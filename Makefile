@@ -9,10 +9,11 @@ include config/Makefile.config
 ## disable possibility, that rules included many times 
 Dabc_Makefile_rules = true
 
-BLD_DIRS += $(DABCDLLPATH)
-BLD_DIRS += $(DABCINCPATH)
+CREATE_DIRS += $(DABCDLLPATH) $(DABCINCPATH) $(DABCBINPATH)
 
 include base/Makefile
+
+include plugins/mbs/Makefile
 
 
 Dabc_Makefile_rules :=

@@ -3,14 +3,18 @@
 ifndef Dabc_Makefile_rules
 Dabc_Makefile_rules = true
 
-BLD_DIRS += $(sort $(dir $(ALLHDRS))) 
-BLD_DIRS += $(sort $(dir $(ALLDEPENDENC))) 
+AUTO_DIRS = $(sort $(CREATE_DIRS) $(dir $(ALLDEPENDENC))) 
 
+build-init::
+
+ifdef DABCMAINMAKE
+AUTO_DIRS += $(sort $(dir $(ALLHDRS))) 
 build-init:: $(ALLHDRS)
+endif
 
 clean::
-	@echo "Clean in $(CURDIR) dirs: $(BLD_DIRS)" 
-	@for DIR in $(BLD_DIRS); do (if [ ! -f $$DIR ] ; then rm -rf $$DIR; fi); done
+	@echo "Clean in $(CURDIR)" 
+	@for DIR in $(AUTO_DIRS); do (if [ ! -f $$DIR ] ; then rm -rf $$DIR; fi); done
 	@rm -rf $(BLD_DIR) 
 
 ifeq ($(DOOPTIMIZATION), false)
@@ -19,12 +23,11 @@ else
 OPTFLAGS = $(OPTIMIZEMODE)
 endif
 
-$(BLD_DIR)/dummy.d: $(BLD_DIRS) build-init 
+$(BLD_DIR)/dummy.d: $(AUTO_DIRS) build-init 
 	@(if [ ! -f $(BLD_DIR) ] ; then mkdir -p $(BLD_DIR); fi)
 	@(if [ ! -f $@ ] ; then touch $@; fi)
 
-$(BLD_DIRS):
-	@echo "Build all dirs $(BLD_DIR)"
+$(AUTO_DIRS):
 	@for DIR in $@; do (if [ ! -f $$DIR ] ; then mkdir -p $$DIR; fi); done
 
 ## Extentions rules

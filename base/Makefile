@@ -28,6 +28,7 @@ ALLDEPENDENC += $(BASE_D)
 ##### local rules #####
 
 $(DABCINCPATH)/%.h: $(BASEDIR)/%.h
+	@echo "Header: $@" 
 	@cp -f $< $@
 
 $(DABCBASE_LIB):   $(BASE_O)
