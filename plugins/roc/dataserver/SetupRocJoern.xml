@@ -1,0 +1,45 @@
+<!--<?xml version='1.0'?> -->
+<xc:Partition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xc="http://xdaq.web.cern.ch/xdaq/xsd/2004/XMLConfiguration-30">
+<xc:Context url="http://lxg0517.gsi.de:1982">
+        <xc:Application class="dabc::xd::Worker" id="42" instance="1" network="local">
+            <properties xmlns="urn:xdaq-application:dabc::xd::Worker" xsi:type="soapenc:Struct">
+                <debugLevel xsi:type="xsd:integer">1</debugLevel>
+                <nodeId xsi:type="xsd:unsignedInt">1</nodeId>
+                <workerTid xsi:type="xsd:unsignedInt">42</workerTid>
+                <controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>    	
+<!--                <HostIP.RocPlugin xsi:type="xsd:string">lxg0517</HostIP.RocPlugin> -->
+                <UdpDataPort.RocPlugin xsi:type="xsd:integer">13131</UdpDataPort.RocPlugin>
+                <UdpControlPort.RocPlugin xsi:type="xsd:integer">13132</UdpControlPort.RocPlugin>
+                <BufferSize.RocPlugin xsi:type="xsd:integer">8192</BufferSize.RocPlugin>
+                <MaxCredits.RocPlugin xsi:type="xsd:integer">15</MaxCredits.RocPlugin>
+                <NumRocs.RocPlugin xsi:type="xsd:integer">2</NumRocs.RocPlugin>
+                <RocIp0.RocPlugin xsi:type="xsd:string">lxi010</RocIp0.RocPlugin>
+                <RocIp1.RocPlugin xsi:type="xsd:string">lxi011</RocIp1.RocPlugin>
+                <RocIp2.RocPlugin xsi:type="xsd:string"></RocIp2.RocPlugin>
+                <RocIp3.RocPlugin xsi:type="xsd:string"></RocIp3.RocPlugin>
+                <RocIp4.RocPlugin xsi:type="xsd:string"></RocIp4.RocPlugin>
+                <BufferSize.RocPlugin xsi:type="xsd:integer">65536</BufferSize.RocPlugin>
+                <PoolBuffers.RocPlugin xsi:type="xsd:integer">100</PoolBuffers.RocPlugin>
+                <QueueLength.RocPlugin xsi:type="xsd:integer">5</QueueLength.RocPlugin>
+                <DataServerKind.RocPlugin xsi:type="xsd:string">Stream</DataServerKind.RocPlugin>
+                <OutFile.RocPlugin xsi:type="xsd:string">/data.local1/adamczew/RocMon/RawTest.lmd</OutFile.RocPlugin>  
+                <OutFileLimit.RocPlugin xsi:type="xsd:integer">500</OutFileLimit.RocPlugin>
+                <DoCalibr.RocPlugin xsi:type="xsd:integer">1</DoCalibr.RocPlugin>
+                <CalibrFile.RocPlugin xsi:type="xsd:string">/data.local1/adamczew/RocMon/Calibtest.lmd</CalibrFile.RocPlugin>
+                <CalibrFileLimit.RocPlugin xsi:type="xsd:integer">500</CalibrFileLimit.RocPlugin>
+              </properties> 
+        </xc:Application>
+
+<!-- Shared object library that contains the implementation -->
+        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABC_USER_DIR}/../libKnut.so</xc:Module>
+        <xc:Module>${DABC_USER_DIR}/../libDabcKnut.so</xc:Module>
+        <xc:Module>${DABC_USER_DIR}/libRocDataserver.so</xc:Module>
+        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/${XDAQ_OS}/${XDAQ_PLATFORM}/libDABC_Control.so</xc:Module>
+
+</xc:Context>
+
+
+</xc:Partition>

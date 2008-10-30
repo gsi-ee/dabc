@@ -1,0 +1,42 @@
+<xc:Context url="http://XDAQNODE:1970">
+        <xc:Application class="READERCLASS" id="42" instance="READERINSTANCE" network="local">
+            <properties xmlns="urn:xdaq-application:READERCLASS" xsi:type="soapenc:Struct">
+                <debugLevel xsi:type="xsd:integer">1</debugLevel>
+                <nodeId xsi:type="xsd:unsignedInt">READERINSTANCE</nodeId>
+                <workerTid xsi:type="xsd:unsignedInt">42</workerTid>
+                <controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
+                <CfgNodeId.BnetPlugin xsi:type="xsd:integer">READERINSTANCE</CfgNodeId.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:integer">1</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:integer">1</IsFilter.BnetPlugin>
+                <NumReadouts.BnetPlugin xsi:type="xsd:integer">NUMREADOUTS</NumReadouts.BnetPlugin>
+                <Input0Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewTransport; InpName:MBSNODE0; Port:6000; </Input0Cfg.BnetPlugin>
+                <Input1Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewTransport; InpName:MBSNODE1; Port:6000; </Input1Cfg.BnetPlugin>
+                <Input2Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewTransport; InpName:MBSNODE2; Port:6000; </Input2Cfg.BnetPlugin>
+                <Input3Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewTransport; InpName:MBSNODE3; Port:6000; </Input3Cfg.BnetPlugin>
+                <Input4Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewTransport; InpName:MBSNODE4; Port:6000; </Input4Cfg.BnetPlugin>
+                <StoragePar.BnetPlugin xsi:type="xsd:string">OutType:MbsNewFile; OutName:dabc_READERINSTANCE.lmd;</StoragePar.BnetPlugin>
+                <ReadoutBuffer.BnetPlugin xsi:type="xsd:integer">2032</ReadoutBuffer.BnetPlugin>
+                <ReadoutPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</ReadoutPoolSize.BnetPlugin>
+                <TransportBuffer.BnetPlugin xsi:type="xsd:integer">6128</TransportBuffer.BnetPlugin>
+                <TransportPoolSize.BnetPlugin xsi:type="xsd:integer">16777216</TransportPoolSize.BnetPlugin>
+                <EventBuffer.BnetPlugin xsi:type="xsd:integer">30704</EventBuffer.BnetPlugin>
+                <EventPoolSize.BnetPlugin xsi:type="xsd:integer">4194304</EventPoolSize.BnetPlugin>
+                <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
+                <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
+                <CombinerModus.BnetPlugin xsi:type="xsd:integer">0</CombinerModus.BnetPlugin>
+            </properties> 
+        </xc:Application>
+
+<!-- Shared object library that contains the implementation -->
+        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/bnet/bin/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/bnet/mbs/libBnetWorker.so</xc:Module>
+        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/${XDAQ_OS}/${XDAQ_PLATFORM}/libDABC_Control.so</xc:Module>
+
+</xc:Context>
+
+

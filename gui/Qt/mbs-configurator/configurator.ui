@@ -1,0 +1,946 @@
+<!DOCTYPE UI><UI version="3.3" stdsetdef="1">
+<class>Configurator</class>
+<widget class="QMainWindow">
+    <property name="name">
+        <cstring>Configurator</cstring>
+    </property>
+    <property name="geometry">
+        <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>505</width>
+            <height>288</height>
+        </rect>
+    </property>
+    <property name="caption">
+        <string>Data Acquisition Backbone Core Configurator</string>
+    </property>
+    <property name="icon">
+        <pixmap>image0</pixmap>
+    </property>
+    <grid>
+        <property name="name">
+            <cstring>unnamed</cstring>
+        </property>
+        <widget class="QLayoutWidget" row="0" column="0" rowspan="1" colspan="2">
+            <property name="name">
+                <cstring>layout33</cstring>
+            </property>
+            <hbox>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QFrame">
+                    <property name="name">
+                        <cstring>frame18</cstring>
+                    </property>
+                    <property name="frameShape">
+                        <enum>StyledPanel</enum>
+                    </property>
+                    <property name="frameShadow">
+                        <enum>Raised</enum>
+                    </property>
+                    <hbox>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLabel">
+                            <property name="name">
+                                <cstring>ControllerLabel</cstring>
+                            </property>
+                            <property name="text">
+                                <string>Bnet Controller Node:</string>
+                            </property>
+                        </widget>
+                        <widget class="QLineEdit">
+                            <property name="name">
+                                <cstring>ControllerLineEdit</cstring>
+                            </property>
+                            <property name="toolTip" stdset="0">
+                                <string>Name of the bnet cluster controller</string>
+                            </property>
+                        </widget>
+                    </hbox>
+                </widget>
+                <spacer>
+                    <property name="name">
+                        <cstring>spacer14</cstring>
+                    </property>
+                    <property name="orientation">
+                        <enum>Horizontal</enum>
+                    </property>
+                    <property name="sizeType">
+                        <enum>Expanding</enum>
+                    </property>
+                    <property name="sizeHint">
+                        <size>
+                            <width>110</width>
+                            <height>20</height>
+                        </size>
+                    </property>
+                </spacer>
+                <widget class="QCheckBox">
+                    <property name="name">
+                        <cstring>AsymmCheckBox</cstring>
+                    </property>
+                    <property name="text">
+                        <string>Use separate eventbuilders</string>
+                    </property>
+                    <property name="toolTip" stdset="0">
+                        <string>Check here to set up  bnet with special nodes for readout and event building</string>
+                    </property>
+                </widget>
+            </hbox>
+        </widget>
+        <widget class="QFrame" row="1" column="0">
+            <property name="name">
+                <cstring>frame12</cstring>
+            </property>
+            <property name="frameShape">
+                <enum>StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+                <enum>Raised</enum>
+            </property>
+            <grid>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QFrame" row="0" column="1">
+                    <property name="name">
+                        <cstring>ReadoutFrame</cstring>
+                    </property>
+                    <property name="frameShape">
+                        <enum>StyledPanel</enum>
+                    </property>
+                    <property name="frameShadow">
+                        <enum>Raised</enum>
+                    </property>
+                    <grid>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLayoutWidget" row="0" column="0">
+                            <property name="name">
+                                <cstring>layout12</cstring>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>ReadoutLabel</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>DABC Readout nodes:</string>
+                                    </property>
+                                </widget>
+                                <widget class="QListBox">
+                                    <item>
+                                        <property name="text">
+                                            <string>Readout1</string>
+                                        </property>
+                                    </item>
+                                    <property name="name">
+                                        <cstring>ReadoutListBox</cstring>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>List of readout nodes connected to mbs</string>
+                                    </property>
+                                </widget>
+                            </vbox>
+                        </widget>
+                        <widget class="QLayoutWidget" row="1" column="0">
+                            <property name="name">
+                                <cstring>layout10</cstring>
+                            </property>
+                            <hbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>NewReadoutButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image0</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Add new DABC node...</string>
+                                    </property>
+                                </widget>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>EditReadoutButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image1</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Rename selected DABC  node</string>
+                                    </property>
+                                </widget>
+                                <spacer>
+                                    <property name="name">
+                                        <cstring>spacer5</cstring>
+                                    </property>
+                                    <property name="orientation">
+                                        <enum>Horizontal</enum>
+                                    </property>
+                                    <property name="sizeType">
+                                        <enum>Expanding</enum>
+                                    </property>
+                                    <property name="sizeHint">
+                                        <size>
+                                            <width>20</width>
+                                            <height>20</height>
+                                        </size>
+                                    </property>
+                                </spacer>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>KillReadoutButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image2</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Remove selected node from list</string>
+                                    </property>
+                                </widget>
+                            </hbox>
+                        </widget>
+                    </grid>
+                </widget>
+                <widget class="QFrame" row="0" column="0">
+                    <property name="name">
+                        <cstring>Mbsframe</cstring>
+                    </property>
+                    <property name="frameShape">
+                        <enum>StyledPanel</enum>
+                    </property>
+                    <property name="frameShadow">
+                        <enum>Raised</enum>
+                    </property>
+                    <grid>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLayoutWidget" row="0" column="0">
+                            <property name="name">
+                                <cstring>layout4_2</cstring>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>MBSLabel</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>MBS nodes:</string>
+                                    </property>
+                                </widget>
+                                <widget class="QListBox">
+                                    <item>
+                                        <property name="text">
+                                            <string>x86_dummy</string>
+                                        </property>
+                                    </item>
+                                    <property name="name">
+                                        <cstring>MBSListBox</cstring>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>List of mbs inputs for the selected readout node</string>
+                                    </property>
+                                </widget>
+                            </vbox>
+                        </widget>
+                        <widget class="QLayoutWidget" row="1" column="0">
+                            <property name="name">
+                                <cstring>layout9</cstring>
+                            </property>
+                            <hbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>NewMbsButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image3</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Add new MBS node...</string>
+                                    </property>
+                                </widget>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>EditMbsButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image1</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Rename selected MBS node</string>
+                                    </property>
+                                </widget>
+                                <spacer>
+                                    <property name="name">
+                                        <cstring>spacer5_2_2</cstring>
+                                    </property>
+                                    <property name="orientation">
+                                        <enum>Horizontal</enum>
+                                    </property>
+                                    <property name="sizeType">
+                                        <enum>Expanding</enum>
+                                    </property>
+                                    <property name="sizeHint">
+                                        <size>
+                                            <width>20</width>
+                                            <height>20</height>
+                                        </size>
+                                    </property>
+                                </spacer>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>KillMbsButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image2</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Remove selected node from list </string>
+                                    </property>
+                                </widget>
+                            </hbox>
+                        </widget>
+                    </grid>
+                </widget>
+            </grid>
+        </widget>
+        <widget class="QFrame" row="1" column="1">
+            <property name="name">
+                <cstring>BuilderFrame</cstring>
+            </property>
+            <property name="frameShape">
+                <enum>StyledPanel</enum>
+            </property>
+            <property name="frameShadow">
+                <enum>Raised</enum>
+            </property>
+            <grid>
+                <property name="name">
+                    <cstring>unnamed</cstring>
+                </property>
+                <widget class="QFrame" row="0" column="0">
+                    <property name="name">
+                        <cstring>BuilderSubFrame</cstring>
+                    </property>
+                    <property name="frameShape">
+                        <enum>StyledPanel</enum>
+                    </property>
+                    <property name="frameShadow">
+                        <enum>Raised</enum>
+                    </property>
+                    <grid>
+                        <property name="name">
+                            <cstring>unnamed</cstring>
+                        </property>
+                        <widget class="QLayoutWidget" row="0" column="0">
+                            <property name="name">
+                                <cstring>layout5</cstring>
+                            </property>
+                            <vbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QLabel">
+                                    <property name="name">
+                                        <cstring>BuilderLabel</cstring>
+                                    </property>
+                                    <property name="text">
+                                        <string>DABC Event builder nodes:</string>
+                                    </property>
+                                </widget>
+                                <widget class="QListBox">
+                                    <item>
+                                        <property name="text">
+                                            <string>Eventbuilder 1</string>
+                                        </property>
+                                    </item>
+                                    <property name="name">
+                                        <cstring>BuilderListBox</cstring>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>List of event builder nodes getting data from the readout nodes</string>
+                                    </property>
+                                </widget>
+                            </vbox>
+                        </widget>
+                        <widget class="QLayoutWidget" row="1" column="0">
+                            <property name="name">
+                                <cstring>layout11</cstring>
+                            </property>
+                            <hbox>
+                                <property name="name">
+                                    <cstring>unnamed</cstring>
+                                </property>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>NewBuilderButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image0</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Add new DABC eventbuider node...</string>
+                                    </property>
+                                </widget>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>EditBuilderButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image1</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Rename selected DABC eventbuilder node</string>
+                                    </property>
+                                </widget>
+                                <spacer>
+                                    <property name="name">
+                                        <cstring>spacer5_2</cstring>
+                                    </property>
+                                    <property name="orientation">
+                                        <enum>Horizontal</enum>
+                                    </property>
+                                    <property name="sizeType">
+                                        <enum>Expanding</enum>
+                                    </property>
+                                    <property name="sizeHint">
+                                        <size>
+                                            <width>80</width>
+                                            <height>20</height>
+                                        </size>
+                                    </property>
+                                </spacer>
+                                <widget class="QPushButton">
+                                    <property name="name">
+                                        <cstring>KillBuilderButton</cstring>
+                                    </property>
+                                    <property name="minimumSize">
+                                        <size>
+                                            <width>30</width>
+                                            <height>30</height>
+                                        </size>
+                                    </property>
+                                    <property name="text">
+                                        <string></string>
+                                    </property>
+                                    <property name="pixmap">
+                                        <pixmap>image2</pixmap>
+                                    </property>
+                                    <property name="toolTip" stdset="0">
+                                        <string>Remove selected node from list</string>
+                                    </property>
+                                </widget>
+                            </hbox>
+                        </widget>
+                    </grid>
+                </widget>
+            </grid>
+        </widget>
+    </grid>
+</widget>
+<menubar>
+    <property name="name">
+        <cstring>MenuBar</cstring>
+    </property>
+    <item text="File" name="File">
+        <action name="fileNewAction"/>
+        <action name="fileOpenAction"/>
+        <action name="fileSaveAction"/>
+        <action name="fileSaveAsAction"/>
+        <action name="fileGenerate_DABC_SetupAction"/>
+        <separator/>
+        <action name="fileExitAction"/>
+        <separator/>
+    </item>
+    <item text="&amp;Help" name="helpMenu">
+        <action name="helpUsageAction"/>
+        <separator/>
+        <action name="helpAboutAction"/>
+    </item>
+    <separator/>
+</menubar>
+<toolbars>
+</toolbars>
+<actions>
+    <action>
+        <property name="name">
+            <cstring>fileNewAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>image4</iconset>
+        </property>
+        <property name="text">
+            <string>New</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;New</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+N</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileOpenAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>image5</iconset>
+        </property>
+        <property name="text">
+            <string>Open</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Open...</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+O</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileSaveAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>image6</iconset>
+        </property>
+        <property name="text">
+            <string>Save</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Save</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+S</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileSaveAsAction</cstring>
+        </property>
+        <property name="text">
+            <string>Save As</string>
+        </property>
+        <property name="menuText">
+            <string>Save &amp;As...</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>filePrintAction</cstring>
+        </property>
+        <property name="iconSet">
+            <iconset>image7</iconset>
+        </property>
+        <property name="text">
+            <string>Print</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Print...</string>
+        </property>
+        <property name="accel">
+            <string>Ctrl+P</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileExitAction</cstring>
+        </property>
+        <property name="text">
+            <string>Exit</string>
+        </property>
+        <property name="menuText">
+            <string>E&amp;xit</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpContentsAction</cstring>
+        </property>
+        <property name="text">
+            <string>Contents</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Contents...</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpIndexAction</cstring>
+        </property>
+        <property name="text">
+            <string>Index</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;Index...</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpAboutAction</cstring>
+        </property>
+        <property name="text">
+            <string>About</string>
+        </property>
+        <property name="menuText">
+            <string>&amp;About</string>
+        </property>
+        <property name="accel">
+            <string></string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>helpUsageAction</cstring>
+        </property>
+        <property name="text">
+            <string>Usage</string>
+        </property>
+        <property name="menuText">
+            <string>Usage</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>fileGenerate_DABC_SetupAction</cstring>
+        </property>
+        <property name="text">
+            <string>Generate DABC Setup...</string>
+        </property>
+        <property name="menuText">
+            <string>Generate DABC Setup...</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>menuasAction</cstring>
+        </property>
+        <property name="text">
+            <string>as</string>
+        </property>
+        <property name="menuText">
+            <string>as</string>
+        </property>
+    </action>
+    <action>
+        <property name="name">
+            <cstring>menuasAction_2</cstring>
+        </property>
+        <property name="text">
+            <string></string>
+        </property>
+        <property name="menuText">
+            <string></string>
+        </property>
+    </action>
+</actions>
+<images>
+    <image name="image0">
+        <data format="PNG" length="659">89504e470d0a1a0a0000000d49484452000000100000001008060000001ff3ff610000025a49444154789c85934f48545114c6bf7bef7bcff7469d379a290c4e3a632a3529898b302a1225b09590482da290c220da4928113a8b2888361285fdd9b628a920220a4a268284842003b5d09a882132ca421da69977bf16458c13da81b3f938dfef70ee3d0724f1375b5a1495dace584cacd0ffa469b22e12a199abad2cb2ac208518a694bbf2cdb6cd7542f0a4cfc7925c5d22371a1a3e014840eb81d48672bb118d66145173f0c335914ee3a010488642f8b1c293dfc9338c86acc2dcc5e3b803e20988b818db7d09bec58786e935e5d7ff03f02f195b6f76e1cbc72068a7401044cf55e2f0f5053917695d131060c007e2597412ec39e5a3356f10048bcf77104f77101a930e9dd2550192720f880c08ca45c9aad35574e32ecb6e95111a0491959407723d065cb710a954045a07877b7928198431d10c8c352914240b101e08233198807ab119dee53ea5bf951c53f7684a29661c07530632191b9e5705724bcb736e141e604f1562ea55298c05032aade01ff743cb30be8f7601458b6112cd5a63399bc53b3016136c6d558c46cdf2cfb2cb5942d64c83f0c09a13350c9d0d31f038f07b84acd4226d1d1d1aa21819a14826f3dec0475f00c4eb8214b873d462c9a300454670fd996dc49b5a82786fd10aaef98d4acbb68efb989f6814ac9b06a141d1fe80a2efdcb24c39fbc639bef61e7c0d1517cdd462e4c67ebc84c65b10b3b872248e50e2ae5994aaf9ef22d1309a29c48564d809ba745d3ffd818adedb8e10ba5f29b6777753ac0ea8acb4286527a56ccb071b063729c5bd1515b4573fa6cece0ca49c4575751c79d1df8f69a530535f8f9fb9fa2f6a38f7f81ebd224e0000000049454e44ae426082</data>
+    </image>
+    <image name="image1">
+        <data format="PNG" length="231">89504e470d0a1a0a0000000d49484452000000140000001408060000008d891d0d000000ae49444154789ccd94d10d83300c44e38a1d98e126c2eb649c4e74333085fb51594a4c48508ada9e84c80f2f2f76b0904c77e6712bedeb400006c0e27a1a485254350130554d246504942b4d0160576043c3992c95c9b3ae11b7a3d51eeab806f3ca901bc59fd6060e5b497150dca06b78960869021d766657261eb3cc474dd9018bb6d5b5695971a394d766d494257e3cb2ea1d37a55f0c879cb395ef51babf9e0f03f25d475f4f0367f2ff03f605a98364872fe7cb2d0000000049454e44ae426082</data>
+    </image>
+    <image name="image2">
+        <data format="PNG" length="246">89504e470d0a1a0a0000000d49484452000000140000001408060000008d891d0d000000bd49444154789ccd94d11103210844d74c9aa102dba134daa102ca315f663854bc64cc4cf6cb39f1b1205e31339cd4e3282d0255b5a96abb7b7816fff49bcc0c0010910600b5d6b202010033c3cc2e31c5f790882ed9446480fac411068492630033c397b4830d0ebdbc5b11792798b9be058cd0551551e9d8c4c3dde9d7c0e830f6f423a0879959e96e77d0690f236cb6b7eae5e03083f96f2b97c3d3ebebec02ccacac4a1f1c7650366bde69543a873b11514bdff209fdf67ff897c0172ab38eaedb509b620000000049454e44ae426082</data>
+    </image>
+    <image name="image3">
+        <data format="PNG" length="628">89504e470d0a1a0a0000000d49484452000000140000001408060000008d891d0d0000023b49444154789ccd944f4854511487bffbe68dce38d314683d6c2199053394142a825110ad2291848856c5509b5ab66c11ee824074d122288ac1457f36114584906184d40829688ffb829aa916c94b41b2d1199b37efb47836d5fe051db8dcc3e5de8ff3fbdd7b8fd25a136618a1d2fe05d0cce7f3122a516b8d84145a6b946ddb02b0ead55858abb22b15034036ea562a98e7cacbec6c4c92304c4001c186d99acd6cd401e0ac7f02d3300ce5fbbe2c5484e3e35de8538e0270cb9e1c7eb417fba4c630941a2f225002e05c3ac96633428e078c2c0efd966b6d5c8a0fdc2daefc65c597b207c0d775afbe762193a27347955b4e890aeb8cb843684bab5fa3c45a00acd4e09e7390436d9388045a3e95aaec6b9da058aad68131c320659800c409acc9b81929531141e42259650038df7e00d0918c32bdb4862f229e08bd2d715e2d56eac0c7df17982a280676473189286d690530cc6d3ef01900a3ea8b9c9ed8cfd89119ce74a4c83eef62b1e271f9752fc7b627b8397fa00eec8b370350a8aeb2eed704e08d35c31df71a03ee51de511063a91278d4bea981d6a6a8fab3e2b644148092171cde6a36924d27b03f36f0beba0a401371f5d6b219b6ae33e8f6638c1556b8d2374d4bcc5400977af29c7fd1cdd3fe396291e0cd24cd201120a12200787864dc8c8c92930886da2229004c80d678b42eaba739307b5bcc44297836304fe67ea764f74c316a2f03d0ddeed166a678683d61d0ede706570560d27a890abbdb9800e9743a94ffec388e52b95c2ed4e610bae4ffbfc1fe041a7c2a2a131e98d00000000049454e44ae426082</data>
+    </image>
+    <image name="image4">
+        <data format="PNG" length="173">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b0000007449444154789cedd5c109c0200c05d06fe936812c10b2ffdd85d25385b6a991480f053f081af0291210f828c5a9d9c4de96cd2b9ad9eb0000660e2fe0c2519839c4f70c4c446d5e6b3538cf928245e4b2f6f014acaa8fda1d4fc1a5741b22079f9d111d96ea8a912c78c10bee64e60719f57e9203ad452a040318f5f70000000049454e44ae426082</data>
+    </image>
+    <image name="image5">
+        <data format="PNG" length="210">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b0000009949444154789ced94410e85200c445f89c7367f61bc775d2848a42860ffced9548bbe8e13043e1d928177f481a123dc2b34f6f47a3de2b865a8843f4001982a0b3d5f62c58300aa1ad70550449ab9d507a773a8a4ba4f92a2df333c64c63bebbd82e5b8addecbcc7820eb4266c639745dfa80f36faf66c66fa19c3f882fb470ec05cdc0bed07893f68e171492635f686c3eeff6ba3c8fdd366dc4c0452cf153a9590000000049454e44ae426082</data>
+    </image>
+    <image name="image6">
+        <data format="PNG" length="217">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b000000a049444154789cd5954d0a802010859fd14668e18de662d222bc98376a21b4ac451992c66469e0b7f187f1f11c47052a218e762daddbfb9e99f6568f80b5364b8588ce35440400e80a398ce8f99034d2292cc37c8ebd530feb583a05e954341f8a027b2a7d3a1f09bf854dc5d5d953aa396e4f38cab199e2d2e108abe156f82e30977fcb4d8ff942d75dbebed2e143953a93f6caad3d6111f44b7d4f820ff9c0069bb51ecd122066740000000049454e44ae426082</data>
+    </image>
+    <image name="image7">
+        <data format="PNG" length="725">89504e470d0a1a0a0000000d4948445200000016000000160806000000c4b46c3b0000029c49444154789c8d95ad76db4010853ff718cc3289d950d06136344c98c362964087256f503f426161021be6b2842550612e8be14299496c866dc14ab2fc77da2192665777eedc3b5af53813afafaf414448d3742f6f6600a82a005555912409575757bdeebefe396011613299b440876b4d946589f7fe68cf596080cd6673047658485571cefd3ff02900333b2a70aa23806fa792799e07336b9938e770ceede9dde82f2247fa9e65acaa244942599688486b54374eb5ff4fc6105b3c9c882e6853ec9c142719376c4e31ede655756f42ba71a40dc06ab50a5996311c0ecf8237467e7e7e022092309f5fb7787b8cdfdfdf83f79efc2347668288b40087d786695994e479ceb6daf2f0f01066b319d7d7d7bd5e1774b3f154c5163580d34c019ca408020e7ce159afffb0dd16a81a1717198bc5224ad130bd9c5ee2d2145503538e6c3103849c4f3e78656a53d2af94e79767fc57fcfad4946c7411419f9e7e85b228c3ffc457f80aa3300a12248cc228acd7ebf0e3fbcf301e8fc360908524494236c842bfda56dcdddd9c75f73052522e999223cc98311e8f4964486905cfbf5ea8aa8a7490d237c0fb22cea31988106b48ed36385c54dc14c4f160dfb9c133b4217fd88019e97018d76b77fa6551e045a29e66b4be39882ed69d38031520e604f0b6c5886788df6c5a4f1cf5b835096b00b17628148b35746f673b39d278da0945e9236065e705adc976371a200a76b8e2302ba9fb6c7a633299f20debb06cc96a7cb4faba07ea9a6d35680d58cb39180c582cee2263ef7d631588412540159d338b30d2b0b21d183bcd31430496cb25f3f9bcd7cfb28c8fb70f7ebfbda16ac4f347d81b3ee93ccb0eb2edb39ea6e572c9e3e3630f3a87d06ab50aabd51bdbfaffa5686dcace99dd5f0354cb785f1993e984dbdb5beeefef5bbcbfd1f69e0c0f8448030000000049454e44ae426082</data>
+    </image>
+</images>
+<connections>
+    <connection>
+        <sender>fileNewAction</sender>
+        <signal>activated()</signal>
+        <receiver>Configurator</receiver>
+        <slot>fileNew()</slot>
+    </connection>
+    <connection>
+        <sender>fileOpenAction</sender>
+        <signal>activated()</signal>
+        <receiver>Configurator</receiver>
+        <slot>fileOpen()</slot>
+    </connection>
+    <connection>
+        <sender>fileSaveAction</sender>
+        <signal>activated()</signal>
+        <receiver>Configurator</receiver>
+        <slot>fileSave()</slot>
+    </connection>
+    <connection>
+        <sender>fileSaveAsAction</sender>
+        <signal>activated()</signal>
+        <receiver>Configurator</receiver>
+        <slot>fileSaveAs()</slot>
+    </connection>
+    <connection>
+        <sender>fileExitAction</sender>
+        <signal>activated()</signal>
+        <receiver>Configurator</receiver>
+        <slot>fileExit()</slot>
+    </connection>
+    <connection>
+        <sender>helpAboutAction</sender>
+        <signal>activated()</signal>
+        <receiver>Configurator</receiver>
+        <slot>helpAbout()</slot>
+    </connection>
+    <connection>
+        <sender>NewReadoutButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>newReadoutSlot()</slot>
+    </connection>
+    <connection>
+        <sender>KillReadoutButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>removeReadoutSlot()</slot>
+    </connection>
+    <connection>
+        <sender>NewBuilderButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>newBuilderSlot()</slot>
+    </connection>
+    <connection>
+        <sender>KillBuilderButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>removeBuilderSlot()</slot>
+    </connection>
+    <connection>
+        <sender>NewMbsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>newMbsSlot()</slot>
+    </connection>
+    <connection>
+        <sender>KillMbsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>removeMbsSlot()</slot>
+    </connection>
+    <connection>
+        <sender>AsymmCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>BuilderFrame</receiver>
+        <slot>setShown(bool)</slot>
+    </connection>
+    <connection>
+        <sender>AsymmCheckBox</sender>
+        <signal>toggled(bool)</signal>
+        <receiver>Configurator</receiver>
+        <slot>setSeparateEventbuidersSlot(bool)</slot>
+    </connection>
+    <connection>
+        <sender>ReadoutListBox</sender>
+        <signal>highlighted(int)</signal>
+        <receiver>Configurator</receiver>
+        <slot>setCurrentReadoutSlot(int)</slot>
+    </connection>
+    <connection>
+        <sender>fileGenerate_DABC_SetupAction</sender>
+        <signal>activated()</signal>
+        <receiver>Configurator</receiver>
+        <slot>generateSetupSlot()</slot>
+    </connection>
+    <connection>
+        <sender>helpUsageAction</sender>
+        <signal>activated()</signal>
+        <receiver>Configurator</receiver>
+        <slot>helpUsageAction_activated()</slot>
+    </connection>
+    <connection>
+        <sender>EditMbsButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>editMBSSlot()</slot>
+    </connection>
+    <connection>
+        <sender>EditReadoutButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>editReadoutSlot()</slot>
+    </connection>
+    <connection>
+        <sender>EditBuilderButton</sender>
+        <signal>clicked()</signal>
+        <receiver>Configurator</receiver>
+        <slot>editBuilderSlot()</slot>
+    </connection>
+    <connection>
+        <sender>ControllerLineEdit</sender>
+        <signal>textChanged(const QString&amp;)</signal>
+        <receiver>Configurator</receiver>
+        <slot>controllernameChangedSlot()</slot>
+    </connection>
+</connections>
+<includes>
+    <include location="global" impldecl="in declaration">vector</include>
+    <include location="local" impldecl="in declaration">qinputdialog.h</include>
+    <include location="global" impldecl="in declaration">iostream</include>
+    <include location="local" impldecl="in declaration">qprocess.h</include>
+    <include location="local" impldecl="in implementation">qfile.h</include>
+    <include location="local" impldecl="in implementation">qmessagebox.h</include>
+    <include location="local" impldecl="in implementation">qsettings.h</include>
+    <include location="local" impldecl="in implementation">qfiledialog.h</include>
+    <include location="local" impldecl="in implementation">configurator.ui.h</include>
+</includes>
+<variables>
+    <variable>QProcess* fShell;</variable>
+    <variable>bool fbSeparateBuilders;</variable>
+    <variable>std::vector&lt;QStringList&gt; fxMbsList;</variable>
+    <variable>int fiCurrentReadout;</variable>
+    <variable>QString fxProjectName;</variable>
+    <variable>bool fbWasSaved;</variable>
+</variables>
+<slots>
+    <slot>fileNew()</slot>
+    <slot>fileOpen()</slot>
+    <slot>fileSave()</slot>
+    <slot>fileSaveAs()</slot>
+    <slot>fileExit()</slot>
+    <slot>helpAbout()</slot>
+    <slot>helpUsageAction_activated()</slot>
+    <slot>newReadoutSlot()</slot>
+    <slot>removeReadoutSlot()</slot>
+    <slot>editReadoutSlot()</slot>
+    <slot>newBuilderSlot()</slot>
+    <slot>removeBuilderSlot()</slot>
+    <slot>editBuilderSlot()</slot>
+    <slot>newMbsSlot()</slot>
+    <slot>removeMbsSlot()</slot>
+    <slot>editMBSSlot()</slot>
+    <slot>setSeparateEventbuidersSlot( bool on )</slot>
+    <slot>setCurrentReadoutSlot( int num )</slot>
+    <slot>generateSetupSlot()</slot>
+    <slot>readFromStdout()</slot>
+    <slot>readFromStderr()</slot>
+    <slot>exitShell()</slot>
+    <slot>controllernameChangedSlot()</slot>
+</slots>
+<functions>
+    <function access="private" specifier="non virtual">init()</function>
+    <function access="private" specifier="non virtual">destroy()</function>
+    <function access="private">updateMbsList()</function>
+    <function access="protected">closeEvent( QCloseEvent * ce )</function>
+    <function access="private">updateCaption()</function>
+    <function>clearForm()</function>
+    <function access="private">restoreSettings( const QString &amp; name )</function>
+</functions>
+<layoutdefaults spacing="6" margin="11"/>
+</UI>

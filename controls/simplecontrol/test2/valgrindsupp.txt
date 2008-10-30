@@ -1,0 +1,43 @@
+{
+   mthca_alloc_db_tab-0
+   Memcheck:Cond
+   fun:mthca_alloc_db_tab
+   fun:mthca_alloc_context
+   fun:ibv_open_device@@IBVERBS_1.1
+   fun:*
+}
+
+{
+   mthca_create_qp-0
+   Memcheck:Value8
+   fun:mthca_alloc_db
+   fun:mthca_create_qp
+   fun:ibv_create_qp@@IBVERBS_1.1
+   fun:*
+}
+
+{
+   mthca_create_qp-1
+   Memcheck:Value8
+   fun:mthca_alloc_db
+   fun:mthca_create_qp
+   fun:ibv_create_qp@@IBVERBS_1.1
+   fun:*
+}
+
+{
+   ibv_post_recv-0
+   Memcheck:Cond
+   fun:mthca_arbel_post_recv
+   fun:ibv_post_recv
+   fun:*
+}
+
+{
+   ibv_post_recv-1
+   Memcheck:Value8
+   fun:mthca_arbel_post_recv
+   fun:ibv_post_recv
+   fun:*
+}
+

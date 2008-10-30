@@ -1,0 +1,2 @@
+lxi009.gsi.de:x86-13:x86-15
+lxi010.gsi.de:r2-d2:c3-po

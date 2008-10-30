@@ -1,0 +1,219 @@
+\hypertarget{classmprace_1_1RegisterTristate}{
+\section{mprace::Register\-Tristate Class Reference}
+\label{classmprace_1_1RegisterTristate}\index{mprace::RegisterTristate@{mprace::RegisterTristate}}
+}
+In this implementation, 3 addresses are used for a single register.  
+
+
+{\tt \#include $<$Register\-Tristate.h$>$}
+
+Inheritance diagram for mprace::Register\-Tristate:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=84pt]{classmprace_1_1RegisterTristate__inherit__graph}
+\end{center}
+\end{figure}
+Collaboration diagram for mprace::Register\-Tristate:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=84pt]{classmprace_1_1RegisterTristate__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1RegisterTristate_a0}{Register\-Tristate} (unsigned int $\ast$in\_\-reg, unsigned int $\ast$out\_\-reg, unsigned int $\ast$oe\_\-reg)
+\begin{CompactList}\small\item\em Creates a \hyperlink{classmprace_1_1Register}{Register} associated with the specified addresses. \item\end{CompactList}\item 
+virtual \hyperlink{classmprace_1_1RegisterTristate_a1}{$\sim$Register\-Tristate} ()
+\begin{CompactList}\small\item\em Delete a register. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1RegisterTristate_a2}{set} (const unsigned int value)
+\begin{CompactList}\small\item\em Set the pin to a certain value. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1RegisterTristate_a3}{set\-OE} ()
+\begin{CompactList}\small\item\em Enable the output for all bits. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1RegisterTristate_a4}{set\-OE} (const unsigned int value)
+\begin{CompactList}\small\item\em Enable the output for certain bits. \item\end{CompactList}\item 
+virtual unsigned int \hyperlink{classmprace_1_1RegisterTristate_a5}{get} ()
+\begin{CompactList}\small\item\em Get the register current value. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1RegisterTristate_a6}{set} ()
+\begin{CompactList}\small\item\em Set all bits to true. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1RegisterTristate_a7}{clear} ()
+\begin{CompactList}\small\item\em Set all bits to false. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1RegisterTristate_b0}{Register\-Tristate} (const \hyperlink{classmprace_1_1Register}{Register} \&)
+\begin{CompactList}\small\item\em Overrides default copy constructor, does nothing. \item\end{CompactList}\item 
+\hyperlink{classmprace_1_1RegisterTristate}{Register\-Tristate} \& \hyperlink{classmprace_1_1RegisterTristate_b1}{operator=} (const \hyperlink{classmprace_1_1RegisterTristate}{Register\-Tristate} \&)
+\begin{CompactList}\small\item\em Overrides default assignment operation, does nothing. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+In this implementation, 3 addresses are used for a single register. 
+
+One is used for reading, another for writing, and a third one as output enable. Writing sets the bits to the requested value, reading returns the value.
+
+This allows for an easy register mapping which is hardware friendly, allowing easy control of bit direction in a register.
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.1 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2007-05-29 07:50:45 \end{Desc}
+\end{Desc}
+
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classmprace_1_1RegisterTristate_a0}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!RegisterTristate@{RegisterTristate}}
+\index{RegisterTristate@{RegisterTristate}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[RegisterTristate]{\setlength{\rightskip}{0pt plus 5cm}mprace::Register\-Tristate::Register\-Tristate (unsigned int $\ast$ {\em in\_\-reg}, unsigned int $\ast$ {\em out\_\-reg}, unsigned int $\ast$ {\em oe\_\-reg})\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_a0}
+
+
+Creates a \hyperlink{classmprace_1_1Register}{Register} associated with the specified addresses. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em in\_\-reg}]The memory address associated with the input register. \item[{\em out\_\-reg}]The memory address associated with the output register. \item[{\em oe\_\-reg}]The memory address associated with the OE register.\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1RegisterTristate_a1}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!~RegisterTristate@{$\sim$RegisterTristate}}
+\index{~RegisterTristate@{$\sim$RegisterTristate}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[$\sim$RegisterTristate]{\setlength{\rightskip}{0pt plus 5cm}virtual mprace::Register\-Tristate::$\sim$\hyperlink{classmprace_1_1RegisterTristate}{Register\-Tristate} ()\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_a1}
+
+
+Delete a register. 
+
+Must be virtual to ensure the proper subclass destructor is called.\hypertarget{classmprace_1_1RegisterTristate_b0}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!RegisterTristate@{RegisterTristate}}
+\index{RegisterTristate@{RegisterTristate}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[RegisterTristate]{\setlength{\rightskip}{0pt plus 5cm}mprace::Register\-Tristate::Register\-Tristate (const \hyperlink{classmprace_1_1Register}{Register} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_b0}
+
+
+Overrides default copy constructor, does nothing. 
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classmprace_1_1RegisterTristate_a7}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!clear@{clear}}
+\index{clear@{clear}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[clear]{\setlength{\rightskip}{0pt plus 5cm}void mprace::Register\-Tristate::clear ()\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_a7}
+
+
+Set all bits to false. 
+
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Reimplemented from \hyperlink{classmprace_1_1Register_a4}{mprace::Register}.\hypertarget{classmprace_1_1RegisterTristate_a5}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!get@{get}}
+\index{get@{get}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[get]{\setlength{\rightskip}{0pt plus 5cm}virtual unsigned int mprace::Register\-Tristate::get ()\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_a5}
+
+
+Get the register current value. 
+
+\begin{Desc}
+\item[Returns:]The current pin value. \end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1Register_a2}{mprace::Register}.\hypertarget{classmprace_1_1RegisterTristate_b1}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!operator=@{operator=}}
+\index{operator=@{operator=}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[operator=]{\setlength{\rightskip}{0pt plus 5cm}\hyperlink{classmprace_1_1RegisterTristate}{Register\-Tristate}\& mprace::Register\-Tristate::operator= (const \hyperlink{classmprace_1_1RegisterTristate}{Register\-Tristate} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_b1}
+
+
+Overrides default assignment operation, does nothing. 
+
+\hypertarget{classmprace_1_1RegisterTristate_a6}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!set@{set}}
+\index{set@{set}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[set]{\setlength{\rightskip}{0pt plus 5cm}void mprace::Register\-Tristate::set ()\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_a6}
+
+
+Set all bits to true. 
+
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Reimplemented from \hyperlink{classmprace_1_1Register_a3}{mprace::Register}.\hypertarget{classmprace_1_1RegisterTristate_a2}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!set@{set}}
+\index{set@{set}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[set]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::Register\-Tristate::set (const unsigned int {\em value})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_a2}
+
+
+Set the pin to a certain value. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em value}]the new value. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1Register_a1}{mprace::Register}.\hypertarget{classmprace_1_1RegisterTristate_a4}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!setOE@{setOE}}
+\index{setOE@{setOE}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[setOE]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::Register\-Tristate::set\-OE (const unsigned int {\em value})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_a4}
+
+
+Enable the output for certain bits. 
+
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1RegisterTristate_a3}{
+\index{mprace::RegisterTristate@{mprace::Register\-Tristate}!setOE@{setOE}}
+\index{setOE@{setOE}!mprace::RegisterTristate@{mprace::Register\-Tristate}}
+\subsubsection[setOE]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::Register\-Tristate::set\-OE ()\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1RegisterTristate_a3}
+
+
+Enable the output for all bits. 
+
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+include/mprace/Register\-Tristate.h\end{CompactItemize}

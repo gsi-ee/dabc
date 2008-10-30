@@ -1,0 +1,179 @@
+\hypertarget{classmprace_1_1Logger}{
+\section{mprace::Logger Class Reference}
+\label{classmprace_1_1Logger}\index{mprace::Logger@{mprace::Logger}}
+}
+Implements Logging functions for the boards.  
+
+
+{\tt \#include $<$Logger.h$>$}
+
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1Logger_a0}{Logger} ()
+\begin{CompactList}\small\item\em Create a \hyperlink{classmprace_1_1Logger}{Logger} object. \item\end{CompactList}\item 
+\hyperlink{classmprace_1_1Logger_a1}{$\sim$Logger} ()
+\begin{CompactList}\small\item\em Close underlying output streams and destroy the object. \item\end{CompactList}\item 
+int \hyperlink{classmprace_1_1Logger_a2}{get\-Verbose\-Level} ()
+\begin{CompactList}\small\item\em Get the current verbosity level of the logger. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1Logger_a3}{set\-Verbose\-Level} (const int level)
+\begin{CompactList}\small\item\em Set the verbosity level of the logger. \item\end{CompactList}\item 
+\hypertarget{classmprace_1_1Logger_a4}{
+void \hyperlink{classmprace_1_1Logger_a4}{log\-Entry} (const std::string \&s)}
+\label{classmprace_1_1Logger_a4}
+
+\begin{CompactList}\small\item\em Insert an entry into the log. \item\end{CompactList}\item 
+\hypertarget{classmprace_1_1Logger_a5}{
+void \hyperlink{classmprace_1_1Logger_a5}{log\-Debug\-Entry} (const std::string \&s)}
+\label{classmprace_1_1Logger_a5}
+
+\begin{CompactList}\small\item\em Insert an entry into the debug log. \item\end{CompactList}\item 
+\hypertarget{classmprace_1_1Logger_a6}{
+void \hyperlink{classmprace_1_1Logger_a6}{write} (const unsigned int address, const unsigned int value)}
+\label{classmprace_1_1Logger_a6}
+
+\begin{CompactList}\small\item\em Log a write operation. \item\end{CompactList}\item 
+\hypertarget{classmprace_1_1Logger_a7}{
+void \hyperlink{classmprace_1_1Logger_a7}{read} (const unsigned int address, const unsigned int value)}
+\label{classmprace_1_1Logger_a7}
+
+\begin{CompactList}\small\item\em Log a read operation. \item\end{CompactList}\item 
+\hypertarget{classmprace_1_1Logger_a8}{
+void \hyperlink{classmprace_1_1Logger_a8}{write\-Block} (const unsigned int address, const unsigned int $\ast$start\-Ptr, const unsigned int count)}
+\label{classmprace_1_1Logger_a8}
+
+\begin{CompactList}\small\item\em Log a write\-Block operation. \item\end{CompactList}\item 
+\hypertarget{classmprace_1_1Logger_a9}{
+void \hyperlink{classmprace_1_1Logger_a9}{read\-Block} (const unsigned int address, const unsigned int $\ast$start\-Ptr, const unsigned int count)}
+\label{classmprace_1_1Logger_a9}
+
+\begin{CompactList}\small\item\em Log a read\-Block operation. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Member Functions}
+\begin{CompactItemize}
+\item 
+void \hyperlink{classmprace_1_1Logger_b0}{open\-Log} ()
+\begin{CompactList}\small\item\em Open a log file for writing. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1Logger_b1}{open\-Debug\-Log} ()
+\begin{CompactList}\small\item\em Open a debug log file for writing. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Attributes}
+\begin{CompactItemize}
+\item 
+std::ostream $\ast$ \hyperlink{classmprace_1_1Logger_p0}{log}
+\begin{CompactList}\small\item\em Output stream to write log entries to. \item\end{CompactList}\item 
+std::ostream $\ast$ \hyperlink{classmprace_1_1Logger_p1}{debug\-Log}
+\begin{CompactList}\small\item\em Output stream to write debug information to. \item\end{CompactList}\item 
+int \hyperlink{classmprace_1_1Logger_p2}{verbose}
+\begin{CompactList}\small\item\em Level of verbosity used by the logger. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Implements Logging functions for the boards. 
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.1 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2007-02-12 18:09:16 \end{Desc}
+\end{Desc}
+
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classmprace_1_1Logger_a0}{
+\index{mprace::Logger@{mprace::Logger}!Logger@{Logger}}
+\index{Logger@{Logger}!mprace::Logger@{mprace::Logger}}
+\subsubsection[Logger]{\setlength{\rightskip}{0pt plus 5cm}Logger::Logger ()}}
+\label{classmprace_1_1Logger_a0}
+
+
+Create a \hyperlink{classmprace_1_1Logger}{Logger} object. 
+
+\hypertarget{classmprace_1_1Logger_a1}{
+\index{mprace::Logger@{mprace::Logger}!~Logger@{$\sim$Logger}}
+\index{~Logger@{$\sim$Logger}!mprace::Logger@{mprace::Logger}}
+\subsubsection[$\sim$Logger]{\setlength{\rightskip}{0pt plus 5cm}Logger::$\sim$\hyperlink{classmprace_1_1Logger}{Logger} ()}}
+\label{classmprace_1_1Logger_a1}
+
+
+Close underlying output streams and destroy the object. 
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classmprace_1_1Logger_a2}{
+\index{mprace::Logger@{mprace::Logger}!getVerboseLevel@{getVerboseLevel}}
+\index{getVerboseLevel@{getVerboseLevel}!mprace::Logger@{mprace::Logger}}
+\subsubsection[getVerboseLevel]{\setlength{\rightskip}{0pt plus 5cm}int mprace::Logger::get\-Verbose\-Level ()\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1Logger_a2}
+
+
+Get the current verbosity level of the logger. 
+
+Options include: 0 - Silent 1 - Log commands 2 - Log commands and their debug info\hypertarget{classmprace_1_1Logger_b1}{
+\index{mprace::Logger@{mprace::Logger}!openDebugLog@{openDebugLog}}
+\index{openDebugLog@{openDebugLog}!mprace::Logger@{mprace::Logger}}
+\subsubsection[openDebugLog]{\setlength{\rightskip}{0pt plus 5cm}void Logger::open\-Debug\-Log ()\hspace{0.3cm}{\tt  \mbox{[}protected\mbox{]}}}}
+\label{classmprace_1_1Logger_b1}
+
+
+Open a debug log file for writing. 
+
+\hypertarget{classmprace_1_1Logger_b0}{
+\index{mprace::Logger@{mprace::Logger}!openLog@{openLog}}
+\index{openLog@{openLog}!mprace::Logger@{mprace::Logger}}
+\subsubsection[openLog]{\setlength{\rightskip}{0pt plus 5cm}void Logger::open\-Log ()\hspace{0.3cm}{\tt  \mbox{[}protected\mbox{]}}}}
+\label{classmprace_1_1Logger_b0}
+
+
+Open a log file for writing. 
+
+\hypertarget{classmprace_1_1Logger_a3}{
+\index{mprace::Logger@{mprace::Logger}!setVerboseLevel@{setVerboseLevel}}
+\index{setVerboseLevel@{setVerboseLevel}!mprace::Logger@{mprace::Logger}}
+\subsubsection[setVerboseLevel]{\setlength{\rightskip}{0pt plus 5cm}void mprace::Logger::set\-Verbose\-Level (const int {\em level})\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1Logger_a3}
+
+
+Set the verbosity level of the logger. 
+
+Options include: 0 - Silent 1 - Log commands 2 - Log commands and their debug info
+
+\subsection{Member Data Documentation}
+\hypertarget{classmprace_1_1Logger_p1}{
+\index{mprace::Logger@{mprace::Logger}!debugLog@{debugLog}}
+\index{debugLog@{debugLog}!mprace::Logger@{mprace::Logger}}
+\subsubsection[debugLog]{\setlength{\rightskip}{0pt plus 5cm}std::ostream$\ast$ \hyperlink{classmprace_1_1Logger_p1}{mprace::Logger::debug\-Log}\hspace{0.3cm}{\tt  \mbox{[}protected\mbox{]}}}}
+\label{classmprace_1_1Logger_p1}
+
+
+Output stream to write debug information to. 
+
+\hypertarget{classmprace_1_1Logger_p0}{
+\index{mprace::Logger@{mprace::Logger}!log@{log}}
+\index{log@{log}!mprace::Logger@{mprace::Logger}}
+\subsubsection[log]{\setlength{\rightskip}{0pt plus 5cm}std::ostream$\ast$ \hyperlink{classmprace_1_1Logger_p0}{mprace::Logger::log}\hspace{0.3cm}{\tt  \mbox{[}protected\mbox{]}}}}
+\label{classmprace_1_1Logger_p0}
+
+
+Output stream to write log entries to. 
+
+\hypertarget{classmprace_1_1Logger_p2}{
+\index{mprace::Logger@{mprace::Logger}!verbose@{verbose}}
+\index{verbose@{verbose}!mprace::Logger@{mprace::Logger}}
+\subsubsection[verbose]{\setlength{\rightskip}{0pt plus 5cm}int \hyperlink{classmprace_1_1Logger_p2}{mprace::Logger::verbose}\hspace{0.3cm}{\tt  \mbox{[}protected\mbox{]}}}}
+\label{classmprace_1_1Logger_p2}
+
+
+Level of verbosity used by the logger. 
+
+
+
+The documentation for this class was generated from the following files:\begin{CompactItemize}
+\item 
+include/mprace/Logger.h\item 
+src/lib/Logger.cpp\end{CompactItemize}

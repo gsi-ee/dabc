@@ -1,0 +1,326 @@
+\hypertarget{classmprace_1_1MPRACE2}{
+\section{mprace::MPRACE2 Class Reference}
+\label{classmprace_1_1MPRACE2}\index{mprace::MPRACE2@{mprace::MPRACE2}}
+}
+Implements the library interface for the MPRACE-2.  
+
+
+{\tt \#include $<$MPRACE2.h$>$}
+
+Inheritance diagram for mprace::MPRACE2:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=74pt]{classmprace_1_1MPRACE2__inherit__graph}
+\end{center}
+\end{figure}
+Collaboration diagram for mprace::MPRACE2:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=127pt]{classmprace_1_1MPRACE2__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1MPRACE2_a0}{MPRACE2} (const unsigned int number)
+\begin{CompactList}\small\item\em Creates an \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} board object. \item\end{CompactList}\item 
+virtual \hyperlink{classmprace_1_1MPRACE2_a1}{$\sim$MPRACE2} ()
+\begin{CompactList}\small\item\em Releases a board. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1MPRACE2_a2}{write} (unsigned int address, unsigned int value)
+\begin{CompactList}\small\item\em Write a value to the board address space. \item\end{CompactList}\item 
+unsigned int \hyperlink{classmprace_1_1MPRACE2_a3}{read} (unsigned int address)
+\begin{CompactList}\small\item\em Read a value from the board address space. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1MPRACE2_a4}{write\-Block} (const unsigned int address, const unsigned int $\ast$data, const unsigned int count, const bool inc=true)
+\begin{CompactList}\small\item\em Write multiple values to the board address space. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1MPRACE2_a5}{read\-Block} (const unsigned int address, unsigned int $\ast$data, const unsigned int count, const bool inc=true)
+\begin{CompactList}\small\item\em Read multiple values from the board address space. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1MPRACE2_a6}{write\-DMA} (const unsigned int address, const \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf, const unsigned int count, const unsigned int offset, const bool inc=true, const bool lock=true)
+\begin{CompactList}\small\item\em Write multiple values from a DMA Buffer to the board address space. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1MPRACE2_a7}{read\-DMA} (const unsigned int address, \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf, const unsigned int count, const unsigned int offset, const bool inc=true, const bool lock=true)
+\begin{CompactList}\small\item\em Read multiple values from the board address space to a DMA Buffer. \item\end{CompactList}\item 
+virtual \hyperlink{classmprace_1_1DMAEngine}{DMAEngine} \& \hyperlink{classmprace_1_1MPRACE2_a8}{get\-DMAEngine} ()
+\begin{CompactList}\small\item\em Get the DMA Engine for this board. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{CompactItemize}
+\item 
+bool \hyperlink{classmprace_1_1MPRACE2_e0}{probe} (\hyperlink{classmprace_1_1Driver}{Driver} \&dev)
+\begin{CompactList}\small\item\em Probes a \hyperlink{classmprace_1_1Driver}{Driver} if it handles an \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} \hyperlink{classmprace_1_1Board}{Board}. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1MPRACE2_b0}{MPRACE2} (const \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} \&)
+\begin{CompactList}\small\item\em Overrides default copy constructor, does nothing. \item\end{CompactList}\item 
+\hyperlink{classmprace_1_1MPRACE2}{MPRACE2} \& \hyperlink{classmprace_1_1MPRACE2_b1}{operator=} (const \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} \&)
+\begin{CompactList}\small\item\em Overrides default assignment operation, does nothing. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Attributes}
+\begin{CompactItemize}
+\item 
+\hypertarget{classmprace_1_1MPRACE2_p0}{
+unsigned int $\ast$ {\bf bridge}}
+\label{classmprace_1_1MPRACE2_p0}
+
+\item 
+\hypertarget{classmprace_1_1MPRACE2_p1}{
+unsigned int {\bf bridge\_\-size}}
+\label{classmprace_1_1MPRACE2_p1}
+
+\item 
+\hypertarget{classmprace_1_1MPRACE2_p2}{
+unsigned int $\ast$ \hyperlink{classmprace_1_1MPRACE2_p2}{main}}
+\label{classmprace_1_1MPRACE2_p2}
+
+\begin{CompactList}\small\item\em Size of the \hyperlink{classmprace_1_1Bridge}{Bridge} area, in 32-bit words. \item\end{CompactList}\item 
+\hypertarget{classmprace_1_1MPRACE2_p3}{
+unsigned int {\bf main\_\-size}}
+\label{classmprace_1_1MPRACE2_p3}
+
+\item 
+\hypertarget{classmprace_1_1MPRACE2_p4}{
+\hyperlink{classmprace_1_1DMAEngineWG}{DMAEngine\-WG} $\ast$ \hyperlink{classmprace_1_1MPRACE2_p4}{dma}}
+\label{classmprace_1_1MPRACE2_p4}
+
+\begin{CompactList}\small\item\em Size of the Main area, in 32-bit words. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Static Protected Attributes}
+\begin{CompactItemize}
+\item 
+\hypertarget{classmprace_1_1MPRACE2_t0}{
+const unsigned int {\bf DMA0\_\-BASE} = 0x0}
+\label{classmprace_1_1MPRACE2_t0}
+
+\item 
+\hypertarget{classmprace_1_1MPRACE2_t1}{
+const unsigned int {\bf DMA1\_\-BASE} = 0x0}
+\label{classmprace_1_1MPRACE2_t1}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Implements the library interface for the MPRACE-2. 
+
+The address space provides access to the Main FPGA only. All other memory areas must be accessed thru the specific device interface associated with it.
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.2 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2007-03-02 14:58:25 \end{Desc}
+\end{Desc}
+
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classmprace_1_1MPRACE2_a0}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!MPRACE2@{MPRACE2}}
+\index{MPRACE2@{MPRACE2}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[MPRACE2]{\setlength{\rightskip}{0pt plus 5cm}MPRACE2::MPRACE2 (const unsigned int {\em number})}}
+\label{classmprace_1_1MPRACE2_a0}
+
+
+Creates an \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} board object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em number}]The number of the board to initialize \end{description}
+\end{Desc}
+\begin{Desc}
+\item[\hyperlink{todo__todo000003}{Todo}]How are boards enumerated? \end{Desc}
+\hypertarget{classmprace_1_1MPRACE2_a1}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!~MPRACE2@{$\sim$MPRACE2}}
+\index{~MPRACE2@{$\sim$MPRACE2}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[$\sim$MPRACE2]{\setlength{\rightskip}{0pt plus 5cm}MPRACE2::$\sim$\hyperlink{classmprace_1_1MPRACE2}{MPRACE2} ()\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_a1}
+
+
+Releases a board. 
+
+\hypertarget{classmprace_1_1MPRACE2_b0}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!MPRACE2@{MPRACE2}}
+\index{MPRACE2@{MPRACE2}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[MPRACE2]{\setlength{\rightskip}{0pt plus 5cm}mprace::MPRACE2::MPRACE2 (const \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_b0}
+
+
+Overrides default copy constructor, does nothing. 
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classmprace_1_1MPRACE2_a8}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!getDMAEngine@{getDMAEngine}}
+\index{getDMAEngine@{getDMAEngine}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[getDMAEngine]{\setlength{\rightskip}{0pt plus 5cm}virtual \hyperlink{classmprace_1_1DMAEngine}{DMAEngine}\& mprace::MPRACE2::get\-DMAEngine ()\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_a8}
+
+
+Get the DMA Engine for this board. 
+
+
+
+Reimplemented from \hyperlink{classmprace_1_1Board_a12}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE2_b1}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!operator=@{operator=}}
+\index{operator=@{operator=}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[operator=]{\setlength{\rightskip}{0pt plus 5cm}\hyperlink{classmprace_1_1MPRACE2}{MPRACE2}\& mprace::MPRACE2::operator= (const \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_b1}
+
+
+Overrides default assignment operation, does nothing. 
+
+\hypertarget{classmprace_1_1MPRACE2_e0}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!probe@{probe}}
+\index{probe@{probe}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[probe]{\setlength{\rightskip}{0pt plus 5cm}bool MPRACE2::probe (\hyperlink{classmprace_1_1Driver}{Driver} \& {\em dev})\hspace{0.3cm}{\tt  \mbox{[}static\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_e0}
+
+
+Probes a \hyperlink{classmprace_1_1Driver}{Driver} if it handles an \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} \hyperlink{classmprace_1_1Board}{Board}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em device}]The device to probe. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]true if is an \hyperlink{classmprace_1_1MPRACE2}{MPRACE2} board, false otherwise.\end{Desc}
+
+
+Reimplemented from \hyperlink{classmprace_1_1Board_e0}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE2_a3}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!read@{read}}
+\index{read@{read}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[read]{\setlength{\rightskip}{0pt plus 5cm}unsigned int MPRACE2::read (unsigned int {\em address})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_a3}
+
+
+Read a value from the board address space. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em address}]Address in the board. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]The value read from the board. \end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1Board_a4}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE2_a5}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!readBlock@{readBlock}}
+\index{readBlock@{readBlock}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[readBlock]{\setlength{\rightskip}{0pt plus 5cm}void MPRACE2::read\-Block (const unsigned int {\em address}, unsigned int $\ast$ {\em data}, const unsigned int {\em count}, const bool {\em inc} = {\tt true})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_a5}
+
+
+Read multiple values from the board address space. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em address}]Address in the board. \item[{\em data}]An array where to read values into. \item[{\em count}]Number of values to read from the board's address space, in dwords. \item[{\em inc}]Increment the address on the FPGA side (default: true). \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Reimplemented from \hyperlink{classmprace_1_1Board_a6}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE2_a7}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!readDMA@{readDMA}}
+\index{readDMA@{readDMA}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[readDMA]{\setlength{\rightskip}{0pt plus 5cm}void MPRACE2::read\-DMA (const unsigned int {\em address}, \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf}, const unsigned int {\em count}, const unsigned int {\em offset}, const bool {\em inc} = {\tt true}, const bool {\em lock} = {\tt true})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_a7}
+
+
+Read multiple values from the board address space to a DMA Buffer. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em address}]Address in the board. \item[{\em data}]An array where to read values into. \item[{\em count}]Number of values to read from the board's address space, in dwords. \item[{\em offset}]Offset in the DMA buffer, in dwords (default = 0). \item[{\em inc}]Increment the address on the FPGA side (default: true). \item[{\em lock}]Lock until the write finishes (default: true) \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Reimplemented from \hyperlink{classmprace_1_1Board_a8}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE2_a2}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!write@{write}}
+\index{write@{write}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[write]{\setlength{\rightskip}{0pt plus 5cm}void MPRACE2::write (unsigned int {\em address}, unsigned int {\em value})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_a2}
+
+
+Write a value to the board address space. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em address}]Address in the board. \item[{\em value}]Value to write. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1Board_a3}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE2_a4}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!writeBlock@{writeBlock}}
+\index{writeBlock@{writeBlock}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[writeBlock]{\setlength{\rightskip}{0pt plus 5cm}void MPRACE2::write\-Block (const unsigned int {\em address}, const unsigned int $\ast$ {\em data}, const unsigned int {\em count}, const bool {\em inc} = {\tt true})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_a4}
+
+
+Write multiple values to the board address space. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em address}]Address in the board. \item[{\em data}]Values to write. \item[{\em count}]Number of values to write, in dwords. \item[{\em inc}]Increment the address on the FPGA side (default: true). \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Reimplemented from \hyperlink{classmprace_1_1Board_a5}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE2_a6}{
+\index{mprace::MPRACE2@{mprace::MPRACE2}!writeDMA@{writeDMA}}
+\index{writeDMA@{writeDMA}!mprace::MPRACE2@{mprace::MPRACE2}}
+\subsubsection[writeDMA]{\setlength{\rightskip}{0pt plus 5cm}void MPRACE2::write\-DMA (const unsigned int {\em address}, const \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf}, const unsigned int {\em count}, const unsigned int {\em offset}, const bool {\em inc} = {\tt true}, const bool {\em lock} = {\tt true})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE2_a6}
+
+
+Write multiple values from a DMA Buffer to the board address space. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em address}]Address in the board. \item[{\em data}]Values to write. \item[{\em count}]Number of values to write, in dwords. \item[{\em offset}]Offset in the DMA buffer, in dwords (default = 0). \item[{\em inc}]Increment the address on the FPGA side (default: true). \item[{\em lock}]Lock until the write finishes (default: true) \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Reimplemented from \hyperlink{classmprace_1_1Board_a7}{mprace::Board}.
+
+The documentation for this class was generated from the following files:\begin{CompactItemize}
+\item 
+include/mprace/MPRACE2.h\item 
+src/lib/MPRACE2.cpp\end{CompactItemize}

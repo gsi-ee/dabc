@@ -1,0 +1,6 @@
+base referer
+rect $classmprace_1_1Board.html 5,78 115,102
+rect $classmprace_1_1ABB.html 191,6 292,30
+rect $classmprace_1_1MPRACE1.html 172,54 311,78
+rect $classmprace_1_1MPRACE2.html 172,102 311,126
+rect $classmprace_1_1PROGRAPE4.html 163,150 320,174

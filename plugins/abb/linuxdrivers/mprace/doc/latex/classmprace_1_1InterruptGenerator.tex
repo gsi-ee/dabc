@@ -1,0 +1,108 @@
+\hypertarget{classmprace_1_1InterruptGenerator}{
+\section{mprace::Interrupt\-Generator Class Reference}
+\label{classmprace_1_1InterruptGenerator}\index{mprace::InterruptGenerator@{mprace::InterruptGenerator}}
+}
+Class controller the functionality of the Interrupt Generator Test module.  
+
+
+{\tt \#include $<$Interrupt\-Generator.h$>$}
+
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a0}{
+{\bf Interrupt\-Generator} (unsigned int $\ast$base, unsigned int $\ast$inte, unsigned int $\ast$ints)}
+\label{classmprace_1_1InterruptGenerator_a0}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a2}{
+unsigned int {\bf get\-Assert\-Count} ()}
+\label{classmprace_1_1InterruptGenerator_a2}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a3}{
+unsigned int {\bf get\-Deassert\-Count} ()}
+\label{classmprace_1_1InterruptGenerator_a3}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a4}{
+void {\bf reset} ()}
+\label{classmprace_1_1InterruptGenerator_a4}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a5}{
+void {\bf set\-Latency} (unsigned int nanoseconds)}
+\label{classmprace_1_1InterruptGenerator_a5}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a6}{
+unsigned int {\bf get\-Latency} ()}
+\label{classmprace_1_1InterruptGenerator_a6}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a7}{
+void {\bf enable} ()}
+\label{classmprace_1_1InterruptGenerator_a7}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a8}{
+void {\bf pause} ()}
+\label{classmprace_1_1InterruptGenerator_a8}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a9}{
+void {\bf play} ()}
+\label{classmprace_1_1InterruptGenerator_a9}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a10}{
+void {\bf disable} ()}
+\label{classmprace_1_1InterruptGenerator_a10}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_a11}{
+void {\bf ack} ()}
+\label{classmprace_1_1InterruptGenerator_a11}
+
+\end{CompactItemize}
+\subsection*{Static Protected Attributes}
+\begin{CompactItemize}
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_t0}{
+const unsigned int {\bf CTRL\_\-RESET} = 0x0A}
+\label{classmprace_1_1InterruptGenerator_t0}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_t1}{
+const unsigned int {\bf CTRL\_\-ACK} = 0x00F0}
+\label{classmprace_1_1InterruptGenerator_t1}
+
+\item 
+\hypertarget{classmprace_1_1InterruptGenerator_t2}{
+const unsigned int {\bf INTE\_\-IG} = 0x00000004}
+\label{classmprace_1_1InterruptGenerator_t2}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Class controller the functionality of the Interrupt Generator Test module. 
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.2 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2007-11-04 20:58:57 \end{Desc}
+\end{Desc}
+
+
+
+
+The documentation for this class was generated from the following files:\begin{CompactItemize}
+\item 
+include/mprace/Interrupt\-Generator.h\item 
+src/lib/Interrupt\-Generator.cpp\end{CompactItemize}

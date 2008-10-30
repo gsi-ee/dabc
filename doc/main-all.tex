@@ -1,0 +1,70 @@
+% Future DAQ demonstrator
+\documentclass{democlass}
+\pdfinfo{
+   /Author (Hans G. Essel)
+   /Title  (Future DAQ Demonstrator)
+   /Subject (Data Acquisition)
+   /Keywords (FutureDAQ, CBM, FOPI)
+}
+
+\include{environment/demo-defs}
+\def\docver{v0.9}
+
+\begin{document}
+\pagenumbering{roman}
+%-----------------------------------------------------------------------------------
+\include{environment/demo-frontpage} \cleardoublepage
+%-----------------------------------------------------------------------------------
+\thispagestyle{empty} \tableofcontents \thispagestyle{empty} \cleardoublepage
+\pagenumbering{arabic}
+
+\include{environment/demo-preface} \cleardoublepage
+\include{environment/demo-people} \cleardoublepage
+\include{demo-requirements} \cleardoublepage
+
+%------------------------------------------------------------------------------------
+\setcounter{chapter}{0}
+\chapter{Documents}
+Document names: DAS-t-c-d, where t=R(equirement) or D(esign), c=component key, d=year.\\
+\input{introduction/in-docrev}
+\input{dtor/dtor-docrev}
+\input{simulation/simu-docrev}
+\input{test/test-docrev}
+\input{software/sw-docrev}
+\input{hardware/hw-docrev}
+\input{controls/ctrl-docrev}
+\cleardoublepage
+% The parts structure may be useful later
+%------------------------------------------------------------------------------------
+%\part{Introduction and Overview}
+%\setcounter{chapter}{0}
+\chapter{Introduction}
+\input{introduction/steer-intro} \cleardoublepage
+%-----------------------------------------------------------------------------------
+%\part{I}
+\chapter{Demonstrator}
+\input{dtor/steer-dtor} \cleardoublepage
+%-----------------------------------------------------------------------------------
+\chapter{Hardware}
+\input{hardware/steer-hardware} \cleardoublepage
+%-----------------------------------------------------------------------------------
+\chapter{Software}
+\input{software/steer-software} \cleardoublepage
+%-----------------------------------------------------------------------------------
+\chapter{Controls}
+\input{controls/steer-controls} \cleardoublepage
+%----------------------------------------------------------------------------------
+\chapter{Work packages}
+\input{environment/demo-work} \cleardoublepage
+%-----------------------------------------------------------------------------------
+%\part{II}
+\chapter{Simulations}
+\input{simulation/steer-simu} \cleardoublepage
+%-----------------------------------------------------------------------------------
+\chapter{Testings}
+\input{test/steer-test} \cleardoublepage
+
+\thispagestyle{empty}
+\input{demo-glossary} \cleardoublepage
+\input{environment/demo-post}
+\end{document}

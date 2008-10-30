@@ -1,0 +1,543 @@
+package xgui;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.*;
+import java.util.*;
+import javax.swing.*;
+import javax.swing.JPopupMenu;
+import javax.swing.JMenuItem;
+import java.awt.geom.AffineTransform;
+//***************************************************
+public class xDispHisto extends JPanel 
+                        implements xiPanelGraphics, MouseMotionListener, MouseListener, ActionListener, ComponentListener
+//***************************************************
+{
+public static final boolean LOG=true;
+public static final boolean LIN=false;
+private int ix;
+private int iy;
+private int iHead;
+private int iFullHead;
+private int iMin;
+private int iMax;
+private int iSum;
+private int iMinl;
+private int iMaxl;
+private int iSuml;
+private int iMaxc;
+private int iMinc;
+private int iXax;
+private int iCur;
+private int iposx;
+private int iposy;
+private int iInit;
+private int iLastx;
+private int iLasty;
+private int iys;
+private int iy0;
+private int ixs;
+private int ix0;
+private int iID=0;
+private boolean drag=true;
+private boolean isLog=false;
+private boolean bar=false;
+private String sHead;
+private String sFullHead;
+private String sCont;
+private String sXaxis;
+private String sMin;
+private String sMax;
+private String sCur;
+private String sMaxc;
+private String sMinc;
+private String sSum;
+private String sCoord;
+private double fMin;
+private double fMax;
+private double fCur;
+private double fVal;
+private double fLast;
+private double fScale;
+private Color cCol;
+private Color cColNorm;
+private Color cColAlert;
+private FontMetrics fm;
+private Font tfont;
+private BufferedImage iHisto;
+private JMenuItem menit;
+private Graphics2D gg;
+private RenderingHints renderHint;
+private xDispHisto extHisto=null;
+boolean boextHisto=false;
+private xInternalFrame extFrame=null;
+private int   iChan=0;
+private float dData[];
+private int iData[];
+private int iPixelX[];
+private int iPixelY[];
+private double dDataY[];
+private Color cColPanel = new Color(0.2f,0.2f,0.3f);
+private Color cColBack  = new Color(0.0f,0.0f,0.0f);
+private Color cColValue = new Color(1.0f,0.5f,0.5f);
+private Color cColBord  = new Color(0.7f,1.0f,0.7f);
+private Color cColText  = new Color(0.5f,1.0f,1.0f);
+private Color cColTextV = new Color(0.5f,1.0f,0.5f);
+//**************************************************************
+public xDispHisto(String name, String head, String cont, String xaxis, int x, int y)
+//**************************************************************
+{
+    addMouseMotionListener(this);
+    addMouseListener(this);
+    addComponentListener(this);
+    int l;
+    ix=x;//400
+    iy=y;//205
+    iys = iy-40;
+    iy0 = iy-20;
+    ixs = ix-30;
+    ix0 = 20;
+    iInit=0;
+    iLastx=-1;
+    iLasty=-1;
+    cColAlert = Color.red;
+    sFullHead=name;
+    setLettering(head, cont, xaxis);
+    tfont = new Font("Dialog",Font.PLAIN,10);
+    setFont(tfont);
+    sMin = new String("Min=0");
+    sMax = new String("Max");
+    sMinc = new String("0");
+    sMaxc = new String("0");
+    sSum = new String("Int");
+    renderHint=new RenderingHints(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+    renderHint.put(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
+    if(xSet.getDesktop()!=null){
+    JInternalFrame[] fr=xSet.getDesktop().getAllFrames();
+    for(int i=0;i<fr.length;i++){
+        if(fr[i].getTitle().equals(head)){
+        extFrame=(xInternalFrame)fr[i];
+        extHisto=(xDispHisto)(extFrame.getPanel());
+        boextHisto=true;
+        System.out.println("connect histogram "+head);
+        break;
+    }}}
+}
+public void setLettering(String head, String cont, String xaxis){
+    sHead=head;
+    sCont = cont;
+    sXaxis = xaxis;
+    iLastx=-1;
+}
+
+public void setSizeXY(){
+    setPreferredSize(new Dimension(ix,iy));}
+    
+public void hasParent(){
+boextHisto=true; // true: cannot create child
+}
+public void setSizeXY(Dimension dd){
+    ix=(int)dd.getWidth();
+    iy=(int)dd.getHeight();
+    iys = iy-40;
+    iy0 = iy-20;
+    ixs = ix-30;
+    ix0 = 20;
+    iInit=0;
+    iLastx=-1;
+    iLasty=-1;
+    setPreferredSize(dd);
+}
+public void setID(int i){iID=i;}
+public void setBar(boolean drawbar){bar=drawbar;}
+
+public void setColorBack(Color color){cColBack=color;}
+public void setColor(String colorname){
+    if(colorname.equals("Red"))    cCol=new Color(1.0f,0.0f,0.0f);
+    if(colorname.equals("White"))  cCol=new Color(1.0f,1.0f,1.0f);
+    if(colorname.equals("Blue"))   cCol=new Color(0.3f,0.5f,1.0f);
+    if(colorname.equals("Green"))  cCol=new Color(0.0f,1.0f,0.0f);
+    if(colorname.equals("Yellow")) cCol=new Color(1.0f,1.0f,0.0f);
+    if(colorname.equals("Cyan"))   cCol=new Color(0.5f,1.0f,1.0f);
+    if(colorname.equals("Magenta"))cCol=new Color(1.0f,0.5f,1.0f);
+}
+public void setColor(Color c){
+    cCol=c;
+    cColNorm = c;
+}
+public void setLog(boolean log){isLog=log;}
+
+public void newFrame(){
+if(!boextHisto){
+    xLayout la = new xLayout(sHead);
+    la.set(new Point(iID*30,100+iID*30), null, 0, true); // position
+    extFrame = new xInternalFrame(sHead,la);
+    extHisto=new xDispHisto(sFullHead, sHead, sCont, sXaxis, 400, 200); 
+    extHisto.setSizeXY(new Dimension(500,250));
+    extHisto.setBar(bar);
+    extHisto.setColor(cCol);
+    extHisto.setLog(isLog);
+    extHisto.hasParent();
+    boextHisto=true;
+    extFrame.setupFrame(null, null, extHisto, true);  // true for resizable
+    xSet.getDesktop().add(extFrame);
+    xSet.getDesktop().setSelectedFrame(extFrame);
+    extFrame.moveToFront();
+}}
+//***************************************************
+public void paintComponent(Graphics g)  // called by update
+//***************************************************
+{
+    update(g); // update is not called by repaint!
+    Graphics2D g2d = (Graphics2D)g;
+    g2d.drawImage(iHisto,new AffineTransform(1f,0f,0f,1f,0,0),this);
+}
+
+//***************************************************
+public void update(Graphics g)  // called by repaint via AWT
+//***************************************************
+{
+// System.out.print("Update, init="+iInit+" draw="+iLastx);
+// static graphics into memory image
+    if(iInit == 0) {
+        iHisto = new BufferedImage(ix,iy,BufferedImage.TYPE_INT_RGB);
+        gg = iHisto.createGraphics();
+        gg.addRenderingHints(renderHint);
+        fm = gg.getFontMetrics();
+        iInit = 1;
+    }
+// redraw only if necessary
+    if(iLastx == -1) {
+        fm = gg.getFontMetrics();
+        iMinl = fm.stringWidth(sMin);
+        iMaxl = iy - 3 - 4 - fm.stringWidth(sMax);
+        iSuml = ix - 3 - fm.stringWidth(sSum);
+        iFullHead = fm.stringWidth(sFullHead);
+        iHead = (ix - fm.stringWidth(sSum) - fm.stringWidth(sHead)) / 2;
+        iMinc = fm.stringWidth(sMinc);
+        iMaxc = ix - 3 - fm.stringWidth(sMaxc);
+        iXax  = (ix - fm.stringWidth(sXaxis)) / 2;
+        gg.setColor(cColPanel);
+        gg.fillRect(0,0,ix,iy); // 18
+        gg.setColor(cColText);
+        //gg.drawRect(0,0,ix-1,iy);
+        //gg.drawRect(1,1,ix-3,iy-2);
+        gg.setColor(cColBack);
+        gg.drawRect(0,0,ix,iy);
+        gg.fillRect(20,18,ix-30,iy-38);
+        gg.setColor(cColText);
+        gg.drawRect(20,18,ix-30,iy-38);
+        gg.drawString(sSum,iSuml,14);
+        gg.drawString(sMinc,20,iy-4);
+        gg.drawString(sMaxc,iMaxc,iy-4);
+        gg.setColor(cColTextV);
+        if((iFullHead-iSuml+ix+20)>ix) gg.drawString(sHead,20,14);
+        else                     gg.drawString(sFullHead,20,14);
+        gg.drawString(sXaxis,iXax,iy-4);
+        gg.setColor(cCol);
+        if(bar){
+            for(int i=0;i<iChan-1;i++)gg.drawRect(iPixelX[i],iPixelY[i],iPixelX[i+1]-iPixelX[i],iy0-iPixelY[i]);
+        }else if(iChan>0)gg.drawPolyline(iPixelX,iPixelY,iChan);
+// save current transform
+        AffineTransform af = gg.getTransform();
+        gg.rotate(-Math.PI/2.0); // rotate left 90
+        gg.translate(-iy-4,0);
+// whole image is rotated around upper left corner
+// Therefore we must pull down y
+        gg.setColor(cColText);
+        gg.drawString(sMax,iMaxl,14);
+        gg.setColor(cColTextV);
+        gg.drawString(sCont,24,14);
+        // restore transform
+        gg.setTransform(af);
+        // dont draw again
+        gg.setColor(cCol);
+        iLastx=-2;
+    }
+// draw static image
+//paint(g);
+}
+
+//****************************************************
+public void redraw(int channels, int iBuffer[], boolean draw){
+    iChan=channels;
+    iData = iBuffer;
+    if(iPixelY == null){
+        iPixelY = new int[iChan];
+        iPixelX = new int[iChan];
+        dDataY = new double[iChan];
+    } else
+        if(iPixelY.length != iChan){
+        iPixelY = new int[iChan];
+        iPixelX = new int[iChan];
+        dDataY = new double[iChan];
+        }
+    if(draw)redraw();
+    if(extFrame != null){
+        if(extFrame.isClosed()){
+            extFrame=null;
+            extHisto=null;
+            boextHisto=false;
+        }
+    }
+    if(extHisto != null) extHisto.redraw(channels, iBuffer, draw);
+}
+//***************************************************
+//****************************************************
+public void redraw()
+//***************************************************
+// integer
+{
+    int l,iMaxold;
+    double dlog;
+    double dMax;
+    double off0;
+
+    iLastx=-1;
+
+    iMaxold=iMax;
+    iMax=0;
+    iSum=0;
+    if(isLog) {
+        dMax=0.0;
+        dlog = 1.0/Math.log(10.);
+        off0 = dlog*Math.log(0.1);
+        for(l=0;l<iChan;l++) {
+            iSum += iData[l];
+            if(iData[l] > iMax) iMax=iData[l];
+            if(iData[l] <= 0) dDataY[l] = off0;
+            else                dDataY[l] = dlog * Math.log((double)iData[l]);
+            if(dDataY[l] > dMax) dMax=dDataY[l];
+        }
+        iMax=(int)((float)iMax*1.5);
+        dMax=1.2*dMax-off0;
+        for(l=0;l<iChan;l++) {
+            iPixelY[l]= iy0 - (int) ((dDataY[l]-off0) * (double)iys / dMax);
+            iPixelX[l]= ix0 + (int) ((float)l * (float)ixs / (float)iChan);
+        }
+    } else {
+        for(l=0;l<iChan;l++) {
+            iSum += iData[l];
+            if(iData[l] > iMax) iMax=iData[l];
+        }
+        iMax=(int)((float)iMax*1.5);
+        for(l=0;l<iChan;l++) {
+            iPixelY[l]= iy0 - (int) ((float)iData[l] * (float)iys / (float)iMax);
+            iPixelX[l]= ix0 + (int) ((float)l * (float)ixs / (float)iChan);
+        }
+    }
+    sMin = new String("Min=0");
+    sMax = new String(""+iMax);
+    sMinc = new String("0");
+    sMaxc = new String(Integer.toString((iChan-1)));
+    sSum = new String("Int="+iSum);
+    repaint();
+}
+//****************************************************
+public void redraw(String head, String cont, String xaxis,
+        float dBuffer[], int channels, boolean log, Color c)
+//***************************************************
+// float
+{
+    int l;
+    double dlog;
+    double dMax;
+    double off0;
+
+    iChan=channels;
+    sHead=head;
+    sCont = cont;
+    sXaxis = xaxis;
+    cCol = c;
+    cColNorm = c;
+    //  dData = dBuffer;
+    iPixelY = new int[iChan];
+    iPixelX = new int[iChan];
+    iLastx=-1;
+
+    iMax=0;
+    iSum=0;
+    if(isLog) {
+        dMax=0.0;
+        dlog = 1.0/Math.log(10.);
+        off0 = dlog*Math.log(0.1);
+        dDataY = new double[iChan];
+        for(l=0;l<iChan;l++) {
+            iSum += dBuffer[l];
+            if(dBuffer[l] > iMax) iMax=(int)dBuffer[l];
+            if(dBuffer[l] <= 0) dDataY[l] = off0;
+            else                dDataY[l] = dlog * Math.log((double)dBuffer[l]);
+            if(dDataY[l] > dMax) dMax=dDataY[l];
+        }
+        dMax=dMax-off0;
+        for(l=0;l<iChan;l++) {
+            iPixelY[l]= iy0 - (int) ((dDataY[l]-off0) * (double)iys / dMax);
+            iPixelX[l]= ix0 + (int) ((float)l * (float)ixs / (float)iChan);
+        }
+    } else {
+        for(l=0;l<iChan;l++) {
+            iSum += dBuffer[l];
+            if(dBuffer[l] > iMax) iMax=(int)dBuffer[l];
+        }
+        for(l=0;l<iChan;l++) {
+            iPixelY[l]= iy0 - (int) ((float)dBuffer[l] * (float)iys / (float)iMax);
+            iPixelX[l]= ix0 + (int) ((float)l * (float)ixs / (float)iChan);
+        }
+    }
+    sMin = new String("Min=0");
+    sMax = new String("Max="+iMax);
+    sMinc = new String("0");
+    sMaxc = new String(Integer.toString((iChan-1)));
+    sSum = new String("Int="+iSum);
+    repaint();
+}
+// Context menu execution (ActionListener)
+public void actionPerformed(ActionEvent a){
+    String c=a.getActionCommand();
+    setColor(c);
+    if(c.equals("setLin")){setLog(false);redraw();}
+    if(c.equals("setLog")){setLog(true);redraw();}
+    if(c.equals("Barchart")){setBar(true);redraw();}
+    if(c.equals("Histogram")){setBar(false);redraw();}
+    if(c.equals("Large"))newFrame();
+    if(c.equals("Discard"));
+    drag=true; // enable cross cursor drawing
+}
+// context menu definition (MouseListener)
+public void mousePressed(MouseEvent me) {
+    if(me.getButton()==MouseEvent.BUTTON3){
+        drag=false; // prevent cross cursor drawing
+        JPopupMenu men=new JPopupMenu();
+        menit=new JMenuItem(sHead);
+        men.add(menit);
+        menit.addActionListener(this);
+        if(bar)	menit=new JMenuItem("Histogram");
+        else 	menit=new JMenuItem("Barchart");
+        men.add(menit);
+        menit.addActionListener(this);
+        if(isLog)	menit=new JMenuItem("setLin");
+        else	menit=new JMenuItem("setLog");
+        men.add(menit);
+        menit.addActionListener(this);
+        men.addSeparator();
+        menit=new JMenuItem("Large");
+        men.add(menit);
+        menit.addActionListener(this);
+        men.addSeparator();
+        JMenu colmen=new JMenu("Colors");
+        
+        menit=new JMenuItem("White");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Red");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Green");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Blue");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Yellow");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Magenta");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Cyan");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        men.add(colmen);
+        men.addSeparator();
+        menit=new JMenuItem("Discard");
+        men.add(menit);
+        menit.addActionListener(this);
+//men.setLightWeightPopupEnabled(true);
+        men.setVisible(true);
+        men.show(me.getComponent(),me.getX(),me.getY());
+    }
+}
+//****************************************************
+public void mouseClicked(MouseEvent me)
+//***************************************************
+{
+// called after released if short click
+// System.out.println("Click Repaint ");
+// if(iInit != 0){
+    // gg.setXORMode(Color.yellow);
+    // if(iLastx >= 0)
+    // {
+    // gg.drawString(sCoord,iposx,iposy);
+    // gg.drawLine(20,iLasty,ix-10,iLasty); // horizontal
+    // gg.drawLine(iLastx,18,iLastx,iy-20); // vertical
+    // iLastx = -1;
+    // }
+    // gg.setPaintMode();
+    // }
+    // repaint();
+}
+//****************************************************
+public void mouseEntered(MouseEvent me)
+//***************************************************
+{
+}
+//****************************************************
+public void mouseExited(MouseEvent me)
+//***************************************************
+{
+}
+//****************************************************
+public void mouseReleased(MouseEvent me)
+//***************************************************
+{
+// this is called before click
+    drag=true; // enable cross cursor drawing
+    if(me.getButton()==MouseEvent.BUTTON1){
+        iLastx=-1;
+        repaint();
+    }}
+//****************************************************
+public void mouseMoved(MouseEvent me)
+//***************************************************
+{
+}
+//****************************************************
+public void mouseDragged(MouseEvent me)
+//***************************************************
+{
+// no click event, but release
+    if(drag){
+        int x =  me.getX();
+        int y =  me.getY();
+        if((x>20) && (x<(ix-10)) && (y>18) && (y<(iy-20))){
+            gg.setXORMode(Color.yellow);
+            if(iLastx >= 0) {
+                gg.drawString(sCoord,iposx,iposy);
+                gg.drawLine(20,iLasty,ix-10,iLasty); // horizontal
+                gg.drawLine(iLastx,18,iLastx,iy-20); // vertical
+            }
+            iLastx =  x;
+            iLasty =  y;
+            int i = (iLastx-ix0)*iChan/ixs;
+            int j = (-iLasty+iy0)*iMax/iys;
+            if(i < 0) i = 0;  if(i >= iChan) i = iChan-1;
+            sCoord = new String(" "+i+","+j+" ");
+            iposx=iLastx+3;
+            iposy=iLasty-4;
+            if(iLastx > ix/2) iposx=iLastx-3-fm.stringWidth(sCoord);
+            if(iLasty < 40)   iposy=iLasty+26;
+            gg.drawString(sCoord,iposx,iposy);
+            gg.drawLine(20,iLasty,ix-10,iLasty);
+            gg.drawLine(iLastx,18,iLastx,iy-20);
+            gg.setPaintMode();
+            repaint();
+        }
+    }}
+// Component listener
+public void componentHidden(ComponentEvent e) {}
+public void componentMoved(ComponentEvent e) {}
+public void componentShown(ComponentEvent e) {}
+public void componentResized(ComponentEvent e) {
+setSizeXY(getSize());
+}
+}
+

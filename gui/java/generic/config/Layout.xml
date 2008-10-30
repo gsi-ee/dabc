@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Layout>
+<WindowLayout>
+<Main shape="233,0,1043,878" columns="0" show="true"/>
+<Meter shape="618,391,100,75" columns="4" show="true"/>
+<Histogram shape="710,600,200,150" columns="3" show="false"/>
+<State shape="619,600,100,75" columns="1" show="true"/>
+<Info shape="2,390,613,259" columns="1" show="true"/>
+<Logger shape="1,237,1029,150" columns="0" show="true"/>
+<Parameter shape="2,651,613,150" columns="0" show="true"/>
+<Command shape="450,1,582,233" columns="0" show="true"/>
+<DabcLauncher shape="0,0,100,100" columns="0" show="false"/>
+<MbsLauncher shape="1,1,447,234" columns="0" show="true"/>
+</WindowLayout>
+<TableLayout>
+<Parameter width="51,50,76,86,174,93,48" />
+</TableLayout>
+</Layout>

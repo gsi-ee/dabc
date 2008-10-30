@@ -1,0 +1,71 @@
+\Chapter{Preface}
+
+This document describes the requirements, design, and implementation of the
+general purpose data acquisition demonstrator system.
+This system, called {\DDA}, is a result of the discussions about DAQ concepts for CBM,
+Panda, and FutureDAQ started in 2004.
+
+\section{Structure of document}
+The document is structured hierarchically. To make sure that files
+to be included by \verb+\+input\{filename\} or \verb+\+include\{filename\}
+can be located, set the following environment variables:\\
+Linux:\\
+export TEXINPUTS=\verb+<+topdirectory\verb+>+//:\\
+Windows: If one uses fpTeX with WInEdt:\\
+Append ;P:\verb+\+Application\verb+\+TeXLive2005\verb+\+bin\verb+\+win32 to PATH.\\
+Set TEXINPUTS to x:\verb+\+topdirectory\verb+\+//;\\
+(Systemsteuerung->System:Erweitert:Umgebungsvariablen)
+
+The full document is built by command (we are on topdirectory):
+\begin{verbatim}
+pdflatex main-all
+makeindex
+pdflatex main-all
+\end{verbatim}
+On each subdirectory there is a main file main-xxx.tex, i.e.
+\begin{verbatim}
+cd template
+pdflatex main-XXX
+makeindex
+pdflatex main-XXX
+\end{verbatim}
+The files on directory {\tt template} can be used as templates, i.e. copied to a new subdirectory.
+All occurences of XXX in file names and tex files should then be renamed properly.
+The script {\tt rename.sh} can be used to do so:
+\begin{verbatim}
+. ./rename.sh XXX yyy
+\end{verbatim}
+replaces all {\tt XXX} to {\tt yyy} in tex file names and tex files.
+(After that all {\tt *XXX*} files can be deletetd).\\
+The file {\tt XXX-section.tex} contains commonly used tex commands.
+It could be used as cut\&paste source.\\
+Description of the files:
+\subsubsection{Topdirectory}
+\begin{compactdesc}
+\item[main-all.tex] main file to be texed. Includes all steer files from subdirectories.
+\item[bibitem.tex] references
+\item[demo-glossary.tex] glossary
+\item[demo-requirements.tex] brief and informal list of requirements
+\item[democlass.cls] document description
+\end{compactdesc}
+\subsubsection{Subdirectory {\tt environment}}
+\begin{compactdesc}
+\item[demo-docrev.tex] document name and revision information
+\item[demo-defs.tex] central definitions (included by all main files)
+\item[demo-post.tex] reference and index chapters (included by all main files)
+\item[demo-frontpage.tex] first page of top document
+\item[demo-people.tex] list of people
+\item[demo-preface.tex] this text
+\item[demo-work.tex] working packages
+\end{compactdesc}
+\subsubsection{Subdirectory {\tt controls}}
+\begin{compactdesc}
+\item[ctrl-docrev.tex] document name and revision information.
+Is included by {\tt main-all.tex} and {\tt main-controls.tex}
+\item[main-controls.tex] main file to be texed.
+Includes {\tt steer-controls.tex} and {\tt ctrl-docrev.tex}. Adjust document information here.
+\item[steer-controls.tex] includes everything needed from this directory.
+Is included by {\tt main-all.tex}
+\end{compactdesc}
+All other directories below topdirectory have the main, docrev and the steer file.
+\section{Naming conventions}

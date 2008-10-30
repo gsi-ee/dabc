@@ -1,0 +1,216 @@
+<?xml version='1.0'?> <xc:Partition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xc="http://xdaq.web.cern.ch/xdaq/xsd/2004/XMLConfiguration-30">
+<xc:Context url="http://master.cluster.domain:1972">
+		<xc:Application class="dabc::xd::Readout" id="42" instance="1" network="local">
+			<properties xmlns="urn:xdaq-application:dabc::xd::Readout" xsi:type="soapenc:Struct">
+                <debugLevel xsi:type="xsd:integer">1</debugLevel>
+                <nodeId xsi:type="xsd:unsignedInt">1</nodeId>
+                <workerTid xsi:type="xsd:unsignedInt">42</workerTid>      
+				<controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
+                <CfgNodeId.BnetPlugin xsi:type="xsd:integer">1</CfgNodeId.BnetPlugin>
+                <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5</CfgNumNodes.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:integer">0</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:integer">0</IsFilter.BnetPlugin>
+                <NumReadouts.BnetPlugin xsi:type="xsd:integer">4</NumReadouts.BnetPlugin>
+                <Input0Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_0_0*.lmd; </Input0Cfg.BnetPlugin>
+                <Input1Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_0_1*.lmd; </Input1Cfg.BnetPlugin>
+                <Input2Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_0_2*.lmd; </Input2Cfg.BnetPlugin>
+                <Input3Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_0_3*.lmd; </Input3Cfg.BnetPlugin>
+                <Input4Cfg.BnetPlugin xsi:type="xsd:string"> </Input4Cfg.BnetPlugin>
+                <StoragePar.BnetPlugin xsi:type="xsd:string">OutType:MbsNewFile; OutName:/tmp/genmbs_nout_0.lmd; </StoragePar.BnetPlugin>
+                <ReadoutBuffer.BnetPlugin xsi:type="xsd:integer">2032</ReadoutBuffer.BnetPlugin>
+                <ReadoutPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</ReadoutPoolSize.BnetPlugin>
+                <TransportBuffer.BnetPlugin xsi:type="xsd:integer">6128</TransportBuffer.BnetPlugin>
+                <TransportPoolSize.BnetPlugin xsi:type="xsd:integer">16777216</TransportPoolSize.BnetPlugin>
+                <EventBuffer.BnetPlugin xsi:type="xsd:integer">30704</EventBuffer.BnetPlugin>
+                <EventPoolSize.BnetPlugin xsi:type="xsd:integer">4194304</EventPoolSize.BnetPlugin>
+                <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
+                <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
+                <CombinerModus.BnetPlugin xsi:type="xsd:integer">0</CombinerModus.BnetPlugin>      
+<!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
+            </properties> 
+        </xc:Application>
+
+
+
+ 
+        
+		<!-- Shared object library that contains the implementation -->		
+        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libBnetWorker.so</xc:Module>
+        <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
+	<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>         
+</xc:Context>
+
+
+<xc:Context url="http://node01.cluster.domain:1972">
+		<xc:Application class="dabc::xd::Readout" id="42" instance="2" network="local">
+			<properties xmlns="urn:xdaq-application:dabc::xd::Readout" xsi:type="soapenc:Struct">
+                <debugLevel xsi:type="xsd:integer">1</debugLevel>
+                <nodeId xsi:type="xsd:unsignedInt">2</nodeId>
+                <workerTid xsi:type="xsd:unsignedInt">42</workerTid>      
+				<controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
+                <CfgNodeId.BnetPlugin xsi:type="xsd:integer">2</CfgNodeId.BnetPlugin>
+                <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5</CfgNumNodes.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:integer">0</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:integer">0</IsFilter.BnetPlugin>
+                <NumReadouts.BnetPlugin xsi:type="xsd:integer">4</NumReadouts.BnetPlugin>
+                <Input0Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_1_0*.lmd; </Input0Cfg.BnetPlugin>
+                <Input1Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_1_1*.lmd; </Input1Cfg.BnetPlugin>
+                <Input2Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_1_2*.lmd; </Input2Cfg.BnetPlugin>
+                <Input3Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_1_3*.lmd; </Input3Cfg.BnetPlugin>
+                <Input4Cfg.BnetPlugin xsi:type="xsd:string"> </Input4Cfg.BnetPlugin>
+                <StoragePar.BnetPlugin xsi:type="xsd:string">OutType:MbsNewFile; OutName:/tmp/genmbs_nout_1.lmd; </StoragePar.BnetPlugin>
+                <ReadoutBuffer.BnetPlugin xsi:type="xsd:integer">2032</ReadoutBuffer.BnetPlugin>
+                <ReadoutPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</ReadoutPoolSize.BnetPlugin>
+                <TransportBuffer.BnetPlugin xsi:type="xsd:integer">6128</TransportBuffer.BnetPlugin>
+                <TransportPoolSize.BnetPlugin xsi:type="xsd:integer">16777216</TransportPoolSize.BnetPlugin>
+                <EventBuffer.BnetPlugin xsi:type="xsd:integer">30704</EventBuffer.BnetPlugin>
+                <EventPoolSize.BnetPlugin xsi:type="xsd:integer">4194304</EventPoolSize.BnetPlugin>
+                <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
+                <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
+                <CombinerModus.BnetPlugin xsi:type="xsd:integer">0</CombinerModus.BnetPlugin>      
+<!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
+            </properties> 
+        </xc:Application>
+
+
+
+ 
+        
+		<!-- Shared object library that contains the implementation -->		
+        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libBnetWorker.so</xc:Module> 
+        <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
+	<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>        
+</xc:Context>
+
+
+<xc:Context url="http://node02.cluster.domain:1972">
+		<xc:Application class="dabc::xd::Eventbuilder" id="42" instance="3" network="local">
+			<properties xmlns="urn:xdaq-application:dabc::xd::Eventbuilder" xsi:type="soapenc:Struct">
+                <debugLevel xsi:type="xsd:integer">1</debugLevel>
+                <nodeId xsi:type="xsd:unsignedInt">3</nodeId>
+                <workerTid xsi:type="xsd:unsignedInt">42</workerTid>      
+				<controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
+                <CfgNodeId.BnetPlugin xsi:type="xsd:integer">3</CfgNodeId.BnetPlugin>
+                <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5</CfgNumNodes.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:integer">0</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:integer">0</IsFilter.BnetPlugin>
+                <NumReadouts.BnetPlugin xsi:type="xsd:integer">4</NumReadouts.BnetPlugin>
+                <Input0Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_2_0*.lmd; </Input0Cfg.BnetPlugin>
+                <Input1Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_2_1*.lmd; </Input1Cfg.BnetPlugin>
+                <Input2Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_2_2*.lmd; </Input2Cfg.BnetPlugin>
+                <Input3Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_2_3*.lmd; </Input3Cfg.BnetPlugin>
+                <Input4Cfg.BnetPlugin xsi:type="xsd:string"> </Input4Cfg.BnetPlugin>
+                <StoragePar.BnetPlugin xsi:type="xsd:string">OutType:MbsNewFile; OutName:/tmp/genmbs_nout_2.lmd; </StoragePar.BnetPlugin>
+                <TransportBuffer.BnetPlugin xsi:type="xsd:integer">6128</TransportBuffer.BnetPlugin>
+                <TransportPoolSize.BnetPlugin xsi:type="xsd:integer">16777216</TransportPoolSize.BnetPlugin>
+                <EventBuffer.BnetPlugin xsi:type="xsd:integer">30704</EventBuffer.BnetPlugin>
+                <EventPoolSize.BnetPlugin xsi:type="xsd:integer">4194304</EventPoolSize.BnetPlugin>
+                <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
+                <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
+<!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
+            </properties> 
+        </xc:Application>
+
+
+
+ 
+        
+		<!-- Shared object library that contains the implementation -->		
+        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libBnetWorker.so</xc:Module> 
+        <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
+	<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>        
+</xc:Context>
+
+
+<xc:Context url="http://node03.cluster.domain:1972">
+		<xc:Application class="dabc::xd::Eventbuilder" id="42" instance="4" network="local">
+			<properties xmlns="urn:xdaq-application:dabc::xd::Eventbuilder" xsi:type="soapenc:Struct">
+                <debugLevel xsi:type="xsd:integer">1</debugLevel>
+                <nodeId xsi:type="xsd:unsignedInt">4</nodeId>
+                <workerTid xsi:type="xsd:unsignedInt">42</workerTid>      
+				<controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
+                <CfgNodeId.BnetPlugin xsi:type="xsd:integer">4</CfgNodeId.BnetPlugin>
+                <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5</CfgNumNodes.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:integer">0</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:integer">0</IsFilter.BnetPlugin>
+                <NumReadouts.BnetPlugin xsi:type="xsd:integer">4</NumReadouts.BnetPlugin>
+                <Input0Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_3_0*.lmd; </Input0Cfg.BnetPlugin>
+                <Input1Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_3_1*.lmd; </Input1Cfg.BnetPlugin>
+                <Input2Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_3_2*.lmd; </Input2Cfg.BnetPlugin>
+                <Input3Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewFile; InpName:/tmp/genmbs_inp_3_3*.lmd; </Input3Cfg.BnetPlugin>
+                <Input4Cfg.BnetPlugin xsi:type="xsd:string"> </Input4Cfg.BnetPlugin>
+                <StoragePar.BnetPlugin xsi:type="xsd:string">OutType:MbsNewFile; OutName:/tmp/genmbs_nout_3.lmd; </StoragePar.BnetPlugin>
+                <TransportBuffer.BnetPlugin xsi:type="xsd:integer">6128</TransportBuffer.BnetPlugin>
+                <TransportPoolSize.BnetPlugin xsi:type="xsd:integer">16777216</TransportPoolSize.BnetPlugin>
+                <EventBuffer.BnetPlugin xsi:type="xsd:integer">30704</EventBuffer.BnetPlugin>
+                <EventPoolSize.BnetPlugin xsi:type="xsd:integer">4194304</EventPoolSize.BnetPlugin>
+                <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
+                <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
+<!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
+            </properties> 
+        </xc:Application>
+
+
+
+ 
+        
+		<!-- Shared object library that contains the implementation -->		
+        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libBnetWorker.so</xc:Module> 
+        <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
+	<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>        
+</xc:Context>
+
+
+
+
+<xc:Context url="http://master.cluster.domain:1968">
+		<xc:Application class="dabc::xd::Controller" id="41" instance="0" network="local">
+			<properties xmlns="urn:xdaq-application:dabc::xd::Controller" xsi:type="soapenc:Struct">
+            <debugLevel xsi:type="xsd:integer">1</debugLevel>
+            <nodeId xsi:type="xsd:unsignedInt">0</nodeId>
+            <NetDevice.ClusterPlugin xsi:type="xsd:string">VerbsDevice</NetDevice.ClusterPlugin>      
+<!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
+            </properties>
+        </xc:Application>
+
+ 
+	<!-- Shared object library that contains the implementation -->		
+        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABC_LIBS}/libBnetCluster.so</xc:Module>
+        <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
+	<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>        
+
+</xc:Context>
+
+</xc:Partition>

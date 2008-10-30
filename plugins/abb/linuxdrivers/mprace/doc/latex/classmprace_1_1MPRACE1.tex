@@ -1,0 +1,177 @@
+\hypertarget{classmprace_1_1MPRACE1}{
+\section{mprace::MPRACE1 Class Reference}
+\label{classmprace_1_1MPRACE1}\index{mprace::MPRACE1@{mprace::MPRACE1}}
+}
+Implements the library interface for the MPRACE-1.  
+
+
+{\tt \#include $<$MPRACE1.h$>$}
+
+Inheritance diagram for mprace::MPRACE1:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=74pt]{classmprace_1_1MPRACE1__inherit__graph}
+\end{center}
+\end{figure}
+Collaboration diagram for mprace::MPRACE1:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=115pt]{classmprace_1_1MPRACE1__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1MPRACE1_a0}{MPRACE1} (const unsigned int number)
+\begin{CompactList}\small\item\em Creates an \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} board object. \item\end{CompactList}\item 
+virtual \hyperlink{classmprace_1_1MPRACE1_a1}{$\sim$MPRACE1} ()
+\begin{CompactList}\small\item\em Releases a board. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1MPRACE1_a2}{write} (unsigned int address, unsigned int value)
+\begin{CompactList}\small\item\em Write a value to the board address space. \item\end{CompactList}\item 
+virtual unsigned int \hyperlink{classmprace_1_1MPRACE1_a3}{read} (unsigned int address)
+\begin{CompactList}\small\item\em Read a value from the board address space. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Static Public Member Functions}
+\begin{CompactItemize}
+\item 
+bool \hyperlink{classmprace_1_1MPRACE1_e0}{probe} (\hyperlink{classmprace_1_1Driver}{Driver} \&dev)
+\begin{CompactList}\small\item\em Probes a \hyperlink{classmprace_1_1Driver}{Driver} if it handles an \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} \hyperlink{classmprace_1_1Board}{Board}. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1MPRACE1_b0}{MPRACE1} (const \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} \&)
+\begin{CompactList}\small\item\em Overrides default copy constructor, does nothing. \item\end{CompactList}\item 
+\hyperlink{classmprace_1_1MPRACE1}{MPRACE1} \& \hyperlink{classmprace_1_1MPRACE1_b1}{operator=} (const \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} \&)
+\begin{CompactList}\small\item\em Overrides default assignment operation, does nothing. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Implements the library interface for the MPRACE-1. 
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.1 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2007-02-12 18:09:18 \end{Desc}
+\end{Desc}
+
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classmprace_1_1MPRACE1_a0}{
+\index{mprace::MPRACE1@{mprace::MPRACE1}!MPRACE1@{MPRACE1}}
+\index{MPRACE1@{MPRACE1}!mprace::MPRACE1@{mprace::MPRACE1}}
+\subsubsection[MPRACE1]{\setlength{\rightskip}{0pt plus 5cm}mprace::MPRACE1::MPRACE1 (const unsigned int {\em number})}}
+\label{classmprace_1_1MPRACE1_a0}
+
+
+Creates an \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} board object. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em number}]The number of the board to initialize \end{description}
+\end{Desc}
+\begin{Desc}
+\item[\hyperlink{todo__todo000002}{Todo}]How are boards enumerated? \end{Desc}
+\hypertarget{classmprace_1_1MPRACE1_a1}{
+\index{mprace::MPRACE1@{mprace::MPRACE1}!~MPRACE1@{$\sim$MPRACE1}}
+\index{~MPRACE1@{$\sim$MPRACE1}!mprace::MPRACE1@{mprace::MPRACE1}}
+\subsubsection[$\sim$MPRACE1]{\setlength{\rightskip}{0pt plus 5cm}virtual mprace::MPRACE1::$\sim$\hyperlink{classmprace_1_1MPRACE1}{MPRACE1} ()\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE1_a1}
+
+
+Releases a board. 
+
+\hypertarget{classmprace_1_1MPRACE1_b0}{
+\index{mprace::MPRACE1@{mprace::MPRACE1}!MPRACE1@{MPRACE1}}
+\index{MPRACE1@{MPRACE1}!mprace::MPRACE1@{mprace::MPRACE1}}
+\subsubsection[MPRACE1]{\setlength{\rightskip}{0pt plus 5cm}mprace::MPRACE1::MPRACE1 (const \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1MPRACE1_b0}
+
+
+Overrides default copy constructor, does nothing. 
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classmprace_1_1MPRACE1_b1}{
+\index{mprace::MPRACE1@{mprace::MPRACE1}!operator=@{operator=}}
+\index{operator=@{operator=}!mprace::MPRACE1@{mprace::MPRACE1}}
+\subsubsection[operator=]{\setlength{\rightskip}{0pt plus 5cm}\hyperlink{classmprace_1_1MPRACE1}{MPRACE1}\& mprace::MPRACE1::operator= (const \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1MPRACE1_b1}
+
+
+Overrides default assignment operation, does nothing. 
+
+\hypertarget{classmprace_1_1MPRACE1_e0}{
+\index{mprace::MPRACE1@{mprace::MPRACE1}!probe@{probe}}
+\index{probe@{probe}!mprace::MPRACE1@{mprace::MPRACE1}}
+\subsubsection[probe]{\setlength{\rightskip}{0pt plus 5cm}bool mprace::MPRACE1::probe (\hyperlink{classmprace_1_1Driver}{Driver} \& {\em dev})\hspace{0.3cm}{\tt  \mbox{[}static\mbox{]}}}}
+\label{classmprace_1_1MPRACE1_e0}
+
+
+Probes a \hyperlink{classmprace_1_1Driver}{Driver} if it handles an \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} \hyperlink{classmprace_1_1Board}{Board}. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em device}]The device to probe. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]true if is an \hyperlink{classmprace_1_1MPRACE1}{MPRACE1} board, false otherwise.\end{Desc}
+
+
+Reimplemented from \hyperlink{classmprace_1_1Board_e0}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE1_a3}{
+\index{mprace::MPRACE1@{mprace::MPRACE1}!read@{read}}
+\index{read@{read}!mprace::MPRACE1@{mprace::MPRACE1}}
+\subsubsection[read]{\setlength{\rightskip}{0pt plus 5cm}virtual unsigned int mprace::MPRACE1::read (unsigned int {\em address})\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE1_a3}
+
+
+Read a value from the board address space. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em address}]Address in the board. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]The value read from the board. \end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1Board_a4}{mprace::Board}.\hypertarget{classmprace_1_1MPRACE1_a2}{
+\index{mprace::MPRACE1@{mprace::MPRACE1}!write@{write}}
+\index{write@{write}!mprace::MPRACE1@{mprace::MPRACE1}}
+\subsubsection[write]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::MPRACE1::write (unsigned int {\em address}, unsigned int {\em value})\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1MPRACE1_a2}
+
+
+Write a value to the board address space. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em address}]Address in the board. \item[{\em value}]Value to write. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1Board_a3}{mprace::Board}.
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+include/mprace/MPRACE1.h\end{CompactItemize}

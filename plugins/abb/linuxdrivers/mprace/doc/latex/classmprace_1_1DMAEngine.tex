@@ -1,0 +1,212 @@
+\hypertarget{classmprace_1_1DMAEngine}{
+\section{mprace::DMAEngine Class Reference}
+\label{classmprace_1_1DMAEngine}\index{mprace::DMAEngine@{mprace::DMAEngine}}
+}
+Abstract interface for handling DMA operations.  
+
+
+{\tt \#include $<$DMAEngine.h$>$}
+
+Inheritance diagram for mprace::DMAEngine:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=85pt]{classmprace_1_1DMAEngine__inherit__graph}
+\end{center}
+\end{figure}
+Collaboration diagram for mprace::DMAEngine:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=76pt]{classmprace_1_1DMAEngine__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Types}
+\begin{CompactItemize}
+\item 
+enum \hyperlink{classmprace_1_1DMAEngine_w3}{DMAStatus} \{ {\bf IDLE}, 
+{\bf BUSY}, 
+{\bf ERROR}
+ \}
+\begin{CompactList}\small\item\em Possible status of a DMA channel. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+virtual \hyperlink{classmprace_1_1DMAEngine_w3}{DMAStatus} \hyperlink{classmprace_1_1DMAEngine_a1}{get\-Status} (const unsigned int channel)=0
+\begin{CompactList}\small\item\em Get the current status of a DMA channel. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngine_a2}{reset} (const unsigned int channel)=0
+\begin{CompactList}\small\item\em Reset the status of a DMA channel. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngine_a3}{host2board} (const unsigned int addr, const \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf, const unsigned int count, const unsigned int offset=0, const bool inc=true, const bool lock=true)=0
+\begin{CompactList}\small\item\em Performs a DMA transaction from host to board. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngine_a4}{board2host} (const unsigned int addr, \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf, const unsigned int count, const unsigned int offset=0, const bool inc=true, bool lock=true)=0
+\begin{CompactList}\small\item\em Performs a DMA transaction from board to host. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngine_a5}{fill\-Descriptor\-List} (\hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf)=0
+\begin{CompactList}\small\item\em Fills the Descriptor List of the the DMA Buffer for the current engine. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngine_a6}{release\-Descriptor\-List} (\hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf)=0
+\begin{CompactList}\small\item\em Release the Descriptor List of the the DMA Buffer for the current engine. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1DMAEngine_b0}{DMAEngine} (\hyperlink{classmprace_1_1Driver}{Driver} \&driver)
+\begin{CompactList}\small\item\em Creates a \hyperlink{classmprace_1_1DMAEngine}{DMAEngine}. \item\end{CompactList}\item 
+\hyperlink{classmprace_1_1DMAEngine_b1}{DMAEngine} (const \hyperlink{classmprace_1_1DMAEngine}{DMAEngine} \&)
+\begin{CompactList}\small\item\em Overrides default copy constructor, does nothing. \item\end{CompactList}\item 
+\hyperlink{classmprace_1_1DMAEngine}{DMAEngine} \& \hyperlink{classmprace_1_1DMAEngine_b2}{operator=} (const \hyperlink{classmprace_1_1DMAEngine}{DMAEngine} \&)
+\begin{CompactList}\small\item\em Overrides default assignment operation, does nothing. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Attributes}
+\begin{CompactItemize}
+\item 
+\hypertarget{classmprace_1_1DMAEngine_p0}{
+\hyperlink{classmprace_1_1Driver}{Driver} $\ast$ {\bf drv}}
+\label{classmprace_1_1DMAEngine_p0}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Abstract interface for handling DMA operations. 
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.4 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2007-05-29 07:50:48 \end{Desc}
+\end{Desc}
+
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classmprace_1_1DMAEngine_b0}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!DMAEngine@{DMAEngine}}
+\index{DMAEngine@{DMAEngine}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[DMAEngine]{\setlength{\rightskip}{0pt plus 5cm}mprace::DMAEngine::DMAEngine (\hyperlink{classmprace_1_1Driver}{Driver} \& {\em driver})\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_b0}
+
+
+Creates a \hyperlink{classmprace_1_1DMAEngine}{DMAEngine}. 
+
+Protected because only subclasses should be instantiated.\hypertarget{classmprace_1_1DMAEngine_b1}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!DMAEngine@{DMAEngine}}
+\index{DMAEngine@{DMAEngine}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[DMAEngine]{\setlength{\rightskip}{0pt plus 5cm}mprace::DMAEngine::DMAEngine (const \hyperlink{classmprace_1_1DMAEngine}{DMAEngine} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_b1}
+
+
+Overrides default copy constructor, does nothing. 
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classmprace_1_1DMAEngine_a4}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!board2host@{board2host}}
+\index{board2host@{board2host}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[board2host]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::DMAEngine::board2host (const unsigned int {\em addr}, \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf}, const unsigned int {\em count}, const unsigned int {\em offset} = {\tt 0}, const bool {\em inc} = {\tt true}, bool {\em lock} = {\tt true})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_a4}
+
+
+Performs a DMA transaction from board to host. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em addr}]The address in the board. \item[{\em buf}]The DMA buffer in the host. \item[{\em count}]Number of bytes to transfer. \item[{\em offset}]Initial dword to transfer. \item[{\em inc}]If the address in the board is incremented or not. \item[{\em lock}]If the function waits until the transaction is complete or not.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1DMAEngineWG_a5}{mprace::DMAEngine\-WG}.\hypertarget{classmprace_1_1DMAEngine_a5}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!fillDescriptorList@{fillDescriptorList}}
+\index{fillDescriptorList@{fillDescriptorList}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[fillDescriptorList]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::DMAEngine::fill\-Descriptor\-List (\hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_a5}
+
+
+Fills the Descriptor List of the the DMA Buffer for the current engine. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buf}]The DMA Buffer.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1DMAEngineWG_a6}{mprace::DMAEngine\-WG}.\hypertarget{classmprace_1_1DMAEngine_a1}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!getStatus@{getStatus}}
+\index{getStatus@{getStatus}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[getStatus]{\setlength{\rightskip}{0pt plus 5cm}virtual \hyperlink{classmprace_1_1DMAEngine_w3}{DMAStatus} mprace::DMAEngine::get\-Status (const unsigned int {\em channel})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_a1}
+
+
+Get the current status of a DMA channel. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel to query\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1DMAEngineWG_a2}{mprace::DMAEngine\-WG}.\hypertarget{classmprace_1_1DMAEngine_a3}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!host2board@{host2board}}
+\index{host2board@{host2board}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[host2board]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::DMAEngine::host2board (const unsigned int {\em addr}, const \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf}, const unsigned int {\em count}, const unsigned int {\em offset} = {\tt 0}, const bool {\em inc} = {\tt true}, const bool {\em lock} = {\tt true})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_a3}
+
+
+Performs a DMA transaction from host to board. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em addr}]The address in the board. \item[{\em buf}]The DMA buffer in the host. \item[{\em count}]Number of bytes to transfer. \item[{\em offset}]Initial dword to transfer. \item[{\em inc}]If the address in the board is incremented or not. \item[{\em lock}]If the function waits until the transaction is complete or not.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1DMAEngineWG_a4}{mprace::DMAEngine\-WG}.\hypertarget{classmprace_1_1DMAEngine_b2}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!operator=@{operator=}}
+\index{operator=@{operator=}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[operator=]{\setlength{\rightskip}{0pt plus 5cm}\hyperlink{classmprace_1_1DMAEngine}{DMAEngine}\& mprace::DMAEngine::operator= (const \hyperlink{classmprace_1_1DMAEngine}{DMAEngine} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_b2}
+
+
+Overrides default assignment operation, does nothing. 
+
+\hypertarget{classmprace_1_1DMAEngine_a6}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!releaseDescriptorList@{releaseDescriptorList}}
+\index{releaseDescriptorList@{releaseDescriptorList}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[releaseDescriptorList]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::DMAEngine::release\-Descriptor\-List (\hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_a6}
+
+
+Release the Descriptor List of the the DMA Buffer for the current engine. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buf}]The DMA Buffer.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1DMAEngineWG_a7}{mprace::DMAEngine\-WG}.\hypertarget{classmprace_1_1DMAEngine_a2}{
+\index{mprace::DMAEngine@{mprace::DMAEngine}!reset@{reset}}
+\index{reset@{reset}!mprace::DMAEngine@{mprace::DMAEngine}}
+\subsubsection[reset]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::DMAEngine::reset (const unsigned int {\em channel})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngine_a2}
+
+
+Reset the status of a DMA channel. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel to reset\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1DMAEngineWG_a3}{mprace::DMAEngine\-WG}.
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+include/mprace/DMAEngine.h\end{CompactItemize}

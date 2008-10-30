@@ -1,0 +1,21 @@
+
+<xc:Context url="http://CONTROLLERNODE:1969">
+		<xc:Application class="CONTROLLERCLASS" id="41" instance="CONTROLLERINSTANCE" network="local">
+            <properties xmlns="urn:xdaq-application:CONTROLLERCLASS" xsi:type="soapenc:Struct">
+                <debugLevel xsi:type="xsd:integer">1</debugLevel>
+                <nodeId xsi:type="xsd:unsignedInt">CONTROLLERINSTANCE</nodeId>
+                <NetDevice.ClusterPlugin xsi:type="xsd:string">SocketDevice</NetDevice.ClusterPlugin>      
+           </properties>
+        </xc:Application>
+
+ 
+	<!-- Shared object library that contains the implementation -->		
+        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/bnet/bin/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABCSYS}/core/bnet/bin/libBnetCluster.so</xc:Module>  
+        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/${XDAQ_OS}/${XDAQ_PLATFORM}/libDABC_Control.so</xc:Module>
+        
+</xc:Context>
+

@@ -1,0 +1,174 @@
+\hypertarget{classmprace_1_1Register}{
+\section{mprace::Register Class Reference}
+\label{classmprace_1_1Register}\index{mprace::Register@{mprace::Register}}
+}
+Abstract interface to access a virtual register.  
+
+
+{\tt \#include $<$Register.h$>$}
+
+Inheritance diagram for mprace::Register:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=84pt]{classmprace_1_1Register__inherit__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+virtual \hyperlink{classmprace_1_1Register_a0}{$\sim$Register} ()
+\begin{CompactList}\small\item\em Delete a \hyperlink{classmprace_1_1Register}{Register}. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1Register_a1}{set} (const unsigned int value)=0
+\begin{CompactList}\small\item\em Set the register to a certain value. \item\end{CompactList}\item 
+virtual unsigned int \hyperlink{classmprace_1_1Register_a2}{get} ()=0
+\begin{CompactList}\small\item\em Get the register current value. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1Register_a3}{set} ()
+\begin{CompactList}\small\item\em Set the register to all ones. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1Register_a4}{clear} ()
+\begin{CompactList}\small\item\em Set the register to all zeros. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1Register_b0}{Register} ()
+\begin{CompactList}\small\item\em Creates a \hyperlink{classmprace_1_1Register}{Register}. \item\end{CompactList}\item 
+\hyperlink{classmprace_1_1Register_b1}{Register} (const \hyperlink{classmprace_1_1Register}{Register} \&)
+\begin{CompactList}\small\item\em Overrides default copy constructor, does nothing. \item\end{CompactList}\item 
+\hyperlink{classmprace_1_1Register}{Register} \& \hyperlink{classmprace_1_1Register_b2}{operator=} (const \hyperlink{classmprace_1_1Register}{Register} \&)
+\begin{CompactList}\small\item\em Overrides default assignment operation, does nothing. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Abstract interface to access a virtual register. 
+
+A virtual register is the basic building block for low-level device interfaces. It provides a hardware abstraction layer for register manipulation, separating the action (set/clear/get) from the platform dependent access sequence (by example, accessing a memory address, or querying a device).
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.1 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2007-05-29 07:50:49 \end{Desc}
+\end{Desc}
+
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classmprace_1_1Register_a0}{
+\index{mprace::Register@{mprace::Register}!~Register@{$\sim$Register}}
+\index{~Register@{$\sim$Register}!mprace::Register@{mprace::Register}}
+\subsubsection[$\sim$Register]{\setlength{\rightskip}{0pt plus 5cm}virtual mprace::Register::$\sim$\hyperlink{classmprace_1_1Register}{Register} ()\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1Register_a0}
+
+
+Delete a \hyperlink{classmprace_1_1Register}{Register}. 
+
+Must be virtual to ensure the proper subclass destructor is called.\hypertarget{classmprace_1_1Register_b0}{
+\index{mprace::Register@{mprace::Register}!Register@{Register}}
+\index{Register@{Register}!mprace::Register@{mprace::Register}}
+\subsubsection[Register]{\setlength{\rightskip}{0pt plus 5cm}mprace::Register::Register ()\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1Register_b0}
+
+
+Creates a \hyperlink{classmprace_1_1Register}{Register}. 
+
+Protected because only subclasses should be instantiated.\hypertarget{classmprace_1_1Register_b1}{
+\index{mprace::Register@{mprace::Register}!Register@{Register}}
+\index{Register@{Register}!mprace::Register@{mprace::Register}}
+\subsubsection[Register]{\setlength{\rightskip}{0pt plus 5cm}mprace::Register::Register (const \hyperlink{classmprace_1_1Register}{Register} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1Register_b1}
+
+
+Overrides default copy constructor, does nothing. 
+
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classmprace_1_1Register_a4}{
+\index{mprace::Register@{mprace::Register}!clear@{clear}}
+\index{clear@{clear}!mprace::Register@{mprace::Register}}
+\subsubsection[clear]{\setlength{\rightskip}{0pt plus 5cm}void mprace::Register::clear ()\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1Register_a4}
+
+
+Set the register to all zeros. 
+
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Reimplemented in \hyperlink{classmprace_1_1RegisterTristate_a7}{mprace::Register\-Tristate}.\hypertarget{classmprace_1_1Register_a2}{
+\index{mprace::Register@{mprace::Register}!get@{get}}
+\index{get@{get}!mprace::Register@{mprace::Register}}
+\subsubsection[get]{\setlength{\rightskip}{0pt plus 5cm}virtual unsigned int mprace::Register::get ()\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1Register_a2}
+
+
+Get the register current value. 
+
+\begin{Desc}
+\item[Returns:]The current register value. \end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1RegisterTristate_a5}{mprace::Register\-Tristate}.\hypertarget{classmprace_1_1Register_b2}{
+\index{mprace::Register@{mprace::Register}!operator=@{operator=}}
+\index{operator=@{operator=}!mprace::Register@{mprace::Register}}
+\subsubsection[operator=]{\setlength{\rightskip}{0pt plus 5cm}\hyperlink{classmprace_1_1Register}{Register}\& mprace::Register::operator= (const \hyperlink{classmprace_1_1Register}{Register} \&)\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1Register_b2}
+
+
+Overrides default assignment operation, does nothing. 
+
+\hypertarget{classmprace_1_1Register_a3}{
+\index{mprace::Register@{mprace::Register}!set@{set}}
+\index{set@{set}!mprace::Register@{mprace::Register}}
+\subsubsection[set]{\setlength{\rightskip}{0pt plus 5cm}void mprace::Register::set ()\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1Register_a3}
+
+
+Set the register to all ones. 
+
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Reimplemented in \hyperlink{classmprace_1_1RegisterTristate_a6}{mprace::Register\-Tristate}.\hypertarget{classmprace_1_1Register_a1}{
+\index{mprace::Register@{mprace::Register}!set@{set}}
+\index{set@{set}!mprace::Register@{mprace::Register}}
+\subsubsection[set]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::Register::set (const unsigned int {\em value})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1Register_a1}
+
+
+Set the register to a certain value. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em value}]the new value. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]On error.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1RegisterTristate_a2}{mprace::Register\-Tristate}.
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+include/mprace/Register.h\end{CompactItemize}

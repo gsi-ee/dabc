@@ -1,0 +1,175 @@
+\hypertarget{classmprace_1_1Driver}{
+\section{mprace::Driver Class Reference}
+\label{classmprace_1_1Driver}\index{mprace::Driver@{mprace::Driver}}
+}
+Abstract interface to any driver supported by the library.  
+
+
+{\tt \#include $<$Driver.h$>$}
+
+Inheritance diagram for mprace::Driver:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=71pt]{classmprace_1_1Driver__inherit__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+virtual \hyperlink{classmprace_1_1Driver_a0}{$\sim$Driver} ()
+\begin{CompactList}\small\item\em Delete a device. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1Driver_a1}{open} ()=0
+\begin{CompactList}\small\item\em Open the device. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1Driver_a2}{close} ()=0
+\begin{CompactList}\small\item\em Close the device. \item\end{CompactList}\item 
+virtual void $\ast$ \hyperlink{classmprace_1_1Driver_a3}{mmap\-Area} (const unsigned int num)=0
+\begin{CompactList}\small\item\em Memory Map an area into User Space Memory. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1Driver_a4}{unmap\-Area} (const unsigned int num)=0
+\begin{CompactList}\small\item\em Release an area previously mapped into User Space Memory. \item\end{CompactList}\item 
+virtual unsigned int \hyperlink{classmprace_1_1Driver_a5}{get\-Area\-Size} (const unsigned int num)=0
+\begin{CompactList}\small\item\em Get the size of the area. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1Driver_a6}{wait\-For\-Interrupt} (unsigned int int\_\-id)=0
+\begin{CompactList}\small\item\em Wait for an Interrupt to arrive. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+Abstract interface to any driver supported by the library. 
+
+Allows the separation of the low level device driver from the library, by defining the operations needed by the library to be performed by the driver. Each driver instance represents one device.
+
+As a difference with the uelib, non-PCI drivers are supported. To accomplish this, the concept of an 'area' is defined. For PCI devices, an area is a BAR. For USB devices, an area represents an endpoint buffer. Numbering of the areas is device specific.
+
+Another difference is that the DMA Engine is completely abstracted from the driver. If the DMA operation is hidden or not, depends on the implementation of the \hyperlink{classmprace_1_1DMAEngine}{DMAEngine} and the \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} used.
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.3 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2008-01-11 10:30:21 \end{Desc}
+\end{Desc}
+
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classmprace_1_1Driver_a0}{
+\index{mprace::Driver@{mprace::Driver}!~Driver@{$\sim$Driver}}
+\index{~Driver@{$\sim$Driver}!mprace::Driver@{mprace::Driver}}
+\subsubsection[$\sim$Driver]{\setlength{\rightskip}{0pt plus 5cm}virtual mprace::Driver::$\sim$\hyperlink{classmprace_1_1Driver}{Driver} ()\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1Driver_a0}
+
+
+Delete a device. 
+
+Must be virtual to properly call the driver in the subclass.
+
+\subsection{Member Function Documentation}
+\hypertarget{classmprace_1_1Driver_a2}{
+\index{mprace::Driver@{mprace::Driver}!close@{close}}
+\index{close@{close}!mprace::Driver@{mprace::Driver}}
+\subsubsection[close]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::Driver::close ()\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1Driver_a2}
+
+
+Close the device. 
+
+
+
+Implemented in \hyperlink{classmprace_1_1PCIDriver_a3}{mprace::PCIDriver}.\hypertarget{classmprace_1_1Driver_a5}{
+\index{mprace::Driver@{mprace::Driver}!getAreaSize@{getAreaSize}}
+\index{getAreaSize@{getAreaSize}!mprace::Driver@{mprace::Driver}}
+\subsubsection[getAreaSize]{\setlength{\rightskip}{0pt plus 5cm}virtual unsigned int mprace::Driver::get\-Area\-Size (const unsigned int {\em num})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1Driver_a5}
+
+
+Get the size of the area. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em num}]the area number. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]the size of the area, in bytes.\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1PCIDriver_a6}{mprace::PCIDriver}.\hypertarget{classmprace_1_1Driver_a3}{
+\index{mprace::Driver@{mprace::Driver}!mmapArea@{mmapArea}}
+\index{mmapArea@{mmapArea}!mprace::Driver@{mprace::Driver}}
+\subsubsection[mmapArea]{\setlength{\rightskip}{0pt plus 5cm}virtual void$\ast$ mprace::Driver::mmap\-Area (const unsigned int {\em num})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1Driver_a3}
+
+
+Memory Map an area into User Space Memory. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em num}]the area number to mmap. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Returns:]A pointer to access the requested area. \end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]on Error.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1PCIDriver_a4}{mprace::PCIDriver}.\hypertarget{classmprace_1_1Driver_a1}{
+\index{mprace::Driver@{mprace::Driver}!open@{open}}
+\index{open@{open}!mprace::Driver@{mprace::Driver}}
+\subsubsection[open]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::Driver::open ()\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1Driver_a1}
+
+
+Open the device. 
+
+
+
+Implemented in \hyperlink{classmprace_1_1PCIDriver_a2}{mprace::PCIDriver}.\hypertarget{classmprace_1_1Driver_a4}{
+\index{mprace::Driver@{mprace::Driver}!unmapArea@{unmapArea}}
+\index{unmapArea@{unmapArea}!mprace::Driver@{mprace::Driver}}
+\subsubsection[unmapArea]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::Driver::unmap\-Area (const unsigned int {\em num})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1Driver_a4}
+
+
+Release an area previously mapped into User Space Memory. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em num}]the area number to release. \end{description}
+\end{Desc}
+\begin{Desc}
+\item[Exceptions:]
+\begin{description}
+\item[{\em mprace::Exception}]on Error.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1PCIDriver_a5}{mprace::PCIDriver}.\hypertarget{classmprace_1_1Driver_a6}{
+\index{mprace::Driver@{mprace::Driver}!waitForInterrupt@{waitForInterrupt}}
+\index{waitForInterrupt@{waitForInterrupt}!mprace::Driver@{mprace::Driver}}
+\subsubsection[waitForInterrupt]{\setlength{\rightskip}{0pt plus 5cm}virtual void mprace::Driver::wait\-For\-Interrupt (unsigned int {\em int\_\-id})\hspace{0.3cm}{\tt  \mbox{[}pure virtual\mbox{]}}}}
+\label{classmprace_1_1Driver_a6}
+
+
+Wait for an Interrupt to arrive. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em int\_\-id}]The IRQ id number to identify the waiting queue in the driver. This is a blocking call.\end{description}
+\end{Desc}
+
+
+Implemented in \hyperlink{classmprace_1_1PCIDriver_a9}{mprace::PCIDriver}.
+
+The documentation for this class was generated from the following file:\begin{CompactItemize}
+\item 
+include/mprace/Driver.h\end{CompactItemize}

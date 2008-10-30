@@ -1,0 +1,24 @@
+% template for main file for chapters.
+% please change title of chapter
+% steer-XXX.tex should contain structure of this chapter
+\documentclass{democlass}
+\pdfinfo{
+   /Author (Hans G. Essel)
+   /Title  (Data Acquisition Backbone Core)
+   /Subject (Data Acquisition)
+   /Keywords (FutureDAQ, CBM, FOPI, DABC)
+}
+\input{demo-defs}
+\begin{document}
+\setcounter{chapter}{1}\setcounter{section}{0}\setcounter{subsection}{0}
+
+\Chapter{Data Acquisition Backbone Core DABC}
+\input{dabc-docrev}
+\cleardoublepage
+\thispagestyle{empty} \tableofcontents
+\thispagestyle{empty} \cleardoublepage
+
+\include{steer-dabc} \cleardoublepage
+
+%\include{demo-post}
+\end{document}

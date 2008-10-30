@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DabcLaunch>
+<Labels
+    DabcMaster="DABC master" 
+    DabcName="DABC name" 
+    DabcUserPath="DABC user path" 
+    DabcSystemPath="DABC system path"
+    DabcSetup="DABC setup file"    
+    DabcScript="DABC script"
+    DabcServers="Number of DIM servers needed"
+/>
+<Fields
+    DabcMaster="master"  
+    DabcName="Controller:41"  
+    DabcUserPath="/u/adamczew/xdaq/devel_xmlconfigs/" 
+    DabcSystemPath="/u/adamczew/xdaq/dabc/" 
+    DabcSetup="DABC_IB_Setup.xml" 
+    DabcScript="ps"
+    DabcServers="5"
+/>
+</DabcLaunch>

@@ -1,0 +1,4 @@
+base referer
+rect $classmprace_1_1PinInRegister.html 6,81 160,105
+rect $classmprace_1_1RegisterAsPin.html 184,81 342,105
+rect $classmprace_1_1RegisterAsPinTristate.html 366,81 566,105

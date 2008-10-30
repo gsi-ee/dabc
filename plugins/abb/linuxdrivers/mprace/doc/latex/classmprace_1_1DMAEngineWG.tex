@@ -1,0 +1,407 @@
+\hypertarget{classmprace_1_1DMAEngineWG}{
+\section{mprace::DMAEngine\-WG Class Reference}
+\label{classmprace_1_1DMAEngineWG}\index{mprace::DMAEngineWG@{mprace::DMAEngineWG}}
+}
+DMA Engine interface for the Wengxue Gao's (WG) DMA controller.  
+
+
+{\tt \#include $<$DMAEngine\-WG.h$>$}
+
+Inheritance diagram for mprace::DMAEngine\-WG:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=85pt]{classmprace_1_1DMAEngineWG__inherit__graph}
+\end{center}
+\end{figure}
+Collaboration diagram for mprace::DMAEngine\-WG:\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=85pt]{classmprace_1_1DMAEngineWG__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Member Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{classmprace_1_1DMAEngineWG_a0}{DMAEngine\-WG} (\hyperlink{classmprace_1_1Driver}{Driver} \&driver, unsigned int $\ast$base0, unsigned int $\ast$base1, unsigned int $\ast$inte, unsigned int $\ast$ints)
+\begin{CompactList}\small\item\em Creates an instance of the DMA Engine, to interface with Wenxue's design. \item\end{CompactList}\item 
+\hypertarget{classmprace_1_1DMAEngineWG_a1}{
+virtual \hyperlink{classmprace_1_1DMAEngineWG_a1}{$\sim$DMAEngine\-WG} ()}
+\label{classmprace_1_1DMAEngineWG_a1}
+
+\begin{CompactList}\small\item\em Delete the DMA Engine. \item\end{CompactList}\item 
+virtual \hyperlink{classmprace_1_1DMAEngine_w3}{DMAStatus} \hyperlink{classmprace_1_1DMAEngineWG_a2}{get\-Status} (const unsigned int channel)
+\begin{CompactList}\small\item\em Get the current status of a DMA channel. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngineWG_a3}{reset} (const unsigned int channel)
+\begin{CompactList}\small\item\em Reset the status of a DMA channel. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngineWG_a4}{host2board} (const unsigned int addr, const \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf, const unsigned int count, const unsigned int offset=0, const bool inc=true, const bool lock=true)
+\begin{CompactList}\small\item\em Performs a DMA transaction from host to board. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngineWG_a5}{board2host} (const unsigned int addr, \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf, const unsigned int count, const unsigned int offset=0, const bool inc=true, const bool lock=true)
+\begin{CompactList}\small\item\em Performs a DMA transaction from board to host. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngineWG_a6}{fill\-Descriptor\-List} (\hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf)
+\begin{CompactList}\small\item\em Fills the Descriptor List of the the DMA Buffer for the current engine. \item\end{CompactList}\item 
+virtual void \hyperlink{classmprace_1_1DMAEngineWG_a7}{release\-Descriptor\-List} (\hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf)
+\begin{CompactList}\small\item\em Release the Descriptor List of the the DMA Buffer for the current engine. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1DMAEngineWG_a8}{set\-Use\-Interrupts} (bool val)
+\begin{CompactList}\small\item\em Set the \hyperlink{classmprace_1_1DMAEngine}{DMAEngine} to use interrupts or not. \item\end{CompactList}\item 
+bool \hyperlink{classmprace_1_1DMAEngineWG_a9}{get\-Use\-Interrupts} ()
+\begin{CompactList}\small\item\em Get the use interrupts value. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Protected Member Functions}
+\begin{CompactItemize}
+\item 
+void \hyperlink{classmprace_1_1DMAEngineWG_b0}{write} (const unsigned int channel, const DMADescriptor\-WG \&desc)
+\begin{CompactList}\small\item\em Write a DMA Descriptor to a channel control address. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1DMAEngineWG_b1}{wait\-Channel} (const unsigned int channel)
+\begin{CompactList}\small\item\em Wait for the channel to be done. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1DMAEngineWG_b2}{enable\-Interrupt} (const unsigned int channel)
+\begin{CompactList}\small\item\em Enable Interrupts for a DMA channel. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1DMAEngineWG_b3}{disable\-Interrupt} (const unsigned int channel)
+\begin{CompactList}\small\item\em Disable Interrupts for a DMA channel. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1DMAEngineWG_b4}{wait\-For\-Interrupt} (const unsigned int ch)
+\begin{CompactList}\small\item\em Wait the Interrupt from a given DMA channel. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1DMAEngineWG_b5}{send\-Descriptor\-List} (const unsigned int addr, const \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \&buf, const unsigned int count, const unsigned int offset, const bool inc, const unsigned int ch)
+\begin{CompactList}\small\item\em Prepares and sends a descriptor list for a DMA transaction. \item\end{CompactList}\item 
+void \hyperlink{classmprace_1_1DMAEngineWG_b6}{restore\-Saved\-Data} (unsigned int ch)
+\begin{CompactList}\small\item\em Restore data saved for a descriptor list. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Static Protected Attributes}
+\begin{CompactItemize}
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t0}{
+const unsigned int {\bf STATUS\_\-BUSY} = 0x00000002}
+\label{classmprace_1_1DMAEngineWG_t0}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t1}{
+const unsigned int {\bf STATUS\_\-DONE} = 0x00000001}
+\label{classmprace_1_1DMAEngineWG_t1}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t2}{
+const unsigned int {\bf CTRL\_\-RESET} = 0x0000000A}
+\label{classmprace_1_1DMAEngineWG_t2}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t3}{
+const unsigned int {\bf CTRL\_\-END} = 0x00000100}
+\label{classmprace_1_1DMAEngineWG_t3}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t4}{
+const unsigned int {\bf CTRL\_\-INC} = 0x00008000}
+\label{classmprace_1_1DMAEngineWG_t4}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t5}{
+const unsigned int {\bf CTRL\_\-LAST} = 0x01000000}
+\label{classmprace_1_1DMAEngineWG_t5}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t6}{
+const unsigned int {\bf CTRL\_\-EDI} = 0x10000000}
+\label{classmprace_1_1DMAEngineWG_t6}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t7}{
+const unsigned int {\bf CTRL\_\-EEI} = 0x20000000}
+\label{classmprace_1_1DMAEngineWG_t7}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t8}{
+const unsigned int {\bf CTRL\_\-ESEI} = 0x40000000}
+\label{classmprace_1_1DMAEngineWG_t8}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t9}{
+const unsigned int {\bf CTRL\_\-UPA} = 0x00100000}
+\label{classmprace_1_1DMAEngineWG_t9}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t10}{
+const unsigned int {\bf CTRL\_\-V} = 0x02000000}
+\label{classmprace_1_1DMAEngineWG_t10}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t11}{
+const unsigned int {\bf CTRL\_\-BAR} = 0x00010000}
+\label{classmprace_1_1DMAEngineWG_t11}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t12}{
+const unsigned int {\bf INTE\_\-CH0} = 0x00000002}
+\label{classmprace_1_1DMAEngineWG_t12}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t13}{
+const unsigned int {\bf INTE\_\-CH1} = 0x00000001}
+\label{classmprace_1_1DMAEngineWG_t13}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t14}{
+const unsigned int {\bf IRQ\_\-SRC\_\-CH0} = 0}
+\label{classmprace_1_1DMAEngineWG_t14}
+
+\item 
+\hypertarget{classmprace_1_1DMAEngineWG_t15}{
+const unsigned int {\bf IRQ\_\-SRC\_\-CH1} = 1}
+\label{classmprace_1_1DMAEngineWG_t15}
+
+\end{CompactItemize}
+
+
+\subsection{Detailed Description}
+DMA Engine interface for the Wengxue Gao's (WG) DMA controller. 
+
+\begin{Desc}
+\item[Author:]Guillermo Marcus \end{Desc}
+\begin{Desc}
+\item[Version:]\begin{Desc}
+\item[Revision]1.9 \end{Desc}
+\end{Desc}
+\begin{Desc}
+\item[Date:]\begin{Desc}
+\item[Date]2008-01-11 10:30:21 \end{Desc}
+\end{Desc}
+
+
+
+
+\subsection{Constructor \& Destructor Documentation}
+\hypertarget{classmprace_1_1DMAEngineWG_a0}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!DMAEngineWG@{DMAEngineWG}}
+\index{DMAEngineWG@{DMAEngineWG}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[DMAEngineWG]{\setlength{\rightskip}{0pt plus 5cm}DMAEngine\-WG::DMAEngine\-WG (\hyperlink{classmprace_1_1Driver}{Driver} \& {\em driver}, unsigned int $\ast$ {\em base0}, unsigned int $\ast$ {\em base1}, unsigned int $\ast$ {\em inte}, unsigned int $\ast$ {\em ints})}}
+\label{classmprace_1_1DMAEngineWG_a0}
+
+
+Creates an instance of the DMA Engine, to interface with Wenxue's design. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em driver}]The \hyperlink{classmprace_1_1Driver}{Driver} to use to communicate with the driver. Needed to create DMA buffers. \item[{\em base0}]Pointer to the base address to access the Channel0 descriptor (DMA\_\-DOWN). \item[{\em base1}]Pointer to the base address to access the Channel1 descriptor (DMA\_\-UP). \item[{\em inte}]Pointer to the Interrupt Enable \hyperlink{classmprace_1_1Register}{Register} (IER). \item[{\em ints}]Pointer to the Interrupt Status \hyperlink{classmprace_1_1Register}{Register} (ISR).\end{description}
+\end{Desc}
+
+
+\subsection{Member Function Documentation}
+\hypertarget{classmprace_1_1DMAEngineWG_a5}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!board2host@{board2host}}
+\index{board2host@{board2host}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[board2host]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::board2host (const unsigned int {\em addr}, \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf}, const unsigned int {\em count}, const unsigned int {\em offset} = {\tt 0}, const bool {\em inc} = {\tt true}, const bool {\em lock} = {\tt true})\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_a5}
+
+
+Performs a DMA transaction from board to host. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em addr}]The address in the board (dword address). \item[{\em buf}]The DMA buffer in the host. \item[{\em count}]Number of bytes to transfer. \item[{\em offset}]Initial dword to transfer. \item[{\em inc}]If the address in the board is incremented or not. \item[{\em lock}]If the function waits until the transaction is complete or not.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1DMAEngine_a4}{mprace::DMAEngine}.\hypertarget{classmprace_1_1DMAEngineWG_b3}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!disableInterrupt@{disableInterrupt}}
+\index{disableInterrupt@{disableInterrupt}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[disableInterrupt]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::disable\-Interrupt (const unsigned int {\em channel})\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_b3}
+
+
+Disable Interrupts for a DMA channel. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel to modify\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1DMAEngineWG_b2}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!enableInterrupt@{enableInterrupt}}
+\index{enableInterrupt@{enableInterrupt}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[enableInterrupt]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::enable\-Interrupt (const unsigned int {\em channel})\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_b2}
+
+
+Enable Interrupts for a DMA channel. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel to modify\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1DMAEngineWG_a6}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!fillDescriptorList@{fillDescriptorList}}
+\index{fillDescriptorList@{fillDescriptorList}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[fillDescriptorList]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::fill\-Descriptor\-List (\hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf})\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_a6}
+
+
+Fills the Descriptor List of the the DMA Buffer for the current engine. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buf}]The DMA Buffer.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1DMAEngine_a5}{mprace::DMAEngine}.\hypertarget{classmprace_1_1DMAEngineWG_a2}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!getStatus@{getStatus}}
+\index{getStatus@{getStatus}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[getStatus]{\setlength{\rightskip}{0pt plus 5cm}\hyperlink{classmprace_1_1DMAEngine_w3}{DMAEngine::DMAStatus} DMAEngine\-WG::get\-Status (const unsigned int {\em channel})\hspace{0.3cm}{\tt  \mbox{[}inline, virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_a2}
+
+
+Get the current status of a DMA channel. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel to query\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1DMAEngine_a1}{mprace::DMAEngine}.\hypertarget{classmprace_1_1DMAEngineWG_a9}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!getUseInterrupts@{getUseInterrupts}}
+\index{getUseInterrupts@{getUseInterrupts}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[getUseInterrupts]{\setlength{\rightskip}{0pt plus 5cm}bool mprace::DMAEngine\-WG::get\-Use\-Interrupts ()\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_a9}
+
+
+Get the use interrupts value. 
+
+\hypertarget{classmprace_1_1DMAEngineWG_a4}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!host2board@{host2board}}
+\index{host2board@{host2board}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[host2board]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::host2board (const unsigned int {\em addr}, const \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf}, const unsigned int {\em count}, const unsigned int {\em offset} = {\tt 0}, const bool {\em inc} = {\tt true}, const bool {\em lock} = {\tt true})\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_a4}
+
+
+Performs a DMA transaction from host to board. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em addr}]The address in the board (dword address). \item[{\em buf}]The DMA buffer in the host. \item[{\em count}]Number of bytes to transfer. \item[{\em offset}]Initial dword to transfer. \item[{\em inc}]If the address in the board is incremented or not. \item[{\em lock}]If the function waits until the transaction is complete or not.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1DMAEngine_a3}{mprace::DMAEngine}.\hypertarget{classmprace_1_1DMAEngineWG_a7}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!releaseDescriptorList@{releaseDescriptorList}}
+\index{releaseDescriptorList@{releaseDescriptorList}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[releaseDescriptorList]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::release\-Descriptor\-List (\hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf})\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_a7}
+
+
+Release the Descriptor List of the the DMA Buffer for the current engine. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em buf}]The DMA Buffer.\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1DMAEngine_a6}{mprace::DMAEngine}.\hypertarget{classmprace_1_1DMAEngineWG_a3}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!reset@{reset}}
+\index{reset@{reset}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[reset]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::reset (const unsigned int {\em channel})\hspace{0.3cm}{\tt  \mbox{[}virtual\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_a3}
+
+
+Reset the status of a DMA channel. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel to reset\end{description}
+\end{Desc}
+
+
+Implements \hyperlink{classmprace_1_1DMAEngine_a2}{mprace::DMAEngine}.\hypertarget{classmprace_1_1DMAEngineWG_b6}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!restoreSavedData@{restoreSavedData}}
+\index{restoreSavedData@{restoreSavedData}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[restoreSavedData]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::restore\-Saved\-Data (unsigned int {\em ch})\hspace{0.3cm}{\tt  \mbox{[}protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_b6}
+
+
+Restore data saved for a descriptor list. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em ch}]Channel that saved the data\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1DMAEngineWG_b5}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!sendDescriptorList@{sendDescriptorList}}
+\index{sendDescriptorList@{sendDescriptorList}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[sendDescriptorList]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::send\-Descriptor\-List (const unsigned int {\em addr}, const \hyperlink{classmprace_1_1DMABuffer}{DMABuffer} \& {\em buf}, const unsigned int {\em count}, const unsigned int {\em offset}, const bool {\em inc}, const unsigned int {\em ch})\hspace{0.3cm}{\tt  \mbox{[}protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_b5}
+
+
+Prepares and sends a descriptor list for a DMA transaction. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em addr}]The address in the board (dword address). \item[{\em buf}]The DMA buffer in the host. \item[{\em count}]Number of bytes to transfer. \item[{\em offset}]Initial dword to transfer. \item[{\em inc}]If the address in the board is incremented or not. \item[{\em ch}]Channel to perform the transaction\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1DMAEngineWG_a8}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!setUseInterrupts@{setUseInterrupts}}
+\index{setUseInterrupts@{setUseInterrupts}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[setUseInterrupts]{\setlength{\rightskip}{0pt plus 5cm}void mprace::DMAEngine\-WG::set\-Use\-Interrupts (bool {\em val})\hspace{0.3cm}{\tt  \mbox{[}inline\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_a8}
+
+
+Set the \hyperlink{classmprace_1_1DMAEngine}{DMAEngine} to use interrupts or not. 
+
+This is a global setting, and should not be change while DMA transactions are ongoing. \begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em val}]True to use interrupts, false to poll the status.\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1DMAEngineWG_b1}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!waitChannel@{waitChannel}}
+\index{waitChannel@{waitChannel}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[waitChannel]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::wait\-Channel (const unsigned int {\em channel})\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_b1}
+
+
+Wait for the channel to be done. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel number to wait for.\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1DMAEngineWG_b4}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!waitForInterrupt@{waitForInterrupt}}
+\index{waitForInterrupt@{waitForInterrupt}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[waitForInterrupt]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::wait\-For\-Interrupt (const unsigned int {\em ch})\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_b4}
+
+
+Wait the Interrupt from a given DMA channel. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel to modify\end{description}
+\end{Desc}
+\hypertarget{classmprace_1_1DMAEngineWG_b0}{
+\index{mprace::DMAEngineWG@{mprace::DMAEngine\-WG}!write@{write}}
+\index{write@{write}!mprace::DMAEngineWG@{mprace::DMAEngine\-WG}}
+\subsubsection[write]{\setlength{\rightskip}{0pt plus 5cm}void DMAEngine\-WG::write (const unsigned int {\em channel}, const DMADescriptor\-WG \& {\em desc})\hspace{0.3cm}{\tt  \mbox{[}inline, protected\mbox{]}}}}
+\label{classmprace_1_1DMAEngineWG_b0}
+
+
+Write a DMA Descriptor to a channel control address. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em channel}]The channel number to write the descriptor to. \item[{\em desc}]DMADescriptor to write.\end{description}
+\end{Desc}
+
+
+The documentation for this class was generated from the following files:\begin{CompactItemize}
+\item 
+include/mprace/DMAEngine\-WG.h\item 
+src/lib/DMAEngine\-WG.cpp\end{CompactItemize}

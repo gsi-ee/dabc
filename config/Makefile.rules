@@ -1,0 +1,36 @@
+## Include dependencies rules, working only on linux
+
+ifdef ALLDEPENDENC
+ifeq ($(findstring $(MAKECMDGOALS), $(FASTRULES)),)
+-include $(ALLDEPENDENC)
+endif
+endif
+
+ifeq ($(DOOPTIMIZATION), false)
+OPTFLAGS = $(DEBUGMODE)
+else
+OPTFLAGS = $(OPTIMIZEMODE)
+endif
+
+
+## Extentions rules
+
+.SUFFIXES: .$(SrcSuf) .$(DepSuf) .$(HedSuf) .cpp
+
+%.$(ObjSuf): %.$(SrcSuf)
+	$(CXX) -c $< $(OPTFLAGS) $(CXXFLAGS) -o $@ 
+
+%.$(ObjSuf): %.$(CSuf)
+	$(CC) -c $< $(OPTFLAGS) $(CFLAGS) -o $@
+
+%.$(DepSuf): %.$(SrcSuf)
+	@echo "Generate dependency $@ ... "
+	@$(MakeDepend) $@ "$(CXXFLAGS)" $*.$(SrcSuf) > $@
+
+%.$(DepSuf): %.$(CSuf)
+	@echo "Generate dependency $@ ... "
+	@$(MakeDepend) $@ "$(CFLAGS)" $*.$(CSuf) > $@
+
+%.$(DepSuf): %.cpp
+	@echo "Generate dependency $@ ... "
+	@$(MakeDepend) $@ "$(CXXFLAGS)" $*.cpp > $@
