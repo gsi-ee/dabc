@@ -94,14 +94,14 @@ echo "*** enabled XDAQ at $XDAQ_ROOT ."
 # the dabc part:
 
 export DABCSYS=$TOPDIR/dabc
-export DABCSYSCORE=$DABCSYS/core
+export DABCSYSCORE=$DABCSYS
 
 export PATH=$DABCSYSCORE/bin:$PATH
 
 export LD_LIBRARY_PATH=.:$DABCSYSCORE/lib:$DABCSYS/xdaq/dabc/nodecontrol/lib/$XDAQ_OS/$PLATFORM:$LD_LIBRARY_PATH
 
 # for ibcluster: add path to pci drivers
-#export LD_LIBRARY_PATH=$DABCSYS/linuxdrivers/pciDriver2/lib:$DABCSYS/linuxdrivers/mprace/lib:$LD_LIBRARY_PATH
+#export LD_LIBRARY_PATH=$DABCSYS/plugins/abb/linuxdrivers/pciDriver2/lib:$DABCSYS/plugins/abb/linuxdrivers/mprace/lib:$LD_LIBRARY_PATH
 
 
 #-----------------------------------
