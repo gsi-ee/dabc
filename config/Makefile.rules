@@ -1,10 +1,17 @@
-## Include dependencies rules, working only on linux
+## Include dependencies rules
 
-ifdef ALLDEPENDENC
-ifeq ($(findstring $(MAKECMDGOALS), $(FASTRULES)),)
--include $(ALLDEPENDENC)
-endif
-endif
+ifndef Dabc_Makefile_rules
+Dabc_Makefile_rules = true
+
+BLD_DIRS += $(sort $(dir $(ALLHDRS))) 
+BLD_DIRS += $(sort $(dir $(ALLDEPENDENC))) 
+
+build-init:: $(ALLHDRS)
+
+clean::
+	@echo "Clean in $(CURDIR) dirs: $(BLD_DIRS)" 
+	@for DIR in $(BLD_DIRS); do (if [ ! -f $$DIR ] ; then rm -rf $$DIR; fi); done
+	@rm -rf $(BLD_DIR) 
 
 ifeq ($(DOOPTIMIZATION), false)
 OPTFLAGS = $(DEBUGMODE)
@@ -12,25 +19,44 @@ else
 OPTFLAGS = $(OPTIMIZEMODE)
 endif
 
+$(BLD_DIR)/dummy.d: $(BLD_DIRS) build-init 
+	@(if [ ! -f $(BLD_DIR) ] ; then mkdir -p $(BLD_DIR); fi)
+	@(if [ ! -f $@ ] ; then touch $@; fi)
+
+$(BLD_DIRS):
+	@echo "Build all dirs $(BLD_DIR)"
+	@for DIR in $@; do (if [ ! -f $$DIR ] ; then mkdir -p $$DIR; fi); done
 
 ## Extentions rules
 
-.SUFFIXES: .$(SrcSuf) .$(DepSuf) .$(HedSuf) .cpp
+.SUFFIXES: .$(SrcSuf) .$(DepSuf) .$(HedSuf) .$(CSuf)
 
-%.$(ObjSuf): %.$(SrcSuf)
+$(BLD_DIR)/%.$(ObjSuf): %.$(SrcSuf)
 	$(CXX) -c $< $(OPTFLAGS) $(CXXFLAGS) -o $@ 
 
-%.$(ObjSuf): %.$(CSuf)
+$(BLD_DIR)/%.$(ObjSuf): %.$(CSuf)
 	$(CC) -c $< $(OPTFLAGS) $(CFLAGS) -o $@
 
-%.$(DepSuf): %.$(SrcSuf)
-	@echo "Generate dependency $@ ... "
-	@$(MakeDepend) $@ "$(CXXFLAGS)" $*.$(SrcSuf) > $@
+$(BLD_DIR)/%.$(DepSuf): %.$(SrcSuf)
+	@echo "Dependency: $@"
+	@$(MakeDepend) "$(CXXFLAGS)" $@  $<  $*
 
-%.$(DepSuf): %.$(CSuf)
-	@echo "Generate dependency $@ ... "
-	@$(MakeDepend) $@ "$(CFLAGS)" $*.$(CSuf) > $@
+$(BLD_DIR)/%.$(DepSuf): %.$(CSuf)
+	@echo "Dependency: $@"
+	@$(MakeDepend) "$(CFLAGS)" $@  $<  $* 
 
-%.$(DepSuf): %.cpp
-	@echo "Generate dependency $@ ... "
-	@$(MakeDepend) $@ "$(CXXFLAGS)" $*.cpp > $@
+## include in the end, if necessary, dependency and dummy.h file 
+ 
+ifeq ($(findstring $(MAKECMDGOALS), $(FASTRULES)),)
+
+ifdef ALLDEPENDENC
+-include $(ALLDEPENDENC)
+endif
+
+## this must be last include in complete makefile
+-include $(BLD_DIR)/dummy.d
+
+endif
+	
+endif
+	

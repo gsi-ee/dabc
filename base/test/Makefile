@@ -1,36 +1,30 @@
-include $(DABCSYSCORE)/config/Makefile.config
+include $(DABCSYS)/config/Makefile.config
 
-CORETEST_S      = coretest.cxx
-CORETEST_O      = $(CORETEST_S:.$(SrcSuf)=.$(ObjSuf))
-CORETEST_DEP    = $(CORETEST_O:.$(ObjSuf)=.$(DepSuf))
-CORETEST_E      = coretest
+CORETEST_S      = coretest.$(SrcSuf)
+CORETEST_O      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(CORETEST_S))
+CORETEST_D      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(CORETEST_S))
+CORETEST_E      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%, $(CORETEST_S))
 
-SOCKETEST_S     = socketest.cxx
-SOCKETEST_O     = $(SOCKETEST_S:.$(SrcSuf)=.$(ObjSuf))
-SOCKETEST_DEP   = $(SOCKETEST_O:.$(ObjSuf)=.$(DepSuf))
-SOCKETEST_E     = socketest
+SOCKETEST_S     = socketest.$(SrcSuf)
+SOCKETEST_O     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(SOCKETEST_S))
+SOCKETEST_D     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(SOCKETEST_S))
+SOCKETEST_E     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%, $(SOCKETEST_S))
 
+ALLDEPENDENC += $(CORETEST_D) $(SOCKETEST_D)
 
-ALLDEPENDENC += $(CORETEST_DEP) $(SOCKETEST_DEP)
+tests::  $(CORETEST_E) $(SOCKETEST_E)
 
-all:  $(CORETEST_E) $(SOCKETEST_E)
-
-$(CORETEST_E):  $(CORETEST_O) $(DABCDLLPATH)/libDabcCore.so
+$(CORETEST_E):  $(CORETEST_O)
 	$(LD) $(LDFLAGS) $(CORETEST_O) $(LIBS_CORESET) $(OutPutOpt) $(CORETEST_E)
-ifneq ($(wildcard ~/run/core),)
-	cp -f $(CORETEST_E) $(DABCDLLPATH)/libDabcCore.so ~/run/core
-endif
 	@echo "$@  done"
 
-$(SOCKETEST_E):  $(SOCKETEST_O) $(DABCDLLPATH)/libDabcCore.so
+$(SOCKETEST_E):  $(SOCKETEST_O)
 	$(LD) $(LDFLAGS) $(SOCKETEST_O) $(LIBS_CORESET) $(OutPutOpt) $(SOCKETEST_E)
-ifneq ($(wildcard ~/run/core),)
-	cp -f $(SOCKETEST_E) $(DABCDLLPATH)/libDabcCore.so ~/run/core
-endif
 	@echo "$@  done"
 
-clean:
-	@rm -f $(CORETEST_O) $(CORETEST_E) $(CORETEST_DEP)
-	@rm -f $(SOCKETEST_O) $(SOCKETEST_E) $(SOCKETEST_DEP)
+clean::
+	@rm -f $(CORETEST_O) $(CORETEST_E) $(CORETEST_D)
+	@rm -f $(SOCKETEST_O) $(SOCKETEST_E) $(SOCKETEST_D)
 
-include $(DABCSYSCORE)/config/Makefile.rules
+
+include $(DABCSYS)/config/Makefile.rules

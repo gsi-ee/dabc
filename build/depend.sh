@@ -4,27 +4,30 @@
 # dependency file itself depend from all sources and rebuild automatically
 
 OBJSUF=$1
-shift
+DEPSUF=$2
+TGTDIR=$3
+CFLAGS=$4
+DEPFILE=$5
+SRCFILE=$6
+SRCBASE=$7
 
-trap "rm -f $1.tmp $1.tmp.bak; exit 1" 1 2 3 15
+# echo "SRCBASE = $SRCBASE TGTDIR = $TGTDIR"
 
-touch $1.tmp
+touch $DEPFILE
 
-#rmkdepend -f$1.tmp -Y -o.$OBJSUF -w 30000 -- $2 -- $3 > /dev/null 2>&1
-makedepend -f$1.tmp -Y -o.$OBJSUF -w 30000 -- $2 -- $3 > /dev/null 2>&1
+makedepend -f$DEPFILE -Y -o.$OBJSUF -w 30000 -- $CFLAGS -- $SRCFILE > /dev/null 2>&1
+
 depstat=$?
 if [ $depstat -ne 0 ]; then
-   rm -f $1.tmp $1.tmp.bak
+   rm -f $DEPFILE $DEPFILE.bak
    exit $depstat
 fi
 
-if [ "$OBJSUF" = "obj" ]; then
-sed -e 's@^\(.*\)\.obj:@\1.d \1.obj:@' -e 's@^#.*$@@' -e '/^$/d' $1.tmp
-else
-sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' -e 's@^#.*$@@' -e '/^$/d' $1.tmp
-fi
+# echo "s|$SRCBASE.$OBJSUF|$TGTDIR/$SRCBASE.$OBJSUF $TGTDIR/$SRCBASE.$DEPSUF|g"
+# echo 's|$SRCBASE.$OBJSUF|$TGTDIR/$SRCBASE.$OBJSUF $TGTDIR/$SRCBASE.$DEPSUF|g'
 
-#sed -e 's@^\(.*\)\.o:@\1.d \1.o:@' -e 's@^#.*$@@' -e '/^$/d' $1.tmp
-rm -f $1.tmp $1.tmp.bak
+sed -i "s|$SRCBASE.$OBJSUF|$TGTDIR/$SRCBASE.$OBJSUF $TGTDIR/$SRCBASE.$DEPSUF|g" $DEPFILE
+
+rm -f $DEPFILE.bak
 
 exit 0
