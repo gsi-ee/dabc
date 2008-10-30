@@ -1,9 +1,0 @@
-<RCC>
-    <qresource prefix="/images" >
-        <file>images/close.png</file>
-        <file>images/color.png</file>
-        <file>images/dynlist.png</file>
-        <file>images/fitter.png</file>
-        <file>images/open.png</file>
-    </qresource>
-</RCC>
