@@ -1,37 +1,33 @@
-include $(DABCSYSCORE)/config/Makefile.config
+# this is generic makefile for DABC application
 
-BNETBINPATH           = $(DABCSYSCORE)/bnet/bin
+include $(DABCSYS)/config/Makefile.config
 
-ifdef USEMPRACE
-#INCLUDES += $(ABB_INCLUDES:%=-I%) 
-DEFINITIONS += -D__USE_ABB__
-endif
+#ifdef USEMPRACE
+#DEFINITIONS += -D__USE_ABB__
+#endif
+
+BNETBINPATH           = $(DABCSYS)/plugins/bnet/scripts
 
 BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetWorker
-BNETTEST_LIB         = $(BNETTEST_LIBNAME).$(DllSuf)
+BNETTEST_LIB         = $(TGTDLLPATH)/$(BNETTEST_LIBNAME).$(DllSuf)
 
 BNETTEST_S           = $(wildcard *.$(SrcSuf))
-BNETTEST_O           = $(BNETTEST_S:.$(SrcSuf)=.$(ObjSuf))
+BNETTEST_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETTEST_S))
+BNETTEST_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETTEST_S))
 
-BNETTEST_DEP         =  $(BNETTEST_O:.$(ObjSuf)=.$(DepSuf))
-BNETTEST_EDEP        =  $(BNETTEST_EXEO:.$(ObjSuf)=.$(DepSuf))
+ALLDEPENDENC        += $(BNETTEST_D)
+CREATE_DIRS         += $(TGTDLLPATH)
 
-ALLDEPENDENC        += $(BNETTEST_DEP) $(BNETTEST_EDEP)
+libs::  $(BNETTEST_LIB)
 
-all:  $(BNETTEST_LIB)
-
-$(BNETTEST_LIB):  $(BNETTEST_O) $(wildcard $(BNETBINPATH)/*) $(wildcard $(DABCDLLPATH)/*.so) Makefile
-	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(CURDIR) "-L$(BNETBINPATH) -lDabcBnet"
+$(BNETTEST_LIB):  $(BNETTEST_O)
+	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH) "-L$(DABCDLLPATH) -lDabcBnet"
 ifneq ($(wildcard ~/run/bnet),)
 	cp -f $(BNETTEST_LIB) ~/run/bnet
-	cp -f $(DABCDLLPATH)/*.so ~/run/bnet
-	cp -f $(BNETBINPATH)/* ~/run/bnet
+	cp -f $(DABCDLLPATH)/*.so $(DABCBINPATH)/*.so ~/run/bnet
+	cp -f $(DABCSYS)/plugins/bnet/scripts/* ~/run/bnet
 endif
 	@echo "$@  done"
 
-clean:
-	@rm -f $(BNETTEST_O) $(BNETTEST_DEP)
-	@$(CleanLib) $(BNETTEST_LIBNAME) $(CURDIR)
 
-
-include $(DABCSYSCORE)/config/Makefile.rules
+include $(DABCSYS)/config/Makefile.rules

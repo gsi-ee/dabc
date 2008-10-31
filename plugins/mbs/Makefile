@@ -60,6 +60,8 @@ CREATE_DIRS     += $(TGTDLLPATH)
 LIBS_PLUGINS    += $(DABCMBS_LIB)
 #LIBS_EXTRA      += -L/my/dir abc.so 
 
+libs:: $(DABCMBS_LIB) $(MBSFAPI_PACKAGE)
+
 ##### local rules #####
 
 $(DABCINCPATH)/%.h: $(MBSDIR)/%.h
@@ -75,8 +77,6 @@ $(MBSFAPI_PACKAGE) : $(MBSFAPI_H) $(MBSFAPI_DISTR)
 	@cd $(MBSFAPIDIR); tar rf test.tar $(MBSFAPI_DISTR:$(MBSFAPIDIR)/%=%); gzip test.tar  
 	@mv -f $(MBSFAPIDIR)/test.tar.gz $(MBSFAPI_PACKAGE)
 	@echo "$(MBSFAPI_PACKAGE) produced!"
-
-libs:: $(DABCMBS_LIB) $(MBSFAPI_PACKAGE)
 
 ########### extra rules #############
 $(MBS_O) $(MBS_D) : DEFINITIONS += $(MBSAPI_DEFINITIONS) 
