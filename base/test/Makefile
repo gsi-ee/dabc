@@ -12,7 +12,7 @@ SOCKETEST_E     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%, $(SOCKETEST_S))
 
 ALLDEPENDENC += $(CORETEST_D) $(SOCKETEST_D)
 
-tests::  $(CORETEST_E) $(SOCKETEST_E)
+exes::  $(CORETEST_E) $(SOCKETEST_E)
 
 $(CORETEST_E):  $(CORETEST_O)
 	$(LD) $(LDFLAGS) $(CORETEST_O) $(LIBS_CORESET) $(OutPutOpt) $(CORETEST_E)
@@ -21,10 +21,5 @@ $(CORETEST_E):  $(CORETEST_O)
 $(SOCKETEST_E):  $(SOCKETEST_O)
 	$(LD) $(LDFLAGS) $(SOCKETEST_O) $(LIBS_CORESET) $(OutPutOpt) $(SOCKETEST_E)
 	@echo "$@  done"
-
-clean::
-	@rm -f $(CORETEST_O) $(CORETEST_E) $(CORETEST_D)
-	@rm -f $(SOCKETEST_O) $(SOCKETEST_E) $(SOCKETEST_D)
-
 
 include $(DABCSYS)/config/Makefile.rules

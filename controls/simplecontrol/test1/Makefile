@@ -1,27 +1,23 @@
-include $(DABCSYSCORE)/config/Makefile.config
+include $(DABCSYS)/config/Makefile.config
 
-TEST1_EXENAME     = test1
+TEST1_NAME     = test1
 
-## must be similar for every module
+TEST1_S        = $(TEST1_NAME).$(SrcSuf)
+TEST1_O        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(TEST1_S))
+TEST1_D        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(TEST1_S))
 
-TEST1_EXEO        = $(TEST1_EXENAME).$(ObjSuf)
-TEST1_EXES        = $(TEST1_EXENAME).$(SrcSuf)
-TEST1_EXE         = $(TEST1_EXENAME)$(ExeSuf)
+TEST1_EXE      = $(BLD_DIR)/$(TEST1_NAME)$(ExeSuf)
 
-TEST1_DEP         =  $(TEST1_EXEO:.$(ObjSuf)=.$(DepSuf))
+ALLDEPENDENC  += $(TEST1_D)
 
-ALLDEPENDENC += $(TEST1_DEP)
+exes::  $(TEST1_EXE)
 
-all:  $(TEST1_EXE)
 
-clean: 
-	@rm -f $(TEST1_DEP) $(TEST1_EXEO) $(TEST1_EXE)
-
-$(TEST1_EXE):  $(TEST1_EXEO) $(wildcard $(DABCDLLPATH)/*.$(DllSuf))
-	$(LD) $(LDFLAGS) $(TEST1_EXEO) $(LIBS_FULLSET) $(OutPutOpt) $(TEST1_EXE)
+$(TEST1_EXE):  $(TEST1_O)
+	$(LD) $(LDFLAGS) $(TEST1_O) $(LIBS_CORESET) -lDabcSctrl $(OutPutOpt) $(TEST1_EXE)
 ifneq ($(wildcard ~/run/test1),)
 	cp -f $(TEST1_EXE) *.sh *.txt $(DABCDLLPATH)/*.$(DllSuf) ~/run/test1
 endif
 	@echo "$@  done"
 
-include $(DABCSYSCORE)/config/Makefile.rules
+include $(DABCSYS)/config/Makefile.rules

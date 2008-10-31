@@ -20,10 +20,9 @@ BASE_S           = $(wildcard $(BASEDIRS)/*.$(SrcSuf))
 BASE_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BASE_S))
 BASE_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BASE_S))
 
-ALLHDRS +=  $(patsubst $(BASEDIR)/%.h, $(DABCINCPATH)/%.h, $(BASE_H))
-
-ALLDEPENDENC += $(BASE_D)
-
+ALLHDRS         +=  $(patsubst $(BASEDIR)/%.h, $(DABCINCPATH)/%.h, $(BASE_H))
+ALLDEPENDENC    += $(BASE_D)
+TEST_DIRS       += $(BASETESTDIR)
 
 ##### local rules #####
 
@@ -37,12 +36,4 @@ $(DABCBASE_LIB):   $(BASE_O)
 libs:: $(DABCBASE_LIB)
 
 exes::
-
-clean::
-	@$(CleanLib) $(DABCBASE_LIBNAME) $(DABCDLLPATH)
-	@rm -f $(BASE_O) $(BASE_D)
-	@export DABCSYS=$(CURDIR); cd $(BASETESTDIR); make clean
-
-tests::
-	@export DABCSYS=$(CURDIR); cd $(BASETESTDIR); make all
 
