@@ -4,18 +4,24 @@ ifdef DABCMAINMAKE
 ABBDIR = plugins/abb
 else
 ABBDIR = .
-INCLUDES += $(ROCDIR)
+INCLUDES += $(ABBDIR)
 endif
 
 #this is MPRACE components location
+ifndef MPRACE_DIR
 MPRACE_DIR      = $(ABBDIR)/linuxdrivers/mprace
+endif
+
 MPRACE_LIBDIR   = $(MPRACE_DIR)/lib
 MPRACE_INCLUDES = $(MPRACE_DIR)/include 
 MPRACE_DEFINITIONS = 
 MPRACE_LIBS     = -lmprace 
 
 #this is Mannheim pciDriver components location
+ifndef PCIDRIVER_DIR
 PCIDRIVER_DIR      = $(ABBDIR)/linuxdrivers/pciDriver2
+endif
+
 PCIDRIVER_LIBDIR   = $(PCIDRIVER_DIR)/lib
 PCIDRIVER_INCLUDES = $(PCIDRIVER_DIR)/include 
 PCIDRIVER_DEFINITIONS = 
