@@ -15,7 +15,7 @@ include base/Makefile.mk
 
 include controls/simple/Makefile.mk
 
-DABC_PLUGINS = plugins/mbs plugins/bnet plugins/verbs
+DABC_PLUGINS = plugins/mbs plugins/bnet plugins/verbs plugins/roc
 
 DABC_APPLICATIONS = applications/bnet-test applications/bnet-mbs
   

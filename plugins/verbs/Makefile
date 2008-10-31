@@ -1,5 +1,3 @@
-## normally should be like this for every module, but can be specific
-
 # in the beginning initialise all OFED variables and check if one has OFED installed
 # to change default configuration, it is enough to change OFED_DIR and OFED_LIBDIR
 # the rest can remain as is
@@ -35,6 +33,8 @@ endif
 
 
 ifdef USEOFEDVERBS
+
+include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
 VERBSDIR = plugins/verbs
@@ -84,5 +84,7 @@ $(DABCVERBS_LIB):   $(VERBS_O)
 
 $(VERBS_O) $(VERBS_D): INCLUDES += $(OFED_INCLUDES)
 $(VERBS_O) $(VERBS_D): DEFINITIONS += $(VERBS_DEFINITIONS)
+
+include $(DABCSYS)/config/Makefile.rules
 
 endif

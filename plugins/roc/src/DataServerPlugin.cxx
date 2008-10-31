@@ -1,4 +1,4 @@
-#include "DataServerPlugin.h"
+#include "roc/DataServerPlugin.h"
 
 #include "dabc/Parameter.h"
 #include "dabc/Command.h"
@@ -10,7 +10,7 @@
 
 #include "roc/RocCalibrModule.h"
 
-#include "SysCoreDefines.h"   
+#include "SysCoreDefines.h"
 
 dabc::String roc::DataServerPlugin::fPluginName = "";
 
@@ -19,13 +19,13 @@ roc::DataServerPlugin::DataServerPlugin(dabc::Manager* m) :
 {
    //new dabc::StrParameter(this,DABC_ROC_COMPAR_BOARDIP, "140.181.66.173"); // lxi010.gsi.de
    // todo: later provide more than one roc board as input
-   
+
    new dabc::IntParameter(this, DABC_ROC_COMPAR_ROCSNUMBER, 1);
-   for (int nr=0;nr<15;nr++) 
+   for (int nr=0;nr<15;nr++)
       new dabc::StrParameter(this, FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)), "");
-      
+
    SetParValue(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, 0)),"140.181.66.173"); // lxi010.gsi.de
-   
+
    new dabc::IntParameter(this, DABC_ROC_COMPAR_BUFSIZE, 8192);
    new dabc::IntParameter(this, DABC_ROC_COMPAR_TRANSWINDOW, 30);
    new dabc::IntParameter(this, DABC_ROC_COMPAR_POOL_SIZE, 100);
@@ -36,10 +36,10 @@ roc::DataServerPlugin::DataServerPlugin(dabc::Manager* m) :
    new dabc::IntParameter(this, DABC_ROC_PAR_DOCALIBR, 1);
    new dabc::StrParameter(this, DABC_ROC_PAR_CALIBRFILE, "");
    new dabc::IntParameter(this, DABC_ROC_PAR_CALIBRFILELIMIT, 0);
-   
-   
-   
-   DOUT1(("!!!! Data server plugin created !!!!")); 
+
+
+
+   DOUT1(("!!!! Data server plugin created !!!!"));
 }
 
 const char* roc::DataServerPlugin::ItemName()
@@ -52,17 +52,17 @@ const char* roc::DataServerPlugin::ItemName()
    return fPluginName.c_str();
 }
 
-int roc::DataServerPlugin::DataServerKind() const 
-{ 
+int roc::DataServerPlugin::DataServerKind() const
+{
    int kind = mbs::NoServer;
-   std::string servertype=GetParCharStar(DABC_ROC_PAR_DATASERVER); 
+   std::string servertype=GetParCharStar(DABC_ROC_PAR_DATASERVER);
    if(servertype.find("Stream")!=std::string::npos)
       kind=mbs::StreamServer;
-   else 
+   else
    if(servertype.find("Transport")!=std::string::npos)
       kind=mbs::TransportServer;
-   return kind;   
-}   
+   return kind;
+}
 
 const char* roc::DataServerPlugin::RocIp(int nreadout) const
 {
@@ -77,20 +77,20 @@ bool roc::DataServerPlugin::CreateAppModules()
    DOUT1(("CreateAppModules starts..·"));
    bool res=false;
    dabc::Command* cmd;
-   
+
    std::string devname = "ROC"; // parametrize this later?
    fFullDeviceName = "Devices/"+devname;
 
    GetManager()->CreateMemoryPool(DABC_ROC_POOLNAME, BufferSize(), NumPoolBuffers());
-   
+
    if (DoTaking()) {
       if (!GetManager()->FindDevice(devname.c_str())) {
          res = GetManager()->CreateDevice("RocDevice",devname.c_str());
          DOUT1(("Create Roc Device = %s", DBOOL(res)));
          if(!res) return false;
       }
-   
-  
+
+
       cmd = new dabc::CommandCreateModule("RocCombinerModule","RocComb");
       cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
       cmd->SetInt(DABC_ROC_COMPAR_QLENGTH, PortQueueLength());
@@ -100,8 +100,8 @@ bool roc::DataServerPlugin::CreateAppModules()
       DOUT1(("Create ROC combiner module = %s", DBOOL(res)));
       if(!res) return false;
    }
-   
-   if (DoCalibr()) { 
+
+   if (DoCalibr()) {
       cmd = new dabc::CommandCreateModule("RocCalibrModule","RocCalibr");
       cmd->SetInt(DABC_ROC_COMPAR_ROCSNUMBER, NumRocs());
       cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
@@ -110,7 +110,7 @@ bool roc::DataServerPlugin::CreateAppModules()
       res = GetManager()->CreateModule("RocCalibrModule","RocCalibr", "RocCalibrThrd" ,cmd);
       DOUT1(("Create ROC calibration module = %s", DBOOL(res)));
       if(!res) return false;
-   
+
       if (DoTaking()) {
          res = GetManager()->ConnectPorts("RocComb/Ports/Output0", "RocCalibr/Ports/Input");
          DOUT1(("Connect readout and calibr modules = %s", DBOOL(res)));
@@ -121,12 +121,12 @@ bool roc::DataServerPlugin::CreateAppModules()
    res = GetManager()->CreateMemoryPools();
    DOUT1(("Create memory pools result=%s", DBOOL(res)));
    if(!res) return false;
-   
-   if (DoTaking()) {
-   
-   //// connect module to ROC device, one transport for each board:    
 
-      for(int t=0; t<NumRocs(); t++) {  
+   if (DoTaking()) {
+
+   //// connect module to ROC device, one transport for each board:
+
+      for(int t=0; t<NumRocs(); t++) {
          cmd= new dabc::CmdCreateTransport(); // container for additional bopard parameters
          cmd->SetStr(DABC_ROC_COMPAR_BOARDIP, RocIp(t));
          cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
@@ -135,9 +135,9 @@ bool roc::DataServerPlugin::CreateAppModules()
          DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t), DBOOL(res)));
          if(!res) return false;
       }
-   
+
       // configure loop over all connected rocs:
-       for(int t=0; t<NumRocs();++t) {  
+       for(int t=0; t<NumRocs();++t) {
           res=ConfigureRoc(t);
           DOUT1(("Configure ROC %d returns %s", t, DBOOL(res)));
           if(!res) return false;
@@ -150,25 +150,25 @@ bool roc::DataServerPlugin::CreateAppModules()
          cmd->SetInt("SizeLimit", OutFileLimit());
          cmd->SetInt("NumMulti", -1); // allow to create multiple files
       }
-      
+
       if (DoTaking())
          res = GetManager()->CreateDataOutputTransport("RocComb/Ports/Output1", "OutputThrd", mbs::MbsFactory::LmdFileType(), OutputFileName().c_str(), cmd);
-      else    
+      else
          res = GetManager()->CreateDataInputTransport("RocCalibr/Ports/Input", "InputThrd", mbs::MbsFactory::LmdFileType(), OutputFileName().c_str(), cmd);
-         
+
       DOUT1(("Create raw lmd %s file res = %s", (DoTaking() ? "output" : "input"), DBOOL(res)));
       if(!res) return false;
    }
-   
+
    if ((CalibrFileName().length()>0) && DoCalibr()) {
       cmd = new dabc::CmdCreateDataTransport();
-      
+
       const char* outtype = mbs::MbsFactory::LmdFileType();
-      
-      if ((CalibrFileName().rfind(".root")!=dabc::String::npos) || 
+
+      if ((CalibrFileName().rfind(".root")!=dabc::String::npos) ||
           (CalibrFileName().rfind(".ROOT")!=dabc::String::npos))
              outtype = "RocTreeOutput";
-      
+
       if (CalibrFileLimit()>0) {
          cmd->SetInt("SizeLimit", CalibrFileLimit());
          cmd->SetInt("NumMulti", -1); // allow to create multiple files
@@ -179,12 +179,12 @@ bool roc::DataServerPlugin::CreateAppModules()
       if(!res) return false;
    }
 
-   
+
    if (DataServerKind() != mbs::NoServer) {
-       
+
      // need mbs device for event server:
       if (!GetManager()->FindDevice("MBS")) {
-         res=GetManager()->CreateDevice("MbsDevice", "MBS"); 
+         res=GetManager()->CreateDevice("MbsDevice", "MBS");
          DOUT1(("Create Mbs Device = %s", DBOOL(res)));
       }
 
@@ -194,12 +194,12 @@ bool roc::DataServerPlugin::CreateAppModules()
       //      cmd->SetInt("PortMin", 6002);
       //      cmd->SetInt("PortMax", 7000);
       cmd->SetUInt("BufferSize", BufferSize());
-      
+
       const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
       res=GetManager()->CreateTransport("MBS", portname, cmd);
       DOUT1(("Connected readout module output to Mbs server = %s", DBOOL(res)));
       if(!res) return false;
-   } 
+   }
 
    return true;
 }
@@ -211,7 +211,7 @@ bool roc::DataServerPlugin::WriteRocRegister(int rocid, int registr, int value)
 }
 
 
-bool roc::DataServerPlugin::ConfigureRoc(int index) 
+bool roc::DataServerPlugin::ConfigureRoc(int index)
 {
    bool res = true;
 
@@ -223,22 +223,22 @@ bool roc::DataServerPlugin::ConfigureRoc(int index)
    res = res && WriteRocRegister(index, ROC_AUX_ACTIVE, 3);
 
 
-/*   
+/*
    res = res && WriteRocRegister(index, ROC_ACTIVATE_LOW_LEVEL, 1);
    res = res && WriteRocRegister(index, ROC_DO_TESTSETUP,1);
    res = res && WriteRocRegister(index, ROC_ACTIVATE_LOW_LEVEL,0);
-   
+
    res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 0,255);
    res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 1,255);
    res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 2,0);
    res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 18,35);
    res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 32,1);
-  
+
    res = res && WriteRocRegister(index, ROC_FIFO_RESET,1);
    res = res && WriteRocRegister(index, ROC_BUFFER_FLUSH_TIMER,1000);
 */
-      
-   return res;   
+
+   return res;
 }
 
 bool roc::DataServerPlugin::PluginWorking()
@@ -253,6 +253,6 @@ void InitUserPlugin(dabc::Manager* mgr)
    //std::cout<<"iiiiiiiii InitUserPlugin..."<<std::endl;
    roc::DataServerPlugin* worker = new roc::DataServerPlugin(mgr);
    // here set defaults if necessary
-   
+
    if (worker==0);
 }
