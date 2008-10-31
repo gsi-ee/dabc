@@ -6,10 +6,11 @@ ifndef KNUT_SLIB
 KNUT_SLIB = $(KNUT_DIR)/libKnut.a
 endif
 
-ifneq ($(wildcard $(KNUT_DIR))$(wildcard $(KNUT_SLIB)),)
+ifneq ($(wildcard $(KNUT_DIR)/Control),)
+ifneq ($(wildcard $(KNUT_SLIB)),)
 USEKNUT    = true
 endif
-
+endif
 
 ifdef USEKNUT 
 
@@ -45,9 +46,10 @@ ROC_EXE         = $(TGTBINPATH)/rocdataserver
 
 # used in the main Makefile
 
-ALLHDRS          +=  $(patsubst $(ROCDIR)/%.h, $(DABCINCPATH)/%.h, $(ROC_H))
-ALLDEPENDENC     += $(ROC_D) $(ROC_EXED)
-CREATE_DIRS      += $(TGTDLLPATH) $(TGTBINPATH)
+ALLHDRS         += $(patsubst $(ROCDIR)/%.h, $(DABCINCPATH)/%.h, $(ROC_H))
+ALLDEPENDENC    += $(ROC_D) $(ROC_EXED)
+CREATE_DIRS     += $(TGTDLLPATH) $(TGTBINPATH)
+LIBS_PLUGINS    += $(ROC_LIB)
 
 libs:: $(ROC_LIB)
 
