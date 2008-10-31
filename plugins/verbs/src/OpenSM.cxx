@@ -1,6 +1,10 @@
-#include "dabc/VerbsOsm.h"
+#include "verbs/OpenSM.h"
 
 #include <opensm/osm_helper.h>
+
+#include "dabc/logging.h"
+#include "verbs/QueuePair.h"
+
 
 ib_gid_t TOsm_good_mgid = {
     {
@@ -49,7 +53,7 @@ int ibv_sa_init_ah_from_mcmember(
 
 void TOsm_query_callback(osmv_query_res_t * p_rec )
 {
-  dabc::VerbsOsm* ctxt = (dabc::VerbsOsm*) p_rec->query_context;
+  verbs::OpenSM* ctxt = (verbs::OpenSM*) p_rec->query_context;
 
   ctxt->SetResult(p_rec);
 
@@ -63,7 +67,7 @@ void TOsm_query_callback(osmv_query_res_t * p_rec )
 
 // **************************************************
 
-dabc::VerbsOsm::VerbsOsm() :
+verbs::OpenSM::OpenSM() :
    f_vendor(0),
    f_log(0)
 {
@@ -72,11 +76,11 @@ dabc::VerbsOsm::VerbsOsm() :
    memset(&f_mad_pool, 0, sizeof(f_mad_pool));
 }
 
-dabc::VerbsOsm::~VerbsOsm()
+verbs::OpenSM::~OpenSM()
 {
 }
 
-bool dabc::VerbsOsm::Init()
+bool verbs::OpenSM::Init()
 {
    ib_api_status_t status;
 
@@ -114,7 +118,7 @@ bool dabc::VerbsOsm::Init()
    return BindPort();
 }
 
-bool dabc::VerbsOsm::BindPort()
+bool verbs::OpenSM::BindPort()
 {
    uint32_t port_index = 0; // we always use first port
    ib_api_status_t status;
@@ -154,7 +158,7 @@ bool dabc::VerbsOsm::BindPort()
 }
 
 
-bool dabc::VerbsOsm::Close()
+bool verbs::OpenSM::Close()
 {
    DOUT4(( "osm_vendor_delete commented"));
 //   osm_vendor_delete(&f_vendor);
@@ -166,7 +170,7 @@ bool dabc::VerbsOsm::Close()
 }
 
 
-bool dabc::VerbsOsm::Query_SA(osmv_query_type_t query_type,
+bool verbs::OpenSM::Query_SA(osmv_query_type_t query_type,
                           uint64_t          comp_mask,
                           ib_member_rec_t   *mc_req,
                           ib_sa_mad_t  *res)
@@ -226,7 +230,7 @@ bool dabc::VerbsOsm::Query_SA(osmv_query_type_t query_type,
   return (status==IB_SUCCESS);
 }
 
-bool dabc::VerbsOsm::ManageMultiCastGroup(bool isadd,
+bool verbs::OpenSM::ManageMultiCastGroup(bool isadd,
                                 uint8_t* mgid_raw,
                                 uint16_t* mlid)
 {
@@ -322,7 +326,7 @@ bool dabc::VerbsOsm::ManageMultiCastGroup(bool isadd,
 }
 
 
-bool dabc::VerbsOsm::PrintAllMulticasts()
+bool verbs::OpenSM::PrintAllMulticasts()
 {
   ib_api_status_t status = IB_SUCCESS;
   osmv_user_query_t user;
@@ -400,7 +404,7 @@ bool dabc::VerbsOsm::PrintAllMulticasts()
 }
 
 
-bool dabc::VerbsOsm::QueryMyltucastGroup(uint8_t* mgid, uint16_t& mlid)
+bool verbs::OpenSM::QueryMyltucastGroup(uint8_t* mgid, uint16_t& mlid)
 {
   bool res = false;
 

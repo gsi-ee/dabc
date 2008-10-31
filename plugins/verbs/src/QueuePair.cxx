@@ -1,25 +1,25 @@
-#include "dabc/VerbsQP.h"
+#include "verbs/QueuePair.h"
 
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "dabc/logging.h"
+
 #include <infiniband/arch.h>
 
-#include "dabc/VerbsDevice.h"
-#include "dabc/VerbsCQ.h"
-
-#include "dabc/logging.h"
-#include "dabc/MemoryPool.h"
+#include "verbs/Device.h"
+#include "verbs/ComplQueue.h"
 
 
-uint32_t dabc::VerbsQP::fQPCounter = 0;
+
+uint32_t verbs::QueuePair::fQPCounter = 0;
 
 // static int __qpcnt__ = 0;
 
-dabc::VerbsQP::VerbsQP(VerbsDevice* verbs, ibv_qp_type qp_type,
-                       VerbsCQ* send_cq, int send_depth, int max_send_sge,
-                       VerbsCQ* recv_cq, int recv_depth, int max_recv_sge) :
+verbs::QueuePair::QueuePair(Device* verbs, ibv_qp_type qp_type,
+                       ComplQueue* send_cq, int send_depth, int max_send_sge,
+                       ComplQueue* recv_cq, int recv_depth, int max_recv_sge) :
    fVerbs(verbs),
    fType(qp_type),
    f_qp(0),
@@ -41,10 +41,10 @@ dabc::VerbsQP::VerbsQP(VerbsDevice* verbs, ibv_qp_type qp_type,
 
    attr.cap.max_send_wr  = send_depth;
    attr.cap.max_send_sge = max_send_sge;
-   
+
    attr.cap.max_recv_wr  = recv_depth;
    attr.cap.max_recv_sge = max_recv_sge;
-   
+
    attr.cap.max_inline_data = VERBS_MAX_INLINE;
    attr.qp_type = fType;
 
@@ -69,10 +69,10 @@ dabc::VerbsQP::VerbsQP(VerbsDevice* verbs, ibv_qp_type qp_type,
                           IBV_QP_QKEY));
    } else {
 //      qp_attr.qp_access_flags = 0; when no RDMA is required
-       
-      qp_attr.qp_access_flags = 
-         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE | 
-                                   IBV_ACCESS_REMOTE_READ;    
+
+      qp_attr.qp_access_flags =
+         IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
+                                   IBV_ACCESS_REMOTE_READ;
       res = ibv_modify_qp(f_qp, &qp_attr, (ibv_qp_attr_mask)
                           (IBV_QP_STATE              |
                           IBV_QP_PKEY_INDEX         |
@@ -88,19 +88,19 @@ dabc::VerbsQP::VerbsQP(VerbsDevice* verbs, ibv_qp_type qp_type,
    fQPCounter += 1;
    f_local_psn = fQPCounter;
 
-   DOUT4(("Create VerbsQP %p", this));
+   DOUT4(("Create QueuePair %p", this));
 }
 
-dabc::VerbsQP::~VerbsQP()
+verbs::QueuePair::~QueuePair()
 {
-   DOUT4(("Destroy VerbsQP %p", this));
-   
+   DOUT4(("Destroy QueuePair %p", this));
+
    ibv_destroy_qp(f_qp);
 
-   DOUT4(("Destroy VerbsQP %p done", this));
+   DOUT4(("Destroy QueuePair %p done", this));
 }
 
-bool dabc::VerbsQP::InitUD()
+bool verbs::QueuePair::InitUD()
 {
    struct ibv_qp_attr attr;
    memset(&attr, 0, sizeof attr);
@@ -116,7 +116,7 @@ bool dabc::VerbsQP::InitUD()
       case 4096: attr.path_mtu = IBV_MTU_4096; break;
       default: EOUT(("Wrong mtu value %u", fVerbs->mtu()));
    }
-   
+
    attr.path_mtu = IBV_MTU_1024;
 
    if (ibv_modify_qp(qp(), &attr,
@@ -140,14 +140,14 @@ bool dabc::VerbsQP::InitUD()
    return true;
 }
 
-bool dabc::VerbsQP::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t dest_psn)
+bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t dest_psn)
 {
    if (qp_type() == IBV_QPT_UD) {
-      EOUT(("VerbsQP::Connect not supported for unreliable datagramm connection. Use InitUD() instead"));
+      EOUT(("QueuePair::Connect not supported for unreliable datagramm connection. Use InitUD() instead"));
       return false;
    }
-    
-    
+
+
    struct ibv_qp_attr attr;
    memset(&attr, 0, sizeof attr);
 
@@ -162,7 +162,7 @@ bool dabc::VerbsQP::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t dest_
       case 4096: attr.path_mtu = IBV_MTU_4096; break;
       default: EOUT(("Wrong mtu value %u", fVerbs->mtu()));
    }
-   
+
    attr.path_mtu = IBV_MTU_1024;
 
    attr.dest_qp_num  = dest_qpn;
@@ -249,14 +249,14 @@ bool dabc::VerbsQP::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t dest_
    f_remote_lid = dest_lid;
    f_remote_qpn = dest_qpn;
    f_remote_psn = dest_psn;
-   
+
 //   if (qp_type()!= IBV_QPT_UD)
 //      DOUT1(("DO CONNECT local_qpn=%x remote_qpn=%x", qp_num(), dest_qpn));
 
    return true;
 }
 
-bool dabc::VerbsQP::Post_Send(struct ibv_send_wr* swr)
+bool verbs::QueuePair::Post_Send(struct ibv_send_wr* swr)
 {
    struct ibv_send_wr* bad_swr = 0;
 
@@ -267,7 +267,7 @@ bool dabc::VerbsQP::Post_Send(struct ibv_send_wr* swr)
    return true;
 }
 
-bool dabc::VerbsQP::Post_Recv(struct ibv_recv_wr* rwr)
+bool verbs::QueuePair::Post_Recv(struct ibv_recv_wr* rwr)
 {
    struct ibv_recv_wr* bad_rwr = 0;
 
@@ -279,12 +279,12 @@ bool dabc::VerbsQP::Post_Recv(struct ibv_recv_wr* rwr)
    return true;
 }
 
-bool dabc::VerbsQP::AttachMcast(ibv_gid* mgid, uint16_t mlid)
+bool verbs::QueuePair::AttachMcast(ibv_gid* mgid, uint16_t mlid)
 {
    return ibv_attach_mcast(qp(), mgid, mlid) == 0;
 }
 
-bool dabc::VerbsQP::DetachMcast(ibv_gid* mgid, uint16_t mlid)
+bool verbs::QueuePair::DetachMcast(ibv_gid* mgid, uint16_t mlid)
 {
   return ibv_detach_mcast(qp(), mgid, mlid) == 0;
 }

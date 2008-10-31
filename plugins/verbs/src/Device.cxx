@@ -1,4 +1,4 @@
-#include "dabc/VerbsDevice.h"
+#include "verbs/Device.h"
 
 #include <sys/poll.h>
 #include <errno.h>
@@ -9,8 +9,8 @@
 #include <netinet/in.h>
 
 
-#ifndef  __NO_MULTICAST__ 
-#include "dabc/VerbsOsm.h"
+#ifndef  __NO_MULTICAST__
+#include "verbs/OpenSM.h"
 #else
 #include <infiniband/arch.h>
 #endif
@@ -23,11 +23,10 @@
 #include "dabc/Port.h"
 #include "dabc/Factory.h"
 
-#include "dabc/VerbsCQ.h"
-#include "dabc/VerbsQP.h"
-
-#include "dabc/VerbsThread.h"
-#include "dabc/VerbsTransport.h"
+#include "verbs/ComplQueue.h"
+#include "verbs/QueuePair.h"
+#include "verbs/Thread.h"
+#include "verbs/Transport.h"
 
 const int LoopBackQueueSize = 8;
 const int LoopBackBufferSize = 64;
@@ -41,57 +40,57 @@ int null_gid(union ibv_gid *gid)
 // this boolean indicates if one can use verbs calls from different threads
 // if no, all post/recv/complition operation for all QP/CQ will happens in the same thread
 
-bool dabc::VerbsDevice::fThreadSafeVerbs = true;
+bool verbs::Device::fThreadSafeVerbs = true;
 
-namespace dabc {
-   class VerbsFactory : public Factory {
+namespace verbs {
+   class VerbsFactory : public dabc::Factory {
       public:
-         VerbsFactory(const char* name) : Factory(name) {}
-         
-         virtual Device* CreateDevice(Basic* parent,
-                                      const char* classname, 
-                                      const char* devname, 
-                                      Command*);
-         
-         virtual WorkingThread* CreateThread(Basic* parent, const char* classname, const char* thrdname, const char* thrddev, Command* cmd);
+         VerbsFactory(const char* name) : dabc::Factory(name) {}
+
+         virtual dabc::Device* CreateDevice(dabc::Basic* parent,
+                                      const char* classname,
+                                      const char* devname,
+                                      dabc::Command*);
+
+         virtual dabc::WorkingThread* CreateThread(dabc::Basic* parent, const char* classname, const char* thrdname, const char* thrddev, dabc::Command* cmd);
    };
-   
+
 
    VerbsFactory verbsfactory("verbs");
 }
 
-dabc::Device* dabc::VerbsFactory::CreateDevice(Basic* parent,
-                                               const char* classname, 
-                                               const char* devname, 
-                                               Command*) 
+dabc::Device* verbs::VerbsFactory::CreateDevice(dabc::Basic* parent,
+                                                const char* classname,
+                                                const char* devname,
+                                                dabc::Command*)
 {
-   if (strcmp(classname, "VerbsDevice")!=0) return 0;
+	if (strcmp(classname, "VerbsDevice")!=0) return 0;
 
-   return new VerbsDevice(parent, devname);
-}                            
+	return new Device(parent, devname);
+}
 
-dabc::WorkingThread* dabc::VerbsFactory::CreateThread(Basic* parent, const char* classname, const char* thrdname, const char* thrddev, Command* cmd)
+dabc::WorkingThread* verbs::VerbsFactory::CreateThread(dabc::Basic* parent, const char* classname, const char* thrdname, const char* thrddev, dabc::Command* cmd)
 {
-   if ((classname==0) || (strcmp(classname,"VerbsThread")!=0)) return 0;
-    
-   if (thrddev==0) { 
-      EOUT(("Device name not specified to create verbs thread")); 
+   if ((classname==0) || (strcmp(classname, VERBS_THRD_CLASSNAME)!=0)) return 0;
+
+   if (thrddev==0) {
+      EOUT(("Device name not specified to create verbs thread"));
       return 0;
    }
-   
-   VerbsDevice* dev = dynamic_cast<VerbsDevice*> (Manager::Instance()->FindDevice(thrddev));
+
+   Device* dev = dynamic_cast<Device*> (dabc::Manager::Instance()->FindDevice(thrddev));
    if (dev==0) {
       EOUT(("Did not found verbs device with name %s", thrddev));
       return 0;
    }
-   
-   return new VerbsThread(dev, parent, thrdname);
+
+   return new Thread(dev, parent, thrdname);
 }
 
 // *******************************************************************
 
-dabc::VerbsPoolRegistry::VerbsPoolRegistry(VerbsDevice* verbs, MemoryPool* pool, bool local) : 
-   Basic(local ? 0 : verbs->GetPoolRegFolder(true), pool->GetName()),
+verbs::PoolRegistry::PoolRegistry(Device* verbs, dabc::MemoryPool* pool, bool local) :
+   dabc::Basic(local ? 0 : verbs->GetPoolRegFolder(true), pool->GetName()),
    fVerbs(verbs),
    fPool(pool),
    fWorkMutex(0),
@@ -101,32 +100,32 @@ dabc::VerbsPoolRegistry::VerbsPoolRegistry(VerbsDevice* verbs, MemoryPool* pool,
    f_mr(0),
    fBlockChanged(0)
 {
-   if (GetManager() && fPool) 
-     GetManager()->RegisterDependency(this, fPool); 
-    
-   LockGuard lock(fPool->GetPoolMutex());
-   
+   if (GetManager() && fPool)
+     GetManager()->RegisterDependency(this, fPool);
+
+   dabc::LockGuard lock(fPool->GetPoolMutex());
+
    // we only need to lock again pool mutex when pool can be potentially changed
    // otherwise structure, created once, can be used forever
    if (!fPool->IsMemLayoutFixed()) fWorkMutex = fPool->GetPoolMutex();
 
    _UpdateMRStructure();
-}   
-          
-dabc::VerbsPoolRegistry::~VerbsPoolRegistry()
+}
+
+verbs::PoolRegistry::~PoolRegistry()
 {
-   DOUT3(("~VerbsPoolRegistry %s", GetName())); 
-    
-   if (GetManager() && fPool) 
+   DOUT3(("~PoolRegistry %s", GetName()));
+
+   if (GetManager() && fPool)
       GetManager()->UnregisterDependency(this, fPool);
-      
+
    CleanMRStructure();
 
-   DOUT3(("~VerbsPoolRegistry %s done", GetName())); 
+   DOUT3(("~PoolRegistry %s done", GetName()));
 
 }
 
-void dabc::VerbsPoolRegistry::DependendDestroyed(Basic* obj) 
+void verbs::PoolRegistry::DependendDestroyed(dabc::Basic* obj)
 {
    if (obj == fPool) {
 //      EOUT(("!!!!!!!!! Hard error - memory pool %s destroyed behind the scene", fPool->GetName()));
@@ -137,41 +136,41 @@ void dabc::VerbsPoolRegistry::DependendDestroyed(Basic* obj)
    }
 }
 
-void dabc::VerbsPoolRegistry::CleanMRStructure()
+void verbs::PoolRegistry::CleanMRStructure()
 {
-   DOUT3(("CleanMRStructure %s call ibv_dereg_mr %u", GetName(), f_nummr)); 
+   DOUT3(("CleanMRStructure %s call ibv_dereg_mr %u", GetName(), f_nummr));
 
-   for (unsigned n=0;n<f_nummr;n++) 
+   for (unsigned n=0;n<f_nummr;n++)
      if (f_mr[n] != 0) {
         DOUT3(("CleanMRStructure %s mr[%u] = %p", GetName(), n, f_mr[n]));
 //        if (strcmp(GetName(),"TransportPool")!=0)
            ibv_dereg_mr(f_mr[n]);
 //        else
-//           EOUT(("Skip ibv_dereg_mr(f_mr[n])"));   
+//           EOUT(("Skip ibv_dereg_mr(f_mr[n])"));
         DOUT3(("CleanMRStructure %s mr[%u] = %p done", GetName(), n, f_mr[n]));
      }
-   
+
    delete[] fBlockChanged; fBlockChanged = 0;
-   
-   delete[] f_mr; 
+
+   delete[] f_mr;
    f_mr = 0;
    f_nummr = 0;
-   
+
    fLastChangeCounter = 0;
 }
 
 
-void dabc::VerbsPoolRegistry::_UpdateMRStructure()
+void verbs::PoolRegistry::_UpdateMRStructure()
 {
-   if (fPool==0) return; 
-   
+   if (fPool==0) return;
+
    if (f_nummr < fPool->NumMemBlocks()) {
-      // this is a case, when pool size was extended   
-      
+      // this is a case, when pool size was extended
+
       struct ibv_mr* *new_mr = new struct ibv_mr* [fPool->NumMemBlocks()];
-      
+
       unsigned *new_changed = new unsigned [fPool->NumMemBlocks()];
-      
+
       for (unsigned n=0;n<fPool->NumMemBlocks();n++) {
          new_mr[n] = 0;
          new_changed[n] = 0;
@@ -180,16 +179,16 @@ void dabc::VerbsPoolRegistry::_UpdateMRStructure()
              new_changed[n] = fBlockChanged[n];
          }
       }
-      
+
       delete[] f_mr;
       delete[] fBlockChanged;
-      
+
       f_mr = new_mr;
       fBlockChanged = new_changed;
-      
+
    } else
    if (f_nummr > fPool->NumMemBlocks()) {
-      //  this is a case, when pool size was reduced 
+      //  this is a case, when pool size was reduced
       // first, cleanup no longer avaliable memory regions
       for (unsigned n=fPool->NumMemBlocks(); n<f_nummr; n++) {
          if (f_mr[n]) {
@@ -199,45 +198,45 @@ void dabc::VerbsPoolRegistry::_UpdateMRStructure()
          fBlockChanged[n] = 0;
       }
    }
-    
+
    f_nummr = fPool->NumMemBlocks();
-   
-   for (unsigned n=0;n<f_nummr;n++) 
-      if ( fPool->IsMemoryBlock(n) && 
+
+   for (unsigned n=0;n<f_nummr;n++)
+      if ( fPool->IsMemoryBlock(n) &&
           ((f_mr[n]==0) || (fBlockChanged[n] != fPool->MemBlockChangeCounter(n))) ) {
               if (f_mr[n]!=0) {
                  ibv_dereg_mr(f_mr[n]);
               }
-              
+
               f_mr[n] = ibv_reg_mr(fVerbs->pd(),
                                    fPool->GetMemBlock(n),
                                    fPool->GetMemBlockSize(n),
                                    IBV_ACCESS_LOCAL_WRITE);
-                                   
+
 //                                   (ibv_access_flags) (IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE));
 
-              DOUT3(("New VerbsPoolRegistry %s mr[%u] = %p done", GetName(), n, f_mr[n]));
+              DOUT3(("New PoolRegistry %s mr[%u] = %p done", GetName(), n, f_mr[n]));
 
               if (f_mr[n]==0) {
                  EOUT(("Fail to registry VERBS memory - HALT"));
-                 exit(1);   
+                 exit(1);
               }
               fBlockChanged[n] = fPool->MemBlockChangeCounter(n);
-          } else 
-          
+          } else
+
           if (!fPool->IsMemoryBlock(n)) {
-             if (f_mr[n]!=0) ibv_dereg_mr(f_mr[n]); 
+             if (f_mr[n]!=0) ibv_dereg_mr(f_mr[n]);
              f_mr[n] = 0;
              fBlockChanged[n] = 0;
           }
-   
+
    fLastChangeCounter = fPool->GetChangeCounter();
 }
 
 // ____________________________________________________________________
 
-dabc::VerbsDevice::VerbsDevice(Basic* parent, const char* name) : 
-   Device(parent, name),
+verbs::Device::Device(dabc::Basic* parent, const char* name) :
+   dabc::Device(parent, name),
    fIbPort(0),
    fContext(0),
    fPD(0),
@@ -245,44 +244,44 @@ dabc::VerbsDevice::VerbsDevice(Basic* parent, const char* name) :
    fOsm(0),
    fAllocateIndividualCQ(false)
 {
-   DOUT3(("Creating VERBS device %s", name)); 
-    
+   DOUT3(("Creating VERBS device %s", name));
+
    if (!OpenVerbs(true)) {
       EOUT(("FATAL. Cannot start VERBS device"));
       exit(1);
-   } 
-    
-   DOUT3(("Creating VERBS thread %s", GetName())); 
-   
-   VerbsThread* thrd = GetVerbsThread(GetName(), true);
+   }
 
-   DOUT3(("Assign VERBS device to thread %s", GetName())); 
-   
+   DOUT3(("Creating VERBS thread %s", GetName()));
+
+   Thread* thrd = MakeThread(GetName(), true);
+
+   DOUT3(("Assign VERBS device to thread %s", GetName()));
+
    AssignProcessorToThread(thrd);
-   
-   DOUT3(("Creating VERBS device %s done", name)); 
+
+   DOUT3(("Creating VERBS device %s done", name));
 
 }
 
-dabc::VerbsDevice::~VerbsDevice()
+verbs::Device::~Device()
 {
-   DOUT5(("Start VerbsDevice::~VerbsDevice()")); 
+   DOUT5(("Start Device::~Device()"));
 
    // one should call method here, while thread(s) must be deleted
    // before CQ, Channel, PD will be destroyed
    CleanupDevice(true);
 
    DOUT5(("Cleanup verbs device done"));
-   
+
    RemoveProcessorFromThread(true);
-   
-   Folder* f = GetManager()->GetThreadsFolder();
+
+   dabc::Folder* f = GetManager()->GetThreadsFolder();
    if (f) {
       for (int n=f->NumChilds()-1; n>=0; n--) {
-         VerbsThread* thrd = dynamic_cast<VerbsThread*> (f->GetChild(n));
+         Thread* thrd = dynamic_cast<Thread*> (f->GetChild(n));
          if (thrd && (thrd->GetDevice()==this))
             if (!thrd->IsItself()) {
-               if (thrd==ProcessorThread()) EOUT(("AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBB")); 
+               if (thrd==ProcessorThread()) EOUT(("AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBB"));
                delete thrd;
             } else {
                thrd->CloseThread();
@@ -295,19 +294,19 @@ dabc::VerbsDevice::~VerbsDevice()
 
    CloseVerbs();
 
-   DOUT5(("Stop VerbsDevice::~VerbsDevice()"));
+   DOUT5(("Stop verbs::Device::~Device()"));
 }
 
-bool dabc::VerbsDevice::OpenVerbs(bool withmulticast, const char* devicename, int ibport)
+bool verbs::Device::OpenVerbs(bool withmulticast, const char* devicename, int ibport)
 {
-   DOUT4(("Call  VerbsDevice::Open"));
-    
-#ifndef  __NO_MULTICAST__ 
+   DOUT4(("Call  verbs::Device::Open"));
+
+#ifndef  __NO_MULTICAST__
    if (withmulticast) {
-      fOsm = new VerbsOsm;
+      fOsm = new OpenSM;
       if (!fOsm->Init()) return false;
    }
-#endif   
+#endif
 
    int num_of_hcas = 0;
 
@@ -346,7 +345,7 @@ bool dabc::VerbsDevice::OpenVerbs(bool withmulticast, const char* devicename, in
       EOUT(("Cannot open device %s", devicename));
       goto cleanup;
    }
-   
+
    if (ibv_query_device(fContext, &fDeviceAttr)) {
       EOUT(("Failed to query device props"));
       goto cleanup;
@@ -365,13 +364,13 @@ bool dabc::VerbsDevice::OpenVerbs(bool withmulticast, const char* devicename, in
       EOUT(("Fail to query port attributes"));
       goto cleanup;
    }
-   
+
 //   PrintDevicesList(true);
 
    DOUT4(("Call new TVerbsConnMgr(this) done"));
 
    res = true;
-   
+
 cleanup:
 
    ibv_free_device_list(dev_list);
@@ -380,13 +379,13 @@ cleanup:
 
 }
 
-bool dabc::VerbsDevice::CloseVerbs()
+bool verbs::Device::CloseVerbs()
 {
    if (fContext==0) return true;
 
    bool res = true;
-   
-   Folder* fold = GetPoolRegFolder(false);
+
+   dabc::Folder* fold = GetPoolRegFolder(false);
    if (fold!=0) fold->DeleteChilds();
 
    if (ibv_dealloc_pd(fPD)) {
@@ -400,7 +399,7 @@ bool dabc::VerbsDevice::CloseVerbs()
 
    fContext = 0;
 
-#ifndef  __NO_MULTICAST__ 
+#ifndef  __NO_MULTICAST__
    if (fOsm!=0) {
       fOsm->Close();
       delete fOsm;
@@ -411,7 +410,7 @@ bool dabc::VerbsDevice::CloseVerbs()
    return res;
 }
 
-int dabc::VerbsDevice::GetGidIndex(ibv_gid* lookgid)
+int verbs::Device::GetGidIndex(ibv_gid* lookgid)
 {
    ibv_gid gid;
    int ret = 0;
@@ -436,7 +435,7 @@ int dabc::VerbsDevice::GetGidIndex(ibv_gid* lookgid)
    return 0;
 }
 
-struct ibv_ah* dabc::VerbsDevice::CreateAH(uint32_t dest_lid, int dest_port)
+struct ibv_ah* verbs::Device::CreateAH(uint32_t dest_lid, int dest_port)
 {
    ibv_ah_attr ah_attr;
    memset(&ah_attr, 0, sizeof(ah_attr));
@@ -453,20 +452,20 @@ struct ibv_ah* dabc::VerbsDevice::CreateAH(uint32_t dest_lid, int dest_port)
    return ah;
 }
 
-bool dabc::VerbsDevice::RegisterMultiCastGroup(ibv_gid* mgid, uint16_t& mlid)
+bool verbs::Device::RegisterMultiCastGroup(ibv_gid* mgid, uint16_t& mlid)
 {
    mlid = 0;
-#ifndef  __NO_MULTICAST__ 
+#ifndef  __NO_MULTICAST__
    if ((mgid==0) || (fOsm==0)) return false;
    return fOsm->ManageMultiCastGroup(true, mgid->raw, &mlid);
 #else
    return false;
-#endif   
+#endif
 }
 
-bool dabc::VerbsDevice::UnRegisterMultiCastGroup(ibv_gid* mgid, uint16_t mlid)
+bool verbs::Device::UnRegisterMultiCastGroup(ibv_gid* mgid, uint16_t mlid)
 {
-#ifndef  __NO_MULTICAST__ 
+#ifndef  __NO_MULTICAST__
    if ((mgid==0) || (fOsm==0)) return false;
    return fOsm->ManageMultiCastGroup(false, mgid->raw, &mlid);
 #else
@@ -474,10 +473,10 @@ bool dabc::VerbsDevice::UnRegisterMultiCastGroup(ibv_gid* mgid, uint16_t mlid)
 #endif
 }
 
-struct ibv_ah* dabc::VerbsDevice::CreateMAH(ibv_gid* mgid, uint32_t mlid, int mport)
+struct ibv_ah* verbs::Device::CreateMAH(ibv_gid* mgid, uint32_t mlid, int mport)
 {
-   if (mgid==0) return 0; 
-    
+   if (mgid==0) return 0;
+
    ibv_ah_attr mah_attr;
    memset(&mah_attr, 0, sizeof(ibv_ah_attr));
 
@@ -500,72 +499,72 @@ struct ibv_ah* dabc::VerbsDevice::CreateMAH(ibv_gid* mgid, uint32_t mlid, int mp
    if (f_ah==0) {
      EOUT(("Failed to create Multicast Address Handle"));
    }
-   
+
    return f_ah;
 }
 
-void dabc::VerbsDevice::CreatePortQP(const char* thrd_name, Port* port, int conn_type,
-                                     VerbsCQ* &port_cq, VerbsQP* &port_qp)
+void verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
+                                     ComplQueue* &port_cq, QueuePair* &port_qp)
 {
    ibv_qp_type qp_type = IBV_QPT_RC;
-    
+
    if (conn_type>0) qp_type = (ibv_qp_type) conn_type;
-   
-   VerbsThread* thrd = GetVerbsThread(thrd_name, true);
-   
+
+   Thread* thrd = MakeThread(thrd_name, true);
+
    bool isowncq = IsAllocateIndividualCQ() && !thrd->IsFastModus();
-   
+
    if (isowncq)
-      port_cq = new VerbsCQ(fContext, port->NumOutputBuffersRequired() + port->NumInputBuffersRequired() + 2, thrd->Channel());
+      port_cq = new ComplQueue(fContext, port->NumOutputBuffersRequired() + port->NumInputBuffersRequired() + 2, thrd->Channel());
    else
       port_cq = thrd->MakeCQ();
-   
-   port_qp = new VerbsQP(this, qp_type, 
-                         port_cq, port->NumOutputBuffersRequired(), fDeviceAttr.max_sge - 1, 
+
+   port_qp = new QueuePair(this, qp_type,
+                         port_cq, port->NumOutputBuffersRequired(), fDeviceAttr.max_sge - 1,
                          port_cq, port->NumInputBuffersRequired(), /*fDeviceAttr.max_sge / 2*/ 2);
     if (!isowncq)
-       port_cq = 0; 
+       port_cq = 0;
 }
 
-dabc::Folder* dabc::VerbsDevice::GetPoolRegFolder(bool force)
+dabc::Folder* verbs::Device::GetPoolRegFolder(bool force)
 {
    return GetFolder("PoolReg", force, true);
 }
 
-dabc::VerbsPoolRegistry* dabc::VerbsDevice::FindPoolRegistry(MemoryPool* pool)
+verbs::PoolRegistry* verbs::Device::FindPoolRegistry(dabc::MemoryPool* pool)
 {
-   if (pool==0) return 0; 
-    
-   Folder* fold = GetPoolRegFolder(false);
+   if (pool==0) return 0;
+
+   dabc::Folder* fold = GetPoolRegFolder(false);
    if (fold==0) return 0;
-   
+
    for (unsigned n=0; n<fold->NumChilds(); n++) {
-       VerbsPoolRegistry* reg = (VerbsPoolRegistry*) fold->GetChild(n);
+       PoolRegistry* reg = (PoolRegistry*) fold->GetChild(n);
        if ((reg!=0) && (reg->GetPool()==pool)) return reg;
    }
-   
+
    return 0;
 }
 
-dabc::VerbsPoolRegistry* dabc::VerbsDevice::RegisterPool(dabc::MemoryPool* pool)
+verbs::PoolRegistry* verbs::Device::RegisterPool(dabc::MemoryPool* pool)
 {
    if (pool==0) return 0;
-   
-   VerbsPoolRegistry* entry = FindPoolRegistry(pool);
-   
-   if (entry==0) entry = new VerbsPoolRegistry(this, pool);
-   
+
+   PoolRegistry* entry = FindPoolRegistry(pool);
+
+   if (entry==0) entry = new PoolRegistry(this, pool);
+
    entry->IncUsage();
-   
+
    return entry;
 }
 
-void dabc::VerbsDevice::UnregisterPool(VerbsPoolRegistry* entry)
+void verbs::Device::UnregisterPool(PoolRegistry* entry)
 {
-   if (entry==0) return; 
+   if (entry==0) return;
 
-   DOUT3(("Call UnregisterPool %s", entry->GetName())); 
-    
+   DOUT3(("Call UnregisterPool %s", entry->GetName()));
+
    entry->DecUsage();
 
    if (entry->GetUsage()<=0) {
@@ -573,91 +572,91 @@ void dabc::VerbsDevice::UnregisterPool(VerbsPoolRegistry* entry)
       //delete entry;
       // entry->GetParent()->RemoveChild(entry);
       // delete entry;
-      
+
       //GetManager()->DestroyObject(entry);
-      
+
       //entry->CleanMRStructure();
-      
+
       // DOUT1(("Clean entry %p done", entry));
    }
 
-   DOUT3(("Call UnregisterPool done")); 
+   DOUT3(("Call UnregisterPool done"));
 }
 
-void dabc::VerbsDevice::CreateVerbsTransport(const char* thrdname, const char* portname, VerbsCQ* cq, VerbsQP* qp)
+void verbs::Device::CreateVerbsTransport(const char* thrdname, const char* portname, ComplQueue* cq, QueuePair* qp)
 {
    if (qp==0) return;
 
-   Port* port = GetManager()->FindPort(portname); 
-    
-   VerbsThread* thrd = GetVerbsThread(thrdname, false);
+   dabc::Port* port = GetManager()->FindPort(portname);
+
+   Thread* thrd = MakeThread(thrdname, false);
 
    if ((thrd==0) || (port==0)) {
-      EOUT(("VerbsThread %s:%p or Port %s:%p is dissapiar!!!", thrdname, thrd, portname, port));
+      EOUT(("verbs::Thread %s:%p or Port %s:%p is dissapiar!!!", thrdname, thrd, portname, port));
       delete qp;
       delete cq;
       return;
    }
 
-   VerbsTransport* tr = new VerbsTransport(this, cq, qp, port);
-   
+   Transport* tr = new Transport(this, cq, qp, port);
+
    tr->AssignProcessorToThread(thrd);
-   
+
    port->AssignTransport(tr);
 }
 
-bool dabc::VerbsDevice::ServerConnect(Command* cmd, Port* port, const char* portname)
+bool verbs::Device::ServerConnect(dabc::Command* cmd, dabc::Port* port, const char* portname)
 {
-   if (cmd==0) return false; 
-   
-   return ((VerbsThread*) ProcessorThread())->DoServer(cmd, port, portname);
+   if (cmd==0) return false;
+
+   return ((Thread*) ProcessorThread())->DoServer(cmd, port, portname);
 }
 
-bool dabc::VerbsDevice::ClientConnect(Command* cmd, Port* port, const char* portname)
+bool verbs::Device::ClientConnect(dabc::Command* cmd, dabc::Port* port, const char* portname)
 {
-   if (cmd==0) return false; 
+   if (cmd==0) return false;
 
-   return ((VerbsThread*) ProcessorThread())->DoClient(cmd, port, portname);
+   return ((Thread*) ProcessorThread())->DoClient(cmd, port, portname);
 }
 
-bool dabc::VerbsDevice::SubmitRemoteCommand(const char* servid, const char* channelid, Command* cmd)
+bool verbs::Device::SubmitRemoteCommand(const char* servid, const char* channelid, dabc::Command* cmd)
 {
-   return false; 
+   return false;
 }
 
-dabc::VerbsThread* dabc::VerbsDevice::GetVerbsThread(const char* name, bool force)
+verbs::Thread* verbs::Device::MakeThread(const char* name, bool force)
 {
-   VerbsThread* thrd = dynamic_cast<VerbsThread*> (Manager::Instance()->FindThread(name, "VerbsThread"));
+   Thread* thrd = dynamic_cast<Thread*> (dabc::Manager::Instance()->FindThread(name, VERBS_THRD_CLASSNAME));
 
    if (thrd || !force) return thrd;
-    
-   return dynamic_cast<VerbsThread*> (Manager::Instance()->CreateThread(name, "VerbsThread", 0, GetName()));
+
+   return dynamic_cast<Thread*> (dabc::Manager::Instance()->CreateThread(name, VERBS_THRD_CLASSNAME, 0, GetName()));
 }
 
-int dabc::VerbsDevice::CreateTransport(Command* cmd, Port* port)
+int verbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
    bool isserver = cmd->GetBool("IsServer", true);
-   
+
    const char* portname = cmd->GetPar("PortName");
-      
+
    if (isserver ? ServerConnect(cmd, port, portname) : ClientConnect(cmd, port, portname))
       return cmd_postponed;
-      
+
    return cmd_false;
 }
 
-int dabc::VerbsDevice::ExecuteCommand(dabc::Command* cmd)
+int verbs::Device::ExecuteCommand(dabc::Command* cmd)
 {
    int cmd_res = cmd_true;
-   
+
    DOUT5(("Execute command %s", cmd->GetName()));
-   
+
    if (cmd->IsName("StartServer")) {
-      String servid;
-      ((VerbsThread*) ProcessorThread())->FillServerId(servid);
+	   dabc::String servid;
+      ((Thread*) ProcessorThread())->FillServerId(servid);
       cmd->SetPar("ConnId", servid.c_str());
-   } else 
+   } else
       cmd_res = dabc::Device::ExecuteCommand(cmd);
-      
+
    return cmd_res;
 }

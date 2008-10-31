@@ -1,62 +1,88 @@
 ## normally should be like this for every module, but can be specific
 
-VERBSDIR          = verbs
-VERBSDIRI         = $(VERBSDIR)/inc
+# in the beginning initialise all OFED variables and check if one has OFED installed
+# to change default configuration, it is enough to change OFED_DIR and OFED_LIBDIR
+# the rest can remain as is
+# If required, support of VERBS MCAST can be enabled  
+
+ifndef OFED_DIR
+OFED_DIR        = /usr/local/ofed
+endif
+
+ifndef OFED_LIBDIR
+OFED_LIBDIR     = $(OFED_DIR)/lib64
+endif
+
+ifndef OFED_MCAST
+OFED_MCAST      = true
+endif
+ 
+ifndef OFED_LIBS
+OFED_LIBS       = -libverbs
+endif
+
+ifeq ($(OFED_MCAST), true)
+OFED_INCLUDES += /usr/include/infiniband
+OFED_LIBS     += -lopensm -losmcomp -losmvendor -lrt
+endif
+
+# switch to enable OFED library support 
+ifndef USEOFEDVERBS
+ifneq ($(wildcard $(OFED_LIBDIR))$(wildcard $(OFED_DIR)),)
+USEOFEDVERBS    = true
+endif
+endif
+
+
+ifdef USEOFEDVERBS
+
+ifdef DABCMAINMAKE
+VERBSDIR = plugins/verbs
+else
+VERBSDIR = .
+INCLUDES += $(VERBSDIR)
+endif
+
+
+VERBSDIRI         = $(VERBSDIR)/verbs
 VERBSDIRS         = $(VERBSDIR)/src
 
-VERBS_NOTLIBF     =
+VERBS_NOTLIBF = 
 
 DABCVERBS_LIBNAME  = $(LIB_PREFIX)DabcVerbs
-DABCVERBS_LIB      = $(DABCDLLPATH)/$(DABCVERBS_LIBNAME).$(DllSuf)
+DABCVERBS_LIB      = $(TGTDLLPATH)/$(DABCVERBS_LIBNAME).$(DllSuf)
 
 ## must be similar for every module
 
 VERBS_DEFINITIONS = 
 ifneq ($(OFED_MCAST), true)
 VERBS_DEFINITIONS += __NO_MULTICAST__
-VERBS_NOTLIBF += $(VERBSDIRI)/VerbsOsm.h $(VERBSDIRS)/VerbsOsm.cxx
+VERBS_NOTLIBF += $(VERBSDIRI)/OpenSM.h $(VERBSDIRS)/OpenSM.cxx
 endif
 
 VERBS_H           = $(filter-out $(VERBS_NOTLIBF), $(wildcard $(VERBSDIRI)/*.$(HedSuf)))
 VERBS_S           = $(filter-out $(VERBS_NOTLIBF), $(wildcard $(VERBSDIRS)/*.$(SrcSuf)))
-VERBS_O           = $(VERBS_S:.$(SrcSuf)=.$(ObjSuf))
-VERBS_DEP         = $(VERBS_O:.$(ObjSuf)=.$(DepSuf))
+VERBS_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(VERBS_S))
+VERBS_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(VERBS_S))
 
-# used in the main Makefile
+ALLHDRS          +=  $(patsubst $(VERBSDIR)/%.h, $(DABCINCPATH)/%.h, $(VERBS_H))
+ALLDEPENDENC     += $(VERBS_D) 
+CREATE_DIRS      += $(TGTDLLPATH)
+LIBS_PLUGINS     += $(DABCVERBS_LIB)
+LIBS_EXTRA       += -L$(OFED_LIBDIR) $(OFED_LIBS)  
 
-DISTRFILES         += $(VERBS_S) $(VERBS_H) $(VERBS_NOTLIBF)
-
-ifdef USEOFEDVERBS
-
-ALLHDRS +=  $(patsubst $(VERBSDIRI)/%.h, $(DABCINCPATH)/%.h, $(VERBS_H))
-
-BUILDDABCLIBS      += $(DABCVERBS_LIB)
-
-ALLDEPENDENC       += $(VERBS_DEP) 
-
-all-verbs:  $(DABCVERBS_LIB)
-
-else 
-
-all-verbs: 
-	@echo "Verbs not build"
-
-endif
+libs:: $(DABCVERBS_LIB)
 
 ##### local rules #####
 
-$(DABCINCPATH)/%.h: $(VERBSDIRI)/%.h
+$(DABCINCPATH)/%.h: $(VERBSDIR)/%.h
+	@echo "Header: $@" 
 	@cp -f $< $@
 
 $(DABCVERBS_LIB):   $(VERBS_O)
-	@$(MakeLib) $(DABCVERBS_LIBNAME) "$(VERBS_O)" $(DABCDLLPATH) "-L$(OFED_LIBDIR) $(OFED_LIBS)"
+	@$(MakeLib) $(DABCVERBS_LIBNAME) "$(VERBS_O)" $(TGTDLLPATH) "-L$(OFED_LIBDIR) $(OFED_LIBS)"
 
-clean-verbs:
-	@rm -f $(VERBS_O) $(VERBS_DEP)
-	@$(CleanLib) $(DABCVERBS_LIBNAME) $(DABCDLLPATH)
+$(VERBS_O) $(VERBS_D): INCLUDES += $(OFED_INCLUDES)
+$(VERBS_O) $(VERBS_D): DEFINITIONS += $(VERBS_DEFINITIONS)
 
-clean:: clean-verbs
-
-########### extra roles #############
-$(VERBS_O) $(VERBS_DEP): INCLUDES += $(OFED_INCLUDES:%=-I%)
-$(VERBS_O) $(VERBS_DEP): DEFINITIONS += $(VERBS_DEFINITIONS:%=-D%)
+endif
