@@ -1,14 +1,11 @@
 include $(DABCSYS)/config/Makefile.config
 
-TEST1_NAME     = test1
-
-TEST1_S        = $(TEST1_NAME).$(SrcSuf)
+TEST1_S        = $(_topdir_)test1.$(SrcSuf)
 TEST1_O        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(TEST1_S))
 TEST1_D        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(TEST1_S))
+TEST1_EXE      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%$(ExeSuf), $(TEST1_S))
 
-TEST1_EXE      = $(BLD_DIR)/$(TEST1_NAME)$(ExeSuf)
-
-ALLDEPENDENC  += $(TEST1_D)
+ALLDEPENDENC   += $(TEST1_D)
 
 exes::  $(TEST1_EXE)
 

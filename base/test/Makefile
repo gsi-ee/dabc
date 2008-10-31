@@ -1,11 +1,11 @@
 include $(DABCSYS)/config/Makefile.config
 
-CORETEST_S      = coretest.$(SrcSuf)
+CORETEST_S      = $(_topdir_)coretest.$(SrcSuf)
 CORETEST_O      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(CORETEST_S))
 CORETEST_D      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(CORETEST_S))
 CORETEST_E      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%, $(CORETEST_S))
 
-SOCKETEST_S     = socketest.$(SrcSuf)
+SOCKETEST_S     = $(_topdir_)socketest.$(SrcSuf)
 SOCKETEST_O     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(SOCKETEST_S))
 SOCKETEST_D     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(SOCKETEST_S))
 SOCKETEST_E     = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%, $(SOCKETEST_S))

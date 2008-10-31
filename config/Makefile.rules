@@ -12,12 +12,12 @@ AUTO_DIRS += $(sort $(dir $(ALLHDRS)))
 build-init:: $(ALLHDRS)
 endif
 
-tests::
-	@for DIR in $(TEST_DIRS); do (cd $$DIR; $(MAKE) all DABCSYS=$(DABCSYS)) done
+apps::
+	@for DIR in $(APPLICATIONS_DIRS); do ($(MAKE) -f $$DIR/Makefile DABCSYS=$(DABCSYS) _topdir_=$$DIR/) done
 
 clean::
 	@echo "Clean in $(CURDIR)" 
-	@for DIR in $(TEST_DIRS); do (cd $$DIR; $(MAKE) clean DABCSYS=$(DABCSYS)) done
+	@for DIR in $(APPLICATIONS_DIRS); do ($(MAKE) clean -f $$DIR/Makefile DABCSYS=$(DABCSYS) _topdir_=$$DIR/) done
 	@for DIR in $(AUTO_DIRS); do (if [ ! -f $$DIR ] ; then rm -rf $$DIR; fi); done
 	@rm -rf $(BLD_DIR) 
 

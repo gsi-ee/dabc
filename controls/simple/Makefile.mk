@@ -1,6 +1,6 @@
 #this is not a plugin, therefore cannot be extracted from main makefile
 
-SCTRLDIR         = controls/simplecontrol
+SCTRLDIR         = controls/simple
 SCTRLDIRI        = $(SCTRLDIR)/dabc
 SCTRLDIRS        = $(SCTRLDIR)/src
 SCTRLTEST1DIR    = $(SCTRLDIR)/test1
@@ -20,7 +20,7 @@ SCTRL_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(SCTRL_S))
 
 ALLHDRS          +=  $(patsubst $(SCTRLDIR)/%.h, $(DABCINCPATH)/%.h, $(SCTRL_H))
 ALLDEPENDENC     += $(SCTRL_D) 
-TEST_DIRS        += $(SCTRLTEST1DIR) $(SCTRLTEST2DIR) 
+APPLICATIONS_DIRS        += $(SCTRLTEST1DIR) $(SCTRLTEST2DIR) 
 
 ##### local rules #####
 

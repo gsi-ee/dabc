@@ -1,16 +1,13 @@
 include $(DABCSYS)/config/Makefile.config
 
-TEST2_NAME     = test2
-
 ## must be similar for every module
 
-TEST2_S        = $(TEST2_NAME).$(SrcSuf)
+TEST2_S        = $(_topdir_)test2.$(SrcSuf)
 TEST2_O        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(TEST2_S))
 TEST2_D        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(TEST2_S))
+TEST2_EXE      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%$(ExeSuf), $(TEST2_S))
 
-TEST2_EXE      = $(BLD_DIR)/$(TEST2_NAME)$(ExeSuf)
-
-ALLDEPENDENC  += $(TEST2_D)
+ALLDEPENDENC   += $(TEST2_D)
 
 exes::  $(TEST2_EXE)
 

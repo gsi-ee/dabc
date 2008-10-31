@@ -13,7 +13,7 @@ CREATE_DIRS += $(DABCDLLPATH) $(DABCINCPATH) $(DABCBINPATH)
 
 include base/Makefile.mk
 
-include controls/simplecontrol/Makefile.mk
+include controls/simple/Makefile.mk
 
 DABC_PLUGINS = plugins/mbs plugins/bnet
 
@@ -21,7 +21,7 @@ DABC_APPLICATIONS = applications/bnet-test applications/bnet-mbs
   
 include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
 
-TEST_DIRS += $(DABC_APPLICATIONS)
+APPLICATIONS_DIRS += $(DABC_APPLICATIONS)
 
 libs:: $(DABCSYS)/config/Makefile.plugins
 
@@ -33,7 +33,7 @@ clean::
 	rm -f $(DABCSYS)/config/Makefile.plugins
 	
 package:: clean
-	tar cf dabc.tar Makefile base/ build/ config/ controls/simplecontrol $(DABC_PLUGINS) $(DABC_APPLICATIONS) --exclude=.svn --exclude=*.bak 
+	tar cf dabc.tar Makefile base/ build/ config/ controls/simple $(DABC_PLUGINS) $(DABC_APPLICATIONS) --exclude=.svn --exclude=*.bak 
 	gzip dabc.tar
 	echo "dabc.tar.gz done" 
 

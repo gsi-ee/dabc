@@ -22,7 +22,7 @@ BASE_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BASE_S))
 
 ALLHDRS         +=  $(patsubst $(BASEDIR)/%.h, $(DABCINCPATH)/%.h, $(BASE_H))
 ALLDEPENDENC    += $(BASE_D)
-TEST_DIRS       += $(BASETESTDIR)
+APPLICATIONS_DIRS       += $(BASETESTDIR)
 
 ##### local rules #####
 
