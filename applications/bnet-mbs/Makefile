@@ -28,7 +28,7 @@ $(BNETTEST_LIB):   $(BNETTEST_O)
 $(BNETTEST_EXE):  $(BNETTEST_EXEO) $(BNETTEST_LIB) $(_topdir_)Makefile $(_topdir_)genmbsfiles.sh
 	$(LD) $(LDFLAGS) $(BNETTEST_EXEO) $(LIBS_FULLSET) -L$(TGTDLLPATH) -lBnetWorker $(OutPutOpt) $(BNETTEST_EXE)
 ifneq ($(wildcard ~/run/bnet/mbs),)
-	cp -f $(BNETTEST_EXE) $(BNETTEST_LIB) $(DABCDLLPATH)/*.so $(BNETBINPATH)/* *.sh ~/run/bnet/mbs
+	cp -f $(BNETTEST_EXE) $(BNETTEST_LIB) $(DABCDLLPATH)/*.so $(BNETBINPATH)/* $(_topdir_)*.sh ~/run/bnet/mbs
 endif
 
 include $(DABCSYS)/config/Makefile.rules
