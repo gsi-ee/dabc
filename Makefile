@@ -19,9 +19,16 @@ include controls/simple/Makefile.mk
 
 DABC_PLUGINS = $(wildcard plugins/*)
 
-DABC_APPLICATIONS = applications/bnet-test applications/bnet-mbs
-  
 -include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
+
+-include controls/xdaq/Makefile.mk
+
+-include gui/java/Makefile.mk
+
+-include gui/Qt/Makefile.mk
+
+
+DABC_APPLICATIONS = applications/bnet-test applications/bnet-mbs
 
 APPLICATIONS_DIRS += $(DABC_APPLICATIONS)
 
