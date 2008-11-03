@@ -4,6 +4,9 @@ ifdef XDAQ_ROOT
 exes::
 	cd $(DABCSYS)/xdaq/dabc; $(MAKE)
 
+clean::
+	@echo "clean XDAQ here"
+
 else
 
 exes::
