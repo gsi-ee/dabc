@@ -5,17 +5,17 @@
 #include "dabc/Factory.h"
 #endif
 
-namespace dabc {
-    
+namespace dabc_root {
+
    class RootFactory : public dabc::Factory {
-      public:  
+      public:
          RootFactory(const char* name) : dabc::Factory(name) {}
-         
+
          virtual dabc::DataInput* CreateDataInput(const char* typ, const char* name, dabc::Command* cmd = 0);
 
          virtual dabc::DataOutput* CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd = 0);
-   };   
-   
+   };
+
 }
 
 #endif

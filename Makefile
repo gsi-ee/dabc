@@ -15,11 +15,13 @@ include base/Makefile.mk
 
 include controls/simple/Makefile.mk
 
-DABC_PLUGINS = plugins/mbs plugins/bnet plugins/verbs plugins/roc plugins/abb
+#DABC_PLUGINS = plugins/mbs plugins/bnet plugins/verbs plugins/roc plugins/abb
+
+DABC_PLUGINS = $(wildcard plugins/*)
 
 DABC_APPLICATIONS = applications/bnet-test applications/bnet-mbs
   
-include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
+-include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
 
 APPLICATIONS_DIRS += $(DABC_APPLICATIONS)
 
