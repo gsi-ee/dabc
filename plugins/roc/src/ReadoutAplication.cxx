@@ -227,12 +227,6 @@ bool roc::ReadoutApplication::ConfigureRoc(int index)
    return res;
 }
 
-bool roc::ReadoutApplication::PluginWorking()
-{
-   return roc::RocCalibrModule::WorkingFlag();
-}
-
-
 bool roc::ReadoutApplication::IsModulesRunning()
 {
    if (DoTaking())

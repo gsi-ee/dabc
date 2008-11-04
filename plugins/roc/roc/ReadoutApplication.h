@@ -53,8 +53,6 @@ namespace roc {
          dabc::String CalibrFileName() const { return GetParStr(DABC_ROC_PAR_CALIBRFILE, ""); }
          int CalibrFileLimit() const { return GetParInt(DABC_ROC_PAR_CALIBRFILELIMIT, 0); }
 
-         static bool PluginWorking();
-
          virtual bool CreateAppModules();
 
          virtual int SMCommandTimeout() const { return 20; }

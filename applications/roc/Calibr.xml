@@ -10,17 +10,17 @@
                 <BufferSize.RocPlugin xsi:type="xsd:integer">65536</BufferSize.RocPlugin>
                 <TransportWindow.RocPlugin xsi:type="xsd:integer">30</TransportWindow.RocPlugin>
                 <NumRocs.RocPlugin xsi:type="xsd:integer">3</NumRocs.RocPlugin>
-                <RocIp0.RocPlugin xsi:type="xsd:string">node01</RocIp0.RocPlugin>
-                <RocIp1.RocPlugin xsi:type="xsd:string">node02</RocIp1.RocPlugin>
-                <RocIp2.RocPlugin xsi:type="xsd:string">node03</RocIp2.RocPlugin>
+                <RocIp0.RocPlugin xsi:type="xsd:string"></RocIp0.RocPlugin>
+                <RocIp1.RocPlugin xsi:type="xsd:string"></RocIp1.RocPlugin>
+                <RocIp2.RocPlugin xsi:type="xsd:string"></RocIp2.RocPlugin>
                 <RocIp3.RocPlugin xsi:type="xsd:string"></RocIp3.RocPlugin>
                 <RocIp4.RocPlugin xsi:type="xsd:string"></RocIp4.RocPlugin>
                 <PoolBuffers.RocPlugin xsi:type="xsd:integer">250</PoolBuffers.RocPlugin>
                 <QueueLength.RocPlugin xsi:type="xsd:integer">20</QueueLength.RocPlugin>
                 <DataServerKind.RocPlugin xsi:type="xsd:string">Str_eam</DataServerKind.RocPlugin>
-                <OutFile.RocPlugin xsi:type="xsd:string"></OutFile.RocPlugin>
+                <OutFile.RocPlugin xsi:type="xsd:string">/d/cbm06/cbmdata/SEP08/raw/run028/run028*.lmd</OutFile.RocPlugin>
                 <OutFileLimit.RocPlugin xsi:type="xsd:integer">20</OutFileLimit.RocPlugin>
-                <DoCalibr.RocPlugin xsi:type="xsd:integer">0</DoCalibr.RocPlugin>
+                <DoCalibr.RocPlugin xsi:type="xsd:integer">2</DoCalibr.RocPlugin>
                 <CalibrFile.RocPlugin xsi:type="xsd:string"></CalibrFile.RocPlugin>
                 <CalibrFileLimit.RocPlugin xsi:type="xsd:integer">100</CalibrFileLimit.RocPlugin>
               </properties> 
