@@ -25,6 +25,7 @@
 include ../../common.mk
 
 INCDIR += ../../include
+LIBDIR += $(PCIDRIVERDIR)/lib
 LDINC += $(addprefix -L ,$(LIBDIR))
 LDFLAGS += -lpcidriver -lmprace
 

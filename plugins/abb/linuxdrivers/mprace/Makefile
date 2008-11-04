@@ -49,6 +49,7 @@ export CFLAGS += -O2 -g $(FLAGS)
 export LDFLAGS += -lrt
 
 ROOTDIR := $(shell pwd)
+export PCIDRIVERDIR := $(ROOTDIR)/../pciDriver2
 
 export INCDIR := $(ROOTDIR)/include
 export SRCDIR := $(ROOTDIR)/src
@@ -77,6 +78,7 @@ dirs:
 	$(Q)mkdir -p $(OBJDIR)
 	$(Q)mkdir -p $(LIBDIR)
 	$(Q)mkdir -p $(DEPENDDIR)
+	$(Q)ln -sf $(PCIDRIVERDIR)/include $(ROOTDIR)/include/mprace/pciDriver
 
 doc:
 	$(Q)doxygen mprace.doxygen
