@@ -113,7 +113,7 @@ LibInstallDir   	= $(DABCSYS)/lib
 #BinInstallDir   	= $(INSTALL_PREFIX)/$(XDAQ_PLATFORM)/bin
 BinInstallDir   	= $(DABCSYS)/bin
 #IncludeInstallDir	= $(INSTALL_PREFIX)/$(XDAQ_PLATFORM)/include
-IncludeInstallDir	= $(DABCSYS)/include
+IncludeInstallDir	= $(DABCSYS)/include/dabc/xd
 
 
 TargetDir		= $(SourceDir)
