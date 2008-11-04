@@ -689,12 +689,12 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       const char* appthrd = cmd->GetStr("AppThrd");
 
       if ((classname==0) || (strlen(classname)==0)) classname = Factory::DfltAppClass();
-      if ((appname==0) || (strlen(appname)==0)) appname = classname;
+      if ((appname!=0) && (strlen(appname)==0)) appname = 0;
 
       Application* app = GetApp();
 
-      if ((app!=0) && (strcmp(app->GetName(), appname)==0)) {
-        DOUT4(("Application %s of class %s already exists", appname, classname));
+      if ((app!=0) && ((appname==0) || (strcmp(app->GetName(), appname)==0))) {
+        DOUT4(("Application with name %s already exists", app->GetName()));
 
       } else {
          if (app!=0) { delete app; app = 0; }

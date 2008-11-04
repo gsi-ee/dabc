@@ -2,7 +2,12 @@
 
 #include "dabc/Manager.h"
 
-dabc::String dabc::Factory::fDfltAppClass = "UserApplication";
+const char* dabc::Factory::DfltAppClass(const char* newdefltclass)
+{
+   static dabc::String dflt = "UserApplication";
+   if (newdefltclass!=0) dflt = newdefltclass;
+   return dflt.c_str();
+}
 
 dabc::Factory* dabc::Factory::NextNewFactory()
 {

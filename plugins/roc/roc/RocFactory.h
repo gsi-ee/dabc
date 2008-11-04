@@ -17,7 +17,7 @@ class RocDevice;
 class RocFactory: public dabc::Factory  {
    public:
 
-      RocFactory(const char* name) : dabc::Factory(name) { SetDfltAppClass("RocReadoutApp"); }
+      RocFactory(const char* name) : dabc::Factory(name) { DfltAppClass("RocReadoutApp"); }
 
       virtual dabc::Application* CreateApplication(dabc::Basic* parent, const char* classname, const char* appname, dabc::Command* cmd);
 

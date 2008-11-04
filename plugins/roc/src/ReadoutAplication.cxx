@@ -13,7 +13,7 @@
 #include "SysCoreDefines.h"
 
 roc::ReadoutApplication::ReadoutApplication(dabc::Basic* parent, const char* name) :
-   dabc::Application(parent, name)
+   dabc::Application(parent, name ? name : "RocPlugin")
 {
    //new dabc::StrParameter(this,DABC_ROC_COMPAR_BOARDIP, "140.181.66.173"); // lxi010.gsi.de
    // todo: later provide more than one roc board as input
@@ -35,7 +35,7 @@ roc::ReadoutApplication::ReadoutApplication(dabc::Basic* parent, const char* nam
    new dabc::StrParameter(this, DABC_ROC_PAR_CALIBRFILE, "");
    new dabc::IntParameter(this, DABC_ROC_PAR_CALIBRFILELIMIT, 0);
 
-   DOUT1(("!!!! Data server plugin created !!!!"));
+   DOUT1(("!!!! Data server plugin created %s !!!!", GetName()));
 }
 
 int roc::ReadoutApplication::DataServerKind() const

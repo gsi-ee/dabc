@@ -32,8 +32,6 @@ namespace dabc {
       public:
          Factory(const char* name);
 
-         static const char* DfltAppClass() { return fDfltAppClass.c_str(); }
-
          virtual Application* CreateApplication(Basic* parent, const char* classname, const char* appname, Command* cmd) { return 0; }
 
          virtual Device* CreateDevice(Basic* parent, const char* classname, const char* devname, Command* cmd) { return 0; }
@@ -51,7 +49,7 @@ namespace dabc {
          virtual DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0) { return 0; }
 
       protected:
-         static void SetDfltAppClass(const char* appclass) { fDfltAppClass = appclass; }
+         static const char* DfltAppClass(const char* newdefltclass = 0);
 
       private:
          static Queue<Factory*> *Factories()
@@ -66,9 +64,6 @@ namespace dabc {
          }
 
          static Factory* NextNewFactory();
-
-         static String fDfltAppClass;
-
    };
 
 }

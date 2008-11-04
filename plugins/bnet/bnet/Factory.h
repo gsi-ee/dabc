@@ -9,7 +9,7 @@ namespace bnet {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const char* name) : dabc::Factory(name) { SetDfltAppClass("BnetCluster"); }
+         Factory(const char* name) : dabc::Factory(name) { DfltAppClass("BnetCluster"); }
 
          virtual dabc::Application* CreateApplication(dabc::Basic* parent, const char* classname, const char* appname, dabc::Command* cmd);
    };
