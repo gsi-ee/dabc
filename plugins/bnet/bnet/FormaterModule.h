@@ -5,7 +5,7 @@
 
 namespace bnet {
     
-   class WorkerPlugin;
+   class WorkerApplication;
     
    class FormaterModule : public dabc::ModuleSync {
       protected:
@@ -17,7 +17,7 @@ namespace bnet {
          
       public:
          FormaterModule(dabc::Manager* mgr, const char* name, 
-                        WorkerPlugin* factory);
+                        WorkerApplication* factory);
                         
          virtual ~FormaterModule();
 

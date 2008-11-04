@@ -6,12 +6,12 @@
 #include "dabc/Command.h"
 #include "dabc/Port.h"
 
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 #include "bnet/common.h"
 
 
 bnet::GeneratorModule::GeneratorModule(dabc::Manager* mgr, const char* name, 
-                                       WorkerPlugin* factory) : 
+                                       WorkerApplication* factory) : 
    dabc::ModuleSync(mgr, name),
    fPool(0),
    fEventCnt(1),

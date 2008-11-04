@@ -1,12 +1,12 @@
 #include "bnet/GlobalDFCModule.h"
 
-#include "bnet/ClusterPlugin.h"
+#include "bnet/ClusterApplication.h"
 
 #include "dabc/Port.h"
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"
 
-bnet::GlobalDFCModule::GlobalDFCModule(dabc::Manager* m, const char* name, ClusterPlugin* plugin) : 
+bnet::GlobalDFCModule::GlobalDFCModule(dabc::Manager* m, const char* name, ClusterApplication* plugin) : 
    dabc::ModuleAsync(m, name),
    fPool(0),
    fMap(),

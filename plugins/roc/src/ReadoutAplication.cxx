@@ -1,4 +1,4 @@
-#include "roc/DataServerPlugin.h"
+#include "roc/ReadoutApplication.h"
 
 #include "dabc/Parameter.h"
 #include "dabc/Command.h"
@@ -6,16 +6,14 @@
 #include "dabc/CommandsSet.h"
 
 #include "mbs/MbsTypeDefs.h"
-#include "mbs/MbsFactory.h"
+#include "mbs/Factory.h"
 
 #include "roc/RocCalibrModule.h"
 
 #include "SysCoreDefines.h"
 
-dabc::String roc::DataServerPlugin::fPluginName = "";
-
-roc::DataServerPlugin::DataServerPlugin(dabc::Manager* m) :
-   dabc::ApplicationPlugin(m, PluginName())
+roc::ReadoutApplication::ReadoutApplication(dabc::Basic* parent, const char* name) :
+   dabc::Application(parent, name)
 {
    //new dabc::StrParameter(this,DABC_ROC_COMPAR_BOARDIP, "140.181.66.173"); // lxi010.gsi.de
    // todo: later provide more than one roc board as input
@@ -37,22 +35,10 @@ roc::DataServerPlugin::DataServerPlugin(dabc::Manager* m) :
    new dabc::StrParameter(this, DABC_ROC_PAR_CALIBRFILE, "");
    new dabc::IntParameter(this, DABC_ROC_PAR_CALIBRFILELIMIT, 0);
 
-
-
    DOUT1(("!!!! Data server plugin created !!!!"));
 }
 
-const char* roc::DataServerPlugin::ItemName()
-{
-   if (fPluginName.length()==0) {
-      fPluginName = dabc::Manager::PluginFolderName();
-      fPluginName += "/";
-      fPluginName += PluginName();
-   }
-   return fPluginName.c_str();
-}
-
-int roc::DataServerPlugin::DataServerKind() const
+int roc::ReadoutApplication::DataServerKind() const
 {
    int kind = mbs::NoServer;
    std::string servertype=GetParCharStar(DABC_ROC_PAR_DATASERVER);
@@ -64,7 +50,7 @@ int roc::DataServerPlugin::DataServerKind() const
    return kind;
 }
 
-const char* roc::DataServerPlugin::RocIp(int nreadout) const
+const char* roc::ReadoutApplication::RocIp(int nreadout) const
 {
    if ((nreadout<0) || (nreadout>=NumRocs())) return 0;
    return GetParCharStar(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nreadout)));
@@ -72,7 +58,7 @@ const char* roc::DataServerPlugin::RocIp(int nreadout) const
 
 
 
-bool roc::DataServerPlugin::CreateAppModules()
+bool roc::ReadoutApplication::CreateAppModules()
 {
    DOUT1(("CreateAppModules starts..·"));
    bool res=false;
@@ -152,9 +138,9 @@ bool roc::DataServerPlugin::CreateAppModules()
       }
 
       if (DoTaking())
-         res = GetManager()->CreateDataOutputTransport("RocComb/Ports/Output1", "OutputThrd", mbs::MbsFactory::LmdFileType(), OutputFileName().c_str(), cmd);
+         res = GetManager()->CreateDataOutputTransport("RocComb/Ports/Output1", "OutputThrd", mbs::Factory::LmdFileType(), OutputFileName().c_str(), cmd);
       else
-         res = GetManager()->CreateDataInputTransport("RocCalibr/Ports/Input", "InputThrd", mbs::MbsFactory::LmdFileType(), OutputFileName().c_str(), cmd);
+         res = GetManager()->CreateDataInputTransport("RocCalibr/Ports/Input", "InputThrd", mbs::Factory::LmdFileType(), OutputFileName().c_str(), cmd);
 
       DOUT1(("Create raw lmd %s file res = %s", (DoTaking() ? "output" : "input"), DBOOL(res)));
       if(!res) return false;
@@ -163,7 +149,7 @@ bool roc::DataServerPlugin::CreateAppModules()
    if ((CalibrFileName().length()>0) && DoCalibr()) {
       cmd = new dabc::CmdCreateDataTransport();
 
-      const char* outtype = mbs::MbsFactory::LmdFileType();
+      const char* outtype = mbs::Factory::LmdFileType();
 
       if ((CalibrFileName().rfind(".root")!=dabc::String::npos) ||
           (CalibrFileName().rfind(".ROOT")!=dabc::String::npos))
@@ -204,14 +190,14 @@ bool roc::DataServerPlugin::CreateAppModules()
    return true;
 }
 
-bool roc::DataServerPlugin::WriteRocRegister(int rocid, int registr, int value)
+bool roc::ReadoutApplication::WriteRocRegister(int rocid, int registr, int value)
 {
    dabc::Command* cmd = new roc::CommandWriteRegister(rocid, registr, value);
    return GetManager()->Execute(GetManager()->LocalCmd(cmd, fFullDeviceName.c_str()), 1);
 }
 
 
-bool roc::DataServerPlugin::ConfigureRoc(int index)
+bool roc::ReadoutApplication::ConfigureRoc(int index)
 {
    bool res = true;
 
@@ -241,18 +227,7 @@ bool roc::DataServerPlugin::ConfigureRoc(int index)
    return res;
 }
 
-bool roc::DataServerPlugin::PluginWorking()
+bool roc::ReadoutApplication::PluginWorking()
 {
    return roc::RocCalibrModule::WorkingFlag();
-}
-
-
-
-void InitUserPlugin(dabc::Manager* mgr)
-{
-   //std::cout<<"iiiiiiiii InitUserPlugin..."<<std::endl;
-   roc::DataServerPlugin* worker = new roc::DataServerPlugin(mgr);
-   // here set defaults if necessary
-
-   if (worker==0);
 }

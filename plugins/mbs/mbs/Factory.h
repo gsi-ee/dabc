@@ -1,5 +1,5 @@
-#ifndef MBS_MbsFactory
-#define MBS_MbsFactory
+#ifndef MBS_Factory
+#define MBS_Factory
 
 #ifndef DABC_Factory
 #include "dabc/Factory.h"
@@ -7,9 +7,9 @@
 
 namespace mbs {
     
-   class MbsFactory : public dabc::Factory {
+   class Factory : public dabc::Factory {
       public:  
-         MbsFactory(const char* name) : dabc::Factory(name) {}
+         Factory(const char* name) : dabc::Factory(name) {}
          
          static const char* FileType() { return "MbsFile"; }
          static const char* NewFileType() { return "MbsNewFile"; }

@@ -8,11 +8,11 @@
 #include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
 bnet::FormaterModule::FormaterModule(dabc::Manager* mgr, 
                                      const char* name, 
-                                     WorkerPlugin* plugin) : 
+                                     WorkerApplication* plugin) : 
    dabc::ModuleSync(mgr, name),
    fNumReadout(1),
    fModus(0)

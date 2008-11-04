@@ -1,4 +1,4 @@
-#include "mbs/MbsFactory.h"
+#include "mbs/Factory.h"
 
 #include "dabc/string.h"
 #include "dabc/logging.h"
@@ -14,10 +14,10 @@
 #include "mbs/MbsDevice.h"
 
 
-mbs::MbsFactory mbsfactory("mbs");
+mbs::Factory mbsfactory("mbs");
 
 
-dabc::Device* mbs::MbsFactory::CreateDevice(dabc::Basic* parent, const char* classname, const char* devname, dabc::Command*)
+dabc::Device* mbs::Factory::CreateDevice(dabc::Basic* parent, const char* classname, const char* devname, dabc::Command*)
 {
    if (strcmp(classname, "MbsDevice")!=0) return 0;
 
@@ -26,11 +26,11 @@ dabc::Device* mbs::MbsFactory::CreateDevice(dabc::Basic* parent, const char* cla
    return new mbs::MbsDevice(parent, devname);
 }
 
-dabc::DataInput* mbs::MbsFactory::CreateDataInput(const char* typ, const char* name, dabc::Command* cmd)
+dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ, const char* name, dabc::Command* cmd)
 {
    if ((typ==0) || (strlen(typ)==0)) return 0;
     
-   DOUT3(("MbsFactory::CreateDataInput %s", typ));
+   DOUT3(("Factory::CreateDataInput %s", typ));
    
    if (strcmp(typ, LmdFileType())==0) {
       int nummulti = 0;
@@ -102,12 +102,12 @@ dabc::DataInput* mbs::MbsFactory::CreateDataInput(const char* typ, const char* n
 }
 
 
-dabc::DataOutput* mbs::MbsFactory::CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd)
+dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd)
 {
     
    if ((typ==0) || (strlen(typ)==0)) return 0;
 
-   DOUT3(("MbsFactory::CreateDataOutput typ:%s", typ)); 
+   DOUT3(("Factory::CreateDataOutput typ:%s", typ)); 
 
    if (strcmp(typ, LmdFileType())==0) {
 

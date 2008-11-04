@@ -6,9 +6,9 @@
 #include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
-bnet::BuilderModule::BuilderModule(dabc::Manager* m, const char* name, WorkerPlugin* factory) :
+bnet::BuilderModule::BuilderModule(dabc::Manager* m, const char* name, WorkerApplication* factory) :
    dabc::ModuleSync(m, name),
    fInpPool(0),
    fOutPool(0),

@@ -7,9 +7,9 @@
 #include "dabc/Parameter.h"
 
 #include "bnet/common.h"
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
-bnet::ReceiverModule::ReceiverModule(dabc::Manager* m, const char* name, WorkerPlugin* factory) : 
+bnet::ReceiverModule::ReceiverModule(dabc::Manager* m, const char* name, WorkerApplication* factory) : 
    dabc::ModuleAsync(m, name),
    fPool(0),
    fRecvRate(),
@@ -452,7 +452,7 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
       
       Stop();
       
-      GetManager()->Submit(GetManager()->LocalCmd(new dabc::Command("CheckModulesStatus"), WorkerPlugin::ItemName()));
+      GetManager()->Submit(GetManager()->LocalCmd(new dabc::Command("CheckModulesStatus"), WorkerApplication::ItemName()));
       
       return;
    }

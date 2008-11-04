@@ -10,7 +10,7 @@
 #include "dabc/timing.h"
 
 #include "mbs/MbsEventAPI.h"
-#include "mbs/MbsFactory.h"
+#include "mbs/Factory.h"
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/MbsDataInput.h"
 #include "mbs/MbsOutputFile.h"
@@ -108,7 +108,7 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
    dabc::Manager mgr("LocalHost");
    
-//   new mbs::MbsFactory(&mgr);
+//   new mbs::Factory(&mgr);
    
    MbsTest1RepeaterModule* m = new MbsTest1RepeaterModule(&mgr, "Repeater");
 
@@ -116,7 +116,7 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
    
    mgr.CreateMemoryPools();
    
-   const char* format = new_format ? mbs::MbsFactory::NewFileType() : mbs::MbsFactory::FileType();
+   const char* format = new_format ? mbs::Factory::NewFileType() : mbs::Factory::FileType();
    
    bool res = mgr.CreateDataInputTransport("Repeater/Ports/Input", "", format, inpfile);
    res = res && mgr.CreateDataOutputTransport("Repeater/Ports/Output", "", format, outfile);

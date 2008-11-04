@@ -13,7 +13,7 @@
 
 namespace bnet {
     
-   class WorkerPlugin;
+   class WorkerApplication;
    
    class SenderModule : public dabc::ModuleAsync {
       protected:
@@ -29,7 +29,7 @@ namespace bnet {
          typedef std::pair<bnet::EventId, SenderRec> SenderPair;
          typedef std::list<bnet::EventId> SenderList;
        
-         WorkerPlugin*     fPlugin;
+         WorkerApplication*     fPlugin;
          
          dabc::PoolHandle*  fPool;
        
@@ -57,7 +57,7 @@ namespace bnet {
          void ReactOnDisconnect(dabc::Port* port);
          
       public:
-         SenderModule(dabc::Manager* m, const char* name, WorkerPlugin* factory);
+         SenderModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
          
          virtual ~SenderModule();
          

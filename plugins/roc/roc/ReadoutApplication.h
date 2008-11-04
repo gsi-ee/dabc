@@ -1,7 +1,7 @@
-#ifndef ROC_DataServerPlugin
-#define ROC_DataServerPlugin
+#ifndef ROC_ReadoutApplication
+#define ROC_ReadoutApplication
 
-#include "dabc/ApplicationPlugin.h"
+#include "dabc/Application.h"
 #include "dabc/Basic.h"
 #include "dabc/threads.h"
 #include "dabc/MemoryPool.h"
@@ -9,9 +9,6 @@
 #include "dabc/Module.h"
 
 #include "roc/RocFactory.h"
-
-#include <vector>
-
 
 #define DABC_ROC_PAR_DATASERVER      "DataServerKind"
 #define DABC_ROC_PAR_ROCIP           "RocIp"
@@ -21,33 +18,30 @@
 #define DABC_ROC_PAR_CALIBRFILE      "CalibrFile"
 #define DABC_ROC_PAR_CALIBRFILELIMIT "CalibrFileLimit"
 
-
-
 namespace roc {
-    
-   class DataServerPlugin : public dabc::ApplicationPlugin {
+
+   class ReadoutApplication : public dabc::Application {
       public:
-         DataServerPlugin(dabc::Manager* m);
+         ReadoutApplication(dabc::Basic* parent, const char* name);
 
-
-         /** Number of ROCs connected to ReadoutModule*/   
+         /** Number of ROCs connected to ReadoutModule*/
          int   NumRocs() const { return GetParInt(DABC_ROC_COMPAR_ROCSNUMBER, 1); }
 
-         /** IP address for ROC of index*/   
+         /** IP address for ROC of index*/
          const char* RocIp(int index = 0) const;
-         
-         /** id number of Mbs server (stream, transport)*/     
+
+         /** id number of Mbs server (stream, transport)*/
          int DataServerKind() const;
 
-         /** Total size of dabc buffer containing served Mbs events*/ 
+         /** Total size of dabc buffer containing served Mbs events*/
          int BufferSize() const { return GetParInt(DABC_ROC_COMPAR_BUFSIZE, 8192);}
-         
+
          int TransWindow() const { return GetParInt(DABC_ROC_COMPAR_TRANSWINDOW, 30);}
 
-         /** Number of buffers each input/output port of readout module*/ 
+         /** Number of buffers each input/output port of readout module*/
          int   PortQueueLength() const {return GetParInt(DABC_ROC_COMPAR_QLENGTH,10);}
 
-            /** Number of buffers each input/output port of readout module*/ 
+            /** Number of buffers each input/output port of readout module*/
          int   NumPoolBuffers() const {return GetParInt(DABC_ROC_COMPAR_POOL_SIZE,50);}
 
          dabc::String OutputFileName() const { return GetParStr(DABC_ROC_PAR_OUTFILE, ""); }
@@ -57,31 +51,23 @@ namespace roc {
          dabc::String CalibrFileName() const { return GetParStr(DABC_ROC_PAR_CALIBRFILE, ""); }
          int CalibrFileLimit() const { return GetParInt(DABC_ROC_PAR_CALIBRFILELIMIT, 0); }
 
-         static const char* ItemName();
-         
-         static const char* PluginName() { return "RocPlugin"; }
          static bool PluginWorking();
-         
-         
+
          virtual bool CreateAppModules();
 
          virtual int SMCommandTimeout() const { return 20; }
-         
-         
+
+
       protected:
 
         /** Send configuration to connected roc*/
         bool ConfigureRoc(int index=0);
-        
+
         bool WriteRocRegister(int rocid, int registr, int value);
-         
+
         /** current full name of roc device (with leading "Device/") */
-        dabc::String fFullDeviceName; 
-         
-         static dabc::String fPluginName;
+        dabc::String fFullDeviceName;
    };
 }
-
-extern "C" void InitUserPlugin(dabc::Manager* mgr);
 
 #endif

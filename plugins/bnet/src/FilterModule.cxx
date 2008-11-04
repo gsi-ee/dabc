@@ -1,8 +1,8 @@
 #include "bnet/FilterModule.h"
 
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
-bnet::FilterModule::FilterModule(dabc::Manager* m, const char* name, WorkerPlugin* factory) : 
+bnet::FilterModule::FilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory) : 
    dabc::ModuleSync(m, name)
 {
    fPool = CreatePool(factory->EventPoolName());

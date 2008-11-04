@@ -5,7 +5,7 @@
 
 namespace bnet {
     
-   class WorkerPlugin;
+   class WorkerApplication;
    
    class GeneratorModule : public dabc::ModuleSync {
       protected:
@@ -17,7 +17,7 @@ namespace bnet {
       public:
          GeneratorModule(dabc::Manager* mgr, 
                          const char* name, 
-                         WorkerPlugin* factory);
+                         WorkerApplication* factory);
 
          virtual void MainLoop();
          

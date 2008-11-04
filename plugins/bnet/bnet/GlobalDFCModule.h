@@ -12,7 +12,7 @@
 
 namespace bnet {
    
-   class ClusterPlugin;
+   class ClusterApplication;
    
    class GlobalDFCModule : public dabc::ModuleAsync {
       protected:  
@@ -43,7 +43,7 @@ namespace bnet {
          void TrySendEventsAssignment(bool force);
          
       public:
-         GlobalDFCModule(dabc::Manager* m, const char* name, ClusterPlugin* factory);
+         GlobalDFCModule(dabc::Manager* m, const char* name, ClusterApplication* factory);
          virtual ~GlobalDFCModule();
          
          virtual void ProcessInputEvent(dabc::Port* port);

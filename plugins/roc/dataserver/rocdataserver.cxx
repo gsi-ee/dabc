@@ -2,7 +2,7 @@
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 
-#include "roc/DataServerPlugin.h"
+#include "roc/ReadoutApplication.h"
 
 #include <unistd.h>
 
@@ -285,7 +285,7 @@ int main(int numc, char* args[])
 
    manager.InstallCtrlCHandler();
 
-   ::InitUserPlugin(&manager);
+   manager.CreateApplication("RocReadoutApp");
 
    manager.Read_XDAQ_XML_Config(configuration);
 
@@ -312,7 +312,7 @@ int main(int numc, char* args[])
 
 //   manager.RunManagerMainLoop();
 
-   while(roc::DataServerPlugin::PluginWorking()) { ::sleep(1); }
+   while(roc::ReadoutApplication::PluginWorking()) { ::sleep(1); }
 //   sleep(10);
 
    DOUT1(("Normal finish of data taking"));

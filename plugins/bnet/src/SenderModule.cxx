@@ -6,9 +6,9 @@
 #include "dabc/Port.h"
 
 #include "bnet/common.h"
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
-bnet::SenderModule::SenderModule(dabc::Manager* m, const char* name, WorkerPlugin* factory) : 
+bnet::SenderModule::SenderModule(dabc::Manager* m, const char* name, WorkerApplication* factory) : 
    dabc::ModuleAsync(m, name),
    fPlugin(factory),
    fPool(0),
@@ -167,7 +167,7 @@ void bnet::SenderModule::StandaloneProcessEvent(dabc::ModuleItem* item, uint16_t
          
          Stop();
          
-         GetManager()->Submit(GetManager()->LocalCmd(new dabc::Command("CheckModulesStatus"), WorkerPlugin::ItemName()));
+         GetManager()->Submit(GetManager()->LocalCmd(new dabc::Command("CheckModulesStatus"), WorkerApplication::ItemName()));
          
          return;
           

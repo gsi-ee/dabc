@@ -9,7 +9,7 @@
 
 namespace bnet {
     
-   class WorkerPlugin;
+   class WorkerApplication;
    
    class BuilderModule : public dabc::ModuleSync {
        
@@ -22,7 +22,7 @@ namespace bnet {
          std::vector<dabc::Buffer*> fBuffers;
          
       public:
-         BuilderModule(dabc::Manager* m, const char* name, WorkerPlugin* factory);
+         BuilderModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
          virtual ~BuilderModule();
          
          virtual void MainLoop();

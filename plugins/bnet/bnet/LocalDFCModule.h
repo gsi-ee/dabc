@@ -5,14 +5,14 @@
 
 namespace bnet {
 
-   class WorkerPlugin;
+   class WorkerApplication;
 
    class LocalDFCModule : public dabc::ModuleAsync {
       protected:  
          dabc::PoolHandle*   fPool;
 
       public:
-         LocalDFCModule(dabc::Manager* m, const char* name, WorkerPlugin* factory);
+         LocalDFCModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
    };
 }
 
