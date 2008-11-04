@@ -8,7 +8,7 @@ include $(DABCSYS)/config/Makefile.config
 
 BNETBINPATH           = $(DABCSYS)/plugins/bnet/scripts
 
-BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetWorker
+BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetTest
 BNETTEST_LIB         = $(TGTDLLPATH)/$(BNETTEST_LIBNAME).$(DllSuf)
 
 BNETTEST_S           = $(wildcard $(_topdir_)*.$(SrcSuf))
@@ -21,7 +21,7 @@ CREATE_DIRS         += $(TGTDLLPATH)
 libs::  $(BNETTEST_LIB)
 
 $(BNETTEST_LIB):  $(BNETTEST_O)
-	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH) "-L$(DABCDLLPATH) -lDabcBnet"
+	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH)
 ifneq ($(wildcard ~/run/bnet),)
 	cp -f $(BNETTEST_LIB) ~/run/bnet
 	cp -f $(DABCDLLPATH)/*.so $(DABCBINPATH)/bnet_exe ~/run/bnet

@@ -5,7 +5,7 @@
 
 namespace bnet {
    
-   class WorkerPlugin;
+   class WorkerApplication;
    
    class MbsFilterModule : public FilterModule {
       protected:
@@ -14,7 +14,7 @@ namespace bnet {
          virtual bool TestBuffer(dabc::Buffer*);
 
       public:
-         MbsFilterModule(dabc::Manager* m, const char* name, WorkerPlugin* factory);
+         MbsFilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
    };   
 }
 

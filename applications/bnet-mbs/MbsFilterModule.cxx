@@ -2,11 +2,11 @@
 
 #include "dabc/logging.h"
 
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
 #include "mbs/MbsTypeDefs.h"
 
-bnet::MbsFilterModule::MbsFilterModule(dabc::Manager* m, const char* name, WorkerPlugin* factory) : 
+bnet::MbsFilterModule::MbsFilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory) : 
    FilterModule(m, name, factory)
 {
    DOUT5(("Create MbsFilterModule %s", name)); 

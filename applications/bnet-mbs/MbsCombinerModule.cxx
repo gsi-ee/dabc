@@ -7,10 +7,10 @@
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
 
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
 bnet::MbsCombinerModule::MbsCombinerModule(dabc::Manager* mgr, const char* name, 
-                                           WorkerPlugin* plugin) : 
+                                           WorkerApplication* plugin) : 
    FormaterModule(mgr, name, plugin),
    fCfgEventsCombine(plugin->CfgEventsCombine()),
    fTransportBufferSize(plugin->TransportBufferSize()),

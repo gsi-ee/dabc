@@ -9,7 +9,7 @@ namespace bnet {
       public:
          MbsGeneratorModule(dabc::Manager* mgr, 
                             const char* name, 
-                            WorkerPlugin* factory) :
+                            WorkerApplication* factory) :
            GeneratorModule(mgr, name, factory) {}
                             
       protected:  

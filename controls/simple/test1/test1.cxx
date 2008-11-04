@@ -8,7 +8,7 @@
 #include "dabc/MemoryPool.h"
 #include "dabc/PoolHandle.h"
 #include "dabc/threads.h"
-#include "dabc/ApplicationPlugin.h"
+#include "dabc/Application.h"
 #include "dabc/SocketDevice.h"
 
 #include <map>
@@ -247,10 +247,10 @@ class Test1WorkerModule : public dabc::ModuleSync {
 };
 
 
-class Test1Plugin: public dabc::ApplicationPlugin  {
+class Test1Plugin: public dabc::Application  {
    public: 
       Test1Plugin(dabc::Manager* m) : 
-         dabc::ApplicationPlugin(m, "Test1Plugin")
+         dabc::Application(m, "Test1Plugin")
       {
       }
 

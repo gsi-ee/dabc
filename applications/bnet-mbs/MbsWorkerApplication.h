@@ -1,31 +1,29 @@
-#ifndef BNET_MbsWorkerPlugin
-#define BNET_MbsWorkerPlugin
+#ifndef BNET_MbsWorkerApplication
+#define BNET_MbsWorkerApplication
 
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
 namespace bnet {
-    
-   class MbsWorkerPlugin : public WorkerPlugin {
+
+   class MbsWorkerApplication : public WorkerApplication {
       public:
-         MbsWorkerPlugin(dabc::Manager* m) : WorkerPlugin(m) { }
-         
+         MbsWorkerApplication(dabc::Basic* parent, const char* name);
+
          virtual bool CreateReadout(const char* portname, int portnumber);
-         
+
          virtual dabc::Module* CreateCombiner(const char* name);
          virtual dabc::Module* CreateBuilder(const char* name);
          virtual dabc::Module* CreateFilter(const char* name);
-         
+
          virtual bool CreateStorage(const char* portname);
-         
+
          void SetMbsFilePars(const char* filebase);
 
          void SetMbsTransportPars();
-         
+
          void SetMbsGeneratorsPars();
 
-   }; 
+   };
 }
-
-extern "C" void InitUserPlugin(dabc::Manager* mgr);
 
 #endif

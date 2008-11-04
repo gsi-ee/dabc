@@ -16,7 +16,7 @@
 
 namespace bnet {
     
-   class WorkerPlugin;
+   class WorkerApplication;
     
    class MbsCombinerModule : public FormaterModule {
       protected:
@@ -50,7 +50,7 @@ namespace bnet {
          
       public:
          MbsCombinerModule(dabc::Manager* mgr, const char* name, 
-                           WorkerPlugin* factory);
+                           WorkerApplication* factory);
          
          virtual ~MbsCombinerModule();
 

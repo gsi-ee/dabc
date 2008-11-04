@@ -11,7 +11,7 @@
 
 namespace bnet {
     
-   class WorkerPlugin;
+   class WorkerApplication;
    
    class MbsBuilderModule : public BuilderModule {
       protected:
@@ -33,7 +33,7 @@ namespace bnet {
          void SendOutputBuffer();
          
       public:
-         MbsBuilderModule(dabc::Manager* m, const char* name, WorkerPlugin* factory);
+         MbsBuilderModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
          virtual ~MbsBuilderModule();
 
          virtual void DoBuildEvent(std::vector<dabc::Buffer*>& bufs);

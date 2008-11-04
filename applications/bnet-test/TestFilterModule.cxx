@@ -6,9 +6,9 @@
 #include "dabc/Port.h"
 
 #include "bnet/common.h"
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
-bnet::TestFilterModule::TestFilterModule(dabc::Manager* m, const char* name, WorkerPlugin* factory) : 
+bnet::TestFilterModule::TestFilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory) : 
    dabc::ModuleAsync(m, name)
 {
    fPool = CreatePool(factory->EventPoolName());

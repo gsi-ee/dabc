@@ -12,7 +12,7 @@
 #include "dabc/PoolHandle.h"
 #include "dabc/Timer.h"
 #include "dabc/TimeSyncModule.h"
-#include "dabc/ApplicationPlugin.h"
+#include "dabc/Application.h"
 
 #include <map>
 #include <math.h>
@@ -221,10 +221,10 @@ class Test2WorkerModule : public dabc::ModuleSync {
 };
 
 
-class Test2Plugin: public dabc::ApplicationPlugin  {
+class Test2Plugin: public dabc::Application  {
    public: 
       Test2Plugin(dabc::Manager* m) : 
-         dabc::ApplicationPlugin(m, "Test2Plugin")
+         dabc::Application(m, "Test2Plugin")
       {
       }
 

@@ -7,7 +7,7 @@
 #include "dabc/Parameter.h"
 #include "dabc/Module.h"
 #include "dabc/CommandDefinition.h"
-#include "dabc/ApplicationPlugin.h"
+#include "dabc/Application.h"
 
 
  
@@ -68,10 +68,10 @@ void dabc::xd::Manager::ParameterEvent(dabc::Parameter* par, int event)
       }
 //   std::cout <<"got holder name:"<<recname <<": for parameter "<<par->GetName()<< std::endl;
 ////// optional/debug: test type of holder. may use this for more precise naming later?
-//   dabc::ApplicationPlugin* apl= dynamic_cast<dabc::ApplicationPlugin*>(holder);
+//   dabc::Application* apl= dynamic_cast<dabc::Application*>(holder);
 //   dabc::GenericDevice* dev= dynamic_cast<dabc::GenericDevice*>(holder);; 
 //   dabc::Module* module=dynamic_cast<dabc::Module*>(holder);  
-//   if(apl)  std::cout <<" -holder is ApplicationPlugin."<<std::endl;
+//   if(apl)  std::cout <<" -holder is Application."<<std::endl;
 //   if(dev)  std::cout <<" -holder is GenericDevice."<<std::endl;
 //   if(module)  std::cout <<" -holder is Module."<<std::endl;
 //////

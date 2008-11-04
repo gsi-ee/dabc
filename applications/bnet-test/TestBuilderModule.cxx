@@ -7,9 +7,9 @@
 #include "dabc/Parameter.h"
 
 #include "bnet/common.h"
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
-bnet::TestBuilderModule::TestBuilderModule(dabc::Manager* m, const char* name, WorkerPlugin* factory) :
+bnet::TestBuilderModule::TestBuilderModule(dabc::Manager* m, const char* name, WorkerApplication* factory) :
    dabc::ModuleAsync(m, name),
    fInpPool(0),
    fOutPool(0),

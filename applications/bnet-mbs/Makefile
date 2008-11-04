@@ -2,7 +2,7 @@ include $(DABCSYS)/config/Makefile.config
 
 BNETBINPATH           = $(DABCSYS)/plugins/bnet/scripts
 
-BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetWorker
+BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetMbs
 BNETTEST_LIB         = $(TGTDLLPATH)/$(BNETTEST_LIBNAME).$(DllSuf)
 
 BNETTEST_EXES        = $(_topdir_)genmbsfiles.$(SrcSuf)
@@ -26,7 +26,7 @@ $(BNETTEST_LIB):   $(BNETTEST_O)
 	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH)
 
 $(BNETTEST_EXE):  $(BNETTEST_EXEO) $(BNETTEST_LIB) $(_topdir_)Makefile $(_topdir_)genmbsfiles.sh
-	$(LD) $(LDFLAGS) $(BNETTEST_EXEO) $(LIBS_FULLSET) -L$(TGTDLLPATH) -lBnetWorker $(OutPutOpt) $(BNETTEST_EXE)
+	$(LD) $(LDFLAGS) $(BNETTEST_EXEO) $(LIBS_CORESET) -lDabcMbs $(OutPutOpt) $(BNETTEST_EXE)
 ifneq ($(wildcard ~/run/bnet/mbs),)
 	cp -f $(BNETTEST_EXE) $(BNETTEST_LIB) $(DABCDLLPATH)/*.so $(BNETBINPATH)/* $(_topdir_)*.sh ~/run/bnet/mbs
 endif

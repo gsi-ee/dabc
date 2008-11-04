@@ -7,9 +7,9 @@
 #include "dabc/Parameter.h"
 
 #include "bnet/common.h"
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
-bnet::MbsBuilderModule::MbsBuilderModule(dabc::Manager* m, const char* name, WorkerPlugin* plugin) :
+bnet::MbsBuilderModule::MbsBuilderModule(dabc::Manager* m, const char* name, WorkerApplication* plugin) :
    BuilderModule(m, name, plugin),
    fCfgEventsCombine(plugin->CfgEventsCombine()),
    fEvntRate(0)

@@ -7,10 +7,10 @@
 #include "dabc/Port.h"
 #include "dabc/Pointer.h"
 
-#include "bnet/WorkerPlugin.h"
+#include "bnet/WorkerApplication.h"
 
 bnet::TestGeneratorModule::TestGeneratorModule(dabc::Manager* mgr, const char* name, 
-                                               WorkerPlugin* factory) : 
+                                               WorkerApplication* factory) : 
    dabc::ModuleAsync(mgr, name),
    fPool(0),
    fEventCnt(0)

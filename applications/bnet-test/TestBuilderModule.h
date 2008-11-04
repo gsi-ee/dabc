@@ -7,7 +7,7 @@
 
 namespace bnet {
     
-   class WorkerPlugin;
+   class WorkerApplication;
    
    class TestBuilderModule : public dabc::ModuleAsync {
       protected:
@@ -19,7 +19,7 @@ namespace bnet {
          std::vector<dabc::Buffer*> fBuffers;
          
       public:
-         TestBuilderModule(dabc::Manager* m, const char* name, WorkerPlugin* factory);
+         TestBuilderModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
          virtual ~TestBuilderModule();
          
          virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);

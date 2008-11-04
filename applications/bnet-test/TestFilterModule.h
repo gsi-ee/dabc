@@ -5,14 +5,14 @@
 
 namespace bnet {
    
-   class WorkerPlugin;
+   class WorkerApplication;
    
    class TestFilterModule : public dabc::ModuleAsync {
       protected:
          dabc::PoolHandle*  fPool;
        
       public:
-         TestFilterModule(dabc::Manager* m, const char* name, WorkerPlugin* factory);
+         TestFilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
          
          virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
    };   

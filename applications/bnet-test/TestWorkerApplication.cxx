@@ -1,8 +1,8 @@
-#include "TestWorkerPlugin.h"
+#include "TestWorkerApplication.h"
 
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
-#include "dabc/Device.h"  
+#include "dabc/Device.h"
 
 #include "bnet/GeneratorModule.h"
 
@@ -17,24 +17,27 @@
 
 #include <iostream>
 
-bnet::TestWorkerPlugin::TestWorkerPlugin(dabc::Manager* m) 
-: WorkerPlugin(m) , fABBActive(false)
-{ 
-// register application specific parameters here:   
+bnet::TestWorkerApplication::TestWorkerApplication(dabc::Basic* parent, const char* name) :
+   WorkerApplication(parent, name) ,
+   fABBActive(false)
+{
+// register application specific parameters here:
 #ifdef __USE_ABB__
     new dabc::StrParameter(this, ABB_PAR_DEVICE, "ABB_Device");
     new dabc::StrParameter(this, ABB_PAR_MODULE, "ABB_Readout");
     new dabc::IntParameter(this, ABB_PAR_BOARDNUM,0);
     new dabc::IntParameter(this, ABB_PAR_BAR,1);
     new dabc::IntParameter(this, ABB_PAR_ADDRESS,(0x8000 >> 2));
-    new dabc::IntParameter(this, ABB_PAR_LENGTH, 8*1024);   
-#endif   
+    new dabc::IntParameter(this, ABB_PAR_LENGTH, 8*1024);
+#endif
+
+    DOUT0(("Set all pars to TestWorker"));
+
+    SetPars(bnet::NetBidirectional, 4, 0);
 }
 
 
-
-
-dabc::Module* bnet::TestWorkerPlugin::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
+dabc::Module* bnet::TestWorkerApplication::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
 
 {
    if (strcmp(classname,"TestGeneratorModule")==0)
@@ -49,17 +52,17 @@ dabc::Module* bnet::TestWorkerPlugin::CreateModule(const char* classname, const 
    if (strcmp(classname,"TestFilterModule")==0)
       return new bnet::TestFilterModule(GetManager(), modulename, this);
    else
-      return bnet::WorkerPlugin::CreateModule(classname, modulename, cmd);
+      return bnet::WorkerApplication::CreateModule(classname, modulename, cmd);
 }
 
-bool bnet::TestWorkerPlugin::CreateReadout(const char* portname, int portnumber)
+bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnumber)
 {
    if (!IsGenerator()) return false;
 
    DOUT1(("CreateReadout buf = %d", ReadoutBufferSize()));
 
-   bool res = false;     
-   dabc::String modulename;    
+   bool res = false;
+   dabc::String modulename;
    dabc::formats(modulename,"Readout%d", portnumber);
    dabc::String abbdevname;
    dabc::String modinputname = modulename+"/Ports/Input";
@@ -74,7 +77,7 @@ bool bnet::TestWorkerPlugin::CreateReadout(const char* portname, int portnumber)
          dcom->SetInt(ABB_PAR_BOARDNUM, GetParInt(ABB_PAR_BOARDNUM, 0));
          dcom->SetInt(ABB_PAR_BAR, GetParInt(ABB_PAR_BAR, 1));
          dcom->SetInt(ABB_PAR_ADDRESS, GetParInt(ABB_PAR_ADDRESS, (0x8000 >> 2)));
-         dcom->SetInt(ABB_PAR_LENGTH, GetParInt(ABB_PAR_LENGTH, 8192));   
+         dcom->SetInt(ABB_PAR_LENGTH, GetParInt(ABB_PAR_LENGTH, 8192));
          res=GetManager()->CreateDevice("AbbDevice",abbdevname.c_str(),dcom);
 
          //GetManager()->Execute(dcom);
@@ -84,16 +87,16 @@ bool bnet::TestWorkerPlugin::CreateReadout(const char* portname, int portnumber)
       }
    else
 #endif
-      {   
+      {
          // create dummy event generator module:
          dabc::Module* m = new bnet::TestGeneratorModule(GetManager(), modulename.c_str(), this);
          GetManager()->MakeThreadForModule(m, Thrd1Name());
-         modulename += "/Ports/Output";   
-         GetManager()->ConnectPorts(modulename.c_str(), portname);      
+         modulename += "/Ports/Output";
+         GetManager()->ConnectPorts(modulename.c_str(), portname);
          fABBActive=false;
-      }   
-      
-   GetManager()->CreateMemoryPools(); // pools must exist before abb transport can connect to module   
+      }
+
+   GetManager()->CreateMemoryPools(); // pools must exist before abb transport can connect to module
    if(fABBActive)
       {
       /// here creation of pci transport from abb device with connection to given input port:
@@ -102,59 +105,38 @@ bool bnet::TestWorkerPlugin::CreateReadout(const char* portname, int portnumber)
 //        dabc::Device* abbdev=GetManager()->FindDevice(abbdevname.c_str());
 //        if(abbdev==0) return false;
 //        bool res=abbdev->Execute(concom);
-/////// following  to test failure:        
+/////// following  to test failure:
 //       DOUT1(("CreateReadout Sleeping 60s ..."));
-//       ::sleep(60); 
-//       DOUT1(("done.")); 
+//       ::sleep(60);
+//       DOUT1(("done."));
       }
 
    return true;
 }
 
-dabc::Module* bnet::TestWorkerPlugin::CreateCombiner(const char* name) 
+dabc::Module* bnet::TestWorkerApplication::CreateCombiner(const char* name)
 {
    dabc::Module* m = new bnet::TestCombinerModule(GetManager(), name, this);
    GetManager()->MakeThreadForModule(m, Thrd1Name());
    return m;
 }
 
-dabc::Module* bnet::TestWorkerPlugin::CreateBuilder(const char* name)
+dabc::Module* bnet::TestWorkerApplication::CreateBuilder(const char* name)
 {
    dabc::Module* m = new bnet::TestBuilderModule(GetManager(), name, this);
-   GetManager()->MakeThreadForModule(m, Thrd2Name()); 
+   GetManager()->MakeThreadForModule(m, Thrd2Name());
    return m;
 }
 
-dabc::Module* bnet::TestWorkerPlugin::CreateFilter(const char* name)
+dabc::Module* bnet::TestWorkerApplication::CreateFilter(const char* name)
 {
    dabc::Module* m = new bnet::TestFilterModule(GetManager(), name, this);
    GetManager()->MakeThreadForModule(m, Thrd2Name());
    return m;
 }
 
-bool bnet::TestWorkerPlugin::CreateStorage(const char* portname)
+bool bnet::TestWorkerApplication::CreateStorage(const char* portname)
 {
-   return bnet::WorkerPlugin::CreateStorage(portname);
+   return bnet::WorkerApplication::CreateStorage(portname);
 }
 
-
-
-
-
-// _____________________________________________________________________
-
-void InitUserPlugin(dabc::Manager* mgr)
-{
-   //std::cout<<"iiiiiiiii InitUserPlugin..."<<std::endl;
-   
-   bool is_all_to_all = bnet::NetBidirectional;
-   int CombinerModus = 0;
-   int NumReadouts = 4;
-
-   bnet::TestWorkerPlugin* worker = new bnet::TestWorkerPlugin(mgr);
-
-   worker->SetPars(is_all_to_all, NumReadouts, CombinerModus);
-
-
-   
-}

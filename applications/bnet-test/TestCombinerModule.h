@@ -9,7 +9,7 @@
 
 namespace bnet {
     
-   class WorkerPlugin;
+   class WorkerApplication;
     
    class TestCombinerModule : public dabc::ModuleAsync {
       protected:
@@ -30,7 +30,7 @@ namespace bnet {
          
       public:
          TestCombinerModule(dabc::Manager* mgr, const char* name, 
-                        WorkerPlugin* factory);
+                        WorkerApplication* factory);
          
          virtual ~TestCombinerModule();
          
