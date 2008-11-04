@@ -15,8 +15,8 @@
 
 
 namespace dabc {
- 
-   class Module;   
+
+   class Module;
    class FileIO;
    class DataInput;
    class DataOutput;
@@ -24,29 +24,37 @@ namespace dabc {
    class Device;
    class Folder;
    class WorkingThread;
-   
+   class Application;
+
    class Factory : public Basic {
-      friend class Manager; 
-       
-      public: 
+      friend class Manager;
+
+      public:
          Factory(const char* name);
-          
-         virtual Device* CreateDevice(Basic* parent, const char* classname, const char* devname, Command* cmd) { return 0; } 
-         
+
+         static const char* DfltAppClass() { return fDfltAppClass.c_str(); }
+
+         virtual Application* CreateApplication(Basic* parent, const char* classname, const char* appname, Command* cmd) { return 0; }
+
+         virtual Device* CreateDevice(Basic* parent, const char* classname, const char* devname, Command* cmd) { return 0; }
+
          virtual WorkingThread* CreateThread(Basic* parent, const char* classname, const char* thrdname, const char* thrddev, Command* cmd) { return 0; }
-          
+
          virtual Module* CreateModule(const char* classname, const char* modulename, Command* cmd) { return 0; }
-          
+
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option) { return 0; }
-         
+
          virtual Folder* ListMatchFiles(const char* typ, const char* filemask) { return 0; }
-         
+
          virtual DataInput* CreateDataInput(const char* typ, const char* name, Command* cmd = 0) { return 0; }
 
          virtual DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0) { return 0; }
 
+      protected:
+         static void SetDfltAppClass(const char* appclass) { fDfltAppClass = appclass; }
+
       private:
-         static Queue<Factory*> *Factories() 
+         static Queue<Factory*> *Factories()
          {
             static Queue<Factory*> f(16, true);
             return &f;
@@ -56,11 +64,13 @@ namespace dabc {
             static Mutex m;
             return &m;
          }
-         
+
          static Factory* NextNewFactory();
-         
+
+         static String fDfltAppClass;
+
    };
-   
+
 }
 
 #endif
