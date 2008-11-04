@@ -17,6 +17,8 @@ class RocDevice;
 class RocFactory: public dabc::Factory  {
    public:
 
+      RocFactory(const char* name) : dabc::Factory(name) { SetDfltAppClass("RocReadoutApp"); }
+
       virtual dabc::Application* CreateApplication(dabc::Basic* parent, const char* classname, const char* appname, dabc::Command* cmd);
 
       virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
@@ -24,15 +26,9 @@ class RocFactory: public dabc::Factory  {
       virtual dabc::Device* CreateDevice(dabc::Basic* parent, const char* classname, const char* devname, dabc::Command* com);
 
       virtual dabc::DataOutput* CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd = 0);
-
-    private:
-         RocFactory();
-
-    static RocFactory gRocFactory;
-
 };
 
-}// namespace
+}
 
 #endif
 

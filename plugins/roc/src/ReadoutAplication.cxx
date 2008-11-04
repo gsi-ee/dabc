@@ -231,3 +231,16 @@ bool roc::ReadoutApplication::PluginWorking()
 {
    return roc::RocCalibrModule::WorkingFlag();
 }
+
+
+bool roc::ReadoutApplication::IsModulesRunning()
+{
+   if (DoTaking())
+      if (!dabc::mgr()->IsModuleRunning("RocComb")) return false;
+
+   if (DoCalibr())
+      if (!dabc::mgr()->IsModuleRunning("RocCalibr")) return false;
+
+   return true;
+}
+

@@ -1,0 +1,1 @@
+LIBS_EXTRA =  -lDabcBnet  -lDabcMbs  -lDabcKnut  -lDabcRoot

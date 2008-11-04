@@ -675,6 +675,9 @@ namespace dabc {
          // this method is used from Factory to register factory when it created
          void AddFactory(Factory* factory);
    };
+
+   inline dabc::Manager* mgr() { return dabc::Manager::Instance(); }
+
 }
 
 #endif

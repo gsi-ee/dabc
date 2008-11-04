@@ -24,6 +24,8 @@ namespace roc {
       public:
          ReadoutApplication(dabc::Basic* parent, const char* name);
 
+         virtual bool IsModulesRunning();
+
          /** Number of ROCs connected to ReadoutModule*/
          int   NumRocs() const { return GetParInt(DABC_ROC_COMPAR_ROCSNUMBER, 1); }
 

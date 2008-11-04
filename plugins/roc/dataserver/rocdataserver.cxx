@@ -2,7 +2,7 @@
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 
-#include "roc/ReadoutApplication.h"
+#include "dabc/Application.h"
 
 #include <unistd.h>
 
@@ -100,6 +100,8 @@ void TestSpeed()
    DOUT1(("Tm %5.3f s Get old speed mps = %5.1f MBs %5.1f ", tm, cnt / tm * 1e-6, cnt / tm * 6e-6));
 }
 */
+
+/*
 
 #include "SysCoreData.h"
 #include "SysCoreSorter.h"
@@ -258,7 +260,7 @@ void TestCalibr()
     }
 
 }
-
+*/
 
 int main(int numc, char* args[])
 {
@@ -312,7 +314,7 @@ int main(int numc, char* args[])
 
 //   manager.RunManagerMainLoop();
 
-   while(roc::ReadoutApplication::PluginWorking()) { ::sleep(1); }
+   while(dabc::mgr()->GetApp()->IsModulesRunning()) { ::sleep(1); }
 //   sleep(10);
 
    DOUT1(("Normal finish of data taking"));

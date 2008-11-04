@@ -9,15 +9,7 @@
 #include "dabc/logging.h"
 
 
-roc::RocFactory roc::RocFactory::gRocFactory;
-
-roc::RocFactory::RocFactory()
- : dabc::Factory(DABC_ROC_NAME_PLUGIN)
-{
-   SetDfltAppClass("RocReadoutApp");
-
-   DOUT1(("-----------RocFactory::CONSTRUCTOR!"));
-}
+roc::RocFactory rocfactory("roc");
 
 dabc::Application* roc::RocFactory::CreateApplication(dabc::Basic* parent, const char* classname, const char* appname, dabc::Command* cmd)
 {
@@ -64,9 +56,3 @@ dabc::DataOutput* roc::RocFactory::CreateDataOutput(const char* typ, const char*
 
    return out;
 }
-
-
-
-
-
-
