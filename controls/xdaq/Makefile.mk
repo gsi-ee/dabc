@@ -1,15 +1,16 @@
 ifdef XDAQ_ROOT
 
 
-exes::
+libs::
 	cd $(DABCSYS)/controls/xdaq/dabc; $(MAKE)
 
 clean::
-	@echo "clean XDAQ here"
+	cd $(DABCSYS)/controls/xdaq/dabc/nodecontrol ; rm -rf lib; rm -rf src/*/*.o; rm -rf src/*/*.d
+	
 
 else
 
-exes::
+libs::
 	@echo "XDAQ not installed/configured"
 
 
