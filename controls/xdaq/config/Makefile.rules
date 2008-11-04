@@ -108,9 +108,13 @@ PackageIncludeDirs	= $(ConfigDir) $(SourceDir)/$(Package)/include/$(XDAQ_OS) $(S
 			 $(InstallationIncludeDirs)
 endif
 
-LibInstallDir   	= $(INSTALL_PREFIX)/$(XDAQ_PLATFORM)/lib
-BinInstallDir   	= $(INSTALL_PREFIX)/$(XDAQ_PLATFORM)/bin
-IncludeInstallDir	= $(INSTALL_PREFIX)/$(XDAQ_PLATFORM)/include
+#LibInstallDir   	= $(INSTALL_PREFIX)/$(XDAQ_PLATFORM)/lib
+LibInstallDir   	= $(DABCSYS)/lib
+#BinInstallDir   	= $(INSTALL_PREFIX)/$(XDAQ_PLATFORM)/bin
+BinInstallDir   	= $(DABCSYS)/bin
+#IncludeInstallDir	= $(INSTALL_PREFIX)/$(XDAQ_PLATFORM)/include
+IncludeInstallDir	= $(DABCSYS)/include
+
 
 TargetDir		= $(SourceDir)
 LibDir			= $(XDAQ_USER)/$(Project)/$(Package)/lib/$(XDAQ_OS)/$(XDAQ_PLATFORM)
