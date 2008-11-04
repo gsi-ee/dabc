@@ -1,1 +1,0 @@
-cmd_/u/adamczew/lxgsi/xdaq/devel/dabc/linuxdrivers/pciDriver2/src/driver/pciDriver.ko := ld -m elf_x86_64 -r -o /u/adamczew/lxgsi/xdaq/devel/dabc/linuxdrivers/pciDriver2/src/driver/pciDriver.ko /u/adamczew/lxgsi/xdaq/devel/dabc/linuxdrivers/pciDriver2/src/driver/pciDriver.o /u/adamczew/lxgsi/xdaq/devel/dabc/linuxdrivers/pciDriver2/src/driver/pciDriver.mod.o
