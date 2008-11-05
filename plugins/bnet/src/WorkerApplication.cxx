@@ -23,7 +23,7 @@ const char* bnet::WorkerApplication::ItemName()
 
 
 bnet::WorkerApplication::WorkerApplication(dabc::Basic* parent, const char* name) :
-   dabc::Application(parent, name)
+   dabc::Application(parent, name ? name : PluginName())
 {
    new dabc::IntParameter(this, "IsGenerator", 1);
    new dabc::IntParameter(this, "IsSender", 0);

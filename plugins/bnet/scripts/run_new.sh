@@ -44,7 +44,7 @@ then
    uselog=true
 fi
 
-userlibs=TestBnetWorker libBnetTest.so
+userlibs='TestBnetWorker libBnetTest.so'
 clusterlibs=BnetCluster 
 
 if [[ "$devicesID" == u* ]]
