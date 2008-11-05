@@ -12,7 +12,7 @@
 #include "TestFilterModule.h"
 
 #ifdef __USE_ABB__
-#include "dabc/AbbFactory.h"
+#include "abb/AbbFactory.h"
 #endif
 
 #include <iostream>

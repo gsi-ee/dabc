@@ -200,9 +200,9 @@ int main(int numc, char* args[])
 {
    dabc::SetDebugLevel(1);
 
-   if (numc<7) {
+   if (numc<6) {
       EOUT(("Too few arguments for bnet_exe"));
-      DOUT1(( "Usage: bnet_exe nodeid numnodes devices controllerId apptype firstlib [secondlib, thrirdlib, ...]"));
+      DOUT1(( "Usage: bnet_exe nodeid numnodes devices controllerId apptype [firstlib secondlib, thrirdlib, ...]"));
       return 1;
    }
 
