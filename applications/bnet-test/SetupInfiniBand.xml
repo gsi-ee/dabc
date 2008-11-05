@@ -45,8 +45,10 @@
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
 		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>     
         <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
-       
-c:Context url="http://node01.cluster.domain:1972">
+
+</xc:Context>
+
+<xc:Context url="http://node01.cluster.domain:1972">
 		<xc:Application class="dabc::xd::Worker" id="42" instance="2" network="local">
 			<properties xmlns="urn:xdaq-application:dabc::xd::Worker" xsi:type="soapenc:Struct">
                 <debugLevel xsi:type="xsd:integer">1</debugLevel>

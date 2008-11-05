@@ -32,12 +32,10 @@
 
 <!-- Shared object library that contains the implementation -->
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_USER_DIR}/../libKnut.so</xc:Module>
-        <xc:Module>${DABC_USER_DIR}/../libDabcKnut.so</xc:Module>
-        <xc:Module>${DABC_USER_DIR}/libRocDataserver.so</xc:Module>
-        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/${XDAQ_OS}/${XDAQ_PLATFORM}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcKnut.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
 
 </xc:Context>
 
