@@ -7,11 +7,7 @@
                 <nodeId xsi:type="xsd:unsignedInt">1</nodeId>
                 <workerTid xsi:type="xsd:unsignedInt">42</workerTid>
                 <controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>    	
-<!--                <HostIP.RocPlugin xsi:type="xsd:string">lxg0517</HostIP.RocPlugin> -->
-                <UdpDataPort.RocPlugin xsi:type="xsd:integer">13131</UdpDataPort.RocPlugin>
-                <UdpControlPort.RocPlugin xsi:type="xsd:integer">13132</UdpControlPort.RocPlugin>
-                <BufferSize.RocPlugin xsi:type="xsd:integer">8192</BufferSize.RocPlugin>
-                <MaxCredits.RocPlugin xsi:type="xsd:integer">15</MaxCredits.RocPlugin>
+                <TransportWindow.RocPlugin xsi:type="xsd:integer">15</TransportWindow.RocPlugin>
                 <NumRocs.RocPlugin xsi:type="xsd:integer">2</NumRocs.RocPlugin>
                 <RocIp0.RocPlugin xsi:type="xsd:string">lxi010</RocIp0.RocPlugin>
                 <RocIp1.RocPlugin xsi:type="xsd:string">lxi011</RocIp1.RocPlugin>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <DabcLaunch>
 <Labels
-DabcMaster="DABC Master"
+DabcMaster="DABC master node"
 DabcName="DABC Name"
 DabcUserPath="DABC user path"
 DabcSystemPath="DABC system path"
@@ -12,9 +12,9 @@ DabcServers="%Number of needed DIM servers%"
 <Fields
 DabcMaster="lxg0517.gsi.de"
 DabcName="Worker:42"
-DabcUserPath="/misc/adamczew/xdaq/devel/dabc/core/roc/dataserver"
-DabcSystemPath="/misc/adamczew/xdaq/devel/dabc"
-DabcSetup="SetupRoc.xml"
+DabcUserPath="/misc/adamczew/dabc.workspace/dabc/applications/roc/"
+DabcSystemPath="/misc/adamczew/dabc.workspace/dabc"
+DabcSetup="SetupRocJoern.xml"
 DabcScript=""
 DabcServers="-1"
 />
