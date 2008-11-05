@@ -10,38 +10,37 @@
 #include "bnet/common.h"
 
 
-bnet::GeneratorModule::GeneratorModule(dabc::Manager* mgr, const char* name, 
-                                       WorkerApplication* factory) : 
-   dabc::ModuleSync(mgr, name),
+bnet::GeneratorModule::GeneratorModule(const char* name, WorkerApplication* factory) :
+   dabc::ModuleSync(name),
    fPool(0),
    fEventCnt(1),
    fUniqueId(0)
 {
-   SetSyncCommands(true); 
-    
+   SetSyncCommands(true);
+
    fPool = CreatePool(factory->ReadoutPoolName());
-   
+
    fBufferSize = factory->ReadoutBufferSize();
 
    CreateOutput("Output", fPool, ReadoutQueueSize);
-   
+
    new dabc::IntParameter(this, "UniqueId", 0);
 }
 
 void bnet::GeneratorModule::MainLoop()
 {
-   fUniqueId = GetParInt("UniqueId", 0); 
-   
+   fUniqueId = GetParInt("UniqueId", 0);
+
 //   DOUT1(("GeneratorModule::MainLoop fUniqueId = %llu", fUniqueId));
-    
+
    dabc::BufferGuard buf;
-    
+
    while (TestWorking()) {
 
       buf = TakeBuffer(fPool, fBufferSize);
-              
+
       GeneratePacket(buf());
-      
+
       Send(Output(0), buf);
    }
 }

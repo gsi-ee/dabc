@@ -41,7 +41,7 @@ void dabc::Parameter::Changed()
 
 void dabc::Parameter::RaiseEvent(int evt)
 {
-   if (GetManager()) GetManager()->ParameterEvent(this, evt);
+   if (dabc::mgr()) dabc::mgr()->ParameterEvent(this, evt);
 }
 
 dabc::Basic* dabc::Parameter::GetHolder()

@@ -10,9 +10,10 @@
 #include "dabc/Pointer.h"
 #include "dabc/Manager.h"
 
-dabc::AbbReadoutModule::AbbReadoutModule(dabc::Manager* mgr, const char* name,
-                                         dabc::Command* cmd)
-   : dabc::ModuleAsync(mgr, name), fPool(0), fStandalone(true)
+dabc::AbbReadoutModule::AbbReadoutModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name),
+   fPool(0),
+   fStandalone(true)
 {
          int buffsize = cmd->GetInt(ABB_COMPAR_BUFSIZE, 16384);
          int queuelen = cmd->GetInt(ABB_COMPAR_QLENGTH, 10);

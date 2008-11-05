@@ -6,21 +6,21 @@
 #include "dabc/Command.h"
 
 namespace dabc {
-    
-   class MemoryPool; 
+
+   class MemoryPool;
    class CommandsQueue;
-   
+
    class CommandChannelModule : public ModuleAsync {
       protected:
          PoolHandle*  fPool;
          bool           fIsMaster;
          CommandsQueue* fCmdOutQueue;
       public:
-         CommandChannelModule(Manager* mgr, int numnodes);
+         CommandChannelModule(int numnodes);
          virtual ~CommandChannelModule();
-         
+
          MemoryPool* GetPool();
-         
+
          virtual int ExecuteCommand(Command* cmd);
          virtual void ProcessInputEvent(Port* port);
          virtual void ProcessOutputEvent(Port* port);
@@ -28,13 +28,13 @@ namespace dabc {
          virtual void ProcessConnectEvent(Port* port);
          virtual void ProcessDisconnectEvent(Port* port);
 
-         
-      protected:  
+
+      protected:
          void SendSubmittedCommands();
-         
+
          void ConnDissPort(Port* port, bool on);
-         
-   };   
+
+   };
 }
 
 #endif

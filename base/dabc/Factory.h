@@ -32,7 +32,7 @@ namespace dabc {
       public:
          Factory(const char* name);
 
-         virtual Application* CreateApplication(Basic* parent, const char* classname, const char* appname, Command* cmd) { return 0; }
+         virtual Application* CreateApplication(const char* classname, const char* appname, Command* cmd) { return 0; }
 
          virtual Device* CreateDevice(Basic* parent, const char* classname, const char* devname, Command* cmd) { return 0; }
 

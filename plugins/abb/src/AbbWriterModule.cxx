@@ -10,9 +10,11 @@
 #include "dabc/Pointer.h"
 #include "dabc/Manager.h"
 
-dabc::AbbWriterModule::AbbWriterModule(dabc::Manager* mgr, const char* name,
-                                         dabc::Command* cmd)
-   : dabc::ModuleSync(mgr, name), fPool(0), fStandalone(true), fBufferSize(0)
+dabc::AbbWriterModule::AbbWriterModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleSync(name),
+   fPool(0),
+   fStandalone(true),
+   fBufferSize(0)
 {
          fBufferSize = cmd->GetInt(ABB_COMPAR_BUFSIZE, 16384);
          int queuelen = cmd->GetInt(ABB_COMPAR_QLENGTH, 10);

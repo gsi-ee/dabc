@@ -16,15 +16,15 @@ char MyHostName[500];
 
 const char* GetMyHostName()
 {
-   strcpy(MyHostName, ""); 
-    
+   strcpy(MyHostName, "");
+
    if (gethostname(MyHostName, sizeof(MyHostName))==0) return MyHostName;
-   
+
    strcpy(MyHostName, getenv("HOSTNAME"));
-   
+
    if (strlen(MyHostName)==0) strcpy(MyHostName, "host");
-   
-   return MyHostName;   
+
+   return MyHostName;
 }
 
 dabc::StandaloneManager::StandaloneManager(int nodeid, int numnodes, bool usesm) :
@@ -48,11 +48,11 @@ dabc::StandaloneManager::StandaloneManager(int nodeid, int numnodes, bool usesm)
 
    fClusterNames[NodeId()] = GetName();
    fClusterActive[NodeId()] = true;
-   
+
    // if this is main manager, we know that we are alive
-   if (fIsMainMgr) 
+   if (fIsMainMgr)
       fMainMgrName = GetName();
-      
+
    if (usesm) InitSMmodule();
 
    init();
@@ -60,12 +60,12 @@ dabc::StandaloneManager::StandaloneManager(int nodeid, int numnodes, bool usesm)
 
 dabc::StandaloneManager::~StandaloneManager()
 {
-   DOUT3(("dabc::StandaloneManager::~StandaloneManager() starts")); 
+   DOUT3(("dabc::StandaloneManager::~StandaloneManager() starts"));
 
    if (IsMainManager())
       DisconnectCmdChannels();
-   else 
-      WaitDisconnectCmdChannel();   
+   else
+      WaitDisconnectCmdChannel();
 
    DOUT0(("Finish"));
 
@@ -82,89 +82,89 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
 {
    const char* devname = "MgrDev";
    const char* devclass = "";
-   
+
    if (deviceid==1) devclass = "SocketDevice"; else
    if (deviceid==2) devclass = "VerbsDevice";
-   
+
    Device* dev = 0;
    if (CreateDevice(devclass, devname))
       dev = FindDevice(devname);
-   
+
    if ((dev==0) || (dev->ProcessorThread()==0)) {
       EOUT(("Cannot create device %s of class %s  for command channel. Abort", devname, devclass));
-      exit(1);   
+      exit(1);
    }
-   
+
    fCmdDevName = dev->GetFullName(this/*dev->GetParent()*/);
    DOUT1(("Device name = %s", fCmdDevName.c_str()));
 
-   fCmdChannel = new CommandChannelModule(this, IsMainManager() ? numnodes-1 : 1);
-   
+   fCmdChannel = new CommandChannelModule(IsMainManager() ? numnodes-1 : 1);
+
    fCmdChannel->AssignProcessorToThread(dev->ProcessorThread());
 
    CreateMemoryPools();
-   
+
    fCmdChannel->SetAppId(77);
    fCmdChannel->GetPool()->SetAppId(77);
    dev->SetAppId(77);
 
    fCmdChannel->Start();
    DOUT3(( "Started CommandChannelModule module"));
-      
+
    dabc::CommandClient cli;
 
    if (IsMainManager()) {
-       
+
       Command* scmd = new Command("StartServer");
       scmd->SetStr("CmdChannel", "StdMgrCmd");
       scmd->SetKeepAlive(true);
-      SubmitLocal(cli, scmd, fCmdDevName.c_str()); 
+      SubmitLocal(cli, scmd, fCmdDevName.c_str());
 
       if (cli.WaitCommands(10)) {
-         fCmdDeviceId = scmd->GetPar("ConnId");  
-          
+         fCmdDeviceId = scmd->GetPar("ConnId");
+
          std::ofstream f(controllerID);
          f << fCmdDeviceId << std::endl;
          dabc::Command::Finalise(scmd);
-      } else {    
+      } else {
          EOUT(("Cannot start server. HALT"));
          dabc::Command::Finalise(scmd);
-         exit(1);   
+         exit(1);
       }
-      
+
       int cnt = 100;
-      
+
       while ((cnt-->0) && (NumActiveNodes()<numnodes)) {
-         MicroSleep(100000); 
+         MicroSleep(100000);
       }
-      
+
       if (NumActiveNodes() < numnodes) {
          EOUT(("Not all nodes are connected. Try to continue"));
       }
-     
+
    } else {
-       
+
       Command* cmdr = new Command("RegisterSlave");
       cmdr->SetStr("SlaveName", GetName());
       cmdr->SetInt("SlaveNodeId", fNodeId);
       cmdr->SetKeepAlive(true);
-      
+
       SubmitLocal(cli, Device::MakeRemoteCommand(cmdr, controllerID, "StdMgrCmd"), fCmdDevName.c_str());
-      
+
       if (cli.WaitCommands(7)) {
-         DOUT2(("RegisterSlave execution OK serv = %s connid = %s", 
+         DOUT2(("RegisterSlave execution OK serv = %s connid = %s",
            cmdr->GetStr("ServerId","null"), cmdr->GetPar("ConnId")));
       } else {
          EOUT(("RegisterSlave command fail. Halt"));
          exit(1);
       }
-      
+
       fMainMgrName = cmdr->GetStr("MainMgr","Node0");
       fClusterNames[0] = fMainMgrName;
       fClusterActive[0] = true;
-      
+
       DOUT2(("Main manager = %s", fMainMgrName.c_str()));
-       
+
       Command* cmd = new CommandDirectConnect(false, FORMAT(("%s/CommandChannel/Ports/Port0", ModulesFolderName())));
       cmd->SetPar("ConnId", cmdr->GetPar("ConnId"));
       cmd->SetPar("ServerId", cmdr->GetPar("ServerId"));
@@ -174,22 +174,22 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       dabc::Command::Finalise(cmdr);
 
       bool res = cli.WaitCommands(5);
-    
+
       if (!res) {
-         EOUT(("Not able to connect commands channel")); 
+         EOUT(("Not able to connect commands channel"));
          exit(1);
       }
    }
 
    DOUT3(("Is it OK ?????"));
-   
+
    if (IsMainManager()) {
-   
+
       MicroSleep(1000000);
       DOUT0(("Now numactive = %d", NumActiveNodes()));
-      
+
       if (NumActiveNodes()<numnodes)
-        for (int node = 0; node <NumNodes();node++) 
+        for (int node = 0; node <NumNodes();node++)
            if ((node!=NodeId()) && !IsNodeActive(node))
               DOUT1(("  Node %d is not active", node));
    }
@@ -199,76 +199,76 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
 {
    const char* devname = "MgrDev";
    const char* devclass = "";
-   
+
    if (deviceid==1) devclass = "SocketDevice"; else
    if (deviceid==2) devclass = "VerbsDevice";
-   
+
    Device* dev = 0;
    if (CreateDevice(devclass, devname))
       dev = FindDevice(devname);
-   
+
    if ((dev==0) || (dev->ProcessorThread()==0)) {
       EOUT(("Cannot create device %s of class %s  for command channel. Abort", devname, devclass));
-      exit(1);   
+      exit(1);
    }
-   
+
    fCmdDevName = dev->GetFullName(this /*dev->GetParent()*/);
    DOUT1(("Device name = %s", fCmdDevName.c_str()));
-   
-   fCmdChannel = new CommandChannelModule(this, IsMainManager() ? numnodes-1 : 1);
+
+   fCmdChannel = new CommandChannelModule(IsMainManager() ? numnodes-1 : 1);
 
    fCmdChannel->AssignProcessorToThread(dev->ProcessorThread());
-   
+
    CreateMemoryPools();
 
    fCmdChannel->SetAppId(77);
    fCmdChannel->GetPool()->SetAppId(77);
    dev->SetAppId(77);
-   
+
    // up to now we are in normal situation
 
    fCmdChannel->Start();
    DOUT3(( "Started CommandChannelModule module"));
-      
+
    dabc::CommandClient cli;
 
-   ChangeManagerName(FORMAT(("Node%d", fNodeId))); 
+   ChangeManagerName(FORMAT(("Node%d", fNodeId)));
 
    fMainMgrName = "Node0";
 
    if (IsMainManager()) {
-       
+
       // start server without extra cmd channel
       Command* scmd = new Command("StartServer");
 //      scmd->SetStr("CmdChannel","StdMgrCmd");
       scmd->SetKeepAlive(true);
-      SubmitLocal(cli, scmd, fCmdDevName.c_str()); 
+      SubmitLocal(cli, scmd, fCmdDevName.c_str());
 
       if (cli.WaitCommands(10)) {
-         fCmdDeviceId = scmd->GetPar("ConnId");  
-          
+         fCmdDeviceId = scmd->GetPar("ConnId");
+
          std::ofstream f(controllerID);
          f << fCmdDeviceId << std::endl;
          dabc::Command::Finalise(scmd);
-      } else {    
+      } else {
          EOUT(("Cannot start server. HALT"));
          dabc::Command::Finalise(scmd);
-         exit(1);   
+         exit(1);
       }
-    
+
       fClusterNames[0] = "Node0";
-    
-      for (int nrem = 1; nrem < numnodes; nrem++) 
-         fClusterNames[nrem] = FORMAT(("Node%d", nrem)); 
-      
+
+      for (int nrem = 1; nrem < numnodes; nrem++)
+         fClusterNames[nrem] = FORMAT(("Node%d", nrem));
+
       for (int nslave=1; nslave < NumNodes(); nslave++) {
          Command* cmd = new CommandDirectConnect(true, FORMAT(("%s/CommandChannel/Ports/Port%d", ModulesFolderName(), nslave-1)));
          cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", nslave)));
          SubmitLocal(cli, cmd, fCmdDevName.c_str());
       }
-      
+
    } else {
-       
+
       fClusterNames[0] = fMainMgrName;
       fClusterActive[0] = true;
 
@@ -280,15 +280,15 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
    }
 
    bool res = cli.WaitCommands(5);
-    
+
    if (!res) {
-      EOUT(("Not able to connect commands channel")); 
+      EOUT(("Not able to connect commands channel"));
       exit(1);
    }
 
    MicroSleep(1000000);
    DOUT1(("Is it OK ?????"));
-   
+
    if (IsMainManager()) {
       DOUT1(("Now ready numactive = %d ????? ", NumActiveNodes()));
    }
@@ -300,17 +300,17 @@ void dabc::StandaloneManager::DisconnectCmdChannels()
    DOUT1(("StandaloneManager::DisconnectCmdChannels chnl = %p", fCmdChannel));
 
    if (fCmdChannel==0) return;
-    
+
    dabc::CommandClient cli;
-    
+
    for (int node=1;node<NumNodes();node++)
       if (IsNodeActive(node))
          SubmitRemote(cli, new dabc::Command("DisconnectCmdChannel"), node);
-   
+
    bool res = cli.WaitCommands(10);
-   
+
    if (!res) {
-      EOUT(("Cannot disconnect correctly command channels"));   
+      EOUT(("Cannot disconnect correctly command channels"));
    }
 }
 
@@ -320,14 +320,14 @@ void dabc::StandaloneManager::WaitDisconnectCmdChannel()
 
    // first, wait that "DisconnectCmdChannel" is coming
    fStopCond.DoWait();
-   
+
    // second, wait several seconds that connection is broken
    bool res = fStopCond.DoWait(5.);
-   
+
    if (!res) {
       EOUT(("Stop condition was not correctly fired"));
    }
-   
+
    DOUT4(("WaitDisconnectCmdChannel done"));
 }
 
@@ -335,49 +335,49 @@ void dabc::StandaloneManager::WaitDisconnectCmdChannel()
 void dabc::StandaloneManager::InitSMmodule()
 {
    if (fSMmodule!=0) return;
-    
-   fSMmodule = new StateMachineModule(this);
+
+   fSMmodule = new StateMachineModule();
    MakeThreadForModule(fSMmodule, "SMthread");
    fSMmodule->SetAppId(77);
 
    fSMmodule->Start();
-   
+
    DOUT2(("InitSMmodule done"));
 }
 
 bool dabc::StandaloneManager::CanSendCmdToManager(const char* mgrname)
 {
    if ((mgrname==0) || (*mgrname==0)) return false;
-   
+
    int findnodeid = -1;
 
    for (unsigned n=0;n<fClusterNames.size();n++)
       if (fClusterNames[n].compare(mgrname)==0) {
          findnodeid = n;
-         break; 
+         break;
       }
-      
+
    if (findnodeid<0) return false;
-   
+
    if (IsMainManager()) {
-      return fClusterActive[findnodeid]; 
+      return fClusterActive[findnodeid];
    } else {
       return (findnodeid==0) || (findnodeid==NodeId());
    }
-      
-   return false;   
+
+   return false;
 }
 
 int dabc::StandaloneManager::DefinePortId(const char* managername)
 {
    if (IsMainManager()) {
       for (int n=1;n<NumNodes();n++)
-         if (fClusterNames[n].compare(managername) == 0) 
+         if (fClusterNames[n].compare(managername) == 0)
             if (fClusterActive[n]) return n-1;
    } else
       // we can only send command to master
       if (fMainMgrName.compare(managername) == 0) return 0;
-      
+
    return -1;
 }
 
@@ -390,48 +390,48 @@ bool dabc::StandaloneManager::SendOverCommandChannel(const char* managername, co
       EOUT(("Cannot submit command to %s", managername));
       return false;
    }
-             
+
    dabc::Command* cmd = new dabc::Command("SendCommand");
    cmd->SetInt("PortId", portid);
    cmd->SetPar("Value", cmddata);
-   
+
    return fCmdChannel->Submit(cmd);
 }
 
 dabc::Parameter* dabc::StandaloneManager::FindControlParameter(const char* name)
 {
    dabc::String holdername;
-   
+
    const char* pos = strrchr(name, '.');
-   
+
    if (pos!=0) {
       holdername.assign(name, pos - name);
       name = pos + 1;
    }
-   
+
    if (holdername.length()==0) return FindPar(name);
-   
+
    dabc::Iterator iter(this);
-      
+
    while (iter.next()) {
       Parameter* par = dynamic_cast<Parameter*> (iter.current());
       if (par==0) continue;
-      
+
       if (!par->GetHolder()->IsName(holdername.c_str())) continue;
-      
+
       if (par->IsName(name)) return par;
    }
-   
+
    return 0;
 }
 
 int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
 {
    if (cmd->IsName("DoCommandRecv")) {
-      const char* cmddata = cmd->GetPar("cmddata"); 
+      const char* cmddata = cmd->GetPar("cmddata");
 
       DOUT3(( "DoCommandRecv cmd:%s", cmddata));
-      
+
       RecvOverCommandChannel(cmddata);
    } else
    if (cmd->IsName("ActivateSlave")) {
@@ -449,25 +449,25 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
          // we fire two time to be sure that even in case of error application
          // will be halted
          if ((nodeid==0) && !isactive) {
-            DOUT1(("Master is disconnected. Can cleanup")); 
+            DOUT1(("Master is disconnected. Can cleanup"));
             fStopCond.DoFire();
             fStopCond.DoFire();
          }
       }
-      
+
    } else
    if (cmd->IsName("RegisterSlave")) {
-      
-      if (fCmdChannel==0) return cmd_false; 
-       
+
+      if (fCmdChannel==0) return cmd_false;
+
       const char* slavename = cmd->GetPar("SlaveName");
       int slaveid = cmd->GetInt("SlaveNodeId", 0);
-       
+
       if ((slaveid<=0) || (slaveid>=NumNodes())) {
          EOUT(("Wrong id of node %s %d", slavename, slaveid));
          return cmd_false;
       }
-       
+
       fClusterNames[slaveid] = slavename;
 
       String connid;
@@ -478,7 +478,7 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       ccmd->SetPar("ConnId", connid.c_str());
       ccmd->SetBool("ServerUseAckn", true);
       SubmitLocal(*this, ccmd, fCmdDevName.c_str());
-      
+
       // reply with complete info that client can start connection
       cmd->SetStr("MainMgr", GetName());
       cmd->SetStr("DeviceId", fCmdDevName.c_str());
@@ -486,14 +486,14 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       cmd->SetStr("ConnId", connid.c_str());
    } else
    if (cmd->IsName("DisconnectCmdChannel")) {
-      // release condition first time 
+      // release condition first time
       fStopCond.DoFire();
-   } else 
+   } else
    if (cmd->IsName("SubscribeParam")) {
-      
+
       const char* srcname = cmd->GetStr("SrcName", "");
       const char* tgtname = cmd->GetStr("TgtName", "");
-      
+
       dabc::Parameter* par = FindControlParameter(srcname);
       // dynamic_cast<dabc::Parameter*>(FindChild(srcname));
 
@@ -501,14 +501,14 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
          EOUT(("Cannot find parameter with name %s", srcname));
          return cmd_false;
       }
-      
+
       ParamReg reg(par);
       reg.ismaster = true;
       reg.srcnode = NodeId();
       reg.tgtnode = cmd->GetInt("TgtNode", 0);
       reg.remname = tgtname;
       reg.active = true;
-   
+
       // add entry to the list
       {
          LockGuard guard(GetMutex());
@@ -516,31 +516,31 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       }
 
       DOUT3(( "Subscribe to %s par:%p from node:%d", srcname, par, reg.tgtnode));
-      
+
       // probably, submit parameter change already now?
       ParameterEvent(par, 1);
-       
+
    } else
    if (cmd->IsName("UnsubscribeParam")) {
       const char* tgtname = cmd->GetStr("TgtName", "");
       int tgtnode = cmd->GetInt("TgtNode", 0);
-      
+
       LockGuard guard(GetMutex());
-      
+
       ParamRegList::iterator iter = fParReg.begin();
       while (iter!=fParReg.end()) {
          ParamRegList::iterator curr(iter++);
-         if (curr->ismaster && (curr->tgtnode==tgtnode) && 
+         if (curr->ismaster && (curr->tgtnode==tgtnode) &&
              (curr->remname.compare(tgtname)==0)) {
                 DOUT1(("Unsubscribe parameter %s", curr->par->GetName()));
                 fParReg.erase(curr);
                 break;
              }
       }
-      
-   } else 
-   
-   
+
+   } else
+
+
    if (cmd->IsName("StateTransition")) {
 
      if (fSMmodule==0) InitSMmodule();
@@ -548,45 +548,45 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
      fSMmodule->Submit(cmd);
 
      DOUT3(("Submit state transition %s", cmd->GetStr("Cmd")));
-   
+
      return cmd_postponed;
    } else
-   
+
       return Manager::ExecuteCommand(cmd);
-      
+
    return cmd_true;
 }
 
 void dabc::StandaloneManager::ParameterEvent(Parameter* par, int eventid)
 {
-   dabc::Manager::ParameterEvent(par, eventid); 
-    
+   dabc::Manager::ParameterEvent(par, eventid);
+
 //   if (event==1)
-//      DOUT1(("Parameter: %s Value: %5.1f", par->GetName(), par->GetDouble())); 
-   
+//      DOUT1(("Parameter: %s Value: %5.1f", par->GetName(), par->GetDouble()));
+
    // we are not interesting in parameter creation event
    if (eventid==0) return;
-   
+
    // when parameter is destroyed, simple remove it from the lists
    if (eventid==2) {
       LockGuard guard(GetMutex());
-   
+
       ParamRegList::iterator iter = fParReg.begin();
       while (iter!=fParReg.end()) {
          ParamRegList::iterator curr(iter++);
          if (curr->par==par) fParReg.erase(curr);
       }
-      
+
       // !!!!!!!!!! TODO in case of master parameter, deactivate slave record
       // and in case of slave parameter, deactivate master record
-   
+
       return;
    }
 
 //   dabc::String value;
-      
+
    LockGuard guard(GetMutex());
-   
+
    ParamRegList::iterator iter = fParReg.begin();
    while (iter!=fParReg.end()) {
       if (iter->par == par)
@@ -601,22 +601,22 @@ void dabc::StandaloneManager::SubscribedParChanged(ParamReg& reg)
    if (!reg.active || !reg.ismaster) return;
 
    dabc::String value, remname(reg.remname);
-   
+
    // here send to remote node command to update slave parameter value
-   if (!reg.par->GetStr(value)) { 
+   if (!reg.par->GetStr(value)) {
       EOUT(("Cannot convert parameter %s to string", reg.par->GetName()));
       reg.active = false;
       return;
    }
-   
-   DOUT3(( "Subscribed parameter changed %s tgt:%d %s", 
+
+   DOUT3(( "Subscribed parameter changed %s tgt:%d %s",
       reg.par->GetName(), reg.tgtnode, remname.c_str()));
-   
+
    Command* cmd = new CommandSetParameter(remname.c_str(), value.c_str());
-   
+
    if (!Submit(RemoteCmd(cmd, reg.tgtnode, 0)))
       EOUT(("Cannot send parameter change"));
-   
+
    DOUT3(("SubscribedParChanged completed"));
 }
 
@@ -624,41 +624,41 @@ void dabc::StandaloneManager::SubscribedParChanged(ParamReg& reg)
 bool dabc::StandaloneManager::Subscribe(Parameter* par, int remnode, const char* remname)
 {
    Unsubscribe(par);
-   
+
    ParamReg reg(par);
-   
+
    reg.ismaster = false;
    reg.srcnode = remnode;
    reg.tgtnode = NodeId();
    reg.remname = remname;
    reg.active = false;
    par->GetStr(reg.defvalue);
-   
+
    {
       LockGuard guard(GetMutex());
       fParReg.push_back(reg);
    }
-   
+
    CheckSubscriptionList();
-   
+
    return true;
 }
 
 bool dabc::StandaloneManager::Unsubscribe(Parameter* par)
 {
-   CommandsQueue cmds; 
-    
-   { 
+   CommandsQueue cmds;
+
+   {
       LockGuard guard(GetMutex());
-      
+
       ParamRegList::iterator iter = fParReg.begin();
       while (iter!=fParReg.end()) {
          ParamRegList::iterator curr(iter++);
          if ((curr->par==par) && !curr->ismaster) {
-             
-            if (curr->active) { 
+
+            if (curr->active) {
                // send unsubscribe to the node
- 
+
                dabc::String fullname;
                par->MakeFullName(fullname, this);
 
@@ -670,66 +670,66 @@ bool dabc::StandaloneManager::Unsubscribe(Parameter* par)
          }
       }
    }
-   
+
    while (cmds.Size()>0) Submit(cmds.Pop());
-   
+
    return true;
 }
 
 void dabc::StandaloneManager::CheckSubscriptionList()
 {
    LockGuard guard(GetMutex());
-   
+
    DOUT3(("CheckSubscriptionList sz = %u", fParReg.size()));
 
    ParamRegList::iterator iter = fParReg.begin();
    while (iter!=fParReg.end()) {
       ParamRegList::iterator curr(iter++);
-      
+
       if (curr->ismaster && !curr->active) {
          EOUT(("Should not happen - par:%s record must be deleted when node %d disconnected", curr->par->GetName(), curr->tgtnode));
          fParReg.erase(curr);
-         continue;   
+         continue;
       }
-      
+
       if (curr->ismaster) {
-         // this is case of master parameter  
-         
+         // this is case of master parameter
+
          if (!IsNodeActive(curr->tgtnode)) {
             if (curr->active) {
                DOUT3(( "Master record deactivated %s and removed", curr->remname.c_str()));
                curr->active = false;
                fParReg.erase(curr);
-            }   
+            }
          } else {
             if (!curr->active) {
                curr->active = true;
                EOUT(("Should not happen - par:%s record must be deleted when node %d disconnected", curr->par->GetName(), curr->tgtnode));
-               
-               // send parameter update to remote node 
+
+               // send parameter update to remote node
                ParameterEvent(curr->par, 1);
-            } 
-             
+            }
+
          }
       } else
       if (curr->tgtnode == NodeId()) {
-         // this is case of slave parameter 
-          
-         if (!IsNodeActive(curr->srcnode)) { 
+         // this is case of slave parameter
+
+         if (!IsNodeActive(curr->srcnode)) {
             if (curr->active) {
                DOUT3(( "Slave record deactivated %s", curr->remname.c_str()));
                curr->active = false;
                curr->par->InvokeChange(curr->defvalue.c_str());
             }
-               
+
          } else {
             if (!curr->active) {
                DOUT3(( "Slave record activated node:%d %s", curr->srcnode, curr->remname.c_str()));
                curr->active = true;
-               
+
                dabc::String fullname;
                curr->par->MakeFullName(fullname, this);
-               
+
                // send subscribe to the node
                Command* cmd = new Command("SubscribeParam");
                cmd->SetStr("SrcName", curr->remname.c_str());
@@ -739,29 +739,29 @@ void dabc::StandaloneManager::CheckSubscriptionList()
             }
          }
       } else {
-         EOUT(("Strange entry in subscription list"));   
+         EOUT(("Strange entry in subscription list"));
       }
    }
 }
 
 int dabc::StandaloneManager::NumNodes()
 {
-   return fClusterNames.size(); 
+   return fClusterNames.size();
 }
 
 const char* dabc::StandaloneManager::GetNodeName(int num)
 {
-   if ((unsigned) num >= fClusterNames.size()) return 0;  
-    
+   if ((unsigned) num >= fClusterNames.size()) return 0;
+
    return fClusterNames[num].c_str();
 }
 
 bool dabc::StandaloneManager::IsNodeActive(int num)
 {
-   if ((unsigned) num >= fClusterNames.size()) return false;  
-   
+   if ((unsigned) num >= fClusterNames.size()) return false;
+
    if (fClusterNames[num].size()==0) return false;
-   
+
    return fClusterActive[num];
 }
 
@@ -772,12 +772,12 @@ bool dabc::StandaloneManager::InvokeStateTransition(const char* state_transition
       dabc::Command::Reply(cmd, false);
       return false;
    }
-   
+
    if (cmd==0) cmd = new CommandStateTransition(state_transition_name);
-   
+
    // we can submit command to ourself, while we catch it later in ExecuteCommand
    // and resubmit again to the SMmodule. If something fail, command will be replyed with false
    // We do not submit command immediately to SMmodule while we may work on other thread.
-   
+
    return Submit(cmd);
 }

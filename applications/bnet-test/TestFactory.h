@@ -11,7 +11,7 @@ namespace bnet {
    public:
       TestFactory(const char* name) : dabc::Factory(name) { DfltAppClass("TestBnetWorker"); }
 
-      virtual dabc::Application* CreateApplication(dabc::Basic* parent, const char* classname, const char* appname, dabc::Command* cmd);
+      virtual dabc::Application* CreateApplication(const char* classname, const char* appname, dabc::Command* cmd);
 
    };
 }

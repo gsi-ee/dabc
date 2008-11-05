@@ -5,8 +5,8 @@
 #include "dabc/Port.h"
 #include "dabc/Buffer.h"
 
-bnet::LocalDFCModule::LocalDFCModule(dabc::Manager* mgr, const char* name, WorkerApplication* factory) : 
-   dabc::ModuleAsync(mgr, name),
+bnet::LocalDFCModule::LocalDFCModule(const char* name, WorkerApplication* factory) :
+   dabc::ModuleAsync(name),
    fPool(0)
 {
    fPool = CreatePool(factory->ControlPoolName());

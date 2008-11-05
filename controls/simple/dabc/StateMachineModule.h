@@ -6,13 +6,13 @@
 #endif
 
 namespace dabc {
-    
+
    class StateMachineModule : public ModuleAsync {
       public:
-         StateMachineModule(Manager* mgr);
+         StateMachineModule();
 
          virtual int ExecuteCommand(Command* cmd);
-   };   
+   };
 }
 
 #endif

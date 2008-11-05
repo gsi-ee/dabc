@@ -9,24 +9,18 @@ namespace dabc {
 
    class ModuleAsync : public Module {
       public:
-         ModuleAsync(Manager* mgr, const char* name = "module") : 
-            Module(mgr, name)
-            {
-            }
-         ModuleAsync(Manager* mgr, Command* cmd) : 
-            Module(mgr, cmd)
-            {
-            }
-            
-         virtual ~ModuleAsync();   
-            
-         // here is a list of methods, 
-         // which can be reimplemented in user code 
-   
-   
+         ModuleAsync(const char* name) : Module(name) { }
+         ModuleAsync(Command* cmd) : Module(cmd) { }
+
+         virtual ~ModuleAsync();
+
+         // here is a list of methods,
+         // which can be reimplemented in user code
+
+
          // Either generic event processing function must be reimplemented
          virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid);
-          
+
          // Or one can redefine one or several following methods to
          // react on specific events only
          virtual void ProcessInputEvent(Port* port) {}

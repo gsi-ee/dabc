@@ -17,8 +17,8 @@
 
 // __________________________________________________________________
 
-dabc::Module::Module(Manager* mgr, const char* name) : 
-   Folder(mgr ? mgr->GetModulesFolder(true) : 0, name, true),
+dabc::Module::Module(const char* name) :
+   Folder(dabc::mgr()->GetModulesFolder(true), name, true),
    WorkingProcessor(GetFolder("Parameters", true, true)),
    CommandClientBase(),
    fWorkStatus(0),
@@ -28,11 +28,11 @@ dabc::Module::Module(Manager* mgr, const char* name) :
    fReplyes(true, true),
    fLostEvents(128, true)
 {
-   init(); 
+   init();
 }
 
-dabc::Module::Module(Manager* mgr, Command* cmd) :
-   Folder(mgr ? mgr->GetModulesFolder(true) : 0, cmd->GetStr("Name","Module"), true),
+dabc::Module::Module(Command* cmd) :
+   Folder(dabc::mgr()->GetModulesFolder(true), cmd->GetStr("Name","Module"), true),
    WorkingProcessor(GetFolder("Parameters", true, true)),
    CommandClientBase(),
    fWorkStatus(0),
@@ -42,16 +42,16 @@ dabc::Module::Module(Manager* mgr, Command* cmd) :
    fReplyes(true, true),
    fLostEvents(128, true)
 {
-   init(); 
+   init();
 }
 
 void dabc::Module::init()
 {
-   // we will use 3 priority levels: 
+   // we will use 3 priority levels:
    //  0 - normal for i/o ,
    //  1 - for commands and replyes,
    //  2 - for sys commands (in modules thread itself)
-    
+
    CommandDefinition* def = NewCmdDef("SetPriority");
    def->AddArgument("Priority", argInt, true);
    def->Register(true);
@@ -64,8 +64,8 @@ void dabc::Module::init()
 
 dabc::Module::~Module()
 {
-   DOUT3(( "dabc::Module::~Module() %s thrd = %s mgr = %p", 
-             GetName(), DNAME(ProcessorThread()), GetManager()));
+   DOUT3(( "dabc::Module::~Module() %s thrd = %s mgr = %p",
+             GetName(), DNAME(ProcessorThread()), dabc::mgr()));
 
    fWorkStatus = -1;
 
@@ -73,14 +73,14 @@ dabc::Module::~Module()
    // by this we stop any further events processing and can be sure that
    // destroying module items will not cause seg.fault
    RemoveProcessorFromThread(true);
-   
-   // one should call destructor of childs here, while 
+
+   // one should call destructor of childs here, while
    // all ModuleItem objects will try to access Module method ItemDestroyed
    // If it happens in Basic destructor, object as it is no longer exists
 
    DOUT5(("Module:%s deletes all childs", GetName()));
 
-   DeleteChilds(); 
+   DeleteChilds();
 
    DOUT5((" dabc::Module::~Module() %s done", GetName()));
 }
@@ -94,14 +94,14 @@ void dabc::Module::OnThreadAssigned()
 
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
-      if (item && (item->ProcessorThread()==0)) 
+      if (item && (item->ProcessorThread()==0))
          item->AssignProcessorToThread(ProcessorThread(), true);
    }
 }
 
 dabc::Folder* dabc::Module::GetPortsFolder(bool force)
 {
-   return GetFolder("Ports", force, true); 
+   return GetFolder("Ports", force, true);
 }
 
 dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sync, double interval, const char* inpportname, const char* outportname)
@@ -115,15 +115,15 @@ dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sy
       port->SetInpRateMeter(par);
       isanyport = true;
    }
-   
+
    port = FindPort(outportname);
    if (port) {
        port->SetOutRateMeter(par);
        isanyport = true;
    }
-   
+
    if (isanyport) par->SetUnits("MB/s");
-   
+
    return par;
 }
 
@@ -140,13 +140,13 @@ dabc::Parameter* dabc::Module::CreatePoolUsageParameter(const char* name, double
 dabc::CommandDefinition* dabc::Module::NewCmdDef(const char* cmdname)
 {
    if (cmdname==0) return 0;
-   
+
    return new dabc::CommandDefinition(GetCmdDefFolder(true), cmdname);
 }
 
 dabc::Timer* dabc::Module::CreateTimer(const char* name, double period_sec, bool synchron)
 {
-   return new Timer(GetTimersFolder(true), name, period_sec, synchron); 
+   return new Timer(GetTimersFolder(true), name, period_sec, synchron);
 }
 
 dabc::Timer* dabc::Module::FindTimer(const char* name)
@@ -159,19 +159,19 @@ dabc::Timer* dabc::Module::FindTimer(const char* name)
 bool dabc::Module::ShootTimer(const char* name, double delay_sec)
 {
    Timer* t = FindTimer(name);
-   
+
    if (t==0) return false;
-   
+
    t->SingleShoot(delay_sec);
-   
+
    return true;
 }
 
 void dabc::Module::Start()
 {
    DOUT3(("Start module %s thrd %s", GetName(), DNAME(ProcessorThread())));
-    
-   Execute("StartModule"); 
+
+   Execute("StartModule");
 }
 
 void dabc::Module::Stop()
@@ -186,72 +186,72 @@ int dabc::Module::PreviewCommand(Command* cmd)
    // this hook in command execution routine allows us to "preview"
    // command before it actually executed
    // if it is system command, just execute it immidiately
-   
+
    int cmd_res = cmd_ignore;
-   
+
    DOUT3(("Module:%s PreviewCommand %s", GetName(), cmd->GetName()));
-   
+
    if (cmd->IsName("StartModule"))
-      cmd_res = cmd_bool(DoStart()); 
+      cmd_res = cmd_bool(DoStart());
    else
-   if (cmd->IsName("StopModule")) 
-      cmd_res = cmd_bool(DoStop()); 
+   if (cmd->IsName("StopModule"))
+      cmd_res = cmd_bool(DoStop());
    else
    if (cmd->IsName("SetPriority")) {
       if (ProcessorThread()) {
          ProcessorThread()->SetPriority(cmd->GetInt("Priority",0));
          cmd_res = cmd_true;
       } else
-         cmd_res = cmd_false; 
+         cmd_res = cmd_false;
    } else
       cmd_res = WorkingProcessor::PreviewCommand(cmd);
-      
+
    return cmd_res;
 }
 
 bool dabc::Module::DoStart()
 {
-   if (WorkStatus()>0) return true; 
+   if (WorkStatus()>0) return true;
 
    BeforeModuleStart();
-        
+
    fWorkStatus = 1;
-   
+
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
       if (item) item->DoStart();
    }
-   
+
    if (fLostEvents.Size()>0) FireEvent(evntReinjectlost);
-   
+
    return true;
 }
 
 bool dabc::Module::DoStop()
 {
-   DOUT3(("Module %s DoStop", GetName())); 
-   
+   DOUT3(("Module %s DoStop", GetName()));
+
    if (WorkStatus()<=0) return false;
-    
+
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
       if (item) item->DoStop();
    }
 
    fWorkStatus = 0;
-   
+
    AfterModuleStop();
 
-   DOUT3(("Module %s DoStop done", GetName())); 
-   
+   DOUT3(("Module %s DoStop done", GetName()));
+
    return true;
 }
 
 int dabc::Module::ExecuteCommand(Command* cmd)
 {
-   // return false if command cannot be processed 
-    
-   return CommandReceiver::ExecuteCommand(cmd); 
+   // return false if command cannot be processed
+
+   return CommandReceiver::ExecuteCommand(cmd);
 }
 
 dabc::PoolHandle* dabc::Module::CreatePool(const char* name, BufferNum_t number, BufferSize_t size, BufferNum_t increment)
@@ -263,61 +263,61 @@ dabc::PoolHandle* dabc::Module::CreatePool(const char* name, BufferNum_t number,
 
 dabc::Folder* dabc::Module::GetPoolsFolder(bool force)
 {
-   return GetFolder("Pools", force, true); 
+   return GetFolder("Pools", force, true);
 }
 
 dabc::Folder* dabc::Module::GetObjFolder(bool force)
 {
-   return GetFolder("Objects", force, true);   
+   return GetFolder("Objects", force, true);
 }
 
 dabc::Folder* dabc::Module::GetCmdDefFolder(bool force)
 {
-   return GetFolder("Commands", force, true);    
+   return GetFolder("Commands", force, true);
 }
 
 dabc::Folder* dabc::Module::GetTimersFolder(bool force)
 {
-   return GetFolder("Timers", force, true);    
+   return GetFolder("Timers", force, true);
 }
 
 bool dabc::Module::_ProcessReply(Command* cmd)
 {
    // here one get completion from command
-   // one should redirect it to the signal 
-   
-   if (cmd==0) return false; 
+   // one should redirect it to the signal
+
+   if (cmd==0) return false;
    fReplyes.Push(cmd);
-   FireEvent(evntReplyCommand); 
-   return true; 
+   FireEvent(evntReplyCommand);
+   return true;
 }
 
 void dabc::Module::ItemCreated(ModuleItem* item)
 {
    // at that place one cannot use any dynamic_cast to inherited types,
-   // while constructor of item is not completely finished 
-    
+   // while constructor of item is not completely finished
+
    unsigned id = fItems.size();
-   
+
    fItems.push_back(item);
 
    item->SetItemId(id);
-   
+
    if (id>moduleitemMaxId) {
       EOUT(("Item id is too big, event propogation will not work"));
-      exit(1);   
+      exit(1);
    }
-   
-   if (ProcessorThread()!=0) 
+
+   if (ProcessorThread()!=0)
       item->AssignProcessorToThread(ProcessorThread(), false);
-   
+
 //   DOUT1(("Module:%s Add item:%s Id:%d", GetName(), item->GetName(), id));
 }
 
 void dabc::Module::ItemDestroyed(ModuleItem* item)
 {
-   unsigned id = item->ItemId(); 
-   
+   unsigned id = item->ItemId();
+
    for (unsigned n=0;n<fInputPorts.size();n++)
       if (fInputPorts[n] == id) {
          fInputPorts.erase(fInputPorts.begin()+n);
@@ -335,7 +335,7 @@ void dabc::Module::ItemDestroyed(ModuleItem* item)
          fPorts.erase(fPorts.begin()+n);
          break;
       }
-   
+
    unsigned n = 0;
    while (n<fLostEvents.Size())
       if (id == GetEventItem(fLostEvents.Item(n)))
@@ -387,23 +387,23 @@ dabc::Port* dabc::Module::GetPortItem(unsigned id) const
 
 dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize, bool ackn)
 {
-   Port* port = new Port(GetPortsFolder(true), name, 
+   Port* port = new Port(GetPortsFolder(true), name,
                          pool, recvqueue, sendqueue, headersize, ackn);
-   if (pool) 
+   if (pool)
      pool->AddPortRequirements(port->NumInputBuffersRequired() + port->NumOutputBuffersRequired(), port->UserHeaderSize());
-   
+
    fPorts.push_back(port->ItemId());
    if (recvqueue>0) fInputPorts.push_back(port->ItemId());
    if (sendqueue>0) fOutputPorts.push_back(port->ItemId());
-   
+
    return port;
 }
 
 void dabc::Module::GetUserEvent(ModuleItem* item, uint16_t evid)
 {
-   if (WorkStatus()>0) 
+   if (WorkStatus()>0)
       ProcessUserEvent(item, evid);
-   else 
+   else
       fLostEvents.Push(CodeEvent(evid, item->ItemId()));
 }
 
@@ -411,50 +411,50 @@ void dabc::Module::GetUserEvent(ModuleItem* item, uint16_t evid)
 void dabc::Module::ProcessEvent(EventId evid)
 {
    switch (dabc::GetEventCode(evid)) {
-      case evntReinjectlost: 
+      case evntReinjectlost:
          if (fLostEvents.Size()>0) {
             EventId user_evnt = fLostEvents.Pop();
-            
+
             ModuleItem* item = GetItem(GetEventItem(user_evnt));
-            
+
             if (item!=0)
                GetUserEvent(item, GetEventCode(user_evnt));
             else
                EOUT(("Module:%s Event %u for item %u lost completely",
                      GetName(), GetEventCode(user_evnt), GetEventItem(user_evnt)));
          }
-         
+
          if (fLostEvents.Size() > 0) FireEvent(evntReinjectlost);
          break;
-         
+
       case evntReplyCommand: {
-         dabc::Command* cmd = fReplyes.Pop(); 
-         if (ReplyCommand(cmd)) 
+         dabc::Command* cmd = fReplyes.Pop();
+         if (ReplyCommand(cmd))
             dabc::Command::Finalise(cmd);
          break;
       }
-      
+
       default:
-         dabc::WorkingProcessor::ProcessEvent(evid);  
+         dabc::WorkingProcessor::ProcessEvent(evid);
    }
 }
 
 dabc::Buffer* dabc::Module::TakeBuffer(const char* poolname, BufferSize_t size)
 {
    PoolHandle* pool = FindPool(poolname);
-   
+
    return pool ? pool->TakeBuffer(size, false) : 0;
 }
 
 
 
-bool dabc::Module::IsAnyOutputBlocked() const 
+bool dabc::Module::IsAnyOutputBlocked() const
 {
    for(unsigned n=0;n<NumOutputs();n++)
       if (Output(n)->OutputBlocked()) return true;
    return false;
 }
- 
+
 void dabc::Module::SendToAllOutputs(dabc::Buffer* buf)
 {
    if (buf==0) return;

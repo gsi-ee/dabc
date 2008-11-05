@@ -16,7 +16,7 @@ namespace dabc {
    class Application : public Folder,
                        public WorkingProcessor {
        public:
-          Application(Basic* parent, const char* name);
+          Application(const char* name);
 
           virtual ~Application();
 

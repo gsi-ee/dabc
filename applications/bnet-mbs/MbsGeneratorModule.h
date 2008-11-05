@@ -4,19 +4,18 @@
 #include "bnet/GeneratorModule.h"
 
 namespace bnet {
-    
+
    class MbsGeneratorModule : public GeneratorModule {
       public:
-         MbsGeneratorModule(dabc::Manager* mgr, 
-                            const char* name, 
+         MbsGeneratorModule(const char* name,
                             WorkerApplication* factory) :
-           GeneratorModule(mgr, name, factory) {}
-                            
-      protected:  
-      
+           GeneratorModule(name, factory) {}
+
+      protected:
+
          virtual void GeneratePacket(dabc::Buffer* buf);
-   };   
-   
+   };
+
 }
 
 #endif

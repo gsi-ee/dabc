@@ -15,9 +15,7 @@ namespace roc {
 
       public:
 
-         RocCalibrModule(dabc::Manager* mgr,
-                         const char* name,
-                         dabc::Command* cmd);
+         RocCalibrModule(const char* name, dabc::Command* cmd);
          virtual ~RocCalibrModule();
 
          virtual void BeforeModuleStart() {}

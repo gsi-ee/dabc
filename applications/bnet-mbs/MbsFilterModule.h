@@ -4,18 +4,18 @@
 #include "bnet/FilterModule.h"
 
 namespace bnet {
-   
+
    class WorkerApplication;
-   
+
    class MbsFilterModule : public FilterModule {
       protected:
          long fTotalCnt;
-       
+
          virtual bool TestBuffer(dabc::Buffer*);
 
       public:
-         MbsFilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
-   };   
+         MbsFilterModule(const char* name, WorkerApplication* factory);
+   };
 }
 
 #endif

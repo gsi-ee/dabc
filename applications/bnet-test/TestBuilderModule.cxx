@@ -9,8 +9,8 @@
 #include "bnet/common.h"
 #include "bnet/WorkerApplication.h"
 
-bnet::TestBuilderModule::TestBuilderModule(dabc::Manager* m, const char* name, WorkerApplication* factory) :
-   dabc::ModuleAsync(m, name),
+bnet::TestBuilderModule::TestBuilderModule(const char* name, WorkerApplication* factory) :
+   dabc::ModuleAsync(name),
    fInpPool(0),
    fOutPool(0),
    fNumSenders(1)
@@ -22,9 +22,9 @@ bnet::TestBuilderModule::TestBuilderModule(dabc::Manager* m, const char* name, W
    fInpPool = CreatePool(factory->TransportPoolName());
 
    CreateInput("Input", fInpPool, BuilderInpQueueSize, sizeof(bnet::SubEventNetHeader));
-   
+
    fOutBufferSize = factory->EventBufferSize();
-   
+
    new dabc::StrParameter(this, "SendMask", "xxxx");
 }
 
@@ -38,7 +38,7 @@ bnet::TestBuilderModule::~TestBuilderModule()
 void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 {
    while (fBuffers.size() < (unsigned) fNumSenders) {
-      if (Input(0)->InputBlocked()) return; 
+      if (Input(0)->InputBlocked()) return;
       dabc::Buffer* buf = 0;
       Input(0)->Recv(buf);
       if (buf==0) return;
@@ -51,23 +51,23 @@ void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
    if (outbuf==0) return;
 
    uint64_t evid = 0;
-      
+
    for (unsigned n=0; n<fBuffers.size(); n++) {
-      uint64_t* mem = (uint64_t*) fBuffers[n]->GetDataLocation(); 
+      uint64_t* mem = (uint64_t*) fBuffers[n]->GetDataLocation();
       if (evid==0) evid = *mem; else
-        if (evid!=*mem) { 
+        if (evid!=*mem) {
             EOUT(("Missmatch in events id %llu %llu", evid, *mem));
             exit(1);
         }
-          
+
       dabc::Buffer::Release(fBuffers[n]);
    }
-      
+
    fBuffers.clear();
-      
+
    uint64_t* mem = (uint64_t*) outbuf->GetDataLocation();
    *mem = evid;
-      
+
    Output(0)->Send(outbuf);
 
 //   DOUT1(("!!!!!!! SEND EVENT %llu DONE", evid));
@@ -76,7 +76,7 @@ void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 void bnet::TestBuilderModule::BeforeModuleStart()
 {
    fNumSenders = bnet::NodesVector(GetParCharStar("SendMask")).size();
-   
+
 //   DOUT1(("TestBuilderModule::BeforeModuleStart numsend = %d", fNumSenders));
 }
 

@@ -25,14 +25,14 @@ dabc::Module* dabc::AbbFactory::CreateModule(const char* classname, const char* 
     if ((classname==0) || (cmd==0)) return 0;
     if (strcmp(classname,"AbbReadoutModule")==0)
        {
-           dabc::Module* mod= new dabc::AbbReadoutModule(GetManager(),modulename,cmd);
+           dabc::Module* mod= new dabc::AbbReadoutModule(modulename,cmd);
            unsigned int boardnum=cmd->GetInt(ABB_PAR_BOARDNUM, 0);
            DOUT1(("AbbFactory::CreateModule - Created ABBReadout module %s for /dev/fpga%d", modulename, boardnum));
            return mod;
          }
     else if (strcmp(classname,"AbbWriterModule")==0)
        {
-           dabc::Module* mod= new dabc::AbbWriterModule(GetManager(),modulename,cmd);
+           dabc::Module* mod= new dabc::AbbWriterModule(modulename,cmd);
            unsigned int boardnum=cmd->GetInt(ABB_PAR_BOARDNUM, 0);
            DOUT1(("AbbFactory::CreateModule - Created ABBWriter module %s for /dev/fpga%d", modulename, boardnum));
            return mod;

@@ -22,7 +22,7 @@ namespace roc {
 
    class ReadoutApplication : public dabc::Application {
       public:
-         ReadoutApplication(dabc::Basic* parent, const char* name);
+         ReadoutApplication(const char* name);
 
          virtual bool IsModulesRunning();
 

@@ -4,11 +4,11 @@
 
 bnet::TestFactory bnettestfactory("bnet-test");
 
-dabc::Application* bnet::TestFactory::CreateApplication(dabc::Basic* parent, const char* classname, const char* appname, dabc::Command* cmd)
+dabc::Application* bnet::TestFactory::CreateApplication(const char* classname, const char* appname, dabc::Command* cmd)
 {
    if (strcmp(classname, "TestBnetWorker")==0)
-      return new bnet::TestWorkerApplication(parent, appname);
+      return new bnet::TestWorkerApplication(appname);
 
-   return dabc::Factory::CreateApplication(parent, classname, appname, cmd);
+   return dabc::Factory::CreateApplication(classname, appname, cmd);
 }
 

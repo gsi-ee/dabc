@@ -10,8 +10,8 @@
 #include "MbsBuilderModule.h"
 #include "MbsFilterModule.h"
 
-bnet::MbsWorkerApplication::MbsWorkerApplication(dabc::Basic* parent, const char* name) :
-   WorkerApplication(parent, name)
+bnet::MbsWorkerApplication::MbsWorkerApplication(const char* name) :
+   WorkerApplication(name)
 {
    bool is_all_to_all = bnet::NetBidirectional;
    int CombinerModus = 0;
@@ -34,14 +34,14 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
       dabc::formats(modulename,"Readout%d", portnumber);
 
-      dabc::Module* m = new bnet::MbsGeneratorModule(GetManager(), modulename.c_str(), this);
-      GetManager()->MakeThreadForModule(m, modulename.c_str());
+      dabc::Module* m = new bnet::MbsGeneratorModule(modulename.c_str(), this);
+      dabc::mgr()->MakeThreadForModule(m, modulename.c_str());
 
-      GetManager()->CreateMemoryPools();
+      dabc::mgr()->CreateMemoryPools();
 
       modulename += "/Ports/Output";
 
-      GetManager()->ConnectPorts(modulename.c_str(), portname);
+      dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
    } else {
 
       dabc::Command* cmd = new dabc::CmdCreateDataTransport;
@@ -68,7 +68,7 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
       dabc::CmdCreateDataTransport::SetArgs(cmd, portname, "MbsIOThrd");
 
-      bool res = GetManager()->Execute(cmd, 10);
+      bool res = dabc::mgr()->Execute(cmd, 10);
 
       DOUT3(("Create input for port %s res = %s", portname, DBOOL(res)));
 
@@ -80,22 +80,22 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
 dabc::Module* bnet::MbsWorkerApplication::CreateCombiner(const char* name)
 {
-   dabc::Module* m = new bnet::MbsCombinerModule(GetManager(), name, this);
-   GetManager()->MakeThreadForModule(m, name);
+   dabc::Module* m = new bnet::MbsCombinerModule(name, this);
+   dabc::mgr()->MakeThreadForModule(m, name);
    return m;
 }
 
 dabc::Module* bnet::MbsWorkerApplication::CreateBuilder(const char* name)
 {
-   dabc::Module* m = new bnet::MbsBuilderModule(GetManager(), name, this);
-   GetManager()->MakeThreadForModule(m, name);
+   dabc::Module* m = new bnet::MbsBuilderModule(name, this);
+   dabc::mgr()->MakeThreadForModule(m, name);
    return m;
 }
 
 dabc::Module* bnet::MbsWorkerApplication::CreateFilter(const char* name)
 {
-   dabc::Module* m = new bnet::MbsFilterModule(GetManager(), name, this);
-   GetManager()->MakeThreadForModule(m, name);
+   dabc::Module* m = new bnet::MbsFilterModule(name, this);
+   dabc::mgr()->MakeThreadForModule(m, name);
    return m;
 }
 
@@ -130,7 +130,7 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
 
    dabc::CmdCreateDataTransport::SetArgs(cmd, portname, "MbsIOThrd");
 
-   bool res = GetManager()->Execute(cmd, 5);
+   bool res = dabc::mgr()->Execute(cmd, 5);
 
    DOUT1(("Create output for port %s res = %s", portname, DBOOL(res)));
 
@@ -143,7 +143,7 @@ void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
 
    SetParValue("IsFilter", 0);
 
-   int nodeid = GetManager()->NodeId();
+   int nodeid = dabc::mgr()->NodeId();
 
    if (IsReceiver()) {
       int recvid = 0;
@@ -186,12 +186,12 @@ void bnet::MbsWorkerApplication::SetMbsTransportPars()
 
    SetParValue("NumReadouts", 1);
 
-   if ((GetManager()->NodeId()==1) || (GetManager()->NodeId()==2)) {
+   if ((dabc::mgr()->NodeId()==1) || (dabc::mgr()->NodeId()==2)) {
 
       SetParValue("IsSender", 1);
       SetParValue("IsReceiver", 0);
 
-      const char* server_name = (GetManager()->NodeId()==1) ? "x86g-4" : "x86-7";
+      const char* server_name = (dabc::mgr()->NodeId()==1) ? "x86g-4" : "x86-7";
 
       dabc::String cfgstr;
 
@@ -217,12 +217,12 @@ void bnet::MbsWorkerApplication::SetMbsGeneratorsPars()
 
    SetParValue("NumReadouts", 1);
 
-   if ((GetManager()->NodeId()==1) || (GetManager()->NodeId()==2)) {
+   if ((dabc::mgr()->NodeId()==1) || (dabc::mgr()->NodeId()==2)) {
 
       SetParValue("IsSender", 1);
       SetParValue("IsReceiver", 0);
 
-      const char* server_name = (GetManager()->NodeId()==1) ? "master" : "node01";
+      const char* server_name = (dabc::mgr()->NodeId()==1) ? "master" : "node01";
 
       dabc::String cfgstr;
 

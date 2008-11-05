@@ -74,7 +74,7 @@ int dabc::PCIBoardDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
    LockGuard lock(fMutex);
    if(port==0)
-      port = GetManager()->FindPort(cmd->GetPar(DABC_PCI_COMPAR_PORT));
+      port = dabc::mgr()->FindPort(cmd->GetPar(DABC_PCI_COMPAR_PORT));
    if (port==0)
       {
           EOUT(("dabc::PCIBoardDevice::CreateTransport FAILED, port %s not found!",cmd->GetPar(DABC_PCI_COMPAR_PORT)));

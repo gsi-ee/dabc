@@ -4,18 +4,18 @@
 #include "dabc/ModuleAsync.h"
 
 namespace bnet {
-   
+
    class WorkerApplication;
-   
+
    class TestFilterModule : public dabc::ModuleAsync {
       protected:
          dabc::PoolHandle*  fPool;
-       
+
       public:
-         TestFilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
-         
+         TestFilterModule(const char* name, WorkerApplication* factory);
+
          virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
-   };   
+   };
 }
 
 #endif

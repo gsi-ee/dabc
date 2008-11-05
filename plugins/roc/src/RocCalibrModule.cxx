@@ -120,10 +120,9 @@ void roc::RocCalibrModule::CalibRec::TimeStampOverflow()
    }
 }
 
-roc::RocCalibrModule::RocCalibrModule(dabc::Manager* mgr,
-                                      const char* name,
+roc::RocCalibrModule::RocCalibrModule(const char* name,
                                       dabc::Command* cmd) :
-   dabc::ModuleAsync(mgr, name),
+   dabc::ModuleAsync(name),
    fPool(0),
    f_inpptr(),
    fOutBuf(0),
@@ -189,7 +188,7 @@ bool roc::RocCalibrModule::DoCalibration()
             fBuildEvents, fSkippedEvents,
            (fBuildEvents > 0 ? 100. * fSkippedEvents / fBuildEvents : 0.)));
 
-      GetManager()->RaiseCtrlCSignal();
+      dabc::mgr()->RaiseCtrlCSignal();
 
       return false;
    }

@@ -4,20 +4,20 @@
 #include "dabc/ModuleSync.h"
 
 namespace bnet {
-   
+
    class WorkerApplication;
-   
+
    class FilterModule : public dabc::ModuleSync {
       protected:
          dabc::PoolHandle*  fPool;
-         
+
          virtual bool TestBuffer(dabc::Buffer*) { return true; }
-       
+
       public:
-         FilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
-         
+         FilterModule(const char* name, WorkerApplication* factory);
+
          virtual void MainLoop();
-   };   
+   };
 }
 
 #endif

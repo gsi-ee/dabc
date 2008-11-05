@@ -3,11 +3,11 @@
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 
-dabc::CommandsSet::CommandsSet(Manager* mgr, Command* cmd, bool parallel_exe) :
+dabc::CommandsSet::CommandsSet(Command* cmd, bool parallel_exe) :
    CommandClientBase(),
    WorkingProcessor(),
-   fMgr(mgr),
-   fReceiver(mgr),
+   fMgr(dabc::mgr()),
+   fReceiver(dabc::mgr()),
    fMain(cmd),
    fParallelExe(parallel_exe),
    fCmdsSet(false, false),

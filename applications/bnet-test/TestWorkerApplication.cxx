@@ -17,8 +17,8 @@
 
 #include <iostream>
 
-bnet::TestWorkerApplication::TestWorkerApplication(dabc::Basic* parent, const char* name) :
-   WorkerApplication(parent, name) ,
+bnet::TestWorkerApplication::TestWorkerApplication(const char* name) :
+   WorkerApplication(name) ,
    fABBActive(false)
 {
 // register application specific parameters here:
@@ -41,16 +41,16 @@ dabc::Module* bnet::TestWorkerApplication::CreateModule(const char* classname, c
 
 {
    if (strcmp(classname,"TestGeneratorModule")==0)
-      return new bnet::TestGeneratorModule(GetManager(), modulename, this);
+      return new bnet::TestGeneratorModule(modulename, this);
    else
    if (strcmp(classname,"TestCombinerModule")==0)
-      return new bnet::TestCombinerModule(GetManager(), modulename, this);
+      return new bnet::TestCombinerModule(modulename, this);
    else
    if (strcmp(classname,"TestBuilderModule")==0)
-      return new bnet::TestBuilderModule(GetManager(), modulename, this);
+      return new bnet::TestBuilderModule(modulename, this);
    else
    if (strcmp(classname,"TestFilterModule")==0)
-      return new bnet::TestFilterModule(GetManager(), modulename, this);
+      return new bnet::TestFilterModule(modulename, this);
    else
       return bnet::WorkerApplication::CreateModule(classname, modulename, cmd);
 }
@@ -78,9 +78,9 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
          dcom->SetInt(ABB_PAR_BAR, GetParInt(ABB_PAR_BAR, 1));
          dcom->SetInt(ABB_PAR_ADDRESS, GetParInt(ABB_PAR_ADDRESS, (0x8000 >> 2)));
          dcom->SetInt(ABB_PAR_LENGTH, GetParInt(ABB_PAR_LENGTH, 8192));
-         res=GetManager()->CreateDevice("AbbDevice",abbdevname.c_str(),dcom);
+         res=dabc::mgr()->CreateDevice("AbbDevice",abbdevname.c_str(),dcom);
 
-         //GetManager()->Execute(dcom);
+         //dabc::mgr()->Execute(dcom);
          abbdevname=std::string("Devices/")+abbdevname;
          //fABBActive=true;
          fABBActive=res;
@@ -89,20 +89,20 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
 #endif
       {
          // create dummy event generator module:
-         dabc::Module* m = new bnet::TestGeneratorModule(GetManager(), modulename.c_str(), this);
-         GetManager()->MakeThreadForModule(m, Thrd1Name());
+         dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str(), this);
+         dabc::mgr()->MakeThreadForModule(m, Thrd1Name());
          modulename += "/Ports/Output";
-         GetManager()->ConnectPorts(modulename.c_str(), portname);
+         dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
          fABBActive=false;
       }
 
-   GetManager()->CreateMemoryPools(); // pools must exist before abb transport can connect to module
+   dabc::mgr()->CreateMemoryPools(); // pools must exist before abb transport can connect to module
    if(fABBActive)
       {
       /// here creation of pci transport from abb device with connection to given input port:
-        res=GetManager()->CreateTransport(abbdevname.c_str(), portname);
+        res=dabc::mgr()->CreateTransport(abbdevname.c_str(), portname);
 //        dabc::Command* concom= new dabc::CmdCreateTransport(portname);
-//        dabc::Device* abbdev=GetManager()->FindDevice(abbdevname.c_str());
+//        dabc::Device* abbdev=dabc::mgr()->FindDevice(abbdevname.c_str());
 //        if(abbdev==0) return false;
 //        bool res=abbdev->Execute(concom);
 /////// following  to test failure:
@@ -116,22 +116,22 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
 
 dabc::Module* bnet::TestWorkerApplication::CreateCombiner(const char* name)
 {
-   dabc::Module* m = new bnet::TestCombinerModule(GetManager(), name, this);
-   GetManager()->MakeThreadForModule(m, Thrd1Name());
+   dabc::Module* m = new bnet::TestCombinerModule(name, this);
+   dabc::mgr()->MakeThreadForModule(m, Thrd1Name());
    return m;
 }
 
 dabc::Module* bnet::TestWorkerApplication::CreateBuilder(const char* name)
 {
-   dabc::Module* m = new bnet::TestBuilderModule(GetManager(), name, this);
-   GetManager()->MakeThreadForModule(m, Thrd2Name());
+   dabc::Module* m = new bnet::TestBuilderModule(name, this);
+   dabc::mgr()->MakeThreadForModule(m, Thrd2Name());
    return m;
 }
 
 dabc::Module* bnet::TestWorkerApplication::CreateFilter(const char* name)
 {
-   dabc::Module* m = new bnet::TestFilterModule(GetManager(), name, this);
-   GetManager()->MakeThreadForModule(m, Thrd2Name());
+   dabc::Module* m = new bnet::TestFilterModule(name, this);
+   dabc::mgr()->MakeThreadForModule(m, Thrd2Name());
    return m;
 }
 

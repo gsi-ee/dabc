@@ -100,8 +100,8 @@ verbs::PoolRegistry::PoolRegistry(Device* verbs, dabc::MemoryPool* pool, bool lo
    f_mr(0),
    fBlockChanged(0)
 {
-   if (GetManager() && fPool)
-     GetManager()->RegisterDependency(this, fPool);
+   if (dabc::mgr() && fPool)
+     dabc::mgr()->RegisterDependency(this, fPool);
 
    dabc::LockGuard lock(fPool->GetPoolMutex());
 
@@ -116,8 +116,8 @@ verbs::PoolRegistry::~PoolRegistry()
 {
    DOUT3(("~PoolRegistry %s", GetName()));
 
-   if (GetManager() && fPool)
-      GetManager()->UnregisterDependency(this, fPool);
+   if (dabc::mgr() && fPool)
+      dabc::mgr()->UnregisterDependency(this, fPool);
 
    CleanMRStructure();
 
@@ -275,7 +275,7 @@ verbs::Device::~Device()
 
    RemoveProcessorFromThread(true);
 
-   dabc::Folder* f = GetManager()->GetThreadsFolder();
+   dabc::Folder* f = dabc::mgr()->GetThreadsFolder();
    if (f) {
       for (int n=f->NumChilds()-1; n>=0; n--) {
          Thread* thrd = dynamic_cast<Thread*> (f->GetChild(n));
@@ -285,7 +285,7 @@ verbs::Device::~Device()
                delete thrd;
             } else {
                thrd->CloseThread();
-               GetManager()->DestroyObject(thrd);
+               dabc::mgr()->DestroyObject(thrd);
             }
       }
    }
@@ -573,7 +573,7 @@ void verbs::Device::UnregisterPool(PoolRegistry* entry)
       // entry->GetParent()->RemoveChild(entry);
       // delete entry;
 
-      //GetManager()->DestroyObject(entry);
+      //dabc::mgr()->DestroyObject(entry);
 
       //entry->CleanMRStructure();
 
@@ -587,7 +587,7 @@ void verbs::Device::CreateVerbsTransport(const char* thrdname, const char* portn
 {
    if (qp==0) return;
 
-   dabc::Port* port = GetManager()->FindPort(portname);
+   dabc::Port* port = dabc::mgr()->FindPort(portname);
 
    Thread* thrd = MakeThread(thrdname, false);
 

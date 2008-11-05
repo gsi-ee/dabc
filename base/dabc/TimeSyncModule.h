@@ -14,11 +14,11 @@
 #endif
 
 namespace dabc {
-    
+
    class CommandDoTimeSync : public Command {
       public:
          CommandDoTimeSync(bool thrdclock, int niter, bool doshift = false, bool doscale = false) :
-            Command("DoTimeSync") 
+            Command("DoTimeSync")
             {
                SetBool("ThrdClock", thrdclock);
                SetInt("NumIter", niter);
@@ -27,17 +27,17 @@ namespace dabc {
             }
    };
 
-   class TimeSource; 
-    
+   class TimeSource;
+
    class TimeSyncModule : public ModuleAsync {
-      protected:  
+      protected:
          bool        fMasterConn;
          int         fNumSlaves;
          double*     fSyncTimes;  // time when last tyme sync was done, need for scale calculations
          String      fPoolName;
-         
+
          TimeSource* fTimeSource;
-         
+
          Command* fCurrCmd;
          int      fSlaveCnt;
          int      fPktCnt;
@@ -47,26 +47,26 @@ namespace dabc {
          double   fSetShift;
          double   fSetScale;
          bool     fSkipSlavePacket;
-         
+
          int      fMasterSendCnt;
          int      fMasterRecvCnt;
-         
+
          Mutex    fMutex;
-         
+
          PoolHandle* fPool;
-         
+
          void GenerateNextEvent(Buffer* buf);
          bool FillMasterPacket(Buffer* buf);
          bool FillSlavePacket(Buffer* buf);
-         
+
          virtual void OnThreadAssigned();
-         
+
          virtual int ExecuteCommand(Command* cmd);
 
          virtual void ProcessInputEvent(Port* port);
-         
+
       public:
-         TimeSyncModule(Manager* m, const char* name, Command* cmd);
+         TimeSyncModule(const char* name, Command* cmd);
          virtual ~TimeSyncModule();
    };
 }

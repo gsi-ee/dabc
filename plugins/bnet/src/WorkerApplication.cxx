@@ -22,8 +22,8 @@ const char* bnet::WorkerApplication::ItemName()
 }
 
 
-bnet::WorkerApplication::WorkerApplication(dabc::Basic* parent, const char* name) :
-   dabc::Application(parent, name ? name : PluginName())
+bnet::WorkerApplication::WorkerApplication(const char* name) :
+   dabc::Application(name ? name : PluginName())
 {
    new dabc::IntParameter(this, "IsGenerator", 1);
    new dabc::IntParameter(this, "IsSender", 0);
@@ -81,10 +81,10 @@ dabc::Module* bnet::WorkerApplication::CreateModule(const char* classname, const
     DOUT4(( "Create module:%s name:%s", classname, modulename));
 
     if (strcmp(classname,"SenderModule")==0)
-       return new bnet::SenderModule(GetManager(), modulename, this);
+       return new bnet::SenderModule(modulename, this);
     else
     if (strcmp(classname,"ReceiverModule")==0)
-       return new bnet::ReceiverModule(GetManager(), modulename, this);
+       return new bnet::ReceiverModule(modulename, this);
 
     return 0;
 }
@@ -94,7 +94,7 @@ bool bnet::WorkerApplication::CreateStorage(const char* portname)
    dabc::Command* cmd = new dabc::Command("NullConnect");
    cmd->SetStr("Port", portname);
 
-   return GetManager()->Execute(cmd, 5);
+   return dabc::mgr()->Execute(cmd, 5);
 }
 
 
@@ -118,7 +118,7 @@ void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 
    if (IsSender()) {
 
-      dabc::Module* m = GetManager()->FindModule("Sender");
+      dabc::Module* m = dabc::mgr()->FindModule("Sender");
       if (m) {
          dabc::String res = m->ExecuteStr("GetConfig", "RecvMask", 5);
          cmd->SetStr("RecvMask", res.c_str());
@@ -126,7 +126,7 @@ void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
    }
 
    if (IsReceiver()) {
-      dabc::Module* m = GetManager()->FindModule("Receiver");
+      dabc::Module* m = dabc::mgr()->FindModule("Receiver");
       if (m) {
          dabc::String res = m->ExecuteStr("GetConfig", "SendMask", 5);
          cmd->SetStr("SendMask", res.c_str());
@@ -145,45 +145,45 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
 
 //   LockUnlockPars(true);
 
-   dabc::CommandsSet* set = new dabc::CommandsSet(GetManager(), cmd, false);
+   dabc::CommandsSet* set = new dabc::CommandsSet(cmd, false);
 
    dabc::Module* m = 0;
 
    if (IsSender()) {
 
-      m = GetManager()->FindModule("Sender");
+      m = dabc::mgr()->FindModule("Sender");
       if (m) {
          dabc::Command* cmd = new dabc::Command("Configure");
          cmd->SetInt("Standalone", CfgController() ? 0 : 1);
          cmd->SetStr("RecvMask", CfgRecvMask());
 
-         set->Add(GetManager()->LocalCmd(cmd, m));
+         set->Add(dabc::mgr()->LocalCmd(cmd, m));
 //         m->Submit(*set, cmd);
       } else
          EOUT(("Cannot find Sender module"));
    }
 
    if (IsReceiver()) {
-      m = GetManager()->FindModule("Receiver");
+      m = dabc::mgr()->FindModule("Receiver");
       if (m) {
          dabc::Command* cmd = new dabc::Command("Configure");
          cmd->SetStr("SendMask", CfgSendMask());
-         set->Add(GetManager()->LocalCmd(cmd, m));
+         set->Add(dabc::mgr()->LocalCmd(cmd, m));
 //         m->Submit(*set, cmd);
       } else
          EOUT(("Cannot find receiever module"));
 
-      m = GetManager()->FindModule("Builder");
+      m = dabc::mgr()->FindModule("Builder");
       if (m) {
          dabc::Command* cmd = new dabc::CommandSetParameter("SendMask", CfgSendMask());
-         set->Add(GetManager()->LocalCmd(cmd, m));
+         set->Add(dabc::mgr()->LocalCmd(cmd, m));
 
 //         m->Submit(*set, new dabc::CommandSetParameter("SendMask", CfgSendMask()));
       } else
          EOUT(("Cannot find builder module"));
    }
 
-   set->Add(GetManager()->LocalCmd(new dabc::CommandSetParameter("CfgConnected", 1), this));
+   set->Add(dabc::mgr()->LocalCmd(new dabc::CommandSetParameter("CfgConnected", 1), this));
 
    dabc::CommandsSet::Completed(set, SMCommandTimeout());
 
@@ -216,22 +216,22 @@ bool bnet::WorkerApplication::CheckWorkerModules()
 
    if (IsSender()) {
 
-//      if (GetManager()->IsModuleRunning("Combiner")) isstopped = false;
-      if (GetManager()->IsModuleRunning("Sender")) isstopped = false;
+//      if (dabc::mgr()->IsModuleRunning("Combiner")) isstopped = false;
+      if (dabc::mgr()->IsModuleRunning("Sender")) isstopped = false;
    }
 
    if (IsReceiver()) {
-      if (GetManager()->IsModuleRunning("Receiver")) isstopped = false;
-//      if (GetManager()->IsModuleRunning("Builder")) isstopped = false;
+      if (dabc::mgr()->IsModuleRunning("Receiver")) isstopped = false;
+//      if (dabc::mgr()->IsModuleRunning("Builder")) isstopped = false;
 
 //      if (IsFilter())
-//         if (GetManager()->IsModuleRunning("Filter")) isstopped = false;
+//         if (dabc::mgr()->IsModuleRunning("Filter")) isstopped = false;
    }
 
    if (isstopped) {
-      if (strcmp(GetManager()->CurrentState(), dabc::Manager::stReady) != 0) {
+      if (strcmp(dabc::mgr()->CurrentState(), dabc::Manager::stReady) != 0) {
          DOUT1(("!!!!! ******** !!!!!!!!  All main modules are stopped - we can switch to Stop state"));
-         GetManager()->InvokeStateTransition(dabc::Manager::stcmdDoStop);
+         dabc::mgr()->InvokeStateTransition(dabc::Manager::stcmdDoStop);
       }
    }
 
@@ -243,8 +243,8 @@ void bnet::WorkerApplication::SetPars(bool is_all_to_all,
                                  int combinermodus)
 {
 
-   int nodeid = GetManager()->NodeId();
-   int numnodes = GetManager()->NumNodes();
+   int nodeid = dabc::mgr()->NodeId();
+   int numnodes = dabc::mgr()->NumNodes();
 
    if ((nodeid<0) || (nodeid>=numnodes)) return;
 
@@ -306,24 +306,24 @@ bool bnet::WorkerApplication::CreateAppModules()
 
    DOUT1(("CreateAppModules starts dev = %s", CfgNetDevice()));
 
-   GetManager()->CreateDevice(CfgNetDevice(), "BnetDev");
+   dabc::mgr()->CreateDevice(CfgNetDevice(), "BnetDev");
 
    if (IsSender() && (CombinerModus()==0)) {
-      GetManager()->CreateMemoryPool(ReadoutPoolName(), ReadoutBufferSize(), ReadoutPoolSize()/ReadoutBufferSize());
-      GetManager()->ConfigurePool(ReadoutPoolName(), true);
+      dabc::mgr()->CreateMemoryPool(ReadoutPoolName(), ReadoutBufferSize(), ReadoutPoolSize()/ReadoutBufferSize());
+      dabc::mgr()->ConfigurePool(ReadoutPoolName(), true);
    }
 
-   GetManager()->CreateMemoryPool(TransportPoolName(), TransportBufferSize(), TransportPoolSize()/TransportBufferSize(), 0, sizeof(bnet::SubEventNetHeader));
-   GetManager()->ConfigurePool(TransportPoolName(), true);
+   dabc::mgr()->CreateMemoryPool(TransportPoolName(), TransportBufferSize(), TransportPoolSize()/TransportBufferSize(), 0, sizeof(bnet::SubEventNetHeader));
+   dabc::mgr()->ConfigurePool(TransportPoolName(), true);
 
    if (IsReceiver()) {
-      GetManager()->CreateMemoryPool(EventPoolName(), EventBufferSize(), EventPoolSize()/EventBufferSize());
-      GetManager()->ConfigurePool(EventPoolName(), true);
+      dabc::mgr()->CreateMemoryPool(EventPoolName(), EventBufferSize(), EventPoolSize()/EventBufferSize());
+      dabc::mgr()->ConfigurePool(EventPoolName(), true);
    }
 
    if (IsSender()) {
-      GetManager()->CreateMemoryPool(ControlPoolName(), ControlBufferSize(), ControlPoolSize() / ControlBufferSize() );
-      GetManager()->ConfigurePool(ControlPoolName(), true);
+      dabc::mgr()->CreateMemoryPool(ControlPoolName(), ControlBufferSize(), ControlPoolSize() / ControlBufferSize() );
+      dabc::mgr()->ConfigurePool(ControlPoolName(), true);
    }
 
    dabc::Module* m = 0;
@@ -336,14 +336,14 @@ bool bnet::WorkerApplication::CreateAppModules()
          return false;
       }
 
-      m = new bnet::SenderModule(GetManager(), "Sender", this);
-      GetManager()->MakeThreadForModule(m, Thrd1Name());
+      m = new bnet::SenderModule("Sender", this);
+      dabc::mgr()->MakeThreadForModule(m, Thrd1Name());
    }
 
    if (IsReceiver()) {
 
-      m = new bnet::ReceiverModule(GetManager(), "Receiver", this);
-      GetManager()->MakeThreadForModule(m, Thrd2Name());
+      m = new bnet::ReceiverModule("Receiver", this);
+      dabc::mgr()->MakeThreadForModule(m, Thrd2Name());
 
       m = CreateBuilder("Builder");
       if (m==0) {
@@ -360,7 +360,7 @@ bool bnet::WorkerApplication::CreateAppModules()
       }
    }
 
-   GetManager()->CreateMemoryPools();
+   dabc::mgr()->CreateMemoryPools();
 
    if (IsSender()) {
 
@@ -370,16 +370,16 @@ bool bnet::WorkerApplication::CreateAppModules()
            return false;
         }
 
-      GetManager()->ConnectPorts("Combiner/Ports/Output", "Sender/Ports/Input");
+      dabc::mgr()->ConnectPorts("Combiner/Ports/Output", "Sender/Ports/Input");
    }
 
    if (IsReceiver()) {
-      GetManager()->ConnectPorts("Receiver/Ports/Output", "Builder/Ports/Input");
+      dabc::mgr()->ConnectPorts("Receiver/Ports/Output", "Builder/Ports/Input");
 
       const char* outportname = 0;
 
       if (IsFilter()) {
-         GetManager()->ConnectPorts("Builder/Ports/Output", "Filter/Ports/Input");
+         dabc::mgr()->ConnectPorts("Builder/Ports/Output", "Filter/Ports/Input");
          outportname = "Filter/Ports/Output";
       } else
          outportname = "Builder/Ports/Output";

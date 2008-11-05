@@ -3,8 +3,8 @@
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 
-dabc::Application::Application(Basic* parent, const char* name) :
-   Folder(parent, name ? name : "App", true),
+dabc::Application::Application(const char* name) :
+   Folder(dabc::mgr()->GetAppFolder(true), name ? name : "App", true),
    WorkingProcessor(this),
    fConnCmd(0),
    fConnTmout(0)
@@ -96,7 +96,7 @@ bool dabc::Application::DoStateTransition(const char* state_trans_name)
 
       DOUT1(("Did CreateAppModules"));
 
-      res = GetManager()->CreateMemoryPools() && res;
+      res = dabc::mgr()->CreateMemoryPools() && res;
 
       DOUT1(("Did CreateMemoryPools"));
 
@@ -106,18 +106,18 @@ bool dabc::Application::DoStateTransition(const char* state_trans_name)
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoStart)==0) {
       res = Execute("BeforeAppModulesStarted", SMCommandTimeout());
-      res = GetManager()->StartAllModules() && res;
+      res = dabc::mgr()->StartAllModules() && res;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoStop)==0) {
-      res = GetManager()->StopAllModules();
+      res = dabc::mgr()->StopAllModules();
       res = Execute("AfterAppModulesStopped", SMCommandTimeout()) && res;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoHalt)==0) {
       res = Execute("BeforeAppModulesDestroyed", SMCommandTimeout());
-      res = GetManager()->CleanupManager() && res;
+      res = dabc::mgr()->CleanupManager() && res;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoError)==0) {
-      res = GetManager()->StopAllModules();
+      res = dabc::mgr()->StopAllModules();
    } else
       res = false;
 

@@ -11,12 +11,12 @@
 
 roc::RocFactory rocfactory("roc");
 
-dabc::Application* roc::RocFactory::CreateApplication(dabc::Basic* parent, const char* classname, const char* appname, dabc::Command* cmd)
+dabc::Application* roc::RocFactory::CreateApplication(const char* classname, const char* appname, dabc::Command* cmd)
 {
    if (strcmp(classname,"RocReadoutApp")==0)
-      return new roc::ReadoutApplication(parent, appname);
+      return new roc::ReadoutApplication(appname);
 
-   return 0;
+   return dabc::Factory::CreateApplication(classname, appname, cmd);
 }
 
 dabc::Module* roc::RocFactory::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
@@ -24,12 +24,12 @@ dabc::Module* roc::RocFactory::CreateModule(const char* classname, const char* m
    DOUT1(("RocFactory::CreateModule called for class:%s, module:%s", classname, modulename));
 
    if (strcmp(classname,"RocCombinerModule")==0) {
-      dabc::Module* mod= new roc::RocCombinerModule(GetManager(),modulename,cmd);
+      dabc::Module* mod= new roc::RocCombinerModule(modulename,cmd);
       DOUT1(("RocFactory::CreateModule - Created RocCombiner module %s ", modulename));
       return mod;
    } else
    if (strcmp(classname,"RocCalibrModule")==0) {
-      dabc::Module* mod = new roc::RocCalibrModule(GetManager(), modulename, cmd);
+      dabc::Module* mod = new roc::RocCalibrModule(modulename, cmd);
       DOUT1(("RocFactory::CreateModule - Created RocCalibrModule module %s ", modulename));
       return mod;
    }

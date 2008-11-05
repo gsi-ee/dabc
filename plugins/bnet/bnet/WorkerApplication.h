@@ -14,7 +14,7 @@ namespace bnet {
 
    class WorkerApplication : public dabc::Application {
       public:
-         WorkerApplication(dabc::Basic* parent, const char* name);
+         WorkerApplication(const char* name);
 
          virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
 

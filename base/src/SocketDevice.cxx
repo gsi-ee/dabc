@@ -364,7 +364,7 @@ bool dabc::SocketDevice::StartServerThread(Command* cmd, String& servid, const c
          
 bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* portname)
 {
-   port = GetManager()->FindPort(portname);
+   port = dabc::mgr()->FindPort(portname);
    DOUT3(("ServerConnect %s %p", portname, port));
    if (port==0) return false;
 
@@ -409,7 +409,7 @@ bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* por
 
 bool dabc::SocketDevice::ClientConnect(Command* cmd, Port* port, const char* portname)
 {
-   port = GetManager()->FindPort(portname);
+   port = dabc::mgr()->FindPort(portname);
    DOUT3(("ClientConnect %s %p", portname, port));
    if (port==0) return false;
 
@@ -702,7 +702,7 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const 
          // create transport for the established connection 
          int fd = proc->TakeSocket();
          
-         Port* port = GetManager()->FindPort(rec->fPortName.c_str());
+         Port* port = dabc::mgr()->FindPort(rec->fPortName.c_str());
          
          if (port==0) {
             EOUT(("Port dissappear while connection is ready"));
@@ -752,7 +752,7 @@ bool dabc::SocketDevice::SubmitCommandFromRemote(SocketProtocolProcessor* proc, 
    
    rec->fCmd = cmd;
    
-   GetManager()->Submit(cmd);
+   dabc::mgr()->Submit(cmd);
 
    return true;
 }

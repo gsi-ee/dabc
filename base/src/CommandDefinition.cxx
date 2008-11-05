@@ -19,42 +19,41 @@ dabc::CommandDefinition::~CommandDefinition()
 
 void dabc::CommandDefinition::Register(bool on)
 {
-   Manager* mgr = GetManager();
    Module* m = GetParent() ? dynamic_cast<Module*>(GetParent()->GetParent()) : 0;
 
-   DOUT3((" CommandDefinition::Register(%s) mgr = %p mdl %p cmd %s", DBOOL(on), mgr, m, GetName()));
+   DOUT3((" CommandDefinition::Register(%s) mgr = %p mdl %p cmd %s", DBOOL(on), dabc::mgr(), m, GetName()));
 
-   if (mgr)
-      mgr->CommandRegistration(m, this, on);
+   if (dabc::mgr())
+      dabc::mgr()->CommandRegistration(m, this, on);
 }
 
 
-void dabc::CommandDefinition::AddArgument(const char* name, 
+void dabc::CommandDefinition::AddArgument(const char* name,
                                           CommandArgumentType typ,
                                           bool required)
 {
    if (fClosed) {
       EOUT(("Command definition %s is closed", GetName()));
       return;
-   } 
-   
+   }
+
    const char* styp = 0;
    switch (typ) {
       case argInt: styp = "I"; break;
       case argDouble: styp = "F"; break;
       case argString: styp = "C"; break;
    }
-   
+
    fXml += format("  <argument name=\"%s\" type=\"%s\" value=\"\" required=\"%s\"/>\n",
                       name, styp, (required ? "true" : "false"));
 }
 
-const char* dabc::CommandDefinition::GetXml() 
-{ 
+const char* dabc::CommandDefinition::GetXml()
+{
    if (!fClosed) {
       fXml+="</command>\n";
       fClosed = true;
-   } 
-    
-   return fXml.c_str(); 
+   }
+
+   return fXml.c_str();
 }

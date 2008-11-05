@@ -10,14 +10,13 @@
 
 #include "bnet/WorkerApplication.h"
 
-bnet::FormaterModule::FormaterModule(dabc::Manager* mgr, 
-                                     const char* name, 
-                                     WorkerApplication* plugin) : 
-   dabc::ModuleSync(mgr, name),
+bnet::FormaterModule::FormaterModule(const char* name,
+                                     WorkerApplication* plugin) :
+   dabc::ModuleSync(name),
    fNumReadout(1),
    fModus(0)
 {
-   fModus = plugin->CombinerModus(); 
+   fModus = plugin->CombinerModus();
    fNumReadout = plugin->NumReadouts();
 
    fInpPool = CreatePool(plugin->ReadoutPoolName());
@@ -25,7 +24,7 @@ bnet::FormaterModule::FormaterModule(dabc::Manager* mgr,
    fOutPool = CreatePool(plugin->TransportPoolName());
 
    fOutPort = CreateOutput("Output", fOutPool, plugin->CombinerOutQueueSize(), sizeof(bnet::SubEventNetHeader));
-   
+
    for (int n=0;n<fNumReadout;n++)
       CreateInput(FORMAT(("Input%d", n)), fInpPool, plugin->CombinerInQueueSize());
 }

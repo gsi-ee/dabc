@@ -6,27 +6,27 @@
 #include <vector>
 
 namespace bnet {
-    
+
    class WorkerApplication;
-   
+
    class TestBuilderModule : public dabc::ModuleAsync {
       protected:
          dabc::PoolHandle*  fInpPool;
          dabc::PoolHandle*  fOutPool;
          int                  fNumSenders;
          int                  fOutBufferSize;
-         
+
          std::vector<dabc::Buffer*> fBuffers;
-         
+
       public:
-         TestBuilderModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
+         TestBuilderModule(const char* name, WorkerApplication* factory);
          virtual ~TestBuilderModule();
-         
+
          virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
 
          virtual void BeforeModuleStart();
          virtual void AfterModuleStop();
-   };   
+   };
 }
 
 #endif

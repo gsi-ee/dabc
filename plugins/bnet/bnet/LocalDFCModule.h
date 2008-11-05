@@ -8,11 +8,11 @@ namespace bnet {
    class WorkerApplication;
 
    class LocalDFCModule : public dabc::ModuleAsync {
-      protected:  
+      protected:
          dabc::PoolHandle*   fPool;
 
       public:
-         LocalDFCModule(dabc::Manager* m, const char* name, WorkerApplication* factory);
+         LocalDFCModule(const char* name, WorkerApplication* factory);
    };
 }
 

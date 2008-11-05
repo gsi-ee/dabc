@@ -6,10 +6,10 @@
 
 #include "mbs/MbsTypeDefs.h"
 
-bnet::MbsFilterModule::MbsFilterModule(dabc::Manager* m, const char* name, WorkerApplication* factory) : 
-   FilterModule(m, name, factory)
+bnet::MbsFilterModule::MbsFilterModule(const char* name, WorkerApplication* factory) :
+   FilterModule(name, factory)
 {
-   DOUT5(("Create MbsFilterModule %s", name)); 
+   DOUT5(("Create MbsFilterModule %s", name));
    fTotalCnt = 0;
 }
 

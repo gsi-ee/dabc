@@ -285,7 +285,7 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
    if (tmout_sec>=0.) {
       if (fTimeout==0) {
          fTimeout = new TimeoutProcessor(this);
-         fTimeout->AssignProcessorToThread(GetManager()->ProcessorThread(), false);
+         fTimeout->AssignProcessorToThread(dabc::mgr()->ProcessorThread(), false);
       }
       fTimeout->DoTimeout(tmout_sec);
    }

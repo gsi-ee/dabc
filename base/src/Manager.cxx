@@ -67,7 +67,7 @@ namespace dabc {
 dabc::Module* dabc::StdManagerFactory::CreateModule(const char* classname, const char* modulename, Command* cmd)
 {
    if (strcmp(classname, "TimeSyncModule")==0)
-      return new TimeSyncModule(GetManager(), modulename, cmd);
+      return new TimeSyncModule(modulename, cmd);
 
    return 0;
 }
@@ -220,7 +220,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess) :
    // this will sets basic pointer on manager itself and mutex
    {
       LockGuard lock(fMgrMutex);
-      _SetParent(this, fMgrMutex, 0);
+      _SetParent(fMgrMutex, 0);
    }
 
    if (fInstance == this) {
@@ -268,7 +268,7 @@ dabc::Manager::~Manager()
 
    {
       LockGuard lock(fMgrMutex);
-      _SetParent(0, 0, 0);
+      _SetParent(0, 0);
    }
 
    while (fDestroyQueue.Size()>0)
@@ -708,7 +708,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
                Factory* factory =
                   dynamic_cast<Factory*> (folder->GetChild(n));
                if (factory!=0)
-                  app = factory->CreateApplication(GetAppFolder(true), classname, appname, cmd);
+                  app = factory->CreateApplication(classname, appname, cmd);
                if (app!=0) break;
             }
 

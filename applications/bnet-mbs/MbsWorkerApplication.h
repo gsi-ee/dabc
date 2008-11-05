@@ -7,7 +7,7 @@ namespace bnet {
 
    class MbsWorkerApplication : public WorkerApplication {
       public:
-         MbsWorkerApplication(dabc::Basic* parent, const char* name);
+         MbsWorkerApplication(const char* name);
 
          virtual bool CreateReadout(const char* portname, int portnumber);
 

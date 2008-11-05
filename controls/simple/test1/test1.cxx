@@ -26,92 +26,92 @@ const int FirstNode = 0;
 
 class Test1SendModule : public dabc::ModuleAsync {
    protected:
-      dabc::PoolHandle* fPool; 
+      dabc::PoolHandle* fPool;
       bool                fCanSend;
       dabc::Ratemeter     fSendRate;
       unsigned            fPortCnt;
-      
+
    public:
-      Test1SendModule(dabc::Manager* mgr, dabc::Command* cmd) : 
-         dabc::ModuleAsync(mgr, cmd)
+      Test1SendModule(dabc::Command* cmd) :
+         dabc::ModuleAsync(cmd)
       {
          int nports = cmd->GetInt("NumPorts", 3);
          int buffsize = cmd->GetInt("BufferSize", 16*1024);
 
          fPool = CreatePool("SendPool", 5, buffsize);
-          
+
          for (int n=0;n<nports;n++)
             CreateOutput(FORMAT(("Output%d", n)), fPool, TestSendQueueSize, 0, TestUseAkcn);
-         
+
          fCanSend = false;
          fPortCnt = 0;
 
          DOUT1(("new TSendModule %s nports = %d buf = %d req = %d done", GetName(), NumOutputs(), buffsize, fPool->GetRequiredBuffersNumber()));
       }
-      
-      int ExecuteCommand(dabc::Command* cmd) 
+
+      int ExecuteCommand(dabc::Command* cmd)
       {
          if (cmd->IsName("EnableSending")) {
             fCanSend = cmd->GetBool("Enable", true);
             if (fCanSend) StartSending();
             fPortCnt = 0;
             return cmd_true;
-         } 
-            
+         }
+
          return ModuleAsync::ExecuteCommand(cmd);
       }
-      
-      void ProcessOutputEvent(dabc::Port* port) 
-      { 
+
+      void ProcessOutputEvent(dabc::Port* port)
+      {
          bool fullchaotic = false;
-         
+
          if (!fCanSend) return;
-         
+
          if (!fullchaotic && (Output(fPortCnt) != port)) return;
-         
+
          bool tryagain = true;
-         
+
          int cnt=0;
-         
-         do { 
-            if (cnt++> 100) { EOUT(("AAAAAAAAAAA")); } 
-             
-            tryagain = false; 
+
+         do {
+            if (cnt++> 100) { EOUT(("AAAAAAAAAAA")); }
+
+            tryagain = false;
             dabc::Buffer* ref = fPool->TakeBuffer(0, false);
             if (ref==0) { EOUT(("AAAAAAA")); }
-            
+
             fSendRate.Packet(ref->GetDataSize());
-            
+
             port->Send(ref);
-            
+
             if (!fullchaotic) {
-               fPortCnt = (fPortCnt+1) % NumOutputs(); 
+               fPortCnt = (fPortCnt+1) % NumOutputs();
                port = Output(fPortCnt);
                tryagain = !port->OutputBlocked();
             }
-            
+
          } while (tryagain);
       }
-      
+
       void StartSending()
       {
-         for(int n=0;n<TestSendQueueSize;n++) 
+         for(int n=0;n<TestSendQueueSize;n++)
             for(unsigned nout=0;nout<NumOutputs();nout++) {
                dabc::Buffer* buf = fPool->TakeBuffer(0, false);
-               
+
                if (buf==0) { EOUT(("AAAAAAAAA")); }
-               
+
                Output(nout)->Send(buf);
             }
       }
-      
+
       void BeforeModuleStart()
       {
 //         fCanSend = true;
 //         StartSending();
 //         fPortCnt = 0;
       }
-      
+
       void AfterModuleStop()
       {
          fCanSend = false;
@@ -122,65 +122,65 @@ class Test1SendModule : public dabc::ModuleAsync {
 
 class Test1RecvModule : public dabc::ModuleAsync {
    protected:
-      dabc::PoolHandle* fPool; 
+      dabc::PoolHandle* fPool;
       int fSleepTime;
       dabc::Ratemeter fRecvRate;
       dabc::Average fRealSleepTime;
 
    public:
-      Test1RecvModule(dabc::Manager* mgr, dabc::Command* cmd) : 
-         dabc::ModuleAsync(mgr, cmd) 
+      Test1RecvModule(dabc::Command* cmd) :
+         dabc::ModuleAsync(cmd)
       {
-         // we will use queue (second true) in the signal to detect order of signal fire 
+         // we will use queue (second true) in the signal to detect order of signal fire
          int nports = cmd->GetInt("NumPorts", 3);
          int buffsize = cmd->GetInt("BufferSize", 16*1024);
-         
-         
+
+
          // 0 here means that we need at least 1 buffer more for module and force by that pool request scheme
          // 1 is just exactly that we need to work without requests
          fPool = CreatePool("RecvPool", 0, buffsize);
 
-         for (int n=0;n<nports;n++) 
+         for (int n=0;n<nports;n++)
             CreateInput(FORMAT(("Input%d", n)), fPool, TestRecvQueueSize, 0, TestUseAkcn);
 
          DOUT1(("new TRecvModule %s nports:%d buf:%d req:%d", GetName(), nports, buffsize, fPool->GetRequiredBuffersNumber()));
 
          fSleepTime = 0;
       }
-      
-      int ExecuteCommand(dabc::Command* cmd) 
+
+      int ExecuteCommand(dabc::Command* cmd)
       {
          if (cmd->IsName("ChangeSleepTime")) {
-            int old = fSleepTime; 
+            int old = fSleepTime;
             fSleepTime = cmd->GetInt("SleepTime", 0);
             DOUT1(("Sleep:%5d (%5.1f, %5.1f) Rate: %5.1f     new:%5d", old, fRealSleepTime.Mean(), fRealSleepTime.Max(), fRecvRate.GetRate(), fSleepTime));
             fRealSleepTime.Reset();
             fRecvRate.Reset();
          } else
             return ModuleAsync::ExecuteCommand(cmd);
-          
-         return cmd_true; 
+
+         return cmd_true;
       }
-      
+
       void ProcessInputEvent(dabc::Port* port)
       {
          dabc::Buffer* ref = 0;
          port->Recv(ref);
          if (ref==0) { EOUT(("AAAAAAA")); }
-         
+
 //         DOUT1(("Did recv buffer %p", ref));
-         
+
          fRecvRate.Packet(ref->GetTotalSize());
          dabc::Buffer::Release(ref);
-        
+
          if (fSleepTime>0) {
-            dabc::TimeStamp_t tm1 = TimeStamp(); 
+            dabc::TimeStamp_t tm1 = TimeStamp();
             dabc::MicroSleep(fSleepTime);
             dabc::TimeStamp_t tm2 = TimeStamp();
             fRealSleepTime.Fill(dabc::TimeDistance(tm1,tm2));
          }
       }
-      
+
       void AfterModuleStop()
       {
          DOUT1(("TRecvModule finish Rate %5.1f numoper:%7ld", fRecvRate.GetRate(), fRecvRate.GetNumOper()));
@@ -193,47 +193,47 @@ class Test1WorkerModule : public dabc::ModuleSync {
       int fCounter;
 
    public:
-      Test1WorkerModule(dabc::Manager* mgr, dabc::Command* cmd) : 
-         dabc::ModuleSync(mgr, cmd) 
+      Test1WorkerModule(dabc::Command* cmd) :
+         dabc::ModuleSync(cmd)
       {
          fCounter = 0;
          SetTmoutExcept(true);
       }
 
-      Test1WorkerModule(dabc::Manager* mgr, const char* name) : 
-         dabc::ModuleSync(mgr, name) 
+      Test1WorkerModule(const char* name) :
+         dabc::ModuleSync(name)
       {
          fCounter = 0;
          SetTmoutExcept(true);
       }
-      
-      int ExecuteCommand(dabc::Command* cmd) 
+
+      int ExecuteCommand(dabc::Command* cmd)
       {
          if (cmd->IsName("ResetCounter")) {
-            fCounter = 0; 
+            fCounter = 0;
          } else
             return ModuleSync::ExecuteCommand(cmd);
-          
-         return cmd_true; 
+
+         return cmd_true;
       }
 
-      virtual void BeforeModuleStart() 
+      virtual void BeforeModuleStart()
       {
          DOUT1(("TWorkerModule::BeforeModuleStart"));
       }
-      
-      virtual void AfterModuleStop() 
+
+      virtual void AfterModuleStop()
       {
          DOUT1(("TWorkerModule::AfterModuleStop cnt = %d", fCounter));
       }
-      
+
       virtual void MainLoop()
       {
          DOUT1(("TWorkerModule mainloop"));
-         
+
          while (TestWorking(100)) {
             fCounter++;
-            
+
             // lets say, about 10 milisecond
             for (int k=0;k<10000/110;k++) {
               // this peace of code takes about 110 microsec
@@ -248,35 +248,32 @@ class Test1WorkerModule : public dabc::ModuleSync {
 
 
 class Test1Plugin: public dabc::Application  {
-   public: 
-      Test1Plugin(dabc::Manager* m) : 
-         dabc::Application(m, "Test1Plugin")
-      {
-      }
+   public:
+      Test1Plugin() : dabc::Application("Test1Plugin") { }
 
-      dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd) 
+      dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
       {
-          if ((classname==0) || (cmd==0)) return 0; 
-          
+          if ((classname==0) || (cmd==0)) return 0;
+
           if (strcmp(classname,"Test1SendModule")==0)
-             return new Test1SendModule(GetManager(), cmd);
+             return new Test1SendModule(cmd);
           else
           if (strcmp(classname,"Test1RecvModule")==0)
-             return new Test1RecvModule(GetManager(), cmd);
+             return new Test1RecvModule(cmd);
           else
           if (strcmp(classname,"Test1WorkerModule")==0)
-             return new Test1WorkerModule(GetManager(), cmd);
-             
-          return 0;   
+             return new Test1WorkerModule(cmd);
+
+          return 0;
       }
 };
 
-void CreateAllModules(dabc::StandaloneManager &m, int numworkers = 0) 
+void CreateAllModules(dabc::StandaloneManager &m, int numworkers = 0)
 {
    dabc::CommandClient cli;
-    
+
    for (int node=FirstNode;node<m.NumNodes();node++) {
-      dabc::Command* cmd = 
+      dabc::Command* cmd =
          new dabc::CommandCreateModule("Test1RecvModule","Receiver");
       cmd->SetInt("NumPorts", m.NumNodes()-1-FirstNode);
       cmd->SetInt("BufferSize", TestBufferSize);
@@ -284,43 +281,43 @@ void CreateAllModules(dabc::StandaloneManager &m, int numworkers = 0)
    }
 
    for (int node=FirstNode;node<m.NumNodes();node++) {
-      dabc::Command* cmd = 
+      dabc::Command* cmd =
          new dabc::CommandCreateModule("Test1SendModule","Sender");
       cmd->SetInt("NumPorts", m.NumNodes()-1-FirstNode);
       cmd->SetInt("BufferSize", TestBufferSize);
       m.SubmitRemote(cli, cmd, node);
    }
-      
-   for (int nw=0;nw<numworkers;nw++) 
+
+   for (int nw=0;nw<numworkers;nw++)
       for (int node=FirstNode;node<m.NumNodes();node++) {
-         dabc::Command* cmd = 
+         dabc::Command* cmd =
             new dabc::CommandCreateModule("Test1WorkerModule", FORMAT(("Worker%d",nw)));
          m.SubmitRemote(cli, cmd, node);
       }
 
    DOUT1(("Do CreateMemoryPools "));
-   
+
    // create completely minimum for recv pool
 //   for (int node=0; node<m.NumNodes();node++)
 //      m.SubmitRemote(cli, new dabc::CmdCreatePool("RecvPool", TestBufferSize * m.NumNodes() * TestRecvQueueSize * 2,  TestBufferSize), node);
 
-   for (int node=FirstNode;node<m.NumNodes();node++) 
+   for (int node=FirstNode;node<m.NumNodes();node++)
       m.SubmitRemote(cli, new dabc::Command("CreateMemoryPools"), node);
 
-   bool res = cli.WaitCommands(5);         
-   
+   bool res = cli.WaitCommands(5);
+
    DOUT1(("CreateAllModules() res = %s", DBOOL(res)));
 }
 
 void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
 {
    dabc::CommandClient cli;
-    
-   const char* devname = "Test1Dev"; 
-    
+
+   const char* devname = "Test1Dev";
+
    const char* deviceclass = "SocketDevice";
    if (deviceid==2) deviceclass = "VerbsDevice";
-   
+
    for (int node = FirstNode; node < m.NumNodes(); node++)
       m.SubmitRemote(cli, new dabc::CmdCreateDevice(deviceclass, devname), node);
 
@@ -328,34 +325,34 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
       EOUT(("Cannot create devices of class %s", deviceclass));
       exit(1);
    }
-    
+
    for (int nsender = FirstNode; nsender < m.NumNodes(); nsender++) {
       for (int nreceiver = FirstNode; nreceiver < m.NumNodes(); nreceiver++) {
           if (nsender==nreceiver) continue;
-          
+
           dabc::String port1name, port2name;
-          
+
           dabc::formats(port1name, "%s$Sender/Ports/Output%d", m.GetNodeName(nsender), (nreceiver>nsender ? nreceiver-1 : nreceiver) - FirstNode);
           dabc::formats(port2name, "%s$Receiver/Ports/Input%d", m.GetNodeName(nreceiver), (nsender>nreceiver ? nsender-1 : nsender) - FirstNode);
-          
-          dabc::Command* cmd = 
+
+          dabc::Command* cmd =
              new dabc::CommandPortConnect(port1name.c_str(),
                                           port2name.c_str(),
                                           devname, "TransportThrd");
 
           m.SubmitCl(cli, cmd);
-//          break;                    
+//          break;
       }
 //      break;
    }
-   bool res = cli.WaitCommands(5);         
+   bool res = cli.WaitCommands(5);
    DOUT1(("ConnectAllModules() res = %s", DBOOL(res)));
 }
 
 void SetPriorities(dabc::StandaloneManager &m, int prio = 0)
 {
    dabc::CommandClient cli;
-    
+
    for (int node=FirstNode;node<m.NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("SetPriority");
       cmd->SetInt("Priority", prio);
@@ -367,38 +364,38 @@ void SetPriorities(dabc::StandaloneManager &m, int prio = 0)
       m.SubmitRemote(cli, cmd, node, "Modules/Sender");
    }
 
-   bool res = cli.WaitCommands(1);         
+   bool res = cli.WaitCommands(1);
    DOUT1(("SetPriorities res = %s", DBOOL(res)));
 }
 
-void StartAll(dabc::StandaloneManager &m, int numworkers = 0) 
+void StartAll(dabc::StandaloneManager &m, int numworkers = 0)
 {
    dabc::CommandClient cli;
-    
-   for (int node=FirstNode;node<m.NumNodes();node++) 
+
+   for (int node=FirstNode;node<m.NumNodes();node++)
       m.SubmitRemote(cli, new dabc::CmdStartAllModules(), node);
 
-   bool res = cli.WaitCommands(1);         
+   bool res = cli.WaitCommands(1);
    DOUT1(("StartAll() res = %s", DBOOL(res)));
 }
 
 void EnableSending(dabc::StandaloneManager &m, bool on = true)
 {
    dabc::CommandClient cli;
-    
+
    for (int node=FirstNode;node<m.NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("EnableSending");
       cmd->SetBool("Enable", on);
       m.SubmitRemote(cli, cmd, node, "Modules/Sender");
    }
-   
+
    cli.WaitCommands(3);
 }
 
-void ChangeSleepTime(dabc::StandaloneManager &m, int tm=0, int selectnode = -1) 
+void ChangeSleepTime(dabc::StandaloneManager &m, int tm=0, int selectnode = -1)
 {
    dabc::CommandClient cli;
- 
+
    for (int node=FirstNode;node<m.NumNodes();node++) {
       if ((selectnode>=0) && (node!=selectnode)) continue;
       dabc::Command* cmd = new dabc::Command("ChangeSleepTime");
@@ -408,23 +405,23 @@ void ChangeSleepTime(dabc::StandaloneManager &m, int tm=0, int selectnode = -1)
    cli.WaitCommands(1);
 }
 
-void StopAll(dabc::StandaloneManager &m) 
+void StopAll(dabc::StandaloneManager &m)
 {
    dabc::CommandClient cli;
- 
-   for (int node=FirstNode;node<m.NumNodes();node++) 
+
+   for (int node=FirstNode;node<m.NumNodes();node++)
       m.SubmitRemote(cli, new dabc::CmdStopAllModules(), node);
-   bool res = cli.WaitCommands(5);         
+   bool res = cli.WaitCommands(5);
    DOUT1(("StopAll res = %s", DBOOL(res)));
 }
 
-void CleanupAll(dabc::StandaloneManager &m) 
+void CleanupAll(dabc::StandaloneManager &m)
 {
    dabc::CommandClient cli;
- 
-   for (int node=FirstNode;node<m.NumNodes();node++) 
+
+   for (int node=FirstNode;node<m.NumNodes();node++)
       m.SubmitRemote(cli, new dabc::CmdCleanupManager(), node);
-   bool res = cli.WaitCommands(5);         
+   bool res = cli.WaitCommands(5);
    DOUT1(("CleanupAll res = %s", DBOOL(res)));
 }
 
@@ -433,21 +430,21 @@ void TestWorker(dabc::StandaloneManager &mgr)
 {
    dabc::SetDebugLevel(3);
 
-   Test1WorkerModule* m = new Test1WorkerModule(&mgr, "Combiner");
+   Test1WorkerModule* m = new Test1WorkerModule("Combiner");
 
    mgr.MakeThreadForModule(m, "Thrd1");
-   
+
    mgr.CreateMemoryPools();
 
    m->Start();
 
    DOUT1(("Start called"));
-   
+
    dabc::ShowLongSleep("Working", 3);
    DOUT1(("Work finished"));
-   
+
    m->Stop();
-   
+
    DOUT1(("Stop called"));
 }
 
@@ -455,17 +452,17 @@ void TestWorker(dabc::StandaloneManager &mgr)
 void CheckLocking()
 {
    dabc::TimeStamp_t tm1, tm2;
-   
+
    dabc::Mutex mutex;
    double cnt = 0;
 
    for (int k=0;k<10;k++) {
        tm1 = TimeStamp();
        for (unsigned n=0;n<1000;n++) {
-          mutex.Lock(); 
+          mutex.Lock();
 //          dabc::LockGuard guard(mutex);
           cnt+=1.;
-          mutex.Unlock(); 
+          mutex.Unlock();
        }
        tm2 = TimeStamp();
        DOUT1(("Locking 1000 times need %7.6f", dabc::TimeDistance(tm1, tm2)));
@@ -475,19 +472,19 @@ void CheckLocking()
 void CheckIntQueue()
 {
    dabc::TimeStamp_t tm1, tm2;
-   
+
    std::queue<uint64_t> q;
-   
+
    tm1 = TimeStamp();
-   for (unsigned n=0;n<1000;n++) 
+   for (unsigned n=0;n<1000;n++)
       q.push(n);
    tm2 = TimeStamp();
    DOUT1(("Insert 1000 items need  %7.6f", dabc::TimeDistance(tm1, tm2)));
 
-   uint64_t res=0;   
+   uint64_t res=0;
    tm1 = TimeStamp();
    for (unsigned n=0;n<1000;n++) {
-      res = q.front(); 
+      res = q.front();
       q.pop();
    }
    tm2 = TimeStamp();
@@ -496,15 +493,15 @@ void CheckIntQueue()
    tm1 = TimeStamp();
    for (unsigned n=0;n<1000;n++) {
       q.push(n);
-      res = q.front(); 
+      res = q.front();
       q.pop();
    }
    tm2 = TimeStamp();
 
    DOUT1(("Insert and Extract 1000 items need %7.6f", dabc::TimeDistance(tm1, tm2)));
-   
+
    uint64_t arr[1000];
-   
+
    int cnt = 0;
 
    tm1 = TimeStamp();
@@ -513,11 +510,11 @@ void CheckIntQueue()
    }
    tm2 = TimeStamp();
    DOUT1(("Insert 1000 items in array need %7.6f", dabc::TimeDistance(tm1, tm2)));
-   
-   cnt = 0; 
+
+   cnt = 0;
    tm1 = TimeStamp();
    for (unsigned n=0;n<1000;n++) {
-      res = arr[cnt++]; 
+      res = arr[cnt++];
    }
    tm2 = TimeStamp();
    DOUT1(("Extract 1000 items from array need %7.6f", dabc::TimeDistance(tm1, tm2)));
@@ -534,36 +531,36 @@ int main(int numc, char* args[])
    if (numc>2) numnodes = atoi(args[2]);
    if (numc>3) devices = atoi(args[3]);
    if (numc>4) controllerID = args[4];
-   
+
 //   if (numc>5) dabc::SocketDevice::SetLocalHostIP(args[5]);
-   
+
    dabc::SetDebugLevel(1);
 
    dabc::StandaloneManager manager(nodeid, numnodes, false);
 
 //   TestWorker(manager);
 //   return 0;
-   
-   
+
+
    manager.ConnectCmdChannel(numnodes, devices / 10, controllerID);
 
-   new Test1Plugin(&manager);
+   new Test1Plugin();
 
    DOUT1(("READY"));
-   
+
    if (nodeid==0) {
        dabc::SetDebugLevel(1);
-       
+
 //       CheckIntQueue();
 
        sleep(1);
-       
+
        int numworkers = 0;
-       
+
        CreateAllModules(manager, numworkers);
        ConnectModules(manager, devices % 10);
        sleep(1);
-       
+
        StartAll(manager);
        sleep(1);
 
@@ -580,15 +577,15 @@ int main(int numc, char* args[])
 
        sleep(1);
        StopAll(manager);
-       
+
 //       manager.SetPriorities(60);
 //       sleep(1);
-       
+
 //       manager.ChangeSleepTime(50000, 2);
 //       sleep(1);
 
 //       EnableSending(manager);
-       
+
 //       for (int tm=10;tm<=500;tm+=10) {
 //          manager.ChangeSleepTime(tm);
 //          sleep(5);
@@ -596,30 +593,30 @@ int main(int numc, char* args[])
 
 //       manager.ChangeSleepTime(0);
 //       sleep(1);
-       
+
 
 //       sleep(1); // need for master node to be able smoothly stop threads
-       
+
 //       DeleteAll(manager);
 
        CleanupAll(manager);
        sleep(2);
-       
 
-       DOUT1(("\n\n\n =============== START AGAIN ============")); 
+
+       DOUT1(("\n\n\n =============== START AGAIN ============"));
 
        // after cleanup try same again
 
        CreateAllModules(manager, numworkers);
        ConnectModules(manager, devices % 10);
        sleep(1);
-       
+
        StartAll(manager);
        sleep(1);
-       
+
        EnableSending(manager, true);
 //       CheckLocking();
-       
+
        dabc::ShowLongSleep("Main loop", 5);
 
        EnableSending(manager, false);
@@ -628,5 +625,5 @@ int main(int numc, char* args[])
        CleanupAll(manager);
    }
 
-   return 0; 
+   return 0;
 }

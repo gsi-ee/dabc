@@ -14,7 +14,7 @@ namespace bnet {
       friend class ClusterModule;
 
       public:
-         ClusterApplication(dabc::Basic* parent, const char* name);
+         ClusterApplication(const char* name);
          virtual ~ClusterApplication();
 
          virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);

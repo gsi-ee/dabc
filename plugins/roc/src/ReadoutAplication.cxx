@@ -12,8 +12,8 @@
 
 #include "SysCoreDefines.h"
 
-roc::ReadoutApplication::ReadoutApplication(dabc::Basic* parent, const char* name) :
-   dabc::Application(parent, name ? name : "RocPlugin")
+roc::ReadoutApplication::ReadoutApplication(const char* name) :
+   dabc::Application(name ? name : "RocPlugin")
 {
    //new dabc::StrParameter(this,DABC_ROC_COMPAR_BOARDIP, "140.181.66.173"); // lxi010.gsi.de
    // todo: later provide more than one roc board as input
@@ -67,11 +67,11 @@ bool roc::ReadoutApplication::CreateAppModules()
    std::string devname = "ROC"; // parametrize this later?
    fFullDeviceName = "Devices/"+devname;
 
-   GetManager()->CreateMemoryPool(DABC_ROC_POOLNAME, BufferSize(), NumPoolBuffers());
+   dabc::mgr()->CreateMemoryPool(DABC_ROC_POOLNAME, BufferSize(), NumPoolBuffers());
 
    if (DoTaking()) {
-      if (!GetManager()->FindDevice(devname.c_str())) {
-         res = GetManager()->CreateDevice("RocDevice",devname.c_str());
+      if (!dabc::mgr()->FindDevice(devname.c_str())) {
+         res = dabc::mgr()->CreateDevice("RocDevice",devname.c_str());
          DOUT1(("Create Roc Device = %s", DBOOL(res)));
          if(!res) return false;
       }
@@ -82,7 +82,7 @@ bool roc::ReadoutApplication::CreateAppModules()
       cmd->SetInt(DABC_ROC_COMPAR_QLENGTH, PortQueueLength());
       cmd->SetInt(DABC_ROC_COMPAR_ROCSNUMBER, NumRocs());
       cmd->SetInt(DABC_ROC_COMPAR_NUMOUTPUTS, 2);
-      res = GetManager()->CreateModule("RocCombinerModule","RocComb", "RocCombThrd", cmd);
+      res = dabc::mgr()->CreateModule("RocCombinerModule","RocComb", "RocCombThrd", cmd);
       DOUT1(("Create ROC combiner module = %s", DBOOL(res)));
       if(!res) return false;
    }
@@ -93,18 +93,18 @@ bool roc::ReadoutApplication::CreateAppModules()
       cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
       cmd->SetInt(DABC_ROC_COMPAR_QLENGTH, PortQueueLength());
       cmd->SetInt(DABC_ROC_COMPAR_NUMOUTPUTS, 2);
-      res = GetManager()->CreateModule("RocCalibrModule","RocCalibr", "RocCalibrThrd" ,cmd);
+      res = dabc::mgr()->CreateModule("RocCalibrModule","RocCalibr", "RocCalibrThrd" ,cmd);
       DOUT1(("Create ROC calibration module = %s", DBOOL(res)));
       if(!res) return false;
 
       if (DoTaking()) {
-         res = GetManager()->ConnectPorts("RocComb/Ports/Output0", "RocCalibr/Ports/Input");
+         res = dabc::mgr()->ConnectPorts("RocComb/Ports/Output0", "RocCalibr/Ports/Input");
          DOUT1(("Connect readout and calibr modules = %s", DBOOL(res)));
          if(!res) return false;
       }
    }
 
-   res = GetManager()->CreateMemoryPools();
+   res = dabc::mgr()->CreateMemoryPools();
    DOUT1(("Create memory pools result=%s", DBOOL(res)));
    if(!res) return false;
 
@@ -117,7 +117,7 @@ bool roc::ReadoutApplication::CreateAppModules()
          cmd->SetStr(DABC_ROC_COMPAR_BOARDIP, RocIp(t));
          cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
          cmd->SetInt(DABC_ROC_COMPAR_TRANSWINDOW, TransWindow());
-         res=GetManager()->CreateTransport(fFullDeviceName.c_str(),FORMAT(("RocComb/Ports/Input%d", t)),cmd);
+         res=dabc::mgr()->CreateTransport(fFullDeviceName.c_str(),FORMAT(("RocComb/Ports/Input%d", t)),cmd);
          DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t), DBOOL(res)));
          if(!res) return false;
       }
@@ -138,9 +138,9 @@ bool roc::ReadoutApplication::CreateAppModules()
       }
 
       if (DoTaking())
-         res = GetManager()->CreateDataOutputTransport("RocComb/Ports/Output1", "OutputThrd", mbs::Factory::LmdFileType(), OutputFileName().c_str(), cmd);
+         res = dabc::mgr()->CreateDataOutputTransport("RocComb/Ports/Output1", "OutputThrd", mbs::Factory::LmdFileType(), OutputFileName().c_str(), cmd);
       else
-         res = GetManager()->CreateDataInputTransport("RocCalibr/Ports/Input", "InputThrd", mbs::Factory::LmdFileType(), OutputFileName().c_str(), cmd);
+         res = dabc::mgr()->CreateDataInputTransport("RocCalibr/Ports/Input", "InputThrd", mbs::Factory::LmdFileType(), OutputFileName().c_str(), cmd);
 
       DOUT1(("Create raw lmd %s file res = %s", (DoTaking() ? "output" : "input"), DBOOL(res)));
       if(!res) return false;
@@ -160,7 +160,7 @@ bool roc::ReadoutApplication::CreateAppModules()
          cmd->SetInt("NumMulti", -1); // allow to create multiple files
       }
 
-      res = GetManager()->CreateDataOutputTransport("RocCalibr/Ports/Output1", "OutputThrd", outtype, CalibrFileName().c_str(), cmd);
+      res = dabc::mgr()->CreateDataOutputTransport("RocCalibr/Ports/Output1", "OutputThrd", outtype, CalibrFileName().c_str(), cmd);
       DOUT1(("Create calibr output file res = %s", DBOOL(res)));
       if(!res) return false;
    }
@@ -169,8 +169,8 @@ bool roc::ReadoutApplication::CreateAppModules()
    if (DataServerKind() != mbs::NoServer) {
 
      // need mbs device for event server:
-      if (!GetManager()->FindDevice("MBS")) {
-         res=GetManager()->CreateDevice("MbsDevice", "MBS");
+      if (!dabc::mgr()->FindDevice("MBS")) {
+         res=dabc::mgr()->CreateDevice("MbsDevice", "MBS");
          DOUT1(("Create Mbs Device = %s", DBOOL(res)));
       }
 
@@ -182,7 +182,7 @@ bool roc::ReadoutApplication::CreateAppModules()
       cmd->SetUInt("BufferSize", BufferSize());
 
       const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
-      res=GetManager()->CreateTransport("MBS", portname, cmd);
+      res=dabc::mgr()->CreateTransport("MBS", portname, cmd);
       DOUT1(("Connected readout module output to Mbs server = %s", DBOOL(res)));
       if(!res) return false;
    }
@@ -193,7 +193,7 @@ bool roc::ReadoutApplication::CreateAppModules()
 bool roc::ReadoutApplication::WriteRocRegister(int rocid, int registr, int value)
 {
    dabc::Command* cmd = new roc::CommandWriteRegister(rocid, registr, value);
-   return GetManager()->Execute(GetManager()->LocalCmd(cmd, fFullDeviceName.c_str()), 1);
+   return dabc::mgr()->Execute(dabc::mgr()->LocalCmd(cmd, fFullDeviceName.c_str()), 1);
 }
 
 

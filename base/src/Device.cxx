@@ -122,7 +122,7 @@ int dabc::Device::ExecuteCommand(dabc::Command* cmd)
       cmd_res = DoDeviceCleanup(cmd->GetBool("Force", false));
    else
    if (cmd->IsName(CmdCreateTransport::CmdName())) {
-      Port* port = GetManager()->FindPort(cmd->GetPar("PortName")); 
+      Port* port = dabc::mgr()->FindPort(cmd->GetPar("PortName")); 
       if (port==0)
          cmd_res = false;
       else 
