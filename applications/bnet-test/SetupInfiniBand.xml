@@ -27,8 +27,6 @@
                 <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
                 <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
                 <CombinerModus.BnetPlugin xsi:type="xsd:integer">0</CombinerModus.BnetPlugin>      
-                <nodeDNS xsi:type="xsd:string">master.cluster.domain</nodeDNS>
-                <portDNS xsi:type="xsd:unsignedInt">2505</portDNS>
 <!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
             </properties> 
         </xc:Application>
@@ -39,18 +37,16 @@
         
 		<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMgmnt.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libBnetWorker.so</xc:Module> 
-        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
+		<xc:Module>${DABCSYS}/x86_64/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
-		<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>      
-</xc:Context>
-
-
-<xc:Context url="http://node01.cluster.domain:1972">
+		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>     
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
+       
+c:Context url="http://node01.cluster.domain:1972">
 		<xc:Application class="dabc::xd::Worker" id="42" instance="2" network="local">
 			<properties xmlns="urn:xdaq-application:dabc::xd::Worker" xsi:type="soapenc:Struct">
                 <debugLevel xsi:type="xsd:integer">1</debugLevel>
@@ -78,8 +74,6 @@
                 <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
                 <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
                 <CombinerModus.BnetPlugin xsi:type="xsd:integer">0</CombinerModus.BnetPlugin>      
-                <nodeDNS xsi:type="xsd:string">master.cluster.domain</nodeDNS>
-                <portDNS xsi:type="xsd:unsignedInt">2505</portDNS>
 <!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
             </properties> 
         </xc:Application>
@@ -90,14 +84,15 @@
         
 		<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMgmnt.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libBnetWorker.so</xc:Module> 
-        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+	    <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
+		<xc:Module>${DABCSYS}/x86_64/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
-		<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>      
+		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>   
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
+          
 </xc:Context>
 
 
@@ -128,9 +123,6 @@
                 <EventPoolSize.BnetPlugin xsi:type="xsd:integer">4194304</EventPoolSize.BnetPlugin>
                 <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
                 <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
-                <CombinerModus.BnetPlugin xsi:type="xsd:integer">0</CombinerModus.BnetPlugin>      
-                <nodeDNS xsi:type="xsd:string">master.cluster.domain</nodeDNS>
-                <portDNS xsi:type="xsd:unsignedInt">2505</portDNS>
 <!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
             </properties> 
         </xc:Application>
@@ -141,14 +133,15 @@
         
 		<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMgmnt.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libBnetWorker.so</xc:Module> 
-        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
+		<xc:Module>${DABCSYS}/x86_64/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
-		<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>      
+		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>     
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
+           
 </xc:Context>
 
 
@@ -180,8 +173,6 @@
                 <CtrlBuffer.BnetPlugin xsi:type="xsd:integer">4096</CtrlBuffer.BnetPlugin>
                 <CtrlPoolSize.BnetPlugin xsi:type="xsd:integer">2097152</CtrlPoolSize.BnetPlugin>
                 <CombinerModus.BnetPlugin xsi:type="xsd:integer">0</CombinerModus.BnetPlugin>      
-                <nodeDNS xsi:type="xsd:string">master.cluster.domain</nodeDNS>
-                <portDNS xsi:type="xsd:unsignedInt">2505</portDNS>
 <!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
             </properties> 
         </xc:Application>
@@ -192,14 +183,15 @@
         
 		<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMgmnt.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libBnetWorker.so</xc:Module> 
-        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
+		<xc:Module>${DABCSYS}/x86_64/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
-		<xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>      
+		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>   
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
+             
 </xc:Context>
 
 
@@ -210,9 +202,8 @@
 			<properties xmlns="urn:xdaq-application:dabc::xd::Controller" xsi:type="soapenc:Struct">
             <debugLevel xsi:type="xsd:integer">1</debugLevel>
             <nodeId xsi:type="xsd:unsignedInt">0</nodeId>
-            <NetDevice.ClusterPlugin xsi:type="xsd:string">VERBS</NetDevice.ClusterPlugin>      
-                <nodeDNS xsi:type="xsd:string">master.cluster.domain</nodeDNS>      
-                <portDNS xsi:type="xsd:unsignedInt">2505</portDNS>
+            <NetDevice.ClusterPlugin xsi:type="xsd:string">VerbsDevice</NetDevice.ClusterPlugin>
+            <TransportBuffer.ClusterPlugin xsi:type="xsd:integer">32768</TransportBuffer.ClusterPlugin>
 <!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
             </properties>
         </xc:Application>
@@ -220,16 +211,13 @@
  
 	<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcCore.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcMgmnt.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libBnetCluster.so</xc:Module>         
-        <xc:Module>${DABC_LIBS}/libDABC_Control.so</xc:Module>  
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
-        <xc:Module>${DABC_LIBS}/libDabcVerbs.so</xc:Module>
-
-       
-
+		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>   
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
+           
 </xc:Context>
 
 </xc:Partition>

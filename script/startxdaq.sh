@@ -14,7 +14,7 @@ export DABC_USER_DIR=$2
 
 #if [ -z "$XDAQ_ROOT" ] 
     #then 
-	. /misc/adamczew/xdaq/devel/dabc/script/dabcxdaqinit.sh
+	. /misc/adamczew/dabc.workspace/dabc/script/dabclogin-gsi-devel.sh
 #fi
 
 cd $2

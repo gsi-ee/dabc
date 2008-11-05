@@ -12,9 +12,9 @@ DabcServers="%Number of needed DIM servers%"
 <Fields
 DabcMaster="lxg0517"
 DabcName="Controller:41"
-DabcUserPath="/misc/adamczew/dabc_examples/bnet/test/"
-DabcSystemPath="/usr/local/pub/debian3.1/gcc335-13/dabc/dabc/dabc/"
-DabcSetup="DABC_Test_Setup_gsi.xml"
+DabcUserPath="/misc/adamczew/dabc.workspace/dabc/applications/bnet-test"
+DabcSystemPath="/misc/adamczew/dabc.workspace/dabc"
+DabcSetup="SetupSockets.xml"
 DabcScript="ps"
 DabcServers="5"
 />

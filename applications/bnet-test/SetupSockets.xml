@@ -38,11 +38,12 @@
         
 		<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/bnet/bin/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_USER_DIR}/libBnetWorker.so</xc:Module>     
-        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/linux/x86/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
+		<xc:Module>${DABCSYS}/i686/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
        
 </xc:Context>
 
@@ -86,11 +87,12 @@
         
 		<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/bnet/bin/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_USER_DIR}/libBnetWorker.so</xc:Module>   
-        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/linux/x86/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+	    <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
+		<xc:Module>${DABCSYS}/i686/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
           
 </xc:Context>
 
@@ -131,11 +133,12 @@
         
 		<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/bnet/bin/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_USER_DIR}/libBnetWorker.so</xc:Module>   
-        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/linux/x86/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
+		<xc:Module>${DABCSYS}/i686/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
           
 </xc:Context>
 
@@ -176,11 +179,12 @@
         
 		<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/bnet/bin/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABC_USER_DIR}/libBnetWorker.so</xc:Module> 
-        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/linux/x86/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
+		<xc:Module>${DABCSYS}/i686/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
              
 </xc:Context>
 
@@ -196,15 +200,15 @@
 <!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
             </properties>
         </xc:Application>
-
+ 
  
 	<!-- Shared object library that contains the implementation -->		
         <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcCore.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/bnet/bin/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/lib/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABCSYS}/core/bnet/bin/libBnetCluster.so</xc:Module>  
-        <xc:Module>${DABCSYS}/xdaq/dabc/nodecontrol/lib/linux/x86/libDABC_Control.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        
+        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
            
 </xc:Context>
 
