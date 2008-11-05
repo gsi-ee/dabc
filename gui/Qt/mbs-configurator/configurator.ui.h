@@ -16,14 +16,14 @@ void Configurator::init()
     fiCurrentReadout=-1;
     fShell=0;
     fbWasSaved=true;
-    restoreSettings("dabc_default"); 
-    
+    restoreSettings("dabc_default");
+
 }
 
 
 void Configurator::destroy()
 {
-    
+
 }
 
 
@@ -37,7 +37,7 @@ void Configurator::fileNew()
     if ( ok && !text.isEmpty() ) {
      fxProjectName=text;
      clearForm();
-  }    
+  }
   }
 
 
@@ -55,8 +55,8 @@ void Configurator::fileOpen()
    QString text=fd.selectedFile();
    text=text.section( '/', -1 ); // strip full path
    text=text.left(text.length()-2); // remove rc at the end
-   restoreSettings(text); 
-          
+   restoreSettings(text);
+
 }
 
 
@@ -70,18 +70,18 @@ void Configurator::fileSave()
     QString builders="";
      for(unsigned int ix=0;ix<BuilderListBox->count();++ix){
                 builders.append(BuilderListBox->text(ix));
-                builders.append(";");                
-            }       	 
+                builders.append(";");
+            }
        sett.writeEntry(fxProjectName+"/BuilderNodes", builders);
-     QString readers="";  
+     QString readers="";
       for(unsigned int ix=0;ix<ReadoutListBox->count();++ix){
           readers.append(ReadoutListBox->text(ix));
           readers.append(":");
-          QStringList mlist=fxMbsList[ix]; 
+          QStringList mlist=fxMbsList[ix];
           QString mbsnodes=mlist.join(":");
-          readers.append(mbsnodes); 
-          readers.append(";");                    
-      }       	 
+          readers.append(mbsnodes);
+          readers.append(";");
+      }
      sett.writeEntry(fxProjectName+"/ReaderNodes", readers);
      fbWasSaved=true;
 }
@@ -97,8 +97,8 @@ void Configurator::fileSaveAs()
         fxProjectName=text;
         updateCaption();
         fileSave();
-    }		     	     
-}	
+    }
+}
 
 
 
@@ -118,20 +118,20 @@ void Configurator::helpAbout()
    QMessageBox AboutConfigurator("DABC Configurator", mestring,
                          QMessageBox::NoIcon,QMessageBox::Ok,QMessageBox::NoButton,QMessageBox::NoButton ,this);
      //AboutConfigurator.setIconPixmap(QPixmap::fromMimeSource( "dabcicon.png"));
-   AboutConfigurator.exec();  
-    
+   AboutConfigurator.exec();
+
 }
 
 void Configurator::helpUsageAction_activated()
 {
     std::cout << std::endl;
     std::cout <<"******** DABC configurator for bnet with Multi Branch System readout" << std::endl;
-    std::cout <<"- Define name of bnet controller node in text field" << std::endl; 
-    std::cout <<"- Choose if you want to have symmetric builder net or separate eventbuilders" << std::endl; 
+    std::cout <<"- Define name of bnet controller node in text field" << std::endl;
+    std::cout <<"- Choose if you want to have symmetric builder net or separate eventbuilders" << std::endl;
     std::cout <<"- Add new DABC nodes using the 'Add new DABC' buttons (those with the dabc logo) for Worker, Readout, or Eventbuilder nodes,resp." <<  std::endl;
     std::cout <<"- Add new Mbs readout connections for each DABC event builder/worker node using the 'Add new Mbs' button (the one with the MBS symbol)" << std:: endl;
-    std::cout <<"- Generate DABC setup file with Menu: 'File/GenerateDABC Setup'. This file is to be used by dabc gui 'dabc'" <<  std::endl; 
-    std::cout <<"- Load/Save configurator projects in Qt settings wtih Menu: 'File/Open and Save'" <<  std::endl; 
+    std::cout <<"- Generate DABC setup file with Menu: 'File/GenerateDABC Setup'. This file is to be used by dabc gui 'dabc'" <<  std::endl;
+    std::cout <<"- Load/Save configurator projects in Qt settings wtih Menu: 'File/Open and Save'" <<  std::endl;
 
 }
 
@@ -150,8 +150,8 @@ void Configurator::newReadoutSlot()
         QStringList mbslist;
         fxMbsList.push_back(mbslist);
         fbWasSaved=false;
-         
-        
+
+
     }
 }
 
@@ -164,7 +164,7 @@ void Configurator::removeReadoutSlot()
       //std::cout <<"removeReadoutSlot() erasing.."<<std::endl;
     fxMbsList.erase(fxMbsList.begin()+fiCurrentReadout);
     ReadoutListBox->removeItem(fiCurrentReadout); // will update current index by signal after removing the old one
-  fbWasSaved=false;    
+  fbWasSaved=false;
 }
 
 
@@ -176,8 +176,8 @@ void Configurator::editReadoutSlot()
     QString text = QInputDialog::getText(
             "Edit Readout Node", "Change node name:", QLineEdit::Normal,
             ReadoutListBox->currentText(), &ok, this );
-    if ( ok && !text.isEmpty() ) { 
-        ReadoutListBox->changeItem(text,fiCurrentReadout);        
+    if ( ok && !text.isEmpty() ) {
+        ReadoutListBox->changeItem(text,fiCurrentReadout);
         fbWasSaved=false;
     }
 }
@@ -196,11 +196,11 @@ void Configurator::newBuilderSlot()
     if ( ok && !text.isEmpty() ) {
         // user entered something and pressed OK
         //std::cout <<"got new readout slot "<<text << std::endl;
-        BuilderListBox->insertItem(text,-1);                       
+        BuilderListBox->insertItem(text,-1);
         fbWasSaved=false;
-    } 
-    
-    
+    }
+
+
 }
 
 
@@ -218,10 +218,10 @@ void Configurator::editBuilderSlot()
     QString text = QInputDialog::getText(
             "Edit Eventbuilder Node", "Change node name:", QLineEdit::Normal,
             BuilderListBox->currentText(), &ok, this );
-    if ( ok && !text.isEmpty() ) { 
-        BuilderListBox->changeItem(text,currentbuilder);        
+    if ( ok && !text.isEmpty() ) {
+        BuilderListBox->changeItem(text,currentbuilder);
         fbWasSaved=false;
-    }   
+    }
 }
 
 
@@ -239,7 +239,7 @@ void Configurator::newMbsSlot()
         mbsnodes.push_back(text);
         updateMbsList();
         fbWasSaved=false;
-        
+
     }
 }
 
@@ -248,7 +248,7 @@ void Configurator::removeMbsSlot()
 {
     if(fiCurrentReadout<0) return;
     int currentmbs=MBSListBox->currentItem();
-    if(currentmbs<0) return;    
+    if(currentmbs<0) return;
     MBSListBox->removeItem(currentmbs);
     QStringList& mbsnodes=fxMbsList[fiCurrentReadout];
     mbsnodes.remove(mbsnodes[currentmbs]);
@@ -269,11 +269,11 @@ void Configurator::editMBSSlot()
         // user entered something and pressed OK
         //std::cout <<"got new readout slot "<<text << std::endl;
         MBSListBox->changeItem(text,currentmbs);
-        QStringList& mbsnodes=fxMbsList[fiCurrentReadout]; 
+        QStringList& mbsnodes=fxMbsList[fiCurrentReadout];
         mbsnodes[currentmbs]=text;
         fbWasSaved=false;
     }
-           
+
 }
 
 
@@ -284,10 +284,10 @@ void Configurator::editMBSSlot()
 void Configurator::setSeparateEventbuidersSlot( bool on)
 {
     fbSeparateBuilders=on;
-    if(fbSeparateBuilders) 
+    if(fbSeparateBuilders)
         ReadoutLabel->setText("DABC Readout nodes");
     else
-       ReadoutLabel->setText("DABC Worker nodes"); 
+       ReadoutLabel->setText("DABC Worker nodes");
     fbWasSaved=false;
 }
 
@@ -306,7 +306,7 @@ void Configurator::setCurrentReadoutSlot(int num)
 void Configurator::updateMbsList()
 {
     MBSListBox->clear();
-    if(fiCurrentReadout<0){ 
+    if(fiCurrentReadout<0){
         MBSLabel->setText("MBS nodes (please select Readout first):");
         return;
     }
@@ -329,36 +329,36 @@ void Configurator::generateSetupSlot()
             for(unsigned int ix=0;ix<BuilderListBox->count();++ix){
                 QString current=BuilderListBox->text(ix);
                 stream << current << "\n";
-            }       	 
+            }
             file.close();
         }
     }
-        // readout nodes with mbs:    
+        // readout nodes with mbs:
         //std::cout <<"writing readernodes.txt" <<std::endl;
        QFile file2( "readernodes.txt" );
         if ( file2.open( IO_WriteOnly ) ) {
          QTextStream stream( &file2 );
             for(unsigned int ix=0;ix<ReadoutListBox->count();++ix){
                 QString readnode=ReadoutListBox->text(ix);
-                QStringList mlist=fxMbsList[ix]; 
+                QStringList mlist=fxMbsList[ix];
                 QString mbsnodes=mlist.join(":");
-                stream << readnode << ":"<<mbsnodes <<"\n";                
-            }       	 
+                stream << readnode << ":"<<mbsnodes <<"\n";
+            }
             file2.close();
-        
+
     }
-   
-    
+
+
     // then invoke our nice script with correct parameters:
     std::cout <<"****************Generating setup...." << std::endl;
-    fShell= new QProcess();     
+    fShell= new QProcess();
     connect( fShell, SIGNAL(readyReadStdout()), this, SLOT(readFromStdout()));
     connect( fShell, SIGNAL(readyReadStderr()), this, SLOT(readFromStderr()));
     connect( fShell, SIGNAL(processExited()), this, SLOT(exitShell()));
-     
+
      QString dabcsys=::getenv("DABCSYS"); // note that QProcess can not expand environment variables!
      //std::cout <<"Found dabcsys="<<dabcsys << std::endl;
-     QString fullcommand=dabcsys+"/gui/Qt/configurator/generateSetupMbs.sh";
+     QString fullcommand=dabcsys+"/gui/Qt/mbs-configurator/generateSetupMbs.sh";
      //fShell->addArgument("/misc/adamczew/xdaq/devel/dabc/gui/Qt/configurator/generateSetupMbs.sh");
      fShell->addArgument(fullcommand);
      //fShell->addArgument("./generateSetupMbs.sh");
@@ -366,7 +366,7 @@ void Configurator::generateSetupSlot()
      if(fbSeparateBuilders)
         fShell->addArgument(" 1");
        else
-         fShell->addArgument(" 0");      
+         fShell->addArgument(" 0");
      fShell->setWorkingDirectory(QDir::current());
      if(!fShell->start(0))
         {
@@ -394,8 +394,8 @@ void Configurator::readFromStderr()
          QByteArray ba = fShell->readStderr();
          QString buf(ba);
          std::cout << buf <<std::endl;
-   }         
-     
+   }
+
 }
 
 
@@ -418,8 +418,8 @@ if(!fbWasSaved)
          QMessageBox::No | QMessageBox::Escape) == QMessageBox::Yes ){
         fileSave();
     }
-}    
-    
+}
+
 if(QMessageBox::question( this, "DABC Configurator", "Really Exit?",
          QMessageBox::Yes ,
          QMessageBox::No | QMessageBox::Escape) != QMessageBox::Yes ) return;
@@ -446,7 +446,7 @@ void Configurator::clearForm()
     ReadoutListBox->clear();
     BuilderListBox->clear();
     fiCurrentReadout=-1;
-    updateMbsList();    
+    updateMbsList();
     updateCaption();
 }
 
@@ -458,15 +458,15 @@ void Configurator::clearForm()
 
 void Configurator::restoreSettings( const QString & name )
 {
-    clearForm();    
+    clearForm();
     fxProjectName=name;
-    std::cout <<"****************Open project "<<fxProjectName << std::endl;     
+    std::cout <<"****************Open project "<<fxProjectName << std::endl;
     QSettings sett;
-    sett.insertSearchPath( QSettings::Unix, QDir::currentDirPath()+ "/.dabc");    
+    sett.insertSearchPath( QSettings::Unix, QDir::currentDirPath()+ "/.dabc");
     int sepbuilders=sett.readNumEntry(fxProjectName+"/SeparateBuilders", 1);
-    if(sepbuilders>0)  
+    if(sepbuilders>0)
         fbSeparateBuilders=true;
-    else 
+    else
         fbSeparateBuilders=false;
     BuilderFrame->setShown(fbSeparateBuilders);
     AsymmCheckBox->setChecked(fbSeparateBuilders);
@@ -489,7 +489,7 @@ void Configurator::restoreSettings( const QString & name )
       } // for iterator
     updateCaption();
     fbWasSaved=true;
-      
+
 }
 
 

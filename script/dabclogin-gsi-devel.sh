@@ -115,7 +115,7 @@ alias dabc="java xgui.xGui"
 
 # Qt configurator frontend:
 . /usr/local/bin/qtlogin 303-04
-alias dabcConfigurator="$DABCSYS/gui/Qt/configurator/Configurator"
+alias dabcConfigurator="$DABCSYS/gui/Qt/mbs-configurator/Configurator"
 
 echo "*** set DABC system directory to $DABCSYS ."
 echo "***********************************************************************"

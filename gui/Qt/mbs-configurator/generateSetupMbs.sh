@@ -24,10 +24,10 @@ else
     FOOTER=`echo "</xc:Partition>"`
     if [[ "$2" -gt 0 ]]; then
         READER=`echo dabc::xd::Readout`
-        READERTEMP=`echo $DABCSYS/gui/Qt/configurator/bnetReadoutTemp.xml`   
+        READERTEMP=`echo $DABCSYS/gui/Qt/mbs-configurator/bnetReadoutTemp.xml`   
     else
         READER=`echo dabc::xd::Worker`    
-        READERTEMP=`echo $DABCSYS/gui/Qt/configurator/bnetWorkerTemp.xml`   
+        READERTEMP=`echo $DABCSYS/gui/Qt/mbs-configurator/bnetWorkerTemp.xml`   
     fi 
     BUILDER=`echo dabc::xd::Eventbuilder`
     CONTROLLER=`echo dabc::xd::Controller`
@@ -86,7 +86,7 @@ else
         for NODENAME in $BUILDERNODELIST;
             do
             echo "preparing $BUILDER instance $INSTCOUNTA  for node $NODENAME" 
-            cat  $DABCSYS/gui/Qt/configurator/bnetEventbuilderTemp.xml | awk -v rep=$NODENAME -v str=XDAQNODE '{ gsub(str,rep) ; print }' \
+            cat  $DABCSYS/gui/Qt/mbs-configurator/bnetEventbuilderTemp.xml | awk -v rep=$NODENAME -v str=XDAQNODE '{ gsub(str,rep) ; print }' \
                     | awk -v rep=$BUILDER -v str=BUILDERCLASS '{ gsub(str,rep) ; print }' \
                     | awk -v rep=$CONTNODE -v str=CONTROLLERNODE '{ gsub(str,rep) ; print }'\
                     | awk -v rep=$CONTROLLER -v str=CONTROLLERCLASS '{ gsub(str,rep) ; print }'\
@@ -99,7 +99,7 @@ else
     fi
     let "INSTCOUNTA=0" 
     echo  > $TEMPNAME
-    cat  $DABCSYS/gui/Qt/configurator/bnetControllerTemp.xml | awk -v rep=$CONTNODE -v str=CONTROLLERNODE '{ gsub(str,rep) ; print }'\
+    cat  $DABCSYS/gui/Qt/mbs-configurator/bnetControllerTemp.xml | awk -v rep=$CONTNODE -v str=CONTROLLERNODE '{ gsub(str,rep) ; print }'\
             | awk -v rep=$CONTROLLER -v str=CONTROLLERCLASS '{ gsub(str,rep) ; print }'\
             | awk -v rep=$INSTCOUNTA -v str=CONTROLLERINSTANCE '{ gsub(str,rep) ; print }'\
         >> $TEMPNAME;
