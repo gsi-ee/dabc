@@ -174,10 +174,10 @@ $(PACKAGE)/xParTable.class : $(SOURCEDIR)/xParTable.java
 	javac $(FLAGS) $(SOURCEDIR)/xParTable.java
 
 clean:
-	rm $(PACKAGE)/*.class
-	rm $(PACKAGE)/*.html
+	rm -f $(PACKAGE)/*.class
+	rm -f $(PACKAGE)/*.html
 cleandoc:
-	rm -R doc/*
+	rm -Rf doc/*
 jar:
 	jar -cmf JarHeader.txt $(PACKAGE).jar $(PACKAGE)/*.class icons
 	jar -tf $(PACKAGE).jar

@@ -1,7 +1,7 @@
 
 exes::
-	@echo "Compile java gui here"
-
+	@echo "Compiling java gui..."
+	@cd $(DABCSYS)/gui/java/generic; $(MAKE) all;  $(MAKE) jar; 
 clean::
-	@echo "clean java gui here"
-	
+	@echo "Cleaning java gui..."
+	@cd $(DABCSYS)/gui/java/generic; $(MAKE) clean; 
