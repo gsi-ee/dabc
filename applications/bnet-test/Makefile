@@ -20,11 +20,11 @@ CREATE_DIRS         += $(TGTDLLPATH)
 
 libs::  $(BNETTEST_LIB)
 
-$(BNETTEST_LIB):  $(BNETTEST_O)
+$(BNETTEST_LIB):  $(BNETTEST_O) $(DABCDLLPATH)/*.$(DllSuf)
 	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH)
 ifneq ($(wildcard ~/run/bnet),)
 	cp -f $(BNETTEST_LIB) ~/run/bnet
-	cp -f $(DABCDLLPATH)/*.so $(DABCBINPATH)/bnet_exe ~/run/bnet
+	cp -f $(DABCDLLPATH)/*.$(DllSuf) $(DABCBINPATH)/bnet_exe ~/run/bnet
 	cp -f $(BNETBINPATH)/* ~/run/bnet
 endif
 	@echo "$@  done"

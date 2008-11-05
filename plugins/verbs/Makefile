@@ -12,7 +12,7 @@ OFED_LIBDIR     = $(OFED_DIR)/lib64
 endif
 
 ifndef OFED_MCAST
-OFED_MCAST      = true
+OFED_MCAST      = false
 endif
  
 ifndef OFED_LIBS

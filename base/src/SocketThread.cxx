@@ -9,10 +9,10 @@
 #include "dabc/Buffer.h"
 #include "dabc/SocketDevice.h"
 
-const char* SocketErr(int err) 
+const char* SocketErr(int err)
 {
    switch (err) {
-      case -1: return "Internal"; 
+      case -1: return "Internal";
       case EAGAIN: return "EAGAIN";
       case EBADF:  return "EBADF";
       case ECONNREFUSED: return "ECONNREFUSED";
@@ -22,7 +22,7 @@ const char* SocketErr(int err)
       case ENOMEM: return "ENOMEM";
       case ENOTCONN: return "ENOTCONN";
       case ENOTSOCK:  return "ENOTSOCK";;
-    
+
       case EACCES:  return "EACCES";
       case ECONNRESET:  return "ECONNRESET";
       case EDESTADDRREQ:  return "EDESTADDRREQ";
@@ -31,7 +31,7 @@ const char* SocketErr(int err)
       case ENOBUFS:  return "ENOBUFS";
       case EOPNOTSUPP:  return "EOPNOTSUPP";
       case EPIPE:  return "EPIPE";
-      
+
       case EPERM: return "EPERM";
       case EADDRINUSE: return "EADDRINUSE";
       case EAFNOSUPPORT: return "EAFNOSUPPORT";
@@ -40,7 +40,7 @@ const char* SocketErr(int err)
       case ENETUNREACH: return "ENETUNREACH";
       case ETIMEDOUT: return "ETIMEDOUT";
    }
-   
+
    return "UNCKNOWN";
 }
 
@@ -48,14 +48,14 @@ const char* SocketErr(int err)
 
 // _____________________________________________________________________
 
-dabc::SocketProcessor::SocketProcessor(int fd) : 
+dabc::SocketProcessor::SocketProcessor(int fd) :
    dabc::WorkingProcessor(),
    fSocket(fd),
    fDoingInput(false),
    fDoingOutput(false)
 {
 }
-         
+
 dabc::SocketProcessor::~SocketProcessor()
 {
    CloseSocket();
@@ -76,8 +76,8 @@ int dabc::SocketProcessor::TakeSocket()
 
 void dabc::SocketProcessor::CloseSocket()
 {
-   if (fSocket<0) return; 
-    
+   if (fSocket<0) return;
+
    DOUT3(("~~~~~~~~~~~~~~~~ Close socket %d", fSocket));
    close(fSocket);
    fSocket = -1;
@@ -85,15 +85,15 @@ void dabc::SocketProcessor::CloseSocket()
 
 int dabc::SocketProcessor::TakeSocketError()
 {
-   if (Socket()<0) return -1; 
-    
+   if (Socket()<0) return -1;
+
    int myerrno = 753642;
    socklen_t optlen = sizeof(myerrno);
-          
+
    int res = getsockopt(Socket(), SOL_SOCKET, SO_ERROR, &myerrno, &optlen);
-   
+
    if ((res<0) || (myerrno == 753642)) return -1;
-   
+
    return myerrno;
 }
 
@@ -102,14 +102,14 @@ void dabc::SocketProcessor::ProcessEvent(dabc::EventId evnt)
     switch (GetEventCode(evnt)) {
        case evntSocketRead:
           break;
-       
-       case evntSocketWrite: 
+
+       case evntSocketWrite:
           break;
-          
+
        case evntSocketError:
           OnSocketError(0, "When working");
           break;
-          
+
        default:
           WorkingProcessor::ProcessEvent(evnt);
     }
@@ -117,7 +117,7 @@ void dabc::SocketProcessor::ProcessEvent(dabc::EventId evnt)
 
 void dabc::SocketProcessor::OnConnectionClosed()
 {
-   EOUT(("Connection closed - destroy socket"));
+   DOUT2(("Connection closed - destroy socket"));
    DestroyProcessor();
 }
 
@@ -129,7 +129,7 @@ void dabc::SocketProcessor::OnSocketError(int errnum, const char* info)
 
 // _____________________________________________________________________
 
-dabc::SocketIOProcessor::SocketIOProcessor(int fd) : 
+dabc::SocketIOProcessor::SocketIOProcessor(int fd) :
    SocketProcessor(fd),
    fSendUseMsg(true),
    fSendIOV(0),
@@ -149,9 +149,9 @@ dabc::SocketIOProcessor::SocketIOProcessor(int fd) :
        fRecvOper = 0;
        fRecvTime = 0.;
        fRecvSize = 0.;
-   #endif         
+   #endif
 }
-         
+
 dabc::SocketIOProcessor::~SocketIOProcessor()
 {
    #ifdef SOCKET_PROFILING
@@ -160,7 +160,7 @@ dabc::SocketIOProcessor::~SocketIOProcessor()
          DOUT1(("   Send time:%5.1f microsec sz:%7.1f", fSendTime*1e6/fSendOper, 1.*fSendSize/fSendOper));
       if (fRecvOper>0)
          DOUT1(("   Recv time:%5.1f microsec sz:%7.1f", fRecvTime*1e6/fRecvOper, 1.*fRecvSize/fRecvOper));
-   #endif         
+   #endif
 
    AllocateSendIOV(0);
    AllocateRecvIOV(0);
@@ -169,14 +169,14 @@ dabc::SocketIOProcessor::~SocketIOProcessor()
 void dabc::SocketIOProcessor::AllocateSendIOV(unsigned size)
 {
    if (fSendIOV!=0) delete [] fSendIOV;
-   
+
    fSendIOV = 0;
    fSendIOVSize = 0;
    fSendIOVFirst = 0;
    fSendIOVNumber = 0;
-   
+
    if (size<=0) return;
-   
+
    fSendIOVSize = size;
    fSendIOV = new struct iovec [size];
 }
@@ -184,14 +184,14 @@ void dabc::SocketIOProcessor::AllocateSendIOV(unsigned size)
 void dabc::SocketIOProcessor::AllocateRecvIOV(unsigned size)
 {
    if (fRecvIOV!=0) delete [] fRecvIOV;
-   
+
    fRecvIOV = 0;
    fRecvIOVSize = 0;
    fRecvIOVFirst = 0;
    fRecvIOVNumber = 0;
-   
+
    if (size<=0) return;
-   
+
    fRecvIOVSize = size;
    fRecvIOV = new struct iovec [size];
 }
@@ -202,7 +202,7 @@ bool dabc::SocketIOProcessor::StartSend(void* buf, size_t size, bool usemsg)
       EOUT(("Current send operation not yet completed"));
       return false;
    }
-   
+
    if (fSendIOVSize<1) AllocateSendIOV(8);
 
    fSendUseMsg = usemsg;
@@ -210,10 +210,10 @@ bool dabc::SocketIOProcessor::StartSend(void* buf, size_t size, bool usemsg)
    fSendIOVNumber = 1;
    fSendIOV[0].iov_base = buf;
    fSendIOV[0].iov_len = size;
-   
+
    SetDoingOutput(true);
    FireEvent(evntSocketWrite);
-   
+
    return true;
 }
 
@@ -223,7 +223,7 @@ bool dabc::SocketIOProcessor::StartRecv(void* buf, size_t size, bool usemsg)
       EOUT(("Current recv operation not yet completed"));
       return false;
    }
-   
+
    if (fRecvIOVSize<1) AllocateRecvIOV(8);
 
    fRecvUseMsg = usemsg;
@@ -234,80 +234,80 @@ bool dabc::SocketIOProcessor::StartRecv(void* buf, size_t size, bool usemsg)
 
    SetDoingInput(true);
    FireEvent(evntSocketRead);
-   
+
    return true;
 }
 
 bool dabc::SocketIOProcessor::StartSend(Buffer* buf, bool usemsg)
 {
-   // this is simple version, 
+   // this is simple version,
    // where only buffer itslef without header is transported
-   
+
    if (fSendIOVNumber>0) {
       EOUT(("Current send operation not yet completed"));
       return false;
    }
-   
+
    if (buf==0) return false;
-   
+
    if (fSendIOVSize < buf->NumSegments()) AllocateSendIOV(buf->NumSegments());
 
    fSendUseMsg = usemsg;
    fSendIOVFirst = 0;
    fSendIOVNumber = buf->NumSegments();
-   
+
    for (unsigned nseg=0; nseg<buf->NumSegments(); nseg++) {
       fSendIOV[nseg].iov_base = buf->GetDataLocation(nseg);
       fSendIOV[nseg].iov_len = buf->GetDataSize(nseg);
    }
-   
+
    SetDoingOutput(true);
    FireEvent(evntSocketWrite);
-   
+
    return true;
 }
 
 bool dabc::SocketIOProcessor::StartNetRecv(void* hdr, BufferSize_t hdrsize, Buffer* buf, BufferSize_t datasize, bool usemsg)
 {
    // datasize==0 here really means that there is no data to get !!!!
-    
+
    if (fRecvIOVNumber>0) {
       EOUT(("Current recv operation not yet completed"));
       return false;
    }
-   
+
    if (buf==0) return false;
-   
+
    if (fRecvIOVSize<=buf->NumSegments()) AllocateRecvIOV(buf->NumSegments()+1);
 
    fRecvUseMsg = usemsg;
    fRecvIOVFirst = 0;
-   
+
    int indx = 0;
-   
+
    if ((hdr!=0) && (hdrsize>0)) {
       fRecvIOV[indx].iov_base = hdr;
       fRecvIOV[indx].iov_len = hdrsize;
       indx++;
    }
-   
+
    for (unsigned nseg=0; nseg<buf->NumSegments(); nseg++) {
       BufferSize_t segsize = buf->GetDataSize(nseg);
       if (segsize>datasize) segsize = datasize;
       if (segsize==0) break;
-      
+
       fRecvIOV[indx].iov_base = buf->GetDataLocation(nseg);
       fRecvIOV[indx].iov_len = segsize;
       indx++;
-      
+
       datasize-=segsize;
    }
-   
+
    fRecvIOVNumber = indx;
-   
+
    SetDoingInput(true);
    FireEvent(evntSocketRead);
-   
+
    return true;
 }
 
@@ -317,33 +317,33 @@ bool dabc::SocketIOProcessor::StartNetSend(void* hdr, BufferSize_t hdrsize, Buff
       EOUT(("Current send operation not yet completed"));
       return false;
    }
-   
+
    if (buf==0) return false;
-   
+
    if (fSendIOVSize<=buf->NumSegments()) AllocateSendIOV(buf->NumSegments()+1);
-   
+
    fSendUseMsg = usemsg;
    fSendIOVFirst = 0;
-   
+
    int indx = 0;
-   
+
    if ((hdr!=0) && (hdrsize>0)) {
       fSendIOV[indx].iov_base = hdr;
       fSendIOV[indx].iov_len = hdrsize;
       indx++;
    }
-   
+
    for (unsigned nseg=0; nseg<buf->NumSegments(); nseg++) {
       fSendIOV[indx].iov_base = buf->GetDataLocation(nseg);
       fSendIOV[indx].iov_len = buf->GetDataSize(nseg);
       indx++;
    }
-   
+
    fSendIOVNumber = indx;
-   
+
    SetDoingOutput(true);
    FireEvent(evntSocketWrite);
-   
+
    return true;
 }
 
@@ -359,13 +359,13 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
              fRecvOper++;
              TimeStamp_t tm1 = TimeStamp();
           #endif
-          
+
           ssize_t res = 0;
-          
+
           if (fRecvUseMsg) {
-          
+
              struct msghdr msg;
-   
+
              msg.msg_name = 0;
              msg.msg_namelen = 0;
              msg.msg_iov = &(fRecvIOV[fRecvIOVFirst]);
@@ -373,7 +373,7 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
              msg.msg_control = 0;
              msg.msg_controllen = 0;
              msg.msg_flags = 0;
-             
+
              res = recvmsg(fSocket, &msg, MSG_DONTWAIT | MSG_NOSIGNAL);
           } else
              res = recv(fSocket, fRecvIOV[fRecvIOVFirst].iov_base, fRecvIOV[fRecvIOVFirst].iov_len, MSG_DONTWAIT | MSG_NOSIGNAL);
@@ -386,31 +386,31 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
 
           if (res==0) {
              OnConnectionClosed();
-             return; 
+             return;
           }
-          
-          if (res<0) { 
+
+          if (res<0) {
              if (errno!=EAGAIN) OnSocketError(errno, "When recvmsg()");
-             return; 
+             return;
           }
-          
+
           while (res>0) {
              struct iovec* rec = &(fRecvIOV[fRecvIOVFirst]);
-             
+
              if (rec->iov_len <= (unsigned) res) {
                 // just skip current rec, jump to next
                 res -= rec->iov_len;
                 fRecvIOVFirst++;
-                
+
                 if (fRecvIOVFirst==fRecvIOVNumber) {
                    if (res!=0) EOUT(("Internal error - length after recvmsg() not zero"));
-                   
+
                    fRecvIOVFirst = 0;
                    fRecvIOVNumber = 0;
                    SetDoingInput(false);
-                   
+
                    OnRecvCompleted();
-                   
+
                    return;
                 }
              } else {
@@ -419,12 +419,12 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
                 res = 0;
              }
           }
-          
+
           break;
        }
-       
+
        case evntSocketWrite: {
-          
+
           if (fSendIOVNumber==0) return; // nothing to send
 
 
@@ -432,13 +432,13 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
              fSendOper++;
              TimeStamp_t tm1 = TimeStamp();
           #endif
-          
+
           ssize_t res = 0;
-          
+
           if (fSendUseMsg) {
-          
+
              struct msghdr msg;
-   
+
              msg.msg_name = 0;
              msg.msg_namelen = 0;
              msg.msg_iov = &(fSendIOV[fSendIOVFirst]);
@@ -446,7 +446,7 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
              msg.msg_control = 0;
              msg.msg_controllen = 0;
              msg.msg_flags = 0;
-             
+
              res = sendmsg(fSocket, &msg, MSG_DONTWAIT | MSG_NOSIGNAL);
           } else
              res = send(fSocket, fSendIOV[fSendIOVFirst].iov_base, fSendIOV[fSendIOVFirst].iov_len, MSG_DONTWAIT | MSG_NOSIGNAL);
@@ -458,35 +458,35 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
           #endif
 
 
-          if (res==0) { 
+          if (res==0) {
              OnConnectionClosed();
-             return; 
+             return;
           }
-          
-          if (res<0) { 
+
+          if (res<0) {
              if (errno!=EAGAIN) OnSocketError(errno, "When sendmsg()");
-             return; 
+             return;
           }
-          
+
           DOUT5(("Socket %d send %d bytes", Socket(), res));
-          
+
           while (res>0) {
              struct iovec* rec = &(fSendIOV[fSendIOVFirst]);
-             
+
              if (rec->iov_len <= (unsigned) res) {
                 // just skip current rec, jump to next
                 res -= rec->iov_len;
                 fSendIOVFirst++;
-                
+
                 if (fSendIOVFirst==fSendIOVNumber) {
                    if (res!=0) EOUT(("Internal error - length after sendmsg() not zero"));
-                   
+
                    fSendIOVFirst = 0;
                    fSendIOVNumber = 0;
                    SetDoingOutput(false);
-                   
+
                    OnSendCompleted();
-                   
+
                    return;
                 }
              } else {
@@ -495,7 +495,7 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
                 res = 0;
              }
           }
-          
+
           break;
        }
        default:
@@ -505,16 +505,16 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
 
 // ___________________________________________________________________
 
-dabc::SocketServerProcessor::SocketServerProcessor(int serversocket, int portnum) : 
+dabc::SocketServerProcessor::SocketServerProcessor(int serversocket, int portnum) :
    SocketConnectProcessor(serversocket),
    fServerPortNumber(portnum),
    fServerHostName()
 {
    fServerHostName = dabc::SocketDevice::GetLocalHost();
-   
+
 //   dabc::SocketThread::DefineHostName();
-    
-   SetDoingInput(true); 
+
+   SetDoingInput(true);
    listen(Socket(), 10);
 }
 
@@ -535,14 +535,14 @@ void dabc::SocketServerProcessor::ProcessEvent(dabc::EventId evnt)
              close(connfd);
              return;
           }
-          
+
           DOUT3(("We get new connection with fd: %d", connfd));
-          
+
           OnClientConnected(connfd);
-          
+
           break;
        }
-       
+
        default:
           dabc::SocketProcessor::ProcessEvent(evnt);
     }
@@ -557,7 +557,7 @@ void dabc::SocketServerProcessor::OnClientConnected(int fd)
       cmd->SetStr("ConnId", GetConnId());
       GetConnRecv()->Submit(cmd);
    } else {
-      EOUT(("Method not implemented - socked will be closed"));  
+      EOUT(("Method not implemented - socked will be closed"));
       close(fd);
    }
 }
@@ -570,10 +570,10 @@ dabc::SocketClientProcessor::SocketClientProcessor(const struct addrinfo* serv_a
    fRetryTmout(-1)
 {
    if (serv_addr==0) {
-      EOUT(("Server address not specified"));   
+      EOUT(("Server address not specified"));
       return;
-   } 
-   
+   }
+
    fServAddr.ai_flags = serv_addr->ai_flags;
    fServAddr.ai_family = serv_addr->ai_family;
    fServAddr.ai_socktype = serv_addr->ai_socktype;
@@ -584,7 +584,7 @@ dabc::SocketClientProcessor::SocketClientProcessor(const struct addrinfo* serv_a
        fServAddr.ai_addr = (sockaddr*) malloc(fServAddr.ai_addrlen);
        memcpy(fServAddr.ai_addr, serv_addr->ai_addr, fServAddr.ai_addrlen);
    }
-   
+
    fServAddr.ai_canonname = 0;
    if (serv_addr->ai_canonname) {
       fServAddr.ai_canonname = (char*) malloc(strlen(serv_addr->ai_canonname) + 1);
@@ -615,49 +615,49 @@ void dabc::SocketClientProcessor::ProcessEvent(dabc::EventId evnt)
    switch (GetEventCode(evnt)) {
        case evntSocketWrite: {
           // we can check if connection established
-          
+
           if (!IsDoingOutput()) return;
-         
+
           int myerrno = TakeSocketError();
-          
+
           if (myerrno==0) {
-             DOUT5(("Connection done %7.1f", TimeStamp()*1e-3));  
+             DOUT5(("Connection done %7.1f", TimeStamp()*1e-3));
              int fd = TakeSocket();
              OnConnectionEstablished(fd);
              return;
           }
-          
+
           ShowSocketError("Postponed connect", myerrno);
 
           break;
        }
-       
+
        case evntSocketError: {
           if (!IsDoingOutput()) return;
 
           int myerrno = TakeSocketError();
           ShowSocketError("Doing connect", myerrno);
-          
+
           break;
        }
-       
+
        case evntSocketStartConnect: {
           // start next attemp for connection
 
           if (IsDoingOutput()) {
              EOUT(("Something wrong !!!!"));
-             return;   
+             return;
           }
-          
+
           if (Socket()<=0) {
-             int fd = socket(fServAddr.ai_family, fServAddr.ai_socktype, fServAddr.ai_protocol); 
-             
-             if (fd<=0) 
-                EOUT(("Cannot create socket of given addr"));   
-             else 
+             int fd = socket(fServAddr.ai_family, fServAddr.ai_socktype, fServAddr.ai_protocol);
+
+             if (fd<=0)
+                EOUT(("Cannot create socket of given addr"));
+             else
                 SetSocket(fd);
           }
-          
+
           if (Socket()>0) {
              dabc::SocketThread::SetNonBlockSocket(Socket());
 
@@ -668,19 +668,19 @@ void dabc::SocketClientProcessor::ProcessEvent(dabc::EventId evnt)
                 OnConnectionEstablished(fd);
                 return;
              }
-          
+
              if (errno==EINPROGRESS) {
-                DOUT5(("Connection in progress %7.1f", TimeStamp()*1e-3)); 
+                DOUT5(("Connection in progress %7.1f", TimeStamp()*1e-3));
                 SetDoingOutput(true);
-                return; 
+                return;
              }
-             
+
              ShowSocketError("When calling connection", errno);
           }
-          
+
           break;
        }
-       
+
        default:
           dabc::SocketProcessor::ProcessEvent(evnt);
           return;
@@ -688,20 +688,20 @@ void dabc::SocketClientProcessor::ProcessEvent(dabc::EventId evnt)
 
    SetDoingOutput(false);
    CloseSocket();
-          
+
    if (--fRetry>0) {
-      DOUT3(("Try connect after %5.1f s  n:%d", fRetryTmout, fRetry)); 
-       
-      ActivateTimeout(fRetryTmout > 0. ? fRetryTmout : 0.);   
+      DOUT3(("Try connect after %5.1f s  n:%d", fRetryTmout, fRetry));
+
+      ActivateTimeout(fRetryTmout > 0. ? fRetryTmout : 0.);
    } else {
-      OnConnectionFailed(); 
+      OnConnectionFailed();
    }
 }
 
 double dabc::SocketClientProcessor::ProcessTimeout(double)
 {
-   // activate connection start again 
-   
+   // activate connection start again
+
    FireEvent(evntSocketStartConnect);
    return -1.;
 }
@@ -718,7 +718,7 @@ void dabc::SocketClientProcessor::OnConnectionEstablished(int fd)
       EOUT(("Connection established, but not processed - close socket"));
       close(fd);
    }
-   
+
    DestroyProcessor();
 }
 
@@ -732,13 +732,13 @@ void dabc::SocketClientProcessor::OnConnectionFailed()
    } else {
       EOUT(("Connection failed to establish, error not processed"));
    }
-   
+
    DestroyProcessor();
 }
 
 // _______________________________________________________________________
 
-dabc::SocketThread::SocketThread(Basic* parent, const char* name, int numqueues) : 
+dabc::SocketThread::SocketThread(Basic* parent, const char* name, int numqueues) :
    dabc::WorkingThread(parent, name, numqueues),
    fFireCounter(0),
    fPipeFired(false),
@@ -754,7 +754,7 @@ dabc::SocketThread::SocketThread(Basic* parent, const char* name, int numqueues)
    fWaitTime = 0;
    fFillTime = 0;
    fPipeCalled = 0;
-#endif         
+#endif
 
    fPipe[0] = 0;
    fPipe[1] = 0;
@@ -769,12 +769,12 @@ dabc::SocketThread::~SocketThread()
 {
    // !!!!!! we should stop thread before destroying anything while
    // thread may use some structures in the MainLoop !!!!!!!!
-   
+
    Stop(true);
-   
+
    if (fPipe[0]!=0) { close(fPipe[0]);  fPipe[0] = 0; }
    if (fPipe[1]!=0) { close(fPipe[1]);  fPipe[1] = 0; }
-   
+
    if (f_ufds!=0) {
       delete[] f_ufds;
       delete[] f_recs;
@@ -820,15 +820,15 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
    int firsttest = portnum;
 
    for(int ntest=0;ntest<numtests;ntest++) {
-     
+
      if ((ntest==0) && (portnum<0)) continue;
-     
+
      if (ntest>0) portnum = portmin - 1 + ntest;
-     
-     int sockfd = -1;  
+
+     int sockfd = -1;
 
      struct addrinfo hints, *info;
-       
+
      memset(&hints, 0, sizeof(hints));
      hints.ai_flags    = AI_PASSIVE;
      hints.ai_family   = AF_UNSPEC; //AF_INET;
@@ -837,10 +837,10 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
      const char* myhostname = 0;
      char service[100];
      sprintf(service, "%d", portnum);
-     
+
 //     myhostname = dabc::SocketDevice::GetLocalHost();
      int n = getaddrinfo(myhostname, service, &hints, &info);
-     
+
      DOUT1(("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "localhost"), service, n));
 
      if (n < 0) {
@@ -849,12 +849,12 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
      }
 
      for (struct addrinfo *t = info; t; t = t->ai_next) {
-         
-         
+
+
         sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
         if (sockfd >= 0) {
-            
-            
+
+
            int opt = 1;
 
            setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt);
@@ -868,16 +868,16 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
      freeaddrinfo(info);
 
      if (sockfd<0) {
-       EOUT(("Cannot bind any socket to service %s", service));
+       DOUT3(("Cannot bind socket to service %s", service));
        continue;
      }
-   
+
      if (dabc::SocketThread::SetNonBlockSocket(sockfd)) return sockfd;
-     
+
      EOUT(("Cannot set nonblocking flag for server socket"));
      close(sockfd);
    }
-   
+
    EOUT(("Cannot bind server socket to port %d or find its in range %d:%d", firsttest, portmin, portmax));
    portnum = -1;
    return -1;
@@ -888,7 +888,7 @@ dabc::String dabc::SocketThread::DefineHostName()
    char hostname[1000];
    if (gethostname(hostname, sizeof(hostname)))
       EOUT(("ERROR gethostname"));
-   else  
+   else
       DOUT3(( "gethostname = %s", hostname));
    return String(hostname);
 }
@@ -896,16 +896,16 @@ dabc::String dabc::SocketThread::DefineHostName()
 dabc::SocketServerProcessor* dabc::SocketThread::CreateServerProcessor(int nport, int portmin, int portmax)
 {
    int fd = dabc::SocketThread::StartServer(nport, portmin, portmax);
-         
+
    if (fd<0) return 0;
-          
+
    return new SocketServerProcessor(fd, nport);
 }
 
 int dabc::SocketThread::StartClient(const char* host, int nport)
 {
    char service[100];
-   
+
    sprintf(service, "%d", nport);
 
    struct addrinfo *info;
@@ -913,55 +913,55 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
    memset(&hints, 0, sizeof(hints));
    hints.ai_family = AF_UNSPEC;
    hints.ai_socktype = SOCK_STREAM;
-   
+
    if (getaddrinfo(host, service, &hints, &info)==0) {
       for (struct addrinfo *t = info; t; t = t->ai_next) {
-          
+
          int sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
 
-         if (sockfd > 0) 
-            if (connect(sockfd, t->ai_addr, t->ai_addrlen)==0) 
-               if (dabc::SocketThread::SetNonBlockSocket(sockfd)) 
+         if (sockfd > 0)
+            if (connect(sockfd, t->ai_addr, t->ai_addrlen)==0)
+               if (dabc::SocketThread::SetNonBlockSocket(sockfd))
                   return sockfd;
                else
-                  EOUT(("Cannot set non-blocking flag for client socket"));   
+                  EOUT(("Cannot set non-blocking flag for client socket"));
          close(sockfd);
          sockfd = -1;
       }
       freeaddrinfo(info);
    }
-   
+
    return -1;
 }
 
 dabc::SocketClientProcessor* dabc::SocketThread::CreateClientProcessor(const char* serverid)
 {
    if (serverid==0) return 0;
-   
+
    const char* service = strchr(serverid, ':');
    if (service==0) return 0;
-   
+
    String host;
    host.assign(serverid, service - serverid);
    service++;
-   
-   SocketClientProcessor* proc = 0; 
-   
+
+   SocketClientProcessor* proc = 0;
+
    DOUT5(("CreateClientProcessor %s:%s", service, serverid));
-    
+
    struct addrinfo *info;
    struct addrinfo hints;
    memset(&hints, 0, sizeof(hints));
    hints.ai_family = AF_UNSPEC;
    hints.ai_socktype = SOCK_STREAM;
-      
+
    if (getaddrinfo(host.c_str(), service, &hints, &info)==0) {
       for (struct addrinfo *t = info; t; t = t->ai_next) {
-       
+
          int sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
-         
+
          if (sockfd<=0) continue;
-         
+
          proc = new SocketClientProcessor(t, sockfd);
          break;
       }
@@ -969,25 +969,25 @@ dabc::SocketClientProcessor* dabc::SocketThread::CreateClientProcessor(const cha
    }
 
    DOUT5(("CreateClientProcessor %s:%s done res = %p", service, serverid, proc));
-   
+
    return proc;
 }
 
 
-void dabc::SocketThread::_Fire(dabc::EventId arg, int nq) 
-{ 
+void dabc::SocketThread::_Fire(dabc::EventId arg, int nq)
+{
    DOUT5(("SocketThread::_Fire %s nq:%d numq:%d waiting:%s", GetName(), nq, fNumQueues, DBOOL(fWaitFire)));
-   
+
    _PushEvent(arg, nq);
    fFireCounter++;
-   
+
    if (fWaitFire && !fPipeFired) {
       write(fPipe[1], "w", 1);
       fPipeFired = true;
-      
+
       #ifdef SOCKET_PROFILING
          fPipeCalled++;
-      #endif   
+      #endif
    }
 }
 
@@ -997,10 +997,10 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
 
    #ifdef SOCKET_PROFILING
      fWaitCalls++;
-     
+
      TimeStamp_t tm1 = TimeStamp();
-   #endif         
-   
+   #endif
+
    {
       dabc::LockGuard lock(fWorkMutex);
 
@@ -1010,18 +1010,18 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
       }
 
       if (f_ufds==0) return NullEventId;
-      
+
       fWaitFire = true;
    }
-   
+
    // here we wait for next event from any socket, including pipe
-   
+
    int numufds = 1;
 
    f_ufds[0].fd = fPipe[0];
    f_ufds[0].events = POLLIN;
    f_ufds[0].revents = 0;
-   
+
    for(unsigned n=1; n<f_sizeufds; n++) {
       if (!f_recs[n].use) continue;
       SocketProcessor* proc = (SocketProcessor*) fProcessors[n];
@@ -1035,15 +1035,15 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
 
       if (proc->IsDoingOutput())
          events = events | POLLOUT;
-      
+
       if (events==0) continue;
-      
+
       f_ufds[numufds].fd = proc->Socket();
       f_ufds[numufds].events = events;
       f_ufds[numufds].revents = 0;
-      
+
       f_recs[numufds].indx = n; // this is for dereferencing of the value
-      
+
       numufds++;
    }
 
@@ -1052,10 +1052,10 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
    #ifdef SOCKET_PROFILING
      fWaitDone++;
      TimeStamp_t tm2 = TimeStamp();
-     
+
      fFillTime += TimeDistance(tm1, tm2);
    #endif
-   
+
    int poll_res = poll(f_ufds, numufds, tmout);
 
    #ifdef SOCKET_PROFILING
@@ -1064,7 +1064,7 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
    #endif
 
    dabc::LockGuard lock(fWorkMutex);
-   
+
    fWaitFire = false;
 
    // cleanup pipe in bigger steps
@@ -1073,30 +1073,30 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
       read(fPipe[0], &sbuf, 1);
       fPipeFired = false;
    }
-   
+
    // if we really has any events, analyse all of them and push in the queue
    if (poll_res>0)
       for (int n=1; n<numufds;n++) {
-         
-         if (f_ufds[n].revents==0) continue; 
-          
+
+         if (f_ufds[n].revents==0) continue;
+
          if (f_ufds[n].revents & (POLLERR | POLLHUP | POLLNVAL)) {
 //            EOUT(("Error on the socket %d", f_ufds[n].fd));
             _PushEvent(CodeEvent(SocketProcessor::evntSocketError, f_recs[n].indx), 0);
             fFireCounter++;
          }
-          
+
          if (f_ufds[n].revents & (POLLIN | POLLPRI)) {
             _PushEvent(CodeEvent(SocketProcessor::evntSocketRead, f_recs[n].indx), 1);
             fFireCounter++;
-         } 
-         
+         }
+
          if (f_ufds[n].revents & POLLOUT) {
             _PushEvent(CodeEvent(SocketProcessor::evntSocketWrite, f_recs[n].indx), 1);
             fFireCounter++;
-         } 
+         }
       }
-   
+
    if (fFireCounter==0) return NullEventId;
    fFireCounter--;
    return _GetNextEvent();
@@ -1105,20 +1105,20 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
 void dabc::SocketThread::ProcessorNumberChanged()
 {
    unsigned new_sz = fProcessors.size();
-   
+
    if (new_sz>f_sizeufds) {
 
       delete[] f_ufds;
       delete[] f_recs;
       f_ufds = new pollfd [new_sz];
       f_recs = new ProcRec [new_sz];
-      
+
       f_sizeufds = new_sz;
    }
-   
+
    memset(f_ufds, 0, sizeof(pollfd) * f_sizeufds);
    memset(f_recs, 0, sizeof(ProcRec) * f_sizeufds);
-   
+
    f_recs[0].use = true;
    f_recs[0].indx = 0;
 
@@ -1127,6 +1127,6 @@ void dabc::SocketThread::ProcessorNumberChanged()
 
       f_recs[indx].use = proc!=0;
    }
-   
+
    DOUT5(("ProcessorNumberChanged finished"));
 }

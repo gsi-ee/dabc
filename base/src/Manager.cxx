@@ -449,6 +449,8 @@ bool dabc::Manager::DeletePool(const char* name)
 
 void dabc::Manager::DoHaltManager()
 {
+//   dabc::SetDebugLevel(5);
+
    DOUT3(("Start DoHaltManager"));
 
    DOUT3(("Deleting all plugins"));
@@ -473,10 +475,10 @@ void dabc::Manager::DoHaltManager()
    df = GetPoolsFolder(false);
    if (df) df->DeleteChilds();
 
-   // to be on the safe side, destroy everithing in the queue
+   // to be on the safe side, destroy everything in the queue
    ProcessDestroyQueue();
 
-   RemoveProcessorFromThread(false);
+   RemoveProcessorFromThread(true);
 
    fMgrWorking = false;
 
@@ -491,9 +493,9 @@ void dabc::Manager::HaltManager()
    else
      Execute("HaltManager");
 
-   // here we stopping and delete all new threads
+   // here we stopping and delete all threads
    Folder* df = GetThreadsFolder(false);
-   DOUT3(("Calling destructor of all working threads %d", (df ? df->NumChilds() : -1)));
+   DOUT3(("Calling destructor of all working threads %u", (df ? df->NumChilds() : 0)));
    if (df) df->DeleteChilds();
 
    DOUT3(("dabc::Manager::HaltManager done"));
@@ -1388,7 +1390,7 @@ bool dabc::Manager::DoCleanupManager(int appid)
    if (mf) mf->DeleteChilds(appid);
 
    DOUT3(( "Cleanup all devices"));
-   DoCleanupDevices(true);
+   DoCleanupDevices(false);
 
    // here we delete all pools
 
@@ -1397,7 +1399,7 @@ bool dabc::Manager::DoCleanupManager(int appid)
    if (pf) pf->DeleteChilds(appid);
 
    pf = GetDevicesFolder();
-   DOUT3(( "Deleting app devices num = %d", (pf ? pf->NumChilds() : -1)));
+   DOUT3(( "Deleting app devices num = %u", (pf ? pf->NumChilds() : 0)));
    if (pf) pf->DeleteChilds(appid);
 
    DOUT3(( "Cleanup all working threads"));

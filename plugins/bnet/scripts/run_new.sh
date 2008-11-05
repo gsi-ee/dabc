@@ -54,6 +54,12 @@ then
   echo "Using unidirectional case $numprocs $nodeslist"
 fi
 
+if [[ "$devicesID" == *2 ]]
+then
+  userlibs+=' libDabcVerbs.so' 
+  echo "Using verbs for data transport"
+fi
+
 numprocs=`expr $numprocs + 1`
 
 lastnode=""
@@ -109,7 +115,7 @@ do
    
    procfilename="procid.$counter"
 
-   ssh $node "$callargs &" "jobs -p > $procfilename" &
+   ssh $node "$callargs & jobs -p > $procfilename" &
 
    counter=`expr $counter + 1`
    

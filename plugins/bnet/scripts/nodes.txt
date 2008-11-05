@@ -1,4 +1,4 @@
-master
-node01
-node02
-node03
+lxg0516
+lxi008
+lxi009
+lxi010
