@@ -1,7 +1,8 @@
 #! /bin/bash
 # dabclogin
 # first version 01-Jul-2008, Joern Adamczewski gsi
-#
+# added optional argument to be able to set a local DABCSYS, 18-Jul-2008, HE
+# modified for refactorized workspace 06-11-2008 JAM
 #
 echo
 echo "***********************************************************************"
@@ -11,6 +12,13 @@ if [ -z "$GSI_OS_FLAVOR" ]
 fi
 
 VERSIONPATH=/usr/local/pub/$GSI_OS_FLAVOR$GSI_OS_VERSION/$GSI_COMPILER_CC
+# look for explicit DABCSYS
+if [ $# -eq 0 ]
+then
+export DABCSYS=$VERSIONPATH/dabc/dabc/dabc
+else
+export DABCSYS=$1
+fi
 #------------------------------------
 # cleanup old library path:
   IFSOLD=$IFS
@@ -98,19 +106,20 @@ echo "*** enabled XDAQ at $XDAQ_ROOT ."
 #----------------------------------
 # the dabc part:
 
-export DABCSYS=$VERSIONPATH/dabc/dabc/dabc
-export DABCSYSCORE=$DABCSYS
+# was set above
+#export DABCSYS=$VERSIONPATH/dabc/dabc/dabc
 
-export PATH=$DABCSYSCORE/bin:$PATH
+export PATH=$DABCSYS/bin:$PATH
 
 
-export LD_LIBRARY_PATH=.:$DABCSYSCORE/lib:$DABCSYS/controls/xdaq/dabc/nodecontrol/lib/$XDAQ_OS/$PLATFORM:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=.:$DABCSYS/lib:$LD_LIBRARY_PATH
 
 #-----------------------------------
 # java gui part:
 #export CLASSPATH=.:$DABCSYS/gui/java/generic/:$DIMDIR/jdim/classes
 export CLASSPATH=.:$DABCSYS/gui/java/packages/xgui.jar:$DIMDIR/jdim/classes
-alias dabc="java xgui.xGui"
+alias dabc="java -Xmx200m xgui.xGui"
+alias dabcmoni="java -Xmx200m xgui.xGui -moni"
 
 # Qt configurator frontend:
 . /usr/local/bin/qtlogin 303-04
