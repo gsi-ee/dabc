@@ -1,1 +1,0 @@
-cmd_/u/linev/smb/workspace/dabc/plugins/abb/linuxdrivers/pciDriver2/src/driver/pciDriver.o := ld -m elf_x86_64  -r -o /u/linev/smb/workspace/dabc/plugins/abb/linuxdrivers/pciDriver2/src/driver/pciDriver.o /u/linev/smb/workspace/dabc/plugins/abb/linuxdrivers/pciDriver2/src/driver/pciDriver_base.o
