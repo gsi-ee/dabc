@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+#include <dlfcn.h>
 
 #include "dabc/logging.h"
 #include "dabc/timing.h"
@@ -1963,9 +1964,40 @@ void* dabc::Manager::FindXmlContext(void* engine, void* doc, unsigned cnt, const
 
 bool dabc::Manager::LoadLibrary(const char* libname)
 {
-   DOUT1(("Loading library %s", libname));
+   String name = libname;
 
-   return true;
+   while (name.find("${") != name.npos) {
+      size_t pos1 = name.find("${");
+      size_t pos2 = name.find("}");
+
+      if (pos1>pos2) {
+         EOUT(("Wrnog variable parentesis %s", name.c_str()));
+         return false;
+      }
+
+      String var(name, pos1+2, pos2-pos1-2);
+
+      name.erase(pos1, pos2-pos1+1);
+
+      if (var.length()>0) {
+         const char* value = getenv(var.c_str());
+         if (value==0)
+            if (var=="DABCSYS") value = ".";
+
+         DOUT3(("LoadLibrary:: Replace variable %s with value %s", var.c_str(), value));
+
+         if (value!=0) name.insert(pos1, value);
+      }
+   }
+
+   void* lib = ::dlopen(name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+
+   if (lib==0)
+      EOUT(("Cannot load library %s err:%s", name.c_str(), ::dlerror()));
+   else
+      DOUT1(("Library loaded %s", name.c_str()));
+
+   return (lib!=0);
 }
 
 

@@ -43,7 +43,7 @@ $(DABCINCPATH)/%.h: $(BASEDIR)/%.h
 	@cp -f $< $@
 
 $(DABCBASE_LIB):   $(BASE_O)
-	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_O)" $(DABCDLLPATH)
+	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_O)" $(DABCDLLPATH) "-lpthread -ldl"
 
 $(DABCBASE_EXE):  $(BASERUN_O) $(DABCBASE_LIB)
 	$(LD) $(LDFLAGS) $(BASERUN_O) $(LIBS_CORESET) $(OutPutOpt) $(DABCBASE_EXE)

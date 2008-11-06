@@ -27,7 +27,6 @@ endif
 
 ROCDIRI         = $(ROCDIR)/roc
 ROCDIRS         = $(ROCDIR)/src
-ROCPLUGINDIR    = $(ROCDIR)/dataserver
 
 ROC_LIBNAME     = $(LIB_PREFIX)DabcKnut
 ROC_LIB         = $(TGTDLLPATH)/$(ROC_LIBNAME).$(DllSuf)
@@ -39,21 +38,14 @@ ROC_S           = $(wildcard $(ROCDIRS)/*.$(SrcSuf))
 ROC_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(ROC_S))
 ROC_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(ROC_S))
 
-ROC_EXES        = $(ROCPLUGINDIR)/rocdataserver.$(SrcSuf)
-ROC_EXEO        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(ROC_EXES))
-ROC_EXED        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(ROC_EXES))
-ROC_EXE         = $(TGTBINPATH)/rocdataserver
-
 # used in the main Makefile
 
 ALLHDRS         += $(patsubst $(ROCDIR)/%.h, $(DABCINCPATH)/%.h, $(ROC_H))
-ALLDEPENDENC    += $(ROC_D) $(ROC_EXED)
-CREATE_DIRS     += $(TGTDLLPATH) $(TGTBINPATH)
+ALLDEPENDENC    += $(ROC_D)
+CREATE_DIRS     += $(TGTDLLPATH)
 LIBS_PLUGINS    += $(ROC_LIB)
 
 libs:: $(ROC_LIB)
-
-exes:: $(ROC_EXE)
 
 ##### local rules #####
 
@@ -64,11 +56,8 @@ $(DABCINCPATH)/%.h: $(ROCDIR)/%.h
 $(ROC_LIB):  $(ROC_O) $(KNUT_SLIB)
 	@$(MakeLib) $(ROC_LIBNAME) "$(ROC_O) $(KNUT_SLIB)" $(TGTDLLPATH) 
 
-$(ROC_EXE):  $(ROC_EXEO) $(ROC_LIB)
-	$(LD) $(LDFLAGS) $(ROC_EXEO) $(LIBS_CORESET) -lDabcMbs -lDabcKnut $(OutPutOpt) $(ROC_EXE)
-
 ########### extra rules #############
-$(ROC_O) $(ROC_D) $(ROC_EXE) $(ROC_EXEO) : INCLUDES += $(KNUT_DIR)/Control 
+$(ROC_O) $(ROC_D): INCLUDES += $(KNUT_DIR)/Control 
 
 include $(DABCSYS)/config/Makefile.rules
 

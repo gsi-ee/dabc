@@ -6,16 +6,6 @@
 
 #include "bnet/WorkerApplication.h"
 
-bool LoadUserLibrary(const char* libname)
-{
-   void* lib = ::dlopen(libname, RTLD_LAZY | RTLD_GLOBAL);
-
-   if (lib==0)
-      EOUT(("Cannot load library %s err:%s", libname, ::dlerror()));
-
-   return (lib!=0);
-}
-
 void ChangeRemoteParameter(dabc::Manager& m, int nodeid, const char* parname, const char* parvalue)
 {
    dabc::Command* cmd = new dabc::CommandSetParameter(parname, parvalue);
@@ -239,7 +229,7 @@ int main(int numc, char* args[])
 
    int argcnt = 6;
    while (argcnt<numc) {
-      if (!LoadUserLibrary(args[argcnt])) return 1;
+      if (!manager.LoadLibrary(args[argcnt])) return 1;
       argcnt++;
    }
 

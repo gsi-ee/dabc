@@ -53,6 +53,6 @@ $(DABCBNET_LIB):   $(BNET_O)
 	@$(MakeLib) $(DABCBNET_LIBNAME) "$(BNET_O)" $(TGTDLLPATH)
 
 $(DABCBNET_EXE) : $(BNETEXE_O)
-	$(LD) $(LDFLAGS) $(BNETEXE_O) -ldl $(LIBS_CORESET) -lDabcSctrl -lDabcBnet $(OutPutOpt) $(DABCBNET_EXE)
+	$(LD) $(LDFLAGS) $(BNETEXE_O) $(LIBS_CORESET) -lDabcSctrl -lDabcBnet $(OutPutOpt) $(DABCBNET_EXE)
 
 include $(DABCSYS)/config/Makefile.rules

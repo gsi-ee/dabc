@@ -21,6 +21,8 @@ int main(int numc, char* args[])
 
    manager.InstallCtrlCHandler();
 
+   manager.Read_XDAQ_XML_Libs(configuration);
+
    if (!manager.CreateApplication(appclass)) {
       EOUT(("Cannot create application of specified class %s", (appclass ? appclass : "???")));
       return 1;
