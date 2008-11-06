@@ -57,6 +57,14 @@ int dabc::Application::ExecuteCommand(dabc::Command* cmd)
    if (cmd->IsName("BeforeAppModulesDestroyed")) {
       cmd_res = cmd_bool(BeforeAppModulesDestroyed());
    } else
+   if (cmd->IsName("CheckModulesRunning")) {
+      if (!IsModulesRunning()) {
+         if (strcmp(dabc::mgr()->CurrentState(), dabc::Manager::stReady) != 0) {
+            DOUT1(("!!!!! ******** !!!!!!!!  All main modules are stopped - we can switch to Stop state"));
+            dabc::mgr()->InvokeStateTransition(dabc::Manager::stcmdDoStop);
+         }
+      }
+   } else
       cmd_res = dabc::WorkingProcessor::ExecuteCommand(cmd);
 
    return cmd_res;
@@ -124,3 +132,12 @@ bool dabc::Application::DoStateTransition(const char* state_trans_name)
    return res;
 }
 
+bool dabc::Application::IsModulesRunning()
+{
+   return dabc::mgr()->IsAnyModuleRunning();
+}
+
+void dabc::Application::InvokeCheckModulesCmd()
+{
+   Submit(new Command("CheckModulesRunning"));
+}

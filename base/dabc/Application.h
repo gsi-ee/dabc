@@ -41,8 +41,9 @@ namespace dabc {
 
           virtual int SMCommandTimeout() const { return 10; }
 
-          virtual bool IsModulesRunning() { return true; }
+          virtual bool IsModulesRunning();
 
+          void InvokeCheckModulesCmd();
 
        protected:
           virtual double ProcessTimeout(double last_diff);

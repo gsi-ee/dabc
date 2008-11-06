@@ -1,7 +1,6 @@
 #include "dabc/Manager.h"
 #include "dabc/Command.h"
 #include "dabc/logging.h"
-#include "dabc/Application.h"
 
 int main(int numc, char* args[])
 {
@@ -15,7 +14,7 @@ int main(int numc, char* args[])
 
    DOUT1(("Using config file: %s", configuration));
 
-   dabc::Manager manager("dabc", false);
+   dabc::Manager manager("dabc", true);
 
    dabc::Logger::Instance()->LogFile("dabc.log");
 
@@ -51,9 +50,9 @@ int main(int numc, char* args[])
    DOUT1(("Data taking from ROC(s) is now running"));
    DOUT1(("       Press ctrl-C for stop"));
 
-//   manager.RunManagerMainLoop();
+   manager.RunManagerMainLoop();
 
-   while(dabc::mgr()->GetApp()->IsModulesRunning()) { ::sleep(1); }
+//   while(dabc::mgr()->GetApp()->IsModulesRunning()) { ::sleep(1); }
 //   sleep(10);
 
    DOUT1(("Normal finish of data taking"));

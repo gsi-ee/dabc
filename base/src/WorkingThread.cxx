@@ -13,7 +13,7 @@ dabc::WorkingThread::WorkingThread(Basic* parent, const char* name, unsigned num
    Thread(),
    Runnable(),
    CommandReceiver(),
-   fStatus(stCreated),
+   fState(stCreated),
    fThrdWorking(false),
    fNoLongerUsed(false),
    fRealThrd(true),
@@ -48,10 +48,10 @@ dabc::WorkingThread::~WorkingThread()
    Stop(true);
 
    LockGuard guard(fWorkMutex);
-   if (fStatus==stError) {
+   if (fState==stError) {
       EOUT(("Kill thread in error state, nothing better can be done"));
       Kill();
-      fStatus = stJoined;
+      fState = stJoined;
    }
 
    delete [] fQueues; fQueues = 0;
@@ -120,7 +120,7 @@ bool dabc::WorkingThread::Start(double timeout_sec, bool withoutthrd)
    {
       LockGuard guard(fWorkMutex);
       fRealThrd = !withoutthrd;
-      switch (fStatus) {
+      switch (fState) {
          case stCreated:
             break;
          case stRunning:
@@ -141,7 +141,7 @@ bool dabc::WorkingThread::Start(double timeout_sec, bool withoutthrd)
             EOUT(("Forgot something???"));
       }
 
-      fStatus = stChanging;
+      fState = stChanging;
    }
 
    DOUT3(("Thread %s starting join:%s kill:%s", GetName(), DBOOL(needjoin), DBOOL(needkill)));
@@ -163,7 +163,7 @@ bool dabc::WorkingThread::Start(double timeout_sec, bool withoutthrd)
    bool res = Execute("ConfirmStart", timeout_sec);
 
    LockGuard guard(fWorkMutex);
-   fStatus = res ? stRunning : stError;
+   fState = res ? stRunning : stError;
 
    return res;
 }
@@ -174,7 +174,7 @@ bool dabc::WorkingThread::Stop(bool waitjoin, double timeout_sec)
 
    {
       LockGuard guard(fWorkMutex);
-      switch (fStatus) {
+      switch (fState) {
          case stCreated:
             return true;
          case stRunning:
@@ -189,13 +189,13 @@ bool dabc::WorkingThread::Stop(bool waitjoin, double timeout_sec)
             EOUT(("Stop from error state, do nothing"));
             return true;
          case stChanging:
-            EOUT(("Status is chaning from other thread. Not supported"));
+            EOUT(("State is changing from other thread. Not supported"));
             return false;
          default:
             EOUT(("Forgot something???"));
       }
 
-      fStatus = stChanging;
+      fState = stChanging;
    }
 
    bool res = true;
@@ -203,7 +203,7 @@ bool dabc::WorkingThread::Stop(bool waitjoin, double timeout_sec)
    if (needstop) res = Execute("ConfirmStop", timeout_sec);
 
    if (waitjoin && fRealThrd) {
-      if (!res) EOUT(("Cannot wait for join when stop was not succeded"));
+      if (!res) EOUT(("Cannot wait for join when stop was not succeeded"));
            else Thread::Join();
    }
 
@@ -212,9 +212,9 @@ bool dabc::WorkingThread::Stop(bool waitjoin, double timeout_sec)
    if (!res) {
       // not necessary, but to be sure that everything is done to stop thread
       fThrdWorking = false;
-      fStatus = stError;
+      fState = stError;
    } else
-      fStatus = waitjoin ? stJoined : stStopped;
+      fState = waitjoin ? stJoined : stStopped;
 
    return res;
 }

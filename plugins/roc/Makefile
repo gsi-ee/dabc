@@ -27,6 +27,7 @@ endif
 
 ROCDIRI         = $(ROCDIR)/roc
 ROCDIRS         = $(ROCDIR)/src
+ROCDIRGO4       = $(ROCDIR)/go4monitor
 
 ROC_LIBNAME     = $(LIB_PREFIX)DabcKnut
 ROC_LIB         = $(TGTDLLPATH)/$(ROC_LIBNAME).$(DllSuf)
@@ -46,6 +47,12 @@ CREATE_DIRS     += $(TGTDLLPATH)
 LIBS_PLUGINS    += $(ROC_LIB)
 
 libs:: $(ROC_LIB)
+
+ifdef GO4SYS
+exes::
+	@echo "Build go4 monitor analsysis for roc application"
+	@cd $(ROCDIRGO4); make all
+endif
 
 ##### local rules #####
 

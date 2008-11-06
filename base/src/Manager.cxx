@@ -192,7 +192,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess) :
    Folder(0, managername, true),
    WorkingProcessor(GetFolder("Pars", true, true)),
    CommandClientBase(),
-   fMgrWorking(true),
+   fMgrMainLoop(true),
    fMgrMutex(0),
    fReplyesQueue(true, false),
    fDestroyQueue(16, true),
@@ -389,6 +389,21 @@ bool dabc::Manager::IsModuleRunning(const char* name)
    return m ? m->WorkStatus()>0 : false;
 }
 
+bool dabc::Manager::IsAnyModuleRunning()
+{
+   LockGuard lock(fMgrMutex);
+
+   Folder* f = GetModulesFolder(false);
+   if (f==0) return false;
+
+   for (unsigned n=0;n<f->NumChilds();n++) {
+      Module* m = dynamic_cast<Module*> (f->GetChild(n));
+      if (m && (m->WorkStatus()>0)) return true;
+   }
+
+   return false;
+}
+
 dabc::Port* dabc::Manager::FindPort(const char* name)
 {
    dabc::Port* port = dynamic_cast<dabc::Port*>(FindChild(name));
@@ -481,18 +496,13 @@ void dabc::Manager::DoHaltManager()
 
    RemoveProcessorFromThread(true);
 
-   fMgrWorking = false;
-
    DOUT3(("Done DoHaltManager"));
 }
 
 
 void dabc::Manager::HaltManager()
 {
-   if (!fMgrWorking)
-      DoHaltManager();
-   else
-     Execute("HaltManager");
+   Execute("HaltManager");
 
    // here we stopping and delete all threads
    Folder* df = GetThreadsFolder(false);
@@ -1510,8 +1520,22 @@ const char* dabc::Manager::CurrentThrdName()
 
 void dabc::Manager::RunManagerMainLoop()
 {
-   if (ProcessorThread())
-      ProcessorThread()->MainLoop();
+   WorkingThread* thrd = ProcessorThread();
+
+   if (thrd==0) return;
+
+   if (thrd->IsReadThrd()) {
+      DOUT3(("Manager has normal thread - just wait until application modules are stopped"));
+      while(fMgrMainLoop) { dabc::LongSleep(1); }
+   } else {
+      DOUT3(("Manager uses process as thread - run mainloop ourself"));
+
+      thrd->MainLoop();
+
+      DOUT3(("Manager is stopped - just keep process as it is"));// make virtual run, while thread in reality is running
+
+      thrd->Start(-1, true);
+   }
 }
 
 void dabc::Manager::DoPrint()
@@ -1553,6 +1577,19 @@ int dabc::Manager::DefineNodeId(const char* nodename)
 bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Command* cmd)
 {
    dabc::Command::Reply(cmd, false);
+
+   if ((state_transition_name!=0) && (strcmp(state_transition_name, stcmdDoStop)==0)) {
+      DOUT1(("Application can stops its execution"));
+
+      fMgrMainLoop = false;
+
+      WorkingThread* thrd = ProcessorThread();
+      if (thrd)
+        if (!thrd->IsReadThrd()) {
+           RemoveProcessorFromThread(true);
+           thrd->Stop(false); // stop thread - means leave thread main loop
+        }
+   }
 
    return false;
 }

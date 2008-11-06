@@ -9,6 +9,7 @@
 #include "dabc/Port.h"
 #include "dabc/Pointer.h"
 #include "dabc/Manager.h"
+#include "dabc/Application.h"
 
 #include "SysCoreControl.h"
 #include "SysCoreSorter.h"
@@ -233,6 +234,8 @@ bool roc::RocCalibrModule::DoCalibration()
 
             // stop module execution - application will react later on
             Stop();
+
+            dabc::mgr()->GetApp()->InvokeCheckModulesCmd();
 
             return false;
          }

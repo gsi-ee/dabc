@@ -154,7 +154,7 @@ namespace dabc {
          virtual void ProcessorNumberChanged() {} // function called when number of processors are changed
          virtual bool CheckThreadUsage(); // checks if there is any reasons to continue usage of thread 
       
-         EStatus              fStatus;
+         EStatus              fState;
          
          bool                 fThrdWorking; // flag indicates if mainloop of the thread should continue to work
          bool                 fNoLongerUsed; // set to true when thread has nothing to do

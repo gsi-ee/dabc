@@ -87,6 +87,8 @@ namespace bnet {
          virtual bool CreateAppModules();
          virtual int IsAppModulesConnected();
 
+         virtual bool IsModulesRunning();
+
       protected:
 
          void DiscoverNodeConfig(dabc::Command* cmd);

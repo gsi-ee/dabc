@@ -202,33 +202,28 @@ int bnet::WorkerApplication::ExecuteCommand(dabc::Command* cmd)
       ApplyNodeConfig(cmd);
       cmd_res = cmd_postponed;
    } else
-   if (cmd->IsName("CheckModulesStatus")) {
-      cmd_res = CheckWorkerModules();
-   } else
+//   if (cmd->IsName("CheckModulesStatus")) {
+//      cmd_res = CheckWorkerModules();
+//   } else
       cmd_res = dabc::Application::ExecuteCommand(cmd);
 
    return cmd_res;
 }
 
+bool bnet::WorkerApplication::IsModulesRunning()
+{
+   if (IsSender())
+      if (dabc::mgr()->IsModuleRunning("Sender")) return true;
+
+   if (IsReceiver())
+      if (dabc::mgr()->IsModuleRunning("Receiver")) return true;
+
+   return false;
+}
+
 bool bnet::WorkerApplication::CheckWorkerModules()
 {
-   bool isstopped = true;
-
-   if (IsSender()) {
-
-//      if (dabc::mgr()->IsModuleRunning("Combiner")) isstopped = false;
-      if (dabc::mgr()->IsModuleRunning("Sender")) isstopped = false;
-   }
-
-   if (IsReceiver()) {
-      if (dabc::mgr()->IsModuleRunning("Receiver")) isstopped = false;
-//      if (dabc::mgr()->IsModuleRunning("Builder")) isstopped = false;
-
-//      if (IsFilter())
-//         if (dabc::mgr()->IsModuleRunning("Filter")) isstopped = false;
-   }
-
-   if (isstopped) {
+   if (!IsModulesRunning()) {
       if (strcmp(dabc::mgr()->CurrentState(), dabc::Manager::stReady) != 0) {
          DOUT1(("!!!!! ******** !!!!!!!!  All main modules are stopped - we can switch to Stop state"));
          dabc::mgr()->InvokeStateTransition(dabc::Manager::stcmdDoStop);
@@ -239,8 +234,8 @@ bool bnet::WorkerApplication::CheckWorkerModules()
 }
 
 void bnet::WorkerApplication::SetPars(bool is_all_to_all,
-                                 int numreadouts,
-                                 int combinermodus)
+                                      int numreadouts,
+                                      int combinermodus)
 {
 
    int nodeid = dabc::mgr()->NodeId();

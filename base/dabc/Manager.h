@@ -390,8 +390,8 @@ namespace dabc {
          static const char* TargetStateName(const char* stcmd);
 
          /** Invoke state transition of manager.
-           * Must be overwritten in derivered class.
-           * This MUST be asynchron functions means calling thread should not be blocked.
+           * Must be overwritten in derived class.
+           * This MUST be asynhron functions means calling thread should not be blocked.
            * Actual state transition will be performed in state-machine thread.
            * If command object is specified, it will be replyed when state transition is
            * completed or when transition is failed */
@@ -451,6 +451,7 @@ namespace dabc {
          bool StopAllModules(int appid = 0);
          bool DeleteModule(const char* name);
          bool IsModuleRunning(const char* name);
+         bool IsAnyModuleRunning();
 
          bool ConnectPorts(const char* port1name,
                            const char* port2name,
@@ -617,7 +618,7 @@ namespace dabc {
          DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0);
 
       protected:
-         bool                  fMgrWorking;
+         bool                  fMgrMainLoop; // flag indicates if mainloop of manager should runs
 
          Mutex                *fMgrMutex; // main mutex to protect manager queues
          CommandsQueue         fReplyesQueue;
