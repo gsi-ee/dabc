@@ -2,9 +2,9 @@
 
 include $(DABCSYS)/config/Makefile.config
 
-#ifdef USEMPRACE
-#DEFINITIONS += -D__USE_ABB__
-#endif
+# enable this define to use active buffer board
+# DEFINITIONS += __USE_ABB__
+
 
 BNETBINPATH           = $(DABCSYS)/plugins/bnet/scripts
 
