@@ -575,7 +575,8 @@ namespace dabc {
            * In the end all unused thread also destroyed */
          bool CleanupManager(int appid = 0);
 
-         bool Read_XDAQ_XML_Config(const char* fname, const char* context = 0);
+         bool Read_XDAQ_XML_Libs(const char* fname, unsigned cnt = 0);
+         bool Read_XDAQ_XML_Pars(const char* fname, unsigned cnt = 0);
 
          bool InstallCtrlCHandler();
          void ProcessCtrlCSignal();
@@ -666,6 +667,9 @@ namespace dabc {
          virtual bool CanSendCmdToManager(const char*) { return false; }
          virtual bool SendOverCommandChannel(const char* managername, const char* cmddata);
          void RecvOverCommandChannel(const char* cmddata);
+
+         void* FindXmlContext(void* engine, void* doc, unsigned cnt = 0, const char* context = 0);
+         bool LoadLibrary(const char* libname);
 
          // must be called in inherited class constructor & destructor
          void init();

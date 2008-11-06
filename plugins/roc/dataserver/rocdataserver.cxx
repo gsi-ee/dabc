@@ -6,100 +6,6 @@
 
 #include <unistd.h>
 
-/*
-#include "SysCoreControl.h"
-#include "SysCoreData.h"
-
-void TestSpeed()
-{
-   SysCoreData data;
-
-   double t1 = TimeStamp();
-
-   int cnt = 10000000;
-
-   unsigned typ, rocid, id;
-
-   for (int n=0;n<cnt;n++) {
-      typ = data.getMessageType();
-      rocid = data.getRocNumber();
-      id = data.getNxNumber();
-      id = data.getNxTs();
-      id = data.getId();
-      id = data.getAdcValue();
-   }
-
-   double t2 = TimeStamp();
-
-   double tm = (t2-t1)*1e-6;
-
-   DOUT1(("Tm %5.3f s Get speed mps = %5.1f MBs %5.1f ", tm, cnt / tm * 1e-6, cnt / tm * 6e-6));
-
-   t1 = TimeStamp();
-
-   for (int n=0;n<cnt;n++) {
-      data.setMessageType(1);
-      data.setRocNumber(1);
-      data.setNxTs(1345);
-      data.setLastEpoch(0);
-
-      data.setSyncTs(123);
-      data.setSyncEvNum(56789);
-
-   }
-
-   t2 = TimeStamp();
-
-   tm = (t2-t1)*1e-6;
-
-   DOUT1(("Tm %5.3f s Set speed mps = %5.1f MBs %5.1f ", tm, cnt / tm * 1e-6, cnt / tm * 6e-6));
-
-   for(unsigned n=0;n<=0x3fff;n++) {
-      data.setNxTs(n);
-      if (data.getNxTs()!=n) DOUT1(("Ts Miss %x != %x", n, data.getNxTs()));
-   }
-
-   for(unsigned n=0;n<=0xfffffff;n+=1234) {
-      data.setEpoch(n);
-      if (data.getEpoch()!=n) DOUT1(("Epoch Miss %x != %x", n, data.getEpoch()));
-   }
-
-   for(unsigned n=0;n<=0xffffff;n+=7) {
-      data.setSyncEvNum(n);
-      if (data.getSyncEvNum()!=n) DOUT1(("Sync Miss %x != %x", n, data.getSyncEvNum()));
-   }
-
-   for(unsigned n=0;n<=0x3fff;n++) {
-      unsigned ts = n & 0x3ffe;
-      data.setSyncTs(ts);
-      data.setSyncEvNum(n*0x2f7);
-      if (data.getSyncTs()!=ts) DOUT1(("SyncTs Miss %x != %x", ts, data.getSyncTs()));
-      if (data.getSyncEvNum()!=n*0x2f7) DOUT1(("Sync Miss %x != %x", n*0x2f7, data.getSyncEvNum()));
-   }
-
-   for(unsigned n=0;n<=0x3fff;n++) {
-      unsigned ts = n & 0x3ffe;
-      data.setAuxTs(ts);
-      if (data.getAuxTs()!=ts) DOUT1(("AUXTs Miss %x != %x", ts, data.getAuxTs()));
-   }
-
-   data.setSyncEvNum(0x111111);
-
-   DOUT1(("%x %x %s", data.getSyncEvNum(),
-             *((uint32_t*)(data.getData()+2)), data.getCharData()));
-
-   t1 = TimeStamp();
-
-   for (int n=0;n<cnt;n++) {
-      id = data.getSyncEvNum();
-   }
-
-   t2 = TimeStamp();
-   tm = (t2-t1)*1e-6;
-
-   DOUT1(("Tm %5.3f s Get old speed mps = %5.1f MBs %5.1f ", tm, cnt / tm * 1e-6, cnt / tm * 6e-6));
-}
-*/
 
 /*
 
@@ -229,37 +135,6 @@ void TestSorter(const char* lmffilename = "/misc/linev/rawdata/run026_raw_0000.l
 
    f.Close();
 }
-
-void TestCalibr()
-{
-    unsigned t1, t2, shift, t2corr;
-    double k;
-
-
-    t1 = 155;
-    t2 = 110;
-
-    shift = 56; k = 1./1.1;
-
-    for (int i=0; i<10000; i++) {
-       t1 += 4322450;
-
-       unsigned t2_prev = t2;
-
-       t2 += 4754695;
-
-       if (t2_prev > t2) {
-          shift+=0x100000000LLU*k;
-       }
-
-       t2corr = unsigned(t2*k) + shift;
-
-       double diff = 0. + t2corr - t1;
-
-       printf("t1: %08x  t2: %08x  t2corr: %08x  diff: %5.1f\n", t1, t2, t2corr, diff);
-    }
-
-}
 */
 
 int main(int numc, char* args[])
@@ -280,16 +155,17 @@ int main(int numc, char* args[])
 
    DOUT1(("Using config file: %s", configuration));
 
-//   dabc::StandaloneManager manager(0, 1);
    dabc::Manager manager("Dataserver", false);
 
    dabc::Logger::Instance()->LogFile("Dataserver.log");
 
    manager.InstallCtrlCHandler();
 
+   manager.Read_XDAQ_XML_Libs(configuration);
+
    manager.CreateApplication("RocReadoutApp");
 
-   manager.Read_XDAQ_XML_Config(configuration);
+   manager.Read_XDAQ_XML_Pars(configuration);
 
    // set states of manager to running here:
    if(!manager.DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
