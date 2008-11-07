@@ -7,7 +7,7 @@
 #ifndef _DABC_controlV_h_
 #define _DABC_controlV_h_
 
-#if __XDAQVERSION__  > 310    
+#if __XDAQVERSION__  > 310
 #include "config/PackageInfo.h"
 #else
 #include "PackageInfo.h"
@@ -22,17 +22,17 @@
 //#include "DABCRegistry.h"
 
 
-namespace DABC_Control
+namespace DabcXDAQControl
 {
 	const std::string package  =  "DABC Control";
 	//const std::string versions =  "v0.2";
-    const std::string versions = PACKAGE_VERSION_STRING(0,9,8);
+    const std::string versions = PACKAGE_VERSION_STRING(0,9,9);
 
 	const std::string description = "Data Acquisition Backbone Core";
-	const std::string link = "http://wiki.gsi.de/cgi-bin/view/DABC/WebHome";
-    const std::string authors = "Joern Adamczewski, Experiment Electronics, GSI Darmstadt";
+	const std::string link = "http://dabc.gsi.de";
+    const std::string authors = "Joern Adamczewski-Musch, Experiment Electronics, GSI Darmstadt";
     const std::string summary ="Package providing runtime Application and controls framework for Data Acquisition Backbone Core system";
-#if __XDAQVERSION__  > 310    
+#if __XDAQVERSION__  > 310
     config::PackageInfo getPackageInfo();
 	void checkPackageDependencies() throw (config::PackageInfo::VersionException);
 #else

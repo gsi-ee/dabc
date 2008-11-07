@@ -26,6 +26,6 @@
 	<!-- DABC specific libraries -->
 	<xp:Module>${DIMDIR}/linux/libdim.so</xp:Module>
 	<xp:Module>${DABCSYS}/lib/libDabcBase.so</xp:Module>
-	<xp:Module>${DABCSYS}/lib/libDABC_Control.so</xp:Module>   
+	<xp:Module>${DABCSYS}/lib/libDabcXDAQControl.so</xp:Module>   
 
 </xp:Profile>

@@ -19,19 +19,19 @@
 #include <string>
 #include <set>
 
-GETPACKAGEINFO(DABC_Control)
+GETPACKAGEINFO(DabcXDAQControl)
 
 #if __XDAQVERSION__  > 310  
-void DABC_Control::checkPackageDependencies() throw (config::PackageInfo::VersionException)
+void DabcXDAQControl::checkPackageDependencies() throw (config::PackageInfo::VersionException)
 #else 
-void DABC_Control::checkPackageDependencies() throw (toolbox::PackageInfo::VersionException)
+void DabcXDAQControl::checkPackageDependencies() throw (toolbox::PackageInfo::VersionException)
 #endif
 {
 	CHECKDEPENDENCY(toolbox)
 	CHECKDEPENDENCY(xdaq)
 }
 
-std::set<std::string, std::less<std::string> > DABC_Control::getPackageDependencies()
+std::set<std::string, std::less<std::string> > DabcXDAQControl::getPackageDependencies()
 {
     std::set<std::string, std::less<std::string> > dependencies;
     ADDDEPENDENCY(dependencies,toolbox);

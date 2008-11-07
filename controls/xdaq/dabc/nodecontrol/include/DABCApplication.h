@@ -24,7 +24,7 @@
 
 
 
-#define __LIBVERSIONNAMESPACE__ "DABC_Control"
+#define __LIBVERSIONNAMESPACE__ "DabcXDAQControl"
 // <- this is the namespace as defined in the library version definition
 #define __UPTIMEHEARTBEAT__ 5
 // in seconds, period for dim heartbeat updating state and uptime variables

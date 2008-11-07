@@ -61,7 +61,7 @@ Libraries =
 #
 # Compile the source files and create a shared library
 #
-DynamicLibrary= DABC_Control
+DynamicLibrary= DabcXDAQControl
 
 StaticLibrary=
 
