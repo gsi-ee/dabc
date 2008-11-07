@@ -30,12 +30,9 @@
         </xc:Application>
 
 <!-- Shared object library that contains the implementation -->
-        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
         <xc:Module>${DABC_USER_DIR}/lib/libBnetMbs.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
 
 </xc:Context>
 

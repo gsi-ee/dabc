@@ -27,11 +27,8 @@
         </xc:Application>
 
 <!-- Shared object library that contains the implementation -->
-        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcKnut.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
 
 </xc:Context>
 

@@ -12,10 +12,10 @@ echo $4
 export DIM_DNS_NODE=$4
 export DABC_USER_DIR=$2
 
-#if [ -z "$XDAQ_ROOT" ] 
-    #then 
-	. /misc/adamczew/dabc.workspace/dabc/script/dabclogin-gsi-devel.sh
-#fi
+ 
+. /misc/adamczew/dabc.workspace/dabc/script/dabclogin-gsi-devel.sh
+#. /u/adamczew/lxgsi/dabc.workspace/dabc/script/dabclogin-ibcluster-devel.sh
+
 
 cd $2
 echo Dim name server expected on $DIM_DNS_NODE.

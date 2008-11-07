@@ -4,17 +4,14 @@
             <properties xmlns="urn:xdaq-application:CONTROLLERCLASS" xsi:type="soapenc:Struct">
                 <debugLevel xsi:type="xsd:integer">1</debugLevel>
                 <nodeId xsi:type="xsd:unsignedInt">CONTROLLERINSTANCE</nodeId>
-                <NetDevice.ClusterPlugin xsi:type="xsd:string">SocketDevice</NetDevice.ClusterPlugin>      
+                <NetDevice.App xsi:type="xsd:string">SocketDevice</NetDevice.App>      
            </properties>
         </xc:Application>
 
  
 	<!-- Shared object library that contains the implementation -->		
-        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>  
-        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
         
 </xc:Context>
 

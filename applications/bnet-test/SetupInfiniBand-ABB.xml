@@ -36,18 +36,14 @@
  
         
 		<!-- Shared object library that contains the implementation -->		
-        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libpcidriver.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libmprace.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcAbb.so</xc:Module>
         <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
 		<xc:Module>${DABCSYS}/x86_64/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
 		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>     
-        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
 
 </xc:Context>
 
@@ -95,18 +91,14 @@
  
         
 		<!-- Shared object library that contains the implementation -->		
-		<xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libpcidriver.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libmprace.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcAbb.so</xc:Module>
         <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
 		<xc:Module>${DABCSYS}/x86_64/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
 		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>   
-        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
           
 </xc:Context>
 
@@ -148,18 +140,14 @@
  
         
 		<!-- Shared object library that contains the implementation -->		
-		<xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libpcidriver.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libmprace.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcAbb.so</xc:Module>
         <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
 		<xc:Module>${DABCSYS}/x86_64/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
 		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>     
-        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
            
 </xc:Context>
 
@@ -202,18 +190,15 @@
         
 		<!-- Shared object library that contains the implementation -->		
 <!-- Shared object library that contains the implementation -->		
-		<xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libpcidriver.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libmprace.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
+
         <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libpcidriver.so</xc:Module>
+        <xc:Module>${DABCSYS}/lib/libmprace.so</xc:Module>        
         <xc:Module>${DABCSYS}/lib/libDabcAbb.so</xc:Module>
         <!-- xc:Module>${DABC_USER_DIR}/lib/libBnetTest.so</xc:Module-->     
 		<xc:Module>${DABCSYS}/x86_64/applications/bnet-test/lib/libBnetTest.so</xc:Module>           
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
 		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>   
-        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
              
 </xc:Context>
 
@@ -225,21 +210,17 @@
 			<properties xmlns="urn:xdaq-application:dabc::xd::Controller" xsi:type="soapenc:Struct">
             <debugLevel xsi:type="xsd:integer">1</debugLevel>
             <nodeId xsi:type="xsd:unsignedInt">0</nodeId>
-            <NetDevice.ClusterPlugin xsi:type="xsd:string">VerbsDevice</NetDevice.ClusterPlugin>
-            <TransportBuffer.ClusterPlugin xsi:type="xsd:integer">32768</TransportBuffer.ClusterPlugin>
+            <NetDevice.App xsi:type="xsd:string">VerbsDevice</NetDevice.App>
+            <TransportBuffer.App xsi:type="xsd:integer">32768</TransportBuffer.App>
 <!--                <heartbeatPeriod xsi:type="xsd:unsignedInt">7</heartbeatPeriod>-->
             </properties>
         </xc:Application>
 
  
 	<!-- Shared object library that contains the implementation -->		
-        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
         <xc:Module>${DABCSYS}/lib/libDabcBnet.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
         <xc:Module>/usr/lib64/libibverbs.so</xc:Module>
 		<xc:Module>${DABCSYS}/lib/libDabcVerbs.so</xc:Module>   
-        <xc:Module>${DABCSYS}/lib/libDABC_Control.so</xc:Module>
            
 </xc:Context>
 

@@ -95,6 +95,9 @@ export LD_LIBRARY_PATH
 PATH=$XDAQ_ROOT/$PLATFORM/bin:$PATH
 export PATH
 alias xdaq=$XDAQ_ROOT/$PLATFORM/bin/xdaq.exe
+
+
+
 echo "*** enabled XDAQ at $XDAQ_ROOT ."
 #----------------------------------
 # the dabc part:
@@ -106,6 +109,7 @@ export PATH=$DABCSYS/bin:$PATH
 
 
 export LD_LIBRARY_PATH=.:$DABCSY/lib:$LD_LIBRARY_PATH
+
 
 #-----------------------------------
 # java gui part:
