@@ -2037,6 +2037,36 @@ bool dabc::Manager::LoadLibrary(const char* libname)
    return (lib!=0);
 }
 
+String dabc::Manager::Read_XDAQ_XML_NondName(const char* fname, unsigned cnt)
+{
+   dabc::XmlEngine xml;
+
+   dabc::String res("error");
+
+   dabc::XMLDocPointer_t doc = xml.ParseFile(fname);
+
+   if (doc==0) {
+      EOUT(("Not able to open/parse xml file %s", fname));
+      return res;
+   }
+
+   dabc::XMLNodePointer_t contextnode =
+      (dabc::XMLNodePointer_t) FindXmlContext(&xml, doc, cnt);
+
+   const char* url = contextnode ? xml.GetAttr(contextnode, "url") : 0;
+
+   if (url!=0)
+       if (strstr(url,"http://")==url) {
+          url += 7;
+          const char* pos = strtsr(url, ":");
+          if (pos==0) res = url;
+                 else res.assign(url, pos-url);
+       }
+
+   xml.FreeDoc(doc);
+   return res;
+}
+
 
 bool dabc::Manager::Read_XDAQ_XML_Libs(const char* fname, unsigned cnt)
 {
@@ -2049,8 +2079,8 @@ bool dabc::Manager::Read_XDAQ_XML_Libs(const char* fname, unsigned cnt)
       return false;
    }
 
-   dabc::XMLNodePointer_t contextnode = (dabc::XMLNodePointer_t)
-      FindXmlContext(&xml, doc, cnt);
+   dabc::XMLNodePointer_t contextnode =
+      (dabc::XMLNodePointer_t) FindXmlContext(&xml, doc, cnt);
 
    if (contextnode==0) {
       xml.FreeDoc(doc);
