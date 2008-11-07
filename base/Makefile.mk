@@ -6,7 +6,8 @@ DABC_BASEDIRS    = $(DABC_BASEDIR)/src
 DABC_BASEDIRTEST = $(DABC_BASEDIR)/test
 DABC_BASEDIRRUN  = $(DABC_BASEDIR)/run
 
-DABCBASE_EXE      = $(DABCBINPATH)/dabc_run
+DABC_BASEEXE      = $(DABCBINPATH)/dabc_run
+DABC_BASESH       = $(DABCBINPATH)/run.sh
 
 BASE_H            = $(wildcard $(DABC_BASEDIRI)/*.$(HedSuf))
 BASE_S            = $(wildcard $(DABC_BASEDIRS)/*.$(SrcSuf))
@@ -16,6 +17,8 @@ BASE_D            = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BASE_S))
 BASERUN_S         = $(wildcard $(DABC_BASEDIRRUN)/*.$(SrcSuf))
 BASERUN_O         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BASERUN_S))
 BASERUN_D         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BASERUN_S))
+
+BASERUN_SH        = $(DABC_BASEDIRRUN)/run.sh
 
 BASERUN_LIBS      = $(LIBS_CORESET)
 ifdef DABCSCTRL_LIB
@@ -30,7 +33,7 @@ APPLICATIONS_DIRS += $(DABC_BASEDIRTEST)
 
 libs:: $(DABCBASE_LIB) $(DABCBASE_SLIB)
 
-exes:: $(DABCBASE_EXE)
+exes:: $(DABC_BASEEXE) $(DABC_BASESH)
 
 ##### local rules #####
 
@@ -44,8 +47,11 @@ $(DABCBASE_LIB):   $(BASE_O)
 $(DABCBASE_SLIB): $(BASE_O)
 	$(AR) $(ARFLAGS) $(DABCBASE_SLIB) $(BASE_O)
 
-$(DABCBASE_EXE):  $(BASERUN_O) 
-	$(LD) $(LDFLAGS) $(BASERUN_O) $(BASERUN_LIBS) $(OutPutOpt) $(DABCBASE_EXE)
+$(DABC_BASEEXE):  $(BASERUN_O) 
+	$(LD) $(LDFLAGS) $(BASERUN_O) $(BASERUN_LIBS) $(OutPutOpt) $(DABC_BASEEXE)
+
+$(DABC_BASESH): $(BASERUN_SH)
+	@cp -f $< $@
 
 ifdef DABCSCTRL_LIB
 $(BASERUN_O): DEFINITIONS += __USE_STANDALONE__

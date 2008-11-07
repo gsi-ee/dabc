@@ -19,6 +19,8 @@ include controls/simple/Makefile.mk
 
 DABC_PLUGINS = $(wildcard plugins/*)
 
+DABC_PLUGINS += $(wildcard applications/*)
+
 -include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
 
 -include controls/xdaq/Makefile.mk
@@ -27,10 +29,7 @@ DABC_PLUGINS = $(wildcard plugins/*)
 
 -include gui/Qt/Makefile.mk
 
-
-DABC_APPLICATIONS = applications/bnet-test applications/bnet-mbs
-
-APPLICATIONS_DIRS += $(DABC_APPLICATIONS)
+APPLICATIONS_DIRS =
 
 libs:: $(DABCSYS)/config/Makefile.plugins
 
@@ -42,7 +41,7 @@ clean::
 	rm -f $(DABCSYS)/config/Makefile.plugins
 	
 package:: clean
-	tar cf dabc.tar Makefile base/ build/ config/ controls/simple $(DABC_PLUGINS) $(DABC_APPLICATIONS) --exclude=.svn --exclude=*.bak 
+	tar cf dabc.tar Makefile base/ build/ config/ controls/simple $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 
 	gzip dabc.tar
 	echo "dabc.tar.gz done" 
 

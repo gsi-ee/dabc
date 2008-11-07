@@ -5,13 +5,19 @@ include $(DABCSYS)/config/Makefile.config
 # enable this define to use active buffer board
 # DEFINITIONS += __USE_ABB__
 
+ifdef DABCMAINMAKE
+BNETTESTDIR = applications/bnet-test/
+else
+BNETTESTDIR = 
+INCLUDES += .
+endif
 
-BNETBINPATH           = $(DABCSYS)/plugins/bnet/scripts
+BNETBINPATH          = $(DABCSYS)/plugins/bnet/scripts
 
 BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetTest
 BNETTEST_LIB         = $(TGTDLLPATH)/$(BNETTEST_LIBNAME).$(DllSuf)
 
-BNETTEST_S           = $(wildcard $(_topdir_)*.$(SrcSuf))
+BNETTEST_S           = $(wildcard $(BNETTESTDIR)*.$(SrcSuf))
 BNETTEST_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETTEST_S))
 BNETTEST_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETTEST_S))
 
@@ -20,7 +26,7 @@ CREATE_DIRS         += $(TGTDLLPATH)
 
 libs::  $(BNETTEST_LIB)
 
-$(BNETTEST_LIB):  $(BNETTEST_O) $(DABCDLLPATH)/*.$(DllSuf)
+$(BNETTEST_LIB):  $(BNETTEST_O)
 	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH)
 ifneq ($(wildcard ~/run/bnet),)
 	cp -f $(BNETTEST_LIB) ~/run/bnet
@@ -28,6 +34,5 @@ ifneq ($(wildcard ~/run/bnet),)
 	cp -f $(BNETBINPATH)/* ~/run/bnet
 endif
 	@echo "$@  done"
-
 
 include $(DABCSYS)/config/Makefile.rules

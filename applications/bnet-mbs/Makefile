@@ -1,34 +1,41 @@
 include $(DABCSYS)/config/Makefile.config
 
-BNETBINPATH           = $(DABCSYS)/plugins/bnet/scripts
+ifdef DABCMAINMAKE
+BNETMBS_DIR = applications/bnet-mbs/
+else
+BNETMBS_DIR = 
+INCLUDES += .
+endif
 
-BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetMbs
-BNETTEST_LIB         = $(TGTDLLPATH)/$(BNETTEST_LIBNAME).$(DllSuf)
+BNETBINPATH         = $(DABCSYS)/plugins/bnet/scripts
 
-BNETTEST_EXES        = $(_topdir_)genmbsfiles.$(SrcSuf)
-BNETTEST_EXEO        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETTEST_EXES))
-BNETTEST_EXED        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETTEST_EXES))
-BNETTEST_EXE         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%$(ExeSuf), $(BNETTEST_EXES))
+BNETMBS_LIBNAME     = $(LIB_PREFIX)BnetMbs
+BNETMBS_LIB         = $(TGTDLLPATH)/$(BNETMBS_LIBNAME).$(DllSuf)
 
-BNETTEST_S           = $(filter-out $(BNETTEST_EXES), $(wildcard $(_topdir_)*.$(SrcSuf)))
-BNETTEST_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETTEST_S))
-BNETTEST_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETTEST_S))
+BNETMBS_EXES        = $(BNETMBS_DIR)genmbsfiles.$(SrcSuf)
+BNETMBS_EXEO        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETMBS_EXES))
+BNETMBS_EXED        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETMBS_EXES))
+BNETMBS_EXE         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%$(ExeSuf), $(BNETMBS_EXES))
 
-ALLDEPENDENC        += $(BNETTEST_D) $(BNETTEST_EXED)
+BNETMBS_S           = $(filter-out $(BNETMBS_EXES), $(wildcard $(BNETMBS_DIR)*.$(SrcSuf)))
+BNETMBS_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETMBS_S))
+BNETMBS_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETMBS_S))
+
+ALLDEPENDENC        += $(BNETMBS_D) $(BNETMBS_EXED)
 
 CREATE_DIRS         += $(TGTDLLPATH)
 
-libs:: $(BNETTEST_LIB) 
+libs:: $(BNETMBS_LIB) 
 
-exes:: $(BNETTEST_EXE) 
+exes:: $(BNETMBS_EXE) 
 
-$(BNETTEST_LIB):   $(BNETTEST_O)
-	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH)
+$(BNETMBS_LIB):   $(BNETMBS_O)
+	@$(MakeLib) $(BNETMBS_LIBNAME) "$(BNETMBS_O)" $(TGTDLLPATH)
 
-$(BNETTEST_EXE):  $(BNETTEST_EXEO) $(BNETTEST_LIB) $(_topdir_)Makefile $(_topdir_)genmbsfiles.sh
-	$(LD) $(LDFLAGS) $(BNETTEST_EXEO) $(LIBS_CORESET) -lDabcMbs $(OutPutOpt) $(BNETTEST_EXE)
+$(BNETMBS_EXE):  $(BNETMBS_EXEO) $(BNETMBS_LIB) $(BNETMBS_DIR)Makefile $(BNETMBS_DIR)genmbsfiles.sh
+	$(LD) $(LDFLAGS) $(BNETMBS_EXEO) $(LIBS_CORESET) -lDabcMbs $(OutPutOpt) $(BNETMBS_EXE)
 ifneq ($(wildcard ~/run/bnet/mbs),)
-	cp -f $(BNETTEST_EXE) $(BNETTEST_LIB) $(DABCDLLPATH)/*.so $(BNETBINPATH)/* $(_topdir_)*.sh ~/run/bnet/mbs
+	cp -f $(BNETMBS_EXE) $(BNETMBS_LIB) $(DABCDLLPATH)/*.so $(BNETBINPATH)/* $(BNETMBS_DIR)*.sh ~/run/bnet/mbs
 endif
 
 include $(DABCSYS)/config/Makefile.rules
