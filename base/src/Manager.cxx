@@ -1954,49 +1954,47 @@ dabc::DataOutput* dabc::Manager::CreateDataOutput(const char* typ, const char* n
    return 0;
 }
 
-void* dabc::Manager::FindXmlContext(void* engine, void* doc, unsigned cnt, const char* context)
+void* dabc::Manager::FindXmlContext(void* engine, void* doc, unsigned cnt, const char* context, bool showerr)
 {
-   if ((engine==0) || (doc==0)) return 0;
+   if ((engine==0) || (doc==0)) {
+      if (showerr) EOUT(("engine or doc are not speciefied"));
+      return 0;
+   }
 
    dabc::XmlEngine* xml = (dabc::XmlEngine*) engine;
 
    dabc::XMLNodePointer_t rootnode = xml->DocGetRootElement((dabc::XMLDocPointer_t)doc);
    if (strcmp(xml->GetNodeName(rootnode), "Partition")!=0) {
-      EOUT(("xc:Partition must be root node in the system"));
+      if (showerr) EOUT(("Instead of Partition root node %s found", xml->GetNodeName(rootnode)));
       return 0;
+
    }
 
    dabc::XMLNodePointer_t contextnode = xml->GetChild(rootnode);
 
-   bool findcontext = false;
-
    unsigned icnt = cnt;
 
-   while ((contextnode!=0) && !findcontext) {
+   while (contextnode!=0) {
       if (strcmp(xml->GetNodeName(contextnode), "Context")!=0) {
-         EOUT(("Context must be child nodes of root node"));
+         if (showerr) EOUT(("Instead of Context node %s found", xml->GetNodeName(contextnode)));
          return 0;
       }
+
+      bool findcontext = false;
 
       if (context==0)
          findcontext = (icnt-- == 0);
       else
          findcontext = (strcmp(xml->GetAttr(contextnode, "url"), context) == 0);
 
-      if (findcontext) break;
+      if (findcontext) return contextnode;
 
       contextnode = xml->GetNext(contextnode);
    }
 
-   if (!findcontext) {
-      if (context)
-         EOUT(("Specified context: %s not found", context));
-      else
-         EOUT(("Specified context id: %u not found", cnt));
-      return 0;
-   }
+   if (showerr) EOUT(("Specified context not found"));
 
-   return contextnode;
+   return 0;
 }
 
 bool dabc::Manager::LoadLibrary(const char* libname)
@@ -2037,21 +2035,31 @@ bool dabc::Manager::LoadLibrary(const char* libname)
    return (lib!=0);
 }
 
-dabc::String dabc::Manager::Read_XDAQ_XML_NondName(const char* fname, unsigned cnt)
+unsigned dabc::Manager::Read_XDAQ_XML_NumNodes(const char* fname)
+{
+   dabc::XmlEngine xml;
+
+   dabc::XMLDocPointer_t doc = xml.ParseFile(fname, false);
+
+   unsigned cnt = 0;
+
+   while (FindXmlContext(&xml, doc, cnt, 0, false) != 0) cnt++;
+
+   xml.FreeDoc(doc);
+
+   return cnt;
+}
+
+dabc::String dabc::Manager::Read_XDAQ_XML_NodeName(const char* fname, unsigned cnt)
 {
    dabc::XmlEngine xml;
 
    dabc::String res("error");
 
-   dabc::XMLDocPointer_t doc = xml.ParseFile(fname);
-
-   if (doc==0) {
-      EOUT(("Not able to open/parse xml file %s", fname));
-      return res;
-   }
+   dabc::XMLDocPointer_t doc = xml.ParseFile(fname, false);
 
    dabc::XMLNodePointer_t contextnode =
-      (dabc::XMLNodePointer_t) FindXmlContext(&xml, doc, cnt);
+      (dabc::XMLNodePointer_t) FindXmlContext(&xml, doc, cnt, 0, false);
 
    const char* url = contextnode ? xml.GetAttr(contextnode, "url") : 0;
 
@@ -2119,8 +2127,8 @@ bool dabc::Manager::Read_XDAQ_XML_Pars(const char* fname, unsigned cnt)
       return false;
    }
 
-   dabc::XMLNodePointer_t contextnode = (dabc::XMLNodePointer_t)
-      FindXmlContext(&xml, doc, cnt);
+   dabc::XMLNodePointer_t contextnode =
+      (dabc::XMLNodePointer_t) FindXmlContext(&xml, doc, cnt);
 
    if (contextnode==0) {
       xml.FreeDoc(doc);

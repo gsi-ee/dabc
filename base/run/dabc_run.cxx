@@ -63,11 +63,15 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
+      if (strcmp(arg,"-number")==0) {
+         std::cout << dabc::Manager::Read_XDAQ_XML_NumNodes(configuration);
+         std::cout.flush();
+         return 0;
+      } else
       if (strstr(arg,"-name")==arg) {
          arg+=5;
          unsigned cnt = *arg ? atoi(arg) : 0;
-         dabc::String res = dabc::Manager::Read_XDAQ_XML_NondName(configuration, cnt);
-         std::cout << res << std::endl;
+         std::cout << dabc::Manager::Read_XDAQ_XML_NodeName(configuration, cnt);
          std::cout.flush();
          return 0;
       } else

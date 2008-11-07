@@ -19,7 +19,7 @@ namespace dabc {
       public:
          XmlEngine();
          virtual ~XmlEngine();
-         
+
          bool              HasAttr(XMLNodePointer_t xmlnode, const char* name);
          const char*       GetAttr(XMLNodePointer_t xmlnode, const char* name);
          int               GetIntAttr(XMLNodePointer_t node, const char* name);
@@ -44,15 +44,15 @@ namespace dabc {
          bool              AddDocComment(XMLDocPointer_t xmldoc, const char* comment);
          bool              AddRawLine(XMLNodePointer_t parent, const char* line);
          bool              AddDocRawLine(XMLDocPointer_t xmldoc, const char* line);
-         bool              AddStyleSheet(XMLNodePointer_t parent, 
-                                         const char* href, 
+         bool              AddStyleSheet(XMLNodePointer_t parent,
+                                         const char* href,
                                          const char* type = "text/css",
                                          const char* title = 0,
                                          int alternate = -1,
                                          const char* media = 0,
                                          const char* charset = 0);
-         bool              AddDocStyleSheet(XMLDocPointer_t xmldoc, 
-                                            const char* href, 
+         bool              AddDocStyleSheet(XMLDocPointer_t xmldoc,
+                                            const char* href,
                                             const char* type = "text/css",
                                             const char* title = 0,
                                             int alternate = -1,
@@ -76,12 +76,12 @@ namespace dabc {
          void              SaveDoc(XMLDocPointer_t xmldoc, const char* filename, int layout = 1);
          void              DocSetRootElement(XMLDocPointer_t xmldoc, XMLNodePointer_t xmlnode);
          XMLNodePointer_t  DocGetRootElement(XMLDocPointer_t xmldoc);
-         XMLDocPointer_t   ParseFile(const char* filename);
+         XMLDocPointer_t   ParseFile(const char* filename, bool showerr = true);
          bool              ValidateVersion(XMLDocPointer_t doc, const char* version = 0);
          void              SaveSingleNode(XMLNodePointer_t xmlnode, String* res, int layout = 1);
          XMLNodePointer_t  ReadSingleNode(const char* src);
       protected:
-         char*             Makestr(const char* str);   
+         char*             Makestr(const char* str);
          char*             Makenstr(const char* start, int len);
          XMLNodePointer_t  AllocateNode(int namelen, XMLNodePointer_t parent);
          XMLAttrPointer_t  AllocateAttr(int namelen, int valuelen, XMLNodePointer_t xmlnode);
