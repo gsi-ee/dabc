@@ -2037,7 +2037,7 @@ bool dabc::Manager::LoadLibrary(const char* libname)
    return (lib!=0);
 }
 
-String dabc::Manager::Read_XDAQ_XML_NondName(const char* fname, unsigned cnt)
+dabc::String dabc::Manager::Read_XDAQ_XML_NondName(const char* fname, unsigned cnt)
 {
    dabc::XmlEngine xml;
 
@@ -2058,7 +2058,7 @@ String dabc::Manager::Read_XDAQ_XML_NondName(const char* fname, unsigned cnt)
    if (url!=0)
        if (strstr(url,"http://")==url) {
           url += 7;
-          const char* pos = strtsr(url, ":");
+          const char* pos = strstr(url, ":");
           if (pos==0) res = url;
                  else res.assign(url, pos-url);
        }
