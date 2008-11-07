@@ -4,6 +4,8 @@
 #include "dabc/StandaloneManager.h"
 #endif
 
+#include <iostream>
+
 int RunApplication()
 {
    // set states of manager to running here:
@@ -55,6 +57,23 @@ int main(int numc, char* args[])
    const char* appclass = 0;
 
    if(numc > 1) configuration = args[1];
+
+   int cnt = 2;
+   while (cnt<numc) {
+
+      const char* arg = args[cnt++];
+
+      if (strstr(arg,"-name")==arg) {
+         arg+=5;
+         unsigned cnt = *arg ? atoi(arg) : 0;
+         dabc::String res = dabc::Manager::Read_XDAQ_XML_NondName(configuration, cnt);
+         std::cout << res << std::endl;
+         std::cout.flush();
+         return 0;
+      } else
+         if (appclass==0) appclass = arg;
+   }
+
    if(numc > 2) appclass = args[2];
 
    DOUT1(("Using config file: %s", configuration));
