@@ -6,9 +6,6 @@ SCTRLDIRS        = $(SCTRLDIR)/src
 SCTRLTEST1DIR    = $(SCTRLDIR)/test1
 SCTRLTEST2DIR    = $(SCTRLDIR)/test2
 
-DABCSCTRL_LIBNAME  = $(LIB_PREFIX)DabcSctrl
-DABCSCTRL_LIB      = $(DABCDLLPATH)/$(DABCSCTRL_LIBNAME).$(DllSuf)
-
 ## must be similar for every module
 
 SCTRL_H           = $(wildcard $(SCTRLDIRI)/*.$(HedSuf))
@@ -22,7 +19,7 @@ ALLHDRS            += $(patsubst $(SCTRLDIR)/%.h, $(DABCINCPATH)/%.h, $(SCTRL_H)
 ALLDEPENDENC       += $(SCTRL_D) 
 APPLICATIONS_DIRS  += $(SCTRLTEST1DIR) $(SCTRLTEST2DIR) 
 
-libs:: $(DABCSCTRL_LIB)
+libs:: $(DABCSCTRL_LIB) $(DABCSCTRL_SLIB)
 
 ##### local rules #####
 
@@ -32,3 +29,7 @@ $(DABCINCPATH)/%.h: $(SCTRLDIR)/%.h
 
 $(DABCSCTRL_LIB):   $(SCTRL_O)
 	@$(MakeLib) $(DABCSCTRL_LIBNAME) "$(SCTRL_O)" $(DABCDLLPATH)
+
+$(DABCSCTRL_SLIB):   $(SCTRL_O)
+	$(AR) $(ARFLAGS) $(DABCSCTRL_SLIB) $(SCTRL_O)
+	

@@ -1,6 +1,51 @@
-#include "dabc/Manager.h"
-#include "dabc/Command.h"
 #include "dabc/logging.h"
+#include "dabc/Manager.h"
+#ifdef __USE_STANDALONE__
+#include "dabc/StandaloneManager.h"
+#endif
+
+int RunApplication()
+{
+   // set states of manager to running here:
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
+      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoConfigure));
+      return 1;
+   }
+   DOUT1(("Did configure"));
+
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoEnable)) {
+      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoEnable));
+      return 1;
+   }
+   DOUT1(("Did enable"));
+
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoStart)) {
+      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStart));
+      return 1;
+   }
+
+   DOUT1(("Application mainloop is now running"));
+   DOUT1(("       Press ctrl-C for stop"));
+
+   dabc::mgr()->RunManagerMainLoop();
+
+//   while(dabc::mgr()->GetApp()->IsModulesRunning()) { ::sleep(1); }
+//   sleep(10);
+
+   DOUT1(("Normal finish of mainloop"));
+
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoStop)) {
+      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStop));
+      return 1;
+   }
+
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoHalt)) {
+      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoHalt));
+      return 1;
+   }
+
+   return 0;
+}
 
 int main(int numc, char* args[])
 {
@@ -29,45 +74,9 @@ int main(int numc, char* args[])
 
    manager.Read_XDAQ_XML_Pars(configuration);
 
-   // set states of manager to running here:
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoConfigure));
-      return 1;
-   }
-   DOUT1(("Did configure"));
-
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoEnable)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoEnable));
-      return 1;
-   }
-   DOUT1(("Did enable"));
-
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoStart)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStart));
-      return 1;
-   }
-
-   DOUT1(("Data taking from ROC(s) is now running"));
-   DOUT1(("       Press ctrl-C for stop"));
-
-   manager.RunManagerMainLoop();
-
-//   while(dabc::mgr()->GetApp()->IsModulesRunning()) { ::sleep(1); }
-//   sleep(10);
-
-   DOUT1(("Normal finish of data taking"));
-
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoStop)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStop));
-      return 1;
-   }
-
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoHalt)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoHalt));
-      return 1;
-   }
+   int res = RunApplication();
 
    dabc::Logger::Instance()->ShowStat();
 
-   return 0;
+   return res;
 }
