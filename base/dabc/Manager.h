@@ -583,10 +583,6 @@ namespace dabc {
          bool CleanupManager(int appid = 0);
 
          static bool LoadLibrary(const char* libname);
-         static unsigned Read_XDAQ_XML_NumNodes(const char* fname);
-         static String Read_XDAQ_XML_NodeName(const char* fname, unsigned cnt = 0);
-         bool Read_XDAQ_XML_Libs(const char* fname, unsigned cnt = 0);
-         bool Read_XDAQ_XML_Pars(const char* fname, unsigned cnt = 0);
 
          bool InstallCtrlCHandler();
          void ProcessCtrlCSignal();
@@ -679,8 +675,6 @@ namespace dabc {
          virtual bool CanSendCmdToManager(const char*) { return false; }
          virtual bool SendOverCommandChannel(const char* managername, const char* cmddata);
          void RecvOverCommandChannel(const char* cmddata);
-
-         static void* FindXmlContext(void* engine, void* doc, unsigned cnt = 0, const char* context = 0, bool showerr = true);
 
          void InitSMmodule();
 

@@ -1,12 +1,14 @@
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
+#include "dabc/Configuration.h"
+
 #ifdef __USE_STANDALONE__
 #include "dabc/StandaloneManager.h"
 #endif
 
 #include <iostream>
 
-int RunSimpleApplication(const char* configuration, const char* appclass)
+int RunSimpleApplication(dabc::XdaqConfiguration* cfg, const char* appclass)
 {
    dabc::Manager manager("dabc", true);
 
@@ -14,14 +16,14 @@ int RunSimpleApplication(const char* configuration, const char* appclass)
 
    manager.InstallCtrlCHandler();
 
-   manager.Read_XDAQ_XML_Libs(configuration);
+   cfg->LoadLibs();
 
    if (!manager.CreateApplication(appclass)) {
       EOUT(("Cannot create application of specified class %s", (appclass ? appclass : "???")));
       return 1;
    }
 
-   manager.Read_XDAQ_XML_Pars(configuration);
+   cfg->ReadPars();
 
    // set states of manager to running here:
    if(!manager.DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
@@ -144,6 +146,9 @@ int main(int numc, char* args[])
 
    if(numc > 1) configuration = args[1];
 
+   dabc::XdaqConfiguration cfg(configuration);
+   if (!cfg.IsOk()) return 1;
+
    int nodeid = 0;
    int numnodes = 1;
    const char* connid = 0;
@@ -154,14 +159,14 @@ int main(int numc, char* args[])
       const char* arg = args[cnt++];
 
       if (strcmp(arg,"-number")==0) {
-         std::cout << dabc::Manager::Read_XDAQ_XML_NumNodes(configuration);
+         std::cout << cfg.NumNodes();
          std::cout.flush();
          return 0;
       } else
       if (strstr(arg,"-name")==arg) {
          arg+=5;
          unsigned cnt = *arg ? atoi(arg) : 0;
-         std::cout << dabc::Manager::Read_XDAQ_XML_NodeName(configuration, cnt);
+         std::cout << cfg.NodeName(cnt);
          std::cout.flush();
          return 0;
       } else
@@ -179,8 +184,14 @@ int main(int numc, char* args[])
 
    DOUT1(("Using config file: %s", configuration));
 
+   if (cfg.FindContext(nodeid) == 0) {
+      EOUT(("Did not found context for node %d", nodeid));
+      return 1;
+   }
+
    if (numnodes<2)
-      return RunSimpleApplication(configuration, appclass);
+      return RunSimpleApplication(&cfg, appclass);
+
 
    dabc::StandaloneManager manager(nodeid, numnodes, true);
 
@@ -190,12 +201,14 @@ int main(int numc, char* args[])
 
    manager.InstallCtrlCHandler();
 
-   manager.Read_XDAQ_XML_Libs(configuration, nodeid);
+   cfg.LoadLibs(nodeid);
 
    if (!manager.CreateApplication(appclass)) {
       EOUT(("Cannot create application %s", appclass));
       return 1;
    }
+
+   cfg.ReadPars(nodeid);
 
    manager.ConnectCmdChannel(numnodes, 1, connid);
 
