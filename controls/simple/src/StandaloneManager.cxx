@@ -10,7 +10,6 @@
 #include "dabc/Iterator.h"
 
 #include "dabc/CommandChannelModule.h"
-#include "dabc/StateMachineModule.h"
 
 char MyHostName[500];
 
@@ -37,7 +36,6 @@ dabc::StandaloneManager::StandaloneManager(int nodeid, int numnodes, bool usesm)
    fCmdChannel(0),
    fCmdDeviceId(),
    fCmdDevName(),
-   fSMmodule(0),
    fStopCond(),
    fParReg()
 {
@@ -69,7 +67,6 @@ dabc::StandaloneManager::~StandaloneManager()
 
    DOUT0(("Finish"));
 
-   fSMmodule = 0;
    fCmdChannel = 0;
    CleanupManager(77);
 
@@ -331,20 +328,6 @@ void dabc::StandaloneManager::WaitDisconnectCmdChannel()
    DOUT4(("WaitDisconnectCmdChannel done"));
 }
 
-
-void dabc::StandaloneManager::InitSMmodule()
-{
-   if (fSMmodule!=0) return;
-
-   fSMmodule = new StateMachineModule();
-   MakeThreadForModule(fSMmodule, "SMthread");
-   fSMmodule->SetAppId(77);
-
-   fSMmodule->Start();
-
-   DOUT2(("InitSMmodule done"));
-}
-
 bool dabc::StandaloneManager::CanSendCmdToManager(const char* mgrname)
 {
    if ((mgrname==0) || (*mgrname==0)) return false;
@@ -539,19 +522,6 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       }
 
    } else
-
-
-   if (cmd->IsName("StateTransition")) {
-
-     if (fSMmodule==0) InitSMmodule();
-
-     fSMmodule->Submit(cmd);
-
-     DOUT3(("Submit state transition %s", cmd->GetStr("Cmd")));
-
-     return cmd_postponed;
-   } else
-
       return Manager::ExecuteCommand(cmd);
 
    return cmd_true;
@@ -763,21 +733,4 @@ bool dabc::StandaloneManager::IsNodeActive(int num)
    if (fClusterNames[num].size()==0) return false;
 
    return fClusterActive[num];
-}
-
-bool dabc::StandaloneManager::InvokeStateTransition(const char* state_transition_name, Command* cmd)
-{
-   if ((state_transition_name==0) || (*state_transition_name == 0)) {
-      EOUT(("State transition is not specified"));
-      dabc::Command::Reply(cmd, false);
-      return false;
-   }
-
-   if (cmd==0) cmd = new CommandStateTransition(state_transition_name);
-
-   // we can submit command to ourself, while we catch it later in ExecuteCommand
-   // and resubmit again to the SMmodule. If something fail, command will be replyed with false
-   // We do not submit command immediately to SMmodule while we may work on other thread.
-
-   return Submit(cmd);
 }

@@ -182,7 +182,7 @@ int main(int numc, char* args[])
    if (numnodes<2)
       return RunSimpleApplication(configuration, appclass);
 
-   dabc::StandaloneManager manager(nodeid, numnodes);
+   dabc::StandaloneManager manager(nodeid, numnodes, true);
 
    DOUT0(("Run cluster application!!! %d %d %s", nodeid, numnodes, (connid ? connid : "---")));
 

@@ -91,7 +91,7 @@ do
       done
       connstr=`cat $connstr`
       echo "Connection id for master = $connstr  wait $waitcnt"
-      rm -f $connstr
+      rm -f file.id
    fi
    
 #   ssh $nodename "echo hello" &

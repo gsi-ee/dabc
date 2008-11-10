@@ -45,6 +45,7 @@ namespace dabc {
    class DataInput;
    class DataOutput;
    class FileIO;
+   class StateMachineModule;
 
    class CommandCreateModule : public Command {
       public:
@@ -311,8 +312,10 @@ namespace dabc {
 
    class CommandStateTransition : public Command {
       public:
+         static const char* CmdName() { return "StateTransition"; }
+
          CommandStateTransition(const char* state_transition_cmd) :
-            Command("StateTransition")
+            Command(CmdName())
             {
                SetStr("Cmd", state_transition_cmd);
             }
@@ -636,6 +639,8 @@ namespace dabc {
 
          Thread_t              fSigThrd;
 
+         StateMachineModule   *fSMmodule;
+
          static Manager       *fInstance;
 
          virtual bool _ProcessReply(Command* cmd);
@@ -673,6 +678,8 @@ namespace dabc {
          void RecvOverCommandChannel(const char* cmddata);
 
          static void* FindXmlContext(void* engine, void* doc, unsigned cnt = 0, const char* context = 0, bool showerr = true);
+
+         void InitSMmodule();
 
          // must be called in inherited class constructor & destructor
          void init();

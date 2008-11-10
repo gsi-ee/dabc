@@ -33,6 +33,7 @@
 #include "dabc/BinaryFile.h"
 #include "dabc/DataIOTransport.h"
 #include "dabc/XmlEngine.h"
+#include "dabc/StateMachineModule.h"
 
 namespace dabc {
 
@@ -201,7 +202,8 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess) :
    fSendCommands(),
    fTimedPars(),
    fDepend(0),
-   fSigThrd(0)
+   fSigThrd(0),
+   fSMmodule(0)
 {
    if (fInstance==0) {
       fInstance = this;
@@ -257,6 +259,8 @@ dabc::Manager::~Manager()
 
    DOUT3(("Start ~Manager"));
 
+   fSMmodule = 0;
+
    HaltManager();
 
    DOUT5(("~Manager -> CancelCommands()"));
@@ -307,6 +311,18 @@ void dabc::Manager::destroy()
    DestroyParameter(stParName);
 }
 
+void dabc::Manager::InitSMmodule()
+{
+   if (fSMmodule!=0) return;
+
+   fSMmodule = new StateMachineModule();
+   MakeThreadForModule(fSMmodule, "SMthread");
+   fSMmodule->SetAppId(77);
+
+   fSMmodule->Start();
+
+   DOUT2(("InitSMmodule done"));
+}
 
 const char* dabc::Manager::TargetStateName(const char* stcmd)
 {
@@ -891,7 +907,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       dabc::MemoryPool* pool = FindPool(cmd->GetPar("PoolName"));
       if (pool) delete pool;
    } else
-   if (cmd->IsName("StateTransition")) {
+   if (cmd->IsName(CommandStateTransition::CmdName())) {
       InvokeStateTransition(cmd->GetStr("Cmd"), cmd);
       cmd_res = cmd_postponed;
    } else
@@ -1576,6 +1592,21 @@ int dabc::Manager::DefineNodeId(const char* nodename)
 
 bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Command* cmd)
 {
+   if (fSMmodule!=0) {
+
+      if ((state_transition_name==0) || (*state_transition_name == 0)) {
+         EOUT(("State transition is not specified"));
+         dabc::Command::Reply(cmd, false);
+         return false;
+      }
+
+      if (cmd==0) cmd = new CommandStateTransition(state_transition_name);
+
+      fSMmodule->Submit(cmd);
+      DOUT3(("Submit state transition %s", state_transition_name));
+      return true;
+   }
+
    dabc::Command::Reply(cmd, false);
 
    if ((state_transition_name!=0) && (strcmp(state_transition_name, stcmdDoStop)==0)) {
@@ -2104,7 +2135,7 @@ bool dabc::Manager::Read_XDAQ_XML_Libs(const char* fname, unsigned cnt)
 
          if ((strstr(libname,"libdim")==0) &&
              (strstr(libname,"libDabcBase")==0) &&
-             (strstr(libname,"libDABC_Control")==0))
+             (strstr(libname,"libDabcXDAQControl")==0))
                 LoadLibrary(libname);
       }
 
