@@ -14,6 +14,8 @@ int dabc::StateMachineModule::ExecuteCommand(Command* cmd)
 
       const char* stcmd = cmd->GetStr("Cmd");
 
+      if (!dabc::mgr()->IsStateTransitionAllowed(stcmd, true)) return cmd_false;
+
       dabc::String prev_state = dabc::mgr()->CurrentState();
 
       bool res = dabc::mgr()->DoStateTransition(stcmd);

@@ -364,7 +364,10 @@ namespace dabc {
            * Automatically called from destructor */
          void HaltManager();
 
-         /** Perform action to makes required state trunsition
+         /** Check if transition allowed */
+         bool IsStateTransitionAllowed(const char* state_transition_cmd, bool errout = false);
+
+         /** Perform action to makes required state transition
            * Should not be called from manager thread while
            * it is synchron and returns only when transition is completed (true) or
            * error is detected (false) */

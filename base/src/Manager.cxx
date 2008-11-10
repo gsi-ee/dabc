@@ -1630,49 +1630,53 @@ const char* dabc::Manager::CurrentState() const
    return GetParCharStar(stParName, stNull);
 }
 
+bool dabc::Manager::IsStateTransitionAllowed(const char* stcmd, bool errout)
+{
+   if ((stcmd==0) || (strlen(stcmd)==0)) {
+      if (errout) EOUT(("State transition command not specified"));
+      return false;
+   }
+
+   const char* tgtstate = TargetStateName(stcmd);
+
+   if (strcmp(CurrentState(), tgtstate)==0) {
+      DOUT1(("SM Command %s leads to current state, do nothing", stcmd));
+      return false;
+   }
+
+   bool allowed = false;
+   if ((strcmp(CurrentState(), stHalted)==0) && (strcmp(stcmd, stcmdDoConfigure)==0))
+      allowed = true;
+   else
+   if ((strcmp(CurrentState(), stConfigured)==0) && (strcmp(stcmd, stcmdDoEnable)==0))
+      allowed = true;
+   else
+   if ((strcmp(CurrentState(), stReady)==0) && (strcmp(stcmd, stcmdDoStart)==0))
+       allowed = true;
+   else
+   if ((strcmp(CurrentState(), stRunning)==0) && (strcmp(stcmd, stcmdDoStop)==0))
+       allowed = true;
+   else
+   if (strcmp(stcmd, stcmdDoHalt)==0)
+      allowed = true;
+
+   if (!allowed && errout)
+      EOUT(("Command %s not allowed at state %s", stcmd, CurrentState()));
+
+   return allowed;
+}
+
 bool dabc::Manager::DoStateTransition(const char* stcmd)
 {
    // must be called from SM thread
 
-   Application* plugin = GetApp();
+   Application* app = GetApp();
 
-   if (plugin==0) return false;
+   if (app==0) return false;
 
+   if (!app->DoStateTransition(stcmd)) return false;
 
-   const char* tgtstate = TargetStateName(stcmd);
-/////////// take this out, already handled in xdaq fsm JA
-//
-//   if (strcmp(CurrentState(), tgtstate)==0) {
-//      DOUT1(("SM Command %s leads to current state, do nothing", stcmd));
-//      return true;
-//   }
-//
-//   bool allowed = false;
-//
-//   if ((strcmp(CurrentState(), stHalted)==0) && (strcmp(stcmd, stcmdDoConfigure)==0))
-//     allowed = true;
-//   else
-//   if ((strcmp(CurrentState(), stConfigured)==0) && (strcmp(stcmd, stcmdDoEnable)==0))
-//      allowed = true;
-//   else
-//   if ((strcmp(CurrentState(), stReady)==0) && (strcmp(stcmd, stcmdDoStart)==0))
-//      allowed = true;
-//   else
-//   if ((strcmp(CurrentState(), stRunning)==0) && (strcmp(stcmd, stcmdDoStop)==0))
-//      allowed = true;
-//   else
-//   if (strcmp(stcmd, stcmdDoHalt)==0)
-//      allowed = true;
-//
-//   if (!allowed) {
-//      EOUT(("Command %s not allowed at state %s", stcmd, CurrentState()));
-//      return cmd_false;
-//   }
-////////////////////////////////
-
-   if (!plugin->DoStateTransition(stcmd)) return false;
-
-   return Execute(new CommandSetParameter(stParName, tgtstate));
+   return Execute(new CommandSetParameter(stParName, TargetStateName(stcmd)));
 }
 
 
