@@ -723,7 +723,7 @@ int main(int numc, char* args[])
 
    dabc::SetDebugLevel(1);
 
-   dabc::StandaloneManager manager(nodeid, numnodes, false);
+   dabc::StandaloneManager manager(0, nodeid, numnodes, false);
    new Test2Plugin();
 
    if (numc<2) {

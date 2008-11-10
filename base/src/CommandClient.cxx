@@ -69,7 +69,6 @@ bool dabc::CommandClientBase::_CommandReplyed(Command* cmd, bool res)
    // if returned true means we get control over command object
    // if returned false, object will be finalised
 
-
    // first, we "forget" command - client has no reply job with it
    _Forget(cmd);
 
@@ -190,19 +189,28 @@ bool dabc::CommandReceiver::Execute(Command* cmd, double timeout_sec)
 
       CommandClient cli;
 
+      DOUT5(("Start cmd: %s execution - thrd %s cli %p", cmd->GetName(), DBOOL(IsExecutionThread()), &cli));
+
       if (IsExecutionThread()) {
+
+         DOUT5(("Client: %p Execute command %s in same thread %d", &cli, cmd->GetName(), Thread::Self()));
 
          cli.Assign(cmd);
 
          int cmd_res = ProcessCommand(cmd);
 
+         DOUT5(("Client: %p Execute command in same thread res = %d", &cli, cmd_res));
+
          if (cmd_res!=cmd_postponed)
             return (cmd_res == cmd_true);
       } else
+         if (!Submit(cli.Assign(cmd))) return false;
 
-      if (!Submit(cli.Assign(cmd))) return false;
+      DOUT5(("Client: %p Thread:%d Start waiting for tm %5.1f", &cli, Thread::Self(), timeout_sec));
 
       res = cli.WaitCommands(timeout_sec);
+
+      DOUT5(("Client: %p Thread:%d  Waiting done res = %s", &cli, Thread::Self(), DBOOL(res)));
    }
 
    return res;
@@ -281,6 +289,8 @@ bool dabc::CommandClient::_ProcessReply(Command* cmd)
 
    fReplyedCmds.Push(cmd);
 
+   DOUT5(("Fire condition cli:%p thrd:%d cond:%p waiting:%s", this, Thread::Self(), fReplyCond, DBOOL(fReplyCond->_Waiting())));
+
    fReplyCond->_DoFire();
 
 //   DOUT1(("CommandClient %p _ProcessReply %s", this, cmd->GetName()));
@@ -294,7 +304,7 @@ bool dabc::CommandClient::WaitCommands(double timeout_sec)
 
    double waittm = timeout_sec;
 
-   DOUT5(("WaitCommands %3.1f size %d locked %s", timeout_sec, _NumSubmCmds(), DBOOL(fCmdsMutex->IsLocked())));
+   DOUT5(("Clinet:%p Thread:%d WaitCommands %3.1f size %d locked %s", this, Thread::Self(), timeout_sec, _NumSubmCmds(), DBOOL(fCmdsMutex->IsLocked())));
 
    do {
       {
@@ -302,9 +312,12 @@ bool dabc::CommandClient::WaitCommands(double timeout_sec)
         // no need to wait if no commands is waiting
         if (_NumSubmCmds()==0) break;
 
-        if (!fReplyCond->_DoWait(waittm)) break;
+        if (!fReplyCond->_DoWait(waittm)) {
+           DOUT5(("Client:%p Break _DoWait, number = %d", this, _NumSubmCmds()));
+           break;
+        }
 
-        DOUT5(("Leave %p _DoWait, tmout = %5.3f number = %d", this, waittm,  _NumSubmCmds()));
+        DOUT5(("Client:%p Leave _DoWait, tmout = %5.3f number = %d", this, waittm,  _NumSubmCmds()));
       }
 
       if (timeout_sec>0)

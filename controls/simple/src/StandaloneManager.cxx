@@ -8,13 +8,36 @@
 #include "dabc/MemoryPool.h"
 #include "dabc/Device.h"
 #include "dabc/Iterator.h"
+#include "dabc/Factory.h"
 
 #include "dabc/CommandChannelModule.h"
 
-char MyHostName[500];
+namespace dabc {
+   class StandaloneMgrFactory : public Factory {
+      public:
+         StandaloneMgrFactory(const char* name) : Factory(name) { }
+
+      protected:
+         virtual bool CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes);
+   };
+
+}
+
+dabc::StandaloneMgrFactory standalonemgrfactory("standalone");
+
+bool dabc::StandaloneMgrFactory::CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes)
+{
+   if ((kind!=0) && (strcmp(kind,"Standalone")==0)) {
+      new dabc::StandaloneManager(name, nodeid, numnodes, true);
+      return true;
+   }
+   return false;
+}
 
 const char* GetMyHostName()
 {
+   static char MyHostName[500];
+
    strcpy(MyHostName, "");
 
    if (gethostname(MyHostName, sizeof(MyHostName))==0) return MyHostName;
@@ -26,8 +49,8 @@ const char* GetMyHostName()
    return MyHostName;
 }
 
-dabc::StandaloneManager::StandaloneManager(int nodeid, int numnodes, bool usesm) :
-   Manager(FORMAT(("%s-%d", GetMyHostName(), nodeid))),
+dabc::StandaloneManager::StandaloneManager(const char* name, int nodeid, int numnodes, bool usesm) :
+   Manager(name ? name : FORMAT(("%s-%d", GetMyHostName(), nodeid))),
    fIsMainMgr(nodeid==0),
    fMainMgrName(),
    fClusterNames(),
@@ -73,6 +96,12 @@ dabc::StandaloneManager::~StandaloneManager()
    destroy();
 
    DOUT3(("dabc::StandaloneManager::~StandaloneManager() done"));
+}
+
+bool dabc::StandaloneManager::ConnectControl(const char* connid)
+{
+   ConnectCmdChannel(NumNodes(), 1, connid);
+   return true;
 }
 
 void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, const char* controllerID)

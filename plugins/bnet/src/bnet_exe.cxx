@@ -221,7 +221,7 @@ int main(int numc, char* args[])
 //   dabc::SetDebugLevel(10);
 
 
-   dabc::StandaloneManager manager(nodeid, numnodes);
+   dabc::StandaloneManager manager(0, nodeid, numnodes);
 
    // init plugins
 

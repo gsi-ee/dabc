@@ -548,6 +548,8 @@ namespace dabc {
          virtual bool IsNodeActive(int num) { return num==0; }
          /** Returns number of currently active nodes */
          int NumActiveNodes();
+         /** Establish/test connection to control system */
+         virtual bool ConnectControl(const char* connid) { return true; }
 
          // Subscribe/unsubscribe parameter against remote (local)
          virtual bool Subscribe(Parameter* par, int remnode, const char* remname) { return false; }

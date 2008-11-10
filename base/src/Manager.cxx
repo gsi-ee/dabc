@@ -54,6 +54,8 @@ namespace dabc {
 
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option);
          virtual Folder* ListMatchFiles(const char* typ, const char* filemask);
+      protected:
+         virtual bool CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes);
    };
 
    typedef struct DependPair {
@@ -165,6 +167,17 @@ dabc::Folder* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
    return res;
 }
 
+bool dabc::StdManagerFactory::CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes)
+{
+   if ((kind==0) || (strcmp(kind,"Basic")==0)) {
+      new dabc::Manager((name ? name : "dabc"), true);
+      return true;
+   }
+
+   return false;
+}
+
+
 
 // ******************************************************************
 
@@ -192,7 +205,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess) :
    Folder(0, managername, true),
    WorkingProcessor(GetFolder("Pars", true, true)),
    CommandClientBase(),
-   fMgrMainLoop(true),
+   fMgrMainLoop(false),
    fMgrMutex(0),
    fReplyesQueue(true, false),
    fDestroyQueue(16, true),
@@ -1539,7 +1552,9 @@ void dabc::Manager::RunManagerMainLoop()
 
    if (thrd==0) return;
 
-   if (thrd->IsReadThrd()) {
+   fMgrMainLoop = true;
+
+   if (thrd->IsRealThrd()) {
       DOUT3(("Manager has normal thread - just wait until application modules are stopped"));
       while(fMgrMainLoop) { dabc::LongSleep(1); }
    } else {
@@ -1551,6 +1566,8 @@ void dabc::Manager::RunManagerMainLoop()
 
       thrd->Start(-1, true);
    }
+
+   fMgrMainLoop = false;
 }
 
 void dabc::Manager::DoPrint()
@@ -1609,13 +1626,13 @@ bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Com
    dabc::Command::Reply(cmd, false);
 
    if ((state_transition_name!=0) && (strcmp(state_transition_name, stcmdDoStop)==0)) {
-      DOUT1(("Application can stops its execution"));
+      DOUT1(("Application can stop its execution"));
 
       fMgrMainLoop = false;
 
       WorkingThread* thrd = ProcessorThread();
       if (thrd)
-        if (!thrd->IsReadThrd()) {
+        if (!thrd->IsRealThrd()) {
            RemoveProcessorFromThread(true);
            thrd->Stop(false); // stop thread - means leave thread main loop
         }
@@ -1993,11 +2010,12 @@ bool dabc::Manager::LoadLibrary(const char* libname)
    String name = libname;
 
    while (name.find("${") != name.npos) {
+
       size_t pos1 = name.find("${");
       size_t pos2 = name.find("}");
 
-      if (pos1>pos2) {
-         EOUT(("Wrnog variable parentesis %s", name.c_str()));
+      if ((pos1>pos2) || (pos2==name.npos)) {
+         EOUT(("Wrong variable parenthesis %s", name.c_str()));
          return false;
       }
 
@@ -2028,8 +2046,8 @@ bool dabc::Manager::LoadLibrary(const char* libname)
 
 void dabc_Manager_CtrlCHandler(int number)
 {
-   if (dabc::Manager::Instance())
-      dabc::Manager::Instance()->ProcessCtrlCSignal();
+   if (dabc::mgr())
+      dabc::mgr()->ProcessCtrlCSignal();
    else {
       DOUT0(("Ctrl-C pressed, but no manager found !!!"));
       exit(0);
@@ -2067,25 +2085,37 @@ void dabc::Manager::RaiseCtrlCSignal()
 
 void dabc::Manager::ProcessCtrlCSignal()
 {
+   //if ((ProcessorThread()==0) || !ProcessorThread()->IsItself()) return;
+
    if (fSigThrd != dabc::Thread::Self()) return;
 
-   if (strcmp(CurrentState(), stRunning)==0) {
-      DOUT1(("First, stop manager"));
-      if(!DoStateTransition(stcmdDoStop)) {
-         EOUT(("State transition % failed. Abort", stcmdDoStop));
-         exit(1);
+   DOUT1(("Enter CTRL-C process routine"));
+
+   if (fMgrMainLoop) {
+      fMgrMainLoop = false;
+      WorkingThread* thrd = ProcessorThread();
+
+      if (thrd && !thrd->IsRealThrd()) {
+
+         DOUT0(("Stop thread"));
+         thrd->Stop(false); // stop thread - means leave thread main loop
+
+         // DOUT0(("Remove processor"));
+         // RemoveProcessorFromThread(true);
+         DOUT0(("Exit handler"));
       }
+      return;
    }
 
-   DOUT1(("Now halt manager"));
-   if(!DoStateTransition(stcmdDoHalt)) {
-      EOUT(("State transition % failed. Abort", stcmdDoHalt));
-      exit(1);
-   }
+   DOUT1(("Ctrl-C out of main loop - force manager halt"));
 
-   HaltManager();
+   DoHaltManager();
+
+   DOUT1(("Calcel commands"));
 
    CancelCommands();
+
+   DOUT1(("Delete childs"));
 
    DeleteChilds();
 
@@ -2095,4 +2125,3 @@ void dabc::Manager::ProcessCtrlCSignal()
 
    exit(0);
 }
-

@@ -70,6 +70,9 @@ void dabc::WorkingProcessor::DestroyProcessor()
 
 bool dabc::WorkingProcessor::Submit(Command* cmd)
 {
+   DOUT5(("Submit command %s to thread %p %d", cmd->GetName(), fProcessorThread,
+         fProcessorThread ? fProcessorThread->Id() : 0));
+
    if (fProcessorThread)
       return fProcessorThread->SubmitProcessorCmd(this, cmd);
 

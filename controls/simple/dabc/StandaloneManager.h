@@ -35,7 +35,7 @@ namespace dabc {
       typedef std::list<ParamReg> ParamRegList;
 
       public:
-         StandaloneManager(int nodeid, int numnodes, bool usesm = true);
+         StandaloneManager(const char* name, int nodeid, int numnodes, bool usesm = true);
          virtual ~StandaloneManager();
 
          void ConnectCmdChannel(int numnodes, int deviceid = 1, const char* controllerID = "file.txt");
@@ -51,6 +51,7 @@ namespace dabc {
          virtual int NodeId() const { return fNodeId; }
          virtual bool IsNodeActive(int num);
          virtual const char* GetNodeName(int num);
+         virtual bool ConnectControl(const char* connid);
 
          virtual bool Subscribe(Parameter* par, int remnode, const char* remname);
          virtual bool Unsubscribe(Parameter* par);

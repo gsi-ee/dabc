@@ -536,7 +536,7 @@ int main(int numc, char* args[])
 
    dabc::SetDebugLevel(1);
 
-   dabc::StandaloneManager manager(nodeid, numnodes, false);
+   dabc::StandaloneManager manager(0, nodeid, numnodes, false);
 
 //   TestWorker(manager);
 //   return 0;

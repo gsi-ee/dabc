@@ -1,10 +1,7 @@
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 #include "dabc/Configuration.h"
-
-#ifdef __USE_STANDALONE__
-#include "dabc/StandaloneManager.h"
-#endif
+#include "dabc/Factory.h"
 
 #include <iostream>
 
@@ -68,13 +65,13 @@ int RunSimpleApplication(dabc::XdaqConfiguration* cfg, const char* appclass)
    return 0;
 }
 
-bool SMChange(dabc::Manager& m, const char* smcmdname)
+bool SMChange(const char* smcmdname)
 {
    dabc::CommandClient cli;
 
    dabc::Command* cmd = new dabc::CommandStateTransition(smcmdname);
 
-   if (!m.InvokeStateTransition(smcmdname, cli.Assign(cmd))) return false;
+   if (!dabc::mgr()->InvokeStateTransition(smcmdname, cli.Assign(cmd))) return false;
 
    bool res = cli.WaitCommands(10);
 
@@ -89,7 +86,7 @@ bool SMChange(dabc::Manager& m, const char* smcmdname)
    return res;
 }
 
-bool RunBnetTest(dabc::Manager& m)
+bool RunBnetTest()
 {
    dabc::CpuStatistic cpu;
 
@@ -97,25 +94,25 @@ bool RunBnetTest(dabc::Manager& m)
 
 //   ChangeRemoteParameter(m, 2, "Input0Cfg", "ABB");
 
-   SMChange(m, dabc::Manager::stcmdDoConfigure);
+   SMChange(dabc::Manager::stcmdDoConfigure);
 
    DOUT1(("Create done"));
 
-   SMChange(m, dabc::Manager::stcmdDoEnable);
+   SMChange(dabc::Manager::stcmdDoEnable);
 
    DOUT1(("Connection done"));
 
-   SMChange(m, dabc::Manager::stcmdDoStart);
+   SMChange(dabc::Manager::stcmdDoStart);
 
    cpu.Reset();
 
    dabc::ShowLongSleep("Main loop", 15); //15
 
-   SMChange(m, dabc::Manager::stcmdDoStop);
+   SMChange(dabc::Manager::stcmdDoStop);
 
    sleep(1);
 
-   SMChange(m, dabc::Manager::stcmdDoStart);
+   SMChange(dabc::Manager::stcmdDoStart);
 
    dabc::ShowLongSleep("Again main loop", 10); //10
 
@@ -123,11 +120,11 @@ bool RunBnetTest(dabc::Manager& m)
 
    DOUT1(("Calling stop"));
 
-   SMChange(m, dabc::Manager::stcmdDoStop);
+   SMChange(dabc::Manager::stcmdDoStop);
 
    DOUT1(("Calling halt"));
 
-   SMChange(m, dabc::Manager::stcmdDoHalt);
+   SMChange(dabc::Manager::stcmdDoHalt);
 
    DOUT1(("CPU usage %5.1f", cpu.CPUutil()*100.));
 
@@ -146,8 +143,7 @@ int main(int numc, char* args[])
 
    if(numc > 1) configuration = args[1];
 
-   dabc::XdaqConfiguration cfg(configuration);
-   if (!cfg.IsOk()) return 1;
+   dabc::XdaqConfiguration cfg(configuration, false);
 
    int nodeid = 0;
    int numnodes = 1;
@@ -192,40 +188,59 @@ int main(int numc, char* args[])
    if (numnodes<2)
       return RunSimpleApplication(&cfg, appclass);
 
+   dabc::Logger::Instance()->LogFile(FORMAT(("LogFile%d.log", nodeid)));
 
-   dabc::StandaloneManager manager(nodeid, numnodes, true);
+   if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcSctrl.so")) {
+      EOUT(("Cannot load control library"));
+      return 1;
+   }
+
+   if (!dabc::Factory::CreateManager("Standalone", 0, nodeid, numnodes)) {
+      EOUT(("Cannot create required manager class"));
+      return 1;
+   }
+
+//   dabc::StandaloneManager manager(0, nodeid, numnodes, true);
 
    DOUT0(("Run cluster application!!! %d %d %s", nodeid, numnodes, (connid ? connid : "---")));
 
-   dabc::Logger::Instance()->LogFile(FORMAT(("LogFile%d.log", nodeid)));
-
-   manager.InstallCtrlCHandler();
+   dabc::mgr()->InstallCtrlCHandler();
 
    cfg.LoadLibs(nodeid);
 
-   if (!manager.CreateApplication(appclass)) {
+   if (!dabc::mgr()->CreateApplication(appclass)) {
       EOUT(("Cannot create application %s", appclass));
+      delete dabc::mgr();
       return 1;
    }
 
    cfg.ReadPars(nodeid);
 
-   manager.ConnectCmdChannel(numnodes, 1, connid);
+   if (!dabc::mgr()->ConnectControl(connid)) {
+      EOUT(("Cannot establish connection to control system"));
+      delete dabc::mgr();
+      return 1;
+   }
+
+   //((dabc::StandaloneManager*) dabc::mgr())->ConnectCmdChannel(numnodes, 1, connid);
 
    if (nodeid==0) {
-      if (!manager.HasClusterInfo()) {
+      if (!dabc::mgr()->HasClusterInfo()) {
          EOUT(("Cannot access cluster information from main node"));
+         delete dabc::mgr();
          return 1;
       }
 
       dabc::SetDebugLevel(1);
 
-      RunBnetTest(manager);
+      RunBnetTest();
 
       //dabc::ShowLongSleep("Main loop", 5); //15
 
       //SMChange(manager, dabc::Manager::stcmdDoHalt);
    }
+
+   delete dabc::mgr();
 
    return 0;
 }

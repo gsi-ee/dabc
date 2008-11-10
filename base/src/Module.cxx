@@ -176,16 +176,20 @@ void dabc::Module::Start()
 
 void dabc::Module::Stop()
 {
-   DOUT3(("Stop module %s thrd %s", GetName(), DNAME(ProcessorThread())));
+   DOUT1(("Stop module %s thrd %s itself %s", GetName(), DNAME(ProcessorThread()),
+         DBOOL(ProcessorThread()->IsItself())));
 
    Execute("StopModule");
+
+   DOUT1(("Stop module %s thrd %s done", GetName(), DNAME(ProcessorThread())));
+
 }
 
 int dabc::Module::PreviewCommand(Command* cmd)
 {
    // this hook in command execution routine allows us to "preview"
    // command before it actually executed
-   // if it is system command, just execute it immidiately
+   // if it is system command, just execute it immediately
 
    int cmd_res = cmd_ignore;
 
@@ -205,6 +209,9 @@ int dabc::Module::PreviewCommand(Command* cmd)
          cmd_res = cmd_false;
    } else
       cmd_res = WorkingProcessor::PreviewCommand(cmd);
+
+   if (cmd_res!=cmd_ignore)
+      DOUT1(("Module:%s PreviewCommand %s res=%d", GetName(), cmd->GetName(), cmd_res));
 
    return cmd_res;
 }
@@ -229,7 +236,7 @@ bool dabc::Module::DoStart()
 
 bool dabc::Module::DoStop()
 {
-   DOUT3(("Module %s DoStop", GetName()));
+   DOUT1(("Module %s DoStop", GetName()));
 
    if (WorkStatus()<=0) return false;
 
@@ -240,9 +247,11 @@ bool dabc::Module::DoStop()
 
    fWorkStatus = 0;
 
+   DOUT1(("Module %s call AfterModuleStop", GetName()));
+
    AfterModuleStop();
 
-   DOUT3(("Module %s DoStop done", GetName()));
+   DOUT1(("Module %s DoStop done", GetName()));
 
    return true;
 }

@@ -48,8 +48,12 @@ namespace dabc {
 
          virtual DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0) { return 0; }
 
+         static bool CreateManager(const char* kind, const char* name, int nodeid, int numnodes);
+
       protected:
          static const char* DfltAppClass(const char* newdefltclass = 0);
+
+         virtual bool CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes) { return false; }
 
       private:
          static Queue<Factory*> *Factories()

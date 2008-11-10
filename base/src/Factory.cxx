@@ -28,3 +28,18 @@ dabc::Factory::Factory(const char* name) :
       Factories()->Push(this);
    }
 }
+
+bool dabc::Factory::CreateManager(const char* kind, const char* name, int nodeid, int numnodes)
+{
+   if (Factories()==0) return false;
+
+   if (dabc::mgr() != 0) {
+      EOUT(("Manager instance already exists"));
+      return false;
+   }
+
+   for (unsigned n=0;n<Factories()->Size();n++)
+      if (Factories()->Item(n)->CreateManagerInstance(kind, name, nodeid, numnodes)) return true;
+
+   return false;
+}

@@ -20,18 +20,13 @@ BASERUN_D         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BASERUN_S)
 
 BASERUN_SH        = $(DABC_BASEDIRRUN)/run.sh
 
-BASERUN_LIBS      = $(LIBS_CORESET)
-ifdef DABCSCTRL_LIB
-BASERUN_LIBS     += -lDabcSctrl
-endif
-
 ######### used in main Makefile
 
 ALLHDRS          +=  $(patsubst $(DABC_BASEDIR)/%.h, $(DABCINCPATH)/%.h, $(BASE_H))
 ALLDEPENDENC     += $(BASE_D) $(BASERUN_D)
 APPLICATIONS_DIRS += $(DABC_BASEDIRTEST)
 
-libs:: $(DABCBASE_LIB) $(DABCBASE_SLIB)
+libs:: $(DABCBASE_LIB)
 
 exes:: $(DABC_BASEEXE) $(DABC_BASESH)
 
@@ -48,11 +43,7 @@ $(DABCBASE_SLIB): $(BASE_O)
 	$(AR) $(ARFLAGS) $(DABCBASE_SLIB) $(BASE_O)
 
 $(DABC_BASEEXE):  $(BASERUN_O) 
-	$(LD) $(LDFLAGS) $(BASERUN_O) $(BASERUN_LIBS) $(OutPutOpt) $(DABC_BASEEXE)
+	$(LD) $(LDFLAGS) $(BASERUN_O) $(LIBS_CORESET) $(OutPutOpt) $(DABC_BASEEXE)
 
 $(DABC_BASESH): $(BASERUN_SH)
 	@cp -f $< $@
-
-ifdef DABCSCTRL_LIB
-$(BASERUN_O): DEFINITIONS += __USE_STANDALONE__
-endif	
