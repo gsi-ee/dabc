@@ -2,6 +2,7 @@
 
 #include "dabc/logging.h"
 #include "dabc/timing.h"
+#include "dabc/statistic.h"
 #include "dabc/StandaloneManager.h"
 
 #include "bnet/WorkerApplication.h"

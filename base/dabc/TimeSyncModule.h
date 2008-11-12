@@ -9,9 +9,15 @@
 #include "dabc/logging.h"
 #endif
 
+#ifndef DABC_statistic
+#include "dabc/statistic.h"
+#endif
+
+
 #ifndef DABC_threads
 #include "dabc/threads.h"
 #endif
+
 
 namespace dabc {
 

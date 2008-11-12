@@ -25,7 +25,15 @@ then
    echo "DABCSYS not specified, use current dir $DABCSYS"
 fi
 
-numnodes=`$DABCSYS/bin/dabc_run $XMLFILE -number`
+dabc_xml=`which dabc_xml`
+if [[ "x$dabc_xml" == "x" ]]
+then
+   echo "Cannot find dabc_xml executable"
+   exit 1
+fi
+
+
+numnodes=`$dabc_xml $XMLFILE -number`
 
 retval=$?
 if [ $retval -ne 0 ]; then
@@ -47,7 +55,7 @@ currdir=`pwd`
 
 while [[ "$counter" != "$numnodes" ]]
 do
-   callargs=`$DABCSYS/bin/dabc_run $XMLFILE -cfgid $counter -workdir $currdir -sshtest`
+   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -sshtest`
    retval=$?
    if [ $retval -ne 0 ]; then
       echo "Cannot identify test call args for node $counter  err = $retval"

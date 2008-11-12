@@ -1,5 +1,5 @@
 #include "dabc/logging.h"
-#include "dabc/Configuration.h"
+#include "dabc/ConfigBase.h"
 
 #include <iostream>
 
@@ -13,7 +13,7 @@ int main(int numc, char* args[])
 
    if(numc > 1) configuration = args[1];
 
-   dabc::Configuration cfg(configuration);
+   dabc::ConfigBase cfg(configuration);
    if (!cfg.IsOk()) return 7;
 
    int cnt = 2;

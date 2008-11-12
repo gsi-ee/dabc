@@ -3,6 +3,7 @@
 
 #include "dabc/ModuleAsync.h"
 #include "dabc/logging.h"
+#include "dabc/statistic.h"
 
 #include "bnet/common.h"
 

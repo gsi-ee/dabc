@@ -2,9 +2,10 @@
 
 #include <list>
 
-#include "dabc/Command.h"
 #include "dabc/threads.h"
 #include "dabc/logging.h"
+#include "dabc/timing.h"
+#include "dabc/Command.h"
 
 class dabc::CommandClientBase::stl_commands_list : public std::list<dabc::Command*> {};
 
