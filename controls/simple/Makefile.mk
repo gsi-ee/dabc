@@ -19,7 +19,7 @@ ALLHDRS            += $(patsubst $(SCTRLDIR)/%.h, $(DABCINCPATH)/%.h, $(SCTRL_H)
 ALLDEPENDENC       += $(SCTRL_D) 
 APPLICATIONS_DIRS  += $(SCTRLTEST1DIR) $(SCTRLTEST2DIR) 
 
-libs:: $(DABCSCTRL_LIB) $(DABCSCTRL_SLIB)
+libs:: $(DABCSCTRL_LIB)
 
 ##### local rules #####
 

@@ -5,7 +5,7 @@
 
 #include <iostream>
 
-int RunSimpleApplication(dabc::XdaqConfiguration* cfg, const char* appclass)
+int RunSimpleApplication(dabc::Configuration* cfg, const char* appclass)
 {
    dabc::Manager manager("dabc", true);
 
@@ -13,14 +13,14 @@ int RunSimpleApplication(dabc::XdaqConfiguration* cfg, const char* appclass)
 
    manager.InstallCtrlCHandler();
 
-   cfg->LoadLibs();
+   cfg->LoadLibs(0);
 
    if (!manager.CreateApplication(appclass)) {
       EOUT(("Cannot create application of specified class %s", (appclass ? appclass : "???")));
       return 1;
    }
 
-   cfg->ReadPars();
+   cfg->ReadPars(0);
 
    // set states of manager to running here:
    if(!manager.DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
@@ -140,14 +140,19 @@ int main(int numc, char* args[])
 
    const char* configuration = "SetupRoc.xml";
    const char* appclass = 0;
+   const char* workdir = 0;
+   const char* logfile = 0;
 
    if(numc > 1) configuration = args[1];
 
-   dabc::XdaqConfiguration cfg(configuration, false);
+   int configid = -1;
 
    int nodeid = 0;
-   int numnodes = 1;
+   int numnodes = 0;
    const char* connid = 0;
+
+   dabc::Configuration cfg(configuration);
+   if (!cfg.IsOk()) return 7;
 
    int cnt = 2;
    while (cnt<numc) {
@@ -155,33 +160,83 @@ int main(int numc, char* args[])
       const char* arg = args[cnt++];
 
       if (strcmp(arg,"-number")==0) {
-         std::cout << cfg.NumNodes();
+         unsigned res = cfg.NumNodes();
+         if (res==0) return 7;
+         std::cout << res << std::endl;
          std::cout.flush();
          return 0;
       } else
-      if (strstr(arg,"-name")==arg) {
-         arg+=5;
-         unsigned cnt = *arg ? atoi(arg) : 0;
-         std::cout << cfg.NodeName(cnt);
+      if (strcmp(arg,"-workdir")==0) {
+         if (cnt < numc)
+            workdir = args[cnt++];
+      } else
+      if (strcmp(arg,"-logfile")==0) {
+         if (cnt < numc)
+            logfile = args[cnt++];
+      } else
+      if (strstr(arg,"-gen")==arg) {
+         dabc::Configuration::ProduceClusterFile(configuration, numnodes);
+         DOUT1(("Produce cluster file %s", configuration));
+         return 0;
+      } else
+      if (strcmp(arg,"-cfgid")==0) {
+         if (cnt < numc)
+            configid = atoi(args[cnt++]);
+      } else
+      if (strcmp(arg,"-nodeid")==0) {
+         if (cnt < numc)
+            nodeid = atoi(args[cnt++]);
+      } else
+      if (strcmp(arg,"-numnodes")==0) {
+         if (cnt < numc)
+            numnodes = atoi(args[cnt++]);
+      } else
+      if (strcmp(arg,"-conn")==0) {
+         if (cnt < numc)
+            connid = args[cnt++];
+      } else
+      if (strcmp(arg,"-ssh") == 0) {
+         if (configid<0) return 5;
+         std::cout << cfg.SshArgs(configid, 3, configuration, workdir) << std::endl;
          std::cout.flush();
          return 0;
       } else
-      if (strstr(arg,"-id")==arg) {
-         nodeid = atoi(arg+3);
+      if (strcmp(arg,"-sshtest") == 0) {
+         if (configid<0) return 5;
+         std::cout << cfg.SshArgs(configid, 0, configuration, workdir) << std::endl;
+         std::cout.flush();
+         return 0;
       } else
-      if (strstr(arg,"-num")==arg) {
-         numnodes = atoi(arg+4);
+      if (strcmp(arg,"-sshrun") == 0) {
+         if (configid<0) return 5;
+         std::cout << cfg.SshArgs(configid, 1, configuration, workdir) << std::endl;
+         std::cout.flush();
+         return 0;
       } else
-      if (strstr(arg,"-conn")==arg) {
-         connid = arg+5;
+      if (strcmp(arg,"-sshconn") == 0) {
+         if (configid<0) return 5;
+         std::cout << cfg.SshArgs(configid, 2, configuration, workdir) << std::endl;
+         std::cout.flush();
+         return 0;
+      } else
+      if (strstr(arg,"-nodename")==arg) {
+         if (configid<0) return 5;
+         dabc::String name = cfg.NodeName(configid);
+         if (name.length() == 0) return 5;
+         std::cout << name << std::endl;
+         std::cout.flush();
+         return 0;
       } else
          if (appclass==0) appclass = arg;
    }
 
-   DOUT1(("Using config file: %s", configuration));
+   if (configid<0) configid = nodeid;
+   if (numnodes==0) numnodes = cfg.NumNodes();
 
-   if (cfg.FindContext(nodeid) == 0) {
-      EOUT(("Did not found context for node %d", nodeid));
+   DOUT1(("Using config file: %s id: %d", configuration, configid));
+
+   if (!cfg.HasContext(configid)) {
+      EOUT(("Did not found context"));
       return 1;
    }
 

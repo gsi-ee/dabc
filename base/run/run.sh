@@ -5,6 +5,12 @@ echo "  Usage: run.sh filename.xml [test|kill]"
 
 XMLFILE=$1
 
+#arg1="ssh lxi002"
+#arg='. gsi_environment.sh; echo $HOST : $HOST; ls'
+#$arg1 $arg
+#exit 0
+
+
 if [[ "x$XMLFILE" == "x" ]]
 then
    echo "XML file is not specified"
@@ -21,31 +27,47 @@ fi
 
 numnodes=`$DABCSYS/bin/dabc_run $XMLFILE -number`
 
+retval=$?
+if [ $retval -ne 0 ]; then
+   echo "Cannot identify number of nodes in $XMLFILE - ret = $retval syntax error?"
+   exit $retval
+fi
+
 if [[ "x$numnodes" == "x" || "$numnodes" == "0" ]] 
 then
-   echo "cannot identify numnodes in $XMLFILE"
+   echo "Internal error in dabc_run - cannot identify numnodes in $XMLFILE"
    exit 1
 fi
 
-
-echo "Total numnodes = $numnodes, check all of then that we can log in"
+echo "Total numnodes = $numnodes, check all of them that we can log in"
 
 counter=0
 
+currdir=`pwd`
+
 while [[ "$counter" != "$numnodes" ]]
 do
-   nodename=`$DABCSYS/bin/dabc_run $XMLFILE -name$counter`
-   
-   if [[ "$2" == "kill" ]]
-   then
-     echo "Node $counter is $nodename, kill all dabc_run applications"
-     ssh $nodename "killall dabc_run"
-   else
-      echo "Node $counter is $nodename, try to login"
-      ssh $nodename "echo Hallo from $nodename"
+   callargs=`$DABCSYS/bin/dabc_run $XMLFILE -cfgid $counter -workdir $currdir -sshtest`
+   retval=$?
+   if [ $retval -ne 0 ]; then
+      echo "Cannot identify test call args for node $counter  err = $retval"
+      exit $retval
    fi
+   
+   echo $callargs
+   
+   $callargs
+
+   retval=$?
+   if [ $retval -ne 0 ]; then
+      echo "Test sequence for node $counter fail err = $retval"
+      exit $retval
+   fi
+
    counter=`expr $counter + 1`
 done
+
+exit 0
 
 if [[ "$2" == "test" ]]
 then
