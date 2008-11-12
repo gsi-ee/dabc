@@ -133,21 +133,21 @@ namespace dabc {
    const char* xmlSshTimeout       = "timeout";
    const char* xmlDABCSYS          = "DABCSYS";
    const char* xmlDABCUSERDIR      = "DABCUSERDIR";
+   const char* xmlDABCWORKDIR      = "DABCWORKDIR";
    const char* xmlDABCNODEID       = "DABCNODEID";
+   const char* xmlDABCNUMNODES     = "DABCNUMNODES";
    const char* xmlWorkDir          = "workdir";
    const char* xmlLogfile          = "logfile";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
    const char* xmlConfigFile       = "config";
    const char* xmlConfigFileId     = "configid";
+   const char* xmlUserLib          = "Lib";
 }
-
-
 
 dabc::ConfigBase::ConfigBase(const char* fname) :
    fXml(),
    fDoc(0),
    fVersion(-1),
-   fSelected(0),
    fPrnt(0),
    envDABCSYS(),
    envDABCUSERDIR(),
@@ -158,12 +158,10 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
    XMLNodePointer_t rootnode = fXml.DocGetRootElement(fDoc);
 
    if (IsNodeName(rootnode, xmlRootNode)) {
-      fSelected = rootnode;
       fVersion = GetIntAttr(rootnode, xmlVersionAttr, 1);
    } else
    if (IsNodeName(rootnode, xmlXDAQPartition)) {
       fVersion = 0;
-      fSelected = rootnode;
    } else {
       EOUT(("Xml file %s has neither dabc nor xdaq format", fname));
       fXml.FreeDoc(fDoc);
@@ -387,10 +385,10 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
  */
 
 const char* dabc::ConfigBase::Find1(XMLNodePointer_t node,
-                                       const char* dflt,
-                                       const char* sub1,
-                                       const char* sub2,
-                                       const char* sub3)
+                                    const char* dflt,
+                                    const char* sub1,
+                                    const char* sub2,
+                                    const char* sub3)
 {
    XMLNodePointer_t res = FindMatch(0, node, node, sub1, sub2, sub3);
    if (res==0) {
@@ -403,6 +401,20 @@ const char* dabc::ConfigBase::Find1(XMLNodePointer_t node,
    const char* cont = fXml.GetNodeContent(res);
    if (cont==0) cont = fXml.GetAttr(res, xmlValueAttr);
    return cont ? cont : dflt;
+}
+
+const char* dabc::ConfigBase::FindN(XMLNodePointer_t node,
+                                    XMLNodePointer_t& prev,
+                                    const char* sub1,
+                                    const char* sub2,
+                                    const char* sub3)
+{
+   XMLNodePointer_t res = FindMatch(prev, node, node, sub1, sub2, sub3);
+   prev = res;
+   if (res==0) return 0;
+   const char* cont = fXml.GetNodeContent(res);
+   if (cont==0) cont = fXml.GetAttr(res, xmlValueAttr);
+   return cont ? cont : "";
 }
 
 unsigned dabc::ConfigBase::NumNodes()
@@ -473,7 +485,9 @@ dabc::String dabc::ConfigBase::ResolveEnv(const char* arg)
 
          if ((var==xmlDABCSYS) && (envDABCSYS.length()>0)) value = envDABCSYS.c_str(); else
          if ((var==xmlDABCUSERDIR) && (envDABCUSERDIR.length()>0)) value = envDABCUSERDIR.c_str(); else
-         if (var==xmlDABCNODEID) value = envDABCNODEID.c_str();
+         if (var==xmlDABCWORKDIR) value = envDABCWORKDIR.c_str(); else
+         if (var==xmlDABCNODEID) value = envDABCNODEID.c_str(); else
+         if (var==xmlDABCNUMNODES) value = envDABCNUMNODES.c_str(); else
 
          if (value==0) value = getenv(var.c_str());
 
@@ -525,7 +539,9 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfg
 
    envDABCSYS = dabcsys ? dabcsys : "";
    envDABCUSERDIR = userdir ? userdir : "";
+   envDABCWORKDIR = workdir ? workdir : "";
    envDABCNODEID = FORMAT(("%u", id));
+   envDABCNUMNODES = FORMAT(("%u", NumNodes()));
 
    res = "ssh ";
 
@@ -579,7 +595,7 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfg
    if (kind == 1) {
       // this is main run arguments
 
-      res += " \"";
+      res += " ";
 
       res += FORMAT(("export DABCSYS=%s; ", dabcsys));
 
@@ -589,6 +605,9 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfg
       res += "$DABCSYS/lib:$LD_LIBRARY_PATH;";
 
       if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
+
+      if ((connstr!=0) && (id==0))
+         res += FORMAT((" rm -f %s;", connstr));
 
       res += " $DABCSYS/bin/dabc_run ";
 
@@ -609,22 +628,17 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfg
          res += ResolveEnv(logfile);
       }
 
-      res += " -nodeid ";
-      res += FORMAT(("%u", id));
-      res += " -numnodes ";
-      res += FORMAT(("%u", id));
+      res += FORMAT((" -nodeid %u -numnodes %u", id, NumNodes()));
 
-      if (connstr!=0) {
-         res += " -conn ";
-         res += connstr;
-      }
+      if (connstr!=0) res += FORMAT((" -conn %s", connstr));
 
-      res += "\" &";
    } else
    if (kind == 2) {
       // this is way to get connection string
       if (connstr==0) connstr = "dummyfile.txt";
-      res += FORMAT((" \"if [ -f %s ] ; then cat %s; fi\"", connstr, connstr));
+
+      if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
+      res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; else exit 1; fi", connstr, connstr, connstr));
    }
 
    return res;

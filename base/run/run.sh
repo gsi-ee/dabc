@@ -62,7 +62,7 @@ do
       exit $retval
    fi
    
-   echo $callargs
+#   echo $callargs
    
    $callargs
 
@@ -75,13 +75,54 @@ do
    counter=`expr $counter + 1`
 done
 
-exit 0
-
 if [[ "$2" == "test" ]]
 then
    echo "We only did tests of login"
    exit 0
 fi
+
+counter=0
+connstr=file.id
+
+while [[ "$counter" != "$numnodes" ]]
+do
+   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -sshrun`
+   retval=$?
+   if [ $retval -ne 0 ]; then
+      echo "Cannot identify test call args for node $counter  err = $retval"
+      exit $retval
+   fi
+   
+   echo $callargs
+   
+   $callargs &
+
+   retval=$?
+   if [ $retval -ne 0 ]; then
+      echo "Run of dabc application for node $counter fails err = $retval"
+      exit $retval
+   fi
+   
+   if [[ "$counter" == "0" ]]
+   then
+      callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -sshconn`
+
+      echo $callargs
+      
+      sleep 3
+      
+      connstr=`$callargs`
+   
+      echo "New connection string is $connstr"
+      
+      exit 1 
+   fi
+   
+   counter=`expr $counter + 1`
+done
+
+exit 0
+
 
 if [[ "$2" == "kill" ]]
 then

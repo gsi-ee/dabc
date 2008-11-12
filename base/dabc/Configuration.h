@@ -8,13 +8,20 @@
 namespace dabc {
 
    class Configuration : public ConfigBase {
+      protected:
+         XMLNodePointer_t  fSelected; // selected context node
+
+         bool XDAQ_LoadLibs();
+
       public:
          Configuration(const char* fname);
          ~Configuration();
 
-         bool LoadLibs(unsigned id) { return true; }
+         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes);
 
-         bool ReadPars(unsigned id) { return true; }
+         bool LoadLibs();
+
+         bool ReadPars() { return true; }
    };
 
 

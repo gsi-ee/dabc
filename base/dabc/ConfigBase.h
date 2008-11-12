@@ -23,25 +23,30 @@ namespace dabc {
    extern const char* xmlSshTimeout;
    extern const char* xmlDABCSYS;
    extern const char* xmlDABCUSERDIR;
+   extern const char* xmlDABCWORKDIR;
    extern const char* xmlDABCNODEID;
+   extern const char* xmlDABCNUMNODES;
    extern const char* xmlWorkDir;
    extern const char* xmlLogfile;
    extern const char* xmlLDPATH;
    extern const char* xmlConfigFile;
    extern const char* xmlConfigFileId;
+   extern const char* xmlUserLib;
+
 
    class ConfigBase {
       protected:
          XmlEngine         fXml;
          XMLDocPointer_t   fDoc;
          int               fVersion;  // -1 - error, 0 - xdaq, 1 and more - dabc
-         XMLNodePointer_t  fSelected; // selected node, recognized as root node
          ConfigBase       *fPrnt;  // parent configuration with defaults for some variables
 
          // following variables work as 'enviroment'
          String            envDABCSYS;
-         String            envDABCUSERDIR;
-         String            envDABCNODEID;
+         String            envDABCUSERDIR;     // dir with user plugin
+         String            envDABCWORKDIR;     // dir where application is started
+         String            envDABCNODEID;      // current node id
+         String            envDABCNUMNODES;    // current number of nodes
 
          XMLNodePointer_t Dflts();
 
@@ -67,11 +72,19 @@ namespace dabc {
                                     const char* sub1 = 0,
                                     const char* sub2 = 0,
                                     const char* sub3 = 0);
+
          const char* Find1(XMLNodePointer_t node,
                            const char* dflt,
                            const char* sub1,
                            const char* sub2 = 0,
                            const char* sub3 = 0);
+
+         const char* FindN(XMLNodePointer_t node,
+                           XMLNodePointer_t& prev,
+                           const char* sub1,
+                           const char* sub2 = 0,
+                           const char* sub3 = 0);
+
 
          bool IsNodeName(XMLNodePointer_t node, const char* name);
          const char* GetAttr(XMLNodePointer_t node, const char* attr, const char* defvalue = 0);

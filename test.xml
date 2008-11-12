@@ -1,0 +1,52 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="Cluster">
+    <Run>
+      <host>lxg0526</host>
+    </Run>
+  </Context>
+  <Context name="Cont1">
+    <Run>
+      <host>lxi006</host>
+    </Run>
+  </Context>
+  <Context name="Cont2">
+    <Run>
+      <host>lxi007</host>
+    </Run>
+  </Context>
+  <Context name="Cont3">
+    <Run>
+      <host>lxi008</host>
+    </Run>
+  </Context>
+  <Context name="Cont4">
+    <Run>
+      <host>lxi009</host>
+    </Run>
+  </Context>
+  <Defaults>
+    <Context name="Cluster">
+      <Run>
+        <user>linev</user>
+        <port>22</port>
+        <timeout v="10"/>
+	<test>. gsi_environment.sh; echo $HOST</test>
+      </Run>
+    </Context>
+    <Context name="*">
+    <Run>
+       <user v="linev"/>
+       <port v="22"/>
+       <logfile v="test${DABCNODEID}.log"/>
+       <Lib>${DABCSYS}/lib/libDabcBnet.so</Lib>
+    </Run>
+    </Context>
+
+    <Context name="Cont*">
+       <Run>
+          <Lib>libBnetTest.so</Lib>
+       </Run>
+    </Context>
+  </Defaults>
+</dabc>

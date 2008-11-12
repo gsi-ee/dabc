@@ -10,6 +10,7 @@ int main(int numc, char* args[])
    const char* configuration = "SetupRoc.xml";
    const char* workdir = 0;
    unsigned configid = 0;
+   const char* connstr = 0;
 
    if(numc > 1) configuration = args[1];
 
@@ -29,6 +30,10 @@ int main(int numc, char* args[])
          if (cnt < numc)
             workdir = args[cnt++];
       } else
+      if (strcmp(arg,"-conn")==0) {
+         if (cnt < numc)
+            connstr = args[cnt++];
+      } else
       if (strcmp(arg,"-number")==0) {
          unsigned res = cfg.NumNodes();
          if (res==0) return 5;
@@ -41,22 +46,22 @@ int main(int numc, char* args[])
 //      } else
       if (strcmp(arg,"-ssh") == 0) {
          if (configid<0) return 5;
-         std::cout << cfg.SshArgs(configid, 3, configuration, workdir) << std::endl;
+         std::cout << cfg.SshArgs(configid, 3, configuration, workdir, connstr) << std::endl;
          std::cout.flush();
       } else
       if (strcmp(arg,"-sshtest") == 0) {
          if (configid<0) return 5;
-         std::cout << cfg.SshArgs(configid, 0, configuration, workdir) << std::endl;
+         std::cout << cfg.SshArgs(configid, 0, configuration, workdir, connstr) << std::endl;
          std::cout.flush();
       } else
       if (strcmp(arg,"-sshrun") == 0) {
          if (configid<0) return 5;
-         std::cout << cfg.SshArgs(configid, 1, configuration, workdir) << std::endl;
+         std::cout << cfg.SshArgs(configid, 1, configuration, workdir, connstr) << std::endl;
          std::cout.flush();
       } else
       if (strcmp(arg,"-sshconn") == 0) {
          if (configid<0) return 5;
-         std::cout << cfg.SshArgs(configid, 2, configuration, workdir) << std::endl;
+         std::cout << cfg.SshArgs(configid, 2, configuration, workdir, connstr) << std::endl;
          std::cout.flush();
       } else
       if (strstr(arg,"-nodename")==arg) {

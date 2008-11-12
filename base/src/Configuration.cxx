@@ -1,5 +1,7 @@
 #include "dabc/Configuration.h"
 
+#include <unistd.h>
+
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 #include "dabc/Application.h"
@@ -185,11 +187,84 @@ bool dabc::XdaqConfiguration::ReadPars(unsigned instance)
 
 */
 
+namespace dabc {
+
+   const char* xmlXDAQModule       = "Module";
+
+}
+
+bool dabc::Configuration::XDAQ_LoadLibs()
+{
+   XMLNodePointer_t modnode = fXml.GetChild(fSelected);
+
+   while (modnode!=0) {
+      if (strcmp(fXml.GetNodeName(modnode), xmlXDAQModule)==0) {
+
+         const char* libname = fXml.GetNodeContent(modnode);
+
+         if ((strstr(libname,"libdim")==0) &&
+             (strstr(libname,"libDabcBase")==0) &&
+             (strstr(libname,"libDabcXDAQControl")==0))
+                dabc::Manager::LoadLibrary(ResolveEnv(libname).c_str());
+      }
+
+      modnode = fXml.GetNext(modnode);
+   }
+
+   return true;
+}
+
+
 dabc::Configuration::Configuration(const char* fname) :
-   ConfigBase(fname)
+   ConfigBase(fname),
+   fSelected(0)
 {
 }
 
 dabc::Configuration::~Configuration()
 {
+}
+
+bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes)
+{
+   fSelected = IsXDAQ() ? XDAQ_FindContext(cfgid) : FindContext(cfgid);
+
+   if (fSelected==0) return false;
+
+   const char* val = getenv(xmlDABCSYS);
+   if (val!=0) envDABCSYS = val;
+
+   val = 0;
+   if (IsNative()) val = Find1(fSelected, 0, xmlRunNode, xmlDABCUSERDIR);
+   if (val==0) val = getenv(xmlDABCUSERDIR);
+   if (val!=0) envDABCUSERDIR = val;
+
+   char sbuf[1000];
+   if (getcwd(sbuf, sizeof(sbuf)))
+      envDABCWORKDIR = sbuf;
+   else
+      envDABCWORKDIR = ".";
+
+   envDABCNODEID = FORMAT(("%u", nodeid));
+   envDABCNUMNODES = FORMAT(("%u", numnodes));
+
+   return true;
+}
+
+bool dabc::Configuration::LoadLibs()
+{
+    if (fSelected==0) return false;
+
+    if (IsXDAQ()) return XDAQ_LoadLibs();
+
+
+    const char* libname = 0;
+    XMLNodePointer_t last = 0;
+
+    while ((libname = FindN(fSelected, last, xmlRunNode, xmlUserLib))!=0) {
+       DOUT0(("Find library %s", libname));
+       dabc::Manager::LoadLibrary(ResolveEnv(libname).c_str());
+    }
+
+    return true;
 }

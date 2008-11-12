@@ -12,14 +12,14 @@ int RunSimpleApplication(dabc::Configuration* cfg, const char* appclass)
 
    manager.InstallCtrlCHandler();
 
-   cfg->LoadLibs(0);
+   cfg->LoadLibs();
 
    if (!manager.CreateApplication(appclass)) {
       EOUT(("Cannot create application of specified class %s", (appclass ? appclass : "???")));
       return 1;
    }
 
-   cfg->ReadPars(0);
+   cfg->ReadPars();
 
    // set states of manager to running here:
    if(!manager.DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
@@ -192,7 +192,7 @@ int main(int numc, char* args[])
 
    DOUT1(("Using config file: %s id: %u", configuration, configid));
 
-   if (!cfg.HasContext(configid)) {
+   if (!cfg.SelectContext(configid, nodeid, numnodes)) {
       EOUT(("Did not found context"));
       return 1;
    }
@@ -216,7 +216,7 @@ int main(int numc, char* args[])
 
    dabc::mgr()->InstallCtrlCHandler();
 
-   cfg.LoadLibs(nodeid);
+   cfg.LoadLibs();
 
    if (!dabc::mgr()->CreateApplication(appclass)) {
       EOUT(("Cannot create application %s", appclass));
@@ -224,7 +224,7 @@ int main(int numc, char* args[])
       return 1;
    }
 
-   cfg.ReadPars(nodeid);
+//   cfg.ReadPars();
 
    if (!dabc::mgr()->ConnectControl(connid)) {
       EOUT(("Cannot establish connection to control system"));
