@@ -19,6 +19,7 @@ namespace dabc {
    extern const char* xmlSshHost;
    extern const char* xmlSshUser;
    extern const char* xmlSshPort;
+   extern const char* xmlSshInit;
    extern const char* xmlSshTest;
    extern const char* xmlSshTimeout;
    extern const char* xmlDABCSYS;

@@ -17,7 +17,7 @@ namespace dabc {
          Configuration(const char* fname);
          ~Configuration();
 
-         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes);
+         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0);
 
          bool LoadLibs();
 

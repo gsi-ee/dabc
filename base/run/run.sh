@@ -25,7 +25,6 @@ done
 
 echo "Choosen run mode = $RUNMODE verbose = $VERBOSE" 
 
-
 curdir=`pwd`
 if [[ "x$DABCSYS" == "x" ]] ; then DABCSYS=$curdir; echo DABCSYS not specified, use current dir $DABCSYS; fi
 

@@ -97,7 +97,7 @@ dabc::Configuration::~Configuration()
 {
 }
 
-bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes)
+bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile)
 {
    fSelected = IsXDAQ() ? XDAQ_FindContext(cfgid) : FindContext(cfgid);
 
@@ -119,6 +119,17 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
 
    envDABCNODEID = FORMAT(("%u", nodeid));
    envDABCNUMNODES = FORMAT(("%u", numnodes));
+
+   String log;
+
+   if (logfile!=0) log = logfile; else
+   if (IsNative()) {
+      logfile = Find1(fSelected, 0, xmlRunNode, xmlLogfile);
+      if (logfile!=0) log = ResolveEnv(logfile);
+   }
+
+   if (log.length()>0)
+      dabc::Logger::Instance()->LogFile(log.c_str());
 
    return true;
 }

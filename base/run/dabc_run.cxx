@@ -138,7 +138,6 @@ int main(int numc, char* args[])
    dabc::SetDebugLevel(1);
 
    const char* configuration = "SetupRoc.xml";
-   const char* workdir = 0;
    const char* logfile = 0;
 
    if(numc > 1) configuration = args[1];
@@ -157,10 +156,6 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
-      if (strcmp(arg,"-workdir")==0) {
-         if (cnt < numc)
-            workdir = args[cnt++];
-      } else
       if (strcmp(arg,"-logfile")==0) {
          if (cnt < numc)
             logfile = args[cnt++];
@@ -185,12 +180,9 @@ int main(int numc, char* args[])
 
    if (numnodes==0) numnodes = cfg.NumNodes();
 
-   if (logfile!=0)
-      dabc::Logger::Instance()->LogFile(logfile);
-
    DOUT1(("Using config file: %s id: %u", configuration, configid));
 
-   if (!cfg.SelectContext(configid, nodeid, numnodes)) {
+   if (!cfg.SelectContext(configid, nodeid, numnodes, logfile)) {
       EOUT(("Did not found context"));
       return 1;
    }

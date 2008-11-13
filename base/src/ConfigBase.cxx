@@ -97,9 +97,19 @@ dabc::String dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int kind, const c
       return String("");
    }
 
+   envDABCSYS = dabcsys ? dabcsys : "";
+   envDABCWORKDIR = topworkdir ? topworkdir : "";
+   envDABCNODEID = FORMAT(("%u", instance));
+   envDABCNUMNODES = FORMAT(("%u", NumNodes()));
+
    if (kind == kindTest) {
-      res += " echo only test for node ";
-      res += nodename;
+      if (topworkdir!=0) {
+         String dir = ResolveEnv(topworkdir);
+         res += FORMAT((" if [ ! -d %s ] ; then echo workdir = %s missed; exit 12; fi; ", dir.c_str(), dir.c_str()));
+         res += FORMAT((" cd %s;", dir.c_str()));
+      }
+
+      res += FORMAT((" echo test for node %s done", nodename.c_str()));
 
    } else
    if (kind == kindStart) {
@@ -144,6 +154,7 @@ namespace dabc {
    const char* xmlSshHost          = "host";
    const char* xmlSshUser          = "user";
    const char* xmlSshPort          = "port";
+   const char* xmlSshInit          = "init";
    const char* xmlSshTest          = "test";
    const char* xmlSshTimeout       = "timeout";
    const char* xmlDABCSYS          = "DABCSYS";
@@ -541,6 +552,7 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const cha
    const char* username = Find1(contnode, 0, xmlRunNode, xmlSshUser);
    const char* portid = Find1(contnode, 0, xmlRunNode, xmlSshPort);
    const char* timeout = Find1(contnode, 0, xmlRunNode, xmlSshTimeout);
+   const char* initcmd = Find1(contnode, 0, xmlRunNode, xmlSshInit);
    const char* testcmd = Find1(contnode, 0, xmlRunNode, xmlSshTest);
 
    const char* dabcsys = Find1(contnode, 0, xmlRunNode, xmlDABCSYS);
@@ -551,16 +563,15 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const cha
    const char* cfgfile = Find1(contnode, 0, xmlRunNode, xmlConfigFile);
    const char* cfgid = Find1(contnode, 0, xmlRunNode, xmlConfigFileId);
 
-   if (dabcsys==0) dabcsys = getenv("DABCSYS");
-   if (dabcsys==0) {
-      EOUT(("DABCSYS not specified!!!"));
-      return dabc::String("");
-   }
+   const char* envdabcsys = getenv("DABCSYS");
 
    if ((topcfgfile==0) && (cfgfile==0)) {
       EOUT(("Config file not defined"));
       return dabc::String("");
    }
+
+//  char currdir[1024];
+// if (!getcwd(currdir, sizeof(currdir))) strcpy(currdir,".");
 
    if (workdir==0) workdir = topworkdir;
 
@@ -596,9 +607,17 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const cha
 
 //      res += FORMAT ((" . gsi_environment.sh; echo $HOST - %s; ls /data.local1; exit 243", hostname));
 
+      if (initcmd!=0) res += FORMAT((" %s;", initcmd));
+
       if (testcmd!=0) res += FORMAT((" %s;", testcmd));
 
-      res += FORMAT((" if [ ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", dabcsys, dabcsys));
+      if (dabcsys!=0)
+         res += FORMAT((" if [ ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", dabcsys, dabcsys));
+      else
+      if (envdabcsys!=0)
+         res += FORMAT((" if [ z $DABSYS -a ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", envdabcsys, envdabcsys));
+      else
+         res += " if [ z $DABCSYS ] ; then echo DABCSYS not specified; exit 7; fi;";
 
       if (workdir!=0) {
          String dir = ResolveEnv(workdir);
@@ -622,14 +641,28 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const cha
    if (kind == kindStart) {
       // this is main run arguments
 
-      res += " ";
+      if (initcmd!=0) res += FORMAT((" %s;", initcmd));
 
-      res += FORMAT(("export DABCSYS=%s; ", dabcsys));
+      String ld;
+      if (ldpath) res = ResolveEnv(ldpath);
+      if (userdir) { if (res.length()>0) res += ":"; res += ResolveEnv(userdir); }
 
-      res += "export LD_LIBRARY_PATH=";
-      if (ldpath) { res += ResolveEnv(ldpath); res+=":"; }
-      if (userdir) { res += ResolveEnv(userdir); res+="/lib:"; }
-      res += "$DABCSYS/lib:$LD_LIBRARY_PATH;";
+      if (dabcsys!=0) {
+         res += FORMAT((" export DABCSYS=%s;", dabcsys));
+         res += " export LD_LIBRARY_PATH=";
+         if (ld.length()>0) { res += ld; res+=":"; }
+         res += "$DABCSYS/lib:$LD_LIBRARY_PATH;";
+      } else
+      if (envdabcsys!=0) {
+         res += FORMAT(( " if [ z $DABCSYS -a -d %s ] ; then export DABCSYS=%s;", envdabcsys, envdabcsys));
+         res += " export LD_LIBRARY_PATH=";
+         if (ld.length()>0) { res += ld; res+=":"; }
+         res += "$DABCSYS/lib:$LD_LIBRARY_PATH; fi;";
+      } else
+      if (ld.length()>0) {
+         res += " if [ z $DABCSYS ] ; then echo DABCSYS not specified; exit 7; fi;";
+         res+=FORMAT((" export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH;", ld.c_str()));
+      }
 
       if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
 
