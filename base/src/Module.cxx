@@ -176,13 +176,9 @@ void dabc::Module::Start()
 
 void dabc::Module::Stop()
 {
-   DOUT1(("Stop module %s thrd %s itself %s", GetName(), DNAME(ProcessorThread()),
-         DBOOL(ProcessorThread()->IsItself())));
-
    Execute("StopModule");
 
-   DOUT1(("Stop module %s thrd %s done", GetName(), DNAME(ProcessorThread())));
-
+   DOUT4(("Stop module %s thrd %s done", GetName(), DNAME(ProcessorThread())));
 }
 
 int dabc::Module::PreviewCommand(Command* cmd)
@@ -211,7 +207,7 @@ int dabc::Module::PreviewCommand(Command* cmd)
       cmd_res = WorkingProcessor::PreviewCommand(cmd);
 
    if (cmd_res!=cmd_ignore)
-      DOUT1(("Module:%s PreviewCommand %s res=%d", GetName(), cmd->GetName(), cmd_res));
+      DOUT3(("Module:%s PreviewCommand %s res=%d", GetName(), cmd->GetName(), cmd_res));
 
    return cmd_res;
 }
@@ -236,8 +232,6 @@ bool dabc::Module::DoStart()
 
 bool dabc::Module::DoStop()
 {
-   DOUT1(("Module %s DoStop", GetName()));
-
    if (WorkStatus()<=0) return false;
 
    for (unsigned n=0;n<fItems.size();n++) {
@@ -247,11 +241,7 @@ bool dabc::Module::DoStop()
 
    fWorkStatus = 0;
 
-   DOUT1(("Module %s call AfterModuleStop", GetName()));
-
    AfterModuleStop();
-
-   DOUT1(("Module %s DoStop done", GetName()));
 
    return true;
 }

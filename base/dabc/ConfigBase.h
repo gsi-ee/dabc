@@ -33,9 +33,20 @@ namespace dabc {
    extern const char* xmlConfigFileId;
    extern const char* xmlUserLib;
 
+   extern const char* xmlXDAQPartition;
+   extern const char* xmlXDAQContext;
+   extern const char* xmlXDAQApplication;
+   extern const char* xmlXDAQproperties;
+   extern const char* xmlXDAQinstattr;
+   extern const char* xmlXDAQurlattr;
+   extern const char* xmlXDAQModule;
+   extern const char* xmlXDAQdebuglevel;
+
 
    class ConfigBase {
       protected:
+         enum ESshArgsKinds { kindTest, kindStart, kindStop, kindKill, kindConn };
+
          XmlEngine         fXml;
          XMLDocPointer_t   fDoc;
          int               fVersion;  // -1 - error, 0 - xdaq, 1 and more - dabc
@@ -114,7 +125,7 @@ namespace dabc {
          String NodeName(unsigned id);
 
          // method used by run.sh script to produce command line when test(0), run(1), conn(2), kill(3) application
-         String SshArgs(unsigned id = 0, int kind = 0, const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);
+         String SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);
 
          String ResolveEnv(const char* arg);
 

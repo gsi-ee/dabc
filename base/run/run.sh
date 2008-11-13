@@ -1,43 +1,41 @@
 #!/bin/bash
 
 echo "Shell script to run dabc application in simple (without XDAQ/dim) environment"
-echo "  Usage: run.sh filename.xml [test|kill]"
-
-XMLFILE=$1
+echo "  Usage: run.sh filename.xml [run|start|stop|test|kill]  [-v|--verbose]"
 
 #arg1="ssh lxi002"
 #arg='. gsi_environment.sh; echo $HOST : $HOST; ls'
 #$arg1 $arg
 #exit 0
 
+XMLFILE=$1
+shift
+if [ ! -f $XMLFILE ] ; then echo "file $XMLFILE not exists"; exit 1; fi
 
-if [[ "x$XMLFILE" == "x" ]]
-then
-   echo "XML file is not specified"
-   exit 1
-fi
+VERBOSE=false
+RUNMODE=run
+while [[ "x$1" != "x" ]] ; do
+   if [[ "$1" == "-v" || "$1" == "--vebrose" ]] ; then 
+      VERBOSE=true;
+   else
+      RUNMODE=$1;   
+   fi  
+   shift
+done
+
+echo "Choosen run mode = $RUNMODE verbose = $VERBOSE" 
+
 
 curdir=`pwd`
-
-if [[ "x$DABCSYS" == "x" ]]
-then
-   DABCSYS=$curdir
-   echo "DABCSYS not specified, use current dir $DABCSYS"
-fi
+if [[ "x$DABCSYS" == "x" ]] ; then DABCSYS=$curdir; echo DABCSYS not specified, use current dir $DABCSYS; fi
 
 dabc_xml=`which dabc_xml`
-if [[ "x$dabc_xml" == "x" ]]
-then
-   echo "Cannot find dabc_xml executable"
-   exit 1
-fi
-
+if [[ "x$dabc_xml" == "x" ]] ; then echo Cannot find dabc_xml executable; exit 1; fi
 
 numnodes=`$dabc_xml $XMLFILE -number`
-
 retval=$?
 if [ $retval -ne 0 ]; then
-   echo "Cannot identify number of nodes in $XMLFILE - ret = $retval syntax error?"
+   echo Cannot identify number of nodes in $XMLFILE - ret = $retval syntax error?
    exit $retval
 fi
 
@@ -52,47 +50,49 @@ echo "Total numnodes = $numnodes, check all of them that we can log in"
 currdir=`pwd`
 
 ###########################################################
-# first loop, where only test login to the nodes are done
+# first loop, where only test/stop/kill are done
 ###########################################################
 
+if [[ "$RUNMODE" != "start" ]] 
+then
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
-   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -sshtest`
+   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -ssh $RUNMODE`
    retval=$?
    if [ $retval -ne 0 ]; then
       echo "Cannot identify test call args for node $counter  err = $retval"
       exit $retval
    fi
    
-#   echo $callargs
+   if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
    
    $callargs
 
-   retval=$?
-   if [ $retval -ne 0 ]; then
-      echo "Test sequence for node $counter fail err = $retval"
-      exit $retval
+   retval=$? 
+   if [[ "$RUNMODE" == "test" || "$RUNMODE" == "run" ]] ; then 
+      if [ $retval -ne 0 ] ; then
+         echo Mode $RUNMODE fail for node $counter with err = $retval
+         exit $retval
+      fi
    fi
 done
-
-if [[ "$2" == "test" ]]
-then
-   echo "We only did tests of login"
-   exit 0
 fi
+
+if [[ "$RUNMODE" == "run" || "$RUNMODE" == "start" ]]
+then
 
 connstr=file.id
 
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
-   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -sshrun`
+   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -ssh start`
    retval=$?
    if [ $retval -ne 0 ]; then
       echo "Cannot identify test call args for node $counter  err = $retval"
       exit $retval
    fi
-   
-   echo $callargs
+
+   if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
    
    $callargs &
 
@@ -109,9 +109,9 @@ do
    
    if (( counter == 0 ))
    then
-      callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -sshconn`
+      callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -ssh conn`
 
-      echo $callargs
+      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
       
       for (( cnt=10; cnt>0; cnt=cnt-1)) ; do 
          connstr=`$callargs`
@@ -122,7 +122,10 @@ do
          fi
          if [[ "x$connstr" == "x" ]] ; then sleep 1; else cnt=0; fi
       done 
-   
-      echo "New connection string is $connstr"
+
+      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: Connection string is $connstr; fi
    fi
 done
+
+fi
+

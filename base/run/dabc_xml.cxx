@@ -45,23 +45,10 @@ int main(int numc, char* args[])
 //         DOUT1(("Produce cluster file %s", configuration));
 //      } else
       if (strcmp(arg,"-ssh") == 0) {
-         if (configid<0) return 5;
-         std::cout << cfg.SshArgs(configid, 3, configuration, workdir, connstr) << std::endl;
-         std::cout.flush();
-      } else
-      if (strcmp(arg,"-sshtest") == 0) {
-         if (configid<0) return 5;
-         std::cout << cfg.SshArgs(configid, 0, configuration, workdir, connstr) << std::endl;
-         std::cout.flush();
-      } else
-      if (strcmp(arg,"-sshrun") == 0) {
-         if (configid<0) return 5;
-         std::cout << cfg.SshArgs(configid, 1, configuration, workdir, connstr) << std::endl;
-         std::cout.flush();
-      } else
-      if (strcmp(arg,"-sshconn") == 0) {
-         if (configid<0) return 5;
-         std::cout << cfg.SshArgs(configid, 2, configuration, workdir, connstr) << std::endl;
+         const char* kind = (cnt < numc) ? args[cnt++] : "start";
+         dabc::String res = cfg.SshArgs(configid, kind, configuration, workdir, connstr);
+         if (res.length()==0) return 7;
+         std::cout << res << std::endl;
          std::cout.flush();
       } else
       if (strstr(arg,"-nodename")==arg) {

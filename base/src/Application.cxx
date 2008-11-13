@@ -117,11 +117,8 @@ bool dabc::Application::DoStateTransition(const char* state_trans_name)
       res = dabc::mgr()->StartAllModules() && res;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoStop)==0) {
-      DOUT1(("DoStop 1"));
       res = dabc::mgr()->StopAllModules();
-      DOUT1(("DoStop 2"));
       res = Execute("AfterAppModulesStopped", SMCommandTimeout()) && res;
-      DOUT1(("DoStop 3"));
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoHalt)==0) {
       res = Execute("BeforeAppModulesDestroyed", SMCommandTimeout());

@@ -6,7 +6,7 @@
 
 #include <iostream>
 
-int RunSimpleApplication(dabc::Configuration* cfg, const char* appclass)
+int RunSimpleApplication(dabc::Configuration* cfg)
 {
    dabc::Manager manager("dabc", true);
 
@@ -14,8 +14,8 @@ int RunSimpleApplication(dabc::Configuration* cfg, const char* appclass)
 
    cfg->LoadLibs();
 
-   if (!manager.CreateApplication(appclass)) {
-      EOUT(("Cannot create application of specified class %s", (appclass ? appclass : "???")));
+   if (!manager.CreateApplication()) {
+      EOUT(("Cannot create application"));
       return 1;
    }
 
@@ -138,7 +138,6 @@ int main(int numc, char* args[])
    dabc::SetDebugLevel(1);
 
    const char* configuration = "SetupRoc.xml";
-   const char* appclass = 0;
    const char* workdir = 0;
    const char* logfile = 0;
 
@@ -181,8 +180,7 @@ int main(int numc, char* args[])
       if (strcmp(arg,"-conn")==0) {
          if (cnt < numc)
             connid = args[cnt++];
-      } else
-         if (appclass==0) appclass = arg;
+      }
    }
 
    if (numnodes==0) numnodes = cfg.NumNodes();
@@ -198,7 +196,7 @@ int main(int numc, char* args[])
    }
 
    if (numnodes<2)
-      return RunSimpleApplication(&cfg, appclass);
+      return RunSimpleApplication(&cfg);
 
    if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcSctrl.so")) {
       EOUT(("Cannot load control library"));
@@ -218,8 +216,8 @@ int main(int numc, char* args[])
 
    cfg.LoadLibs();
 
-   if (!dabc::mgr()->CreateApplication(appclass)) {
-      EOUT(("Cannot create application %s", appclass));
+   if (!dabc::mgr()->CreateApplication()) {
+      EOUT(("Cannot create application"));
       delete dabc::mgr();
       return 1;
    }

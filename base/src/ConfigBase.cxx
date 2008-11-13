@@ -9,8 +9,11 @@ namespace dabc {
    const char* xmlXDAQPartition    = "Partition";
    const char* xmlXDAQContext      = "Context";
    const char* xmlXDAQApplication  = "Application";
+   const char* xmlXDAQproperties   = "properties";
    const char* xmlXDAQinstattr     = "instance";
    const char* xmlXDAQurlattr      = "url";
+   const char* xmlXDAQModule       = "Module";
+   const char* xmlXDAQdebuglevel   = "debugLevel";
 
 }
 
@@ -94,25 +97,37 @@ dabc::String dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int kind, const c
       return String("");
    }
 
-   if (kind == 0) {
+   if (kind == kindTest) {
       res += " echo only test for node ";
       res += nodename;
 
    } else
-   if (kind == 1) {
+   if (kind == kindStart) {
       res += FORMAT((" export DABCSYS=%s; ", dabcsys));
       res += " export LD_LIBRARY_PATH=$DABCSYS/lib:$LD_LIBRARY_PATH;";
       res += FORMAT((" cd %s;", topworkdir));
-      res += FORMAT(("$DABCSYS/bin/dabc_run %s -nodeid %u", topcfgfile, instance));
+      res += FORMAT(("$DABCSYS/bin/dabc_run %s -cfgid %u -nodeid %u -numnodes %u", topcfgfile, instance, instance, NumNodes()));
 
+      if (connstr!=0) res += FORMAT((" -conn %s", connstr));
+   } else
+   if (kind == kindConn) {
+      // this is way to get connection string
+      if (connstr==0) {
+         res += " echo No connection string specified; exit 1";
+      } else {
+         res += FORMAT((" cd %s;", topworkdir));
+         res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
+      }
+   } else
+   if (kind == kindKill) {
+      res += " killall --quiet dabc_run";
+   } else
+   if (kind == kindStop) {
+      res += " pkill -SIGINT dabc_run";
    }
 
-
    return res;
-
 }
-
-
 
 // ________________________________________________________________________________
 
@@ -497,8 +512,20 @@ dabc::String dabc::ConfigBase::ResolveEnv(const char* arg)
    return name;
 }
 
-dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr)
+dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char* topcfgfile, const char* topworkdir, const char* connstr)
 {
+   if (skind==0) skind = "test";
+
+   int kind = -1;
+   if (strcmp(skind, "kill")==0) kind = kindKill; else
+   if (strcmp(skind, "start")==0) kind = kindStart; else
+   if (strcmp(skind, "stop")==0) kind = kindStop; else
+   if (strcmp(skind, "test")==0) kind = kindTest; else
+   if (strcmp(skind, "run")==0) kind = kindTest; else
+   if (strcmp(skind, "conn")==0) kind = kindConn;
+
+   if (kind<0) return String("");
+
    if (IsXDAQ()) return XDAQ_SshArgs(id, kind, topcfgfile, topworkdir, connstr);
 
    String res;
@@ -564,7 +591,7 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfg
 
    res += hostname;
 
-   if (kind == 0) {
+   if (kind == kindTest) {
       // this is a way to get test arguments
 
 //      res += FORMAT ((" . gsi_environment.sh; echo $HOST - %s; ls /data.local1; exit 243", hostname));
@@ -592,7 +619,7 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfg
 //      res += "'";
    } else
 
-   if (kind == 1) {
+   if (kind == kindStart) {
       // this is main run arguments
 
       res += " ";
@@ -633,12 +660,20 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfg
       if (connstr!=0) res += FORMAT((" -conn %s", connstr));
 
    } else
-   if (kind == 2) {
+   if (kind == kindConn) {
       // this is way to get connection string
-      if (connstr==0) connstr = "dummyfile.txt";
-
-      if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
-      res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
+      if (connstr==0) {
+         res += " echo No connection string specified; exit 1";
+      } else {
+         if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
+         res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
+      }
+   } else
+   if (kind == kindKill) {
+      res += " killall --quiet dabc_run";
+   } else
+   if (kind == kindStop) {
+      res += " pkill -SIGINT dabc_run";
    }
 
    return res;

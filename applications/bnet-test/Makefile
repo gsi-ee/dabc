@@ -30,7 +30,8 @@ $(BNETTEST_LIB):  $(BNETTEST_O)
 	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH)
 ifneq ($(wildcard ~/run/bnet),)
 	cp -f $(BNETTEST_LIB) ~/run/bnet
-	cp -f $(DABCDLLPATH)/*.$(DllSuf) $(DABCBINPATH)/bnet_exe ~/run/bnet
+	cp -f $(DABCDLLPATH)/*.$(DllSuf) ~/run/bnet 
+	cp -f $(DABCBINPATH)/bnet_exe ~/run/bnet
 	cp -f $(BNETBINPATH)/* ~/run/bnet
 endif
 	@echo "$@  done"

@@ -12,7 +12,7 @@ namespace dabc {
          XMLNodePointer_t  fSelected; // selected context node
 
          bool XDAQ_LoadLibs();
-
+         bool XDAQ_ReadPars();
       public:
          Configuration(const char* fname);
          ~Configuration();
@@ -21,7 +21,7 @@ namespace dabc {
 
          bool LoadLibs();
 
-         bool ReadPars() { return true; }
+         bool ReadPars();
    };
 
 
