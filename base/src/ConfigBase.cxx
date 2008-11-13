@@ -638,7 +638,7 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, int kind, const char* topcfg
       if (connstr==0) connstr = "dummyfile.txt";
 
       if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
-      res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; else exit 1; fi", connstr, connstr, connstr));
+      res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
    }
 
    return res;

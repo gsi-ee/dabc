@@ -49,11 +49,13 @@ fi
 
 echo "Total numnodes = $numnodes, check all of them that we can log in"
 
-counter=0
-
 currdir=`pwd`
 
-while [[ "$counter" != "$numnodes" ]]
+###########################################################
+# first loop, where only test login to the nodes are done
+###########################################################
+
+for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
    callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -sshtest`
    retval=$?
@@ -71,8 +73,6 @@ do
       echo "Test sequence for node $counter fail err = $retval"
       exit $retval
    fi
-
-   counter=`expr $counter + 1`
 done
 
 if [[ "$2" == "test" ]]
@@ -81,10 +81,9 @@ then
    exit 0
 fi
 
-counter=0
 connstr=file.id
 
-while [[ "$counter" != "$numnodes" ]]
+for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
    callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -sshrun`
    retval=$?
@@ -102,72 +101,28 @@ do
       echo "Run of dabc application for node $counter fails err = $retval"
       exit $retval
    fi
+
+   ####################################################################
+   # this is special part to get connection string from first node
+   # only required for SimpleControl, for DIM control must be deactivated
+   ####################################################################
    
-   if [[ "$counter" == "0" ]]
+   if (( counter == 0 ))
    then
       callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -sshconn`
 
       echo $callargs
       
-      sleep 3
-      
-      connstr=`$callargs`
+      for (( cnt=10; cnt>0; cnt=cnt-1)) ; do 
+         connstr=`$callargs`
+         retval=$?
+         if [ $retval -ne 0 ]; then
+            echo "Get connect information fails err = $retval"
+            exit $retval
+         fi
+         if [[ "x$connstr" == "x" ]] ; then sleep 1; else cnt=0; fi
+      done 
    
       echo "New connection string is $connstr"
-      
-      exit 1 
    fi
-   
-   counter=`expr $counter + 1`
 done
-
-exit 0
-
-
-if [[ "$2" == "kill" ]]
-then
-   echo "We only did kills"
-   exit 0
-fi
-
-
-echo "Now try to run DABC an all tested nodes"
-
-counter=0
-
-connstr=file.id
-rm -f $connstr 
-
-while [[ "$counter" != "$numnodes" ]]
-do
-   nodename=`$DABCSYS/bin/dabc_run $XMLFILE -name$counter`
-   echo "Node $counter is $nodename"
-   callargs="cd $curdir; export DABCSYS=$DABCSYS; export LD_LIBRARY_PATH=$DABCSYS/lib; $DABCSYS/bin/dabc_run $XMLFILE -id$counter -num$numnodes -conn$connstr"
-   echo $callargs
-   
-   ssh $nodename "$callargs" &
-   
-   if [[ "$counter" == "0" ]]
-   then
-      waitcnt=0
-      while [[ ! -f $connstr ]] 
-      do
-         sleep 1
-         waitcnt=`expr $waitcnt + 1`
-         if [[ "$waitcnt" == "10" ]] 
-         then
-            echo "No connection info after 10 sec"
-            exit 1 
-         fi
-      done
-      connstr=`cat $connstr`
-      echo "Connection id for master = $connstr  wait $waitcnt"
-      rm -f file.id
-   fi
-   
-#   ssh $nodename "echo hello" &
-   
-   counter=`expr $counter + 1`
-done
-
-exit 0
