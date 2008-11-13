@@ -116,6 +116,10 @@ namespace dabc {
          bool IsAnyOutputBlocked() const;
          void SendToAllOutputs(Buffer* buf);
 
+         virtual const char* MasterClassName() const { return "Module"; }
+         virtual const char* ClassName() const { return "Module"; }
+         virtual bool UseMasterClassName() const { return true; }
+
       protected:
 
          // these two methods called before start and after stop of module

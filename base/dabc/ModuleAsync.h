@@ -17,7 +17,6 @@ namespace dabc {
          // here is a list of methods,
          // which can be reimplemented in user code
 
-
          // Either generic event processing function must be reimplemented
          virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid);
 

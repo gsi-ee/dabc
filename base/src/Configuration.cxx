@@ -89,7 +89,10 @@ bool dabc::Configuration::XDAQ_ReadPars()
 
 dabc::Configuration::Configuration(const char* fname) :
    ConfigBase(fname),
-   fSelected(0)
+   ConfigIO(),
+   fSelected(0),
+   fStoreStack(),
+   fStoreLastPop(0)
 {
 }
 
@@ -158,4 +161,69 @@ bool dabc::Configuration::ReadPars()
    if (IsXDAQ()) return XDAQ_ReadPars();
 
    return true;
+}
+
+
+bool dabc::Configuration::CreateItem(const char* name, const char* value)
+{
+   XMLNodePointer_t parent = 0;
+   if (fStoreStack.size() > 0) parent = fStoreStack.back();
+   XMLNodePointer_t item = fXml.NewChild(parent, 0, name, value);
+   fStoreStack.push_back(item);
+   return true;
+}
+
+bool dabc::Configuration::CreateAttr(const char* name, const char* value)
+{
+   if (fStoreStack.size() == 0) return false;
+   XMLNodePointer_t parent = fStoreStack.back();
+   fXml.NewAttr(parent, 0, name, value);
+   return true;
+}
+
+bool dabc::Configuration::PopItem()
+{
+   if (fStoreStack.size() == 0) return false;
+   fStoreLastPop = fStoreStack.back();
+   fStoreStack.pop_back();
+   return true;
+}
+
+bool dabc::Configuration::PushLastItem()
+{
+   if (fStoreLastPop==0) return false;
+   fStoreStack.push_back(fStoreLastPop);
+   fStoreLastPop = 0;
+   return true;
+}
+
+bool dabc::Configuration::StoreObject(const char* fname, Basic* obj)
+{
+   if (obj == 0) return false;
+
+   fStoreStack.clear();
+   fStoreLastPop = 0;
+
+   obj->Store(*this);
+
+   if ((fStoreStack.size()!=0) || (fStoreLastPop==0)) {
+      EOUT(("Error during store of object %s", obj->GetName()));
+      if (fStoreStack.size()==0)
+         fXml.FreeNode(fStoreLastPop);
+      else
+         fXml.FreeNode(fStoreStack.front());
+      fStoreStack.clear();
+      fStoreLastPop = 0;
+      return false;
+   }
+
+   XMLDocPointer_t doc = fXml.NewDoc();
+   fXml.DocSetRootElement(doc, fStoreLastPop);
+   fXml.SaveDoc(doc, fname);
+   fXml.FreeDoc(doc);
+
+   fStoreLastPop = 0;
+
+   return true;
+
 }

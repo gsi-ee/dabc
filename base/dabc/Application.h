@@ -45,6 +45,10 @@ namespace dabc {
 
           void InvokeCheckModulesCmd();
 
+          virtual const char* MasterClassName() const { return "Application"; }
+          virtual const char* ClassName() const { return "Application"; }
+          virtual bool UseMasterClassName() const { return true; }
+
        protected:
           virtual double ProcessTimeout(double last_diff);
 

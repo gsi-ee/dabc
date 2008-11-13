@@ -181,3 +181,27 @@ dabc::Folder* dabc::Folder::GetFolder(const char* name, bool force, bool isowner
    // here we need recursive mutex, while in constructor new lock will be required
    return new Folder(this, name, isowner);
 }
+
+bool dabc::Folder::Store(ConfigIO &cfg)
+{
+   if (UseMasterClassName()) {
+      cfg.CreateItem(MasterClassName());
+      cfg.CreateAttr("name", GetName());
+   } else {
+      cfg.CreateItem(GetName());
+   }
+
+   if ((MasterClassName()!=0) && (ClassName()!=0) &&
+       (strcmp(ClassName(), MasterClassName())!=0))
+          cfg.CreateAttr("class", ClassName());
+
+   for (unsigned n=0; n<NumChilds(); n++) {
+      Basic* child = GetChild(n);
+      if (child!=0) child->Store(cfg);
+   }
+
+   cfg.PopItem();
+
+   return true;
+}
+

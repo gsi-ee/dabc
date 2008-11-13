@@ -16,6 +16,9 @@ namespace dabc {
          Folder(Basic* parent, const char* name, bool owner = false);
          virtual ~Folder();
 
+         virtual const char* MasterClassName() const { return "Folder"; }
+         virtual const char* ClassName() const { return "Folder"; }
+
          virtual void AddChild(Basic* child);
          virtual void RemoveChild(Basic* child);
          void DeleteChilds(int appid = -1);
@@ -26,6 +29,8 @@ namespace dabc {
          Basic* FindChild(const char* name) const;
          bool IsChild(Basic* obj) const;
          bool IsOwner() const { return fOwner; }
+
+         virtual bool Store(ConfigIO &cfg);
 
       protected:
          Folder* GetFolder(const char* name,

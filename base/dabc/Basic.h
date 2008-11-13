@@ -5,12 +5,17 @@
 #include "dabc/string.h"
 #endif
 
+#ifndef DABC_ConfigIO
+#include "dabc/ConfigIO.h"
+#endif
+
 namespace dabc {
 
    class Manager;
    class CommandReceiver;
    class Folder;
    class Mutex;
+   class Configuration;
 
    class Basic {
       friend class Folder;
@@ -19,6 +24,11 @@ namespace dabc {
       public:
          Basic(Basic* parent, const char* name);
          virtual ~Basic();
+
+         // these three methods describes look of element in xml file
+         virtual const char* MasterClassName() const { return "Basic"; }
+         virtual const char* ClassName() const { return "Basic"; }
+         virtual bool UseMasterClassName() const { return false; }
 
          // here we listed all thread-safe methods
 
@@ -44,6 +54,8 @@ namespace dabc {
 
          int GetAppId() const { return fAppId; }
          void SetAppId(int id = 0) { fAppId = id; }
+
+         virtual bool Store(ConfigIO &cfg) { return true; }
 
          static long NumInstances() { return gNumInstances; }
 

@@ -110,7 +110,7 @@ namespace dabc {
          String XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr);
 
       public:
-         ConfigBase(const char* fname);
+         ConfigBase(const char* fname = 0);
          ~ConfigBase();
 
          // following methods implemented for both XDAQ/native xml formats

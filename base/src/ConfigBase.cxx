@@ -179,6 +179,8 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
    envDABCUSERDIR(),
    envDABCNODEID()
 {
+   if (fname==0) return;
+
    fDoc = fXml.ParseFile(fname, true);
 
    XMLNodePointer_t rootnode = fXml.DocGetRootElement(fDoc);
