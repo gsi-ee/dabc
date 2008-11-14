@@ -272,10 +272,10 @@ bool dabc::ConfigBase::ProduceClusterFile(const char* fname, int numnodes)
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindItemMatch(XMLNodePointer_t& lastmatch,
-                                                          XMLNodePointer_t node,
-                                                          const char* sub1,
-                                                          const char* sub2,
-                                                          const char* sub3)
+                                                       XMLNodePointer_t node,
+                                                       const char* sub1,
+                                                       const char* sub2,
+                                                       const char* sub3)
 {
    if (sub1==0) return 0;
 
@@ -340,13 +340,13 @@ bool dabc::ConfigBase::NodeMaskMatch(XMLNodePointer_t node, XMLNodePointer_t mas
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindNodesMatch(
-      XMLNodePointer_t& lastmatch,
-      XMLNodePointer_t searchfold,
-      XMLNodePointer_t topnode,
-      XMLNodePointer_t node,
-      const char* sub1,
-      const char* sub2,
-      const char* sub3)
+        XMLNodePointer_t& lastmatch,
+        XMLNodePointer_t searchfold,
+        XMLNodePointer_t topnode,
+        XMLNodePointer_t node,
+        const char* sub1,
+        const char* sub2,
+        const char* sub3)
 {
    if (searchfold==0) return 0;
 
@@ -383,11 +383,11 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindNodesMatch(
 
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
-                                                      XMLNodePointer_t topnode,
-                                                      XMLNodePointer_t node,
-                                                      const char* sub1,
-                                                      const char* sub2,
-                                                      const char* sub3)
+                                                   XMLNodePointer_t topnode,
+                                                   XMLNodePointer_t node,
+                                                   const char* sub1,
+                                                   const char* sub2,
+                                                   const char* sub3)
 {
    if (node==0) return 0;
 

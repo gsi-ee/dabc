@@ -56,6 +56,8 @@ namespace dabc {
          void SetAppId(int id = 0) { fAppId = id; }
 
          virtual bool Store(ConfigIO &cfg) { return true; }
+         virtual bool Find(ConfigIO &cfg) { return true; }
+         virtual bool Read(ConfigIO &cfg) { return true; }
 
          static long NumInstances() { return gNumInstances; }
 

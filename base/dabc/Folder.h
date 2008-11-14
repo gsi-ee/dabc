@@ -31,6 +31,7 @@ namespace dabc {
          bool IsOwner() const { return fOwner; }
 
          virtual bool Store(ConfigIO &cfg);
+         virtual bool Find(ConfigIO &cfg);
 
       protected:
          Folder* GetFolder(const char* name,

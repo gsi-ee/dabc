@@ -205,3 +205,23 @@ bool dabc::Folder::Store(ConfigIO &cfg)
    return true;
 }
 
+bool dabc::Folder::Find(ConfigIO &cfg)
+{
+   if (GetParent())
+      if (!GetParent()->Find(cfg)) return false;
+
+   const char* searchname = GetName();
+   if (UseMasterClassName()) searchname = MasterClassName();
+
+   if (!cfg.FindItem(searchname, GetParent() ? ConfigIO::findChild : ConfigIO::findTop)) return false;
+
+   if (UseMasterClassName())
+      if (!cfg.CheckAttr("name", GetName())) return false;
+
+   if ((MasterClassName()!=0) && (ClassName()!=0) &&
+       (strcmp(ClassName(), MasterClassName())!=0))
+          if (!cfg.CheckAttr("class", ClassName())) return false;
+
+   return true;
+}
+

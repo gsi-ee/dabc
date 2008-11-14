@@ -66,6 +66,7 @@ namespace dabc {
          int InvokeChange(dabc::Command* cmd);
 
          virtual bool Store(ConfigIO &cfg);
+         virtual bool Read(ConfigIO &cfg);
 
       protected:
 

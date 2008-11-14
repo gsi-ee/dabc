@@ -92,7 +92,9 @@ dabc::Configuration::Configuration(const char* fname) :
    ConfigIO(),
    fSelected(0),
    fStoreStack(),
-   fStoreLastPop(0)
+   fStoreLastPop(0),
+   fCurrMasterItem(0),
+   fCurrItem(0)
 {
 }
 
@@ -160,6 +162,17 @@ bool dabc::Configuration::ReadPars()
 
    if (IsXDAQ()) return XDAQ_ReadPars();
 
+   Application* app = mgr()->GetApp();
+   if (app==0) return false;
+
+   Folder* f = app->GetParsFolder();
+   if (f==0) return false;
+
+   for (unsigned n = 0; n < f->NumChilds(); n++) {
+      Parameter* par = dynamic_cast<Parameter*> (f->GetChild(n));
+      if (par!=0) par->Read(*this);
+   }
+
    return true;
 }
 
@@ -225,5 +238,41 @@ bool dabc::Configuration::StoreObject(const char* fname, Basic* obj)
    fStoreLastPop = 0;
 
    return true;
-
 }
+
+bool dabc::Configuration::FindItem(const char* name, FindKinds kind)
+{
+   switch (kind) {
+      case selectTop:
+         if (!IsNative() || (fSelected==0)) return false;
+         fCurrItem = fSelected;
+         return true;
+
+      case findTop:
+         if (!IsNative() || (fSelected==0)) return false;
+         fCurrItem = FindChild(fSelected, name);
+         return fCurrItem != 0;
+
+      case findChild:
+         if (fCurrItem==0) return false;
+         fCurrItem = FindChild(fCurrItem, name);
+         return fCurrItem != 0;
+
+      default:
+         return false;
+   }
+
+   return false;
+}
+
+const char* dabc::Configuration::GetItemValue()
+{
+   return fXml.GetNodeContent(fCurrItem);
+}
+
+const char* dabc::Configuration::GetAttrValue(const char* name)
+{
+   return fXml.GetAttr(fCurrItem, name);
+}
+
+

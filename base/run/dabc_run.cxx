@@ -21,7 +21,7 @@ int RunSimpleApplication(dabc::Configuration* cfg)
 
    cfg->ReadPars();
 
-   //cfg->StoreObject("Manager.xml", dabc::mgr());
+//   cfg->StoreObject("Manager.xml", dabc::mgr());
 
    // set states of manager to running here:
    if(!manager.DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
@@ -44,7 +44,7 @@ int RunSimpleApplication(dabc::Configuration* cfg)
    DOUT1(("Application mainloop is now running"));
    DOUT1(("       Press ctrl-C for stop"));
 
-   //cfg->StoreObject("Manager2.xml", dabc::mgr());
+//   cfg->StoreObject("Manager2.xml", dabc::mgr());
 
    manager.RunManagerMainLoop();
 

@@ -96,6 +96,23 @@ bool dabc::Parameter::Store(ConfigIO &cfg)
    return true;
 }
 
+bool dabc::Parameter::Read(ConfigIO &cfg)
+{
+   if (GetParent()==0) return false;
+
+   if (!GetParent()->Find(cfg)) return false;
+
+   if (!cfg.FindItem(GetName(), ConfigIO::findChild)) return false;
+
+   const char* value = cfg.GetItemValue();
+
+   DOUT0(("Set parameter %s = %s", GetFullName().c_str(), (value ? value : "null")));
+
+   SetStr(value);
+
+   return true;
+}
+
 // __________________________________________________________
 
 dabc::RateParameter::RateParameter(WorkingProcessor* parent, const char* name, bool synchron, double interval, bool visible) :

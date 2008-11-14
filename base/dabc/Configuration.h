@@ -24,6 +24,9 @@ namespace dabc {
          std::list<XMLNodePointer_t> fStoreStack; // stack of nodes during store
          XMLNodePointer_t fStoreLastPop; // last pop-ed item
 
+         XMLNodePointer_t fCurrMasterItem; // current top (master) item in search
+         XMLNodePointer_t fCurrItem; // currently found item
+
          bool XDAQ_LoadLibs();
          bool XDAQ_ReadPars();
 
@@ -41,6 +44,10 @@ namespace dabc {
          virtual bool CreateAttr(const char* name, const char* value);
          virtual bool PopItem();
          virtual bool PushLastItem();
+
+         virtual bool FindItem(const char* name, FindKinds kind);
+         virtual const char* GetItemValue();
+         virtual const char* GetAttrValue(const char* name);
 
          bool StoreObject(const char* fname, Basic* obj);
 
