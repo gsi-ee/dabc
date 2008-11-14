@@ -93,8 +93,8 @@ dabc::Configuration::Configuration(const char* fname) :
    fSelected(0),
    fStoreStack(),
    fStoreLastPop(0),
-   fCurrMasterItem(0),
-   fCurrItem(0)
+   fCurrItem(0),
+   fLastTop(0)
 {
 }
 
@@ -242,21 +242,45 @@ bool dabc::Configuration::StoreObject(const char* fname, Basic* obj)
 
 bool dabc::Configuration::FindItem(const char* name, FindKinds kind)
 {
+   if (!IsNative() || (fSelected==0)) return false;
+
    switch (kind) {
+
       case selectTop:
-         if (!IsNative() || (fSelected==0)) return false;
          fCurrItem = fSelected;
+         fSearchLevel = 0;
          return true;
 
-      case findTop:
-         if (!IsNative() || (fSelected==0)) return false;
-         fCurrItem = FindChild(fSelected, name);
-         return fCurrItem != 0;
-
-      case findChild:
+      case findChild: {
          if (fCurrItem==0) return false;
-         fCurrItem = FindChild(fCurrItem, name);
-         return fCurrItem != 0;
+         XMLNodePointer_t res = FindChild(fCurrItem, name);
+         if (res!=0) {
+            fCurrItem = res;
+            fSearchLevel++;
+         }
+         return res != 0;
+      }
+
+      case findNext: {
+         if (fCurrItem==0) return false;
+
+         XMLNodePointer_t prnt = fXml.GetParent(fCurrItem);
+         while ((fCurrItem = fXml.GetNext(fCurrItem)) != 0)
+            if (IsNodeName(fCurrItem, name)) return true;
+
+         if (fSearchLevel>0) {
+            fSearchLevel--;
+            fCurrItem = prnt;
+         }
+
+         return false;
+      }
+
+      case firstTop:
+         fCurrItem = FindChild(Dflts(), name);
+         fLastTop = fCurrItem;
+         fSearchLevel = 0;
+         return (fCurrItem!=0);
 
       default:
          return false;

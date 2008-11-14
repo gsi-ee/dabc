@@ -94,8 +94,6 @@ namespace bnet {
          void DiscoverNodeConfig(dabc::Command* cmd);
          void ApplyNodeConfig(dabc::Command* cmd);
          bool CheckWorkerModules();
-
-         static dabc::String fPluginName;
    };
 }
 

@@ -412,7 +412,6 @@ namespace dabc {
          static const char* ThreadsFolderName() { return "Threads"; }
          static const char* ModulesFolderName() { return "Modules"; }
          static const char* DevicesFolderName() { return "Devices"; }
-         static const char* PluginFolderName()  { return "Plugin"; }
          static const char* FactoriesFolderName() { return "Factories"; }
          static const char* PoolsFolderName()   { return "Pools"; }
          static const char* LocalDeviceName()   { return "local"; }
@@ -420,7 +419,6 @@ namespace dabc {
          static const char* MgrThrdName()       { return "ManagerThrd"; }
 
          Folder* GetFactoriesFolder(bool force = false) { return GetFolder(FactoriesFolderName(), force, false); }
-         Folder* GetAppFolder(bool force = false) { return GetFolder(PluginFolderName(), force, true); }
          Folder* GetDevicesFolder(bool force = false) { return GetFolder(DevicesFolderName(), force, true); }
          Folder* GetThreadsFolder(bool force = false) { return GetFolder(ThreadsFolderName(), force, true); }
          Folder* GetModulesFolder(bool force = false) { return GetFolder(ModulesFolderName(), force, true); }
@@ -623,7 +621,7 @@ namespace dabc {
 
          DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0);
 
-         virtual bool Find(ConfigIO &cfg) { return cfg.FindItem(0, ConfigIO::selectTop); }
+         virtual bool Find(ConfigIO &cfg);
 
       protected:
          bool                  fMgrMainLoop; // flag indicates if mainloop of manager should runs

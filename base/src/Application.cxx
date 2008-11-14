@@ -4,7 +4,7 @@
 #include "dabc/logging.h"
 
 dabc::Application::Application(const char* name) :
-   Folder(dabc::mgr()->GetAppFolder(true), name ? name : "App", true),
+   Folder(dabc::mgr(), name ? name : "App", true),
    WorkingProcessor(this),
    fConnCmd(0),
    fConnTmout(0)

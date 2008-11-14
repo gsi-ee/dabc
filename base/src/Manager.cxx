@@ -33,6 +33,7 @@
 #include "dabc/BinaryFile.h"
 #include "dabc/DataIOTransport.h"
 #include "dabc/StateMachineModule.h"
+#include "dabc/Configuration.h"
 
 namespace dabc {
 
@@ -472,10 +473,12 @@ dabc::Factory* dabc::Manager::FindFactory(const char* name)
 
 dabc::Application* dabc::Manager::GetApp()
 {
-   Folder* f = GetAppFolder(false);
-   if ((f==0) || (f->NumChilds()<1)) return 0;
+   for (unsigned n = 0; n < NumChilds(); n++) {
+      Application* app = dynamic_cast<Application*>(GetChild(n));
+      if (app) return app;
+   }
 
-   return dynamic_cast<Application*>(f->GetChild(0));
+   return 0;
 }
 
 dabc::MemoryPool* dabc::Manager::FindPool(const char* name)
@@ -497,13 +500,12 @@ void dabc::Manager::DoHaltManager()
 
    DOUT3(("Start DoHaltManager"));
 
-   DOUT3(("Deleting all plugins"));
-   dabc::Folder* df = GetAppFolder(false);
-   if (df) df->DeleteChilds();
+   DOUT3(("Deleting application"));
+   delete GetApp();
 
    DOUT3(("Deleting all modules"));
    // than we delete all modules
-   df = GetModulesFolder();
+   dabc::Folder* df = GetModulesFolder();
    if (df) df->DeleteChilds();
 
    DoCleanupDevices(true);
@@ -695,18 +697,10 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
 
       Module* m = 0;
 
-      dabc::Folder* folder = GetAppFolder(false);
-      if ((folder!=0) && (m==0))
-         for (unsigned n=0;n<folder->NumChilds();n++) {
-            Application* plugin =
-               dynamic_cast<dabc::Application*> (folder->GetChild(n));
-            if (plugin==0) continue;
+      Application* app = GetApp();
+      if (app) m = app->CreateModule(classname, modulename, cmd);
 
-            m = plugin->CreateModule(classname, modulename, cmd);
-            if (m!=0) break;
-         }
-
-      folder = GetFactoriesFolder(false);
+      Folder* folder = GetFactoriesFolder(false);
       if ((folder!=0) && (m==0))
          for (unsigned n=0;n<folder->NumChilds();n++) {
             Factory* factory =
@@ -2124,4 +2118,15 @@ void dabc::Manager::ProcessCtrlCSignal()
    DOUT0(("Normal exit after Ctrl-C"));
 
    exit(0);
+}
+
+bool dabc::Manager::Find(ConfigIO &cfg)
+{
+   if (cfg.IsExact()) return cfg.FindItem(0, ConfigIO::selectTop);
+
+   DOUT3(("Manager search node %s lvl %d", xmlContNode, cfg.SearchLevel()));
+
+   if (!cfg.FindItem(xmlContNode, cfg.SearchLevel() <0 ? ConfigIO::firstTop : ConfigIO::findNext)) return false;
+
+   return cfg.CheckAttr("name", GetName());
 }

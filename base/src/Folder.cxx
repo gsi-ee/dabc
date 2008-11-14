@@ -207,21 +207,42 @@ bool dabc::Folder::Store(ConfigIO &cfg)
 
 bool dabc::Folder::Find(ConfigIO &cfg)
 {
-   if (GetParent())
-      if (!GetParent()->Find(cfg)) return false;
+   if (GetParent()==0) return false;
 
    const char* searchname = GetName();
    if (UseMasterClassName()) searchname = MasterClassName();
 
-   if (!cfg.FindItem(searchname, GetParent() ? ConfigIO::findChild : ConfigIO::findTop)) return false;
+   int lvl = cfg.SearchLevel();
+   bool res = true;
 
-   if (UseMasterClassName())
-      if (!cfg.CheckAttr("name", GetName())) return false;
+   ConfigIO::FindKinds kind = ConfigIO::findNext;
 
-   if ((MasterClassName()!=0) && (ClassName()!=0) &&
-       (strcmp(ClassName(), MasterClassName())!=0))
-          if (!cfg.CheckAttr("class", ClassName())) return false;
+   do {
 
-   return true;
+      res = cfg.FindItem(searchname, kind);
+
+      DOUT3(("Search item %s kind = %d lvl %d res = %s", searchname, kind, cfg.SearchLevel(), DBOOL(res)));
+
+      kind = ConfigIO::findChild;
+
+      if (res && UseMasterClassName())
+         res = cfg.CheckAttr("name", GetName());
+
+      if (res && (MasterClassName()!=0) && (ClassName()!=0) &&
+           (strcmp(ClassName(), MasterClassName())!=0))
+              res = cfg.CheckAttr("class", ClassName());
+
+      if (res) return true;
+
+      if (GetParent()->Find(cfg))
+         res = true;
+      else
+      if ((lvl!=0) && UseMasterClassName()) {
+         res = true;
+         lvl = 0;
+         kind = ConfigIO::firstTop;
+      }
+   } while (res);
+
+   return false;
 }
-

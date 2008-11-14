@@ -8,19 +8,10 @@
 #include "dabc/timing.h"
 #include "dabc/CommandsSet.h"
 
-dabc::String bnet::WorkerApplication::fPluginName = "";
-
-
 const char* bnet::WorkerApplication::ItemName()
 {
-   if (fPluginName.length()==0) {
-      fPluginName = dabc::Manager::PluginFolderName();
-      fPluginName += "/";
-      fPluginName += PluginName();
-   }
-   return fPluginName.c_str();
+   return PluginName();
 }
-
 
 bnet::WorkerApplication::WorkerApplication(const char* name) :
    dabc::Application(name ? name : PluginName())

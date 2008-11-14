@@ -100,17 +100,34 @@ bool dabc::Parameter::Read(ConfigIO &cfg)
 {
    if (GetParent()==0) return false;
 
-   if (!GetParent()->Find(cfg)) return false;
+   cfg.SetExact(true);
 
-   if (!cfg.FindItem(GetName(), ConfigIO::findChild)) return false;
+   if (GetParent()->Find(cfg) && cfg.FindItem(GetName(), ConfigIO::findChild)) {
+      const char* value = cfg.GetItemValue();
+      DOUT0(("Set parameter %s = %s", GetFullName().c_str(), (value ? value : "null")));
+      SetStr(value);
+      return true;
+   }
 
-   const char* value = cfg.GetItemValue();
+   cfg.SetExact(false);
 
-   DOUT0(("Set parameter %s = %s", GetFullName().c_str(), (value ? value : "null")));
+   dabc::SetDebugLevel(5);
 
-   SetStr(value);
+   while (GetParent()->Find(cfg)) {
+      if (cfg.FindItem(GetName(), ConfigIO::findChild)) {
+         const char* value = cfg.GetItemValue();
+         DOUT0(("Set parameter via mask %s = %s", GetFullName().c_str(), (value ? value : "null")));
+         SetStr(value);
+         dabc::SetDebugLevel(1);
+         return true;
+      }
+   }
 
-   return true;
+   dabc::SetDebugLevel(1);
+
+   DOUT0(("Parameter %s not found", GetFullName().c_str()));
+
+   return false;
 }
 
 // __________________________________________________________
