@@ -34,7 +34,7 @@ namespace dabc {
          Configuration(const char* fname = 0);
          virtual ~Configuration();
 
-         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0);
+         const char* SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0);
 
          bool LoadLibs();
 

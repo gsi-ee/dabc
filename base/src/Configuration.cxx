@@ -102,11 +102,11 @@ dabc::Configuration::~Configuration()
 {
 }
 
-bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile)
+const char* dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile)
 {
    fSelected = IsXDAQ() ? XDAQ_FindContext(cfgid) : FindContext(cfgid);
 
-   if (fSelected==0) return false;
+   if (fSelected==0) return 0;
 
    const char* val = getenv(xmlDABCSYS);
    if (val!=0) envDABCSYS = val;
@@ -136,7 +136,18 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    if (log.length()>0)
       dabc::Logger::Instance()->LogFile(log.c_str());
 
-   return true;
+   const char* mgrname = 0;
+
+   if (IsXDAQ()) {
+      mgrname = fXml.GetAttr(fSelected, xmlXDAQurlattr);
+      if (mgrname) mgrname+=7; // remove http:// prefix
+   } else {
+      mgrname = fXml.GetAttr(fSelected, xmlNameAttr);
+   }
+
+   if (mgrname==0) mgrname = "dabc";
+
+   return mgrname;
 }
 
 bool dabc::Configuration::LoadLibs()
