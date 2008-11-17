@@ -36,7 +36,6 @@ void dabc::Parameter::Changed()
    RaiseEvent(1);
 
    if (IsDebugOutput()) DoDebugOutput();
-
 }
 
 void dabc::Parameter::RaiseEvent(int evt)

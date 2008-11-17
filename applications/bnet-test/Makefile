@@ -12,7 +12,7 @@ BNETTESTDIR =
 INCLUDES += .
 endif
 
-BNETBINPATH          = $(DABCSYS)/plugins/bnet/scripts
+BNETBINPATH          = $(DABCSYS)/plugins/bnet
 
 BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetTest
 BNETTEST_LIB         = $(TGTDLLPATH)/$(BNETTEST_LIBNAME).$(DllSuf)
@@ -22,7 +22,7 @@ BNETTEST_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETTES
 BNETTEST_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETTEST_S))
 
 ALLDEPENDENC        += $(BNETTEST_D)
-CREATE_DIRS         += $(TGTDLLPATH)
+
 
 libs::  $(BNETTEST_LIB)
 
@@ -31,8 +31,8 @@ $(BNETTEST_LIB):  $(BNETTEST_O)
 ifneq ($(wildcard ~/run/bnet),)
 	cp -f $(BNETTEST_LIB) ~/run/bnet
 	cp -f $(DABCDLLPATH)/*.$(DllSuf) ~/run/bnet 
-	cp -f $(DABCBINPATH)/bnet_exe ~/run/bnet
-	cp -f $(BNETBINPATH)/* ~/run/bnet
+	cp -f $(BNETBINPATH)/bnet_exe ~/run/bnet
+	cp -f $(BNETBINPATH)/scripts/* ~/run/bnet
 endif
 	@echo "$@  done"
 

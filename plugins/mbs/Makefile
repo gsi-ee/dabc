@@ -55,11 +55,6 @@ ALLHDRS         += $(patsubst $(MBSDIR)/%.h, $(DABCINCPATH)/%.h, $(MBS_H))
 ALLDEPENDENC    += $(MBS_D) $(MBSAPI_CD) $(MBSFAPI_D) $(MBSFAPI_CD)
 APPLICATIONS_DIRS     += $(MBSTESTDIR)
 
-CREATE_DIRS     += $(TGTDLLPATH)
-
-LIBS_PLUGINS    += $(DABCMBS_LIB)
-#LIBS_EXTRA      += -L/my/dir abc.so 
-
 libs:: $(DABCMBS_LIB) $(MBSFAPI_PACKAGE)
 
 ##### local rules #####

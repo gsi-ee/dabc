@@ -67,9 +67,6 @@ ABB_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(ABB_S))
 
 ALLHDRS         += $(patsubst $(ABBDIR)/%.h, $(DABCINCPATH)/%.h, $(ABB_H))
 ALLDEPENDENC    += $(ABB_D) 
-CREATE_DIRS     += $(TGTDLLPATH)
-LIBS_PLUGINS    += $(DABCABB_LIB) $(TGTDLLPATH)/$(PCIDRIVER_LIBNAME) $(TGTDLLPATH)/$(MPRACE_LIBNAME)
-
 
 
 libs:: pcidriver mprace $(DABCABB_LIB)

@@ -43,8 +43,6 @@ ROC_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(ROC_S))
 
 ALLHDRS         += $(patsubst $(ROCDIR)/%.h, $(DABCINCPATH)/%.h, $(ROC_H))
 ALLDEPENDENC    += $(ROC_D)
-CREATE_DIRS     += $(TGTDLLPATH)
-LIBS_PLUGINS    += $(ROC_LIB)
 
 libs:: $(ROC_LIB)
 

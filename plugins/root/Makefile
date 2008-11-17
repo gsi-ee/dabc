@@ -26,8 +26,6 @@ DABCROOT_D        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCROOT_S
 
 ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_H))
 ALLDEPENDENC     += $(DABCROOT_D) 
-CREATE_DIRS      += $(TGTDLLPATH)
-LIBS_PLUGINS     += $(DABCROOT_LIB)
 
 libs:: $(DABCROOT_LIB)
 

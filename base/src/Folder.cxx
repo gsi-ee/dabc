@@ -136,7 +136,7 @@ dabc::Basic* dabc::Folder::FindChild(const char* name) const
 
 dabc::Basic* dabc::Folder::_FindChild(const char* name) const
 {
-   // child name can include slahes for searching in subfolders
+   // child name can include slashes for searching in subfolders
 
    if ((name==0) || (strlen(name)==0)) return 0;
 
@@ -168,6 +168,8 @@ dabc::Folder* dabc::Folder::GetFolder(const char* name, bool force, bool isowner
 {
    LockGuard guard(GetMutex());
 
+   if ((name==0) || (strlen(name)==0)) return this;
+
    Basic* child = _FindChild(name);
    Folder* folder = dynamic_cast<Folder*>(child);
 
@@ -178,8 +180,27 @@ dabc::Folder* dabc::Folder::GetFolder(const char* name, bool force, bool isowner
 
    if ((folder!=0) || !force) return folder;
 
+   const char* slash = strchr(name, '/');
+
    // here we need recursive mutex, while in constructor new lock will be required
-   return new Folder(this, name, isowner);
+   if (slash==0) return new Folder(this, name, isowner);
+
+   int len = slash-name;
+   if (len==0)
+       folder = this;
+   else
+   for(unsigned n=0;n<fChilds.size();n++) {
+      folder = dynamic_cast<Folder*> ((Basic*)fChilds.at(n));
+      if ((folder!=0) && (strncmp(name, folder->GetName(), len)==0)) break;
+      folder = 0;
+   }
+
+   if (folder==0) {
+      dabc::String fname(name, len);
+      folder = new Folder(this, fname.c_str(), true);
+   }
+
+   return folder->GetFolder(slash+1, force, isowner);
 }
 
 bool dabc::Folder::Store(ConfigIO &cfg)
@@ -246,3 +267,18 @@ bool dabc::Folder::Find(ConfigIO &cfg)
 
    return false;
 }
+
+dabc::String dabc::Folder::GetPathName(const char* path)
+{
+   const char* slash = strrchr(path, '/');
+   if (slash==0) return String("");
+
+   return dabc::String(path, slash - path);
+}
+
+const char* dabc::Folder::GetObjectName(const char* path)
+{
+   const char* slash = strrchr(path, '/');
+   return (slash==0) ? path : slash + 1;
+}
+

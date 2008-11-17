@@ -31,14 +31,9 @@ DABC_PLUGINS += $(wildcard applications/*)
 
 APPLICATIONS_DIRS =
 
-libs:: $(DABCSYS)/config/Makefile.plugins
-
-$(DABCSYS)/config/Makefile.plugins: $(LIBS_PLUGINS)
-	@rm -f $@
-	@echo "LIBS_EXTRA = $(LIBS_EXTRA)" > $@
+libs::
 
 clean::
-	rm -f $(DABCSYS)/config/Makefile.plugins
 	
 package:: clean
 	tar cf dabc.tar Makefile base/ build/ config/ controls/simple $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 

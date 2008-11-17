@@ -22,9 +22,7 @@
 <builder id="cdt.managedbuild.target.gnu.builder.base.1134859078" keepEnvironmentInBuildfile="false" managedBuildOn="false" name="Gnu Make Builder" superClass="cdt.managedbuild.target.gnu.builder.base"/>
 <tool id="cdt.managedbuild.tool.gnu.archiver.base.1114298388" name="GCC Archiver" superClass="cdt.managedbuild.tool.gnu.archiver.base"/>
 <tool id="cdt.managedbuild.tool.gnu.cpp.compiler.base.1436887310" name="GCC C++ Compiler" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.base">
-<option id="gnu.cpp.compiler.option.include.paths.280556350" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath">
-<listOptionValue builtIn="false" value="&quot;${workspace_loc:/dabc/include}&quot;"/>
-</option>
+<option id="gnu.cpp.compiler.option.include.paths.280556350" name="Include paths (-I)" superClass="gnu.cpp.compiler.option.include.paths" valueType="includePath"/>
 <inputType id="cdt.managedbuild.tool.gnu.cpp.compiler.input.289837126" superClass="cdt.managedbuild.tool.gnu.cpp.compiler.input"/>
 </tool>
 <tool id="cdt.managedbuild.tool.gnu.c.compiler.base.809865620" name="GCC C Compiler" superClass="cdt.managedbuild.tool.gnu.c.compiler.base">
@@ -48,6 +46,9 @@
 
 <storageModule moduleId="org.eclipse.cdt.core.externalSettings"/>
 
+
+<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+<storageModule moduleId="org.eclipse.cdt.core.language.mapping"/>
 <storageModule moduleId="scannerConfiguration">
 <autodiscovery enabled="true" problemReportingEnabled="true" selectedProfileId="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile"/>
 <profile id="org.eclipse.cdt.make.core.GCCStandardMakePerProjectProfile">
@@ -297,7 +298,6 @@
 </profile>
 </scannerConfigBuildInfo>
 </storageModule>
-<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 <storageModule moduleId="org.eclipse.cdt.make.core.buildtargets">
 <buildTargets>
 <target name="xdaq-dabc" path="controls/xdaq/dabc" targetID="org.eclipse.cdt.build.MakeTargetBuilder">

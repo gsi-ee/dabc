@@ -23,8 +23,6 @@ BNETMBS_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETMBS_
 
 ALLDEPENDENC        += $(BNETMBS_D) $(BNETMBS_EXED)
 
-CREATE_DIRS         += $(TGTDLLPATH)
-
 libs:: $(BNETMBS_LIB) 
 
 exes:: $(BNETMBS_EXE) 

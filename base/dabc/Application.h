@@ -49,6 +49,8 @@ namespace dabc {
           virtual const char* ClassName() const { return "Application"; }
           virtual bool UseMasterClassName() const { return true; }
 
+          virtual Basic* GetParsHolder() { return this; }
+
        protected:
           virtual double ProcessTimeout(double last_diff);
 

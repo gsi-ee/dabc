@@ -67,9 +67,6 @@ VERBS_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(VERBS_S))
 
 ALLHDRS          +=  $(patsubst $(VERBSDIR)/%.h, $(DABCINCPATH)/%.h, $(VERBS_H))
 ALLDEPENDENC     += $(VERBS_D) 
-CREATE_DIRS      += $(TGTDLLPATH)
-LIBS_PLUGINS     += $(DABCVERBS_LIB)
-LIBS_EXTRA       += -L$(OFED_LIBDIR) $(OFED_LIBS)  
 
 libs:: $(DABCVERBS_LIB)
 
