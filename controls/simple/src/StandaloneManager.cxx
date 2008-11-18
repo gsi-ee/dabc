@@ -9,6 +9,7 @@
 #include "dabc/Device.h"
 #include "dabc/Iterator.h"
 #include "dabc/Factory.h"
+#include "dabc/Configuration.h"
 
 #include "dabc/CommandChannelModule.h"
 
@@ -18,17 +19,17 @@ namespace dabc {
          StandaloneMgrFactory(const char* name) : Factory(name) { }
 
       protected:
-         virtual bool CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes);
+         virtual bool CreateManagerInstance(const char* kind, Configuration* cfg);
    };
 
 }
 
 dabc::StandaloneMgrFactory standalonemgrfactory("standalone");
 
-bool dabc::StandaloneMgrFactory::CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes)
+bool dabc::StandaloneMgrFactory::CreateManagerInstance(const char* kind, Configuration* cfg)
 {
    if ((kind!=0) && (strcmp(kind,"Standalone")==0)) {
-      new dabc::StandaloneManager(name, nodeid, numnodes, true);
+      new dabc::StandaloneManager(cfg->MgrName(), cfg->MgrNodeId(), cfg->MgrNumNodes(), true, cfg);
       return true;
    }
    return false;
@@ -49,8 +50,8 @@ const char* GetMyHostName()
    return MyHostName;
 }
 
-dabc::StandaloneManager::StandaloneManager(const char* name, int nodeid, int numnodes, bool usesm) :
-   Manager(name ? name : FORMAT(("%s-%d", GetMyHostName(), nodeid))),
+dabc::StandaloneManager::StandaloneManager(const char* name, int nodeid, int numnodes, bool usesm, Configuration* cfg) :
+   Manager(name ? name : FORMAT(("%s-%d", GetMyHostName(), nodeid)), false, cfg),
    fIsMainMgr(nodeid==0),
    fMainMgrName(),
    fClusterNames(),
@@ -564,10 +565,10 @@ void dabc::StandaloneManager::ParameterEvent(Parameter* par, int eventid)
 //      DOUT1(("Parameter: %s Value: %5.1f", par->GetName(), par->GetDouble()));
 
    // we are not interesting in parameter creation event
-   if (eventid==0) return;
+   if (eventid==parCreated) return;
 
    // when parameter is destroyed, simple remove it from the lists
-   if (eventid==2) {
+   if (eventid==parDestroyed) {
       LockGuard guard(GetMutex());
 
       ParamRegList::iterator iter = fParReg.begin();

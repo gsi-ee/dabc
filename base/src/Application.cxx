@@ -5,10 +5,12 @@
 
 dabc::Application::Application(const char* name) :
    Folder(dabc::mgr(), name ? name : "App", true),
-   WorkingProcessor(this),
+   WorkingProcessor(),
    fConnCmd(0),
    fConnTmout(0)
 {
+   SetParsHolder(this);
+
    DOUT3(("Plugin %s created", GetName()));
 }
 
@@ -21,7 +23,7 @@ dabc::Application::~Application()
    fConnCmd = 0;
 
    // delete childs (parameters) before destructor is finished that one
-   // can correcly use GetParsHolder() in Manager::ParameterEvent()
+   // can correctly use GetParsHolder() in Manager::ParameterEvent()
    DeleteChilds();
 
    DOUT3(("Did Application %s destructor", GetName()));

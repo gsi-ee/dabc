@@ -26,7 +26,7 @@ bnet::BuilderModule::BuilderModule(const char* name, WorkerApplication* factory)
 
    fOutBufferSize = factory->EventBufferSize();
 
-   new dabc::StrParameter(this, "SendMask", "xxxx");
+   CreateStrPar("SendMask", "xxxx");
 }
 
 bnet::BuilderModule::~BuilderModule()

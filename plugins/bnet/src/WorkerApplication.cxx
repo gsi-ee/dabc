@@ -16,45 +16,50 @@ const char* bnet::WorkerApplication::ItemName()
 bnet::WorkerApplication::WorkerApplication(const char* name) :
    dabc::Application(name ? name : PluginName())
 {
-   new dabc::IntParameter(this, "IsGenerator", 1);
-   new dabc::IntParameter(this, "IsSender", 0);
-   new dabc::IntParameter(this, "IsReceiver", 0);
-   new dabc::IntParameter(this, "IsFilter", 0);
-   new dabc::IntParameter(this, "CombinerModus", 0);
-   new dabc::IntParameter(this, "NumReadouts", 1);
+   CreateIntPar("IsGenerator", 1);
+   CreateIntPar("IsSender", 0);
+   CreateIntPar("IsReceiver", 0);
+   CreateIntPar("IsFilter", 0);
+   CreateIntPar("CombinerModus", 0);
+   CreateIntPar("NumReadouts", 1);
    for (int nr=0;nr<5;nr++)
-      new dabc::StrParameter(this, FORMAT(("Input%dCfg", nr)), "");
-   new dabc::StrParameter(this, "StoragePar", "");
+      CreateStrPar(FORMAT(("Input%dCfg", nr)), "");
+   CreateStrPar("StoragePar", "");
 
-   new dabc::StrParameter(this, "Thread1Name", "Thread1");
-   new dabc::StrParameter(this, "Thread2Name", "Thread2");
-   new dabc::StrParameter(this, "ThreadCtrlName", "ThreadCtrl");
+   CreateStrPar("Thread1Name", "Thread1");
+   CreateStrPar("Thread2Name", "Thread2");
+   CreateStrPar("ThreadCtrlName", "ThreadCtrl");
 
-   new dabc::IntParameter(this, "CombinerInQueueSize", 4);
-   new dabc::IntParameter(this, "CombinerOutQueueSize", 4);
+   CreateIntPar("CombinerInQueueSize", 4);
+   CreateIntPar("CombinerOutQueueSize", 4);
 
-   new dabc::IntParameter(this, "ReadoutBuffer",         2*1024);
-   new dabc::IntParameter(this, "ReadoutPoolSize",   4*0x100000);
-   new dabc::IntParameter(this, "TransportBuffer",       8*1024);
-   new dabc::IntParameter(this, "TransportPoolSize",16*0x100000);
-   new dabc::IntParameter(this, "EventBuffer",          32*1024);
-   new dabc::IntParameter(this, "EventPoolSize",     4*0x100000);
-   new dabc::IntParameter(this, "CtrlBuffer",            2*1024);
-   new dabc::IntParameter(this, "CtrlPoolSize",      2*0x100000);
+   CreateIntPar("ReadoutBuffer",         2*1024);
+   CreateIntPar("ReadoutPoolSize",   4*0x100000);
+   CreateIntPar("TransportBuffer",       8*1024);
+   CreateIntPar("TransportPoolSize",16*0x100000);
+   CreateIntPar("EventBuffer",          32*1024);
+   CreateIntPar("EventPoolSize",     4*0x100000);
+   CreateIntPar("CtrlBuffer",            2*1024);
+   CreateIntPar("CtrlPoolSize",      2*0x100000);
 
-   new dabc::IntParameter(this, "CfgNumNodes", 1, false);
-   new dabc::IntParameter(this, "CfgNodeId", 0, false);
-   new dabc::IntParameter(this, "CfgController", 0, false);
-   new dabc::StrParameter(this, "CfgSendMask", "", false);
-   new dabc::StrParameter(this, "CfgRecvMask", "", false);
-   new dabc::StrParameter(this, "CfgClusterMgr", "", false);
-   new dabc::StrParameter(this, "CfgNetDevice", "", false);
-   new dabc::IntParameter(this, "CfgConnected", 0, false);
-   new dabc::IntParameter(this, "CfgEventsCombine", 1, false);
+   CreateStrPar("Status", "Off");
+   CreateStrPar("SendStatus", "oooo");
+   CreateStrPar("RecvStatus", "oooo");
 
-   new dabc::StrParameter(this, "Status", "Off");
-   new dabc::StrParameter(this, "SendStatus", "oooo");
-   new dabc::StrParameter(this, "RecvStatus", "oooo");
+
+   SetParDflts(0);  // make next parameters not visible outside
+
+   CreateIntPar("CfgNumNodes", 1);
+   CreateIntPar("CfgNodeId", 0);
+   CreateIntPar("CfgController", 0);
+   CreateStrPar("CfgSendMask", "");
+   CreateStrPar("CfgRecvMask", "");
+   CreateStrPar("CfgClusterMgr", "");
+   CreateStrPar("CfgNetDevice", "");
+   CreateIntPar("CfgConnected", 0);
+   CreateIntPar("CfgEventsCombine", 1);
+
+   SetParDflts();
 
    DOUT1(("!!!! Wroker plugin created !!!!"));
 }

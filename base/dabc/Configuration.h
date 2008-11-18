@@ -27,6 +27,10 @@ namespace dabc {
          XMLNodePointer_t fCurrItem; // currently found item
          XMLNodePointer_t fLastTop; // currently found item
 
+         String  fMgrName;
+         int     fMgrNodeId;
+         int     fMgrNumNodes;
+
          bool XDAQ_LoadLibs();
          bool XDAQ_ReadPars();
 
@@ -34,7 +38,11 @@ namespace dabc {
          Configuration(const char* fname = 0);
          virtual ~Configuration();
 
-         const char* SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0);
+         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0);
+
+         const char* MgrName() const { return fMgrName.c_str(); }
+         int MgrNodeId() const { return fMgrNodeId; }
+         int MgrNumNodes() const { return fMgrNumNodes; }
 
          bool LoadLibs();
 

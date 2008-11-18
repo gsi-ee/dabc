@@ -23,12 +23,12 @@ bnet::TestWorkerApplication::TestWorkerApplication(const char* name) :
 {
 // register application specific parameters here:
 #ifdef __USE_ABB__
-    new dabc::StrParameter(this, ABB_PAR_DEVICE, "ABB_Device");
-    new dabc::StrParameter(this, ABB_PAR_MODULE, "ABB_Readout");
-    new dabc::IntParameter(this, ABB_PAR_BOARDNUM,0);
-    new dabc::IntParameter(this, ABB_PAR_BAR,1);
-    new dabc::IntParameter(this, ABB_PAR_ADDRESS,(0x8000 >> 2));
-    new dabc::IntParameter(this, ABB_PAR_LENGTH, 8*1024);
+    CreateStrPar(ABB_PAR_DEVICE, "ABB_Device");
+    CreateStrPar(ABB_PAR_MODULE, "ABB_Readout");
+    CreateIntPar(ABB_PAR_BOARDNUM,0);
+    CreateIntPar(ABB_PAR_BAR,1);
+    CreateIntPar(ABB_PAR_ADDRESS,(0x8000 >> 2));
+    CreateIntPar(ABB_PAR_LENGTH, 8*1024);
 #endif
 
     DOUT0(("Set all pars to TestWorker"));

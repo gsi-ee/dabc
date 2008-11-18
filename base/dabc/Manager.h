@@ -46,6 +46,7 @@ namespace dabc {
    class DataOutput;
    class FileIO;
    class StateMachineModule;
+   class Configuration;
 
    class CommandCreateModule : public Command {
       public:
@@ -352,7 +353,7 @@ namespace dabc {
 
       public:
 
-         Manager(const char* managername, bool usecurrentprocess = false);
+         Manager(const char* managername, bool usecurrentprocess = false, Configuration* cfg = 0);
          virtual ~Manager();
 
          static Manager* Instance() { return fInstance; }
@@ -397,13 +398,13 @@ namespace dabc {
 
          /** Invoke state transition of manager.
            * Must be overwritten in derived class.
-           * This MUST be asynhron functions means calling thread should not be blocked.
+           * This MUST be asynchron functions means calling thread should not be blocked.
            * Actual state transition will be performed in state-machine thread.
-           * If command object is specified, it will be replyed when state transition is
+           * If command object is specified, it will be replied when state transition is
            * completed or when transition is failed */
          virtual bool InvokeStateTransition(const char* state_transition_name, Command* cmd = 0);
 
-         /** Returns curren state name */
+         /** Returns current state name */
          const char* CurrentState() const;
 
 
@@ -553,8 +554,6 @@ namespace dabc {
          virtual bool Subscribe(Parameter* par, int remnode, const char* remname) { return false; }
          virtual bool Unsubscribe(Parameter* par) { return false; }
 
-         virtual Basic* GetParsHolder() { return this; }
-
          // -------------------------- misc functions ---------------
 
          /** Displays on std output list of running threads and modules */
@@ -641,6 +640,8 @@ namespace dabc {
          Thread_t              fSigThrd;
 
          StateMachineModule   *fSMmodule;
+
+         Configuration        *fCfg;
 
          static Manager       *fInstance;
 

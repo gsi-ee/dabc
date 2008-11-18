@@ -19,7 +19,7 @@
 
 dabc::Module::Module(const char* name) :
    Folder(dabc::mgr()->GetModulesFolder(true), name, true),
-   WorkingProcessor(GetFolder("Parameters", true, true)),
+   WorkingProcessor(),
    CommandClientBase(),
    fWorkStatus(0),
    fInputPorts(),
@@ -33,7 +33,7 @@ dabc::Module::Module(const char* name) :
 
 dabc::Module::Module(Command* cmd) :
    Folder(dabc::mgr()->GetModulesFolder(true), cmd->GetStr("Name","Module"), true),
-   WorkingProcessor(GetFolder("Parameters", true, true)),
+   WorkingProcessor(),
    CommandClientBase(),
    fWorkStatus(0),
    fInputPorts(),
@@ -51,6 +51,8 @@ void dabc::Module::init()
    //  0 - normal for i/o ,
    //  1 - for commands and replyes,
    //  2 - for sys commands (in modules thread itself)
+
+   SetParsHolder(this, "Parameters");
 
    CommandDefinition* def = NewCmdDef("SetPriority");
    def->AddArgument("Priority", argInt, true);
@@ -106,7 +108,7 @@ dabc::Folder* dabc::Module::GetPortsFolder(bool force)
 
 dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sync, double interval, const char* inpportname, const char* outportname)
 {
-   RateParameter* par = new RateParameter(this, name, sync, interval, true);
+   RateParameter* par = new RateParameter(this, name, sync, interval);
 
    bool isanyport = false;
 
@@ -129,7 +131,7 @@ dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sy
 
 dabc::Parameter* dabc::Module::CreatePoolUsageParameter(const char* name, double interval, const char* poolname)
 {
-   DoubleParameter* par = new DoubleParameter(this, name, 0.);
+   Parameter* par = CreateDoublePar(name, 0.);
 
    PoolHandle* pool = FindPool(poolname);
    if (pool) pool->SetUsageParameter(par, interval);

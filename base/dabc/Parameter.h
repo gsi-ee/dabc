@@ -21,12 +21,14 @@ namespace dabc {
 
    enum EParamKind { parNone, parString, parDouble, parInt, parSyncRate, parAsyncRate, parPoolStatus, parStatus, parHisto, parInfo };
 
+   enum EParamEvent { parCreated = 0, parModified = 1, parDestroyed = 2 };
+
    class Parameter : public Basic {
       friend class WorkingProcessor;
       friend class Manager;
 
       public:
-         Parameter(WorkingProcessor* lst, const char* name, bool visible = true);
+         Parameter(WorkingProcessor* lst, const char* name);
          virtual ~Parameter();
 
          virtual const char* MasterClassName() const { return "Parameter"; }
@@ -35,10 +37,11 @@ namespace dabc {
          virtual EParamKind Kind() const { return parNone; }
          virtual void* GetPtr() { return 0; }
 
+         bool IsVisible() const { return fVisibility > 0; }
+         int Visibility() const { return fVisibility; }
+
          bool IsFixed() const { return fFixed; }
          void SetFixed(bool on = true) { fFixed = on; }
-
-         bool IsVisible() const { return fVisible; }
 
          bool IsDebugOutput() const { return fDebug; }
          void SetDebugOutput(bool on = true) { fDebug = on; }
@@ -61,9 +64,9 @@ namespace dabc {
          // these methods change parameter value not directly,
          // but via parameters list object. This is required in case
          // if parameters belong to object with its own tread otherwise
-         // one can get concurent usage/changing of non-locked value of parameter
+         // one can get concurrent usage/changing of non-locked value of parameter
          bool InvokeChange(const char* value);
-         int InvokeChange(dabc::Command* cmd);
+         bool InvokeChange(dabc::Command* cmd);
 
          virtual bool Store(ConfigIO &cfg);
          virtual bool Read(ConfigIO &cfg);
@@ -79,6 +82,8 @@ namespace dabc {
          virtual bool NeedTimeout() const { return false; }
          virtual void ProcessTimeout(double last_diff) { }
 
+         void Ready();
+
          void Changed();
 
          void RaiseEvent(int evt);
@@ -87,18 +92,22 @@ namespace dabc {
 
          WorkingProcessor* fLst;
          bool              fFixed;
-         bool              fVisible;
+         bool              fVisibility;
          bool              fDebug;
    };
 
    class StrParameter : public Parameter {
-      public:
-         StrParameter(WorkingProcessor* parent, const char* name, const char* istr = 0, bool visible = true) :
-            Parameter(parent, name, visible),
+      protected:
+         friend class WorkingProcessor;
+
+         StrParameter(WorkingProcessor* parent, const char* name, const char* istr = 0) :
+            Parameter(parent, name),
             fValue(istr)
             {
-               RaiseEvent(0);
+               Ready();
             }
+
+      public:
 
          virtual EParamKind Kind() const { return parString; }
 
@@ -106,7 +115,7 @@ namespace dabc {
 
          virtual bool GetStr(String& s) const
          {
-            s.assign(fValue.c_str());
+            s.assign(fValue);
             return true;
          }
 
@@ -160,13 +169,17 @@ namespace dabc {
    };
 
    class DoubleParameter : public Parameter {
-      public:
-         DoubleParameter(WorkingProcessor* parent, const char* name, double iv = 0., bool visible = true) :
-            Parameter(parent, name, visible),
+      protected:
+         friend class WorkingProcessor;
+
+         DoubleParameter(WorkingProcessor* parent, const char* name, double iv = 0.) :
+            Parameter(parent, name),
             fValue(iv)
             {
-               RaiseEvent(0);
+               Ready();
             }
+
+      public:
 
          virtual EParamKind Kind() const { return parDouble; }
 
@@ -214,13 +227,17 @@ namespace dabc {
    };
 
    class IntParameter : public Parameter {
-      public:
-         IntParameter(WorkingProcessor* parent, const char* name, int ii = 0, bool visible = true) :
-            Parameter(parent, name, visible),
+      protected:
+         friend class WorkingProcessor;
+
+         IntParameter(WorkingProcessor* parent, const char* name, int ii = 0) :
+            Parameter(parent, name),
             fValue(ii)
          {
-            RaiseEvent(0);
+            Ready();
          }
+
+      public:
 
          virtual EParamKind Kind() const { return parInt; }
 
@@ -269,7 +286,7 @@ namespace dabc {
 
    class RateParameter : public Parameter {
       public:
-         RateParameter(WorkingProcessor* parent, const char* name, bool synchron, double interval = 1., bool visible = true);
+         RateParameter(WorkingProcessor* parent, const char* name, bool synchron, double interval = 1.);
          virtual ~RateParameter();
 
          virtual EParamKind Kind() const { return fSynchron ? parSyncRate : parAsyncRate; }
@@ -316,13 +333,13 @@ namespace dabc {
 
    class StatusParameter : public Parameter {
       public:
-         StatusParameter(WorkingProcessor* parent, const char* name, int severity = 0, bool visible = true) :
-            Parameter(parent, name, visible)
+         StatusParameter(WorkingProcessor* parent, const char* name, int severity = 0) :
+            Parameter(parent, name)
          {
             fRecord.severity = severity;
             strcpy(fRecord.color,"Cyan");
             strcpy(fRecord.status, "None"); // status name
-            RaiseEvent(0);
+            Ready();
          }
 
          virtual EParamKind Kind() const { return parStatus; }
@@ -374,13 +391,13 @@ namespace dabc {
 //////////////
    class InfoParameter : public Parameter {
       public:
-         InfoParameter(WorkingProcessor* parent, const char* name, int verbose = 0, bool visible = true) :
-            Parameter(parent, name, visible)
+         InfoParameter(WorkingProcessor* parent, const char* name, int verbose = 0) :
+            Parameter(parent, name)
          {
             fRecord.verbose = verbose;
             strcpy(fRecord.color,"Cyan");
             strcpy(fRecord.info, "None"); // info message
-            RaiseEvent(0);
+            Ready();
          }
 
          virtual EParamKind Kind() const { return parInfo; }
@@ -432,16 +449,9 @@ namespace dabc {
    };
 
 
-
-
-
-/////////////
-
-
-
    class HistogramParameter : public Parameter {
       public:
-         HistogramParameter(WorkingProcessor* parent, const char* name, int nchannles = 100, bool visible = true);
+         HistogramParameter(WorkingProcessor* parent, const char* name, int nchannles = 100);
 
          virtual ~HistogramParameter()
          {

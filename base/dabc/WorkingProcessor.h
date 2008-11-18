@@ -24,7 +24,7 @@ namespace dabc {
 
          enum { evntFirstUser = 1 };
 
-         WorkingProcessor(Folder* pars = 0);
+         WorkingProcessor();
          virtual ~WorkingProcessor();
 
          /** Method returns name of required thread class for processor.
@@ -60,14 +60,7 @@ namespace dabc {
          String GetParStr(const char* name, const char* defvalue = "") const;
          const char* GetParCharStar(const char* name, const char* defvalue = "") const;
 
-         Folder* GetParsFolder() const { return fProcessorPars; }
-
-         // this method must return pointer on holder of parameters list
-         // it may differ from folder where parameters are collected
-         // for instance, in case of module parameters are in subfolder.
-         // by default, we suppose that they are the same
-         virtual Basic* GetParsHolder() { return (Basic*) GetParsFolder(); }
-
+         Folder* GetTopParsFolder();
 
       protected:
 
@@ -111,13 +104,22 @@ namespace dabc {
          virtual int PreviewCommand(Command* cmd);
 
          // some protected method for parameters handling
-         Parameter* CreateParameter(const char* name, int kind, const char* initvalue = 0, bool visible = true, bool fixed = false);
+         Parameter* CreatePar(int kind, const char* name, const char* initvalue = 0);
+         Parameter* CreateStrPar(const char* name, const char* initvalue = 0);
+         Parameter* CreateIntPar(const char* name, int initvalue = 0);
+         Parameter* CreateDoublePar(const char* name, double initvalue = 0.);
+
          void DestroyParameter(const char* name);
+         bool InvokeParChange(Parameter* par, const char* value, Command* cmd);
 
          bool SetParValue(const char* name, const char* value);
          bool SetParValue(const char* name, int value);
          bool SetParFixed(const char* name, bool on = true);
          void LockUnlockPars(bool on);
+
+         Folder* MakeFolderForParam(const char* parname);
+         void SetParsHolder(Folder* holder, const char* subfolder = 0);
+         void SetParDflts(int visibility = 1, bool fixed = false);
 
          // this method is called after parameter is changed
          // user may add its reaction on this event, but cannot
@@ -129,9 +131,13 @@ namespace dabc {
          int              fProcessorPriority;
          CommandsQueue    fProcessorCommands;
 
-         Folder*          fProcessorPars;
+         Folder*          fParsHolder;
+         String           fProcessorPars;
 
          Mutex            fProcessorMutex;
+
+         int              fParsDfltVisibility;
+         bool             fParsDfltFixed;
 
       private:
          bool TakeActivateData(TimeStamp_t& mark, double& interval);

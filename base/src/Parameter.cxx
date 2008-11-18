@@ -1,24 +1,26 @@
 #include "dabc/Parameter.h"
 
 #include "dabc/Manager.h"
-#include "dabc/Command.h"
+// #include "dabc/Command.h"
 #include "dabc/CommandClient.h"
 #include "dabc/logging.h"
 #include "dabc/Iterator.h"
 #include "dabc/WorkingProcessor.h"
 
-dabc::Parameter::Parameter(WorkingProcessor* lst, const char* name, bool visible) :
-   Basic(lst ? lst->GetParsFolder() : 0, name),
+dabc::Parameter::Parameter(WorkingProcessor* lst, const char* name) :
+   Basic(lst ? lst->MakeFolderForParam(name) : 0, dabc::Folder::GetObjectName(name)),
    fLst(lst),
-   fFixed(false),
-   fVisible(visible),
+   fFixed(lst ? lst->fParsDfltFixed : false),
+   fVisibility(lst ? lst->fParsDfltVisibility : 1),
    fDebug(false)
 {
+   DOUT5(("Create parameter %s", GetFullName(dabc::mgr()).c_str()));
 }
 
 dabc::Parameter::~Parameter()
 {
-   RaiseEvent(2);
+   RaiseEvent(parDestroyed);
+   DOUT5(("Destroy parameter %s", GetName()));
 }
 
 void dabc::Parameter::FillInfo(String& info)
@@ -31,9 +33,14 @@ void dabc::Parameter::FillInfo(String& info)
       dabc::Basic::FillInfo(info);
 }
 
+void dabc::Parameter::Ready()
+{
+   RaiseEvent(parCreated);
+}
+
 void dabc::Parameter::Changed()
 {
-   RaiseEvent(1);
+   RaiseEvent(parModified);
 
    if (IsDebugOutput()) DoDebugOutput();
 }
@@ -45,33 +52,17 @@ void dabc::Parameter::RaiseEvent(int evt)
 
 dabc::Basic* dabc::Parameter::GetHolder()
 {
-   return GetParsLst() ? GetParsLst()->GetParsHolder() : 0;
+   return fLst ? fLst->fParsHolder : 0;
 }
 
 bool dabc::Parameter::InvokeChange(const char* value)
 {
-   Command* cmd = new CommandSetParameter(GetName(), value);
-
-   int cmd_res = InvokeChange(cmd);
-
-   if (cmd_res!=CommandReceiver::cmd_postponed)
-      dabc::Command::Reply(cmd, cmd_res == CommandReceiver::cmd_true);
-
-   return cmd_res != CommandReceiver::cmd_false;
+   return fLst ? fLst->InvokeParChange(this, value, 0) : false;
 }
 
-int dabc::Parameter::InvokeChange(dabc::Command* cmd)
+bool dabc::Parameter::InvokeChange(dabc::Command* cmd)
 {
-   if (cmd==0) return CommandReceiver::cmd_false;
-
-   if (fLst==0) return CommandReceiver::cmd_bool(SetStr(cmd->GetStr("ParValue")));
-
-   cmd->SetStr("ParName", GetName());
-
-   // after submit of the command one should not touch cmd pointer
-   fLst->Submit(cmd);
-
-   return CommandReceiver::cmd_postponed;
+   return cmd && fLst ? fLst->InvokeParChange(this, 0, cmd) : false;
 }
 
 void dabc::Parameter::DoDebugOutput()
@@ -131,8 +122,8 @@ bool dabc::Parameter::Read(ConfigIO &cfg)
 
 // __________________________________________________________
 
-dabc::RateParameter::RateParameter(WorkingProcessor* parent, const char* name, bool synchron, double interval, bool visible) :
-   Parameter(parent, name, visible),
+dabc::RateParameter::RateParameter(WorkingProcessor* parent, const char* name, bool synchron, double interval) :
+   Parameter(parent, name),
    fSynchron(synchron),
    fInterval(interval),
    fTotalSum(0.),
@@ -152,9 +143,10 @@ dabc::RateParameter::RateParameter(WorkingProcessor* parent, const char* name, b
    strcpy(fRecord.color, col_Blue);
    strcpy(fRecord.alarmcolor, col_Yellow);
    strcpy(fRecord.units, "1/s");
-   RaiseEvent(0);
 
    if (!fSynchron) fRateMutex = new Mutex;
+
+   Ready();
 }
 
 dabc::RateParameter::~RateParameter()
@@ -230,8 +222,8 @@ void dabc::RateParameter::SetLimits(double lower, double upper)
 
 // ___________________________________________________
 
-dabc::HistogramParameter::HistogramParameter(WorkingProcessor* parent, const char* name, int nchannles, bool visible) :
-   Parameter(parent, name, visible),
+dabc::HistogramParameter::HistogramParameter(WorkingProcessor* parent, const char* name, int nchannles) :
+   Parameter(parent, name),
    fRecord(0),
    fLastTm(NullTimeStamp),
    fInterval(1.)
@@ -246,7 +238,7 @@ dabc::HistogramParameter::HistogramParameter(WorkingProcessor* parent, const cha
    SetColor(col_Blue);
    SetLimits(0, nchannles);
 
-   RaiseEvent(0);
+   Ready();
 }
 
 

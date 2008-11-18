@@ -56,7 +56,7 @@ namespace dabc {
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option);
          virtual Folder* ListMatchFiles(const char* typ, const char* filemask);
       protected:
-         virtual bool CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes);
+         virtual bool CreateManagerInstance(const char* kind, Configuration* cfg);
    };
 
    typedef struct DependPair {
@@ -168,10 +168,10 @@ dabc::Folder* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
    return res;
 }
 
-bool dabc::StdManagerFactory::CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes)
+bool dabc::StdManagerFactory::CreateManagerInstance(const char* kind, Configuration* cfg)
 {
    if ((kind==0) || (strcmp(kind,"Basic")==0)) {
-      new dabc::Manager((name ? name : "dabc"), true);
+      new dabc::Manager(cfg->MgrName(), true, cfg);
       return true;
    }
 
@@ -202,9 +202,9 @@ const char* dabc::Manager::stcmdDoStop = "DoStop";
 const char* dabc::Manager::stcmdDoError = "DoError";
 const char* dabc::Manager::stcmdDoHalt = "DoHalt";
 
-dabc::Manager::Manager(const char* managername, bool usecurrentprocess) :
+dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configuration* cfg) :
    Folder(0, managername, true),
-   WorkingProcessor(GetFolder("Pars", true, true)),
+   WorkingProcessor(),
    CommandClientBase(),
    fMgrMainLoop(false),
    fMgrMutex(0),
@@ -216,12 +216,15 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess) :
    fTimedPars(),
    fDepend(0),
    fSigThrd(0),
-   fSMmodule(0)
+   fSMmodule(0),
+   fCfg(cfg)
 {
    if (fInstance==0) {
       fInstance = this;
       dabc::SetDebugPrefix(managername);
    }
+
+   SetParsHolder(this, "Pars");
 
    // we create recursive mutex to avoid problem in Folder::GetFolder method,
    // where constructor is called under locked mutex,
@@ -261,7 +264,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess) :
    }
 
    // create state parameter, inherited class should call init to see it
-   CreateParameter(stParName, parString, stHalted, true, false);
+   CreateStrPar(stParName, stHalted);
 }
 
 dabc::Manager::~Manager()
@@ -308,7 +311,7 @@ dabc::Manager::~Manager()
 
 void dabc::Manager::init()
 {
-   dabc::Iterator iter(GetParsFolder());
+   dabc::Iterator iter(GetTopParsFolder());
 
    while (iter.next()) {
       Parameter* par = dynamic_cast<Parameter*> (iter.current());
@@ -672,7 +675,7 @@ int dabc::Manager::PreviewCommand(Command* cmd)
    if (cmd_res == cmd_ignore)
       if (cmd->IsName(CommandSetParameter::CmdName())) {
          dabc::Parameter* par = dynamic_cast<dabc::Parameter*>(FindChild(cmd->GetStr("ParName")));
-         cmd_res = par ? par->InvokeChange(cmd) : cmd_ignore;
+         cmd_res = (par && par->InvokeChange(cmd)) ? cmd_postponed : cmd_ignore;
       }
 
    if (cmd_res == cmd_ignore)
@@ -1756,7 +1759,7 @@ void dabc::Manager::ObjectDestroyed(Basic* obj)
 
 void dabc::Manager::ParameterEvent(Parameter* par, int event)
 {
-   if (event==1) return;
+   if (event==parModified) return;
 
    bool activate = false;
    double interval = 0.;
@@ -1764,11 +1767,11 @@ void dabc::Manager::ParameterEvent(Parameter* par, int event)
    {
       LockGuard lock(fMgrMutex);
 
-      if ((event==0) && par->NeedTimeout()) {
+      if ((event==parCreated) && par->NeedTimeout()) {
          if (fTimedPars.size()==0) { activate = true; interval = 0.; }
          fTimedPars.push_back(par);
       } else
-      if (event==2) {
+      if (event==parDestroyed) {
          fTimedPars.remove(par);
          if (fTimedPars.size()==0) { activate = true; interval = -1.; }
       }

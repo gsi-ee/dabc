@@ -25,6 +25,7 @@ namespace dabc {
    class Folder;
    class WorkingThread;
    class Application;
+   class Configuration;
 
    class Factory : public Basic {
       friend class Manager;
@@ -48,12 +49,12 @@ namespace dabc {
 
          virtual DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0) { return 0; }
 
-         static bool CreateManager(const char* kind, const char* name, int nodeid, int numnodes);
+         static bool CreateManager(const char* kind, Configuration* cfg);
 
       protected:
          static const char* DfltAppClass(const char* newdefltclass = 0);
 
-         virtual bool CreateManagerInstance(const char* kind, const char* name, int nodeid, int numnodes) { return false; }
+         virtual bool CreateManagerInstance(const char* kind, Configuration* cfg) { return false; }
 
       private:
          static Queue<Factory*> *Factories()

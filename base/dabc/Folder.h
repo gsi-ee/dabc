@@ -30,6 +30,8 @@ namespace dabc {
          bool IsChild(Basic* obj) const;
          bool IsOwner() const { return fOwner; }
 
+         Folder* GetFolder(const char* name, bool force = false, bool isowner = true);
+
          virtual bool Store(ConfigIO &cfg);
          virtual bool Find(ConfigIO &cfg);
 
@@ -37,9 +39,6 @@ namespace dabc {
          static const char* GetObjectName(const char* path);
 
       protected:
-         Folder* GetFolder(const char* name,
-                           bool force = false,
-                           bool isowner = true);
 
          virtual void _SetParent(Mutex* mtx, Basic* parent);
 

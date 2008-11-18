@@ -18,22 +18,22 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
    //new dabc::StrParameter(this,DABC_ROC_COMPAR_BOARDIP, "140.181.66.173"); // lxi010.gsi.de
    // todo: later provide more than one roc board as input
 
-   new dabc::IntParameter(this, DABC_ROC_COMPAR_ROCSNUMBER, 1);
+   CreateIntPar(DABC_ROC_COMPAR_ROCSNUMBER, 1);
    for (int nr=0;nr<15;nr++)
-      new dabc::StrParameter(this, FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)), "");
+      CreateStrPar(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)), "");
 
    SetParValue(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, 0)),"140.181.66.173"); // lxi010.gsi.de
 
-   new dabc::IntParameter(this, DABC_ROC_COMPAR_BUFSIZE, 8192);
-   new dabc::IntParameter(this, DABC_ROC_COMPAR_TRANSWINDOW, 30);
-   new dabc::IntParameter(this, DABC_ROC_COMPAR_POOL_SIZE, 100);
-   new dabc::IntParameter(this, DABC_ROC_COMPAR_QLENGTH, 10);
-   new dabc::StrParameter(this, DABC_ROC_PAR_OUTFILE, "");
-   new dabc::IntParameter(this, DABC_ROC_PAR_OUTFILELIMIT, 0);
-   new dabc::StrParameter(this, DABC_ROC_PAR_DATASERVER, "Stream");
-   new dabc::IntParameter(this, DABC_ROC_PAR_DOCALIBR, 1);
-   new dabc::StrParameter(this, DABC_ROC_PAR_CALIBRFILE, "");
-   new dabc::IntParameter(this, DABC_ROC_PAR_CALIBRFILELIMIT, 0);
+   CreateIntPar(DABC_ROC_COMPAR_BUFSIZE, 8192);
+   CreateIntPar(DABC_ROC_COMPAR_TRANSWINDOW, 30);
+   CreateIntPar(DABC_ROC_COMPAR_POOL_SIZE, 100);
+   CreateIntPar(DABC_ROC_COMPAR_QLENGTH, 10);
+   CreateStrPar(DABC_ROC_PAR_OUTFILE, "");
+   CreateIntPar(DABC_ROC_PAR_OUTFILELIMIT, 0);
+   CreateStrPar(DABC_ROC_PAR_DATASERVER, "Stream");
+   CreateIntPar(DABC_ROC_PAR_DOCALIBR, 1);
+   CreateStrPar(DABC_ROC_PAR_CALIBRFILE, "");
+   CreateIntPar(DABC_ROC_PAR_CALIBRFILELIMIT, 0);
 
    DOUT1(("!!!! Data server plugin created %s !!!!", GetName()));
 }

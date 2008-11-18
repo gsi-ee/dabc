@@ -107,8 +107,6 @@ namespace dabc {
 
          virtual CommandReceiver* GetCmdReceiver() { return this; }
 
-         virtual Basic* GetParsHolder() { return this; }
-
          // generic event processing function
          virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid) {}
 

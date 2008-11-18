@@ -66,7 +66,6 @@ void dabc::Basic::_MakeFullName(String &fullname, Basic* upto) const
    }
 
    if (fParent==0) fullname.append("/");
-
    fullname.append(GetName());
 }
 

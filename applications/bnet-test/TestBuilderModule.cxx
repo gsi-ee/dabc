@@ -25,7 +25,7 @@ bnet::TestBuilderModule::TestBuilderModule(const char* name, WorkerApplication* 
 
    fOutBufferSize = factory->EventBufferSize();
 
-   new dabc::StrParameter(this, "SendMask", "xxxx");
+   CreateStrPar("SendMask", "xxxx");
 }
 
 bnet::TestBuilderModule::~TestBuilderModule()

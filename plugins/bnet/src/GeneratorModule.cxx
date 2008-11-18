@@ -24,7 +24,7 @@ bnet::GeneratorModule::GeneratorModule(const char* name, WorkerApplication* fact
 
    CreateOutput("Output", fPool, ReadoutQueueSize);
 
-   new dabc::IntParameter(this, "UniqueId", 0);
+   CreateIntPar("UniqueId", 0);
 }
 
 void bnet::GeneratorModule::MainLoop()

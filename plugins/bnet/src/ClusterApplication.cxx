@@ -48,10 +48,12 @@ bnet::ClusterApplication::ClusterApplication(const char* name) :
    fNodeNames.clear();
    fNodeMask.clear();
 
+   SetParDflts(0); // mark all newly created parameters as invisible
+
    // register dependency against all states in the cluster, include ourself
    for (int id=0; id<dabc::mgr()->NumNodes(); id++) {
       dabc::String parname = FORMAT(("State_%d", id));
-      dabc::Parameter* par = CreateParameter(parname.c_str(), dabc::parString, dabc::Manager::stNull, false, false);
+      dabc::Parameter* par = CreateStrPar(parname.c_str(), dabc::Manager::stNull);
 
       DOUT1(("Create parameter %s", par->GetFullName().c_str()));
       dabc::mgr()->Subscribe(par, id, dabc::Manager::stParName);
@@ -68,30 +70,30 @@ bnet::ClusterApplication::ClusterApplication(const char* name) :
       dabc::String parname;
 
       dabc::formats(parname,"Worker%dStatus",n);
-      dabc::Parameter* par = new dabc::StrParameter(this, parname.c_str(), "Off", false);
+      dabc::Parameter* par = CreateStrPar(parname.c_str(), "Off");
       dabc::Manager::Instance()->Subscribe(par, n, (holdername + ".Status").c_str());
 
       dabc::formats(parname,"Worker%dRecvStatus",n);
-      par = new dabc::StrParameter(this, parname.c_str(), "oooo", false);
+      par = CreateStrPar(parname.c_str(), "oooo");
       dabc::Manager::Instance()->Subscribe(par, n, (holdername + ".RecvStatus").c_str());
 
       dabc::formats(parname,"Worker%dSendStatus",n);
-      par = new dabc::StrParameter(this, parname.c_str(), "oooo", false);
+      par = CreateStrPar(parname.c_str(), "oooo");
       dabc::Manager::Instance()->Subscribe(par, n, (holdername + ".SendStatus").c_str());
    }
 
-   new dabc::IntParameter(this, "CfgNumNodes", dabc::mgr()->NumNodes());
-   new dabc::IntParameter(this, "CfgNodeId", dabc::mgr()->NodeId());
+   SetParDflts();
 
-   new dabc::StrParameter(this, "NetDevice", bnet::NetDevice);
-   new dabc::IntParameter(this, "IsRunning", 0, false);
-   new dabc::IntParameter(this, "WithController", 0);
-   new dabc::IntParameter(this, "NumEventsCombine", 1);
+   CreateIntPar("CfgNumNodes", dabc::mgr()->NumNodes());
+   CreateIntPar("CfgNodeId", dabc::mgr()->NodeId());
 
-   new dabc::IntParameter(this, "CtrlBuffer",            2*1024);
-   new dabc::IntParameter(this, "CtrlPoolSize",      2*0x100000);
-
-   new dabc::IntParameter(this, "TransportBuffer",       8*1024);
+   CreateStrPar("NetDevice", bnet::NetDevice);
+   CreateIntPar("IsRunning", 0);
+   CreateIntPar("WithController", 0);
+   CreateIntPar("NumEventsCombine", 1);
+   CreateIntPar("CtrlBuffer",            2*1024);
+   CreateIntPar("CtrlPoolSize",      2*0x100000);
+   CreateIntPar("TransportBuffer",       8*1024);
 
    DOUT1(("Net device = %s",NetDevice()));
 

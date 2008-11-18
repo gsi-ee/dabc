@@ -6,6 +6,7 @@
 #include "dabc/Manager.h"
 #include "dabc/Application.h"
 #include "dabc/Parameter.h"
+#include "dabc/Iterator.h"
 
 bool dabc::Configuration::XDAQ_LoadLibs()
 {
@@ -102,11 +103,11 @@ dabc::Configuration::~Configuration()
 {
 }
 
-const char* dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile)
+bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile)
 {
    fSelected = IsXDAQ() ? XDAQ_FindContext(cfgid) : FindContext(cfgid);
 
-   if (fSelected==0) return 0;
+   if (fSelected==0) return false;
 
    const char* val = getenv(xmlDABCSYS);
    if (val!=0) envDABCSYS = val;
@@ -147,7 +148,11 @@ const char* dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, 
 
    if (mgrname==0) mgrname = "dabc";
 
-   return mgrname;
+   fMgrName     = mgrname;
+   fMgrNodeId   = nodeid;
+   fMgrNumNodes = numnodes;
+
+   return true;
 }
 
 bool dabc::Configuration::LoadLibs()
@@ -176,11 +181,10 @@ bool dabc::Configuration::ReadPars()
    Application* app = mgr()->GetApp();
    if (app==0) return false;
 
-   Folder* f = app->GetParsFolder();
-   if (f==0) return false;
+   dabc::Iterator iter(app->GetTopParsFolder());
 
-   for (unsigned n = 0; n < f->NumChilds(); n++) {
-      Parameter* par = dynamic_cast<Parameter*> (f->GetChild(n));
+   while (iter.next()) {
+      Parameter* par = dynamic_cast<Parameter*> (iter.current());
       if (par!=0) par->Read(*this);
    }
 

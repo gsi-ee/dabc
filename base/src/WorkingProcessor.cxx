@@ -6,19 +6,25 @@
 #include "dabc/Manager.h"
 #include "dabc/Iterator.h"
 
-dabc::WorkingProcessor::WorkingProcessor(Folder* pars) :
+dabc::WorkingProcessor::WorkingProcessor() :
    fProcessorThread(0),
    fProcessorId(0),
    fProcessorPriority(-1), // minimum priority per default
    fProcessorCommands(false, true),
-   fProcessorPars(pars),
+   fParsHolder(0),
+   fProcessorPars(),
    fProcessorMutex(),
+   fParsDfltVisibility(1),
+   fParsDfltFixed(false),
    fProcessorActivateTmout(false),
    fProcessorActivateMark(NullTimeStamp),
    fProcessorActivateInterv(0.),
    fProcessorPrevFire(NullTimeStamp),
    fProcessorNextFire(NullTimeStamp)
 {
+   if (fProcessorPars.length()>0)
+      if (fProcessorPars[fProcessorPars.length()-1]!='/')
+         fProcessorPars.append("/");
 }
 
 dabc::WorkingProcessor::~WorkingProcessor()
@@ -29,6 +35,14 @@ dabc::WorkingProcessor::~WorkingProcessor()
 
    DOUT5(("~WorkingProcessor %p %d thrd:%p done", this, fProcessorId, fProcessorThread));
 }
+
+void dabc::WorkingProcessor::SetParsHolder(Folder* holder, const char* subfolder)
+{
+   fParsHolder = holder;
+   if (subfolder!=0) fProcessorPars = subfolder;
+                else fProcessorPars.clear();
+}
+
 
 bool dabc::WorkingProcessor::AssignProcessorToThread(WorkingThread* thrd, bool sync)
 {
@@ -143,7 +157,29 @@ void dabc::WorkingProcessor::ExitMainLoop()
 
 // all about parameters handling
 
-dabc::Parameter* dabc::WorkingProcessor::CreateParameter(const char* name, int kind, const char* initvalue, bool visible, bool fixed)
+dabc::Folder* dabc::WorkingProcessor::MakeFolderForParam(const char* parname)
+{
+   dabc::String foldname = fProcessorPars + dabc::Folder::GetPathName(parname);
+
+   if ((foldname.length()==0) || (fParsHolder==0)) return fParsHolder;
+
+   return fParsHolder->GetFolder(foldname.c_str(), true, true);
+}
+
+dabc::Folder* dabc::WorkingProcessor::GetTopParsFolder()
+{
+   if ((fProcessorPars.length()==0) || (fParsHolder==0)) return fParsHolder;
+
+   return fParsHolder->GetFolder(fProcessorPars.c_str(), false, false);
+}
+
+void dabc::WorkingProcessor::SetParDflts(int visibility, bool fixed)
+{
+   fParsDfltVisibility = visibility;
+   fParsDfltFixed = fixed;
+}
+
+dabc::Parameter* dabc::WorkingProcessor::CreatePar(int kind, const char* name, const char* initvalue)
 {
    dabc::Parameter* par = 0;
 
@@ -151,37 +187,51 @@ dabc::Parameter* dabc::WorkingProcessor::CreateParameter(const char* name, int k
       case dabc::parNone:
          break;
       case dabc::parString:
-         par = new dabc::StrParameter(this, name, "", visible);
+         par = new dabc::StrParameter(this, name, initvalue);
          break;
       case dabc::parDouble:
-         par = new dabc::DoubleParameter(this, name, 0.0, visible);
+         par = new dabc::DoubleParameter(this, name, 0.0);
          break;
       case dabc::parInt:
-         par = new dabc::IntParameter(this, name, 0, visible);
+         par = new dabc::IntParameter(this, name, 0);
          break;
       case dabc::parSyncRate:
-         par = new dabc::RateParameter(this, name, true, 0.0, visible);
+         par = new dabc::RateParameter(this, name, true, 0.0);
          break;
       case dabc::parAsyncRate:
-         par = new dabc::RateParameter(this, name, false, 0.0, visible);
+         par = new dabc::RateParameter(this, name, false, 0.0);
          break;
       case dabc::parStatus:
-         par = new dabc::StatusParameter(this, name, 0, visible);
+         par = new dabc::StatusParameter(this, name, 0);
          break;
       case dabc::parHisto:
-         par = new dabc::HistogramParameter(this, name, 10, visible);
+         par = new dabc::HistogramParameter(this, name, 10);
          break;
       default:
          EOUT(("Unsupported parameter type"));
    }
 
-   if (par!=0) {
-      if (initvalue) par->SetStr(initvalue);
-      if (fixed) par->SetFixed(true);
-   }
+   if ((par!=0) && (initvalue!=0) && (kind!=dabc::parString))
+      par->SetStr(initvalue);
 
    return par;
 }
+
+dabc::Parameter* dabc::WorkingProcessor::CreateStrPar(const char* name, const char* initvalue)
+{
+   return new dabc::StrParameter(this, name, initvalue);
+}
+
+dabc::Parameter* dabc::WorkingProcessor::CreateIntPar(const char* name, int initvalue)
+{
+   return new dabc::IntParameter(this, name, initvalue);
+}
+
+dabc::Parameter* dabc::WorkingProcessor::CreateDoublePar(const char* name, double initvalue)
+{
+   return new dabc::DoubleParameter(this, name, initvalue);
+}
+
 
 void dabc::WorkingProcessor::DestroyParameter(const char* name)
 {
@@ -191,7 +241,8 @@ void dabc::WorkingProcessor::DestroyParameter(const char* name)
 
 dabc::Parameter* dabc::WorkingProcessor::FindPar(const char* name) const
 {
-   return GetParsFolder() ? dynamic_cast<dabc::Parameter*>(GetParsFolder()->FindChild(name)) : 0;
+   dabc::Folder* f = ((WorkingProcessor*) this )->GetTopParsFolder();
+   return f ? dynamic_cast<dabc::Parameter*>(f->FindChild(name)) : 0;
 }
 
 void dabc::WorkingProcessor::DeletePar(const char* name)
@@ -255,7 +306,7 @@ const char* dabc::WorkingProcessor::GetParCharStar(const char* name, const char*
 
 void dabc::WorkingProcessor::LockUnlockPars(bool on)
 {
-   dabc::Iterator iter(GetParsFolder());
+   dabc::Iterator iter(GetTopParsFolder());
 
    while (iter.next()) {
       dabc::Parameter* par =
@@ -265,12 +316,31 @@ void dabc::WorkingProcessor::LockUnlockPars(bool on)
    }
 }
 
+bool dabc::WorkingProcessor::InvokeParChange(Parameter* par, const char* value, Command* cmd)
+{
+   String fullname;
+   par->MakeFullName(fullname, GetTopParsFolder());
+
+   DOUT5(("Invoke par change %s topfold:%s", fullname.c_str(), GetTopParsFolder()->GetName()));
+
+   if (cmd==0)
+      cmd = new CommandSetParameter(fullname.c_str(), value);
+   else {
+      cmd->SetStr("ParName", fullname.c_str());
+      if (value!=0) cmd->SetStr("ParValue", value);
+   }
+
+   Submit(cmd);
+
+   return true;
+}
+
 
 int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 {
    int cmd_res = cmd_ignore;
 
-   if (cmd->IsName(CommandSetParameter::CmdName()) && (GetParsFolder()!=0)) {
+   if (cmd->IsName(CommandSetParameter::CmdName())) {
       Parameter* par = FindPar(cmd->GetPar("ParName"));
 
       if (par==0) {
@@ -298,3 +368,5 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 
    return cmd_res;
 }
+
+

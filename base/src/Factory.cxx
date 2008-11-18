@@ -29,9 +29,9 @@ dabc::Factory::Factory(const char* name) :
    }
 }
 
-bool dabc::Factory::CreateManager(const char* kind, const char* name, int nodeid, int numnodes)
+bool dabc::Factory::CreateManager(const char* kind, Configuration* cfg)
 {
-   if (Factories()==0) return false;
+   if ((Factories()==0) || (cfg==0)) return false;
 
    if (dabc::mgr() != 0) {
       EOUT(("Manager instance already exists"));
@@ -39,7 +39,7 @@ bool dabc::Factory::CreateManager(const char* kind, const char* name, int nodeid
    }
 
    for (unsigned n=0;n<Factories()->Size();n++)
-      if (Factories()->Item(n)->CreateManagerInstance(kind, name, nodeid, numnodes)) return true;
+      if (Factories()->Item(n)->CreateManagerInstance(kind, cfg)) return true;
 
    return false;
 }

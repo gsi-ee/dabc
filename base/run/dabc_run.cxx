@@ -6,9 +6,9 @@
 
 #include <iostream>
 
-int RunSimpleApplication(const char* mgrname, dabc::Configuration* cfg)
+int RunSimpleApplication(dabc::Configuration* cfg)
 {
-   dabc::Manager manager(mgrname, true);
+   dabc::Manager manager(cfg->MgrName(), true, cfg);
 
    manager.InstallCtrlCHandler();
 
@@ -186,22 +186,20 @@ int main(int numc, char* args[])
 
    DOUT1(("Using config file: %s id: %u", configuration, configid));
 
-   const char* mgrname = cfg.SelectContext(configid, nodeid, numnodes, logfile);
-
-   if (mgrname==0) {
+   if (!cfg.SelectContext(configid, nodeid, numnodes, logfile)) {
       EOUT(("Did not found context"));
       return 1;
    }
 
    if (numnodes<2)
-      return RunSimpleApplication(mgrname, &cfg);
+      return RunSimpleApplication(&cfg);
 
    if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcSctrl.so")) {
       EOUT(("Cannot load control library"));
       return 1;
    }
 
-   if (!dabc::Factory::CreateManager("Standalone", mgrname, nodeid, numnodes)) {
+   if (!dabc::Factory::CreateManager("Standalone", &cfg)) {
       EOUT(("Cannot create required manager class"));
       return 1;
    }
