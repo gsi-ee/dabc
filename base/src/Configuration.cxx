@@ -178,6 +178,8 @@ bool dabc::Configuration::ReadPars()
 
    if (IsXDAQ()) return XDAQ_ReadPars();
 
+   /*
+
    Application* app = mgr()->GetApp();
    if (app==0) return false;
 
@@ -187,6 +189,7 @@ bool dabc::Configuration::ReadPars()
       Parameter* par = dynamic_cast<Parameter*> (iter.current());
       if (par!=0) par->Read(*this);
    }
+   */
 
    return true;
 }

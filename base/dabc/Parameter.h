@@ -69,6 +69,7 @@ namespace dabc {
          bool InvokeChange(dabc::Command* cmd);
 
          virtual bool Store(ConfigIO &cfg);
+         virtual bool Find(ConfigIO &cfg);
          virtual bool Read(ConfigIO &cfg);
 
       protected:
@@ -312,9 +313,17 @@ namespace dabc {
          void SetUnits(const char* name);
          void SetLimits(double lower = 0., double upper = 0.);
 
+         const char* GetDisplayMode();
+         void SetDisplayMode(const char* v);
+
          virtual void AccountValue(double v);
 
+         virtual bool Store(ConfigIO &cfg);
+         virtual bool Read(ConfigIO &cfg);
+
       protected:
+
+         const char* FindRateAttr(ConfigIO &cfg, const char* name);
 
          virtual bool NeedTimeout() const { return !fSynchron; }
          virtual void ProcessTimeout(double last_diff);

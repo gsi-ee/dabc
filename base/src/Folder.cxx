@@ -233,6 +233,8 @@ bool dabc::Folder::Find(ConfigIO &cfg)
    const char* searchname = GetName();
    if (UseMasterClassName()) searchname = MasterClassName();
 
+   DOUT4(("Start find of folder %s", GetName()));
+
    int lvl = cfg.SearchLevel();
    bool res = true;
 
@@ -240,9 +242,13 @@ bool dabc::Folder::Find(ConfigIO &cfg)
 
    do {
 
+      DOUT5(("Start search item %s", searchname));
+
       res = cfg.FindItem(searchname, kind);
 
-      DOUT3(("Search item %s kind = %d lvl %d res = %s", searchname, kind, cfg.SearchLevel(), DBOOL(res)));
+      DOUT5(("Did Search item %s kind = %d lvl %d res = %s", searchname, kind, cfg.SearchLevel(), DBOOL(res)));
+
+      if (cfg.IsExact() && (kind == ConfigIO::findChild) && !res) return false;
 
       kind = ConfigIO::findChild;
 

@@ -317,7 +317,7 @@ void dabc::Manager::init()
       Parameter* par = dynamic_cast<Parameter*> (iter.current());
       if (par) {
          DOUT5(("Raise event 0 again for par %s", par->GetName()));
-         ParameterEvent(par, 0);
+         ParameterEvent(par, parCreated);
       }
    }
 }
@@ -1767,6 +1767,8 @@ void dabc::Manager::ParameterEvent(Parameter* par, int event)
    {
       LockGuard lock(fMgrMutex);
 
+      if (fCfg && (event==parCreated)) par->Read(*fCfg);
+
       if ((event==parCreated) && par->NeedTimeout()) {
          if (fTimedPars.size()==0) { activate = true; interval = 0.; }
          fTimedPars.push_back(par);
@@ -1778,6 +1780,7 @@ void dabc::Manager::ParameterEvent(Parameter* par, int event)
    }
 
    if (activate) ActivateTimeout(interval);
+
 }
 
 double dabc::Manager::ProcessTimeout(double last_diff)

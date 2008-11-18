@@ -1,5 +1,8 @@
 #include "dabc/Parameter.h"
 
+#include <stdio.h>
+
+
 #include "dabc/Manager.h"
 // #include "dabc/Command.h"
 #include "dabc/CommandClient.h"
@@ -86,38 +89,40 @@ bool dabc::Parameter::Store(ConfigIO &cfg)
    return true;
 }
 
-bool dabc::Parameter::Read(ConfigIO &cfg)
+bool dabc::Parameter::Find(ConfigIO &cfg)
 {
    if (GetParent()==0) return false;
 
+   DOUT3(("Start search of parameter %s", GetFullName().c_str()));
+
    cfg.SetExact(true);
 
-   if (GetParent()->Find(cfg) && cfg.FindItem(GetName(), ConfigIO::findChild)) {
-      const char* value = cfg.GetItemValue();
-      DOUT0(("Set parameter %s = %s", GetFullName().c_str(), (value ? value : "null")));
-      SetStr(value);
-      return true;
-   }
+   if (GetParent()->Find(cfg) && cfg.FindItem(GetName(), ConfigIO::findChild)) return true;
+
+   DOUT3(("Search par %s in defaults", GetFullName().c_str()));
 
    cfg.SetExact(false);
 
-   dabc::SetDebugLevel(5);
+   while (GetParent()->Find(cfg))
+      if (cfg.FindItem(GetName(), ConfigIO::findChild)) return true;
 
-   while (GetParent()->Find(cfg)) {
-      if (cfg.FindItem(GetName(), ConfigIO::findChild)) {
-         const char* value = cfg.GetItemValue();
-         DOUT0(("Set parameter via mask %s = %s", GetFullName().c_str(), (value ? value : "null")));
-         SetStr(value);
-         dabc::SetDebugLevel(1);
-         return true;
-      }
-   }
-
-   dabc::SetDebugLevel(1);
-
-   DOUT0(("Parameter %s not found", GetFullName().c_str()));
+   DOUT3(("Parameter %s not found", GetFullName().c_str()));
 
    return false;
+
+}
+
+bool dabc::Parameter::Read(ConfigIO &cfg)
+{
+   if (!Find(cfg)) return false;
+
+   const char* value = cfg.GetItemValue();
+   DOUT0(("Set %s par %s = %s", (cfg.IsExact() ? "direct" : "via mask"),
+           GetFullName().c_str(), (value ? value : "null")));
+   SetStr(value);
+   cfg.SetExact(true);
+
+   return true;
 }
 
 // __________________________________________________________
@@ -219,6 +224,128 @@ void dabc::RateParameter::SetLimits(double lower, double upper)
    fRecord.lower = lower;
    fRecord.upper = upper;
 }
+
+const char* dabc::RateParameter::GetDisplayMode()
+{
+   switch (fRecord.displaymode) {
+      case DISPLAY_ARC: return "ARC";
+      case DISPLAY_BAR: return "BAR";
+      case DISPLAY_TREND: return "TREND";
+      case DISPLAY_STAT: return "STAT";
+   }
+
+   return "BAR";
+}
+
+void dabc::RateParameter::SetDisplayMode(const char* v)
+{
+    if (v==0) return;
+
+    if (strcmp(v,"ARC")==0) fRecord.displaymode = DISPLAY_ARC; else
+    if (strcmp(v,"BAR")==0) fRecord.displaymode = DISPLAY_BAR; else
+    if (strcmp(v,"TREND")==0) fRecord.displaymode = DISPLAY_TREND; else
+    if (strcmp(v,"STAT")==0) fRecord.displaymode = DISPLAY_STAT;
+}
+
+
+bool dabc::RateParameter::Store(ConfigIO &cfg)
+{
+   cfg.CreateItem("Ratemeter");
+   cfg.CreateAttr("name", GetName());
+
+   cfg.CreateItem("value", FORMAT(("%f", fRecord.value)));
+   cfg.PopItem();
+
+   cfg.CreateItem("units", fRecord.units);
+   cfg.PopItem();
+
+   cfg.CreateItem("displaymode", GetDisplayMode());
+   cfg.PopItem();
+
+   cfg.CreateItem("lower", FORMAT(("%f", fRecord.lower)));
+   cfg.PopItem();
+
+   cfg.CreateItem("upper", FORMAT(("%f", fRecord.upper)));
+   cfg.PopItem();
+
+   cfg.CreateItem("color", fRecord.color);
+   cfg.PopItem();
+
+   cfg.CreateItem("alarmlower", FORMAT(("%f", fRecord.alarmlower)));
+   cfg.PopItem();
+
+   cfg.CreateItem("alarmupper", FORMAT(("%f", fRecord.alarmlower)));
+   cfg.PopItem();
+
+   cfg.CreateItem("alarmcolor", fRecord.alarmcolor);
+   cfg.PopItem();
+
+   cfg.PopItem();
+
+   return true;
+}
+
+const char* dabc::RateParameter::FindRateAttr(ConfigIO &cfg, const char* name)
+{
+   if (GetParent()==0) return 0;
+
+   cfg.SetExact(true);
+
+   if (GetParent()->Find(cfg) &&
+       cfg.FindItem("Ratemeter", ConfigIO::findChild) &&
+       cfg.CheckAttr("name", GetName()) &&
+       cfg.FindItem(name, ConfigIO::findChild)) return cfg.GetItemValue();
+
+   DOUT3(("Search par %s in defaults", GetFullName().c_str()));
+
+   cfg.SetExact(false);
+
+   while (GetParent()->Find(cfg))
+      if (cfg.FindItem("Ratemeter", ConfigIO::findChild) &&
+          cfg.CheckAttr("name", GetName()) &&
+          cfg.FindItem(name, ConfigIO::findChild)) return cfg.GetItemValue();
+
+   DOUT1(("Attribute %s for ratemeter %s not found", name, GetName()));
+
+   return 0;
+}
+
+bool dabc::RateParameter::Read(ConfigIO &cfg)
+{
+   const char* v = FindRateAttr(cfg, "value");
+   if (v) sscanf(v, "%f", &fRecord.value);
+
+   if (v) DOUT0(("Ratemeter %s value = %s", GetName(), v));
+
+   v = FindRateAttr(cfg, "units");
+   if (v) strncpy(fRecord.units, v, sizeof(fRecord.units));
+
+   v = FindRateAttr(cfg, "displaymode");
+   if (v) SetDisplayMode(v);
+
+   v = FindRateAttr(cfg, "lower");
+   if (v) sscanf(v, "%f", &fRecord.lower);
+
+   v = FindRateAttr(cfg, "upper");
+   if (v) sscanf(v, "%f", &fRecord.upper);
+
+   v = FindRateAttr(cfg, "color");
+   if (v) strncpy(fRecord.color, v, sizeof(fRecord.color));
+
+   v = FindRateAttr(cfg, "alarmlower");
+   if (v) sscanf(v, "%f", &fRecord.alarmlower);
+
+   v = FindRateAttr(cfg, "alarmupper");
+   if (v) sscanf(v, "%f", &fRecord.alarmupper);
+
+   v = FindRateAttr(cfg, "alarmcolor");
+   if (v) strncpy(fRecord.alarmcolor, v, sizeof(fRecord.alarmcolor));
+
+   cfg.SetExact(true);
+
+   return true;
+}
+
 
 // ___________________________________________________
 
