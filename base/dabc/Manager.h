@@ -620,8 +620,6 @@ namespace dabc {
 
          DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0);
 
-         virtual bool Find(ConfigIO &cfg);
-
       protected:
          bool                  fMgrMainLoop; // flag indicates if mainloop of manager should runs
 

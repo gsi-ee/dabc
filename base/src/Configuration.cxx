@@ -1,6 +1,8 @@
 #include "dabc/Configuration.h"
 
 #include <unistd.h>
+#include <fnmatch.h>
+
 
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
@@ -258,54 +260,53 @@ bool dabc::Configuration::StoreObject(const char* fname, Basic* obj)
    return true;
 }
 
-bool dabc::Configuration::FindItem(const char* name, FindKinds kind)
+bool dabc::Configuration::FindItem(const char* name)
 {
-   if (!IsNative() || (fSelected==0)) return false;
+   if (!IsNative() || (fCurrItem==0)) return false;
 
-   switch (kind) {
+   if (fCurrChld==0)
+      fCurrChld = fXml.GetChild(fCurrItem);
+   else
+      fCurrChld = fXml.GetNext(fCurrChld);
 
-      case selectTop:
-         fCurrItem = fSelected;
-         fSearchLevel = 0;
+   while (fCurrChld!=0) {
+      if (IsNodeName(fCurrChld, name)) {
+         fCurrItem = fCurrChld;
+         fCurrChld = 0;
          return true;
-
-      case findChild: {
-         if (fCurrItem==0) return false;
-         XMLNodePointer_t res = FindChild(fCurrItem, name);
-         if (res!=0) {
-            fCurrItem = res;
-            fSearchLevel++;
-         }
-         return res != 0;
       }
-
-      case findNext: {
-         if (fCurrItem==0) return false;
-
-         XMLNodePointer_t prnt = fXml.GetParent(fCurrItem);
-         while ((fCurrItem = fXml.GetNext(fCurrItem)) != 0)
-            if (IsNodeName(fCurrItem, name)) return true;
-
-         if (fSearchLevel>0) {
-            fSearchLevel--;
-            fCurrItem = prnt;
-         }
-
-         return false;
-      }
-
-      case firstTop:
-         fCurrItem = FindChild(Dflts(), name);
-         fLastTop = fCurrItem;
-         fSearchLevel = 0;
-         return (fCurrItem!=0);
-
-      default:
-         return false;
+      fCurrChld = fXml.GetNext(fCurrChld);
    }
 
    return false;
 }
+
+bool dabc::Configuration::CheckAttr(const char* name, const char* value)
+{
+   // make extra check - if fCurrChld!=0 something was wrong already
+   if ((fCurrChld!=0) || (fCurrItem==0)) return false;
+
+   const char* attr = fXml.GetAttr(fCurrItem, name);
+
+   bool res = true;
+
+   if (fCurrStrict)
+      res = attr == 0 ? false : strcmp(attr, value) == 0;
+   else
+   if (attr!=0) {
+      res = strcmp(attr, value) == 0;
+
+      if (!res) res = fnmatch(attr, value, FNM_NOESCAPE) == 0;
+   }
+
+   if (!res) {
+      fCurrChld = fCurrItem;
+      fCurrItem = fXml.GetParent(fCurrItem);
+   }
+
+   return res;
+}
+
 
 const char* dabc::Configuration::GetItemValue()
 {
@@ -318,3 +319,90 @@ const char* dabc::Configuration::GetAttrValue(const char* name)
 }
 
 
+dabc::Basic* dabc::Configuration::GetObjParent(Basic* obj, int lvl)
+{
+   while ((obj!=0) && (lvl-->0)) obj = obj->GetParent();
+   return obj;
+}
+
+const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
+{
+   if (obj==0) return 0;
+
+
+   int maxlevel = 0;
+   Basic* prnt = 0;
+   while ((prnt = GetObjParent(obj, maxlevel)) != 0) {
+      if (prnt==dabc::mgr()) break;
+      maxlevel++;
+   }
+
+//   DOUT0(("Search object %s lvl = %d  attr = %s",
+//          obj->GetFullName().c_str(), maxlevel, (findattr ? findattr : "---")));
+
+   if (prnt==0) return 0;
+
+   // first, try strict syntax
+   fCurrStrict = true;
+   fCurrItem = fSelected;
+   fCurrChld = 0;
+   int level = maxlevel - 1;
+
+   while (level>=0) {
+      prnt = GetObjParent(obj, level);
+      if (prnt==0) return 0;
+
+      if (!prnt->Find(*this)) break;
+      if (level--==0)
+         if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
+            const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();
+            if (res==0) res = "";
+//            DOUT0(("Exact found %s res = %s", obj->GetFullName().c_str(), res));
+            return res;
+         }
+   }
+
+   fCurrStrict = false;
+
+   do {
+
+      fCurrItem = Dflts();
+      fCurrChld = 0;
+
+      level = maxlevel - 1;
+      while (level >= 0) {
+         prnt = GetObjParent(obj, level);
+         if (prnt == 0) return 0;
+
+         if (prnt->Find(*this)) {
+            if (level--==0)
+               if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
+                  const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();
+                  if (res==0) res = "";
+//                  DOUT0(("Found object %s res = %s", obj->GetFullName().c_str(), res));
+                  return res;
+               }
+         } else
+         if (fCurrChld == 0) {
+            level++;
+            if (level >= maxlevel) break;
+            fCurrChld = fCurrItem;
+            fCurrItem = fXml.GetParent(fCurrItem);
+         }
+      }
+
+      maxlevel--;
+
+      while (maxlevel > 0) {
+         prnt = GetObjParent(obj, maxlevel - 1);
+         if (prnt->UseMasterClassName()) {
+//            DOUT0(("Try with master %s", prnt->GetName()));
+            break;
+         }
+         maxlevel--;
+      }
+
+   } while (maxlevel>0);
+
+   return 0;
+}

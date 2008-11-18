@@ -318,12 +318,13 @@ namespace dabc {
 
          virtual void AccountValue(double v);
 
+         virtual bool UseMasterClassName() const { return true; }
+
          virtual bool Store(ConfigIO &cfg);
+         virtual bool Find(ConfigIO &cfg);
          virtual bool Read(ConfigIO &cfg);
 
       protected:
-
-         const char* FindRateAttr(ConfigIO &cfg, const char* name);
 
          virtual bool NeedTimeout() const { return !fSynchron; }
          virtual void ProcessTimeout(double last_diff);

@@ -91,36 +91,17 @@ bool dabc::Parameter::Store(ConfigIO &cfg)
 
 bool dabc::Parameter::Find(ConfigIO &cfg)
 {
-   if (GetParent()==0) return false;
-
-   DOUT3(("Start search of parameter %s", GetFullName().c_str()));
-
-   cfg.SetExact(true);
-
-   if (GetParent()->Find(cfg) && cfg.FindItem(GetName(), ConfigIO::findChild)) return true;
-
-   DOUT3(("Search par %s in defaults", GetFullName().c_str()));
-
-   cfg.SetExact(false);
-
-   while (GetParent()->Find(cfg))
-      if (cfg.FindItem(GetName(), ConfigIO::findChild)) return true;
-
-   DOUT3(("Parameter %s not found", GetFullName().c_str()));
-
-   return false;
-
+   return cfg.FindItem(GetName());
 }
 
 bool dabc::Parameter::Read(ConfigIO &cfg)
 {
-   if (!Find(cfg)) return false;
+   const char* value = cfg.Find(this);
 
-   const char* value = cfg.GetItemValue();
-   DOUT0(("Set %s par %s = %s", (cfg.IsExact() ? "direct" : "via mask"),
-           GetFullName().c_str(), (value ? value : "null")));
+   if (value==0) return false;
+
+   DOUT0(("Set par %s = %s", GetFullName().c_str(), value));
    SetStr(value);
-   cfg.SetExact(true);
 
    return true;
 }
@@ -253,95 +234,69 @@ bool dabc::RateParameter::Store(ConfigIO &cfg)
    cfg.CreateItem("Ratemeter");
    cfg.CreateAttr("name", GetName());
 
-   cfg.CreateItem("value", FORMAT(("%f", fRecord.value)));
-   cfg.PopItem();
+   cfg.CreateAttr("value", FORMAT(("%f", fRecord.value)));
 
-   cfg.CreateItem("units", fRecord.units);
-   cfg.PopItem();
+   cfg.CreateAttr("units", fRecord.units);
 
-   cfg.CreateItem("displaymode", GetDisplayMode());
-   cfg.PopItem();
+   cfg.CreateAttr("displaymode", GetDisplayMode());
 
-   cfg.CreateItem("lower", FORMAT(("%f", fRecord.lower)));
-   cfg.PopItem();
+   cfg.CreateAttr("lower", FORMAT(("%f", fRecord.lower)));
 
-   cfg.CreateItem("upper", FORMAT(("%f", fRecord.upper)));
-   cfg.PopItem();
+   cfg.CreateAttr("upper", FORMAT(("%f", fRecord.upper)));
 
-   cfg.CreateItem("color", fRecord.color);
-   cfg.PopItem();
+   cfg.CreateAttr("color", fRecord.color);
 
-   cfg.CreateItem("alarmlower", FORMAT(("%f", fRecord.alarmlower)));
-   cfg.PopItem();
+   cfg.CreateAttr("alarmlower", FORMAT(("%f", fRecord.alarmlower)));
 
-   cfg.CreateItem("alarmupper", FORMAT(("%f", fRecord.alarmlower)));
-   cfg.PopItem();
+   cfg.CreateAttr("alarmupper", FORMAT(("%f", fRecord.alarmlower)));
 
-   cfg.CreateItem("alarmcolor", fRecord.alarmcolor);
-   cfg.PopItem();
+   cfg.CreateAttr("alarmcolor", fRecord.alarmcolor);
 
    cfg.PopItem();
 
    return true;
 }
 
-const char* dabc::RateParameter::FindRateAttr(ConfigIO &cfg, const char* name)
+bool dabc::RateParameter::Find(ConfigIO &cfg)
 {
-   if (GetParent()==0) return 0;
+   if (!cfg.FindItem("Ratemeter")) return false;
 
-   cfg.SetExact(true);
-
-   if (GetParent()->Find(cfg) &&
-       cfg.FindItem("Ratemeter", ConfigIO::findChild) &&
-       cfg.CheckAttr("name", GetName()) &&
-       cfg.FindItem(name, ConfigIO::findChild)) return cfg.GetItemValue();
-
-   DOUT3(("Search par %s in defaults", GetFullName().c_str()));
-
-   cfg.SetExact(false);
-
-   while (GetParent()->Find(cfg))
-      if (cfg.FindItem("Ratemeter", ConfigIO::findChild) &&
-          cfg.CheckAttr("name", GetName()) &&
-          cfg.FindItem(name, ConfigIO::findChild)) return cfg.GetItemValue();
-
-   DOUT1(("Attribute %s for ratemeter %s not found", name, GetName()));
-
-   return 0;
+   return cfg.CheckAttr("name", GetName());
 }
 
 bool dabc::RateParameter::Read(ConfigIO &cfg)
 {
-   const char* v = FindRateAttr(cfg, "value");
+   // no any suitable matches found for top node
+   if (cfg.Find(this)==0) return false;
+
+   const char* v = cfg.Find(this, "value");
    if (v) sscanf(v, "%f", &fRecord.value);
 
    if (v) DOUT0(("Ratemeter %s value = %s", GetName(), v));
 
-   v = FindRateAttr(cfg, "units");
+   v = cfg.Find(this, "units");
    if (v) strncpy(fRecord.units, v, sizeof(fRecord.units));
 
-   v = FindRateAttr(cfg, "displaymode");
+   v = cfg.Find(this, "displaymode");
    if (v) SetDisplayMode(v);
 
-   v = FindRateAttr(cfg, "lower");
+   v = cfg.Find(this, "lower");
    if (v) sscanf(v, "%f", &fRecord.lower);
 
-   v = FindRateAttr(cfg, "upper");
+   v = cfg.Find(this, "upper");
    if (v) sscanf(v, "%f", &fRecord.upper);
 
-   v = FindRateAttr(cfg, "color");
+   v = cfg.Find(this, "color");
    if (v) strncpy(fRecord.color, v, sizeof(fRecord.color));
 
-   v = FindRateAttr(cfg, "alarmlower");
+   v = cfg.Find(this, "alarmlower");
    if (v) sscanf(v, "%f", &fRecord.alarmlower);
 
-   v = FindRateAttr(cfg, "alarmupper");
+   v = cfg.Find(this, "alarmupper");
    if (v) sscanf(v, "%f", &fRecord.alarmupper);
 
-   v = FindRateAttr(cfg, "alarmcolor");
+   v = cfg.Find(this, "alarmcolor");
    if (v) strncpy(fRecord.alarmcolor, v, sizeof(fRecord.alarmcolor));
-
-   cfg.SetExact(true);
 
    return true;
 }

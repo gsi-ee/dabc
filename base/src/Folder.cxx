@@ -233,45 +233,16 @@ bool dabc::Folder::Find(ConfigIO &cfg)
    const char* searchname = GetName();
    if (UseMasterClassName()) searchname = MasterClassName();
 
-   DOUT4(("Start find of folder %s", GetName()));
+   if (!cfg.FindItem(searchname)) return false;
 
-   int lvl = cfg.SearchLevel();
-   bool res = true;
+   if (UseMasterClassName())
+      if (!cfg.CheckAttr("name", GetName())) return false;
 
-   ConfigIO::FindKinds kind = ConfigIO::findNext;
+   if ((MasterClassName()!=0) && (ClassName()!=0) &&
+       (strcmp(ClassName(), MasterClassName())!=0))
+          if (!cfg.CheckAttr("class", ClassName())) return false;
 
-   do {
-
-      DOUT5(("Start search item %s", searchname));
-
-      res = cfg.FindItem(searchname, kind);
-
-      DOUT5(("Did Search item %s kind = %d lvl %d res = %s", searchname, kind, cfg.SearchLevel(), DBOOL(res)));
-
-      if (cfg.IsExact() && (kind == ConfigIO::findChild) && !res) return false;
-
-      kind = ConfigIO::findChild;
-
-      if (res && UseMasterClassName())
-         res = cfg.CheckAttr("name", GetName());
-
-      if (res && (MasterClassName()!=0) && (ClassName()!=0) &&
-           (strcmp(ClassName(), MasterClassName())!=0))
-              res = cfg.CheckAttr("class", ClassName());
-
-      if (res) return true;
-
-      if (GetParent()->Find(cfg))
-         res = true;
-      else
-      if ((lvl!=0) && UseMasterClassName()) {
-         res = true;
-         lvl = 0;
-         kind = ConfigIO::firstTop;
-      }
-   } while (res);
-
-   return false;
+   return true;
 }
 
 dabc::String dabc::Folder::GetPathName(const char* path)

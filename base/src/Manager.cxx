@@ -2125,14 +2125,3 @@ void dabc::Manager::ProcessCtrlCSignal()
 
    exit(0);
 }
-
-bool dabc::Manager::Find(ConfigIO &cfg)
-{
-   if (cfg.IsExact()) return cfg.FindItem(0, ConfigIO::selectTop);
-
-   DOUT3(("Manager search node %s lvl %d", xmlContNode, cfg.SearchLevel()));
-
-   if (!cfg.FindItem(xmlContNode, cfg.SearchLevel() <0 ? ConfigIO::firstTop : ConfigIO::findNext)) return false;
-
-   return cfg.CheckAttr("name", GetName());
-}

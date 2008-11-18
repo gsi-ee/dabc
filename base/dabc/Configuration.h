@@ -25,7 +25,9 @@ namespace dabc {
          XMLNodePointer_t fStoreLastPop; // last pop-ed item
 
          XMLNodePointer_t fCurrItem; // currently found item
+         XMLNodePointer_t fCurrChld; // selected child in current item
          XMLNodePointer_t fLastTop; // currently found item
+         bool             fCurrStrict; // must have strict syntax match
 
          String  fMgrName;
          int     fMgrNodeId;
@@ -33,6 +35,8 @@ namespace dabc {
 
          bool XDAQ_LoadLibs();
          bool XDAQ_ReadPars();
+
+         Basic* GetObjParent(Basic* obj, int lvl);
 
       public:
          Configuration(const char* fname = 0);
@@ -53,12 +57,14 @@ namespace dabc {
          virtual bool PopItem();
          virtual bool PushLastItem();
 
-         virtual bool FindItem(const char* name, FindKinds kind);
-         virtual const char* GetItemValue();
-         virtual const char* GetAttrValue(const char* name);
-
          bool StoreObject(const char* fname, Basic* obj);
 
+         virtual bool FindItem(const char* name);
+         virtual const char* GetItemValue();
+         virtual const char* GetAttrValue(const char* name);
+         virtual bool CheckAttr(const char* name, const char* value);
+
+         virtual const char* Find(Basic* obj, const char* findattr = 0);
    };
 
 
