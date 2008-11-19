@@ -31,6 +31,8 @@ dabc::WorkingProcessor::~WorkingProcessor()
 {
    DOUT5(("~WorkingProcessor %p %d thrd:%p", this, fProcessorId, fProcessorThread));
 
+   DestroyAllPars();
+
    RemoveProcessorFromThread(true);
 
    DOUT5(("~WorkingProcessor %p %d thrd:%p done", this, fProcessorId, fProcessorThread));
@@ -42,7 +44,6 @@ void dabc::WorkingProcessor::SetParsHolder(Folder* holder, const char* subfolder
    if (subfolder!=0) fParsTopFolderName = subfolder;
                 else fParsTopFolderName.clear();
 }
-
 
 bool dabc::WorkingProcessor::AssignProcessorToThread(WorkingThread* thrd, bool sync)
 {
@@ -232,23 +233,40 @@ dabc::Parameter* dabc::WorkingProcessor::CreateParDouble(const char* name, doubl
    return new dabc::DoubleParameter(this, name, initvalue);
 }
 
-
-void dabc::WorkingProcessor::DestroyParameter(const char* name)
+void dabc::WorkingProcessor::DestroyAllPars()
 {
-   dabc::Parameter* par = FindPar(name);
-   if (par!=0) delete par;
+   Folder* f = GetTopParsFolder();
+   if (f==0) return;
+
+   Queue<Parameter*> pars(64, true);
+
+   Iterator iter(f);
+   while (iter.next()) {
+      Parameter* par = dynamic_cast<Parameter*> (iter.current());
+      if (par!=0) pars.Push(par);
+   }
+
+   while (pars.Size()>0)
+      DestroyPar(pars.Pop());
 }
+
+bool dabc::WorkingProcessor::DestroyPar(Parameter* par)
+{
+   if (par==0) return false;
+
+   Basic* prnt = par->GetParent();
+   if (prnt) prnt->RemoveChild(par);
+
+   if (!Parameter::FireEvent(par, parDestroyed)) delete par;
+
+   return true;
+}
+
 
 dabc::Parameter* dabc::WorkingProcessor::FindPar(const char* name) const
 {
    dabc::Folder* f = ((WorkingProcessor*) this )->GetTopParsFolder();
    return f ? dynamic_cast<dabc::Parameter*>(f->FindChild(name)) : 0;
-}
-
-void dabc::WorkingProcessor::DeletePar(const char* name)
-{
-   dabc::Parameter* par = FindPar(name);
-   if (par!=0) delete par;
 }
 
 std::string dabc::WorkingProcessor::GetParStr(const char* name, const std::string& defvalue) const

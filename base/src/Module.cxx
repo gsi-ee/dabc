@@ -82,6 +82,8 @@ dabc::Module::~Module()
 
    DOUT5(("Module:%s deletes all childs", GetName()));
 
+   DestroyAllPars();
+
    DeleteChilds();
 
    DOUT5((" dabc::Module::~Module() %s done", GetName()));

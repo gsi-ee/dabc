@@ -23,8 +23,16 @@ dabc::Parameter::Parameter(WorkingProcessor* lst, const char* name) :
 
 dabc::Parameter::~Parameter()
 {
-   RaiseEvent(parDestroyed);
    DOUT5(("Destroy parameter %s", GetName()));
+   if (GetParent()!=0)
+      EOUT(("Parameter %s not regularly destroyed", GetFullName().c_str()));
+}
+
+bool dabc::Parameter::FireEvent(Parameter* par, int evid)
+{
+   if ((dabc::mgr()==0) || (par==0)) return false;
+   dabc::mgr()->FireParamEvent(par, evid);
+   return true;
 }
 
 bool dabc::Parameter::IsFixed() const
@@ -39,8 +47,6 @@ void dabc::Parameter::SetFixed(bool on)
    fFixed = on;
 }
 
-
-
 void dabc::Parameter::FillInfo(std::string& info)
 {
    std::string mystr;
@@ -53,21 +59,16 @@ void dabc::Parameter::FillInfo(std::string& info)
 
 void dabc::Parameter::Ready()
 {
-   RaiseEvent(parCreated);
+   FireEvent(this, parCreated);
 }
 
 void dabc::Parameter::Changed()
 {
    if (fLst) fLst->ParameterChanged(this);
 
-   RaiseEvent(parModified);
+   FireEvent(this, parModified);
 
    if (IsDebugOutput()) DoDebugOutput();
-}
-
-void dabc::Parameter::RaiseEvent(int evt)
-{
-   if (dabc::mgr()) dabc::mgr()->ParameterEvent(this, evt);
 }
 
 dabc::Basic* dabc::Parameter::GetHolder()

@@ -12,16 +12,16 @@
 #include <vector>
 
 namespace dabc {
-    
-   class Mutex; 
+
+   class Mutex;
    class Command;
    class Basic;
    class Buffer;
-   
+
    typedef uint64_t EventId;
-   
+
    #define NullEventId 0
-   
+
    static inline EventId CodeEvent(uint16_t code)
       { return (uint64_t) code; }
 
@@ -30,17 +30,17 @@ namespace dabc {
 
    static inline EventId CodeEvent(uint16_t code, uint16_t item, uint32_t arg)
       { return (((uint64_t) item) << 48) | (((uint64_t) arg) << 16) | code; }
-      
+
    static inline uint16_t GetEventCode(EventId evnt) { return evnt & 0xffffLU; }
    static inline uint16_t GetEventItem(EventId evnt) { return evnt >> 48; }
    static inline uint32_t GetEventArg(EventId evnt) { return (evnt >> 16) & 0xffffffffLU; }
-   
+
    // ____________________________________________________________
-   
+
    class PointersVector : public std::vector<void*> {
       public:
          PointersVector() : std::vector<void*>() {}
-       
+
          void* pop()
          {
             if (size()==0) return 0;
@@ -48,37 +48,37 @@ namespace dabc {
             pop_back();
             return res;
          }
-         
+
          bool has_ptr(void* item) const
          {
             for (unsigned n=0; n<size(); n++)
                if (at(n)==item) return true;
-            return false;   
+            return false;
          }
-         
+
          bool remove_at(unsigned n)
          {
             if (n>=size()) return false;
             erase(begin()+n);
             return true;
          }
-         
+
          bool remove(void* item)
          {
             for (iterator iter = begin(); iter!=end(); iter++)
                if (*iter == item) {
                   erase(iter);
-                  return true;  
+                  return true;
                }
             return false;
          }
    };
-   
+
    // ___________________________________________________________
-   
+
    template<class T>
    class Queue {
-      protected:  
+      protected:
          T*        fQueue;
          T*        fBorder; // maximum pointer value
          unsigned  fCapacity;
@@ -86,7 +86,7 @@ namespace dabc {
          T*        fHead;
          T*        fTail;
          bool      fCanExpand;
-         
+
       public:
          Queue() :
             fQueue(0),
@@ -110,28 +110,28 @@ namespace dabc {
          {
             Allocate(capacity);
          }
-         
+
          ~Queue()
          {
-            delete[] fQueue; 
+            delete[] fQueue;
             fQueue = 0;
          }
-         
-         void Init(unsigned capacity, bool canexpand) 
+
+         void Init(unsigned capacity, bool canexpand)
          {
-            Allocate(capacity); 
+            Allocate(capacity);
             fCanExpand = canexpand;
          }
-         
-         void Allocate(unsigned capacity) 
+
+         void Allocate(unsigned capacity)
          {
-            if (fCapacity>0) { 
+            if (fCapacity>0) {
                delete[] fQueue;
                fCapacity = 0;
-               fQueue = 0; 
+               fQueue = 0;
                fBorder = 0;
             }
-            
+
             if (capacity>0) {
               fCapacity = capacity;
               fSize = 0;
@@ -141,7 +141,7 @@ namespace dabc {
               fTail = fQueue;
             }
          }
-         
+
          // increase capacity of queue without lost of content
          bool Expand(unsigned newcapacity = 0)
          {
@@ -150,7 +150,7 @@ namespace dabc {
             if (newcapacity < 16) newcapacity = 16;
             T* q = new T [newcapacity];
             if (q==0) return false;
-            
+
             if (fSize>0)
                if (fHead>fTail) {
                   memcpy(q, fTail, (fHead - fTail) * sizeof(T));
@@ -159,44 +159,44 @@ namespace dabc {
                   memcpy(q, fTail, sz * sizeof(T));
                   memcpy(q + sz, fQueue, (fHead - fQueue) * sizeof(T));
                }
-            
-            delete [] fQueue; 
-            
+
+            delete [] fQueue;
+
             fCapacity = newcapacity;
             fQueue = q;
             fBorder = fQueue + fCapacity;
             fHead = fQueue + fSize; // we are sure that size less than capacity
             fTail = fQueue;
-            return true; 
+            return true;
          }
-         
+
          bool Remove(T value)
          {
             if (Size()==0) return false;
-            
+
             T *i_tgt(fTail), *i_src(fTail);
-            
+
             do {
                if (*i_src != value) {
                   if (i_tgt!=i_src) *i_tgt = *i_src;
                   if (++i_tgt == fBorder) i_tgt = fQueue;
                } else
-                  fSize--; 
+                  fSize--;
                if (++i_src == fBorder) i_src = fQueue;
             } while (i_src != fHead);
-            
+
             fHead = i_tgt;
-            
-            return i_tgt != i_src;    
+
+            return i_tgt != i_src;
          }
-         
+
          bool RemoveItem(unsigned indx)
          {
             if (indx>=fSize) return false;
-    
+
             T* tgt = fTail + indx;
             if (tgt>=fBorder) tgt -= fCapacity;
-            
+
             while (true) {
                T* src = tgt + 1;
                if (src==fBorder) src = fQueue;
@@ -204,13 +204,13 @@ namespace dabc {
                *tgt = *src;
                tgt = src;
             }
-            
+
             fHead = tgt;
-            fSize--; 
+            fSize--;
             return true;
          }
-         
-         bool MakePlaceForNext() 
+
+         bool MakePlaceForNext()
          {
             return (fSize<fCapacity) || (fCanExpand && Expand());
          }
@@ -225,7 +225,7 @@ namespace dabc {
                EOUT(("No more space in fixed queue size = %d", fSize));
             }
          }
-         
+
          void PopOnly()
          {
             if (fSize>0) {
@@ -233,12 +233,12 @@ namespace dabc {
                if (++fTail==fBorder) fTail = fQueue;
             }
          }
-         
+
          T Pop()
          {
             #ifdef DO_INDEX_CHECK
                if (fSize==0) EOUT(("Queue is empty"));
-            #endif   
+            #endif
             T* res = fTail++;
             if (fTail==fBorder) fTail = fQueue;
             fSize--;
@@ -249,22 +249,35 @@ namespace dabc {
          {
             #ifdef DO_INDEX_CHECK
                if (fSize==0) EOUT(("Queue is empty"));
-            #endif   
+            #endif
             return *fTail;
          }
-         
+
 
          T Item(unsigned indx) const
          {
             #ifdef DO_INDEX_CHECK
-            if (indx>=fSize) 
-               EOUT(("Wrong item index %u", indx)); 
+            if (indx>=fSize)
+               EOUT(("Wrong item index %u", indx));
             #endif
             T* item = fTail + indx;
             if (item>=fBorder) item -= fCapacity;
             return *item;
          }
-         
+
+         T* ItemPtr(unsigned indx) const
+         {
+            #ifdef DO_INDEX_CHECK
+            if (indx>=fSize) {
+               EOUT(("Wrong item index %u", indx));
+               return 0;
+            }
+            #endif
+            T* item = fTail + indx;
+            if (item>=fBorder) item -= fCapacity;
+            return item;
+         }
+
          void Reset()
          {
             fHead = fQueue;
@@ -273,14 +286,14 @@ namespace dabc {
          }
 
          unsigned Capacity() const { return fCapacity; }
-         
+
          unsigned Size() const { return fSize; }
-         
+
          bool Full() const { return Capacity() == Size(); }
    };
 
    // _______________________________________________________________
-   
+
    class BuffersQueue : public Queue<Buffer*> {
       public:
          BuffersQueue(int capacity, bool expand = false) : Queue<Buffer*>(capacity, expand) {}
@@ -296,18 +309,18 @@ namespace dabc {
          Queue<Command*>    fQueue;
          bool               fReplyQueue;
          Mutex              *fCmdsMutex;
-         
-      public:   
+
+      public:
          CommandsQueue(bool replyqueue = false, bool withmutex = true);
-         virtual ~CommandsQueue();   
+         virtual ~CommandsQueue();
          void Push(Command* cmd);
          Command* Pop();
          Command* Front();
          unsigned Size();
-         
+
          void Cleanup();
-   }; 
-   
+   };
+
 
 
 };

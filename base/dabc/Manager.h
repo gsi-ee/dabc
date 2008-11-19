@@ -349,7 +349,7 @@ namespace dabc {
 
          void ChangeManagerName(const char* newname);
 
-         enum MgrEvents { evntDestroyObj = evntFirstUser, evntManagerReply };
+         enum MgrEvents { evntDestroyObj = evntFirstUser, evntManagerReply, evntManagerParam };
 
       public:
 
@@ -621,11 +621,23 @@ namespace dabc {
          DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0);
 
       protected:
+
+         typedef struct ParamRec {
+            Parameter* par;
+            int event;
+            bool processed;
+
+            ParamRec() : par(0), event(0), processed(false) {}
+            ParamRec(Parameter* p, int e) : par(p), event(e), processed(false) {}
+            ParamRec(const ParamRec& src) : par(src.par), event(src.event), processed(src.processed) {}
+         };
+
          bool                  fMgrMainLoop; // flag indicates if mainloop of manager should runs
 
          Mutex                *fMgrMutex; // main mutex to protect manager queues
          CommandsQueue         fReplyesQueue;
          Queue<Basic*>         fDestroyQueue;
+         Queue<ParamRec>       fParsQueue;
 
          Mutex                *fSendCmdsMutex;
          int                   fSendCmdCounter;
@@ -676,6 +688,8 @@ namespace dabc {
          virtual bool CanSendCmdToManager(const char*) { return false; }
          virtual bool SendOverCommandChannel(const char* managername, const char* cmddata);
          void RecvOverCommandChannel(const char* cmddata);
+
+         void FireParamEvent(Parameter* par, int evid);
 
          void InitSMmodule();
 

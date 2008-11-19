@@ -85,7 +85,7 @@ namespace dabc {
 
          void Changed();
 
-         void RaiseEvent(int evt);
+         static bool FireEvent(Parameter* par, int evid);
 
          virtual void DoDebugOutput();
 

@@ -55,7 +55,6 @@ namespace dabc {
          // this all about parameters list, which can be managed for any working processor
 
          Parameter* FindPar(const char* name) const;
-         void DeletePar(const char* name);
 
          std::string GetParStr(const char* name, const std::string& defvalue = "") const;
          int GetParInt(const char* name, int defvalue = 0) const;
@@ -110,7 +109,9 @@ namespace dabc {
          Parameter* CreateParInt(const char* name, int initvalue = 0);
          Parameter* CreateParDouble(const char* name, double initvalue = 0.);
 
-         void DestroyParameter(const char* name);
+         void DestroyAllPars();
+         void DestroyPar(const char* name) { DestroyPar(FindPar(name)); }
+         bool DestroyPar(Parameter* par);
          bool InvokeParChange(Parameter* par, const char* value, Command* cmd);
 
          bool SetParStr(const char* name, const char* value);

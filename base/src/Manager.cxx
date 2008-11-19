@@ -210,6 +210,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    fMgrMutex(0),
    fReplyesQueue(true, false),
    fDestroyQueue(16, true),
+   fParsQueue(1024, true),
    fSendCmdsMutex(0),
    fSendCmdCounter(0),
    fSendCommands(),
@@ -285,6 +286,8 @@ dabc::Manager::~Manager()
 
    DOUT5(("~Manager -> DeleteChilds()"));
 
+   DestroyAllPars();
+
    DeleteChilds();
 
    {
@@ -324,7 +327,7 @@ void dabc::Manager::init()
 
 void dabc::Manager::destroy()
 {
-   DestroyParameter(stParName);
+   DestroyPar(stParName);
 }
 
 void dabc::Manager::InitSMmodule()
@@ -379,6 +382,40 @@ void dabc::Manager::ProcessDestroyQueue()
    } while (obj!=0);
 }
 
+void dabc::Manager::FireParamEvent(Parameter* par, int evid)
+{
+   if (par==0) return;
+
+   bool isitself = true;
+
+   {
+      LockGuard lock(fMgrMutex);
+
+      if (ProcessorThread()) isitself = ProcessorThread()->IsItself();
+
+      if (evid == parModified) {
+         // check if event of that parameter in the queue
+         for (unsigned n=0;n<fParsQueue.Size();n++)
+            if (fParsQueue.ItemPtr(n)->par == par) return;
+      } else
+      if (evid == parDestroyed) {
+         // disable all previous events, while parameter no longer valid
+         for (unsigned n=0;n<fParsQueue.Size();n++)
+            if (fParsQueue.ItemPtr(n)->par == par)
+               fParsQueue.ItemPtr(n)->processed = true;
+      }
+
+      if (!isitself) fParsQueue.Push(ParamRec(par,evid));
+   }
+
+   if (isitself) {
+      ParameterEvent(par, evid);
+      if (evid == parDestroyed) delete par;
+   } else {
+      FireEvent(evntManagerParam);
+   }
+}
+
 void dabc::Manager::ProcessEvent(EventId evnt)
 {
    switch (GetEventCode(evnt)) {
@@ -395,6 +432,23 @@ void dabc::Manager::ProcessEvent(EventId evnt)
             dabc::Command::Finalise(cmd);
          break;
       }
+      case evntManagerParam: {
+
+         ParamRec rec;
+
+         {
+            LockGuard lock(fMgrMutex);
+            rec = fParsQueue.Pop();
+         }
+
+         // generate parameter event from the manager thread
+         if (!rec.processed) ParameterEvent(rec.par, rec.event);
+
+         if (rec.event == parDestroyed) delete rec.par;
+
+         break;
+      }
+
       default:
          WorkingProcessor::ProcessEvent(evnt);
    }
@@ -2116,6 +2170,10 @@ void dabc::Manager::ProcessCtrlCSignal()
    DOUT1(("Calcel commands"));
 
    CancelCommands();
+
+   DOUT1(("Delete all parameters"));
+
+   DestroyAllPars();
 
    DOUT1(("Delete childs"));
 

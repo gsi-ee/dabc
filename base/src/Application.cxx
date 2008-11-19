@@ -24,7 +24,7 @@ dabc::Application::~Application()
 
    // delete childs (parameters) before destructor is finished that one
    // can correctly use GetParsHolder() in Manager::ParameterEvent()
-   DeleteChilds();
+   DestroyAllPars();
 
    DOUT3(("Did Application %s destructor", GetName()));
 }
