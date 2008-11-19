@@ -41,8 +41,8 @@ namespace dabc {
 
          virtual void DependendDestroyed(Basic*) {}
 
-         void MakeFullName(String &fullname, Basic* upto = 0) const;
-         String GetFullName(Basic* upto = 0) const;
+         void MakeFullName(std::string &fullname, Basic* upto = 0) const;
+         std::string GetFullName(Basic* upto = 0) const;
 
          // operations with object name (and info) are not thread-safe
          // therefore, in the case when object name must be changed,
@@ -50,7 +50,7 @@ namespace dabc {
 
          const char* GetName() const { return fName.c_str(); }
          bool IsName(const char* str) const { return fName.compare(str)==0; }
-         virtual void FillInfo(String& info);
+         virtual void FillInfo(std::string& info);
 
          int GetAppId() const { return fAppId; }
          void SetAppId(int id = 0) { fAppId = id; }
@@ -67,12 +67,12 @@ namespace dabc {
 
          virtual void _SetParent(Mutex* mtx, Basic* parent);
 
-         void _MakeFullName(String &fullname, Basic* upto) const;
+         void _MakeFullName(std::string &fullname, Basic* upto) const;
 
       private:
          Mutex*   fMutex;    // direct pointer on main mutex
          Basic*   fParent;   // parent object
-         String   fName;     // object name
+         std::string   fName;     // object name
          bool     fCleanup;  // indicates if object should inform manager about its destroyment
          int      fAppId;    // indicates id of application, to which object belongs to (0 - default application)
 

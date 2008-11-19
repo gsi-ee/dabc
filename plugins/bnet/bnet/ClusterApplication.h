@@ -21,7 +21,7 @@ namespace bnet {
 
          virtual bool CreateAppModules();
 
-         const char* NetDevice() const { return GetParCharStar("NetDevice", "SocketDevice"); }
+         std::string NetDevice() const { return GetParStr("NetDevice", "SocketDevice"); }
          bool IsRunning() const { return GetParInt("IsRunning") > 0; }
          bool WithController() const { return GetParInt("WithController", 0) > 0; }
          int NumEventsCombine() const { return GetParInt("NumEventsCombine", 1); }
@@ -47,7 +47,7 @@ namespace bnet {
 
       protected:
 
-         const char* NodeCurrentState(int nodeid);
+         std::string NodeCurrentState(int nodeid);
 
          bool ActualTransition(const char* state_trans_name);
 
@@ -65,12 +65,12 @@ namespace bnet {
          virtual void ParameterChanged(dabc::Parameter* par);
 
          std::vector<int> fNodeMask; // info about items on each node
-         std::vector<dabc::String> fNodeNames; // info about names of currently configured nodes
-         std::vector<dabc::String> fSendMatrix; // info about send connections
-         std::vector<dabc::String> fRecvMatrix; // info about recv connections
+         std::vector<std::string> fNodeNames; // info about names of currently configured nodes
+         std::vector<std::string> fSendMatrix; // info about send connections
+         std::vector<std::string> fRecvMatrix; // info about recv connections
 
          dabc::Mutex fSMMutex;
-         dabc::String fSMRunningSMCmd;
+         std::string fSMRunningSMCmd;
 
    };
 }

@@ -131,8 +131,8 @@ int dabc::Device::ExecuteCommand(dabc::Command* cmd)
    if (cmd->IsName("_DeviceRemoteCommand_")) {
        
       cmd->SetCommandName(cmd->GetPar("_OriginName_")); 
-      dabc::String serv = cmd->GetPar("_ServerId_");
-      dabc::String channel = cmd->GetPar("_ChannelId_");
+      std::string serv = cmd->GetPar("_ServerId_");
+      std::string channel = cmd->GetPar("_ChannelId_");
       cmd->RemovePar("_OriginName_");
       cmd->RemovePar("_ServerId_");
       cmd->RemovePar("_ChannelId_");

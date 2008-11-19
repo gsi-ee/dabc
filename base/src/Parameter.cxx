@@ -13,6 +13,7 @@
 dabc::Parameter::Parameter(WorkingProcessor* lst, const char* name) :
    Basic(lst ? lst->MakeFolderForParam(name) : 0, dabc::Folder::GetObjectName(name)),
    fLst(lst),
+   fValueMutex(),
    fFixed(lst ? lst->fParsDfltFixed : false),
    fVisibility(lst ? lst->fParsDfltVisibility : 1),
    fDebug(false)
@@ -26,10 +27,24 @@ dabc::Parameter::~Parameter()
    DOUT5(("Destroy parameter %s", GetName()));
 }
 
-void dabc::Parameter::FillInfo(String& info)
+bool dabc::Parameter::IsFixed() const
 {
-   String mystr;
-   if (GetStr(mystr)) {
+   LockGuard lock(fValueMutex);
+   return fFixed;
+}
+
+void dabc::Parameter::SetFixed(bool on)
+{
+   LockGuard lock(fValueMutex);
+   fFixed = on;
+}
+
+
+
+void dabc::Parameter::FillInfo(std::string& info)
+{
+   std::string mystr;
+   if (GetValue(mystr)) {
       info.assign("Value: ");
       info.append(mystr.c_str());
    } else
@@ -43,6 +58,8 @@ void dabc::Parameter::Ready()
 
 void dabc::Parameter::Changed()
 {
+   if (fLst) fLst->ParameterChanged(this);
+
    RaiseEvent(parModified);
 
    if (IsDebugOutput()) DoDebugOutput();
@@ -70,8 +87,8 @@ bool dabc::Parameter::InvokeChange(dabc::Command* cmd)
 
 void dabc::Parameter::DoDebugOutput()
 {
-   String str;
-   if (GetStr(str))
+   std::string str;
+   if (GetValue(str))
       DOUT0(("%s = %s", GetName(), str.c_str()));
    else
       DOUT0(("%s changed", GetName()));
@@ -79,9 +96,9 @@ void dabc::Parameter::DoDebugOutput()
 
 bool dabc::Parameter::Store(ConfigIO &cfg)
 {
-   String s;
+   std::string s;
 
-   if (GetStr(s)) {
+   if (GetValue(s)) {
       cfg.CreateItem(GetName(), s.c_str());
       cfg.PopItem();
    }
@@ -101,8 +118,125 @@ bool dabc::Parameter::Read(ConfigIO &cfg)
    if (value==0) return false;
 
    DOUT0(("Set par %s = %s", GetFullName().c_str(), value));
-   SetStr(value);
+   SetValue(value);
 
+   return true;
+}
+
+// __________________________________________________________
+
+dabc::StrParameter::StrParameter(WorkingProcessor* parent, const char* name, const char* istr) :
+   Parameter(parent, name),
+   fValue(istr ? istr : "")
+{
+   Ready();
+}
+
+
+bool dabc::StrParameter::GetValue(std::string& value) const
+{
+   LockGuard lock(fValueMutex);
+   value = fValue;
+   return true;
+}
+
+bool dabc::StrParameter::SetValue(const std::string &value)
+{
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed) return false;
+      fValue = value;
+   }
+   Changed();
+   return true;
+}
+
+// __________________________________________________________
+
+
+dabc::DoubleParameter::DoubleParameter(WorkingProcessor* parent, const char* name, double iv) :
+   Parameter(parent, name),
+   fValue(iv)
+{
+   Ready();
+}
+
+bool dabc::DoubleParameter::GetValue(std::string &value) const
+{
+   LockGuard lock(fValueMutex);
+   dabc::formats(value, "%lf", fValue);
+   return true;
+}
+
+bool dabc::DoubleParameter::SetValue(const std::string &value)
+{
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed || (value.length()==0)) return false;
+      sscanf(value.c_str(), "%lf", &fValue);
+   }
+   Changed();
+   return true;
+}
+
+double dabc::DoubleParameter::GetDouble() const
+{
+   LockGuard lock(fValueMutex);
+   return fValue;
+}
+
+bool dabc::DoubleParameter::SetDouble(double v)
+{
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed) return false;
+      fValue = v;
+   }
+   Changed();
+   return true;
+}
+
+// __________________________________________________________
+
+dabc::IntParameter::IntParameter(WorkingProcessor* parent, const char* name, int ii) :
+   Parameter(parent, name),
+   fValue(ii)
+{
+   Ready();
+}
+
+bool dabc::IntParameter::GetValue(std::string &value) const
+{
+   LockGuard lock(fValueMutex);
+   dabc::formats(value, "%d", fValue);
+   return true;
+}
+
+bool dabc::IntParameter::SetValue(const std::string &value)
+{
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed || (value.length()==0)) return false;
+      sscanf(value.c_str(), "%d", &fValue);
+   }
+   Changed();
+   return true;
+}
+
+int dabc::IntParameter::GetInt() const
+{
+   LockGuard lock(fValueMutex);
+   return fValue;
+}
+
+bool dabc::IntParameter::SetInt(int v)
+{
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed) return false;
+      fValue = v;
+   }
+   Changed();
    return true;
 }
 
@@ -114,8 +248,7 @@ dabc::RateParameter::RateParameter(WorkingProcessor* parent, const char* name, b
    fInterval(interval),
    fTotalSum(0.),
    fLastUpdateTm(NullTimeStamp),
-   fDiffSum(0.),
-   fRateMutex(0)
+   fDiffSum(0.)
 {
    SetFixed(true); // one cannot change rate from outside application
    if (fInterval<1e-3) fInterval = 1e-3;
@@ -130,20 +263,14 @@ dabc::RateParameter::RateParameter(WorkingProcessor* parent, const char* name, b
    strcpy(fRecord.alarmcolor, col_Yellow);
    strcpy(fRecord.units, "1/s");
 
-   if (!fSynchron) fRateMutex = new Mutex;
-
    Ready();
 }
 
-dabc::RateParameter::~RateParameter()
-{
-   delete fRateMutex; fRateMutex = 0;
-}
-
-
 void dabc::RateParameter::DoDebugOutput()
 {
-   DOUT0(("%s = %5.1f %s", GetName(), GetDouble(), fRecord.units));
+   LockGuard lock(fValueMutex);
+
+   DOUT0(("%s = %5.1f %s", GetName(), fRecord.value, fRecord.units));
 }
 
 
@@ -151,7 +278,11 @@ void dabc::RateParameter::ChangeRate(double rate)
 {
 //   DOUT3(("Change rate %s - %5.1f %s", GetName(), rate, fRecord.units));
 
-   fRecord.value = rate;
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed) return;
+      fRecord.value = rate;
+   }
    Changed();
 }
 
@@ -167,7 +298,7 @@ void dabc::RateParameter::AccountValue(double v)
          fTotalSum = 0.;
       }
    } else {
-      LockGuard lock(fRateMutex);
+      LockGuard lock(fValueMutex);
       fTotalSum += v;
    }
 
@@ -181,7 +312,7 @@ void dabc::RateParameter::ProcessTimeout(double last_diff)
    double newrate = 0.;
 
    {
-      LockGuard lock(fRateMutex);
+      LockGuard lock(fValueMutex);
       fDiffSum += last_diff;
 
       if (fDiffSum >= GetInterval()) {
@@ -197,16 +328,18 @@ void dabc::RateParameter::ProcessTimeout(double last_diff)
 
 void dabc::RateParameter::SetUnits(const char* name)
 {
+   LockGuard lock(fValueMutex);
    strncpy(fRecord.units, name, sizeof(fRecord.units)-1);
 }
 
 void dabc::RateParameter::SetLimits(double lower, double upper)
 {
+   LockGuard lock(fValueMutex);
    fRecord.lower = lower;
    fRecord.upper = upper;
 }
 
-const char* dabc::RateParameter::GetDisplayMode()
+const char* dabc::RateParameter::_GetDisplayMode()
 {
    switch (fRecord.displaymode) {
       case DISPLAY_ARC: return "ARC";
@@ -218,7 +351,7 @@ const char* dabc::RateParameter::GetDisplayMode()
    return "BAR";
 }
 
-void dabc::RateParameter::SetDisplayMode(const char* v)
+void dabc::RateParameter::_SetDisplayMode(const char* v)
 {
     if (v==0) return;
 
@@ -231,14 +364,17 @@ void dabc::RateParameter::SetDisplayMode(const char* v)
 
 bool dabc::RateParameter::Store(ConfigIO &cfg)
 {
+   LockGuard lock(fValueMutex);
+
    cfg.CreateItem("Ratemeter");
+
    cfg.CreateAttr("name", GetName());
 
    cfg.CreateAttr("value", FORMAT(("%f", fRecord.value)));
 
    cfg.CreateAttr("units", fRecord.units);
 
-   cfg.CreateAttr("displaymode", GetDisplayMode());
+   cfg.CreateAttr("displaymode", _GetDisplayMode());
 
    cfg.CreateAttr("lower", FORMAT(("%f", fRecord.lower)));
 
@@ -269,6 +405,8 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
    // no any suitable matches found for top node
    if (cfg.Find(this)==0) return false;
 
+   LockGuard lock(fValueMutex);
+
    const char* v = cfg.Find(this, "value");
    if (v) sscanf(v, "%f", &fRecord.value);
 
@@ -278,7 +416,7 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
    if (v) strncpy(fRecord.units, v, sizeof(fRecord.units));
 
    v = cfg.Find(this, "displaymode");
-   if (v) SetDisplayMode(v);
+   if (v) _SetDisplayMode(v);
 
    v = cfg.Find(this, "lower");
    if (v) sscanf(v, "%f", &fRecord.lower);
@@ -301,6 +439,27 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
    return true;
 }
 
+// ___________________________________________________
+
+dabc::StatusParameter::StatusParameter(WorkingProcessor* parent, const char* name, int severity) :
+   Parameter(parent, name)
+{
+   fRecord.severity = severity;
+   strcpy(fRecord.color,"Cyan");
+   strcpy(fRecord.status, "None"); // status name
+   Ready();
+}
+
+// ___________________________________________________
+
+dabc::InfoParameter::InfoParameter(WorkingProcessor* parent, const char* name, int verbose) :
+   Parameter(parent, name)
+{
+   fRecord.verbose = verbose;
+   strcpy(fRecord.color,"Cyan");
+   strcpy(fRecord.info, "None"); // info message
+   Ready();
+}
 
 // ___________________________________________________
 
@@ -323,20 +482,31 @@ dabc::HistogramParameter::HistogramParameter(WorkingProcessor* parent, const cha
    Ready();
 }
 
+dabc::HistogramParameter::~HistogramParameter()
+{
+   free(fRecord);
+   fRecord = 0;
+}
 
 void dabc::HistogramParameter::SetLimits(float xmin, float xmax)
 {
+   LockGuard lock(fValueMutex);
+
    fRecord->xlow = xmin;
    fRecord->xhigh = xmax;
 }
 
 void dabc::HistogramParameter::SetColor(const char* color)
 {
+   LockGuard lock(fValueMutex);
+
    strncpy(fRecord->color, color, sizeof(fRecord->color));
 }
 
 void dabc::HistogramParameter::SetLabels(const char* xlabel, const char* ylabel)
 {
+   LockGuard lock(fValueMutex);
+
    strncpy(fRecord->xlett, xlabel, sizeof(fRecord->xlett));
    strncpy(fRecord->cont, ylabel, sizeof(fRecord->cont));
 }
@@ -344,6 +514,8 @@ void dabc::HistogramParameter::SetLabels(const char* xlabel, const char* ylabel)
 
 void dabc::HistogramParameter::SetInterval(double sec)
 {
+   LockGuard lock(fValueMutex);
+
    fInterval = sec;
 
    if (fInterval<1e-3) fInterval = 1e-3;
@@ -351,39 +523,56 @@ void dabc::HistogramParameter::SetInterval(double sec)
 
 void dabc::HistogramParameter::Clear()
 {
-   int* arr = &(fRecord->data);
-   for (int n=0;n<fRecord->channels;n++)
-      arr[n] = 0;
-   CheckChanged(true);
+   {
+      LockGuard lock(fValueMutex);
+
+      int* arr = &(fRecord->data);
+      for (int n=0;n<fRecord->channels;n++)
+         arr[n] = 0;
+
+      _CheckChanged(true);
+   }
+
+   Changed();
 }
 
 bool dabc::HistogramParameter::Fill(float x)
 {
-   if ((x<fRecord->xlow) || (x>=fRecord->xhigh)) return false;
+   bool ch = false;
 
-   if (fRecord->xlow >= fRecord->xhigh) return false;
+   {
+      LockGuard lock(fValueMutex);
 
-   x = (x - fRecord->xlow) / (fRecord->xhigh - fRecord->xlow);
+      if ((x<fRecord->xlow) || (x>=fRecord->xhigh)) return false;
 
-   int np = (int) x * fRecord->channels;
+      if (fRecord->xlow >= fRecord->xhigh) return false;
 
-   if ((np<0) || (np>=fRecord->channels)) return false;
+      x = (x - fRecord->xlow) / (fRecord->xhigh - fRecord->xlow);
 
-   int* arr = &(fRecord->data);
+      int np = (int) x * fRecord->channels;
 
-   arr[np]++;
+      if ((np<0) || (np>=fRecord->channels)) return false;
 
-   CheckChanged();
+      int* arr = &(fRecord->data);
+
+      arr[np]++;
+
+      ch = _CheckChanged();
+   }
+
+   if (ch) Changed();
 
    return true;
 }
 
-void dabc::HistogramParameter::CheckChanged(bool force)
+bool dabc::HistogramParameter::_CheckChanged(bool force)
 {
    TimeStamp_t tm = TimeStamp();
 
    if (force || IsNullTime(fLastTm) || (TimeDistance(fLastTm, tm) > fInterval)) {
       fLastTm = tm;
-      Changed();
+      return true;
    }
+
+   return false;
 }

@@ -883,14 +883,14 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
    return -1;
 }
 
-dabc::String dabc::SocketThread::DefineHostName()
+std::string dabc::SocketThread::DefineHostName()
 {
    char hostname[1000];
    if (gethostname(hostname, sizeof(hostname)))
       EOUT(("ERROR gethostname"));
    else
       DOUT3(( "gethostname = %s", hostname));
-   return String(hostname);
+   return std::string(hostname);
 }
 
 dabc::SocketServerProcessor* dabc::SocketThread::CreateServerProcessor(int nport, int portmin, int portmax)
@@ -941,7 +941,7 @@ dabc::SocketClientProcessor* dabc::SocketThread::CreateClientProcessor(const cha
    const char* service = strchr(serverid, ':');
    if (service==0) return 0;
 
-   String host;
+   std::string host;
    host.assign(serverid, service - serverid);
    service++;
 

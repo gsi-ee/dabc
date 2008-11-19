@@ -31,8 +31,6 @@ $(BNETTEST_LIB):  $(BNETTEST_O)
 ifneq ($(wildcard ~/run/bnet),)
 	cp -f $(BNETTEST_LIB) ~/run/bnet
 	cp -f $(DABCDLLPATH)/*.$(DllSuf) ~/run/bnet 
-	cp -f $(BNETBINPATH)/bnet_exe ~/run/bnet
-	cp -f $(BNETBINPATH)/scripts/* ~/run/bnet
 endif
 	@echo "$@  done"
 

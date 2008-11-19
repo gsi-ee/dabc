@@ -330,7 +330,7 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
       for (int nreceiver = FirstNode; nreceiver < m.NumNodes(); nreceiver++) {
           if (nsender==nreceiver) continue;
 
-          dabc::String port1name, port2name;
+          std::string port1name, port2name;
 
           dabc::formats(port1name, "%s$Sender/Ports/Output%d", m.GetNodeName(nsender), (nreceiver>nsender ? nreceiver-1 : nreceiver) - FirstNode);
           dabc::formats(port2name, "%s$Receiver/Ports/Input%d", m.GetNodeName(nreceiver), (nsender>nreceiver ? nsender-1 : nsender) - FirstNode);

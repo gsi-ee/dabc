@@ -59,15 +59,15 @@ namespace verbs {
    class ProtocolProcessor : public Processor {
       public:
          bool            fServer;
-         dabc::String    fPortName;
+         std::string    fPortName;
          dabc::Command  *fCmd;
          QueuePair      *fPortQP;
          ComplQueue     *fPortCQ;
 
          int             fConnType; // UD, RC, UC
-         dabc::String    fThrdName;
+         std::string    fThrdName;
          double          fTimeout;
-         dabc::String    fConnId;
+         std::string    fConnId;
          double          fLastAttempt;
 
          int             fKindStatus;

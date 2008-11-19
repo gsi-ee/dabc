@@ -16,58 +16,58 @@ const char* bnet::WorkerApplication::ItemName()
 bnet::WorkerApplication::WorkerApplication(const char* name) :
    dabc::Application(name ? name : PluginName())
 {
-   CreateIntPar("IsGenerator", 1);
-   CreateIntPar("IsSender", 0);
-   CreateIntPar("IsReceiver", 0);
-   CreateIntPar("IsFilter", 0);
-   CreateIntPar("CombinerModus", 0);
-   CreateIntPar("NumReadouts", 1);
+   CreateParInt("IsGenerator", 1);
+   CreateParInt("IsSender", 0);
+   CreateParInt("IsReceiver", 0);
+   CreateParInt("IsFilter", 0);
+   CreateParInt("CombinerModus", 0);
+   CreateParInt("NumReadouts", 1);
    for (int nr=0;nr<5;nr++)
-      CreateStrPar(FORMAT(("Input%dCfg", nr)), "");
-   CreateStrPar("StoragePar", "");
+      CreateParStr(FORMAT(("Input%dCfg", nr)), "");
+   CreateParStr("StoragePar", "");
 
-   CreateStrPar("Thread1Name", "Thread1");
-   CreateStrPar("Thread2Name", "Thread2");
-   CreateStrPar("ThreadCtrlName", "ThreadCtrl");
+   CreateParStr("Thread1Name", "Thread1");
+   CreateParStr("Thread2Name", "Thread2");
+   CreateParStr("ThreadCtrlName", "ThreadCtrl");
 
-   CreateIntPar("CombinerInQueueSize", 4);
-   CreateIntPar("CombinerOutQueueSize", 4);
+   CreateParInt("CombinerInQueueSize", 4);
+   CreateParInt("CombinerOutQueueSize", 4);
 
-   CreateIntPar("ReadoutBuffer",         2*1024);
-   CreateIntPar("ReadoutPoolSize",   4*0x100000);
-   CreateIntPar("TransportBuffer",       8*1024);
-   CreateIntPar("TransportPoolSize",16*0x100000);
-   CreateIntPar("EventBuffer",          32*1024);
-   CreateIntPar("EventPoolSize",     4*0x100000);
-   CreateIntPar("CtrlBuffer",            2*1024);
-   CreateIntPar("CtrlPoolSize",      2*0x100000);
+   CreateParInt("ReadoutBuffer",         2*1024);
+   CreateParInt("ReadoutPoolSize",   4*0x100000);
+   CreateParInt("TransportBuffer",       8*1024);
+   CreateParInt("TransportPoolSize",16*0x100000);
+   CreateParInt("EventBuffer",          32*1024);
+   CreateParInt("EventPoolSize",     4*0x100000);
+   CreateParInt("CtrlBuffer",            2*1024);
+   CreateParInt("CtrlPoolSize",      2*0x100000);
 
-   CreateStrPar("Status", "Off");
-   CreateStrPar("SendStatus", "oooo");
-   CreateStrPar("RecvStatus", "oooo");
+   CreateParStr("Status", "Off");
+   CreateParStr("SendStatus", "oooo");
+   CreateParStr("RecvStatus", "oooo");
 
 
    SetParDflts(0);  // make next parameters not visible outside
 
-   CreateIntPar("CfgNumNodes", 1);
-   CreateIntPar("CfgNodeId", 0);
-   CreateIntPar("CfgController", 0);
-   CreateStrPar("CfgSendMask", "");
-   CreateStrPar("CfgRecvMask", "");
-   CreateStrPar("CfgClusterMgr", "");
-   CreateStrPar("CfgNetDevice", "");
-   CreateIntPar("CfgConnected", 0);
-   CreateIntPar("CfgEventsCombine", 1);
+   CreateParInt("CfgNumNodes", 1);
+   CreateParInt("CfgNodeId", 0);
+   CreateParInt("CfgController", 0);
+   CreateParStr("CfgSendMask", "");
+   CreateParStr("CfgRecvMask", "");
+   CreateParStr("CfgClusterMgr", "");
+   CreateParStr("CfgNetDevice", "");
+   CreateParInt("CfgConnected", 0);
+   CreateParInt("CfgEventsCombine", 1);
 
    SetParDflts();
 
    DOUT1(("!!!! Wroker plugin created !!!!"));
 }
 
-const char* bnet::WorkerApplication::ReadoutPar(int nreadout) const
+std::string bnet::WorkerApplication::ReadoutPar(int nreadout) const
 {
-   if ((nreadout<0) || (nreadout>=NumReadouts())) return 0;
-   return GetParCharStar(FORMAT(("Input%dCfg", nreadout)));
+   if ((nreadout<0) || (nreadout>=NumReadouts())) return "";
+   return GetParStr(FORMAT(("Input%dCfg", nreadout)));
 }
 
 dabc::Module* bnet::WorkerApplication::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
@@ -96,18 +96,18 @@ bool bnet::WorkerApplication::CreateStorage(const char* portname)
 
 void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 {
-   SetParValue("CfgController", cmd->GetBool("WithController") ? 1 : 0);
-   SetParValue("CfgEventsCombine", cmd->GetInt("EventsCombine", 1));
-   SetParValue("CtrlBuffer", cmd->GetInt("ControlBuffer", 1024));
-   SetParValue("CfgNetDevice", cmd->GetStr("NetDevice",""));
+   SetParInt("CfgController", cmd->GetBool("WithController") ? 1 : 0);
+   SetParInt("CfgEventsCombine", cmd->GetInt("EventsCombine", 1));
+   SetParInt("CtrlBuffer", cmd->GetInt("ControlBuffer", 1024));
+   SetParStr("CfgNetDevice", cmd->GetStr("NetDevice",""));
 
    int TransportBufferSize = cmd->GetInt("TransportBuffer", 1024);
    int ReadoutBufferSize = TransportBufferSize / NumReadouts();
    int EventBufferSize = TransportBufferSize * (CfgNumNodes() - 1);
 
-   SetParValue("ReadoutBuffer", ReadoutBufferSize);
-   SetParValue("TransportBuffer", TransportBufferSize);
-   SetParValue("EventBuffer", EventBufferSize);
+   SetParInt("ReadoutBuffer", ReadoutBufferSize);
+   SetParInt("TransportBuffer", TransportBufferSize);
+   SetParInt("EventBuffer", EventBufferSize);
 
    cmd->SetBool("IsSender", IsSender());
    cmd->SetBool("IsReceiver", IsReceiver());
@@ -116,7 +116,7 @@ void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 
       dabc::Module* m = dabc::mgr()->FindModule("Sender");
       if (m) {
-         dabc::String res = m->ExecuteStr("GetConfig", "RecvMask", 5);
+         std::string res = m->ExecuteStr("GetConfig", "RecvMask", 5);
          cmd->SetStr("RecvMask", res.c_str());
       }
    }
@@ -124,7 +124,7 @@ void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
    if (IsReceiver()) {
       dabc::Module* m = dabc::mgr()->FindModule("Receiver");
       if (m) {
-         dabc::String res = m->ExecuteStr("GetConfig", "SendMask", 5);
+         std::string res = m->ExecuteStr("GetConfig", "SendMask", 5);
          cmd->SetStr("SendMask", res.c_str());
       }
    }
@@ -134,10 +134,10 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
 {
 //   LockUnlockPars(false);
 
-   SetParValue("CfgController", cmd->GetInt("GlobalCtrl", 0));
-   SetParValue("CfgSendMask", cmd->GetStr("SendMask", "xxxx"));
-   SetParValue("CfgRecvMask", cmd->GetStr("RecvMask", "xxxx"));
-   SetParValue("CfgClusterMgr", cmd->GetStr("ClusterMgr",""));
+   SetParInt("CfgController", cmd->GetInt("GlobalCtrl", 0));
+   SetParStr("CfgSendMask", cmd->GetStr("SendMask", "xxxx"));
+   SetParStr("CfgRecvMask", cmd->GetStr("RecvMask", "xxxx"));
+   SetParStr("CfgClusterMgr", cmd->GetStr("ClusterMgr",""));
 
 //   LockUnlockPars(true);
 
@@ -171,7 +171,7 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
 
       m = dabc::mgr()->FindModule("Builder");
       if (m) {
-         dabc::Command* cmd = new dabc::CommandSetParameter("SendMask", CfgSendMask());
+         dabc::Command* cmd = new dabc::CommandSetParameter("SendMask", CfgSendMask().c_str());
          set->Add(dabc::mgr()->LocalCmd(cmd, m));
 
 //         m->Submit(*set, new dabc::CommandSetParameter("SendMask", CfgSendMask()));
@@ -220,7 +220,7 @@ bool bnet::WorkerApplication::IsModulesRunning()
 bool bnet::WorkerApplication::CheckWorkerModules()
 {
    if (!IsModulesRunning()) {
-      if (strcmp(dabc::mgr()->CurrentState(), dabc::Manager::stReady) != 0) {
+      if (dabc::mgr()->CurrentState() != dabc::Manager::stReady) {
          DOUT1(("!!!!! ******** !!!!!!!!  All main modules are stopped - we can switch to Stop state"));
          dabc::mgr()->InvokeStateTransition(dabc::Manager::stcmdDoStop);
       }
@@ -264,40 +264,36 @@ void bnet::WorkerApplication::SetPars(bool is_all_to_all,
       isreceiver = !issender;
    }
 
-#define SETPAR(name, value) SetParValue(name, value);
+   SetParInt("CfgNodeId", nodeid);
+   SetParInt("CfgNumNodes", numnodes);
+   SetParInt("IsGenerator", 1);
+   SetParInt("IsSender", issender ? 1 : 0);
+   SetParInt("IsReceiver", isreceiver ? 1 : 0);
+   SetParInt("IsFilter", isreceiver ? 1 : 0);
+   SetParInt("CombinerModus", combinermodus);
+   SetParInt("NumReadouts", numreadouts);
 
-      SETPAR("CfgNodeId", nodeid)
-      SETPAR("CfgNumNodes", numnodes)
-      SETPAR("IsGenerator", 1)
-      SETPAR("IsSender", issender ? 1 : 0)
-      SETPAR("IsReceiver", isreceiver ? 1 : 0)
-      SETPAR("IsFilter", isreceiver ? 1 : 0)
-      SETPAR("CombinerModus", combinermodus)
-      SETPAR("NumReadouts", numreadouts)
-
-      SETPAR("Thread1Name", thrd1name)
-      SETPAR("Thread2Name", thrd2name)
-      SETPAR("ThreadCtrlName", thrdctrl)
-      SETPAR("NetDevice", bnet::NetDevice)
-      SETPAR("ReadoutBuffer",           8*1024)
-      SETPAR("ReadoutPoolSize",     20*0x100000)
-      SETPAR("TransportBuffer",        32*1024)
-      SETPAR("TransportPoolSize",  16*0x100000)
-      SETPAR("EventBuffer",           128*1024)
-      SETPAR("EventPoolSize",      16*0x100000)
-      SETPAR("CtrlBuffer",              4*1024)
-      SETPAR("CtrlPoolSize",       32*0x100000)
-
-#undef SETPAR
+   SetParStr("Thread1Name", thrd1name);
+   SetParStr("Thread2Name", thrd2name);
+   SetParStr("ThreadCtrlName", thrdctrl);
+   SetParStr("NetDevice", bnet::NetDevice);
+   SetParInt("ReadoutBuffer",           8*1024);
+   SetParInt("ReadoutPoolSize",     20*0x100000);
+   SetParInt("TransportBuffer",        32*1024);
+   SetParInt("TransportPoolSize",  16*0x100000);
+   SetParInt("EventBuffer",           128*1024);
+   SetParInt("EventPoolSize",      16*0x100000);
+   SetParInt("CtrlBuffer",              4*1024);
+   SetParInt("CtrlPoolSize",       32*0x100000);
 }
 
 bool bnet::WorkerApplication::CreateAppModules()
 {
 //   LockUnlockPars(true);
 
-   DOUT1(("CreateAppModules starts dev = %s", CfgNetDevice()));
+   DOUT1(("CreateAppModules starts dev = %s", CfgNetDevice().c_str()));
 
-   dabc::mgr()->CreateDevice(CfgNetDevice(), "BnetDev");
+   dabc::mgr()->CreateDevice(CfgNetDevice().c_str(), "BnetDev");
 
    if (IsSender() && (CombinerModus()==0)) {
       dabc::mgr()->CreateMemoryPool(ReadoutPoolName(), ReadoutBufferSize(), ReadoutPoolSize()/ReadoutBufferSize());
@@ -328,13 +324,13 @@ bool bnet::WorkerApplication::CreateAppModules()
       }
 
       m = new bnet::SenderModule("Sender", this);
-      dabc::mgr()->MakeThreadForModule(m, Thrd1Name());
+      dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
    }
 
    if (IsReceiver()) {
 
       m = new bnet::ReceiverModule("Receiver", this);
-      dabc::mgr()->MakeThreadForModule(m, Thrd2Name());
+      dabc::mgr()->MakeThreadForModule(m, Thrd2Name().c_str());
 
       m = CreateBuilder("Builder");
       if (m==0) {
@@ -381,11 +377,11 @@ bool bnet::WorkerApplication::CreateAppModules()
    }
 
 //   SetParFixed("Status",  false);
-   SetParValue("Status", "Ready");
+   SetParStr("Status", "Ready");
 
 //   SetParFixed("Status",  true);
 
-   SetParValue("CfgConnected", 0);
+   SetParInt("CfgConnected", 0);
 
    return true;
 }

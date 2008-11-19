@@ -137,7 +137,7 @@ namespace dabc {
    class SocketConnectProcessor : public SocketProcessor {
       protected:
          CommandReceiver* fConnRcv;
-         String fConnId;
+         std::string fConnId;
        
       public:  
          SocketConnectProcessor(int fd) : 
@@ -171,7 +171,7 @@ namespace dabc {
          
          int ServerPortNumber() const { return fServerPortNumber; }
          const char* ServerHostName() { return fServerHostName.c_str(); }
-         String ServerId() { return FORMAT(("%s:%d", ServerHostName(), ServerPortNumber())); }
+         std::string ServerId() { return FORMAT(("%s:%d", ServerHostName(), ServerPortNumber())); }
          
          
       protected:  
@@ -179,7 +179,7 @@ namespace dabc {
          virtual void OnClientConnected(int fd);
          
          int  fServerPortNumber;
-         String fServerHostName;
+         std::string fServerHostName;
    };
 
    // ______________________________________________________________
@@ -223,7 +223,7 @@ namespace dabc {
          
          static bool SetNonBlockSocket(int fd);
          static int StartServer(int& nport, int portmin=-1, int portmax=-1);
-         static String DefineHostName();
+         static std::string DefineHostName();
          static int StartClient(const char* host, int nport);
 
          static SocketServerProcessor* CreateServerProcessor(int nport, int portmin=-1, int portmax=-1);

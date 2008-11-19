@@ -77,7 +77,7 @@ namespace verbs {
 
          bool DoServer(dabc::Command* cmd, dabc::Port* port, const char* portname);
          bool DoClient(dabc::Command* cmd, dabc::Port* port, const char* portname);
-         void FillServerId(dabc::String& id);
+         void FillServerId(std::string& id);
 
          ConnectProcessor* Connect() const { return fConnect; }
 

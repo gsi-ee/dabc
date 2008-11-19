@@ -65,7 +65,7 @@ bool mbs::MbsOutputFile::StartNewFile()
       if ((fCurrentFileNumber>fNumMultiple) && (fNumMultiple>0)) return false;
    } 
    
-   dabc::String fname;
+   std::string fname;
    
    
    

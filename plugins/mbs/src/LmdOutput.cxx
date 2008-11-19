@@ -44,10 +44,10 @@ bool mbs::LmdOutput::Init()
    if (fNumMultiple!=0) {
       fCurrentFileNumber = fFirstMultiple;
       
-      dabc::String mask = fFileName;
+      std::string mask = fFileName;
 
       size_t pos = mask.rfind(".lmd");
-      if (pos==dabc::String::npos)
+      if (pos==std::string::npos)
          pos = mask.rfind(".LMD");
          
       if (pos==mask.length()-4) 
@@ -61,7 +61,7 @@ bool mbs::LmdOutput::Init()
          int maxnumber = -1;
          
          while (lst->NumChilds() > 0) {
-            dabc::String fname = lst->GetChild(0)->GetName();
+            std::string fname = lst->GetChild(0)->GetName();
             fname.erase(fname.length()-4, 4);
             pos = fname.length() - 1;
             while ((fname[pos]>='0') && (fname[pos] <= '9')) pos--;
@@ -101,16 +101,16 @@ bool mbs::LmdOutput::StartNewFile()
        if ((fCurrentFileNumber>fNumMultiple) && (fNumMultiple>0)) return false;
    } 
    
-   dabc::String fname = fFileName;
+   std::string fname = fFileName;
    
    if (IsAllowedMultipleFiles()) {
-      dabc::String extens;
+      std::string extens;
       dabc::formats(extens, "_%04d", fCurrentFileNumber);
        
       unsigned len = fname.length();
       
       size_t pos = fname.rfind(".lmd");
-      if (pos==dabc::String::npos)
+      if (pos==std::string::npos)
          pos = fname.rfind(".LMD");
          
       if (pos==len-4) 

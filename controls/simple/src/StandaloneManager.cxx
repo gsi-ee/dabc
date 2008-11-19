@@ -413,7 +413,7 @@ bool dabc::StandaloneManager::SendOverCommandChannel(const char* managername, co
 
 dabc::Parameter* dabc::StandaloneManager::FindControlParameter(const char* name)
 {
-   dabc::String holdername;
+   std::string holdername;
 
    const char* pos = strrchr(name, '.');
 
@@ -483,7 +483,7 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
 
       fClusterNames[slaveid] = slavename;
 
-      String connid;
+      std::string connid;
       formats(connid, "CmdChl_%s", slavename);
 
       // prepare server for connection
@@ -494,9 +494,9 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
 
       // reply with complete info that client can start connection
       cmd->SetStr("MainMgr", GetName());
-      cmd->SetStr("DeviceId", fCmdDevName.c_str());
-      cmd->SetStr("ServerId", fCmdDeviceId.c_str());
-      cmd->SetStr("ConnId", connid.c_str());
+      cmd->SetStr("DeviceId", fCmdDevName);
+      cmd->SetStr("ServerId", fCmdDeviceId);
+      cmd->SetStr("ConnId", connid);
    } else
    if (cmd->IsName("DisconnectCmdChannel")) {
       // release condition first time
@@ -583,7 +583,7 @@ void dabc::StandaloneManager::ParameterEvent(Parameter* par, int eventid)
       return;
    }
 
-//   dabc::String value;
+//   std::string value;
 
    LockGuard guard(GetMutex());
 
@@ -600,10 +600,10 @@ void dabc::StandaloneManager::SubscribedParChanged(ParamReg& reg)
    // check if this is master parameter and it is active
    if (!reg.active || !reg.ismaster) return;
 
-   dabc::String value, remname(reg.remname);
+   std::string value, remname(reg.remname);
 
    // here send to remote node command to update slave parameter value
-   if (!reg.par->GetStr(value)) {
+   if (!reg.par->GetValue(value)) {
       EOUT(("Cannot convert parameter %s to string", reg.par->GetName()));
       reg.active = false;
       return;
@@ -632,7 +632,7 @@ bool dabc::StandaloneManager::Subscribe(Parameter* par, int remnode, const char*
    reg.tgtnode = NodeId();
    reg.remname = remname;
    reg.active = false;
-   par->GetStr(reg.defvalue);
+   par->GetValue(reg.defvalue);
 
    {
       LockGuard guard(GetMutex());
@@ -659,11 +659,11 @@ bool dabc::StandaloneManager::Unsubscribe(Parameter* par)
             if (curr->active) {
                // send unsubscribe to the node
 
-               dabc::String fullname;
+               std::string fullname;
                par->MakeFullName(fullname, this);
 
                Command* cmd = new Command("UnsubscribeParam");
-               cmd->SetStr("TgtName", fullname.c_str());
+               cmd->SetStr("TgtName", fullname);
                cmd->SetInt("TgtNode", NodeId());
                cmds.Push(RemoteCmd(cmd, curr->srcnode, 0));
             }
@@ -727,13 +727,13 @@ void dabc::StandaloneManager::CheckSubscriptionList()
                DOUT3(( "Slave record activated node:%d %s", curr->srcnode, curr->remname.c_str()));
                curr->active = true;
 
-               dabc::String fullname;
+               std::string fullname;
                curr->par->MakeFullName(fullname, this);
 
                // send subscribe to the node
                Command* cmd = new Command("SubscribeParam");
-               cmd->SetStr("SrcName", curr->remname.c_str());
-               cmd->SetStr("TgtName", fullname.c_str());
+               cmd->SetStr("SrcName", curr->remname);
+               cmd->SetStr("TgtName", fullname);
                cmd->SetInt("TgtNode", NodeId());
                Submit(RemoteCmd(cmd, curr->srcnode, 0));
             }

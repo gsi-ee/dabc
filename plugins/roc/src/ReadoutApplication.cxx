@@ -18,22 +18,22 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
    //new dabc::StrParameter(this,DABC_ROC_COMPAR_BOARDIP, "140.181.66.173"); // lxi010.gsi.de
    // todo: later provide more than one roc board as input
 
-   CreateIntPar(DABC_ROC_COMPAR_ROCSNUMBER, 1);
+   CreateParInt(DABC_ROC_COMPAR_ROCSNUMBER, 1);
    for (int nr=0;nr<15;nr++)
-      CreateStrPar(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)), "");
+      CreateParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)), "");
 
-   SetParValue(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, 0)),"140.181.66.173"); // lxi010.gsi.de
+   SetParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, 0)), "140.181.66.173"); // lxi010.gsi.de
 
-   CreateIntPar(DABC_ROC_COMPAR_BUFSIZE, 8192);
-   CreateIntPar(DABC_ROC_COMPAR_TRANSWINDOW, 30);
-   CreateIntPar(DABC_ROC_COMPAR_POOL_SIZE, 100);
-   CreateIntPar(DABC_ROC_COMPAR_QLENGTH, 10);
-   CreateStrPar(DABC_ROC_PAR_OUTFILE, "");
-   CreateIntPar(DABC_ROC_PAR_OUTFILELIMIT, 0);
-   CreateStrPar(DABC_ROC_PAR_DATASERVER, "Stream");
-   CreateIntPar(DABC_ROC_PAR_DOCALIBR, 1);
-   CreateStrPar(DABC_ROC_PAR_CALIBRFILE, "");
-   CreateIntPar(DABC_ROC_PAR_CALIBRFILELIMIT, 0);
+   CreateParInt(DABC_ROC_COMPAR_BUFSIZE, 8192);
+   CreateParInt(DABC_ROC_COMPAR_TRANSWINDOW, 30);
+   CreateParInt(DABC_ROC_COMPAR_POOL_SIZE, 100);
+   CreateParInt(DABC_ROC_COMPAR_QLENGTH, 10);
+   CreateParStr(DABC_ROC_PAR_OUTFILE, "");
+   CreateParInt(DABC_ROC_PAR_OUTFILELIMIT, 0);
+   CreateParStr(DABC_ROC_PAR_DATASERVER, "Stream");
+   CreateParInt(DABC_ROC_PAR_DOCALIBR, 1);
+   CreateParStr(DABC_ROC_PAR_CALIBRFILE, "");
+   CreateParInt(DABC_ROC_PAR_CALIBRFILELIMIT, 0);
 
    DOUT1(("!!!! Data server plugin created %s !!!!", GetName()));
 }
@@ -41,7 +41,7 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
 int roc::ReadoutApplication::DataServerKind() const
 {
    int kind = mbs::NoServer;
-   std::string servertype=GetParCharStar(DABC_ROC_PAR_DATASERVER);
+   std::string servertype = GetParStr(DABC_ROC_PAR_DATASERVER);
    if(servertype.find("Stream")!=std::string::npos)
       kind=mbs::StreamServer;
    else
@@ -50,13 +50,11 @@ int roc::ReadoutApplication::DataServerKind() const
    return kind;
 }
 
-const char* roc::ReadoutApplication::RocIp(int nreadout) const
+std::string roc::ReadoutApplication::RocIp(int nreadout) const
 {
-   if ((nreadout<0) || (nreadout>=NumRocs())) return 0;
-   return GetParCharStar(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nreadout)));
+   if ((nreadout<0) || (nreadout>=NumRocs())) return "";
+   return GetParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nreadout)));
 }
-
-
 
 bool roc::ReadoutApplication::CreateAppModules()
 {
@@ -118,7 +116,7 @@ bool roc::ReadoutApplication::CreateAppModules()
          cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
          cmd->SetInt(DABC_ROC_COMPAR_TRANSWINDOW, TransWindow());
          res=dabc::mgr()->CreateTransport(fFullDeviceName.c_str(),FORMAT(("RocComb/Ports/Input%d", t)),cmd);
-         DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t), DBOOL(res)));
+         DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t).c_str(), DBOOL(res)));
          if(!res) return false;
       }
 
@@ -151,8 +149,8 @@ bool roc::ReadoutApplication::CreateAppModules()
 
       const char* outtype = mbs::Factory::LmdFileType();
 
-      if ((CalibrFileName().rfind(".root")!=dabc::String::npos) ||
-          (CalibrFileName().rfind(".ROOT")!=dabc::String::npos))
+      if ((CalibrFileName().rfind(".root")!=std::string::npos) ||
+          (CalibrFileName().rfind(".ROOT")!=std::string::npos))
              outtype = "RocTreeOutput";
 
       if (CalibrFileLimit()>0) {

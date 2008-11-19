@@ -175,7 +175,7 @@ void dabc::Command::AddValuesFrom(const dabc::Command* cmd, bool canoverwrite)
    }
 }
 
-void dabc::Command::SaveToString(String& v)
+void dabc::Command::SaveToString(std::string& v)
 {
    v.clear();
 

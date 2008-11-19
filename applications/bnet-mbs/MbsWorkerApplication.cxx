@@ -30,7 +30,7 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 {
    if (IsGenerator()) {
 
-      dabc::String modulename;
+      std::string modulename;
 
       dabc::formats(modulename,"Readout%d", portnumber);
 
@@ -46,10 +46,10 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
       dabc::Command* cmd = new dabc::CmdCreateDataTransport;
 
-      DOUT1(("!!!!! Create readout %d with par %s", portnumber, ReadoutPar(portnumber)));
+      DOUT1(("!!!!! Create readout %d with par %s", portnumber, ReadoutPar(portnumber).c_str()));
 
-      if (!cmd->ReadFromString(ReadoutPar(portnumber), true)) {
-         EOUT(("Cannot decode command parameters for input %d::: %s", portnumber, ReadoutPar(portnumber)));
+      if (!cmd->ReadFromString(ReadoutPar(portnumber).c_str(), true)) {
+         EOUT(("Cannot decode command parameters for input %d::: %s", portnumber, ReadoutPar(portnumber).c_str()));
          dabc::Command::Finalise(cmd);
          return false;
       }
@@ -101,17 +101,17 @@ dabc::Module* bnet::MbsWorkerApplication::CreateFilter(const char* name)
 
 bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
 {
-   const char* outfile = StoragePar();
+   std::string outfile = StoragePar();
 
-   DOUT3(("!!! CreateStorage port:%s par:%s", portname, outfile));
+   DOUT3(("!!! CreateStorage port:%s par:%s", portname, outfile.c_str()));
 
-   if ((outfile==0) || (strlen(outfile)==0))
+   if (outfile.length()==0)
       return bnet::WorkerApplication::CreateStorage(portname);
 
    dabc::Command* cmd = new dabc::CmdCreateDataTransport;
 
-   if (!cmd->ReadFromString(outfile, true)) {
-      EOUT(("Cannot decode command parameters for output %s", outfile));
+   if (!cmd->ReadFromString(outfile.c_str(), true)) {
+      EOUT(("Cannot decode command parameters for output %s", outfile.c_str()));
       dabc::Command::Finalise(cmd);
       return false;
    }
@@ -139,9 +139,9 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
 
 void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
 {
-   SetParValue("IsGenerator", 0);
+   SetParInt("IsGenerator", 0);
 
-   SetParValue("IsFilter", 0);
+   SetParInt("IsFilter", 0);
 
    int nodeid = dabc::mgr()->NodeId();
 
@@ -153,8 +153,8 @@ void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
       else
          recvid = (nodeid-1) / 2;
 
-      SetParValue("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d.lmd;", mbs::Factory::NewFileType(), filebase, recvid)));
-//      SetParValue("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d; SizeLimit:10000000; NumMulti:-1;", mbs::Factory::NewFileType(), filebase, recvid)));
+      SetParStr("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d.lmd;", mbs::Factory::NewFileType(), filebase, recvid)));
+//      SetParStr("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d; SizeLimit:10000000; NumMulti:-1;", mbs::Factory::NewFileType(), filebase, recvid)));
    }
 
    if (IsSender()) {
@@ -165,74 +165,70 @@ void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
          senderid = nodeid;
 
       for (int nr=0;nr<NumReadouts();nr++) {
-         dabc::String cfgstr, parname;
+         std::string cfgstr, parname;
 
          dabc::formats(cfgstr, "InpType:%s; InpName:%s_inp_%d_%d*.lmd;", mbs::Factory::NewFileType(), filebase, senderid, nr);
 
          dabc::formats(parname, "Input%dCfg", nr);
 
-         SetParValue(parname.c_str(), cfgstr.c_str());
+         SetParStr(parname.c_str(), cfgstr);
 
-         DOUT3(("Set filepar value %s %s : res:%s", parname.c_str(), cfgstr.c_str(), ReadoutPar(nr)));
+         DOUT3(("Set filepar value %s %s : res:%s", parname.c_str(), cfgstr.c_str(), ReadoutPar(nr).c_str()));
       }
    }
 }
 
 void bnet::MbsWorkerApplication::SetMbsTransportPars()
 {
-   SetParValue("IsGenerator", 0);
+   SetParInt("IsGenerator", 0);
 
-   SetParValue("IsFilter", 0);
+   SetParInt("IsFilter", 0);
 
-   SetParValue("NumReadouts", 1);
+   SetParInt("NumReadouts", 1);
 
    if ((dabc::mgr()->NodeId()==1) || (dabc::mgr()->NodeId()==2)) {
 
-      SetParValue("IsSender", 1);
-      SetParValue("IsReceiver", 0);
+      SetParInt("IsSender", 1);
+      SetParInt("IsReceiver", 0);
 
       const char* server_name = (dabc::mgr()->NodeId()==1) ? "x86g-4" : "x86-7";
 
-      dabc::String cfgstr;
+      std::string cfgstr;
 
       dabc::formats(cfgstr, "InpType:%s; InpName:%s.gsi.de; Port:6000;", mbs::Factory::NewTransportType(), server_name);
 
-      SetParValue("Input0Cfg", cfgstr.c_str());
+      SetParStr("Input0Cfg", cfgstr);
 
-      SetParValue("IsGenerator", 1);
+      SetParInt("IsGenerator", 1);
 
    } else {
-      SetParValue("IsSender", 0);
-      SetParValue("IsReceiver", 1);
+      SetParInt("IsSender", 0);
+      SetParInt("IsReceiver", 1);
 
-      SetParValue("StoragePar", FORMAT(("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::NewFileType())));
+      SetParStr("StoragePar", dabc::format("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::NewFileType()));
    }
 }
 
 void bnet::MbsWorkerApplication::SetMbsGeneratorsPars()
 {
-   SetParValue("IsGenerator", 0);
+   SetParInt("IsGenerator", 0);
 
-   SetParValue("IsFilter", 0);
+   SetParInt("IsFilter", 0);
 
-   SetParValue("NumReadouts", 1);
+   SetParInt("NumReadouts", 1);
 
    if ((dabc::mgr()->NodeId()==1) || (dabc::mgr()->NodeId()==2)) {
 
-      SetParValue("IsSender", 1);
-      SetParValue("IsReceiver", 0);
+      SetParInt("IsSender", 1);
+      SetParInt("IsReceiver", 0);
 
       const char* server_name = (dabc::mgr()->NodeId()==1) ? "master" : "node01";
 
-      dabc::String cfgstr;
-
-      dabc::formats(cfgstr, "InpType:%s; InpName:%s; Port:8000;", mbs::Factory::NewTransportType(), server_name);
-
-      SetParValue("Input0Cfg", cfgstr.c_str());
+      SetParStr("Input0Cfg", dabc::format("InpType:%s; InpName:%s; Port:8000;", mbs::Factory::NewTransportType(), server_name));
    } else {
-      SetParValue("IsSender", 0);
-      SetParValue("IsReceiver", 1);
+      SetParInt("IsSender", 0);
+      SetParInt("IsReceiver", 1);
 
-//      SetParValue("StoragePar", FORMAT(("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::NewFileType())));
+//      SetParStr("StoragePar", dabc::format("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::NewFileType()));
    }
 }

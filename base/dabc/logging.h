@@ -75,7 +75,7 @@ namespace dabc {
 
          void _ExtendLines(unsigned max);
 
-         void _FillString(String& str, unsigned mask, LoggerEntry* entry);
+         void _FillString(std::string& str, unsigned mask, LoggerEntry* entry);
 
       private:
          Logger*           fPrev;
@@ -87,7 +87,7 @@ namespace dabc {
          unsigned          fErrorMask;   // mask for error output
          unsigned          fFileMask;    // mask for file output
          int               fDebugLevel;  // level of debug
-         String            fPrefix;      // prefix of all messages
+         std::string            fPrefix;      // prefix of all messages
    };
 
    #define DOUT(level, args) \

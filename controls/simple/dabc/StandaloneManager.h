@@ -23,9 +23,9 @@ namespace dabc {
          bool ismaster; // indicate if parameter is master (observed by slave)
          int srcnode;    // nodeid where original parameter is situated
          int tgtnode;    // nodeid where dependent parameter is situated
-         String remname; // name of source/target parameter on remote node
+         std::string remname; // name of source/target parameter on remote node
          bool active;    // indicates if information is delivered to/from remote host
-         String defvalue; // value of parameter if dependent parameter is not connected
+         std::string defvalue; // value of parameter if dependent parameter is not connected
 
          ParamReg(Parameter* p) : par(p), ismaster(false), srcnode(0), tgtnode(0), remname(), active(false), defvalue() {}
          ParamReg(const ParamReg& src) :
@@ -77,14 +77,14 @@ namespace dabc {
          void CheckSubscriptionList();
 
          bool                  fIsMainMgr;
-         String                fMainMgrName;
-         std::vector<String>   fClusterNames;
+         std::string                fMainMgrName;
+         std::vector<std::string>   fClusterNames;
          std::vector<bool>     fClusterActive;
 
          int                   fNodeId;
          CommandChannelModule *fCmdChannel;
-         String                fCmdDeviceId;
-         String                fCmdDevName;
+         std::string                fCmdDeviceId;
+         std::string                fCmdDevName;
 
          Condition             fStopCond;
 

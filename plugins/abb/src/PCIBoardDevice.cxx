@@ -82,7 +82,7 @@ int dabc::PCIBoardDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
       }
    PCITransport* transport = new PCITransport(this, port);
    DOUT3(("PCIBoardDevice::CreateTransport creates new transport instance %p", transport));
-   dabc::String thrname;
+   std::string thrname;
    dabc::formats(thrname,"PCIBoardDeviceThread%d", fgThreadnum++);
 
    Manager::Instance()->MakeThreadFor(transport, thrname.c_str());

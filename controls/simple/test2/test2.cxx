@@ -297,7 +297,7 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
       for (int nreceiver = 0; nreceiver < m.NumNodes(); nreceiver++) {
           if (nsender==nreceiver) continue;
 
-          dabc::String port1name, port2name;
+          std::string port1name, port2name;
 
           dabc::formats(port1name, "%s$Sender/Ports/Output%d", m.GetNodeName(nsender), nreceiver>nsender ? nreceiver-1 : nreceiver);
           dabc::formats(port2name, "%s$Receiver/Ports/Input%d", m.GetNodeName(nreceiver), nsender>nreceiver ? nsender-1 : nsender);
@@ -594,7 +594,7 @@ void OneToAllLoop(dabc::StandaloneManager &m, int deviceid)
    }
 
    for (int nreceiver = 1; nreceiver < m.NumNodes(); nreceiver++) {
-      dabc::String port1name, port2name;
+      std::string port1name, port2name;
 
       dabc::formats(port1name, "%s$Sender/Ports/Output%d", m.GetNodeName(0), nreceiver-1);
       dabc::formats(port2name, "%s$Receiver/Ports/Input0", m.GetNodeName(nreceiver));
@@ -666,7 +666,7 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
    DOUT1(("Create TimeSync modules() res = %s", DBOOL(res)));
 
    for (int nslave = 1; nslave < m.NumNodes(); nslave++) {
-      dabc::String port1name, port2name;
+      std::string port1name, port2name;
 
       dabc::formats(port1name, "%s$TSync/Ports/Slave%d", m.GetNodeName(0), nslave-1);
       dabc::formats(port2name, "%s$TSync/Ports/Master", m.GetNodeName(nslave));

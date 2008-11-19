@@ -40,7 +40,7 @@ namespace dabc {
          bool        fMasterConn;
          int         fNumSlaves;
          double*     fSyncTimes;  // time when last tyme sync was done, need for scale calculations
-         String      fPoolName;
+         std::string      fPoolName;
 
          TimeSource* fTimeSource;
 

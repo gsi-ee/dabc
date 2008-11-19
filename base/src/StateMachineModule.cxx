@@ -16,11 +16,11 @@ int dabc::StateMachineModule::ExecuteCommand(Command* cmd)
 
       if (!dabc::mgr()->IsStateTransitionAllowed(stcmd, true)) return cmd_false;
 
-      dabc::String prev_state = dabc::mgr()->CurrentState();
+      std::string prev_state = dabc::mgr()->CurrentState();
 
       bool res = dabc::mgr()->DoStateTransition(stcmd);
 
-      DOUT1(( "StateTransition %s -> %s  res:%s", prev_state.c_str(), dabc::mgr()->CurrentState(), DBOOL(res)));
+      DOUT1(( "StateTransition %s -> %s  res:%s", prev_state.c_str(), dabc::mgr()->CurrentState().c_str(), DBOOL(res)));
 
       return cmd_bool(res);
    }

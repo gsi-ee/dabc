@@ -131,7 +131,7 @@ dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sy
 
 dabc::Parameter* dabc::Module::CreatePoolUsageParameter(const char* name, double interval, const char* poolname)
 {
-   Parameter* par = CreateDoublePar(name, 0.);
+   Parameter* par = CreateParDouble(name, 0.);
 
    PoolHandle* pool = FindPool(poolname);
    if (pool) pool->SetUsageParameter(par, interval);

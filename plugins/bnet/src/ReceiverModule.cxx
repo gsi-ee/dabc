@@ -91,7 +91,7 @@ int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
       DOUT3(("Receiever Configure done ninp = %d", NumInputs()));
    } else
    if (cmd->IsName("GetConfig")) {
-      dabc::String str = "";
+      std::string str = "";
       for (int node=0;node<fCfgNumNodes;node++) {
          dabc::Port* port = Input(node);
          if ((port!=0) && port->IsConnected())

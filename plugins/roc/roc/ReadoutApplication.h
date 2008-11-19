@@ -30,7 +30,7 @@ namespace roc {
          int   NumRocs() const { return GetParInt(DABC_ROC_COMPAR_ROCSNUMBER, 1); }
 
          /** IP address for ROC of index*/
-         const char* RocIp(int index = 0) const;
+         std::string RocIp(int index = 0) const;
 
          /** id number of Mbs server (stream, transport)*/
          int DataServerKind() const;
@@ -46,11 +46,11 @@ namespace roc {
             /** Number of buffers each input/output port of readout module*/
          int   NumPoolBuffers() const {return GetParInt(DABC_ROC_COMPAR_POOL_SIZE,50);}
 
-         dabc::String OutputFileName() const { return GetParStr(DABC_ROC_PAR_OUTFILE, ""); }
+         std::string OutputFileName() const { return GetParStr(DABC_ROC_PAR_OUTFILE, ""); }
          int OutFileLimit() const { return GetParInt(DABC_ROC_PAR_OUTFILELIMIT, 0); }
          bool DoTaking() const { return GetParInt(DABC_ROC_PAR_DOCALIBR, 0) < 2; }
          bool DoCalibr() const { return GetParInt(DABC_ROC_PAR_DOCALIBR, 0) > 0; }
-         dabc::String CalibrFileName() const { return GetParStr(DABC_ROC_PAR_CALIBRFILE, ""); }
+         std::string CalibrFileName() const { return GetParStr(DABC_ROC_PAR_CALIBRFILE, ""); }
          int CalibrFileLimit() const { return GetParInt(DABC_ROC_PAR_CALIBRFILELIMIT, 0); }
 
          virtual bool CreateAppModules();
@@ -66,7 +66,7 @@ namespace roc {
         bool WriteRocRegister(int rocid, int registr, int value);
 
         /** current full name of roc device (with leading "Device/") */
-        dabc::String fFullDeviceName;
+        std::string fFullDeviceName;
    };
 }
 

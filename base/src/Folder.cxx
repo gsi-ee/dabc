@@ -196,7 +196,7 @@ dabc::Folder* dabc::Folder::GetFolder(const char* name, bool force, bool isowner
    }
 
    if (folder==0) {
-      dabc::String fname(name, len);
+      std::string fname(name, len);
       folder = new Folder(this, fname.c_str(), true);
    }
 
@@ -245,12 +245,12 @@ bool dabc::Folder::Find(ConfigIO &cfg)
    return true;
 }
 
-dabc::String dabc::Folder::GetPathName(const char* path)
+std::string dabc::Folder::GetPathName(const char* path)
 {
    const char* slash = strrchr(path, '/');
-   if (slash==0) return String("");
+   if (slash==0) return std::string("");
 
-   return dabc::String(path, slash - path);
+   return std::string(path, slash - path);
 }
 
 const char* dabc::Folder::GetObjectName(const char* path)

@@ -6,23 +6,21 @@ const char* bnet::NetDevice = "SocketDevice";
 bool bnet::NetBidirectional = true;
 bool bnet::UseFileSource = false;
 
-void bnet::NodesVector::Reset(const char* mask, int numnodes)
+void bnet::NodesVector::Reset(std::string mask, int numnodes)
 {
    fUsedNodes.clear();
    fNumNodes = 0;
-   if (mask==0) return;
-   
-   
-   if (numnodes<=0) numnodes = strlen(mask);
-   
+   if (mask.length()==0) return;
+
+   if (numnodes<=0) numnodes = mask.length();
+
    fNumNodes = numnodes;
-   
+
    int node = 0;
-   
+
    while (node<fNumNodes) {
-      if (mask==0) return;
-      if (*mask=='x') fUsedNodes.push_back(node);
-      mask++;
+      if (mask.length() < (unsigned) node) return;
+      if (mask[node]=='x') fUsedNodes.push_back(node);
       node++;
    }
 }

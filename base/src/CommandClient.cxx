@@ -92,7 +92,7 @@ int dabc::CommandClientBase::CancelCommands()
 
    while (fSubmCmds->size()>0) {
       Command* cmd = fSubmCmds->front();
-      String v;
+      std::string v;
       cmd->SaveToString(v);
       EOUT(("Need to forget command %s",  v.c_str()));
       cmd->SetCanceled();
@@ -237,12 +237,12 @@ int dabc::CommandReceiver::ExecuteInt(const char* cmdname, const char* intresnam
    return res;
 }
 
-dabc::String dabc::CommandReceiver::ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec)
+std::string dabc::CommandReceiver::ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec)
 {
    dabc::Command* cmd = new dabc::Command(cmdname);
    cmd->SetKeepAlive(true);
 
-   dabc::String res;
+   std::string res;
 
    if (Execute(cmd, timeout_sec))
       res = cmd->GetStr(strresname, "");

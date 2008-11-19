@@ -32,14 +32,14 @@ namespace mbs {
          
          bool OpenNextFile();
 
-         dabc::String        fFileName;
+         std::string        fFileName;
          int                 fNumMultiple;
          int                 fFirstMultiple;
          
          dabc::Folder*       fFilesList;
          
          mbs::LmdFile        fFile;
-         dabc::String        fCurrentFileName;
+         std::string        fCurrentFileName;
    };
    
 }

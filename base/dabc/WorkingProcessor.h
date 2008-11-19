@@ -56,9 +56,10 @@ namespace dabc {
 
          Parameter* FindPar(const char* name) const;
          void DeletePar(const char* name);
-         int GetParInt(const char* name, int defvalue = 0) const ;
-         String GetParStr(const char* name, const char* defvalue = "") const;
-         const char* GetParCharStar(const char* name, const char* defvalue = "") const;
+
+         std::string GetParStr(const char* name, const std::string& defvalue = "") const;
+         int GetParInt(const char* name, int defvalue = 0) const;
+         double GetParDouble(const char* name, double defvalue = 0.) const;
 
          Folder* GetTopParsFolder();
 
@@ -105,15 +106,18 @@ namespace dabc {
 
          // some protected method for parameters handling
          Parameter* CreatePar(int kind, const char* name, const char* initvalue = 0);
-         Parameter* CreateStrPar(const char* name, const char* initvalue = 0);
-         Parameter* CreateIntPar(const char* name, int initvalue = 0);
-         Parameter* CreateDoublePar(const char* name, double initvalue = 0.);
+         Parameter* CreateParStr(const char* name, const char* initvalue = 0);
+         Parameter* CreateParInt(const char* name, int initvalue = 0);
+         Parameter* CreateParDouble(const char* name, double initvalue = 0.);
 
          void DestroyParameter(const char* name);
          bool InvokeParChange(Parameter* par, const char* value, Command* cmd);
 
-         bool SetParValue(const char* name, const char* value);
-         bool SetParValue(const char* name, int value);
+         bool SetParStr(const char* name, const char* value);
+         bool SetParStr(const char* name, const std::string& value) { return SetParStr(name, value.c_str()); }
+         bool SetParInt(const char* name, int value);
+         bool SetParDouble(const char* name, double value);
+
          bool SetParFixed(const char* name, bool on = true);
          void LockUnlockPars(bool on);
 
@@ -132,7 +136,7 @@ namespace dabc {
          CommandsQueue    fProcessorCommands;
 
          Folder*          fParsHolder;
-         String           fProcessorPars;
+         std::string      fParsTopFolderName;
 
          Mutex            fProcessorMutex;
 

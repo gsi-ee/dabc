@@ -24,7 +24,7 @@ bnet::GeneratorModule::GeneratorModule(const char* name, WorkerApplication* fact
 
    CreateOutput("Output", fPool, ReadoutQueueSize);
 
-   CreateIntPar("UniqueId", 0);
+   CreateParInt("UniqueId", 0);
 }
 
 void bnet::GeneratorModule::MainLoop()

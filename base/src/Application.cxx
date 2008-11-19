@@ -61,7 +61,7 @@ int dabc::Application::ExecuteCommand(dabc::Command* cmd)
    } else
    if (cmd->IsName("CheckModulesRunning")) {
       if (!IsModulesRunning()) {
-         if (strcmp(dabc::mgr()->CurrentState(), dabc::Manager::stReady) != 0) {
+         if (dabc::mgr()->CurrentState() != dabc::Manager::stReady) {
             DOUT1(("!!!!! ******** !!!!!!!!  All main modules are stopped - we can switch to Stop state"));
             dabc::mgr()->InvokeStateTransition(dabc::Manager::stcmdDoStop);
          }

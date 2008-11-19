@@ -41,15 +41,15 @@ namespace mbs {
          bool Close();
          bool StartNewFile();
       
-         dabc::String        fFileName;
-         dabc::String        fFileIOType;
+         std::string        fFileName;
+         std::string        fFileIOType;
          uint64_t            fSizeLimit;
          int                 fNumMultiple;
          int                 fFirstMultiple;
       
          int                 fCurrentFileNumber;
          uint64_t            fCurrentFileSize;
-         dabc::String        fCurrentFileName;
+         std::string        fCurrentFileName;
          dabc::FileIO*       fIO;
          mbs::sMbsFileHeader fHdr;
          long                fSyncCounter;

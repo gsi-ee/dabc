@@ -23,13 +23,13 @@ namespace dabc {
 
    class LoggerEntry {
       public:
-         String      fFileName;
-         String      fFuncName;
+         std::string      fFileName;
+         std::string      fFuncName;
          unsigned    fLine;
          int         fLevel;
          unsigned    fCounter;
          time_t      fMsgTime; // normal time when message will be output
-         String      fLastMsg; // last shown message
+         std::string      fLastMsg; // last shown message
          TimeStamp_t fLastTm;  // dabc (fast) time of last output
          unsigned    fDropCnt; // number of dropped messages
          bool        fShown;   // used in statistic output
@@ -158,7 +158,7 @@ void dabc::Logger::LogFile(const char* fname)
       fFile = fopen(fname, "a");
 }
 
-void dabc::Logger::_FillString(String& str, unsigned mask, LoggerEntry* entry)
+void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* entry)
 {
    str.clear();
    if (mask==0) return;
@@ -249,7 +249,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    entry->fLastMsg = message;
 
    if (!drop_msg || (mask & lNoDrop)) {
-      dabc::String str;
+      std::string str;
       _FillString(str, mask, entry);
 
       if (str.length() > 0) {
@@ -261,7 +261,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    }
 
    if (fFile && (!drop_msg || (fmask & lNoDrop))) {
-      dabc::String str;
+      std::string str;
       _FillString(str, fmask, entry);
       if (str.length()>0) {
          fprintf(fFile, str.c_str());
@@ -295,7 +295,7 @@ void dabc::Logger::ShowStat()
       }
    }
 
-   String* currfile = 0;
+   std::string* currfile = 0;
 
    do {
 

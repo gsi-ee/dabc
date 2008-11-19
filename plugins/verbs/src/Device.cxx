@@ -652,7 +652,7 @@ int verbs::Device::ExecuteCommand(dabc::Command* cmd)
    DOUT5(("Execute command %s", cmd->GetName()));
 
    if (cmd->IsName("StartServer")) {
-	   dabc::String servid;
+	   std::string servid;
       ((Thread*) ProcessorThread())->FillServerId(servid);
       cmd->SetPar("ConnId", servid.c_str());
    } else

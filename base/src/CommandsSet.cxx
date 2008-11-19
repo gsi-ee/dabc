@@ -45,7 +45,7 @@ bool dabc::CommandsSet::_ProcessReply(Command* cmd)
 {
    if (!cmd->GetResult()) {
       fMainRes = false;
-      String v;
+      std::string v;
       cmd->SaveToString(v);
       EOUT(("Main Cmd %s fails because of subcmd: %s", (fMain ? fMain->GetName() : "---"), v.c_str()));
    }

@@ -52,8 +52,8 @@ bnet::ClusterApplication::ClusterApplication(const char* name) :
 
    // register dependency against all states in the cluster, include ourself
    for (int id=0; id<dabc::mgr()->NumNodes(); id++) {
-      dabc::String parname = FORMAT(("State_%d", id));
-      dabc::Parameter* par = CreateStrPar(parname.c_str(), dabc::Manager::stNull);
+      std::string parname = FORMAT(("State_%d", id));
+      dabc::Parameter* par = CreateParStr(parname.c_str(), dabc::Manager::stNull);
 
       DOUT1(("Create parameter %s", par->GetFullName().c_str()));
       dabc::mgr()->Subscribe(par, id, dabc::Manager::stParName);
@@ -65,37 +65,37 @@ bnet::ClusterApplication::ClusterApplication(const char* name) :
       // no need to subscribe on status of itself - it is not exists
       if (n == dabc::Manager::Instance()->NodeId()) continue;
 
-      dabc::String holdername = bnet::WorkerApplication::PluginName();
+      std::string holdername = bnet::WorkerApplication::PluginName();
 
-      dabc::String parname;
+      std::string parname;
 
       dabc::formats(parname,"Worker%dStatus",n);
-      dabc::Parameter* par = CreateStrPar(parname.c_str(), "Off");
+      dabc::Parameter* par = CreateParStr(parname.c_str(), "Off");
       dabc::Manager::Instance()->Subscribe(par, n, (holdername + ".Status").c_str());
 
       dabc::formats(parname,"Worker%dRecvStatus",n);
-      par = CreateStrPar(parname.c_str(), "oooo");
+      par = CreateParStr(parname.c_str(), "oooo");
       dabc::Manager::Instance()->Subscribe(par, n, (holdername + ".RecvStatus").c_str());
 
       dabc::formats(parname,"Worker%dSendStatus",n);
-      par = CreateStrPar(parname.c_str(), "oooo");
+      par = CreateParStr(parname.c_str(), "oooo");
       dabc::Manager::Instance()->Subscribe(par, n, (holdername + ".SendStatus").c_str());
    }
 
    SetParDflts();
 
-   CreateIntPar("CfgNumNodes", dabc::mgr()->NumNodes());
-   CreateIntPar("CfgNodeId", dabc::mgr()->NodeId());
+   CreateParInt("CfgNumNodes", dabc::mgr()->NumNodes());
+   CreateParInt("CfgNodeId", dabc::mgr()->NodeId());
 
-   CreateStrPar("NetDevice", bnet::NetDevice);
-   CreateIntPar("IsRunning", 0);
-   CreateIntPar("WithController", 0);
-   CreateIntPar("NumEventsCombine", 1);
-   CreateIntPar("CtrlBuffer",            2*1024);
-   CreateIntPar("CtrlPoolSize",      2*0x100000);
-   CreateIntPar("TransportBuffer",       8*1024);
+   CreateParStr("NetDevice", bnet::NetDevice);
+   CreateParInt("IsRunning", 0);
+   CreateParInt("WithController", 0);
+   CreateParInt("NumEventsCombine", 1);
+   CreateParInt("CtrlBuffer",            2*1024);
+   CreateParInt("CtrlPoolSize",      2*0x100000);
+   CreateParInt("TransportBuffer",       8*1024);
 
-   DOUT1(("Net device = %s",NetDevice()));
+   DOUT1(("Net device = %s",NetDevice().c_str()));
 
    // SetPars(false, 2*1024, 128*1024, 16);
 }
@@ -105,7 +105,7 @@ bnet::ClusterApplication::~ClusterApplication()
    // unregister dependency for all state parameters
 
    for (int id=0;id<dabc::mgr()->NumNodes();id++) {
-      dabc::String parname = FORMAT(("State_%d", id));
+      std::string parname = FORMAT(("State_%d", id));
       dabc::Parameter* par = FindPar(parname.c_str());
       if (par) {
          dabc::mgr()->Unsubscribe(par);
@@ -119,11 +119,11 @@ void bnet::ClusterApplication::SetPars(bool withcontrol,
                                   int TransportBufferSize,
                                   int eventscombine)
 {
-   SetParValue("WithController", withcontrol ? 1 : 0);
-   SetParValue("TransportBuffer", TransportBufferSize);
-   SetParValue("CtrlBuffer", ControlBufferSize);
+   SetParInt("WithController", withcontrol ? 1 : 0);
+   SetParInt("TransportBuffer", TransportBufferSize);
+   SetParInt("CtrlBuffer", ControlBufferSize);
 
-   SetParValue("NumEventsCombine", eventscombine);
+   SetParInt("NumEventsCombine", eventscombine);
 }
 
 dabc::Module* bnet::ClusterApplication::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
@@ -138,16 +138,16 @@ dabc::Module* bnet::ClusterApplication::CreateModule(const char* classname, cons
     return 0;
 }
 
-const char* bnet::ClusterApplication::NodeCurrentState(int nodeid)
+std::string bnet::ClusterApplication::NodeCurrentState(int nodeid)
 {
-   return GetParCharStar(FORMAT(("State_%d", nodeid)), dabc::Manager::stNull);
+   return GetParStr(FORMAT(("State_%d", nodeid)), dabc::Manager::stNull);
 }
 
 bool bnet::ClusterApplication::CreateAppModules()
 {
    if (WithController()) {
 
-      dabc::mgr()->CreateDevice(NetDevice(), "BnetDev");
+      dabc::mgr()->CreateDevice(NetDevice().c_str(), "BnetDev");
 
       dabc::mgr()->CreateMemoryPool(ControlPoolName(), ControlBufferSize(), ControlPoolSize()/ControlBufferSize());
       dabc::mgr()->ConfigurePool(ControlPoolName(), true);
@@ -230,7 +230,7 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
       for (int nodeid=0;nodeid<dabc::mgr()->NumNodes(); nodeid++) {
          if (!dabc::mgr()->IsNodeActive(nodeid)) continue;
 
-         if (strcmp(dabc::mgr()->CurrentState(), NodeCurrentState(nodeid))!=0) {
+         if (dabc::mgr()->CurrentState() != NodeCurrentState(nodeid)) {
             cmd_res = cmd_false;
             break;
          }
@@ -253,7 +253,7 @@ bool bnet::ClusterApplication::StartDiscoverConfig(dabc::Command* mastercmd)
    fSendMatrix.clear();
    fRecvMatrix.clear();
 
-   dabc::String nullmask(dabc::mgr()->NumNodes(), 'o');
+   std::string nullmask(dabc::mgr()->NumNodes(), 'o');
 
    ClusterDiscoverSet* set = 0;
 
@@ -275,7 +275,7 @@ bool bnet::ClusterApplication::StartDiscoverConfig(dabc::Command* mastercmd)
       cmd->SetInt("EventsCombine", NumEventsCombine());
       cmd->SetInt("TransportBuffer", TransportBufferSize());
       cmd->SetInt("ControlBuffer", ControlBufferSize());
-      cmd->SetStr("NetDevice", NetDevice());
+      cmd->SetStr("NetDevice", NetDevice().c_str());
 
       if (set==0) set = new ClusterDiscoverSet(this, mastercmd);
 
@@ -321,7 +321,7 @@ bool bnet::ClusterApplication::StartClusterSMCommand(dabc::Command* mastercmd)
 
 bool bnet::ClusterApplication::StartConfigureApply(dabc::Command* mastercmd)
 {
-   dabc::String send_mask, recv_mask;
+   std::string send_mask, recv_mask;
 
    for (unsigned node = 0; node < fNodeNames.size(); node++) {
       send_mask += ((fNodeMask[node] & mask_Sender) ? "x" : "o");
@@ -372,8 +372,8 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
 
    if ((res!=1) || (nodeid<0)) return;
 
-   dabc::String state;
-   par->GetStr(state);
+   std::string state;
+   if (!par->GetValue(state)) return;
 
    bool isnormalsmcmd = false;
 
@@ -454,7 +454,7 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
 
       for (int nodeid=0; nodeid < (int)fNodeMask.size(); nodeid++)
         if (nodeid!=dabc::mgr()->NodeId())
-           if (strcmp(NodeCurrentState(nodeid),dabc::Manager::stReady)!=0) isallready = false;
+           if (NodeCurrentState(nodeid) != dabc::Manager::stReady) isallready = false;
 
       if (isallready && (fNodeMask.size()> 0) && IsRunning()) {
          DOUT1(("All nodes changed their states to Ready, switch cluster itself"));
@@ -490,7 +490,7 @@ bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
                 EOUT(("Connection %d -> %d known only from one side !!!!", nsender, nreceiver));
              }
 
-         dabc::String port1name, port2name;
+         std::string port1name, port2name;
 
          const char* node1name = fNodeNames[nsender].c_str();
          const char* node2name = fNodeNames[nreceiver].c_str();
@@ -515,7 +515,7 @@ bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
       for (unsigned nsender = 0; nsender < fNodeNames.size(); nsender++) {
 
          if ((fNodeMask[nsender] & mask_Sender) == 0) continue;
-         dabc::String port1name, port2name;
+         std::string port1name, port2name;
 
          const char* node1name = fNodeNames[nsender].c_str();
          const char* node2name = dabc::mgr()->GetName();
@@ -594,7 +594,7 @@ bool bnet::ClusterApplication::DoStateTransition(const char* state_trans_cmd)
 
    // this is call from SM thread, use only thread-safe code here!!!
 // took this out to reset failure on all nodes from here JA
-//   if (strcmp(dabc::mgr()->CurrentState(), dabc::Manager::stHalted)==0) {
+//   if (dabc::mgr()->CurrentState() == dabc::Manager::stHalted) {
 //      int cnt = 50;
 //      while (!Execute("TestClusterStates") && (cnt-->0))
 //         dabc::MicroSleep(100000);

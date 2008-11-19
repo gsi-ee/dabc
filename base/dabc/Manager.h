@@ -405,7 +405,7 @@ namespace dabc {
          virtual bool InvokeStateTransition(const char* state_transition_name, Command* cmd = 0);
 
          /** Returns current state name */
-         const char* CurrentState() const;
+         std::string CurrentState() const;
 
 
          // -------------- generic folder structure of manager

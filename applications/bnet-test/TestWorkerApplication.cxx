@@ -23,12 +23,12 @@ bnet::TestWorkerApplication::TestWorkerApplication(const char* name) :
 {
 // register application specific parameters here:
 #ifdef __USE_ABB__
-    CreateStrPar(ABB_PAR_DEVICE, "ABB_Device");
-    CreateStrPar(ABB_PAR_MODULE, "ABB_Readout");
-    CreateIntPar(ABB_PAR_BOARDNUM,0);
-    CreateIntPar(ABB_PAR_BAR,1);
-    CreateIntPar(ABB_PAR_ADDRESS,(0x8000 >> 2));
-    CreateIntPar(ABB_PAR_LENGTH, 8*1024);
+    CreateParStr(ABB_PAR_DEVICE, "ABB_Device");
+    CreateParStr(ABB_PAR_MODULE, "ABB_Readout");
+    CreateParInt(ABB_PAR_BOARDNUM,0);
+    CreateParInt(ABB_PAR_BAR,1);
+    CreateParInt(ABB_PAR_ADDRESS,(0x8000 >> 2));
+    CreateParInt(ABB_PAR_LENGTH, 8*1024);
 #endif
 
     DOUT0(("Set all pars to TestWorker"));
@@ -62,16 +62,16 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
    DOUT1(("CreateReadout buf = %d", ReadoutBufferSize()));
 
    bool res = false;
-   dabc::String modulename;
+   std::string modulename;
    dabc::formats(modulename,"Readout%d", portnumber);
-   dabc::String abbdevname;
-   dabc::String modinputname = modulename+"/Ports/Input";
+   std::string abbdevname;
+   std::string modinputname = modulename+"/Ports/Input";
    // check parameter if we should use abb at this readout:
 #ifdef __USE_ABB__
-   if(strcmp(ReadoutPar(portnumber),"ABB")==0)
+   if(ReadoutPar(portnumber) == "ABB")
       {
          // create device by command:
-         abbdevname=GetParCharStar(ABB_PAR_DEVICE, "ABBDevice");
+         abbdevname=GetParStr(ABB_PAR_DEVICE, "ABBDevice");
          dabc::Command* dcom= new dabc::CmdCreateDevice("AbbDevice", abbdevname.c_str());
          // set additional parameters for abb device here:
          dcom->SetInt(ABB_PAR_BOARDNUM, GetParInt(ABB_PAR_BOARDNUM, 0));
@@ -90,7 +90,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
       {
          // create dummy event generator module:
          dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str(), this);
-         dabc::mgr()->MakeThreadForModule(m, Thrd1Name());
+         dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
          modulename += "/Ports/Output";
          dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
          fABBActive=false;
@@ -117,21 +117,21 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
 dabc::Module* bnet::TestWorkerApplication::CreateCombiner(const char* name)
 {
    dabc::Module* m = new bnet::TestCombinerModule(name, this);
-   dabc::mgr()->MakeThreadForModule(m, Thrd1Name());
+   dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
    return m;
 }
 
 dabc::Module* bnet::TestWorkerApplication::CreateBuilder(const char* name)
 {
    dabc::Module* m = new bnet::TestBuilderModule(name, this);
-   dabc::mgr()->MakeThreadForModule(m, Thrd2Name());
+   dabc::mgr()->MakeThreadForModule(m, Thrd2Name().c_str());
    return m;
 }
 
 dabc::Module* bnet::TestWorkerApplication::CreateFilter(const char* name)
 {
    dabc::Module* m = new bnet::TestFilterModule(name, this);
-   dabc::mgr()->MakeThreadForModule(m, Thrd2Name());
+   dabc::mgr()->MakeThreadForModule(m, Thrd2Name().c_str());
    return m;
 }
 

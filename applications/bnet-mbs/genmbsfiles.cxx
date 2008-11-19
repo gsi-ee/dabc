@@ -30,7 +30,7 @@ int main(int numc, char* args[])
 
    for(int nr=0;nr<numreadouts;nr++) {
 
-      dabc::String fname;
+      std::string fname;
 
       int uniqueid = nodeid* 1000 + nr;
 

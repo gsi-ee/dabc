@@ -54,11 +54,11 @@ namespace dabc {
          ConfigBase       *fPrnt;  // parent configuration with defaults for some variables
 
          // following variables work as 'enviroment'
-         String            envDABCSYS;
-         String            envDABCUSERDIR;     // dir with user plugin
-         String            envDABCWORKDIR;     // dir where application is started
-         String            envDABCNODEID;      // current node id
-         String            envDABCNUMNODES;    // current number of nodes
+         std::string            envDABCSYS;
+         std::string            envDABCUSERDIR;     // dir with user plugin
+         std::string            envDABCWORKDIR;     // dir where application is started
+         std::string            envDABCNODEID;      // current node id
+         std::string            envDABCNUMNODES;    // current number of nodes
 
          XMLNodePointer_t Dflts();
 
@@ -106,8 +106,8 @@ namespace dabc {
 
          XMLNodePointer_t XDAQ_FindContext(unsigned instance);
          unsigned XDAQ_NumNodes();
-         String XDAQ_NodeName(unsigned instance);
-         String XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr);
+         std::string XDAQ_NodeName(unsigned instance);
+         std::string XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr);
 
       public:
          ConfigBase(const char* fname = 0);
@@ -123,12 +123,12 @@ namespace dabc {
          unsigned NumNodes();
 
          // returns nodename of specified context, to be implemented later
-         String NodeName(unsigned id);
+         std::string NodeName(unsigned id);
 
          // method used by run.sh script to produce command line when test(0), run(1), conn(2), kill(3) application
-         String SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);
+         std::string SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);
 
-         String ResolveEnv(const char* arg);
+         std::string ResolveEnv(const char* arg);
 
          bool HasContext(unsigned id);
 

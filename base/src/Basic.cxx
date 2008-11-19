@@ -49,7 +49,7 @@ void dabc::Basic::_SetParent(Mutex* mtx, Basic* parent)
    fParent = parent;
 }
 
-void dabc::Basic::MakeFullName(String &fullname, Basic* upto) const
+void dabc::Basic::MakeFullName(std::string &fullname, Basic* upto) const
 {
    fullname.assign("");
 
@@ -58,7 +58,7 @@ void dabc::Basic::MakeFullName(String &fullname, Basic* upto) const
    _MakeFullName(fullname, upto);
 }
 
-void dabc::Basic::_MakeFullName(String &fullname, Basic* upto) const
+void dabc::Basic::_MakeFullName(std::string &fullname, Basic* upto) const
 {
    if ((fParent!=0) && (fParent != upto)) {
       fParent->_MakeFullName(fullname, upto);
@@ -77,14 +77,14 @@ void dabc::Basic::SetName(const char* name)
 }
 
 
-dabc::String dabc::Basic::GetFullName(Basic* upto) const
+std::string dabc::Basic::GetFullName(Basic* upto) const
 {
-   dabc::String res;
+   std::string res;
    MakeFullName(res, upto);
    return res;
 }
 
-void dabc::Basic::FillInfo(String& info)
+void dabc::Basic::FillInfo(std::string& info)
 {
    dabc::formats(info, "Object: %s", GetName());
 }

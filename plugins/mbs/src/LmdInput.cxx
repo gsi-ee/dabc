@@ -45,7 +45,7 @@ bool mbs::LmdInput::Init()
       fFilesList = dabc::Manager::Instance()->ListMatchFiles("", fFileName.c_str());
    else 
    if (fNumMultiple<=0) {
-//      dabc::String mask = fFileName;
+//      std::string mask = fFileName;
 //      mask += "_*.lmd";
 //      fFilesList = dabc::Manager::Instance()->ListMatchFiles("", mask.c_str());
 //      
@@ -60,7 +60,7 @@ bool mbs::LmdInput::Init()
       fFilesList = new dabc::Folder(0,"FilesList", true);
       
       while (number<fNumMultiple) {
-         dabc::String fname;
+         std::string fname;
          dabc::formats(fname, "%s_%04d.lmd", fFileName.c_str(), number);
          new dabc::Basic(fFilesList, fname.c_str());
          number++;

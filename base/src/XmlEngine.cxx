@@ -40,7 +40,7 @@ namespace dabc {
    protected:
 
       std::ostream  *fOut;
-      String        *fOutStr;
+      std::string        *fOutStr;
       char          *fBuf;
       char          *fCurrent;
       char          *fMaxAddr;
@@ -54,7 +54,7 @@ namespace dabc {
          Init(bufsize);
       }
 
-      XmlOutputStream(String* outstr, int bufsize = 20000)
+      XmlOutputStream(std::string* outstr, int bufsize = 20000)
       {
          fOut = 0;
          fOutStr = outstr;
@@ -1093,7 +1093,7 @@ bool dabc::XmlEngine::ValidateVersion(XMLDocPointer_t xmldoc, const char* versio
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::SaveSingleNode(XMLNodePointer_t xmlnode, String* res, int layout)
+void dabc::XmlEngine::SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res, int layout)
 {
    // convert single xml node (and its child node) to string
    // if layout<=0, no any spaces or newlines will be placed between

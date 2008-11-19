@@ -15,7 +15,7 @@ namespace dabc {
          Basic* fCurrent;  
          std::vector<unsigned> fIndexes;
          std::vector<dabc::Folder*> fFolders;
-         String fFullName;
+         std::string fFullName;
       public:
          Iterator(Basic* topfolder);
          virtual ~Iterator();

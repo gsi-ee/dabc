@@ -29,7 +29,7 @@ namespace dabc {
          XMLNodePointer_t fLastTop; // currently found item
          bool             fCurrStrict; // must have strict syntax match
 
-         String  fMgrName;
+         std::string  fMgrName;
          int     fMgrNodeId;
          int     fMgrNumNodes;
 

@@ -41,8 +41,8 @@ namespace mbs {
          
          bool OpenNextFile();
 
-         dabc::String        fFileName;
-         dabc::String        fFileIOType;
+         std::string        fFileName;
+         std::string        fFileIOType;
          int                 fNumMultiple;
          int                 fFirstMultiple;
          

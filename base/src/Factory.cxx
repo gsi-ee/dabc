@@ -4,7 +4,7 @@
 
 const char* dabc::Factory::DfltAppClass(const char* newdefltclass)
 {
-   static dabc::String dflt = "UserApplication";
+   static std::string dflt = "UserApplication";
    if (newdefltclass!=0) dflt = newdefltclass;
    return dflt.c_str();
 }

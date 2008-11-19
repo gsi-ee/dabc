@@ -34,13 +34,13 @@ namespace mbs {
          bool Close();
          bool StartNewFile();
       
-         dabc::String        fFileName;
+         std::string        fFileName;
          uint64_t            fSizeLimit;
          int                 fNumMultiple;
          int                 fFirstMultiple;
       
          int                 fCurrentFileNumber;
-         dabc::String        fCurrentFileName;
+         std::string        fCurrentFileName;
          
          mbs::LmdFile        fFile;
          uint64_t            fCurrentSize;

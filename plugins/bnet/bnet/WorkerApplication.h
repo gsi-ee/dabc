@@ -22,12 +22,12 @@ namespace bnet {
 
          int   CombinerModus() const { return GetParInt("CombinerModus", 0); }
          int   NumReadouts() const { return GetParInt("NumReadouts", 1); }
-         const char* ReadoutPar(int nreadout = 0) const;
+         std::string ReadoutPar(int nreadout = 0) const;
          bool  IsGenerator() const { return GetParInt("IsGenerator", 0) > 0; }
          bool  IsSender() const { return GetParInt("IsSender", 0) > 0; }
          bool  IsReceiver() const { return GetParInt("IsReceiver", 0) > 0; }
          bool  IsFilter() const { return GetParInt("IsFilter", 0) > 0; }
-         const char* StoragePar() const { return GetParCharStar("StoragePar"); }
+         std::string StoragePar() const { return GetParStr("StoragePar"); }
 
          // these are parameters which fixed furing lifetime of the modules
          // normally these parameters copied in modules constructor
@@ -38,14 +38,14 @@ namespace bnet {
          // these parameters should not be used in modules constructor
          // because of dynamic configuration, which can be changed on the fly (reconfigured)
          bool  CfgController() const { return GetParInt("CfgController", 1) !=0; }
-         const char* CfgSendMask() const { return GetParCharStar("CfgSendMask"); }
-         const char* CfgRecvMask() const { return GetParCharStar("CfgRecvMask"); }
-         const char* CfgClusterMgr() const { return GetParCharStar("CfgClusterMgr"); }
-         const char* CfgNetDevice() const { return GetParCharStar("CfgNetDevice"); }
+         std::string CfgSendMask() const { return GetParStr("CfgSendMask"); }
+         std::string CfgRecvMask() const { return GetParStr("CfgRecvMask"); }
+         std::string CfgClusterMgr() const { return GetParStr("CfgClusterMgr"); }
+         std::string CfgNetDevice() const { return GetParStr("CfgNetDevice"); }
 
-         const char* Thrd1Name() const { return GetParCharStar("Thread1Name", "Thread1"); }
-         const char* Thrd2Name() const { return GetParCharStar("Thread2Name", "Thread2"); }
-         const char* ThrdCtrlName() const { return GetParCharStar("ThreadCtrlName", "ThreadCtrl"); }
+         std::string Thrd1Name() const { return GetParStr("Thread1Name", "Thread1"); }
+         std::string Thrd2Name() const { return GetParStr("Thread2Name", "Thread2"); }
+         std::string ThrdCtrlName() const { return GetParStr("ThreadCtrlName", "ThreadCtrl"); }
 
          int   CombinerInQueueSize() const { return GetParInt("CombinerInQueueSize", 4); }
          int   CombinerOutQueueSize() const { return GetParInt("CombinerOutQueueSize", 4); }

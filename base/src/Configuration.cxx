@@ -64,13 +64,13 @@ bool dabc::Configuration::XDAQ_ReadPars()
       } else {
          const char* separ = strchr(parname, '.');
          if ((separ!=0) && (app!=0)) {
-            dabc::String shortname(parname, separ-parname);
+            std::string shortname(parname, separ-parname);
             const char* ownername = separ+1;
 
             if (app->IsName(ownername)) {
                Parameter* par = app->FindPar(shortname.c_str());
                if (par!=0) {
-                  par->SetStr(parvalue);
+                  par->SetValue(parvalue);
                   DOUT1(("Set parameter %s = %s", parname, parvalue));
                }
                else
@@ -128,7 +128,7 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    envDABCNODEID = FORMAT(("%u", nodeid));
    envDABCNUMNODES = FORMAT(("%u", numnodes));
 
-   String log;
+   std::string log;
 
    if (logfile!=0) log = logfile; else
    if (IsNative()) {

@@ -76,7 +76,7 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
 
    } else
    if (cmd->IsName("GetConfig")) {
-      dabc::String str;
+      std::string str;
       for (int node=0;node<fCfgNumNodes;node++) {
          dabc::Port* port = Output(node);
          if ((port!=0) && port->IsConnected())
@@ -94,16 +94,16 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
 void bnet::SenderModule::ReactOnDisconnect(dabc::Port* port)
 {
    DOUT1(("Get disconnect event for port %s", port->GetName()));
-   dabc::String NewRecvMask;
+   std::string NewRecvMask;
    for (int n=0;n<fCfgNumNodes;n++)
       NewRecvMask += Output(n)->IsConnected() ? "x" : "o";
 
-   if (NewRecvMask.compare(fPlugin->CfgRecvMask())==0) {
+   if (NewRecvMask == fPlugin->CfgRecvMask()) {
       DOUT1(("Recv Mask is not changed - still %s", NewRecvMask.c_str()));
       return;
    }
 
-   DOUT1(("RecvMaskChangeDetected old:%s new:%s", fPlugin->CfgRecvMask(), NewRecvMask.c_str()));
+   DOUT1(("RecvMaskChangeDetected old:%s new:%s", fPlugin->CfgRecvMask().c_str(), NewRecvMask.c_str()));
 
    dabc::Parameter* par = fPlugin->FindPar("RecvStatus");
    if (par) par->InvokeChange(NewRecvMask.c_str());

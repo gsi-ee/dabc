@@ -26,7 +26,7 @@ bnet::BuilderModule::BuilderModule(const char* name, WorkerApplication* factory)
 
    fOutBufferSize = factory->EventBufferSize();
 
-   CreateStrPar("SendMask", "xxxx");
+   CreateParStr("SendMask", "xxxx");
 }
 
 bnet::BuilderModule::~BuilderModule()
@@ -40,7 +40,7 @@ void bnet::BuilderModule::MainLoop()
 {
    DOUT3(("In builder %u buffers collected",  fBuffers.size()));
 
-   fNumSenders = bnet::NodesVector(GetParCharStar("SendMask")).size();
+   fNumSenders = bnet::NodesVector(GetParStr("SendMask")).size();
 
    while (TestWorking()) {
 

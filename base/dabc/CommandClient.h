@@ -78,7 +78,7 @@ namespace dabc {
          bool Execute(const char* cmdname, double timeout_sec = -1.);
          
          int ExecuteInt(const char* cmdname, const char* intresname, double timeout_sec = -1.);
-         String ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec = -1.);
+         std::string ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec = -1.);
    };
 
    // ___________________________________________________________________

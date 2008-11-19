@@ -122,7 +122,7 @@ dabc::Folder* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
 
    DOUT4(("List files %s", filemask));
 
-   String pathname;
+   std::string pathname;
    const char* fname;
 
    const char* slash = strrchr(filemask, '/');
@@ -149,7 +149,7 @@ dabc::Folder* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
       const char* item = namelist[n]->d_name;
 
       if ((fname==0) || (fnmatch(fname, item, FNM_NOESCAPE)==0)) {
-         String fullitemname;
+         std::string fullitemname;
          if (slash) fullitemname += pathname;
          fullitemname += item;
          if (stat(fullitemname.c_str(), &buf)==0)
@@ -264,7 +264,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    }
 
    // create state parameter, inherited class should call init to see it
-   CreateStrPar(stParName, stHalted);
+   CreateParStr(stParName, stHalted);
 }
 
 dabc::Manager::~Manager()
@@ -588,7 +588,7 @@ dabc::Command* dabc::Manager::LocalCmd(Command* cmd, Basic* rcv)
       return 0;
    }
 
-   dabc::String s = rcv->GetFullName(this);
+   std::string s = rcv->GetFullName(this);
 
    DOUT5(("Redirect cmd %s to item %s", cmd->GetName(), s.c_str()));
 
@@ -602,7 +602,7 @@ dabc::Command* dabc::Manager::RemoteCmd(Command* cmd, const char* nodename, cons
    if ((nodename==0) || (IsName(nodename)))
       return LocalCmd(cmd, itemname);
 
-   String fullname = nodename;
+   std::string fullname = nodename;
    fullname.append("$");
    if (itemname!=0) fullname.append(itemname);
 
@@ -954,7 +954,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
 
          Command* newcmd = 0;
 
-         String remrecvname;
+         std::string remrecvname;
 
          if (manager1name == manager2name) {
             newcmd = new CommandPortConnect(port1name, port2name);
@@ -965,7 +965,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
                return cmd_false;
             }
 
-            remrecvname = String("Devices/") + cmd->GetStr("Device");
+            remrecvname = std::string("Devices/") + cmd->GetStr("Device");
 
             newcmd = new CommandDirectConnect(true, port1name, true);
             // copy all aditional values from
@@ -1237,10 +1237,10 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
    // PostCommandProcess return true, when command can be safely deleted
 
    if (cmd->GetPar("_remotereply_srcid_")) {
-      String mgrname = cmd->GetStr("_remotereply_srcid_");
+      std::string mgrname = cmd->GetStr("_remotereply_srcid_");
       cmd->RemovePar("_remotereply_srcid_");
 
-      String sbuf;
+      std::string sbuf;
       cmd->SaveToString(sbuf);
 
       SendOverCommandChannel(mgrname.c_str(), sbuf.c_str());
@@ -1288,7 +1288,7 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
       newcmd->SetBool("ClientSide", true);
       newcmd->ClearResult();
 
-      String devname("Devices/"); devname += prnt->GetStr("Device");
+      std::string devname("Devices/"); devname += prnt->GetStr("Device");
 
       if (!SubmitRemote(*this, newcmd, manager2name.c_str(), devname.c_str())) {
          Command* prnt = TakeInternalCmd("_PCID_", parentid);
@@ -1506,7 +1506,7 @@ bool dabc::Manager::MakeThreadFor(WorkingProcessor* proc, const char* thrdname, 
 {
    if (proc==0) return false;
 
-   String newname;
+   std::string newname;
 
    if ((thrdname==0) || (strlen(thrdname)==0)) {
       EOUT(("Thread name not specified - generate default"));
@@ -1638,9 +1638,9 @@ bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Com
    return false;
 }
 
-const char* dabc::Manager::CurrentState() const
+std::string dabc::Manager::CurrentState() const
 {
-   return GetParCharStar(stParName, stNull);
+   return GetParStr(stParName, stNull);
 }
 
 bool dabc::Manager::IsStateTransitionAllowed(const char* stcmd, bool errout)
@@ -1652,29 +1652,31 @@ bool dabc::Manager::IsStateTransitionAllowed(const char* stcmd, bool errout)
 
    const char* tgtstate = TargetStateName(stcmd);
 
-   if (strcmp(CurrentState(), tgtstate)==0) {
+   std::string currstate = CurrentState();
+
+   if (currstate == tgtstate) {
       DOUT1(("SM Command %s leads to current state, do nothing", stcmd));
       return false;
    }
 
    bool allowed = false;
-   if ((strcmp(CurrentState(), stHalted)==0) && (strcmp(stcmd, stcmdDoConfigure)==0))
+   if ((currstate == stHalted) && (strcmp(stcmd, stcmdDoConfigure)==0))
       allowed = true;
    else
-   if ((strcmp(CurrentState(), stConfigured)==0) && (strcmp(stcmd, stcmdDoEnable)==0))
+   if ((currstate == stConfigured) && (strcmp(stcmd, stcmdDoEnable)==0))
       allowed = true;
    else
-   if ((strcmp(CurrentState(), stReady)==0) && (strcmp(stcmd, stcmdDoStart)==0))
+   if ((currstate == stReady) && (strcmp(stcmd, stcmdDoStart)==0))
        allowed = true;
    else
-   if ((strcmp(CurrentState(), stRunning)==0) && (strcmp(stcmd, stcmdDoStop)==0))
+   if ((currstate == stRunning) && (strcmp(stcmd, stcmdDoStop)==0))
        allowed = true;
    else
    if (strcmp(stcmd, stcmdDoHalt)==0)
       allowed = true;
 
    if (!allowed && errout)
-      EOUT(("Command %s not allowed at state %s", stcmd, CurrentState()));
+      EOUT(("Command %s not allowed at state %s", stcmd, currstate.c_str()));
 
    return allowed;
 }
@@ -2007,7 +2009,7 @@ dabc::DataOutput* dabc::Manager::CreateDataOutput(const char* typ, const char* n
 
 bool dabc::Manager::LoadLibrary(const char* libname)
 {
-   String name = libname;
+   std::string name = libname;
 
    while (name.find("${") != name.npos) {
 
@@ -2019,7 +2021,7 @@ bool dabc::Manager::LoadLibrary(const char* libname)
          return false;
       }
 
-      String var(name, pos1+2, pos2-pos1-2);
+      std::string var(name, pos1+2, pos2-pos1-2);
 
       name.erase(pos1, pos2-pos1+1);
 

@@ -13,6 +13,10 @@
 #include "dabc/timing.h"
 #endif
 
+#ifndef DABC_threads
+#include "dabc/threads.h"
+#endif
+
 namespace dabc {
 
    class WorkingProcessor;
@@ -35,29 +39,23 @@ namespace dabc {
          virtual const char* ClassName() const { return "Parameter"; }
 
          virtual EParamKind Kind() const { return parNone; }
-         virtual void* GetPtr() { return 0; }
 
          bool IsVisible() const { return fVisibility > 0; }
          int Visibility() const { return fVisibility; }
 
-         bool IsFixed() const { return fFixed; }
-         void SetFixed(bool on = true) { fFixed = on; }
+         bool IsFixed() const;
+         void SetFixed(bool on = true);
 
          bool IsDebugOutput() const { return fDebug; }
          void SetDebugOutput(bool on = true) { fDebug = on; }
 
-         virtual bool GetStr(String& s) const { return false; }
-         virtual bool SetStr(const char* s) { return false; }
+         inline std::string GetStr() const { std::string res; return GetValue(res) ? res : ""; }
+         inline bool SetStr(const std::string &value) { return SetValue(value); }
 
-         virtual double GetDouble() const { return 0.; }
-         virtual bool SetDouble(double v) { return false; }
-
-         virtual int GetInt() const { return 0; }
-         virtual bool SetInt(int) { return false; }
-
-         virtual void FillInfo(String& info);
-
-         WorkingProcessor* GetParsLst() const { return fLst; }
+         // this is generic virtual methods to get/set parameter valus in string form
+         virtual bool GetValue(std::string& value) const { return false; }
+         virtual bool SetValue(const std::string &value) { return false; }
+         virtual void FillInfo(std::string& info);
 
          Basic* GetHolder();
 
@@ -92,194 +90,67 @@ namespace dabc {
          virtual void DoDebugOutput();
 
          WorkingProcessor* fLst;
+         Mutex             fValueMutex;
          bool              fFixed;
-         bool              fVisibility;
+         int               fVisibility;
          bool              fDebug;
    };
+
 
    class StrParameter : public Parameter {
       protected:
          friend class WorkingProcessor;
 
-         StrParameter(WorkingProcessor* parent, const char* name, const char* istr = 0) :
-            Parameter(parent, name),
-            fValue(istr)
-            {
-               Ready();
-            }
+         StrParameter(WorkingProcessor* parent, const char* name, const char* istr = 0);
 
       public:
 
          virtual EParamKind Kind() const { return parString; }
 
-         virtual void* GetPtr() { return &fValue; }
-
-         virtual bool GetStr(String& s) const
-         {
-            s.assign(fValue);
-            return true;
-         }
-
-         virtual bool SetStr(const char* s)
-         {
-            if (IsFixed()) return false;
-            fValue.assign(s ? s : "");
-            Changed();
-            return true;
-         }
-
-         virtual double GetDouble() const
-         {
-            double v = 0.;
-            if (fValue.length()>0)
-               sscanf(fValue.c_str(), "%lf", &v);
-            return v;
-         }
-
-         virtual bool SetDouble(double v)
-         {
-            if (IsFixed()) return false;
-            dabc::formats(fValue, "%lf", v);
-            Changed();
-            return true;
-         }
-
-         virtual int GetInt() const
-         {
-            int v = 0;
-            if (fValue.length()>0)
-               sscanf(fValue.c_str(), "%d", &v);
-            return v;
-         }
-
-         virtual bool SetInt(int v)
-         {
-            if (IsFixed()) return false;
-            dabc::formats(fValue, "%d", v);
-            Changed();
-            return true;
-         }
-
-         const char* GetCharStar() const
-         {
-            return fValue.c_str();
-         }
+         virtual bool GetValue(std::string &value) const;
+         virtual bool SetValue(const std::string &value);
 
       protected:
-         String fValue;
+         std::string fValue;
    };
+
 
    class DoubleParameter : public Parameter {
       protected:
          friend class WorkingProcessor;
 
-         DoubleParameter(WorkingProcessor* parent, const char* name, double iv = 0.) :
-            Parameter(parent, name),
-            fValue(iv)
-            {
-               Ready();
-            }
+         DoubleParameter(WorkingProcessor* parent, const char* name, double iv = 0.);
 
       public:
 
          virtual EParamKind Kind() const { return parDouble; }
 
-         virtual void* GetPtr() { return &fValue; }
+         virtual bool GetValue(std::string &value) const;
+         virtual bool SetValue(const std::string &value);
 
-         virtual bool GetStr(String& s) const
-         {
-            dabc::formats(s, "%lf", fValue);
-            return true;
-         }
-
-         virtual bool SetStr(const char* s)
-         {
-            if (IsFixed()) return false;
-            if (s!=0)
-               sscanf(s, "%lf", &fValue);
-            else
-               fValue = 0.;
-            Changed();
-            return true;
-         }
-
-         virtual bool SetDouble(double v)
-         {
-             if (IsFixed()) return false;
-             fValue = v;
-             Changed();
-             return true;
-          }
-
-         virtual double GetDouble() const { return fValue; }
-
-         virtual int GetInt() const{ return (int) fValue; }
-
-         virtual bool SetInt(int v)
-         {
-            if (IsFixed()) return false;
-            fValue = v;
-            Changed();
-            return true;
-         }
+         double GetDouble() const;
+         bool SetDouble(double v);
 
       protected:
          double fValue;
    };
 
+
    class IntParameter : public Parameter {
       protected:
          friend class WorkingProcessor;
 
-         IntParameter(WorkingProcessor* parent, const char* name, int ii = 0) :
-            Parameter(parent, name),
-            fValue(ii)
-         {
-            Ready();
-         }
+         IntParameter(WorkingProcessor* parent, const char* name, int ii = 0);
 
       public:
 
          virtual EParamKind Kind() const { return parInt; }
 
-         virtual void* GetPtr() { return &fValue; }
+         virtual bool GetValue(std::string &value) const;
+         virtual bool SetValue(const std::string &value);
 
-         virtual bool GetStr(String& s) const
-         {
-            dabc::formats(s, "%d", fValue);
-            return true;
-         }
-
-         virtual bool SetStr(const char* s)
-         {
-            if (IsFixed()) return false;
-            if (s!=0)
-               sscanf(s, "%d", &fValue);
-            else
-               fValue = 0;
-            Changed();
-            return true;
-         }
-
-         virtual bool SetInt(int v)
-         {
-            if (IsFixed()) return false;
-            fValue = v;
-            Changed();
-            return true;
-         }
-
-         virtual int GetInt() const { return fValue; }
-
-         virtual double GetDouble() const { return fValue; }
-
-         virtual bool SetDouble(double v)
-         {
-            if (IsFixed()) return false;
-            fValue = (int) v;
-            Changed();
-            return true;
-         }
+         int GetInt() const;
+         bool SetInt(int v);
 
       protected:
          int fValue;
@@ -288,21 +159,8 @@ namespace dabc {
    class RateParameter : public Parameter {
       public:
          RateParameter(WorkingProcessor* parent, const char* name, bool synchron, double interval = 1.);
-         virtual ~RateParameter();
 
          virtual EParamKind Kind() const { return fSynchron ? parSyncRate : parAsyncRate; }
-
-         virtual void* GetPtr() { return &fRecord; }
-
-         virtual bool GetStr(String& s) const
-         {
-            dabc::formats(s, "%f", fRecord.value);
-            return true;
-         }
-
-         virtual int GetInt() const { return (int) fRecord.value; }
-
-         virtual double GetDouble() const { return fRecord.value; }
 
          RateRec* GetRateRec() { return &fRecord; }
 
@@ -313,9 +171,6 @@ namespace dabc {
          void SetUnits(const char* name);
          void SetLimits(double lower = 0., double upper = 0.);
 
-         const char* GetDisplayMode();
-         void SetDisplayMode(const char* v);
-
          virtual void AccountValue(double v);
 
          virtual bool UseMasterClassName() const { return true; }
@@ -325,6 +180,9 @@ namespace dabc {
          virtual bool Read(ConfigIO &cfg);
 
       protected:
+
+         const char* _GetDisplayMode();
+         void _SetDisplayMode(const char* v);
 
          virtual bool NeedTimeout() const { return !fSynchron; }
          virtual void ProcessTimeout(double last_diff);
@@ -337,60 +195,14 @@ namespace dabc {
          double      fTotalSum;
          TimeStamp_t fLastUpdateTm; // used in synchron mode
          double      fDiffSum;      // used in asynchron mode
-         Mutex*      fRateMutex;
-
    };
+
 
    class StatusParameter : public Parameter {
       public:
-         StatusParameter(WorkingProcessor* parent, const char* name, int severity = 0) :
-            Parameter(parent, name)
-         {
-            fRecord.severity = severity;
-            strcpy(fRecord.color,"Cyan");
-            strcpy(fRecord.status, "None"); // status name
-            Ready();
-         }
+         StatusParameter(WorkingProcessor* parent, const char* name, int severity = 0);
 
          virtual EParamKind Kind() const { return parStatus; }
-
-         virtual void* GetPtr() { return &fRecord; }
-
-         virtual bool GetStr(String& s) const
-         {
-            dabc::formats(s, "%d", fRecord.severity);
-            return true;
-         }
-
-         virtual bool SetStr(const char* s)
-         {
-            if (IsFixed()) return false;
-            if (s!=0)
-               sscanf(s, "%d", &fRecord.severity);
-            else
-               fRecord.severity = 0;
-            return true;
-         }
-
-         virtual bool SetInt(int v)
-         {
-            if (IsFixed()) return false;
-            fRecord.severity = v;
-            Changed();
-            return true;
-         }
-
-         virtual int GetInt() const { return fRecord.severity; }
-
-         virtual double GetDouble() const { return fRecord.severity; }
-
-         virtual bool SetDouble(double v)
-         {
-            if (IsFixed()) return false;
-            fRecord.severity = (int) v;
-            Changed();
-            return true;
-         }
 
          StatusRec* GetStatusRec() { return &fRecord; }
 
@@ -398,58 +210,13 @@ namespace dabc {
 
          StatusRec   fRecord;
    };
-//////////////
+
+
    class InfoParameter : public Parameter {
       public:
-         InfoParameter(WorkingProcessor* parent, const char* name, int verbose = 0) :
-            Parameter(parent, name)
-         {
-            fRecord.verbose = verbose;
-            strcpy(fRecord.color,"Cyan");
-            strcpy(fRecord.info, "None"); // info message
-            Ready();
-         }
+         InfoParameter(WorkingProcessor* parent, const char* name, int verbose = 0);
 
          virtual EParamKind Kind() const { return parInfo; }
-
-         virtual void* GetPtr() { return &fRecord; }
-
-         virtual bool GetStr(String& s) const
-         {
-            dabc::formats(s, "%d", fRecord.info);
-            return true;
-         }
-
-         virtual bool SetStr(const char* s)
-         {
-            if (IsFixed()) return false;
-            if (s!=0)
-               strncpy(fRecord.info, s,128);
-            else
-               strcpy(fRecord.info, "");
-            Changed();
-            return true;
-         }
-
-         virtual bool SetInt(int v)
-         {
-            if (IsFixed()) return false;
-            fRecord.verbose = v;
-            Changed();
-            return true;
-         }
-
-         virtual int GetInt() const { return fRecord.verbose; }
-
-         virtual double GetDouble() const { return fRecord.verbose; }
-
-         virtual bool SetDouble(double v)
-         {
-            if (IsFixed()) return false;
-            fRecord.verbose = (int) v;
-            Changed();
-            return true;
-         }
 
          InfoRec* GetInfoRec() { return &fRecord; }
 
@@ -463,43 +230,9 @@ namespace dabc {
       public:
          HistogramParameter(WorkingProcessor* parent, const char* name, int nchannles = 100);
 
-         virtual ~HistogramParameter()
-         {
-            free(fRecord);
-            fRecord = 0;
-         }
+         virtual ~HistogramParameter();
 
          virtual EParamKind Kind() const { return parHisto; }
-
-         virtual void* GetPtr() { return fRecord; }
-
-         virtual bool GetStr(String& s) const
-         {
-            dabc::formats(s, "%d", fRecord->channels);
-            return true;
-         }
-
-         virtual bool SetStr(const char* s)
-         {
-            if (IsFixed()) return false;
-            return false;
-         }
-
-         virtual bool SetInt(int v)
-         {
-            if (IsFixed()) return false;
-            return false;
-         }
-
-         virtual int GetInt() const { return fRecord->channels; }
-
-         virtual double GetDouble() const { return fRecord->channels; }
-
-         virtual bool SetDouble(double v)
-         {
-            if (IsFixed()) return false;
-            return false;
-         }
 
          void SetLimits(float xmin, float xmax);
          void SetColor(const char* color);
@@ -509,12 +242,11 @@ namespace dabc {
          void Clear();
          bool Fill(float x);
 
-
          HistogramRec* GetHistogramRec() { return fRecord; }
 
       protected:
 
-         void CheckChanged(bool force = false);
+         bool _CheckChanged(bool force = false);
          HistogramRec  *fRecord;
 
          TimeStamp_t fLastTm; // last time when histogram was updated

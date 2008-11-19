@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "dabc/string.h"
+
 namespace bnet {
 
    extern const char* NetDevice; // preferred net device for building network
@@ -66,7 +68,7 @@ namespace bnet {
 
       public:
          NodesVector() : fUsedNodes(), fNumNodes(0) {}
-         NodesVector(const char* mask, int numnodes = 0) :
+         NodesVector(std::string mask, int numnodes = 0) :
             fUsedNodes(),
             fNumNodes(0) {
                Reset(mask, numnodes);
@@ -78,7 +80,7 @@ namespace bnet {
          unsigned size() const { return fUsedNodes.size(); }
          int operator[](unsigned node) { return fUsedNodes[node]; }
 
-         void Reset(const char* mask, int numnodes = 0);
+         void Reset(std::string mask, int numnodes = 0);
 
          bool HasNode(int node) const;
 

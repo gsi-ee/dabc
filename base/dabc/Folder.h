@@ -35,7 +35,7 @@ namespace dabc {
          virtual bool Store(ConfigIO &cfg);
          virtual bool Find(ConfigIO &cfg);
 
-         static String GetPathName(const char* path);
+         static std::string GetPathName(const char* path);
          static const char* GetObjectName(const char* path);
 
       protected:

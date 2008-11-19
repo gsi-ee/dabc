@@ -30,7 +30,7 @@ namespace dabc {
          
          void Register(bool on = true);
       protected:
-         String fXml;
+         std::string fXml;
          bool fClosed;
    };
     

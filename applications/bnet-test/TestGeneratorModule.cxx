@@ -21,7 +21,7 @@ bnet::TestGeneratorModule::TestGeneratorModule(const char* name,
 
    CreateOutput("Output", fPool, ReadoutQueueSize);
 
-   CreateIntPar("UniqueId", 0);
+   CreateParInt("UniqueId", 0);
 }
 
 void bnet::TestGeneratorModule::BeforeModuleStart()

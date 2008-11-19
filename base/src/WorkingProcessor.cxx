@@ -12,7 +12,7 @@ dabc::WorkingProcessor::WorkingProcessor() :
    fProcessorPriority(-1), // minimum priority per default
    fProcessorCommands(false, true),
    fParsHolder(0),
-   fProcessorPars(),
+   fParsTopFolderName(),
    fProcessorMutex(),
    fParsDfltVisibility(1),
    fParsDfltFixed(false),
@@ -22,9 +22,9 @@ dabc::WorkingProcessor::WorkingProcessor() :
    fProcessorPrevFire(NullTimeStamp),
    fProcessorNextFire(NullTimeStamp)
 {
-   if (fProcessorPars.length()>0)
-      if (fProcessorPars[fProcessorPars.length()-1]!='/')
-         fProcessorPars.append("/");
+   if (fParsTopFolderName.length()>0)
+      if (fParsTopFolderName[fParsTopFolderName.length()-1]!='/')
+         fParsTopFolderName.append("/");
 }
 
 dabc::WorkingProcessor::~WorkingProcessor()
@@ -39,8 +39,8 @@ dabc::WorkingProcessor::~WorkingProcessor()
 void dabc::WorkingProcessor::SetParsHolder(Folder* holder, const char* subfolder)
 {
    fParsHolder = holder;
-   if (subfolder!=0) fProcessorPars = subfolder;
-                else fProcessorPars.clear();
+   if (subfolder!=0) fParsTopFolderName = subfolder;
+                else fParsTopFolderName.clear();
 }
 
 
@@ -159,7 +159,7 @@ void dabc::WorkingProcessor::ExitMainLoop()
 
 dabc::Folder* dabc::WorkingProcessor::MakeFolderForParam(const char* parname)
 {
-   dabc::String foldname = fProcessorPars + dabc::Folder::GetPathName(parname);
+   std::string foldname = fParsTopFolderName + dabc::Folder::GetPathName(parname);
 
    if ((foldname.length()==0) || (fParsHolder==0)) return fParsHolder;
 
@@ -168,9 +168,9 @@ dabc::Folder* dabc::WorkingProcessor::MakeFolderForParam(const char* parname)
 
 dabc::Folder* dabc::WorkingProcessor::GetTopParsFolder()
 {
-   if ((fProcessorPars.length()==0) || (fParsHolder==0)) return fParsHolder;
+   if ((fParsTopFolderName.length()==0) || (fParsHolder==0)) return fParsHolder;
 
-   return fParsHolder->GetFolder(fProcessorPars.c_str(), false, false);
+   return fParsHolder->GetFolder(fParsTopFolderName.c_str(), false, false);
 }
 
 void dabc::WorkingProcessor::SetParDflts(int visibility, bool fixed)
@@ -212,22 +212,22 @@ dabc::Parameter* dabc::WorkingProcessor::CreatePar(int kind, const char* name, c
    }
 
    if ((par!=0) && (initvalue!=0) && (kind!=dabc::parString))
-      par->SetStr(initvalue);
+      par->SetValue(initvalue);
 
    return par;
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreateStrPar(const char* name, const char* initvalue)
+dabc::Parameter* dabc::WorkingProcessor::CreateParStr(const char* name, const char* initvalue)
 {
    return new dabc::StrParameter(this, name, initvalue);
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreateIntPar(const char* name, int initvalue)
+dabc::Parameter* dabc::WorkingProcessor::CreateParInt(const char* name, int initvalue)
 {
    return new dabc::IntParameter(this, name, initvalue);
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreateDoublePar(const char* name, double initvalue)
+dabc::Parameter* dabc::WorkingProcessor::CreateParDouble(const char* name, double initvalue)
 {
    return new dabc::DoubleParameter(this, name, initvalue);
 }
@@ -248,25 +248,59 @@ dabc::Parameter* dabc::WorkingProcessor::FindPar(const char* name) const
 void dabc::WorkingProcessor::DeletePar(const char* name)
 {
    dabc::Parameter* par = FindPar(name);
-
    if (par!=0) delete par;
 }
 
-bool dabc::WorkingProcessor::SetParValue(const char* name, const char* value)
+std::string dabc::WorkingProcessor::GetParStr(const char* name, const std::string& defvalue) const
 {
    dabc::Parameter* par = FindPar(name);
 
-   return par ? par->SetStr(value) : false;
+   std::string str;
+
+   if (par && par->GetValue(str)) return str;
+
+   return defvalue;
 }
 
-bool dabc::WorkingProcessor::SetParValue(const char* name, int value)
+int dabc::WorkingProcessor::GetParInt(const char* name, int defvalue) const
+{
+   dabc::Parameter* par = FindPar(name);
+
+   return par && (par->Kind()==parInt) ? ((IntParameter*) par)->GetInt() : defvalue;
+}
+
+double dabc::WorkingProcessor::GetParDouble(const char* name, double defvalue) const
+{
+   dabc::Parameter* par = FindPar(name);
+
+   return par && (par->Kind()==parDouble) ? ((DoubleParameter*) par)->GetDouble() : defvalue;
+}
+
+bool dabc::WorkingProcessor::SetParStr(const char* name, const char* value)
+{
+   dabc::Parameter* par = FindPar(name);
+
+   return par ? par->SetValue(value) : false;
+}
+
+bool dabc::WorkingProcessor::SetParInt(const char* name, int value)
 {
    dabc::Parameter* par = FindPar(name);
 
    DOUT5(("SetParInt par = %p name = %s v = %d", par, name, value));
 
-   return par ? par->SetInt(value) : false;
+   return par && (par->Kind()==parInt) ? ((IntParameter*) par)->SetInt(value) : false;
 }
+
+bool dabc::WorkingProcessor::SetParDouble(const char* name, double value)
+{
+   dabc::Parameter* par = FindPar(name);
+
+   DOUT5(("SetParInt par = %p name = %s v = %d", par, name, value));
+
+   return par && (par->Kind()==parDouble) ? ((DoubleParameter*) par)->SetDouble(value) : false;
+}
+
 
 bool dabc::WorkingProcessor::SetParFixed(const char* name, bool on)
 {
@@ -278,31 +312,6 @@ bool dabc::WorkingProcessor::SetParFixed(const char* name, bool on)
    return true;
 }
 
-
-int dabc::WorkingProcessor::GetParInt(const char* name, int defvalue) const
-{
-   dabc::Parameter* par = FindPar(name);
-
-   return par ? par->GetInt() : defvalue;
-}
-
-dabc::String dabc::WorkingProcessor::GetParStr(const char* name, const char* defvalue) const
-{
-   dabc::Parameter* par = FindPar(name);
-
-   dabc::String str;
-
-   if (par && par->GetStr(str)) return str;
-
-   return defvalue;
-}
-
-const char* dabc::WorkingProcessor::GetParCharStar(const char* name, const char* defvalue) const
-{
-   dabc::StrParameter* par = dynamic_cast<StrParameter*> (FindPar(name));
-
-   return par ? par->GetCharStar() : defvalue;
-}
 
 void dabc::WorkingProcessor::LockUnlockPars(bool on)
 {
@@ -318,7 +327,7 @@ void dabc::WorkingProcessor::LockUnlockPars(bool on)
 
 bool dabc::WorkingProcessor::InvokeParChange(Parameter* par, const char* value, Command* cmd)
 {
-   String fullname;
+   std::string fullname;
    par->MakeFullName(fullname, GetTopParsFolder());
 
    DOUT5(("Invoke par change %s topfold:%s", fullname.c_str(), GetTopParsFolder()->GetName()));
@@ -326,7 +335,7 @@ bool dabc::WorkingProcessor::InvokeParChange(Parameter* par, const char* value, 
    if (cmd==0)
       cmd = new CommandSetParameter(fullname.c_str(), value);
    else {
-      cmd->SetStr("ParName", fullname.c_str());
+      cmd->SetStr("ParName", fullname);
       if (value!=0) cmd->SetStr("ParValue", value);
    }
 
@@ -355,14 +364,15 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
          return cmd_false;
       }
 
-      DOUT4(("Change parameter %s to value %s", par->GetName(), value));
+      if (par->SetValue(value)) {
+         DOUT4(("Change parameter %s to value %s", par->GetName(), value));
+         cmd_res = cmd_true;
+      } else {
+         EOUT(("Fail to set %s to parameter %s", value, par->GetName()));
+         cmd_res = cmd_false;
+      }
 
-      par->SetStr(value);
-
-      ParameterChanged(par);
-
-      cmd_res = cmd_true;
-
+      // ParameterChanged(par);
    } else
       cmd_res = CommandReceiver::PreviewCommand(cmd);
 

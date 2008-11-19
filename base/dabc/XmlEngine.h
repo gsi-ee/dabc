@@ -78,7 +78,7 @@ namespace dabc {
          XMLNodePointer_t  DocGetRootElement(XMLDocPointer_t xmldoc);
          XMLDocPointer_t   ParseFile(const char* filename, bool showerr = true);
          bool              ValidateVersion(XMLDocPointer_t doc, const char* version = 0);
-         void              SaveSingleNode(XMLNodePointer_t xmlnode, String* res, int layout = 1);
+         void              SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res, int layout = 1);
          XMLNodePointer_t  ReadSingleNode(const char* src);
       protected:
          char*             Makestr(const char* str);

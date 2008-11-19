@@ -36,13 +36,13 @@ namespace dabc {
          }
          
          Command* fCmd;
-         String   fPortName; // this full port name must be used later to assign transport
+         std::string   fPortName; // this full port name must be used later to assign transport
          SocketClientProcessor* fClient; 
          SocketProtocolProcessor*  fProtocol; 
-         String   fConnId;
+         std::string   fConnId;
          double   fTmOut; // used by device to process connection timeouts
-         String   fCmdStrBuf; // buffer, which contains converted to string command
-         String   fThreadName; // name of thread for transport
+         std::string   fCmdStrBuf; // buffer, which contains converted to string command
+         std::string   fThreadName; // name of thread for transport
          
          const char* ConnId() const { return fConnId.c_str(); }
          
@@ -112,7 +112,7 @@ namespace dabc {
              StartRecv(fCmdBuf, sz);
          }
 
-         void StartCmdBufSend(String& sbuf)
+         void StartCmdBufSend(std::string& sbuf)
          {
              int sz = sbuf.length() + 1;
              delete[] fCmdBuf;
@@ -324,7 +324,7 @@ dabc::SocketDevice::~SocketDevice()
    fServer = 0;
 }
 
-bool dabc::SocketDevice::StartServerThread(Command* cmd, String& servid, const char* cmdchannel)
+bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, const char* cmdchannel)
 {
    if (fServer==0) {
       SocketServerProcessor* new_serv = 
@@ -368,7 +368,7 @@ bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* por
    DOUT3(("ServerConnect %s %p", portname, port));
    if (port==0) return false;
 
-   String servid;   
+   std::string servid;   
    if (!StartServerThread(cmd, servid)) {
       EOUT(("Not started server thread %s", cmd->GetName())); 
       return false;
@@ -380,7 +380,7 @@ bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* por
    {
       LockGuard guard(DeviceMutex());
       
-      String connid;
+      std::string connid;
       if (cmd->GetPar("ConnId")==0)
          dabc::formats(connid, "%s-%d-%d", fServer->ServerHostName(), fServer->ServerPortNumber(), fConnCounter++);
       else    
@@ -452,7 +452,7 @@ bool dabc::SocketDevice::ClientConnect(Command* cmd, Port* port, const char* por
 bool dabc::SocketDevice::SubmitRemoteCommand(const char* serverid, const char* channelid, Command* cmd)
 {
    // this id containes channelid, command string length and local uniquie id
-   String connid, scmd;
+   std::string connid, scmd;
    
    cmd->SaveToString(scmd);
    dabc::formats(connid, "%s %s %d %d", ProtocolCmdHeader, channelid, scmd.length()+1, fConnCounter++);
@@ -566,7 +566,7 @@ int dabc::SocketDevice::ExecuteCommand(dabc::Command* cmd)
    DOUT5(("Execute command %s", cmd->GetName()));
    
    if (cmd->IsName("StartServer")) {
-      String servid;
+      std::string servid;
       cmd_res = StartServerThread(cmd, servid, cmd->GetPar("CmdChannel"));
       cmd->SetPar("ConnId", servid.c_str());
    } else 

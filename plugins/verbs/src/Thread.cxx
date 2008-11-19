@@ -494,7 +494,7 @@ bool verbs::Thread::DoClient(dabc::Command* cmd, dabc::Port* port, const char* p
    return true;
 }
 
-void verbs::Thread::FillServerId(dabc::String& servid)
+void verbs::Thread::FillServerId(std::string& servid)
 {
    StartConnectProcessor();
 

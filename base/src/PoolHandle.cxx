@@ -6,7 +6,7 @@
 #include "dabc/threads.h"
 
 dabc::PoolHandle::PoolHandle(Basic* parent, const char* name,
-                                 BufferNum_t number, BufferNum_t increment, BufferSize_t size) :
+                             BufferNum_t number, BufferNum_t increment, BufferSize_t size) :
    ModuleItem(mitPool, parent, name),
    MemoryPoolRequster(),
    fPool(0),
@@ -21,22 +21,22 @@ dabc::PoolHandle::PoolHandle(Basic* parent, const char* name,
 
 dabc::PoolHandle::~PoolHandle()
 {
-   DisconnectPool(); 
+   DisconnectPool();
 }
 
-void dabc::PoolHandle::SetUsageParameter(Parameter* par, double interval) 
-{ 
-   fUsagePar = par; 
-   
+void dabc::PoolHandle::SetUsageParameter(Parameter* par, double interval)
+{
+   fUsagePar = dynamic_cast<DoubleParameter*> (par);
+
    fUpdateTimeout = interval;
-   
+
    ActivateTimeout(fUsagePar!=0 ? fUpdateTimeout : -1);
 }
 
 void dabc::PoolHandle::AssignPool(MemoryPool *pool)
 {
-   DisconnectPool(); 
-   
+   DisconnectPool();
+
    fPool = pool;
 }
 
@@ -49,9 +49,9 @@ void dabc::PoolHandle::DisconnectPool()
 double dabc::PoolHandle::ProcessTimeout(double)
 {
    if (fUsagePar==0) return -1;
-   
+
    fUsagePar->SetDouble(UsedRatio());
-   
+
    return fUpdateTimeout;
 }
 
@@ -62,31 +62,31 @@ dabc::Buffer* dabc::PoolHandle::TakeEmptyBuffer(BufferSize_t hdrsize)
 
 dabc::Buffer* dabc::PoolHandle::TakeBuffer(BufferSize_t size, bool withrequest)
 {
-   if (fPool==0) return 0; 
-    
+   if (fPool==0) return 0;
+
    return withrequest ? fPool->TakeBufferReq(this, size, 0) : fPool->TakeBuffer(size, 0);
 }
 
 dabc::Buffer* dabc::PoolHandle::TakeRequestedBuffer()
 {
-   return fPool->TakeRequestedBuffer(this); 
+   return fPool->TakeRequestedBuffer(this);
 }
 
-bool dabc::PoolHandle::ProcessPoolRequest() 
-{ 
+bool dabc::PoolHandle::ProcessPoolRequest()
+{
    // inform our thread that we have buffer from the pool
    FireEvent(evntPool);
-   
+
    return true;
 }
 
 void dabc::PoolHandle::ProcessEvent(EventId evid)
 {
    switch (GetEventCode(evid)) {
-      case evntPool: 
+      case evntPool:
          ProduceUserEvent(evntPool);
-         break; 
-         
+         break;
+
       default:
          ModuleItem::ProcessEvent(evid);
    }
@@ -100,10 +100,10 @@ void dabc::PoolHandle::AddPortRequirements(BufferNum_t number, BufferSize_t head
 
 double dabc::PoolHandle::UsedRatio() const
 {
-   if (fPool==0) return 0.; 
-    
+   if (fPool==0) return 0.;
+
    uint64_t totalsize = fPool->GetTotalSize();
    uint64_t usedsize = fPool->GetUsedSize();
-   
+
    return totalsize>0 ? 1.* usedsize / totalsize : 0.;
 }

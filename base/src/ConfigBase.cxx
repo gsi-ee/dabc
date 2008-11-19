@@ -63,14 +63,14 @@ unsigned dabc::ConfigBase::XDAQ_NumNodes()
    return cnt;
 }
 
-dabc::String dabc::ConfigBase::XDAQ_NodeName(unsigned instance)
+std::string dabc::ConfigBase::XDAQ_NodeName(unsigned instance)
 {
    XMLNodePointer_t contextnode = XDAQ_FindContext(instance);
-   if (contextnode==0) return String("");
+   if (contextnode==0) return std::string("");
    const char* url = contextnode ? fXml.GetAttr(contextnode, xmlXDAQurlattr) : 0;
-   if ((url==0) || (strstr(url,"http://")!=url)) return String("");
+   if ((url==0) || (strstr(url,"http://")!=url)) return std::string("");
    url += 7;
-   String nodename;
+   std::string nodename;
    const char* pos = strstr(url, ":");
    if (pos==0) nodename = url;
           else nodename.assign(url, pos-url);
@@ -80,21 +80,21 @@ dabc::String dabc::ConfigBase::XDAQ_NodeName(unsigned instance)
 }
 
 
-dabc::String dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr)
+std::string dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr)
 {
    XMLNodePointer_t contextnode = XDAQ_FindContext(instance);
 
-   String nodename = XDAQ_NodeName(instance);
+   std::string nodename = XDAQ_NodeName(instance);
 
-   if ((contextnode==0) || (nodename.length()==0)) return String("");
+   if ((contextnode==0) || (nodename.length()==0)) return std::string("");
 
-   String res = "ssh ";
+   std::string res = "ssh ";
    res += nodename;
 
    const char* dabcsys = getenv("DABCSYS");
    if (dabcsys==0) {
       EOUT(("DABCSYS not specified"));
-      return String("");
+      return std::string("");
    }
 
    envDABCSYS = dabcsys ? dabcsys : "";
@@ -104,7 +104,7 @@ dabc::String dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int kind, const c
 
    if (kind == kindTest) {
       if (topworkdir!=0) {
-         String dir = ResolveEnv(topworkdir);
+         std::string dir = ResolveEnv(topworkdir);
          res += FORMAT((" if [ ! -d %s ] ; then echo workdir = %s missed; exit 12; fi; ", dir.c_str(), dir.c_str()));
          res += FORMAT((" cd %s;", dir.c_str()));
       }
@@ -461,12 +461,12 @@ unsigned dabc::ConfigBase::NumNodes()
    return cnt;
 }
 
-dabc::String dabc::ConfigBase::NodeName(unsigned id)
+std::string dabc::ConfigBase::NodeName(unsigned id)
 {
    if (IsXDAQ()) return XDAQ_NodeName(id);
    XMLNodePointer_t contnode = FindContext(id);
-   if (contnode == 0) return dabc::String("");
-   return String(Find1(contnode, 0, xmlRunNode, xmlSshHost));
+   if (contnode == 0) return std::string("");
+   return std::string(Find1(contnode, 0, xmlRunNode, xmlSshHost));
 }
 
 
@@ -488,11 +488,11 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
 }
 
 
-dabc::String dabc::ConfigBase::ResolveEnv(const char* arg)
+std::string dabc::ConfigBase::ResolveEnv(const char* arg)
 {
-   if ((arg==0) || (strlen(arg)==0)) return String();
+   if ((arg==0) || (strlen(arg)==0)) return std::string();
 
-   String name = arg;
+   std::string name = arg;
 
    while (name.find("${") != name.npos) {
 
@@ -501,10 +501,10 @@ dabc::String dabc::ConfigBase::ResolveEnv(const char* arg)
 
       if ((pos1>pos2) || (pos2==name.npos)) {
          EOUT(("Wrong variable parenthesis %s", arg));
-         return String(arg);
+         return std::string(arg);
       }
 
-      String var(name, pos1+2, pos2-pos1-2);
+      std::string var(name, pos1+2, pos2-pos1-2);
 
       name.erase(pos1, pos2-pos1+1);
 
@@ -525,7 +525,7 @@ dabc::String dabc::ConfigBase::ResolveEnv(const char* arg)
    return name;
 }
 
-dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char* topcfgfile, const char* topworkdir, const char* connstr)
+std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char* topcfgfile, const char* topworkdir, const char* connstr)
 {
    if (skind==0) skind = "test";
 
@@ -537,18 +537,18 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const cha
    if (strcmp(skind, "run")==0) kind = kindTest; else
    if (strcmp(skind, "conn")==0) kind = kindConn;
 
-   if (kind<0) return String("");
+   if (kind<0) return std::string("");
 
    if (IsXDAQ()) return XDAQ_SshArgs(id, kind, topcfgfile, topworkdir, connstr);
 
-   String res;
+   std::string res;
    XMLNodePointer_t contnode = FindContext(id);
-   if (contnode == 0) return dabc::String("");
+   if (contnode == 0) return std::string("");
 
    const char* hostname = Find1(contnode, 0, xmlRunNode, xmlSshHost);
    if (hostname==0) {
       EOUT(("%s is not found", xmlSshHost));
-      return dabc::String("");
+      return std::string("");
    }
 
    const char* username = Find1(contnode, 0, xmlRunNode, xmlSshUser);
@@ -569,7 +569,7 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const cha
 
    if ((topcfgfile==0) && (cfgfile==0)) {
       EOUT(("Config file not defined"));
-      return dabc::String("");
+      return std::string("");
    }
 
 //  char currdir[1024];
@@ -622,13 +622,13 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const cha
          res += " if [ z $DABCSYS ] ; then echo DABCSYS not specified; exit 7; fi;";
 
       if (workdir!=0) {
-         String dir = ResolveEnv(workdir);
+         std::string dir = ResolveEnv(workdir);
          res += FORMAT((" if [ ! -d %s ] ; then echo workdir = %s missed; exit 12; fi; ", dir.c_str(), dir.c_str()));
          res += FORMAT((" cd %s;", dir.c_str()));
       }
 
       if (cfgfile!=0) {
-         String f = ResolveEnv(cfgfile);
+         std::string f = ResolveEnv(cfgfile);
          res += FORMAT((" if [ ! -f %s ] ; then echo cfgfile = %s missed; exit 12; fi; ", f.c_str(), f.c_str()));
       } else
          res += FORMAT((" if [ ! -f %s ] ; then echo maincfgfile = %s missed; exit 12; fi; ", topcfgfile, topcfgfile));
@@ -645,7 +645,7 @@ dabc::String dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const cha
 
       if (initcmd!=0) res += FORMAT((" %s;", initcmd));
 
-      String ld;
+      std::string ld;
       if (ldpath) res = ResolveEnv(ldpath);
       if (userdir) { if (res.length()>0) res += ":"; res += ResolveEnv(userdir); }
 
