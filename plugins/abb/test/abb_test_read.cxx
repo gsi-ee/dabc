@@ -52,17 +52,17 @@ int main(int numc, char* args[])
    dcom->SetInt(ABB_PAR_BAR, 1);
    dcom->SetInt(ABB_PAR_ADDRESS, READADDRESS);
    dcom->SetInt(ABB_PAR_LENGTH, readsize);
-   res=manager.CreateDevice("AbbDevice",devname.c_str(),dcom);
+   res = manager.Execute(dcom);
    DOUT1(("CreateDevice = %s", DBOOL(res)));
 
-   cmd = new dabc::CommandCreateModule("AbbReadoutModule","ABB_Readout");
+   cmd = new dabc::CommandCreateModule("AbbReadoutModule","ABB_Readout", "ReadoutThread");
    cmd->SetInt(ABB_COMPAR_BUFSIZE, readsize);
    cmd->SetInt(ABB_COMPAR_STALONE,1);
    cmd->SetInt(ABB_COMPAR_QLENGTH, 10);
    cmd->SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
    cmd->SetStr(ABB_PAR_DEVICE,devname.c_str());
 
-   res=manager.CreateModule("AbbReadoutModule","ABB_Readout","ReadoutThread",cmd);
+   res=manager.Execute(cmd);
    // test: use same thread for readout module as for device:
    //res=manager.CreateModule("AbbReadoutModule","ABB_Readout","PCIBoardDeviceThread0",cmd);
 

@@ -55,15 +55,10 @@ namespace dabc {
          CommandCreateModule(const char* classname, const char* modulename, const char* thrdname = 0) :
             Command(CmdName())
             {
-               SetArguments(this, classname, modulename, thrdname);
+               SetStr("Class", classname);
+               SetStr("Name", modulename);
+               SetStr("Thread", thrdname);
             }
-
-         static void SetArguments(Command* cmd, const char* classname, const char* modulename, const char* thrdname = 0)
-         {
-            cmd->SetStr("Class", classname);
-            cmd->SetStr("Name", modulename);
-            cmd->SetStr("Thread", thrdname);
-         }
    };
 
    class CmdCreatePool : public Command {
@@ -170,13 +165,8 @@ namespace dabc {
          CmdCreateDevice(const char* devclass, const char* devname) :
             Command(CmdName())
          {
-            SetArguments(this, devclass, devname);
-         }
-
-         static void SetArguments(Command* cmd, const char* devclass, const char* devname)
-         {
-            cmd->SetStr("DevClass", devclass);
-            cmd->SetStr("DevName", devname);
+            SetStr("DevClass", devclass);
+            SetStr("DevName", devname);
          }
    };
 
@@ -591,11 +581,11 @@ namespace dabc {
 
          bool CreateApplication(const char* classname = 0, const char* appname = 0, const char* appthrd = 0, Command* cmd = 0);
 
-         bool CreateDevice(const char* classname, const char* devname, Command* cmd = 0);
+         bool CreateDevice(const char* classname, const char* devname);
 
          WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, unsigned startmode = 0, const char* devname = 0, Command* cmd = 0);
 
-         bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0, Command* cmd = 0);
+         bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
 
          bool CreateTransport(const char* devicename, const char* portname, Command* cmd = 0);
 

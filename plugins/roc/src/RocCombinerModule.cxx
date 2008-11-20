@@ -25,10 +25,9 @@ roc::RocCombinerModule::RocCombinerModule(const char* name,
    fOutBuf(0),
    f_outptr()
 {
-   int numrocs = GetCfgInt(roc::xmlNumRocs, 1);
-   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384);
-
-   int numoutputs = cmd->GetInt(dabc::xmlNumOutputs, 1);
+   int numrocs = GetCfgInt(roc::xmlNumRocs, 1, cmd);
+   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
+   int numoutputs = GetCfgInt(dabc::xmlNumOutputs, 2, cmd);
 
    dabc::RateParameter* r = CreateRateParameter("CombinerRate", false, 3.);
    r->SetUnits("MB/s");

@@ -759,26 +759,31 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       const char* modulename = cmd->GetPar("Name");
       const char* thrdname = cmd->GetStr("Thread");
 
-      Module* m = 0;
+      Module* m = FindModule(modulename);
 
-      Application* app = GetApp();
-      if (app) m = app->CreateModule(classname, modulename, cmd);
+      if (m!=0) {
+          DOUT4(("Module name %s already exists", modulename));
+      } else {
 
-      Folder* folder = GetFactoriesFolder(false);
-      if ((folder!=0) && (m==0))
-         for (unsigned n=0;n<folder->NumChilds();n++) {
-            Factory* factory =
-               dynamic_cast<dabc::Factory*> (folder->GetChild(n));
-            if (factory==0) continue;
+         Application* app = GetApp();
+         if (app) m = app->CreateModule(classname, modulename, cmd);
 
-            m = factory->CreateModule(classname, modulename, cmd);
-            if (m!=0) break;
-         }
+         Folder* folder = GetFactoriesFolder(false);
+         if ((folder!=0) && (m==0))
+            for (unsigned n=0;n<folder->NumChilds();n++) {
+               Factory* factory =
+                  dynamic_cast<dabc::Factory*> (folder->GetChild(n));
+               if (factory==0) continue;
 
-      if (m!=0)
-         MakeThreadForModule(m, thrdname);
-      else
-         EOUT(("Cannot create module of type %s", classname));
+               m = factory->CreateModule(classname, modulename, cmd);
+               if (m!=0) break;
+            }
+
+         if (m!=0)
+            MakeThreadForModule(m, thrdname);
+         else
+            EOUT(("Cannot create module of type %s", classname));
+      }
 
       cmd_res = cmd_bool(m!=0);
    } else
@@ -829,8 +834,10 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       if (dev!=0) {
         if (strcmp(dev->ClassName(), classname)==0)
            DOUT4(("Device %s of class %s already exists", devname, classname));
-        else
+        else {
            EOUT(("Device %s has other class name %s than requested", devname, dev->ClassName(), classname));
+           dev = 0;
+        }
       } else {
          dabc::Folder* folder = GetFactoriesFolder(false);
 
@@ -1882,38 +1889,14 @@ bool dabc::Manager::CreateApplication(const char* classname, const char* appname
    return Execute(cmd);
 }
 
-bool dabc::Manager::CreateDevice(const char* classname, const char* devname, Command* cmd)
+bool dabc::Manager::CreateDevice(const char* classname, const char* devname)
 {
-   if (cmd==0)
-      cmd = new CmdCreateDevice(classname, devname);
-   else {
-      if (!cmd->IsName(CmdCreateDevice::CmdName())) {
-         EOUT(("Wrong command name %s", cmd->GetName()));
-         dabc::Command::Reply(cmd, false);
-         return false;
-      }
-
-      CmdCreateDevice::SetArguments(cmd, classname, devname);
-   }
-
-   return Execute(cmd);
+   return Execute(new CmdCreateDevice(classname, devname));
 }
 
-bool dabc::Manager::CreateModule(const char* classname, const char* modulename, const char* thrdname, Command* cmd)
+bool dabc::Manager::CreateModule(const char* classname, const char* modulename, const char* thrdname)
 {
-   if (cmd==0)
-      cmd = new CommandCreateModule(classname, modulename, thrdname);
-   else {
-      if (!cmd->IsName(CommandCreateModule::CmdName())) {
-         EOUT(("Wrong command name %s", cmd->GetName()));
-         dabc::Command::Reply(cmd, false);
-         return false;
-      }
-
-      CommandCreateModule::SetArguments(cmd, classname, modulename, thrdname);
-   }
-
-   return Execute(cmd);
+   return Execute(new CommandCreateModule(classname, modulename, thrdname));
 }
 
 bool dabc::Manager::CreateTransport(const char* devicename, const char* portname, Command* cmd)

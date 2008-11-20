@@ -78,7 +78,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
          dcom->SetInt(ABB_PAR_BAR, GetParInt(ABB_PAR_BAR, 1));
          dcom->SetInt(ABB_PAR_ADDRESS, GetParInt(ABB_PAR_ADDRESS, (0x8000 >> 2)));
          dcom->SetInt(ABB_PAR_LENGTH, GetParInt(ABB_PAR_LENGTH, 8192));
-         res=dabc::mgr()->CreateDevice("AbbDevice",abbdevname.c_str(),dcom);
+         res = dabc::mgr()->Execute(dcom);
 
          //dabc::mgr()->Execute(dcom);
          abbdevname=std::string("Devices/")+abbdevname;

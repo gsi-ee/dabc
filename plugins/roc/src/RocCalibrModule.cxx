@@ -130,10 +130,9 @@ roc::RocCalibrModule::RocCalibrModule(const char* name,
    f_outptr()
 {
 
-   fNumRocs = GetCfgInt(roc::xmlNumRocs, 2);
-   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384);
-
-   int numoutputs = cmd->GetInt(dabc::xmlNumOutputs, 1);
+   fNumRocs = GetCfgInt(roc::xmlNumRocs, 2, cmd);
+   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
+   int numoutputs = GetCfgInt(dabc::xmlNumOutputs, 2, cmd);
 
    DOUT1(("new RocCalibrModule %s buff %d", GetName(), fBufferSize));
    fPool = CreatePool(roc::xmlRocPool, 1, fBufferSize);

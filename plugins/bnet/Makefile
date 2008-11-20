@@ -10,8 +10,8 @@ BNETDIR = .
 INCLUDES += $(BNETDIR)
 endif
 
-BNETDIRI         = $(BNETDIR)/bnet
-BNETDIRS         = $(BNETDIR)/src
+BNETDIRI          = $(BNETDIR)/bnet
+BNETDIRS          = $(BNETDIR)/src
 
 DABCBNET_LIBNAME  = $(LIB_PREFIX)DabcBnet
 DABCBNET_LIB      = $(TGTDLLPATH)/$(DABCBNET_LIBNAME).$(DllSuf)

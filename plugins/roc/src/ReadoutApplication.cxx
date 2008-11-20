@@ -77,24 +77,21 @@ bool roc::ReadoutApplication::CreateAppModules()
                                  GetParInt(dabc::xmlNumBuffers, 100));
 
    if (DoTaking()) {
-      if (!dabc::mgr()->FindDevice(devname.c_str())) {
-         res = dabc::mgr()->CreateDevice("RocDevice", devname.c_str());
-         DOUT1(("Create Roc Device = %s", DBOOL(res)));
-         if(!res) return false;
-      }
+      res = dabc::mgr()->CreateDevice("RocDevice", devname.c_str());
+      DOUT1(("Create Roc Device = %s", DBOOL(res)));
+      if(!res) return false;
 
-
-      cmd = new dabc::CommandCreateModule("RocCombinerModule","RocComb");
+      cmd = new dabc::CommandCreateModule("RocCombinerModule","RocComb", "RocCombThrd");
       cmd->SetInt(dabc::xmlNumOutputs, 2);
-      res = dabc::mgr()->CreateModule("RocCombinerModule","RocComb", "RocCombThrd", cmd);
+      res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create ROC combiner module = %s", DBOOL(res)));
       if(!res) return false;
    }
 
    if (DoCalibr()) {
-      cmd = new dabc::CommandCreateModule("RocCalibrModule","RocCalibr");
+      cmd = new dabc::CommandCreateModule("RocCalibrModule","RocCalibr", "RocCalibrThrd");
       cmd->SetInt(dabc::xmlNumOutputs, 2);
-      res = dabc::mgr()->CreateModule("RocCalibrModule","RocCalibr", "RocCalibrThrd" ,cmd);
+      res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create ROC calibration module = %s", DBOOL(res)));
       if(!res) return false;
 
