@@ -54,7 +54,7 @@ namespace dabc {
          unsigned          fInputPending;
          unsigned          fOutputQueueCapacity;
          unsigned          fOutputPending;
-         bool              fUseAcknoledges;
+         bool              fUseAcknowledges;
          BufferSize_t      fUsrHeaderSize;
          Transport*        fTransport;
          RateParameter*    fInpRate;
@@ -89,9 +89,9 @@ namespace dabc {
          MemoryPool* GetMemoryPool() const;
          unsigned InputQueueCapacity() const { return fInputQueueCapacity; }
          unsigned OutputQueueCapacity() const { return fOutputQueueCapacity; }
-         bool IsUseAcknoledges() const { return fUseAcknoledges; }
+         bool IsUseAcknowledges() const { return fUseAcknowledges; }
          BufferSize_t UserHeaderSize() const { return fUsrHeaderSize; }
-         void ChangeUseAcknoledges(bool use = false) { if (!IsConnected()) fUseAcknoledges = use; }
+         void ChangeUseAcknoledges(bool use = false) { if (!IsConnected()) fUseAcknowledges = use; }
          void ChangeUserHeaderSize(BufferSize_t sz) { if (!IsConnected()) fUsrHeaderSize = sz; }
          void ChangeInputQueueCapacity(unsigned sz) { if (!IsConnected()) fInputQueueCapacity = sz; }
          void ChangeOutputQueueCapacity(unsigned sz) { if (!IsConnected()) fOutputQueueCapacity = sz; }

@@ -389,7 +389,7 @@ bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* por
       cmd->SetPar("ServerId", servid.c_str());
       cmd->SetPar("ConnId", connid.c_str());
         
-      cmd->SetBool("ServerUseAckn", port->IsUseAcknoledges());
+      cmd->SetBool("ServerUseAckn", port->IsUseAcknowledges());
       cmd->SetUInt("ServerHeaderSize", port->UserHeaderSize());
          
       int timeout = cmd->GetInt("Timeout", 10);
@@ -422,7 +422,7 @@ bool dabc::SocketDevice::ClientConnect(Command* cmd, Port* port, const char* por
    int timeout = cmd->GetInt("Timeout", 10);
 
    bool useackn = cmd->GetBool("ServerUseAckn", false);
-   if (useackn != port->IsUseAcknoledges()) {
+   if (useackn != port->IsUseAcknowledges()) {
       EOUT(("Missmatch in acknowledges usage in ports server %s ispar %s connid %s cmd %s", 
            DBOOL(useackn), DBOOL(cmd->GetPar("ServerUseAckn")), connid, cmd->GetName())); 
       port->ChangeUseAcknoledges(useackn);

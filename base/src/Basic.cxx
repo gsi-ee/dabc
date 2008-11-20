@@ -8,6 +8,21 @@
 
 long dabc::Basic::gNumInstances = 0;
 
+
+namespace dabc {
+
+   const char* xmlInputQueueSize    = "InputQueueSize";
+   const char* xmlOutputQueueSize   = "OutputQueueSize";
+   const char* xmlUserHeaderSize    = "UserHeaderSize";
+   const char* xmlUseAcknowledges   = "UseAcknowledges";
+
+   const char* xmlBufferSize        = "BufferSize";
+   const char* xmlNumBuffers        = "NumBuffers";
+   const char* xmlNumInputs         = "NumInputs";
+   const char* xmlNumOutputs        = "NumOutputs";
+}
+
+
 dabc::Basic::Basic(Basic* parent, const char* name) :
    fMutex(0),
    fParent(0),

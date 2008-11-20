@@ -14,6 +14,7 @@
 #include "dabc/Timer.h"
 #include "dabc/Parameter.h"
 #include "dabc/CommandDefinition.h"
+#include "dabc/Application.h"
 
 // __________________________________________________________________
 
@@ -87,6 +88,20 @@ dabc::Module::~Module()
    DeleteChilds();
 
    DOUT5((" dabc::Module::~Module() %s done", GetName()));
+}
+
+int dabc::Module::GetCfgInt(const char* name, int dfltvalue, bool checkapp)
+{
+   if (checkapp) {
+      Application* app = dabc::mgr()->GetApp();
+      if (app) dfltvalue = app->GetParInt(name, dfltvalue);
+   }
+
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParInt(name, dfltvalue);
+      if (par) par->SetFixed(true);
+   }
+   return GetParInt(name, dfltvalue);
 }
 
 void dabc::Module::OnThreadAssigned()

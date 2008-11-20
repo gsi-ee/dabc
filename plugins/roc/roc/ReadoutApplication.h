@@ -9,6 +9,7 @@
 #include "dabc/Module.h"
 
 #include "roc/RocFactory.h"
+#include "roc/RocDevice.h"
 
 #define DABC_ROC_PAR_DATASERVER      "DataServerKind"
 #define DABC_ROC_PAR_ROCIP           "RocIp"
@@ -27,7 +28,7 @@ namespace roc {
          virtual bool IsModulesRunning();
 
          /** Number of ROCs connected to ReadoutModule*/
-         int   NumRocs() const { return GetParInt(DABC_ROC_COMPAR_ROCSNUMBER, 1); }
+         int   NumRocs() const { return GetParInt(roc::xmlNumRocs, 1); }
 
          /** IP address for ROC of index*/
          std::string RocIp(int index = 0) const;
@@ -36,14 +37,11 @@ namespace roc {
          int DataServerKind() const;
 
          /** Total size of dabc buffer containing served Mbs events*/
-         int BufferSize() const { return GetParInt(DABC_ROC_COMPAR_BUFSIZE, 8192);}
+         int BufferSize() const { return GetParInt(dabc::xmlBufferSize, 8192);}
 
          int TransWindow() const { return GetParInt(DABC_ROC_COMPAR_TRANSWINDOW, 30);}
 
          /** Number of buffers each input/output port of readout module*/
-         int   PortQueueLength() const {return GetParInt(DABC_ROC_COMPAR_QLENGTH,10);}
-
-            /** Number of buffers each input/output port of readout module*/
          int   NumPoolBuffers() const {return GetParInt(DABC_ROC_COMPAR_POOL_SIZE,50);}
 
          std::string OutputFileName() const { return GetParStr(DABC_ROC_PAR_OUTFILE, ""); }

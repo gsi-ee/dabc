@@ -31,30 +31,23 @@ dabc::Port::Port(Basic* parent,
    fInputPending(0),
    fOutputQueueCapacity(sendqueue),
    fOutputPending(0),
-   fUseAcknoledges(ackn),
+   fUseAcknowledges(ackn),
    fUsrHeaderSize(usrheadersize),
    fTransport(0),
    fInpRate(0),
    fOutRate(0)
 {
-   if (recvqueue > 0) {
-      CreateParInt("InputQueueSize", recvqueue);
-      fInputQueueCapacity = GetParInt("InputQueueSize", recvqueue);
-   }
+   if (recvqueue > 0)
+      fInputQueueCapacity = GetCfgInt(xmlInputQueueSize, recvqueue);
 
-   if (sendqueue > 0) {
-      CreateParInt("OutputQueueSize", sendqueue);
-      fOutputQueueCapacity = GetParInt("OutputQueueSize", sendqueue);
-   }
+   if (sendqueue > 0)
+      fOutputQueueCapacity = GetCfgInt(xmlOutputQueueSize, sendqueue);
 
-   CreateParInt("UserHeaderSize", usrheadersize);
-   fUsrHeaderSize = GetParInt("UserHeaderSize", usrheadersize);
+   fUsrHeaderSize = GetCfgInt(xmlUserHeaderSize, usrheadersize);
 
-   CreateParBool("UseAcknoledges", ackn);
-   fUseAcknoledges = GetParBool("UseAcknoledges", ackn);
+   fUseAcknowledges = GetCfgBool(xmlUseAcknowledges, ackn);
 
    DOUT5(("Create Port %s with inp %u out %u", GetName(), fInputQueueCapacity, fOutputQueueCapacity));
-   LockUnlockPars(true);
 }
 
 dabc::Port::~Port()
@@ -97,7 +90,7 @@ unsigned dabc::Port::NumOutputBuffersRequired() const
    unsigned sz = OutputQueueCapacity();
 
    // this is additional buffers for sending ackn packets
-   if (IsUseAcknoledges() && (InputQueueCapacity() > 0)) sz++;
+   if (IsUseAcknowledges() && (InputQueueCapacity() > 0)) sz++;
 
    return sz;
 }
@@ -108,7 +101,7 @@ unsigned dabc::Port::NumInputBuffersRequired() const
 
    unsigned sz = InputQueueCapacity();
 
-   if (IsUseAcknoledges() && (OutputQueueCapacity() > 0) &&
+   if (IsUseAcknowledges() && (OutputQueueCapacity() > 0) &&
          (InputQueueCapacity()<AcknoledgeQueueLength)) sz = AcknoledgeQueueLength;
 
    return sz;

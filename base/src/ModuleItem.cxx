@@ -26,3 +26,21 @@ dabc::ModuleItem::~ModuleItem()
    if (fModule)
       fModule->ItemDestroyed(this);
 }
+
+int dabc::ModuleItem::GetCfgInt(const char* name, int dfltvalue)
+{
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParInt(name, dfltvalue);
+      if (par) par->SetFixed(true);
+   }
+   return GetParInt(name, dfltvalue);
+}
+
+bool dabc::ModuleItem::GetCfgBool(const char* name, bool dfltvalue)
+{
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParBool(name, dfltvalue);
+      if (par) par->SetFixed(true);
+   }
+   return GetParBool(name, dfltvalue);
+}

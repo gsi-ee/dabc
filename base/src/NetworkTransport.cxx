@@ -51,7 +51,7 @@ void dabc::NetworkTransport::Init(Port *port)
    // constructor of inherited class must be active already.
    
    fPool = port->Pool() ? port->Pool()->getPool() : 0;
-   fUseAckn = port->IsUseAcknoledges();
+   fUseAckn = port->IsUseAcknowledges();
    
    DOUT3(("Port %s use ackn %s", port->GetName(), DBOOL(fUseAckn)));
    

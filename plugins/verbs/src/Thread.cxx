@@ -425,7 +425,7 @@ bool verbs::Thread::DoServer(dabc::Command* cmd, dabc::Port* port, const char* p
 
    cmd->SetPar("ConnId", rec->fConnId.c_str());
 
-   cmd->SetBool("ServerUseAckn", port->IsUseAcknoledges());
+   cmd->SetBool("ServerUseAckn", port->IsUseAcknowledges());
    cmd->SetUInt("ServerHeaderSize", port->UserHeaderSize());
 
    rec->fThrdName = cmd->GetStr("TrThread","");
@@ -454,7 +454,7 @@ bool verbs::Thread::DoClient(dabc::Command* cmd, dabc::Port* port, const char* p
    DOUT3(("Start CLIENT: %s", connid));
 
    bool useakcn = cmd->GetBool("ServerUseAckn", false);
-   if (useakcn != port->IsUseAcknoledges()) {
+   if (useakcn != port->IsUseAcknowledges()) {
       EOUT(("Missmatch in acknowledges usage in ports"));
       port->ChangeUseAcknoledges(useakcn);
    }

@@ -68,6 +68,9 @@ namespace dabc {
          virtual void DoStart() {}
          virtual void DoStop() {}
 
+         int GetCfgInt(const char* name, int dfltvalue);
+         bool GetCfgBool(const char* name, bool dfltvalue);
+
          Module*  fModule;
          int      fItemType;
          unsigned fItemId;

@@ -30,15 +30,16 @@
       <Run>
         <user>linev</user>
         <port>22</port>
-        <timeout v="10"/>
+        <timeout value="10"/>
 	<test>. gsi_environment.sh; echo $HOST</test>
+	<debugger>gdb -x gdbcmd.txt --args</debugger>
       </Run>
     </Context>
     <Context name="*">
     <Run>
-       <user v="linev"/>
-       <port v="22"/>
-       <logfile v="test${DABCNODEID}.log"/>
+       <user value="linev"/>
+       <port value="22"/>
+       <logfile value="test${DABCNODEID}.log"/>
        <Lib>${DABCSYS}/lib/libDabcBnet.so</Lib>
     </Run>
     </Context>

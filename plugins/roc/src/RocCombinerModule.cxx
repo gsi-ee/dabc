@@ -15,6 +15,8 @@
 #include "mbs/LmdTypeDefs.h"
 #include "mbs/MbsTypeDefs.h"
 
+#include "roc/RocDevice.h"
+
 
 roc::RocCombinerModule::RocCombinerModule(const char* name,
                                           dabc::Command* cmd) :
@@ -23,23 +25,20 @@ roc::RocCombinerModule::RocCombinerModule(const char* name,
    fOutBuf(0),
    f_outptr()
 {
+   int numrocs = GetCfgInt(roc::xmlNumRocs, 1);
+   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384);
 
-   CreateParInt("NumRocs", cmd->GetInt(DABC_ROC_COMPAR_ROCSNUMBER, 1));
-
-   fBufferSize = cmd->GetInt(DABC_ROC_COMPAR_BUFSIZE, 16384);
-   int queuelen = cmd->GetInt(DABC_ROC_COMPAR_QLENGTH, 10);
-//   int numinputs = cmd->GetInt(DABC_ROC_COMPAR_ROCSNUMBER, 1);
-   int numoutputs = cmd->GetInt(DABC_ROC_COMPAR_NUMOUTPUTS, 1);
+   int numoutputs = cmd->GetInt(dabc::xmlNumOutputs, 1);
 
    dabc::RateParameter* r = CreateRateParameter("CombinerRate", false, 3.);
    r->SetUnits("MB/s");
    r->SetLimits(0, 10.);
    r->SetDebugOutput(true);
 
-   DOUT1(("new RocCombinerModule %s buff %d queue %d", GetName(), fBufferSize, queuelen));
+   DOUT1(("new RocCombinerModule %s buff %d", GetName(), fBufferSize));
    fPool = CreatePool(DABC_ROC_POOLNAME, 1, fBufferSize); // specify pool
-   for(int inp=0; inp < GetParInt("NumRocs", 1); inp++)  {
-      CreateInput(FORMAT(("Input%d", inp)), fPool, queuelen);
+   for(int inp=0; inp < numrocs; inp++)  {
+      CreateInput(FORMAT(("Input%d", inp)), fPool, 10);
 
       Input(inp)->SetInpRateMeter(r);
 //      CreateRateParameter(FORMAT(("RocReadout%d", inp)), false, 1., FORMAT(("Input%d", inp)), "");
@@ -47,7 +46,7 @@ roc::RocCombinerModule::RocCombinerModule(const char* name,
    }
 
    for(int n=0; n<numoutputs; n++)
-      CreateOutput(FORMAT(("Output%d", n)), fPool, queuelen);
+      CreateOutput(FORMAT(("Output%d", n)), fPool, 10);
 
    fSimpleMode = false;
 

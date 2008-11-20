@@ -2,7 +2,6 @@
 #define ROC_RocCommands
 #include "dabc/Command.h"
 
-
 #define DABC_ROC_POOLNAME "RocPool"
 
 
@@ -13,14 +12,8 @@
 #define DABC_ROC_COMMAND_START_PULSER "StartRocPulser"
 #define DABC_ROC_COMMAND_STOP_PULSER "StopRocPulser"
 
-
-
 #define DABC_ROC_COMPAR_BUFSIZE      "BufferSize"
-#define DABC_ROC_COMPAR_QLENGTH      "QueueLength"
 #define DABC_ROC_COMPAR_POOL_SIZE    "PoolBuffers"
-#define DABC_ROC_COMPAR_ROCSNUMBER   "NumRocs"
-#define DABC_ROC_COMPAR_NUMOUTPUTS   "NumOutputs"
-
 
 
 #define DABC_ROC_COMPAR_BOARDIP      "BoardIP"
@@ -39,75 +32,75 @@
 namespace roc{
 
 
-/** this command sets value to roc register*/   
+/** this command sets value to roc register*/
   class CommandWriteRegister : public dabc::Command {
-      public:   
+      public:
          CommandWriteRegister(unsigned int boardNum, unsigned int address, unsigned int value) :
-            dabc::Command(DABC_ROC_COMMAND_WRITE_REGISTER) 
+            dabc::Command(DABC_ROC_COMMAND_WRITE_REGISTER)
             {
                SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
                SetInt(DABC_ROC_COMPAR_ADDRESS, address);
-               SetInt(DABC_ROC_COMPAR_VALUE, value); 
+               SetInt(DABC_ROC_COMPAR_VALUE, value);
             }
-   };  
+   };
 
-/** this command reads value from roc register. Command reply will contain result (??).*/   
+/** this command reads value from roc register. Command reply will contain result (??).*/
   class CommandReadRegister : public dabc::Command {
-      public:   
+      public:
          CommandReadRegister(unsigned int boardNum, unsigned int address) :
-            dabc::Command(DABC_ROC_COMMAND_READ_REGISTER) 
+            dabc::Command(DABC_ROC_COMMAND_READ_REGISTER)
             {
                SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
                SetInt(DABC_ROC_COMPAR_ADDRESS, address);
             }
-   };  
+   };
 
 
-/** this command starts data transfer from ROC.*/   
+/** this command starts data transfer from ROC.*/
   class CommandStartDAQ : public dabc::Command {
-      public:   
+      public:
          CommandStartDAQ(unsigned int boardNum) :
-            dabc::Command(DABC_ROC_COMMAND_START_DAQ) 
+            dabc::Command(DABC_ROC_COMMAND_START_DAQ)
             {
                SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
             }
-   };  
+   };
 
-/** this command stops data transfer from ROC.*/   
+/** this command stops data transfer from ROC.*/
   class CommandStopDAQ : public dabc::Command {
-      public:   
+      public:
          CommandStopDAQ(unsigned int boardNum) :
-            dabc::Command(DABC_ROC_COMMAND_STOP_DAQ) 
+            dabc::Command(DABC_ROC_COMMAND_STOP_DAQ)
             {
                SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
             }
-   };  
+   };
 
 
-/** this command starts ROC test pulser.*/   
+/** this command starts ROC test pulser.*/
   class CommandStartPulser : public dabc::Command {
-      public:   
+      public:
          CommandStartPulser(unsigned int boardNum, unsigned int pulseResetDelay, unsigned int pulseLen, unsigned int pulseNum) :
-            dabc::Command(DABC_ROC_COMMAND_START_PULSER) 
+            dabc::Command(DABC_ROC_COMMAND_START_PULSER)
             {
                SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
                SetInt(DABC_ROC_COMPAR_PULSE_RESETDELAY, pulseResetDelay);
                SetInt(DABC_ROC_COMPAR_PULSE_LENGTH, pulseLen);
                SetInt(DABC_ROC_COMPAR_PULSE_NUMBER, pulseNum);
             }
-   };  
+   };
 
 
 
-/** this command stops test pulser.*/   
+/** this command stops test pulser.*/
   class CommandStopPulser : public dabc::Command {
-      public:   
+      public:
          CommandStopPulser(unsigned int boardNum) :
-            dabc::Command(DABC_ROC_COMMAND_STOP_PULSER) 
+            dabc::Command(DABC_ROC_COMMAND_STOP_PULSER)
             {
                SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
             }
-   };  
+   };
 
 
 } // end namspace roc

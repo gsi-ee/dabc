@@ -130,22 +130,22 @@ roc::RocCalibrModule::RocCalibrModule(const char* name,
    f_outptr()
 {
 
-   fNumRocs = cmd->GetUInt(DABC_ROC_COMPAR_ROCSNUMBER, 2);
-   fBufferSize = cmd->GetInt(DABC_ROC_COMPAR_BUFSIZE, 16384);
-   int queuelen = cmd->GetInt(DABC_ROC_COMPAR_QLENGTH, 10);
-   int numoutputs = cmd->GetInt(DABC_ROC_COMPAR_NUMOUTPUTS, 1);
+   fNumRocs = GetCfgInt(roc::xmlNumRocs, 2);
+   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384);
 
-   DOUT1(("new RocCalibrModule %s buff %d queue %d", GetName(), fBufferSize, queuelen));
+   int numoutputs = cmd->GetInt(dabc::xmlNumOutputs, 1);
+
+   DOUT1(("new RocCalibrModule %s buff %d", GetName(), fBufferSize));
    fPool = CreatePool(DABC_ROC_POOLNAME, 1, fBufferSize); // specify pool
 
-   CreateInput("Input", fPool, queuelen);
+   CreateInput("Input", fPool, 10);
 
    dabc::RateParameter* r = CreateRateParameter("CalibrRate", false, 3., "Input");
    r->SetLimits(0, 10.);
    r->SetDebugOutput(true);
 
    for(int n=0; n<numoutputs; n++)
-      CreateOutput(FORMAT(("Output%d", n)), fPool, queuelen);
+      CreateOutput(FORMAT(("Output%d", n)), fPool, 10);
 
    fBuildEvents = 0;
    fSkippedEvents = 0;

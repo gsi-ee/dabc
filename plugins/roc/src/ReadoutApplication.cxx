@@ -10,6 +10,8 @@
 
 #include "roc/RocCalibrModule.h"
 
+#include "roc/RocCommands.h"
+
 #include "SysCoreDefines.h"
 
 roc::ReadoutApplication::ReadoutApplication(const char* name) :
@@ -18,14 +20,14 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
    //new dabc::StrParameter(this,DABC_ROC_COMPAR_BOARDIP, "140.181.66.173"); // lxi010.gsi.de
    // todo: later provide more than one roc board as input
 
-   CreateParInt(DABC_ROC_COMPAR_ROCSNUMBER, 1);
+   CreateParInt(roc::xmlNumRocs, 1);
+
    for (int nr=0;nr<15;nr++)
       CreateParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)));
+   CreateParInt(dabc::xmlBufferSize, 8192);
 
-   CreateParInt(DABC_ROC_COMPAR_BUFSIZE, 8192);
    CreateParInt(DABC_ROC_COMPAR_TRANSWINDOW, 30);
    CreateParInt(DABC_ROC_COMPAR_POOL_SIZE, 100);
-   CreateParInt(DABC_ROC_COMPAR_QLENGTH, 10);
    CreateParStr(DABC_ROC_PAR_OUTFILE, "");
    CreateParInt(DABC_ROC_PAR_OUTFILELIMIT, 0);
    CreateParStr(DABC_ROC_PAR_DATASERVER, "Stream");
@@ -74,10 +76,7 @@ bool roc::ReadoutApplication::CreateAppModules()
 
 
       cmd = new dabc::CommandCreateModule("RocCombinerModule","RocComb");
-      cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
-      cmd->SetInt(DABC_ROC_COMPAR_QLENGTH, PortQueueLength());
-      cmd->SetInt(DABC_ROC_COMPAR_ROCSNUMBER, NumRocs());
-      cmd->SetInt(DABC_ROC_COMPAR_NUMOUTPUTS, 2);
+      cmd->SetInt(dabc::xmlNumOutputs, 2);
       res = dabc::mgr()->CreateModule("RocCombinerModule","RocComb", "RocCombThrd", cmd);
       DOUT1(("Create ROC combiner module = %s", DBOOL(res)));
       if(!res) return false;
@@ -85,10 +84,7 @@ bool roc::ReadoutApplication::CreateAppModules()
 
    if (DoCalibr()) {
       cmd = new dabc::CommandCreateModule("RocCalibrModule","RocCalibr");
-      cmd->SetInt(DABC_ROC_COMPAR_ROCSNUMBER, NumRocs());
-      cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
-      cmd->SetInt(DABC_ROC_COMPAR_QLENGTH, PortQueueLength());
-      cmd->SetInt(DABC_ROC_COMPAR_NUMOUTPUTS, 2);
+      cmd->SetInt(dabc::xmlNumOutputs, 2);
       res = dabc::mgr()->CreateModule("RocCalibrModule","RocCalibr", "RocCalibrThrd" ,cmd);
       DOUT1(("Create ROC calibration module = %s", DBOOL(res)));
       if(!res) return false;

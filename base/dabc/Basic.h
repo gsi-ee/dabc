@@ -17,6 +17,17 @@ namespace dabc {
    class Mutex;
    class Configuration;
 
+   extern const char* xmlInputQueueSize;
+   extern const char* xmlOutputQueueSize;
+   extern const char* xmlUserHeaderSize;
+   extern const char* xmlUseAcknowledges;
+
+   extern const char* xmlBufferSize;
+   extern const char* xmlNumBuffers;
+   extern const char* xmlNumInputs;
+   extern const char* xmlNumOutputs;
+
+
    class Basic {
       friend class Folder;
       friend class Manager;
