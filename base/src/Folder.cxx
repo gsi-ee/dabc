@@ -3,8 +3,8 @@
 #include "string.h"
 
 #include "dabc/logging.h"
-
 #include "dabc/threads.h"
+#include "dabc/ConfigBase.h"
 
 
 dabc::Folder::Folder(Basic* parent, const char* name, bool owner) :
@@ -205,16 +205,18 @@ dabc::Folder* dabc::Folder::GetFolder(const char* name, bool force, bool isowner
 
 bool dabc::Folder::Store(ConfigIO &cfg)
 {
+   if (NumChilds()==0) return true;
+
    if (UseMasterClassName()) {
       cfg.CreateItem(MasterClassName());
-      cfg.CreateAttr("name", GetName());
+      cfg.CreateAttr(xmlNameAttr, GetName());
    } else {
       cfg.CreateItem(GetName());
    }
 
    if ((MasterClassName()!=0) && (ClassName()!=0) &&
        (strcmp(ClassName(), MasterClassName())!=0))
-          cfg.CreateAttr("class", ClassName());
+          cfg.CreateAttr(xmlClassAttr, ClassName());
 
    for (unsigned n=0; n<NumChilds(); n++) {
       Basic* child = GetChild(n);
@@ -236,11 +238,11 @@ bool dabc::Folder::Find(ConfigIO &cfg)
    if (!cfg.FindItem(searchname)) return false;
 
    if (UseMasterClassName())
-      if (!cfg.CheckAttr("name", GetName())) return false;
+      if (!cfg.CheckAttr(xmlNameAttr, GetName())) return false;
 
    if ((MasterClassName()!=0) && (ClassName()!=0) &&
        (strcmp(ClassName(), MasterClassName())!=0))
-          if (!cfg.CheckAttr("class", ClassName())) return false;
+          if (!cfg.CheckAttr(xmlClassAttr, ClassName())) return false;
 
    return true;
 }

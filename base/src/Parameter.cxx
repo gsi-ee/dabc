@@ -9,6 +9,7 @@
 #include "dabc/logging.h"
 #include "dabc/Iterator.h"
 #include "dabc/WorkingProcessor.h"
+#include "dabc/ConfigBase.h"
 
 dabc::Parameter::Parameter(WorkingProcessor* lst, const char* name) :
    Basic(lst ? lst->MakeFolderForParam(name) : 0, dabc::Folder::GetObjectName(name)),
@@ -100,7 +101,8 @@ bool dabc::Parameter::Store(ConfigIO &cfg)
    std::string s;
 
    if (GetValue(s)) {
-      cfg.CreateItem(GetName(), s.c_str());
+      cfg.CreateItem(GetName());
+      cfg.CreateAttr(xmlValueAttr, s.c_str());
       cfg.PopItem();
    }
 
@@ -110,13 +112,18 @@ bool dabc::Parameter::Store(ConfigIO &cfg)
 bool dabc::Parameter::Find(ConfigIO &cfg)
 {
    return cfg.FindItem(GetName());
+
+//   if (!cfg.FindItem(GetName())) return false;
+//   return cfg.CheckAttr(xmlValueAttr, 0);
 }
 
 bool dabc::Parameter::Read(ConfigIO &cfg)
 {
-   const char* value = cfg.Find(this);
+   const char* item = cfg.Find(this);
+   if (item==0) return false;
 
-   if (value==0) return false;
+   const char* value = cfg.GetAttrValue(xmlValueAttr);
+   if (value==0) value = item;
 
    DOUT0(("Set par %s = %s", GetFullName().c_str(), value));
    SetValue(value);
@@ -281,7 +288,6 @@ void dabc::RateParameter::ChangeRate(double rate)
 
    {
       LockGuard lock(fValueMutex);
-      if (fFixed) return;
       fRecord.value = rate;
    }
    Changed();

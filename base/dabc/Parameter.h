@@ -25,7 +25,7 @@ namespace dabc {
 
    enum EParamKind { parNone, parString, parDouble, parInt, parSyncRate, parAsyncRate, parPoolStatus, parStatus, parHisto, parInfo };
 
-   enum EParamEvent { parCreated = 0, parModified = 1, parDestroyed = 2 };
+   enum EParamEvent { parCreated = 0, parModified = 1, parDestroy = 2 };
 
    class Parameter : public Basic {
       friend class WorkingProcessor;

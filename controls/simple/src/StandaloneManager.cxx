@@ -568,7 +568,7 @@ void dabc::StandaloneManager::ParameterEvent(Parameter* par, int eventid)
    if (eventid==parCreated) return;
 
    // when parameter is destroyed, simple remove it from the lists
-   if (eventid==parDestroyed) {
+   if (eventid==parDestroy) {
       LockGuard guard(GetMutex());
 
       ParamRegList::iterator iter = fParReg.begin();

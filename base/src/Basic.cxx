@@ -43,6 +43,12 @@ void dabc::Basic::RemoveChild(Basic* obj)
    EOUT(("not implemented"));
 }
 
+bool dabc::Basic::Find(ConfigIO &cfg)
+{
+   return false;
+}
+
+
 void dabc::Basic::_SetParent(Mutex* mtx, Basic* parent)
 {
    fMutex = mtx;

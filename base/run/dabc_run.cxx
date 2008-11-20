@@ -101,6 +101,8 @@ bool RunBnetTest()
 
    DOUT1(("Create done"));
 
+   //dabc::SetDebugLevel(5);
+
    SMChange(dabc::Manager::stcmdDoEnable);
 
    DOUT1(("Connection done"));

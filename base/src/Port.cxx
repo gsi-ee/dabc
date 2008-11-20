@@ -37,6 +37,24 @@ dabc::Port::Port(Basic* parent,
    fInpRate(0),
    fOutRate(0)
 {
+   if (recvqueue > 0) {
+      CreateParInt("InputQueueSize", recvqueue);
+      fInputQueueCapacity = GetParInt("InputQueueSize", recvqueue);
+   }
+
+   if (sendqueue > 0) {
+      CreateParInt("OutputQueueSize", sendqueue);
+      fOutputQueueCapacity = GetParInt("OutputQueueSize", sendqueue);
+   }
+
+   CreateParInt("UserHeaderSize", usrheadersize);
+   fUsrHeaderSize = GetParInt("UserHeaderSize", usrheadersize);
+
+   CreateParBool("UseAcknoledges", ackn);
+   fUseAcknoledges = GetParBool("UseAcknoledges", ackn);
+
+   DOUT5(("Create Port %s with inp %u out %u", GetName(), fInputQueueCapacity, fOutputQueueCapacity));
+   LockUnlockPars(true);
 }
 
 dabc::Port::~Port()

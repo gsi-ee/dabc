@@ -466,7 +466,7 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
 
 bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
 {
-   DOUT2((" StartModulesConnect via BnetDev of class %s", NetDevice()));
+   DOUT2((" StartModulesConnect via BnetDev of class %s", NetDevice().c_str()));
 
    dabc::CommandsSet* set = 0;
 

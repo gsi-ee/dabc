@@ -398,7 +398,7 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
          for (unsigned n=0;n<fParsQueue.Size();n++)
             if (fParsQueue.ItemPtr(n)->par == par) return;
       } else
-      if (evid == parDestroyed) {
+      if (evid == parDestroy) {
          // disable all previous events, while parameter no longer valid
          for (unsigned n=0;n<fParsQueue.Size();n++)
             if (fParsQueue.ItemPtr(n)->par == par)
@@ -410,7 +410,7 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
 
    if (isitself) {
       ParameterEvent(par, evid);
-      if (evid == parDestroyed) delete par;
+      if (evid == parDestroy) delete par;
    } else {
       FireEvent(evntManagerParam);
    }
@@ -444,7 +444,7 @@ void dabc::Manager::ProcessEvent(EventId evnt)
          // generate parameter event from the manager thread
          if (!rec.processed) ParameterEvent(rec.par, rec.event);
 
-         if (rec.event == parDestroyed) delete rec.par;
+         if (rec.event == parDestroy) delete rec.par;
 
          break;
       }
@@ -1829,7 +1829,7 @@ void dabc::Manager::ParameterEvent(Parameter* par, int event)
          if (fTimedPars.size()==0) { activate = true; interval = 0.; }
          fTimedPars.push_back(par);
       } else
-      if (event==parDestroyed) {
+      if (event==parDestroy) {
          fTimedPars.remove(par);
          if (fTimedPars.size()==0) { activate = true; interval = -1.; }
       }

@@ -233,6 +233,11 @@ dabc::Parameter* dabc::WorkingProcessor::CreateParDouble(const char* name, doubl
    return new dabc::DoubleParameter(this, name, initvalue);
 }
 
+dabc::Parameter* dabc::WorkingProcessor::CreateParBool(const char* name, bool initvalue)
+{
+   return CreateParStr(name, initvalue ? "true" : "false");
+}
+
 void dabc::WorkingProcessor::DestroyAllPars()
 {
    Folder* f = GetTopParsFolder();
@@ -257,7 +262,7 @@ bool dabc::WorkingProcessor::DestroyPar(Parameter* par)
    Basic* prnt = par->GetParent();
    if (prnt) prnt->RemoveChild(par);
 
-   if (!Parameter::FireEvent(par, parDestroyed)) delete par;
+   if (!Parameter::FireEvent(par, parDestroy)) delete par;
 
    return true;
 }
@@ -292,6 +297,13 @@ double dabc::WorkingProcessor::GetParDouble(const char* name, double defvalue) c
    dabc::Parameter* par = FindPar(name);
 
    return par && (par->Kind()==parDouble) ? ((DoubleParameter*) par)->GetDouble() : defvalue;
+}
+
+bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const
+{
+   std::string res = GetParStr(name);
+   if (res.length()==0) return defvalue;
+   return res == "true";
 }
 
 bool dabc::WorkingProcessor::SetParStr(const char* name, const char* value)

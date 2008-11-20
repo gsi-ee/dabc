@@ -27,6 +27,7 @@ namespace dabc {
    extern const char* xmlDABCWORKDIR;
    extern const char* xmlDABCNODEID;
    extern const char* xmlDABCNUMNODES;
+   extern const char* xmlDebugger;
    extern const char* xmlWorkDir;
    extern const char* xmlLogfile;
    extern const char* xmlLDPATH;

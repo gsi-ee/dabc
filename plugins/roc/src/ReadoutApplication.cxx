@@ -20,9 +20,7 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
 
    CreateParInt(DABC_ROC_COMPAR_ROCSNUMBER, 1);
    for (int nr=0;nr<15;nr++)
-      CreateParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)), "");
-
-   SetParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, 0)), "140.181.66.173"); // lxi010.gsi.de
+      CreateParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)));
 
    CreateParInt(DABC_ROC_COMPAR_BUFSIZE, 8192);
    CreateParInt(DABC_ROC_COMPAR_TRANSWINDOW, 30);
@@ -69,7 +67,7 @@ bool roc::ReadoutApplication::CreateAppModules()
 
    if (DoTaking()) {
       if (!dabc::mgr()->FindDevice(devname.c_str())) {
-         res = dabc::mgr()->CreateDevice("RocDevice",devname.c_str());
+         res = dabc::mgr()->CreateDevice("RocDevice", devname.c_str());
          DOUT1(("Create Roc Device = %s", DBOOL(res)));
          if(!res) return false;
       }
@@ -111,18 +109,18 @@ bool roc::ReadoutApplication::CreateAppModules()
    //// connect module to ROC device, one transport for each board:
 
       for(int t=0; t<NumRocs(); t++) {
-         cmd= new dabc::CmdCreateTransport(); // container for additional bopard parameters
+         cmd= new dabc::CmdCreateTransport(); // container for additional board parameters
          cmd->SetStr(DABC_ROC_COMPAR_BOARDIP, RocIp(t));
          cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
          cmd->SetInt(DABC_ROC_COMPAR_TRANSWINDOW, TransWindow());
-         res=dabc::mgr()->CreateTransport(fFullDeviceName.c_str(),FORMAT(("RocComb/Ports/Input%d", t)),cmd);
+         res=dabc::mgr()->CreateTransport(fFullDeviceName.c_str(), FORMAT(("RocComb/Ports/Input%d", t)), cmd);
          DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t).c_str(), DBOOL(res)));
          if(!res) return false;
       }
 
       // configure loop over all connected rocs:
        for(int t=0; t<NumRocs();++t) {
-          res=ConfigureRoc(t);
+          res = ConfigureRoc(t);
           DOUT1(("Configure ROC %d returns %s", t, DBOOL(res)));
           if(!res) return false;
       }

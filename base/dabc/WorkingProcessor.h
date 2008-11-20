@@ -59,6 +59,7 @@ namespace dabc {
          std::string GetParStr(const char* name, const std::string& defvalue = "") const;
          int GetParInt(const char* name, int defvalue = 0) const;
          double GetParDouble(const char* name, double defvalue = 0.) const;
+         bool GetParBool(const char* name, bool defvalue = false) const;
 
          Folder* GetTopParsFolder();
 
@@ -108,6 +109,7 @@ namespace dabc {
          Parameter* CreateParStr(const char* name, const char* initvalue = 0);
          Parameter* CreateParInt(const char* name, int initvalue = 0);
          Parameter* CreateParDouble(const char* name, double initvalue = 0.);
+         Parameter* CreateParBool(const char* name, bool initvalue = false);
 
          void DestroyAllPars();
          void DestroyPar(const char* name) { DestroyPar(FindPar(name)); }

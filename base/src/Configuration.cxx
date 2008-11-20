@@ -286,17 +286,20 @@ bool dabc::Configuration::CheckAttr(const char* name, const char* value)
    // make extra check - if fCurrChld!=0 something was wrong already
    if ((fCurrChld!=0) || (fCurrItem==0)) return false;
 
-   const char* attr = fXml.GetAttr(fCurrItem, name);
-
    bool res = true;
 
-   if (fCurrStrict)
-      res = attr == 0 ? false : strcmp(attr, value) == 0;
-   else
-   if (attr!=0) {
-      res = strcmp(attr, value) == 0;
+   if (value==0)
+      res = fXml.HasAttr(fCurrItem, name);
+   else {
+      const char* attr = fXml.GetAttr(fCurrItem, name);
 
-      if (!res) res = fnmatch(attr, value, FNM_NOESCAPE) == 0;
+      if (fCurrStrict)
+         res = attr == 0 ? false : strcmp(attr, value) == 0;
+      else
+      if (attr!=0) {
+         res = strcmp(attr, value) == 0;
+         if (!res) res = fnmatch(attr, value, FNM_NOESCAPE) == 0;
+      }
    }
 
    if (!res) {
@@ -317,7 +320,6 @@ const char* dabc::Configuration::GetAttrValue(const char* name)
 {
    return fXml.GetAttr(fCurrItem, name);
 }
-
 
 dabc::Basic* dabc::Configuration::GetObjParent(Basic* obj, int lvl)
 {
@@ -352,7 +354,13 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
       prnt = GetObjParent(obj, level);
       if (prnt==0) return 0;
 
-      if (!prnt->Find(*this)) break;
+      // search on same level several items - it may match attributes only with second or third
+      do {
+         if (prnt->Find(*this)) break;
+         if (fCurrChld == 0) prnt = 0;
+      } while (prnt != 0);
+      if (prnt==0) break;
+
       if (level--==0)
          if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
             const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();

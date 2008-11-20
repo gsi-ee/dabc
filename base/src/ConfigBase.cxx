@@ -149,7 +149,7 @@ namespace dabc {
    const char* xmlDefualtsNode     = "Defaults";
    const char* xmlNameAttr         = "name";
    const char* xmlClassAttr        = "class";
-   const char* xmlValueAttr        = "v";
+   const char* xmlValueAttr        = "value";
    const char* xmlRunNode          = "Run";
    const char* xmlSshHost          = "host";
    const char* xmlSshUser          = "user";
@@ -162,6 +162,7 @@ namespace dabc {
    const char* xmlDABCWORKDIR      = "DABCWORKDIR";
    const char* xmlDABCNODEID       = "DABCNODEID";
    const char* xmlDABCNUMNODES     = "DABCNUMNODES";
+   const char* xmlDebugger         = "debugger";
    const char* xmlWorkDir          = "workdir";
    const char* xmlLogfile          = "logfile";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
@@ -559,6 +560,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
    const char* dabcsys = Find1(contnode, 0, xmlRunNode, xmlDABCSYS);
    const char* userdir = Find1(contnode, 0, xmlRunNode, xmlDABCUSERDIR);
+   const char* debugger = Find1(contnode, 0, xmlRunNode, xmlDebugger);
    const char* workdir = Find1(contnode, 0, xmlRunNode, xmlWorkDir);
    const char* logfile = Find1(contnode, 0, xmlRunNode, xmlLogfile);
    const char* ldpath = Find1(contnode, 0, xmlRunNode, xmlLDPATH);
@@ -670,6 +672,11 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
       if ((connstr!=0) && (id==0))
          res += FORMAT((" rm -f %s;", connstr));
+
+      if (debugger) {
+         res += " ";
+         res += debugger;
+      }
 
       res += " $DABCSYS/bin/dabc_run ";
 

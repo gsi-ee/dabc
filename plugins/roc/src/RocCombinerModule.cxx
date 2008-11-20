@@ -23,9 +23,12 @@ roc::RocCombinerModule::RocCombinerModule(const char* name,
    fOutBuf(0),
    f_outptr()
 {
+
+   CreateParInt("NumRocs", cmd->GetInt(DABC_ROC_COMPAR_ROCSNUMBER, 1));
+
    fBufferSize = cmd->GetInt(DABC_ROC_COMPAR_BUFSIZE, 16384);
    int queuelen = cmd->GetInt(DABC_ROC_COMPAR_QLENGTH, 10);
-   int numinputs = cmd->GetInt(DABC_ROC_COMPAR_ROCSNUMBER, 1);
+//   int numinputs = cmd->GetInt(DABC_ROC_COMPAR_ROCSNUMBER, 1);
    int numoutputs = cmd->GetInt(DABC_ROC_COMPAR_NUMOUTPUTS, 1);
 
    dabc::RateParameter* r = CreateRateParameter("CombinerRate", false, 3.);
@@ -35,7 +38,7 @@ roc::RocCombinerModule::RocCombinerModule(const char* name,
 
    DOUT1(("new RocCombinerModule %s buff %d queue %d", GetName(), fBufferSize, queuelen));
    fPool = CreatePool(DABC_ROC_POOLNAME, 1, fBufferSize); // specify pool
-   for(int inp=0; inp<numinputs; inp++)  {
+   for(int inp=0; inp < GetParInt("NumRocs", 1); inp++)  {
       CreateInput(FORMAT(("Input%d", inp)), fPool, queuelen);
 
       Input(inp)->SetInpRateMeter(r);
