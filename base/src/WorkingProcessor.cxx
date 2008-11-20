@@ -235,7 +235,7 @@ dabc::Parameter* dabc::WorkingProcessor::CreateParDouble(const char* name, doubl
 
 dabc::Parameter* dabc::WorkingProcessor::CreateParBool(const char* name, bool initvalue)
 {
-   return CreateParStr(name, initvalue ? "true" : "false");
+   return CreateParStr(name, initvalue ? xmlTrueValue : xmlFalseValue);
 }
 
 void dabc::WorkingProcessor::DestroyAllPars()
@@ -302,8 +302,9 @@ double dabc::WorkingProcessor::GetParDouble(const char* name, double defvalue) c
 bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const
 {
    std::string res = GetParStr(name);
-   if (res.length()==0) return defvalue;
-   return res == "true";
+   if (res == xmlTrueValue) return true;
+   if (res == xmlFalseValue) return false;
+   return defvalue;
 }
 
 bool dabc::WorkingProcessor::SetParStr(const char* name, const char* value)
@@ -311,6 +312,13 @@ bool dabc::WorkingProcessor::SetParStr(const char* name, const char* value)
    dabc::Parameter* par = FindPar(name);
 
    return par ? par->SetValue(value) : false;
+}
+
+bool dabc::WorkingProcessor::SetParBool(const char* name, bool value)
+{
+   dabc::Parameter* par = FindPar(name);
+
+   return par && (par->Kind()==parString) ? par->SetValue(value ? xmlTrueValue : xmlFalseValue) : false;
 }
 
 bool dabc::WorkingProcessor::SetParInt(const char* name, int value)

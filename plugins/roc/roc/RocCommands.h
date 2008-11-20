@@ -2,22 +2,12 @@
 #define ROC_RocCommands
 #include "dabc/Command.h"
 
-#define DABC_ROC_POOLNAME "RocPool"
-
-
 #define DABC_ROC_COMMAND_WRITE_REGISTER "WriteRocRegister"
 #define DABC_ROC_COMMAND_READ_REGISTER "ReadRocRegister"
 #define DABC_ROC_COMMAND_START_DAQ "StartRocDaq"
 #define DABC_ROC_COMMAND_STOP_DAQ "StopRocDaq"
 #define DABC_ROC_COMMAND_START_PULSER "StartRocPulser"
 #define DABC_ROC_COMMAND_STOP_PULSER "StopRocPulser"
-
-#define DABC_ROC_COMPAR_BUFSIZE      "BufferSize"
-#define DABC_ROC_COMPAR_POOL_SIZE    "PoolBuffers"
-
-
-#define DABC_ROC_COMPAR_BOARDIP      "BoardIP"
-#define DABC_ROC_COMPAR_TRANSWINDOW  "TransportWindow"
 
 #define DABC_ROC_COMPAR_BOARDNUMBER   "BoardIdNumber"
 

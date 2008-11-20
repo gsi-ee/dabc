@@ -56,6 +56,9 @@ namespace dabc {
          void SetInt(const char* name, int v);
          int GetInt(const char* name, int deflt = 0) const;
 
+         void SetDouble(const char* name, double v);
+         double GetDouble(const char* name, double deflt = 0.) const;
+
          void SetUInt(const char* name, unsigned v);
          unsigned GetUInt(const char* name, unsigned deflt = 0) const;
 

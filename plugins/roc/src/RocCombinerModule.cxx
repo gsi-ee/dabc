@@ -36,7 +36,7 @@ roc::RocCombinerModule::RocCombinerModule(const char* name,
    r->SetDebugOutput(true);
 
    DOUT1(("new RocCombinerModule %s buff %d", GetName(), fBufferSize));
-   fPool = CreatePool(DABC_ROC_POOLNAME, 1, fBufferSize); // specify pool
+   fPool = CreatePool(roc::xmlRocPool, 1, fBufferSize);
    for(int inp=0; inp < numrocs; inp++)  {
       CreateInput(FORMAT(("Input%d", inp)), fPool, 10);
 

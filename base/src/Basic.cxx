@@ -16,10 +16,16 @@ namespace dabc {
    const char* xmlUserHeaderSize    = "UserHeaderSize";
    const char* xmlUseAcknowledges   = "UseAcknowledges";
 
+   const char* xmlPoolName          = "PoolName";
+   const char* xmlWorkPool          = "WorkPool";
    const char* xmlBufferSize        = "BufferSize";
    const char* xmlNumBuffers        = "NumBuffers";
    const char* xmlNumInputs         = "NumInputs";
    const char* xmlNumOutputs        = "NumOutputs";
+
+   const char* xmlTrueValue         = "true";
+   const char* xmlFalseValue        = "false";
+
 }
 
 

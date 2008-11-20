@@ -9,7 +9,10 @@
 #include <exception>
 #include <stdexcept>
 
-const char* roc::xmlNumRocs = "NumRocs";
+const char* roc::xmlNumRocs         = "NumRocs";
+const char* roc::xmlRocPool         = "RocPool";
+const char* roc::xmlTransportWindow = "TransportWindow";
+const char* roc::xmlBoardIP         = "BoardIP";
 
 roc::RocDevice::RocDevice(Basic* parent, const char* name) :
    dabc::Device(parent, name),
@@ -129,13 +132,14 @@ int roc::RocDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
       return cmd_false;
    }
    // take these from command parameters here:
-   const char* BoardIp = cmd->GetStr(DABC_ROC_COMPAR_BOARDIP,"127.0.0.1");
-   int TransWindow = cmd->GetInt(DABC_ROC_COMPAR_TRANSWINDOW, 30);
+   std::string ip = port->GetCfgStr(xmlBoardIP, "localhost", cmd);
 
-   dabc::BufferSize_t bufsize = cmd->GetInt(DABC_ROC_COMPAR_BUFSIZE, 2048);
+   int TransWindow = port->GetCfgInt(xmlTransportWindow, 30, cmd);
 
-   RocTransport* transport = new RocTransport(this, port, bufsize, BoardIp, TransWindow);
-   DOUT1(("RocDevice::CreateTransport creates new transport instance %p", transport));
+   int bufsize = port->GetCfgInt(dabc::xmlBufferSize, 2048, cmd);
+
+   RocTransport* transport = new RocTransport(this, port, bufsize, ip.c_str(), TransWindow);
+   DOUT1(("RocDevice::CreateTransport ip %s win:%d buf:%d ", ip.c_str(), TransWindow, bufsize));
 
    transport->AssignProcessorToThread(ProcessorThread());
 

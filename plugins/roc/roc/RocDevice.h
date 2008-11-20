@@ -17,6 +17,9 @@ namespace dabc{
 namespace roc {
 
    extern const char* xmlNumRocs;
+   extern const char* xmlRocPool;
+   extern const char* xmlTransportWindow;
+   extern const char* xmlBoardIP;
 
    enum ERocBufferTypes {
       rbt_RawRocData     = 234

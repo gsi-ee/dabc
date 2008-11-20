@@ -14,26 +14,33 @@
 
 #include "SysCoreDefines.h"
 
+const char* roc::xmlDoCalibr          = "DoCalibr";
+const char* roc::xmlRocIp             = "RocIp";
+const char* roc::xmlMbsServerKind     = "MbsServerKind";
+const char* roc::xmlRawFile           = "RawFile";
+const char* roc::xmlRawFileLimit      = "RawFileLimit";
+const char* roc::xmlCalibrFile        = "CalibrFile" ;
+const char* roc::xmlCalibrFileLimit   = "CalibrFileLimit";
+
+
 roc::ReadoutApplication::ReadoutApplication(const char* name) :
    dabc::Application(name ? name : "RocPlugin")
 {
-   //new dabc::StrParameter(this,DABC_ROC_COMPAR_BOARDIP, "140.181.66.173"); // lxi010.gsi.de
-   // todo: later provide more than one roc board as input
+   CreateParInt(roc::xmlDoCalibr, 1);
 
-   CreateParInt(roc::xmlNumRocs, 1);
+   CreateParInt(roc::xmlNumRocs, 3);
 
-   for (int nr=0;nr<15;nr++)
-      CreateParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nr)));
+   for (int nr=0; nr<NumRocs(); nr++)
+      CreateParStr(FORMAT(("%s%d", xmlRocIp, nr)));
    CreateParInt(dabc::xmlBufferSize, 8192);
+   CreateParInt(dabc::xmlNumBuffers, 100);
 
-   CreateParInt(DABC_ROC_COMPAR_TRANSWINDOW, 30);
-   CreateParInt(DABC_ROC_COMPAR_POOL_SIZE, 100);
-   CreateParStr(DABC_ROC_PAR_OUTFILE, "");
-   CreateParInt(DABC_ROC_PAR_OUTFILELIMIT, 0);
-   CreateParStr(DABC_ROC_PAR_DATASERVER, "Stream");
-   CreateParInt(DABC_ROC_PAR_DOCALIBR, 1);
-   CreateParStr(DABC_ROC_PAR_CALIBRFILE, "");
-   CreateParInt(DABC_ROC_PAR_CALIBRFILELIMIT, 0);
+   CreateParStr(xmlMbsServerKind, "Stream");
+
+   CreateParStr(xmlRawFile, "");
+   CreateParInt(xmlRawFileLimit, 0);
+   CreateParStr(xmlCalibrFile, "");
+   CreateParInt(xmlCalibrFileLimit, 0);
 
    DOUT1(("!!!! Data server plugin created %s !!!!", GetName()));
 }
@@ -41,7 +48,7 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
 int roc::ReadoutApplication::DataServerKind() const
 {
    int kind = mbs::NoServer;
-   std::string servertype = GetParStr(DABC_ROC_PAR_DATASERVER);
+   std::string servertype = GetParStr(xmlMbsServerKind);
    if(servertype.find("Stream")!=std::string::npos)
       kind=mbs::StreamServer;
    else
@@ -53,7 +60,7 @@ int roc::ReadoutApplication::DataServerKind() const
 std::string roc::ReadoutApplication::RocIp(int nreadout) const
 {
    if ((nreadout<0) || (nreadout>=NumRocs())) return "";
-   return GetParStr(FORMAT(("%s%d", DABC_ROC_PAR_ROCIP, nreadout)));
+   return GetParStr(FORMAT(("%s%d", xmlRocIp, nreadout)));
 }
 
 bool roc::ReadoutApplication::CreateAppModules()
@@ -65,7 +72,9 @@ bool roc::ReadoutApplication::CreateAppModules()
    std::string devname = "ROC"; // parametrize this later?
    fFullDeviceName = "Devices/"+devname;
 
-   dabc::mgr()->CreateMemoryPool(DABC_ROC_POOLNAME, BufferSize(), NumPoolBuffers());
+   dabc::mgr()->CreateMemoryPool(roc::xmlRocPool,
+                                 GetParInt(dabc::xmlBufferSize, 8192),
+                                 GetParInt(dabc::xmlNumBuffers, 100));
 
    if (DoTaking()) {
       if (!dabc::mgr()->FindDevice(devname.c_str())) {
@@ -106,9 +115,7 @@ bool roc::ReadoutApplication::CreateAppModules()
 
       for(int t=0; t<NumRocs(); t++) {
          cmd= new dabc::CmdCreateTransport(); // container for additional board parameters
-         cmd->SetStr(DABC_ROC_COMPAR_BOARDIP, RocIp(t));
-         cmd->SetInt(DABC_ROC_COMPAR_BUFSIZE, BufferSize());
-         cmd->SetInt(DABC_ROC_COMPAR_TRANSWINDOW, TransWindow());
+         cmd->SetStr(roc::xmlBoardIP, RocIp(t));
          res=dabc::mgr()->CreateTransport(fFullDeviceName.c_str(), FORMAT(("RocComb/Ports/Input%d", t)), cmd);
          DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t).c_str(), DBOOL(res)));
          if(!res) return false;
@@ -171,7 +178,7 @@ bool roc::ReadoutApplication::CreateAppModules()
       cmd->SetInt("ServerKind", DataServerKind()); //mbs::StreamServer ,mbs::TransportServer
       //      cmd->SetInt("PortMin", 6002);
       //      cmd->SetInt("PortMax", 7000);
-      cmd->SetUInt("BufferSize", BufferSize());
+      cmd->SetUInt("BufferSize", GetParInt(dabc::xmlBufferSize, 8192));
 
       const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
       res=dabc::mgr()->CreateTransport("MBS", portname, cmd);

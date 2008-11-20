@@ -136,7 +136,7 @@ roc::RocCalibrModule::RocCalibrModule(const char* name,
    int numoutputs = cmd->GetInt(dabc::xmlNumOutputs, 1);
 
    DOUT1(("new RocCalibrModule %s buff %d", GetName(), fBufferSize));
-   fPool = CreatePool(DABC_ROC_POOLNAME, 1, fBufferSize); // specify pool
+   fPool = CreatePool(roc::xmlRocPool, 1, fBufferSize);
 
    CreateInput("Input", fPool, 10);
 

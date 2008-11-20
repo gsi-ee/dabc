@@ -393,16 +393,23 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
 
       if (ProcessorThread()) isitself = ProcessorThread()->IsItself();
 
-      if (evid == parModified) {
-         // check if event of that parameter in the queue
-         for (unsigned n=0;n<fParsQueue.Size();n++)
-            if (fParsQueue.ItemPtr(n)->par == par) return;
-      } else
-      if (evid == parDestroy) {
-         // disable all previous events, while parameter no longer valid
-         for (unsigned n=0;n<fParsQueue.Size();n++)
-            if (fParsQueue.ItemPtr(n)->par == par)
-               fParsQueue.ItemPtr(n)->processed = true;
+      switch (evid) {
+         case parCreated:
+            if (fCfg) par->Read(*fCfg);
+            break;
+
+         case parModified:
+            // check if event of that parameter in the queue
+            for (unsigned n=0;n<fParsQueue.Size();n++)
+                if (fParsQueue.ItemPtr(n)->par == par) return;
+            break;
+
+         case parDestroy:
+            // disable all previous events, while parameter no longer valid
+            for (unsigned n=0;n<fParsQueue.Size();n++)
+               if (fParsQueue.ItemPtr(n)->par == par)
+                  fParsQueue.ItemPtr(n)->processed = true;
+            break;
       }
 
       if (!isitself) fParsQueue.Push(ParamRec(par,evid));
@@ -1822,8 +1829,6 @@ void dabc::Manager::ParameterEvent(Parameter* par, int event)
 
    {
       LockGuard lock(fMgrMutex);
-
-      if (fCfg && (event==parCreated)) par->Read(*fCfg);
 
       if ((event==parCreated) && par->NeedTimeout()) {
          if (fTimedPars.size()==0) { activate = true; interval = 0.; }

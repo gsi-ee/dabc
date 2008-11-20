@@ -22,11 +22,15 @@ namespace dabc {
    extern const char* xmlUserHeaderSize;
    extern const char* xmlUseAcknowledges;
 
+   extern const char* xmlPoolName;
+   extern const char* xmlWorkPool;
    extern const char* xmlBufferSize;
    extern const char* xmlNumBuffers;
    extern const char* xmlNumInputs;
    extern const char* xmlNumOutputs;
 
+   extern const char* xmlTrueValue;
+   extern const char* xmlFalseValue;
 
    class Basic {
       friend class Folder;

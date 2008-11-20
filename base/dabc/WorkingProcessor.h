@@ -120,6 +120,7 @@ namespace dabc {
          bool SetParStr(const char* name, const std::string& value) { return SetParStr(name, value.c_str()); }
          bool SetParInt(const char* name, int value);
          bool SetParDouble(const char* name, double value);
+         bool SetParBool(const char* name, bool value);
 
          bool SetParFixed(const char* name, bool on = true);
          void LockUnlockPars(bool on);

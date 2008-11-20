@@ -99,7 +99,7 @@ const char* dabc::Command::GetStr(const char* name, const char* deflt) const
 
 void dabc::Command::SetBool(const char* name, bool v)
 {
-   SetPar(name, v ? "true": "false");
+   SetPar(name, v ? xmlTrueValue : xmlFalseValue);
 }
 
 bool dabc::Command::GetBool(const char* name, bool deflt) const
@@ -107,8 +107,8 @@ bool dabc::Command::GetBool(const char* name, bool deflt) const
    const char* val = GetPar(name);
    if (val==0) return deflt;
 
-   if (strcmp(val,"true")==0) return true; else
-   if (strcmp(val,"false")==0) return false;
+   if (strcmp(val, xmlTrueValue)==0) return true; else
+   if (strcmp(val, xmlFalseValue)==0) return false;
 
    return deflt;
 }
@@ -124,8 +124,25 @@ int dabc::Command::GetInt(const char* name, int deflt) const
 {
    const char* val = GetPar(name);
    if (val==0) return deflt;
+   int res = 0;
+   if (sscanf(val, "%d", &res) != 1) return deflt;
+   return res;
+}
 
-   return atoi(val);
+void dabc::Command::SetDouble(const char* name, double v)
+{
+   char buf[100];
+   sprintf(buf,"%lf",v);
+   SetPar(name, buf);
+}
+
+double dabc::Command::GetDouble(const char* name, double deflt) const
+{
+   const char* val = GetPar(name);
+   if (val==0) return deflt;
+   double res = 0.;
+   if (sscanf(val, "%lf", &res) != 1) return deflt;
+   return res;
 }
 
 void dabc::Command::SetUInt(const char* name, unsigned v)

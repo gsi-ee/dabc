@@ -27,20 +27,50 @@ dabc::ModuleItem::~ModuleItem()
       fModule->ItemDestroyed(this);
 }
 
-int dabc::ModuleItem::GetCfgInt(const char* name, int dfltvalue)
+std::string dabc::ModuleItem::GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd)
 {
+   std::string v = GetModule()->GetParStr(name, dfltvalue);
+   v = GetParStr(name, v);
+   if (cmd) v = cmd->GetStr(name, v.c_str());
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParStr(name, v.c_str());
+      if (par) par->SetFixed(true);
+   }
+   return v;
+}
+
+double dabc::ModuleItem::GetCfgDouble(const char* name, double dfltvalue, Command* cmd)
+{
+   dfltvalue = GetModule()->GetParDouble(name, dfltvalue);
+   dfltvalue = GetParDouble(name, dfltvalue);
+   if (cmd) dfltvalue = cmd->GetDouble(name, dfltvalue);
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParDouble(name, dfltvalue);
+      if (par) par->SetFixed(true);
+   }
+   return dfltvalue;
+}
+
+int dabc::ModuleItem::GetCfgInt(const char* name, int dfltvalue, Command* cmd)
+{
+   dfltvalue = GetModule()->GetParInt(name, dfltvalue);
+   dfltvalue = GetParInt(name, dfltvalue);
+   if (cmd) dfltvalue = cmd->GetInt(name, dfltvalue);
    if (FindPar(name)==0) {
       Parameter* par = CreateParInt(name, dfltvalue);
       if (par) par->SetFixed(true);
    }
-   return GetParInt(name, dfltvalue);
+   return dfltvalue;
 }
 
-bool dabc::ModuleItem::GetCfgBool(const char* name, bool dfltvalue)
+bool dabc::ModuleItem::GetCfgBool(const char* name, bool dfltvalue, Command* cmd)
 {
+   dfltvalue = GetModule()->GetParBool(name, dfltvalue);
+   dfltvalue = GetParBool(name, dfltvalue);
+   if (cmd) dfltvalue = cmd->GetBool(name, dfltvalue);
    if (FindPar(name)==0) {
       Parameter* par = CreateParBool(name, dfltvalue);
       if (par) par->SetFixed(true);
    }
-   return GetParBool(name, dfltvalue);
+   return dfltvalue;
 }

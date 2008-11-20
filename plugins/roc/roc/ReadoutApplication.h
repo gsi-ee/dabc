@@ -11,21 +11,24 @@
 #include "roc/RocFactory.h"
 #include "roc/RocDevice.h"
 
-#define DABC_ROC_PAR_DATASERVER      "DataServerKind"
-#define DABC_ROC_PAR_ROCIP           "RocIp"
-#define DABC_ROC_PAR_OUTFILE         "OutFile"
-#define DABC_ROC_PAR_OUTFILELIMIT    "OutFileLimit"
-#define DABC_ROC_PAR_DOCALIBR        "DoCalibr"
-#define DABC_ROC_PAR_CALIBRFILE      "CalibrFile"
-#define DABC_ROC_PAR_CALIBRFILELIMIT "CalibrFileLimit"
-
 namespace roc {
+
+   extern const char* xmlDoCalibr;
+   extern const char* xmlRocIp;
+   extern const char* xmlMbsServerKind;
+   extern const char* xmlRawFile;
+   extern const char* xmlRawFileLimit;
+   extern const char* xmlCalibrFile;
+   extern const char* xmlCalibrFileLimit;
 
    class ReadoutApplication : public dabc::Application {
       public:
          ReadoutApplication(const char* name);
 
          virtual bool IsModulesRunning();
+
+         bool DoTaking() const { return GetParInt(xmlDoCalibr, 0) < 2; }
+         bool DoCalibr() const { return GetParInt(xmlDoCalibr, 0) > 0; }
 
          /** Number of ROCs connected to ReadoutModule*/
          int   NumRocs() const { return GetParInt(roc::xmlNumRocs, 1); }
@@ -36,20 +39,10 @@ namespace roc {
          /** id number of Mbs server (stream, transport)*/
          int DataServerKind() const;
 
-         /** Total size of dabc buffer containing served Mbs events*/
-         int BufferSize() const { return GetParInt(dabc::xmlBufferSize, 8192);}
-
-         int TransWindow() const { return GetParInt(DABC_ROC_COMPAR_TRANSWINDOW, 30);}
-
-         /** Number of buffers each input/output port of readout module*/
-         int   NumPoolBuffers() const {return GetParInt(DABC_ROC_COMPAR_POOL_SIZE,50);}
-
-         std::string OutputFileName() const { return GetParStr(DABC_ROC_PAR_OUTFILE, ""); }
-         int OutFileLimit() const { return GetParInt(DABC_ROC_PAR_OUTFILELIMIT, 0); }
-         bool DoTaking() const { return GetParInt(DABC_ROC_PAR_DOCALIBR, 0) < 2; }
-         bool DoCalibr() const { return GetParInt(DABC_ROC_PAR_DOCALIBR, 0) > 0; }
-         std::string CalibrFileName() const { return GetParStr(DABC_ROC_PAR_CALIBRFILE, ""); }
-         int CalibrFileLimit() const { return GetParInt(DABC_ROC_PAR_CALIBRFILELIMIT, 0); }
+         std::string OutputFileName() const { return GetParStr(xmlRawFile, ""); }
+         int OutFileLimit() const { return GetParInt(xmlRawFileLimit, 0); }
+         std::string CalibrFileName() const { return GetParStr(xmlCalibrFile, ""); }
+         int CalibrFileLimit() const { return GetParInt(xmlCalibrFileLimit, 0); }
 
          virtual bool CreateAppModules();
 
