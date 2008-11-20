@@ -16,8 +16,6 @@ BNETDIRS          = $(BNETDIR)/src
 DABCBNET_LIBNAME  = $(LIB_PREFIX)DabcBnet
 DABCBNET_LIB      = $(TGTDLLPATH)/$(DABCBNET_LIBNAME).$(DllSuf)
 
-DABCBNET_EXE      = $(BNETDIR)/bnet_exe
-
 ## must be similar for every module
 
 BNETEXE_S        = $(BNETDIRS)/bnet_exe.$(SrcSuf)
@@ -36,10 +34,9 @@ ALLDEPENDENC     += $(BNET_D) $(BNETEXE_D)
 
 libs:: $(DABCBNET_LIB)
 
-exes:: $(DABCBNET_EXE)
+exes::
 
 clean::
-	rm -f $(DABCBNET_EXE)
 
 
 ##### local rules #####
