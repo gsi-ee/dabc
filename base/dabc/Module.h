@@ -177,7 +177,7 @@ namespace dabc {
          virtual void OnThreadAssigned();
          virtual int PreviewCommand(Command* cmd);
 
-         int GetCfgInt(const char* name, int dfltvalue, bool checkapp = true);
+         virtual WorkingProcessor* GetCfgMaster();
 
        private:
 

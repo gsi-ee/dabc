@@ -54,6 +54,8 @@ namespace dabc {
 
          // this all about parameters list, which can be managed for any working processor
 
+         Folder* GetTopParsFolder();
+
          Parameter* FindPar(const char* name) const;
 
          std::string GetParStr(const char* name, const std::string& defvalue = "") const;
@@ -61,7 +63,16 @@ namespace dabc {
          double GetParDouble(const char* name, double defvalue = 0.) const;
          bool GetParBool(const char* name, bool defvalue = false) const;
 
-         Folder* GetTopParsFolder();
+         // these methods should be used either in constructor or in
+         // dependent objects constructor (like Transport for Port)
+         // Cfg means that parameter with given name will be created and its value
+         // will be delivered back. Also will be checked if appropriate parameter exists in module itslef
+         // As last possibility, command values will be searched.
+         // Priority: Command(max), Own parameter, External parameter (min)
+         std::string GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd = 0);
+         int GetCfgInt(const char* name, int dfltvalue, Command* cmd = 0);
+         double GetCfgDouble(const char* name, double dfltvalue, Command* cmd = 0);
+         bool GetCfgBool(const char* name, bool dfltvalue, Command* cmd = 0);
 
       protected:
 
@@ -128,6 +139,7 @@ namespace dabc {
          Folder* MakeFolderForParam(const char* parname);
          void SetParsHolder(Folder* holder, const char* subfolder = 0);
          void SetParDflts(int visibility = 1, bool fixed = false);
+         virtual WorkingProcessor* GetCfgMaster() { return 0; }
 
          // this method is called after parameter is changed
          // user may add its reaction on this event, but cannot

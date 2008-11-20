@@ -307,6 +307,63 @@ bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const
    return defvalue;
 }
 
+std::string dabc::WorkingProcessor::GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd)
+{
+   std::string v = dfltvalue;
+   if (GetCfgMaster())
+      v = GetCfgMaster()->GetParStr(name, dfltvalue);
+   v = GetParStr(name, v);
+   if (cmd)
+      v = cmd->GetStr(name, v.c_str());
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParStr(name, v.c_str());
+      if (par) par->SetFixed(true);
+   }
+   return v;
+}
+
+double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, Command* cmd)
+{
+   if (GetCfgMaster())
+      dfltvalue = GetCfgMaster()->GetParDouble(name, dfltvalue);
+   dfltvalue = GetParDouble(name, dfltvalue);
+   if (cmd)
+      dfltvalue = cmd->GetDouble(name, dfltvalue);
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParDouble(name, dfltvalue);
+      if (par) par->SetFixed(true);
+   }
+   return dfltvalue;
+}
+
+int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* cmd)
+{
+   if (GetCfgMaster())
+      dfltvalue = GetCfgMaster()->GetParInt(name, dfltvalue);
+   dfltvalue = GetParInt(name, dfltvalue);
+   if (cmd)
+      dfltvalue = cmd->GetInt(name, dfltvalue);
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParInt(name, dfltvalue);
+      if (par) par->SetFixed(true);
+   }
+   return dfltvalue;
+}
+
+bool dabc::WorkingProcessor::GetCfgBool(const char* name, bool dfltvalue, Command* cmd)
+{
+   if (GetCfgMaster())
+      dfltvalue = GetCfgMaster()->GetParBool(name, dfltvalue);
+   dfltvalue = GetParBool(name, dfltvalue);
+   if (cmd)
+      dfltvalue = cmd->GetBool(name, dfltvalue);
+   if (FindPar(name)==0) {
+      Parameter* par = CreateParBool(name, dfltvalue);
+      if (par) par->SetFixed(true);
+   }
+   return dfltvalue;
+}
+
 bool dabc::WorkingProcessor::SetParStr(const char* name, const char* value)
 {
    dabc::Parameter* par = FindPar(name);

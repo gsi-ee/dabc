@@ -45,7 +45,7 @@ void dabc::CommandDefinition::AddArgument(const char* name,
    }
 
    fXml += format("  <argument name=\"%s\" type=\"%s\" value=\"\" required=\"%s\"/>\n",
-                      name, styp, (required ? "true" : "false"));
+                      name, styp, (required ? xmlTrueValue : xmlFalseValue));
 }
 
 const char* dabc::CommandDefinition::GetXml()

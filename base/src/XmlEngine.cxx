@@ -919,7 +919,6 @@ void dabc::XmlEngine::SkipEmpty(XMLNodePointer_t &xmlnode)
    if (IsEmptyNode(xmlnode)) ShiftToNext(xmlnode);
 }
 
-
 //______________________________________________________________________________
 void dabc::XmlEngine::CleanNode(XMLNodePointer_t xmlnode)
 {

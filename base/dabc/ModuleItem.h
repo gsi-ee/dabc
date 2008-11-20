@@ -48,7 +48,7 @@ namespace dabc {
    };
 
    class ModuleItem : public Folder,
-                      protected WorkingProcessor {
+                      public WorkingProcessor {
       friend class Module;
 
       protected:
@@ -62,21 +62,13 @@ namespace dabc {
          inline int GetType() const { return fItemType; }
          inline unsigned ItemId() const { return fItemId; }
 
-         // these methods should be used either in item constructor or in
-         // dependent objects constructor (like Transport for Port)
-         // Cfg means that parameter with given name will be created and its value
-         // will be delivered back. Also will be checked if appropriate parameter exists in module itslef
-
-         std::string GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd = 0);
-         int GetCfgInt(const char* name, int dfltvalue, Command* cmd = 0);
-         double GetCfgDouble(const char* name, double dfltvalue, Command* cmd = 0);
-         bool GetCfgBool(const char* name, bool dfltvalue, Command* cmd = 0);
-
       protected:
          void SetItemId(unsigned id) { fItemId = id; }
 
          void ProduceUserEvent(uint16_t evid)
            { fModule->GetUserEvent(this, evid); }
+
+         virtual WorkingProcessor* GetCfgMaster() { return GetModule(); }
 
          virtual void DoStart() {}
          virtual void DoStop() {}

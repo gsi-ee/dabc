@@ -90,18 +90,9 @@ dabc::Module::~Module()
    DOUT5((" dabc::Module::~Module() %s done", GetName()));
 }
 
-int dabc::Module::GetCfgInt(const char* name, int dfltvalue, bool checkapp)
+dabc::WorkingProcessor* dabc::Module::GetCfgMaster()
 {
-   if (checkapp) {
-      Application* app = dabc::mgr()->GetApp();
-      if (app) dfltvalue = app->GetParInt(name, dfltvalue);
-   }
-
-   if (FindPar(name)==0) {
-      Parameter* par = CreateParInt(name, dfltvalue);
-      if (par) par->SetFixed(true);
-   }
-   return GetParInt(name, dfltvalue);
+   return dabc::mgr()->GetApp();
 }
 
 void dabc::Module::OnThreadAssigned()
