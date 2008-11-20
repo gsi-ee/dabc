@@ -192,17 +192,11 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateTransport"; }
 
-         CmdCreateTransport() : Command(CmdName()) {}
-
-         CmdCreateTransport(const char* portname) :
+         CmdCreateTransport(const char* devname, const char* portname) :
             Command(CmdName())
          {
-            SetArguments(this, portname);
-         }
-
-         static void SetArguments(Command* cmd, const char* portname)
-         {
-            cmd->SetPar("PortName", portname);
+            SetPar("DevName", devname);
+            SetPar("PortName", portname);
          }
    };
 
@@ -215,22 +209,25 @@ namespace dabc {
                             const char* device = 0,
                             const char* trthread = 0) :
             Command(CmdName())
-            {
-               SetPar("Port1Name", port1fullname);
-               SetPar("Port2Name", port2fullname);
-               SetPar("Device", device);
-               SetPar("TrThread", trthread);
-            }
+         {
+            SetPar("Port1Name", port1fullname);
+            SetPar("Port2Name", port2fullname);
+            SetPar("Device", device);
+            SetPar("TrThread", trthread);
+         }
    };
 
-   class CommandDirectConnect : public CmdCreateTransport {
+   class CmdDirectConnect : public Command {
       public:
-         CommandDirectConnect(bool isserver, const char* portname, bool immidiate_reply = false) :
-            CmdCreateTransport(portname)
-            {
-               SetBool("IsServer", isserver);
-               SetBool("ImmidiateReply", immidiate_reply);
-            }
+         static const char* CmdName() { return "DirectConnect"; }
+
+         CmdDirectConnect(bool isserver, const char* portname, bool immidiate_reply = false) :
+            Command(CmdName())
+         {
+            SetPar("PortName", portname);
+            SetBool("IsServer", isserver);
+            SetBool("ImmidiateReply", immidiate_reply);
+         }
    };
 
    class CommandSetParameter : public Command {
@@ -587,7 +584,7 @@ namespace dabc {
 
          bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
 
-         bool CreateTransport(const char* devicename, const char* portname, Command* cmd = 0);
+         bool CreateTransport(const char* devicename, const char* portname);
 
          bool CreateDataInputTransport(const char* portname, const char* thrdname,
                                        const char* typ, const char* name,

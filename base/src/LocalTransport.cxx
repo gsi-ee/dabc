@@ -244,7 +244,7 @@ int dabc::LocalDevice::ExecuteCommand(dabc::Command* cmd)
          } else {
             cmd_res = cmd_postponed;
             dabc::CommandsSet::Completed(set, 3.);
-            DOUT1(("LocalTransport complets commandset %p", set));
+            DOUT4(("LocalTransport completes commandset %p", set));
          }
       }
    } else

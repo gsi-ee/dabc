@@ -160,11 +160,11 @@ bool dabc::CommandReceiver::Submit(Command* cmd)
 {
    // this method is called from outside to provide command for execution
    // it should be always thread-safe!
-   // If object has no own thread, processing of command must be done immideately
+   // If object has no own thread, processing of command must be done immediately
    // If special thread is exists, one should put command in the queue and
    // ProcessCommand should be called from the thread
 
-   // Here is default implementation - command is processed immidiately
+   // Here is default implementation - command is processed immediately
 
    // Method returns true when it accept command for execution
 

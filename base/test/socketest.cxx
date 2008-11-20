@@ -125,7 +125,7 @@ void TestNewSocketDevice(int numc, char* args[])
       // this is server
       m = new TestModuleAsync("Sender", 0);
 
-      cmd = new dabc::CommandDirectConnect(true, "Modules/Sender/Ports/Output");
+      cmd = new dabc::CmdDirectConnect(true, "Modules/Sender/Ports/Output");
 
    } else {
       // this is client
@@ -141,7 +141,7 @@ void TestNewSocketDevice(int numc, char* args[])
 
       m = new TestModuleAsync("Receiver", 2);
 
-      cmd = new dabc::CommandDirectConnect(false, "Modules/Receiver/Ports/Input");
+      cmd = new dabc::CmdDirectConnect(false, "Modules/Receiver/Ports/Input");
 
       cmd->SetPar("ServerId", serverid);
       cmd->SetBool("ServerUseAckn", true);

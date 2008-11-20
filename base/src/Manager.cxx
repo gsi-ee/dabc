@@ -510,14 +510,14 @@ dabc::Port* dabc::Manager::FindPort(const char* name)
 
 dabc::Device* dabc::Manager::FindDevice(const char* name)
 {
-   dabc::Device* dev =
-      dynamic_cast<dabc::Device*> (FindChild(name));
-   if (dev!=0) return dev;
+   dabc::Device* dev = 0;
 
    Folder* folder = GetDevicesFolder();
-   if (folder==0) return 0;
+   if (folder) dev = dynamic_cast<dabc::Device*> (folder->FindChild(name));
 
-   return dynamic_cast<dabc::Device*> (folder->FindChild(name));
+   if (dev==0) dev = dynamic_cast<dabc::Device*> (FindChild(name));
+
+   return dev;
 }
 
 dabc::LocalDevice* dabc::Manager::FindLocalDevice(const char* name)
@@ -853,6 +853,17 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
 
        cmd_res = cmd_bool(dev!=0);
    } else
+   if (cmd->IsName(CmdCreateTransport::CmdName())) {
+      const char* devname = cmd->GetStr("DevName");
+      Device* dev = FindDevice(devname);
+
+      if (dev==0)
+         cmd_res = cmd_false;
+      else {
+         dev->Submit(cmd);
+         cmd_res = cmd_postponed;
+      }
+   } else
    if (cmd->IsName(CmdCreateThread::CmdName())) {
       const char* thrdname = cmd->GetStr("ThrdName");
       const char* thrdclass = cmd->GetStr("ThrdClass");
@@ -1035,8 +1046,8 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
 
             remrecvname = std::string("Devices/") + cmd->GetStr("Device");
 
-            newcmd = new CommandDirectConnect(true, port1name, true);
-            // copy all aditional values from
+            newcmd = new CmdDirectConnect(true, port1name, true);
+            // copy all additional values from
          }
 
          newcmd->AddValuesFrom(cmd, false);
@@ -1324,12 +1335,12 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
       dabc::Command::Reply(prnt, cmd->GetResult());
    } else
 
-   if (cmd->IsName(CommandDirectConnect::CmdName())) {
+   if (cmd->IsName(CmdDirectConnect::CmdName())) {
 
       int parentid = cmd->GetInt("#_PCID_", -1);
       if (parentid<0) return true;
 
-//      DOUT1(("Reply of CommandDirectConnect parent = %d", parentid));
+      DOUT1(("!!!!!!!!!!!!  Reply of CmdDirectConnect parent = %d", parentid));
 
       bool res = cmd->GetResult();
       cmd->ClearResult();
@@ -1349,7 +1360,7 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
       std::string manager2name;
       const char* port2name = ExtractManagerName(prnt->GetPar("Port2Name"), manager2name);
 
-      Command* newcmd = new CommandDirectConnect(false, port2name, false);
+      Command* newcmd = new CmdDirectConnect(false, port2name, false);
       newcmd->AddValuesFrom(prnt, false); // copy initial settings
       newcmd->AddValuesFrom(cmd, false);  // copy new values from first command
       newcmd->SetInt("#_PCID_", parentid);
@@ -1899,28 +1910,9 @@ bool dabc::Manager::CreateModule(const char* classname, const char* modulename, 
    return Execute(new CommandCreateModule(classname, modulename, thrdname));
 }
 
-bool dabc::Manager::CreateTransport(const char* devicename, const char* portname, Command* cmd)
+bool dabc::Manager::CreateTransport(const char* devicename, const char* portname)
 {
-   Device* dev = FindDevice(devicename);
-   if (dev==0) {
-      EOUT(("Device %s not exists", devicename));
-      dabc::Command::Reply(cmd, false);
-      return false;
-   }
-
-   if (cmd==0)
-      cmd = new CmdCreateTransport(portname);
-   else {
-       if (!cmd->IsName(CmdCreateTransport::CmdName())) {
-           EOUT(("Wrong command name %s", cmd->GetName()));
-           dabc::Command::Reply(cmd, false);
-           return false;
-       }
-
-       CmdCreateTransport::SetArguments(cmd, portname);
-   }
-
-   return dev->Execute(cmd);
+   return Execute(new CmdCreateTransport(devicename, portname));
 }
 
 bool dabc::Manager::CreateDataInputTransport(const char* portname, const char* thrdname,

@@ -142,12 +142,12 @@ int main(int numc, char* args[])
       mgr.MakeThreadForModule(m);
       mgr.CreateMemoryPools();
 
-      dabc::Command* cmd = new dabc::CmdCreateTransport();
+      dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", "Modules/Generator/Ports/Output");
       cmd->SetInt("ServerKind", mbs::TransportServer);
 //      cmd->SetInt("PortMin", 6002);
 //      cmd->SetInt("PortMax", 7000);
       cmd->SetUInt("BufferSize", BUFFERSIZE);
-      if (!mgr.CreateTransport("MBS", "Modules/Generator/Ports/Output", cmd)) {
+      if (!mgr.Execute(cmd)) {
          EOUT(("Cannot create MBS transport server"));
          return 0;
       }

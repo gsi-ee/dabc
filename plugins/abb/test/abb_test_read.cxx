@@ -45,7 +45,6 @@ int main(int numc, char* args[])
    dabc::StandaloneManager manager(0, nodeid, numnodes);
 
    std::string devname="ABB";
-   std::string fulldevname="Devices/"+devname;
    dabc::Command* dcom= new dabc::CmdCreateDevice("AbbDevice", devname.c_str());
       // set additional parameters for abb device here:
    dcom->SetInt(ABB_PAR_BOARDNUM, BOARD_NUM);
@@ -71,7 +70,7 @@ int main(int numc, char* args[])
    res= manager.CreateMemoryPools();
    DOUT1(("Create memory pools result=%s", DBOOL(res)));
 
-   res=manager.CreateTransport(fulldevname.c_str(),"ABB_Readout/Ports/Input");
+   res=manager.CreateTransport(devname.c_str(), "ABB_Readout/Ports/Input");
    DOUT1(("Connected module to ABB device = %s", DBOOL(res)));
    manager.StartModule("ABB_Readout");
    DOUT1(("Started readout module...."));

@@ -111,9 +111,9 @@ bool roc::ReadoutApplication::CreateAppModules()
    //// connect module to ROC device, one transport for each board:
 
       for(int t=0; t<NumRocs(); t++) {
-         cmd= new dabc::CmdCreateTransport(); // container for additional board parameters
+         cmd = new dabc::CmdCreateTransport(devname.c_str(), FORMAT(("RocComb/Ports/Input%d", t))); // container for additional board parameters
          cmd->SetStr(roc::xmlBoardIP, RocIp(t));
-         res=dabc::mgr()->CreateTransport(fFullDeviceName.c_str(), FORMAT(("RocComb/Ports/Input%d", t)), cmd);
+         res = dabc::mgr()->Execute(cmd);
          DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t).c_str(), DBOOL(res)));
          if(!res) return false;
       }
@@ -171,14 +171,14 @@ bool roc::ReadoutApplication::CreateAppModules()
       }
 
    ///// connect module to mbs server:
-      cmd = new dabc::CmdCreateTransport();
+      const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
+      cmd = new dabc::CmdCreateTransport("MBS", portname);
       cmd->SetInt("ServerKind", DataServerKind()); //mbs::StreamServer ,mbs::TransportServer
       //      cmd->SetInt("PortMin", 6002);
       //      cmd->SetInt("PortMax", 7000);
       cmd->SetUInt("BufferSize", GetParInt(dabc::xmlBufferSize, 8192));
 
-      const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
-      res=dabc::mgr()->CreateTransport("MBS", portname, cmd);
+      res = dabc::mgr()->Execute(cmd);
       DOUT1(("Connected readout module output to Mbs server = %s", DBOOL(res)));
       if(!res) return false;
    }

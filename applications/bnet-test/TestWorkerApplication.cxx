@@ -101,14 +101,6 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
       {
       /// here creation of pci transport from abb device with connection to given input port:
         res=dabc::mgr()->CreateTransport(abbdevname.c_str(), portname);
-//        dabc::Command* concom= new dabc::CmdCreateTransport(portname);
-//        dabc::Device* abbdev=dabc::mgr()->FindDevice(abbdevname.c_str());
-//        if(abbdev==0) return false;
-//        bool res=abbdev->Execute(concom);
-/////// following  to test failure:
-//       DOUT1(("CreateReadout Sleeping 60s ..."));
-//       ::sleep(60);
-//       DOUT1(("done."));
       }
 
    return true;
