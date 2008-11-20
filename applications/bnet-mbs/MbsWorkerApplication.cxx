@@ -44,7 +44,7 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
       dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
    } else {
 
-      dabc::Command* cmd = new dabc::CmdCreateDataTransport;
+      dabc::Command* cmd = new dabc::CmdCreateDataTransport(portname, "MbsIOThrd");
 
       DOUT1(("!!!!! Create readout %d with par %s", portnumber, ReadoutPar(portnumber).c_str()));
 
@@ -65,8 +65,6 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
          dabc::Command::Finalise(cmd);
          return false;
       }
-
-      dabc::CmdCreateDataTransport::SetArgs(cmd, portname, "MbsIOThrd");
 
       bool res = dabc::mgr()->Execute(cmd, 10);
 
@@ -108,7 +106,7 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
    if (outfile.length()==0)
       return bnet::WorkerApplication::CreateStorage(portname);
 
-   dabc::Command* cmd = new dabc::CmdCreateDataTransport;
+   dabc::Command* cmd = new dabc::CmdCreateDataTransport(portname, "MbsIOThrd");
 
    if (!cmd->ReadFromString(outfile.c_str(), true)) {
       EOUT(("Cannot decode command parameters for output %s", outfile.c_str()));
@@ -127,8 +125,6 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
       dabc::Command::Finalise(cmd);
       return false;
    }
-
-   dabc::CmdCreateDataTransport::SetArgs(cmd, portname, "MbsIOThrd");
 
    bool res = dabc::mgr()->Execute(cmd, 5);
 

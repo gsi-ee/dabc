@@ -1915,64 +1915,6 @@ bool dabc::Manager::CreateTransport(const char* devicename, const char* portname
    return Execute(new CmdCreateTransport(devicename, portname));
 }
 
-bool dabc::Manager::CreateDataInputTransport(const char* portname, const char* thrdname,
-                                             const char* typ, const char* name, Command* cmd)
-{
-   if (cmd==0)
-      cmd = new CmdCreateDataTransport();
-   else
-      if (!cmd->IsName(CmdCreateDataTransport::CmdName())) {
-         EOUT(("Wrong command name %s", cmd->GetName()));
-         dabc::Command::Reply(cmd, false);
-         return false;
-      }
-
-   CmdCreateDataTransport::SetArgs(cmd, portname, thrdname);
-   CmdCreateDataTransport::SetArgsInp(cmd, typ, name);
-
-   return Execute(cmd);
-}
-
-bool dabc::Manager::CreateDataOutputTransport(const char* portname, const char* thrdname,
-                                              const char* typ, const char* name, Command* cmd)
-{
-   if (cmd==0)
-      cmd = new CmdCreateDataTransport();
-   else
-      if (!cmd->IsName(CmdCreateDataTransport::CmdName())) {
-         EOUT(("Wrong command name %s", cmd->GetName()));
-         dabc::Command::Reply(cmd, false);
-         return false;
-      }
-
-   CmdCreateDataTransport::SetArgs(cmd, portname, thrdname);
-   CmdCreateDataTransport::SetArgsOut(cmd, typ, name);
-
-   return Execute(cmd);
-}
-
-bool dabc::Manager::CreateDataIOTransport(const char* portname, const char* thrdname,
-                                          const char* inp_typ, const char* inp_name,
-                                          const char* out_typ, const char* out_name,
-                                          Command* cmd)
-{
-   if (cmd==0)
-      cmd = new CmdCreateDataTransport();
-   else
-      if (!cmd->IsName(CmdCreateDataTransport::CmdName())) {
-         EOUT(("Wrong command name %s", cmd->GetName()));
-         dabc::Command::Reply(cmd, false);
-         return false;
-      }
-
-   CmdCreateDataTransport::SetArgs(cmd, portname, thrdname);
-   CmdCreateDataTransport::SetArgsInp(cmd, inp_typ, inp_name);
-   CmdCreateDataTransport::SetArgsOut(cmd, out_typ, out_name);
-
-   return Execute(cmd);
-}
-
-
 dabc::FileIO* dabc::Manager::CreateFileIO(const char* typ, const char* name, int option)
 {
    Folder* folder = GetFactoriesFolder(false);

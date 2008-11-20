@@ -118,8 +118,13 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
    const char* format = new_format ? mbs::Factory::NewFileType() : mbs::Factory::FileType();
 
-   bool res = mgr.CreateDataInputTransport("Repeater/Ports/Input", "", format, inpfile);
-   res = res && mgr.CreateDataOutputTransport("Repeater/Ports/Output", "", format, outfile);
+   Command* cmd = new dabc::CmdCreateDataTransport("Repeater/Ports/Input");
+   dabc::CmdCreateDataTransport::SetArgsInp(cmd, format, inpfile);
+   res = mgr.Execute(cmd);
+
+   cmd = new dabc::CmdCreateDataTransport("Repeater/Ports/Output");
+   dabc::CmdCreateDataTransport::SetArgsOut(cmd, format, outfile);
+   res = mgr.Execute(cmd);
 
    DOUT1(("Init repeater module() res = %s", DBOOL(res)));
 

@@ -127,36 +127,42 @@ bool roc::ReadoutApplication::CreateAppModules()
    }
 
    if (OutputFileName().length()>0) {
-      cmd = new dabc::CmdCreateDataTransport();
+      cmd = 0;
+      if (DoTaking()) {
+         cmd = new dabc::CmdCreateDataTransport("RocComb/Ports/Output1", "OutputThrd");
+         dabc::CmdCreateDataTransport::SetArgsOut(cmd, mbs::Factory::LmdFileType(), OutputFileName().c_str());
+      } else {
+         cmd = new dabc::CmdCreateDataTransport("RocCalibr/Ports/Input", "InputThrd");
+         dabc::CmdCreateDataTransport::SetArgsInp(cmd, mbs::Factory::LmdFileType(), OutputFileName().c_str());
+      }
+
       if (OutFileLimit()>0) {
          cmd->SetInt("SizeLimit", OutFileLimit());
          cmd->SetInt("NumMulti", -1); // allow to create multiple files
       }
 
-      if (DoTaking())
-         res = dabc::mgr()->CreateDataOutputTransport("RocComb/Ports/Output1", "OutputThrd", mbs::Factory::LmdFileType(), OutputFileName().c_str(), cmd);
-      else
-         res = dabc::mgr()->CreateDataInputTransport("RocCalibr/Ports/Input", "InputThrd", mbs::Factory::LmdFileType(), OutputFileName().c_str(), cmd);
+      res = dabc::mgr()->Execute(cmd);
 
       DOUT1(("Create raw lmd %s file res = %s", (DoTaking() ? "output" : "input"), DBOOL(res)));
       if(!res) return false;
    }
 
    if ((CalibrFileName().length()>0) && DoCalibr()) {
-      cmd = new dabc::CmdCreateDataTransport();
-
       const char* outtype = mbs::Factory::LmdFileType();
 
       if ((CalibrFileName().rfind(".root")!=std::string::npos) ||
           (CalibrFileName().rfind(".ROOT")!=std::string::npos))
              outtype = "RocTreeOutput";
 
+      cmd = new dabc::CmdCreateDataTransport("RocCalibr/Ports/Output1", "OutputThrd");
+      dabc::CmdCreateDataTransport::SetArgsOut(cmd, outtype, CalibrFileName().c_str());
+
       if (CalibrFileLimit()>0) {
          cmd->SetInt("SizeLimit", CalibrFileLimit());
          cmd->SetInt("NumMulti", -1); // allow to create multiple files
       }
 
-      res = dabc::mgr()->CreateDataOutputTransport("RocCalibr/Ports/Output1", "OutputThrd", outtype, CalibrFileName().c_str(), cmd);
+      res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create calibr output file res = %s", DBOOL(res)));
       if(!res) return false;
    }

@@ -178,11 +178,11 @@ int main(int numc, char* args[])
 
       mgr.CreateMemoryPools();
 
-      dabc::Command* cmd = new dabc::CmdCreateDataTransport();
+      dabc::Command* cmd = new dabc::CmdCreateDataTransport("Modules/Receiever/Ports/Input", "MBSInp");
+      dabc::CmdCreateDataTransport::SetArgsInp(cmd, "MbsTransport", hostname);
       if (nport>0) cmd->SetInt("Port", nport);
 
-      if (!mgr.CreateDataInputTransport("Modules/Receiever/Ports/Input", "MBSInp",
-                                        /*"MbsNewTransport"*/ "MbsTransport" /* "MbsStream" */, hostname, cmd)) {
+      if (!mgr.Execute(cmd)) {
          EOUT(("Cannot create data input for receiever"));
          return 1;
       }

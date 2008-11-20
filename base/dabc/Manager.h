@@ -253,27 +253,14 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateDataTransport"; }
 
-         CmdCreateDataTransport() : Command(CmdName()) {}
-
          CmdCreateDataTransport(const char* portname,
-                                const char* thrdname = 0) :
+                                const char* thrdname = 0,
+                                const char* iotyp = 0) :
             Command(CmdName())
          {
-            SetArgs(this, portname, thrdname);
-         }
-
-         static void SetArgs(Command* cmd,
-                             const char* portname,
-                             const char* thrdname = 0)
-         {
-            cmd->SetPar("PortName", portname);
-            cmd->SetPar("ThrdName", thrdname);
-         }
-
-         static void SetIOTyp(Command* cmd,
-                              const char* iotyp)
-         {
-            cmd->SetPar("IOTyp", iotyp);
+            SetPar("PortName", portname);
+            SetPar("ThrdName", thrdname);
+            SetPar("IOTyp", iotyp);
          }
 
          static const char* GetIOTyp(Command* cmd)
@@ -585,19 +572,6 @@ namespace dabc {
          bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
 
          bool CreateTransport(const char* devicename, const char* portname);
-
-         bool CreateDataInputTransport(const char* portname, const char* thrdname,
-                                       const char* typ, const char* name,
-                                       Command* cmd = 0);
-
-         bool CreateDataOutputTransport(const char* portname, const char* thrdname,
-                                        const char* typ, const char* name,
-                                        Command* cmd = 0);
-
-         bool CreateDataIOTransport(const char* portname, const char* thrdname,
-                                    const char* inp_typ, const char* inp_name,
-                                    const char* out_typ, const char* out_name,
-                                    Command* cmd = 0);
 
          FileIO* CreateFileIO(const char* typ, const char* name, int option);
 
