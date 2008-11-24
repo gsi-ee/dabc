@@ -9,13 +9,12 @@
 #include "dabc/Manager.h"
 #include "dabc/timing.h"
 
-#include "mbs/MbsEventAPI.h"
+#include "mbs/EventAPI.h"
 #include "mbs/Factory.h"
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/MbsDataInput.h"
-#include "mbs/MbsOutputFile.h"
-#include "mbs/MbsInputFile.h"
-#include "mbs/MbsTransport.h"
+#include "mbs/LmdInput.h"
+#include "mbs/LmdOutput.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -116,7 +115,7 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
    mgr.CreateMemoryPools();
 
-   const char* format = new_format ? mbs::Factory::NewFileType() : mbs::Factory::FileType();
+   const char* format = new_format ? mbs::Factory::LmdFileType() : mbs::Factory::FileType();
 
    Command* cmd = new dabc::CmdCreateDataTransport("Repeater/Ports/Input");
    dabc::CmdCreateDataTransport::SetArgsInp(cmd, format, inpfile);
@@ -152,7 +151,7 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
 void TestMbsInpFile(const char* fname)
 {
-   mbs::MbsEventInput* inp = new mbs::MbsEventInput();
+   mbs::EvapiInput* inp = new mbs::EvapiInput();
    long cnt = 0;
 
    if (inp->OpenFile(fname)) {
@@ -174,7 +173,7 @@ void TestMbsInpFile(const char* fname)
 
 void TestMbsTrServer(const char* server)
 {
-   mbs::MbsEventInput* inp = new mbs::MbsEventInput();
+   mbs::EvapiInput* inp = new mbs::EvapiInput();
    long cnt = 0;
 
    if (inp->OpenTransportServer(server)) {
@@ -204,7 +203,7 @@ void TestMbsTrServerNew(const char* server, int port = 8000, const char* outfile
      return;
    }
 
-   mbs::MbsOutputFile* out = new mbs::MbsOutputFile(outfile);
+   mbs::LmdOutput* out = new mbs::LmdOutput(outfile);
    if (!out->Init()) {
       EOUT(("Cannot create output file %s", outfile));
       delete out;
@@ -243,7 +242,7 @@ void TestMbsTrServerNew(const char* server, int port = 8000, const char* outfile
 
 void TestMbsInputFile(const char* fname)
 {
-   mbs::MbsInputFile* inp = new mbs::MbsInputFile(fname);
+   mbs::LmdInput* inp = new mbs::LmdInput(fname);
 
    if (inp->Init()) {
      DOUT1(("Open file %s", fname));
@@ -290,9 +289,9 @@ void TestNewGenerator()
 
 void TestMbsIO(const char* fname, const char* outname)
 {
-   mbs::MbsEventInput* inp = new mbs::MbsEventInput();
+   mbs::EvapiInput* inp = new mbs::EvapiInput();
 
-   mbs::MbsEventOutput* out = new mbs::MbsEventOutput();
+   mbs::EvapiOutput* out = new mbs::EvapiOutput();
 
    ::remove(outname);
 

@@ -8,9 +8,7 @@
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Factory.h"
 
-#include "roc/RocCalibrModule.h"
-
-#include "roc/RocCommands.h"
+#include "roc/Commands.h"
 
 #include "SysCoreDefines.h"
 
@@ -66,22 +64,21 @@ std::string roc::ReadoutApplication::RocIp(int nreadout) const
 bool roc::ReadoutApplication::CreateAppModules()
 {
    DOUT1(("CreateAppModules starts..·"));
-   bool res=false;
+   bool res = false;
    dabc::Command* cmd;
 
-   std::string devname = "ROC"; // parametrize this later?
-   fFullDeviceName = "Devices/"+devname;
+   std::string devname = "ROC";
 
    dabc::mgr()->CreateMemoryPool(roc::xmlRocPool,
                                  GetParInt(dabc::xmlBufferSize, 8192),
                                  GetParInt(dabc::xmlNumBuffers, 100));
 
    if (DoTaking()) {
-      res = dabc::mgr()->CreateDevice("RocDevice", devname.c_str());
+      res = dabc::mgr()->CreateDevice("roc::Device", devname.c_str());
       DOUT1(("Create Roc Device = %s", DBOOL(res)));
       if(!res) return false;
 
-      cmd = new dabc::CommandCreateModule("RocCombinerModule","RocComb", "RocCombThrd");
+      cmd = new dabc::CommandCreateModule("roc::CombinerModule", "RocComb", "RocCombThrd");
       cmd->SetInt(dabc::xmlNumOutputs, 2);
       res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create ROC combiner module = %s", DBOOL(res)));
@@ -89,7 +86,7 @@ bool roc::ReadoutApplication::CreateAppModules()
    }
 
    if (DoCalibr()) {
-      cmd = new dabc::CommandCreateModule("RocCalibrModule","RocCalibr", "RocCalibrThrd");
+      cmd = new dabc::CommandCreateModule("roc::CalibrationModule", "RocCalibr", "RocCalibrThrd");
       cmd->SetInt(dabc::xmlNumOutputs, 2);
       res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create ROC calibration module = %s", DBOOL(res)));
@@ -128,17 +125,16 @@ bool roc::ReadoutApplication::CreateAppModules()
 
    if (OutputFileName().length()>0) {
       cmd = 0;
-      if (DoTaking()) {
-         cmd = new dabc::CmdCreateDataTransport("RocComb/Ports/Output1", "OutputThrd");
-         dabc::CmdCreateDataTransport::SetArgsOut(cmd, mbs::Factory::LmdFileType(), OutputFileName().c_str());
-      } else {
-         cmd = new dabc::CmdCreateDataTransport("RocCalibr/Ports/Input", "InputThrd");
-         dabc::CmdCreateDataTransport::SetArgsInp(cmd, mbs::Factory::LmdFileType(), OutputFileName().c_str());
-      }
+      if (DoTaking())
+         cmd = new dabc::CmdCreateOutputTransport("RocComb/Ports/Output1", mbs::Factory::LmdFileType());
+      else
+         cmd = new dabc::CmdCreateInputTransport("RocCalibr/Ports/Input", mbs::Factory::LmdFileType());
+
+      cmd->SetStr(mbs::xmlFileName, OutputFileName().c_str());
 
       if (OutFileLimit()>0) {
-         cmd->SetInt("SizeLimit", OutFileLimit());
-         cmd->SetInt("NumMulti", -1); // allow to create multiple files
+         cmd->SetInt(mbs::xmlSizeLimit, OutFileLimit());
+         cmd->SetInt(mbs::xmlNumMultiple, -1); // allow to create multiple files
       }
 
       res = dabc::mgr()->Execute(cmd);
@@ -148,18 +144,19 @@ bool roc::ReadoutApplication::CreateAppModules()
    }
 
    if ((CalibrFileName().length()>0) && DoCalibr()) {
+
       const char* outtype = mbs::Factory::LmdFileType();
 
       if ((CalibrFileName().rfind(".root")!=std::string::npos) ||
           (CalibrFileName().rfind(".ROOT")!=std::string::npos))
-             outtype = "RocTreeOutput";
+              outtype = "roc::TreeOutput";
 
-      cmd = new dabc::CmdCreateDataTransport("RocCalibr/Ports/Output1", "OutputThrd");
-      dabc::CmdCreateDataTransport::SetArgsOut(cmd, outtype, CalibrFileName().c_str());
+      cmd = new dabc::CmdCreateOutputTransport("RocCalibr/Ports/Output1", outtype);
 
+      cmd->SetStr(mbs::xmlFileName, CalibrFileName().c_str());
       if (CalibrFileLimit()>0) {
-         cmd->SetInt("SizeLimit", CalibrFileLimit());
-         cmd->SetInt("NumMulti", -1); // allow to create multiple files
+         cmd->SetInt(mbs::xmlSizeLimit, CalibrFileLimit());
+         cmd->SetInt(mbs::xmlNumMultiple, -1); // allow to create multiple files
       }
 
       res = dabc::mgr()->Execute(cmd);
@@ -171,10 +168,9 @@ bool roc::ReadoutApplication::CreateAppModules()
    if (DataServerKind() != mbs::NoServer) {
 
      // need mbs device for event server:
-      if (!dabc::mgr()->FindDevice("MBS")) {
-         res=dabc::mgr()->CreateDevice("MbsDevice", "MBS");
-         DOUT1(("Create Mbs Device = %s", DBOOL(res)));
-      }
+     res = dabc::mgr()->CreateDevice("MbsDevice", "MBS");
+     DOUT1(("Create Mbs Device = %s", DBOOL(res)));
+     if (!res) return false;
 
    ///// connect module to mbs server:
       const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
@@ -194,8 +190,10 @@ bool roc::ReadoutApplication::CreateAppModules()
 
 bool roc::ReadoutApplication::WriteRocRegister(int rocid, int registr, int value)
 {
-   dabc::Command* cmd = new roc::CommandWriteRegister(rocid, registr, value);
-   return dabc::mgr()->Execute(dabc::mgr()->LocalCmd(cmd, fFullDeviceName.c_str()), 1);
+   dabc::Device* dev = dabc::mgr()->FindDevice("ROC");
+   if (dev==0) return false;
+
+   return dev->Execute(new roc::CommandWriteRegister(rocid, registr, value));
 }
 
 

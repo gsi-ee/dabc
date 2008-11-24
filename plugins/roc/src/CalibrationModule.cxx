@@ -1,6 +1,7 @@
-#include "roc/RocCalibrModule.h"
-#include "roc/RocCommands.h"
-#include "roc/RocDevice.h"
+#include "roc/CalibrationModule.h"
+
+#include "roc/Commands.h"
+#include "roc/Device.h"
 
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"
@@ -22,7 +23,7 @@
 
 #define FullTimeStampRange 0x400000000000ULL
 
-roc::RocCalibrModule::CalibRec::CalibRec(unsigned id) :
+roc::CalibrationModule::CalibRec::CalibRec(unsigned id) :
    rocid(id),
    calibr_k(1.), calibr_b_e(0), calibr_b_f(0.), weight(0), sorter(0),
    evnt1_tm(0), evnt2_tm(0), evnt1_num(0), evnt2_num(0), evnt_len(0),
@@ -33,7 +34,7 @@ roc::RocCalibrModule::CalibRec::CalibRec(unsigned id) :
 {
 }
 
-void roc::RocCalibrModule::CalibRec::RecalculateCalibr(double k, uint32_t b_e, double b_f)
+void roc::CalibrationModule::CalibRec::RecalculateCalibr(double k, uint32_t b_e, double b_f)
 {
    // if we have no last hit information, just take calibration as is
    if (NeedBCoef()) {
@@ -80,7 +81,7 @@ void roc::RocCalibrModule::CalibRec::RecalculateCalibr(double k, uint32_t b_e, d
    if (weight<100) weight++;
 }
 
-double roc::RocCalibrModule::CalibRec::CalibrEpoch(uint32_t& epoch)
+double roc::CalibrationModule::CalibRec::CalibrEpoch(uint32_t& epoch)
 {
 //   double calibr_epoch = epoch * calibr_k + calibr_b_e + calibr_b_f;
 
@@ -101,7 +102,7 @@ double roc::RocCalibrModule::CalibRec::CalibrEpoch(uint32_t& epoch)
   return fraction;
 }
 
-void roc::RocCalibrModule::CalibRec::TimeStampOverflow()
+void roc::CalibrationModule::CalibRec::TimeStampOverflow()
 {
 // calibr_b += FullTimeStampRange * calibr_k;
 
@@ -121,7 +122,7 @@ void roc::RocCalibrModule::CalibRec::TimeStampOverflow()
    }
 }
 
-roc::RocCalibrModule::RocCalibrModule(const char* name,
+roc::CalibrationModule::CalibrationModule(const char* name,
                                       dabc::Command* cmd) :
    dabc::ModuleAsync(name),
    fPool(0),
@@ -134,7 +135,7 @@ roc::RocCalibrModule::RocCalibrModule(const char* name,
    fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
    int numoutputs = GetCfgInt(dabc::xmlNumOutputs, 2, cmd);
 
-   DOUT1(("new RocCalibrModule %s buff %d", GetName(), fBufferSize));
+   DOUT1(("new roc::CalibrationModule %s buff %d", GetName(), fBufferSize));
    fPool = CreatePool(roc::xmlRocPool, 1, fBufferSize);
 
    CreateInput("Input", fPool, 10);
@@ -154,7 +155,7 @@ roc::RocCalibrModule::RocCalibrModule(const char* name,
    fIsOutEpoch = false;
 }
 
-roc::RocCalibrModule::~RocCalibrModule()
+roc::CalibrationModule::~CalibrationModule()
 {
    for (unsigned n=0;n<fCalibr.size();n++) {
       delete fCalibr[n].sorter;
@@ -164,12 +165,12 @@ roc::RocCalibrModule::~RocCalibrModule()
    dabc::Buffer::Release(fOutBuf); fOutBuf = 0;
 }
 
-void roc::RocCalibrModule::ProcessInputEvent(dabc::Port* inport)
+void roc::CalibrationModule::ProcessInputEvent(dabc::Port* inport)
 {
    DoCalibration();
 }
 
-void roc::RocCalibrModule::ProcessOutputEvent(dabc::Port* inport)
+void roc::CalibrationModule::ProcessOutputEvent(dabc::Port* inport)
 {
    DoCalibration();
 }
@@ -177,7 +178,7 @@ void roc::RocCalibrModule::ProcessOutputEvent(dabc::Port* inport)
 #define NullStamp 0xffffffff
 #define EndStamp  0xfffffffe
 
-bool roc::RocCalibrModule::DoCalibration()
+bool roc::CalibrationModule::DoCalibration()
 {
    bool doagain = true;
 
@@ -793,7 +794,7 @@ bool roc::RocCalibrModule::DoCalibration()
 }
 
 
-bool roc::RocCalibrModule::FlushOutputBuffer()
+bool roc::CalibrationModule::FlushOutputBuffer()
 {
    if (fOutBuf==0) return false;
 

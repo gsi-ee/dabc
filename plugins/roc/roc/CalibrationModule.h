@@ -1,5 +1,5 @@
-#ifndef ROC_RocCalibrModule
-#define ROC_RocCalibrModule
+#ifndef ROC_CalibrationModule
+#define ROC_CalibrationModule
 
 #include "dabc/ModuleAsync.h"
 #include "dabc/Pointer.h"
@@ -11,12 +11,12 @@ class SysCoreData;
 
 namespace roc {
 
-   class RocCalibrModule : public dabc::ModuleAsync {
+   class CalibrationModule : public dabc::ModuleAsync {
 
       public:
 
-         RocCalibrModule(const char* name, dabc::Command* cmd);
-         virtual ~RocCalibrModule();
+         CalibrationModule(const char* name, dabc::Command* cmd);
+         virtual ~CalibrationModule();
 
          virtual void BeforeModuleStart() {}
          virtual void AfterModuleStop() {}

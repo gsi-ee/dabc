@@ -2,11 +2,11 @@
 #include "dabc/timing.h"
 #include "dabc/string.h"
 
-#include "mbs/MbsEventAPI.h"
+#include "mbs/EventAPI.h"
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/MbsDataInput.h"
-#include "mbs/MbsOutputFile.h"
-#include "mbs/MbsInputFile.h"
+#include "mbs/LmdOutput.h"
+#include "mbs/LmdInput.h"
 
 int main(int numc, char* args[])
 {
@@ -37,7 +37,7 @@ int main(int numc, char* args[])
       dabc::formats(fname,"%s_inp_%d_%d%s", fnamebase, nodeid, nr, (multiple ? "" : ".lmd"));
 
       if (onlycheck) {
-         mbs::MbsInputFile* inp = new mbs::MbsInputFile(fname.c_str(), "", -1);
+         mbs::LmdInput* inp = new mbs::LmdInput(fname.c_str());
          if (inp->Init()) {
             dabc::Buffer* buf = 0;
             int nbuf = 0;
@@ -51,11 +51,11 @@ int main(int numc, char* args[])
          continue;
       }
 
-      mbs::MbsOutputFile* out = 0;
+      mbs::LmdOutput* out = 0;
       if (multiple)
-         out = new mbs::MbsOutputFile(fname.c_str(), "", 2000000, -1);
+         out = new mbs::LmdOutput(fname.c_str(), 20, -1);
       else
-         out = new mbs::MbsOutputFile(fname.c_str(), "");
+         out = new mbs::LmdOutput(fname.c_str());
 
       if (!out->Init()) {
          EOUT(("Cannot create output lmd file %s", fname.c_str()));

@@ -1,6 +1,6 @@
-#include "roc/RocCombinerModule.h"
-#include "roc/RocCommands.h"
-#include "roc/RocDevice.h"
+#include "roc/CombinerModule.h"
+#include "roc/Commands.h"
+#include "roc/Device.h"
 
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"
@@ -15,10 +15,7 @@
 #include "mbs/LmdTypeDefs.h"
 #include "mbs/MbsTypeDefs.h"
 
-#include "roc/RocDevice.h"
-
-
-roc::RocCombinerModule::RocCombinerModule(const char* name,
+roc::CombinerModule::CombinerModule(const char* name,
                                           dabc::Command* cmd) :
    dabc::ModuleAsync(name),
    fPool(0),
@@ -34,7 +31,7 @@ roc::RocCombinerModule::RocCombinerModule(const char* name,
    r->SetLimits(0, 10.);
    r->SetDebugOutput(true);
 
-   DOUT1(("new RocCombinerModule %s buff %d", GetName(), fBufferSize));
+   DOUT1(("new roc::CombinerModule %s buff %d", GetName(), fBufferSize));
    fPool = CreatePool(roc::xmlRocPool, 1, fBufferSize);
    for(int inp=0; inp < numrocs; inp++)  {
       CreateInput(FORMAT(("Input%d", inp)), fPool, 10);
@@ -54,12 +51,12 @@ roc::RocCombinerModule::RocCombinerModule(const char* name,
    fErrorOutput = false;
 }
 
-roc::RocCombinerModule::~RocCombinerModule()
+roc::CombinerModule::~CombinerModule()
 {
    dabc::Buffer::Release(fOutBuf); fOutBuf = 0;
 }
 
-void roc::RocCombinerModule::ProcessInputEvent(dabc::Port* inport)
+void roc::CombinerModule::ProcessInputEvent(dabc::Port* inport)
 {
    unsigned inpid = InputNumber(inport);
 
@@ -89,7 +86,7 @@ void roc::RocCombinerModule::ProcessInputEvent(dabc::Port* inport)
    TryToProduceEventBuffers();
 }
 
-bool roc::RocCombinerModule::FindNextEvent(unsigned ninp)
+bool roc::CombinerModule::FindNextEvent(unsigned ninp)
 {
    dabc::Buffer* buf = 0;
 
@@ -176,7 +173,7 @@ bool roc::RocCombinerModule::FindNextEvent(unsigned ninp)
 }
 
 
-void roc::RocCombinerModule::ProcessOutputEvent(dabc::Port* inport)
+void roc::CombinerModule::ProcessOutputEvent(dabc::Port* inport)
 {
    if (fSimpleMode) return;
 
@@ -184,7 +181,7 @@ void roc::RocCombinerModule::ProcessOutputEvent(dabc::Port* inport)
 }
 
 
-bool roc::RocCombinerModule::SkipEvent(unsigned inpid)
+bool roc::CombinerModule::SkipEvent(unsigned inpid)
 {
    InputRec* rec = &(fInp[inpid]);
    if (!rec->isprev || !rec->isnext) return false;
@@ -212,7 +209,7 @@ bool roc::RocCombinerModule::SkipEvent(unsigned inpid)
 }
 
 
-void roc::RocCombinerModule::TryToProduceEventBuffers()
+void roc::CombinerModule::TryToProduceEventBuffers()
 {
    // method fill output buffer with complete sync event from all
    // available sources and makes correction against master (first roc)
@@ -388,7 +385,7 @@ void roc::RocCombinerModule::TryToProduceEventBuffers()
 }
 
 
-dabc::BufferSize_t roc::RocCombinerModule::CalcDistance(unsigned ninp, unsigned nbuf1, unsigned indx1, unsigned nbuf2, unsigned indx2)
+dabc::BufferSize_t roc::CombinerModule::CalcDistance(unsigned ninp, unsigned nbuf1, unsigned indx1, unsigned nbuf2, unsigned indx2)
 {
    dabc::BufferSize_t datasize = 0;
 
@@ -404,7 +401,7 @@ dabc::BufferSize_t roc::RocCombinerModule::CalcDistance(unsigned ninp, unsigned 
    return datasize;
 }
 
-unsigned roc::RocCombinerModule::FillRawSubeventsBuffer(dabc::Pointer& outptr)
+unsigned roc::CombinerModule::FillRawSubeventsBuffer(dabc::Pointer& outptr)
 {
    unsigned filled_size = 0;
 
@@ -463,7 +460,7 @@ unsigned roc::RocCombinerModule::FillRawSubeventsBuffer(dabc::Pointer& outptr)
    return filled_size;
 }
 
-void roc::RocCombinerModule::DumpData(dabc::Pointer ptr)
+void roc::CombinerModule::DumpData(dabc::Pointer ptr)
 {
    while (ptr.fullsize()>=6) {
       SysCoreData* data = (SysCoreData*) ptr();

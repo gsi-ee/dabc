@@ -15,6 +15,14 @@ dabc_root::RootTreeOutput::~RootTreeOutput()
    fTree = 0;
 }
 
+bool dabc_root::RootTreeOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+{
+   dabc::ConfigSource cfg(cmd, port);
+
+   return false;
+}
+
+
 bool dabc_root::RootTreeOutput::WriteBuffer(dabc::Buffer* buf)
 {
    return true;

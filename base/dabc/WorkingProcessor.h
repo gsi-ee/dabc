@@ -9,11 +9,16 @@
 #include "dabc/WorkingThread.h"
 #endif
 
+#ifndef DABC_Command
+#include "dabc/Command.h"
+#endif
+
 namespace dabc {
 
    class Basic;
    class Folder;
    class Parameter;
+
 
    class WorkingProcessor : public CommandReceiver {
 
@@ -68,7 +73,7 @@ namespace dabc {
          // Cfg means that parameter with given name will be created and its value
          // will be delivered back. Also will be checked if appropriate parameter exists in module itslef
          // As last possibility, command values will be searched.
-         // Priority: Command(max), Own parameter, External parameter (min)
+         // Priority: (max) Command, own parameter, external parameter, default value (min)
          std::string GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd = 0);
          int GetCfgInt(const char* name, int dfltvalue, Command* cmd = 0);
          double GetCfgDouble(const char* name, double dfltvalue, Command* cmd = 0);
@@ -169,6 +174,47 @@ namespace dabc {
          TimeStamp_t      fProcessorPrevFire; // used in thread
          TimeStamp_t      fProcessorNextFire; // used in thread
    };
+
+   class ConfigSource {
+      public:
+         ConfigSource(Command* cmd = 0, WorkingProcessor* proc = 0) : fCmd(cmd), fProc(proc) {}
+
+         std::string GetCfgStr(const char* name, const std::string& dfltvalue)
+         {
+            if (fProc) return fProc->GetCfgStr(name, dfltvalue, fCmd);
+            if (fCmd) return fCmd->GetStr(name, dfltvalue.c_str());
+            return dfltvalue;
+         }
+
+         int GetCfgInt(const char* name, int dfltvalue)
+         {
+            if (fProc) return fProc->GetCfgInt(name, dfltvalue, fCmd);
+            if (fCmd) return fCmd->GetInt(name, dfltvalue);
+            return dfltvalue;
+         }
+
+         double GetCfgDouble(const char* name, double dfltvalue)
+         {
+            if (fProc) return fProc->GetCfgDouble(name, dfltvalue, fCmd);
+            if (fCmd) return fCmd->GetDouble(name, dfltvalue);
+            return dfltvalue;
+
+         }
+
+         bool GetCfgBool(const char* name, bool dfltvalue)
+         {
+            if (fProc) return fProc->GetCfgBool(name, dfltvalue, fCmd);
+            if (fCmd) return fCmd->GetBool(name, dfltvalue);
+            return dfltvalue;
+         }
+
+      protected:
+         Command* fCmd;
+         WorkingProcessor*  fProc;
+   };
+
+
+
 }
 
 #endif

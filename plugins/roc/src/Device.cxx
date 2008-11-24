@@ -1,6 +1,6 @@
-#include "roc/RocDevice.h"
-#include "roc/RocTransport.h"
-#include "roc/RocCommands.h"
+#include "roc/Device.h"
+#include "roc/Transport.h"
+#include "roc/Commands.h"
 #include "dabc/Port.h"
 #include "dabc/Manager.h"
 #include "dabc/Module.h"
@@ -14,31 +14,31 @@ const char* roc::xmlRocPool         = "RocPool";
 const char* roc::xmlTransportWindow = "TransportWindow";
 const char* roc::xmlBoardIP         = "BoardIP";
 
-roc::RocDevice::RocDevice(Basic* parent, const char* name) :
+roc::Device::Device(Basic* parent, const char* name) :
    dabc::Device(parent, name),
    SysCoreControl()
 {
    DOUT3(("Constructing ROC device %s", name));
 
-   dabc::Manager::Instance()->MakeThreadFor(this, "RocDeviceThread");
+   dabc::Manager::Instance()->MakeThreadFor(this, "RocDeviceThrd");
 }
 
-roc::RocDevice::~RocDevice()
+roc::Device::~Device()
 {
    DOUT3(("Destroy ROC device %s", GetName()));
    DoDeviceCleanup(true);
 }
 
-int roc::RocDevice::AddBoard(const char* address, unsigned ctlPort)
+int roc::Device::AddBoard(const char* address, unsigned ctlPort)
 {
-   DOUT1(("roc::RocDevice::AddBoard %s",  address));
+   DOUT1(("roc::Device::AddBoard %s",  address));
 
    return SysCoreControl::addBoard(address,ctlPort);
 }
 
-bool roc::RocDevice::DoDeviceCleanup(bool full)
+bool roc::Device::DoDeviceCleanup(bool full)
 {
-   DOUT1(("_______RocDevice::DoDeviceCleanup full = %s", DBOOL(full)));
+   DOUT1(("_______Device::DoDeviceCleanup full = %s", DBOOL(full)));
    // remove boards from controller here:
    // NOTE: this should be internal method of controller, TODO!
 // need to empty the socket data here before removing the board instance?
@@ -51,7 +51,7 @@ bool roc::RocDevice::DoDeviceCleanup(bool full)
 }
 
 
-int roc::RocDevice::ExecuteCommand(dabc::Command* cmd)
+int roc::Device::ExecuteCommand(dabc::Command* cmd)
 {
    int cmd_res = cmd_false;
 
@@ -114,7 +114,7 @@ int roc::RocDevice::ExecuteCommand(dabc::Command* cmd)
    return cmd_res;
 }
 
-SysCoreBoard* roc::RocDevice::GetBoard(unsigned id)
+SysCoreBoard* roc::Device::GetBoard(unsigned id)
 {
    if (!SysCoreControl::isValidBoardNum(id)) {
       EOUT(("ROC id:%u is not existing!", id));
@@ -125,10 +125,10 @@ SysCoreBoard* roc::RocDevice::GetBoard(unsigned id)
 }
 
 
-int roc::RocDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
+int roc::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
    if (port==0) {
-      EOUT(("roc::RocDevice::CreateTransport FAILED, port %s not specified!"));
+      EOUT(("roc::Device::CreateTransport FAILED, port %s not specified!"));
       return cmd_false;
    }
    // take these from command parameters here:
@@ -138,22 +138,22 @@ int roc::RocDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 
    int bufsize = port->GetCfgInt(dabc::xmlBufferSize, 2048, cmd);
 
-   RocTransport* transport = new RocTransport(this, port, bufsize, ip.c_str(), TransWindow);
-   DOUT1(("RocDevice::CreateTransport ip %s win:%d buf:%d ", ip.c_str(), TransWindow, bufsize));
+   Transport* transport = new Transport(this, port, bufsize, ip.c_str(), TransWindow);
+   DOUT1(("Device::CreateTransport ip %s win:%d buf:%d ", ip.c_str(), TransWindow, bufsize));
 
    transport->AssignProcessorToThread(ProcessorThread());
 
    return cmd_true;
 }
 
-void roc::RocDevice::DataCallBack(SysCoreBoard* brd)
+void roc::Device::DataCallBack(SysCoreBoard* brd)
 {
-   RocTransport* tr = 0;
+   Transport* tr = 0;
 
    {
       dabc::LockGuard guard(fDeviceMutex);
       for (unsigned n=0; n<fTransports.size(); n++) {
-         tr = (RocTransport*) fTransports[n];
+         tr = (Transport*) fTransports[n];
          if ((tr!=0) && (tr->GetBoard() == brd)) break;
          tr = 0;
       }

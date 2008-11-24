@@ -1,5 +1,5 @@
-#ifndef DABC_RootFactory
-#define DABC_RootFactory
+#ifndef DABC_Factory
+#define DABC_Factory
 
 #ifndef DABC_Factory
 #include "dabc/Factory.h"
@@ -7,9 +7,9 @@
 
 namespace dabc_root {
 
-   class RootFactory : public dabc::Factory {
+   class Factory : public dabc::Factory {
       public:
-         RootFactory(const char* name) : dabc::Factory(name) {}
+         Factory(const char* name) : dabc::Factory(name) {}
 
          virtual dabc::DataInput* CreateDataInput(const char* typ, const char* name, dabc::Command* cmd = 0);
 

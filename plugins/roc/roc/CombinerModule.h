@@ -1,5 +1,5 @@
-#ifndef ROC_RocCombinerModule
-#define ROC_RocCombinerModule
+#ifndef ROC_CombinerModule
+#define ROC_CombinerModule
 
 #include "dabc/ModuleAsync.h"
 #include "dabc/Pointer.h"
@@ -8,12 +8,12 @@
 
 namespace roc {
 
-   class RocCombinerModule : public dabc::ModuleAsync {
+   class CombinerModule : public dabc::ModuleAsync {
 
       public:
 
-         RocCombinerModule(const char* name, dabc::Command* cmd);
-         virtual ~RocCombinerModule();
+         CombinerModule(const char* name, dabc::Command* cmd);
+         virtual ~CombinerModule();
 
          virtual void BeforeModuleStart() {}
          virtual void AfterModuleStop() {}

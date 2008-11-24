@@ -8,8 +8,8 @@
 #include "dabc/Manager.h"
 #include "dabc/Module.h"
 
-#include "roc/RocFactory.h"
-#include "roc/RocDevice.h"
+#include "roc/Factory.h"
+#include "roc/Device.h"
 
 namespace roc {
 
@@ -55,9 +55,6 @@ namespace roc {
         bool ConfigureRoc(int index=0);
 
         bool WriteRocRegister(int rocid, int registr, int value);
-
-        /** current full name of roc device (with leading "Device/") */
-        std::string fFullDeviceName;
    };
 }
 

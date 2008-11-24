@@ -149,8 +149,8 @@ void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
       else
          recvid = (nodeid-1) / 2;
 
-      SetParStr("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d.lmd;", mbs::Factory::NewFileType(), filebase, recvid)));
-//      SetParStr("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d; SizeLimit:10000000; NumMulti:-1;", mbs::Factory::NewFileType(), filebase, recvid)));
+      SetParStr("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d.lmd;", mbs::Factory::LmdFileType(), filebase, recvid)));
+//      SetParStr("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d; SizeLimit:10000000; NumMulti:-1;", mbs::Factory::LmdFileType(), filebase, recvid)));
    }
 
    if (IsSender()) {
@@ -163,7 +163,7 @@ void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
       for (int nr=0;nr<NumReadouts();nr++) {
          std::string cfgstr, parname;
 
-         dabc::formats(cfgstr, "InpType:%s; InpName:%s_inp_%d_%d*.lmd;", mbs::Factory::NewFileType(), filebase, senderid, nr);
+         dabc::formats(cfgstr, "InpType:%s; InpName:%s_inp_%d_%d*.lmd;", mbs::Factory::LmdFileType(), filebase, senderid, nr);
 
          dabc::formats(parname, "Input%dCfg", nr);
 
@@ -201,7 +201,7 @@ void bnet::MbsWorkerApplication::SetMbsTransportPars()
       SetParInt("IsSender", 0);
       SetParInt("IsReceiver", 1);
 
-      SetParStr("StoragePar", dabc::format("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::NewFileType()));
+      SetParStr("StoragePar", dabc::format("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::LmdFileType()));
    }
 }
 
@@ -225,6 +225,6 @@ void bnet::MbsWorkerApplication::SetMbsGeneratorsPars()
       SetParInt("IsSender", 0);
       SetParInt("IsReceiver", 1);
 
-//      SetParStr("StoragePar", dabc::format("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::NewFileType()));
+//      SetParStr("StoragePar", dabc::format("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::LmdFileType()));
    }
 }

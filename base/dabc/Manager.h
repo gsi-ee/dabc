@@ -249,6 +249,37 @@ namespace dabc {
             }
    };
 
+   class CmdCreateInputTransport : public Command {
+      public:
+         static const char* CmdName() { return "CreateInputTransport"; }
+
+         CmdCreateInputTransport(const char* portname,
+                                 const char* inptype,
+                                 const char* thrdname = 0) :
+            Command(CmdName())
+         {
+            SetPar("PortName", portname);
+            SetPar("InputTransportType", inptype);
+            SetPar("InputTransportThread", thrdname);
+         }
+   };
+
+   class CmdCreateOutputTransport : public Command {
+      public:
+         static const char* CmdName() { return "CreateOutputTransport"; }
+
+         CmdCreateOutputTransport(const char* portname,
+                                 const char* outtype,
+                                 const char* thrdname = 0) :
+            Command(CmdName())
+         {
+            SetPar("PortName", portname);
+            SetPar("OutputTransportType", outtype);
+            SetPar("OutputTransportThread", thrdname);
+         }
+   };
+
+
    class CmdCreateDataTransport : public Command {
       public:
          static const char* CmdName() { return "CreateDataTransport"; }
@@ -571,7 +602,20 @@ namespace dabc {
 
          bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
 
-         bool CreateTransport(const char* devicename, const char* portname);
+         bool CreateTransport(const char* devicename, const char* portname)
+         {
+            return Execute(new CmdCreateTransport(devicename, portname));
+         }
+
+         bool CreateInputTransport(const char* portname, const char* inptype, const char* thrdname = 0)
+         {
+            return Execute(new CmdCreateInputTransport(portname, inptype, thrdname));
+         }
+
+         bool CreateOutputTransport(const char* portname, const char* outtype, const char* thrdname = 0)
+         {
+            return Execute(new CmdCreateOutputTransport(portname, outtype, thrdname));
+         }
 
          FileIO* CreateFileIO(const char* typ, const char* name, int option);
 

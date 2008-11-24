@@ -1,21 +1,22 @@
-#ifndef ROC_RocCommands
-#define ROC_RocCommands
+#ifndef ROC_Commands
+#define ROC_Commands
+
 #include "dabc/Command.h"
 
-#define DABC_ROC_COMMAND_WRITE_REGISTER "WriteRocRegister"
-#define DABC_ROC_COMMAND_READ_REGISTER "ReadRocRegister"
-#define DABC_ROC_COMMAND_START_DAQ "StartRocDaq"
-#define DABC_ROC_COMMAND_STOP_DAQ "StopRocDaq"
-#define DABC_ROC_COMMAND_START_PULSER "StartRocPulser"
-#define DABC_ROC_COMMAND_STOP_PULSER "StopRocPulser"
+#define DABC_ROC_COMMAND_WRITE_REGISTER    "WriteRocRegister"
+#define DABC_ROC_COMMAND_READ_REGISTER     "ReadRocRegister"
+#define DABC_ROC_COMMAND_START_DAQ         "StartRocDaq"
+#define DABC_ROC_COMMAND_STOP_DAQ          "StopRocDaq"
+#define DABC_ROC_COMMAND_START_PULSER      "StartRocPulser"
+#define DABC_ROC_COMMAND_STOP_PULSER       "StopRocPulser"
 
-#define DABC_ROC_COMPAR_BOARDNUMBER   "BoardIdNumber"
+#define DABC_ROC_COMPAR_BOARDNUMBER        "BoardIdNumber"
 
-#define DABC_ROC_COMPAR_ADDRESS       "RegisterAddress"
-#define DABC_ROC_COMPAR_VALUE         "RegisterValue"
-#define DABC_ROC_COMPAR_PULSE_RESETDELAY "PulseResetDelay"
-#define DABC_ROC_COMPAR_PULSE_LENGTH "PulseLength"
-#define DABC_ROC_COMPAR_PULSE_NUMBER "PulseNumber"
+#define DABC_ROC_COMPAR_ADDRESS            "RegisterAddress"
+#define DABC_ROC_COMPAR_VALUE              "RegisterValue"
+#define DABC_ROC_COMPAR_PULSE_RESETDELAY   "PulseResetDelay"
+#define DABC_ROC_COMPAR_PULSE_LENGTH       "PulseLength"
+#define DABC_ROC_COMPAR_PULSE_NUMBER       "PulseNumber"
 
 
 

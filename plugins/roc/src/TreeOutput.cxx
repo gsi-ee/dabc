@@ -1,30 +1,41 @@
-#include "roc/RocTreeOutput.h"
+#include "roc/TreeOutput.h"
 
 #include "dabc/logging.h"
 #include "mbs/MbsTypeDefs.h"
 
-#include "roc/RocDevice.h"
+#include "roc/Device.h"
 
 #include "SysCoreData.h"
 
 #ifdef DABC_ROOT
 
-roc::RocTreeOutput::RocTreeOutput(const char* name, int sizelimit_mb) : 
+roc::TreeOutput::TreeOutput(const char* name, int sizelimit_mb) :
    dabc::DataOutput(),
+   fFileName(name ? name : ""),
+   fSizeLimit(sizelimit_mb),
    fTree(0),
    fFile(0)
 {
-   fFile = TFile::Open(name,"recreate");
+}
+
+bool roc::TreeOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+{
+   dabc::ConfigSource cfg(cmd, port);
+
+   fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
+   fSizeLimit = cfg.GetCfgInt(mbs::xmlSizeLimit, fSizeLimit);
+
+   fFile = TFile::Open(fFileName.c_str(),"recreate");
    if (fFile==0) {
-      EOUT(("Cannot open root file %s", name));   
-      return; 
+      EOUT(("Cannot open root file %s", fFileName.c_str()));
+      return false;
    }
-   
-   if (sizelimit_mb>0) 
-      TTree::SetMaxTreeSize(((ULong64_t) sizelimit_mb) * 1024 * 1024);
-   
+
+   if (fSizeLimit>0)
+      TTree::SetMaxTreeSize(((ULong64_t) fSizeLimit) * 1024 * 1024);
+
    fTree = new TTree("RocTree","Simple list of hits");
-      
+
    fTree->Branch("rocid", &f_rocid, "rocid/b");
    fTree->Branch("nxyter", &f_nxyter, "nxyter/b");
    fTree->Branch("id", &f_id, "id/b");
@@ -32,15 +43,19 @@ roc::RocTreeOutput::RocTreeOutput(const char* name, int sizelimit_mb) :
    fTree->Branch("value", &f_value, "value/i");
 
    for (unsigned n=0; n<8; n++) {
-     fLastEpoch[n] = 0;
-     fValidEpoch[n] = 0;
+      fLastEpoch[n] = 0;
+      fValidEpoch[n] = 0;
    }
+
+   return true;
 }
 
-void roc::RocTreeOutput::WriteNextData(SysCoreData* data)
+
+
+void roc::TreeOutput::WriteNextData(SysCoreData* data)
 {
    f_rocid = data->getRocNumber();
-   
+
    if (data->getMessageType() == ROC_MSG_HIT) { // hit
       if (fValidEpoch[f_rocid]) {
          f_nxyter = data->getNxNumber();
@@ -49,13 +64,13 @@ void roc::RocTreeOutput::WriteNextData(SysCoreData* data)
          f_value = data->getAdcValue();
          fTree->Fill();
       }
-   } else 
+   } else
    if (data->getMessageType() == ROC_MSG_EPOCH) { // epoch
-      
+
       fLastEpoch[f_rocid] = data->getEpoch();
-      
+
       fValidEpoch[f_rocid] = true;
-   } else 
+   } else
    if (data->getMessageType() == ROC_MSG_SYNC) { // sync
       if (fValidEpoch[f_rocid]) {
          f_nxyter = 0xff; // mark of sync signal
@@ -64,7 +79,7 @@ void roc::RocTreeOutput::WriteNextData(SysCoreData* data)
          f_value = data->getSyncEvNum();
          fTree->Fill();
       }
-   } else 
+   } else
    if (data->getMessageType() == ROC_MSG_AUX) { // aux
       if (fValidEpoch[f_rocid]) {
          f_nxyter = 0xfe; // mark aux signal
@@ -77,30 +92,30 @@ void roc::RocTreeOutput::WriteNextData(SysCoreData* data)
 }
 
 
-bool roc::RocTreeOutput::WriteBuffer(dabc::Buffer* buf)
+bool roc::TreeOutput::WriteBuffer(dabc::Buffer* buf)
 {
    if (buf->GetTypeId() == roc::rbt_RawRocData)
    {
       dabc::Pointer dataptr(buf);
-      
+
       while (dataptr.fullsize()>=6) {
-         
+
          WriteNextData((SysCoreData*) dataptr.ptr());
-         
+
          dataptr.shift(6);
       }
-       
+
       return true;
    }
 
    if (buf->GetTypeId() == mbs::mbt_MbsEvs10_1) {
-       
-      dabc::Pointer evptr(buf); 
-       
+
+      dabc::Pointer evptr(buf);
+
       while (evptr.fullsize()>sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader)) {
-          
+
          mbs::EventHeader* evhdr = (mbs::EventHeader*) evptr();
- 
+
          mbs::SubeventHeader* subevhdr = 0;
 
          while ((subevhdr = evhdr->NextSubEvent(subevhdr)) != 0) {
@@ -108,29 +123,29 @@ bool roc::RocTreeOutput::WriteBuffer(dabc::Buffer* buf)
                EOUT(("CALIBR: Find error in subcrate %u", subevhdr->iSubcrate));
                continue;
             }
-            
+
             dabc::Pointer dataptr(subevhdr->RawData(), subevhdr->RawDataSize());
-            
+
             while (dataptr.fullsize()>=0) {
                WriteNextData((SysCoreData*) dataptr());
-               dataptr.shift(6);   
+               dataptr.shift(6);
             }
          }
-         
+
          evptr.shift(evhdr->FullSize());
       }
-       
+
       return true;
    }
-   
+
    EOUT(("Buffer type %d not supported", buf->GetTypeId()));
-   
+
    return false;
 }
 
-roc::RocTreeOutput::~RocTreeOutput()
+roc::TreeOutput::~TreeOutput()
 {
-   fTree = 0; 
+   fTree = 0;
    if (fFile) {
       fFile->Write();
       fFile->Close();
@@ -141,23 +156,31 @@ roc::RocTreeOutput::~RocTreeOutput()
 
 #else
 
-roc::RocTreeOutput::RocTreeOutput(const char* name, int sizelimit_mb) : 
+roc::TreeOutput::TreeOutput(const char* name, int sizelimit_mb) :
    dabc::DataOutput(),
+   fFileName(name ? name : ""),
+   fSizeLimit(sizelimit_mb),
    fTree(0),
    fFile(0)
 {
 }
 
-bool roc::RocTreeOutput::WriteBuffer(dabc::Buffer* buf)
+bool roc::TreeOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
 {
    return false;
 }
 
-roc::RocTreeOutput::~RocTreeOutput()
+
+bool roc::TreeOutput::WriteBuffer(dabc::Buffer* buf)
+{
+   return false;
+}
+
+roc::TreeOutput::~TreeOutput()
 {
 }
 
-void roc::RocTreeOutput::WriteNextData(SysCoreData* data)
+void roc::TreeOutput::WriteNextData(SysCoreData* data)
 {
 }
 

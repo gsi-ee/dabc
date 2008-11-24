@@ -1,5 +1,5 @@
-#ifndef ROC_ROCDEVICE_H
-#define ROC_ROCDEVICE_H
+#ifndef ROC_Device
+#define ROC_Device
 
 //#include <queue>
 
@@ -33,14 +33,14 @@ namespace roc {
       proc_MergedEvent  = 3    // sorted and synchronised data from several rocs (iSubcrate = upper rocid bits)
    };
 
-   class RocDevice : public dabc::Device,
+   class Device : public dabc::Device,
                      protected SysCoreControl {
       public:
 
-         RocDevice(dabc::Basic* parent, const char* name);
-         virtual ~RocDevice();
+         Device(dabc::Basic* parent, const char* name);
+         virtual ~Device();
 
-         virtual const char* ClassName() const { return "RocDevice"; }
+         virtual const char* ClassName() const { return "roc::Device"; }
 
          int AddBoard(const char* address, unsigned ctlPort);
 

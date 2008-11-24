@@ -9,11 +9,11 @@
 #include "dabc/Manager.h"
 #include "dabc/timing.h"
 
-#include "mbs/MbsEventAPI.h"
+#include "mbs/EventAPI.h"
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/MbsDataInput.h"
-#include "mbs/MbsTransport.h"
-#include "mbs/MbsDevice.h"
+#include "mbs/ServerTransport.h"
+#include "mbs/Device.h"
 
 #define BUFFERSIZE 16*1024
 

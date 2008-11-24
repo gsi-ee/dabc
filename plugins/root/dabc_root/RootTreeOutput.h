@@ -17,6 +17,8 @@ namespace dabc_root {
          RootTreeOutput();
          virtual ~RootTreeOutput();
 
+         virtual bool Write_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
+
          virtual bool WriteBuffer(dabc::Buffer* buf);
 
       protected:

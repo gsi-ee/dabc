@@ -1,5 +1,5 @@
-#ifndef MBS_MbsTransport
-#define MBS_MbsTransport
+#ifndef MBS_ServerTransport
+#define MBS_ServerTransport
 
 #ifndef DABC_Transport
 #include "dabc/Transport.h"
@@ -19,82 +19,82 @@
 
 
 namespace mbs {
-    
-   class MbsDevice; 
-   class MbsServerTransport;
-    
+
+   class Device;
+   class ServerTransport;
+
    class MbsServerPort : public dabc::SocketServerProcessor {
       public:
-         MbsServerPort(MbsServerTransport* tr, int serversocket, int portnum);
-         
-      protected:  
+         MbsServerPort(ServerTransport* tr, int serversocket, int portnum);
+
+      protected:
          virtual void OnClientConnected(int fd);
-         
-         MbsServerTransport*  fTransport;
+
+         ServerTransport*  fTransport;
    };
 
    // _____________________________________________________________________
-   
+
    class MbsServerIOProcessor : public dabc::SocketIOProcessor {
-       
-      friend class MbsServerTransport; 
-       
+
+      friend class ServerTransport;
+
       enum EEvents { evMbsDataOutput = evntSocketLast };
       enum EIOStatus { ioInit, ioReady, ioWaitingReq, ioWaitingBuffer, ioSendingBuffer, ioDoingClose };
-       
+
       public:
-         MbsServerIOProcessor(MbsServerTransport* tr, int fd);
+         MbsServerIOProcessor(ServerTransport* tr, int fd);
          virtual ~MbsServerIOProcessor();
-         
+
          void SendInfo(int32_t maxbytes, bool ifnewformat);
 
          virtual void OnSendCompleted();
          virtual void OnRecvCompleted();
-         
+
          virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const char* info);
-         
+
          inline void FireDataOutput() { FireEvent(evMbsDataOutput); }
          virtual void ProcessEvent(dabc::EventId);
-      
+
       protected:
          virtual double ProcessTimeout(double last_diff);
 
-      
-         MbsServerTransport*   fTransport;
+
+         ServerTransport*   fTransport;
          sMbsTransportInfo     fServInfo; // data, send by transport server in the beginning
          EIOStatus             fStatus;
          char                  f_sbuf[12]; // input buffer to get request
          dabc::Buffer*         fSendBuf;
          mbs::BufferHeader     fHeader;
    };
-   
+
    // _________________________________________________________________
-   
-   class MbsServerTransport : public dabc::Transport {
-       
-      public:  
-         MbsServerTransport(MbsDevice* dev, dabc::Port* port,
-                            int kind, 
-                            int serversocket, 
-                            int portnum, 
+
+   class ServerTransport : public dabc::Transport {
+
+      public:
+         ServerTransport(Device* dev, dabc::Port* port,
+                            int kind,
+                            int serversocket,
+                            int portnum,
                             uint32_t maxbufsize = 16*1024);
-         virtual ~MbsServerTransport();
-         
+         virtual ~ServerTransport();
+
          int Kind() const { return fKind; }
-         
+
          // here is call-backs from different processors
          void ProcessConnectionRequest(int fd);
          void SocketIOClosed(MbsServerIOProcessor* proc);
          dabc::Buffer* TakeFrontBuffer();
          void DropFrontBufferIfQueueFull();
-         
+
          // this is normal transport functionality
-         
+
          virtual bool ProvidesInput() { return false; }
          virtual bool ProvidesOutput() { return true; }
          virtual void PortChanged();
-         
+
          virtual bool Recv(dabc::Buffer* &buf) { return false; }
          virtual unsigned RecvQueueSize() const { return 0; }
          virtual dabc::Buffer* RecvBuffer(unsigned) const { return 0; }
@@ -111,7 +111,7 @@ namespace mbs {
          long                    fSendBuffers;
          long                    fDroppedBuffers;
    };
-   
+
 }
 
 #endif
