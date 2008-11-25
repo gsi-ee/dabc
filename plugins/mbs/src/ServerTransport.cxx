@@ -6,13 +6,13 @@
 
 #include "mbs/Device.h"
 
-mbs::MbsServerPort::MbsServerPort(ServerTransport* tr, int serversocket, int portnum) :
+mbs::ServerConnectProcessor::ServerConnectProcessor(ServerTransport* tr, int serversocket, int portnum) :
    dabc::SocketServerProcessor(serversocket, portnum),
    fTransport(tr)
 {
 }
 
-void mbs::MbsServerPort::OnClientConnected(int connfd)
+void mbs::ServerConnectProcessor::OnClientConnected(int connfd)
 {
    if (fTransport)
       fTransport->ProcessConnectionRequest(connfd);
@@ -24,72 +24,72 @@ void mbs::MbsServerPort::OnClientConnected(int connfd)
 
 // ________________________________________________________________________
 
-mbs::MbsServerIOProcessor::MbsServerIOProcessor(ServerTransport* tr, int fd) :
+mbs::ServerIOProcessor::ServerIOProcessor(ServerTransport* tr, int fd) :
    dabc::SocketIOProcessor(fd),
    fTransport(tr),
-   fStatus(ioInit),
+   fState(ioInit),
    fSendBuf(0)
 {
 }
 
-mbs::MbsServerIOProcessor::~MbsServerIOProcessor()
+mbs::ServerIOProcessor::~ServerIOProcessor()
 {
    dabc::Buffer::Release(fSendBuf);
    fSendBuf = 0;
 }
 
 
-void mbs::MbsServerIOProcessor::SendInfo(int32_t maxbytes, bool isnewformat)
+void mbs::ServerIOProcessor::SendInfo(int32_t maxbytes, bool isnewformat)
 {
    memset(&fServInfo, 0, sizeof(fServInfo));
 
    fServInfo.iEndian = 1;      // byte order. Set to 1 by sender
    fServInfo.iMaxBytes = maxbytes;    // maximum buffer size
    fServInfo.iBuffers = 1;     // buffers per stream
-   fServInfo.iStreams = isnewformat ? 0 : 1;     // number of streams (could be set to -1 to indicate var length buffers, size l_free[1])
+   fServInfo.iStreams = isnewformat ? 0 : 1;     // number of streams (could be set to -1 to indicate variable length buffers, size l_free[1])
 
-   fStatus = ioInit;
+   fState = ioInit;
 
    StartSend(&fServInfo, sizeof(fServInfo));
 }
 
-void mbs::MbsServerIOProcessor::OnSendCompleted()
+void mbs::ServerIOProcessor::OnSendCompleted()
 {
-   DOUT3(("Send completed status:%d tr:%p", fStatus, fTransport));
+   DOUT3(("Send completed status:%d tr:%p", fState, fTransport));
 
-   switch (fStatus) {
+   switch (fState) {
       case ioInit:
-         fStatus = ioReady;
+         fState = ioReady;
          DOUT0(("Send of initial information completed"));
 
          break;
       case ioSendingBuffer:
-         fStatus = ioReady;
+         fState = ioReady;
          dabc::Buffer::Release(fSendBuf);
          fSendBuf = 0;
          break;
       default:
-         EOUT(("One should not complete send in such status %d", fStatus));
+         EOUT(("One should not complete send in such status %d", fState));
          return;
    }
 
    FireDataOutput();
 }
 
-void mbs::MbsServerIOProcessor::OnRecvCompleted()
+void mbs::ServerIOProcessor::OnRecvCompleted()
 {
-   if (fStatus != ioWaitingReq) {
+   if (fState != ioWaitingReq) {
       EOUT(("No recv completion is expected up to now"));
       return;
    }
 
    if (strcmp(f_sbuf, "CLOSE")==0) {
-      DOUT1(("Client want to close connection, do it immidiately"));
+      DOUT1(("Client want to close connection, do it immediately"));
       // keep state as it is, just wait until connection is cut
 
       if (fTransport) fTransport->SocketIOClosed(this);
 
-      fStatus = ioDoingClose;
+      fState = ioDoingClose;
 
       DestroyProcessor();
 
@@ -98,12 +98,12 @@ void mbs::MbsServerIOProcessor::OnRecvCompleted()
 
    if (strcmp(f_sbuf, "GETEVT")!=0)
      EOUT(("Wrong request string %s", f_sbuf));
-   fStatus = ioWaitingBuffer;
+   fState = ioWaitingBuffer;
 
    FireDataOutput();
 }
 
-void mbs::MbsServerIOProcessor::OnConnectionClosed()
+void mbs::ServerIOProcessor::OnConnectionClosed()
 {
    DOUT0(("Connection to MBS client closed"));
 
@@ -112,7 +112,7 @@ void mbs::MbsServerIOProcessor::OnConnectionClosed()
    dabc::SocketIOProcessor::OnConnectionClosed();
 }
 
-void mbs::MbsServerIOProcessor::OnSocketError(int errnum, const char* info)
+void mbs::ServerIOProcessor::OnSocketError(int errnum, const char* info)
 {
 
    DOUT0(("Connection to MBS client error"));
@@ -122,13 +122,13 @@ void mbs::MbsServerIOProcessor::OnSocketError(int errnum, const char* info)
    dabc::SocketIOProcessor::OnSocketError(errnum, info);
 }
 
-double mbs::MbsServerIOProcessor::ProcessTimeout(double)
+double mbs::ServerIOProcessor::ProcessTimeout(double)
 {
    return -1.;
 }
 
 
-void mbs::MbsServerIOProcessor::ProcessEvent(dabc::EventId evnt)
+void mbs::ServerIOProcessor::ProcessEvent(dabc::EventId evnt)
 {
     if (dabc::GetEventCode(evnt) != evMbsDataOutput) {
        dabc::SocketIOProcessor::ProcessEvent(evnt);
@@ -139,35 +139,38 @@ void mbs::MbsServerIOProcessor::ProcessEvent(dabc::EventId evnt)
 
     int kind = fTransport->Kind();
 
-    if (fStatus == ioDoingClose) {
+    if (fState == ioDoingClose) {
        DOUT5(("Doing close"));
        return;
     }
 
-    if (fStatus == ioReady) {
+    if (fState == ioReady) {
         if (kind == TransportServer)
-           fStatus = ioWaitingBuffer;
+           fState = ioWaitingBuffer;
         else
         if (kind == StreamServer) {
            strcpy(f_sbuf, "");
            StartRecv(f_sbuf, 12);
-           fStatus = ioWaitingReq;
+           fState = ioWaitingReq;
         }
     }
 
-    if (fStatus == ioWaitingReq)
+    if (fState == ioWaitingReq)
        fTransport->DropFrontBufferIfQueueFull();
 
-    if (fStatus == ioWaitingBuffer) {
+    if (fState == ioWaitingBuffer) {
        fSendBuf = fTransport->TakeFrontBuffer();
        if (fSendBuf!=0) {
-          fStatus = ioSendingBuffer;
+          fState = ioSendingBuffer;
 
-//        mbs::sMbsBufferHeader* bufhdr = (mbs::sMbsBufferHeader*) fSendBuf->GetDataLocation();
-//        DOUT1(("Send MBS buffer type %x len %d used %d",
-//        bufhdr->iType,  bufhdr->BufferLength(), bufhdr->UsedBufferLength()));
+        mbs::sMbsBufferHeader* bufhdr = (mbs::sMbsBufferHeader*) fSendBuf->GetDataLocation();
+        DOUT4(("Send MBS buffer type %x len %d used %d  total: %u",
+           bufhdr->iType,  bufhdr->BufferLength(), bufhdr->UsedBufferLength(), fSendBuf->GetTotalSize()));
 
           if (fSendBuf->GetTypeId()==mbt_Mbs100_1)
+             StartSend(fSendBuf);
+          else
+          if (fSendBuf->GetTypeId()==mbt_Mbs10_1)
              StartSend(fSendBuf);
           else
           if (fSendBuf->GetTypeId()==mbt_MbsEvs10_1) {
@@ -180,7 +183,7 @@ void mbs::MbsServerIOProcessor::ProcessEvent(dabc::EventId evnt)
               EOUT(("Buffer type %u not supported !!!", fSendBuf->GetTypeId()));
               dabc::Buffer::Release(fSendBuf);
               fSendBuf = 0;
-              fStatus = ioWaitingBuffer;
+              fState = ioWaitingBuffer;
               FireDataOutput();
           }
        }
@@ -191,10 +194,10 @@ void mbs::MbsServerIOProcessor::ProcessEvent(dabc::EventId evnt)
 // _____________________________________________________________________
 
 mbs::ServerTransport::ServerTransport(Device* dev, dabc::Port* port,
-                                            int kind,
-                                            int serversocket,
-                                            int portnum,
-                                            uint32_t maxbufsize) :
+                                      int kind,
+                                      int serversocket,
+                                      int portnum,
+                                      uint32_t maxbufsize) :
    dabc::Transport(dev),
    fKind(kind),
    fMutex(),
@@ -205,7 +208,7 @@ mbs::ServerTransport::ServerTransport(Device* dev, dabc::Port* port,
    fSendBuffers(0),
    fDroppedBuffers(0)
 {
-   fServerPort = new MbsServerPort(this, serversocket, portnum);
+   fServerPort = new ServerConnectProcessor(this, serversocket, portnum);
 
    dabc::Manager::Instance()->MakeThreadFor(fServerPort, dev->ProcessorThreadName());
 }
@@ -248,7 +251,7 @@ void mbs::ServerTransport::ProcessConnectionRequest(int fd)
       return;
    }
 
-   MbsServerIOProcessor* io = new MbsServerIOProcessor(this, fd);
+   ServerIOProcessor* io = new ServerIOProcessor(this, fd);
 
    dabc::Manager::Instance()->MakeThreadFor(io, GetDevice()->ProcessorThreadName());
 
@@ -259,7 +262,7 @@ void mbs::ServerTransport::ProcessConnectionRequest(int fd)
    fIOSocket = io;
 }
 
-void mbs::ServerTransport::SocketIOClosed(MbsServerIOProcessor* proc)
+void mbs::ServerTransport::SocketIOClosed(ServerIOProcessor* proc)
 {
    bool testdrop = false;
 

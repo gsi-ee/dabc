@@ -10,6 +10,8 @@
 #include "dabc/threads.h"
 #include "dabc/Application.h"
 #include "dabc/SocketDevice.h"
+#include "dabc/statistic.h"
+
 
 #include <map>
 #include <math.h>

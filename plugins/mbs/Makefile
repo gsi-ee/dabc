@@ -35,7 +35,7 @@ MBSAPI_CD       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(DepSuf), $(MBSAPI_CS))
 
 MBSFAPI_LINKDEF = $(MBSFAPIDIR)/LinkDef.h
 MBSFAPI_PACKAGE = $(MBSFAPIDIR)/lmdfile.tar.gz
-MBSFAPI_TESTS = $(MBSFAPIDIR)/test.cxx
+MBSFAPI_TESTS   = $(MBSFAPIDIR)/test.cxx
 
 MBSFAPI_CS      = $(wildcard $(MBSFAPIDIR)/*.$(CSuf))
 MBSFAPI_CH      = $(filter-out $(MBSFAPI_LINKDEF), $(wildcard $(MBSFAPIDIR)/*.$(HedSuf)))
@@ -51,9 +51,9 @@ MBSFAPI_DISTR   = $(MBSFAPI_TESTS) $(MBSFAPI_CS) $(MBSFAPI_CH) $(MBSFAPI_S) \
 
 # used in the main Makefile
 
-ALLHDRS         += $(patsubst $(MBSDIR)/%.h, $(DABCINCPATH)/%.h, $(MBS_H))
-ALLDEPENDENC    += $(MBS_D) $(MBSAPI_CD) $(MBSFAPI_D) $(MBSFAPI_CD)
-APPLICATIONS_DIRS     += $(MBSTESTDIR)
+ALLHDRS           += $(patsubst $(MBSDIR)/%.h, $(DABCINCPATH)/%.h, $(MBS_H))
+ALLDEPENDENC      += $(MBS_D) $(MBSAPI_CD) $(MBSFAPI_D) $(MBSFAPI_CD)
+APPLICATIONS_DIRS += $(MBSTESTDIR)
 
 libs:: $(DABCMBS_LIB) $(MBSFAPI_PACKAGE)
 

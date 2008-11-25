@@ -9,7 +9,7 @@
 
 dabc::NetworkTransport::NetworkTransport(Device* device) :
    Transport(device),
-   MemoryPoolRequster(),
+   MemoryPoolRequester(),
    fTransportId(0),
    fIsInput(false),
    fIsOutput(false),

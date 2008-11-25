@@ -36,7 +36,7 @@ namespace dabc {
    
    class DataTransport : public Transport,
                          public WorkingProcessor,
-                         protected MemoryPoolRequster {
+                         protected MemoryPoolRequester {
       
       enum EDataEvents { evDataInput = 1, evDataOutput };
       

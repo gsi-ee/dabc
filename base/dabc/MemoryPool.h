@@ -28,7 +28,7 @@ namespace dabc {
    extern unsigned int MemoryAllign;
    
    
-   class MemoryPoolRequster {
+   class MemoryPoolRequester {
       friend class MemoryPool;
       
       private:
@@ -43,9 +43,9 @@ namespace dabc {
       // not buffer which was requested before
       // User returns true if he accept buffer, false means that buffer must be released
       
-         MemoryPoolRequster() : pool(0), bufsize(0), hdrsize(0), buf(0) {}
+         MemoryPoolRequester() : pool(0), bufsize(0), hdrsize(0), buf(0) {}
          virtual bool ProcessPoolRequest() = 0;
-         virtual ~MemoryPoolRequster() { if (buf!=0) EOUT(("buf !=0 in requester")); }
+         virtual ~MemoryPoolRequester() { if (buf!=0) EOUT(("buf !=0 in requester")); }
    };
    
    // _________________________________________________________
@@ -228,13 +228,13 @@ namespace dabc {
 
          // return buffer or set request to the pool, which will be processed
          // when new memory is available in the buffer
-         Buffer* TakeBufferReq(MemoryPoolRequster* req, BufferSize_t size = 0, BufferSize_t hdrsize = 0);
+         Buffer* TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size = 0, BufferSize_t hdrsize = 0);
          
-         Buffer* TakeRequestedBuffer(MemoryPoolRequster* req);
+         Buffer* TakeRequestedBuffer(MemoryPoolRequester* req);
 
          // Cancel previousely suybmitted request
          // May happen, if object want to be deleted
-         void RemoveRequester(MemoryPoolRequster* req);
+         void RemoveRequester(MemoryPoolRequester* req);
 
          void Print();
          
@@ -285,7 +285,7 @@ namespace dabc {
 
          unsigned          fChangeCounter;
          
-         Queue<MemoryPoolRequster*>  fReqQueue;
+         Queue<MemoryPoolRequester*>  fReqQueue;
          bool              fEvntFired; // indicate if we already fire event for requests processing
          ECleanupStatus    fCleanupStatus; 
          double            fCleanupTmout; // length of cleanup loop

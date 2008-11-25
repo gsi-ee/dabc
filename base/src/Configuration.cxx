@@ -157,7 +157,16 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    return true;
 }
 
-bool dabc::Configuration::LoadLibs()
+std::string dabc::Configuration::StartFuncName()
+{
+   if (IsXDAQ() || (fSelected==0)) return std::string("");
+
+   const char* val = Find1(fSelected, 0, xmlRunNode, xmlUserFunc);
+
+   return std::string(val ? val : "");
+}
+
+bool dabc::Configuration::LoadLibs(const char* startfunc)
 {
     if (fSelected==0) return false;
 
@@ -168,7 +177,7 @@ bool dabc::Configuration::LoadLibs()
 
     while ((libname = FindN(fSelected, last, xmlRunNode, xmlUserLib))!=0) {
        DOUT0(("Find library %s", libname));
-       dabc::Manager::LoadLibrary(ResolveEnv(libname).c_str());
+       dabc::Manager::LoadLibrary(ResolveEnv(libname).c_str(), startfunc);
     }
 
     return true;

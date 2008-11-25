@@ -586,7 +586,7 @@ namespace dabc {
            * In the end all unused thread also destroyed */
          bool CleanupManager(int appid = 0);
 
-         static bool LoadLibrary(const char* libname);
+         static bool LoadLibrary(const char* libname, const char* startfunc = 0);
 
          bool InstallCtrlCHandler();
          void ProcessCtrlCSignal();

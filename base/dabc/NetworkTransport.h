@@ -18,7 +18,7 @@ namespace dabc {
    class MemoryPool;
    
    class NetworkTransport : public Transport,
-                            public MemoryPoolRequster { 
+                            public MemoryPoolRequester { 
       
       typedef Queue<uint32_t> NetIORecsQueue;
  

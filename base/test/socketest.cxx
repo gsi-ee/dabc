@@ -8,6 +8,7 @@
 #include "dabc/Buffer.h"
 #include "dabc/Manager.h"
 #include "dabc/timing.h"
+#include "dabc/statistic.h"
 #include "dabc/SocketThread.h"
 #include "dabc/SocketDevice.h"
 

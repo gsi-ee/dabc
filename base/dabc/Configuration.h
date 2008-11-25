@@ -48,7 +48,9 @@ namespace dabc {
          int MgrNodeId() const { return fMgrNodeId; }
          int MgrNumNodes() const { return fMgrNumNodes; }
 
-         bool LoadLibs();
+         std::string StartFuncName();
+
+         bool LoadLibs(const char* startfunc = 0);
 
          bool ReadPars();
 

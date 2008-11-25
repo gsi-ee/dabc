@@ -169,6 +169,7 @@ namespace dabc {
    const char* xmlConfigFile       = "config";
    const char* xmlConfigFileId     = "configid";
    const char* xmlUserLib          = "Lib";
+   const char* xmlUserFunc         = "Func";
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :
@@ -470,6 +471,13 @@ std::string dabc::ConfigBase::NodeName(unsigned id)
    return std::string(Find1(contnode, 0, xmlRunNode, xmlSshHost));
 }
 
+std::string dabc::ConfigBase::ContextName(unsigned id)
+{
+   if (IsXDAQ()) return XDAQ_NodeName(id);
+   XMLNodePointer_t contnode = FindContext(id);
+   if (contnode == 0) return std::string("");
+   return std::string(fXml.GetAttr(contnode,xmlNameAttr));
+}
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
 {

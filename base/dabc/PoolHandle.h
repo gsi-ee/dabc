@@ -14,7 +14,7 @@ namespace dabc {
    class DoubleParameter;
 
    class PoolHandle : public ModuleItem,
-                      public MemoryPoolRequster {
+                      public MemoryPoolRequester {
       friend class Module;
 
       private:

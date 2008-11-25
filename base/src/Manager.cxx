@@ -2053,7 +2053,7 @@ dabc::DataOutput* dabc::Manager::CreateDataOutput(const char* typ, const char* n
    return 0;
 }
 
-bool dabc::Manager::LoadLibrary(const char* libname)
+bool dabc::Manager::LoadLibrary(const char* libname, const char* startfunc)
 {
    std::string name = libname;
 
@@ -2082,12 +2082,24 @@ bool dabc::Manager::LoadLibrary(const char* libname)
       }
    }
 
-   void* lib = ::dlopen(name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+   void* lib = dlopen(name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
 
    if (lib==0)
-      EOUT(("Cannot load library %s err:%s", name.c_str(), ::dlerror()));
-   else
+      EOUT(("Cannot load library %s err:%s", name.c_str(), dlerror()));
+   else {
       DOUT1(("Library loaded %s", name.c_str()));
+
+      if (startfunc!=0) {
+         typedef void* myfunc();
+
+         myfunc* func = (myfunc*) dlsym(lib, startfunc);
+
+         if (func!=0) {
+            DOUT1(("Find function %s in library", startfunc));
+            func();
+         }
+      }
+   }
 
    return (lib!=0);
 }

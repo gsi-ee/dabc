@@ -15,7 +15,7 @@ namespace mbs {
 
          virtual int CreateTransport(dabc::Command* cmd, dabc::Port* port);
 
-         virtual const char* ClassName() const { return "MbsDevice"; }
+         virtual const char* ClassName() const { return "mbs::Device"; }
    };
 
 };

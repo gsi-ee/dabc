@@ -25,26 +25,27 @@ namespace mbs {
 
 
 #pragma pack(push, 1)
-    
+
    struct Header {
       uint32_t iWords;       // data words + 2
       union {
         struct {
 #if BYTE_ORDER == LITTLE_ENDIAN
-          uint16_t i_type; 
+          uint16_t i_type;
           uint16_t i_subtype;
 #else
           uint16_t i_subtype;
-          uint16_t i_type; 
-#endif         
+          uint16_t i_type;
+#endif
         };
         uint32_t iType; // compatible with s_bufhe, low=type (=100), high=subtype
       };
 
       // FullSize - size of data with header (8 bytes)
-      uint32_t FullSize() const { return 8 + iWords*2; }
-      void SetFullSize(uint32_t sz) { iWords = (sz - 8) /2; }
-   }; 
+      inline uint32_t FullSize() const { return 8 + iWords*2; }
+      inline void SetFullSize(uint32_t sz) { iWords = (sz - 8) /2; }
+      inline uint32_t Type() const { return iType; }
+   };
 
    struct SubeventHeader : public Header {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -57,23 +58,23 @@ namespace mbs {
       int16_t  iProcId;     /*  Processor ID [as loaded from VAX] */
 #endif
 
-      void Init() 
-      { 
-         iWords = 0; 
-         iType = MBS_TYPE_10_1; 
+      void Init()
+      {
+         iWords = 0;
+         iType = MBS_TYPE_10_1;
          iProcId = 0;
          iSubcrate = 0;
          iControl = 0;
       }
 
       void *RawData() const { return (char*) this + sizeof(SubeventHeader); }
-      
+
       // RawDataSize - size of raw data without subevent header
       uint32_t RawDataSize() const { return FullSize() - sizeof(SubeventHeader); }
       void SetRawDataSize(uint32_t sz) { SetFullSize(sz + sizeof(SubeventHeader)); }
-      
+
    };
-    
+
    struct EventHeader : public Header {
 #if BYTE_ORDER == LITTLE_ENDIAN
       int16_t iDummy;     /*  Not used yet */
@@ -84,10 +85,10 @@ namespace mbs {
 #endif
       uint32_t iEventNumber;
 
-      void Init() 
-      { 
-         iWords = 0; 
-         iType = MBS_TYPE_10_1; 
+      void Init()
+      {
+         iWords = 0;
+         iType = MBS_TYPE_10_1;
          iDummy = 0;
          iTrigger = tt_Event;
          iEventNumber = 0;
@@ -99,16 +100,16 @@ namespace mbs {
 
       SubeventHeader* SubEvents() const
          { return (SubeventHeader*) ((char*) this + sizeof(EventHeader)); }
-         
+
       SubeventHeader* NextSubEvent(SubeventHeader* prev) const
-         { return prev == 0 ? (FullSize() > sizeof(EventHeader) ? SubEvents() : 0): 
-                (((char*) this + FullSize() > (char*) prev + prev->FullSize() + sizeof(SubeventHeader)) ? 
+         { return prev == 0 ? (FullSize() > sizeof(EventHeader) ? SubEvents() : 0):
+                (((char*) this + FullSize() > (char*) prev + prev->FullSize() + sizeof(SubeventHeader)) ?
                    (SubeventHeader*) (((char*) prev) + prev->FullSize()) : 0); }
-                   
+
       unsigned NumSubevents() const;
    };
-   
-   
+
+
    struct BufferHeader : public Header {
       union {
          struct {
@@ -120,27 +121,30 @@ namespace mbs {
             int8_t   h_begin;   /*  Fragment at end of buffer */
             int8_t   h_end;    /*  Fragment at begin of buffer */
             int16_t  i_used;   /*  Used length of data field in words */
-#endif      
-         }; 
+#endif
+         };
          int32_t iUsed;        // not used for type=100, low 16bits only
       };
 
       int32_t iBufferId;    // consequent buffer id
       int32_t iNumEvents;   // number of events in buffer
       int32_t iTemp;        // Used volatile
-      int32_t iSeconds;     
-      int32_t iNanosec;     
+      int32_t iSeconds;
+      int32_t iNanosec;
       int32_t iEndian;      // compatible with s_bufhe free[0]
       int32_t iLast;        // length of last event, free[1]
       int32_t iUsedWords;   // total words without header to read for type=100, free[2]
       int32_t iFree3;       // free[3]
-      
+
       void Init(bool newformat);
-      
+
+      // length of buffer, which will be transported over socket
+      uint32_t BufferLength() const;
+
       // UsedBufferSize - size of data after buffer header
-      uint32_t UsedBufferSize();
+      uint32_t UsedBufferSize() const;
       void SetUsedBufferSize(uint32_t len);
-      
+
       void SetEndian() { iEndian = 1; }
       bool IsCorrectEndian() const { return iEndian == 1; }
    };

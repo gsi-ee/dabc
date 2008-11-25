@@ -13,6 +13,8 @@
 #include "dabc/Timer.h"
 #include "dabc/TimeSyncModule.h"
 #include "dabc/Application.h"
+#include "dabc/statistic.h"
+
 
 #include <map>
 #include <math.h>

@@ -34,6 +34,7 @@ namespace dabc {
    extern const char* xmlConfigFile;
    extern const char* xmlConfigFileId;
    extern const char* xmlUserLib;
+   extern const char* xmlUserFunc;
 
    extern const char* xmlXDAQPartition;
    extern const char* xmlXDAQContext;
@@ -123,8 +124,11 @@ namespace dabc {
          // returns number of nodes in xml file
          unsigned NumNodes();
 
-         // returns nodename of specified context, to be implemented later
+         // returns nodename of specified context
          std::string NodeName(unsigned id);
+
+         // returns name of specified context
+         std::string ContextName(unsigned id);
 
          // method used by run.sh script to produce command line when test(0), run(1), conn(2), kill(3) application
          std::string SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);

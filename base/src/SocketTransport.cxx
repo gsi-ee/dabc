@@ -148,14 +148,14 @@ do_compl:
    }
 
    if (fRecvStatus==1) {
-      // analyse header, set new recv operation and so on
+      // analyze header, set new recv operation and so on
 
       fRecvStatus = 2;
 
       NetworkHeader* nethdr = (NetworkHeader*) fRecs[fRecvRecid].header;
 
       if (nethdr->typid == dabc::mbt_EOL) {
-         DOUT1(("Recieve buffer with EOL bufsize = %u resthdr = %u",
+         DOUT1(("Receive buffer with EOL bufsize = %u resthdr = %u",
                  nethdr->size, fFullHeaderSize - sizeof(NetworkHeader)));
       }
 
@@ -172,7 +172,7 @@ do_compl:
       }
 
       void* hdr = 0;
-      if (fFullHeaderSize>sizeof(NetworkHeader))
+      if (fFullHeaderSize > sizeof(NetworkHeader))
         hdr = (char*) fRecs[fRecvRecid].header + sizeof(NetworkHeader);
 
       if (!StartNetRecv(hdr, fFullHeaderSize - sizeof(NetworkHeader), buf, nethdr->size)) {

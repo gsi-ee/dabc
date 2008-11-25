@@ -6,6 +6,27 @@
 
 #include <iostream>
 
+int RunSimpleFunc(dabc::Configuration* cfg)
+{
+   dabc::Manager manager(cfg->MgrName(), true, cfg);
+
+   manager.InstallCtrlCHandler();
+
+   std::string funcname = cfg->StartFuncName();
+
+   cfg->LoadLibs(funcname.c_str());
+
+   cfg->StoreObject((funcname + ".xml").c_str(), dabc::mgr());
+
+   DOUT0(("Start main loop"));
+
+   manager.RunManagerMainLoop();
+
+   DOUT0(("Finish main loop"));
+
+   return 0;
+}
+
 int RunSimpleApplication(dabc::Configuration* cfg)
 {
    dabc::Manager manager(cfg->MgrName(), true, cfg);
@@ -192,6 +213,9 @@ int main(int numc, char* args[])
       EOUT(("Did not found context"));
       return 1;
    }
+
+   if (cfg.StartFuncName().length()>0)
+      return RunSimpleFunc(&cfg);
 
    if (numnodes<2)
       return RunSimpleApplication(&cfg);

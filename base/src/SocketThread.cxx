@@ -241,9 +241,11 @@ bool dabc::SocketIOProcessor::StartRecv(void* buf, size_t size, bool usemsg)
 bool dabc::SocketIOProcessor::StartSend(Buffer* buf, bool usemsg)
 {
    // this is simple version,
-   // where only buffer itslef without header is transported
+   // where only buffer itself without header is transported
 
-   if (fSendIOVNumber>0) {
+   return StartNetSend(0, 0, buf, usemsg);
+
+/*   if (fSendIOVNumber>0) {
       EOUT(("Current send operation not yet completed"));
       return false;
    }
@@ -265,6 +267,13 @@ bool dabc::SocketIOProcessor::StartSend(Buffer* buf, bool usemsg)
    FireEvent(evntSocketWrite);
 
    return true;
+
+*/
+}
+
+bool dabc::SocketIOProcessor::StartRecv(Buffer* buf, BufferSize_t datasize, bool usemsg)
+{
+   return StartNetRecv(0, 0, buf, datasize, usemsg);
 }
 
 bool dabc::SocketIOProcessor::StartNetRecv(void* hdr, BufferSize_t hdrsize, Buffer* buf, BufferSize_t datasize, bool usemsg)
@@ -362,6 +371,10 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
 
           ssize_t res = 0;
 
+//          DOUT1(("Socket %d fRecvIOV = %p fRecvIOVFirst = %u number %u iov: %p %u",
+//                fSocket, fRecvIOV, fRecvIOVFirst, fRecvIOVNumber,
+//                fRecvIOV[fRecvIOVFirst].iov_base, fRecvIOV[fRecvIOVFirst].iov_len));
+
           if (fRecvUseMsg) {
 
              struct msghdr msg;
@@ -377,6 +390,8 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
              res = recvmsg(fSocket, &msg, MSG_DONTWAIT | MSG_NOSIGNAL);
           } else
              res = recv(fSocket, fRecvIOV[fRecvIOVFirst].iov_base, fRecvIOV[fRecvIOVFirst].iov_len, MSG_DONTWAIT | MSG_NOSIGNAL);
+
+//          DOUT1(("res = %d", res));
 
           #ifdef SOCKET_PROFILING
              TimeStamp_t tm2 = TimeStamp();
@@ -395,6 +410,7 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
           }
 
           while (res>0) {
+
              struct iovec* rec = &(fRecvIOV[fRecvIOVFirst]);
 
              if (rec->iov_len <= (unsigned) res) {

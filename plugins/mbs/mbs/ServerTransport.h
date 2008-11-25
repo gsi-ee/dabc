@@ -23,9 +23,9 @@ namespace mbs {
    class Device;
    class ServerTransport;
 
-   class MbsServerPort : public dabc::SocketServerProcessor {
+   class ServerConnectProcessor : public dabc::SocketServerProcessor {
       public:
-         MbsServerPort(ServerTransport* tr, int serversocket, int portnum);
+         ServerConnectProcessor(ServerTransport* tr, int serversocket, int portnum);
 
       protected:
          virtual void OnClientConnected(int fd);
@@ -35,16 +35,16 @@ namespace mbs {
 
    // _____________________________________________________________________
 
-   class MbsServerIOProcessor : public dabc::SocketIOProcessor {
+   class ServerIOProcessor : public dabc::SocketIOProcessor {
 
       friend class ServerTransport;
 
       enum EEvents { evMbsDataOutput = evntSocketLast };
-      enum EIOStatus { ioInit, ioReady, ioWaitingReq, ioWaitingBuffer, ioSendingBuffer, ioDoingClose };
+      enum EIOState { ioInit, ioReady, ioWaitingReq, ioWaitingBuffer, ioSendingBuffer, ioDoingClose };
 
       public:
-         MbsServerIOProcessor(ServerTransport* tr, int fd);
-         virtual ~MbsServerIOProcessor();
+         ServerIOProcessor(ServerTransport* tr, int fd);
+         virtual ~ServerIOProcessor();
 
          void SendInfo(int32_t maxbytes, bool ifnewformat);
 
@@ -61,9 +61,9 @@ namespace mbs {
          virtual double ProcessTimeout(double last_diff);
 
 
-         ServerTransport*   fTransport;
+         ServerTransport*      fTransport;
          sMbsTransportInfo     fServInfo; // data, send by transport server in the beginning
-         EIOStatus             fStatus;
+         EIOState              fState;
          char                  f_sbuf[12]; // input buffer to get request
          dabc::Buffer*         fSendBuf;
          mbs::BufferHeader     fHeader;
@@ -75,17 +75,17 @@ namespace mbs {
 
       public:
          ServerTransport(Device* dev, dabc::Port* port,
-                            int kind,
-                            int serversocket,
-                            int portnum,
-                            uint32_t maxbufsize = 16*1024);
+                         int kind,
+                         int serversocket,
+                         int portnum,
+                         uint32_t maxbufsize = 16*1024);
          virtual ~ServerTransport();
 
          int Kind() const { return fKind; }
 
          // here is call-backs from different processors
          void ProcessConnectionRequest(int fd);
-         void SocketIOClosed(MbsServerIOProcessor* proc);
+         void SocketIOClosed(ServerIOProcessor* proc);
          dabc::Buffer* TakeFrontBuffer();
          void DropFrontBufferIfQueueFull();
 
@@ -105,8 +105,8 @@ namespace mbs {
          int                     fKind; // see EMbsServerKinds values
          dabc::Mutex             fMutex;
          dabc::BuffersQueue      fOutQueue;
-         MbsServerPort*          fServerPort; // socket for connections handling
-         MbsServerIOProcessor*   fIOSocket; // actual socket for I/O operation
+         ServerConnectProcessor* fServerPort; // socket for connections handling
+         ServerIOProcessor*      fIOSocket; // actual socket for I/O operation
          uint32_t                fMaxBufferSize; // maximum size of the buffer, which can be send over channel, used for old transports
          long                    fSendBuffers;
          long                    fDroppedBuffers;

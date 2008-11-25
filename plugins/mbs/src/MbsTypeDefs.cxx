@@ -4,10 +4,10 @@
 
 #include <string.h>
 
-const char* mbs::xmlFileName = "FileName";
-const char* mbs::xmlSizeLimit = "SizeLimit";
-const char* mbs::xmlFirstMultiple = "FirstMultiple";
-const char* mbs::xmlNumMultiple = "NumMultiple";
+const char* mbs::xmlFileName          = "FileName";
+const char* mbs::xmlSizeLimit         = "SizeLimit";
+const char* mbs::xmlFirstMultiple     = "FirstMultiple";
+const char* mbs::xmlNumMultiple       = "NumMultiple";
 
 
 #define MAX_BUF_LGTH 32768

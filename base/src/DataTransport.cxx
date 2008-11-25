@@ -11,7 +11,7 @@
 dabc::DataTransport::DataTransport(Device* dev, Port* port, bool doinput, bool dooutput) :
    Transport(dev),
    WorkingProcessor(),
-   MemoryPoolRequster(),
+   MemoryPoolRequester(),
    fMutex(),
    fInpQueue(doinput ? port->InputQueueCapacity() : 0),
    fOutQueue(dooutput ? port->OutputQueueCapacity() : 0),

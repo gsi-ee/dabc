@@ -117,9 +117,9 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
    const char* format = new_format ? mbs::Factory::LmdFileType() : mbs::Factory::FileType();
 
-   Command* cmd = new dabc::CmdCreateDataTransport("Repeater/Ports/Input");
+   dabc::Command* cmd = new dabc::CmdCreateDataTransport("Repeater/Ports/Input");
    dabc::CmdCreateDataTransport::SetArgsInp(cmd, format, inpfile);
-   res = mgr.Execute(cmd);
+   bool res = mgr.Execute(cmd);
 
    cmd = new dabc::CmdCreateDataTransport("Repeater/Ports/Output");
    dabc::CmdCreateDataTransport::SetArgsOut(cmd, format, outfile);

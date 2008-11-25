@@ -16,7 +16,7 @@ mbs::Factory mbsfactory("mbs");
 
 dabc::Device* mbs::Factory::CreateDevice(dabc::Basic* parent, const char* classname, const char* devname, dabc::Command*)
 {
-   if (strcmp(classname, "MbsDevice")!=0) return 0;
+   if (strcmp(classname, "mbs::Device")!=0) return 0;
 
    DOUT5(("Creating MBS device with name %s", devname));
 

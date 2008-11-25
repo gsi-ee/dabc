@@ -731,7 +731,7 @@ dabc::Buffer* dabc::MemoryPool::TakeEmptyBuffer(BufferSize_t hdrsize)
    return _TakeEmptyBuffer(0, hdrsize); 
 }
 
-dabc::Buffer* dabc::MemoryPool::TakeBufferReq(MemoryPoolRequster* req, BufferSize_t size, BufferSize_t hdrsize)
+dabc::Buffer* dabc::MemoryPool::TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size, BufferSize_t hdrsize)
 {
    
    bool process_res = false;
@@ -794,7 +794,7 @@ dabc::Buffer* dabc::MemoryPool::TakeBufferReq(MemoryPoolRequster* req, BufferSiz
    return buf;
 }
 
-dabc::Buffer* dabc::MemoryPool::TakeRequestedBuffer(MemoryPoolRequster* req)
+dabc::Buffer* dabc::MemoryPool::TakeRequestedBuffer(MemoryPoolRequester* req)
 {
    LockGuard guard(fPoolMutex);
    
@@ -811,7 +811,7 @@ dabc::Buffer* dabc::MemoryPool::TakeRequestedBuffer(MemoryPoolRequster* req)
 }
 
 
-void dabc::MemoryPool::RemoveRequester(MemoryPoolRequster* req)
+void dabc::MemoryPool::RemoveRequester(MemoryPoolRequester* req)
 {
    LockGuard guard(fPoolMutex);
    
@@ -1001,7 +1001,7 @@ bool dabc::MemoryPool::_ProcessRequests()
    bool res = false;
    
    for(unsigned n=0; n<fReqQueue.Size(); n++) {
-      MemoryPoolRequster* req = fReqQueue.Item(n); 
+      MemoryPoolRequester* req = fReqQueue.Item(n); 
       
       if (req->buf==0) 
          req->buf = _TakeBuffer(req->bufsize, req->hdrsize);
@@ -1014,7 +1014,7 @@ bool dabc::MemoryPool::_ProcessRequests()
 
 void dabc::MemoryPool::ReplyReadyRequests()
 {
-   MemoryPoolRequster* req = 0;
+   MemoryPoolRequester* req = 0;
    
    do {
       // give signal to requester that buffer is ready 

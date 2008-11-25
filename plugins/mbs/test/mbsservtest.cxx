@@ -8,6 +8,7 @@
 #include "dabc/Buffer.h"
 #include "dabc/Manager.h"
 #include "dabc/timing.h"
+#include "dabc/statistic.h"
 
 #include "mbs/EventAPI.h"
 #include "mbs/MbsTypeDefs.h"
@@ -102,101 +103,83 @@ class TestModuleAsync : public dabc::ModuleAsync {
       }
 };
 
-void small_test()
+
+extern "C" void StartGenerator()
 {
-   for (int n=0;n<100;n++) {
+    if (dabc::mgr()==0) {
+       EOUT(("Manager is not created"));
+       exit(1);
+    }
 
-      DOUT1(("Test %d", n));
+    DOUT0(("Start MBS generator module"));
 
-      dabc::CommandsQueue q;
+    if (!dabc::mgr()->CreateDevice("mbs::Device", "MBS")) {
+       EOUT(("MbsDevice cannot be created - halt"));
+       exit(1);
+    }
 
-      dabc::Command* cmd = 0;
+    dabc::Module* m = new GeneratorModule("Generator");
+    dabc::mgr()->MakeThreadForModule(m);
+    dabc::mgr()->CreateMemoryPools();
 
-      for (int k=0;k<100;k++) {
-         cmd = new dabc::Command("Test");
-         q.Push(cmd);
-      }
-
-      while ((cmd = q.Pop()) != 0)
-         dabc::Command::Finalise(cmd);
-   }
-}
-
-int main(int numc, char* args[])
-{
-   dabc::SetDebugLevel(1);
-
-   //small_test();
-
-   dabc::Manager mgr("local");
-
-   if (numc==1) {
-      DOUT1(("Start as server"));
-
-      if (!mgr.CreateDevice("MbsDevice", "MBS")) {
-         EOUT(("MbsDevice cannot be created - halt"));
-         return 1;
-      }
-
-      dabc::Module* m = new GeneratorModule("Generator");
-      mgr.MakeThreadForModule(m);
-      mgr.CreateMemoryPools();
-
-      dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", "Modules/Generator/Ports/Output");
-      cmd->SetInt("ServerKind", mbs::TransportServer);
+    dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", "Modules/Generator/Ports/Output");
+    cmd->SetInt("ServerKind", mbs::TransportServer);
 //      cmd->SetInt("PortMin", 6002);
 //      cmd->SetInt("PortMax", 7000);
-      cmd->SetUInt("BufferSize", BUFFERSIZE);
-      if (!mgr.Execute(cmd)) {
-         EOUT(("Cannot create MBS transport server"));
-         return 0;
-      }
+    cmd->SetUInt("BufferSize", BUFFERSIZE);
+    if (!dabc::mgr()->Execute(cmd)) {
+       EOUT(("Cannot create MBS transport server"));
+       exit(1);
+    }
 
 //      if (!mgr.Execute(mgr.LocalCmd(cmd, "Devices/MBS"))) {
 //         EOUT(("Cannot create MBS transport server"));
 //         return 0;
 //      }
 
-      m->Start();
+    m->Start();
+}
 
-      DOUT1(("Start endless loop"));
+extern "C" void StartClient()
+{
+   const char* hostname = "lxg0526";
+   int nport = 6000;
 
-      while (true)
-         dabc::LongSleep(30);
-
-//      m->Stop();
-
-   } else {
-      const char* hostname = args[1];
-      int nport = numc>2 ? atoi(args[2]) : -1;
-
-      DOUT1(("Start as client %s:%d", hostname, nport));
-
-      dabc::Module* m = new TestModuleAsync("Receiever");
-
-      mgr.MakeThreadForModule(m);
-
-      mgr.CreateMemoryPools();
-
-      dabc::Command* cmd = new dabc::CmdCreateDataTransport("Modules/Receiever/Ports/Input", "MBSInp");
-      dabc::CmdCreateDataTransport::SetArgsInp(cmd, "MbsTransport", hostname);
-      if (nport>0) cmd->SetInt("Port", nport);
-
-      if (!mgr.Execute(cmd)) {
-         EOUT(("Cannot create data input for receiever"));
-         return 1;
-      }
-
-      m->Start();
-
-      dabc::LongSleep(3);
-
-//      m->Stop();
+   if (dabc::mgr()==0) {
+      EOUT(("Manager is not created"));
+      exit(1);
    }
 
-//   dabc::SetDebugLevel(10);
+   DOUT1(("Start as client for node %s:%d", hostname, nport));
 
-//   mgr.CleanupManager();
+   if (!dabc::mgr()->CreateDevice("mbs::Device", "MBS")) {
+      EOUT(("MbsDevice cannot be created - halt"));
+      exit(1);
+   }
 
-   return 0;
+   dabc::Module* m = new TestModuleAsync("Receiver");
+
+   dabc::mgr()->MakeThreadForModule(m);
+
+   dabc::mgr()->CreateMemoryPools();
+
+//   dabc::Command* cmd = new dabc::CmdCreateDataTransport("Modules/Receiver/Ports/Input", "MBSInp");
+//   dabc::CmdCreateDataTransport::SetArgsInp(cmd, "MbsTransport", hostname);
+   dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", "Modules/Receiver/Ports/Input");
+   cmd->SetBool("IsClient", true);
+   cmd->SetInt("ServerKind", mbs::TransportServer);
+   cmd->SetStr("Host", hostname);
+   if (nport>0) cmd->SetInt("PortNum", nport);
+//      cmd->SetInt("PortMin", 6002);
+//      cmd->SetInt("PortMax", 7000);
+   cmd->SetUInt("BufferSize", BUFFERSIZE);
+
+   if (!dabc::mgr()->Execute(cmd)) {
+      EOUT(("Cannot create data input for receiver"));
+      exit(1);
+   }
+
+   m->Start();
+
+//   dabc::LongSleep(3);
 }

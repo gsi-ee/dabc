@@ -8,7 +8,7 @@
 dabc::PoolHandle::PoolHandle(Basic* parent, const char* name,
                              BufferNum_t number, BufferNum_t increment, BufferSize_t size) :
    ModuleItem(mitPool, parent, name),
-   MemoryPoolRequster(),
+   MemoryPoolRequester(),
    fPool(0),
    fRequiredNumber(number),
    fRequiredIncrement(increment),

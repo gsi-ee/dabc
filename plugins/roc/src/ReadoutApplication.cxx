@@ -168,7 +168,7 @@ bool roc::ReadoutApplication::CreateAppModules()
    if (DataServerKind() != mbs::NoServer) {
 
      // need mbs device for event server:
-     res = dabc::mgr()->CreateDevice("MbsDevice", "MBS");
+     res = dabc::mgr()->CreateDevice("mbs::Device", "MBS");
      DOUT1(("Create Mbs Device = %s", DBOOL(res)));
      if (!res) return false;
 
