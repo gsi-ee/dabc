@@ -10,6 +10,145 @@ const char* mbs::xmlFirstMultiple     = "FirstMultiple";
 const char* mbs::xmlNumMultiple       = "NumMultiple";
 
 
+
+mbs::ReadIterator::ReadIterator(dabc::Buffer* buf) :
+   fBuffer(buf),
+   fEvPtr(),
+   fSubPtr(),
+   fRawPtr()
+{
+   if (fBuffer==0) return;
+
+   if (fBuffer->GetTypeId() != mbt_MbsEvs10_1) {
+      EOUT(("Only buffer format mbt_MbsEvs10_1 are supported"));
+      fBuffer = 0;
+   }
+}
+
+bool mbs::ReadIterator::NextEvent()
+{
+   if (fEvPtr.null()) {
+      if (fBuffer==0) return false;
+      fEvPtr.reset(fBuffer);
+   } else
+      fEvPtr.shift(evnt()->FullSize());
+
+   if (fEvPtr.fullsize() < sizeof(EventHeader)) {
+      fEvPtr.reset();
+      return false;
+   }
+
+   fSubPtr.reset();
+
+   return true;
+}
+
+bool mbs::ReadIterator::NextSubEvent()
+{
+   if (fSubPtr.null()) {
+      if (fEvPtr.null()) return false;
+      fSubPtr.reset(fEvPtr);
+      fSubPtr.shift(sizeof(EventHeader));
+   } else
+      fSubPtr.shift(subevnt()->FullSize());
+
+   if (fSubPtr.fullsize() < sizeof(SubeventHeader)) {
+      fSubPtr.reset();
+      return false;
+   }
+
+   fRawPtr.reset(fSubPtr);
+   fRawPtr.shift(sizeof(SubeventHeader));
+
+   return true;
+}
+
+
+mbs::WriteIterator::WriteIterator(dabc::Buffer* buf) :
+   fBuffer(buf),
+   fEvPtr(),
+   fSubPtr(),
+   fFullSize(0)
+{
+   if (fBuffer==0) return;
+   fBuffer->SetTypeId(mbt_MbsEvs10_1);
+}
+
+mbs::WriteIterator::~WriteIterator()
+{
+   Close();
+}
+
+void mbs::WriteIterator::Close()
+{
+   fEvPtr.reset();
+   fSubPtr.reset();
+   if (fBuffer && (fFullSize>0))
+      fBuffer->SetDataSize(fFullSize);
+   fBuffer = 0;
+   fFullSize = 0;
+}
+
+bool mbs::WriteIterator::NewEvent(uint32_t event_number, uint32_t mineventsize)
+{
+   if (fBuffer == 0) return false;
+
+   if (fEvPtr.null()) {
+      fEvPtr.reset(fBuffer);
+   } else {
+      dabc::BufferSize_t dist = sizeof(EventHeader);
+      if (!fSubPtr.null()) dist = fEvPtr.distance_to(fSubPtr);
+      evnt()->SetFullSize(dist);
+      fFullSize+=dist;
+      fEvPtr.shift(dist);
+   }
+
+   fSubPtr.reset();
+
+   if (fEvPtr.fullsize() < (sizeof(EventHeader) + mineventsize)) {
+      fEvPtr.reset();
+      return false;
+   }
+
+   evnt()->Init(event_number);
+
+   return true;
+}
+
+bool mbs::WriteIterator::NewSubevent(uint32_t minrawsize, uint8_t crate, uint16_t procid)
+{
+   if (fEvPtr.null()) return false;
+
+   if (fSubPtr.null()) {
+      fSubPtr.reset(fEvPtr);
+      fSubPtr.shift(sizeof(EventHeader));
+   }
+
+   if (fSubPtr.fullsize() < (sizeof(SubeventHeader) + minrawsize)) return false;
+
+   subevnt()->Init(crate, procid);
+
+   return true;
+}
+
+bool mbs::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
+{
+   if (fSubPtr.null()) return false;
+
+   if (rawdatasz > maxrawdatasize()) return false;
+
+   subevnt()->SetRawDataSize(rawdatasz);
+
+   fSubPtr.shift(subevnt()->FullSize());
+
+   return true;
+}
+
+// __________________________________________________________________________________________________
+
+
+
+
 #define MAX_BUF_LGTH 32768
 #define MIN_BUF_LGTH 512
 
@@ -108,37 +247,6 @@ void mbs::sMbsBufferHeader::SetUsedLength(int len)
       default:
          EOUT(("Uncknown buffer type %d-%d", i_type, i_subtype));
    }
-}
-
-// _______________________________________________________________
-
-void mbs::sMbsFileHeader::Swap()
-{
-   sMbsBufferHeader::Swap();
-   fLabel.Swap();
-   fName.Swap();
-   fUser.Swap();
-   fRun.Swap();
-   fExp.Swap();
-   fLines = bswap_32(fLines);
-   for (int n=0;n<30;n++)
-     fComments[n].Swap();
-}
-
-bool mbs::sMbsFileHeader::AddComment(const char* comment)
-{
-   if (fLines >= 30) {
-      fLines = 30;
-      return false;
-   }
-
-   int indx = fLines++;
-   int maxlen = sizeof(fComments[indx].str);
-   ::memset(fComments[indx].str, 0, maxlen);
-   ::strncpy(fComments[indx].str, comment, maxlen-1);
-   fComments[indx].len = ::strlen(fComments[indx].str);
-
-   return true;
 }
 
 // _______________________________________________________________
@@ -407,26 +515,6 @@ bool mbs::NextSubEvent(dabc::Pointer& subevptr, eMbs101SubeventHeader* &subevhdr
    return true;
 }
 
-void mbs::NewIterateBuffer(dabc::Buffer* buf)
-{
-   dabc::Pointer bufptr(buf), evptr, subevptr;
-
-   mbs::eMbs101EventHeader  *evhdr(0), tmp1;
-   mbs::eMbs101SubeventHeader  *subevhdr(0), tmp2;
-
-   if (FirstEvent(bufptr, evptr, evhdr, &tmp1))
-     do {
-        DOUT1(("Event len %d id %d", evhdr->DataSize(), evhdr->iCount));
-
-        if(FirstSubEvent(evptr, evhdr, subevptr, subevhdr, &tmp2))
-        do {
-           DOUT1(("   Subevent len %d proc %d", subevhdr->DataSize(), subevhdr->iProcId));
-
-        } while (NextSubEvent(subevptr, subevhdr, &tmp2));
-
-     } while (NextEvent(evptr, evhdr, &tmp1));
-}
-
 bool mbs::StartBuffer(dabc::Buffer* buf, dabc::Pointer& evptr, sMbsBufferHeader* &bufhdr, void* tmp, bool newformat)
 {
    dabc::Pointer bufptr(buf);
@@ -582,176 +670,3 @@ bool mbs::FinishBuffer(dabc::Buffer* buf, dabc::Pointer& evptr, sMbsBufferHeader
 
    return true;
 }
-
-
-void mbs::NewGenerateBuffer(dabc::Buffer* buf, int numsubevnt, dabc::BufferSize_t subevsize)
-{
-   dabc::Pointer evptr, subevptr, dataptr;
-
-   mbs::sMbsBufferHeader* bufhdr(0), tmp0;
-   mbs::eMbs101EventHeader *evhdr(0), tmp1;
-   mbs::eMbs101SubeventHeader  *subevhdr(0), tmp2;
-
-   if (StartBuffer(buf, evptr, bufhdr, &tmp0, true)) {
-      int evid = 0;
-
-      while (StartEvent(evptr, subevptr, evhdr, &tmp1)) {
-
-         evhdr->iCount = ++evid;
-
-         int cnt = numsubevnt;
-
-         while ((cnt-->0) && StartSubEvent(subevptr, dataptr, subevhdr, &tmp2)) {
-            subevhdr->iProcId = cnt;
-            dataptr.shift(subevsize);
-            FinishSubEvent(subevptr, dataptr, subevhdr);
-         }
-
-         FinishEvent(evptr, subevptr, evhdr);
-
-         DOUT1(("Generated event %d remain buffer %d", evid, evptr.fullsize()));
-
-         // if buffer contains too few memory, just close it
-         if (evptr.fullsize() <
-            (sizeof(mbs::eMbs101EventHeader) + sizeof(mbs::eMbs101SubeventHeader) + subevsize))
-               break;
-      }
-
-      FinishBuffer(buf, evptr, bufhdr);
-   }
-}
-
-bool mbs::GenerateMbsPacket(dabc::Buffer* buf,
-                            int procid,
-                            int &evid,
-                            int SingleSubEventDataSize,
-                            int MaxNumSubEvents,
-                            int startacqevent,
-                            int stopacqevent,
-                            bool newformat)
-{
-   if (buf==0) return false;
-
-   dabc::BufferSize_t minimumeventsize = sizeof(mbs::eMbs101EventHeader) +
-        MaxNumSubEvents * (sizeof(mbs::eMbs101SubeventHeader) + SingleSubEventDataSize);
-
-   dabc::BufferSize_t minimumsubeventsize = sizeof(mbs::eMbs101SubeventHeader) + SingleSubEventDataSize;
-
-   dabc::Pointer evptr, subevptr, dataptr;
-
-   mbs::sMbsBufferHeader* bufhdr(0), tmp0;
-   mbs::eMbs101EventHeader *evhdr(0), tmp1;
-   mbs::eMbs101SubeventHeader  *subevhdr(0), tmp2;
-
-   bool res = false;
-
-   if (StartBuffer(buf, evptr, bufhdr, &tmp0, newformat)) {
-
-      while (StartEvent(evptr, subevptr, evhdr, &tmp1)) {
-
-         evhdr->iCount = evid++;
-         evhdr->iTrigger = mbs::tt_Event;
-         evhdr->iDummy = 0;
-
-         if (evhdr->iCount==startacqevent)
-            evhdr->iTrigger = mbs::tt_StartAcq;
-         else
-         if (evhdr->iCount==stopacqevent)
-            evhdr->iTrigger = mbs::tt_StopAcq;
-
-         int cnt = MaxNumSubEvents;
-
-         while ((cnt-->0) && StartSubEvent(subevptr, dataptr, subevhdr, &tmp2)) {
-            subevhdr->iProcId = procid * MaxNumSubEvents + cnt;
-            subevhdr->iSubcrate = procid;
-            subevhdr->iControl = 2;
-
-            dataptr.shift(SingleSubEventDataSize);
-            FinishSubEvent(subevptr, dataptr, subevhdr);
-
-            // if we have few memory left, stop generation
-            if (subevptr.fullsize() < minimumsubeventsize) break;
-         }
-
-         FinishEvent(evptr, subevptr, evhdr, bufhdr);
-
-//         DOUT1(("Generated event %d remain buffer %d", evid, evptr.fullsize()));
-
-         // if buffer contains too few memory, just close it
-         if (evptr.fullsize() < minimumeventsize) break;
-      }
-
-      res = FinishBuffer(buf, evptr, bufhdr);
-   }
-
-   return res;
-}
-
-#include <math.h>
-
-double Gauss_Rnd(double mean, double sigma)
-{
-
-   double x, y, z;
-
-//   srand(10);
-
-   z = 1.* rand() / RAND_MAX;
-   y = 1.* rand() / RAND_MAX;
-
-   x = z * 6.28318530717958623;
-   return mean + sigma*sin(x)*sqrt(-2*log(y));
-}
-
-
-bool mbs::GenerateMbsPacketForGo4(dabc::Buffer* buf, int &evid)
-{
-   if (buf==0) return false;
-
-   dabc::BufferSize_t minimumeventsize = sizeof(mbs::eMbs101EventHeader) +
-        2 * (sizeof(mbs::eMbs101SubeventHeader) + 8* sizeof(int32_t));
-
-   dabc::Pointer evptr, subevptr, dataptr;
-
-   mbs::sMbsBufferHeader* bufhdr(0), tmp0;
-   mbs::eMbs101EventHeader *evhdr(0), tmp1;
-   mbs::eMbs101SubeventHeader  *subevhdr(0), tmp2;
-
-   bool res = false;
-
-   if (StartBuffer(buf, evptr, bufhdr, &tmp0, false)) {
-
-      while (StartEvent(evptr, subevptr, evhdr, &tmp1)) {
-
-         evhdr->iCount = evid++;
-         evhdr->iTrigger = mbs::tt_Event;
-         evhdr->iDummy = 0;
-
-         int cnt = 0;
-
-         while ((++cnt<3) && StartSubEvent(subevptr, dataptr, subevhdr, &tmp2)) {
-            subevhdr->iProcId = cnt;
-            subevhdr->iSubcrate = cnt;
-            subevhdr->iControl = 2;
-
-            for (int nval=0;nval<8;nval++) {
-               int32_t value = (int) Gauss_Rnd(nval*100 + 2000, 500./(nval+1));
-               dataptr.copyfrom(&value, sizeof(value));
-               dataptr.shift(sizeof(value));
-            }
-
-            FinishSubEvent(subevptr, dataptr, subevhdr);
-         }
-
-         FinishEvent(evptr, subevptr, evhdr, bufhdr);
-
-         if (evptr.fullsize() < minimumeventsize) break;
-      }
-
-      res = FinishBuffer(buf, evptr, bufhdr);
-   }
-
-   return res;
-}
-
-

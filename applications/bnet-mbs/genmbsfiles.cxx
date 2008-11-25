@@ -4,9 +4,10 @@
 
 #include "mbs/EventAPI.h"
 #include "mbs/MbsTypeDefs.h"
-#include "mbs/MbsDataInput.h"
 #include "mbs/LmdOutput.h"
 #include "mbs/LmdInput.h"
+
+#include "MbsGeneratorModule.h"
 
 int main(int numc, char* args[])
 {
@@ -70,7 +71,7 @@ int main(int numc, char* args[])
       while (evid<=numevents) {
          dabc::Buffer* buf = dabc::Buffer::CreateBuffer(32*1024);
 
-         if (!mbs::GenerateMbsPacket(buf, uniqueid, evid, 240, 4, startacq, stopacq)) {
+         if (!bnet::GenerateMbsPacket(buf, uniqueid, evid, 240, 4, startacq, stopacq)) {
             EOUT(("Cannot generate MBS buffer"));
             break;
          }

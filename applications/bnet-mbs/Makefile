@@ -31,7 +31,7 @@ $(BNETMBS_LIB):   $(BNETMBS_O)
 	@$(MakeLib) $(BNETMBS_LIBNAME) "$(BNETMBS_O)" $(TGTDLLPATH)
 
 $(BNETMBS_EXE):  $(BNETMBS_EXEO) $(BNETMBS_LIB) $(BNETMBS_DIR)Makefile $(BNETMBS_DIR)genmbsfiles.sh
-	$(LD) $(LDFLAGS) $(BNETMBS_EXEO) $(LIBS_CORESET) -lDabcMbs $(OutPutOpt) $(BNETMBS_EXE)
+	$(LD) $(LDFLAGS) $(BNETMBS_EXEO) $(LIBS_CORESET) -lDabcMbs -lDabcBnet -lBnetMbs $(OutPutOpt) $(BNETMBS_EXE)
 ifneq ($(wildcard ~/run/bnet/mbs),)
 	cp -f $(BNETMBS_EXE) $(BNETMBS_LIB) $(DABCDLLPATH)/*.so $(BNETBINPATH)/* $(BNETMBS_DIR)*.sh ~/run/bnet/mbs
 endif

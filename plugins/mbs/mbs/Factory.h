@@ -12,7 +12,6 @@ namespace mbs {
          Factory(const char* name) : dabc::Factory(name) {}
 
          static const char* FileType() { return "MbsFile"; }
-         static const char* NewTransportType() { return "MbsNewTransport"; }
          static const char* LmdFileType() { return "LmdFile"; }
 
          virtual dabc::Device* CreateDevice(dabc::Basic* parent, const char* classname, const char* devname, dabc::Command*);

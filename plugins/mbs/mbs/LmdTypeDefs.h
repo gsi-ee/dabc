@@ -58,12 +58,12 @@ namespace mbs {
       int16_t  iProcId;     /*  Processor ID [as loaded from VAX] */
 #endif
 
-      void Init()
+      void Init(uint8_t crate = 0, uint16_t procid = 0)
       {
          iWords = 0;
          iType = MBS_TYPE_10_1;
-         iProcId = 0;
-         iSubcrate = 0;
+         iProcId = procid;
+         iSubcrate = crate;
          iControl = 0;
       }
 
@@ -85,13 +85,13 @@ namespace mbs {
 #endif
       uint32_t iEventNumber;
 
-      void Init()
+      void Init(uint32_t evnt = 0)
       {
          iWords = 0;
          iType = MBS_TYPE_10_1;
          iDummy = 0;
          iTrigger = tt_Event;
-         iEventNumber = 0;
+         iEventNumber = evnt;
       }
 
       // SubEventsSize - size of all subevents, not includes events header

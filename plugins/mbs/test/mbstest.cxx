@@ -12,7 +12,6 @@
 #include "mbs/EventAPI.h"
 #include "mbs/Factory.h"
 #include "mbs/MbsTypeDefs.h"
-#include "mbs/MbsDataInput.h"
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
 
@@ -191,55 +190,6 @@ void TestMbsTrServer(const char* server)
    delete inp;
 }
 
-void TestMbsTrServerNew(const char* server, int port = 8000, const char* outfile = "test.lmd")
-{
-   mbs::MbsDataInput* inp = new mbs::MbsDataInput();
-
-   if (inp->Open(server, port)) {
-     DOUT1(("Open server %s port:%d", server, port));
-   } else {
-     DOUT1(("Cannot open server %s port:%d", server, port));
-     delete inp;
-     return;
-   }
-
-   mbs::LmdOutput* out = new mbs::LmdOutput(outfile);
-   if (!out->Init()) {
-      EOUT(("Cannot create output file %s", outfile));
-      delete out;
-      delete inp;
-      return;
-   }
-
-   long cnt = 0;
-
-   unsigned sz = 0;
-
-   dabc::Buffer* buf = dabc::Buffer::CreateBuffer(1024);
-
-   while (((sz = inp->Read_Size())<=dabc::DataInput::di_ValidSize) && (cnt<100)) {
-
-      buf->RellocateBuffer(sz);
-
-      if (inp->Read_Complete(buf)!=dabc::DataInput::di_Ok) break;
-
-      if (cnt<10)
-         mbs::NewIterateBuffer(buf);
-
-      cnt++;
-
-      out->WriteBuffer(buf);
-   }
-
-   dabc::Buffer::Release(buf);
-
-   DOUT1(("Transport:%s Get %d buffers sz1:%d sz2:%d", server, cnt,
-            sizeof(mbs::sMbsFileHeader), sizeof(mbs::sMbsBufferHeader)));
-
-   delete out;
-   delete inp;
-}
-
 void TestMbsInputFile(const char* fname)
 {
    mbs::LmdInput* inp = new mbs::LmdInput(fname);
@@ -266,9 +216,6 @@ void TestMbsInputFile(const char* fname)
       if (cnt<5)
          mbs::IterateBuffer(buf->GetDataLocation(), cnt==0);
 
-//      if (cnt<5)
-//         mbs::NewIterateBuffer(buf);
-
       cnt++;
    }
 
@@ -277,14 +224,6 @@ void TestMbsInputFile(const char* fname)
    DOUT1(("File:%s Has %d buffers", fname, cnt));
 
    delete inp;
-}
-
-void TestNewGenerator()
-{
-   dabc::Buffer* buf = dabc::Buffer::CreateBuffer(16*1024);
-   mbs::NewGenerateBuffer(buf, 4, 100);
-   mbs::NewIterateBuffer(buf);
-   dabc::Buffer::Release(buf);
 }
 
 void TestMbsIO(const char* fname, const char* outname)
@@ -357,7 +296,6 @@ int main(int numc, char* args[])
 {
    dabc::SetDebugLevel(1);
 
-   TestMbsTrServerNew("x86g-4.gsi.de", 6000, "test.lmd");
 //   return 0;
 
 //   TestList();
@@ -371,7 +309,6 @@ int main(int numc, char* args[])
 //   TestMbsStream("test.lmd");
 
 //   TestMbsInputFile("test.lmd");
-//   TestNewGenerator();
 
    return 0;
 
@@ -380,10 +317,6 @@ int main(int numc, char* args[])
    TestMbsInputFile("test.lmd");
    TestMbsInputFile("testoutput.lmd");
    return 0;
-
-
-
-   TestMbsTrServerNew("lxg0500", 8000, "test.lmd");
 
    TestMbsInputFile("test.lmd");
    TestMbsInputFile("gauss.lmd");

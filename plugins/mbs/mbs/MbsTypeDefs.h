@@ -26,8 +26,58 @@ namespace mbs {
    enum EMbsServerKinds {
       NoServer = 0,
       TransportServer = 1,
-      StreamServer = 2
+      StreamServer = 2,
+      OldTransportServer = 3,
+      OldStreamServer = 4
    };
+
+   class ReadIterator {
+      public:
+         ReadIterator(dabc::Buffer* buf);
+
+         bool IsOk() const { return fBuffer!=0; }
+
+         bool NextEvent();
+         bool NextSubEvent();
+
+         EventHeader* evnt() const { return (EventHeader*) fEvPtr(); }
+         SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
+         void* rawdata() const { return fRawPtr(); }
+         uint32_t rawdatasize() const { return subevnt() ? subevnt()->RawDataSize() : 0; }
+
+      protected:
+         dabc::Buffer*    fBuffer;
+         dabc::Pointer    fEvPtr;
+         dabc::Pointer    fSubPtr;
+         dabc::Pointer    fRawPtr;
+   };
+
+
+   class WriteIterator {
+      public:
+         WriteIterator(dabc::Buffer* buf);
+         ~WriteIterator();
+
+         bool NewEvent(uint32_t event_number = 0, uint32_t mineventsize = 0);
+         bool NewSubevent(uint32_t minrawsize = 0, uint8_t crate = 0, uint16_t procid = 0);
+         bool FinishSubEvent(uint32_t rawdatasz);
+
+         void Close();
+
+         EventHeader* evnt() const { return (EventHeader*) fEvPtr(); }
+         SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
+         void* rawdata() const { return subevnt() ? subevnt()->RawData() : 0; }
+         uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(SubeventHeader); }
+
+
+      protected:
+         dabc::Buffer*    fBuffer;
+         dabc::Pointer    fEvPtr;
+         dabc::Pointer    fSubPtr;
+         dabc::BufferSize_t fFullSize;
+   };
+
+
 
 
 #pragma pack(1)
@@ -88,28 +138,6 @@ namespace mbs {
       void SetUsedLength(int len);
       void SetEndian() { iEndian = 1; }
       bool IsCorrectEndian() const { return iEndian == 1; }
-   };
-
-   template<const int sz> struct InfoString {
-      int16_t len;
-      char str[sz];
-      void Swap() { len = bswap_32(len); }
-   };
-
-   // file header in general is buffer header plus some extras
-   typedef struct sMbsFileHeader : public sMbsBufferHeader {
-      InfoString<30> fLabel;        // tape label
-      InfoString<86> fName;         // file name
-      InfoString<30> fUser;         // user name
-      char           fTime[24];     // date and time string
-      InfoString<66> fRun;          // run id
-      InfoString<66> fExp;          // explanation
-      int32_t        fLines;        // number of comment lines
-      InfoString<78> fComments[30]; // max 30 comment lines
-
-      void Swap();
-      int Length();
-      bool AddComment(const char* cpmment);
    };
 
    typedef struct eMbsEventHeader {
@@ -186,19 +214,6 @@ namespace mbs {
    extern dabc::BufferSize_t FinishBuffer(dabc::Pointer& bufptr, dabc::Pointer& evptr, sMbsBufferHeader* bufhdr);
    extern bool FinishBuffer(dabc::Buffer* buf, dabc::Pointer& evptr, sMbsBufferHeader* bufhdr);
 
-   extern void NewIterateBuffer(dabc::Buffer* buf);
-   extern void NewGenerateBuffer(dabc::Buffer* buf, int numsubevnt, dabc::BufferSize_t subevsize);
-
-   extern bool GenerateMbsPacket(dabc::Buffer* buf,
-                                 int procid,
-                                 int &evid,
-                                 int SingleSubEventDataSize = 120,
-                                 int MaxNumSubEvents = 8,
-                                 int startacqevent = -1,
-                                 int stopacqevent = -1,
-                                 bool newformat=true);
-
-   extern bool GenerateMbsPacketForGo4(dabc::Buffer* buf, int &evid);
 };
 
 #endif

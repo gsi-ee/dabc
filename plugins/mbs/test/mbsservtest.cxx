@@ -1,5 +1,7 @@
 #include "dabc/logging.h"
 
+#include <math.h>
+
 #include "dabc/FileIO.h"
 #include "dabc/ModuleAsync.h"
 #include "dabc/ModuleSync.h"
@@ -12,18 +14,66 @@
 
 #include "mbs/EventAPI.h"
 #include "mbs/MbsTypeDefs.h"
-#include "mbs/MbsDataInput.h"
 #include "mbs/ServerTransport.h"
 #include "mbs/Device.h"
 
 #define BUFFERSIZE 16*1024
 
 
+
+double Gauss_Rnd(double mean, double sigma)
+{
+
+   double x, y, z;
+
+//   srand(10);
+
+   z = 1.* rand() / RAND_MAX;
+   y = 1.* rand() / RAND_MAX;
+
+   x = z * 6.28318530717958623;
+   return mean + sigma*sin(x)*sqrt(-2*log(y));
+}
+
+bool GenerateMbsPacketForGo4(dabc::Buffer* buf, int &evid)
+{
+   if (buf==0) return false;
+
+   mbs::WriteIterator iter(buf);
+
+   while (iter.NewEvent(evid)) {
+
+      bool eventdone = true;
+
+      int cnt = 0;
+      while (++cnt < 3)
+         if (iter.NewSubevent(8 * sizeof(uint32_t), cnt)) {
+            uint32_t* value = (uint32_t*) iter.rawdata();
+
+            for (int nval=0;nval<8;nval++)
+               *value++ = (uint32_t) Gauss_Rnd(nval*100 + 2000, 500./(nval+1));
+
+            iter.FinishSubEvent(8 * sizeof(uint32_t));
+         } else {
+            eventdone = false;
+            break;
+         }
+
+      if (!eventdone) break;
+
+      evid++;
+   }
+
+   return true;
+}
+
+
+
 class GeneratorModule : public dabc::ModuleSync {
    protected:
       dabc::PoolHandle*       fPool;
-      int                       fEventCnt;
-      int                       fBufferCnt;
+      int                     fEventCnt;
+      int                     fBufferCnt;
 
    public:
       GeneratorModule(const char* name) :
@@ -52,9 +102,7 @@ class GeneratorModule : public dabc::ModuleSync {
 
             dabc::Buffer* buf = TakeBuffer(fPool, BUFFERSIZE);
 
-//            mbs::GenerateMbsPacket(buf, 11, fEventCnt, 120, 8);
-
-            mbs::GenerateMbsPacketForGo4(buf, fEventCnt);
+            GenerateMbsPacketForGo4(buf, fEventCnt);
 
             Send(Output(0), buf);
 
@@ -93,6 +141,15 @@ class TestModuleAsync : public dabc::ModuleAsync {
          fInput->Recv(buf);
 
          fRate.Packet(buf->GetTotalSize());
+
+         mbs::ReadIterator iter(buf);
+
+         int cnt = 0;
+
+         while (iter.NextEvent()) cnt++;
+
+         DOUT1(("Found %d events in MBS buffer", cnt));
+
          dabc::Buffer::Release(buf);
          fCounter++;
       }

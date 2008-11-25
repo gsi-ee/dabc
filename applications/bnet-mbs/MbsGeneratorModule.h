@@ -16,6 +16,15 @@ namespace bnet {
          virtual void GeneratePacket(dabc::Buffer* buf);
    };
 
+
+   extern bool GenerateMbsPacket(dabc::Buffer* buf,
+                                 int procid,
+                                 int &evid,
+                                 int SingleSubEventDataSize = 120,
+                                 int MaxNumSubEvents = 8,
+                                 int startacqevent = -1,
+                                 int stopacqevent = -1);
+
 }
 
 #endif

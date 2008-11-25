@@ -191,7 +191,8 @@ void bnet::MbsWorkerApplication::SetMbsTransportPars()
 
       std::string cfgstr;
 
-      dabc::formats(cfgstr, "InpType:%s; InpName:%s.gsi.de; Port:6000;", mbs::Factory::NewTransportType(), server_name);
+      // TODO: replace configuration string by other means
+      dabc::formats(cfgstr, "InpType:%s; InpName:%s.gsi.de; Port:6000;", "?????", server_name);
 
       SetParStr("Input0Cfg", cfgstr);
 
@@ -220,7 +221,8 @@ void bnet::MbsWorkerApplication::SetMbsGeneratorsPars()
 
       const char* server_name = (dabc::mgr()->NodeId()==1) ? "master" : "node01";
 
-      SetParStr("Input0Cfg", dabc::format("InpType:%s; InpName:%s; Port:8000;", mbs::Factory::NewTransportType(), server_name));
+      // TODO: replace configuration string by other means
+      SetParStr("Input0Cfg", dabc::format("InpType:%s; InpName:%s; Port:8000;", "????", server_name));
    } else {
       SetParInt("IsSender", 0);
       SetParInt("IsReceiver", 1);

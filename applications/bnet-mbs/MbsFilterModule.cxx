@@ -15,10 +15,8 @@ bnet::MbsFilterModule::MbsFilterModule(const char* name, WorkerApplication* fact
 
 bool bnet::MbsFilterModule::TestBuffer(dabc::Buffer* buf)
 {
-   if (fTotalCnt++ % 100 == 0) {
-//      mbs::NewIterateBuffer(buf);
+   if (fTotalCnt++ % 100 == 0)
       DOUT5(("Total filtered buffers %d", fTotalCnt));
-   }
 
    return (fTotalCnt++ % 2) > 0;
 }

@@ -6,7 +6,6 @@
 #include "dabc/Manager.h"
 
 #include "mbs/EventAPI.h"
-#include "mbs/MbsDataInput.h"
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
 #include "mbs/Device.h"
@@ -45,16 +44,6 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ, const char* name
       if (inp->Init()) return inp;
       delete inp;
 
-   } else
-   if (strcmp(typ, NewTransportType())==0) {
-      mbs::MbsDataInput* inp = new mbs::MbsDataInput();
-
-      int mbs_port = cmd ? cmd->GetInt("Port", 6000) : 6000;
-
-      DOUT1(("Trying to connect to node %s port %d", name, mbs_port));
-
-      if (inp->Open(name, mbs_port)) return inp;
-      delete inp;
    } else
    if (strcmp(typ, xmlEvapiType) == 0) {
       return new mbs::EvapiInput(xmlEvapiFile, name);
