@@ -161,7 +161,7 @@ void mbs::ServerIOProcessor::ProcessEvent(dabc::EventId evnt)
     if (fState == ioWaitingBuffer) {
        fSendBuf = fTransport->TakeFrontBuffer();
        if (fSendBuf!=0) {
-          if (fSendBuf->GetTypeId()==mbt_MbsEvs10_1) {
+          if (fSendBuf->GetTypeId()==mbt_MbsEvents) {
              fHeader.Init(true);
              fHeader.SetUsedBufferSize(fSendBuf->GetTotalSize());
              // error in evapi, must be + sizeof(mbs::BufferHeader)

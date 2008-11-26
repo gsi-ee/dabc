@@ -174,7 +174,7 @@ extern "C" void StartGenerator()
     DOUT0(("Start MBS generator module"));
 
     if (!dabc::mgr()->CreateDevice("mbs::Device", "MBS")) {
-       EOUT(("MbsDevice cannot be created - halt"));
+       EOUT(("mbs::Device cannot be created - halt"));
        exit(1);
     }
 
@@ -223,8 +223,6 @@ extern "C" void StartClient()
 
    dabc::mgr()->CreateMemoryPools();
 
-//   dabc::Command* cmd = new dabc::CmdCreateDataTransport("Modules/Receiver/Ports/Input", "MBSInp");
-//   dabc::CmdCreateDataTransport::SetArgsInp(cmd, "MbsTransport", hostname);
    dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", "Modules/Receiver/Ports/Input");
    cmd->SetBool("IsClient", true);
    cmd->SetInt("ServerKind", mbs::TransportServer);

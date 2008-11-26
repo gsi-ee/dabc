@@ -326,7 +326,7 @@ void roc::CombinerModule::TryToProduceEventBuffers()
             if (IsAnyOutputBlocked()) return;
 
             fOutBuf->SetDataSize(usedsize);
-            fOutBuf->SetTypeId(mbs::mbt_MbsEvs10_1);
+            fOutBuf->SetTypeId(mbs::mbt_MbsEvents);
 
             SendToAllOutputs(fOutBuf);
 

@@ -7,6 +7,10 @@ const char* mbs::xmlFileName          = "FileName";
 const char* mbs::xmlSizeLimit         = "SizeLimit";
 const char* mbs::xmlFirstMultiple     = "FirstMultiple";
 const char* mbs::xmlNumMultiple       = "NumMultiple";
+const char* mbs::xmlServerName        = "ServerName";
+const char* mbs::xmlServerKind        = "ServerKind";
+const char* mbs::xmlServerPort        = "ServerPort";
+const char* mbs::xmlIsClient          = "IsClient";
 
 unsigned mbs::EventHeader::NumSubevents() const
 {
@@ -19,7 +23,7 @@ unsigned mbs::EventHeader::NumSubevents() const
 void mbs::BufferHeader::Init(bool newformat)
 {
    iWords = 0;
-   iType = newformat ? MBS_TYPE_100_1 : MBS_TYPE_10_1;
+   iType = newformat ? MBS_TYPE(100,1) : MBS_TYPE(10,1);
    iBufferId = 0;
    iNumEvents = 0;
    iTemp = 0;
@@ -36,10 +40,10 @@ uint32_t mbs::BufferHeader::BufferLength() const
 {
    switch (iType) {
       // new buffer type
-      case MBS_TYPE_100_1: return sizeof(BufferHeader) + iUsedWords * 2;
+      case MBS_TYPE(100,1): return sizeof(BufferHeader) + iUsedWords * 2;
 
       // old buffer type
-      case MBS_TYPE_10_1: return sizeof(BufferHeader) + iWords * 2;
+      case MBS_TYPE(10,1): return sizeof(BufferHeader) + iWords * 2;
    }
 
    return 0;
@@ -50,10 +54,10 @@ uint32_t mbs::BufferHeader::UsedBufferSize() const
 {
    switch (iType) {
       // new buffer type
-      case MBS_TYPE_100_1: return iUsedWords * 2;
+      case MBS_TYPE(100,1): return iUsedWords * 2;
 
       // old buffer type
-      case MBS_TYPE_10_1: return i_used * 2;
+      case MBS_TYPE(10,1): return i_used * 2;
 
       default: break;
 //         EOUT(("Uncknown buffer type %d-%d", i_type, i_subtype));
@@ -66,14 +70,14 @@ void mbs::BufferHeader::SetUsedBufferSize(uint32_t len)
 {
    switch (iType) {
       // new buffer type
-      case MBS_TYPE_100_1:
+      case MBS_TYPE(100,1):
          iUsedWords = len / 2;
          if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
 
          break;
 
       // old buffer type
-      case MBS_TYPE_10_1:
+      case MBS_TYPE(10,1):
          i_used = len / 2;
          if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
          break;
@@ -116,6 +120,17 @@ const char* mbs::ServerKindToStr(int kind)
    return "NoServer";
 }
 
+int mbs::DefualtServerPort(int kind)
+{
+   switch (kind) {
+      case TransportServer: return 6000;
+      case StreamServer: return 6002;
+      case OldTransportServer: return 6000;
+      case OldStreamServer: return 6002;
+   }
+   return 0;
+}
+
 int mbs::StrToServerKind(const char* str)
 {
    if (str==0) return NoServer;
@@ -125,3 +140,5 @@ int mbs::StrToServerKind(const char* str)
    if (strcmp(str, "OldStream") == 0) return OldStreamServer;
    return NoServer;
 }
+
+

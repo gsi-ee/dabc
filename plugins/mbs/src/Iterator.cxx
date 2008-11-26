@@ -10,8 +10,8 @@ mbs::ReadIterator::ReadIterator(dabc::Buffer* buf) :
 {
    if (buf==0) return;
 
-   if (buf->GetTypeId() != mbt_MbsEvs10_1) {
-      EOUT(("Only buffer format mbt_MbsEvs10_1 are supported"));
+   if (buf->GetTypeId() != mbt_MbsEvents) {
+      EOUT(("Only buffer format mbt_MbsEvents are supported"));
       return;
    }
    fBuffer = buf;
@@ -33,8 +33,8 @@ bool mbs::ReadIterator::Reset(dabc::Buffer* buf)
    fRawPtr.reset();
    if (buf==0) return false;
 
-   if (buf->GetTypeId() != mbt_MbsEvs10_1) {
-      EOUT(("Only buffer format mbt_MbsEvs10_1 is supported"));
+   if (buf->GetTypeId() != mbt_MbsEvents) {
+      EOUT(("Only buffer format mbt_MbsEvents is supported"));
       return false;
    }
    fBuffer = buf;
@@ -100,7 +100,7 @@ mbs::WriteIterator::WriteIterator(dabc::Buffer* buf) :
    fFullSize(0)
 {
    if (fBuffer==0) return;
-   fBuffer->SetTypeId(mbt_MbsEvs10_1);
+   fBuffer->SetTypeId(mbt_MbsEvents);
 }
 
 mbs::WriteIterator::~WriteIterator()
@@ -118,7 +118,7 @@ bool mbs::WriteIterator::Reset(dabc::Buffer* buf)
    if (buf==0) return false;
 
    fBuffer = buf;
-   fBuffer->SetTypeId(mbt_MbsEvs10_1);
+   fBuffer->SetTypeId(mbt_MbsEvents);
    return true;
 }
 

@@ -28,6 +28,8 @@ bnet::MbsWorkerApplication::MbsWorkerApplication(const char* name) :
 
 bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnumber)
 {
+   std::string cfg = ReadoutPar(portnumber);
+
    if (IsGenerator()) {
 
       std::string modulename;
@@ -42,36 +44,30 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
       modulename += "/Ports/Output";
 
       dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
+
+      cfg = "Generator";
+
+   } else
+   if ((cfg.find("lmd") != cfg.npos) || (cfg.find("LMD") != cfg.npos)) {
+
+
+
    } else {
 
-      dabc::Command* cmd = new dabc::CmdCreateDataTransport(portname, "MbsIOThrd");
-
-      DOUT1(("!!!!! Create readout %d with par %s", portnumber, ReadoutPar(portnumber).c_str()));
-
-      if (!cmd->ReadFromString(ReadoutPar(portnumber).c_str(), true)) {
-         EOUT(("Cannot decode command parameters for input %d::: %s", portnumber, ReadoutPar(portnumber).c_str()));
-         dabc::Command::Finalise(cmd);
+      if (!dabc::mgr()->CreateDevice("mbs::Device", "MBS")) {
+         EOUT(("mbs::Device cannot be created - halt"));
          return false;
       }
 
-      if (cmd->GetPar("InpName")==0) {
-         EOUT(("Important parameter 'InpName' missed in config for input %d", portnumber));
-         dabc::Command::Finalise(cmd);
-         return false;
-      }
+      dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", portname);
+      cmd->SetBool(mbs::xmlIsClient, true);
+      cmd->SetStr(mbs::xmlServerName, cfg);
 
-      if (cmd->GetPar("InpType")==0) {
-         EOUT(("Important parameter 'InpType' missed in config for input %d", portnumber));
-         dabc::Command::Finalise(cmd);
-         return false;
-      }
-
-      bool res = dabc::mgr()->Execute(cmd, 10);
-
-      DOUT3(("Create input for port %s res = %s", portname, DBOOL(res)));
-
-      if (!res) return false;
+      if (!dabc::mgr()->Execute(cmd, 10)) return false;
    }
+
+
+   DOUT1(("Create input for port:%s cfg:%s done", portname, cfg.c_str()));
 
    return true;
 }
@@ -149,8 +145,7 @@ void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
       else
          recvid = (nodeid-1) / 2;
 
-      SetParStr("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d.lmd;", mbs::Factory::LmdFileType(), filebase, recvid)));
-//      SetParStr("StoragePar", FORMAT(("OutType:%s; OutName:%s_out_%d; SizeLimit:10000000; NumMulti:-1;", mbs::Factory::LmdFileType(), filebase, recvid)));
+      SetParStr("StoragePar", FORMAT(("%s_out_%d.lmd;", filebase, recvid)));
    }
 
    if (IsSender()) {
@@ -163,7 +158,7 @@ void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
       for (int nr=0;nr<NumReadouts();nr++) {
          std::string cfgstr, parname;
 
-         dabc::formats(cfgstr, "InpType:%s; InpName:%s_inp_%d_%d*.lmd;", mbs::Factory::LmdFileType(), filebase, senderid, nr);
+         dabc::formats(cfgstr, "%s_inp_%d_%d*.lmd;", filebase, senderid, nr);
 
          dabc::formats(parname, "Input%dCfg", nr);
 
@@ -202,7 +197,7 @@ void bnet::MbsWorkerApplication::SetMbsTransportPars()
       SetParInt("IsSender", 0);
       SetParInt("IsReceiver", 1);
 
-      SetParStr("StoragePar", dabc::format("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::LmdFileType()));
+      SetParStr("StoragePar", dabc::format("/tmp/test_out.lmd;"));
    }
 }
 
@@ -221,12 +216,11 @@ void bnet::MbsWorkerApplication::SetMbsGeneratorsPars()
 
       const char* server_name = (dabc::mgr()->NodeId()==1) ? "master" : "node01";
 
-      // TODO: replace configuration string by other means
-      SetParStr("Input0Cfg", dabc::format("InpType:%s; InpName:%s; Port:8000;", "????", server_name));
+      SetParStr("Input0Cfg", server_name);
    } else {
       SetParInt("IsSender", 0);
       SetParInt("IsReceiver", 1);
 
-//      SetParStr("StoragePar", dabc::format("InpType:%s; OutName:/tmp/test_out.lmd;", mbs::Factory::LmdFileType()));
+      SetParStr("StoragePar", dabc::format("/tmp/test_out.lmd;"));
    }
 }

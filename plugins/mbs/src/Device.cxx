@@ -21,20 +21,25 @@ mbs::Device::Device(Basic* parent, const char* name) :
 
 int mbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
-   if (cmd->GetBool("IsClient", false)) {
-      int kind = cmd->GetInt("ServerKind", -1);
-      int portnum = cmd->GetInt("PortNum",-1);
-      const char* hostname = cmd->GetStr("Host", "localhost");
+   std::string kindstr = port->GetCfgStr(xmlServerKind, ServerKindToStr(mbs::TransportServer), cmd);
 
-      if (portnum<=0)
-         if (kind == TransportServer) portnum = 6000; else
-         if (kind == StreamServer) portnum = 6002;
+   int kind = StrToServerKind(kindstr.c_str());
+   if ( kind == mbs::NoServer) {
+      EOUT(("Wrong configured server type %s, use transport", kindstr.c_str()));
+      kind = mbs::TransportServer;
+   }
 
-      int fd = dabc::SocketThread::StartClient(hostname, portnum);
+   int portnum = port->GetCfgInt(xmlServerPort, DefualtServerPort(kind), cmd);
+
+   if (cmd->GetBool(xmlIsClient, false)) {
+
+      std::string hostname = port->GetCfgStr(xmlServerName, "localhost", cmd);
+
+      int fd = dabc::SocketThread::StartClient(hostname.c_str(), portnum);
 
       if (fd<=0) return false;
 
-      DOUT1(("Creating client kind = %d  host %s port %d", kind, hostname, portnum));
+      DOUT1(("Creating client kind = %s  host %s port %d", kindstr.c_str(), hostname.c_str(), portnum));
 
       ClientTransport* tr = new ClientTransport(this, port, kind);
 
@@ -45,29 +50,13 @@ int mbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
       return true;
    }
 
-   int portnum = cmd->GetInt("PortNum",-1);
+   uint32_t maxbufsize = port->GetCfgInt(dabc::xmlBufferSize, 16*1024, cmd);
 
-   int kind = cmd->GetInt("ServerKind", -1);
-   uint32_t maxbufsize = cmd->GetUInt("BufferSize", 16*1024);
-   int portmin = cmd->GetInt("PortMin",-1);
-   int portmax = cmd->GetInt("PortMax",-1);
+   int servfd = dabc::SocketThread::StartServer(portnum);
 
-   if (kind == TransportServer) {
-      portmin = 6000;
-      portmax = 6000;
-   } else
-   if (kind == StreamServer) {
-      portmin = 6002;
-      portmax = 6002;
-   } else {
-      kind = TransportServer;
-   }
+   if (servfd<0) return cmd_false;
 
-   int servfd = dabc::SocketThread::StartServer(portnum, portmin, portmax);
-
-   if (servfd<0) return false;
-
-   DOUT1(("!!!!! Starts MBS server on port %d", portnum));
+   DOUT1(("!!!!! Starts MBS server kind:%s on port %d", kindstr.c_str(), portnum));
 
    ServerTransport* tr = new ServerTransport(this, port, kind, servfd, portnum, maxbufsize);
 
@@ -77,5 +66,5 @@ int mbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 
    port->AssignTransport(tr);
 
-   return true;
+   return cmd_true;
 }

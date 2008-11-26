@@ -46,12 +46,11 @@ namespace dabc {
 
          virtual Module* CreateModule(const char* classname, const char* modulename, Command* cmd);
 
-         virtual Device* CreateDevice(Basic* parent,
-                                      const char* classname,
+         virtual Device* CreateDevice(const char* classname,
                                       const char* devname,
                                       Command*);
 
-         virtual WorkingThread* CreateThread(Basic* parent, const char* classname, const char* thrdname, const char* thrddev, Command* cmd);
+         virtual WorkingThread* CreateThread(const char* classname, const char* thrdname, const char* thrddev, Command* cmd);
 
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option);
          virtual Folder* ListMatchFiles(const char* typ, const char* filemask);
@@ -76,26 +75,25 @@ dabc::Module* dabc::StdManagerFactory::CreateModule(const char* classname, const
    return 0;
 }
 
-dabc::Device* dabc::StdManagerFactory::CreateDevice(Basic* parent,
-                                                    const char* classname,
+dabc::Device* dabc::StdManagerFactory::CreateDevice(const char* classname,
                                                     const char* devname,
                                                     Command*)
 {
    if (strcmp(classname, "SocketDevice")==0)
-      return new SocketDevice(parent, devname);
+      return new SocketDevice(dabc::mgr()->GetDevicesFolder(true), devname);
    else
    if (strcmp(classname, "LocalDevice")==0)
-      return new LocalDevice(parent, devname);
+      return new LocalDevice(dabc::mgr()->GetDevicesFolder(true), devname);
    return 0;
 }
 
-dabc::WorkingThread* dabc::StdManagerFactory::CreateThread(Basic* parent, const char* classname, const char* thrdname, const char* thrddev, Command* cmd)
+dabc::WorkingThread* dabc::StdManagerFactory::CreateThread(const char* classname, const char* thrdname, const char* thrddev, Command* cmd)
 {
    if ((classname==0) || (strlen(classname)==0) || (strcmp(classname, "WorkingThread")==0))
-      return new WorkingThread(parent, thrdname, cmd ? cmd->GetInt("NumQueues", 3) : 3);
+      return new WorkingThread(dabc::mgr()->GetThreadsFolder(true), thrdname, cmd ? cmd->GetInt("NumQueues", 3) : 3);
    else
    if (strcmp(classname, "SocketThread")==0)
-      return new SocketThread(parent, thrdname, cmd ? cmd->GetInt("NumQueues", 3) : 3);
+      return new SocketThread(dabc::mgr()->GetThreadsFolder(true), thrdname, cmd ? cmd->GetInt("NumQueues", 3) : 3);
 
    return 0;
 }
@@ -846,7 +844,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
                Factory* factory =
                   dynamic_cast<Factory*> (folder->GetChild(n));
                if (factory!=0)
-                  dev = factory->CreateDevice(GetDevicesFolder(true), classname, devname, cmd);
+                  dev = factory->CreateDevice(classname, devname, cmd);
                if (dev!=0) break;
             }
       }
@@ -1639,7 +1637,7 @@ dabc::WorkingThread* dabc::Manager::CreateThread(const char* thrdname, const cha
          Factory* factory =
             dynamic_cast<Factory*> (folder->GetChild(n));
          if (factory!=0)
-            thrd = factory->CreateThread(GetThreadsFolder(true), thrdclass, thrdname, thrddev, cmd);
+            thrd = factory->CreateThread(thrdclass, thrdname, thrddev, cmd);
          if (thrd!=0) break;
       }
 

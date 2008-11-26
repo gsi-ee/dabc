@@ -47,29 +47,27 @@ namespace verbs {
       public:
          VerbsFactory(const char* name) : dabc::Factory(name) {}
 
-         virtual dabc::Device* CreateDevice(dabc::Basic* parent,
-                                      const char* classname,
-                                      const char* devname,
-                                      dabc::Command*);
+         virtual dabc::Device* CreateDevice(const char* classname,
+                                            const char* devname,
+                                            dabc::Command*);
 
-         virtual dabc::WorkingThread* CreateThread(dabc::Basic* parent, const char* classname, const char* thrdname, const char* thrddev, dabc::Command* cmd);
+         virtual dabc::WorkingThread* CreateThread(const char* classname, const char* thrdname, const char* thrddev, dabc::Command* cmd);
    };
 
 
    VerbsFactory verbsfactory("verbs");
 }
 
-dabc::Device* verbs::VerbsFactory::CreateDevice(dabc::Basic* parent,
-                                                const char* classname,
+dabc::Device* verbs::VerbsFactory::CreateDevice(const char* classname,
                                                 const char* devname,
                                                 dabc::Command*)
 {
 	if (strcmp(classname, "VerbsDevice")!=0) return 0;
 
-	return new Device(parent, devname);
+	return new Device(dabc::mgr()->GetDevicesFolder(true), devname);
 }
 
-dabc::WorkingThread* verbs::VerbsFactory::CreateThread(dabc::Basic* parent, const char* classname, const char* thrdname, const char* thrddev, dabc::Command* cmd)
+dabc::WorkingThread* verbs::VerbsFactory::CreateThread(const char* classname, const char* thrdname, const char* thrddev, dabc::Command* cmd)
 {
    if ((classname==0) || (strcmp(classname, VERBS_THRD_CLASSNAME)!=0)) return 0;
 
@@ -78,13 +76,13 @@ dabc::WorkingThread* verbs::VerbsFactory::CreateThread(dabc::Basic* parent, cons
       return 0;
    }
 
-   Device* dev = dynamic_cast<Device*> (dabc::Manager::Instance()->FindDevice(thrddev));
+   verbs::Device* dev = dynamic_cast<verbs::Device*> (dabc::mgr()->FindDevice(thrddev));
    if (dev==0) {
       EOUT(("Did not found verbs device with name %s", thrddev));
       return 0;
    }
 
-   return new Thread(dev, parent, thrdname);
+   return new verbs::Thread(dev, dabc::mgr()->GetThreadsFolder(true), thrdname);
 }
 
 // *******************************************************************

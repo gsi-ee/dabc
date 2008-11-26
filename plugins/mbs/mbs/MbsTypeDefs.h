@@ -7,15 +7,6 @@
 
 namespace mbs {
 
-   #if BYTE_ORDER == LITTLE_ENDIAN
-   #define MBS_TYPE(typ, subtyp) ((int32_t) typ | ((int32_t) subtyp) << 16)
-   #else
-   #define MBS_TYPE(typ, subtyp) ((int32_t) subtyp | ((int32_t) typ) << 16)
-   #endif
-
-   #define MBS_TYPE_10_1 MBS_TYPE(10,1)
-   #define MBS_TYPE_100_1 MBS_TYPE(100,1)
-
    enum EMbsTriggerTypes {
       tt_Event         = 1,
       tt_SpillOn       = 12,
@@ -23,7 +14,6 @@ namespace mbs {
       tt_StartAcq      = 14,
       tt_StopAcq       = 15
    };
-
 
 #pragma pack(push, 1)
 
@@ -42,7 +32,7 @@ namespace mbs {
       void Init(uint8_t crate = 0, uint16_t procid = 0)
       {
          iWords = 0;
-         iType = MBS_TYPE_10_1;
+         iType = MBS_TYPE(10,1);
          iProcId = procid;
          iSubcrate = crate;
          iControl = 0;
@@ -71,7 +61,7 @@ namespace mbs {
       void Init(EventNumType evnt = 0)
       {
          iWords = 0;
-         iType = MBS_TYPE_10_1;
+         iType = MBS_TYPE(10,1);
          iDummy = 0;
          iTrigger = tt_Event;
          iEventNumber = evnt;
@@ -153,9 +143,7 @@ namespace mbs {
 #pragma pack(pop)
 
    enum EMbsBufferTypes {
-      mbt_Mbs10_1      = 101,  // old (fixed-length) mbs buffer with events and, probably, spanning
-      mbt_Mbs100_1     = 102,  // new (variable-length) mbs buffer with events, no spanning
-      mbt_MbsEvs10_1   = 103   // several mbs events (without buffer header)
+      mbt_MbsEvents   = 103   // several mbs events without buffer header
    };
 
    // this is list of server kind, supported up to now by DABC
@@ -169,6 +157,7 @@ namespace mbs {
 
    extern const char* ServerKindToStr(int kind);
    extern int StrToServerKind(const char* str);
+   extern int DefualtServerPort(int kind);
 
    extern void SwapData(void* data, unsigned bytessize);
 
@@ -176,7 +165,10 @@ namespace mbs {
    extern const char* xmlSizeLimit;
    extern const char* xmlFirstMultiple;
    extern const char* xmlNumMultiple;
-
+   extern const char* xmlServerName;
+   extern const char* xmlServerKind;
+   extern const char* xmlServerPort;
+   extern const char* xmlIsClient;
 };
 
 #endif

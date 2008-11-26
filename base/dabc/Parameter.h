@@ -43,6 +43,8 @@ namespace dabc {
          bool IsVisible() const { return fVisibility > 0; }
          int Visibility() const { return fVisibility; }
 
+         virtual void* GetPtr() { return 0; }
+
          bool IsFixed() const;
          void SetFixed(bool on = true);
 
@@ -110,6 +112,8 @@ namespace dabc {
          virtual bool GetValue(std::string &value) const;
          virtual bool SetValue(const std::string &value);
 
+         virtual void* GetPtr() { return &fValue; }
+
       protected:
          std::string fValue;
    };
@@ -131,6 +135,8 @@ namespace dabc {
          double GetDouble() const;
          bool SetDouble(double v);
 
+         virtual void* GetPtr() { return &fValue; }
+
       protected:
          double fValue;
    };
@@ -151,6 +157,8 @@ namespace dabc {
 
          int GetInt() const;
          bool SetInt(int v);
+
+         virtual void* GetPtr() { return &fValue; }
 
       protected:
          int fValue;
@@ -179,6 +187,8 @@ namespace dabc {
          virtual bool Find(ConfigIO &cfg);
          virtual bool Read(ConfigIO &cfg);
 
+         virtual void* GetPtr() { return &fRecord; }
+
       protected:
 
          const char* _GetDisplayMode();
@@ -206,6 +216,8 @@ namespace dabc {
          bool SetStatus(const char* status, const char* color);
          StatusRec* GetStatusRec() { return &fRecord; }
 
+         virtual void* GetPtr() { return &fRecord; }
+
       protected:
 
          StatusRec   fRecord;
@@ -219,6 +231,8 @@ namespace dabc {
          virtual EParamKind Kind() const { return parInfo; }
 
          InfoRec* GetInfoRec() { return &fRecord; }
+
+         virtual void* GetPtr() { return &fRecord; }
 
       protected:
 
@@ -243,6 +257,8 @@ namespace dabc {
          bool Fill(float x);
 
          HistogramRec* GetHistogramRec() { return fRecord; }
+
+         virtual void* GetPtr() { return fRecord; }
 
       protected:
 

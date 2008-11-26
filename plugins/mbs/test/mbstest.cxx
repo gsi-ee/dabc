@@ -127,7 +127,7 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
    mgr.CreateMemoryPools();
 
-   const char* format = new_format ? mbs::Factory::LmdFileType() : mbs::Factory::FileType();
+   const char* format = mbs::Factory::LmdFileType();
 
    dabc::Command* cmd = new dabc::CmdCreateDataTransport("Repeater/Ports/Input");
    dabc::CmdCreateDataTransport::SetArgsInp(cmd, format, inpfile);

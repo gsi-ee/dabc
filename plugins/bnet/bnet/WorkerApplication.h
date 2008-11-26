@@ -29,7 +29,7 @@ namespace bnet {
          bool  IsFilter() const { return GetParInt("IsFilter", 0) > 0; }
          std::string StoragePar() const { return GetParStr("StoragePar"); }
 
-         // these are parameters which fixed furing lifetime of the modules
+         // these are parameters which fixed during lifetime of the modules
          // normally these parameters copied in modules constructor
          int   CfgNumNodes() const { return GetParInt("CfgNumNodes", 1); }
          int   CfgNodeId() const { return GetParInt("CfgNodeId", 0); }

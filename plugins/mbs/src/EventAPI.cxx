@@ -279,7 +279,7 @@ unsigned mbs::EvapiInput::Read_Complete(dabc::Buffer* buf)
 {
    if ((fMode<0) || (buf==0) || (fEventHeader==0)) return di_Error;
 
-   buf->SetTypeId(mbt_MbsEvs10_1);
+   buf->SetTypeId(mbt_MbsEvents);
 
    buf->SetHeaderSize(0);
 
@@ -371,8 +371,8 @@ bool mbs::EvapiOutput::WriteBuffer(dabc::Buffer* buf)
 
    DOUT5(("Call WriteBuffer"));
 
-   if (buf->GetTypeId() != mbt_MbsEvs10_1) {
-      EOUT(("Buffer must contain complete MBS event, type %d != %d mbs::mbt_MbsEvs10_1", buf->GetTypeId(), mbt_MbsEvs10_1));
+   if (buf->GetTypeId() != mbt_MbsEvents) {
+      EOUT(("Buffer must contain complete MBS event, type %d != %d mbs::mbt_MbsEvents", buf->GetTypeId(), mbt_MbsEvents));
       return false;
    }
 

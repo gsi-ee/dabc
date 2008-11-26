@@ -142,7 +142,7 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
    } while (numev==0);
 
    buf->SetDataSize(bufsize);
-   buf->SetTypeId(mbs::mbt_MbsEvs10_1);
+   buf->SetTypeId(mbs::mbt_MbsEvents);
 
    return di_Ok;
 }

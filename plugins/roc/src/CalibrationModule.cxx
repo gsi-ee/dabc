@@ -801,7 +801,7 @@ bool roc::CalibrationModule::FlushOutputBuffer()
 
    // send output buffer to all outputs
    fOutBuf->SetDataSize(fOutBuf->GetDataSize() - f_outptr.fullsize());
-   fOutBuf->SetTypeId(mbs::mbt_MbsEvs10_1);
+   fOutBuf->SetTypeId(mbs::mbt_MbsEvents);
 
    SendToAllOutputs(fOutBuf);
    fOutBuf = 0;

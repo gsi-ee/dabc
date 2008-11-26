@@ -35,9 +35,9 @@ namespace dabc {
 
          virtual Application* CreateApplication(const char* classname, const char* appname, Command* cmd) { return 0; }
 
-         virtual Device* CreateDevice(Basic* parent, const char* classname, const char* devname, Command* cmd) { return 0; }
+         virtual Device* CreateDevice(const char* classname, const char* devname, Command* cmd) { return 0; }
 
-         virtual WorkingThread* CreateThread(Basic* parent, const char* classname, const char* thrdname, const char* thrddev, Command* cmd) { return 0; }
+         virtual WorkingThread* CreateThread(const char* classname, const char* thrdname, const char* thrddev, Command* cmd) { return 0; }
 
          virtual Module* CreateModule(const char* classname, const char* modulename, Command* cmd) { return 0; }
 

@@ -64,7 +64,7 @@ void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
       //         DOUT1(("Start receiving of buffer %p %u %p len = %d",
       //               fRecvBuffer, fRecvBuffer->GetTotalSize(), fRecvBuffer->GetDataLocation(), ReadBufferSize()));
 
-               fRecvBuffer->SetTypeId(mbs::mbt_MbsEvs10_1);
+               fRecvBuffer->SetTypeId(mbs::mbt_MbsEvents);
                StartRecv(fRecvBuffer, ReadBufferSize());
                fState = ioRecvBuffer;
             }

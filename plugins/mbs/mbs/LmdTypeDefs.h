@@ -6,6 +6,12 @@
 
 namespace mbs {
 
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define MBS_TYPE(typ, subtyp) ((int32_t) typ | ((int32_t) subtyp) << 16)
+#else
+#define MBS_TYPE(typ, subtyp) ((int32_t) subtyp | ((int32_t) typ) << 16)
+#endif
+
 #pragma pack(push, 1)
 
    struct Header {
@@ -29,7 +35,6 @@ namespace mbs {
 
       inline uint32_t Type() const { return iType; }
    };
-
 
 #pragma pack(pop)
 

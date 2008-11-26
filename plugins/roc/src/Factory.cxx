@@ -37,12 +37,12 @@ dabc::Module* roc::Factory::CreateModule(const char* classname, const char* modu
    return 0;
 }
 
-dabc::Device* roc::Factory::CreateDevice(dabc::Basic* parent, const char* classname, const char* devname, dabc::Command* cmd)
+dabc::Device* roc::Factory::CreateDevice(const char* classname, const char* devname, dabc::Command* cmd)
 {
    if (strcmp(classname,"roc::Device")!=0) return 0;
 
    DOUT1(("roc::Factory::CreateDevice - Creating  ROC device %s ...", devname));
-   roc::Device* dev = new  roc::Device(parent, devname);
+   roc::Device* dev = new  roc::Device(dabc::mgr()->GetDevicesFolder(true), devname);
    return dev;
 }
 

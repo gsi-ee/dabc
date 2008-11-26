@@ -22,7 +22,7 @@ bnet::WorkerApplication::WorkerApplication(const char* name) :
    CreateParInt("IsFilter", 0);
    CreateParInt("CombinerModus", 0);
    CreateParInt("NumReadouts", 1);
-   for (int nr=0;nr<5;nr++)
+   for (int nr=0;nr<NumReadouts();nr++)
       CreateParStr(FORMAT(("Input%dCfg", nr)), "");
    CreateParStr("StoragePar", "");
 
@@ -61,7 +61,7 @@ bnet::WorkerApplication::WorkerApplication(const char* name) :
 
    SetParDflts();
 
-   DOUT1(("!!!! Wroker plugin created !!!!"));
+   DOUT1(("!!!! Worker plugin created !!!!"));
 }
 
 std::string bnet::WorkerApplication::ReadoutPar(int nreadout) const

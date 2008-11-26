@@ -165,7 +165,7 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
    }
 
 
-   if (buf->GetTypeId() != mbs::mbt_MbsEvs10_1) {
+   if (buf->GetTypeId() != mbs::mbt_MbsEvents) {
       EOUT(("Buffer must contain mbs event(s) 10-1, but has type %u", buf->GetTypeId()));
       return false;
    }
@@ -188,7 +188,7 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
 
    unsigned numevents = 0;
 
-   if (buf->GetTypeId() == mbs::mbt_MbsEvs10_1) {
+   if (buf->GetTypeId() == mbs::mbt_MbsEvents) {
       dabc::BufferSize_t size = buf->GetTotalSize();
       mbs::EventHeader* hdr = (mbs::EventHeader*) buf->GetDataLocation();
 

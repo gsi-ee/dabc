@@ -108,7 +108,7 @@ bool roc::TreeOutput::WriteBuffer(dabc::Buffer* buf)
       return true;
    }
 
-   if (buf->GetTypeId() == mbs::mbt_MbsEvs10_1) {
+   if (buf->GetTypeId() == mbs::mbt_MbsEvents) {
 
       dabc::Pointer evptr(buf);
 

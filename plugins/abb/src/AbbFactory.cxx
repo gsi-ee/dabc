@@ -41,13 +41,13 @@ dabc::Module* dabc::AbbFactory::CreateModule(const char* classname, const char* 
 }
 
 
-dabc::Device* dabc::AbbFactory::CreateDevice(dabc::Basic* parent, const char* classname, const char* devname, dabc::Command* cmd)
+dabc::Device* dabc::AbbFactory::CreateDevice(const char* classname, const char* devname, dabc::Command* cmd)
 {
    if (strcmp(classname,"AbbDevice")!=0) return 0;
    // advanced device parameters contained in factory command object:
    unsigned int boardnum= cmd->GetInt(ABB_PAR_BOARDNUM, 0);
    bool dmamode=true; // put this to parameter later? now always use DMA
-   dabc::AbbDevice* dev= new  dabc::AbbDevice(parent, devname, dmamode, boardnum);
+   dabc::AbbDevice* dev= new  dabc::AbbDevice(dabc::mgr()->GetDevicesFolder(true), devname, dmamode, boardnum);
    unsigned int bar=cmd->GetInt(ABB_PAR_BAR, 1);
    unsigned int addr=cmd->GetInt(ABB_PAR_ADDRESS, (0x8000 >> 2));
    unsigned int size=cmd->GetInt(ABB_PAR_LENGTH, 8192);
