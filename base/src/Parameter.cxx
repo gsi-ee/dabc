@@ -457,6 +457,22 @@ dabc::StatusParameter::StatusParameter(WorkingProcessor* parent, const char* nam
    Ready();
 }
 
+
+bool dabc::StatusParameter::SetStatus(const char* status, const char* color)
+{
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed) return false;
+      if(status)
+         strncpy(fRecord.status, status ,16);
+      if (color)
+         strncpy(fRecord.color, color,16);
+   }
+   Changed();
+   return true;
+
+}
+
 // ___________________________________________________
 
 dabc::InfoParameter::InfoParameter(WorkingProcessor* parent, const char* name, int verbose) :

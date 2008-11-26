@@ -203,7 +203,7 @@ namespace dabc {
          StatusParameter(WorkingProcessor* parent, const char* name, int severity = 0);
 
          virtual EParamKind Kind() const { return parStatus; }
-
+         bool SetStatus(const char* status, const char* color);
          StatusRec* GetStatusRec() { return &fRecord; }
 
       protected:
