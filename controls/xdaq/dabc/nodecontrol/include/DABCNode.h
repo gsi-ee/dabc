@@ -4,14 +4,14 @@
 #define DABC_XD_NODE_H
 #include "DABCApplication.h"
 
-#define _DABC_COMMAND_MANAGER_ "ManagerCommand" 
+#define _DABC_COMMAND_MANAGER_ "ManagerCommand"
 // special command to wrap remote manager commands
 
 
 #include "dabc/Manager.h"
 #include "dabc/Command.h"
 
-extern "C" void InitUserPlugin(dabc::Manager* mgr);
+//extern "C" void InitUserPlugin(dabc::Manager* mgr);
 
 namespace dabc{
 namespace xd{
@@ -29,15 +29,15 @@ friend class dabc::xd::Manager;
 
 public:
 
-    
+
 
 
     Node(xdaq::ApplicationStub* as) throw (xdaq::exception::Exception);;
 
-    
+
 	virtual ~Node();
-    
- 
+
+
 
 protected:
 
@@ -67,7 +67,7 @@ protected:
    /** Shutdown (exit) this application. Will terminate process if there is no other app running.*/
     virtual void Shutdown();
 
- 
+
 
     /** Reply most recent core state change command.
       * If state transition was triggered by core only.*/
@@ -87,25 +87,25 @@ protected:
 	virtual void DoError(toolbox::Event::Reference e) ;
 
     virtual void DoHandleFailure(toolbox::Event::Reference e);
-  
+
     virtual void DoResetFailure(toolbox::Event::Reference e);
- 
+
 
 
     /** Execute command string par on local module */
-    void ExecuteManagerCommand(std::string parameter); 
+    void ExecuteManagerCommand(std::string parameter);
 
       /** Send core command to remote manager. */
     bool SendManagerCommand(std::string managername, std::string parameter, bool async);
 
 
 
-  
+
      /** get number of all active nodes in cluster.
 	  * note that controller nodes are only accounted if they
 	  * have global data flow controller*/
     int NumberOfAllNodes();
-	
+
     /** get node id (instance of module application) from manager nodename.
       * returns <0 in case of error.*/
     int FindNodeID(std::string managername);
@@ -117,41 +117,41 @@ protected:
     std::string FindApplicationPrefix(unsigned int instance) throw (dabc::xd::Exception);
 
 
- 
+
    /** Check if application of id is really up and running*/
     virtual bool CheckApplicationActive(unsigned int instance);
 
 
   /** this instance id number as configured*/
     int GetLocalID(){return nodeId_;}
-   
-  
+
+
        /** node id for module manager*/
     xdata::UnsignedInteger nodeId_;
-    
+
     /** xdaq application id for the worker nodes*/
     xdata::UnsignedInteger workerTid_;
-    
+
      /** xdaq appliation id for the controller node*/
     xdata::UnsignedInteger controllerTid_;
 
-		
+
 
 private:
-  
-      /** object manager of the core; offers controls interface*/ 
+
+      /** object manager of the core; offers controls interface*/
    dabc::xd::Manager* fxModMan;
-   
+
    /** Number of all nodes on cluster. This value is dynamically set
-     * at init time */   
+     * at init time */
    int fiNumAllNodes;
-   
+
     /** remember last command from core that invoked state change.
-     * to be used for asynchronous reply*/ 
+     * to be used for asynchronous reply*/
    dabc::Command* fxStateChangeCommand;
-   
-  
-    
+
+
+
 };
 } // end namespace xd
 } // end namespace bnet

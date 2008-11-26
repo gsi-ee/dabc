@@ -1855,7 +1855,7 @@ try
    if(pdouble)
       {
          double defval=-1;
-         defval=par->GetDouble();
+         defval=pdouble->GetDouble();
          subscription=new DimParameterInfo(par, fulldimname.c_str(), defval);
       }
    else if (pstring)
@@ -1867,7 +1867,7 @@ try
    else if (pint)
       {
          int defval=-1;
-         defval=par->GetInt();
+         defval=pint->GetInt();
          subscription=new DimParameterInfo(par, fulldimname.c_str(), defval);
       }
    else if (pstat)

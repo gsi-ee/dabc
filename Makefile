@@ -15,6 +15,8 @@ include base/Makefile.mk
 
 include controls/simple/Makefile.mk
 
+include controls/dimcontrol/Makefile.mk
+
 #DABC_PLUGINS = plugins/mbs plugins/bnet plugins/verbs plugins/roc plugins/abb
 
 DABC_PLUGINS = $(wildcard plugins/*)
