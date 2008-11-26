@@ -234,19 +234,18 @@ namespace dabc {
       public:
          static const char* CmdName() { return "SetParameter"; }
 
-
          CommandSetParameter(const char* parname, const char* value) :
             Command(CmdName())
-            {
-                SetPar("ParName", parname);
-                SetPar("ParValue", value);
-            }
+         {
+            SetPar("ParName", parname);
+            SetPar("ParValue", value);
+         }
          CommandSetParameter(const char* parname, int value) :
             Command(CmdName())
-            {
-                SetPar("ParName", parname);
-                SetInt("ParValue", value);
-            }
+         {
+            SetPar("ParName", parname);
+            SetInt("ParValue", value);
+         }
    };
 
    class CmdCreateInputTransport : public Command {
@@ -269,50 +268,13 @@ namespace dabc {
          static const char* CmdName() { return "CreateOutputTransport"; }
 
          CmdCreateOutputTransport(const char* portname,
-                                 const char* outtype,
-                                 const char* thrdname = 0) :
+                                  const char* outtype,
+                                  const char* thrdname = 0) :
             Command(CmdName())
          {
             SetPar("PortName", portname);
             SetPar("OutputTransportType", outtype);
             SetPar("OutputTransportThread", thrdname);
-         }
-   };
-
-
-   class CmdCreateDataTransport : public Command {
-      public:
-         static const char* CmdName() { return "CreateDataTransport"; }
-
-         CmdCreateDataTransport(const char* portname,
-                                const char* thrdname = 0,
-                                const char* iotyp = 0) :
-            Command(CmdName())
-         {
-            SetPar("PortName", portname);
-            SetPar("ThrdName", thrdname);
-            SetPar("IOTyp", iotyp);
-         }
-
-         static const char* GetIOTyp(Command* cmd)
-         {
-            return cmd->GetPar("IOTyp");
-         }
-
-         static void SetArgsInp(Command* cmd,
-                                const char* inp_typ,
-                                const char* inp_name)
-         {
-            cmd->SetPar("InpType", inp_typ);
-            cmd->SetPar("InpName", inp_name);
-         }
-
-         static void SetArgsOut(Command* cmd,
-                                const char* out_typ,
-                                const char* out_name)
-         {
-            cmd->SetPar("OutType", out_typ);
-            cmd->SetPar("OutName", out_name);
          }
    };
 
@@ -605,16 +567,6 @@ namespace dabc {
          bool CreateTransport(const char* devicename, const char* portname)
          {
             return Execute(new CmdCreateTransport(devicename, portname));
-         }
-
-         bool CreateInputTransport(const char* portname, const char* inptype, const char* thrdname = 0)
-         {
-            return Execute(new CmdCreateInputTransport(portname, inptype, thrdname));
-         }
-
-         bool CreateOutputTransport(const char* portname, const char* outtype, const char* thrdname = 0)
-         {
-            return Execute(new CmdCreateOutputTransport(portname, outtype, thrdname));
          }
 
          FileIO* CreateFileIO(const char* typ, const char* name, int option);

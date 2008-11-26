@@ -27,7 +27,7 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ, const char* name
 
    DOUT3(("Factory::CreateDataInput %s", typ));
 
-   if (strcmp(typ, LmdFileType())==0) {
+   if (strcmp(typ, typeLmdInput)==0) {
       return new mbs::LmdInput();
    } else
    if (strcmp(typ, xmlEvapiType) == 0) {
@@ -62,7 +62,7 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ, const char* na
 
    DOUT3(("Factory::CreateDataOutput typ:%s", typ));
 
-   if (strcmp(typ, LmdFileType())==0) {
+   if (strcmp(typ, typeLmdOutput)==0) {
       return new mbs::LmdOutput();
    } else
    if (strcmp(typ, xmlEvapiOutFile) == 0) {

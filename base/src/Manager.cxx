@@ -1016,53 +1016,6 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          }
       }
    } else
-   if (cmd->IsName(CmdCreateDataTransport::CmdName())) {
-
-      const char* portname = cmd->GetStr("PortName","");
-      const char* thrdname = cmd->GetPar("ThrdName");
-      const char* sourcename = cmd->GetPar("InpName");
-      const char* targetname = cmd->GetPar("OutName");
-
-      Port* port = FindPort(portname);
-
-      if (port==0) {
-         EOUT(("Port %s not found", portname));
-         cmd_res = cmd_false;
-      } else {
-         DOUT4(("Create data channel for port %s", portname));
-
-         dabc::DataInput* inp = 0;
-         dabc::DataOutput* out = 0;
-
-         if (sourcename!=0)
-            inp = CreateDataInput(cmd->GetPar("InpType"), sourcename, cmd);
-
-         if (targetname!=0)
-            out = CreateDataOutput(cmd->GetPar("OutType"), targetname, cmd);
-
-         DOUT4(( "inp = %p out = %p", inp, out));
-
-         if ((inp!=0) || (out!=0)) {
-
-            LocalDevice* dev = FindLocalDevice();
-            DataIOTransport* tr = new DataIOTransport(dev, port, inp, out);
-
-            if (thrdname==0) thrdname = dev->ProcessorThreadName();
-
-            if (MakeThreadFor(tr, thrdname)) {
-               port->AssignTransport(tr);
-               cmd_res = cmd_true;
-            } else
-               cmd_res = cmd_false;
-
-         } else {
-            EOUT(("No input or output is created"));
-            cmd_res = cmd_false;
-         }
-      }
-
-      DOUT4(( "Result of data transport creation = %s", DBOOL(cmd_res)));
-   } else
    if (cmd->IsName(CmdDeletePool::CmdName())) {
       dabc::MemoryPool* pool = FindPool(cmd->GetPar("PoolName"));
       if (pool) delete pool;

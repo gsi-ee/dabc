@@ -119,9 +119,9 @@ bool roc::ReadoutApplication::CreateAppModules()
    if (OutputFileName().length()>0) {
       cmd = 0;
       if (DoTaking())
-         cmd = new dabc::CmdCreateOutputTransport("RocComb/Ports/Output1", mbs::Factory::LmdFileType());
+         cmd = new dabc::CmdCreateOutputTransport("RocComb/Ports/Output1", mbs::typeLmdOutput);
       else
-         cmd = new dabc::CmdCreateInputTransport("RocCalibr/Ports/Input", mbs::Factory::LmdFileType());
+         cmd = new dabc::CmdCreateInputTransport("RocCalibr/Ports/Input", mbs::typeLmdInput);
 
       cmd->SetStr(mbs::xmlFileName, OutputFileName().c_str());
 
@@ -138,7 +138,7 @@ bool roc::ReadoutApplication::CreateAppModules()
 
    if ((CalibrFileName().length()>0) && DoCalibr()) {
 
-      const char* outtype = mbs::Factory::LmdFileType();
+      const char* outtype = mbs::typeLmdOutput;
 
       if ((CalibrFileName().rfind(".root")!=std::string::npos) ||
           (CalibrFileName().rfind(".ROOT")!=std::string::npos))

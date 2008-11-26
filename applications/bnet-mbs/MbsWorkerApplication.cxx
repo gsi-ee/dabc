@@ -49,9 +49,9 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
    } else
    if ((cfg.find("lmd") != cfg.npos) || (cfg.find("LMD") != cfg.npos)) {
-
-
-
+      dabc::Command* cmd = new dabc::CmdCreateInputTransport(portname, mbs::typeLmdInput, "MbsInpThrd");
+      cmd->SetStr(mbs::xmlFileName, cfg);
+      if (!dabc::mgr()->Execute(cmd, 10)) return false;
    } else {
 
       if (!dabc::mgr()->CreateDevice("mbs::Device", "MBS")) {
@@ -102,25 +102,8 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
    if (outfile.length()==0)
       return bnet::WorkerApplication::CreateStorage(portname);
 
-   dabc::Command* cmd = new dabc::CmdCreateDataTransport(portname, "MbsIOThrd");
-
-   if (!cmd->ReadFromString(outfile.c_str(), true)) {
-      EOUT(("Cannot decode command parameters for output %s", outfile.c_str()));
-      dabc::Command::Finalise(cmd);
-      return false;
-   }
-
-   if (cmd->GetPar("OutName")==0) {
-      EOUT(("Important parameter 'OutName' missed in config for output"));
-      dabc::Command::Finalise(cmd);
-      return false;
-   }
-
-   if (cmd->GetPar("OutType")==0) {
-      EOUT(("Important parameter 'OutType' missed in config for output"));
-      dabc::Command::Finalise(cmd);
-      return false;
-   }
+   dabc::Command* cmd = new dabc::CmdCreateOutputTransport(portname, mbs::typeLmdOutput, "MbsIOThrd");
+   cmd->SetStr(mbs::xmlFileName, outfile);
 
    bool res = dabc::mgr()->Execute(cmd, 5);
 
@@ -184,12 +167,7 @@ void bnet::MbsWorkerApplication::SetMbsTransportPars()
 
       const char* server_name = (dabc::mgr()->NodeId()==1) ? "x86g-4" : "x86-7";
 
-      std::string cfgstr;
-
-      // TODO: replace configuration string by other means
-      dabc::formats(cfgstr, "InpType:%s; InpName:%s.gsi.de; Port:6000;", "?????", server_name);
-
-      SetParStr("Input0Cfg", cfgstr);
+      SetParStr("Input0Cfg", server_name);
 
       SetParInt("IsGenerator", 1);
 

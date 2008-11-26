@@ -73,7 +73,6 @@ namespace dabc {
 
          /** This is generic virtual method to initialize output,
           * using configurations from Port or from the Command
-          * In general case port and command may be ignored
           */
 
          virtual bool Write_Init(Command* cmd = 0, WorkingProcessor* port = 0) { return false; }

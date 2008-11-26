@@ -3,6 +3,10 @@
 #include <string.h>
 #include <byteswap.h>
 
+
+const char* mbs::typeLmdInput         = "mbs::LmdInput";
+const char* mbs::typeLmdOutput        = "mbs::LmdOutput";
+
 const char* mbs::xmlFileName          = "FileName";
 const char* mbs::xmlSizeLimit         = "SizeLimit";
 const char* mbs::xmlFirstMultiple     = "FirstMultiple";
