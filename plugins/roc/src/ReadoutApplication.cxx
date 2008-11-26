@@ -23,7 +23,7 @@ const char* roc::xmlCalibrFileLimit   = "CalibrFileLimit";
 
 roc::ReadoutApplication::ReadoutApplication(const char* name) :
    dabc::Application(name ? name : "RocPlugin")
-{StreamServer
+{
    CreateParInt(roc::xmlDoCalibr, 1);
 
    CreateParInt(roc::xmlNumRocs, 3);

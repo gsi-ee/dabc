@@ -1414,7 +1414,7 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
       int parentid = cmd->GetInt("#_PCID_", -1);
       if (parentid<0) return true;
 
-      DOUT1(("!!!!!!!!!!!!  Reply of CmdDirectConnect parent = %d", parentid));
+      DOUT5(("!!!!!!!!!!!!  Reply of CmdDirectConnect parent = %d", parentid));
 
       bool res = cmd->GetResult();
       cmd->ClearResult();
