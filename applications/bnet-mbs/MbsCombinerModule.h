@@ -13,6 +13,7 @@
 
 #include "mbs/MbsTypeDefs.h"
 
+#include "mbs/Iterator.h"
 
 namespace bnet {
 
@@ -22,13 +23,11 @@ namespace bnet {
       protected:
 
          struct InputRec {
-            int            bufindx; // index of buffer in input queue
-            dabc::Buffer*  headbuf; // pointer on head buffer, indicate if we still using it
-            dabc::Pointer  evptr;
-            mbs::eMbs101EventHeader *evhdr;
-            mbs::eMbs101EventHeader tmp_evhdr;
+            int                bufindx; // index of buffer in input queue
+            dabc::Buffer*      headbuf; // pointer on head buffer, indicate if we still using it
+            mbs::ReadIterator  iter;
 
-            InputRec() : bufindx(-1), headbuf(0), evptr(), evhdr(0), tmp_evhdr() {}
+            InputRec() : bufindx(-1), headbuf(0), iter(0) {}
          };
 
          int                      fCfgEventsCombine;
@@ -36,8 +35,8 @@ namespace bnet {
          std::vector<InputRec>    fRecs;
 
          // range of events, packed in one output buffer
-         mbs::MbsEventId          fMinEvId;
-         mbs::MbsEventId          fMaxEvId;
+         mbs::EventNumType        fMinEvId;
+         mbs::EventNumType        fMaxEvId;
          // list of subevents, which should be used to produce output buffer
          std::vector<dabc::Pointer> fSubEvnts;
 

@@ -114,7 +114,7 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
          fState = ioReady;
          DOUT1(("Receive server info completed"));
          if (fServInfo.iEndian != 1) {
-            SwapMbsData(&fServInfo, sizeof(fServInfo));
+            mbs::SwapData(&fServInfo, sizeof(fServInfo));
             fSwapping = true;
          }
 
@@ -130,7 +130,7 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
 
          DOUT1(("Header received, rest size = %u used %u", ReadBufferSize(), fHeader.UsedBufferSize()));
 
-         if (fSwapping) SwapMbsData(&fHeader, sizeof(fHeader));
+         if (fSwapping) mbs::SwapData(&fHeader, sizeof(fHeader));
 
          if (ReadBufferSize() > (unsigned) fServInfo.iMaxBytes) {
             EOUT(("Buffer size bigger than allowed by info record"));
@@ -150,7 +150,11 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
       case ioRecvBuffer:
 
 //         DOUT1(("Provide recv buffer %p to transport", fRecvBuffer));
+
          fRecvBuffer->SetDataSize(fHeader.UsedBufferSize());
+
+         if (fSwapping) mbs::SwapData(fRecvBuffer->GetDataLocation(), fRecvBuffer->GetDataSize());
+
          fTransport->GetReadyBuffer(fRecvBuffer);
          fRecvBuffer = 0;
          fState = ioReady;

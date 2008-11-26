@@ -16,6 +16,7 @@
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/ServerTransport.h"
 #include "mbs/Device.h"
+#include "mbs/Iterator.h"
 
 #define BUFFERSIZE 16*1024
 
@@ -60,6 +61,8 @@ bool GenerateMbsPacketForGo4(dabc::Buffer* buf, int &evid)
          }
 
       if (!eventdone) break;
+
+      if (!iter.FinishEvent()) break;
 
       evid++;
    }

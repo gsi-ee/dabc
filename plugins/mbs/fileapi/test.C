@@ -8,21 +8,21 @@ void test(const char* fname = "test_0000.lmd")
 {
    mbs::LmdFile f;
    if (!f.OpenRead(fname)) return;
-   
+
    mbs::EventHeader* hdr = 0;
 
    long totalsz = 0;
    unsigned numevents = 0;
-   
+
    while ((hdr = f.ReadEvent()) != 0) {
       numevents++;
       totalsz += hdr->FullSize();
-//      printf("Event %u size %u\n", hdr->iEventNumber, hdr->FullSize());
+//      printf("Event %u size %u\n", hdr->EventNumber(), hdr->FullSize());
    }
 
    printf("Overall events: %u total size:%ld\n", numevents, totalsz);
 
    f.Close();
-   
+
    cout << "File closed" << endl;
 }

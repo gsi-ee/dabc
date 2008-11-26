@@ -265,7 +265,7 @@ bool roc::CalibrationModule::DoCalibration()
 
 //      if (fSkippedEvents + fBuildEvents > 5500) exit(1);
 
-//      DOUT1(("CALIBR: Analyse event %u of full size %u", inpevhdr->iEventNumber, inpevhdr->FullSize()));
+//      DOUT1(("CALIBR: Analyse event %u of full size %u", inpevhdr->EventNumber(), inpevhdr->FullSize()));
 
       if (inpevhdr->FullSize() > f_outptr.fullsize())
          if (FlushOutputBuffer())
@@ -538,7 +538,7 @@ bool roc::CalibrationModule::DoCalibration()
          fSkippedEvents++;
 
 //         EOUT(("CALIBR: Skip event id = %u sz = %u from input iserr %s numrecs %u",
-//            inpevhdr->iEventNumber, inpevhdr->FullSize(), DBOOL(iserrdata), recs.size()));
+//            inpevhdr->EventNumber(), inpevhdr->FullSize(), DBOOL(iserrdata), recs.size()));
 
          if (f_inpptr.fullsize() < inpevhdr->FullSize()) {
             EOUT(("Corrupted MBS data rest: %u  evnt: %u", f_inpptr.fullsize(), inpevhdr->FullSize()));
@@ -562,8 +562,7 @@ bool roc::CalibrationModule::DoCalibration()
       dabc::Pointer out_begin(f_outptr);
 
       mbs::EventHeader* evhdr = (mbs::EventHeader*) f_outptr();
-      evhdr->Init();
-      evhdr->iEventNumber = inpevhdr->iEventNumber;
+      evhdr->Init(inpevhdr->EventNumber());
       f_outptr.shift(sizeof(mbs::EventHeader));
 
       mbs::SubeventHeader* subhdr = (mbs::SubeventHeader*) f_outptr();

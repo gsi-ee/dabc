@@ -12,6 +12,7 @@
 #include "mbs/EventAPI.h"
 #include "mbs/Factory.h"
 #include "mbs/MbsTypeDefs.h"
+#include "mbs/Iterator.h"
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
 
@@ -22,6 +23,23 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <list>
+
+
+void IterateBuffer(dabc::Buffer* buf)
+{
+   if (buf==0) return;
+
+   mbs::ReadIterator iter(buf);
+
+   while (iter.NextEvent()) {
+      DOUT1(("Event %u", iter.evnt()->EventNumber()));
+
+      while (iter.NextSubEvent())
+         DOUT1(("Subevent crate %u", iter.subevnt()->iSubcrate));
+   }
+}
+
+
 
 
 class MbsTest1RepeaterModule : public dabc::ModuleAsync {
@@ -64,12 +82,7 @@ class MbsTest1RepeaterModule : public dabc::ModuleAsync {
                DOUT1(("Find EOF in input stream"));
                fWaitForStop = true;
             } else  {
-               if (fBufferCnt<10)
-                  if (buf->GetTypeId() == mbs::mbt_MbsEvs10_1)
-                     mbs::IterateEvent(buf->GetDataLocation());
-                  else
-                  if (buf->GetTypeId() == mbs::mbt_Mbs100_1)
-                     mbs::IterateBuffer(buf->GetDataLocation(), fBufferCnt==0);
+               if (fBufferCnt<10) IterateBuffer(buf);
 
                fBufferCnt++;
             }
@@ -159,7 +172,7 @@ void TestMbsInpFile(const char* fname)
 
       while ((buf = inp->ReadBuffer())>0) {
          if (cnt++<10)
-            mbs::IterateEvent(buf->GetDataLocation());
+            IterateBuffer(buf);
 
          dabc::Buffer::Release(buf);
       }
@@ -180,7 +193,7 @@ void TestMbsTrServer(const char* server)
       while ((inp->Read_Size()<=dabc::DataInput::di_ValidSize) && (cnt<10000)) {
          inp->Read_Complete(0);
          if (cnt<100)
-            mbs::IterateEvent(inp->GetEventBuffer());
+            DOUT1((" Event buffer %p", inp->GetEventBuffer()));
          cnt++;
       }
    }
@@ -214,7 +227,7 @@ void TestMbsInputFile(const char* fname)
 
       if (inp->Read_Complete(buf)!=dabc::DataInput::di_Ok) break;
       if (cnt<5)
-         mbs::IterateBuffer(buf->GetDataLocation(), cnt==0);
+         IterateBuffer(buf);
 
       cnt++;
    }
@@ -250,8 +263,7 @@ void TestMbsIO(const char* fname, const char* outname)
 
          inp->Read_Complete(buf);
 
-         if (cnt<10)
-            mbs::IterateEvent(buf->GetDataLocation());
+         if (cnt<10) IterateBuffer(buf);
 
          out->WriteBuffer(buf);
 

@@ -1,7 +1,7 @@
 This is standalone API to read/write lmd files.
 
-It include C-based code, LmdFile class (C++ wrapper for C code) and 
-several structure definitions in LmdTypeDefs.h, usefull to work with 
+It includes C-based code, LmdFile class (C++ wrapper for C code) and 
+several structures definitions in LmdTypeDefs.h to work with 
 mbs event structures.
 
 Install:
@@ -9,7 +9,7 @@ Install:
          [shell] tar xzf lmdfile.tar.gz
    2. If one would like to use lmd files in ROOT scripts,
       install ROOT (see site http://root.cern.ch) and configure correctly
-      ROOTSYS and LD_LIBRARY_PATH enviroment variable.
+      ROOTSYS and LD_LIBRARY_PATH environment variable.
    3. Compile code by invoking:
          [shell] make
       It will create library "libLmdFile.so" and executable "test".

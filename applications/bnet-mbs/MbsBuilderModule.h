@@ -7,6 +7,8 @@
 
 #include "mbs/MbsTypeDefs.h"
 
+#include "mbs/Iterator.h"
+
 #include <vector>
 
 namespace bnet {
@@ -16,12 +18,11 @@ namespace bnet {
    class MbsBuilderModule : public BuilderModule {
       protected:
          struct OutputRec {
-            bool          ready; // indicates that output buffer ready to be send
-            dabc::Buffer* buf;
-            dabc::Pointer evptr;
-            mbs::sMbsBufferHeader* bufhdr;
-            mbs::sMbsBufferHeader tmp_bufhdr;
-            OutputRec() : ready(false), buf(0), bufhdr(0) {}
+            bool                ready; // indicates that output buffer ready to be send
+            dabc::Buffer*       buf;
+            mbs::WriteIterator  iter;
+
+            OutputRec() : ready(false), buf(0), iter(0) {}
          };
 
          int                  fCfgEventsCombine;

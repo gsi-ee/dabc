@@ -23,7 +23,7 @@ const char* roc::xmlCalibrFileLimit   = "CalibrFileLimit";
 
 roc::ReadoutApplication::ReadoutApplication(const char* name) :
    dabc::Application(name ? name : "RocPlugin")
-{
+{StreamServer
    CreateParInt(roc::xmlDoCalibr, 1);
 
    CreateParInt(roc::xmlNumRocs, 3);
@@ -33,7 +33,7 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
    CreateParInt(dabc::xmlBufferSize, 8192);
    CreateParInt(dabc::xmlNumBuffers, 100);
 
-   CreateParStr(xmlMbsServerKind, "Stream");
+   CreateParStr(xmlMbsServerKind, mbs::ServerKindToStr(mbs::StreamServer));
 
    CreateParStr(xmlRawFile, "");
    CreateParInt(xmlRawFileLimit, 0);
@@ -45,14 +45,7 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
 
 int roc::ReadoutApplication::DataServerKind() const
 {
-   int kind = mbs::NoServer;
-   std::string servertype = GetParStr(xmlMbsServerKind);
-   if(servertype.find("Stream")!=std::string::npos)
-      kind=mbs::StreamServer;
-   else
-   if(servertype.find("Transport")!=std::string::npos)
-      kind=mbs::TransportServer;
-   return kind;
+   return mbs::StrToServerKind(GetParStr(xmlMbsServerKind).c_str());
 }
 
 std::string roc::ReadoutApplication::RocIp(int nreadout) const

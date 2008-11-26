@@ -62,7 +62,7 @@ namespace mbs {
 
 
          ServerTransport*      fTransport;
-         sMbsTransportInfo     fServInfo; // data, send by transport server in the beginning
+         mbs::TransportInfo    fServInfo; // data, send by transport server in the beginning
          EIOState              fState;
          char                  f_sbuf[12]; // input buffer to get request
          dabc::Buffer*         fSendBuf;

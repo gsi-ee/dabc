@@ -161,23 +161,12 @@ void mbs::ServerIOProcessor::ProcessEvent(dabc::EventId evnt)
     if (fState == ioWaitingBuffer) {
        fSendBuf = fTransport->TakeFrontBuffer();
        if (fSendBuf!=0) {
-          fState = ioSendingBuffer;
-
-        mbs::sMbsBufferHeader* bufhdr = (mbs::sMbsBufferHeader*) fSendBuf->GetDataLocation();
-        DOUT4(("Send MBS buffer type %x len %d used %d  total: %u",
-           bufhdr->iType,  bufhdr->BufferLength(), bufhdr->UsedBufferLength(), fSendBuf->GetTotalSize()));
-
-          if (fSendBuf->GetTypeId()==mbt_Mbs100_1)
-             StartSend(fSendBuf);
-          else
-          if (fSendBuf->GetTypeId()==mbt_Mbs10_1)
-             StartSend(fSendBuf);
-          else
           if (fSendBuf->GetTypeId()==mbt_MbsEvs10_1) {
              fHeader.Init(true);
              fHeader.SetUsedBufferSize(fSendBuf->GetTotalSize());
              // error in evapi, must be + sizeof(mbs::BufferHeader)
              fHeader.SetFullSize(fSendBuf->GetTotalSize() - sizeof(mbs::BufferHeader));
+             fState = ioSendingBuffer;
              StartNetSend(&fHeader, sizeof(fHeader), fSendBuf, false);
           } else {
               EOUT(("Buffer type %u not supported !!!", fSendBuf->GetTypeId()));

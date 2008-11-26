@@ -1,111 +1,109 @@
 #ifndef MBS_MbsTypeDefs
 #define MBS_MbsTypeDefs
 
-#include <stdint.h>
-#include <endian.h>
-#include <byteswap.h>
-
-#include "dabc/Pointer.h"
-
-#include "mbs/LmdTypeDefs.h"
+#ifndef MBS_LmdTypeDefs
+#include "LmdTypeDefs.h"
+#endif
 
 namespace mbs {
 
-   extern const char* xmlFileName;
-   extern const char* xmlSizeLimit;
-   extern const char* xmlFirstMultiple;
-   extern const char* xmlNumMultiple;
+   #if BYTE_ORDER == LITTLE_ENDIAN
+   #define MBS_TYPE(typ, subtyp) ((int32_t) typ | ((int32_t) subtyp) << 16)
+   #else
+   #define MBS_TYPE(typ, subtyp) ((int32_t) subtyp | ((int32_t) typ) << 16)
+   #endif
 
-   enum EMbsBufferTypes {
-      mbt_Mbs10_1      = 101,  // old (fixed-length) mbs buffer with events and, probably, spanning
-      mbt_Mbs100_1     = 102,  // new (variable-length) mbs buffer with events, no spanning
-      mbt_MbsEvs10_1   = 103   // several mbs events (without buffer header)
-   };
+   #define MBS_TYPE_10_1 MBS_TYPE(10,1)
+   #define MBS_TYPE_100_1 MBS_TYPE(100,1)
 
-   // this is list of server kind, supported up to now by DABC
-   enum EMbsServerKinds {
-      NoServer = 0,
-      TransportServer = 1,
-      StreamServer = 2,
-      OldTransportServer = 3,
-      OldStreamServer = 4
-   };
-
-   class ReadIterator {
-      public:
-         ReadIterator(dabc::Buffer* buf);
-
-         bool IsOk() const { return fBuffer!=0; }
-
-         bool NextEvent();
-         bool NextSubEvent();
-
-         EventHeader* evnt() const { return (EventHeader*) fEvPtr(); }
-         SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
-         void* rawdata() const { return fRawPtr(); }
-         uint32_t rawdatasize() const { return subevnt() ? subevnt()->RawDataSize() : 0; }
-
-      protected:
-         dabc::Buffer*    fBuffer;
-         dabc::Pointer    fEvPtr;
-         dabc::Pointer    fSubPtr;
-         dabc::Pointer    fRawPtr;
+   enum EMbsTriggerTypes {
+      tt_Event         = 1,
+      tt_SpillOn       = 12,
+      tt_SpillOff      = 13,
+      tt_StartAcq      = 14,
+      tt_StopAcq       = 15
    };
 
 
-   class WriteIterator {
-      public:
-         WriteIterator(dabc::Buffer* buf);
-         ~WriteIterator();
-
-         bool NewEvent(uint32_t event_number = 0, uint32_t mineventsize = 0);
-         bool NewSubevent(uint32_t minrawsize = 0, uint8_t crate = 0, uint16_t procid = 0);
-         bool FinishSubEvent(uint32_t rawdatasz);
-
-         void Close();
-
-         EventHeader* evnt() const { return (EventHeader*) fEvPtr(); }
-         SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
-         void* rawdata() const { return subevnt() ? subevnt()->RawData() : 0; }
-         uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(SubeventHeader); }
+#pragma pack(push, 1)
 
 
-      protected:
-         dabc::Buffer*    fBuffer;
-         dabc::Pointer    fEvPtr;
-         dabc::Pointer    fSubPtr;
-         dabc::BufferSize_t fFullSize;
-   };
-
-
-
-
-#pragma pack(1)
-
-   typedef struct sMbsTransportInfo {
-      int32_t iEndian;      // byte order. Set to 1 by sender
-      int32_t iMaxBytes;    // maximum buffer size
-      int32_t iBuffers;     // buffers per stream
-      int32_t iStreams;     // number of streams (could be set to -1 to indicate var length buffers, size l_free[1])
-   };
-
-   // Buffer header, maps s_bufhe
-   typedef struct sMbsBufferHeader {
-      int32_t iMaxWords;    // compatible with s_bufhe (total buffer size - header)
-
-      union {
-        struct {
+   struct SubeventHeader : public Header {
 #if BYTE_ORDER == LITTLE_ENDIAN
-          uint16_t i_type;
-          uint16_t i_subtype;
+      int16_t  iProcId;     /*  Processor ID [as loaded from VAX] */
+      int8_t   iSubcrate;   /*  Subcrate number */
+      int8_t   iControl;    /*  Processor type code */
 #else
-          uint16_t i_subtype;
-          uint16_t i_type;
+      int8_t   iControl;    /*  Processor type code */
+      int8_t   iSubcrate;   /*  Subcrate number */
+      int16_t  iProcId;     /*  Processor ID [as loaded from VAX] */
 #endif
-        };
-        uint32_t iType; // compatible with s_bufhe, low=type (=100), high=subtype
-      };
 
+      void Init(uint8_t crate = 0, uint16_t procid = 0)
+      {
+         iWords = 0;
+         iType = MBS_TYPE_10_1;
+         iProcId = procid;
+         iSubcrate = crate;
+         iControl = 0;
+      }
+
+      void *RawData() const { return (char*) this + sizeof(SubeventHeader); }
+
+      // RawDataSize - size of raw data without subevent header
+      uint32_t RawDataSize() const { return FullSize() - sizeof(SubeventHeader); }
+      void SetRawDataSize(uint32_t sz) { SetFullSize(sz + sizeof(SubeventHeader)); }
+
+   };
+
+   typedef uint32_t EventNumType;
+
+   struct EventHeader : public Header {
+#if BYTE_ORDER == LITTLE_ENDIAN
+      int16_t       iDummy;     /*  Not used yet */
+      int16_t       iTrigger;   /*  Trigger number */
+#else
+      int16_t       iTrigger;   /*  Trigger number */
+      int16_t       iDummy;     /*  Not used yet */
+#endif
+      EventNumType  iEventNumber;
+
+      void Init(EventNumType evnt = 0)
+      {
+         iWords = 0;
+         iType = MBS_TYPE_10_1;
+         iDummy = 0;
+         iTrigger = tt_Event;
+         iEventNumber = evnt;
+      }
+
+      void CopyHeader(EventHeader* src)
+      {
+         iDummy = src->iDummy;
+         iTrigger = src->iTrigger;
+         iEventNumber = src->iEventNumber;
+      }
+
+      inline EventNumType EventNumber() const { return iEventNumber; }
+      inline void SetEventNumber(EventNumType ev) { iEventNumber = ev; }
+
+      // SubEventsSize - size of all subevents, not includes events header
+      inline uint32_t SubEventsSize() const { return FullSize() - sizeof(EventHeader); }
+      inline void SetSubEventsSize(uint32_t sz) { SetFullSize(sz + sizeof(EventHeader)); }
+
+      SubeventHeader* SubEvents() const
+         { return (SubeventHeader*) ((char*) this + sizeof(EventHeader)); }
+
+      SubeventHeader* NextSubEvent(SubeventHeader* prev) const
+         { return prev == 0 ? (FullSize() > sizeof(EventHeader) ? SubEvents() : 0):
+                (((char*) this + FullSize() > (char*) prev + prev->FullSize() + sizeof(SubeventHeader)) ?
+                   (SubeventHeader*) (((char*) prev) + prev->FullSize()) : 0); }
+
+      unsigned NumSubevents() const;
+   };
+
+
+   struct BufferHeader : public Header {
       union {
          struct {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -131,88 +129,53 @@ namespace mbs {
       int32_t iUsedWords;   // total words without header to read for type=100, free[2]
       int32_t iFree3;       // free[3]
 
-      bool Check();
-      void Swap();
-      int BufferLength();
-      unsigned UsedBufferLength();
-      void SetUsedLength(int len);
+      void Init(bool newformat);
+
+      // length of buffer, which will be transported over socket
+      uint32_t BufferLength() const;
+
+      // UsedBufferSize - size of data after buffer header
+      uint32_t UsedBufferSize() const;
+      void SetUsedBufferSize(uint32_t len);
+
       void SetEndian() { iEndian = 1; }
       bool IsCorrectEndian() const { return iEndian == 1; }
    };
 
-   typedef struct eMbsEventHeader {
-      int32_t iMaxWords;    // compatible with s_bufhe (total buffer size - header)
-      union {
-        struct {
-#if BYTE_ORDER == LITTLE_ENDIAN
-          uint16_t i_type;
-          uint16_t i_subtype;
-#else
-          uint16_t i_subtype;
-          uint16_t i_type;
-#endif
-        };
-        uint32_t iType; // compatible with s_bufhe, low=type (=100), high=subtype
-      };
-      int DataSize() const { return 8 + iMaxWords*2; } // returns complete size of the event
-      void SetDataSize(int32_t len) { iMaxWords = (len - 8) / 2; }
-
-   };
-
-   typedef int32_t MbsEventId;
-
-
-   typedef struct eMbs101EventHeader : public eMbsEventHeader {
-#if BYTE_ORDER == LITTLE_ENDIAN
-      int16_t iDummy;     /*  Not used yet */
-      int16_t iTrigger;   /*  Trigger number */
-#else
-      int16_t iTrigger;   /*  Trigger number */
-      int16_t iDummy;    /*  Not used yet */
-#endif
-      int32_t  iCount;   /*  Current event number */
-
-      void Dump101Event();
-
-      void CopyFrom(const eMbs101EventHeader& src);
-
-      int SubeventsDataSize() const { return DataSize() - sizeof(eMbs101EventHeader); }
-   };
-
-   typedef struct eMbs101SubeventHeader : public eMbsEventHeader {
-#if BYTE_ORDER == LITTLE_ENDIAN
-      int16_t  iProcId;     /*  Processor ID [as loaded from VAX] */
-      int8_t   iSubcrate;   /*  Subcrate number */
-      int8_t   iControl;    /*  Processor type code */
-#else
-      int8_t   iControl;    /*  Processor type code */
-      int8_t   iSubcrate;   /*  Subcrate number */
-      int16_t  iProcId;     /*  Processor ID [as loaded from VAX] */
-#endif
-
+   typedef struct TransportInfo {
+      int32_t iEndian;      // byte order. Set to 1 by sender
+      int32_t iMaxBytes;    // maximum buffer size
+      int32_t iBuffers;     // buffers per stream
+      int32_t iStreams;     // number of streams (could be set to -1 to indicate variable length buffers)
    };
 
 
-#pragma pack(0)
+#pragma pack(pop)
 
-   extern void IterateBuffer(void* buf, bool reset);
-   extern void IterateEvent(void* evhdr);
-   extern void SwapMbsData(void* data, int bytessize);
+   enum EMbsBufferTypes {
+      mbt_Mbs10_1      = 101,  // old (fixed-length) mbs buffer with events and, probably, spanning
+      mbt_Mbs100_1     = 102,  // new (variable-length) mbs buffer with events, no spanning
+      mbt_MbsEvs10_1   = 103   // several mbs events (without buffer header)
+   };
 
-   extern bool FirstEvent(const dabc::Pointer& bufptr, dabc::Pointer& evptr, eMbs101EventHeader* &evhdr, void* tmp = 0);
-   extern bool GetEventHeader(dabc::Pointer& evptr, eMbs101EventHeader* &evhdr, void* tmp = 0);
-   extern bool NextEvent(dabc::Pointer& evptr, eMbs101EventHeader* &evhdr, void* tmp = 0);
-   extern bool FirstSubEvent(const dabc::Pointer& evptr, eMbs101EventHeader* evhdr, dabc::Pointer& subevptr, eMbs101SubeventHeader* &subevhdr, void* tmp = 0);
-   extern bool NextSubEvent(dabc::Pointer& subevptr, eMbs101SubeventHeader* &subevhdr, void* tmp = 0);
+   // this is list of server kind, supported up to now by DABC
+   enum EMbsServerKinds {
+      NoServer = 0,
+      TransportServer = 1,
+      StreamServer = 2,
+      OldTransportServer = 3,
+      OldStreamServer = 4
+   };
 
-   extern bool StartBuffer(dabc::Buffer* buf, dabc::Pointer& evptr, sMbsBufferHeader* &bufhdr, void* tmp = 0, bool newformat = true);
-   extern bool StartBuffer(dabc::Pointer& bufptr, dabc::Pointer& evptr, sMbsBufferHeader* &bufhdr, void* tmp = 0, bool newformat = true);
-   extern bool StartEvent(dabc::Pointer& evptr, dabc::Pointer& subevptr, eMbs101EventHeader* &evhdr, void* tmp = 0);
-   extern bool StartSubEvent(dabc::Pointer& subevptr, dabc::Pointer& subevdata, eMbs101SubeventHeader* &subevhdr, void* tmp = 0);
-   extern bool FinishSubEvent(dabc::Pointer& subevptr, dabc::Pointer& subevdata, eMbs101SubeventHeader* subevhdr);
-   extern dabc::BufferSize_t FinishEvent(dabc::Pointer& evptr, dabc::Pointer& subevptr, eMbs101EventHeader* evhdr, sMbsBufferHeader* bufhdr = 0);
-   extern dabc::BufferSize_t FinishBuffer(dabc::Pointer& bufptr, dabc::Pointer& evptr, sMbsBufferHeader* bufhdr);
-   extern bool FinishBuffer(dabc::Buffer* buf, dabc::Pointer& evptr, sMbsBufferHeader* bufhdr);
+   extern const char* ServerKindToStr(int kind);
+   extern int StrToServerKind(const char* str);
+
+   extern void SwapData(void* data, unsigned bytessize);
+
+   extern const char* xmlFileName;
+   extern const char* xmlSizeLimit;
+   extern const char* xmlFirstMultiple;
+   extern const char* xmlNumMultiple;
 
 };
 

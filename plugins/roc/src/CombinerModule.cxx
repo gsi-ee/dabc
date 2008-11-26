@@ -358,8 +358,7 @@ void roc::CombinerModule::TryToProduceEventBuffers()
 //         DOUT5(("Start MBS event at pos %u", dabc::Pointer(fOutBuf).distance_to(f_outptr)));
 
          mbs::EventHeader* evhdr = (mbs::EventHeader*) f_outptr();
-         evhdr->Init();
-         evhdr->iEventNumber = fiEventCnt++;
+         evhdr->Init(fiEventCnt++);
          f_outptr.shift(sizeof(mbs::EventHeader));
 
 //         DOUT1(("Fill event %7u  ~size %6u inp0 %ld outsize:%u",

@@ -66,7 +66,6 @@ void bnet::MbsCombinerModule::SkipNotUsedBuffers()
    }
 }
 
-
 dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 {
    // here we check if any event information was accumulated
@@ -96,7 +95,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 
          fullbufsize += fSubEvnts[recid].fullsize();
 
-         if (ninp>0) fullbufsize -= sizeof(mbs::eMbs101EventHeader);
+         if (ninp>0) fullbufsize -= sizeof(mbs::EventHeader);
       }
 
       if (fullbufsize <= fTransportBufferSize) {
@@ -114,9 +113,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 
    dabc::BufferGuard buf = TakeBuffer(fOutPool, usedbufsize);
 
-   dabc::BufferSize_t filledsize = 0;
-
-   dabc::Pointer evptr(buf());
+   mbs::WriteIterator iter(buf());
 
    for (int nevnt = 0; nevnt < NumUsedEvents; nevnt++) {
 
@@ -124,55 +121,40 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 
       if (fSubEvnts[firtsrecid].null()) continue;
 
-      dabc::Pointer outdataptr;
-      mbs::eMbs101EventHeader *evhdr(0), tmp1;
-      mbs::eMbs101EventHeader *src_evhdr(0), src_tmp1;
+      mbs::EventHeader* srchdr = (mbs::EventHeader*) fSubEvnts[firtsrecid].ptr();
 
-      if (!mbs::StartEvent(evptr, outdataptr, evhdr, &tmp1)) {
-         EOUT(("Cannot start event"));
+      if (!iter.NewEvent()) {
+         EOUT(("Cannot start new event"));
          exit(1);
       }
 
-      if (!mbs::GetEventHeader(fSubEvnts[firtsrecid], src_evhdr, &src_tmp1)) {
-         EOUT(("Cannot locate source event header"));
-         exit(1);
-      }
-
-      evhdr->CopyFrom(*src_evhdr);
+      iter.evnt()->CopyHeader(srchdr);
 
       for (int ninp = 0; ninp < NumReadouts(); ninp++) {
          int recid = nevnt * NumReadouts() + ninp;
 
          dabc::Pointer subevptr(fSubEvnts[recid]);
          // skip now event header
-         subevptr += sizeof(mbs::eMbs101EventHeader);
+         subevptr.shift(sizeof(mbs::EventHeader));
 
-         // copy at one all subevents
-         outdataptr.copyfrom(subevptr, subevptr.fullsize());
-         outdataptr+=subevptr.fullsize();
+         if (!iter.AddSubevent(subevptr)) {
+            EOUT(("Cannot add subevent"));
+            exit(1);
+         }
       }
 
-      dabc::BufferSize_t len = mbs::FinishEvent(evptr, outdataptr, evhdr, 0);
-
-//      DOUT1(("Finish event %d sz %u", evhdr->iCount, len));
-
-      if (len == dabc::BufferSizeError) {
-         EOUT(("Something wrong with combiner"));
-         exit(1);
-      }
-
-      filledsize += len;
+      iter.FinishEvent();
    }
 
-   if (filledsize != usedbufsize) {
+   iter.Close();
+
+   if (buf()->GetDataSize() !=  usedbufsize) {
       EOUT(("Error when filling data in combiner"));
       exit(1);
    }
 
    // this is last action with output buffer, send in beginning
    // we create bnet header for the buffer
-   buf()->SetDataSize(filledsize);
-   buf()->SetTypeId(mbs::mbt_MbsEvs10_1);
    buf()->SetHeaderSize(sizeof(bnet::EventId));
    *((bnet::EventId*) buf()->GetHeader()) = (fMinEvId - 1) / fCfgEventsCombine + 1;
 
@@ -187,6 +169,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 
    return buf.Take();
 }
+
 
 
 void bnet::MbsCombinerModule::MainLoop()
@@ -246,18 +229,10 @@ void bnet::MbsCombinerModule::MainLoop()
             continue;
          }
 
-         dabc::Pointer bufptr(buf);
-
-//         DOUT1(("Extract first event from %p", buf));
-
-         if (FirstEvent(bufptr, fRecs[ninp].evptr, fRecs[ninp].evhdr, &(fRecs[ninp].tmp_evhdr))) {
+         if (fRecs[ninp].iter.Reset(buf) && fRecs[ninp].iter.NextEvent()) {
             fRecs[ninp].headbuf = buf;
 
-            mbs::sMbsBufferHeader* bufhdr = (mbs::sMbsBufferHeader*) bufptr();
-
-            if (fEvntRate) fEvntRate->AccountValue(bufhdr->iNumEvents);
-
-            DOUT5(("Extract first event from %p done ninp %d hdr %p evid %d", buf, ninp, fRecs[ninp].evhdr, fRecs[ninp].evhdr->iCount));
+            DOUT5(("Extract first event from %p done ninp %d evid %d", buf, ninp, fRecs[ninp].iter.evnt()->EventNumber()));
          } else {
             // no error recovery, just continue
             EOUT(("Get buffer of non MBS-format"));
@@ -270,13 +245,13 @@ void bnet::MbsCombinerModule::MainLoop()
 //      DOUT1(("Get buffer on each input n = %d", fCfgEventsCombine));
 
       // now check that every input gets the same eventid
-      mbs::MbsEventId mineventid = 0;
-      mbs::MbsEventId maxeventid = 0;
+      mbs::EventNumType mineventid = 0;
+      mbs::EventNumType maxeventid = 0;
       int mininp = 0;
 
       for (int ninp=0; ninp<NumReadouts(); ninp++) {
 
-         mbs::MbsEventId evid = fRecs[ninp].evhdr->iCount;
+         mbs::EventNumType evid = fRecs[ninp].iter.evnt()->EventNumber();
 
 //         DOUT1(("Extract evid from inp %d hfd %p evid %d", ninp, fRecs[ninp].evhdr, evid));
 
@@ -297,7 +272,7 @@ void bnet::MbsCombinerModule::MainLoop()
          EOUT(("Problem with event ids, skip event on input %d", mininp));
 
          // if no more events in the buffer, release it
-         if (!NextEvent(fRecs[mininp].evptr, fRecs[mininp].evhdr, &(fRecs[mininp].tmp_evhdr))) {
+         if (!fRecs[mininp].iter.NextEvent()) {
             fRecs[mininp].headbuf = 0;
 
             // we copy all accumulated data to output buffer when input we using is full
@@ -327,16 +302,12 @@ void bnet::MbsCombinerModule::MainLoop()
 
          int recid = (mineventid - fMinEvId) * NumReadouts() + ninp;
 
-//         DOUT1(("Fill data for rec %d  size %d", recid, fRecs[ninp].evhdr->DataSize()));
+         fRecs[ninp].iter.AssignEventPointer(fSubEvnts[recid]);
 
-         // assign pointer on the region, where subevent is situated
-         fSubEvnts[recid].reset(fRecs[ninp].evptr, fRecs[ninp].evhdr->DataSize());
-
-         if (fRecs[ninp].evhdr->iTrigger==mbs::tt_StopAcq) {
+         if (fRecs[ninp].iter.evnt()->iTrigger==mbs::tt_StopAcq)
             isstopacq = true;
-         }
 
-         if (!NextEvent(fRecs[ninp].evptr, fRecs[ninp].evhdr, &(fRecs[ninp].tmp_evhdr)))
+         if (!fRecs[ninp].iter.NextEvent())
             fRecs[ninp].headbuf = 0;
       }
 

@@ -34,13 +34,11 @@ void bnet::MbsBuilderModule::StartOutputBuffer(dabc::BufferSize_t bufsize)
    if ((fOut.buf==0) && !fOut.ready) {
 
       // increase buffer size on the header information
-      bufsize += sizeof(mbs::sMbsBufferHeader);
-
       if (bufsize<fOutBufferSize) bufsize = fOutBufferSize;
 
       fOut.buf = TakeBuffer(fOutPool, bufsize);
 
-      if (!StartBuffer(fOut.buf, fOut.evptr, fOut.bufhdr, &fOut.tmp_bufhdr)) {
+      if (!fOut.iter.Reset(fOut.buf)) {
          EOUT(("Problem to start with MBS buffer"));
          exit(1);
       }
@@ -49,16 +47,9 @@ void bnet::MbsBuilderModule::StartOutputBuffer(dabc::BufferSize_t bufsize)
 
 void bnet::MbsBuilderModule::FinishOutputBuffer()
 {
-   dabc::BufferSize_t reslen = FinishBuffer(fOut.buf, fOut.evptr, fOut.bufhdr);
+   fOut.iter.Close();
 
-   if (reslen == dabc::BufferSizeError) {
-      EOUT(("Missmatch in buffer size calculations"));
-      exit(1);
-   }
-
-//   DOUT1(("Build buffer of size %d", outlen));
-
-   if (fEvntRate) fEvntRate->AccountValue(fOut.bufhdr->iNumEvents);
+   // if (fEvntRate) fEvntRate->AccountValue(fOut.bufhdr->iNumEvents);
 
    fOut.ready = true;
 }
@@ -71,17 +62,11 @@ void bnet::MbsBuilderModule::SendOutputBuffer()
    Send(Output(0), buf);
 }
 
-typedef struct BufRec {
-   dabc::Pointer evptr;
-   mbs::eMbs101EventHeader *evhdr;
-   mbs::eMbs101EventHeader tmp;
-};
-
 void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 {
 //   DOUT1(("start DoBuildEvent n = %d", fCfgEventsCombine));
 
-   std::vector<BufRec> recs;
+   std::vector<mbs::ReadIterator> recs;
    recs.resize(bufs.size());
 
    for (unsigned n=0;n<bufs.size();n++) {
@@ -91,9 +76,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
          exit(1);
       }
 
-      recs[n].evptr.reset(bufs[n]);
-      recs[n].evhdr = 0;
-      if (!mbs::GetEventHeader(recs[n].evptr, recs[n].evhdr, &(recs[n].tmp))) {
+      if (!recs[n].Reset(bufs[n]) || !recs[n].NextEvent()) {
          EOUT(("Invalid MBS format on buffer %u size: %u", n, bufs[n]->GetTotalSize()));
          return;
       }
@@ -104,32 +87,29 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
    while (nevent<fCfgEventsCombine) {
       unsigned pmin(0), pmax(0);
 
-      dabc::BufferSize_t fulleventlen = 0;
+      uint32_t subeventslen = 0;
 
       for (unsigned n=0;n<recs.size();n++) {
-         if (recs[n].evhdr->iCount < recs[pmin].evhdr->iCount) pmin = n; else
-         if (recs[n].evhdr->iCount > recs[pmax].evhdr->iCount) pmax = n;
+         if (recs[n].evnt()->EventNumber() < recs[pmin].evnt()->EventNumber()) pmin = n; else
+         if (recs[n].evnt()->EventNumber() > recs[pmax].evnt()->EventNumber()) pmax = n;
 
-         if (n==0)
-            fulleventlen += recs[n].evhdr->DataSize();
-         else
-            fulleventlen += recs[n].evhdr->SubeventsDataSize();
+         subeventslen += recs[n].evnt()->SubEventsSize();
       }
 
-      if (recs[pmin].evhdr->iCount < recs[pmax].evhdr->iCount) {
-         EOUT(("Skip subevent %u from buffer %u", recs[pmin].evhdr->iCount, pmin));
-         if (!NextEvent(recs[pmin].evptr, recs[pmin].evhdr, &(recs[pmin].tmp))) return;
-         // try to analyse events now
+      if (recs[pmin].evnt()->EventNumber() < recs[pmax].evnt()->EventNumber()) {
+         EOUT(("Skip subevent %u from buffer %u", recs[pmin].evnt()->EventNumber(), pmin));
+         if (!recs[pmin].NextEvent()) return;
+         // try to analyze events now
          continue;
       }
 
-      if (fulleventlen==0) {
+      if (subeventslen==0) {
          EOUT(("Something wrong with data"));
          return;
       }
 
       // if rest of existing buffer less than new event data, close it
-      if (!fOut.ready && fOut.buf && (fOut.evptr.fullsize() < fulleventlen))
+      if (!fOut.ready && fOut.buf && !fOut.iter.IsPlaceForEvent(subeventslen))
          FinishOutputBuffer();
 
       // send buffer, if it is filled and ready to send
@@ -137,19 +117,15 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 
       // start new buffer if required
       if ((fOut.buf==0) && !fOut.ready) {
-         StartOutputBuffer(fulleventlen);
+         StartOutputBuffer(subeventslen + sizeof(mbs::EventHeader));
 
-         if (fOut.evptr.fullsize() < fulleventlen) {
+         if (!fOut.iter.IsPlaceForEvent(subeventslen)) {
             EOUT(("Single event do not pass in to the buffers"));
             exit(1);
          }
       }
 
-      dabc::Pointer outdataptr;
-
-      mbs::eMbs101EventHeader *evhdr(0), tmp_evhdr;
-
-      if (!mbs::StartEvent(fOut.evptr, outdataptr, evhdr, &tmp_evhdr)) {
+      if (!fOut.iter.NewEvent(0, subeventslen)) {
          EOUT(("Problem to start event in buffer"));
          return;
       }
@@ -158,20 +134,19 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 
       for (unsigned n=0;n<recs.size();n++) {
 
-         if (recs[n].evhdr->iTrigger == mbs::tt_StopAcq) numstopacq++;
+         if (recs[n].evnt()->iTrigger == mbs::tt_StopAcq) numstopacq++;
 
          if (n==0)
-            evhdr->CopyFrom(*(recs[n].evhdr));
+            fOut.iter.evnt()->CopyHeader(recs[n].evnt());
 
-         dabc::Pointer subevdata(recs[n].evptr);
-         subevdata += sizeof(mbs::eMbs101EventHeader);
+         dabc::Pointer subevdata;
+         recs[n].AssignEventPointer(subevdata);
+         subevdata.shift(sizeof(mbs::EventHeader));
 
-         // copy all subevents without header
-         outdataptr.copyfrom(subevdata, recs[n].evhdr->SubeventsDataSize());
-         outdataptr += recs[n].evhdr->SubeventsDataSize();
+         fOut.iter.AddSubevent(subevdata);
       }
 
-      mbs::FinishEvent(fOut.evptr, outdataptr, evhdr, fOut.bufhdr);
+      fOut.iter.FinishEvent();
 
 //      if (fEvntRate) fEvntRate->AccountValue(1.);
 
@@ -184,7 +159,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
       // shift all pointers to next subevent
       if (nevent<fCfgEventsCombine)
          for (unsigned n=0;n<bufs.size();n++)
-           if (!mbs::NextEvent(recs[n].evptr, recs[n].evhdr, &(recs[n].tmp))) {
+           if (!recs[n].NextEvent()) {
               EOUT(("Too few events (%d from %d) in subevent packet from buf %u", nevent, fCfgEventsCombine, n));
               numfinished++;
            }

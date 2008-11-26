@@ -196,7 +196,7 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
 
       while (size>0) {
 
-         DOUT5(("Next event id = %u sz = %u",  hdr->iEventNumber, hdr->FullSize()));
+         DOUT5(("Next event id = %u sz = %u",  hdr->EventNumber(), hdr->FullSize()));
 
          numevents++;
          size-= hdr->FullSize();

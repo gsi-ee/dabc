@@ -49,7 +49,7 @@ namespace mbs {
          unsigned             ReadBufferSize();
 
          ClientTransport     *fTransport;
-         sMbsTransportInfo    fServInfo; // data, send by transport server in the beginning
+         mbs::TransportInfo   fServInfo; // data, send by transport server in the beginning
          EIOState             fState;
          bool                 fSwapping;
          mbs::BufferHeader    fHeader;
