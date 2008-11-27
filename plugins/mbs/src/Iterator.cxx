@@ -91,6 +91,14 @@ bool mbs::ReadIterator::NextSubEvent()
    return true;
 }
 
+unsigned mbs::ReadIterator::NumEvents(dabc::Buffer* buf)
+{
+   ReadIterator iter(buf);
+   unsigned cnt = 0;
+   while (iter.NextEvent()) cnt++;
+   return cnt;
+}
+
 // ________________________________________________________________________________
 
 mbs::WriteIterator::WriteIterator(dabc::Buffer* buf) :

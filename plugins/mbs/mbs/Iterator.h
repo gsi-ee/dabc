@@ -30,6 +30,8 @@ namespace mbs {
          void* rawdata() const { return fRawPtr(); }
          uint32_t rawdatasize() const { return subevnt() ? subevnt()->RawDataSize() : 0; }
 
+         static unsigned NumEvents(dabc::Buffer* buf);
+
       protected:
          dabc::Buffer*    fBuffer;
          dabc::Pointer    fEvPtr;

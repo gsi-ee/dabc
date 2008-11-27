@@ -1,5 +1,7 @@
 #this is not a plugin, therefore cannot be extracted from main makefile
 
+ifdef DIMDIR
+
 DIM_INCLUDES       = $(DIMDIR)/dim
 
 DIMCTRLDIR         = controls/dimcontrol
@@ -45,4 +47,10 @@ $(DABCDIMCTRL_SLIB):   $(DIMCTRL_O)
 	$(AR) $(ARFLAGS) $(DABCDIMCTRL_SLIB) $(DIMCTRL_O)
 	
 $(DIMCTRL_O) $(DIMCTRL_D): INCLUDES += $(DIM_INCLUDES) 	
-	
+
+else
+
+libs:: 
+	@echo "make libs of dimc not active while DIMDIR is not specified."
+
+endif	

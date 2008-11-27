@@ -36,13 +36,13 @@ namespace mbs {
          bool Close();
          bool StartNewFile();
 
-         std::string        fFileName;
+         std::string         fFileName;
          uint64_t            fSizeLimit;
          int                 fNumMultiple;
          int                 fFirstMultiple;
 
          int                 fCurrentFileNumber;
-         std::string        fCurrentFileName;
+         std::string         fCurrentFileName;
 
          mbs::LmdFile        fFile;
          uint64_t            fCurrentSize;

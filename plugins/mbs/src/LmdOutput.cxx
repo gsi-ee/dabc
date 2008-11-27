@@ -11,6 +11,7 @@
 #include "dabc/Manager.h"
 
 #include "mbs/MbsTypeDefs.h"
+#include "mbs/Iterator.h"
 
 mbs::LmdOutput::LmdOutput(const char* fname,
                           unsigned sizelimit_mb,
@@ -171,43 +172,25 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
    }
 
    if (buf->NumSegments()>1) {
-      EOUT(("Segemented buffer not (yet) supported"));
+      EOUT(("Segmented buffer not (yet) supported"));
       return false;
    }
 
-   if (fSizeLimit > 0)
-      if (fCurrentSize + buf->GetTotalSize() > fSizeLimit)
-        if (!IsAllowedMultipleFiles()) {
-           EOUT(("Size limit is reached, no more data can be written !!!"));
-           return false;
-        } else
-        if (!StartNewFile()) {
-           EOUT(("Cannot start new file for writing"));
-           return false;
-        }
-
-   unsigned numevents = 0;
-
-   if (buf->GetTypeId() == mbs::mbt_MbsEvents) {
-      dabc::BufferSize_t size = buf->GetTotalSize();
-      mbs::EventHeader* hdr = (mbs::EventHeader*) buf->GetDataLocation();
-
-      DOUT5(("WriteBuffer of size %u", size));
-
-      while (size>0) {
-
-         DOUT5(("Next event id = %u sz = %u",  hdr->EventNumber(), hdr->FullSize()));
-
-         numevents++;
-         size-= hdr->FullSize();
-         hdr = (mbs::EventHeader*)((char*) hdr + hdr->FullSize());
+   if ((fSizeLimit > 0) && (fCurrentSize + buf->GetTotalSize() > fSizeLimit))
+      if (!IsAllowedMultipleFiles()) {
+         EOUT(("Size limit is reached, no more data can be written !!!"));
+         return false;
+      } else
+      if (!StartNewFile()) {
+         EOUT(("Cannot start new file for writing"));
+         return false;
       }
-   } else
-      numevents = 1;
+
+   unsigned numevents = mbs::ReadIterator::NumEvents(buf);
 
    DOUT4(("Write %u events to lmd file", numevents));
 
    fCurrentSize += buf->GetTotalSize();
 
-   return fFile.WriteEvents((mbs::EventHeader*) buf->GetDataLocation(), numevents);
+   return fFile.WriteElements((mbs::Header*) buf->GetDataLocation(), numevents);
 }
