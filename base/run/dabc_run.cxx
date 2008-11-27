@@ -172,6 +172,22 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
    return 0;
 }
 
+int RunClusterDimApplucation(dabc::Configuration* cfg, int nodeid)
+{
+   DOUT0(("Run cluster DIM application node %d!!!", nodeid));
+
+   cfg->LoadLibs();
+
+   if (!dabc::mgr()->CreateApplication()) {
+      EOUT(("Cannot create application"));
+      return 1;
+   }
+
+   dabc::mgr()->RunManagerMainLoop();
+
+   return 0;
+}
+
 
 int main(int numc, char* args[])
 {
@@ -267,6 +283,9 @@ int main(int numc, char* args[])
    else
    if (numnodes<2)
       res = RunSimpleApplication(&cfg);
+   else
+   if (isdim)
+      res = RunClusterDimApplucation(&cfg, nodeid);
    else
       res = RunClusterApplucation(&cfg, connid, nodeid, numnodes);
 
