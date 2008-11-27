@@ -35,6 +35,7 @@ namespace dabc {
    extern const char* xmlConfigFileId;
    extern const char* xmlUserLib;
    extern const char* xmlUserFunc;
+   extern const char* xmlControlType;
 
    extern const char* xmlXDAQPartition;
    extern const char* xmlXDAQContext;
@@ -55,7 +56,7 @@ namespace dabc {
          int               fVersion;  // -1 - error, 0 - xdaq, 1 and more - dabc
          ConfigBase       *fPrnt;  // parent configuration with defaults for some variables
 
-         // following variables work as 'enviroment'
+         // following variables work as 'environment'
          std::string            envDABCSYS;
          std::string            envDABCUSERDIR;     // dir with user plugin
          std::string            envDABCWORKDIR;     // dir where application is started

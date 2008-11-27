@@ -170,6 +170,7 @@ namespace dabc {
    const char* xmlConfigFileId     = "configid";
    const char* xmlUserLib          = "Lib";
    const char* xmlUserFunc         = "Func";
+   const char* xmlControlType      = "control";
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :

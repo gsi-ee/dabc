@@ -166,6 +166,16 @@ std::string dabc::Configuration::StartFuncName()
    return std::string(val ? val : "");
 }
 
+
+std::string dabc::Configuration::ControlType()
+{
+   if (IsXDAQ() || (fSelected==0)) return std::string("");
+
+   const char* val = Find1(fSelected, 0, xmlRunNode, xmlControlType);
+
+   return std::string(val ? val : "");
+}
+
 bool dabc::Configuration::LoadLibs(const char* startfunc)
 {
     if (fSelected==0) return false;

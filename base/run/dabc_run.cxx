@@ -6,21 +6,15 @@
 
 #include <iostream>
 
-int RunSimpleFunc(dabc::Configuration* cfg)
+int RunSimpleFunc(dabc::Configuration* cfg, std::string funcname)
 {
-   dabc::Manager manager(cfg->MgrName(), true, cfg);
-
-   manager.InstallCtrlCHandler();
-
-   std::string funcname = cfg->StartFuncName();
-
    cfg->LoadLibs(funcname.c_str());
 
    cfg->StoreObject((funcname + ".xml").c_str(), dabc::mgr());
 
    DOUT0(("Start main loop"));
 
-   manager.RunManagerMainLoop();
+   dabc::mgr()->RunManagerMainLoop();
 
    DOUT0(("Finish main loop"));
 
@@ -29,13 +23,9 @@ int RunSimpleFunc(dabc::Configuration* cfg)
 
 int RunSimpleApplication(dabc::Configuration* cfg)
 {
-   dabc::Manager manager(cfg->MgrName(), true, cfg);
-
-   manager.InstallCtrlCHandler();
-
    cfg->LoadLibs();
 
-   if (!manager.CreateApplication()) {
+   if (!dabc::mgr()->CreateApplication()) {
       EOUT(("Cannot create application"));
       return 1;
    }
@@ -45,19 +35,19 @@ int RunSimpleApplication(dabc::Configuration* cfg)
 //   cfg->StoreObject("Manager.xml", dabc::mgr());
 
    // set states of manager to running here:
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
       EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoConfigure));
       return 1;
    }
    DOUT1(("Did configure"));
 
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoEnable)) {
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoEnable)) {
       EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoEnable));
       return 1;
    }
    DOUT1(("Did enable"));
 
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoStart)) {
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoStart)) {
       EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStart));
       return 1;
    }
@@ -67,19 +57,19 @@ int RunSimpleApplication(dabc::Configuration* cfg)
 
    cfg->StoreObject("Manager.xml", dabc::mgr());
 
-   manager.RunManagerMainLoop();
+   dabc::mgr()->RunManagerMainLoop();
 
 //   while(dabc::mgr()->GetApp()->IsModulesRunning()) { ::sleep(1); }
 //   sleep(10);
 
    DOUT1(("Normal finish of mainloop"));
 
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoStop)) {
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoStop)) {
       EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStop));
       return 1;
    }
 
-   if(!manager.DoStateTransition(dabc::Manager::stcmdDoHalt)) {
+   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoHalt)) {
       EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoHalt));
       return 1;
    }
@@ -110,53 +100,76 @@ bool SMChange(const char* smcmdname)
    return res;
 }
 
-bool RunBnetTest()
+int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int nodeid, int numnodes)
 {
-   dabc::CpuStatistic cpu;
+   DOUT0(("Run cluster application!!! %d %d %s", nodeid, numnodes, (connid ? connid : "---")));
 
-   DOUT1(("RunTest start"));
+   cfg->LoadLibs();
 
-//   ChangeRemoteParameter(m, 2, "Input0Cfg", "ABB");
+   if (!dabc::mgr()->CreateApplication()) {
+      EOUT(("Cannot create application"));
+      return 1;
+   }
 
-   SMChange(dabc::Manager::stcmdDoConfigure);
+   if (connid!=0)
+       if (!dabc::mgr()->ConnectControl(connid)) {
+          EOUT(("Cannot establish connection to control system"));
+          return 1;
+       }
 
-   DOUT1(("Create done"));
+   if (nodeid==0) {
+       if (!dabc::mgr()->HasClusterInfo()) {
+          EOUT(("Cannot access cluster information from main node"));
+          return 1;
+       }
 
-   //dabc::SetDebugLevel(5);
+       dabc::SetDebugLevel(1);
 
-   SMChange(dabc::Manager::stcmdDoEnable);
+       dabc::CpuStatistic cpu;
 
-   DOUT1(("Connection done"));
+       DOUT1(("RunTest start"));
 
-   SMChange(dabc::Manager::stcmdDoStart);
+    //   ChangeRemoteParameter(m, 2, "Input0Cfg", "ABB");
 
-   cpu.Reset();
+       SMChange(dabc::Manager::stcmdDoConfigure);
 
-   dabc::ShowLongSleep("Main loop", 15); //15
+       DOUT1(("Create done"));
 
-   SMChange(dabc::Manager::stcmdDoStop);
+       //dabc::SetDebugLevel(5);
 
-   sleep(1);
+       SMChange(dabc::Manager::stcmdDoEnable);
 
-   SMChange(dabc::Manager::stcmdDoStart);
+       DOUT1(("Connection done"));
 
-   dabc::ShowLongSleep("Again main loop", 10); //10
+       SMChange(dabc::Manager::stcmdDoStart);
 
-   cpu.Measure();
+       cpu.Reset();
 
-   DOUT1(("Calling stop"));
+       dabc::ShowLongSleep("Main loop", 15); //15
 
-   SMChange(dabc::Manager::stcmdDoStop);
+       SMChange(dabc::Manager::stcmdDoStop);
 
-   DOUT1(("Calling halt"));
+       sleep(1);
 
-   SMChange(dabc::Manager::stcmdDoHalt);
+       SMChange(dabc::Manager::stcmdDoStart);
 
-   DOUT1(("CPU usage %5.1f", cpu.CPUutil()*100.));
+       dabc::ShowLongSleep("Again main loop", 10); //10
 
-   DOUT1(("RunTest done"));
+       cpu.Measure();
 
-   return true;
+       DOUT1(("Calling stop"));
+
+       SMChange(dabc::Manager::stcmdDoStop);
+
+       DOUT1(("Calling halt"));
+
+       SMChange(dabc::Manager::stcmdDoHalt);
+
+       DOUT1(("CPU usage %5.1f", cpu.CPUutil()*100.));
+
+       DOUT1(("RunTest done"));
+   }
+   return 0;
 }
 
 
@@ -214,63 +227,48 @@ int main(int numc, char* args[])
       return 1;
    }
 
-   if (cfg.StartFuncName().length()>0)
-      return RunSimpleFunc(&cfg);
+   bool isdim = cfg.ControlType() == "dim";
+   std::string funcname = cfg.StartFuncName();
 
-   if (numnodes<2)
-      return RunSimpleApplication(&cfg);
 
-   if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcSctrl.so")) {
-      EOUT(("Cannot load control library"));
-      return 1;
+   const char* mgrclass = "";
+
+   if (isdim) {
+      if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcDimCtrl.so")) {
+         EOUT(("Cannot load dim control library"));
+         return 1;
+      }
+      connid = 0;
+      mgrclass = "DimControl";
+   } else
+   if ((funcname.length()==0) && (numnodes > 1)) {
+      if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcSctrl.so")) {
+         EOUT(("Cannot load control library"));
+         return 1;
+      }
+      mgrclass = "Standalone";
+   } else {
+      mgrclass = "Basic";
    }
 
-   if (!dabc::Factory::CreateManager("Standalone", &cfg)) {
-      EOUT(("Cannot create required manager class"));
+   if (!dabc::Factory::CreateManager(mgrclass, &cfg)) {
+      EOUT(("Cannot create required manager class %s", mgrclass));
       return 1;
    }
-
-//   dabc::StandaloneManager manager(0, nodeid, numnodes, true);
-
-   DOUT0(("Run cluster application!!! %u %u %s", nodeid, numnodes, (connid ? connid : "---")));
 
    dabc::mgr()->InstallCtrlCHandler();
 
-   cfg.LoadLibs();
+   int res = 0;
 
-   if (!dabc::mgr()->CreateApplication()) {
-      EOUT(("Cannot create application"));
-      delete dabc::mgr();
-      return 1;
-   }
-
-//   cfg.ReadPars();
-
-   if (!dabc::mgr()->ConnectControl(connid)) {
-      EOUT(("Cannot establish connection to control system"));
-      delete dabc::mgr();
-      return 1;
-   }
-
-   //((dabc::StandaloneManager*) dabc::mgr())->ConnectCmdChannel(numnodes, 1, connid);
-
-   if (nodeid==0) {
-      if (!dabc::mgr()->HasClusterInfo()) {
-         EOUT(("Cannot access cluster information from main node"));
-         delete dabc::mgr();
-         return 1;
-      }
-
-      dabc::SetDebugLevel(1);
-
-      RunBnetTest();
-
-      //dabc::ShowLongSleep("Main loop", 5); //15
-
-      //SMChange(manager, dabc::Manager::stcmdDoHalt);
-   }
+   if (funcname.length()>0)
+      res = RunSimpleFunc(&cfg, funcname);
+   else
+   if (numnodes<2)
+      res = RunSimpleApplication(&cfg);
+   else
+      res = RunClusterApplucation(&cfg, connid, nodeid, numnodes);
 
    delete dabc::mgr();
 
-   return 0;
+   return res;
 }
