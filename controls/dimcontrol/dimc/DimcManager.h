@@ -2,6 +2,7 @@
 #define DimcManager
 
 #include "dabc/Manager.h"
+#include "dabc/Factory.h"
 
 #include "dabc/threads.h"
 
@@ -10,17 +11,21 @@
 #include <list>
 
 
+#define DIMC_MANAGERTYPE "DimControl"
 
-//   class CommandChannelModule;
-   class dabc::StateMachineModule;
-   class dabc::Command;
-   class dabc::Parameter;
-   class dabc::Configuration;
+
+class dabc::StateMachineModule;
+class dabc::Command;
+class dabc::Parameter;
+class dabc::Configuration;
 
 namespace dimc {
 
    class Registry;
-
+   /*
+    * Manager for pure DIM control environment.
+    *
+    */
    class Manager : public dabc::Manager  {
 
 
@@ -70,6 +75,19 @@ namespace dimc {
 
 
    };
-}
+
+      class ManagerFactory : public dabc::Factory {
+         public:
+         ManagerFactory(const char* name);
+
+         protected:
+            virtual bool CreateManagerInstance(const char* kind, dabc::Configuration* cfg);
+      };
+
+
+
+
+
+} // end namespace dimc
 
 #endif

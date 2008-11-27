@@ -15,6 +15,37 @@
 #include <iostream>
 
 
+
+/*************************************************************************************
+ * The factory for creation of dim control manager:
+ *
+ */
+
+dimc::ManagerFactory dimManagerFactory("dimcfactory"); // instantiate at library load time
+
+
+dimc::ManagerFactory::ManagerFactory(const char* name) : dabc::Factory(name)
+ {
+
+ }
+
+bool dimc::ManagerFactory::CreateManagerInstance(const char* kind, dabc::Configuration* cfg)
+{
+   if ((kind!=0) && (strcmp(kind,DIMC_MANAGERTYPE)==0)) {
+      new dimc::Manager(cfg->MgrName(), false, cfg);
+      return true;
+   }
+   return false;
+}
+
+
+
+/*************************************************************************************
+ * The Manager class itself
+ *
+ **************************************************************************************/
+
+
 dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Configuration* cfg) :
    dabc::Manager(managername, usecurrentprocess, cfg), fIsMainMgr(false)
 {
