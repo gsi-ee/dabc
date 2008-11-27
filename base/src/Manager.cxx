@@ -168,8 +168,6 @@ dabc::Folder* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
 
 bool dabc::StdManagerFactory::CreateManagerInstance(const char* kind, Configuration* cfg)
 {
-   DOUT0(("Test kind = %s", kind));
-
    if ((kind==0) || (strcmp(kind,"Basic")==0)) {
       new dabc::Manager(cfg->MgrName(), true, cfg);
       return true;

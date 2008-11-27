@@ -190,6 +190,7 @@ int main(int numc, char* args[])
 
    dabc::Configuration cfg(configuration);
    if (!cfg.IsOk()) return 7;
+   bool isdim = false;
 
    int cnt = 2;
    while (cnt<numc) {
@@ -215,7 +216,9 @@ int main(int numc, char* args[])
       if (strcmp(arg,"-conn")==0) {
          if (cnt < numc)
             connid = args[cnt++];
-      }
+      } else
+      if (strcmp(arg,"-dim")==0)
+         isdim = true;
    }
 
    if (numnodes==0) numnodes = cfg.NumNodes();
@@ -227,9 +230,8 @@ int main(int numc, char* args[])
       return 1;
    }
 
-   bool isdim = cfg.ControlType() == "dim";
+   if (cfg.ControlType() == "dim") isdim = true;
    std::string funcname = cfg.StartFuncName();
-
 
    const char* mgrclass = "";
 
