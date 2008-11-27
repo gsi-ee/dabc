@@ -595,6 +595,7 @@ namespace dabc {
          CommandsQueue         fReplyesQueue;
          Queue<Basic*>         fDestroyQueue;
          Queue<ParamRec>       fParsQueue;
+         int                   fParsVisibility; // maximum level which can be seen by parameters
 
          Mutex                *fSendCmdsMutex;
          int                   fSendCmdCounter;
@@ -635,6 +636,7 @@ namespace dabc {
          void ProcessDestroyQueue();
 
          virtual void ProcessEvent(uint64_t evid);
+         virtual bool ProcessParameterEvent();
 
          // virtual method to deliver some events to control system
          virtual void ModuleExecption(Module* m, const char* msg);

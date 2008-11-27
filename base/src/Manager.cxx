@@ -209,6 +209,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    fReplyesQueue(true, false),
    fDestroyQueue(16, true),
    fParsQueue(1024, true),
+   fParsVisibility(-1),
    fSendCmdsMutex(0),
    fSendCmdCounter(0),
    fSendCommands(),
@@ -264,6 +265,10 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
 
    // create state parameter, inherited class should call init to see it
    CreateParStr(stParName, stHalted);
+
+   // from this moment one can see all parameters events from visibility level 2
+   LockGuard lock(fMgrMutex);
+   fParsVisibility = 2;
 }
 
 dabc::Manager::~Manager()
@@ -312,15 +317,21 @@ dabc::Manager::~Manager()
 
 void dabc::Manager::init()
 {
-   dabc::Iterator iter(GetTopParsFolder());
+   // method should be called from inherited class constructor to reactivate
+   // all parameters events, which are created before
 
-   while (iter.next()) {
-      Parameter* par = dynamic_cast<Parameter*> (iter.current());
-      if (par) {
-         DOUT5(("Raise event 0 again for par %s", par->GetName()));
-         ParameterEvent(par, parCreated);
-      }
+   unsigned cnt = 0;
+
+   {
+      LockGuard lock(fMgrMutex);
+      cnt = fParsQueue.Size();
    }
+
+   bool canexecute = ((ProcessorThread()==0) ||  ProcessorThread()->IsItself());
+
+   while (cnt-->0)
+      if (canexecute) ProcessParameterEvent();
+                else  FireEvent(evntManagerParam);
 }
 
 void dabc::Manager::destroy()
@@ -384,12 +395,17 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
 {
    if (par==0) return;
 
-   bool isitself = true;
+   bool canexecute = true;
+   bool cansubmit = true;
 
    {
       LockGuard lock(fMgrMutex);
 
-      if (ProcessorThread()) isitself = ProcessorThread()->IsItself();
+      if (fParsVisibility<0) {
+         canexecute = false;
+         cansubmit = false;
+      } else
+      if (ProcessorThread()) canexecute = ProcessorThread()->IsItself();
 
       switch (evid) {
          case parCreated:
@@ -410,15 +426,40 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
             break;
       }
 
-      if (!isitself) fParsQueue.Push(ParamRec(par,evid));
+      // mask out all events for parameters with high visibility value
+      if ((fParsVisibility > 0) &&
+          (par->Visibility() > fParsVisibility) &&
+          (evid != parDestroy)) return;
+
+      fParsQueue.Push(ParamRec(par,evid));
    }
 
-   if (isitself) {
-      ParameterEvent(par, evid);
-      if (evid == parDestroy) delete par;
-   } else {
+   if (canexecute)
+      ProcessParameterEvent();
+   else
+   if (cansubmit)
       FireEvent(evntManagerParam);
+}
+
+bool dabc::Manager::ProcessParameterEvent()
+{
+   ParamRec rec;
+
+   bool visible = true;
+
+   {
+      LockGuard lock(fMgrMutex);
+      if (fParsQueue.Size()==0) return false;
+      rec = fParsQueue.Pop();
+      visible = (fParsVisibility<=0) || (rec.par->Visibility() <= fParsVisibility);
    }
+
+   // generate parameter event from the manager thread
+   if (!rec.processed && visible) ParameterEvent(rec.par, rec.event);
+
+   if (rec.event == parDestroy) delete rec.par;
+
+   return true;
 }
 
 void dabc::Manager::ProcessEvent(EventId evnt)
@@ -438,19 +479,7 @@ void dabc::Manager::ProcessEvent(EventId evnt)
          break;
       }
       case evntManagerParam: {
-
-         ParamRec rec;
-
-         {
-            LockGuard lock(fMgrMutex);
-            rec = fParsQueue.Pop();
-         }
-
-         // generate parameter event from the manager thread
-         if (!rec.processed) ParameterEvent(rec.par, rec.event);
-
-         if (rec.event == parDestroy) delete rec.par;
-
+         ProcessParameterEvent();
          break;
       }
 
