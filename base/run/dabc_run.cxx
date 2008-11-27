@@ -198,7 +198,7 @@ int main(int numc, char* args[])
 
    if(numc > 1) configuration = args[1];
 
-   unsigned nodeid = 0;
+   unsigned nodeid = 1000000;
    unsigned numnodes = 0;
    unsigned configid = 0;
 
@@ -238,6 +238,7 @@ int main(int numc, char* args[])
    }
 
    if (numnodes==0) numnodes = cfg.NumNodes();
+   if (nodeid > numnodes) nodeid = configid;
 
    DOUT1(("Using config file: %s id: %u", configuration, configid));
 
