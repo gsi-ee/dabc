@@ -37,6 +37,8 @@ bool mbs::LmdOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port
    fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
    fSizeLimit = cfg.GetCfgInt(mbs::xmlSizeLimit, fSizeLimit);
 
+   DOUT1(("Create LmdOutput name:%s limit:%llu", fFileName.c_str(), fSizeLimit));
+
    return Init();
 }
 

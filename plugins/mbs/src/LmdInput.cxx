@@ -11,12 +11,14 @@
 
 #include "mbs/MbsTypeDefs.h"
 
-mbs::LmdInput::LmdInput(const char* fname) :
+mbs::LmdInput::LmdInput(const char* fname, uint32_t bufsize) :
    dabc::DataInput(),
    fFileName(fname ? fname : ""),
+   fBufferSize(bufsize),
    fFilesList(0),
    fFile(),
-   fCurrentFileName()
+   fCurrentFileName(),
+   fCurrentRead(0)
 {
 }
 
@@ -34,6 +36,9 @@ bool mbs::LmdInput::Read_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
    dabc::ConfigSource cfg(cmd, port);
 
    fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
+   fBufferSize = cfg.GetCfgInt(dabc::xmlBufferSize, fBufferSize);
+
+   DOUT1(("BufferSize = %d", fBufferSize));
 
    return Init();
 }
@@ -44,6 +49,11 @@ bool mbs::LmdInput::Init()
 
    if (fFilesList!=0) {
       EOUT(("Files list already exists"));
+      return false;
+   }
+
+   if (fBufferSize==0) {
+      EOUT(("Buffer size not specified !!!!"));
       return false;
    }
 
@@ -82,6 +92,7 @@ bool mbs::LmdInput::CloseFile()
 {
    fFile.Close();
    fCurrentFileName = "";
+   fCurrentRead = 0;
    return true;
 }
 
@@ -92,7 +103,7 @@ unsigned mbs::LmdInput::Read_Size()
    if (!fFile.IsReadMode())
       if (!OpenNextFile()) return di_EndOfStream;
 
-   return 64*1024;
+   return fBufferSize;
 }
 
 unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
@@ -115,6 +126,7 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
 
    } while (numev==0);
 
+   fCurrentRead += bufsize;
    buf->SetDataSize(bufsize);
    buf->SetTypeId(mbs::mbt_MbsEvents);
 

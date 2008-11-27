@@ -24,7 +24,7 @@ int mbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
    std::string kindstr = port->GetCfgStr(xmlServerKind, ServerKindToStr(mbs::TransportServer), cmd);
 
    int kind = StrToServerKind(kindstr.c_str());
-   if ( kind == mbs::NoServer) {
+   if (kind == mbs::NoServer) {
       EOUT(("Wrong configured server type %s, use transport", kindstr.c_str()));
       kind = mbs::TransportServer;
    }
@@ -56,7 +56,7 @@ int mbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 
    if (servfd<0) return cmd_false;
 
-   DOUT1(("!!!!! Starts MBS server kind:%s on port %d", kindstr.c_str(), portnum));
+   DOUT1(("!!!!! Starts MBS server kind:%s on port %d maxbufsize %u", kindstr.c_str(), portnum, maxbufsize));
 
    ServerTransport* tr = new ServerTransport(this, port, kind, servfd, portnum, maxbufsize);
 

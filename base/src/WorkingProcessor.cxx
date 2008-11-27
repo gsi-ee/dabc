@@ -310,9 +310,18 @@ bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const
 std::string dabc::WorkingProcessor::GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd)
 {
    std::string v = dfltvalue;
-   if (GetCfgMaster())
-      v = GetCfgMaster()->GetParStr(name, dfltvalue);
-   v = GetParStr(name, v);
+
+   WorkingProcessor* cfgsrc = this;
+   while (cfgsrc)
+      if (cfgsrc->FindPar(name)) {
+         v = cfgsrc->GetParStr(name, v);
+         break;
+      } else
+         cfgsrc = cfgsrc->GetCfgMaster();
+
+//   if (GetCfgMaster())
+//      v = GetCfgMaster()->GetParStr(name, dfltvalue);
+//   v = GetParStr(name, v);
    if (cmd)
       v = cmd->GetStr(name, v.c_str());
    if (FindPar(name)==0) {
@@ -324,9 +333,13 @@ std::string dabc::WorkingProcessor::GetCfgStr(const char* name, const std::strin
 
 double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, Command* cmd)
 {
-   if (GetCfgMaster())
-      dfltvalue = GetCfgMaster()->GetParDouble(name, dfltvalue);
-   dfltvalue = GetParDouble(name, dfltvalue);
+   WorkingProcessor* cfgsrc = this;
+   while (cfgsrc)
+      if (cfgsrc->FindPar(name)) {
+         dfltvalue = cfgsrc->GetParDouble(name, dfltvalue);
+         break;
+      } else
+         cfgsrc = cfgsrc->GetCfgMaster();
    if (cmd)
       dfltvalue = cmd->GetDouble(name, dfltvalue);
    if (FindPar(name)==0) {
@@ -338,9 +351,13 @@ double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, 
 
 int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* cmd)
 {
-   if (GetCfgMaster())
-      dfltvalue = GetCfgMaster()->GetParInt(name, dfltvalue);
-   dfltvalue = GetParInt(name, dfltvalue);
+   WorkingProcessor* cfgsrc = this;
+   while (cfgsrc)
+      if (cfgsrc->FindPar(name)) {
+         dfltvalue = cfgsrc->GetParInt(name, dfltvalue);
+         break;
+      } else
+         cfgsrc = cfgsrc->GetCfgMaster();
    if (cmd)
       dfltvalue = cmd->GetInt(name, dfltvalue);
    if (FindPar(name)==0) {
@@ -352,9 +369,13 @@ int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* 
 
 bool dabc::WorkingProcessor::GetCfgBool(const char* name, bool dfltvalue, Command* cmd)
 {
-   if (GetCfgMaster())
-      dfltvalue = GetCfgMaster()->GetParBool(name, dfltvalue);
-   dfltvalue = GetParBool(name, dfltvalue);
+   WorkingProcessor* cfgsrc = this;
+   while (cfgsrc)
+      if (cfgsrc->FindPar(name)) {
+         dfltvalue = cfgsrc->GetParBool(name, dfltvalue);
+         break;
+      } else
+         cfgsrc = cfgsrc->GetCfgMaster();
    if (cmd)
       dfltvalue = cmd->GetBool(name, dfltvalue);
    if (FindPar(name)==0) {

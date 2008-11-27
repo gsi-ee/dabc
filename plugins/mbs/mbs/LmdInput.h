@@ -17,7 +17,7 @@ namespace mbs {
 
    class LmdInput : public dabc::DataInput {
       public:
-         LmdInput(const char* fname = 0);
+         LmdInput(const char* fname = 0, uint32_t bufsize = 0x10000);
          virtual ~LmdInput();
 
          virtual bool Read_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
@@ -33,11 +33,13 @@ namespace mbs {
          bool OpenNextFile();
 
          std::string         fFileName;
+         uint32_t            fBufferSize;
 
          dabc::Folder*       fFilesList;
 
          mbs::LmdFile        fFile;
          std::string         fCurrentFileName;
+         uint64_t            fCurrentRead;
    };
 
 }

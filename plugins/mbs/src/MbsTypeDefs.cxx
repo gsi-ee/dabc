@@ -7,11 +7,11 @@
 const char* mbs::typeLmdInput         = "mbs::LmdInput";
 const char* mbs::typeLmdOutput        = "mbs::LmdOutput";
 
-const char* mbs::xmlFileName          = "FileName";
-const char* mbs::xmlSizeLimit         = "SizeLimit";
-const char* mbs::xmlServerName        = "ServerName";
-const char* mbs::xmlServerKind        = "ServerKind";
-const char* mbs::xmlServerPort        = "ServerPort";
+const char* mbs::xmlFileName          = "MbsFileName";
+const char* mbs::xmlSizeLimit         = "MbsFileSizeLimit";
+const char* mbs::xmlServerName        = "MbsServerName";
+const char* mbs::xmlServerKind        = "MbsServerKind";
+const char* mbs::xmlServerPort        = "MbsServerPort";
 const char* mbs::xmlIsClient          = "IsClient";
 
 unsigned mbs::EventHeader::NumSubevents() const

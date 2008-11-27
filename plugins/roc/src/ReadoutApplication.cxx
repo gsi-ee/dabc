@@ -14,10 +14,8 @@
 
 const char* roc::xmlDoCalibr          = "DoCalibr";
 const char* roc::xmlRocIp             = "RocIp";
-const char* roc::xmlMbsServerKind     = "MbsServerKind";
 const char* roc::xmlRawFile           = "RawFile";
 const char* roc::xmlCalibrFile        = "CalibrFile" ;
-const char* roc::xmlFileSizeLimit     = "FileSizeLimit";
 
 
 roc::ReadoutApplication::ReadoutApplication(const char* name) :
@@ -32,18 +30,18 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
    CreateParInt(dabc::xmlBufferSize, 8192);
    CreateParInt(dabc::xmlNumBuffers, 100);
 
-   CreateParStr(xmlMbsServerKind, mbs::ServerKindToStr(mbs::StreamServer));
+   CreateParStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
 
    CreateParStr(xmlRawFile, "");
    CreateParStr(xmlCalibrFile, "");
-   CreateParInt(xmlFileSizeLimit, 0);
+   CreateParInt(mbs::xmlSizeLimit, 0);
 
    DOUT1(("!!!! Data server plugin created %s !!!!", GetName()));
 }
 
 int roc::ReadoutApplication::DataServerKind() const
 {
-   return mbs::StrToServerKind(GetParStr(xmlMbsServerKind).c_str());
+   return mbs::StrToServerKind(GetParStr(mbs::xmlServerKind).c_str());
 }
 
 std::string roc::ReadoutApplication::RocIp(int nreadout) const
@@ -116,15 +114,17 @@ bool roc::ReadoutApplication::CreateAppModules()
 
    if (OutputFileName().length()>0) {
       cmd = 0;
-      if (DoTaking())
+      if (DoTaking()) {
          cmd = new dabc::CmdCreateOutputTransport("RocComb/Ports/Output1", mbs::typeLmdOutput);
-      else
+         // no need to set extra size parameters - it will be taken from application
+         // if (FileSizeLimit()>0) cmd->SetInt(mbs::xmlSizeLimit, FileSizeLimit());
+      } else {
          cmd = new dabc::CmdCreateInputTransport("RocCalibr/Ports/Input", mbs::typeLmdInput);
+         // no need to extra set of buffer size - it will be taken from module itself
+         //  cmd->SetInt(dabc::xmlBufferSize, GetParInt(dabc::xmlBufferSize, 8192));
+      }
 
       cmd->SetStr(mbs::xmlFileName, OutputFileName().c_str());
-
-      if (FileSizeLimit()>0)
-         cmd->SetInt(mbs::xmlSizeLimit, FileSizeLimit());
 
       res = dabc::mgr()->Execute(cmd);
 
@@ -143,8 +143,8 @@ bool roc::ReadoutApplication::CreateAppModules()
       cmd = new dabc::CmdCreateOutputTransport("RocCalibr/Ports/Output1", outtype);
 
       cmd->SetStr(mbs::xmlFileName, CalibrFileName().c_str());
-      if (FileSizeLimit()>0)
-         cmd->SetInt(mbs::xmlSizeLimit, FileSizeLimit());
+      // no need to set extra size parameters - it will be taken from application
+      // if (FileSizeLimit()>0) cmd->SetInt(mbs::xmlSizeLimit, FileSizeLimit());
 
       res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create calibr output file res = %s", DBOOL(res)));
@@ -162,10 +162,10 @@ bool roc::ReadoutApplication::CreateAppModules()
    ///// connect module to mbs server:
       const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
       cmd = new dabc::CmdCreateTransport("MBS", portname);
-      cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(DataServerKind())); //mbs::StreamServer ,mbs::TransportServer
-      //      cmd->SetInt("PortMin", 6002);
-      //      cmd->SetInt("PortMax", 7000);
-      cmd->SetUInt("BufferSize", GetParInt(dabc::xmlBufferSize, 8192));
+
+      // no need to set extra parameters - they will be taken from application !!!
+//      cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(DataServerKind())); //mbs::StreamServer ,mbs::TransportServer
+//      cmd->SetInt(dabc::xmlBufferSize, GetParInt(dabc::xmlBufferSize, 8192));
 
       res = dabc::mgr()->Execute(cmd);
       DOUT1(("Connected readout module output to Mbs server = %s", DBOOL(res)));
