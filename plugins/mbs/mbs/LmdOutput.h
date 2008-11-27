@@ -17,10 +17,7 @@ namespace mbs {
 
    class LmdOutput : public dabc::DataOutput {
       public:
-         LmdOutput(const char* fname = 0,
-                   unsigned sizelimit_mb = 0,   // maximum size of the file in MB
-                   int nmultiple = 0,           // number of multriple instances 0 - no, <0 - any, >0 - exact number
-                   int firstmultiple = 0);      // first id of multiple files
+         LmdOutput(const char* fname = 0, unsigned sizelimit_mb = 0);
          virtual ~LmdOutput();
 
          virtual bool Write_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
@@ -29,17 +26,15 @@ namespace mbs {
 
          bool Init();
 
-         bool IsAllowedMultipleFiles() const { return fNumMultiple!=0; }
-
       protected:
+
+         std::string FullFileName(std::string extens);
 
          bool Close();
          bool StartNewFile();
 
          std::string         fFileName;
          uint64_t            fSizeLimit;
-         int                 fNumMultiple;
-         int                 fFirstMultiple;
 
          int                 fCurrentFileNumber;
          std::string         fCurrentFileName;

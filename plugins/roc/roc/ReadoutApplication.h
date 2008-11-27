@@ -17,9 +17,8 @@ namespace roc {
    extern const char* xmlRocIp;
    extern const char* xmlMbsServerKind;
    extern const char* xmlRawFile;
-   extern const char* xmlRawFileLimit;
    extern const char* xmlCalibrFile;
-   extern const char* xmlCalibrFileLimit;
+   extern const char* xmlFileSizeLimit;
 
    class ReadoutApplication : public dabc::Application {
       public:
@@ -40,9 +39,8 @@ namespace roc {
          int DataServerKind() const;
 
          std::string OutputFileName() const { return GetParStr(xmlRawFile, ""); }
-         int OutFileLimit() const { return GetParInt(xmlRawFileLimit, 0); }
          std::string CalibrFileName() const { return GetParStr(xmlCalibrFile, ""); }
-         int CalibrFileLimit() const { return GetParInt(xmlCalibrFileLimit, 0); }
+         int FileSizeLimit() const { return GetParInt(xmlFileSizeLimit, 0); }
 
          virtual bool CreateAppModules();
 

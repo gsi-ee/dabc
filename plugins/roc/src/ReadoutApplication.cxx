@@ -16,9 +16,8 @@ const char* roc::xmlDoCalibr          = "DoCalibr";
 const char* roc::xmlRocIp             = "RocIp";
 const char* roc::xmlMbsServerKind     = "MbsServerKind";
 const char* roc::xmlRawFile           = "RawFile";
-const char* roc::xmlRawFileLimit      = "RawFileLimit";
 const char* roc::xmlCalibrFile        = "CalibrFile" ;
-const char* roc::xmlCalibrFileLimit   = "CalibrFileLimit";
+const char* roc::xmlFileSizeLimit     = "FileSizeLimit";
 
 
 roc::ReadoutApplication::ReadoutApplication(const char* name) :
@@ -36,9 +35,8 @@ roc::ReadoutApplication::ReadoutApplication(const char* name) :
    CreateParStr(xmlMbsServerKind, mbs::ServerKindToStr(mbs::StreamServer));
 
    CreateParStr(xmlRawFile, "");
-   CreateParInt(xmlRawFileLimit, 0);
    CreateParStr(xmlCalibrFile, "");
-   CreateParInt(xmlCalibrFileLimit, 0);
+   CreateParInt(xmlFileSizeLimit, 0);
 
    DOUT1(("!!!! Data server plugin created %s !!!!", GetName()));
 }
@@ -125,10 +123,8 @@ bool roc::ReadoutApplication::CreateAppModules()
 
       cmd->SetStr(mbs::xmlFileName, OutputFileName().c_str());
 
-      if (OutFileLimit()>0) {
-         cmd->SetInt(mbs::xmlSizeLimit, OutFileLimit());
-         cmd->SetInt(mbs::xmlNumMultiple, -1); // allow to create multiple files
-      }
+      if (FileSizeLimit()>0)
+         cmd->SetInt(mbs::xmlSizeLimit, FileSizeLimit());
 
       res = dabc::mgr()->Execute(cmd);
 
@@ -147,10 +143,8 @@ bool roc::ReadoutApplication::CreateAppModules()
       cmd = new dabc::CmdCreateOutputTransport("RocCalibr/Ports/Output1", outtype);
 
       cmd->SetStr(mbs::xmlFileName, CalibrFileName().c_str());
-      if (CalibrFileLimit()>0) {
-         cmd->SetInt(mbs::xmlSizeLimit, CalibrFileLimit());
-         cmd->SetInt(mbs::xmlNumMultiple, -1); // allow to create multiple files
-      }
+      if (FileSizeLimit()>0)
+         cmd->SetInt(mbs::xmlSizeLimit, FileSizeLimit());
 
       res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create calibr output file res = %s", DBOOL(res)));
@@ -168,7 +162,7 @@ bool roc::ReadoutApplication::CreateAppModules()
    ///// connect module to mbs server:
       const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
       cmd = new dabc::CmdCreateTransport("MBS", portname);
-      cmd->SetInt("ServerKind", DataServerKind()); //mbs::StreamServer ,mbs::TransportServer
+      cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(DataServerKind())); //mbs::StreamServer ,mbs::TransportServer
       //      cmd->SetInt("PortMin", 6002);
       //      cmd->SetInt("PortMax", 7000);
       cmd->SetUInt("BufferSize", GetParInt(dabc::xmlBufferSize, 8192));

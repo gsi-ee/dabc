@@ -169,8 +169,6 @@ namespace mbs {
 
    extern const char* xmlFileName;
    extern const char* xmlSizeLimit;
-   extern const char* xmlFirstMultiple;
-   extern const char* xmlNumMultiple;
    extern const char* xmlServerName;
    extern const char* xmlServerKind;
    extern const char* xmlServerPort;

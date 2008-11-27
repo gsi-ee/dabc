@@ -17,9 +17,7 @@ namespace mbs {
 
    class LmdInput : public dabc::DataInput {
       public:
-         LmdInput(const char* fname = 0,
-                  int nummulti = 0,
-                  int firstmulti = 0);
+         LmdInput(const char* fname = 0);
          virtual ~LmdInput();
 
          virtual bool Read_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
@@ -34,14 +32,12 @@ namespace mbs {
 
          bool OpenNextFile();
 
-         std::string        fFileName;
-         int                 fNumMultiple;
-         int                 fFirstMultiple;
+         std::string         fFileName;
 
          dabc::Folder*       fFilesList;
 
          mbs::LmdFile        fFile;
-         std::string        fCurrentFileName;
+         std::string         fCurrentFileName;
    };
 
 }

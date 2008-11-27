@@ -14,14 +14,10 @@
 #include "mbs/Iterator.h"
 
 mbs::LmdOutput::LmdOutput(const char* fname,
-                          unsigned sizelimit_mb,
-                          int nmultiple,
-                          int firstmultiple) :
+                          unsigned sizelimit_mb) :
    dabc::DataOutput(),
    fFileName(fname ? fname : ""),
    fSizeLimit(sizelimit_mb),
-   fNumMultiple(nmultiple),
-   fFirstMultiple(firstmultiple),
    fCurrentFileNumber(0),
    fCurrentFileName(),
    fFile(),
@@ -40,10 +36,27 @@ bool mbs::LmdOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port
 
    fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
    fSizeLimit = cfg.GetCfgInt(mbs::xmlSizeLimit, fSizeLimit);
-   fNumMultiple = cfg.GetCfgInt(mbs::xmlNumMultiple, fNumMultiple);
-   fFirstMultiple = cfg.GetCfgInt(mbs::xmlFirstMultiple, fFirstMultiple);
 
    return Init();
+}
+
+std::string mbs::LmdOutput::FullFileName(std::string extens)
+{
+   std::string fname = fFileName;
+
+   size_t len = fname.length();
+   size_t pos = fname.rfind(".lmd");
+   if (pos==std::string::npos)
+      pos = fname.rfind(".LMD");
+
+   if (pos==len-4)
+      fname.insert(pos, extens);
+   else {
+      fname += extens;
+      fname += ".lmd";
+   }
+
+   return fname;
 }
 
 bool mbs::LmdOutput::Init()
@@ -52,50 +65,38 @@ bool mbs::LmdOutput::Init()
 
    if (fSizeLimit>0) fSizeLimit *= 1000000;
 
+   fCurrentFileNumber = 0;
 
-   if (fNumMultiple!=0) {
-      fCurrentFileNumber = fFirstMultiple;
+   std::string mask = FullFileName("_*");
 
-      std::string mask = fFileName;
+   dabc::Folder *lst = dabc::Manager::Instance()->ListMatchFiles("", mask.c_str());
 
-      size_t pos = mask.rfind(".lmd");
-      if (pos==std::string::npos)
-         pos = mask.rfind(".LMD");
+   if (lst!=0) {
+      int maxnumber = -1;
 
-      if (pos==mask.length()-4)
-         mask.insert(pos, "_*");
-      else
-         mask += "_*.lmd";
+      unsigned cnt = 0;
 
-      dabc::Folder *lst = dabc::Manager::Instance()->ListMatchFiles("", mask.c_str());
+      while (cnt < lst->NumChilds()) {
+         std::string fname = lst->GetChild(cnt++)->GetName();
+         fname.erase(fname.length()-4, 4);
+         size_t pos = fname.length() - 1;
+         while ((fname[pos]>='0') && (fname[pos] <= '9')) pos--;
+         fname.erase(0, pos+1);
 
-      if (lst!=0) {
-         int maxnumber = -1;
+         while ((fname.length()>1) && fname[0]=='0') fname.erase(0, 1);
 
-         while (lst->NumChilds() > 0) {
-            std::string fname = lst->GetChild(0)->GetName();
-            fname.erase(fname.length()-4, 4);
-            pos = fname.length() - 1;
-            while ((fname[pos]>='0') && (fname[pos] <= '9')) pos--;
-            fname.erase(0, pos+1);
-
-            while ((fname.length()>1) && fname[0]=='0') fname.erase(0, 1);
-
-            if (fname.length()>0) {
-               int number = atoi(fname.c_str());
-               if (number>maxnumber) maxnumber = number;
-            }
-
-            delete lst->GetChild(0);
+         if (fname.length()>0) {
+            int number = atoi(fname.c_str());
+            if (number>maxnumber) maxnumber = number;
          }
-
-         if (fCurrentFileNumber <= maxnumber)
-            fCurrentFileNumber = maxnumber + 1;
-
-         DOUT1(("Find file %s with maximum number %d, start with %d", mask.c_str(), maxnumber, fCurrentFileNumber));
-
-         delete lst;
       }
+
+      if (fCurrentFileNumber <= maxnumber)
+         fCurrentFileNumber = maxnumber + 1;
+
+      DOUT1(("Find file %s with maximum number %d, start with %d", mask.c_str(), maxnumber, fCurrentFileNumber));
+
+      delete lst;
    }
 
    return StartNewFile();
@@ -107,31 +108,10 @@ bool mbs::LmdOutput::StartNewFile()
        fFile.Close();
        fCurrentFileName = "";
        fCurrentSize = 0;
-       if (!IsAllowedMultipleFiles()) return false;
-
        fCurrentFileNumber++;
-       if ((fCurrentFileNumber>fNumMultiple) && (fNumMultiple>0)) return false;
    }
 
-   std::string fname = fFileName;
-
-   if (IsAllowedMultipleFiles()) {
-      std::string extens;
-      dabc::formats(extens, "_%04d", fCurrentFileNumber);
-
-      unsigned len = fname.length();
-
-      size_t pos = fname.rfind(".lmd");
-      if (pos==std::string::npos)
-         pos = fname.rfind(".LMD");
-
-      if (pos==len-4)
-         fname.insert(pos, extens);
-      else {
-         fname += extens;
-         fname += ".lmd";
-      }
-   }
+   std::string fname = FullFileName(dabc::format("_%04d", fCurrentFileNumber));
 
    if (!fFile.OpenWrite(fname.c_str(), 0)) {
        EOUT(("Cannot open file %s for writing, errcode %u", fname.c_str(), fFile.LastError()));
@@ -165,7 +145,6 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
       return false;
    }
 
-
    if (buf->GetTypeId() != mbs::mbt_MbsEvents) {
       EOUT(("Buffer must contain mbs event(s) 10-1, but has type %u", buf->GetTypeId()));
       return false;
@@ -177,10 +156,6 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
    }
 
    if ((fSizeLimit > 0) && (fCurrentSize + buf->GetTotalSize() > fSizeLimit))
-      if (!IsAllowedMultipleFiles()) {
-         EOUT(("Size limit is reached, no more data can be written !!!"));
-         return false;
-      } else
       if (!StartNewFile()) {
          EOUT(("Cannot start new file for writing"));
          return false;
@@ -192,5 +167,5 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
 
    fCurrentSize += buf->GetTotalSize();
 
-   return fFile.WriteElements((mbs::Header*) buf->GetDataLocation(), numevents);
+   return fFile.WriteEvents((mbs::EventHeader*) buf->GetDataLocation(), numevents);
 }

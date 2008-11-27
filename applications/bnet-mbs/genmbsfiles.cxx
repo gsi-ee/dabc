@@ -54,7 +54,7 @@ int main(int numc, char* args[])
 
       mbs::LmdOutput* out = 0;
       if (multiple)
-         out = new mbs::LmdOutput(fname.c_str(), 20, -1);
+         out = new mbs::LmdOutput(fname.c_str(), 20);
       else
          out = new mbs::LmdOutput(fname.c_str());
 

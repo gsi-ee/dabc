@@ -11,13 +11,9 @@
 
 #include "mbs/MbsTypeDefs.h"
 
-mbs::LmdInput::LmdInput(const char* fname,
-                        int nummulti,
-                        int firstmulti) :
+mbs::LmdInput::LmdInput(const char* fname) :
    dabc::DataInput(),
    fFileName(fname ? fname : ""),
-   fNumMultiple(nummulti),
-   fFirstMultiple(firstmulti),
    fFilesList(0),
    fFile(),
    fCurrentFileName()
@@ -38,8 +34,6 @@ bool mbs::LmdInput::Read_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
    dabc::ConfigSource cfg(cmd, port);
 
    fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
-   fNumMultiple = cfg.GetCfgInt(mbs::xmlNumMultiple, fNumMultiple);
-   fFirstMultiple = cfg.GetCfgInt(mbs::xmlFirstMultiple, fFirstMultiple);
 
    return Init();
 }
@@ -55,28 +49,9 @@ bool mbs::LmdInput::Init()
 
    if (strpbrk(fFileName.c_str(),"*?")!=0)
       fFilesList = dabc::Manager::Instance()->ListMatchFiles("", fFileName.c_str());
-   else
-   if (fNumMultiple<=0) {
-//      std::string mask = fFileName;
-//      mask += "_*.lmd";
-//      fFilesList = dabc::Manager::Instance()->ListMatchFiles("", mask.c_str());
-//
-//      DOUT1(("Try to find files with mask %s", mask.c_str()));
-//   } else
-//   if (fNumMultiple == 0) {
-      fFilesList = new dabc::Folder(0,"FilesList", true);
+   else {
+      fFilesList = new dabc::Folder(0, "FilesList", true);
       new dabc::Basic(fFilesList, fFileName.c_str());
-   } else {
-      int number = fFirstMultiple;
-
-      fFilesList = new dabc::Folder(0,"FilesList", true);
-
-      while (number<fNumMultiple) {
-         std::string fname;
-         dabc::formats(fname, "%s_%04d.lmd", fFileName.c_str(), number);
-         new dabc::Basic(fFilesList, fname.c_str());
-         number++;
-      }
    }
 
    return OpenNextFile();
@@ -84,8 +59,7 @@ bool mbs::LmdInput::Init()
 
 bool mbs::LmdInput::OpenNextFile()
 {
-   fFile.Close();
-   fCurrentFileName = "";
+   CloseFile();
 
    if ((fFilesList==0) || (fFilesList->NumChilds()==0)) return false;
 
@@ -107,7 +81,7 @@ bool mbs::LmdInput::OpenNextFile()
 bool mbs::LmdInput::CloseFile()
 {
    fFile.Close();
-
+   fCurrentFileName = "";
    return true;
 }
 
