@@ -1,19 +1,20 @@
-#ifndef DABC_AbbWriterModule
-#define DABC_AbbWriterModule
+#ifndef ABB_WriterModule
+#define ABB_WriterModule
 
 #include "dabc/ModuleSync.h"
-#include <string>
 
-namespace dabc {
+#include "dabc/statistic.h"
 
-   class AbbWriterModule : public dabc::ModuleSync {
+
+namespace abb {
+
+   class WriterModule : public dabc::ModuleSync {
 
       public:
 
          /** standalonetest flag switches to simple readout test
            * without forwarding buffers to bnet */
-         AbbWriterModule(const char* name,
-                         dabc::Command* cmd);
+         WriterModule(const char* name, dabc::Command* cmd);
 
          virtual void BeforeModuleStart();
          virtual void AfterModuleStop();
@@ -25,7 +26,7 @@ namespace dabc {
          dabc::PoolHandle*    fPool;
          dabc::Ratemeter      fWriteRate;
          bool                 fStandalone;
-         int     		      fBufferSize;
+         int     		         fBufferSize;
 
    };
 }

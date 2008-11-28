@@ -11,25 +11,11 @@
 #include "TestBuilderModule.h"
 #include "TestFilterModule.h"
 
-#ifdef __USE_ABB__
-#include "abb/AbbFactory.h"
-#endif
-
-#include <iostream>
-
 bnet::TestWorkerApplication::TestWorkerApplication(const char* name) :
    WorkerApplication(name) ,
    fABBActive(false)
 {
 // register application specific parameters here:
-#ifdef __USE_ABB__
-    CreateParStr(ABB_PAR_DEVICE, "ABB_Device");
-    CreateParStr(ABB_PAR_MODULE, "ABB_Readout");
-    CreateParInt(ABB_PAR_BOARDNUM,0);
-    CreateParInt(ABB_PAR_BAR,1);
-    CreateParInt(ABB_PAR_ADDRESS,(0x8000 >> 2));
-    CreateParInt(ABB_PAR_LENGTH, 8*1024);
-#endif
 
     DOUT0(("Set all pars to TestWorker"));
 
@@ -67,41 +53,27 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
    std::string abbdevname;
    std::string modinputname = modulename+"/Ports/Input";
    // check parameter if we should use abb at this readout:
-#ifdef __USE_ABB__
-   if(ReadoutPar(portnumber) == "ABB")
-      {
-         // create device by command:
-         abbdevname=GetParStr(ABB_PAR_DEVICE, "ABBDevice");
-         dabc::Command* dcom= new dabc::CmdCreateDevice("AbbDevice", abbdevname.c_str());
-         // set additional parameters for abb device here:
-         dcom->SetInt(ABB_PAR_BOARDNUM, GetParInt(ABB_PAR_BOARDNUM, 0));
-         dcom->SetInt(ABB_PAR_BAR, GetParInt(ABB_PAR_BAR, 1));
-         dcom->SetInt(ABB_PAR_ADDRESS, GetParInt(ABB_PAR_ADDRESS, (0x8000 >> 2)));
-         dcom->SetInt(ABB_PAR_LENGTH, GetParInt(ABB_PAR_LENGTH, 8192));
-         res = dabc::mgr()->Execute(dcom);
-
-         //dabc::mgr()->Execute(dcom);
-         abbdevname=std::string("Devices/")+abbdevname;
-         //fABBActive=true;
-         fABBActive=res;
-      }
-   else
-#endif
-      {
-         // create dummy event generator module:
-         dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str(), this);
-         dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
-         modulename += "/Ports/Output";
-         dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
-         fABBActive=false;
-      }
+   if(ReadoutPar(portnumber) == "ABB") {
+       abbdevname = "ABBDevice";
+       fABBActive = dabc::mgr()->CreateDevice("abb::Device", abbdevname.c_str());
+   } else {
+      // create dummy event generator module:
+      dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str(), this);
+      dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
+      modulename += "/Ports/Output";
+      dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
+      fABBActive = false;
+   }
 
    dabc::mgr()->CreateMemoryPools(); // pools must exist before abb transport can connect to module
-   if(fABBActive)
-      {
+   if(fABBActive) {
       /// here creation of pci transport from abb device with connection to given input port:
-        res=dabc::mgr()->CreateTransport(portname, abbdevname.c_str());
-      }
+       res = dabc::mgr()->CreateTransport(portname, abbdevname.c_str());
+       if (!res) {
+          EOUT(("Cannot create ABB transport"));
+          return false;
+       }
+   }
 
    return true;
 }

@@ -49,9 +49,9 @@ namespace dabc {
 
          virtual Folder* ListMatchFiles(const char* typ, const char* filemask) { return 0; }
 
-         virtual DataInput* CreateDataInput(const char* typ, const char* name, Command* cmd = 0) { return 0; }
+         virtual DataInput* CreateDataInput(const char* typ) { return 0; }
 
-         virtual DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0) { return 0; }
+         virtual DataOutput* CreateDataOutput(const char* typ) { return 0; }
 
          static bool CreateManager(const char* kind, Configuration* cfg);
 

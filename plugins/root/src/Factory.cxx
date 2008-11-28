@@ -7,13 +7,13 @@
 
 dabc_root::Factory mbsfactory("dabc_root");
 
-dabc::DataInput* dabc_root::Factory::CreateDataInput(const char* typ, const char* name, dabc::Command* cmd)
+dabc::DataInput* dabc_root::Factory::CreateDataInput(const char* typ)
 {
    return 0;
 }
 
 
-dabc::DataOutput* dabc_root::Factory::CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd)
+dabc::DataOutput* dabc_root::Factory::CreateDataOutput(const char* typ)
 {
 
    DOUT3(("dabc_root::Factory::CreateDataOutput typ:%s", typ));

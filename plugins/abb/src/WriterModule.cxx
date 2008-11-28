@@ -1,5 +1,5 @@
-#include "abb/AbbWriterModule.h"
-#include "pci/PCIBoardCommands.h"
+#include "abb/WriterModule.h"
+#include "pci/BoardCommands.h"
 
 
 #include "dabc/logging.h"
@@ -10,7 +10,7 @@
 #include "dabc/Pointer.h"
 #include "dabc/Manager.h"
 
-dabc::AbbWriterModule::AbbWriterModule(const char* name, dabc::Command* cmd) :
+abb::WriterModule::WriterModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleSync(name),
    fPool(0),
    fStandalone(true),
@@ -20,7 +20,7 @@ dabc::AbbWriterModule::AbbWriterModule(const char* name, dabc::Command* cmd) :
          int queuelen = cmd->GetInt(ABB_COMPAR_QLENGTH, 10);
          fStandalone = (bool) cmd->GetInt(ABB_COMPAR_STALONE, 1);
          const char* poolname=cmd->GetStr(ABB_COMPAR_POOL,"ABBWriterPool");
-         DOUT1(("new AbbWriterModule %s buff %d queue %d, poolname=%s, standalone=%d", GetName(), fBufferSize, queuelen,poolname, fStandalone));
+         DOUT1(("new abb::WriterModule %s buff %d queue %d, poolname=%s, standalone=%d", GetName(), fBufferSize, queuelen,poolname, fStandalone));
          if(fStandalone)
             fPool = CreatePool(poolname, 200, fBufferSize); // specify pool
          else
@@ -35,19 +35,19 @@ dabc::AbbWriterModule::AbbWriterModule(const char* name, dabc::Command* cmd) :
 
 }
 
-void dabc::AbbWriterModule::BeforeModuleStart()
+void abb::WriterModule::BeforeModuleStart()
 {
-    DOUT1(("\n\nAbbWriterModule::BeforeModuleStart, fStandalone = %d", fStandalone));
+    DOUT1(("\n\nabb::WriterModule::BeforeModuleStart, fStandalone = %d", fStandalone));
 
 }
 
-void dabc::AbbWriterModule::AfterModuleStop()
+void abb::WriterModule::AfterModuleStop()
 {
-   DOUT1(("\nAbbWriterModule finish Rate %5.1f numoper:%7ld  tm:%7.5f \n\n", fWriteRate.GetRate(), fWriteRate.GetNumOper(), fWriteRate.GetTotalTime()));
+   DOUT1(("\nabb::WriterModule finish Rate %5.1f numoper:%7ld  tm:%7.5f \n\n", fWriteRate.GetRate(), fWriteRate.GetNumOper(), fWriteRate.GetTotalTime()));
 }
 
 
-void dabc::AbbWriterModule::MainLoop()
+void abb::WriterModule::MainLoop()
 {
 while (TestWorking())
    {
@@ -68,20 +68,20 @@ while (TestWorking())
       }
    catch(dabc::Exception& e)
       {
-          DOUT1(("AbbWriterModule::MainLoop - raised dabc exception %s", e.what()));
+          DOUT1(("abb::WriterModule::MainLoop - raised dabc exception %s", e.what()));
           dabc::Buffer::Release(ref);
           // how do we treat this?
           Stop();
       }
    catch(std::exception& e)
       {
-          DOUT1(("AbbWriterModule::MainLoop - raised std exception %s ", e.what()));
+          DOUT1(("abb::WriterModule::MainLoop - raised std exception %s ", e.what()));
           dabc::Buffer::Release(ref);
           Stop();
       }
    catch(...)
       {
-          DOUT1(("AbbWriterModule::MainLoop - Unexpected exception!!!"));
+          DOUT1(("abb::WriterModule::MainLoop - Unexpected exception!!!"));
           throw;
       }
    } // end while

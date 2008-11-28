@@ -1,7 +1,7 @@
 #include "dabc/Command.h"
 #include "dabc/StandaloneManager.h"
 #include "dabc/logging.h"
-#include "dabc/AbbFactory.h"
+#include "abb/Factory.h"
 #include <iostream>
 
 
@@ -45,7 +45,7 @@ int main(int numc, char* args[])
    dabc::StandaloneManager manager(0, nodeid, numnodes);
 
    std::string devname="ABB";
-   dabc::Command* dcom= new dabc::CmdCreateDevice("AbbDevice", devname.c_str());
+   dabc::Command* dcom= new dabc::CmdCreateDevice("abb::Device", devname.c_str());
       // set additional parameters for abb device here:
    dcom->SetInt(ABB_PAR_BOARDNUM, BOARD_NUM);
    dcom->SetInt(ABB_PAR_BAR, 1);
@@ -54,7 +54,7 @@ int main(int numc, char* args[])
    res=manager.Execute(dcom);
    DOUT1(("CreateDevice = %s", DBOOL(res)));
 
-   cmd = new dabc::CommandCreateModule("AbbReadoutModule","ABB_Readout", "ReadoutThread");
+   cmd = new dabc::CommandCreateModule("abb::ReadoutModule","ABB_Readout", "ReadoutThread");
    cmd->SetInt(ABB_COMPAR_BUFSIZE, readsize);
    cmd->SetInt(ABB_COMPAR_STALONE,1);
    cmd->SetInt(ABB_COMPAR_QLENGTH, 10);
@@ -63,11 +63,11 @@ int main(int numc, char* args[])
 
    res = manager.Execute(cmd);
    // test: use same thread for readout module as for device:
-   //res=manager.CreateModule("AbbReadoutModule","ABB_Readout","PCIBoardDeviceThread0",cmd);
+   //res=manager.CreateModule("abb::ReadoutModule","ABB_Readout","PCIBoardDeviceThread0",cmd);
 
    DOUT1(("Create ABB readout module = %s", DBOOL(res)));
 
-   cmd = new dabc::CommandCreateModule("AbbWriterModule","ABB_Sender", "WriterThread");
+   cmd = new dabc::CommandCreateModule("abb::WriterModule","ABB_Sender", "WriterThread");
    cmd->SetInt(ABB_COMPAR_BUFSIZE, readsize);
    cmd->SetInt(ABB_COMPAR_STALONE,1);
    cmd->SetInt(ABB_COMPAR_QLENGTH, 10);
@@ -75,7 +75,7 @@ int main(int numc, char* args[])
    cmd->SetStr(ABB_PAR_DEVICE,devname.c_str());
    res = manager.Execute(cmd);
    // test: use same thread for readout module as for device:
-   //res=manager.CreateModule("AbbWriterModule","ABB_Sender","PCIBoardDeviceThread0",cmd);
+   //res=manager.CreateModule("abb::WriterModule","ABB_Sender","PCIBoardDeviceThread0",cmd);
 
    DOUT1(("Create ABB writer module = %s", DBOOL(res)));
 

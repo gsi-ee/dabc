@@ -184,11 +184,6 @@ extern "C" void StartGenerator()
        exit(1);
     }
 
-//      if (!mgr.Execute(mgr.LocalCmd(cmd, "Devices/MBS"))) {
-//         EOUT(("Cannot create MBS transport server"));
-//         return 0;
-//      }
-
     m->Start();
 }
 

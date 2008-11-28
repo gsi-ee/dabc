@@ -2,9 +2,6 @@
 
 include $(DABCSYS)/config/Makefile.config
 
-# enable this define to use active buffer board
-# DEFINITIONS += __USE_ABB__
-
 ifdef DABCMAINMAKE
 BNETTESTDIR = applications/bnet-test/
 else

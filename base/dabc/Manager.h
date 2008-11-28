@@ -526,18 +526,11 @@ namespace dabc {
 
          bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
 
-         bool CreateTransport(const char* portname, const char* transportkind, const char* thrdname = 0)
-         {
-            return Execute(new CmdCreateTransport(portname, transportkind, thrdname));
-         }
+         bool CreateTransport(const char* portname, const char* transportkind, const char* thrdname = 0);
 
          FileIO* CreateFileIO(const char* typ, const char* name, int option);
 
          Folder* ListMatchFiles(const char* typ, const char* filemask);
-
-         DataInput* CreateDataInput(const char* typ, const char* name, Command* cmd = 0);
-
-         DataOutput* CreateDataOutput(const char* typ, const char* name, Command* cmd = 0);
 
       protected:
 

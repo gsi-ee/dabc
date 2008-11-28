@@ -82,7 +82,7 @@ dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ
 }
 
 
-dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ, const char* name, dabc::Command* cmd)
+dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ)
 {
    if ((typ==0) || (strlen(typ)==0)) return 0;
 
@@ -92,31 +92,31 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ, const char* name
       return new mbs::LmdInput();
    } else
    if (strcmp(typ, xmlEvapiType) == 0) {
-      return new mbs::EvapiInput(xmlEvapiFile, name);
+      return new mbs::EvapiInput(xmlEvapiFile);
    } else
    if (strcmp(typ, xmlEvapiFile) == 0) {
-      return new mbs::EvapiInput(xmlEvapiFile, name);
+      return new mbs::EvapiInput(xmlEvapiFile);
    } else
    if (strcmp(typ, xmlEvapiRFIOFile) == 0) {
-      return new mbs::EvapiInput(xmlEvapiRFIOFile, name);
+      return new mbs::EvapiInput(xmlEvapiRFIOFile);
    } else
    if (strcmp(typ, xmlEvapiTransportServer) == 0) {
-      return new mbs::EvapiInput(xmlEvapiTransportServer, name);
+      return new mbs::EvapiInput(xmlEvapiTransportServer);
    } else
    if (strcmp(typ, xmlEvapiStreamServer) == 0) {
-      return new mbs::EvapiInput(xmlEvapiStreamServer, name);
+      return new mbs::EvapiInput(xmlEvapiStreamServer);
    } else
    if (strcmp(typ, xmlEvapiEventServer) == 0) {
-      return new mbs::EvapiInput(xmlEvapiEventServer, name);
+      return new mbs::EvapiInput(xmlEvapiEventServer);
    } else
    if (strcmp(typ, xmlEvapiRemoteEventServer) == 0) {
-      return new mbs::EvapiInput(xmlEvapiRemoteEventServer, name);
+      return new mbs::EvapiInput(xmlEvapiRemoteEventServer);
    }
 
    return 0;
 }
 
-dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd)
+dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ)
 {
 
    if ((typ==0) || (strlen(typ)==0)) return 0;
@@ -127,7 +127,7 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ, const char* na
       return new mbs::LmdOutput();
    } else
    if (strcmp(typ, xmlEvapiOutFile) == 0) {
-      return new mbs::EvapiOutput(name);
+      return new mbs::EvapiOutput();
    }
 
    return 0;

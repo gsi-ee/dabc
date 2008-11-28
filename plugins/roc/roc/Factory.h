@@ -16,7 +16,7 @@ namespace roc {
 
          virtual dabc::Device* CreateDevice(const char* classname, const char* devname, dabc::Command* com);
 
-         virtual dabc::DataOutput* CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd = 0);
+         virtual dabc::DataOutput* CreateDataOutput(const char* typ);
    };
 
 }

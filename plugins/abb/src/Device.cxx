@@ -1,4 +1,4 @@
-#include "abb/AbbDevice.h"
+#include "abb/Device.h"
 
 #include "dabc/MemoryPool.h"
 #include "dabc/Buffer.h"
@@ -7,44 +7,56 @@
 
 #include "mprace/ABB.h"
 #include "mprace/DMAEngineWG.h"
+#include "abb/Factory.h"
 
 #define  USE_INTERRUPTS 1
 
 
-dabc::AbbDevice::AbbDevice(Basic* parent, const char* name, bool enabledma, unsigned int devicenum) :
-   dabc::PCIBoardDevice(parent, name, enabledma),fDMAengine(0),fReadDMAbuf(0),
-   fEventCnt(0),fUniqueId(0)
+abb::Device::Device(Basic* parent, const char* name, bool enabledma, dabc::Command* cmd) :
+   pci::BoardDevice(parent, name, enabledma),
+   fDMAengine(0),
+   fReadDMAbuf(0),
+   fEventCnt(0),
+   fUniqueId(0)
 
 {
+   unsigned int devicenum = GetCfgInt(ABB_PAR_BOARDNUM, 0, cmd);
+   unsigned int bar = GetCfgInt(ABB_PAR_BAR, 1, cmd);
+   unsigned int addr = GetCfgInt(ABB_PAR_ADDRESS, (0x8000 >> 2), cmd);
+   unsigned int size = GetCfgInt(ABB_PAR_LENGTH, 8192, cmd);
 
-fBoard=new mprace::ABB(devicenum);
-fDMAengine = & (static_cast<mprace::DMAEngineWG&>(fBoard->getDMAEngine()) );
+   DOUT1(("Create ABB device %s for /dev/fpga%u", name, devicenum));
 
-#ifdef USE_INTERRUPTS
-	fDMAengine->setUseInterrupts(true);
-#endif
+   fBoard = new mprace::ABB(devicenum);
+   fDMAengine = & (static_cast<mprace::DMAEngineWG&>(fBoard->getDMAEngine()) );
 
-fUniqueId=88; // get from ABB class later?
+   #ifdef USE_INTERRUPTS
+   	fDMAengine->setUseInterrupts(true);
+   #endif
 
+   fUniqueId=88; // get from ABB class later?
+
+   SetReadBuffer(bar, addr, size);
+   SetWriteBuffer(bar, addr, size); // for testing, use same values as for reading; later different parameters in setup!
 }
 
-dabc::AbbDevice::~AbbDevice()
+abb::Device::~Device()
 {
 }
 
-bool dabc::AbbDevice::DoDeviceCleanup(bool full)
+bool abb::Device::DoDeviceCleanup(bool full)
 {
-   DOUT3(("_______AbbDevice::DoDeviceCleanup... "));
-   bool res = dabc::PCIBoardDevice::DoDeviceCleanup(full);
+   DOUT3(("_______abb::Device::DoDeviceCleanup... "));
+   bool res = pci::BoardDevice::DoDeviceCleanup(full);
    if(res) SetEventCount(0);
 
-   DOUT3(("_______AbbDevice::DoDeviceCleanup done res=%s", DBOOL(res)));
+   DOUT3(("_______abb::Device::DoDeviceCleanup done res=%s", DBOOL(res)));
 
    return res;
 }
 
 
-bool  dabc::AbbDevice::WriteBnetHeader(dabc::Buffer* buf)
+bool  abb::Device::WriteBnetHeader(dabc::Buffer* buf)
 {
    //if(buf==0) return false;
    // write header for bnet test into buffer; later to be done in ABB
@@ -59,15 +71,15 @@ bool  dabc::AbbDevice::WriteBnetHeader(dabc::Buffer* buf)
 
 }
 
-int dabc::AbbDevice::ReadPCI(dabc::Buffer* buf)
+int abb::Device::ReadPCI(dabc::Buffer* buf)
 {
-   int result=dabc::PCIBoardDevice::ReadPCI(buf);
+   int result=pci::BoardDevice::ReadPCI(buf);
    if(result>0) WriteBnetHeader(buf);
    return result;
 }
 
 
-bool dabc::AbbDevice::ReadPCIStart(dabc::Buffer* buf)
+bool abb::Device::ReadPCIStart(dabc::Buffer* buf)
 {
 if(fBoard==0) return false;
 if(fEnableDMA)
@@ -76,13 +88,13 @@ if(fEnableDMA)
          LockDMABuffers(); // do we need to protect buffer list here?
          if(fReadDMAbuf!=0)
          {
-           EOUT(("AbbDevice::ReadPCIStart: previous read buffer not yet processed, something is wrong!!!!!!!!"));
+           EOUT(("abb::Device::ReadPCIStart: previous read buffer not yet processed, something is wrong!!!!!!!!"));
            return false;
          }
         fReadDMAbuf=GetDMABuffer(buf);
         if(fReadDMAbuf==0)
          {
-           EOUT(("AbbDevice::ReadPCIStart: GetDMABuffer gives ZERO, something is wrong!!!!!!!!"));
+           EOUT(("abb::Device::ReadPCIStart: GetDMABuffer gives ZERO, something is wrong!!!!!!!!"));
            return false;
          }
         DOUT5(("Start ReadDMA id %d mprace %p, non blocking.", buf->GetId(), fReadDMAbuf));
@@ -102,14 +114,14 @@ return true;
 
 }
 
-int dabc::AbbDevice::ReadPCIComplete(dabc::Buffer* buf)
+int abb::Device::ReadPCIComplete(dabc::Buffer* buf)
 {
 if(fBoard==0) return -3;
 if(fEnableDMA)
    {
        if(fReadDMAbuf==0)
          {
-           EOUT(("AbbDevice::ReadPCIComplete: no active DMA buffer, something is wrong!!!!!!!!"));
+           EOUT(("abb::Device::ReadPCIComplete: no active DMA buffer, something is wrong!!!!!!!!"));
            return -3;
          }
 

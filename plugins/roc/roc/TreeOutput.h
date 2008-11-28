@@ -31,7 +31,7 @@ namespace roc {
 
    class TreeOutput : public dabc::DataOutput {
       public:
-         TreeOutput(const char* name, int sizelimit_mb = 0);
+         TreeOutput(const char* name = 0, int sizelimit_mb = 0);
 
          virtual bool Write_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
 

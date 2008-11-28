@@ -11,9 +11,9 @@ namespace dabc_root {
       public:
          Factory(const char* name) : dabc::Factory(name) {}
 
-         virtual dabc::DataInput* CreateDataInput(const char* typ, const char* name, dabc::Command* cmd = 0);
+         virtual dabc::DataInput* CreateDataInput(const char* typ);
 
-         virtual dabc::DataOutput* CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd = 0);
+         virtual dabc::DataOutput* CreateDataOutput(const char* typ);
    };
 
 }

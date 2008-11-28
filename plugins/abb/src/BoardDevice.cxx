@@ -1,6 +1,6 @@
-#include "pci/PCIBoardDevice.h"
-#include "pci/PCIBoardCommands.h"
-#include "pci/PCITransport.h"
+#include "pci/BoardDevice.h"
+#include "pci/BoardCommands.h"
+#include "pci/Transport.h"
 
 #include "dabc/Port.h"
 #include "dabc/Manager.h"
@@ -13,9 +13,9 @@
 
 #include <exception>
 
-unsigned int dabc::PCIBoardDevice::fgThreadnum=0;
+unsigned int pci::BoardDevice::fgThreadnum=0;
 
-dabc::PCIBoardDevice::PCIBoardDevice(Basic* parent, const char* name, bool usedma) :
+pci::BoardDevice::BoardDevice(Basic* parent, const char* name, bool usedma) :
    dabc::Device(parent, name),
    fEnableDMA(usedma),
    fBoard(0),
@@ -29,22 +29,22 @@ dabc::PCIBoardDevice::PCIBoardDevice(Basic* parent, const char* name, bool usedm
     fDMABuffers.clear();
 }
 
-dabc::PCIBoardDevice::~PCIBoardDevice()
+pci::BoardDevice::~BoardDevice()
 {
    DoDeviceCleanup(true);
    delete fBoard;
 }
 
 
-bool dabc::PCIBoardDevice::DoDeviceCleanup(bool full)
+bool pci::BoardDevice::DoDeviceCleanup(bool full)
 {
    CleanupDMABuffers(); // delete sgmapping before freeing memory in pool
-   DOUT3(("_______PCIBoardDevice::DoDeviceCleanup after CleanupDMABuffers"));
+   DOUT3(("_______pci::BoardDevice::DoDeviceCleanup after CleanupDMABuffers"));
    return(dabc::Device::DoDeviceCleanup(full));
 }
 
 
-int dabc::PCIBoardDevice::ExecuteCommand(Command* cmd)
+int pci::BoardDevice::ExecuteCommand(dabc::Command* cmd)
 {
    int cmd_res = cmd_true;
    if (cmd->IsName(DABC_PCI_COMMAND_SET_READ_REGION))
@@ -70,29 +70,29 @@ return cmd_res;
 }
 
 
-int dabc::PCIBoardDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
+int pci::BoardDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
-   LockGuard lock(fMutex);
+   dabc::LockGuard lock(fMutex);
    if(port==0)
       port = dabc::mgr()->FindPort(cmd->GetPar(DABC_PCI_COMPAR_PORT));
    if (port==0)
       {
-          EOUT(("dabc::PCIBoardDevice::CreateTransport FAILED, port %s not found!",cmd->GetPar(DABC_PCI_COMPAR_PORT)));
+          EOUT(("pci::BoardDevice::CreateTransport FAILED, port %s not found!",cmd->GetPar(DABC_PCI_COMPAR_PORT)));
           return cmd_false;
       }
-   PCITransport* transport = new PCITransport(this, port);
-   DOUT3(("PCIBoardDevice::CreateTransport creates new transport instance %p", transport));
+   pci::Transport* transport = new pci::Transport(this, port);
+   DOUT3(("pci::BoardDevice::CreateTransport creates new transport instance %p", transport));
    std::string thrname;
    dabc::formats(thrname,"PCIBoardDeviceThread%d", fgThreadnum++);
 
-   Manager::Instance()->MakeThreadFor(transport, thrname.c_str());
-   DOUT1(("PCIBoardDevice::CreateTransport uses thread %s", thrname.c_str()));
+   dabc::mgr()->MakeThreadFor(transport, thrname.c_str());
+   DOUT1(("pci::BoardDevice::CreateTransport uses thread %s", thrname.c_str()));
 
    return cmd_true;
 }
 
 
-int dabc::PCIBoardDevice::WritePCI(dabc::Buffer* buf)
+int pci::BoardDevice::WritePCI(dabc::Buffer* buf)
 {
 if(fBoard==0) return -3;
 if(fEnableDMA)
@@ -101,7 +101,7 @@ if(fEnableDMA)
         mprace::DMABuffer* DMAbuf=GetDMABuffer(buf);
         if(DMAbuf==0)
          {
-           EOUT(("AbbDevice::WritePCI: GetDMABuffer gives ZERO, something is wrong!!!!!!!!"));
+           EOUT(("abb::Device::WritePCI: GetDMABuffer gives ZERO, something is wrong!!!!!!!!"));
            return -3;
          }
         DOUT5(("Start Write DMA id %d mprace %p", buf->GetId(), DMAbuf));
@@ -123,7 +123,7 @@ return fWriteLength;
 
 
 
-int dabc::PCIBoardDevice::ReadPCI(dabc::Buffer* buf)
+int pci::BoardDevice::ReadPCI(dabc::Buffer* buf)
 {
 if(fBoard==0) return -3;
 if(fEnableDMA)
@@ -132,7 +132,7 @@ if(fEnableDMA)
         mprace::DMABuffer* DMAbuf=GetDMABuffer(buf);
         if(DMAbuf==0)
          {
-           EOUT(("AbbDevice::ReadPCI: GetDMABuffer gives ZERO, something is wrong!!!!!!!!"));
+           EOUT(("abb::Device::ReadPCI: GetDMABuffer gives ZERO, something is wrong!!!!!!!!"));
            return -3;
          }
         DOUT5(("Start ReadDMA id %d mprace %p", buf->GetId(), DMAbuf));
@@ -152,14 +152,14 @@ return fReadLength;
 }
 
 
-bool dabc::PCIBoardDevice::ReadPCIStart(dabc::Buffer* buf)
+bool pci::BoardDevice::ReadPCIStart(dabc::Buffer* buf)
 {
 // asynchronous read to be implmented in subclass, we do nothing here
 return true;
 
 }
 
-int dabc::PCIBoardDevice::ReadPCIComplete(dabc::Buffer* buf)
+int pci::BoardDevice::ReadPCIComplete(dabc::Buffer* buf)
 {
 // asynchronous read to be implmented in subclass, we just do a blocking read here
 return (ReadPCI(buf));
@@ -167,10 +167,10 @@ return (ReadPCI(buf));
 
 
 
-bool dabc::PCIBoardDevice::ReadDMA(const unsigned int address, mprace::DMABuffer& buf, const unsigned int count)
+bool pci::BoardDevice::ReadDMA(const unsigned int address, mprace::DMABuffer& buf, const unsigned int count)
 {
 if(fBoard==0) return false;
-LockGuard lock(fMutex); // lock dma buffer against deletion from cleanup!
+dabc::LockGuard lock(fMutex); // lock dma buffer against deletion from cleanup!
 //buf.syncUsermem(pciDriver::UserMemory::TO_DEVICE); // do we need this?
 fBoard->readDMA(address, buf, count, 0, false, true);
 //buf.syncUsermem(pciDriver::UserMemory::FROM_DEVICE);
@@ -178,10 +178,10 @@ fBoard->readDMA(address, buf, count, 0, false, true);
 return true;
 }
 
-bool dabc::PCIBoardDevice::WriteDMA(const unsigned int address, mprace::DMABuffer& buf, const unsigned int count)
+bool pci::BoardDevice::WriteDMA(const unsigned int address, mprace::DMABuffer& buf, const unsigned int count)
 {
 if(fBoard==0) return false;
-LockGuard lock(fMutex); // lock dma buffer against deletion from cleanup!
+dabc::LockGuard lock(fMutex); // lock dma buffer against deletion from cleanup!
 //buf.syncUsermem(pciDriver::UserMemory::TO_DEVICE); // do we need this?
 fBoard->writeDMA(address, buf, count, 0, true, true);
 //buf.syncUsermem(pciDriver::UserMemory::FROM_DEVICE);
@@ -191,16 +191,16 @@ return true;
 
 
 
-mprace::DMABuffer* dabc::PCIBoardDevice::GetDMABuffer(dabc::Buffer* buf)
+mprace::DMABuffer* pci::BoardDevice::GetDMABuffer(dabc::Buffer* buf)
 {
 if(buf==0) return 0;
-LockGuard lock(fMutex);
+dabc::LockGuard lock(fMutex);
 try
    {
    bool mapsuccess=true;
    if(fDMARemapRequired)
       {
-         DOUT1(("dabc::PCIBoardDevice::GetDMABuffer calls MapDMABuffers since remap required!"));
+         DOUT1(("pci::BoardDevice::GetDMABuffer calls MapDMABuffers since remap required!"));
          mapsuccess=MapDMABuffers(buf->Pool());
       }
    if(!mapsuccess) return 0;
@@ -208,7 +208,7 @@ try
    // check if buffers are matching address:
    if(buf->GetDataLocation() != dbuf->getPointer())
       {
-         EOUT(("dabc::PCIBoardDevice::GetDMABuffer buffer address MISMATCH for id:%d ! poolbuffer:%p!= dmabuffer%p",buf->GetId(),buf->GetDataLocation(),dbuf->getPointer()));
+         EOUT(("pci::BoardDevice::GetDMABuffer buffer address MISMATCH for id:%d ! poolbuffer:%p!= dmabuffer%p",buf->GetId(),buf->GetDataLocation(),dbuf->getPointer()));
          return 0;
       }
 
@@ -226,33 +226,32 @@ catch(...)
    }
 }
 
-bool dabc::PCIBoardDevice::MapDMABuffers(dabc::MemoryPool* pool)
+bool pci::BoardDevice::MapDMABuffers(dabc::MemoryPool* pool)
 {
-LockGuard lock(fMutex);
-CleanupDMABuffers();
-if(pool==0)
-   {
+   dabc::LockGuard lock(fMutex);
+   CleanupDMABuffers();
+   if(pool==0) {
      EOUT(("MapDMABuffers with no memory pool!!!"));
      return false;
      // TODO: error handling?
    }
 
-BlockNum_t numblocks=pool->NumMemBlocks();
-std::size_t expectedsize=0;
-BufferId_t counter=0;
-BufferSize_t lastlen=0;
+   dabc::BlockNum_t numblocks=pool->NumMemBlocks();
+   std::size_t expectedsize=0;
+   dabc::BufferId_t counter=0;
+   dabc::BufferSize_t lastlen=0;
 
 DOUT1(("MapDMABuffers pool %p %s numblocks %d numbufs %d", pool, pool->GetName(), numblocks, pool->GetNumBuffersInBlock(0)));
 
-for(BlockNum_t blocknum=0; blocknum<numblocks; ++blocknum)
+for(dabc::BlockNum_t blocknum=0; blocknum<numblocks; ++blocknum)
    {
-      BufferNum_t numbufs= pool->GetNumBuffersInBlock(blocknum);
+      dabc::BufferNum_t numbufs= pool->GetNumBuffersInBlock(blocknum);
       expectedsize+=numbufs;
       fDMABuffers.resize(expectedsize);
-      for(BufferNum_t bufnum=0; bufnum<numbufs; ++bufnum)
+      for(dabc::BufferNum_t bufnum=0; bufnum<numbufs; ++bufnum)
       {
-         BufferId_t id=dabc::CodeBufferId( blocknum,  bufnum) ;
-         BufferSize_t len= pool->GetBufferSize(id);
+         dabc::BufferId_t id=dabc::CodeBufferId( blocknum,  bufnum) ;
+         dabc::BufferSize_t len= pool->GetBufferSize(id);
          if(len!=lastlen)
             {
                DOUT1(("******** MapDMABuffers maps buffers of length %u from block %u", len, blocknum));
@@ -294,14 +293,14 @@ fDMARemapRequired=false;
 return true;
 }
 
-void dabc::PCIBoardDevice::CleanupDMABuffers()
+void pci::BoardDevice::CleanupDMABuffers()
 {
-LockGuard lock(fMutex);
+   dabc::LockGuard lock(fMutex);
    std::vector<mprace::DMABuffer*>::const_iterator iter;
    for(iter=fDMABuffers.begin(); iter!=fDMABuffers.end(); ++iter)
       {
          mprace::DMABuffer* buf=*iter;
-         DOUT3(("PCIBoardDevice::CleanupDMABuffers is deleting dma buffer %p",buf));
+         DOUT3(("pci::BoardDevice::CleanupDMABuffers is deleting dma buffer %p",buf));
          delete buf;
       }// for
    fDMABuffers.clear();

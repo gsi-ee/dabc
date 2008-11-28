@@ -1900,6 +1900,10 @@ bool dabc::Manager::CreateModule(const char* classname, const char* modulename, 
    return Execute(new CommandCreateModule(classname, modulename, thrdname));
 }
 
+bool dabc::Manager::CreateTransport(const char* portname, const char* transportkind, const char* thrdname)
+{
+   return Execute(new CmdCreateTransport(portname, transportkind, thrdname));
+}
 
 dabc::FileIO* dabc::Manager::CreateFileIO(const char* typ, const char* name, int option)
 {
@@ -1930,40 +1934,6 @@ dabc::Folder* dabc::Manager::ListMatchFiles(const char* typ, const char* filemas
 
       Folder* res = factory->ListMatchFiles(typ, filemask);
       if (res!=0) return res;
-   }
-
-   return 0;
-}
-
-dabc::DataInput* dabc::Manager::CreateDataInput(const char* typ, const char* name, Command* cmd)
-{
-   Folder* folder = GetFactoriesFolder(false);
-   if (folder==0) return 0;
-
-   for (unsigned n=0;n<folder->NumChilds();n++) {
-      Factory* factory =
-         dynamic_cast<dabc::Factory*> (folder->GetChild(n));
-      if (factory==0) continue;
-
-      DataInput* inp = factory->CreateDataInput(typ, name, cmd);
-      if (inp!=0) return inp;
-   }
-
-   return 0;
-}
-
-dabc::DataOutput* dabc::Manager::CreateDataOutput(const char* typ, const char* name, Command* cmd)
-{
-   Folder* folder = GetFactoriesFolder(false);
-   if (folder==0) return 0;
-
-   for (unsigned n=0;n<folder->NumChilds();n++) {
-      Factory* factory =
-         dynamic_cast<dabc::Factory*> (folder->GetChild(n));
-      if (factory==0) continue;
-
-      DataOutput* out = factory->CreateDataOutput(typ, name, cmd);
-      if (out!=0) return out;
    }
 
    return 0;

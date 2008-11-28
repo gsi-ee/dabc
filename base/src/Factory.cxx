@@ -49,14 +49,14 @@ bool dabc::Factory::CreateManager(const char* kind, Configuration* cfg)
 
 dabc::Transport* dabc::Factory::CreateTransport(dabc::Port* port, const char* typ, const char* thrdname, dabc::Command* cmd)
 {
-   dabc::DataInput* inp = CreateDataInput(typ, 0);
+   dabc::DataInput* inp = CreateDataInput(typ);
    if ((inp!=0) && !inp->Read_Init(cmd, port)) {
       EOUT(("Input object %s cannot be initialized", typ));
       delete inp;
       inp = 0;
    }
 
-   dabc::DataOutput* out = CreateDataOutput(typ, 0);
+   dabc::DataOutput* out = CreateDataOutput(typ);
    if ((out!=0) && !out->Write_Init(cmd, port)) {
       EOUT(("Output object %s cannot be initialized", typ));
       delete out;

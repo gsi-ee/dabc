@@ -1,21 +1,22 @@
-#ifndef DABC_AbbReadoutModule
-#define DABC_AbbReadoutModule
+#ifndef ABB_ReadoutModule
+#define ABB_ReadoutModule
 
 #include "dabc/ModuleAsync.h"
-#include <string>
 
-namespace dabc {
+#include "dabc/statistic.h"
 
-   class AbbReadoutModule : public dabc::ModuleAsync {
+namespace abb {
+
+   class ReadoutModule : public dabc::ModuleAsync {
 
       public:
 
-         AbbReadoutModule(const char* name, dabc::Command* cmd);
+         ReadoutModule(const char* name, dabc::Command* cmd);
 
          virtual void BeforeModuleStart();
          virtual void AfterModuleStop();
 
-         void ProcessUserEvent(ModuleItem* , uint16_t );
+         virtual void ProcessUserEvent(dabc::ModuleItem* , uint16_t );
 
 
       protected:

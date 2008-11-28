@@ -46,13 +46,9 @@ dabc::Device* roc::Factory::CreateDevice(const char* classname, const char* devn
    return dev;
 }
 
-dabc::DataOutput* roc::Factory::CreateDataOutput(const char* typ, const char* name, dabc::Command* cmd)
+dabc::DataOutput* roc::Factory::CreateDataOutput(const char* typ)
 {
    if (strcmp(typ, "roc::TreeOutput")!=0) return 0;
 
-   roc::TreeOutput* out = new roc::TreeOutput(name, cmd->GetInt("SizeLimit", 0));
-
-   if (!out->IsOk()) { delete out; out = 0; }
-
-   return out;
+   return new roc::TreeOutput();
 }

@@ -1,32 +1,27 @@
-#ifndef DABC_AbbDevice
-#define DABC_AbbDevice
+#ifndef ABB_Device
+#define ABB_Device
 
-#include "pci/PCIBoardDevice.h"
+#include "pci/BoardDevice.h"
 #include "mprace/DMAEngineWG.h"
 
-namespace dabc {
+namespace abb {
 
-
-   class AbbDevice : public PCIBoardDevice {
-
+   class Device : public pci::BoardDevice {
 
       public:
 
-         AbbDevice(Basic* parent, const char* name, bool enabledma, unsigned int devid);
-         virtual ~AbbDevice();
-
+         Device(Basic* parent, const char* name, bool enabledma, dabc::Command* cmd);
+         virtual ~Device();
 
          virtual int ReadPCI(dabc::Buffer* buf);
 
-        virtual bool ReadPCIStart(dabc::Buffer* buf);
+         virtual bool ReadPCIStart(dabc::Buffer* buf);
 
-        virtual int ReadPCIComplete(dabc::Buffer* buf);
+         virtual int ReadPCIComplete(dabc::Buffer* buf);
 
-        virtual const char* ClassName() const { return "AbbDevice"; }
+         virtual const char* ClassName() const { return "abb::Device"; }
 
-
-
-         unsigned int GetDeviceNumber(){return fDeviceNum;}
+         unsigned int GetDeviceNumber() { return fDeviceNum; }
 
          void SetEventCount(uint64_t val){fEventCnt=val;}
          void SetID(uint64_t id){fUniqueId=id;}
