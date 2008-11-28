@@ -2,17 +2,17 @@
 #include <unistd.h>
 using namespace std;
 #include <string>
-#include <nameParser.h>
+#include "dimc/nameParser.h"
 
-char dabc::xd::nameParser::ParameterName[256];
-char dabc::xd::nameParser::CommandDescriptorName[256];    
+char dimc::nameParser::ParameterName[256];
+char dimc::nameParser::CommandDescriptorName[256];
 
-dabc::xd::nameParser::nameParser(const char *fullname)
+dimc::nameParser::nameParser(const char *fullname)
 {
   parseQuality(0);
   parseFullName(fullname);
 }
-void dabc::xd::nameParser::initParser(){
+void dimc::nameParser::initParser(){
   NameSpace[0]=0;
   NodeSpec[0]=0;
   NodeName[0]=0;
@@ -25,18 +25,18 @@ void dabc::xd::nameParser::initParser(){
   Name[0]=0;
   FullName[0]=0;
 }
-void dabc::xd::nameParser::parseQuality(unsigned int qual){
+void dimc::nameParser::parseQuality(unsigned int qual){
   quality   = qual;
-  status    =  (dabc::xd::nameParser::recordstat) (quality       & 0xff);
-  type      = (dabc::xd::nameParser::recordtype) ((quality>>8)  & 0xff);
-  visibility= (dabc::xd::nameParser::visiblemask)  ((quality>>16) & 0xff);
-  mode      = (dabc::xd::nameParser::recordmode) ((quality>>24) & 0xff);
+  status    =  (dimc::nameParser::recordstat) (quality       & 0xff);
+  type      = (dimc::nameParser::recordtype) ((quality>>8)  & 0xff);
+  visibility= (dimc::nameParser::visiblemask)  ((quality>>16) & 0xff);
+  mode      = (dimc::nameParser::recordmode) ((quality>>24) & 0xff);
 }
 
-int dabc::xd::nameParser::buildQuality (dabc::xd::nameParser::recordstat s, 
-                                        dabc::xd::nameParser::recordtype t, 
-                                        dabc::xd::nameParser::visiblemask v, 
-                                        dabc::xd::nameParser::recordmode m)
+int dimc::nameParser::buildQuality (dimc::nameParser::recordstat s,
+                                        dimc::nameParser::recordtype t,
+                                        dimc::nameParser::visiblemask v,
+                                        dimc::nameParser::recordmode m)
 {
   status=s;
   type=t;
@@ -46,51 +46,51 @@ int dabc::xd::nameParser::buildQuality (dabc::xd::nameParser::recordstat s,
   return quality;
 }
 
-void dabc::xd::nameParser::setType(dabc::xd::nameParser::recordtype t)
+void dimc::nameParser::setType(dimc::nameParser::recordtype t)
 {
-    int q=quality;  
-    q = (q & 0xFFFF00FF); // clear old type byte 2  
+    int q=quality;
+    q = (q & 0xFFFF00FF); // clear old type byte 2
     int rt=((int) (t) << 8);
-    q = (q | rt); // set new type 
+    q = (q | rt); // set new type
     quality=q;
-    type=t;   
+    type=t;
 }
-        
-void dabc::xd::nameParser::setVisibility(dabc::xd::nameParser::visiblemask mask)
+
+void dimc::nameParser::setVisibility(dimc::nameParser::visiblemask mask)
 {
-    int q=quality;   
-    q = (q & 0xFF00FFFF); // clear old visibility byte 2  
+    int q=quality;
+    q = (q & 0xFF00FFFF); // clear old visibility byte 2
     int rmask=((int) (mask) << 16);
-    q = (q | rmask); // set new vis mask 
+    q = (q | rmask); // set new vis mask
     quality=q;
-    visibility=mask;     
-   
+    visibility=mask;
+
 }
-    
-void dabc::xd::nameParser::setStatus(dabc::xd::nameParser::recordstat s)
+
+void dimc::nameParser::setStatus(dimc::nameParser::recordstat s)
 {
-    int q=quality; // no getter method for quality in dim c++ interface!  
-    q = (q & 0xFFFFFF00); // clear old status byte 1  
+    int q=quality; // no getter method for quality in dim c++ interface!
+    q = (q & 0xFFFFFF00); // clear old status byte 1
     int rs=(int) (s);
-    q = (q | rs); // set new status 
+    q = (q | rs); // set new status
     quality=q;
-    status=s;    
+    status=s;
 }
-    
-void dabc::xd::nameParser::setMode(dabc::xd::nameParser::recordmode m)
+
+void dimc::nameParser::setMode(dimc::nameParser::recordmode m)
 {
-    int q=quality;   
-    q = (q & 0x00FFFFFF); // clear old mode byte 3  
+    int q=quality;
+    q = (q & 0x00FFFFFF); // clear old mode byte 3
     int rm=((int) (m) << 24);
-    q = (q | rm); // set new mode mask 
+    q = (q | rm); // set new mode mask
     quality=q;
-    mode=m;   
+    mode=m;
 }
-      
 
 
 
-bool dabc::xd::nameParser::checkFields(){
+
+bool dimc::nameParser::checkFields(){
   if(strlen(NameSpace)==0) return false;
   if(strlen(NodeName)==0) return false;
   if(strlen(NodeID)==0) return false;
@@ -99,7 +99,7 @@ bool dabc::xd::nameParser::checkFields(){
   if(strlen(Name)==0) return false;
   return true;
 }
-char* dabc::xd::nameParser::buildFullName()
+char* dimc::nameParser::buildFullName()
 { // check if all fields are there
   if(!checkFields()) return NULL;
   buildNodeSpec();
@@ -107,48 +107,48 @@ char* dabc::xd::nameParser::buildFullName()
   sprintf(FullName,"%s/%s/%s/%s",NameSpace,NodeSpec,ApplSpec,Name);
   return FullName;
 }
-void dabc::xd::nameParser::buildNodeSpec(){
+void dimc::nameParser::buildNodeSpec(){
   sprintf(NodeSpec,"%s:%s",NodeName,NodeID);
 }
-void dabc::xd::nameParser::buildApplSpec(){
+void dimc::nameParser::buildApplSpec(){
   sprintf(ApplNameID,"%s:%s",ApplName,ApplID);
   if(strlen(ApplNameSpace) > 0) sprintf(ApplSpec,"%s::%s",ApplNameSpace,ApplNameID);
   else strcpy(ApplSpec,ApplNameID);
 }
-void dabc::xd::nameParser::setNodeSpec(const char *nodespec){
+void dimc::nameParser::setNodeSpec(const char *nodespec){
   strcpy(NodeSpec,nodespec);
   parseNodeSpec();
 }
-void dabc::xd::nameParser::setNodeName(const char *nodename){
+void dimc::nameParser::setNodeName(const char *nodename){
   strcpy(NodeName,nodename);
   buildNodeSpec();
 }
-void dabc::xd::nameParser::setNodeID(const char *nodeid){
+void dimc::nameParser::setNodeID(const char *nodeid){
   strcpy(NodeID,nodeid);
   buildNodeSpec();
 }
-void dabc::xd::nameParser::setApplSpec(const char *applspec){
+void dimc::nameParser::setApplSpec(const char *applspec){
   strcpy(ApplSpec,applspec);
   parseApplSpec();
 }
-void dabc::xd::nameParser::setApplName(const char *applname){
+void dimc::nameParser::setApplName(const char *applname){
   strcpy(ApplName,applname);
   buildApplSpec();
 }
-void dabc::xd::nameParser::setApplNameID(const char *applnameid){
+void dimc::nameParser::setApplNameID(const char *applnameid){
   strcpy(ApplNameID,applnameid);
   parseApplNameID();
   buildApplSpec();
 }
-void dabc::xd::nameParser::setApplID(const char *applid){
+void dimc::nameParser::setApplID(const char *applid){
   strcpy(ApplID,applid);
   buildApplSpec();
 }
-void dabc::xd::nameParser::setApplNameSpace(const char *applnamespace){
+void dimc::nameParser::setApplNameSpace(const char *applnamespace){
   strcpy(ApplNameSpace,applnamespace);
   buildApplSpec();
 }
-bool dabc::xd::nameParser::parseApplSpec(){
+bool dimc::nameParser::parseApplSpec(){
   char *p1;
   p1=strstr(ApplSpec,"::");
   if(p1){  // namespace specified
@@ -162,7 +162,7 @@ bool dabc::xd::nameParser::parseApplSpec(){
   }
   return parseApplNameID();
 }
-bool dabc::xd::nameParser::parseApplNameID(){
+bool dimc::nameParser::parseApplNameID(){
   char *p2;
   strcpy(ApplName,ApplNameID);
   p2=ApplName;
@@ -175,7 +175,7 @@ bool dabc::xd::nameParser::parseApplNameID(){
   }
   return false;
 }
-bool dabc::xd::nameParser::parseNodeSpec(){
+bool dimc::nameParser::parseNodeSpec(){
   char *p2;
   strcpy(NodeName,NodeSpec);
   p2=NodeName;
@@ -189,7 +189,7 @@ bool dabc::xd::nameParser::parseNodeSpec(){
   return false;
 }
 
-bool dabc::xd::nameParser::parseFullName(const char *fullname){
+bool dimc::nameParser::parseFullName(const char *fullname){
   char *p1,*p2;
   char fn[512];
   if(fullname) strcpy(fn,fullname);
@@ -221,7 +221,7 @@ bool dabc::xd::nameParser::parseFullName(const char *fullname){
     buildFullName();
     return true;
   }
-  cout << "Error: " << 
+  cout << "Error: " <<
   NameSpace << "/" <<
   NodeName << ":" <<
   NodeID << "/" <<
@@ -233,9 +233,9 @@ bool dabc::xd::nameParser::parseFullName(const char *fullname){
   return false;
 }
 
-void dabc::xd::nameParser::printFields() {
+void dimc::nameParser::printFields() {
   cout << "Full:  " << FullName << endl;
-  cout << "Fields: " << 
+  cout << "Fields: " <<
   NameSpace << "/" <<
   NodeName << ":" <<
   NodeID << "/" <<
@@ -244,60 +244,60 @@ void dabc::xd::nameParser::printFields() {
   ApplID << "/" <<
   Name << endl;
 
-  cout << "NodeSpec: " << 
+  cout << "NodeSpec: " <<
   NodeSpec << "  ApplSpec: " <<
   ApplSpec << "  ApplNameID: " <<
   ApplNameID << endl;
 }
-void dabc::xd::nameParser::newCommand(const char* name, const char* scope){
+void dimc::nameParser::newCommand(const char* name, const char* scope){
   char temp[128];
   finalized=false;
   strcpy(XmlString,"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
   sprintf(temp,"<command name=\"%s\" scope=\"%s\">\n",name,scope);
   strcat(XmlString,temp);
 }
-void dabc::xd::nameParser::addArgument(const char* name, const char* type, const char* value, const char* required){
+void dimc::nameParser::addArgument(const char* name, const char* type, const char* value, const char* required){
   char temp[128];
   if(!finalized) {
     sprintf(temp,"<argument name=\"%s\" type=\"%s\" value=\"%s\" required=\"%s\"/>\n",name,type,value,required);
     strcat(XmlString,temp);
   }
 }
-char * dabc::xd::nameParser::getXmlString(){
+char * dimc::nameParser::getXmlString(){
   if(!finalized) strcat(XmlString,"</command>\n");
   finalized=true;
   return XmlString;
 
 }
 
-const char* dabc::xd::nameParser::createCommandDescriptorName(const char* commandname)
+const char* dimc::nameParser::createCommandDescriptorName(const char* commandname)
 {
- snprintf(CommandDescriptorName, sizeof(CommandDescriptorName), "%s_",commandname);  
- return CommandDescriptorName;      
+ snprintf(CommandDescriptorName, sizeof(CommandDescriptorName), "%s_",commandname);
+ return CommandDescriptorName;
 }
 
-const char* dabc::xd::nameParser::createFullParameterName(const char* modulename, const char* varname)
+const char* dimc::nameParser::createFullParameterName(const char* modulename, const char* varname)
 {
-   snprintf(ParameterName, sizeof(ParameterName), "%s.%s",varname,modulename);  
+   snprintf(ParameterName, sizeof(ParameterName), "%s.%s",varname,modulename);
    return ParameterName;
-} 
-  
-void dabc::xd::nameParser::parseFullParameterName(const char* fullname, char** modname, char** varname)
+}
+
+void dimc::nameParser::parseFullParameterName(const char* fullname, char** modname, char** varname)
 {
    strncpy(ParameterName,fullname,sizeof(ParameterName));
    char* colon=strstr(ParameterName,".");
    if(colon==0)
       {
        *modname=0;
-       *varname=0;  
+       *varname=0;
       }
    else
       {
         *modname=colon+1;
         *colon=0;
-        *varname=ParameterName; 
+        *varname=ParameterName;
       }
-    //cout <<"parseFullParameterName with modname="<<*modname<<", varname="<<*varname << endl;  
-   
+    //cout <<"parseFullParameterName with modname="<<*modname<<", varname="<<*varname << endl;
+
 }
 

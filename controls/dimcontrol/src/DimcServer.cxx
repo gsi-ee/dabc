@@ -11,6 +11,7 @@
 
 dimc::Server* dimc::Server::gInstance=0;
 
+dabc::Mutex dimc::Server::gGlobalMutex(true);
 
 
 dimc::Server::Server():fOwner(0),fIsStarted(false)
@@ -28,7 +29,7 @@ dimc::Server::~Server()
 dimc::Server* dimc::Server::Instance()
 {
 // need static mutex here to avoid double creation of server by access glitch
-dabc::LockGuard g(gGlobalMutex);
+dabc::LockGuard g(&gGlobalMutex);
    if(gInstance==0)
       gInstance=new dimc::Server();
 return gInstance;
@@ -37,7 +38,7 @@ return gInstance;
 void dimc::Server::Delete()
 {
 // need static mutex here to avoid double deletion
-dabc::LockGuard g(gGlobalMutex);
+dabc::LockGuard g(&gGlobalMutex);
 if(gInstance!=0)
    {
       delete gInstance;
@@ -57,9 +58,8 @@ if(dnsport!=0)
    {
       DOUT0(("Starting DIM server of name %s for DIM_DNS_NODE  %s:%d",name.c_str(),DimServer::getDnsNode(),DimServer::getDnsPort()));
    }
-DimServer::autoStartOn(); // any new service will be started afterwards
 DimServer::start(name.c_str());
-// now create service for list of applications:
+DimServer::autoStartOn(); // any new service will be started afterwards
 fIsStarted=true;
 }
 

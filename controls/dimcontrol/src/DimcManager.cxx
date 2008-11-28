@@ -50,7 +50,6 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    dabc::Manager(managername, usecurrentprocess, cfg), fIsMainMgr(false)
 {
    // setup of nodes registry here or in base class?
-   InitSMmodule();
    fRegistry=new dimc::Registry(this);
    // define commands here:
    fRegistry->DefineDIMCommand(dabc::Manager::stcmdDoConfigure);
@@ -68,9 +67,10 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    fNodeId=fCfg->MgrNodeId();
    if(fNodeId==0) fIsMainMgr=true; // TODO: specify main manager from other quality in config?
 
+   InitSMmodule();
+
    fStatusRecord=new dabc::StatusParameter(this, _DIMC_SERVICE_FSMRECORD_,0);//CurrentState());
    init();
-   //CreateApplication(); // do we need this here, or called by run executable?
    UpdateStatusRecord();
    fRegistry->StartDIMServer("",0); // 0 port means: use environment variables for dns
 }
@@ -121,8 +121,9 @@ int dimc::Manager::ExecuteCommand(dabc::Command* cmd)
                DOUT0(("ExecuteCommand sees Shutdown.."));
                Shutdown();
             }
-         else if(dimcom->IsName(_DIMC_COMMAND_SETPAR_))
+         else if(dimcom->IsName(_DIMC_COMMAND_SETDIMPAR_))
             {
+               DOUT0(("ExecuteCommand sees set par:%s..",_DIMC_COMMAND_SETPAR_));
                fRegistry->SetDIMVariable(dimcom->DimPar());
             }
          else if(dimcom->IsName(_DIMC_COMMAND_MANAGER_))
@@ -138,7 +139,7 @@ int dimc::Manager::ExecuteCommand(dabc::Command* cmd)
       }
    else
       {
-         return Manager::ExecuteCommand(cmd);
+         return dabc::Manager::ExecuteCommand(cmd);
       }
    return cmd_true;
 }

@@ -106,7 +106,7 @@ std::string dimc::Registry::GetDIMServerName(const char* contextname)
 
 std::string dimc::Registry::CreateFullParameterName(const std::string& modulename, const std::string& varname)
 {
-dabc::LockGuard g(fParseMutex);
+dabc::LockGuard g(&fParseMutex);
 if(modulename=="") return varname;
 std::string registername="";
 const char* rname=dimc::nameParser::createFullParameterName(modulename.c_str(),varname.c_str());
@@ -119,7 +119,7 @@ return registername;
 
 void dimc::Registry::ParseFullParameterName(const std::string& fullname, std::string& modname, std::string& varname)
 {
-dabc::LockGuard g(fParseMutex);
+dabc::LockGuard g(&fParseMutex);
 char* mod=0;
 char* var=0;
 nameParser::parseFullParameterName(fullname.c_str(), &mod, &var);
@@ -136,7 +136,7 @@ else
 
 std::string dimc::Registry::CreateCommandDescriptorName(const std::string& commandname)
 {
-dabc::LockGuard g(fParseMutex);
+dabc::LockGuard g(&fParseMutex);
 std::string descrname="";
 const char* dname=nameParser::createCommandDescriptorName(commandname.c_str());
 if(dname) descrname=dname; // cannot init std::string from null char* ptr
@@ -196,7 +196,7 @@ void dimc::Registry::AddService(dimc::ServiceEntry* nentry, bool allowdimchange,
       }
    // put to our own service list:
    { // begin lock
-      dabc::LockGuard g(fMainMutex);
+      dabc::LockGuard g(&fMainMutex);
       fDimServices.push_back(nentry);
    } // end lock
 }
@@ -214,7 +214,7 @@ void dimc::Registry::UnregisterParameter(dabc::Parameter* par)
    if(par==0) return;
    dimc::ServiceEntry* remservice=0;
 { // begin lockguard
-   dabc::LockGuard g(fMainMutex);
+   dabc::LockGuard g(&fMainMutex);
    std::vector<dimc::ServiceEntry*>::iterator iter;
    for(iter=fDimServices.begin(); iter!=fDimServices.end(); ++iter)
       {
@@ -249,7 +249,7 @@ delete remservice; // delete outside lock to avoid conflict with dim
 dimc::ServiceEntry* dimc::Registry::FindDIMService(std::string name)
 {
 dimc::ServiceEntry* ret=0;
-dabc::LockGuard g(fMainMutex);
+dabc::LockGuard g(&fMainMutex);
 //std::cout <<"fffffffff FindDIMService is looking for -"<<name<<"-" << std::endl;
 
 std::vector<dimc::ServiceEntry*>::iterator iter;
@@ -290,7 +290,7 @@ dimc::ServiceEntry* dimc::Registry::FindDIMService(dabc::Parameter* par)
 {
 if(par==0) return 0;
 dimc::ServiceEntry* ret=0;
-dabc::LockGuard g(fMainMutex);
+dabc::LockGuard g(&fMainMutex);
 //std::cout <<"fffffffff FindDIMService is looking for -"<<name<<"-" << std::endl;
 
 std::vector<dimc::ServiceEntry*>::iterator iter;
@@ -326,7 +326,7 @@ void dimc::Registry::DefineDIMCommand(const std::string &name)
 {
    std::string dimname=BuildDIMName(name);
    DimCommand* ncom= new DimCommand(dimname.c_str(), "C", fDimServer);
-dabc::LockGuard g(fMainMutex); // only protect our own list, do not lock dim
+dabc::LockGuard g(&fMainMutex); // only protect our own list, do not lock dim
    fDimCommands.push_back(ncom);
    //std::cout <<"added dim command " <<dimname << std::endl;
 }
@@ -356,7 +356,7 @@ void dimc::Registry::StopDIMServer()
 
 void dimc::Registry::UpdateDIMService(const std::string& name, bool logoutput, dimc::nameParser::recordstat recstat)
 {
-//std::cout <<"UpdateDIMService for "<<name << std::endl;
+std::cout <<"uuuuuuuuuuuu UpdateDIMService for "<<name << std::endl;
 dimc::ServiceEntry* service=FindDIMService(name);
 if(service)
    {
@@ -379,7 +379,7 @@ if(service)
 
 void dimc::Registry::UpdateDIMServiceAll()
 {
-// dabc::LockGuard g(fMainMutex); // no guard during dim update
+// dabc::LockGuard g(&fMainMutex); // no guard during dim update
 // may explicitely take and give mutex instad
 std::vector<dimc::ServiceEntry*>::const_iterator iter;
 for(iter=fDimServices.begin(); iter!=fDimServices.end(); ++iter)
@@ -406,13 +406,12 @@ for(iter=fDimServices.begin(); iter!=fDimServices.end(); ++iter)
 
 void dimc::Registry::SetDIMVariable(std::string parameter)
 {
-//dabc::LockGuard g(fMainMutex);
-//std::cout <<"SetDIMVariable with -"<< parameter<<"-" << std::endl;
+//dabc::LockGuard g(&fMainMutex);
+std::cout <<"SetDIMVariable with -"<< parameter<<"-" << std::endl;
 
 std::string::size_type eqpos=parameter.find("=");
 if(eqpos==std::string::npos) // no equals sign in parameter!
 {
-   //theApplication_->StatusMessage(toolbox::toString("Wrong parameter format (%s) to set DIM variable!",parameter.c_str()),dimc::nameParser::WARNING);
    EOUT(("Wrong parameter format (%s) to set DIM variable!",parameter.c_str()));
    return;
 }
@@ -422,7 +421,6 @@ dimc::ServiceEntry* service=FindDIMService(name);
 if(service)
    {
       //std::cout <<"Setting dim service "<< name << std::endl;
-      //theApplication_->StatusMessage(toolbox::toString("Setting dim service %s to %s",name.c_str(),nval.c_str()));
       DOUT0(("Setting dim service %s to %s",name.c_str(),nval.c_str()));
       service->SetValue(nval);
    }
@@ -432,7 +430,7 @@ void dimc::Registry::RemoveDIMService(const std::string& name)
 {
 dimc::ServiceEntry* remservice=0;
 { // begin lockguard
-   dabc::LockGuard g(fMainMutex);
+   dabc::LockGuard g(&fMainMutex);
    std::vector<dimc::ServiceEntry*>::iterator iter;
    for(iter=fDimServices.begin(); iter!=fDimServices.end(); ++iter)
       {
@@ -475,7 +473,7 @@ void dimc::Registry::RemoveDIMServiceAll()
 {
 std::vector<dimc::ServiceEntry*> removeservices;
   { // begin lock
-   dabc::LockGuard g(fMainMutex);
+   dabc::LockGuard g(&fMainMutex);
       removeservices=fDimServices; // backup list of service pointers
       fDimServices.clear(); // now "official" list is cleared
    } // end lock
@@ -508,7 +506,7 @@ void dimc::Registry::RemoveDIMCommand(const std::string& name)
 {
 DimCommand* remcom=0;
 {  // begin lock
-   dabc::LockGuard g(fMainMutex);
+   dabc::LockGuard g(&fMainMutex);
    std::vector<DimCommand*>::iterator iter;
    for(iter=fDimCommands.begin(); iter!=fDimCommands.end(); ++iter)
       {
@@ -548,7 +546,7 @@ void dimc::Registry::RemoveDIMCommandsAll()
 {
    std::vector<DimCommand*> removecommands;
    { // begin lock
-   dabc::LockGuard g(fMainMutex);
+   dabc::LockGuard g(&fMainMutex);
       removecommands=fDimCommands; // backup list of command pointers
       fDimCommands.clear(); // now "official" list is cleared
    } // end lock
@@ -592,7 +590,7 @@ void dimc::Registry::HandleDIMCommand(DimCommand* com)
 // check for one of our registered commands:
 bool found=false;
 {
-dabc::LockGuard g(fMainMutex);
+dabc::LockGuard g(&fMainMutex);
    std::vector<DimCommand*>::const_iterator iter;
    for(iter=fDimCommands.begin(); iter!=fDimCommands.end(); ++iter)
       {
@@ -627,7 +625,7 @@ if(found) OnDIMCommand(com);
 void dimc::Registry::OnDIMCommand(DimCommand* com)
 {
 std::string cname=com->getName();
-//std::cout <<"found command "<< cname << std::endl;
+std::cout <<"found command "<< cname << std::endl;
 std::string rname=ReduceDIMName(cname);
 std::string par=com->getString();
 SubmitLocalDIMCommand(rname,par); // decouple execution from dim thread!
@@ -671,10 +669,26 @@ catch(...)
 
 void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::string& par)
 {
+   // strip password here:
+      if(par.length()<13)
+         {
+            std::cout<<" - ERROR: parameter too short:"<<par.length() << std::endl;
+            return ;
+         }
+      std::string password=par.substr(0,13);
+      // add password check here:
+      std::string parameter=" - no parameter -";
+      if(par.length()>14)
+         parameter=par.substr(14);
+      std::cout <<"      password:"<<password <<", parameter:"<<parameter<<"," << std::endl;
+
+
+
+
    if(FindModuleCommand(com))
       {
          // submit exported module command directly:
-         std::cout <<"Execute Registered ModuleCommand "<< com <<", string="<<par <<":"<< std::endl;
+         std::cout <<"Execute Registered ModuleCommand "<< com <<", string="<<parameter <<":"<< std::endl;
          std::string modname;
          std::string varname;
          ParseFullParameterName(com,modname, varname);
@@ -689,8 +703,12 @@ void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::st
       }
    else
       {
+
+
          // wrap other dim commands to be executed in manager thread:
-         dimc::Command* command= new dimc::Command(com.c_str(),par.c_str());
+         dimc::Command* command= new dimc::Command(com.c_str(),parameter.c_str());
+         if(command->IsName(_DIMC_COMMAND_SETPAR_))
+               command->SetCommandName(_DIMC_COMMAND_SETDIMPAR_); // avoid confusion with default core SetParameter command
          fManager->Submit(command);
       }
 
@@ -746,7 +764,7 @@ switch(severity)
 void dimc::Registry::RegisterModuleCommand(std::string name, dabc::CommandDefinition* def)
 {
  {  // begin lockguard
-    dabc::LockGuard g(fMainMutex);
+    dabc::LockGuard g(&fMainMutex);
     std::string comname=name;
     if(FindModuleCommand(name))
       {
@@ -768,7 +786,7 @@ void dimc::Registry::UnRegisterModuleCommand(std::string name)
 bool found=false;
 try
    {
-   dabc::LockGuard g(fMainMutex);
+   dabc::LockGuard g(&fMainMutex);
    std::vector<std::string>::iterator iter=find(fModuleCommandNames.begin(),fModuleCommandNames.end(),name);
    if(iter!=fModuleCommandNames.end())
       {
@@ -805,7 +823,7 @@ if(found)
 bool  dimc::Registry::FindModuleCommand(std::string name)
 {
 bool rev=false;
-dabc::LockGuard g(fMainMutex);
+dabc::LockGuard g(&fMainMutex);
 std::vector<std::string>::iterator iter=find(fModuleCommandNames.begin(),fModuleCommandNames.end(),name);
 if(iter!=fModuleCommandNames.end()) rev=true;
 return rev;
@@ -883,7 +901,7 @@ try
       EOUT(("!!!!!!!!! Never come here: unknown parameter type in SubscribeParameter for %s",par->GetName()));
    if(subscription)
       {
-         dabc::LockGuard g(fMainMutex);  // only protect our own list
+         dabc::LockGuard g(&fMainMutex);  // only protect our own list
          fParamInfos.push_back(subscription);
          //std::cout <<"Registry::SubscribeParameter has subscribed for "<<fulldimname << std::endl;
          return true;
@@ -919,7 +937,7 @@ if(par==0) return false;
 bool result=false;
 dimc::ParameterInfo* delinfo=0;
 { // begin lockguard
-dabc::LockGuard g(fMainMutex);
+dabc::LockGuard g(&fMainMutex);
    std::vector<dimc::ParameterInfo*>::iterator iter;
    for(iter=fParamInfos.begin(); iter!=fParamInfos.end(); ++iter)
       {

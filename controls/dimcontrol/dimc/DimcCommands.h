@@ -13,6 +13,7 @@
 #define DIMC_COMPAR_PAR      "Parameter"
 
 #define _DIMC_COMMAND_SETPAR_ "SetParameter"
+#define _DIMC_COMMAND_SETDIMPAR_ "SetDimParameter"
 #define _DIMC_COMMAND_SHUTDOWN_ "Shutdown"
 #define _DIMC_COMMAND_MANAGER_ "ManagerCommand"
 
