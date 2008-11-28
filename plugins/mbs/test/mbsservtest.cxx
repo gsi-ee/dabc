@@ -15,7 +15,6 @@
 #include "mbs/EventAPI.h"
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/ServerTransport.h"
-#include "mbs/Device.h"
 #include "mbs/Iterator.h"
 
 #define BUFFERSIZE 16*1024
@@ -173,16 +172,11 @@ extern "C" void StartGenerator()
 
     DOUT0(("Start MBS generator module"));
 
-    if (!dabc::mgr()->CreateDevice("mbs::Device", "MBS")) {
-       EOUT(("mbs::Device cannot be created - halt"));
-       exit(1);
-    }
-
     dabc::Module* m = new GeneratorModule("Generator");
     dabc::mgr()->MakeThreadForModule(m);
     dabc::mgr()->CreateMemoryPools();
 
-    dabc::Command* cmd = new dabc::CmdCreateTransport("Modules/Generator/Ports/Output", "MBS");
+    dabc::Command* cmd = new dabc::CmdCreateTransport("Modules/Generator/Ports/Output", mbs::typeServerTransport, "MbsTransport");
     cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
     cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
     if (!dabc::mgr()->Execute(cmd)) {
@@ -210,19 +204,14 @@ extern "C" void StartClient()
 
    DOUT1(("Start as client for node %s:%d", hostname, nport));
 
-   if (!dabc::mgr()->CreateDevice("mbs::Device", "MBS")) {
-      EOUT(("MbsDevice cannot be created - halt"));
-      exit(1);
-   }
-
    dabc::Module* m = new TestModuleAsync("Receiver");
 
    dabc::mgr()->MakeThreadForModule(m);
 
    dabc::mgr()->CreateMemoryPools();
 
-   dabc::Command* cmd = new dabc::CmdCreateTransport("Modules/Receiver/Ports/Input", "MBS");
-   cmd->SetBool("IsClient", true);
+   dabc::Command* cmd = new dabc::CmdCreateTransport("Modules/Receiver/Ports/Input", mbs::typeClientTransport, "MbsTransport");
+//   cmd->SetBool("IsClient", true);
    cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
    cmd->SetStr(mbs::xmlServerName, hostname);
    if (nport>0) cmd->SetInt(mbs::xmlServerPort, nport);

@@ -26,6 +26,8 @@ namespace dabc {
    class WorkingThread;
    class Application;
    class Configuration;
+   class Transport;
+   class Port;
 
    class Factory : public Basic {
       friend class Manager;
@@ -40,6 +42,8 @@ namespace dabc {
          virtual WorkingThread* CreateThread(const char* classname, const char* thrdname, const char* thrddev, Command* cmd) { return 0; }
 
          virtual Module* CreateModule(const char* classname, const char* modulename, Command* cmd) { return 0; }
+
+         virtual Transport* CreateTransport(Port* port, const char* typ, const char* thrdname, Command* cmd) { return 0; }
 
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option) { return 0; }
 

@@ -154,14 +154,9 @@ bool roc::ReadoutApplication::CreateAppModules()
 
    if (DataServerKind() != mbs::NoServer) {
 
-     // need mbs device for event server:
-     res = dabc::mgr()->CreateDevice("mbs::Device", "MBS");
-     DOUT1(("Create Mbs Device = %s", DBOOL(res)));
-     if (!res) return false;
-
    ///// connect module to mbs server:
       const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
-      cmd = new dabc::CmdCreateTransport(portname, "MBS");
+      cmd = new dabc::CmdCreateTransport(portname, mbs::typeServerTransport, "MbsServerThrd");
 
       // no need to set extra parameters - they will be taken from application !!!
 //      cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(DataServerKind())); //mbs::StreamServer ,mbs::TransportServer

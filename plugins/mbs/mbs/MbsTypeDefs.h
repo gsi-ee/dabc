@@ -161,18 +161,16 @@ namespace mbs {
 
    extern void SwapData(void* data, unsigned bytessize);
 
-
    extern const char* typeLmdInput;
    extern const char* typeLmdOutput;
-
-
+   extern const char* typeServerTransport;
+   extern const char* typeClientTransport;
 
    extern const char* xmlFileName;
    extern const char* xmlSizeLimit;
    extern const char* xmlServerName;
    extern const char* xmlServerKind;
    extern const char* xmlServerPort;
-   extern const char* xmlIsClient;
 };
 
 #endif

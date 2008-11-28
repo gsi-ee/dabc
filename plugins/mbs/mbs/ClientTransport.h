@@ -23,7 +23,6 @@
 
 namespace mbs {
 
-   class Device;
    class ClientTransport;
 
    class ClientIOProcessor : public dabc::SocketIOProcessor {
@@ -64,12 +63,10 @@ namespace mbs {
       friend class ClientIOProcessor;
 
       public:
-         ClientTransport(Device* dev, dabc::Port* port, int kind);
+         ClientTransport(dabc::Device* dev, dabc::Port* port, int kind, int fd, const std::string& thrdname);
          virtual ~ClientTransport();
 
          int Kind() const { return fKind; }
-         bool SetSocket(int fd);
-         bool OpenSocket(const char* hostname, int port);
 
          virtual bool ProvidesInput() { return true; }
          virtual void PortChanged();

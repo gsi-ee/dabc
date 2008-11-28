@@ -3,8 +3,7 @@
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
-
-#include "mbs/Device.h"
+#include "dabc/Device.h"
 
 mbs::ServerConnectProcessor::ServerConnectProcessor(ServerTransport* tr, int serversocket, int portnum) :
    dabc::SocketServerProcessor(serversocket, portnum),
@@ -182,9 +181,9 @@ void mbs::ServerIOProcessor::ProcessEvent(dabc::EventId evnt)
 
 // _____________________________________________________________________
 
-mbs::ServerTransport::ServerTransport(Device* dev, dabc::Port* port,
+mbs::ServerTransport::ServerTransport(dabc::Device* dev, dabc::Port* port,
                                       int kind,
-                                      int serversocket,
+                                      int serversocket, const std::string& thrdname,
                                       int portnum,
                                       uint32_t maxbufsize) :
    dabc::Transport(dev),
@@ -199,7 +198,7 @@ mbs::ServerTransport::ServerTransport(Device* dev, dabc::Port* port,
 {
    fServerPort = new ServerConnectProcessor(this, serversocket, portnum);
 
-   dabc::Manager::Instance()->MakeThreadFor(fServerPort, dev->ProcessorThreadName());
+   dabc::Manager::Instance()->MakeThreadFor(fServerPort, thrdname.c_str());
 }
 
 mbs::ServerTransport::~ServerTransport()
@@ -242,7 +241,7 @@ void mbs::ServerTransport::ProcessConnectionRequest(int fd)
 
    ServerIOProcessor* io = new ServerIOProcessor(this, fd);
 
-   dabc::Manager::Instance()->MakeThreadFor(io, GetDevice()->ProcessorThreadName());
+   dabc::Manager::Instance()->MakeThreadFor(io, fServerPort->ProcessorThreadName());
 
    DOUT1(("Create IO for client fd:%d", fd));
    io->SendInfo(fMaxBufferSize + sizeof(mbs::BufferHeader), true);

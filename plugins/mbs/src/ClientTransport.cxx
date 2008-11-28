@@ -3,8 +3,8 @@
 #include "dabc/Port.h"
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"
+#include "dabc/Device.h"
 
-#include "mbs/Device.h"
 
 mbs::ClientIOProcessor::ClientIOProcessor(ClientTransport* cl, int fd) :
    dabc::SocketIOProcessor(fd),
@@ -13,7 +13,6 @@ mbs::ClientIOProcessor::ClientIOProcessor(ClientTransport* cl, int fd) :
    fSwapping(false),
    fRecvBuffer(0)
 {
-
 }
 
 mbs::ClientIOProcessor::~ClientIOProcessor()
@@ -35,6 +34,8 @@ unsigned mbs::ClientIOProcessor::ReadBufferSize()
 
 void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
 {
+//   DOUT0(("ClientIOProcessor::Process event %d", dabc::GetEventCode(evnt)));
+
    switch (dabc::GetEventCode(evnt)) {
 
       case evReactivate:
@@ -178,7 +179,7 @@ void mbs::ClientIOProcessor::OnConnectionClosed()
 // _________________________________________________________________________________
 
 
-mbs::ClientTransport::ClientTransport(Device* dev, dabc::Port* port, int kind) :
+mbs::ClientTransport::ClientTransport(dabc::Device* dev, dabc::Port* port, int kind, int fd, const std::string& thrdname) :
    dabc::Transport(dev),
    dabc::MemoryPoolRequester(),
    fKind(kind),
@@ -186,6 +187,11 @@ mbs::ClientTransport::ClientTransport(Device* dev, dabc::Port* port, int kind) :
    fMutex(),
    fInpQueue(port->InputQueueCapacity())
 {
+   fIOProcessor = new ClientIOProcessor(this, fd);
+
+   dabc::mgr()->MakeThreadFor(fIOProcessor, thrdname.c_str());
+
+   fIOProcessor->FireEvent(ClientIOProcessor::evRecvInfo);
 }
 
 mbs::ClientTransport::~ClientTransport()
@@ -203,35 +209,6 @@ bool mbs::ClientTransport::ProcessPoolRequest()
    if (fIOProcessor==0) return false;
 
    fIOProcessor->FireEvent(ClientIOProcessor::evDataInput);
-
-   return true;
-}
-
-bool mbs::ClientTransport::OpenSocket(const char* hostname, int port)
-{
-   int fd = dabc::SocketThread::StartClient(hostname, port);
-   if (fd<=0) return false;
-   return SetSocket(fd);
-}
-
-bool mbs::ClientTransport::SetSocket(int fd)
-{
-   if (fIOProcessor!=0) {
-      EOUT(("There is connection already exists"));
-      close(fd);
-      return false;
-   }
-
-   if (fd<=0) {
-      EOUT(("Wrong socket descriptor %d", fd));
-      return false;
-   }
-
-   fIOProcessor = new ClientIOProcessor(this, fd);
-
-   dabc::mgr()->MakeThreadFor(fIOProcessor, GetDevice()->ProcessorThreadName());
-
-   fIOProcessor->FireEvent(ClientIOProcessor::evRecvInfo);
 
    return true;
 }

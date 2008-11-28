@@ -192,11 +192,12 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateTransport"; }
 
-         CmdCreateTransport(const char* portname, const char* devname) :
+         CmdCreateTransport(const char* portname, const char* transportkind, const char* thrdname = 0) :
             Command(CmdName())
          {
             SetPar("PortName", portname);
-            SetPar("DevName", devname);
+            SetPar("TransportKind", transportkind);
+            SetPar("TransportThrdName", thrdname);
          }
    };
 
@@ -411,6 +412,8 @@ namespace dabc {
            * If thread name is not specified, module name is used */
          bool MakeThreadForModule(Module* m, const char* thrdname = 0);
 
+         std::string MakeThreadName(const char* base = "Thread");
+
          const char* CurrentThrdName();
 
          void RunManagerMainLoop();
@@ -527,7 +530,7 @@ namespace dabc {
          void Print();
 
          /** Delete deriver from Basic class object in manager thread.
-           * Usefull as replasement of call "delete this;" */
+           * Useful as replacement of call "delete this;" */
          virtual void DestroyObject(Basic* obj);
 
          /** Delete of any kind of object in manager thread */
@@ -564,9 +567,9 @@ namespace dabc {
 
          bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
 
-         bool CreateTransport(const char* portname, const char* devicename)
+         bool CreateTransport(const char* portname, const char* transportkind, const char* thrdname = 0)
          {
-            return Execute(new CmdCreateTransport(portname, devicename));
+            return Execute(new CmdCreateTransport(portname, transportkind, thrdname));
          }
 
          FileIO* CreateFileIO(const char* typ, const char* name, int option);

@@ -54,13 +54,7 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
       if (!dabc::mgr()->Execute(cmd, 10)) return false;
    } else {
 
-      if (!dabc::mgr()->CreateDevice("mbs::Device", "MBS")) {
-         EOUT(("mbs::Device cannot be created - halt"));
-         return false;
-      }
-
-      dabc::Command* cmd = new dabc::CmdCreateTransport(portname, "MBS");
-      cmd->SetBool(mbs::xmlIsClient, true);
+      dabc::Command* cmd = new dabc::CmdCreateTransport(portname, mbs::typeClientTransport, "MbsReadoutThrd");
       cmd->SetStr(mbs::xmlServerName, cfg);
 
       if (!dabc::mgr()->Execute(cmd, 10)) return false;

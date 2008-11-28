@@ -881,14 +881,41 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
        cmd_res = cmd_bool(dev!=0);
    } else
    if (cmd->IsName(CmdCreateTransport::CmdName())) {
-      const char* devname = cmd->GetStr("DevName");
-      Device* dev = FindDevice(devname);
+      const char* portname = cmd->GetStr("PortName");
+      const char* transportkind = cmd->GetStr("TransportKind");
+      const char* thrdname = cmd->GetStr("TransportThrdName");
 
-      if (dev==0)
+      Port* port = FindPort(portname);
+      Device* dev = FindDevice(transportkind);
+
+      if (port==0) {
+         EOUT(("Port %s not found - cannot create transport %s", portname, transportkind));
          cmd_res = cmd_false;
-      else {
+      } else
+      if (dev!=0) {
          dev->Submit(cmd);
          cmd_res = cmd_postponed;
+      } else {
+         Transport* tr = 0;
+
+         Folder* folder = GetFactoriesFolder(false);
+
+         if (folder!=0)
+            for (unsigned n=0;n<folder->NumChilds();n++) {
+               Factory* factory =
+                  dynamic_cast<Factory*> (folder->GetChild(n));
+               if (factory!=0)
+                  tr = factory->CreateTransport(port, transportkind, thrdname, cmd);
+               if (tr!=0) break;
+            }
+
+         if (tr==0) {
+            EOUT(("Cannot create transport of kind %s", transportkind));
+            cmd_res = cmd_false;
+         } else {
+            port->AssignTransport(tr);
+            cmd_res = cmd_true;
+         }
       }
    } else
    if (cmd->IsName(CmdCreateThread::CmdName())) {
@@ -1635,6 +1662,20 @@ dabc::WorkingThread* dabc::Manager::CreateThread(const char* thrdname, const cha
    return thrd;
 }
 
+std::string dabc::Manager::MakeThreadName(const char* base)
+{
+   if ((base==0) || (strlen(base)==0)) base = "Thread";
+
+   std::string newname;
+
+   int cnt = 0;
+   do {
+     dabc::formats(newname, "%s%d", base, cnt++);
+   } while (FindThread(newname.c_str()));
+
+   return newname;
+}
+
 bool dabc::Manager::MakeThreadFor(WorkingProcessor* proc, const char* thrdname, unsigned startmode)
 {
    if (proc==0) return false;
@@ -1643,12 +1684,8 @@ bool dabc::Manager::MakeThreadFor(WorkingProcessor* proc, const char* thrdname, 
 
    if ((thrdname==0) || (strlen(thrdname)==0)) {
       EOUT(("Thread name not specified - generate default"));
-
-      int cnt = 0;
-      do {
-         dabc::formats(newname, "Thread%d", cnt++);
-         thrdname = newname.c_str();
-      } while (FindThread(thrdname));
+      newname = MakeThreadName("Thread");
+      thrdname = newname.c_str();
    }
 
    WorkingThread* thrd = CreateThread(thrdname, proc->RequiredThrdClass(), startmode);

@@ -6,13 +6,14 @@
 
 const char* mbs::typeLmdInput         = "mbs::LmdInput";
 const char* mbs::typeLmdOutput        = "mbs::LmdOutput";
+const char* mbs::typeServerTransport  = "mbs::ServerTransport";
+const char* mbs::typeClientTransport  = "mbs::ClientTransport";
 
 const char* mbs::xmlFileName          = "MbsFileName";
 const char* mbs::xmlSizeLimit         = "MbsFileSizeLimit";
 const char* mbs::xmlServerName        = "MbsServerName";
 const char* mbs::xmlServerKind        = "MbsServerKind";
 const char* mbs::xmlServerPort        = "MbsServerPort";
-const char* mbs::xmlIsClient          = "IsClient";
 
 unsigned mbs::EventHeader::NumSubevents() const
 {

@@ -4,22 +4,83 @@
 #include "dabc/logging.h"
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
+#include "dabc/SocketThread.h"
+#include "dabc/Port.h"
 
 #include "mbs/EventAPI.h"
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
-#include "mbs/Device.h"
+#include "mbs/ServerTransport.h"
+#include "mbs/ClientTransport.h"
 
 mbs::Factory mbsfactory("mbs");
 
-dabc::Device* mbs::Factory::CreateDevice(const char* classname, const char* devname, dabc::Command*)
+dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ, const char* thrdname, dabc::Command* cmd)
 {
-   if (strcmp(classname, "mbs::Device")!=0) return 0;
+   bool isserver = true;
 
-   DOUT5(("Creating MBS device with name %s", devname));
+   if (strcmp(typ, mbs::typeServerTransport)==0)
+      isserver = true;
+   else
+   if (strcmp(typ, mbs::typeClientTransport)==0)
+      isserver = false;
+   else
+      return 0;
 
-   return new mbs::Device(dabc::mgr()->GetDevicesFolder(true), devname);
+   std::string kindstr = port->GetCfgStr(xmlServerKind, ServerKindToStr(mbs::TransportServer), cmd);
+
+   int kind = StrToServerKind(kindstr.c_str());
+   if (kind == mbs::NoServer) {
+      EOUT(("Wrong configured server type %s, use transport", kindstr.c_str()));
+      kind = mbs::TransportServer;
+   }
+
+   int portnum = port->GetCfgInt(xmlServerPort, DefualtServerPort(kind), cmd);
+
+   dabc::Device* dev = (dabc::Device*) dabc::mgr()->FindLocalDevice();
+   if (dev==0) {
+      EOUT(("Local device not found"));
+      return 0;
+   }
+
+   std::string newthrdname;
+   if (thrdname==0)
+      newthrdname = dabc::mgr()->MakeThreadName();
+   else
+      newthrdname = thrdname;
+
+   if (!isserver) {
+
+      std::string hostname = port->GetCfgStr(xmlServerName, "localhost", cmd);
+
+      int fd = dabc::SocketThread::StartClient(hostname.c_str(), portnum);
+
+      if (fd<=0) return 0;
+
+      DOUT1(("Creating client kind = %s  host %s port %d thrd %s", kindstr.c_str(), hostname.c_str(), portnum, newthrdname.c_str()));
+
+      ClientTransport* tr = new ClientTransport(dev, port, kind, fd, newthrdname);
+
+      return tr;
+   }
+
+   uint32_t maxbufsize = port->GetCfgInt(dabc::xmlBufferSize, 16*1024, cmd);
+
+   int servfd = dabc::SocketThread::StartServer(portnum);
+
+   if (servfd<0) return 0;
+
+   DOUT1(("!!!!! Starts MBS server kind:%s on port %d maxbufsize %u", kindstr.c_str(), portnum, maxbufsize));
+
+   ServerTransport* tr = new ServerTransport(dev, port, kind, servfd, newthrdname, portnum, maxbufsize);
+
+   // connect to port immediately, even before client(s) really connected
+   // This will fill output queue of the transport, but buffers should not be lost
+   // Connection/disconnection of client will be invisible for the module
+
+   return tr;
 }
+
 
 dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ, const char* name, dabc::Command* cmd)
 {

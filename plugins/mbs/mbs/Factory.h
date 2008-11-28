@@ -11,7 +11,7 @@ namespace mbs {
       public:
          Factory(const char* name) : dabc::Factory(name) {}
 
-         virtual dabc::Device* CreateDevice(const char* classname, const char* devname, dabc::Command*);
+         virtual dabc::Transport* CreateTransport(dabc::Port* port, const char* typ, const char* thrdname, dabc::Command*);
 
          virtual dabc::DataInput* CreateDataInput(const char* typ, const char* name, dabc::Command* cmd = 0);
 

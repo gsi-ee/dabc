@@ -20,7 +20,6 @@
 
 namespace mbs {
 
-   class Device;
    class ServerTransport;
 
    class ServerConnectProcessor : public dabc::SocketServerProcessor {
@@ -74,9 +73,9 @@ namespace mbs {
    class ServerTransport : public dabc::Transport {
 
       public:
-         ServerTransport(Device* dev, dabc::Port* port,
+         ServerTransport(dabc::Device* dev, dabc::Port* port,
                          int kind,
-                         int serversocket,
+                         int serversocket, const std::string& thrdname,
                          int portnum,
                          uint32_t maxbufsize = 16*1024);
          virtual ~ServerTransport();
