@@ -1,6 +1,9 @@
 #include "dabc/Factory.h"
 
 #include "dabc/Manager.h"
+#include "dabc/Port.h"
+#include "dabc/DataIO.h"
+#include "dabc/DataIOTransport.h"
 
 const char* dabc::Factory::DfltAppClass(const char* newdefltclass)
 {
@@ -42,4 +45,37 @@ bool dabc::Factory::CreateManager(const char* kind, Configuration* cfg)
       if (Factories()->Item(n)->CreateManagerInstance(kind, cfg)) return true;
 
    return false;
+}
+
+dabc::Transport* dabc::Factory::CreateTransport(dabc::Port* port, const char* typ, const char* thrdname, dabc::Command* cmd)
+{
+   dabc::DataInput* inp = CreateDataInput(typ, 0);
+   if ((inp!=0) && !inp->Read_Init(cmd, port)) {
+      EOUT(("Input object %s cannot be initialized", typ));
+      delete inp;
+      inp = 0;
+   }
+
+   dabc::DataOutput* out = CreateDataOutput(typ, 0);
+   if ((out!=0) && !out->Write_Init(cmd, port)) {
+      EOUT(("Output object %s cannot be initialized", typ));
+      delete out;
+      out = 0;
+   }
+
+   if ((inp==0) && (out==0)) return 0;
+
+   Device* dev = (Device*) dabc::mgr()->FindLocalDevice();
+   DataIOTransport* tr = new DataIOTransport(dev, port, inp, out);
+
+   if ((thrdname==0) || (strlen(thrdname)==0))
+      thrdname = port->ProcessorThreadName();
+
+   if (!dabc::mgr()->MakeThreadFor(tr, thrdname)) {
+      EOUT(("Fail to create thread for transport"));
+      delete tr;
+      tr = 0;
+   }
+
+   return tr;
 }

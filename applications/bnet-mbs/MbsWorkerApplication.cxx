@@ -49,7 +49,7 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
    } else
    if ((cfg.find("lmd") != cfg.npos) || (cfg.find("LMD") != cfg.npos)) {
-      dabc::Command* cmd = new dabc::CmdCreateInputTransport(portname, mbs::typeLmdInput, "MbsInpThrd");
+      dabc::Command* cmd = new dabc::CmdCreateTransport(portname, mbs::typeLmdInput, "MbsInpThrd");
       cmd->SetStr(mbs::xmlFileName, cfg);
       if (!dabc::mgr()->Execute(cmd, 10)) return false;
    } else {
@@ -96,7 +96,7 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
    if (outfile.length()==0)
       return bnet::WorkerApplication::CreateStorage(portname);
 
-   dabc::Command* cmd = new dabc::CmdCreateOutputTransport(portname, mbs::typeLmdOutput, "MbsIOThrd");
+   dabc::Command* cmd = new dabc::CmdCreateTransport(portname, mbs::typeLmdOutput, "MbsIOThrd");
    cmd->SetStr(mbs::xmlFileName, outfile);
 
    bool res = dabc::mgr()->Execute(cmd, 5);

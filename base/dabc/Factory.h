@@ -43,7 +43,7 @@ namespace dabc {
 
          virtual Module* CreateModule(const char* classname, const char* modulename, Command* cmd) { return 0; }
 
-         virtual Transport* CreateTransport(Port* port, const char* typ, const char* thrdname, Command* cmd) { return 0; }
+         virtual Transport* CreateTransport(Port* port, const char* typ, const char* thrdname, Command* cmd);
 
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option) { return 0; }
 

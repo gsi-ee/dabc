@@ -25,7 +25,7 @@ dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ
    if (strcmp(typ, mbs::typeClientTransport)==0)
       isserver = false;
    else
-      return 0;
+      return dabc::Factory::CreateTransport(port, typ, thrdname, cmd);
 
    std::string kindstr = port->GetCfgStr(xmlServerKind, ServerKindToStr(mbs::TransportServer), cmd);
 

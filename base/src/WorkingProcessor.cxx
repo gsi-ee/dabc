@@ -309,79 +309,69 @@ bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const
 
 std::string dabc::WorkingProcessor::GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd)
 {
-   std::string v = dfltvalue;
+   if (cmd && cmd->HasPar(name))
+      return cmd->GetStr(name, dfltvalue.c_str());
 
    WorkingProcessor* cfgsrc = this;
    while (cfgsrc)
-      if (cfgsrc->FindPar(name)) {
-         v = cfgsrc->GetParStr(name, v);
-         break;
-      } else
+      if (cfgsrc->FindPar(name))
+         return cfgsrc->GetParStr(name, dfltvalue);
+      else
          cfgsrc = cfgsrc->GetCfgMaster();
 
-//   if (GetCfgMaster())
-//      v = GetCfgMaster()->GetParStr(name, dfltvalue);
-//   v = GetParStr(name, v);
-   if (cmd)
-      v = cmd->GetStr(name, v.c_str());
-   if (FindPar(name)==0) {
-      Parameter* par = CreateParStr(name, v.c_str());
-      if (par) par->SetFixed(true);
-   }
-   return v;
+   Parameter* par = CreateParStr(name, dfltvalue.c_str());
+   if (par) par->SetFixed(true);
+   return dfltvalue;
 }
 
 double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, Command* cmd)
 {
+   if (cmd && cmd->HasPar(name))
+      return cmd->GetDouble(name, dfltvalue);
+
    WorkingProcessor* cfgsrc = this;
    while (cfgsrc)
-      if (cfgsrc->FindPar(name)) {
-         dfltvalue = cfgsrc->GetParDouble(name, dfltvalue);
-         break;
-      } else
+      if (cfgsrc->FindPar(name))
+         return cfgsrc->GetParDouble(name, dfltvalue);
+      else
          cfgsrc = cfgsrc->GetCfgMaster();
-   if (cmd)
-      dfltvalue = cmd->GetDouble(name, dfltvalue);
-   if (FindPar(name)==0) {
-      Parameter* par = CreateParDouble(name, dfltvalue);
-      if (par) par->SetFixed(true);
-   }
+
+   Parameter* par = CreateParDouble(name, dfltvalue);
+   if (par) par->SetFixed(true);
    return dfltvalue;
 }
 
 int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* cmd)
 {
+   if (cmd && cmd->HasPar(name))
+      return cmd->GetInt(name, dfltvalue);
+
    WorkingProcessor* cfgsrc = this;
    while (cfgsrc)
-      if (cfgsrc->FindPar(name)) {
-         dfltvalue = cfgsrc->GetParInt(name, dfltvalue);
-         break;
-      } else
+      if (cfgsrc->FindPar(name))
+         return cfgsrc->GetParInt(name, dfltvalue);
+      else
          cfgsrc = cfgsrc->GetCfgMaster();
-   if (cmd)
-      dfltvalue = cmd->GetInt(name, dfltvalue);
-   if (FindPar(name)==0) {
-      Parameter* par = CreateParInt(name, dfltvalue);
-      if (par) par->SetFixed(true);
-   }
+
+   Parameter* par = CreateParInt(name, dfltvalue);
+   if (par) par->SetFixed(true);
    return dfltvalue;
 }
 
 bool dabc::WorkingProcessor::GetCfgBool(const char* name, bool dfltvalue, Command* cmd)
 {
+   if (cmd && cmd->HasPar(name))
+      return cmd->GetBool(name, dfltvalue);
+
    WorkingProcessor* cfgsrc = this;
    while (cfgsrc)
-      if (cfgsrc->FindPar(name)) {
-         dfltvalue = cfgsrc->GetParBool(name, dfltvalue);
-         break;
-      } else
+      if (cfgsrc->FindPar(name))
+         return cfgsrc->GetParBool(name, dfltvalue);
+      else
          cfgsrc = cfgsrc->GetCfgMaster();
-   if (cmd)
-      dfltvalue = cmd->GetBool(name, dfltvalue);
-   if (FindPar(name)==0) {
-      Parameter* par = CreateParBool(name, dfltvalue);
-      if (par) par->SetFixed(true);
-   }
+
+   Parameter* par = CreateParBool(name, dfltvalue);
+   if (par) par->SetFixed(true);
    return dfltvalue;
 }
 

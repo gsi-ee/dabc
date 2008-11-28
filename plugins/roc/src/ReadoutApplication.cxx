@@ -115,11 +115,11 @@ bool roc::ReadoutApplication::CreateAppModules()
    if (OutputFileName().length()>0) {
       cmd = 0;
       if (DoTaking()) {
-         cmd = new dabc::CmdCreateOutputTransport("RocComb/Ports/Output1", mbs::typeLmdOutput);
+         cmd = new dabc::CmdCreateTransport("RocComb/Ports/Output1", mbs::typeLmdOutput);
          // no need to set extra size parameters - it will be taken from application
          // if (FileSizeLimit()>0) cmd->SetInt(mbs::xmlSizeLimit, FileSizeLimit());
       } else {
-         cmd = new dabc::CmdCreateInputTransport("RocCalibr/Ports/Input", mbs::typeLmdInput);
+         cmd = new dabc::CmdCreateTransport("RocCalibr/Ports/Input", mbs::typeLmdInput);
          // no need to extra set of buffer size - it will be taken from module itself
          //  cmd->SetInt(dabc::xmlBufferSize, GetParInt(dabc::xmlBufferSize, 8192));
       }
@@ -140,7 +140,7 @@ bool roc::ReadoutApplication::CreateAppModules()
           (CalibrFileName().rfind(".ROOT")!=std::string::npos))
               outtype = "roc::TreeOutput";
 
-      cmd = new dabc::CmdCreateOutputTransport("RocCalibr/Ports/Output1", outtype);
+      cmd = new dabc::CmdCreateTransport("RocCalibr/Ports/Output1", outtype);
 
       cmd->SetStr(mbs::xmlFileName, CalibrFileName().c_str());
       // no need to set extra size parameters - it will be taken from application
