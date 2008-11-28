@@ -272,7 +272,7 @@ void CreateAllModules(dabc::StandaloneManager &m, int buffersize, int numworkers
       }
 
    for (int node=0;node<m.NumNodes();node++)
-      m.SubmitRemote(cli, new dabc::Command("CreateMemoryPools"), node);
+      m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
 
    bool res = cli.WaitCommands(5);
 
@@ -486,7 +486,7 @@ void RunStandaloneTest(dabc::StandaloneManager &m, int nmodules = 1)
       m.SubmitCl(cli, cmd);
    }
 
-   m.SubmitCl(cli, new dabc::Command("CreateMemoryPools"));
+   m.SubmitCl(cli, new dabc::CmdCreateMemoryPools());
 
    for (int nm1=0;nm1<nmodules;nm1++)
       for (int nm2=0;nm2<nmodules;nm2++)
@@ -577,7 +577,7 @@ void OneToAllLoop(dabc::StandaloneManager &m, int deviceid)
    m.SubmitLocal(cli, cmd);
 
    for (int node=0;node<m.NumNodes();node++)
-      m.SubmitRemote(cli, new dabc::Command("CreateMemoryPools"), node);
+      m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
 
    bool res = cli.WaitCommands(5);
 
@@ -661,7 +661,7 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
    }
 
    for (int node=0;node<m.NumNodes();node++)
-      m.SubmitRemote(cli, new dabc::Command("CreateMemoryPools"), node);
+      m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
 
    bool res = cli.WaitCommands(5);
 

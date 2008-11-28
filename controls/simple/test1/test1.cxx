@@ -304,7 +304,7 @@ void CreateAllModules(dabc::StandaloneManager &m, int numworkers = 0)
 //      m.SubmitRemote(cli, new dabc::CmdCreatePool("RecvPool", TestBufferSize * m.NumNodes() * TestRecvQueueSize * 2,  TestBufferSize), node);
 
    for (int node=FirstNode;node<m.NumNodes();node++)
-      m.SubmitRemote(cli, new dabc::Command("CreateMemoryPools"), node);
+      m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
 
    bool res = cli.WaitCommands(5);
 

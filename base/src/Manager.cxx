@@ -498,7 +498,7 @@ dabc::Module* dabc::Manager::FindModule(const char* name)
 
 bool dabc::Manager::DeleteModule(const char* name)
 {
-   return Execute(new CommandDeleteModule(name));
+   return Execute(new CmdDeleteModule(name));
 }
 
 bool dabc::Manager::IsModuleRunning(const char* name)
@@ -547,7 +547,7 @@ dabc::Device* dabc::Manager::FindDevice(const char* name)
    return dev;
 }
 
-dabc::LocalDevice* dabc::Manager::FindLocalDevice(const char* name)
+dabc::Device* dabc::Manager::FindLocalDevice(const char* name)
 {
    if ((name==0) || (strlen(name)==0)) name = LocalDeviceName();
 
@@ -928,7 +928,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
    } else
    if (cmd->IsName("NullConnect")) {
       Port* port = FindPort(cmd->GetPar("Port"));
-      LocalDevice* dev = FindLocalDevice();
+      LocalDevice* dev = (LocalDevice*) FindLocalDevice();
 
       if (dev && port)
          cmd_res = dev->MakeNullTransport(port);
@@ -942,31 +942,31 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       unsigned headersize = cmd->GetInt("HeaderSize", 0);
       cmd_res = cmd_bool(CreateMemoryPool(poolname, buffersize, numbuffers, 0, headersize));
    } else
-   if (cmd->IsName("CreateMemoryPools")) {
+   if (cmd->IsName(CmdCreateMemoryPools::CmdName())) {
       cmd_res = DoCreateMemoryPools();
    } else
-   if (cmd->IsName("CleanupManager")) {
+   if (cmd->IsName(CmdCleanupManager::CmdName())) {
       cmd_res = DoCleanupManager(cmd->GetInt("AppId", 0));
    } else
-   if (cmd->IsName("StartModule")) {
+   if (cmd->IsName(CmdStartModule::CmdName())) {
       dabc::Module* m = FindModule(cmd->GetStr("Module",""));
       if (m!=0) m->Start();
 //      DOUT1(("Call module start %s", (m ? m->GetName() : "null")));
       cmd_res = cmd_bool(m!=0);
    } else
-   if (cmd->IsName("StopModule")) {
+   if (cmd->IsName(CmdStopModule::CmdName())) {
       dabc::Module* m = FindModule(cmd->GetStr("Module",""));
       if (m!=0) m->Stop();
 //      DOUT1(("Call module stop %s", (m ? m->GetName() : "null")));
       cmd_res = cmd_bool(m!=0);
    } else
-   if (cmd->IsName("DeleteModule")) {
+   if (cmd->IsName(CmdDeleteModule::CmdName())) {
       dabc::Module* m = FindModule(cmd->GetStr("Module",""));
       if (m!=0) delete m;
 //      DOUT1(("Call module stop %s", (m ? m->GetName() : "null")));
       cmd_res = cmd_bool(m!=0);
    } else
-   if (cmd->IsName("StartAllModules")) {
+   if (cmd->IsName(CmdStartAllModules::CmdName())) {
       dabc::Folder* folder = GetModulesFolder(false);
 
       int appid = cmd->GetInt("AppId", 0);
@@ -982,7 +982,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
               m->Start();
         }
    } else
-   if (cmd->IsName("StopAllModules")) {
+   if (cmd->IsName(CmdStopAllModules::CmdName())) {
       dabc::Folder* folder = GetModulesFolder(false);
 
       int appid = cmd->GetInt("AppId", 0);
@@ -1024,7 +1024,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       // first check local connect
       if ((manager1name.length()==0) && (manager2name.length()==0)) {
 
-         LocalDevice* dev = FindLocalDevice(cmd->GetStr("Device"));
+         Device* dev = FindLocalDevice(cmd->GetStr("Device"));
          if (dev==0) dev = FindLocalDevice();
 
          if (dev) {
@@ -1297,22 +1297,6 @@ bool dabc::Manager::DoCreateMemoryPools()
    return res;
 }
 
-bool dabc::Manager::DoLocalPortConnect(const char* port1name, const char* port2name, const char* devname)
-{
-   DOUT3(("Doint local connect %s %s dev:%s", port1name, port2name, devname));
-
-   Port* port1 = FindPort(port1name);
-   Port* port2 = FindPort(port2name);
-
-   if (port1==0) EOUT(("Cannot find port %s", port1name));
-   if (port2==0) EOUT(("Cannot find port %s", port2name));
-
-   LocalDevice* dev = FindLocalDevice(devname);
-   if (dev==0) dev = FindLocalDevice();
-
-   return dev ? dev->ConnectPorts(port1, port2) : false;
-}
-
 void dabc::Manager::ModuleExecption(Module* m, const char* msg)
 {
    EOUT(("EXCEPTION Module: %s message %s", m->GetName(), msg));
@@ -1387,12 +1371,12 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
 
 void dabc::Manager::StartModule(const char* modulename)
 {
-   Execute(new dabc::CommandStartModule(modulename));
+   Execute(new dabc::CmdStartModule(modulename));
 }
 
 void dabc::Manager::StopModule(const char* modulename)
 {
-   Execute(new dabc::CommandStopModule(modulename));
+   Execute(new dabc::CmdStopModule(modulename));
 }
 
 bool dabc::Manager::StartAllModules(int appid)
@@ -1407,7 +1391,7 @@ bool dabc::Manager::StopAllModules(int appid)
 
 bool dabc::Manager::CreateMemoryPools()
 {
-   return Execute("CreateMemoryPools");
+   return Execute(new CmdCreateMemoryPools());
 }
 
 bool dabc::Manager::CleanupManager(int appid)
@@ -1901,20 +1885,9 @@ void dabc::Manager::AddFactory(Factory* factory)
    DOUT3(("Add factory %s", factory->GetName()));
 }
 
-bool dabc::Manager::CreateApplication(const char* classname, const char* appname, const char* appthrd, Command* cmd)
+bool dabc::Manager::CreateApplication(const char* classname, const char* appname, const char* appthrd)
 {
-   if (cmd==0)
-      cmd = new CmdCreateApplication(classname, appname, appthrd);
-   else {
-      if (!cmd->IsName(CmdCreateApplication::CmdName())) {
-          EOUT(("Wrong command name %s", cmd->GetName()));
-          dabc::Command::Reply(cmd, false);
-          return false;
-      }
-      CmdCreateApplication::SetArguments(cmd, classname, appname, appthrd);
-   }
-
-   return Execute(cmd);
+   return Execute(new CmdCreateApplication(classname, appname, appthrd));
 }
 
 bool dabc::Manager::CreateDevice(const char* classname, const char* devname)

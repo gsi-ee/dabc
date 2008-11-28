@@ -41,7 +41,6 @@ namespace dabc {
    class Application;
    class Factory;
    class DependPairList;
-   class LocalDevice;
    class DataInput;
    class DataOutput;
    class FileIO;
@@ -75,68 +74,68 @@ namespace dabc {
          }
    };
 
+   class CmdCreateMemoryPools : public Command {
+      public:
+         static const char* CmdName() { return "CreateMemoryPools"; }
+
+         CmdCreateMemoryPools() : Command(CmdName()) {}
+   };
+
+
    class CmdDeletePool : public Command {
       public:
          static const char* CmdName() { return "DeletePool"; }
-         CmdDeletePool(const char* name) :
-            Command(CmdName())
-         {
-            SetStr("PoolName", name);
-         }
+
+         CmdDeletePool(const char* name) : Command(CmdName())
+            { SetStr("PoolName", name); }
    };
 
-   class CommandStartModule : public Command {
+   class CmdStartModule : public Command {
       public:
-         CommandStartModule(const char* modulename) :
-            Command("StartModule")
-         {
-            SetPar("Module", modulename);
-         }
+         static const char* CmdName() { return "StartModule"; }
+
+         CmdStartModule(const char* modulename) : Command(CmdName())
+            { SetPar("Module", modulename); }
    };
 
-   class CommandStopModule : public Command {
+   class CmdStopModule : public Command {
       public:
-         CommandStopModule(const char* modulename) :
-            Command("StopModule")
-         {
-            SetPar("Module", modulename);
-         }
+         static const char* CmdName() { return "StopModule"; }
+
+         CmdStopModule(const char* modulename) : Command(CmdName())
+           { SetPar("Module", modulename); }
    };
 
-   class CommandDeleteModule : public Command {
+   class CmdDeleteModule : public Command {
       public:
-         CommandDeleteModule(const char* modulename) :
-            Command("DeleteModule")
-         {
-            SetPar("Module", modulename);
-         }
+         static const char* CmdName() { return "DeleteModule"; }
+
+         CmdDeleteModule(const char* modulename) : Command(CmdName())
+            { SetPar("Module", modulename); }
    };
 
    class CmdStartAllModules : public Command {
       public:
-         CmdStartAllModules(int appid = 0) :
-            Command("StartAllModules")
-         {
-            SetInt("AppId", appid);
-         }
+         static const char* CmdName() { return "StartAllModules"; }
+
+         CmdStartAllModules(int appid = 0) : Command(CmdName())
+            { SetInt("AppId", appid); }
    };
 
    class CmdStopAllModules : public Command {
       public:
-         CmdStopAllModules(int appid = 0) :
-            Command("StopAllModules")
-         {
-            SetInt("AppId", appid);
-         }
+         static const char* CmdName() { return "StopAllModules"; }
+
+         CmdStopAllModules(int appid = 0) : Command(CmdName())
+            { SetInt("AppId", appid); }
    };
 
    class CmdCleanupManager : public Command {
       public:
-         CmdCleanupManager(int appid = 0) :
-            Command("CleanupManager")
-         {
-            SetInt("AppId", appid);
-         }
+         static const char* CmdName() { return "CleanupManager"; }
+
+         CmdCleanupManager(int appid = 0) : Command(CmdName())
+            { SetInt("AppId", appid); }
    };
 
    class CmdCreateApplication : public Command {
@@ -146,14 +145,9 @@ namespace dabc {
          CmdCreateApplication(const char* appclass, const char* appname = 0, const char* appthrd = 0) :
             Command(CmdName())
          {
-            SetArguments(this, appclass, appname, appthrd);
-         }
-
-         static void SetArguments(Command* cmd, const char* appclass, const char* appname, const char* appthrd)
-         {
-            cmd->SetStr("AppClass", appclass);
-            cmd->SetStr("AppName", appname);
-            cmd->SetStr("AppThrd", appthrd);
+            SetStr("AppClass", appclass);
+            SetStr("AppName", appname);
+            SetStr("AppThrd", appthrd);
          }
      };
 
@@ -177,14 +171,9 @@ namespace dabc {
          CmdCreateThread(const char* thrdname, const char* thrdclass = 0,  const char* devname = 0) :
             Command(CmdName())
          {
-            SetArguments(this, thrdname, thrdclass, devname);
-         }
-
-         static void SetArguments(Command* cmd, const char* thrdname, const char* thrdclass = 0, const char* devname = 0)
-         {
-            cmd->SetStr("ThrdName", thrdname);
-            cmd->SetStr("ThrdClass", thrdclass);
-            cmd->SetStr("ThrdDev", devname);
+            SetStr("ThrdName", thrdname);
+            SetStr("ThrdClass", thrdclass);
+            SetStr("ThrdDev", devname);
          }
    };
 
@@ -369,7 +358,7 @@ namespace dabc {
          Factory* FindFactory(const char* name);
          Device* FindDevice(const char* name);
          WorkingThread* FindThread(const char* name, const char* required_class = 0);
-         LocalDevice* FindLocalDevice(const char* name = 0);
+         Device* FindLocalDevice(const char* name = 0);
          Application* GetApp();
 
          // ------------------ threads manipulation ------------------
@@ -529,7 +518,7 @@ namespace dabc {
 
          // ------------ access to factories method -------------
 
-         bool CreateApplication(const char* classname = 0, const char* appname = 0, const char* appthrd = 0, Command* cmd = 0);
+         bool CreateApplication(const char* classname = 0, const char* appname = 0, const char* appthrd = 0);
 
          bool CreateDevice(const char* classname, const char* devname);
 
@@ -590,7 +579,6 @@ namespace dabc {
          virtual double ProcessTimeout(double last_diff);
 
          bool DoCreateMemoryPools();
-         bool DoLocalPortConnect(const char* port1name, const char* port2name, const char* devname = 0);
          void DoCleanupThreads();
          void DoCleanupDevices(bool force);
          bool DoCleanupManager(int appid);

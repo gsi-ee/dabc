@@ -65,7 +65,7 @@ dabc::Transport* dabc::Factory::CreateTransport(dabc::Port* port, const char* ty
 
    if ((inp==0) && (out==0)) return 0;
 
-   Device* dev = (Device*) dabc::mgr()->FindLocalDevice();
+   Device* dev = dabc::mgr()->FindLocalDevice();
    DataIOTransport* tr = new DataIOTransport(dev, port, inp, out);
 
    if ((thrdname==0) || (strlen(thrdname)==0))
