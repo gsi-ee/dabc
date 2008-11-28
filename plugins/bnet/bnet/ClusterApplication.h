@@ -21,7 +21,7 @@ namespace bnet {
 
          virtual bool CreateAppModules();
 
-         std::string NetDevice() const { return GetParStr("NetDevice", "SocketDevice"); }
+         std::string NetDevice() const { return GetParStr("NetDevice", "dabc::SocketDevice"); }
          bool IsRunning() const { return GetParInt("IsRunning") > 0; }
          bool WithController() const { return GetParInt("WithController", 0) > 0; }
          int NumEventsCombine() const { return GetParInt("NumEventsCombine", 1); }

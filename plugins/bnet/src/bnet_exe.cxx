@@ -215,7 +215,7 @@ int main(int numc, char* args[])
 
    const char* controllerID = args[4];
 
-   if (devices % 10 == 2) bnet::NetDevice = "VerbsDevice";
+   if (devices % 10 == 2) bnet::NetDevice = "verbs::Device";
 
    const char* appname = args[5];
 

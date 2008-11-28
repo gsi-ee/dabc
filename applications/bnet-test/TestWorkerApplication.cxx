@@ -100,7 +100,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
    if(fABBActive)
       {
       /// here creation of pci transport from abb device with connection to given input port:
-        res=dabc::mgr()->CreateTransport(abbdevname.c_str(), portname);
+        res=dabc::mgr()->CreateTransport(portname, abbdevname.c_str());
       }
 
    return true;

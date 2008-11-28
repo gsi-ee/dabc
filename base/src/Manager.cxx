@@ -79,7 +79,7 @@ dabc::Device* dabc::StdManagerFactory::CreateDevice(const char* classname,
                                                     const char* devname,
                                                     Command*)
 {
-   if (strcmp(classname, "SocketDevice")==0)
+   if (strcmp(classname, dabc::typeSocketDevice)==0)
       return new SocketDevice(dabc::mgr()->GetDevicesFolder(true), devname);
    else
    if (strcmp(classname, "LocalDevice")==0)
@@ -268,7 +268,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
 
    // from this moment one can see all parameters events from visibility level 2
    LockGuard lock(fMgrMutex);
-   fParsVisibility = 2;
+   fParsVisibility = 10;
 }
 
 dabc::Manager::~Manager()

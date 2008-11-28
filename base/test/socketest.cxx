@@ -111,7 +111,7 @@ void TestNewSocketDevice(int numc, char* args[])
 {
    dabc::Manager mgr("local");
 
-   mgr.CreateDevice("SocketDevice", "SOCKET");
+   mgr.CreateDevice(dabc::typeSocketDevice, "SOCKET");
 
    dabc::Device* dev = mgr.FindDevice("SOCKET");
    if (dev==0) {

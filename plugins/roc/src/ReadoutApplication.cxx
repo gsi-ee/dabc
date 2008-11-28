@@ -97,7 +97,7 @@ bool roc::ReadoutApplication::CreateAppModules()
    //// connect module to ROC device, one transport for each board:
 
       for(int t=0; t<NumRocs(); t++) {
-         cmd = new dabc::CmdCreateTransport(devname.c_str(), FORMAT(("RocComb/Ports/Input%d", t))); // container for additional board parameters
+         cmd = new dabc::CmdCreateTransport(FORMAT(("RocComb/Ports/Input%d", t)), devname.c_str()); // container for additional board parameters
          cmd->SetStr(roc::xmlBoardIP, RocIp(t));
          res = dabc::mgr()->Execute(cmd);
          DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t).c_str(), DBOOL(res)));
@@ -161,7 +161,7 @@ bool roc::ReadoutApplication::CreateAppModules()
 
    ///// connect module to mbs server:
       const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
-      cmd = new dabc::CmdCreateTransport("MBS", portname);
+      cmd = new dabc::CmdCreateTransport(portname, "MBS");
 
       // no need to set extra parameters - they will be taken from application !!!
 //      cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(DataServerKind())); //mbs::StreamServer ,mbs::TransportServer

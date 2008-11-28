@@ -284,8 +284,8 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
    dabc::CommandClient cli;
 
    const char* devname = "Test2Dev";
-   const char* deviceclass = "SocketDevice";
-   if (deviceid==2) deviceclass = "VerbsDevice";
+   const char* deviceclass = "dabc::SocketDevice";
+   if (deviceid==2) deviceclass = "verbs::Device";
 
    for (int node = 0; node < m.NumNodes(); node++)
       m.SubmitRemote(cli, new dabc::CmdCreateDevice(deviceclass, devname), node);
@@ -584,8 +584,8 @@ void OneToAllLoop(dabc::StandaloneManager &m, int deviceid)
    DOUT1(("CreateAllModules() res = %s", DBOOL(res)));
 
    const char* devname = "Test2Dev";
-   const char* deviceclass = "SocketDevice";
-   if (deviceid==2) deviceclass = "VerbsDevice";
+   const char* deviceclass = "dabc::SocketDevice";
+   if (deviceid==2) deviceclass = "verbs::Device";
 
    for (int node = 0; node < m.NumNodes(); node++)
       m.SubmitRemote(cli, new dabc::CmdCreateDevice(deviceclass, devname), node);
@@ -631,10 +631,10 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
    dabc::CommandClient cli;
 
    const char* devname = "TSyncDev";
-   const char* deviceclass = "SocketDevice";
+   const char* deviceclass = "dabc::SocketDevice";
    const char* thrdclass = "SocketThread";
    if (deviceid==2) {
-       deviceclass = "VerbsDevice";
+       deviceclass = "verbs::Device";
        thrdclass = "VerbsThread";
    }
 

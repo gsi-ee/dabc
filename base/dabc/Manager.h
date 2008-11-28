@@ -192,11 +192,11 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateTransport"; }
 
-         CmdCreateTransport(const char* devname, const char* portname) :
+         CmdCreateTransport(const char* portname, const char* devname) :
             Command(CmdName())
          {
-            SetPar("DevName", devname);
             SetPar("PortName", portname);
+            SetPar("DevName", devname);
          }
    };
 
@@ -564,9 +564,9 @@ namespace dabc {
 
          bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
 
-         bool CreateTransport(const char* devicename, const char* portname)
+         bool CreateTransport(const char* portname, const char* devicename)
          {
-            return Execute(new CmdCreateTransport(devicename, portname));
+            return Execute(new CmdCreateTransport(portname, devicename));
          }
 
          FileIO* CreateFileIO(const char* typ, const char* name, int option);

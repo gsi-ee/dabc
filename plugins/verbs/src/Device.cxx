@@ -62,7 +62,7 @@ dabc::Device* verbs::VerbsFactory::CreateDevice(const char* classname,
                                                 const char* devname,
                                                 dabc::Command*)
 {
-	if (strcmp(classname, "VerbsDevice")!=0) return 0;
+	if (strcmp(classname, "verbs::Device")!=0) return 0;
 
 	return new Device(dabc::mgr()->GetDevicesFolder(true), devname);
 }

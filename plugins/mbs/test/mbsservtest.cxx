@@ -182,11 +182,9 @@ extern "C" void StartGenerator()
     dabc::mgr()->MakeThreadForModule(m);
     dabc::mgr()->CreateMemoryPools();
 
-    dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", "Modules/Generator/Ports/Output");
-    cmd->SetInt("ServerKind", mbs::TransportServer);
-//      cmd->SetInt("PortMin", 6002);
-//      cmd->SetInt("PortMax", 7000);
-    cmd->SetUInt("BufferSize", BUFFERSIZE);
+    dabc::Command* cmd = new dabc::CmdCreateTransport("Modules/Generator/Ports/Output", "MBS");
+    cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
+    cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
     if (!dabc::mgr()->Execute(cmd)) {
        EOUT(("Cannot create MBS transport server"));
        exit(1);
@@ -223,14 +221,12 @@ extern "C" void StartClient()
 
    dabc::mgr()->CreateMemoryPools();
 
-   dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", "Modules/Receiver/Ports/Input");
+   dabc::Command* cmd = new dabc::CmdCreateTransport("Modules/Receiver/Ports/Input", "MBS");
    cmd->SetBool("IsClient", true);
-   cmd->SetInt("ServerKind", mbs::TransportServer);
-   cmd->SetStr("Host", hostname);
-   if (nport>0) cmd->SetInt("PortNum", nport);
-//      cmd->SetInt("PortMin", 6002);
-//      cmd->SetInt("PortMax", 7000);
-   cmd->SetUInt("BufferSize", BUFFERSIZE);
+   cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
+   cmd->SetStr(mbs::xmlServerName, hostname);
+   if (nport>0) cmd->SetInt(mbs::xmlServerPort, nport);
+   cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
 
    if (!dabc::mgr()->Execute(cmd)) {
       EOUT(("Cannot create data input for receiver"));

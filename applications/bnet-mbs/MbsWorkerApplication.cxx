@@ -59,7 +59,7 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
          return false;
       }
 
-      dabc::Command* cmd = new dabc::CmdCreateTransport("MBS", portname);
+      dabc::Command* cmd = new dabc::CmdCreateTransport(portname, "MBS");
       cmd->SetBool(mbs::xmlIsClient, true);
       cmd->SetStr(mbs::xmlServerName, cfg);
 

@@ -317,8 +317,8 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
 
    const char* devname = "Test1Dev";
 
-   const char* deviceclass = "SocketDevice";
-   if (deviceid==2) deviceclass = "VerbsDevice";
+   const char* deviceclass = "dabc::SocketDevice";
+   if (deviceid==2) deviceclass = "verbs::Device";
 
    for (int node = FirstNode; node < m.NumNodes(); node++)
       m.SubmitRemote(cli, new dabc::CmdCreateDevice(deviceclass, devname), node);

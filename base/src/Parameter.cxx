@@ -284,7 +284,7 @@ void dabc::RateParameter::DoDebugOutput()
 
 void dabc::RateParameter::ChangeRate(double rate)
 {
-//   DOUT3(("Change rate %s - %5.1f %s", GetName(), rate, fRecord.units));
+   DOUT5(("Change rate %s - %5.1f %s", GetName(), rate, fRecord.units));
 
    {
       LockGuard lock(fValueMutex);
