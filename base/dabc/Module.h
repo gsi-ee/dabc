@@ -56,7 +56,7 @@ namespace dabc {
       protected:
          typedef std::vector<unsigned> PortsIndexVector;
 
-         int                      fWorkStatus;  // 1 - working, 0 - stoped, -1 - halt
+         int                      fWorkStatus;  // 1 - working, 0 - stopped, -1 - halt
          PointersVector           fItems;       // map for fast search of module items
          PortsIndexVector         fInputPorts;  // map for fast access to input ports
          PortsIndexVector         fOutputPorts; // map for fast access to output ports

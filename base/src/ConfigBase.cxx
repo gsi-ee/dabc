@@ -464,6 +464,47 @@ unsigned dabc::ConfigBase::NumNodes()
    return cnt;
 }
 
+unsigned dabc::ConfigBase::NumControlNodes()
+{
+   if (!IsOk()) return 0;
+   if (IsXDAQ()) return XDAQ_NumNodes();
+
+   XMLNodePointer_t rootnode = fXml.DocGetRootElement(fDoc);
+   if (rootnode==0) return 0;
+   XMLNodePointer_t node = fXml.GetChild(rootnode);
+   unsigned cnt = 0;
+   while (node!=0) {
+      if (IsNodeName(node, xmlContNode))
+         if (Find1(node, 0, xmlRunNode, xmlUserFunc) == 0) cnt++;
+      node = fXml.GetNext(node);
+   }
+   return cnt;
+}
+
+unsigned dabc::ConfigBase::ControlSequenceId(unsigned id)
+{
+   if (!IsOk()) return 0;
+   if (IsXDAQ()) return id;
+
+   XMLNodePointer_t rootnode = fXml.DocGetRootElement(fDoc);
+   if (rootnode==0) return id;
+   XMLNodePointer_t node = fXml.GetChild(rootnode);
+   unsigned cnt = 0;
+   unsigned ctrlcnt = 0;
+   while (node!=0) {
+      if (IsNodeName(node, xmlContNode)) {
+         const char* func = Find1(node, 0, xmlRunNode, xmlUserFunc);
+
+         if (func == 0) ctrlcnt++;
+
+         if (cnt++==id) return (func==0) ? ctrlcnt : 0;
+      }
+      node = fXml.GetNext(node);
+   }
+   return id;
+}
+
+
 std::string dabc::ConfigBase::NodeName(unsigned id)
 {
    if (IsXDAQ()) return XDAQ_NodeName(id);
@@ -556,10 +597,11 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
    if (contnode == 0) return std::string("");
 
    const char* hostname = Find1(contnode, 0, xmlRunNode, xmlSshHost);
-   if (hostname==0) {
-      EOUT(("%s is not found", xmlSshHost));
-      return std::string("");
-   }
+   if (hostname==0) hostname = "localhost";
+//   if (hostname==0) {
+//      EOUT(("%s is not found", xmlSshHost));
+//      return std::string("");
+//   }
 
    const char* username = Find1(contnode, 0, xmlRunNode, xmlSshUser);
    const char* portid = Find1(contnode, 0, xmlRunNode, xmlSshPort);
@@ -706,7 +748,10 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
          res += ResolveEnv(logfile);
       }
 
-      res += FORMAT((" -nodeid %u -numnodes %u", id, NumNodes()));
+      unsigned ctrldid = ControlSequenceId(id);
+      if (ctrldid>0) ctrldid--;
+
+      res += FORMAT((" -nodeid %u -numnodes %u", ctrldid, NumControlNodes()));
 
       if (connstr!=0) res += FORMAT((" -conn %s", connstr));
 
@@ -715,10 +760,12 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
       // this is way to get connection string
       if (connstr==0) {
          res += " echo No connection string specified; exit 1";
-      } else {
+      } else
+      if (ControlSequenceId(id)==1) {
          if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
          res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
-      }
+      } else
+         res = "";
    } else
    if (kind == kindKill) {
       res += " killall --quiet dabc_run";

@@ -125,6 +125,12 @@ namespace dabc {
          // returns number of nodes in xml file
          unsigned NumNodes();
 
+         // returns number of nodes, which must be control by the control system
+         unsigned NumControlNodes();
+
+         // defines sequence number in list of control nodes
+         unsigned ControlSequenceId(unsigned id);
+
          // returns nodename of specified context
          std::string NodeName(unsigned id);
 

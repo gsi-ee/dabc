@@ -213,7 +213,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
    if (IsMainManager()) {
 
       MicroSleep(1000000);
-      DOUT0(("Now numactive = %d", NumActiveNodes()));
+      DOUT1(("Now numactive = %d", NumActiveNodes()));
 
       if (NumActiveNodes()<numnodes)
         for (int node = 0; node <NumNodes();node++)

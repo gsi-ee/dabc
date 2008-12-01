@@ -106,10 +106,10 @@ do
    # only required for SimpleControl, for DIM control must be deactivated
    ####################################################################
    
-   if (( counter == 0 ))
+   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -ssh conn`
+   
+   if [[ "x$callargs" != "x" ]]
    then
-      callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -ssh conn`
-
       if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
       
       for (( cnt=10; cnt>0; cnt=cnt-1)) ; do 
