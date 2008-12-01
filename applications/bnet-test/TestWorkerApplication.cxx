@@ -51,7 +51,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
    std::string modulename;
    dabc::formats(modulename,"Readout%d", portnumber);
    std::string abbdevname;
-   std::string modinputname = modulename+"/Ports/Input";
+   std::string modinputname = modulename+"/Input";
    // check parameter if we should use abb at this readout:
    if(ReadoutPar(portnumber) == "ABB") {
        abbdevname = "ABBDevice";
@@ -60,7 +60,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
       // create dummy event generator module:
       dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str(), this);
       dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
-      modulename += "/Ports/Output";
+      modulename += "/Output";
       dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
       fABBActive = false;
    }

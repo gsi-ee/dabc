@@ -495,8 +495,8 @@ bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
          const char* node1name = fNodeNames[nsender].c_str();
          const char* node2name = fNodeNames[nreceiver].c_str();
 
-         dabc::formats(port1name, "%s$Sender/Ports/Output%u", node1name, nreceiver);
-         dabc::formats(port2name, "%s$Receiver/Ports/Input%u", node2name, nsender);
+         dabc::formats(port1name, "%s$Sender/Output%u", node1name, nreceiver);
+         dabc::formats(port2name, "%s$Receiver/Input%u", node2name, nsender);
 
          dabc::Command* cmd =
              new dabc::CommandPortConnect(port1name.c_str(),
@@ -520,8 +520,8 @@ bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
          const char* node1name = fNodeNames[nsender].c_str();
          const char* node2name = dabc::mgr()->GetName();
 
-         dabc::formats(port1name, "%s$Sender/Ports/CtrlPort", node1name);
-         dabc::formats(port2name, "%s$GlobalContr/Ports/Sender%u", node2name, nsender);
+         dabc::formats(port1name, "%s$Sender/CtrlPort", node1name);
+         dabc::formats(port2name, "%s$GlobalContr/Sender%u", node2name, nsender);
 
          dabc::Command* cmd =
             new dabc::CommandPortConnect(port1name.c_str(),

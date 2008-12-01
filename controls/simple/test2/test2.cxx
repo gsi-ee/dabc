@@ -301,8 +301,8 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
 
           std::string port1name, port2name;
 
-          dabc::formats(port1name, "%s$Sender/Ports/Output%d", m.GetNodeName(nsender), nreceiver>nsender ? nreceiver-1 : nreceiver);
-          dabc::formats(port2name, "%s$Receiver/Ports/Input%d", m.GetNodeName(nreceiver), nsender>nreceiver ? nsender-1 : nsender);
+          dabc::formats(port1name, "%s$Sender/Output%d", m.GetNodeName(nsender), nreceiver>nsender ? nreceiver-1 : nreceiver);
+          dabc::formats(port2name, "%s$Receiver/Input%d", m.GetNodeName(nreceiver), nsender>nreceiver ? nsender-1 : nsender);
 
           dabc::Command* cmd =
              new dabc::CommandPortConnect(port1name.c_str(),
@@ -323,12 +323,12 @@ void SetPriorities(dabc::StandaloneManager &m, int prio = 0)
    for (int node=0;node<m.NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("SetPriority");
       cmd->SetInt("Priority",prio);
-      m.SubmitRemote(cli, cmd, node, "Modules/Receiver");
+      m.SubmitRemote(cli, cmd, node, "Receiver");
    }
    for (int node=0;node<m.NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("SetPriority");
       cmd->SetInt("Priority",prio);
-      m.SubmitRemote(cli, cmd, node, "Modules/Sender");
+      m.SubmitRemote(cli, cmd, node, "Sender");
    }
 
    bool res = cli.WaitCommands(1);
@@ -353,7 +353,7 @@ void EnableSending(dabc::StandaloneManager &m, bool on = true, int maxnode = -1)
    for (int node=0;node< (maxnode>=0 ? maxnode : m.NumNodes()); node++) {
       dabc::Command* cmd = new dabc::Command("EnableSending");
       cmd->SetBool("Enable", on);
-      m.SubmitRemote(cli, cmd, node, "Modules/Sender");
+      m.SubmitRemote(cli, cmd, node, "Sender");
    }
    cli.WaitCommands(1);
 }
@@ -366,7 +366,7 @@ void ChangeSleepTime(dabc::StandaloneManager &m, int tm=0, int selectnode = -1)
       if ((selectnode>=0) && (node!=selectnode)) continue;
       dabc::Command* cmd = new dabc::Command("ChangeSleepTime");
       cmd->SetInt("SleepTime", tm);
-      m.SubmitRemote(cli, cmd, node, "Modules/Receiver");
+      m.SubmitRemote(cli, cmd, node, "Receiver");
    }
    cli.WaitCommands(1);
 }
@@ -492,8 +492,8 @@ void RunStandaloneTest(dabc::StandaloneManager &m, int nmodules = 1)
       for (int nm2=0;nm2<nmodules;nm2++)
          m.SubmitCl(cli,
             new dabc::CommandPortConnect(
-                  FORMAT(("Sender%d/Ports/Output%d", nm1, nm2)),
-                  FORMAT(("Receiver%d/Ports/Input%d", nm2, nm1))));
+                  FORMAT(("Sender%d/Output%d", nm1, nm2)),
+                  FORMAT(("Receiver%d/Input%d", nm2, nm1))));
    cli.WaitCommands(1);
 
    m.SubmitCl(cli, new dabc::CmdStartAllModules());
@@ -502,7 +502,7 @@ void RunStandaloneTest(dabc::StandaloneManager &m, int nmodules = 1)
    for (int nm=0;nm<nmodules;nm++) {
       dabc::Command* cmd = new dabc::Command("EnableSending");
       cmd->SetBool("Enable", true);
-      m.SubmitLocal(cli, cmd, FORMAT(("Modules/Sender%d",nm)));
+      m.SubmitLocal(cli, cmd, FORMAT(("Sender%d",nm)));
    }
    cli.WaitCommands(1);
 
@@ -511,7 +511,7 @@ void RunStandaloneTest(dabc::StandaloneManager &m, int nmodules = 1)
    for (int nm=0;nm<nmodules;nm++) {
       dabc::Command* cmd = new dabc::Command("EnableSending");
       cmd->SetBool("Enable", false);
-      m.SubmitLocal(cli, cmd, FORMAT(("Modules/Sender%d",nm)));
+      m.SubmitLocal(cli, cmd, FORMAT(("Sender%d",nm)));
    }
    cli.WaitCommands(1);
 
@@ -598,8 +598,8 @@ void OneToAllLoop(dabc::StandaloneManager &m, int deviceid)
    for (int nreceiver = 1; nreceiver < m.NumNodes(); nreceiver++) {
       std::string port1name, port2name;
 
-      dabc::formats(port1name, "%s$Sender/Ports/Output%d", m.GetNodeName(0), nreceiver-1);
-      dabc::formats(port2name, "%s$Receiver/Ports/Input0", m.GetNodeName(nreceiver));
+      dabc::formats(port1name, "%s$Sender/Output%d", m.GetNodeName(0), nreceiver-1);
+      dabc::formats(port2name, "%s$Receiver/Input0", m.GetNodeName(nreceiver));
 
       cmd = new dabc::CommandPortConnect(port1name.c_str(),
                                          port2name.c_str(),
@@ -670,8 +670,8 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
    for (int nslave = 1; nslave < m.NumNodes(); nslave++) {
       std::string port1name, port2name;
 
-      dabc::formats(port1name, "%s$TSync/Ports/Slave%d", m.GetNodeName(0), nslave-1);
-      dabc::formats(port2name, "%s$TSync/Ports/Master", m.GetNodeName(nslave));
+      dabc::formats(port1name, "%s$TSync/Slave%d", m.GetNodeName(0), nslave-1);
+      dabc::formats(port2name, "%s$TSync/Master", m.GetNodeName(nslave));
 
       cmd = new dabc::CommandPortConnect(port1name.c_str(),
                                          port2name.c_str(),
@@ -687,19 +687,19 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
 
 
    cmd = new dabc::CommandDoTimeSync(false, 100, true, false);
-   m.SubmitLocal(cli, cmd, "Modules/TSync");
+   m.SubmitLocal(cli, cmd, "TSync");
    res = cli.WaitCommands(5);
 
    dabc::ShowLongSleep("First pause", 5);
 
    cmd = new dabc::CommandDoTimeSync(false, 100, true, true);
-   m.SubmitLocal(cli, cmd, "Modules/TSync");
+   m.SubmitLocal(cli, cmd, "TSync");
    res = cli.WaitCommands(5);
 
    dabc::ShowLongSleep("Second pause", 10);
 
    cmd = new dabc::CommandDoTimeSync(false, 100, false, false);
-   m.SubmitLocal(cli, cmd, "Modules/TSync");
+   m.SubmitLocal(cli, cmd, "TSync");
    res = cli.WaitCommands(5);
 
    sleep(1);

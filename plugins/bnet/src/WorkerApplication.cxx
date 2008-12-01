@@ -352,24 +352,24 @@ bool bnet::WorkerApplication::CreateAppModules()
    if (IsSender()) {
 
       for (int nr=0;nr<NumReadouts();nr++)
-        if (!CreateReadout(FORMAT(("Combiner/Ports/Input%d", nr)), nr)) {
+        if (!CreateReadout(FORMAT(("Combiner/Input%d", nr)), nr)) {
            EOUT(("Cannot create readout channel %d", nr));
            return false;
         }
 
-      dabc::mgr()->ConnectPorts("Combiner/Ports/Output", "Sender/Ports/Input");
+      dabc::mgr()->ConnectPorts("Combiner/Output", "Sender/Input");
    }
 
    if (IsReceiver()) {
-      dabc::mgr()->ConnectPorts("Receiver/Ports/Output", "Builder/Ports/Input");
+      dabc::mgr()->ConnectPorts("Receiver/Output", "Builder/Input");
 
       const char* outportname = 0;
 
       if (IsFilter()) {
-         dabc::mgr()->ConnectPorts("Builder/Ports/Output", "Filter/Ports/Input");
-         outportname = "Filter/Ports/Output";
+         dabc::mgr()->ConnectPorts("Builder/Output", "Filter/Input");
+         outportname = "Filter/Output";
       } else
-         outportname = "Builder/Ports/Output";
+         outportname = "Builder/Output";
 
       if (!CreateStorage(outportname)) {
          EOUT(("Not able to create storage for port %s", outportname));

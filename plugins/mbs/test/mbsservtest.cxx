@@ -176,7 +176,7 @@ extern "C" void StartGenerator()
     dabc::mgr()->MakeThreadForModule(m);
     dabc::mgr()->CreateMemoryPools();
 
-    dabc::Command* cmd = new dabc::CmdCreateTransport("Modules/Generator/Ports/Output", mbs::typeServerTransport, "MbsTransport");
+    dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", mbs::typeServerTransport, "MbsTransport");
     cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
     cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
     if (!dabc::mgr()->Execute(cmd)) {
@@ -205,7 +205,7 @@ extern "C" void StartClient()
 
    dabc::mgr()->CreateMemoryPools();
 
-   dabc::Command* cmd = new dabc::CmdCreateTransport("Modules/Receiver/Ports/Input", mbs::typeClientTransport, "MbsTransport");
+   dabc::Command* cmd = new dabc::CmdCreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
 //   cmd->SetBool("IsClient", true);
    cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
    cmd->SetStr(mbs::xmlServerName, hostname);

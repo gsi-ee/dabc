@@ -192,7 +192,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
 
       DOUT2(("Main manager = %s", fMainMgrName.c_str()));
 
-      Command* cmd = new CmdDirectConnect(false, FORMAT(("%s/CommandChannel/Ports/Port0", ModulesFolderName())));
+      Command* cmd = new CmdDirectConnect(false, "CommandChannel/Port0");
       cmd->SetPar("ConnId", cmdr->GetPar("ConnId"));
       cmd->SetPar("ServerId", cmdr->GetPar("ServerId"));
       cmd->SetBool("ServerUseAckn", true);
@@ -289,7 +289,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
          fClusterNames[nrem] = FORMAT(("Node%d", nrem));
 
       for (int nslave=1; nslave < NumNodes(); nslave++) {
-         Command* cmd = new CmdDirectConnect(true, FORMAT(("%s/CommandChannel/Ports/Port%d", ModulesFolderName(), nslave-1)));
+         Command* cmd = new CmdDirectConnect(true, FORMAT(("CommandChannel/Port%d", nslave-1)));
          cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", nslave)));
          SubmitLocal(cli, cmd, fCmdDevName.c_str());
       }
@@ -299,7 +299,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       fClusterNames[0] = fMainMgrName;
       fClusterActive[0] = true;
 
-      Command* cmd = new CmdDirectConnect(false, FORMAT(("%s/CommandChannel/Ports/Port0", ModulesFolderName())));
+      Command* cmd = new CmdDirectConnect(false, "CommandChannel/Port0");
       cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", fNodeId)));
       cmd->SetPar("ServerId", controllerID);
       cmd->SetBool("ServerUseAckn", true);
@@ -487,7 +487,7 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       formats(connid, "CmdChl_%s", slavename);
 
       // prepare server for connection
-      Command* ccmd = new CmdDirectConnect(true, FORMAT(("%s/CommandChannel/Ports/Port%d", ModulesFolderName(), slaveid-1)));
+      Command* ccmd = new CmdDirectConnect(true, FORMAT(("CommandChannel/Port%d", slaveid-1)));
       ccmd->SetPar("ConnId", connid.c_str());
       ccmd->SetBool("ServerUseAckn", true);
       SubmitLocal(*this, ccmd, fCmdDevName.c_str());

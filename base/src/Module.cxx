@@ -19,7 +19,7 @@
 // __________________________________________________________________
 
 dabc::Module::Module(const char* name) :
-   Folder(dabc::mgr()->GetModulesFolder(true), name, true),
+   Folder(dabc::mgr(), name, true),
    WorkingProcessor(),
    CommandClientBase(),
    fWorkStatus(0),
@@ -33,7 +33,7 @@ dabc::Module::Module(const char* name) :
 }
 
 dabc::Module::Module(Command* cmd) :
-   Folder(dabc::mgr()->GetModulesFolder(true), cmd->GetStr("Name","Module"), true),
+   Folder(dabc::mgr(), cmd->GetStr("Name","Module"), true),
    WorkingProcessor(),
    CommandClientBase(),
    fWorkStatus(0),
@@ -50,7 +50,7 @@ void dabc::Module::init()
 {
    // we will use 3 priority levels:
    //  0 - normal for i/o ,
-   //  1 - for commands and replyes,
+   //  1 - for commands and replies,
    //  2 - for sys commands (in modules thread itself)
 
    SetParsHolder(this, "Parameters");
@@ -107,11 +107,6 @@ void dabc::Module::OnThreadAssigned()
       if (item && (item->ProcessorThread()==0))
          item->AssignProcessorToThread(ProcessorThread(), true);
    }
-}
-
-dabc::Folder* dabc::Module::GetPortsFolder(bool force)
-{
-   return GetFolder("Ports", force, true);
 }
 
 dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sync, double interval, const char* inpportname, const char* outportname)
@@ -378,8 +373,7 @@ unsigned dabc::Module::IOPortNumber(Port* port)
 
 dabc::Port* dabc::Module::FindPort(const char* name)
 {
-   Folder* f = GetPortsFolder(false);
-   return f==0 ? 0 : (Port*) f->FindChild(name);
+   return dynamic_cast<Port*> (FindChild(name));
 }
 
 dabc::PoolHandle* dabc::Module::FindPool(const char* name)
@@ -396,8 +390,7 @@ dabc::Port* dabc::Module::GetPortItem(unsigned id) const
 
 dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize, bool ackn)
 {
-   Port* port = new Port(GetPortsFolder(true), name,
-                         pool, recvqueue, sendqueue, headersize, ackn);
+   Port* port = new Port(this, name, pool, recvqueue, sendqueue, headersize, ackn);
    if (pool)
      pool->AddPortRequirements(port->NumInputBuffersRequired() + port->NumOutputBuffersRequired(), port->UserHeaderSize());
 

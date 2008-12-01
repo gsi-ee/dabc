@@ -70,7 +70,7 @@ int main(int numc, char* args[])
    res= manager.CreateMemoryPools();
    DOUT1(("Create memory pools result=%s", DBOOL(res)));
 
-   res=manager.CreateTransport("ABB_Readout/Ports/Input", devname.c_str());
+   res=manager.CreateTransport("ABB_Readout/Input", devname.c_str());
    DOUT1(("Connected module to ABB device = %s", DBOOL(res)));
    manager.StartModule("ABB_Readout");
    DOUT1(("Started readout module...."));

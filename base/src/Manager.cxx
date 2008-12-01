@@ -490,10 +490,7 @@ void dabc::Manager::ProcessEvent(EventId evnt)
 
 dabc::Module* dabc::Manager::FindModule(const char* name)
 {
-   Folder* folder = GetModulesFolder(false);
-   if (folder==0) return 0;
-
-   return dynamic_cast<dabc::Module*> (folder->FindChild(name));
+   return dynamic_cast<dabc::Module*> (FindChild(name));
 }
 
 bool dabc::Manager::DeleteModule(const char* name)
@@ -513,11 +510,10 @@ bool dabc::Manager::IsAnyModuleRunning()
 {
    LockGuard lock(fMgrMutex);
 
-   Folder* f = GetModulesFolder(false);
-   if (f==0) return false;
+   Iterator iter(this);
 
-   for (unsigned n=0;n<f->NumChilds();n++) {
-      Module* m = dynamic_cast<Module*> (f->GetChild(n));
+   while (iter.next()) {
+      Module* m = dynamic_cast<Module*> (iter.current());
       if (m && (m->WorkStatus()>0)) return true;
    }
 
@@ -526,13 +522,9 @@ bool dabc::Manager::IsAnyModuleRunning()
 
 dabc::Port* dabc::Manager::FindPort(const char* name)
 {
-   dabc::Port* port = dynamic_cast<dabc::Port*>(FindChild(name));
-   if (port!=0) return port;
+   LockGuard lock(fMgrMutex);
 
-   Folder* folder = GetModulesFolder(false);
-   if (folder==0) return 0;
-
-   return dynamic_cast<dabc::Port*> (folder->FindChild(name));
+   return dynamic_cast<dabc::Port*>(FindChild(name));
 }
 
 dabc::Device* dabc::Manager::FindDevice(const char* name)
@@ -585,6 +577,32 @@ bool dabc::Manager::DeletePool(const char* name)
    return Execute(new CmdDeletePool(name));
 }
 
+bool dabc::Manager::DoDeleteAllModules(int appid)
+{
+   Module* m = 0;
+
+   do {
+      if (m!=0) {
+         DOUT5(("Delete module %s", m->GetName()));
+         delete m;
+         DOUT5(("Delete module done"));
+         m = 0;
+      }
+
+      LockGuard lock(fMgrMutex);
+
+      Iterator iter(this);
+      while (iter.next()) {
+         m = dynamic_cast<Module*> (iter.current());
+         if (m!=0)
+            if ((appid<0) || (m->GetAppId()==appid)) break;
+         m = 0;
+      }
+   } while (m!=0);
+
+   return true;
+}
+
 void dabc::Manager::DoHaltManager()
 {
 //   dabc::SetDebugLevel(5);
@@ -596,8 +614,10 @@ void dabc::Manager::DoHaltManager()
 
    DOUT3(("Deleting all modules"));
    // than we delete all modules
-   dabc::Folder* df = GetModulesFolder();
-   if (df) df->DeleteChilds();
+
+   DoDeleteAllModules();
+
+   DOUT3(("Do device cleanup"));
 
    DoCleanupDevices(true);
 
@@ -605,7 +625,7 @@ void dabc::Manager::DoHaltManager()
    ProcessDestroyQueue();
 
    DOUT3(("Calling destructor of all devices"));
-   df = GetDevicesFolder();
+   Folder* df = GetDevicesFolder();
    if (df) df->DeleteChilds();
 
    DOUT3(("Calling destructor of all memory pools"));
@@ -967,36 +987,30 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       cmd_res = cmd_bool(m!=0);
    } else
    if (cmd->IsName(CmdStartAllModules::CmdName())) {
-      dabc::Folder* folder = GetModulesFolder(false);
 
       int appid = cmd->GetInt("AppId", 0);
 
-      if (folder!=0)
-        for (unsigned n=0;n<folder->NumChilds();n++) {
-           dabc::Module* m = dynamic_cast<dabc::Module*> (folder->GetChild(n));
-           if (m==0) {
-              EOUT(("Strange object in Modules folder indx %d",n));
-              cmd_res = cmd_false;
-           } else
-           if ((appid<0) || (m->GetAppId() == appid))
-              m->Start();
-        }
+      Iterator iter(this);
+
+      while (iter.next()) {
+         dabc::Module* m = dynamic_cast<dabc::Module*> (iter.current());
+         if (m!=0)
+            if ((appid<0) || (m->GetAppId() == appid))
+               m->Start();
+      }
    } else
    if (cmd->IsName(CmdStopAllModules::CmdName())) {
-      dabc::Folder* folder = GetModulesFolder(false);
 
       int appid = cmd->GetInt("AppId", 0);
 
-      if (folder!=0)
-        for (unsigned n=0;n<folder->NumChilds();n++) {
-           dabc::Module* m = dynamic_cast<dabc::Module*> (folder->GetChild(n));
-           if (m==0) {
-              EOUT(("Strange object in Modules folder indx %d",n));
-              cmd_res = cmd_false;
-           } else
-           if ((appid<0) || (m->GetAppId() == appid))
-              m->Stop();
-        }
+      Iterator iter(this);
+
+      while (iter.next()) {
+         dabc::Module* m = dynamic_cast<dabc::Module*> (iter.current());
+         if (m!=0)
+            if ((appid<0) || (m->GetAppId() == appid))
+               m->Stop();
+      }
    } else
    if (cmd->IsName(CmdDeletePool::CmdName())) {
       dabc::MemoryPool* pool = FindPool(cmd->GetPar("PoolName"));
@@ -1244,9 +1258,6 @@ bool dabc::Manager::DoCreateMemoryPools()
 
    bool res = true;
 
-   dabc::Folder* modules = GetModulesFolder(false);
-   if (modules==0) return res;
-
    do {
       selectedname = 0;
       BufferSize_t selectedsize = 0;
@@ -1256,7 +1267,7 @@ bool dabc::Manager::DoCreateMemoryPools()
 
       Queue<PoolHandle*> pools(16, true);
 
-      dabc::Iterator iter(modules);
+      dabc::Iterator iter(this);
 
       while (iter.next()) {
          PoolHandle* pool = dynamic_cast<PoolHandle*> (iter.current());
@@ -1492,8 +1503,7 @@ bool dabc::Manager::DoCleanupManager(int appid)
 
    // than we can safely delete all modules, while no execution can happen
 
-   Folder* mf = GetModulesFolder();
-   if (mf) mf->DeleteChilds(appid);
+   DoDeleteAllModules(appid);
 
    DOUT3(( "Cleanup all devices"));
    DoCleanupDevices(false);
@@ -1656,7 +1666,7 @@ void dabc::Manager::DoPrint()
       if (thrd) DOUT1(("Thrd: %s", thrd->GetName()));
    }
 
-   dabc::Iterator iter2(GetModulesFolder(false));
+   dabc::Iterator iter2(this);
 
    while (iter2.next()) {
       Module* m = dynamic_cast<Module*> (iter2.current());

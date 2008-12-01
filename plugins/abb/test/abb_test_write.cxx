@@ -71,12 +71,12 @@ int main(int numc, char* args[])
    DOUT1(("Create memory pools result=%s", DBOOL(res)));
 
    //// connect to ABB device:
-   res=manager.CreateTransport("ABB_Sender/Ports/Output", devname.c_str());
+   res=manager.CreateTransport("ABB_Sender/Output", devname.c_str());
    DOUT1(("Connected module to ABB device = %s", DBOOL(res)));
 
    //// TEST: connect with null transport
 //    cmd = new dabc::Command("NullConnect");
-//    cmd->SetStr("Port", "ABB_Sender/Ports/Output");
+//    cmd->SetStr("Port", "ABB_Sender/Output");
 //    res=manager.Execute(cmd, 5);
 //    DOUT1(("Connected module to NULL transport, result= %s", DBOOL(res)));
    /////////// end TEST

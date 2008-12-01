@@ -695,11 +695,9 @@ void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::st
          dabc::Command* dabccom= new dabc::Command(varname.c_str());
          std::cout <<" -  commandname is "<<varname << std::endl;
          std::cout <<" -  modulename is "<<modname << std::endl;
-         std::string fullmod="Modules/";
-         fullmod+=modname;
          // TODO: fill xml par string to dabccom (special ctor later)
          dabc::CommandClient dummyclient;
-         fManager->SubmitLocal(dummyclient, dabccom, fullmod.c_str());
+         fManager->SubmitLocal(dummyclient, dabccom, modname.c_str());
       }
    else
       {

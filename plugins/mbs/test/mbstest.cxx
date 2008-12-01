@@ -127,11 +127,11 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
    mgr.CreateMemoryPools();
 
-   dabc::Command* cmd = new dabc::CmdCreateTransport("Repeater/Ports/Input", mbs::typeLmdInput);
+   dabc::Command* cmd = new dabc::CmdCreateTransport("Repeater/Input", mbs::typeLmdInput);
    cmd->SetStr(mbs::xmlFileName, inpfile);
    bool res = mgr.Execute(cmd);
 
-   cmd = new dabc::CmdCreateTransport("Repeater/Ports/Output", mbs::typeLmdOutput);
+   cmd = new dabc::CmdCreateTransport("Repeater/Output", mbs::typeLmdOutput);
    cmd->SetStr(mbs::xmlFileName, outfile);
    res = mgr.Execute(cmd);
 

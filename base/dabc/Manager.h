@@ -338,7 +338,6 @@ namespace dabc {
          // -------------- generic folder structure of manager
 
          static const char* ThreadsFolderName() { return "Threads"; }
-         static const char* ModulesFolderName() { return "Modules"; }
          static const char* DevicesFolderName() { return "Devices"; }
          static const char* FactoriesFolderName() { return "Factories"; }
          static const char* PoolsFolderName()   { return "Pools"; }
@@ -349,7 +348,6 @@ namespace dabc {
          Folder* GetFactoriesFolder(bool force = false) { return GetFolder(FactoriesFolderName(), force, false); }
          Folder* GetDevicesFolder(bool force = false) { return GetFolder(DevicesFolderName(), force, true); }
          Folder* GetThreadsFolder(bool force = false) { return GetFolder(ThreadsFolderName(), force, true); }
-         Folder* GetModulesFolder(bool force = false) { return GetFolder(ModulesFolderName(), force, true); }
          Folder* GetPoolsFolder(bool force = false) { return GetFolder(PoolsFolderName(), force, true); }
 
          Module* FindModule(const char* name);
@@ -431,7 +429,7 @@ namespace dabc {
 
          // next methods prepare commands arguments so, that
          // they can be directly submitted to the maneger via submit
-         // for instance m.Submit(m.LocalCmd(new Command("Start"), "Modules/Generator"));
+         // for instance m.Submit(m.LocalCmd(new Command("Start"), "Generator"));
          // This queues commands first in manager queue and than submitted to sepcified
          // object. If object has own thread, it will be used for command execution
 
@@ -571,6 +569,7 @@ namespace dabc {
          virtual bool _ProcessReply(Command* cmd);
          virtual double ProcessTimeout(double last_diff);
 
+         bool DoDeleteAllModules(int appid = -1);
          bool DoCreateMemoryPools();
          void DoCleanupThreads();
          void DoCleanupDevices(bool force);

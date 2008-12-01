@@ -82,7 +82,7 @@ bool roc::ReadoutApplication::CreateAppModules()
       if(!res) return false;
 
       if (DoTaking()) {
-         res = dabc::mgr()->ConnectPorts("RocComb/Ports/Output0", "RocCalibr/Ports/Input");
+         res = dabc::mgr()->ConnectPorts("RocComb/Output0", "RocCalibr/Input");
          DOUT1(("Connect readout and calibr modules = %s", DBOOL(res)));
          if(!res) return false;
       }
@@ -97,7 +97,7 @@ bool roc::ReadoutApplication::CreateAppModules()
    //// connect module to ROC device, one transport for each board:
 
       for(int t=0; t<NumRocs(); t++) {
-         cmd = new dabc::CmdCreateTransport(FORMAT(("RocComb/Ports/Input%d", t)), devname.c_str()); // container for additional board parameters
+         cmd = new dabc::CmdCreateTransport(FORMAT(("RocComb/Input%d", t)), devname.c_str()); // container for additional board parameters
          cmd->SetStr(roc::xmlBoardIP, RocIp(t));
          res = dabc::mgr()->Execute(cmd);
          DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t).c_str(), DBOOL(res)));
@@ -115,11 +115,11 @@ bool roc::ReadoutApplication::CreateAppModules()
    if (OutputFileName().length()>0) {
       cmd = 0;
       if (DoTaking()) {
-         cmd = new dabc::CmdCreateTransport("RocComb/Ports/Output1", mbs::typeLmdOutput);
+         cmd = new dabc::CmdCreateTransport("RocComb/Output1", mbs::typeLmdOutput);
          // no need to set extra size parameters - it will be taken from application
          // if (FileSizeLimit()>0) cmd->SetInt(mbs::xmlSizeLimit, FileSizeLimit());
       } else {
-         cmd = new dabc::CmdCreateTransport("RocCalibr/Ports/Input", mbs::typeLmdInput);
+         cmd = new dabc::CmdCreateTransport("RocCalibr/Input", mbs::typeLmdInput);
          // no need to extra set of buffer size - it will be taken from module itself
          //  cmd->SetInt(dabc::xmlBufferSize, GetParInt(dabc::xmlBufferSize, 8192));
       }
@@ -140,7 +140,7 @@ bool roc::ReadoutApplication::CreateAppModules()
           (CalibrFileName().rfind(".ROOT")!=std::string::npos))
               outtype = "roc::TreeOutput";
 
-      cmd = new dabc::CmdCreateTransport("RocCalibr/Ports/Output1", outtype);
+      cmd = new dabc::CmdCreateTransport("RocCalibr/Output1", outtype);
 
       cmd->SetStr(mbs::xmlFileName, CalibrFileName().c_str());
       // no need to set extra size parameters - it will be taken from application
@@ -155,7 +155,7 @@ bool roc::ReadoutApplication::CreateAppModules()
    if (DataServerKind() != mbs::NoServer) {
 
    ///// connect module to mbs server:
-      const char* portname = DoCalibr() ? "RocCalibr/Ports/Output0" : "RocComb/Ports/Output0";
+      const char* portname = DoCalibr() ? "RocCalibr/Output0" : "RocComb/Output0";
       cmd = new dabc::CmdCreateTransport(portname, mbs::typeServerTransport, "MbsServerThrd");
 
       // no need to set extra parameters - they will be taken from application !!!

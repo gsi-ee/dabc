@@ -334,8 +334,8 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
 
           std::string port1name, port2name;
 
-          dabc::formats(port1name, "%s$Sender/Ports/Output%d", m.GetNodeName(nsender), (nreceiver>nsender ? nreceiver-1 : nreceiver) - FirstNode);
-          dabc::formats(port2name, "%s$Receiver/Ports/Input%d", m.GetNodeName(nreceiver), (nsender>nreceiver ? nsender-1 : nsender) - FirstNode);
+          dabc::formats(port1name, "%s$Sender/Output%d", m.GetNodeName(nsender), (nreceiver>nsender ? nreceiver-1 : nreceiver) - FirstNode);
+          dabc::formats(port2name, "%s$Receiver/Input%d", m.GetNodeName(nreceiver), (nsender>nreceiver ? nsender-1 : nsender) - FirstNode);
 
           dabc::Command* cmd =
              new dabc::CommandPortConnect(port1name.c_str(),
@@ -358,12 +358,12 @@ void SetPriorities(dabc::StandaloneManager &m, int prio = 0)
    for (int node=FirstNode;node<m.NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("SetPriority");
       cmd->SetInt("Priority", prio);
-      m.SubmitRemote(cli, cmd, node, "Modules/Receiver");
+      m.SubmitRemote(cli, cmd, node, "Receiver");
    }
    for (int node=FirstNode;node<m.NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("SetPriority");
       cmd->SetInt("Priority", prio);
-      m.SubmitRemote(cli, cmd, node, "Modules/Sender");
+      m.SubmitRemote(cli, cmd, node, "Sender");
    }
 
    bool res = cli.WaitCommands(1);
@@ -388,7 +388,7 @@ void EnableSending(dabc::StandaloneManager &m, bool on = true)
    for (int node=FirstNode;node<m.NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("EnableSending");
       cmd->SetBool("Enable", on);
-      m.SubmitRemote(cli, cmd, node, "Modules/Sender");
+      m.SubmitRemote(cli, cmd, node, "Sender");
    }
 
    cli.WaitCommands(3);
@@ -402,7 +402,7 @@ void ChangeSleepTime(dabc::StandaloneManager &m, int tm=0, int selectnode = -1)
       if ((selectnode>=0) && (node!=selectnode)) continue;
       dabc::Command* cmd = new dabc::Command("ChangeSleepTime");
       cmd->SetInt("SleepTime", tm);
-      m.SubmitRemote(cli, cmd, node, "Modules/Receiver");
+      m.SubmitRemote(cli, cmd, node, "Receiver");
    }
    cli.WaitCommands(1);
 }

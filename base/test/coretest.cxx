@@ -212,8 +212,8 @@ void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
    bool connectres = true;
 
    for (int n=1; n<number; n++) {
-      if (!mgr->ConnectPorts( FORMAT(("Module%d/Ports/Output", n-1)),
-                         FORMAT(("Module%d/Ports/Input", n)))) connectres = false;
+      if (!mgr->ConnectPorts( FORMAT(("Module%d/Output", n-1)),
+                         FORMAT(("Module%d/Input", n)))) connectres = false;
    }
 
    if (!connectres)

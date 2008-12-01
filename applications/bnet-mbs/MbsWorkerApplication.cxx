@@ -41,7 +41,7 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
       dabc::mgr()->CreateMemoryPools();
 
-      modulename += "/Ports/Output";
+      modulename += "/Output";
 
       dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
 
