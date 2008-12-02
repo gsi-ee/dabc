@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<Generator>
+  <Factories/>
+  <Threads/>
+  <Devices/>
+  <Pars>
+    <CoreState value="Halted"/>
+  </Pars>
+  <Modules>
+    <Module name="Generator">
+      <Commands/>
+      <Pools/>
+      <Ports>
+        <Port name="Output">
+          <OutputQueueSize value="5"/>
+          <UserHeaderSize value="0"/>
+          <UseAcknowledges value="false"/>
+          <MbsServerPort value="6000"/>
+        </Port>
+      </Ports>
+    </Module>
+  </Modules>
+  <Pools/>
+</Generator>

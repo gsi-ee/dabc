@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="Generator">
+    <Run>
+      <Lib>libDabcMbs.so</Lib>
+      <Func>StartMbsGenerator</Func>
+    </Run>
+    <Module name="Generator">
+        <NumSubevents value="2"/>
+        <FirstProcId value="0"/>
+        <SubeventSize value="32"/>
+        <Go4Random value="true"/>
+        <BufferSize value="8384"/>
+    </Module>
+  </Context>
+  <Context name="Client">
+    <Run>
+      <Lib>libDabcMbs.so</Lib>
+      <Func>StartMbsClient</Func>
+    </Run>
+  </Context>
+</dabc>
