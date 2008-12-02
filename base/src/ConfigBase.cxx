@@ -77,9 +77,8 @@ std::string dabc::ConfigBase::XDAQ_NodeName(unsigned instance)
    std::string ctxt = XDAQ_ContextName(instance);
    size_t pos = ctxt.find(":");
    if (pos==ctxt.npos) return ctxt;
-   return ctxt.substr(0, pos-1);
+   return ctxt.substr(0, pos);
 }
-
 
 std::string dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr)
 {
