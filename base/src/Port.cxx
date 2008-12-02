@@ -41,9 +41,10 @@ dabc::Port::Port(Basic* parent,
    if (sendqueue > 0)
       fOutputQueueCapacity = GetCfgInt(xmlOutputQueueSize, sendqueue);
 
-   fUsrHeaderSize = GetCfgInt(xmlUserHeaderSize, usrheadersize);
+   if (usrheadersize > 0)
+      fUsrHeaderSize = GetCfgInt(xmlUserHeaderSize, usrheadersize);
 
-   DOUT5(("Create Port %s with inp %u out %u", GetName(), fInputQueueCapacity, fOutputQueueCapacity));
+   DOUT5(("Create Port %s with inp %u out %u hdr %u", GetName(), fInputQueueCapacity, fOutputQueueCapacity, fUsrHeaderSize));
 }
 
 dabc::Port::~Port()

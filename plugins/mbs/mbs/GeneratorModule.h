@@ -16,6 +16,7 @@ namespace mbs {
          dabc::BufferSize_t      fBufferSize;
 
          uint32_t fEventCount;
+         uint32_t fStartStopPeriod;
          uint16_t fNumSubevents;
          uint16_t fFirstProcId;
          uint32_t fSubeventSize;
@@ -28,10 +29,7 @@ namespace mbs {
          virtual void BeforeModuleStart();
          virtual void ProcessOutputEvent(dabc::Port* port);
 
-
          bool GeneratePacket();
-
-         bool GenerateGo4RandomPacket(dabc::Buffer* buf);
    };
 
 

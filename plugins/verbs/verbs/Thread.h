@@ -73,8 +73,6 @@ namespace verbs {
 
          Device* GetDevice() const { return fDevice; }
 
-         void FireDoNothingEvent();
-
          bool DoServer(dabc::Command* cmd, dabc::Port* port, const char* portname);
          bool DoClient(dabc::Command* cmd, dabc::Port* port, const char* portname);
          void FillServerId(std::string& id);

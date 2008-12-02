@@ -140,14 +140,14 @@ namespace dabc {
 
          // =======================================================
 
-         PoolHandle* CreatePool(const char* name, BufferNum_t number = 0, BufferSize_t size = 0, BufferNum_t increment = 0);
+         PoolHandle* CreatePool(const char* poolname, BufferNum_t number = 0, BufferSize_t size = 0, BufferNum_t increment = 0);
          Buffer* TakeBuffer(const char* poolname, BufferSize_t size = 0);
 
-         Port* CreateInput(const char* name, PoolHandle* pool, unsigned queue, BufferSize_t headersize = 0)
+         Port* CreateInput(const char* name, PoolHandle* pool, unsigned queue = 10, BufferSize_t headersize = 0)
            { return CreatePort(name, pool, queue, 0, headersize); }
-         Port* CreateOutput(const char* name, PoolHandle* pool, unsigned queue, BufferSize_t headersize = 0)
+         Port* CreateOutput(const char* name, PoolHandle* pool, unsigned queue = 10, BufferSize_t headersize = 0)
            { return CreatePort(name, pool, 0, queue, headersize); }
-         Port* CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize = 0);
+         Port* CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue = 10, unsigned sendqueue = 10, BufferSize_t headersize = 0);
 
          CommandDefinition* NewCmdDef(const char* cmdname);
 

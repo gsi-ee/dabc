@@ -23,7 +23,7 @@ mbs::ClientIOProcessor::~ClientIOProcessor()
 unsigned mbs::ClientIOProcessor::ReadBufferSize()
 {
    uint32_t sz = fHeader.BufferLength();
-   if (sz<sizeof(fHeader)) {
+   if (sz < sizeof(fHeader)) {
       EOUT(("Wrong buffer length %u", sz));
       return 0;
    }
@@ -134,7 +134,7 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
          if (fSwapping) mbs::SwapData(&fHeader, sizeof(fHeader));
 
          if (ReadBufferSize() > (unsigned) fServInfo.iMaxBytes) {
-            EOUT(("Buffer size bigger than allowed by info record"));
+            EOUT(("Buffer size %u bigger than allowed by info record %d", ReadBufferSize(), fServInfo.iMaxBytes));
             fState = ioError;
          } else
          if (ReadBufferSize() == 0) {

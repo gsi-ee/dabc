@@ -321,7 +321,7 @@ std::string dabc::WorkingProcessor::GetCfgStr(const char* name, const std::strin
 
    Parameter* par = CreateParStr(name, dfltvalue.c_str());
    if (par) par->SetFixed(true);
-   return dfltvalue;
+   return GetParStr(name, dfltvalue);
 }
 
 double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, Command* cmd)
@@ -338,7 +338,7 @@ double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, 
 
    Parameter* par = CreateParDouble(name, dfltvalue);
    if (par) par->SetFixed(true);
-   return dfltvalue;
+   return GetParDouble(name, dfltvalue);
 }
 
 int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* cmd)
@@ -355,7 +355,7 @@ int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* 
 
    Parameter* par = CreateParInt(name, dfltvalue);
    if (par) par->SetFixed(true);
-   return dfltvalue;
+   return GetParInt(name, dfltvalue);
 }
 
 bool dabc::WorkingProcessor::GetCfgBool(const char* name, bool dfltvalue, Command* cmd)
@@ -372,7 +372,7 @@ bool dabc::WorkingProcessor::GetCfgBool(const char* name, bool dfltvalue, Comman
 
    Parameter* par = CreateParBool(name, dfltvalue);
    if (par) par->SetFixed(true);
-   return dfltvalue;
+   return GetParBool(name, dfltvalue);
 }
 
 bool dabc::WorkingProcessor::SetParStr(const char* name, const char* value)

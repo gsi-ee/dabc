@@ -184,13 +184,6 @@ int verbs::Thread::ExecuteCommand(dabc::Command* cmd)
    return cmd_res;
 }
 
-void verbs::Thread::FireDoNothingEvent()
-{
-   // used by timout object to activate thread and leave WaitEvent function
-
-   Fire(CodeEvent(evntDoNothing), -1);
-}
-
 void verbs::Thread::_Fire(dabc::EventId arg, int nq)
 {
    DOUT2(("verbs::Thread %s   ::_Fire %lx status %d", GetName(), arg, fWaitStatus));

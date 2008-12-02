@@ -76,19 +76,19 @@ namespace dabc {
 
          void CheckSubscriptionList();
 
-         bool                  fIsMainMgr;
+         bool                       fIsMainMgr;
          std::string                fMainMgrName;
          std::vector<std::string>   fClusterNames;
-         std::vector<bool>     fClusterActive;
+         std::vector<bool>          fClusterActive;
 
-         int                   fNodeId;
-         CommandChannelModule *fCmdChannel;
+         int                        fNodeId;
+         CommandChannelModule      *fCmdChannel;
          std::string                fCmdDeviceId;
          std::string                fCmdDevName;
 
-         Condition             fStopCond;
+         Condition                  fStopCond;
 
-         std::list<ParamReg>   fParReg;
+         std::list<ParamReg>        fParReg;
    };
 };
 

@@ -53,7 +53,8 @@ void dabc::Module::init()
    //  1 - for commands and replies,
    //  2 - for sys commands (in modules thread itself)
 
-   SetParsHolder(this, "Parameters");
+//   SetParsHolder(this, "Parameters");
+   SetParsHolder(this);
 
    CommandDefinition* def = NewCmdDef("SetPriority");
    def->AddArgument("Priority", argInt, true);
@@ -77,7 +78,7 @@ dabc::Module::~Module()
    // destroying module items will not cause seg.fault
    RemoveProcessorFromThread(true);
 
-   // one should call destructor of childs here, while
+   // one should call destructor of children here, while
    // all ModuleItem objects will try to access Module method ItemDestroyed
    // If it happens in Basic destructor, object as it is no longer exists
 
@@ -390,6 +391,11 @@ dabc::Port* dabc::Module::GetPortItem(unsigned id) const
 
 dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize)
 {
+   if ((recvqueue==0) && (sendqueue==0)) {
+      EOUT(("Both receive and send queue length are zero - port %s not created", name));
+      return 0;
+   }
+
    Port* port = new Port(this, name, pool, recvqueue, sendqueue, headersize);
    if (pool)
      pool->AddPortRequirements(port->NumInputBuffersRequired() + port->NumOutputBuffersRequired(), port->UserHeaderSize());

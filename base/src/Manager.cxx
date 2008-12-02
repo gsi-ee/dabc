@@ -1633,30 +1633,6 @@ const char* dabc::Manager::CurrentThrdName()
    return "uncknown";
 }
 
-void dabc::Manager::RunManagerMainLoop()
-{
-   WorkingThread* thrd = ProcessorThread();
-
-   if (thrd==0) return;
-
-   fMgrMainLoop = true;
-
-   if (thrd->IsRealThrd()) {
-      DOUT3(("Manager has normal thread - just wait until application modules are stopped"));
-      while(fMgrMainLoop) { dabc::LongSleep(1); }
-   } else {
-      DOUT3(("Manager uses process as thread - run mainloop ourself"));
-
-      thrd->MainLoop();
-
-      DOUT3(("Manager is stopped - just keep process as it is"));// make virtual run, while thread in reality is running
-
-      thrd->Start(-1, true);
-   }
-
-   fMgrMainLoop = false;
-}
-
 void dabc::Manager::DoPrint()
 {
    dabc::Iterator iter(GetThreadsFolder(false));
@@ -2045,7 +2021,7 @@ void dabc::Manager::ProcessCtrlCSignal()
 
    if (fSigThrd != dabc::Thread::Self()) return;
 
-   DOUT1(("Enter CTRL-C process routine"));
+   DOUT1(("Process CTRL-C signal"));
 
    if (fMgrMainLoop) {
       fMgrMainLoop = false;
@@ -2053,12 +2029,13 @@ void dabc::Manager::ProcessCtrlCSignal()
 
       if (thrd && !thrd->IsRealThrd()) {
 
-         DOUT0(("Stop thread"));
+         DOUT3(("Stop thread"));
+
          thrd->Stop(false); // stop thread - means leave thread main loop
 
          // DOUT0(("Remove processor"));
          // RemoveProcessorFromThread(true);
-         DOUT0(("Exit handler"));
+         DOUT3(("Exit handler"));
       }
       return;
    }
@@ -2067,7 +2044,7 @@ void dabc::Manager::ProcessCtrlCSignal()
 
    DoHaltManager();
 
-   DOUT1(("Calcel commands"));
+   DOUT1(("Cancel commands"));
 
    CancelCommands();
 
@@ -2075,13 +2052,42 @@ void dabc::Manager::ProcessCtrlCSignal()
 
    DestroyAllPars();
 
-   DOUT1(("Delete childs"));
+   DOUT1(("Delete children"));
 
    DeleteChilds();
 
    dabc::Logger::Instance()->ShowStat();
 
-   DOUT0(("Normal exit after Ctrl-C"));
+   DOUT0(("Exit after Ctrl-C"));
 
    exit(0);
 }
+
+void dabc::Manager::RunManagerMainLoop()
+{
+   DOUT3(("Enter dabc::Manager::RunManagerMainLoop"));
+
+   WorkingThread* thrd = ProcessorThread();
+
+   if (thrd==0) return;
+
+   fMgrMainLoop = true;
+
+   if (thrd->IsRealThrd()) {
+      DOUT3(("Manager has normal thread - just wait until application modules are stopped"));
+      while(fMgrMainLoop) { dabc::LongSleep(1); }
+   } else {
+      DOUT3(("Manager uses main process as thread - run mainloop ourself"));
+
+      thrd->MainLoop();
+
+      DOUT3(("Manager is stopped - just keep process as it is"));// make virtual run, while thread in reality is running
+
+      thrd->Start(-1, true);
+   }
+
+   fMgrMainLoop = false;
+
+   DOUT3(("Exit dabc::Manager::RunManagerMainLoop"));
+}
+

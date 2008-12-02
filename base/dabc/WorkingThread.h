@@ -84,6 +84,8 @@ namespace dabc {
 
          virtual bool CompatibleClass(const char* clname) const;
 
+         void FireDoNothingEvent();
+
       protected:
 
          typedef std::vector<WorkingProcessor*> ProcessorsVector;

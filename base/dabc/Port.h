@@ -69,7 +69,6 @@ namespace dabc {
 
          virtual void ProcessEvent(EventId evid);
 
-      public:
          Port(Basic* parent,
               const char* name,
               PoolHandle* pool,
@@ -77,6 +76,8 @@ namespace dabc {
               unsigned sendqueue,
               BufferSize_t usrheadersize = 0);
          virtual ~Port();
+
+      public:
 
          virtual const char* MasterClassName() const { return "Port"; }
          virtual const char* ClassName() const { return "Port"; }

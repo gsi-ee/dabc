@@ -289,6 +289,13 @@ bool dabc::WorkingThread::Submit(Command* cmd)
    return CommandReceiver::Submit(cmd);
 }
 
+void dabc::WorkingThread::FireDoNothingEvent()
+{
+   // used by timeout object to activate thread and leave WaitEvent function
+
+   Fire(CodeEvent(evntDoNothing), -1);
+}
+
 int dabc::WorkingThread::ExecuteCommand(Command* cmd)
 {
    DOUT3(("WorkingThread::Execute command %s", cmd->GetName()));
@@ -298,7 +305,10 @@ int dabc::WorkingThread::ExecuteCommand(Command* cmd)
    if (cmd->IsName("ConfirmStart")) {
    } else
    if (cmd->IsName("ConfirmStop")) {
+      DOUT5(("Execute command ConfirmStop"));
       fThrdWorking = false;
+      // make one loop in MainLoop that flag can be checked and main loop will be leaved
+      FireDoNothingEvent();
    } else
    if (cmd->IsName("ConfirmSync")) {
    } else

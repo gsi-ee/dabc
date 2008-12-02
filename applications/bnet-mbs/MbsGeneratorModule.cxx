@@ -48,7 +48,7 @@ bool bnet::GenerateMbsPacket(dabc::Buffer* buf,
       }
 
       if (cnt>0) {
-         EOUT(("Should not happend - one always should be able to produce subevents"));
+         EOUT(("Should not happened - one always should be able to produce subevents"));
          break;
       }
 

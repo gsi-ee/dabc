@@ -26,11 +26,15 @@ mbs::GeneratorModule::GeneratorModule(const char* name) :
    dabc::ModuleAsync(name)
 {
    fEventCount = 0;
+
+   fStartStopPeriod = GetCfgInt("StartStopPeriod", 0);
    fNumSubevents = GetCfgInt("NumSubevents", 2);
    fFirstProcId = GetCfgInt("FirstProcId", 0);
    fSubeventSize = GetCfgInt("SubeventSize", 32);
    fIsGo4RandomFormat = GetCfgBool("Go4Random", true);
    fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16*1024);
+
+   DOUT1(("Generator buffer size %u sub %u", fBufferSize, fNumSubevents));
 
    fPool = CreatePool("Pool", 10, fBufferSize);
 
@@ -59,29 +63,7 @@ bool mbs::GeneratorModule::GeneratePacket()
 
    dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize, false);
    if (buf==0) { EOUT(("AAAAAAAAAAAA")); return false; }
-
-   if (fIsGo4RandomFormat) {
-      if (!GenerateGo4RandomPacket(buf)) {
-         dabc::Buffer::Release(buf);
-         return false;
-      }
-   } else {
-      EOUT(("Not implemented"));
-      dabc::Buffer::Release(buf);
-      return false;
-   }
-
-   Output(0)->Send(buf);
-
-   return true;
-
-}
-
-bool mbs::GeneratorModule::GenerateGo4RandomPacket(dabc::Buffer* buf)
-{
-   if (buf==0) return false;
-
-   unsigned numval = fSubeventSize / sizeof(uint32_t);
+   buf->SetDataSize(fBufferSize);
 
    mbs::WriteIterator iter(buf);
 
@@ -90,13 +72,20 @@ bool mbs::GeneratorModule::GenerateGo4RandomPacket(dabc::Buffer* buf)
       bool eventdone = true;
 
       for (unsigned subcnt = 0; subcnt < fNumSubevents; subcnt++)
-         if (iter.NewSubevent(numval * sizeof(uint32_t), 0, fFirstProcId+subcnt)) {
-            uint32_t* value = (uint32_t*) iter.rawdata();
+         if (iter.NewSubevent(fSubeventSize, 0, fFirstProcId + subcnt)) {
 
-            for (unsigned nval=0;nval<numval;nval++)
-               *value++ = (uint32_t) Gauss_Rnd(nval*100 + 2000, 500./(nval+1));
+            unsigned subsz = fSubeventSize;
 
-            iter.FinishSubEvent(numval * sizeof(uint32_t));
+            if (fIsGo4RandomFormat) {
+               uint32_t* value = (uint32_t*) iter.rawdata();
+               unsigned numval = fSubeventSize / sizeof(uint32_t);
+               for (unsigned nval=0;nval<numval;nval++)
+                  *value++ = (uint32_t) Gauss_Rnd(nval*100 + 2000, 500./(nval+1));
+
+               subsz = numval * sizeof(uint32_t);
+            }
+
+            iter.FinishSubEvent(subsz);
          } else {
             eventdone = false;
             break;
@@ -109,7 +98,10 @@ bool mbs::GeneratorModule::GenerateGo4RandomPacket(dabc::Buffer* buf)
       fEventCount++;
    }
 
+   Output(0)->Send(buf);
+
    return true;
+
 }
 
 

@@ -203,7 +203,7 @@ mbs::ServerTransport::ServerTransport(dabc::Device* dev, dabc::Port* port,
 
 mbs::ServerTransport::~ServerTransport()
 {
-   DOUT1(("mbs::ServerTransport::~ServerTransport queue:%d", fOutQueue.Size()));
+   DOUT3(("mbs::ServerTransport::~ServerTransport queue:%d", fOutQueue.Size()));
 
    fOutQueue.Cleanup();
 
@@ -214,12 +214,12 @@ mbs::ServerTransport::~ServerTransport()
    }
 
    if (fServerPort) {
-      DOUT1(("Close server port socket"));
+      DOUT3(("mbs::ServerTransport Close server port socket"));
       delete fServerPort;
       fServerPort = 0;
    }
 
-   DOUT1(("mbs::ServerTransport::~ServerTransport done queue:%d", fOutQueue.Size()));
+   DOUT3(("mbs::ServerTransport::~ServerTransport done queue:%d", fOutQueue.Size()));
 }
 
 void mbs::ServerTransport::PortChanged()
