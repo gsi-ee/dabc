@@ -32,7 +32,7 @@ if [[ "$RUNMODE" != "run" && "$RUNMODE" != "start" && "$RUNMODE" != "stop" && "$
    RUNMODE=test
 fi 
 
-echo "Chosen run mode = $RUNMODE verbose = $VERBOSE" 
+echo "Chosen run mode = $RUNMODE verbose = $VERBOSE ctrl = $CTRLMODE" 
 
 curdir=`pwd`
 if [[ "x$DABCSYS" == "x" ]] ; then DABCSYS=$curdir; echo DABCSYS not specified, use current dir $DABCSYS; fi
@@ -65,7 +65,7 @@ if [[ "$RUNMODE" != "start" ]]
 then
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
-   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -ssh $RUNMODE`
+   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -ssh $RUNMODE`
    retval=$?
    if [ $retval -ne 0 ]; then
       echo "Cannot identify test call args for node $counter  err = $retval"
@@ -93,7 +93,7 @@ connstr=file.id
 
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
-   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -ssh start`
+   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -ssh start`
    retval=$?
    if [ $retval -ne 0 ]; then
       echo "Cannot identify test call args for node $counter  err = $retval"
@@ -115,7 +115,7 @@ do
    # only required for SimpleControl, for DIM control must be deactivated
    ####################################################################
    
-   callargs=`$dabc_xml $XMLFILE -id $counter -workdir $currdir -conn $connstr -ssh conn`
+   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -ssh conn`
    
    if [[ "x$callargs" != "x" ]]
    then

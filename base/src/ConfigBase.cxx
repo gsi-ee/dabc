@@ -80,7 +80,7 @@ std::string dabc::ConfigBase::XDAQ_NodeName(unsigned instance)
    return ctxt.substr(0, pos);
 }
 
-std::string dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr)
+std::string dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int ctrlkind, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr)
 {
    XMLNodePointer_t contextnode = XDAQ_FindContext(instance);
 
@@ -116,18 +116,34 @@ std::string dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int kind, const ch
       res += FORMAT((" export DABCSYS=%s; ", dabcsys));
       res += " export LD_LIBRARY_PATH=$DABCSYS/lib:$LD_LIBRARY_PATH;";
       res += FORMAT((" cd %s;", topworkdir));
-      res += FORMAT(("$DABCSYS/bin/dabc_run %s -cfgid %u -nodeid %u -numnodes %u", topcfgfile, instance, instance, NumNodes()));
+      res += FORMAT((" $DABCSYS/bin/dabc_run %s -cfgid %u -nodeid %u -numnodes %u", topcfgfile, instance, instance, NumNodes()));
+      if (ctrlkind == kindSctrl)
+         res += " -sctrl ";
+      else
+      if (ctrlkind == kindDim) {
+         const char* dimnode = getenv(xmlDIM_DNS_NODE);
+         if (dimnode==0) {
+            EOUT(("Cannot identify dim node"));
+            return std::string("");
+         }
+         res += " -dim ";
+         res += dimnode;
+      }
 
-      if (connstr!=0) res += FORMAT((" -conn %s", connstr));
+      if ((connstr!=0) && (ctrlkind != kindDim))
+         res += FORMAT((" -conn %s", connstr));
    } else
    if (kind == kindConn) {
       // this is way to get connection string
-      if (connstr==0) {
-         res += " echo No connection string specified; exit 1";
-      } else {
-         res += FORMAT((" cd %s;", topworkdir));
-         res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
-      }
+      if ((ctrlkind != kindDim) && (instance==0)) {
+         if (connstr==0) {
+            res += " echo No connection string specified; exit 1";
+         } else {
+            res += FORMAT((" cd %s;", topworkdir));
+            res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
+         }
+      } else
+         res = "";
    } else
    if (kind == kindKill) {
       res += " killall --quiet dabc_run";
@@ -591,7 +607,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
 
    if (kind<0) return std::string("");
 
-   if (IsXDAQ()) return XDAQ_SshArgs(id, kind, topcfgfile, topworkdir, connstr);
+   if (IsXDAQ()) return XDAQ_SshArgs(id, ctrlkind, kind, topcfgfile, topworkdir, connstr);
 
    std::string res;
    XMLNodePointer_t contnode = FindContext(id);
@@ -724,7 +740,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
 
       if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
 
-      if ((connstr!=0) && (id==0))
+      if ((connstr!=0) && (ControlSequenceId(id)==1) && (ctrlkind != kindDim))
          res += FORMAT((" rm -f %s;", connstr));
 
       if (debugger) {
@@ -733,27 +749,6 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
       }
 
       res += " $DABCSYS/bin/dabc_run ";
-
-      if (ctrlkind == kindSctrl)
-         res += "-sctrl ";
-      else
-      if (ctrlkind == kindDim) {
-         const char* dimnode = Find1(contnode, 0, xmlRunNode, xmlDIM_DNS_NODE);
-         const char* dimport = Find1(contnode, 0, xmlRunNode, xmlDIM_DNS_PORT);
-         if (dimnode==0)
-            dimnode = getenv(xmlDIM_DNS_NODE);
-         if (dimnode==0) {
-            EOUT(("Cannot identify dim node"));
-            return std::string("");
-         }
-         res += "-dim ";
-         res += dimnode;
-         if (dimport) {
-            res += ":";
-            res += dimport;
-         }
-         res += " ";
-      }
 
       if (cfgfile) {
          res += ResolveEnv(cfgfile);
@@ -772,20 +767,41 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
          res += ResolveEnv(logfile);
       }
 
+      if (ctrlkind == kindSctrl)
+         res += " -sctrl ";
+      else
+      if (ctrlkind == kindDim) {
+         const char* dimnode = Find1(contnode, 0, xmlRunNode, xmlDIM_DNS_NODE);
+         const char* dimport = Find1(contnode, 0, xmlRunNode, xmlDIM_DNS_PORT);
+         if (dimnode==0)
+            dimnode = getenv(xmlDIM_DNS_NODE);
+         if (dimnode==0) {
+            EOUT(("Cannot identify dim node"));
+            return std::string("");
+         }
+         res += " -dim ";
+         res += dimnode;
+         if (dimport) {
+            res += ":";
+            res += dimport;
+         }
+         res += " ";
+      }
+
       unsigned ctrldid = ControlSequenceId(id);
       if (ctrldid>0) ctrldid--;
 
       res += FORMAT((" -nodeid %u -numnodes %u", ctrldid, NumControlNodes()));
 
-      if (connstr!=0) res += FORMAT((" -conn %s", connstr));
-
+      if (ctrlkind != kindDim)
+         if (connstr!=0) res += FORMAT((" -conn %s", connstr));
    } else
    if (kind == kindConn) {
       // this is way to get connection string
       if (connstr==0) {
          res += " echo No connection string specified; exit 1";
       } else
-      if (ControlSequenceId(id)==1) {
+      if ((ControlSequenceId(id)==1) && (ctrlkind != kindDim)) {
          if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
          res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
       } else

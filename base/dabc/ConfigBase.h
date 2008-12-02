@@ -111,7 +111,7 @@ namespace dabc {
          unsigned XDAQ_NumNodes();
          std::string XDAQ_ContextName(unsigned instance);
          std::string XDAQ_NodeName(unsigned instance);
-         std::string XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr);
+         std::string XDAQ_SshArgs(unsigned instance, int ctrlkind, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr);
 
       public:
          enum EControlKinds { kindNone, kindSctrl, kindDim };

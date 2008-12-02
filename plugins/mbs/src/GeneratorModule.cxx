@@ -140,7 +140,13 @@ class MbsTestReadoutModule : public dabc::ModuleAsync {
 
          dabc::PoolHandle* pool = CreatePool("Pool1", 5, size);
 
-         CreateInput("Input", pool, 5);
+         dabc::Port* port = CreateInput("Input", pool, 5);
+
+         port->CreateParStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
+         port->CreateParStr(mbs::xmlServerName, "lxg0526");
+         port->CreateParInt(mbs::xmlServerPort, DefualtServerPort(mbs::TransportServer));
+
+         DOUT1(("Start as client for node %s:%d", port->GetParStr(mbs::xmlServerName).c_str(), port->GetParInt(mbs::xmlServerPort)));
       }
 
       virtual void ProcessInputEvent(dabc::Port* port)
@@ -162,15 +168,13 @@ class MbsTestReadoutModule : public dabc::ModuleAsync {
 
 extern "C" void StartMbsClient()
 {
-   const char* hostname = "lxg0526";
-   int nport = 6000;
+//   const char* hostname = "lxg0526";
+//   int nport = 6000;
 
    if (dabc::mgr()==0) {
       EOUT(("Manager is not created"));
       exit(1);
    }
-
-   DOUT1(("Start as client for node %s:%d", hostname, nport));
 
    dabc::Module* m = new MbsTestReadoutModule("Receiver");
 
@@ -179,9 +183,9 @@ extern "C" void StartMbsClient()
    dabc::mgr()->CreateMemoryPools();
 
    dabc::Command* cmd = new dabc::CmdCreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
-   cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
-   cmd->SetStr(mbs::xmlServerName, hostname);
-   if (nport>0) cmd->SetInt(mbs::xmlServerPort, nport);
+//   cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
+//   cmd->SetStr(mbs::xmlServerName, hostname);
+//   if (nport>0) cmd->SetInt(mbs::xmlServerPort, nport);
 //   cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
 
    if (!dabc::mgr()->Execute(cmd)) {

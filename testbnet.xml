@@ -1,0 +1,47 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="Cluster">
+    <Run>
+      <host>lxg0526</host>
+    </Run>
+    <Application name="App">
+       <NetDevice>dabc::SocketDevice</NetDevice>
+    </Application>
+  </Context>
+  <Context name="Cont1">
+    <Run>
+      <host>lxi009</host>
+    </Run>
+  </Context>
+  <Context name="Cont2">
+    <Run>
+      <host>lxi010</host>
+    </Run>
+  </Context>
+  <Context name="Cont3">
+    <Run>
+      <host>lxi011</host>
+    </Run>
+  </Context>
+  <Context name="Cont4">
+    <Run>
+      <host>lxi012</host>
+    </Run>
+  </Context>
+  <Defaults>
+    <Context name="*">
+    <Run>
+       <user value="linev"/>
+       <port value="22"/>
+       <logfile value="test${DABCNODEID}.log"/>
+       <Lib>${DABCSYS}/lib/libDabcBnet.so</Lib>
+    </Run>
+    </Context>
+
+    <Context name="Cont*">
+       <Run>
+          <Lib>libBnetTest.so</Lib>
+       </Run>
+    </Context>
+  </Defaults>
+</dabc>

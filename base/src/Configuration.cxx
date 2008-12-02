@@ -170,6 +170,7 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
          fMgrDimNode.assign(dimnode, separ - dimnode);
          fMgrDimPort = atoi(separ + 1);
       }
+      DOUT4(("Mgr dim node %s port %d", fMgrDimNode.c_str(), fMgrDimPort));
    }
 
    return true;
