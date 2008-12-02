@@ -55,12 +55,18 @@ int main(int numc, char* args[])
          std::cout.flush();
       } else
       if (strstr(arg,"-nodename")==arg) {
-         if (configid<0) return 5;
          std::string name = cfg.NodeName(configid);
          if (name.length() == 0) return 5;
          std::cout << name << std::endl;
          std::cout.flush();
+      } else
+      if (strstr(arg,"-contextname")==arg) {
+         std::string name = cfg.ContextName(configid);
+         if (name.length() == 0) return 5;
+         std::cout << name << std::endl;
+         std::cout.flush();
       }
+
    }
 
    return 0;

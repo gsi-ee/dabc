@@ -516,7 +516,7 @@ std::string dabc::ConfigBase::NodeName(unsigned id)
 
 std::string dabc::ConfigBase::ContextName(unsigned id)
 {
-   if (IsXDAQ()) return XDAQ_NodeName(id);
+   if (IsXDAQ()) return XDAQ_ContextName(id);
    XMLNodePointer_t contnode = FindContext(id);
    if (contnode == 0) return std::string("");
    return std::string(fXml.GetAttr(contnode,xmlNameAttr));
