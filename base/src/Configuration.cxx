@@ -160,6 +160,8 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    fMgrNodeId   = nodeid;
    fMgrNumNodes = numnodes;
 
+   if (dimnode==0) dimnode = getenv(xmlDIM_DNS_NODE);
+
    if (dimnode!=0) {
       const char* separ = strchr(dimnode, ':');
       if (separ==0)
