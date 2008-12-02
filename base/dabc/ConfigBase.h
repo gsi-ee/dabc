@@ -35,7 +35,8 @@ namespace dabc {
    extern const char* xmlConfigFileId;
    extern const char* xmlUserLib;
    extern const char* xmlUserFunc;
-   extern const char* xmlControlType;
+   extern const char* xmlDIM_DNS_NODE;
+   extern const char* xmlDIM_DNS_PORT;
 
    extern const char* xmlXDAQPartition;
    extern const char* xmlXDAQContext;
@@ -45,7 +46,6 @@ namespace dabc {
    extern const char* xmlXDAQurlattr;
    extern const char* xmlXDAQModule;
    extern const char* xmlXDAQdebuglevel;
-
 
    class ConfigBase {
       protected:
@@ -109,10 +109,13 @@ namespace dabc {
 
          XMLNodePointer_t XDAQ_FindContext(unsigned instance);
          unsigned XDAQ_NumNodes();
+         std::string XDAQ_ContextName(unsigned instance);
          std::string XDAQ_NodeName(unsigned instance);
          std::string XDAQ_SshArgs(unsigned instance, int kind, const char* topcfgfile, const char* topworkdir, const char* connstr);
 
       public:
+         enum EControlKinds { kindNone, kindSctrl, kindDim };
+
          ConfigBase(const char* fname = 0);
          ~ConfigBase();
 
@@ -138,7 +141,7 @@ namespace dabc {
          std::string ContextName(unsigned id);
 
          // method used by run.sh script to produce command line when test(0), run(1), conn(2), kill(3) application
-         std::string SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);
+         std::string SshArgs(unsigned id = 0, int ctrlkind = kindNone, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);
 
          std::string ResolveEnv(const char* arg);
 

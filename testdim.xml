@@ -5,7 +5,6 @@
     <host value="lxg0517"/>
     <Lib>libDabcMbs.so</Lib>
     <Lib>libDabcKnut.so</Lib>
-    <control value="dim"/>
   </Run>
   <Application name="RocPlugin">
     <DoCalibr value="2"/>

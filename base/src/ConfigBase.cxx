@@ -63,20 +63,21 @@ unsigned dabc::ConfigBase::XDAQ_NumNodes()
    return cnt;
 }
 
-std::string dabc::ConfigBase::XDAQ_NodeName(unsigned instance)
+std::string dabc::ConfigBase::XDAQ_ContextName(unsigned instance)
 {
    XMLNodePointer_t contextnode = XDAQ_FindContext(instance);
    if (contextnode==0) return std::string("");
    const char* url = contextnode ? fXml.GetAttr(contextnode, xmlXDAQurlattr) : 0;
    if ((url==0) || (strstr(url,"http://")!=url)) return std::string("");
-   url += 7;
-   std::string nodename;
-   const char* pos = strstr(url, ":");
-   if (pos==0) nodename = url;
-          else nodename.assign(url, pos-url);
+   return std::string(url+7);
+}
 
-   return nodename;
-
+std::string dabc::ConfigBase::XDAQ_NodeName(unsigned instance)
+{
+   std::string ctxt = XDAQ_ContextName(instance);
+   size_t pos = ctxt.find(":");
+   if (pos==ctxt.npos) return ctxt;
+   return ctxt.substr(0, pos-1);
 }
 
 
@@ -170,7 +171,8 @@ namespace dabc {
    const char* xmlConfigFileId     = "configid";
    const char* xmlUserLib          = "Lib";
    const char* xmlUserFunc         = "Func";
-   const char* xmlControlType      = "control";
+   const char* xmlDIM_DNS_NODE     = "DIM_DNS_NODE";
+   const char* xmlDIM_DNS_PORT     = "DIM_DNS_PORT";
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :
@@ -576,7 +578,7 @@ std::string dabc::ConfigBase::ResolveEnv(const char* arg)
    return name;
 }
 
-std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char* topcfgfile, const char* topworkdir, const char* connstr)
+std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* skind, const char* topcfgfile, const char* topworkdir, const char* connstr)
 {
    if (skind==0) skind = "test";
 
@@ -618,7 +620,9 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
    const char* cfgfile = Find1(contnode, 0, xmlRunNode, xmlConfigFile);
    const char* cfgid = Find1(contnode, 0, xmlRunNode, xmlConfigFileId);
 
-   const char* envdabcsys = getenv("DABCSYS");
+   std::string envdabcsys;
+   const char* _env = getenv("DABCSYS");
+   if (_env!=0) envdabcsys = _env;
 
    if ((topcfgfile==0) && (cfgfile==0)) {
       EOUT(("Config file not defined"));
@@ -669,8 +673,8 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
       if (dabcsys!=0)
          res += FORMAT((" if [ ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", dabcsys, dabcsys));
       else
-      if (envdabcsys!=0)
-         res += FORMAT((" if [ z $DABSYS -a ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", envdabcsys, envdabcsys));
+      if (envdabcsys.length() > 0)
+         res += FORMAT((" if [ z $DABSYS -a ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", envdabcsys.c_str(), envdabcsys.c_str()));
       else
          res += " if [ z $DABCSYS ] ; then echo DABCSYS not specified; exit 7; fi;";
 
@@ -708,8 +712,8 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
          if (ld.length()>0) { res += ld; res+=":"; }
          res += "$DABCSYS/lib:$LD_LIBRARY_PATH;";
       } else
-      if (envdabcsys!=0) {
-         res += FORMAT(( " if [ z $DABCSYS -a -d %s ] ; then export DABCSYS=%s;", envdabcsys, envdabcsys));
+      if (envdabcsys.length()>0) {
+         res += FORMAT(( " if [ z $DABCSYS -a -d %s ] ; then export DABCSYS=%s;", envdabcsys.c_str(), envdabcsys.c_str()));
          res += " export LD_LIBRARY_PATH=";
          if (ld.length()>0) { res += ld; res+=":"; }
          res += "$DABCSYS/lib:$LD_LIBRARY_PATH; fi;";
@@ -730,6 +734,27 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
       }
 
       res += " $DABCSYS/bin/dabc_run ";
+
+      if (ctrlkind == kindSctrl)
+         res += "-sctrl ";
+      else
+      if (ctrlkind == kindDim) {
+         const char* dimnode = Find1(contnode, 0, xmlRunNode, xmlDIM_DNS_NODE);
+         const char* dimport = Find1(contnode, 0, xmlRunNode, xmlDIM_DNS_PORT);
+         if (dimnode==0)
+            dimnode = getenv(xmlDIM_DNS_NODE);
+         if (dimnode==0) {
+            EOUT(("Cannot identify dim node"));
+            return std::string("");
+         }
+         res += "-dim ";
+         res += dimnode;
+         if (dimport) {
+            res += ":";
+            res += dimport;
+         }
+         res += " ";
+      }
 
       if (cfgfile) {
          res += ResolveEnv(cfgfile);

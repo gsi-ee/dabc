@@ -30,8 +30,10 @@ namespace dabc {
          bool             fCurrStrict; // must have strict syntax match
 
          std::string  fMgrName;
-         int     fMgrNodeId;
-         int     fMgrNumNodes;
+         int          fMgrNodeId;
+         int          fMgrNumNodes;
+         std::string  fMgrDimNode;
+         int          fMgrDimPort;
 
          bool XDAQ_LoadLibs();
          bool XDAQ_ReadPars();
@@ -42,14 +44,15 @@ namespace dabc {
          Configuration(const char* fname = 0);
          virtual ~Configuration();
 
-         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0);
+         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0, const char* dimnode = 0);
 
          const char* MgrName() const { return fMgrName.c_str(); }
          int MgrNodeId() const { return fMgrNodeId; }
          int MgrNumNodes() const { return fMgrNumNodes; }
+         const char* MgrDimNode() const { return fMgrDimNode.c_str(); }
+         int MgrDimPort() const { return fMgrDimPort; }
 
          std::string StartFuncName();
-         std::string ControlType();
 
          bool LoadLibs(const char* startfunc = 0);
 

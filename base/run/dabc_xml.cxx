@@ -11,6 +11,7 @@ int main(int numc, char* args[])
    const char* workdir = 0;
    unsigned configid = 0;
    const char* connstr = 0;
+   int ctrlkind = dabc::ConfigBase::kindNone;
 
    if(numc > 1) configuration = args[1];
 
@@ -22,6 +23,12 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
+      if (strcmp(arg,"-dim")==0) {
+         ctrlkind = dabc::ConfigBase::kindDim;
+      } else
+      if (strcmp(arg,"-sctrl")==0) {
+         ctrlkind = dabc::ConfigBase::kindSctrl;
+      } else
       if (strcmp(arg,"-id")==0) {
          if (cnt < numc)
             configid = (unsigned) atoi(args[cnt++]);
@@ -40,13 +47,9 @@ int main(int numc, char* args[])
          std::cout << res << std::endl;
          std::cout.flush();
       } else
-//      if (strstr(arg,"-gen")==arg) {
-//         dabc::Configuration::ProduceClusterFile(configuration, numnodes);
-//         DOUT1(("Produce cluster file %s", configuration));
-//      } else
       if (strcmp(arg,"-ssh") == 0) {
          const char* kind = (cnt < numc) ? args[cnt++] : "start";
-         std::string res = cfg.SshArgs(configid, kind, configuration, workdir, connstr);
+         std::string res = cfg.SshArgs(configid, ctrlkind, kind, configuration, workdir, connstr);
          if (res.length()==0) return 7;
          std::cout << res << std::endl;
          std::cout.flush();

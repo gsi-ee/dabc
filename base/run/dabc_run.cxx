@@ -206,7 +206,8 @@ int main(int numc, char* args[])
 
    dabc::Configuration cfg(configuration);
    if (!cfg.IsOk()) return 7;
-   bool isdim = false;
+   int ctrlkind = dabc::ConfigBase::kindNone;
+   const char* dimnode = 0;
 
    int cnt = 2;
    while (cnt<numc) {
@@ -233,8 +234,14 @@ int main(int numc, char* args[])
          if (cnt < numc)
             connid = args[cnt++];
       } else
-      if (strcmp(arg,"-dim")==0)
-         isdim = true;
+      if (strcmp(arg,"-sctrl")==0) {
+         ctrlkind = dabc::ConfigBase::kindSctrl;
+      } else
+      if (strcmp(arg,"-dim")==0) {
+         ctrlkind = dabc::ConfigBase::kindDim;
+         if (cnt < numc)
+            dimnode = args[cnt++];
+      }
    }
 
    if (numnodes==0) numnodes = cfg.NumNodes();
@@ -242,17 +249,19 @@ int main(int numc, char* args[])
 
    DOUT1(("Using config file: %s id: %u", configuration, configid));
 
-   if (!cfg.SelectContext(configid, nodeid, numnodes, logfile)) {
+   if (!cfg.SelectContext(configid, nodeid, numnodes, logfile, dimnode)) {
       EOUT(("Did not found context"));
       return 1;
    }
 
-   if (cfg.ControlType() == "dim") isdim = true;
    std::string funcname = cfg.StartFuncName();
 
    const char* mgrclass = "";
 
-   if (isdim) {
+   if ((ctrlkind == dabc::ConfigBase::kindNone) && (numnodes > 1))
+      ctrlkind = dabc::ConfigBase::kindSctrl;
+
+   if (ctrlkind == dabc::ConfigBase::kindDim) {
       if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcDimCtrl.so")) {
          EOUT(("Cannot load dim control library"));
          return 1;
@@ -260,7 +269,7 @@ int main(int numc, char* args[])
       connid = 0;
       mgrclass = "DimControl";
    } else
-   if ((funcname.length()==0) && (numnodes > 1)) {
+   if (ctrlkind == dabc::ConfigBase::kindSctrl) {
       if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcSctrl.so")) {
          EOUT(("Cannot load control library"));
          return 1;
@@ -285,7 +294,7 @@ int main(int numc, char* args[])
    if (numnodes<2)
       res = RunSimpleApplication(&cfg);
    else
-   if (isdim)
+   if (ctrlkind == dabc::ConfigBase::kindDim)
       res = RunClusterDimApplucation(&cfg, nodeid);
    else
       res = RunClusterApplucation(&cfg, connid, nodeid, numnodes);

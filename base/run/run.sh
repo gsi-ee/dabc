@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "Shell script to run dabc application in simple (without XDAQ/dim) environment"
-echo "  Usage: run.sh filename.xml [run|start|stop|test|kill]  [-v|--verbose]"
+echo "  Usage: run.sh filename.xml [run|start|stop|test|kill]  [-v|--verbose] [-dim|-sctrl]"
 
 #arg1="ssh lxi002"
 #arg='. gsi_environment.sh; echo $HOST : $HOST; ls'
@@ -14,16 +14,25 @@ if [ ! -f $XMLFILE ] ; then echo "file $XMLFILE not exists"; exit 1; fi
 
 VERBOSE=false
 RUNMODE=run
+CTRLMODE=
+
 while [[ "x$1" != "x" ]] ; do
    if [[ "$1" == "-v" || "$1" == "--vebrose" ]] ; then 
       VERBOSE=true;
+   elif [[ "$1" == "-dim" || "$1" == "-sctrl" ]] ; then
+      CTRLMODE=$1;
    else
       RUNMODE=$1;   
    fi  
    shift
 done
 
-echo "Choosen run mode = $RUNMODE verbose = $VERBOSE" 
+if [[ "$RUNMODE" != "run" && "$RUNMODE" != "start" && "$RUNMODE" != "stop" && "$RUNMODE" != "test" && "$RUNMODE" != "kill" ]] ; then
+   echo Wrong run mode  = $RUNMODE selected, use test
+   RUNMODE=test
+fi 
+
+echo "Chosen run mode = $RUNMODE verbose = $VERBOSE" 
 
 curdir=`pwd`
 if [[ "x$DABCSYS" == "x" ]] ; then DABCSYS=$curdir; echo DABCSYS not specified, use current dir $DABCSYS; fi

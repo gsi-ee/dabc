@@ -97,7 +97,13 @@ dabc::Configuration::Configuration(const char* fname) :
    fStoreStack(),
    fStoreLastPop(0),
    fCurrItem(0),
-   fLastTop(0)
+   fLastTop(0),
+   fCurrStrict(true),
+   fMgrName("Manager"),
+   fMgrNodeId(0),
+   fMgrNumNodes(0),
+   fMgrDimNode(),
+   fMgrDimPort(0)
 {
 }
 
@@ -105,7 +111,7 @@ dabc::Configuration::~Configuration()
 {
 }
 
-bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile)
+bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile, const char* dimnode)
 {
    fSelected = IsXDAQ() ? XDAQ_FindContext(cfgid) : FindContext(cfgid);
 
@@ -154,6 +160,16 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    fMgrNodeId   = nodeid;
    fMgrNumNodes = numnodes;
 
+   if (dimnode!=0) {
+      const char* separ = strchr(dimnode, ':');
+      if (separ==0)
+         fMgrDimNode = dimnode;
+      else {
+         fMgrDimNode.assign(dimnode, separ - dimnode);
+         fMgrDimPort = atoi(separ + 1);
+      }
+   }
+
    return true;
 }
 
@@ -162,16 +178,6 @@ std::string dabc::Configuration::StartFuncName()
    if (IsXDAQ() || (fSelected==0)) return std::string("");
 
    const char* val = Find1(fSelected, 0, xmlRunNode, xmlUserFunc);
-
-   return std::string(val ? val : "");
-}
-
-
-std::string dabc::Configuration::ControlType()
-{
-   if (IsXDAQ() || (fSelected==0)) return std::string("");
-
-   const char* val = Find1(fSelected, 0, xmlRunNode, xmlControlType);
 
    return std::string(val ? val : "");
 }
