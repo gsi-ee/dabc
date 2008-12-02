@@ -38,10 +38,10 @@ class TestModuleAsync : public dabc::ModuleAsync {
          fPool = CreatePool("Pool", 5, BUFFERSIZE);
 
          if (fKind>0)
-            fInput = CreateInput("Input", fPool, QUEUESIZE, 0, true);
+            fInput = CreateInput("Input", fPool, QUEUESIZE, 0);
 
          if (fKind<2)
-            fOutput = CreateOutput("Output", fPool, QUEUESIZE, 0, true);
+            fOutput = CreateOutput("Output", fPool, QUEUESIZE, 0);
 
          fCounter = 0;
       }

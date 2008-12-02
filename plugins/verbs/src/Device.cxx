@@ -518,8 +518,8 @@ void verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int co
       port_cq = thrd->MakeCQ();
 
    port_qp = new QueuePair(this, qp_type,
-                         port_cq, port->NumOutputBuffersRequired(), fDeviceAttr.max_sge - 1,
-                         port_cq, port->NumInputBuffersRequired(), /*fDeviceAttr.max_sge / 2*/ 2);
+                           port_cq, port->NumOutputBuffersRequired(), fDeviceAttr.max_sge - 1,
+                           port_cq, port->NumInputBuffersRequired(), /*fDeviceAttr.max_sge / 2*/ 2);
     if (!isowncq)
        port_cq = 0;
 }
@@ -581,7 +581,7 @@ void verbs::Device::UnregisterPool(PoolRegistry* entry)
    DOUT3(("Call UnregisterPool done"));
 }
 
-void verbs::Device::CreateVerbsTransport(const char* thrdname, const char* portname, ComplQueue* cq, QueuePair* qp)
+void verbs::Device::CreateVerbsTransport(const char* thrdname, const char* portname, bool useackn, ComplQueue* cq, QueuePair* qp)
 {
    if (qp==0) return;
 
@@ -596,7 +596,7 @@ void verbs::Device::CreateVerbsTransport(const char* thrdname, const char* portn
       return;
    }
 
-   Transport* tr = new Transport(this, cq, qp, port);
+   Transport* tr = new Transport(this, cq, qp, port, useackn);
 
    tr->AssignProcessorToThread(thrd);
 

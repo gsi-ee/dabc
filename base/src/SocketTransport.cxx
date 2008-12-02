@@ -2,7 +2,7 @@
 
 #include "dabc/SocketDevice.h"
 
-dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, int fd) :
+dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useackn, int fd) :
    NetworkTransport(dev),
    SocketIOProcessor(fd),
    fHeaders(0),
@@ -13,7 +13,7 @@ dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, int fd) :
    fSendStatus(0),
    fSendRecid(0)
 {
-   Init(port);
+   Init(port, useackn);
 
    DOUT3(("Tranport %p for port %p created", this, port));
 

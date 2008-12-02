@@ -54,7 +54,7 @@ int main(int numc, char* args[])
    res = manager.Execute(dcom);
    DOUT1(("CreateDevice = %s", DBOOL(res)));
 
-   cmd = new dabc::CommandCreateModule("abb::ReadoutModule","ABB_Readout", "ReadoutThread");
+   cmd = new dabc::CmdCreateModule("abb::ReadoutModule","ABB_Readout", "ReadoutThread");
    cmd->SetInt(ABB_COMPAR_BUFSIZE, readsize);
    cmd->SetInt(ABB_COMPAR_STALONE,1);
    cmd->SetInt(ABB_COMPAR_QLENGTH, 10);

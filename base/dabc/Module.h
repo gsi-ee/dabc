@@ -109,7 +109,7 @@ namespace dabc {
          // generic event processing function
          virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid) {}
 
-         // some usefull routines for I/O handling
+         // some useful routines for I/O handling
          bool IsAnyOutputBlocked() const;
          void SendToAllOutputs(Buffer* buf);
 
@@ -120,7 +120,7 @@ namespace dabc {
       protected:
 
          // these two methods called before start and after stop of module
-         // disregad of module has its own mainloop or not
+         // disregard of module has its own mainloop or not
          virtual void BeforeModuleStart() {}
          virtual void AfterModuleStop() {}
 
@@ -143,11 +143,11 @@ namespace dabc {
          PoolHandle* CreatePool(const char* name, BufferNum_t number = 0, BufferSize_t size = 0, BufferNum_t increment = 0);
          Buffer* TakeBuffer(const char* poolname, BufferSize_t size = 0);
 
-         Port* CreateInput(const char* name, PoolHandle* pool, unsigned queue, BufferSize_t headersize = 0, bool ackn = false)
-           { return CreatePort(name, pool, queue, 0, headersize, ackn); }
-         Port* CreateOutput(const char* name, PoolHandle* pool, unsigned queue, BufferSize_t headersize = 0, bool ackn = false)
-           { return CreatePort(name, pool, 0, queue, headersize, ackn); }
-         Port* CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize = 0, bool ackn = false);
+         Port* CreateInput(const char* name, PoolHandle* pool, unsigned queue, BufferSize_t headersize = 0)
+           { return CreatePort(name, pool, queue, 0, headersize); }
+         Port* CreateOutput(const char* name, PoolHandle* pool, unsigned queue, BufferSize_t headersize = 0)
+           { return CreatePort(name, pool, 0, queue, headersize); }
+         Port* CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize = 0);
 
          CommandDefinition* NewCmdDef(const char* cmdname);
 

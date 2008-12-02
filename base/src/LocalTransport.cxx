@@ -226,7 +226,7 @@ int dabc::LocalDevice::ExecuteCommand(dabc::Command* cmd)
 {
    int cmd_res = cmd_true;
 
-   if (cmd->IsName(CommandPortConnect::CmdName())) {
+   if (cmd->IsName(CmdConnectPorts::CmdName())) {
       Port* port1 = dabc::mgr()->FindPort(cmd->GetPar("Port1Name"));
       Port* port2 = dabc::mgr()->FindPort(cmd->GetPar("Port2Name"));
 

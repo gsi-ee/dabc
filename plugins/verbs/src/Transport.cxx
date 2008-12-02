@@ -8,7 +8,7 @@
 #include "verbs/ComplQueue.h"
 #include "verbs/MemoryPool.h"
 
-verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::Port* port) :
+verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::Port* port, bool useackn) :
    dabc::NetworkTransport(verbs),
    Processor(qp),
    fCQ(cq),
@@ -20,7 +20,7 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
    fSegmPerOper(2),
    fFastPost(true)
 {
-   Init(port);
+   Init(port, useackn);
 
    fFastPost = Device::IsThreadSafeVerbs();
 

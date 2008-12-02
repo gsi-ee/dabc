@@ -44,7 +44,7 @@ class Test2SendModule : public dabc::ModuleAsync {
          fPool = CreatePool("SendPool", 500, buffsize);
 
          for (int n=0;n<nports;n++)
-            CreateOutput(FORMAT(("Output%d", n)), fPool, TestSendQueueSize, 0, TestUseAckn);
+            CreateOutput(FORMAT(("Output%d", n)), fPool, TestSendQueueSize);
 
          // CreateTimer("StillAlive", 1.);
 
@@ -133,7 +133,7 @@ class Test2RecvModule : public dabc::ModuleAsync {
          fPool = CreatePool("RecvPool", 5, buffsize);
 
          for (int n=0;n<nports;n++)
-            CreateInput(FORMAT(("Input%d", n)), fPool, TestRecvQueueSize, 0, TestUseAckn);
+            CreateInput(FORMAT(("Input%d", n)), fPool, TestRecvQueueSize);
 
          fSleepTime = 0;
       }
@@ -250,7 +250,7 @@ void CreateAllModules(dabc::StandaloneManager &m, int buffersize, int numworkers
 
    for (int node=0;node<m.NumNodes();node++) {
       dabc::Command* cmd =
-         new dabc::CommandCreateModule("Test2RecvModule","Receiver");
+         new dabc::CmdCreateModule("Test2RecvModule","Receiver");
       cmd->SetInt("NumPorts", m.NumNodes()-1);
       cmd->SetInt("BufferSize", buffersize);
       m.SubmitRemote(cli, cmd, node);
@@ -258,7 +258,7 @@ void CreateAllModules(dabc::StandaloneManager &m, int buffersize, int numworkers
 
    for (int node=0;node<m.NumNodes();node++) {
       dabc::Command* cmd =
-         new dabc::CommandCreateModule("Test2SendModule","Sender");
+         new dabc::CmdCreateModule("Test2SendModule","Sender");
       cmd->SetInt("NumPorts", m.NumNodes()-1);
       cmd->SetInt("BufferSize", buffersize);
       m.SubmitRemote(cli, cmd, node);
@@ -267,7 +267,7 @@ void CreateAllModules(dabc::StandaloneManager &m, int buffersize, int numworkers
    for (int nw=0;nw<numworkers;nw++)
       for (int node=0;node<m.NumNodes();node++) {
          dabc::Command* cmd =
-            new dabc::CommandCreateModule("Test2WorkerModule", FORMAT(("Worker%d",nw)));
+            new dabc::CmdCreateModule("Test2WorkerModule", FORMAT(("Worker%d",nw)));
          m.SubmitRemote(cli, cmd, node);
       }
 
@@ -305,9 +305,11 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
           dabc::formats(port2name, "%s$Receiver/Input%d", m.GetNodeName(nreceiver), nsender>nreceiver ? nsender-1 : nsender);
 
           dabc::Command* cmd =
-             new dabc::CommandPortConnect(port1name.c_str(),
+             new dabc::CmdConnectPorts(port1name.c_str(),
                                           port2name.c_str(),
                                           devname);
+
+          cmd->SetBool(dabc::xmlUseAcknowledge, TestUseAckn);
 
           m.SubmitCl(cli, cmd);
       }
@@ -472,7 +474,7 @@ void RunStandaloneTest(dabc::StandaloneManager &m, int nmodules = 1)
 
    for (int nm=0;nm<nmodules;nm++) {
       dabc::Command* cmd =
-         new dabc::CommandCreateModule("TRecvModule", FORMAT(("Receiver%d",nm)), thrdname);
+         new dabc::CmdCreateModule("TRecvModule", FORMAT(("Receiver%d",nm)), thrdname);
       cmd->SetInt("NumPorts", nmodules);
       cmd->SetInt("BufferSize", TestBufferSize);
       m.SubmitCl(cli, cmd);
@@ -480,7 +482,7 @@ void RunStandaloneTest(dabc::StandaloneManager &m, int nmodules = 1)
 
    for (int nm=0;nm<nmodules;nm++) {
       dabc::Command* cmd =
-         new dabc::CommandCreateModule("TSendModule",FORMAT(("Sender%d",nm)), thrdname);
+         new dabc::CmdCreateModule("TSendModule",FORMAT(("Sender%d",nm)), thrdname);
       cmd->SetInt("NumPorts", nmodules);
       cmd->SetInt("BufferSize", TestBufferSize);
       m.SubmitCl(cli, cmd);
@@ -491,7 +493,7 @@ void RunStandaloneTest(dabc::StandaloneManager &m, int nmodules = 1)
    for (int nm1=0;nm1<nmodules;nm1++)
       for (int nm2=0;nm2<nmodules;nm2++)
          m.SubmitCl(cli,
-            new dabc::CommandPortConnect(
+            new dabc::CmdConnectPorts(
                   FORMAT(("Sender%d/Output%d", nm1, nm2)),
                   FORMAT(("Receiver%d/Input%d", nm2, nm1))));
    cli.WaitCommands(1);
@@ -565,13 +567,13 @@ void OneToAllLoop(dabc::StandaloneManager &m, int deviceid)
    dabc::Command* cmd = 0;
 
    for (int node=1;node<m.NumNodes();node++) {
-      cmd = new dabc::CommandCreateModule("Test2RecvModule","Receiver");
+      cmd = new dabc::CmdCreateModule("Test2RecvModule","Receiver");
       cmd->SetInt("NumPorts", 1);
       cmd->SetInt("BufferSize", TestBufferSize);
       m.SubmitRemote(cli, cmd, node);
    }
 
-   cmd = new dabc::CommandCreateModule("Test2SendModule","Sender");
+   cmd = new dabc::CmdCreateModule("Test2SendModule","Sender");
    cmd->SetInt("NumPorts", m.NumNodes()-1);
    cmd->SetInt("BufferSize", TestBufferSize);
    m.SubmitLocal(cli, cmd);
@@ -601,7 +603,7 @@ void OneToAllLoop(dabc::StandaloneManager &m, int deviceid)
       dabc::formats(port1name, "%s$Sender/Output%d", m.GetNodeName(0), nreceiver-1);
       dabc::formats(port2name, "%s$Receiver/Input0", m.GetNodeName(nreceiver));
 
-      cmd = new dabc::CommandPortConnect(port1name.c_str(),
+      cmd = new dabc::CmdConnectPorts(port1name.c_str(),
                                          port2name.c_str(),
                                          devname);
 
@@ -651,7 +653,7 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
    dabc::Command* cmd = 0;
 
    for (int node=0;node<m.NumNodes();node++) {
-      cmd = new dabc::CommandCreateModule("TimeSyncModule","TSync", "TSyncThrd");
+      cmd = new dabc::CmdCreateModule("TimeSyncModule","TSync", "TSyncThrd");
 
       if (node==0)
          cmd->SetInt("NumSlaves", m.NumNodes()-1);
@@ -673,7 +675,7 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
       dabc::formats(port1name, "%s$TSync/Slave%d", m.GetNodeName(0), nslave-1);
       dabc::formats(port2name, "%s$TSync/Master", m.GetNodeName(nslave));
 
-      cmd = new dabc::CommandPortConnect(port1name.c_str(),
+      cmd = new dabc::CmdConnectPorts(port1name.c_str(),
                                          port2name.c_str(),
                                          devname, "TSyncThrd");
 

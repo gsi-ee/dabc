@@ -31,7 +31,7 @@ bnet::ReceiverModule::ReceiverModule(const char* name, WorkerApplication* factor
    CreateOutput("Output", fPool, ReceiverOutQueueSize, sizeof(bnet::SubEventNetHeader));
 
    for (int n=0;n<fCfgNumNodes;n++)
-      CreateInput(FORMAT(("Input%d", n)), fPool, ReceiverQueueSize, sizeof(bnet::SubEventNetHeader), BnetUseAcknowledge);
+      CreateInput(FORMAT(("Input%d", n)), fPool, ReceiverQueueSize, sizeof(bnet::SubEventNetHeader));
 
    CreateRateParameter("DataRate", false, 1., "", "Output");
 

@@ -23,15 +23,13 @@ dabc::Port::Port(Basic* parent,
                  PoolHandle* pool,
                  unsigned recvqueue,
                  unsigned sendqueue,
-                 BufferSize_t usrheadersize,
-                 bool ackn) :
+                 BufferSize_t usrheadersize) :
    ModuleItem(dabc::mitPort, parent, name),
    fPool(pool),
    fInputQueueCapacity(recvqueue),
    fInputPending(0),
    fOutputQueueCapacity(sendqueue),
    fOutputPending(0),
-   fUseAcknowledges(ackn),
    fUsrHeaderSize(usrheadersize),
    fTransport(0),
    fInpRate(0),
@@ -44,8 +42,6 @@ dabc::Port::Port(Basic* parent,
       fOutputQueueCapacity = GetCfgInt(xmlOutputQueueSize, sendqueue);
 
    fUsrHeaderSize = GetCfgInt(xmlUserHeaderSize, usrheadersize);
-
-   fUseAcknowledges = GetCfgBool(xmlUseAcknowledges, ackn);
 
    DOUT5(("Create Port %s with inp %u out %u", GetName(), fInputQueueCapacity, fOutputQueueCapacity));
 }
@@ -89,8 +85,8 @@ unsigned dabc::Port::NumOutputBuffersRequired() const
 
    unsigned sz = OutputQueueCapacity();
 
-   // this is additional buffers for sending ackn packets
-   if (IsUseAcknowledges() && (InputQueueCapacity() > 0)) sz++;
+   // this is additional buffers for sending acknowledge packets (when will be required)
+   if (InputQueueCapacity() > 0) sz++;
 
    return sz;
 }
@@ -101,8 +97,8 @@ unsigned dabc::Port::NumInputBuffersRequired() const
 
    unsigned sz = InputQueueCapacity();
 
-   if (IsUseAcknowledges() && (OutputQueueCapacity() > 0) &&
-         (InputQueueCapacity()<AcknoledgeQueueLength)) sz = AcknoledgeQueueLength;
+   // this is additional buffers for receiving acknowledge packets (when will be required)
+   if ((OutputQueueCapacity() > 0) && (sz<AcknoledgeQueueLength)) sz = AcknoledgeQueueLength;
 
    return sz;
 }

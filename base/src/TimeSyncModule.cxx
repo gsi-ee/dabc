@@ -44,10 +44,10 @@ dabc::TimeSyncModule::TimeSyncModule(const char* name, Command* cmd) :
    fPool = CreatePool(fPoolName.c_str(), 5, 0);
 
    if (fMasterConn)
-      CreatePort("Master", fPool, 5, 10, TimeSyncBufferSize, false);
+      CreatePort("Master", fPool, 5, 10, TimeSyncBufferSize);
 
    for (int n=0; n<fNumSlaves; n++)
-      CreatePort(FORMAT(("Slave%d",n)), fPool, 5, 10, TimeSyncBufferSize, false);
+      CreatePort(FORMAT(("Slave%d",n)), fPool, 5, 10, TimeSyncBufferSize);
 
    if (fNumSlaves>0) {
       fSyncTimes = new double [fNumSlaves];

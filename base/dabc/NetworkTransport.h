@@ -14,16 +14,16 @@
 #endif
 
 namespace dabc {
-   
+
    class MemoryPool;
-   
+
    class NetworkTransport : public Transport,
-                            public MemoryPoolRequester { 
-      
+                            public MemoryPoolRequester {
+
       typedef Queue<uint32_t> NetIORecsQueue;
- 
+
       protected:
-      
+
          enum ENetworkOperTypes {
             netot_Send     = 0x001U,
             netot_Recv     = 0x002U,
@@ -37,11 +37,11 @@ namespace dabc {
             Buffer*  buf;
             void*    header;
             void*    usrheader;
-         }; 
+         };
 
 
 #pragma pack(1)
-         
+
          typedef struct NetworkHeader {
             uint32_t chkword;
             uint32_t kind;
@@ -53,21 +53,21 @@ namespace dabc {
 #pragma pack(0)
 
          uint32_t      fTransportId;
-      
+
          bool          fIsInput;
          bool          fIsOutput;
-      
+
          MemoryPool*   fPool;
          bool          fUseAckn;
          unsigned      fInputQueueLength;
          unsigned      fOutputQueueLength;
-         
+
          Mutex         fMutex;
          uint32_t      fNumRecs;
          uint32_t      fRecsCounter;
          NetIORec*     fRecs;
          int           fNumUsedRecs;
-         
+
          unsigned      fOutputQueueSize;
          unsigned      fAcknAllowedOper;
          NetIORecsQueue fAcknSendQueue;
@@ -75,35 +75,35 @@ namespace dabc {
 
          BufferSize_t  fInputBufferSize; // size of buffer, specified by user to be preselected from memory pool
          unsigned      fInputQueueSize; // total number of buffers, using for receieving : in device recv queue and input queue, not yet cleaned by user
-         NetIORecsQueue fInputQueue;   // buffers, which already delivered by device 
+         NetIORecsQueue fInputQueue;   // buffers, which already delivered by device
          bool          fFirstAckn;      // indicates, if first ackn packet was send or not
          unsigned      fAcknReadyCounter; // counter of submitted to device recv packets
-         
+
          BufferSize_t  fFullHeaderSize;  // total header size
          BufferSize_t  fUserHeaderSize;  // user part of the header (in the end)
-                        
+
          NetworkTransport(Device* device);
          virtual ~NetworkTransport();
-         
-         void Init(Port *port);
+
+         void Init(Port *port, bool useackn);
          void Cleanup();
-         
+
          virtual void PortChanged();
-         
+
          uint32_t _TakeRec(Buffer* buf, uint32_t kind = 0, uint64_t extras = 0);
          void _ReleaseRec(uint32_t recid);
          void SetRecHeader(uint32_t recid, void* header);
-         
+
          void FillRecvQueue(Buffer* freebuf = 0);
          bool CheckAcknReadyCounter(unsigned newitems = 0);
          void _SubmitAllowedSendOperations();
-         
+
          // this method must be reimplemented in inherited classes
          virtual void _SubmitRecv(uint32_t recid) = 0;
          virtual void _SubmitSend(uint32_t recid) = 0;
 
          int PackHeader(uint32_t recid);
-         
+
       public:
 
          inline int GetId() const { return fTransportId; }

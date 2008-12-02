@@ -405,8 +405,8 @@ bool verbs::Thread::DoServer(dabc::Command* cmd, dabc::Port* port, const char* p
    if (!StartConnectProcessor()) return false;
 
    QueuePair* hs_qp = new QueuePair(fDevice, IBV_QPT_RC,
-                                MakeCQ(), 2, 1,
-                                MakeCQ(), 2, 1);
+                                    MakeCQ(), 2, 1,
+                                    MakeCQ(), 2, 1);
 
    ProtocolProcessor* rec = new ProtocolProcessor(this, hs_qp, true, portname, cmd);
 
@@ -425,7 +425,6 @@ bool verbs::Thread::DoServer(dabc::Command* cmd, dabc::Port* port, const char* p
 
    cmd->SetPar("ConnId", rec->fConnId.c_str());
 
-   cmd->SetBool("ServerUseAckn", port->IsUseAcknowledges());
    cmd->SetUInt("ServerHeaderSize", port->UserHeaderSize());
 
    rec->fThrdName = cmd->GetStr("TrThread","");
@@ -452,12 +451,6 @@ bool verbs::Thread::DoClient(dabc::Command* cmd, dabc::Port* port, const char* p
    }
 
    DOUT3(("Start CLIENT: %s", connid));
-
-   bool useakcn = cmd->GetBool("ServerUseAckn", false);
-   if (useakcn != port->IsUseAcknowledges()) {
-      EOUT(("Missmatch in acknowledges usage in ports"));
-      port->ChangeUseAcknoledges(useakcn);
-   }
 
    unsigned headersize = cmd->GetUInt("ServerHeaderSize", 0);
    if (headersize != port->UserHeaderSize()) {

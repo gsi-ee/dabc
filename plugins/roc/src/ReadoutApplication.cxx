@@ -67,7 +67,7 @@ bool roc::ReadoutApplication::CreateAppModules()
       DOUT1(("Create Roc Device = %s", DBOOL(res)));
       if(!res) return false;
 
-      cmd = new dabc::CommandCreateModule("roc::CombinerModule", "RocComb", "RocCombThrd");
+      cmd = new dabc::CmdCreateModule("roc::CombinerModule", "RocComb", "RocCombThrd");
       cmd->SetInt(dabc::xmlNumOutputs, 2);
       res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create ROC combiner module = %s", DBOOL(res)));
@@ -75,7 +75,7 @@ bool roc::ReadoutApplication::CreateAppModules()
    }
 
    if (DoCalibr()) {
-      cmd = new dabc::CommandCreateModule("roc::CalibrationModule", "RocCalibr", "RocCalibrThrd");
+      cmd = new dabc::CmdCreateModule("roc::CalibrationModule", "RocCalibr", "RocCalibrThrd");
       cmd->SetInt(dabc::xmlNumOutputs, 2);
       res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create ROC calibration module = %s", DBOOL(res)));

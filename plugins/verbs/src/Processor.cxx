@@ -319,10 +319,10 @@ bool verbs::ConnectProcessor::TrySendConnRequest(ProtocolProcessor* rec)
 
 
 verbs::ProtocolProcessor::ProtocolProcessor(Thread* thrd,
-                                                     QueuePair* hs_qp,
-                                                     bool server,
-                                                     const char* portname,
-                                                     dabc::Command* cmd) :
+                                            QueuePair* hs_qp,
+                                            bool server,
+                                            const char* portname,
+                                            dabc::Command* cmd) :
    Processor(hs_qp),
    fServer(server),
    fPortName(portname),
@@ -334,6 +334,7 @@ verbs::ProtocolProcessor::ProtocolProcessor(Thread* thrd,
    fTimeout(10.), // per default, 10 sec for connection, can be changed
    fConnId(),
    fLastAttempt(0.),
+   fUseAckn(false),
    fKindStatus(0),
    fRemoteLID(0),
    fRemoteQPN(0),
@@ -346,6 +347,8 @@ verbs::ProtocolProcessor::ProtocolProcessor(Thread* thrd,
 {
    // we need the only buffer, which used either for receive (by server) or send (by client)
    fPool = new MemoryPool(thrd->GetDevice(), "HandshakePool", 1, 1024, false);
+   if (fCmd) fUseAckn = fCmd->GetBool(dabc::xmlUseAcknowledge, false);
+
 }
 
 verbs::ProtocolProcessor::~ProtocolProcessor()
@@ -466,7 +469,7 @@ void verbs::ProtocolProcessor::VerbsProcessSendCompl(uint32_t bufid)
 
    fPortQP->Connect(fRemoteLID, fTransportQPN, fTransportPSN);
 
-   thrd()->GetDevice()->CreateVerbsTransport(fThrdName.c_str(), fPortName.c_str(), fPortCQ, fPortQP);
+   thrd()->GetDevice()->CreateVerbsTransport(fThrdName.c_str(), fPortName.c_str(), fUseAckn, fPortCQ, fPortQP);
    fPortQP = 0;
    fPortCQ = 0;
 
@@ -501,7 +504,7 @@ void verbs::ProtocolProcessor::VerbsProcessRecvCompl(uint32_t bufid)
 
    fPortQP->Connect(fRemoteLID, fTransportQPN, fTransportPSN);
 
-   thrd()->GetDevice()->CreateVerbsTransport(fThrdName.c_str(), fPortName.c_str(), fPortCQ, fPortQP);
+   thrd()->GetDevice()->CreateVerbsTransport(fThrdName.c_str(), fPortName.c_str(), fUseAckn, fPortCQ, fPortQP);
    fPortQP = 0;
    fPortCQ = 0;
    DOUT1(("CREATE SERVER %s", fConnId.c_str()));

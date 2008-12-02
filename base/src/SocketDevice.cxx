@@ -391,7 +391,6 @@ bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* por
       cmd->SetPar("ServerId", servid.c_str());
       cmd->SetPar("ConnId", connid.c_str());
 
-      cmd->SetBool("ServerUseAckn", port->IsUseAcknowledges());
       cmd->SetUInt("ServerHeaderSize", port->UserHeaderSize());
 
       int timeout = cmd->GetInt("Timeout", 10);
@@ -423,16 +422,9 @@ bool dabc::SocketDevice::ClientConnect(Command* cmd, Port* port, const char* por
    const char* connid = cmd->GetPar("ConnId");
    int timeout = cmd->GetInt("Timeout", 10);
 
-   bool useackn = cmd->GetBool("ServerUseAckn", false);
-   if (useackn != port->IsUseAcknowledges()) {
-      EOUT(("Missmatch in acknowledges usage in ports server %s ispar %s connid %s cmd %s",
-           DBOOL(useackn), DBOOL(cmd->GetPar("ServerUseAckn")), connid, cmd->GetName()));
-      port->ChangeUseAcknoledges(useackn);
-   }
-
    unsigned headersize = cmd->GetUInt("ServerHeaderSize", 0);
    if (headersize != port->UserHeaderSize()) {
-      EOUT(("Missmatch in configured header sizes: %d %d", headersize, port->UserHeaderSize()));
+      EOUT(("Mismatch in configured header sizes: %d %d", headersize, port->UserHeaderSize()));
       port->ChangeUserHeaderSize(headersize);
    }
 
@@ -706,8 +698,11 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const 
 
          Port* port = dabc::mgr()->FindPort(rec->fPortName.c_str());
 
+         bool useackn = false;
+         if (rec->fCmd) useackn = rec->fCmd->GetBool(dabc::xmlUseAcknowledge, false);
+
          if (port==0) {
-            EOUT(("Port dissappear while connection is ready"));
+            EOUT(("Port disappear while connection is ready"));
             close(fd);
             res = false;
          } else {
@@ -719,7 +714,7 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const 
 
             DOUT1(("TRANSPORT %s thrd %s", rec->ConnId(), newthrdname));
 
-            SocketTransport* tr = new SocketTransport(this, port, fd);
+            SocketTransport* tr = new SocketTransport(this, port, useackn, fd);
             if (Manager::Instance()->MakeThreadFor(tr, newthrdname))
                port->AssignTransport(tr);
             else {

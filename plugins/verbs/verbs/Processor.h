@@ -65,10 +65,11 @@ namespace verbs {
          ComplQueue     *fPortCQ;
 
          int             fConnType; // UD, RC, UC
-         std::string    fThrdName;
+         std::string     fThrdName;
          double          fTimeout;
-         std::string    fConnId;
+         std::string     fConnId;
          double          fLastAttempt;
+         bool            fUseAckn;
 
          int             fKindStatus;
 
@@ -76,7 +77,7 @@ namespace verbs {
          uint32_t        fRemoteLID;
          uint32_t        fRemoteQPN;
 
-         // address data of tranport on other side
+         // address data of transport on other side
          uint32_t        fTransportQPN;
          uint32_t        fTransportPSN;
          struct ibv_ah  *f_ah;

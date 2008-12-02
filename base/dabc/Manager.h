@@ -47,11 +47,11 @@ namespace dabc {
    class StateMachineModule;
    class Configuration;
 
-   class CommandCreateModule : public Command {
+   class CmdCreateModule : public Command {
       public:
          static const char* CmdName() { return "CreateModule"; }
 
-         CommandCreateModule(const char* classname, const char* modulename, const char* thrdname = 0) :
+         CmdCreateModule(const char* classname, const char* modulename, const char* thrdname = 0) :
             Command(CmdName())
             {
                SetStr("Class", classname);
@@ -190,14 +190,14 @@ namespace dabc {
          }
    };
 
-   class CommandPortConnect: public Command {
+   class CmdConnectPorts: public Command {
       public:
-         static const char* CmdName() { return "PortConnect"; }
+         static const char* CmdName() { return "ConnectPorts"; }
 
-         CommandPortConnect(const char* port1fullname,
-                            const char* port2fullname,
-                            const char* device = 0,
-                            const char* trthread = 0) :
+         CmdConnectPorts(const char* port1fullname,
+                         const char* port2fullname,
+                         const char* device = 0,
+                         const char* trthread = 0) :
             Command(CmdName())
          {
             SetPar("Port1Name", port1fullname);

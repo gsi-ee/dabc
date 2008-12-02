@@ -388,9 +388,9 @@ dabc::Port* dabc::Module::GetPortItem(unsigned id) const
    return item && (item->GetType()==mitPort) ? (Port*) item : 0;
 }
 
-dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize, bool ackn)
+dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize)
 {
-   Port* port = new Port(this, name, pool, recvqueue, sendqueue, headersize, ackn);
+   Port* port = new Port(this, name, pool, recvqueue, sendqueue, headersize);
    if (pool)
      pool->AddPortRequirements(port->NumInputBuffersRequired() + port->NumOutputBuffersRequired(), port->UserHeaderSize());
 

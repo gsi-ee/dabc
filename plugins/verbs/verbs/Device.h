@@ -115,7 +115,7 @@ namespace verbs {
 
          void CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
                            ComplQueue* &port_cq, QueuePair* &port_qp);
-         void CreateVerbsTransport(const char* thrdname, const char* portname, ComplQueue* cq, QueuePair* qp);
+         void CreateVerbsTransport(const char* thrdname, const char* portname, bool useackn, ComplQueue* cq, QueuePair* qp);
 
          virtual int CreateTransport(dabc::Command* cmd, dabc::Port* port);
 

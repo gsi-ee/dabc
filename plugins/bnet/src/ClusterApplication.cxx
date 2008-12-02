@@ -499,9 +499,10 @@ bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
          dabc::formats(port2name, "%s$Receiver/Input%u", node2name, nsender);
 
          dabc::Command* cmd =
-             new dabc::CommandPortConnect(port1name.c_str(),
-                                          port2name.c_str(),
-                                          "BnetDev", "BnetTransport");
+             new dabc::CmdConnectPorts(port1name.c_str(),
+                                       port2name.c_str(),
+                                       "BnetDev", "BnetTransport");
+         cmd->SetBool(dabc::xmlUseAcknowledge, BnetUseAcknowledge);
 
          DOUT3(( "DoConnection %d -> %d ", nsender, nreceiver));
 
@@ -524,7 +525,7 @@ bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
          dabc::formats(port2name, "%s$GlobalContr/Sender%u", node2name, nsender);
 
          dabc::Command* cmd =
-            new dabc::CommandPortConnect(port1name.c_str(),
+            new dabc::CmdConnectPorts(port1name.c_str(),
                                          port2name.c_str(),
                                          "BnetDev");
 

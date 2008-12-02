@@ -14,7 +14,6 @@ namespace dabc {
    const char* xmlInputQueueSize    = "InputQueueSize";
    const char* xmlOutputQueueSize   = "OutputQueueSize";
    const char* xmlUserHeaderSize    = "UserHeaderSize";
-   const char* xmlUseAcknowledges   = "UseAcknowledges";
 
    const char* xmlPoolName          = "PoolName";
    const char* xmlWorkPool          = "WorkPool";
@@ -22,6 +21,7 @@ namespace dabc {
    const char* xmlNumBuffers        = "NumBuffers";
    const char* xmlNumInputs         = "NumInputs";
    const char* xmlNumOutputs        = "NumOutputs";
+   const char* xmlUseAcknowledge    = "UseAcknowledge";
 
    const char* xmlTrueValue         = "true";
    const char* xmlFalseValue        = "false";

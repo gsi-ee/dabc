@@ -657,7 +657,7 @@ bool dabc::Manager::ConnectPorts(const char* port1name,
                                  const char* port2name,
                                  const char* devname)
 {
-   return Execute(new CommandPortConnect(port1name, port2name, devname));
+   return Execute(new CmdConnectPorts(port1name, port2name, devname));
 }
 
 const char* dabc::Manager::ExtractManagerName(const char* fullname, std::string& managername)
@@ -801,7 +801,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
    if (cmd->IsName("HaltManager")) {
       DoHaltManager();
    } else
-   if (cmd->IsName(CommandCreateModule::CmdName())) {
+   if (cmd->IsName(CmdCreateModule::CmdName())) {
       const char* classname = cmd->GetPar("Class");
       const char* modulename = cmd->GetPar("Name");
       const char* thrdname = cmd->GetStr("Thread");
@@ -1025,7 +1025,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
    } else
 
    // these are two special commands with postponed execution
-   if (cmd->IsName(CommandPortConnect::CmdName())) {
+   if (cmd->IsName(CmdConnectPorts::CmdName())) {
       std::string manager1name, manager2name;
 
       const char* port1name = ExtractManagerName(cmd->GetPar("Port1Name"), manager1name);
@@ -1057,7 +1057,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          std::string remrecvname;
 
          if (manager1name == manager2name) {
-            newcmd = new CommandPortConnect(port1name, port2name);
+            newcmd = new CmdConnectPorts(port1name, port2name);
 
          } else {
             if (!CanSendCmdToManager(manager2name.c_str())) {
@@ -1328,7 +1328,7 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
 
       return true;
    } else
-   if (cmd->IsName(CommandPortConnect::CmdName())) {
+   if (cmd->IsName(CmdConnectPorts::CmdName())) {
 
       int parentid = cmd->GetInt("#_PCID_", -1);
       if (parentid<0) return true;
@@ -1907,7 +1907,7 @@ bool dabc::Manager::CreateDevice(const char* classname, const char* devname)
 
 bool dabc::Manager::CreateModule(const char* classname, const char* modulename, const char* thrdname)
 {
-   return Execute(new CommandCreateModule(classname, modulename, thrdname));
+   return Execute(new CmdCreateModule(classname, modulename, thrdname));
 }
 
 bool dabc::Manager::CreateTransport(const char* portname, const char* transportkind, const char* thrdname)

@@ -49,7 +49,7 @@ namespace verbs {
          virtual void ProcessEvent(dabc::EventId evnt);
 
       public:
-         Transport(Device* dev, ComplQueue* cq, QueuePair* qp, dabc::Port* port);
+         Transport(Device* dev, ComplQueue* cq, QueuePair* qp, dabc::Port* port, bool useackn);
          virtual ~Transport();
 
          virtual unsigned MaxSendSegments() { return fSegmPerOper - 1; }

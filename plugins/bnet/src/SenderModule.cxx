@@ -31,7 +31,7 @@ bnet::SenderModule::SenderModule(const char* name, WorkerApplication* factory) :
    CreateInput("Input", fPool, SenderInQueueSize, sizeof(bnet::EventId));
 
    for (int n=0;n<fCfgNumNodes;n++)
-     CreateOutput(FORMAT(("Output%d", n)), fPool, SenderQueueSize, sizeof(bnet::SubEventNetHeader), BnetUseAcknowledge);
+     CreateOutput(FORMAT(("Output%d", n)), fPool, SenderQueueSize, sizeof(bnet::SubEventNetHeader));
 
    fCtrlPool = CreatePool(factory->ControlPoolName());
    fCtrlBufSize = factory->ControlBufferSize();
