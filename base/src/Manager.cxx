@@ -205,6 +205,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    WorkingProcessor(),
    CommandClientBase(),
    fMgrMainLoop(false),
+   fMgrNormalThrd(!usecurrentprocess),
    fMgrMutex(0),
    fReplyesQueue(true, false),
    fDestroyQueue(16, true),
@@ -1694,11 +1695,10 @@ bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Com
       fMgrMainLoop = false;
 
       WorkingThread* thrd = ProcessorThread();
-      if (thrd)
-        if (!thrd->IsRealThrd()) {
-           RemoveProcessorFromThread(true);
-           thrd->Stop(false); // stop thread - means leave thread main loop
-        }
+      if (thrd && !fMgrNormalThrd) {
+         RemoveProcessorFromThread(true);
+         thrd->Stop(false); // stop thread - means leave thread main loop
+      }
    }
 
    return false;
@@ -1857,9 +1857,8 @@ double dabc::Manager::ProcessTimeout(double last_diff)
       if (fTimedPars[n]!=0)
          ((Parameter*) fTimedPars[n])->ProcessTimeout(last_diff);
 
-   return fTimedPars.size()==0 ? -1. : 1.;
+   return (fTimedPars.size()==0 && fMgrNormalThrd) ? -1. : 1.;
 }
-
 
 void dabc::Manager::AddFactory(Factory* factory)
 {
@@ -2001,6 +2000,8 @@ bool dabc::Manager::InstallCtrlCHandler()
       return false;
    }
 
+   DOUT1(("Install Ctrl-C handler from thrd %d", Thread::Self()));
+
    return true;
 }
 
@@ -2024,19 +2025,14 @@ void dabc::Manager::ProcessCtrlCSignal()
    DOUT1(("Process CTRL-C signal"));
 
    if (fMgrMainLoop) {
-      fMgrMainLoop = false;
+      if (fMgrStopped) return;
+
+      fMgrStopped = true;
+
       WorkingThread* thrd = ProcessorThread();
 
-      if (thrd && !thrd->IsRealThrd()) {
+      if (thrd && !fMgrNormalThrd) thrd->SetWorkingFlag(false);
 
-         DOUT3(("Stop thread"));
-
-         thrd->Stop(false); // stop thread - means leave thread main loop
-
-         // DOUT0(("Remove processor"));
-         // RemoveProcessorFromThread(true);
-         DOUT3(("Exit handler"));
-      }
       return;
    }
 
@@ -2065,29 +2061,40 @@ void dabc::Manager::ProcessCtrlCSignal()
 
 void dabc::Manager::RunManagerMainLoop()
 {
-   DOUT3(("Enter dabc::Manager::RunManagerMainLoop"));
+   DOUT2(("Enter dabc::Manager::RunManagerMainLoop"));
 
    WorkingThread* thrd = ProcessorThread();
 
    if (thrd==0) return;
 
    fMgrMainLoop = true;
+   fMgrStopped = false;
 
-   if (thrd->IsRealThrd()) {
+   if (fMgrNormalThrd) {
       DOUT3(("Manager has normal thread - just wait until application modules are stopped"));
-      while(fMgrMainLoop) { dabc::LongSleep(1); }
+      while(!fMgrStopped) { dabc::LongSleep(1); }
    } else {
       DOUT3(("Manager uses main process as thread - run mainloop ourself"));
 
+      // to be sure that timeout processing is active
+      // only via timeout one should be able to stop processing of main loop
+      bool activate = false;
+      {
+         LockGuard lock(fMgrMutex);
+         activate = (fTimedPars.size()==0);
+      }
+      if (activate) ActivateTimeout(1.);
+
       thrd->MainLoop();
 
-      DOUT3(("Manager is stopped - just keep process as it is"));// make virtual run, while thread in reality is running
-
-      thrd->Start(-1, true);
+      // set true to be able process some other commands
+      thrd->SetWorkingFlag(true);
    }
 
    fMgrMainLoop = false;
+   fMgrStopped = true;
 
-   DOUT3(("Exit dabc::Manager::RunManagerMainLoop"));
+   DOUT2(("Exit dabc::Manager::RunManagerMainLoop"));
 }
+
 

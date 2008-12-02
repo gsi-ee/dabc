@@ -854,7 +854,7 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
      char service[100];
      sprintf(service, "%d", portnum);
 
-     myhostname = dabc::SocketDevice::GetLocalHost();
+//     myhostname = dabc::SocketDevice::GetLocalHost();
      int n = getaddrinfo(myhostname, service, &hints, &info);
 
      DOUT1(("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "localhost"), service, n));

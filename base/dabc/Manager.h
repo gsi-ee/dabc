@@ -542,7 +542,9 @@ namespace dabc {
             ParamRec(const ParamRec& src) : par(src.par), event(src.event), processed(src.processed) {}
          };
 
-         bool                  fMgrMainLoop; // flag indicates if mainloop of manager should runs
+         bool                  fMgrMainLoop; // flag indicates if mainloop of manager runs
+         bool                  fMgrStopped; // indicate if manager mainloop is stopped
+         bool                  fMgrNormalThrd; // indicate if manager has normal thread
 
          Mutex                *fMgrMutex; // main mutex to protect manager queues
          CommandsQueue         fReplyesQueue;

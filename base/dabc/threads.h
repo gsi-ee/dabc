@@ -127,7 +127,9 @@ namespace dabc {
          void Kill(int sig = 9);
 
          void SetPriority(int prio);
-         inline bool IsItself() const { return pthread_equal(pthread_self(), fThrd) != 0; }
+//         inline bool IsItself() const { return pthread_equal(pthread_self(), fThrd) != 0; }
+         inline bool IsItself() const { return fThrd == pthread_self(); }
+
 
          inline Thread_t Id() const { return fThrd; }
 

@@ -111,7 +111,7 @@ unsigned dabc::CommandClientBase::_NumSubmCmds()
 
 int dabc::CommandReceiver::ProcessCommand(dabc::Command* cmd)
 {
-   /// this method perfrom command processing
+   /// this method perform command processing
    // return true if command processed and result is true
 
    if (cmd==0) return cmd_false;

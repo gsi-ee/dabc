@@ -9,7 +9,7 @@
     <Module name="Generator">
        <Port name="Output">
           <OutputQueueSize value="5"/>
-          <MbsServerPort value="6010"/>
+          <MbsServerPort value="16020"/>
         </Port>
      </Module>
   </Context>
@@ -25,7 +25,7 @@
           <InputQueueSize value="5"/>
           <MbsServerKind value="Transport"/>
           <MbsServerName value="lxi009"/>
-          <MbsServerPort value="6010"/>
+          <MbsServerPort value="16020"/>
        </Port>
      </Module>
   </Context>

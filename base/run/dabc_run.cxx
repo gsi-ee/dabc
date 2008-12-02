@@ -244,7 +244,7 @@ int main(int numc, char* args[])
       }
    }
 
-   if (numnodes==0) numnodes = cfg.NumNodes();
+   if (numnodes==0) numnodes = cfg.NumControlNodes();
    if (nodeid > numnodes) nodeid = configid;
 
    DOUT1(("Using config file: %s id: %u", configuration, configid));

@@ -200,7 +200,11 @@ bool dabc::WorkingThread::Stop(bool waitjoin, double timeout_sec)
 
    bool res = true;
 
+   DOUT3(("Start execute ConfirmStop"));
+
    if (needstop) res = Execute("ConfirmStop", timeout_sec);
+
+   DOUT3(("Did execute ConfirmStop"));
 
    if (waitjoin && fRealThrd) {
       if (!res) EOUT(("Cannot wait for join when stop was not succeeded"));
@@ -217,6 +221,12 @@ bool dabc::WorkingThread::Stop(bool waitjoin, double timeout_sec)
       fState = waitjoin ? stJoined : stStopped;
 
    return res;
+}
+
+void dabc::WorkingThread::SetWorkingFlag(bool on)
+{
+   LockGuard guard(fWorkMutex);
+   fThrdWorking = on;
 }
 
 bool dabc::WorkingThread::Sync(double timeout_sec)
@@ -305,10 +315,7 @@ int dabc::WorkingThread::ExecuteCommand(Command* cmd)
    if (cmd->IsName("ConfirmStart")) {
    } else
    if (cmd->IsName("ConfirmStop")) {
-      DOUT5(("Execute command ConfirmStop"));
       fThrdWorking = false;
-      // make one loop in MainLoop that flag can be checked and main loop will be leaved
-      FireDoNothingEvent();
    } else
    if (cmd->IsName("ConfirmSync")) {
    } else

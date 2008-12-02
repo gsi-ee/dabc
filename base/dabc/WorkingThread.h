@@ -70,6 +70,9 @@ namespace dabc {
          bool Stop(bool waitjoin = true, double timeout_sec = -1);
          bool Sync(double timeout_sec = -1);
 
+         // direct change of working flag
+         void SetWorkingFlag(bool on);
+
          inline bool IsThrdWorking() const { return fThrdWorking; }
          inline bool NoLongerUsed() const { return fNoLongerUsed; }
          inline bool IsRealThrd() const { return fRealThrd; }
