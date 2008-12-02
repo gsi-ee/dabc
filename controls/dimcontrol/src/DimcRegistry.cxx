@@ -89,14 +89,22 @@ return result;
 std::string dimc::Registry::GetDIMServerName(const char* contextname)
 {
  std::string servname;
+ std::string retval;
  if(contextname==0) // use own context
-    servname=fManager->GetName();
+    {
+       servname=fManager->GetName();
+       //retval=fManager->GetNodeName(fManager->NodeId());
+    }
  else
-    servname=contextname;
-
-  std::string prefix=gServerPrefix;//"DABC/"
-  std::string retval=prefix+servname;
- std::cout <<"GetDIMServerName returns "<<retval << std::endl;
+    {
+       servname=contextname;
+    }
+    std::string prefix=gServerPrefix;//"DABC/"
+    if(servname.find(prefix)==std::string::npos)
+       retval=prefix+servname;
+    else
+       retval=servname;
+    std::cout <<"GetDIMServerName returns "<<retval << std::endl;
  return retval;
 }
 
@@ -204,9 +212,14 @@ void dimc::Registry::AddService(dimc::ServiceEntry* nentry, bool allowdimchange,
 
 void dimc::Registry::ParameterUpdated(dabc::Parameter* par)
 {
+   //std::cout << "  +++dimc::Registry::ParameterUpdated for " << par->GetName() << std::endl ;
    dimc::ServiceEntry* service=FindDIMService(par);
-   if(service) service->Update();
-
+   if(service)
+       service->Update();
+   else if(par)
+      EOUT(("dimc::Registry::ParameterUpdated could not find DIM service %s ",par->GetName()));
+   else
+      EOUT(("dimc::Registry::ParameterUpdated NEVER COME HERE: zero parameter pointer!"));
 }
 
 void dimc::Registry::UnregisterParameter(dabc::Parameter* par)
@@ -639,9 +652,7 @@ void dimc::Registry::SendDIMCommand(const std::string& target, const std::string
 {
 try{
 
-   //std::string fullcommand=CreateDIMPrefix(target)+comname;
-   std::string fullcommand=target+comname; // dim prefix was already added to targetname in Manager::GetNodeName()
-
+   std::string fullcommand=CreateDIMPrefix(target.c_str())+comname;
    std::string password="x1gSFfpv0JvDA"; // get this from environment later!
    std::string parameter=password+" "+par; // blank in between!
 

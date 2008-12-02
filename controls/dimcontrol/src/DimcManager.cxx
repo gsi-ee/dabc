@@ -33,6 +33,8 @@ bool dimc::ManagerFactory::CreateManagerInstance(const char* kind, dabc::Configu
 {
    if ((kind!=0) && (strcmp(kind,DIMC_MANAGERTYPE)==0)) {
       new dimc::Manager(cfg->MgrName(), false, cfg);
+//      int selfid=cfg->MgrNodeId();
+//      new dimc::Manager(cfg->ContextName(selfid).c_str(), false, cfg);
       return true;
    }
    return false;
@@ -104,8 +106,8 @@ bool dimc::Manager::CanSendCmdToManager(const char* mgrname)
 bool dimc::Manager::SendOverCommandChannel(const char* managername, const char* cmddata)
 {
    std::string commandname=_DIMC_COMMAND_MANAGER_;
-     std::cout <<"SendOverCommandChannel with string:"<<cmddata << std::endl;
-     fRegistry->SendDIMCommand(managername,commandname,cmddata);
+     //std::cout <<"SendOverCommandChannel with string:"<<cmddata << std::endl;
+   fRegistry->SendDIMCommand(managername,commandname,cmddata);
    return true;
 }
 
@@ -147,7 +149,9 @@ int dimc::Manager::ExecuteCommand(dabc::Command* cmd)
 void dimc::Manager::ParameterEvent(dabc::Parameter* par, int event)
 {
    std::string pname=par->GetName();
-    switch(event)
+   //std::cout << "++++++ ParameterEvent"<< event <<" for "<<pname<<std::endl;
+   dabc::Manager::ParameterEvent(par, event);
+   switch(event)
     {
        case 0: // creation of new parameter
           fRegistry->RegisterParameter(par,true);
@@ -252,6 +256,7 @@ const char* dimc::Manager::GetNodeName(int num)
 {
    std::string name=GetName();
    if(fCfg!=0) name=fRegistry->GetDIMServerName(fCfg->ContextName(num).c_str()); // already adds dabc prefix
+   //std::cout <<"+++++++++++ GetNodeName("<<num<<")="<<name << std::endl;
    return name.c_str();
 }
 
