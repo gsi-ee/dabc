@@ -10,7 +10,7 @@ namespace dabc {
 
    extern const char* xmlRootNode;
    extern const char* xmlVersionAttr;
-   extern const char* xmlContNode;
+   extern const char* xmlContext;
    extern const char* xmlDefualtsNode;
    extern const char* xmlNameAttr;
    extern const char* xmlClassAttr;
@@ -29,7 +29,9 @@ namespace dabc {
    extern const char* xmlDABCNUMNODES;
    extern const char* xmlDebugger;
    extern const char* xmlWorkDir;
+   extern const char* xmlDebuglevel;
    extern const char* xmlLogfile;
+   extern const char* xmlLoglevel;
    extern const char* xmlLDPATH;
    extern const char* xmlConfigFile;
    extern const char* xmlConfigFileId;
@@ -57,11 +59,12 @@ namespace dabc {
          ConfigBase       *fPrnt;  // parent configuration with defaults for some variables
 
          // following variables work as 'environment'
-         std::string            envDABCSYS;
-         std::string            envDABCUSERDIR;     // dir with user plugin
-         std::string            envDABCWORKDIR;     // dir where application is started
-         std::string            envDABCNODEID;      // current node id
-         std::string            envDABCNUMNODES;    // current number of nodes
+         std::string       envDABCSYS;
+         std::string       envDABCUSERDIR;     // dir with user plugin
+         std::string       envDABCWORKDIR;     // dir where application is started
+         std::string       envDABCNODEID;      // current node id
+         std::string       envDABCNUMNODES;    // current number of nodes
+         std::string       envContext;         // context name
 
          XMLNodePointer_t Dflts();
 

@@ -49,21 +49,23 @@ namespace dabc {
          void SetFileMask(unsigned mask) { fFileMask = mask; }
          unsigned GetFileMask() const  { return fFileMask; }
 
-         void SetDebugLevel(int level = 0) { fDebugLevel = level; }
+         void SetDebugLevel(int level = 0);
+         void SetFileLevel(int level = 0);
          inline int GetDebugLevel() const { return fDebugLevel; }
+         inline int GetFileLevel() const { return fFileLevel; }
 
          void SetPrefix(const char* prefix = 0) { fPrefix = prefix ? prefix : ""; }
          const char* GetPrefix() { return fPrefix.c_str(); }
 
-         void LogFile(const char* fname);
+         virtual void LogFile(const char* fname);
 
-         void ShowStat();
+         void ShowStat(bool tofile = true);
 
          static inline Logger* Instance() { return gDebug; }
 
          static inline void Debug(int level, const char* filename, unsigned linenumber, const char* funcname, const char* message)
          {
-            if (Instance() && (level <= Instance()->GetDebugLevel()))
+            if (Instance() && (level <= Instance()->fLevel))
                Instance()->DoOutput(level, filename, linenumber, funcname, message);
          }
 
@@ -86,7 +88,9 @@ namespace dabc {
          unsigned          fDebugMask;   // mask for debug output
          unsigned          fErrorMask;   // mask for error output
          unsigned          fFileMask;    // mask for file output
-         int               fDebugLevel;  // level of debug
+         int               fDebugLevel;  // level of debug output on terminal
+         int               fFileLevel;   // level of debug output to file
+         int               fLevel;       // used to define max
          std::string       fPrefix;      // prefix of all messages
    };
 
@@ -140,6 +144,7 @@ namespace dabc {
    #define DNAME(arg) (arg ? arg->GetName() : "---")
 
    extern void SetDebugLevel(int level = 0);
+   extern void SetFileLevel(int level = 0);
    extern void SetDebugPrefix(const char* prefix = 0);
 };
 

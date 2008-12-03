@@ -25,14 +25,14 @@ namespace dabc {
       public:
          std::string      fFileName;
          std::string      fFuncName;
-         unsigned    fLine;
-         int         fLevel;
-         unsigned    fCounter;
-         time_t      fMsgTime; // normal time when message will be output
+         unsigned         fLine;
+         int              fLevel;
+         unsigned         fCounter;
+         time_t           fMsgTime; // normal time when message will be output
          std::string      fLastMsg; // last shown message
-         TimeStamp_t fLastTm;  // dabc (fast) time of last output
-         unsigned    fDropCnt; // number of dropped messages
-         bool        fShown;   // used in statistic output
+         TimeStamp_t      fLastTm;  // dabc (fast) time of last output
+         unsigned         fDropCnt; // number of dropped messages
+         bool             fShown;   // used in statistic output
 
          LoggerEntry(const char* fname, const char* funcname, unsigned line, int lvl) :
             fFileName(fname),
@@ -92,6 +92,8 @@ dabc::Logger::Logger(bool withmutex)
    fPrev = gDebug;
 
    fDebugLevel = 1;
+   fFileLevel = 1;
+   fLevel = 1;
    fPrefix = "";
 
    fDebugMask = lPrefix | lMessage;
@@ -126,6 +128,19 @@ dabc::Logger::~Logger()
 
    delete fMutex; fMutex = 0;
 }
+
+void dabc::Logger::SetDebugLevel(int level)
+{
+   fDebugLevel = level;
+   fLevel = fDebugLevel < fFileLevel ? fFileLevel : fDebugLevel;
+}
+
+void dabc::Logger::SetFileLevel(int level)
+{
+   fFileLevel = level;
+   fLevel = fDebugLevel < fFileLevel ? fFileLevel : fDebugLevel;
+}
+
 
 void dabc::Logger::_ExtendLines(unsigned max)
 {
@@ -248,7 +263,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    entry->fMsgTime = time(0);
    entry->fLastMsg = message;
 
-   if (!drop_msg || (mask & lNoDrop)) {
+   if ((!drop_msg || (mask & lNoDrop)) && (level<=fDebugLevel)) {
       std::string str;
       _FillString(str, mask, entry);
 
@@ -260,7 +275,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
       }
    }
 
-   if (fFile && (!drop_msg || (fmask & lNoDrop))) {
+   if (fFile && (!drop_msg || (fmask & lNoDrop)) && (level<=fFileLevel)) {
       std::string str;
       _FillString(str, fmask, entry);
       if (str.length()>0) {
@@ -275,13 +290,14 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    }
 }
 
-void dabc::Logger::ShowStat()
+void dabc::Logger::ShowStat(bool tofile)
 {
    LockGuard lock(fMutex);
 
-   fprintf(stdout,"\n=======  Begin debug statistic =============\n");
-   if (fFile)
-      fprintf(fFile,"\n=======  Begin debug statistic =============\n");
+   FILE* out = tofile ? fFile : stdout;
+   if (out==0) out = stdout;
+
+   fprintf(out,"\n=======  Begin debug statistic =============\n");
 
    for (unsigned n=0; n<fMaxLine;n++) {
       LoggerLineEntry* entry = fLines[n];
@@ -316,29 +332,20 @@ void dabc::Logger::ShowStat()
 
             if (currfile==0) {
                currfile = &(fentry->fFileName);
-               fprintf(stdout, "\nFile: %s\n", currfile->c_str());
-               if (fFile)
-                  fprintf(fFile, "\nFile: %s\n", currfile->c_str());
+               fprintf(out, "\nFile: %s\n", currfile->c_str());
             }
 
-            fprintf(stdout,"  Line:%4u Lvl:%2d Cnt:%4u Func:%s Msg:'%s'\n",
+            fprintf(out,"  Line:%4u Lvl:%2d Cnt:%4u Func:%s Msg:'%s'\n",
                        n, fentry->fLevel, fentry->fCounter, fentry->fFuncName.c_str(), fentry->fLastMsg.c_str());
-
-            if (fFile)
-               fprintf(fFile,"  Line:%4u Lvl:%2d Cnt:%4u Func:%s Msg:'%s'\n",
-                          n, fentry->fLevel, fentry->fCounter, fentry->fFuncName.c_str(), fentry->fLastMsg.c_str());
 
             fentry->fShown = true;
          }
       }
    } while (currfile != 0);
 
-   fprintf(stdout,"\n=======  Stop debug statistic =============\n");
-   if (fFile)
-      fprintf(fFile,"\n=======  Stop debug statistic =============\n");
+   fprintf(out,"\n=======  Stop debug statistic =============\n");
 
-   fflush(stdout);
-   if (fFile) fflush(fFile);
+   fflush(out);
 }
 
 void dabc::SetDebugLevel(int level)
@@ -346,7 +353,13 @@ void dabc::SetDebugLevel(int level)
    dabc::Logger::Instance()->SetDebugLevel(level);
 }
 
+void dabc::SetFileLevel(int level)
+{
+   dabc::Logger::Instance()->SetFileLevel(level);
+}
+
 void dabc::SetDebugPrefix(const char* prefix)
 {
     dabc::Logger::Instance()->SetPrefix(prefix);
 }
+

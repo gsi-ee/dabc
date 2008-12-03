@@ -294,13 +294,13 @@ bool bnet::ClusterApplication::StartClusterSMCommand(dabc::Command* mastercmd)
    const char* smcmdname = mastercmd->GetStr("CmdName");
    int selectid = mastercmd->GetInt("NodeId", -1);
 
-   DOUT1(("StartClusterSMCommand cmd:%s selected:%d", smcmdname, selectid));
+   DOUT2(("StartClusterSMCommand cmd:%s selected:%d", smcmdname, selectid));
 
    dabc::CommandsSet* set = 0;
 
    for (unsigned node = 0; node < fNodeNames.size(); node++) {
 
-      DOUT1(("Node %u mask %d", node, fNodeMask[node]));
+      DOUT4(("Node %u has mask %d", node, fNodeMask[node]));
 
       if (fNodeMask[node]==0) continue;
 
@@ -382,7 +382,7 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
 
    bool isnormalsmcmd = false;
 
-   DOUT1(("STATE CHANGED node:%d name:%s", nodeid, state.c_str()));
+   DOUT2(("STATE CHANGED node:%d name:%s", nodeid, state.c_str()));
 
    {
       dabc::LockGuard lock(fSMMutex);
@@ -509,7 +509,7 @@ bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
                                       "BnetDev", "BnetTransport");
          cmd->SetBool(dabc::xmlUseAcknowledge, BnetUseAcknowledge);
 
-         DOUT1(( "DoConnection %d -> %d ", nsender, nreceiver));
+         DOUT3(( "DoConnection %d -> %d ", nsender, nreceiver));
 
          if (set==0) set = new dabc::CommandsSet(mastercmd);
 
@@ -554,13 +554,9 @@ bool bnet::ClusterApplication::ExecuteClusterSMCommand(const char* smcmdname)
 bool bnet::ClusterApplication::ActualTransition(const char* state_trans_name)
 {
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoConfigure)==0) {
-      DOUT1(("Start discover"));
       if (!Execute(DiscoverCmdName)) return false;
-      DOUT1(("Start create app modules"));
       if (!Execute("CreateAppModules")) return false;
-      DOUT1(("Create memory pools"));
       if (!dabc::mgr()->CreateMemoryPools()) return false;
-      DOUT1(("Execute SM command %s", state_trans_name));
       if (!ExecuteClusterSMCommand(state_trans_name)) return false;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoEnable)==0) {

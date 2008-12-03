@@ -101,6 +101,7 @@ std::string dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int ctrlkind, int 
    envDABCWORKDIR = topworkdir ? topworkdir : "";
    envDABCNODEID = FORMAT(("%u", instance));
    envDABCNUMNODES = FORMAT(("%u", NumNodes()));
+   envContext = XDAQ_ContextName(instance);
 
    if (kind == kindTest) {
       if (topworkdir!=0) {
@@ -161,7 +162,7 @@ namespace dabc {
 
    const char* xmlRootNode         = "dabc";
    const char* xmlVersionAttr      = "version";
-   const char* xmlContNode         = "Context";
+   const char* xmlContext         = "Context";
    const char* xmlDefualtsNode     = "Defaults";
    const char* xmlNameAttr         = "name";
    const char* xmlClassAttr        = "class";
@@ -180,7 +181,9 @@ namespace dabc {
    const char* xmlDABCNUMNODES     = "DABCNUMNODES";
    const char* xmlDebugger         = "debugger";
    const char* xmlWorkDir          = "workdir";
+   const char* xmlDebuglevel       = "debuglevel";
    const char* xmlLogfile          = "logfile";
+   const char* xmlLoglevel         = "loglevel";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
    const char* xmlConfigFile       = "config";
    const char* xmlConfigFileId     = "configid";
@@ -188,6 +191,7 @@ namespace dabc {
    const char* xmlUserFunc         = "Func";
    const char* xmlDIM_DNS_NODE     = "DIM_DNS_NODE";
    const char* xmlDIM_DNS_PORT     = "DIM_DNS_PORT";
+
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :
@@ -197,7 +201,8 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
    fPrnt(0),
    envDABCSYS(),
    envDABCUSERDIR(),
-   envDABCNODEID()
+   envDABCNODEID(),
+   envContext()
 {
    if (fname==0) return;
 
@@ -264,7 +269,7 @@ bool dabc::ConfigBase::ProduceClusterFile(const char* fname, int numnodes)
    xml.NewIntAttr(rootnode, xmlVersionAttr, 1);
 
    for(int n=0;n<numnodes;n++) {
-      XMLNodePointer_t contnode = xml.NewChild(rootnode, 0, xmlContNode);
+      XMLNodePointer_t contnode = xml.NewChild(rootnode, 0, xmlContext);
       xml.NewAttr(contnode, 0, xmlNameAttr, FORMAT(("Cont%d", n)));
 
       XMLNodePointer_t runnode = xml.NewChild(contnode, 0, xmlRunNode);
@@ -275,7 +280,7 @@ bool dabc::ConfigBase::ProduceClusterFile(const char* fname, int numnodes)
    }
 
    XMLNodePointer_t defnode = xml.NewChild(rootnode, 0, xmlDefualtsNode);
-   XMLNodePointer_t contnode = xml.NewChild(defnode, 0, xmlContNode);
+   XMLNodePointer_t contnode = xml.NewChild(defnode, 0, xmlContext);
    xml.NewAttr(contnode, 0, xmlNameAttr, "*");
    XMLNodePointer_t runnode = xml.NewChild(contnode, 0, xmlRunNode);
    xml.NewChild(runnode, 0, xmlSshUser, "linev");
@@ -475,7 +480,7 @@ unsigned dabc::ConfigBase::NumNodes()
    XMLNodePointer_t node = fXml.GetChild(rootnode);
    unsigned cnt = 0;
    while (node!=0) {
-      if (IsNodeName(node, xmlContNode)) cnt++;
+      if (IsNodeName(node, xmlContext)) cnt++;
       node = fXml.GetNext(node);
    }
    return cnt;
@@ -491,7 +496,7 @@ unsigned dabc::ConfigBase::NumControlNodes()
    XMLNodePointer_t node = fXml.GetChild(rootnode);
    unsigned cnt = 0;
    while (node!=0) {
-      if (IsNodeName(node, xmlContNode))
+      if (IsNodeName(node, xmlContext))
          if (Find1(node, 0, xmlRunNode, xmlUserFunc) == 0) cnt++;
       node = fXml.GetNext(node);
    }
@@ -509,7 +514,7 @@ unsigned dabc::ConfigBase::ControlSequenceId(unsigned id)
    unsigned cnt = 0;
    unsigned ctrlcnt = 0;
    while (node!=0) {
-      if (IsNodeName(node, xmlContNode)) {
+      if (IsNodeName(node, xmlContext)) {
          const char* func = Find1(node, 0, xmlRunNode, xmlUserFunc);
 
          if (func == 0) ctrlcnt++;
@@ -547,7 +552,7 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
    unsigned cnt = 0;
 
    while (node!=0) {
-      if (IsNodeName(node, xmlContNode))
+      if (IsNodeName(node, xmlContext))
          if (cnt++ == id) return node;
       node = fXml.GetNext(node);
    }
@@ -584,6 +589,7 @@ std::string dabc::ConfigBase::ResolveEnv(const char* arg)
          if (var==xmlDABCWORKDIR) value = envDABCWORKDIR.c_str(); else
          if (var==xmlDABCNODEID) value = envDABCNODEID.c_str(); else
          if (var==xmlDABCNUMNODES) value = envDABCNUMNODES.c_str(); else
+         if (var==xmlContext) value = envContext.c_str();
 
          if (value==0) value = getenv(var.c_str());
 
@@ -654,7 +660,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
    envDABCWORKDIR = workdir ? workdir : "";
    envDABCNODEID = FORMAT(("%u", id));
    envDABCNUMNODES = FORMAT(("%u", NumNodes()));
-
+   envContext = ContextName(id);
    res = "ssh ";
 
    if (portid!=0) {

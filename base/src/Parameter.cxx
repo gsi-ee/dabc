@@ -125,7 +125,7 @@ bool dabc::Parameter::Read(ConfigIO &cfg)
    const char* value = cfg.GetAttrValue(xmlValueAttr);
    if (value==0) value = item;
 
-   DOUT0(("Set par %s = %s", GetFullName().c_str(), value));
+   DOUT2(("Set par %s = %s", GetFullName().c_str(), value));
    SetValue(value);
 
    return true;

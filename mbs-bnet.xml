@@ -77,7 +77,7 @@
   <Defaults>
      <Context name="*">
        <Run>
-          <logfile value="mbs-bnet-${DABCNODEID}.log"/>
+          <logfile value="${Context}.log"/>
        </Run>
      </Context>
      <Context name="Gener*">
@@ -87,6 +87,7 @@
         </Run>
         <Module name="Generator">
            <BufferSize value="8192"/>
+           <Go4Random value="false"/>
            <Port name="Output">
               <OutputQueueSize value="5"/>
               <MbsServerPort value="16020"/>

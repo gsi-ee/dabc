@@ -134,17 +134,6 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    envDABCNODEID = FORMAT(("%u", nodeid));
    envDABCNUMNODES = FORMAT(("%u", numnodes));
 
-   std::string log;
-
-   if (logfile!=0) log = logfile; else
-   if (IsNative()) {
-      logfile = Find1(fSelected, 0, xmlRunNode, xmlLogfile);
-      if (logfile!=0) log = ResolveEnv(logfile);
-   }
-
-   if (log.length()>0)
-      dabc::Logger::Instance()->LogFile(log.c_str());
-
    const char* mgrname = 0;
 
    if (IsXDAQ()) {
@@ -159,6 +148,38 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    fMgrName     = mgrname;
    fMgrNodeId   = nodeid;
    fMgrNumNodes = numnodes;
+
+   envContext = fMgrName;
+
+   if (numnodes>1) {
+      dabc::SetDebugLevel(0);
+      dabc::SetFileLevel(1);
+   } else {
+      dabc::SetDebugLevel(1);
+      dabc::SetFileLevel(1);
+   }
+
+   if (IsNative()) {
+      val = Find1(fSelected, 0, xmlRunNode, xmlDebuglevel);
+      if (val) dabc::SetDebugLevel(atoi(val));
+      val = Find1(fSelected, 0, xmlRunNode, xmlLoglevel);
+      if (val) dabc::SetFileLevel(atoi(val));
+   }
+
+   std::string log;
+
+   if (logfile!=0) log = logfile; else
+   if (IsNative()) {
+      logfile = Find1(fSelected, 0, xmlRunNode, xmlLogfile);
+      if (logfile!=0) log = ResolveEnv(logfile);
+   } else {
+      log = fMgrName;
+      log += ".log";
+   }
+
+   if (log.length()>0)
+      dabc::Logger::Instance()->LogFile(log.c_str());
+
 
    if (dimnode==0) dimnode = getenv(xmlDIM_DNS_NODE);
 
@@ -195,7 +216,7 @@ bool dabc::Configuration::LoadLibs(const char* startfunc)
     XMLNodePointer_t last = 0;
 
     while ((libname = FindN(fSelected, last, xmlRunNode, xmlUserLib))!=0) {
-       DOUT0(("Find library %s", libname));
+       DOUT1(("Find library %s in config", libname));
        dabc::Manager::LoadLibrary(ResolveEnv(libname).c_str(), startfunc);
     }
 

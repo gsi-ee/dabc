@@ -123,7 +123,7 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
           return 1;
        }
 
-       dabc::SetDebugLevel(1);
+//       dabc::SetDebugLevel(1);
 
        dabc::CpuStatistic cpu;
 

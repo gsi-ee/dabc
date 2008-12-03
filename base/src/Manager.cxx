@@ -2104,7 +2104,7 @@ void dabc::Manager::RunManagerMainLoop()
 
 bool dabc::Manager::Store(ConfigIO &cfg)
 {
-   cfg.CreateItem(xmlContNode);
+   cfg.CreateItem(xmlContext);
    cfg.CreateAttr(xmlNameAttr, GetName());
 
    for (unsigned n=0; n<NumChilds(); n++) {
@@ -2119,7 +2119,7 @@ bool dabc::Manager::Store(ConfigIO &cfg)
 
 bool dabc::Manager::Find(ConfigIO &cfg)
 {
-   if (!cfg.FindItem(xmlContNode)) return false;
+   if (!cfg.FindItem(xmlContext)) return false;
 
    if (!cfg.CheckAttr(xmlNameAttr, GetName())) return false;
 
