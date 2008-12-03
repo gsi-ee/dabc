@@ -30,9 +30,12 @@ bool bnet::MbsFilterModule::TestBuffer(dabc::Buffer* buf)
    while (iter.NextEvent()) {
       DOUT1(("Event %u size %u", iter.evnt()->EventNumber(), iter.evnt()->FullSize()));
 
-      while (iter.NextSubEvent())
-         DOUT1(("Subevent crate %u procid %u size %u",
-               iter.subevnt()->iSubcrate, iter.subevnt()->iProcId, iter.subevnt()->FullSize()));
+      while (iter.NextSubEvent()) {
+         uint32_t* rawdata = (uint32_t*) iter.rawdata();
+         DOUT1(("Subevent crate %u procid %u size %u rawdata0 %u rawdata1 %u",
+               iter.subevnt()->iSubcrate, iter.subevnt()->iProcId, iter.subevnt()->FullSize(),
+               rawdata[0], rawdata[1]));
+      }
    }
 
    return (fTotalCnt++ % 2) > 0;

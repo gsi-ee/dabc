@@ -54,6 +54,8 @@ namespace dabc {
 
          std::string StartFuncName();
 
+         const char* ConetextAppClass();
+
          bool LoadLibs(const char* startfunc = 0);
 
          bool ReadPars();

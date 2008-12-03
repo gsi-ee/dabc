@@ -16,7 +16,7 @@ namespace dabc {
    class Application : public Folder,
                        public WorkingProcessor {
        public:
-          Application(const char* name);
+          Application(const char* classname);
 
           virtual ~Application();
 
@@ -45,13 +45,17 @@ namespace dabc {
 
           void InvokeCheckModulesCmd();
 
-          virtual const char* MasterClassName() const { return "Application"; }
-          virtual const char* ClassName() const { return "Application"; }
+          virtual const char* MasterClassName() const;
+          virtual const char* ClassName() const { return fAppClass.c_str(); }
           virtual bool UseMasterClassName() const { return true; }
+
+          virtual bool Store(ConfigIO &cfg);
+          virtual bool Find(ConfigIO &cfg);
 
        protected:
           virtual double ProcessTimeout(double last_diff);
 
+          std::string fAppClass;
           Command* fConnCmd;
           double fConnTmout;
 

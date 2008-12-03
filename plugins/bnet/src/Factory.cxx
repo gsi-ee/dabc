@@ -1,14 +1,22 @@
 #include "bnet/Factory.h"
 
+#include "bnet/common.h"
 #include "bnet/ClusterApplication.h"
 
 bnet::Factory bnetfactory("bnet");
 
-dabc::Application* bnet::Factory::CreateApplication(const char* classname, const char* appname, dabc::Command* cmd)
+bnet::Factory::Factory(const char* name) :
+   dabc::Factory(name)
 {
-   if (strcmp(classname, "BnetCluster")==0)
-      return new bnet::ClusterApplication(appname);
+   DfltAppClass(xmlClusterClass);
+}
 
-   return dabc::Factory::CreateApplication(classname, appname, cmd);
+
+dabc::Application* bnet::Factory::CreateApplication(const char* classname, dabc::Command* cmd)
+{
+   if (strcmp(classname, xmlClusterClass)==0)
+      return new bnet::ClusterApplication();
+
+   return dabc::Factory::CreateApplication(classname, cmd);
 }
 

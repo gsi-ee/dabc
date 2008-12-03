@@ -7,7 +7,7 @@ namespace bnet {
 
    class MbsWorkerApplication : public WorkerApplication {
       public:
-         MbsWorkerApplication(const char* name);
+         MbsWorkerApplication();
 
          virtual bool CreateReadout(const char* portname, int portnumber);
 

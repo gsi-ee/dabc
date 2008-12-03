@@ -3,10 +3,11 @@
 <Context name="Calbr">
   <Run>
     <host value="lxg0517"/>
-    <Lib>libDabcMbs.so</Lib>
-    <Lib>libDabcKnut.so</Lib>
+    <lib value="libDabcMbs.so"/>
+    <lib value="libDabcKnut.so"/>
+    <logfile value="testcal.log"/>
   </Run>
-  <Application name="RocPlugin">
+  <Application class="roc::Readout">
     <DoCalibr value="2"/>
     <NumRocs value="3"/>
     <RocIp0 value=""/>

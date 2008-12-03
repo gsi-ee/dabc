@@ -162,7 +162,9 @@ namespace dabc {
 
    const char* xmlRootNode         = "dabc";
    const char* xmlVersionAttr      = "version";
-   const char* xmlContext         = "Context";
+   const char* xmlContext          = "Context";
+   const char* xmlApplication      = "Application";
+   const char* xmlAppDfltName      = "App";
    const char* xmlDefualtsNode     = "Defaults";
    const char* xmlNameAttr         = "name";
    const char* xmlClassAttr        = "class";
@@ -187,8 +189,8 @@ namespace dabc {
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
    const char* xmlConfigFile       = "config";
    const char* xmlConfigFileId     = "configid";
-   const char* xmlUserLib          = "Lib";
-   const char* xmlUserFunc         = "Func";
+   const char* xmlUserLib          = "lib";
+   const char* xmlUserFunc         = "func";
    const char* xmlDIM_DNS_NODE     = "DIM_DNS_NODE";
    const char* xmlDIM_DNS_PORT     = "DIM_DNS_PORT";
 

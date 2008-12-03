@@ -14,7 +14,7 @@ namespace bnet {
 
    class WorkerApplication : public dabc::Application {
       public:
-         WorkerApplication(const char* name);
+         WorkerApplication(const char* classname);
 
          virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
 
@@ -79,10 +79,6 @@ namespace bnet {
          void SetPars(bool is_all_to_all,
                       int numreadouts,
                       int combinermodus);
-
-         static const char* ItemName();
-
-         static const char* PluginName() { return "BnetPlugin"; }
 
          virtual bool CreateAppModules();
          virtual int IsAppModulesConnected();

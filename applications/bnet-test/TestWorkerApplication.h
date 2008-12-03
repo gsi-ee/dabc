@@ -7,7 +7,7 @@ namespace bnet {
 
    class TestWorkerApplication : public WorkerApplication {
       public:
-         TestWorkerApplication(const char* name);
+         TestWorkerApplication();
 
          virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
 

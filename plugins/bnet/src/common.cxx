@@ -2,6 +2,8 @@
 
 #include <string.h>
 
+const char* bnet::xmlClusterClass = "bnet::Cluster";
+
 const char* bnet::NetDevice = "dabc::SocketDevice";
 bool bnet::NetBidirectional = true;
 bool bnet::UseFileSource = false;

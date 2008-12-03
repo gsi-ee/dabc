@@ -4,11 +4,13 @@
 
 bnet::TestFactory bnettestfactory("bnet-test");
 
-dabc::Application* bnet::TestFactory::CreateApplication(const char* classname, const char* appname, dabc::Command* cmd)
-{
-   if (strcmp(classname, "TestBnetWorker")==0)
-      return new bnet::TestWorkerApplication(appname);
+const char* bnet::xmlTestWrokerClass = "bnet::TestWorker";
 
-   return dabc::Factory::CreateApplication(classname, appname, cmd);
+dabc::Application* bnet::TestFactory::CreateApplication(const char* classname, dabc::Command* cmd)
+{
+   if (strcmp(classname, xmlTestWrokerClass)==0)
+      return new bnet::TestWorkerApplication();
+
+   return dabc::Factory::CreateApplication(classname, cmd);
 }
 

@@ -11,12 +11,19 @@
 
 roc::Factory rocfactory("roc");
 
-dabc::Application* roc::Factory::CreateApplication(const char* classname, const char* appname, dabc::Command* cmd)
-{
-   if (strcmp(classname,"RocReadoutApp")==0)
-      return new roc::ReadoutApplication(appname);
 
-   return dabc::Factory::CreateApplication(classname, appname, cmd);
+roc::Factory::Factory(const char* name) :
+   dabc::Factory(name)
+{
+   DfltAppClass(xmlReadoutAppClass);
+}
+
+dabc::Application* roc::Factory::CreateApplication(const char* classname, dabc::Command* cmd)
+{
+   if (strcmp(classname, xmlReadoutAppClass)==0)
+      return new roc::ReadoutApplication();
+
+   return dabc::Factory::CreateApplication(classname, cmd);
 }
 
 dabc::Module* roc::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)

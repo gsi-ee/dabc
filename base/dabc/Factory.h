@@ -35,7 +35,7 @@ namespace dabc {
       public:
          Factory(const char* name);
 
-         virtual Application* CreateApplication(const char* classname, const char* appname, Command* cmd) { return 0; }
+         virtual Application* CreateApplication(const char* classname, Command* cmd) { return 0; }
 
          virtual Device* CreateDevice(const char* classname, const char* devname, Command* cmd) { return 0; }
 

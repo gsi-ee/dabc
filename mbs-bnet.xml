@@ -35,9 +35,9 @@
   <Context name="Controller">
     <Run>
       <host value="lxg0526"/>
-      <Lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+      <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
     </Run>
-    <Application name="App">
+    <Application class="bnet::Cluster">
        <NetDevice value="dabc::SocketDevice"/>
        <CtrlBuffer value="2048"/>
        <TransportBuffer value="8192"/>
@@ -48,7 +48,7 @@
     <Run>
       <host value="lxi009"/>
     </Run>
-    <Application name="BnetPlugin">
+    <Application class="bnet::MbsWorker">
        <NumReadouts value="2"/>
        <Input0Cfg value="lxi011"/>
        <Input1Cfg value="lxi012"/>
@@ -58,7 +58,7 @@
     <Run>
       <host value="lxi011"/>
     </Run>
-    <Application name="BnetPlugin">
+    <Application class="bnet::MbsWorker">
        <NumReadouts value="2"/>
        <Input0Cfg value="lxi009"/>
        <Input1Cfg value="lxi010"/>
@@ -82,12 +82,13 @@
      </Context>
      <Context name="Gener*">
         <Run>
-          <Lib value="libDabcMbs.so"/>
-          <Func value="StartMbsGenerator"/>
+          <lib value="libDabcMbs.so"/>
+          <func value="StartMbsGenerator"/>
         </Run>
         <Module name="Generator">
            <BufferSize value="8192"/>
            <Go4Random value="false"/>
+           <SubeventSize value="128"/>
            <Port name="Output">
               <OutputQueueSize value="5"/>
               <MbsServerPort value="16020"/>
@@ -96,11 +97,11 @@
      </Context>
      <Context name="Read*">
         <Run>
-          <Lib value="libDabcBnet.so"/>
-          <Lib value="libDabcMbs.so"/>
-          <Lib value="libBnetMbs.so"/>
+          <lib value="libDabcBnet.so"/>
+          <lib value="libDabcMbs.so"/>
+          <lib value="libBnetMbs.so"/>
         </Run>
-        <Application name="BnetPlugin">
+        <Application class="bnet::MbsWorker">
            <IsSender value="1"/>
            <ReadoutBuffer value="8192"/>
         </Application>
@@ -112,11 +113,11 @@
      </Context>
      <Context name="Build*">
         <Run>
-          <Lib value="libDabcBnet.so"/>
-          <Lib value="libDabcMbs.so"/>
-          <Lib value="libBnetMbs.so"/>
+          <lib value="libDabcBnet.so"/>
+          <lib value="libDabcMbs.so"/>
+          <lib value="libBnetMbs.so"/>
         </Run>
-        <Application name="BnetPlugin">
+        <Application class="bnet::MbsWorker">
            <IsReceiver value="1"/>
            <IsFilter value="1"/>
            <EventBuffer value="8192"/>

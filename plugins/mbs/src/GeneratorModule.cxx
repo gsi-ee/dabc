@@ -76,13 +76,17 @@ bool mbs::GeneratorModule::GeneratePacket()
 
             unsigned subsz = fSubeventSize;
 
+            uint32_t* value = (uint32_t*) iter.rawdata();
+
             if (fIsGo4RandomFormat) {
-               uint32_t* value = (uint32_t*) iter.rawdata();
                unsigned numval = fSubeventSize / sizeof(uint32_t);
                for (unsigned nval=0;nval<numval;nval++)
                   *value++ = (uint32_t) Gauss_Rnd(nval*100 + 2000, 500./(nval+1));
 
                subsz = numval * sizeof(uint32_t);
+            } else {
+               if (subsz>0) *value++ = fEventCount;
+               if (subsz>4) *value++ = fFirstProcId + subcnt;
             }
 
             iter.FinishSubEvent(subsz);

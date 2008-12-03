@@ -6,6 +6,7 @@
 #include "dabc/CommandsSet.h"
 #include "dabc/logging.h"
 #include "dabc/timing.h"
+#include "dabc/Configuration.h"
 
 #include "bnet/GlobalDFCModule.h"
 #include "bnet/WorkerApplication.h"
@@ -40,8 +41,8 @@ namespace bnet {
 // _______________________________________________________________
 
 
-bnet::ClusterApplication::ClusterApplication(const char* name) :
-   dabc::Application(name),
+bnet::ClusterApplication::ClusterApplication() :
+   dabc::Application(xmlClusterClass),
    fSMMutex(),
    fSMRunningSMCmd()
 {
@@ -65,7 +66,7 @@ bnet::ClusterApplication::ClusterApplication(const char* name) :
       // no need to subscribe on status of itself - it is not exists
       if (n == dabc::Manager::Instance()->NodeId()) continue;
 
-      std::string holdername = bnet::WorkerApplication::PluginName();
+      std::string holdername = dabc::xmlAppDfltName;
 
       std::string parname;
 
@@ -279,7 +280,7 @@ bool bnet::ClusterApplication::StartDiscoverConfig(dabc::Command* mastercmd)
 
       if (set==0) set = new ClusterDiscoverSet(this, mastercmd);
 
-      dabc::mgr()->SubmitRemote(*set, cmd, nodename, WorkerApplication::ItemName());
+      dabc::mgr()->SubmitRemote(*set, cmd, nodename, dabc::xmlAppDfltName);
    }
 
    dabc::CommandsSet::Completed(set, SMCommandTimeout());
@@ -348,7 +349,7 @@ bool bnet::ClusterApplication::StartConfigureApply(dabc::Command* mastercmd)
 
       if (set==0) set = new dabc::CommandsSet(mastercmd);
 
-      dabc::mgr()->SubmitRemote(*set, cmd, nodename, WorkerApplication::ItemName());
+      dabc::mgr()->SubmitRemote(*set, cmd, nodename, dabc::xmlAppDfltName);
    }
 
    if (WithController()) {

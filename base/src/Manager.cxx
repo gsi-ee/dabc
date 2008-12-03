@@ -839,17 +839,14 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
    } else
    if (cmd->IsName(CmdCreateApplication::CmdName())) {
       const char* classname = cmd->GetStr("AppClass");
-      const char* appname = cmd->GetStr("AppName");
       const char* appthrd = cmd->GetStr("AppThrd");
 
       if ((classname==0) || (strlen(classname)==0)) classname = Factory::DfltAppClass();
-      if ((appname!=0) && (strlen(appname)==0)) appname = 0;
 
       Application* app = GetApp();
 
-      if ((app!=0) && ((appname==0) || (strcmp(app->GetName(), appname)==0))) {
-        DOUT4(("Application with name %s already exists", app->GetName()));
-
+      if ((app!=0) && (strcmp(app->ClassName(), classname)==0)) {
+         DOUT2(("Application of class %s already exists", classname));
       } else {
          if (app!=0) { delete app; app = 0; }
 
@@ -860,7 +857,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
                Factory* factory =
                   dynamic_cast<Factory*> (folder->GetChild(n));
                if (factory!=0)
-                  app = factory->CreateApplication(classname, appname, cmd);
+                  app = factory->CreateApplication(classname, cmd);
                if (app!=0) break;
             }
 
@@ -1874,9 +1871,9 @@ void dabc::Manager::AddFactory(Factory* factory)
    DOUT3(("Add factory %s", factory->GetName()));
 }
 
-bool dabc::Manager::CreateApplication(const char* classname, const char* appname, const char* appthrd)
+bool dabc::Manager::CreateApplication(const char* classname, const char* appthrd)
 {
-   return Execute(new CmdCreateApplication(classname, appname, appthrd));
+   return Execute(new CmdCreateApplication(classname, appthrd));
 }
 
 bool dabc::Manager::CreateDevice(const char* classname, const char* devname)

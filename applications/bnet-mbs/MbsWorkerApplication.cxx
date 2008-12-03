@@ -9,9 +9,10 @@
 #include "MbsCombinerModule.h"
 #include "MbsBuilderModule.h"
 #include "MbsFilterModule.h"
+#include "MbsFactory.h"
 
-bnet::MbsWorkerApplication::MbsWorkerApplication(const char* name) :
-   WorkerApplication(name)
+bnet::MbsWorkerApplication::MbsWorkerApplication() :
+   WorkerApplication(xmlMbsWorkerClass)
 {
 /*
 

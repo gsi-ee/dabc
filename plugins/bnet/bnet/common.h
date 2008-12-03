@@ -9,6 +9,8 @@
 
 namespace bnet {
 
+   extern const char* xmlClusterClass; // preferred net device for building network
+
    extern const char* NetDevice; // preferred net device for building network
    extern bool NetBidirectional; // preferred configuration for network
    extern bool UseFileSource;    // configure usage of files as data source insted of generator

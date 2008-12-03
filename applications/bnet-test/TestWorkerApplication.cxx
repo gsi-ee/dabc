@@ -10,9 +10,10 @@
 #include "TestCombinerModule.h"
 #include "TestBuilderModule.h"
 #include "TestFilterModule.h"
+#include "TestFactory.h"
 
-bnet::TestWorkerApplication::TestWorkerApplication(const char* name) :
-   WorkerApplication(name) ,
+bnet::TestWorkerApplication::TestWorkerApplication() :
+   WorkerApplication(xmlTestWrokerClass) ,
    fABBActive(false)
 {
 // register application specific parameters here:

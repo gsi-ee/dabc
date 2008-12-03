@@ -16,10 +16,11 @@ const char* roc::xmlDoCalibr          = "DoCalibr";
 const char* roc::xmlRocIp             = "RocIp";
 const char* roc::xmlRawFile           = "RawFile";
 const char* roc::xmlCalibrFile        = "CalibrFile" ;
+const char* roc::xmlReadoutAppClass   = "roc::Readout";
 
 
-roc::ReadoutApplication::ReadoutApplication(const char* name) :
-   dabc::Application(name ? name : "RocPlugin")
+roc::ReadoutApplication::ReadoutApplication() :
+   dabc::Application(roc::xmlReadoutAppClass)
 {
    CreateParInt(roc::xmlDoCalibr, 1);
 

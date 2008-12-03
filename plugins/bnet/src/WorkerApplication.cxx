@@ -8,13 +8,8 @@
 #include "dabc/timing.h"
 #include "dabc/CommandsSet.h"
 
-const char* bnet::WorkerApplication::ItemName()
-{
-   return PluginName();
-}
-
-bnet::WorkerApplication::WorkerApplication(const char* name) :
-   dabc::Application(name ? name : PluginName())
+bnet::WorkerApplication::WorkerApplication(const char* classname) :
+   dabc::Application(classname)
 {
    CreateParInt("IsGenerator", 0);
    CreateParInt("IsSender", 0);

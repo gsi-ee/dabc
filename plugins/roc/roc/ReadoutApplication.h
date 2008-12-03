@@ -17,10 +17,11 @@ namespace roc {
    extern const char* xmlRocIp;
    extern const char* xmlRawFile;
    extern const char* xmlCalibrFile;
+   extern const char* xmlReadoutAppClass;
 
    class ReadoutApplication : public dabc::Application {
       public:
-         ReadoutApplication(const char* name);
+         ReadoutApplication();
 
          virtual bool IsModulesRunning();
 

@@ -142,11 +142,10 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateApplication"; }
 
-         CmdCreateApplication(const char* appclass, const char* appname = 0, const char* appthrd = 0) :
+         CmdCreateApplication(const char* appclass, const char* appthrd = 0) :
             Command(CmdName())
          {
             SetStr("AppClass", appclass);
-            SetStr("AppName", appname);
             SetStr("AppThrd", appthrd);
          }
      };
@@ -519,7 +518,7 @@ namespace dabc {
 
          // ------------ access to factories method -------------
 
-         bool CreateApplication(const char* classname = 0, const char* appname = 0, const char* appthrd = 0);
+         bool CreateApplication(const char* classname = 0, const char* appthrd = 0);
 
          bool CreateDevice(const char* classname, const char* devname);
 

@@ -3,8 +3,8 @@
   <Context name="Server">
     <Run>
       <host value="lxi009"/>
-      <Lib value="libDabcMbs.so"/>
-      <Func value="StartMbsGenerator"/>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsGenerator"/>
     </Run>
     <Module name="Generator">
        <Port name="Output">
@@ -16,8 +16,8 @@
   <Context name="Client">
     <Run>
       <host value="lxi010"/>
-      <Lib value="libDabcMbs.so"/>
-      <Func value="StartMbsClient"/>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsClient"/>
     </Run>
     <Module name="Receiver">
        <BufferSize value="16384"/>

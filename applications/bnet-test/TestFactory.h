@@ -7,11 +7,13 @@
 
 namespace bnet {
 
+   extern const char* xmlTestWrokerClass;
+
    class TestFactory : public dabc::Factory {
    public:
-      TestFactory(const char* name) : dabc::Factory(name) { DfltAppClass("TestBnetWorker"); }
+      TestFactory(const char* name) : dabc::Factory(name) { DfltAppClass(xmlTestWrokerClass); }
 
-      virtual dabc::Application* CreateApplication(const char* classname, const char* appname, dabc::Command* cmd);
+      virtual dabc::Application* CreateApplication(const char* classname, dabc::Command* cmd);
 
    };
 }

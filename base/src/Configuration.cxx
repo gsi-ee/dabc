@@ -206,6 +206,24 @@ std::string dabc::Configuration::StartFuncName()
    return std::string(val ? val : "");
 }
 
+const char* dabc::Configuration::ConetextAppClass()
+{
+   if (IsXDAQ() || (fSelected==0)) return 0;
+
+   XMLNodePointer_t node = fXml.GetChild(fSelected);
+
+   while (node!=0) {
+      if (IsNodeName(node, xmlApplication)) break;
+      node = fXml.GetNext(node);
+   }
+
+   if (node==0)
+      node = FindMatch(0, fSelected, fSelected, xmlApplication);
+
+   return fXml.GetAttr(node, xmlClassAttr);
+}
+
+
 bool dabc::Configuration::LoadLibs(const char* startfunc)
 {
     if (fSelected==0) return false;

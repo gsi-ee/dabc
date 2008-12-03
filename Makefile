@@ -38,7 +38,7 @@ libs::
 clean::
 	
 package:: clean
-	tar cf dabc.tar Makefile base/ build/ config/ controls/simple $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 
+	tar cf dabc.tar Makefile *.xml base/ build/ config/ controls/simple $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 
 	gzip dabc.tar
 	echo "dabc.tar.gz done" 
 

@@ -4,7 +4,7 @@
     <Run>
       <host>lxg0526</host>
     </Run>
-    <Application name="App">
+    <Application class="bnet::Cluster">
        <NetDevice>dabc::SocketDevice</NetDevice>
     </Application>
   </Context>
@@ -34,13 +34,13 @@
        <user value="linev"/>
        <port value="22"/>
        <logfile value="test${DABCNODEID}.log"/>
-       <Lib>${DABCSYS}/lib/libDabcBnet.so</Lib>
+       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
     </Run>
     </Context>
 
     <Context name="Cont*">
        <Run>
-          <Lib>libBnetTest.so</Lib>
+          <lib value="libBnetTest.so"/>
        </Run>
     </Context>
   </Defaults>

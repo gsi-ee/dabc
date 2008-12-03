@@ -2,10 +2,12 @@
 
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
+#include "dabc/Configuration.h"
 
-dabc::Application::Application(const char* name) :
-   Folder(dabc::mgr(), name ? name : "App", true),
+dabc::Application::Application(const char* classname) :
+   Folder(dabc::mgr(), xmlAppDfltName, true),
    WorkingProcessor(),
+   fAppClass(classname ? classname : xmlApplication),
    fConnCmd(0),
    fConnTmout(0)
 {
@@ -27,6 +29,11 @@ dabc::Application::~Application()
    DestroyAllPars();
 
    DOUT3(("Did Application %s destructor", GetName()));
+}
+
+const char* dabc::Application::MasterClassName() const
+{
+   return xmlApplication;
 }
 
 int dabc::Application::ExecuteCommand(dabc::Command* cmd)
@@ -142,4 +149,32 @@ bool dabc::Application::IsModulesRunning()
 void dabc::Application::InvokeCheckModulesCmd()
 {
    Submit(new Command("CheckModulesRunning"));
+}
+
+
+bool dabc::Application::Store(ConfigIO &cfg)
+{
+   cfg.CreateItem(xmlApplication);
+
+   if (strcmp(ClassName(), MasterClassName()) != 0)
+      cfg.CreateAttr(xmlClassAttr, ClassName());
+
+   for (unsigned n=0; n<NumChilds(); n++) {
+      Basic* child = GetChild(n);
+      if (child!=0) child->Store(cfg);
+   }
+
+   cfg.PopItem();
+
+   return true;
+}
+
+bool dabc::Application::Find(ConfigIO &cfg)
+{
+   if (!cfg.FindItem(xmlApplication)) return false;
+
+   if (strcmp(ClassName(), MasterClassName()) != 0)
+      if (!cfg.CheckAttr(xmlClassAttr, ClassName())) return false;
+
+   return true;
 }
