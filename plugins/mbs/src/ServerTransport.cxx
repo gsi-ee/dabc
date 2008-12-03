@@ -59,7 +59,7 @@ void mbs::ServerIOProcessor::OnSendCompleted()
    switch (fState) {
       case ioInit:
          fState = ioReady;
-         DOUT0(("Send of initial information completed"));
+         DOUT2(("MBS Server send info block"));
 
          break;
       case ioSendingBuffer:

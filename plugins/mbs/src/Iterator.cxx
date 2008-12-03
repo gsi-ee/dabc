@@ -75,7 +75,7 @@ bool mbs::ReadIterator::NextSubEvent()
 {
    if (fSubPtr.null()) {
       if (fEvPtr.null()) return false;
-      fSubPtr.reset(fEvPtr);
+      fSubPtr.reset(fEvPtr, evnt()->FullSize());
       fSubPtr.shift(sizeof(EventHeader));
    } else
       fSubPtr.shift(subevnt()->FullSize());
@@ -85,7 +85,7 @@ bool mbs::ReadIterator::NextSubEvent()
       return false;
    }
 
-   fRawPtr.reset(fSubPtr);
+   fRawPtr.reset(fSubPtr, subevnt()->FullSize());
    fRawPtr.shift(sizeof(SubeventHeader));
 
    return true;

@@ -118,7 +118,7 @@
         </Run>
         <Application name="BnetPlugin">
            <IsReceiver value="1"/>
-           <IsFilter value="0"/>
+           <IsFilter value="1"/>
            <EventBuffer value="8192"/>
         </Application>
      </Context>

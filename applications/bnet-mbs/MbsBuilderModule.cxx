@@ -103,6 +103,8 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
          continue;
       }
 
+//      DOUT1(("Build event %u len %u", recs[pmin].evnt()->EventNumber(), subeventslen));
+
       if (subeventslen==0) {
          EOUT(("Something wrong with data"));
          return;

@@ -28,7 +28,7 @@ namespace mbs {
          bool AssignEventPointer(dabc::Pointer& ptr);
          SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
          void* rawdata() const { return fRawPtr(); }
-         uint32_t rawdatasize() const { return subevnt() ? subevnt()->RawDataSize() : 0; }
+         uint32_t rawdatasize() const { return fRawPtr.fullsize(); }
 
          static unsigned NumEvents(dabc::Buffer* buf);
 

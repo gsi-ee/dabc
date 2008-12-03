@@ -6,6 +6,9 @@
 
 #include "mbs/MbsTypeDefs.h"
 
+#include "mbs/Iterator.h"
+
+
 bnet::MbsFilterModule::MbsFilterModule(const char* name, WorkerApplication* factory) :
    FilterModule(name, factory)
 {
@@ -17,6 +20,20 @@ bool bnet::MbsFilterModule::TestBuffer(dabc::Buffer* buf)
 {
    if (fTotalCnt++ % 100 == 0)
       DOUT5(("Total filtered buffers %d", fTotalCnt));
+
+   unsigned numevnts = mbs::ReadIterator::NumEvents(buf);
+
+   DOUT1(("NumEvents %u", numevnts));
+
+   mbs::ReadIterator iter(buf);
+
+   while (iter.NextEvent()) {
+      DOUT1(("Event %u size %u", iter.evnt()->EventNumber(), iter.evnt()->FullSize()));
+
+      while (iter.NextSubEvent())
+         DOUT1(("Subevent crate %u procid %u size %u",
+               iter.subevnt()->iSubcrate, iter.subevnt()->iProcId, iter.subevnt()->FullSize()));
+   }
 
    return (fTotalCnt++ % 2) > 0;
 }
