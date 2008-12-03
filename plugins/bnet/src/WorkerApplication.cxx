@@ -16,12 +16,12 @@ const char* bnet::WorkerApplication::ItemName()
 bnet::WorkerApplication::WorkerApplication(const char* name) :
    dabc::Application(name ? name : PluginName())
 {
-   CreateParInt("IsGenerator", 1);
+   CreateParInt("IsGenerator", 0);
    CreateParInt("IsSender", 0);
    CreateParInt("IsReceiver", 0);
    CreateParInt("IsFilter", 0);
    CreateParInt("CombinerModus", 0);
-   CreateParInt("NumReadouts", 1);
+   CreateParInt("NumReadouts", 0);
    for (int nr=0;nr<NumReadouts();nr++)
       CreateParStr(FORMAT(("Input%dCfg", nr)), "");
    CreateParStr("StoragePar", "");
@@ -98,16 +98,17 @@ void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 {
    SetParInt("CfgController", cmd->GetBool("WithController") ? 1 : 0);
    SetParInt("CfgEventsCombine", cmd->GetInt("EventsCombine", 1));
-   SetParInt("CtrlBuffer", cmd->GetInt("ControlBuffer", 1024));
    SetParStr("CfgNetDevice", cmd->GetStr("NetDevice",""));
 
-   int TransportBufferSize = cmd->GetInt("TransportBuffer", 1024);
-   int ReadoutBufferSize = TransportBufferSize / NumReadouts();
-   int EventBufferSize = TransportBufferSize * (CfgNumNodes() - 1);
+   SetParInt("CtrlBuffer", cmd->GetInt("ControlBuffer", 1024));
+   SetParInt("TransportBuffer", cmd->GetInt("TransportBuffer", 1024));
 
-   SetParInt("ReadoutBuffer", ReadoutBufferSize);
-   SetParInt("TransportBuffer", TransportBufferSize);
-   SetParInt("EventBuffer", EventBufferSize);
+//   int TransportBufferSize = cmd->GetInt("TransportBuffer", 1024);
+//   int ReadoutBufferSize = TransportBufferSize / NumReadouts();
+//   int EventBufferSize = TransportBufferSize * (CfgNumNodes() - 1);
+//   SetParInt("TransportBuffer", TransportBufferSize);
+//   SetParInt("ReadoutBuffer", ReadoutBufferSize);
+//   SetParInt("EventBuffer", EventBufferSize);
 
    cmd->SetBool("IsSender", IsSender());
    cmd->SetBool("IsReceiver", IsReceiver());

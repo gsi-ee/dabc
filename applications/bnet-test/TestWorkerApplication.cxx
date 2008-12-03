@@ -104,3 +104,16 @@ bool bnet::TestWorkerApplication::CreateStorage(const char* portname)
    return bnet::WorkerApplication::CreateStorage(portname);
 }
 
+void bnet::TestWorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
+{
+   bnet::WorkerApplication::DiscoverNodeConfig(cmd);
+
+   if (IsSender())
+      SetParInt("ReadoutBuffer", TransportBufferSize() / NumReadouts());
+
+   if (IsReceiver())
+      SetParInt("EventBuffer", TransportBufferSize() * (CfgNumNodes() - 1));
+
+}
+
+

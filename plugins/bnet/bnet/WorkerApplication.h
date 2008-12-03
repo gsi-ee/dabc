@@ -91,7 +91,7 @@ namespace bnet {
 
       protected:
 
-         void DiscoverNodeConfig(dabc::Command* cmd);
+         virtual void DiscoverNodeConfig(dabc::Command* cmd);
          void ApplyNodeConfig(dabc::Command* cmd);
          bool CheckWorkerModules();
    };

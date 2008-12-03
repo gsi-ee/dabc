@@ -19,8 +19,10 @@ namespace bnet {
 
          bool CreateStorage(const char* portname);
 
+      protected:
+         virtual void DiscoverNodeConfig(dabc::Command* cmd);
 
-    private:
+      private:
          bool fABBActive;
 
    };

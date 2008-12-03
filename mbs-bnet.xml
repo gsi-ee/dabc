@@ -27,20 +27,87 @@
     </Run>
     <Application name="App">
        <NetDevice value="dabc::SocketDevice"/>
+       <CtrlBuffer value="2048"/>
+       <TransportBuffer value="8192"/>
+       <NumEventsCombine value="1"/>
     </Application>
   </Context>
+  <Context name="Read_lxi009">
+    <Run>
+      <host value="lxi009"/>
+    </Run>
+    <Application name="App">
+       <NumReadouts value="2"/>
+       <Input0Cfg value="lxi011"/>
+       <Input1Cfg value="lxi012"/>
+    </Application>
+  </Context>
+  <Context name="Read_lxi011">
+    <Run>
+      <host value="lxi011"/>
+    </Run>
+    <Application name="App">
+       <NumReadouts value="2"/>
+       <Input0Cfg value="lxi009"/>
+       <Input1Cfg value="lxi010"/>
+    </Application>
+  </Context>
+  <Context name="Build_lxi010">
+    <Run>
+      <host value="lxi010"/>
+    </Run>
+  </Context>
+  <Context name="Build_lxi012">
+    <Run>
+      <host value="lxi012"/>
+    </Run>
+  </Context>
   <Defaults>
+     <Context name="*">
+       <Run>
+          <logfile value="mbs-bnet-${DABCNODEID}.log"/>
+       </Run>
+     </Context>
      <Context name="Gener*">
         <Run>
           <Lib value="libDabcMbs.so"/>
           <Func value="StartMbsGenerator"/>
         </Run>
         <Module name="Generator">
+           <BufferSize value="8192"/>
            <Port name="Output">
               <OutputQueueSize value="5"/>
               <MbsServerPort value="16020"/>
            </Port>
         </Module>
+     </Context>
+     <Context name="Read*">
+        <Run>
+          <Lib value="libDabcBnet.so"/>
+          <Lib value="libDabcMbs.so"/>
+          <Lib value="libBnetMbs.so"/>
+        </Run>
+        <Application name="App">
+           <IsSender value="1"/>
+           <ReadoutBuffer value="8192"/>
+           <Module name="Combiner">
+              <Port name="Input*">
+                 <MbsServerPort value="16020"/>
+              </Port>
+           </Module>
+        </Application>
+     </Context>
+     <Context name="Build*">
+        <Run>
+          <Lib value="libDabcBnet.so"/>
+          <Lib value="libDabcMbs.so"/>
+          <Lib value="libBnetMbs.so"/>
+        </Run>
+        <Application name="App">
+           <IsReceiver value="1"/>
+           <IsFilter value="0"/>
+           <EventBuffer value="8192"/>
+        </Application>
      </Context>
   </Defaults>
 </dabc>
