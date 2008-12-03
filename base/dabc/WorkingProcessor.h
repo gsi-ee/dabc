@@ -79,13 +79,6 @@ namespace dabc {
          double GetCfgDouble(const char* name, double dfltvalue, Command* cmd = 0);
          bool GetCfgBool(const char* name, bool dfltvalue, Command* cmd = 0);
 
-         // methods for parameters creation
-         Parameter* CreatePar(int kind, const char* name, const char* initvalue = 0);
-         Parameter* CreateParStr(const char* name, const char* initvalue = 0);
-         Parameter* CreateParInt(const char* name, int initvalue = 0);
-         Parameter* CreateParDouble(const char* name, double initvalue = 0.);
-         Parameter* CreateParBool(const char* name, bool initvalue = false);
-
       protected:
 
          // Method is called when requested time point is reached
@@ -145,6 +138,13 @@ namespace dabc {
          void SetParsHolder(Folder* holder, const char* subfolder = 0);
          void SetParDflts(int visibility = 1, bool fixed = false);
          virtual WorkingProcessor* GetCfgMaster() { return 0; }
+
+         // methods for parameters creation
+         Parameter* CreatePar(int kind, const char* name, const char* initvalue = 0);
+         Parameter* CreateParStr(const char* name, const char* initvalue = 0);
+         Parameter* CreateParInt(const char* name, int initvalue = 0);
+         Parameter* CreateParDouble(const char* name, double initvalue = 0.);
+         Parameter* CreateParBool(const char* name, bool initvalue = false);
 
          // this method is called after parameter is changed
          // user may add its reaction on this event, but cannot

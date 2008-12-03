@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="Gener_lxi009">
+    <Run>
+      <host value="lxi009"/>
+    </Run>
+  </Context>
+  <Context name="Gener_lxi010">
+    <Run>
+      <host value="lxi010"/>
+    </Run>
+  </Context>
+  <Context name="Gener_lxi011">
+    <Run>
+      <host value="lxi011"/>
+    </Run>
+  </Context>
+  <Context name="Gener_lxi012">
+    <Run>
+      <host value="lxi012"/>
+    </Run>
+  </Context>
+  <Context name="Controller">
+    <Run>
+      <host value="lxg0526"/>
+      <Lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+    </Run>
+    <Application name="App">
+       <NetDevice value="dabc::SocketDevice"/>
+    </Application>
+  </Context>
+  <Defaults>
+     <Context name="Gener*">
+        <Run>
+          <Lib value="libDabcMbs.so"/>
+          <Func value="StartMbsGenerator"/>
+        </Run>
+        <Module name="Generator">
+           <Port name="Output">
+              <OutputQueueSize value="5"/>
+              <MbsServerPort value="16020"/>
+           </Port>
+        </Module>
+     </Context>
+  </Defaults>
+</dabc>

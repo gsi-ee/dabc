@@ -514,6 +514,9 @@ namespace dabc {
          void ProcessCtrlCSignal();
          void RaiseCtrlCSignal();
 
+         virtual bool Store(ConfigIO &cfg);
+         virtual bool Find(ConfigIO &cfg);
+
          // ------------ access to factories method -------------
 
          bool CreateApplication(const char* classname = 0, const char* appname = 0, const char* appthrd = 0);

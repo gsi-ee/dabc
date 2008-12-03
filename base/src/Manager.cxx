@@ -410,6 +410,7 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
 
       switch (evid) {
          case parCreated:
+            DOUT3(("Read parameter %s from cfg %p", par->GetFullName().c_str(), fCfg));
             if (fCfg) par->Read(*fCfg);
             break;
 
@@ -1692,13 +1693,15 @@ bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Com
    if ((state_transition_name!=0) && (strcmp(state_transition_name, stcmdDoStop)==0)) {
       DOUT1(("Application can stop its execution"));
 
-      fMgrMainLoop = false;
-
-      WorkingThread* thrd = ProcessorThread();
-      if (thrd && !fMgrNormalThrd) {
-         RemoveProcessorFromThread(true);
-         thrd->Stop(false); // stop thread - means leave thread main loop
+      if (!fMgrStopped && fMgrMainLoop) {
+         fMgrStopped = true;
+         WorkingThread* thrd = ProcessorThread();
+         if (thrd && !fMgrNormalThrd) thrd->SetWorkingFlag(false);
       }
+//      if (thrd && !fMgrNormalThrd) {
+//         RemoveProcessorFromThread(true);
+//         thrd->Stop(false); // stop thread - means leave thread main loop
+//      }
    }
 
    return false;
@@ -2098,3 +2101,26 @@ void dabc::Manager::RunManagerMainLoop()
 }
 
 
+bool dabc::Manager::Store(ConfigIO &cfg)
+{
+   cfg.CreateItem(xmlContNode);
+   cfg.CreateAttr(xmlNameAttr, GetName());
+
+   for (unsigned n=0; n<NumChilds(); n++) {
+      Basic* child = GetChild(n);
+      if (child!=0) child->Store(cfg);
+   }
+
+   cfg.PopItem();
+
+   return true;
+}
+
+bool dabc::Manager::Find(ConfigIO &cfg)
+{
+   if (!cfg.FindItem(xmlContNode)) return false;
+
+   if (!cfg.CheckAttr(xmlNameAttr, GetName())) return false;
+
+   return true;
+}

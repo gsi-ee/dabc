@@ -142,9 +142,9 @@ class MbsTestReadoutModule : public dabc::ModuleAsync {
 
          dabc::Port* port = CreateInput("Input", pool, 5);
 
-         port->CreateParStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
-         port->CreateParStr(mbs::xmlServerName, "lxg0526");
-         port->CreateParInt(mbs::xmlServerPort, DefualtServerPort(mbs::TransportServer));
+         port->GetCfgStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
+         port->GetCfgStr(mbs::xmlServerName, "lxg0526");
+         port->GetCfgInt(mbs::xmlServerPort, DefualtServerPort(mbs::TransportServer));
 
          DOUT1(("Start as client for node %s:%d", port->GetParStr(mbs::xmlServerName).c_str(), port->GetParInt(mbs::xmlServerPort)));
       }

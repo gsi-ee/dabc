@@ -367,8 +367,8 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
       maxlevel++;
    }
 
-//   DOUT0(("Search object %s lvl = %d  attr = %s",
-//          obj->GetFullName().c_str(), maxlevel, (findattr ? findattr : "---")));
+   DOUT5(("Configuration::Find object %s lvl = %d  attr = %s",
+          obj->GetFullName().c_str(), maxlevel, (findattr ? findattr : "---")));
 
    if (prnt==0) return 0;
 
@@ -393,7 +393,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
          if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
             const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();
             if (res==0) res = "";
-//            DOUT0(("Exact found %s res = %s", obj->GetFullName().c_str(), res));
+            DOUT5(("Exact found %s res = %s", obj->GetFullName().c_str(), res));
             return res;
          }
    }
@@ -402,20 +402,24 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
 
    do {
 
+      DOUT5(("Start search with maxlevel = %d", maxlevel));
+
       fCurrItem = Dflts();
       fCurrChld = 0;
 
-      level = maxlevel - 1;
+      level = maxlevel;
       while (level >= 0) {
          prnt = GetObjParent(obj, level);
          if (prnt == 0) return 0;
+
+         DOUT5(("Search parent %s", prnt->GetName()));
 
          if (prnt->Find(*this)) {
             if (level--==0)
                if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
                   const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();
                   if (res==0) res = "";
-//                  DOUT0(("Found object %s res = %s", obj->GetFullName().c_str(), res));
+                  DOUT5(("Found object %s res = %s", obj->GetFullName().c_str(), res));
                   return res;
                }
          } else
@@ -430,9 +434,9 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
       maxlevel--;
 
       while (maxlevel > 0) {
-         prnt = GetObjParent(obj, maxlevel - 1);
+         prnt = GetObjParent(obj, maxlevel);
          if (prnt->UseMasterClassName()) {
-//            DOUT0(("Try with master %s", prnt->GetName()));
+            DOUT5(("Try with master %s", prnt->GetName()));
             break;
          }
          maxlevel--;

@@ -15,7 +15,7 @@
   </Context>
   <Context name="Client">
     <Run>
-      <host value="lxg0526"/>
+      <host value="lxi010"/>
       <Lib value="libDabcMbs.so"/>
       <Func value="StartMbsClient"/>
     </Run>
