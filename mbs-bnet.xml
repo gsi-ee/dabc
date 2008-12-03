@@ -4,21 +4,33 @@
     <Run>
       <host value="lxi009"/>
     </Run>
+    <Module name="Generator">
+       <FirstProcId value="0"/>
+    </Module>
   </Context>
   <Context name="Gener_lxi010">
     <Run>
       <host value="lxi010"/>
     </Run>
+    <Module name="Generator">
+       <FirstProcId value="2"/>
+    </Module>
   </Context>
   <Context name="Gener_lxi011">
     <Run>
       <host value="lxi011"/>
     </Run>
+    <Module name="Generator">
+       <FirstProcId value="4"/>
+    </Module>
   </Context>
   <Context name="Gener_lxi012">
     <Run>
       <host value="lxi012"/>
     </Run>
+    <Module name="Generator">
+       <FirstProcId value="6"/>
+    </Module>
   </Context>
   <Context name="Controller">
     <Run>
@@ -36,7 +48,7 @@
     <Run>
       <host value="lxi009"/>
     </Run>
-    <Application name="App">
+    <Application name="BnetPlugin">
        <NumReadouts value="2"/>
        <Input0Cfg value="lxi011"/>
        <Input1Cfg value="lxi012"/>
@@ -46,7 +58,7 @@
     <Run>
       <host value="lxi011"/>
     </Run>
-    <Application name="App">
+    <Application name="BnetPlugin">
        <NumReadouts value="2"/>
        <Input0Cfg value="lxi009"/>
        <Input1Cfg value="lxi010"/>
@@ -87,15 +99,15 @@
           <Lib value="libDabcMbs.so"/>
           <Lib value="libBnetMbs.so"/>
         </Run>
-        <Application name="App">
+        <Application name="BnetPlugin">
            <IsSender value="1"/>
            <ReadoutBuffer value="8192"/>
-           <Module name="Combiner">
-              <Port name="Input*">
-                 <MbsServerPort value="16020"/>
-              </Port>
-           </Module>
         </Application>
+        <Module name="Combiner">
+           <Port name="Input*">
+              <MbsServerPort value="16020"/>
+           </Port>
+        </Module>
      </Context>
      <Context name="Build*">
         <Run>
@@ -103,7 +115,7 @@
           <Lib value="libDabcMbs.so"/>
           <Lib value="libBnetMbs.so"/>
         </Run>
-        <Application name="App">
+        <Application name="BnetPlugin">
            <IsReceiver value="1"/>
            <IsFilter value="0"/>
            <EventBuffer value="8192"/>

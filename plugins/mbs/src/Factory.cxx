@@ -35,7 +35,12 @@ dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ
       kind = mbs::TransportServer;
    }
 
+   dabc::SetDebugLevel(3);
+
    int portnum = port->GetCfgInt(xmlServerPort, DefualtServerPort(kind), cmd);
+
+   dabc::SetDebugLevel(1);
+
 
    dabc::Device* dev = (dabc::Device*) dabc::mgr()->FindLocalDevice();
    if (dev==0) {

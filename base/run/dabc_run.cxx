@@ -258,7 +258,7 @@ int main(int numc, char* args[])
 
    const char* mgrclass = "";
 
-   if ((ctrlkind == dabc::ConfigBase::kindNone) && (numnodes > 1))
+   if ((ctrlkind == dabc::ConfigBase::kindNone) && (numnodes > 1) && (funcname.length()==0))
       ctrlkind = dabc::ConfigBase::kindSctrl;
 
    if (ctrlkind == dabc::ConfigBase::kindDim) {

@@ -87,7 +87,7 @@ namespace dabc {
          unsigned          fErrorMask;   // mask for error output
          unsigned          fFileMask;    // mask for file output
          int               fDebugLevel;  // level of debug
-         std::string            fPrefix;      // prefix of all messages
+         std::string       fPrefix;      // prefix of all messages
    };
 
    #define DOUT(level, args) \

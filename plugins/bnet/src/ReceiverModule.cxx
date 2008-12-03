@@ -30,6 +30,8 @@ bnet::ReceiverModule::ReceiverModule(const char* name, WorkerApplication* factor
    // output is always there
    CreateOutput("Output", fPool, ReceiverOutQueueSize, sizeof(bnet::SubEventNetHeader));
 
+   DOUT1(("Create Receiver with %d inputs", fCfgNumNodes));
+
    for (int n=0;n<fCfgNumNodes;n++)
       CreateInput(FORMAT(("Input%d", n)), fPool, ReceiverQueueSize, sizeof(bnet::SubEventNetHeader));
 

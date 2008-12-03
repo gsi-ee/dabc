@@ -49,8 +49,8 @@ bnet::WorkerApplication::WorkerApplication(const char* name) :
 
    SetParDflts(0);  // make next parameters not visible outside
 
-   CreateParInt("CfgNumNodes", 1);
-   CreateParInt("CfgNodeId", 0);
+   CreateParInt("CfgNodeId", dabc::mgr()->NodeId());
+   CreateParInt("CfgNumNodes", dabc::mgr()->NumNodes());
    CreateParInt("CfgController", 0);
    CreateParStr("CfgSendMask", "");
    CreateParStr("CfgRecvMask", "");
@@ -61,7 +61,7 @@ bnet::WorkerApplication::WorkerApplication(const char* name) :
 
    SetParDflts();
 
-   DOUT1(("!!!! Worker plugin created !!!!"));
+   DOUT1(("!!!! Worker plugin created name = %s!!!!", GetName()));
 }
 
 std::string bnet::WorkerApplication::ReadoutPar(int nreadout) const
@@ -96,6 +96,9 @@ bool bnet::WorkerApplication::CreateStorage(const char* portname)
 
 void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 {
+
+   DOUT1(("Process DiscoverNodeConfig sender:%s recv:%s", DBOOL(IsSender()), DBOOL(IsReceiver())));
+
    SetParInt("CfgController", cmd->GetBool("WithController") ? 1 : 0);
    SetParInt("CfgEventsCombine", cmd->GetInt("EventsCombine", 1));
    SetParStr("CfgNetDevice", cmd->GetStr("NetDevice",""));

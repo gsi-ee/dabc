@@ -138,7 +138,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
          subevptr.shift(sizeof(mbs::EventHeader));
 
          if (!iter.AddSubevent(subevptr)) {
-            EOUT(("Cannot add subevent"));
+            EOUT(("Cannot add subevent size recid = %d size = %u %u", recid, subevptr.fullsize(), fSubEvnts[recid].fullsize()));
             exit(1);
          }
       }

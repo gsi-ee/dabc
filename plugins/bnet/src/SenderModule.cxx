@@ -30,8 +30,10 @@ bnet::SenderModule::SenderModule(const char* name, WorkerApplication* factory) :
 
    CreateInput("Input", fPool, SenderInQueueSize, sizeof(bnet::EventId));
 
+   DOUT1(("Create Sender with %d outputs", fCfgNumNodes));
+
    for (int n=0;n<fCfgNumNodes;n++)
-     CreateOutput(FORMAT(("Output%d", n)), fPool, SenderQueueSize, sizeof(bnet::SubEventNetHeader));
+      CreateOutput(FORMAT(("Output%d", n)), fPool, SenderQueueSize, sizeof(bnet::SubEventNetHeader));
 
    fCtrlPool = CreatePool(factory->ControlPoolName());
    fCtrlBufSize = factory->ControlBufferSize();
@@ -64,7 +66,7 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
         if (!fRecvNodes.HasNode(node)) {
            dabc::Port* port = Output(node);
            if (port->IsConnected()) {
-              DOUT1(("@@@@@@@ Disconnecting receiever node %d", node));
+              DOUT1(("@@@@@@@ Disconnecting receiver node %d", node));
               port->Disconnect();
            }
         }
@@ -145,7 +147,7 @@ void bnet::SenderModule::StandaloneProcessEvent(dabc::ModuleItem* item, uint16_t
       }
 
       if (buf->GetTypeId() == dabc::mbt_EOL) {
-         DOUT1(("Sender findes EOL in the input, broadcast to all receivers"));
+         DOUT1(("Sender finds EOL in the input, broadcast to all receivers"));
 
          for (unsigned n=0;n<fRecvNodes.size();n++) {
             dabc::Port* port = Output(fRecvNodes[n]);
@@ -186,7 +188,7 @@ void bnet::SenderModule::StandaloneProcessEvent(dabc::ModuleItem* item, uint16_t
       int tgtnode = 0;
 
       if (fRecvNodes.size()==0)
-         EOUT(("Recieve nodes mask is not specified"));
+         EOUT(("Receive nodes mask is not specified"));
       else
         tgtnode = fRecvNodes[evid % fRecvNodes.size()];
 

@@ -312,6 +312,7 @@ dabc::Manager::~Manager()
 
    if (fInstance==this) {
       DOUT0(("Real EXIT"));
+      dabc::Logger::Instance()->LogFile(0);
       fInstance = 0;
    }
 }

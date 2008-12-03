@@ -95,7 +95,7 @@ bnet::ClusterApplication::ClusterApplication(const char* name) :
    CreateParInt("CtrlPoolSize",      2*0x100000);
    CreateParInt("TransportBuffer",       8*1024);
 
-   DOUT1(("Net device = %s",NetDevice().c_str()));
+   DOUT1(("Net device = %s numnodes = %d",NetDevice().c_str(), CfgNumNodes()));
 
    // SetPars(false, 2*1024, 128*1024, 16);
 }
@@ -171,7 +171,7 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
    DOUT3(("~~~~~~~~~~~~~~~~~~~~ Process command %s", cmd->GetName()));
 
    if (cmd->IsName(DiscoverCmdName)) {
-      // first, try to strart discover, if required
+      // first, try to start discover, if required
       if (StartDiscoverConfig(cmd)) cmd_res = cmd_postponed;
    } else
    if (cmd->IsName("ConnectModules")) {
@@ -294,9 +294,14 @@ bool bnet::ClusterApplication::StartClusterSMCommand(dabc::Command* mastercmd)
    const char* smcmdname = mastercmd->GetStr("CmdName");
    int selectid = mastercmd->GetInt("NodeId", -1);
 
+   DOUT1(("StartClusterSMCommand cmd:%s selected:%d", smcmdname, selectid));
+
    dabc::CommandsSet* set = 0;
 
    for (unsigned node = 0; node < fNodeNames.size(); node++) {
+
+      DOUT1(("Node %u mask %d", node, fNodeMask[node]));
+
       if (fNodeMask[node]==0) continue;
 
       if ((selectid>=0) && (node != (unsigned) selectid)) continue;
@@ -466,7 +471,7 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
 
 bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
 {
-   DOUT2((" StartModulesConnect via BnetDev of class %s", NetDevice().c_str()));
+   DOUT1((" StartModulesConnect via BnetDev of class %s", NetDevice().c_str()));
 
    dabc::CommandsSet* set = 0;
 
@@ -501,10 +506,10 @@ bool bnet::ClusterApplication::StartModulesConnect(dabc::Command* mastercmd)
          dabc::Command* cmd =
              new dabc::CmdConnectPorts(port1name.c_str(),
                                        port2name.c_str(),
-                                       "BnetDev", "BnetTransport");
+                                      "BnetDev", "BnetTransport");
          cmd->SetBool(dabc::xmlUseAcknowledge, BnetUseAcknowledge);
 
-         DOUT3(( "DoConnection %d -> %d ", nsender, nreceiver));
+         DOUT1(( "DoConnection %d -> %d ", nsender, nreceiver));
 
          if (set==0) set = new dabc::CommandsSet(mastercmd);
 
@@ -549,9 +554,13 @@ bool bnet::ClusterApplication::ExecuteClusterSMCommand(const char* smcmdname)
 bool bnet::ClusterApplication::ActualTransition(const char* state_trans_name)
 {
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoConfigure)==0) {
+      DOUT1(("Start discover"));
       if (!Execute(DiscoverCmdName)) return false;
+      DOUT1(("Start create app modules"));
       if (!Execute("CreateAppModules")) return false;
+      DOUT1(("Create memory pools"));
       if (!dabc::mgr()->CreateMemoryPools()) return false;
+      DOUT1(("Execute SM command %s", state_trans_name));
       if (!ExecuteClusterSMCommand(state_trans_name)) return false;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoEnable)==0) {

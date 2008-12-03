@@ -367,7 +367,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
       maxlevel++;
    }
 
-   DOUT5(("Configuration::Find object %s lvl = %d  attr = %s",
+   DOUT3(("Configuration::Find object %s lvl = %d  attr = %s",
           obj->GetFullName().c_str(), maxlevel, (findattr ? findattr : "---")));
 
    if (prnt==0) return 0;
@@ -393,7 +393,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
          if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
             const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();
             if (res==0) res = "";
-            DOUT5(("Exact found %s res = %s", obj->GetFullName().c_str(), res));
+            DOUT1(("Exact found %s res = %s", obj->GetFullName().c_str(), res));
             return res;
          }
    }
@@ -402,7 +402,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
 
    do {
 
-      DOUT5(("Start search with maxlevel = %d", maxlevel));
+      DOUT3(("Start search with maxlevel = %d", maxlevel));
 
       fCurrItem = Dflts();
       fCurrChld = 0;
@@ -412,20 +412,20 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
          prnt = GetObjParent(obj, level);
          if (prnt == 0) return 0;
 
-         DOUT5(("Search parent %s", prnt->GetName()));
+         DOUT3(("Search parent %s", prnt->GetName()));
 
          if (prnt->Find(*this)) {
             if (level--==0)
                if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
                   const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();
                   if (res==0) res = "";
-                  DOUT5(("Found object %s res = %s", obj->GetFullName().c_str(), res));
+                  DOUT3(("Found object %s res = %s", obj->GetFullName().c_str(), res));
                   return res;
                }
          } else
          if (fCurrChld == 0) {
             level++;
-            if (level >= maxlevel) break;
+            if (level > maxlevel) break;
             fCurrChld = fCurrItem;
             fCurrItem = fXml.GetParent(fCurrItem);
          }
@@ -436,7 +436,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
       while (maxlevel > 0) {
          prnt = GetObjParent(obj, maxlevel);
          if (prnt->UseMasterClassName()) {
-            DOUT5(("Try with master %s", prnt->GetName()));
+            DOUT3(("Try with master %s", prnt->GetName()));
             break;
          }
          maxlevel--;

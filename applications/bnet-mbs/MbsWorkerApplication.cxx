@@ -13,6 +13,8 @@
 bnet::MbsWorkerApplication::MbsWorkerApplication(const char* name) :
    WorkerApplication(name)
 {
+/*
+
    bool is_all_to_all = bnet::NetBidirectional;
    int CombinerModus = 0;
    int NumReadouts = 4;
@@ -23,6 +25,7 @@ bnet::MbsWorkerApplication::MbsWorkerApplication(const char* name) :
 //      SetMbsTransportPars();
 //      SetMbsGeneratorsPars();
       SetMbsFilePars("/tmp/genmbs");
+*/
 }
 
 
