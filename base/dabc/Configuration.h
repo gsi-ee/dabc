@@ -68,11 +68,10 @@ namespace dabc {
          bool StoreObject(const char* fname, Basic* obj);
 
          virtual bool FindItem(const char* name);
-         virtual const char* GetItemValue();
-         virtual const char* GetAttrValue(const char* name);
          virtual bool CheckAttr(const char* name, const char* value);
 
          virtual const char* Find(Basic* obj, const char* findattr = 0);
+         virtual const char* GetAttrValue(const char* name);
    };
 
 

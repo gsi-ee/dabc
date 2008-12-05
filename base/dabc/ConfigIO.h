@@ -17,11 +17,10 @@ namespace dabc {
           virtual bool CreateIntAttr(const char* name, int value);
 
           virtual bool FindItem(const char* name) = 0;
-          virtual const char* GetItemValue() = 0;
-          virtual const char* GetAttrValue(const char* name) = 0;
           virtual bool CheckAttr(const char* name, const char* value) = 0;
 
           virtual const char* Find(Basic* obj, const char* findattr = 0) = 0;
+          virtual const char* GetAttrValue(const char* name) = 0;
    };
 
 }

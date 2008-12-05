@@ -14,6 +14,7 @@ namespace dabc {
    extern const char* xmlApplication;
    extern const char* xmlAppDfltName;
    extern const char* xmlDefualtsNode;
+   extern const char* xmlVariablesNode;
    extern const char* xmlNameAttr;
    extern const char* xmlClassAttr;
    extern const char* xmlValueAttr;
@@ -59,6 +60,8 @@ namespace dabc {
          XMLDocPointer_t   fDoc;
          int               fVersion;  // -1 - error, 0 - xdaq, 1 and more - dabc
          ConfigBase       *fPrnt;  // parent configuration with defaults for some variables
+         XMLNodePointer_t  fDflts;
+         XMLNodePointer_t  fVariables;
 
          // following variables work as 'environment'
          std::string       envDABCSYS;
@@ -69,6 +72,7 @@ namespace dabc {
          std::string       envContext;         // context name
 
          XMLNodePointer_t Dflts();
+         XMLNodePointer_t Variables();
 
          bool NodeMaskMatch(XMLNodePointer_t node, XMLNodePointer_t mask);
 
@@ -109,6 +113,8 @@ namespace dabc {
          bool IsNodeName(XMLNodePointer_t node, const char* name);
          const char* GetAttr(XMLNodePointer_t node, const char* attr, const char* defvalue = 0);
          int  GetIntAttr(XMLNodePointer_t node, const char* attr, int defvalue = 0);
+
+         const char* GetNodeValue(XMLNodePointer_t node);
          XMLNodePointer_t FindChild(XMLNodePointer_t node, const char* name);
          XMLNodePointer_t FindContext(unsigned id);
 

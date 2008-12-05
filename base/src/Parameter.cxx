@@ -112,9 +112,6 @@ bool dabc::Parameter::Store(ConfigIO &cfg)
 bool dabc::Parameter::Find(ConfigIO &cfg)
 {
    return cfg.FindItem(GetName());
-
-//   if (!cfg.FindItem(GetName())) return false;
-//   return cfg.CheckAttr(xmlValueAttr, 0);
 }
 
 bool dabc::Parameter::Read(ConfigIO &cfg)

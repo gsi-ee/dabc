@@ -166,6 +166,7 @@ namespace dabc {
    const char* xmlApplication      = "Application";
    const char* xmlAppDfltName      = "App";
    const char* xmlDefualtsNode     = "Defaults";
+   const char* xmlVariablesNode    = "Variables";
    const char* xmlNameAttr         = "name";
    const char* xmlClassAttr        = "class";
    const char* xmlValueAttr        = "value";
@@ -212,6 +213,9 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
 
    XMLNodePointer_t rootnode = fXml.DocGetRootElement(fDoc);
 
+   fDflts = 0;
+   fVariables = 0;
+
    if (IsNodeName(rootnode, xmlRootNode)) {
       fVersion = GetIntAttr(rootnode, xmlVersionAttr, 1);
    } else
@@ -228,7 +232,45 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
 dabc::ConfigBase::~ConfigBase()
 {
    fXml.FreeDoc(fDoc);
+   fDoc = 0;
 }
+
+dabc::XMLNodePointer_t dabc::ConfigBase::Dflts()
+{
+   if ((fDoc==0) || (fDflts!=0)) return fDflts;
+
+   fDflts = 0;
+   XMLNodePointer_t rootnode = fXml.DocGetRootElement(fDoc);
+   if (rootnode==0) return 0;
+
+   XMLNodePointer_t node = fXml.GetChild(rootnode);
+   while (node!=0) {
+      if (IsNodeName(node, xmlDefualtsNode)) break;
+      node = fXml.GetNext(node);
+   }
+
+   fDflts = node;
+   return fDflts;
+}
+
+dabc::XMLNodePointer_t dabc::ConfigBase::Variables()
+{
+   if ((fDoc==0) || (fVariables!=0)) return fVariables;
+
+   fVariables = 0;
+   XMLNodePointer_t rootnode = fXml.DocGetRootElement(fDoc);
+   if (rootnode==0) return 0;
+
+   XMLNodePointer_t node = fXml.GetChild(rootnode);
+   while (node!=0) {
+      if (IsNodeName(node, xmlVariablesNode)) break;
+      node = fXml.GetNext(node);
+   }
+
+   fVariables = node;
+   return fVariables;
+}
+
 
 bool dabc::ConfigBase::IsNodeName(XMLNodePointer_t node, const char* name)
 {
@@ -319,24 +361,6 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindItemMatch(XMLNodePointer_t& lastmat
       }
 
       subnode = fXml.GetNext(subnode);
-   }
-
-   return 0;
-}
-
-dabc::XMLNodePointer_t dabc::ConfigBase::Dflts()
-{
-   if (fDoc==0) return 0;
-
-   XMLNodePointer_t rootnode = fXml.DocGetRootElement(fDoc);
-
-   if (rootnode==0) return 0;
-
-   XMLNodePointer_t node = fXml.GetChild(rootnode);
-
-   while (node!=0) {
-      if (IsNodeName(node, xmlDefualtsNode)) return node;
-      node = fXml.GetNext(node);
    }
 
    return 0;
@@ -435,6 +459,14 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
    return 0;
 }
 
+const char* dabc::ConfigBase::GetNodeValue(XMLNodePointer_t node)
+{
+   if (node==0) return 0;
+   const char* value = fXml.GetAttr(node, xmlValueAttr);
+   if (value==0) value = fXml.GetNodeContent(node);
+   return value;
+}
+
 /** Search first entry for item sub1/sub2/sub3 in specified node
  *  First tries full path, than found sub1 and path sub2/sub3
  */
@@ -453,8 +485,7 @@ const char* dabc::ConfigBase::Find1(XMLNodePointer_t node,
       }
       return dflt;
    }
-   const char* cont = fXml.GetNodeContent(res);
-   if (cont==0) cont = fXml.GetAttr(res, xmlValueAttr);
+   const char* cont = GetNodeValue(res);
    return cont ? cont : dflt;
 }
 
@@ -467,8 +498,7 @@ const char* dabc::ConfigBase::FindN(XMLNodePointer_t node,
    XMLNodePointer_t res = FindMatch(prev, node, node, sub1, sub2, sub3);
    prev = res;
    if (res==0) return 0;
-   const char* cont = fXml.GetNodeContent(res);
-   if (cont==0) cont = fXml.GetAttr(res, xmlValueAttr);
+   const char* cont = GetNodeValue(res);
    return cont ? cont : "";
 }
 
@@ -569,6 +599,8 @@ std::string dabc::ConfigBase::ResolveEnv(const char* arg)
 
    std::string name = arg;
 
+   XMLNodePointer_t vars = Variables();
+
    while (name.find("${") != name.npos) {
 
       size_t pos1 = name.find("${");
@@ -592,6 +624,11 @@ std::string dabc::ConfigBase::ResolveEnv(const char* arg)
          if (var==xmlDABCNODEID) value = envDABCNODEID.c_str(); else
          if (var==xmlDABCNUMNODES) value = envDABCNUMNODES.c_str(); else
          if (var==xmlContext) value = envContext.c_str();
+
+         if ((value==0) && (vars!=0)) {
+            XMLNodePointer_t node = FindChild(vars, var.c_str());
+            if (node!=0) value = GetNodeValue(node);
+         }
 
          if (value==0) value = getenv(var.c_str());
 

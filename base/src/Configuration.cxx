@@ -247,19 +247,6 @@ bool dabc::Configuration::ReadPars()
 
    if (IsXDAQ()) return XDAQ_ReadPars();
 
-   /*
-
-   Application* app = mgr()->GetApp();
-   if (app==0) return false;
-
-   dabc::Iterator iter(app->GetTopParsFolder());
-
-   while (iter.next()) {
-      Parameter* par = dynamic_cast<Parameter*> (iter.current());
-      if (par!=0) par->Read(*this);
-   }
-   */
-
    return true;
 }
 
@@ -377,12 +364,6 @@ bool dabc::Configuration::CheckAttr(const char* name, const char* value)
    return res;
 }
 
-
-const char* dabc::Configuration::GetItemValue()
-{
-   return fXml.GetNodeContent(fCurrItem);
-}
-
 const char* dabc::Configuration::GetAttrValue(const char* name)
 {
    return fXml.GetAttr(fCurrItem, name);
@@ -430,7 +411,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
 
       if (level--==0)
          if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
-            const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();
+            const char* res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
             if (res==0) res = "";
             DOUT1(("Exact found %s res = %s", obj->GetFullName().c_str(), res));
             return res;
@@ -456,7 +437,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
          if (prnt->Find(*this)) {
             if (level--==0)
                if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
-                  const char* res = findattr ? GetAttrValue(findattr) : GetItemValue();
+                  const char* res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
                   if (res==0) res = "";
                   DOUT3(("Found object %s res = %s", obj->GetFullName().c_str(), res));
                   return res;
