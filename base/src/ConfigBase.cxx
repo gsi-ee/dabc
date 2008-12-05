@@ -122,8 +122,8 @@ std::string dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int ctrlkind, int 
          res += " -sctrl ";
       else
       if (ctrlkind == kindDim) {
-         const char* dimnode = getenv(xmlDIM_DNS_NODE);
-         if (dimnode==0) {
+         std::string dimnode = GetEnv(xmlDIM_DNS_NODE);
+         if (dimnode.empty()) {
             EOUT(("Cannot identify dim node"));
             return std::string("");
          }
@@ -295,6 +295,7 @@ int dabc::ConfigBase::GetIntAttr(XMLNodePointer_t node, const char* attr, int de
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const char* name)
 {
+   if (node==0) return 0;
    XMLNodePointer_t child = fXml.GetChild(node);
    while (child!=0) {
       if (IsNodeName(child, name)) return child;
@@ -302,7 +303,6 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const 
    }
    return 0;
 }
-
 
 bool dabc::ConfigBase::ProduceClusterFile(const char* fname, int numnodes)
 {
@@ -329,8 +329,6 @@ bool dabc::ConfigBase::ProduceClusterFile(const char* fname, int numnodes)
    XMLNodePointer_t runnode = xml.NewChild(contnode, 0, xmlRunNode);
    xml.NewChild(runnode, 0, xmlSshUser, "linev");
    xml.NewChild(runnode, 0, xmlSshPort, "22");
-
-
 
    XMLDocPointer_t doc = xml.NewDoc();
    xml.DocSetRootElement(doc, rootnode);
@@ -390,51 +388,8 @@ bool dabc::ConfigBase::NodeMaskMatch(XMLNodePointer_t node, XMLNodePointer_t mas
    return true;
 }
 
-dabc::XMLNodePointer_t dabc::ConfigBase::FindNodesMatch(
-        XMLNodePointer_t& lastmatch,
-        XMLNodePointer_t searchfold,
-        XMLNodePointer_t topnode,
-        XMLNodePointer_t node,
-        const char* sub1,
-        const char* sub2,
-        const char* sub3)
-{
-   if (searchfold==0) return 0;
-
-   XMLNodePointer_t subfolder = fXml.GetChild(searchfold);
-
-   XMLNodePointer_t res = 0;
-
-   while (subfolder!=0) {
-      if (NodeMaskMatch(topnode, subfolder)) {
-         if (topnode==node) {
-            res = FindItemMatch(lastmatch, subfolder, sub1, sub2, sub3);
-         } else {
-            XMLNodePointer_t nexttop = node;
-
-            while (fXml.GetParent(nexttop) != topnode) {
-               nexttop = fXml.GetParent(nexttop);
-               if (nexttop==0) {
-                  EOUT(("Internal error !!!!!"));
-                  return 0;
-               }
-            }
-
-            res = FindNodesMatch(lastmatch, subfolder, nexttop, node, sub1, sub2, sub3);
-         }
-
-         if (res!=0) return res;
-      }
-
-      subfolder = fXml.GetNext(subfolder);
-   }
-
-   return 0;
-}
-
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
-                                                   XMLNodePointer_t topnode,
                                                    XMLNodePointer_t node,
                                                    const char* sub1,
                                                    const char* sub2,
@@ -451,55 +406,66 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
    dabc::ConfigBase* cfg = this;
 
    do {
-      nextmatch = cfg->FindNodesMatch(lastmatch, cfg->Dflts(), topnode, node, sub1, sub2, sub3);
-      if (nextmatch!=0) return nextmatch;
+
+      XMLNodePointer_t subfolder = cfg->fXml.GetChild(cfg->Dflts());
+
+      while (subfolder!=0) {
+         if (cfg->NodeMaskMatch(node, subfolder)) {
+
+            nextmatch = cfg->FindItemMatch(lastmatch, subfolder, sub1, sub2, sub3);
+
+            if (nextmatch!=0) return nextmatch;
+         }
+
+         subfolder = cfg->fXml.GetNext(subfolder);
+      }
+
       cfg = cfg->fPrnt;
    } while (cfg!=0);
 
    return 0;
 }
 
-const char* dabc::ConfigBase::GetNodeValue(XMLNodePointer_t node)
+std::string dabc::ConfigBase::GetNodeValue(XMLNodePointer_t node)
 {
-   if (node==0) return 0;
+   if (node==0) return std::string();
    const char* value = fXml.GetAttr(node, xmlValueAttr);
    if (value==0) value = fXml.GetNodeContent(node);
-   return value;
+   return ResolveEnv(value ? value : "");
 }
 
 /** Search first entry for item sub1/sub2/sub3 in specified node
  *  First tries full path, than found sub1 and path sub2/sub3
  */
 
-const char* dabc::ConfigBase::Find1(XMLNodePointer_t node,
-                                    const char* dflt,
+std::string dabc::ConfigBase::Find1(XMLNodePointer_t node,
+                                    const std::string& dflt,
                                     const char* sub1,
                                     const char* sub2,
                                     const char* sub3)
 {
-   XMLNodePointer_t res = FindMatch(0, node, node, sub1, sub2, sub3);
+   XMLNodePointer_t res = FindMatch(0, node, sub1, sub2, sub3);
    if (res==0) {
       if (sub2!=0) {
          XMLNodePointer_t child = FindChild(node, sub1);
-         if (child) return Find1(child, dflt, sub2, sub3, 0);
+         if (child) return Find1(child, dflt, sub2, sub3);
       }
       return dflt;
    }
-   const char* cont = GetNodeValue(res);
-   return cont ? cont : dflt;
+   std::string cont = GetNodeValue(res);
+   return cont.empty() ? dflt : cont;
 }
 
-const char* dabc::ConfigBase::FindN(XMLNodePointer_t node,
+std::string dabc::ConfigBase::FindN(XMLNodePointer_t node,
                                     XMLNodePointer_t& prev,
                                     const char* sub1,
                                     const char* sub2,
                                     const char* sub3)
 {
-   XMLNodePointer_t res = FindMatch(prev, node, node, sub1, sub2, sub3);
+   XMLNodePointer_t res = FindMatch(prev, node, sub1, sub2, sub3);
    prev = res;
-   if (res==0) return 0;
-   const char* cont = GetNodeValue(res);
-   return cont ? cont : "";
+   if (res==0) return std::string();
+   return GetNodeValue(res);
 }
 
 unsigned dabc::ConfigBase::NumNodes()
@@ -529,7 +495,7 @@ unsigned dabc::ConfigBase::NumControlNodes()
    unsigned cnt = 0;
    while (node!=0) {
       if (IsNodeName(node, xmlContext))
-         if (Find1(node, 0, xmlRunNode, xmlUserFunc) == 0) cnt++;
+         if (Find1(node, "", xmlRunNode, xmlUserFunc).empty()) cnt++;
       node = fXml.GetNext(node);
    }
    return cnt;
@@ -547,11 +513,11 @@ unsigned dabc::ConfigBase::ControlSequenceId(unsigned id)
    unsigned ctrlcnt = 0;
    while (node!=0) {
       if (IsNodeName(node, xmlContext)) {
-         const char* func = Find1(node, 0, xmlRunNode, xmlUserFunc);
+         std::string func = Find1(node, "", xmlRunNode, xmlUserFunc);
 
-         if (func == 0) ctrlcnt++;
+         if (func.empty()) ctrlcnt++;
 
-         if (cnt++==id) return (func==0) ? ctrlcnt : 0;
+         if (cnt++==id) return (func.empty()) ? ctrlcnt : 0;
       }
       node = fXml.GetNext(node);
    }
@@ -564,15 +530,16 @@ std::string dabc::ConfigBase::NodeName(unsigned id)
    if (IsXDAQ()) return XDAQ_NodeName(id);
    XMLNodePointer_t contnode = FindContext(id);
    if (contnode == 0) return std::string("");
-   return std::string(Find1(contnode, 0, xmlRunNode, xmlSshHost));
+   return Find1(contnode, "", xmlRunNode, xmlSshHost);
 }
 
 std::string dabc::ConfigBase::ContextName(unsigned id)
 {
    if (IsXDAQ()) return XDAQ_ContextName(id);
    XMLNodePointer_t contnode = FindContext(id);
-   if (contnode == 0) return std::string("");
-   return std::string(fXml.GetAttr(contnode,xmlNameAttr));
+   const char* name = fXml.GetAttr(contnode,xmlNameAttr);
+   if (name == 0) return std::string("");
+   return ResolveEnv(name);
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
@@ -593,9 +560,9 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
 }
 
 
-std::string dabc::ConfigBase::ResolveEnv(const char* arg)
+std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
 {
-   if ((arg==0) || (strlen(arg)==0)) return std::string();
+   if (arg.empty()) return arg;
 
    std::string name = arg;
 
@@ -607,7 +574,7 @@ std::string dabc::ConfigBase::ResolveEnv(const char* arg)
       size_t pos2 = name.find("}");
 
       if ((pos1>pos2) || (pos2==name.npos)) {
-         EOUT(("Wrong variable parenthesis %s", arg));
+         EOUT(("Wrong variable parenthesis %s", arg.c_str()));
          return std::string(arg);
       }
 
@@ -616,26 +583,31 @@ std::string dabc::ConfigBase::ResolveEnv(const char* arg)
       name.erase(pos1, pos2-pos1+1);
 
       if (var.length()>0) {
-         const char* value = 0;
+         std::string value;
 
-         if ((var==xmlDABCSYS) && (envDABCSYS.length()>0)) value = envDABCSYS.c_str(); else
-         if ((var==xmlDABCUSERDIR) && (envDABCUSERDIR.length()>0)) value = envDABCUSERDIR.c_str(); else
-         if (var==xmlDABCWORKDIR) value = envDABCWORKDIR.c_str(); else
-         if (var==xmlDABCNODEID) value = envDABCNODEID.c_str(); else
-         if (var==xmlDABCNUMNODES) value = envDABCNUMNODES.c_str(); else
-         if (var==xmlContext) value = envContext.c_str();
+         XMLNodePointer_t node = FindChild(vars, var.c_str());
+         if (node!=0) value = GetNodeValue(node);
 
-         if ((value==0) && (vars!=0)) {
-            XMLNodePointer_t node = FindChild(vars, var.c_str());
-            if (node!=0) value = GetNodeValue(node);
-         }
+         if (value.empty())
+            if (var==xmlDABCSYS) value = envDABCSYS; else
+            if (var==xmlDABCUSERDIR) value = envDABCUSERDIR; else
+            if (var==xmlDABCWORKDIR) value = envDABCWORKDIR; else
+            if (var==xmlDABCNODEID) value = envDABCNODEID; else
+            if (var==xmlDABCNUMNODES) value = envDABCNUMNODES; else
+            if (var==xmlContext) value = envContext;
 
-         if (value==0) value = getenv(var.c_str());
+         if (value.empty()) value = GetEnv(var.c_str());
 
-         if (value!=0) name.insert(pos1, value);
+         if (!value.empty()) name.insert(pos1, value);
       }
    }
    return name;
+}
+
+std::string dabc::ConfigBase::GetEnv(const char* name)
+{
+   const char* env = getenv(name);
+   return std::string(env ? env : "");
 }
 
 std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* skind, const char* topcfgfile, const char* topworkdir, const char* connstr)
@@ -658,33 +630,40 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
    XMLNodePointer_t contnode = FindContext(id);
    if (contnode == 0) return std::string("");
 
-   const char* hostname = Find1(contnode, 0, xmlRunNode, xmlSshHost);
-   if (hostname==0) hostname = "localhost";
+   envDABCNODEID = dabc::format("%u", id);
+   envDABCNUMNODES = dabc::format("%u", NumNodes());
+   envContext = ContextName(id);
+
+   envDABCSYS = Find1(contnode, "", xmlRunNode, xmlDABCSYS);
+   envDABCUSERDIR = Find1(contnode, "", xmlRunNode, xmlDABCUSERDIR);
+   envDABCWORKDIR = Find1(contnode, "", xmlRunNode, xmlWorkDir);
+
+   std::string hostname = Find1(contnode, "", xmlRunNode, xmlSshHost);
+   if (hostname.empty()) hostname = "localhost";
 //   if (hostname==0) {
 //      EOUT(("%s is not found", xmlSshHost));
 //      return std::string("");
 //   }
 
-   const char* username = Find1(contnode, 0, xmlRunNode, xmlSshUser);
-   const char* portid = Find1(contnode, 0, xmlRunNode, xmlSshPort);
-   const char* timeout = Find1(contnode, 0, xmlRunNode, xmlSshTimeout);
-   const char* initcmd = Find1(contnode, 0, xmlRunNode, xmlSshInit);
-   const char* testcmd = Find1(contnode, 0, xmlRunNode, xmlSshTest);
+   std::string username = Find1(contnode, "", xmlRunNode, xmlSshUser);
+   std::string portid = Find1(contnode, "", xmlRunNode, xmlSshPort);
+   std::string timeout = Find1(contnode, "", xmlRunNode, xmlSshTimeout);
+   std::string initcmd = Find1(contnode, "", xmlRunNode, xmlSshInit);
+   std::string testcmd = Find1(contnode, "", xmlRunNode, xmlSshTest);
 
-   const char* dabcsys = Find1(contnode, 0, xmlRunNode, xmlDABCSYS);
-   const char* userdir = Find1(contnode, 0, xmlRunNode, xmlDABCUSERDIR);
-   const char* debugger = Find1(contnode, 0, xmlRunNode, xmlDebugger);
-   const char* workdir = Find1(contnode, 0, xmlRunNode, xmlWorkDir);
-   const char* logfile = Find1(contnode, 0, xmlRunNode, xmlLogfile);
-   const char* ldpath = Find1(contnode, 0, xmlRunNode, xmlLDPATH);
-   const char* cfgfile = Find1(contnode, 0, xmlRunNode, xmlConfigFile);
-   const char* cfgid = Find1(contnode, 0, xmlRunNode, xmlConfigFileId);
+   std::string debugger = Find1(contnode, "", xmlRunNode, xmlDebugger);
+   std::string logfile = Find1(contnode, "", xmlRunNode, xmlLogfile);
+   std::string ldpath = Find1(contnode, "", xmlRunNode, xmlLDPATH);
+   std::string cfgfile = Find1(contnode, "", xmlRunNode, xmlConfigFile);
+   std::string cfgid = Find1(contnode, "", xmlRunNode, xmlConfigFileId);
 
-   std::string envdabcsys;
-   const char* _env = getenv("DABCSYS");
-   if (_env!=0) envdabcsys = _env;
+   std::string workdir = envDABCWORKDIR;
+   std::string dabcsys = envDABCSYS;
+   std::string userdir = envDABCUSERDIR;
 
-   if ((topcfgfile==0) && (cfgfile==0)) {
+   std::string envdabcsys = GetEnv("DABCSYS");
+
+   if ((topcfgfile==0) && cfgfile.empty()) {
       EOUT(("Config file not defined"));
       return std::string("");
    }
@@ -692,29 +671,23 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
 //  char currdir[1024];
 // if (!getcwd(currdir, sizeof(currdir))) strcpy(currdir,".");
 
-   if (workdir==0) workdir = topworkdir;
+   if (workdir.empty()) workdir = topworkdir;
 
-   envDABCSYS = dabcsys ? dabcsys : "";
-   envDABCUSERDIR = userdir ? userdir : "";
-   envDABCWORKDIR = workdir ? workdir : "";
-   envDABCNODEID = FORMAT(("%u", id));
-   envDABCNUMNODES = FORMAT(("%u", NumNodes()));
-   envContext = ContextName(id);
-   res = "ssh ";
+   res = "ssh -x ";
 
-   if (portid!=0) {
+   if (!portid.empty()) {
       res += "-p ";
       res += portid;
       res += " ";
    }
 
-   if (timeout) {
+   if (!timeout.empty()) {
       res += "-o ConnectTimeout=";
       res += timeout;
       res += " ";
    }
 
-   if (username) {
+   if (!username.empty()) {
       res += username;
       res += "@";
    }
@@ -726,107 +699,102 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
 
 //      res += FORMAT ((" . gsi_environment.sh; echo $HOST - %s; ls /data.local1; exit 243", hostname));
 
-      if (initcmd!=0) res += FORMAT((" %s;", initcmd));
+      if (!initcmd.empty()) res += dabc::format(" %s;", initcmd.c_str());
 
-      if (testcmd!=0) res += FORMAT((" %s;", testcmd));
+      if (!testcmd.empty()) res += dabc::format(" %s;", testcmd.c_str());
 
-      if (dabcsys!=0)
-         res += FORMAT((" if [ ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", dabcsys, dabcsys));
+      if (!dabcsys.empty())
+         res += dabc::format(" if [ ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", dabcsys.c_str(), dabcsys.c_str());
       else
-      if (envdabcsys.length() > 0)
-         res += FORMAT((" if [ z $DABSYS -a ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", envdabcsys.c_str(), envdabcsys.c_str()));
+      if (!envdabcsys.empty())
+         res += dabc::format(" if [ z $DABSYS -a ! -d %s ] ; then echo DABCSYS = %s missed; exit 11; fi; ", envdabcsys.c_str(), envdabcsys.c_str());
       else
          res += " if [ z $DABCSYS ] ; then echo DABCSYS not specified; exit 7; fi;";
 
-      if (workdir!=0) {
-         std::string dir = ResolveEnv(workdir);
-         res += FORMAT((" if [ ! -d %s ] ; then echo workdir = %s missed; exit 12; fi; ", dir.c_str(), dir.c_str()));
-         res += FORMAT((" cd %s;", dir.c_str()));
+      if (!workdir.empty()) {
+         res += dabc::format(" if [ ! -d %s ] ; then echo workdir = %s missed; exit 12; fi; ", workdir.c_str(), workdir.c_str());
+         res += dabc::format(" cd %s;", workdir.c_str());
       }
 
-      if (cfgfile!=0) {
-         std::string f = ResolveEnv(cfgfile);
-         res += FORMAT((" if [ ! -f %s ] ; then echo cfgfile = %s missed; exit 12; fi; ", f.c_str(), f.c_str()));
+      if (!cfgfile.empty()) {
+         res += dabc::format(" if [ ! -f %s ] ; then echo cfgfile = %s missed; exit 12; fi; ", cfgfile.c_str(), cfgfile.c_str());
       } else
-         res += FORMAT((" if [ ! -f %s ] ; then echo maincfgfile = %s missed; exit 12; fi; ", topcfgfile, topcfgfile));
+         res += dabc::format(" if [ ! -f %s ] ; then echo maincfgfile = %s missed; exit 12; fi; ", topcfgfile, topcfgfile);
 
-      res += FORMAT((" echo test on node %s done;", hostname));
+      res += dabc::format(" echo test on node %s done;", hostname.c_str());
 
-//      res += " 'echo Test node ";
-//      res += hostname;
-//      res += "'";
    } else
 
    if (kind == kindStart) {
       // this is main run arguments
 
-      if (initcmd!=0) res += FORMAT((" %s;", initcmd));
+      if (!initcmd.empty()) res += dabc::format(" %s;", initcmd.c_str());
 
       std::string ld;
-      if (ldpath) res = ResolveEnv(ldpath);
-      if (userdir) { if (res.length()>0) res += ":"; res += ResolveEnv(userdir); }
+      if (!ldpath.empty()) ld += ldpath;
+      if (!userdir.empty()) { if (!ld.empty()) ld += ":"; ld += userdir; }
 
-      if (dabcsys!=0) {
-         res += FORMAT((" export DABCSYS=%s;", dabcsys));
+      if (!dabcsys.empty()) {
+         res += dabc::format(" export DABCSYS=%s;", dabcsys.c_str());
          res += " export LD_LIBRARY_PATH=";
-         if (ld.length()>0) { res += ld; res+=":"; }
+         if (!ld.empty()) { res += ld; res += ":"; }
          res += "$DABCSYS/lib:$LD_LIBRARY_PATH;";
       } else
-      if (envdabcsys.length()>0) {
-         res += FORMAT(( " if [ z $DABCSYS -a -d %s ] ; then export DABCSYS=%s;", envdabcsys.c_str(), envdabcsys.c_str()));
+      if (!envdabcsys.empty()) {
+         res += dabc::format( " if [ z $DABCSYS -a -d %s ] ; then export DABCSYS=%s;", envdabcsys.c_str(), envdabcsys.c_str());
          res += " export LD_LIBRARY_PATH=";
-         if (ld.length()>0) { res += ld; res+=":"; }
+         if (!ld.empty()) { res += ld; res += ":"; }
          res += "$DABCSYS/lib:$LD_LIBRARY_PATH; fi;";
       } else
-      if (ld.length()>0) {
+      if (!ld.empty()) {
          res += " if [ z $DABCSYS ] ; then echo DABCSYS not specified; exit 7; fi;";
-         res+=FORMAT((" export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH;", ld.c_str()));
+         res += dabc::format(" export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH;", ld.c_str());
       }
 
-      if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
+      if (!workdir.empty()) res += dabc::format(" cd %s;", ResolveEnv(workdir).c_str());
 
       if ((connstr!=0) && (ControlSequenceId(id)==1) && (ctrlkind != kindDim))
-         res += FORMAT((" rm -f %s;", connstr));
+         res += dabc::format(" rm -f %s;", connstr);
 
-      if (debugger) {
+      if (!debugger.empty()) {
          res += " ";
          res += debugger;
       }
 
       res += " $DABCSYS/bin/dabc_run ";
 
-      if (cfgfile) {
-         res += ResolveEnv(cfgfile);
-         if (cfgid!=0) {
+      if (!cfgfile.empty()) {
+         res += cfgfile;
+         if (!cfgid.empty()) {
             res += " -cfgid ";
             res += cfgid;
          }
       } else {
          res += topcfgfile;
          res += " -cfgid ";
-         res += FORMAT(("%u", id));
+         res += dabc::format("%u", id);
       }
 
-      if (logfile) {
+      if (!logfile.empty()) {
          res += " -logfile ";
-         res += ResolveEnv(logfile);
+         res += logfile;
       }
 
       if (ctrlkind == kindSctrl)
          res += " -sctrl ";
       else
       if (ctrlkind == kindDim) {
-         const char* dimnode = Find1(contnode, 0, xmlRunNode, xmlDIM_DNS_NODE);
-         const char* dimport = Find1(contnode, 0, xmlRunNode, xmlDIM_DNS_PORT);
-         if (dimnode==0)
-            dimnode = getenv(xmlDIM_DNS_NODE);
-         if (dimnode==0) {
+         std::string dimnode = Find1(contnode, "", xmlRunNode, xmlDIM_DNS_NODE);
+         std::string dimport = Find1(contnode, "", xmlRunNode, xmlDIM_DNS_PORT);
+         if (dimnode.empty())
+            dimnode = GetEnv(xmlDIM_DNS_NODE);
+         if (dimnode.empty()) {
             EOUT(("Cannot identify dim node"));
             return std::string("");
          }
          res += " -dim ";
          res += dimnode;
-         if (dimport) {
+         if (!dimport.empty()) {
             res += ":";
             res += dimport;
          }
@@ -836,10 +804,10 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
       unsigned ctrldid = ControlSequenceId(id);
       if (ctrldid>0) ctrldid--;
 
-      res += FORMAT((" -nodeid %u -numnodes %u", ctrldid, NumControlNodes()));
+      res += dabc::format(" -nodeid %u -numnodes %u", ctrldid, NumControlNodes());
 
       if (ctrlkind != kindDim)
-         if (connstr!=0) res += FORMAT((" -conn %s", connstr));
+         if (connstr!=0) res += dabc::format(" -conn %s", connstr);
    } else
    if (kind == kindConn) {
       // this is way to get connection string
@@ -847,8 +815,8 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
          res += " echo No connection string specified; exit 1";
       } else
       if ((ControlSequenceId(id)==1) && (ctrlkind != kindDim)) {
-         if (workdir) res += FORMAT((" cd %s;", ResolveEnv(workdir).c_str()));
-         res += FORMAT((" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr));
+         if (!workdir.empty()) res += dabc::format(" cd %s;", workdir.c_str());
+         res += dabc::format(" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr);
       } else
          res = "";
    } else

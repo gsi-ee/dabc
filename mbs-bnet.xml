@@ -1,32 +1,40 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context name="Gener_lxi009">
+  <Variables>
+     <node0 value="lxg0526"/>
+     <node1 value="lxi009"/>
+     <node2 value="lxi010"/>
+     <node3 value="lxi011"/>
+     <node4 value="lxi012"/>
+     <custport value="16015"/>
+  </Variables>
+  <Context name="Gener_${node1}">
     <Run>
-      <host value="lxi009"/>
+      <host value="${node1}"/>
     </Run>
     <Module name="Generator">
        <FirstProcId value="0"/>
     </Module>
   </Context>
-  <Context name="Gener_lxi010">
+  <Context name="Gener_${node2}">
     <Run>
-      <host value="lxi010"/>
+      <host value="${node2}"/>
     </Run>
     <Module name="Generator">
        <FirstProcId value="2"/>
     </Module>
   </Context>
-  <Context name="Gener_lxi011">
+  <Context name="Gener_${node3}">
     <Run>
-      <host value="lxi011"/>
+      <host value="${node3}"/>
     </Run>
     <Module name="Generator">
        <FirstProcId value="4"/>
     </Module>
   </Context>
-  <Context name="Gener_lxi012">
+  <Context name="Gener_${node4}">
     <Run>
-      <host value="lxi012"/>
+      <host value="${node4}"/>
     </Run>
     <Module name="Generator">
        <FirstProcId value="6"/>
@@ -34,7 +42,7 @@
   </Context>
   <Context name="Controller">
     <Run>
-      <host value="lxg0526"/>
+      <host value="${node0}"/>
       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
     </Run>
     <Application class="bnet::Cluster">
@@ -44,34 +52,34 @@
        <NumEventsCombine value="1"/>
     </Application>
   </Context>
-  <Context name="Read_lxi009">
+  <Context name="Read_${node1}">
     <Run>
-      <host value="lxi009"/>
+      <host value="${node1}"/>
     </Run>
     <Application class="bnet::MbsWorker">
        <NumReadouts value="2"/>
-       <Input0Cfg value="lxi011"/>
-       <Input1Cfg value="lxi012"/>
+       <Input0Cfg value="${node3}"/>
+       <Input1Cfg value="${node4}"/>
     </Application>
   </Context>
-  <Context name="Read_lxi011">
+  <Context name="Read_${node3}">
     <Run>
-      <host value="lxi011"/>
+      <host value="${node3}"/>
     </Run>
     <Application class="bnet::MbsWorker">
        <NumReadouts value="2"/>
-       <Input0Cfg value="lxi009"/>
-       <Input1Cfg value="lxi010"/>
+       <Input0Cfg value="${node1}"/>
+       <Input1Cfg value="${node2}"/>
     </Application>
   </Context>
-  <Context name="Build_lxi010">
+  <Context name="Build_${node2}">
     <Run>
-      <host value="lxi010"/>
+      <host value="${node2}"/>
     </Run>
   </Context>
-  <Context name="Build_lxi012">
+  <Context name="Build_${node4}">
     <Run>
-      <host value="lxi012"/>
+      <host value="${node4}"/>
     </Run>
   </Context>
   <Defaults>
@@ -92,7 +100,7 @@
            <SubeventSize value="128"/>
            <Port name="Output">
               <OutputQueueSize value="5"/>
-              <MbsServerPort value="16020"/>
+              <MbsServerPort value="${custport}"/>
            </Port>
         </Module>
      </Context>
@@ -108,7 +116,7 @@
         </Application>
         <Module name="Combiner">
            <Port name="Input*">
-              <MbsServerPort value="16020"/>
+              <MbsServerPort value="${custport}"/>
            </Port>
         </Module>
      </Context>

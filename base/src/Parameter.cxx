@@ -116,14 +116,11 @@ bool dabc::Parameter::Find(ConfigIO &cfg)
 
 bool dabc::Parameter::Read(ConfigIO &cfg)
 {
-   const char* item = cfg.Find(this);
-   if (item==0) return false;
+   std::string value = cfg.Find(this);
+   if (value.empty()) return false;
 
-   const char* value = cfg.GetAttrValue(xmlValueAttr);
-   if (value==0) value = item;
-
-   DOUT2(("Set par %s = %s", GetFullName().c_str(), value));
-   SetValue(value);
+   DOUT2(("Set par %s = %s", GetFullName().c_str(), value.c_str()));
+   SetValue(value.c_str());
 
    return true;
 }
@@ -372,9 +369,9 @@ bool dabc::RateParameter::Store(ConfigIO &cfg)
 
    cfg.CreateItem("Ratemeter");
 
-   cfg.CreateAttr("name", GetName());
+   cfg.CreateAttr(xmlNameAttr, GetName());
 
-   cfg.CreateAttr("value", FORMAT(("%f", fRecord.value)));
+   cfg.CreateAttr(xmlValueAttr, FORMAT(("%f", fRecord.value)));
 
    cfg.CreateAttr("units", fRecord.units);
 
@@ -407,38 +404,39 @@ bool dabc::RateParameter::Find(ConfigIO &cfg)
 bool dabc::RateParameter::Read(ConfigIO &cfg)
 {
    // no any suitable matches found for top node
-   if (cfg.Find(this)==0) return false;
+   std::string v = cfg.Find(this, xmlNameAttr);
+   if (v.empty()) return false;
 
    LockGuard lock(fValueMutex);
 
-   const char* v = cfg.Find(this, "value");
-   if (v) sscanf(v, "%f", &fRecord.value);
+   v = cfg.Find(this, xmlValueAttr);
+   if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.value);
 
-   if (v) DOUT0(("Ratemeter %s value = %s", GetName(), v));
+   if (!v.empty()) DOUT0(("Ratemeter %s value = %s", GetName(), v.c_str()));
 
    v = cfg.Find(this, "units");
-   if (v) strncpy(fRecord.units, v, sizeof(fRecord.units));
+   if (!v.empty()) strncpy(fRecord.units, v.c_str(), sizeof(fRecord.units));
 
    v = cfg.Find(this, "displaymode");
-   if (v) _SetDisplayMode(v);
+   if (!v.empty()) _SetDisplayMode(v.c_str());
 
    v = cfg.Find(this, "lower");
-   if (v) sscanf(v, "%f", &fRecord.lower);
+   if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.lower);
 
    v = cfg.Find(this, "upper");
-   if (v) sscanf(v, "%f", &fRecord.upper);
+   if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.upper);
 
    v = cfg.Find(this, "color");
-   if (v) strncpy(fRecord.color, v, sizeof(fRecord.color));
+   if (!v.empty()) strncpy(fRecord.color, v.c_str(), sizeof(fRecord.color));
 
    v = cfg.Find(this, "alarmlower");
-   if (v) sscanf(v, "%f", &fRecord.alarmlower);
+   if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.alarmlower);
 
    v = cfg.Find(this, "alarmupper");
-   if (v) sscanf(v, "%f", &fRecord.alarmupper);
+   if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.alarmupper);
 
    v = cfg.Find(this, "alarmcolor");
-   if (v) strncpy(fRecord.alarmcolor, v, sizeof(fRecord.alarmcolor));
+   if (!v.empty()) strncpy(fRecord.alarmcolor, v.c_str(), sizeof(fRecord.alarmcolor));
 
    return true;
 }

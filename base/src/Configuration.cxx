@@ -117,22 +117,19 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
 
    if (fSelected==0) return false;
 
-   const char* val = getenv(xmlDABCSYS);
-   if (val!=0) envDABCSYS = val;
+   envDABCNODEID = dabc::format("%u", nodeid);
+   envDABCNUMNODES = dabc::format("%u", numnodes);
 
-   val = 0;
-   if (IsNative()) val = Find1(fSelected, 0, xmlRunNode, xmlDABCUSERDIR);
-   if (val==0) val = getenv(xmlDABCUSERDIR);
-   if (val!=0) envDABCUSERDIR = val;
+   envDABCSYS = GetEnv(xmlDABCSYS);
+
+   if (IsNative()) envDABCUSERDIR = Find1(fSelected, "", xmlRunNode, xmlDABCUSERDIR);
+   if (envDABCUSERDIR.empty()) envDABCUSERDIR = GetEnv(xmlDABCUSERDIR);
 
    char sbuf[1000];
    if (getcwd(sbuf, sizeof(sbuf)))
       envDABCWORKDIR = sbuf;
    else
       envDABCWORKDIR = ".";
-
-   envDABCNODEID = FORMAT(("%u", nodeid));
-   envDABCNUMNODES = FORMAT(("%u", numnodes));
 
    const char* mgrname = 0;
 
@@ -145,7 +142,7 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
 
    if (mgrname==0) mgrname = "dabc";
 
-   fMgrName     = mgrname;
+   fMgrName     = ResolveEnv(mgrname);
    fMgrNodeId   = nodeid;
    fMgrNumNodes = numnodes;
 
@@ -160,18 +157,17 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    }
 
    if (IsNative()) {
-      val = Find1(fSelected, 0, xmlRunNode, xmlDebuglevel);
-      if (val) dabc::SetDebugLevel(atoi(val));
-      val = Find1(fSelected, 0, xmlRunNode, xmlLoglevel);
-      if (val) dabc::SetFileLevel(atoi(val));
+      std::string val = Find1(fSelected, "", xmlRunNode, xmlDebuglevel);
+      if (!val.empty()) dabc::SetDebugLevel(atoi(val.c_str()));
+      val = Find1(fSelected, "", xmlRunNode, xmlLoglevel);
+      if (!val.empty()) dabc::SetFileLevel(atoi(val.c_str()));
    }
 
    std::string log;
 
    if (logfile!=0) log = logfile; else
    if (IsNative()) {
-      logfile = Find1(fSelected, 0, xmlRunNode, xmlLogfile);
-      if (logfile!=0) log = ResolveEnv(logfile);
+      log = Find1(fSelected, "", xmlRunNode, xmlLogfile);
    } else {
       log = fMgrName;
       log += ".log";
@@ -179,7 +175,6 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
 
    if (log.length()>0)
       dabc::Logger::Instance()->LogFile(log.c_str());
-
 
    if (dimnode==0) dimnode = getenv(xmlDIM_DNS_NODE);
 
@@ -201,9 +196,7 @@ std::string dabc::Configuration::StartFuncName()
 {
    if (IsXDAQ() || (fSelected==0)) return std::string("");
 
-   const char* val = Find1(fSelected, 0, xmlRunNode, xmlUserFunc);
-
-   return std::string(val ? val : "");
+   return Find1(fSelected, "", xmlRunNode, xmlUserFunc);
 }
 
 const char* dabc::Configuration::ConetextAppClass()
@@ -218,7 +211,7 @@ const char* dabc::Configuration::ConetextAppClass()
    }
 
    if (node==0)
-      node = FindMatch(0, fSelected, fSelected, xmlApplication);
+      node = FindMatch(0, fSelected, xmlApplication);
 
    return fXml.GetAttr(node, xmlClassAttr);
 }
@@ -230,13 +223,16 @@ bool dabc::Configuration::LoadLibs(const char* startfunc)
 
     if (IsXDAQ()) return XDAQ_LoadLibs();
 
-    const char* libname = 0;
+    std::string libname;
     XMLNodePointer_t last = 0;
 
-    while ((libname = FindN(fSelected, last, xmlRunNode, xmlUserLib))!=0) {
-       DOUT1(("Find library %s in config", libname));
+    do {
+       libname = FindN(fSelected, last, xmlRunNode, xmlUserLib);
+       if (libname.empty()) break;
+       DOUT1(("Find library %s in config", libname.c_str()));
        dabc::Manager::LoadLibrary(ResolveEnv(libname).c_str(), startfunc);
-    }
+
+    } while (true);
 
     return true;
 }
@@ -347,12 +343,14 @@ bool dabc::Configuration::CheckAttr(const char* name, const char* value)
    else {
       const char* attr = fXml.GetAttr(fCurrItem, name);
 
+      std::string sattr = attr ? ResolveEnv(attr) : std::string("");
+
       if (fCurrStrict)
-         res = attr == 0 ? false : strcmp(attr, value) == 0;
+         res = sattr.empty() ? false : (sattr == value);
       else
-      if (attr!=0) {
-         res = strcmp(attr, value) == 0;
-         if (!res) res = fnmatch(attr, value, FNM_NOESCAPE) == 0;
+      if (!sattr.empty()) {
+         res = (sattr == value);
+         if (!res) res = fnmatch(sattr.c_str(), value, FNM_NOESCAPE) == 0;
       }
    }
 
@@ -364,9 +362,11 @@ bool dabc::Configuration::CheckAttr(const char* name, const char* value)
    return res;
 }
 
-const char* dabc::Configuration::GetAttrValue(const char* name)
+std::string dabc::Configuration::GetAttrValue(const char* name)
 {
-   return fXml.GetAttr(fCurrItem, name);
+   const char* res = fXml.GetAttr(fCurrItem, name);
+   if (res==0) return std::string();
+   return ResolveEnv(res);
 }
 
 dabc::Basic* dabc::Configuration::GetObjParent(Basic* obj, int lvl)
@@ -375,10 +375,9 @@ dabc::Basic* dabc::Configuration::GetObjParent(Basic* obj, int lvl)
    return obj;
 }
 
-const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
+std::string dabc::Configuration::Find(Basic* obj, const char* findattr)
 {
-   if (obj==0) return 0;
-
+   if (obj==0) return std::string();
 
    int maxlevel = 0;
    Basic* prnt = 0;
@@ -390,7 +389,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
    DOUT3(("Configuration::Find object %s lvl = %d  attr = %s",
           obj->GetFullName().c_str(), maxlevel, (findattr ? findattr : "---")));
 
-   if (prnt==0) return 0;
+   if (prnt==0) return std::string();
 
    // first, try strict syntax
    fCurrStrict = true;
@@ -400,7 +399,7 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
 
    while (level>=0) {
       prnt = GetObjParent(obj, level);
-      if (prnt==0) return 0;
+      if (prnt==0) return std::string();
 
       // search on same level several items - it may match attributes only with second or third
       do {
@@ -411,9 +410,8 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
 
       if (level--==0)
          if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
-            const char* res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
-            if (res==0) res = "";
-            DOUT1(("Exact found %s res = %s", obj->GetFullName().c_str(), res));
+            std::string res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
+            DOUT1(("Exact found %s res = %s", obj->GetFullName().c_str(), res.c_str()));
             return res;
          }
    }
@@ -430,16 +428,15 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
       level = maxlevel;
       while (level >= 0) {
          prnt = GetObjParent(obj, level);
-         if (prnt == 0) return 0;
+         if (prnt == 0) return std::string();
 
          DOUT3(("Search parent %s", prnt->GetName()));
 
          if (prnt->Find(*this)) {
             if (level--==0)
                if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
-                  const char* res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
-                  if (res==0) res = "";
-                  DOUT3(("Found object %s res = %s", obj->GetFullName().c_str(), res));
+                  std::string res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
+                  DOUT3(("Found object %s res = %s", obj->GetFullName().c_str(), res.c_str()));
                   return res;
                }
          } else
@@ -464,5 +461,5 @@ const char* dabc::Configuration::Find(Basic* obj, const char* findattr)
 
    } while (maxlevel>0);
 
-   return 0;
+   return std::string();
 }
