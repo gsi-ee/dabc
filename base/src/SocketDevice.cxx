@@ -13,8 +13,6 @@
 #define ProtocolMsgSize 100
 #define ProtocolCmdHeader "Command"
 
-const char* dabc::typeSocketDevice = "dabc::SocketDevice";
-
 namespace dabc {
 
    class SocketProtocolProcessor;

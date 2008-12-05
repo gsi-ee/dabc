@@ -11,9 +11,9 @@ namespace bnet {
 
          virtual bool CreateReadout(const char* portname, int portnumber);
 
-         virtual dabc::Module* CreateCombiner(const char* name);
-         virtual dabc::Module* CreateBuilder(const char* name);
-         virtual dabc::Module* CreateFilter(const char* name);
+         virtual bool CreateCombiner(const char* name);
+         virtual bool CreateBuilder(const char* name);
+         virtual bool CreateFilter(const char* name);
 
          virtual bool CreateStorage(const char* portname);
    };

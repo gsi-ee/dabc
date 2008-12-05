@@ -88,13 +88,13 @@ bnet::ClusterApplication::ClusterApplication() :
    CreateParInt(CfgNumNodes, dabc::mgr()->NumNodes());
    CreateParInt(CfgNodeId, dabc::mgr()->NodeId());
 
-   CreateParStr("NetDevice", "dabc::SocketDevice");
-   CreateParInt("IsRunning", 0);
-   CreateParInt("WithController", 0);
-   CreateParInt("NumEventsCombine", 1);
+   CreateParStr(xmlNetDevice, dabc::typeSocketDevice);
+   CreateParBool(xmlWithController, false);
+   CreateParInt(xmlNumEventsCombine, 1);
    CreateParInt(xmlCtrlBuffer,            2*1024);
    CreateParInt(xmlCtrlPoolSize,      2*0x100000);
    CreateParInt(xmlTransportBuffer,       8*1024);
+   CreateParBool(xmlIsRunning, false);
 
    DOUT1(("Net device = %s numnodes = %d",NetDevice().c_str(), GetParInt(CfgNumNodes)));
 }
@@ -186,9 +186,9 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
          if (cmd->GetBool(xmlIsReceiever, false))
             mask = mask | mask_Receiever;
 
-         const char* recvmask = cmd->GetPar("RecvMask");
+         const char* recvmask = cmd->GetPar(parRecvMask);
          if (recvmask) fRecvMatrix[nodeid] = recvmask;
-         const char* sendmask = cmd->GetPar("SendMask");
+         const char* sendmask = cmd->GetPar(parSendMask);
          if (sendmask) fSendMatrix[nodeid] = sendmask;
 
          DOUT1(("Discover node: %d mask: %x send:%s recv:%s", nodeid, mask, sendmask, recvmask));
@@ -249,11 +249,11 @@ bool bnet::ClusterApplication::StartDiscoverConfig(dabc::Command* mastercmd)
 
       cmd->SetInt("DestId", nodeid);
 
-      cmd->SetBool("WithController", WithController());
-      cmd->SetInt("EventsCombine", NumEventsCombine());
+      cmd->SetBool(xmlWithController, WithController());
+      cmd->SetInt(xmlNumEventsCombine, GetParInt(xmlNumEventsCombine, 1));
       cmd->SetInt(xmlTransportBuffer, GetParInt(xmlTransportBuffer));
-      cmd->SetInt("ControlBuffer", GetParInt(xmlCtrlBuffer));
-      cmd->SetStr("NetDevice", NetDevice().c_str());
+      cmd->SetInt(xmlCtrlBuffer, GetParInt(xmlCtrlBuffer));
+      cmd->SetStr(xmlNetDevice, NetDevice().c_str());
 
       if (set==0) set = new ClusterDiscoverSet(this, mastercmd);
 
@@ -320,9 +320,9 @@ bool bnet::ClusterApplication::StartConfigureApply(dabc::Command* mastercmd)
       const char* nodename = fNodeNames[node].c_str();
 
       cmd->SetBool(CfgController, WithController());
-      cmd->SetStr("SendMask", send_mask.c_str());
-      cmd->SetStr("RecvMask", recv_mask.c_str());
-      cmd->SetStr("ClusterMgr", dabc::mgr()->GetName());
+      cmd->SetStr(CfgClusterMgr, dabc::mgr()->GetName());
+      cmd->SetStr(parSendMask, send_mask.c_str());
+      cmd->SetStr(parRecvMask, recv_mask.c_str());
 
       if (set==0) set = new dabc::CommandsSet(mastercmd);
 
@@ -333,8 +333,8 @@ bool bnet::ClusterApplication::StartConfigureApply(dabc::Command* mastercmd)
       dabc::Module* m = dabc::mgr()->FindModule("GlobalContr");
       if (m) {
          dabc::Command* cmd = new dabc::Command("Configure");
-         cmd->SetStr("SendMask", send_mask.c_str());
-         cmd->SetStr("RecvMask", recv_mask.c_str());
+         cmd->SetStr(parSendMask, send_mask.c_str());
+         cmd->SetStr(parRecvMask, recv_mask.c_str());
 //         set->Add(dabc::mgr()->LocalCmd(cmd, m));
          if (set==0) set = new dabc::CommandsSet(mastercmd);
          m->Submit(set->Assign(cmd));
@@ -439,7 +439,7 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
         if (nodeid!=dabc::mgr()->NodeId())
            if (NodeCurrentState(nodeid) != dabc::Manager::stReady) isallready = false;
 
-      if (isallready && (fNodeMask.size()> 0) && IsRunning()) {
+      if (isallready && (fNodeMask.size() > 0) && IsRunning()) {
          DOUT1(("All nodes changed their states to Ready, switch cluster itself"));
          dabc::mgr()->InvokeStateTransition(dabc::Manager::stcmdDoStop);
       }
@@ -546,10 +546,10 @@ bool bnet::ClusterApplication::ActualTransition(const char* state_trans_name)
       if (!ExecuteClusterSMCommand(state_trans_name)) return false;
       if (!Execute("BeforeAppModulesStarted", SMCommandTimeout())) return false;
       if (!dabc::mgr()->StartAllModules()) return false;
-      if (!Execute(new dabc::CmdSetParameter("IsRunning", 1))) return false;
+      if (!Execute(new dabc::CmdSetParameter(xmlIsRunning, true))) return false;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoStop)==0) {
-      if (!Execute(new dabc::CmdSetParameter("IsRunning", 0))) return false;
+      if (!Execute(new dabc::CmdSetParameter(xmlIsRunning, false))) return false;
       if (!dabc::mgr()->StopAllModules()) return false;
       if (!Execute("AfterAppModulesStopped", SMCommandTimeout())) return false;
       if (!ExecuteClusterSMCommand(state_trans_name)) return false;

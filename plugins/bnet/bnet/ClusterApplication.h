@@ -3,7 +3,7 @@
 
 #include "dabc/Application.h"
 
-#include "dabc/collections.h"
+#include "bnet/common.h"
 
 #include <vector>
 
@@ -19,10 +19,9 @@ namespace bnet {
 
          virtual bool CreateAppModules();
 
-         std::string NetDevice() const { return GetParStr("NetDevice", "dabc::SocketDevice"); }
-         bool IsRunning() const { return GetParInt("IsRunning") > 0; }
-         bool WithController() const { return GetParInt("WithController", 0) > 0; }
-         int NumEventsCombine() const { return GetParInt("NumEventsCombine", 1); }
+         std::string NetDevice() const { return GetParStr(xmlNetDevice, dabc::typeSocketDevice); }
+         bool IsRunning() const { return GetParBool(xmlIsRunning); }
+         bool WithController() const { return GetParBool(xmlWithController, false); }
 
          virtual int ExecuteCommand(dabc::Command* cmd);
 

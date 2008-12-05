@@ -76,7 +76,7 @@ int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
 
       DOUT3(("Get command Configure"));
 
-      fSendNodes.Reset(cmd->GetStr("SendMask"), fCfgNumNodes);
+      fSendNodes.Reset(cmd->GetStr(parSendMask), fCfgNumNodes);
 
       fInpCounter = fSendNodes.size();
 
@@ -101,7 +101,7 @@ int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
             str += "o";
       }
 
-      cmd->SetStr("SendMask", str.c_str());
+      cmd->SetStr(parSendMask, str.c_str());
    } else
 
       return dabc::ModuleAsync::ExecuteCommand(cmd);

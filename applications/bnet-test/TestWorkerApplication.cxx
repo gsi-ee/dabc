@@ -75,7 +75,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
    } else {
       // create dummy event generator module:
       dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str());
-      dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
+      dabc::mgr()->MakeThreadForModule(m, SenderThreadName);
       modulename += "/Output";
       dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
       fABBActive = false;
@@ -94,25 +94,19 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
    return true;
 }
 
-dabc::Module* bnet::TestWorkerApplication::CreateCombiner(const char* name)
+bool bnet::TestWorkerApplication::CreateCombiner(const char* name)
 {
-   dabc::Module* m = new bnet::TestCombinerModule(name);
-   dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
-   return m;
+   return dabc::mgr()->CreateModule("bnet::TestCombinerModule", name, SenderThreadName);
 }
 
-dabc::Module* bnet::TestWorkerApplication::CreateBuilder(const char* name)
+bool bnet::TestWorkerApplication::CreateBuilder(const char* name)
 {
-   dabc::Module* m = new bnet::TestBuilderModule(name);
-   dabc::mgr()->MakeThreadForModule(m, Thrd2Name().c_str());
-   return m;
+   return dabc::mgr()->CreateModule("bnet::TestBuilderModule", name, ReceiverThreadName);
 }
 
-dabc::Module* bnet::TestWorkerApplication::CreateFilter(const char* name)
+bool bnet::TestWorkerApplication::CreateFilter(const char* name)
 {
-   dabc::Module* m = new bnet::TestFilterModule(name);
-   dabc::mgr()->MakeThreadForModule(m, Thrd2Name().c_str());
-   return m;
+   return dabc::mgr()->CreateModule("bnet::TestFilterModule", name, ReceiverThreadName);
 }
 
 bool bnet::TestWorkerApplication::CreateStorage(const char* portname)

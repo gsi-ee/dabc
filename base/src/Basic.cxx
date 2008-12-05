@@ -26,6 +26,7 @@ namespace dabc {
    const char* xmlTrueValue         = "true";
    const char* xmlFalseValue        = "false";
 
+   const char* typeSocketDevice     = "dabc::SocketDevice";
 }
 
 

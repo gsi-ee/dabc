@@ -32,6 +32,8 @@ namespace dabc {
    extern const char* xmlTrueValue;
    extern const char* xmlFalseValue;
 
+   extern const char* typeSocketDevice;
+
    class Basic {
       friend class Folder;
       friend class Manager;
@@ -85,11 +87,11 @@ namespace dabc {
          void _MakeFullName(std::string &fullname, Basic* upto) const;
 
       private:
-         Mutex*   fMutex;    // direct pointer on main mutex
-         Basic*   fParent;   // parent object
+         Mutex*        fMutex;    // direct pointer on main mutex
+         Basic*        fParent;   // parent object
          std::string   fName;     // object name
-         bool     fCleanup;  // indicates if object should inform manager about its destroyment
-         int      fAppId;    // indicates id of application, to which object belongs to (0 - default application)
+         bool          fCleanup;  // indicates if object should inform manager about its destroyment
+         int           fAppId;    // indicates id of application, to which object belongs to (0 - default application)
 
          static long gNumInstances;
    };

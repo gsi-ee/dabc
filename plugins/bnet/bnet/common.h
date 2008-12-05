@@ -11,6 +11,11 @@ namespace bnet {
 
    extern const char* xmlClusterClass; // preferred net device for building network
 
+   extern const char* xmlIsRunning;
+   extern const char* xmlNetDevice;
+   extern const char* xmlWithController;
+   extern const char* xmlNumEventsCombine;
+
    extern const char* xmlIsGenerator;
    extern const char* xmlIsSender;
    extern const char* xmlIsReceiever;
@@ -19,12 +24,14 @@ namespace bnet {
    extern const char* xmlNumReadouts;
    extern const char* xmlStoragePar;
 
-   extern std::string xmlInputCfg(int n);
-
    extern const char* ReadoutPoolName;
    extern const char* TransportPoolName;
    extern const char* EventPoolName;
    extern const char* ControlPoolName;
+
+   extern const char* SenderThreadName;
+   extern const char* ReceiverThreadName;
+   extern const char* ControlThreadName;
 
    extern const char* xmlReadoutBuffer;
    extern const char* xmlReadoutPoolSize;
@@ -38,6 +45,9 @@ namespace bnet {
    extern const char* parStatus;
    extern const char* parRecvStatus;
    extern const char* parSendStatus;
+   extern const char* parSendMask;
+   extern const char* parRecvMask;
+
 
    // list of configuration parameters in worker application
    extern const char* CfgNodeId;

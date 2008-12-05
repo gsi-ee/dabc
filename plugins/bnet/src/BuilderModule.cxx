@@ -26,7 +26,7 @@ bnet::BuilderModule::BuilderModule(const char* name, dabc::Command* cmd) :
 
    fOutBufferSize = GetCfgInt(xmlEventBuffer, 2048, cmd);
 
-   CreateParStr("SendMask", "xxxx");
+   CreateParStr(parSendMask, "xxxx");
 }
 
 bnet::BuilderModule::~BuilderModule()
@@ -40,7 +40,7 @@ void bnet::BuilderModule::MainLoop()
 {
    DOUT3(("In builder %u buffers collected",  fBuffers.size()));
 
-   fNumSenders = bnet::NodesVector(GetParStr("SendMask")).size();
+   fNumSenders = bnet::NodesVector(GetParStr(parSendMask)).size();
 
    while (TestWorking()) {
 

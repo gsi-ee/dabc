@@ -2,7 +2,13 @@
 
 #include <string.h>
 
-const char* bnet::xmlClusterClass = "bnet::Cluster";
+const char* bnet::xmlClusterClass  = "bnet::Cluster";
+
+const char* bnet::xmlIsRunning     = "IsRunning";
+const char* bnet::xmlNetDevice     = "NetDevice";
+const char* bnet::xmlWithController= "WithController";
+const char* bnet::xmlNumEventsCombine = "NumEventsCombine";
+
 
 const char* bnet::xmlIsGenerator   = "IsGenerator";
 const char* bnet::xmlIsSender      = "IsSender";
@@ -17,6 +23,11 @@ const char* bnet::ReadoutPoolName      = "ReadoutPool";
 const char* bnet::TransportPoolName    = "TransportPool";
 const char* bnet::EventPoolName        = "EventPool";
 const char* bnet::ControlPoolName      = "ControlPool";
+
+const char* bnet::SenderThreadName     = "SenderThrd";
+const char* bnet::ReceiverThreadName   = "ReceiverThrd";
+const char* bnet::ControlThreadName    = "ControlThrd";
+
 
 const char* bnet::xmlReadoutBuffer     = "ReadoutBuffer";
 const char* bnet::xmlReadoutPoolSize   = "ReadoutPoolSize";
@@ -42,10 +53,9 @@ const char* bnet::parStatus            = "Status";
 const char* bnet::parRecvStatus        = "RecvStatus";
 const char* bnet::parSendStatus        = "SendStatus";
 
-std::string bnet::xmlInputCfg(int nr)
-{
-   return dabc::format("Input%dCfg", nr);
-}
+const char* bnet::parSendMask          = "SendMask";
+const char* bnet::parRecvMask          = "RecvMask";
+
 
 void bnet::NodesVector::Reset(std::string mask, int numnodes)
 {

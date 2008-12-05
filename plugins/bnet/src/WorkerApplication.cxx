@@ -8,6 +8,7 @@
 #include "dabc/timing.h"
 #include "dabc/CommandsSet.h"
 
+
 bnet::WorkerApplication::WorkerApplication(const char* classname) :
    dabc::Application(classname)
 {
@@ -18,12 +19,8 @@ bnet::WorkerApplication::WorkerApplication(const char* classname) :
    CreateParInt(xmlCombinerModus, 0);
    CreateParInt(xmlNumReadouts, 0);
    for (int nr=0;nr<NumReadouts();nr++)
-      CreateParStr(FORMAT(("Input%dCfg", nr)), "");
-   CreateParStr("StoragePar", "");
-
-   CreateParStr("Thread1Name", "Thread1");
-   CreateParStr("Thread2Name", "Thread2");
-   CreateParStr("ThreadCtrlName", "ThreadCtrl");
+      CreateParStr(ReadoutParName(nr).c_str(), "");
+   CreateParStr(xmlStoragePar, "");
 
    CreateParInt(xmlReadoutBuffer,          2*1024);
    CreateParInt(xmlReadoutPoolSize,    4*0x100000);
@@ -57,10 +54,17 @@ bnet::WorkerApplication::WorkerApplication(const char* classname) :
    DOUT1(("!!!! Worker plugin created name = %s!!!!", GetName()));
 }
 
+std::string bnet::WorkerApplication::ReadoutParName(int nreadout)
+{
+   std::string name;
+   dabc::formats(name, "Input%dCfg", nreadout);
+   return name;
+}
+
 std::string bnet::WorkerApplication::ReadoutPar(int nreadout) const
 {
    if ((nreadout<0) || (nreadout>=NumReadouts())) return "";
-   return GetParStr(FORMAT(("Input%dCfg", nreadout)));
+   return GetParStr(ReadoutParName(nreadout).c_str());
 }
 
 bool bnet::WorkerApplication::CreateStorage(const char* portname)
@@ -77,11 +81,11 @@ void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 
    DOUT1(("Process DiscoverNodeConfig sender:%s recv:%s", DBOOL(IsSender()), DBOOL(IsReceiver())));
 
-   SetParBool(CfgController, cmd->GetBool("WithController"));
-   SetParInt(CfgEventsCombine, cmd->GetInt("EventsCombine", 1));
-   SetParStr(CfgNetDevice, cmd->GetStr("NetDevice",""));
+   SetParBool(CfgController, cmd->GetBool(xmlWithController));
+   SetParInt(CfgEventsCombine, cmd->GetInt(xmlNumEventsCombine, 1));
+   SetParStr(CfgNetDevice, cmd->GetStr(xmlNetDevice,""));
 
-   SetParInt(xmlCtrlBuffer, cmd->GetInt("ControlBuffer", 1024));
+   SetParInt(xmlCtrlBuffer, cmd->GetInt(xmlCtrlBuffer, 1024));
    SetParInt(xmlTransportBuffer, cmd->GetInt(xmlTransportBuffer, 1024));
 
    cmd->SetBool(xmlIsSender, IsSender());
@@ -91,16 +95,16 @@ void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 
       dabc::Module* m = dabc::mgr()->FindModule("Sender");
       if (m) {
-         std::string res = m->ExecuteStr("GetConfig", "RecvMask", 5);
-         cmd->SetStr("RecvMask", res.c_str());
+         std::string res = m->ExecuteStr("GetConfig", parRecvMask, 5);
+         cmd->SetStr(parRecvMask, res.c_str());
       }
    }
 
    if (IsReceiver()) {
       dabc::Module* m = dabc::mgr()->FindModule("Receiver");
       if (m) {
-         std::string res = m->ExecuteStr("GetConfig", "SendMask", 5);
-         cmd->SetStr("SendMask", res.c_str());
+         std::string res = m->ExecuteStr("GetConfig", parSendMask, 5);
+         cmd->SetStr(parSendMask, res.c_str());
       }
    }
 }
@@ -110,9 +114,9 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
 //   LockUnlockPars(false);
 
    SetParBool(CfgController, cmd->GetBool(CfgController, 0));
-   SetParStr(CfgSendMask, cmd->GetStr("SendMask", "xxxx"));
-   SetParStr(CfgRecvMask, cmd->GetStr("RecvMask", "xxxx"));
-   SetParStr(CfgClusterMgr, cmd->GetStr("ClusterMgr",""));
+   SetParStr(CfgSendMask, cmd->GetStr(parSendMask, "xxxx"));
+   SetParStr(CfgRecvMask, cmd->GetStr(parRecvMask, "xxxx"));
+   SetParStr(CfgClusterMgr, cmd->GetStr(CfgClusterMgr,""));
 
 //   LockUnlockPars(true);
 
@@ -126,7 +130,7 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
       if (m) {
          dabc::Command* cmd = new dabc::Command("Configure");
          cmd->SetBool("Standalone", !GetParBool(CfgController));
-         cmd->SetStr("RecvMask", GetParStr(CfgRecvMask));
+         cmd->SetStr(parRecvMask, GetParStr(CfgRecvMask));
 
          set->Add(dabc::mgr()->LocalCmd(cmd, m));
 //         m->Submit(*set, cmd);
@@ -138,7 +142,7 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
       m = dabc::mgr()->FindModule("Receiver");
       if (m) {
          dabc::Command* cmd = new dabc::Command("Configure");
-         cmd->SetStr("SendMask", GetParStr(CfgSendMask));
+         cmd->SetStr(parSendMask, GetParStr(CfgSendMask));
          set->Add(dabc::mgr()->LocalCmd(cmd, m));
 //         m->Submit(*set, cmd);
       } else
@@ -146,7 +150,7 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
 
       m = dabc::mgr()->FindModule("Builder");
       if (m) {
-         dabc::Command* cmd = new dabc::CmdSetParameter("SendMask", GetParStr(CfgSendMask).c_str());
+         dabc::Command* cmd = new dabc::CmdSetParameter(parSendMask, GetParStr(CfgSendMask).c_str());
          set->Add(dabc::mgr()->LocalCmd(cmd, m));
       } else
          EOUT(("Cannot find builder module"));
@@ -167,7 +171,7 @@ int bnet::WorkerApplication::ExecuteCommand(dabc::Command* cmd)
       DiscoverNodeConfig(cmd);
    } else
    if (cmd->IsName("ApplyConfigNode")) {
-      DOUT3(( "Get reconfigure recvmask = %s", cmd->GetStr("RecvMask")));
+      DOUT3(( "Get reconfigure recvmask = %s", cmd->GetStr(parRecvMask)));
       ApplyNodeConfig(cmd);
       cmd_res = cmd_postponed;
    } else
@@ -244,37 +248,34 @@ bool bnet::WorkerApplication::CreateAppModules()
       dabc::mgr()->ConfigurePool(bnet::ControlPoolName, true);
    }
 
-   dabc::Module* m = 0;
-
    if (IsSender()) {
 
-      m = CreateCombiner("Combiner");
-      if (m==0) {
+      if (!CreateCombiner("Combiner")) {
          EOUT(("Combiner module not created"));
          return false;
       }
 
-      m = new bnet::SenderModule("Sender");
-      dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
+      if (!dabc::mgr()->CreateModule("bnet::SenderModule", "Sender", SenderThreadName)) {
+         EOUT(("Sender module not created"));
+         return false;
+      }
    }
 
    if (IsReceiver()) {
 
-      m = new bnet::ReceiverModule("Receiver");
-      dabc::mgr()->MakeThreadForModule(m, Thrd2Name().c_str());
+      if (!dabc::mgr()->CreateModule("bnet::ReceiverModule", "Receiver", ReceiverThreadName)) {
+         EOUT(("Receiver module not created"));
+         return false;
+      }
 
-      m = CreateBuilder("Builder");
-      if (m==0) {
+      if (!CreateBuilder("Builder")) {
          EOUT(("EventBuilder is not created"));
          return false;
       }
 
-      if (IsFilter()) {
-         m = CreateFilter("Filter");
-         if (m==0) {
-            EOUT(("EventFilter is not created"));
-           return false;
-         }
+      if (IsFilter() && !CreateFilter("Filter")) {
+         EOUT(("EventFilter is not created"));
+         return false;
       }
    }
 

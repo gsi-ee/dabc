@@ -24,7 +24,7 @@ bnet::TestBuilderModule::TestBuilderModule(const char* name, dabc::Command* cmd)
 
    fOutBufferSize = GetCfgInt(xmlEventBuffer, 2048, cmd);
 
-   CreateParStr("SendMask", "xxxx");
+   CreateParStr(parSendMask, "xxxx");
 }
 
 bnet::TestBuilderModule::~TestBuilderModule()
@@ -74,7 +74,7 @@ void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
 void bnet::TestBuilderModule::BeforeModuleStart()
 {
-   fNumSenders = bnet::NodesVector(GetParStr("SendMask")).size();
+   fNumSenders = bnet::NodesVector(GetParStr(parSendMask)).size();
 
 //   DOUT1(("TestBuilderModule::BeforeModuleStart numsend = %d", fNumSenders));
 }

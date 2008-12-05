@@ -14,8 +14,6 @@ namespace dabc {
    class NewConnectRec;
    class SocketProtocolProcessor;
 
-   extern const char* typeSocketDevice;
-
    class SocketDevice : public Device {
 
       friend class SocketProtocolProcessor;

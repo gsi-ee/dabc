@@ -57,7 +57,7 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
       DOUT3(("Get command Configure"));
 
       fStandalone = cmd->GetBool("Standalone");
-      fRecvNodes.Reset(cmd->GetStr("RecvMask"), fCfgNumNodes);
+      fRecvNodes.Reset(cmd->GetStr(parRecvMask), fCfgNumNodes);
 
       for (int node=0;node<fCfgNumNodes;node++)
         if (!fRecvNodes.HasNode(node)) {
@@ -83,7 +83,7 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
          else
             str += "o";
       }
-      cmd->SetStr("RecvMask", str.c_str());
+      cmd->SetStr(parRecvMask, str.c_str());
    } else
       return dabc::ModuleAsync::ExecuteCommand(cmd);
 

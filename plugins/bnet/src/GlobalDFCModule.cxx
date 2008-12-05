@@ -41,8 +41,8 @@ int bnet::GlobalDFCModule::ExecuteCommand(dabc::Command* cmd)
        DOUT3(("Controller Get command Configure"));
 
       // now, create everything that we need
-      fSendNodes.Reset(cmd->GetStr("SendMask"), fCfgNumNodes);
-      fRecvNodes.Reset(cmd->GetStr("RecvMask"), fCfgNumNodes);
+      fSendNodes.Reset(cmd->GetStr(parSendMask), fCfgNumNodes);
+      fRecvNodes.Reset(cmd->GetStr(parRecvMask), fCfgNumNodes);
 
       DOUT1(("Controller Configure done nout = %d", NumOutputs()));
 

@@ -23,21 +23,14 @@ namespace bnet {
          bool  IsSender() const { return GetParBool(xmlIsSender, false); }
          bool  IsReceiver() const { return GetParBool(xmlIsReceiever, false); }
          bool  IsFilter() const { return GetParBool(xmlIsFilter, false); }
-         std::string StoragePar() const { return GetParStr("StoragePar"); }
-
-         // these are parameters which fixed during lifetime of the modules
-         // normally these parameters copied in modules constructor
-         std::string Thrd1Name() const { return GetParStr("Thread1Name", "Thread1"); }
-         std::string Thrd2Name() const { return GetParStr("Thread2Name", "Thread2"); }
-         std::string ThrdCtrlName() const { return GetParStr("ThreadCtrlName", "ThreadCtrl"); }
 
          virtual int ExecuteCommand(dabc::Command* cmd);
 
          virtual bool CreateReadout(const char* portname, int portnumber) { return false; }
 
-         virtual dabc::Module* CreateCombiner(const char* name) { return 0; }
-         virtual dabc::Module* CreateBuilder(const char* name) { return 0; }
-         virtual dabc::Module* CreateFilter(const char* name) { return 0; }
+         virtual bool CreateCombiner(const char* name) { return false; }
+         virtual bool CreateBuilder(const char* name) { return false; }
+         virtual bool CreateFilter(const char* name) { return false; }
 
          virtual bool CreateStorage(const char* portname);
 
@@ -45,6 +38,8 @@ namespace bnet {
          virtual int IsAppModulesConnected();
 
          virtual bool IsModulesRunning();
+
+         static std::string bnet::WorkerApplication::ReadoutParName(int nreadout);
 
       protected:
 

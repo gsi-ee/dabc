@@ -317,7 +317,7 @@ void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
 
    const char* devname = "Test1Dev";
 
-   const char* deviceclass = "dabc::SocketDevice";
+   const char* deviceclass = dabc::typeSocketDevice;
    if (deviceid==2) deviceclass = "verbs::Device";
 
    for (int node = FirstNode; node < m.NumNodes(); node++)

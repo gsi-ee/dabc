@@ -112,7 +112,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
    const char* devname = "MgrDev";
    const char* devclass = "";
 
-   if (deviceid==1) devclass = "dabc::SocketDevice"; else
+   if (deviceid==1) devclass = typeSocketDevice; else
    if (deviceid==2) devclass = "verbs::Device";
 
    Device* dev = 0;
@@ -229,7 +229,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
    const char* devname = "MgrDev";
    const char* devclass = "";
 
-   if (deviceid==1) devclass = "dabc::SocketDevice"; else
+   if (deviceid==1) devclass = typeSocketDevice; else
    if (deviceid==2) devclass = "verbs::Device";
 
    Device* dev = 0;

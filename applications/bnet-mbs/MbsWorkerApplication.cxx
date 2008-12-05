@@ -57,30 +57,24 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
    return true;
 }
 
-dabc::Module* bnet::MbsWorkerApplication::CreateCombiner(const char* name)
+bool bnet::MbsWorkerApplication::CreateCombiner(const char* name)
 {
-   dabc::Module* m = new bnet::MbsCombinerModule(name);
-   dabc::mgr()->MakeThreadForModule(m, name);
-   return m;
+   return dabc::mgr()->CreateModule("bnet::MbsCombinerModule", name);
 }
 
-dabc::Module* bnet::MbsWorkerApplication::CreateBuilder(const char* name)
+bool bnet::MbsWorkerApplication::CreateBuilder(const char* name)
 {
-   dabc::Module* m = new bnet::MbsBuilderModule(name);
-   dabc::mgr()->MakeThreadForModule(m, name);
-   return m;
+   return dabc::mgr()->CreateModule("bnet::MbsBuilderModule", name);
 }
 
-dabc::Module* bnet::MbsWorkerApplication::CreateFilter(const char* name)
+bool bnet::MbsWorkerApplication::CreateFilter(const char* name)
 {
-   dabc::Module* m = new bnet::MbsFilterModule(name);
-   dabc::mgr()->MakeThreadForModule(m, name);
-   return m;
+   return dabc::mgr()->CreateModule("bnet::MbsFilterModule", name);
 }
 
 bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
 {
-   std::string outfile = StoragePar();
+   std::string outfile = GetParStr(xmlStoragePar);
 
    DOUT3(("!!! CreateStorage port:%s par:%s", portname, outfile.c_str()));
 
