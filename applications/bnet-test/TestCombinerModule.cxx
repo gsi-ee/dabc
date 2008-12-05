@@ -8,26 +8,23 @@
 #include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
-#include "bnet/WorkerApplication.h"
-
-bnet::TestCombinerModule::TestCombinerModule(const char* name,
-                                             WorkerApplication* plugin) :
+bnet::TestCombinerModule::TestCombinerModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name),
    fNumReadout(1),
    fModus(0)
 {
-   fModus = plugin->CombinerModus();
-   fNumReadout = plugin->NumReadouts();
-   fOutBufferSize = plugin->TransportBufferSize();
+   fModus = GetCfgInt(xmlCombinerModus, 0, cmd);
+   fNumReadout = GetCfgInt(xmlNumReadouts, 1, cmd);
+   fOutBufferSize = GetCfgInt(xmlTransportBuffer, 1024, cmd);
 
-   fOutPool = CreatePool(plugin->TransportPoolName());
+   fOutPool = CreatePool(bnet::TransportPoolName);
 
-   fInpPool = CreatePool(plugin->ReadoutPoolName());
+   fInpPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd));
 
-   fOutPort = CreateOutput("Output", fOutPool, plugin->CombinerOutQueueSize(), sizeof(bnet::EventId));
+   fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize, sizeof(bnet::EventId));
 
    for (int n=0;n<fNumReadout;n++) {
-      CreateInput(FORMAT(("Input%d", n)), fInpPool, plugin->CombinerInQueueSize());
+      CreateInput(FORMAT(("Input%d", n)), fInpPool, ReadoutQueueSize);
       fBuffers.push_back(0);
    }
 
@@ -95,6 +92,8 @@ void bnet::TestCombinerModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
    dabc::Buffer* buf = fOutBuffer;
    fOutBuffer = 0;
    Output(0)->Send(buf);
+
+   DOUT3(("Combiner produces event %llu", fLastEvent));
 
    fLastInput = 0; // start from the beginning
 }

@@ -13,8 +13,6 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class MbsBuilderModule : public BuilderModule {
       protected:
          struct OutputRec {
@@ -34,7 +32,7 @@ namespace bnet {
          void SendOutputBuffer();
 
       public:
-         MbsBuilderModule(const char* name, WorkerApplication* factory);
+         MbsBuilderModule(const char* name, dabc::Command* cmd = 0);
          virtual ~MbsBuilderModule();
 
          virtual void DoBuildEvent(std::vector<dabc::Buffer*>& bufs);

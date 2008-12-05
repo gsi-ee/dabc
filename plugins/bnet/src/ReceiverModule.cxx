@@ -5,16 +5,12 @@
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
 #include "dabc/Parameter.h"
+#include "dabc/Application.h"
 
-#include "bnet/common.h"
-#include "bnet/WorkerApplication.h"
-
-bnet::ReceiverModule::ReceiverModule(const char* name, WorkerApplication* factory) :
-   dabc::ModuleAsync(name),
+bnet::ReceiverModule::ReceiverModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd),
    fPool(0),
    fRecvRate(),
-   fCfgNumNodes(factory->CfgNumNodes()),
-   fCfgNodeId(factory->CfgNodeId()),
    fSendNodes(),
    fInpCounter(0),
    fEventsPool(),
@@ -25,7 +21,10 @@ bnet::ReceiverModule::ReceiverModule(const char* name, WorkerApplication* factor
    fLastEvents(),
    fPoolTailSending(-1)
 {
-   fPool = CreatePool(factory->TransportPoolName());
+   fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
+   fCfgNodeId = GetCfgInt(CfgNodeId, 0, cmd);
+
+   fPool = CreatePool(bnet::TransportPoolName);
 
    // output is always there
    CreateOutput("Output", fPool, ReceiverOutQueueSize, sizeof(bnet::SubEventNetHeader));

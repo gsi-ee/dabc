@@ -66,9 +66,9 @@ void dabc::CommandClientBase::_Forget(Command* cmd)
 
 bool dabc::CommandClientBase::_CommandReplyed(Command* cmd, bool res)
 {
-   // this method is called when command is replyed
+   // this method is called when command is replied
    // if returned true means we get control over command object
-   // if returned false, object will be finalised
+   // if returned false, object will be finalized
 
    // first, we "forget" command - client has no reply job with it
    _Forget(cmd);

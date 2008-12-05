@@ -6,10 +6,10 @@
                 <workerTid xsi:type="xsd:unsignedInt">42</workerTid>
                 <controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
                 <CfgNodeId.BnetPlugin xsi:type="xsd:integer">READERINSTANCE</CfgNodeId.BnetPlugin>
-                <IsGenerator.BnetPlugin xsi:type="xsd:integer">0</IsGenerator.BnetPlugin>
-                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
-                <IsReceiver.BnetPlugin xsi:type="xsd:integer">0</IsReceiver.BnetPlugin>
-                <IsFilter.BnetPlugin xsi:type="xsd:integer">0</IsFilter.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:string">false</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:string">true</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:string">false</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:string">false</IsFilter.BnetPlugin>
                 <NumReadouts.BnetPlugin xsi:type="xsd:integer">NUMREADOUTS</NumReadouts.BnetPlugin>
                 <Input0Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewTransport; InpName:MBSNODE0; Port:6000; </Input0Cfg.BnetPlugin>
                 <Input1Cfg.BnetPlugin xsi:type="xsd:string">InpType:MbsNewTransport; InpName:MBSNODE1; Port:6000; </Input1Cfg.BnetPlugin>

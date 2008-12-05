@@ -7,13 +7,13 @@
 #include "dabc/Parameter.h"
 
 #include "bnet/common.h"
-#include "bnet/WorkerApplication.h"
 
-bnet::MbsBuilderModule::MbsBuilderModule(const char* name, WorkerApplication* plugin) :
-   BuilderModule(name, plugin),
-   fCfgEventsCombine(plugin->CfgEventsCombine()),
+bnet::MbsBuilderModule::MbsBuilderModule(const char* name, dabc::Command* cmd) :
+   BuilderModule(name, cmd),
    fEvntRate(0)
 {
+   fCfgEventsCombine = GetCfgInt(CfgEventsCombine, 1, cmd);
+
    fOut.buf = 0;
    fOut.ready = false;
 

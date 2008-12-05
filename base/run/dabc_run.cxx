@@ -86,7 +86,7 @@ bool SMChange(const char* smcmdname)
 {
    dabc::CommandClient cli;
 
-   dabc::Command* cmd = new dabc::CommandStateTransition(smcmdname);
+   dabc::Command* cmd = new dabc::CmdStateTransition(smcmdname);
 
    if (!dabc::mgr()->InvokeStateTransition(smcmdname, cli.Assign(cmd))) return false;
 
@@ -159,7 +159,7 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
 
        SMChange(dabc::Manager::stcmdDoStart);
 
-       dabc::ShowLongSleep("Again main loop", 10); //10
+       dabc::ShowLongSleep("Again main loop", 15); //10
 
        cpu.Measure();
 

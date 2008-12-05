@@ -5,14 +5,12 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class LocalDFCModule : public dabc::ModuleAsync {
       protected:
          dabc::PoolHandle*   fPool;
 
       public:
-         LocalDFCModule(const char* name, WorkerApplication* factory);
+         LocalDFCModule(const char* name, dabc::Command* cmd = 0);
    };
 }
 

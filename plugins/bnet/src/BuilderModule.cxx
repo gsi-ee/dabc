@@ -6,25 +6,25 @@
 #include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
-#include "bnet/WorkerApplication.h"
+#include "bnet/common.h"
 
-bnet::BuilderModule::BuilderModule(const char* name, WorkerApplication* factory) :
-   dabc::ModuleSync(name),
+bnet::BuilderModule::BuilderModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleSync(name, cmd),
    fInpPool(0),
    fOutPool(0),
    fNumSenders(1)
 {
    SetSyncCommands(true);
 
-   fOutPool = CreatePool(factory->EventPoolName());
+   fOutPool = CreatePool(bnet::EventPoolName);
 
    CreateOutput("Output", fOutPool, BuilderOutQueueSize);
 
-   fInpPool = CreatePool(factory->TransportPoolName());
+   fInpPool = CreatePool(bnet::TransportPoolName);
 
    CreateInput("Input", fInpPool, BuilderInpQueueSize, sizeof(bnet::SubEventNetHeader));
 
-   fOutBufferSize = factory->EventBufferSize();
+   fOutBufferSize = GetCfgInt(xmlEventBuffer, 2048, cmd);
 
    CreateParStr("SendMask", "xxxx");
 }

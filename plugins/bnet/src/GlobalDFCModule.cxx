@@ -1,24 +1,24 @@
 #include "bnet/GlobalDFCModule.h"
 
-#include "bnet/ClusterApplication.h"
-
 #include "dabc/Port.h"
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"
 
-bnet::GlobalDFCModule::GlobalDFCModule(const char* name, ClusterApplication* plugin) :
-   dabc::ModuleAsync(name),
+bnet::GlobalDFCModule::GlobalDFCModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd),
    fPool(0),
    fMap(),
-   fCfgNumNodes(plugin->CfgNumNodes()),
    fSendNodes(),
    fRecvNodes()
 {
-   fPool = CreatePool(plugin->ControlPoolName());
 
-   fBufferSize = plugin->ControlBufferSize();
+   fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
 
-   CreatePoolUsageParameter("CtrlPoolUsage", 1., plugin->ControlPoolName());
+   fPool = CreatePool(bnet::ControlPoolName);
+
+   fBufferSize = GetCfgInt(xmlCtrlBuffer, 2*1024, cmd);
+
+   CreatePoolUsageParameter("CtrlPoolUsage", 1., bnet::ControlPoolName);
 
    CreateTimer("HeartBeat", 0.1); // every 100 milisec one timer event
 

@@ -17,28 +17,12 @@ namespace bnet {
          ClusterApplication();
          virtual ~ClusterApplication();
 
-         virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
-
          virtual bool CreateAppModules();
 
          std::string NetDevice() const { return GetParStr("NetDevice", "dabc::SocketDevice"); }
          bool IsRunning() const { return GetParInt("IsRunning") > 0; }
          bool WithController() const { return GetParInt("WithController", 0) > 0; }
          int NumEventsCombine() const { return GetParInt("NumEventsCombine", 1); }
-
-         const char* ControlPoolName() const { return "ControlPool"; }
-         uint64_t    ControlBufferSize() const { return GetParInt("CtrlBuffer", 2*1024); }
-         uint64_t    ControlPoolSize() const { return GetParInt("CtrlPoolSize", 4*0x100000); }
-
-         uint64_t    TransportBufferSize() const { return GetParInt("TransportBuffer", 8*1024); }
-
-         int   CfgNumNodes() const { return GetParInt("CfgNumNodes", 1); }
-         int   CfgNodeId() const { return GetParInt("CfgNodeId", 0); }
-
-         void SetPars(bool withcontrol,
-                      int ControlBufferSize,
-                      int TransportBufferSize,
-                      int eventscombine = 1);
 
          virtual int ExecuteCommand(dabc::Command* cmd);
 

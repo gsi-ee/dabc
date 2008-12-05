@@ -10,7 +10,7 @@ dabc::StateMachineModule::StateMachineModule() :
 
 int dabc::StateMachineModule::ExecuteCommand(Command* cmd)
 {
-   if (cmd->IsName(CommandStateTransition::CmdName())) {
+   if (cmd->IsName(CmdStateTransition::CmdName())) {
 
       const char* stcmd = cmd->GetStr("Cmd");
 

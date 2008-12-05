@@ -9,8 +9,8 @@
 #include "mbs/Iterator.h"
 
 
-bnet::MbsFilterModule::MbsFilterModule(const char* name, WorkerApplication* factory) :
-   FilterModule(name, factory)
+bnet::MbsFilterModule::MbsFilterModule(const char* name, dabc::Command* cmd) :
+   FilterModule(name, cmd)
 {
    DOUT5(("Create MbsFilterModule %s", name));
    fTotalCnt = 0;

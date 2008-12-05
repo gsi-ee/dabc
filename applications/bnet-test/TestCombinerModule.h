@@ -9,14 +9,12 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class TestCombinerModule : public dabc::ModuleAsync {
       protected:
          int                      fNumReadout;
          int                      fModus;
-         dabc::PoolHandle*      fInpPool;
-         dabc::PoolHandle*      fOutPool;
+         dabc::PoolHandle*        fInpPool;
+         dabc::PoolHandle*        fOutPool;
          uint64_t                 fOutBufferSize;
          dabc::Port*              fOutPort;
          std::vector<dabc::Buffer*> fBuffers;
@@ -29,7 +27,7 @@ namespace bnet {
          dabc::Buffer* MakeMemCopyBuf(uint64_t& evid);
 
       public:
-         TestCombinerModule(const char* name, WorkerApplication* factory);
+         TestCombinerModule(const char* name, dabc::Command* cmd = 0);
 
          virtual ~TestCombinerModule();
 

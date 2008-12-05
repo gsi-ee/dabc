@@ -5,16 +5,16 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class FilterModule : public dabc::ModuleSync {
       protected:
          dabc::PoolHandle*  fPool;
 
          virtual bool TestBuffer(dabc::Buffer*) { return true; }
 
+         // constructor is hidden while filter module is incomplete
+         FilterModule(const char* name, dabc::Command* cmd);
+
       public:
-         FilterModule(const char* name, WorkerApplication* factory);
 
          virtual void MainLoop();
    };

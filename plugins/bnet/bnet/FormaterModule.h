@@ -5,22 +5,19 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class FormaterModule : public dabc::ModuleSync {
       protected:
-         int                      fNumReadout;
-         int                      fModus;
+         int                    fNumReadouts;
+         int                    fModus;
          dabc::PoolHandle*      fInpPool;
          dabc::PoolHandle*      fOutPool;
-         dabc::Port*              fOutPort;
+         dabc::Port*            fOutPort;
+
+         FormaterModule(const char* name, dabc::Command* cmd = 0);
 
       public:
-         FormaterModule(const char* name, WorkerApplication* factory);
 
-         virtual ~FormaterModule();
-
-         int NumReadouts() const { return fNumReadout; }
+         int NumReadouts() const { return fNumReadouts; }
    };
 }
 

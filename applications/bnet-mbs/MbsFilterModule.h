@@ -5,8 +5,6 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class MbsFilterModule : public FilterModule {
       protected:
          long fTotalCnt;
@@ -14,7 +12,7 @@ namespace bnet {
          virtual bool TestBuffer(dabc::Buffer*);
 
       public:
-         MbsFilterModule(const char* name, WorkerApplication* factory);
+         MbsFilterModule(const char* name, dabc::Command* cmd = 0);
    };
 }
 

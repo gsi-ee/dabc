@@ -9,8 +9,6 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class BuilderModule : public dabc::ModuleSync {
 
       protected:
@@ -21,8 +19,9 @@ namespace bnet {
 
          std::vector<dabc::Buffer*> fBuffers;
 
+         BuilderModule(const char* name, dabc::Command* cmd = 0);
+
       public:
-         BuilderModule(const char* name, WorkerApplication* factory);
          virtual ~BuilderModule();
 
          virtual void MainLoop();

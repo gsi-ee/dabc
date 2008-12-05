@@ -284,11 +284,13 @@ dabc::Manager::~Manager()
 
    HaltManager();
 
-   DOUT5(("~Manager -> CancelCommands()"));
+   DOUT0(("~Manager -> CancelCommands() locked:%s cmds:%u",
+         DBOOL((fCmdsMutex ? fCmdsMutex->IsLocked() : false)),
+         _NumSubmCmds()));
 
    CancelCommands();
 
-   DOUT5(("~Manager -> DeleteChilds()"));
+   DOUT0(("~Manager -> DeleteChilds()"));
 
    DestroyAllPars();
 
@@ -308,13 +310,12 @@ dabc::Manager::~Manager()
 
    delete fMgrMutex; fMgrMutex = 0;
 
-   DOUT3(("Did ~Manager"));
-
    if (fInstance==this) {
       DOUT0(("Real EXIT"));
       dabc::Logger::Instance()->LogFile(0);
       fInstance = 0;
-   }
+   } else
+      EOUT(("What ??? !!!"));
 }
 
 void dabc::Manager::init()
@@ -559,12 +560,7 @@ dabc::Factory* dabc::Manager::FindFactory(const char* name)
 
 dabc::Application* dabc::Manager::GetApp()
 {
-   for (unsigned n = 0; n < NumChilds(); n++) {
-      Application* app = dynamic_cast<Application*>(GetChild(n));
-      if (app) return app;
-   }
-
-   return 0;
+   return dynamic_cast<Application*>(FindChild(xmlAppDfltName));
 }
 
 dabc::MemoryPool* dabc::Manager::FindPool(const char* name)
@@ -784,7 +780,7 @@ int dabc::Manager::PreviewCommand(Command* cmd)
    }
 
    if (cmd_res == cmd_ignore)
-      if (cmd->IsName(CommandSetParameter::CmdName())) {
+      if (cmd->IsName(CmdSetParameter::CmdName())) {
          dabc::Parameter* par = dynamic_cast<dabc::Parameter*>(FindChild(cmd->GetStr("ParName")));
          cmd_res = (par && par->InvokeChange(cmd)) ? cmd_postponed : cmd_ignore;
       }
@@ -1016,7 +1012,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       dabc::MemoryPool* pool = FindPool(cmd->GetPar("PoolName"));
       if (pool) delete pool;
    } else
-   if (cmd->IsName(CommandStateTransition::CmdName())) {
+   if (cmd->IsName(CmdStateTransition::CmdName())) {
       InvokeStateTransition(cmd->GetStr("Cmd"), cmd);
       cmd_res = cmd_postponed;
    } else
@@ -1679,7 +1675,7 @@ bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Com
          return false;
       }
 
-      if (cmd==0) cmd = new CommandStateTransition(state_transition_name);
+      if (cmd==0) cmd = new CmdStateTransition(state_transition_name);
 
       fSMmodule->Submit(cmd);
       DOUT3(("Submit state transition %s", state_transition_name));
@@ -1758,7 +1754,7 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
 
    if (!app->DoStateTransition(stcmd)) return false;
 
-   return Execute(new CommandSetParameter(stParName, TargetStateName(stcmd)));
+   return Execute(new CmdSetParameter(stParName, TargetStateName(stcmd)));
 }
 
 

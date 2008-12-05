@@ -5,8 +5,6 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class GeneratorModule : public dabc::ModuleSync {
       protected:
          dabc::PoolHandle*       fPool;
@@ -14,8 +12,9 @@ namespace bnet {
          int                       fBufferSize;
          uint64_t                  fUniqueId;
 
+         GeneratorModule(const char* name, dabc::Command* cmd = 0);
+
       public:
-         GeneratorModule(const char* name, WorkerApplication* factory);
 
          virtual void MainLoop();
 

@@ -6,21 +6,21 @@
 #include "dabc/Command.h"
 #include "dabc/Port.h"
 
-#include "bnet/WorkerApplication.h"
+// #include "bnet/WorkerApplication.h"
 #include "bnet/common.h"
 
 
-bnet::GeneratorModule::GeneratorModule(const char* name, WorkerApplication* factory) :
-   dabc::ModuleSync(name),
+bnet::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleSync(name, cmd),
    fPool(0),
    fEventCnt(1),
    fUniqueId(0)
 {
    SetSyncCommands(true);
 
-   fPool = CreatePool(factory->ReadoutPoolName());
+   fPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd));
 
-   fBufferSize = factory->ReadoutBufferSize();
+   fBufferSize = GetCfgInt(xmlReadoutBuffer, 1024, cmd);
 
    CreateOutput("Output", fPool, ReadoutQueueSize);
 

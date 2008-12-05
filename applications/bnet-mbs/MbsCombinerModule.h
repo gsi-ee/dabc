@@ -48,8 +48,7 @@ namespace bnet {
          void SkipNotUsedBuffers();
 
       public:
-         MbsCombinerModule(const char* name,
-                           WorkerApplication* factory);
+         MbsCombinerModule(const char* name, dabc::Command* cmd = 0);
 
          virtual ~MbsCombinerModule();
 

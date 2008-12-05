@@ -7,17 +7,18 @@
 #include "dabc/Port.h"
 #include "dabc/Pointer.h"
 
-#include "bnet/WorkerApplication.h"
+#include "bnet/common.h"
 
-bnet::TestGeneratorModule::TestGeneratorModule(const char* name,
-                                               WorkerApplication* factory) :
-   dabc::ModuleAsync(name),
+bnet::TestGeneratorModule::TestGeneratorModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd),
    fPool(0),
    fEventCnt(0)
 {
-   fPool = CreatePool(factory->ReadoutPoolName());
+   DOUT1(("Generator %s: Create pool %s", GetName(), GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str()));
 
-   fBufferSize = factory->ReadoutBufferSize();
+   fPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd));
+
+   fBufferSize = GetCfgInt(xmlReadoutBuffer, 1024, cmd);
 
    CreateOutput("Output", fPool, ReadoutQueueSize);
 
@@ -28,10 +29,12 @@ void bnet::TestGeneratorModule::BeforeModuleStart()
 {
    fUniquieId = GetParInt("UniqueId", 0);
 
-//   DOUT1(("TestGeneratorModule::BeforeModuleStart fUniquieId = %d blocked %s",
-//          fUniquieId, DBOOL(Output(0)->OutputBlocked())));
+//   DOUT1(("TestGeneratorModule::BeforeModuleStart fUniquieId = %d blocked %s size %u",
+//            fUniquieId, DBOOL(Output(0)->OutputBlocked()), Output(0)->OutputQueueCapacity()));
 
-   for (int n=0;n<ReadoutQueueSize;n++)
+    DOUT1(("TestGeneratorModule::BeforeModuleStart %s %p %u", GetName(), Output(0), Output(0)->OutputQueueCapacity()));
+
+   for (unsigned n=0;n<Output(0)->OutputQueueCapacity();n++)
      GeneratePacket();
 }
 
@@ -75,7 +78,7 @@ bool bnet::TestGeneratorModule::GeneratePacket()
    ptr.copyfrom(&fUniquieId, sizeof(fUniquieId));
    ptr+=sizeof(fUniquieId);
 
-//   DOUT1(("Generate packet id %llu of size %d need %d", fUniquieId, buf->GetTotalSize(), fBufferSize));
+   DOUT3(("Generate packet id %llu of size %d need %d", fUniquieId, buf->GetTotalSize(), fBufferSize));
 
    Output(0)->Send(buf);
 

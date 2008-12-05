@@ -9,8 +9,7 @@ namespace dabc {
 
    class ModuleAsync : public Module {
       public:
-         ModuleAsync(const char* name) : Module(name) { }
-         ModuleAsync(Command* cmd) : Module(cmd) { }
+         ModuleAsync(const char* name, Command* cmd = 0) : Module(name, cmd) { }
 
          virtual ~ModuleAsync();
 

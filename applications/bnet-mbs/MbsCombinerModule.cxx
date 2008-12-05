@@ -7,18 +7,17 @@
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
 
-#include "bnet/WorkerApplication.h"
-
-bnet::MbsCombinerModule::MbsCombinerModule(const char* name,
-                                           WorkerApplication* plugin) :
-   FormaterModule(name, plugin),
-   fCfgEventsCombine(plugin->CfgEventsCombine()),
-   fTransportBufferSize(plugin->TransportBufferSize()),
+bnet::MbsCombinerModule::MbsCombinerModule(const char* name, dabc::Command* cmd) :
+   FormaterModule(name, cmd),
    fMinEvId(0),
    fMaxEvId(0),
    fUsedEvents(0),
    fEvntRate(0)
 {
+
+   fCfgEventsCombine = GetCfgInt(CfgEventsCombine, 1, cmd);
+   fTransportBufferSize = GetCfgInt(xmlTransportBuffer, 1024, cmd);
+
    InputRec rec;
 
    for (int n=0;n<NumReadouts();n++) {
@@ -229,6 +228,8 @@ void bnet::MbsCombinerModule::MainLoop()
             continue;
          }
 
+         DOUT1(("Num events in buffer %p size: %u is %u ", buf, buf->GetDataSize(), mbs::ReadIterator::NumEvents(buf)));
+
          if (fRecs[ninp].iter.Reset(buf) && fRecs[ninp].iter.NextEvent()) {
             fRecs[ninp].headbuf = buf;
 
@@ -274,6 +275,7 @@ void bnet::MbsCombinerModule::MainLoop()
          // if no more events in the buffer, release it
          if (!fRecs[mininp].iter.NextEvent()) {
             fRecs[mininp].headbuf = 0;
+            fRecs[mininp].iter.Reset(0);
 
             // we copy all accumulated data to output buffer when input we using is full
             // we cannot wait longer while data from this input will be blocked
@@ -303,6 +305,33 @@ void bnet::MbsCombinerModule::MainLoop()
          int recid = (mineventid - fMinEvId) * NumReadouts() + ninp;
 
          fRecs[ninp].iter.AssignEventPointer(fSubEvnts[recid]);
+
+//         DOUT1(("Assign event pointer recid %d len %u", recid, fSubEvnts[recid].fullsize()));
+         if (fSubEvnts[recid].fullsize() != 296) {
+            EOUT(("Input %d Recid %d Size missmtach %u evid %u", ninp, recid, fSubEvnts[recid].fullsize(), fMinEvId));
+
+            unsigned numevnts = mbs::ReadIterator::NumEvents(fRecs[ninp].headbuf);
+
+            DOUT1(("Error NumEvents %u  datasize: %u ", numevnts, fRecs[ninp].headbuf->GetDataSize()));
+
+            numevnts = mbs::ReadIterator::NumEvents(fRecs[ninp].headbuf);
+
+            DOUT1(("Error NumEvents %u again?", numevnts));
+
+            mbs::ReadIterator iter(fRecs[ninp].headbuf);
+
+            while (iter.NextEvent()) {
+               DOUT1(("Error Event %u size %u", iter.evnt()->EventNumber(), iter.evnt()->FullSize()));
+
+               while (iter.NextSubEvent()) {
+                  uint32_t* rawdata = (uint32_t*) iter.rawdata();
+                  DOUT1(("Subevent crate %u procid %u size %u rawdata0 %u rawdata1 %u",
+                        iter.subevnt()->iSubcrate, iter.subevnt()->iProcId, iter.subevnt()->FullSize(),
+                        rawdata[0], rawdata[1]));
+               }
+            }
+
+         }
 
          if (fRecs[ninp].iter.evnt()->iTrigger==mbs::tt_StopAcq)
             isstopacq = true;

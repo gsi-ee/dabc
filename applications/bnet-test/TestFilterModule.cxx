@@ -6,12 +6,11 @@
 #include "dabc/Port.h"
 
 #include "bnet/common.h"
-#include "bnet/WorkerApplication.h"
 
-bnet::TestFilterModule::TestFilterModule(const char* name, WorkerApplication* factory) :
-   dabc::ModuleAsync(name)
+bnet::TestFilterModule::TestFilterModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd)
 {
-   fPool = CreatePool(factory->EventPoolName());
+   fPool = CreatePool(bnet::EventPoolName);
 
    CreateInput("Input", fPool, FilterInpQueueSize);
 

@@ -44,8 +44,7 @@ namespace dabc {
    class ModuleSync : public Module {
 
       public:
-         ModuleSync(const char* name = "module");
-         ModuleSync(Command* cmd);
+         ModuleSync(const char* name, Command* cmd = 0);
 
          virtual ~ModuleSync();
 

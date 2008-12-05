@@ -439,7 +439,7 @@ bool dabc::WorkingProcessor::InvokeParChange(Parameter* par, const char* value, 
    DOUT5(("Invoke par change %s topfold:%s", fullname.c_str(), GetTopParsFolder()->GetName()));
 
    if (cmd==0)
-      cmd = new CommandSetParameter(fullname.c_str(), value);
+      cmd = new CmdSetParameter(fullname.c_str(), value);
    else {
       cmd->SetStr("ParName", fullname);
       if (value!=0) cmd->SetStr("ParValue", value);
@@ -455,7 +455,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 {
    int cmd_res = cmd_ignore;
 
-   if (cmd->IsName(CommandSetParameter::CmdName())) {
+   if (cmd->IsName(CmdSetParameter::CmdName())) {
       Parameter* par = FindPar(cmd->GetPar("ParName"));
 
       if (par==0) {

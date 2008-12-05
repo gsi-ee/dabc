@@ -14,19 +14,6 @@
 bnet::MbsWorkerApplication::MbsWorkerApplication() :
    WorkerApplication(xmlMbsWorkerClass)
 {
-/*
-
-   bool is_all_to_all = bnet::NetBidirectional;
-   int CombinerModus = 0;
-   int NumReadouts = 4;
-
-   SetPars(is_all_to_all, NumReadouts, CombinerModus);
-
-   if (bnet::UseFileSource)
-//      SetMbsTransportPars();
-//      SetMbsGeneratorsPars();
-      SetMbsFilePars("/tmp/genmbs");
-*/
 }
 
 
@@ -40,7 +27,7 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
       dabc::formats(modulename,"Readout%d", portnumber);
 
-      dabc::Module* m = new bnet::MbsGeneratorModule(modulename.c_str(), this);
+      dabc::Module* m = new bnet::MbsGeneratorModule(modulename.c_str());
       dabc::mgr()->MakeThreadForModule(m, modulename.c_str());
 
       dabc::mgr()->CreateMemoryPools();
@@ -72,21 +59,21 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
 dabc::Module* bnet::MbsWorkerApplication::CreateCombiner(const char* name)
 {
-   dabc::Module* m = new bnet::MbsCombinerModule(name, this);
+   dabc::Module* m = new bnet::MbsCombinerModule(name);
    dabc::mgr()->MakeThreadForModule(m, name);
    return m;
 }
 
 dabc::Module* bnet::MbsWorkerApplication::CreateBuilder(const char* name)
 {
-   dabc::Module* m = new bnet::MbsBuilderModule(name, this);
+   dabc::Module* m = new bnet::MbsBuilderModule(name);
    dabc::mgr()->MakeThreadForModule(m, name);
    return m;
 }
 
 dabc::Module* bnet::MbsWorkerApplication::CreateFilter(const char* name)
 {
-   dabc::Module* m = new bnet::MbsFilterModule(name, this);
+   dabc::Module* m = new bnet::MbsFilterModule(name);
    dabc::mgr()->MakeThreadForModule(m, name);
    return m;
 }
@@ -108,95 +95,4 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
    DOUT1(("Create output for port %s res = %s", portname, DBOOL(res)));
 
    return res;
-}
-
-void bnet::MbsWorkerApplication::SetMbsFilePars(const char* filebase)
-{
-   SetParInt("IsGenerator", 0);
-
-   SetParInt("IsFilter", 0);
-
-   int nodeid = dabc::mgr()->NodeId();
-
-   if (IsReceiver()) {
-      int recvid = 0;
-
-      if (bnet::NetBidirectional)
-         recvid = nodeid - 1;
-      else
-         recvid = (nodeid-1) / 2;
-
-      SetParStr("StoragePar", FORMAT(("%s_out_%d.lmd;", filebase, recvid)));
-   }
-
-   if (IsSender()) {
-      int senderid = 0;
-      if (bnet::NetBidirectional)
-         senderid = nodeid - 1;
-      else
-         senderid = nodeid;
-
-      for (int nr=0;nr<NumReadouts();nr++) {
-         std::string cfgstr, parname;
-
-         dabc::formats(cfgstr, "%s_inp_%d_%d*.lmd;", filebase, senderid, nr);
-
-         dabc::formats(parname, "Input%dCfg", nr);
-
-         SetParStr(parname.c_str(), cfgstr);
-
-         DOUT3(("Set filepar value %s %s : res:%s", parname.c_str(), cfgstr.c_str(), ReadoutPar(nr).c_str()));
-      }
-   }
-}
-
-void bnet::MbsWorkerApplication::SetMbsTransportPars()
-{
-   SetParInt("IsGenerator", 0);
-
-   SetParInt("IsFilter", 0);
-
-   SetParInt("NumReadouts", 1);
-
-   if ((dabc::mgr()->NodeId()==1) || (dabc::mgr()->NodeId()==2)) {
-
-      SetParInt("IsSender", 1);
-      SetParInt("IsReceiver", 0);
-
-      const char* server_name = (dabc::mgr()->NodeId()==1) ? "x86g-4" : "x86-7";
-
-      SetParStr("Input0Cfg", server_name);
-
-      SetParInt("IsGenerator", 1);
-
-   } else {
-      SetParInt("IsSender", 0);
-      SetParInt("IsReceiver", 1);
-
-      SetParStr("StoragePar", dabc::format("/tmp/test_out.lmd;"));
-   }
-}
-
-void bnet::MbsWorkerApplication::SetMbsGeneratorsPars()
-{
-   SetParInt("IsGenerator", 0);
-
-   SetParInt("IsFilter", 0);
-
-   SetParInt("NumReadouts", 1);
-
-   if ((dabc::mgr()->NodeId()==1) || (dabc::mgr()->NodeId()==2)) {
-
-      SetParInt("IsSender", 1);
-      SetParInt("IsReceiver", 0);
-
-      const char* server_name = (dabc::mgr()->NodeId()==1) ? "master" : "node01";
-
-      SetParStr("Input0Cfg", server_name);
-   } else {
-      SetParInt("IsSender", 0);
-      SetParInt("IsReceiver", 1);
-
-      SetParStr("StoragePar", dabc::format("/tmp/test_out.lmd;"));
-   }
 }

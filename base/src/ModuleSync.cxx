@@ -4,21 +4,8 @@
 #include "dabc/ModuleItem.h"
 #include "dabc/PoolHandle.h"
 
-dabc::ModuleSync::ModuleSync(const char* name) :
-   Module(name),
-   fTmoutExcept(false),
-   fDisconnectExcept(false),
-   fSyncCommands(false),
-   fNewCommands(),
-   fWaitItem(0),
-   fWaitId(0),
-   fWaitRes(false),
-   fLoopStatus(stInit)
-{
-}
-
-dabc::ModuleSync::ModuleSync(Command* cmd) :
-   Module(cmd),
+dabc::ModuleSync::ModuleSync(const char* name, Command* cmd) :
+   Module(name, cmd),
    fTmoutExcept(false),
    fDisconnectExcept(false),
    fSyncCommands(false),

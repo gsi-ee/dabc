@@ -6,10 +6,10 @@
                 <workerTid xsi:type="xsd:unsignedInt">42</workerTid>      
                 <controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
                 <CfgNodeId.BnetPlugin xsi:type="xsd:integer">BUILDERINSTANCE</CfgNodeId.BnetPlugin>
-                <IsGenerator.BnetPlugin xsi:type="xsd:integer">0</IsGenerator.BnetPlugin>
-                <IsSender.BnetPlugin xsi:type="xsd:integer">0</IsSender.BnetPlugin>
-                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
-                <IsFilter.BnetPlugin xsi:type="xsd:integer">1</IsFilter.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:string">false</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:string">false</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:string">true</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:string">true</IsFilter.BnetPlugin>
                 <!--StoragePar.BnetPlugin xsi:type="xsd:string">OutType:MbsNewFile; OutName:dabc_BUILDERINSTANCE.lmd;</StoragePar.BnetPlugin-->
                 <TransportBuffer.BnetPlugin xsi:type="xsd:integer">6128</TransportBuffer.BnetPlugin>
                 <TransportPoolSize.BnetPlugin xsi:type="xsd:integer">16777216</TransportPoolSize.BnetPlugin>

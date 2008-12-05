@@ -18,8 +18,8 @@
 
 // __________________________________________________________________
 
-dabc::Module::Module(const char* name) :
-   Folder(dabc::mgr(), name, true),
+dabc::Module::Module(const char* name, Command* cmd) :
+   Folder(dabc::mgr(), (name ? name : (cmd ? cmd->GetStr("Name","module") : "module")), true),
    WorkingProcessor(),
    CommandClientBase(),
    fWorkStatus(0),
@@ -29,38 +29,18 @@ dabc::Module::Module(const char* name) :
    fReplyes(true, true),
    fLostEvents(128, true)
 {
-   init();
-}
+   SetParsHolder(this);
 
-dabc::Module::Module(Command* cmd) :
-   Folder(dabc::mgr(), cmd->GetStr("Name","Module"), true),
-   WorkingProcessor(),
-   CommandClientBase(),
-   fWorkStatus(0),
-   fInputPorts(),
-   fOutputPorts(),
-   fPorts(),
-   fReplyes(true, true),
-   fLostEvents(128, true)
-{
-   init();
-}
-
-void dabc::Module::init()
-{
    // we will use 3 priority levels:
    //  0 - normal for i/o ,
    //  1 - for commands and replies,
    //  2 - for sys commands (in modules thread itself)
 
-//   SetParsHolder(this, "Parameters");
-   SetParsHolder(this);
-
    CommandDefinition* def = NewCmdDef("SetPriority");
    def->AddArgument("Priority", argInt, true);
    def->Register(true);
 
-   def = NewCmdDef(CommandSetParameter::CmdName());
+   def = NewCmdDef(CmdSetParameter::CmdName());
    def->AddArgument("ParName", argString, true);
    def->AddArgument("ParValue", argString, true);
    def->Register(true);
@@ -259,10 +239,10 @@ int dabc::Module::ExecuteCommand(Command* cmd)
    return CommandReceiver::ExecuteCommand(cmd);
 }
 
-dabc::PoolHandle* dabc::Module::CreatePool(const char* name, BufferNum_t number, BufferSize_t size, BufferNum_t increment)
+dabc::PoolHandle* dabc::Module::CreatePool(const std::string &name, BufferNum_t number, BufferSize_t size, BufferNum_t increment)
 {
    Folder* folder = GetPoolsFolder(true);
-   dabc::PoolHandle* pool = new dabc::PoolHandle(folder, name, number, increment, size);
+   dabc::PoolHandle* pool = new dabc::PoolHandle(folder, name.c_str(), number, increment, size);
    return pool;
 }
 

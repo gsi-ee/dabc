@@ -35,8 +35,8 @@ class Test2SendModule : public dabc::ModuleAsync {
       int                 fPortCnt;
 
    public:
-      Test2SendModule(dabc::Command* cmd) :
-         dabc::ModuleAsync(cmd)
+      Test2SendModule(const char* name, dabc::Command* cmd) :
+         dabc::ModuleAsync(name, cmd)
       {
          int nports = cmd->GetInt("NumPorts", 3);
          int buffsize = cmd->GetInt("BufferSize", 16*1024);
@@ -121,8 +121,8 @@ class Test2RecvModule : public dabc::ModuleAsync {
       dabc::Average fRealSleepTime;
 
    public:
-      Test2RecvModule(dabc::Command* cmd) :
-         dabc::ModuleAsync(cmd)
+      Test2RecvModule(const char* name, dabc::Command* cmd) :
+         dabc::ModuleAsync(name, cmd)
       {
          // we will use queue (second true) in the signal to detect order of signal fire
          int nports = cmd->GetInt("NumPorts", 3);
@@ -187,8 +187,8 @@ class Test2WorkerModule : public dabc::ModuleSync {
       int fCounter;
 
    public:
-      Test2WorkerModule(dabc::Command* cmd) :
-         dabc::ModuleSync(cmd)
+      Test2WorkerModule(const char* name, dabc::Command* cmd) :
+         dabc::ModuleSync(name, cmd)
       {
          fCounter = 0;
       }
@@ -232,13 +232,13 @@ class Test2Plugin: public dabc::Application  {
           if ((classname==0) || (cmd==0)) return 0;
 
           if (strcmp(classname,"Test2SendModule")==0)
-             return new Test2SendModule(cmd);
+             return new Test2SendModule(modulename, cmd);
           else
           if (strcmp(classname,"Test2RecvModule")==0)
-             return new Test2RecvModule(cmd);
+             return new Test2RecvModule(modulename, cmd);
           else
           if (strcmp(classname,"Test2WorkerModule")==0)
-             return new Test2WorkerModule(cmd);
+             return new Test2WorkerModule(modulename, cmd);
 
           return 0;
       }

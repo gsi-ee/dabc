@@ -11,9 +11,48 @@ namespace bnet {
 
    extern const char* xmlClusterClass; // preferred net device for building network
 
-   extern const char* NetDevice; // preferred net device for building network
-   extern bool NetBidirectional; // preferred configuration for network
-   extern bool UseFileSource;    // configure usage of files as data source insted of generator
+   extern const char* xmlIsGenerator;
+   extern const char* xmlIsSender;
+   extern const char* xmlIsReceiever;
+   extern const char* xmlIsFilter;
+   extern const char* xmlCombinerModus;
+   extern const char* xmlNumReadouts;
+   extern const char* xmlStoragePar;
+
+   extern std::string xmlInputCfg(int n);
+
+   extern const char* ReadoutPoolName;
+   extern const char* TransportPoolName;
+   extern const char* EventPoolName;
+   extern const char* ControlPoolName;
+
+   extern const char* xmlReadoutBuffer;
+   extern const char* xmlReadoutPoolSize;
+   extern const char* xmlTransportBuffer;
+   extern const char* xmlTransportPoolSize;
+   extern const char* xmlEventBuffer;
+   extern const char* xmlEventPoolSize;
+   extern const char* xmlCtrlBuffer;
+   extern const char* xmlCtrlPoolSize;
+
+   extern const char* parStatus;
+   extern const char* parRecvStatus;
+   extern const char* parSendStatus;
+
+   // list of configuration parameters in worker application
+   extern const char* CfgNodeId;
+   extern const char* CfgNumNodes;
+   extern const char* CfgController;
+   extern const char* CfgSendMask;
+   extern const char* CfgRecvMask;
+   extern const char* CfgClusterMgr;
+   extern const char* CfgNetDevice;
+   extern const char* CfgConnected;
+   extern const char* CfgEventsCombine;
+   extern const char* CfgReadoutPool;
+
+
+
 
    enum EBnetBufferTypes {
       mbt_EvInfo    = 201, // events information

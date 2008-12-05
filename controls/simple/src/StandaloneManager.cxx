@@ -89,12 +89,14 @@ dabc::StandaloneManager::~StandaloneManager()
    else
       WaitDisconnectCmdChannel();
 
-   DOUT0(("Finish"));
+   DOUT0(("Finish 0"));
 
    fCmdChannel = 0;
    CleanupManager(77);
 
    destroy();
+
+   DOUT0(("Finish 1"));
 
    DOUT3(("dabc::StandaloneManager::~StandaloneManager() done"));
 }
@@ -612,7 +614,7 @@ void dabc::StandaloneManager::SubscribedParChanged(ParamReg& reg)
    DOUT3(( "Subscribed parameter changed %s tgt:%d %s",
       reg.par->GetName(), reg.tgtnode, remname.c_str()));
 
-   Command* cmd = new CommandSetParameter(remname.c_str(), value.c_str());
+   Command* cmd = new CmdSetParameter(remname.c_str(), value.c_str());
 
    if (!Submit(RemoteCmd(cmd, reg.tgtnode, 0)))
       EOUT(("Cannot send parameter change"));

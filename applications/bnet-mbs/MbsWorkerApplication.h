@@ -16,13 +16,6 @@ namespace bnet {
          virtual dabc::Module* CreateFilter(const char* name);
 
          virtual bool CreateStorage(const char* portname);
-
-         void SetMbsFilePars(const char* filebase);
-
-         void SetMbsTransportPars();
-
-         void SetMbsGeneratorsPars();
-
    };
 }
 

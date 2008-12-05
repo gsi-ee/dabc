@@ -15,6 +15,7 @@ namespace bnet {
 
       virtual dabc::Application* CreateApplication(const char* classname, dabc::Command* cmd);
 
+      virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
    };
 }
 

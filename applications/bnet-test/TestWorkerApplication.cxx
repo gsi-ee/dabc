@@ -20,33 +20,48 @@ bnet::TestWorkerApplication::TestWorkerApplication() :
 
     DOUT0(("Set all pars to TestWorker"));
 
-    SetPars(bnet::NetBidirectional, 4, 0);
+    int nodeid = dabc::mgr()->NodeId();
+    int numnodes = dabc::mgr()->NumNodes();
+
+    if ((nodeid<0) || (nodeid>=numnodes)) return;
+
+    int numsrcnodes(1), numbldnodes(1);
+
+    bool all_to_all = true;
+
+    if (all_to_all) {
+       numsrcnodes = numnodes - 1;
+       numbldnodes = numsrcnodes;
+    } else {
+       numsrcnodes = (numnodes - 1) / 2;
+       numbldnodes = numnodes - 1 - numsrcnodes;
+    }
+
+    // first, set common parameters
+    bool issender(false), isreceiver(false);
+
+    if (all_to_all) {
+       issender = true;
+       isreceiver = true;
+    } else {
+       issender = (nodeid <= numsrcnodes);
+       isreceiver = !issender;
+    }
+
+    SetParBool(xmlIsGenerator, true);
+    SetParBool(xmlIsSender, issender);
+    SetParBool(xmlIsReceiever, isreceiver);
+    SetParBool(xmlIsFilter, isreceiver);
+    SetParInt(xmlCombinerModus, 0);
+    SetParInt(xmlNumReadouts, 4);
 }
 
-
-dabc::Module* bnet::TestWorkerApplication::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
-
-{
-   if (strcmp(classname,"TestGeneratorModule")==0)
-      return new bnet::TestGeneratorModule(modulename, this);
-   else
-   if (strcmp(classname,"TestCombinerModule")==0)
-      return new bnet::TestCombinerModule(modulename, this);
-   else
-   if (strcmp(classname,"TestBuilderModule")==0)
-      return new bnet::TestBuilderModule(modulename, this);
-   else
-   if (strcmp(classname,"TestFilterModule")==0)
-      return new bnet::TestFilterModule(modulename, this);
-   else
-      return bnet::WorkerApplication::CreateModule(classname, modulename, cmd);
-}
 
 bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnumber)
 {
    if (!IsGenerator()) return false;
 
-   DOUT1(("CreateReadout buf = %d", ReadoutBufferSize()));
+   DOUT1(("CreateReadout buf = %d", GetParInt(xmlReadoutBuffer)));
 
    bool res = false;
    std::string modulename;
@@ -59,7 +74,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
        fABBActive = dabc::mgr()->CreateDevice("abb::Device", abbdevname.c_str());
    } else {
       // create dummy event generator module:
-      dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str(), this);
+      dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str());
       dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
       modulename += "/Output";
       dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
@@ -81,21 +96,21 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
 
 dabc::Module* bnet::TestWorkerApplication::CreateCombiner(const char* name)
 {
-   dabc::Module* m = new bnet::TestCombinerModule(name, this);
+   dabc::Module* m = new bnet::TestCombinerModule(name);
    dabc::mgr()->MakeThreadForModule(m, Thrd1Name().c_str());
    return m;
 }
 
 dabc::Module* bnet::TestWorkerApplication::CreateBuilder(const char* name)
 {
-   dabc::Module* m = new bnet::TestBuilderModule(name, this);
+   dabc::Module* m = new bnet::TestBuilderModule(name);
    dabc::mgr()->MakeThreadForModule(m, Thrd2Name().c_str());
    return m;
 }
 
 dabc::Module* bnet::TestWorkerApplication::CreateFilter(const char* name)
 {
-   dabc::Module* m = new bnet::TestFilterModule(name, this);
+   dabc::Module* m = new bnet::TestFilterModule(name);
    dabc::mgr()->MakeThreadForModule(m, Thrd2Name().c_str());
    return m;
 }
@@ -110,10 +125,10 @@ void bnet::TestWorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
    bnet::WorkerApplication::DiscoverNodeConfig(cmd);
 
    if (IsSender())
-      SetParInt("ReadoutBuffer", TransportBufferSize() / NumReadouts());
+      SetParInt(xmlReadoutBuffer, GetParInt(xmlTransportBuffer) / NumReadouts());
 
    if (IsReceiver())
-      SetParInt("EventBuffer", TransportBufferSize() * (CfgNumNodes() - 1));
+      SetParInt(xmlEventBuffer, GetParInt(xmlTransportBuffer) * (GetParInt(CfgNumNodes) - 1));
 
 }
 

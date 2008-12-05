@@ -7,9 +7,8 @@ namespace bnet {
 
    class MbsGeneratorModule : public GeneratorModule {
       public:
-         MbsGeneratorModule(const char* name,
-                            WorkerApplication* factory) :
-           GeneratorModule(name, factory) {}
+         MbsGeneratorModule(const char* name, dabc::Command* cmd = 0) :
+           GeneratorModule(name, cmd) {}
 
       protected:
 

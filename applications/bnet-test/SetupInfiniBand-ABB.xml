@@ -8,10 +8,10 @@
 				<controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
                 <CfgNodeId.BnetPlugin xsi:type="xsd:integer">1</CfgNodeId.BnetPlugin>
                 <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5</CfgNumNodes.BnetPlugin>
-                <IsGenerator.BnetPlugin xsi:type="xsd:integer">1</IsGenerator.BnetPlugin>
-                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
-                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
-                <IsFilter.BnetPlugin xsi:type="xsd:integer">1</IsFilter.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:string">true</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:string">true</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:string">true</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:string">true</IsFilter.BnetPlugin>
                 <NumReadouts.BnetPlugin xsi:type="xsd:integer">3</NumReadouts.BnetPlugin>
                 <Input0Cfg.BnetPlugin xsi:type="xsd:string">Mbsfile</Input0Cfg.BnetPlugin>
                 <Input1Cfg.BnetPlugin xsi:type="xsd:string">Mbsfile</Input1Cfg.BnetPlugin>
@@ -57,11 +57,12 @@
                 <workerTid xsi:type="xsd:unsignedInt">42</workerTid>      
 				<controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
                 <CfgNodeId.BnetPlugin xsi:type="xsd:integer">2</CfgNodeId.BnetPlugin>
-                <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5<IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin></CfgNumNodes.BnetPlugin>
-                <IsGenerator.BnetPlugin xsi:type="xsd:integer">1</IsGenerator.BnetPlugin>
-                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
+                <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5</CfgNumNodes.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:string">true</IsReceiver.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:string">true</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:string">true</IsSender.BnetPlugin>
                 
-                <IsFilter.BnetPlugin xsi:type="xsd:integer">1</IsFilter.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:string">true</IsFilter.BnetPlugin>
                 <NumReadouts.BnetPlugin xsi:type="xsd:integer">1</NumReadouts.BnetPlugin>
                 <Input0Cfg.BnetPlugin xsi:type="xsd:string">ABB</Input0Cfg.BnetPlugin>
                 <Input1Cfg.BnetPlugin xsi:type="xsd:string">Mbsfile</Input1Cfg.BnetPlugin>
@@ -112,10 +113,10 @@
 				<controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
                 <CfgNodeId.BnetPlugin xsi:type="xsd:integer">3</CfgNodeId.BnetPlugin>
                 <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5</CfgNumNodes.BnetPlugin>
-                <IsGenerator.BnetPlugin xsi:type="xsd:integer">1</IsGenerator.BnetPlugin>
-                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
-                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
-                <IsFilter.BnetPlugin xsi:type="xsd:integer">1</IsFilter.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:string">true</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:string">true</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:string">true</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:string">true</IsFilter.BnetPlugin>
                 <NumReadouts.BnetPlugin xsi:type="xsd:integer">3</NumReadouts.BnetPlugin>
                 <Input0Cfg.BnetPlugin xsi:type="xsd:string">Mbsfile</Input0Cfg.BnetPlugin>
                 <Input1Cfg.BnetPlugin xsi:type="xsd:string">Mbsfile</Input1Cfg.BnetPlugin>
@@ -161,10 +162,10 @@
 				<controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
                 <CfgNodeId.BnetPlugin xsi:type="xsd:integer">4</CfgNodeId.BnetPlugin>
                 <CfgNumNodes.BnetPlugin xsi:type="xsd:integer">5</CfgNumNodes.BnetPlugin>
-                <IsGenerator.BnetPlugin xsi:type="xsd:integer">1</IsGenerator.BnetPlugin>
-                <IsSender.BnetPlugin xsi:type="xsd:integer">1</IsSender.BnetPlugin>
-                <IsReceiver.BnetPlugin xsi:type="xsd:integer">1</IsReceiver.BnetPlugin>
-                <IsFilter.BnetPlugin xsi:type="xsd:integer">1</IsFilter.BnetPlugin>
+                <IsGenerator.BnetPlugin xsi:type="xsd:string">true</IsGenerator.BnetPlugin>
+                <IsSender.BnetPlugin xsi:type="xsd:string">true</IsSender.BnetPlugin>
+                <IsReceiver.BnetPlugin xsi:type="xsd:string">true</IsReceiver.BnetPlugin>
+                <IsFilter.BnetPlugin xsi:type="xsd:string">true</IsFilter.BnetPlugin>
                 <NumReadouts.BnetPlugin xsi:type="xsd:integer">3</NumReadouts.BnetPlugin>
                 <Input0Cfg.BnetPlugin xsi:type="xsd:string">Mbsfile</Input0Cfg.BnetPlugin>
                 <Input1Cfg.BnetPlugin xsi:type="xsd:string">Mbsfile</Input1Cfg.BnetPlugin>

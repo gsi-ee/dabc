@@ -9,8 +9,6 @@ namespace bnet {
       public:
          TestWorkerApplication();
 
-         virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
-
          virtual bool CreateReadout(const char* portname, int portnumber);
 
          virtual dabc::Module* CreateCombiner(const char* name);

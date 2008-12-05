@@ -219,29 +219,38 @@ namespace dabc {
          }
    };
 
-   class CommandSetParameter : public Command {
+   class CmdSetParameter : public Command {
       public:
          static const char* CmdName() { return "SetParameter"; }
 
-         CommandSetParameter(const char* parname, const char* value) :
+         CmdSetParameter(const char* parname, const char* value) :
             Command(CmdName())
          {
             SetPar("ParName", parname);
             SetPar("ParValue", value);
          }
-         CommandSetParameter(const char* parname, int value) :
+
+         CmdSetParameter(const char* parname, int value) :
             Command(CmdName())
          {
             SetPar("ParName", parname);
             SetInt("ParValue", value);
          }
+
+         CmdSetParameter(const char* parname, bool value) :
+            Command(CmdName())
+         {
+            SetPar("ParName", parname);
+            SetBool("ParValue", value);
+         }
+
    };
 
-   class CommandStateTransition : public Command {
+   class CmdStateTransition : public Command {
       public:
          static const char* CmdName() { return "StateTransition"; }
 
-         CommandStateTransition(const char* state_transition_cmd) :
+         CmdStateTransition(const char* state_transition_cmd) :
             Command(CmdName())
             {
                SetStr("Cmd", state_transition_cmd);

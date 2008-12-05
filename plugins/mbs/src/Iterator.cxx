@@ -56,6 +56,7 @@ bool mbs::ReadIterator::NextEvent()
    }
 
    fSubPtr.reset();
+   fRawPtr.reset();
 
    return true;
 }
@@ -75,12 +76,22 @@ bool mbs::ReadIterator::NextSubEvent()
 {
    if (fSubPtr.null()) {
       if (fEvPtr.null()) return false;
+      if (evnt()->FullSize() < sizeof(EventHeader)) {
+         EOUT(("Mbs format error - event fullsize too small"));
+         return false;
+      }
       fSubPtr.reset(fEvPtr, evnt()->FullSize());
       fSubPtr.shift(sizeof(EventHeader));
    } else
       fSubPtr.shift(subevnt()->FullSize());
 
    if (fSubPtr.fullsize() < sizeof(SubeventHeader)) {
+      fSubPtr.reset();
+      return false;
+   }
+
+   if (subevnt()->FullSize() < sizeof(SubeventHeader)) {
+      EOUT(("Mbs format error - subevent fullsize too small"));
       fSubPtr.reset();
       return false;
    }

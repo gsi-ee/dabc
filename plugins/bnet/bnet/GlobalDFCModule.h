@@ -12,8 +12,6 @@
 
 namespace bnet {
 
-   class ClusterApplication;
-
    class GlobalDFCModule : public dabc::ModuleAsync {
       protected:
          struct ControllerRec {
@@ -43,7 +41,7 @@ namespace bnet {
          void TrySendEventsAssignment(bool force);
 
       public:
-         GlobalDFCModule(const char* name, ClusterApplication* factory);
+         GlobalDFCModule(const char* name, dabc::Command* cmd = 0);
          virtual ~GlobalDFCModule();
 
          virtual void ProcessInputEvent(dabc::Port* port);

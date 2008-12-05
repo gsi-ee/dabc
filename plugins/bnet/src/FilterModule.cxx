@@ -1,11 +1,11 @@
 #include "bnet/FilterModule.h"
 
-#include "bnet/WorkerApplication.h"
+#include "bnet/common.h"
 
-bnet::FilterModule::FilterModule(const char* name, WorkerApplication* factory) :
-   dabc::ModuleSync(name)
+bnet::FilterModule::FilterModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleSync(name, cmd)
 {
-   fPool = CreatePool(factory->EventPoolName());
+   fPool = CreatePool(bnet::EventPoolName);
 
    CreateInput("Input", fPool, FilterInpQueueSize);
 

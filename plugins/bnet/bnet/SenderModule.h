@@ -14,8 +14,6 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class SenderModule : public dabc::ModuleAsync {
       protected:
 
@@ -30,20 +28,18 @@ namespace bnet {
          typedef std::pair<bnet::EventId, SenderRec> SenderPair;
          typedef std::list<bnet::EventId> SenderList;
 
-         WorkerApplication*     fPlugin;
-
          dabc::PoolHandle*  fPool;
 
          SenderMap     fMap;
          SenderList    fNewEvents;
          SenderList    fReadyEvents;
 
-         int                 fCfgNumNodes;
-         int                 fCfgNodeId;
-         bool                fStandalone;
-         NodesVector         fRecvNodes;
+         int                  fCfgNumNodes;
+         int                  fCfgNodeId;
+         bool                 fStandalone;
+         NodesVector          fRecvNodes;
 
-         dabc::PoolHandle*  fCtrlPool;
+         dabc::PoolHandle*    fCtrlPool;
          dabc::Port*          fCtrlPort;
          dabc::BufferSize_t   fCtrlBufSize;
          double               fCtrlOutTime;
@@ -58,7 +54,7 @@ namespace bnet {
          void ReactOnDisconnect(dabc::Port* port);
 
       public:
-         SenderModule(const char* name, WorkerApplication* factory);
+         SenderModule(const char* name, dabc::Command* cmd = 0);
 
          virtual ~SenderModule();
 

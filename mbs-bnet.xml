@@ -78,6 +78,7 @@
      <Context name="*">
        <Run>
           <logfile value="${Context}.log"/>
+          <loglevel value="1"/>
        </Run>
      </Context>
      <Context name="Gener*">
@@ -102,7 +103,7 @@
           <lib value="libBnetMbs.so"/>
         </Run>
         <Application class="bnet::MbsWorker">
-           <IsSender value="1"/>
+           <IsSender value="true"/>
            <ReadoutBuffer value="8192"/>
         </Application>
         <Module name="Combiner">
@@ -118,8 +119,8 @@
           <lib value="libBnetMbs.so"/>
         </Run>
         <Application class="bnet::MbsWorker">
-           <IsReceiver value="1"/>
-           <IsFilter value="1"/>
+           <IsReceiver value="true"/>
+           <IsFilter value="true"/>
            <EventBuffer value="8192"/>
         </Application>
      </Context>

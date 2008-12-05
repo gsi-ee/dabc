@@ -9,8 +9,6 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class TestGeneratorModule : public dabc::ModuleAsync {
       protected:
          dabc::PoolHandle*       fPool;
@@ -19,8 +17,7 @@ namespace bnet {
          uint64_t                  fUniquieId;
 
       public:
-         TestGeneratorModule(const char* name,
-                             WorkerApplication* factory);
+         TestGeneratorModule(const char* name, dabc::Command* cmd = 0);
 
          virtual void BeforeModuleStart();
          virtual void AfterModuleStop();

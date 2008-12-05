@@ -12,8 +12,6 @@
 
 namespace bnet {
 
-   class WorkerApplication;
-
    class ReceiverModule : public dabc::ModuleAsync {
       protected:
 
@@ -56,7 +54,7 @@ namespace bnet {
          EventId DefineMinimumLastEvent();
 
       public:
-         ReceiverModule(const char* name, WorkerApplication* factory);
+         ReceiverModule(const char* name, dabc::Command* cmd = 0);
          virtual ~ReceiverModule();
 
          virtual int ExecuteCommand(dabc::Command* cmd);

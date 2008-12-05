@@ -8,28 +8,20 @@
 #include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
-#include "bnet/WorkerApplication.h"
+#include "bnet/common.h"
 
-bnet::FormaterModule::FormaterModule(const char* name,
-                                     WorkerApplication* plugin) :
-   dabc::ModuleSync(name),
-   fNumReadout(1),
-   fModus(0)
+bnet::FormaterModule::FormaterModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleSync(name, cmd)
 {
-   fModus = plugin->CombinerModus();
-   fNumReadout = plugin->NumReadouts();
+   fNumReadouts = GetCfgInt(xmlNumReadouts, 1, cmd);
+   fModus = GetCfgInt(xmlCombinerModus, 0, cmd);
 
-   fInpPool = CreatePool(plugin->ReadoutPoolName());
+   fInpPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd));
 
-   fOutPool = CreatePool(plugin->TransportPoolName());
+   fOutPool = CreatePool(bnet::TransportPoolName);
 
-   fOutPort = CreateOutput("Output", fOutPool, plugin->CombinerOutQueueSize(), sizeof(bnet::SubEventNetHeader));
+   fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize, sizeof(bnet::SubEventNetHeader));
 
-   for (int n=0;n<fNumReadout;n++)
-      CreateInput(FORMAT(("Input%d", n)), fInpPool, plugin->CombinerInQueueSize());
+   for (int n=0;n<NumReadouts();n++)
+      CreateInput(FORMAT(("Input%d", n)), fInpPool, ReadoutQueueSize);
 }
-
-bnet::FormaterModule::~FormaterModule()
-{
-}
-

@@ -4,20 +4,14 @@
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
+#include "dabc/Application.h"
 
-#include "bnet/common.h"
-#include "bnet/WorkerApplication.h"
-
-bnet::SenderModule::SenderModule(const char* name, WorkerApplication* factory) :
-   dabc::ModuleAsync(name),
-   fPlugin(factory),
+bnet::SenderModule::SenderModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd),
    fPool(0),
    fMap(),
    fNewEvents(),
    fReadyEvents(),
-
-   fCfgNumNodes(factory->CfgNumNodes()),
-   fCfgNodeId(factory->CfgNodeId()),
    fStandalone(true),
    fRecvNodes(),
 
@@ -26,7 +20,10 @@ bnet::SenderModule::SenderModule(const char* name, WorkerApplication* factory) :
    fCtrlBufSize(0),
    fCtrlOutTime(0.)
 {
-   fPool = CreatePool(factory->TransportPoolName());
+   fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
+   fCfgNodeId = GetCfgInt(CfgNodeId, 0, cmd);
+
+   fPool = CreatePool(bnet::TransportPoolName);
 
    CreateInput("Input", fPool, SenderInQueueSize, sizeof(bnet::EventId));
 
@@ -35,8 +32,8 @@ bnet::SenderModule::SenderModule(const char* name, WorkerApplication* factory) :
    for (int n=0;n<fCfgNumNodes;n++)
       CreateOutput(FORMAT(("Output%d", n)), fPool, SenderQueueSize, sizeof(bnet::SubEventNetHeader));
 
-   fCtrlPool = CreatePool(factory->ControlPoolName());
-   fCtrlBufSize = factory->ControlBufferSize();
+   fCtrlPool = CreatePool(bnet::ControlPoolName);
+   fCtrlBufSize = GetCfgInt(xmlCtrlBuffer, 2*1024, cmd);
    fCtrlPort = CreatePort("CtrlPort", fCtrlPool, CtrlInpQueueSize, CtrlOutQueueSize);
    fCtrlOutTime = 0.;
 
@@ -59,7 +56,7 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
 
       DOUT3(("Get command Configure"));
 
-      fStandalone = cmd->GetInt("Standalone") > 0;
+      fStandalone = cmd->GetBool("Standalone");
       fRecvNodes.Reset(cmd->GetStr("RecvMask"), fCfgNumNodes);
 
       for (int node=0;node<fCfgNumNodes;node++)
@@ -100,14 +97,19 @@ void bnet::SenderModule::ReactOnDisconnect(dabc::Port* port)
    for (int n=0;n<fCfgNumNodes;n++)
       NewRecvMask += Output(n)->IsConnected() ? "x" : "o";
 
-   if (NewRecvMask == fPlugin->CfgRecvMask()) {
+   std::string oldmask = GetCfgStr(CfgRecvMask, "");
+
+   if (NewRecvMask == oldmask) {
       DOUT1(("Recv Mask is not changed - still %s", NewRecvMask.c_str()));
       return;
    }
 
-   DOUT1(("RecvMaskChangeDetected old:%s new:%s", fPlugin->CfgRecvMask().c_str(), NewRecvMask.c_str()));
+   DOUT1(("RecvMaskChangeDetected old:%s new:%s", oldmask.c_str(), NewRecvMask.c_str()));
 
-   dabc::Parameter* par = fPlugin->FindPar("RecvStatus");
+   dabc::Application* app = dabc::mgr()->GetApp();
+   if (app==0) return;
+
+   dabc::Parameter* par = app->FindPar(parRecvStatus);
    if (par) par->InvokeChange(NewRecvMask.c_str());
        else EOUT(("Did not fount RecvStatus parameter"));
 }
