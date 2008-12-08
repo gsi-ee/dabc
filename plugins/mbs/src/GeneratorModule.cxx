@@ -41,28 +41,15 @@ mbs::GeneratorModule::GeneratorModule(const char* name) :
    CreateOutput("Output", fPool, 5);
 }
 
-mbs::GeneratorModule::~GeneratorModule()
-{
-
-}
-
-void mbs::GeneratorModule::BeforeModuleStart()
-{
-   for (unsigned n=0;n<Output(0)->OutputQueueCapacity();n++)
-      GeneratePacket();
-}
-
 void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
 {
-   GeneratePacket();
-}
-
-bool mbs::GeneratorModule::GeneratePacket()
-{
-   if (Output(0)->OutputBlocked()) return false;
+   if (port->OutputBlocked()) {
+      EOUT(("Output blocked ????"));
+      return;
+   }
 
    dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize, false);
-   if (buf==0) { EOUT(("AAAAAAAAAAAA")); return false; }
+   if (buf==0) { EOUT(("No free buffer - generator will block")); return; }
    buf->SetDataSize(fBufferSize);
 
    mbs::WriteIterator iter(buf);
@@ -102,10 +89,7 @@ bool mbs::GeneratorModule::GeneratePacket()
       fEventCount++;
    }
 
-   Output(0)->Send(buf);
-
-   return true;
-
+   port->Send(buf);
 }
 
 

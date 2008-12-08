@@ -53,7 +53,6 @@ dabc::Module::~Module()
 
    fWorkStatus = -1;
 
-
    // by this we stop any further events processing and can be sure that
    // destroying module items will not cause seg.fault
    RemoveProcessorFromThread(true);
@@ -289,7 +288,7 @@ void dabc::Module::ItemCreated(ModuleItem* item)
    item->SetItemId(id);
 
    if (id>moduleitemMaxId) {
-      EOUT(("Item id is too big, event propogation will not work"));
+      EOUT(("Item id is too big, event propagation will not work"));
       exit(1);
    }
 

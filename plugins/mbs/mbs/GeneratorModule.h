@@ -15,21 +15,17 @@ namespace mbs {
 
          dabc::BufferSize_t      fBufferSize;
 
-         uint32_t fEventCount;
-         uint32_t fStartStopPeriod;
-         uint16_t fNumSubevents;
-         uint16_t fFirstProcId;
-         uint32_t fSubeventSize;
-         bool fIsGo4RandomFormat;
+         uint32_t    fEventCount;
+         uint32_t    fStartStopPeriod;
+         uint16_t    fNumSubevents;
+         uint16_t    fFirstProcId;
+         uint32_t    fSubeventSize;
+         bool        fIsGo4RandomFormat;
 
       public:
          GeneratorModule(const char* name);
-         virtual ~GeneratorModule();
 
-         virtual void BeforeModuleStart();
          virtual void ProcessOutputEvent(dabc::Port* port);
-
-         bool GeneratePacket();
    };
 
 

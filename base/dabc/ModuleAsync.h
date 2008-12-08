@@ -27,7 +27,8 @@ namespace dabc {
          virtual void ProcessTimerEvent(Timer* timer) {}
          virtual void ProcessConnectEvent(Port* port) {}
          virtual void ProcessDisconnectEvent(Port* port) {}
-
+      protected:
+         virtual void OnThreadAssigned();
    };
 
 };

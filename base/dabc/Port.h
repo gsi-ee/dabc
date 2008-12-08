@@ -49,7 +49,7 @@ namespace dabc {
       friend class Transport;
 
       protected:
-         PoolHandle*     fPool;
+         PoolHandle*       fPool;
          unsigned          fInputQueueCapacity;
          unsigned          fInputPending;
          unsigned          fOutputQueueCapacity;

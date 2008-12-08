@@ -162,8 +162,8 @@ void dabc::Port::DoStop()
 bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
 {
    // Sends buffer to the Port
-   // If return true, operation is succsessfull
-   // If return false, error is occures
+   // If return true, operation is successful
+   // If return false, error is occurs
    // In all cases buffer is no longer available to user and will be released by the core
 
    if (buf==0) throw PortOutputException(this, "No buffer specified");

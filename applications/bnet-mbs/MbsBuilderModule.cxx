@@ -190,13 +190,3 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
       }
    }
 }
-
-
-void bnet::MbsBuilderModule::BeforeModuleStart()
-{
-}
-
-void bnet::MbsBuilderModule::AfterModuleStop()
-{
-}
-

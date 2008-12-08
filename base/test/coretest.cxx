@@ -69,28 +69,17 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
       void ProcessOutputEvent(dabc::Port* port)
       {
-         if (fKind==0) GeneratePacket(); else
+         if (fKind==0) {
+            dabc::Buffer* buf = fPool->TakeBuffer(BUFFERSIZE, false);
+            if (buf==0) { EOUT(("AAAAAAAAAAAA")); exit(1); }
+            fOutput->Send(buf);
+         } else
          if ((fKind==1) && !fInput->InputBlocked()) {
             dabc::Buffer* buf = 0;
             fInput->Recv(buf);
             if (buf==0) { EOUT(("BBBBBBBBBBBB")); exit(1); }
             fOutput->Send(buf);
          }
-      }
-
-      virtual void BeforeModuleStart()
-      {
-         DOUT3(("TestModuleAsync %s starts", GetName()));
-         if (fKind==0)
-           for(int n=0; n<QUEUESIZE; n++)
-              GeneratePacket();
-      }
-
-      void GeneratePacket()
-      {
-         dabc::Buffer* buf = fPool->TakeBuffer(BUFFERSIZE, false);
-         if (buf==0) { EOUT(("AAAAAAAAAAAA")); exit(1); }
-         fOutput->Send(buf);
       }
 
       virtual void AfterModuleStop()
@@ -164,14 +153,8 @@ class TestModuleSync : public dabc::ModuleSync {
          }
       }
 
-      virtual void BeforeModuleStart()
-      {
-//         DOUT1(("TestModuleSync %s starts thrd %p", GetName(), ProcessorThread()));
-      }
-
       virtual void AfterModuleStop()
       {
-//         DOUT1(("TestModuleSync %s stops %ld", GetName(), fCounter));
          if (fCounter>0) fGlobalCnt = fCounter;
       }
 };
@@ -268,16 +251,6 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
       {
          CreateTimer("Timer1", 0.01, true);
          CreateTimer("Timer2", 0.1, false);
-      }
-
-      virtual void BeforeModuleStart()
-      {
-         DOUT3(("TimeoutTestModuleAsync %s starts %ld %ld", GetName(), fCounter1, fCounter2));
-      }
-
-      virtual void AfterModuleStop()
-      {
-         DOUT1(("TimeoutTestModuleAsync %s stops %ld %ld", GetName(), fCounter1, fCounter2));
       }
 
       virtual void ProcessTimerEvent(dabc::Timer* timer)

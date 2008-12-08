@@ -18,13 +18,9 @@ namespace roc {
          CalibrationModule(const char* name, dabc::Command* cmd);
          virtual ~CalibrationModule();
 
-         virtual void BeforeModuleStart() {}
-         virtual void AfterModuleStop() {}
-
          virtual void ProcessInputEvent(dabc::Port* port);
 
          virtual void ProcessOutputEvent(dabc::Port* port);
-
 
       protected:
          struct CalibRec {

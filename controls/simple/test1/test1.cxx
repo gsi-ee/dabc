@@ -107,13 +107,6 @@ class Test1SendModule : public dabc::ModuleAsync {
             }
       }
 
-      void BeforeModuleStart()
-      {
-//         fCanSend = true;
-//         StartSending();
-//         fPortCnt = 0;
-      }
-
       void AfterModuleStop()
       {
          fCanSend = false;
@@ -217,16 +210,6 @@ class Test1WorkerModule : public dabc::ModuleSync {
             return ModuleSync::ExecuteCommand(cmd);
 
          return cmd_true;
-      }
-
-      virtual void BeforeModuleStart()
-      {
-         DOUT1(("TWorkerModule::BeforeModuleStart"));
-      }
-
-      virtual void AfterModuleStop()
-      {
-         DOUT1(("TWorkerModule::AfterModuleStop cnt = %d", fCounter));
       }
 
       virtual void MainLoop()

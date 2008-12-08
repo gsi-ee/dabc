@@ -98,16 +98,6 @@ void bnet::TestCombinerModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
    fLastInput = 0; // start from the beginning
 }
 
-
-void bnet::TestCombinerModule::BeforeModuleStart()
-{
-}
-
-void bnet::TestCombinerModule::AfterModuleStop()
-{
-}
-
-
 dabc::Buffer* bnet::TestCombinerModule::MakeSegmenetedBuf(uint64_t& evid)
 {
    evid = 0;

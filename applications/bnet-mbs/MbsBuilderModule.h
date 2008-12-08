@@ -36,9 +36,6 @@ namespace bnet {
          virtual ~MbsBuilderModule();
 
          virtual void DoBuildEvent(std::vector<dabc::Buffer*>& bufs);
-
-         virtual void BeforeModuleStart();
-         virtual void AfterModuleStop();
    };
 }
 

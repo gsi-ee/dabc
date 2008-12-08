@@ -31,9 +31,6 @@ namespace bnet {
 
          virtual ~TestCombinerModule();
 
-         virtual void BeforeModuleStart();
-         virtual void AfterModuleStop();
-
          virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
    };
 }

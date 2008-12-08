@@ -15,9 +15,6 @@ namespace roc {
          CombinerModule(const char* name, dabc::Command* cmd);
          virtual ~CombinerModule();
 
-         virtual void BeforeModuleStart() {}
-         virtual void AfterModuleStop() {}
-
          virtual void ProcessInputEvent(dabc::Port* port);
 
          virtual void ProcessOutputEvent(dabc::Port* port);

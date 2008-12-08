@@ -74,8 +74,10 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
        fABBActive = dabc::mgr()->CreateDevice("abb::Device", abbdevname.c_str());
    } else {
       // create dummy event generator module:
-      dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str());
-      dabc::mgr()->MakeThreadForModule(m, SenderThreadName);
+
+      dabc::mgr()->CreateModule("bnet::TestGeneratorModule", modulename.c_str(), SenderThreadName);
+//      dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str());
+//      dabc::mgr()->MakeThreadForModule(m, SenderThreadName);
       modulename += "/Output";
       dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
       fABBActive = false;
