@@ -756,6 +756,8 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
          res += dabc::format(" export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH;", ld.c_str());
       }
 
+      res += " . $DABCSYS/script/nodelogin.sh;";
+
       if (!workdir.empty()) res += dabc::format(" cd %s;", ResolveEnv(workdir).c_str());
 
       if ((connstr!=0) && (ControlSequenceId(id)==1) && (ctrlkind != kindDim))
