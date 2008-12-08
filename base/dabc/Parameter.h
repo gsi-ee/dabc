@@ -31,9 +31,14 @@ namespace dabc {
       friend class WorkingProcessor;
       friend class Manager;
 
-      public:
+      protected:
+         // make constructor and destructor of parameters protected,
+         // that user cannot call them directly - only via CreatePar() and DestroyPar
+
          Parameter(WorkingProcessor* lst, const char* name);
          virtual ~Parameter();
+
+      public:
 
          virtual const char* MasterClassName() const { return "Parameter"; }
          virtual const char* ClassName() const { return "Parameter"; }

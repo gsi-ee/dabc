@@ -24,7 +24,7 @@ dabc::Application::~Application()
    dabc::Command::Reply(fConnCmd, false);
    fConnCmd = 0;
 
-   // delete childs (parameters) before destructor is finished that one
+   // delete children (parameters) before destructor is finished that one
    // can correctly use GetParsHolder() in Manager::ParameterEvent()
    DestroyAllPars();
 

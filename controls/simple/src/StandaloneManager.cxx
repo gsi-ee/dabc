@@ -52,7 +52,7 @@ const char* GetMyHostName()
 
 dabc::StandaloneManager::StandaloneManager(const char* name, int nodeid, int numnodes, bool usesm, Configuration* cfg) :
    Manager(name ? name : FORMAT(("%s-%d", GetMyHostName(), nodeid)), false, cfg),
-   fIsMainMgr(nodeid==0),
+   fIsMainMgr(false),
    fMainMgrName(),
    fClusterNames(),
    fClusterActive(),
@@ -63,6 +63,11 @@ dabc::StandaloneManager::StandaloneManager(const char* name, int nodeid, int num
    fStopCond(),
    fParReg()
 {
+   if (numnodes<=0) numnodes = 1;
+   if (nodeid>=numnodes) nodeid = 0;
+
+   fIsMainMgr = (nodeid==0);
+
    while (fClusterNames.size() < (unsigned) numnodes) {
       fClusterNames.push_back("");
       fClusterActive.push_back(false);

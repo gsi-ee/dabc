@@ -22,7 +22,7 @@ dabc::ModuleSync::~ModuleSync()
    // call stop before ModuleSync specific data will be destroyed
    Stop();
 
-   fWorkStatus = -1; // indicate that we should leave all loops as soon as possible
+   fRunState = msHalted;
 
    // if module assigned to thread, make sure that mainloop of the module is leaved
    ExitMainLoop();
@@ -187,7 +187,7 @@ bool dabc::ModuleSync::TestWorking(double timeout)
 
    AsyncProcessCommands();
 
-   return WorkStatus()>=0;
+   return !IsHalted();
 }
 
 uint16_t dabc::ModuleSync::WaitEvent(double timeout)
@@ -254,13 +254,13 @@ void dabc::ModuleSync::StopUntilRestart()
 {
    Stop();
 
-   DOUT1(("Stop module %s until restart work:%d", GetName(), WorkStatus()));
+   DOUT1(("Stop module %s until restart", GetName()));
 
    double tmout = -1.;
 
    WaitItemEvent(tmout);
 
-   DOUT1(("Finish StopUntilRestart for module %s work:%d", GetName(), WorkStatus()));
+   DOUT1(("Finish StopUntilRestart for module %s", GetName()));
 }
 
 void dabc::ModuleSync::AsyncProcessCommands()
@@ -295,7 +295,7 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
 
    while (!fWaitRes || (fLoopStatus==stSuspend)) {
 
-      if ((ProcessorThread()==0) || (WorkStatus()<0))
+      if ((ProcessorThread()==0) || IsHalted())
          throw StopException();
 
       // account timeout only in running state

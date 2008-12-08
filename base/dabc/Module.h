@@ -56,7 +56,9 @@ namespace dabc {
       protected:
          typedef std::vector<unsigned> PortsIndexVector;
 
-         int                      fWorkStatus;  // 1 - working, 0 - stopped, -1 - halt
+         enum EModuleRunState { msHalted, msStopped, msRunning };
+
+         EModuleRunState          fRunState;    // module running state
          PointersVector           fItems;       // map for fast search of module items
          PortsIndexVector         fInputPorts;  // map for fast access to input ports
          PortsIndexVector         fOutputPorts; // map for fast access to output ports
@@ -100,7 +102,9 @@ namespace dabc {
 
          ModuleItem* GetItem(unsigned id) const { return id<fItems.size() ? (ModuleItem*) fItems.at(id) : 0; }
 
-         inline int WorkStatus() const { return fWorkStatus; }
+         inline bool IsRunning() const { return fRunState == msRunning; }
+         inline bool IsStopped() const { return fRunState == msStopped; }
+         inline bool IsHalted() const { return fRunState == msHalted; }
 
          virtual CommandReceiver* GetCmdReceiver() { return this; }
 

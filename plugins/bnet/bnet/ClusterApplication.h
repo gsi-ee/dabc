@@ -54,6 +54,7 @@ namespace bnet {
 
          dabc::Mutex fSMMutex;
          std::string fSMRunningSMCmd;
+         int         fNumNodes; // number of nodes when app started
 
    };
 }

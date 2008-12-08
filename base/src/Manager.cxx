@@ -281,7 +281,7 @@ dabc::Manager::~Manager()
    // normally, as last operation in the main() program must be HaltManeger(true)
    // call, which suspend and erase all items in manager
 
-   DOUT3(("Start ~Manager"));
+   DOUT0(("Start ~Manager"));
 
    fSMmodule = 0;
 
@@ -510,7 +510,7 @@ bool dabc::Manager::IsModuleRunning(const char* name)
    LockGuard lock(fMgrMutex);
 
    dabc::Module* m = FindModule(name);
-   return m ? m->WorkStatus()>0 : false;
+   return m ? m->IsRunning() : false;
 }
 
 bool dabc::Manager::IsAnyModuleRunning()
@@ -521,7 +521,7 @@ bool dabc::Manager::IsAnyModuleRunning()
 
    while (iter.next()) {
       Module* m = dynamic_cast<Module*> (iter.current());
-      if (m && (m->WorkStatus()>0)) return true;
+      if (m && m->IsRunning()) return true;
    }
 
    return false;
@@ -614,7 +614,7 @@ void dabc::Manager::DoHaltManager()
    DOUT3(("Deleting application"));
    delete GetApp();
 
-   DOUT3(("Deleting all modules"));
+   DOUT0(("Deleting all modules"));
    // than we delete all modules
 
    DoDeleteAllModules();
@@ -630,7 +630,7 @@ void dabc::Manager::DoHaltManager()
    Folder* df = GetDevicesFolder();
    if (df) df->DeleteChilds();
 
-   DOUT3(("Calling destructor of all memory pools"));
+   DOUT0(("Calling destructor of all memory pools"));
    df = GetPoolsFolder(false);
    if (df) df->DeleteChilds();
 

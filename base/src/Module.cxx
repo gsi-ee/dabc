@@ -22,7 +22,7 @@ dabc::Module::Module(const char* name, Command* cmd) :
    Folder(dabc::mgr(), (name ? name : (cmd ? cmd->GetStr("Name","module") : "module")), true),
    WorkingProcessor(),
    CommandClientBase(),
-   fWorkStatus(0),
+   fRunState(msStopped),
    fInputPorts(),
    fOutputPorts(),
    fPorts(),
@@ -51,7 +51,7 @@ dabc::Module::~Module()
    DOUT3(( "dabc::Module::~Module() %s thrd = %s mgr = %p",
              GetName(), DNAME(ProcessorThread()), dabc::mgr()));
 
-   fWorkStatus = -1;
+   fRunState = msHalted;
 
    // by this we stop any further events processing and can be sure that
    // destroying module items will not cause seg.fault
@@ -77,7 +77,7 @@ dabc::WorkingProcessor* dabc::Module::GetCfgMaster()
 
 void dabc::Module::OnThreadAssigned()
 {
-   if (WorkStatus()<0) {
+   if (IsHalted()) {
       EOUT(("Module %s must be deleted", GetName()));
       return;
    }
@@ -199,11 +199,11 @@ int dabc::Module::PreviewCommand(Command* cmd)
 
 bool dabc::Module::DoStart()
 {
-   if (WorkStatus()>0) return true;
+   if (IsRunning()) return true;
 
    BeforeModuleStart();
 
-   fWorkStatus = 1;
+   fRunState = msRunning;
 
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
@@ -217,14 +217,14 @@ bool dabc::Module::DoStart()
 
 bool dabc::Module::DoStop()
 {
-   if (WorkStatus()<=0) return false;
+   if (!IsRunning()) return false;
 
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
       if (item) item->DoStop();
    }
 
-   fWorkStatus = 0;
+   fRunState = msStopped;
 
    AfterModuleStop();
 
@@ -388,7 +388,7 @@ dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* pool, unsigne
 
 void dabc::Module::GetUserEvent(ModuleItem* item, uint16_t evid)
 {
-   if (WorkStatus()>0)
+   if (IsRunning())
       ProcessUserEvent(item, evid);
    else
       fLostEvents.Push(CodeEvent(evid, item->ItemId()));

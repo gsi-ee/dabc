@@ -145,7 +145,7 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
    for (int n=0;n<100;n++) {
       dabc::MicroSleep(100000);
-      if (m->WorkStatus()<=0) break;
+      if (!m->IsRunning()) break;
    }
 
    dabc::SetDebugLevel(10);

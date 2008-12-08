@@ -44,15 +44,19 @@ namespace bnet {
 bnet::ClusterApplication::ClusterApplication() :
    dabc::Application(xmlClusterClass),
    fSMMutex(),
-   fSMRunningSMCmd()
+   fSMRunningSMCmd(),
+   fNumNodes(0)
 {
    fNodeNames.clear();
    fNodeMask.clear();
 
+   fNumNodes = dabc::mgr()->NumNodes();
+   if (fNumNodes<1) fNumNodes = 1;
+
    SetParDflts(0); // mark all newly created parameters as invisible
 
    // register dependency against all states in the cluster, include ourself
-   for (int id=0; id<dabc::mgr()->NumNodes(); id++) {
+   for (int id=0; id<fNumNodes; id++) {
       std::string parname = FORMAT(("State_%d", id));
       dabc::Parameter* par = CreateParStr(parname.c_str(), dabc::Manager::stNull);
 
@@ -61,7 +65,7 @@ bnet::ClusterApplication::ClusterApplication() :
    }
 
    // subscribe to observe status changing on all worker nodes
-   for (int n=0;n<dabc::Manager::Instance()->NumNodes();n++) {
+   for (int n=0;n<fNumNodes;n++) {
 
       // no need to subscribe on status of itself - it is not exists
       if (n == dabc::Manager::Instance()->NodeId()) continue;
@@ -85,7 +89,7 @@ bnet::ClusterApplication::ClusterApplication() :
 
    SetParDflts();
 
-   CreateParInt(CfgNumNodes, dabc::mgr()->NumNodes());
+   CreateParInt(CfgNumNodes, fNumNodes);
    CreateParInt(CfgNodeId, dabc::mgr()->NodeId());
 
    CreateParStr(xmlNetDevice, dabc::typeSocketDevice);
@@ -103,12 +107,12 @@ bnet::ClusterApplication::~ClusterApplication()
 {
    // unregister dependency for all state parameters
 
-   for (int id=0;id<dabc::mgr()->NumNodes();id++) {
+   for (int id=0;id<fNumNodes;id++) {
       std::string parname = FORMAT(("State_%d", id));
       dabc::Parameter* par = FindPar(parname.c_str());
       if (par) {
          dabc::mgr()->Unsubscribe(par);
-         delete par;
+         DestroyPar(par);
       }
    }
 }
@@ -205,7 +209,7 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
 
       cmd_res = cmd_true;
 
-      for (int nodeid=0;nodeid<dabc::mgr()->NumNodes(); nodeid++) {
+      for (int nodeid=0;nodeid<fNumNodes; nodeid++) {
          if (!dabc::mgr()->IsNodeActive(nodeid)) continue;
 
          if (dabc::mgr()->CurrentState() != NodeCurrentState(nodeid)) {
@@ -231,11 +235,11 @@ bool bnet::ClusterApplication::StartDiscoverConfig(dabc::Command* mastercmd)
    fSendMatrix.clear();
    fRecvMatrix.clear();
 
-   std::string nullmask(dabc::mgr()->NumNodes(), 'o');
+   std::string nullmask(fNumNodes, 'o');
 
    ClusterDiscoverSet* set = 0;
 
-   for (int nodeid=0;nodeid<dabc::mgr()->NumNodes(); nodeid++) {
+   for (int nodeid=0;nodeid<fNumNodes; nodeid++) {
       const char* nodename = dabc::mgr()->GetNodeName(nodeid);
 
       fNodeNames.push_back(nodename);
