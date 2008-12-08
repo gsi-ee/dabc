@@ -8,41 +8,28 @@
      <node4 value="lxi012"/>
      <custport value="16015"/>
   </Variables>
-  <Context name="Gener_${node1}">
-    <Run>
-      <host value="${node1}"/>
-    </Run>
+  <Context host="${node1}" name="Gener_${host}">
     <Module name="Generator">
        <FirstProcId value="0"/>
     </Module>
   </Context>
-  <Context name="Gener_${node2}">
-    <Run>
-      <host value="${node2}"/>
-    </Run>
+  <Context host="${node2}" name="Gener_${host}">
     <Module name="Generator">
        <FirstProcId value="2"/>
     </Module>
   </Context>
-  <Context name="Gener_${node3}">
-    <Run>
-      <host value="${node3}"/>
-    </Run>
+  <Context host="${node3}" name="Gener_${host}">
     <Module name="Generator">
        <FirstProcId value="4"/>
     </Module>
   </Context>
-  <Context name="Gener_${node4}">
-    <Run>
-      <host value="${node4}"/>
-    </Run>
+  <Context host="${node4}" name="Gener_${host}">
     <Module name="Generator">
        <FirstProcId value="6"/>
     </Module>
   </Context>
-  <Context name="Controller">
+  <Context host="${node0}" name="Controller">
     <Run>
-      <host value="${node0}"/>
       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
     </Run>
     <Application class="bnet::Cluster">
@@ -52,36 +39,22 @@
        <NumEventsCombine value="1"/>
     </Application>
   </Context>
-  <Context name="Read_${node1}">
-    <Run>
-      <host value="${node1}"/>
-    </Run>
+  <Context host="${node1}" name="Read_${host}">
     <Application class="bnet::MbsWorker">
        <NumReadouts value="2"/>
        <Input0Cfg value="${node3}"/>
        <Input1Cfg value="${node4}"/>
     </Application>
   </Context>
-  <Context name="Read_${node3}">
-    <Run>
-      <host value="${node3}"/>
-    </Run>
+  <Context host="${node3}" name="Read_${host}">
     <Application class="bnet::MbsWorker">
        <NumReadouts value="2"/>
        <Input0Cfg value="${node1}"/>
        <Input1Cfg value="${node2}"/>
     </Application>
   </Context>
-  <Context name="Build_${node2}">
-    <Run>
-      <host value="${node2}"/>
-    </Run>
-  </Context>
-  <Context name="Build_${node4}">
-    <Run>
-      <host value="${node4}"/>
-    </Run>
-  </Context>
+  <Context host="${node2}" name="Build_${host}"/>
+  <Context host="${node4}" name="Build_${host}"/>
   <Defaults>
      <Context name="*">
        <Run>

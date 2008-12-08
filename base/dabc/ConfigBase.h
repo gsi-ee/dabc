@@ -16,10 +16,10 @@ namespace dabc {
    extern const char* xmlDefualtsNode;
    extern const char* xmlVariablesNode;
    extern const char* xmlNameAttr;
+   extern const char* xmlHostAttr;
    extern const char* xmlClassAttr;
    extern const char* xmlValueAttr;
    extern const char* xmlRunNode;
-   extern const char* xmlSshHost;
    extern const char* xmlSshUser;
    extern const char* xmlSshPort;
    extern const char* xmlSshInit;
@@ -69,7 +69,9 @@ namespace dabc {
          std::string       envDABCWORKDIR;     // dir where application is started
          std::string       envDABCNODEID;      // current node id
          std::string       envDABCNUMNODES;    // current number of nodes
-         std::string       envContext;         // context name
+         std::string       envHost;            // host name of current context
+         std::string       envContext;         // name of current context
+
 
          XMLNodePointer_t Dflts();
          XMLNodePointer_t Variables();

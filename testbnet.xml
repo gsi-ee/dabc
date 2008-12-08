@@ -1,44 +1,24 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context name="Cluster">
-    <Run>
-      <host>lxg0526</host>
-    </Run>
+  <Context host="lxg0526" name="Cluster">
     <Application class="bnet::Cluster">
-       <NetDevice>dabc::SocketDevice</NetDevice>
+       <NetDevice value="dabc::SocketDevice"/>
     </Application>
   </Context>
-  <Context name="Cont1">
-    <Run>
-      <host>lxi009</host>
-    </Run>
-  </Context>
-  <Context name="Cont2">
-    <Run>
-      <host>lxi010</host>
-    </Run>
-  </Context>
-  <Context name="Cont3">
-    <Run>
-      <host>lxi011</host>
-    </Run>
-  </Context>
-  <Context name="Cont4">
-    <Run>
-      <host>lxi012</host>
-    </Run>
-  </Context>
+  <Context host="lxi009" name="Cont1"/>
+  <Context host="lxi010" name="Cont2"/>
+  <Context host="lxi011" name="Cont3"/>
+  <Context host="lxi012" name="Cont4"/>
   <Defaults>
     <Context name="*">
-    <Run>
-       <user value="linev"/>
-       <port value="22"/>
-       <logfile value="test${DABCNODEID}.log"/>
-       <loglevel value="1"/>
-       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
-    </Run>
+      <Run>
+        <user value="linev"/>
+        <port value="22"/>
+        <logfile value="test${DABCNODEID}.log"/>
+        <loglevel value="1"/>
+        <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+      </Run>
     </Context>
-
     <Context name="Cont*">
        <Run>
           <lib value="libBnetTest.so"/>

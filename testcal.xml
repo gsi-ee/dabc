@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <dabc version="1">
-<Context name="Calbr">
+<Context host="lxg0517" name="Calbr">
   <Run>
-    <host value="lxg0517"/>
     <lib value="libDabcMbs.so"/>
     <lib value="libDabcKnut.so"/>
     <logfile value="testcal.log"/>

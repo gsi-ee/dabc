@@ -29,11 +29,12 @@ namespace dabc {
          XMLNodePointer_t fLastTop; // currently found item
          bool             fCurrStrict; // must have strict syntax match
 
-         std::string  fMgrName;
-         int          fMgrNodeId;
-         int          fMgrNumNodes;
-         std::string  fMgrDimNode;
-         int          fMgrDimPort;
+         std::string      fMgrHost;
+         std::string      fMgrName;
+         int              fMgrNodeId;
+         int              fMgrNumNodes;
+         std::string      fMgrDimNode;
+         int              fMgrDimPort;
 
          bool XDAQ_LoadLibs();
          bool XDAQ_ReadPars();
@@ -46,6 +47,7 @@ namespace dabc {
 
          bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0, const char* dimnode = 0);
 
+         std::string MgrHost() const { return fMgrHost; }
          const char* MgrName() const { return fMgrName.c_str(); }
          int MgrNodeId() const { return fMgrNodeId; }
          int MgrNumNodes() const { return fMgrNumNodes; }

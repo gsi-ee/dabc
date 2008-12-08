@@ -99,6 +99,7 @@ dabc::Configuration::Configuration(const char* fname) :
    fCurrItem(0),
    fLastTop(0),
    fCurrStrict(true),
+   fMgrHost(),
    fMgrName("Manager"),
    fMgrNodeId(0),
    fMgrNumNodes(0),
@@ -131,22 +132,15 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    else
       envDABCWORKDIR = ".";
 
-   const char* mgrname = 0;
+   fMgrHost     = NodeName(cfgid);
+   envHost      = fMgrHost;
 
-   if (IsXDAQ()) {
-      mgrname = fXml.GetAttr(fSelected, xmlXDAQurlattr);
-      if (mgrname) mgrname+=7; // remove http:// prefix
-   } else {
-      mgrname = fXml.GetAttr(fSelected, xmlNameAttr);
-   }
+   fMgrName     = ContextName(cfgid);
+   envContext   = fMgrName;
 
-   if (mgrname==0) mgrname = "dabc";
-
-   fMgrName     = ResolveEnv(mgrname);
    fMgrNodeId   = nodeid;
    fMgrNumNodes = numnodes;
 
-   envContext = fMgrName;
 
    if (numnodes>1) {
       dabc::SetDebugLevel(0);

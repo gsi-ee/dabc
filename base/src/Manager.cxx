@@ -218,12 +218,15 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    fDepend(0),
    fSigThrd(0),
    fSMmodule(0),
-   fCfg(cfg)
+   fCfg(cfg),
+   fCfgHost()
 {
    if (fInstance==0) {
       fInstance = this;
       dabc::SetDebugPrefix(managername);
    }
+
+   if (cfg) fCfgHost = cfg->MgrHost();
 
    SetParsHolder(this, "Pars");
 
@@ -2098,7 +2101,12 @@ void dabc::Manager::RunManagerMainLoop()
 bool dabc::Manager::Store(ConfigIO &cfg)
 {
    cfg.CreateItem(xmlContext);
-   cfg.CreateAttr(xmlNameAttr, GetName());
+
+   if (!fCfgHost.empty())
+      cfg.CreateAttr(xmlHostAttr, fCfgHost.c_str());
+
+   if (fCfgHost != GetName())
+      cfg.CreateAttr(xmlNameAttr, GetName());
 
    for (unsigned n=0; n<NumChilds(); n++) {
       Basic* child = GetChild(n);
@@ -2114,7 +2122,11 @@ bool dabc::Manager::Find(ConfigIO &cfg)
 {
    if (!cfg.FindItem(xmlContext)) return false;
 
-   if (!cfg.CheckAttr(xmlNameAttr, GetName())) return false;
+   if (!fCfgHost.empty())
+      if (!cfg.CheckAttr(xmlHostAttr, fCfgHost.c_str())) return false;
+
+   if (fCfgHost != GetName())
+      if (!cfg.CheckAttr(xmlNameAttr, GetName())) return false;
 
    return true;
 }

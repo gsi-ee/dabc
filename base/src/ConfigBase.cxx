@@ -168,10 +168,10 @@ namespace dabc {
    const char* xmlDefualtsNode     = "Defaults";
    const char* xmlVariablesNode    = "Variables";
    const char* xmlNameAttr         = "name";
+   const char* xmlHostAttr         = "host";
    const char* xmlClassAttr        = "class";
    const char* xmlValueAttr        = "value";
    const char* xmlRunNode          = "Run";
-   const char* xmlSshHost          = "host";
    const char* xmlSshUser          = "user";
    const char* xmlSshPort          = "port";
    const char* xmlSshInit          = "init";
@@ -314,11 +314,11 @@ bool dabc::ConfigBase::ProduceClusterFile(const char* fname, int numnodes)
 
    for(int n=0;n<numnodes;n++) {
       XMLNodePointer_t contnode = xml.NewChild(rootnode, 0, xmlContext);
+
+      xml.NewAttr(contnode, 0, xmlHostAttr,n==0 ? "lxg0526" : FORMAT(("lxi%03d", n+5)));
       xml.NewAttr(contnode, 0, xmlNameAttr, FORMAT(("Cont%d", n)));
 
-      XMLNodePointer_t runnode = xml.NewChild(contnode, 0, xmlRunNode);
-
-      xml.NewChild(runnode, 0, xmlSshHost, n==0 ? "lxg0526" : FORMAT(("lxi%03d", n+5)));
+//      XMLNodePointer_t runnode = xml.NewChild(contnode, 0, xmlRunNode);
 //      xml.NewChild(runnode, 0, xmlSshUser, "linev");
 //      xml.NewChild(runnode, 0, xmlSshPort, "22");
    }
@@ -530,16 +530,22 @@ std::string dabc::ConfigBase::NodeName(unsigned id)
    if (IsXDAQ()) return XDAQ_NodeName(id);
    XMLNodePointer_t contnode = FindContext(id);
    if (contnode == 0) return std::string("");
-   return Find1(contnode, "", xmlRunNode, xmlSshHost);
+   const char* host = fXml.GetAttr(contnode, xmlHostAttr);
+   if (host == 0) return std::string("");
+   return ResolveEnv(host);
 }
 
 std::string dabc::ConfigBase::ContextName(unsigned id)
 {
    if (IsXDAQ()) return XDAQ_ContextName(id);
    XMLNodePointer_t contnode = FindContext(id);
-   const char* name = fXml.GetAttr(contnode,xmlNameAttr);
-   if (name == 0) return std::string("");
-   return ResolveEnv(name);
+   std::string oldhost = envHost;
+   envHost = NodeName(id);
+   const char* name = fXml.GetAttr(contnode, xmlNameAttr);
+   std::string res = name ? ResolveEnv(name) : "";
+   if (res.empty()) res = envHost;
+   envHost = oldhost;
+   return res;
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)
@@ -594,6 +600,7 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
             if (var==xmlDABCWORKDIR) value = envDABCWORKDIR; else
             if (var==xmlDABCNODEID) value = envDABCNODEID; else
             if (var==xmlDABCNUMNODES) value = envDABCNUMNODES; else
+            if (var==xmlHostAttr) value = envHost; else
             if (var==xmlContext) value = envContext;
 
          if (value.empty()) value = GetEnv(var.c_str());
@@ -632,18 +639,16 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
 
    envDABCNODEID = dabc::format("%u", id);
    envDABCNUMNODES = dabc::format("%u", NumNodes());
+
+   envHost = NodeName(id);
    envContext = ContextName(id);
 
    envDABCSYS = Find1(contnode, "", xmlRunNode, xmlDABCSYS);
    envDABCUSERDIR = Find1(contnode, "", xmlRunNode, xmlDABCUSERDIR);
    envDABCWORKDIR = Find1(contnode, "", xmlRunNode, xmlWorkDir);
 
-   std::string hostname = Find1(contnode, "", xmlRunNode, xmlSshHost);
+   std::string hostname = envHost;
    if (hostname.empty()) hostname = "localhost";
-//   if (hostname==0) {
-//      EOUT(("%s is not found", xmlSshHost));
-//      return std::string("");
-//   }
 
    std::string username = Find1(contnode, "", xmlRunNode, xmlSshUser);
    std::string portid = Find1(contnode, "", xmlRunNode, xmlSshPort);

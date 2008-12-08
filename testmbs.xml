@@ -1,8 +1,7 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context name="Server">
+  <Context host="lxi009" name="Server">
     <Run>
-      <host value="lxi009"/>
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsGenerator"/>
     </Run>
@@ -13,9 +12,8 @@
         </Port>
      </Module>
   </Context>
-  <Context name="Client">
+  <Context host="lxi010" name="Client">
     <Run>
-      <host value="lxi010"/>
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsClient"/>
     </Run>

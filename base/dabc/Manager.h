@@ -576,6 +576,7 @@ namespace dabc {
          StateMachineModule   *fSMmodule;
 
          Configuration        *fCfg;
+         std::string           fCfgHost;
 
          static Manager       *fInstance;
 
