@@ -116,6 +116,7 @@ std::string dabc::ConfigBase::XDAQ_SshArgs(unsigned instance, int ctrlkind, int 
    if (kind == kindStart) {
       res += FORMAT((" export DABCSYS=%s; ", dabcsys));
       res += " export LD_LIBRARY_PATH=$DABCSYS/lib:$LD_LIBRARY_PATH;";
+      res += " . $DABCSYS/script/nodelogin.sh;";
       res += FORMAT((" cd %s;", topworkdir));
       res += FORMAT((" $DABCSYS/bin/dabc_run %s -cfgid %u -nodeid %u -numnodes %u", topcfgfile, instance, instance, NumNodes()));
       if (ctrlkind == kindSctrl)
@@ -755,8 +756,6 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
          res += " if [ z $DABCSYS ] ; then echo DABCSYS not specified; exit 7; fi;";
          res += dabc::format(" export LD_LIBRARY_PATH=%s:$LD_LIBRARY_PATH;", ld.c_str());
       }
-
-      res += " . $DABCSYS/script/nodelogin.sh;";
 
       if (!workdir.empty()) res += dabc::format(" cd %s;", ResolveEnv(workdir).c_str());
 
