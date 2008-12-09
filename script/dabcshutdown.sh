@@ -42,8 +42,10 @@ for FULLNAME in $CONTEXTLIST;
                 let "SUBCOUNT+=1"; 
             done
         IFS=$IFSOLD
-    echo killing all xdaq applications on node $NODENAME ...   
-    ssh -l $USER $NODENAME  $DABCSYS/script/killxdaq.sh xdaq &
+#    echo killing all xdaq applications on node $NODENAME ...   
+#    ssh -l $USER $NODENAME  $DABCSYS/script/killxdaq.sh xdaq &
+    echo killing all dabc_run applications on node $NODENAME ...   
+    ssh -l $USER $NODENAME  $DABCSYS/script/killxdaq.sh dabc_run &
     echo        ready.
 
 done
