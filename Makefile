@@ -25,7 +25,7 @@ DABC_PLUGINS += $(wildcard applications/*)
 
 -include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
 
--include controls/xdaq/Makefile.mk
+# -include controls/xdaq/Makefile.mk
 
 -include gui/java/Makefile.mk
 
@@ -38,7 +38,8 @@ libs::
 clean::
 	
 package:: clean
-	tar cf dabc.tar Makefile *.xml base/ build/ config/ controls/simple $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 
+	rm -f dabc.tar.gz
+	tar cf dabc.tar Makefile *.xml base/ build/ config/ controls/simple controls/dimcontrol gui $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 
 	gzip dabc.tar
 	echo "dabc.tar.gz done" 
 
