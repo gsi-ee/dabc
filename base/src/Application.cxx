@@ -159,10 +159,7 @@ bool dabc::Application::Store(ConfigIO &cfg)
    if (strcmp(ClassName(), MasterClassName()) != 0)
       cfg.CreateAttr(xmlClassAttr, ClassName());
 
-   for (unsigned n=0; n<NumChilds(); n++) {
-      Basic* child = GetChild(n);
-      if (child!=0) child->Store(cfg);
-   }
+   StoreChilds(cfg);
 
    cfg.PopItem();
 

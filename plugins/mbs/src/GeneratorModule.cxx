@@ -22,17 +22,17 @@ double Gauss_Rnd(double mean, double sigma)
 }
 
 
-mbs::GeneratorModule::GeneratorModule(const char* name) :
-   dabc::ModuleAsync(name)
+mbs::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd)
 {
    fEventCount = 0;
 
-   fStartStopPeriod = GetCfgInt("StartStopPeriod", 0);
-   fNumSubevents = GetCfgInt("NumSubevents", 2);
-   fFirstProcId = GetCfgInt("FirstProcId", 0);
-   fSubeventSize = GetCfgInt("SubeventSize", 32);
-   fIsGo4RandomFormat = GetCfgBool("Go4Random", true);
-   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16*1024);
+   fStartStopPeriod = GetCfgInt("StartStopPeriod", 0, cmd);
+   fNumSubevents = GetCfgInt("NumSubevents", 2, cmd);
+   fFirstProcId = GetCfgInt("FirstProcId", 0, cmd);
+   fSubeventSize = GetCfgInt("SubeventSize", 32, cmd);
+   fIsGo4RandomFormat = GetCfgBool("Go4Random", true, cmd);
+   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16*1024, cmd);
 
    DOUT1(("Generator buffer size %u sub %u", fBufferSize, fNumSubevents));
 

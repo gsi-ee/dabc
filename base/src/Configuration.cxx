@@ -371,7 +371,27 @@ dabc::Basic* dabc::Configuration::GetObjParent(Basic* obj, int lvl)
 
 std::string dabc::Configuration::Find(Basic* obj, const char* findattr)
 {
-   if (obj==0) return std::string();
+   std::string res;
+
+   FindItem(obj, res, 0, findattr);
+
+   return res;
+}
+
+dabc::XMLNodePointer_t dabc::Configuration::FindSubItem(XMLNodePointer_t node, const char* name)
+{
+   if ((node==0) || (name==0) || (strlen(name)==0)) return node;
+
+   const char* pos = strchr(name, '/');
+   if (pos==0) return FindChild(node, name);
+
+   std::string subname(name, pos-name);
+   return FindSubItem(FindChild(node, subname.c_str()), pos+1);
+}
+
+bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* finditem, const char* findattr)
+{
+   if (obj==0) return false;
 
    int maxlevel = 0;
    Basic* prnt = 0;
@@ -383,7 +403,7 @@ std::string dabc::Configuration::Find(Basic* obj, const char* findattr)
    DOUT3(("Configuration::Find object %s lvl = %d  attr = %s",
           obj->GetFullName().c_str(), maxlevel, (findattr ? findattr : "---")));
 
-   if (prnt==0) return std::string();
+   if (prnt==0) return false;
 
    // first, try strict syntax
    fCurrStrict = true;
@@ -393,7 +413,7 @@ std::string dabc::Configuration::Find(Basic* obj, const char* findattr)
 
    while (level>=0) {
       prnt = GetObjParent(obj, level);
-      if (prnt==0) return std::string();
+      if (prnt==0) return false;
 
       // search on same level several items - it may match attributes only with second or third
       do {
@@ -402,12 +422,15 @@ std::string dabc::Configuration::Find(Basic* obj, const char* findattr)
       } while (prnt != 0);
       if (prnt==0) break;
 
-      if (level--==0)
-         if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
-            std::string res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
+      if (level--==0) {
+         if (finditem!=0) fCurrItem = FindSubItem(fCurrItem, finditem);
+
+         if ((fCurrItem!=0) && ((findattr==0) || fXml.HasAttr(fCurrItem, findattr))) {
+            res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
             DOUT1(("Exact found %s res = %s", obj->GetFullName().c_str(), res.c_str()));
-            return res;
+            return true;
          }
+      }
    }
 
    fCurrStrict = false;
@@ -422,17 +445,19 @@ std::string dabc::Configuration::Find(Basic* obj, const char* findattr)
       level = maxlevel;
       while (level >= 0) {
          prnt = GetObjParent(obj, level);
-         if (prnt == 0) return std::string();
+         if (prnt == 0) return false;
 
          DOUT3(("Search parent %s", prnt->GetName()));
 
          if (prnt->Find(*this)) {
-            if (level--==0)
-               if ((findattr==0) || fXml.HasAttr(fCurrItem, findattr)) {
-                  std::string res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
+            if (level--==0) {
+               if (finditem!=0) fCurrItem = FindSubItem(fCurrItem, finditem);
+               if ((fCurrItem!=0) && ((findattr==0) || fXml.HasAttr(fCurrItem, findattr))) {
+                  res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
                   DOUT3(("Found object %s res = %s", obj->GetFullName().c_str(), res.c_str()));
-                  return res;
+                  return true;
                }
+            }
          } else
          if (fCurrChld == 0) {
             level++;
@@ -455,5 +480,5 @@ std::string dabc::Configuration::Find(Basic* obj, const char* findattr)
 
    } while (maxlevel>0);
 
-   return std::string();
+   return false;
 }

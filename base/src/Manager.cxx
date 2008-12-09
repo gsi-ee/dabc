@@ -397,6 +397,17 @@ void dabc::Manager::ProcessDestroyQueue()
    } while (obj!=0);
 }
 
+bool dabc::Manager::FindInConfiguration(dabc::Folder* fold, const char* itemname)
+{
+   LockGuard lock(fMgrMutex);
+
+   if (fCfg==0) return false;
+
+   std::string res;
+
+   return fCfg->FindItem(fold, res, itemname, 0);
+}
+
 void dabc::Manager::FireParamEvent(Parameter* par, int evid)
 {
    if (par==0) return;
@@ -568,10 +579,7 @@ dabc::Application* dabc::Manager::GetApp()
 
 dabc::MemoryPool* dabc::Manager::FindPool(const char* name)
 {
-   Folder* folder = GetPoolsFolder(false);
-   if (folder==0) return 0;
-
-   return dynamic_cast<dabc::MemoryPool*> (folder->FindChild(name));
+   return dynamic_cast<dabc::MemoryPool*> (FindChild(name));
 }
 
 bool dabc::Manager::DeletePool(const char* name)
@@ -631,8 +639,7 @@ void dabc::Manager::DoHaltManager()
    if (df) df->DeleteChilds();
 
    DOUT0(("Calling destructor of all memory pools"));
-   df = GetPoolsFolder(false);
-   if (df) df->DeleteChilds();
+   DeleteChilds(-1, clMemoryPool);
 
    // to be on the safe side, destroy everything in the queue
    ProcessDestroyQueue();
@@ -954,12 +961,8 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       else
          cmd_res = cmd_false;
    } else
-   if (cmd->IsName(CmdCreatePool::CmdName())) {
-      const char* poolname = cmd->GetPar("PoolName");
-      unsigned numbuffers = cmd->GetUInt("NumBuffers", 0);
-      unsigned buffersize = cmd->GetUInt("BufferSize", 0);
-      unsigned headersize = cmd->GetInt("HeaderSize", 0);
-      cmd_res = cmd_bool(CreateMemoryPool(poolname, buffersize, numbuffers, 0, headersize));
+   if (cmd->IsName(CmdCreateMemoryPool::CmdName())) {
+      cmd_res = cmd_bool(DoCreateMemoryPool(cmd));
    } else
    if (cmd->IsName(CmdCreateMemoryPools::CmdName())) {
       cmd_res = DoCreateMemoryPools();
@@ -1170,68 +1173,43 @@ void dabc::Manager::RecvOverCommandChannel(const char* cmddata)
    }
 }
 
-unsigned RoundBufferSize(unsigned bufsize)
+bool dabc::Manager::CreateMemoryPool(const char* poolname,
+                                     unsigned buffersize,
+                                     unsigned numbuffers,
+                                     unsigned numincrement,
+                                     unsigned headersize,
+                                     unsigned numsegments)
 {
-   if (bufsize==0) return 0;
-
-   unsigned size = 256;
-   while (size<bufsize) size*=2;
-   return size;
+   return Execute(new CmdCreateMemoryPool(poolname, buffersize, numbuffers, numincrement, headersize, numsegments));
 }
 
-dabc::MemoryPool* dabc::Manager::CreateMemoryPool(const char* poolname,
-                                                  unsigned buffersize,
-                                                  unsigned numbuffers,
-                                                  unsigned numincrement,
-                                                  unsigned headersize,
-                                                  unsigned numsegments)
+bool dabc::Manager::DoCreateMemoryPool(Command* cmd)
 {
-   if (poolname==0) return 0;
+   if (cmd==0) return false;
 
-   MemoryPool* mem_pool = FindPool(poolname);
+   const char* poolname = cmd->GetPar(xmlPoolName);
+   if (poolname==0) {
+      EOUT(("Pool name is not specified"));
+   }
+
+   MemoryPool* pool = FindPool(poolname);
 
    // round always buffer size to 256 limits
 
-   if (mem_pool==0) {
+   if (pool==0) {
 
-      mem_pool = new dabc::MemoryPool(GetPoolsFolder(true), poolname);
+      pool = new dabc::MemoryPool(this, poolname);
 
-      mem_pool->UseMutex();
+      pool->UseMutex();
 
-      mem_pool->SetMemoryLimit(0); // one can extend pool as much as system can
-      mem_pool->SetCleanupTimeout(1.0); // when changed, memory pool can be shrinked again
+      pool->SetMemoryLimit(0); // one can extend pool as much as system can
+      pool->SetCleanupTimeout(1.0); // when changed, memory pool can be shrink again
 
-      mem_pool->AssignProcessorToThread(ProcessorThread());
+      pool->AssignProcessorToThread(ProcessorThread());
    }
 
-   if (mem_pool->IsMemLayoutFixed()) {
-      if (!mem_pool->CanHasBufferSize(buffersize)) {
-         EOUT(("Memory pool structure is fixed and pool will not provide buffers of size %u", buffersize));
-      }
-      if (!mem_pool->CanHasHeaderSize(headersize)) {
-         EOUT(("Memory pool structure is fixed and pool will not provide headers of size %u", headersize));
-      }
 
-      return mem_pool;
-   }
-
-   if (numbuffers>0) {
-
-      if (buffersize>0) {
-
-         buffersize = RoundBufferSize(buffersize);
-
-         DOUT3(("Create pool:%s buffers:%u number:%u", poolname, buffersize, numbuffers));
-
-         mem_pool->AllocateMemory(buffersize, numbuffers,  numincrement);
-      }
-
-      DOUT3(("Create pool:%s references:%u headersize:%u", poolname, numbuffers, headersize));
-
-      mem_pool->AllocateReferences(headersize, numbuffers, numincrement > 0 ? numincrement : numbuffers / 2, numsegments);
-   }
-
-   return mem_pool;
+   return pool->Allocate(cmd);
 }
 
 dabc::MemoryPool* dabc::Manager::ConfigurePool(const char* poolname,
@@ -1244,7 +1222,7 @@ dabc::MemoryPool* dabc::Manager::ConfigurePool(const char* poolname,
       mem_pool->SetMemoryLimit(size_limit);
       mem_pool->SetCleanupTimeout(cleanup_timeout);
       if (fixlayout) {
-         DOUT2(("Fix layou of pool %s", poolname));
+         DOUT2(("Fix layout of pool %s", poolname));
          mem_pool->SetLayoutFixed();
       }
    }
@@ -1274,14 +1252,13 @@ bool dabc::Manager::DoCreateMemoryPools()
 
          if (selectedname==0) {
             selectedname = pool->GetName();
-            selectedsize = RoundBufferSize(pool->GetRequiredBufferSize());
+            selectedsize = dabc::MemoryPool::RoundBufferSize(pool->GetRequiredBufferSize());
          }
 
          if (pool->IsName(selectedname) &&
-             (selectedsize == RoundBufferSize(pool->GetRequiredBufferSize()))) {
+             (selectedsize == dabc::MemoryPool::RoundBufferSize(pool->GetRequiredBufferSize()))) {
                totalbufnum += pool->GetRequiredBuffersNumber();
                if (headersize < pool->GetRequiredHeaderSize()) headersize = pool->GetRequiredHeaderSize();
-
 
                if (increment < pool->GetRequiredIncrement()) increment = pool->GetRequiredIncrement();
                pools.Push(pool);
@@ -1291,12 +1268,17 @@ bool dabc::Manager::DoCreateMemoryPools()
       if ((selectedname!=0) && (pools.Size()>0)) {
 
          DOUT3(("Start creating pool %s %u x 0x%x, increment: %u", selectedname, totalbufnum, selectedsize, increment));
-         MemoryPool* mem_pool =
-             CreateMemoryPool(selectedname, selectedsize, totalbufnum, increment, headersize, 8);
-         if (mem_pool==0) {
+         if (!CreateMemoryPool(selectedname, selectedsize, totalbufnum, increment, headersize, 8)) {
             EOUT(("Was not able to create memory pool %s", selectedname));
-            exit(1);
+            res = false;
          }
+
+         MemoryPool* mem_pool = FindPool(selectedname);
+         if (mem_pool==0) {
+            EOUT(("Pool %s cannot be found", selectedname));
+            res = false;
+         }
+
          DOUT3(("Done creating pool %s", selectedname));
 
          while (pools.Size()>0)
@@ -1510,10 +1492,9 @@ bool dabc::Manager::DoCleanupManager(int appid)
    // here we delete all pools
 
    DOUT3(("Deleting app pools"));
-   Folder* pf = GetPoolsFolder();
-   if (pf) pf->DeleteChilds(appid);
+   DeleteChilds(appid, clMemoryPool);
 
-   pf = GetDevicesFolder();
+   Folder* pf = GetDevicesFolder();
    DOUT3(( "Deleting app devices num = %u", (pf ? pf->NumChilds() : 0)));
    if (pf) pf->DeleteChilds(appid);
 
@@ -2108,10 +2089,7 @@ bool dabc::Manager::Store(ConfigIO &cfg)
    if (fCfgHost != GetName())
       cfg.CreateAttr(xmlNameAttr, GetName());
 
-   for (unsigned n=0; n<NumChilds(); n++) {
-      Basic* child = GetChild(n);
-      if (child!=0) child->Store(cfg);
-   }
+   StoreChilds(cfg);
 
    cfg.PopItem();
 

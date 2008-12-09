@@ -122,9 +122,8 @@ void roc::CalibrationModule::CalibRec::TimeStampOverflow()
    }
 }
 
-roc::CalibrationModule::CalibrationModule(const char* name,
-                                      dabc::Command* cmd) :
-   dabc::ModuleAsync(name),
+roc::CalibrationModule::CalibrationModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd),
    fPool(0),
    f_inpptr(),
    fOutBuf(0),

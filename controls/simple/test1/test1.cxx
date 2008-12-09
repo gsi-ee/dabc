@@ -282,10 +282,6 @@ void CreateAllModules(dabc::StandaloneManager &m, int numworkers = 0)
 
    DOUT1(("Do CreateMemoryPools "));
 
-   // create completely minimum for recv pool
-//   for (int node=0; node<m.NumNodes();node++)
-//      m.SubmitRemote(cli, new dabc::CmdCreatePool("RecvPool", TestBufferSize * m.NumNodes() * TestRecvQueueSize * 2,  TestBufferSize), node);
-
    for (int node=FirstNode;node<m.NumNodes();node++)
       m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
 

@@ -41,6 +41,8 @@ namespace dabc {
 
          Basic* GetObjParent(Basic* obj, int lvl);
 
+         XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char* name);
+
       public:
          Configuration(const char* fname = 0);
          virtual ~Configuration();
@@ -74,6 +76,8 @@ namespace dabc {
 
          virtual std::string Find(Basic* obj, const char* findattr = 0);
          virtual std::string GetAttrValue(const char* name);
+
+         bool FindItem(Basic* obj, std::string& res, const char* finditem = 0, const char* findattr = 0);
    };
 
 

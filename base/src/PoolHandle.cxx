@@ -4,6 +4,8 @@
 #include "dabc/MemoryPool.h"
 #include "dabc/Parameter.h"
 #include "dabc/threads.h"
+#include "dabc/Manager.h"
+#include "dabc/Configuration.h"
 
 dabc::PoolHandle::PoolHandle(Basic* parent, const char* name,
                              BufferNum_t number, BufferNum_t increment, BufferSize_t size) :
@@ -15,8 +17,18 @@ dabc::PoolHandle::PoolHandle(Basic* parent, const char* name,
    fRequiredSize(size),
    fRequiredHeaderSize(0),
    fUsagePar(0),
-   fUpdateTimeout(-1)
+   fUpdateTimeout(-1),
+   fStoreHandle(false)
 {
+   dabc::MemoryPool* mem = dabc::mgr()->FindPool(name);
+   if (mem!=0)
+      AssignPool(mem);
+   else {
+      fStoreHandle = true;
+      if (number>0) fRequiredNumber = GetCfgInt(xmlNumBuffers, number);
+      if (increment>0) fRequiredIncrement = GetCfgInt(xmlNumIncrement, increment);
+      if (size>0) fRequiredSize = GetCfgInt(xmlBufferSize, size);
+   }
 }
 
 dabc::PoolHandle::~PoolHandle()
@@ -106,4 +118,28 @@ double dabc::PoolHandle::UsedRatio() const
    uint64_t usedsize = fPool->GetUsedSize();
 
    return totalsize>0 ? 1.* usedsize / totalsize : 0.;
+}
+
+bool dabc::PoolHandle::Store(ConfigIO &cfg)
+{
+   if (!fStoreHandle) return true;
+
+   cfg.CreateItem(clPoolHandle);
+
+   cfg.CreateAttr(xmlNameAttr, GetName());
+
+   StoreChilds(cfg);
+
+   cfg.PopItem();
+
+   return true;
+}
+
+bool dabc::PoolHandle::Find(ConfigIO &cfg)
+{
+   if (!fStoreHandle) return true;
+
+   if (!cfg.FindItem(clPoolHandle)) return false;
+
+   return cfg.CheckAttr(xmlNameAttr, GetName());
 }

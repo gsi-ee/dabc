@@ -21,7 +21,7 @@ namespace dabc {
 
          virtual void AddChild(Basic* child);
          virtual void RemoveChild(Basic* child);
-         void DeleteChilds(int appid = -1);
+         void DeleteChilds(int appid = -1, const char* classname = 0);
          void RemoveChilds();
 
          unsigned NumChilds() const;
@@ -41,6 +41,8 @@ namespace dabc {
       protected:
 
          virtual void _SetParent(Mutex* mtx, Basic* parent);
+
+         void StoreChilds(ConfigIO &cfg);
 
          Basic* _FindChild(const char* name) const;
 

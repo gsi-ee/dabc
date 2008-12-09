@@ -307,6 +307,13 @@ bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const
    return defvalue;
 }
 
+bool dabc::WorkingProcessor::HasCfgPar(const char* name)
+{
+   if (dabc::mgr()==0) return false;
+
+   return dabc::mgr()->FindInConfiguration(GetTopParsFolder(), name);
+}
+
 std::string dabc::WorkingProcessor::GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd)
 {
    if (cmd && cmd->HasPar(name))
@@ -317,11 +324,16 @@ std::string dabc::WorkingProcessor::GetCfgStr(const char* name, const std::strin
       if (cfgsrc->FindPar(name))
          return cfgsrc->GetParStr(name, dfltvalue);
       else
+      if (cfgsrc->HasCfgPar(name))
+         break;
+      else
          cfgsrc = cfgsrc->GetCfgMaster();
 
-   Parameter* par = CreateParStr(name, dfltvalue.c_str());
+   if (cfgsrc==0) cfgsrc = this;
+
+   Parameter* par = cfgsrc->CreateParStr(name, dfltvalue.c_str());
    if (par) par->SetFixed(true);
-   return GetParStr(name, dfltvalue);
+   return cfgsrc->GetParStr(name, dfltvalue);
 }
 
 double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, Command* cmd)
@@ -334,11 +346,16 @@ double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, 
       if (cfgsrc->FindPar(name))
          return cfgsrc->GetParDouble(name, dfltvalue);
       else
+      if (cfgsrc->HasCfgPar(name))
+         break;
+      else
          cfgsrc = cfgsrc->GetCfgMaster();
 
-   Parameter* par = CreateParDouble(name, dfltvalue);
+   if (cfgsrc==0) cfgsrc = this;
+
+   Parameter* par = cfgsrc->CreateParDouble(name, dfltvalue);
    if (par) par->SetFixed(true);
-   return GetParDouble(name, dfltvalue);
+   return cfgsrc->GetParDouble(name, dfltvalue);
 }
 
 int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* cmd)
@@ -351,11 +368,16 @@ int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* 
       if (cfgsrc->FindPar(name))
          return cfgsrc->GetParInt(name, dfltvalue);
       else
+      if (cfgsrc->HasCfgPar(name))
+         break;
+      else
          cfgsrc = cfgsrc->GetCfgMaster();
 
-   Parameter* par = CreateParInt(name, dfltvalue);
+   if (cfgsrc==0) cfgsrc = this;
+
+   Parameter* par = cfgsrc->CreateParInt(name, dfltvalue);
    if (par) par->SetFixed(true);
-   return GetParInt(name, dfltvalue);
+   return cfgsrc->GetParInt(name, dfltvalue);
 }
 
 bool dabc::WorkingProcessor::GetCfgBool(const char* name, bool dfltvalue, Command* cmd)
@@ -368,11 +390,16 @@ bool dabc::WorkingProcessor::GetCfgBool(const char* name, bool dfltvalue, Comman
       if (cfgsrc->FindPar(name))
          return cfgsrc->GetParBool(name, dfltvalue);
       else
+      if (cfgsrc->HasCfgPar(name))
+         break;
+      else
          cfgsrc = cfgsrc->GetCfgMaster();
 
-   Parameter* par = CreateParBool(name, dfltvalue);
+   if (cfgsrc==0) cfgsrc = this;
+
+   Parameter* par = cfgsrc->CreateParBool(name, dfltvalue);
    if (par) par->SetFixed(true);
-   return GetParBool(name, dfltvalue);
+   return cfgsrc->GetParBool(name, dfltvalue);
 }
 
 bool dabc::WorkingProcessor::SetParStr(const char* name, const char* value)

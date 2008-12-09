@@ -95,7 +95,6 @@ namespace dabc {
          unsigned OutputNumber(Port* port);
          unsigned IOPortNumber(Port* port);
 
-         Folder* GetPoolsFolder(bool force = false);
          Folder* GetObjFolder(bool force = false);
          Folder* GetCmdDefFolder(bool force = false);
          Folder* GetTimersFolder(bool force = false);

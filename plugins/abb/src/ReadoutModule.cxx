@@ -14,15 +14,16 @@ abb::ReadoutModule::ReadoutModule(const char* name, dabc::Command* cmd) :
    fPool(0),
    fStandalone(true)
 {
-         int buffsize = cmd->GetInt(ABB_COMPAR_BUFSIZE, 16384);
-         int queuelen = cmd->GetInt(ABB_COMPAR_QLENGTH, 10);
-         fStandalone = (bool) cmd->GetInt(ABB_COMPAR_STALONE, 1);
-         const char* poolname=cmd->GetStr(ABB_COMPAR_POOL,"ABBReadPool");
-         DOUT1(("new abb::ReadoutModule %s buff %d queue %d, poolname=%s, standalone=%d", GetName(), buffsize, queuelen,poolname, fStandalone));
-         if(fStandalone)
-            fPool = CreatePool(poolname, 200, buffsize); // specify pool
-         else
-            fPool = CreatePool(poolname); // use external pool of bnet readout
+   int buffsize = cmd->GetInt(ABB_COMPAR_BUFSIZE, 16384);
+   int queuelen = cmd->GetInt(ABB_COMPAR_QLENGTH, 10);
+   fStandalone = (bool) cmd->GetInt(ABB_COMPAR_STALONE, 1);
+   const char* poolname=cmd->GetStr(ABB_COMPAR_POOL,"ABBReadPool");
+   DOUT1(("new abb::ReadoutModule %s buff %d queue %d, poolname=%s, standalone=%d", GetName(), buffsize, queuelen,poolname, fStandalone));
+   if(fStandalone)
+      fPool = CreatePool(poolname, 200, buffsize); // specify pool
+   else
+      fPool = CreatePool(poolname); // use external pool of bnet readout
+
    CreateInput("Input", fPool, queuelen);
    CreateRateParameter("DMAReadout", false, 1., "Input","");
 

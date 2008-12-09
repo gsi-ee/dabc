@@ -22,6 +22,9 @@ namespace dabc {
          virtual ~PoolHandle();
 
       public:
+
+         virtual const char* ClassName() const { return clPoolHandle; }
+
          /** sets how many buffers required for the envelope */
          void AddPortRequirements(BufferNum_t number, BufferSize_t headersize);
 
@@ -47,6 +50,9 @@ namespace dabc {
 
          void SetUsageParameter(Parameter* par, double interval = 1.);
 
+         virtual bool Store(ConfigIO &cfg);
+         virtual bool Find(ConfigIO &cfg);
+
       protected:
 
          virtual void ProcessEvent(EventId evid);
@@ -62,6 +68,8 @@ namespace dabc {
 
          DoubleParameter  *fUsagePar;
          double            fUpdateTimeout;
+
+         bool              fStoreHandle;
    };
 
 }

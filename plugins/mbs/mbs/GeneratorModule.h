@@ -23,7 +23,7 @@ namespace mbs {
          bool        fIsGo4RandomFormat;
 
       public:
-         GeneratorModule(const char* name);
+         GeneratorModule(const char* name, dabc::Command* cmd = 0);
 
          virtual void ProcessOutputEvent(dabc::Port* port);
    };

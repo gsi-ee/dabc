@@ -79,6 +79,8 @@ namespace dabc {
          double GetCfgDouble(const char* name, double dfltvalue, Command* cmd = 0);
          bool GetCfgBool(const char* name, bool dfltvalue, Command* cmd = 0);
 
+         bool HasCfgPar(const char* name);
+
       protected:
 
          // Method is called when requested time point is reached

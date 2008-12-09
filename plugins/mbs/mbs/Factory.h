@@ -17,6 +17,8 @@ namespace mbs {
 
          virtual dabc::DataOutput* CreateDataOutput(const char* typ);
 
+         virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
+
       protected:
 
    };

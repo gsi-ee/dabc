@@ -60,20 +60,6 @@ namespace dabc {
             }
    };
 
-   class CmdCreatePool : public Command {
-      public:
-         static const char* CmdName() { return "CreatePool"; }
-
-         CmdCreatePool(const char* name, unsigned totalsize, unsigned buffersize, unsigned headersize = 0) :
-            Command(CmdName())
-         {
-            SetPar("PoolName", name);
-            SetUInt("NumBuffers", buffersize>0 ? totalsize / buffersize : 1);
-            SetUInt("BufferSize", buffersize);
-            SetUInt("HeaderSize", headersize);
-         }
-   };
-
    class CmdCreateMemoryPools : public Command {
       public:
          static const char* CmdName() { return "CreateMemoryPools"; }
@@ -348,7 +334,6 @@ namespace dabc {
          static const char* ThreadsFolderName() { return "Threads"; }
          static const char* DevicesFolderName() { return "Devices"; }
          static const char* FactoriesFolderName() { return "Factories"; }
-         static const char* PoolsFolderName()   { return "Pools"; }
          static const char* LocalDeviceName()   { return "local"; }
 
          static const char* MgrThrdName()       { return "ManagerThrd"; }
@@ -356,7 +341,6 @@ namespace dabc {
          Folder* GetFactoriesFolder(bool force = false) { return GetFolder(FactoriesFolderName(), force, false); }
          Folder* GetDevicesFolder(bool force = false) { return GetFolder(DevicesFolderName(), force, true); }
          Folder* GetThreadsFolder(bool force = false) { return GetFolder(ThreadsFolderName(), force, true); }
-         Folder* GetPoolsFolder(bool force = false) { return GetFolder(PoolsFolderName(), force, true); }
 
          Module* FindModule(const char* name);
          Port* FindPort(const char* name);
@@ -409,12 +393,12 @@ namespace dabc {
            * In case when expanding of pool is allowed, one can limit total size
            * of pool via ConfigurePool method. There one can also specify how often
            * memory pool should try to cleanup unused memory.*/
-         MemoryPool* CreateMemoryPool(const char* poolname,
-                                      unsigned buffersize,
-                                      unsigned numbuffers,
-                                      unsigned numincrement = 0,
-                                      unsigned headersize = 0x20,
-                                      unsigned numsegments = 8);
+         bool CreateMemoryPool(const char* poolname,
+                               unsigned buffersize,
+                               unsigned numbuffers,
+                               unsigned numincrement = 0,
+                               unsigned headersize = 0x20,
+                               unsigned numsegments = 8);
 
          /** This method create memory pools on the base of values,
            * configured in the newly created modules. */
@@ -525,6 +509,8 @@ namespace dabc {
          virtual bool Store(ConfigIO &cfg);
          virtual bool Find(ConfigIO &cfg);
 
+         bool FindInConfiguration(Folder* fold, const char* itemname);
+
          // ------------ access to factories method -------------
 
          bool CreateApplication(const char* classname = 0, const char* appthrd = 0);
@@ -584,6 +570,7 @@ namespace dabc {
          virtual double ProcessTimeout(double last_diff);
 
          bool DoDeleteAllModules(int appid = -1);
+         bool DoCreateMemoryPool(Command* cmd);
          bool DoCreateMemoryPools();
          void DoCleanupThreads();
          void DoCleanupDevices(bool force);

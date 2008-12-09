@@ -15,9 +15,8 @@
 #include "mbs/LmdTypeDefs.h"
 #include "mbs/MbsTypeDefs.h"
 
-roc::CombinerModule::CombinerModule(const char* name,
-                                          dabc::Command* cmd) :
-   dabc::ModuleAsync(name),
+roc::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd),
    fPool(0),
    fOutBuf(0),
    f_outptr()

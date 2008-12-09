@@ -12,6 +12,7 @@
 #include "mbs/LmdOutput.h"
 #include "mbs/ServerTransport.h"
 #include "mbs/ClientTransport.h"
+#include "mbs/GeneratorModule.h"
 
 mbs::Factory mbsfactory("mbs");
 
@@ -132,3 +133,13 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ)
 
    return 0;
 }
+
+dabc::Module* mbs::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
+{
+
+   if (strcmp(classname, "mbs::GeneratorModule")==0)
+      return new mbs::GeneratorModule(modulename, cmd);
+
+   return dabc::Factory::CreateModule(classname, modulename, cmd);
+}
+

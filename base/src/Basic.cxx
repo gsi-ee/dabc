@@ -11,14 +11,21 @@ long dabc::Basic::gNumInstances = 0;
 
 namespace dabc {
 
+
+   const char* clPoolHandle         = "PoolHandle";
+   const char* clMemoryPool         = "MemoryPool";
+
    const char* xmlInputQueueSize    = "InputQueueSize";
    const char* xmlOutputQueueSize   = "OutputQueueSize";
-   const char* xmlUserHeaderSize    = "UserHeaderSize";
 
    const char* xmlPoolName          = "PoolName";
    const char* xmlWorkPool          = "WorkPool";
    const char* xmlBufferSize        = "BufferSize";
    const char* xmlNumBuffers        = "NumBuffers";
+   const char* xmlNumIncrement      = "NumIncrement";
+   const char* xmlHeaderSize        = "HeaderSize";
+   const char* xmlNumSegments       = "NumSegments";
+
    const char* xmlNumInputs         = "NumInputs";
    const char* xmlNumOutputs        = "NumOutputs";
    const char* xmlUseAcknowledge    = "UseAcknowledge";

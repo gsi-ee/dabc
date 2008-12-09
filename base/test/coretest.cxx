@@ -190,7 +190,7 @@ void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
    }
 
    mgr->CreateMemoryPools();
-   DOUT3(("Creare memory pools"));
+   DOUT3(("Create memory pools"));
 
    bool connectres = true;
 
@@ -376,7 +376,7 @@ void TestMemoryPool(dabc::Manager& mgr)
 
    int numtests = 1000000;
 
-   dabc::MemoryPool* mem_pool = new dabc::MemoryPool(mgr.GetPoolsFolder(true), "Test");
+   dabc::MemoryPool* mem_pool = new dabc::MemoryPool(&mgr, "Test");
 
    mem_pool->UseMutex();
    mem_pool->SetMemoryLimit(0); // endless

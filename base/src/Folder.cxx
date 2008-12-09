@@ -60,7 +60,7 @@ void dabc::Folder::RemoveChilds()
 }
 
 
-void dabc::Folder::DeleteChilds(int appid)
+void dabc::Folder::DeleteChilds(int appid, const char* classname)
 {
    Basic* child = 0;
 
@@ -83,6 +83,11 @@ void dabc::Folder::DeleteChilds(int appid)
             if ((appid>=0) && (child->GetAppId()!=appid)) {
                cnt++;
                child = 0;
+            } else
+            if ((classname!=0) && strcmp(classname, child->ClassName())!=0) {
+               cnt++;
+               child = 0;
+
             }
          } while (child == 0);
       }
@@ -218,15 +223,21 @@ bool dabc::Folder::Store(ConfigIO &cfg)
        (strcmp(ClassName(), MasterClassName())!=0))
           cfg.CreateAttr(xmlClassAttr, ClassName());
 
-   for (unsigned n=0; n<NumChilds(); n++) {
-      Basic* child = GetChild(n);
-      if (child!=0) child->Store(cfg);
-   }
+   StoreChilds(cfg);
 
    cfg.PopItem();
 
    return true;
 }
+
+void dabc::Folder::StoreChilds(ConfigIO &cfg)
+{
+   for (unsigned n=0; n<NumChilds(); n++) {
+      Basic* child = GetChild(n);
+      if (child!=0) child->Store(cfg);
+   }
+}
+
 
 bool dabc::Folder::Find(ConfigIO &cfg)
 {
