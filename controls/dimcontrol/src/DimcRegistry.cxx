@@ -7,6 +7,7 @@
 
 #include "dabc/Parameter.h"
 #include "dabc/CommandDefinition.h"
+#include "dabc/Configuration.h"
 #include "dabc/logging.h"
 
 #include <iostream>
@@ -14,8 +15,8 @@
 
 const std::string dimc::Registry::gServerPrefix="DABC/";
 
-dimc::Registry::Registry(dimc::Manager* owner)
-   : fMainMutex(true), fParseMutex(true), fManager(owner),  fDimServer(0), fDimPrefixReady(false)
+dimc::Registry::Registry(dimc::Manager* owner, dabc::Configuration* cfg)
+   : fMainMutex(true), fParseMutex(true), fManager(owner),  fDimServer(0), fConfiguration(cfg), fDimPrefixReady(false)
 {
    fDimServer=dimc::Server::Instance();
    fDimServer->SetOwner(this);
@@ -41,7 +42,7 @@ dimc::Registry::~Registry()
 
 std::string dimc::Registry::BuildDIMName(const std::string& localname)
 {
- std::string& prefix=GetDIMPrefix();
+ std::string prefix=GetDIMPrefix()+"/";
  std::string dimname=prefix+localname;
  return dimname;
 
@@ -52,7 +53,7 @@ std::string dimc::Registry::ReduceDIMName(const std::string& dimname)
  std::string rname=dimname;
    //std::cout <<"ReduceDIMName for "<<rname<< std::endl;
 
- std::string& prefix=GetDIMPrefix();
+ std::string prefix=GetDIMPrefix()+"/";
    //std::cout <<"   ReduceDIMName uses prefix "<<prefix<< std::endl;
 
  std::string::size_type start=rname.find(prefix);
@@ -70,45 +71,33 @@ std::string& dimc::Registry::GetDIMPrefix()
 {
 if(!fDimPrefixReady)
 {
-   fDimPrefix=CreateDIMPrefix();
+   fDimPrefix=CreateDIMPrefix(fConfiguration->MgrNodeId());
    fDimPrefixReady=true;
 }
 return fDimPrefix;
 }
 
-std::string dimc::Registry::CreateDIMPrefix(const char* nodename)
+
+
+std::string dimc::Registry::CreateDIMPrefix(unsigned int nodeid)
 {
-std::string contextname=GetDIMServerName(nodename);
-std::string appname="Node";//TODO: get reasonable application name here? or drop this completely?
-//if(fManager->IsMainManager()) appname="Controller";
-std::string result=contextname+"/"+appname+"/";
+std::string nodename=GetDIMServerName(nodeid);
+std::string appname=fConfiguration->ContextName(nodeid);
+std::string result=nodename+"/"+appname;
 return result;
 }
 
 
-std::string dimc::Registry::GetDIMServerName(const char* contextname)
+
+std::string  dimc::Registry::GetDIMServerName(unsigned int nodeid)
 {
- std::string servname;
- std::string retval;
- if(contextname==0) // use own context
-    {
-       servname=fManager->GetName();
-       //retval=fManager->GetNodeName(fManager->NodeId());
-    }
- else
-    {
-       servname=contextname;
-    }
-    std::string prefix=gServerPrefix;//"DABC/"
-    if(servname.find(prefix)==std::string::npos)
-       retval=prefix+servname;
-    else
-       retval=servname;
-    std::cout <<"GetDIMServerName returns "<<retval << std::endl;
- return retval;
+std::string retval;
+std::string servname=fConfiguration->NodeName(nodeid);
+std::string prefix=gServerPrefix;//"DABC/"
+retval=prefix+servname+dabc::format(":%d",nodeid);
+//std::cout <<"GetDIMServerName returns "<<retval << std::endl;
+return retval;
 }
-
-
 
 
 
@@ -348,7 +337,7 @@ dabc::LockGuard g(&fMainMutex); // only protect our own list, do not lock dim
 
 void dimc::Registry::StartDIMServer(const std::string& dnsnode, unsigned int dnsport)
 {
- std::string servname=GetDIMServerName();
+ std::string servname=GetDIMServerName(fConfiguration->MgrNodeId());
  if(dnsport!=0)
    {
       DimServer::setDnsNode (dnsnode.c_str(), dnsport);
@@ -370,7 +359,7 @@ void dimc::Registry::StopDIMServer()
 
 void dimc::Registry::UpdateDIMService(const std::string& name, bool logoutput, dimc::nameParser::recordstat recstat)
 {
-std::cout <<"uuuuuuuuuuuu UpdateDIMService for "<<name << std::endl;
+//std::cout <<"uuuuuuuuuuuu UpdateDIMService for "<<name << std::endl;
 dimc::ServiceEntry* service=FindDIMService(name);
 if(service)
    {
@@ -421,7 +410,7 @@ for(iter=fDimServices.begin(); iter!=fDimServices.end(); ++iter)
 void dimc::Registry::SetDIMVariable(std::string parameter)
 {
 //dabc::LockGuard g(&fMainMutex);
-std::cout <<"SetDIMVariable with -"<< parameter<<"-" << std::endl;
+//std::cout <<"SetDIMVariable with -"<< parameter<<"-" << std::endl;
 
 std::string::size_type eqpos=parameter.find("=");
 if(eqpos==std::string::npos) // no equals sign in parameter!
@@ -652,12 +641,12 @@ void dimc::Registry::SendDIMCommand(const std::string& target, const std::string
 
 {
 try{
-
-   std::string fullcommand=CreateDIMPrefix(target.c_str())+comname;
+   std::string fullcommand=target+"/"+comname;
    std::string password="x1gSFfpv0JvDA"; // get this from environment later!
    std::string parameter=password+" "+par; // blank in between!
 
    //std::cout <<"SendDIMCommand with cmd="<<fullcommand<<", par="<<parameter << std::endl;
+   DOUT0(("SendDIMCommand with cmd=%s, par=%s",fullcommand.c_str(),parameter.c_str()));
 
 
    int ret=DimClient::sendCommand (fullcommand.c_str(), (char*) parameter.c_str());
@@ -681,10 +670,13 @@ catch(...)
 
 void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::string& par)
 {
+   //DOUT5(("sssssssss SubmitLocalDIMCommand for:%s, par=%s",com.c_str(),par.c_str()));
+
    // strip password here:
       if(par.length()<13)
          {
-            std::cout<<" - ERROR: parameter too short:"<<par.length() << std::endl;
+            //std::cout<<" - ERROR: parameter too short:"<<par.length() << std::endl;
+            EOUT(("dimc::Registry::SubmitLocalDIMCommand ERROR: parameter too short:%d ",par.length()));
             return ;
          }
       std::string password=par.substr(0,13);
@@ -692,7 +684,7 @@ void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::st
       std::string parameter=" - no parameter -";
       if(par.length()>14)
          parameter=par.substr(14);
-      std::cout <<"      password:"<<password <<", parameter:"<<parameter<<"," << std::endl;
+      //std::cout <<"      password:"<<password <<", parameter:"<<parameter<<"," << std::endl;
 
 
 
@@ -700,7 +692,8 @@ void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::st
    if(FindModuleCommand(com))
       {
          // submit exported module command directly:
-         std::cout <<"Execute Registered ModuleCommand "<< com <<", string="<<parameter <<":"<< std::endl;
+         DOUT3(("Execute Registered ModuleCommand:%s, par=%s",com.c_str(),parameter.c_str()));
+         //std::cout <<"Execute Registered ModuleCommand "<< com <<", string="<<parameter <<":"<< std::endl;
          std::string modname;
          std::string varname;
          ParseFullParameterName(com,modname, varname);

@@ -32,9 +32,7 @@ dimc::ManagerFactory::ManagerFactory(const char* name) : dabc::Factory(name)
 bool dimc::ManagerFactory::CreateManagerInstance(const char* kind, dabc::Configuration* cfg)
 {
    if ((kind!=0) && (strcmp(kind,DIMC_MANAGERTYPE)==0)) {
-      new dimc::Manager(cfg->MgrName(), false, cfg);
-//      int selfid=cfg->MgrNodeId();
-//      new dimc::Manager(cfg->ContextName(selfid).c_str(), false, cfg);
+      new dimc::Manager(cfg->MgrName(), false, cfg); // NOTE: manager name will be overwritten to match dim prefix later
       return true;
    }
    return false;
@@ -52,7 +50,7 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    dabc::Manager(managername, usecurrentprocess, cfg), fIsMainMgr(false)
 {
    // setup of nodes registry here or in base class?
-   fRegistry=new dimc::Registry(this);
+   fRegistry=new dimc::Registry(this,cfg);
    // define commands here:
    fRegistry->DefineDIMCommand(dabc::Manager::stcmdDoConfigure);
    fRegistry->DefineDIMCommand(dabc::Manager::stcmdDoEnable);
@@ -68,7 +66,7 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
 
    fNodeId=fCfg->MgrNodeId();
    if(fNodeId==0) fIsMainMgr=true; // TODO: specify main manager from other quality in config?
-
+   SetName(fRegistry->CreateDIMPrefix(fNodeId).c_str()); // required for correct command response
    InitSMmodule();
 
    fStatusRecord=new dabc::StatusParameter(this, _DIMC_SERVICE_FSMRECORD_,0);//CurrentState());
@@ -121,6 +119,7 @@ int dimc::Manager::ExecuteCommand(dabc::Command* cmd)
    dimc::Command* dimcom=dynamic_cast<dimc::Command*>(cmd);
    if(dimcom)
       {
+         //DOUT3(("ExecuteCommand sees command %s",cmd->GetName()));
          if(dimcom->IsName(_DIMC_COMMAND_SHUTDOWN_))
             {
                DOUT0(("ExecuteCommand sees Shutdown.."));
@@ -152,7 +151,7 @@ int dimc::Manager::ExecuteCommand(dabc::Command* cmd)
 void dimc::Manager::ParameterEvent(dabc::Parameter* par, int event)
 {
    std::string pname=par->GetName();
-   //std::cout << "++++++ ParameterEvent"<< event <<" for "<<pname<<std::endl;
+   //DOUT5(("dimc::Manager::ParameterEvent %d for %s \n",event,pname.c_str()));
    dabc::Manager::ParameterEvent(par, event);
    switch(event)
     {
@@ -166,7 +165,6 @@ void dimc::Manager::ParameterEvent(dabc::Parameter* par, int event)
           break;
        case 2: // parameter is deleted
            fRegistry->UnregisterParameter(par);
-           //fxRegistry->RemoveControlParameter(registername);
         break;
        default:
           EOUT(("dimc::Manager::ParameterEvent - UNKNOWN EVENT ID: %d \n",event));
@@ -223,13 +221,14 @@ void dimc::Manager::CommandRegistration(dabc::Module* m, dabc::CommandDefinition
   std::string registername=fRegistry->CreateFullParameterName(m->GetName(),def->GetName());
   if(reg)
    {
-      //std::cout <<"******** Manager::CommandRegistration register "<<registername << std::endl;
+      DOUT5(("dimc::Manager::CommandRegistration registers %s \n",registername.c_str()));
       fRegistry->RegisterModuleCommand(registername,def);
    }
   else
    {
-      //std::cout <<"******** Manager::CommandRegistration unregister "<<registername << std::endl;
+      DOUT5(("dimc::Manager::CommandRegistration unregisters %s \n",registername.c_str()));
       fRegistry->UnRegisterModuleCommand(registername);
+
    }
 
 }
@@ -239,8 +238,7 @@ void dimc::Manager::CommandRegistration(dabc::Module* m, dabc::CommandDefinition
 
 bool dimc::Manager::Subscribe(dabc::Parameter* par, int remnode, const char* remname)
 {
-   std::string nodename=fCfg->ContextName(remnode);
-   std::string fulldimname= fRegistry->CreateDIMPrefix(nodename.c_str())+remname;
+   std::string fulldimname= fRegistry->CreateDIMPrefix(remnode)+remname;
    return (fRegistry->SubscribeParameter(par,fulldimname));
 }
 
@@ -258,7 +256,7 @@ int dimc::Manager::NumNodes()
 const char* dimc::Manager::GetNodeName(int num)
 {
    std::string name=GetName();
-   if(fCfg!=0) name=fRegistry->GetDIMServerName(fCfg->ContextName(num).c_str()); // already adds dabc prefix
+   if(fCfg!=0) name=fRegistry->CreateDIMPrefix(num);// GetDIMServerName(num); // already adds dabc prefix
    //std::cout <<"+++++++++++ GetNodeName("<<num<<")="<<name << std::endl;
    return name.c_str();
 }

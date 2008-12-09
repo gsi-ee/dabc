@@ -12,6 +12,7 @@ namespace dabc{
 
    class CommandDefinition;
    class Parameter;
+   class Configuration;
 }
 
 
@@ -33,7 +34,7 @@ class Registry
 public:
 
 
-	Registry(dimc::Manager* owner);
+	Registry(dimc::Manager* owner, dabc::Configuration* cfg);
 
     virtual  ~Registry();
 
@@ -242,23 +243,17 @@ public:
      /** Returns prefix for dim service name, from contextname, classname, and lid of this application. */
     std::string& GetDIMPrefix();
 
-    /** Evaluate DIM prefix from given cluster node name. If
-     * name is not specified, use this node*/
-    std::string CreateDIMPrefix(const char* nodename=0);
 
 
+    /** Evaluate DIM prefix from given cluster node id.*/
+    std::string CreateDIMPrefix(unsigned int nodeid);
 
 
-    /** Evaluate name of dim server from cluster node name
-     *   If node name is not specified, use this node*/
-    std::string GetDIMServerName(const char* managername=0);
+    /** Evaluate name of dim server from cluster node id*/
+    std::string  GetDIMServerName(unsigned int nodeid);
 
 
-
-
-
-
-    /** hold prefix for dim server name , e.g. XDAQ  */
+    /** hold prefix for dim server name , e.g. DABC  */
     static const std::string gServerPrefix;
 
     static const std::string& GetServerPrefix(){return gServerPrefix;}
@@ -287,6 +282,9 @@ protected:
 
       /** handle to dim server*/
     dimc::Server* fDimServer;
+
+    /** Configuration for name prefixes*/
+    dabc::Configuration* fConfiguration;
 
     /** hold prefix for dim service names  */
     std::string fDimPrefix;
