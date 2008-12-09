@@ -95,7 +95,7 @@ class ServiceEntry
         const std::string Name();
 
         /** Access to parameter reference*/
-        dabc::Parameter* Parameter();
+        dabc::Parameter* Parameter(){return fPar;}
 
         /** change value of registered parameter from DIM command*/
         void SetValue(const std::string val);

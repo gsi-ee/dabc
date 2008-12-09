@@ -212,6 +212,7 @@ const std::string dimc::ServiceEntry::Name()
 }
 
 
+
 void dimc::ServiceEntry::SetValue(const std::string val)
 {
 if(fParser.isChangable())
