@@ -37,8 +37,12 @@ echo "Chosen run mode = $RUNMODE verbose = $VERBOSE ctrl = $CTRLMODE"
 curdir=`pwd`
 if [[ "x$DABCSYS" == "x" ]] ; then DABCSYS=$curdir; echo DABCSYS not specified, use current dir $DABCSYS; fi
 
-dabc_xml=`which dabc_xml`
-if [[ "x$dabc_xml" == "x" ]] ; then echo Cannot find dabc_xml executable; exit 1; fi
+if [[ -f $DABCSYS/bin/dabc_xml ]] ; then 
+   dabc_xml=$DABCSYS/bin/dabc_xml
+else
+   dabc_xml=`which dabc_xml`
+fi   
+if [[ ! -f $dabc_xml ]] ; then echo Cannot find dabc_xml executable; exit 1; fi
 
 numnodes=`$dabc_xml $XMLFILE -number`
 retval=$?

@@ -242,6 +242,10 @@ dabc::PoolHandle* dabc::Module::CreatePool(const std::string &name, BufferNum_t 
 {
    Folder* folder = GetPoolsFolder(true);
    dabc::PoolHandle* pool = new dabc::PoolHandle(folder, name.c_str(), number, increment, size);
+
+   dabc::MemoryPool* mem = dabc::mgr()->FindPool(name.c_str());
+   if (mem!=0) pool->AssignPool(mem);
+
    return pool;
 }
 

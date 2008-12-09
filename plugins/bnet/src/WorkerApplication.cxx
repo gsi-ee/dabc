@@ -279,7 +279,7 @@ bool bnet::WorkerApplication::CreateAppModules()
       }
    }
 
-   dabc::mgr()->CreateMemoryPools();
+//   dabc::mgr()->CreateMemoryPools();
 
    if (IsSender()) {
 
