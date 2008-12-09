@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="lxg0517" name="Controller:41">
+    <Application class="bnet::Cluster">
+       <NetDevice value="dabc::SocketDevice"/>
+    </Application>
+  </Context>
+  <Context host="lxi009" name="Worker1:42"/>
+  <Context host="lxi010" name="Worker2:42"/>
+  <Context host="lxi011" name="Worker3:42"/>
+  <Context host="lxi012" name="Worker4:42"/>
+  <Defaults>
+    <Context name="*">
+      <Run>
+        <logfile value="test${DABCNODEID}.log"/>
+        <loglevel value="1"/>
+        <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+      </Run>
+    </Context>
+    <Context name="*Worker*">
+       <Run>
+          <lib value="libBnetTest.so"/>
+       </Run>
+    </Context>
+  </Defaults>
+</dabc>
