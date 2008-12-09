@@ -349,16 +349,17 @@ dabc::LockGuard g(&fMainMutex); // only protect our own list, do not lock dim
 void dimc::Registry::StartDIMServer(const std::string& dnsnode, unsigned int dnsport)
 {
  std::string servname=GetDIMServerName();
- fDimServer->Start(servname,dnsnode,dnsport);
  if(dnsport!=0)
    {
+      DimServer::setDnsNode (dnsnode.c_str(), dnsport);
+      DimClient::setDnsNode (dnsnode.c_str(), dnsport);
       DOUT0(("dimc::Registry starting DIM server of name %s for dns %s:%d",servname.c_str(),dnsnode.c_str(),dnsport));
    }
  else
    {
       DOUT0(("dimc::Registry starting DIM server of name %s for DIM_DNS_NODE  %s:%d",servname.c_str(),DimServer::getDnsNode(),DimServer::getDnsPort()));
    }
-
+ fDimServer->Start(servname,dnsnode,dnsport);
 }
 
 void dimc::Registry::StopDIMServer()
