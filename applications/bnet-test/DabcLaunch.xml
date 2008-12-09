@@ -14,7 +14,7 @@ DabcMaster="lxg0517"
 DabcName="Controller:41"
 DabcUserPath="/misc/adamczew/dabc.workspace/dabc/applications/bnet-test"
 DabcSystemPath="/misc/adamczew/dabc.workspace/dabc"
-DabcSetup="SetupSockets.xml"
+DabcSetup="SetupBnet.xml"
 DabcScript="ps"
 DabcServers="5"
 />
