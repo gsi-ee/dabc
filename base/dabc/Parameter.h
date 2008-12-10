@@ -101,6 +101,7 @@ namespace dabc {
          bool              fFixed;
          int               fVisibility;
          bool              fDebug;
+         bool              fRegistered; // indicate if parameter is registered in manager
    };
 
 

@@ -17,7 +17,8 @@ dabc::Parameter::Parameter(WorkingProcessor* lst, const char* name) :
    fValueMutex(),
    fFixed(lst ? lst->fParsDfltFixed : false),
    fVisibility(lst ? lst->fParsDfltVisibility : 1),
-   fDebug(false)
+   fDebug(false),
+   fRegistered(false)
 {
    DOUT5(("Create parameter %s", GetFullName(dabc::mgr()).c_str()));
 }
@@ -119,7 +120,7 @@ bool dabc::Parameter::Read(ConfigIO &cfg)
    std::string value;
    if (!cfg.Find(this, value)) return false;
 
-   DOUT2(("Set par %s = %s", GetFullName().c_str(), value.c_str()));
+   DOUT1(("Set par %s = %s", GetFullName().c_str(), value.c_str()));
    SetValue(value.c_str());
 
    return true;

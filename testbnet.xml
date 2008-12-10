@@ -23,6 +23,10 @@
        <Run>
           <lib value="libBnetTest.so"/>
        </Run>
+      <Application class="bnet::TestWorker">
+         <NumReadouts value="4"/>
+         <Input0Cfg value="mytest"/>
+      </Application>       
     </Context>
   </Defaults>
 </dabc>

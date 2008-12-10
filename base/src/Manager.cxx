@@ -432,6 +432,7 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
 
          case parModified:
             // check if event of that parameter in the queue
+            if (!par->fRegistered) return;
             for (unsigned n=0;n<fParsQueue.Size();n++)
                 if (fParsQueue.ItemPtr(n)->par == par) return;
             break;
@@ -459,17 +460,43 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
       FireEvent(evntManagerParam);
 }
 
-bool dabc::Manager::ProcessParameterEvent()
+void dabc::Manager::ProcessParameterEvent()
 {
    ParamRec rec;
 
    bool visible = true;
+   bool activate = false;
+   double interval = 0.;
 
    {
       LockGuard lock(fMgrMutex);
-      if (fParsQueue.Size()==0) return false;
+      if (fParsQueue.Size()==0) return;
       rec = fParsQueue.Pop();
       visible = (fParsVisibility<=0) || (rec.par->Visibility() <= fParsVisibility);
+
+      if (!rec.processed)
+
+         switch (rec.event) {
+            case parCreated:
+               rec.par->fRegistered = true;
+
+               if (rec.par->NeedTimeout()) {
+                  if (fTimedPars.size()==0) { activate = true; interval = 0.; }
+                  fTimedPars.push_back(rec.par);
+               }
+
+               break;
+
+            case parModified:
+               if (!rec.par->fRegistered) return;
+               break;
+
+            case parDestroy:
+               rec.par->fRegistered = false;
+               fTimedPars.remove(rec.par);
+               if (fTimedPars.size()==0) { activate = true; interval = -1.; }
+               break;
+         }
    }
 
    // generate parameter event from the manager thread
@@ -477,7 +504,7 @@ bool dabc::Manager::ProcessParameterEvent()
 
    if (rec.event == parDestroy) delete rec.par;
 
-   return true;
+   if (activate) ActivateTimeout(interval);
 }
 
 void dabc::Manager::ProcessEvent(EventId evnt)
@@ -1804,30 +1831,6 @@ void dabc::Manager::ObjectDestroyed(Basic* obj)
       LockGuard guard(fSendCmdsMutex);
       fSendCommands.remove(obj);
    }
-}
-
-void dabc::Manager::ParameterEvent(Parameter* par, int event)
-{
-   if (event==parModified) return;
-
-   bool activate = false;
-   double interval = 0.;
-
-   {
-      LockGuard lock(fMgrMutex);
-
-      if ((event==parCreated) && par->NeedTimeout()) {
-         if (fTimedPars.size()==0) { activate = true; interval = 0.; }
-         fTimedPars.push_back(par);
-      } else
-      if (event==parDestroy) {
-         fTimedPars.remove(par);
-         if (fTimedPars.size()==0) { activate = true; interval = -1.; }
-      }
-   }
-
-   if (activate) ActivateTimeout(interval);
-
 }
 
 double dabc::Manager::ProcessTimeout(double last_diff)

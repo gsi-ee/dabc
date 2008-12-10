@@ -588,13 +588,13 @@ namespace dabc {
          Command* TakeInternalCmd(const char* lblname, int id);
 
          void ProcessDestroyQueue();
+         void ProcessParameterEvent();
 
          virtual void ProcessEvent(uint64_t evid);
-         virtual bool ProcessParameterEvent();
 
          // virtual method to deliver some events to control system
          virtual void ModuleExecption(Module* m, const char* msg);
-         virtual void ParameterEvent(Parameter* par, int event);
+         virtual void ParameterEvent(Parameter* par, int event) {}
          virtual void CommandRegistration(Module* m, CommandDefinition* def, bool reg) {}
 
          // methods, used for remote command execution
