@@ -15,9 +15,9 @@ include base/Makefile.mk
 
 include controls/simple/Makefile.mk
 
-include dim/Makefile.mk
+-include dim/Makefile.mk
 
-include controls/dimcontrol/Makefile.mk
+-include controls/dimcontrol/Makefile.mk
 
 #DABC_PLUGINS = plugins/mbs plugins/bnet plugins/verbs plugins/roc plugins/abb
 
@@ -41,7 +41,7 @@ clean::
 	
 package:: clean
 	rm -f dabc.tar.gz
-	tar cf dabc.tar Makefile *.xml base/ build/ config/ controls/simple controls/dimcontrol gui $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 
+	tar cf dabc.tar Makefile *.xml base/ build/ config/ controls/simple controls/dimcontrol dim script gui $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 
 	gzip dabc.tar
 	echo "dabc.tar.gz done" 
 
