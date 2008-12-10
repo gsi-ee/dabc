@@ -19,12 +19,25 @@
       </Run>
    </Context>
     <Context name="*Worker*">
+       <Application class="bnet::TestWorker">
+       <NumReadouts value="3"/>
+       </Application>       
        <Run>
           <lib value="libBnetTest.so"/>
           <lib value="${DABCSYS}/lib/libpcidriver.so"/>          
           <lib value="${DABCSYS}/lib/libmprace.so"/>
           <lib value="${DABCSYS}/lib/libDabcAbb.so"/>          
        </Run>
+    </Context>
+    <Context name="Worker1*">
+		<Application class="bnet::TestWorker">
+       		<NumReadouts value="1"/>
+       		<Input0Cfg value="ABB"/>
+        </Application>       		
+<!-- 		<ABB_BoardNumber value="0"/>-->
+<!--	    <ABB_ReadoutBAR value="1"/>  -->
+<!--        <ABB_ReadoutAddress value="8192"/>-->
+<!--        <ABB_ReadoutLength value="8192"/>-->       
     </Context>
   </Defaults>
 </dabc>
