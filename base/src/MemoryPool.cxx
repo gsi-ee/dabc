@@ -505,6 +505,8 @@ bool dabc::MemoryPool::Allocate(Command* cmd)
 
    BufferNum_t numbuffers = GetCfgInt((blockname+xmlNumBuffers).c_str(), 0, cmd);
 
+   if ((buffersize==0) && (numbuffers==0)) return false;
+
    BufferNum_t numincrement = GetCfgInt((blockname+xmlNumIncrement).c_str(), 0, cmd);
 
 //   std::string sbuf;
@@ -523,7 +525,8 @@ bool dabc::MemoryPool::Allocate(Command* cmd)
 
    BufferNum_t numsegments = GetCfgInt((blockname+xmlNumSegments).c_str(), 8, cmd);
 
-   AllocateReferences(headersize, numbuffers, numincrement > 0 ? numincrement : numbuffers / 2, numsegments);
+   if (numbuffers>0)
+      AllocateReferences(headersize, numbuffers, numincrement > 0 ? numincrement : numbuffers / 2, numsegments);
 
    return true;
 }

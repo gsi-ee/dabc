@@ -1,0 +1,56 @@
+DIM_VERSION = dim_v18r0
+
+DIM_ZIP = $(DIM_VERSION).zip
+
+ifneq ($(wildcard $(DABCSYS)/dim/$(DIM_ZIP)),)
+
+DIMDIR := $(DABCSYS)/dim/$(DIM_VERSION)
+
+DIM_LIB = $(DABCDLLPATH)/libdim.so
+
+DIM_JDK_INCLUDE = $(JDK_INCLUDE)
+
+ifndef JDK_INCLUDE
+ifdef JAVA_HOME
+DIM_JDK_INCLUDE = $(JAVA_HOME)/include
+endif
+endif
+
+DIM_BUILD_ARGS=
+
+ifdef DIM_JDK_INCLUDE
+ifneq ($(wildcard $(DIM_JDK_INCLUDE)),)
+DIM_BUILD_ARGS=JDIM=yes
+JDK_INCLUDE:=$(DIM_JDK_INCLUDE)
+else 
+DIM_JDK_INCLUDE=
+endif
+endif
+
+DIM_ODIR = linux
+DIM_OS = Linux
+
+$(DIMDIR):
+	@echo "Extract dim zip file"
+	cd $(DABCSYS)/dim; unzip $(DIM_ZIP)  
+
+$(DIM_LIB):
+	@echo build args = $(DIM_BUILD_ARGS) 
+	cd $(DIMDIR); export DIMDIR=$(DIMDIR); export OS=$(DIM_OS); export ODIR=$(DIM_ODIR); export JDK_INCLUDE=$(DIM_JDK_INCLUDE); $(MAKE) $(DIM_BUILD_ARGS)
+	cp -f $(DIMDIR)/$(DIM_ODIR)/libdim.so $(DIM_LIB)
+	cp -f $(DIMDIR)/$(DIM_ODIR)/libjdim.so $(DABCDLLPATH)  
+	cp -f $(DIMDIR)/$(DIM_ODIR)/dns $(DABCBINPATH)/dimDns  
+	@echo "Dim library build"
+
+libs:: $(DIMDIR) $(DIM_LIB)
+
+clean::
+	cd $(DABCSYS)/dim; rm -rf $(DIM_VERSION)
+
+else
+
+libs::
+	echo "Cannot build DIM - dim is not specified"
+
+endif
+

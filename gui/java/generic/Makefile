@@ -2,13 +2,18 @@ JARDIR=../packages
 PACKAGE=xgui
 SOURCEDIR=./src
 CLASSPATH=.:./$(PACKAGE):$(DIMDIR)/jdim/classes
+JARFILE=$(JARDIR)/$(PACKAGE).jar 
+
+
 #CLASSPATH=$(PACKAGE):/misc/goofy/cbm/daq/controls/smi/dim_v16r10/jdim/classes
 # package directory is created automatically
 # One MUST specify where with -d. The package directory MUST NOT specified here
 # because the package directory is created under the specified directory, even if it
 # IS the package directory
-FLAGS=-d .
-all: classes
+FLAGS=-d . -classpath .:./$(PACKAGE):$(DIMDIR)/jdim/classes
+ 
+all: classes $(JARFILE)
+
 classes: \
 	$(PACKAGE)/xForm.class \
 	$(PACKAGE)/xFormMbs.class \
@@ -176,12 +181,20 @@ $(PACKAGE)/xParTable.class : $(SOURCEDIR)/xParTable.java
 clean:
 	rm -f $(PACKAGE)/*.class
 	rm -f $(PACKAGE)/*.html
+	rm -f $(JARFILE)
+	
 cleandoc:
 	rm -Rf doc/*
-jar:
+	
+jar: $(JARFILE)
+
+
+$(JARFILE): JarHeader.txt $(wildcard $(PACKAGE)/*.class) $(wildcard icons/*.png)  
 	jar -cmf JarHeader.txt $(PACKAGE).jar $(PACKAGE)/*.class icons
-	jar -tf $(PACKAGE).jar
+#	jar -tf $(PACKAGE).jar
 	mv $(PACKAGE).jar $(JARDIR)
+	
+	
 doc: doc/index.html
 doc/index.html : \
 	 $(SOURCEDIR)/xiDesktop.java \

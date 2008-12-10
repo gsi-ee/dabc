@@ -1190,6 +1190,7 @@ bool dabc::Manager::DoCreateMemoryPool(Command* cmd)
    const char* poolname = cmd->GetPar(xmlPoolName);
    if (poolname==0) {
       EOUT(("Pool name is not specified"));
+      return false;
    }
 
    MemoryPool* pool = FindPool(poolname);

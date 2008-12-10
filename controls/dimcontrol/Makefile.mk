@@ -17,11 +17,9 @@ DIMCTRL_S           = $(wildcard $(DIMCTRLDIRS)/*.$(SrcSuf))
 DIMCTRL_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DIMCTRL_S))
 DIMCTRL_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DIMCTRL_S))
 
-#DABCDIMCTRL_LIBNAME  = $(LIB_PREFIX)DabcDimCtrl
-#DABCDIMCTRL_LIB      = $(DABCDLLPATH)/$(DABCDIMCTRL_LIBNAME).$(DllSuf)
-#DABCDIMCTRL_SLIB     = $(DABCDLLPATH)/$(DABCDIMCTRL_LIBNAME).$(ArSuf)
 
-
+DABCDIMCTRL_LIBNAME  = $(LIB_PREFIX)DabcDimCtrl
+DABCDIMCTRL_LIB      = $(DABCDLLPATH)/$(DABCDIMCTRL_LIBNAME).$(DllSuf)
 
 # used in the main Makefile
 
@@ -40,8 +38,8 @@ $(DABCINCPATH)/%.h: $(DIMCTRLDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCDIMCTRL_LIB):   $(DIMCTRL_O)
-	@$(MakeLib) $(DABCDIMCTRL_LIBNAME) "$(DIMCTRL_O)" $(DABCDLLPATH) "-L$(DIMDIR)/linux -ldim"
+$(DABCDIMCTRL_LIB):   $(DIMCTRL_O) $(DABCDLLPATH)/libdim.$(DllSuf)
+	@$(MakeLib) $(DABCDIMCTRL_LIBNAME) "$(DIMCTRL_O)" $(DABCDLLPATH) "-L$(DABCDLLPATH) -ldim"
 
 $(DABCDIMCTRL_SLIB):   $(DIMCTRL_O)
 	$(AR) $(ARFLAGS) $(DABCDIMCTRL_SLIB) $(DIMCTRL_O)
