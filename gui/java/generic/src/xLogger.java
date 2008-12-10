@@ -15,7 +15,6 @@ private static DateFormat dateform=DateFormat.getDateTimeInstance();
 
 /**
  * Creates a State canvas.
- * @param head name of parameter displayed
  */
 public xLogger(){
 }

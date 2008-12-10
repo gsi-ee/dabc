@@ -1,12 +1,4 @@
 package xgui;
-/*
-This client expects server tDABCserver from eclipse DIM project.
-*/
-
-
-/**
-* @author goofy
-*/
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
@@ -29,8 +21,12 @@ import java.awt.Insets;
 import java.util.*;
 
 /**
-* DIM GUI class
-*/
+ * Panel for set of info panels.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xDesktop
+ * @see xInfo
+ */
 public class xPanelInfo extends JPanel implements ActionListener {
 private int i,indent;
 private int elements=0,columns=1;
@@ -45,9 +41,9 @@ private ActionListener action=null;
 // private GroupLayout.SequentialGroup vGroup;
 // private GroupLayout.ParallelGroup pGroup;
 /**
- * DIM GUI class. Uses JScrollPanes with GridBagLayout.
- * Creates the table for the parameters and the tree for the commands.
- * Creates rate meters for dataBW, dataLatency and dataRate
+ * Uses JPanel with GridBagLayout. Assumes that all items have same size.
+ * One item per line.
+ * @param dim Dimension
  */
 public xPanelInfo(Dimension dim) {
     super(new GridLayout(1,0));
@@ -79,23 +75,32 @@ public xPanelInfo(Dimension dim) {
     add(metpan);
 //setViewportView(pan);
 }
-
-public void setColumns(int col){
+    // not used here
+private void setColumns(int col){
     columns=col;
     updateAll();
     action.actionPerformed(null);
 }
+/**
+ * @param info Removes Info. Calls updateAll().
+ */
 public void removeInfo(xInfo info){
     list.remove(info);
     elements--;
     updateAll();
 }
 
+/**
+ * Cleanup item list and panel.
+ */
 public void cleanup(){
     list=new Vector<Object>();
     elements=0;
     pan.removeAll();
 }
+/**
+ * Removes all items from panel, resize and rebuild all items.
+ */
 public void updateAll(){
     pan.removeAll();
     adjustSize();
@@ -108,7 +113,7 @@ public void updateAll(){
     if(action!=null)action.actionPerformed(null);
 }
 
-public void adjustSize(){
+private void adjustSize(){
     int rows=1;
     if(elements>0){
         rows=(elements-1)/columns+1;
@@ -119,11 +124,22 @@ public void adjustSize(){
     pan.setPreferredSize(new Dimension(cols,rows));
 }
 
+/**
+ * Add info item to internal table.
+ * @param info Info.
+ * @param update True: updateAll, false: no graphics update. Several Infos can be added without
+ * redrawing the panel each time. The last one should. 
+ */
 public void addInfo(xInfo info, boolean update){
 addInfo(info);
 if(update)updateAll();
 }
 
+/**
+ * Add info item to internal table, calls setSizeXY and setID.
+ * @param info Info.
+ * . 
+ */
 public void addInfo(xInfo info){
     info.setSizeXY();
 // only 1.6
@@ -133,6 +149,7 @@ public void addInfo(xInfo info){
     // }
 // pGroup.addComponent(info);
 //
+    info.setID(elements); // gives unique number to meter
     elements += 1;
 // just adding the new info would put all in same row!
 // if((elements/columns)*columns == elements) c.gridwidth = GridBagConstraints.REMAINDER;

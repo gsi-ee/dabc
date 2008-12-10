@@ -1,25 +1,19 @@
 package xgui;
-/*
-This client 
-*/
-
-/**
-* @author goofy
-*/
-
 import java.util.*;
 import org.w3c.dom.*;
 import org.xml.sax.*;
 import javax.xml.parsers.*;
 import java.io.*;
 import java.awt.event.*;
-
 /**
-* DIM GUI class
-*/
+ * Base class to keep the data of the setup forms for DABC.
+ * Reads/writes XML setup file.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xFormDabc extends xForm{
-private String Setup;
 private String Name;
+private String Setup;
 private DocumentBuilderFactory factory;
 private DocumentBuilder builder;
 private Document document;
@@ -38,7 +32,7 @@ setDefaults();
 restoreSetup(file);
 }
 
-public void setDefaults(){
+protected void setDefaults(){
     Master=new String("<MasterNode>");
     Name=new String("<MasterName>");
     Servers=new String("0");
@@ -48,10 +42,10 @@ public void setDefaults(){
     Setup=new String("<DABC setup file>");
 }
 
-public void printForm(){
+protected void printForm(){
 System.out.println(build().toString());
 }
-public StringBuffer build(){
+private StringBuffer build(){
 StringBuffer str=new StringBuffer();
 str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
 str.append("<DabcLaunch>\n");
@@ -78,7 +72,7 @@ str.append("/>\n");
 str.append("</DabcLaunch>\n");
 return str;
 }
-public void saveSetup(String file){
+protected void saveSetup(String file){
 try{
     FileWriter fw = new FileWriter(file);
     fw.write(build().toString());
@@ -87,7 +81,7 @@ try{
 }catch(IOException ioe){System.out.println("Error writing Dabc launch setup "+file);}
 }
 
-public void restoreSetup(String file){
+protected void restoreSetup(String file){
 LaunchFile=new String(file);
 try{
     factory=DocumentBuilderFactory.newInstance();
@@ -105,10 +99,21 @@ try{
     nServers=1+Integer.parseInt(Servers);// add DNS
 }catch(Exception e){System.out.println("Error reading "+file);}
 }
-public String getName(){return Name;}
+/**
+ * @param setup DABC setup file name
+ */
+protected void setSetup(String setup){Setup=setup;}
+/**
+ * @return DABC setup file name
+ */
 public String getSetup(){return Setup;}
-public void setName(String name){Name=name;}
-public void setSetup(String setup){Setup=setup;}
-
+/**
+ * @param name DABC master name
+ */
+protected void setName(String name){Name=name;}
+/**
+ * @return DABC master name
+ */
+public String getName(){return Name;}
 }
 

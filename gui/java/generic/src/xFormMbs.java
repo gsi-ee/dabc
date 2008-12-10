@@ -1,22 +1,16 @@
 package xgui;
-/*
-This client 
-*/
-
-/**
-* @author goofy
-*/
-
 import java.util.*;
 import org.w3c.dom.*;
 import org.xml.sax.*;
 import javax.xml.parsers.*;
 import java.io.*;
 import java.awt.event.*;
-
 /**
-* DIM GUI class
-*/
+ * Base class to keep the data of the setup forms for MBS
+ * Reads/writes XML setup file.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xFormMbs extends xForm {
 private String Command;
 private DocumentBuilderFactory factory;
@@ -37,7 +31,7 @@ setDefaults();
 restoreSetup(file);
 }
 
-public void setDefaults(){
+protected void setDefaults(){
     Master=new String("<MasterNode>");
     Servers=new String("0");
     UserPath=new String("<UserPath>");
@@ -46,10 +40,10 @@ public void setDefaults(){
     Command=new String("<Command>");
 }
 
-public void printForm(){
+protected void printForm(){
 System.out.println(build().toString());
 }
-public StringBuffer build(){
+private StringBuffer build(){
 StringBuffer str=new StringBuffer();
 str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
 str.append("<MbsLaunch>\n");
@@ -74,7 +68,7 @@ str.append("/>\n");
 str.append("</MbsLaunch>\n");
 return str;
 }
-public void saveSetup(String file){
+protected void saveSetup(String file){
 try{
     FileWriter fw = new FileWriter(file);
     fw.write(build().toString());
@@ -83,7 +77,7 @@ try{
 }catch(IOException ioe){System.out.println("Error writing Mbs launch setup "+file);}
 }
 
-public void restoreSetup(String file){
+protected void restoreSetup(String file){
     LaunchFile=new String(file);
 try{
     factory=DocumentBuilderFactory.newInstance();
@@ -101,7 +95,7 @@ try{
 }catch(Exception e){System.out.println("Error reading "+file);}
 }
 public String getCommand(){return Command;}
-public void setCommand(String command){Command=command;}
+protected void setCommand(String command){Command=command;}
 
 }
 

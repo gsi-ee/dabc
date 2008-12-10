@@ -11,7 +11,7 @@ import javax.swing.JSplitPane;
 import dim.*;
 
 // Could also extend JPanel
-public class MbsPanel  extends xPanelPrompt            // provides some simpple formatting
+public class MbsPanel  extends xPanelPrompt            // provides some simple formatting
                         implements  xiUserPanel,        // needed by GUI
                                     xiUserInfoHandler,  // neewded by xDimParameter DIM client
                                     xiUserCommand,      // optional to specify command formats
@@ -91,6 +91,7 @@ public xiUserCommand getUserCommand(){return this;} // or xiUserCommand class
 
 // Build panel (xiUserPanel)
 public void init(xiDesktop desktop, ActionListener actionlistener){
+xSet.setColorBack(back);
     desk=desktop;
     action=actionlistener;    // external DABC action listener 
     formMbs=(xFormMbs)xSet.getObject("xgui.xFormMbs");
@@ -154,11 +155,11 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
     if(p1lo == null)p1lo=xSet.createLayout(p1name,new Point(400,400), new Dimension(100,75),1,true);
 // create the compound for the graphics panels
     if(p1lo.show()){
-        frame=new xInternalCompound(p1name,graphIcon, p1pnt, p1lo, back);
+        frame=new xInternalCompound(p1name,graphIcon, 0, p1lo, back);
         dividersize=frame.getDividerSize();
-        desk.addDesktop(frame);
+        desk.addFrame(frame);
     }
-    }
+}
 
 // Release local references to DIM parameters and commands (xiUserPanel)
 // otherwise we would get memory leaks!
@@ -181,7 +182,7 @@ public void releaseDimServices(){
 // Called after releaseDimServices() after every change in DIM services
 public void setDimServices(xiDimBrowser browser){
 int len1, len2;
-xiParser p;
+xiParser xip;
 brows=browser;
 // paramOK ist false when we enter here
 boolean OK=true;
@@ -209,12 +210,12 @@ Vector<xiDimParameter> vipar=browser.getParameters();
 // Get reference to parameters
 for(int i=0;i<vipar.size();i++){
     register=false;
-    p=vipar.get(i).getParserInfo();
-    full=p.getFull();
-    if(p.isRate()){ // with this, we take all meters
+    xip=vipar.get(i).getParserInfo();
+    full=xip.getFull();
+    if(xip.isRate()){ // with this, we take all meters
         if(full.indexOf("Trend")<0){
-        head = new String(p.getNode()+"/"+p.getApplication());
-        name = new String(p.getName()+"["+vipar.get(i).getMeter().getUnits()+"]");
+        head = new String(xip.getNode()+"/"+xip.getApplication());
+        name = new String(xip.getName()+"["+vipar.get(i).getMeter().getUnits()+"]");
         rate=new xRate(head, name, !head.equals(last),
             xRate.XSIZE,xRate.YSIZE,
             vipar.get(i).getMeter().getLower(),
@@ -227,9 +228,9 @@ for(int i=0;i<vipar.size();i++){
         meterrecs.add(vipar.get(i).getMeter());
         register=true;
     }}
-    else if(p.isState()){ // with this, we take all states
+    else if(xip.isState()){ // with this, we take all states
         if(full.indexOf("RunMode")<0){
-        state=new xState(new String(p.getNodeName()+":"+p.getApplicationName()),200,xState.YSIZE);
+        state=new xState(new String(xip.getNodeName()+":"+xip.getApplicationName()),200,xState.YSIZE);
         states.add(state); // add to local list
         state.setColorBack(back);
         // add reference to record data to local list
@@ -237,14 +238,14 @@ for(int i=0;i<vipar.size();i++){
         stapan.addGraphics(state,false); // add to graphics panel
         register=true;
     }}
-    else if(p.isInfo()){
+    else if(xip.isInfo()){
         if((full.indexOf("/eFile")>0)||
         (full.indexOf("/ePerform")>0) ||
         (full.indexOf("/Transport")>0) ||
         (full.indexOf("/Current")>0) ||
         (full.indexOf("/NodeList")>0)
         ) { // here we could select by name
-        info=new xInfo(new String(p.getNodeName()+":"),
+        info=new xInfo(new String(xip.getNodeName()+":"),
                                     dividersize+440,xInfo.YSIZE);
         info.setColorBack(back);
         infos.add(info); // add to local list
@@ -337,12 +338,12 @@ if ("mbsTest".equals(e.getActionCommand())) {
                                 "v50/rio3/runmbs "+
                                 "m_evgen_RIO2 v50/rio3/runmbs . x86g-4"
                                 );
-        mbsshell.rsh("R3g-2",xSet.getUserName(),cmd,0L);
+        // mbsshell.rsh("R3g-2",xSet.getUserName(),cmd,0L);
         cmd = new String(formMbs.getSystemPath()+"/"+
                                 formMbs.getScript()+" "+
                                 formMbs.getSystemPath()+" "+
                                 "v50/rio3/runmbs "+
-                                "m_evgen_RIO2 v50/rio3/runmbs . x86-7"
+                                "m_evgen_RIO2 v50/rio3/runmbs . x86-7 x86g-4"
                                 );
         mbsshell.rsh("R2f-2",xSet.getUserName(),cmd,0L);
 }
@@ -365,10 +366,10 @@ else tellError("Command not available!");
 }
 //-----------
 else if ("userDisp".equals(e.getActionCommand())) {
-if(!desk.frameExists(p1name)){
-    frame=new xInternalCompound(p1name,graphIcon, p1pnt, xSet.getLayout(p1name), back);
+if(!desk.findFrame(p1name)){
+    frame=new xInternalCompound(p1name,graphIcon, 0, xSet.getLayout(p1name), back);
     frame.rebuild(stapan, metpan, infpan);
-    desk.addDesktop(frame); // old frame will be deleted
+    desk.addFrame(frame); // old frame will be deleted
 }}
 //-----------
 else if ("MbsShow".equals(e.getActionCommand())) {

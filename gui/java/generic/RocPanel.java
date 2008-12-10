@@ -152,7 +152,7 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
     if(p1lo.show()){
         frame=new xInternalCompound(p1name,graphIcon, p1pnt, p1lo, back);
         dividersize=frame.getDividerSize();
-        desk.addDesktop(frame);
+        desk.addFrame(frame);
     }
     }
 
@@ -308,10 +308,10 @@ stateServer.redraw(0,"Gray","None",true);
 }
 // open display
 else if ("userDisp".equals(e.getActionCommand())) {
-if(!desk.frameExists(p1name)){
+if(!desk.findFrame(p1name)){
     frame=new xInternalCompound(p1name,graphIcon, p1pnt, xSet.getLayout(p1name), back);
     frame.rebuild(stapan, metpan); 
-    desk.addDesktop(frame); // old frame will be deleted
+    desk.addFrame(frame); // old frame will be deleted
 }}
 //-----------
 else { // route to PanelDabc

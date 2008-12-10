@@ -8,16 +8,25 @@ import javax.swing.JPopupMenu;
 import javax.swing.JMenuItem;
 import java.awt.geom.AffineTransform;
 
-public class xRate extends JPanel implements xiPanelGraphics, MouseListener, ActionListener
+/**
+ * Graphic rate meter (bar). Can be used as item in xPanelGraphics.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xPanelGraphics
+ */
+public class xRate extends JPanel implements xiPanelItem, MouseListener, ActionListener
 {
+/** recommended size x */
 public final static int XSIZE=400;
+/** recommended size y */
 public final static int YSIZE=14;
-private  int ix;
-private  int iy;
+private int ix;
+private int iy;
 private int iSeverity=0;
 private int iDim=0;
 private int iYpos;
 private int iInit;
+private int iID;
 private int barsize,barwidth,barposy,barposx;
 double Min,Max,Fact,Value,ValMax;
 private String sHead;
@@ -44,6 +53,7 @@ private BufferedImage imStore;
 private Graphics2D gg;
 private int i,ii;
 private JMenuItem menit;
+private ActionListener action;
 
 // Context menu execution (ActionListener)
 public void actionPerformed(ActionEvent a){
@@ -68,9 +78,9 @@ public void mouseReleased(MouseEvent me){}
 
 /**
  * Creates a Rate canvas.
- * @param head name of parameter displayed
- * @param xlength size of canvas in pixels
- * @param ylength size of canvas in pixels
+ * @param head Name of parameter displayed.
+ * @param xlength Size of canvas in pixels.
+ * @param ylength Size of canvas in pixels.
  */
 public xRate(String head, String name, boolean header, int xlength, int ylength, double min, double max, String color){
     withHeader=header;
@@ -79,9 +89,9 @@ public xRate(String head, String name, boolean header, int xlength, int ylength,
 }
 /**
  * Initializes a Rate canvas (called by constructor).
- * @param head name of parameter displayed
- * @param xlen size of canvas in pixels
- * @param ylen size of canvas in pixels
+ * @param head Name of parameter displayed.
+ * @param xlen Size of canvas in pixels.
+ * @param ylen Size of canvas in pixels.
  */
 public void initRate(String head, String name, int xlen, int ylen, double min, double max, String color){
     setColor(color);
@@ -137,22 +147,24 @@ public void setColor(String colorname){
     if(colorname.equals("White"))  setColor(1.0f,1.0f,1.0f);
     if(colorname.equals("Gray"))   setColor(0.5f,0.5f,0.5f);
 }
-public void setID(int i){}
-/**
- * Set preferred size to the one specified in constructor. Called from the panels.
- */
-public void setSizeXY(){
-    setPreferredSize(new Dimension(ix,iy));
-}
-/**
- * Set preferred size to the one specified in constructor. Called from the panels.
- */
-public void setSizeXY(Dimension dd){
-    setPreferredSize(dd);
-}
-public String getName(){return sName;}
+public double getMin(){return Min;}
+public double getMax(){return Max;}
+// xiPanelGraphics
+public void setActionListener(ActionListener actionlistener){action=actionlistener;}
+public JPanel getPanel() {return this;}
+public String getName(){return sHead;}
+public void setID(int i){iID=i;}
+public int getID(){return iID;}
+public Point getPosition(){return new Point(getX(),getY());};
+public Dimension getDimension(){return new Dimension(ix,iy);};
+public void setSizeXY(){setPreferredSize(new Dimension(ix,iy));}
+public void setSizeXY(Dimension dd){setPreferredSize(dd);}
+
 public String getHeader(){return sHead;}
 
+/**
+ * Called by repaint, calls update.
+ */
 public void paintComponent(Graphics g){
 // draw image
 // System.out.println("paint");
@@ -164,10 +176,11 @@ public void paintComponent(Graphics g){
     Graphics2D g2d = (Graphics2D)g;
     g2d.drawImage(imStore,new AffineTransform(1f,0f,0f,1f,0,0),this);
 }
-// Overwriting update method we avoid clearing the
-// graphics. This would cause flickering
-// update is not called by repaint!
-
+/**
+ * Overwriting update method we avoid clearing the
+ * graphics. This would cause flickering
+ * update is not called by repaint!
+ */
 public void update(Graphics g){
 // static graphics into memory image
     int ixtemp;
@@ -212,14 +225,13 @@ public void update(Graphics g){
     }
 }
 /**
- * Redraw without changes.
+ * Redraw without changes (repaint).
  */
 public void redraw(){repaint();}
 /**
- * Redraw with new value
- * @param severity (0: Success, 1: Warning, 2: Error, 3: Fatal)
- * @param colorname (Red, Green, Blue, Yellow, Cyan, Magenta).
- * @param value Short string describing info
+ * Redraw with new value.
+ * @param value New value.
+ * @param draw True for redraw.
  */
 public void redraw(double value, boolean draw){
     if(auto && (value > Max)){

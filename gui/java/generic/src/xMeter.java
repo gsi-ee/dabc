@@ -8,16 +8,31 @@ import javax.swing.JPopupMenu;
 import javax.swing.JMenuItem;
 import java.awt.geom.AffineTransform;
 import javax.swing.JInternalFrame;
-public class xMeter extends JPanel implements xiPanelGraphics, MouseListener, ActionListener {
+import java.lang.Double;
+/**
+ * Graphic item rate meter. Can be displayed in two fixed sizes.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xPanelMeter
+ */
+public class xMeter extends JPanel implements xiPanelItem, MouseListener, ActionListener {
 private  int ix;
 private  int iy;
-public final static int ARC=0;
-public final static int BAR=1;
+/** Arc mode = 0, half circle with indicator. */
+public final static int ARC=0; 
+/** Bar mode = 1, horizontal. */
+public final static int BAR=1; 
+/** Trend histogram = 2. */
 public final static int TREND=2;
+/** Statistics histogram = 3. */
 public final static int STAT=3;
+/** normal size x */
 public final static int XSIZE=100;
+/** normal size y */
 public final static int YSIZE=90;
+/** large size x */
 public final static int XSIZE_LARGE=200;
+/** large size y */
 public final static int YSIZE_LARGE=102;
 private int iAngle;
 private int iAngleLast;
@@ -32,7 +47,7 @@ private int iyOff;
 private int iDim=0;
 private int iYpos;
 private int iInit;
-private int iMode;
+private int iMode, defMode;
 private int ixpol[]={1,2,3};
 private int iypol[]={1,2,3};
 private int ixtick[]={1,2,3,4,5};
@@ -41,8 +56,8 @@ private boolean boArc=true;
 private boolean boBar=false;
 private boolean boTrend=false;
 private boolean boStat=false;
-private boolean isLog=false;
-private boolean boAutoScale=true;
+private boolean isLog=false, defLog=false;
+private boolean boAutoScale=true, defAutoScale=true;
 private boolean boLarge=false;
 private String sFullHead1;
 private String sFullHead2;
@@ -54,8 +69,9 @@ private String sCont;
 private String sSum;
 private String sCur;
 private String sUnits;
-private double fMin;
-private double fMax;
+private String sColor;
+private double fMin,defMin;
+private double fMax,defMax;
 private double fAngle;
 private double fCur;
 private double fVal;
@@ -98,174 +114,57 @@ private double ddCont;
 private boolean valueValid=false;
 private JMenuItem menit;
 private RenderingHints renderHint;
+private ActionListener action;
 private xMeter extMeter;
 boolean boextMeter=false;
-private xInternalFrame extFrame=null;
+private JInternalFrame extFrame=null;
 
-// Context menu execution (ActionListener)
-public void actionPerformed(ActionEvent a){
-    String c=a.getActionCommand();
-    setColor(c);
-    if(c.equals(sHead));
-    if(c.equals("Meter"))toggleMeter(true);
-    if(c.equals("Bar"))toggleMeter(false);
-    if(c.equals("Statistics"))toggleTrend(true);
-    if(c.equals("Trend"))toggleTrend(false);
-    if(c.equals("setLin"))setLogScale(false);
-    if(c.equals("setLog"))setLogScale(true);
-    if(c.equals("setFixscale"))setAutoScale(false);
-    if(c.equals("setAutoscale"))setAutoScale(true);
-    if(c.equals("Clear"))clearStat();
-    if(c.equals("Large"))newFrame();
-    if(c.equals("Discard"));
-}
-// context menu definition (MouseListener)
-public void mousePressed(MouseEvent me) {
-    if(me.getButton()==MouseEvent.BUTTON3){
-        JPopupMenu men=new JPopupMenu();
-        if(!boLarge){
-            men.add(new JMenuItem(sHead));
-            men.add(new JMenuItem(sFullHead1));
-            men.add(new JMenuItem(sFullHead2));
-            men.add(new JMenuItem(sFullHead3));
-            men.add(new JMenuItem(sUnits));
-        }
-        //menit.addActionListener(this);
-        men.addSeparator();
-        menit=new JMenuItem("Large");
-        men.add(menit);
-        menit.addActionListener(this);
-        men.addSeparator();
-        if(!boArc){
-            menit=new JMenuItem("Meter");
-            men.add(menit);
-            menit.addActionListener(this);
-        }
-        if(!boBar){
-            menit=new JMenuItem("Bar");
-            men.add(menit);
-            menit.addActionListener(this);
-        }
-        if(!boStat){
-            menit=new JMenuItem("Statistics");
-            men.add(menit);
-            menit.addActionListener(this);
-        }
-        if(!boTrend){
-            menit=new JMenuItem("Trend");
-            men.add(menit);
-            menit.addActionListener(this);
-        }
-        if(boAutoScale) menit=new JMenuItem("setFixscale");
-        else menit=new JMenuItem("setAutoscale");
-        men.add(menit);
-        menit.addActionListener(this);
-        if(isLog) menit=new JMenuItem("setLin");
-        else menit=new JMenuItem("setLog");
-        men.add(menit);
-        menit.addActionListener(this);
-        menit=new JMenuItem("Clear");
-        men.add(menit);
-        menit.addActionListener(this);
-        men.addSeparator();
-        JMenu colmen=new JMenu("Colors");
-        menit=new JMenuItem("Red");
-        colmen.add(menit);
-        menit.addActionListener(this);
-        menit=new JMenuItem("Green");
-        colmen.add(menit);
-        menit.addActionListener(this);
-        menit=new JMenuItem("Blue");
-        colmen.add(menit);
-        menit.addActionListener(this);
-        menit=new JMenuItem("Yellow");
-        colmen.add(menit);
-        menit.addActionListener(this);
-        menit=new JMenuItem("Magenta");
-        colmen.add(menit);
-        menit.addActionListener(this);
-        menit=new JMenuItem("Cyan");
-        colmen.add(menit);
-        menit.addActionListener(this);
-        men.add(colmen);
-        men.addSeparator();
-        menit=new JMenuItem("Discard");
-        men.add(menit);
-        menit.addActionListener(this);
-        men.setLightWeightPopupEnabled(false); // makes popup medium weight to go on top of heavy weight canvas
-        men.setVisible(true);
-        men.show(me.getComponent(),me.getX(),me.getY());
-    }
-}
-public void mouseClicked(MouseEvent me){}
-public void mouseEntered(MouseEvent me){}
-public void mouseExited(MouseEvent me){}
-public void mouseReleased(MouseEvent me){}
-
-public void hasParent(){
-boextMeter=true; // true: cannot create child
-}
-public void newFrame(){
-if(!boextMeter){
-    xLayout la = new xLayout(sHead);
-    la.set(new Point(iID*30,iID*30), null, 0, true); // position
-    extFrame = new xInternalFrame(sHead,la);
-    extMeter=new xMeter(iMode, sHead, fMin, fMax, XSIZE, YSIZE, cColValue);
-    extMeter.setLettering(sFullHead1,sFullHead2,sFullHead3,sUnits);
-    extMeter.setSizeXY(new Dimension(XSIZE_LARGE,YSIZE_LARGE));
-    extMeter.hasParent();
-    extFrame.setupFrame(null, null, extMeter, false);  // true for resizable
-    xSet.getDesktop().add(extFrame);
-    xSet.getDesktop().setSelectedFrame(extFrame);
-    extFrame.moveToFront();
-    boextMeter=true;
-}}
 /**
  * Creates a meter canvas.
  * @param mode BAR, ARC, TREND, STAT
- * @param head name of parameter displayed
- * @param min parameter value range
- * @param max parameter value range
- * @param xlength size of canvas in pixels
- * @param ylength size of canvas in pixels
- * @param c color of markers
+ * @param name Name of parameter displayed
+ * @param min Parameter value range
+ * @param max Parameter value range
+ * @param xlength Size of canvas in pixels (XSIZE)
+ * @param ylength Size of canvas in pixels (YSIZE)
+ * @param c Color of markers
  */
-public xMeter(int mode, String head, double min, double max, int xlength, int ylength, Color c){
+public xMeter(int mode, String name, double min, double max, int xlength, int ylength, Color c){
  iMode=mode;
  if(mode==BAR)  boBar=true;
     else if(mode==TREND)boTrend=true;
     else if(mode==STAT) boStat=true;
     else        boArc=true;
-    sFullHead1=new String("%none%");
+    sFullHead1=new String(name);
     sFullHead2=new String("%none%");
     sFullHead3=new String("%none%");
     sUnits=new String("Rate");
     renderHint=new RenderingHints(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
     renderHint.put(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
-    initMeter(head,min,max,xlength,ylength,c);
+    initMeter(name,min,max,xlength,ylength,c);
     addMouseListener(this);
     // look if external frame is still there
-    if(xSet.getDesktop()!=null){
-    JInternalFrame[] fr=xSet.getDesktop().getAllFrames();
-    for(int i=0;i<fr.length;i++){
-        if(fr[i].getTitle().equals(head)){
-        extFrame=(xInternalFrame)fr[i];
-        extMeter=(xMeter)(extFrame.getPanel());
-        boextMeter=true;
-        System.out.println("connect meter "+head);
-        break;
-    }}}
+    // if(xSet.getDesktop()!=null){
+    // JInternalFrame[] fr=xSet.getDesktop().getAllFrames();
+    // for(int i=0;i<fr.length;i++){
+        // if(fr[i].getTitle().equals(head)){
+        // extFrame=(xInternalFrame)fr[i];
+        // extMeter=(xMeter)(extFrame.getPanel());
+        // boextMeter=true;
+        // System.out.println("connect meter "+head);
+        // break;
+    // }}}
 }
 /**
  * Initializes a meter canvas (called by constructor).
- * @param head name of parameter displayed
- * @param min parameter value range
- * @param max parameter value range
- * @param xlen size of canvas in pixels
- * @param ylen size of canvas in pixels
- * @param c color of markers
+ * @param name Name of parameter displayed
+ * @param min Parameter value range
+ * @param max Parameter value range
+ * @param xlen Size of canvas in pixels
+ * @param ylen Size of canvas in pixels
+ * @param c Color of markers
  */
-public void initMeter(String head, double min, double max, int xlen, int ylen, Color c){
+private void initMeter(String name, double min, double max, int xlen, int ylen, Color c){
     if(xlen>0) ix=xlen;
     if(ylen>0) iy=ylen;
     if(ix<XSIZE)ix=XSIZE;
@@ -309,40 +208,19 @@ public void initMeter(String head, double min, double max, int xlen, int ylen, C
     setLimits(min,max);
     cColValue = c;
     cColCur=c;
-    sHead = new String(head);
+    sHead = new String(name);
     tfont = new Font("Dialog",Font.PLAIN,10);
     setFont(tfont);
 }
 /**
- * Set units string.
- * @param units
+ * Initializes a meter canvas with new limits and store as default.
+ * @param min parameter value range
+ * @param max parameter value range
  */
-public void setLettering(String node, String appl, String name, String units){
-    sUnits=units;
-    sHead=node;
-    sFullHead1=node;
-    sFullHead2=appl;
-    sFullHead3=name;
-}
-/**
- * Set units string.
- * @param units
- */
-public void setUnits(String units){sUnits=units;}
-public void setColor(Color color){cColValue=color;}
-public void setColorBack(Color color){cColBack=color;cColNorm=color.brighter().brighter();}
-/**
- * Set color.
- * @param colorname (Red, Green, Blue, Yellow, Cyan, Magenta).
- */
-public void setColor(String colorname){
-    if(colorname.equals("Red"))    cColValue=new Color(1.0f,0.0f,0.0f);
-    else if(colorname.equals("Blue"))   cColValue=new Color(0.5f,0.5f,1.0f);
-    else if(colorname.equals("Green"))  cColValue=new Color(0.0f,1.0f,0.0f);
-    else if(colorname.equals("Yellow")) cColValue=new Color(1.0f,1.0f,0.0f);
-    else if(colorname.equals("Cyan"))   cColValue=new Color(0.5f,1.0f,1.0f);
-    else if(colorname.equals("Magenta"))cColValue=new Color(1.0f,0.5f,1.0f);
-    cColCur=cColValue;
+public void setDefaultLimits(double min, double max){
+defMin=min;
+defMax=max;
+setLimits(min,max);
 }
 /**
  * Initializes a meter canvas with new limits.
@@ -362,9 +240,162 @@ public void setLimits(double min, double max){
     createScale();
 }
 /**
+ * Create a new meter from existing one. When clone shall be attached
+ * to parent meter, typically these settings must be applied:<br> 
+ * clone.setSizeXY(new Dimension(XSIZE_LARGE,YSIZE_LARGE));<br>
+ * clone.hasParent();<br>
+ * parent.setExternMeter(clone,Frame);
+ * @param name Name of clone.
+ */
+public xMeter getClone(String name){
+    xMeter extMeter=new xMeter(iMode, name, fMin, fMax, XSIZE, YSIZE, cColValue);
+    extMeter.setAutoScale(boAutoScale);
+    extMeter.setLogScale(isLog);
+    extMeter.setLettering(sFullHead1,sFullHead2,sFullHead3,sUnits);
+    extMeter.setColorBack(cColBack);
+    return extMeter;
+}
+/**
+ * Set some strings for lettering. In the compact mode Node:Appl and Name are shown in two lines.
+ * Units are not shown. In large mode Node, Appl and Name are shown in three lines, units are shown.
+ * @param node Node name. Get back by getHead1().
+ * @param appl Application name. Get back by getHead2().
+ * @param name Parameter name. Get back by getHead3().
+ * @param units Units
+ */
+public void setLettering(String node, String appl, String name, String units){
+    sUnits=units;
+    sHead=node;
+    sFullHead1=node;
+    sFullHead2=appl;
+    sFullHead3=name;
+}
+/**
+ * Set units string.
+ * @param units
+ */
+public void setUnits(String units){sUnits=units;}
+/**
+ * Set color of marker.
+ * @param color
+ */
+public void setColor(Color color){cColValue=color;}
+/**
+ * Set back ground color. Color for text is two times brighter.
+ * Background color should therefore be dark.
+ * @param color
+ */
+public void setColorBack(Color color){cColBack=color;cColNorm=color.brighter().brighter();}
+/**
+ * Set color by name.
+ * @param colorname (Red, Green, Blue, Yellow, Cyan, Magenta).
+ */
+public void setColor(String colorname){
+    if(colorname.equals("Red"))         {sColor=colorname; cColValue=new Color(1.0f,0.0f,0.0f);}
+    else if(colorname.equals("Blue"))   {sColor=colorname; cColValue=new Color(0.5f,0.5f,1.0f);}
+    else if(colorname.equals("Green"))  {sColor=colorname; cColValue=new Color(0.0f,1.0f,0.0f);}
+    else if(colorname.equals("Yellow")) {sColor=colorname; cColValue=new Color(1.0f,1.0f,0.0f);}
+    else if(colorname.equals("Cyan"))   {sColor=colorname; cColValue=new Color(0.5f,1.0f,1.0f);}
+    else if(colorname.equals("Magenta")){sColor=colorname; cColValue=new Color(1.0f,0.5f,1.0f);}
+    cColCur=cColValue;
+}
+// from pull down menu.
+private void askLimits(){
+double low=fMin,high=fMax;
+    boAutoScale=false;
+    String str=JOptionPane.showInputDialog("Enter limits: low,high",
+        new String(Double.toString(fMin)+","+Double.toString(fMax)));
+    if(str != null){
+    String f[]=str.split(",");
+    if(f.length == 1)high=Double.parseDouble(f[0]);
+    if(f.length == 2){low=Double.parseDouble(f[0]);high=Double.parseDouble(f[1]);}
+    setDefaultLimits(low,high);
+    if(extMeter!=null)extMeter.setLimits(low,high);
+}}
+/**
+ * If caller makes a clone of this Meter (parent), and wants that clone to be
+ * controlled by this Meter (updated), it must set the clone to hasParent.
+ * The clone is passed to its parent by setExternMeter together with a reference to
+ * a JInternalFrame where the clone is displayed. This frame must be created by caller.
+ * If frame is closed, the parent removes its child.
+ */
+protected void hasParent(){
+boextMeter=true; // true: cannot create child
+}
+/**
+ * Attach a second meter to this. Second meter will be updated from this.
+ * @param extmeter Typically a clone with large size to be displayed in an extra frame.
+ * @param extframe Extra frame for the clone. Must be handled by caller.
+ */
+protected void setExternMeter(xMeter extmeter, JInternalFrame extframe){
+extMeter=extmeter;
+extFrame=extframe;
+boextMeter=true;
+}
+// If frame is detected to be gone, call this function to clean up.
+private void removeMeter(){
+extFrame=null;
+extMeter=null;
+boextMeter=false;
+}
+/**
+ * Resets log scale, limits, autoscale, and mode to values as set by default settings.
+ */
+public void setDefaults(){
+setLogScale(defLog);
+setLimits(defMin,defMax);
+setAutoScale(defAutoScale);
+setMode(defMode);
+}
+public String getHead1(){return sFullHead1;}
+public String getHead2(){return sFullHead2;}
+public String getHead3(){return sFullHead3;}
+public double getMin(){return fMin;}
+public double getMax(){return fMax;}
+public int getMode(){return iMode;}
+public String getColor(){return sColor;}
+public void setDefaultLogScale(boolean log){defLog=log;setLogScale(log);}
+public void setLogScale(boolean log){isLog=log;createScale();}
+public boolean getLogScale(){return isLog;}
+public void setName(String sH){sHead = new String(sH);}
+public void setDefaultAutoScale(boolean as){
+defAutoScale=as;
+setAutoScale(as);
+}
+public void setAutoScale(boolean as){
+boAutoScale=as;
+if(boAutoScale)fMax=fMin*1.1; // autoscale from low value
+}
+public boolean getAutoScale(){return boAutoScale;}
+/**
+ * Set update interval for trending and histogramming
+ * @param seconds Time interval.
+ */
+public void setInterval(int seconds){iTimes=seconds;}
+// xiPanelItem
+public void setActionListener(ActionListener actionlistener){action=actionlistener;}
+public JPanel getPanel() {return this;}
+public String getName(){return sHead;}
+public void setID(int i){iID=i;}
+public int getID(){return iID;}
+public Point getPosition(){return new Point(getX(),getY());};
+public Dimension getDimension(){return new Dimension(ix,iy);};
+public void setSizeXY(){setPreferredSize(new Dimension(ix,iy));}
+public void setSizeXY(Dimension dd){
+    ix=(int)dd.getWidth();
+    iy=(int)dd.getHeight();
+    iInit=0;
+    imStore = null;
+    createScale();
+    clearStat();
+    setMode(iMode);
+    setPreferredSize(dd);
+    repaint();
+}
+/**
  * Calculates new scaling (internally used).
  */
-public void createScale(){
+private void createScale(){
 int ioff=iy-37; // was 38
     boLarge=iy>YSIZE;
     if(isLog){
@@ -400,34 +431,10 @@ int ioff=iy-37; // was 38
         ixtick[2]=(int)(Math.cos(Math.toRadians(135.))*len);
     }
 }
-public void setID(int i){iID=i;}
-public void setLogScale(boolean log){isLog=log;createScale();}
-public void setHeader(String sH){sHead = new String(sH);}
-public String getName(){return sHead;}
-public void setAutoScale(boolean as){boAutoScale=as;}
-/**
- * Set update interval for trending and histogramming
- */
-public void setInterval(int is){iTimes=is;}
-
-public void setSizeXY(){
-    setPreferredSize(new Dimension(ix,iy));
-}
-public void setSizeXY(Dimension dd){
-    ix=(int)dd.getWidth();
-    iy=(int)dd.getHeight();
-    iInit=0;
-    imStore = null;
-    createScale();
-    clearStat();
-    setMode(iMode);
-    setPreferredSize(dd);
-    repaint();
-}
 /**
  * Clear trending and histogram arrays
  */
-public void clearStat(){
+private void clearStat(){
 int ioff=iy-37; // was 38
     iYpos=iy-49;
     if(boAutoScale)fMax=fMin+1.0;
@@ -448,6 +455,18 @@ int ioff=iy-37; // was 38
         }
     }
 }
+/**
+ * Set mode of presentation.
+ * @param mode ARC, BAR, TREND, STAT
+ */
+public void setDefaultMode(int mode){
+defMode=mode;
+setMode(mode);
+}
+/**
+ * Set mode of presentation.
+ * @param mode ARC, BAR, TREND, STAT
+ */
 public void setMode(int mode){
     iMode=mode;
     boArc = false;
@@ -495,13 +514,15 @@ public void setMode(int mode){
     }
 }
 /**
- * Toggle between trend meter and bar mode. If mode was none of both, meter is set.
+ * Toggle between meter and bar mode. If mode was none of both, meter is set.
+ * @param meter True: select meter, false: bar.
  */
-public void toggleMeter(boolean meter){
+private void toggleMeter(boolean meter){
     boArc = meter;
     boBar = !meter;
     if(boArc)iMode=ARC;
     if(boBar)iMode=BAR;
+    defMode=iMode;
     boTrend=false;
     boStat=false;
     iYpos=iy-49;
@@ -510,12 +531,14 @@ public void toggleMeter(boolean meter){
 }
 /**
  * Toggle between trend mode and histogram mode. If mode was none of both, histogram is set.
+ * @param stat True: select histogram, false: trend.
  */
-public void toggleTrend(boolean stat){
+private void toggleTrend(boolean stat){
     boStat = stat;
     boTrend = !stat;
     if(boStat)iMode=STAT;
     if(boTrend)iMode=TREND;
+    defMode=iMode;
     boArc=false;
     boBar=false;
     if(iDim==0){
@@ -533,6 +556,9 @@ public void toggleTrend(boolean stat){
     }
     repaint();
 }
+/**
+ * Called by repaint, calls update.
+ */
 public void paintComponent(Graphics g){
 // draw image
 // System.out.println("paint");
@@ -545,10 +571,11 @@ public void paintComponent(Graphics g){
     Graphics2D g2d = (Graphics2D)g;
     g2d.drawImage(imStore,new AffineTransform(1f,0f,0f,1f,0,0),this);
 }
-// Overwriting update method we avoid clearing the
-// graphics. This would cause flickering
-// update is not called by repaint!
-
+/**
+ * Overwriting update method we avoid clearing the
+ * graphics. This would cause flickering.
+ * Update is not called by repaint!
+ */
 public void update(Graphics g){
 // static graphics into memory image
     int ixtemp;
@@ -623,7 +650,7 @@ public void update(Graphics g){
         gg.drawString(sFullHead2,10,28);
         gg.drawString(sFullHead3,10,42);
     } else {
-        gg.drawString(sHead+":"+sFullHead2,5,14);
+        gg.drawString(sFullHead1+":"+sFullHead2,5,14);
         gg.drawString(sFullHead3,5,28);
     }
     if(boArc || boBar){
@@ -720,8 +747,10 @@ public void update(Graphics g){
  */
 public void redraw(){redraw(fMin);}
 /**
- * Redraw with new value
- * @param value new value
+ * Redraw with new value.
+ * @param value New value
+ * @param valid True if value is valid, false if not. Change color on change in validity.
+ * @param draw True: call redraw, otherwise no repaint.
  */
 public void redraw(double value, boolean valid, boolean draw){
 if(valid){
@@ -737,8 +766,8 @@ if(valid){
 if(draw)redraw(value);
 }
 /**
- * Redraw with new value
- * @param value new value
+ * Final redraw with new value. Called by all other redraw entries.
+ * @param value New value.
  */
 public void redraw(double value){
 int ioff=iy-37; // was 38
@@ -835,10 +864,135 @@ int ioff=iy-37; // was 38
     if(extFrame != null){
         if(extFrame.isClosed()){
             extFrame=null;
-            extMeter=null;
-            boextMeter=false;
+            removeMeter();
         }
-    }
+    } else removeMeter();
     if(extMeter!=null)extMeter.redraw(value);
     }
+// Context menu execution (ActionListener)
+/**
+ * Dispatch actions from right mouse button.
+ */
+public void actionPerformed(ActionEvent a){
+    String c=a.getActionCommand();
+    setColor(c); // only valid color names are applied.
+    if(c.equals(sHead));
+    if(c.equals("Meter"))toggleMeter(true);
+    if(c.equals("Bar"))toggleMeter(false);
+    if(c.equals("Statistics"))toggleTrend(true);
+    if(c.equals("Trend"))toggleTrend(false);
+    if(c.equals("setLin"))setDefaultLogScale(false);
+    if(c.equals("setLog"))setDefaultLogScale(true);
+    if(c.equals("setFixscale"))setDefaultAutoScale(false);
+    if(c.equals("setAutoscale"))setDefaultAutoScale(true);
+    if(c.equals("Limits"))askLimits();
+    if(c.equals("Clear"))clearStat();
+    if(c.equals("Large"))
+        if((action!=null)&(!boextMeter)){
+            boextMeter=true;
+            action.actionPerformed(new ActionEvent(this,getID(),"Large"));
+            }
+    if(c.equals("Discard"));
+}
+// context menu definition (MouseListener)
+/**
+ * Pull down context menu with right mouse button
+ */
+public void mousePressed(MouseEvent me) {
+    if(me.getButton()==MouseEvent.BUTTON3){
+        JPopupMenu men=new JPopupMenu();
+        if(!boLarge){
+            men.add(new JMenuItem(sFullHead1));
+            men.add(new JMenuItem(sFullHead2));
+            men.add(new JMenuItem(sFullHead3));
+            men.add(new JMenuItem(sUnits));
+        }
+        //menit.addActionListener(this);
+        men.addSeparator();
+        if(!boArc){
+            menit=new JMenuItem("Meter");
+            men.add(menit);
+            menit.addActionListener(this);
+        }
+        if(!boBar){
+            menit=new JMenuItem("Bar");
+            men.add(menit);
+            menit.addActionListener(this);
+        }
+        if(!boStat){
+            menit=new JMenuItem("Statistics");
+            men.add(menit);
+            menit.addActionListener(this);
+        }
+        if(!boTrend){
+            menit=new JMenuItem("Trend");
+            men.add(menit);
+            menit.addActionListener(this);
+        }
+        men.addSeparator();
+        if(boAutoScale) menit=new JMenuItem("setFixscale");
+        else menit=new JMenuItem("setAutoscale");
+        men.add(menit);
+        menit.addActionListener(this);
+        if(isLog) menit=new JMenuItem("setLin");
+        else menit=new JMenuItem("setLog");
+        men.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Limits");
+        men.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Clear");
+        men.add(menit);
+        menit.addActionListener(this);
+        men.addSeparator();
+        JMenu colmen=new JMenu("Colors");
+        menit=new JMenuItem("Red");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Green");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Blue");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Yellow");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Magenta");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        menit=new JMenuItem("Cyan");
+        colmen.add(menit);
+        menit.addActionListener(this);
+        men.add(colmen);
+        men.addSeparator();
+        if(!boextMeter){
+            menit=new JMenuItem("Large");
+            men.add(menit);
+            menit.addActionListener(this);
+        }
+        // menit=new JMenuItem("Discard");
+        // men.add(menit);
+        // menit.addActionListener(this);
+        men.setLightWeightPopupEnabled(false); // makes popup medium weight to go on top of heavy weight canvas
+        men.setVisible(true);
+        men.show(me.getComponent(),me.getX(),me.getY());
+    }
+}
+/**
+ * Not used.
+ */
+public void mouseClicked(MouseEvent me){}
+/**
+ * Not used.
+ */
+public void mouseEntered(MouseEvent me){}
+/**
+ * Not used.
+ */
+public void mouseExited(MouseEvent me){}
+/**
+ * Not used.
+ */
+public void mouseReleased(MouseEvent me){}
 }

@@ -1,12 +1,4 @@
 package xgui;
-/*
-This client expects server tDABCserver from eclipse DIM project.
-*/
-
-
-/**
-* @author goofy
-*/
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
@@ -37,8 +29,12 @@ import java.awt.Insets;
 import java.util.*;
 
 /**
-* DIM GUI class
-*/
+ * Base class for prompt panels.
+ * Provides functions to build forms from text input fields (one column)
+ * and buttons (tool bar).
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xPanelPrompt extends JPanel 
 {
 private GridBagConstraints gridconst;
@@ -53,9 +49,8 @@ private JOptionPane confirm;
 // private GroupLayout.SequentialGroup vGroup;
 // private GroupLayout.ParallelGroup pGroup;
 /**
- * DIM GUI class. Uses JScrollPanes with GridBagLayout.
- * Creates the table for the parameters and the tree for the commands.
- * Creates rate meters for dataBW, dataLatency and dataRate
+ * Create panel with title.
+ * @param title Title
  */
 public xPanelPrompt(String title) {
     super(new BorderLayout());
@@ -73,6 +68,11 @@ public xPanelPrompt(String title) {
     tool.setMargin(new Insets(-4,0,-6,0));
     add(tool,BorderLayout.SOUTH);
 }
+/**
+ * Add prompter line in column.
+ * @param label Label for prompt.
+ * @param input Input text field. Action listener must be set from caller.
+ */
 public void addPrompt(String label, JTextField input){
     gridconst.gridwidth = GridBagConstraints.RELATIVE; //next-to-last
     gridconst.fill = GridBagConstraints.NONE;      //reset to default
@@ -85,6 +85,15 @@ public void addPrompt(String label, JTextField input){
     gridconst.weightx = 1.0;
     pan.add(input, gridconst);
 }
+/**
+ * Add prompter line in column and return text field.
+ * @param label Label for prompt.
+ * @param value Default value.
+ * @param cmd Action command.
+ * @param width Size of text field.
+ * @param al Action listener to handle action command.
+ * @return Text field.
+ */
 public JTextField addPrompt(String label, String value, String cmd, int width, ActionListener al){
     JTextField tf=new JTextField(value,width);
     tf.setActionCommand(cmd);
@@ -92,6 +101,13 @@ public JTextField addPrompt(String label, String value, String cmd, int width, A
     addPrompt(label,tf);
     return tf;
 }
+/**
+ * Add check box in column and return it.
+ * @param label Label for check box.
+ * @param cmd Action command.
+ * @param al Action listener to handle check box command.
+ * @return Check box.
+ */
 public JCheckBox addCheckBox(String label, String cmd, ActionListener al){
     JCheckBox check1 = new JCheckBox();
     check1.addActionListener(al);
@@ -99,6 +115,11 @@ public JCheckBox addCheckBox(String label, String cmd, ActionListener al){
     addCheckBox(label,check1);
     return check1;
 }
+/**
+ * Add check box in column.
+ * @param label Label for check box.
+ * @param check Check box. Action listener must be set from caller.
+ */
 public void addCheckBox(String label, JCheckBox check){
     gridconst.gridwidth = GridBagConstraints.RELATIVE; //next-to-last
     gridconst.fill = GridBagConstraints.NONE;      //reset to default
@@ -111,6 +132,13 @@ public void addCheckBox(String label, JCheckBox check){
     gridconst.weightx = 1.0;
     pan.add(check, gridconst);
 }
+/**
+ * Add text button in column.
+ * @param label Text of button.
+ * @param cmd Button command. 
+ * @param tt Tool tip text.
+ * @param al Action listener handling button command.
+ */
 public void addTextButton(String label, String cmd, String tt, ActionListener al){
     JButton button = new JButton();
     button.setActionCommand(cmd);
@@ -123,46 +151,68 @@ public void addTextButton(String label, String cmd, String tt, ActionListener al
     gridconst.weightx = 1.0;
     pan.add(button, gridconst);
 }
-public void addButton(String cmd, String tt, ImageIcon icon, ActionListener a){
+/**
+ * Add tool bar button.
+ * @param cmd Button command. 
+ * @param icon Button icon.
+ * @param tt Tool tip text.
+ * @param al Action listener handling button command.
+ */
+public void addButton(String cmd, String tt, ImageIcon icon, ActionListener al){
     JButton button = new JButton(icon);
     button.setActionCommand(cmd);
-    button.addActionListener(a);
+    button.addActionListener(al);
     button.setText("");
     button.setToolTipText(tt);
     button.setBorderPainted(false);
     tool.add(button);
 }
-public void addButton(String cmd, String tt, ImageIcon icon, ActionListener a, boolean def){
-    JButton button = new JButton(icon);
-    button.setActionCommand(cmd);
-    button.addActionListener(a);
-    button.setText("");
-    button.setToolTipText(tt);
-    button.setBorderPainted(false);
-    button.setContentAreaFilled(false);
-    getRootPane().setDefaultButton(button);
-    tool.add(button);
-}
-public void setTitle(String t, Color c){
-titleborder.setTitle(t);
-titleborder.setTitleColor(c);
+/**
+ * Set title and color of title boarder.
+ * @param title Title
+ * @param color Color
+ */
+public void setTitle(String title, Color color){
+titleborder.setTitle(title);
+titleborder.setTitleColor(color);
 repaint();
 }
 // public TitledBorder getTitle(){return titleborder;}
 
+
+/**
+ * Modal pop up window with error message.
+ * @param msg Error message
+ */
 public void tellError(String msg){
-// first argument must be a component which is displayed. Could be PanelDabc, but this may be closed.
-// therefore we use desktop. 
-    JOptionPane.showInternalMessageDialog(xSet.getDesktop(), msg, "Error",JOptionPane.ERROR_MESSAGE);
+// first argument must be a component which is displayed. 
+// Therefore we use desktop. 
+JOptionPane.showInternalMessageDialog(xSet.getDesktop(), msg, "Error",JOptionPane.ERROR_MESSAGE);
 }
+/**
+ * Modal pop up window with info message.
+ * @param msg Info message
+ */
 public void tellInfo(String msg){
-    JOptionPane.showInternalMessageDialog(xSet.getDesktop(), msg, "Information",JOptionPane.INFORMATION_MESSAGE);
+JOptionPane.showInternalMessageDialog(xSet.getDesktop(), msg, "Information",JOptionPane.INFORMATION_MESSAGE);
 }
-public boolean choose(String msg){
-    int i=JOptionPane.showInternalConfirmDialog(xSet.getDesktop(),msg, "Really continue?", JOptionPane.YES_NO_OPTION); 
+/**
+ * Modal pop up window with question.
+ * @param title Text.
+ * @param question Question.
+ * @return True, if answer was yes.
+ */
+public boolean askQuestion(String title, String question){
+    int i=JOptionPane.showInternalConfirmDialog(xSet.getDesktop(),question,title, JOptionPane.YES_NO_OPTION); 
     return (i == 0);
 }
-}
+/**
+ * Modal pop up window to enter text.
+ * @param title Text describing input.
+ */
+public String askInput(String title){
+ return JOptionPane.showInputDialog(title);
+}}
 
 
 

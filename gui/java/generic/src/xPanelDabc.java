@@ -1,7 +1,4 @@
 package xgui;
-/**
-* @author goofy
-*/
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -22,11 +19,13 @@ import org.w3c.dom.*;
 import org.xml.sax.*;
 import javax.xml.parsers.*;
 
-import dim.*;
-
 /**
-* DIM GUI class
-*/
+ * Form panel to control DABC.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xForm
+ * @see xFormDabc
+ */
 public class xPanelDabc extends xPanelPrompt implements ActionListener, Runnable 
 {
 private xRemoteShell dabcshell;
@@ -39,7 +38,7 @@ private xDimBrowser browser;
 private xiDesktop desk;
 private xInternalFrame progress;
 private xState progressState;
-private xFormDabc setupDabc;
+private xFormDabc formDabc;
 private ActionListener action;
 private DocumentBuilderFactory factory;
 private DocumentBuilder builder;
@@ -50,12 +49,11 @@ private int nServers;
 private Element root, elem;
 private xDimCommand doConfig, doEnable, doStart, doStop, doHalt;
 private Vector<xDimParameter> runState;
-private Vector<Object> doExit, doShutdown;
+private Vector<xDimCommand> doExit;
 private Thread threxe;
 private ActionEvent ae;
 private xTimer etime;
 private boolean threadRunning=false;
-private Point panpnt;
 private xSetup setup;
 private Vector<xPanelSetup> PanelSetupList;
 private Vector<String> names;
@@ -63,7 +61,15 @@ private Vector<String> types;
 private Vector<String> values;
 private Vector<String> titles;
 
-
+/**
+ * Constructor of DABC launch panel.
+ * @param title Title of window.
+ * @param diminfo DIM browser
+ * @param desktop Interface to desktop
+ * @param al Event handler of desktop. Handles events from xTimer.<br>
+ * Passed actions are: Update, DisplayFrame, RemoveFrame.
+ * @see xTimer
+ */
 public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionListener al) {
     super(title);
     action=al;
@@ -99,11 +105,11 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     int width=25;
     // read dabc setup from file
     if(System.getenv("DABC_LAUNCH_DABC")!=null)
-        setupDabc=new xFormDabc(System.getenv("DABC_LAUNCH_DABC"));
-    else setupDabc=new xFormDabc("DabcLaunch.xml");
-    setupDabc.addActionListener(this);
-    xSet.addObject(setupDabc);
-    // setupDabc=(xFormDabc)xSet.getObject("xgui.xFormDabc"); // how to retrieve
+        formDabc=new xFormDabc(System.getenv("DABC_LAUNCH_DABC"));
+    else formDabc=new xFormDabc("DabcLaunch.xml");
+    formDabc.addActionListener(this);
+    Object o=xSet.addObject(formDabc);
+    // formDabc=(xFormDabc)xSet.getObject("xgui.xFormDabc"); // how to retrieve
     DimName=new JTextField(xSet.getDimDns(),width);
     DimName.setEditable(false);
     Username=new JTextField(xSet.getUserName(),width);
@@ -116,23 +122,22 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     addPrompt("Name server: ",DimName);
     addPrompt("User name: ",Username);
     addPrompt("Password [RET]: ",Password);
-    DabcNode=addPrompt("Master node: ",setupDabc.getMaster(),"set",width,this);
-    DabcName=addPrompt("Master name: ",setupDabc.getName(),"set",width,this);
-    DabcServers=addPrompt("Servers: ",setupDabc.getServers(),"set",width,this);
-    DabcPath=addPrompt("System path: ",setupDabc.getSystemPath(),"set",width,this);
-    DabcUserpath=addPrompt("User path: ",setupDabc.getUserPath(),"set",width,this);
-    DabcSetup=addPrompt("Setup file: ",setupDabc.getSetup(),"set",width,this);
-    DabcScript=addPrompt("Script: ",setupDabc.getScript(),"set",width,this);
-    DabcLaunchFile=addPrompt("Launch file: ",setupDabc.getLaunchFile(),"set",width,this);
+    DabcNode=addPrompt("Master node: ",formDabc.getMaster(),"set",width,this);
+    DabcName=addPrompt("Master name: ",formDabc.getName(),"set",width,this);
+    DabcServers=addPrompt("Servers: ",formDabc.getServers(),"set",width,this);
+    DabcPath=addPrompt("System path: ",formDabc.getSystemPath(),"set",width,this);
+    DabcUserpath=addPrompt("User path: ",formDabc.getUserPath(),"set",width,this);
+    DabcSetup=addPrompt("Setup file: ",formDabc.getSetup(),"set",width,this);
+    DabcScript=addPrompt("Script: ",formDabc.getScript(),"set",width,this);
+    DabcLaunchFile=addPrompt("Launch file: ",formDabc.getLaunchFile(),"set",width,this);
     
 // Add checkboxes
     getnew = new JCheckBox();
     getnew.setSelected(true);
     addCheckBox("Get new setup",getnew);
 
-    panpnt = new Point(0,1); // layout for compound
     dabcshell = new xRemoteShell("ssh");
-    nServers=1+Integer.parseInt(setupDabc.getServers()); // add DNS
+    nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS
     setDimServices();
     System.out.println("DABC  servers needed: DNS + "+(nServers-1));
     etime = new xTimer(al, false); // fire only once
@@ -140,37 +145,42 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
 
 private void setLaunch(){
 xSet.setAccess(Password.getPassword());
-setupDabc.setMaster(DabcNode.getText());
-setupDabc.setServers(DabcServers.getText());
-setupDabc.setSystemPath(DabcPath.getText());
-setupDabc.setUserPath(DabcUserpath.getText());
-setupDabc.setScript(DabcScript.getText());
-setupDabc.setLaunchFile(DabcLaunchFile.getText());
-setupDabc.setName(DabcName.getText());
-setupDabc.setSetup(DabcSetup.getText());
-//setupDabc.printForm();
+formDabc.setMaster(DabcNode.getText());
+formDabc.setServers(DabcServers.getText());
+formDabc.setSystemPath(DabcPath.getText());
+formDabc.setUserPath(DabcUserpath.getText());
+formDabc.setScript(DabcScript.getText());
+formDabc.setLaunchFile(DabcLaunchFile.getText());
+formDabc.setName(DabcName.getText());
+formDabc.setSetup(DabcSetup.getText());
+//formDabc.printForm();
 }
-// get from command list special commands for buttons.
+/**
+ * Called in xDesktop to rebuild references to DIM services.
+ */
 public void setDimServices(){
 int i;
 releaseDimServices();
 System.out.println("Dabc setDimServices");
-doExit=new Vector<Object>();
+doExit=new Vector<xDimCommand>();
 runState=new Vector<xDimParameter>();
 Vector<xDimCommand> list=browser.getCommandList();
+String pref=new String(DabcName.getText());
 for(i=0;i<list.size();i++){
-if(list.get(i).getParser().getFull().indexOf(DabcName.getText()+"/DoConfigure")>0) doConfig=list.get(i);
-if(list.get(i).getParser().getFull().indexOf(DabcName.getText()+"/DoEnable")>0) doEnable=list.get(i);
-if(list.get(i).getParser().getFull().indexOf(DabcName.getText()+"/DoStart")>0) doStart=list.get(i);
-if(list.get(i).getParser().getFull().indexOf(DabcName.getText()+"/DoStop")>0) doStop=list.get(i);
-if(list.get(i).getParser().getFull().indexOf(DabcName.getText()+"/DoHalt")>0) doHalt=list.get(i);
-if(list.get(i).getParser().getFull().indexOf("/EXIT")>0) doExit.add(list.get(i));
+if(list.get(i).getParser().getFull().indexOf(pref+"/DoConfigure")>0) doConfig=list.get(i);
+else if(list.get(i).getParser().getFull().indexOf(pref+"/DoEnable")>0) doEnable=list.get(i);
+else if(list.get(i).getParser().getFull().indexOf(pref+"/DoStart")>0) doStart=list.get(i);
+else if(list.get(i).getParser().getFull().indexOf(pref+"/DoStop")>0) doStop=list.get(i);
+else if(list.get(i).getParser().getFull().indexOf(pref+"/DoHalt")>0) doHalt=list.get(i);
+else if(list.get(i).getParser().getFull().indexOf("/EXIT")>0) doExit.add(list.get(i));
 }
 Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
 if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) runState.add(para.get(i));
 }}
-
+/**
+ * Called in xDesktop to release references to DIM services.
+ */
 public void releaseDimServices(){
 System.out.println("Dabc releaseDimServices");
 doConfig=null;
@@ -184,10 +194,8 @@ doExit=null;
 runState=null;
 }
 
-private void setProgress(String info, Color color){
-setTitle(info,color);
-if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
-}
+// Start internal frame with an xState panel through timer.
+// Timer events are handled by desktop event handler passed to constructor.
 private void startProgress(){
     xLayout la= new xLayout("progress");
     la.set(new Point(50,200), new Dimension(300,100),0,true);
@@ -198,10 +206,17 @@ private void startProgress(){
     progress.setupFrame(workIcon, null, progressState, true);
     etime.action(new ActionEvent(progress,1,"DisplayFrame"));
 }
+// Fire event handler of desktop through timer.
+private void setProgress(String info, Color color){
+setTitle(info,color);
+if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
+}
+// Fire event handler of desktop through timer.
 private void stopProgress(){
     etime.action(new ActionEvent(progress,1,"RemoveFrame"));
 }
 
+// wait until all runState parameters have the value state.
 private boolean waitState(int timeout, String state){
 int t=0;
 boolean ok;
@@ -220,6 +235,17 @@ System.out.print("Wait for "+state);
     return false;
 }
 //React to menu selections.
+/**
+ * Handle events.
+ * @param e Event. Some events are handled directly. Others are handled in a thread. 
+ * If an update of DIM parameter list is necessary, Update event is launched through timer
+ * and handled by desktop action listener.<p>
+ * "ReadSetup":<br>
+ * Creates a new xSetup object, read Xdaq XML setup file, get references to name/type/value lists.
+ * Create for each context a xPanelSetup passing the list references, and display in a separate frame. <br>
+ * "DabcSave":<br>
+ * Save content of form to file and contents of context panels to XML file. 
+ */
 public void actionPerformed(ActionEvent e) {
 boolean doit=true;
 if ("set".equals(e.getActionCommand())) {
@@ -235,7 +261,7 @@ int off[]=new int[100],len[]=new int[100],ind,i;
     String name,header;
     if(getnew.isSelected()){
         setup=null;
-        if(titles != null) for(i=0;i<titles.size();i++) desk.removeDesktop(titles.get(i));
+        if(titles != null) for(i=0;i<titles.size();i++) desk.removeFrame(titles.get(i));
         titles=null;
     }
     getnew.setSelected(false);
@@ -274,25 +300,25 @@ int off[]=new int[100],len[]=new int[100],ind,i;
         }
     }
     System.out.println("Setup parse: "+DabcUserpath.getText()+"/"+DabcSetup.getText());
-    if(titles != null) for(i=0;i<titles.size();i++) desk.removeDesktop(titles.get(i));
+    if(titles != null) for(i=0;i<titles.size();i++) desk.removeFrame(titles.get(i));
     // display panels
     for(i=0;i<PanelSetupList.size();i++){
         name=new String(titles.get(i));
         xLayout panlo=xSet.getLayout(name); // if not loaded from setup file, create new one
         panlo=xSet.getLayout(name);
         if(panlo==null)panlo=xSet.createLayout(name,new Point(100+100*i,200+10*i), new Dimension(100,75),1,true);
-        xInternalCompound ic =new xInternalCompound(name,setupIcon, panpnt, panlo,null);
-        ic.rebuild(PanelSetupList.get(i)); // top 2, bottom 1
-        desk.addDesktop(ic); // old frame will be deleted
+        xInternalCompound ic =new xInternalCompound(name,setupIcon, 0, panlo,null);
+        ic.rebuild(PanelSetupList.get(i)); 
+        desk.addFrame(ic); // old frame will be deleted
         ic.moveToFront();
     }
-    desk.frameToFront("DabcLauncher");
+    desk.toFront("DabcLauncher");
     return;
 }
 else if ("dabcSave".equals(e.getActionCommand())) {
     xLogger.print(1,Action+" "+DabcLaunchFile.getText());
     setLaunch();
-    setupDabc.saveSetup(DabcLaunchFile.getText());
+    formDabc.saveSetup(DabcLaunchFile.getText());
     String msg=new String("Dabc launch: "+DabcLaunchFile.getText());
     if(setup != null){
         for(int i=0;i<PanelSetupList.size();i++)PanelSetupList.get(i).updateList();
@@ -308,15 +334,15 @@ else if ("dabcSave".equals(e.getActionCommand())) {
     return;
 }
 else if ("CloseWindows".equals(e.getActionCommand())) {
-    if(titles != null) for(int i=0;i<titles.size();i++) desk.removeDesktop(titles.get(i));
+    if(titles != null) for(int i=0;i<titles.size();i++) desk.removeFrame(titles.get(i));
     return;
 }
     
 if(!threadRunning){
     Action = new String(e.getActionCommand());
     // must do confirm here, because in thread it would block forever
-    if ("dabcExit".equals(Action)) doit=choose("Exit, shut down and cleanup DABC?");
-    if ("dabcCleanup".equals(Action)) doit=choose("Kill DABC tasks?");
+    if ("dabcExit".equals(Action)) doit=askQuestion("Confirmation","Exit, shut down and cleanup DABC?");
+    if ("dabcCleanup".equals(Action)) doit=askQuestion("Confirmation","Kill DABC tasks?");
     if(doit){
         startProgress();
         ae=e;
@@ -327,7 +353,12 @@ if(!threadRunning){
     } else tellError("Execution thread not yet finished!");
 }
 // start thread by threxe.start()
-// CAUTION: Do not use tell or choose here: Thread will never continue!
+// CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!
+/**
+ * Thread handling events.<br>
+ * If an update of DIM parameter list is necessary, Update event is launched through timer
+ * and handled by desktop action listener.
+ */
 public void run(){
     dabcMaster = DabcNode.getText();
     
@@ -400,8 +431,8 @@ public void run(){
         setProgress("Exit DABC ...",xSet.blueD());
         if(doExit != null){
             for(int i=0;i<doExit.size();i++){
-                xLogger.print(1,((xDimCommand)doExit.elementAt(i)).getParser().getFull());
-                ((xDimCommand)doExit.elementAt(i)).exec(xSet.getAccess());
+                xLogger.print(1,doExit.elementAt(i).getParser().getFull());
+                doExit.elementAt(i).exec(xSet.getAccess());
             }
             setProgress("OK: DABC down, update parameters ...",xSet.blueD());
             browser.sleep(2);

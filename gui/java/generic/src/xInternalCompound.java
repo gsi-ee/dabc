@@ -7,25 +7,45 @@ import javax.swing.JPanel;
 import javax.swing.JDesktopPane;
 import javax.swing.JSplitPane;
 
+/**
+ * Special internal frame for one to four split panes.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xInternalCompound extends xInternalFrame
 {
 private ImageIcon menuIcon;
 private ActionListener action;
 private JPanel frapan;
-private int topdiv, bottomdiv;
+private int topdiv;
 private int dividerSize;
 private Color backColor;
-
-public xInternalCompound(String title, ImageIcon icon, Point divisions, xLayout la, Color back){
+/**
+ * Creates internal frame.
+ * @param title Title.
+ * @param icon Window icon.
+ * @param divisions Controls layout of split panes.
+ * @param la Layout (position and size).
+ * @param back Background color.
+ */
+public xInternalCompound(String title, ImageIcon icon, int divisions, xLayout la, Color back){
     super(title,la);
     JSplitPane sp=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     dividerSize=sp.getDividerSize();
     menuIcon=icon;
-    topdiv=(int)divisions.getX();
-    bottomdiv=(int)divisions.getY();
+    topdiv=divisions;
     if(back == null) backColor = xSet.getColorBack();
     else backColor=back;
 }
+/**
+ * Creates new container panel, adds the three panels and replaces panel of internal frame.<br>
+ * Division 0: left 1, right top 2, right bottom 3<br>
+ * Division 1: top 1, bottom left 2, bottom right 3<br>
+ * Division 2: top left 1, top right 2, bottom 3
+ * @param panel1
+ * @param panel2
+ * @param panel3
+ */
 public void rebuild(JPanel panel1, JPanel panel2, JPanel panel3){
     JPanel frapan=new JPanel();
     JSplitPane hori=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -72,6 +92,13 @@ public void rebuild(JPanel panel1, JPanel panel2, JPanel panel3){
     }
     setupFrame(menuIcon, null, frapan, true);  // true for resizable
 }
+/**
+ * Creates new container panel, adds the two panels and replaces panel of internal frame.<br>
+ * Division 0: left 1, right 2<br>
+ * Division 1: top 1, bottom 2<br>
+ * @param panel1
+ * @param panel2
+ */
 public void rebuild(JPanel panel1, JPanel panel2){
     JPanel frapan=new JPanel();
     JSplitPane hori=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
@@ -95,9 +122,21 @@ public void rebuild(JPanel panel1, JPanel panel2){
     }
     setupFrame(menuIcon, null, frapan, true);  // true for resizable
 }    
+/**
+ * Replaces panel of internal frame.
+ * @param panel
+ */
 public void rebuild(JPanel panel){
     setupFrame(menuIcon, null, panel, true);  // true for resizable
 }
+/**
+ * Creates new container panel, adds the four panels and replaces panel of internal frame.<br>
+ * Only one possibility for arranging four panels.
+ * @param panel1
+ * @param panel2
+ * @param panel3
+ * @param panel4
+ */
 public void rebuild(JPanel panel1, JPanel panel2, JPanel panel3, JPanel panel4){
     JPanel frapan=new JPanel();
     JSplitPane hori1=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);

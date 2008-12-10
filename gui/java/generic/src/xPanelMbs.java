@@ -1,7 +1,4 @@
 package xgui;
-/**
-* @author goofy
-*/
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -21,9 +18,14 @@ import java.io.*;
 import org.w3c.dom.*;
 import org.xml.sax.*;
 import javax.xml.parsers.*;
+
 /**
-* DIM GUI class
-*/
+ * Form panel to control MBS.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xForm
+ * @see xFormMbs
+ */
 public class xPanelMbs extends xPanelPrompt implements ActionListener, Runnable
 {
 private xRemoteShell mbsshell;
@@ -43,7 +45,7 @@ private xDimBrowser browser;
 private xiDesktop desk;
 private xInternalFrame progress;
 private xState progressState;
-private xFormMbs setupMbs;
+private xFormMbs formMbs;
 private ActionListener action;
 private DocumentBuilderFactory factory;
 private DocumentBuilder builder;
@@ -60,6 +62,14 @@ private ActionEvent ae;
 private xTimer etime;
 private boolean threadRunning=false;
 
+/**
+ * Constructor of MBS launch panel.
+ * @param title Title of window.
+ * @param diminfo DIM browser
+ * @param desktop Interface to desktop
+ * @param al Event handler of desktop. Handles events from xTimer.<br>
+ * Passed actions are: Update, DisplayFrame, RemoveFrame.
+ */
 public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionListener al) {
     super(title);
     runMsgLog=new Vector<xDimParameter>(0);
@@ -98,11 +108,11 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
 // Text input fields
     // read defaults from setup file
     if(System.getenv("DABC_LAUNCH_MBS")!=null)
-         setupMbs=new xFormMbs(System.getenv("DABC_LAUNCH_MBS"));
-    else setupMbs=new xFormMbs("MbsLaunch.xml");
-    setupMbs.addActionListener(this);
-    xSet.addObject(setupMbs);
-    // setupMbs=(xFormMbs)xSet.getObject("xgui.xFormMbs"); // how to retrieve
+         formMbs=new xFormMbs(System.getenv("DABC_LAUNCH_MBS"));
+    else formMbs=new xFormMbs("MbsLaunch.xml");
+    formMbs.addActionListener(this);
+    Object o=xSet.addObject(formMbs);
+    // formMbs=(xFormMbs)xSet.getObject("xgui.xFormMbs"); // how to retrieve
 
     int width=25;
     DimName=new JTextField(xSet.getDimDns(),width);
@@ -117,15 +127,15 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     addPrompt("Name server: ",DimName);
     addPrompt("User name: ",Username);
     addPrompt("Password [RET]: ",Password);
-    MbsNode=addPrompt("Master node: ",setupMbs.getMaster(),"set",width,this);
-    MbsServers=addPrompt("Servers: ",setupMbs.getServers(),"set",width,this);
-    MbsPath=addPrompt("System path: ",setupMbs.getSystemPath(),"set",width,this);
-    MbsUserpath=addPrompt("User path: ",setupMbs.getUserPath(),"set",width,this);
-    MbsScript=addPrompt("Script: ",setupMbs.getScript(),"set",width,this);
-    MbsCommand=addPrompt("Command: ",setupMbs.getCommand(),"set",width,this);
-    MbsLaunchFile=addPrompt("Launch file: ",setupMbs.getLaunchFile(),"set",width,this);
+    MbsNode=addPrompt("Master node: ",formMbs.getMaster(),"set",width,this);
+    MbsServers=addPrompt("Servers: ",formMbs.getServers(),"set",width,this);
+    MbsPath=addPrompt("System path: ",formMbs.getSystemPath(),"set",width,this);
+    MbsUserpath=addPrompt("User path: ",formMbs.getUserPath(),"set",width,this);
+    MbsScript=addPrompt("Script: ",formMbs.getScript(),"set",width,this);
+    MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"set",width,this);
+    MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",width,this);
     // addCheckBox("Test box",new JCheckBox());
-    nServers=1+Integer.parseInt(setupMbs.getServers());// add DNS
+    nServers=1+Integer.parseInt(formMbs.getServers());// add DNS
     System.out.println("MBS   servers needed: DNS + "+(nServers-1));
     
     mbsshell = new xRemoteShell("rsh");
@@ -140,16 +150,18 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
 
 private void setLaunch(){
 xSet.setAccess(Password.getPassword());
-setupMbs.setMaster(MbsNode.getText());
-setupMbs.setServers(MbsServers.getText());
-setupMbs.setSystemPath(MbsPath.getText());
-setupMbs.setUserPath(MbsUserpath.getText());
-setupMbs.setScript(MbsScript.getText());
-setupMbs.setLaunchFile(MbsLaunchFile.getText());
-setupMbs.setCommand(MbsCommand.getText());
-//setupMbs.printForm();
+formMbs.setMaster(MbsNode.getText());
+formMbs.setServers(MbsServers.getText());
+formMbs.setSystemPath(MbsPath.getText());
+formMbs.setUserPath(MbsUserpath.getText());
+formMbs.setScript(MbsScript.getText());
+formMbs.setLaunchFile(MbsLaunchFile.getText());
+formMbs.setCommand(MbsCommand.getText());
+//formMbs.printForm();
 }
-// get from command list special commands for buttons.
+/**
+ * Called in xDesktop to rebuild references to DIM services.
+ */
 public void setDimServices(){
 int i;
 releaseDimServices();
@@ -164,7 +176,9 @@ if(para.get(i).getParser().getFull().indexOf("MSG/MsgLog")>0) runMsgLog.add(para
 if(para.get(i).getParser().getFull().indexOf("MSG/Rate")>0) runRate.add(para.get(i));
 }
 }
-
+/**
+ * Called in xDesktop to release references to DIM services.
+ */
 public void releaseDimServices(){
 System.out.println("Mbs releaseDimServices");
     mbsCommand=null;
@@ -172,10 +186,8 @@ System.out.println("Mbs releaseDimServices");
     runRate.removeAllElements();
 }
 
-private void setProgress(String info, Color color){
-setTitle(info,color);
-if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
-}
+// Start internal frame with an xState panel through timer.
+// Timer events are handled by desktop event handler passed to constructor.
 private void startProgress(){
     xLayout la= new xLayout("progress");
     la.set(new Point(50,200), new Dimension(300,100),0,true);
@@ -186,11 +198,19 @@ private void startProgress(){
     progress.setupFrame(workIcon, null, progressState, true);
     etime.action(new ActionEvent(progress,1,"DisplayFrame"));
 }
+// Fire event handler of desktop through timer.
+private void setProgress(String info, Color color){
+setTitle(info,color);
+if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
+}
+// Fire event handler of desktop through timer.
 private void stopProgress(){
 //etime.setActionCommand(progress.getTitle()); // Java 1.6
     etime.action(new ActionEvent(progress,1,"RemoveFrame"));
 }
 
+// wait until all parameters from vector match serv (parameters exist).
+// or wait until the number of *MSG/serv parameters reaches the requested number.  
 private boolean waitMbs(int timeout, Vector<xDimParameter> param, String serv){
 int t=0,i;
 // param is supposed to be Vector of message logger or rate task parameters.
@@ -278,6 +298,12 @@ int num=0;
     }
 
 //React to menu selections.
+/**
+ * Handle events.
+ * @param e Event. Some events are handled directly. Others are handled in a thread. 
+ * If an update of DIM parameter list is necessary, Update event is launched through timer
+ * and handled by desktop action listener.
+ */
 public void actionPerformed(ActionEvent e) {
 boolean doit=true;
 if ("set".equals(e.getActionCommand())) {
@@ -292,7 +318,7 @@ return;
 if ("mbsSave".equals(e.getActionCommand())) {
     xLogger.print(1,Action);
     setLaunch();
-    setupMbs.saveSetup(MbsLaunchFile.getText());
+    formMbs.saveSetup(MbsLaunchFile.getText());
     String msg=new String("Mbs launch: "+MbsLaunchFile.getText());
     tellInfo(msg);
     return;
@@ -301,7 +327,7 @@ if ("mbsSave".equals(e.getActionCommand())) {
     if(!threadRunning){
     Action = new String(e.getActionCommand());
     // must do confirm here, because in thread it would block forever
-    if ("mbsCleanup".equals(Action)) doit=choose("Shut down and cleanup MBS?");
+    if ("mbsCleanup".equals(Action)) doit=askQuestion("Confirmation","Shut down and cleanup MBS?");
     if(doit){
         startProgress();
         ae=e;
@@ -312,7 +338,12 @@ if ("mbsSave".equals(e.getActionCommand())) {
     } else tellError("Execution thread not yet finished!");
 }
 // start thread by threxe.start()
-// CAUTION: Do not use tell or choose here: Thread will never continue!
+// CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!
+/**
+ * Thread handling events.<br>
+ * If an update of DIM parameter list is necessary, Update event is launched through timer
+ * and handled by desktop action listener.
+ */
 public void run(){
 //xSet.setWaitCursor();
     MbsMaster = MbsNode.getText();

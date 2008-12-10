@@ -1,12 +1,4 @@
 package xgui;
-/*
-This client expects server tDABCserver from eclipse DIM project.
-*/
-
-
-/**
-* @author goofy
-*/
 import javax.swing.JEditorPane;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -45,10 +37,12 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
 import java.util.*;
-
 /**
-* DIM GUI class
-*/
+ * Panel for command tree
+ * @see xDimCommand
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xPanelCommand extends JPanel implements TreeSelectionListener, ActionListener {
 private JTree comtree;
 private JTextField compar;
@@ -72,149 +66,10 @@ private String[] argtypes;
 private ImageIcon execIcon;
 private xiUserCommand userCmd;
 
-public void actionPerformed(ActionEvent e) {
-executeCommands();
-}
-//----------------------------------------------------------
-// Required by TreeSelectionListener interface.
-public void valueChanged(TreeSelectionEvent e) {
-// here we store the treenode to be processed in the MouseListener(MouseClicked->executeCommand)
-// mouseClicked is called after valueChanged.
-// mouseClicked reacts only on double click
-// tree reacts only on triple clicks or click on handles
-    nodesel = (DefaultMutableTreeNode) comtree.getLastSelectedPathComponent();
-    // look down to find the corresponding command
-    cmd=null;
-    if (nodesel==null) return;
-    if (nodesel.getLevel() == 0)return;
-    if (nodesel.isLeaf()) {
-        cmd = (xDimCommand)nodesel.getUserObject();
-    } else{ // no leaf, get childs. At least one child must be there!
-        node1 = (DefaultMutableTreeNode)nodesel.getFirstChild();
-        if(node1.isLeaf()){
-               cmd = (xDimCommand)node1.getUserObject();
-             } else{ // no leaf, must have children
-                node2 = (DefaultMutableTreeNode)node1.getFirstChild();
-                cmd = (xDimCommand)node2.getUserObject();
-                }
-            }
-    if(cmd != null) {
-        setPromptPanel(cmd.getXmlParser(),cmd.getParser().getName(), cmd.getType());
-        addPromptButton("Execute");
-        Args.revalidate();
-        }
-    else System.out.println("null");
-}
-//----------------------------------------------------------
-// called by mouseClicked, nodesel set by previously called valueChanged
-public void executeCommands(){
-// check if we can do
-    if (nodesel==null) return;
-    if (nodesel.getLevel() == 0)return;
-//process single leaf (execution node)
-    if (nodesel.isLeaf()) {
-        executeCommand((xDimCommand)nodesel.getUserObject());
-    } else{ // no leaf, get childs. At least one child must be there!
-        node1 = (DefaultMutableTreeNode)nodesel.getFirstChild();
-        if(node1.isLeaf()){
-            while(node1!=null){
-                executeCommand((xDimCommand)node1.getUserObject());
-                node1= node1.getNextSibling();
-            }} else{ // no leaf, must have children
-            while(node1!=null){
-                node2 = (DefaultMutableTreeNode)node1.getFirstChild();
-                while(node2!=null){
-                    executeCommand((xDimCommand)node2.getUserObject());
-                    node2 = node2.getNextSibling();
-                }
-                node1 = node1.getNextSibling();
-            }}}
-}
-//----------------------------------------------------------
-// called by executeCommands
-public void executeCommand(xDimCommand cmd){
-boolean done=false;
-boolean xmlargs=false;
-StringBuffer sb=null;
-int in=0;
-xXmlParser x =cmd.getXmlParser();
-sb=new StringBuffer();
-// No XML command description,
-// build simple command string, i.e. only one text field
-if(inputs.size() == 1){
-if(argnames[0].equals("*")){
-    sb.append(inputs.elementAt(0).getText());
-    cmd.exec(xSet.getAccess()+" "+sb.toString());
-    done=true;
-}}
-// we have an XML description
-if(!done && (x != null)){ 
-// System.out.println(x.getName());
-// System.out.println(x.getXmlString());
-// application can specify if this command needs XML arguments or not
-    if(userCmd != null) xmlargs=userCmd.getArgumentStyleXml(x.getCommandScope(),cmd.getParser().getFull());
-// Store values in xml description without header
-    x.newCommand(x.getCommandName(),false,x.getCommandScope(),true); // values have changed
-    in=0;
-    for(int i=0;i<inputs.size();i++){
-        x.addArgument(argnames[in],
-            x.getArgumentType(in),
-            inputs.elementAt(i).getText(),
-            x.getArgumentRequired(in));
-            in++;
-    }
-    for(int i=0;i<checkers.size();i++){
-        if(checkers.elementAt(i).isSelected())
-            x.addArgument(argnames[in],
-                x.getArgumentType(in),
-                "true",
-                x.getArgumentRequired(in));
-                else
-            x.addArgument(argnames[in],
-                x.getArgumentType(in),
-                "false",
-                x.getArgumentRequired(in));
-        in++;
-    }
-// finalize XML string
-    x.parseXmlString(x.getCommandName(),x.getXmlString());
-// build arg=value arg=value string
-    in=0;
-    for(int i=0;i<inputs.size();i++){
-        if(inputs.elementAt(i).getText().length() > 0){
-            sb.append(argnames[in]);
-            if(argtypes[in].equals("C"))sb.append("=\"");
-            else sb.append("=");
-            sb.append(inputs.elementAt(i).getText());
-            if(argtypes[in].equals("C"))sb.append("\" ");
-            else sb.append(" ");
-        }
-        else if(x.getArgumentRequired(in).startsWith("R")){
-            sb.append(argnames[in]);
-            sb.append(" is REQUIRED! ");
-            done=true; // mark error, do not execute
-        }
-        in++;
-    }
-    // append switches just by names
-    for(int i=0;i<checkers.size();i++){
-        if(checkers.elementAt(i).isSelected()){
-        sb.append(argnames[in]);
-        sb.append(" ");
-        }
-        in++;
-    }
-    if(!done){
-        if(xmlargs) cmd.exec(xSet.getAccess()+" "+x.getXmlString());
-        else        cmd.exec(xSet.getAccess()+" "+sb.toString());
-        done=true;
-    }
-}
-xLogger.print(1,cmd.getParser().getFull()+" "+sb.toString());
-}
-//----------------------------------------------------------
 /**
- * DIM GUI class. Uses JScrollPanes with GridBagLayout.
+ * Opens panel for command tree. Gets list of xDimCommand objects
+ * @param browser DIM browser.
+ * @param dim Size and position of window.
  */
 public xPanelCommand(xDimBrowser browser, Dimension dim) {
     super(new GridLayout(1,0));
@@ -224,8 +79,6 @@ public xPanelCommand(xDimBrowser browser, Dimension dim) {
     icmd=vcom.size(); // number of commands
     if(icmd>0)initPanel(dim);
 }
-
-public void setUserCommand(xiUserCommand uc){userCmd=uc;}
 
 private void initPanel(Dimension dim){
     execIcon  = new ImageIcon("icons/execute.png");
@@ -299,6 +152,148 @@ private void initPanel(Dimension dim){
     comView.setPreferredSize(new Dimension((int)(cdim.getWidth()*0.4), (int)cdim.getHeight()));
     argView.setPreferredSize(new Dimension((int)(cdim.getWidth()*0.6), (int)cdim.getHeight()));
     add(splitpane);
+}
+/**
+ * Handles mainly RET to execute commands.
+ */
+public void actionPerformed(ActionEvent e) {executeCommands();}
+
+//----------------------------------------------------------
+// Required by TreeSelectionListener interface.
+public void valueChanged(TreeSelectionEvent e) {
+// here we store the treenode to be processed in the MouseListener(MouseClicked->executeCommand)
+// mouseClicked is called after valueChanged.
+// mouseClicked reacts only on double click
+// tree reacts only on triple clicks or click on handles
+    nodesel = (DefaultMutableTreeNode) comtree.getLastSelectedPathComponent();
+    // look down to find the corresponding command
+    cmd=null;
+    if (nodesel==null) return;
+    if (nodesel.getLevel() == 0)return;
+    if (nodesel.isLeaf()) {
+        cmd = (xDimCommand)nodesel.getUserObject();
+    } else{ // no leaf, get childs. At least one child must be there!
+        node1 = (DefaultMutableTreeNode)nodesel.getFirstChild();
+        if(node1.isLeaf()){
+               cmd = (xDimCommand)node1.getUserObject();
+             } else{ // no leaf, must have children
+                node2 = (DefaultMutableTreeNode)node1.getFirstChild();
+                cmd = (xDimCommand)node2.getUserObject();
+                }
+            }
+    if(cmd != null) {
+        setPromptPanel(cmd.getXmlParser(),cmd.getParser().getName(), cmd.getType());
+        addPromptButton("Execute");
+        Args.revalidate();
+        }
+    else System.out.println("null");
+}
+//----------------------------------------------------------
+// called by mouseClicked, nodesel set by previously called valueChanged
+private void executeCommands(){
+// check if we can do
+    if (nodesel==null) return;
+    if (nodesel.getLevel() == 0)return;
+//process single leaf (execution node)
+    if (nodesel.isLeaf()) {
+        executeCommand((xDimCommand)nodesel.getUserObject());
+    } else{ // no leaf, get childs. At least one child must be there!
+        node1 = (DefaultMutableTreeNode)nodesel.getFirstChild();
+        if(node1.isLeaf()){
+            while(node1!=null){
+                executeCommand((xDimCommand)node1.getUserObject());
+                node1= node1.getNextSibling();
+            }} else{ // no leaf, must have children
+            while(node1!=null){
+                node2 = (DefaultMutableTreeNode)node1.getFirstChild();
+                while(node2!=null){
+                    executeCommand((xDimCommand)node2.getUserObject());
+                    node2 = node2.getNextSibling();
+                }
+                node1 = node1.getNextSibling();
+            }}}
+}
+//----------------------------------------------------------
+// called by executeCommands
+private void executeCommand(xDimCommand cmd){
+boolean done=false;
+boolean xmlargs=false;
+StringBuffer sb=null;
+int in=0;
+xXmlParser xmlp =cmd.getXmlParser();
+sb=new StringBuffer();
+// No XML command description,
+// build simple command string, i.e. only one text field
+if(inputs.size() == 1){
+if(argnames[0].equals("*")){
+    sb.append(inputs.elementAt(0).getText());
+    cmd.exec(xSet.getAccess()+" "+sb.toString());
+    done=true;
+}}
+// we have an XML description
+if(!done && (xmlp != null)){ 
+// System.out.println(xmlp.getName());
+// System.out.println(xmlp.getXmlString());
+// application can specify if this command needs XML arguments or not
+    if(userCmd != null) xmlargs=userCmd.getArgumentStyleXml(xmlp.getCommandScope(),cmd.getParser().getFull());
+// Store values in xml description without header
+    xmlp.newCommand(xmlp.getCommandName(),false,xmlp.getCommandScope(),true); // values have changed
+    in=0;
+    for(int i=0;i<inputs.size();i++){
+        xmlp.addArgument(argnames[in],
+            xmlp.getArgumentType(in),
+            inputs.elementAt(i).getText(),
+            xmlp.getArgumentRequired(in));
+            in++;
+    }
+    for(int i=0;i<checkers.size();i++){
+        if(checkers.elementAt(i).isSelected())
+            xmlp.addArgument(argnames[in],
+                xmlp.getArgumentType(in),
+                "true",
+                xmlp.getArgumentRequired(in));
+                else
+            xmlp.addArgument(argnames[in],
+                xmlp.getArgumentType(in),
+                "false",
+                xmlp.getArgumentRequired(in));
+        in++;
+    }
+// finalize XML string
+    xmlp.parseXmlString(xmlp.getCommandName(),xmlp.getXmlString());
+// build arg=value arg=value string
+    in=0;
+    for(int i=0;i<inputs.size();i++){
+        if(inputs.elementAt(i).getText().length() > 0){
+            sb.append(argnames[in]);
+            if(argtypes[in].equals("C"))sb.append("=\"");
+            else sb.append("=");
+            sb.append(inputs.elementAt(i).getText());
+            if(argtypes[in].equals("C"))sb.append("\" ");
+            else sb.append(" ");
+        }
+        else if(xmlp.getArgumentRequired(in).startsWith("R")){
+            sb.append(argnames[in]);
+            sb.append(" is REQUIRED! ");
+            done=true; // mark error, do not execute
+        }
+        in++;
+    }
+    // append switches just by names
+    for(int i=0;i<checkers.size();i++){
+        if(checkers.elementAt(i).isSelected()){
+        sb.append(argnames[in]);
+        sb.append(" ");
+        }
+        in++;
+    }
+    if(!done){
+        if(xmlargs) cmd.exec(xSet.getAccess()+" "+xmlp.getXmlString());
+        else        cmd.exec(xSet.getAccess()+" "+sb.toString());
+        done=true;
+    }
+}
+xLogger.print(1,cmd.getParser().getFull()+" "+sb.toString());
 }
 private void addPrompt(String label, JTextField input){
     gridconst.gridwidth = GridBagConstraints.RELATIVE; //next-to-last
@@ -389,14 +384,26 @@ if(xparser!=null){
     addPrompt(new String(" * ( "+type+" ) : "),inputs.elementAt(0));
 }
 }
-// called by xGui, descriptors from PanelParameter
-public void setCommandDescriptors(Vector<Object> desc){
+/**
+ * Called by desktop, format from xiUserPanel.getUserCommand()
+ * @param format format.getArgumentStyleXml(...) function is called
+ * before command argument composing
+ * to check if arguments should be formatted in XML or not.
+ * @see xiUserPanel
+ */
+protected void setUserCommand(xiUserCommand format){userCmd=format;}
+/**
+ * Called by desktop, descriptors from PanelParameter
+ * @param desc Descriptor list as returned from xPanelParameter.getCommandDescriptors()
+ * @see xPanelParameter
+ */
+ protected void setCommandDescriptors(Vector<xXmlParser> desc){
 // look through command definitions to find the commands
     for(int i=0;i<vcom.size();i++){
     for(int ii=0;ii<desc.size();ii++){
-        xXmlParser x=(xXmlParser)desc.elementAt(ii);
-        if(vcom.get(i).getParser().getFull().equals(x.getName())){
-            vcom.get(i).setXmlParser(x);
+        xXmlParser xmlp=desc.elementAt(ii);
+        if(vcom.get(i).getParser().getFull().equals(xmlp.getName())){
+            vcom.get(i).setXmlParser(xmlp);
             break;
     }}}
 }

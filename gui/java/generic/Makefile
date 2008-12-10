@@ -24,7 +24,7 @@ classes: \
 	$(PACKAGE)/xSet.class \
 	$(PACKAGE)/xSetup.class \
 	$(PACKAGE)/xPanelLogger.class \
-	$(PACKAGE)/xiPanelGraphics.class \
+	$(PACKAGE)/xiPanelItem.class \
 	$(PACKAGE)/xLogger.class \
 	$(PACKAGE)/xRemoteShell.class \
 	$(PACKAGE)/xConvert.class \
@@ -33,7 +33,7 @@ classes: \
 	$(PACKAGE)/xDimNameInfo.class \
 	$(PACKAGE)/xInternalFrame.class \
 	$(PACKAGE)/xInternalCompound.class \
-	$(PACKAGE)/xDispHisto.class \
+	$(PACKAGE)/xHisto.class \
 	$(PACKAGE)/xRate.class \
 	$(PACKAGE)/xMeter.class \
 	$(PACKAGE)/xState.class \
@@ -53,14 +53,13 @@ classes: \
 	$(PACKAGE)/xPanelState.class \
 	$(PACKAGE)/xPanelInfo.class \
 	$(PACKAGE)/xPanelMeter.class \
-	$(PACKAGE)/xPanelHistogram.class \
+	$(PACKAGE)/xPanelHisto.class \
 	$(PACKAGE)/xiDimParameter.class \
 	$(PACKAGE)/xiUserInfoHandler.class \
 	$(PACKAGE)/xiDimBrowser.class \
 	$(PACKAGE)/xiDesktop.class \
 	$(PACKAGE)/xDimParameter.class \
 	$(PACKAGE)/xDimBrowser.class \
-	$(PACKAGE)/xiUserFrame.class \
 	$(PACKAGE)/xiUserCommand.class \
 	$(PACKAGE)/xiUserPanel.class \
 	$(PACKAGE)/xPanelDabc.class \
@@ -68,7 +67,15 @@ classes: \
 	$(PACKAGE)/xPanelDabcMbs.class \
 	$(PACKAGE)/xPanelCommand.class \
 	$(PACKAGE)/xPanelParameter.class \
+	$(PACKAGE)/xSaveRestore.class \
+	$(PACKAGE)/xDesktop.class \
 	$(PACKAGE)/xGui.class
+$(PACKAGE)/xSaveRestore.class : $(SOURCEDIR)/xSaveRestore.java
+	javac $(FLAGS) $(SOURCEDIR)/xSaveRestore.java
+$(PACKAGE)/xDesktop.class : $(SOURCEDIR)/xDesktop.java
+	javac $(FLAGS) $(SOURCEDIR)/xDesktop.java
+$(PACKAGE)/xGui.class : $(SOURCEDIR)/xGui.java
+	javac $(FLAGS) $(SOURCEDIR)/xGui.java
 $(PACKAGE)/xForm.class : $(SOURCEDIR)/xForm.java
 	javac $(FLAGS) $(SOURCEDIR)/xForm.java
 $(PACKAGE)/xFormMbs.class : $(SOURCEDIR)/xFormMbs.java
@@ -95,8 +102,6 @@ $(PACKAGE)/xiUserCommand.class : $(SOURCEDIR)/xiUserCommand.java
 	javac $(FLAGS) $(SOURCEDIR)/xiUserCommand.java
 $(PACKAGE)/xiUserPanel.class : $(SOURCEDIR)/xiUserPanel.java
 	javac $(FLAGS) $(SOURCEDIR)/xiUserPanel.java
-$(PACKAGE)/xiUserFrame.class : $(SOURCEDIR)/xiUserFrame.java
-	javac $(FLAGS) $(SOURCEDIR)/xiUserFrame.java
 $(PACKAGE)/xiUserInfoHandler.class : $(SOURCEDIR)/xiUserInfoHandler.java
 	javac $(FLAGS) $(SOURCEDIR)/xiUserInfoHandler.java
 $(PACKAGE)/xRecord.class : $(SOURCEDIR)/xRecord.java
@@ -117,8 +122,8 @@ $(PACKAGE)/xRemoteShell.class : $(SOURCEDIR)/xRemoteShell.java
 	javac $(FLAGS) $(SOURCEDIR)/xRemoteShell.java
 $(PACKAGE)/xConvert.class : $(SOURCEDIR)/xConvert.java
 	javac $(FLAGS) $(SOURCEDIR)/xConvert.java
-$(PACKAGE)/xDispHisto.class : $(SOURCEDIR)/xDispHisto.java
-	javac $(FLAGS) $(SOURCEDIR)/xDispHisto.java
+$(PACKAGE)/xHisto.class : $(SOURCEDIR)/xHisto.java
+	javac $(FLAGS) $(SOURCEDIR)/xHisto.java
 $(PACKAGE)/xRate.class : $(SOURCEDIR)/xRate.java
 	javac $(FLAGS) $(SOURCEDIR)/xRate.java
 $(PACKAGE)/xMeter.class : $(SOURCEDIR)/xMeter.java
@@ -141,10 +146,10 @@ $(PACKAGE)/xParser.class : $(SOURCEDIR)/xParser.java
 	javac $(FLAGS) $(SOURCEDIR)/xParser.java
 $(PACKAGE)/xDimBrowser.class : $(SOURCEDIR)/xDimBrowser.java
 	javac $(FLAGS) $(SOURCEDIR)/xDimBrowser.java
-$(PACKAGE)/xPanelHistogram.class : $(SOURCEDIR)/xPanelHistogram.java
-	javac $(FLAGS) $(SOURCEDIR)/xPanelHistogram.java
-$(PACKAGE)/xiPanelGraphics.class : $(SOURCEDIR)/xiPanelGraphics.java
-	javac $(FLAGS) $(SOURCEDIR)/xiPanelGraphics.java
+$(PACKAGE)/xPanelHisto.class : $(SOURCEDIR)/xPanelHisto.java
+	javac $(FLAGS) $(SOURCEDIR)/xPanelHisto.java
+$(PACKAGE)/xiPanelItem.class : $(SOURCEDIR)/xiPanelItem.java
+	javac $(FLAGS) $(SOURCEDIR)/xiPanelItem.java
 $(PACKAGE)/xPanelGraphics.class : $(SOURCEDIR)/xPanelGraphics.java
 	javac $(FLAGS) $(SOURCEDIR)/xPanelGraphics.java
 $(PACKAGE)/xPanelMeter.class : $(SOURCEDIR)/xPanelMeter.java
@@ -173,8 +178,6 @@ $(PACKAGE)/xInternalFrame.class : $(SOURCEDIR)/xInternalFrame.java
 	javac $(FLAGS) $(SOURCEDIR)/xInternalFrame.java
 $(PACKAGE)/xInternalCompound.class : $(SOURCEDIR)/xInternalCompound.java
 	javac $(FLAGS) $(SOURCEDIR)/xInternalCompound.java
-$(PACKAGE)/xGui.class : $(SOURCEDIR)/xGui.java
-	javac $(FLAGS) $(SOURCEDIR)/xGui.java
 $(PACKAGE)/xParTable.class : $(SOURCEDIR)/xParTable.java
 	javac $(FLAGS) $(SOURCEDIR)/xParTable.java
 
@@ -200,15 +203,14 @@ doc/index.html : \
 	 $(SOURCEDIR)/xiDesktop.java \
 	 $(SOURCEDIR)/xiDimParameter.java \
 	 $(SOURCEDIR)/xiUserPanel.java \
-	 $(SOURCEDIR)/xiUserFrame.java \
 	 $(SOURCEDIR)/xiUserCommand.java \
 	 $(SOURCEDIR)/xiUserInfoHandler.java \
-	 $(SOURCEDIR)/xiPanelGraphics.java \
+	 $(SOURCEDIR)/xiPanelItem.java \
 	 $(SOURCEDIR)/xRecord.java \
 	 $(SOURCEDIR)/xRecordMeter.java \
 	 $(SOURCEDIR)/xRecordState.java \
 	 $(SOURCEDIR)/xRecordInfo.java \
-	 $(SOURCEDIR)/xDispHisto.java \
+	 $(SOURCEDIR)/xHisto.java \
 	 $(SOURCEDIR)/xRate.java \
 	 $(SOURCEDIR)/xMeter.java \
 	 $(SOURCEDIR)/xState.java \
@@ -233,11 +235,12 @@ doc/index.html : \
 	 $(SOURCEDIR)/xDimBrowser.java \
 	 $(SOURCEDIR)/xPanelCommand.java \
 	 $(SOURCEDIR)/xPanelParameter.java \
-	 $(SOURCEDIR)/xPanelHistogram.java \
+	 $(SOURCEDIR)/xPanelHisto.java \
 	 $(SOURCEDIR)/xPanelState.java \
 	 $(SOURCEDIR)/xPanelInfo.java \
 	 $(SOURCEDIR)/xPanelGraphics.java \
 	 $(SOURCEDIR)/xInternalFrame.java \
 	 $(SOURCEDIR)/xInternalCompound.java \
-	 $(SOURCEDIR)/xGui.java
-	javadoc -d doc $(SOURCEDIR)/x*.java
+	 $(SOURCEDIR)/xGui.java \
+	 $(SOURCEDIR)/xDesktop.java
+	javadoc -d doc -author -version -doctitle "DABC Generic Java GUI" $(SOURCEDIR)/x*.java

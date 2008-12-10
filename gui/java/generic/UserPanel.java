@@ -121,7 +121,7 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
     if(p1lo.show()){
         frame=new xInternalCompound(p1name,graphIcon, p1pnt, p1lo, back);
         dividersize=frame.getDividerSize();
-        desk.addDesktop(frame);
+        desk.addFrame(frame);
         frame.moveToFront();
     }
 // create graphics panels, will be placed into compound frame p2
@@ -135,7 +135,7 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
         color=new xInternalCompound(p2name,colorIcon, p2pnt, p2lo, back);
         color.rebuild(colpan); // top 2, bottom 1
         dividersize=color.getDividerSize();
-        desk.addDesktop(color);
+        desk.addFrame(color);
         color.moveToFront();
     }
     }
@@ -358,14 +358,14 @@ else tellError("Command not available!");
 else if ("userDisp".equals(e.getActionCommand())) {
     frame=new xInternalCompound(p1name,graphIcon, p1pnt, xSet.getLayout(p1name), back);
     frame.rebuild(stapan, metpan, infpan); // top 2, bottom 1
-    desk.addDesktop(frame); // old frame will be deleted
+    desk.addFrame(frame); // old frame will be deleted
     frame.moveToFront();
 }
 else if ("userColor".equals(e.getActionCommand())) {
     color=new xInternalCompound(p2name,colorIcon, p2pnt, xSet.getLayout(p2name),back);
     color.rebuild(colpan); // top 2, bottom 1
     colpan.repaint();
-    desk.addDesktop(color); // old frame will be deleted
+    desk.addFrame(color); // old frame will be deleted
     color.moveToFront();
 }
 //-----------

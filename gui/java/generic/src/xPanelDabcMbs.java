@@ -1,7 +1,4 @@
 package xgui;
-/**
-* @author goofy
-*/
 import javax.swing.JLabel;
 import javax.swing.JButton;
 import javax.swing.JTextField;
@@ -10,7 +7,6 @@ import javax.swing.ImageIcon;
 import java.awt.Dimension;
 import java.awt.Point;
 //import javax.swing.GroupLayout;
-
 import java.io.IOException;
 import java.awt.event.*;
 import java.awt.Color;
@@ -19,9 +15,14 @@ import java.io.*;
 import org.w3c.dom.*;
 import org.xml.sax.*;
 import javax.xml.parsers.*;
+
 /**
-* DIM GUI class
-*/
+ * Form panel to control DABC.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xForm
+ * @see xFormDabc
+ */
 public class xPanelDabcMbs extends xPanelPrompt implements ActionListener , Runnable
 {
 private xRemoteShell mbsshell, dabcshell;
@@ -36,8 +37,8 @@ private String Action;
 private xDimBrowser browser;
 private xiDesktop desk;
 private xInternalFrame progress;
-private xFormMbs setupMbs;
-private xFormDabc setupDabc;
+private xFormMbs formMbs;
+private xFormDabc formDabc;
 private xState progressState;
 private ActionListener action;
 private xTimer etime;
@@ -50,7 +51,7 @@ private int nDabcServers;
 private int nServers;
 private xDimCommand mbsCommand;
 private xDimCommand doConfig, doEnable, doStart, doStop, doHalt;
-private Vector<Object> doExit;
+private Vector<xDimCommand> doExit;
 private Vector<xDimParameter> runState;
 private Vector<xDimParameter> runMsgLog;
 private Vector<xDimParameter> runRate;
@@ -59,6 +60,15 @@ private Thread threxe;
 private ActionEvent ae;
 private boolean threadRunning=false;
 
+/**
+ * Constructor of MBS+DABC launch panel.
+ * @param title Title of window.
+ * @param diminfo DIM browser
+ * @param desktop Interface to desktop
+ * @param al Event handler of desktop. Handles events from xTimer.<br>
+ * Passed actions are: Update, DisplayFrame, RemoveFrame.
+ * @see xTimer
+ */
 public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionListener al) {
     super(title);
     // get icons
@@ -98,11 +108,15 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     addButton("dabcShell","ssh DabcNode -l Username Script",workIcon,this);
 // Text input fields
     if(System.getenv("DABC_LAUNCH_MBS")!=null)
-         setupMbs=new xFormMbs(System.getenv("DABC_LAUNCH_MBS"),this);
-    else setupMbs=new xFormMbs("MbsLaunch.xml",this);
+        formMbs=new xFormMbs(System.getenv("DABC_LAUNCH_MBS"),this);
+    else formMbs=new xFormMbs("MbsLaunch.xml",this);
+    formMbs.addActionListener(this);
+    Object o=xSet.addObject(formMbs);
     if(System.getenv("DABC_LAUNCH_DABC")!=null)
-        setupDabc=new xFormDabc(System.getenv("DABC_LAUNCH_DABC"),this);
-    else setupDabc=new xFormDabc("DabcLaunch.xml",this);
+        formDabc=new xFormDabc(System.getenv("DABC_LAUNCH_DABC"),this);
+    else formDabc=new xFormDabc("DabcLaunch.xml",this);
+    formDabc.addActionListener(this);
+    o=xSet.addObject(formDabc);
     int width=25;
     DimName=new JTextField(xSet.getDimDns(),width);
     DimName.setEditable(false);
@@ -116,24 +130,24 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     addPrompt("Name server: ",DimName);
     addPrompt("User name: ",Username);
     addPrompt("Password [RET]: ",Password);
-    MbsNode=addPrompt("MBS master node: ",setupMbs.getMaster(),"set",width,this);
-    MbsServers=addPrompt("MBS servers: ",setupMbs.getServers(),"set",width,this);
-    DabcNode=addPrompt("DABC master node: ",setupDabc.getMaster(),"set",width,this);
-    DabcName=addPrompt("DABC master name: ",setupDabc.getName(),"set",width,this);
-    DabcServers=addPrompt("DABC servers: ",setupDabc.getServers(),"set",width,this);
-    MbsPath=addPrompt("MBS system path: ",setupMbs.getSystemPath(),"set",width,this);
-    MbsUserpath=addPrompt("MBS user path: ",setupMbs.getUserPath(),"set",width,this);
-    MbsScript=addPrompt("MBS script: ",setupMbs.getScript(),"set",width,this);
-    MbsCommand=addPrompt("MBS command: ",setupMbs.getCommand(),"set",width,this);
-    DabcPath=addPrompt("DABC system path: ",setupDabc.getSystemPath(),"set",width,this);
-    DabcUserpath=addPrompt("DABC user path: ",setupDabc.getUserPath(),"set",width,this);
-    DabcSetup=addPrompt("DABC setup file: ",setupDabc.getSetup(),"set",width,this);
-    DabcScript=addPrompt("DABC script: ",setupDabc.getScript(),"set",width,this);
-    MbsLaunchFile=addPrompt("MBS launch file: ",setupMbs.getLaunchFile(),"set",width,this);
-    DabcLaunchFile=addPrompt("DABC launch file: ",setupDabc.getLaunchFile(),"set",width,this);
+    MbsNode=addPrompt("MBS master node: ",formMbs.getMaster(),"set",width,this);
+    MbsServers=addPrompt("MBS servers: ",formMbs.getServers(),"set",width,this);
+    DabcNode=addPrompt("DABC master node: ",formDabc.getMaster(),"set",width,this);
+    DabcName=addPrompt("DABC master name: ",formDabc.getName(),"set",width,this);
+    DabcServers=addPrompt("DABC servers: ",formDabc.getServers(),"set",width,this);
+    MbsPath=addPrompt("MBS system path: ",formMbs.getSystemPath(),"set",width,this);
+    MbsUserpath=addPrompt("MBS user path: ",formMbs.getUserPath(),"set",width,this);
+    MbsScript=addPrompt("MBS script: ",formMbs.getScript(),"set",width,this);
+    MbsCommand=addPrompt("MBS command: ",formMbs.getCommand(),"set",width,this);
+    DabcPath=addPrompt("DABC system path: ",formDabc.getSystemPath(),"set",width,this);
+    DabcUserpath=addPrompt("DABC user path: ",formDabc.getUserPath(),"set",width,this);
+    DabcSetup=addPrompt("DABC setup file: ",formDabc.getSetup(),"set",width,this);
+    DabcScript=addPrompt("DABC script: ",formDabc.getScript(),"set",width,this);
+    MbsLaunchFile=addPrompt("MBS launch file: ",formMbs.getLaunchFile(),"set",width,this);
+    DabcLaunchFile=addPrompt("DABC launch file: ",formDabc.getLaunchFile(),"set",width,this);
     // read defaults from setup file
-    nMbsServers=Integer.parseInt(setupMbs.getServers());
-    nDabcServers=Integer.parseInt(setupDabc.getServers());
+    nMbsServers=Integer.parseInt(formMbs.getServers());
+    nDabcServers=Integer.parseInt(formDabc.getServers());
     nServers=nMbsServers+nDabcServers+1; // add DNS
     System.out.println("Total servers needed: DNS + "+(nServers-1));
     
@@ -152,31 +166,34 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
 
 private void setLaunch(){
 xSet.setAccess(Password.getPassword());
-setupMbs.setMaster(MbsNode.getText());
-setupMbs.setServers(MbsServers.getText());
-setupMbs.setSystemPath(MbsPath.getText());
-setupMbs.setUserPath(MbsUserpath.getText());
-setupMbs.setScript(MbsScript.getText());
-setupMbs.setLaunchFile(MbsLaunchFile.getText());
-setupMbs.setCommand(MbsCommand.getText());
-//setupMbs.printForm();
+formMbs.setMaster(MbsNode.getText());
+formMbs.setServers(MbsServers.getText());
+formMbs.setSystemPath(MbsPath.getText());
+formMbs.setUserPath(MbsUserpath.getText());
+formMbs.setScript(MbsScript.getText());
+formMbs.setLaunchFile(MbsLaunchFile.getText());
+formMbs.setCommand(MbsCommand.getText());
+//formMbs.printForm();
 
-setupDabc.setMaster(DabcNode.getText());
-setupDabc.setServers(DabcServers.getText());
-setupDabc.setSystemPath(DabcPath.getText());
-setupDabc.setUserPath(DabcUserpath.getText());
-setupDabc.setScript(DabcScript.getText());
-setupDabc.setLaunchFile(DabcLaunchFile.getText());
-setupDabc.setName(DabcName.getText());
-setupDabc.setSetup(DabcSetup.getText());
-//setupDabc.printForm();
+formDabc.setMaster(DabcNode.getText());
+formDabc.setServers(DabcServers.getText());
+formDabc.setSystemPath(DabcPath.getText());
+formDabc.setUserPath(DabcUserpath.getText());
+formDabc.setScript(DabcScript.getText());
+formDabc.setLaunchFile(DabcLaunchFile.getText());
+formDabc.setName(DabcName.getText());
+formDabc.setSetup(DabcSetup.getText());
+//formDabc.printForm();
 }
 // get from command list special commands for buttons.
+/**
+ * Called in xDesktop to rebuild references to DIM services.
+ */
 public void setDimServices(){
 int i;
 releaseDimServices();
 System.out.println("DabcMbs setDimServices");
-doExit=new Vector<Object>(0);
+doExit=new Vector<xDimCommand>(0);
 runMsgLog=new Vector<xDimParameter>(0);
 runRate=new Vector<xDimParameter>(0);
 runState=new Vector<xDimParameter>(0);
@@ -223,7 +240,9 @@ else if(para.get(i).getParser().getFull().indexOf("/RunMode/State")>0) {
 // if(runMsgLog==null)System.out.println("missing Parameter runMsgLog ");
 // if(runRate==null)System.out.println("missing Parameter runRate");
 }
-
+/**
+ * Called in xDesktop to release references to DIM services.
+ */
 public void releaseDimServices(){
 System.out.println("DabcMbs releaseDimServices");
 mbsCommand=null;
@@ -241,11 +260,8 @@ runState=null;
 runMsgLog=null;
 runRate=null;
 }
-
-private void setProgress(String info, Color color){
-setTitle(info,color);
-if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
-}
+// Start internal frame with an xState panel through timer.
+// Timer events are handled by desktop event handler passed to constructor.
 private void startProgress(){
     xLayout la= new xLayout("progress");
     la.set(new Point(50,200), new Dimension(300,100),0,true);
@@ -256,10 +272,17 @@ private void startProgress(){
     progress.setupFrame(workIcon, null, progressState, true);
     etime.action(new ActionEvent(progress,1,"DisplayFrame"));
 }
+// Fire event handler of desktop through timer.
+private void setProgress(String info, Color color){
+setTitle(info,color);
+if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
+}
+// Fire event handler of desktop through timer.
 private void stopProgress(){
     etime.action(new ActionEvent(progress,1,"RemoveFrame"));
 }
-
+// wait until all parameters from vector match serv (parameters exist).
+// or wait until the number of *MSG/serv parameters reaches the requested number.  
 private boolean waitMbs(int timeout, Vector<xDimParameter> param, String serv){
 int t=0,i;
 int nLoggers;
@@ -290,6 +313,7 @@ if(param.size()>0){
     }
     return false;
 }
+// wait until all runState parameters have the value state.
 private boolean waitState(int timeout, String state){
 int t=0;
 boolean ok;
@@ -307,6 +331,7 @@ System.out.print("Wait for state "+state);
     }
     return false;
 }
+// wait until all runMode parameters match mode.
 private boolean waitMode(int timeout, String mode){
 int t=0;
 boolean ok;
@@ -325,6 +350,12 @@ System.out.print("Wait for run mode "+mode);
     return false;
 }
 //React to menu selections.
+/**
+ * Handle events.
+ * @param e Event. Some events are handled directly. Others are handled in a thread. 
+ * If an update of DIM parameter list is necessary, Update event is launched through timer
+ * and handled by desktop action listener.
+ */
 public void actionPerformed(ActionEvent e) {
 boolean doit=true;
 if ("set".equals(e.getActionCommand())) {
@@ -339,8 +370,8 @@ return;
 if ("Save".equals(e.getActionCommand())) {
     xLogger.print(1,Action);
     setLaunch();
-    setupDabc.saveSetup(DabcLaunchFile.getText());
-    setupMbs.saveSetup(MbsLaunchFile.getText());
+    formDabc.saveSetup(DabcLaunchFile.getText());
+    formMbs.saveSetup(MbsLaunchFile.getText());
     String msg=new String("Dabc launch: "+DabcLaunchFile.getText()+"\nMbs  launch: "+MbsLaunchFile.getText());
     tellInfo(msg);
     return;
@@ -349,7 +380,7 @@ if ("Save".equals(e.getActionCommand())) {
     if(!threadRunning){
     Action = new String(e.getActionCommand());
     // must do confirm here, because in thread it would block forever
-    if ("mbsCleanup".equals(Action)) doit=choose("Shut down and cleanup MBS/DABC?");
+    if ("mbsCleanup".equals(Action)) doit=askQuestion("Confirmation","Shut down and cleanup MBS/DABC?");
     if(doit){
         startProgress();
         ae=e;
@@ -360,7 +391,7 @@ if ("Save".equals(e.getActionCommand())) {
     } else tellError("Execution thread not yet finished!");
 }
 // start thread by threxe.start()
-// CAUTION: Do not use tell or choose here: Thread will never continue!
+// CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!
 public void run(){
 int time=0;
     MbsMaster = MbsNode.getText();
@@ -384,8 +415,8 @@ int time=0;
         if(doExit != null){
         setProgress("Exit DABC ...",xSet.blueD());
         for(int i=0;i<doExit.size();i++){
-            xLogger.print(1,((xDimCommand)doExit.get(i)).getParser().getFull());
-            ((xDimCommand)doExit.get(i)).exec(xSet.getAccess());
+            xLogger.print(1,doExit.get(i).getParser().getFull());
+            doExit.get(i).exec(xSet.getAccess());
         }
         }  else {setProgress("No DABC exit commands available!",xSet.redD());browser.sleep(2);}
         setProgress("Shut down MBS ...",xSet.blueD());
@@ -526,8 +557,8 @@ int time=0;
         // if(doExit == null) setDimServices();
         // if(doExit != null){
         // for(int i=0;i<doExit.size();i++){
-            // xLogger.print(1,((xDimCommand)doExit.get(i)).getParser().getFull());
-            // ((xDimCommand)doExit.get(i)).exec(xSet.getAccess());
+            // xLogger.print(1,doExit.get(i).getParser().getFull());
+            // doExit.get(i).exec(xSet.getAccess());
         // }}  else setProgress("No DABC exit commands available!",xSet.redD());
         // if(mbsCommand == null) setDimServices();
         // if(mbsCommand != null){

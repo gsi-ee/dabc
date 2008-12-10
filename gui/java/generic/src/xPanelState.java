@@ -1,12 +1,4 @@
 package xgui;
-/*
-This client expects server tDABCserver from eclipse DIM project.
-*/
-
-
-/**
-* @author goofy
-*/
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
@@ -27,10 +19,14 @@ import java.awt.GridBagConstraints;
 import java.awt.event.*;
 import java.awt.Insets;
 import java.util.*;
-
 /**
-* DIM GUI class
-*/
+ * Container panel for State panels.
+ * Provides functions to add graphic panels in ciolumns.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xDesktop
+ * @see xState
+ */
 public class xPanelState extends JPanel implements ActionListener {
 private int i,indent;
 private int elements=0,columns=1;
@@ -46,9 +42,9 @@ private boolean showtext=true;
 // private GroupLayout.SequentialGroup vGroup;
 // private GroupLayout.ParallelGroup pGroup;
 /**
- * DIM GUI class. Uses JScrollPanes with GridBagLayout.
- * Creates the table for the parameters and the tree for the commands.
- * Creates rate meters for dataBW, dataLatency and dataRate
+ * Create panel for number of columns.
+ * @param dim Dimension
+ * @param col Columns
  */
 public xPanelState(Dimension dim, int col) {
     super(new GridLayout(1,0));
@@ -90,17 +86,27 @@ public void setColumns(int col){
 public int getColumns(){
     return columns;
 }
+/**
+ * Remove a panel from list and update all.
+ * @param state Panel to be removed.
+ */
 public void removeState(xState state){
     list.remove(state);
     elements--;
     updateAll();
 }
 
+/**
+ * Remove all panels from list and panel.
+ */
 public void cleanup(){
     list=new Vector<Object>();
     elements=0;
     pan.removeAll();
 }
+/**
+ * Redraw all, remove all, adjust size, add to panel, revalidate, call action handler (null).
+ */
 public void updateAll(){
     for(int i=0;i<elements;i++){
         ((xState)list.elementAt(i)).showText(showtext);
@@ -117,7 +123,10 @@ public void updateAll(){
     if(action!=null)action.actionPerformed(null);
 }
 
-public void adjustSize(){
+/**
+ * Recalculate sizes.
+ */
+private void adjustSize(){
     int rows=1;
     if(elements>0){
         rows=(elements-1)/columns+1;
@@ -129,11 +138,20 @@ public void adjustSize(){
     setPreferredSize(new Dimension(cols+3,rows+3));
 }
 
+/**
+ * Add graphic panel to list.
+ * @param state State panel to be added. setSizeXY and setID is called.
+ * @param update True: update all, false to only add to list.
+ */
 public void addState(xState state, boolean update){
 addState(state);
 if(update)updateAll();
 }
 
+/**
+ * Add graphic panel to list.
+ * @param state State panel to be added. setSizeXY and setID is called.
+ */
 public void addState(xState state){
     state.setSizeXY();
 // only 1.6
@@ -143,6 +161,7 @@ public void addState(xState state){
     // }
 // pGroup.addComponent(state);
 //
+    state.setID(elements); // gives unique number to panel
     elements += 1;
 // just adding the new State would put all in same row!
 // if((elements/columns)*columns == elements) c.gridwidth = GridBagConstraints.REMAINDER;
@@ -168,10 +187,25 @@ JMenuItem menuItem;
     }
     return menuBar;
 }
-public void setListener(ActionListener al){
-    action=al;
+/**
+ * This is called directly after creating the internal frame
+ * where this is in. Listener is xInternalFrame.
+ * After resizing the items this action listener is
+ * called pack the frame.
+ * @param actionlistener Frame containing this panel.
+ * @see xInternalFrame
+ */
+public void setListener(ActionListener actionlistener){
+    action=actionlistener;
 }
 //React to menu selections.
+/***
+ * React to menu selections. 
+ * Event "Fit" fired by the menu bar calls event handler of associated frame to pack.<br>
+ * Event "Text" fired by the menu bar switches text display on/off.<br>
+ * Others change number of columns.
+ * @see xInternalFrame
+ */
 public void actionPerformed(ActionEvent e) {
     if ("Fit".equals(e.getActionCommand())) action.actionPerformed(e);
     if ("Text".equals(e.getActionCommand())){

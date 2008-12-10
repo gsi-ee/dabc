@@ -1,6 +1,7 @@
 package xgui;
 /**
-* @author H.G.Essel
+ * @author H.G.Essel
+ * @version 1.0
 */
 public class xParser implements xiParser{
 
@@ -34,38 +35,64 @@ private boolean islong=false;
 private boolean ischar=false;
 private boolean isstruct=false;
 private boolean iscommand=false;
+/** Parser steering switch to store full name inside. */
 public static final boolean PARSE_STORE_FULL=true;
+/** Parser steering switch to parse only. */
 public static final boolean PARSE_ONLY=false;
+/** Used for command style names. */
 public static final boolean IS_COMMAND=true;
+/** Used for parameter style names. */
 public static final boolean IS_PARAMETER=false;
+/** Build name from components. */
 public static final boolean MAKE_FULL=true;
+/** Do not build name from components */
 public static final boolean COPY_FULL=false;
-public static final int NOTSPEC=0;  // state
-public static final int SUCCESS=1;  // state
-public static final int INFORMATION=2;    // state
-public static final int WARNING=3;    // state
-public static final int ERROR=4;    // state
-public static final int FATAL=5;    // state
-
-public static final int ATOMIC=0;  // type
-public static final int GENERIC=1;  // type
-public static final int STATE=2;   // type
-public static final int RATE=3;   // type
-public static final int HISTOGRAM=4;   // type
-public static final int MODULE=5;   // type
+/** Values for DIM quality mask 0xff (state field): state undefined. */
+public static final int NOTSPEC=0;
+/** Values for DIM quality mask 0xff (state field): success. */
+public static final int SUCCESS=1;
+/** Values for DIM quality mask 0xff (state field): info. */
+public static final int INFORMATION=2; 
+/** Values for DIM quality mask 0xff (state field): warning. */
+public static final int WARNING=3;  
+/** Values for DIM quality mask 0xff (state field): error. */
+public static final int ERROR=4;    
+/** Values for DIM quality mask 0xff (state field): fatal. */
+public static final int FATAL=5; 
+/** Values for DIM quality mask 0xff00 (type field): atomic data type. */
+public static final int ATOMIC=0; 
+/** Values for DIM quality mask 0xff00 (type field): generic data encoded in string (XML). */
+public static final int GENERIC=1; 
+/** Values for DIM quality mask 0xff00 (type field): state structure. */
+public static final int STATE=2;  
+/** Values for DIM quality mask 0xff00 (type field): rate structure. */
+public static final int RATE=3;  
+/** Values for DIM quality mask 0xff00 (type field): histogram structure. */
+public static final int HISTOGRAM=4;  
+/** Values for DIM quality mask 0xff00 (type field): module structure. */
+public static final int MODULE=5;  
+/** Values for DIM quality mask 0xff00 (type field): port structure. */
 public static final int PORT=6;
+/** Values for DIM quality mask 0xff00 (type field): device structure. */
 public static final int DEVICE=7;
+/** Values for DIM quality mask 0xff00 (type field): queue structure. */
 public static final int QUEUE=8;
+/** Values for DIM quality mask 0xff00 (type field): command descriptor. */
 public static final int COMMANDDESC=9;
+/** Values for DIM quality mask 0xff00 (type field): info structure. */
 public static final int INFO=10;
-
-public static final int VISIBLE=1;  // visibility
-public static final int MONITOR=2;  // visibility
-public static final int CHANGABLE=4;   // visibility
-public static final int IMPORTANT=8;   // visibility
-public static final int LOGGING=16;   // visibility
-
-public static final int NOMODE=0;   // mode
+/** Values for DIM quality mask 0xff0000 (visibility field): to show. */
+public static final int VISIBLE=1; 
+/** Values for DIM quality mask 0xff0000 (visibility field): to monitor. */
+public static final int MONITOR=2; 
+/** Values for DIM quality mask 0xff0000 (visibility field): can be modified. */
+public static final int CHANGABLE=4;  
+/** Values for DIM quality mask 0xff0000 (visibility field): is important. */
+public static final int IMPORTANT=8;  
+/** Values for DIM quality mask 0xff0000 (visibility field): changes in logfile. */
+public static final int LOGGING=16;  
+/** Values for DIM quality mask 0xff000000 (mode field): not used. */
+public static final int NOMODE=0; 
 
 public boolean isNotSpecified(){return (state == NOTSPEC);}
 public boolean isSuccess()     {return (state == SUCCESS);}
@@ -99,9 +126,9 @@ public xParser(){
 /**
  * Create a parser object and store string.
  * String must have the format <p> <
- * Dns/Node:NodeId/applNS::Application:ApplicationID/Name > <p>
+ * Dns/Node[:NodeId]/[applNS::]Application[:ApplicationId]/Name > <p>
  * for standard parameters and <p> <
- * Dns/Name/applNS::Application:ApplicationID/Node:NodeID > <p>
+ * Dns/Name/[applNS::]Application[:ApplicationId]/Node[:NodeId] > <p>
  * for commands (only used for sorting purposes)
  * @param full full string to be parsed later.<p>
  */
@@ -124,7 +151,7 @@ public int parse(){
  * return code:
  * @param full string to parse.
  * String must have the format <p> <
- * Dns/Node:NodeId/applNS::Application:ApplicationID/Name >
+ * Dns/Node[:NodeId]/[applNS::]Application[:ApplicationId]/Name >
  * @param store PARSE_STORE_FULL: store composed strings (parameter and command format), PARSE_ONLY: parse only
  * @return 0 OK, -1 syntax error
  */
@@ -136,10 +163,10 @@ public int parse(String full, boolean store){
  * The items of the string are copied into internal strings.
  * @param full string
  * String must have the format <p> <
- * Dns/Node:NodeId/applNS::Application:ApplicationID/Name >
+ * Dns/Node[:NodeId]/[applNS::]Application[:ApplicationId]/Name >
  * @param store PARSE_STORE_FULL: store composed strings (parameter and command format), PARSE_ONLY: parse only
  * @param command IS_COMMAND: given string is command format <p> <
- * Dns/Name/applNS::Application:ApplicationID/Node:NodeID > <p>
+ * Dns/Name/[applNS::]Application[:ApplicationId]/Node[:NodeId] > <p>
  * IS_PARAMETER: standard
  * @return 0 OK,  -1 syntax error
  */
@@ -415,9 +442,14 @@ if(qual != -1){
  * DEVICE=7; <p>
  * QUEUE=8;
  */
-
 public int getType(){return type;}
-
+public String getTypeName(){
+if(isRate())return "Rate";
+else if(isState())return "State";
+else if(isInfo())return "Info";
+else if(isHistogram())return "Histo";
+return "Unknown";
+}
 /**
  * get state (from quality))
  * @return state <p>

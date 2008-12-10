@@ -1,12 +1,5 @@
 package xgui;
-/*
-This client expects server tDABCserver from eclipse DIM project.
-*/
 
-
-/**
-* @author goofy
-*/
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.UIManager;
@@ -29,10 +22,12 @@ import java.awt.GridBagConstraints;
 import java.awt.event.*;
 import java.awt.Insets;
 import java.util.*;
-
 /**
-* DIM GUI class
-*/
+ * Container panel for graphic panels.
+ * Provides functions to add graphic panels in ciolumns.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xPanelGraphics extends JPanel implements ActionListener {
 private int i,indent;
 private int elements=0,columns=2;
@@ -47,9 +42,9 @@ private ActionListener action=null;
 // private GroupLayout.SequentialGroup vGroup;
 // private GroupLayout.ParallelGroup pGroup;
 /**
- * DIM GUI class. Uses JScrollPanes with GridBagLayout.
- * Creates the table for the parameters and the tree for the commands.
- * Creates rate meters for dataBW, dataLatency and dataRate
+ * Create panel for number of columns.
+ * @param dim Dimension
+ * @param col Columns
  */
 public xPanelGraphics(Dimension dim, int col) {
     super(new GridLayout(1,0));
@@ -94,18 +89,26 @@ private void setColumns(int col){
 public int getColumns(){
     return columns;
 }
-
+/**
+ * Remove a panel from list and update all.
+ * @param panel Panel to be removed.
+ */
 public void removeGraphics(JPanel panel){
     list.remove(panel);
     elements--;
     updateAll();
 }
-
+/**
+ * Remove all panels from list and panel.
+ */
 public void cleanup(){
     list=new Vector<JPanel>();
     elements=0;
     pan.removeAll();
 }
+/**
+ * Remove all, adjust size, add to panel, revalidate, call action handler (null).
+ */
 public void updateAll(){
     pan.removeAll();
     adjustSize();
@@ -119,7 +122,9 @@ public void updateAll(){
  // System.out.println("grapan get "+pan.getSize());
     if(action!=null)action.actionPerformed(null);
 }
-
+/**
+ * Recalculate sizes.
+ */
 private void adjustSize(){
     int rows=1;
     int cols=0;
@@ -129,19 +134,24 @@ private void adjustSize(){
             panSize=((JPanel)list.elementAt(0)).getPreferredSize();
         }
         rows=rows*((int)panSize.getHeight());
-    } else { // equal width foe all, variant height, sum up
-    rows=0;
-    for(int i=0;i<elements;i++){
-        panSize=((JPanel)list.elementAt(i)).getPreferredSize();
-        rows=rows+(int)panSize.getHeight();
+    } else { // equal width for all, variant height, sum up
+        rows=0;
+        for(int i=0;i<elements;i++){
+            panSize=((JPanel)list.elementAt(i)).getPreferredSize();
+            rows=rows+(int)panSize.getHeight();
     }}
     cols=columns*(int)panSize.getWidth();
     pan.setPreferredSize(new Dimension(cols,rows));
     setPreferredSize(new Dimension(cols+3,rows+3));
 }
 
-public void addGraphics(JPanel panel, boolean update){
-    ((xiPanelGraphics)panel).setSizeXY();
+/**
+ * Add graphic panel to list.
+ * @param panelItem Interface of panel to be added. setSizeXY and setID is called.
+ * @param update True: update all, false to only add to list.
+ */
+public void addGraphics(xiPanelItem panelItem, boolean update){
+    panelItem.setSizeXY();
 // only 1.6
 // if((elements/3)*3 == elements) {
     // pGroup=layout.createParallelGroup();
@@ -149,25 +159,31 @@ public void addGraphics(JPanel panel, boolean update){
     // }
 // pGroup.addComponent(panel);
 //
-    ((xiPanelGraphics)panel).setID(elements); // gives unique number to panel
+    panelItem.setID(elements); // gives unique number to panel
     elements += 1;
 // just adding the new panel would put all in same row!
 // if((elements/columns)*columns == elements) c.gridwidth = GridBagConstraints.REMAINDER;
 // else c.gridwidth = 1;
 // pan.add(panel);
-    list.add(panel);
+    list.add(panelItem.getPanel());
     if(update) updateAll();
 }
 public JMenuBar createMenuBar() {
     return null;
 }
-// this is called directly after creating the internal frame
-// where this is in. Listener is internal frame.
+/**
+ * Attach an action listener. 
+ * This is called directly after creating the internal frame
+ * where this is in. Listener is internal frame.
+ * @param al Action listener.
+ * @see xInternalFrame
+ */
 public void setListener(ActionListener al){
     action=al;
 }
-//React to menu selections.
+// React to menu selections.
 public void actionPerformed(ActionEvent e) {
+if(action!=null)action.actionPerformed(e);
 }
 }
 

@@ -1,16 +1,25 @@
 package xgui;
-/**
-* @author goofy
-*/
 import javax.swing.JTextArea;
 import java.util.*;
 import dim.*;
 
+/**
+ * InfoHandler to manage list of DIM servers. List is composed in a text area.
+ * DIM parameter is DIS_DNS/SERVER_LIST.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xDesktop
+ */
 public class xDimNameInfo extends DimInfo {
 private JTextArea lab;
 private StringBuffer serverlist;
 
-xDimNameInfo(String service, JTextArea label){
+/**
+ * Constructor of DIM parameter handler.
+ * @param service DIM name of service: DIS_DNS/SERVER_LIST
+ * @param label Text area to store the DIM server list. 
+ */
+public xDimNameInfo(String service, JTextArea label){
     super(service,"none");
     lab=label;
     // at startup text area of label is filled with server name list
@@ -19,6 +28,15 @@ xDimNameInfo(String service, JTextArea label){
     // are processed.
     serverlist=new StringBuffer(label.getText());
 }
+/**
+ * The DIM parameter DIS_DNS/SERVER_LIST is either a list, or incremental.
+ * That means it may start with + to add a server, or with - to remove a server,
+ * or a list of servers separated by |:<br>
+ * +name@node -name@node name@node|name@node|name@node<br>
+ * This handler only handles the increments. On startup the text area is
+ * filled with the server list by xBrowser.getServers function.
+ * @see xDimBrowser 
+ */
 public void infoHandler(){
     String[] name;
     String str=getString();

@@ -1,5 +1,4 @@
 package xgui;
-
 import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -10,8 +9,12 @@ import javax.swing.JPanel;
 import javax.swing.JDesktopPane;
 import javax.swing.JSplitPane;
 import dim.*;
-
-// Could also extend JPanel
+/**
+ * Panel to display context from Xdaq XML file as editable textfields.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xPanelDabc
+ */
 public class xPanelSetup extends xPanelPrompt implements ActionListener 
 {
 private ImageIcon storeIcon, menuIcon;
@@ -23,14 +26,23 @@ private JCheckBox check1,check2;
 private Vector<String> Values;
 private Vector<JTextField> Fields;
 private int off, num;
-
-// hand over the fields
-public xPanelSetup(String title, Vector<String> names, Vector<String> types, Vector<String> values, int offset, int number){
-super(title);
-boolean show;
-off=offset;
-num=number;
-Values=values;
+/**
+ * Create panel for one context. In the lists there are all contexts. Therefore
+ * an offset and length must be passed.
+ * @param title Title of frame.
+ * @param names Reference to name list.
+ * @param types Reference to type list.
+ * @param values Reference to value list.
+ * @param offset Offset in the lists.
+ * @param number Items in the lists to be used (behind offset).
+ * @see xPanelDabc
+ */
+protected xPanelSetup(String title, Vector<String> names, Vector<String> types, Vector<String> values, int offset, int number){
+    super(title);
+    boolean show;
+    off=offset;
+    num=number;
+    Values=values;
     Fields = new Vector<JTextField>(0);
     for(int i=off;i<(off+number);i++){
     // Add prompter lines
@@ -50,12 +62,12 @@ Values=values;
         else if(names.get(i).equals("portDNS"))show=false;
         if(show)addPrompt(names.get(i)+" ["+types.get(i)+"]",prompt1);
     }
-// Build button line
-    // storeIcon   = xSet.getIcon("icons/savewin.png");
-    // addButton("userStore","Save setup changes",storeIcon,this);
-    }
-
-public void updateList(){
+}
+/**
+ * Update value list from text input fields.
+ * @see xPanelDabc
+ */
+protected void updateList(){
     for(int i=0;i<Fields.size();i++){
         if(!Values.get(off+i).equals(Fields.get(i).getText())){
             System.out.print(Values.get(off+i)+" => ");
@@ -66,16 +78,6 @@ public void updateList(){
 }
 // ---- Handle the menu actions ---------------------------------------
 public void actionPerformed(ActionEvent e) {
-//-----------
-if ("userQuit".equals(e.getActionCommand())) {
-}
-//-----------
-else if ("userStore".equals(e.getActionCommand())) {
-updateList();
-}
-//-----------
-else {
-System.out.println(prompt1.getText());
-}
+
 }
 }

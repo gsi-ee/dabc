@@ -18,50 +18,47 @@ private float[] floatarr;
 private double[] doublearr;
 private String[] stringarr;
 private int indent=0;
-private int version;
+private int Version;
 /**
  * Create DIM command object
  * @param name DABC format full command string. String and format are parsed and stored in parser.
  * @param format DIM format list
+ * @param version number of instance (debug purpose only)
  */
-// protected void finalize(){
-// if(pars.getApplication().equals("OpenFile"))
-// System.out.println("  "+version+" fincom "+pars.getFull());
-// pars=null;
-// }
-xDimCommand(String name, String format, int v){
-    version=v;
+public xDimCommand(String name, String format, int version){
+    Version=version;
     pars = new xParser();
     i=pars.parse(name,xParser.PARSE_STORE_FULL,xParser.IS_COMMAND);
     i=pars.format(format,xParser.PARSE_STORE_FULL);
-// if(pars.getApplication().equals("OpenFile"))
-// System.out.println(version+" create dimcom "+pars.getFull());
 }
+// protected void finalize(){
+// if(pars.getApplication().equals("OpenFile"))
+// System.out.println("  "+Version+" fincom "+pars.getFull());
+// pars=null;
+// }
 /**
+ * Specify XML parser to be used (keeps definitions and values)
  * @param parser XML parser
  */
-public void setXmlParser(xXmlParser parser){if(xpars==null)xpars=parser;}
+protected void setXmlParser(xXmlParser parser){if(xpars==null)xpars=parser;}
 /**
+ * Get XML parser (keeps definitions and values)
  * @return XML parser
  */
-public xXmlParser getXmlParser(){return xpars;}
-/**
- * @return parser
- */
+protected xXmlParser getXmlParser(){return xpars;}
+// xiDimCommand
 public xiParser getParserInfo(){return pars;}
 /**
+ * Get parser keeping fields and formats ov DIM command.
  * @return parser
  */
-public xParser getParser(){return pars;}
+protected xParser getParser(){return pars;}
 /**
+ * Used by xPanelCommand.
  * @return data type
  */
-public String getType(){return pars.getTypeList()[0];}
-/**
- * Execute DIM command from internal parameter string (not from commandstring which is used only for sorting).
- * If the application name is $:0 this was no DABC formatted command like DIM server EXIT and is handled differently.
- * @param arg string for command argument
- */
+protected String getType(){return pars.getTypeList()[0];}
+// xiDimCommand
 public void exec(String arg){
 int iarg=0;
 float farg=0.0F;
@@ -87,17 +84,21 @@ try{
 /**
  * Set indentation level. This controls which field is returned by toString (used by tree browser).
  * In the browser the order goes from command to application to node.
+ * @param ind indent level for tree browser.
  */
-public void setIndent(int ind){indent=ind;}
+protected void setIndent(int ind){indent=ind;}
 /**
- * Return field according indentation and store indentation used in toString()
+ * @param ind indent level for tree browser.
+ * @return field according indentation and store indentation used in toString()
  */
 public String toString(int ind){
     indent=ind;
     return pars.toString(ind,xParser.IS_COMMAND);
 }
 /**
- * Return field according indentation
+ * @return field with last indentation
  */
-public String toString(){return pars.toString(indent,xParser.IS_COMMAND);}
+public String toString(){
+    return pars.toString(indent,xParser.IS_COMMAND);
+    }
 } // class xDimCommand

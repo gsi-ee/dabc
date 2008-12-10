@@ -1,5 +1,4 @@
 package xgui;
-
 import java.util.*;
 import java.io.*;
 import org.w3c.dom.*;
@@ -12,7 +11,12 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Point;
 import javax.swing.ImageIcon;
-
+/**
+ * Used in DABC form panel to read/edit/write Xdaq setup files.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xPanelDabc
+ */
 public class xSetup
 {
 private Vector<String> names;
@@ -31,8 +35,14 @@ private String typeUInt=new String("Uint");
 
 public xSetup(){}
 
-// Read file
-public boolean parseSetup(String file){
+/**
+ * Read and parse Xdaq XML setup file. Generates flat lists of names/types/values.
+ * Loops over "xc:Context", then "xc:Module" and "xc:Application"+"properties"+"*".
+ * Assumption is that there is only one application per context.
+ * @see xPanelDabc 
+ * @param file XML file name.
+ */
+protected boolean parseSetup(String file){
 int i,ii,iii,iiii;
 boolean show;
 String ty;
@@ -109,8 +119,13 @@ for(i = 0;i<NoContexts;i++){
 return true;
 }
 
-// Replace new values
-public boolean updateSetup(){
+/**
+ * Rebuild the XML values from values in the flat list.
+ * Caller gets references to these lists and may change values.
+ * @see xPanelDabc
+ * @see xPanelSetup
+ */
+protected boolean updateSetup(){
 int i,ii,iii,iiii,iv;
 boolean show;
 String ty;
@@ -165,9 +180,12 @@ for(i = 0;i<NoContexts;i++){
 }
 return true;
 }
-
-// Write file
-public boolean writeSetup(String filename){
+/**
+ * Write internal XML string to XML file.
+ * @param filename File name.
+ * @return True: OK, false: error.
+ */
+protected boolean writeSetup(String filename){
 // This method writes a DOM document to a file
 boolean retOK=true;
 try {
@@ -180,22 +198,34 @@ try {
     Transformer xformer = TransformerFactory.newInstance().newTransformer();
     xformer.transform(source, result);
 } catch (TransformerConfigurationException e) { retOK=false;
-} catch (TransformerException e) { retOK=false;
-}
+} catch (TransformerException e) { retOK=false;}
 return retOK;
 }
-
-
+/**
+ * Print flat list of names and values and types.
+ */
 public void printSetup(){
 for(int i=0;i<names.size();i++)
 System.out.println(names.get(i)+" ["+types.get(i)+"] = "+values.get(i));
 }
-
-public int getContextNumber(){return NoContexts;}
-public NodeList getContexts(){return Contexts;}
-public Vector<String> getNames(){return names;}
-public Vector<String> getValues(){return values;}
-public Vector<String> getTypes(){return types;}
-
-
+/**
+ * @return Number of contexts found.
+ */
+protected int getContextNumber(){return NoContexts;}
+/**
+ * @return List of contexts.
+ */
+protected NodeList getContexts(){return Contexts;}
+/**
+ * @return Flat list of names (reference).
+ */
+protected Vector<String> getNames(){return names;}
+/**
+ * @return Flat list of values (reference).
+ */
+protected Vector<String> getValues(){return values;}
+/**
+ * @return Flat list of types (reference).
+ */
+protected Vector<String> getTypes(){return types;}
 }

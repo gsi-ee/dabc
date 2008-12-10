@@ -8,9 +8,17 @@ import javax.swing.JPopupMenu;
 import javax.swing.JMenuItem;
 import java.awt.geom.AffineTransform;
 
-public class xInfo extends JPanel implements xiPanelGraphics, MouseListener, ActionListener
+/**
+ * Graphic item info line.
+ * @author Hans G. Essel
+ * @version 1.0
+ * @see xPanelInfo
+ */
+public class xInfo extends JPanel implements xiPanelItem, MouseListener, ActionListener
 {
+/** recommended size x */
 public final static int XSIZE=600;
+/** recommended size y */
 public final static int YSIZE=14;
 private  int ix;
 private  int iy;
@@ -18,6 +26,7 @@ private int iSeverity=0;
 private int iDim=0;
 private int iYpos;
 private int iInit;
+private int iID;
 private String sHead;
 private String sSev[]={"S","W","E","F","L"};
 private String sInfo;
@@ -29,6 +38,7 @@ private FontMetrics fm;
 private Font tfont;
 private BufferedImage imStore;
 private Graphics2D gg;
+private ActionListener action;
 private int i;
 private int ii;
 private JMenuItem menit;
@@ -56,9 +66,9 @@ public void mouseReleased(MouseEvent me){}
 
 /**
  * Creates a Info canvas.
- * @param head name of parameter displayed
- * @param xlength size of canvas in pixels
- * @param ylength size of canvas in pixels
+ * @param head Name of parameter displayed.
+ * @param xlength Size of canvas in pixels.
+ * @param ylength Size of canvas in pixels.
  */
 public xInfo(String head, int xlength, int ylength){
     initInfo(head,xlength,ylength);
@@ -66,9 +76,9 @@ public xInfo(String head, int xlength, int ylength){
 }
 /**
  * Initializes a Info canvas (called by constructor).
- * @param head name of parameter displayed
- * @param xlen size of canvas in pixels
- * @param ylen size of canvas in pixels
+ * @param head Name of parameter displayed.
+ * @param xlen Size of canvas in pixels.
+ * @param ylen Size of canvas in pixels.
  */
 public void initInfo(String head, int xlen, int ylen){
     if(xlen>0) ix=xlen;
@@ -97,21 +107,20 @@ public void setColor(String colorname){
     if(colorname.equals("White"))  cColValue=new Color(1.0f,1.0f,1.0f);
     if(colorname.equals("Gray"))   cColValue=new Color(0.5f,0.5f,0.5f);
 }
-public void setID(int i){}
-/**
- * Set preferred size to the one specified in constructor. Called from the panels.
- */
-public void setSizeXY(){
-    setPreferredSize(new Dimension(ix,iy));
-}
-/**
- * Set preferred size to the one specified in constructor. Called from the panels.
- */
-public void setSizeXY(Dimension dd){
-    setPreferredSize(dd);
-}
+// xiPanelGraphics
+public void setActionListener(ActionListener actionlistener){action=actionlistener;}
+public JPanel getPanel() {return this;}
 public String getName(){return sHead;}
+public void setID(int i){iID=i;}
+public int getID(){return iID;}
+public Point getPosition(){return new Point(getX(),getY());};
+public Dimension getDimension(){return new Dimension(ix,iy);};
+public void setSizeXY(){setPreferredSize(new Dimension(ix,iy));}
+public void setSizeXY(Dimension dd){setPreferredSize(dd);}
 
+/**
+ * Called by repaint, calls update.
+ */
 public void paintComponent(Graphics g){
 // draw image
 // System.out.println("paint");
@@ -123,10 +132,11 @@ public void paintComponent(Graphics g){
     Graphics2D g2d = (Graphics2D)g;
     g2d.drawImage(imStore,new AffineTransform(1f,0f,0f,1f,0,0),this);
 }
-// Overwriting update method we avoid clearing the
-// graphics. This would cause flickering
-// update is not called by repaint!
-
+/**
+ * Overwriting update method we avoid clearing the
+ * graphics. This would cause flickering
+ * update is not called by repaint!
+ */
 public void update(Graphics g){
 // static graphics into memory image
     int ixtemp;
@@ -150,14 +160,15 @@ public void update(Graphics g){
     gg.drawString(sInfo,iy+2,iy-2);
 }
 /**
- * Redraw without changes.
+ * Redraw without changes (repaint).
  */
 public void redraw(){repaint();}
 /**
  * Redraw with new value
- * @param severity (0: Success, 1: Warning, 2: Error, 3: Fatal)
+ * @param severity 0: Display value string only, 1: Header plus value.
  * @param colorname (Red, Green, Blue, Yellow, Cyan, Magenta).
- * @param value Short string describing info
+ * @param value Short string describing info.
+ * @param draw True: redraw, false: update values only.
  */
 public void redraw(int severity, String colorname, String value, boolean draw){
 if(severity == 0) sInfo=new String(value);

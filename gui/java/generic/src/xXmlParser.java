@@ -5,6 +5,10 @@ import org.xml.sax.*;
 import javax.xml.parsers.*;
 import java.io.*;
 
+/**
+ * @author H.G.Essel
+ * @version 1.0
+*/
 public class xXmlParser{
 private DocumentBuilderFactory factory;
 private DocumentBuilder builder;
@@ -17,13 +21,20 @@ private boolean finalized=false;
 private boolean domcreated=false;
 private boolean ischanged=false;
 
+/**
+ * The XML parser can be used to build a command description string.
+ * Or it can parse a given XML string and return the fields.
+ */
 public xXmlParser(){
 }
 /**
  * Starts to build internal XML string buffer.
- * @param command name of the command
+ * <br> command name="" scope="" content="default"
+ * @param command Name of the command
+ * @param header True: write XML header line (version, encoding).
  */
 public void newCommand(String command, boolean header){
+xml=null;
 finalized=false;
 str=new StringBuffer();
 if(header)str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
@@ -31,10 +42,13 @@ str.append(String.format("<command name=\"%s\" scope=\"*\" content=\"default\">\
 }
 /**
  * Starts to build internal XML string buffer.
- * @param command name of the command
- * @param scope scope of command, could be like public, hidden, ...
+ * <br> command name="" scope="" content="default"
+ * @param command Name of the command
+ * @param header True: write XML header line (version, encoding).
+ * @param scope Scope of command, could be like public, hidden, MBS ...
  */
 public void newCommand(String command, boolean header, String scope){
+xml=null;
 finalized=false;
 str=new StringBuffer();
 if(header)str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
@@ -42,11 +56,14 @@ str.append(String.format("<command name=\"%s\" scope=\"%s\" content=\"default\">
 }
 /**
  * Starts to build internal XML string buffer.
- * @param command name of the command
- * @param scope scope of command, could be like public, hidden, ...
- * @param changed false for default values, true for changed values
+ * <br> command name="" scope="" content="default"
+ * @param command Name of the command
+ * @param header True: write XML header line (version, encoding).
+ * @param scope Scope of command, could be like public, hidden, ...
+ * @param changed False: content="default", true: content="values"
  */
 public void newCommand(String command, boolean header, String scope, boolean changed){
+xml=null;
 finalized=false;
 ischanged=changed;
 str=new StringBuffer();
@@ -56,17 +73,18 @@ else       str.append(String.format("<command name=\"%s\" scope=\"%s\" content=\
 }
 /**
  * Adds argument description to internal XML string buffer.
- * @param argument name of argument
- * @param type type of argument (I,F,D,C)
- * @param value value of argument. In command definition would be the default.
- * @param required specifies if argument is required. Stored as string "true" or "false".
+ * <br> argument name="" type="" value="" required=""
+ * @param argument Name of argument
+ * @param type Type of argument (I,F,D,C)
+ * @param value Value of argument. In command definition would be the default.
+ * @param required Specifies if argument is required. Stored as string "true" or "false".
  */
 public void addArgument(String argument, String type, String value, String required){
 if(!finalized) 
 str.append(String.format("<argument name=\"%s\" type=\"%s\" value=\"%s\" required=\"%s\"/>\n",argument,type,value,required));
 }
 /**
- * @return finalized internal XML string buffer.
+ * @return Finalized internal XML string buffer, or XML string read by parseXmlString.
  */
 public String getXmlString(){
 if(str==null)return xml;
@@ -74,6 +92,11 @@ if(!finalized) str.append("</command>\n");
 finalized=true;
 return str.toString();
 }
+/**
+ * Save string to file.
+ * @param file File name.
+ * @param xml XML string.
+ */
 public void saveXmlString(String file, String xml){
     try{
         FileWriter fw = new FileWriter(file);
@@ -82,7 +105,9 @@ public void saveXmlString(String file, String xml){
     }catch(IOException ioe){System.out.println("Error writing xml file "+file);}
 }
 /**
- * @param xmlstring encoded XML string. Must be called before the getter methods.
+ * Read and parse XML string. String is stored. Must be called before the getter methods.
+ * @param name Just a name returned by getName.
+ * @param xmlstring Encoded XML string.
  */
 public void parseXmlString(String name, String xmlstring){
 try{
@@ -95,48 +120,53 @@ args=root.getElementsByTagName("argument");
 domcreated=true;
 cname=name;
 xml=xmlstring;
+str=null;
 }
 /**
- * @return component name
+ * @return True: XML string contains values of arguments.
  */
-public boolean isChanged(){return ischanged                                                                                                                        ;}
+public boolean isChanged(){return ischanged;}
 /**
- * @return component name
+ * @return Component name
  */
 public String getName(){return cname;}
 /**
- * @return command name
+ * @return Command name field
  */
 public String getCommandName(){return root.getAttribute("name");}
 /**
- * @return command scope
+ * @return Command scope field
  */
 public String getCommandScope(){return root.getAttribute("scope");}
 /**
- * @return command scope
+ * @return Command content field
  */
 public String getCommandContent(){return root.getAttribute("content");}
 /**
- * @return number of arguments
+ * @return Number of arguments
  */
 public int getNargs(){return args.getLength();}
 /**
- * @return argument name
+ * @param index Argument index.
+ * @return Argument name field
  */
 public String getArgumentName(int index){
 return ((Element)args.item(index)).getAttribute("name").toString();}
 /**
- * @return argument type (I,F,D,C)
+ * @param index Argument index.
+ * @return Argument type  field(I,F,D,C)
  */
 public String getArgumentType(int index){
 return ((Element)args.item(index)).getAttribute("type").toString().toUpperCase();}
 /**
- * @return argument value
+ * @param index Argument index.
+ * @return Argument value field
  */
 public String getArgumentValue(int index){
 return ((Element)args.item(index)).getAttribute("value").toString();}
 /**
- * @return argument requirement (false or true)
+ * @param index Argument index.
+ * @return Argument required field (FALSE or TRUE)
  */
 public String getArgumentRequired(int index){
 return ((Element)args.item(index)).getAttribute("required").toString().toUpperCase();}

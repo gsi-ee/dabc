@@ -1,16 +1,16 @@
 package xgui;
-/**
-*
-* @author goofy
-*/
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.*;
 import dim.*;
 /**
-* DIM parameter class implemeting infoHandler. It has reference to table model and a Meter.
-* On parameter update, table and meter are updated.
-*/
+ * A list of these objects is the central management of DIM parameters.
+ * It implements the DIM handler, creates the graphical elements, the records keeping
+ * parameter values, and interface functions to access these values.
+ * It also has reference to table model. On parameter update, the table and all graphical objects are updated.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xDimParameter extends DimInfo implements xiDimParameter {
 private xParser pars, compars;
 private xXmlParser xmlpars;
@@ -34,6 +34,7 @@ private int tabrow=-1, myparindex=-1;
 private boolean tabinit=false;
 private xParTable tabmod;
 private xMeter meter=null;
+private boolean paint=false;
 private boolean paraShown=false;
 private boolean meterInit=false;
 private int meterMode;
@@ -44,7 +45,7 @@ private float meterAlarmUp;
 private String meterColor;
 private String meterAlarmColor;
 private String meterUnits;
-private xDispHisto histo=null;
+private xHisto histo=null;
 private int histoChannels;
 private float histoLow;
 private float histoHigh;
@@ -57,21 +58,65 @@ private int stateSeverity;
 private String stateColor;
 private String stateName;
 private xPanelMeter metpan;
-private xPanelHistogram hispan;
+private xPanelHisto hispan;
 private xPanelState stapan;
 private xPanelInfo infpan;
 private String color;
 private String sNolink;
 private int    iNolink;
 private float  fNolink;
-private int version;
+private int Version;
 private xiUserInfoHandler userHandler=null;
 private xRecordHisto rechis=null;
 private xRecordMeter recmet=null;
 private xRecordState recsta=null;
 private xRecordInfo recinf=null;
-public static final boolean LF=true;
+private boolean LF=true;
+private boolean skip=false;
 
+/**
+ * DIM integer parameter. Calls initParser
+ * @param name DABC format full parameter name
+ * @param format DIM format list
+ * @param noLink default value if no connection to DIM server
+ * @param version instance number (for internal debugging only)
+ */
+public xDimParameter(String name, String format, int noLink, int version){
+    super(name,noLink);
+    Version=version;
+    sNolink=new String("%BROKEN%");
+    iNolink=noLink;
+    initParser(name,format);
+// if(pars.getName().equals("NodeList"))
+// System.out.println(Version+" crepar "+pars.getFull());
+}
+/**
+ * DIM float parameter. Calls initParser
+ * @param name DABC format parameter name
+ * @param format DIM format list
+ * @param noLink default value if no connection to DIM server
+ * @param version instance number (for internal debugging only)
+ */
+public xDimParameter(String name, String format, float noLink, int version){
+    super(name,noLink);
+    Version=version;
+    sNolink=new String("%BROKEN%");
+    fNolink=noLink;
+    initParser(name,format);
+}
+/**
+ * DIM string parameter. Calls initParser
+ * @param name DABC format parameter name
+ * @param format DIM format list
+ * @param noLink default value if no connection to DIM server
+ * @param version instance number (for internal debugging only)
+ */
+public xDimParameter(String name, String format, String noLink, int version){
+    super(name,noLink);
+    Version=version;
+    sNolink=new String(noLink);
+    initParser(name,format);
+}
 public void printParameter(int index){
 System.out.println(index+": "+super.getName());
 if(quality != 2304){
@@ -92,89 +137,63 @@ System.out.println(super.getName()+" I:"+myparindex+" TI:"+tabrow+" Q:"+String.f
 
 // protected void finalize(){
 // if(pars.getName().equals("Transport"))
-// System.out.println("    "+version+" finpar "+pars.getFull());
+// System.out.println("    "+Version+" finpar "+pars.getFull());
 // pars=null;
 // }
 /**
- * DIM integer parameter
- * @param name DABC format full parameter name
- * @param format DIM format list
- * @param index index of parameter object in DimGui table. Stored.
- * @param noLink default value if no connection to DIM server
- */
-xDimParameter(String name, String format, int noLink, int v){
-    super(name,noLink);
-    version=v;
-    sNolink=new String("%BROKEN%");
-    iNolink=noLink;
-    initParser(name,format);
-// if(pars.getName().equals("NodeList"))
-// System.out.println(version+" crepar "+pars.getFull());
-}
-/**
- * DIM integer parameter
- * @param name DABC format parameter name
- * @param format DIM format list
- * @param index index of parameter object in DimGui table. Stored.
- * @param noLink default value if no connection to DIM server
- */
-xDimParameter(String name, String format, float noLink, int v){
-    super(name,noLink);
-    version=v;
-    sNolink=new String("%BROKEN%");
-    fNolink=noLink;
-    initParser(name,format);
-}
-/**
- * DIM integer parameter
- * @param name DABC format parameter name
- * @param format DIM format list
- * @param index index of parameter object in DimGui table. Stored.
- * @param noLink default value if no connection to DIM server
- */
-xDimParameter(String name, String format, String noLink, int v){
-    super(name,noLink);
-    version=v;
-    sNolink=new String(noLink);
-    initParser(name,format);
-}
-/**
  * Imports the references to the graphic panels. Called from browser.
- * @param histogram
- * @param meter
- * @param state
+ * @param histogramPanel
+ * @param meterPanel
+ * @param statePanel
+ * @param infoPanel
  */
-public void setPanels(xPanelHistogram histogramPanel, xPanelMeter meterPanel, xPanelState statePanel, xPanelInfo infoPanel){
+protected void setPanels(xPanelHisto histogramPanel, xPanelMeter meterPanel, xPanelState statePanel, xPanelInfo infoPanel){
     hispan=histogramPanel;
     metpan=meterPanel;
     stapan=statePanel;
     infpan=infoPanel;
 }
-public void addInfoHandler(xiUserInfoHandler pu){
+/**
+ * Add user handler. Called from user panels through xiDimBrowser interface.
+ * @param pu Interface of user handler
+ * @see xiDimBrowser
+ */
+protected void addInfoHandler(xiUserInfoHandler pu){
 userHandler=pu;
 }
-public void removeInfoHandler(xiUserInfoHandler pu){
+/**
+ * Remove user handler. Called from user panels through xiDimBrowser interface.
+ * @param pu Interface of user handler
+ * @see xiDimBrowser
+ */
+protected void removeInfoHandler(xiUserInfoHandler pu){
 userHandler=null;
 }
-public void deactivateParameter() {isactive=false;}
-public void activateParameter() {
+/**
+ * (De)activate parameter.
+ * A deactivated parameter does no drawing in infoHandler function neither calls user handler.
+ * Before any changes in the parameter list is done, all parameters are deactivated (browser).
+ * @param activ true: Activate and redraw all graphic objects, otherwise deactivate.
+ */
+protected void setParameterActiv(boolean activ) {
+if(activ){
 if(info!=null)info.redraw();
 if(meter!=null)meter.redraw();
 if(stat!=null)stat.redraw();
 if(histo!=null)histo.redraw();
 isactive=true;
+} else isactive=false;
 }
 /**
- * DIM integer parameter
+ * Initializes name parser. Creates XML parser. Creates command to set parameter value by preceding underscore
+ * to the parameter name. Value is set to string of NOLINK. 
  * @param name DABC format parameter name
  * @param format DIM format list
- * @param index index of parameter object in DimGui table. Stored.
  */
-public void initParser(String name, String format){
+protected void initParser(String name, String format){
     pars = new xParser();
     xmlpars = new xXmlParser();
     i=pars.parse(name,xParser.PARSE_STORE_FULL); // check, parse and store
-// if(pars.getName().equals("Transport"))System.out.println("Transport "+version);
     // create command to set parameter
     pars.setName(new String("_"+pars.getName()));
     setcommand=pars.getFull(true);
@@ -184,53 +203,56 @@ public void initParser(String name, String format){
     value=new String(sNolink);
 }
 /**
- * Adds a new row to the table
- * @param table Table model assigned to this parameter
- * @param rowindex index of row in table
- * @return true parameter is visible and has been added
- * @return false parameter is not visible and has not been added
+ * Adds a new row to the table. Called in xPanelParameter.initPanel.
+ * Only visible parameters are handled. Graphical elements are created like meters,
+ * if they are monitored.
+ * @param table Table model assigned to this parameter.
+ * @param rowindex index of row in table.
+ * @return true parameter is visible and has been added,
+ * else parameter is not visible and has not been added.
+ * @see xPanelParameter
  */
-public boolean addRow(xParTable table, int rowindex){
+protected boolean addRow(xParTable table, int rowindex){
 boolean ret=false;
 boolean show=false;
-    if(pars.isVisible()){
-        tabmod=table;
-        tabinit=true; // otherwise following elements would not be put to panels
-        if(pars.isRate() && pars.isMonitor()) {createMeter(true);}
-        if(pars.isInfo() && pars.isMonitor()) {createInfo(true);}
-        if(pars.isState() && pars.isMonitor()) {createState(true);}
-        if(pars.isHistogram() && pars.isMonitor()) {createDispHisto(true);}
-        Vector<Object> row = new Vector<Object>();
-        row.add(this);
-        row.add(pars.getNode().replace(".gsi.de",""));
-        row.add(pars.getApplication());
-        row.add(pars.getName());
-        if(pars.isRate()) row.add(new String("rate"));
-        else if(pars.isInfo()) row.add(new String("info"));
-        else if(pars.isState()) row.add(new String("state"));
-        else if(pars.isHistogram()) row.add(new String("histo"));
-        else if(pars.isFloat()) row.add(new String("float"));
-        else if(pars.isDouble()) row.add(new String("double"));
-        else if(pars.isInt()) row.add(new String("int"));
-        else if(pars.isLong()) row.add(new String("long"));
-        else if(pars.isChar()) row.add(new String("char"));
-        else row.add(new String("unknown"));
-        row.add(value);
-        if(pars.isChangable())row.add("");
-        else row.add("-");
-        row.add(new Boolean(paraShown)); // set by the create.. functions
-        tabmod.addRow(row);
-        setTableIndex(rowindex); // only now we can use the new row
-        print(super.getName()+" i="+rowindex,LF);
-        ret = true;
-    }
+if(pars.isVisible()){
+    tabmod=table;
+    tabinit=true; // otherwise following elements would not be put to panels
+    if(pars.isRate() && paint) {createMeter(true);}
+    if(pars.isInfo() && paint) {createInfo(true);}
+    if(pars.isState() && paint) {createState(true);}
+    if(pars.isHistogram() && paint) {createHisto(true);}
+    Vector<Object> row = new Vector<Object>();
+    row.add(this);
+    row.add(pars.getNode().replace(".gsi.de",""));
+    row.add(pars.getApplication());
+    row.add(pars.getName());
+    if(pars.isRate()) row.add(new String("rate"));
+    else if(pars.isInfo()) row.add(new String("info"));
+    else if(pars.isState()) row.add(new String("state"));
+    else if(pars.isHistogram()) row.add(new String("histo"));
+    else if(pars.isFloat()) row.add(new String("float"));
+    else if(pars.isDouble()) row.add(new String("double"));
+    else if(pars.isInt()) row.add(new String("int"));
+    else if(pars.isLong()) row.add(new String("long"));
+    else if(pars.isChar()) row.add(new String("char"));
+    else row.add(new String("unknown"));
+    row.add(value);
+    if(pars.isChangable())row.add("");
+    else row.add("-");
+    row.add(new Boolean(paraShown)); // set by the create.. functions
+    tabmod.addRow(row);
+    setTableIndex(rowindex); // only now we can use the new row
+    print(super.getName()+" i="+rowindex,LF);
+    ret = true;
+}
 return ret;
 }
 /**
- * Called by PanelParameter after sorting
+ * Called by xPanelParameter after sorting
  * @param index parameter index shown as text in first column.
  */
-public void setIndex(int index) {
+protected void setIndex(int index) {
 myparindex=index;
 paraShown=false;
 }
@@ -238,7 +260,7 @@ paraShown=false;
  * Called by PanelParameter after sorting
  * @param index table index needed to update correct row.
  */
-public void setTableIndex(int index) {tabrow=index;}
+protected void setTableIndex(int index) {tabrow=index;}
 /**
  * Execute DIM command from internal parameter string .
  * @param arg string for command argument
@@ -269,9 +291,9 @@ if(pars.isChangable()){
 return false;
 }
 /**
- * @param create Create or remove meter (from panel).
+ * @param create Create or remove meter (to/from panel).
  */
-public void createMeter(Boolean create){
+protected void createMeter(Boolean create){
 int len1, len2;
 String node;
 if(pars.isRate()){
@@ -287,13 +309,14 @@ if(pars.isRate()){
             meter.setColorBack(xSet.getColorBack());
         }
         if(meterInit){
-            meter.setColor(meterColor);
-            int i = pars.getNode().indexOf(".");
-            if(i >=0) node=pars.getNode().substring(0,i);
-            else node=pars.getNode();
-            meter.setLettering(node,pars.getApplication(),pars.getName(),meterUnits);
-            if(meterLow<meterUp){meter.setLimits(meterLow,meterUp);meter.setAutoScale(false);}
-            meter.setMode(meterMode);
+            // meter.setColor(recmet.getColor());
+            // int i = pars.getNode().indexOf(".");
+            // if(i >=0) node=pars.getNode().substring(0,i);
+            // else node=pars.getNode();
+            // meter.setLettering(node,pars.getApplication(),pars.getName(),recmet.getUnits());
+            // meter.setDefaultLimits(recmet.getLower(),recmet.getUpper());
+            // meter.setDefaultAutoScale(false);
+            // meter.setDefaultMode(recmet.getMode());
         }
         if(tabinit){
             if(!paraShown)metpan.addMeter(meter);
@@ -303,31 +326,32 @@ if(pars.isRate()){
 }
 }
 /**
- * @param create Create or remove histogram (from panel).
+ * @param create Create or remove histogram (to/from panel).
  */
-public void createDispHisto(Boolean create){
+protected void createHisto(Boolean create){
 int len;
 if(pars.isHistogram()){
     if(create){
         if(histo == null){
             len=pars.getNodeName().indexOf(".");
             if(len == -1)len=pars.getNodeName().length();
-            histo = new xDispHisto(pars.getFull(), new String(pars.getNodeName().substring(0,len)+":"+pars.getName()),
-                    histoContent,histoLetter,200,150);
+            histo = new xHisto(pars.getFull(), new String(pars.getNodeName().substring(0,len)+":"+pars.getName()),
+                    histoContent,histoLetter,xHisto.XSIZE,xHisto.YSIZE);
             histo.setColorBack(xSet.getColorBack());
             histo.setColor(histoColor);
         }
         if(tabinit){
-            if(!paraShown)hispan.addHistogram(histo);
+            if(!paraShown){
+            hispan.addHistogram(histo);
             paraShown=true;
-        }
+        }}
     } else if(paraShown && (histo != null)) {hispan.removeHistogram(histo); paraShown=false;}
 }
 }
 /**
- * @param create Create or remove state (from panel).
+ * @param create Create or remove state (to/from panel).
  */
-public void createState(Boolean create){
+protected void createState(Boolean create){
 int len;
 if(pars.isState()){
     if(create){
@@ -339,13 +363,17 @@ if(pars.isState()){
             stat.setColorBack(xSet.getColorBack());
         }
         if(tabinit){
-            if(!paraShown)stapan.addState(stat);
+            if(!paraShown){
+            stapan.addState(stat);
             paraShown=true;
-        }
+        }}
     } else if(paraShown && (stat != null)) {stapan.removeState(stat);paraShown=false;}
 }
 }
-public void createInfo(Boolean create){
+/**
+ * @param create Create or remove info (to/from panel).
+ */
+protected void createInfo(Boolean create){
 int len;
 if(pars.isInfo()){
     if(create){
@@ -367,15 +395,11 @@ if(pars.isInfo()){
 /**
  * @return true if command descriptor
  */
-public boolean isCommandDescriptor(){return pars.isCommandDescriptor();}
-/**
- * @return parameter name from parser.
- */
-public String getName(){return pars.getName();}
+protected boolean isCommandDescriptor(){return pars.isCommandDescriptor();}
 /**
  * @return node:ID form parser.
  */
-public String getNode(){return pars.getNode();}
+protected String getNode(){return pars.getNode();}
 /**
  * @return value.
  */
@@ -399,7 +423,7 @@ public double getDoubleValue(){return dvalue;}
 /**
  * @return quality.
  */
-public int getQuality(){return quality;}
+public int getDimQuality(){return quality;}
 /**
  * The first row of the table is the DimParameter object. The string seen in the table
  * is the string returned by this function.
@@ -407,19 +431,19 @@ public int getQuality(){return quality;}
  */
 public String toString(){return String.format("%05d",myparindex);}
 /**
- * @return parser
+ * @return parser interface
  */
 public xiParser getParserInfo(){return pars;}
 /**
  * @return parser object.
  */
-public xParser getParser(){return pars;}
+protected xParser getParser(){return pars;}
 /**
  * @return command parser object.
  */
-public xXmlParser getXmlParser(){return xmlpars;}
+protected xXmlParser getXmlParser(){return xmlpars;}
 
-public void setPrint(boolean dop){doprint=dop;}
+protected void setPrint(boolean dop){doprint=dop;}
 
 private void print(String s){print(s,false);}
 
@@ -428,20 +452,72 @@ private void print(String s, boolean lf){
         if(lf)System.out.println(s);
         else System.out.print(s);
     }}
-//
-public xRecordMeter getMeter(){return recmet;}
+/**
+ * Meter record is updated from meter settings.
+ * @return Meter record.
+ */
+public xRecordMeter getMeter(){
+if(recmet!=null){
+if(meter != null){
+    recmet.setColor(meter.getColor());
+    recmet.setSize(meter.getDimension());
+    recmet.setLower(meter.getMin());
+    recmet.setUpper(meter.getMax());
+    recmet.setMode(meter.getMode());
+    recmet.setVisible(paraShown);
+    recmet.setAutoScale(new Boolean(meter.getAutoScale()));
+    recmet.setLogScale(new Boolean(meter.getLogScale()));
+} else System.out.println("No meter for "+pars.getFull());
+}
+return recmet;
+}
+public void setAttributeMeter(){
+if(recmet!=null){
+if(meter != null){
+    meter.setColor(recmet.getColor());
+    meter.setDefaultAutoScale(recmet.getAutoScale().booleanValue());
+    meter.setDefaultLimits(recmet.getLower(),recmet.getUpper());
+    meter.setDefaultMode(recmet.getMode());
+    meter.setDefaultLogScale(recmet.getLogScale().booleanValue());
+    paint=recmet.isVisible().booleanValue();
+} else System.out.println("No meter to set for "+pars.getFull());
+}}
+
 public xRecordState getState(){return recsta;}
 public xRecordInfo getInfo(){return recinf;}
+
+public xRecordHisto getHisto(){
+if(rechis!=null){
+if(histo != null){
+    rechis.setColor(histo.getColor());
+    rechis.setSize(histo.getDimension());
+    rechis.setMode(histo.getMode());
+    rechis.setVisible(paraShown);
+    rechis.setLogScale(new Boolean(histo.getLogScale()));
+} else System.out.println("No histo for "+pars.getFull());
+}
+return rechis;
+}
+public void setAttributeHisto(){
+if(rechis!=null){
+if(histo != null){
+    histo.setColor(rechis.getColor());
+    histo.setSizeXY(rechis.getSize());
+    histo.setMode(rechis.getMode());
+    histo.setLogScale(rechis.getLogScale().booleanValue());
+    paint=rechis.isVisible().booleanValue();
+} else System.out.println("No histo to set for "+pars.getFull());
+}}
 /**
  * Info handler.
  * Checks the incoming name and format against the stored ones.
- * Optionally (setPrint(true)) printout parameter (all formats, structures).
  * Table field and rate meter are updated, if known.
  */
 public void infoHandler(){
 int[] intArr; 
 String format;
-// if(pars.getName().equals("RunStatus"))
+String node;
+if(skip)return;
 // System.out.println(isactive+" q "+super.getQuality()+" "+super.getName()+"  Value: "+value);
 // check name and format
 // quality is sent correctly for broken links.
@@ -453,8 +529,7 @@ String format;
 //if(pars.getName().equals("RunStatus"))System.out.println(pars.getFull()+" t="+tabrow+" "+value);
     quality=super.getQuality();
     //System.out.println(quality+" "+super.getName());
-    pars.parseQuality(quality);
-    
+    pars.parseQuality(quality);    
     // if(pars.getFull().indexOf("X86G-4/Acquis")>0) System.out.print(pars.getFull());
     // if(pars.getFull().indexOf("/RunStatus")>0) System.out.println(pars.getFull());
     format=getFormat();
@@ -479,7 +554,10 @@ String format;
 
     else if(pars.isState()){
         int severity=getInt();
-        if(recsta==null)recsta=new xRecordState(pars.getFull(), pars.getType());
+        if(recsta==null){
+            recsta=new xRecordState(pars.getFull(), pars.getType());
+            paint=pars.isMonitor();
+        }
         if(severity == iNolink){
             color=new String("Gray");
             value=sNolink;
@@ -491,14 +569,17 @@ String format;
         }
     // if(pars.getFull().indexOf("X86G-4/Acquis")>0) System.out.println(":"+value);
     // if(pars.getFull().indexOf("/RunStatus")>0) System.out.println(pars.getFull()+":"+value);
-        if(pars.isMonitor() && (stat==null)) createState(true);
+        if(paint && (stat==null)) createState(true);
         if(stat!=null)stat.redraw(severity,color,value,isactive);
         recsta.setValue(severity,color,value);
     }
 
     else if(pars.isInfo()){
         int severity=getInt();
-        if(recinf==null)recinf=new xRecordInfo(pars.getFull(), pars.getType());
+        if(recinf==null){
+            recinf=new xRecordInfo(pars.getFull(), pars.getType());
+            paint=pars.isMonitor();
+        }
         if(severity == iNolink){
             color=new String("Gray");
             value=sNolink;
@@ -508,7 +589,7 @@ String format;
             color=new String(getString());
             value=new String(getString());
         }
-        if(pars.isMonitor() && (info==null)) createInfo(true);
+        if(paint && (info==null)) createInfo(true);
         if(info!=null)info.redraw(severity,color,value,isactive);
         recinf.setValue(severity,color,value);
     }
@@ -530,14 +611,30 @@ String format;
             meterUnits=new String(getString());
             meterInit=true;
         }}
-        if(recmet == null)
+        if(recmet == null){
             recmet = new xRecordMeter(pars.getFull(), pars.getType(), meterMode,
                 meterLow, meterUp, meterAlarmLow, meterAlarmUp, 
                 meterColor, meterAlarmColor, meterUnits);
+            paint=pars.isMonitor();
+           }
         recmet.setValue(val);
         value=String.valueOf(val);
-        if(pars.isMonitor() && (meter==null)) createMeter(true);
-        if(meter!=null)meter.redraw((double)val,(quality!=-1), isactive);
+        if(paint && (meter==null)) {
+            createMeter(true);
+            meter.setColor(recmet.getColor());
+            int i = pars.getNode().indexOf(".");
+            if(i >=0) node=pars.getNode().substring(0,i);
+            else node=pars.getNode();
+            meter.setLettering(node,pars.getApplication(),pars.getName(),recmet.getUnits());
+            meter.setDefaultLimits(recmet.getLower(),recmet.getUpper());
+            meter.setDefaultAutoScale(false);
+            meter.setDefaultMode(recmet.getMode());
+        }
+        if(meter!=null){
+            meter.redraw((double)val,(quality!=-1), isactive);
+            recmet.setSize(meter.getDimension());
+            recmet.setPosition(meter.getPosition());
+        }
     }
 
     else if(pars.isHistogram()){
@@ -554,11 +651,18 @@ String format;
             histoContent=new String(getString());
             histoColor=new String(getString());
             intArr=getIntArray();
-            if(rechis==null) rechis = new xRecordHisto(pars.getFull(), pars.getType(),
+            if(rechis==null) {
+                rechis = new xRecordHisto(pars.getFull(), pars.getType(),
                         histoLow,histoHigh,histoLetter,histoContent,histoColor);
+                paint=pars.isMonitor();
+            }
         }
-        if(pars.isMonitor() && (histo==null)) createDispHisto(true);
-        if(histo!=null)histo.redraw(histoChannels,intArr, isactive);
+        if(paint && (histo==null)) createHisto(true);
+        if(histo!=null){
+            histo.redraw(histoChannels,intArr, isactive);
+            rechis.setSize(histo.getDimension());
+            rechis.setPosition(histo.getPosition());
+        }
         rechis.setValue(histoChannels,intArr);
     }
     else if(pars.isStruct()){
@@ -654,6 +758,7 @@ String format;
     }
     if(userHandler != null)userHandler.infoHandler(this);
     }
+//if(!pars.getName().contains("Rate0")) skip=true;
 //print(value,LF);
 //} else System.out.println("Deprecated parameter: "+super.getName());
 } // info handler

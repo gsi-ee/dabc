@@ -1,5 +1,12 @@
 package xgui;
 
+/**
+ * Interface to name parser.
+ * Format of names is:<br>
+ * Dns/Node:NodeId/applNS::Application:ApplicationID/Name.component
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public interface xiParser
 {
 public abstract String getDns();

@@ -14,6 +14,11 @@ import javax.swing.JDesktopPane;
 import javax.swing.JFrame;
 import javax.swing.JInternalFrame;
 
+/**
+ * Singleton and registry.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xSet
 {
 private static String  DimDns   = new String(System.getenv("DIM_DNS_NODE"));
@@ -47,19 +52,26 @@ private static Color colorBack=new Color(0.0f, 0.0f, 0.3f);
 private static Color colorText=new Color(1.0f, 1.0f, 1.0f);
 private static Vector<xLayout> layouts = new Vector<xLayout>();
 private static Vector<Object> objects = new Vector<Object>();
+private static NodeList records=null;
 private static JDesktopPane desktop=null;
 private static JFrame guiframe=null;
 private static int[] ParTableWidth;
 private static StringBuffer str;
 private static boolean OK;
 private static String msg;
+public static boolean OPEN=true;
+public static boolean CLOSE=false;
+
 /**
- * Singleton.
- * @param head name of parameter displayed
+ * Singleton
  */
 public xSet(){
 }
-
+/**
+ * Set background color. Userpanel may set this color in constructor.
+ * Than all panels inherit this color.
+ * @param back Color for background
+ */
 public final static void setColorBack(Color back){colorBack=back;}
 public final static void setColorText(Color text){colorText=text;}
 public final static Color getColorBack(){return colorBack;}
@@ -88,15 +100,39 @@ public final static Color grayL(){return grayL;}
 public final static Color grayD(){return grayD;}  
 public final static Color white(){return white;}  
 
-public final static void addObject(Object object){
-objects.add(object);
+public final static void setRecordXml(NodeList list){
+records=list;
 }
+public static final NodeList getRecordXml(){return records;}
+/**
+ * Adds object to repository (only one per class!).
+ * @param object Object to add.
+ * @return Null if an object of this class already exists.
+ */
+public final static Object addObject(Object object){
+if(getObject(object.getClass().getName()) == null){
+    objects.add(object);
+    return object;
+} else return null;
+}
+/**
+ * @param classname Only one object per class!
+ * @return Object reference or null.
+ */
 public final static Object getObject(String classname){
 for(int i=0;i < objects.size();i++)
     if(objects.elementAt(i).getClass().getName().equals(classname)) return objects.elementAt(i);
 return null;
 }
-
+/**
+ * Layouts keep position and size of windows.
+ * Most layouts are created in xDesktop, but user can add his own.
+ * All layouts are stored with the save layout button.
+ * On startup of the GUI layouts are retrieved. User can get his layouts
+ * by getLayout method. 
+ * @param name Name of layout.
+ * @return New layout or null, if one already exists with same name.
+ */
 public final static xLayout createLayout(String name){
 for(int i=0;i < layouts.size();i++)
     if(layouts.elementAt(i).getName().equals(name)) return null;
@@ -106,142 +142,191 @@ lo.set(new Point(0,0), new Dimension(100,100),0,false);
 layouts.add(lo);
 return lo;
 }
-
-public final static xLayout createLayout(String name, Point pos, Dimension size, int columns, boolean show){
+/**
+ * See also createLayout.
+ * @param name Name of layout.
+ * @param pos Position
+ * @param size Size of window
+ * @param columns Columns in the panels of states, meters, and histograms.
+ * @param visible True if component should be show up on startup.
+ * @return New layout or null, if one already exists with same name.
+ */
+public final static xLayout createLayout(String name, Point pos, Dimension size, int columns, boolean visible){
 for(int i=0;i < layouts.size();i++) if(layouts.elementAt(i).getName().equals(name)) return null;
 // not found, can add
 xLayout lo=new xLayout(name);
-lo.set(pos,size,columns,show);
+lo.set(pos,size,columns,visible);
 layouts.add(lo);
 return lo;
 }
-
-public final static boolean setLayout(String name, Point pos, Dimension size, int columns, boolean show){
+/**
+ * See also createLayout.
+ * @param name Name of layout.
+ * @param pos Position
+ * @param size Size of window
+ * @param columns Columns in the panels of states, meters, and histograms.
+ * @param visible True if component should be show up on startup.
+ * @return True if layout exists, otherwise null.
+ * @see xLayout 
+ */
+public final static boolean setLayout(String name, Point pos, Dimension size, int columns, boolean visible){
 for(int i=0;i < layouts.size();i++){
     if(layouts.elementAt(i).getName().equals(name)){
-    layouts.elementAt(i).set(pos,size,columns,show);
+    layouts.elementAt(i).set(pos,size,columns,visible);
     return true;
 }}
 return false;
 }
-
+/**
+ * See also createLayout.
+ * @param name Name of layout.
+ * @return Layout or null (not found).
+ */
 public final static xLayout getLayout(String name){
 for(int i=0;i < layouts.size();i++) if(layouts.elementAt(i).getName().equals(name)) return layouts.elementAt(i);
 // not found
 return null;
 }
-public final static JInternalFrame getDesktopFrame(String title){
-    JInternalFrame[] fr=desktop.getAllFrames();
-    for(int i=0;i<fr.length;i++){
-        if(fr[i].getTitle().equals(title)) return fr[i];
-    }
-    return null;
-} 
-public final static void setWaitCursor(){
+/**
+ * See also createLayout.
+ * @return Layouts.
+ */
+public final static Vector<xLayout> getLayouts(){return layouts;}
+/**
+ * Does not work as expected!
+ */
+protected final static void setWaitCursor(){
     JInternalFrame[] fr=desktop.getAllFrames();
     guiframe.setCursor(new Cursor(Cursor.WAIT_CURSOR));
     for(int i=0;i<fr.length;i++)fr[i].setCursor(new Cursor(Cursor.WAIT_CURSOR));
 } 
-public final static void setDefaultCursor(){
+/**
+ * Does not work as expected!
+ */
+protected final static void setDefaultCursor(){
     JInternalFrame[] fr=desktop.getAllFrames();
     guiframe.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
     for(int i=0;i<fr.length;i++)fr[i].setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
 } 
 // setup the geometry of the windows
-public final static void setParTableWidth(int[] w){ParTableWidth=w;}
+protected final static void setParTableWidth(int[] w){ParTableWidth=w;}
 // store desktop
-public final static void setDesktop(JFrame gui, JDesktopPane dp){guiframe=gui; desktop=dp;}
+protected final static void setDesktop(JFrame gui, JDesktopPane dp){guiframe=gui; desktop=dp;}
+/**
+ * @param success Value can be retrieved by isSuccess().
+ */
 public final static void setSuccess(boolean success){OK=success;}
+/**
+ * @param message Value can be retrieved by getMessage().
+ */
 public final static void setMessage(String message){msg=new String(message);}
-// get all we have stored
+/**
+ * @return Value previously set by setSuccess(...).
+ */
 public final static boolean isSuccess(){return OK;}
+/**
+ * @return Value previously set by setMessage(...).
+ */
 public final static String getMessage(){return msg;}
-public final static int[] getParTableWidth(){return ParTableWidth;}
+/**
+ * @return Widths of the parameter table columns.
+ */
+protected final static int[] getParTableWidth(){return ParTableWidth;}
+/**
+ * @return DIM name server node
+ */
 public final static String getDimDns(){return DimDns;}
+/**
+ * @return User name.
+ */
 public final static String getUserName(){return UserName;}
+/**
+ * @return Host name.
+ */
 public final static String getGuiNode(){return GuiNode;}
-public final static JDesktopPane getDesktop(){return desktop;}
-
-public final static void setAccess(char[] access){
+/**
+ * Sometimes one needs the top pane.
+ * @return Desktop pane.
+ * @see xHisto
+ * @see xMeter
+ * @see xPanelPrompt
+ */
+protected final static JDesktopPane getDesktop(){return desktop;}
+/**
+ * Store encrypted password (crypt).
+ * @param access Password as retrieved from JPasswordField.
+ */
+protected final static void setAccess(char[] access){
 Access = new String(xCrypt.crypt("x1",new String(access)));
 }
+/**
+ * @return Encrypted password.
+ */
 public final static String getAccess(){return Access;}
-// Dimension adder for convenience
+/**
+ * Dimension adder for convenience.
+ * @param d1 First dimension
+ * @param d2 Second dimension
+ * @return New dimension with added w and h.
+ */
 public final static Dimension addDimension(Dimension d1, Dimension d2){
 return new Dimension((int)(d1.getWidth()+d2.getWidth()),(int)(d1.getHeight()+d2.getHeight()));
 }
-// To read images from jar file, we need this ugly stuff
-public final static ImageIcon getIcon(String f){
-    InputStream is = ClassLoader.getSystemResourceAsStream(f);
+/**
+ * To read images from jar file, we need this ugly stuff.
+ * @param file Icon file name.
+ * @return The icon or null (not found).
+ */
+public final static ImageIcon getIcon(String file){
+    InputStream is = ClassLoader.getSystemResourceAsStream(file);
     try{
     return new ImageIcon(ImageIO.read(is));
     } catch(IOException e){}
     return null;
 }
-
-// Save geometries to xml file
-public final static void Save(String file){
-    str=new StringBuffer();
-    str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-    str.append("<Layout>\n");
-    str.append("<WindowLayout>\n");
-    // append window specs
-    for(int i =0; i < layouts.size(); i++) str.append(layouts.elementAt(i).getXmlString()); 
-    str.append("</WindowLayout>\n");
-    // append table specs
-    str.append("<TableLayout>\n");
-    str.append(String.format("<Parameter width=\"%d",ParTableWidth[0]));
-    for(int i=1;i<ParTableWidth.length;i++) str.append(","+Integer.toString(ParTableWidth[i]));
-    str.append("\" />\n");
-    str.append("</TableLayout>\n");
-    str.append("</Layout>\n");
-    try{
-        FileWriter fw = new FileWriter(file);
-        fw.write(str.toString());
-        fw.close();
-    }catch(IOException ioe){System.out.println("Error writing layout file");}
+/**
+ * XML opening string.
+ * @return Standard XML opening string.
+ */
+public final static String XmlHeader(){
+return new String("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
 }
-
-// used by restore
-public final static void setWindowLayout(Element el){
+/**
+ * XML tag string.
+ * @param name Tag name.
+ * @param open True: open tag, false: close tag.
+ * @return XML string.
+ */
+public final static String XmlTag(String name, boolean open){
+if(open)return new String("<"+name+">\n");
+else return new String("</"+name+">\n");
+}
+/**
+ * Set layout values from XML element. Called by xSaveRestore.restoreLayouts.
+ * @param layout Element of WindowLayout elements.
+ * @see xSaveRestore
+ */
+protected final static void setWindowLayout(Element layout){
 String[] sx;
-xLayout lo=createLayout(el.getTagName());
-if(lo == null)lo=getLayout(el.getTagName());
-sx=el.getAttribute("shape").toString().split(",");
+xLayout lo=createLayout(layout.getTagName());
+if(lo == null)lo=getLayout(layout.getTagName());
+sx=layout.getAttribute("shape").toString().split(",");
 lo.set(new Point(Integer.parseInt(sx[0]),Integer.parseInt(sx[1])),
     new Dimension(Integer.parseInt(sx[2]),Integer.parseInt(sx[3])),
-    Integer.parseInt(el.getAttribute("columns").toString()),
-    Boolean.parseBoolean(el.getAttribute("show").toString()));
+    Integer.parseInt(layout.getAttribute("columns").toString()),
+    Boolean.parseBoolean(layout.getAttribute("show").toString()));
 }
-// used by restore
-public final static void setTableLayout(String name, Element e){
+/**
+ * Set table values from XML element. Called by xSaveRestore.restoreLayouts.
+ * @param name Name of element of TableLayout ("Parameter").
+ * @param layout Element of TableLayout.
+ * @see xSaveRestore
+ */
+protected final static void setTableLayout(String name, Element layout){
 String[] sx;
 Element el;
-el=(Element)e.getElementsByTagName(name).item(0);
+el=(Element)layout.getElementsByTagName(name).item(0);
 sx=el.getAttribute("width").toString().split(",");
 for(int i=0;i<sx.length;i++)ParTableWidth[i]=Integer.parseInt(sx[i]);
-}
-
-// Restore geometry from xml file
-public final static void Restore(String file){
-String s;
-int col;
-boolean show;
-Element root,elem,el;
-try{
-    DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder=factory.newDocumentBuilder();
-    Document document=builder.parse(new File(file));
-    root=document.getDocumentElement();
-    elem=(Element)root.getElementsByTagName("WindowLayout").item(0); // only one WindowLayout!
-    NodeList list=elem.getElementsByTagName("*"); // list of layout names
-    for(int i=0;i<list.getLength();i++){
-        el=(Element)list.item(i);
-        setWindowLayout(el);
-        // System.out.println("Layout elements "+el.getTagName());
-    }
-    elem=(Element)root.getElementsByTagName("TableLayout").item(0); // only one TableLayout!
-    setTableLayout("Parameter",elem);
-}catch(Exception e){}
 }
 }

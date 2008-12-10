@@ -8,6 +8,12 @@ import javax.swing.event.*;
 import java.awt.event.*;
 import java.awt.*;
 
+/**
+ * Frame for one panel. To be added by caller to a JDesktopPane.
+ * Provides functions to add one panel.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xInternalFrame extends JInternalFrame
                             implements ActionListener, InternalFrameListener, ComponentListener
 {
@@ -16,6 +22,11 @@ private xLayout layout;
 private JPanel mypan;
 private boolean hasMenu=false;
 private boolean resizable=true;
+/**
+ * Create the frame. Set background and layout.
+ * @param title Title of frame.
+ * @param la Frame layout (position and size).
+ */
 public xInternalFrame(String title, xLayout la) {
     super(title,
             true, //resizable
@@ -32,7 +43,13 @@ public xInternalFrame(String title, xLayout la) {
     addComponentListener(this);
     mypan=null;
     }
-
+/**
+ * Set up frame and add panel.
+ * @param icon Give it an icon.
+ * @param menu Optional menu bar. Event handler defined from caller.
+ * @param panel Panel to be displayed.
+ * @param resize Make frame resizable.
+ */
 public void setupFrame(ImageIcon icon, JMenuBar menu, JPanel panel, boolean resize) {
     if(icon != null)setFrameIcon(icon);
     if(menu != null){setJMenuBar(menu);hasMenu=true;}
@@ -43,12 +60,15 @@ public void setupFrame(ImageIcon icon, JMenuBar menu, JPanel panel, boolean resi
     try { setSelected(true);
     } catch (java.beans.PropertyVetoException pe) {System.out.println("Frame select failed");}
 }   
-    
-public void addWindow(JPanel pan){
+/**
+ * Remove all panels, add this one, and pack.
+ * @param panel Panel to display.
+ */
+public void addWindow(JPanel panel){
     getContentPane().removeAll();
-    getContentPane().add(pan);
+    getContentPane().add(panel);
     getContentPane().setBackground(xSet.getColorBack());
-    mypan=pan;
+    mypan=panel;
     pack();
 }
 public JPanel getPanel(){return mypan;}
@@ -64,15 +84,25 @@ Dimension nd;
     // setPreferredSize(nd);
 // System.out.println("intfram "+mypan.getClass()+" "+nd);
     // setResizable(true);
-    if(e == null) pack();
-    else if ("Zoom".equals(e.getActionCommand())) pack();
-    // setResizable(resizable);
+if(e == null) {
+    mypan.revalidate();
+    pack();
+} else if ("Zoom".equals(e.getActionCommand())) pack();
+else if ("MyResize".equals(e.getActionCommand())){
+    mypan.revalidate();
+    pack();
 }
-// Frame listener
+}
+/**
+ * Store layout (position and size)
+ */
 public void internalFrameClosing(InternalFrameEvent e) {
 //System.out.println("Frame closing: "+getTitle());
 layout.set(getLocation(),getSize(),0,false);
 }
+/**
+ * Store layout (position and size)
+ */
 public void internalFrameClosed(InternalFrameEvent e){
 //System.out.println("Frame closed : "+getTitle());
 layout.set(getLocation(),getSize(),0,false);
@@ -86,6 +116,9 @@ public void internalFrameOpened(InternalFrameEvent e){}
 public void componentHidden(ComponentEvent e) {}
 public void componentMoved(ComponentEvent e) {}
 public void componentShown(ComponentEvent e) {}
+/**
+ * Set new preferred size when resizable was enabled, otherwise noop.
+ */
 public void componentResized(ComponentEvent e) {
 Dimension nd;
 // panel must implement ComponentListener, and resize itself if necessary

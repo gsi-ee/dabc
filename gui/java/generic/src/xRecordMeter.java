@@ -1,35 +1,38 @@
 package xgui;
-/**
-*
-* @author goofy
-*/
 import java.util.*;
+import org.w3c.dom.*;
 /**
-*/
+ * Dim record data for meter.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xRecordMeter extends xRecord
 {
 private int Mode;
-private float Value;
-private float Low;
-private float Up;
-private float AlarmLow;
-private float AlarmUp;
+private double Value;
+private double Low;
+private double Up;
+private double AlarmLow;
+private double AlarmUp;
 private String AlarmColor;
 private String Units;
+private Boolean Auto;
+private Boolean Log;
 /**
  * DIM record object: Meter
  * @param name DABC format full parameter name
- * @param index Index in parameter table
- * @param low lower limit
- * @param up upper limit
- * @param alarmLow alarm lower limit
- * @param alarmUp alarm upper limit
+ * @param type Record type
+ * @param mode Display mode
+ * @param lower lower limit
+ * @param upper upper limit
+ * @param alarmLower alarm lower limit
+ * @param alarmUpper alarm upper limit
  * @param color color of pointer
- * @param alarmcol color of frame in alarm
+ * @param alarmColor color of frame in alarm
  * @param units units
  */
 public xRecordMeter(String name, int type, int mode,
-        float lower, float upper, float alarmLower, float alarmUpper, 
+        double lower, double upper, double alarmLower, double alarmUpper, 
         String color, String alarmColor, String units){
         super(name,type);
     AlarmLow=alarmLower;
@@ -40,13 +43,46 @@ public xRecordMeter(String name, int type, int mode,
     setUpper(upper);
     Units = new String(units);
 }
-public void setValue(float value){Value=value;}
-public void setLower(float low){Low=low;}
-public void setUpper(float up){Up=up;}
-
+public void setValue(double value){Value=value;}
+public void setLower(double low){Low=low;}
+public void setUpper(double up){Up=up;}
+public void setMode(int mode){Mode=mode;}
+public void setAutoScale(Boolean auto){Auto=new Boolean(auto);}
+public Boolean getAutoScale(){return Auto;}
+public Boolean getLogScale(){return Log;}
+public void setLogScale(Boolean log){Log=new Boolean(log);}
 public int getMode(){return Mode;}
-public float getValue(){return Value;}
-public float getLower(){return Low;}
-public float getUpper(){return Up;}
+public double getValue(){return Value;}
+public double getLower(){return Low;}
+public double getUpper(){return Up;}
 public String getUnits(){return Units;}
+
+public String XmlLine(){
+String str = String.format("<Meter name=\"%s\" visible=\"%s\" mode=\"%d\" auto=\"%s\" log=\"%s\" low=\"%010.1f\" up=\"%010.1f\" color=\"%s\"/>\n",
+getName(),isVisible().toString(),getMode(),getAutoScale().toString(),getLogScale().toString(),getLower(),getUpper(),getColor());
+return str;}
+
+public void restoreRecord(Element el){
+String att;
+    // setName(el.getAttribute("name").toString());
+    att=el.getAttribute("mode");
+    if(att.length()>0)Mode=Integer.parseInt(att);
+    att=el.getAttribute("low");
+    if(att.length()>0)Low=Double.parseDouble(att);
+    att=el.getAttribute("up");
+    if(att.length()>0)Up=Double.parseDouble(att);
+    att=el.getAttribute("auto");
+    if(att.length()>0)Auto=new Boolean(att);
+    att=el.getAttribute("log");
+    if(att.length()>0)Log=new Boolean(att);
+    att=el.getAttribute("visible");
+    if(att.length()>0)setVisible(att);
+    att=el.getAttribute("color");
+    if(att.length()>0)setColor(att);
+//    printRecord();
+}
+public void printRecord(){
+System.out.println(getType()+" "+getName()+" "+getColor()+" "+getMode()+" "+getLower()+" "+getUpper()+" "+getUnits());
+}
+
 } // class xRecordMeter

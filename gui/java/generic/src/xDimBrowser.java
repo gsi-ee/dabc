@@ -1,14 +1,11 @@
 package xgui;
-/**
-*
-* @author goofy
-*/
 import java.util.*;
 import dim.*;
-
 /**
-* DIM Browser
-*/
+ * DIM browser.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xDimBrowser implements xiDimBrowser {
 private int i,ncom,npar,ist;
 private int version=0;
@@ -19,14 +16,18 @@ private Vector<xDimCommand> vcom;
 private Vector<xiDimParameter> vipar;
 private Vector<xiDimCommand> vicom;
 private xPanelMeter metpan;
-private xPanelHistogram hispan;
+private xPanelHisto hispan;
 private xPanelState stapan;
 private xPanelInfo infpan;
 
 /**
- * Constructor adds DIM error handler
+ * Constructor adds DIM error handler.
+ * @param histogram Panel
+ * @param meter Panel
+ * @param state Panel
+ * @param info Panel
  */
-public xDimBrowser(xPanelHistogram histogram, xPanelMeter meter, xPanelState state, xPanelInfo info){
+public xDimBrowser(xPanelHisto histogram, xPanelMeter meter, xPanelState state, xPanelInfo info){
     hispan=histogram;
     stapan=state;
     infpan=info;
@@ -47,18 +48,32 @@ public static void startTimer(int secs){
             startTimer(10);
         }	};
 }
+// xiDimBrowser
 public void addInfoHandler(xiDimParameter parameter, xiUserInfoHandler infohandler){
 ((xDimParameter)parameter).addInfoHandler(infohandler);}
 
+// xiDimBrowser
 public void removeInfoHandler(xiDimParameter parameter, xiUserInfoHandler infohandler){
 ((xDimParameter)parameter).removeInfoHandler(infohandler);}
 
-public xPanelHistogram getPanelHistogram(){return hispan;}
-public xPanelMeter     getPanelMeter(){return metpan;}
-public xPanelState     getPanelState(){return stapan;}
-public xPanelInfo      getPanelInfo(){return infpan;}
+protected xPanelHisto getPanelHistogram(){return hispan;}
+protected xPanelMeter getPanelMeter(){return metpan;}
+protected xPanelState getPanelState(){return stapan;}
+protected xPanelInfo  getPanelInfo(){return infpan;}
 
-public String getServers(){
+/**
+ * Get list of services filtered by wildcard. 
+ * @param wildcard Wildcard string
+ * @return String array of service names. 
+ */
+protected String[] getServices(String wildcard){
+return DimBrowser.getServices(wildcard);
+}
+/**
+ * Search for server node names. Searches for * / EXIT services. 
+ * @return Space separated list of servres names. 
+ */
+protected String getServers(){
     StringBuffer list=new StringBuffer();
     String item;
     int ii;
@@ -74,14 +89,14 @@ public String getServers(){
     }
     return list.toString();
 }
-public int getNofServers(){
+/**
+ * @return Number of servers (number of EXIT commands).
+ */
+protected int getNofServers(){
     String[] srv=DimBrowser.getServices("*/EXIT");
     return srv.length;
 }
-public String[] getServices(String wildcard){
-    return DimBrowser.getServices(wildcard);
-    }
-public void listServices(boolean all){
+protected void listServices(boolean all){
     if(vpar != null){
         Iterator<xDimParameter> vi = vpar.listIterator();
         for(i=0;i<vpar.size();i++){
@@ -90,17 +105,25 @@ public void listServices(boolean all){
         }
     }
 }
-public void enableServices(){
+/** 
+ * Steps through parameter list and activates all by setParameterActiv.
+ * @see xDimParameter
+ */
+protected void enableServices(){
     if(vpar != null){
     System.out.println("Browser enableServices");
         Iterator<xDimParameter> vi = vpar.listIterator();
         for(i=0;i<vpar.size();i++){
             par=vi.next();
-            par.activateParameter();
+            par.setParameterActiv(true);
         }
     }
 }
-public void releaseServices(boolean cleanup){
+/**
+ * @param cleanup True: Remove all services, otherwise only deactivate.
+ * @see xDimParameter
+ */
+protected void releaseServices(boolean cleanup){
 // look for commands and parameters available
 // release registered parameters
 if(cleanup){
@@ -110,7 +133,7 @@ System.out.println("Browser releaseServices, rebuild all");
         for(i=0;i<vpar.size();i++){
             par=vi.next();
             par.releaseService();
-            par.deactivateParameter();
+            par.setParameterActiv(false);
         }
     }
     if(vpar != null)vpar.clear();
@@ -128,7 +151,7 @@ System.out.println("Browser releaseServices, update");
         for(i=0;i<vpar.size();i++){
             par=vi.next();
             par.removeInfoHandler(null);// clear all registrations of user handlers
-            par.deactivateParameter();
+            par.setParameterActiv(false);
         }
     }
 }
@@ -137,11 +160,13 @@ System.out.println("Browser releaseServices, update");
 /**
  * Get list of services from DIM name server defined by DIM_DNS_NODE, filtered by wildcard.
  * Commands and parameters are kept in separate lists and ordered alphabetically.
- * Names not matching the DABC format are handled separately. Finally they are formatted according DABC,
- * but in xDimCommand they are restored. This might need better solution.
+ * Names not matching the DABC format (four elements separated by slashes) are handled separately. 
+ * Only DIM EXIT commands are formatted according DABC,
+ * but in xDimCommand they are restored for execution. This might need better solution.
  * @param wildcard services name filter
+ * @see xParser
  */
-public void initServices(String wildcard){
+protected void initServices(String wildcard){
     xParser pars=new xParser();
 
     String[] srvcs = DimBrowser.getServices(wildcard);
@@ -161,7 +186,9 @@ public void initServices(String wildcard){
             }else{
             npar++;
             servlist[i]=2; // parameter
-            } else if(srvcs[i].contains("/EXIT") && srvcs[i].contains(":")){
+            }
+        else // no dabc format, take only EXIT commands (not for DIS_DNS)
+            if(srvcs[i].contains("/EXIT") && srvcs[i].contains(":")){
             if(srvcs[i].split("/").length==3){
                 ncom++;
                 servlist[i]=3; // free format command
@@ -325,11 +352,11 @@ xDimParameter p;
     p.setPanels(hispan,metpan,stapan,infpan);
     return p;
 }
-public int getNumberOfCommands(){return ncom;}
-public int getNumberOfParameters(){return npar;}
+protected int getNumberOfCommands(){return ncom;}
+protected int getNumberOfParameters(){return npar;}
 
-public Vector<xDimParameter> getParameterList(){return vpar;}
-public Vector<xDimCommand> getCommandList(){return vcom;}
+protected Vector<xDimParameter> getParameterList(){return vpar;}
+protected Vector<xDimCommand> getCommandList(){return vcom;}
 public Vector<xiDimParameter> getParameters(){return vipar;}
 public Vector<xiDimCommand> getCommands(){return vicom;}
 public void sleep(int s){DimTimer.sleep(s);}
