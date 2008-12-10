@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="master" name="Controller:41">
+    <Application class="bnet::Cluster">
+       <NetDevice value="verbs::Device"/>
+    </Application>
+  </Context>
+  <Context host="master" name="Worker1:42"/>
+  <Context host="node01" name="Worker2:42"/>
+  <Context host="node02" name="Worker3:42"/>
+  <Context host="node03" name="Worker4:42"/>
+  <Defaults>
+    <Context name="*">
+      <Run>
+        <logfile value="test${DABCNODEID}.log"/>
+        <loglevel value="1"/>
+        <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+        <lib value="${DABCSYS}/lib/libDabcVerbs.so"/>
+      </Run>
+   </Context>
+    <Context name="*Worker*">
+       <Run>
+          <lib value="libBnetTest.so"/>
+          <lib value="${DABCSYS}/lib/libpcidriver.so"/>          
+          <lib value="${DABCSYS}/lib/libmprace.so"/>
+          <lib value="${DABCSYS}/lib/libDabcAbb.so"/>          
+       </Run>
+    </Context>
+  </Defaults>
+</dabc>
