@@ -6,8 +6,6 @@
 #include "dimc/nameParser.h"
 #include "dabc/threads.h"
 
-//#include "dabc/Parameter.h"
-
 namespace dabc{
 
    class CommandDefinition;
@@ -110,10 +108,6 @@ public:
 
      /** Remove parameter from remote subscription list*/
      bool UnsubscribeParameter(dabc::Parameter* par);
-
-
-
-
 
 
 
@@ -233,14 +227,14 @@ public:
 
 
      /** Expand local variable name to full dim service name.
-      * dim service contains prefix of context and application class*/
+      * dim service contains prefix of node and context */
     std::string BuildDIMName(const std::string& localname);
 
-       /** Reduce dim service name to local infospace variable name.
-       *  Prefix of context and application class will be removed*/
+       /** Reduce dim service name to local parameter name.
+       *  Prefix of node and context will be removed*/
     std::string ReduceDIMName(const std::string& dimname);
 
-     /** Returns prefix for dim service name, from contextname, classname, and lid of this application. */
+     /** Returns prefix for dim service name of this node. */
     std::string& GetDIMPrefix();
 
 

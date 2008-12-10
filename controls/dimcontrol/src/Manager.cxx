@@ -1,16 +1,15 @@
-#include "dimc/DimcManager.h"
+#include "dimc/Manager.h"
 
 
 #include "dabc/logging.h"
-//#include "dabc/timing.h"
 #include "dabc/Configuration.h"
 #include "dabc/CommandDefinition.h"
 #include "dabc/Parameter.h"
 #include "dabc/Module.h"
 
 
-#include "dimc/DimcCommands.h"
-#include "dimc/DimcRegistry.h"
+#include "dimc/Commands.h"
+#include "dimc/Registry.h"
 
 #include <iostream>
 
