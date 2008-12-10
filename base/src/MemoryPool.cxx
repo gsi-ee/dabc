@@ -1173,9 +1173,77 @@ void dabc::MemoryPool::Print()
         DOUT1(("  Ref[%u] : size %lu bufsize %lu used %u", fRef[id]->BlockSize(), fRef[id]->BufferSize(), fRef[id]->NumUsedBuffers()));
 }
 
+void dabc::MemoryPool::StoreConfig()
+{
+    DeleteChilds();
+
+    if (IsEmpty()) return;
+
+    BufferSize_t  bufsize = minBufferSize();
+
+    while (bufsize <= maxBufferSize()) {
+       BufferNum_t numbuf = 0;
+       BufferNum_t numinc = 0;
+       unsigned align = 0;
+
+       {
+          LockGuard guard(fPoolMutex);
+
+          for (BlockNum_t num=0;num<fNumMem;num++)
+            if (fMem[num]->BufferSize() == bufsize) {
+               numbuf += fMem[num]->NumBuffers();
+               if (fMem[num]->NumIncrease() > numinc)
+                  numinc = fMem[num]->NumIncrease();
+               if (fMem[num]->Alignment() > align)
+                  align = fMem[num]->Alignment();
+            }
+       }
+
+       if (numbuf>0) {
+          std::string blockname = BlockName(bufsize);
+
+          CreateParInt((blockname+xmlNumBuffers).c_str(), numbuf);
+          CreateParInt((blockname+xmlNumIncrement).c_str(), numinc);
+          CreateParInt((blockname+xmlAlignment).c_str(), align);
+       }
+
+       bufsize*=2;
+    }
+
+    BufferNum_t numref = 0;
+    BufferSize_t header = 0;
+    unsigned numsegm = 1;
+    BufferNum_t numinc = 0;
+
+    {
+       LockGuard guard(fPoolMutex);
+
+       for (BlockNum_t num=0;num<fNumRef;num++) {
+          numref += fRef[num]->NumBuffers();
+          if (fRef[num]->HeaderSize() > header)
+             header = fRef[num]->HeaderSize();
+          if (fRef[num]->NumSegments() > numsegm)
+             numsegm = fRef[num]->NumSegments();
+          if (fRef[num]->NumIncrease() > numinc)
+             numinc = fRef[num]->NumIncrease();
+       }
+    }
+
+    if (numref>0) {
+       std::string blockname = BlockName(0);
+
+       CreateParInt((blockname+xmlNumBuffers).c_str(), numref);
+       CreateParInt((blockname+xmlNumIncrement).c_str(), numinc);
+       CreateParInt((blockname+xmlHeaderSize).c_str(), header);
+       CreateParInt((blockname+xmlNumSegments).c_str(), numsegm);
+    }
+}
+
 bool dabc::MemoryPool::Store(ConfigIO &cfg)
 {
-   if (NumChilds()==0) return true;
+   if (IsEmpty()) return false;
+
+   StoreConfig();
 
    cfg.CreateItem(clMemoryPool);
 
@@ -1188,12 +1256,59 @@ bool dabc::MemoryPool::Store(ConfigIO &cfg)
    return true;
 }
 
+bool dabc::MemoryPool::ReconstructFromConfig(dabc::Command* cmd)
+{
+   if (!IsEmpty()) return false;
+
+   BufferSize_t bufsize = minBufferSize();
+
+   unsigned totalnumbuf = 0;
+
+   while (bufsize <= maxBufferSize()) {
+
+      std::string blockname = BlockName(bufsize);
+
+      if (!HasCfgPar((blockname + xmlNumBuffers).c_str(), cmd)) continue;
+
+      unsigned numbuf = GetCfgInt((blockname + xmlNumBuffers).c_str(), 0, cmd);
+      if (numbuf==0) continue;
+
+      unsigned numinc = GetCfgInt((blockname + xmlNumIncrement).c_str(), 0, cmd);
+
+      unsigned align = GetCfgInt((blockname + xmlAlignment).c_str(), 0, cmd);
+
+      AllocateMemory(bufsize, numbuf, numinc, align);
+      totalnumbuf += numbuf;
+
+      bufsize*=2;
+   }
+
+   std::string blockname = BlockName(0);
+
+   if (HasCfgPar((blockname + xmlNumBuffers).c_str(), cmd)) {
+      unsigned numref = GetCfgInt((blockname+xmlNumBuffers).c_str(), 0);
+
+      if (numref>0) {
+         unsigned numinc = GetCfgInt((blockname+xmlNumIncrement).c_str(), 0);
+         unsigned header = GetCfgInt((blockname+xmlHeaderSize).c_str(), 0);
+         unsigned numsegm = GetCfgInt((blockname+xmlNumSegments).c_str(), 1);
+
+         AllocateReferences(header, numref, numinc, numsegm);
+      }
+   }
+
+   if ((totalnumbuf>0) && (fNumRef==0))
+      AllocateReferences(0, totalnumbuf, totalnumbuf/2, 8);
+
+   return true;
+}
+
+
 bool dabc::MemoryPool::Find(ConfigIO &cfg)
 {
    if (!cfg.FindItem(clMemoryPool)) return false;
 
    return cfg.CheckAttr(xmlNameAttr, GetName());
-
 }
 
 
@@ -1201,8 +1316,8 @@ dabc::BufferSize_t dabc::MemoryPool::RoundBufferSize(dabc::BufferSize_t bufsize)
 {
    if (bufsize==0) return 0;
 
-   BufferSize_t size = 256;
-   while (size<bufsize) size*=2;
+   BufferSize_t size = minBufferSize();
+   while ((size<bufsize) && (size<maxBufferSize())) size*=2;
    return size;
 }
 

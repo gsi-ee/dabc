@@ -31,7 +31,6 @@ namespace dabc {
    // It must be a power of two and should be like 16 or 32 or 256
    extern unsigned int MemoryAllign;
 
-
    class MemoryPoolRequester {
       friend class MemoryPool;
 
@@ -159,6 +158,9 @@ namespace dabc {
          MemoryPool(Basic* parent, const char* name);
          virtual ~MemoryPool();
 
+         static BufferSize_t minBufferSize() { return 0x100; }
+         static BufferSize_t maxBufferSize() { return 0x10000000; }
+
          virtual const char* ClassName() const { return clMemoryPool; }
 
          void UseMutex(Mutex* mutex = 0);
@@ -191,6 +193,7 @@ namespace dabc {
 
          // this is information about internal structure
          // of memory pool and how this structure changes
+         bool IsEmpty() const { return (fNumMem==0) && (fNumRef==0); }
 
          BlockNum_t NumMemBlocks() const { return fNumMem; }
          bool IsMemoryBlock(BlockNum_t n) { return n<fNumMem && fMem[n]!=0; }
@@ -205,7 +208,7 @@ namespace dabc {
          BufferNum_t GetNumBuffersInBlock(BlockNum_t block = 0) const { return fMem[block]->NumBuffers(); }
          inline BufferSize_t GetBufferSize(BufferId_t id) const { return fMem[GetBlockNum(id)]->BufferSize(); }
          inline void* GetBufferLocation(BufferId_t id) const
-         { return fMem[GetBlockNum(id)]->RawBuffer(GetBufferNum(id)); }
+           { return fMem[GetBlockNum(id)]->RawBuffer(GetBufferNum(id)); }
 
          uint64_t GetTotalSize() const;
          uint64_t GetUsedSize() const;
@@ -245,6 +248,11 @@ namespace dabc {
          void RemoveRequester(MemoryPoolRequester* req);
 
          void Print();
+
+         void StoreConfig();
+         bool ReconstructFromConfig(dabc::Command* cmd = 0);
+
+
 
          virtual bool Store(ConfigIO &cfg);
          virtual bool Find(ConfigIO &cfg);

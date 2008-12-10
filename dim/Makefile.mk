@@ -20,7 +20,7 @@ DIM_BUILD_ARGS=
 
 ifdef DIM_JDK_INCLUDE
 ifneq ($(wildcard $(DIM_JDK_INCLUDE)),)
-DIM_BUILD_ARGS=JDIM=yes
+DIM_BUILD_ARGS = JDIM=yes
 JDK_INCLUDE:=$(DIM_JDK_INCLUDE)
 else 
 DIM_JDK_INCLUDE=
@@ -35,12 +35,13 @@ $(DIMDIR):
 	cd $(DABCSYS)/dim; unzip $(DIM_ZIP)  
 
 $(DIM_LIB):
-	@echo build args = $(DIM_BUILD_ARGS) 
 	cd $(DIMDIR); export DIMDIR=$(DIMDIR); export OS=$(DIM_OS); export ODIR=$(DIM_ODIR); export JDK_INCLUDE=$(DIM_JDK_INCLUDE); $(MAKE) $(DIM_BUILD_ARGS)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libdim.so $(DIM_LIB)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libjdim.so $(DABCDLLPATH)  
 	cp -f $(DIMDIR)/$(DIM_ODIR)/dns $(DABCBINPATH)/dimDns  
 	@echo "Dim library build"
+#	cd $(DIMDIR)/jdim/classes; jar cf dim.jar dim/*.class
+#	mv -f $(DIMDIR)/jdim/classes/dim.jar $(DABCDLLPATH)
 
 libs:: $(DIMDIR) $(DIM_LIB)
 

@@ -30,6 +30,7 @@ namespace dabc {
    extern const char* xmlNumBuffers;
    extern const char* xmlHeaderSize;
    extern const char* xmlNumSegments;
+   extern const char* xmlAlignment;
 
    extern const char* xmlNumInputs;
    extern const char* xmlNumOutputs;

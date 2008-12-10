@@ -307,8 +307,10 @@ bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const
    return defvalue;
 }
 
-bool dabc::WorkingProcessor::HasCfgPar(const char* name)
+bool dabc::WorkingProcessor::HasCfgPar(const char* name, Command* cmd)
 {
+   if (cmd && cmd->HasPar(name)) return true;
+
    if (dabc::mgr()==0) return false;
 
    return dabc::mgr()->FindInConfiguration(GetTopParsFolder(), name);

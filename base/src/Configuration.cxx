@@ -369,13 +369,22 @@ dabc::Basic* dabc::Configuration::GetObjParent(Basic* obj, int lvl)
    return obj;
 }
 
-std::string dabc::Configuration::Find(Basic* obj, const char* findattr)
+
+bool dabc::Configuration::Find(Basic* obj, std::string& value, const char* findattr)
 {
-   std::string res;
+   std::string item;
 
-   FindItem(obj, res, 0, findattr);
+   if (findattr!=0) {
+      const char* pos = strrchr(findattr, '/');
 
-   return res;
+      if (pos!=0) {
+         item.assign(findattr, pos - findattr);
+         findattr = pos+1;
+         if (*findattr==0) findattr = 0;
+      }
+   }
+
+   return FindItem(obj, value, item.empty() ? 0 : item.c_str(), findattr);
 }
 
 dabc::XMLNodePointer_t dabc::Configuration::FindSubItem(XMLNodePointer_t node, const char* name)
@@ -391,6 +400,8 @@ dabc::XMLNodePointer_t dabc::Configuration::FindSubItem(XMLNodePointer_t node, c
 
 bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* finditem, const char* findattr)
 {
+   res.clear();
+
    if (obj==0) return false;
 
    int maxlevel = 0;

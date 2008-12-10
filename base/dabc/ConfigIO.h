@@ -23,8 +23,7 @@ namespace dabc {
           virtual bool FindItem(const char* name) = 0;
           virtual bool CheckAttr(const char* name, const char* value) = 0;
 
-          virtual std::string Find(Basic* obj, const char* findattr = 0) = 0;
-          virtual std::string GetAttrValue(const char* name) = 0;
+          virtual bool Find(Basic* obj, std::string& value, const char* findattr = 0) = 0;
    };
 
 }

@@ -79,7 +79,7 @@ namespace dabc {
          double GetCfgDouble(const char* name, double dfltvalue, Command* cmd = 0);
          bool GetCfgBool(const char* name, bool dfltvalue, Command* cmd = 0);
 
-         bool HasCfgPar(const char* name);
+         bool HasCfgPar(const char* name, Command* cmd = 0);
 
       protected:
 

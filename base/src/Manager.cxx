@@ -1156,7 +1156,7 @@ void dabc::Manager::RecvOverCommandChannel(const char* cmddata)
 
       Submit(Assign(cmd));
    } else {
-      // this is for replyes
+      // this is for replies
       int cmdid = cmd->GetInt("_cmdid_",-1);
       bool cmdres = cmd->GetResult();
 
@@ -1195,8 +1195,6 @@ bool dabc::Manager::DoCreateMemoryPool(Command* cmd)
 
    MemoryPool* pool = FindPool(poolname);
 
-   // round always buffer size to 256 limits
-
    if (pool==0) {
 
       pool = new dabc::MemoryPool(this, poolname);
@@ -1209,8 +1207,9 @@ bool dabc::Manager::DoCreateMemoryPool(Command* cmd)
       pool->AssignProcessorToThread(ProcessorThread());
    }
 
+   if (pool->Allocate(cmd)) return true;
 
-   return pool->Allocate(cmd);
+   return pool->ReconstructFromConfig();
 }
 
 dabc::MemoryPool* dabc::Manager::ConfigurePool(const char* poolname,
