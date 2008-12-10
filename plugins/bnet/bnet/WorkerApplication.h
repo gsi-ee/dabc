@@ -39,7 +39,7 @@ namespace bnet {
 
          virtual bool IsModulesRunning();
 
-         static std::string bnet::WorkerApplication::ReadoutParName(int nreadout);
+         static std::string ReadoutParName(int nreadout);
 
       protected:
 

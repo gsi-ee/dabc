@@ -61,7 +61,7 @@ namespace dimc {
          virtual int ExecuteCommand(dabc::Command* cmd);
 
          /** update local status record for gui from baseclass state string*/
-         void dimc::Manager::UpdateStatusRecord();
+         void UpdateStatusRecord();
 
       private:
          bool                  fIsMainMgr;
