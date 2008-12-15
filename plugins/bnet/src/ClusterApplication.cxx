@@ -132,7 +132,6 @@ bool bnet::ClusterApplication::CreateAppModules()
       dabc::BufferNum_t num = GetParInt(xmlCtrlPoolSize, 4*0x100000) / size;
 
       dabc::mgr()->CreateMemoryPool(bnet::ControlPoolName, size, num);
-      dabc::mgr()->ConfigurePool(bnet::ControlPoolName, true);
 
       bnet::GlobalDFCModule* m = new bnet::GlobalDFCModule("GlobalContr");
       dabc::mgr()->MakeThreadForModule(m, "GlobalContr");

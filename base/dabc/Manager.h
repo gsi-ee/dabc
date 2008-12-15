@@ -344,7 +344,6 @@ namespace dabc {
 
          Module* FindModule(const char* name);
          Port* FindPort(const char* name);
-         MemoryPool* FindPool(const char* name);
          Factory* FindFactory(const char* name);
          Device* FindDevice(const char* name);
          WorkingThread* FindThread(const char* name, const char* required_class = 0);
@@ -394,28 +393,20 @@ namespace dabc {
            * of pool via ConfigurePool method. There one can also specify how often
            * memory pool should try to cleanup unused memory.*/
          bool CreateMemoryPool(const char* poolname,
-                               unsigned buffersize,
-                               unsigned numbuffers,
+                               unsigned buffersize = 0,
+                               unsigned numbuffers = 0,
                                unsigned numincrement = 0,
                                unsigned headersize = 0x20,
                                unsigned numsegments = 8);
+
+         MemoryPool* FindPool(const char* name);
 
          /** This method create memory pools on the base of values,
            * configured in the newly created modules. */
          bool CreateMemoryPools();
 
-         /** Set pools configuration.
-           * fixlayout = true means memory pool cannot be increased/decreased automatically,
-           * size_limit - maximum size of memory pool
-           * cleanup_timeout - time in seconds, after which pool will delete unused buffers */
-         MemoryPool* ConfigurePool(const char* poolname,
-                                   bool fixlayout = false,
-                                   uint64_t size_limit = 0,
-                                   double cleanup_timeout = -1.);
-
          /** Delete memory pool */
          bool DeletePool(const char* name);
-
 
          // ----------- commands submission -------------------
 
@@ -569,9 +560,10 @@ namespace dabc {
          virtual bool _ProcessReply(Command* cmd);
          virtual double ProcessTimeout(double last_diff);
 
-         bool DoDeleteAllModules(int appid = -1);
          bool DoCreateMemoryPool(Command* cmd);
          bool DoCreateMemoryPools();
+
+         bool DoDeleteAllModules(int appid = -1);
          void DoCleanupThreads();
          void DoCleanupDevices(bool force);
          bool DoCleanupManager(int appid);

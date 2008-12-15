@@ -389,7 +389,7 @@ void dabc::MemoryPool::SetCleanupTimeout(double tmout)
    fCleanupTmout = tmout;
 
    if (fCleanupTmout <= 0.)
-      fCleanupStatus = stOff; // disable any possible cleanup immidiately
+      fCleanupStatus = stOff; // disable any possible cleanup immediately
 }
 
 void dabc::MemoryPool::SetLayoutFixed()
@@ -405,8 +405,6 @@ bool dabc::MemoryPool::AllocateMemory(BufferSize_t buffersize,
                                       bool withqueue)
 {
    LockGuard lock(fPoolMutex);
-
-   if (fMemLayoutFixed) return false;
 
    if (increase>0xffff) increase = 0xffff;
 
@@ -459,8 +457,6 @@ bool dabc::MemoryPool::AllocateReferences(BufferSize_t headersize,
 {
    LockGuard lock(fPoolMutex);
 
-   if (fMemLayoutFixed) return false;
-
    while (numrefs>0) {
 
       BufferNum_t numrefsalloc = (numrefs < 0x10000) ? numrefs : 0xffff;
@@ -478,59 +474,6 @@ bool dabc::MemoryPool::AllocateReferences(BufferSize_t headersize,
 
    return true;
 }
-
-bool dabc::MemoryPool::Allocate(Command* cmd)
-{
-   if (cmd==0) return false;
-
-   BufferSize_t buffersize = RoundBufferSize(cmd->GetUInt(xmlBufferSize, 0));
-
-   if (IsMemLayoutFixed()) {
-      if (!CanHasBufferSize(buffersize)) {
-         EOUT(("Memory pool structure is fixed and pool will not provide buffers of size %u", buffersize));
-         return false;
-      }
-
-      BufferSize_t headersize = GetCfgInt((BlockName(0)+xmlHeaderSize).c_str(), 0, cmd);
-
-      if (!CanHasHeaderSize(headersize)) {
-         EOUT(("Memory pool structure is fixed and pool will not provide headers of size %u", headersize));
-         return false;
-      }
-
-      return true;
-   }
-
-   std::string blockname = BlockName(buffersize);
-
-   BufferNum_t numbuffers = GetCfgInt((blockname+xmlNumBuffers).c_str(), 0, cmd);
-
-   if ((buffersize==0) && (numbuffers==0)) return false;
-
-   BufferNum_t numincrement = GetCfgInt((blockname+xmlNumIncrement).c_str(), 0, cmd);
-
-//   std::string sbuf;
-//   cmd->SaveToString(sbuf);
-//   DOUT0(("Pool:%s Create block %u X %u cmd:%s", GetName(), buffersize, numbuffers, sbuf.c_str()));
-
-   if (buffersize>0) {
-
-      if (numbuffers>0)
-         AllocateMemory(buffersize, numbuffers,  numincrement);
-
-      blockname = BlockName(0);
-   }
-
-   BufferSize_t headersize = GetCfgInt((blockname+xmlHeaderSize).c_str(), 0, cmd);
-
-   BufferNum_t numsegments = GetCfgInt((blockname+xmlNumSegments).c_str(), 8, cmd);
-
-   if (numbuffers>0)
-      AllocateReferences(headersize, numbuffers, numincrement > 0 ? numincrement : numbuffers / 2, numsegments);
-
-   return true;
-}
-
 
 bool dabc::MemoryPool::ReleaseMemory()
 {
@@ -1177,6 +1120,10 @@ void dabc::MemoryPool::StoreConfig()
 {
     DeleteChilds();
 
+    CreateParBool(xmlFixedLayout, fMemLayoutFixed);
+    CreateParInt(xmlSizeLimitMb, fMemoryLimit / 1024 / 1024);
+    CreateParDouble(xmlCleanupTimeout, fCleanupTmout);
+
     if (IsEmpty()) return;
 
     BufferSize_t  bufsize = minBufferSize();
@@ -1256,29 +1203,28 @@ bool dabc::MemoryPool::Store(ConfigIO &cfg)
    return true;
 }
 
-bool dabc::MemoryPool::ReconstructFromConfig(dabc::Command* cmd)
+bool dabc::MemoryPool::Reconstruct(dabc::Command* cmd)
 {
    if (!IsEmpty()) return false;
 
    BufferSize_t bufsize = minBufferSize();
 
-   unsigned totalnumbuf = 0;
-
    while (bufsize <= maxBufferSize()) {
 
       std::string blockname = BlockName(bufsize);
 
-      if (!HasCfgPar((blockname + xmlNumBuffers).c_str(), cmd)) continue;
+      if (HasCfgPar((blockname + xmlNumBuffers).c_str(), cmd)) {
 
-      unsigned numbuf = GetCfgInt((blockname + xmlNumBuffers).c_str(), 0, cmd);
-      if (numbuf==0) continue;
+         unsigned numbuf = GetCfgInt((blockname + xmlNumBuffers).c_str(), 0, cmd);
 
-      unsigned numinc = GetCfgInt((blockname + xmlNumIncrement).c_str(), 0, cmd);
+         if (numbuf>0) {
+            unsigned numinc = GetCfgInt((blockname + xmlNumIncrement).c_str(), 0, cmd);
 
-      unsigned align = GetCfgInt((blockname + xmlAlignment).c_str(), 0, cmd);
+            unsigned align = GetCfgInt((blockname + xmlAlignment).c_str(), 8, cmd);
 
-      AllocateMemory(bufsize, numbuf, numinc, align);
-      totalnumbuf += numbuf;
+            AllocateMemory(bufsize, numbuf, numinc, align);
+         }
+      }
 
       bufsize*=2;
    }
@@ -1286,23 +1232,32 @@ bool dabc::MemoryPool::ReconstructFromConfig(dabc::Command* cmd)
    std::string blockname = BlockName(0);
 
    if (HasCfgPar((blockname + xmlNumBuffers).c_str(), cmd)) {
-      unsigned numref = GetCfgInt((blockname+xmlNumBuffers).c_str(), 0);
+      unsigned numref = GetCfgInt((blockname+xmlNumBuffers).c_str(), 0, cmd);
 
       if (numref>0) {
-         unsigned numinc = GetCfgInt((blockname+xmlNumIncrement).c_str(), 0);
-         unsigned header = GetCfgInt((blockname+xmlHeaderSize).c_str(), 0);
-         unsigned numsegm = GetCfgInt((blockname+xmlNumSegments).c_str(), 1);
+         unsigned numinc = GetCfgInt((blockname+xmlNumIncrement).c_str(), 0, cmd);
+         unsigned header = GetCfgInt((blockname+xmlHeaderSize).c_str(), 0, cmd);
+         unsigned numsegm = GetCfgInt((blockname+xmlNumSegments).c_str(), 1, cmd);
 
          AllocateReferences(header, numref, numinc, numsegm);
       }
    }
 
-   if ((totalnumbuf>0) && (fNumRef==0))
-      AllocateReferences(0, totalnumbuf, totalnumbuf/2, 8);
+   unsigned sizelimitmb = GetCfgInt(xmlSizeLimitMb, 0, cmd);
+
+   if (sizelimitmb>0) SetMemoryLimit(((uint64_t)sizelimitmb) * 1024 * 1024);
+
+   SetCleanupTimeout(GetCfgDouble(xmlCleanupTimeout, -1., cmd));
+
+   bool fixlayout = GetCfgBool(xmlFixedLayout, false, cmd);
+
+   if (fixlayout) {
+      DOUT1(("Fix layout of pool %s", GetName()));
+      SetLayoutFixed();
+   }
 
    return true;
 }
-
 
 bool dabc::MemoryPool::Find(ConfigIO &cfg)
 {
@@ -1310,7 +1265,6 @@ bool dabc::MemoryPool::Find(ConfigIO &cfg)
 
    return cfg.CheckAttr(xmlNameAttr, GetName());
 }
-
 
 dabc::BufferSize_t dabc::MemoryPool::RoundBufferSize(dabc::BufferSize_t bufsize)
 {

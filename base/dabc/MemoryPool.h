@@ -189,8 +189,6 @@ namespace dabc {
                                  BufferNum_t increase = 0,
                                  unsigned numsegm = 4);
 
-         bool Allocate(Command* cmd);
-
          // this is information about internal structure
          // of memory pool and how this structure changes
          bool IsEmpty() const { return (fNumMem==0) && (fNumRef==0); }
@@ -250,9 +248,7 @@ namespace dabc {
          void Print();
 
          void StoreConfig();
-         bool ReconstructFromConfig(dabc::Command* cmd = 0);
-
-
+         bool Reconstruct(dabc::Command* cmd = 0);
 
          virtual bool Store(ConfigIO &cfg);
          virtual bool Find(ConfigIO &cfg);
@@ -320,29 +316,62 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateMemoryPool"; }
 
-         CmdCreateMemoryPool(const char* name, unsigned buffersize = 0,
-                             unsigned numbuffers = 0, unsigned increment = 0,
-                             unsigned headersize = 0, unsigned numsegm = 1) :
-            Command(CmdName())
+         CmdCreateMemoryPool(const char* poolname) : Command(CmdName())
          {
-            SetPar(xmlPoolName, name);
+            SetPar(xmlPoolName, poolname);
+         }
 
+         static bool AddCfg(Command* cmd,
+                            bool fixedlayout = false,
+                            unsigned size_limit_mb = 0,
+                            double cleanuptmout = -1.)
+         {
+            if ((cmd==0) || !cmd->IsName(CmdName())) return false;
+
+            if (fixedlayout) cmd->SetBool(xmlFixedLayout, fixedlayout);
+            if (size_limit_mb>0) cmd->SetUInt(xmlSizeLimitMb, size_limit_mb);
+            if (cleanuptmout>=0.) cmd->SetDouble(xmlCleanupTimeout, cleanuptmout);
+         }
+
+         static bool AddMem(Command* cmd,
+                           unsigned buffersize,
+                           unsigned numbuffers,
+                           unsigned increment = 0,
+                           unsigned align = 8)
+         {
             buffersize = dabc::MemoryPool::RoundBufferSize(buffersize);
 
-            if (buffersize>0) SetUInt(xmlBufferSize, buffersize);
+            if ((cmd==0) || !cmd->IsName(CmdName())) return false;
+
+            if ((buffersize==0) || (numbuffers==0)) return false;
 
             std::string blockname = dabc::MemoryPool::BlockName(buffersize);
-            if (numbuffers>0) SetUInt((blockname+xmlNumBuffers).c_str(), numbuffers);
-            if (increment>0) SetUInt((blockname+xmlNumIncrement).c_str(), increment);
+            cmd->SetUInt((blockname+xmlNumBuffers).c_str(), numbuffers);
+            if (increment>0) cmd->SetUInt((blockname+xmlNumIncrement).c_str(), increment);
+            if (align!=8) cmd->SetUInt((blockname+xmlAlignment).c_str(), align);
 
-            blockname = dabc::MemoryPool::BlockName(0);
-            if (headersize>0) SetUInt((blockname+xmlHeaderSize).c_str(), headersize);
-            if (numsegm>1) SetUInt((blockname+xmlNumSegments).c_str(), numsegm);
+            return true;
          }
+
+         static bool AddRef(Command* cmd,
+                            unsigned numref,
+                            unsigned headersize = 0,
+                            unsigned increment = 0,
+                            unsigned numsegm = 1)
+         {
+            if ((cmd==0) || !cmd->IsName(CmdName())) return false;
+            if (numref==0) return false;
+
+            std::string blockname = dabc::MemoryPool::BlockName(0);
+            cmd->SetUInt((blockname+xmlNumBuffers).c_str(), numref);
+            if (headersize>0) cmd->SetUInt((blockname+xmlHeaderSize).c_str(), headersize);
+            if (increment>0) cmd->SetUInt((blockname+xmlNumIncrement).c_str(), increment);
+            if (numsegm!=1) cmd->SetUInt((blockname+xmlNumSegments).c_str(), numsegm);
+
+            return true;
+         }
+
    };
-
-
-
 
 }
 

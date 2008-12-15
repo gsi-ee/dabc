@@ -224,20 +224,17 @@ bool bnet::WorkerApplication::CreateAppModules()
       size = GetParInt(xmlReadoutBuffer, 1024);
       num = GetParInt(xmlReadoutPoolSize, 0x100000) / size;
       dabc::mgr()->CreateMemoryPool(GetParStr(CfgReadoutPool, ReadoutPoolName).c_str(), size, num);
-      dabc::mgr()->ConfigurePool(GetParStr(CfgReadoutPool, ReadoutPoolName).c_str(), true);
    }
 
    size = GetParInt(xmlTransportBuffer, 1024);
    num = GetParInt(xmlTransportPoolSize, 16*0x100000)/ size;
 
    dabc::mgr()->CreateMemoryPool(bnet::TransportPoolName, size, num, 0, sizeof(bnet::SubEventNetHeader));
-   dabc::mgr()->ConfigurePool(bnet::TransportPoolName, true);
 
    if (IsReceiver()) {
       size = GetParInt(xmlEventBuffer, 2048*16);
       num = GetParInt(xmlEventPoolSize, 4*0x100000) / size;
       dabc::mgr()->CreateMemoryPool(bnet::EventPoolName, size, num);
-      dabc::mgr()->ConfigurePool(bnet::EventPoolName, true);
    }
 
    if (IsSender()) {
@@ -245,7 +242,6 @@ bool bnet::WorkerApplication::CreateAppModules()
       num = GetParInt(xmlCtrlPoolSize, 4*0x100000) / size;
 
       dabc::mgr()->CreateMemoryPool(bnet::ControlPoolName, size, num);
-      dabc::mgr()->ConfigurePool(bnet::ControlPoolName, true);
    }
 
    if (IsSender()) {

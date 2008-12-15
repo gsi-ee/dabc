@@ -15,7 +15,7 @@ dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useac
 {
    Init(port, useackn);
 
-   DOUT3(("Tranport %p for port %p created", this, port));
+   DOUT3(("Transport %p for port %p created", this, port));
 
    fHeaders = new char[fFullHeaderSize*fNumRecs];
    for (uint32_t n=0;n<fNumRecs;n++)

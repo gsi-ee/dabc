@@ -1207,7 +1207,21 @@ bool dabc::Manager::CreateMemoryPool(const char* poolname,
                                      unsigned headersize,
                                      unsigned numsegments)
 {
-   return Execute(new CmdCreateMemoryPool(poolname, buffersize, numbuffers, numincrement, headersize, numsegments));
+   Command* cmd = new CmdCreateMemoryPool(poolname);
+   if (!CmdCreateMemoryPool::AddMem(cmd, buffersize, numbuffers, numincrement)) {
+      dabc::Command::Finalise(cmd);
+      return false;
+   }
+
+   if (!CmdCreateMemoryPool::AddRef(cmd, numbuffers*2, headersize, numincrement, numsegments)) {
+      dabc::Command::Finalise(cmd);
+      return false;
+   }
+
+   if (numincrement==0)
+      cmd->SetBool(xmlFixedLayout, true);
+
+   return Execute(cmd);
 }
 
 bool dabc::Manager::DoCreateMemoryPool(Command* cmd)
@@ -1222,38 +1236,19 @@ bool dabc::Manager::DoCreateMemoryPool(Command* cmd)
 
    MemoryPool* pool = FindPool(poolname);
 
-   if (pool==0) {
-
-      pool = new dabc::MemoryPool(this, poolname);
-
-      pool->UseMutex();
-
-      pool->SetMemoryLimit(0); // one can extend pool as much as system can
-      pool->SetCleanupTimeout(1.0); // when changed, memory pool can be shrink again
-
-      pool->AssignProcessorToThread(ProcessorThread());
+   if (pool!=0) {
+      DOUT0(("Pool %s already exists, do not try to create it again!!!", poolname));
+      return true;
    }
 
-   if (pool->Allocate(cmd)) return true;
+   pool = new dabc::MemoryPool(this, poolname);
 
-   return pool->ReconstructFromConfig();
-}
+   pool->UseMutex();
+   pool->SetMemoryLimit(0); // one can extend pool as much as system can
+   pool->SetCleanupTimeout(1.0); // when changed, memory pool can be shrink again
+   pool->AssignProcessorToThread(ProcessorThread());
 
-dabc::MemoryPool* dabc::Manager::ConfigurePool(const char* poolname,
-                                               bool fixlayout,
-                                               uint64_t size_limit,
-                                               double cleanup_timeout)
-{
-   MemoryPool* mem_pool = FindPool(poolname);
-   if (mem_pool!=0) {
-      mem_pool->SetMemoryLimit(size_limit);
-      mem_pool->SetCleanupTimeout(cleanup_timeout);
-      if (fixlayout) {
-         DOUT2(("Fix layout of pool %s", poolname));
-         mem_pool->SetLayoutFixed();
-      }
-   }
-   return mem_pool;
+   return pool->Reconstruct(cmd);
 }
 
 bool dabc::Manager::DoCreateMemoryPools()

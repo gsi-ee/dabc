@@ -20,6 +20,9 @@ namespace dabc {
 
    const char* xmlPoolName          = "PoolName";
    const char* xmlWorkPool          = "WorkPool";
+   const char* xmlFixedLayout       = "FixedLayout";
+   const char* xmlSizeLimitMb       = "SizeLimitMb";
+   const char* xmlCleanupTimeout    = "CleanupTimeout";
    const char* xmlBufferSize        = "BufferSize";
    const char* xmlNumBuffers        = "NumBuffers";
    const char* xmlNumIncrement      = "NumIncrement";

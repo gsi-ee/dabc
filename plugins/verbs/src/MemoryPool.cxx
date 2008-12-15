@@ -19,7 +19,7 @@ verbs::MemoryPool::MemoryPool(Device* verbs,
    if (isud && (bufsize>0x1000)) bufsize = 0x1000;
 
    SetMemoryLimit(1); // one cannot extend pool
-   SetCleanupTimeout(-1); // no any cleanup tryes
+   SetCleanupTimeout(-1); // no any cleanup tries
 
    AllocateMemory(bufsize, number, 0, (bufsize<0x100) ? 0x10 : 0x100);
 

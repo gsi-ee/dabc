@@ -25,6 +25,9 @@ namespace dabc {
 
    extern const char* xmlPoolName;
    extern const char* xmlWorkPool;
+   extern const char* xmlFixedLayout;
+   extern const char* xmlSizeLimitMb;
+   extern const char* xmlCleanupTimeout;
    extern const char* xmlBufferSize;
    extern const char* xmlNumIncrement;
    extern const char* xmlNumBuffers;
