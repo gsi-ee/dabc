@@ -9,7 +9,7 @@
 
 unsigned dabc::DefaultMemoryAllign = 16;
 unsigned dabc::DefaultNumSegments = 8;
-
+unsigned dabc::DefaultBufferSize = 2048;
 
 dabc::MemoryBlock::MemoryBlock() :
    fBlock(0),
@@ -988,7 +988,7 @@ bool dabc::MemoryPool::AddMemReq(BufferSize_t bufsize, BufferNum_t number, Buffe
 
    if (fMemLayoutFixed) return false;
 
-   if (bufsize==0) return false;
+   if (bufsize==0) bufsize = DefaultBufferSize;
 
    if ((number==0) && (increment==0)) {
       EOUT(("Empty mem request to pool %s", GetName()));

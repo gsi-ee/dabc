@@ -23,7 +23,7 @@ bnet::SenderModule::SenderModule(const char* name, dabc::Command* cmd) :
    fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
    fCfgNodeId = GetCfgInt(CfgNodeId, 0, cmd);
 
-   fPool = CreatePool(bnet::TransportPoolName);
+   fPool = CreatePoolHandle(bnet::TransportPoolName);
 
    CreateInput("Input", fPool, SenderInQueueSize, sizeof(bnet::EventId));
 
@@ -32,7 +32,7 @@ bnet::SenderModule::SenderModule(const char* name, dabc::Command* cmd) :
    for (int n=0;n<fCfgNumNodes;n++)
       CreateOutput(FORMAT(("Output%d", n)), fPool, SenderQueueSize, sizeof(bnet::SubEventNetHeader));
 
-   fCtrlPool = CreatePool(bnet::ControlPoolName);
+   fCtrlPool = CreatePoolHandle(bnet::ControlPoolName);
    fCtrlBufSize = GetCfgInt(xmlCtrlBuffer, 2*1024, cmd);
    fCtrlPort = CreatePort("CtrlPort", fCtrlPool, CtrlInpQueueSize, CtrlOutQueueSize);
    fCtrlOutTime = 0.;
@@ -311,7 +311,7 @@ void bnet::SenderModule::CheckNewEvents()
 
 //   DOUT1(("Take ctrl buf %d %p %p",fCtrlBufSize, fCtrlPool, fCtrlPool->getPool()));
 
-   dabc::Buffer* outbuf = fCtrlPool->TakeBuffer(fCtrlBufSize, false);
+   dabc::Buffer* outbuf = fCtrlPool->TakeBuffer(fCtrlBufSize);
    if (outbuf==0) {
       EOUT(("Cannot get control buffer."));
       return;

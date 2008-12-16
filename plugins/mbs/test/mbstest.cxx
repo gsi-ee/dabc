@@ -56,7 +56,7 @@ class MbsTest1RepeaterModule : public dabc::ModuleAsync {
          // we can use small buffer, while now we can allocate flexible buffer
          int buffersize = 1024;
 
-         fPool = CreatePool("MyPool", buffersize, 100);
+         fPool = CreatePoolHandle("MyPool", buffersize, 100);
 
          fInpPort = CreateInput("Input", fPool, 5);
 

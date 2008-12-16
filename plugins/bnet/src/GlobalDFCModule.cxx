@@ -14,7 +14,7 @@ bnet::GlobalDFCModule::GlobalDFCModule(const char* name, dabc::Command* cmd) :
 
    fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
 
-   fPool = CreatePool(bnet::ControlPoolName);
+   fPool = CreatePoolHandle(bnet::ControlPoolName);
 
    fBufferSize = GetCfgInt(xmlCtrlBuffer, 2*1024, cmd);
 
@@ -142,7 +142,7 @@ void bnet::GlobalDFCModule::TrySendEventsAssignment(bool force)
    if (fReadyEvnts.size() < limit) return;
 
    // third, check if memory pool is not yet blocked
-   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize, false);
+   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
    if (buf==0) return;
 
    EventAssignRec* evas = (EventAssignRec*) buf->GetDataLocation();

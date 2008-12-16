@@ -24,7 +24,7 @@ bnet::ReceiverModule::ReceiverModule(const char* name, dabc::Command* cmd) :
    fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
    fCfgNodeId = GetCfgInt(CfgNodeId, 0, cmd);
 
-   fPool = CreatePool(bnet::TransportPoolName);
+   fPool = CreatePoolHandle(bnet::TransportPoolName);
 
    // output is always there
    CreateOutput("Output", fPool, ReceiverOutQueueSize, sizeof(bnet::SubEventNetHeader));

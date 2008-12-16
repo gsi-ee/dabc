@@ -41,7 +41,7 @@ class Test2SendModule : public dabc::ModuleAsync {
          int nports = cmd->GetInt("NumPorts", 3);
          int buffsize = cmd->GetInt("BufferSize", 16*1024);
 
-         fPool = CreatePool("SendPool", buffsize, 500);
+         fPool = CreatePoolHandle("SendPool", buffsize, 500);
 
          for (int n=0;n<nports;n++)
             CreateOutput(FORMAT(("Output%d", n)), fPool, TestSendQueueSize);
@@ -63,7 +63,7 @@ class Test2SendModule : public dabc::ModuleAsync {
                DOUT1(("Can start sending"));
                for(int n=0;n<TestSendQueueSize;n++)
                   for(unsigned nport=0;nport<NumOutputs();nport++) {
-                     dabc::Buffer* ref = fPool->TakeBuffer(0, false);
+                     dabc::Buffer* ref = fPool->TakeBuffer();
 //                     DOUT1(("Buf %p size = %d", ref, ref->GetTotalSize()));
                      Output(nport)->Send(ref);
                   }
@@ -87,7 +87,7 @@ class Test2SendModule : public dabc::ModuleAsync {
 
          do {
             tryagain = false;
-            dabc::Buffer* ref = fPool->TakeBuffer(0, false);
+            dabc::Buffer* ref = fPool->TakeBuffer();
             fSendRate.Packet(ref->GetDataSize());
             port->Send(ref);
 
@@ -130,7 +130,7 @@ class Test2RecvModule : public dabc::ModuleAsync {
 
          DOUT3(( "new TRecvModule %s %d %d", GetName(), nports, buffsize));
 
-         fPool = CreatePool("RecvPool", buffsize, 5);
+         fPool = CreatePoolHandle("RecvPool", buffsize, 5);
 
          for (int n=0;n<nports;n++)
             CreateInput(FORMAT(("Input%d", n)), fPool, TestRecvQueueSize);

@@ -26,24 +26,29 @@ namespace dabc {
 
          virtual const char* ClassName() const { return clPoolHandle; }
 
-         /** sets how many buffers required for the envelope */
-         void AddPortRequirements(BufferNum_t number, BufferSize_t headersize);
-
-         bool IsPoolAssigned() const { return fPool!=0; }
-
-         BufferNum_t GetRequiredBuffersNumber() const { return fRequiredNumber; }
-         BufferNum_t GetRequiredIncrement() const { return fRequiredIncrement; }
          BufferSize_t GetRequiredBufferSize() const { return fRequiredSize; }
-         BufferSize_t GetRequiredHeaderSize() const { return fRequiredHeaderSize; }
-
-         void AssignPool(MemoryPool *pool);
-         void DisconnectPool();
 
          MemoryPool* getPool() const { return fPool; }
 
-         Buffer* TakeEmptyBuffer(BufferSize_t hdrsize = 0);
-         Buffer* TakeBuffer(BufferSize_t size, bool withrequest);
-         Buffer* TakeRequestedBuffer();
+         inline Buffer* TakeEmptyBuffer(BufferSize_t hdrsize = 0)
+         {
+            return fPool->TakeEmptyBuffer(hdrsize);
+         }
+
+         inline Buffer* TakeBuffer(BufferSize_t size = 0, BufferSize_t hdrsize = 0)
+         {
+            return fPool->TakeBuffer(size ? size : fRequiredSize, hdrsize);
+         }
+
+         inline Buffer* TakeBufferReq(BufferSize_t size = 0, BufferSize_t hdrsize = 0)
+         {
+            return fPool->TakeBufferReq(this, size ? size : fRequiredSize, hdrsize);
+         }
+
+         inline Buffer* TakeRequestedBuffer()
+         {
+            return fPool->TakeRequestedBuffer(this);
+         }
 
          bool ProcessPoolRequest();
 

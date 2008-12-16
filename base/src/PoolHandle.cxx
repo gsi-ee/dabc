@@ -26,11 +26,17 @@ dabc::PoolHandle::PoolHandle(Basic* parent, const char* name, MemoryPool* pool,
       if (number>0) fRequiredNumber = GetCfgInt(xmlNumBuffers, number);
       if (increment>0) fRequiredIncrement = GetCfgInt(xmlNumIncrement, increment);
    }
+
+   if (fRequiredSize==0) fRequiredSize = dabc::DefaultBufferSize;
+
+   fPool->AddMemReq(fRequiredSize, fRequiredNumber, fRequiredIncrement, 0);
+
+   fPool->AddRefReq(0, fRequiredNumber*2, fRequiredIncrement, 0);
 }
 
 dabc::PoolHandle::~PoolHandle()
 {
-   DisconnectPool();
+   if (fPool) fPool->RemoveRequester(this);
 }
 
 void dabc::PoolHandle::SetUsageParameter(Parameter* par, double interval)
@@ -42,19 +48,6 @@ void dabc::PoolHandle::SetUsageParameter(Parameter* par, double interval)
    ActivateTimeout(fUsagePar!=0 ? fUpdateTimeout : -1);
 }
 
-void dabc::PoolHandle::AssignPool(MemoryPool *pool)
-{
-   DisconnectPool();
-
-   fPool = pool;
-}
-
-void dabc::PoolHandle::DisconnectPool()
-{
-   if (fPool) fPool->RemoveRequester(this);
-   fPool = 0;
-}
-
 double dabc::PoolHandle::ProcessTimeout(double)
 {
    if (fUsagePar==0) return -1;
@@ -62,23 +55,6 @@ double dabc::PoolHandle::ProcessTimeout(double)
    fUsagePar->SetDouble(UsedRatio());
 
    return fUpdateTimeout;
-}
-
-dabc::Buffer* dabc::PoolHandle::TakeEmptyBuffer(BufferSize_t hdrsize)
-{
-   return fPool ? fPool->TakeEmptyBuffer(hdrsize) : 0;
-}
-
-dabc::Buffer* dabc::PoolHandle::TakeBuffer(BufferSize_t size, bool withrequest)
-{
-   if (fPool==0) return 0;
-
-   return withrequest ? fPool->TakeBufferReq(this, size, 0) : fPool->TakeBuffer(size, 0);
-}
-
-dabc::Buffer* dabc::PoolHandle::TakeRequestedBuffer()
-{
-   return fPool->TakeRequestedBuffer(this);
 }
 
 bool dabc::PoolHandle::ProcessPoolRequest()
@@ -99,12 +75,6 @@ void dabc::PoolHandle::ProcessEvent(EventId evid)
       default:
          ModuleItem::ProcessEvent(evid);
    }
-}
-
-void dabc::PoolHandle::AddPortRequirements(BufferNum_t number, BufferSize_t headersize)
-{
-   fRequiredNumber += number;
-   if (fRequiredHeaderSize<headersize) fRequiredHeaderSize = headersize;
 }
 
 double dabc::PoolHandle::UsedRatio() const

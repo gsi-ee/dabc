@@ -40,7 +40,7 @@ class Test1SendModule : public dabc::ModuleAsync {
          int nports = cmd->GetInt("NumPorts", 3);
          int buffsize = cmd->GetInt("BufferSize", 16*1024);
 
-         fPool = CreatePool("SendPool", buffsize, 5);
+         fPool = CreatePoolHandle("SendPool", buffsize, 5);
 
          for (int n=0;n<nports;n++)
             CreateOutput(FORMAT(("Output%d", n)), fPool, TestSendQueueSize);
@@ -48,7 +48,7 @@ class Test1SendModule : public dabc::ModuleAsync {
          fCanSend = false;
          fPortCnt = 0;
 
-         DOUT1(("new TSendModule %s nports = %d buf = %d req = %d done", GetName(), NumOutputs(), buffsize, fPool->GetRequiredBuffersNumber()));
+         DOUT1(("new TSendModule %s nports = %d buf = %d done", GetName(), NumOutputs(), buffsize));
       }
 
       int ExecuteCommand(dabc::Command* cmd)
@@ -79,7 +79,7 @@ class Test1SendModule : public dabc::ModuleAsync {
             if (cnt++> 100) { EOUT(("AAAAAAAAAAA")); }
 
             tryagain = false;
-            dabc::Buffer* ref = fPool->TakeBuffer(0, false);
+            dabc::Buffer* ref = fPool->TakeBuffer();
             if (ref==0) { EOUT(("AAAAAAA")); }
 
             fSendRate.Packet(ref->GetDataSize());
@@ -99,7 +99,7 @@ class Test1SendModule : public dabc::ModuleAsync {
       {
          for(int n=0;n<TestSendQueueSize;n++)
             for(unsigned nout=0;nout<NumOutputs();nout++) {
-               dabc::Buffer* buf = fPool->TakeBuffer(0, false);
+               dabc::Buffer* buf = fPool->TakeBuffer();
 
                if (buf==0) { EOUT(("AAAAAAAAA")); }
 
@@ -132,12 +132,12 @@ class Test1RecvModule : public dabc::ModuleAsync {
 
          // 0 here means that we need at least 1 buffer more for module and force by that pool request scheme
          // 1 is just exactly that we need to work without requests
-         fPool = CreatePool("RecvPool", buffsize, 0);
+         fPool = CreatePoolHandle("RecvPool", buffsize, 0);
 
          for (int n=0;n<nports;n++)
             CreateInput(FORMAT(("Input%d", n)), fPool, TestRecvQueueSize);
 
-         DOUT1(("new TRecvModule %s nports:%d buf:%d req:%d", GetName(), nports, buffsize, fPool->GetRequiredBuffersNumber()));
+         DOUT1(("new TRecvModule %s nports:%d buf:%d", GetName(), nports, buffsize));
 
          fSleepTime = 0;
       }

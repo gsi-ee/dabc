@@ -37,7 +37,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
          fInput(0),
          fOutput(0)
       {
-         fPool = CreatePool("Pool", BUFFERSIZE, 5);
+         fPool = CreatePoolHandle("Pool", BUFFERSIZE, 5);
 
          if (fKind>0)
             fInput = CreateInput("Input", fPool, QUEUESIZE);
@@ -70,7 +70,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
       void ProcessOutputEvent(dabc::Port* port)
       {
          if (fKind==0) {
-            dabc::Buffer* buf = fPool->TakeBuffer(BUFFERSIZE, false);
+            dabc::Buffer* buf = fPool->TakeBuffer(BUFFERSIZE);
             if (buf==0) { EOUT(("AAAAAAAAAAAA")); exit(1); }
             fOutput->Send(buf);
          } else
@@ -106,7 +106,7 @@ class TestModuleSync : public dabc::ModuleSync {
          fInput(0),
          fOutput(0)
       {
-         fPool = CreatePool("Pool", BUFFERSIZE, 5);
+         fPool = CreatePoolHandle("Pool", BUFFERSIZE, 5);
 
          if (fKind>0)
             fInput = CreateInput("Input", fPool, QUEUESIZE);

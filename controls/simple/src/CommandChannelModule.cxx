@@ -16,7 +16,7 @@ dabc::CommandChannelModule::CommandChannelModule(int numnodes) :
    fPool(0),
    fCmdOutQueue(0)
 {
-   fPool = CreatePool("CommandChannelPool", CommandBufferSize, 100);
+   fPool = CreatePoolHandle("CommandChannelPool", CommandBufferSize, 100);
 
    fCmdOutQueue = new CommandsQueue(false, false);
 
@@ -118,7 +118,7 @@ void dabc::CommandChannelModule::SendSubmittedCommands()
 
       // take buffer without request, while we anyhow get event when send is completed and
       // device will release buffer anyhow
-      dabc::Buffer* buf = fPool->TakeBuffer(CommandBufferSize, false);
+      dabc::Buffer* buf = fPool->TakeBuffer(CommandBufferSize);
       // if one has no buffers in pool, one should wait more time
       if (buf==0) break;
 

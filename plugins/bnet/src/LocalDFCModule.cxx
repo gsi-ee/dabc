@@ -9,6 +9,6 @@ bnet::LocalDFCModule::LocalDFCModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd),
    fPool(0)
 {
-   fPool = CreatePool(bnet::ControlPoolName);
+   fPool = CreatePoolHandle(bnet::ControlPoolName);
 }
 

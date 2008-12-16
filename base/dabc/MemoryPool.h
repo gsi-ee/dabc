@@ -26,12 +26,16 @@ namespace dabc {
    class Buffer;
    class Mutex;
    class MemoryPool;
-   class Module;
 
    // this is alignment for the buffers and memory blocks, created by pool
    // It must be a power of two and should be like 16 or 32 or 256
    extern unsigned DefaultMemoryAllign;
+
+   // Default number of preallocated segments in reference array
    extern unsigned DefaultNumSegments;
+
+   extern unsigned DefaultBufferSize;
+
 
    class MemoryPoolRequester {
       friend class MemoryPool;
@@ -157,7 +161,6 @@ namespace dabc {
       enum ECleanupStatus { stOff, stMemCleanup, stRefCleanup };
 
       friend class Buffer;
-      friend class Module;
 
       public:
          MemoryPool(Basic* parent, const char* name);
@@ -193,6 +196,13 @@ namespace dabc {
                                  BufferNum_t numrefs,
                                  BufferNum_t increase = 0,
                                  unsigned numsegm = 4);
+
+         /** These methods used in module constructor to configure pool sizes
+          * instead of creating pool immediately. Appropriate memory and reference block
+          * will be created when first request of memory buffer will be done
+          */
+         bool AddMemReq(BufferSize_t bufsize, BufferNum_t number, BufferNum_t increment, unsigned align);
+         bool AddRefReq(BufferSize_t hdrsize, BufferNum_t number, BufferNum_t increment, unsigned numsegm);
 
          // this is information about internal structure
          // of memory pool and how this structure changes
@@ -286,9 +296,6 @@ namespace dabc {
          void ReplyReadyRequests();
 
          bool _CheckCleanupStatus();
-
-         bool AddMemReq(BufferSize_t bufsize, BufferNum_t number, BufferNum_t increment, unsigned align);
-         bool AddRefReq(BufferSize_t hdrsize, BufferNum_t number, BufferNum_t increment, unsigned numsegm);
 
          Mutex            *fPoolMutex;
          bool              fOwnMutex;

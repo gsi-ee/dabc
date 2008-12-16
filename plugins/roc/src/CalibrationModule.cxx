@@ -135,7 +135,7 @@ roc::CalibrationModule::CalibrationModule(const char* name, dabc::Command* cmd) 
    int numoutputs = GetCfgInt(dabc::xmlNumOutputs, 2, cmd);
 
    DOUT1(("new roc::CalibrationModule %s buff %d", GetName(), fBufferSize));
-   fPool = CreatePool(roc::xmlRocPool, fBufferSize, 1);
+   fPool = CreatePoolHandle(roc::xmlRocPool, fBufferSize, 1);
 
    CreateInput("Input", fPool, 10);
 
@@ -243,7 +243,7 @@ bool roc::CalibrationModule::DoCalibration()
       }
 
       if (fOutBuf==0) {
-         fOutBuf = fPool->TakeBuffer(fBufferSize, false);
+         fOutBuf = fPool->TakeBuffer(fBufferSize);
          if (fOutBuf==0) return false;
          fOutBuf->SetDataSize(fBufferSize);
          f_outptr.reset(fOutBuf);

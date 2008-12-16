@@ -35,7 +35,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
          fInput(0),
          fOutput(0)
       {
-         fPool = CreatePool("Pool", BUFFERSIZE, 5);
+         fPool = CreatePoolHandle("Pool", BUFFERSIZE, 5);
 
          if (fKind>0)
             fInput = CreateInput("Input", fPool, QUEUESIZE, 0);
@@ -91,7 +91,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
       void GeneratePacket()
       {
-         dabc::Buffer* buf = fPool->TakeBuffer(BUFFERSIZE, false);
+         dabc::Buffer* buf = fPool->TakeBuffer(BUFFERSIZE);
 
          sprintf((char*)buf->GetDataLocation(), "Buffer %ld", fGlobalCnt);
          fGlobalCnt++;

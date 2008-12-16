@@ -20,9 +20,9 @@ abb::ReadoutModule::ReadoutModule(const char* name, dabc::Command* cmd) :
    const char* poolname=cmd->GetStr(ABB_COMPAR_POOL,"ABBReadPool");
    DOUT1(("new abb::ReadoutModule %s buff %d queue %d, poolname=%s, standalone=%d", GetName(), buffsize, queuelen,poolname, fStandalone));
    if(fStandalone)
-      fPool = CreatePool(poolname, buffsize, 200); // specify pool
+      fPool = CreatePoolHandle(poolname, buffsize, 200); // specify pool
    else
-      fPool = CreatePool(poolname); // use external pool of bnet readout
+      fPool = CreatePoolHandle(poolname); // use external pool of bnet readout
 
    CreateInput("Input", fPool, queuelen);
    CreateRateParameter("DMAReadout", false, 1., "Input","");

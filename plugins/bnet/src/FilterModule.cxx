@@ -5,7 +5,7 @@
 bnet::FilterModule::FilterModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleSync(name, cmd)
 {
-   fPool = CreatePool(bnet::EventPoolName);
+   fPool = CreatePoolHandle(bnet::EventPoolName);
 
    CreateInput("Input", fPool, FilterInpQueueSize);
 

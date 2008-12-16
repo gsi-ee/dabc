@@ -14,11 +14,11 @@ bnet::TestBuilderModule::TestBuilderModule(const char* name, dabc::Command* cmd)
    fOutPool(0),
    fNumSenders(1)
 {
-   fOutPool = CreatePool(bnet::EventPoolName);
+   fOutPool = CreatePoolHandle(bnet::EventPoolName);
 
    CreateOutput("Output", fOutPool, BuilderOutQueueSize);
 
-   fInpPool = CreatePool(bnet::TransportPoolName);
+   fInpPool = CreatePoolHandle(bnet::TransportPoolName);
 
    CreateInput("Input", fInpPool, BuilderInpQueueSize, sizeof(bnet::SubEventNetHeader));
 
@@ -46,7 +46,7 @@ void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
    if (Output(0)->OutputBlocked()) return;
 
-   dabc::Buffer* outbuf = fOutPool->TakeBuffer(fOutBufferSize, true);
+   dabc::Buffer* outbuf = fOutPool->TakeBufferReq(fOutBufferSize);
    if (outbuf==0) return;
 
    uint64_t evid = 0;

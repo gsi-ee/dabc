@@ -156,7 +156,7 @@ bool dabc::ModuleSync::WaitInput(Port* port, unsigned minqueuesize, double timeo
    return false;
 }
 
-dabc::Buffer* dabc::ModuleSync::TakeBuffer(PoolHandle* pool, unsigned size, double timeout)
+dabc::Buffer* dabc::ModuleSync::TakeBuffer(PoolHandle* pool, BufferSize_t size, BufferSize_t hdrsize, double timeout)
    throw (StopException, TimeoutException)
 {
    if (pool==0) return 0;
@@ -168,7 +168,10 @@ dabc::Buffer* dabc::ModuleSync::TakeBuffer(PoolHandle* pool, unsigned size, doub
       buf = 0;
    }
 
-   buf = pool->TakeBuffer(size, timeout!=0);
+   if (timeout==0.)
+      return pool->TakeBuffer(size, hdrsize);
+
+   buf = pool->TakeBufferReq(size, hdrsize);
    if (buf!=0) return buf;
 
    do {

@@ -16,9 +16,9 @@ bnet::FormaterModule::FormaterModule(const char* name, dabc::Command* cmd) :
    fNumReadouts = GetCfgInt(xmlNumReadouts, 1, cmd);
    fModus = GetCfgInt(xmlCombinerModus, 0, cmd);
 
-   fInpPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
+   fInpPool = CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
 
-   fOutPool = CreatePool(bnet::TransportPoolName);
+   fOutPool = CreatePoolHandle(bnet::TransportPoolName);
 
    fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize, sizeof(bnet::SubEventNetHeader));
 

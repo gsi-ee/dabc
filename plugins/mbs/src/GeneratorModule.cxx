@@ -36,7 +36,7 @@ mbs::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
 
    DOUT1(("Generator buffer size %u sub %u", fBufferSize, fNumSubevents));
 
-   fPool = CreatePool("Pool", fBufferSize, 10);
+   fPool = CreatePoolHandle("Pool", fBufferSize, 10);
 
    CreateOutput("Output", fPool, 5);
 }
@@ -48,7 +48,7 @@ void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
       return;
    }
 
-   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize, false);
+   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
    if (buf==0) { EOUT(("No free buffer - generator will block")); return; }
    buf->SetDataSize(fBufferSize);
 
@@ -125,7 +125,7 @@ class MbsTestReadoutModule : public dabc::ModuleAsync {
       {
          dabc::BufferSize_t size = GetCfgInt(dabc::xmlBufferSize, 16*1024);
 
-         dabc::PoolHandle* pool = CreatePool("Pool1", size, 5);
+         dabc::PoolHandle* pool = CreatePoolHandle("Pool1", size, 5);
 
          dabc::Port* port = CreateInput("Input", pool, 5);
 

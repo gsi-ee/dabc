@@ -63,7 +63,7 @@ namespace dabc {
             throw (PortInputException, StopException, TimeoutException);
          bool WaitInput(Port* port, unsigned minqueuesize = 1, double timeout = -1)
             throw (PortInputException, StopException, TimeoutException);
-         Buffer* TakeBuffer(PoolHandle* pool, unsigned size, double timeout = -1)
+         Buffer* TakeBuffer(PoolHandle* pool, BufferSize_t size, BufferSize_t hdrsize = 0, double timeout = -1)
             throw (StopException, TimeoutException);
          bool Send(Port* port, Buffer* buf, double timeout = -1)
             throw (PortOutputException, StopException, TimeoutException);

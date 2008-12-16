@@ -17,9 +17,9 @@ bnet::TestCombinerModule::TestCombinerModule(const char* name, dabc::Command* cm
    fNumReadout = GetCfgInt(xmlNumReadouts, 1, cmd);
    fOutBufferSize = GetCfgInt(xmlTransportBuffer, 1024, cmd);
 
-   fOutPool = CreatePool(bnet::TransportPoolName);
+   fOutPool = CreatePoolHandle(bnet::TransportPoolName);
 
-   fInpPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
+   fInpPool = CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
 
    fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize, sizeof(bnet::EventId));
 
@@ -154,7 +154,7 @@ dabc::Buffer* bnet::TestCombinerModule::MakeMemCopyBuf(uint64_t& evid)
       }
    }
 
-   dabc::Buffer* buf = fOutPool->TakeBuffer(sz, true);
+   dabc::Buffer* buf = fOutPool->TakeBufferReq(sz, sizeof(bnet::EventId));
    if (buf==0) return 0;
 
    // release all buffers for further usage

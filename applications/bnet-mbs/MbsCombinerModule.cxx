@@ -110,7 +110,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
          NumUsedEvents, fCfgEventsCombine, fullbufsize, fTransportBufferSize));
    }
 
-   dabc::BufferGuard buf = TakeBuffer(fOutPool, usedbufsize);
+   dabc::BufferGuard buf = TakeBuffer(fOutPool, usedbufsize, sizeof(bnet::EventId));
 
    mbs::WriteIterator iter(buf());
 

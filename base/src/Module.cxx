@@ -238,7 +238,7 @@ int dabc::Module::ExecuteCommand(Command* cmd)
    return CommandReceiver::ExecuteCommand(cmd);
 }
 
-dabc::PoolHandle* dabc::Module::CreatePool(const char* poolname, BufferSize_t size, BufferNum_t number, BufferNum_t increment)
+dabc::PoolHandle* dabc::Module::CreatePoolHandle(const char* poolname, BufferSize_t size, BufferNum_t number, BufferNum_t increment)
 {
    dabc::MemoryPool* pool = dabc::mgr()->FindPool(poolname);
    if (pool==0) {
@@ -251,13 +251,7 @@ dabc::PoolHandle* dabc::Module::CreatePool(const char* poolname, BufferSize_t si
       return 0;
    }
 
-   dabc::PoolHandle* handle = new dabc::PoolHandle(this, poolname, pool, size, number, increment);
-
-   pool->AddMemReq(size, number, increment, 0);
-
-   pool->AddRefReq(0, number*2, increment*2, 0);
-
-   return handle;
+   return new dabc::PoolHandle(this, poolname, pool, size, number, increment);
 }
 
 dabc::Folder* dabc::Module::GetObjFolder(bool force)
@@ -387,8 +381,6 @@ dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* handle, unsig
    Port* port = new Port(this, name, handle, recvqueue, sendqueue, headersize);
    if (handle) {
       BufferNum_t number = port->NumInputBuffersRequired() + port->NumOutputBuffersRequired();
-
-      handle->AddPortRequirements(number, port->UserHeaderSize());
       if (handle->getPool()) {
          handle->getPool()->AddMemReq(handle->GetRequiredBufferSize(), number, 0, 0);
          handle->getPool()->AddRefReq(headersize, number*2, 0, 0);
@@ -442,14 +434,12 @@ void dabc::Module::ProcessEvent(EventId evid)
    }
 }
 
-dabc::Buffer* dabc::Module::TakeBuffer(const char* poolname, BufferSize_t size)
+dabc::Buffer* dabc::Module::TakeBuffer(const char* poolname, BufferSize_t size, BufferSize_t hdrsize)
 {
    PoolHandle* pool = FindPool(poolname);
 
-   return pool ? pool->TakeBuffer(size, false) : 0;
+   return pool ? pool->TakeBuffer(size, hdrsize) : 0;
 }
-
-
 
 bool dabc::Module::IsAnyOutputBlocked() const
 {

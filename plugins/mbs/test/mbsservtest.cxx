@@ -87,7 +87,7 @@ class GeneratorModule : public dabc::ModuleSync {
       {
          SetSyncCommands(true);
 
-         fPool = CreatePool("Pool", BUFFERSIZE, 10);
+         fPool = CreatePoolHandle("Pool", BUFFERSIZE, 10);
 
          CreateOutput("Output", fPool, 5);
       }
@@ -128,7 +128,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
          fPool(0),
          fInput(0)
       {
-         fPool = CreatePool("Pool1", BUFFERSIZE, 5);
+         fPool = CreatePoolHandle("Pool1", BUFFERSIZE, 5);
 
          fInput = CreateInput("Input", fPool, 5);
 

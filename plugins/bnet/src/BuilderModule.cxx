@@ -16,11 +16,11 @@ bnet::BuilderModule::BuilderModule(const char* name, dabc::Command* cmd) :
 {
    SetSyncCommands(true);
 
-   fOutPool = CreatePool(bnet::EventPoolName);
+   fOutPool = CreatePoolHandle(bnet::EventPoolName);
 
    CreateOutput("Output", fOutPool, BuilderOutQueueSize);
 
-   fInpPool = CreatePool(bnet::TransportPoolName);
+   fInpPool = CreatePoolHandle(bnet::TransportPoolName);
 
    CreateInput("Input", fInpPool, BuilderInpQueueSize, sizeof(bnet::SubEventNetHeader));
 

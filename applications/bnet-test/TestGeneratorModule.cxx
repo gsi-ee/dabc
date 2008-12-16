@@ -18,7 +18,7 @@ bnet::TestGeneratorModule::TestGeneratorModule(const char* name, dabc::Command* 
 
    fBufferSize = GetCfgInt(xmlReadoutBuffer, 1024, cmd);
 
-   fPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
+   fPool = CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
 
    CreateOutput("Output", fPool, ReadoutQueueSize);
 
@@ -32,7 +32,7 @@ void bnet::TestGeneratorModule::ProcessOutputEvent(dabc::Port* port)
       return;
    }
 
-   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize, false);
+   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
    if (buf==0) {
       EOUT(("No free buffer - generator will block"));
       return;

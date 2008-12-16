@@ -41,7 +41,7 @@ dabc::TimeSyncModule::TimeSyncModule(const char* name, Command* cmd) :
    fMasterSendCnt = 0;
    fMasterRecvCnt = 0;
 
-   fPool = CreatePool(fPoolName.c_str(), 0, 5);
+   fPool = CreatePoolHandle(fPoolName.c_str(), 0, 5);
 
    if (fMasterConn)
       CreatePort("Master", fPool, 5, 10, TimeSyncBufferSize);

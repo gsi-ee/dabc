@@ -10,7 +10,7 @@
 bnet::TestFilterModule::TestFilterModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd)
 {
-   fPool = CreatePool(bnet::EventPoolName);
+   fPool = CreatePoolHandle(bnet::EventPoolName);
 
    CreateInput("Input", fPool, FilterInpQueueSize);
 

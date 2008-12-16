@@ -22,9 +22,9 @@ abb::WriterModule::WriterModule(const char* name, dabc::Command* cmd) :
    const char* poolname = cmd->GetStr(ABB_COMPAR_POOL,"ABBWriterPool");
    DOUT1(("new abb::WriterModule %s buff %d queue %d, poolname=%s, standalone=%d", GetName(), fBufferSize, queuelen,poolname, fStandalone));
    if(fStandalone)
-      fPool = CreatePool(poolname, fBufferSize, 200); // specify pool
+      fPool = CreatePoolHandle(poolname, fBufferSize, 200); // specify pool
    else
-      fPool = CreatePool(poolname); // use external pool of connected data sender
+      fPool = CreatePoolHandle(poolname); // use external pool of connected data sender
    CreateOutput("Output", fPool, queuelen);
    CreateRateParameter("DMAWriter", false, 1., "Output","");
 
@@ -56,7 +56,7 @@ while (TestWorking())
       {
          if(fStandalone)
                {
-                  ref=TakeBuffer(fPool, fBufferSize);
+                  ref = TakeBuffer(fPool, fBufferSize);
                }
             else
                {
