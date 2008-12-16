@@ -1768,6 +1768,8 @@ void dabc::Manager::ObjectDestroyed(Basic* obj)
 
 double dabc::Manager::ProcessTimeout(double last_diff)
 {
+   dabc::Logger::CheckTimeout();
+
    LockGuard lock(fMgrMutex);
 
    for (unsigned n=0;n<fTimedPars.size();n++)

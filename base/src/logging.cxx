@@ -104,7 +104,10 @@ dabc::Logger::Logger(bool withmutex)
    fMaxLine = 0;
    fLines = 0;
 
+   fLogFileName = "";
    fFile = 0;
+   fLogReopenTime = 0.;
+   fLogFileModified = false;
 
    LockGuard lock(fMutex);
    _ExtendLines(1024);
@@ -169,8 +172,12 @@ void dabc::Logger::LogFile(const char* fname)
 
    fFile = 0;
 
-   if ((fname!=0) && (strlen(fname)>0))
+   if ((fname!=0) && (strlen(fname)>0)) {
+      fLogFileName = fname;
       fFile = fopen(fname, "a");
+      fLogReopenTime = TimeStamp();
+      fLogFileModified = false;
+   }
 }
 
 void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* entry)
@@ -281,7 +288,9 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
       if (str.length()>0) {
          fprintf(fFile, str.c_str());
          fprintf(fFile, "\n");
+         fLogFileModified = true;
       }
+      _DoCheckTimeout();
    }
 
    if (!drop_msg) {
@@ -289,6 +298,28 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
       entry->fLastTm = now;
    }
 }
+
+void dabc::Logger::_DoCheckTimeout()
+{
+   if ((fFile==0) || fLogFileName.empty() || !fLogFileModified) return;
+
+   TimeStamp_t now = TimeStamp();
+
+   if (TimeDistance(fLogReopenTime, now) > 3.) {
+      fLogReopenTime = now;
+      fclose(fFile);
+      fFile = fopen(fLogFileName.c_str(), "a");
+      fLogFileModified = false;
+   }
+}
+
+void dabc::Logger::CheckTimeout()
+{
+   if (Instance()==0) return;
+   LockGuard lock(Instance()->fMutex);
+   Instance()->_DoCheckTimeout();
+}
+
 
 void dabc::Logger::ShowStat(bool tofile)
 {

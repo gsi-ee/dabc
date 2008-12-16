@@ -61,6 +61,8 @@ namespace dabc {
 
          void ShowStat(bool tofile = true);
 
+         static void CheckTimeout();
+
          static inline Logger* Instance() { return gDebug; }
 
          static inline void Debug(int level, const char* filename, unsigned linenumber, const char* funcname, const char* message)
@@ -79,6 +81,8 @@ namespace dabc {
 
          void _FillString(std::string& str, unsigned mask, LoggerEntry* entry);
 
+         virtual void _DoCheckTimeout();
+
       private:
          Logger*           fPrev;
          LoggerLineEntry **fLines;
@@ -92,6 +96,9 @@ namespace dabc {
          int               fFileLevel;   // level of debug output to file
          int               fLevel;       // used to define max
          std::string       fPrefix;      // prefix of all messages
+         std::string       fLogFileName; // name of logfile
+         double            fLogReopenTime; // last time when logfile was reopened
+         bool              fLogFileModified; // true if any string was written into file
    };
 
    #define DOUT(level, args) \
