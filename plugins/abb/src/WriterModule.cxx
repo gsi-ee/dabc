@@ -19,10 +19,10 @@ abb::WriterModule::WriterModule(const char* name, dabc::Command* cmd) :
    fBufferSize = cmd->GetInt(ABB_COMPAR_BUFSIZE, 16384);
    int queuelen = cmd->GetInt(ABB_COMPAR_QLENGTH, 10);
    fStandalone = (bool) cmd->GetInt(ABB_COMPAR_STALONE, 1);
-   const char* poolname=cmd->GetStr(ABB_COMPAR_POOL,"ABBWriterPool");
+   const char* poolname = cmd->GetStr(ABB_COMPAR_POOL,"ABBWriterPool");
    DOUT1(("new abb::WriterModule %s buff %d queue %d, poolname=%s, standalone=%d", GetName(), fBufferSize, queuelen,poolname, fStandalone));
    if(fStandalone)
-      fPool = CreatePool(poolname, 200, fBufferSize); // specify pool
+      fPool = CreatePool(poolname, fBufferSize, 200); // specify pool
    else
       fPool = CreatePool(poolname); // use external pool of connected data sender
    CreateOutput("Output", fPool, queuelen);

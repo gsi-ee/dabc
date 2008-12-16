@@ -165,8 +165,8 @@ do_compl:
       dabc::Buffer* buf = fRecs[fRecvRecid].buf;
 
       if ((buf==0) || (nethdr->size > buf->GetTotalSize())) {
-         EOUT(("Fatal - no buffer to receive data rec %d  buf %p sz1:%d sz2:%d",
-                 fRecvRecid, buf, nethdr->size, buf->GetTotalSize()));
+         EOUT(("Fatal - no buffer to receive data rec %d  buf %p sz1:%d sz2:%d pool:%s",
+                 fRecvRecid, buf, nethdr->size, buf->GetTotalSize(), fPool->GetName()));
          fPool->Print();
          exit(1);
       }

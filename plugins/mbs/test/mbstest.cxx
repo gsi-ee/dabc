@@ -56,7 +56,7 @@ class MbsTest1RepeaterModule : public dabc::ModuleAsync {
          // we can use small buffer, while now we can allocate flexible buffer
          int buffersize = 1024;
 
-         fPool = CreatePool("MyPool", 100, buffersize);
+         fPool = CreatePool("MyPool", buffersize, 100);
 
          fInpPort = CreateInput("Input", fPool, 5);
 
@@ -124,8 +124,6 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
    MbsTest1RepeaterModule* m = new MbsTest1RepeaterModule("Repeater");
 
    mgr.MakeThreadForModule(m, "Thrd1");
-
-   mgr.CreateMemoryPools();
 
    dabc::Command* cmd = new dabc::CmdCreateTransport("Repeater/Input", mbs::typeLmdInput);
    cmd->SetStr(mbs::xmlFileName, inpfile);

@@ -26,10 +26,12 @@ namespace dabc {
    class Buffer;
    class Mutex;
    class MemoryPool;
+   class Module;
 
    // this is alignment for the buffers and memory blocks, created by pool
    // It must be a power of two and should be like 16 or 32 or 256
-   extern unsigned int MemoryAllign;
+   extern unsigned DefaultMemoryAllign;
+   extern unsigned DefaultNumSegments;
 
    class MemoryPoolRequester {
       friend class MemoryPool;
@@ -82,6 +84,8 @@ namespace dabc {
 
       MemoryBlock();
       ~MemoryBlock();
+
+      bool IsNull() const { return fBlock==0; }
 
       bool Allocate(BufferSize_t buffersize, BufferNum_t numbuf,  unsigned align = 0, bool usagequeue = true);
       bool Release();
@@ -153,6 +157,7 @@ namespace dabc {
       enum ECleanupStatus { stOff, stMemCleanup, stRefCleanup };
 
       friend class Buffer;
+      friend class Module;
 
       public:
          MemoryPool(Basic* parent, const char* name);
@@ -282,6 +287,9 @@ namespace dabc {
 
          bool _CheckCleanupStatus();
 
+         bool AddMemReq(BufferSize_t bufsize, BufferNum_t number, BufferNum_t increment, unsigned align);
+         bool AddRefReq(BufferSize_t hdrsize, BufferNum_t number, BufferNum_t increment, unsigned numsegm);
+
          Mutex            *fPoolMutex;
          bool              fOwnMutex;
 
@@ -307,8 +315,6 @@ namespace dabc {
          bool              fEvntFired; // indicate if we already fire event for requests processing
          ECleanupStatus    fCleanupStatus;
          double            fCleanupTmout; // length of cleanup loop
-
-
    };
 
 
@@ -357,7 +363,7 @@ namespace dabc {
                             unsigned numref,
                             unsigned headersize = 0,
                             unsigned increment = 0,
-                            unsigned numsegm = 1)
+                            unsigned numsegm = 0)
          {
             if ((cmd==0) || !cmd->IsName(CmdName())) return false;
             if (numref==0) return false;
@@ -366,7 +372,7 @@ namespace dabc {
             cmd->SetUInt((blockname+xmlNumBuffers).c_str(), numref);
             if (headersize>0) cmd->SetUInt((blockname+xmlHeaderSize).c_str(), headersize);
             if (increment>0) cmd->SetUInt((blockname+xmlNumIncrement).c_str(), increment);
-            if (numsegm!=1) cmd->SetUInt((blockname+xmlNumSegments).c_str(), numsegm);
+            if (numsegm>0) cmd->SetUInt((blockname+xmlNumSegments).c_str(), numsegm);
 
             return true;
          }

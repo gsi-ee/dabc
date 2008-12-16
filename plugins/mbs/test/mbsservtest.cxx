@@ -87,7 +87,7 @@ class GeneratorModule : public dabc::ModuleSync {
       {
          SetSyncCommands(true);
 
-         fPool = CreatePool("Pool", 10, BUFFERSIZE);
+         fPool = CreatePool("Pool", BUFFERSIZE, 10);
 
          CreateOutput("Output", fPool, 5);
       }
@@ -128,7 +128,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
          fPool(0),
          fInput(0)
       {
-         fPool = CreatePool("Pool1", 5, BUFFERSIZE);
+         fPool = CreatePool("Pool1", BUFFERSIZE, 5);
 
          fInput = CreateInput("Input", fPool, 5);
 
@@ -174,7 +174,6 @@ extern "C" void StartGenerator()
 
     dabc::Module* m = new GeneratorModule("Generator");
     dabc::mgr()->MakeThreadForModule(m);
-    dabc::mgr()->CreateMemoryPools();
 
     dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", mbs::typeServerTransport, "MbsTransport");
     cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
@@ -202,8 +201,6 @@ extern "C" void StartClient()
    dabc::Module* m = new TestModuleAsync("Receiver");
 
    dabc::mgr()->MakeThreadForModule(m);
-
-   dabc::mgr()->CreateMemoryPools();
 
    dabc::Command* cmd = new dabc::CmdCreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
 //   cmd->SetBool("IsClient", true);

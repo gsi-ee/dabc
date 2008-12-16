@@ -79,12 +79,8 @@ int main(int numc, char* args[])
 
    DOUT1(("Create ABB writer module = %s", DBOOL(res)));
 
-
-   res= manager.CreateMemoryPools();
-   DOUT1(("Create memory pools result=%s", DBOOL(res)));
-
    //// connect to ABB device:
-   res=manager.CreateTransport("ABB_Readout/Input", devname.c_str());
+   res = manager.CreateTransport("ABB_Readout/Input", devname.c_str());
    DOUT1(("Connected readout module to ABB device = %s", DBOOL(res)));
 
    res=manager.CreateTransport("ABB_Sender/Output", devname.c_str());

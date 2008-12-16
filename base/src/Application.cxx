@@ -112,11 +112,6 @@ bool dabc::Application::DoStateTransition(const char* state_trans_name)
       res = Execute("CreateAppModules", SMCommandTimeout());
 
       DOUT1(("Did CreateAppModules"));
-
-      res = dabc::mgr()->CreateMemoryPools() && res;
-
-      DOUT1(("Did CreateMemoryPools"));
-
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoEnable)==0) {
       res = Execute("ConnectAppModules", SMCommandTimeout());

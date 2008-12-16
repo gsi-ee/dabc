@@ -7,11 +7,11 @@
 #include "dabc/Manager.h"
 #include "dabc/Configuration.h"
 
-dabc::PoolHandle::PoolHandle(Basic* parent, const char* name,
-                             BufferNum_t number, BufferNum_t increment, BufferSize_t size) :
+dabc::PoolHandle::PoolHandle(Basic* parent, const char* name, MemoryPool* pool,
+                             BufferSize_t size, BufferNum_t number, BufferNum_t increment) :
    ModuleItem(mitPool, parent, name),
    MemoryPoolRequester(),
-   fPool(0),
+   fPool(pool),
    fRequiredNumber(number),
    fRequiredIncrement(increment),
    fRequiredSize(size),
@@ -20,14 +20,11 @@ dabc::PoolHandle::PoolHandle(Basic* parent, const char* name,
    fUpdateTimeout(-1),
    fStoreHandle(false)
 {
-   dabc::MemoryPool* mem = dabc::mgr()->FindPool(name);
-   if (mem!=0)
-      AssignPool(mem);
-   else {
-      fStoreHandle = true;
+   if ((number>0) || (increment>0) || (size>0)) {
+      fStoreHandle = (pool==0) || !pool->IsMemLayoutFixed();
+      if (size>0) fRequiredSize = GetCfgInt(xmlBufferSize, size);
       if (number>0) fRequiredNumber = GetCfgInt(xmlNumBuffers, number);
       if (increment>0) fRequiredIncrement = GetCfgInt(xmlNumIncrement, increment);
-      if (size>0) fRequiredSize = GetCfgInt(xmlBufferSize, size);
    }
 }
 

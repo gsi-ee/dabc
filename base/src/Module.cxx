@@ -238,9 +238,26 @@ int dabc::Module::ExecuteCommand(Command* cmd)
    return CommandReceiver::ExecuteCommand(cmd);
 }
 
-dabc::PoolHandle* dabc::Module::CreatePool(const std::string &name, BufferNum_t number, BufferSize_t size, BufferNum_t increment)
+dabc::PoolHandle* dabc::Module::CreatePool(const char* poolname, BufferSize_t size, BufferNum_t number, BufferNum_t increment)
 {
-   return new dabc::PoolHandle(this, name.c_str(), number, increment, size);
+   dabc::MemoryPool* pool = dabc::mgr()->FindPool(poolname);
+   if (pool==0) {
+      dabc::mgr()->CreateMemoryPool(poolname);
+      pool = dabc::mgr()->FindPool(poolname);
+   }
+
+   if (pool==0) {
+      EOUT(("Cannot create/find pool with name %s", poolname));
+      return 0;
+   }
+
+   dabc::PoolHandle* handle = new dabc::PoolHandle(this, poolname, pool, size, number, increment);
+
+   pool->AddMemReq(size, number, increment, 0);
+
+   pool->AddRefReq(0, number*2, increment*2, 0);
+
+   return handle;
 }
 
 dabc::Folder* dabc::Module::GetObjFolder(bool force)
@@ -360,16 +377,23 @@ dabc::Port* dabc::Module::GetPortItem(unsigned id) const
    return item && (item->GetType()==mitPort) ? (Port*) item : 0;
 }
 
-dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* pool, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize)
+dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* handle, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize)
 {
    if ((recvqueue==0) && (sendqueue==0)) {
       EOUT(("Both receive and send queue length are zero - port %s not created", name));
       return 0;
    }
 
-   Port* port = new Port(this, name, pool, recvqueue, sendqueue, headersize);
-   if (pool)
-     pool->AddPortRequirements(port->NumInputBuffersRequired() + port->NumOutputBuffersRequired(), port->UserHeaderSize());
+   Port* port = new Port(this, name, handle, recvqueue, sendqueue, headersize);
+   if (handle) {
+      BufferNum_t number = port->NumInputBuffersRequired() + port->NumOutputBuffersRequired();
+
+      handle->AddPortRequirements(number, port->UserHeaderSize());
+      if (handle->getPool()) {
+         handle->getPool()->AddMemReq(handle->GetRequiredBufferSize(), number, 0, 0);
+         handle->getPool()->AddRefReq(headersize, number*2, 0, 0);
+      }
+   }
 
    fPorts.push_back(port->ItemId());
    if (recvqueue>0) fInputPorts.push_back(port->ItemId());

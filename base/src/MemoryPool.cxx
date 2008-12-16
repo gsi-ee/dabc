@@ -7,7 +7,8 @@
 #include "dabc/threads.h"
 #include "dabc/Configuration.h"
 
-unsigned int dabc::MemoryAllign = 16;
+unsigned dabc::DefaultMemoryAllign = 16;
+unsigned dabc::DefaultNumSegments = 8;
 
 
 dabc::MemoryBlock::MemoryBlock() :
@@ -39,13 +40,13 @@ bool dabc::MemoryBlock::Allocate(BufferSize_t buffersize, BufferNum_t numbuffers
    if (!Release()) return false;
 
    if (align==0) {
-      unsigned align = sizeof(void*);
-      while (align < dabc::MemoryAllign) align*=2;
-      if (align!=dabc::MemoryAllign)
-          EOUT(("Unsuitable align value %u, used %u", dabc::MemoryAllign, align));
+      align = sizeof(void*);
+      while (align < dabc::DefaultMemoryAllign) align*=2;
+      if (align!=dabc::DefaultMemoryAllign)
+          EOUT(("Unsuitable align value %u, used %u", dabc::DefaultMemoryAllign, align));
    }
 
-   if (buffersize % align != 0) buffersize = (buffersize/align + 1) * align;
+      if (buffersize % align != 0) buffersize = (buffersize/align + 1) * align;
 
    uint64_t totalsize = buffersize;
    totalsize *= numbuffers;
@@ -224,6 +225,7 @@ bool dabc::ReferencesBlock::Allocate(MemoryPool* pool, BufferSize_t headersize, 
       headersize = align;
    }
 
+   if (numsegments==0) numsegments = dabc::DefaultNumSegments;
    if (numsegments<1) numsegments = 1;
 
    unsigned datasize = headersize + numsegments*sizeof(MemSegment);
@@ -239,7 +241,7 @@ bool dabc::ReferencesBlock::Allocate(MemoryPool* pool, BufferSize_t headersize, 
 
    fPool = pool;
    fHeaderSize = headersize;
-   // actual number of items due-to allign
+   // actual number of items due-to align
    fNumSegments = (fBufferSize - fHeaderSize) / sizeof(MemSegment);
 
    return true;
@@ -261,7 +263,16 @@ dabc::Buffer* dabc::ReferencesBlock::TakeReference(unsigned nseg, BufferSize_t h
    BufferNum_t id = 0;
 
    // if not forced, return 0 when preallocated memory is not enough
-   if (!force && ((nseg > NumSegments()) || hdrsize>HeaderSize())) return 0;
+   if (!force && ((nseg > NumSegments()) || (hdrsize > HeaderSize()))) return 0;
+
+
+   if (IsNull()) {
+      if (!Allocate(fPool, fHeaderSize, fNumBuffers,  fNumSegments)) {
+         EOUT(("Hard error - cannot allocate preconfigured references"));
+         return false;
+      }
+      DOUT2(("Allocate preconfigured ref block in pool %s", fPool->GetName()));
+   }
 
    if (!TakeBuffer(id)) return 0;
 
@@ -524,7 +535,7 @@ bool dabc::MemoryPool::_ExtendArr(void* arr, BlockNum_t &capacity)
 
 dabc::MemoryBlock* dabc::MemoryPool::_AllocateMemBlock(BufferSize_t buffersize, BufferNum_t numbuffers, unsigned align, bool withqueue)
 {
-   DOUT5(("_AllocateMemBlock pool:%s bufsize:%u number:%u align:%u", GetName(), buffersize, numbuffers, align));
+   DOUT1(("_AllocateMemBlock pool:%s bufsize:%u number:%u align:%u", GetName(), buffersize, numbuffers, align));
 
    if (fNumMem>=fMemCapacity)
       if (!_ExtendArr(&fMem, fMemCapacity)) return 0;
@@ -541,9 +552,10 @@ dabc::MemoryBlock* dabc::MemoryPool::_AllocateMemBlock(BufferSize_t buffersize, 
    fMem[fNumMem] = block;
    fNumMem++;
 
-   block->fChangeCounter = ++fChangeCounter;
 
-   DOUT3(("_AllocateMemBlock new block of memory %u 0x%x", numbuffers, buffersize));
+   DOUT1(("Pool:%s  Mem[%u] : blocksize %llu  bufsize %u used %u", GetName(), fNumMem-1, block->BlockSize(), block->BufferSize(), block->NumUsedBuffers()));
+
+   block->fChangeCounter = ++fChangeCounter;
 
    return block;
 }
@@ -558,7 +570,7 @@ dabc::ReferencesBlock* dabc::MemoryPool::_AllocateRefBlock(BufferSize_t headersi
 
    ReferencesBlock* block = new ReferencesBlock();
 
-   // one should set this id that Allocate initialise references appropriately
+   // one should set this id that Allocate initialize references appropriately
    block->fBlockId = CodeBufferId(fNumRef, 0);
 
    if (!block->Allocate(this, headersize, numrefs,  numsegm)) {
@@ -754,11 +766,11 @@ dabc::Buffer* dabc::MemoryPool::TakeBufferReq(MemoryPoolRequester* req, BufferSi
          req->pool = 0;
          req->buf = 0;
 
-         if (req->bufsize<size)
-            EOUT(("Missmatch in requested (%u) and obtainbed (%u) buffer sizes", req->bufsize, size));
+         if (req->bufsize < size)
+            EOUT(("Mismatch in requested (%u) and obtained (%u) buffer sizes", req->bufsize, size));
 
-         if (req->hdrsize<hdrsize)
-            EOUT(("Missmatch in requested (%u) and obtainbed (%u) header sizes", req->hdrsize, hdrsize));
+         if (req->hdrsize < hdrsize)
+            EOUT(("Mismatch in requested (%u) and obtained (%u) header sizes", req->hdrsize, hdrsize));
       } else {
          buf = _TakeBuffer(size, hdrsize);
 
@@ -896,7 +908,7 @@ dabc::Buffer* dabc::MemoryPool::_TakeBuffer(BufferSize_t size, BufferSize_t hdrs
    MemoryBlock* master = 0;
    for (unsigned id = 0; id<fMemPrimary; id++) {
       MemoryBlock* block = fMem[id];
-      if (size==0) size = block->BufferSize(); // if specified 0, take buffers of size of first block
+      if (size==0) size = block->BufferSize();
       if (block->BufferSize() >= size)
          if ((master==0) || master->BufferSize() > block->BufferSize()) master = block;
    }
@@ -906,7 +918,14 @@ dabc::Buffer* dabc::MemoryPool::_TakeBuffer(BufferSize_t size, BufferSize_t hdrs
       return 0;
    }
 
-   if (size==0) size = master->BufferSize();
+   if (master->IsNull()) {
+      if (!master->Allocate(master->fBufferSize, master->fNumBuffers, master->fAlignment, true)) {
+         EOUT(("Hard error - cannot allocate preconfigured buffer"));
+         return 0;
+      }
+      DOUT2(("Allocate preconfigured mem block in pool %s", GetName()));
+      master->fChangeCounter = ++fChangeCounter;
+   }
 
    BufferNum_t num = 0;
    bool res = master->TakeBuffer(num);
@@ -962,6 +981,105 @@ void dabc::MemoryPool::_ReleaseBuffer(Buffer* buf)
    ReferencesBlock* refblock = fRef[GetBlockNum(buf->fReferenceId)];
    refblock->ReleaseReference(buf);
 }
+
+bool dabc::MemoryPool::AddMemReq(BufferSize_t bufsize, BufferNum_t number, BufferNum_t increment, unsigned align)
+{
+   LockGuard guard(fPoolMutex);
+
+   if (fMemLayoutFixed) return false;
+
+   if (bufsize==0) return false;
+
+   if ((number==0) && (increment==0)) {
+      EOUT(("Empty mem request to pool %s", GetName()));
+      return false;
+   }
+
+   bufsize = RoundBufferSize(bufsize);
+
+   MemoryBlock* master = 0;
+   for (unsigned id = 0; id<fMemPrimary; id++) {
+      if (fMem[id]->BufferSize() == bufsize) {
+         master = fMem[id];
+         break;
+      }
+   }
+
+   if (master && !master->IsNull()) return false;
+
+   if (master==0) {
+      if (fNumMem>=fMemCapacity)
+         if (!_ExtendArr(&fMem, fMemCapacity)) return false;
+
+      master = new MemoryBlock;
+
+      master->fBlockId = CodeBufferId(fNumMem, 0);
+
+      fMem[fNumMem] = master;
+      fNumMem++;
+
+      fMemPrimary = fNumMem;
+      fMemSecondary = fMemPrimary;
+   }
+
+   master->fBufferSize = bufsize;
+   master->fNumBuffers += number;
+   master->fNumIncrease += increment;
+   master->fAlignment = align;
+
+   return true;
+}
+
+bool dabc::MemoryPool::AddRefReq(BufferSize_t hdrsize, BufferNum_t number, BufferNum_t increment, unsigned numsegm)
+{
+   LockGuard guard(fPoolMutex);
+
+   if (fMemLayoutFixed) return false;
+
+   if ((number==0) && (increment==0)) {
+      EOUT(("Empty ref request to pool %s", GetName()));
+      return false;
+   }
+
+   if (numsegm==0) numsegm = dabc::DefaultNumSegments;
+
+   ReferencesBlock* master = 0;
+
+   for (BlockNum_t nblock=0;nblock<fRefPrimary;nblock++) {
+      ReferencesBlock* block = fRef[nblock];
+
+      if ((block->NumSegments() >= numsegm) && (block->HeaderSize() >= hdrsize)) {
+         if (block->IsNull()) { master = block; break; }
+         if (master==0) master = block;
+      }
+   }
+
+   if ((master!=0) && !master->IsNull()) return false;
+
+   if (master==0) {
+      if (fNumRef>=fRefCapacity)
+         if (!_ExtendArr(&fRef, fRefCapacity)) return false;
+
+      master = new ReferencesBlock();
+
+      // one should set this id that Allocate initialize references appropriately
+      master->fBlockId = CodeBufferId(fNumRef, 0);
+
+      fRef[fNumRef] = master;
+      fNumRef++;
+      fRefPrimary = fNumRef;
+   }
+
+   master->fPool = this;
+   master->fHeaderSize = hdrsize;
+   master->fNumSegments = numsegm;
+   master->fNumBuffers += number;
+   master->fNumIncrease += increment;
+
+   return true;
+}
+
+
 
 void dabc::MemoryPool::ProcessEvent(EventId evid)
 {
@@ -1101,19 +1219,19 @@ void dabc::MemoryPool::Print()
 {
    LockGuard guard(fPoolMutex);
 
-   DOUT1(("Pool:% numem:%d numref:%d fixed:%s", GetName(), fNumMem, fNumRef, DBOOL(fMemLayoutFixed)));
+   DOUT1(("Pool:%s numem:%d numref:%d fixed:%s", GetName(), fNumMem, fNumRef, DBOOL(fMemLayoutFixed)));
 
    for (BlockNum_t id=0;id<fNumMem;id++)
      if (fMem[id]==0)
         DOUT1(("  Mem[%u] = null", id));
      else
-        DOUT1(("  Mem[%u] : size %lu bufsize %lu used %u", fMem[id]->BlockSize(), fMem[id]->BufferSize(), fMem[id]->NumUsedBuffers()));
+        DOUT1(("  Mem[%u] : size %llu  bufsize %u used %u", id, fMem[id]->BlockSize(), fMem[id]->BufferSize(), fMem[id]->NumUsedBuffers()));
 
    for (BlockNum_t id=0;id<fNumRef;id++)
      if (fRef[id]==0)
         DOUT1(("  Ref[%u] = null", id));
      else
-        DOUT1(("  Ref[%u] : size %lu bufsize %lu used %u", fRef[id]->BlockSize(), fRef[id]->BufferSize(), fRef[id]->NumUsedBuffers()));
+        DOUT1(("  Ref[%u] : size %llu bufsize %u used %u", id, fRef[id]->BlockSize(), fRef[id]->BufferSize(), fRef[id]->NumUsedBuffers()));
 }
 
 void dabc::MemoryPool::StoreConfig()
@@ -1237,7 +1355,7 @@ bool dabc::MemoryPool::Reconstruct(dabc::Command* cmd)
       if (numref>0) {
          unsigned numinc = GetCfgInt((blockname+xmlNumIncrement).c_str(), 0, cmd);
          unsigned header = GetCfgInt((blockname+xmlHeaderSize).c_str(), 0, cmd);
-         unsigned numsegm = GetCfgInt((blockname+xmlNumSegments).c_str(), 1, cmd);
+         unsigned numsegm = GetCfgInt((blockname+xmlNumSegments).c_str(), 0, cmd);
 
          AllocateReferences(header, numref, numinc, numsegm);
       }

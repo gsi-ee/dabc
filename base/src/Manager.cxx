@@ -991,9 +991,6 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
    if (cmd->IsName(CmdCreateMemoryPool::CmdName())) {
       cmd_res = cmd_bool(DoCreateMemoryPool(cmd));
    } else
-   if (cmd->IsName(CmdCreateMemoryPools::CmdName())) {
-      cmd_res = DoCreateMemoryPools();
-   } else
    if (cmd->IsName(CmdCleanupManager::CmdName())) {
       cmd_res = DoCleanupManager(cmd->GetInt("AppId", 0));
    } else
@@ -1207,19 +1204,25 @@ bool dabc::Manager::CreateMemoryPool(const char* poolname,
                                      unsigned headersize,
                                      unsigned numsegments)
 {
+
+   DOUT3(("Create memory pool %s %u x %u", poolname, buffersize, numbuffers));
+
    Command* cmd = new CmdCreateMemoryPool(poolname);
-   if (!CmdCreateMemoryPool::AddMem(cmd, buffersize, numbuffers, numincrement)) {
-      dabc::Command::Finalise(cmd);
-      return false;
-   }
 
-   if (!CmdCreateMemoryPool::AddRef(cmd, numbuffers*2, headersize, numincrement, numsegments)) {
-      dabc::Command::Finalise(cmd);
-      return false;
-   }
+   if ((buffersize>0) && (numbuffers>0)) {
+      if (!CmdCreateMemoryPool::AddMem(cmd, buffersize, numbuffers, numincrement)) {
+         dabc::Command::Finalise(cmd);
+         return false;
+      }
 
-   if (numincrement==0)
-      cmd->SetBool(xmlFixedLayout, true);
+      if (!CmdCreateMemoryPool::AddRef(cmd, numbuffers*2, headersize, numincrement, numsegments)) {
+         dabc::Command::Finalise(cmd);
+         return false;
+      }
+
+      if (numincrement==0)
+         cmd->SetBool(xmlFixedLayout, true);
+   }
 
    return Execute(cmd);
 }
@@ -1249,66 +1252,6 @@ bool dabc::Manager::DoCreateMemoryPool(Command* cmd)
    pool->AssignProcessorToThread(ProcessorThread());
 
    return pool->Reconstruct(cmd);
-}
-
-bool dabc::Manager::DoCreateMemoryPools()
-{
-   const char* selectedname = 0;
-
-   bool res = true;
-
-   do {
-      selectedname = 0;
-      BufferSize_t selectedsize = 0;
-      BufferSize_t headersize = 0;
-      BufferNum_t totalbufnum = 0;
-      BufferNum_t increment = 0;
-
-      Queue<PoolHandle*> pools(16, true);
-
-      dabc::Iterator iter(this);
-
-      while (iter.next()) {
-         PoolHandle* pool = dynamic_cast<PoolHandle*> (iter.current());
-         if ((pool==0) || pool->IsPoolAssigned()) continue;
-
-         if (selectedname==0) {
-            selectedname = pool->GetName();
-            selectedsize = dabc::MemoryPool::RoundBufferSize(pool->GetRequiredBufferSize());
-         }
-
-         if (pool->IsName(selectedname) &&
-             (selectedsize == dabc::MemoryPool::RoundBufferSize(pool->GetRequiredBufferSize()))) {
-               totalbufnum += pool->GetRequiredBuffersNumber();
-               if (headersize < pool->GetRequiredHeaderSize()) headersize = pool->GetRequiredHeaderSize();
-
-               if (increment < pool->GetRequiredIncrement()) increment = pool->GetRequiredIncrement();
-               pools.Push(pool);
-            }
-      }
-
-      if ((selectedname!=0) && (pools.Size()>0)) {
-
-         DOUT3(("Start creating pool %s %u x 0x%x, increment: %u", selectedname, totalbufnum, selectedsize, increment));
-         if (!CreateMemoryPool(selectedname, selectedsize, totalbufnum, increment, headersize, 8)) {
-            EOUT(("Was not able to create memory pool %s", selectedname));
-            res = false;
-         }
-
-         MemoryPool* mem_pool = FindPool(selectedname);
-         if (mem_pool==0) {
-            EOUT(("Pool %s cannot be found", selectedname));
-            res = false;
-         }
-
-         DOUT3(("Done creating pool %s", selectedname));
-
-         while (pools.Size()>0)
-            pools.Pop()->AssignPool(mem_pool);
-      }
-   } while (selectedname!=0);
-
-   return res;
 }
 
 void dabc::Manager::ModuleExecption(Module* m, const char* msg)
@@ -1358,7 +1301,7 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
 
       Command* prnt = FindInternalCmd("_PCID_", parentid);
       if (prnt==0) {
-         EOUT(("Parent %d is dissaper, parentid"));
+         EOUT(("Parent %d is disappear, parentid"));
          return true;
       }
 
@@ -1401,11 +1344,6 @@ bool dabc::Manager::StartAllModules(int appid)
 bool dabc::Manager::StopAllModules(int appid)
 {
    return Execute(new CmdStopAllModules(appid));
-}
-
-bool dabc::Manager::CreateMemoryPools()
-{
-   return Execute(new CmdCreateMemoryPools());
 }
 
 bool dabc::Manager::CleanupManager(int appid)

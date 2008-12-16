@@ -18,7 +18,7 @@ bnet::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
 {
    SetSyncCommands(true);
 
-   fPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd));
+   fPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
 
    fBufferSize = GetCfgInt(xmlReadoutBuffer, 1024, cmd);
 

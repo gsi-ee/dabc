@@ -28,7 +28,7 @@ const int FirstNode = 0;
 
 class Test1SendModule : public dabc::ModuleAsync {
    protected:
-      dabc::PoolHandle* fPool;
+      dabc::PoolHandle*   fPool;
       bool                fCanSend;
       dabc::Ratemeter     fSendRate;
       unsigned            fPortCnt;
@@ -40,7 +40,7 @@ class Test1SendModule : public dabc::ModuleAsync {
          int nports = cmd->GetInt("NumPorts", 3);
          int buffsize = cmd->GetInt("BufferSize", 16*1024);
 
-         fPool = CreatePool("SendPool", 5, buffsize);
+         fPool = CreatePool("SendPool", buffsize, 5);
 
          for (int n=0;n<nports;n++)
             CreateOutput(FORMAT(("Output%d", n)), fPool, TestSendQueueSize);
@@ -117,10 +117,10 @@ class Test1SendModule : public dabc::ModuleAsync {
 
 class Test1RecvModule : public dabc::ModuleAsync {
    protected:
-      dabc::PoolHandle* fPool;
-      int fSleepTime;
-      dabc::Ratemeter fRecvRate;
-      dabc::Average fRealSleepTime;
+      dabc::PoolHandle*    fPool;
+      int                  fSleepTime;
+      dabc::Ratemeter      fRecvRate;
+      dabc::Average        fRealSleepTime;
 
    public:
       Test1RecvModule(const char* name, dabc::Command* cmd) :
@@ -130,10 +130,9 @@ class Test1RecvModule : public dabc::ModuleAsync {
          int nports = cmd->GetInt("NumPorts", 3);
          int buffsize = cmd->GetInt("BufferSize", 16*1024);
 
-
          // 0 here means that we need at least 1 buffer more for module and force by that pool request scheme
          // 1 is just exactly that we need to work without requests
-         fPool = CreatePool("RecvPool", 0, buffsize);
+         fPool = CreatePool("RecvPool", buffsize, 0);
 
          for (int n=0;n<nports;n++)
             CreateInput(FORMAT(("Input%d", n)), fPool, TestRecvQueueSize);
@@ -280,11 +279,6 @@ void CreateAllModules(dabc::StandaloneManager &m, int numworkers = 0)
          m.SubmitRemote(cli, cmd, node);
       }
 
-   DOUT1(("Do CreateMemoryPools "));
-
-   for (int node=FirstNode;node<m.NumNodes();node++)
-      m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
-
    bool res = cli.WaitCommands(5);
 
    DOUT1(("CreateAllModules() res = %s", DBOOL(res)));
@@ -415,8 +409,6 @@ void TestWorker(dabc::StandaloneManager &mgr)
    Test1WorkerModule* m = new Test1WorkerModule("Combiner");
 
    mgr.MakeThreadForModule(m, "Thrd1");
-
-   mgr.CreateMemoryPools();
 
    m->Start();
 

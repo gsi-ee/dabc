@@ -16,7 +16,7 @@ dabc::CommandChannelModule::CommandChannelModule(int numnodes) :
    fPool(0),
    fCmdOutQueue(0)
 {
-   fPool = CreatePool("CommandChannelPool", 100, CommandBufferSize);
+   fPool = CreatePool("CommandChannelPool", CommandBufferSize, 100);
 
    fCmdOutQueue = new CommandsQueue(false, false);
 

@@ -35,7 +35,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
          fInput(0),
          fOutput(0)
       {
-         fPool = CreatePool("Pool", 5, BUFFERSIZE);
+         fPool = CreatePool("Pool", BUFFERSIZE, 5);
 
          if (fKind>0)
             fInput = CreateInput("Input", fPool, QUEUESIZE, 0);
@@ -151,7 +151,6 @@ void TestNewSocketDevice(int numc, char* args[])
    }
 
    mgr.MakeThreadForModule(m, "Thread1");
-   mgr.CreateMemoryPools();
 
    cmd->SetInt("Timeout", 3);
    cmd->SetStr("ConnId", "TestConn");

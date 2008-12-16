@@ -36,7 +36,7 @@ mbs::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
 
    DOUT1(("Generator buffer size %u sub %u", fBufferSize, fNumSubevents));
 
-   fPool = CreatePool("Pool", 10, fBufferSize);
+   fPool = CreatePool("Pool", fBufferSize, 10);
 
    CreateOutput("Output", fPool, 5);
 }
@@ -104,7 +104,6 @@ extern "C" void StartMbsGenerator()
 
     dabc::Module* m = new mbs::GeneratorModule("Generator");
     dabc::mgr()->MakeThreadForModule(m);
-    dabc::mgr()->CreateMemoryPools();
 
     dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", mbs::typeServerTransport, "MbsTransport");
     cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
@@ -126,7 +125,7 @@ class MbsTestReadoutModule : public dabc::ModuleAsync {
       {
          dabc::BufferSize_t size = GetCfgInt(dabc::xmlBufferSize, 16*1024);
 
-         dabc::PoolHandle* pool = CreatePool("Pool1", 5, size);
+         dabc::PoolHandle* pool = CreatePool("Pool1", size, 5);
 
          dabc::Port* port = CreateInput("Input", pool, 5);
 
@@ -167,8 +166,6 @@ extern "C" void StartMbsClient()
    dabc::Module* m = new MbsTestReadoutModule("Receiver");
 
    dabc::mgr()->MakeThreadForModule(m);
-
-   dabc::mgr()->CreateMemoryPools();
 
    dabc::Command* cmd = new dabc::CmdCreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
 //   cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));

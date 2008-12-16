@@ -537,7 +537,6 @@ bool bnet::ClusterApplication::ActualTransition(const char* state_trans_name)
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoConfigure)==0) {
       if (!Execute(DiscoverCmdName)) return false;
       if (!Execute("CreateAppModules")) return false;
-      if (!dabc::mgr()->CreateMemoryPools()) return false;
       if (!ExecuteClusterSMCommand(state_trans_name)) return false;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoEnable)==0) {

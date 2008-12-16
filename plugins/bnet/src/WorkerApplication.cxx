@@ -275,8 +275,6 @@ bool bnet::WorkerApplication::CreateAppModules()
       }
    }
 
-//   dabc::mgr()->CreateMemoryPools();
-
    if (IsSender()) {
 
       for (int nr=0;nr<NumReadouts();nr++)

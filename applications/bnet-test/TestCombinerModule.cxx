@@ -19,7 +19,7 @@ bnet::TestCombinerModule::TestCombinerModule(const char* name, dabc::Command* cm
 
    fOutPool = CreatePool(bnet::TransportPoolName);
 
-   fInpPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd));
+   fInpPool = CreatePool(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
 
    fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize, sizeof(bnet::EventId));
 

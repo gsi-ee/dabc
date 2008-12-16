@@ -60,14 +60,6 @@ namespace dabc {
             }
    };
 
-   class CmdCreateMemoryPools : public Command {
-      public:
-         static const char* CmdName() { return "CreateMemoryPools"; }
-
-         CmdCreateMemoryPools() : Command(CmdName()) {}
-   };
-
-
    class CmdDeletePool : public Command {
       public:
          static const char* CmdName() { return "DeletePool"; }
@@ -397,13 +389,9 @@ namespace dabc {
                                unsigned numbuffers = 0,
                                unsigned numincrement = 0,
                                unsigned headersize = 0x20,
-                               unsigned numsegments = 8);
+                               unsigned numsegments = 0);
 
          MemoryPool* FindPool(const char* name);
-
-         /** This method create memory pools on the base of values,
-           * configured in the newly created modules. */
-         bool CreateMemoryPools();
 
          /** Delete memory pool */
          bool DeletePool(const char* name);
@@ -561,7 +549,6 @@ namespace dabc {
          virtual double ProcessTimeout(double last_diff);
 
          bool DoCreateMemoryPool(Command* cmd);
-         bool DoCreateMemoryPools();
 
          bool DoDeleteAllModules(int appid = -1);
          void DoCleanupThreads();

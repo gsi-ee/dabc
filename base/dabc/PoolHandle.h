@@ -18,7 +18,8 @@ namespace dabc {
       friend class Module;
 
       private:
-         PoolHandle(Basic* parent, const char* name, BufferNum_t number, BufferNum_t increment, BufferSize_t size);
+         PoolHandle(Basic* parent, const char* name, MemoryPool* pool,
+                    BufferSize_t size, BufferNum_t number, BufferNum_t increment);
          virtual ~PoolHandle();
 
       public:

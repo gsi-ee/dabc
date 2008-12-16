@@ -41,7 +41,7 @@ class Test2SendModule : public dabc::ModuleAsync {
          int nports = cmd->GetInt("NumPorts", 3);
          int buffsize = cmd->GetInt("BufferSize", 16*1024);
 
-         fPool = CreatePool("SendPool", 500, buffsize);
+         fPool = CreatePool("SendPool", buffsize, 500);
 
          for (int n=0;n<nports;n++)
             CreateOutput(FORMAT(("Output%d", n)), fPool, TestSendQueueSize);
@@ -130,7 +130,7 @@ class Test2RecvModule : public dabc::ModuleAsync {
 
          DOUT3(( "new TRecvModule %s %d %d", GetName(), nports, buffsize));
 
-         fPool = CreatePool("RecvPool", 5, buffsize);
+         fPool = CreatePool("RecvPool", buffsize, 5);
 
          for (int n=0;n<nports;n++)
             CreateInput(FORMAT(("Input%d", n)), fPool, TestRecvQueueSize);
@@ -270,9 +270,6 @@ void CreateAllModules(dabc::StandaloneManager &m, int buffersize, int numworkers
             new dabc::CmdCreateModule("Test2WorkerModule", FORMAT(("Worker%d",nw)));
          m.SubmitRemote(cli, cmd, node);
       }
-
-   for (int node=0;node<m.NumNodes();node++)
-      m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
 
    bool res = cli.WaitCommands(5);
 
@@ -488,8 +485,6 @@ void RunStandaloneTest(dabc::StandaloneManager &m, int nmodules = 1)
       m.SubmitCl(cli, cmd);
    }
 
-   m.SubmitCl(cli, new dabc::CmdCreateMemoryPools());
-
    for (int nm1=0;nm1<nmodules;nm1++)
       for (int nm2=0;nm2<nmodules;nm2++)
          m.SubmitCl(cli,
@@ -578,9 +573,6 @@ void OneToAllLoop(dabc::StandaloneManager &m, int deviceid)
    cmd->SetInt("BufferSize", TestBufferSize);
    m.SubmitLocal(cli, cmd);
 
-   for (int node=0;node<m.NumNodes();node++)
-      m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
-
    bool res = cli.WaitCommands(5);
 
    DOUT1(("CreateAllModules() res = %s", DBOOL(res)));
@@ -661,9 +653,6 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
          cmd->SetBool("MasterConn", true);
       m.SubmitRemote(cli, cmd, node);
    }
-
-   for (int node=0;node<m.NumNodes();node++)
-      m.SubmitRemote(cli, new dabc::CmdCreateMemoryPools(), node);
 
    bool res = cli.WaitCommands(5);
 

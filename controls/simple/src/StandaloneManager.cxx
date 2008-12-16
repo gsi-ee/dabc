@@ -136,8 +136,6 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
 
    fCmdChannel->AssignProcessorToThread(dev->ProcessorThread());
 
-   CreateMemoryPools();
-
    fCmdChannel->SetAppId(77);
    fCmdChannel->GetPool()->SetAppId(77);
    dev->SetAppId(77);
@@ -252,8 +250,6 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
    fCmdChannel = new CommandChannelModule(IsMainManager() ? numnodes-1 : 1);
 
    fCmdChannel->AssignProcessorToThread(dev->ProcessorThread());
-
-   CreateMemoryPools();
 
    fCmdChannel->SetAppId(77);
    fCmdChannel->GetPool()->SetAppId(77);

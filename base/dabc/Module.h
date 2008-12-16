@@ -141,7 +141,7 @@ namespace dabc {
 
          // =======================================================
 
-         PoolHandle* CreatePool(const std::string &poolname, BufferNum_t number = 0, BufferSize_t size = 0, BufferNum_t increment = 0);
+         PoolHandle* CreatePool(const char* poolname, BufferSize_t size = 0, BufferNum_t number = 0, BufferNum_t increment = 0);
          Buffer* TakeBuffer(const char* poolname, BufferSize_t size = 0);
 
          Port* CreateInput(const char* name, PoolHandle* pool, unsigned queue = 10, BufferSize_t headersize = 0)

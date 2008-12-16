@@ -83,7 +83,6 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
       fABBActive = false;
    }
 
-   dabc::mgr()->CreateMemoryPools(); // pools must exist before abb transport can connect to module
    if(fABBActive) {
       /// here creation of pci transport from abb device with connection to given input port:
        res = dabc::mgr()->CreateTransport(portname, abbdevname.c_str());

@@ -37,7 +37,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
          fInput(0),
          fOutput(0)
       {
-         fPool = CreatePool("Pool", 5, BUFFERSIZE);
+         fPool = CreatePool("Pool", BUFFERSIZE, 5);
 
          if (fKind>0)
             fInput = CreateInput("Input", fPool, QUEUESIZE);
@@ -106,7 +106,7 @@ class TestModuleSync : public dabc::ModuleSync {
          fInput(0),
          fOutput(0)
       {
-         fPool = CreatePool("Pool", 5, BUFFERSIZE);
+         fPool = CreatePool("Pool", BUFFERSIZE, 5);
 
          if (fKind>0)
             fInput = CreateInput("Input", fPool, QUEUESIZE);
@@ -189,9 +189,6 @@ void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
       }
    }
 
-   mgr->CreateMemoryPools();
-   DOUT3(("Create memory pools"));
-
    bool connectres = true;
 
    for (int n=1; n<number; n++) {
@@ -273,8 +270,6 @@ void TestTimers(dabc::Manager* mgr, int number)
    }
 
    dabc::CpuStatistic cpu;
-
-   mgr->CreateMemoryPools();
 
    mgr->StartAllModules();
 

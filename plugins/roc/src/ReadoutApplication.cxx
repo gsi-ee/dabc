@@ -89,10 +89,6 @@ bool roc::ReadoutApplication::CreateAppModules()
       }
    }
 
-   res = dabc::mgr()->CreateMemoryPools();
-   DOUT1(("Create memory pools result=%s", DBOOL(res)));
-   if(!res) return false;
-
    if (DoTaking()) {
 
    //// connect module to ROC device, one transport for each board:
