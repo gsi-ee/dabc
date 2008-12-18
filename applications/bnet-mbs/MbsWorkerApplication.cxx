@@ -5,7 +5,6 @@
 
 #include "mbs/Factory.h"
 
-#include "MbsGeneratorModule.h"
 #include "MbsCombinerModule.h"
 #include "MbsBuilderModule.h"
 #include "MbsFilterModule.h"
@@ -23,16 +22,11 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
    if (IsGenerator()) {
 
-      std::string modulename;
+      std::string modulename = dabc::format("Readout%d", portnumber);
 
-      dabc::formats(modulename,"Readout%d", portnumber);
+      dabc::mgr()->CreateModule("mbs::GeneratorModule", modulename.c_str());
 
-      dabc::Module* m = new bnet::MbsGeneratorModule(modulename.c_str());
-      dabc::mgr()->MakeThreadForModule(m, modulename.c_str());
-
-      modulename += "/Output";
-
-      dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
+      dabc::mgr()->ConnectPorts((modulename + "/Output").c_str(), portname);
 
       cfg = "Generator";
 

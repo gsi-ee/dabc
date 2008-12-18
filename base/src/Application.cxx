@@ -106,12 +106,7 @@ bool dabc::Application::DoStateTransition(const char* state_trans_name)
    bool res = true;
 
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoConfigure)==0) {
-
-      DOUT1(("Doing CreateAppModules %d", SMCommandTimeout()));
-
       res = Execute("CreateAppModules", SMCommandTimeout());
-
-      DOUT1(("Did CreateAppModules"));
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoEnable)==0) {
       res = Execute("ConnectAppModules", SMCommandTimeout());
@@ -145,7 +140,6 @@ void dabc::Application::InvokeCheckModulesCmd()
 {
    Submit(new Command("CheckModulesRunning"));
 }
-
 
 bool dabc::Application::Store(ConfigIO &cfg)
 {

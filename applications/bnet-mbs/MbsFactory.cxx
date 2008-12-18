@@ -3,7 +3,6 @@
 #include "MbsWorkerApplication.h"
 #include "MbsCombinerModule.h"
 #include "MbsFilterModule.h"
-#include "MbsGeneratorModule.h"
 #include "MbsBuilderModule.h"
 
 bnet::MbsFactory bnetmbsfactory("bnet-mbs");
@@ -26,9 +25,6 @@ dabc::Module* bnet::MbsFactory::CreateModule(const char* classname, const char* 
    else
    if (strcmp(classname, "bnet::MbsFilterModule")==0)
       return new bnet::MbsFilterModule(modulename, cmd);
-   else
-   if (strcmp(classname, "bnet::MbsGeneratorModule")==0)
-      return new bnet::MbsGeneratorModule(modulename, cmd);
    else
    if (strcmp(classname, "bnet::MbsBuilderModule")==0)
       return new bnet::MbsBuilderModule(modulename, cmd);

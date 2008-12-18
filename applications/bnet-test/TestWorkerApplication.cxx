@@ -64,35 +64,25 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
    DOUT1(("CreateReadout buf = %d", GetParInt(xmlReadoutBuffer)));
 
    bool res = false;
-   std::string modulename;
-   dabc::formats(modulename,"Readout%d", portnumber);
-   std::string abbdevname;
-   std::string modinputname = modulename+"/Input";
+
    // check parameter if we should use abb at this readout:
    if(ReadoutPar(portnumber) == "ABB") {
-       abbdevname = "ABBDevice";
-       fABBActive = dabc::mgr()->CreateDevice("abb::Device", abbdevname.c_str());
+       const char* abbdevname = "ABBDevice";
+       fABBActive = dabc::mgr()->CreateDevice("abb::Device", abbdevname);
+
+       res = dabc::mgr()->CreateTransport(portname, abbdevname);
+       if (!res) EOUT(("Cannot create ABB transport"));
    } else {
       // create dummy event generator module:
 
+      std::string modulename = dabc::format("Readout%d", portnumber);
       dabc::mgr()->CreateModule("bnet::TestGeneratorModule", modulename.c_str(), SenderThreadName);
-//      dabc::Module* m = new bnet::TestGeneratorModule(modulename.c_str());
-//      dabc::mgr()->MakeThreadForModule(m, SenderThreadName);
       modulename += "/Output";
-      dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
+      res = dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
       fABBActive = false;
    }
 
-   if(fABBActive) {
-      /// here creation of pci transport from abb device with connection to given input port:
-       res = dabc::mgr()->CreateTransport(portname, abbdevname.c_str());
-       if (!res) {
-          EOUT(("Cannot create ABB transport"));
-          return false;
-       }
-   }
-
-   return true;
+   return res;
 }
 
 bool bnet::TestWorkerApplication::CreateCombiner(const char* name)
