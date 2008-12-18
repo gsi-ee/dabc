@@ -1,23 +1,23 @@
 <?xml version="1.0"?>
 <dabc version="1">
-<Context host="lxg0517" name="Calbr">
+<Context name="Readout">
   <Run>
     <lib value="libDabcMbs.so"/>
     <lib value="libDabcKnut.so"/>
-    <logfile value="testcal.log"/>
+    <logfile value="Readout.log"/>
   </Run>
   <Application class="roc::Readout">
-    <DoCalibr value="2"/>
+    <DoCalibr value="0"/>
     <NumRocs value="3"/>
-    <RocIp0 value=""/>
-    <RocIp1 value=""/>
-    <RocIp2 value=""/>
-    <BufferSize value="65538"/>
+    <RocIp0 value="cbmtest01"/>
+    <RocIp1 value="cbmtest02"/>
+    <RocIp2 value="cbmtest04"/>
+    <BufferSize value="65536"/>
     <NumBuffers value="100"/>
     <TransportWindow value="30"/>
-    <RawFile value="/d/cbm06/cbmdata/SEP08/raw/run028/run028*.lmd"/>
+    <RawFile value="run090.lmd"/>
     <MbsServerKind value="Stream"/>
-    <CalibrFile value="test.lmd"/>
+    <CalibrFile value=""/>
     <MbsFileSizeLimit value="110"/>
   </Application>
  </Context>

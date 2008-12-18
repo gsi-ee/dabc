@@ -1,37 +1,20 @@
-<!--<?xml version='1.0'?> -->
-<xc:Partition xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:xc="http://xdaq.web.cern.ch/xdaq/xsd/2004/XMLConfiguration-30">
-<xc:Context url="http://lxg0526.gsi.de:1982">
-        <xc:Application class="dabc::xd::Worker" id="42" instance="0" network="local">
-            <properties xmlns="urn:xdaq-application:dabc::xd::Worker" xsi:type="soapenc:Struct">
-                <debugLevel xsi:type="xsd:integer">1</debugLevel>
-                <nodeId xsi:type="xsd:unsignedInt">1</nodeId>
-                <workerTid xsi:type="xsd:unsignedInt">42</workerTid>
-                <controllerTid xsi:type="xsd:unsignedInt">41</controllerTid>
-                <BufferSize.RocPlugin xsi:type="xsd:integer">65536</BufferSize.RocPlugin>
-                <TransportWindow.RocPlugin xsi:type="xsd:integer">30</TransportWindow.RocPlugin>
-                <NumRocs.RocPlugin xsi:type="xsd:integer">3</NumRocs.RocPlugin>
-                <RocIp0.RocPlugin xsi:type="xsd:string"></RocIp0.RocPlugin>
-                <RocIp1.RocPlugin xsi:type="xsd:string"></RocIp1.RocPlugin>
-                <RocIp2.RocPlugin xsi:type="xsd:string"></RocIp2.RocPlugin>
-                <RocIp3.RocPlugin xsi:type="xsd:string"></RocIp3.RocPlugin>
-                <RocIp4.RocPlugin xsi:type="xsd:string"></RocIp4.RocPlugin>
-                <PoolBuffers.RocPlugin xsi:type="xsd:integer">250</PoolBuffers.RocPlugin>
-                <QueueLength.RocPlugin xsi:type="xsd:integer">20</QueueLength.RocPlugin>
-                <DataServerKind.RocPlugin xsi:type="xsd:string">Str_eam</DataServerKind.RocPlugin>
-                <OutFile.RocPlugin xsi:type="xsd:string">/d/cbm06/cbmdata/SEP08/raw/run028/run028*.lmd</OutFile.RocPlugin>
-                <OutFileLimit.RocPlugin xsi:type="xsd:integer">20</OutFileLimit.RocPlugin>
-                <DoCalibr.RocPlugin xsi:type="xsd:integer">2</DoCalibr.RocPlugin>
-                <CalibrFile.RocPlugin xsi:type="xsd:string"></CalibrFile.RocPlugin>
-                <CalibrFileLimit.RocPlugin xsi:type="xsd:integer">100</CalibrFileLimit.RocPlugin>
-            </properties> 
-        </xc:Application>
-        <xc:Module>${DIMDIR}/linux/libdim.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcBase.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcMbs.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcKnut.so</xc:Module>
-        <xc:Module>${DABCSYS}/lib/libDabcXDAQControl.so</xc:Module>
-
-</xc:Context>
-
-
-</xc:Partition>
+<?xml version="1.0"?>
+<dabc version="1">
+<Context name="Calibr">
+  <Run>
+    <lib value="libDabcMbs.so"/>
+    <lib value="libDabcKnut.so"/>
+    <logfile value="Calibr.log"/>
+  </Run>
+  <Application class="roc::Readout">
+    <DoCalibr value="2"/>
+    <NumRocs value="3"/>
+    <BufferSize value="65536"/>
+    <NumBuffers value="100"/>
+    <RawFile value="/d/cbm06/cbmdata/SEP08/raw/run028/run028*.lmd"/>
+    <MbsServerKind value="Stream"/>
+    <CalibrFile value="testcal.lmd"/>
+    <MbsFileSizeLimit value="110"/>
+  </Application>
+ </Context>
+</dabc>

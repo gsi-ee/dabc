@@ -38,10 +38,10 @@ int roc::Device::AddBoard(const char* address, unsigned ctlPort)
 
 bool roc::Device::DoDeviceCleanup(bool full)
 {
-   DOUT1(("_______Device::DoDeviceCleanup full = %s", DBOOL(full)));
+   DOUT1(("DoDeviceCleanup: %s class:%s  full = %s", GetName(), ClassName(), DBOOL(full)));
    // remove boards from controller here:
    // NOTE: this should be internal method of controller, TODO!
-// need to empty the socket data here before removing the board instance?
+   // need to empty the socket data here before removing the board instance?
 
    bool res = dabc::Device::DoDeviceCleanup(full);
 
