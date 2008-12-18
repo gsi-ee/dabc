@@ -1,7 +1,7 @@
-#ifndef BNET_CombinerModule
-#define BNET_CombinerModule
+#ifndef BNET_MbsCombinerModule
+#define BNET_MbsCombinerModule
 
-#include "bnet/FormaterModule.h"
+#include "bnet/CombinerModule.h"
 
 #include "dabc/Pointer.h"
 
@@ -19,7 +19,7 @@ namespace bnet {
 
    class WorkerApplication;
 
-   class MbsCombinerModule : public FormaterModule {
+   class MbsCombinerModule : public CombinerModule {
       protected:
 
          struct InputRec {

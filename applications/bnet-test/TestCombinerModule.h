@@ -1,5 +1,5 @@
-#ifndef BNET_CombinerModule
-#define BNET_CombinerModule
+#ifndef BNET_TestCombinerModule
+#define BNET_TestCombinerModule
 
 #include "dabc/ModuleAsync.h"
 

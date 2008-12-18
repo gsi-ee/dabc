@@ -8,7 +8,7 @@
 #include "dabc/Port.h"
 
 bnet::MbsCombinerModule::MbsCombinerModule(const char* name, dabc::Command* cmd) :
-   FormaterModule(name, cmd),
+   CombinerModule(name, cmd),
    fMinEvId(0),
    fMaxEvId(0),
    fUsedEvents(0),

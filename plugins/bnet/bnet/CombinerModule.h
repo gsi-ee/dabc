@@ -1,11 +1,11 @@
-#ifndef BNET_FormaterModule
-#define BNET_FormaterModule
+#ifndef BNET_CombinerModule
+#define BNET_CombinerModule
 
 #include "dabc/ModuleSync.h"
 
 namespace bnet {
 
-   class FormaterModule : public dabc::ModuleSync {
+   class CombinerModule : public dabc::ModuleSync {
       protected:
          int                    fNumReadouts;
          int                    fModus;
@@ -13,7 +13,7 @@ namespace bnet {
          dabc::PoolHandle*      fOutPool;
          dabc::Port*            fOutPort;
 
-         FormaterModule(const char* name, dabc::Command* cmd = 0);
+         CombinerModule(const char* name, dabc::Command* cmd = 0);
 
       public:
 

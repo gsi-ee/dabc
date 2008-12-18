@@ -1,4 +1,4 @@
-#include "bnet/FormaterModule.h"
+#include "bnet/CombinerModule.h"
 
 #include "dabc/logging.h"
 #include "dabc/string.h"
@@ -10,7 +10,7 @@
 
 #include "bnet/common.h"
 
-bnet::FormaterModule::FormaterModule(const char* name, dabc::Command* cmd) :
+bnet::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleSync(name, cmd)
 {
    fNumReadouts = GetCfgInt(xmlNumReadouts, 1, cmd);

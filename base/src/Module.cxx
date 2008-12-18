@@ -251,7 +251,11 @@ dabc::PoolHandle* dabc::Module::CreatePoolHandle(const char* poolname, BufferSiz
       return 0;
    }
 
-   return new dabc::PoolHandle(this, poolname, pool, size, number, increment);
+   dabc::PoolHandle* handle = FindPool(poolname);
+
+   if (handle==0) handle = new dabc::PoolHandle(this, poolname, pool, size, number, increment);
+
+   return handle;
 }
 
 dabc::Folder* dabc::Module::GetObjFolder(bool force)

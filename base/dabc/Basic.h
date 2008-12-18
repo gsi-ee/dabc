@@ -38,6 +38,7 @@ namespace dabc {
    extern const char* xmlNumInputs;
    extern const char* xmlNumOutputs;
    extern const char* xmlUseAcknowledge;
+   extern const char* xmlFlashTimeout;
 
    extern const char* xmlTrueValue;
    extern const char* xmlFalseValue;
