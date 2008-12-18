@@ -1696,9 +1696,15 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
 
    if (app==0) return false;
 
-   if (!app->DoStateTransition(stcmd)) return false;
+   const char* tgtstate = TargetStateName(stcmd);
 
-   return Execute(new CmdSetParameter(stParName, TargetStateName(stcmd)));
+   bool res = app->DoStateTransition(stcmd);
+
+   if (!res) tgtstate = stFailure;
+
+   if (!Execute(new CmdSetParameter(stParName, tgtstate))) res = false;
+
+   return res;
 }
 
 

@@ -163,9 +163,11 @@ void mbs::ServerIOProcessor::ProcessEvent(dabc::EventId evnt)
           if (fSendBuf->GetTypeId()==mbt_MbsEvents) {
              fHeader.Init(true);
              fHeader.SetUsedBufferSize(fSendBuf->GetTotalSize());
+
              // error in evapi, must be + sizeof(mbs::BufferHeader)
              fHeader.SetFullSize(fSendBuf->GetTotalSize() - sizeof(mbs::BufferHeader));
              fState = ioSendingBuffer;
+
              StartNetSend(&fHeader, sizeof(fHeader), fSendBuf, false);
           } else {
               EOUT(("Buffer type %u not supported !!!", fSendBuf->GetTypeId()));

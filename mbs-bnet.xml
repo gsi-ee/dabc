@@ -36,7 +36,7 @@
        <NetDevice value="dabc::SocketDevice"/>
        <CtrlBuffer value="2048"/>
        <TransportBuffer value="8192"/>
-       <NumEventsCombine value="1"/>
+       <NumEventsCombine value="5"/>
     </Application>
   </Context>
   <Context host="${node1}" name="Read_${host}">

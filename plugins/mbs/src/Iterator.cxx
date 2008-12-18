@@ -55,6 +55,14 @@ bool mbs::ReadIterator::NextEvent()
       return false;
    }
 
+   if (fEvPtr.fullsize() < evnt()->FullSize()) {
+      EOUT(("Error in MBS format - declared event size %u smaller than actual portion in buffer %u",
+            evnt()->FullSize(), fEvPtr.fullsize()));
+      fEvPtr.reset();
+      return false;
+
+   }
+
    fSubPtr.reset();
    fRawPtr.reset();
 

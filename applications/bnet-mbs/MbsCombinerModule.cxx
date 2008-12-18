@@ -54,13 +54,8 @@ void bnet::MbsCombinerModule::SkipNotUsedBuffers()
       if (fRecs[ninp].headbuf) nskip--;
 
       if (nskip>0) {
-
-//         DOUT1(("Skip %d buffers from input %d", nskip, ninp));
-
          Input(ninp)->SkipInputBuffers(nskip);
          fRecs[ninp].bufindx -= nskip;
-
-//         DOUT1(("Skip done"));
       }
    }
 }
@@ -228,7 +223,7 @@ void bnet::MbsCombinerModule::MainLoop()
             continue;
          }
 
-         DOUT1(("Num events in buffer %p size: %u is %u ", buf, buf->GetDataSize(), mbs::ReadIterator::NumEvents(buf)));
+         DOUT5(("Num events in buffer %p size: %u is %u ", buf, buf->GetDataSize(), mbs::ReadIterator::NumEvents(buf)));
 
          if (fRecs[ninp].iter.Reset(buf) && fRecs[ninp].iter.NextEvent()) {
             fRecs[ninp].headbuf = buf;
@@ -299,6 +294,8 @@ void bnet::MbsCombinerModule::MainLoop()
       // we should close output buffer and send it over net
       if ((mineventid < fMinEvId) ||
           (mineventid >= fMaxEvId)) {
+             EOUT(("Jump ??? %u  interval %u %u", mineventid, fMinEvId, fMaxEvId));
+
              outbuf = ProduceOutputBuffer();
              continue;
           }
@@ -307,7 +304,8 @@ void bnet::MbsCombinerModule::MainLoop()
 
          int recid = (mineventid - fMinEvId) * NumReadouts() + ninp;
 
-         fRecs[ninp].iter.AssignEventPointer(fSubEvnts[recid]);
+         if (!fRecs[ninp].iter.AssignEventPointer(fSubEvnts[recid]))
+            EOUT(("Problem to assign event %u from input %d", mineventid, ninp));
 
 //         DOUT1(("Assign event pointer recid %d len %u", recid, fSubEvnts[recid].fullsize()));
          if (fSubEvnts[recid].fullsize() != 296) {

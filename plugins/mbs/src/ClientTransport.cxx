@@ -129,7 +129,7 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
          break;
       case ioRecvHeder:
 
-         DOUT5(("MbsClient:: Header received, rest size = %u used %u", ReadBufferSize(), fHeader.UsedBufferSize()));
+         DOUT1(("MbsClient:: Header received, rest size = %u used %u", ReadBufferSize(), fHeader.UsedBufferSize()));
 
          if (fSwapping) mbs::SwapData(&fHeader, sizeof(fHeader));
 

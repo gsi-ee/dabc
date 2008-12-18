@@ -89,6 +89,8 @@ void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
       fEventCount++;
    }
 
+   iter.Close();
+
    port->Send(buf);
 }
 
