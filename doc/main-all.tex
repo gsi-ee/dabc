@@ -1,5 +1,5 @@
-% Future DAQ demonstrator
-\documentclass{democlass}
+% Future DAQ dabcnstrator
+\documentclass{dabcclass}
 \pdfinfo{
    /Author (Hans G. Essel)
    /Title  (Future DAQ Demonstrator)
@@ -7,20 +7,20 @@
    /Keywords (FutureDAQ, CBM, FOPI)
 }
 
-\include{environment/demo-defs}
+\include{environment/dabc-defs}
 \def\docver{v0.9}
 
 \begin{document}
 \pagenumbering{roman}
 %-----------------------------------------------------------------------------------
-\include{environment/demo-frontpage} \cleardoublepage
+\include{environment/dabc-frontpage} \cleardoublepage
 %-----------------------------------------------------------------------------------
 \thispagestyle{empty} \tableofcontents \thispagestyle{empty} \cleardoublepage
 \pagenumbering{arabic}
 
-\include{environment/demo-preface} \cleardoublepage
-\include{environment/demo-people} \cleardoublepage
-\include{demo-requirements} \cleardoublepage
+\include{environment/dabc-preface} \cleardoublepage
+\include{environment/dabc-people} \cleardoublepage
+\include{dabc-requirements} \cleardoublepage
 
 %------------------------------------------------------------------------------------
 \setcounter{chapter}{0}
@@ -55,7 +55,7 @@ Document names: DAS-t-c-d, where t=R(equirement) or D(esign), c=component key, d
 \input{controls/steer-controls} \cleardoublepage
 %----------------------------------------------------------------------------------
 \chapter{Work packages}
-\input{environment/demo-work} \cleardoublepage
+\input{environment/dabc-work} \cleardoublepage
 %-----------------------------------------------------------------------------------
 %\part{II}
 \chapter{Simulations}
@@ -65,6 +65,6 @@ Document names: DAS-t-c-d, where t=R(equirement) or D(esign), c=component key, d
 \input{test/steer-test} \cleardoublepage
 
 \thispagestyle{empty}
-\input{demo-glossary} \cleardoublepage
-\input{environment/demo-post}
+\input{dabc-glossary} \cleardoublepage
+\input{environment/dabc-post}
 \end{document}
