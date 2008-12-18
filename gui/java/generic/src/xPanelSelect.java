@@ -109,7 +109,7 @@ int width=14;
  * otherwise we would get memory leaks!
  */
 public void releaseDimServices(){
-System.out.println("Selection releaseDimServices");
+//System.out.println("Selection releaseDimServices");
 if((parlist != null)&(valist != null)){
 if(valist.size() > 0)
     for(int i=0;i<parlist.size();i++)
@@ -125,7 +125,7 @@ parlist=brows.getParameters(); // get parameter list
 parpan=new xPanelPrompt("Selected parameter list", new Dimension(800,400));
 // Get references to selected parameter and build parpan
 buildList();
-System.out.println("Selection setDimServices");
+//System.out.println("Selection setDimServices");
 // Build up the frame with the graphics panels  
 if(frame != null) frame.rebuild(parpan); 
 }
