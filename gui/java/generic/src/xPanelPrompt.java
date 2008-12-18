@@ -69,6 +69,28 @@ public xPanelPrompt(String title) {
     add(tool,BorderLayout.SOUTH);
 }
 /**
+ * Create panel with title.
+ * @param title Title
+ * @param dim Window size.
+ */
+public xPanelPrompt(String title, Dimension dim) {
+    super(new BorderLayout());
+    gridconst = new GridBagConstraints();
+    gridconst.anchor = GridBagConstraints.EAST;
+    pan=new JPanel(new GridBagLayout());
+    scrollpan=new JScrollPane(pan);
+    titleborder=BorderFactory.createTitledBorder(title);
+    titleborder.setTitleColor(xSet.greenD());
+    pan.setBorder(titleborder);
+    scrollpan.setPreferredSize(dim);
+    // panSize = new Dimension(xs, ys);
+    // pan.setPreferredSize(panSize);
+    add(scrollpan,BorderLayout.CENTER);
+    tool=new JToolBar();
+    tool.setMargin(new Insets(-4,0,-6,0));
+    add(tool,BorderLayout.SOUTH);
+}
+/**
  * Add prompter line in column.
  * @param label Label for prompt.
  * @param input Input text field. Action listener must be set from caller.
@@ -179,7 +201,6 @@ repaint();
 }
 // public TitledBorder getTitle(){return titleborder;}
 
-
 /**
  * Modal pop up window with error message.
  * @param msg Error message
@@ -207,6 +228,13 @@ public boolean askQuestion(String title, String question){
     return (i == 0);
 }
 /**
+ * Modal pop up window to enter text.
+ * @param title Text describing input.
+ * @param Default Default text.
+ */
+public String askInput(String title, String Default){
+ return JOptionPane.showInputDialog(title,Default);
+}/**
  * Modal pop up window to enter text.
  * @param title Text describing input.
  */

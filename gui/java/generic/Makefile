@@ -68,8 +68,11 @@ classes: \
 	$(PACKAGE)/xPanelCommand.class \
 	$(PACKAGE)/xPanelParameter.class \
 	$(PACKAGE)/xSaveRestore.class \
+	$(PACKAGE)/xPanelSelect.class \
 	$(PACKAGE)/xDesktop.class \
 	$(PACKAGE)/xGui.class
+$(PACKAGE)/xPanelSelect.class : $(SOURCEDIR)/xPanelSelect.java
+	javac $(FLAGS) $(SOURCEDIR)/xPanelSelect.java
 $(PACKAGE)/xSaveRestore.class : $(SOURCEDIR)/xSaveRestore.java
 	javac $(FLAGS) $(SOURCEDIR)/xSaveRestore.java
 $(PACKAGE)/xDesktop.class : $(SOURCEDIR)/xDesktop.java

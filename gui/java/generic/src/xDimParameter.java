@@ -66,7 +66,7 @@ private String sNolink;
 private int    iNolink;
 private float  fNolink;
 private int Version;
-private xiUserInfoHandler userHandler=null;
+private Vector<xiUserInfoHandler> userHandler=null;
 private xRecordHisto rechis=null;
 private xRecordMeter recmet=null;
 private xRecordState recsta=null;
@@ -159,7 +159,10 @@ protected void setPanels(xPanelHisto histogramPanel, xPanelMeter meterPanel, xPa
  * @see xiDimBrowser
  */
 protected void addInfoHandler(xiUserInfoHandler pu){
-userHandler=pu;
+if(userHandler== null)userHandler=new Vector<xiUserInfoHandler>();
+else for(int i=0;i<userHandler.size();i++)
+    if(userHandler.get(i).getName().equals(pu.getName()))return; // already attached
+    userHandler.add(pu);
 }
 /**
  * Remove user handler. Called from user panels through xiDimBrowser interface.
@@ -167,7 +170,12 @@ userHandler=pu;
  * @see xiDimBrowser
  */
 protected void removeInfoHandler(xiUserInfoHandler pu){
-userHandler=null;
+if(userHandler==null) return;
+for(int i=0;i<userHandler.size();i++)
+if(userHandler.get(i).getName().equals(pu.getName())){
+    userHandler.remove(i);
+    break;
+    }
 }
 /**
  * (De)activate parameter.
@@ -756,7 +764,9 @@ if(skip)return;
         } catch (ArrayIndexOutOfBoundsException e){
             System.out.println("Exception Table index: "+tabrow+" "+super.getName());}
     }
-    if(userHandler != null)userHandler.infoHandler(this);
+    // call user info handlers if attached:
+    if(userHandler != null)
+        for(int i=0;i<userHandler.size();i++)userHandler.get(i).infoHandler(this);
     }
 //if(!pars.getName().contains("Rate0")) skip=true;
 //print(value,LF);

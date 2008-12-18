@@ -1,15 +1,6 @@
 package xgui;
-/*
-This client 
-*/
-
-/**
-* @author goofy
-*/
-
 import java.util.*;
 import java.awt.event.*;
-
 /**
  * Base class to keep the data of the setup forms for MBS and DABC
  * @author Hans G. Essel

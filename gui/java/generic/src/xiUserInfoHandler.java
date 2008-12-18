@@ -18,4 +18,9 @@ public interface xiUserInfoHandler
  * @see xiDimParameter
  */
 public abstract void infoHandler(xiDimParameter parameter);
+/**
+ * Called in callback of DIM parameter.
+ * @return Unique name of handler.
+ */
+public abstract String getName();
 }
