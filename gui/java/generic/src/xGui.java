@@ -8,7 +8,7 @@ import java.io.*;
 import dim.*;
 import java.text.NumberFormat;
 import java.beans.PropertyVetoException;
-
+ 
 /**
  * Main class. Creates desktop.<br>
  * Optionally a switch -m may be passed to indicate that no control panels will be shown (monitoring mode).<br>
