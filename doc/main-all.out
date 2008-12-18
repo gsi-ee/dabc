@@ -1,0 +1,74 @@
+\BOOKMARK [0][-]{section*.1}{Preface}{}
+\BOOKMARK [1][-]{section.0.1}{Structure of document}{section*.1}
+\BOOKMARK [1][-]{section.0.2}{Naming conventions}{section*.1}
+\BOOKMARK [0][-]{section.0.2}{The Demonstrator Collaboration}{}
+\BOOKMARK [0][-]{section.0.2}{Requirements pin board}{}
+\BOOKMARK [0][-]{chapter.1}{Documents}{}
+\BOOKMARK [0][-]{chapter.2}{Introduction}{}
+\BOOKMARK [1][-]{section.2.1}{DAQ for CBM}{chapter.2}
+\BOOKMARK [1][-]{section.2.2}{Demonstrator mission}{chapter.2}
+\BOOKMARK [2][-]{subsection.2.2.1}{Demonstration of key technologies}{section.2.2}
+\BOOKMARK [2][-]{subsection.2.2.2}{Test bed for prototypes}{section.2.2}
+\BOOKMARK [2][-]{subsection.2.2.3}{Functional DAQ for detector tests}{section.2.2}
+\BOOKMARK [2][-]{subsection.2.2.4}{General purpose DAQ for medium sized experiments}{section.2.2}
+\BOOKMARK [1][-]{section.2.3}{Demonstrator use cases}{chapter.2}
+\BOOKMARK [1][-]{section.2.4}{Demonstrator architecture}{chapter.2}
+\BOOKMARK [2][-]{subsection.2.4.1}{Hardware}{section.2.4}
+\BOOKMARK [2][-]{subsection.2.4.2}{Data formats}{section.2.4}
+\BOOKMARK [2][-]{subsection.2.4.3}{Software}{section.2.4}
+\BOOKMARK [2][-]{subsection.2.4.4}{Controls}{section.2.4}
+\BOOKMARK [0][-]{chapter.3}{Demonstrator}{}
+\BOOKMARK [1][-]{section.3.1}{Concept}{chapter.3}
+\BOOKMARK [2][-]{subsection.3.1.1}{Demonstrator \040use cases}{section.3.1}
+\BOOKMARK [2][-]{subsection.3.1.2}{The name}{section.3.1}
+\BOOKMARK [1][-]{section.3.2}{DABC \040architecture}{chapter.3}
+\BOOKMARK [1][-]{section.3.3}{Implementation phases}{chapter.3}
+\BOOKMARK [1][-]{section.3.4}{Requirements}{chapter.3}
+\BOOKMARK [2][-]{subsection.3.4.1}{Frontend test bed}{section.3.4}
+\BOOKMARK [2][-]{subsection.3.4.2}{Detector test bed}{section.3.4}
+\BOOKMARK [2][-]{subsection.3.4.3}{Switched event building}{section.3.4}
+\BOOKMARK [2][-]{subsection.3.4.4}{DAQ framework and control systems}{section.3.4}
+\BOOKMARK [2][-]{subsection.3.4.5}{MBS \040front-end support}{section.3.4}
+\BOOKMARK [2][-]{subsection.3.4.6}{Hybrid setup}{section.3.4}
+\BOOKMARK [1][-]{section.3.5}{Design}{chapter.3}
+\BOOKMARK [2][-]{subsection.3.5.1}{Task layout}{section.3.5}
+\BOOKMARK [2][-]{subsection.3.5.2}{MBS \040data input}{section.3.5}
+\BOOKMARK [0][-]{chapter.4}{Hardware}{}
+\BOOKMARK [1][-]{section.4.1}{Hardware Introduction}{chapter.4}
+\BOOKMARK [2][-]{subsection.4.1.1}{Demonstrator}{section.4.1}
+\BOOKMARK [0][-]{chapter.5}{Software}{}
+\BOOKMARK [1][-]{section.5.1}{Software Introduction}{chapter.5}
+\BOOKMARK [1][-]{section.5.2}{Data streams overview}{chapter.5}
+\BOOKMARK [1][-]{section.5.3}{Data formats}{chapter.5}
+\BOOKMARK [2][-]{subsection.5.3.1}{Proposal for data format}{section.5.3}
+\BOOKMARK [0][-]{chapter.6}{Controls}{}
+\BOOKMARK [1][-]{section.6.1}{Controls Introduction}{chapter.6}
+\BOOKMARK [0][-]{chapter.7}{Work packages}{}
+\BOOKMARK [1][-]{section.7.1}{Hardware}{chapter.7}
+\BOOKMARK [1][-]{section.7.2}{Software}{chapter.7}
+\BOOKMARK [2][-]{subsection.7.2.1}{Framework}{section.7.2}
+\BOOKMARK [1][-]{section.7.3}{Controls}{chapter.7}
+\BOOKMARK [0][-]{chapter.8}{Simulations}{}
+\BOOKMARK [1][-]{section.8.1}{Simulations}{chapter.8}
+\BOOKMARK [0][-]{chapter.9}{Testings}{}
+\BOOKMARK [1][-]{section.9.1}{Overview}{chapter.9}
+\BOOKMARK [1][-]{section.9.2}{Test proposal at FZK}{chapter.9}
+\BOOKMARK [2][-]{subsection.9.2.1}{Future DAQ for FAIR}{section.9.2}
+\BOOKMARK [2][-]{subsection.9.2.2}{Infiniband cluster in GSI}{section.9.2}
+\BOOKMARK [2][-]{subsection.9.2.3}{IBGold and uDAPL tests}{section.9.2}
+\BOOKMARK [2][-]{subsection.9.2.4}{OFED and verbs tests}{section.9.2}
+\BOOKMARK [2][-]{subsection.9.2.5}{Planned test in FZK}{section.9.2}
+\BOOKMARK [2][-]{subsection.9.2.6}{System requirements}{section.9.2}
+\BOOKMARK [1][-]{section.9.3}{Testing the UDAPL library}{chapter.9}
+\BOOKMARK [2][-]{subsection.9.3.1}{Overview}{section.9.3}
+\BOOKMARK [2][-]{subsection.9.3.2}{Installation on IB test cluster}{section.9.3}
+\BOOKMARK [2][-]{subsection.9.3.3}{Running of standard InfiniBand transport tests}{section.9.3}
+\BOOKMARK [2][-]{subsection.9.3.4}{C++ wrapper for uDAPL fuctionality}{section.9.3}
+\BOOKMARK [2][-]{subsection.9.3.5}{uDAPL test application}{section.9.3}
+\BOOKMARK [2][-]{subsection.9.3.6}{Time synchronisation}{section.9.3}
+\BOOKMARK [2][-]{subsection.9.3.7}{Scheduled data transfer}{section.9.3}
+\BOOKMARK [2][-]{subsection.9.3.8}{``Chaotic'' data transfer}{section.9.3}
+\BOOKMARK [2][-]{subsection.9.3.9}{Concequence of firmware update}{section.9.3}
+\BOOKMARK [0][-]{figure.9.6}{Glossary}{}
+\BOOKMARK [0][-]{figure.9.6}{References}{}
+\BOOKMARK [0][-]{Item.33}{Index}{}

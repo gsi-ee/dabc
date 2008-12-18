@@ -1,0 +1,115 @@
+\contentsline {chapter}{Preface}{1}{section*.1}
+\contentsline {section}{\numberline {0.1}Structure of document}{1}{section.0.1}
+\contentsline {subsubsection}{\numberline {0.1.0.1}Topdirectory}{1}{subsubsection.0.1.0.1}
+\contentsline {subsubsection}{\numberline {0.1.0.2}Subdirectory {\tt environment}}{2}{subsubsection.0.1.0.2}
+\contentsline {subsubsection}{\numberline {0.1.0.3}Subdirectory {\tt controls}}{2}{subsubsection.0.1.0.3}
+\contentsline {section}{\numberline {0.2}Naming conventions}{2}{section.0.2}
+\contentsline {chapter}{The Demonstrator Collaboration}{3}{section.0.2}
+\contentsline {chapter}{Requirements pin board}{5}{section.0.2}
+\contentsline {chapter}{\numberline {1}Documents}{7}{chapter.1}
+\contentsline {chapter}{\numberline {2}Introduction}{9}{chapter.2}
+\contentsline {section}{\numberline {2.1}DAQ for CBM}{9}{section.2.1}
+\contentsline {section}{\numberline {2.2}Demonstrator mission}{10}{section.2.2}
+\contentsline {subsection}{\numberline {2.2.1}Demonstration of key technologies}{10}{subsection.2.2.1}
+\contentsline {subsection}{\numberline {2.2.2}Test bed for prototypes}{10}{subsection.2.2.2}
+\contentsline {subsection}{\numberline {2.2.3}Functional DAQ for detector tests}{10}{subsection.2.2.3}
+\contentsline {subsection}{\numberline {2.2.4}General purpose DAQ for medium sized experiments}{10}{subsection.2.2.4}
+\contentsline {section}{\numberline {2.3}Demonstrator use cases}{10}{section.2.3}
+\contentsline {subsubsection}{\numberline {2.3.0.1}Frontend test bed}{10}{subsubsection.2.3.0.1}
+\contentsline {subsubsection}{\numberline {2.3.0.2}Detector test bed}{11}{subsubsection.2.3.0.2}
+\contentsline {subsubsection}{\numberline {2.3.0.3}Switched event building}{11}{subsubsection.2.3.0.3}
+\contentsline {subsubsection}{\numberline {2.3.0.4}DAQ framework and control systems}{11}{subsubsection.2.3.0.4}
+\contentsline {subsubsection}{\numberline {2.3.0.5}MBS replacement}{11}{subsubsection.2.3.0.5}
+\contentsline {subsubsection}{\numberline {2.3.0.6}Hybrid setup}{11}{subsubsection.2.3.0.6}
+\contentsline {section}{\numberline {2.4}Demonstrator architecture}{11}{section.2.4}
+\contentsline {subsection}{\numberline {2.4.1}Hardware}{12}{subsection.2.4.1}
+\contentsline {subsubsection}{\numberline {2.4.1.1}Front End Electronics board FEE}{12}{subsubsection.2.4.1.1}
+\contentsline {subsubsection}{\numberline {2.4.1.2}Data Combiner board DCB}{12}{subsubsection.2.4.1.2}
+\contentsline {subsubsection}{\numberline {2.4.1.3}Active Buffer board ABB}{12}{subsubsection.2.4.1.3}
+\contentsline {subsubsection}{\numberline {2.4.1.4}Timing board}{12}{subsubsection.2.4.1.4}
+\contentsline {subsubsection}{\numberline {2.4.1.5}Event builder}{12}{subsubsection.2.4.1.5}
+\contentsline {subsection}{\numberline {2.4.2}Data formats}{12}{subsection.2.4.2}
+\contentsline {subsubsection}{\numberline {2.4.2.1}Raw data stream}{13}{subsubsection.2.4.2.1}
+\contentsline {subsubsection}{\numberline {2.4.2.2}Event definition data}{13}{subsubsection.2.4.2.2}
+\contentsline {subsubsection}{\numberline {2.4.2.3}Event format}{13}{subsubsection.2.4.2.3}
+\contentsline {subsection}{\numberline {2.4.3}Software}{13}{subsection.2.4.3}
+\contentsline {subsubsection}{\numberline {2.4.3.1}Board level software}{13}{subsubsection.2.4.3.1}
+\contentsline {subsubsection}{\numberline {2.4.3.2}Data mover}{13}{subsubsection.2.4.3.2}
+\contentsline {subsubsection}{\numberline {2.4.3.3}Data processing}{13}{subsubsection.2.4.3.3}
+\contentsline {subsection}{\numberline {2.4.4}Controls}{13}{subsection.2.4.4}
+\contentsline {chapter}{\numberline {3}Demonstrator}{15}{chapter.3}
+\contentsline {section}{\numberline {3.1}Concept}{15}{section.3.1}
+\contentsline {subsection}{\numberline {3.1.1}{\sl Demonstrator}\nobreakspace {} use cases}{15}{subsection.3.1.1}
+\contentsline {subsubsection}{\numberline {3.1.1.1}Detector test bed}{15}{subsubsection.3.1.1.1}
+\contentsline {subsubsection}{\numberline {3.1.1.2}Switched event building}{15}{subsubsection.3.1.1.2}
+\contentsline {subsubsection}{\numberline {3.1.1.3}DAQ framework and control systems}{15}{subsubsection.3.1.1.3}
+\contentsline {subsubsection}{\numberline {3.1.1.4}{\sl MBS}\nobreakspace {} replacement}{15}{subsubsection.3.1.1.4}
+\contentsline {subsubsection}{\numberline {3.1.1.5}Hybrid setup}{15}{subsubsection.3.1.1.5}
+\contentsline {subsubsection}{\numberline {3.1.1.6}Front end test bed}{16}{subsubsection.3.1.1.6}
+\contentsline {subsection}{\numberline {3.1.2}The name}{16}{subsection.3.1.2}
+\contentsline {section}{\numberline {3.2}{\sl DABC}\nobreakspace {} architecture}{16}{section.3.2}
+\contentsline {section}{\numberline {3.3}Implementation phases}{16}{section.3.3}
+\contentsline {section}{\numberline {3.4}Requirements}{16}{section.3.4}
+\contentsline {subsection}{\numberline {3.4.1}Frontend test bed}{16}{subsection.3.4.1}
+\contentsline {subsection}{\numberline {3.4.2}Detector test bed}{17}{subsection.3.4.2}
+\contentsline {subsection}{\numberline {3.4.3}Switched event building}{17}{subsection.3.4.3}
+\contentsline {subsection}{\numberline {3.4.4}DAQ framework and control systems}{18}{subsection.3.4.4}
+\contentsline {subsection}{\numberline {3.4.5}{\sl MBS}\nobreakspace {} front-end support}{18}{subsection.3.4.5}
+\contentsline {subsection}{\numberline {3.4.6}Hybrid setup}{18}{subsection.3.4.6}
+\contentsline {section}{\numberline {3.5}Design}{19}{section.3.5}
+\contentsline {subsection}{\numberline {3.5.1}Task layout}{19}{subsection.3.5.1}
+\contentsline {subsection}{\numberline {3.5.2}{\sl MBS}\nobreakspace {} data input}{20}{subsection.3.5.2}
+\contentsline {subsubsection}{\numberline {3.5.2.1}Copy mode}{20}{subsubsection.3.5.2.1}
+\contentsline {subsubsection}{\numberline {3.5.2.2}Zero copy mode}{20}{subsubsection.3.5.2.2}
+\contentsline {subsubsection}{\numberline {3.5.2.3}Communication protocol}{21}{subsubsection.3.5.2.3}
+\contentsline {subsubsection}{\numberline {3.5.2.4}{\sl MBS}\nobreakspace {} control}{22}{subsubsection.3.5.2.4}
+\contentsline {chapter}{\numberline {4}Hardware}{23}{chapter.4}
+\contentsline {section}{\numberline {4.1}Hardware Introduction}{23}{section.4.1}
+\contentsline {subsection}{\numberline {4.1.1}Demonstrator}{23}{subsection.4.1.1}
+\contentsline {subsubsection}{\numberline {4.1.1.1}Front End Electronics board FEE}{23}{subsubsection.4.1.1.1}
+\contentsline {subsubsection}{\numberline {4.1.1.2}Data Combiner board DCB}{23}{subsubsection.4.1.1.2}
+\contentsline {subsubsection}{\numberline {4.1.1.3}Active Buffer board ABB}{23}{subsubsection.4.1.1.3}
+\contentsline {subsubsection}{\numberline {4.1.1.4}Timing board}{24}{subsubsection.4.1.1.4}
+\contentsline {subsubsection}{\numberline {4.1.1.5}Event builder}{24}{subsubsection.4.1.1.5}
+\contentsline {chapter}{\numberline {5}Software}{25}{chapter.5}
+\contentsline {section}{\numberline {5.1}Software Introduction}{25}{section.5.1}
+\contentsline {section}{\numberline {5.2}Data streams overview}{25}{section.5.2}
+\contentsline {section}{\numberline {5.3}Data formats}{26}{section.5.3}
+\contentsline {subsection}{\numberline {5.3.1}Proposal for data format}{26}{subsection.5.3.1}
+\contentsline {chapter}{\numberline {6}Controls}{29}{chapter.6}
+\contentsline {section}{\numberline {6.1}Controls Introduction}{29}{section.6.1}
+\contentsline {chapter}{\numberline {7}Work packages}{31}{chapter.7}
+\contentsline {section}{\numberline {7.1}Hardware}{31}{section.7.1}
+\contentsline {section}{\numberline {7.2}Software}{31}{section.7.2}
+\contentsline {subsection}{\numberline {7.2.1}Framework}{31}{subsection.7.2.1}
+\contentsline {subsubsection}{\numberline {7.2.1.1}GUI}{31}{subsubsection.7.2.1.1}
+\contentsline {section}{\numberline {7.3}Controls}{31}{section.7.3}
+\contentsline {chapter}{\numberline {8}Simulations}{33}{chapter.8}
+\contentsline {section}{\numberline {8.1}Simulations}{33}{section.8.1}
+\contentsline {chapter}{\numberline {9}Testings}{35}{chapter.9}
+\contentsline {section}{\numberline {9.1}Overview}{35}{section.9.1}
+\contentsline {section}{\numberline {9.2}Test proposal at FZK}{35}{section.9.2}
+\contentsline {subsection}{\numberline {9.2.1}Future DAQ for FAIR}{35}{subsection.9.2.1}
+\contentsline {subsection}{\numberline {9.2.2}Infiniband cluster in GSI}{35}{subsection.9.2.2}
+\contentsline {subsection}{\numberline {9.2.3}IBGold and uDAPL tests}{35}{subsection.9.2.3}
+\contentsline {subsection}{\numberline {9.2.4}OFED and verbs tests}{37}{subsection.9.2.4}
+\contentsline {subsection}{\numberline {9.2.5}Planned test in FZK}{37}{subsection.9.2.5}
+\contentsline {subsubsection}{\numberline {9.2.5.1}One switch}{37}{subsubsection.9.2.5.1}
+\contentsline {subsubsection}{\numberline {9.2.5.2}Switch fabric}{37}{subsubsection.9.2.5.2}
+\contentsline {subsubsection}{\numberline {9.2.5.3}Big cluster}{38}{subsubsection.9.2.5.3}
+\contentsline {subsection}{\numberline {9.2.6}System requirements}{38}{subsection.9.2.6}
+\contentsline {section}{\numberline {9.3}Testing the UDAPL library}{39}{section.9.3}
+\contentsline {subsection}{\numberline {9.3.1}Overview}{39}{subsection.9.3.1}
+\contentsline {subsection}{\numberline {9.3.2}Installation on IB test cluster}{39}{subsection.9.3.2}
+\contentsline {subsection}{\numberline {9.3.3}Running of standard InfiniBand transport tests}{39}{subsection.9.3.3}
+\contentsline {subsubsection}{\numberline {9.3.3.1}MPI tests}{40}{subsubsection.9.3.3.1}
+\contentsline {subsubsection}{\numberline {9.3.3.2}uDAPL tests}{41}{subsubsection.9.3.3.2}
+\contentsline {subsection}{\numberline {9.3.4}C++ wrapper for uDAPL fuctionality}{41}{subsection.9.3.4}
+\contentsline {subsection}{\numberline {9.3.5}uDAPL test application}{42}{subsection.9.3.5}
+\contentsline {subsection}{\numberline {9.3.6}Time synchronisation}{42}{subsection.9.3.6}
+\contentsline {subsection}{\numberline {9.3.7}Scheduled data transfer}{43}{subsection.9.3.7}
+\contentsline {subsection}{\numberline {9.3.8}``Chaotic'' data transfer}{45}{subsection.9.3.8}
+\contentsline {subsection}{\numberline {9.3.9}Concequence of firmware update}{47}{subsection.9.3.9}
+\contentsline {chapter}{Glossary}{49}{figure.9.6}
+\contentsline {chapter}{References}{51}{figure.9.6}
+\contentsline {chapter}{Index}{53}{Item.33}
