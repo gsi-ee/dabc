@@ -122,7 +122,7 @@ if(valist.size() > 0)
 public void setDimServices(){
 parlist=brows.getParameters(); // get parameter list
 // create graphics panels, will be placed into compound frame
-parpan=new xPanelPrompt("Selected parameter list", new Dimension(800,400));
+parpan=new xPanelPrompt("Selected parameter list, type RET on white fields to enter value.", new Dimension(800,400));
 // Get references to selected parameter and build parpan
 buildList();
 //System.out.println("Selection setDimServices");
