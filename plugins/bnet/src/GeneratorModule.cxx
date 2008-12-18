@@ -35,7 +35,7 @@ void bnet::GeneratorModule::MainLoop()
 
    dabc::BufferGuard buf;
 
-   while (TestWorking()) {
+   while (ModuleWorking()) {
 
       buf = TakeBuffer(fPool, fBufferSize);
 

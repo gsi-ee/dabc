@@ -42,7 +42,7 @@ void bnet::BuilderModule::MainLoop()
 
    fNumSenders = bnet::NodesVector(GetParStr(parSendMask)).size();
 
-   while (TestWorking()) {
+   while (ModuleWorking()) {
 
       bool iseol = false;
 

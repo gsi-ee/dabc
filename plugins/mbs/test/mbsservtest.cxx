@@ -100,7 +100,7 @@ class GeneratorModule : public dabc::ModuleSync {
 
       virtual void MainLoop()
       {
-         while (TestWorking()) {
+         while (ModuleWorking()) {
 
             dabc::Buffer* buf = TakeBuffer(fPool, BUFFERSIZE);
 

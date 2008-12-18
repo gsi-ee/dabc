@@ -113,7 +113,7 @@ namespace dabc {
 
          unsigned InputQueueSize() { return fTransport ? fTransport->RecvQueueSize() : 0; }
          unsigned InputPending() const { return fInputPending; }
-         bool InputQueueBlocked() const { return (InputPending()==0); }
+         bool InputQueueBlocked() const { return InputPending() == 0; }
          bool InputBlocked() const { return !IsConnected() || InputQueueBlocked(); }
          bool InputQueueFull() { return InputPending() == InputQueueSize(); }
 

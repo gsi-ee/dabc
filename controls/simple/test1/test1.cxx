@@ -215,7 +215,7 @@ class Test1WorkerModule : public dabc::ModuleSync {
       {
          DOUT1(("TWorkerModule mainloop"));
 
-         while (TestWorking(100)) {
+         while (ModuleWorking(100)) {
             fCounter++;
 
             // lets say, about 10 milisecond

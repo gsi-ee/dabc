@@ -177,7 +177,7 @@ void bnet::MbsCombinerModule::MainLoop()
 
    bool isstopacq = false;
 
-   while (TestWorking()) {
+   while (ModuleWorking()) {
 
       // check output buffer
       if (outbuf()!=0)
@@ -279,8 +279,11 @@ void bnet::MbsCombinerModule::MainLoop()
 
             // we copy all accumulated data to output buffer when input we using is full
             // we cannot wait longer while data from this input will be blocked
-            if (Input(mininp)->InputQueueFull())
+            if (Input(mininp)->InputQueueFull()) {
+               EOUT(("Produce here for input %d minev = %u maxev = %u", mininp, mineventid, maxeventid));
+
                outbuf = ProduceOutputBuffer();
+            }
          }
 
          continue;

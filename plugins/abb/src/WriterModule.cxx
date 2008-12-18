@@ -49,7 +49,7 @@ void abb::WriterModule::AfterModuleStop()
 
 void abb::WriterModule::MainLoop()
 {
-while (TestWorking())
+while (ModuleWorking())
    {
    dabc::Buffer* ref = 0;
    try

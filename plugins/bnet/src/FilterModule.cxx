@@ -14,7 +14,7 @@ bnet::FilterModule::FilterModule(const char* name, dabc::Command* cmd) :
 
 void bnet::FilterModule::MainLoop()
 {
-   while (TestWorking()) {
+   while (ModuleWorking()) {
       dabc::BufferGuard buf = Recv(Input(0));
 
       bool dosend = false;

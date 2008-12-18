@@ -27,11 +27,11 @@
   * Typicall MainLoop of the ModuleSync should look like this:
   *     void MainLoop()
   *     {
-  *        while (TestWorking()) {
+  *        while (ModuleWorking()) {
   *          // do something
   *        }
   *     }
-  * TestWorking() function tests if module should continue to work, and will execute commands,
+  * ModuleWorking() function tests if module should continue to work, and will execute commands,
   * submitted to module. To execute commands immidiately, synchron modus must be
   * specified by SetSyncCommands(true) call.
   * In case when main loop containes no any methods like Recv or Send, it will
@@ -48,7 +48,7 @@ namespace dabc {
 
          virtual ~ModuleSync();
 
-         bool TestWorking(double timeout = 0.)
+         bool ModuleWorking(double timeout = 0.)
             throw (StopException, TimeoutException);
 
          virtual void MainLoop() = 0;

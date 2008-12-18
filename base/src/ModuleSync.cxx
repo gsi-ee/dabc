@@ -182,7 +182,7 @@ dabc::Buffer* dabc::ModuleSync::TakeBuffer(PoolHandle* pool, BufferSize_t size, 
    return 0;
 }
 
-bool dabc::ModuleSync::TestWorking(double timeout)
+bool dabc::ModuleSync::ModuleWorking(double timeout)
    throw (StopException, TimeoutException)
 {
    // process exact one event without any timeout

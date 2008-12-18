@@ -129,7 +129,7 @@ class TestModuleSync : public dabc::ModuleSync {
 
       void GeneratorLoop()
       {
-         while (TestWorking()) {
+         while (ModuleWorking()) {
             dabc::Buffer* buf = TakeBuffer(fPool, BUFFERSIZE);
             Send(fOutput, buf);
             fCounter++;
@@ -138,14 +138,14 @@ class TestModuleSync : public dabc::ModuleSync {
 
       void RepeaterLoop()
       {
-         while (TestWorking())
+         while (ModuleWorking())
             Send(fOutput, Recv(fInput));
 //            Send(fOutput, RecvFromAny());
       }
 
       void ReceiverLoop()
       {
-         while (TestWorking()) {
+         while (ModuleWorking()) {
             dabc::Buffer* buf = Recv(fInput);
 //            dabc::Buffer* buf = RecvFromAny();
             dabc::Buffer::Release(buf);
