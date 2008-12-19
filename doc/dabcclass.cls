@@ -1,10 +1,10 @@
-% documentclass for the CBM Technical Status Report
+% documentclass for the DABC manuals
 \def\fileversion{1}
 \def\filedate{2006/03/16}
 \def\docdate{2006/03/16}
 
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesClass{democlass}[\filedate]
+\ProvidesClass{dabcclass}[\filedate]
 \DeclareOption*{\PassOptionsToClass{\CurrentOption}{report}}
 \PassOptionsToClass{a4paper,twoside,openright,english,11pt}{report}
 \ProcessOptions

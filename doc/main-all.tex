@@ -25,11 +25,15 @@
 %------------------------------------------------------------------------------------
 \setcounter{chapter}{0}
 \chapter{Documents}
-Document names: DAS-t-c-d, where t=R(equirement) or D(esign), c=component key, d=year.\\
+Document names: DABC-c, where c=component key. Date in form yyyy-mm-dd.
+Revision in form v.sv.b.\\
 \input{introduction/in-docrev}
-\input{dtor/dtor-docrev}
-\input{simulation/simu-docrev}
-\input{test/test-docrev}
+%\input{dtor/dtor-docrev}
+%\input{simulation/simu-docrev}
+%\input{test/test-docrev}
+\input{dabc/dabc-docrev}
+\input{user/user-docrev}
+\input{reference/ref-docrev}
 \input{software/sw-docrev}
 \input{hardware/hw-docrev}
 \input{controls/ctrl-docrev}
@@ -42,14 +46,23 @@ Document names: DAS-t-c-d, where t=R(equirement) or D(esign), c=component key, d
 \input{introduction/steer-intro} \cleardoublepage
 %-----------------------------------------------------------------------------------
 %\part{I}
-\chapter{Demonstrator}
-\input{dtor/steer-dtor} \cleardoublepage
+%\chapter{Demonstrator}
+%\input{dtor/steer-dtor} \cleardoublepage
 %-----------------------------------------------------------------------------------
-\chapter{Hardware}
-\input{hardware/steer-hardware} \cleardoublepage
+%\chapter{Hardware}
+%\input{hardware/steer-hardware} \cleardoublepage
+%-----------------------------------------------------------------------------------
+\chapter{DABC}
+\input{dabc/steer-dabc} \cleardoublepage
 %-----------------------------------------------------------------------------------
 \chapter{Software}
 \input{software/steer-software} \cleardoublepage
+%-----------------------------------------------------------------------------------
+\chapter{User Manual}
+\input{user/steer-user} \cleardoublepage
+%----------------------------------------------------------------------------------
+\chapter{Reference Manual}
+\input{reference/steer-ref} \cleardoublepage
 %-----------------------------------------------------------------------------------
 \chapter{Controls}
 \input{controls/steer-controls} \cleardoublepage
@@ -58,11 +71,11 @@ Document names: DAS-t-c-d, where t=R(equirement) or D(esign), c=component key, d
 \input{environment/dabc-work} \cleardoublepage
 %-----------------------------------------------------------------------------------
 %\part{II}
-\chapter{Simulations}
-\input{simulation/steer-simu} \cleardoublepage
+%\chapter{Simulations}
+%\input{simulation/steer-simu} \cleardoublepage
 %-----------------------------------------------------------------------------------
-\chapter{Testings}
-\input{test/steer-test} \cleardoublepage
+%\chapter{Testings}
+%\input{test/steer-test} \cleardoublepage
 
 \thispagestyle{empty}
 \input{dabc-glossary} \cleardoublepage

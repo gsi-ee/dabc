@@ -19,14 +19,14 @@ Set TEXINPUTS to x:\verb+\+topdirectory\verb+\+//;\\
 The full document is built by command (we are on topdirectory):
 \begin{verbatim}
 pdflatex main-all
-makeindex
+makeindex main-all.idx
 pdflatex main-all
 \end{verbatim}
 On each subdirectory there is a main file main-xxx.tex, i.e.
 \begin{verbatim}
 cd template
 pdflatex main-XXX
-makeindex
+makeindex main-XXX.idx
 pdflatex main-XXX
 \end{verbatim}
 The files on directory {\tt template} can be used as templates, i.e. copied to a new subdirectory.
