@@ -13,6 +13,7 @@
 #include "mbs/ServerTransport.h"
 #include "mbs/ClientTransport.h"
 #include "mbs/GeneratorModule.h"
+#include "mbs/CombinerModule.h"
 
 mbs::Factory mbsfactory("mbs");
 
@@ -139,6 +140,9 @@ dabc::Module* mbs::Factory::CreateModule(const char* classname, const char* modu
 
    if (strcmp(classname, "mbs::GeneratorModule")==0)
       return new mbs::GeneratorModule(modulename, cmd);
+   else
+   if (strcmp(classname, "mbs::CombinerModule")==0)
+      return new mbs::CombinerModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

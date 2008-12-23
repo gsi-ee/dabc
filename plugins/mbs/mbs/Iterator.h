@@ -19,7 +19,7 @@ namespace mbs {
 
          bool Reset(dabc::Buffer* buf);
 
-         bool IsOk() const { return fBuffer!=0; }
+         bool IsBuffer() const { return fBuffer!=0; }
 
          bool NextEvent();
          bool NextSubEvent();
@@ -42,11 +42,13 @@ namespace mbs {
 
    class WriteIterator {
       public:
-         WriteIterator(dabc::Buffer* buf);
+         WriteIterator(dabc::Buffer* buf = 0);
          ~WriteIterator();
 
          bool Reset(dabc::Buffer* buf);
 
+
+         bool IsEmpty() const { return fFullSize == 0; }
          bool IsPlaceForEvent(uint32_t subeventsize);
          bool NewEvent(EventNumType event_number = 0, uint32_t subeventsize = 0);
          bool NewSubevent(uint32_t minrawsize = 0, uint8_t crate = 0, uint16_t procid = 0);
