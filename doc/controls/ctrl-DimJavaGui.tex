@@ -1,0 +1,224 @@
+\section{Generic Java GUI}
+A generic GUI has been implemented in Java. It processes all services found on the DIM name server. According the description above it does the following:
+\begin{compactitem}[$\bullet$]
+\item Get list of commands and parameters and create objects for each
+\item Put parameters in a table
+\item Put commands in a command tree
+\item Create graphics panels for rate meters, states, histograms, and infos
+\end{compactitem}
+\subsection{Application servers}
+Any application which can implement DIM services can be controlled by the generic GUI if it follows the protocol describesd above. The first application was DABC, the second one MBS.
+
+\subsection{Application interfaces}
+Besides the generic part of the GUI it might be useful to have specific user panels as well, integrated in the generic GUI. This is provided by interface classes. A user may implement these interfaces in his own menues. He can connect his own call back functions to parameters, and a command function to be called when a command shall be executed. He may create his own panels for display using the graphical primitives like rate meters.
+
+\subsection{Java Interfaces to be implemented by application}
+\subsubsection{Interface xiUserPanel}
+{\tt public abstract void init(xiDesktop desktop, ActionListener actionlistener);}
+Called by xgui after instantiation. The desktop can be used to add frames (see below).\\
+{\tt public String getHeader();}
+Must return a header/name text after instantiation.\\
+{\tt public String getToolTip();}
+Must return a tooltip text after instantiation.\\
+{\tt public ImageIcon getIcon();}
+Must return an icon after instantiation.\\
+{\tt public xiUserCommand getUserCommand();}
+Must return an object implementing xiUserCommand, or null. See below.\\
+{\tt public void setDimServices(xiDimBrowser browser);}
+Called by xgui whenever the DIM services had been changed.
+The browser provides the command and parameter list (see below). One can select and store references to commands or parameters. A xiUserInfoHandler can be registered for each selected parameter. Then the infoHandler method is called for each parameter update.\\
+{\tt public void releaseDimServices();}
+All local references to commands or parameters must be cleared!
+
+\subsubsection{public interface xiUserCommand}
+{\tt public boolean getArgumentStyleXml(String scope, String command);}
+Return true if command shall be composed as XML string, false if MBS style string. scope is specified in the XML command descriptor, command is the full command name.
+
+\subsubsection{public interface xiUserInfoHandler}
+{\tt public void infoHandler(xiDimParameter p);}
+
+\subsection{Java Interfaces provided by xgui}
+\subsubsection{Interface xiDesktop}
+{\tt public void addDesktop(JInternalFrame frame, String name);}
+
+\subsubsection{Interface xiDimBrowser}
+\begin{verbatim}
+public xiDimParameter[] getParameters();
+public xiDimCommand[] getCommands();
+public void setInfoHandler(xiDimParameter parameter, 
+                           xiUserInfoHandler infohandler);
+public void sleep(int s);
+\end{verbatim}
+
+\subsubsection{Interface xiDimCommand}
+\begin{verbatim}
+public void exec(String command);
+public xiParser getParserInfo();
+\end{verbatim}
+
+\subsubsection{Interface xiDimParameter}
+\begin{verbatim}
+public xRecordMeter getMeter();
+public xRecordState getState();
+public xRecordInfo getInfo();
+public xiParser getParserInfo();
+\end{verbatim}
+
+\subsubsection{Interface xiParser}
+\begin{verbatim}
+public String getDns();
+public String getNode();
+public String getNodeName();
+public String getNodeID();
+public String getApplicationFull();
+public String getApplication();
+public String getApplicationName();
+public String getApplicationID();
+public String getName();
+public String getNameSpace();
+public String[] getItems();
+public String getFull();
+public String getFull(boolean build);
+public String getCommand();
+public String getCommand(boolean build);
+public int getType();
+public int getState();
+public int getVisibility();
+public int getMode();
+public int getQuality();
+public int getNofTypes();
+public int[] getTypeSizes();
+public String[] getTypeList();
+public String getFormat();
+public boolean isNotSpecified();
+public boolean isSuccess();
+public boolean isInformation();
+public boolean isWarning();
+public boolean isError();
+public boolean isFatal();
+public boolean isAtomic();
+public boolean isGeneric();
+public boolean isState();
+public boolean isInfo();
+public boolean isRate();
+public boolean isHistogram();
+public boolean isCommandDescriptor();
+public boolean isHidden();
+public boolean isVisible();
+public boolean isMonitor();
+public boolean isChangable();
+public boolean isImportant();
+public boolean isLogging();
+public boolean isArray();
+public boolean isFloat();
+public boolean isDouble();
+public boolean isInt();
+public boolean isLong();
+public boolean isChar();
+public boolean isStruct();
+\end{verbatim}
+\subsection{Setup files}
+\subsubsection{Records}
+File {\tt Records.xml}
+\begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+<Record>
+<Meter name="DABC/X86-7/MSG/DataRateKb" 
+       visible="true" 
+       mode="0" 
+       auto="false" 
+       log="false" 
+       low="00000000.0" 
+       up="00016000.0" 
+       color="Red"/>
+</Record>
+\end{verbatim}
+\subsubsection{Parameter filter}
+File {\tt Selection.xml}
+\begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+<Selection>
+<Full contains="Date" filter="false" />
+<Node contains="X86-7" filter="false" />
+<Application contains="MSG" filter="false" />
+<Name contains="*" filter="false" />
+<Records Only="true"  Rates="true"  States="false"  Infos="false" />
+</Selection>
+\end{verbatim}
+\subsubsection{Windows layout}
+File {\tt Layout.xml}
+\begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+<Layout>
+<WindowLayout>
+<Main shape="357,53,857,953" columns="0" show="true"/>
+<Command shape="0,230,650,200" columns="0" show="false"/>
+<Parameter shape="20,259,578,386" columns="0" show="false"/>
+<Logger shape="0,650,680,150" columns="0" show="false"/>
+<Meter shape="463,13,413,236" columns="4" show="false"/>
+<State shape="85,504,313,206" columns="2" show="false"/>
+<Info shape="521,482,613,217" columns="1" show="false"/>
+<Histogram shape="124,508,613,206" columns="3" show="false"/>
+<DabcLauncher shape="0,0,100,100" columns="0" show="false"/>
+<MbsLauncher shape="50,14,404,272" columns="0" show="false"/>
+<DabcMbsLauncher shape="0,0,430,424" columns="0" show="false"/>
+<ParameterSelect shape="300,0,271,326" columns="0" show="true"/>
+<ParameterList shape="13,364,810,426" columns="1" show="true"/>
+</WindowLayout>
+<TableLayout>
+<Parameter width="74,74,74,74,74,74,74,74" />
+</TableLayout>
+</Layout>
+\end{verbatim}
+\subsubsection{DABC launch panel values}
+File {\tt DabcLaunch.xml}
+\begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+<DabcLaunch>
+<Labels
+DabcMaster="DABC Master"
+DabcName="DABC Name"
+DabcUserPath="DABC user path"
+DabcSystemPath="DABC system path"
+DabcSetup="DABC setup file"
+DabcScript="DABC Script"
+DabcServers="%Number of needed DIM servers%"
+/>
+<Fields
+DabcMaster="lxg0523.gsi.de"
+DabcName="Controller:41"
+DabcUserPath="/misc/goofy/dabc/work"
+DabcSystemPath="/misc/goofy/sniff/dabc"
+DabcSetup="SetupMbs.xml"
+DabcScript="ps"
+DabcServers="5"
+/>
+</DabcLaunch>
+\end{verbatim}
+\subsubsection{MBS launch panel}
+File {\tt MbsLaunch.xml}
+\begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+<MbsLaunch>
+<Labels
+MbsMaster="MBS Master"
+MbsUserPath="MBS User path"
+MbsSystemPath="MBS system path"
+MbsScript="MBS Script"
+MbsCommand="Script command"
+MbsServers="%Number of needed DIM servers%"
+/>
+<Fields
+MbsMaster="x86g-4"
+MbsUserPath="v50/x86/newmbs"
+MbsSystemPath="/daq/usr/goofy/mbswork/v51"
+MbsScript="script/remote_exe.sc"
+MbsCommand="m_rising v50/x86/newmbs . x86g-4 x86-7"
+MbsServers="3"
+/>
+</MbsLaunch>
+\end{verbatim}
+
+
+
+
