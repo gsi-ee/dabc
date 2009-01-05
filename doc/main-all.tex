@@ -2,13 +2,13 @@
 \documentclass{dabcclass}
 \pdfinfo{
    /Author (Hans G. Essel)
-   /Title  (Future DAQ Demonstrator)
+   /Title  (Data Acquisition Backbone Core)
    /Subject (Data Acquisition)
-   /Keywords (FutureDAQ, CBM, FOPI)
+   /Keywords (DABC, CBM, FOPI, MBS)
 }
 
 \include{environment/dabc-defs}
-\def\docver{v0.9}
+\def\docver{v1.0.0}
 
 \begin{document}
 \pagenumbering{roman}
@@ -29,21 +29,20 @@ Document names: DABC-c, where c=component key. Date in form yyyy-mm-dd.
 Revision in form v.sv.b.\\
 \input{introduction/in-docrev}
 %\input{dtor/dtor-docrev}
-%\input{simulation/simu-docrev}
-%\input{test/test-docrev}
-\input{dabc/dabc-docrev}
-\input{user/user-docrev}
+input{user/user-docrev}
 \input{reference/ref-docrev}
-\input{software/sw-docrev}
+%\input{software/sw-docrev}
 \input{hardware/hw-docrev}
 \input{controls/ctrl-docrev}
+%\input{simulation/simu-docrev}
+%\input{test/test-docrev}
 \cleardoublepage
 % The parts structure may be useful later
 %------------------------------------------------------------------------------------
 %\part{Introduction and Overview}
 %\setcounter{chapter}{0}
 \chapter{Introduction}
-\input{introduction/steer-intro} \cleardoublepage
+\input{introduction/steer-introduction} \cleardoublepage
 %-----------------------------------------------------------------------------------
 %\part{I}
 %\chapter{Demonstrator}
@@ -52,17 +51,14 @@ Revision in form v.sv.b.\\
 %\chapter{Hardware}
 %\input{hardware/steer-hardware} \cleardoublepage
 %-----------------------------------------------------------------------------------
-\chapter{DABC}
-\input{dabc/steer-dabc} \cleardoublepage
-%-----------------------------------------------------------------------------------
-\chapter{Software}
-\input{software/steer-software} \cleardoublepage
+%\chapter{Software}
+%\input{software/steer-software} \cleardoublepage
 %-----------------------------------------------------------------------------------
 \chapter{User Manual}
 \input{user/steer-user} \cleardoublepage
 %----------------------------------------------------------------------------------
 \chapter{Reference Manual}
-\input{reference/steer-ref} \cleardoublepage
+\input{reference/steer-reference} \cleardoublepage
 %-----------------------------------------------------------------------------------
 \chapter{Controls}
 \input{controls/steer-controls} \cleardoublepage

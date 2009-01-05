@@ -59,13 +59,14 @@ Description of the files:
 \item[dabc-work.tex] working packages
 \end{compactdesc}
 \subsubsection{Subdirectory {\tt controls}}
+Example of a manual component. 
 \begin{compactdesc}
 \item[ctrl-docrev.tex] document name and revision information.
-Is included by {\tt main-all.tex} and {\tt main-controls.tex}
+Is included by {\tt main-all.tex} and {\tt main-controls.tex}.
 \item[main-controls.tex] main file to be texed.
 Includes {\tt steer-controls.tex} and {\tt ctrl-docrev.tex}. Adjust document information here.
 \item[steer-controls.tex] includes everything needed from this directory.
-Is included by {\tt main-all.tex}
+Is included by {\tt main-all.tex} and {\tt main-controls.tex}.
 \end{compactdesc}
 All other directories below topdirectory have the main, docrev and the steer file.
 \section{Naming conventions}
