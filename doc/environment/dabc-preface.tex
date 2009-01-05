@@ -22,6 +22,7 @@ pdflatex main-all
 makeindex main-all.idx
 pdflatex main-all
 \end{verbatim}
+or by {\tt make}.
 On each subdirectory there is a main file main-xxx.tex, i.e.
 \begin{verbatim}
 cd template
@@ -29,11 +30,16 @@ pdflatex main-XXX
 makeindex main-XXX.idx
 pdflatex main-XXX
 \end{verbatim}
+Alternatively on top directory the script 
+\begin{verbatim}
+makedoc <subdirectory>
+\end{verbatim}
+can be used.
 The files on directory {\tt template} can be used as templates, i.e. copied to a new subdirectory.
 All occurences of XXX in file names and tex files should then be renamed properly.
 The script {\tt rename.sh} can be used to do so:
 \begin{verbatim}
-. ./rename.sh XXX yyy
+. ../rename.sh XXX yyy
 \end{verbatim}
 replaces all {\tt XXX} to {\tt yyy} in tex file names and tex files.
 (After that all {\tt *XXX*} files can be deletetd).\\
@@ -42,11 +48,14 @@ It could be used as cut\&paste source.\\
 Description of the files:
 \subsubsection{Topdirectory}
 \begin{compactdesc}
+\item[Makefile] make file.
+\item[makedoc] script to make a subdirectory.
 \item[main-all.tex] main file to be texed. Includes all steer files from subdirectories.
 \item[bibitem.tex] references
 \item[dabc-glossary.tex] glossary
 \item[dabc-requirements.tex] brief and informal list of requirements
 \item[dabcclass.cls] document description
+\item[rename.sh] script to rename/replace strings in file names and content.
 \end{compactdesc}
 \subsubsection{Subdirectory {\tt environment}}
 \begin{compactdesc}
