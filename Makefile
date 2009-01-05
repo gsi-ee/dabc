@@ -33,6 +33,8 @@ DABC_PLUGINS += $(wildcard applications/*)
 
 -include gui/Qt/Makefile.mk
 
+-include doc/Makefile.mk
+
 # APPLICATIONS_DIRS =
 
 libs::
