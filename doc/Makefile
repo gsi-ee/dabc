@@ -54,6 +54,7 @@ reference/ref-section.tex \
 	pdflatex main-all.tex
 	makeindex main-all.idx
 	pdflatex main-all.tex
+	rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc
 clean:
 	rm -f main-all.pdf *.aux *.idx *.ilg *.ind *.log *.out *.toc
 	

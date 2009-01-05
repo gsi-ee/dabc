@@ -1,0 +1,11 @@
+#! /bin/bash
+if [ $# -lt 1 ] ; then
+echo 'args: directory'
+else
+cd $1
+pdflatex main-$1.tex
+makeindex main-$1.idx
+pdflatex main-$1.tex
+rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc
+cd ..
+fi

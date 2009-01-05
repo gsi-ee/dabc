@@ -1,10 +1,10 @@
 % template for main file for chapters.
 % please change title of chapter
-% steer-simu.tex should contain structure of this chapter
+% steer-user.tex should contain structure of this chapter
 \documentclass{dabcclass}
 \pdfinfo{
    /Author (Hans G. Essel)
-   /Title  (Future DAQ Demonstrator Simulations)
+   /Title  (Future DAQ Demonstrator user)
    /Subject (Data Acquisition)
    /Keywords (FutureDAQ, CBM, FOPI)
 }
@@ -12,13 +12,13 @@
 \begin{document}
 \setcounter{chapter}{1}\setcounter{section}{0}\setcounter{subsection}{0}
 
-\Chapter{FutureDAQ Demonstrator Simulations}
-\input{simu-docrev}
+\Chapter{FutureDAQ Demonstrator user}
+\input{user-docrev}
 \cleardoublepage
 \thispagestyle{empty} \tableofcontents
 \thispagestyle{empty} \cleardoublepage
 
-\include{steer-simu} \cleardoublepage
+\include{steer-user} \cleardoublepage
 
 \include{dabc-post}
 \end{document}
