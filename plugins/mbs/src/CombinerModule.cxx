@@ -22,9 +22,8 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    int numinp = GetCfgInt(dabc::xmlNumInputs, 1, cmd);
 
-
-   fFileOutput = GetCfgBool("FileOutput", false, cmd);
-   fServOutput = GetCfgBool("ServerOutput", false, cmd);
+   fFileOutput = GetCfgBool("DoFile", false, cmd);
+   fServOutput = GetCfgBool("DoServer", false, cmd);
 
    double flashtmout = GetCfgDouble(dabc::xmlFlashTimeout, 1., cmd);
 
@@ -191,8 +190,6 @@ extern "C" void StartMbsCombiner()
           EOUT(("Cannot create MBS server"));
           exit(1);
        }
-
-
     }
 
     if (m->IsFileOutput())
