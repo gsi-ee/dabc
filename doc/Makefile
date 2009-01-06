@@ -26,6 +26,14 @@ user/user-exa-roc.tex \
 programmer/steer-programmer.tex \
 programmer/prog-docrev.tex \
 programmer/prog-concepts.tex \
+programmer/prog-command.tex \
+programmer/prog-parameter.tex \
+programmer/prog-plugin.tex \
+programmer/prog-setup.tex \
+programmer/prog-overview.tex \
+programmer/prog-exa-mbs.tex \
+programmer/prog-exa-bnet.tex \
+programmer/prog-exa-roc.tex \
 reference/steer-reference.tex \
 reference/ref-docrev.tex \
 reference/ref-overview.tex \
