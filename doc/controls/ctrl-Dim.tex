@@ -22,7 +22,7 @@ Naming conventions for generic GUI:
    /DABC/lx05/Control/RunState
 \end{verbatim}
 
-We recommend to forbid spaces in any name fields. Dots should not be used except in names (last field). The generic GUI can handle only services from one servernamespace. For DABC and MBS this servernamespace is set to DABC.
+We recommend to forbid spaces in any name fields. Dots should not be used except in names (last field). The generic GUI can handle only services from one servernamespace. For \dabc~ and \mbs~ this servernamespace is set to DABC.
 
 \subsubsection{DIM records}
 For generic GUIs we need something similar to the EPICS records. This means to define structures which can be identified. How shall they be indentified? One possibility would be to prefix a type to the parameter name, i.e. {\\tt rate:DataRate}. Another to use the quality longword. This longword can be set by the server. One could mask the bytes of this longword for different information:

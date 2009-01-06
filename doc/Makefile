@@ -23,6 +23,9 @@ user/user-overview.tex \
 user/user-exa-mbs.tex \
 user/user-exa-bnet.tex \
 user/user-exa-roc.tex \
+programmer/steer-programmer.tex \
+programmer/prog-docrev.tex \
+programmer/prog-concepts.tex \
 reference/steer-reference.tex \
 reference/ref-docrev.tex \
 reference/ref-overview.tex \
