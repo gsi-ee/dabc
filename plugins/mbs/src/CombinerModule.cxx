@@ -39,9 +39,18 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    if (flashtmout>0.) CreateTimer("Flash", flashtmout, false);
 }
 
+mbs::CombinerModule::~CombinerModule()
+{
+   if (fOutBuf!=0) {
+      fOut.Close();
+      dabc::Buffer::Release(fOutBuf);
+      fOutBuf = 0;
+   }
+}
+
 void mbs::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
 {
-   if (fTmCnt>0) fTmCnt--;
+   if (fTmCnt > 0) fTmCnt--;
    if (fTmCnt == 0) FlushBuffer();
 }
 
@@ -86,7 +95,10 @@ bool mbs::CombinerModule::BuildEvent()
          dabc::Port* port = Input(ninp);
 
          while (!port->InputQueueBlocked()) {
-            if (fInp[ninp].Reset(port->FirstInputBuffer())) break;
+            if (fInp[ninp].Reset(port->FirstInputBuffer()))
+               if (fInp[ninp].NextEvent()) break;
+
+            fInp[ninp].Reset(0);
             port->SkipInputBuffers(1);
          }
 
@@ -133,6 +145,9 @@ bool mbs::CombinerModule::BuildEvent()
    if (!fOut.IsPlaceForEvent(subeventssize))
       EOUT(("Event size %u too big for buffer %u, skip event %u", subeventssize+ sizeof(mbs::EventHeader), fBufferSize, buildevid));
    else {
+
+      DOUT0(("Build event %u", buildevid));
+
       fOut.NewEvent(buildevid);
       dabc::Pointer ptr;
       bool isfirst = true;
@@ -199,5 +214,7 @@ extern "C" void StartMbsCombiner()
        }
 
     m->Start();
+
+    DOUT0(("Start MBS combiner module done"));
 }
 

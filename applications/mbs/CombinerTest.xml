@@ -13,11 +13,12 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsCombiner"/>
+      <logfile value="combiner.log"/>
     </Run>
     <Module name="Combiner">
        <NumInputs value="3"/>
        <DoFile value="false"/>
-       <DoServer value="false"/>
+       <DoServer value="true"/>
        <BufferSize value="16384"/>
        <Port name="Input0">
           <InputQueueSize value="5"/>
@@ -37,6 +38,15 @@
           <MbsServerName value="${genhost3}"/>
           <MbsServerPort value="${genport}"/>
        </Port>
+       <Port name="FileOutput">
+          <OutputQueueSize value="5"/>
+          <MbsFileName value="combiner.lmd"/>
+          <MbsFileSizeLimit value="128"/>
+        </Port>
+       <Port name="ServerOutput">
+          <OutputQueueSize value="5"/>
+          <MbsServerKind value="Stream"/>
+        </Port>
      </Module>
   </Context>
   <Defaults>
@@ -46,6 +56,8 @@
         <func value="StartMbsGenerator"/>
       </Run>
       <Module name="Generator">
+         <FirstProcId value="${DABCNODEID}"/>
+         <NumSubevents value="1"/>
          <Port name="Output">
             <OutputQueueSize value="5"/>
             <MbsServerPort value="${genport}"/>
