@@ -247,3 +247,4 @@ doc/index.html : \
 	 $(SOURCEDIR)/xGui.java \
 	 $(SOURCEDIR)/xDesktop.java
 	javadoc -d doc -author -version -doctitle "DABC Generic Java GUI" $(SOURCEDIR)/x*.java
+    javadoc -author -noinherited H.G.Essel -title "DABC Generic Java GUI programming" -doclet org.wonderly.doclets.TexDoclet -docletpath $(JARDIR)/texdoclet.jar -output doc/xgui.tex $(SOURCEDIR)/x*.java
