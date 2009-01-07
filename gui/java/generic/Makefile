@@ -245,6 +245,9 @@ doc/index.html : \
 	 $(SOURCEDIR)/xInternalFrame.java \
 	 $(SOURCEDIR)/xInternalCompound.java \
 	 $(SOURCEDIR)/xGui.java \
-	 $(SOURCEDIR)/xDesktop.java
+	 $(SOURCEDIR)/xDesktop.java \
+	 doc/xgui.tex
 	javadoc -d doc -author -version -doctitle "DABC Generic Java GUI" $(SOURCEDIR)/x*.java
-    javadoc -author -noinherited H.G.Essel -title "DABC Generic Java GUI programming" -doclet org.wonderly.doclets.TexDoclet -docletpath $(JARDIR)/texdoclet.jar -output doc/xgui.tex $(SOURCEDIR)/x*.java
+	javadoc -author H.G.Essel -noinherited -title "DABC Generic Java GUI programming" -doclet org.wonderly.doclets.TexDoclet -docletpath $(JARDIR)/texdoclet.jar -output doc/xgui.tex $(SOURCEDIR)/x*.java
+	cd doc; pdflatex xgui.tex; pdflatex xgui.tex; rm *.aux *.log *.toc *.out
+    
