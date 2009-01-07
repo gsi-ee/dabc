@@ -1,4 +1,4 @@
-[prog/prog-gui.tex]
+[programmer/prog-gui.tex]
 \section{GUI Guide lines}
 \section{GUI Panels}
 \subsection{\dabc~ launch panel}
@@ -7,10 +7,115 @@
 \subsection{Command panel}
 \subsection{Parameter selection panel}
 \subsection{Monitoring panels}
-\subsubsection{Rate meters}
-\subsubsection{Histograms}
-\subsubsection{States}
-\subsubsection{Information}
 \subsection{Parameter table}
 \subsection{Logging window}
 \section{GUI save/restore setups}
+\section{Application specific GUI plug-in}
+\subsection{Application interfaces}
+Besides the generic part of the GUI it might be useful to have specific user panels as well, integrated in the generic GUI. This is provided by interface classes. A user may implement these interfaces in his own menues. He can connect his own call back functions to parameters, and a command function to be called when a command shall be executed. He may create his own panels for display using the graphical primitives like rate meters.
+
+\subsection{Java Interfaces to be implemented by application}
+\subsubsection{Interface xiUserPanel}
+{\tt public abstract void init(xiDesktop desktop, ActionListener actionlistener);}
+Called by xgui after instantiation. The desktop can be used to add frames (see below).\\
+{\tt public String getHeader();}
+Must return a header/name text after instantiation.\\
+{\tt public String getToolTip();}
+Must return a tooltip text after instantiation.\\
+{\tt public ImageIcon getIcon();}
+Must return an icon after instantiation.\\
+{\tt public xiUserCommand getUserCommand();}
+Must return an object implementing xiUserCommand, or null. See below.\\
+{\tt public void setDimServices(xiDimBrowser browser);}
+Called by xgui whenever the DIM services had been changed.
+The browser provides the command and parameter list (see below). One can select and store references to commands or parameters. A xiUserInfoHandler can be registered for each selected parameter. Then the infoHandler method is called for each parameter update.\\
+{\tt public void releaseDimServices();}
+All local references to commands or parameters must be cleared!
+
+\subsubsection{public interface xiUserCommand}
+{\tt public boolean getArgumentStyleXml(String scope, String command);}
+Return true if command shall be composed as XML string, false if MBS style string. scope is specified in the XML command descriptor, command is the full command name.
+
+\subsubsection{public interface xiUserInfoHandler}
+{\tt public void infoHandler(xiDimParameter p);}
+
+\subsection{Java Interfaces provided by xgui}
+\subsubsection{Interface xiDesktop}
+{\tt public void addDesktop(JInternalFrame frame, String name);}
+
+\subsubsection{Interface xiDimBrowser}
+\begin{verbatim}
+public xiDimParameter[] getParameters();
+public xiDimCommand[] getCommands();
+public void setInfoHandler(xiDimParameter parameter, 
+                           xiUserInfoHandler infohandler);
+public void sleep(int s);
+\end{verbatim}
+
+\subsubsection{Interface xiDimCommand}
+\begin{verbatim}
+public void exec(String command);
+public xiParser getParserInfo();
+\end{verbatim}
+
+\subsubsection{Interface xiDimParameter}
+\begin{verbatim}
+public xRecordMeter getMeter();
+public xRecordState getState();
+public xRecordInfo getInfo();
+public xiParser getParserInfo();
+\end{verbatim}
+
+\subsubsection{Interface xiParser}
+\begin{verbatim}
+public String getDns();
+public String getNode();
+public String getNodeName();
+public String getNodeID();
+public String getApplicationFull();
+public String getApplication();
+public String getApplicationName();
+public String getApplicationID();
+public String getName();
+public String getNameSpace();
+public String[] getItems();
+public String getFull();
+public String getFull(boolean build);
+public String getCommand();
+public String getCommand(boolean build);
+public int getType();
+public int getState();
+public int getVisibility();
+public int getMode();
+public int getQuality();
+public int getNofTypes();
+public int[] getTypeSizes();
+public String[] getTypeList();
+public String getFormat();
+public boolean isNotSpecified();
+public boolean isSuccess();
+public boolean isInformation();
+public boolean isWarning();
+public boolean isError();
+public boolean isFatal();
+public boolean isAtomic();
+public boolean isGeneric();
+public boolean isState();
+public boolean isInfo();
+public boolean isRate();
+public boolean isHistogram();
+public boolean isCommandDescriptor();
+public boolean isHidden();
+public boolean isVisible();
+public boolean isMonitor();
+public boolean isChangable();
+public boolean isImportant();
+public boolean isLogging();
+public boolean isArray();
+public boolean isFloat();
+public boolean isDouble();
+public boolean isInt();
+public boolean isLong();
+public boolean isChar();
+public boolean isStruct();
+\end{verbatim}
