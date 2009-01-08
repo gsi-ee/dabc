@@ -201,53 +201,56 @@ $(JARFILE): JarHeader.txt $(wildcard $(PACKAGE)/*.class) $(wildcard icons/*.png)
 	mv $(PACKAGE).jar $(JARDIR)
 	
 	
-doc: doc/index.html
+doc: javadoc2tex doc/index.html doc/xgui.tex
 doc/index.html : \
-	 $(SOURCEDIR)/xiDesktop.java \
-	 $(SOURCEDIR)/xiDimParameter.java \
-	 $(SOURCEDIR)/xiUserPanel.java \
-	 $(SOURCEDIR)/xiUserCommand.java \
-	 $(SOURCEDIR)/xiUserInfoHandler.java \
-	 $(SOURCEDIR)/xiPanelItem.java \
-	 $(SOURCEDIR)/xRecord.java \
-	 $(SOURCEDIR)/xRecordMeter.java \
-	 $(SOURCEDIR)/xRecordState.java \
-	 $(SOURCEDIR)/xRecordInfo.java \
-	 $(SOURCEDIR)/xHisto.java \
-	 $(SOURCEDIR)/xRate.java \
-	 $(SOURCEDIR)/xMeter.java \
-	 $(SOURCEDIR)/xState.java \
-	 $(SOURCEDIR)/xInfo.java \
-	 $(SOURCEDIR)/xXmlParser.java \
-	 $(SOURCEDIR)/xParser.java \
-	 $(SOURCEDIR)/xParTable.java \
-	 $(SOURCEDIR)/xLogger.java \
-	 $(SOURCEDIR)/xLayout.java \
-	 $(SOURCEDIR)/xSet.java \
-	 $(SOURCEDIR)/xPanelLogger.java \
-	 $(SOURCEDIR)/xPanelPrompt.java \
-	 $(SOURCEDIR)/xDimNameInfo.java \
-	 $(SOURCEDIR)/xPanelDabc.java \
-	 $(SOURCEDIR)/xPanelDabcMbs.java \
-	 $(SOURCEDIR)/xPanelMbs.java \
-	 $(SOURCEDIR)/xPanelMeter.java \
-	 $(SOURCEDIR)/xPanelState.java \
-	 $(SOURCEDIR)/xPanelInfo.java \
-	 $(SOURCEDIR)/xDimCommand.java \
-	 $(SOURCEDIR)/xDimParameter.java \
-	 $(SOURCEDIR)/xDimBrowser.java \
-	 $(SOURCEDIR)/xPanelCommand.java \
-	 $(SOURCEDIR)/xPanelParameter.java \
-	 $(SOURCEDIR)/xPanelHisto.java \
-	 $(SOURCEDIR)/xPanelState.java \
-	 $(SOURCEDIR)/xPanelInfo.java \
-	 $(SOURCEDIR)/xPanelGraphics.java \
-	 $(SOURCEDIR)/xInternalFrame.java \
-	 $(SOURCEDIR)/xInternalCompound.java \
-	 $(SOURCEDIR)/xGui.java \
-	 $(SOURCEDIR)/xDesktop.java \
-	 doc/xgui.tex
+	$(SOURCEDIR)/xiDesktop.java \
+	$(SOURCEDIR)/xiDimParameter.java \
+	$(SOURCEDIR)/xiUserPanel.java \
+	$(SOURCEDIR)/xiUserCommand.java \
+	$(SOURCEDIR)/xiUserInfoHandler.java \
+	$(SOURCEDIR)/xiPanelItem.java \
+	$(SOURCEDIR)/xRecord.java \
+	$(SOURCEDIR)/xRecordMeter.java \
+	$(SOURCEDIR)/xRecordState.java \
+	$(SOURCEDIR)/xRecordInfo.java \
+	$(SOURCEDIR)/xHisto.java \
+	$(SOURCEDIR)/xRate.java \
+	$(SOURCEDIR)/xMeter.java \
+	$(SOURCEDIR)/xState.java \
+	$(SOURCEDIR)/xInfo.java \
+	$(SOURCEDIR)/xXmlParser.java \
+	$(SOURCEDIR)/xParser.java \
+	$(SOURCEDIR)/xParTable.java \
+	$(SOURCEDIR)/xLogger.java \
+	$(SOURCEDIR)/xLayout.java \
+	$(SOURCEDIR)/xSet.java \
+	$(SOURCEDIR)/xPanelLogger.java \
+	$(SOURCEDIR)/xPanelPrompt.java \
+	$(SOURCEDIR)/xDimNameInfo.java \
+	$(SOURCEDIR)/xPanelDabc.java \
+	$(SOURCEDIR)/xPanelDabcMbs.java \
+	$(SOURCEDIR)/xPanelMbs.java \
+	$(SOURCEDIR)/xPanelMeter.java \
+	$(SOURCEDIR)/xPanelState.java \
+	$(SOURCEDIR)/xPanelInfo.java \
+	$(SOURCEDIR)/xDimCommand.java \
+	$(SOURCEDIR)/xDimParameter.java \
+	$(SOURCEDIR)/xDimBrowser.java \
+	$(SOURCEDIR)/xPanelCommand.java \
+	$(SOURCEDIR)/xPanelParameter.java \
+	$(SOURCEDIR)/xPanelHisto.java \
+	$(SOURCEDIR)/xPanelState.java \
+	$(SOURCEDIR)/xPanelInfo.java \
+	$(SOURCEDIR)/xPanelGraphics.java \
+	$(SOURCEDIR)/xInternalFrame.java \
+	$(SOURCEDIR)/xInternalCompound.java \
+	$(SOURCEDIR)/xGui.java \
+	$(SOURCEDIR)/xDesktop.java
 	javadoc -d doc -author -version -doctitle "DABC Generic Java GUI" $(SOURCEDIR)/x*.java
+javadoc2tex: javadoc2tex.c
+	gcc javadoc2tex.c -o javadoc2tex
+doc/xgui.tex: doc/index.html
 	javadoc -author H.G.Essel -noinherited -title "DABC Generic Java GUI programming" -doclet org.wonderly.doclets.TexDoclet -docletpath $(JARDIR)/texdoclet.jar -output doc/xgui.tex $(SOURCEDIR)/x*.java
-	cd doc; pdflatex xgui.tex; pdflatex xgui.tex; rm *.aux *.log *.toc *.out
+	./javadoc2tex doc/xgui.tex doc/xguiref.tex
+	cd doc; pdflatex xguiref.tex; pdflatex xguiref.tex; rm *.aux *.log *.toc xgui.tex
     
