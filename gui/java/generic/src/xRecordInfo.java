@@ -1,11 +1,10 @@
 package xgui;
-/**
-*
-* @author goofy
-*/
 import java.util.*;
 /**
-*/
+ * Dim record data for info.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xRecordInfo extends xRecord
 {
 private int Severity;

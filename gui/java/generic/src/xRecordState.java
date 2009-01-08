@@ -1,11 +1,10 @@
 package xgui;
-/**
-*
-* @author goofy
-*/
 import java.util.*;
 /**
-*/
+ * Dim record data for state.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xRecordState extends xRecord
 {
 private int Severity;

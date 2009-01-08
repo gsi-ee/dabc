@@ -15,6 +15,11 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.JTableHeader;
 
+/**
+ * Table model for parameter table.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xParTable extends DefaultTableModel implements Comparator{
 
 protected   int         currCol, editCol, meterCol;

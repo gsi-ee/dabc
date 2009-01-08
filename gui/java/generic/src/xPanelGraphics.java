@@ -24,7 +24,7 @@ import java.awt.Insets;
 import java.util.*;
 /**
  * Container panel for graphic panels.
- * Provides functions to add graphic panels in ciolumns.
+ * Provides functions to add graphic panels in columns.
  * @author Hans G. Essel
  * @version 1.0
  */

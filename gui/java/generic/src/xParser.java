@@ -1,5 +1,8 @@
 package xgui;
 /**
+ * Parser for (de)composing DIM service names.
+ * The DIM service names of DABC follow a defined structure,
+ * mainly Dns/Node[:NodeId]/[applNS::]Application[:ApplicationId]/Name.
  * @author H.G.Essel
  * @version 1.0
 */

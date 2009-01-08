@@ -3,6 +3,11 @@ import java.util.*;
 import org.w3c.dom.*;
 import javax.swing.text.html.parser.AttributeList;
 import java.awt.Dimension;
+/**
+ * Dim record data for histogram.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xRecordHisto extends xRecord
 {
 private int Mode=0;

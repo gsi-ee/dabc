@@ -194,7 +194,7 @@ extFrame=null;
 extHisto=null;
 boextHisto=false;
 }
-// xiPanelGraphics
+// xiPanelItem
 public void setActionListener(ActionListener actionlistener){action=actionlistener;}
 public JPanel getPanel() {return this;}
 public String getName(){return sFullHead;}

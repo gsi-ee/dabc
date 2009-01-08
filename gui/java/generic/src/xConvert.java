@@ -1,5 +1,10 @@
 package xgui;
 import java.io.*;
+/**
+ * Swapping function.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xConvert
 {
   public final static int swap(int i, int e)

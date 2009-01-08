@@ -107,7 +107,7 @@ public void setColor(String colorname){
     if(colorname.equals("White"))  cColValue=new Color(1.0f,1.0f,1.0f);
     if(colorname.equals("Gray"))   cColValue=new Color(0.5f,0.5f,0.5f);
 }
-// xiPanelGraphics
+// xiPanelItem
 public void setActionListener(ActionListener actionlistener){action=actionlistener;}
 public JPanel getPanel() {return this;}
 public String getName(){return sHead;}

@@ -149,7 +149,7 @@ public void setColor(String colorname){
 }
 public double getMin(){return Min;}
 public double getMax(){return Max;}
-// xiPanelGraphics
+// xiPanelItem
 public void setActionListener(ActionListener actionlistener){action=actionlistener;}
 public JPanel getPanel() {return this;}
 public String getName(){return sHead;}

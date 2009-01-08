@@ -1,20 +1,16 @@
 package xgui;
 /**
- * This class provides us with the ability to encrypt passwords when sent
- * over the network stream
- *
- * <P>Contains static methods to encrypt and compare
- * passwords with Unix encrypted passwords.</P>
- *
- * <P>See <A HREF="http://www.zeh.com/local/jfd/crypt.html">
- * John Dumas's Java Crypt page</A> for the original source.</P>
- *
+ * Encrypt passwords.
  * @author jdumas@zgs.com (John Dumas)
  */
 public class xCrypt extends Object
 {
-  //
-  // Null constructor - can't instantiate class
+/*
+ * Contains static methods to encrypt and compare
+ * passwords with Unix encrypted passwords.<br>
+ * See <A HREF="http://www.zeh.com/local/jfd/crypt.html"><br>
+ * John Dumas's Java Crypt page</A> for the original source.
+ */
   private xCrypt()
   {
   }

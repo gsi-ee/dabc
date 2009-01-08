@@ -2,7 +2,11 @@ package xgui;
 import java.util.*;
 import java.io.*;
 import java.awt.*;
-
+/**
+ * Remote shell execution.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xRemoteShell{
 
 private String sCom;

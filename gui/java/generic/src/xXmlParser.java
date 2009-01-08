@@ -6,6 +6,7 @@ import javax.xml.parsers.*;
 import java.io.*;
 
 /**
+ * Parser for XML formatted command descriptions.
  * @author H.G.Essel
  * @version 1.0
 */

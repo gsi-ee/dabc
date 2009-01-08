@@ -2,7 +2,11 @@ package xgui;
 import java.util.Date;
 import java.text.DateFormat;
 import java.awt.Color;
-
+/**
+ * Central print function into logger window.
+ * @author Hans G. Essel
+ * @version 1.0
+ */
 public class xLogger
 {
 private static String sSev[]={"U","S","I","W","E","F","L"};
