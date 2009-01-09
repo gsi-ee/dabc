@@ -3,6 +3,7 @@ all: documents
 documents: \
 	main-all.pdf
 main-all.pdf : main-all.tex \
+dabcclass.cls \
 templates/XXX-docrev.tex \
 templates/steer-XXX.tex \
 templates/XXX-section.tex \
@@ -11,6 +12,7 @@ environment/dabc-docrev.tex \
 environment/dabc-frontpage.tex \
 environment/dabc-people.tex \
 environment/dabc-post.tex \
+environment/dabc-editorial.tex \
 environment/dabc-preface.tex \
 environment/dabc-work.tex \
 user/steer-user.tex \

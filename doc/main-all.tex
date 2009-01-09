@@ -18,13 +18,15 @@
 \thispagestyle{empty} \tableofcontents \thispagestyle{empty} \cleardoublepage
 \pagenumbering{arabic}
 
+\include{environment/dabc-editorial} \cleardoublepage
 \include{environment/dabc-preface} \cleardoublepage
 \include{environment/dabc-people} \cleardoublepage
 \include{dabc-requirements} \cleardoublepage
+\include{environment/dabc-work} \cleardoublepage
 
 %------------------------------------------------------------------------------------
 \setcounter{chapter}{0}
-\chapter{Documents}
+\Chapter{Documents}
 Document names: DABC-c, where c=component key. Date in form yyyy-mm-dd.
 Revision in form v.sv.b.\\
 \input{introduction/in-docrev}
@@ -39,43 +41,42 @@ Revision in form v.sv.b.\\
 %\input{test/test-docrev}
 \cleardoublepage
 %----------------------------------------------------------------------------------
-%\chapter{Work packages}
+%\Chapter{Work packages}
 %\input{environment/dabc-work} \cleardoublepage
 % The parts structure may be useful later
 %------------------------------------------------------------------------------------
 \part{Introduction and Overview}
-%\setcounter{chapter}{0}
-\chapter{Introduction}
+\Chapter{\dabc~: Introduction and Overview}
 \input{introduction/steer-introduction} \cleardoublepage
 %-----------------------------------------------------------------------------------
 \part{User Manual}
-%\chapter{User Manual}
+\Chapter{\dabc~ User Manual: Overview}
 \input{user/steer-user} \cleardoublepage
 %-----------------------------------------------------------------------------------
 \part{Programmer Manual}
-%\chapter{User Manual}
+\Chapter{\dabc~ Programmer Manual: Overview}
 \input{programmer/steer-programmer} \cleardoublepage
 %----------------------------------------------------------------------------------
 \part{Reference Manual}
-%\chapter{Reference Manual}
+\Chapter{\dabc~ Reference Manual: Overview}
 \input{reference/steer-reference} \cleardoublepage
 %-----------------------------------------------------------------------------------
 \part{Controls}
-%\chapter{Controls}
+\Chapter{\dabc~ Controls: Introduction}
 \input{controls/steer-controls} \cleardoublepage
 %-----------------------------------------------------------------------------------
-%\chapter{Hardware}
+%\Chapter{\dabc~: Hardware}
 %\input{hardware/steer-hardware} \cleardoublepage
 %-----------------------------------------------------------------------------------
-%\chapter{Software}
+%\Chapter{\dabc~: Software}
 %\input{software/steer-software} \cleardoublepage
 %-----------------------------------------------------------------------------------
 %\part{Simulations}
-%\chapter{Simulations}
+%\Chapter{\dabc~: Simulations}
 %\input{simulation/steer-simu} \cleardoublepage
 %-----------------------------------------------------------------------------------
 %\part{Measurements}
-%\chapter{Testings}
+%\Chapter{\dabc~: Testings}
 %\input{test/steer-test} \cleardoublepage
 
 \thispagestyle{empty}

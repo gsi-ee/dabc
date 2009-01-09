@@ -218,4 +218,31 @@
 \renewcommand{\l@paragraph}{\@dottedtocline{4}{3.5em}{4.5em}}
 \renewcommand{\l@subparagraph}{\@dottedtocline{5}{4.5em}{5.0em}}
 
+% fontstyles
+% -----------------------------------------------------------------
+\newcommand{\verba}[1]{{\tt #1}}
+\newcommand{\decl}[1]{{\tt #1}}
+\newcommand{\class}[1]{{\bf{\em #1}}}
+\newcommand{\func}[1]{{\sl #1}}
+\newcommand{\member}[1]{{\sl #1}}
+\newcommand{\strong}[1]{{\bf #1}}
+\newcommand{\keyw}[1]{{\sf #1}}
+\newcommand{\param}[1]{{\sf #1}}
+\newcommand{\comm}[1]{{\sf #1}}
+
+% compact lists etc
+% -----------------------------------------------------------------
+\newcommand{\bbul}{\begin{compactitem}[$\bullet$]}
+\newcommand{\ebul}{\end{compactitem}}
+\newcommand{\bcir}{\begin{compactitem}[$\circ$]}
+\newcommand{\ecir}{\end{compactitem}}
+\newcommand{\btri}{\begin{compactitem}[$\triangleright$]}
+\newcommand{\etri}{\end{compactitem}}
+\newcommand{\bbox}{\begin{compactitem}[$\Box$]}
+\newcommand{\ebox}{\end{compactitem}}
+\newcommand{\bnum}{\begin{compactenum}}
+\newcommand{\enum}{\end{compactenum}}
+\newcommand{\bdes}{\begin{compactdesc}}
+\newcommand{\edes}{\end{compactdesc}}
+
 \endinput

@@ -11,8 +11,10 @@
 \subsection{Logging window}
 \section{GUI save/restore setups}
 \section{Application specific GUI plug-in}
+Besides the generic part of the GUI it might be useful to have specific user panels as well, integrated in the generic GUI. This is done by implementation of a xPanelPrompt derived class. The class name can be 
+passed as argument to the java command starting the GUI. The class must implement some interfaces.
 \subsection{Application interfaces}
-Besides the generic part of the GUI it might be useful to have specific user panels as well, integrated in the generic GUI. This is provided by interface classes. A user may implement these interfaces in his own menues. He can connect his own call back functions to parameters, and a command function to be called when a command shall be executed. He may create his own panels for display using the graphical primitives like rate meters.
+A user may implement these interfaces in his own menues. He can connect his own call back functions to parameters, and a command function to be called when a command shall be executed. He may create his own panels for display using the graphical primitives like rate meters.
 
 \subsection{Java Interfaces to be implemented by application}
 \subsubsection{Interface xiUserPanel}

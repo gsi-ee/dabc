@@ -11,13 +11,13 @@ Example figure
 \label{fig:XXX-fig} % give it a name for references
 \end{figure}
 
-\index{Demonstrator!mission} % entry in index
+\index{DABC!mission} % entry in index
 
 Reference to Fig.~\ref{fig:XXX-fig}.
 \clearpage % new page
 
 \section{Next section}
-\index{Demonstrator!mission} % entry in index
+\index{DABC!mission} % entry in index
 
 % define a marker to be referenced from outside:
 \hyperdef{XXX}{name}{[Marker:XXX:name]}\\
@@ -26,33 +26,46 @@ See also \hyperref{http://www-linux.gsi.de/~mbs/main-software.pdf}{sw}{data}{Sof
 See also \hyperref{http://www-linux.gsi.de/~mbs/main-intro.pdf}{in}{mission}{Introduction paper}.
 
 \subsection{Subsection}
-\index{Demonstrator!technology} % entry in index
+\index{DABC!technology} % entry in index
 
 Example of a compact list with bullets
-\begin{compactitem}[$\bullet$]
+\bbul
 \item FEE: self-triggered, data push, conditional RoI based readout
 \item CNet: combined data, time, control, and RoI traffic
-\end{compactitem}
+\ebul
 
 Another compact list with circles
-\begin{compactitem}[$\circ$]
+\bcir
 \item Hardware
 \item Firmware
-\end{compactitem}
+\ecir
+
+Another compact list with triangle
+\btri
+\item Hardware
+\item Firmware
+\etri
+
+Another compact list with squares
+\bbox
+\item Hardware
+\item Firmware
+\ebox
+
 \subsubsection{Subsubsection}
 
 Example of compact description list
-\begin{compactdesc}
+\bdes
 \item[Hardware] There are mainly three boards with different tasks but similar architecture.
 \item[Data formats] The data and time stamp formats must be defined early because they are
 interpreted at many occasions. A change would have big impact.
-\end{compactdesc}
+\edes
 
 Example of compact numerated list
-\begin{compactenum}
+\bnum
 \item compressed
 \item coded geographical address
-\end{compactenum}
+\enum
 
 Example of table
 \begin{table}[h]
@@ -63,3 +76,8 @@ DAS-XXX-06 & 2006 Mar 13 & Hans G.Essel & 0.9      & First scetch \\ \hline
 \caption{Example of table.}
 \label{XXX-table}
 \end{table}
+
+When we have a \class{MyNewClass} it might have some \func{Functions} and some \member{Members}.
+It also might have some \keyw{Constants} and \decl{Declarations}.
+Fixed terms should be in \verba{Typewriter}. Text to be highlighted: \strong{Note!}.
+DIM parameter and commands as \param{DataRate} and \comm{setBufferSize}
