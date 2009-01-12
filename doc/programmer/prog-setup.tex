@@ -112,11 +112,75 @@ There are several variables, which are defined by configuration system:
 
 Any environment variable can also be used as well. 
 
+
 \subsection{Default values}
 
-There are situations, when one can set 
+There are situations, when one need to set same value to several similar parameters,
+for instance same output queue length for all output ports in the module. One possible way
+is to use variables (as described before) and set parameter value via variable. 
+Disadvantage of such approach that one should expand xml files and in case 
+of big number of ports xml will be very big and unreadable.
+
+Another possibility to set several parameters at once - create <dabc/Defaults> node and
+specify cast rule, using "*" or "?" symbols like that: 
+
+\begin{verbatim}
+
+<?xml version="1.0"?>
+<dabc version="1">
+  <Variables>
+    <myname value="Generator"/> 
+    <myport value="6010"/> 
+  </Variables>
+
+  <Context name="Mgr${myname}">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsGenerator"/>
+    </Run>
+    <Module name="${myname}">
+       <Port name="Output">
+          <MbsServerPort value="${myport}"/>
+       </Port>
+    </Module>
+  </Context>
+  <Defualts>
+    <Module name="*">
+       <Port name="Output*">
+          <OutputQueueSize value="5"/>
+       </Port>
+    </Module>
+  </Defualts>
+</dabc>
+
+\end{verbatim}
+
+In this case for all ports, which names are started with string "Output" from any module,
+output queue length will 5. 
+
+In form, as it is specified in example, such multicast rule will be applied for 
+all contexts from configuration file means by such rule we set output queue length 
+for all modules on all nodes. This allow us to create compact xml files for big multi-nodes configuration.   
 
 
-\subsection{Parameters priorities}
+\subsection{Configuration priorities}
 
- 
+Setting parameter values via xml file not the only possibility for system configuration. 
+Usually parameter has default value, which is specified at the time when parameter is created.
+One also can supply some configuration parameters to the command, when module or device or transport is created.
+
+Here all possibilities are listed with decreased priority:
+
+\bbul
+\item Command argument. It has the highest priority in all cases and allows programmer to
+overwrite any configuration parameters which user may define in configuration file
+\item Parameter value from appropriate <Context> node. In this case names of parameter and all its parents  
+should exactly match to names which are specified in xml file. No any kind of cast is supported.  
+\item Parameter value from <Defaults> node. Parameter name and names of at least one parent should match to multicast rules.
+If there is several matches exists match with maximal number of parent matches will be preferred.
+For instance node <Defualts/Context/Module/Port/OutputQueueSize> will be preferable rather than
+<Defualts/Port/OutputQueueSize>. 
+\item Default parameter value.
+\ebul
+    
+
