@@ -186,7 +186,6 @@ $(PACKAGE)/xParTable.class : $(SOURCEDIR)/xParTable.java
 
 clean:
 	rm -f $(PACKAGE)/*.class
-	rm -f $(PACKAGE)/*.html
 	rm -f $(JARFILE)
 	
 cleandoc:
