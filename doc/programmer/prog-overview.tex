@@ -54,7 +54,7 @@ The modules are organized and controlled by one manager.
 \item  The manager defines interface methods to the control system. 
       This covers registering, sending, and receiving of commands; registering, 
       updating, unregistering of parameters; error logging and global error handling. 
-      These methods must be implemented in subclass of \class{dabd::Manager} that 
+      These methods must be implemented in subclass of \class{dabc::Manager} that 
       knows the specific controls framework.
 \item  The manager is a singleton instance per executable. 
       It is persistent independent of the application's state.
@@ -167,7 +167,7 @@ For special set ups (e.g. Bnet), the framework provides
 \begin{compactitem}[$\circ$]
 \item  Instead of implementing \func{MainLoop()}, other virtual 
       methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
-      implemented that are implicitely called by the superclass \func{MainLoop()}.
+      implemented that are implicitly called by the superclass \func{MainLoop()}.
 \item  The special base classes may provide additional 
       methods to be used for data processing.    
 \end{compactitem}
