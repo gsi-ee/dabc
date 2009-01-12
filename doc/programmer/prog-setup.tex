@@ -1,2 +1,122 @@
 [programmer/prog-setup.tex]
 \section{Setting up system}
+
+Configuration parameters for mostly all objects, created in dabc, 
+can be placed in xml file. 
+
+
+
+\subsection{Simple example}
+
+Lets consider simple example of configuration file:
+
+\begin{verbatim}
+
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="Generator">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsGenerator"/>
+    </Run>
+    <Module name="Generator">
+       <Port name="Output">
+          <OutputQueueSize value="5"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+    </Module>
+  </Context>
+</dabc>
+
+\end{verbatim}
+
+This is an example of xml file for mbs generator, which produces 
+mbs events and provides them to mbs transport server. Other application
+(dabc or Go4) can connect to that server and read generated mbs events.
+
+\subsection{Basic syntax}
+
+DABC configuration file should always contain <dabc> as root node. 
+Inside <dabc> node one or several <Context> nodes should exists.
+Each <Context> node corresponds to independent application context, which runs as
+independent executable. 
+Optionally <dabc> node can has <Variables> and <Defaults> nodes, which are described further. 
+
+\subsection{Context}
+
+<Context> node can has two optional attributes:
+\bdes
+\item["host"] host name, where executable should runs, default is localhost
+\item["name"] application (manager), default is host name.
+\edes
+
+Inside <Context> node configuration parameters for modules, devices, memory pools are stored.
+In example file one sees several parameters for output port of generator module.  
+
+\subsection{Run parameters}
+
+
+\subsection{Variables}
+
+In root <dabc> node one can insert <Variables> node, which may contain 
+definition of one or several variables. Once defined, 
+such variables can be used in several places of configuration file to set parameters.
+In this case syntax to set parameter is:
+
+\begin{verbatim}
+    <ParameterName value="${VariableName}"/>
+\end{verbatim}
+
+It is allowed to combine variable with text or other variable, 
+but non of arithmetic or string operations are supported. 
+
+Using variables, one can modify example in following way:
+
+\begin{verbatim}
+
+<?xml version="1.0"?>
+<dabc version="1">
+  <Variables>
+    <myname value="Generator"/> 
+    <myport value="6010"/> 
+  </Variables>
+
+  <Context name="Mgr${myname}">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsGenerator"/>
+    </Run>
+    <Module name="${myname}">
+       <Port name="Output">
+          <OutputQueueSize value="5"/>
+          <MbsServerPort value="${myport}"/>
+       </Port>
+    </Module>
+  </Context>
+</dabc>
+
+\end{verbatim}
+
+Here context name and module name are set via myname variable and mbs server 
+socket port is set via myport variable.
+
+There are several variables, which are defined by configuration system:
+
+\bbul
+\item DABCSYS - top directory of dabc installation
+\item DABCUSERDIR - user-specified directory
+\item DABCWORKDIR - current working directory
+\item DABCNUMNODES - number of <Context> nodes in configuration files
+\item DABCNODEID - sequence number of current <Context> node in configuration file 
+\ebul
+
+Any environment variable can also be used as well. 
+
+\subsection{Default values}
+
+There are situations, when one can set 
+
+
+\subsection{Parameters priorities}
+
+ 
