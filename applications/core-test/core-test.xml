@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="core-test">
+    <Run>
+      <lib value="libDabcCoreTest.so"/>
+      <func value="StartCoreTest"/>
+      <logfile value="core-test.log"/>
+    </Run>
+  </Context>
+</dabc>

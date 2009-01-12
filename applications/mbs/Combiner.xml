@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="localhost" name="Combiner">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsCombiner"/>
+      <logfile value="combiner.log"/>
+    </Run>
+    <Module name="Combiner">
+       <NumInputs value="3"/>
+       <DoFile value="false"/>
+       <DoServer value="true"/>
+       <BufferSize value="16384"/>
+       <Port name="Input0">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi009"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="Input1">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi010"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="Input2">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi011"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="FileOutput">
+          <OutputQueueSize value="5"/>
+          <MbsFileName value="combiner.lmd"/>
+          <MbsFileSizeLimit value="128"/>
+        </Port>
+       <Port name="ServerOutput">
+          <OutputQueueSize value="5"/>
+          <MbsServerKind value="Stream"/>
+        </Port>
+     </Module>
+  </Context>
+</dabc>
