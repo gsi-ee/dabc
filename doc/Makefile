@@ -36,6 +36,7 @@ programmer/prog-overview.tex \
 programmer/prog-exa-mbs.tex \
 programmer/prog-exa-bnet.tex \
 programmer/prog-exa-roc.tex \
+programmer/prog-gui.tex \
 reference/steer-reference.tex \
 reference/ref-docrev.tex \
 reference/ref-overview.tex \
