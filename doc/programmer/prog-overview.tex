@@ -1,7 +1,6 @@
 [programmer/prog-overview.tex]
 \section{Role and  functionality of the objects}
 \subsection{Modules}
-
 All processing code runs in module objects. 
 There are two general types of modules: 
 The \class{dabc::ModuleSync} and the \class{dabc::ModuleAsync}. 
@@ -138,143 +137,43 @@ A transport belongs to a \class{dabc::Device} object of a
       singleton. Transport objects are owned by the device.
 \ecir
 
-\section{User interface}
-\subsection{Module}
-It is supposed that the data processing functionality usually is implemented by subclassing 
-   the \class{dabc::ModuleSync} base class. 
+\subsection{Application}
+The \class{dabc::Application} is a singleton object that represents the running application of the DAQ node 
+(i.e.~ one system process) itself. 
 \bcir
-\item  The constructor of \class{dabc::ModuleSync} subclass  creates all 
-      ports, may initialize the pool handles, and may 
-      define commands and parameters. 
-\item  The virtual \func{ExecuteCommand()} method of \class{dabc::ModuleSync} 
-      subclass may implement the callbacks of the defined commands.
-\item  The virtual \func{MainLoop()} method of \class{dabc::ModuleSync} 
-      subclass implements the processing job.
-\item  The user code shall not directly access the 
-      memory pools to request new buffers. Instead, it can use methods of 
-      \class{dabc::Module} with a \class{dabc::PoolHandle} object as argument. 
-      These methods may block the \func{MainLoop()}.
-\item  The user code can send and receive buffers 
-      from and to ports by methods of \class{dabc::ModuleSync}. 
-      These methods may block the \func{MainLoop()}.
+
+\item  The  \class{dabc::Application} provides the main configuration parameters
+and defines the runtime actions in the different control system states (see section \ref{prog_fsm}).
+
+\item In contrast to the \class{dabc::Manager} implementation that defines a framework control system (e.g. DIM, EPICS),
+the subclass of \class{dabc::Application} defines the experiment specific behaviour of the DAQ
+
 \ecir
-\subsection{Special modules}
-For special set ups (e.g. Bnet), the framework provides 
-   \class{dabc::Module} subclasses with generic functionality 
-   (e.g. \class{bnet::BuilderModule}, \class{bnet::FilterModule}). 
-   In this case, the user specific parts like data formats are 
-   implemented by subclassing these special module classes.
-\begin{compactitem}[$\circ$]
-\item  Instead of implementing \func{MainLoop()}, other virtual 
-      methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
-      implemented that are implicitly called by the superclass \func{MainLoop()}.
-\item  The special base classes may provide additional 
-      methods to be used for data processing.    
-\end{compactitem}
-\subsection{Device and transport}
-All data transport functionality is implemented by 
-   subclassing  \class{dabc::Device} and \class{dabc::Transport} base classes. 
-\begin{compactitem}[$\circ$]
-\item  The \class{dabc::Device} subclass constructor may create  
-      pool handles and may define commands and parameters. 
-\item  The virtual \func{ExecuteCommand()} method of \class{dabc::Device} 
-      subclass may implement the callbacks of the defined commands.
-\item  Factory method \func{CreateTransport()} of \class{dabc::Device}
-      subclass defines which transport instance is created 
-      by the framework whenever this device shall be connected to 
-      the port of a module.   
-\item  The virtual \func{Send()} and \func{Recv()} methods of the 
-      \class{dabc::Transport} subclass must implement the actual transport 
-      from and to a connected port, respectively.
-\item  To implement a simple user defined transport 
-      (e.g. read from a special socket protocol), 
-      there is another base class \class{dabc::DataTransport} (subclass of \class{dabc::Transport}). 
-      This class already provides queues for (optionally)
-      input and output buffers and a data backpressure mechanism. 
-      Instead of \func{Send} and \func{Recv()}, the user subclass must implement 
-      special virtual methods, e.g. \func{ReadBegin()}, \func{ReadComplete(buffer)} 
-      to request the next buffer of a given size from the base class, 
-      and to peform filling this buffer from the associated user device, respectively. 
-      These methods are called implicitely from the framework at the right time. 
-\end{compactitem}
-\subsection{Factories}
-The set up of the application specific module and device objects is done 
-   by \class{dabc::Factory} subclasses.
-\begin{compactitem}[$\circ$]
-\item  All factories are registered and kept in the global manager. 
-      The access to the factories' functionality is done via methods of the manager. 
-\item  All factories are instantiated as static singletons when 
-      loading the libraries that defines them. 
-      The user need not to create them explicitely.       
-\item  The \class{dabc::Factory} subclasses must implement methods \func{CreateModule(classname)}, 
-      and \func{CreateDevice(classname)} , to instantiate modules or 
-      devices, respectively. The user must subclass 
-      the \class{dabc::Factory} to add own classes to the system. \strong{Note:} the factory 
-      method for transport objects is not in this factory, but in the 
-      corresponding \class{dabc::Device} subclass. 
-\item  The manager can keep more than one factory and scans 
-      all factories to produce the requested object class. 
-\item  The framework provides several factories for predefined 
-      implementations (e.g. \class{bnet::SenderModule}, \class{dabc::VerbsDevice}).      
-\end{compactitem}
-\subsection{Application plug-in}
-The specific application controlling code is defined in 
-   the \class{dabc::ApplicationPlugin}.   
-\begin{compactitem}[$\circ$]
-\item  The manager has exactly one application plug-in. 
-      The user must provide a \class{dabc::ApplicationPlugin} subclass.
-\item  The \class{dabc::ApplicationPlugin} is instantiated and registered on 
-      startup time by a global \func{InitPlugins()} function. This function 
-      is declared and executed in the framework, but defined in the user 
-      library and thus knows the user specific plug-in classes. 
-      This trick is necessary to decouple the executable main function 
-      (e.g. \xdaq executive) from the user specific part.  
-\item  The user may implement virtual methods \func{UserConfigure()} ,  
-      \func{UserEnable()}, \func{UserBeforeStart()}, 
-      \func{UserAfterStop()}, \func{UserHalt()} in his/her 
-      \class{dabc::ApplicationPlugin} subclass. These methods are executed by the 
-      framework state machine before or after the corresponding state 
-      transitions to do additional application specific configuration, 
-      run control, and clean-up actions. Note: all generic state machine 
-      actions (e.g. cleanup of modules and devices, starting 
-      and stopping the working processors) are already handled by 
-      the framework at the right time and need not to be invoked explicitely here.
-\item  The application plug-in may register parameters that 
-      define the application's configuration. These parameters can be set at 
-      runtime from the configuration and controls system.
-\item  The methods of the application plug-in should use 
-      application factories to create modules and 
-      devices by name string. However, for convenience the user may 
-      implement factory methods \func{CreateModule()} and \func{CreateDevice()} straight in his/her 
-      \class{dabc::ApplicationPlugin} subclass.
-\item   For special DAQ topologies (e.g. Bnet), the framework offers 
-      implementations of the \class{dabc::ApplicationPlugin} containing the 
-      generic functionality (e.g. \class{bnet::WorkerPlugin}, \class{bnet::ClusterPlugin}). 
-      In this case, the user specific parts are implemented by subclassing 
-      these and implementing additional virtual methods (e.g. \func{CreateReadout()}).    
-\end{compactitem}
+
                
 \section{Controls and configuration}
 \subsection{Finite state machine}
+\label{prog_fsm}
 The running state of the DAQ system is ruled by a {\sl finite state machine} on 
-   each node of the cluster.
-\begin{compactitem}[$\circ$]
-\item  The manager provides an interface to switch the application 
-      state by the external control system. This may be done by calling state 
-      change methods of the manager, or by submitting state change commands 
+each node of the cluster.The manager provides an interface to switch the application 
+	 state by the external control system. This may be done by calling 
+	 state change methods of the manager, or by submitting state change commands 
       to the manager.
-\item  The finite state machine itself is not part of the manager, 
+
+The finite state machine itself is not part of the manager, 
       i.e. the manager does not necessarily check if a state transition 
       is allowed. Instead, the controls framework provides a 
       state machine implementation.
-\item  Some of the application states may be propagated to the 
+
+Some of the application states may be propagated to the 
       active components (modules, device objects), e.g. the 
       \keyw{Running} or \keyw{Ready} state which correspond to the activity of the thread. 
       Other states like \keyw{Halted} or \keyw{Failure} do not match a component state; 
       e.g. in \keyw{Halted} state, all modules are deleted and thus do not 
       have an internal state. The granularity of the control system state 
       machine is not finer than the node application.
-\item  There are 5 generic states to treat all set-ups: 
+
+There are 5 generic states to treat all set-ups: 
 \begin{compactdesc}
 \item[Halted] : The application is not configured and not running. 
 	 There are no modules, transports, and devices existing.
@@ -292,7 +191,8 @@ The running state of the DAQ system is ruled by a {\sl finite state machine} on
 	 \keyw{Running} state would not lead to \keyw{Failure}, but rather to stop 
 	 the run in a usual way (to \keyw{Ready}).
 \end{compactdesc}
-\item  The state transitions between the 5 generic states correspond to 
+
+The state transitions between the 5 generic states correspond to 
       commands of the control system for each node application:
 \begin{compactdesc}
 \item[Configure] : between \keyw{Halted} and \keyw{Configured}. Core 
@@ -319,7 +219,8 @@ The running state of the DAQ system is ruled by a {\sl finite state machine} on
 	 creation time that an object shall be persistent (e.g. a device may 
 	 be kept until the end of the process once it had been created) 
 \end{compactdesc}
-\end{compactitem}
+
+
 \subsection{Commands}
 The control system may send (user defined) commands to each 
    component (module , device). Execution of these commands is 
@@ -328,24 +229,26 @@ The control system may send (user defined) commands to each
 The {\sl Configuration} is done using parameter objects. The 
    manager provides an interface to register parameters to the
     configuration/control system.    
-\begin{compactitem}[$\circ$]
-\item  On application startup time, the external configuration system may 
+
+On application startup time, the external configuration system may 
       set the parameters from a database, or from a configuration file 
-      (e.g. XML configuration files).
-\item  During the application lifetime, the control system may change 
+      (e.g. XML configuration files). During the application lifetime, the control system may change 
       values of the parameters by command. However, since the set 
       up is changed on \keyw{Configure} time only, it may be forbidden to change 
       true configuration parameters except when the application is \keyw{Halted}. 
       Otherwise, there would be the possibility of a mismatch between the 
       monitored parameter values and the really running set up.
-\item  The current parameters  may be stored back to the data 
+
+The current parameters  may be stored back to the data 
       base of the configuration system.
-\end{compactitem}
+
+      
 \subsection{Parameters and monitoring}
 The control system may use local parameter objects for 
    {\sl Monitoring} the components. When monitoring parameters change, 
    the control system is updated by interface methods of the 
    manager and may refresh the GUI representation.
+
 \subsection{Parameter change}
 The control system may change local parameter objects 
    by command in any state to modify minor system properties 
@@ -355,115 +258,109 @@ The control system may change local parameter objects
 
 \section{Package and library organisation}
 The complete system consists of different packages. 
-Each package may be represented by a subproject of the source code with own namespace. 
+Each package is represented by a subproject of the source code with own namespace. 
 There may be one or more shared libraries for each package. Main packages are as follows: 
+
 \subsection{Core system}
-  Defines all base classes and interfaces, like 
-   \bbul
-   \item \class{dabc::Module}
-   \item \class{dabc::Port}
-   \item \class{dabc::Buffer}
-   \item \class{dabc::Device}
-   \item \class{dabc::Transport}
-   \item \class{dabc::Command}
-   \item \class{dabc::Parameter}
-   \item \class{dabc::Manager}
-   \ebul 
-   and basic functionality for object organization, memory management, 
-   thread control, event communication.
-\subsection{Control system}
-   Depends on the {\bf Core system}. Defines 
+The \strong{Core system} package uses namespace \class{dabc::}.
+It defines all base classes and interfaces, 
+and implements basic functionalities for object organization, memory management, 
+thread control, and event communication. Section \ref{prog_core_classes} gives a brief overview of the
+\strong{Core system}  classes.
+   
+
+\subsection{Control and configuration system}
+   Depends on the \strong{Core system}. Defines 
    functionality of state machine, command transport, parameter 
-   monitoring and modification. Interface to the \strong{Core system} is 
-   implemented by subclass of \class{dabc::Manager}.       
-\subsection{Configuration System}
-   Depends on the \strong{Core system}; it 
-   may use functionalities of the control system. Implements the 
+   monitoring and modification. Implements the 
    connection of configuration parameters with a database 
-   (i.e. a file in trivial case). Interface to the \strong{Core system} is defined 
-   by subclass of \class{dabc::Manager}. 
-\subsection{Transport packages}
-   One or more special transport packages: Depends on the \strong{Core system}. 
-   It may depend on an external framework. Implements \class{dabc::Device} and 
-   \class{dabc::Transport} classes for specific data transfer mechanism, e.g. 
-   \strong{verbs} or \strong{tcp/ip socket}. Each transport package provides a 
-   factory to create a specific device by class name. 
-   However, the most common transport implementations may be put 
-   directly to the \strong{Core system}, e.g. local memory transport, or 
-   socket; the corresponding factory is part of the \strong{Core system} then. 
-\subsection{Bnet package}
-   Depends on the \strong{Core system}. Implements special 
+   (i.e. a file in the trivial case). Interface to the \strong{Core system} is 
+   implemented by subclass of \class{dabc::Manager}.
+
+                
+\subsection{Plugin packages}
+Plugin packages may provide special implementations of the core interface classes 
+\class{dabc::Device}, \class{dabc::Transport}, \class{dabc::Module}, or
+\class{dabc::Application}. Usually, these classes are made available to the system by means
+of a corresponding \class{dabc::Factory} that is automatically registered in the \class{dabc::Manager} 
+when loading the plugin library.
+
+When installed centrally, the \strong{Plugin packages} are kept in subfolders of the  \verba{\$DABCSYS/plugins} directory.
+Alternatively, the \strong{Plugin packages} may be installed in a user directory and linked against the
+\strong{Core system} installation.
+
+\subsubsection{Bnet package}
+   This package uses namespace \class{bnet::}. It depends on the \strong{Core system} and implements 
    modules to cover a generic event builder network. 
-   Defines interfaces (virtual methods) of the special Bnet modules to 
+   It defines interfaces (virtual methods) of the special Bnet modules to 
    implement user specific code in subclasses. The Bnet package provides a 
    factory to create specific Bnet modules by class name. It also 
-   provides application plug-ins to define generic functionalities for 
-   worker nodes (\class{bnet::WorkerPlugin}) and 
-   controller nodes (\class{bnet::ControllerPlugin}).    
-\subsection{Application packages}
-   Depend on the \strong{Core system}; may depend 
-   on several ransport packages; may depend on the Bnet package; may 
-   depend on other application packages. Implement experiment specific 
-   modules that actually run the DAQ. May implement \class{dabc::Device} 
-   and \class{dabc::Transport} classes for special data input or output. May provide 
-   a factory to create a specific module or device by class name. 
-   Provides implementation of \class{dabc::ApplicationPlugin} that defines the 
-   application set-up; this may be a subclass of specific existing 
-   application plug-ins (e.g. subclass of \class{bnet::WorkerPlugin}). 
-
-The DABC distribution will provide the 
-\bbul
-\item \strong{Core}
-\item \strong{Control} 
-\item \strong{Configuration} 
-\item \strong{Bnet} 
-\item \strong{Transport packages} for \strong{verbs} and \strong{socket} 
-\ebul
-As examples, there are several application packages, with configuration data for different cases:
-\bbul
-\item  Simple \mbs~ event builder (one node, one or more \mbs~ input channels)
-\item  \strong{\mbs} n $\times$ m event building (using the Bnet package)
-\item  Simple \ABB~ readout (this example also contains 
-   a separate ransport package implementing the \class{dabc::Device} class for \ABB)
-\item  A Bnet set up for \ABB~ readout (with \ABB~ transport package)
-\ebul
-
-\section{Implementation status}
-\subsection{Packages}
-\subsubsection{Core system}
-   Plain C++ code; independent of any external framework.
-\subsubsection{Control system}
-\begin{compactitem}[$\circ$]
-\item  \xdaq~ provides the application environment and the state machine. 
-      There may be a second non-\xdaq~ state machine environment in the future. 
-\item  DIM is used as main transport layer for commands and parameter monitoring. 
-      On top of DIM, a generic record format for parameters is defined.
-\item  Each registered command exports a self describing command descriptor 
-      parameter as DIM service.      
-\item  A generic controls GUI using the record and command descriptors is 
-      implemented with JAVA.
-\end{compactitem}
-\subsubsection{Configuration system}
-Configuration parameters are set from setup files (XML) and 
-available as DIM services to the control system.
+   provides application classes to define generic functionalities for 
+   worker nodes (\class{bnet::WorkerApplication}) and 
+   controller nodes (\class{bnet::ClusterApplication}). These may be used as base classes
+   in further \strong{Application packages}.
+   Section \ref{prog_bnet_classes} gives a brief overview of the
+\strong{Bnet package} classes.   
+   
 \subsubsection{Transport packages}
-\begin{compactitem}[$\circ$]
-\item  Network transport for  tcp/ip socket and InfiniBand verbs.
-\item  {\bf \ABB~ (ABB) readout}
-\item  {\bf \ROC~ readout using Knut library}
-\end{compactitem}
-\subsubsection{Bnet package}
-   Ready
-\subsubsection{Application packages}
+   Depend on the \strong{Core system}, and may depend on external libraries or hardware drivers. 
+   Implement \class{dabc::Device} and 
+   \class{dabc::Transport} classes for specific data transfer mechanism, e.g. 
+   \strong{verbs} or \strong{tcp/ip socket}. May also implement \class{dabc::Device} 
+   and \class{dabc::Transport} classes for special data input or output. Each transport package provides a 
+   factory to create a specific device by class name. 
+   
+   However, the most common transport implementations are put 
+   directly to the \strong{Core system}, e.g. local memory transport, or 
+   socket; the corresponding factory is part of the \strong{Core system} then. 
+ 
+\subsection{Application packages}
+They depend on the \strong{Core system}, and may depend 
+on several transport packages, on the Bnet package, or other plugin packages. 
+They may also depend on other application packages. 
+Application packages provide the actual implementation of the core interface class
+\class{dabc::Application} that defines the set-up and behaviour of the DAQ application in 
+different execution states. This may be a subclass of specific existing 
+application (e.g. subclass of \class{bnet::WorkerApplication}). 
+Additionally, they may provide experiment specific \class{dabc::Module} classes.
+
+When installed centrally, the \strong{Application packages} are kept in subfolders of the  
+\verba{\$DABCSYS/applications} directory. Alternatively, an \strong{Application package} may be installed in a user directory and linked against the \strong{Core system} installation and the required \strong{Plugin packages}.
+
+
+     
+\subsection{Distribution contents}
+The DABC distribution contains the following packages:
+
+\begin{compactdesc}
+\item [Core system] : This is plain C++ code and independent of any external framework.
+\item [Bnet plugin] : Depends on the core system only.
+\item [Transport plugins] :  Network transport for  \textit{tcp/ip} sockets and \textit{InfiniBand} verbs. Additionally, 
+transports for gsi \textit{Multi Branch System} \mbs~ connections (socket, filesystem) is provided.
+\item [Control and configuration system]: The general implementation is depending on the DIM framework only.
+DIM is used as main transport layer for commands and parameter monitoring.  On top of DIM, a generic record format for parameters is defined. Each registered command exports a self describing command descriptor  parameter as DIM service. Configuration parameters are set from XML setup files and are 
+available as DIM services.      
+\item  [GUI] A generic controls GUI using the DIM record and command descriptors is 
+      implemented with Java. It may be extendable with user defined components.
+\item[Application packages] : some example applications, such as: 
 \begin{compactitem}[$\circ$]
 \item  Simple \mbs~ event building
 \item  Bnet with switched \mbs~ event building
-\item  Bnet with pseudo event generators and optional \ABB~ readout
+\item  Bnet with random generated events
 \end{compactitem}
 
-\subsection{Classes}
-\subsubsection{Core system}
-The most important classes of the dabc core system
+      
+\end{compactdesc}   
+
+
+
+
+
+
+\section{Main Classes}
+\subsection{Core system}
+\label{prog_core_classes}
+The most important classes of the \dabc core system are described in the following.
 
 \begin{compactdesc}
 \item[\class{dabc::Basic}] : The base class for all objects to be kept in 
@@ -598,16 +495,17 @@ The most important classes of the dabc core system
 \end{compactitem}
       \item It provides interfaces for user specific plug-ins that define 
       the actual set-up: several \class{dabc::Factory} objects to create objects, and 
-      one \class{dabc::ApplicationPlugin} object to define the state machine transition actions.
+      one \class{dabc::Application} object to define the state machine transition actions.
 \end{compactenum}
 \item[\class{dabc::Factory}] : Factory plug-in for creation of modules and devices.
-\item[\class{dabc::ApplicationPlugin}] : Subclass of \class{dabc::WorkingProcessor} 
+\item[\class{dabc::Application}] : Subclass of \class{dabc::WorkingProcessor} 
    (and therefore \class{dabc::CommandReceiver}). Interface for the user specific code. 
    Defines the actions on transitions of the finite state machine of the manager. 
    May export parameters for configuration, and may define additional commands.
 \end{compactdesc}
 
-\subsubsection{Bnet classes}
+\subsection{BNET classes}
+\label{prog_bnet_classes}
 The classes of the Bnet package, providing functionalities of the event builder network.
 
 \begin{compactdesc}

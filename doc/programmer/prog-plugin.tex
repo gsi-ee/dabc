@@ -1,2 +1,142 @@
 [programmer/prog-plugin.tex]
-\section{\dabc~ plug-in mechanism }
+\section{Introduction}
+%\textit{put some general words on the plugin philosophy here}
+A multi purpose DAQ system like \dabc~ requires to develop user specific code and adopt
+this into the general framework. A common object oriented technique to realize such
+extensability consists in the definition of base classes as interfaces for dedicated purposes.
+The programmer may implement subclasses for these interfaces as \strong{Plug-Ins}
+with the extended functionality that matches the data format, hardware, or other boundary conditions of the
+data-taking experiment. Moreover, the  \dabc~ core itself applies such powerful plug-in mechanism to provide generic services in a flexible and maintenable manner.   
+
+This chapter gives a brief description of all interface classes for the data acquisition 
+processing itself. This covers the processing \strong{Modules}, the \strong{Transport} and 
+\strong{Device} objects that move data between the DAQ components, 
+and the \strong{Application} that is responsible for the node set-up and run control.
+A \strong{Factory} pattern is used to introduce new classes to the framework and let them
+be available by name at runtime.
+
+\section{Modules}
+\subsection{ModuleSync}
+The data processing functionality is usually implemented by subclassing 
+   the \class{dabc::ModuleSync} base class. 
+\bcir
+\item  The constructor of \class{dabc::ModuleSync} subclass  creates all 
+      ports, may initialize the pool handles, and may 
+      define commands and parameters. 
+\item  The virtual \func{ExecuteCommand()} method of \class{dabc::ModuleSync} 
+      subclass may implement the callbacks of the defined commands.
+\item  The virtual \func{MainLoop()} method of \class{dabc::ModuleSync} 
+      subclass implements the processing job.
+\item  The user code shall not directly access the 
+      memory pools to request new buffers. Instead, it can use methods of 
+      \class{dabc::Module} with a \class{dabc::PoolHandle} object as argument. 
+      These methods may block the \func{MainLoop()}.
+\item  The user code can send and receive buffers 
+      from and to ports by methods of \class{dabc::ModuleSync}. 
+      These methods may block the \func{MainLoop()}.
+\ecir
+\subsection{Special modules}
+For special set ups (e.g. Bnet), the framework provides 
+   \class{dabc::Module} subclasses with generic functionality 
+   (e.g. \class{bnet::BuilderModule}, \class{bnet::FilterModule}). 
+   In this case, the user specific parts like data formats are 
+   implemented by subclassing these special module classes.
+\begin{compactitem}[$\circ$]
+\item  Instead of implementing \func{MainLoop()}, other virtual 
+      methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
+      implemented that are implicitly called by the superclass \func{MainLoop()}.
+\item  The special base classes may provide additional 
+      methods to be used for data processing.    
+\end{compactitem}
+
+\section{Device and transport}
+All data transport functionality is implemented by 
+   subclassing  \class{dabc::Device} and \class{dabc::Transport} base classes. 
+\begin{compactitem}[$\circ$]
+\item  The \class{dabc::Device} subclass constructor may create  
+      pool handles and may define commands and parameters. 
+\item  The virtual \func{ExecuteCommand()} method of \class{dabc::Device} 
+      subclass may implement the callbacks of the defined commands.
+\item  Factory method \func{CreateTransport()} of \class{dabc::Device}
+      subclass defines which transport instance is created 
+      by the framework whenever this device shall be connected to 
+      the port of a module.   
+\item  The virtual \func{Send()} and \func{Recv()} methods of the 
+      \class{dabc::Transport} subclass must implement the actual transport 
+      from and to a connected port, respectively.
+\item  To implement a simple user defined transport 
+      (e.g. read from a special socket protocol), 
+      there is another base class \class{dabc::DataTransport} 
+      (subclass of\class{dabc::Transport}). 
+      This class already provides queues for (optionally)
+      input and output buffers and a data backpressure mechanism. 
+      Instead of \func{Send} and \func{Recv()}, the user subclass must implement 
+      special virtual methods, e.g. \func{ReadBegin()}, \func{ReadComplete(buffer)} 
+      to request the next buffer of a given size from the base class, 
+      and to peform filling this buffer from the associated user device, respectively. 
+      These methods are called implicitely from the framework at the right time. 
+\end{compactitem}
+
+\section{Factories}
+The set up of the application specific module and device objects is done 
+   by \class{dabc::Factory} subclasses.
+\begin{compactitem}[$\circ$]
+\item  All factories are registered and kept in the global manager. 
+      The access to the factories' functionality is done via methods of the manager. 
+\item  All factories are instantiated as static singletons when 
+      loading the libraries that defines them. 
+      The user need not to create them explicitely.       
+\item  The \class{dabc::Factory} subclasses must implement methods \func{CreateModule(classname)}, 
+      and \func{CreateDevice(classname)} , to instantiate modules or 
+      devices, respectively. The user must subclass 
+      the \class{dabc::Factory} to add own classes to the system. \strong{Note:} the factory 
+      method for transport objects is not in this factory, but in the 
+      corresponding \class{dabc::Device} subclass. 
+\item  The manager can keep more than one factory and scans 
+      all factories to produce the requested object class. 
+\item  The framework provides several factories for predefined 
+      implementations (e.g. \class{bnet::SenderModule}, \class{dabc::VerbsDevice}).      
+\end{compactitem}
+
+\section{The DABC Application}
+The specific application controlling code is defined in 
+   the \class{dabc::Application}.   
+\begin{compactitem}[$\circ$]
+\item  The manager has exactly one application object. 
+      The user must provide a \class{dabc::Application} subclass.
+\item  The \class{dabc::Application} is instantiated and registered on 
+      startup time by a global \func{InitPlugins()} function. This function 
+      is declared and executed in the framework, but defined in the user 
+      library and thus knows the user specific plug-in classes. 
+      This trick is necessary to decouple the executable main function 
+      (e.g. \xdaq executive) from the user specific part.  
+\item  The user may implement virtual methods \func{UserConfigure()} ,  
+      \func{UserEnable()}, \func{UserBeforeStart()}, 
+      \func{UserAfterStop()}, \func{UserHalt()} in his/her 
+      \class{dabc::Application} subclass. These methods are executed by the 
+      framework state machine before or after the corresponding state 
+      transitions to do additional application specific configuration, 
+      run control, and clean-up actions. Note: all generic state machine 
+      actions (e.g. cleanup of modules and devices, starting 
+      and stopping the working processors) are already handled by 
+      the framework at the right time and need not to be invoked explicitely here.
+\item  The application  may register parameters that 
+      define the application's configuration. These parameters can be set at 
+      runtime from the configuration and controls system.
+\item  The methods of the application  should use 
+      application factories to create modules and 
+      devices by name string. However, for convenience the user may 
+      implement factory methods \func{CreateModule()} and \func{CreateDevice()} straight 
+      in his/her \class{dabc::Application} subclass.
+\item   For special DAQ topologies (e.g. Bnet), the framework offers 
+      implementations of the \class{dabc::Application} containing the 
+      generic functionality (e.g. \class{bnet::WorkerApplication}, \class{bnet::ClusterApplication}). 
+      In this case, the user specific parts are implemented by subclassing 
+      these and implementing additional virtual methods (e.g. \func{CreateReadout()}).    
+\end{compactitem}
+
+
+
+
+
+
