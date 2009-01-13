@@ -6,7 +6,7 @@
 
 Configuration and status information of objects can be represented by \class{Parameter} class.
 Any objects, derived from \class{WorkingProcessor} class, can has a list of parameters,
-assigned to it - for instance, class{Application}, \class{Device}, \class{Module}, \class{Port} classes.   
+assigned to it - for instance, \class{Application}, \class{Device}, \class{Module}, \class{Port} classes.   
   
 There are number of class \class{WorkingProcessor} methods to create parameter objects of different kinds 
 and access their values. Full list one can see in following table:
@@ -48,7 +48,7 @@ to change parameter value from both program and user side. Only when fixed flag 
 parameter value can be changed. 
 
 Not all parameters objects should be visible to control system. There is so-called 
-visibility level of parameter, which is assigned to parameter when instance is created.
+visibility level of parameter, which is assigned to parameter when its instance is created.
 Only if visibility level smaller than current level (configured in Manager::ParsVisibility()),
 parameter will be "seen" by control system. Such level is configured for complete object 
 via WorkingProcessor::SetParDflts() function before parameter object is created.
@@ -61,7 +61,7 @@ Lets consider example of module, which uses parameter:
 \begin{verbatim}
 class UserModule : public dabc::ModuleAsync {
    public:
-      UserModule(const char* name, dabc::Command* cmd) : 
+      UserModule(const char* name, dabc::Command* cmd = 0) : 
          dabc::ModuleAsync(name, cmd)
       {
          CreateParBool("Output", true);
@@ -95,32 +95,59 @@ one should implement following method:
 
 From the performance reasons one should avoid usage of parameter getter/setter methods (like  
 GetParBool() or SetParInt()) inside loop, which executed many times. Main aim of parameter
-object is to provide connection to control system and in other situation normal class members should be used.
+object is to provide connection to control system and in other situations normal class members should be used.
 
 
 \subsection{Configuration parameters}
 
+Another use of parameter object is its usage for objects configuration.
+When one creates object like module or device, one often need to deliver 
+one or several configurations parameters to constructor such as required
+number of input ports or server socket port number. 
 
-Parameters may also be used for configuration of newly created objects.
+For such situation configuration parameter are defined.
+This parameter should be created and set only in object constructor with following methods:
+\bdes
+\item[GetCfgStr]  string
+\item[GetCfgDouble]   double 
+\item[GetCfgInt]   integer
+\item[GetCfgBool]   boolean 
+\edes
 
+All these methods has following arguments: name of configuration parameter, 
+default value of configuration parameter [optional] and pointer on \class{Command} object [optional].
+Lets add one configuration parameter to our module constructor:
 
+\begin{verbatim}
+      UserModule(const char* name, dabc::Command* cmd = 0) : 
+         dabc::ModuleAsync(name, cmd)
+      {
+         CreateParBool("Output", true);
+         CreateParInt("Counter", 0);
+         double period = GetCfgDouble("Period", 1.0, cmd);
+         CreateTimer("Timer", period, false);
+      }
+\end{verbatim}
 
-There are another use of parameters 
+Here period of timer is set via configuration parameter "Period". How its value will be defined? 
 
-Configuration parameters for mostly all objects, created in dabc, 
-can be placed in xml file. 
-
+First of all, will be checked if parameter with given name exists in the command.
+If not, appropriate entry in configuration file will be searched. If configuration file also
+does not contains such parameter, default value will be used.
 
 
 \subsection{Configuration file example}
 
-Lets consider simple example of configuration file:
+Configuration file is xml file in dabc-specific format, which contains 
+value of some or all configuration parameters of the system. 
+
+Lets consider simple but functional example of configuration file:
 
 \begin{verbatim}
 
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context name="Generator">
+  <Context host="localhost" name="Generator">
     <Run>
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsGenerator"/>
@@ -137,16 +164,20 @@ Lets consider simple example of configuration file:
 \end{verbatim}
 
 This is an example of xml file for mbs generator, which produces 
-mbs events and provides them to mbs transport server. Other application
+mbs events and provides them to mbs transport server. 
+To run that example, just "run.sh test.xml" should be executed in the shell.
+Other application
 (dabc or Go4) can connect to that server and read generated mbs events.
+
 
 \subsection{Basic syntax}
 
 DABC configuration file should always contain <dabc> as root node. 
 Inside <dabc> node one or several <Context> nodes should exists.
-Each <Context> node corresponds to independent application context, which runs as
+Each <Context> node represents independent application context, which runs as
 independent executable. 
 Optionally <dabc> node can has <Variables> and <Defaults> nodes, which are described further. 
+
 
 \subsection{Context}
 
@@ -159,10 +190,11 @@ Optionally <dabc> node can has <Variables> and <Defaults> nodes, which are descr
 Inside <Context> node configuration parameters for modules, devices, memory pools are stored.
 In example file one sees several parameters for output port of generator module.  
 
-\subsection{Run parameters}
 
-Usually <Context> node has <Run> subnode, where user defines different parameters, relevant to start
-application:
+\subsection{Run arguments}
+
+Usually <Context> node has <Run> subnode, where user defines different parameters, 
+relevant for running dabc application:
 
 \bdes
 \item[lib] library name, which should be loaded. Several libraries names can be specified.
@@ -213,6 +245,7 @@ Using variables, one can modify example in following way:
       <func value="StartMbsGenerator"/>
     </Run>
     <Module name="${myname}">
+       <SubeventSize value="32"/>
        <Port name="Output">
           <OutputQueueSize value="5"/>
           <MbsServerPort value="${myport}"/>
@@ -265,6 +298,7 @@ specify cast rule, using "*" or "?" symbols like that:
       <func value="StartMbsGenerator"/>
     </Run>
     <Module name="${myname}">
+       <SubeventSize value="32"/>
        <Port name="Output">
           <MbsServerPort value="${myport}"/>
        </Port>
@@ -289,24 +323,31 @@ all contexts from configuration file means by such rule we set output queue leng
 for all modules on all nodes. This allow us to create compact xml files for big multi-nodes configuration.   
 
 
-\subsection{Configuration priorities}
+\subsection{Usage commands for configuration}
 
-Setting parameter values via xml file not the only possibility for system configuration. 
-Usually parameter has default value, which is specified at the time when parameter is created.
-One also can supply some configuration parameters to the command, when module or device or transport is created.
+Lets consider possibility to configure module, using \class{Command} class.
 
-Here possibilities to set parameter value listed with decreased priority:
+This is required when object (like mnodule) should be created with fixed parameters
+disregard of values specified in config file.
 
-\bbul
-\item Command argument. It has the highest priority in all cases and allows programmer to
-overwrite any configuration parameters which user may define in configuration file
-\item Parameter value from appropriate <Context> node. In this case names of parameter and all its parents  
-should exactly match to names which are specified in xml file. No any kind of cast is supported.  
-\item Parameter value from <Defaults> node. Parameter name and names of at least one parent should match to multicast rules.
-If there is several matches exists match with maximal number of parent matches will be preferred.
-For instance node <Defualts/Context/Module/Port/OutputQueueSize> will be preferable rather than
-<Defualts/Port/OutputQueueSize>. 
-\item Default parameter value.
-\ebul
+In our example one can modify StartMbsGenerator() function in following way:
+
+\begin{verbatim}
+
+extern "C" void StartMbsGenerator() 
+{
+    dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", "Generator");
+    cmd->SetInt("SubeventSize", 128);
+    if (!dabc::mgr()->Execute(cmd)) {
+       EOUT(("Cannot create generator module"));
+       exit(1);
+    }
     
+    ...
+}
+\end{verbatim}
+
+Here one add additional arguments to \comm{CmdCreateModule}, 
+which set mbs subevent size to 128. After that any modification of
+<SubeventSize> entry in config file take no effects.
 
