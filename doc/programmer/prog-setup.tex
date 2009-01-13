@@ -1,12 +1,118 @@
 [programmer/prog-setup.tex]
 \section{Setting up system}
 
+\subsection{Parameter class}
+
+
+Configuration and status information of objects can be represented by \class{Parameter} class.
+Any objects, derived from \class{WorkingProcessor} class, can has a list of parameters,
+assigned to it - for instance, class{Application}, \class{Device}, \class{Module}, \class{Port} classes.   
+  
+There are number of class \class{WorkingProcessor} methods to create parameter objects of different kinds 
+and access their values. Full list one can see in following table:
+
+\begin{tabular}{|l|l|lll|}
+   \hline
+Type & Class  & Create & Getter & Setter \\
+   \hline
+string &  StrParameter    & CreateParStr    & GetParStr     & SetParStr     \\
+double &  DoubleParameter & CreateParDouble & GetParDouble  & SetParDouble  \\
+int    &  IntParameter    & CreateParInt    & GetParInt     & SetParInt     \\
+bool   &  StrParameter    & CreateParBool   & GetParBool    & SetParBool    \\
+   \hline
+\end{tabular}
+
+As one can see, to store boolean parameter, string is used. If value of string is "true" (in lower case),
+boolean value of such parameter recognized as true, otherwise false.
+
+For any type of parameter GetParStr/SetParStr methods can be used. 
+
+It is recommended to use class \class{WorkingProcessor} methods to create parameters and access its values,
+but one also can use FindPar() method to find parameter object and use its methods directly.   
+
+
+\subsection{Use parameter for control}
+
+The main advantage to use parameter objects is that parameter values can be 
+observed and changed using controlling system.
+
+At any time, when parameter value changed by program via SetPar... methods, 
+control system informed and represents such change in appropriate GUI element.
+At the same time, if user modifies parameter value in the GUI, value of parameter object
+will be changed and correspondent parent object (module, device) get callback via 
+virtual method ParameterChanged(). Implementing correct reaction on this call, 
+one can provide possibility to reconfigure/adjust running code on the fly.
+
+Parameter value may be fixed via Parameter::SetFixed() method. This blocks possibility 
+to change parameter value from both program and user side. Only when fixed flag set again to false,
+parameter value can be changed. 
+
+Not all parameters objects should be visible to control system. There is so-called 
+visibility level of parameter, which is assigned to parameter when instance is created.
+Only if visibility level smaller than current level (configured in Manager::ParsVisibility()),
+parameter will be "seen" by control system. Such level is configured for complete object 
+via WorkingProcessor::SetParDflts() function before parameter object is created.
+
+
+\subsection{Example of parameters usage}
+
+Lets consider example of module, which uses parameter:
+
+\begin{verbatim}
+class UserModule : public dabc::ModuleAsync {
+   public:
+      UserModule(const char* name, dabc::Command* cmd) : 
+         dabc::ModuleAsync(name, cmd)
+      {
+         CreateParBool("Output", true);
+         CreateParInt("Counter", 0);
+         CreateTimer("Timer", 1.0, false);
+      }
+      
+      virtual void ProcessTimerEvent(dabc::Timer*)
+      {
+         SetParInt("Counter", GetParInt("Counter")+1);
+         if (GetParBool("Output")) 
+            DOUT1(("Counter = %d", GetParInt("Counter")));
+      }
+}; 
+\end{verbatim}
+
+In module constructor two parameters are created - boolean and integer and timer with period of 1 s.
+When module started, value of integer parameter will be changed every second.
+If boolean parameter is set to true, value of counter will be displayed on debug output.
+
+Using control system, value of boolean parameter can be changed. To detect and react on such change,
+one should implement following method: 
+ 
+\begin{verbatim}
+      virtual void ParameterChanged(dabc::Parameter* par) 
+      {
+         if (par->IsName("Output")) 
+            DOUT1(("Output flag changed to %s", DBOOL(GetParBool("Output")));
+      }
+\end{verbatim}
+
+From the performance reasons one should avoid usage of parameter getter/setter methods (like  
+GetParBool() or SetParInt()) inside loop, which executed many times. Main aim of parameter
+object is to provide connection to control system and in other situation normal class members should be used.
+
+
+\subsection{Configuration parameters}
+
+
+Parameters may also be used for configuration of newly created objects.
+
+
+
+There are another use of parameters 
+
 Configuration parameters for mostly all objects, created in dabc, 
 can be placed in xml file. 
 
 
 
-\subsection{Simple example}
+\subsection{Configuration file example}
 
 Lets consider simple example of configuration file:
 
@@ -72,6 +178,8 @@ It is alternative to writing subclass of \class{Application} and instantiating i
 \item[debuglevel] level of debug output on console, default 1
 \item[logfile] filename for log output, default none  
 \item[loglevel] level of log output to file, default 2 
+\item[DIM\_DNS\_NODE] node name of dim dns server, used by dim control 
+\item[DIM\_DNS\_PORT] port number of dim dns server, used by dim control 
 \edes
 
 

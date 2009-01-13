@@ -270,9 +270,8 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    // create state parameter, inherited class should call init to see it
    CreateParStr(stParName, stHalted);
 
-   // from this moment one can see all parameters events from visibility level 2
-   LockGuard lock(fMgrMutex);
-   fParsVisibility = 10;
+   // from this moment one can see all parameters events from visibility level 10
+   SetParsVisibility(10);
 }
 
 dabc::Manager::~Manager()
@@ -1607,6 +1606,12 @@ int dabc::Manager::DefineNodeId(const char* nodename)
          if (strcmp(name, nodename)==0) return n;
    }
    return -1;
+}
+
+void dabc::Manager::SetParsVisibility(int level)
+{
+   LockGuard lock(fMgrMutex);
+   fParsVisibility = level;
 }
 
 bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Command* cmd)
