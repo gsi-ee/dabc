@@ -55,12 +55,31 @@ In example file one sees several parameters for output port of generator module.
 
 \subsection{Run parameters}
 
+Usually <Context> node has <Run> subnode, where user defines different parameters, relevant to start
+application:
+
+\bdes
+\item[lib] library name, which should be loaded. Several libraries names can be specified.
+\item[func] function name which should be called to create modules. 
+It is alternative to writing subclass of \class{Application} and instantiating it.
+\item[port] ssh port number of remote host
+\item[user] account name to be used for ssh (login without password should be possible)
+\item[init] init script, which should be called before dabc application starts
+\item[test] test script, which is called when test sequence is run by run.sh script
+\item[timeout] ssh timeout 
+\item[debugger] argument to run debugger. Value should be like "gdb -x run.txt --args", where file run.txt should contain commands "r bt q".
+\item[workdir] directory where dabc application should start
+\item[debuglevel] level of debug output on console, default 1
+\item[logfile] filename for log output, default none  
+\item[loglevel] level of log output to file, default 2 
+\edes
+
 
 \subsection{Variables}
 
 In root <dabc> node one can insert <Variables> node, which may contain 
 definition of one or several variables. Once defined, 
-such variables can be used in several places of configuration file to set parameters.
+such variables can be used in any place of configuration file to set parameters values.
 In this case syntax to set parameter is:
 
 \begin{verbatim}
@@ -68,7 +87,7 @@ In this case syntax to set parameter is:
 \end{verbatim}
 
 It is allowed to combine variable with text or other variable, 
-but non of arithmetic or string operations are supported. 
+but neither arithmetic nor string operations are supported. 
 
 Using variables, one can modify example in following way:
 
@@ -80,7 +99,6 @@ Using variables, one can modify example in following way:
     <myname value="Generator"/> 
     <myport value="6010"/> 
   </Variables>
-
   <Context name="Mgr${myname}">
     <Run>
       <lib value="libDabcMbs.so"/>
@@ -110,7 +128,7 @@ There are several variables, which are defined by configuration system:
 \item DABCNODEID - sequence number of current <Context> node in configuration file 
 \ebul
 
-Any environment variable can also be used as well. 
+Any environment variable can also be used as variable to set parameter values. 
 
 
 \subsection{Default values}
@@ -119,7 +137,7 @@ There are situations, when one need to set same value to several similar paramet
 for instance same output queue length for all output ports in the module. One possible way
 is to use variables (as described before) and set parameter value via variable. 
 Disadvantage of such approach that one should expand xml files and in case 
-of big number of ports xml will be very big and unreadable.
+of big number of ports xml file will be very long and unreadable.
 
 Another possibility to set several parameters at once - create <dabc/Defaults> node and
 specify cast rule, using "*" or "?" symbols like that: 
@@ -156,7 +174,7 @@ specify cast rule, using "*" or "?" symbols like that:
 \end{verbatim}
 
 In this case for all ports, which names are started with string "Output" from any module,
-output queue length will 5. 
+output queue length will be 5. 
 
 In form, as it is specified in example, such multicast rule will be applied for 
 all contexts from configuration file means by such rule we set output queue length 
@@ -169,7 +187,7 @@ Setting parameter values via xml file not the only possibility for system config
 Usually parameter has default value, which is specified at the time when parameter is created.
 One also can supply some configuration parameters to the command, when module or device or transport is created.
 
-Here all possibilities are listed with decreased priority:
+Here possibilities to set parameter value listed with decreased priority:
 
 \bbul
 \item Command argument. It has the highest priority in all cases and allows programmer to
