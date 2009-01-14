@@ -50,13 +50,13 @@ parameter value can be changed.
 Not all parameters objects should be visible to control system. There is so-called 
 visibility level of parameter, which is assigned to parameter when its instance is created.
 Only if visibility level smaller than current level (configured in Manager::ParsVisibility()),
-parameter will be "seen" by control system. Such level is configured for complete object 
-via WorkingProcessor::SetParDflts() function before parameter object is created.
+parameter will be "seen" by control system. Such level is configured  
+via WorkingProcessor::SetParDflts() function before parameters objects are created.
 
 
 \subsection{Example of parameters usage}
 
-Lets consider example of module, which uses parameter:
+Lets consider example of module, which uses parameters:
 
 \begin{verbatim}
 class UserModule : public dabc::ModuleAsync {

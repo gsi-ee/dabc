@@ -1,2 +1,113 @@
 [programmer/prog-exa-roc.tex]
-\section{Example ROC event building}
+
+\section{ROC plugin overview}
+
+CBM readout controller (ROC) is FPGA-based board, which is aimed to readout
+nXYTER chip and transport data over Ethernet to PC. Software package ROClib 
+provides basic functionality to readout data from ROC.
+ 
+To support usage of ROC in DABC, following classes were designed:
+\bbul
+\item \class{roc::Device}  device class, wrapper for SysCoreController 
+\item \class{roc::Transport}  access to SysCoreBoard functionality 
+\item \class{roc::CombinerModule}  module to combine data from several ROCs in single output  
+\item \class{roc::CalibrationModule}  module to calibrate time scale in ROC data  
+\item \class{roc::ReadoutApplication}  application to perform readout from ROC boards   
+\item \class{roc::Factory}  factory class to organize plugin 
+\ebul
+
+
+\section{Device and transport}
+
+Normally instance of device class corresponds to physical device or board, but not in case
+of \class{roc::Device}. It inherits from two classes: \class{dabc::Device} and \class{SysCoreControl},
+where \class{SysCoreControl} provides simultaneous access to several ROC boards. 
+Here device object used as central collection of \class{SysCoreBoard} objects.
+
+Each instance of \class{roc::Transport} has a pointer to \class{SysCoreBoard} object,
+over which data taking from specific ROC is performed. 
+Implementation of class \class{roc::Transport} based on \class{dabc::DataTransport} class.
+Class \class{dabc::DataTransport} uses event loop mechanism and does not requires explicit thread.
+This feature allows to run several instances of such transports in the same thread.
+In ROC case all \class{roc::Transport} instances uses thread of \class{roc::Device}.     
+Lets try to describe how class \class{roc::Transport} is working.
+
+In the beginning of event loop (when module starts) \func{StartTransport} is called, which
+is used to call \func{SysCoreBoard::startDaq} to start data taking. After that
+event loop consist from consequent calls of \func{Read\_Size}, \func{Read\_Start} and \func{Read\_Complete}
+functions, derived from \class{dabc::DataTransport} class. 
+
+Aim of \func{Read\_Size} is to define size of next buffer, required to read data. 
+In case of \class{roc::Transport} this size
+is fixed and defined by configuration parameter:  
+
+\begin{verbatim}
+unsigned roc::Transport::Read_Size()
+{
+   return fBufferSize;
+}
+\end{verbatim}
+    
+When system can deliver buffer of requested size, \func{Read\_Start} function is called to start reading 
+of that buffer from data source. \class{SysCoreBoard} internally has its own buffer, therefore call 
+\func{SysCoreBoard::requestData} either inform that required number of messages already there or
+ROClib will call back \func{SysCoreControl::DataCallBack} virtual function when required amount of data is there.
+Implementation of method is looks like:
+
+\begin{verbatim}
+unsigned roc::Transport::Read_Start(dabc::Buffer* buf)
+{
+   int req = fxBoard->requestData(fReqNumMsgs);
+
+   if (req==2) return dabc::DataInput::di_CallBack;
+
+   if (req==1) return dabc::DataInput::di_Ok;
+
+   return dabc::DataInput::di_Error;
+}
+\end{verbatim}
+
+In case when data already exists in internal buffer of \class{SysCoreBoard} object, \verba{dabc::DataInput::di\_Ok} 
+is returned and than immediately \func{Read\_Complete} will be called, which finally fill output buffer:
+
+\begin{verbatim}
+unsigned roc::Transport::Read_Complete(dabc::Buffer* buf)
+{
+   unsigned fullsz = buf->GetDataSize();
+
+   if (!fxBoard->fillData((char*) buf->GetDataLocation(), fullsz)) 
+      return dabc::DataInput::di_SkipBuffer;
+
+   if (fullsz==0) 
+      return dabc::DataInput::di_SkipBuffer;
+   
+   buf->SetTypeId(roc::rbt_RawRocData);
+
+   buf->SetDataSize(fullsz);
+
+   return dabc::DataInput::di_Ok;
+}
+\end{verbatim}
+
+Returned from function \func{Read\_Start} value \verba{dabc::DataInput::di\_CallBack} indicates 
+that event loop should be suspended until call \func{Read\_CallBack} is achieved.
+This call performed via \func{SysCoreControl::DataCallBack}, which is reimplemented in \class{roc::Device} class. 
+
+
+
+
+\section{Combiner module}
+
+\section{Calibration module}
+
+\section{Readout application}
+
+\section{Factory}
+
+\section{Compilation}
+Source code for all classes can be found in \$DABCSYS/plugins/roc directory. 
+Compiled library libDabcKnut.so can be found in \$DABCSYS/lib directory.
+If one need to modify some code in this library, one should copy sources in 
+user directory and call "make" in this directory. 
+ 
+\section{Running ROC application}
