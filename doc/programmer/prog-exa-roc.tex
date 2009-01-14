@@ -94,20 +94,144 @@ that event loop should be suspended until call \func{Read\_CallBack} is achieved
 This call performed via \func{SysCoreControl::DataCallBack}, which is reimplemented in \class{roc::Device} class. 
 
 
-
-
 \section{Combiner module}
+
+Class \class{roc::CombinerModule} is designed to combine data from several ROC boards in one MBS event. It also performs sorting of
+data according timestamp, resolves last epoch bits and fixes several coding errors (class \class{SysCoreSorter} is
+used for this).
+
+Module has following configuration parameters:
+\bbul
+\item \param{NumRocs}     - number of ROC boards, connected to combiner [default 1]  
+\item \param{BufferSize}  - size of buffer, used to read data from ROCs [default 16386]
+\item \param{NumOutputs}  - number of outputs [default 2]
+\ebul
+
+As output MBS events are provided. Each MBS event contain ROC messages between two sync markers.
+For each ROC separate MBS event allocated. Field iSubcrate contains ROC id.
+
 
 \section{Calibration module}
 
+Class \class{roc::CalibrationModule} perform calibration of time scale for all
+ROCs and merging all messages in single data stream. As output, MBS event with single
+subevent is produced. 
+
+Module has following configuration parameters:
+\bbul
+\item \param{NumRocs}     - number of ROC boards, which should be provided in MBS event [default 2]  
+\item \param{BufferSize}  - size of buffer, used to produce output data [default 16386]
+\item \param{NumOutputs}  - number of outputs [default 2]
+\ebul
+ 
+
 \section{Readout application}
+
+The main aim of \class{roc::ReadoutApplication} class is configure and run application,
+which combines readout of data from several ROCs, store it into lmd file and optionally 
+create mbs stream server to observe data from remote Go4 GUI.
+It has following configuration parameters:
+
+\bbul
+\item \param{NumRocs}   - number of ROC boards  
+\item \param{RocIp0}, \param{RocIp1}, \param{RocIp2}, ... - addresses (IP or nodname) of ROC boards
+\item \param{DoCalibr}  - defines calibration mode (see further)
+\item \param{BufferSize} - size of buffer
+\item \param{NumBuffers} - number of buffers
+\item \param{MbsServerKind} - kind of MBS server (None, Stream, Transport)
+\item \param{RawFile} - name of lmd file to store combined data
+\item \param{CalibrFile} - name of lmd file to store calibrated data
+\item \param{MbsFileSizeLimit} - maximum size of each file, in Mb
+\ebul
+
+Three calibration modes are supported:
+\bbul
+\item \param{DoCalibr}=0 - Only CombinerModule is instantiated, which produces kind of ROC "raw" data 
+\item \param{DoCalibr}=1 - Both CombinerModule and CalibrationModule are instantiated   
+\item \param{DoCalibr}=2 - Only CalibrationModule, used to convert raw data from lmd files into calibrated format.
+\ebul
+
+In all modes output in form of raw or (and) calibrated data can be stored in lmd file(s),
+defined by \param{RawFile} and \param{CalibdFile} parameters respectively. Last mode is special case,
+when \param{RawFile} specifies not output but input file for the calibration module.
+
 
 \section{Factory}
 
-\section{Compilation}
+Factory class \class{roc::Factory} implements several methods to create
+ROC-specific application, device and modules.    
+
+
+\section{Source and compilation}
+
 Source code for all classes can be found in \$DABCSYS/plugins/roc directory. 
-Compiled library libDabcKnut.so can be found in \$DABCSYS/lib directory.
+Compiled library libDabcKnut.so should be found in \$DABCSYS/lib directory.
 If one need to modify some code in this library, one should copy sources in 
-user directory and call "make" in this directory. 
+user directory and call "make" in this directory. In this case library can be found
+in directory like \$ARCH/lib, where \$ARCH is current CPU architecture (for instance, i686).
+
  
 \section{Running ROC application}
+
+To run readout application, approprite xml configuration file should be created.
+There are two examples of configuration files in \$DABCSYS/applications/roc.
+In Readout.xml one founds example of readout from 3 ROCs: 
+
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+<Context name="Readout">
+  <Run>
+    <lib value="libDabcMbs.so"/>
+    <lib value="libDabcKnut.so"/>
+    <logfile value="Readout.log"/>
+  </Run>
+  <Application class="roc::Readout">
+    <DoCalibr value="0"/>
+    <NumRocs value="3"/>
+    <RocIp0 value="cbmtest01"/>
+    <RocIp1 value="cbmtest02"/>
+    <RocIp2 value="cbmtest04"/>
+    <BufferSize value="65536"/>
+    <NumBuffers value="100"/>
+    <TransportWindow value="30"/>
+    <RawFile value="run090.lmd"/>
+    <MbsServerKind value="Stream"/>
+    <MbsFileSizeLimit value="110"/>
+  </Application>
+ </Context>
+</dabc>
+\end{verbatim}
+
+While this is single-node application, to run it, dabc\_run executable can be used:
+\verba{dabc\_run Readout.xml}. dabc\_run executable will load specified libraries,
+create application, configure it and switch system in running mode.   
+
+In Calibr.xml shown special case of configuration to convert raw data 
+into calibrated files without running any real DAQ. 
+
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+<Context name="Calibr">
+  <Run>
+    <lib value="libDabcMbs.so"/>
+    <lib value="libDabcKnut.so"/>
+    <logfile value="Calibr.log"/>
+  </Run>
+  <Application class="roc::Readout">
+    <DoCalibr value="2"/>
+    <NumRocs value="3"/>
+    <BufferSize value="65536"/>
+    <NumBuffers value="100"/>
+    <RawFile value="/d/cbm06/cbmdata/SEP08/raw/run028/run028*.lmd"/>
+    <MbsServerKind value="Stream"/>
+    <CalibrFile value="testcal.lmd"/>
+    <MbsFileSizeLimit value="110"/>
+  </Application>
+ </Context>
+</dabc>
+\end{verbatim}
+
+
+ 
