@@ -19,7 +19,8 @@ be available by name at runtime.
 \subsection{ModuleSync}
 The data processing functionality is usually implemented by subclassing 
    the \class{dabc::ModuleSync} base class. 
-\bcir
+
+\begin{compactenum}
 \item  The constructor of \class{dabc::ModuleSync} subclass  creates all 
       ports, may initialize the pool handles, and may 
       define commands and parameters. 
@@ -34,25 +35,29 @@ The data processing functionality is usually implemented by subclassing
 \item  The user code can send and receive buffers 
       from and to ports by methods of \class{dabc::ModuleSync}. 
       These methods may block the \func{MainLoop()}.
-\ecir
+\end{compactenum}
+
 \subsection{Special modules}
 For special set ups (e.g. Bnet), the framework provides 
    \class{dabc::Module} subclasses with generic functionality 
    (e.g. \class{bnet::BuilderModule}, \class{bnet::FilterModule}). 
    In this case, the user specific parts like data formats are 
    implemented by subclassing these special module classes.
-\begin{compactitem}[$\circ$]
+
+   
+\begin{compactenum}
+
 \item  Instead of implementing \func{MainLoop()}, other virtual 
       methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
       implemented that are implicitly called by the superclass \func{MainLoop()}.
 \item  The special base classes may provide additional 
       methods to be used for data processing.    
-\end{compactitem}
+\end{compactenum}
 
 \section{Device and transport}
 All data transport functionality is implemented by 
    subclassing  \class{dabc::Device} and \class{dabc::Transport} base classes. 
-\begin{compactitem}[$\circ$]
+\begin{compactenum}
 \item  The \class{dabc::Device} subclass constructor may create  
       pool handles and may define commands and parameters. 
 \item  The virtual \func{ExecuteCommand()} method of \class{dabc::Device} 
@@ -75,12 +80,12 @@ All data transport functionality is implemented by
       to request the next buffer of a given size from the base class, 
       and to peform filling this buffer from the associated user device, respectively. 
       These methods are called implicitely from the framework at the right time. 
-\end{compactitem}
+\end{compactenum}
 
 \section{Factories}
 The set up of the application specific module and device objects is done 
    by \class{dabc::Factory} subclasses.
-\begin{compactitem}[$\circ$]
+\begin{compactenum}
 \item  All factories are registered and kept in the global manager. 
       The access to the factories' functionality is done via methods of the manager. 
 \item  All factories are instantiated as static singletons when 
@@ -96,12 +101,12 @@ The set up of the application specific module and device objects is done
       all factories to produce the requested object class. 
 \item  The framework provides several factories for predefined 
       implementations (e.g. \class{bnet::SenderModule}, \class{dabc::VerbsDevice}).      
-\end{compactitem}
+\end{compactenum}
 
 \section{The DABC Application}
 The specific application controlling code is defined in 
    the \class{dabc::Application}.   
-\begin{compactitem}[$\circ$]
+\begin{compactenum}
 \item  The manager has exactly one application object. 
       The user must provide a \class{dabc::Application} subclass.
 \item  The \class{dabc::Application} is instantiated and registered on 
@@ -133,7 +138,7 @@ The specific application controlling code is defined in
       generic functionality (e.g. \class{bnet::WorkerApplication}, \class{bnet::ClusterApplication}). 
       In this case, the user specific parts are implemented by subclassing 
       these and implementing additional virtual methods (e.g. \func{CreateReadout()}).    
-\end{compactitem}
+\end{compactenum}
 
 
 

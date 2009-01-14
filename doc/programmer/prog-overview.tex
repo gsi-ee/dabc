@@ -1,6 +1,7 @@
 [programmer/prog-overview.tex]
 \section{Role and  functionality of the objects}
 \subsection{Modules}
+\label{prog_overview_modules}
 All processing code runs in module objects. 
 There are two general types of modules: 
 The \class{dabc::ModuleSync} and the \class{dabc::ModuleAsync}. 
@@ -38,7 +39,8 @@ A module may register \class{dabc::Parameter} objects. Parameters are
    accessible by name; their values can be monitored and optionally changed by 
    the controls system. 
 \subsection{Manager}
-The modules are organized and controlled by one manager. 
+The modules are organized and controlled by one manager object of class \class{dabc::Manager} with following
+properties: 
 \bcir
 \item  The manager is an object manager that owns and keeps all 
       registered basic objects into a folder structure. Each object 
@@ -49,7 +51,7 @@ The modules are organized and controlled by one manager.
       that must be executed immediately even if the mainloop of the modules is blocked.
 \item  The manager receives and dispatches external module commands 
       to the destination module where they are queued and eventually executed 
-      by the module thread (see above).
+      by the module thread (see section \ref{prog_overview_modules}).
 \item  The manager defines interface methods to the control system. 
       This covers registering, sending, and receiving of commands; registering, 
       updating, unregistering of parameters; error logging and global error handling. 
@@ -118,6 +120,8 @@ Outside the modules the ports are connected to \class{dabc::Transport} objects.
 \subsection{Device}
 A transport belongs to a \class{dabc::Device} object of a 
    corresponding type that manages it.
+   
+   
 \bcir
 \item  A device may have one or several transports.
 \item  A \class{dabc::Device} instance usually corresponds to an IO component (e.g. network card). 
@@ -139,16 +143,10 @@ A transport belongs to a \class{dabc::Device} object of a
 
 \subsection{Application}
 The \class{dabc::Application} is a singleton object that represents the running application of the DAQ node 
-(i.e.~ one system process) itself. 
-\bcir
-
-\item  The  \class{dabc::Application} provides the main configuration parameters
+(i.e.~ one system process) itself. It provides the main configuration parameters
 and defines the runtime actions in the different control system states (see section \ref{prog_fsm}).
+In contrast to the \class{dabc::Manager} implementation that defines a framework control system (e.g. DIM, EPICS), the subclass of \class{dabc::Application} defines the experiment specific behaviour of the DAQ.
 
-\item In contrast to the \class{dabc::Manager} implementation that defines a framework control system (e.g. DIM, EPICS),
-the subclass of \class{dabc::Application} defines the experiment specific behaviour of the DAQ
-
-\ecir
 
                
 \section{Controls and configuration}
