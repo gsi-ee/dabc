@@ -52,12 +52,12 @@
 \renewcommand{\ttdefault}{pcr} 
 
 % number of sections shown in "Contents", 4 ist standard
-%\setcounter{tocdepth}{5}
+\setcounter{tocdepth}{5}
 
 
 % number of sections which get a number
 \setcounter{secnumdepth}{4}
-% allows 3 levels of sections, e.g. '5.3.2 The Blablabla'
+% allows 4 levels of sections, e.g. '5.3.2 The Blablabla'
 % sequence: \section \subsection \subsubsection \paragraph
 
 
