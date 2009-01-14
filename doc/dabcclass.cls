@@ -1,7 +1,7 @@
 % documentclass for the DABC manuals
 \def\fileversion{1}
-\def\filedate{2006/03/16}
-\def\docdate{2006/03/16}
+\def\filedate{2009/01/16}
+\def\docdate{2009/01/16}
 
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{dabcclass}[\filedate]
@@ -56,7 +56,7 @@
 
 
 % number of sections which get a number
-\setcounter{secnumdepth}{3}
+\setcounter{secnumdepth}{4}
 % allows 3 levels of sections, e.g. '5.3.2 The Blablabla'
 % sequence: \section \subsection \subsubsection \paragraph
 
@@ -218,7 +218,7 @@
 \renewcommand{\l@paragraph}{\@dottedtocline{4}{3.5em}{4.5em}}
 \renewcommand{\l@subparagraph}{\@dottedtocline{5}{4.5em}{5.0em}}
 
-% fontstyles
+% semantic fontstyles
 % -----------------------------------------------------------------
 \newcommand{\verba}[1]{{\tt #1}}
 \newcommand{\decl}[1]{{\tt #1}}
