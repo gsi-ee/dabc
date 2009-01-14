@@ -1,9 +1,25 @@
 [programmer/prog-overview.tex]
+\section{Introduction}
+The {\em \dabc~ Programmer Manual} 
+describes the aspects of the Data Acquisition Backbone Core
+framework that are necessary for programming user extensions.
+To begin with, this overview chapter explains the
+software objects and their collaboration, 
+the intended mechanisms for controls and configuration, the dependencies of
+packages and libraries, and gives a short reference of the most important classes.
+
+The following chapters contain full explanations of the \dabc~ interface classes, 
+describe the set-up with parameters, and give a reference of the Java GUI plug-in possibilities.
+
+Finally, some implementation examples are treated in detail to illustrate these issues:
+the adaption of the GSI legacy DAQ system \mbs~ within  \dabc~; the application of a distributed
+event builder network (Bnet); and the data import via UDP from a readout controller board (ROC). 
+
 \section{Role and  functionality of the objects}
 \subsection{Modules}
 \label{prog_overview_modules}
 All processing code runs in module objects. 
-There are two general types of modules: 
+There are two general types of modules: \\
 The \class{dabc::ModuleSync} and the \class{dabc::ModuleAsync}. 
 \subsubsection{Class \class{dabc::ModuleSync}} 
 Each module is executed by a 
@@ -39,107 +55,160 @@ A module may register \class{dabc::Parameter} objects. Parameters are
    accessible by name; their values can be monitored and optionally changed by 
    the controls system. 
 \subsection{Manager}
-The modules are organized and controlled by one manager object of class \class{dabc::Manager} with following
-properties: 
-\bcir
-\item  The manager is an object manager that owns and keeps all 
-      registered basic objects into a folder structure. Each object 
-      has a direct backpointer to the manager. 
-\item  The manager has an independent manager thread. 
-      This thread may execute manager commands for configuration, 
-      and all high priority commands like state machine switching 
-      that must be executed immediately even if the mainloop of the modules is blocked.
-\item  The manager receives and dispatches external module commands 
-      to the destination module where they are queued and eventually executed 
-      by the module thread (see section \ref{prog_overview_modules}).
-\item  The manager defines interface methods to the control system. 
-      This covers registering, sending, and receiving of commands; registering, 
-      updating, unregistering of parameters; error logging and global error handling. 
-      These methods must be implemented in subclass of \class{dabc::Manager} that 
-      knows the specific controls framework.
-\item  The manager is a singleton instance per executable. 
-      It is persistent independent of the application's state.
-\ecir
+The modules are organized and controlled by one manager object of class \class{dabc::Manager};
+this singleton instance is persistent independent of the application's state.
+
+The manager is an \strong{object manager} that owns and keeps all 
+registered basic objects into a folder structure. Each object 
+has a direct backpointer to the manager. 
+
+Moreover, the manager defines the \strong{interface to the control system}. 
+This covers registering, sending, and receiving of commands; registering, 
+updating, unregistering of parameters; error logging and global error handling. 
+The virtual interface methods must be implemented in subclass of \class{dabc::Manager} that 
+knows the specific controls framework.
+
+The manager receives and \strong{dispatches commands} 
+to the destination module where they are queued and eventually executed 
+by the module thread (see section \ref{prog_overview_modules}).
+Additionally, the manager has an independent manager thread. 
+This thread may execute manager commands for configuration, 
+and all high priority commands like state machine switching 
+that must be executed immediately even if the mainloop of the modules is blocked.
+ 
+ 
+%  with following
+% properties: 
+% \bcir
+% \item  The manager is an object manager that owns and keeps all 
+%       registered basic objects into a folder structure. Each object 
+%       has a direct backpointer to the manager. 
+% \item  The manager has an independent manager thread. 
+%       This thread may execute manager commands for configuration, 
+%       and all high priority commands like state machine switching 
+%       that must be executed immediately even if the mainloop of the modules is blocked.
+% \item  The manager receives and dispatches external module commands 
+%       to the destination module where they are queued and eventually executed 
+%       by the module thread (see section \ref{prog_overview_modules}).
+% \item  The manager defines interface methods to the control system. 
+%       This covers registering, sending, and receiving of commands; registering, 
+%       updating, unregistering of parameters; error logging and global error handling. 
+%       These methods must be implemented in subclass of \class{dabc::Manager} that 
+%       knows the specific controls framework.
+% \item  The manager is a singleton instance per executable. 
+%       It is persistent independent of the application's state.
+% \ecir
+
 \subsection{Memory and buffers}
 Data in memory is referred by \class{dabc::Buffer} objects. 
-   Allocated memory areas are kept in \class{dabc::MemoryPool} objects. 
-\bcir
-\item  A buffer contains a list of references to scattered memory 
-      fragments, or it may have an empty list of references. 
-      Auxiliary class \class{dabc::Pointer} offers methods to transparently 
-      treat the scattered fragments from the user point of view 
-      (concept of "virtual contiguous buffer"). 
-      Moreover, the user may also get direct access to each of the fragments.      
-\item  The buffers are provided by one or several memory pools 
-      which preallocate reasonable memory from the operating system. 
-      A memory pool may keep several sets, each set for a different 
-      configurable memory size. Each memory pool is identified by a 
-      unique \class{dabc::PoolHandle} object which is used e.g. by the module to 
-      communicate with the memory pool.  
-\item  A new buffer may be requested from a memory pool by size. 
-      Depending on the module type and mode, this request may block until an 
-      appropriate buffer is available; or it may return an error value 
-      if it can not be fulfilled, resp. The delivered buffer has at 
-      least the requested size, but may be larger. A buffer as 
-      delivered by the memory pool is contiguos. 
-\item  Several buffers may refer to the same fragment of memory. 
-      Therefore, the memory as owned by the memory pool has a 
-      reference counter which is incremented for each buffer 
-      that refers to any of the contained fragments. When a user frees 
-      a buffer object, the reference counters of the referred 
-      memory blocks are decremented. If a reference counter becomes 
-      zero, the memory is marked as "free" in the memory pool.
-\ecir
+Allocated memory areas are kept in \class{dabc::MemoryPool} objects. 
+   
+
+A buffer contains a list of references to scattered memory 
+fragments, or it may have an empty list of references. 
+The auxiliary class \class{dabc::Pointer} offers methods to transparently 
+treat the scattered fragments from the user point of view 
+(concept of "virtual contiguous buffer"). 
+Moreover, the user may also get direct access to each of the fragments.      
+
+The buffers are provided by one or several memory pools 
+which preallocate reasonable memory from the operating system. 
+A memory pool may keep several sets, each set for a different 
+configurable memory size. Each memory pool is identified by a 
+unique \class{dabc::PoolHandle} object which is used e.g. by the module to 
+communicate with the memory pool.  
+
+A new buffer may be requested from a memory pool by size. 
+Depending on the module type and mode, this request may block until an 
+appropriate buffer is available; or it may return an error value 
+if it can not be fulfilled, resp. The delivered buffer has at 
+least the requested size, but may be larger. A buffer as 
+delivered by the memory pool is contiguos. 
+
+Several buffers may refer to the same fragment of memory. 
+Therefore, the memory as owned by the memory pool has a 
+reference counter which is incremented for each buffer 
+that refers to any of the contained fragments. When a user frees 
+a buffer object, the reference counters of the referred 
+memory blocks are decremented. If a reference counter becomes 
+zero, the memory is marked as "free" in the memory pool.
+
+      
 \subsection{Ports}
 Buffers are entering and leaving a module through \class{dabc::Port} objects. 
-\bcir
-\item  A module may have several input ports, output ports, 
-      or bidirectional ports. The ports are owned by the module.
-\item  Each port uses a buffer queue of configurable length.
-\item  The \class{dabc::ModuleSync} class \func{MainLoop()} function may wait for buffers 
-      to arrive at one or several input ports; this call may block. 
-      Processed buffers can be put into output ports; 
-      these calls may also block the mainloop (data backpressure mechanism).
-\item  The \class{dabc::ModuleAsync} class has event callbacks that are executed 
-      by the framework when a buffer arrives at an input 
-      port (\func{processInput()}), or when an output 
-      port is ready to accept a buffer (\func{processOutput()}).       
-\ecir
+Each port has a buffer queue of configurable length.
+A module may have several input ports, output ports, 
+or bidirectional ports. The ports are owned by the module.
+
+Depending on the module type, there are different possibilities to
+work with the port buffers in the processing functions of the module: 
+For \class{dabc::ModuleSync}, function \func{MainLoop()} may wait for buffers 
+to arrive at one or several input ports, calling the respective \func{Recv()} methods; this call may block. 
+Processed buffers can be put into output ports by method \func{Send()}; 
+these calls may also block the mainloop, if the port queue is full since
+subsequent components do not read the outgoing buffers fast enough (data backpressure mechanism).
+
+In contrast to this, \class{dabc::ModuleAsync} has event callbacks that are executed 
+by the framework when a buffer arrives at an input 
+port (\func{processInput()}), or when an output 
+port is ready to accept a buffer (\func{processOutput()}). 
+Alternatively, \func{ProcessUserEvent()} may be implemented to handle events of all input and output ports
+in one function. 
+
+
+
 \subsection{Transport}
 Outside the modules the ports are connected to \class{dabc::Transport} objects.
-\bcir
-\item  A transport may transfer buffers between 
-      the ports of different modules (local data transport).
-\item  A transport may connect the port to a data 
-      source (file input, network receiver, hardware readout), 
-      or to a data sink (file output, network sender).
-\item  Two transport instances of the same kind on 
-      different nodes may connect ports of modules on 
-      different nodes (e.g. InfiniBand verbs transport).
-\ecir
+On each node, a transport may either transfer buffers between 
+the ports of different modules (local data transport), or it may connect the module port to a data 
+source or sink (e.~g.~ file i/o, network connection, hardware readout).
+
+In the latter case, it is also possible  to connect ports of two modules on 
+different nodes by means of a transport instance of the same kind on 
+each node (e.g. InfiniBand verbs transport connecting a sender module on node A with a receiver
+module on node B via a verbs device connection).
+
 \subsection{Device}
 A transport belongs to a \class{dabc::Device} object of a 
-   corresponding type that manages it.
+corresponding type that manages it. Such a device may have one or several transports.  
+The threads that run the transport functionality are
+created by the device. If the \class{dabc::Transport} implementation 
+shall be able to block (e.g. on socket receive), there can be only 
+one transport for this thread. 
+
+A \class{dabc::Device} instance usually represents an IO component (e.g. network card); 
+there may be more than one \class{dabc::Device} instances of the same 
+type in an application scope. 
+The device objects are owned by the manager 
+singleton; transport objects are owned and managed by their corresponding device.  
+
+A device is persistent independent of the connection state 
+of the transport. In contrast, a transport is created 
+during \func{connect()} or \func{open()}, respectively,
+and deleted during \func{disconnect()} or \func{close()}, respectively. 
+
+A device may register parameters and define 
+commands. This is the same functionality as available for modules.   
    
    
-\bcir
-\item  A device may have one or several transports.
-\item  A \class{dabc::Device} instance usually corresponds to an IO component (e.g. network card). 
-\item  There may be more than one \class{dabc::Device} instances of the same 
-      type in an application scope. 
-\item  The threads that run the transport functionality are 
-      created by the device. If the \class{dabc::Transport} implementation 
-      shall be able to block (e.g. on socket receive), there can be only 
-      one transport for this thread. 
-\item  A device may register parameters and define 
-      commands. This is the same functionality as available for modules.   
-\item  A device is persistent independent of the connection state 
-      of the transport. In contrast, a transport is created 
-      during \func{connect()} or \func{open()}, respectively,
-      and deleted during \func{disconnect()} or \func{close()}, respectively. 
-\item  The device objects are owned by the global manager 
-      singleton. Transport objects are owned by the device.
-\ecir
+% \bcir
+% \item  A device may have one or several transports.
+% \item  A \class{dabc::Device} instance usually corresponds to an IO component (e.g. network card). 
+% \item  There may be more than one \class{dabc::Device} instances of the same 
+%       type in an application scope. 
+% \item  The threads that run the transport functionality are 
+%       created by the device. If the \class{dabc::Transport} implementation 
+%       shall be able to block (e.g. on socket receive), there can be only 
+%       one transport for this thread. 
+% \item  A device may register parameters and define 
+%       commands. This is the same functionality as available for modules.   
+% \item  A device is persistent independent of the connection state 
+%       of the transport. In contrast, a transport is created 
+%       during \func{connect()} or \func{open()}, respectively,
+%       and deleted during \func{disconnect()} or \func{close()}, respectively. 
+% \item  The device objects are owned by the global manager 
+%       singleton. Transport objects are owned by the device.
+% \ecir
 
 \subsection{Application}
 The \class{dabc::Application} is a singleton object that represents the running application of the DAQ node 
@@ -277,7 +346,7 @@ thread control, and event communication. Section \ref{prog_core_classes} gives a
 
                 
 \subsection{Plugin packages}
-Plugin packages may provide special implementations of the core interface classes 
+Plugin packages may provide special implementations of the core interface classes: \\
 \class{dabc::Device}, \class{dabc::Transport}, \class{dabc::Module}, or
 \class{dabc::Application}. Usually, these classes are made available to the system by means
 of a corresponding \class{dabc::Factory} that is automatically registered in the \class{dabc::Manager} 
@@ -360,9 +429,10 @@ available as DIM services.
 \label{prog_core_classes}
 The most important classes of the \dabc core system are described in the following.
 
-\begin{compactdesc}
+%\begin{compactdesc}
+\begin{description}
 \item[\class{dabc::Basic}] : The base class for all objects to be kept in 
-   \dabc~ collection(e.g. \class{dabc::Folder}).
+   \dabc~ collection (e.~g.~ \class{dabc::Folder}).
 \item[\class{dabc::Command}] : Represents a command object. A command 
    is identified by its name which it keeps as text string. Additionally, 
    a command object may contain any number of arguments (integer, double, text). 
@@ -492,7 +562,8 @@ The most important classes of the \dabc core system are described in the followi
 	 implementation are described here.]]
 \end{compactitem}
       \item It provides interfaces for user specific plug-ins that define 
-      the actual set-up: several \class{dabc::Factory} objects to create objects, and 
+      the actual set-up: \\
+      several \class{dabc::Factory} objects to create objects, and 
       one \class{dabc::Application} object to define the state machine transition actions.
 \end{compactenum}
 \item[\class{dabc::Factory}] : Factory plug-in for creation of modules and devices.
@@ -500,13 +571,15 @@ The most important classes of the \dabc core system are described in the followi
    (and therefore \class{dabc::CommandReceiver}). Interface for the user specific code. 
    Defines the actions on transitions of the finite state machine of the manager. 
    May export parameters for configuration, and may define additional commands.
-\end{compactdesc}
+%\end{compactdesc}
+\end{description}
 
 \subsection{BNET classes}
 \label{prog_bnet_classes}
 The classes of the Bnet package, providing functionalities of the event builder network.
 
-\begin{compactdesc}
+%\begin{compactdesc}
+\begin{description}
 \item[\class{bnet::ClusterPlugin}] : Subclass of \class{dabc::ApplicationPlugin} to run on 
    the cluster controller node of the builder network. 
 \begin{compactenum}
@@ -548,7 +621,8 @@ The classes of the Bnet package, providing functionalities of the event builder 
    frame (e.g. combine an event from subevent readouts on that node). 
 \begin{compactenum}
   \item It provides memory pools and one input port for each 
-      readout connection (either \class{bnet::GeneratorModule} or connection to a 
+      readout connection \\
+      (either \class{bnet::GeneratorModule} or connection to a 
       readout transport). 
   \item The formatting functionality is to be implemented in method 
       \func{MainLoop()} of user defined subclass (e.g. \class{bnet::MbsCombinerModule}).
@@ -591,7 +665,7 @@ The classes of the Bnet package, providing functionalities of the event builder 
       The data frame buffers of all Bnet senders are transferred serially 
       over this port and are then kept as an internal {\bf std::vector} in the Bnet builder module.
   \item Method \func{DoBuildEvent()} is to be implemented in user defined 
-      subclass (e.g. \class{bnet::MbsBuilderModule}) and is called in module's 
+      subclass (e.~g.~ \class{MbsBuilderModule}) and is called in module's 
       \func{MainLoop()} when a set of corresponding buffers is complete.
   \item It provides {\bf one} output port that may connect to a 
       Bnet filter module, or a user defined output or storage module, resp. 
@@ -607,10 +681,11 @@ The classes of the Bnet package, providing functionalities of the event builder 
       already tagged physics events from the preceding Bnet builder module.
   \item Has {\bf one} output port to connect a user defined output or storage module, resp.
   \item Method \func{TestBuffer(buffer)} is to be implemented in user 
-      defined subclass (e.g. \class{bnet::MbsFilterModule}) and is called in 
+      defined subclass (e.~g.~ \class{MbsFilterModule}) and is called in 
       module's \func{MainLoop()} for each incoming buffer. 
       Method should return \keyw{true} if the event is "good" for further processing.
   \item Forwards the tested "good" buffers to the output 
       port and discards all other buffers.
 \end{compactenum}
-\end{compactdesc}
+%\end{compactdesc}
+\end{description}
