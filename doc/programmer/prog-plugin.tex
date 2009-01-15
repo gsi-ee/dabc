@@ -17,9 +17,11 @@ be available by name at runtime.
 
 \section{Modules}
 \subsection{ModuleSync}
-The data processing functionality is usually implemented by subclassing 
-   the \class{dabc::ModuleSync} base class. 
-
+\index{Core classes !dabc::ModuleSync}
+Simple data processing functionality is most easily implemented by subclassing 
+the \class{dabc::ModuleSync} base class which defines the interface for a 
+synchronous module that is allowed to block its dedicated execution thread.  
+   
 \begin{compactenum}
 \item  The constructor of \class{dabc::ModuleSync} subclass  creates all 
       ports, may initialize the pool handles, and may 
@@ -27,15 +29,98 @@ The data processing functionality is usually implemented by subclassing
 \item  The virtual \func{ExecuteCommand()} method of \class{dabc::ModuleSync} 
       subclass may implement the callbacks of the defined commands.
 \item  The virtual \func{MainLoop()} method of \class{dabc::ModuleSync} 
-      subclass implements the processing job.
+      subclass implements the processing job. This method runs in a dedicated working thread.  
 \item  The user code shall not directly access the 
-      memory pools to request new buffers. Instead, it can use methods of 
-      \class{dabc::Module} with a \class{dabc::PoolHandle} object as argument. 
-      These methods may block the \func{MainLoop()}.
-\item  The user code can send and receive buffers 
-      from and to ports by methods of \class{dabc::ModuleSync}. 
-      These methods may block the \func{MainLoop()}.
+      memory pools to request new buffers. Instead, it can use \class{dabc::ModuleSync} method 
+      \func{TakeBuffer()} with a \class{dabc::PoolHandle} object as argument.
+      This method provides a blocking access to a memory pool, i.~e.~ the \func{MainLoop()} thread may block here until a buffer is available.
+      
+\item  The \func{MainLoop()} code can send and receive buffers   
+      from, and to ports by \class{dabc::ModuleSync} methods \func{Send(port), buffer)}, and
+    \func{Receive(port), buffer)}, resp. These methods may also block the \func{MainLoop()} if an output port queue is full, or if no buffer is available at the input port, resp.
+
 \end{compactenum}
+
+\subsection{ModuleAsync}
+\index{Core classes !dabc::ModuleAsync}
+
+Alternatively, a subclass of \class{dabc::ModuleAsync} 
+can be implemented. In contrast to \class{dabc::ModuleSync},
+there is no main loop function which runs in a dedicated, blockable thread,
+but some event callbacks are implemented that are only executed if a 
+\dabc~ event occurs, e.~g.~ a buffer arrives at the input port; a requested
+buffer is available from a memory pool, etc.
+Several \class{dabc::ModuleAsync} objects may be assigned to one working thread,
+so any event callback function must never block the execution
+
+\begin{compactenum}
+
+\item  The constructor of \class{dabc::ModuleAsync} subclass  creates all 
+      ports, may initialize the pool handles, and may 
+      define commands and parameters. 
+\item  The virtual \func{ExecuteCommand()} method of \class{dabc::ModuleAsync} 
+      subclass may implement the callbacks of the defined commands.
+
+\item  For each kind of \dabc~ event, virtual methods  may be
+implemented in \class{dabc::ModuleAsync} subclass that are executed 
+by the working thread when the corresponding event occurs for the module, e~.g.~:
+\begin{compactdesc}
+	\item [\func{void ProcessInputEvent(Port* port)}] : 
+	A new buffer was received at a connected port. The \class{Port*} argument
+	gives the reference to the port where the buffer was received.
+	
+	\item [\func{void ProcessOutputEvent(Port* port)}] :
+	A buffer in the queue of an output port was taken by the connected
+	transport. The \class{Port*} argument
+	gives the reference to the port where the buffer was send.
+	 
+	 \item [\func{void ProcessConnectEvent(Port* port)}] :
+	 A port has been connected to an external \class{dabc::Transport}.
+	  The \class{Port*} argument
+	gives the reference to the port that was connected. This method can
+	be used for initialization actions on connection.
+	  
+         \item  [\func{void ProcessDisconnectEvent(Port* port)}]:	
+ 	A port has been disconnected from a \class{dabc::Transport}.
+	  The \class{Port*} argument gives the reference to the port that 
+	  was disconnected. This method can be used for cleanup actions.
+	
+         \item [\func{void ProcessPoolEvent(PoolHandle* pool)}]: 
+	 A requested buffer is available at a memory pool.  The
+	 \class{PoolHandle*} argument gives the reference to the memory 
+	 pool handle which fired the event; this is used to actually take the
+	 buffer into the module without blocking execution.
+          
+	  \item [\func{void ProcessTimerEvent(Timer* timer)}]:
+	  A timer has fired an event.  The
+	 \class{Timer*} argument gives the reference to identify which
+	 timer reached its timeout.  
+        
+\end{compactdesc}      
+   
+\item   In baseclass \class{dabc::ModuleAsync} all events are dispatched to the callbacks above by method 
+\func{ProcessUserEvent(ModuleItem\* item, uint16\_t evid)}. 
+This is called by the working thread
+whenever {\bf any} event for this module shall be processed.
+However, this virtual method  
+may also directly be re-implemented in the \class{dabc::ModuleAsync} subclass
+if one wants to treat all events in one method. 
+The \class{uint16\_t evid} argument gives the number of the event type. 
+The component that fired the event may be accessed 
+by the \class{ModuleItem*} pointer. 
+
+      
+\item    To avoid blocking the shared working thread, 
+the user must always check if a resource (e.g. a port, a memory pool) 
+would block before any calls (e.g. \func{Send()}, \func{TakeBuffer()}) are
+invoked on it. 
+All callbacks must \strong{return} in the "I would block" case; on the next 
+time the callback is executed by the framework the user must check the
+situation again and react appropriately. This might require an own
+bookkeeping of available resources. 
+
+\end{compactenum}
+   
 
 \subsection{Special modules}
 For special set ups (e.g. Bnet), the framework provides 
@@ -55,66 +140,154 @@ For special set ups (e.g. Bnet), the framework provides
 \end{compactenum}
 
 \section{Device and transport}
+\label{prog_plugin_device}
 All data transport functionality is implemented by 
-   subclassing  \class{dabc::Device} and \class{dabc::Transport} base classes. 
+   subclassing  \class{dabc::Device} and \class{dabc::Transport} base classes.
+       
 \begin{compactenum}
 \item  The \class{dabc::Device} subclass constructor may create  
       pool handles and may define commands and parameters. 
-\item  The virtual \func{ExecuteCommand()} method of \class{dabc::Device} 
-      subclass may implement the callbacks of the defined commands.
-\item  Factory method \func{CreateTransport()} of \class{dabc::Device}
-      subclass defines which transport instance is created 
-      by the framework whenever this device shall be connected to 
-      the port of a module.   
-\item  The virtual \func{Send()} and \func{Recv()} methods of the 
-      \class{dabc::Transport} subclass must implement the actual transport 
-      from and to a connected port, respectively.
-\item  To implement a simple user defined transport 
-      (e.g. read from a special socket protocol), 
-      there is another base class \class{dabc::DataTransport} 
-      (subclass of\class{dabc::Transport}). 
+
+\item  Method \func{int CreateTransport(Command* cmd, Port* port)} of the \class{dabc::Device}
+      implementation creates the appropriate \class{dabc::Transport} 
+      instance and connects it to the given \func{Port* port}.
+      It is invoked by the framework  when this device is connected to 
+      a module port, which is usually specified in the application via calls
+      of \class{dabc::Manager} methods. The optional argument 
+      \func{Command* cmd} may pass further parameters from the application 
+      to the new transport, encapsulated in a command object. 
+      
+% \item  The virtual \func{bool Send(Buffer* buf)} and \func{bool Recv(Buffer* \&buf)} methods of the 
+%       \class{dabc::Transport} subclass must implement the actual transport 
+%       from and to a connected port, respectively.
+
+\item  The special transport class \class{dabc::DataTransport} 
+(inherits from \class{dabc::Transport})
+       should be used as base class to implement a user defined transport 
+      (e.~g.~ read from a user defined hardware board).
       This class already provides queues for (optionally)
       input and output buffers and a data backpressure mechanism. 
-      Instead of \func{Send} and \func{Recv()}, the user subclass must implement 
-      special virtual methods, e.g. \func{ReadBegin()}, \func{ReadComplete(buffer)} 
-      to request the next buffer of a given size from the base class, 
-      and to peform filling this buffer from the associated user device, respectively. 
-      These methods are called implicitely from the framework at the right time. 
+      The user subclass must implement virtual methods 
+      to perform the data transport which are called implicitely from 
+      the framework at the right time:
+\begin{compactdesc}
+	
+	\item [\func{unsigned Read\_Size()}] : 
+	Should specify the required buffer size to be read from the device, 
+	e.~g.~ the DMA memory size. Framework will then allocate a \func{Buffer}
+	of appropriate size for the \func{Read\_*} functions
+
+	\item [\func{unsigned Read\_Start(Buffer* buf)}] : transport gets a 
+	\func{Buffer* buf} to be filled in the read. Actual filling may be done
+	asynchronously to the calling thread, e.~g.~ by DMA. Thus
+	this function may initiate the asynchronous read here and return
+	immeadeately before the read is complete. 
+	For synchronous filling of the buffer, this function should do nothing.
+	
+	
+	\item [\func{unsigned Read\_Complete(Buffer* buf)}] :
+	Called before the framework transfers the \func{Buffer* buf}
+	to the connected port. The transport should no sooner return this function
+	 than the reading of this buffer (e.~g.~ by DMA) 
+	 is complete. In case of synchronous reading, the buffer filling is also
+	 initiated here. For asynchronous reading, 
+	 buffer filling has been initiated before
+	 in func{unsigned Read\_Start(Buffer* buf)} and this function just waits
+	 for a "buffer complete" state from the filling device.
+      
+	\item [\func{void Read\_CallBack(unsigned compl\_res = DataInput::di\_Ok)}] :
+	this method MUST be called by transport when \func{Read\_Start()} 
+	returns \func{di\_CallBack}. It is only way to "restart" event loop in the transport (Sergei, please explain more!)
+	
+	\item [\func{double Read\_Timeout()}] :
+	Defines timeout for operation in ms? TO BE EXPLAINED
+	
+	\item [\func{bool WriteBuffer(Buffer* buf)}] : 
+	The arriving \func{Buffer* buf} is synchronously written to the device.	
+         
+	\item [\func{void ProcessPoolChanged(MemoryPool* pool)}] : 	
+	Called when a func{MemoryPool} changes the buffer set up. 
+	This allows to work directly on the buffers
+	of a memory pool, e.~g.~ to initialize all buffers for DMA when
+	memory pool is created.  
+	  
+
+\end{compactdesc}
+      
+      
+\item  The virtual \func{ExecuteCommand()} method of \class{dabc::Device} 
+      subclass may implement the callbacks of the defined commands.
+
+
 \end{compactenum}
 
 \section{Factories}
-The set up of the application specific module and device objects is done 
+The set up of the application specific objects is done 
    by \class{dabc::Factory} subclasses.
 \begin{compactenum}
-\item  All factories are registered and kept in the global manager. 
-      The access to the factories' functionality is done via methods of the manager. 
-\item  All factories are instantiated as static singletons when 
-      loading the libraries that defines them. 
-      The user need not to create them explicitely.       
-\item  The \class{dabc::Factory} subclasses must implement methods \func{CreateModule(classname)}, 
-      and \func{CreateDevice(classname)} , to instantiate modules or 
-      devices, respectively. The user must subclass 
-      the \class{dabc::Factory} to add own classes to the system. \strong{Note:} the factory 
-      method for transport objects is not in this factory, but in the 
-      corresponding \class{dabc::Device} subclass. 
-\item  The manager can keep more than one factory and scans 
-      all factories to produce the requested object class. 
+
+\item  The user must define a \class{dabc::Factory} subclass to add own classes to the system. 
+
+\item  Each factory is instantiated as static singleton when 
+      loading the library that defines it. 
+
+\item  Factories are registered and kept in the global manager. 
+      The access to the factories' functionality is done via methods of the
+      manager that scans all known factories to produce the requested object
+      class. 
+
 \item  The framework provides several factories for predefined 
-      implementations (e.g. \class{bnet::SenderModule}, \class{dabc::VerbsDevice}).      
+      implementations (e.~g.~ \class{bnet::SenderModule}, \class{verbs::Device})
+            
+      
+\item The user factory may implement such methods:
+\begin{compactdesc}
+	\item [\func{Module* CreateModule(const char* classname, const char* modulename, Command* cmd)}] : 
+	Instantiate a \class{dabc::Module} of class \func{classname}. The object
+	name of the module is taken from \func{modulename} argument. Optional 
+	argument \func{Command* cmd} may pass further creation parameters 
+	from the application to the new module, encapsulated in a command object.
+	
+\item [\func{Device* CreateDevice(const char* classname, const char* devname, Command* cmd)}] : 
+	Instantiate a \class{dabc::Device} of class \func{classname}. The object
+	name of the device is taken from \func{devname} argument. Optional 
+	argument \func{Command* cmd} may pass further creation parameters 
+	from the application to the new device, encapsulated in a command object.
+	
+\item [\func{Application* CreateApplication(const char* classname, Command* cmd)}] : 
+	Instantiate a \class{dabc::Application} of class \func{classname}.  Optional 
+	argument \func{Command* cmd} may pass further creation parameters 
+	from the set-up to the new application, encapsulated in a command object.
+
+            
+\end{compactdesc}      
+
+Note that the factory  methods for \class{dabc::Transport} objects
+belong to the corresponding \class{dabc::Device} implementation (see section \ref{prog_plugin_device})). 
+      
+
+
 \end{compactenum}
 
 \section{The DABC Application}
+\label{prog_plugin_applicaton}
 The specific application controlling code is defined in 
    the \class{dabc::Application}.   
 \begin{compactenum}
 \item  The manager has exactly one application object. 
-      The user must provide a \class{dabc::Application} subclass.
-\item  The \class{dabc::Application} is instantiated and registered on 
-      startup time by a global \func{InitPlugins()} function. This function 
-      is declared and executed in the framework, but defined in the user 
-      library and thus knows the user specific plug-in classes. 
-      This trick is necessary to decouple the executable main function 
-      (e.g. \xdaq executive) from the user specific part.  
+      The user must implement a \class{dabc::Application} subclass.
+\item  On startup time, the \class{dabc::Application} is instantiated
+by means of a factory method 
+      \func{CreateApplication(const char* classname, dabc::Command* cmd)}.
+The text argument \func{classname} specifies which
+application subclass is created; this name is taken from a setup parameter, i.~e.~ it may be read from an XML setup file. The framework will search all
+registered factories for the method which can fullfill to create an application
+of that name. So the user must provide a \class{dabc::Factory} that defines such method for his/her application implementation.
+      
+\item  The application  may register parameters that 
+      define the application's configuration. These parameters can be set at 
+      runtime from the configuration and controls system.
+     
 \item  The user may implement virtual methods \func{UserConfigure()} ,  
       \func{UserEnable()}, \func{UserBeforeStart()}, 
       \func{UserAfterStop()}, \func{UserHalt()} in his/her 
@@ -125,19 +298,12 @@ The specific application controlling code is defined in
       actions (e.g. cleanup of modules and devices, starting 
       and stopping the working processors) are already handled by 
       the framework at the right time and need not to be invoked explicitely here.
-\item  The application  may register parameters that 
-      define the application's configuration. These parameters can be set at 
-      runtime from the configuration and controls system.
-\item  The methods of the application  should use 
-      application factories to create modules and 
-      devices by name string. However, for convenience the user may 
-      implement factory methods \func{CreateModule()} and \func{CreateDevice()} straight 
-      in his/her \class{dabc::Application} subclass.
+
 \item   For special DAQ topologies (e.g. Bnet), the framework offers 
       implementations of the \class{dabc::Application} containing the 
-      generic functionality (e.g. \class{bnet::WorkerApplication}, \class{bnet::ClusterApplication}). 
+      generic functionality (e.~g.~ \class{bnet::WorkerApplication}, \class{bnet::ClusterApplication}). 
       In this case, the user specific parts are implemented by subclassing 
-      these and implementing additional virtual methods (e.g. \func{CreateReadout()}).    
+      these and implementing additional virtual methods (e.~g.~ \func{CreateReadout()}).    
 \end{compactenum}
 
 
