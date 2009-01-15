@@ -1,6 +1,5 @@
 [programmer/prog-plugin.tex]
 \section{Introduction}
-%\textit{put some general words on the plugin philosophy here}
 A multi purpose DAQ system like \dabc~ requires to develop user specific code and adopt
 this into the general framework. A common object oriented technique to realize such
 extensability consists in the definition of base classes as interfaces for dedicated purposes.
@@ -18,6 +17,7 @@ be available by name at runtime.
 \section{Modules}
 \subsection{ModuleSync}
 \index{Core classes !dabc::ModuleSync}
+\label{plugin_module_sync}
 Simple data processing functionality is most easily implemented by subclassing 
 the \class{dabc::ModuleSync} base class which defines the interface for a 
 synchronous module that is allowed to block its dedicated execution thread.  
@@ -43,6 +43,7 @@ synchronous module that is allowed to block its dedicated execution thread.
 
 \subsection{ModuleAsync}
 \index{Core classes !dabc::ModuleAsync}
+\label{plugin_module_async}
 
 Alternatively, a subclass of \class{dabc::ModuleAsync} 
 can be implemented. In contrast to \class{dabc::ModuleSync},
