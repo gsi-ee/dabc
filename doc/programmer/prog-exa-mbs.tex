@@ -1,2 +1,35 @@
 [programmer/prog-exa-mbs.tex]
-\section{Example \mbs~ event building}
+
+\section{Overview}
+
+MBS (Multi Branch System) is standard DAQ system of GSI.
+Support of MBS in DABC includes several components:
+\bbul
+\item type definitions for different MBS structures  
+\item iterator classes for reading/creating MBS event/subevent data 
+\item support of new LMD file format  
+\item \class{mbs::ClientTransport} for connecting to MBS servers  
+\item \class{mbs::ServerTransport} to "emulate" running MBS servers  
+\item \class{mbs::CombinerModule} for performing mbs events building   
+\item \class{mbs::GeneratorModule} for generating random mbs events 
+\ebul
+
+This plugin is part of standard DABC distribution.  
+All sources can be found in \$DABCSYS/plugin/mbs directory.
+All these sources compiled into library libDabcMbs.so, which is placed in \$DABCSYS/lib. 
+
+
+\section{Events iterators}
+
+\section{File I/O}
+
+\section{Server transport}
+
+\section{Client transport}
+
+
+\section{Events generator example}
+
+
+
+\section{Local event building}
