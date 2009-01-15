@@ -27,6 +27,7 @@ user/user-exa-bnet.tex \
 user/user-exa-roc.tex \
 programmer/steer-programmer.tex \
 programmer/prog-docrev.tex \
+programmer/prog-manager.tex \
 programmer/prog-concepts.tex \
 programmer/prog-command.tex \
 programmer/prog-parameter.tex \
