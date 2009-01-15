@@ -1,0 +1,65 @@
+[programmer/prog-exa-pci.tex]
+\section{Example PCI event building}
+The Active Buffer Board (\ABB) as example of a PCI device in \dabc.
+The \ABB is developed by Institut f. Technische Informatik at Uni Mannheim.
+
+\section{DABC class description and functionality}
+
+\subsection{dabc::PCIBoardDevice}
+Subclass of \class{dabc::Device}. Adapter to the the \class{mprace::Board} functionality, i.e. the generic PCIe.
+\bcir
+\item Keeps vector of \class{mprace::DMABuffers} (mapped user memory taken from regular \dabc memory pool. Method \func{GetDMABuffer} of \class{dabc::Buffer*} delivers the mapped DMA buffer which corresponds to a given memory pool buffer; these are associated by the buffer id number used as index of the DMA buffer vector. The (re-)mapping is done on the fly if needed, calling \func{MapDMABuffer} of \class{dabc::MemoryPool*}.
+\item Method \func{ReadPCI} of \class{dabc::Buffer*} implements reading one buffer from PCI, with regard to parameters \member{fReadAddress}, \member{fReadBAR}, \member{fReadLength}, resp. Performs DMA into a regular pool buffer (user memory) which is mapped using \func{GetDMABuffer} of \class{dabc::Buffer*}. Currently DMA is still initiated by the host PC, i.e. ABB will start transfer by the call of \func{ReadDMA()} that blocks until DMA is complete. For asynchronous DMA (double buffering of \class{dabc::DataTransport}) following methods \func{ReadPCIStart()} and \func{ReadPCIComplete()} are provided. Device subclass may re-implement this method, adding board specific stuff.
+\item Method \func{ReadPCIStart} of \class{dabc::Buffer*} implements start reading one buffer from PCI, with regard to parameters \member{fReadAddress}, \member{fReadBAR}, \member{fReadLength}, resp. Performs DMA into a regular pool buffer (user memory) which is mapped using \func{GetDMABuffer} of \class{dabc::Buffer*}. This call does not block until DMA is complete, but returns immediately! Device subclass may re-implement this method, adding board specific stuff.
+\item Method \func{ReadPCIComplete} of \class{dabc::Buffer*} does a blocking wait until the current DMA buffer is finished with read from PCI. DMA has to be started using \func{ReadPCIStart()} before; method returns error if there was no DMA going on. Device subclass may re-implement this method, adding board specific stuff.
+\item Implements \func{CreateTransport()} as framework factory method to create a \class{dabc::PCITransport} and assign own working thread for each transport.
+\item Implements several specific commands which are handled in \func{ExecuteCommand(Command*)}. Currently these commands define DMA address regions for reading and writing.
+\item Implements \func{DoDeviceCleanup()} for cleaning the mapped dma buffers.
+\ecir
+\subsection{dabc::PCITransport}
+    Subclass of \class{dabc::DataTransport}, providing the connection to a module's input port.
+\bcir
+\item Transport queues and backpressure mechanism is provided by base class. The IO actions are executed in the thread assigned to the base class \class{dabc::WorkingProcessor}.
+\item Implements \func{ProcessPoolChanged(\class{dabc::MemoryPool*})}. This method is called whenever the memory pool associated with the transport changes, e.g. by recreation, expansion, etc. Uses \func{PCIBoardDevice::MapDMABuffers(\class{dabc::MemoryPool*})} to rebuild the indexed \class{mprace::DMABuffers} for each buffer of the pool.
+\item Implements \func{ReadBegin()}, returning the size of the next buffer that should be read from board. Uses current values as set in the \class{dabc::PCIBoardDevice}
+\item Implements \func{ReadPrepare(\class{dabc::Buffer*})} which initiates the actual reading of the buffer passed as argument. Calls \func{PCIBoardDevice::ReadPCIStart(\class{dabc::Buffer*})}. Note that on return of \func{ReadPrepare()}, the previously filled DMA buffer is already forwarded to the connected port (which wakes up thread of the readout module), i.e. \class{dabc::DataTransport} implicitly provides a double-buffering mechanism here.
+\item Implements \func{ReadComplete(\class{dabc::Buffer*})} which returns when the actual buffer has finished being filled from DMA read operation. Calls \func{PCIBoardDevice::ReadPCIComplete(\class{dabc::Buffer*})}.
+\ecir
+\subsection{dabc::AbbDevice}
+Subclass of \class{dabc::PCIBoardDevice}.
+\bcir
+\item Re-Implements \func{ReadPCI()}: NOTE: To work with the bnet test example, this will copy an event header of the Bnet format (i.e. incrementing event count and unique id) into each output Buffer after \func{dabc::PCIBoardDevice::ReadPCI()} is complete. Later CBM event format must be written by ABB and implemented in bnet for ABB.
+\item Implements \func{DoDeviceCleanup()} to reset event counter for the bnet test example.
+\ecir
+\subsection{dabc::AbbReadoutModule}
+Subclass of \class{dabc::ModuleAsync}; generic implementation of a readout module to use the \class{PCIBoardDevice}.
+\bcir
+\item Creates the memory pool which is used for DMA buffers in the \class{PCIBoardDevice}; this pool is propagated to the device via the \class{PCITransport} when module is connected, since device will use the pool associated with the connection port.
+\item Module runs either in standalone mode (one input port, no output) for testing; or in regular mode (one input port, one output port)
+\item \func{ProcessUserEvent()} defines the module action for any dabc events, e.g. input port has new buffer. In standalone mode, received buffer is just released. In regular mode, buffer is send to the output port.
+\ecir
+\subsection{dabc::AbbWriterModule}
+Subclass of \class{dabc::ModuleSync}; generic implementation of a writer module to use the \class{PCIBoardDevice}.
+\bcir
+\item Creates the memory pool which is used for DMA buffers in the \class{PCIBoardDevice}; this pool is propagated to the device via the \class{PCITransport} when module is connected, since device will use the pool associated with the connection port.
+\item Module runs either in standalone mode (one output port, no input) for testing; or in regular mode (one input port, one output port)
+\item \func{MainLoop()} defines the module action. In standalone mode, a new buffer is taken from the memory pool and send to the output port. In regular mode, the send buffer is taken from the input port.
+\ecir
+\subsection{dabc::AbbFactory}
+Subclass of \class{dabc::ApplicationFactory}. Generic plugin to utilize ABB classes in a set up:
+\bcir
+\item Implements \func{CreateDevice()} for the \class{AbbDevice}. Third argument of this factory method is \class{dabc::command}, containing initial setup parameters of the device.
+\item Implements \func{CreateModule()} for the \class{AbbReadoutModule} and the \class{AbbWriterModule}. Third argument of this factory method is \class{dabc::command}, containing initial setup parameters of the module.
+\item Factory is created automatically as static (singleton) instance on loading the \verba{libDabcAbb.so}.
+\ecir
+See Class Diagram of dabc PCI classes.
+
+\section{ABB classes with bnet test example}
+The \class{TestWorkerPlugin} of the bnet/test example was modified to optionally integrate ABB.
+
+\subsection{bnet::TestWorkerPlugin}
+Subclass of \class{bnet::WorkerPlugin}. This example has possibililty to utilize ABB classes in a bnet-set up.
+\bcir
+\item Registers parameters to configure the ABB. Note: The Parameter names are defined as string constants in \decl{AbbFactory.h}. These same names are used by \class{AbbFactory} methods to get the appropriate command parameters!
+\item Implements \func{CreateReadout()} with optional \class{AbbDevice}. May either use the \class{AbbDevice}, or still use the \class{TestGeneratorModule} of the example. This is switched by configuration parameter via the \func{ReadoutPar()} value (either "ABB", or anything else).Connects \class{AbbDevice} directly with the input port of the combiner module; we do not use \class{dabc::AbbReadoutModule} here (this is applied for standalone example \verba{abb\_test} only).
+\ecir
