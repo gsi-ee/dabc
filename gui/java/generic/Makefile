@@ -11,6 +11,7 @@ JARFILE=$(JARDIR)/$(PACKAGE).jar
 # because the package directory is created under the specified directory, even if it
 # IS the package directory
 FLAGS=-d . -classpath .:./$(PACKAGE):$(DIMDIR)/jdim/classes
+FLAGSA=-d . -classpath .:../$(PACKAGE):$(DIMDIR)/jdim/classes
  
 all: classes $(JARFILE)
 
@@ -70,7 +71,17 @@ classes: \
 	$(PACKAGE)/xSaveRestore.class \
 	$(PACKAGE)/xPanelSelect.class \
 	$(PACKAGE)/xDesktop.class \
-	$(PACKAGE)/xGui.class
+	$(PACKAGE)/xGui.class \
+	application/MbsPanel.class \
+	application/RocPanel.class \
+	application/UserPanel.class
+	
+application/MbsPanel.class: application/MbsPanel.java
+	javac $(FLAGSA) application/MbsPanel.java
+application/RocPanel.class: application/RocPanel.java
+	javac $(FLAGSA) application/RocPanel.java
+application/UserPanel.class: application/UserPanel.java
+	javac $(FLAGSA) application/UserPanel.java
 $(PACKAGE)/xPanelSelect.class : $(SOURCEDIR)/xPanelSelect.java
 	javac $(FLAGS) $(SOURCEDIR)/xPanelSelect.java
 $(PACKAGE)/xSaveRestore.class : $(SOURCEDIR)/xSaveRestore.java
