@@ -76,10 +76,14 @@ dtor/dtor-design.tex \
 dabc-bibitems.tex \
 dabc-glossary.tex \
 dabc-requirements.tex
-	pdflatex main-all.tex
+	@echo ==== 1st pass =====================
+	pdflatex main-all.tex|./texoutfilter
+	@echo ==== index pass ===================
 	makeindex main-all.idx
-	pdflatex main-all.tex
-	pdflatex main-all.tex
+	@echo ==== 2nd pass =====================
+	pdflatex main-all.tex|./texoutfilter
+	@echo ==== 3rd pass =====================
+	pdflatex main-all.tex|./texoutfilter
 	rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc
 clean:
 	rm -f main-all.pdf *.aux *.idx *.ilg *.ind *.log *.out *.toc

@@ -4,13 +4,13 @@ echo 'args: directory'
 else
 cd $1
 echo ====== First pass main-$1.tex ======================
-pdflatex main-$1.tex
+pdflatex main-$1.tex|../texoutfilter
 echo ====== Index main-$1.isx ======================
 makeindex main-$1.idx
 echo ====== Second pass main-$1.tex generate TOC======================
-pdflatex main-$1.tex
+pdflatex main-$1.tex|../texoutfilter
 echo ====== Third pass main-$1.tex with TOC ======================
-pdflatex main-$1.tex
+pdflatex main-$1.tex|../texoutfilter
 rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc
 cd ..
 fi
