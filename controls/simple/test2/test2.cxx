@@ -626,7 +626,7 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
 
    const char* devname = "TSyncDev";
    const char* deviceclass = dabc::typeSocketDevice;
-   const char* thrdclass = "SocketThread";
+   const char* thrdclass = dabc::typeSocketThread;
    if (deviceid==2) {
        deviceclass = "verbs::Device";
        thrdclass = "VerbsThread";

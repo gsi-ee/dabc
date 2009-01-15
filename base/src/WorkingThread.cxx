@@ -65,7 +65,7 @@ bool dabc::WorkingThread::CompatibleClass(const char* clname) const
 {
    if ((clname==0) || (strlen(clname)==0)) return true;
 
-   return strcmp(clname, "WorkingThread") == 0;
+   return strcmp(clname, typeWorkingThread) == 0;
 }
 
 

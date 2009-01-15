@@ -43,7 +43,9 @@ namespace dabc {
    extern const char* xmlTrueValue;
    extern const char* xmlFalseValue;
 
+   extern const char* typeWorkingThread;
    extern const char* typeSocketDevice;
+   extern const char* typeSocketThread;
 
    class Basic {
       friend class Folder;

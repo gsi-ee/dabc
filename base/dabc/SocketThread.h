@@ -40,7 +40,7 @@ namespace dabc {
 
          virtual ~SocketProcessor();
 
-         virtual const char* RequiredThrdClass() const { return "SocketThread"; }
+         virtual const char* RequiredThrdClass() const { return typeSocketThread; }
 
          inline int Socket() const { return fSocket; }
 
@@ -219,7 +219,7 @@ namespace dabc {
          SocketThread(Basic* parent, const char* name = "SocketThrd", int numqueues = 3);
          virtual ~SocketThread();
 
-         virtual const char* ClassName() const { return "SocketThread"; }
+         virtual const char* ClassName() const { return typeSocketThread; }
          virtual bool CompatibleClass(const char* clname) const;
 
          static bool SetNonBlockSocket(int fd);

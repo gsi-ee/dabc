@@ -89,10 +89,10 @@ dabc::Device* dabc::StdManagerFactory::CreateDevice(const char* classname,
 
 dabc::WorkingThread* dabc::StdManagerFactory::CreateThread(const char* classname, const char* thrdname, const char* thrddev, Command* cmd)
 {
-   if ((classname==0) || (strlen(classname)==0) || (strcmp(classname, "WorkingThread")==0))
+   if ((classname==0) || (strlen(classname)==0) || (strcmp(classname, typeWorkingThread)==0))
       return new WorkingThread(dabc::mgr()->GetThreadsFolder(true), thrdname, cmd ? cmd->GetInt("NumQueues", 3) : 3);
    else
-   if (strcmp(classname, "SocketThread")==0)
+   if (strcmp(classname, typeSocketThread)==0)
       return new SocketThread(dabc::mgr()->GetThreadsFolder(true), thrdname, cmd ? cmd->GetInt("NumQueues", 3) : 3);
 
    return 0;

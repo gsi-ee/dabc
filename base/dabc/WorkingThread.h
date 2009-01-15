@@ -83,7 +83,7 @@ namespace dabc {
 
          virtual bool Submit(Command* cmd);
 
-         virtual const char* ClassName() const { return "WorkingThread"; }
+         virtual const char* ClassName() const { return typeWorkingThread; }
 
          virtual bool CompatibleClass(const char* clname) const;
 

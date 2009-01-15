@@ -22,7 +22,7 @@ namespace dabc {
          SocketDevice(Basic* parent, const char* name);
          virtual ~SocketDevice();
 
-         virtual const char* RequiredThrdClass() const { return "SocketThread"; }
+         virtual const char* RequiredThrdClass() const { return typeSocketThread; }
 
          virtual bool ServerConnect(Command* cmd, Port* port, const char* portname);
          virtual bool ClientConnect(Command* cmd, Port* port, const char* portname);

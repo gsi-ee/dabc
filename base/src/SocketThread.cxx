@@ -809,7 +809,7 @@ dabc::SocketThread::~SocketThread()
 bool dabc::SocketThread::CompatibleClass(const char* clname) const
 {
    if (WorkingThread::CompatibleClass(clname)) return true;
-   return strcmp(clname, "SocketThread") == 0;
+   return strcmp(clname, typeSocketThread) == 0;
 }
 
 bool dabc::SocketThread::SetNonBlockSocket(int fd)

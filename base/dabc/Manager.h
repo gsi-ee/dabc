@@ -283,7 +283,7 @@ namespace dabc {
 
          /** Perform action to makes required state transition
            * Should not be called from manager thread while
-           * it is synchron and returns only when transition is completed (true) or
+           * it is synchronous and returns only when transition is completed (true) or
            * error is detected (false) */
          bool DoStateTransition(const char* state_transition_cmd);
 
@@ -311,7 +311,7 @@ namespace dabc {
 
          /** Invoke state transition of manager.
            * Must be overwritten in derived class.
-           * This MUST be asynchron functions means calling thread should not be blocked.
+           * This MUST be asynchronous functions means calling thread should not be blocked.
            * Actual state transition will be performed in state-machine thread.
            * If command object is specified, it will be replied when state transition is
            * completed or when transition is failed */

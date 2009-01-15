@@ -39,7 +39,9 @@ namespace dabc {
    const char* xmlTrueValue         = "true";
    const char* xmlFalseValue        = "false";
 
+   const char* typeWorkingThread    = "dabc::WorkingThread";
    const char* typeSocketDevice     = "dabc::SocketDevice";
+   const char* typeSocketThread     = "dabc::SocketThread";
 }
 
 

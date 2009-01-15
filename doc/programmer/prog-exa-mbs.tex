@@ -171,17 +171,80 @@ kinds of sockets:
 \item  - \class{dabc::SocketIOProcessor} - send/recv handling  
 \ebul
 
+Usage of socket processor classes requires that thread, 
+to which such processors assigned should be of type \class{dabc::SocketThread}.
+At the same time normal processors like \class{dabc::ModuleAsync} can work together
+with \class{dabc::SocketThread}. Therefore, it is possible to run module and all its
+socket transports in one single thread if socket thread for such module created in
+advance:
+
+\begin{verbatim}
+  ...
+  dabc::mgr()->CreateThread("GeneratorThrd", dabc::typeSocketThread);
+  dabc::mgr()->CreateModule("Generator","mbs::GeneratorModule", "GeneratorThrd");
+  dabc::mgr()->CreateTransport("Generator/Output", 
+                  mbs::typeServerTransport, "GeneratorThrd");
+  ...
+\end{verbatim}
+    
 
 \section{Server transport}
 
 Class \class{mbs::ServerTransport} was developed to provide MBS servers functionality in DABC.
 Using this class one can emulate work of MBS transport server and MBS stream server. 
-This class is also good example of use \class{dabc::SocketProcessor} classes.
+This is also good example of usage of \class{dabc::SocketProcessor} classes.
 
+Implementation of \class{mbs::ServerTransport} based on generic class \class{dabc::Transport} and 
+internally uses two kinds of sockets: socket for handling connection and I/O socket for 
+sending data.
+  
+Server transport has following parameters:
+\bbul
+\item \param{MbsServerKind}  - kind of mbs server ("Transport" or "Stream")  
+\item \param{MbsServerPort}  - port number for socket connection
+\ebul
+
+In previous section there is example of creation server transport with default
+parameters. To instantiate MBS server tranport with user-defined parameters, 
+following code should be used:
+
+\begin{verbatim}
+  ...
+  dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", 
+                         mbs::typeServerTransport, "MbsTransThrd");
+  cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
+  cmd->SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(mbs::TransportServer) + 5);
+  dabc::mgr()->Execute(cmd);
+  ...
+\end{verbatim}
 
 
 \section{Client transport}
 
+Class \class{mbs::ClientTransport} allows connect DABC with MBS. 
+For the moment MBS transport and stream servers are supported.  
+
+Client transport has following parameters:
+\bbul
+\item \param{MbsServerKind}  - kind of mbs server ("Transport" or "Stream") to connect to  
+\item \param{MbsServerName}  - host name where mbs server runs 
+\item \param{MbsServerPort}  - server port number for socket connection
+\ebul
+
+To create client connection, following pease of code should be used:
+
+\begin{verbatim}
+  ...
+  dabc::Command* cmd = new dabc::CmdCreateTransport("Combiner/Input0", 
+                         mbs::typeClientTransport, "MbsTransThrd");
+  cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
+  cmd->SetStr(mbs::xmlServerName, "lxi010.gsi.de");
+  cmd->SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(mbs::TransportServer) + 5);
+  dabc::mgr()->Execute(cmd);
+  ...
+\end{verbatim}
+
+ 
 
 \section{Events generator example}
 
