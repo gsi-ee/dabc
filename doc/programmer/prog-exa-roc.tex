@@ -67,7 +67,7 @@ unsigned roc::Transport::Read_Start(dabc::Buffer* buf)
 }
 \end{verbatim}
 
-In case when data already exists in internal buffer of \class{SysCoreBoard} object, \verba{dabc::DataInput::di\_Ok} 
+In case when data already exists in internal buffer of \class{SysCoreBoard} object, \keyw{dabc::DataInput::di\_Ok} 
 is returned and than immediately \func{Read\_Complete} will be called, which finally fill output buffer:
 
 \begin{verbatim}
@@ -84,7 +84,7 @@ unsigned roc::Transport::Read_Complete(dabc::Buffer* buf)
 }
 \end{verbatim}
 
-Returned from function \func{Read\_Start} value \verba{dabc::DataInput::di\_CallBack} indicates 
+Returned from function \func{Read\_Start} value \keyw{dabc::DataInput::di\_CallBack} indicates 
 that event loop should be suspended. When required amount of data received by ROClib,
 it produces call of \func{SysCoreControl::DataCallBack} method, which is reimplemented in \class{roc::Device} 
 class and calls following method of \class{roc::Transport}: 

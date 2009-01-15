@@ -18,12 +18,167 @@ This plugin is part of standard DABC distribution.
 All sources can be found in \$DABCSYS/plugin/mbs directory.
 All these sources compiled into library libDabcMbs.so, which is placed in \$DABCSYS/lib. 
 
-
 \section{Events iterators}
+
+MBS defines own event/subevent structures. To access such events data,
+number of structures are defined in "mbs/LmdTypeDefs.h" and "mbs/MbsTypeDefs.h".
+In first file structure \class{mbs::Header} is defined, which is just container for 
+arbitrary raw data. Such container is used to store/read data from LMD files.
+In "mbs/MbsTypeDefs.h" file following structures are defined:
+\bbul
+\item \class{mbs::EventHeader} - MBS event header of 10-1 type 
+\item \class{mbs::SubeventHeader} - MBS subevent header of 10-1 type 
+\ebul
+DABC operates with buffer (type \keyw{mbt\_MbsEvents}), where several subsequent 
+MBS events (there is no buffer header in front!). To iterate over all events in such
+buffer class \class{mbs::ReadIterator} was designed (defined in "mbs/Iterator.h"). It provides
+possibility to iterate (access) over all events in buffer in following way:
+
+\begin{verbatim}
+#include "mbs/Iterator.h"
+
+void Print(dabc::Buffer* buf)
+{
+   mbs::ReadIterator iter(buf);
+   while (iter.NextEvent()) {
+      DOUT1(("Event %u size %u", 
+              iter.evnt()->EventNumber(), 
+              iter.evnt()->FullSize()));
+      while (iter.NextSubEvent()) {
+         DOUT1(("Subevent crate %u procid %u size %u",
+               iter.subevnt()->iSubcrate, 
+               iter.subevnt()->iProcId, 
+               iter.subevnt()->FullSize()));
+      }
+   }
+}
+\end{verbatim}
+
+Another class \class{mbs::WriteIterator} is developed to fill number  
+of MBS events into \class{dabc::Buffer}. Way to use this iterator 
+illustrated by following code:
+
+\begin{verbatim}
+#include "mbs/Iterator.h"
+
+void Fill(dabc::Buffer* buf)
+{
+   mbs::WriteIterator iter(buf);
+   unsigned evntid = 0;
+   while (iter.NewEvent(evntid++)) {
+      for (unsigned subcnt = 0; subcnt < 3; subcnt++) {
+         if (!iter.NewSubevent(28, 0, subcnt)) return;
+         // fill raw data iter.rawdata() here
+         memset(iter.rawdata(), 0, 28);
+         iter.FinishSubEvent(28);
+      } 
+      if (!iter.FinishEvent()) return;
+   }
+}
+\end{verbatim}
+
 
 \section{File I/O}
 
+LMD file format used in MBS. There is class \class{mbs::LmdFile}, which provide
+C++ interface for reading/writing such lmd file.
+
+To use \class{mbs::LmdFile} as input/output transport of the module, classes \class{mbs::LmdInput} 
+and \class{mbs::LmdOutput} were developed. 
+
+In general case, to provide user-specific input/output capability over port, 
+one should implement complete \class{dabc::Transport} interface, which includes 
+event handling, queue organization, complex initialization sequence. 
+All this required for cases like socket or InfiniBand transports, 
+but maybe too complicated for simple cases as file I/O. Therefore, special kind of
+transport \class{dabc::DataIOTransport} was developed, which handle most of such complex tasks
+and only requires to implement relatively simple \class{dabc::DataInput} and
+\class{dabc::DataOutput} interfaces.
+
+Class \class{mbs::LmdOutput} inherits \class{dabc::DataOutput} and provides possibility to save 
+MBS events, placed in \class{dabc::Buffer} objects, in LMD file. 
+In addition to \class{mbs::LmdFile} functionality, it allows to create
+multiple files when file size limit is exceeded. Following parameters are supported:
+\bbul
+\item \param{MbsFileName}      - name of lmd file (including .lmd extension)  
+\item \param{MbsFileSizeLimit} - size limit (in Mb) of single file, 0 - no limit
+\ebul
+
+Class \class{mbs::LmdInput} inherits \class{dabc::DataInput} and allows to read 
+MBS events from LMD file(s) and provide them over input ports into module.
+
+It has following parameters:
+\bbul
+\item \param{MbsFileName} - name of lmd file (multicast symbols * and ? supported)  
+\item \param{BufferSize}  - buffer size to read data
+\ebul
+
+\func{CreateDataInput} and \func{CreateDataOutput} methods were implemented in \class{mbs::Factory} class, 
+that user can instantiate these classes using plugin meachanism of DABC. 
+  
+
+Here is an example, how output file for generator module can be configured:
+   
+\begin{verbatim}
+   ...
+   dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator");
+   dabc::Command* cmd = 
+      new dabc::CmdCreateTransport("Generator/Output", mbs::typeLmdOutput);
+   cmd->SetStr(mbs::xmlFileName, "output.lmd");
+   cmd->SetInt(mbs::xmlSizeLimit, 100);
+   dabc::mgr()->Execute(cmd);
+   ...
+\end{verbatim}
+       
+Here one first creates module and than configure (via command) type of
+output transport and its parameters.        
+       
+Another example shows, how several input files can be configured for combiner:
+   
+\begin{verbatim}
+   ...
+   dabc::Command* cmd = 
+      new dabc::CmdCreateModule("mbs::CombinerModule", "Combiner");
+   cmd->SetInt(dabc::xmlNumInputs, 3);
+   dabc::mgr()->Execute(cmd);
+   
+   for (unisgned n=0;n++;n<3) {
+      cmd = new dabc::CmdCreateTransport(
+         FORMAT(("Combiner/Input%u",n)), mbs::typeLmdInput);
+      cmd->SetStr(mbs::xmlFileName, FORMAT(("input%u_*.lmd",n)));
+      dabc::mgr()->Execute(cmd);
+   }   
+   ...
+\end{verbatim}
+
+In this example one create module with 3 inputs and than for each input port lmd file transport is created.
+
+
+\section{Socket classes}
+
+All communication with MBS servers performed via socket. DABC has number
+of class for socket handling, included in base package (libDabcBase.so).
+Main idea of these classes is to handle socket operation (creation, connection, sending, receiving and 
+error handling) in form of event processing. 
+
+Class \class{dabc::SocketThread} organises event loop, produced by sockets, assigned with
+\class{dabc::SocketProcessor}. Processing of these events done by virtual methods
+of class \class{dabc::SocketProcessor}, which has several subclasses for different 
+kinds of sockets: 
+\bbul
+\item  - \class{dabc::SocketServerProcessor} - server socket handling  
+\item  - \class{dabc::SocketClientProcessor} - server socket handling  
+\item  - \class{dabc::SocketIOProcessor} - send/recv handling  
+\ebul
+
+
 \section{Server transport}
+
+Class \class{mbs::ServerTransport} was developed to provide MBS servers functionality in DABC.
+Using this class one can emulate work of MBS transport server and MBS stream server. 
+This class is also good example of use \class{dabc::SocketProcessor} classes.
+
+
 
 \section{Client transport}
 

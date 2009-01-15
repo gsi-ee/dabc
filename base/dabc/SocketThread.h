@@ -161,7 +161,7 @@ namespace dabc {
    // ________________________________________________________________
 
 
-   // this object establishe server socket, which waits for new connection
+   // this object establish server socket, which waits for new connection
    // of course, we do not want to block complete thread for such task :-)
 
    class SocketServerProcessor : public SocketConnectProcessor {
