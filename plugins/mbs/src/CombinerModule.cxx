@@ -16,11 +16,11 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    fServOutput(false)
 {
 
-   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 8*1024, cmd);
+   fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
 
    fPool = CreatePoolHandle(dabc::xmlWorkPool, fBufferSize, 10);
 
-   int numinp = GetCfgInt(dabc::xmlNumInputs, 1, cmd);
+   int numinp = GetCfgInt(dabc::xmlNumInputs, 2, cmd);
 
    fFileOutput = GetCfgBool("DoFile", false, cmd);
    fServOutput = GetCfgBool("DoServer", false, cmd);

@@ -6,8 +6,10 @@
       <func value="StartMbsGenerator"/>
     </Run>
     <Module name="Generator">
+       <BufferSize value="16384"/>
        <Port name="Output">
           <OutputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
           <MbsServerPort value="16020"/>
         </Port>
      </Module>

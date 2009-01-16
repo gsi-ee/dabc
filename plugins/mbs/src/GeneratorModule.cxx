@@ -41,14 +41,8 @@ mbs::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
    CreateOutput("Output", fPool, 5);
 }
 
-void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
+void mbs::GeneratorModule::FillRandomBuffer(dabc::Buffer* buf)
 {
-   if (port->OutputBlocked()) {
-      EOUT(("Output blocked ????"));
-      return;
-   }
-
-   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
    if (buf==0) { EOUT(("No free buffer - generator will block")); return; }
    buf->SetDataSize(fBufferSize);
 
@@ -90,6 +84,15 @@ void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
    }
 
    iter.Close();
+
+}
+
+
+void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
+{
+   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
+
+   FillRandomBuffer(buf);
 
    port->Send(buf);
 }

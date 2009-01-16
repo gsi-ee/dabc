@@ -34,6 +34,7 @@ MBS events (there is no buffer header in front!). To iterate over all events in 
 buffer class \class{mbs::ReadIterator} was designed (defined in "mbs/Iterator.h"). It provides
 possibility to iterate (access) over all events in buffer in following way:
 
+\begin{small}
 \begin{verbatim}
 #include "mbs/Iterator.h"
 
@@ -53,11 +54,13 @@ void Print(dabc::Buffer* buf)
    }
 }
 \end{verbatim}
+\end{small}
 
 Another class \class{mbs::WriteIterator} is developed to fill number  
 of MBS events into \class{dabc::Buffer}. Way to use this iterator 
 illustrated by following code:
 
+\begin{small}
 \begin{verbatim}
 #include "mbs/Iterator.h"
 
@@ -76,6 +79,7 @@ void Fill(dabc::Buffer* buf)
    }
 }
 \end{verbatim}
+\end{small}
 
 
 \section{File I/O}
@@ -118,6 +122,7 @@ that user can instantiate these classes using plugin meachanism of DABC.
 
 Here is an example, how output file for generator module can be configured:
    
+\begin{small}
 \begin{verbatim}
    ...
    dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator");
@@ -128,12 +133,14 @@ Here is an example, how output file for generator module can be configured:
    dabc::mgr()->Execute(cmd);
    ...
 \end{verbatim}
+\end{small}
        
 Here one first creates module and than configure (via command) type of
 output transport and its parameters.        
        
 Another example shows, how several input files can be configured for combiner:
    
+\begin{small}
 \begin{verbatim}
    ...
    dabc::Command* cmd = 
@@ -149,6 +156,7 @@ Another example shows, how several input files can be configured for combiner:
    }   
    ...
 \end{verbatim}
+\end{small}
 
 In this example one create module with 3 inputs and than for each input port lmd file transport is created.
 
@@ -175,7 +183,7 @@ One can use \class{dabc::SocketThread} together with other kind of processors
 like module classes, but not wise-versa (one cannot use socket processors inside other
 thread types). Therefore, it is possible to run module and all its
 socket transports in one single thread if socket thread for such module created in
-advance (see MBS generator example}
+advance (see MBS generator example).
   
 
 \section{Server transport}
@@ -189,12 +197,18 @@ internally uses two kinds of sockets: socket for handling connection and I/O soc
 sending data.
   
 Server transport has following parameters:
-\bbul
-\item \param{MbsServerKind}  - kind of mbs server ("Transport" or "Stream")  
-\item \param{MbsServerPort}  - port number for socket connection
-\ebul
+
+\begin{tabular}{llll}
+\hline
+Name &  Type &  Dflt & Description  \\
+\hline
+\param{MbsServerKind} & str & Transport & kind of mbs server: "Transport" or "Stream" \\  
+\param{MbsServerPort} & int & 6000 & server port number for socket connection \\
+\hline
+\end{tabular}
 
 These parameters can be set in xml file like here:
+\begin{small}
 \begin{verbatim}
 ...
   <Module name="Generator">
@@ -205,17 +219,21 @@ These parameters can be set in xml file like here:
   </Module>
 ...
 \end{verbatim}
+\end{small}
 
 Than, to create such transport, following code should be executed:
+\begin{small}
 \begin{verbatim}
   ...
   dabc::mgr()->CreateTransport("Generator/Output", 
                   mbs::typeServerTransport, "GeneratorThrd");
   ...
 \end{verbatim}
+\end{small}
 
 
 Another possibility to specify these parameters - use \comm{dabc::CmdCreateTransport}:
+\begin{small}
 \begin{verbatim}
   ...
   dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", 
@@ -225,6 +243,7 @@ Another possibility to specify these parameters - use \comm{dabc::CmdCreateTrans
   dabc::mgr()->Execute(cmd);
   ...
 \end{verbatim}
+\end{small}
 
 
 
@@ -234,14 +253,22 @@ Class \class{mbs::ClientTransport} allows connect DABC with MBS.
 For the moment MBS transport and stream servers are supported.  
 
 Client transport has following parameters:
-\bbul
-\item \param{MbsServerKind}  - kind of mbs server ("Transport" or "Stream") to connect to  
-\item \param{MbsServerName}  - host name where mbs server runs 
-\item \param{MbsServerPort}  - server port number for socket connection
-\ebul
+
+\begin{tabular}{llll}
+\hline
+Name &  Type &  Dflt & Description  \\
+\hline
+\param{MbsServerKind} & str & Transport & kind of mbs server: "Transport" or "Stream" \\  
+\param{MbsServerName} & str & localhost & host name where mbs server runs  \\
+\param{MbsServerPort} & int & 6000 & server port number for socket connection \\
+\hline
+\end{tabular}
+
+
 
 To create client connection, following pease of code should be used:
 
+\begin{small}
 \begin{verbatim}
   ...
   dabc::Command* cmd = new dabc::CmdCreateTransport("Combiner/Input0", 
@@ -252,6 +279,7 @@ To create client connection, following pease of code should be used:
   dabc::mgr()->Execute(cmd);
   ...
 \end{verbatim}
+\end{small}
 
  
 
@@ -263,6 +291,7 @@ which just fills buffers with random MBS
 events and provides them to the output. 
 Schematically implementation of module can be shown as:
 
+\begin{small}
 \begin{verbatim}
 #include "dabc/ModuleAsync.h"
 
@@ -274,6 +303,7 @@ public:
    GeneratorModule(const char* name, dabc::Command* cmd = 0) :
       dabc::ModuleAsync(name, cmd)
    {
+      ...
       fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
       fPool = CreatePoolHandle("Pool", fBufferSize, 10);
       CreateOutput("Output", fPool, 5);
@@ -282,11 +312,12 @@ public:
    virtual void ProcessOutputEvent(dabc::Port* port)
    {
       dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
-      // here filling of rundom events into buffer should be
+      FillRandomBuffer(buf);
       port->Send(buf);
    }
 };
 \end{verbatim}
+\end{small}
 
 In module constructor pool handle create to declare that module requires
 memory pool with 10 buffers of defined size. Buffer size here 
@@ -299,22 +330,40 @@ output queue is appears. It means, when module starts, it immediately gets
 N times (size of output queue, here 5) this call while there is N empty places in the queue.
 The only action here is take new buffer from memory pool, fill it with rundom
 events and send to output.    
+
+Real class \class{mbs::GeneratorModule} included in libDabcMbs.so library and has
+following parameters:
+
+\begin{tabular}{llll}
+\hline
+Name &  Type &  Dflt & Description  \\
+\hline
+\param{NumSubevents} & int & 2 &  number of subevents in generated event  \\   
+\param{FirstProcId}  & int & 0 & value of procid field of first subevent \\
+\param{SubeventSize} & int & 32  &  size of rawdata in subevent            \\
+\param{Go4Random}    & bool & true & is raw data filled with random value  \\
+\param{BufferSize}   & int & 16384 & server port number for socket connection \\
+\hline
+\end{tabular}
   
-There is also \func{StartMbsGenerator} function to instantiate and run generator module:
+There is also \func{StartMbsGenerator} function to instantiate and run generator module.
+It demonstrates, how thread of type \class{dabc::SocketThread} can be created
+and used by both module and transport object. 
+\begin{small}
 \begin{verbatim}
 extern "C" void StartMbsGenerator()
 {
   dabc::mgr()->CreateThread("GenerThrd", dabc::typeSocketThread);
   dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator", "GenerThrd");
-  dabc::mgr()->CreateTransport("Generator/Output", 
-                  mbs::typeServerTransport, "GenerThrd");
+  dabc::mgr()->CreateTransport("Generator/Output", mbs::typeServerTransport, "GenerThrd");
   dabc::mgr()->StartModule("Generator");
 }
 \end{verbatim}
+\end{small}
 
 To run generator module with all default parameters, 
 simple xml file should be used:   
-
+\begin{small}
 \begin{verbatim}
 <?xml version="1.0"?>
 <dabc version="1">
@@ -326,6 +375,105 @@ simple xml file should be used:
   </Context>
 </dabc>
 \end{verbatim}
- 
+\end{small}
 
-\section{Local event building}
+One can also specify all module and transport parameters directly:
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="lxi009" name="Server">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsGenerator"/>
+    </Run>
+    <Module name="Generator">
+       <NumSubevents value="3"/>
+       <FirstProcId value="77"/>
+       <SubeventSize value="128"/>
+       <Go4Random value="false"/>
+       <BufferSize value="16384"/>
+       <Port name="Output">
+          <OutputQueueSize value="5"/>
+          <MbsServerKind value="Stream"/>
+          <MbsServerPort value="6006"/>
+        </Port>
+     </Module>
+  </Context>
+</dabc>
+\end{verbatim}
+\end{small}
+
+There is example \$DABCSYS/application/mbs/GeneratorTest.xml file,  
+which demonstrate  usage of generator module. 
+
+
+\section{MBS event building}
+Class \class{mbs::CombinerModule} provides possibility to combine events from
+several running MBS systems. It has following parameters:
+
+\begin{tabular}{llll}
+\hline
+Name &  Type &  Dflt & Description  \\
+\hline
+\param{BufferSize}   & int & 16384 & server port number for socket connection \\
+\param{NumInputs}    & int & 2 &  number of mbs data sources  \\   
+\param{DoFile}       & bool & false & create LMD file store for combined events \\
+\param{DoServer}     & bool & false  &  create MBS server to provide data further   \\
+\hline
+\end{tabular}
+
+
+There is function \func{StartMbsCombiner}, which initialized combiner module and starts
+data taking. There is \$DABCSYS/applications/mbs/Combiner.xml example xml file: 
+
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="localhost" name="Combiner">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsCombiner"/>
+      <logfile value="combiner.log"/>
+    </Run>
+    <Module name="Combiner">
+       <NumInputs value="3"/>
+       <DoFile value="false"/>
+       <DoServer value="true"/>
+       <BufferSize value="16384"/>
+       <Port name="Input0">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi009"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="Input1">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi010"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="Input2">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi011"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="FileOutput">
+          <OutputQueueSize value="5"/>
+          <MbsFileName value="combiner.lmd"/>
+          <MbsFileSizeLimit value="128"/>
+        </Port>
+       <Port name="ServerOutput">
+          <OutputQueueSize value="5"/>
+          <MbsServerKind value="Stream"/>
+        </Port>
+     </Module>
+  </Context>
+</dabc>
+\end{verbatim}
+\end{small}
+
+
+

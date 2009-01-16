@@ -22,6 +22,8 @@ namespace mbs {
          uint32_t    fSubeventSize;
          bool        fIsGo4RandomFormat;
 
+         void   FillRandomBuffer(dabc::Buffer* buf);
+
       public:
          GeneratorModule(const char* name, dabc::Command* cmd = 0);
 
