@@ -94,28 +94,12 @@ void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
    port->Send(buf);
 }
 
-
 extern "C" void StartMbsGenerator()
 {
-    if (dabc::mgr()==0) {
-       EOUT(("Manager is not created"));
-       exit(1);
-    }
-
-    DOUT0(("Start MBS generator module"));
-
-    dabc::Module* m = new mbs::GeneratorModule("Generator");
-    dabc::mgr()->MakeThreadForModule(m);
-
-    dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", mbs::typeServerTransport, "MbsTransport");
-    cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
-//    cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
-    if (!dabc::mgr()->Execute(cmd)) {
-       EOUT(("Cannot create MBS transport server"));
-       exit(1);
-    }
-
-    m->Start();
+   dabc::mgr()->CreateThread("GenThrd", dabc::typeSocketThread);
+   dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator", "GenThrd");
+   dabc::mgr()->CreateTransport("Generator/Output", mbs::typeServerTransport, "GenThrd");
+   dabc::mgr()->StartModule("Generator");
 }
 
 

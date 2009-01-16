@@ -28,7 +28,6 @@ namespace mbs {
          virtual void ProcessOutputEvent(dabc::Port* port);
    };
 
-
 }
 
 

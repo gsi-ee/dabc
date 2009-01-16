@@ -89,24 +89,23 @@ and \class{mbs::LmdOutput} were developed.
 In general case, to provide user-specific input/output capability over port, 
 one should implement complete \class{dabc::Transport} interface, which includes 
 event handling, queue organization, complex initialization sequence. 
-All this required for cases like socket or InfiniBand transports, 
-but maybe too complicated for simple cases as file I/O. Therefore, special kind of
+All this necessary for cases like socket or InfiniBand transports, 
+but too complicated for simple cases as file I/O. Therefore, special kind of
 transport \class{dabc::DataIOTransport} was developed, which handle most of such complex tasks
-and only requires to implement relatively simple \class{dabc::DataInput} and
+and requires to implement relatively simple \class{dabc::DataInput} and
 \class{dabc::DataOutput} interfaces.
 
 Class \class{mbs::LmdOutput} inherits \class{dabc::DataOutput} and provides possibility to save 
 MBS events, placed in \class{dabc::Buffer} objects, in LMD file. 
 In addition to \class{mbs::LmdFile} functionality, it allows to create
-multiple files when file size limit is exceeded. Following parameters are supported:
+multiple files when file size limit is exceeded. Class has following parameters:
 \bbul
 \item \param{MbsFileName}      - name of lmd file (including .lmd extension)  
 \item \param{MbsFileSizeLimit} - size limit (in Mb) of single file, 0 - no limit
 \ebul
 
 Class \class{mbs::LmdInput} inherits \class{dabc::DataInput} and allows to read 
-MBS events from LMD file(s) and provide them over input ports into module.
-
+MBS events from LMD file(s) and provide them over input ports into module. 
 It has following parameters:
 \bbul
 \item \param{MbsFileName} - name of lmd file (multicast symbols * and ? supported)  
@@ -158,41 +157,32 @@ In this example one create module with 3 inputs and than for each input port lmd
 
 All communication with MBS servers performed via socket. DABC has number
 of class for socket handling, included in base package (libDabcBase.so).
-Main idea of these classes is to handle socket operation (creation, connection, sending, receiving and 
+Main idea of these classes is to handle socket operations (creation, connection, sending, receiving and 
 error handling) in form of event processing. 
 
-Class \class{dabc::SocketThread} organises event loop, produced by sockets, assigned with
-\class{dabc::SocketProcessor}. Processing of these events done by virtual methods
+Class \class{dabc::SocketThread} organises event loop, produced by sockets.
+Each system socket assigned with instance of \class{dabc::SocketProcessor} class. 
+Processing of socket events done in virtual methods
 of class \class{dabc::SocketProcessor}, which has several subclasses for different 
 kinds of sockets: 
 \bbul
-\item  - \class{dabc::SocketServerProcessor} - server socket handling  
-\item  - \class{dabc::SocketClientProcessor} - server socket handling  
+\item  - \class{dabc::SocketServerProcessor} - server socket for connection  
+\item  - \class{dabc::SocketClientProcessor} - client socket for connection  
 \item  - \class{dabc::SocketIOProcessor} - send/recv handling  
 \ebul
 
-Usage of socket processor classes requires that thread, 
-to which such processors assigned should be of type \class{dabc::SocketThread}.
-At the same time normal processors like \class{dabc::ModuleAsync} can work together
-with \class{dabc::SocketThread}. Therefore, it is possible to run module and all its
+One can use \class{dabc::SocketThread} together with other kind of processors
+like module classes, but not wise-versa (one cannot use socket processors inside other
+thread types). Therefore, it is possible to run module and all its
 socket transports in one single thread if socket thread for such module created in
-advance:
-
-\begin{verbatim}
-  ...
-  dabc::mgr()->CreateThread("GeneratorThrd", dabc::typeSocketThread);
-  dabc::mgr()->CreateModule("Generator","mbs::GeneratorModule", "GeneratorThrd");
-  dabc::mgr()->CreateTransport("Generator/Output", 
-                  mbs::typeServerTransport, "GeneratorThrd");
-  ...
-\end{verbatim}
-    
+advance (see MBS generator example}
+  
 
 \section{Server transport}
 
 Class \class{mbs::ServerTransport} was developed to provide MBS servers functionality in DABC.
 Using this class one can emulate work of MBS transport server and MBS stream server. 
-This is also good example of usage of \class{dabc::SocketProcessor} classes.
+This is also good example for usage of \class{dabc::SocketProcessor} classes.
 
 Implementation of \class{mbs::ServerTransport} based on generic class \class{dabc::Transport} and 
 internally uses two kinds of sockets: socket for handling connection and I/O socket for 
@@ -204,19 +194,38 @@ Server transport has following parameters:
 \item \param{MbsServerPort}  - port number for socket connection
 \ebul
 
-In previous section there is example of creation server transport with default
-parameters. To instantiate MBS server tranport with user-defined parameters, 
-following code should be used:
+These parameters can be set in xml file like here:
+\begin{verbatim}
+...
+  <Module name="Generator">
+    <Port name="Output">
+      <MbsServerKind value="Transport"/>
+      <MbsServerPort value="16020"/>
+    </Port>
+  </Module>
+...
+\end{verbatim}
 
+Than, to create such transport, following code should be executed:
+\begin{verbatim}
+  ...
+  dabc::mgr()->CreateTransport("Generator/Output", 
+                  mbs::typeServerTransport, "GeneratorThrd");
+  ...
+\end{verbatim}
+
+
+Another possibility to specify these parameters - use \comm{dabc::CmdCreateTransport}:
 \begin{verbatim}
   ...
   dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", 
                          mbs::typeServerTransport, "MbsTransThrd");
   cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
-  cmd->SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(mbs::TransportServer) + 5);
+  cmd->SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(mbs::StreamServer) + 5);
   dabc::mgr()->Execute(cmd);
   ...
 \end{verbatim}
+
 
 
 \section{Client transport}
@@ -239,15 +248,84 @@ To create client connection, following pease of code should be used:
                          mbs::typeClientTransport, "MbsTransThrd");
   cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
   cmd->SetStr(mbs::xmlServerName, "lxi010.gsi.de");
-  cmd->SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(mbs::TransportServer) + 5);
+  cmd->SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(mbs::StreamServer) + 5);
   dabc::mgr()->Execute(cmd);
   ...
 \end{verbatim}
 
  
 
-\section{Events generator example}
+\section{Events generator}
 
 
+Class \class{mbs::GeneratorModule} is an example of simple module design, 
+which just fills buffers with random MBS 
+events and provides them to the output. 
+Schematically implementation of module can be shown as:
+
+\begin{verbatim}
+#include "dabc/ModuleAsync.h"
+
+class GeneratorModule : public dabc::ModuleAsync {
+protected:
+   dabc::PoolHandle*       fPool;
+   dabc::BufferSize_t      fBufferSize;
+public:
+   GeneratorModule(const char* name, dabc::Command* cmd = 0) :
+      dabc::ModuleAsync(name, cmd)
+   {
+      fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
+      fPool = CreatePoolHandle("Pool", fBufferSize, 10);
+      CreateOutput("Output", fPool, 5);
+   }
+
+   virtual void ProcessOutputEvent(dabc::Port* port)
+   {
+      dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
+      // here filling of rundom events into buffer should be
+      port->Send(buf);
+   }
+};
+\end{verbatim}
+
+In module constructor pool handle create to declare that module requires
+memory pool with 10 buffers of defined size. Buffer size here 
+taken as configuration parameter. When output port is created, pool handle and
+default queue size is specified.
+
+The only virtual method which should be implemented for generator module is
+\func{ProcessOutputEvent}. This function call every time when free space in port
+output queue is appears. It means, when module starts, it immediately gets 
+N times (size of output queue, here 5) this call while there is N empty places in the queue.
+The only action here is take new buffer from memory pool, fill it with rundom
+events and send to output.    
+  
+There is also \func{StartMbsGenerator} function to instantiate and run generator module:
+\begin{verbatim}
+extern "C" void StartMbsGenerator()
+{
+  dabc::mgr()->CreateThread("GenerThrd", dabc::typeSocketThread);
+  dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator", "GenerThrd");
+  dabc::mgr()->CreateTransport("Generator/Output", 
+                  mbs::typeServerTransport, "GenerThrd");
+  dabc::mgr()->StartModule("Generator");
+}
+\end{verbatim}
+
+To run generator module with all default parameters, 
+simple xml file should be used:   
+
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="lxi009" name="Server">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsGenerator"/>
+    </Run>
+  </Context>
+</dabc>
+\end{verbatim}
+ 
 
 \section{Local event building}
