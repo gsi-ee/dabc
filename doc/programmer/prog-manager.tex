@@ -4,15 +4,232 @@
 this chapter covers the manager API description
 
 
-\section{Manager singleton as framework interface}
+\section{Framework interface}
 here description of mostly used methods to be called from application, modules, etc.
 
 
-\section{Manager as control system plugin}
+\section{Control system plug-in}
 
 \subsection{Interfaces}
-here most important virtual methods description
+
+
+\subsubsection{Manager}
+\label{prog_interface_manager}
+Besides its role as a central singleton to access framework functionalities,
+the \class{dabc::Manager} is also the interface base class for the 
+control and configuration system that is applied with \dabc~. 
+It defines several virtual methods concerning the {\em finite state machine},
+the registration and subscription of parameters, the command communication
+in-between nodes, and the management of a DAQ cluster, resp.
+These methods have to be implemented for differrent kinds of control systems in
+an appropriate subclass and are described as follows:
+
+%\begin{compactdesc}
+\begin{description}
+
+\item[\em Manager(const char* managername,  bool usecurrentprocess, configuration* cfg)] :
+The constructor of the subclass. The recommended parameters 
+are passed from the manager factory (see section \ref{prog_interface_manfactory})
+to the baseclass constructor, such as
+the object name of the manager; optionally a
+flag indicating to use either the main process or another thread for manager 
+command execution;
+and an optional configuration object \func{cfg}.
+\begin{compactenum}
+
+\item The constructor should initialize the control system implementation.
+
+\item If the default state machine module of the \dabc~ core is used, the constructor
+should invoke method \func{InitSMmodule()}. Otherwise, the constructor must
+initialize an external state machine of the control system, following the
+state and transition names defined as static constants in {\tt dabc/Manager.h}. 
+
+\item The constructor must call method \func{init()} to initialize the base
+functionalities and parameters. This should be done {\em after} the control system
+is ready for handling parameters and commands, and {\em after} the optional \func{InitSMmodule()} call.
+  
+\end{compactenum}     
+
+
+     
+\item[\~{~}Manager()] :
+The destructor of the subclass. It should cleanup and remove the  
+control system implementation. It must call method \func{destroy()}
+at the end.    
+
+
+\item[void ParameterEvent(dabc::Parameter* par, int event)] :
+Is invoked by the framework when any \class{Parameter} is created 
+(argument value $event=0$),  changed ($event=1$),
+or destroyed ($event=2$), resp. Pointer \func{par} should be used to access parameter
+name and value for export to the control system. 
+
+\item[void CommandRegistration(dabc::Module* m, dabc::CommandDefinition* def, bool reg)] :
+Is invoked by the framework
+
+
+
+\item[bool Subscribe(dabc::Parameter* par, int remnode, 
+const char* remname)] :
+
+\item[bool Unsubscribe(dabc::Parameter* par)] : 
+
+
+
+    
+\item[bool InvokeStateTransition(const char* state\_transition\_name, 
+Command* cmd)] : 
+This should initiate the state transition for the given \func{state\_transition\_name}.
+This \strong{must} be an asynchronous function that does not block the calling thread,
+possibliy the main manager thread if the state transition is triggered by a command
+from a remote "master" state machine node. Thus the actual state transition should be performed in a dedicated state-machine thread, calling the synchronous method
+\func{DoStateTransition(const char*)} of the base class (see section \ref{prog_manager_framework}).
+
+Synchronization of the state with the invoking client is done by
+the passed command object reference \func{cmd}. 
+This should be used as handle in the static call \func{dabc::Command::Reply(cmd,true)} when the state transition is completed, or \func{dabc::Command::Reply(cmd,false)} when the transition has been failed, resp.
+
+Note that base class \class{dabc::Manager} already implements this method for the 
+\dabc~ default state machine module which is activated in the
+manager constructor with \func{InitSMmodule()}. It needs a re-implementation only if
+an external state machine shall be used.
+
+
+
+
+
+
+
+\item[bool HasClusterInfo()]:
+Returns \keyw{true} if this node has complete information of the DAQ cluster.
+
+
+
+
+\item[int NumNodes()] :
+Returns the number of all DAQ nodes in the cluster. This may be taken
+from a configuration database, e.~g.~ an XML file, but may also test the
+real number of running nodes each time it's called (???).
+
+\item[const char* GetNodeName(int num)] :
+
+
+
+\item[int NodeId() const] :
+
+\item[bool IsNodeActive(int num)] : 
+
+
+
+
+
+\item[bool IsMainManager()] :
+
+
+\item[bool CanSendCmdToManager(const char* mgrname)] :
+
+
+\item[bool SendOverCommandChannel(const char* managername, const char* cmddata)] :
+
+\item[void CommandRegistration(dabc::Module* m, dabc::CommandDefinition* def, bool reg)] :
+
+
+\item[int ExecuteCommand(dabc::Command* cmd)] :
+
+
+ 
+
+\end{description}
+%\end{compactdesc}
+
+In addition to the virtual methods to be implemented in the manager subclass,
+there is a number of \class{dabc::Manager} baseclass methods 
+that should be called from the control system to perform actions of the 
+framework:
+
+\begin{description}
+
+ 
+\item[bool DoStateTransition(const char* state\_transition\_cmd)] :
+Performs the state machine transition of name \func{state\_transition\_cmd}.
+This method is synchronous and returns no sooner than the 
+transition actions are completed (true) or an error is detected (false).
+Note that the real transition actions are still user defined in methods
+of the \class{dabc::Application} implementation.
+
+\item[bool IsStateTransitionAllowed(const char* state\_transition\_cmd, bool errout)] :
+Checks if state transition of name \func{state\_transition\_cmd} is allowed
+for the default state machine implementation (which should be reproduced exactly by
+any external SM implementation) and returns true or false, resp. Argument
+\func{errout} may specify if error messages shall be printed to {\tt stdout}.
+
+\item[RecvOverCommandChannel(const char* cmddata)] :
+Receives a \dabc~ command as text stream \func{cmddata} 
+from a remote node. Usually this function should be called in a
+receiving callback of the control system communication layer,
+passing the received command representation to the core system.
+Here the command object is unstreamed again, forwarded to its
+receiver and executed.
+
+This is the pendant to virtual method 
+\func{SendOverCommandChannel()} which should implement the \strong{sending} 
+of a streamed command from the core to a remote manager by transport mechanisms of the control system. 
+
+ 
+ 
+\end{description}
+
+
+
+\subsubsection{ManagerFactory}
+ \label{prog_interface_manfactory}
+A new control system plug-in is added into \dabc~, 
+by means of a \class{dabc::Factory} subclass that  
+defines the method
+\func{bool CreateManagerInstance(const char* kind, dabc::Configuration* cfg)}.
+This method should
+create the appropriate \class{dabc::Manager} instance and return \keyw{true} 
+if the name \func{kind}, as specified by the runtime environment,
+matches the implementation.
+The default \dabc~ runtime executable will also pass 
+a configuration object \func{cfg} read from an XML file which may be
+passed to the constructor of the \class{Manager}.
+
+As it's mandatory for other \dabc~ factories, 
+the \class{dabc::Factory} for the manager must be
+instantiated as global object in the code that implements it.
+This assures that the factory exists in the system on
+loading the corresponding library.
 
 
 \subsection{Default implementation for DIM}
-describe functionality 
+The \dabc~ default controls and configuration system 
+is based on the DIM library \cite{DIM} and is marked by namespace
+\class{dimc::} (for "DIM Control"). It features the DIM publisher-subscriber mechanism with \dabc~ process records and uses state machine module and XML parser as provided by the 
+\dabc~core system. The main classes are described in the following:
+
+
+\begin{description}
+
+\item[\class{dabc::Manager}] : implements the control system interface of
+\class{dabc::Manager} as described above. Main methods are:  
+
+\begin{compactenum}
+
+\item Implements SendOverCommandChannel() to transport core commands over the dabc::xd DIM layer.
+
+\item Implements ParameterEvent(): Interface method to register and update dabc parameter to infospace and DIM. If parameter is created, its contstructor calls this method. Depending on parameter type it is registered using Add...Record() methods of Registry. Vice versa, on parameter deletion it is removed via RemoveRecord(). If module parameter changes value, this is forwarded using Update...Record().
+
+\item Implements CommandRegistration() : Interface method to register or unregister a module command as a DIM command and corresponding command descriptor service. Uses internally dabc::xd::Registry::RegisterModuleCommand() and ...UnRegisterModuleCommand() methods.
+
+\item Implements ModuleException() to react to a dabc::exception if thrown in a module. So far, we only do error output here. TODO: concept of exception handling in modules, threads and control system!
+
+\item Implements methods for the daq cluster management: GetNodeName() , NodeId() to map the unique node id number as used in the core with an arbitrary node name of the configuration/control system; NodeId() delivers the id of the current node. NumNodes() returns the number of all configured cluster nodes as known from the set up. These methods are just forwards to corresponding interface methods of Node.
+
+\item Implements Subscribe() and Unsubscribe() for parameters. These methods are just forwards to corresponding interface methods Registry::SubscribeParameter() , and ..:UnsubscribeParameter() , resp.
+
+\item Implements InvokeStateTransition(). This method is forwarded to corresponding interface method of Node.
+
+\end{compactenum}
+    
+ \end{description}   
