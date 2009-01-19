@@ -93,17 +93,60 @@ experiment-specific components should be created:
 \item \func{CreateStorage}   - creates storage (transport) to store data on disk/tape 
 \ebul
 
-Therefore, to implement experiment-specific BNET application, user should creates 
+Class \class{bnet::WorkerApplication} has following parameters:
+
+\begin{tabular}{llll}
+\hline
+Name &  Type &  Dflt & Description  \\
+\hline
+\param{IsGenerator}    & bool & false  &  is generators instead of data sources should be used  \\   
+\param{IsSender}       & bool & false  &  is sender module is created (readout functionality)  \\   
+\param{IsReceiver}     & bool & false  &  is receiver module is created (event builder functionality)  \\   
+\param{IsFilter}       & bool & false  &  is filter module is created (event builder should be true)  \\   
+\param{NumReadouts}    & int  & 1      &  number of data inputs  \\   
+\param{Inpit0Cfg}      & str  &       &  string parameter to configure input 0 - user specific \\   
+\param{Inpit1Cfg}      & str  &       &  string parameter to configure input 1 and so on - user specific  \\   
+\param{StoragePar}         & str  &       &  string parameter to configure storage - user specific  \\   
+\param{ReadoutBuffer}      & int  & 2048  &  buffer size, used for readout  \\   
+\param{ReadoutPoolSize}    & int  & 4MB  &  size of memory pool for readout  \\   
+\param{TransportPoolSize}  & int  & 16MB  &  size of memory pool for data transport  \\   
+\param{EventBuffer}        & int  & 32768  &  buffer size, used for event building  \\   
+\param{EventPoolSize}      & int  & 4MB  &  size of memory pool for event building  \\   
+\hline
+\end{tabular}
+
+To implement experiment-specific BNET application, user should creates 
 its own application class, which inherits from \class{bnet::WorkerApplication} and
-implement mentioned above virtual methods. 
+implement mentioned above virtual methods. If required, one can also add more parameters. 
+
+
 
 
 \section{Combiner module}
 
-In combiner module several data sources should be combined together.
-Such module should have several inputs and one output.
+Combiner module merges together several data sources and produces 
+subevents packets.
+Subevent here means that data from all sources, which corresponds to the same
+event (or time frame) should be placed in same \class{dabc::Buffer} object.
+This buffer object should has header with unique identifier of type
+\decl{bnet::EventId} - 64-bit unsigned integer. 
+
+\begin{small}
+\begin{verbatim}
+  ...
+  dabc::Buffer* buf = fPool->TakeBuffer(bufsize);
+  buf->SetHeaderSize(sizeof(bnet::EventId));
+   *((bnet::EventId*) buf()->GetHeader()) = evid++;
+  ...
+\end{verbatim}
+\end{small}
+
+Subevent identifier should has increasing number without gap. When
+no data for specific identifier is available, empty buffer with no data and
+correct header should be delivered to output.
+
 There is \class{bnet::CombinerModule} class, which provides prototype 
-of combiner module. Is has following parameters:
+of combiner module. It has following parameters:
 
 \begin{tabular}{llll}
 \hline
@@ -113,14 +156,64 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
 
+Actually, parameter \param{NumReadouts} may not be defined in the configuration of the module itself.
+While class \class{bnet::WorkerApplication} already has parameter with such name,
+its value will be used for model configuration too.     
+
+When implementing experiment-specific combiner class, 
+One should either derive it's from \class{bnet::CombinerModule} class or 
+start its implementation from scratch. One can add more experiment-specific
+parameters to the module. 
 
 
+\section{Network topology}
+
+Topology (connectivity) of network between workers defined by parameters 
+\param{IsSender} and \param{IsReceiver} of \class{bnet::WorkerApplication} class. 
+By setting these parameters one can configure role of current worker:
+as data sender or as data receiver or with both functions.
+It is required that at least one from both parameters has true value.
+
+Cluster controller during configuration establish connections between workers so,
+that each sender module connected with all receiver modules. This guarantees, that 
+each receiever can get necessary data from all data sources and perform event building.
+
+There are two bnet classes: \class{bnet::SenderModule} and \class{bnet::ReceiverModule},
+which implement functionality of sender and receiver respectively. 
+These classes instantiated by
+\class{bnet::WorkerApplication} and should not be modified by user.     
+
+Subevents buffers, produced by combiner module, will be delivered 
+to sender module. Based on event identifier, buffer will be 
+send to specific receiver, where event with such id will be build. 
+For now simple round-robin schedule is used by BNET, but in next DABC versions
+one or several others data transfer schedules will be implemented.
+Idea of BNET framework is that such improvments should be possible without
+changing of user code.  
 
 
 \section{Event builder module}
 
+Task of receiver module is to collect all buffers with same event identifier and
+deliver them at once to the event builder module.
+
+To build experiment-specific builder module, one should derive it from
+\class{bnet::BuilderModule} class. In this case the only virtual method
+should be implemented - \func{DoBuildEvent}, which produces from N buffers with subevents
+complete event. Format of output buffer is completely user-defined. 
+One allowed to fill several events in one output buffer if necessary.    
+
 
 \section{Filter module}
+
+This is optional component of BNET for situation, when build events should be filtered
+before they will be stored. To implement such filter, 
+one can derived it from \class{bnet::FilterModule} and reimplement virtual method
+\func{TestBuffer}. As alternative, filterring can be implemented directly in the 
+event builder module.  
+
+
+  
 
 
 \section{BNET-test example}
