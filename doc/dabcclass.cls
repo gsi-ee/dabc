@@ -244,6 +244,5 @@
 \newcommand{\enum}{\end{compactenum}}
 \newcommand{\bdes}{\begin{compactdesc}}
 \newcommand{\edes}{\end{compactdesc}}
-\newcommand{\code}{\small \begin{verbatim}}
 
 \endinput
