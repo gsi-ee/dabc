@@ -220,7 +220,7 @@
 
 % semantic fontstyles
 % -----------------------------------------------------------------
-\newcommand{\verba}[1]{{\tt #1}}
+\newcommand{\verba}[1]{{\tt {\large #1}}}
 \newcommand{\decl}[1]{{\tt #1}}
 \newcommand{\class}[1]{{\bf{\em #1}}}
 \newcommand{\func}[1]{{\sl #1}}
@@ -244,5 +244,6 @@
 \newcommand{\enum}{\end{compactenum}}
 \newcommand{\bdes}{\begin{compactdesc}}
 \newcommand{\edes}{\end{compactdesc}}
+\newcommand{\code}{\small \begin{verbatim}}
 
 \endinput
