@@ -416,16 +416,19 @@ several running MBS systems. It has following parameters:
 \hline
 Name &  Type &  Dflt & Description  \\
 \hline
-\param{BufferSize}   & int & 16384 & server port number for socket connection \\
-\param{NumInputs}    & int & 2 &  number of mbs data sources  \\   
-\param{DoFile}       & bool & false & create LMD file store for combined events \\
+\param{BufferSize}   & int  & 16384  &  buffer size of output data \\
+\param{NumInputs}    & int  & 2      &  number of mbs data sources  \\   
+\param{DoFile}       & bool & false  &  create LMD file store for combined events \\
 \param{DoServer}     & bool & false  &  create MBS server to provide data further   \\
 \hline
 \end{tabular}
 
+Module can has two outputs: for file storage (port name FileOutput) and for 
+providing data further over MBS server (port name ServerOutput). 
 
 There is function \func{StartMbsCombiner}, which initialized combiner module and starts
-data taking. There is \$DABCSYS/applications/mbs/Combiner.xml example xml file: 
+data taking. Example configuration file \$DABCSYS/applications/mbs/Combiner.xml shows how to 
+configure combiner from three MBS transport servers: 
 
 \begin{small}
 \begin{verbatim}
@@ -474,6 +477,4 @@ data taking. There is \$DABCSYS/applications/mbs/Combiner.xml example xml file:
 </dabc>
 \end{verbatim}
 \end{small}
-
-
 

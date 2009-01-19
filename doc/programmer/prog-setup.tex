@@ -1,8 +1,6 @@
 [programmer/prog-setup.tex]
-\section{Setting up system}
 
-\subsection{Parameter class}
-
+\section{Parameter class}
 
 Configuration and status information of objects can be represented by \class{Parameter} class.
 Any objects, derived from \class{WorkingProcessor} class, can has a list of parameters,
@@ -31,7 +29,7 @@ It is recommended to use class \class{WorkingProcessor} methods to create parame
 but one also can use FindPar() method to find parameter object and use its methods directly.   
 
 
-\subsection{Use parameter for control}
+\section{Use parameter for control}
 
 The main advantage to use parameter objects is that parameter values can be 
 observed and changed using controlling system.
@@ -54,7 +52,7 @@ parameter will be "seen" by control system. Such level is configured
 via WorkingProcessor::SetParDflts() function before parameters objects are created.
 
 
-\subsection{Example of parameters usage}
+\section{Example of parameters usage}
 
 Lets consider example of module, which uses parameters:
 
@@ -98,7 +96,7 @@ GetParBool() or SetParInt()) inside loop, which executed many times. Main aim of
 object is to provide connection to control system and in other situations normal class members should be used.
 
 
-\subsection{Configuration parameters}
+\section{Configuration parameters}
 
 Another use of parameter object is its usage for objects configuration.
 When one creates object like module or device, one often need to deliver 
@@ -136,7 +134,7 @@ If not, appropriate entry in configuration file will be searched. If configurati
 does not contains such parameter, default value will be used.
 
 
-\subsection{Configuration file example}
+\section{Configuration file example}
 
 Configuration file is xml file in dabc-specific format, which contains 
 value of some or all configuration parameters of the system. 
@@ -170,7 +168,7 @@ Other application
 (dabc or Go4) can connect to that server and read generated mbs events.
 
 
-\subsection{Basic syntax}
+\section{Basic syntax}
 
 DABC configuration file should always contain <dabc> as root node. 
 Inside <dabc> node one or several <Context> nodes should exists.
@@ -179,7 +177,7 @@ independent executable.
 Optionally <dabc> node can has <Variables> and <Defaults> nodes, which are described further. 
 
 
-\subsection{Context}
+\section{Context}
 
 <Context> node can has two optional attributes:
 \bdes
@@ -191,7 +189,7 @@ Inside <Context> node configuration parameters for modules, devices, memory pool
 In example file one sees several parameters for output port of generator module.  
 
 
-\subsection{Run arguments}
+\section{Run arguments}
 
 Usually <Context> node has <Run> subnode, where user defines different parameters, 
 relevant for running dabc application:
@@ -215,7 +213,7 @@ It is alternative to writing subclass of \class{Application} and instantiating i
 \edes
 
 
-\subsection{Variables}
+\section{Variables}
 
 In root <dabc> node one can insert <Variables> node, which may contain 
 definition of one or several variables. Once defined, 
@@ -272,7 +270,7 @@ There are several variables, which are defined by configuration system:
 Any environment variable can also be used as variable to set parameter values. 
 
 
-\subsection{Default values}
+\section{Default values}
 
 There are situations, when one need to set same value to several similar parameters,
 for instance same output queue length for all output ports in the module. One possible way
@@ -323,7 +321,7 @@ all contexts from configuration file means by such rule we set output queue leng
 for all modules on all nodes. This allow us to create compact xml files for big multi-nodes configuration.   
 
 
-\subsection{Usage commands for configuration}
+\section{Usage commands for configuration}
 
 Lets consider possibility to configure module, using \class{Command} class.
 

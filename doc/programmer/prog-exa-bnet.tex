@@ -1,2 +1,40 @@
 [programmer/prog-exa-bnet.tex]
-\section{Example network event building}
+
+\section{Overview}
+
+In complex experiments there are lot of front-end systems, which runs in parallel.
+They takes data and marks them with trigger information or just with time stamps.
+To be able analyze such data, all portions belonging to the same event (or time stamp),   
+should be combined in one processing unit. Such task usually called event building.
+
+To support such functionality in DABC, special sub-framework of building network (BNET) was introduced. 
+It's main aim - simplify implementation of event building for user-specific data.
+ 
+
+
+
+\section{Controller and workers}
+
+Event building task usually distributed over several nodes, which should be controlled.
+Therefore in BNET all nodes classified by their functionality on two kinds: controller and
+workers. Workers perform all kinds of data transport and analysis codes while controller 
+configures and steers all workers. 
+
+Functionality of controller is implemented in \class{bnet::ClusterApplication} class.
+Via controlling interface cluster controller distributes commands, coming from user,
+to all workers, observes status of all workers and reconfigures them when errors on
+some workers are detected.
+ 
+Basic functionality of worker implemented in \class{bnet::WorkerApplication} class.
+Its main aim - by commands from cluster controller instantiate all necessary modules, 
+configure and connect them together. While some of the modules should be user-specific,
+class provides virtual methods, which should be implemented in user-specific part. 
+
+
+\section{Writing user classes}
+
+
+\section{BNET-test example}
+
+
+\section{BNET for MBS implementation}
