@@ -7,31 +7,120 @@ They takes data and marks them with trigger information or just with time stamps
 To be able analyze such data, all portions belonging to the same event (or time stamp),   
 should be combined in one processing unit. Such task usually called event building.
 
-To support such functionality in DABC, special sub-framework of building network (BNET) was introduced. 
-It's main aim - simplify implementation of event building for user-specific data.
- 
+To support event building functionality in DABC, special sub-framework called 
+BNET (building network) was introduced. 
+It's main aim - simplify implementation of experiment-specific event building, 
+distributed over several nodes.
+
+Typical event building network contains several \strong{readout} nodes, 
+which are connected to some number of data sources each.
+In readout node one reads data from data sources and combines
+together data parts, which logically belongs together (so-called subevent building).
+In case of trigerred system one combines together data, which has same trigger number.
+In case of time-stamped data one combines together data which belongs to the same 
+time interval. While one have several readout nodes, to build complete event, one
+should bring together all data, which belongs to same trigger (or time interval) into
+the same \strong{builder} node. 
+One typically has not single but several builder nodes, therefore
+full connectivity between all readouts and all builder nodes should be introduced.
+Once all subevents delivered to the same builder node, one can build complete event 
+and store it on the file or tape. 
 
 
+BNET framework defines required functional units (modules), 
+which should be used in application, 
+and provides implementation of several important components.
+BNET also defines topology of these functional units, which can be customized up
+to definite level.
 
-\section{Controller and workers}
 
-Event building task usually distributed over several nodes, which should be controlled.
+\section{Controller application}
+
+Event building task usually distributed over several nodes, 
+which should be controlled.
 Therefore in BNET all nodes classified by their functionality on two kinds: controller and
 workers. Workers perform all kinds of data transport and analysis codes while controller 
 configures and steers all workers. 
 
 Functionality of controller is implemented in \class{bnet::ClusterApplication} class.
-Via controlling interface cluster controller distributes commands, coming from user,
-to all workers, observes status of all workers and reconfigures them when errors on
-some workers are detected.
+Via controlling interface cluster controller distributes commands, coming from operator,
+to all workers, observes status of all workers and reconfigures them automatically when 
+errors are detected.
+
+Functionality of \class{bnet::ClusterApplication} based on state-machine logic of DABC.
+It means, that all actions performed during state changing command, implemented  
+in virtual \func{DoStateTransition} method. State transition on cluster controller requires,
+that appropriate state transition performed on all worker nodes.
+
+Technically it means, that command, which is executed on cluster controller only than 
+can be completed, when state transition commands on all workers are completed. This
+is implemented with use of class \class{dabc::CommandsSet} - 
+see method \func{StartClusterSMCommand} for details.  
+  
+Class \class{bnet::ClusterApplication} has following configuration parameters:
+
+\begin{tabular}{llll}
+\hline
+Name &  Type &  Dflt & Description  \\
+\hline
+\param{NetDevice}           & str  & dabc::SocketDevice  &  device class for network connections \\
+\param{NumEventsCombine}    & int  & 1      &  number of events (time frames) combined together  \\   
+\param{TransportBuffer}     & int & 8192  &  size of buffer used for data transport cluster wide \\
+\hline
+\end{tabular}
+
+Class \class{bnet::ClusterApplication} is fully functional and can be used as is in real work.
+ 
+ 
+\section{Worker application}
  
 Basic functionality of worker implemented in \class{bnet::WorkerApplication} class.
 Its main aim - by commands from cluster controller instantiate all necessary modules, 
 configure and connect them together. While some of the modules should be user-specific,
-class provides virtual methods, which should be implemented in user-specific part. 
+class provides virtual methods, which should be implemented in user-specific part.
+
+Main functionality of \class{bnet::WorkerApplication} class is implemented 
+in virtual method \func{CreateAppModules}, which is called during transition 
+from Halted to Configured state. In this method all local modules are instantiated 
+and configured. Some of these modules should be experiment specific, therefore 
+class \class{bnet::WorkerApplication} provide number of virtual methods, where 
+experiment-specific components should be created:
+\bbul
+\item \func{CreateReadout}   - creates readout (transport) connected to data source
+\item \func{CreateCombiner}  - create module to combine several data sources and produces ready subevents 
+\item \func{CreateBuilder}   - create module, which combines N subevents to complete event 
+\item \func{CreateFilter}    - optional filter module to filter-out non-interesting events 
+\item \func{CreateStorage}   - creates storage (transport) to store data on disk/tape 
+\ebul
+
+Therefore, to implement experiment-specific BNET application, user should creates 
+its own application class, which inherits from \class{bnet::WorkerApplication} and
+implement mentioned above virtual methods. 
 
 
-\section{Writing user classes}
+\section{Combiner module}
+
+In combiner module several data sources should be combined together.
+Such module should have several inputs and one output.
+There is \class{bnet::CombinerModule} class, which provides prototype 
+of combiner module. Is has following parameters:
+
+\begin{tabular}{llll}
+\hline
+Name &  Type &  Dflt & Description  \\
+\hline
+\param{NumReadouts}    & int  & 1   &  number of data inputs  \\   
+\hline
+\end{tabular}
+
+
+
+
+
+\section{Event builder module}
+
+
+\section{Filter module}
 
 
 \section{BNET-test example}
