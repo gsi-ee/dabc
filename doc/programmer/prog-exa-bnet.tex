@@ -99,7 +99,7 @@ Class \class{bnet::WorkerApplication} has following parameters:
 \hline
 Name &  Type &  Dflt & Description  \\
 \hline
-\param{IsGenerator}    & bool & false  &  is generators instead of data sources should be used  \\   
+\param{IsGenerator}    & bool & false  &  use generators instead of data sources  \\   
 \param{IsSender}       & bool & false  &  is sender module is created (readout functionality)  \\   
 \param{IsReceiver}     & bool & false  &  is receiver module is created (event builder functionality)  \\   
 \param{IsFilter}       & bool & false  &  is filter module is created (event builder should be true)  \\   
@@ -117,9 +117,29 @@ Name &  Type &  Dflt & Description  \\
 
 To implement experiment-specific BNET application, user should creates 
 its own application class, which inherits from \class{bnet::WorkerApplication} and
-implement mentioned above virtual methods. If required, one can also add more parameters. 
+implement mentioned above virtual methods. If required, one can also add more parameters.
 
+Class \class{bnet::WorkerApplication} has also number of parameters, which
+are not seen by control system and cannot be configured via xml file:
 
+\begin{tabular}{llll}
+\hline
+Name &  Type &  Dflt & Description  \\
+\hline
+\param{CfgNodeID}    & int &  &  node id (starts from 1 for workers)  \\   
+\param{CfgNumNodes}  & int &  &  number of nodes in configuration  \\   
+\param{CfgSendMask}  & str & &  string in form of "xxox" defines which nodes are sender "x" or not "o" \\   
+\param{CfgRecvMask}  & str & &  string in form of "xxox" defines which nodes are sender "x" or not "o"  \\   
+\param{CfgClusterMgr} & str  & & name of cluster controller node \\   
+\param{CfgNetDevice}   & str  & & name of configured network device, same as cluster param \param{NetDevice} \\   
+\param{CfgEventsCombine}  & int  &  & number of events combined together, same as cluster param \param{NumEventsCombine}  \\   
+\param{CfgReadoutPool}    & str &  &  name of memory pool, used for readout ("ReadoutPool" or "TransportPool")  \\   
+\param{CfgConnected}      & bool &  &  true when local configuration of application completed  \\   
+\hline
+\end{tabular}
+ 
+These parameters are set during initialization phase.
+Some of them like \param{CfgEventsCombine} should be used by modules for it's configuration.  
 
 
 \section{Combiner module}
@@ -207,16 +227,102 @@ One allowed to fill several events in one output buffer if necessary.
 \section{Filter module}
 
 This is optional component of BNET for situation, when build events should be filtered
-before they will be stored. To implement such filter, 
+before they are stored. To implement such filter, 
 one can derived it from \class{bnet::FilterModule} and reimplement virtual method
 \func{TestBuffer}. As alternative, filterring can be implemented directly in the 
 event builder module.  
 
 
+\section{BNET test application}
+
+This is test application, which is designed for testing different asspects of BNET
+without necessity to have real data sources. Complete source code and configurations 
+examples can be found in \$DABCSYS/applications/bnet-test.  
+
+Example has following classes:
+\bbul
+\item  \class{bnet::TestGeneratorModule}
+\item  \class{bnet::TestCombinerModule}
+\item  \class{bnet::TestBuilderModule}
+\item  \class{bnet::TestFilterModule}
+\item  \class{bnet::TestWorkerApplication}
+\item  \class{bnet::TestFactory}
+\ebul
+
+Example can be used as template for developing user-specific application. 
+
+
+\section{BNET for MBS application}
+
+This is complete implementation of distributed event building for MBS.
+Source code can be found in \$DABCSYS/applications/bnet-mbs. It contains following
+classes:
+\bbul
+\item  \class{bnet::MbsCombinerModule}
+\item  \class{bnet::MbsBuilderModule}
+\item  \class{bnet::MbsWorkerApplication}
+\item  \class{bnet::MbsFactory}
+\ebul
+
+Class \class{bnet::MbsCombinerModule} combines together  
+events with tha same event id from all inputs. 
+In cluster application parameter \param{NumEventsCombine} defines how many
+events should be combined togther in one buffer. It is crutial that transport
+buffer size should be enough for such number of subevents. 
+Clsuter parameter \param{NumEventsCombine} during initialisation copied to each
+worker parameter \param{CfgEventsCombine}, which finally used in \class{bnet::MbsCombinerModule}
+during initialisation: 
+   
+\begin{small}
+\begin{verbatim}
+bnet::MbsCombinerModule::MbsCombinerModule(...  
+  ...
+  fCfgEventsCombine = GetCfgInt(CfgEventsCombine, 1, cmd);
+  ...
+\end{verbatim}
+\end{small}
+
+For the moment \class{bnet::MbsCombinerModule} skips event, when it is not present on all inputs. 
+
+Class \class{bnet::MbsBuilderModule} builds mbs events from 
+delivered by receiver module buffers. It also use parameter
+\param{CfgEventsCombine} from application to be sure how many real MBS events
+contained in input buffers.
   
+Application class \class{bnet::MbsWorkerApplication} implements several methods to
+correctly instantiate combiner and builder modules.
+It also implement virtual method \func{CreateReadout}, where approprite input transport 
+for combiner module should be created. In case of mbs there is three possibility:
+\bnum
+\item when \param{IsGenerator} is configured, module \class{mbs::GeneratorModule} connected as data input 
+\item when appropriate readout parameter (like \param{Input0Cfg} for first input) has 
+      ".lmd" in the end, specified lmd file as data input will be used
+\item value of readout parameter \param{Input0Cfg} will be used as MBS server name for
+      connecting of \class{mbs::ClientTransport} to appropriate data input         
+\enum
+In virtual method \func{CreateStorage} output lmd file will be created, if 
+parameter \param{StoragePar} value is not empty.
 
+There is example "SetupBnetMbs.xml" file, which contains running example for 
+MBS event building of with 2 readout nodes, connected with 2 generators each and 
+2 event builder nodes. Configuration file can be customised via variables definition in the beginning:
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+  <Variables>
+     <node0 value="lxg0526"/>
+     <node1 value="lxi009"/>
+     <node2 value="lxi010"/>
+     <node3 value="lxi011"/>
+     <node4 value="lxi012"/>
+     <custport value="16015"/>
+  </Variables>
+  ...
+</dabc>
+\end{verbatim}
+\end{small}
 
-\section{BNET-test example}
-
-
-\section{BNET for MBS implementation}
+Here node0 specifies node where cluster controller will runs, node1 and node3 used as readout nodes,
+node2 and node4 as builder nodes. On all four nodes (node1..node4) one mbs generator
+application will be started. To run application, just type \verba{run.sh SetupBnetMbs.xml}.  
