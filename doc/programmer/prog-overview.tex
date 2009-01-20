@@ -16,19 +16,21 @@ the adaption of the GSI legacy DAQ system \mbs~ within  \dabc~; the application 
 event builder network (Bnet); and the data import via UDP from a readout controller board (ROC). 
 
 \section{Role and  functionality of the objects}
+
 \subsection{Modules}
 \label{prog_overview_modules}
 All processing code runs in module objects. 
 There are two general types of modules: \\
 The \class{dabc::ModuleSync} and the \class{dabc::ModuleAsync}. 
+
 \subsubsection{Class \class{dabc::ModuleSync}} 
 \index{Core classes !dabc::ModuleSync}
-Each module is executed by a 
+Each synchron module is executed by a 
 dedicated working thread. The thread executes a
  method \func{MainLoop()} with arbitrary code, which {\sl may block} 
 the thread. In blocking calls of the framework (resource or 
 port wait), optionally command callbacks may be executed 
-implicitely ("non strictly blocking mode"). In the "strictly 
+implicitly ("non strictly blocking mode"). In the "strictly 
 blocking mode", the blocking calls do nothing but wait. 
 A {\sl timeout} may be set for all blocking calls; this can 
 optionally throw an exception when the time is up. On timeout 
@@ -37,9 +39,10 @@ is then handled in the framework thread; or the \func{MainLoop()} itself
 catches and handles the exception. On state machine commands (e.g. 
 \comm{Halt} or \comm{Suspend}), the blocking calls are also left by exception, 
 thus putting the mainloop thread into a stopped state.
+
 \subsubsection{Class \class{dabc::ModuleAsync}}
 \index{Core classes !dabc::ModuleAsync}
- Several modules may be run by a {\sl shared working thread}. 
+ Several asynchron modules may be run by a {\sl shared working thread}. 
 The thread processes an  {\sl event queue} and executes 
 appropriate  {\sl callback functions} 
 of the module that is the receiver of the event. Events are fired for data input 
@@ -52,21 +55,21 @@ available resources explicitly whenever it is entered.
 \subsection{Commands}
 \index{Core classes !dabc::Command}
 A module may register commands in the constructor and may define 
-command actions by overwriting a virtual command callback method in a 
-subclass implementation of \class{dabc::Command}.
+command actions by overwriting a virtual command callback method \func{ExecuteCommand}.
 
 \subsection{Parameters}
-A module may register \class{dabc::Parameter} \index{Core classes !dabc::Parameter} objects. Parameters are accessible by name; their values can be monitored and optionally changed by 
-the controls system. 
+A module may register \class{dabc::Parameter} \index{Core classes !dabc::Parameter} objects. 
+Parameters are accessible by name; their values can be monitored and optionally changed by 
+the controls system. Initial parameter values can be set from xml configuration files.   
 
 \subsection{Manager}
-The modules are organized and controlled by one manager object of class \class{dabc::Manager}
-\index{Core classes !dabc::Manager};
+The modules are organized and controlled by one manager object of 
+class \class{dabc::Manager}\index{Core classes !dabc::Manager};
 this singleton instance is persistent independent of the application's state.
+One can always access manager via \func{dabc::mgr()} function.
 
 The manager is an \strong{object manager} that owns and keeps all 
-registered basic objects into a folder structure. Each object 
-has a direct backpointer to the manager. 
+registered basic objects into a folder structure. 
 
 Moreover, the manager defines the \strong{interface to the control system}. 
 This covers registering, sending, and receiving of commands; registering, 
@@ -78,9 +81,7 @@ The manager receives and \strong{dispatches commands}
 to the destination module where they are queued and eventually executed 
 by the module thread (see section \ref{prog_overview_modules}).
 Additionally, the manager has an independent manager thread. 
-This thread may execute manager commands for configuration, 
-and all high priority commands like state machine switching 
-that must be executed immediately even if the mainloop of the modules is blocked.
+This thread used for manager commands execution, parameters timeout processing and so on. 
  
  
 \subsection{Memory and buffers}
@@ -91,8 +92,11 @@ Allocated memory areas are kept in\\
 objects. 
    
 
-A buffer contains a list of references to scattered memory 
-fragments, or it may have an empty list of references. 
+In general case \class{dabc::Buffer} contains a list of references to scattered memory 
+fragments from memory pool. Typically buffer reference exactly one segment.
+Buffer may have an empty list of references. In addition, buffer can be supplied
+ with custom header.
+ 
 The auxiliary class \class{dabc::Pointer} \index{Core classes !dabc::Pointer} 
 offers methods to transparently 
 treat the scattered fragments from the user point of view 
@@ -102,10 +106,8 @@ Moreover, the user may also get direct access to each of the fragments.
 The buffers are provided by one or several memory pools 
 which preallocate reasonable memory from the operating system. 
 A memory pool may keep several sets, each set for a different 
-configurable memory size. Each memory pool is identified by a 
-unique \class{dabc::PoolHandle} \index{Core classes !dabc::PoolHandle} 
-object which is used e.g. by the module to 
-communicate with the memory pool.  
+configurable memory size. Module communicate with memory pool 
+via \class{dabc::PoolHandle} \index{Core classes !dabc::PoolHandle} object. 
 
 A new buffer may be requested from a memory pool by size. 
 Depending on the module type and mode, this request may either block until an 
@@ -127,13 +129,13 @@ zero, the memory is marked as "free" in the memory pool.
 Buffers are entering and leaving a module through \class{dabc::Port}
 \index{Core classes !dabc::Port}  objects. 
 Each port has a buffer queue of configurable length.
-A module may have several input ports, output ports, 
+A module may have several input, output  
 or bidirectional ports. The ports are owned by the module.
 
 Depending on the module type, there are different possibilities to
 work with the port buffers in the processing functions of the module.
-These are described in section \ref{plugin_module_sync} (for \class{dabc::ModuleSync} ),
-and section \ref{plugin_module_async}  \class{dabc::ModuleAsync}, resp.
+These are described in section \ref{plugin_module_sync} for \class{dabc::ModuleSync}
+and section \ref{plugin_module_async} for \class{dabc::ModuleAsync} respectively.
  
 % For \class{dabc::ModuleSync} \index{Core classes !dabc::ModuleSync}   , 
 % function \func{MainLoop()} may wait for buffers 
@@ -164,6 +166,8 @@ different nodes by means of a transport instance of the same kind on
 each node (e.g. InfiniBand verbs transport connecting a sender module on node A with a receiver
 module on node B via a verbs device connection).
 
+Transport object may use configuration parameters from port to which it assigned to.
+
 \subsection{Device}
 A transport belongs to a \class{dabc::Device} \index{Core classes !dabc::Device}
  object of a 
@@ -173,7 +177,7 @@ created by the device. If the \class{dabc::Transport} implementation
 shall be able to block (e.g. on socket receive), there can be only 
 one transport for this thread. 
 
-A \class{dabc::Device} instance usually represents an IO component (e.g. network card); 
+A \class{dabc::Device} instance usually represents an I/O component (e.g. network card); 
 there may be more than one \class{dabc::Device} instances of the same 
 type in an application scope. 
 The device objects are owned by the manager 
@@ -186,14 +190,12 @@ and deleted during \func{disconnect()} or \func{close()}, respectively.
 
 A device may register parameters and define 
 commands. This is the same functionality as available for modules.   
-   
-   
 
 
 \subsection{Application}
 The \class{dabc::Application} \index{Core classes !dabc::Application}
 is a singleton object that represents the running application of the DAQ node 
-(i.e.~ one system process) itself. It provides the main configuration parameters
+(i.e. one per system process). It provides the main configuration parameters
 and defines the runtime actions in the different control system states (see section \ref{prog_fsm}).
 In contrast to the \class{dabc::Manager} implementation that defines a framework control system (e.g. DIM, EPICS), the subclass of \class{dabc::Application} defines the experiment specific behaviour of the DAQ.
 
@@ -204,10 +206,10 @@ In contrast to the \class{dabc::Manager} implementation that defines a framework
 \label{prog_fsm}
 
 The running state of the DAQ system is ruled by a {\sl finite state machine} on 
-each node of the cluster.The manager provides an interface to switch the application 
-	 state by the external control system. This may be done by calling 
-	 state change methods of the manager, or by submitting state change commands 
-      to the manager.
+each node of the cluster. The manager provides an interface to switch the application 
+state by the external control system. This may be done by calling 
+state change methods of the manager, or by submitting state change commands 
+to the manager.
 
 The finite state machine itself is not necessarily part of the manager,
 but may be provided by an external control system. In this case,
@@ -232,7 +234,7 @@ There are 5 generic states to treat all set-ups:
 \item[Halted] : The application is not configured and not running. 
 	 There are no modules, transports, and devices existing.
 \item[Configured] : The application is mostly configured, but not running. 
-	 modules and devices are created. Local port connections are done.
+	 Modules and devices are created. Local port connections are done.
 	  Remote transport connections may be not all fully connected, 
 	  since some connections require active negotiations between existing 
 	  modules. Thus, the final connecting is done between 
@@ -250,35 +252,33 @@ The state transitions between the 5 generic states correspond to
       commands of the control system for each node application:
 \index{Finite state machine ! transition commands}      
 \begin{compactdesc}
-\item[Configure] : between \keyw{Halted} and \keyw{Configured}. Core 
-	 framework automatically creates standard modules and 
-	 devices. The application plug-in  creates application 
-	 specific objects, requests memory pools, and establishes all 
-	 local port connections. Core framework instantiates the 
-	 requested memory pools
-\item[Enable] : between \keyw{Configured} and \keyw{Ready}. 
+\item[DoConfigure] : between \keyw{Halted} and \keyw{Configured}. 
+    The application plug-in creates application 
+	 specific devices, modules and memory pools. Application typically establishes all 
+	 local port connections. 
+\item[DoEnable] : between \keyw{Configured} and \keyw{Ready}. 
 	 The application plug-in may establish the necessary 
 	 connections between remote ports. The framework checks if 
 	 all required connections are ready.
-\item[Start]  : between \keyw{Ready} and \keyw{Running}. The framework automatically 
+\item[DoStart]  : between \keyw{Ready} and \keyw{Running}. The framework automatically 
 	 starts all modules, transport and device actions.
-\item[Stop] : between \keyw{Running} and \keyw{Ready}. The framework automaticall 
+\item[DoStop] : between \keyw{Running} and \keyw{Ready}. The framework automaticall 
 	 stops all modules, transport and device actions, 
 	 i.e. the code is suspended to \keyw{wait} at the next appropriate 
 	 \keyw{waiting point} (e.g. begin of \func{MainLoop()}, wait for a requested resource). 
 	 Note: queued buffers are not flushed or discarded on \keyw{Stop} !
-\item[Halt] : switches states \keyw{Ready} , \keyw{Running} , \keyw{Configured}, or 
+\item[DoHalt] : switches states \keyw{Ready} , \keyw{Running} , \keyw{Configured}, or 
 	 \keyw{Failure} to \keyw{Halted}. The framework automatically deletes all 
 	 registered objects (transport, device, module) 
 	 in the correct order. However, the user may explicitly specify on 
 	 creation time that an object shall be persistent (e.g. a device may 
-	 be kept until the end of the process once it had been created) 
+	 be kept until the end of the process once it had been created). 
 \end{compactdesc}
 
 
 \subsection{Commands}
 The control system may send (user defined) commands to each 
-   component (module , device). Execution of these commands is 
+   component (module , device, application). Execution of these commands is 
    independent of the state machine transitions.
 
 \subsection{Parameters for configuration and monitoring}
@@ -287,10 +287,10 @@ The {\sl Configuration} is done using parameter objects. The
     configuration/control system.    
 
 On application startup time, the configuration system may 
-      set the parameters from a database, or from a configuration file 
-      (e.g. XML configuration files). During the application lifetime, the control system may change 
+      set the parameters from a configuration file (e.g. XML configuration files). 
+      During the application lifetime, the control system may change 
       values of the parameters by command. However, since the set 
-      up is changed on \keyw{Configure} time only, it may be forbidden to change 
+      up is changed on \keyw{DoConfigure} time only, it may be forbidden to change 
       true configuration parameters except when the application is \keyw{Halted}. 
       Otherwise, there would be the possibility of a mismatch between the 
       monitored parameter values and the really running set up.
@@ -299,8 +299,7 @@ On application startup time, the configuration system may
    independent of the configuration set up (e.g. switching on 
    debug output, change details of processing parameters).
       
-The current parameters  may be stored back to the data 
-base of the configuration system.
+The current parameters  may be stored back to the XML file.
 
       
 %\subsection{Parameters and monitoring}
@@ -441,7 +440,7 @@ Represents a command object. A command
    The available arguments of a special command may be exported to the control 
    system as \class{dabc::CommandDefinition} objects. A command is sent from a 
    \class{dabc::CommandClient} object to a \class{dabc::CommandReceiver} object
-    that executes it in his scope. 
+    that executes it in its scope. 
    The result of the command execution may be returned as a reply event to 
    the command client. The manager is the standard command client 
    that distributes the commands to the command receivers 
@@ -450,21 +449,14 @@ Represents a command object. A command
 \item[\class{dabc::Parameter}] :  \index{Core classes !dabc::Parameter} 
 Parameter object that may be monitored or 
    changed from control system. Any \class{dabc::WorkingProcessor} implementation 
-   may register its own parameters. The use case of a parameter 
-   depends on the lifetime of its parent object: The configuration 
-   parameters should be created from the application plug-in which 
-   is persistent during the process lifetime. Transient monitoring parameters 
-   may be created from a device (optionally also persistent, but not 
-   yet existing at process startup when configuration database is read!), 
-   from a module, or from a transport implementation (if this 
-   also inherits from \class{dabc::WorkingProcessor}). The latter parameters 
-   do only exist if the application is at least in \keyw{Configured} state, and 
-   they will be destroyed with their parents when switching to \keyw{Halted} state. 
-   Currently supported parameter types are:
+   may register its own parameters. Parameter can be used for configuration of object 
+   at creation time (via configuration file), monitoring of object properties in GUI or
+   manipulating of object properties at runtime, changing parameter values via controlling 
+   interface.  Currently supported parameter types are:
 \begin{compactitem}[$\bullet$]
 \item \class{dabc::IntParameter}    - simple integer value
 \item \class{dabc::DoubleParameter} - simple double value
-\item \class{dabc::StrParameter} - simple test string
+\item \class{dabc::StrParameter} - simple string value
 \item \class{dabc::StateParameter} - contains state record, e.g. current 
       state of the finite stat machine and associated colour for gui representation
 \item \class{dabc::InfoParameter} - contains info record, e.g. system message 
@@ -484,13 +476,12 @@ An object of this class represents a system thread.
    executed by calling \func{ProcessEvent()} of the corresponding working processor.
 
 \item[\class{dabc::WorkingProcessor}] :  \index{Core classes !dabc::WorkingProcessor} 
-Represents a runnable job. Each 
+   Represents a runnable job. Each 
    working processor is assigned to one working thread instance; 
-   this thread may run either one working processor, or serve several
-    working processors in parallel. 
-    \class{dabc::WorkingProcessor} is a subclass of \class{dabc::CommandReceiver}, 
-   i.e. a working processor may receive and execute commands in 
-   his scope. 
+   this thread can serve several working processors in parallel.
+   In special mode processor can run its own main loop.  
+   \class{dabc::WorkingProcessor} is a subclass of \class{dabc::CommandReceiver}, 
+   i.e. a working processor may receive and execute commands in its scope. 
 
 \item[\class{dabc::Module}] : \index{Core classes !dabc::Module} 
 A processing unit for one "step" of the dataflow. 
@@ -502,12 +493,11 @@ A processing unit for one "step" of the dataflow.
 \item[\class{dabc::ModuleSync}] : \index{Core classes !dabc::ModuleSync}
 Is subclass of \class{dabc::Module}; defines interface for a 
    synchronous module that is allowed to block. User must implement virtual 
-   method \func{MainLoop()} that runs in a dedicated working thread. 
+   method \func{MainLoop()} that uses dedicated working thread to run. 
    Method \func{TakeBuffer()} provides blocking access to a memory pool. 
-   The optionally blocking methods \func{Send(port), buffer)} and
-    \func{Receive(port), buffer)} are used from the \func{MainLoop()} 
-    code to send (or receive) buffers over (or from) 
-    a port of the \class{dabc::ModuleSync}.  
+   Blocking methods \func{dabc::ModuleSync::Send} and
+    \func{dabc::ModuleSync::Receive} are used from the \func{MainLoop()} 
+    code to send (or receive) buffers over (or from) a ports.  
 
 \item[\class{dabc::ModuleAsync}] : \index{Core classes !dabc::ModuleAsync}
 Subclass of \class{dabc::Module}; defines interface for an 
@@ -520,12 +510,9 @@ Subclass of \class{dabc::Module}; defines interface for an
    \func{ProcessOutputEvent()}, \func{ProcessPoolEvent()},..) that are invoked when 
    the corresponding event is processed by the working thread. 
    The events are dispatched to these callbacks by the \func{ProcessUserEvent()} 
-   default implementation then. To avoid blocking the shared working thread, 
-   the user must always check if a resource (e.g. a port, a memory pool) 
-   would block before any calls (e.g. \func{Send()}, \func{TakeBuffer()}) are invoked on it. 
-   All callbacks must \strong{return} in the "I would block" case; on the next 
-   time the callback is executed by the framework the user must check the situation 
-   again and react appropriately (might require own bookkeeping of available resources). 
+   default implementation then. There are no blocking function availible in class{dabc::ModuleAsync}.  
+   But user \strong{must} avoid any poolling loops, waiting for availible resources - 
+   event processing function must be returned as soon as possible.
 
 \item[\class{dabc::Port}] : \index{Core classes !dabc::Port}
 A connection interface between module and transport. 
