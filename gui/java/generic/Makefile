@@ -11,7 +11,7 @@ JARFILE=$(JARDIR)/$(PACKAGE).jar
 # because the package directory is created under the specified directory, even if it
 # IS the package directory
 FLAGS=-d . -classpath .:./$(PACKAGE):$(DIMDIR)/jdim/classes
-FLAGSA=-d . -classpath .:../$(PACKAGE):$(DIMDIR)/jdim/classes
+FLAGSA=-d application -classpath .:../$(PACKAGE):$(DIMDIR)/jdim/classes
  
 all: classes $(JARFILE)
 

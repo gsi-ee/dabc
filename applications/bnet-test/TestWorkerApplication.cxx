@@ -16,44 +16,7 @@ bnet::TestWorkerApplication::TestWorkerApplication() :
    WorkerApplication(xmlTestWrokerClass) ,
    fABBActive(false)
 {
-// register application specific parameters here:
-
-    DOUT0(("Set all pars to TestWorker"));
-
-    int nodeid = dabc::mgr()->NodeId();
-    int numnodes = dabc::mgr()->NumNodes();
-
-    if ((nodeid<0) || (nodeid>=numnodes)) return;
-
-    int numsrcnodes(1), numbldnodes(1);
-
-    bool all_to_all = true;
-
-    if (all_to_all) {
-       numsrcnodes = numnodes - 1;
-       numbldnodes = numsrcnodes;
-    } else {
-       numsrcnodes = (numnodes - 1) / 2;
-       numbldnodes = numnodes - 1 - numsrcnodes;
-    }
-
-    // first, set common parameters
-    bool issender(false), isreceiver(false);
-
-    if (all_to_all) {
-       issender = true;
-       isreceiver = true;
-    } else {
-       issender = (nodeid <= numsrcnodes);
-       isreceiver = !issender;
-    }
-
-    SetParBool(xmlIsGenerator, true);
-    SetParBool(xmlIsSender, issender);
-    SetParBool(xmlIsReceiever, isreceiver);
-    SetParBool(xmlIsFilter, isreceiver);
-    SetParInt(xmlCombinerModus, 0);
-    SetParInt(xmlNumReadouts, 4);
+   // register application specific parameters here:
 }
 
 

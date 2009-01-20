@@ -76,20 +76,19 @@ Class \class{bnet::ClusterApplication} is fully functional and can be used as is
  
 Basic functionality of worker implemented in \class{bnet::WorkerApplication} class.
 Its main aim - by commands from cluster controller instantiate all necessary modules, 
-configure and connect them together. While some of the modules should be user-specific,
-class provides virtual methods, which should be implemented in user-specific part.
+configure and connect them together. 
 
 Main functionality of \class{bnet::WorkerApplication} class is implemented 
-in virtual method \func{CreateAppModules}, which is called during transition 
+in virtual \func{CreateAppModules} method, which is called during transition 
 from Halted to Configured state. In this method all local modules are instantiated 
 and configured. Some of these modules should be experiment specific, therefore 
 class \class{bnet::WorkerApplication} provide number of virtual methods, where 
 experiment-specific components should be created:
 \bbul
-\item \func{CreateReadout}   - creates readout (transport) connected to data source
-\item \func{CreateCombiner}  - create module to combine several data sources and produces ready subevents 
+\item \func{CreateCombiner}  - create module to combine several data sources and produce ready subevents 
 \item \func{CreateBuilder}   - create module, which combines N subevents to complete event 
-\item \func{CreateFilter}    - optional filter module to filter-out non-interesting events 
+\item \func{CreateFilter}    - optional filter module to filter out events 
+\item \func{CreateReadout}   - creates readout (transport) connected to data source
 \item \func{CreateStorage}   - creates storage (transport) to store data on disk/tape 
 \ebul
 
@@ -115,7 +114,7 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
 
-To implement experiment-specific BNET application, user should creates 
+To implement experiment-specific BNET application, user should first of all create 
 its own application class, which inherits from \class{bnet::WorkerApplication} and
 implement mentioned above virtual methods. If required, one can also add more parameters.
 
@@ -166,7 +165,7 @@ no data for specific identifier is available, empty buffer with no data and
 correct header should be delivered to output.
 
 There is \class{bnet::CombinerModule} class, which provides prototype 
-of combiner module. It has following parameters:
+of combiner module. It uses following parameters:
 
 \begin{tabular}{llll}
 \hline
@@ -178,10 +177,10 @@ Name &  Type &  Dflt & Description  \\
 
 Actually, parameter \param{NumReadouts} may not be defined in the configuration of the module itself.
 While class \class{bnet::WorkerApplication} already has parameter with such name,
-its value will be used for model configuration too.     
+its value will be directly used for model configuration.     
 
 When implementing experiment-specific combiner class, 
-One should either derive it's from \class{bnet::CombinerModule} class or 
+one should either derive it's from \class{bnet::CombinerModule} class or 
 start its implementation from scratch. One can add more experiment-specific
 parameters to the module. 
 
@@ -190,8 +189,12 @@ parameters to the module.
 
 Topology (connectivity) of network between workers defined by parameters 
 \param{IsSender} and \param{IsReceiver} of \class{bnet::WorkerApplication} class. 
-By setting these parameters one can configure role of current worker:
-as data sender or as data receiver or with both functions.
+By setting these parameters one can configure role of each worker:
+\bbul
+\item collector of data from data source(s) and sender to event builder
+\item receiever of data from collectors and builder of complete events
+\item both functions at the same application  
+\ebul
 It is required that at least one from both parameters has true value.
 
 Cluster controller during configuration establish connections between workers so,
@@ -217,11 +220,17 @@ changing of user code.
 Task of receiver module is to collect all buffers with same event identifier and
 deliver them at once to the event builder module.
 
-To build experiment-specific builder module, one should derive it from
-\class{bnet::BuilderModule} class. In this case the only virtual method
-should be implemented - \func{DoBuildEvent}, which produces from N buffers with subevents
-complete event. Format of output buffer is completely user-defined. 
-One allowed to fill several events in one output buffer if necessary.    
+To build experiment-specific builder module, one can derive it from
+\class{bnet::BuilderModule} class or start it from scratch. 
+Event builder module has one input and one output. Over input module gets
+N buffers with subevents for same event identifier. Over output module should deliver
+buffer with build events. 
+ 
+When user inherits its builder module from \class{bnet::BuilderModule} class,
+it is enough to implement virtual \func{DoBuildEvent} method, 
+which gets as argument list from N buffers with subevents. 
+Format of output buffer is completely user-defined. 
+One allowed to fill several events into the same output buffer if necessary.    
 
 
 \section{Filter module}
@@ -239,7 +248,7 @@ This is test application, which is designed for testing different asspects of BN
 without necessity to have real data sources. Complete source code and configurations 
 examples can be found in \$DABCSYS/applications/bnet-test.  
 
-Example has following classes:
+Example contains following classes:
 \bbul
 \item  \class{bnet::TestGeneratorModule}
 \item  \class{bnet::TestCombinerModule}
