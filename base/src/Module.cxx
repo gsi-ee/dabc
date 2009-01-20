@@ -26,6 +26,7 @@ dabc::Module::Module(const char* name, Command* cmd) :
    fInputPorts(),
    fOutputPorts(),
    fPorts(),
+   fWorkingPool(0),
    fReplyes(true, true),
    fLostEvents(128, true)
 {
@@ -116,7 +117,7 @@ dabc::Parameter* dabc::Module::CreatePoolUsageParameter(const char* name, double
 {
    Parameter* par = CreateParDouble(name, 0.);
 
-   PoolHandle* pool = FindPool(poolname);
+   PoolHandle* pool = Pool(poolname);
    if (pool) pool->SetUsageParameter(par, interval);
 
    return par;
@@ -251,16 +252,13 @@ dabc::PoolHandle* dabc::Module::CreatePoolHandle(const char* poolname, BufferSiz
       return 0;
    }
 
-   dabc::PoolHandle* handle = FindPool(poolname);
+   dabc::PoolHandle* handle = Pool(poolname);
 
    if (handle==0) handle = new dabc::PoolHandle(this, poolname, pool, size, number, increment);
 
-   return handle;
-}
+   if (fWorkingPool==0) fWorkingPool = handle;
 
-dabc::Folder* dabc::Module::GetObjFolder(bool force)
-{
-   return GetFolder("Objects", force, true);
+   return handle;
 }
 
 dabc::Folder* dabc::Module::GetCmdDefFolder(bool force)
@@ -309,6 +307,9 @@ void dabc::Module::ItemCreated(ModuleItem* item)
 void dabc::Module::ItemDestroyed(ModuleItem* item)
 {
    unsigned id = item->ItemId();
+
+   if (fWorkingPool==item)
+      fWorkingPool = 0;
 
    for (unsigned n=0;n<fInputPorts.size();n++)
       if (fInputPorts[n] == id) {
@@ -366,6 +367,8 @@ dabc::Port* dabc::Module::FindPort(const char* name)
 
 dabc::PoolHandle* dabc::Module::FindPool(const char* name)
 {
+   if ((fWorkingPool!=0) && fWorkingPool->IsName(name)) return fWorkingPool;
+
    return dynamic_cast<dabc::PoolHandle*> (FindChild(name));
 }
 
@@ -440,7 +443,7 @@ void dabc::Module::ProcessEvent(EventId evid)
 
 dabc::Buffer* dabc::Module::TakeBuffer(const char* poolname, BufferSize_t size, BufferSize_t hdrsize)
 {
-   PoolHandle* pool = FindPool(poolname);
+   PoolHandle* pool = Pool(poolname);
 
    return pool ? pool->TakeBuffer(size, hdrsize) : 0;
 }

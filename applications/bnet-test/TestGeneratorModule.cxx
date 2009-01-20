@@ -11,16 +11,15 @@
 
 bnet::TestGeneratorModule::TestGeneratorModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd),
-   fPool(0),
    fEventCnt(0)
 {
    fUniquieId = GetCfgInt("UniqueId", 0, cmd);
 
    fBufferSize = GetCfgInt(xmlReadoutBuffer, 1024, cmd);
 
-   fPool = CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
+   CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
 
-   CreateOutput("Output", fPool, ReadoutQueueSize);
+   CreateOutput("Output", Pool(), ReadoutQueueSize);
 
    DOUT1(("Test Generator %s: UniqueId:%llu", GetName(), fUniquieId));
 }
@@ -32,7 +31,7 @@ void bnet::TestGeneratorModule::ProcessOutputEvent(dabc::Port* port)
       return;
    }
 
-   dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
+   dabc::Buffer* buf = Pool()->TakeBuffer(fBufferSize);
    if (buf==0) {
       EOUT(("No free buffer - generator will block"));
       return;

@@ -11,7 +11,6 @@ namespace bnet {
 
    class TestGeneratorModule : public dabc::ModuleAsync {
       protected:
-         dabc::PoolHandle*     fPool;
          uint64_t              fEventCnt;
          int                   fBufferSize;
          uint64_t              fUniquieId;

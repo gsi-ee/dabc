@@ -63,6 +63,7 @@ namespace dabc {
          PortsIndexVector         fInputPorts;  // map for fast access to input ports
          PortsIndexVector         fOutputPorts; // map for fast access to output ports
          PortsIndexVector         fPorts;       // map for fast access to IOports
+         PoolHandle              *fWorkingPool; // pointer on first created pool
          CommandsQueue            fReplyes;     // reply queue
          Queue<EventId>           fLostEvents;  // events, coming while module is sleeping
 
@@ -80,6 +81,9 @@ namespace dabc {
 
          // end of public methods, rest later will be moved to protected area
 
+         PoolHandle* Pool(const char* name = 0)
+           { return ((name==0) || (*name==0)) ? fWorkingPool : FindPool(name); }
+
          unsigned NumInputs() const { return fInputPorts.size(); }
          unsigned NumOutputs() const { return fOutputPorts.size(); }
          unsigned NumPorts() const { return fPorts.size(); }
@@ -89,13 +93,12 @@ namespace dabc {
          Port* IOPort(unsigned n) const { return n < fPorts.size() ? GetPortItem(fPorts[n]) : 0; }
 
          Port* FindPort(const char* name);
-         PoolHandle* FindPool(const char* name);
+         PoolHandle* FindPool(const char* name = 0);
 
          unsigned InputNumber(Port* port);
          unsigned OutputNumber(Port* port);
          unsigned IOPortNumber(Port* port);
 
-         Folder* GetObjFolder(bool force = false);
          Folder* GetCmdDefFolder(bool force = false);
          Folder* GetTimersFolder(bool force = false);
 
