@@ -1,10 +1,9 @@
 #include "TestGeneratorModule.h"
 
 #include "dabc/logging.h"
-#include "dabc/PoolHandle.h"
-#include "dabc/MemoryPool.h"
-#include "dabc/Command.h"
 #include "dabc/Port.h"
+#include "dabc/PoolHandle.h"
+#include "dabc/Buffer.h"
 #include "dabc/Pointer.h"
 
 #include "bnet/common.h"

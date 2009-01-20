@@ -23,27 +23,18 @@ long int fGlobalCnt = 0;
 class TestModuleAsync : public dabc::ModuleAsync {
    protected:
       int                 fKind; // 0 - first in chain, 1 - repeater, 2 - last in chain,
-      dabc::PoolHandle* fPool;
-      dabc::Port*         fInput;
-      dabc::Port*         fOutput;
       long                fCounter;
-
 
    public:
       TestModuleAsync(const char* name, int kind) :
          dabc::ModuleAsync(name),
-         fKind(kind),
-         fPool(0),
-         fInput(0),
-         fOutput(0)
+         fKind(kind)
       {
-         fPool = CreatePoolHandle("Pool", BUFFERSIZE, 5);
+         CreatePoolHandle("Pool", BUFFERSIZE, 5);
 
-         if (fKind>0)
-            fInput = CreateInput("Input", fPool, QUEUESIZE);
+         if (fKind>0) CreateInput("Input", Pool(), QUEUESIZE);
 
-         if (fKind<2)
-            fOutput = CreateOutput("Output", fPool, QUEUESIZE);
+         if (fKind<2) CreateOutput("Output", Pool(), QUEUESIZE);
 
          fCounter = 0;
       }
@@ -53,9 +44,9 @@ class TestModuleAsync : public dabc::ModuleAsync {
          dabc::Buffer* buf = 0;
 
          if (fKind==1)
-            if (fInput->InputBlocked() || fOutput->OutputBlocked()) return;
+            if (Input()->InputBlocked() || Output()->OutputBlocked()) return;
 
-         fInput->Recv(buf);
+         Input()->Recv(buf);
 
          if (buf==0) { EOUT(("CCCCCCCCCC")); exit(1); }
 
@@ -63,24 +54,24 @@ class TestModuleAsync : public dabc::ModuleAsync {
             dabc::Buffer::Release(buf);
             fCounter++;
          } else
-            fOutput->Send(buf);
+            Output()->Send(buf);
 
       }
 
       void ProcessOutputEvent(dabc::Port* port)
       {
-         if (fOutput->OutputBlocked()) return;
+         if (Output()->OutputBlocked()) return;
 
          if (fKind==0) {
-            dabc::Buffer* buf = fPool->TakeBuffer(BUFFERSIZE);
+            dabc::Buffer* buf = Pool()->TakeBuffer(BUFFERSIZE);
             if (buf==0) { EOUT(("AAAAAAAAAAAA")); exit(1); }
-            fOutput->Send(buf);
+            Output()->Send(buf);
          } else
-         if ((fKind==1) && !fInput->InputBlocked()) {
+         if ((fKind==1) && !Input()->InputBlocked()) {
             dabc::Buffer* buf = 0;
-            fInput->Recv(buf);
+            Input()->Recv(buf);
             if (buf==0) { EOUT(("BBBBBBBBBBBB")); exit(1); }
-            fOutput->Send(buf);
+            Output()->Send(buf);
          }
       }
 
@@ -95,26 +86,18 @@ class TestModuleAsync : public dabc::ModuleAsync {
 class TestModuleSync : public dabc::ModuleSync {
    protected:
       int                 fKind; // 0 - first in chain, 1 - repeater, 2 - last in chain,
-      dabc::PoolHandle*   fPool;
-      dabc::Port*         fInput;
-      dabc::Port*         fOutput;
       long                fCounter;
 
    public:
       TestModuleSync(const char* name, int kind) :
          dabc::ModuleSync(name),
-         fKind(kind),
-         fPool(0),
-         fInput(0),
-         fOutput(0)
+         fKind(kind)
       {
-         fPool = CreatePoolHandle("Pool", BUFFERSIZE, 5);
+         CreatePoolHandle("Pool", BUFFERSIZE, 5);
 
-         if (fKind>0)
-            fInput = CreateInput("Input", fPool, QUEUESIZE);
+         if (fKind>0) CreateInput("Input", Pool(), QUEUESIZE);
 
-         if (fKind<2)
-            fOutput = CreateOutput("Output", fPool, QUEUESIZE);
+         if (fKind<2) CreateOutput("Output", Pool(), QUEUESIZE);
 
          fCounter = 0;
       }
@@ -132,8 +115,8 @@ class TestModuleSync : public dabc::ModuleSync {
       void GeneratorLoop()
       {
          while (ModuleWorking()) {
-            dabc::Buffer* buf = TakeBuffer(fPool, BUFFERSIZE);
-            Send(fOutput, buf);
+            dabc::Buffer* buf = TakeBuffer(Pool(), BUFFERSIZE);
+            Send(Output(), buf);
             fCounter++;
          }
       }
@@ -141,15 +124,13 @@ class TestModuleSync : public dabc::ModuleSync {
       void RepeaterLoop()
       {
          while (ModuleWorking())
-            Send(fOutput, Recv(fInput));
-//            Send(fOutput, RecvFromAny());
+            Send(Output(), Recv(Input()));
       }
 
       void ReceiverLoop()
       {
          while (ModuleWorking()) {
-            dabc::Buffer* buf = Recv(fInput);
-//            dabc::Buffer* buf = RecvFromAny();
+            dabc::Buffer* buf = Recv(Input());
             dabc::Buffer::Release(buf);
             fCounter++;
          }
@@ -161,7 +142,7 @@ class TestModuleSync : public dabc::ModuleSync {
       }
 };
 
-void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
+void TestChain(bool isM, int number, int testkind = 0)
 {
    for (int n=0;n<number;n++) {
       int kind = 1;
@@ -172,20 +153,20 @@ void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
 
       if (isM) {
          m = new TestModuleSync(FORMAT(("Module%d",n)), kind);
-         mgr->MakeThreadForModule(m);
+         dabc::mgr()->MakeThreadForModule(m);
       } else {
          m = new TestModuleAsync(FORMAT(("Module%d",n)), kind);
 
          switch (testkind) {
             case 1:
-              if (n<number/2) mgr->MakeThreadForModule(m, "MainThread0");
-                         else mgr->MakeThreadForModule(m, "MainThread1");
+              if (n<number/2) dabc::mgr()->MakeThreadForModule(m, "MainThread0");
+                         else dabc::mgr()->MakeThreadForModule(m, "MainThread1");
               break;
             case 2:
-               mgr->MakeThreadForModule(m);
+               dabc::mgr()->MakeThreadForModule(m);
                break;
             default:
-               mgr->MakeThreadForModule(m, "MainThread");
+               dabc::mgr()->MakeThreadForModule(m, "MainThread");
                break;
          }
       }
@@ -194,7 +175,7 @@ void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
    bool connectres = true;
 
    for (int n=1; n<number; n++) {
-      if (!mgr->ConnectPorts( FORMAT(("Module%d/Output", n-1)),
+      if (!dabc::mgr()->ConnectPorts( FORMAT(("Module%d/Output", n-1)),
                          FORMAT(("Module%d/Input", n)))) connectres = false;
    }
 
@@ -208,7 +189,7 @@ void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
 
       dabc::SetDebugLevel(1);
 
-      mgr->StartAllModules();
+      dabc::mgr()->StartAllModules();
       dabc::TimeStamp_t tm1 = TimeStamp();
 
       dabc::SetDebugLevel(1);
@@ -222,7 +203,7 @@ void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
 
 //      dabc::SetDebugLevel(5);
 
-      mgr->StopAllModules();
+      dabc::mgr()->StopAllModules();
 
       dabc::TimeStamp_t tm2 = TimeStamp();
 
@@ -232,7 +213,7 @@ void TestChain(dabc::Manager* mgr, bool isM, int number, int testkind = 0)
          dabc::TimeDistance(tm1,tm2), fGlobalCnt, dabc::TimeDistance(tm1,tm2)/fGlobalCnt*1e3, cpu.CPUutil()*100.));
    }
 
-   mgr->CleanupManager();
+   dabc::mgr()->CleanupManager();
 
    DOUT3(("Did manager cleanup"));
 }
@@ -639,18 +620,13 @@ extern "C" void StartCoreTest()
 //   TestNewThreads(&mgr);
 //   return 0;
 
-   TestChain(dabc::mgr(), false, 10, 1);
-   return;
-
-
-
    TestMemoryPool();
 
-   TestChain(dabc::mgr(), true, 10);
+   TestChain(true, 10);
 
-   TestChain(dabc::mgr(), false, 10, 2);
-   TestChain(dabc::mgr(), false, 10, 1);
-   TestChain(dabc::mgr(), false, 10, 0);
+   TestChain(false, 10, 2);
+   TestChain(false, 10, 1);
+   TestChain(false, 10, 0);
 
    TestTimers(dabc::mgr(), 1);
    TestTimers(dabc::mgr(), 3);

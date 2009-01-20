@@ -385,6 +385,8 @@ dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* handle, unsig
       return 0;
    }
 
+   if (handle==0) handle = Pool();
+
    Port* port = new Port(this, name, handle, recvqueue, sendqueue, headersize);
    if (handle) {
       BufferNum_t number = port->NumInputBuffersRequired() + port->NumOutputBuffersRequired();
@@ -439,13 +441,6 @@ void dabc::Module::ProcessEvent(EventId evid)
       default:
          dabc::WorkingProcessor::ProcessEvent(evid);
    }
-}
-
-dabc::Buffer* dabc::Module::TakeBuffer(const char* poolname, BufferSize_t size, BufferSize_t hdrsize)
-{
-   PoolHandle* pool = Pool(poolname);
-
-   return pool ? pool->TakeBuffer(size, hdrsize) : 0;
 }
 
 bool dabc::Module::IsAnyOutputBlocked() const
