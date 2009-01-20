@@ -150,7 +150,7 @@ System.out.println("Browser releaseServices, update");
         Iterator<xDimParameter> vi = vpar.listIterator();
         for(i=0;i<vpar.size();i++){
             par=vi.next();
-            par.removeInfoHandler(null);// clear all registrations of user handlers
+            par.removeInfoHandler();// clear all registrations of user handlers
             par.setParameterActiv(false);
         }
     }

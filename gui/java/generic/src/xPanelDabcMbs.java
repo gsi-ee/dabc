@@ -11,10 +11,6 @@ import java.io.IOException;
 import java.awt.event.*;
 import java.awt.Color;
 import java.util.*;
-import java.io.*;
-import org.w3c.dom.*;
-import org.xml.sax.*;
-import javax.xml.parsers.*;
 
 /**
  * Form panel to control DABC.
@@ -42,10 +38,6 @@ private xFormDabc formDabc;
 private xState progressState;
 private ActionListener action;
 private xTimer etime;
-private DocumentBuilderFactory factory;
-private DocumentBuilder builder;
-private Document document;
-private Element root, elem;
 private int nMbsServers;
 private int nDabcServers;
 private int nServers;

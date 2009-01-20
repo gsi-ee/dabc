@@ -13,11 +13,7 @@ import java.io.IOException;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.*;
-import java.io.*;
 import java.awt.Color;
-import org.w3c.dom.*;
-import org.xml.sax.*;
-import javax.xml.parsers.*;
 
 /**
  * Form panel to control DABC.
@@ -40,13 +36,9 @@ private xInternalFrame progress;
 private xState progressState;
 private xFormDabc formDabc;
 private ActionListener action;
-private DocumentBuilderFactory factory;
-private DocumentBuilder builder;
-private Document document;
 private String dabcMaster;
 private String Action;
 private int nServers;
-private Element root, elem;
 private xDimCommand doConfig, doEnable, doStart, doStop, doHalt;
 private Vector<xDimParameter> runState;
 private Vector<xDimCommand> doExit;

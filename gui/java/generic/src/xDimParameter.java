@@ -162,21 +162,33 @@ protected void addInfoHandler(xiUserInfoHandler pu){
 if(userHandler== null)userHandler=new Vector<xiUserInfoHandler>();
 else for(int i=0;i<userHandler.size();i++)
     if(userHandler.get(i).getName().equals(pu.getName()))return; // already attached
-    userHandler.add(pu);
+userHandler.add(pu);
+}
+/**
+ * Remove all user handlers. 
+ * @see xiDimBrowser
+ */
+protected void removeInfoHandler(){
+removeInfoHandler(null);
 }
 /**
  * Remove user handler. Called from user panels through xiDimBrowser interface.
- * @param pu Interface of user handler
+ * @param pu Interface of user handler. If null, all handlers are removed.
  * @see xiDimBrowser
  */
 protected void removeInfoHandler(xiUserInfoHandler pu){
 if(userHandler==null) return;
+if(pu == null){
+	for(int i=0;i<userHandler.size();i++)
+	userHandler.clear();
+}
+else{
 for(int i=0;i<userHandler.size();i++)
 if(userHandler.get(i).getName().equals(pu.getName())){
     userHandler.remove(i);
     break;
     }
-}
+}}
 /**
  * (De)activate parameter.
  * A deactivated parameter does no drawing in infoHandler function neither calls user handler.

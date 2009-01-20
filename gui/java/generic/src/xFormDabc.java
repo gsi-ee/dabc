@@ -1,9 +1,7 @@
 package xgui;
 import java.util.*;
 import org.w3c.dom.*;
-import org.xml.sax.*;
 import javax.xml.parsers.*;
-import java.io.*;
 import java.awt.event.*;
 /**
  * Base class to keep the data of the setup forms for DABC.
@@ -14,10 +12,6 @@ import java.awt.event.*;
 public class xFormDabc extends xForm{
 private String Name;
 private String Setup;
-private DocumentBuilderFactory factory;
-private DocumentBuilder builder;
-private Document document;
-private Element root, elem;
 
 public xFormDabc() {
 setDefaults();
@@ -46,58 +40,53 @@ protected void printForm(){
 System.out.println(build().toString());
 }
 private StringBuffer build(){
-StringBuffer str=new StringBuffer();
-str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-str.append("<DabcLaunch>\n");
-str.append("<Labels\n");
-// append prompt line specs
-str.append("DabcMaster=\"DABC Master\"\n");
-str.append("DabcName=\"DABC Name\"\n");
-str.append("DabcUserPath=\"DABC user path\"\n");
-str.append("DabcSystemPath=\"DABC system path\"\n");
-str.append("DabcSetup=\"DABC setup file\"\n");
-str.append("DabcScript=\"DABC Script\"\n");
-str.append("DabcServers=\"%Number of needed DIM servers%\"\n");
-str.append("/>\n");
-// append value specs
-str.append("<Fields\n");
-str.append("DabcMaster=\""+Master+"\"\n");
-str.append("DabcName=\""+Name+"\"\n");
-str.append("DabcUserPath=\""+UserPath+"\"\n");
-str.append("DabcSystemPath=\""+SystemPath+"\"\n");
-str.append("DabcSetup=\""+Setup+"\"\n");
-str.append("DabcScript=\""+Script+"\"\n");
-str.append("DabcServers=\""+Servers+"\"\n");
-str.append("/>\n");
-str.append("</DabcLaunch>\n");
+    StringBuffer str=new StringBuffer();
+    str.append(xSet.XmlHeader());
+    str.append(xSet.XmlTag("DabcLaunch",xSet.OPEN));
+    str.append("<DabcMaster "+key("prompt","DABC Master")+key("value",Master)+"/>\n");
+    str.append("<DabcName "+key("prompt","DABC Name")+key("value",Name)+"/>\n");
+    str.append("<DabcUserPath "+key("prompt","DABC user path")+key("value",UserPath)+"/>\n");
+    str.append("<DabcSystemPath "+key("prompt","DABC system path")+key("value",SystemPath)+"/>\n");
+    str.append("<DabcSetup "+key("prompt","DABC setup file")+key("value",Setup)+"/>\n");
+    str.append("<DabcScript "+key("prompt","DABC Script")+key("value",Script)+"/>\n");
+    str.append("<DabcServers "+key("prompt","%Number of needed DIM servers%")+key("value",Servers)+"/>\n");
+    str.append(xSet.XmlTag("DabcLaunch",xSet.CLOSE));
 return str;
 }
+/**
+ * Writes Xml file with filter setup values.
+ * @param file Xml file name.
+ */
 protected void saveSetup(String file){
-try{
-    FileWriter fw = new FileWriter(file);
-    fw.write(build().toString());
-    fw.close();
-    System.out.println("Dabc launch setup: "+file);
-}catch(IOException ioe){System.out.println("Error writing Dabc launch setup "+file);}
+System.out.println("Dabc launch setup: "+file);
+    xSet.writeXml(file,build().toString());
 }
-
+/**
+ * Reads Xml file and restores filter setup values.
+ * @param file Xml file name.
+ */
 protected void restoreSetup(String file){
+NodeList li;
+System.out.println("Restore Dabc launch setup from "+file);
 LaunchFile=new String(file);
-try{
-    factory=DocumentBuilderFactory.newInstance();
-    builder=factory.newDocumentBuilder();
-    document=builder.parse(new File(file));
-    root=document.getDocumentElement();
-    elem=(Element)root.getElementsByTagName("Fields").item(0);
-    Master=new String(elem.getAttribute("DabcMaster").toString());
-    Name=new String(elem.getAttribute("DabcName").toString());
-    Servers=new String(elem.getAttribute("DabcServers").toString());
-    UserPath=new String(elem.getAttribute("DabcUserPath").toString());
-    SystemPath=new String(elem.getAttribute("DabcSystemPath").toString());
-    Script=new String(elem.getAttribute("DabcScript").toString());
-    Setup=new String(elem.getAttribute("DabcSetup").toString());
-    nServers=1+Integer.parseInt(Servers);// add DNS
-}catch(Exception e){System.out.println("Error reading "+file);}
+    Element root=xSet.readXml(file);
+    if(root != null){
+        li=root.getElementsByTagName("DabcMaster");
+        Master=((Element)li.item(0)).getAttribute("value");
+        li=root.getElementsByTagName("DabcName");
+        Name=((Element)li.item(0)).getAttribute("value");
+        li=root.getElementsByTagName("DabcUserPath");
+        UserPath=((Element)li.item(0)).getAttribute("value");
+        li=root.getElementsByTagName("DabcSystemPath");
+        SystemPath=((Element)li.item(0)).getAttribute("value");
+        li=root.getElementsByTagName("DabcScript");
+        Script=((Element)li.item(0)).getAttribute("value");
+        li=root.getElementsByTagName("DabcSetup");
+        Setup=((Element)li.item(0)).getAttribute("value");
+        li=root.getElementsByTagName("DabcServers");
+        Servers=((Element)li.item(0)).getAttribute("value");
+        nServers=1+Integer.parseInt(Servers);// add DNS
+    }
 }
 /**
  * @param setup DABC setup file name

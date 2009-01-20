@@ -14,10 +14,6 @@ import java.io.IOException;
 import java.awt.event.*;
 import java.awt.Color;
 import java.util.*;
-import java.io.*;
-import org.w3c.dom.*;
-import org.xml.sax.*;
-import javax.xml.parsers.*;
 
 /**
  * Form panel to control MBS.
@@ -47,12 +43,8 @@ private xInternalFrame progress;
 private xState progressState;
 private xFormMbs formMbs;
 private ActionListener action;
-private DocumentBuilderFactory factory;
-private DocumentBuilder builder;
-private Document document;
 private JOptionPane confirm;
 private int nServers, nLoggers, nRates;
-private Element root, elem;
 private xDimCommand mbsCommand=null;
 private xDimParameter mbsNodeList=null;
 private Vector<xDimParameter> runMsgLog;

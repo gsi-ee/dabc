@@ -84,7 +84,7 @@ private void initPanel(Dimension dim){
 //-------------------------------------------------------------------------------------------------------
 // before we fill the table, we must be sure that the first
 // parameter update has been done. Otherwise we would not get correct quality.
-// before we create a new table, we must be sure that
+// Before we create a new table, we must be sure that
 // infoHandler does not use wrong table row index.
 // Therefore we set all indices to -1, will be set below (addRow)
 // Parameters are inactive at this point.
@@ -135,11 +135,11 @@ private void initPanel(Dimension dim){
             if(el.getAttribute("name").toString().equals(vpar.get(ii).getName())){
             if(recmet != null){
                 recmet.restoreRecord(el);
-                vpar.get(ii).setAttributeMeter();
+                vpar.get(ii).setAttributeMeter(); // from recmet
                 }
             else if(rechis != null){
                 rechis.restoreRecord(el);
-                vpar.get(ii).setAttributeHisto();
+                vpar.get(ii).setAttributeHisto(); // from rechis
                 }
             break;
             }
@@ -191,6 +191,11 @@ private void initPanel(Dimension dim){
     paraView.setPreferredSize(xSet.addDimension(dim, new Dimension(-10,-32)));
 //Add frame to panel
     add(paraView);
+// Rebuild graphics panels
+    infpan.updateAll();
+    stapan.updateAll();
+    metpan.updateAll();
+    hispan.updateAll();
 }
 private xDimParameter newParameter(String name, String format){
 xDimParameter dimpar;

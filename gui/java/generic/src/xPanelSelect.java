@@ -70,7 +70,7 @@ init(desktop,actionlistener);
  * @param desktop Desktop interface to open the windows.
  * @param actionlistener Events can be passed to Desktop action listener.
  */
-public void init(xiDesktop desktop, ActionListener actionlistener){
+private void init(xiDesktop desktop, ActionListener actionlistener){
     xSet.setColorBack(back);
     desk=desktop;
     action=actionlistener;    // external DABC action listener 
@@ -85,10 +85,10 @@ int width=14;
     checknode=addCheckBox("Check nodes: ","filter",this);checknode.setSelected(node);
     checkapp=addCheckBox("Check appl.: ","filter",this);checkapp.setSelected(app);
     checkname=addCheckBox("Check names: ","filter",this);checkname.setSelected(name);
-    checkonly=addCheckBox("Show only: ","filter",this);checkonly.setSelected(only);
-    checkrate=addCheckBox("Show rates: ","filter",this);checkrate.setSelected(rate);
-    checkstate=addCheckBox("Show states: ","filter",this);checkstate.setSelected(state);
-    checkinfo=addCheckBox("Show infos: ","filter",this);checkinfo.setSelected(info);
+    checkonly=addCheckBox("Below only: ","filter",this);checkonly.setSelected(only);
+    checkrate=addCheckBox("Rates: ","filter",this);checkrate.setSelected(rate);
+    checkstate=addCheckBox("States: ","filter",this);checkstate.setSelected(state);
+    checkinfo=addCheckBox("Infos: ","filter",this);checkinfo.setSelected(info);
 // Build button line
     graphIcon   = xSet.getIcon("icons/usergraphics.png");
     storeIcon   = xSet.getIcon("icons/savewin.png");
@@ -175,7 +175,7 @@ boolean isRecord;
         if(parlist.get(i).getValue().length()>50)continue;
         num++;
         infoHandler(parlist.get(i)); // to get current parameter values
-        mypar = new myParameter(Name,parpan); // will handle infoHandler
+        mypar = new myParameter("ParaList",parpan); // will handle infoHandler
         if(xip.isChangable()) // handle events by actionPerformed of myParameter
             mypar.setField(parpan.addPrompt(new String(fulnam+" "),parlist.get(i).getValue(),fulnam,30,mypar),true);
         else // handle events by actionPerformed of xPanelSelect (and ignore)
@@ -241,13 +241,13 @@ System.out.println("Store selections to "+file);
     str.append(xSet.XmlTag("Selection",xSet.CLOSE));
     xSet.writeXml(file,str.toString());
 }
-// ---- Handle the menu actions ---------------------------------------
 private String key(String key, String value){
 return new String(key+"=\""+value+"\" ");
 }
 private String key(String key, boolean value){
 return new String(key+"=\""+new Boolean(value).toString()+"\" ");
 }
+//---- Handle the menu actions ---------------------------------------
 public void actionPerformed(ActionEvent e) {
 String cmd = new String(e.getActionCommand());
 
