@@ -1,8 +1,10 @@
 [programmer/prog-gui.tex]
 \section{GUI Guide lines}
-The \dabc~GUI is written in Java. In the following we refer to it
-as a whole as \gui. It uses the DIM Java package to register the
-DIM services provided by the \dabc~DIM servers. It is generic in that it
+The \dabc\ GUI is written in Java \verba{Java}. In the following we refer to it
+as a whole as \gui. 
+It uses the DIM Java package to register the
+DIM services provided by the \dabc\ DIM servers. 
+It is generic in that it
 builds most of the panels from the services available.
 Thus it can control and monitor any system running DIM servers conforming to
 rules described in the following. 
@@ -30,8 +32,8 @@ In addition to the data and format string one longword called quality is sent.
 \index{DABC!DIM conventions}
 When the number and kind of services of DIM servers often change it would be very convenient if a generic GUI would show all available services without further programming. It would be also very nice if standard graphical elements would be used to display certain parameters like rate meters. If we have many services it would be convenient to have a naming convention which allows to build tree structures on the GUI.
 
-Naming conventions for generic \gui~(line breaks for better reading):
-\begin{verbatim}
+Naming conventions for generic \gui\ (line breaks for better reading):
+{\small \begin{verbatim}
    /servernamespace
    /nodename[:nodeID]
    /[[applicationnamespace::]applicationname:]applicationID
@@ -39,10 +41,11 @@ Naming conventions for generic \gui~(line breaks for better reading):
 Example:
    /DABC/lx05/Control/RunState
 \end{verbatim}
-We recommend to forbid spaces in any name fields. Dots should not be used except in names (last field). The generic \gui~can handle only services from one servernamespace. For \dabc~and \mbs~this servernamespace is set to \keyw{DABC}.
+}
+We recommend to forbid spaces in any name fields. Dots should not be used except in names (last field). The generic \gui\ can handle only services from one servernamespace. For \dabc\ and \mbs\ this servernamespace is set to \keyw{DABC}.
 \subsection{DABC DIM records}
 For generic GUIs we need something similar to the EPICS records. This means to define structures which can be identified. How shall they be indentified? One possibility would be to prefix a type to the parameter name, i.e. \verba{rate:DataRate}. Another to use the quality longword. This longword can be set by the server. One could mask the bytes of this longword for different information:
-\begin{verbatim}
+{\small \begin{verbatim}
    mode (MSB)| visibility | type | status (LSB)
    mode: not used
    visibility: Bit wise (can be ORed)
@@ -72,6 +75,7 @@ For generic GUIs we need something similar to the EPICS records. This means to d
      ERROR       = 4
      FATAL       = 5
 \end{verbatim}
+}
 
 Then we could provide at the client side objects for handling and visualization of such records.
 
@@ -146,7 +150,7 @@ The descriptor string could be XML specifying the argument name, type, required 
 <argument name="arg4" type="boolean" value="" required="opt"/>
 </command>
 \end{verbatim}
-The command definition can be used by the \gui~to build input panels for commands. The scope can be used to classify commands, content should be set to default if argument values are default, values if argument values have been changed.
+The command definition can be used by the \gui\ to build input panels for commands. The scope can be used to classify commands, content should be set to default if argument values are default, values if argument values have been changed.
 \subsubsection{Commands}
 Commands have one string argument only. This leaves the arguments to semantic definitions in string format. To implement a minimal security, the first 14 characters of the argument string should be an encrypted password (13 characters by crypt plus space). The arguments are passed as string. A command structure could look like:
 \bdes
@@ -156,20 +160,20 @@ Commands have one string argument only. This leaves the arguments to semantic de
 \edes
 The argument string has the same XML as the command description. Thus, the same parser can be used to encode/decode the description (parameter) and the command. An alternate format is the MBS style format argument = value where boolean arguments are given by -argument if argument is true.
 Setting parameters
-If a parameter should be changable from the \gui, there must be a command for that. A fixed command SetParameter must be defined on the server for that. Argument is a string of form name=value. In the parameter table of the \gui~one field can be provided to enter a new value and the command SetParameter is used to set the new value.
+If a parameter should be changable from the \gui, there must be a command for that. A fixed command SetParameter must be defined on the server for that. Argument is a string of form name=value. In the parameter table of the \gui\ one field can be provided to enter a new value and the command SetParameter is used to set the new value.
 \subsection{Application servers}
-Any application which can implement DIM services can be controlled by the generic \gui~if it follows the protocol described above. The first application was \dabc, the second one \mbs.
+Any application which can implement DIM services can be controlled by the generic \gui\ if it follows the protocol described above. The first application was \dabc, the second one \mbs.
 \subsection{DABC GUI usage of DIM}
 The service names follow a structured syntax as described above. The name fields are used to
 build trees (for commands). Using the DIM quality longword (delivered by the server together
 with each update) simple aggregated data services (records) are defined.
 Currently the records \keyw{STATE}, \keyw{RATE}, \keyw{HISTOGRAM}, \keyw{COMMANDDESC} and \keyw{INFO}
-are used. When the \gui~receives the first update of a service (immediately after subscribing)
+are used. When the \gui\ receives the first update of a service (immediately after subscribing)
 it can determine the record type and handle the record in an appropriate way.
 The \keyw{COMMANDDESC} record is an XML string describing a command.
 The name of a descriptor record must be the name of the command it describes followed by an underscore.
 \section{GUI global layout}
-The top window of the \gui~is a \class{JFrame}. Inside that is a \class{JPanel}
+The top window of the \gui\ is a \class{JFrame}. Inside that is a \class{JPanel}
 which contains on top a \class{JToolBar} (all the main buttons), 
 in the middle a \class{JDesktopPane} (main viewing area), and at the bottom
 a \class{JTextArea} (One line text for server list). 
@@ -200,21 +204,21 @@ Currently no menu bar is supported.
 Brief description of panels implemented in the \gui.
 \subsection{DABC launch panel}
 \class{xPanelDabc} extending \class{xPanelPrompt}.\\
-Form to enter all information needed to startup \dabc~tasks and
+Form to enter all information needed to startup \dabc\ tasks and
 buttons to execute standard commands.
 The values of the form (internally stored in \class{xFormDabc} extending of \class{xForm})
 can be saved to an XML file and are restored from it. File name is either
 \verba{DabcLaunch.xml} or translation of \keyw{DABC\_LAUNCH\_DABC}, respectively.
 \subsection{MBS launch panel}
 \class{xPanelMbs} extending \class{xPanelPrompt}.\\
-Form to enter all information needed to startup \mbs~tasks and
+Form to enter all information needed to startup \mbs\ tasks and
 buttons to execute standard commands.
 The values of the form (internally stored in \class{xFormMbs} extending of \class{xForm})
 can be saved to an XML file and are restored from it. File name is either
 \verba{MbsLaunch.xml} or translation of \keyw{DABC\_LAUNCH\_MBS}, respectively.
 \subsection{Combined DABC and MBS launch panel}
 \class{xPanelDabcMbs} extending \class{xPanelPrompt}.\\
-It is a combination of both, \dabc~and \mbs~launch panel.
+It is a combination of both, \dabc\ and \mbs\ launch panel.
 \subsection{Command panel}
 \class{xPanelCommand} extending \class{JPanel}.\\
 Is rebuilt from scratch by \class{xDesktop} whenever the DIM service list has been updated.\\
@@ -261,13 +265,13 @@ Displays a colored text line.
 Central window to write messages.
 \section{GUI save/restore setups}
 There are several setups which can be stored in XML files and are retrieved
-when the \gui~is started again.
+when the \gui\ is started again.
 \bdes
 \item [\keyw{DABC\_LAUNCH\_DABC}]: 
-Values of \dabc~launch panel. Saved by button in panel. \\
+Values of \dabc\ launch panel. Saved by button in panel. \\
 Default \verba{DabcLaunch.xml}.
 \item [\keyw{DABC\_LAUNCH\_MBS}]: 
-Values of \mbs~launch panel. Saved by button in panel. \\
+Values of \mbs\ launch panel. Saved by button in panel. \\
 Default \verba{MbsLaunch.xml}.
 \item [\keyw{DABC\_RECORD\_ATTRIBUTES}]: 
 Attributes of rate and histogram panels. Saved by main save button. \\
@@ -380,7 +384,7 @@ MbsServers="3"
 </MbsLaunch>
 \end{verbatim}
 \section{Application specific GUI plug-in}
-Besides the generic part of the \gui~it might be useful to have application specific panels as well, integrated in the generic \gui. This is done by implementing subclasses of  \class{xPanelPrompt}. The class name (only one) can be passed as argument to the java command starting the \gui~or by setting variable \keyw{DABC\_APPLICATION\_PANELS} being a comma separated list of class names.
+Besides the generic part of the \gui\ it might be useful to have application specific panels as well, integrated in the generic \gui. This is done by implementing subclasses of  \class{xPanelPrompt}. The class name (only one) can be passed as argument to the java command starting the \gui\ or by setting variable \keyw{DABC\_APPLICATION\_PANELS} being a comma separated list of class names.
 Variable is ignored if class name is given as argument.
 The classes must implement some interfaces:
 \bdes
@@ -391,7 +395,7 @@ The classes must implement some interfaces:
 One can connect call back functions to parameters, 
 get a list of available commands,
 create his own panels for display using the graphical primitives like rate meters.
-Optional \class{xiUserCommand} provides a function to be called in the \gui~
+Optional \class{xiUserCommand} provides a function to be called in the \gui\ 
 (\class{xPanelCommand}) when a command shall be executed. This function steers if the command arguments have to be
 encoded in XML style or argument list style.
 
@@ -403,7 +407,7 @@ Examples of such application panel can be found on directory \verba{application}
 \subsubsection{Interface xiUserPanel}
 \bcir
 \item \decl{abstract void init(xiDesktop d, ActionListener a)}\\
-Called by \gui~after instantiation. The desktop can be used to add frames (see below).\\
+Called by \gui\ after instantiation. The desktop can be used to add frames (see below).\\
 \item \decl{String getHeader();}\\
 Must return a header/name text after instantiation.\\
 \item \decl{String getToolTip();}\\
@@ -413,7 +417,7 @@ Must return an icon after instantiation.\\
 \item \decl{xiUserCommand getUserCommand();}\\
 Must return an object implementing \class{xiUserCommand}, or null. See below.\\
 \item \decl{void setDimServices(xiDimBrowser b);}\\
-Called by \gui~whenever the DIM services had been changed.
+Called by \gui\ whenever the DIM services had been changed.
 The browser provides the command and parameter list (see below). 
 One can select and store references to commands or parameters. 
 A \class{xiUserInfoHandler} object can be registered for each selected parameter. 
@@ -425,7 +429,7 @@ All local references to commands or parameters must be cleared!
 \bcir
 \item \decl{boolean getArgumentStyleXml(String scope, String command);}\\
 Return \keyw{true} if command shall be composed as XML string, 
-\keyw{false} if \mbs~style string. \verba{Scope} 
+\keyw{false} if \mbs\ style string. \verba{Scope} 
 is specified in the XML command descriptor, \verba{command} is the full command name.
 \ecir
 
@@ -465,9 +469,12 @@ Typically called in \func{setDimServices} to get list of available parameters.
 Only selected parameters may be registered to.
 \item \decl{Vector<xiDimCommand> getCommands()}\\
 Typically called in \func{setDimServices} to get list of available commands.
-\item \decl{void setInfoHandler(xiDimParameter p, xiUserInfoHandler h, int handlerID)}\\
-Typically called in \func{setDimServices} to register a call back handler
+\item \decl{void setInfoHandler(xiDimParameter p, xiUserInfoHandler h)}\\
+Typically called in application function \func{setDimServices} to register a call back handler
 (mostly \verba{this}) to a parameter.
+\item \decl{void removeInfoHandler(xiDimParameter p, xiUserInfoHandler h)}\\
+Typically called in application function \func{releaseDimServices} to remove a call back handler
+of a parameter.
 \item \decl{void sleep(int s)}
 \ecir
 
@@ -549,7 +556,7 @@ Builds and executes a DIM command \func{SetParameter name=vale} where name is th
 \subsection{Other interfaces}
 \subsubsection{Interface xiPanelItem}
 Interface to be implemented for objects to be placed onto \class{xPanelGraphics}.
-The elementary graphics objects of \gui~all have implemented this interface.
+The elementary graphics objects of \gui\ all have implemented this interface.
 Example \class{xMeter}, \class{xState}, \class{xHisto}.
 \bcir
 \item \decl{Dimension getDimension()}
@@ -567,7 +574,7 @@ Sets the preferred size of item to specified dimension.
 \ecir
 Exampele:
 \begin{verbatim}
-public void setActionListener(ActionListener actionlistener){action=actionlistener;}
+public void setActionListener(ActionListener a){action=a;}
 public JPanel getPanel() {return this;}
 public String getName(){return sHead;}
 public void setID(int i){iID=i;}
@@ -580,11 +587,11 @@ public void setSizeXY(Dimension dd){setPreferredSize(dd);}
 \section{DIM update mechanism}
 To get informed when a DIM parameter has been updated a DIM client has to register to it.
 In a Java DIM client this is done by instantiating a subclass of \class{DimInfo}.
-In \gui this is \class{xDimParameter} implementing callback function \func{infoHandler}.
+In \gui\ this is \class{xDimParameter} implementing callback function \func{infoHandler}.
 After registration the callback function is called once immediately.
 In \func{infoHandler} one can use getter functions to get the quality, the format string,
 and the value(s).
-
+\subsection{\class{xDimBrowser}}
 The central object handling the available lists of DIM parameters and commands
 is the \class{xDimBrowser}. It provides the functions:
 \bdes
@@ -594,10 +601,10 @@ There are protected functions to get then the references to these panels.
 \item [\func{protected initServices(String wildcard)}]: 
 Get list of available services from DIM name server
 \keyw{DIM\_DNS\_NODE}. Create vectors of alphabetically ordered parameters 
-(\class{xDimParameter})and commands (\class{xDimCommand}) and their interfaces, respectively.
+(\class{xDimParameter}) and commands (\class{xDimCommand}) and their interfaces, respectively.
 The references of the graphics panels are passed to the parameter objects.
 \item [\func{addInfoHandler(xiDimParameter p, xiUserInfoHandler ih)}]:
-Interface function to add an info handler to a parameter. The \func{infoHandler}
+Interface function to add an additional info handler to a parameter. The \func{infoHandler}
 function of this handler is called at the end of the \func{infoHandler} function
 of \class{xDimParameter}. 
 \item [\func{removeInfoHandler(xiDimParameter p, xiUserInfoHandler ih)}]:
@@ -608,7 +615,7 @@ Interface function to remove an info handler added before.
 From outside one gets only references to the interfaces.
 \item [\func{Vector<xiDimCommand> getCommands()}]: 
 From outside one gets only references to the interfaces.
-\item [\func{rotected releaseServices(boolean cleanup)}]: Removes all external handlers
+\item [\func{protected releaseServices(boolean cleanup)}]: Removes all external handlers
 of the parameters. Sets all parameters to \keyw{inactive}. This means that in the
 \func{infoHandler}s no more graphical activity is performed.
 It \verba{cleanup} is \keyw{true}
@@ -619,5 +626,60 @@ Note that the objects themselfes are removed only by next garbage collection.
 All parameters are  set to \keyw{active}.
 \item [\func{}]: 
 \edes
-\subsection{Getting parameters}
+\subsection{Getting parameters and commands}
+Once the parameter and command objects have been created by the browser, it is up to the 
+\class{xPanelParameter} and \class{xPanelCommand} object, respectively, to manage them.
+These two objects are created new each time an update occurs.
+\subsubsection{\class{xPanelParameter}}
+Extends \class{JPanel}.
+It has references to the browser and all graphics panels. It owns the parameter table
+(\class{JTable}). In the constructor the following steps are performed:
+\bnum
+\item Get reference to list of parameters (from browser).
+\item Set in all parameters the table index to -1 (\func{infoHandler}s will no longer update
+table fields.
+\item Scan through all parameters and check if any quality is still -1 which would mean
+that the type is undefined. That is repeated two times with 2 seconds delay to give
+the DIM servers the chance to update all parameters. If still any quality is -1 this is an error.
+\item Restore record attributes of meters and histograms from XML file.
+\item Cleanup graphics panels.
+\item Create new table.
+\item Add parameters to table by calling function \func{xDimParameter.addRow}. This function
+also creates graphical presentations of the parameters (e.g. \class{xMeter}) and add them to the appropriate graphics panels (e.g. \class{xPanelMeter}) if needed.
+\item Builds list of command descriptors (\class{xXmlParser}).
+\item Add table to its panel.
+\enum
+\subsubsection{xPanelCommand}
+Extends \class{JPanel}.
+It has references to the browser. It owns the command tree (\class{JTree}). In the constructor
+the following steps are performed:
+\bnum
+\item Get reference to list of commands (from browser).
+\item Create from that list a command tree to be shown on left side in window.
+\item Create arguments panel for the right side. When a command is selected and
+an XML descriptor is available, the arguments are shown as prompter panel.
+\item Call back functions for command execution.
+\enum
+Function \func{setCommandDescriptors} is called from \class{xDesktop} to build
+the command descriptor list.\\
+Function \func{setUserCommand} is called from \class{xDesktop} to specify
+a \class{xiUserCommand} object which provides a function \func{getArgumentStyleXml}
+which is used to determine how the command string has to be formatted (either
+like the command XML description or like the \mbs\ style).
+\subsection{Update sequence}
+The build up sequence during the GUI start or after changes of the DIM services
+is done in the \class{xDesktop}.
+Sequence on startup:
+\bnum
+\item Create application panels and graphics panels.
+\item Create browser and call \func{initServices}.
+\item Create prompter panels.
+\item Create \class{xPanelParameter}.
+\item Call browser \func{enableServices} function. Now all DIM clients should already operate.
+\item Create \class{xPanelCommand} and call \func{setCommandDescriptors}.
+\item Update all graphics panels (\func{updateAll}).
+\item Call \func{init} and \func{setDimServices} of all application panels. Pass
+\class{xiUserCommand} objects from application panel objects to \class{xPanelCommand}.
+\item Create the internal frames to display all panels which shall be visible.
+\enum 
 
