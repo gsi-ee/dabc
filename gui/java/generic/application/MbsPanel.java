@@ -281,6 +281,7 @@ System.out.println("User services OK: "+paramOK);
 //----- end of xiUserPanel interface methods -----------------------
 
 // ---- xiUserInfoHandler interface methods ----------------------------
+public String getName(){return name;}
 // call back for parameter update (xiUserInfoHandler))
 public void infoHandler(xiDimParameter param){
 // System.out.println("Param: "+par.getParserInfo().getFull()+", value "+par.getRecordMeter().getValue());
@@ -292,7 +293,7 @@ for(int i=0;i < meterrecs.size(); i++){
     if(meterrecs.get(i)==param.getMeter()){
     //System.out.println("Rate: "+meterrecs.get(i).getName()+" = "+meterrecs.get(i).getValue());
     //meters.get(i).redraw((double)meterrecs.get(i).getValue());
-    rates.get(i).redraw((double)meterrecs.get(i).getValue(), true);
+    	rates.get(i).redraw((double)meterrecs.get(i).getValue(), true);
     }}}
 // look which state to update
 else if((param.getState() != null)&&(staterecs!=null)&&(states!=null))

@@ -208,7 +208,7 @@ for(int i=0;i<vipar.size();i++){
         states.add(state); // add to local list
         state.setColorBack(back);
         // add reference to record data to local list
-        if(vipar.get(i).getState()!=null) staterecs.add(vipar.get(i).getState());
+        staterecs.add(vipar.get(i).getState());
         stapan.addGraphics(state,false); // add to graphics panel
     }
 //    if((full.indexOf("/Eventbuilder:42/Events.")>0)||(full.indexOf("/EventRate")>0)) {
@@ -276,6 +276,7 @@ System.out.println("User services OK: "+paramOK);
 //----- end of xiUserPanel interface methods -----------------------
 
 // ---- xiUserInfoHandler interface methods ----------------------------
+public String getName(){return name;}
 // call back for parameter update (xiUserInfoHandler))
 public void infoHandler(xiDimParameter param){
 // System.out.println("Param: "+par.getParserInfo().getFull()+", value "+par.getRecordMeter().getValue());
