@@ -246,7 +246,7 @@ event builder module.
 
 This is test application, which is designed for testing different asspects of BNET
 without necessity to have real data sources. Complete source code and configurations 
-examples can be found in \$DABCSYS/applications/bnet-test.  
+examples can be found in \$DABCSYS/applications/bnet-test directory.  
 
 Example contains following classes:
 \bbul
@@ -258,12 +258,67 @@ Example contains following classes:
 \item  \class{bnet::TestFactory}
 \ebul
 
-Example can be used as template for developing user-specific application. 
+There are several examples of configuration files. For instance,
+configuration with 4 worker nodes with sender and receiver functionality each
+showin in SetupBnet.xml example:
+
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="lxi008" name="Controller:41">
+    <Application class="bnet::Cluster">
+       <NetDevice value="dabc::SocketDevice"/>
+    </Application>
+  </Context>
+  <Context host="lxi009" name="Worker1:42"/>
+  <Context host="lxi010" name="Worker2:42"/>
+  <Context host="lxi011" name="Worker3:42"/>
+  <Context host="lxi012" name="Worker4:42"/>
+  <Defaults>
+    <Context name="*">
+      <Run>
+        <logfile value="test${DABCNODEID}.log"/>
+        <loglevel value="1"/>
+        <lib value="libDabcBnet.so"/>
+      </Run>
+    </Context>
+    <Context name="Worker*">
+       <Run>
+          <lib value="libBnetTest.so"/>
+       </Run>
+       <Application class="bnet::TestWorker">
+         <IsGenerator value="true"/>
+         <IsSender value="true"/>
+         <IsReceiver value="true"/>
+         <NumReadouts value="4"/>
+      </Application>       
+    </Context>
+  </Defaults>
+</dabc>
+\end{verbatim}
+\end{small}
+
+Here one can see cluster controller apllication in the beginning, configured to
+use \class{dabc::SocketDevice} for workers connections. And there are four workers
+with same configurations parameters, which can be found in <Defaults> section.
+In section <Context name="Worker*"> one sees, 
+that \param{IsGenerator}, \param{IsSender} and \param{IsReceiver} parameters are set to true.
+This defines so-called all-to-all topology, when each node can communicates with all other nodes including itself.   
+Parameter \param{NumReadouts}=4 means that there are 4 inputs on each combiner resulting 
+in 16 data sources over complete system.
+
+To run this example, one should specify correct host names for all contexts and 
+run example with \verba{run.sh SetupBnet.xml} command.      
+
+Example can be used as template for developing user-specific application.
+One can change functionality of combiner and builder modules and provide 
+real readout instead of generator module. 
 
 
 \section{BNET for MBS application}
 
-This is complete implementation of distributed event building for MBS.
+This is ready-ro-use implementation of distributed event building for MBS.
 Source code can be found in \$DABCSYS/applications/bnet-mbs. It contains following
 classes:
 \bbul
@@ -274,11 +329,11 @@ classes:
 \ebul
 
 Class \class{bnet::MbsCombinerModule} combines together  
-events with tha same event id from all inputs. 
+events with the same event identifier from all inputs. 
 In cluster application parameter \param{NumEventsCombine} defines how many
-events should be combined togther in one buffer. It is crutial that transport
-buffer size should be enough for such number of subevents. 
-Clsuter parameter \param{NumEventsCombine} during initialisation copied to each
+events should be bundled togther in one buffer. It is crutial that transport
+buffer size should be big enough for such number of subevents. 
+Cluster parameter \param{NumEventsCombine} during initialisation copied to each
 worker parameter \param{CfgEventsCombine}, which finally used in \class{bnet::MbsCombinerModule}
 during initialisation: 
    
@@ -291,7 +346,8 @@ bnet::MbsCombinerModule::MbsCombinerModule(...
 \end{verbatim}
 \end{small}
 
-For the moment \class{bnet::MbsCombinerModule} skips event, when it is not present on all inputs. 
+For the moment \class{bnet::MbsCombinerModule} skips event, 
+when it is not present on local data all inputs. 
 
 Class \class{bnet::MbsBuilderModule} builds mbs events from 
 delivered by receiver module buffers. It also use parameter
@@ -301,11 +357,11 @@ contained in input buffers.
 Application class \class{bnet::MbsWorkerApplication} implements several methods to
 correctly instantiate combiner and builder modules.
 It also implement virtual method \func{CreateReadout}, where approprite input transport 
-for combiner module should be created. In case of mbs there is three possibility:
+for combiner module should be created. In case of mbs there are three possibilities:
 \bnum
-\item when \param{IsGenerator} is configured, module \class{mbs::GeneratorModule} connected as data input 
-\item when appropriate readout parameter (like \param{Input0Cfg} for first input) has 
-      ".lmd" in the end, specified lmd file as data input will be used
+\item when \param{IsGenerator}=true module \class{mbs::GeneratorModule} connected as data input 
+\item when appropriate readout parameter (like \param{Input0Cfg} for first input) has filename with 
+      ".lmd" in the end, specified file as data input will be used
 \item value of readout parameter \param{Input0Cfg} will be used as MBS server name for
       connecting of \class{mbs::ClientTransport} to appropriate data input         
 \enum
@@ -320,7 +376,7 @@ MBS event building of with 2 readout nodes, connected with 2 generators each and
 <?xml version="1.0"?>
 <dabc version="1">
   <Variables>
-     <node0 value="lxg0526"/>
+     <node0 value="lxi008"/>
      <node1 value="lxi009"/>
      <node2 value="lxi010"/>
      <node3 value="lxi011"/>
@@ -332,6 +388,6 @@ MBS event building of with 2 readout nodes, connected with 2 generators each and
 \end{verbatim}
 \end{small}
 
-Here node0 specifies node where cluster controller will runs, node1 and node3 used as readout nodes,
-node2 and node4 as builder nodes. On all four nodes (node1..node4) one mbs generator
+Here \keyw{node0} specifies node where cluster controller will runs, \keyw{node1} and \keyw{node3} used as readout nodes,
+\keyw{node2} and \keyw{node4} as builder nodes. On all four worker nodes one mbs generator
 application will be started. To run application, just type \verba{run.sh SetupBnetMbs.xml}.  

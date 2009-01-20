@@ -12,11 +12,9 @@
   <Defaults>
     <Context name="*">
       <Run>
-        <user value="linev"/>
-        <port value="22"/>
         <logfile value="test${DABCNODEID}.log"/>
         <loglevel value="1"/>
-        <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+        <lib value="libDabcBnet.so"/>
       </Run>
     </Context>
     <Context name="Cont*">
@@ -24,8 +22,11 @@
           <lib value="libBnetTest.so"/>
        </Run>
       <Application class="bnet::TestWorker">
+         <IsGenerator value="true"/>
+         <IsSender value="true"/>
+         <IsReceiver value="true"/>
          <NumReadouts value="4"/>
-         <Input0Cfg value="mytest"/>
+         <CombinerModus value="0"/>
       </Application>       
     </Context>
   </Defaults>

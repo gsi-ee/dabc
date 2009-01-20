@@ -14,14 +14,20 @@
       <Run>
         <logfile value="test${DABCNODEID}.log"/>
         <loglevel value="1"/>
-        <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
-        <lib value="${DABCSYS}/lib/libDabcVerbs.so"/>
+        <lib value="libDabcVerbs.so"/>
+        <lib value="libDabcBnet.so"/>
       </Run>
-   </Context>
-    <Context name="*Worker*">
+    </Context>
+    <Context name="Worker*">
        <Run>
           <lib value="libBnetTest.so"/>
        </Run>
+       <Application class="bnet::TestWorker">
+         <IsGenerator value="true"/>
+         <IsSender value="true"/>
+         <IsReceiver value="true"/>
+         <NumReadouts value="4"/>
+       </Application>       
     </Context>
   </Defaults>
 </dabc>

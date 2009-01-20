@@ -5,7 +5,12 @@
        <NetDevice value="verbs::Device"/>
     </Application>
   </Context>
-  <Context host="master" name="Worker1:42"/>
+  <Context host="master" name="Worker1:42">
+    <Application class="bnet::TestWorker">
+      <NumReadouts value="1"/>
+      <Input0Cfg value="ABB"/>
+    </Application>             
+  </Context>
   <Context host="node01" name="Worker2:42"/>
   <Context host="node02" name="Worker3:42"/>
   <Context host="node03" name="Worker4:42"/>
@@ -14,30 +19,23 @@
       <Run>
         <logfile value="test${DABCNODEID}.log"/>
         <loglevel value="1"/>
-        <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
-        <lib value="${DABCSYS}/lib/libDabcVerbs.so"/>
+        <lib value="libDabcVerbs.so"/>
+        <lib value="libDabcBnet.so"/>
       </Run>
-   </Context>
-    <Context name="*Worker*">
-       <Application class="bnet::TestWorker">
-       <NumReadouts value="3"/>
-       </Application>       
-       <Run>
-          <lib value="libBnetTest.so"/>
-          <lib value="${DABCSYS}/lib/libpcidriver.so"/>          
-          <lib value="${DABCSYS}/lib/libmprace.so"/>
-          <lib value="${DABCSYS}/lib/libDabcAbb.so"/>          
-       </Run>
     </Context>
-    <Context name="Worker1*">
-		<Application class="bnet::TestWorker">
-       		<NumReadouts value="1"/>
-       		<Input0Cfg value="ABB"/>
-        </Application>       		
-<!-- 		<ABB_BoardNumber value="0"/>-->
-<!--	    <ABB_ReadoutBAR value="1"/>  -->
-<!--        <ABB_ReadoutAddress value="8192"/>-->
-<!--        <ABB_ReadoutLength value="8192"/>-->       
+    <Context name="Worker*">
+      <Run>
+        <lib value="${DABCSYS}/lib/libpcidriver.so"/>          
+        <lib value="${DABCSYS}/lib/libmprace.so"/>
+        <lib value="${DABCSYS}/lib/libDabcAbb.so"/>          
+        <lib value="libBnetTest.so"/>
+      </Run>
+      <Application class="bnet::TestWorker">
+        <IsGenerator value="true"/>
+        <IsSender value="true"/>
+        <IsReceiver value="true"/>
+        <NumReadouts value="4"/>
+      </Application>       
     </Context>
   </Defaults>
 </dabc>
