@@ -2,8 +2,8 @@
 
 #include "dabc/logging.h"
 #include "dabc/MemoryPool.h"
-#include "dabc/Port.h"
 #include "dabc/PoolHandle.h"
+#include "dabc/Port.h"
 #include "dabc/Manager.h"
 #include "dabc/Device.h"
 
@@ -50,7 +50,7 @@ void dabc::NetworkTransport::Init(Port *port, bool useackn)
    // we want to call here some virtual methods and therefore,
    // constructor of inherited class must be active already.
 
-   fPool = port->Pool() ? port->Pool()->getPool() : 0;
+   fPool = port->GetMemoryPool();
    fUseAckn = useackn;
 
    DOUT3(("Port %s use ackn %s", port->GetName(), DBOOL(fUseAckn)));
@@ -99,7 +99,7 @@ void dabc::NetworkTransport::Init(Port *port, bool useackn)
          return;
       }
 
-      fInputBufferSize = port->Pool()->GetRequiredBufferSize();
+      fInputBufferSize = port->GetPoolHandle()->GetRequiredBufferSize();
 
       fInputQueue.Allocate(fInputQueueLength);
 

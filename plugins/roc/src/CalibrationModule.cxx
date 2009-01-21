@@ -197,9 +197,9 @@ bool roc::CalibrationModule::DoCalibration()
 
    while (doagain) {
       // check that there is data in input and we can send results to all outputs
-      if (Input(0)->InputBlocked()) return false;
+      if (!Input(0)->CanRecv()) return false;
 
-      if (IsAnyOutputBlocked()) return false;
+      if (!CanSendToAllOutputs()) return false;
 
       // skip input buffer if it has no data
       if ((f_inpptr.buf()!=0) && (f_inpptr.fullsize() <= sizeof(mbs::EventHeader))) {

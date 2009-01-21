@@ -51,8 +51,8 @@ try
    {
    if(id==dabc::evntInput || id==dabc::evntOutput)
       {
-      dabc::Port* output=Output(0);
-      if(output && output->OutputBlocked()) return; // leave immediately if we cannot send further
+      dabc::Port* output = Output(0);
+      if(output && !output->CanSend()) return; // leave immediately if we cannot send further
       Input(0)->Recv(ref);
       if (ref)
          {

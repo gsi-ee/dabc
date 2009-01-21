@@ -21,7 +21,7 @@ void bnet::TestFilterModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 {
 //   DOUT1(("!!!!!!!! ProcessInputEvent port = %p", port));
 
-   while (!Input(0)->InputBlocked() && !Output(0)->OutputBlocked()) {
+   while (Input(0)->CanRecv() && Output(0)->CanSend()) {
 
       dabc::Buffer* buf = 0;
       Input(0)->Recv(buf);

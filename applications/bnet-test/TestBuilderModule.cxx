@@ -37,14 +37,14 @@ bnet::TestBuilderModule::~TestBuilderModule()
 void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 {
    while (fBuffers.size() < (unsigned) fNumSenders) {
-      if (Input(0)->InputBlocked()) return;
+      if (!Input(0)->CanRecv()) return;
       dabc::Buffer* buf = 0;
       Input(0)->Recv(buf);
       if (buf==0) return;
       fBuffers.push_back(buf);
    }
 
-   if (Output(0)->OutputBlocked()) return;
+   if (!Output(0)->CanSend()) return;
 
    dabc::Buffer* outbuf = fOutPool->TakeBufferReq(fOutBufferSize);
    if (outbuf==0) return;

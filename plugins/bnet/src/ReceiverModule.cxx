@@ -172,7 +172,7 @@ bnet::ReceiverModule::RecvEventData* bnet::ReceiverModule::ProvideEventData(bnet
 
 bool bnet::ReceiverModule::DoInputRead(int nodeid)
 {
-   if (Input(nodeid)->InputBlocked()) return false;
+   if (!Input(nodeid)->CanRecv()) return false;
 
    dabc::Buffer* buf = 0;
 
@@ -289,7 +289,7 @@ void bnet::ReceiverModule::ProcessEventNew(dabc::ModuleItem*, uint16_t)
          }
 
          // if cannot send, data, just exit
-         if (Output(0)->OutputBlocked()) return;
+         if (!Output(0)->CanSend()) return;
 
          dabc::Buffer* buf = evnt->bufs[fPoolTailSending];
          evnt->bufs[fPoolTailSending] = 0;
@@ -433,7 +433,7 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
    }
 
    if (fStopSending) {
-      if (Output(0)->OutputBlocked()) return;
+      if (!Output(0)->CanSend()) return;
 
       DOUT1(("First, skip all EOL from all inputs"));
 
@@ -461,7 +461,7 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
    }
 
    // this is simple loop to retranslate events from inputs to output
-   while (!Output(0)->OutputBlocked() && (fSendingCounter<fSendNodes.size())) {
+   while (Output(0)->CanSend() && (fSendingCounter<fSendNodes.size())) {
       int nodeid = fSendNodes[fSendingCounter++];
       dabc::Buffer* buf = 0;
 
@@ -491,14 +491,14 @@ void bnet::ReceiverModule::ProcessEvent2(dabc::ModuleItem*, uint16_t)
       bool blocked = false;
 
       for (unsigned n=0; n < fSendNodes.size(); n++)
-        if (Input(fSendNodes[n])->InputBlocked()) blocked = true;
+        if (!Input(fSendNodes[n])->CanRecv()) blocked = true;
 
       if (blocked) return;
 
       fInpCounter = 0;
    }
 
-   while ((fInpCounter < fSendNodes.size()) && !Output(0)->OutputBlocked()) {
+   while ((fInpCounter < fSendNodes.size()) && Output(0)->CanSend()) {
       dabc::Buffer* buf = 0;
 
 //      DOUT1(("Recv buffer from input %d %p", fInpCounter, Input(fInpCounter)));

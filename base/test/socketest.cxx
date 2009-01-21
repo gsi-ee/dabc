@@ -50,7 +50,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
       {
          dabc::Buffer* buf = 0;
 
-         if ((fKind==1) && fOutput->OutputBlocked()) return;
+         if ((fKind==1) && !fOutput->CanSend()) return;
 
          fInput->Recv(buf);
 
@@ -67,7 +67,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
       void ProcessOutputEvent(dabc::Port* port)
       {
          if (fKind==0) GeneratePacket(); else
-         if ((fKind==1) && !fInput->InputBlocked()) {
+         if ((fKind==1) && fInput->CanRecv()) {
             dabc::Buffer* buf = 0;
             fInput->Recv(buf);
             fOutput->Send(buf);

@@ -114,7 +114,7 @@ void dabc::CommandChannelModule::SendSubmittedCommands()
          exit(1);
       }
 
-      if (outport->OutputBlocked()) break;
+      if (!outport->CanSend()) break;
 
       // take buffer without request, while we anyhow get event when send is completed and
       // device will release buffer anyhow
@@ -139,7 +139,7 @@ void dabc::CommandChannelModule::SendSubmittedCommands()
       memcpy(buf->GetDataLocation(), cmdbuf, cmdlen+1);
       buf->SetDataSize(cmdlen+1);
 
-//      DOUT1(("Need to send command to port:%d busy:%s buf:%p", nport, DBOOL(Output(nport)->OutputBlocked()), buf));
+//      DOUT1(("Need to send command to port:%d busy:%s buf:%p", nport, DBOOL(!Output(nport)->CanSend()), buf));
 
       outport->Send(buf);
 

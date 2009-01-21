@@ -174,7 +174,7 @@ bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
 //      throw PortOutputException(this, "No transport");
    }
 
-   if (OutputBlocked()) {
+   if (!CanSend()) {
       dabc::Buffer::Release(buf);
       throw PortOutputException(this, "Output blocked - queue is full");
    }
@@ -210,7 +210,7 @@ bool dabc::Port::SkipInputBuffers(unsigned num)
 {
    dabc::Buffer* buf = 0;
    while (num-->0) {
-      if (InputBlocked()) return false;
+      if (!CanRecv()) return false;
       if (!Recv(buf)) return false;
       dabc::Buffer::Release(buf);
    }

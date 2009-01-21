@@ -70,7 +70,7 @@ bool mbs::CombinerModule::FlushBuffer()
 
    if (fOut.IsEmpty()) return false;
 
-   if (IsAnyOutputBlocked()) return false;
+   if (!CanSendToAllOutputs()) return false;
 
    fOut.Close();
 
@@ -94,7 +94,7 @@ bool mbs::CombinerModule::BuildEvent()
 
          dabc::Port* port = Input(ninp);
 
-         while (!port->InputQueueBlocked()) {
+         while (port->CanRecv()) {
             if (fInp[ninp].Reset(port->FirstInputBuffer()))
                if (fInp[ninp].NextEvent()) break;
 

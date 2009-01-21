@@ -65,7 +65,7 @@ void bnet::GlobalDFCModule::ProcessInputEvent(dabc::Port* port)
 
    bool isanynew = false;
 
-   while (!port->InputBlocked()) {
+   while (port->CanRecv()) {
 
       dabc::Buffer* buf = 0;
       if (!port->Recv(buf)) {
@@ -133,7 +133,7 @@ void bnet::GlobalDFCModule::TrySendEventsAssignment(bool force)
 {
    // first, check if none of outputs is blocked
    for (unsigned n=0;n<fSendNodes.size();n++)
-      if (Output(fSendNodes[n])->OutputBlocked()) return;
+      if (!Output(fSendNodes[n])->CanSend()) return;
 
    // second, check if any new status is there
    unsigned maxcnt = fBufferSize / sizeof(EventAssignRec);

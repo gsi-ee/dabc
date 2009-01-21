@@ -1,7 +1,6 @@
 #include "dabc/DataTransport.h"
 
 #include "dabc/Buffer.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/Port.h"
 #include "dabc/logging.h"
 #include "dabc/Command.h"
@@ -26,9 +25,9 @@ dabc::DataTransport::DataTransport(Device* dev, Port* port, bool doinput, bool d
    fComplRes(DataInput::di_None),
    fPoolChangeCounter(0)
 {
-   fPool = port->Pool() ? port->Pool()->getPool() : 0;
+   fPool = port->GetMemoryPool();
 
-   DOUT5(("Data transport %p pool %p port->pool %p", this, fPool, port->Pool()));
+   DOUT5(("Data transport %p pool %p port->pool %p", this, fPool, port->GetPoolHandle()));
    DOUT5(("Create DataTransport %p for port %s", this, port->GetFullName().c_str()));
 }
 

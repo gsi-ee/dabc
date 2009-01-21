@@ -25,7 +25,7 @@ bnet::TestGeneratorModule::TestGeneratorModule(const char* name, dabc::Command* 
 
 void bnet::TestGeneratorModule::ProcessOutputEvent(dabc::Port* port)
 {
-   if (port->OutputBlocked()) {
+   if (!port->CanSend()) {
       EOUT(("Should not happen with generator"));
       return;
    }

@@ -121,14 +121,14 @@ void bnet::SenderModule::StandaloneProcessEvent(dabc::ModuleItem* item, uint16_t
       ReactOnDisconnect((dabc::Port*) item);
    }
 
-   while(!Input(0)->InputBlocked()) {
+   while(Input(0)->CanRecv()) {
 
       // only check if queue is not overflowed
       // if transport is disconnected, port will skip buffer which we send over it
       for (unsigned n=0;n<fRecvNodes.size();n++) {
          dabc::Port* port = Output(fRecvNodes[n]);
 
-         if (port->IsConnected() && port->OutputQueueBlocked()) {
+         if (!port->CanSend()) {
             DOUT5(("Output queue %d %d pend:%d blocked, leave", n, fRecvNodes[n], port->OutputPending()));
             return;
          }
@@ -235,7 +235,7 @@ void bnet::SenderModule::ProcessInputEvent(dabc::Port* port)
 
 //   DOUT1(("ProcessInputEvent %s port %s", GetName(), port->GetName()));
 
-   if (port->InputBlocked()) return;
+   if (!port->CanRecv()) return;
 
    if (port == fCtrlPort) {
 
@@ -301,7 +301,7 @@ void bnet::SenderModule::ProcessOutputEvent(dabc::Port* port)
 
 void bnet::SenderModule::CheckNewEvents()
 {
-   if (fCtrlPort->OutputBlocked() || (fNewEvents.size()==0)) return;
+   if (!fCtrlPort->CanSend() || (fNewEvents.size()==0)) return;
 
    if (fNewEvents.size() * sizeof(EventInfoRec) < fCtrlBufSize) {
       double tm = ThrdTimeStamp();
@@ -354,7 +354,7 @@ void bnet::SenderModule::CheckReadyEvents()
 
       int tgtnode = it->second.tgtnode;
 
-      if (Output(tgtnode)->OutputBlocked()) return;
+      if (!Output(tgtnode)->CanSend()) return;
 
       dabc::Buffer* buf = it->second.buf;
       it->second.buf = 0;

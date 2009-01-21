@@ -443,11 +443,11 @@ void dabc::Module::ProcessEvent(EventId evid)
    }
 }
 
-bool dabc::Module::IsAnyOutputBlocked() const
+bool dabc::Module::CanSendToAllOutputs() const
 {
    for(unsigned n=0;n<NumOutputs();n++)
-      if (Output(n)->OutputBlocked()) return true;
-   return false;
+      if (!Output(n)->CanSend()) return false;
+   return true;
 }
 
 void dabc::Module::SendToAllOutputs(dabc::Buffer* buf)

@@ -69,7 +69,7 @@ class MbsTest1RepeaterModule : public dabc::ModuleAsync {
 
       void PerformRepeater()
       {
-         while (!fInpPort->InputBlocked() && !fOutPort->OutputBlocked())
+         while (fInpPort->CanRecv() && fOutPort->CanSend())
          {
             dabc::Buffer* buf = 0;
             fInpPort->Recv(buf);

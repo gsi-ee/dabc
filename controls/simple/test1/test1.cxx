@@ -89,7 +89,7 @@ class Test1SendModule : public dabc::ModuleAsync {
             if (!fullchaotic) {
                fPortCnt = (fPortCnt+1) % NumOutputs();
                port = Output(fPortCnt);
-               tryagain = !port->OutputBlocked();
+               tryagain = port->CanSend();
             }
 
          } while (tryagain);

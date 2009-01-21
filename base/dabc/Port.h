@@ -84,7 +84,7 @@ namespace dabc {
          virtual bool UseMasterClassName() const { return true; }
 
           //  here methods for config settings
-         PoolHandle* Pool() const { return fPool; }
+         PoolHandle* GetPoolHandle() const { return fPool; }
          MemoryPool* GetMemoryPool() const;
          unsigned InputQueueCapacity() const { return fInputQueueCapacity; }
          unsigned OutputQueueCapacity() const { return fOutputQueueCapacity; }
@@ -104,18 +104,19 @@ namespace dabc {
 
          unsigned OutputQueueSize() { return fTransport ? fTransport->SendQueueSize() : 0; }
          unsigned OutputPending() const { return fOutputPending; }
-         bool OutputQueueBlocked() const { return OutputPending() >= OutputQueueCapacity(); }
-         bool OutputBlocked() const { return IsConnected() && OutputQueueBlocked(); }
-
-         unsigned MaxSendSegments() { return fTransport ? fTransport->MaxSendSegments() : 0; }
+         bool CanSend() const { return !IsConnected() || (OutputPending() < OutputQueueCapacity()); }
 
          bool Send(Buffer* buf) throw (PortOutputException);
 
+         unsigned MaxSendSegments() { return fTransport ? fTransport->MaxSendSegments() : 0; }
+
+
          unsigned InputQueueSize() { return fTransport ? fTransport->RecvQueueSize() : 0; }
          unsigned InputPending() const { return fInputPending; }
-         bool InputQueueBlocked() const { return InputPending() == 0; }
-         bool InputBlocked() const { return !IsConnected() || InputQueueBlocked(); }
          bool InputQueueFull() { return InputPending() == InputQueueSize(); }
+         bool CanRecv() const { return IsConnected() && (InputPending() > 0); }
+
+         bool Recv(Buffer* &buf) throw (PortInputException);
 
          Buffer* InputBuffer(unsigned indx = 0) const { return (fTransport && (indx<fInputPending)) ? fTransport->RecvBuffer(indx) : 0; }
          Buffer* FirstInputBuffer() const { return InputBuffer(0); }
@@ -123,7 +124,6 @@ namespace dabc {
 
          bool SkipInputBuffers(unsigned num=1);
 
-         bool Recv(Buffer* &buf) throw (PortInputException);
 
          void SetInpRateMeter(RateParameter* p) { fInpRate = p; }
          void SetOutRateMeter(RateParameter* p) { fOutRate = p; }

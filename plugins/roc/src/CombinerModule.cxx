@@ -59,7 +59,7 @@ void roc::CombinerModule::ProcessInputEvent(dabc::Port* inport)
 {
    unsigned inpid = InputNumber(inport);
 
-   if (inport->InputBlocked()) {
+   if (!inport->CanRecv()) {
       EOUT(("Something wrong with input %u %s", inpid, inport->GetName()));
       return;
    }
@@ -70,10 +70,10 @@ void roc::CombinerModule::ProcessInputEvent(dabc::Port* inport)
 
       if(!inport->Recv(buf)) return;
 
-      if (Output(0)->OutputBlocked())
-         dabc::Buffer::Release(buf);
-      else
+      if (Output(0)->CanSend())
          Output(0)->Send(buf);
+      else
+         dabc::Buffer::Release(buf);
 
       return;
    }
@@ -322,7 +322,7 @@ void roc::CombinerModule::TryToProduceEventBuffers()
          if ((fOutBuf!=0) && (usedsize>0)) {
 
             // all outputs must be able to get buffer for sending
-            if (IsAnyOutputBlocked()) return;
+            if (!CanSendToAllOutputs()) return;
 
             fOutBuf->SetDataSize(usedsize);
             fOutBuf->SetTypeId(mbs::mbt_MbsEvents);

@@ -75,7 +75,7 @@ bool dabc::ModuleSync::Send(Port* port, BufferGuard &buf, double timeout)
          if (IsDisconnectExcept())
             throw PortOutputException(port, "Disconnect");
 
-      if (!port->OutputBlocked())
+      if (port->CanSend())
          return port->Send(buf.Take());
 
    } while (WaitItemEvent(timeout, port, &evid));
@@ -96,7 +96,7 @@ dabc::Buffer* dabc::ModuleSync::Recv(Port* port, double timeout)
          if (IsDisconnectExcept())
             throw PortInputException(port, "Disconnect");
 
-      if (!port->InputBlocked()) {
+      if (port->CanRecv()) {
          dabc::Buffer* buf = 0;
          if (port->Recv(buf)) return buf;
       }
@@ -124,7 +124,7 @@ dabc::Buffer* dabc::ModuleSync::RecvFromAny(Port** port, double timeout)
 
       for (unsigned n=0; n < NumInputs(); n++) {
          Port* p = Input( (n+shift) % NumInputs());
-         if (!p->InputBlocked()) {
+         if (p->CanRecv()) {
             dabc::Buffer* buf = 0;
             if (p->Recv(buf)) {
                if (port) *port = p;

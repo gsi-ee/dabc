@@ -114,7 +114,7 @@ namespace dabc {
          virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid) {}
 
          // some useful routines for I/O handling
-         bool IsAnyOutputBlocked() const;
+         bool CanSendToAllOutputs() const;
          void SendToAllOutputs(Buffer* buf);
 
          virtual const char* MasterClassName() const { return "Module"; }

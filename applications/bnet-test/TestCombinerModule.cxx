@@ -50,7 +50,7 @@ void bnet::TestCombinerModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
    while ((fLastInput>=0) && (fLastInput<fNumReadout)) {
       int ninp = fLastInput;
 
-      if (Input(ninp)->InputBlocked()) return;
+      if (!Input(ninp)->CanRecv()) return;
 
       dabc::Buffer* buf = 0;
       Input(ninp)->Recv(buf);
@@ -87,7 +87,7 @@ void bnet::TestCombinerModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
       fLastEvent = evid;
    }
 
-   if (Output(0)->OutputBlocked()) return;
+   if (!Output(0)->CanSend()) return;
 
    dabc::Buffer* buf = fOutBuffer;
    fOutBuffer = 0;
