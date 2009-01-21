@@ -692,31 +692,29 @@ public void setSizeXY(Dimension dd){setPreferredSize(dd);}
 \end{verbatim}
 }
 \subsection{Example}
-
+Example of a minimalistic application panel.
+Full running code in \class{MiniPanel}.
+That is how the class must look like:
 {\small \begin{verbatim}
-\end{verbatim}
-}
-Thats how the class must look like:
-{\small \begin{verbatim}
-public class MyPanel  extends xPanelPrompt
+public class MiniPanel  extends xPanelPrompt
                       implements  xiUserPanel,
-                                  xiUserInfoHandler,
                                   ActionListener 
 \end{verbatim}
 }
 The constructor must not have arguments! Icon, name and tooltip have to be
 passed by getter function to the caller (the GUI desktop).
 {\small \begin{verbatim}
-public MyPanel(){
+public MiniPanel(){
    super("MyPanel");
    menuIcon=xSet.getIcon("Myicon.png");
    name=new String("MyPanel");
+   franame=new String("MyGraphics");
    tooltip=new String("Launch my panel");
 }
 \end{verbatim}
 }
 The simple functions to be implemented for the interface \class{xiUserPanel}
-(we do not provide a command formatting function):
+(we do not provide a command formatting function) are:
 {\small \begin{verbatim}
 public String getToolTip(){return tooltip;}
 public String getHeader(){return name;}
@@ -724,7 +722,7 @@ public ImageIcon getIcon(){return menuIcon;}
 public xiUserCommand getUserCommand(){return null;}
 \end{verbatim}
 }
-This is called once after constructor. Here we have to setup all panels.
+The \func{init} is called once after constructor. Here we have to setup all panels.
 We have in the main panel three lines: one text prompt, a text button, and a check box.
 At the bottom we have one icon button which would open the display frame.
 {\small \begin{verbatim}
@@ -739,33 +737,33 @@ state = new xState("ServerState", xState.XSIZE,xState.YSIZE);
 stapan=new xPanelGraphics(new Dimension(160,50),1); // one column of states
 metpan=new xPanelGraphics(new Dimension(410,14),1); // one columns of meters
 layout=xSet.createLayout(name,new Point(400,400), new Dimension(100,75),1,true);
-frame=new xInternalCompound(name,graphIcon, 0, layout, xSet.blueD());
+frame=new xInternalCompound(franame,graphIcon,0,layout,xSet.blueD());
 }
 \end{verbatim}
 }
 Here we have the callback function for the interactive elements,
 the text prompt, the button, the checker, and the icon:
 {\small \begin{verbatim}
+private void print(String s){
+System.out.println(s);
+}
 public void actionPerformed(ActionEvent e) {
 String cmd=e.getActionCommand();
 if ("prompt".equals(cmd)) {
-System.out.println(cmd+":"+prompt.getText()+" "+check.isSelected());
-}
-else if ("button".equals(cmd)) {
-System.out.println(cmd+":"+prompt.getText()+" "+check.isSelected());
-}
-else if ("check".equals(cmd)) {
-System.out.println("Data server "+check.isSelected());
-if(check.isSelected()){
-if(param != null)param.setParameter("0");
-state.redraw(0,"Green","Active",true);
-} else {
-if(param != null)param.setParameter("1");
-state.redraw(0,"Gray","Dead",true);
-}}
-else if ("Display".equals(cmd)) {
-if(!desk.findFrame(name)){
-    frame=new xInternalCompound(name,graphIcon, 0, layout, xSet.blueD());
+  print(cmd+":"+prompt.getText()+" "+check.isSelected());
+} else if ("button".equals(cmd)) {
+  print(cmd+":"+prompt.getText()+" "+check.isSelected());
+} else if ("check".equals(cmd)) {
+  print("Data server "+check.isSelected());
+  if(check.isSelected()){
+    if(param != null)param.setParameter("0");
+    state.redraw(0,"Green","Active",true);
+  } else {
+    if(param != null)param.setParameter("1");
+    state.redraw(0,"Gray","Dead",true);
+}} else if ("Display".equals(cmd)) {
+  if(!desk.findFrame(franame)){
+    frame=new xInternalCompound(franame,graphIcon,0,layout,xSet.blueD());
     frame.rebuild(stapan, metpan); 
     desk.addFrame(frame); 
 }}
@@ -773,29 +771,28 @@ if(!desk.findFrame(name)){
 \end{verbatim}
 }
 With the checker we toggle the \class{xState} state.
-The \class{xDimParameter} param to be toggled we will find in the next.
+The \class{xiDimParameter} param to be toggled we will find in the next.
 To get access to DIM parameters we must implement \func{setDimServices}.
+We suggest that there is a parameter \param{*Setup\_File*} which has a string value.
 {\small \begin{verbatim}
 public void setDimServices(xiDimBrowser browser){
 Vector<xiDimParameter> vipar=browser.getParameters();
-// Get reference to parameters
 for(int i=0;i<vipar.size();i++){
-    xiParser p=vipar.get(i).getParserInfo();
-    String pname=new String(p.getNode()+":"+p.getName());
-    if(p.isRate()){ // with this, we take all meters
-        meter=new xMeter(xMeter.ARC,
-                pname,0.0,10.0,xMeter.XSIZE,xMeter.YSIZE,xSet.blueD());
-        metpan.addGraphics(meter,false); 
-        brows.addInfoHandler(vipar.get(i),
-	new myInfoHandler(pname,meter,null));
-    }
-    if(p.isState()){ // with this, we take all states
-       xState state=new xState(pname,xState.XSIZE,xState.YSIZE);
-       stapan.addGraphics(state,false);
-       brows.addInfoHandler(vipar.get(i),
-       new myInfoHandler(pname,null,state));
-    }
-    } // list of parameters
+  xiParser p=vipar.get(i).getParserInfo();
+  String pname=new String(p.getNode()+":"+p.getName());
+  if(p.isRate()){ 
+      xMeter meter=new xMeter(xMeter.ARC,
+        pname,0.0,10.0,xMeter.XSIZE,xMeter.YSIZE,xSet.blueL());
+      metpan.addGraphics(meter,false); 
+      browser.addInfoHandler(vipar.get(i),
+        new myInfoHandler(pname,meter,null));
+  } else if(p.isState()){ 
+     xState state=new xState(pname,xState.XSIZE,xState.YSIZE);
+     stapan.addGraphics(state,false);
+     browser.addInfoHandler(vipar.get(i),
+        new myInfoHandler(pname,null,state));
+  } else if(p.getFull().indexOf("Setup_File")>0) param=vipar.get(i);
+} // end list of parameters
 stapan.addGraphics(state,false);
 stapan.updateAll();
 metpan.updateAll();
@@ -803,28 +800,16 @@ if(frame != null) frame.rebuild(stapan, metpan);
 \end{verbatim}
 }
 All references or allocated objects from \func{setDimServices} we have to free in
-\func{releaseDimServices}.
+\func{releaseDimServices}:
 {\small \begin{verbatim}
 public void releaseDimServices(){
     metpan.cleanup();
     stapan.cleanup();
-    meters=null;
-    states=null;
-    rates=null;
-    meterrecs=null;
-    staterecs=null;
-    paraServer=null;
+    param=null;
 }
 \end{verbatim}
 }
-Now the callback function \func{infoHandler} which is called each time.
-{\small \begin{verbatim}
-public String getName(){return name;}
-public void infoHandler(xiDimParameter Parameter){
-}
-\end{verbatim}
-}
-We provide a little extra class implementing the \func{infoHandler} function.
+We provide a little extra class implementing \class{xiUserHandler} function \func{infoHandler}.
 Each parameter we want to monitor gets its own handler instance which has direct
 access to our graphics panels.
 {\small \begin{verbatim}
