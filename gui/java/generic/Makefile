@@ -16,6 +16,7 @@ FLAGSA=-d application -classpath .:./application:../$(PACKAGE):$(DIMDIR)/jdim/cl
 all: classes $(JARFILE)
 
 classes: \
+	$(PACKAGE)/xXml.class \
 	$(PACKAGE)/xForm.class \
 	$(PACKAGE)/xFormMbs.class \
 	$(PACKAGE)/xFormDabc.class \
@@ -85,6 +86,8 @@ application/RocPanel.class: application/RocPanel.java
 	javac $(FLAGSA) application/RocPanel.java
 application/UserPanel.class: application/UserPanel.java
 	javac $(FLAGSA) application/UserPanel.java
+$(PACKAGE)/xXml.class : $(SOURCEDIR)/xXml.java
+	javac $(FLAGS) $(SOURCEDIR)/xXml.java
 $(PACKAGE)/xPanelSelect.class : $(SOURCEDIR)/xPanelSelect.java
 	javac $(FLAGS) $(SOURCEDIR)/xPanelSelect.java
 $(PACKAGE)/xSaveRestore.class : $(SOURCEDIR)/xSaveRestore.java
@@ -237,6 +240,7 @@ doc/index.html : \
 	$(SOURCEDIR)/xLogger.java \
 	$(SOURCEDIR)/xLayout.java \
 	$(SOURCEDIR)/xSet.java \
+	$(SOURCEDIR)/xXml.java \
 	$(SOURCEDIR)/xPanelLogger.java \
 	$(SOURCEDIR)/xPanelPrompt.java \
 	$(SOURCEDIR)/xDimNameInfo.java \
