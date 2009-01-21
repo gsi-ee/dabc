@@ -50,12 +50,10 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
       void ProcessInputEvent(dabc::Port* port)
       {
-         dabc::Buffer* buf = 0;
-
          if (fKind==1)
             if (!fInput->CanRecv() || !fOutput->CanSend()) return;
 
-         fInput->Recv(buf);
+         dabc::Buffer* buf = fInput->Recv();
 
          if (buf==0) { EOUT(("CCCCCCCCCC")); exit(1); }
 
@@ -75,8 +73,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
             fOutput->Send(buf);
          } else
          if ((fKind==1) && fInput->CanRecv()) {
-            dabc::Buffer* buf = 0;
-            fInput->Recv(buf);
+            dabc::Buffer* buf = fInput->Recv();
             if (buf==0) { EOUT(("BBBBBBBBBBBB")); exit(1); }
             fOutput->Send(buf);
          }

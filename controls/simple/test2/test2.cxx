@@ -154,8 +154,7 @@ class Test2RecvModule : public dabc::ModuleAsync {
 
       void ProcessInputEvent(dabc::Port* port)
       {
-         dabc::Buffer* ref = 0;
-         port->Recv(ref);
+         dabc::Buffer* ref = port->Recv();
 
          if (ref==0) {
             EOUT(("Cannot recv buffer from port %s", port->GetName()));

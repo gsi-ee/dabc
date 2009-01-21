@@ -71,8 +71,7 @@ void dabc::CommandChannelModule::ProcessDisconnectEvent(Port* port)
 
 void dabc::CommandChannelModule::ProcessInputEvent(Port* port)
 {
-   dabc::Buffer* ref = 0;
-   port->Recv(ref);
+   dabc::Buffer* ref = port->Recv();
    if (ref==0) {
       EOUT(("Port cannot recv data"));
       return;

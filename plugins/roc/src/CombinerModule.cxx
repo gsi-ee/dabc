@@ -66,9 +66,7 @@ void roc::CombinerModule::ProcessInputEvent(dabc::Port* inport)
 
    if (fSimpleMode) {
 
-      dabc::Buffer* buf = 0;
-
-      if(!inport->Recv(buf)) return;
+      dabc::Buffer* buf = inport->Recv();
 
       if (Output(0)->CanSend())
          Output(0)->Send(buf);

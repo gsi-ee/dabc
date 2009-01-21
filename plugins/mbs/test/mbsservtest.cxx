@@ -139,8 +139,7 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
       void ProcessInputEvent(dabc::Port* port)
       {
-         dabc::Buffer* buf = 0;
-         fInput->Recv(buf);
+         dabc::Buffer* buf = fInput->Recv();
 
          fRate.Packet(buf->GetTotalSize());
 

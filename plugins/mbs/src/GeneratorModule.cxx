@@ -127,8 +127,7 @@ class MbsTestReadoutModule : public dabc::ModuleAsync {
 
       virtual void ProcessInputEvent(dabc::Port* port)
       {
-         dabc::Buffer* buf = 0;
-         port->Recv(buf);
+         dabc::Buffer* buf = port->Recv();
 
          unsigned cnt = mbs::ReadIterator::NumEvents(buf);
 

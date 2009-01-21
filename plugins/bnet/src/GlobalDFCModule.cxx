@@ -67,8 +67,8 @@ void bnet::GlobalDFCModule::ProcessInputEvent(dabc::Port* port)
 
    while (port->CanRecv()) {
 
-      dabc::Buffer* buf = 0;
-      if (!port->Recv(buf)) {
+      dabc::Buffer* buf = port->Recv();
+      if (buf==0) {
          EOUT(("Internal error"));
          break;
       }

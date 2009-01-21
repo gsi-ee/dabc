@@ -52,8 +52,7 @@ void bnet::TestCombinerModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
       if (!Input(ninp)->CanRecv()) return;
 
-      dabc::Buffer* buf = 0;
-      Input(ninp)->Recv(buf);
+      dabc::Buffer* buf = Input(ninp)->Recv();
       if (buf==0) return;
 
       dabc::Buffer::Release(fBuffers[ninp]);

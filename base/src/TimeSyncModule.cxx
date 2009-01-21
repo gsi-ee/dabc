@@ -264,13 +264,12 @@ bool dabc::TimeSyncModule::FillSlavePacket(Buffer* buf)
 
 void dabc::TimeSyncModule::ProcessInputEvent(Port* port)
 {
-   Buffer* buf = 0;
-   if (!port->Recv(buf)) {
+   Buffer* buf = port->Recv();
+
+   if (buf==0) {
       EOUT(("Cannot get buffer from input"));
       return;
    }
-
-   if (buf==0) return;
 
    if (buf->GetTypeId() != mbt_TymeSync) return;
 

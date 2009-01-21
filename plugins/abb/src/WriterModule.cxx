@@ -60,7 +60,7 @@ while (ModuleWorking())
                }
             else
                {
-                   ref=Recv(Input(0));
+                   ref = Recv(Input(0));
                }
           int length=ref->GetDataSize(); // ref is gone after Send...
           Send(Output(0),ref);

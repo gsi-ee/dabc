@@ -167,6 +167,7 @@ Lets consider as an example same repeater module, but implemented with asynchron
 \begin{small}
 \begin{verbatim}
 #include "dabc/ModuleAsync.h"
+#include "dabc/Port.h"
 
 class RepeaterAsync : public dabc::ModuleAsync {
    unsigned   fCnt;
@@ -182,21 +183,17 @@ public:
     
    virtual void ProcessInputEvent(dabc::Port* port) 
    {
-      while (!Input()->InputBlocked() && !Output(fCnt % 2)->OutputBlocked()) {
-         dabc::Buffer* buf = 0;
-         Input()->Recv(buf);
-         Output(fCnt % 2)->Send(buf);
-         fCnt++;
+      while (Input()->CanRecv() && Output(fCnt % 2)->CanSend()) {
+         dabc::Buffer* buf = Input()->Recv();
+         Output(fCnt++ % 2)->Send(buf);
       }
    }
 
    virtual void ProcessOutputEvent(dabc::Port* port) 
    {
-      while (!Input()->InputBlocked() && !Output(fCnt % 2)->OutputBlocked()) {
-         dabc::Buffer* buf = 0;
-         Input()->Recv(buf);
-         Output(fCnt % 2)->Send(buf);
-         fCnt++;
+      while (Input()->CanRecv() && Output(fCnt % 2)->CanSend()) {
+         dabc::Buffer* buf = Input()->Recv();
+         Output(fCnt++ % 2)->Send(buf);
       }
    }
 };
@@ -206,9 +203,50 @@ public:
 Constructor of this module has absolutely the same components as in previous example.
 One only adds \member{fCnt} member to count direction for output of next buffer. 
 Instaed of main loop one can see two virtual methods for input and output event
-processing. In each methods one sees same code, with \strong{while} loop inside.
+processing. In each methods one sees same code, with while loop inside.
 In the loop one checks that input and current output are ready and retransmit buffer.
+When any port (input or output) has no more possibility to transmit data, 
+method will be returned. 
+
+One need \keyw{while} loop here while not every input event and not every output events
+leads to buffer transports. In case, when input queue is empty (\func{CanRecv} returns false) 
+or output queue is full (\func{CanSend} returns false) one cannot transfer buffer from input
+to output, therefore callback must be returned. But next time event processing routine is
+called, one should tranfer several buffers at once. While methods \func{Send} and \func{Recv}  
+cannot block, such \keyw{while} loop will not block too. But in any case one should 
+avoid such \strong{wrong} code:
+
+\begin{small}
+\begin{verbatim}
+   virtual void ProcessInputEvent(dabc::Port* port) 
+   {
+      // this kind of waiting is WRONG!!!
+      while(!Output(fCnt % 2)->CanSend()) usleep(10);
+   
+      dabc::Buffer* buf = Input()->Recv();
+      Output(fCnt++ % 2)->Send(buf);
+   }
+
+\end{verbatim}
+\end{small}
+
+Here \keyw{while} loop can wait infinite time until output port cannot accept new buffer
+and during this time complete thread will be blocked. 
+
+While both processing methods are the same in the example,  
+therefore one can implement \func{ProcessUserEvent} instead:  
  
+\begin{small}
+\begin{verbatim}
+   virtual void ProcessUserEvent(dabc::ModuleItem*, uint16_t)
+   {
+      while (Input()->CanRecv() && Output(fCnt % 2)->CanSend()) {
+         dabc::Buffer* buf = Input()->Recv();
+         Output(fCnt++ % 2)->Send(buf);
+      }
+   }
+\end{verbatim}
+\end{small}
     
    
 

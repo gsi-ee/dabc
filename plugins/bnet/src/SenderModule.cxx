@@ -134,8 +134,7 @@ void bnet::SenderModule::StandaloneProcessEvent(dabc::ModuleItem* item, uint16_t
          }
       }
 
-      dabc::Buffer* buf = 0;
-      Input(0)->Recv(buf);
+      dabc::Buffer* buf = Input(0)->Recv();
 
       if (buf==0) {
          EOUT(("Fail to receive data from Combiner module"));
@@ -239,7 +238,9 @@ void bnet::SenderModule::ProcessInputEvent(dabc::Port* port)
 
    if (port == fCtrlPort) {
 
-     if (!port->Recv(buf)) return;
+      buf = port->Recv();
+
+      if (buf==0) return;
 
      if (buf->GetTypeId() != bnet::mbt_EvAssign) {
         EOUT(("Wrong buffer id %d", buf->GetTypeId()));
@@ -271,7 +272,9 @@ void bnet::SenderModule::ProcessInputEvent(dabc::Port* port)
       // just block input if too many data is collected
       if (fPool->UsedRatio() > 0.8) return;
 
-      if (!port->Recv(buf)) return;
+      buf = port->Recv();
+
+      if (buf==0) return;
 
       bnet::EventId* header = (bnet::EventId*) buf->GetHeader();
       if (header==0) {

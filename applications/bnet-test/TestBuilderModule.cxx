@@ -38,8 +38,7 @@ void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 {
    while (fBuffers.size() < (unsigned) fNumSenders) {
       if (!Input(0)->CanRecv()) return;
-      dabc::Buffer* buf = 0;
-      Input(0)->Recv(buf);
+      dabc::Buffer* buf = Input(0)->Recv();
       if (buf==0) return;
       fBuffers.push_back(buf);
    }

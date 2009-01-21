@@ -193,26 +193,26 @@ bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
    return true;
 }
 
-bool dabc::Port::Recv(Buffer* &buf) throw (PortInputException)
+dabc::Buffer* dabc::Port::Recv() throw (PortInputException)
 {
    if (fTransport==0) throw PortInputException(this, "No transport");
 
-   if (!fTransport->Recv(buf)) return false;
+   dabc::Buffer* buf(0);
+
+   if (!fTransport->Recv(buf)) return 0;
 
    if (fInpRate && buf)
       fInpRate->AccountValue((buf->GetTotalSize() + buf->GetHeaderSize())/1024./1024.);
 
    fInputPending--;
-   return true;
+   return buf;
 }
 
 bool dabc::Port::SkipInputBuffers(unsigned num)
 {
-   dabc::Buffer* buf = 0;
    while (num-->0) {
       if (!CanRecv()) return false;
-      if (!Recv(buf)) return false;
-      dabc::Buffer::Release(buf);
+      dabc::Buffer::Release(Recv());
    }
    return true;
 }

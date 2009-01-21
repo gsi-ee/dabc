@@ -116,7 +116,7 @@ namespace dabc {
          bool InputQueueFull() { return InputPending() == InputQueueSize(); }
          bool CanRecv() const { return IsConnected() && (InputPending() > 0); }
 
-         bool Recv(Buffer* &buf) throw (PortInputException);
+         Buffer* Recv() throw (PortInputException);
 
          Buffer* InputBuffer(unsigned indx = 0) const { return (fTransport && (indx<fInputPending)) ? fTransport->RecvBuffer(indx) : 0; }
          Buffer* FirstInputBuffer() const { return InputBuffer(0); }

@@ -174,9 +174,7 @@ bool bnet::ReceiverModule::DoInputRead(int nodeid)
 {
    if (!Input(nodeid)->CanRecv()) return false;
 
-   dabc::Buffer* buf = 0;
-
-   Input(nodeid)->Recv(buf);
+   dabc::Buffer* buf = Input(nodeid)->Recv();
 
    if (buf==0) return false;
 
@@ -463,13 +461,11 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
    // this is simple loop to retranslate events from inputs to output
    while (Output(0)->CanSend() && (fSendingCounter<fSendNodes.size())) {
       int nodeid = fSendNodes[fSendingCounter++];
-      dabc::Buffer* buf = 0;
 
-      if (!Input(nodeid)->IsConnected()) {
+      if (!Input(nodeid)->IsConnected())
          EOUT(("Input %d not connected, why come here ?", nodeid));
-      }
 
-      Input(nodeid)->Recv(buf);
+      dabc::Buffer* buf = Input(nodeid)->Recv();
 
 //      DOUT1(("Retranslate buf %p evid %llu from node %d", buf, fCurrEvent[nodeid], nodeid));
 
@@ -499,11 +495,10 @@ void bnet::ReceiverModule::ProcessEvent2(dabc::ModuleItem*, uint16_t)
    }
 
    while ((fInpCounter < fSendNodes.size()) && Output(0)->CanSend()) {
-      dabc::Buffer* buf = 0;
 
 //      DOUT1(("Recv buffer from input %d %p", fInpCounter, Input(fInpCounter)));
 
-      Input(fSendNodes[fInpCounter])->Recv(buf);
+      dabc::Buffer* buf = Input(fSendNodes[fInpCounter])->Recv();
 
       fRecvRate.Packet(buf->GetTotalSize());
 

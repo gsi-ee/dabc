@@ -48,11 +48,9 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
       void ProcessInputEvent(dabc::Port* port)
       {
-         dabc::Buffer* buf = 0;
-
          if ((fKind==1) && !fOutput->CanSend()) return;
 
-         fInput->Recv(buf);
+         dabc::Buffer* buf = fInput->Recv();
 
          if (fKind==2) {
 //            DOUT1(("Get: %s", buf->GetDataLocation()));
@@ -67,11 +65,8 @@ class TestModuleAsync : public dabc::ModuleAsync {
       void ProcessOutputEvent(dabc::Port* port)
       {
          if (fKind==0) GeneratePacket(); else
-         if ((fKind==1) && fInput->CanRecv()) {
-            dabc::Buffer* buf = 0;
-            fInput->Recv(buf);
-            fOutput->Send(buf);
-         }
+         if ((fKind==1) && fInput->CanRecv())
+            fOutput->Send(fInput->Recv());
       }
 
       void ProcessDisconnectEvent(dabc::Port* port)

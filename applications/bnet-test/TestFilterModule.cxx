@@ -23,8 +23,7 @@ void bnet::TestFilterModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
    while (Input(0)->CanRecv() && Output(0)->CanSend()) {
 
-      dabc::Buffer* buf = 0;
-      Input(0)->Recv(buf);
+      dabc::Buffer* buf = Input(0)->Recv();
 
       if (buf==0) {
          EOUT(("Fail to receive data from Input"));

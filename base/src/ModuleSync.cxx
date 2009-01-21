@@ -96,10 +96,9 @@ dabc::Buffer* dabc::ModuleSync::Recv(Port* port, double timeout)
          if (IsDisconnectExcept())
             throw PortInputException(port, "Disconnect");
 
-      if (port->CanRecv()) {
-         dabc::Buffer* buf = 0;
-         if (port->Recv(buf)) return buf;
-      }
+      if (port->CanRecv())
+         return port->Recv();
+
    } while (WaitItemEvent(timeout, port, &evid));
 
    return 0;
@@ -125,11 +124,8 @@ dabc::Buffer* dabc::ModuleSync::RecvFromAny(Port** port, double timeout)
       for (unsigned n=0; n < NumInputs(); n++) {
          Port* p = Input( (n+shift) % NumInputs());
          if (p->CanRecv()) {
-            dabc::Buffer* buf = 0;
-            if (p->Recv(buf)) {
-               if (port) *port = p;
-               return buf;
-            }
+            if (port) *port = p;
+            return p->Recv();
          }
       }
    } while (WaitItemEvent(timeout, 0, &evid, &resitem));
