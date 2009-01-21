@@ -25,7 +25,7 @@ these methods are available everywhere in the user code
 by means of the static handle \func{dabc::Manager::mgr()->}.
 
 
-Following section \ref{prog_manager_framework} describes such interface methods to
+The following section \ref{prog_manager_framework} describes such interface methods to
 be used by the programmer of the \class{Module}, \class{Transport}, \class{Device}, and \class{Application} classes.
 In contrast to this, section \ref{prog_manager_controls} gives a guide how to
 re-implement the \class{Manager} class itself for a different control and configuration
@@ -35,103 +35,170 @@ but is added here as a reference and as useful insight into the \dabc~ mechanism
 
 \section{Framework interface}
 \label{prog_manager_framework}
-here description of mostly used methods to be called from application, modules, etc.
+%here description of mostly used methods to be called from application, modules, etc.
 
 \subsection{General object management}
+\label{prog_manager_framework_objects}
+All objects are organized in a folder structure and can be accessed
+by the full path name. However, for most purposes it is recommended
+to rather use higher level \class{Manager} methods to cause some
+action(e.~g.~ \func{StartModule()}) than to work directly with the
+primitive objects. 
+
 \begin{description}
 
-\item[\em Module* FindModule(const char* name)] :
+\item[\em Module* FindModule\small (const char* name)] :
 Access to a \class{Module} by name. Returns $0$ if module does not exist.
    
-\item[\em Port* FindPort(const char* name)]:
+\item[\em Port* FindPort\small (const char* name)]:
 Access to a \class{Port} by name. Returns $0$ if port does not exist.
  
+\item[\em Device* FindDevice\small (const char* name)] :
+Access to a \class{Device} by name. Returns $0$ if device does not exist.
 
+\item[\em Device* FindLocalDevice()] :
+Shortcut to get the "local device" that is responsible for basic transport
+mechanisms like transport of buffers through the local memory.
          
-\item[\em Factory* FindFactory(const char* name)] :
+\item[\em Factory* FindFactory\small (const char* name)] :
+Access to a \class{Factory} by name. Returns $0$ if factory does not exist.
 
-\item[\em Device* FindDevice(const char* name)] :
 
-\item[\em WorkingThread* FindThread(const char* name, const char* required\_class = 0)] :
+\item[\em WorkingThread* FindThread\small (const char* name, const char* required\_class = 0)] :
+Access to a \class{WorkingThread} by name. The \func{required\_class} string may
+be specified to check if the working thread implementation matches the client
+intentions. Returns $0$ if thread object does not exist, or if it does not fullfill
+\func{required\_class}.
 
-\item[\em Device* FindLocalDevice(const char* name = 0)] :
 
 \item[\em Application* GetApp()] : 
+Access to the unique \class{Application} Object of this node.
+
 
 	 
 \end{description}
 
+\subsection{Factory methods}	 
+Since all \dabc~ objects are provided by  \class{dabc::Factory} plug-ins,
+the application programmer needs to invoke corresponding factory methods to
+instantiate them. However, the factories themselves should not be accessed by the
+user code (although the \class{Manager} offers a getter method, see section
+\ref{prog_manager_framework_objects}). Instead, creation and registration
+of the key objects, like \class{Module} or \class{Device}, 
+is done transparently by the \class{Manager} 
+within specific creation methods. These will scan over all existing factories 
+whether the corresponding factory method can provide an object of the requested class name.
+In this case the object is created, kept in the object manager, and may be
+addressed by its full name later.
+
+
+
+\begin{description}
+	 
+\item[\em bool CreateModule\small (const char* classname, const char* modulename, const char* thrdname = 0)] : 
+Instantiate a \class{Module} of class \func{classname} with the object name
+\func{modulename}. Optionally, the name of the working thread \func{thrdname} may
+be specified that shall run this module. If a thread of this name is already exisiting, 
+it will be also applied for the new module; otherwise, a new thread of the name
+will be created. If \func{thrdname} is not defined, \dabc~ will use a new module
+thread automatically with an internal name.
+Returns \keyw{true} or \keyw{false} depending on the instantiation success.
+
+\item[\em bool CreateDevice\small (const char* classname, const char* devname)]: 
+Instantiate a \class{Device} of class \func{classname} with the object name
+\func{devname}. Returns \keyw{true} or \keyw{false} depending on the instantiation success.
+
+
+
+% \item[\em WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, unsigned startmode = 0, const char* devname = 0, Command* cmd = 0)] :
+
+
+
+\item[\em bool CreateTransport\small (const char* portname, const char* transportkind, const char* thrdname = 0)] : 
+Instantiate a \class{Transport} from the \class{Device} of type \func{transportkind} 
+(e.~g.~ "PCI-Device")
+and connect it to the port of full name \func{portname} (e.~g.~ "Readout1/Input"). 
+Optionally the name of the working thread
+\func{thrdname} may
+be specified that shall run this transport. If a thread of this name is already exisiting, 
+it will be also applied for the new transport; otherwise, a new thread of the name
+will be created. If \func{thrdname} is not defined, \dabc~ will use a new 
+thread automatically with an internal name.
+Returns \keyw{true} or \keyw{false} depending on the instantiation success.
+
+
+\item[\em FileIO* CreateFileIO\small (const char* typ, const char* name, int option)] :
+Returns a new \class{FileIO} of type \func{typ} (e.~g.~ "posix") with name
+\func{name}. The \func{option} value may define the file access option,
+e.~g.~ \keyw{ReadOnly}, \keyw{ReadWrite}, \keyw{WriteOnly}, \keyw{Create}, and 
+\keyw{Recreate}. Current standard implementation is \class{dabc::PosixFileIO}
+which is provided in the manager by default.
+Returns $0$ if instantiation of desired typ fails.
+
+  
+\item[\em bool CreateApplication\small (const char* classname = 0, const char* appthrd = 0)] :
+Instantiate the \class{Application} of class \func{classname}. Optionally
+the name \func{appthrd} of the main application thread may be specified.
+To be used in the \func{main()} function of the runtime executable on
+inititialization time.
+
+\end{description}	 
+
 
 \subsection{Module manipulation}	
+Since
 
 \begin{description}
 
-\item[\em void StartModule(const char* modulename)] :
+\item[\em void StartModule\small (const char* modulename)] :
 
-\item[\em void StopModule(const char* modulename)] :
+\item[\em void StopModule\small (const char* modulename)] :
 
-\item[\em bool StartAllModules(int appid = 0)] :
+\item[\em bool StartAllModules\small (int appid = 0)] :
 
-\item[\em bool StopAllModules(int appid = 0)] :
+\item[\em bool StopAllModules\small (int appid = 0)] :
 
-\item[\em bool DeleteModule(const char* name)] :
+\item[\em bool DeleteModule\small (const char* name)] :
 
-\item[\em bool IsModuleRunning(const char* name)] :
+\item[\em bool IsModuleRunning\small (const char* name)] :
          
 \item[\em bool IsAnyModuleRunning()] :
 
 
-\item[\em bool ConnectPorts(const char* port1name,
+\item[\em bool ConnectPorts\small (const char* port1name,
                            const char* port2name,
                            const char* devname)] :
 			   
 \end{description}
 
-\subsection{Factory methods}	 
 
-\begin{description}
-	 
-\item[\em bool CreateApplication(const char* classname = 0, const char* appthrd = 0)] :
-
-
-\item[\em bool CreateDevice(const char* classname, const char* devname)]: 
-
-% \item[\em WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, unsigned startmode = 0, const char* devname = 0, Command* cmd = 0)] :
-
-\item[\em bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0)] : 
-
-\item[\em bool CreateTransport(const char* portname, const char* transportkind, const char* thrdname = 0)] : 
-
-\item[\em FileIO* CreateFileIO(const char* typ, const char* name, int option)] :
-
-
-\end{description}	 
 	 
 \subsection{Command submission}	 
 	
 \begin{description}
  
-\item[\em bool Submit(Command* cmd)] :
+\item[\em bool Submit\small (Command* cmd)] :
 This method generally prepares a command \func{cmd} for execution.
 The command is put in the queue of its command receiver working thread and is
 then asynchronously executed there. The \class{Manager} will either forward the command
 to its receiver, if such is specified as command parameter; or the \class{Manager} working thread itself will execute the command.
 Thus method does not block and returns \keyw{true} if it accepts the command for execution, otherwise \keyw{false}. 
 
-\item[\em bool SubmitLocal(CommandClientBase\& cli, Command* cmd, const char* fullitemname = "")] :
+\item[\em bool SubmitLocal\small (CommandClientBase\& cli, Command* cmd, const char* fullitemname = "")] :
 Prepares a command \func{cmd} for execution on the local node. The command receiver
 is defined by the full name \func{fullitemname} in the object folder structure,
 e.~g.~ "Modules/ReadoutModule1". The caller must provide a command client object
 \func{cli} that will receive a command reply depending on the execution success.
 
-\item[\em bool SubmitLocal(CommandClientBase\& cli, Command* cmd, Basic* rcv)] :
+\item[\em bool SubmitLocal\small (CommandClientBase\& cli, Command* cmd,Basic* rcv)] :
 Prepares a command \func{cmd} for execution on the local node. The command receiver
 \func{rcv} is passed directly by reference.
 The caller must provide a command client object
 \func{cli} that will receive a command reply depending on the execution success.
 
 
-\item[\em bool SubmitRemote(CommandClientBase\& cli, Command* cmd, int nodeid, const char* itemname = "")] :
+\item[\em bool SubmitRemote ] {\small \bf\em (} \\
+{\small \bf\em CommandClientBase\& cli, Command* cmd, int nodeid, const char* itemname = "") } :
 Prepares a command \func{cmd} for execution on a remote node. 
 The execution node is specified by the unique \func{nodeid} in the DAQ
 cluster. The command receiver on that node
@@ -140,7 +207,8 @@ e.~g.~ "Modules/ReadoutModule1". The caller must provide a command client object
 \func{cli} that will receive a command reply depending on the execution success.
 
 
-\item[\em bool SubmitRemote(CommandClientBase\& cli, Command* cmd, const char* nodename, const char* itemname = "")] :
+\item[\em bool SubmitRemote] {\small \bf\em (} \\
+{\small \bf\em CommandClientBase\& cli, Command* cmd, const char* nodename, const char* itemname = "") }:
 Prepares a command \func{cmd} for execution on a remote node. 
 The execution node is specified by the unique \func{nodename} as defined
 by the configuration system (see section \ref{prog_manager_controls_manager}).
@@ -150,60 +218,34 @@ e.~g.~ "Modules/ReadoutModule1". The caller must provide a command client object
 \func{cli} that will receive a command reply depending on the execution success.
 
 
-
-
-
-
-% 	   Command* LocalCmd(Command* cmd, const char* fullitemname = "");
-% 
-%          Command* LocalCmd(Command* cmd, Basic* rcv);
-% 
-%          Command* RemoteCmd(Command* cmd, const char* nodename, const char* itemname = "");
-% 
-%          Command* RemoteCmd(Command* cmd, int nodeid, const char* itemname = "");
-% 
-%          bool SubmitLocal(CommandClientBase& cli, Command* cmd, const char* fullitemname = "")
-%             { return SubmitCl(cli, LocalCmd(cmd, fullitemname)); }
-% 
-%          bool SubmitLocal(CommandClientBase& cli, Command* cmd, Basic* rcv)
-%            { return SubmitCl(cli, LocalCmd(cmd, rcv)); }
-% 
-%          bool SubmitRemote(CommandClientBase& cli, Command* cmd, const char* nodename, const char* itemname = "")
-%            { return SubmitCl(cli, RemoteCmd(cmd, nodename, itemname)); }
-% 
-%          bool SubmitRemote(CommandClientBase& cli, Command* cmd, int nodeid, const char* itemname = "")
-%            { return SubmitCl(cli, RemoteCmd(cmd, nodeid, itemname)); }
-
-
 \end{description}
  
 \subsection{Memory pool management}	 	   
 
 \begin{description}	
 
-\item[\em bool CreateMemoryPool(const char* poolname,
-                               unsigned buffersize = 0,
-                               unsigned numbuffers = 0,
-                               unsigned numincrement = 0,
-                               unsigned headersize = 0x20,
-                               unsigned numsegments = 0)] : 
-   
-Generic method to create memory pool.
-Creates (or extends) memory pool with numbuffers buffers of size buffersize.
-Together with buffers memory pool creates number of reference objects with
+\item[\em bool CreateMemoryPool] {\small \bf\em (} \\
+{\small \bf\em const char* poolname, unsigned buffersize, unsigned numbuffers, \\
+          unsigned numincrement, unsigned headersize, unsigned numsegments)} :    
+Instantiates a \class{MemoryPool} of name \func{poolname}, 
+with \func{numbuffers} buffers of size \func{buffersize}.
+If a pool of this name already exists, it will be extended by the specified buffers.
+Together with the buffers the \class{MemoryPool} creates a number of reference objects with
 preallocated header and gather list.
-One can configure that memory pool can be extended "on the fly" -
-numincrement value specifies how much buffers memory pool can extend at once.
-In case when expanding of pool is allowed, one can limit total size
-of pool via ConfigurePool method. There one can also specify how often
-memory pool should try to cleanup unused memory.
-         
-	
+One can configure that the memory pool can be extended "on the fly" -
+\func{numincrement} value specifies how much buffers the memory pool can extend at once.
+If expanding the pool is allowed, one can limit the total size 
+of the pool via \func{ConfigurePool()} method (WHERE IS THIS ???). 
+There one can also specify how often
+the memory pool should try to cleanup unused memory.
+Optional arguments \func{headersize} and \func{numsegments} may
+define the buffer header size, and the partition of the buffer segments, resp.         
+Method returns true or false depending on success.	
 
-\item[\em MemoryPool* FindPool(const char* name)] :
+\item[\em MemoryPool* FindPool\small (const char* name)] :
 Access to memory pool by name \func{name}. Returns 0 if not found.
 
-\item[\em bool DeletePool(const char* name)] :
+\item[\em bool DeletePool\small (const char* name)] :
 Delete memory pool of name \func{name}. Returns true or false depending on success.
    
 \end{description}
