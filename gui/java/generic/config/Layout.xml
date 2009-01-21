@@ -1,18 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Layout>
 <WindowLayout>
-<Main shape="233,0,1043,878" columns="0" show="true"/>
-<Meter shape="618,391,100,75" columns="4" show="true"/>
-<Histogram shape="710,600,200,150" columns="3" show="false"/>
-<State shape="619,600,100,75" columns="1" show="true"/>
-<Info shape="2,390,613,259" columns="1" show="true"/>
-<Logger shape="1,237,1029,150" columns="0" show="true"/>
-<Parameter shape="2,651,613,150" columns="0" show="true"/>
-<Command shape="450,1,582,233" columns="0" show="true"/>
-<DabcLauncher shape="0,0,100,100" columns="0" show="false"/>
-<MbsLauncher shape="1,1,447,234" columns="0" show="true"/>
+<Main shape="357,53,857,953" columns="0" show="true"/>
+<Command shape="0,230,650,200" columns="0" show="false"/>
+<Parameter shape="20,259,578,386" columns="0" show="false"/>
+<Logger shape="0,650,680,150" columns="0" show="false"/>
+<Meter shape="143,439,413,236" columns="4" show="true"/>
+<State shape="85,504,313,206" columns="2" show="false"/>
+<Info shape="521,482,613,217" columns="1" show="false"/>
+<Histogram shape="124,508,613,206" columns="3" show="false"/>
+<DabcLauncher shape="71,55,404,312" columns="0" show="false"/>
+<MbsLauncher shape="50,14,404,272" columns="0" show="false"/>
+<DabcMbsLauncher shape="0,0,430,424" columns="0" show="true"/>
+<ParameterSelect shape="496,70,271,326" columns="0" show="true"/>
+<ParameterList shape="13,364,810,426" columns="1" show="false"/>
+<RocPanel shape="100,100,349,147" columns="1" show="true"/>
+<RocMonitor shape="400,400,588,347" columns="1" show="true"/>
 </WindowLayout>
 <TableLayout>
-<Parameter width="51,50,76,86,174,93,48" />
+<Parameter width="74,74,74,74,74,74,74,74" />
 </TableLayout>
 </Layout>
