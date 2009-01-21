@@ -2,10 +2,11 @@
 \section{Introduction}
 A multi purpose DAQ system like \dabc~ requires to develop user specific code and adopt
 this into the general framework. A common object oriented technique to realize such
-extensability consists in the definition of base classes as interfaces for dedicated purposes.
+extensibility consists in the definition of base classes as interfaces for dedicated purposes.
 The programmer may implement subclasses for these interfaces as \strong{Plug-Ins}
 with the extended functionality that matches the data format, hardware, or other boundary conditions of the
-data-taking experiment. Moreover, the  \dabc~ core itself applies such powerful plug-in mechanism to provide generic services in a flexible and maintenable manner.   
+data-taking experiment. Moreover, the  \dabc~ core itself applies such powerful plug-in mechanism to provide 
+generic services in a flexible and maintainable manner.   
 
 This chapter gives a brief description of all interface classes for the data acquisition 
 processing itself. This covers the processing \strong{Modules}, the \strong{Transport} and 
@@ -15,53 +16,92 @@ A \strong{Factory} pattern is used to introduce new classes to the framework and
 be available by name at runtime.
 
 \section{Modules}
+
+\dabc~ provides \class{dabc::Module} class, which plays role of data processing entity in framework. 
+This class provides organization of necessary components like pool handles, ports, parameters, timers.
+Class \class{dabc::Module} has two subclasses - \class{dabc::ModuleSync} and \class{dabc::ModuleAsync},
+which provides two different paradigms of data processing: within explicit main loop and via event processing respectively.
+
 \subsection{ModuleSync}
 \index{Core classes !dabc::ModuleSync}
 \label{plugin_module_sync}
-Simple data processing functionality is most easily implemented by subclassing 
-the \class{dabc::ModuleSync} base class which defines the interface for a 
+Data processing functionality in most intuitive way can be implemented by subclassing 
+the \class{dabc::ModuleSync} base class, which defines the interface for a 
 synchronous module that is allowed to block its dedicated execution thread.  
    
 \begin{compactenum}
 \item  The constructor of \class{dabc::ModuleSync} subclass  creates all 
       ports, may initialize the pool handles, and may 
       define commands and parameters. 
-\item  The virtual \func{ExecuteCommand()} method of \class{dabc::ModuleSync} 
-      subclass may implement the callbacks of the defined commands.
 \item  The virtual \func{MainLoop()} method of \class{dabc::ModuleSync} 
       subclass implements the processing job. This method runs in a dedicated working thread.  
 \item  The user code shall not directly access the 
       memory pools to request new buffers. Instead, it can use \class{dabc::ModuleSync} method 
       \func{TakeBuffer()} with a \class{dabc::PoolHandle} object as argument.
-      This method provides a blocking access to a memory pool, i.~e.~ the \func{MainLoop()} thread may block here until a buffer is available.
-      
+      This method provides a blocking access to a memory pool, i.~e.~ the \func{MainLoop()} 
+      thread may block here until a buffer is available.
 \item  The \func{MainLoop()} code can send and receive buffers   
       from, and to ports by \class{dabc::ModuleSync} methods \func{Send(port), buffer)}, and
     \func{Receive(port), buffer)}, resp. These methods may also block the \func{MainLoop()} if an output port queue is full, or if no buffer is available at the input port, resp.
-
+\item  The virtual \func{ExecuteCommand()} method of \class{dabc::ModuleSync} 
+      subclass may implement the callbacks of the defined commands.
 \end{compactenum}
 
+Lets consider simple example of the module, 
+which has one input and two output ports and deliver buffers from input to
+one or another output sequentially. Implementation of such 
+class will look like:
+\begin{small}
+\begin{verbatim}
+#include "dabc/ModuleSync.h"
+
+class RepeaterSync : public dabc::ModuleSync {
+public:
+   RepeaterSync(const char* name) : dabc::ModuleSync(name)
+   {
+      CreatePoolHandle("Pool", 2048, 1);
+      CreateInput("Input", Pool(), 5);
+      CreateOutput("Output0", Pool(), 5);
+      CreateOutput("Output1", Pool(), 5);
+   }
+     
+   virtual void MainLoop()
+   {
+      unsigned cnt(0);
+      while (ModuleWorking()) {
+         dabc::Buffer* buf = Recv(Input());
+         if (cnt++ % 2 == 0) Send(Output(0), buf);
+                        else Send(Output(1), buf);
+   }
+};
+\end{verbatim}
+\end{small}
+
+In constructor one sees creation of pool handle and input and output ports.
+Method \func{MainLoop} has simple while loop, where buffer received from the
+input and than send to first or second output.
+  
 \subsection{ModuleAsync}
 \index{Core classes !dabc::ModuleAsync}
 \label{plugin_module_async}
 
-Alternatively, a subclass of \class{dabc::ModuleAsync} 
-can be implemented. In contrast to \class{dabc::ModuleSync},
-there is no main loop function which runs in a dedicated, blockable thread,
-but some event callbacks are implemented that are only executed if a 
-\dabc~ event occurs, e.~g.~ a buffer arrives at the input port; a requested
-buffer is available from a memory pool, etc.
-Several \class{dabc::ModuleAsync} objects may be assigned to one working thread,
-so any event callback function must never block the execution
+In contrast to data processing in \class{dabc::ModuleSync} main loop,
+class \class{dabc::ModuleAsync} provides 
+number of callbacks routines which are executed only if dedicated \dabc~ events occurs.
+For instance, when any input port gets new buffer, virtual method \func{ProcessInputEvent} will
+be called. User should reimplement this method to react on the event.
+
+Main advantage of such approach that thread is not blocked and
+several modules \class{dabc::ModuleAsync} can run within same working thread.
+At the same time, using such programming technique may requires additional 
+bookkeeping while it is not allowed to block callback routine, waiting that
+some resource is available.
 
 \begin{compactenum}
 
 \item  The constructor of \class{dabc::ModuleAsync} subclass  creates all 
       ports, may initialize the pool handles, and may 
       define commands and parameters. 
-\item  The virtual \func{ExecuteCommand()} method of \class{dabc::ModuleAsync} 
-      subclass may implement the callbacks of the defined commands.
-
 \item  For each kind of \dabc~ event, virtual methods  may be
 implemented in \class{dabc::ModuleAsync} subclass that are executed 
 by the working thread when the corresponding event occurs for the module, e~.g.~:
@@ -98,7 +138,7 @@ by the working thread when the corresponding event occurs for the module, e~.g.~
 	 timer reached its timeout.  
         
 \end{compactdesc}      
-   
+
 \item   In baseclass \class{dabc::ModuleAsync} all events are dispatched to the callbacks above by method 
 \func{ProcessUserEvent(ModuleItem\* item, uint16\_t evid)}. 
 This is called by the working thread
@@ -109,18 +149,67 @@ if one wants to treat all events in one method.
 The \class{uint16\_t evid} argument gives the number of the event type. 
 The component that fired the event may be accessed 
 by the \class{ModuleItem*} pointer. 
-
       
-\item    To avoid blocking the shared working thread, 
-the user must always check if a resource (e.g. a port, a memory pool) 
-would block before any calls (e.g. \func{Send()}, \func{TakeBuffer()}) are
-invoked on it. 
-All callbacks must \strong{return} in the "I would block" case; on the next 
-time the callback is executed by the framework the user must check the
-situation again and react appropriately. This might require an own
-bookkeeping of available resources. 
+\item  Class \class{dabc::ModuleAsync} has no methods, which can block thread.
+Nevertheless user should avoid any kind of polling loops, waiting for some
+other resource (buffer, output queue and so on) - callbacks should \strong{return}
+as soon as possible. In such situation processing can be continued in 
+the other callback, called when required resource is available. 
+This might require an own bookkeeping of such situations (kind of state transition logic). 
+
+\item  In virtual \func{ExecuteCommand()} method one can implement 
+      processing of the defined commands.
 
 \end{compactenum}
+
+Lets consider as an example same repeater module, but implemented with asynchronous module.
+   
+\begin{small}
+\begin{verbatim}
+#include "dabc/ModuleAsync.h"
+
+class RepeaterAsync : public dabc::ModuleAsync {
+   unsigned   fCnt;
+public:
+   RepeaterAsync(const char* name) : dabc::ModuleAsync(name)
+   {
+      CreatePoolHandle("Pool", 2048, 1);
+      CreateInput("Input", Pool(), 5);
+      CreateOutput("Output0", Pool(), 5);
+      CreateOutput("Output1", Pool(), 5);
+      fCnt = 0;
+   }
+    
+   virtual void ProcessInputEvent(dabc::Port* port) 
+   {
+      while (!Input()->InputBlocked() && !Output(fCnt % 2)->OutputBlocked()) {
+         dabc::Buffer* buf = 0;
+         Input()->Recv(buf);
+         Output(fCnt % 2)->Send(buf);
+         fCnt++;
+      }
+   }
+
+   virtual void ProcessOutputEvent(dabc::Port* port) 
+   {
+      while (!Input()->InputBlocked() && !Output(fCnt % 2)->OutputBlocked()) {
+         dabc::Buffer* buf = 0;
+         Input()->Recv(buf);
+         Output(fCnt % 2)->Send(buf);
+         fCnt++;
+      }
+   }
+};
+\end{verbatim}
+\end{small}
+
+Constructor of this module has absolutely the same components as in previous example.
+One only adds \member{fCnt} member to count direction for output of next buffer. 
+Instaed of main loop one can see two virtual methods for input and output event
+processing. In each methods one sees same code, with \strong{while} loop inside.
+In the loop one checks that input and current output are ready and retransmit buffer.
+ 
+    
    
 
 \subsection{Special modules}

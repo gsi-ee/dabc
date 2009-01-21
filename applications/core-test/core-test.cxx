@@ -242,19 +242,17 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
       }
 };
 
-void TestTimers(dabc::Manager* mgr, int number)
+void TestTimers(int number)
 {
    for (int n=0;n<number;n++) {
-      dabc::Module* m = 0;
+      dabc::Module* m = new TimeoutTestModuleAsync(FORMAT(("Module%d",n)));
 
-      m = new TimeoutTestModuleAsync(FORMAT(("Module%d",n)));
-
-      mgr->MakeThreadForModule(m, "MainThread");
+      dabc::mgr()->MakeThreadForModule(m, "MainThread");
    }
 
    dabc::CpuStatistic cpu;
 
-   mgr->StartAllModules();
+   dabc::mgr()->StartAllModules();
 
    dabc::TimeStamp_t tm1 = TimeStamp();
 
@@ -264,13 +262,13 @@ void TestTimers(dabc::Manager* mgr, int number)
 
    cpu.Measure();
 
-   mgr->StopAllModules();
+   dabc::mgr()->StopAllModules();
 
    dabc::TimeStamp_t tm2 = TimeStamp();
 
    DOUT1(("Overall time = %3.2f CPU = %5.1f", dabc::TimeDistance(tm1,tm2), cpu.CPUutil()*100.));
 
-   mgr->CleanupManager();
+   dabc::mgr()->CleanupManager();
 
    DOUT3(("Did manager cleanup"));
 }
@@ -628,9 +626,9 @@ extern "C" void StartCoreTest()
    TestChain(false, 10, 1);
    TestChain(false, 10, 0);
 
-   TestTimers(dabc::mgr(), 1);
-   TestTimers(dabc::mgr(), 3);
-   TestTimers(dabc::mgr(), 10);
+   TestTimers(1);
+   TestTimers(3);
+   TestTimers(10);
 }
 
 
