@@ -1,19 +1,238 @@
 [programmer/prog-manager.tex]
 
 \section{Introduction}
-this chapter covers the manager API description
+%this chapter covers the manager API description
+The \class{Manager} is the central singleton object of the
+\dabc~ framework. 
+It combines a number of different roles, such as:
+
+\bcir
+\item object manager;
+\item memory pool manager;
+\item processing thread manager;
+\item event handler;
+\item command dispatcher and executor;
+\item run control state manager;
+\item plug-in manager for factories and application;
+\item implementation of control and configuration system
+\ecir
+
+Although these functionalities internally could as well be treated in
+separate classes, \class{dabc::Manager} class defines the common
+application programmer's interface to access most of these features.
+Since the manager is a singleton,
+these methods are available everywhere in the user code
+by means of the static handle \func{dabc::Manager::mgr()->}.
+
+
+Following section \ref{prog_manager_framework} describes such interface methods to
+be used by the programmer of the \class{Module}, \class{Transport}, \class{Device}, and \class{Application} classes.
+In contrast to this, section \ref{prog_manager_controls} gives a guide how to
+re-implement the \class{Manager} class itself for a different control and configuration
+system. This should be seldomly  necessary for the common DAQ designer, 
+but is added here as a reference and as useful insight into the \dabc~ mechanisms.
 
 
 \section{Framework interface}
+\label{prog_manager_framework}
 here description of mostly used methods to be called from application, modules, etc.
 
+\subsection{General object management}
+\begin{description}
 
+\item[\em Module* FindModule(const char* name)] :
+Access to a \class{Module} by name. Returns $0$ if module does not exist.
+   
+\item[\em Port* FindPort(const char* name)]:
+Access to a \class{Port} by name. Returns $0$ if port does not exist.
+ 
+
+         
+\item[\em Factory* FindFactory(const char* name)] :
+
+\item[\em Device* FindDevice(const char* name)] :
+
+\item[\em WorkingThread* FindThread(const char* name, const char* required\_class = 0)] :
+
+\item[\em Device* FindLocalDevice(const char* name = 0)] :
+
+\item[\em Application* GetApp()] : 
+
+	 
+\end{description}
+
+
+\subsection{Module manipulation}	
+
+\begin{description}
+
+\item[\em void StartModule(const char* modulename)] :
+
+\item[\em void StopModule(const char* modulename)] :
+
+\item[\em bool StartAllModules(int appid = 0)] :
+
+\item[\em bool StopAllModules(int appid = 0)] :
+
+\item[\em bool DeleteModule(const char* name)] :
+
+\item[\em bool IsModuleRunning(const char* name)] :
+         
+\item[\em bool IsAnyModuleRunning()] :
+
+
+\item[\em bool ConnectPorts(const char* port1name,
+                           const char* port2name,
+                           const char* devname)] :
+			   
+\end{description}
+
+\subsection{Factory methods}	 
+
+\begin{description}
+	 
+\item[\em bool CreateApplication(const char* classname = 0, const char* appthrd = 0)] :
+
+
+\item[\em bool CreateDevice(const char* classname, const char* devname)]: 
+
+% \item[\em WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, unsigned startmode = 0, const char* devname = 0, Command* cmd = 0)] :
+
+\item[\em bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0)] : 
+
+\item[\em bool CreateTransport(const char* portname, const char* transportkind, const char* thrdname = 0)] : 
+
+\item[\em FileIO* CreateFileIO(const char* typ, const char* name, int option)] :
+
+
+\end{description}	 
+	 
+\subsection{Command submission}	 
+	
+\begin{description}
+ 
+\item[\em bool Submit(Command* cmd)] :
+This method generally prepares a command \func{cmd} for execution.
+The command is put in the queue of its command receiver working thread and is
+then asynchronously executed there. The \class{Manager} will either forward the command
+to its receiver, if such is specified as command parameter; or the \class{Manager} working thread itself will execute the command.
+Thus method does not block and returns \keyw{true} if it accepts the command for execution, otherwise \keyw{false}. 
+
+\item[\em bool SubmitLocal(CommandClientBase\& cli, Command* cmd, const char* fullitemname = "")] :
+Prepares a command \func{cmd} for execution on the local node. The command receiver
+is defined by the full name \func{fullitemname} in the object folder structure,
+e.~g.~ "Modules/ReadoutModule1". The caller must provide a command client object
+\func{cli} that will receive a command reply depending on the execution success.
+
+\item[\em bool SubmitLocal(CommandClientBase\& cli, Command* cmd, Basic* rcv)] :
+Prepares a command \func{cmd} for execution on the local node. The command receiver
+\func{rcv} is passed directly by reference.
+The caller must provide a command client object
+\func{cli} that will receive a command reply depending on the execution success.
+
+
+\item[\em bool SubmitRemote(CommandClientBase\& cli, Command* cmd, int nodeid, const char* itemname = "")] :
+Prepares a command \func{cmd} for execution on a remote node. 
+The execution node is specified by the unique \func{nodeid} in the DAQ
+cluster. The command receiver on that node
+is defined by the full name \func{fullitemname} in the object folder structure,
+e.~g.~ "Modules/ReadoutModule1". The caller must provide a command client object
+\func{cli} that will receive a command reply depending on the execution success.
+
+
+\item[\em bool SubmitRemote(CommandClientBase\& cli, Command* cmd, const char* nodename, const char* itemname = "")] :
+Prepares a command \func{cmd} for execution on a remote node. 
+The execution node is specified by the unique \func{nodename} as defined
+by the configuration system (see section \ref{prog_manager_controls_manager}).
+The command receiver on that node
+is defined by the full name \func{fullitemname} in the object folder structure,
+e.~g.~ "Modules/ReadoutModule1". The caller must provide a command client object
+\func{cli} that will receive a command reply depending on the execution success.
+
+
+
+
+
+
+% 	   Command* LocalCmd(Command* cmd, const char* fullitemname = "");
+% 
+%          Command* LocalCmd(Command* cmd, Basic* rcv);
+% 
+%          Command* RemoteCmd(Command* cmd, const char* nodename, const char* itemname = "");
+% 
+%          Command* RemoteCmd(Command* cmd, int nodeid, const char* itemname = "");
+% 
+%          bool SubmitLocal(CommandClientBase& cli, Command* cmd, const char* fullitemname = "")
+%             { return SubmitCl(cli, LocalCmd(cmd, fullitemname)); }
+% 
+%          bool SubmitLocal(CommandClientBase& cli, Command* cmd, Basic* rcv)
+%            { return SubmitCl(cli, LocalCmd(cmd, rcv)); }
+% 
+%          bool SubmitRemote(CommandClientBase& cli, Command* cmd, const char* nodename, const char* itemname = "")
+%            { return SubmitCl(cli, RemoteCmd(cmd, nodename, itemname)); }
+% 
+%          bool SubmitRemote(CommandClientBase& cli, Command* cmd, int nodeid, const char* itemname = "")
+%            { return SubmitCl(cli, RemoteCmd(cmd, nodeid, itemname)); }
+
+
+\end{description}
+ 
+\subsection{Memory pool management}	 	   
+
+\begin{description}	
+
+\item[\em bool CreateMemoryPool(const char* poolname,
+                               unsigned buffersize = 0,
+                               unsigned numbuffers = 0,
+                               unsigned numincrement = 0,
+                               unsigned headersize = 0x20,
+                               unsigned numsegments = 0)] : 
+   
+Generic method to create memory pool.
+Creates (or extends) memory pool with numbuffers buffers of size buffersize.
+Together with buffers memory pool creates number of reference objects with
+preallocated header and gather list.
+One can configure that memory pool can be extended "on the fly" -
+numincrement value specifies how much buffers memory pool can extend at once.
+In case when expanding of pool is allowed, one can limit total size
+of pool via ConfigurePool method. There one can also specify how often
+memory pool should try to cleanup unused memory.
+         
+	
+
+\item[\em MemoryPool* FindPool(const char* name)] :
+Access to memory pool by name \func{name}. Returns 0 if not found.
+
+\item[\em bool DeletePool(const char* name)] :
+Delete memory pool of name \func{name}. Returns true or false depending on success.
+   
+\end{description}
+	 
 \section{Control system plug-in}
+\label{prog_manager_controls}
+For the common \dabc~ usage, the provided standard control and configuration system,
+featuring DIM protocol \cite{DIM}, XML setup files, and a generic Java GUI,
+will probably be sufficient.
+However, if e.~g.~
+an experiment control system is already existing and the data acquisition
+shall be handled with the same means,
+it might be necessary to adjust \dabc~ to another
+controls and configuration framework.
+Moreover, future developments may replace the current standard control
+system by a more powerful, or a more convenient one.
 
-%\subsection{Interfaces}
+Because of this, the connection between the \dabc~ core system and the
+control system implementation was designed with a clear plug-in interface.
+Again the \class{dabc::Manager} class plays here a key role.
+
+This section covers all methods and mechanisms for
+the control system plug-in. As an example, part \ref{prog_manager_controls_DIM}  
+describes in detail the standard implementation as delivered with the \dabc~ distribution .
+
+
 
 \subsection{Factory}
- \label{prog_controls_manfactory}
+ \label{prog_manager_controls_factory}
 A new control system plug-in is added into \dabc~, 
 by means of a \class{dabc::Factory} subclass that  
 defines the method
@@ -33,7 +252,7 @@ This assures that the factory exists in the system on
 loading the corresponding library.
 
 \subsection{Manager}
-\label{prog_controls_manager}
+\label{prog_manager_controls_manager}
 Besides its role as a central singleton to access framework functionalities,
 the \class{dabc::Manager} is also the interface base class for the 
 control and configuration system that is applied with \dabc~. 
@@ -47,9 +266,9 @@ an appropriate subclass and are described as follows:
 %\begin{compactdesc}
 \begin{description}
 
-\item[\em Manager(const char* managername,  bool usecurrentprocess, configuration* cfg)] :
+\item[\em Manager(const char* managername,  bool usecurrentprocess, Configuration* cfg)] :
 The constructor of the subclass. The recommended parameters 
-are passed from the manager factory (see section \ref{prog_controls_manfactory})
+are passed from the manager factory (see section \ref{prog_manager_controls_factory})
 to the baseclass constructor, such as
 the object name of the manager; optionally a
 flag indicating to use either the main process or another thread for manager 
@@ -84,7 +303,7 @@ This should initiate the state transition for the given \func{state\_transition\
 This \strong{must} be an asynchronous function that does not block the calling thread,
 possibliy the main manager thread if the state transition is triggered by a command
 from a remote "master" state machine node. Thus the actual state transition should be performed in a dedicated state-machine thread, calling the synchronous method
-\func{DoStateTransition(const char*)} of the base class (see section \ref{prog_controls_manager_base}).
+\func{DoStateTransition(const char*)} of the base class (see section \ref{prog_manager_controls_base}).
 
 Synchronization of the state with the invoking client is done by
 the passed command object reference \func{cmd}. 
@@ -219,7 +438,7 @@ to decouple control system callbacks from their execution thread.
 
 
 \subsubsection{Baseclass methods}
-\label{prog_controls_manager_base}
+\label{prog_manager_controls_base}
 In addition to the virtual methods to be implemented in the manager subclass,
 there is a number of \class{dabc::Manager} base class methods 
 that should be called from the control system to perform actions of the 
@@ -263,36 +482,41 @@ of a streamed command from the core to a remote manager by transport mechanisms 
 
 
 \subsection{Default implementation for DIM}
+\label{prog_manager_controls_DIM}
 The \dabc~ default controls and configuration system 
 is based on the DIM library \cite{DIM} and is marked by namespace
-\class{dimc::} (for "DIM Control"). It features the DIM publisher-subscriber mechanism with \dabc~ process records and uses state machine module and XML parser as provided by the 
-\dabc~core system. The main classes are described in the following:
+\class{dimc::} (for "DIM Control"). 
+% It features the DIM publisher-subscriber mechanism with \dabc~ process records and uses state machine module and XML parser as provided by the \dabc~core system. 
+The main classes are described in the following:
 
 \subsubsection{\class{dimc::Manager}}
 Implements the control system interface of
-\class{dabc::Manager} as described above.   
+\class{dabc::Manager} as described above. 
 
-% \begin{compactenum}
-% 
-% \item Implements SendOverCommandChannel() to transport core commands over the dabc::xd DIM layer.
-% 
-% \item Implements ParameterEvent(): Interface method to register and update dabc parameter to infospace and DIM. If parameter is created, its contstructor calls this method. Depending on parameter type it is registered using Add...Record() methods of Registry. Vice versa, on parameter deletion it is removed via RemoveRecord(). If module parameter changes value, this is forwarded using Update...Record().
-% 
-% \item Implements CommandRegistration() : Interface method to register or unregister a module command as a DIM command and corresponding command descriptor service. Uses internally dimc::Registry::RegisterModuleCommand() and ...UnRegisterModuleCommand() methods.
-% 
-% \item Implements ModuleException() to react to a dabc::exception if thrown in a module. So far, we only do error output here. TODO: concept of exception handling in modules, threads and control system!
-% 
-% \item Implements methods for the daq cluster management: GetNodeName() , NodeId() to map the unique node id number as used in the core with an arbitrary node name of the configuration/control system; NodeId() delivers the id of the current node. NumNodes() returns the number of all configured cluster nodes as known from the set up. These methods are just forwards to corresponding interface methods of Node.
-% 
-% \item Implements Subscribe() and Unsubscribe() for parameters. These methods are just forwards to corresponding interface methods Registry::SubscribeParameter() , and ..:UnsubscribeParameter() , resp.
-% 
-% \item Implements InvokeStateTransition(). This method is forwarded to corresponding interface method of Node.
-% 
-% \end{compactenum}
-%%%%%%%%%%%%%%5
+\begin{compactenum}
+
+\item It uses the \strong{default state machine module} of the \dabc~core system.
+This is activated in \class{dimc::Manager} constructor by calling
+\func{InitSMmodule()}. Thus virtual method \func{InvokeStateTransition()}
+is \strong{not} re-implemented here.
+
+\item It exports a dedicated \class{dabc::StatusParameter} that is
+synchronized with the value of the core state machine in \func{ParameterEvent()}. 
+This parameter is required to display the state of the node on the generic
+Java GUI.
+
+\item It applies the generic \class{dabc::Configuration}  for setting up
+the node properties. The standard \dabc~ runtime executable will create the \class{dabc::Configuration} object from parsing an XML file. 
+
+\item The other interface functionalities use one
+component of class \class{dimc::Registry}.
+
+\end{compactenum}
+
+
+
 
 \subsubsection{\class{dimc::Registry}}
-%\item[\class{dimc::Registry}] :
 
 The main component of the \class{dimc::Manager} that
 offers service methods really implementing the manager interface.
@@ -343,7 +567,7 @@ such as Configure, Enable, Halt, Start, Stop. Additionally, there are DIM comman
 shutting down the node, setting a parameter value, and
 wrapping a \dabc~ 
 command as string representation ({\em "ManagerCommand"} for \func{SendOverCommandChannel()},
-see section \ref{prog_controls_manager}), resp.
+see section \ref{prog_manager_controls_manager}), resp.
 
 Moreover, a \dabc~ module may register a 
 \class{dabc::Command} as new control system command on the fly.
@@ -413,6 +637,10 @@ implemented as forward calls to corresponding methods of the
 \subsubsection{\class{dimc::ServiceEntry}}
 This is a container to keep the \class{DimService} together with 
 the corresponding \class{dabc::Parameter} object and some extra properties.
+The \class{dimc::ServiceEntry} objects are managed by the
+\class{dimc::Registry} and applied for the 
+\func{RegisterParameter()}  method.
+
 
 \begin{compactenum} 
 
@@ -427,10 +655,26 @@ parameter contents to the buffer before.
 
 
 \subsubsection{\class{dimc::ParameterInfo}}
+A subclass of DIM class \class{DimStampedInfo} which subscribes
+to be informed if a remote DIM service changes its value. 
+The \class{dimc::ParameterInfo} objects are managed by the
+\class{dimc::Registry} and applied for the \func{Subscribe()} method.
 
+\begin{compactenum} 
 
+\item The \class{dimc::ParameterInfo} has a reference to
+a local \class{dabc::Parameter} object that shall be updated
+if the subscribed service changes. 
 
+\item Depending on the subscribing \class{dabc::Parameter} type
+(integer, double, string,...), the \class{dimc::ParameterInfo} constructor will
+instantiate an appropriate \class{DimStampedInfo} type.
 
+\item Method \func{infoHandler()} of \class{DimStampedInfo} 
+is implemented to update the parameter to the new value
+by means of an \func{InvokeChange()} call.
+
+\end{compactenum}
 
 
 
