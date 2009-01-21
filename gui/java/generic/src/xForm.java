@@ -33,9 +33,6 @@ protected void setUserPath(String userpath){UserPath=userpath;}
 protected void setSystemPath(String systempath){SystemPath=systempath;}
 protected void setScript(String script){Script=script;}
 protected void addActionListener(ActionListener ae){action=ae;}
-protected String key(String key, String value){
-	return new String(key+"=\""+value+"\" ");
-	}
 public ActionListener getActionListener(){return action;}
 
 }

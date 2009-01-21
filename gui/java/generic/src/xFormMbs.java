@@ -38,15 +38,15 @@ System.out.println(build().toString());
 }
 private StringBuffer build(){
     StringBuffer str=new StringBuffer();
-    str.append(xSet.XmlHeader());
-    str.append(xSet.XmlTag("MbsLaunch",xSet.OPEN));
-    str.append("<MbsMaster "+key("prompt","MBS Master")+key("value",Master)+"/>\n");
-    str.append("<MbsUserPath "+key("prompt","MBS User path")+key("value",UserPath)+"/>\n");
-    str.append("<MbsSystemPath "+key("prompt","MBS system path")+key("value",SystemPath)+"/>\n");
-    str.append("<MbsScript "+key("prompt","MBS Script")+key("value",Script)+"/>\n");
-    str.append("<MbsCommand "+key("prompt","Script command")+key("value",Command)+"/>\n");
-    str.append("<MbsServers "+key("prompt","%Number of needed DIM servers%")+key("value",Servers)+"/>\n");
-    str.append(xSet.XmlTag("MbsLaunch",xSet.CLOSE));
+    str.append(xXml.header());
+    str.append(xXml.tag("MbsLaunch",xXml.OPEN));
+    str.append("<MbsMaster "+xXml.attr("prompt","MBS Master")+xXml.attr("value",Master)+"/>\n");
+    str.append("<MbsUserPath "+xXml.attr("prompt","MBS User path")+xXml.attr("value",UserPath)+"/>\n");
+    str.append("<MbsSystemPath "+xXml.attr("prompt","MBS system path")+xXml.attr("value",SystemPath)+"/>\n");
+    str.append("<MbsScript "+xXml.attr("prompt","MBS Script")+xXml.attr("value",Script)+"/>\n");
+    str.append("<MbsCommand "+xXml.attr("prompt","Script command")+xXml.attr("value",Command)+"/>\n");
+    str.append("<MbsServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers)+"/>\n");
+    str.append(xXml.tag("MbsLaunch",xXml.CLOSE));
 return str;
 }
 /**
@@ -54,8 +54,8 @@ return str;
  * @param file Xml file name.
  */
 protected void saveSetup(String file){
-System.out.println("Mbs launch setup:  "+file);
-    xSet.writeXml(file,build().toString());
+System.out.println("Store Mbs  launch setup to "+file);
+    xXml.write(file,build().toString());
 }
 /**
  * Reads Xml file and restores filter setup values.
@@ -63,9 +63,9 @@ System.out.println("Mbs launch setup:  "+file);
  */
 protected void restoreSetup(String file){
 NodeList li;
-System.out.println("Restore Mbs launch setup from  "+file);
+System.out.println("Restore Mbs  launch setup from "+file);
 LaunchFile=new String(file);
-    Element root=xSet.readXml(file);
+    Element root=xXml.read(file);
     if(root != null){
         li=root.getElementsByTagName("MbsMaster");
         Master=((Element)li.item(0)).getAttribute("value");

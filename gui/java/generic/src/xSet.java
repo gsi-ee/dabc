@@ -58,8 +58,6 @@ private static int[] ParTableWidth;
 private static StringBuffer str;
 private static boolean OK;
 private static String msg;
-public static boolean OPEN=true;
-public static boolean CLOSE=false;
 
 /**
  * Singleton
@@ -282,50 +280,6 @@ public final static ImageIcon getIcon(String file){
     return new ImageIcon(ImageIO.read(is));
     } catch(IOException e){}
     return null;
-}
-/**
- * XML opening string.
- * @return Standard XML opening string.
- */
-public final static String XmlHeader(){
-return new String("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-}
-/**
- * XML tag string.
- * @param name Tag name.
- * @param open True: open tag, false: close tag.
- * @return XML string.
- */
-public final static String XmlTag(String name, boolean open){
-if(open)return new String("<"+name+">\n");
-else return new String("</"+name+">\n");
-}
-/**
- * Write xml file
- * @param file File name (ending with .xml).
- * @param xml Xml string to write.
- */
-public final static void writeXml(String file, String xml){
-try{
-    FileWriter fw = new FileWriter(file);
-    fw.write(xml);
-    fw.close();
-}catch(IOException ioe){System.out.println("Error writing XML file "+file);}
-}
-/**
- * Read XML file
- * @param file File name (ending with .xml).
- * @return Top element.
- */
-public final static Element readXml(String file){
-Element root;
-try{
-    DocumentBuilderFactory factory=DocumentBuilderFactory.newInstance();
-    DocumentBuilder builder=factory.newDocumentBuilder();
-    Document document=builder.parse(new File(file));
-    root=document.getDocumentElement();
-}catch(Exception e){System.out.println("Error reading XML file "+file);return null;}
-return root;
 }
 /**
  * Set layout values from XML element. Called by xSaveRestore.restoreLayouts.

@@ -195,7 +195,7 @@ NodeList li;
 Element el;
 String att;
 System.out.println("Restore selections from "+file);
-    Element root=xSet.readXml(file);
+    Element root=xXml.read(file);
     if(root != null){
         li=root.getElementsByTagName("Records");
         el=(Element)li.item(0);
@@ -228,24 +228,18 @@ System.out.println("Restore selections from "+file);
 public void saveSetup(String file){
 System.out.println("Store selections to "+file);
     StringBuffer str=new StringBuffer();
-    str.append(xSet.XmlHeader());
-    str.append(xSet.XmlTag("Selection",xSet.OPEN));
-    str.append("<Full "+key("contains",wildfull.getText())+key("filter",checkfull.isSelected())+"/>\n");
-    str.append("<Node "+key("contains",wildnode.getText())+key("filter",checknode.isSelected())+"/>\n");
-    str.append("<Application "+key("contains",wildapp.getText())+key("filter",checkapp.isSelected())+"/>\n");
-    str.append("<Name "+key("contains",wildname.getText())+key("filter",checkname.isSelected())+"/>\n");
-    str.append("<Records "+key("Only",checkonly.isSelected()));
-    str.append(key(" Rates",checkrate.isSelected()));
-    str.append(key(" States",checkstate.isSelected()));
-    str.append(key(" Infos",checkinfo.isSelected())+"/>\n");
-    str.append(xSet.XmlTag("Selection",xSet.CLOSE));
-    xSet.writeXml(file,str.toString());
-}
-private String key(String key, String value){
-return new String(key+"=\""+value+"\" ");
-}
-private String key(String key, boolean value){
-return new String(key+"=\""+new Boolean(value).toString()+"\" ");
+    str.append(xXml.header());
+    str.append(xXml.tag("Selection",xXml.OPEN));
+    str.append("<Full "+xXml.attr("contains",wildfull.getText())+xXml.attr("filter",checkfull.isSelected())+"/>\n");
+    str.append("<Node "+xXml.attr("contains",wildnode.getText())+xXml.attr("filter",checknode.isSelected())+"/>\n");
+    str.append("<Application "+xXml.attr("contains",wildapp.getText())+xXml.attr("filter",checkapp.isSelected())+"/>\n");
+    str.append("<Name "+xXml.attr("contains",wildname.getText())+xXml.attr("filter",checkname.isSelected())+"/>\n");
+    str.append("<Records "+xXml.attr("Only",checkonly.isSelected()));
+    str.append(xXml.attr("Rates",checkrate.isSelected()));
+    str.append(xXml.attr("States",checkstate.isSelected()));
+    str.append(xXml.attr("Infos",checkinfo.isSelected())+"/>\n");
+    str.append(xXml.tag("Selection",xXml.CLOSE));
+    xXml.write(file,str.toString());
 }
 //---- Handle the menu actions ---------------------------------------
 public void actionPerformed(ActionEvent e) {

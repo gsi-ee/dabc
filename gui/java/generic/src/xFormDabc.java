@@ -41,16 +41,16 @@ System.out.println(build().toString());
 }
 private StringBuffer build(){
     StringBuffer str=new StringBuffer();
-    str.append(xSet.XmlHeader());
-    str.append(xSet.XmlTag("DabcLaunch",xSet.OPEN));
-    str.append("<DabcMaster "+key("prompt","DABC Master")+key("value",Master)+"/>\n");
-    str.append("<DabcName "+key("prompt","DABC Name")+key("value",Name)+"/>\n");
-    str.append("<DabcUserPath "+key("prompt","DABC user path")+key("value",UserPath)+"/>\n");
-    str.append("<DabcSystemPath "+key("prompt","DABC system path")+key("value",SystemPath)+"/>\n");
-    str.append("<DabcSetup "+key("prompt","DABC setup file")+key("value",Setup)+"/>\n");
-    str.append("<DabcScript "+key("prompt","DABC Script")+key("value",Script)+"/>\n");
-    str.append("<DabcServers "+key("prompt","%Number of needed DIM servers%")+key("value",Servers)+"/>\n");
-    str.append(xSet.XmlTag("DabcLaunch",xSet.CLOSE));
+    str.append(xXml.header());
+    str.append(xXml.tag("DabcLaunch",xXml.OPEN));
+    str.append("<DabcMaster "+xXml.attr("prompt","DABC Master")+xXml.attr("value",Master)+"/>\n");
+    str.append("<DabcName "+xXml.attr("prompt","DABC Name")+xXml.attr("value",Name)+"/>\n");
+    str.append("<DabcUserPath "+xXml.attr("prompt","DABC user path")+xXml.attr("value",UserPath)+"/>\n");
+    str.append("<DabcSystemPath "+xXml.attr("prompt","DABC system path")+xXml.attr("value",SystemPath)+"/>\n");
+    str.append("<DabcSetup "+xXml.attr("prompt","DABC setup file")+xXml.attr("value",Setup)+"/>\n");
+    str.append("<DabcScript "+xXml.attr("prompt","DABC Script")+xXml.attr("value",Script)+"/>\n");
+    str.append("<DabcServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers)+"/>\n");
+    str.append(xXml.tag("DabcLaunch",xXml.CLOSE));
 return str;
 }
 /**
@@ -58,8 +58,8 @@ return str;
  * @param file Xml file name.
  */
 protected void saveSetup(String file){
-System.out.println("Dabc launch setup: "+file);
-    xSet.writeXml(file,build().toString());
+System.out.println("Store Dabc launch setup to "+file);
+    xXml.write(file,build().toString());
 }
 /**
  * Reads Xml file and restores filter setup values.
@@ -69,7 +69,7 @@ protected void restoreSetup(String file){
 NodeList li;
 System.out.println("Restore Dabc launch setup from "+file);
 LaunchFile=new String(file);
-    Element root=xSet.readXml(file);
+    Element root=xXml.read(file);
     if(root != null){
         li=root.getElementsByTagName("DabcMaster");
         Master=((Element)li.item(0)).getAttribute("value");
