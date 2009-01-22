@@ -141,7 +141,6 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    fMgrNodeId   = nodeid;
    fMgrNumNodes = numnodes;
 
-
    if (numnodes>1) {
       dabc::SetDebugLevel(0);
       dabc::SetFileLevel(1);
