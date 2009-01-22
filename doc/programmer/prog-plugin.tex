@@ -21,6 +21,30 @@ be available by name at runtime.
 This class provides organization of necessary components like pool handles, ports, parameters, timers.
 Class \class{dabc::Module} has two subclasses - \class{dabc::ModuleSync} and \class{dabc::ModuleAsync},
 which provides two different paradigms of data processing: within explicit main loop and via event processing respectively.
+Before discuss these two kinds of modules, lets consider components, which can be used with any type 
+of the module.  
+
+
+\subsection{Pool handles}
+
+Class \class{dabc::PoolHanlde} should be used in any module to communicate with \class{dabc::MemoryPool}.
+By creating pool handle with method \func{CreatePoolHandle}, module declares that it 
+wants to use buffers from specified (by name) memory pool. 
+More than one memory handle can be used in one module. 
+Pool handle can be accessed with method \func{dabc::Module::FindPool} via name or
+ with method \func{dabc::Module::Pool} via handle number (started from 0).     
+
+\subsection{Ports}
+
+
+
+\subsection{Timers and timeouts}
+
+
+\subsection{Parameters and configurations}
+
+\subsection{Commands processing}
+
 
 \subsection{ModuleSync}
 \index{Core classes !dabc::ModuleSync}
@@ -230,11 +254,11 @@ avoid such \strong{wrong} code:
 \end{verbatim}
 \end{small}
 
-Here \keyw{while} loop can wait infinite time until output port cannot accept new buffer
+Here \keyw{while} loop can wait infinite time until output port will accept new buffer
 and during this time complete thread will be blocked. 
 
 While both processing methods are the same in the example,  
-therefore one can implement \func{ProcessUserEvent} instead:  
+one can implement central \func{ProcessUserEvent} method instead:  
  
 \begin{small}
 \begin{verbatim}
@@ -247,7 +271,7 @@ therefore one can implement \func{ProcessUserEvent} instead:
    }
 \end{verbatim}
 \end{small}
-    
+
    
 
 \subsection{Special modules}
