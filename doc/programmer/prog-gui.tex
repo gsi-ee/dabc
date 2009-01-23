@@ -694,6 +694,11 @@ public void setSizeXY(Dimension dd){setPreferredSize(dd);}
 \subsection{Example}
 Example of a minimalistic application panel.
 Full running code in \class{MiniPanel}.
+\begin{figure}[htb]
+\centering\includegraphics[angle=0,width=.6\textwidth]{prog-minipanel.png} % pdf file
+\caption{Minipanel.}
+\label{fig:prog-minipanel} % give it a name for references
+\end{figure}
 That is how the class must look like:
 {\small \begin{verbatim}
 public class MiniPanel  extends xPanelPrompt
@@ -770,6 +775,11 @@ if ("prompt".equals(cmd)) {
 }
 \end{verbatim}
 }
+\begin{figure}[htb]
+\centering\includegraphics[angle=0,width=.7\textwidth]{prog-ministates.png} % pdf file
+\caption{Ministates.}
+\label{fig:prog-ministates} % give it a name for references
+\end{figure}
 With the checker we toggle the \class{xState} state.
 The \class{xiDimParameter} param to be toggled we will find in the next.
 To get access to DIM parameters we must implement \func{setDimServices}.
@@ -783,6 +793,8 @@ for(int i=0;i<vipar.size();i++){
   if(p.isRate()){ 
       xMeter meter=new xMeter(xMeter.ARC,
         pname,0.0,10.0,xMeter.XSIZE,xMeter.YSIZE,xSet.blueL());
+      meter.setLettering(p.getNode(),p.getName(),
+        vipar.get(i).getMeter().getUnits(),"");
       metpan.addGraphics(meter,false); 
       browser.addInfoHandler(vipar.get(i),
         new myInfoHandler(pname,meter,null));
