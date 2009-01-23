@@ -6,7 +6,6 @@ import java.awt.Point;
 import java.awt.Cursor;
 import java.io.*;
 import org.w3c.dom.*;
-import javax.xml.parsers.*;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JDesktopPane;

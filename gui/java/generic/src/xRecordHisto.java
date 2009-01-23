@@ -1,7 +1,6 @@
 package xgui;
 import java.util.*;
 import org.w3c.dom.*;
-import javax.swing.text.html.parser.AttributeList;
 import java.awt.Dimension;
 /**
  * Dim record data for histogram.

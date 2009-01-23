@@ -40,7 +40,7 @@ else return new String("</"+name+">\n");
  * @return formatted string key="value". Space appended.
  */
 public final static String attr(String key, String value){
-return new String(key+"=\""+value+"\" ");
+return attr(key,value," ");
 }
 /**
  * @param key key name.
@@ -48,7 +48,24 @@ return new String(key+"=\""+value+"\" ");
  * @return formatted string key="true"/"false". Space appended.
  */
 public final static String attr(String key, boolean value){
-return new String(key+"=\""+new Boolean(value).toString()+"\" ");
+return attr(key,value," ");
+}
+/**
+ * @param key key name.
+ * @param value value.
+ * @param term terminator (should include \n).
+ * @return formatted string key="value". Space appended.
+ */
+public final static String attr(String key, String value, String term){
+return new String(key+"=\""+value+"\""+term);
+}
+/**
+ * @param key key name.
+ * @param value value. Written as true or false, respectively.
+ * @return formatted string key="true"/"false". Space appended.
+ */
+public final static String attr(String key, boolean value, String term){
+return new String(key+"=\""+new Boolean(value).toString()+"\""+term);
 }
 /**
  * Write xml file
@@ -91,5 +108,15 @@ try{
     root=document.getDocumentElement();
 }catch(Exception e){e.printStackTrace();}
 return root;
+}
+/**
+ * Get named subelement of an element. 
+ * @param root Top element.
+ * @param tagname Name of element to be returned.
+ * @return Element.
+ */
+public final static Element get(Element root, String tagname){
+if(root == null) return null;
+return (Element)root.getElementsByTagName(tagname).item(0);
 }
 }

@@ -1,8 +1,6 @@
 package xgui;
 
 import org.w3c.dom.*;
-import org.xml.sax.*;
-import javax.xml.parsers.*;
 import java.io.*;
 
 /**
@@ -11,9 +9,6 @@ import java.io.*;
  * @version 1.0
 */
 public class xXmlParser{
-private DocumentBuilderFactory factory;
-private DocumentBuilder builder;
-private Document document;
 private Element root;
 private NodeList args;
 private String cname,xml;
@@ -35,11 +30,7 @@ public xXmlParser(){
  * @param header True: write XML header line (version, encoding).
  */
 public void newCommand(String command, boolean header){
-xml=null;
-finalized=false;
-str=new StringBuffer();
-if(header)str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-str.append(String.format("<command name=\"%s\" scope=\"*\" content=\"default\">\n",command));
+newCommand(command, header, "*",false);
 }
 /**
  * Starts to build internal XML string buffer.
@@ -49,11 +40,7 @@ str.append(String.format("<command name=\"%s\" scope=\"*\" content=\"default\">\
  * @param scope Scope of command, could be like public, hidden, MBS ...
  */
 public void newCommand(String command, boolean header, String scope){
-xml=null;
-finalized=false;
-str=new StringBuffer();
-if(header)str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-str.append(String.format("<command name=\"%s\" scope=\"%s\" content=\"default\">\n",command,scope));
+newCommand(command, header, scope, false);
 }
 /**
  * Starts to build internal XML string buffer.
@@ -64,13 +51,18 @@ str.append(String.format("<command name=\"%s\" scope=\"%s\" content=\"default\">
  * @param changed False: content="default", true: content="values"
  */
 public void newCommand(String command, boolean header, String scope, boolean changed){
+String content;
+if(changed) content = new String("values");
+else        content = new String("default");
 xml=null;
 finalized=false;
 ischanged=changed;
 str=new StringBuffer();
-if(header)str.append("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n");
-if(changed)str.append(String.format("<command name=\"%s\" scope=\"%s\" content=\"values\">\n",command,scope));
-else       str.append(String.format("<command name=\"%s\" scope=\"%s\" content=\"default\">\n",command,scope));
+if(header)str.append(xXml.header());
+str.append("<command "+
+		xXml.attr("name",command)+
+		xXml.attr("scope",scope)+
+		xXml.attr("content",content,">\n"));
 }
 /**
  * Adds argument description to internal XML string buffer.
@@ -82,14 +74,18 @@ else       str.append(String.format("<command name=\"%s\" scope=\"%s\" content=\
  */
 public void addArgument(String argument, String type, String value, String required){
 if(!finalized) 
-str.append(String.format("<argument name=\"%s\" type=\"%s\" value=\"%s\" required=\"%s\"/>\n",argument,type,value,required));
+str.append("<argument "+
+		xXml.attr("name",argument)+
+		xXml.attr("type",type)+
+		xXml.attr("value",value)+
+		xXml.attr("required",required,"/>\n"));
 }
 /**
  * @return Finalized internal XML string buffer, or XML string read by parseXmlString.
  */
 public String getXmlString(){
 if(str==null)return xml;
-if(!finalized) str.append("</command>\n");
+if(!finalized) str.append(xXml.tag("command",xXml.CLOSE));
 finalized=true;
 return str.toString();
 }
@@ -99,11 +95,7 @@ return str.toString();
  * @param xml XML string.
  */
 public void saveXmlString(String file, String xml){
-    try{
-        FileWriter fw = new FileWriter(file);
-        fw.write(xml);
-        fw.close();
-    }catch(IOException ioe){System.out.println("Error writing xml file "+file);}
+xXml.write(file,xml);
 }
 /**
  * Read and parse XML string. String is stored. Must be called before the getter methods.
@@ -111,15 +103,10 @@ public void saveXmlString(String file, String xml){
  * @param xmlstring Encoded XML string.
  */
 public void parseXmlString(String name, String xmlstring){
-try{
-factory=DocumentBuilderFactory.newInstance();
-builder=factory.newDocumentBuilder();
-document=builder.parse(new InputSource(new StringReader(xmlstring)));
-root=document.getDocumentElement();
+root=xXml.string(xmlstring);
 args=root.getElementsByTagName("argument");
-}catch(Exception e){System.out.println(name);e.printStackTrace();}
 domcreated=true;
-cname=name;
+cname=new String(name);
 xml=xmlstring;
 str=null;
 }

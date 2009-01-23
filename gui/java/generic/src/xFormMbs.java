@@ -1,7 +1,6 @@
 package xgui;
 import java.util.*;
 import org.w3c.dom.*;
-import javax.xml.parsers.*;
 import java.awt.event.*;
 /**
  * Base class to keep the data of the setup forms for MBS
@@ -40,12 +39,12 @@ private StringBuffer build(){
     StringBuffer str=new StringBuffer();
     str.append(xXml.header());
     str.append(xXml.tag("MbsLaunch",xXml.OPEN));
-    str.append("<MbsMaster "+xXml.attr("prompt","MBS Master")+xXml.attr("value",Master)+"/>\n");
-    str.append("<MbsUserPath "+xXml.attr("prompt","MBS User path")+xXml.attr("value",UserPath)+"/>\n");
-    str.append("<MbsSystemPath "+xXml.attr("prompt","MBS system path")+xXml.attr("value",SystemPath)+"/>\n");
-    str.append("<MbsScript "+xXml.attr("prompt","MBS Script")+xXml.attr("value",Script)+"/>\n");
-    str.append("<MbsCommand "+xXml.attr("prompt","Script command")+xXml.attr("value",Command)+"/>\n");
-    str.append("<MbsServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers)+"/>\n");
+    str.append("<MbsMaster "+xXml.attr("prompt","MBS Master")+xXml.attr("value",Master,"/>\n"));
+    str.append("<MbsUserPath "+xXml.attr("prompt","MBS User path")+xXml.attr("value",UserPath,"/>\n"));
+    str.append("<MbsSystemPath "+xXml.attr("prompt","MBS system path")+xXml.attr("value",SystemPath,"/>\n"));
+    str.append("<MbsScript "+xXml.attr("prompt","MBS Script")+xXml.attr("value",Script,"/>\n"));
+    str.append("<MbsCommand "+xXml.attr("prompt","Script command")+xXml.attr("value",Command,"/>\n"));
+    str.append("<MbsServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers,"/>\n"));
     str.append(xXml.tag("MbsLaunch",xXml.CLOSE));
 return str;
 }

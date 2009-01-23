@@ -3,8 +3,6 @@ import java.util.*;
 import java.io.*;
 import java.awt.Point;
 import java.awt.Dimension;
-import org.w3c.dom.*;
-import javax.xml.parsers.*;
 /**
  * Base class for DIM record data.
  * @author Hans G. Essel

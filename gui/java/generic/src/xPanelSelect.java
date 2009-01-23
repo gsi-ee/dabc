@@ -9,7 +9,6 @@ import javax.swing.JPanel;
 import javax.swing.JDesktopPane;
 import javax.swing.JSplitPane;
 import org.w3c.dom.*;
-import javax.xml.parsers.*;
 import dim.*;
 /**
  * Panel for display of selected list of parameters.

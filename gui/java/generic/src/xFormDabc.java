@@ -1,7 +1,6 @@
 package xgui;
 import java.util.*;
 import org.w3c.dom.*;
-import javax.xml.parsers.*;
 import java.awt.event.*;
 /**
  * Base class to keep the data of the setup forms for DABC.
@@ -43,13 +42,13 @@ private StringBuffer build(){
     StringBuffer str=new StringBuffer();
     str.append(xXml.header());
     str.append(xXml.tag("DabcLaunch",xXml.OPEN));
-    str.append("<DabcMaster "+xXml.attr("prompt","DABC Master")+xXml.attr("value",Master)+"/>\n");
-    str.append("<DabcName "+xXml.attr("prompt","DABC Name")+xXml.attr("value",Name)+"/>\n");
-    str.append("<DabcUserPath "+xXml.attr("prompt","DABC user path")+xXml.attr("value",UserPath)+"/>\n");
-    str.append("<DabcSystemPath "+xXml.attr("prompt","DABC system path")+xXml.attr("value",SystemPath)+"/>\n");
-    str.append("<DabcSetup "+xXml.attr("prompt","DABC setup file")+xXml.attr("value",Setup)+"/>\n");
-    str.append("<DabcScript "+xXml.attr("prompt","DABC Script")+xXml.attr("value",Script)+"/>\n");
-    str.append("<DabcServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers)+"/>\n");
+    str.append("<DabcMaster "+xXml.attr("prompt","DABC Master")+xXml.attr("value",Master,"/>\n"));
+    str.append("<DabcName "+xXml.attr("prompt","DABC Name")+xXml.attr("value",Name,"/>\n"));
+    str.append("<DabcUserPath "+xXml.attr("prompt","DABC user path")+xXml.attr("value",UserPath,"/>\n"));
+    str.append("<DabcSystemPath "+xXml.attr("prompt","DABC system path")+xXml.attr("value",SystemPath,"/>\n"));
+    str.append("<DabcSetup "+xXml.attr("prompt","DABC setup file")+xXml.attr("value",Setup,"/>\n"));
+    str.append("<DabcScript "+xXml.attr("prompt","DABC Script")+xXml.attr("value",Script,"/>\n"));
+    str.append("<DabcServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers,"/>\n"));
     str.append(xXml.tag("DabcLaunch",xXml.CLOSE));
 return str;
 }

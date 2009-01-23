@@ -82,8 +82,8 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     haltIcon    = xSet.getIcon("icons/dabchalt.png");
     exitIcon    = xSet.getIcon("icons/exitall.png");
     addButton("dabcQuit","Close window",closeIcon,this);
-    addButton("ReadSetup","Read setup file from user path",setupIcon,this);
-    addButton("CloseWindows","Close setup windows",wcloseIcon,this);
+//    addButton("ReadSetup","Read setup file from user path",setupIcon,this);
+//    addButton("CloseWindows","Close setup windows",wcloseIcon,this);
     addButton("dabcSave","Save this form and setup to files",storeIcon,this);
     addButton("dabcLaunch","Launch DABC",launchIcon,this);
     addButton("dabcConfig","Configure DABC",configIcon,this);
@@ -124,9 +124,9 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     DabcLaunchFile=addPrompt("Launch file: ",formDabc.getLaunchFile(),"set",width,this);
     
 // Add checkboxes
-    getnew = new JCheckBox();
-    getnew.setSelected(true);
-    addCheckBox("Get new setup",getnew);
+//    getnew = new JCheckBox();
+//    getnew.setSelected(true);
+//    addCheckBox("Get new setup",getnew);
 
     dabcshell = new xRemoteShell("ssh");
     nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS

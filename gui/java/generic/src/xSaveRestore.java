@@ -2,7 +2,6 @@ package xgui;
 import java.util.*;
 import java.io.*;
 import org.w3c.dom.*;
-import javax.xml.parsers.*;
 /**
  * Base class for DIM SaveRestore data.
  * @author Hans G. Essel
@@ -88,13 +87,13 @@ Element root,elem,el;
 root=xXml.read(file);
 if(root != null){
 	System.out.println("Restore layouts from "+file);
-	elem=(Element)root.getElementsByTagName("WindowLayout").item(0); // only one WindowLayout!
+	elem=xXml.get(root,"WindowLayout"); // only one WindowLayout!
     NodeList list=elem.getElementsByTagName("*"); // list of layout names
     for(int i=0;i<list.getLength();i++){
         el=(Element)list.item(i);
         xSet.setWindowLayout(el);
     }
-    elem=(Element)root.getElementsByTagName("TableLayout").item(0); // only one TableLayout!
+    elem=xXml.get(root,"TableLayout"); // only one TableLayout!
     xSet.setTableLayout("Parameter",elem);
 }}
 } // class xSaveRestore
