@@ -16,15 +16,15 @@
 /** Subclass from Module class
   * Allows to use explicit main loop of the module
   * Provides blocking operation (Recv, Send, TakeBuffer, ...) with timeouts.
-  * If timeout is happening, either exception is produced or function returnes with false results.
-  * One can specify usage of timout exception by SetTmoutExcept() method (fefault - false).
+  * If timeout is happening, either exception is produced or function returns with false results.
+  * One can specify usage of timeout exception by SetTmoutExcept() method (default - false).
   * Another source of exceptions - disconnecting of module ports. Will be
   * produced when port, used in operation (Send or Recv), disconnected.
   * Execution of module main loop can be suspended by Stop() function and resumed again
   * by Start() function. This can only happens in some of ModuleSync methods like Send, TakeBuffer and so on.
   * In case when module is destroyed, MainLoop will be leaved by StopException.
-  * User can catch this excpetion, but MUST throw it again that module can be safely deleted afterwards.
-  * Typicall MainLoop of the ModuleSync should look like this:
+  * User can catch this exception, but MUST throw it again that module can be safely deleted afterwards.
+  * Typical MainLoop of the ModuleSync should look like this:
   *     void MainLoop()
   *     {
   *        while (ModuleWorking()) {
@@ -32,11 +32,11 @@
   *        }
   *     }
   * ModuleWorking() function tests if module should continue to work, and will execute commands,
-  * submitted to module. To execute commands immidiately, synchron modus must be
+  * submitted to module. To execute commands immediately, synchron modus must be
   * specified by SetSyncCommands(true) call.
-  * In case when main loop containes no any methods like Recv or Send, it will
+  * In case when main loop contains no any methods like Recv or Send, it will
   * consume 100% of CPU resources, therefore one better should use
-  * WaitEvent() call for waiting on any events wich may happen in module.
+  * WaitEvent() call for waiting on any events which may happen in module.
   */
 
 namespace dabc {

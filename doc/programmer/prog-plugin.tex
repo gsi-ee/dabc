@@ -95,14 +95,63 @@ While these are non-blocking methods, one should use \func{CanSend()} and \func{
 before one can call transfer operations.
 
 
-\subsection{Timers and timeouts}
-
-
-
-
 \subsection{Parameters and configurations}
 
+Parameters are used in module for configuration, controlling and monitoring.
+More information about parameters handling see in chapter ...
+
+
 \subsection{Commands processing}
+
+There is possibility in \dabc~ to execute user-defined commands in module context.
+Virtual method \func{ExecuteCommand} called every time when new command is submitted
+to the module. Command \strong{always} executed in module thread disregard from which thread
+command was submitted, therefore it is not necessary to lock command execution code.
+Most actions in \dabc~ performed with help of the commands. 
+
+Possible example how command execution can look like:
+\begin{small}
+\begin{verbatim}
+int UserModule::ExecuteCommand(dabc::Command* cmd) 
+{
+   if (cmd->IsName("UserPrint")) {
+      DOUT1(("Printout from UserModule"));
+      return dabc::cmd_true;
+   }
+   return dabc::ModuleSync::ExecuteCommand(cmd);
+}
+\end{verbatim}
+\end{small}
+
+Than somewhere in the code of other component:
+\begin{small}
+\begin{verbatim}
+...
+dabc::Module* m = dabc::mgr()->FindModule("MyModule"); 
+dabc::Command* cmd = new dabc::Command("UserPrint");
+m->Execute(cmd);
+// again, but in short form
+m->Execute("UserPrint");
+...
+\end{verbatim}
+\end{small}
+Method \func{Execute} returns true when command executed successfully. 
+When command is executed, \class{dabc::Command} object deleted automatically.  
+
+One can register command in module constructor. In this case command will be 
+known by control system and can be invoked by user from the GUI:
+
+\begin{small}
+\begin{verbatim}
+UserModule::UserModule(const char* name) : dabc::ModuleSync(name) 
+{
+   ...
+   dabc::CommandDefinition* def = NewCmdDef("UserPrint");
+   def->AddArgument("Level", dabc::argInt, false); // optional argument
+   def->Register(true);
+}
+\end{verbatim}
+\end{small}
 
 
 \subsection{ModuleSync}
@@ -111,24 +160,33 @@ before one can call transfer operations.
 Data processing functionality in most intuitive way can be implemented by subclassing 
 the \class{dabc::ModuleSync} base class, which defines the interface for a 
 synchronous module that is allowed to block its dedicated execution thread.  
-   
-\begin{compactenum}
-\item  The constructor of \class{dabc::ModuleSync} subclass  creates all 
-      ports, may initialize the pool handles, and may 
-      define commands and parameters. 
-\item  The virtual \func{MainLoop()} method of \class{dabc::ModuleSync} 
-      subclass implements the processing job. This method runs in a dedicated working thread.  
-\item  The user code shall not directly access the 
-      memory pools to request new buffers. Instead, it can use \class{dabc::ModuleSync} method 
-      \func{TakeBuffer()} with a \class{dabc::PoolHandle} object as argument.
-      This method provides a blocking access to a memory pool, i.~e.~ the \func{MainLoop()} 
-      thread may block here until a buffer is available.
-\item  The \func{MainLoop()} code can send and receive buffers   
-      from, and to ports by \class{dabc::ModuleSync} methods \func{Send(port), buffer)}, and
-    \func{Receive(port), buffer)}, resp. These methods may also block the \func{MainLoop()} if an output port queue is full, or if no buffer is available at the input port, resp.
-\item  The virtual \func{ExecuteCommand()} method of \class{dabc::ModuleSync} 
-      subclass may implement the callbacks of the defined commands.
-\end{compactenum}
+
+Class provides a number of methods, which are blocked until expected action 
+cannot be performed.
+
+\begin{tabular}{ll}
+Method &  Description \\
+   \hline
+\func{Recv()} & Receive buffer from specified input port \\
+\func{Send()} & Send buffers over output port \\
+\func{RecvFromAny()} & Receive buffer from any of specified port \\
+\func{WaitInput()} & Waits until required number of buffers is queued in input port \\
+\func{TakeBuffer()} & Get buffer of specified size from memory pool \\
+\func{WaitConnect()} & Waits until port is connected \\
+   \hline
+\end{tabular}
+
+In all these methods timeout value as last argument can be specified.
+Method \func{SetTmoutExcept} defines if \class{dabc::TimeoutException} exception 
+is produced when timeout is expired. By default, these blocking methods
+just return false in case of timeout.
+
+Data processing should be implemented in \func{MainLoop()} method.
+It usually contains \strong{while} loop where \func{ModuleWorking()} method
+is used to check if execution of module code shall be continued.
+This method is also used to execute queued command if user specified
+so-call synchronous command execution by \func{SetSyncCommands()} call.
+By default, command can be executed in any place of the code. 
 
 Lets consider simple example of the module, 
 which has one input and two output ports and deliver buffers from input to
@@ -163,6 +221,7 @@ public:
 In constructor one sees creation of pool handle and input and output ports.
 Method \func{MainLoop} has simple while loop, where buffer received from the
 input and than send to first or second output.
+
   
 \subsection{ModuleAsync}
 \index{Core classes !dabc::ModuleAsync}
@@ -180,70 +239,37 @@ At the same time, using such programming technique may requires additional
 bookkeeping while it is not allowed to block callback routine, waiting that
 some resource is available.
 
-\begin{compactenum}
+Class \class{dabc::ModuleSync} provides number of methods for handling different events:
 
-\item  The constructor of \class{dabc::ModuleAsync} subclass  creates all 
-      ports, may initialize the pool handles, and may 
-      define commands and parameters. 
-\item  For each kind of \dabc~ event, virtual methods  may be
-implemented in \class{dabc::ModuleAsync} subclass that are executed 
-by the working thread when the corresponding event occurs for the module, e~.g.~:
-\begin{compactdesc}
-	\item [\func{void ProcessInputEvent(Port* port)}] : 
-	A new buffer was received at a connected port. The \class{Port*} argument
-	gives the reference to the port where the buffer was received.
-	
-	\item [\func{void ProcessOutputEvent(Port* port)}] :
-	A buffer in the queue of an output port was taken by the connected
-	transport. The \class{Port*} argument
-	gives the reference to the port where the buffer was send.
-	 
-	 \item [\func{void ProcessConnectEvent(Port* port)}] :
-	 A port has been connected to an external \class{dabc::Transport}.
-	  The \class{Port*} argument
-	gives the reference to the port that was connected. This method can
-	be used for initialization actions on connection.
-	  
-         \item  [\func{void ProcessDisconnectEvent(Port* port)}]:	
- 	A port has been disconnected from a \class{dabc::Transport}.
-	  The \class{Port*} argument gives the reference to the port that 
-	  was disconnected. This method can be used for cleanup actions.
-	
-         \item [\func{void ProcessPoolEvent(PoolHandle* pool)}]: 
-	 A requested buffer is available at a memory pool.  The
-	 \class{PoolHandle*} argument gives the reference to the memory 
-	 pool handle which fired the event; this is used to actually take the
-	 buffer into the module without blocking execution.
-          
-	  \item [\func{void ProcessTimerEvent(Timer* timer)}]:
-	  A timer has fired an event.  The
-	 \class{Timer*} argument gives the reference to identify which
-	 timer reached its timeout.  
-        
-\end{compactdesc}      
+\begin{tabular}{ll}
+Method &  Description \\
+   \hline
+\func{ProcessInputEvent()} & new buffer in input queue, it can be read with port->Recv() \\
+\func{ProcessOutputEvent()} & new place in output queue is availible, one can use port->Send()  \\
+\func{ProcessConnectEvent()} & port is connected to transport  \\
+\func{ProcessDisconnectEvent()} & port was disconnected from transport  \\
+\func{ProcessPoolEvent()} & requested buffer can be read with handle->TakeRequestedBuffer()  \\
+\func{ProcessTimerEvent()} & time has fired and event  \\
+\end{tabular}
 
-\item   In baseclass \class{dabc::ModuleAsync} all events are dispatched to the callbacks above by method 
-\func{ProcessUserEvent(ModuleItem\* item, uint16\_t evid)}. 
-This is called by the working thread
+By reimplementing one or several from these methods, one can react on correspondent events.
+
+Actually, all events are dispatched to the mentioned above metyhods by method 
+\func{ProcessUserEvent()}. 
+The method called by the working thread
 whenever {\bf any} event for this module shall be processed.
 However, this virtual method  
-may also directly be re-implemented in the \class{dabc::ModuleAsync} subclass
-if one wants to treat all events in one method. 
-The \class{uint16\_t evid} argument gives the number of the event type. 
-The component that fired the event may be accessed 
-by the \class{ModuleItem*} pointer. 
-      
-\item  Class \class{dabc::ModuleAsync} has no methods, which can block thread.
+may also directly be re-implemented in the user subclass
+if one wants to treat all events centrally. 
+As arguments one get component pointer (port, timer, ...) and number of
+event type (dabc::evntInput, dabc::evntOutput, ...) 
+ 
+Class \class{dabc::ModuleAsync} has no methods, which can block thread.
 Nevertheless user should avoid any kind of polling loops, waiting for some
 other resource (buffer, output queue and so on) - callbacks should \strong{return}
 as soon as possible. In such situation processing can be continued in 
 the other callback, called when required resource is available. 
 This might require an own bookkeeping of such situations (kind of state transition logic). 
-
-\item  In virtual \func{ExecuteCommand()} method one can implement 
-      processing of the defined commands.
-
-\end{compactenum}
 
 Lets consider as an example same repeater module, but implemented with asynchronous module.
    
@@ -284,8 +310,9 @@ public:
 \end{small}
 
 Constructor of this module has absolutely the same components as in previous example.
-One only adds \member{fCnt} member to count direction for output of next buffer. 
-Instaed of main loop one can see two virtual methods for input and output event
+One should add \member{fCnt} member to count direction for output of next buffer.
+Value of \member{fCnt} in some sense defines current state of the module. 
+ Instaed of main loop one can see two virtual methods for input and output event
 processing. In each methods one sees same code, with while loop inside.
 In the loop one checks that input and current output are ready and retransmit buffer.
 When any port (input or output) has no more possibility to transmit data, 
@@ -331,6 +358,29 @@ one can implement central \func{ProcessUserEvent} method instead:
 \end{verbatim}
 \end{small}
 
+To introduce time-dependent activity in \class{dabc::ModuleAsync}, 
+one should use timers. Timer object can be created with method 
+\func{CreateTimer}. It delivers timer event with specified intervals, 
+which can be processed in \func{ProcessTimerEvent()} method.
+
+One can modify previos example to display number of transported buffers
+every 5 seconds.
+
+\begin{small}
+\begin{verbatim}
+   RepeaterAsync(const char* name) : dabc::ModuleAsync(name)
+   {
+      ...
+      CreateTimer("Timer1", 5.);
+   }
+
+   virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evnt)
+   {
+      ...
+      if (evnt == dabc::evntTimeout) DOUT1(("Buffers count = %d", fCnt));  
+   }
+\end{verbatim}
+\end{small}
    
 
 \subsection{Special modules}
