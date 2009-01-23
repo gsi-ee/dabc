@@ -8,24 +8,30 @@
    /Subject (Data Acquisition)
    /Keywords (FutureDAQ, CBM, FOPI)
 }
-
-\input{dabc-defs} 
+\input{dabc-defs}
 \begin{document}
-\title{ \huge \bf  The DABC Programmers Manual\\} 
-\author{\em J.Adamczewski-Musch, S.Linev, H.G.Essel \\ \\ Experiment Electronics Department \\
-GSI Darmstadt} 
-%\date{} 
-\maketitle 
+\setcounter{chapter}{1}\setcounter{section}{0}\setcounter{subsection}{0}
 
-\thispagestyle{empty} 
-{\huge Revisions:}
+\begin{figure}[htb]
+\centering\includegraphics[width=.9\textwidth]
+{prog-frontpage.png}
+\end{figure}
+%\begin{center}
+{\em J.Adamczewski-Musch, S.Linev, H.G.Essel} \\
+{\large GSI Darmstadt,}\\
+Experiment Electronics Department\\\\
+%\end{center}
+% vspace must be surrounded by empty lines!
+
+\vspace{4cm}
+
+Produced: \today, Revisions:
 \input{prog-docrev}
-\clearpage
-
+\cleardoublepage
 \thispagestyle{empty} \tableofcontents
 \thispagestyle{empty} \cleardoublepage
-\chapter{DABC Programmer Manual: Overview}
-\input{steer-programmer} \cleardoublepage
+
+\include{steer-programmer} \cleardoublepage
 
 \include{dabc-post}
 \end{document}
