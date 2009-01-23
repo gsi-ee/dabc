@@ -33,6 +33,11 @@ public abstract String getToolTip();
  */
 public abstract ImageIcon getIcon();
 /**
+ * Called by xDesktop. This should ensure that the user panel creates a layout.
+ * @return xLayout.
+ */
+public abstract xLayout checkLayout();
+/**
  * Called by xDesktop.
  * @return Object implementing xiUserCommand
  */

@@ -85,6 +85,8 @@ public  String getToolTip(){return tooltip;}
 public  String getHeader(){return name;}
 // Icon for the main menu and window decoration (xiUserPanel)
 public  ImageIcon getIcon(){return menuIcon;}
+//Layout
+public xLayout checkLayout(){return panlo;}
 
 // Command handler (xiUserPanel)
 public xiUserCommand getUserCommand(){return this;} // or xiUserCommand class

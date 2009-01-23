@@ -19,8 +19,8 @@ private xInternalCompound frame;
 private xPanelGraphics metpan, stapan;
 private xState state;
 private xiDimParameter param;
-private xLayout layout;
-
+private xLayout panelLayout, frameLayout;
+//----------------------------------------------------------
 private class myInfoHandler implements xiUserInfoHandler{
 private xMeter meter;
 private xState state;
@@ -43,19 +43,25 @@ public void infoHandler(xiDimParameter P){
 }
 }
 //=========================================================
+// Constructor without arguments
 public MiniPanel(){
    super("MyPanel");
    menuIcon=xSet.getIcon("icons/usericon.png");
    graphIcon=xSet.getIcon("icons/usergraphics.png");
    name=new String("MyPanel"); // name for prompter panel
-   fname=new String("MyGraphics"); // name for display frame
+   panelLayout=xSet.getLayout(name); // restored from setup?
+   if(panelLayout==null) // no, create
+   panelLayout=xSet.createLayout(name,new Point(100,200), new Dimension(100,75),1,true);
    tooltip=new String("Launch my panel");
 }
+// xiUserPanel interface functions
 public String getToolTip(){return tooltip;
 }
 public String getHeader(){return name;
 }
 public ImageIcon getIcon(){return menuIcon;
+}
+public xLayout checkLayout(){return panelLayout;
 }
 public xiUserCommand getUserCommand(){return null;
 }
@@ -65,28 +71,36 @@ public void init(xiDesktop desktop, ActionListener al){
 	addTextButton("This is a test button","button","Tool tip, whatever it does",this);
 	check=addCheckBox("Data server on/off","check",this);
 	addButton("Display","Display info",graphIcon,this);
-	state = new xState("ServerState", xState.XSIZE,xState.YSIZE);
-	stapan=new xPanelGraphics(new Dimension(160,50),1); // one column of states
-	metpan=new xPanelGraphics(new Dimension(410,14),4); // one columns of meters
-	layout=xSet.createLayout(name,new Point(200,200), new Dimension(100,75),1,true);
-	frame=new xInternalCompound(fname,graphIcon,0,layout,xSet.blueD());
-	desk.addFrame(frame); 
+	state  = new xState("ServerState", xState.XSIZE,xState.YSIZE);
+	stapan = new xPanelGraphics(new Dimension(160,50),1); // one column of states
+	metpan = new xPanelGraphics(new Dimension(410,14),3); // one columns of meters
+	fname=new String("MyGraphics"); // name for display frame
+	frameLayout = xSet.getLayout(fname);
+	if(frameLayout == null)
+	frameLayout = xSet.createLayout(fname,new Point(200,200), new Dimension(100,75),1,true);
+	frame  = new xInternalCompound(fname,graphIcon,0,frameLayout,xSet.blueD());
+	desk.addFrame(frame); // display
 }
 public void setDimServices(xiDimBrowser browser){
 	Vector<xiDimParameter> vipar=browser.getParameters();
 	for(int i=0;i<vipar.size();i++){
 	  xiParser p=vipar.get(i).getParserInfo();
-	  String pname=new String(p.getNode()+":"+p.getName());
+	  String metername=new String(p.getNode()+":"+p.getName());
+	  String statename=new String(p.getNode()+":"+p.getApplication());
 	  if(p.isRate()){ 
+		  if(p.getFull().indexOf("Rate")>0){ 
 	      xMeter meter=new xMeter(xMeter.ARC,
-	        pname,0.0,10.0,xMeter.XSIZE,xMeter.YSIZE,xSet.blueL());
+	        metername,0.0,10.0,xMeter.XSIZE,xMeter.YSIZE,xSet.blueL());
+	      meter.setLettering(p.getNode(),p.getName(),vipar.get(i).getMeter().getUnits(),"");
 	      metpan.addGraphics(meter,false); 
-	      browser.addInfoHandler(vipar.get(i),new myInfoHandler(pname,meter,null));
-	  } else if(p.isState()){ 
-	     xState state=new xState(pname,xState.XSIZE,xState.YSIZE);
+	      browser.addInfoHandler(vipar.get(i),new myInfoHandler(metername,meter,null));
+	  }} else if(p.isState()){ 
+		  if((p.getFull().indexOf("Acquis")>0)| 
+		    (p.getFull().indexOf("RunMode")>0)){ 
+	     xState state=new xState(statename,xState.XSIZE,xState.YSIZE);
 	     stapan.addGraphics(state,false);
-	     browser.addInfoHandler(vipar.get(i),new myInfoHandler(pname,null,state));
-	  } else if(p.getFull().indexOf("Setup_File")>0) param=vipar.get(i);
+	     browser.addInfoHandler(vipar.get(i),new myInfoHandler(statename,null,state));
+	  }} else if(p.getFull().indexOf("Setup_File")>0) param=vipar.get(i);
 	} // end list of parameters
 	stapan.addGraphics(state,false);
 	stapan.updateAll();
@@ -118,7 +132,7 @@ public void actionPerformed(ActionEvent e) {
 	}} else if ("Display".equals(cmd)) {
 	  print(cmd+" "+fname);
 	  if(!desk.findFrame(fname)){
-	    frame=new xInternalCompound(fname,graphIcon,0,layout,xSet.blueD());
+	    frame=new xInternalCompound(fname,graphIcon,0,frameLayout,xSet.blueD());
 	    frame.rebuild(stapan, metpan); 
 	    desk.addFrame(frame); 
 	}}

@@ -341,6 +341,11 @@ private JToolBar createToolBar() {
     // return menuBar;
 // }
 
+private void printFrame(){
+    JInternalFrame[] fr=desktop.getAllFrames();
+    for(int i=0;i<fr.length;i++)
+      System.out.println("Frame "+fr[i].getTitle());
+}
 // xiDesktop implementation
 /**
  * Checks if a frame exists on the desktop .
@@ -495,7 +500,8 @@ public void actionPerformed(ActionEvent e) {
         xSet.setLayout("Logger",null,null,0, true);
         }
     else if ("Test".equals(e.getActionCommand())) {
-        browser.listServices(false); // exclude command definitions
+    	printFrame();
+        //browser.listServices(false); // exclude command definitions
     }
     else if ("Quit".equals(e.getActionCommand())) {
         // String[] srvcs;

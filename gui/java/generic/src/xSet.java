@@ -96,16 +96,16 @@ public final static Color grayL(){return grayL;}
 public final static Color grayD(){return grayD;}  
 public final static Color white(){return white;}  
 
-public final static void setRecordXml(NodeList list){
+protected final static void setRecordXml(NodeList list){
 records=list;
 }
-public static final NodeList getRecordXml(){return records;}
+protected static final NodeList getRecordXml(){return records;}
 /**
  * Adds object to repository (only one per class!).
  * @param object Object to add.
  * @return Null if an object of this class already exists.
  */
-public final static Object addObject(Object object){
+protected final static Object addObject(Object object){
 if(getObject(object.getClass().getName()) == null){
     objects.add(object);
     return object;
@@ -187,7 +187,7 @@ return null;
  * See also createLayout.
  * @return Layouts.
  */
-public final static Vector<xLayout> getLayouts(){return layouts;}
+protected final static Vector<xLayout> getLayouts(){return layouts;}
 /**
  * Does not work as expected!
  */
