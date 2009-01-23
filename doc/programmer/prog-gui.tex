@@ -42,7 +42,8 @@ Example:
    /DABC/lx05/Control/RunState
 \end{verbatim}
 }
-We recommend to forbid spaces in any name fields. Dots should not be used except in names (last field). The generic \gui\ can handle only services from one servernamespace. For \dabc\ and \mbs\ this servernamespace is set to \keyw{DABC}.
+We recommend to forbid spaces in any name fields. Dots should not be used except in names (last field). The generic \gui\ can handle only services from one server name space 
+(defined by \keyw{DIM\_DNS\_NODE}). For \dabc\ and \mbs\ this servernamespace is set to \keyw{DABC}.
 \subsection{\dabc\ DIM records}
 For generic GUIs we need something similar to the EPICS records. This means to define structures which can be identified. How shall they be indentified? One possibility would be to prefix a type to the parameter name, i.e. \verba{rate:DataRate}. Another to use the quality longword. This longword can be set by the server. One could mask the bytes of this longword for different information:
 {\small \begin{verbatim}
@@ -52,7 +53,7 @@ For generic GUIs we need something similar to the EPICS records. This means to d
      HIDDEN    = all zero
      VISIBLE   = 1  appears in parameter table
      MONITOR   = 2  in table, graphics shown automatically 
-                    if type is STATUS, RATE or HISTOGRAM
+                    if type is STATE, RATE or HISTOGRAM
      CHANGABLE = 4  in table, can be modified
      IMPORTANT = 8  in table also if GUI has a "minimal" view.
    type: (exclusive)
@@ -170,7 +171,7 @@ The service names follow a structured syntax as described above. The name fields
 build trees (for commands). Using the DIM quality longword (delivered by the server together
 with each update) simple aggregated data services (records) are defined.
 Currently the records \\
-\keyw{STATE}, \keyw{RATE}, \keyw{HISTOGRAM}, \keyw{COMMANDDESC} and \keyw{INFO}\\
+\keyw{STATE}, \keyw{RATE}, \keyw{HISTOGRAM}, \keyw{COMMANDDESC} and \keyw{INFO}.\\
 are used. When the \gui\ receives the first update of a service (immediately after subscribing)
 it can determine the record type and handle the record in an appropriate way.
 The \keyw{COMMANDDESC} record is an XML string describing a command.
@@ -222,15 +223,6 @@ can be saved to an XML file and are restored from it. File name is either
 \subsection{Combined \dabc\ and \mbs\ launch panel}
 \class{xPanelDabcMbs} extending \class{xPanelPrompt}.\\
 It is a combination of both, \dabc\ and \mbs\ launch panel.
-\subsection{Command panel}
-\class{xPanelCommand} extending \class{JPanel}.\\
-Is rebuilt from scratch by \class{xDesktop} whenever the DIM service list has been updated.\\
-This panel is split into a right and a left part. On the left, there is the command tree,
-on the right the argument prompter panel for the currently selected command.
-The panel gets the list of commands (\class{xDimCommand}) from the DIM browser (\class{xDimBrowser}).
-The list of command descriptors (\class{xXmlParser}) is copied in \class{xDesktop} from \class{xPanelParameter} to
-\class{xPanelCommand} and the \class{xXmlParser} objects are added to the
-\class{xDimCommand} objects they belong to.
 \subsection{Parameter table}
 \class{xPanelParameter} extending \class{JPanel}.\\
 Is rebuilt from scratch by \class{xDesktop} whenever the DIM service list has been updated.\\
@@ -241,6 +233,15 @@ It creates a list of command descriptors (\class{xXmlParser}).
 This form can be used to specify various filters on parameter attributes.
 Parameters matching the filters are shown in a separate frame. Values
 are updated on DIM update and can be modified interactively.
+\subsection{Command panel}
+\class{xPanelCommand} extending \class{JPanel}.\\
+Is rebuilt from scratch by \class{xDesktop} whenever the DIM service list has been updated.\\
+This panel is split into a right and a left part. On the left, there is the command tree,
+on the right the argument prompter panel for the currently selected command.
+The panel gets the list of commands (\class{xDimCommand}) from the DIM browser (\class{xDimBrowser}).
+The list of command descriptors (\class{xXmlParser}) is copied in \class{xDesktop} from \class{xPanelParameter} to
+\class{xPanelCommand} and the \class{xXmlParser} objects are added to the
+\class{xDimCommand} objects they belong to.
 \subsection{Monitoring panels}
 These panels are very similar to \class{xPanelGraphics} but have additional
 functionality. 
@@ -279,7 +280,7 @@ Default \verba{DabcLaunch.xml}.
 Values of \mbs\ launch panel. Saved by button in panel. \\
 Default \verba{MbsLaunch.xml}.
 \item [\keyw{DABC\_RECORD\_ATTRIBUTES}]: 
-Attributes of rate and histogram panels. Saved by main save button. \\
+Attributes of records. Saved by main save button. \\
 Default \verba{Records.xml}.
 \item [\keyw{DABC\_PARAMETER\_FILTER}]: 
 Values of parameter filter panel. Saved by main save button. \\
@@ -387,7 +388,7 @@ is the \class{xDimBrowser}. It provides the functions:
 \class{xPanelMeter}, \class{xPanelState}, \class{xPanelInfo} and \class{xPanelHisto}.
 There are protected functions to get then the references to these panels.
 \item [\func{protected initServices(String wildcard)}]: 
-Get list of available services from DIM name server
+Get list of available services from DIM name server\\
 \keyw{DIM\_DNS\_NODE}. Create vectors of alphabetically ordered parameters 
 (\class{xDimParameter}) and commands (\class{xDimCommand}) and their interfaces, respectively.
 The references of the graphics panels are passed to the parameter objects.
@@ -501,7 +502,8 @@ Variable is ignored if class name is given as argument.
 The classes must implement some interfaces:
 \bdes
 \item [\class{xiUserPanel}]: needed by \gui.
-\item [\class{xiUserInfoHandler}]: needed to register to DIM services.
+\item [\class{xiUserInfoHandler}]: needed to register to DIM services. This could be a separate
+class.
 \item [\class{xiUserCommand}]: optional to specify command formats.
 \edes
 One can connect call back functions to parameters, 
@@ -514,6 +516,7 @@ encoded in XML style or argument list style.
 There is for convenience another subclass of \class{xInternalFrame} and \class{JInternalFrame} for easy formatting from one to four panels 
 (\class{JPanel} or \class{xPanelGraphics}) inside,
 \class{xInternalCompound}.
+
 Examples of such application panel can be found on directory \verba{application}.
 \subsection{Java Interfaces to be implemented by application}
 \subsubsection{Interface \class{xiUserPanel}}
@@ -526,6 +529,8 @@ Must return a header/name text after instantiation.
 Must return a tooltip text after instantiation.
 \item \decl{ImageIcon getIcon();}\\
 Must return an icon after instantiation.
+\item \decl{xLayout checkLayout();}\\
+Must return the panel layout after initialization.
 \item \decl{xiUserCommand getUserCommand();}\\
 Must return an object implementing \class{xiUserCommand}, or null. See below.
 \item \decl{void setDimServices(xiDimBrowser b);}\\
@@ -707,14 +712,17 @@ public class MiniPanel  extends xPanelPrompt
 \end{verbatim}
 }
 The constructor must not have arguments! Icon, name and tooltip have to be
-passed by getter function to the caller (the GUI desktop).
+passed by getter function to the caller (the GUI desktop). Layout is mandatory.
+Declarations have been masked out in the code snippets.
 {\small \begin{verbatim}
 public MiniPanel(){
    super("MyPanel");
    menuIcon=xSet.getIcon("Myicon.png");
    name=new String("MyPanel");
-   franame=new String("MyGraphics");
    tooltip=new String("Launch my panel");
+   layout = xSet.getLayout(name);
+   if(layout == null)
+   layout=xSet.createLayout(name,new Point(100,200), new Dimension(100,75),1,true);
 }
 \end{verbatim}
 }
@@ -724,6 +732,7 @@ The simple functions to be implemented for the interface \class{xiUserPanel}
 public String getToolTip(){return tooltip;}
 public String getHeader(){return name;}
 public ImageIcon getIcon(){return menuIcon;}
+public xLayout checkLayout(){return layout;}
 public xiUserCommand getUserCommand(){return null;}
 \end{verbatim}
 }
@@ -741,8 +750,11 @@ addButton("Display","Display info",graphIcon,this);
 state = new xState("ServerState", xState.XSIZE,xState.YSIZE);
 stapan=new xPanelGraphics(new Dimension(160,50),1); // one column of states
 metpan=new xPanelGraphics(new Dimension(410,14),1); // one columns of meters
-layout=xSet.createLayout(name,new Point(400,400), new Dimension(100,75),1,true);
-frame=new xInternalCompound(franame,graphIcon,0,layout,xSet.blueD());
+franame=new String("MyGraphics");
+fralayout = xSet.getLayout(franame);
+if(fralayout == null)
+fralayout=xSet.createLayout(franame,new Point(400,400), new Dimension(100,75),1,true);
+frame=new xInternalCompound(franame,graphIcon,0,fralayout,xSet.blueD());
 }
 \end{verbatim}
 }
@@ -768,7 +780,7 @@ if ("prompt".equals(cmd)) {
     state.redraw(0,"Gray","Dead",true);
 }} else if ("Display".equals(cmd)) {
   if(!desk.findFrame(franame)){
-    frame=new xInternalCompound(franame,graphIcon,0,layout,xSet.blueD());
+    frame=new xInternalCompound(franame,graphIcon,0,fralayout,xSet.blueD());
     frame.rebuild(stapan, metpan); 
     desk.addFrame(frame); 
 }}
@@ -780,7 +792,7 @@ if ("prompt".equals(cmd)) {
 \caption{Ministates.}
 \label{fig:prog-ministates} % give it a name for references
 \end{figure}
-With the checker we toggle the \class{xState} state.
+With the checker we toggle the \class{xState} state {\keyw{ServerState} in screen shot).
 The \class{xiDimParameter} param to be toggled we will find in the next.
 To get access to DIM parameters we must implement \func{setDimServices}.
 We suggest that there is a parameter \param{*Setup\_File*} which has a string value.
@@ -845,5 +857,12 @@ if(state != null) state.redraw(
 }
 \end{verbatim}
 }
+\subsection{Store/restore layout}
+It is absolutely necessary to save and restore window layouts to be able to see the GUI after
+restart as before. This is done through \class{xLayout} objects which are managed centrally.
+They keep information about frame position, size, visibility, and the number of columns
+in graphics panels. All existing layouts are stored with the save setup button, and restored
+on startup.
+
 
 
