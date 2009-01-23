@@ -74,12 +74,15 @@ classes: \
 	$(PACKAGE)/xDesktop.class \
 	$(PACKAGE)/xGui.class \
 	application/ColorTest.class \
+	application/MiniPanel.class \
 	application/MbsPanel.class \
 	application/RocPanel.class \
 	application/UserPanel.class
 	
 application/ColorTest.class: application/ColorTest.java
 	javac $(FLAGSA) application/ColorTest.java
+application/MiniPanel.class: application/MiniPanel.java
+	javac $(FLAGSA) application/MiniPanel.java
 application/MbsPanel.class: application/MbsPanel.java
 	javac $(FLAGSA) application/MbsPanel.java
 application/RocPanel.class: application/RocPanel.java
