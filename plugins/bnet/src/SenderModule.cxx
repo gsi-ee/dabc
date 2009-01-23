@@ -34,7 +34,7 @@ bnet::SenderModule::SenderModule(const char* name, dabc::Command* cmd) :
 
    fCtrlPool = CreatePoolHandle(bnet::ControlPoolName);
    fCtrlBufSize = GetCfgInt(xmlCtrlBuffer, 2*1024, cmd);
-   fCtrlPort = CreatePort("CtrlPort", fCtrlPool, CtrlInpQueueSize, CtrlOutQueueSize);
+   fCtrlPort = CreateIOPort("CtrlPort", fCtrlPool, CtrlInpQueueSize, CtrlOutQueueSize);
    fCtrlOutTime = 0.;
 
    CreateRateParameter("DataRate", false, 1., "Input", "");

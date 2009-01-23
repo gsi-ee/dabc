@@ -86,7 +86,7 @@ namespace dabc {
 
          unsigned NumInputs() const { return fInputPorts.size(); }
          unsigned NumOutputs() const { return fOutputPorts.size(); }
-         unsigned NumPorts() const { return fPorts.size(); }
+         unsigned NumIOPorts() const { return fPorts.size(); }
 
          Port* Input(unsigned n = 0) const { return n < fInputPorts.size() ? GetPortItem(fInputPorts[n]) : 0; }
          Port* Output(unsigned n = 0) const { return n < fOutputPorts.size() ? GetPortItem(fOutputPorts[n]) : 0; }
@@ -147,10 +147,10 @@ namespace dabc {
          PoolHandle* CreatePoolHandle(const char* poolname, BufferSize_t size = 0, BufferNum_t number = 0, BufferNum_t increment = 0);
 
          Port* CreateInput(const char* name, PoolHandle* pool = 0, unsigned queue = 10, BufferSize_t headersize = 0)
-           { return CreatePort(name, pool, queue, 0, headersize); }
+           { return CreateIOPort(name, pool, queue, 0, headersize); }
          Port* CreateOutput(const char* name, PoolHandle* pool = 0, unsigned queue = 10, BufferSize_t headersize = 0)
-           { return CreatePort(name, pool, 0, queue, headersize); }
-         Port* CreatePort(const char* name, PoolHandle* pool = 0, unsigned recvqueue = 10, unsigned sendqueue = 10, BufferSize_t headersize = 0);
+           { return CreateIOPort(name, pool, 0, queue, headersize); }
+         Port* CreateIOPort(const char* name, PoolHandle* pool = 0, unsigned recvqueue = 10, unsigned sendqueue = 10, BufferSize_t headersize = 0);
 
          CommandDefinition* NewCmdDef(const char* cmdname);
 

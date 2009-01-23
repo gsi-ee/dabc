@@ -15,14 +15,36 @@ and the \strong{Application} that is responsible for the node set-up and run con
 A \strong{Factory} pattern is used to introduce new classes to the framework and let them
 be available by name at runtime.
 
+
+\section{Memory pools}
+
+\subsection{Zero-copy concept}
+
+\subsection{Buffer}
+
+References memory from memory pool.
+ 
+List of references (gather lists).
+
+Type is for buffer data identification.
+
+Header for small portion of user specific data, copied during transfer.   
+
+
+\subsection{Pointer}
+
+Seamless access to data from buffer - copy/move/shift operations. 
+
+
+
 \section{Modules}
 
 \dabc~ provides \class{dabc::Module} class, which plays role of data processing entity in framework. 
-This class provides organization of necessary components like pool handles, ports, parameters, timers.
+In this class necessary components like pool handles, ports, parameters, timers are organised.
 Class \class{dabc::Module} has two subclasses - \class{dabc::ModuleSync} and \class{dabc::ModuleAsync},
 which provides two different paradigms of data processing: within explicit main loop and via event processing respectively.
-Before discuss these two kinds of modules, lets consider components, which can be used with any type 
-of the module.  
+Before discuss these two kinds of modules, lets consider components, which can be used with both types 
+of the module.
 
 
 \subsection{Pool handles}
@@ -32,13 +54,50 @@ By creating pool handle with method \func{CreatePoolHandle}, module declares tha
 wants to use buffers from specified (by name) memory pool. 
 More than one memory handle can be used in one module. 
 Pool handle can be accessed with method \func{dabc::Module::FindPool} via name or
- with method \func{dabc::Module::Pool} via handle number (started from 0).     
+with method \func{dabc::Module::Pool} via handle number (started from 0).
+
+When pool with given name not exists, it will be created automatically at the 
+time of first request. In this case plays a role buffer size and number of buffers,
+which are specified in \func{CreatePoolHandle} call. 
+
 
 \subsection{Ports}
 
+Class \class{dabc::Port} is the only legal way to transport buffers from/to the module.
+Class \class{dabc::Module} provides following methods for working with ports:
+
+\begin{tabular}{|l|l|ll|l|}
+   \hline
+kind &  Create  & Count & Access & Search \\
+   \hline
+input   & \func{CreateInput(name, ...)} & \func{NumInputs()} & \func{Input(unsigned)} & \func{InputNumber()} \\
+output  & \func{CreateOutput(name, ...)} & \func{NumOutputs()} & \func{Output(unsigned)} & \func{OutputNumber()} \\
+inp/out  & \func{CreateIOPort(name, ...)} & \func{NumIOPorts()} & \func{IOPort(unsigned)} & \func{IOPortNumber()} \\
+   \hline
+\end{tabular}
+
+Port usually should be created in module constructor.
+As first argument in creation methods unique port name should be specified.
+As second argument, pool handle should be
+specified - it defines pool where necessary memory can be fetched for transports, 
+associated with the port. Length of input or (and) output queue defines how many
+buffers can be kept in correspondent queue. One also can specify size of user header,
+which is expected to be transported over the port - it is important for further transport configurations.    
+
+Any kind of port can be found by name with \func{FindPort()} method.
+But this is not the fastest way to work with ports, while string search is not
+very efficient. 
+One better should use in code methods like func{NumInputs()} and \func{Input(unsigned)} (for input ports),
+where port sequence number is used. 
+
+Class \class{dabc::Port} provides methods \func{Send()} and \func{Recv()} to send or receive buffers. 
+While these are non-blocking methods, one should use \func{CanSend()} and \func{CanRecv()} methods 
+before one can call transfer operations.
 
 
 \subsection{Timers and timeouts}
+
+
 
 
 \subsection{Parameters and configurations}

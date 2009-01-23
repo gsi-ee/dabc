@@ -378,7 +378,7 @@ dabc::Port* dabc::Module::GetPortItem(unsigned id) const
    return item && (item->GetType()==mitPort) ? (Port*) item : 0;
 }
 
-dabc::Port* dabc::Module::CreatePort(const char* name, PoolHandle* handle, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize)
+dabc::Port* dabc::Module::CreateIOPort(const char* name, PoolHandle* handle, unsigned recvqueue, unsigned sendqueue, BufferSize_t headersize)
 {
    if ((recvqueue==0) && (sendqueue==0)) {
       EOUT(("Both receive and send queue length are zero - port %s not created", name));

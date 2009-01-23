@@ -23,7 +23,7 @@ bnet::GlobalDFCModule::GlobalDFCModule(const char* name, dabc::Command* cmd) :
    CreateTimer("HeartBeat", 0.1); // every 100 milisec one timer event
 
    for (int n=0;n<fCfgNumNodes;n++)
-     CreatePort(FORMAT(("Sender%d", n)), fPool, CtrlInpQueueSize, CtrlOutQueueSize);
+     CreateIOPort(FORMAT(("Sender%d", n)), fPool, CtrlInpQueueSize, CtrlOutQueueSize);
 
    fTargetCounter = 0;
 

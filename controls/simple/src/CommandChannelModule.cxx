@@ -21,7 +21,7 @@ dabc::CommandChannelModule::CommandChannelModule(int numnodes) :
    fCmdOutQueue = new CommandsQueue(false, false);
 
    for (int n=0;n<numnodes;n++)
-      CreatePort(FORMAT(("Port%d",n)), fPool, 5, 5, 0);
+      CreateIOPort(FORMAT(("Port%d",n)), fPool, 5, 5, 0);
 }
 
 dabc::CommandChannelModule::~CommandChannelModule()
