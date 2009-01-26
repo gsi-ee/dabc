@@ -15,7 +15,7 @@ Such approach is called zero-copy approach and fully supported by \dabc~.
 \subsection{Memory pool}
 
 Memory in \class{dabc::MemoryPool} organized in big blocks of contiguous virtual memory.
-Each block divided on several peaces (buffers) of the same size, size of each peace is a power of 2.
+Each block divided on peaces (buffers) of the same size, size of each peace is a power of 2.
 Memory pool can has several memory blocks with different size of buffers.
 
 Usually memory pool has fixed structure - means memory allocated once and will not
@@ -27,13 +27,17 @@ memory pool will allocate new blocks in case when there is no more buffers avail
 Each buffer in memory pool has 32-bit reference counter - it counts how many references
 exists to this memory region.   
 
+User can request new buffer from memory pool with \func{TakeBuffer()} method. 
+It returns \class{dabc::Buffer} instance with reference on the buffer of specified size.
+To release buffer, one should call \func{dabc::Buffer::Release()} static method.  
+ 
 
 \subsection{Buffer}
 
-Reference is implemented via \class{dabc::Buffer} class. 
-It contains list of segments (gather list) to different regions from the memory pool.
+In general case \class{dabc::Buffer} contains list of segments (gather list) to different 
+regions from the memory pool.
 Segment (represented by \class{dabc::MemSegment}) contains unique buffer id, pointer
-on segment begin and size of segment. In most common case \class{dabc::Buffer} contains 
+on segment begin and size of segment. Usually \class{dabc::Buffer} contains 
 just one segment, which fully covers complete buffer from memory pool (for instance, 
 when new buffer requested from the memory pool). Methods \func{NumSegments()} and
 \func{Segment(unsigned)} provides access to list of segments. One can also directly access
@@ -55,28 +59,24 @@ void UserModule::ProcessOutputEvent(dabc::Port* port)
 
 One can always create reference to the same data, calling \func{MakeReference()} method.
 This increments reference counter for all segments and returns pointer on
-other \class{dabc::Buffer} instance with the same list of segments. This can be used,
-when one wants to send same data over several ports - one just make as many reference 
-as required and send them to all destinations independently:  
+other \class{dabc::Buffer} instance with the same list of segments. This method used
+when same data should be send over several ports - one just make as many reference 
+as required and send them to all destinations independently without making copy of data.
+For instance, simplified version of \func{dabc::Module::SendToAllOutputs} will look like:  
 
 \begin{small}
 \begin{verbatim}     
-#include "dabc/Buffer.h"
-
-void UserModule::ProcessTimerEvent(dabc::Timer*)
+void dabc::Module::SendToAllOutputs(dabc::Buffer* buf)
 {
-   dabc::Buffer* buf = Pool()->TakeBuffer(2048);
-   memset(buf->GetDataLocation(), 0, buf->GetDataSize());
-   for(unsigned n=1;n<NumOutputs();n++)
+   for(unsigned n=0;n<NumOutputs();n++)
       Output(n)->Send(buf->MakeReference());
-   Output(0)->Send(buf);
+   dabc::Buffer::Release(buf);
 }
 \end{verbatim}     
 \end{small}
 
 
-
-\class{dabc::Buffer} object has 32-bit type identifier, which is can be set via
+\class{dabc::Buffer} object has 32-bit type identifier, which can be set via
 \func{SetTypeId()} method and retrieved with \func{GetTypeId()} method.
 Its main aim - identify type of buffer content. Value of   
 identifier is application specific - for instance, mbs plugin defines its own type,
@@ -86,11 +86,12 @@ Each \class{dabc::Buffer} can be supplied with additional header. This is portio
 memory, which is allocated and managed by pool separately from main memory and 
 in generally \strong{should be} smaller than main buffer memory. 
 Main idea to use buffer header is to add user-specific
-information to already existing buffer without changing structure of buffer itself.
+information to already existing buffer without changing structure of buffer itself
+(even not touch buffer id). 
 Header size can be set by \func{SetHeaderSize()} method, pointer to header can be
 obtained by \func{GetHeader()} method.
 Main difference between header and the main memory - header content will be copied by 
-the transport implementation when send via network.  
+the transport implementation when send via network. 
 
 
 \subsection{Pointer}
@@ -100,12 +101,38 @@ segmented data, which is referenced by \class{dabc::Buffer} object.
 Using \class{dabc::Pointer}, one should not care how many segments 
 referenced by buffer and how big they are. One can use following methods:
 \bbul
-\item[\func{reset()}]  set pointer to \class{dabc::Buffer}, \class{dabc::Pointer} or just simple memory region   
-\item[\func{ptr()}]   current memory pointer
-\item[\func{shift()}]  shift pointer   
+\item[\func{Pointer()} or \func{reset()}]  reset pointer to \class{dabc::Buffer}, \class{dabc::Pointer} or just simple memory region   
+\item[\func{ptr()} or \func{operator()}]   current memory pointer
+\item[\func{rawsize()}]   size of contiguous memory from current pointer position  
+\item[\func{fullsize()}]  size of full memory from current pointer position
+\item[\func{shift()}]  shift pointer    
 \item[\func{copyfrom()}]  set pointed memory from \class{dabc::Pointer} or just memory region
 \item[\func{copyto()}]  copy pointed memory into specified memory region
 \ebul   
+
+Example of pointer usage:
+
+\begin{small}
+\begin{verbatim}     
+#include "dabc/Buffer.h"
+#include "dabc/Pointer.h"
+
+void UserModule::ProcessOutputEvent(dabc::Port* port)
+{
+   if (!Input(0)->CanRecv()) return;
+   dabc::Buffer* buf = Input(0)->Recv();
+   dabc::Pointer ptr(buf);
+   uint32_t v = 0; 
+   while (ptr.fullsize()>0) {
+      ptr.copyfrom(&v, sizeof(v));
+      ptr.shift(sizeof(v));
+      v++;
+   }
+   Output(0)->Send(buf);
+}
+\end{verbatim}     
+\end{small}
+
 
 
 \subsection{Buffer guard}
@@ -134,19 +161,63 @@ in case of any exception, which may not handled correctly by user.
 
 \subsection{Allocation}
 
-Pool can be allocated explicitly in the initialization part of application
-or memory pool can be created automatically at a time, when user first time 
-try to access it via module handle. 
+There are several methods, how memory pool can be created:
+\bbul
+\item Automatically, when user first time try to access it via pool handle 
+\item using \func{dabc::Manager::CreateMemoryPool()} method
+\item using \comm{dabc::CmdCreatePool} command
+\ebul
 
-There is method \func{dabc::Manager::CreateMemoryPool()}, which allow to 
-create memory pool with specified number of buffers and  
- 
-   
+Automatic creation is usefull for simple applications with few modules.
+In this case parameters of pool handles (size and number of buffers) are used. 
 
-Pool can be configured to deliver buffers of different size. 
+But in many situations it is good to create memory pool explicitly,
+setting all its parameters directly or via configuration file.
+Typically memory pool is created by user application class in 
+method \func{CreateAppModules()}, called by state change command \strong{DoConfigure}.
+In simple case:
 
+\begin{small}
+\begin{verbatim}     
+bool UserApplication::CreateAppModules()
+{
+   ...
+   dabc::mgr()->CreateMemoryPool("WorkPool", 8192, 100);
+   ...
+}
+\end{verbatim}     
+\end{small}
 
+One can call \func{CreateMemoryPool()} method several times to create 
+block of memory for different buffers size. As alternative, one can create and 
+configure \comm{dabc::CmdCreateMemoryPool}, where all possible settings can be 
+done via following static methods:
+\bbul
+\item[\func{AddMem()}] add configuration for specified buffer size 
+\item[\func{AddRef()}] add configuration for number of references and header sizes 
+\item[\func{AddCfg()}] set generic configuratio like cleanup timeout or size limit 
+\ebul
 
+For instance, one can do following:
+
+\begin{small}
+\begin{verbatim}     
+bool UserApplication::CreateAppModules()
+{
+   ...
+   dabc::Command* cmd = new dabc::CmdCreateMemoryPool("WorkPool");
+   dabc::CmdCreateMemoryPool::AddMem(cmd, 8192, 100);
+   dabc::CmdCreateMemoryPool::AddMem(cmd, 2048, 500);
+   dabc::CmdCreateMemoryPool::AddRef(cmd, 2048, 2000);
+   dabc::CmdCreateMemoryPool::AddCfg(cmd, true); // set fixed layout
+   dabc::mgr()->Execute(cmd);
+   ...
+}
+\end{verbatim}     
+\end{small}
+
+All parameters, configured for the command, can be setup in configuration file.
+In this case one should just call dabc::mgr()->CreateMemoryPool("WorkPool").
 
 
 \section{Threads organization}
@@ -155,9 +226,11 @@ Pool can be configured to deliver buffers of different size.
 
 \subsection{Processor}
 
+\subsection{Mutex usage}
 
 
 \section{Commands execution}
 
+\subsection{Command receiver}
 
-\section{Parameters}
+\subsection{Command client}
