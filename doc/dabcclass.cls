@@ -230,6 +230,20 @@
 \newcommand{\param}[1]{{\sf #1}}
 \newcommand{\comm}[1]{{\sf #1}}
 
+\newcommand{\figpng}[5]{
+\begin{figure}[#3]
+\centering\includegraphics[angle=#4,width=#5\textwidth]{#1.png} % png file
+\caption{#2}
+\label{fig:#1} % give it a name for references
+\end{figure}
+}
+\newcommand{\figpdf}[5]{
+\begin{figure}[#3]
+\centering\includegraphics[angle=#4,width=#5\textwidth]{#1.pdf} % pdf file
+\caption{#2}
+\label{fig:#1} % give it a name for references
+\end{figure}
+}
 % compact lists etc
 % -----------------------------------------------------------------
 \newcommand{\bbul}{\begin{compactitem}[$\bullet$]}
