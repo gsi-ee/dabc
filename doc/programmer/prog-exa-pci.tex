@@ -192,7 +192,7 @@ of \class{pci::BoardDevice}.
 
 \item[\em bool WriteBuffer(dabc::Buffer* buf)] :
 Write content of \func{buf} to the PCI region 
-as set for the \class{pci::BoardDevice}
+as set for the \class{BoardDevice}
 with \func{SetWriteBuffer()}, or \class{CommandSetPCIWriteRegion}, resp.
 This is a pure synchronous method, i.~e.~ it will start the DMA
 transfer and return no sooner than it's completed.
@@ -213,25 +213,63 @@ to rebuild the scatter-gather mappings for each buffer of the pool.
 
 \subsection{abb::Device}
 This subclass of \class{pci::BoardDevice} adds some functionality that is
-rather specific to the \ABB hardware and the test environment.
+rather specific to the \ABB~ hardware and the test environment.
 
 
 \begin{compactenum} 
 
-\item It Exports \class{Parameters} for the \strong{board configuration}:
-here list of paramteter examples
-
 \item The constructor instantiates the \class{mprace::Board} component for the
-\ABB functionalities. Additionally, a DMA engine component
+\ABB~ functionalities. Additionally, a DMA engine component
 \class{mprace::DMAEngineWG} is applied for all DMA specific actions.
 
 \item It implements the actual asynchronous DMA by overriding 
 methods \func{ReadPCIStart()} and \func{ReadPCIComplete()}.
 The base class \class{pci::BoardDevice}
-can provide the synchronous DMA only, because
-the generic \class{Board} interface of the \class{mprace::}
-library does not cover asynchronous features.
+can provide synchronous DMA only, because
+the generic \class{mprace::Board} interface 
+does not cover asynchronous features.
 These are handled by the \class{DMAEngineWG} component.
+
+\item  The constructor uses several \strong{configuration parameters}:
+\begin{verbatim} 
+
+unsigned int devicenum = GetCfgInt(ABB_PAR_BOARDNUM, 0, cmd);
+unsigned int bar = GetCfgInt(ABB_PAR_BAR, 1, cmd);
+unsigned int addr = GetCfgInt(ABB_PAR_ADDRESS, (0x8000 >> 2), cmd);
+unsigned int size = GetCfgInt(ABB_PAR_LENGTH, 8192, cmd);
+
+\end{verbatim}
+The parameter names are handled by string definitions in 
+\decl{abb/Factory.h}:
+\begin{verbatim}
+
+#define ABB_PAR_BOARDNUM    "ABB_BoardNumber"
+#define ABB_PAR_BAR         "ABB_ReadoutBAR"
+#define ABB_PAR_ADDRESS     "ABB_ReadoutAddress"
+#define ABB_PAR_LENGTH      "ABB_ReadoutLength"
+
+\end{verbatim}
+
+The \func{GetCfgInt()} will look for a parameter of the specified name
+already existing in the system, e.~g.~ if the \class{Application} 
+object has defined such.
+If not, a \class{dabc::Parameter} of that name will be created and exported
+to the control system. If the configuration file
+specifies a value for this parameter, it will be set; otherwise, the
+default value (second argument of \func{GetCfgInt()}) is set.
+
+If the constructor gets a command object \func{cmd} 
+as argument containing a parameter of the specified name,
+this command's parameter value will override all other values
+for this parameter defined elsewhere in the system. 
+The user may pass such a \func{cmd} to the
+\class{abb::Device} either as third argument of the manager factory method 
+\func{CreateDevice()}; or by means of a 
+\class{dabc::CmdCreateDevice} object which is invoked by
+\func{Execute()} of the manager. This is useful if the device is to
+be tested without any configuration or control system, as shown in the
+examples of section \ref{prog_exapci_simpletest}.
+
 
 \item It provides  \strong{pseudo event data} for the Bnet test example in the 
 received DMA buffers: 
@@ -243,50 +281,363 @@ at the end of each DAQ run.
 
 \end{compactenum} 
 
+
+
+
 \subsection{abb::ReadoutModule}
-Subclass of \class{dabc::ModuleAsync}; generic implementation of a readout module to use the \class{pci::BoardDevice}.
+Subclass of \class{dabc::ModuleAsync}; generic implementation of a readout module to use the \class{BoardDevice}.
 
 \begin{compactenum} 
-\item Creates the memory pool which is used for DMA buffers in the \class{PCIBoardDevice}; this pool is propagated to the device via the \class{PCITransport} when module is connected, since device will use the pool associated with the connection port.
+\item It creates the memory pool which is used for DMA buffers in the \class{pci::BoardDevice}; this pool is propagated to the device via the \class{pci::Transport} when module is connected, since device will use the pool associated with the connection port.
+
 \item Module runs either in standalone mode (one input port, no output) for testing; or in regular mode (one input port, one output port)
-\item \func{ProcessUserEvent()} defines the module action for any dabc events, e.g. input port has new buffer. In standalone mode, received buffer is just released. In regular mode, buffer is send to the output port.
+
+\item \func{ProcessUserEvent()} defines the module action for any \dabc~ events, 
+e.~g.~ input port has new buffer. 
+In standalone mode, the received buffer is just released. 
+In regular mode, buffer is send to the output port.
+
+\item It has a \class{dabc::Ratemeter} object which is updated
+for each packet arriving in \func{ProcessUserEvent()}. The average data 
+throughput rate is then printed out to the terminal 
+on stopping the module in \func{AfterModuleStop()}.
+Alternatively, by means of method \func{CreateRateParameter()}
+it also defines a rate parameter "DMAReadout" that is linked to the
+input port "Input" and may export the current data rate to the
+control system.
+
+ 
+
 \end{compactenum} 
 
 \subsection{abb::WriterModule}
-Subclass of \class{dabc::ModuleSync}; generic implementation of a writer module to use the \class{pci::BoardDevice}.
+Subclass of \class{dabc::ModuleSync}; generic implementation of a writer module to use the \class{BoardDevice}.
 \begin{compactenum} 
 
-\item Creates the memory pool which is used for DMA buffers in the \class{PCIBoardDevice}; this pool is propagated to the device via the \class{PCITransport} when module is connected, since device will use the pool associated with the connection port.
+\item Creates the memory pool which is used for DMA buffers in the \class{pci::BoardDevice}; this pool is propagated to the device via the \class{pci::Transport} when module is connected, since device will use the pool associated with the connection port.
+
 \item Module runs either in standalone mode (one output port, no input) for testing; or in regular mode (one input port, one output port)
+
 \item \func{MainLoop()} defines the module action. In standalone mode, a new buffer is taken from the memory pool and send to the output port. In regular mode, the send buffer is taken from the input port.
+
+\item It has a \class{dabc::Ratemeter} object which is updated
+for each packet arriving in \func{MainLoop()}. The average data 
+throughput rate is then printed out to the terminal 
+on stopping the module in \func{AfterModuleStop()}.
+Alternatively, by means of method \func{CreateRateParameter()}
+it also defines a rate parameter "DMAWriter" that is linked to the
+input port "Output" and may export the current data rate to the
+control system.
 
 \end{compactenum} 
 
 \subsection{abb::Factory}
-Subclass of \class{dabc::Factory}. Generic plugin to utilize ABB classes in a set up:
+A subclass of \class{dabc::Factory} to plug in the \ABB~ classes:
 \begin{compactenum} 
 
-\item Implements \func{CreateDevice()} for the \class{abb::Device}. Third argument of this factory method is \class{dabc::Command}, containing initial setup parameters of the device.
-\item Implements \func{CreateModule()} for the \class{abb::ReadoutModule} and the \class{abb::WriterModule}. Third argument of this factory method is \class{dabc::Command}, containing initial setup parameters of the module.
-\item Factory is created automatically as static (singleton) instance on loading the \verba{libDabcAbb.so}.
+\item Implements \func{CreateDevice()} for the \class{abb::Device}. The third argument 
+of this factory method is a \class{dabc::Command} that may contain optional setup parameters of the device.
+
+\item Implements \func{CreateModule()} for the \class{abb::ReadoutModule} and the \class{abb::WriterModule}. Third argument of this factory method is a \class{dabc::Command}, containing optional setup parameters of the module.
+
+\item The factory is created automatically as static (singleton) instance on loading the \verba{libDabcAbb.so}.
 
 \end{compactenum} 
 
-%See Class Diagram of dabc PCI classes.
+
+\section{Simple read and write tests}
+\label{prog_exapci_simpletest}
+The functionality of the \ABB~ can be tested with several simple
+executables which are provided in the \decl{test} subfolder of the
+\decl{abb} plugin package.
+
+\subsection{DMA Read from the board}
+\label{prog_exapci_simpletest_read}
+The example code \verba{abb\_test\_read.cxx} shows in a
+simple \func{main()} function how to utilize the
+\class{abb::} classes for a plain readout with DMA.
+\begin{compactenum} 
+
+\item It applies the \class{dabc::StandaloneManager} as most simple
+\class{Manager} implementation.
+\begin{verbatim}
+
+int nodeid=0; // this node id
+int numnodes=1; // number of nodes in cluster
+...
+dabc::StandaloneManager manager(0, nodeid, numnodes);
+\end{verbatim}
+
+\item The \class{abb::Device} is created by means of a command
+\class{CmdCreateDevice} which is passed to the manager. The 
+command wraps also some initial
+parameters for the device which are then evaluated in 
+method \func{CreateDevice()} of \class{abb::Factory}:
+
+\begin{verbatim}
+#define READADDRESS  (0x8000 >> 2)
+#define READSIZE 16*1024
+...
+std::string devname="ABB";
+dabc::Command* dcom= new dabc::CmdCreateDevice("abb::Device", 
+                                                devname.c_str());
+// arguments: (class name, device name)
+// set additional parameters for abb device here:
+dcom->SetInt(ABB_PAR_BOARDNUM, BOARD_NUM);
+dcom->SetInt(ABB_PAR_BAR, 1);
+dcom->SetInt(ABB_PAR_ADDRESS, READADDRESS);
+dcom->SetInt(ABB_PAR_LENGTH, readsize);
+res=manager.Execute(dcom);
+DOUT1(("CreateDevice = %s", DBOOL(res)));
+\end{verbatim}
+
+Here the parameter names (e.~g.~ {\tt ABB\_PAR\_ADDRESS}) use
+the string definitions as set in \decl{abb/Factory.h}. The
+parameter values are defined locally (e.~g.~ {\tt READADDRESS});
+however, the DMA transfer size {\tt readsize} may be set by
+the executables's first command line parameter. 
+Boolean variable {\tt res} contains the result 
+of the command execution (\keyw{true} or \keyw{false}) which is
+printed as debut output to the terminal with the {\tt DOUT1()} macro. 
+
+\item It creates a \class{abb::ReadoutModule} by means of a command
+\class{CmdCreateModule} which is passed to the manager. The 
+command wraps also some initial
+parameters for the module which are then evaluated in 
+method \func{CreateModule()} of \class{abb::Factory}:
+
+\begin{verbatim}
+cmd = new dabc::CmdCreateModule("abb::ReadoutModule",
+                                "ABB_Readout", 
+                                "ReadoutThread");
+// arguments: (class name, module name, thread name)
+cmd->SetInt(ABB_COMPAR_BUFSIZE, readsize);
+cmd->SetInt(ABB_COMPAR_STALONE,1);
+cmd->SetInt(ABB_COMPAR_QLENGTH, 10);
+cmd->SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
+res=manager.Execute(cmd);
+DOUT1(("Create ABB readout module = %s", DBOOL(res)));
+\end{verbatim}
+
+Again the parameter names (e.~g.~ {\tt ABB\_COMPAR\_QLENGTH}) use
+common string definitions as set in \decl{abb/Factory.h}, 
+such as: 
+the size of the memory pool buffers {\tt ABB\_COMPAR\_BUFSIZE} which is
+set to the required DMA transfer size{\tt readsize};
+the standalone run mode of the module {\tt ABB\_COMPAR\_STALONE};
+the port queue length {\tt ABB\_COMPAR\_QLENGTH}; the name of
+the module's memory pool {\tt ABB\_COMPAR\_POOL}, which also. 
+
+\item The transport connection between the input port of the readout module and
+the \class{abb::Device} is established by a direct method call of the manager:
+\begin{verbatim}
+res = manager.CreateTransport("ABB_Readout/Input", devname.c_str());
+DOUT1(("Connected module to ABB device = %s", DBOOL(res)));
+\end{verbatim}  
+The manager will find the \ABB~ device instance by the string {\tt devname}
+and use its factory method \func{CreateTransport()} to instantiate a
+\class{pci::Transport} that will be connected to the port of name
+"ABB\_Readout/Input".
+
+\item The readout module processing 
+is started by name with a manager method:
+\begin{verbatim}
+manager.StartModule("ABB_Readout");
+DOUT1(("Started readout module...."));
+\end{verbatim}
+Then the main process waits for 5 seconds while the \dabc~ threads
+and the board DMA performs the data transfer. The module is stopped
+again then.
+\begin{verbatim}      
+sleep(5);
+manager.StopModule("ABB_Readout");
+DOUT1(("Stopped readout module."));
+\end{verbatim}
+After the module has stopped, its internal \class{dabc::Ratemeter}
+will print some average data rate values to the terminal.
+Finally, all objects are destroyed and the manager is
+cleaning up the process before the program ends:
+\begin{verbatim} 
+manager.CleanupManager();
+\end{verbatim}
+   
+\end{compactenum} 
+
+\subsection{DMA Write to the board}
+\label{prog_exapci_simpletest_write}
+The example code \verba{abb\_test\_write.cxx} shows in a
+simple \func{main()} function how to utilize the
+\class{abb::} classes to write data from the PC to the \ABB~ 
+with DMA. The code is very similar to the read example as described
+in the above section \ref{prog_exapci_simpletest_read}:
+
+\begin{compactenum} 
+
+\item It applies the \class{dabc::StandaloneManager} as most simple
+\class{Manager} implementation.
+
+\item The \class{abb::Device} is created by means of a command
+\class{CmdCreateDevice} which is passed to the manager. The 
+command contains the initial parameters for the device.
+The DMA transfer size {\tt readsize} may be set by
+the executables's first command line parameter
+(see section \ref{prog_exapci_simpletest_read} for code example).
+
+\item It creates a \class{abb::WriterModule} by means of a command
+\class{CmdCreateModule} which is passed to the manager. The 
+command contains the initial
+parameters for the module which are then evaluated in 
+method \func{CreateModule()} of \class{abb::Factory}:
+\begin{verbatim} 
+cmd = new dabc::CmdCreateModule("abb::WriterModule",
+                                "ABB_Sender", 
+                                "WriterThread");
+cmd->SetInt(ABB_COMPAR_BUFSIZE, readsize);
+cmd->SetInt(ABB_COMPAR_STALONE,1);
+cmd->SetInt(ABB_COMPAR_QLENGTH, 10);
+cmd->SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
+cmd->SetStr(ABB_PAR_DEVICE,devname.c_str());
+res = manager.Execute(cmd);
+DOUT1(("Create ABB writer module = %s", DBOOL(res)));
+\end{verbatim} 
+Again the parameter names are expressd by 
+common string definitions as set in \decl{abb/Factory.h}. 
+
+\item The transport connection between the output port of the writer module and
+the \class{abb::Device} is established by a direct method call of the manager:
+\begin{verbatim}
+res = manager.CreateTransport("ABB_Sender/Output", devname.c_str());
+DOUT1(("Connected module to ABB device = %s", DBOOL(res)));
+\end{verbatim}  
+
+\item The writer module's processing 
+is started with a manager method: \\
+{\tt manager.StartModule("ABB\_Sender")}.
+The main process waits 5 seconds while the \dabc~ threads
+and the board DMA perform the data transfer. The module is stopped
+again then. After the module has stopped, its internal \class{dabc::Ratemeter}
+will print some average data rate values to the terminal.
+Finally, the manager is cleaning up all objects
+and the program terminates.
 
 
-\section{Simple read and write test}
+\end{compactenum} 
+
+\subsection{Simultaneous DMA Read and Write}
+The example code \verba{abb\_test.cxx} shows in a
+simple \func{main()} function how to utilize the
+\class{abb::} classes to write data from the PC to the \ABB~ 
+in one DMA channel,  and simultaneously read data back from the board with another
+DMA channel. It applies the \class{abb::Device} both with
+a \class{abb::WriterModule} and a \class{abb::ReadoutModule}
+that run in different threads. So the code is a merger of the
+above examples \ref{prog_exapci_simpletest_read} and
+\ref{prog_exapci_simpletest_write}:
+
+\begin{compactenum} 
+
+\item It applies the \class{dabc::StandaloneManager} as most simple
+\class{Manager} implementation.
+
+\item The \class{abb::Device} is created by means of a command
+\class{CmdCreateDevice} which is passed to the manager. The 
+command contains the initial parameters for the device.
+The DMA transfer size {\tt readsize} (same for both directions) 
+may be set by the executables's first command line parameter
+(see section \ref{prog_exapci_simpletest_read} for code example).
+
+\item It creates a \class{abb::ReadoutModule} by means of a command
+\class{CmdCreateModule} which is passed to the manager
+(see section \ref{prog_exapci_simpletest_read} for code example).
+
+\item It creates a \class{abb::WriterModule} by means of a command
+\class{CmdCreateModule} which is passed to the manager
+(see section \ref{prog_exapci_simpletest_write} for code example).
+
+\item The transport connections of the \class{abb::Device} both with
+the input port of the reader module, and the output port of the writer module 
+are established by invoking method \func{CreateTransport()} of the manager
+(see sections \ref{prog_exapci_simpletest_read} and \ref{prog_exapci_simpletest_write}
+for comments on the code)
+
+\item Both modules are started with
+{\tt manager.StartModule("")}.
+The main process sleeps for 60 seconds during the DMA transfer, then
+it stops both modules again.
+After the modules have stopped, their internal \class{dabc::Ratemeter}
+instances will print some average data rate values to the terminal.
+Finally the manager is cleaned up and the program ends.
+
+\end{compactenum} 
+
+
 
 
 \section{Active Buffer Board with Bnet application}
-The \class{TestWorkerPlugin} of the bnet/test example was modified to optionally integrate ABB.
+\label{prog_exapci_bnet}
+The DAQ builder network (Bnet) example as described in section
+\ref{prog_exabnet_test} may optionally utilize the \ABB~
+as input for the Readout module. This is provided in
+class  \class{bnet::TestWorkerApplication} which implements
+the \class{bnet::WorkerApplication}: 
+The Bnet factory method 
+\begin{verbatim}
 
-\subsection{bnet::TestWorkerApplication}
-Subclass of \class{bnet::WorkerApplication}. This example has possibililty to utilize ABB classes in a bnet-set up.
+bool bnet::TestWorkerApplication::CreateReadout(const char* portname, 
+                                                int portnumber)
 
-\begin{compactenum} 
+\end{verbatim}
+will instantiate an \class{abb::Device}
+if the configuration parameter for the portnumber $p$ 
+("Input$p$Cfg", as delivered by \func{ReadoutPar(p)}) is set to "ABB".
+This \class{abb::Device} is connected  
+directly to the input port of the standard Bnet combiner module, as specified by
+the \func{portname} argument of the method:
 
-\item Registers parameters to configure the ABB. Note: The Parameter names are defined as string constants in \decl{AbbFactory.h}. These same names are used by \class{AbbFactory} methods to get the appropriate command parameters!
-\item Implements \func{CreateReadout()} with optional \class{AbbDevice}. May either use the \class{AbbDevice}, or still use the \class{TestGeneratorModule} of the example. This is switched by configuration parameter via the \func{ReadoutPar()} value (either "ABB", or anything else).Connects \class{AbbDevice} directly with the input port of the combiner module; we do not use \class{dabc::AbbReadoutModule} here (this is applied for standalone example \verba{abb\_test} only).
+\begin{verbatim}
+if(ReadoutPar(portnumber) == "ABB") {
+       const char* abbdevname = "ABBDevice";
+       fABBActive = dabc::mgr()->CreateDevice("abb::Device", 
+                                               abbdevname);
+       res = dabc::mgr()->CreateTransport(portname, abbdevname);
+       if (!res) EOUT(("Cannot create ABB transport"));
+   } 
+\end{verbatim}
 
-\end{compactenum} 
+Note that the \class{abb::ReadoutModule} is \strong{not used} here; 
+this is applied for the simple examples only, 
+see section \ref{prog_exapci_simpletest}). 
+
+Any other value of \func{ReadoutPar(p)}) will
+apply the \class{TestGeneratorModule} of the standard Bnet example. 
+
+The parameters for the \ABB~
+can be set in the XML configuration file, using the names as defined
+in \decl{abb/Factory.h}. This may look as follows:
+
+\begin{verbatim}
+...
+<Context host="node01" name="Worker2:42">
+  <Run>
+   <lib value="${DABCSYS}/lib/libpcidriver.so"/>          
+   <lib value="${DABCSYS}/lib/libmprace.so"/>
+   <lib value="${DABCSYS}/lib/libDabcAbb.so"/>          
+   <lib value="libBnetTest.so"/>
+ </Run> 
+ <Application class="bnet::TestWorker">
+   <NumReadouts value="1"/>
+   <Input0Cfg value="ABB"/>
+ </Application>        
+ <Device class="abb::Device">
+   <ABB_BoardNumber value="0"/>
+   <ABB_ReadoutBAR value="1"/> 
+   <ABB_ReadoutAddress value="8192"/>
+   <ABB_ReadoutLength value="16384"/>       
+</Context>
+...
+\end{verbatim}
+
+Note that the ABB plugin library \decl{libDabcAbb.so} must be loaded
+to instantiate the \class{abb::Factory} and apply its classes on the node.
+
+
