@@ -217,16 +217,83 @@ bool UserApplication::CreateAppModules()
 \end{small}
 
 All parameters, configured for the command, can be setup in configuration file.
-In this case one should just call dabc::mgr()->CreateMemoryPool("WorkPool").
+In this case one should just call dabc::mgr()->CreateMemoryPool("WorkPool"). 
 
 
 \section{Threads organization}
 
-\subsection{Thread}
+Class \class{dabc::WorkingThread} organizes working loop and performes execution of
+runnable jobs, represented by \class{dabc::WorkingProcessor} class.
 
-\subsection{Processor}
+
+\subsection{Working loop}
+
+Implementation of \class{dabc::WorkingThread} based on pthread library.
+ 
+Main task of \class{dabc::WorkingThread} is to wait for events (using \func{pthread\_cond\_wait()} function)
+and deliver events to correspondent processor. This functionality implemented 
+in \func{dabc::WorkingThread::MainLoop()}.
+ 
+Usually events are produced by calling \func{dabc::WorkingProcessor::FireEvent} 
+method - this method can be invoked from any thread. Events are queued and 
+pthread condition is fired in this case. Thread, waiting for condition is waked up and
+event will be delivered to the processor by calling  \func{dabc::WorkingProcessor::ProcessEvent()}
+virtual method. There any user-specific code can be implemented.
+
+Another task of \class{dabc::WorkingThread} - timeout handling. Some of processors 
+may require to be invoked not only by events, but also after specified time intervals.
+Calling of method \func{dabc::WorkingProcessor::ActivateTimeout()} informs thread, that after
+specified time interval thread should call \func{dabc::WorkingProcessor::ProcessTimeout()} method.  
+ 
+
+\subsection{Sockets handling}
+
+POSIX sockets library provides possibility to handle all sockets operations in 
+event-like manner, using \func{select()} function. Such approach was used in  
+\class{dabc::SocketThread} and \class{dabc::SocketProcessor} classes to provide
+possibility handle several sockets in parallel from single thread.
+
+With each \class{dabc::SocketProcessor} socket descriptor is associated, which can
+deliver events like: can read next portion of data from socket, 
+sending over socket will not blocked, socket is broken and so on.
+Main loop of \class{dabc::SocketThread} modified so that instead of pthread condition waiting 
+thread waits for next event from sockets.
+Handling of these events allows to run sending/receiving of data via socket 
+in non-blocking manner - means one can run several sockets operations in parallel.  
+
+At the same time \class{dabc::SocketThread} class allows to run normal jobs,
+implemented with base \class{dabc::WorkingProcessor} class. 
+It means, within socket thread one can mix sockets processors (like transports) 
+with normal processors (like modules).  
+
+Similar approach was used for support of InfiniBand verbs API in \dabc. 
+
 
 \subsection{Mutex usage}
+
+All methods of \class{dabc::WorkingThread} and \class{dabc::WorkingProcessor} are thread
+safe (excluding those started with underscore "\_" symbol). Therefore in
+user code one could avoid use of mutexes completely. Only when data must be shared between
+processors, runed in different threads, one should use mutexes. When mutex should be locked,
+it is better to use \class{dabc::LockGuard}. This class guarantees that mutex will be always unlocked
+when function scope is leaved. 
+
+For instance, if one has global static variable and mutex, assigned with it,
+one should implement setter method like this:
+\begin{small}
+\begin{verbatim}
+#include "dabc/threads.h"
+
+int GlobalVariable = 0;
+dabc::Mutex GlobalMutex;
+
+void SetGlobalVariable(int newvalue) 
+{
+   dabc::LockGuard guard(GlobalMutex);
+   GlobalVariable = newvalue;
+}
+\end{verbatim}     
+\end{small}
 
 
 \section{Commands execution}
