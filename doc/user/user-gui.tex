@@ -1,17 +1,170 @@
 [user/user-gui.tex]
 \section{GUI Guide lines}
 \section{GUI Panels}
+\figpng{user-gui-main-buttons}{Main buttons.}{htb}{0}{1.0}
+Fig. \ref{fig:user-gui-main-buttons} shows the the main menu of \dabc\ (minimal view).\\
+\icon{fileclose} Close\\
+\icon{control} Test, shell script\\
+\icon{savewin} Save settings\\
+\icon{dabcmbsicon} \dabc\ \mbs\ launcher\\
+\icon{dabcicon} \dabc\ launcher\\
+\icon{mbsicon} \mbs\ launcher\\
+\icon{browser}  Browser.\\
+\icon{comicon} Command.\\
+\icon{paramwin} Parameter table\\
+\icon{usericon} Parameter selection panel\\
+\icon{meterwin} Rate meter panel\\
+\icon{histowin} Histogram panel\\
+\icon{statewin} State panel\\
+\icon{infowin} Info panel\\
+\icon{logwin} Log panel\\
+The three launcher panels (\dabc, \mbs, combined \dabc\ and \mbs) are used depending on the
+application to be controlled. Eventually an application provides additional specific panels.
 \subsection{\dabc~ launch panel}
+\figpng{user-gui-pan-dabc}{DABC launcher.}{htb}{0}{0.6}
+Values from file {\tt DabcLaunch.xml}
+{\small \begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+<DabcLaunch>
+<DabcMaster prompt="DABC Master" value="node.xxx.de" />
+<DabcName prompt="DABC Name" value="Controller:41" />
+<DabcUserPath prompt="DABC user path" value="myWorkDir" />
+<DabcSystemPath prompt="DABC system path" value="/dabc" />
+<DabcSetup prompt="DABC setup file" value="SetupDabc.xml" />
+<DabcScript prompt="DABC Script" value="ps" />
+<DabcServers prompt="%Number of needed DIM servers%" value="5" />
+</DabcLaunch>
+\end{verbatim}
+\bdes
+\item[DabcMaster:] Node where the master controller shall be started.
+Can be one of the worker nodes.
+\item[DabcName:] A unique name inside \dabc\ of the system.
+\item[DabcUserPath:] User working directory. The GUI need not to have
+access to the filesystem. 
+\item[DabcSystemPath:] Path where the \dabc\ is installed. GUI needs no access to this path.
+\item[DabcSetup:] Setup file name.
+\item[DabcScript:] Command to be executed in an ssh at the master node.
+\item[DabcServers:] Number of workers and controllers. This information
+is minimum for the GUI to know when all \dabc\ nodes are up. The GUI waits until
+this number of DIM servers is up and running.
+\edes
 \subsection{\mbs~ launch panel}
+\figpng{user-gui-pan-mbs}{MBS launcher.}{htb}{0}{0.6}
+Values from file {\tt MbsLaunch.xml}
+{\small \begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+<MbsLaunch>
+<MbsMaster prompt="MBS Master" value="node-xx" />
+<MbsUserPath prompt="MBS User path" value="myMbsDir" />
+<MbsSystemPath prompt="MBS system path" value="/mbs/v51" />
+<MbsScript prompt="MBS Script" value="script/remote_exe.sc" />
+<MbsCommand prompt="Script command" value="whatever command" />
+<MbsServers prompt="%Number of needed DIM servers%" value="3" />
+</MbsLaunch>
+\end{verbatim}
+\bdes
+\item[MbsMaster]: Lynx node where the \mbs\ prompter is started.
+\item[MbsUserPath]: User working directory. The GUI need not to have
+access to the filesystem.
+\item[MbsSystemPath]:  Path where the \mbs\ is installed. GUI needs no access to this path.
+\item[MbsScript]: An execution script located relativ to \mbs path.
+It sets all \mbs\ related variables and executes a program given as argument.
+\item[MbsCommand]: Script command (argument to script).
+\item[MbsServers]: Number of nodes plus prompter. This information
+is minimum for the GUI to know when all \mbs\ nodes are up. The GUI waits until
+this number of DIM servers is up and running.
+\edes
 \subsection{Combined \dabc~ and \mbs~ launch panel}
+This panel is simply a superposition of the single ones.
 \subsection{Command panel}
-\subsection{Parameter selection panel}
+\figpng{user-gui-pan-cmd}{Command panel.}{htb}{0}{0.9}
+On the left side is the command tree. Normally the tree is built
+from name, application, nodes. Double click (or \keyw{RETURN}) on a treenode
+executes the command on all treenodes below. The \mbs\ commands
+are defined in a way that the top tree level is the executing \mbs\ task,
+the next one the command, and the master node (prompter node) is the only node.
+Command is sent to the current node which is displayed in the info panel
+(see Fig. \ref{user-gui-pan-info}).
+Click on a command opens at the right side the argument panel.
+Entering argument values and \keyw{RETURN} executes the command.
 \subsection{Monitoring panels}
 \subsubsection{Rate meters}
+\figpng{user-gui-pan-rate}{Rates.}{htb}{0}{0.7}
+All rate meters are displayed in the meter panel. Meters can be removed
+in the parameter table (See Fig. \ref{user-gui-pan-partab}) 
+with the \keyw{Show} buttons like the other graphical parameters.
+Saving the setup, the visibility will be preserved.
+\figpdf{user-gui-rate-set}{Steering menus.}{htb}{0}{1}
+On the left side in Fig. \ref{user-gui-rate-set} the \keyw{Settings}
+menu is shown. It affects all items in the panel. One can \keyw{Zoom}
+(toggle between large and normal view), change the number of
+columns, change the display mode, toggle \keyw{Autoscale}, and set limits
+(applied to all meters). Besides that each individual item can be
+adjusted by right mouse button. The context menu is shown on the right.
+All changes done individually are changing the defaults!
+The global changes can be overwritten by these defaults.
+All settings are saved with the setup.
 \subsubsection{Histograms}
 \subsubsection{States}
+\figpng{user-gui-pan-state}{States.}{htb}{0}{1.0}
 \subsubsection{Information}
+\figpng{user-gui-pan-info}{Info.}{htb}{0}{0.7}
 \subsection{Parameter table}
+\figpng{user-gui-pan-partab}{Parameter table.}{htb}{0}{0.9}
+\subsubsection{Parameter selection}
+\figpng{user-gui-pan-parsel}{Parameter selection panel and selected parameter list.}{htb}{0}{1.0}
 \subsection{Logging window}
+\figpng{user-gui-pan-log}{Logging.}{htb}{0}{1.0}
 \section{GUI save/restore setups}
+There are several setups which can be stored in XML files and are retrieved
+when the \gui\ is started again.
+\bdes
+\item [\keyw{DABC\_LAUNCH\_DABC}]: 
+Values of \dabc\ launch panel. Saved by button in panel. \\
+Default \verba{DabcLaunch.xml}. Filename in panel itself.
+\item [\keyw{DABC\_LAUNCH\_MBS}]: 
+Values of \mbs\ launch panel. Saved by button in panel. \\
+Default \verba{MbsLaunch.xml}. Filename in panel itself.
+\item [\keyw{DABC\_RECORD\_ATTRIBUTES}]: 
+Attributes of records. Saved by main save button. \\
+Default \verba{Records.xml}.
+\item [\keyw{DABC\_PARAMETER\_FILTER}]: 
+Values of parameter filter panel. Saved by main save button. \\
+Default \verba{Selection.xml}.
+\item [\keyw{DABC\_GUI\_LAYOUT}]: 
+Layout of frames. Saved by main save button. \\
+Default \verba{Layout.xml}.
+\edes
+\section{List of icons}
+\icon{browser}  Browser.\\
+\icon{comicon} Command.\\
+\icon{conndsp} Connect single MBS\\
+\icon{connprm} Connect MBS prompter\\
+\icon{control} Test, shell script\\
+\icon{dabcconfig} Configure\\
+\icon{dabcicon} \dabc\ launcher\\
+\icon{dabcmbsicon} \dabc\ \mbs\ launcher\\
+\icon{dabcstart} Start acquisition\\
+\icon{dabcstop} Hold acquisition\\
+\icon{disconn} Shut down all \\
+\icon{exitall} Exit all\\
+\icon{fileclose} Close\\
+\icon{filesave} Save\\
+\icon{histowin} Histogram panel\\
+\icon{info} Show acquisition\\
+\icon{infowin} Info panel\\
+\icon{logwin} Log panel\\
+\icon{mbsconfig} Configure\\
+\icon{mbsicon} \mbs\ launcher\\
+\icon{mbsstart} Start acquisition\\
+\icon{mbsstop} Stop acquisition\\
+\icon{meterwin} Rate meter panel\\
+\icon{paramwin} Parameter table\\
+\icon{rshmbs} \mbs\ remote shell script\\
+\icon{savewin} Save settings\\
+\icon{statewin} State panel\\
+\icon{usergraphics} Graphics panel\\
+\icon{usericon} Parameter selection panel\\
+\icon{user} Windows\\
+\icon{windowclose} Windows close\\
 

@@ -275,10 +275,10 @@ when the \gui\ is started again.
 \bdes
 \item [\keyw{DABC\_LAUNCH\_DABC}]: 
 Values of \dabc\ launch panel. Saved by button in panel. \\
-Default \verba{DabcLaunch.xml}.
+Default \verba{DabcLaunch.xml}. Filename in panel itself.
 \item [\keyw{DABC\_LAUNCH\_MBS}]: 
 Values of \mbs\ launch panel. Saved by button in panel. \\
-Default \verba{MbsLaunch.xml}.
+Default \verba{MbsLaunch.xml}. Filename in panel itself.
 \item [\keyw{DABC\_RECORD\_ATTRIBUTES}]: 
 Attributes of records. Saved by main save button. \\
 Default \verba{Records.xml}.
@@ -349,7 +349,7 @@ File {\tt DabcLaunch.xml}
 {\small \begin{verbatim}
 <?xml version="1.0" encoding="utf-8"?>
 <DabcLaunch>
-<DabcMaster prompt="DABC Master" value="lx100.gsi.de" />
+<DabcMaster prompt="DABC Master" value="node.xxxx.de" />
 <DabcName prompt="DABC Name" value="Controller:41" />
 <DabcUserPath prompt="DABC user path" value="myWorkDir" />
 <DabcSystemPath prompt="DABC system path" value="/dabc" />
@@ -364,7 +364,7 @@ File {\tt MbsLaunch.xml}
 {\small \begin{verbatim}
 <?xml version="1.0" encoding="utf-8"?>
 <MbsLaunch>
-<MbsMaster prompt="MBS Master" value="x86-xx" />
+<MbsMaster prompt="MBS Master" value="node-xx" />
 <MbsUserPath prompt="MBS User path" value="myMbsDir" />
 <MbsSystemPath prompt="MBS system path" value="/mbs/v51" />
 <MbsScript prompt="MBS Script" value="script/remote_exe.sc" />
@@ -699,11 +699,7 @@ public void setSizeXY(Dimension dd){setPreferredSize(dd);}
 \subsection{Example}
 Example of a minimalistic application panel.
 Full running code in \class{MiniPanel}.
-\begin{figure}[htb]
-\centering\includegraphics[angle=0,width=.6\textwidth]{prog-minipanel.png} % pdf file
-\caption{Minipanel.}
-\label{fig:prog-minipanel} % give it a name for references
-\end{figure}
+\figpng{prog-minipanel}{Mini panel.}{htb}{0}{.6}
 That is how the class must look like:
 {\small \begin{verbatim}
 public class MiniPanel  extends xPanelPrompt
@@ -787,11 +783,7 @@ if ("prompt".equals(cmd)) {
 }
 \end{verbatim}
 }
-\begin{figure}[htb]
-\centering\includegraphics[angle=0,width=.7\textwidth]{prog-ministates.png} % pdf file
-\caption{Ministates.}
-\label{fig:prog-ministates} % give it a name for references
-\end{figure}
+\figpng{prog-ministates}{Ministates.}{htb}{0}{.7}
 With the checker we toggle the \class{xState} state {\keyw{ServerState} in screen shot).
 The \class{xiDimParameter} param to be toggled we will find in the next.
 To get access to DIM parameters we must implement \func{setDimServices}.

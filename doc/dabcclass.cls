@@ -244,6 +244,7 @@
 \label{fig:#1} % give it a name for references
 \end{figure}
 }
+\newcommand{\icon}[1]{\includegraphics{#1.png} \rule{0cm}{0.7cm}}
 % compact lists etc
 % -----------------------------------------------------------------
 \newcommand{\bbul}{\begin{compactitem}[$\bullet$]}
