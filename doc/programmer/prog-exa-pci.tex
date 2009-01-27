@@ -11,8 +11,10 @@ The \class{Transport} may fill its data buffers via board DMA, and
 pass the \class{Buffers} to the connected readout \class{Module}. 
 
 This example treats the
-\strong{Active Buffer Board} (\ABB) \cite{AbbDescription}, 
-a PCI express (PCIe) board with a {\em Virtex 4}
+\strong{Active Buffer Board } (\ABB) \cite{AbbDescription}
+\index{Active Buffer Board ! overview}, 
+a PCI express (PCIe) board 
+\index{PCI express} with a {\em Virtex 4}
 FPGA and optical connectors to receive data from the experiment frontend
 hardware. It is developed for the CBM experiment \cite{CBM-stat-rep}
 by the {\em Institut f. Technische Informatik} at Mannheim University. 
@@ -36,6 +38,7 @@ that applies the \ABB classes for the readout module.
 
 
 \subsection{pci::BoardDevice}
+\index{PCI ! pci::BoardDevice}
 Subclass of \class{dabc::Device}. Adapter to the the \class{mprace::Board} functionality, i.e. the generic PCIe.
 
 \begin{compactenum} 
@@ -106,7 +109,8 @@ that was mapped before by means of \func{MapDMABuffer()}.
 This is a synchronous call that will initiate the DMA transfer 
 and block until it is complete.
  
-For asynchronous DMA (double buffering of \class{dabc::DataTransport}) 
+For asynchronous DMA (double buffering of \class{dabc::DataTransport})
+\index{PCI ! DMA} 
 following virtual methods are provided:
 Method \func{ReadPCIStart(dabc::Buffer*)} may start 
 the asynchronous filling of one mapped \class{Buffer} from the configured PCI 
@@ -145,6 +149,7 @@ since this is a rare use case for a DAQ system.
 
 
 \subsection{pci::Transport}
+\index{PCI ! pci::Transport}
 This class handles the connection between
 the \class{Port} of a module and the PCI device.
 It is created in \func{CreateTransport()} of \class{pci::BoardDevice}
@@ -210,8 +215,9 @@ to rebuild the scatter-gather mappings for each buffer of the pool.
 \end{description} 
 
 \section{Active Buffer Board implementation}
-
+\index{Active Buffer Board}
 \subsection{abb::Device}
+\index{PCI ! abb::Device}
 This subclass of \class{pci::BoardDevice} adds some functionality that is
 rather specific to the \ABB~ hardware and the test environment.
 
@@ -224,6 +230,7 @@ rather specific to the \ABB~ hardware and the test environment.
 
 \item It implements the actual asynchronous DMA by overriding 
 methods \func{ReadPCIStart()} and \func{ReadPCIComplete()}.
+\index{PCI ! DMA}
 The base class \class{pci::BoardDevice}
 can provide synchronous DMA only, because
 the generic \class{mprace::Board} interface 
@@ -285,6 +292,7 @@ at the end of each DAQ run.
 
 
 \subsection{abb::ReadoutModule}
+\index{PCI ! abb::ReadoutModule}
 Subclass of \class{dabc::ModuleAsync}; generic implementation of a readout module to use the \class{BoardDevice}.
 
 \begin{compactenum} 
@@ -311,6 +319,7 @@ control system.
 \end{compactenum} 
 
 \subsection{abb::WriterModule}
+\index{PCI ! abb::WriterModule}
 Subclass of \class{dabc::ModuleSync}; generic implementation of a writer module to use the \class{BoardDevice}.
 \begin{compactenum} 
 
@@ -332,6 +341,7 @@ control system.
 \end{compactenum} 
 
 \subsection{abb::Factory}
+\index{PCI ! abb::Factory}
 A subclass of \class{dabc::Factory} to plug in the \ABB~ classes:
 \begin{compactenum} 
 
@@ -355,7 +365,9 @@ executables which are provided in the \decl{test} subfolder of the
 \label{prog_exapci_simpletest_read}
 The example code \verba{abb\_test\_read.cxx} shows in a
 simple \func{main()} function how to utilize the
-\class{abb::} classes for a plain readout with DMA.
+\class{abb::} classes 
+\index{Active Buffer Board ! DMA read}. 
+for a plain readout with DMA.
 \begin{compactenum} 
 
 \item It applies the \class{dabc::StandaloneManager} as most simple
@@ -468,7 +480,8 @@ manager.CleanupManager();
 The example code \verba{abb\_test\_write.cxx} shows in a
 simple \func{main()} function how to utilize the
 \class{abb::} classes to write data from the PC to the \ABB~ 
-with DMA. The code is very similar to the read example as described
+with DMA \index{Active Buffer Board ! DMA write}. 
+The code is very similar to the read example as described
 in the above section \ref{prog_exapci_simpletest_read}:
 
 \begin{compactenum} 
@@ -528,7 +541,10 @@ The example code \verba{abb\_test.cxx} shows in a
 simple \func{main()} function how to utilize the
 \class{abb::} classes to write data from the PC to the \ABB~ 
 in one DMA channel,  and simultaneously read data back from the board with another
-DMA channel. It applies the \class{abb::Device} both with
+DMA \index{Active Buffer Board ! DMA read and write}. 
+channel. 
+
+It applies the \class{abb::Device} both with
 a \class{abb::WriterModule} and a \class{abb::ReadoutModule}
 that run in different threads. So the code is a merger of the
 above examples \ref{prog_exapci_simpletest_read} and
@@ -577,6 +593,7 @@ Finally the manager is cleaned up and the program ends.
 \label{prog_exapci_bnet}
 The DAQ builder network (Bnet) example as described in section
 \ref{prog_exabnet_test} may optionally utilize the \ABB~
+\index{Active Buffer Board ! with Bnet}
 as input for the Readout module. This is provided in
 class  \class{bnet::TestWorkerApplication} which implements
 the \class{bnet::WorkerApplication}: 
