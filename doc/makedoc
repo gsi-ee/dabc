@@ -11,6 +11,6 @@ echo ====== Second pass main-$1.tex generate TOC======================
 pdflatex main-$1.tex|../texoutfilter
 echo ====== Third pass main-$1.tex with TOC ======================
 pdflatex main-$1.tex|../texoutfilter
-rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc
+rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc *.lof
 cd ..
 fi
