@@ -136,9 +136,10 @@ Returns \keyw{true} or \keyw{false} depending on the instantiation success.
 Returns a new \class{FileIO} of type \func{typ} (e.~g.~ "posix") with name
 \func{name}. The \func{option} value may define the file access option,
 e.~g.~ \keyw{ReadOnly}, \keyw{ReadWrite}, \keyw{WriteOnly}, \keyw{Create}, and 
-\keyw{Recreate}. Current standard implementation is \class{dabc::PosixFileIO}
+\keyw{Recreate}. Current standard implementation is \\
+\class{dabc::PosixFileIO}
 which is provided in the manager by default.
-Returns $0$ if instantiation of desired typ fails.
+Returns $0$ if instantiation of desired type fails.
 
   
 \item[\em bool CreateApplication\small (const char* classname = 0, const char* appthrd = 0)] :
@@ -174,6 +175,7 @@ Enables processing for all modules with identifier number \func{appid}.
 The optional identifier  may be set in the \func{Module} definition
 to select different kinds of modules here. By default, this method will
 start all exisiting modules on this node.
+Returns \keyw{true} of \keyw{false} depending on success.
 
 \item[\em bool StopAllModules\small (int appid = 0)] :
 \index{Manager interface !StopAllModules()}
@@ -181,6 +183,7 @@ Disables processing for all modules with identifier number \func{appid}.
 The optional identifier  may be set in the \func{Module} definition
 to select different kinds of modules here. By default, this method will
 stop all exisiting modules on this node.
+Returns \keyw{true} of \keyw{false} depending on success.
 
 \item[\em bool DeleteModule\small (const char* modulename)] :
 \index{Manager interface !DeleteModule()}
@@ -201,7 +204,7 @@ Otherwise returns \keyw{true}.
 \item[\em bool ConnectPorts\small (const char* port1name,
                            const char* port2name,
                            const char* devname=0)] :
-\index{Manager interface !ConnectPorts()}
+\index{Manager interface !ConnectPorts()} \\
 Connects module \class{Port} of full name \func{port1name}
 with another  module \class{Port} of full name \func{port2name}.
 A full port name consists of the module name and a local port name,
@@ -218,7 +221,7 @@ as managed by \class{dabc::LocalDevice}.
 \begin{description}
 
 \item[\em bool MakeThreadForModule\small (Module* m, const char* thrdname = 0) ] :
-\index{Manager interface !MakeThreadForModule()}
+\index{Manager interface !MakeThreadForModule()} \\
 Creates a thread for module \func{m} and assigns module to this thread.
 If thread name \func{thrdname} is not specified, module name is used.
 Returns \keyw{true} of  
@@ -257,7 +260,7 @@ Prepares the properties of command \func{cmd} for execution on the local node. T
 returned \func{Command*} may be directly used for \func{Submit(cmd)}
 (e.~g.~ \\ {\tt m.Submit(m.LocalCmd(new Command("Start"),"Generator"))});
 it may also be collected in a \class{dabc::CommandsSet}.
-The command receiver is defined by the full name \func{fullitemname} in the object folder structure, e.~g.~ "Modules/ReadoutModule1", or by a unique reduced name.
+The command receiver is defined by the full name \func{fullitemname} in the object folder structure, e.~g.~ "Modules/ReadoutModule1", or by a unique reduced name, resp.
 
 \item[\em Command* LocalCmd\small (Command* cmd, Basic* rcv)] :
 \index{Manager interface !LocalCmd()} 
@@ -361,17 +364,14 @@ is not necessary.
 \index{Manager interface !CreateMemoryPool()}   
 Instantiates a \class{MemoryPool} of name \func{poolname}, 
 with \func{numbuffers} buffers of size \func{buffersize}.
-If a pool of this name already exists, it will be extended by the specified buffers.
-Together with the buffers the \class{MemoryPool} creates a number of reference objects with
-preallocated header and gather list.
-One can configure that the memory pool can be extended "on the fly" -
-\func{numincrement} value specifies how much buffers the memory pool can extend at once.
-If expanding the pool is allowed, one can limit the total size 
-of the pool via \func{ConfigurePool()} method (WHERE IS THIS ???). 
-There one can also specify how often
-the memory pool should try to cleanup unused memory.
+If a pool of this name already exists, it may be extended 
+up to the specified buffer number.
+The \func{numincrement} value specifies with how many buffers at once the memory pool 
+can optionally be extended on the fly.
 Optional arguments \func{headersize} and \func{numsegments} may
 define the buffer header size, and the partition of the buffer segments, resp.         
+The \class{MemoryPool} mechanisms are discussed in detail in 
+section \ref{prog_services_memory}.
 Method returns true or false depending on success.	
 
 \item[\em MemoryPool* FindPool\small (const char* name)] :
@@ -436,7 +436,7 @@ describes in detail the standard implementation as delivered with the \dabc~ dis
 
 \subsection{Factory}
  \label{prog_manager_controls_factory}
-A new control system plug-in is added into \dabc~, 
+A new control system plug-in is added into \dabc~ 
 by means of a \class{dabc::Factory} subclass that  
 defines the method
 \func{bool CreateManagerInstance(const char* kind, dabc::Configuration* cfg)}.
@@ -515,8 +515,9 @@ This should be used as handle in the static call \func{dabc::Command::Reply(cmd,
 
 Note that base class \class{dabc::Manager} already implements this method for the 
 \dabc~ default state machine module which is activated in the
-manager constructor with \func{InitSMmodule()}. It needs a re-implementation only if
-an external state machine shall be used.
+manager constructor with \func{InitSMmodule()}. 
+\strong{It needs a re-implementation only if
+an external state machine shall be used.}
 
 
 
@@ -605,13 +606,13 @@ The name should represent the node in a human readable
 way, e.~g.~ by means of URL and a functional node description
 ("daq01.gsi.de-readout"). It should match the
 description in the cluster configuration.
-Note: This name \strong{must} match the local name
-of the manager object on each node.
+Note: \strong{This name must match the local name
+of the manager object on each node}.
 
 
 
 \item[\em bool SendOverCommandChannel(const char* managername, const char* cmddata)] :
-\index{Manager interface !SendOverCommandChannel()}
+\index{Manager interface !SendOverCommandChannel()} \\
 This method sends a \class{dabc::Command} as a streamed text representation \func{cmddata}
 to a remote DAQ cluster node of name \func{managername}.
 The \func{managername} argument must match one of the names defined in
@@ -668,7 +669,7 @@ framework:
 \index{Manager interface !DoStateTransition()}
 Performs the state machine transition of name \func{state\_transition\_cmd}.
 This method is synchronous and returns no sooner than the 
-transition actions are completed (true) or an error is detected (false).
+transition actions are completed (\keyw{true}) or an error is detected (\keyw{false}).
 Note that the real transition actions are still user defined in methods
 of the \class{dabc::Application} implementation.
 
@@ -676,10 +677,10 @@ of the \class{dabc::Application} implementation.
 \index{Manager interface !IsStateTransitionAllowed()}
 Checks if state transition of name \func{state\_transition\_cmd} is allowed
 for the default state machine implementation (which should be reproduced exactly by
-any external SM implementation) and returns true or false, resp. Argument
+any external SM implementation) and returns \keyw{true} or \keyw{false}, resp. Argument
 \func{errout} may specify if error messages shall be printed to {\tt stdout}.
 
-\item[\em RecvOverCommandChannel(const char* cmddata)] :
+\item[\em void RecvOverCommandChannel(const char* cmddata)] :
 \index{Manager interface !RecvOverCommandChannel()}
 Receives a \dabc~ command as text stream \func{cmddata} 
 from a remote node. Usually this function should be called in a
@@ -710,14 +711,15 @@ is based on the DIM library \cite{DIM} and is marked by namespace
 The main classes are described in the following:
 
 \subsubsection{\class{dimc::Manager}}
+\label{prog_manager_controls_DIM_manager}
 \index{DIM Control classes ! dimc::Manager}
 Implements the control system interface of
 \class{dabc::Manager} as described above. 
 
 \begin{compactenum}
 
-\item It uses the \strong{default state machine module} of the \dabc~core system.
-This is activated in \class{dimc::Manager} constructor by calling
+\item It uses the \strong{default state machine module} of the \dabc~ core system.
+This is activated in the constructor by calling
 \func{InitSMmodule()}. Thus virtual method \func{InvokeStateTransition()}
 is \strong{not} re-implemented here.
 
@@ -727,7 +729,8 @@ This parameter is required to display the state of the node on the generic
 Java GUI.
 
 \item It applies the generic \class{dabc::Configuration}  for setting up
-the node properties. The standard \dabc~ runtime executable will create the \class{dabc::Configuration} object from parsing an XML file. 
+the node properties. The standard executable \decl{dabc\_run}  will create 
+this object from parsing an XML file. 
 
 \item The other interface functionalities use one
 component of class \class{dimc::Registry}.
@@ -738,6 +741,7 @@ component of class \class{dimc::Registry}.
 
 
 \subsubsection{\class{dimc::Registry}}
+\label{prog_manager_controls_DIM_registry}
 \index{DIM Control classes ! dimc::Registry}
 The main component of the \class{dimc::Manager} that
 offers service methods really implementing the manager interface.
@@ -776,7 +780,8 @@ uses methods \func{RegisterParameter()} (and
 \func{UnregisterParameter()}, resp.) to declare (undeclare, resp.) 
 a corresponding DIM service. Here the \class{dimc::Registry}
 keeps auxiliary objects of class 
-\class{dimc::ServiceEntry} that link the \class{DimService} with the \class{dabc::Parameter}. On parameter change, method 
+\class{dimc::ServiceEntry} that link the \class{DimService} with the \class{dabc::Parameter} (see section \ref{prog_manager_controls_DIM_servicentry}). 
+On parameter change, method 
 \func{ParameterUpdated()} will initiate an update of the corresponding DIM
 service.
     
@@ -815,9 +820,8 @@ Method \func{Subscribe()} (\func{Unsubscribe()}, resp.) of \class{dimc::Manager}
 are forwarded to \func{SubscribeParameter()} (UnsubscribeParameter() , resp. ) 
 of \class{dimc::Registry}.
 These implement it by means of the \class{DimService} update mechanism. 
-Subscriptions are kept as vector of \class{dimc::DimParameterInfo} objects.
-This is a subclass of \class{DimStampedInfo} with a back reference to the subscribed \class{dabc::Parameter}
-
+Subscriptions are kept as vector of \class{dimc::DimParameterInfo} objects
+(see section \ref{prog_manager_controls_DIM_parinfo}).
 
 \item \strong{Remote command execution:}   
 Method \func{SendOverCommandChannel()} of \class{dimc::Manager}    
@@ -831,6 +835,7 @@ by node name via \func{DimClient::sendCommand()}.
 \end{compactenum}    
 
 \subsubsection{\class{dimc::Server}}
+\label{prog_manager_controls_DIM_server}
 \index{DIM Control classes ! dimc::Server}    
 Subclass of DIM class \class{DimServer}, implementing command handler, error handler, and exit handlers for client and server exit events.
 
@@ -856,6 +861,7 @@ implemented as forward calls to corresponding methods of the
 
     
 \subsubsection{\class{dimc::ServiceEntry}}
+\label{prog_manager_controls_DIM_servicentry}
 \index{DIM Control classes ! dimc::ServiceEntry}
 This is a container to keep the \class{DimService} together with 
 the corresponding \class{dabc::Parameter} object and some extra properties.
@@ -877,6 +883,7 @@ parameter contents to the buffer before.
 
 
 \subsubsection{\class{dimc::ParameterInfo}}
+\label{prog_manager_controls_DIM_parinfo}
 \index{DIM Control classes ! dimc::ParameterInfo}
 A subclass of DIM class \class{DimStampedInfo} which subscribes
 to be informed if a remote DIM service changes its value. 
@@ -890,7 +897,7 @@ a local \class{dabc::Parameter} object that shall be updated
 if the subscribed service changes. 
 
 \item Depending on the subscribing \class{dabc::Parameter} type
-(integer, double, string,...), the \class{dimc::ParameterInfo} constructor will
+(integer, double, string,...), the constructor will
 instantiate an appropriate \class{DimStampedInfo} type.
 
 \item Method \func{infoHandler()} of \class{DimStampedInfo} 
