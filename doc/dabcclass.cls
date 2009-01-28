@@ -245,6 +245,7 @@
 \end{figure}
 }
 \newcommand{\icon}[1]{\includegraphics{#1.png} \rule{0cm}{0.7cm}}
+\newcommand{\paref}[1]{\ref{#1}, page \pageref{#1}}
 % compact lists etc
 % -----------------------------------------------------------------
 \newcommand{\bbul}{\begin{compactitem}[$\bullet$]}

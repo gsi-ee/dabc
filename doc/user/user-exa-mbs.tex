@@ -22,4 +22,45 @@ Behind the header follow data elements with {\tt sMbsHeader} headers (length, ty
 The file size is no longer restricted to 2GB. Optionally an element index is written at the end of the file. This allows for random access of elements in the file through this index table. The table itself has 32-bit values for the element offsets (in 32-bit). It can therefore address offsets up to 16GB in the file. If larger files are needed, the table can be created with 64-bit values giving unlimited addressing.
 
 Note: This file format needs the rewind file function because the file header must be rewritten to store {\tt iMaxWords}, {\tt iElements}, and optionally the offset of the index table. This function is currently not implemented in the {\tt RFIO} package, but will be done.
-
+\section{\mbs\ GUI}
+\subsection{\mbs~ launch panel}
+\figpng{user-gui-pan-mbs}{MBS launcher.}{htb}{0}{0.6}
+Values from file {\tt MbsLaunch.xml} (default, may be saved to other file).
+{\small \begin{verbatim}
+<?xml version="1.0" encoding="utf-8"?>
+<MbsLaunch>
+<MbsMaster prompt="MBS Master" value="node-xx" />
+<MbsUserPath prompt="MBS User path" value="myMbsDir" />
+<MbsSystemPath prompt="MBS system path" value="/mbs/v51" />
+<MbsScript prompt="MBS Script" value="script/remote_exe.sc" />
+<MbsCommand prompt="Script command" value="whatever command" />
+<MbsServers prompt="%Number of needed DIM servers%" value="3" />
+</MbsLaunch>
+\end{verbatim}
+\bdes
+\item[MbsMaster]: Lynx node where the \mbs\ prompter is started.
+\item[MbsUserPath]: User working directory. The GUI need not to have
+access to the filesystem.
+\item[MbsSystemPath]:  Path where the \mbs\ is installed. GUI needs no access to this path.
+\item[MbsScript]: An execution script located relativ to \mbs path.
+It sets all \mbs\ related variables and executes a program given as argument.
+\item[MbsCommand]: Script command (argument to MbsScript).
+\item[MbsServers]: Number of nodes plus prompter. This information
+is minimum for the GUI to know when all \mbs\ nodes are up. The GUI waits until
+this number of DIM servers is up and running.
+\edes
+\subsubsection{\mbs\ launcher buttons}
+\icon{fileclose} Close window\\
+\icon{savewin} Save panel settings\\
+\icon{connprm} Startup all tasks\\
+\icon{conndsp} conndsp Connect single MBS\\
+\icon{dabcconfig} Configure\\
+\icon{dabcstart} Start acquisition\\
+\icon{dabcstop} Hold acquisition\\
+\icon{mbsstop} Stop acquisition\\
+\icon{disconn} Shut down all \\
+\icon{info} Show acquisition\\
+\icon{rshmbs} \mbs\ remote shell script\\
+\icon{control} Shell script\\
+\subsection{Combined \dabc~ and \mbs~ launch panel}
+This panel is simply a superposition of the single ones.

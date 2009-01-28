@@ -1,5 +1,14 @@
 [user/user-gui.tex]
 \section{GUI Guide lines}
+The current \dabc\ GUI is written in Java using the DIM software as communication layer.
+The standard part of the GUI described here may be extended by application specific parts.
+How to add such extensions is described in the programmer's manual.
+Typically they are started as prompter panels via buttons in the
+main GUI menu.
+
+The standard part builds a set of panels (windows) according the parameters
+the DIM servers offer. Only services from one single DIM name server
+defining a name space can be processed.
 \section{GUI Panels}
 \figpng{user-gui-main-buttons}{Main buttons.}{htb}{0}{1.0}
 Fig. \ref{fig:user-gui-main-buttons} shows the the main menu of \dabc\ (minimal view).\\
@@ -18,11 +27,13 @@ Fig. \ref{fig:user-gui-main-buttons} shows the the main menu of \dabc\ (minimal 
 \icon{statewin} State panel\\
 \icon{infowin} Info panel\\
 \icon{logwin} Log panel\\
-The three launcher panels (\dabc, \mbs, combined \dabc\ and \mbs) are used depending on the
-application to be controlled. Eventually an application provides additional specific panels.
+The three launcher panels (\dabc, \mbs, combined \dabc\ and \mbs) 
+are used depending on the
+application to be controlled. Eventually an application provides 
+additional specific panels.
 \subsection{\dabc~ launch panel}
 \figpng{user-gui-pan-dabc}{DABC launcher.}{htb}{0}{0.6}
-Values from file {\tt DabcLaunch.xml}
+Values from file {\tt DabcLaunch.xml} (default, may be saved to other file).
 {\small \begin{verbatim}
 <?xml version="1.0" encoding="utf-8"?>
 <DabcLaunch>
@@ -48,54 +59,65 @@ access to the filesystem.
 is minimum for the GUI to know when all \dabc\ nodes are up. The GUI waits until
 this number of DIM servers is up and running.
 \edes
+\subsubsection{\dabc\ launcher buttons}
+\icon{fileclose} Close window.\\
+\icon{savewin} Save panel settings to the file \keyw{Launch file}.
+If you choose a name different from the default you must
+set a shell variable to it to get the values from that file
+(see \ref{user:guiSaveRestore}, page \pageref{user:guiSaveRestore}).\\
+\icon{connprm} Startup all tasks. Executes a \dabc\ script via \verba{ssh} 
+on the master node under user name. Then it waits until the number of DIM servers
+expected are announced. A progress panel pops up during that time
+(see \ref{user:guiProgress}, page \pageref{user:guiProgress}).
+When the servers are up the main \keyw{Update} is triggered building
+all panels from scratch according the parameters offered by the servers.\\
+\icon{dabcconfig} Configure. Executes state transition command \keyw{Configure}.
+All plug-in components are created. Then \keyw{Enable}.
+Waits until all workers go into \keyw{Ready} state. Now the \dabc\ is ready to run.\\
+\icon{dabcstart} Start acquisition. Executes \keyw{Start} command.
+All components go into running state \keyw{Running}.\\
+\icon{dabcstop} Hold acquisition. Executes \keyw{Stop} command.
+All components go into standby state \keyw{Ready}.\\
+\icon{mbsstop} Stop acquisition. Executes \keyw{Halt} command.
+This closes all plug-ins. States go into \keyw{Halted}. Next must be
+shut down or configure.\\
+\icon{disconn} Exit all by \keyw{Exit} commands. After 2 seconds 
+trigger the main \keyw{Update}.\\
+\icon{exitall} Shut down all by script. This is the hard shut down.\\
+\icon{control} Shell script execution on master node.\\
+\subsection{Action in progress}
+\label{user:guiProgress}
+\figpng{user-gui-pan-progress}{Launching progress.}{htb}{0}{0.6}
+When starting up, configure or shut down the GUI has to wait
+until the front-ends have completed the action.
+During that time a progress window similar to the one shown
+in Fig. \ref{fig:user-gui-pan-progress} pops up.
+Please wait until the popup disappears.
 \subsection{\mbs~ launch panel}
-\figpng{user-gui-pan-mbs}{MBS launcher.}{htb}{0}{0.6}
-Values from file {\tt MbsLaunch.xml}
-{\small \begin{verbatim}
-<?xml version="1.0" encoding="utf-8"?>
-<MbsLaunch>
-<MbsMaster prompt="MBS Master" value="node-xx" />
-<MbsUserPath prompt="MBS User path" value="myMbsDir" />
-<MbsSystemPath prompt="MBS system path" value="/mbs/v51" />
-<MbsScript prompt="MBS Script" value="script/remote_exe.sc" />
-<MbsCommand prompt="Script command" value="whatever command" />
-<MbsServers prompt="%Number of needed DIM servers%" value="3" />
-</MbsLaunch>
-\end{verbatim}
-\bdes
-\item[MbsMaster]: Lynx node where the \mbs\ prompter is started.
-\item[MbsUserPath]: User working directory. The GUI need not to have
-access to the filesystem.
-\item[MbsSystemPath]:  Path where the \mbs\ is installed. GUI needs no access to this path.
-\item[MbsScript]: An execution script located relativ to \mbs path.
-It sets all \mbs\ related variables and executes a program given as argument.
-\item[MbsCommand]: Script command (argument to script).
-\item[MbsServers]: Number of nodes plus prompter. This information
-is minimum for the GUI to know when all \mbs\ nodes are up. The GUI waits until
-this number of DIM servers is up and running.
-\edes
+This panel is a specific application panel and described in the \mbs\ section.
 \subsection{Combined \dabc~ and \mbs~ launch panel}
-This panel is simply a superposition of the single ones.
+This panel is a specific application panel and described in the \mbs\ section.
 \subsection{Command panel}
 \figpng{user-gui-pan-cmd}{Command panel.}{htb}{0}{0.9}
-On the left side is the command tree. Normally the tree is built
+Fig. \ref{fig:user-gui-pan-cmd} shows
+on the left side the command tree. Normally the tree is built
 from name, application, nodes. Double click (or \keyw{RETURN}) on a treenode
 executes the command on all treenodes below. The \mbs\ commands
 are defined in a way that the top tree level is the executing \mbs\ task,
 the next one the command, and the master node (prompter node) is the only node.
 Command is sent to the current node which is displayed in the info panel
-(see Fig. \ref{user-gui-pan-info}).
+(see Fig. \ref{fig:user-gui-pan-info}).
 Click on a command opens at the right side the argument panel.
 Entering argument values and \keyw{RETURN} executes the command.
 \subsection{Monitoring panels}
 \subsubsection{Rate meters}
 \figpng{user-gui-pan-rate}{Rates.}{htb}{0}{0.7}
 All rate meters are displayed in the meter panel. Meters can be removed
-in the parameter table (See Fig. \ref{user-gui-pan-partab}) 
+in the parameter table (See Fig. \ref{fig:user-gui-pan-partab}) 
 with the \keyw{Show} buttons like the other graphical parameters.
 Saving the setup, the visibility will be preserved.
 \figpdf{user-gui-rate-set}{Steering menus.}{htb}{0}{1}
-On the left side in Fig. \ref{user-gui-rate-set} the \keyw{Settings}
+On the left side in Fig. \ref{fig:user-gui-rate-set} the \keyw{Settings}
 menu is shown. It affects all items in the panel. One can \keyw{Zoom}
 (toggle between large and normal view), change the number of
 columns, change the display mode, toggle \keyw{Autoscale}, and set limits
@@ -103,21 +125,50 @@ columns, change the display mode, toggle \keyw{Autoscale}, and set limits
 adjusted by right mouse button. The context menu is shown on the right.
 All changes done individually are changing the defaults!
 The global changes can be overwritten by these defaults.
-All settings are saved with the setup.
+All settings are saved with the setup and restored on GUI startup
+(see \ref{user:guiSaveRestore}, page \pageref{user:guiSaveRestore}).
 \subsubsection{Histograms}
+Histogram panels are handled in pretty much the same way as the rate meters.
+Histograms can have arbitrary size.
 \subsubsection{States}
 \figpng{user-gui-pan-state}{States.}{htb}{0}{1.0}
+States are records having a number for severity (0 to 4), a color,
+and a brief state description (see Fig. \ref{fig:user-gui-pan-state}).
 \subsubsection{Information}
 \figpng{user-gui-pan-info}{Info.}{htb}{0}{0.7}
+Information records mainly display one line of text with a color
+(see Fig. \ref{fig:user-gui-pan-info}).
 \subsection{Parameter table}
 \figpng{user-gui-pan-partab}{Parameter table.}{htb}{0}{0.9}
+The parameter table holds all parameters which can be visible.
+The table can be ordered by columns (click on column header). 
+The parameter values can be changed
+in the \keyw{Set value} column if no minus sign is in there.
+The column width can be adjusted and is saved/restored by main save button
+(see \paref{user:guiSaveRestore}).
 \subsubsection{Parameter selection}
 \figpng{user-gui-pan-parsel}{Parameter selection panel and selected parameter list.}{htb}{0}{1.0}
+To get a more selective view on the parameters one can specify
+filters in the panel shown at the left side of Fig. \ref{fig:user-gui-pan-parsel}. 
+Text substrings for each of the four name fields
+can be specified as well as a selection of record types.
+With the check boxes the filter function for each of these can (de)activated.
+The filter is saved by the main save button
+(see \ref{user:guiSaveRestore}, page \pageref{user:guiSaveRestore}).
+The parameter list at the right window in Fig. \ref{fig:user-gui-pan-parsel}
+shows only the parameters matching all filters.
+If the data field is white the parameter can be changed.
+This cannot be done in place because the parameter might be
+updated in the mean time. Instead press \keyw{RETURN} in the field.
+A prompter will pop up to enter the value.
 \subsection{Logging window}
 \figpng{user-gui-pan-log}{Logging.}{htb}{0}{1.0}
+Fig. \ref{fig:user-gui-pan-log} show the logging window.
 \section{GUI save/restore setups}
+\label{user:guiSaveRestore}
 There are several setups which can be stored in XML files and are retrieved
-when the \gui\ is started again.
+when the \gui\ is started again. The file names can be specified by
+shell variables. 
 \bdes
 \item [\keyw{DABC\_LAUNCH\_DABC}]: 
 Values of \dabc\ launch panel. Saved by button in panel. \\
@@ -136,35 +187,35 @@ Layout of frames. Saved by main save button. \\
 Default \verba{Layout.xml}.
 \edes
 \section{List of icons}
-\icon{browser}  Browser.\\
-\icon{comicon} Command.\\
-\icon{conndsp} Connect single MBS\\
-\icon{connprm} Connect MBS prompter\\
-\icon{control} Test, shell script\\
-\icon{dabcconfig} Configure\\
-\icon{dabcicon} \dabc\ launcher\\
-\icon{dabcmbsicon} \dabc\ \mbs\ launcher\\
-\icon{dabcstart} Start acquisition\\
-\icon{dabcstop} Hold acquisition\\
-\icon{disconn} Shut down all \\
-\icon{exitall} Exit all\\
-\icon{fileclose} Close\\
-\icon{filesave} Save\\
-\icon{histowin} Histogram panel\\
-\icon{info} Show acquisition\\
-\icon{infowin} Info panel\\
-\icon{logwin} Log panel\\
-\icon{mbsconfig} Configure\\
-\icon{mbsicon} \mbs\ launcher\\
-\icon{mbsstart} Start acquisition\\
-\icon{mbsstop} Stop acquisition\\
-\icon{meterwin} Rate meter panel\\
-\icon{paramwin} Parameter table\\
-\icon{rshmbs} \mbs\ remote shell script\\
-\icon{savewin} Save settings\\
-\icon{statewin} State panel\\
-\icon{usergraphics} Graphics panel\\
-\icon{usericon} Parameter selection panel\\
-\icon{user} Windows\\
-\icon{windowclose} Windows close\\
+\icon{browser} browser Browser.\\
+\icon{comicon} comicon Command.\\
+\icon{conndsp} conndsp Connect single MBS\\
+\icon{connprm} connprm Connect MBS prompter\\
+\icon{control} control Test, shell script\\
+\icon{dabcconfig} dabcconfig Configure\\
+\icon{dabcicon} dabcicon \dabc\ launcher\\
+\icon{dabcmbsicon} dabcmbsicon \dabc\ \mbs\ launcher\\
+\icon{dabcstart} dabcstart Start acquisition\\
+\icon{dabcstop} dabcstop Hold acquisition\\
+\icon{disconn} disconn Shut down all \\
+\icon{exitall} exitall Exit all\\
+\icon{fileclose} fileclose Close\\
+\icon{filesave} filesave Save\\
+\icon{histowin} histowin Histogram panel\\
+\icon{info} info Show acquisition\\
+\icon{infowin} infowin Info panel\\
+\icon{logwin} logwin Log panel\\
+\icon{mbsconfig} mbsconfig Configure\\
+\icon{mbsicon} mbsicon \mbs\ launcher\\
+\icon{mbsstart} mbsstart Start acquisition\\
+\icon{mbsstop} mbsstop Stop acquisition\\
+\icon{meterwin} meterwin Rate meter panel\\
+\icon{paramwin} paramwin Parameter table\\
+\icon{rshmbs} rshmbx \mbs\ remote shell script\\
+\icon{savewin} savewin Save settings\\
+\icon{statewin} statewin State panel\\
+\icon{usergraphics} usergraphics Graphics panel\\
+\icon{usericon} usericon Parameter selection panel\\
+\icon{user} user Windows\\
+\icon{windowclose} windowclose Windows close\\
 
