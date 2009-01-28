@@ -371,8 +371,9 @@ int UserModule::ExecuteCommand(dabc::Command* cmd)
       DOUT1(("Execute UserCommand with argument = %d", v));
       return dabc::cmd_true;
    } else
-   if (cmd->IsName("OtherCommand")) {
-      DOUT1(("Execute OtherCommand without arguments"));
+   if (cmd->IsName("UserGetCommand")) {
+      DOUT1(("Execute UserGetCommand without arguments"));
+      cmd->SetInt("UserRes", fCounter);
       return dabc::cmd_true;
    } 
       
@@ -393,16 +394,122 @@ User \strong{should not} reimplement these methods again in derived classes.
 In inherited from \class{dabc::WorkingProcessor} classes like \class{dabc::Module}, \class{dabc::Application}
 custom commands will be executed in appropriate thread context.  
 
-     
-
- 
 With method \func{Execute()} of class \class{dabc::CommandReceiver} one can execute 
 command directly in the object. One can specify \class{dabc::Command} object as argument
 or just command name, if command has no arguments. Method \func{Execute()} will block
-until command is executed - one says about synchron mode of command execution. Optionally
-one 
+until command is executed - one says about \strong{synchron} mode of command execution. 
+Optionally one can set timeout - how long calling thread will wait until command is executed. 
 
- 
- 
+Method \func{Execute()} only usefull to check if command executed succesfully or not -
+one has only boolean return value. There are advanced methods \func{ExecuteInt()} and
+\func{ExecuteStr()} which allows to return result of command execution as integer or string value.
+For example, result of command "UserGetCommand" execution from previous example one can
+obtain so:  
+
+\begin{small}
+\begin{verbatim}
+...
+dabc::Module* m = dabc::mgr()->FindModule("Module1");
+int res = m->ExecuteInt("UserGetCommand", "UserRes");
+...
+\end{verbatim}     
+\end{small}
+
+
+There is other way to execute command - submit command with \func{Submit()} method.
+In this case command will be exeuted \strong{asynchron} to the calling thread, therefore
+one cannot get any information about result of command execution.
+
 
 \subsection{Command client}
+
+To really use asynchron way of command execution, one should be able analyse result
+of such commands execution. This can be done with \class{dabc::CommandClient}.
+Commands, before submited for execution, should be assigned to \class{dabc::CommandClient} object.
+In this case, client get callback from command when execution is done and can react on this callback.
+One can assign more than one command to the client.
+
+First example of client usage - if one need to execute many commands at once.
+If one use \func{Execute()} method, all commands can be only executed \strong{sequentially}.
+If one uses command client, one able first submit many commands and than wait that all
+of them are executed. If objects, where commands should be executed, runs in different threads,
+commands will be executed in \strong{parallel}. For instance:
+
+\begin{small}
+\begin{verbatim}
+...
+dabc::CommandClient cli;
+for (unsigned n=0; n<10; n++) {
+   dabc::Module* m = dabc::mgr()->FindModule(FORMAT(("Module%u",n)));
+   dabc::Command* cmd = new dabc::Command("UserCommand");
+   cli.Assign(cmd);
+   m->Submit(cmd);
+}
+bool res = cli.WaitCommands();
+...
+\end{verbatim}     
+\end{small}
+  
+Here one submits 10 commands into 10 different modules and waits in one place until commands are executed.
+
+Another use of command client - keep command object after command is executed to be able
+analyse its return values. For instance, all 10 commands from previous example may 
+return several values each. If one instantiate client with "true" as contructor argument,
+at the end all commands will be avalible via \func{ReplyedCmds()} method. 
+
+
+\begin{small}
+\begin{verbatim}
+...
+dabc::CommandClient cli(true);
+...
+bool res = cli.WaitCommands();
+DOUT1(("One has %u commands in replyed queue", cli.ReplyedCmds().Size()));
+...
+\end{verbatim}     
+\end{small}
+
+
+One more use of command client interface - is \class{dabc::CommandsSet}. 
+It inherits from \class{dabc::CommandClientBase} - abstract base class for commands clients. 
+It useful in the case when execution of some master command should cause execution of several
+other commands. For instance, when execution of command 
+in one module should be distributed on two other modules, one should do:
+
+   
+\begin{small}
+\begin{verbatim}
+int UserModule::ExecuteCommand(dabc::Command* cmd)
+{
+   if (cmd->IsName("MasterCommand")) {
+      dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
+      
+      dabc::Module* m1 = dabc::mgr()->FindModule("Module1");
+      m1->Submit(set->Assign(new dabc::Command("UserCommand1")); 
+
+      dabc::Module* m2 = dabc::mgr()->FindModule("Module2");
+      m2->Submit(set->Assign(new dabc::Command("UserCommand2")); 
+
+      dabc::CommandsSet::Completed(set, 10.);
+      
+      return dabc::cmd_postponed;
+   } 
+      
+   return dabc::ModuleAsync::ExecuteCommand(cmd);
+}
+\end{verbatim}     
+\end{small}
+
+Here one create set for "master" command and submit two "slave" commands via client
+to two other modules. Method \func{dabc::CommandsSet::Completed} used to inform framework
+that all commands are submitted and they should be ready in 10 seconds. Return argument
+\keyw{dabc::cmd\_postponed} indicates that master command may not be ready at moment, when method is returned.
+Therefore \class{dabc::CommandsSet} will takes care about correct reply of master command when
+either all slaves are ready or timeout is expire.
+
+
+
+
+
+
+

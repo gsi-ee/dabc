@@ -11,13 +11,13 @@
 
 namespace dabc {
 
-   /** CommandsSet - class provides possiblity to submit/control execution of commands sets
+   /** CommandsSet - class provides possibility to submit/control execution of commands sets
      * It's main idea - several commands can be submitted in parallel or sequential and
      * only when all of them is completed, master command is replyed with true argument
      * One also can specify timeout interval, after which master command will be replyed with false.
      * There are two ways to assign command to the set -
      * 1. Use CommandSet as client. It means, command submitted immediately and
-     *    CommandSet is only analyses reply of this command to see if result is ok.
+     *    CommandSet is only analyzes reply of this command to see if result is ok.
      * 2. Use CommandSet::Add method. Then all these commands will be submitted
      *    to specified receiver after CommandSet::Completed call.
      * In all cases one should use CommandSet::Completed to identify that set
