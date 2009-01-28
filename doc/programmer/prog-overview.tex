@@ -422,7 +422,7 @@ available as DIM services.
 \section{Main Classes}
 \subsection{Core system}
 \label{prog_core_classes}
-The most important classes of the \dabc core system are described in the following.
+The most important classes of the \dabc~ core system are described in the following.
 
 %\begin{compactdesc}
 \begin{description}
@@ -441,7 +441,8 @@ Represents a command object. A command
    The result of the command execution may be returned as a reply event to 
    the command client. The manager is the standard command client 
    that distributes the commands to the command receivers 
-   (i.e. module , manager, or device). 
+   (i.e. module , manager, or device). See chapter (PUT REF TO SERVICES HERE)
+   for more details on the command mechanisms.
 
 \item[\class{dabc::Parameter}] :  \index{Core classes !dabc::Parameter} 
 Parameter object that may be monitored or 
@@ -454,14 +455,14 @@ Parameter object that may be monitored or
 \item \class{dabc::IntParameter}    - simple integer value
 \item \class{dabc::DoubleParameter} - simple double value
 \item \class{dabc::StrParameter} - simple string value
-\item \class{dabc::StateParameter} - contains state record, e.g. current 
-      state of the finite stat machine and associated colour for gui representation
-\item \class{dabc::InfoParameter} - contains info record, e.g. system message 
+\item \class{dabc::StateParameter} - contains state record, e.~g.~ current 
+      state of the finite state machine and associated colour for gui representation
+\item \class{dabc::InfoParameter} - contains info record, e.~g.~ system message 
       and associated properties for gui representation
 \item \class{dabc::RateParameter} - contains data rate record and associated 
-      properties for gui representation. May be updated in predefined time intervals.
+      properties for GUI representation. May be updated in predefined time intervals.
 \item \class{dabc::HistogramParameter} - contains histogram record and 
-      associated properties for gui representation.
+      associated properties for GUI representation.
 \end{compactitem}
 
 \item[\class{dabc::WorkingThread}] : \index{Core classes !dabc::WorkingThread} 
@@ -476,13 +477,14 @@ An object of this class represents a system thread.
    Represents a runnable job. Each 
    working processor is assigned to one working thread instance; 
    this thread can serve several working processors in parallel.
-   In special mode processor can run its own main loop.  
+   In a special mode a processor can also run its own main process thread.
+   %main loop.  
    \class{dabc::WorkingProcessor} is a subclass of \class{dabc::CommandReceiver}, 
    i.e. a working processor may receive and execute commands in its scope. 
 
 \item[\class{dabc::Module}] : \index{Core classes !dabc::Module} 
 A processing unit for one "step" of the dataflow. 
-   Is subclass of \class{dabc::WorkingProcessor}, i.e. the module may be run by an own 
+   Is subclass of \class{dabc::WorkingProcessor}, i.~e.~ the module may be run by an own 
    dedicated thread, or a working thread may execute several modules that 
    are assigned to it. A module has ports as connectors for the 
    incoming and outgoing data flow.   
@@ -490,10 +492,10 @@ A processing unit for one "step" of the dataflow.
 \item[\class{dabc::ModuleSync}] : \index{Core classes !dabc::ModuleSync}
 Is subclass of \class{dabc::Module}; defines interface for a 
    synchronous module that is allowed to block. User must implement virtual 
-   method \func{MainLoop()} that uses dedicated working thread to run. 
+   method \func{MainLoop()} that uses a dedicated working thread to run. 
    Method \func{TakeBuffer()} provides blocking access to a memory pool. 
-   Blocking methods \func{dabc::ModuleSync::Send} and
-    \func{dabc::ModuleSync::Receive} are used from the \func{MainLoop()} 
+   Blocking methods \func{dabc::ModuleSync::Send()} and
+    \func{dabc::ModuleSync::Receive()} are used from the \func{MainLoop()} 
     code to send (or receive) buffers over (or from) a ports.  
 
 \item[\class{dabc::ModuleAsync}] : \index{Core classes !dabc::ModuleAsync}
@@ -507,8 +509,8 @@ Subclass of \class{dabc::Module}; defines interface for an
    \func{ProcessOutputEvent()}, \func{ProcessPoolEvent()},..) that are invoked when 
    the corresponding event is processed by the working thread. 
    The events are dispatched to these callbacks by the \func{ProcessUserEvent()} 
-   default implementation then. There are no blocking function availible in class{dabc::ModuleAsync}.  
-   But user \strong{must} avoid any poolling loops, waiting for availible resources - 
+   default implementation then. There are no blocking function available in \class{dabc::ModuleAsync};  
+   but the user \strong{must} avoid any polling loops, waiting for availible resources - 
    event processing function must be returned as soon as possible.
 
 \item[\class{dabc::Port}] : \index{Core classes !dabc::Port}
@@ -522,8 +524,9 @@ A connection interface between module and transport.
    handled by the manager of each node.  
 
 \item[\class{dabc::Transport}] : \index{Core classes !dabc::Transport}
-Producing or consuming entity for buffers, which deliver/recieved via port interface to/from module.   
-As an example, \class{dabc::NetworkTransport} implements transport between modules on different nodes.
+A producing or consuming entity for buffers, which it delivers to 
+(or receives from, resp.) a \class{Module} via the \class{Port} interface.   
+As an example, \class{dabc::NetworkTransport} implements the transport between modules on different nodes.
 
 \item[\class{dabc::Device}] : \index{Core classes !dabc::Device}
 Device class used for creation and configuration of transport objects.
@@ -541,7 +544,7 @@ availible via \func{dabc::mgr()} or \func{dabc::Manager::Instance()} functions.
 it combines different roles: 
 \begin{compactenum}
       \item It is a manager of all \class{dabc::Basic} objects in the process scope. 
-      Objects (e.g. modules, devices, parameters) are kept 
+      Objects (e.~g.~ modules, devices, parameters) are kept 
       in a folder structure and identified by full path name. 
       \item It defines the interface to the controls system (state machine, 
       remote command communication, parameter export); this is to be implemented 
@@ -559,7 +562,7 @@ it combines different roles:
    \item \class{dimc::Manager} Provides DIM \cite{DIM} as 
 	 transport layer for controlling commands. Additionally, 
 	 parameters may be registered and updated automatically as 
-	 DIM services. There is general puprpose GUI for it. 
+	 DIM services. There is a general purpose Java GUI for this implementation. 
 \end{compactitem}
       
       \item It provides interfaces for user specific plug-ins that define 
@@ -578,6 +581,9 @@ May define additional commands.
 %\end{compactdesc}
 \end{description}
 
+\figpng{emptyfig}{Simplified {\em core} classes diagram}{htb}{0}{.6}
+
+
 \subsection{BNET classes}
 \label{prog_bnet_classes}
 The classes of the Bnet package, providing functionalities of the event builder network.
@@ -590,21 +596,21 @@ Subclass of \class{dabc::Application} to run on
 \begin{compactenum}
       \item It implements the master state machine of the Bnet. 
       The controlling GUI usually sends state machine commmands 
-      to the controller node only; the Bnet cluster plugin works as 
+      to the controller node only; the Bnet cluster application works as 
       a command fan-out and state observer of all worker nodes.
       \item It controls the traffic scheduling of the data packets between 
       the worker nodes by means of a data flow controller 
       (class \class{bnet::GlobalDFCModule}). This controller module communicates 
       with the Bnet sender modules on each worker to let them send their 
       packets synchronized with all other workers. 
-      \item It may handle failures on the worker nodes automatically, e.g. 
+      \item It may handle failures on the worker nodes automatically, e.~g.~ 
       by reconfiguring the data scheduling paths between the workers.
 \end{compactenum}
 \item[\class{bnet::WorkerApplication}] : \index{Bnet classes !bnet::WorkerApplication}
 Subclass of \class{dabc::Application} to run on 
    the worker nodes of the builder network. 
 \begin{compactenum}
-  \item Implements the local state machine for each worker with respect 
+  \item Implements the local state machine callbacks for each worker with respect 
       to the Bnet functionality. 
   \item It registers parameters to configure the node in the Bnet, 
       and methods to set and check these parameters.
@@ -650,7 +656,7 @@ Subclass of \class{dabc::ModuleAsync}.
       the Bnet cluster plugin.  
   \item Each receiver node is represented by one output port of 
       the Bnet sender module that is connected via a network transport 
-      (tcp socket, InfiniBand verbs) to an input port of the 
+      (tcp socket, {\em InfiniBand verbs}) to an input port of the 
       corresponding Bnet receiver node.
 \end{compactenum}
 \item[\class{bnet::ReceiverModule}] : \index{Bnet classes !bnet::ReceiverModule}
@@ -668,7 +674,7 @@ Subclass of \class{dabc::ModuleAsync}.
 \end{compactenum}
 \item[\class{bnet::BuilderModule}] : \index{Bnet classes !bnet::BuilderModule}
 	Subclass of \class{dabc::ModuleSync}. 
-   Framework protorype class to select and build a physics event from 
+   Framework prototype class to select and build a physics event from 
    the data frames of all Bnet senders as received by the receiver module.
 \begin{compactenum}
   \item It has {\bf one} input port connected to the Bnet receiver module. 
@@ -699,3 +705,5 @@ Subclass of \class{dabc::ModuleSync}.
 \end{compactenum}
 %\end{compactdesc}
 \end{description}
+
+\figpng{emptyfig}{Simplified {\em Bnet} class diagram}{htb}{0}{.6}

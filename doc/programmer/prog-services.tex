@@ -1,9 +1,8 @@
 [programmer/prog-services.tex]
 
 \section{Memory management}
-
+\label{prog_services_memory}
 \subsection{Zero-copy approach}
-
 Complete \dabc~ framework build around dataflow concept, where data (buffers) 
 flowing through many components like modules, transports and devices. 
 If on each step one will require to copy of data content, this will reduce 
@@ -13,7 +12,7 @@ Such approach is called zero-copy approach and fully supported by \dabc~.
 
 
 \subsection{Memory pool}
-
+\label{prog_services_memory_pool}
 Memory in \class{dabc::MemoryPool} organized in big blocks of contiguous virtual memory.
 Each block divided on peaces (buffers) of the same size, size of each peace is a power of 2.
 Memory pool can has several memory blocks with different size of buffers.
@@ -33,7 +32,7 @@ To release buffer, one should call \func{dabc::Buffer::Release()} static method.
  
 
 \subsection{Buffer}
-
+\label{prog_services_memory_buffer}
 In general case \class{dabc::Buffer} contains list of segments (gather list) to different 
 regions from the memory pool.
 Segment (represented by \class{dabc::MemSegment}) contains unique buffer id, pointer
@@ -95,7 +94,7 @@ the transport implementation when send via network.
 
 
 \subsection{Pointer}
-
+\label{prog_services_memory_pointer}
 Class \class{dabc::Pointer} provides seamless access to 
 segmented data, which is referenced by \class{dabc::Buffer} object.
 Using \class{dabc::Pointer}, one should not care how many segments 
@@ -221,7 +220,7 @@ In this case one should just call dabc::mgr()->CreateMemoryPool("WorkPool").
 
 
 \section{Threads organization}
-
+\label{prog_services_threads}
 Class \class{dabc::WorkingThread} organizes working loop and performes execution of
 runnable jobs, represented by \class{dabc::WorkingProcessor} class.
 
@@ -297,6 +296,7 @@ void SetGlobalVariable(int newvalue)
 
 
 \section{Commands execution}
+\label{prog_services_commands}
 
 \subsection{Command receiver}
 
