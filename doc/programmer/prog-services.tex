@@ -298,6 +298,111 @@ void SetGlobalVariable(int newvalue)
 \section{Commands execution}
 \label{prog_services_commands}
 
+Idea of command execution is to be able invoke user-specific 
+code from any part of the system. 
+There are several reasons to use command interface instead of 
+direct call of class methods:
+\bbul
+\item Execution of command performed not in context of calling thread but from thread, to which 
+  object is assigned. This allows to avoids unnecessary locking.
+\item Execution of command can be performed synchron or asynchron with calling thread, 
+      therefore one can easily specify timeout for command execution. 
+\item Command can be submitted to any object in the system, including objects on remote nodes.    
+\item Class \class{dabc::Command} can contain arbitrary number of arguments 
+      values and can be used for return of any number of result values.    
+\ebul 
+
+\subsection{Command class}
+
+Class \class{dabc::Command} is container for argument and result values.
+Name of the command is main identifier what should be done in command execution.
+
+There are number of methods to set/get command parameters:
+
+\begin{tabular}{l|l|l}
+Type &  Getter & Setter  \\
+   \hline
+string  & GetStr() &  SetStr() \\
+int  & GetInt() &  SetInt() \\
+unsigned int  & GetUInt() &  SetUInt() \\
+bool  & GetBool() &  SetBool() \\
+double  & GetDouble() &  SetDoble() \\
+\end{tabular}
+
+In all setter methods first argument is name of command parameter and second is value
+of correspondent type. In all getter methods first argument is again parameter name and
+second is default parameter value (optional). Default value returned, when
+parameter of that name was not specified in command. To instantiate command,
+one should do: 
+
+\begin{small}
+\begin{verbatim}
+...
+dabc::Command* cmd = new dabc::Command("UserCommand");
+cmd->SetInt("UserArg", 5);
+...
+\end{verbatim}     
+\end{small}
+   
+Usually name of command defines action, which will be performed.
+There are several subclasses of \class{dabc::Command} class (for instance, in
+file "dabc/Manager.h"), but these subclasses only used to set command name and
+command-specific parameters. There is no sense to define some extra methods
+in subclass while \class{dabc::Command} object designed to be only a container for 
+parameters.
+
+With method \func{ConvertToString()} one can convert command and all its parameters in
+the plain string. Method \func{ReadFromString()} is used to reconstruct command object
+for string.     
+
+
 \subsection{Command receiver}
+
+Class \class{dabc::CommandReceiver} provides interface for classes, where command should be
+executed. Main place for user code is virtual method \func{ExecuteCommand()}, which gets command 
+object as argument. Typicall implementation of this method looks like:
+
+\begin{small}
+\begin{verbatim}
+int UserModule::ExecuteCommand(dabc::Command* cmd)
+{
+   if (cmd->IsName("UserCommand")) {
+      int v = cmd->GetInt("UserArg", 0);
+      DOUT1(("Execute UserCommand with argument = %d", v));
+      return dabc::cmd_true;
+   } else
+   if (cmd->IsName("OtherCommand")) {
+      DOUT1(("Execute OtherCommand without arguments"));
+      return dabc::cmd_true;
+   } 
+      
+   return dabc::ModuleAsync::ExecuteCommand(cmd);
+}
+\end{verbatim}     
+\end{small}
+ 
+In \func{ExecuteCommand} method one should analyse command name and perform command-specific
+actions. Method should return \keyw{dabc::cmd\_true} when command executed 
+succesfully or \keyw{dabc::cmd\_false} otherwise.  
+
+Default implementation of \class{dabc::CommandReceiver} methods performs command execution
+in the calling thread. Class \class{dabc::WorkingProcessor} inherites from \class{dabc::CommandReceiver}
+and implements several virtual methods (like \func{IsExecutionThread()}, \func{IsExecutionThread(Submit())}) 
+which are necessary to deliver and execute command in correct thread context.
+User \strong{should not} reimplement these methods again in derived classes.
+In inherited from \class{dabc::WorkingProcessor} classes like \class{dabc::Module}, \class{dabc::Application}
+custom commands will be executed in appropriate thread context.  
+
+     
+
+ 
+With method \func{Execute()} of class \class{dabc::CommandReceiver} one can execute 
+command directly in the object. One can specify \class{dabc::Command} object as argument
+or just command name, if command has no arguments. Method \func{Execute()} will block
+until command is executed - one says about synchron mode of command execution. Optionally
+one 
+
+ 
+ 
 
 \subsection{Command client}
