@@ -277,6 +277,20 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
                DOUT1(("End of stream"));
                state = inpError;
                break;
+            case di_Repeat:
+               fComplRes = di_None;
+               dofireevent = true;
+               break;
+            case di_RepeatTimeOut:
+               fComplRes = di_None;
+               ret_tmout = Read_Timeout();
+               if (ret_tmout>0)
+                  dofireevent = false; //do not fire event, function will be caused by timeout
+               else {
+                  dofireevent = true;
+                  ret_tmout = -1.;
+               }
+               break;
             default:
                EOUT(("Error when do buffer reading res = %d", fComplRes));
                state = inpError;

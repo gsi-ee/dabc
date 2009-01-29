@@ -488,8 +488,7 @@ transports will be created, using negotiated sockets.
 Exactly for this kind of actions user \dabc~ state machine has 
 two commands "DoConfigure" and "DoEnable". Accordingly class
 \class{dabc::Application} has two methods \func{CreateAppModules()} and 
-\func{ConnectAppModules()} 
-(see correspondent section for more details).  
+\func{ConnectAppModules()} (see \ref{prog_plugin_applicaton}).  
 
 
 \subsection{Data transport}
@@ -510,37 +509,43 @@ User should redefine following virtual methods for implement data input:
    each portion of data. This method than should be used to read such header
    and define required buffer size. Method can also return following values:
    \bdes
-   \item[\keyw{di\_EndOfStream}] - end of stream, normal close of the input
-   \item[\keyw{di\_Repeat}]      - nothing to read now, call again as soon as possible
-   \item[\keyw{di\_RepeatTimeout}] - nothing to read now, try again after timeout
-   \item[\keyw{di\_Error}]         - error, close transport
+   \item[\keyw{dabc::di\_EndOfStream}] - end of stream, normal close of the input
+   \item[\keyw{dabc::di\_Repeat}]      - nothing to read now, call again as soon as possible
+   \item[\keyw{dabc::di\_RepeatTimeout}] - nothing to read now, try again after timeout
+   \item[\keyw{dabc::di\_Error}]         - error, close transport
    \edes
 
 \item [\func{Read\_Timeout()}] :
    Defines timeout (in seconds) for operation like \func{Read\_Size()}
    
-\item [\func{Read\_Start()}] : transport gets a 
-   \func{Buffer* buf} to be filled in the read. Actual filling may be done
-   asynchronously to the calling thread, e.~g.~ by DMA. Thus
-   this function may initiate the asynchronous read here and return
-   immeadeately before the read is complete. 
-   For synchronous filling of the buffer, this function should do nothing.
-   
+\item [\func{Read\_Start()}] : Starts reading of buffer. Should return:
+   \bdes
+   \item[\keyw{dabc::di\_Ok}]       - normal case, call of \func{Read\_Comlete()} will follow
+   \item[\keyw{dabc::di\_Error}]    - error, skip buffer, starts again from \func{Read\_Size()}
+   \item[\keyw{dabc::di\_CallBack}] - asynchron readout, user should call \func{Read\_CallBack()}  
+   \edes
+   If \keyw{di\_CallBack} returned, event loop for transport is stopped until
+   user calls \func{Read\_CallBack()} method, providing result of reading: 
+   \keyw{di\_Ok} or \keyw{di\_Error}. This mode is only possible if device driver
+   has its own thread and possibility to call \dabc~ methods. Big advantage of such modus -
+   data transport thread is not blocked by waiting result from device, therefore several
+   transports can share same thread. 
    
 \item [\func{Read\_Complete()}] :
-   Called before the framework transfers the \func{Buffer* buf}
-   to the connected port. The transport should no sooner return this function
-    than the reading of this buffer (e.~g.~ by DMA) 
-    is complete. In case of synchronous reading, the buffer filling is also
-    initiated here. For asynchronous reading, 
-    buffer filling has been initiated before
-    in func{unsigned Read\_Start(Buffer* buf)} and this function just waits
-    for a "buffer complete" state from the filling device.
-      
-\item [\func{Read\_CallBack()}] :
-   this method MUST be called by transport when \func{Read\_Start()} 
-   returns \func{di\_CallBack}. It is only way to "restart" event loop in the transport (Sergei, please explain more!)
-
+   Finish reading of the buffer. Can returns:  
+   \bdes
+   \item[\keyw{dabc::di\_Ok}]           - normal, buffer will be delivered to port
+   \item[\keyw{dabc::di\_Error}]        - error, close transport
+   \item[\keyw{dabc::di\_EndOfStream}]  - end of stream, normal close of the transport
+   \item[\keyw{dabc::di\_SkipBuffer}]   - normal, but buffer will not be deliver to the port
+   \item[\keyw{dabc::di\_Repeat}]       - not ready, call again as soon as possible
+   \item[\keyw{dabc::di\_RepeatTimeout}] - not ready, call again after timeout
+   \edes
+   In simple case actual reading of data performed in this method.
+   Or one can wait that other thread fills buffer. 
+   In this case one should be carefull and not block thread forever - 
+   better return with \keyw{dabc::di\_Repeat}, that thread can continue event loop and 
+   handle other workers.  
 \ebul
 
 When implementing data output, user should just implement \func{WriteBuffer()} virtual method.  
@@ -550,7 +555,10 @@ memory pool changes its layout - new buffers were allocated or released.
 It may be required for DMA operations, where each buffer from memory pool
 should be initialised once before it can be used for data transport.   
 
-
+Instantiation of user written data transport should be done via factory method
+\func{CreateTransport} (see \ref{prog_plugin_factory}). 
+One not need to create user-specific device for data transport - 
+standard local device can be used, while it only required as owner of transport object. 
 
 
 \subsection{Input/output objects}
@@ -559,6 +567,8 @@ should be initialised once before it can be used for data transport.
 
 
 \section{Factories}
+\label{prog_plugin_factory}
+
 The set up of the application specific objects is done 
    by \class{dabc::Factory} subclasses.
 \begin{compactenum}

@@ -53,7 +53,9 @@ namespace dabc {
          //    di_Ok            - buffer filled and ready
          //    di_EndOfStream   - this is end of stream, normal close of the input
          //    di_SkipBuffer    - skip buffer
-         //    di_Error (or other) - error, skip buffer and close input
+         //    di_Error         - error, skip buffer and close input
+         //    di_Repeat        - not ready, call again as soon as possible
+         //    di_RepeatTimeout - not ready, call again after timeout
          virtual unsigned Read_Complete(Buffer* buf) { return di_EndOfStream; }
 
          // One can use timeout (in seconds) in the case
