@@ -1,60 +1,75 @@
 [programmer/prog-setup.tex]
 \label{prog_setup}
 \section{Parameter class}
-
-Configuration and status information of objects can be represented by \class{Parameter} class.
-Any objects, derived from \class{WorkingProcessor} class, can has a list of parameters,
-assigned to it - for instance, \class{Application}, \class{Device}, \class{Module}, \class{Port} classes.   
+\label{prog_setup_parameter}
+Configuration and status information of objects can be represented by the \class{Parameter} class.
+Any object derived from \class{WorkingProcessor} class
+(e.~g.~ \class{Application}, \class{Device}, \class{Module}, and \class{Port})
+can have a list of parameters assigned to it.   
   
-There are number of class \class{WorkingProcessor} methods to create parameter objects of different kinds 
-and access their values. Full list one can see in following table:
+There are a number of \class{WorkingProcessor} methods to create parameter objects of different kinds and access their values. 
+These are shown in the following table:
 
 \begin{tabular}{|l|l|lll|}
    \hline
 Type & Class  & Create & Getter & Setter \\
    \hline
-string &  StrParameter    & CreateParStr    & GetParStr     & SetParStr     \\
-double &  DoubleParameter & CreateParDouble & GetParDouble  & SetParDouble  \\
-int    &  IntParameter    & CreateParInt    & GetParInt     & SetParInt     \\
-bool   &  StrParameter    & CreateParBool   & GetParBool    & SetParBool    \\
+string &  StrParameter    & CreateParStr()    & GetParStr()     & SetParStr ()    \\
+double &  DoubleParameter & CreateParDouble() & GetParDouble()  & SetParDouble()  \\
+int    &  IntParameter    & CreateParInt()    & GetParInt()     & SetParInt()     \\
+bool   &  StrParameter    & CreateParBool()  & GetParBool()    & SetParBool()   \\
    \hline
 \end{tabular}
 
-As one can see, to store boolean parameter, string is used. If value of string is "true" (in lower case),
-boolean value of such parameter recognized as true, otherwise false.
+The \func{GetPar...()} methods will internally create a new
+\class{Parameter} of the specified name if it does not exist before.
+For any type of parameter the \func{GetParStr()} and \func{SetParStr()} methods can be used
+which will deliver the parameter value as text string expression.
 
-For any type of parameter GetParStr/SetParStr methods can be used. 
+As one can see, to represent a boolean value a string parameter is used. 
+If text of string is "true" (in lower case),
+the boolean value is recognized as \keyw{true}, 
+otherwise as \keyw{false}.
 
-It is recommended to use class \class{WorkingProcessor} methods to create parameters and access its values,
-but one also can use FindPar() method to find parameter object and use its methods directly.   
+It is recommended to use these \class{WorkingProcessor} methods to create parameters and access their values;
+but one can also use \func{FindPar()} method to find any parameter object 
+and use its methods directly.   
 
 
 \section{Use parameter for control}
+\label{prog_setup_parametercontrol}
+One advantage of the \dabc~ parameter objects is that parameter values can be 
+observed and changed by a control system.
 
-The main advantage to use parameter objects is that parameter values can be 
-observed and changed using controlling system.
+When a parameter value is changed in the program by a \func{SetPar...} method, 
+the control system is informed and represents such change in an appropriate GUI element.
+On the other hand, if the user modifies a parameter value in the GUI, 
+the value of the parameter object will be changed and the corresponding parent object 
+(\class{Module}, \class{Device}) gets a callback via 
+virtual method \func{ParameterChanged()}. 
+By implementing a suitable reaction in this call, 
+one could reconfigure or adjust the running program on the fly.
 
-At any time, when parameter value changed by program via SetPar... methods, 
-control system informed and represents such change in appropriate GUI element.
-At the same time, if user modifies parameter value in the GUI, value of parameter object
-will be changed and correspondent parent object (module, device) get callback via 
-virtual method ParameterChanged(). Implementing correct reaction on this call, 
-one can provide possibility to reconfigure/adjust running code on the fly.
+A parameter object may be "fixed" via \func{Parameter::SetFixed()} method. 
+This disables to change the parameter value, both
+from the program and the control/configuration system side. 
+Only when the "fixed" flag is reset to \keyw{false},
+the parameter can be modified again.
 
-Parameter value may be fixed via Parameter::SetFixed() method. This blocks possibility 
-to change parameter value from both program and user side. Only when fixed flag set again to false,
-parameter value can be changed. 
-
-Not all parameters objects should be visible to control system. There is so-called 
-visibility level of parameter, which is assigned to parameter when its instance is created.
-Only if visibility level smaller than current level (configured in Manager::ParsVisibility()),
-parameter will be "seen" by control system. Such level is configured  
-via WorkingProcessor::SetParDflts() function before parameters objects are created.
+Not all parameters objects should be visible to the control system. 
+Each parameter has a \strong {visibility level} 
+which is assigned to the parameter instance when it is created.
+A parameter is known to the control system only if its 
+visibility level is smaller than the system visibility level 
+configured with \func{Manager::ParsVisibility()}. 
+The default parameter visiblity level can be set via
+\func{WorkingProcessor::SetParDflts()} function before 
+the parameters objects are created.
 
 
 \section{Example of parameters usage}
-
-Lets consider example of module, which uses parameters:
+\label{prog_setup_parameterexample}
+Let's consider an example of a module which uses parameters:
 
 \begin{verbatim}
 class UserModule : public dabc::ModuleAsync {
@@ -76,35 +91,45 @@ class UserModule : public dabc::ModuleAsync {
 }; 
 \end{verbatim}
 
-In module constructor two parameters are created - boolean and integer and timer with period of 1 s.
-When module started, value of integer parameter will be changed every second.
-If boolean parameter is set to true, value of counter will be displayed on debug output.
+In the module constructor two parameters are created - boolean and integer, 
+and a timer with $1\mbox{~s}$ period.
+When the module is started, the value of integer parameter "Counter" 
+will be changed every second.
+If boolean parameter "Output" is set to \keyw{true}, 
+the counter value will be displayed on debug output.
 
-Using control system, value of boolean parameter can be changed. To detect and react on such change,
+Using a control system, the value of the boolean parameter can be changed. 
+To detect and react on such change,
 one should implement following method: 
  
 \begin{verbatim}
-      virtual void ParameterChanged(dabc::Parameter* par) 
-      {
-         if (par->IsName("Output")) 
-            DOUT1(("Output flag changed to %s", DBOOL(GetParBool("Output")));
-      }
+virtual void ParameterChanged(dabc::Parameter* par) 
+{
+   if (par->IsName("Output")) 
+   DOUT1(("Output flag changed to %s", DBOOL(GetParBool("Output")));
+}
 \end{verbatim}
 
-From the performance reasons one should avoid usage of parameter getter/setter methods (like  
-GetParBool() or SetParInt()) inside loop, which executed many times. Main aim of parameter
-object is to provide connection to control system and in other situations normal class members should be used.
+For performance reasons one should avoid to use parameter getter/setter methods 
+(like  \func{GetParBool()} or \func{SetParInt()}) inside a loop 
+being executed many times. The main purpose of a parameter
+object is to provide a connection to the control and configuration system.
+In other situations simple class members should be used.
 
 
 \section{Configuration parameters}
-
-Another use of parameter object is its usage for objects configuration.
-When one creates object like module or device, one often need to deliver 
-one or several configurations parameters to constructor such as required
-number of input ports or server socket port number. 
+\label{prog_setup_configurationparameter}
+Another use case of parameters consists in the object configuration.
+When one creates an object, like a module or a device, 
+it is often necessary to deliver one or several configuration values 
+to the constructor, e.~g.~ the required
+number of input ports, or a server socket port number. 
 
 For such situation configuration parameter are defined.
-This parameter should be created and set only in object constructor with following methods:
+These parameters should be created and set 
+in the object constructor with following methods only:
+
+
 \bdes
 \item[GetCfgStr]  string
 \item[GetCfgDouble]   double 
@@ -112,34 +137,35 @@ This parameter should be created and set only in object constructor with followi
 \item[GetCfgBool]   boolean 
 \edes
 
-All these methods has following arguments: name of configuration parameter, 
-default value of configuration parameter [optional] and pointer on \class{Command} object [optional].
-Lets add one configuration parameter to our module constructor:
+All these methods have following arguments: the parameter name, 
+a default value [optional], and a pointer to a \class{Command} object [optional].
+Let's add one configuration parameter to our module constructor:
 
 \begin{verbatim}
-      UserModule(const char* name, dabc::Command* cmd = 0) : 
-         dabc::ModuleAsync(name, cmd)
-      {
-         CreateParBool("Output", true);
-         CreateParInt("Counter", 0);
-         double period = GetCfgDouble("Period", 1.0, cmd);
-         CreateTimer("Timer", period, false);
-      }
+UserModule(const char* name, dabc::Command* cmd = 0) : 
+        dabc::ModuleAsync(name, cmd)
+{
+        CreateParBool("Output", true);
+        CreateParInt("Counter", 0);
+        double period = GetCfgDouble("Period", 1.0, cmd);
+        CreateTimer("Timer", period, false);
+}
 \end{verbatim}
 
-Here period of timer is set via configuration parameter "Period". How its value will be defined? 
-
-First of all, will be checked if parameter with given name exists in the command.
-If not, appropriate entry in configuration file will be searched. If configuration file also
-does not contains such parameter, default value will be used.
+Here the period of the timer is set via configuration parameter "Period". 
+How will its value  be defined? 
+First of all, it will be checked if a parameter of that name exists in command
+\func{cmd}. If not, the appropriate entry will be searched in the configuration file. 
+If the configuration file also does not contain such parameter, 
+the specified default value $1.0$  will be used.
 
 
 \section{Configuration file example}
+\label{prog_setup_configfile}
+The configuration file is an XML file in a \dabc-specific format, 
+which contains values for some or all configuration parameters of the system. 
 
-Configuration file is xml file in dabc-specific format, which contains 
-value of some or all configuration parameters of the system. 
-
-Lets consider simple but functional example of configuration file:
+Let's consider this simple but functional configuration file:
 
 \begin{verbatim}
 
@@ -161,73 +187,77 @@ Lets consider simple but functional example of configuration file:
 
 \end{verbatim}
 
-This is an example of xml file for mbs generator, which produces 
-mbs events and provides them to mbs transport server. 
-To run that example, just "run.sh test.xml" should be executed in the shell.
-Other application
-(dabc or Go4) can connect to that server and read generated mbs events.
+This is an example XML file for an MBS generator, which produces 
+MBS events and provides them to an {\em MBS transport} server. 
+To run that example, just "run.sh test.xml" should be executed in a shell.
+Other applications
+(\dabc~ or {\em Go4}) can connect to that server and read generated mbs events.
 
 
 \section{Basic syntax}
-
-DABC configuration file should always contain <dabc> as root node. 
-Inside <dabc> node one or several <Context> nodes should exists.
-Each <Context> node represents independent application context, which runs as
+\label{prog_setup_configfile_syntax}
+A \dabc~ configuration file should always contain <dabc> as root node. 
+Inside the <dabc> node one or several <Context> nodes should exists.
+Each <Context> node represents the {\em application context} which runs as
 independent executable. 
-Optionally <dabc> node can has <Variables> and <Defaults> nodes, which are described further. 
+Optionally the <dabc> node can have <Variables> and <Defaults> nodes, 
+which are described further in the following sections  \ref{prog_setup_configfile_variables}
+and \ref{prog_setup_configfile_defaults}
 
 
 \section{Context}
-
-<Context> node can has two optional attributes:
+\label{prog_setup_configfile_context}
+A <Context> node can have two optional attributes:
 \bdes
-\item["host"] host name, where executable should runs, default is localhost
-\item["name"] application (manager), default is host name.
+\item["host"] host name, where executable should run, default is "localhost"
+\item["name"] application (manager), default is the host name.
 \edes
 
-Inside <Context> node configuration parameters for modules, devices, memory pools are stored.
-In example file one sees several parameters for output port of generator module.  
+Inside a <Context> node configuration parameters for modules, devices, memory pools are
+contained.
+In the example file one sees several parameters for the output port of 
+the generator module.  
 
 
 \section{Run arguments}
-
-Usually <Context> node has <Run> subnode, where user defines different parameters, 
-relevant for running dabc application:
+\label{prog_setup_configfile_run}
+Usually a <Context> node has a <Run> subnode, where the user may define different parameters, relevant for running the \dabc~ executable:
 
 \bdes
-\item[lib] library name, which should be loaded. Several libraries names can be specified.
-\item[func] function name which should be called to create modules. 
-It is alternative to writing subclass of \class{Application} and instantiating it.
+\item[lib] name of a library which should be loaded. Several libraries can be specified.
+\item[func] name of a function which should be called to create modules. 
+This is an alternative to instantiating a subclass of \class{dabc::Application} 
+(compare section \ref{prog_plugin_applicaton})
 \item[port] ssh port number of remote host
 \item[user] account name to be used for ssh (login without password should be possible)
 \item[init] init script, which should be called before dabc application starts
 \item[test] test script, which is called when test sequence is run by run.sh script
 \item[timeout] ssh timeout 
-\item[debugger] argument to run debugger. Value should be like "gdb -x run.txt --args", where file run.txt should contain commands "r bt q".
-\item[workdir] directory where dabc application should start
+\item[debugger] argument to run with a debugger. Value should be like "gdb -x run.txt --args", where file run.txt should contain commands "r bt q".
+\item[workdir] directory where \dabc~ executable should start
 \item[debuglevel] level of debug output on console, default 1
 \item[logfile] filename for log output, default none  
 \item[loglevel] level of log output to file, default 2 
-\item[DIM\_DNS\_NODE] node name of dim dns server, used by dim control 
-\item[DIM\_DNS\_PORT] port number of dim dns server, used by dim control 
+\item[DIM\_DNS\_NODE] node name of DIM dns server, used by DIM controls implementation 
+\item[DIM\_DNS\_PORT] port number of DIM dns server, used by DIM controls implementation
 \edes
 
 
 \section{Variables}
-
-In root <dabc> node one can insert <Variables> node, which may contain 
-definition of one or several variables. Once defined, 
-such variables can be used in any place of configuration file to set parameters values.
-In this case syntax to set parameter is:
+\label{prog_setup_configfile_variables}
+In the root node <dabc> one can insert a <Variables> node which may contain 
+definitions of one or several variables. Once defined, 
+such variables can be used in any place of the configuration file to set parameter values.
+In this case the syntax to set a parameter is:
 
 \begin{verbatim}
     <ParameterName value="${VariableName}"/>
 \end{verbatim}
 
-It is allowed to combine variable with text or other variable, 
+It is allowed to define a variable as a combination of text with another variable, 
 but neither arithmetic nor string operations are supported. 
 
-Using variables, one can modify example in following way:
+Using variables, one can modify the example in the following way:
 
 \begin{verbatim}
 
@@ -254,32 +284,35 @@ Using variables, one can modify example in following way:
 
 \end{verbatim}
 
-Here context name and module name are set via myname variable and mbs server 
-socket port is set via myport variable.
+Here context name and module name are set via {\tt myname} variable,
+and mbs server socket port is set via {\tt myport} variable.
 
-There are several variables, which are defined by configuration system:
+There are several variables which are predefined by the configuration system:
 
 \bbul
-\item DABCSYS - top directory of dabc installation
+\item DABCSYS - top directory of \dabc~ installation
 \item DABCUSERDIR - user-specified directory
 \item DABCWORKDIR - current working directory
 \item DABCNUMNODES - number of <Context> nodes in configuration files
 \item DABCNODEID - sequence number of current <Context> node in configuration file 
 \ebul
 
-Any environment variable can also be used as variable to set parameter values. 
+Any shell environment variable 
+is also available as variable in the configuration file to set parameter values. 
 
 
 \section{Default values}
+\label{prog_setup_configfile_defaults}
+There are situations when one needs to set the same value to several similar parameters,
+for instance the same output queue length for all output ports in the module. One possible way is to use variables, as described above. 
+The disadvantage of such approach is that one must expand the XML file
+to set each queue length explicitely from the variable;
+so in case of a big number of ports the file will be very long and 
+confusing to the user.
 
-There are situations, when one need to set same value to several similar parameters,
-for instance same output queue length for all output ports in the module. One possible way
-is to use variables (as described before) and set parameter value via variable. 
-Disadvantage of such approach that one should expand xml files and in case 
-of big number of ports xml file will be very long and unreadable.
-
-Another possibility to set several parameters at once - create <dabc/Defaults> node and
-specify cast rule, using "*" or "?" symbols like that: 
+Another possibility to set several parameters at once 
+consists in \strong{wildcard rules} using "*" or "?" symbols.
+These can be defined in a  <Defaults> node: 
 
 \begin{verbatim}
 
@@ -313,39 +346,43 @@ specify cast rule, using "*" or "?" symbols like that:
 
 \end{verbatim}
 
-In this case for all ports, which names are started with string "Output" from any module,
-output queue length will be 5. 
+In this example for all ports which names begin with the string "Output", 
+and which belong to any module, the output queue length will be 5. 
+A wildcard rule of this form will be applied for 
+all contexts of the configuration file, 
+i.~e.~ by such rule we set the output queue length for all modules on all nodes. 
+This allows to configure a big multi-node cluster with
+a compact XML file.
 
-In form, as it is specified in example, such multicast rule will be applied for 
-all contexts from configuration file means by such rule we set output queue length 
-for all modules on all nodes. This allow us to create compact xml files for big multi-nodes configuration.   
 
+\section{Usage of commands for configuration}
+\label{prog_setup_configuration_commands}
+Let's consider the possibility to configure a module by means of the \class{Command} class.
+Here the use case is that
+an object (like a module) should be created with fixed parameters,
+ignoring the values specified in the configuration file.
 
-\section{Usage commands for configuration}
-
-Lets consider possibility to configure module, using \class{Command} class.
-
-This is required when object (like mnodule) should be created with fixed parameters
-disregard of values specified in config file.
-
-In our example one can modify StartMbsGenerator() function in following way:
-
+In our example one can modify \func{StartMbsGenerator()} function in the following way:
 \begin{verbatim}
-
 extern "C" void StartMbsGenerator() 
 {
-    dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", "Generator");
-    cmd->SetInt("SubeventSize", 128);
-    if (!dabc::mgr()->Execute(cmd)) {
-       EOUT(("Cannot create generator module"));
-       exit(1);
-    }
+  dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", 
+                                                 "Generator");
+  cmd->SetInt("SubeventSize", 128);
+  if (!dabc::mgr()->Execute(cmd)) {
+     EOUT(("Cannot create generator module"));
+     exit(1);
+  }
     
     ...
 }
 \end{verbatim}
 
-Here one add additional arguments to \comm{CmdCreateModule}, 
-which set mbs subevent size to 128. After that any modification of
-<SubeventSize> entry in config file take no effects.
+Here one adds an additional parameter of name "SubeventSize" to
+the \class{CmdCreateModule} object, 
+which will set the MBS subevent size to 128. 
+The generator module constructor will get the parameter value via method
+\func{GetCfgInt()}, as described in section \ref{prog_setup_configurationparameter}.
+Since the parameters of the passed \func{cmd} object will override all other settings here,
+the value of the corresponding <SubeventSize> entry in the configuration file has no effect.
 
