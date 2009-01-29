@@ -583,6 +583,61 @@ To instantiate such classes, user should inplement factories methods
 \func{CreateDataInput()} and \func{CreateDataOutput()} (see \ref{prog_plugin_factory}).
 
 
+\section{The DABC Application}
+\label{prog_plugin_applicaton}
+The specific application controlling code is defined in the \class{dabc::Application}.
+
+On startup time, the \class{dabc::Application} is instantiated
+by means of a factory method \func{CreateApplication()}.
+As argument, factories gets application class name, provided from configuration file.
+Thus, to use his/her application implementation, 
+the user must provide a \class{dabc::Factory} that defines such method.
+
+The manager has exactly one application object - name of this object always "App".
+Application can always be accessed via \func{dabc::mgr()->GetApp()} call. 
+
+The application  may register parameters that 
+define the application's configuration. These parameters can be set at 
+runtime from the configuration file or by controls system.
+
+Main aim of application class - add user-specific actions during
+execution of state machine commands. Application has virtual method 
+\func{DoStateTransition()} which is called from SM during state change.
+As argument, name of state transition command is delivered. 
+There are following SM commands exists:
+
+\bdes
+\item[\keyw{dabc::Manager::stcmdDoConfigure}] - creates all necessary application components: devices, modules, memory pools
+\item[\keyw{dabc::Manager::stcmdDoEnable}] - connect local and (or) remote nodes together (if necessary) 
+\item[\keyw{dabc::Manager::stcmdDoStart}] - starts execution of user modules 
+\item[\keyw{dabc::Manager::stcmdDoStop}] - stop execution of user modules
+\item[\keyw{dabc::Manager::stcmdDoHalt}] - destroy all components, created during configure
+\item[\keyw{dabc::Manager::stcmdDoError}] - react on error, which happened during other commands
+\edes
+  
+Class \class{dabc::Application} already has default implementation for
+\func{DoStateTransition()} method, where number of virtual methods are called:
+
+\bdes
+\item[\func{CreateAppModules()}] - creates all necessary application components
+\item[\func{ConnectAppModules()}] - activity to connect with remote nodes or  
+\item[\func{IsAppModulesConnected()}] - check if connection is already performed  
+\item[\func{BeforeAppModulesStarted()}] - optional activity before modules started 
+\item[\func{AfterAppModulesStopped()}] - optional activity after modules stopped
+\item[\func{BeforeAppModulesDestroyed()}] - optional call before modules destroyed
+\edes
+
+Actually, for single-node application it is enough to implement \func{CreateAppModules()},
+while all other methods have meaningfull implementation for that case. 
+
+For special DAQ topologies (e.g. Bnet), the framework offers 
+implementations of the \class{dabc::Application} containing the 
+generic functionality (e.~g.~ \class{bnet::WorkerApplication}, \class{bnet::ClusterApplication}). 
+In this case, the user specific parts are implemented by subclassing 
+and implementing additional virtual methods (e.~g.~ \func{CreateReadout()}).    
+
+
+
 \section{Factories}
 \label{prog_plugin_factory}
 
@@ -660,44 +715,6 @@ dabc::mgr()->Execute(cmd);
 \end{verbatim}     
 \end{small}
 
-
-
-\section{The DABC Application}
-\label{prog_plugin_applicaton}
-The specific application controlling code is defined in 
-   the \class{dabc::Application}.   
-\begin{compactenum}
-\item  The manager has exactly one application object. 
-      The user must implement a \class{dabc::Application} subclass.
-\item  On startup time, the \class{dabc::Application} is instantiated
-by means of a factory method 
-      \func{CreateApplication(const char* classname, dabc::Command* cmd)}.
-The text argument \func{classname} specifies which
-application subclass is created; this name is taken from a setup parameter, i.~e.~ it may be read from an XML setup file. The framework will search all
-registered factories for the method which can fullfill to create an application
-of that name. So the user must provide a \class{dabc::Factory} that defines such method for his/her application implementation.
-      
-\item  The application  may register parameters that 
-      define the application's configuration. These parameters can be set at 
-      runtime from the configuration and controls system.
-     
-\item  The user may implement virtual methods \func{UserConfigure()} ,  
-      \func{UserEnable()}, \func{UserBeforeStart()}, 
-      \func{UserAfterStop()}, \func{UserHalt()} in his/her 
-      \class{dabc::Application} subclass. These methods are executed by the 
-      framework state machine before or after the corresponding state 
-      transitions to do additional application specific configuration, 
-      run control, and clean-up actions. Note: all generic state machine 
-      actions (e.g. cleanup of modules and devices, starting 
-      and stopping the working processors) are already handled by 
-      the framework at the right time and need not to be invoked explicitely here.
-
-\item   For special DAQ topologies (e.g. Bnet), the framework offers 
-      implementations of the \class{dabc::Application} containing the 
-      generic functionality (e.~g.~ \class{bnet::WorkerApplication}, \class{bnet::ClusterApplication}). 
-      In this case, the user specific parts are implemented by subclassing 
-      these and implementing additional virtual methods (e.~g.~ \func{CreateReadout()}).    
-\end{compactenum}
 
 
 
