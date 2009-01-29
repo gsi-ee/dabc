@@ -21,23 +21,28 @@ be available by name at runtime.
 \dabc~ provides \class{dabc::Module} class, which plays role of data processing entity in framework. 
 In this class necessary components like pool handles, ports, parameters, timers are organised.
 Class \class{dabc::Module} has two subclasses - \class{dabc::ModuleSync} and \class{dabc::ModuleAsync},
-which provides two different paradigms of data processing: within explicit main loop and via event processing respectively.
-Before discuss these two kinds of modules, lets consider components, which can be used with both types 
-of the module.
+which provides two different paradigms of data processing: 
+within explicit main loop, and via event processing, respectively.
+Before we discuss these two kinds of modules, 
+let's consider components which can be used with both types of the module.
 
 
 \subsection{Pool handles}
 
-Class \class{dabc::PoolHanlde} should be used in any module to communicate with \class{dabc::MemoryPool}.
-By creating pool handle with method \func{CreatePoolHandle}, module declares that it 
-wants to use buffers from specified (by name) memory pool. 
-More than one memory handle can be used in one module. 
-Pool handle can be accessed with method \func{dabc::Module::FindPool} via name or
-with method \func{dabc::Module::Pool} via handle number (started from 0).
+Class \class{dabc::PoolHandle} should be used in any module to communicate with \class{dabc::MemoryPool}.
+By creating a pool handle with method \func{CreatePoolHandle()}, 
+the module declares that it 
+wants to use buffers from the memory pool as specified by name. 
+More than one pool handles can be used in one module. 
+A pool handle can be accessed with method \func{dabc::Module::FindPool()} via name,
+or with method \func{dabc::Module::Pool()} via handle number (started from 0).
 
-When pool with given name not exists, it will be created automatically at the 
-time of first request. In this case plays a role buffer size and number of buffers,
-which are specified in \func{CreatePoolHandle} call. 
+If a pool of the given name does not exist, 
+it will be created automatically at the 
+time of the first request.   
+Buffer size and the number of buffers, 
+which are specified in the \func{CreatePoolHandle()} call,
+play a role in this case only.
 
 
 \subsection{Ports}
@@ -55,19 +60,19 @@ inp/out  & \func{CreateIOPort(name, ...)} & \func{NumIOPorts()} & \func{IOPort(u
    \hline
 \end{tabular}
 
-Port usually should be created in module constructor.
-As first argument in creation methods unique port name should be specified.
-As second argument, pool handle should be
-specified - it defines pool where necessary memory can be fetched for transports, 
-associated with the port. Length of input or (and) output queue defines how many
-buffers can be kept in correspondent queue. One also can specify size of user header,
+A port usually should be created in the module constructor.
+As first argument in the creation methods a unique port name should be specified.
+As second argument, the pool handle should be
+specified; this defines the memory pool where necessary memory can be fetched for the transports associated with the port. The Length of input or (and) output queue 
+defines how many
+buffers can be kept in corresponding queue. One also can specify the size of user header,
 which is expected to be transported over the port - it is important for further transport configurations.    
 
 Any kind of port can be found by name with \func{FindPort()} method.
-But this is not the fastest way to work with ports, while string search is not
+But this is not the fastest way to work with ports, because string search is not
 very efficient. 
-One better should use in code methods like func{NumInputs()} and \func{Input(unsigned)} (for input ports),
-where port sequence number is used. 
+One better should use in code methods like \func{NumInputs()} and \func{Input(unsigned)} (for input ports),
+where the port id number (i.~e.~ the sequence number of port creation) is used. 
 
 Class \class{dabc::Port} provides methods \func{Send()} and \func{Recv()} to send or receive buffers. 
 While these are non-blocking methods, one should use \func{CanSend()} and \func{CanRecv()} methods 
@@ -77,18 +82,21 @@ before one can call transfer operations.
 \subsection{Parameters and configurations}
 
 Parameters are used in module for configuration, controlling and monitoring.
-More information about parameters handling see in chapter ...
+More information about parameters handling see in chapter \ref{prog_setup}.
 
 
 \subsection{Commands processing}
 
-There is possibility in \dabc~ to execute user-defined commands in module context.
-Virtual method \func{ExecuteCommand} called every time when new command is submitted
-to the module. Command \strong{always} executed in module thread disregard from which thread
-command was submitted, therefore it is not necessary to lock command execution code.
-Most actions in \dabc~ performed with help of the commands. 
+There is the possibility in \dabc~ to execute user-defined commands in a module context.
+Virtual method \func{ExecuteCommand()} is called every time when a command is submitted
+to the module. The command is \strong{always} executed in the module thread,
+disregarding from which thread the command was submitted. 
+Therefore it is not necessary to protect command execution code against
+module function code by means of thread locks.
 
-Possible example how command execution can look like:
+Most actions in \dabc~ are performed with help of commands. 
+
+Here is an example how command execution can look like:
 \begin{small}
 \begin{verbatim}
 int UserModule::ExecuteCommand(dabc::Command* cmd) 
@@ -102,7 +110,7 @@ int UserModule::ExecuteCommand(dabc::Command* cmd)
 \end{verbatim}
 \end{small}
 
-Than somewhere in the code of other component:
+This is invoked somewhere in the code of another component:
 \begin{small}
 \begin{verbatim}
 ...
@@ -114,12 +122,16 @@ m->Execute("UserPrint");
 ...
 \end{verbatim}
 \end{small}
-Method \func{Execute} returns true when command executed successfully. 
-When command is executed, \class{dabc::Command} object deleted automatically.  
+After command execution has finished, 
+method \func{Execute()} returns \keyw{true} or  \keyw{false},
+depending on the success. The \class{dabc::Command} object 
+is deleted automatically after execution.  
 
-One can register command in module constructor. In this case command will be 
-known by control system and can be invoked by user from the GUI:
-
+In the module constructor, one can register a command 
+for the control system by means of a corresponding 
+\class{dabc::CommandDefinition} object. 
+In this case the command and its arguments are known
+remotely and can be invoked from a controls GUI:
 \begin{small}
 \begin{verbatim}
 UserModule::UserModule(const char* name) : dabc::ModuleSync(name) 
@@ -136,12 +148,13 @@ UserModule::UserModule(const char* name) : dabc::ModuleSync(name)
 \subsection{ModuleSync}
 \index{Core classes !dabc::ModuleSync}
 \label{plugin_module_sync}
-Data processing functionality in most intuitive way can be implemented by subclassing 
-the \class{dabc::ModuleSync} base class, which defines the interface for a 
+Data processing functionality in a most intuitive way can be implemented by subclassing 
+the \\ 
+\class{dabc::ModuleSync} base class, which defines the interface for a 
 synchronous module that is allowed to block its dedicated execution thread.  
 
-Class provides a number of methods, which are blocked until expected action 
-cannot be performed.
+This class provides a number of methods which will block until the expected action 
+can be performed.
 
 \begin{tabular}{ll}
 Method &  Description \\
@@ -155,20 +168,21 @@ Method &  Description \\
    \hline
 \end{tabular}
 
-In all these methods timeout value as last argument can be specified.
-Method \func{SetTmoutExcept} defines if \class{dabc::TimeoutException} exception 
-is produced when timeout is expired. By default, these blocking methods
-just return false in case of timeout.
+In all these methods a timeout value as last argument can be specified.
+Method \func{SetTmoutExcept()} defines if a \class{dabc::TimeoutException} 
+exception is thrown when the timeout is expired. 
+By default, these blocking methods just return \keyw{false} in case of timeout.
 
 Data processing should be implemented in \func{MainLoop()} method.
-It usually contains \strong{while} loop where \func{ModuleWorking()} method
+It usually contains a \strong{while()} loop where \func{ModuleWorking()} method
 is used to check if execution of module code shall be continued.
-This method is also used to execute queued command if user specified
-so-call synchronous command execution by \func{SetSyncCommands()} call.
-By default, command can be executed in any place of the code. 
+This method will also execute the queued commands, if
+{\em synchronous command execution} was specified before 
+by method \func{SetSyncCommands()}.
+By default, a command can be executed in any place of the code. 
 
-Lets consider simple example of the module, 
-which has one input and two output ports and deliver buffers from input to
+Let's consider a simple example of a  module 
+which has one input and two output ports, and delivers buffers from input to
 one or another output sequentially. Implementation of such 
 class will look like:
 \begin{small}
@@ -198,8 +212,9 @@ public:
 \end{small}
 
 In constructor one sees creation of pool handle and input and output ports.
-Method \func{MainLoop} has simple while loop, where buffer received from the
-input and than send to first or second output.
+Method \func{MainLoop()} has a simple {\tt while()} loop, 
+that receives a buffer from the
+input and then sends it alternatingly to the first or the second output.
 
   
 \subsection{ModuleAsync}
@@ -371,6 +386,7 @@ For special set ups (e.g. Bnet), the framework provides
 
    
 \begin{compactenum}
+
 \item  Instead of implementing \func{MainLoop()}, other virtual 
       methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
       implemented that are implicitly called by the superclass \func{MainLoop()}.
@@ -378,10 +394,8 @@ For special set ups (e.g. Bnet), the framework provides
       methods to be used for data processing.    
 \end{compactenum}
 
-
 \section{Device and transport}
 \label{prog_plugin_device}
-
 All data transport functionality is implemented by 
    subclassing  \class{dabc::Device} and \class{dabc::Transport} base classes.
 
