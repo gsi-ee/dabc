@@ -68,7 +68,7 @@ public MbsPanel(){
 // Head line (title) inside window
 super("MbsSetup");
 // Icon for the main menu and window decoration
-menuIcon=xSet.getIcon("icons/usericon.png");
+menuIcon=xSet.getIcon("icons/usericongreen.png");
 // name of window. This name will be used in layout XML file
 name=new String("MbsPanel");
 // name for graphics windows. These names will be used in layout XML file
@@ -111,7 +111,7 @@ xSet.setColorBack(back);
     check1 = new JCheckBox();
     addCheckBox("Demo mode",check1);
 // Build button line
-    graphIcon   = xSet.getIcon("icons/usergraphics.png");
+    graphIcon   = xSet.getIcon("icons/windowgreen.png");
     launchIcon  = xSet.getIcon("icons/connprm.png");
     killIcon    = xSet.getIcon("icons/dabchalt.png");
     mbsIcon     = xSet.getIcon("icons/conndsp.png");
@@ -215,7 +215,7 @@ for(int i=0;i<vipar.size();i++){
     xip=vipar.get(i).getParserInfo();
     full=xip.getFull();
     if(xip.isRate()){ // with this, we take all meters
-        if(full.indexOf("Trend")<0){
+        if((full.indexOf("DataRate")>0)|(full.indexOf("EventRate")>0)){
         head = new String(xip.getNode()+"/"+xip.getApplication());
         name = new String(xip.getName()+"["+vipar.get(i).getMeter().getUnits()+"]");
         rate=new xRate(head, name, !head.equals(last),

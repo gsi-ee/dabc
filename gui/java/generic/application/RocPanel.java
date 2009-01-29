@@ -65,7 +65,7 @@ public RocPanel(){
 // Head line (title) inside window
 super("RocSetup");
 // Icon for the main menu and window decoration
-menuIcon=xSet.getIcon("icons/usericon.png");
+menuIcon=xSet.getIcon("icons/usericonblue.png");
 // name of window. This name will be used in layout XML file
 name=new String("RocPanel");
 // name for graphics windows. These names will be used in layout XML file
@@ -115,7 +115,7 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
     haltIcon    = xSet.getIcon("icons/dabchalt.png");
     exitIcon    = xSet.getIcon("icons/exitall.png");
-    graphIcon   = xSet.getIcon("icons/usergraphics.png");
+    graphIcon   = xSet.getIcon("icons/windowred.png");
     addButton("dabcLaunch","Launch DABC",launchIcon,this);
     addButton("dabcConfig","Configure DABC",configIcon,this);
     addButton("dabcEnable","Enable DABC",enableIcon,this);

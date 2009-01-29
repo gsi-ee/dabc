@@ -54,7 +54,7 @@ public UserPanel(){
 // Head line (title) inside window
 super("UserSetup");
 // Icon for the main menu and window decoration
-menuIcon=xSet.getIcon("icons/usericon.png");
+menuIcon=xSet.getIcon("icons/usericongreen.png");
 // name of window. This name will be used in layout XML file
 name=new String("UserPanel");
 // name for graphics windows. These names will be used in layout XML file
@@ -98,7 +98,7 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
     stopIcon    = xSet.getIcon("icons/mbsstop.png");
     closeIcon   = xSet.getIcon("icons/fileclose.png");
     storeIcon   = xSet.getIcon("icons/savewin.png");
-    graphIcon   = xSet.getIcon("icons/usergraphics.png");
+    graphIcon   = xSet.getIcon("icons/windowgreen.png");
     colorIcon   = xSet.getIcon("icons/colormap.png");
     addButton("userQuit","Close window",closeIcon,this);
     addButton("userStore","Store",storeIcon,this);

@@ -90,8 +90,6 @@ int width=14;
     checkinfo=addCheckBox("Infos: ","filter",this);checkinfo.setSelected(info);
 // Build button line
     graphIcon   = xSet.getIcon("icons/usergraphics.png");
-    storeIcon   = xSet.getIcon("icons/savewin.png");
-    addButton("Store","Store selection panel content",storeIcon,this);
     addButton("Display","Display parameter list",menuIcon,this);
 // store position and size of graphics frame
     p1lo=xSet.getLayout(p1name); // if not loaded from setup file create new one
@@ -244,9 +242,7 @@ System.out.println("Store selections to "+file);
 public void actionPerformed(ActionEvent e) {
 String cmd = new String(e.getActionCommand());
 
-if ("Store".equals(cmd)) saveSetup("Selection.xml");
-
-else if ("Display".equals(cmd)) {
+if ("Display".equals(cmd)) {
 if(!desk.findFrame(p1name)){
     xSet.setLayout(p1name,null,null,0, true);
     frame=new xInternalCompound(p1name,menuIcon, 0, xSet.getLayout(p1name), back);

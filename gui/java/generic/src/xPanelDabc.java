@@ -25,7 +25,7 @@ import java.awt.Color;
 public class xPanelDabc extends xPanelPrompt implements ActionListener, Runnable 
 {
 private xRemoteShell dabcshell;
-private ImageIcon storeIcon, closeIcon, dabcIcon, launchIcon, killIcon, workIcon;
+private ImageIcon storeIcon, closeIcon, dabcIcon, launchIcon, killIcon, workIcon, dworkIcon;
 private ImageIcon configIcon, enableIcon, startIcon, stopIcon, haltIcon, exitIcon, setupIcon, wcloseIcon;
 private JTextField DimName, DabcNode, DabcServers, DabcName, Username, DabcUserpath, DabcPath, DabcScript, DabcSetup, DabcLaunchFile;
 private JPasswordField Password;
@@ -70,6 +70,7 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     dabcIcon    = xSet.getIcon("icons/DABClogo1small.png");
     closeIcon   = xSet.getIcon("icons/fileclose.png");
     workIcon    = xSet.getIcon("icons/control.png");
+    dworkIcon   = xSet.getIcon("icons/controldabc.png");
     setupIcon   = xSet.getIcon("icons/usericon.png");
     wcloseIcon  = xSet.getIcon("icons/windowclose.png");
     storeIcon   = xSet.getIcon("icons/savewin.png");
@@ -93,7 +94,7 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     addButton("dabcHalt","Halt",haltIcon,this);
     addButton("dabcExit","Exit and shut down",killIcon,this);
     addButton("dabcCleanup","Cleanup DABC",exitIcon,this);
-    addButton("dabcShell","ssh Node -l Username Script",workIcon,this);
+    addButton("dabcShell","ssh Node -l Username Script",dworkIcon,this);
     int width=25;
     // read dabc setup from file
     if(System.getenv("DABC_LAUNCH_DABC")!=null)

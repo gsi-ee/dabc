@@ -22,7 +22,7 @@ import java.util.*;
 public class xPanelDabcMbs extends xPanelPrompt implements ActionListener , Runnable
 {
 private xRemoteShell mbsshell, dabcshell;
-private ImageIcon storeIcon, closeIcon, winIcon, workIcon, launchIcon,  killIcon;
+private ImageIcon storeIcon, closeIcon, winIcon, workIcon, dworkIcon, mworkIcon, launchIcon,  killIcon;
 private ImageIcon mbsIcon, configIcon, enableIcon, startIcon, stopIcon, haltIcon, dabcIcon, disIcon, infoIcon;
 private JTextField MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsScript, MbsCommand, MbsLaunchFile;
 private JTextField DimName, DabcNode, DabcServers, DabcName, DabcUserpath, DabcPath, DabcScript, DabcSetup, DabcLaunchFile;
@@ -77,6 +77,8 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     enableIcon  = xSet.getIcon("icons/dabcenable.png");
     winIcon     = xSet.getIcon("icons/rshmbs.png");
     workIcon    = xSet.getIcon("icons/control.png");
+    dworkIcon   = xSet.getIcon("icons/controldabc.png");
+    mworkIcon   = xSet.getIcon("icons/controlmbs.png");
     closeIcon   = xSet.getIcon("icons/fileclose.png");
     configIcon  = xSet.getIcon("icons/mbsconfig.png");
     startIcon   = xSet.getIcon("icons/mbsstart.png");
@@ -95,9 +97,9 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     addButton("mbsCleanup","Shutdown all servers",disIcon,this);
     //addButton("mbsCleanup","Reset and cleanup",disIcon,this);
     addButton("mbsShow","Show acquisition",infoIcon,this);
-    addButton("mbsTest","Rsh Node -l Username MbsPath/MbsScript MbsPath MbsUserpath Command",winIcon,this);
-    addButton("mbsShell","Rsh MbsNode -l Username Command",workIcon,this);
-    addButton("dabcShell","ssh DabcNode -l Username Script",workIcon,this);
+    addButton("mbsTest","Rsh MbsNode -l Username MbsPath/MbsScript MbsPath MbsUserpath Command",winIcon,this);
+    addButton("mbsShell","Rsh MbsNode -l Username Command",mworkIcon,this);
+    addButton("dabcShell","ssh DabcNode -l Username Script",dworkIcon,this);
 // Text input fields
     if(System.getenv("DABC_LAUNCH_MBS")!=null)
         formMbs=new xFormMbs(System.getenv("DABC_LAUNCH_MBS"),this);

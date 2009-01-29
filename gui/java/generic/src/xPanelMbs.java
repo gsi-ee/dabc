@@ -27,7 +27,7 @@ public class xPanelMbs extends xPanelPrompt implements ActionListener, Runnable
 private xRemoteShell mbsshell;
 private ImageIcon closeIcon ;
 private ImageIcon winIcon;
-private ImageIcon workIcon;
+private ImageIcon workIcon,mworkIcon;
 private ImageIcon launchIcon;
 private ImageIcon killIcon;
 private ImageIcon storeIcon, mbsIcon, configIcon, startIcon, stopIcon, dabcIcon, disIcon, infoIcon;
@@ -79,6 +79,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     dabcIcon    = xSet.getIcon("icons/dabcicon.png");
     winIcon     = xSet.getIcon("icons/rshmbs.png");
     workIcon    = xSet.getIcon("icons/control.png");
+    mworkIcon   = xSet.getIcon("icons/controlmbs.png");
     closeIcon   = xSet.getIcon("icons/fileclose.png");
     configIcon  = xSet.getIcon("icons/mbsconfig.png");
     startIcon   = xSet.getIcon("icons/mbsstart.png");
@@ -96,7 +97,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     addButton("mbsCleanup","Shut down servers and cleanup MBS",disIcon,this);
     addButton("mbsShow","Show acquisition",infoIcon,this);
     addButton("mbsTest","Rsh Node -l Username SystemPath/Script SystemPath Userpath Command",winIcon,this);
-    addButton("mbsShell","Rsh Node -l Username Command",workIcon,this);
+    addButton("mbsShell","Rsh Node -l Username Command",mworkIcon,this);
 // Text input fields
     // read defaults from setup file
     if(System.getenv("DABC_LAUNCH_MBS")!=null)

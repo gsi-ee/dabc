@@ -501,7 +501,7 @@ public void actionPerformed(ActionEvent e) {
         }
     else if ("Test".equals(e.getActionCommand())) {
     	printFrame();
-        //browser.listServices(false); // exclude command definitions
+        browser.listServices(false); // exclude command definitions
     }
     else if ("Quit".equals(e.getActionCommand())) {
         // String[] srvcs;
@@ -568,7 +568,7 @@ public void actionPerformed(ActionEvent e) {
         xSaveRestore.restoreRecords(RecordFile);
         selpan.saveSetup(SelectionFile);
         JOptionPane.showInternalMessageDialog(
-            desktop, "Layout saved: Selection.xml, Records.xml, "+LayoutFile, "Information",JOptionPane.INFORMATION_MESSAGE);
+            desktop, "Layout saved: "+RecordFile+" "+SelectionFile+" "+LayoutFile, "Information",JOptionPane.INFORMATION_MESSAGE);
     }
     else if (("Update".equals(e.getActionCommand())) ||
         ("Browser".equals(e.getActionCommand()))) {

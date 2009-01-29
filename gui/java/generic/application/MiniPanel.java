@@ -46,8 +46,8 @@ public void infoHandler(xiDimParameter P){
 // Constructor without arguments
 public MiniPanel(){
    super("MyPanel");
-   menuIcon=xSet.getIcon("icons/usericon.png");
-   graphIcon=xSet.getIcon("icons/usergraphics.png");
+   menuIcon=xSet.getIcon("icons/usericongreen.png");
+   graphIcon=xSet.getIcon("icons/windowgreen.png");
    name=new String("MyPanel"); // name for prompter panel
    panelLayout=xSet.getLayout(name); // restored from setup?
    if(panelLayout==null) // no, create
