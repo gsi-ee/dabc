@@ -4,7 +4,6 @@
     <Run>
       <lib value="libDabcCoreTest.so"/>
       <func value="StartCoreTest"/>
-      <logfile value="core-test.log"/>
     </Run>
   </Context>
 </dabc>

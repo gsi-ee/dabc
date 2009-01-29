@@ -36,6 +36,24 @@ const char* dabc::Application::MasterClassName() const
    return xmlApplication;
 }
 
+int dabc::Application::ConnectAppModules(Command* cmd)
+{
+   if (fConnCmd!=0) {
+      EOUT(("There is active connect command !!!"));
+      return cmd_false;
+   }
+
+   int res = IsAppModulesConnected();
+   if (res==1) return cmd_true;
+   if (res==0) return cmd_false;
+
+   fConnCmd = cmd;
+   fConnTmout = SMCommandTimeout() - 0.5;
+   if (fConnTmout<0.5) fConnTmout = 0.5;
+   ActivateTimeout(0.2);
+   return cmd_postponed;
+}
+
 int dabc::Application::ExecuteCommand(dabc::Command* cmd)
 {
    int cmd_res = cmd_false;
@@ -44,18 +62,7 @@ int dabc::Application::ExecuteCommand(dabc::Command* cmd)
       cmd_res = cmd_bool(CreateAppModules());
    } else
    if (cmd->IsName("ConnectAppModules")) {
-      if (fConnCmd!=0) {
-         EOUT(("There is active connect command !!!"));
-      } else {
-         int res = IsAppModulesConnected();
-         if (res==1) cmd_res = cmd_true; else
-         if (res==0) cmd_res = cmd_false; else {
-            fConnCmd = cmd;
-            fConnTmout = SMCommandTimeout();
-            ActivateTimeout(0.2);
-            cmd_res = cmd_postponed;
-         }
-      }
+      cmd_res = ConnectAppModules(cmd);
    } else
    if (cmd->IsName("BeforeAppModulesStarted")) {
       cmd_res = cmd_bool(BeforeAppModulesStarted());

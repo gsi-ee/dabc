@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<Context name="core-test">
+  <Factories/>
+  <Threads/>
+  <Devices/>
+  <Pars>
+    <CoreState value="Halted"/>
+  </Pars>
+</Context>

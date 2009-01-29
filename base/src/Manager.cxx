@@ -1407,7 +1407,7 @@ void dabc::Manager::DoCleanupThreads()
      DOUT5(("DoCleanupThread thrd:%s", thrd->GetName()));
 
      if (thrd->NoLongerUsed()) {
-        DOUT1(("!!! Thread %s has nothing to do, delete", thrd->GetName()));
+        DOUT2(("!!! Thread %s has nothing to do, delete", thrd->GetName()));
 
         thrd->Stop();
         delete thrd;

@@ -13,8 +13,6 @@
 #include "dabc/WorkingThread.h"
 #include "dabc/MemoryPool.h"
 
-#include <queue>
-
 #define BUFFERSIZE 1024
 #define QUEUESIZE 5
 
@@ -141,6 +139,11 @@ class TestModuleSync : public dabc::ModuleSync {
 
 void TestChain(bool isM, int number, int testkind = 0)
 {
+   DOUT0(("==============================================="));
+   DOUT0(("Test chain of %d %s modules, using %d threads",
+            number, (isM ? "Sync" : "Async"), (testkind==0 ? number : testkind)));
+
+
    for (int n=0;n<number;n++) {
       int kind = 1;
       if (n==0) kind = 0; else
@@ -156,30 +159,27 @@ void TestChain(bool isM, int number, int testkind = 0)
 
          switch (testkind) {
             case 1:
+               dabc::mgr()->MakeThreadForModule(m, "MainThread");
+               break;
+            case 2:
               if (n<number/2) dabc::mgr()->MakeThreadForModule(m, "MainThread0");
                          else dabc::mgr()->MakeThreadForModule(m, "MainThread1");
               break;
-            case 2:
-               dabc::mgr()->MakeThreadForModule(m);
-               break;
             default:
-               dabc::mgr()->MakeThreadForModule(m, "MainThread");
-               break;
+              dabc::mgr()->MakeThreadForModule(m);
          }
       }
    }
 
    bool connectres = true;
 
-   for (int n=1; n<number; n++) {
+   for (int n=1; n<number; n++)
       if (!dabc::mgr()->ConnectPorts( FORMAT(("Module%d/Output", n-1)),
                          FORMAT(("Module%d/Input", n)))) connectres = false;
-   }
 
    if (!connectres)
      EOUT(("Ports are not connect"));
    else {
-      DOUT1(("Connect ports done"));
       dabc::CpuStatistic cpu;
 
       fGlobalCnt = 0;
@@ -190,7 +190,6 @@ void TestChain(bool isM, int number, int testkind = 0)
       dabc::TimeStamp_t tm1 = TimeStamp();
 
       dabc::SetDebugLevel(1);
-      DOUT1(("Start all modules done"));
 
       cpu.Reset();
 
@@ -226,8 +225,8 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
          fCounter1(0),
          fCounter2(0)
       {
-         CreateTimer("Timer1", 0.01, true);
-         CreateTimer("Timer2", 0.1, false);
+         CreateTimer("Timer1", 0.001, true);
+         CreateTimer("Timer2", 0.001, false);
       }
 
       virtual void ProcessTimerEvent(dabc::Timer* timer)
@@ -237,10 +236,19 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
          else
             fCounter2++;
       }
+
+      virtual void AfterModuleStop()
+      {
+         DOUT1(("Module %s Timer1 %ld Timer2 %ld", GetName(), fCounter1, fCounter2));
+      }
+
 };
 
 void TestTimers(int number)
 {
+   DOUT0(("==============================================="));
+   DOUT0(("Test timers with %d modules, running in the same thread", number));
+
    for (int n=0;n<number;n++) {
       dabc::Module* m = new TimeoutTestModuleAsync(FORMAT(("Module%d",n)));
 
@@ -268,77 +276,6 @@ void TestTimers(int number)
    dabc::mgr()->CleanupManager();
 
    DOUT3(("Did manager cleanup"));
-}
-
-void TestNewThreads(dabc::Manager* mgr)
-{
-   dabc::WorkingThread* thrd = new dabc::WorkingThread(mgr->GetThreadsFolder(true), "Thread1");
-
-   dabc::WorkingProcessor* tm = 0;
-
-   int nrepeat = 3;
-
-   for (int n=0;n<nrepeat;n++) {
-      thrd->Start();
-      if (tm==0) {
-         tm = new dabc::WorkingProcessor();
-         tm->AssignProcessorToThread(thrd);
-      }
-
-      tm->ActivateTimeout(0.2);
-      thrd->Sync();
-      dabc::LongSleep(1);
-
-      if (n == nrepeat - 1) {
-         delete tm; tm = 0;
-         dabc::MicroSleep(10000);
-      }
-
-      thrd->Stop(false);
-   }
-
-   delete thrd;
-}
-
-#include <map>
-
-void TestMap()
-{
-   std::map<uint32_t, void*> mm;
-
-   uint32_t numrec = 10;
-
-   for (uint32_t n=1;n<numrec;n++)
-      mm[n << 4] = &mm;
-
-   void* res = 0;
-
-   for (uint32_t n=1;n<numrec;n++)
-      res = mm[n << 4];
-
-   double min(10000), max(0);
-
-   for(uint32_t n=1;n<numrec;n++) {
-      int ntry = 100;
-
-      dabc::TimeStamp_t tm1 = TimeStamp(), tm2;
-
-      for (int k=0;k<ntry;k++)
-         res = mm[n << 4];
-
-      tm2 = TimeStamp();
-
-      double v = dabc::TimeDistance(tm1,tm2)*1e6/ntry;
-
-//      DOUT0(("Value %u Time %5.3f", n, v));
-      if (v>max) max = v;
-      if (v<min) min = v;
-   }
-   DOUT0(("Minimum %5.3f  Maximum %5.3f", min, max));
-
-   DOUT0(("Outofband value = %u", mm[0]));
-
-   if (res==0);
 }
 
 void TestMemoryPool()
@@ -448,184 +385,22 @@ void TestMemoryPool()
    delete mem_pool;
 }
 
-void TestLoop()
-{
-   #define ArrSize  10000
-   char arr[ArrSize];
-
-   for (int n=0;n<ArrSize;n++)
-     arr[n] = n % 256;
-
-   dabc::TimeStamp_t tm1, tm2;
-
-   unsigned cnt1;
-   uint16_t cnt4;
-   uint32_t cnt2;
-   uint64_t cnt3;
-
-   tm1 = TimeStamp();
-
-   for (int k=0;k<100000;k++) {
-       cnt1=0;
-       for (unsigned n=0;n<ArrSize;n++) {
-          if (arr[n]!=0) cnt1++;
-       }
-   }
-   tm2 = TimeStamp();
-   DOUT1(("Unsigned loop %5.3f cnt1 %u", dabc::TimeDistance(tm1,tm2), cnt1));
-
-
-   tm1 = TimeStamp();
-   for (int k=0;k<100000;k++) {
-       cnt4=0;
-       for (uint16_t n=0;n<ArrSize;n++) {
-          if (arr[n]!=0) cnt4++;
-       }
-   }
-   tm2 = TimeStamp();
-   DOUT1(("Uint16_t loop %5.3f cnt4 %u", dabc::TimeDistance(tm1,tm2), cnt4));
-
-   tm1 = TimeStamp();
-   for (int k=0;k<100000;k++) {
-       cnt2=0;
-       for (uint32_t n=0;n<ArrSize;n++) {
-          if (arr[n]!=0) cnt2++;
-       }
-   }
-   tm2 = TimeStamp();
-   DOUT1(("Uint32_t loop %5.3f cnt2 %u", dabc::TimeDistance(tm1,tm2), cnt2));
-
-   tm1 = TimeStamp();
-   for (int k=0;k<100000;k++) {
-       cnt3=0;
-       for (uint64_t n=0;n<ArrSize;n++) {
-          if (arr[n]!=0) cnt3++;
-       }
-   }
-   tm2 = TimeStamp();
-   DOUT1(("Uint64_t loop %5.3f cnt3 %u", dabc::TimeDistance(tm1,tm2), cnt3));
-
-}
-
-void TestQueues()
-{
-   dabc::Queue<int> q1(1024, true);
-   std::queue<int> q2;
-
-   dabc::TimeStamp_t t1, t2;
-
-   t1 = TimeStamp();
-   for (int n=0;n<10000;n++) {
-      for (int k=0;k<1000;k++);
-      for (int k=0;k<1000;k++);
-   }
-   t2 = TimeStamp();
-
-   DOUT1(("NULL Time %5.3f", dabc::TimeDistance(t1, t2)));
-
-   t1 = TimeStamp();
-
-   for (int n=0;n<10000;n++) {
-      for (int k=0; k<1000; k++)
-        q2.push(k);
-      for (int k=0; k<1000; k++) {
-         q2.front();
-         q2.pop();
-      }
-   }
-
-   t2 = TimeStamp();
-
-   DOUT1(("STD Size %d Time %5.3f", q2.size(), dabc::TimeDistance(t1, t2)));
-
-   t1 = TimeStamp();
-
-   for (int n=0;n<10000;n++) {
-      for (int k=0; k<1000; k++)
-        q1.Push(k);
-      for (int k=0; k<1000; k++)
-         q1.Pop();
-   }
-
-   t2 = TimeStamp();
-
-
-   DOUT1(("DABC Size %d Capacity %d Time %5.3f", q1.Size(), q1.Capacity(), dabc::TimeDistance(t1, t2)));
-
-/*
-   q1.Reset();
-   q1.Push(0);
-   q1.Push(1);
-   q1.Push(1);
-   q1.Push(2);
-   DOUT1(("Size = %d", q1.Size()));
-   q1.Remove(1);
-   DOUT1(("Size = %d", q1.Size()));
-
-   while (q1.Size()>0)
-     DOUT1(("Pop = %d", q1.Pop()));
-*/
-
-}
-
-#include <dirent.h>
-#include <fnmatch.h>
-
-
-void TestScanDir(const char* dirname, const char* pattern = 0)
-{
-   struct dirent **namelist;
-   int n;
-
-   n = scandir(dirname, &namelist, 0, 0);
-   if (n < 0)
-       perror("scandir");
-   else {
-       while(n--) {
-          if ((pattern==0) || (fnmatch(pattern, namelist[n]->d_name, FNM_NOESCAPE)==0))
-              printf("%s\n", namelist[n]->d_name);
-           free(namelist[n]);
-       }
-       free(namelist);
-   }
-
-}
 
 extern "C" void StartCoreTest()
 {
-//   if (numc <= 1) return 0;
-//   TestScanDir(args[1], (numc>2) ? args[2] : 0);
-//   return 0;
-
-//   for(int n=0;n<10;n++)
-//     TestChain(&mgr, false, 10, 0);
-//   return 0;
-
-//   TestLoop();
-//   return 0;
-
-//   TestQueues();
-//   return 0;
-
-//   return 0;
-
-//   TestMap();
-//   return 0;
-
-//   TestNewThreads(&mgr);
-//   return 0;
-
-   TestMemoryPool();
+//   TestMemoryPool();
 
    TestChain(true, 10);
 
+   TestChain(false, 10, 0);
    TestChain(false, 10, 2);
    TestChain(false, 10, 1);
-   TestChain(false, 10, 0);
 
    TestTimers(1);
    TestTimers(3);
    TestTimers(10);
+
+   dabc::mgr()->RaiseCtrlCSignal();
 }
 
 

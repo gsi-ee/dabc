@@ -66,6 +66,7 @@
         <Run>
           <lib value="libDabcMbs.so"/>
           <func value="StartMbsGenerator"/>
+          <ctrl value="false"/>
         </Run>
         <Module name="Generator">
            <BufferSize value="8192"/>

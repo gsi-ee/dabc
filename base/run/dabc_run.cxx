@@ -10,7 +10,7 @@ int RunSimpleFunc(dabc::Configuration* cfg, std::string funcname)
 {
    cfg->LoadLibs(funcname.c_str());
 
-   cfg->StoreObject((funcname + ".xml").c_str(), dabc::mgr());
+   // cfg->StoreObject((funcname + ".xml").c_str(), dabc::mgr());
 
    DOUT0(("Start main loop"));
 
@@ -263,11 +263,9 @@ int main(int numc, char* args[])
       return 1;
    }
 
-   std::string funcname = cfg.StartFuncName();
-
    const char* mgrclass = "";
 
-   if ((ctrlkind == dabc::ConfigBase::kindNone) && (numnodes > 1) && (funcname.length()==0))
+   if ((ctrlkind == dabc::ConfigBase::kindNone) && (numnodes > 1) && (cfg.ControlSequenceId(configid)>0))
       ctrlkind = dabc::ConfigBase::kindSctrl;
 
    if (ctrlkind == dabc::ConfigBase::kindDim) {
@@ -294,6 +292,8 @@ int main(int numc, char* args[])
    }
 
    dabc::mgr()->InstallCtrlCHandler();
+
+   std::string funcname = cfg.StartFuncName();
 
    int res = 0;
 

@@ -193,6 +193,7 @@ namespace dabc {
    const char* xmlConfigFileId     = "configid";
    const char* xmlUserLib          = "lib";
    const char* xmlUserFunc         = "func";
+   const char* xmlControlled       = "ctrl";
    const char* xmlDIM_DNS_NODE     = "DIM_DNS_NODE";
    const char* xmlDIM_DNS_PORT     = "DIM_DNS_PORT";
 
@@ -496,7 +497,7 @@ unsigned dabc::ConfigBase::NumControlNodes()
    unsigned cnt = 0;
    while (node!=0) {
       if (IsNodeName(node, xmlContext))
-         if (Find1(node, "", xmlRunNode, xmlUserFunc).empty()) cnt++;
+         if (Find1(node, "true", xmlRunNode, xmlControlled) == "true") cnt++;
       node = fXml.GetNext(node);
    }
    return cnt;
@@ -514,11 +515,11 @@ unsigned dabc::ConfigBase::ControlSequenceId(unsigned id)
    unsigned ctrlcnt = 0;
    while (node!=0) {
       if (IsNodeName(node, xmlContext)) {
-         std::string func = Find1(node, "", xmlRunNode, xmlUserFunc);
+         bool isctrl = (Find1(node, "true", xmlRunNode, xmlControlled) == "true");
 
-         if (func.empty()) ctrlcnt++;
+         if (isctrl) ctrlcnt++;
 
-         if (cnt++==id) return (func.empty()) ? ctrlcnt : 0;
+         if (cnt++==id) return isctrl ? ctrlcnt : 0;
       }
       node = fXml.GetNext(node);
    }

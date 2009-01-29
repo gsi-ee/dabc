@@ -577,20 +577,6 @@ bool bnet::ClusterApplication::ActualTransition(const char* state_trans_name)
 
 bool bnet::ClusterApplication::DoStateTransition(const char* state_trans_cmd)
 {
-
-   // this is call from SM thread, use only thread-safe code here!!!
-// took this out to reset failure on all nodes from here JA
-//   if (dabc::mgr()->CurrentState() == dabc::Manager::stHalted) {
-//      int cnt = 50;
-//      while (!Execute("TestClusterStates") && (cnt-->0))
-//         dabc::MicroSleep(100000);
-//
-//      if (cnt<=0) {
-//         EOUT(("Some nodes on the cluster do not has %s states - one cannot start transition command %s",  dabc::Manager::stHalted, state_trans_cmd));
-//         return false;
-//      }
-//   }
-////////////////////
    {
       dabc::LockGuard lock(fSMMutex);
       fSMRunningSMCmd = state_trans_cmd;

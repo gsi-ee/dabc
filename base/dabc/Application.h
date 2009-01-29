@@ -34,6 +34,7 @@ namespace dabc {
           // do specific actions before modules stars, after modules stopped and before module destroyed
 
           virtual bool CreateAppModules() { return true; }
+          virtual int ConnectAppModules(Command* cmd);
           virtual int IsAppModulesConnected() { return 1; } // 0 - error, 1 - ok, 2 - not ready
           virtual bool BeforeAppModulesStarted() { return true; }
           virtual bool AfterAppModulesStopped() { return true; }

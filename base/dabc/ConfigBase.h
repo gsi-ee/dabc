@@ -40,6 +40,7 @@ namespace dabc {
    extern const char* xmlConfigFileId;
    extern const char* xmlUserLib;
    extern const char* xmlUserFunc;
+   extern const char* xmlControlled;
    extern const char* xmlDIM_DNS_NODE;
    extern const char* xmlDIM_DNS_PORT;
 
