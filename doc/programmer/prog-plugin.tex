@@ -563,58 +563,104 @@ standard local device can be used, while it only required as owner of transport 
 
 \subsection{Input/output objects}
 
+\dabc~ provides possibility to implement simple input/output objects in form
+of classes, derived from \class{dabc::DataInput} and \class{dabc::DataOutput}.
+These classes provides interface similiar to that \class{dabc::DataTransport} has,
+but they are not dependent from any other components (threads, devices and so) 
+and therefore can be used absolutely independent from \dabc~ data flow engine.
+The only feature, which is not supported by \class{dabc::DataInput} - call back 
+mode.
 
+In addition, methods \func{dabc::DataInput::Read\_Init()} and
+\func{dabc::DataOutput::Write\_Init()} can be implemented to get 
+configuration from port object, to which i/o object may be assigned to.  
+
+Typical use of input/output objects is file I/O. 
+For instance, lmd file handling implemented
+using these classes.
+
+To instantiate such classes, user should inplement factories methods 
+\func{CreateDataInput()} and \func{CreateDataOutput()} (see \ref{prog_plugin_factory}).
 
 
 \section{Factories}
 \label{prog_plugin_factory}
 
-The set up of the application specific objects is done 
-   by \class{dabc::Factory} subclasses.
-\begin{compactenum}
+The creation of the application specific objects is done by \class{dabc::Factory} subclasses.
 
-\item  The user must define a \class{dabc::Factory} subclass to add own classes to the system. 
+The user must define a \class{dabc::Factory} 
+subclass to add own classes to the system.
+Factory should be instantiated as static singleton - this will create factory  
+immediately after library, containing factory, is loaded. 
 
-\item  Each factory is instantiated as static singleton when 
-      loading the library that defines it. 
+Factories are registered and kept in the global manager. 
+The access to the factories' functionality is done via methods of the
+manager that scans all known factories to produce the requested object class. 
 
-\item  Factories are registered and kept in the global manager. 
-      The access to the factories' functionality is done via methods of the
-      manager that scans all known factories to produce the requested object
-      class. 
+The \dabc~ framework provides several factories for predefined 
+implementations (e.~g.~ \class{bnet::SenderModule}, \class{verbs::Device})
 
-\item  The framework provides several factories for predefined 
-      implementations (e.~g.~ \class{bnet::SenderModule}, \class{verbs::Device})
-            
-      
-\item The user factory may implement such methods:
-\begin{compactdesc}
-	\item [\func{Module* CreateModule(const char* classname, const char* modulename, Command* cmd)}] : 
-	Instantiate a \class{dabc::Module} of class \func{classname}. The object
-	name of the module is taken from \func{modulename} argument. Optional 
-	argument \func{Command* cmd} may pass further creation parameters 
-	from the application to the new module, encapsulated in a command object.
+
+The user factory may implement such methods:
+\bdes
+	\item [\func{CreateModule()}] : 
+	Instantiate a \class{dabc::Module} of specified class. 
 	
-\item [\func{Device* CreateDevice(const char* classname, const char* devname, Command* cmd)}] : 
-	Instantiate a \class{dabc::Device} of class \func{classname}. The object
-	name of the device is taken from \func{devname} argument. Optional 
-	argument \func{Command* cmd} may pass further creation parameters 
-	from the application to the new device, encapsulated in a command object.
+\item [\func{CreateDevice()}] : 
+	Instantiate a \class{dabc::Device} of specified class. 
+
+\item [\func{CreateThread()}] : 
+   Instantiate a \class{dabc::WorkingThread} of specified class.
 	
-\item [\func{Application* CreateApplication(const char* classname, Command* cmd)}] : 
-	Instantiate a \class{dabc::Application} of class \func{classname}.  Optional 
-	argument \func{Command* cmd} may pass further creation parameters 
-	from the set-up to the new application, encapsulated in a command object.
+\item [\func{CreateApplication()}] : 
+	Instantiate a \class{dabc::Application} of specified class.
 
-            
-\end{compactdesc}      
+\item [\func{CreateTransport()}] : 
+   Instantiate a \class{dabc::Transport} of specified class.
+   This method is used when transport does not requires specific device functionality
+   (like \class{dabc::DataTransport}). Typically transport objects
+   created by the \class{dabc::Device} methods.   
+	
+\item [\func{CreateDataInput()}] : 
+   Instantiate a \class{dabc::DataInput} of specified type.
+   Initialisation of object will be done by \func{Read\_Init()} call.
 
-Note that the factory  methods for \class{dabc::Transport} objects
-belong to the corresponding \class{dabc::Device} implementation (see section \ref{prog_plugin_device})). 
-      
+\item [\func{CreateDataOutput()}] : 
+   Instantiate a \class{dabc::DataOutput} of specified type.
+   Initialisation of object will be done by \func{Write\_Init()} call.
+	
+\edes      
+
+All mentioned here methods have equivalent methods in \class{dabc::Manager} class.
+Manager simply iterates over all factories and execute appropriate factory method
+until object is created. For instance, to create module, one should do:
+
+\begin{small}
+\begin{verbatim}
+...
+dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator");
+...
+\end{verbatim}     
+\end{small}
+
+Invocation of these methods in manager is implemented via correspondent commands
+(for instance, \comm{CmdCreateModule} for module creation). 
+These command classes should be used directly, if one wants to deliver extra 
+configuration parameters to objects constructor (most factories methods gets
+this command as optional argument). For instance:
+
+\begin{small}
+\begin{verbatim}
+...
+dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", "Generator");
+cmd->SetInt("NumSubevents", 5);
+cmd->SetInt("SubeventSize", 64);
+dabc::mgr()->Execute(cmd);
+...
+\end{verbatim}     
+\end{small}
 
 
-\end{compactenum}
 
 \section{The DABC Application}
 \label{prog_plugin_applicaton}
