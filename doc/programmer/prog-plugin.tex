@@ -371,7 +371,6 @@ For special set ups (e.g. Bnet), the framework provides
 
    
 \begin{compactenum}
-
 \item  Instead of implementing \func{MainLoop()}, other virtual 
       methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
       implemented that are implicitly called by the superclass \func{MainLoop()}.
@@ -379,87 +378,171 @@ For special set ups (e.g. Bnet), the framework provides
       methods to be used for data processing.    
 \end{compactenum}
 
+
 \section{Device and transport}
 \label{prog_plugin_device}
+
 All data transport functionality is implemented by 
    subclassing  \class{dabc::Device} and \class{dabc::Transport} base classes.
-       
-\begin{compactenum}
-\item  The \class{dabc::Device} subclass constructor may create  
-      pool handles and may define commands and parameters. 
 
-\item  Method \func{int CreateTransport(Command* cmd, Port* port)} of the \class{dabc::Device}
-      implementation creates the appropriate \class{dabc::Transport} 
-      instance and connects it to the given \func{Port* port}.
-      It is invoked by the framework  when this device is connected to 
-      a module port, which is usually specified in the application via calls
-      of \class{dabc::Manager} methods. The optional argument 
-      \func{Command* cmd} may pass further parameters from the application 
-      to the new transport, encapsulated in a command object. 
+\subsection{Transport}
+
+Actual transport of buffers from/to the port is done by \class{dabc::Transport} class.
+During connection time each module port gets pointer on transport object, which provides
+number of methods for buffers transfer. Typically transport object runs in other thread than module itself, 
+therefore transmission of the buffer happens not immediately after call of 
+\func{dabc::Port::Send()} or \func{dabc::Port::Recv()} methods.
+
+ 
+
+\subsection{Device}
+
+Class \class{dabc::Device} is typically (but not always) represents some physical
+device (like network or PCIe card) and play role of management unit for transports,
+which are logically belong to that device. Device is always owner of transport object.
+
+Device typically created in user application by:
+\begin{small}
+\begin{verbatim}
+...
+dabc::mgr()->CreateDevice("roc::Device", "ROC");
+...
+\end{verbatim}     
+\end{small}
+
+Later one can find device with \func{dabc::Manager::FindDevice()} method.
+
+Device should implement method \func{CreateTranport()}, 
+where appropriate transport for specified port created.
+ 
+
+\subsection{Local transport}
+
+For connection between two local ports \class{dabc::LocalTransport} is used.
+It organizes queue, which shared between connected ports and pefromes
+movement of \class{dabc::Buffer} pointer to/from this queue.
+If correspondent modules runs in the same thread, 
+local transport works without any mutexes locking.
+
+To manage local transports, manager always has instance of \class{dabc::LocalDevice} class.
+It can be always found via \func{dabc::mgr()->FindLocalDevice()} call. 
+To connect two local ports, one should call:
+\begin{small}
+\begin{verbatim}
+...
+dabc::mgr()->ConnectPorts("Module1/Output", "Module2/Input");
+...
+\end{verbatim}     
+\end{small}
+
+
+\subsection{Network transport}
+
+This is kind of transport, which is used to connect ports, situated on different nodes.
+There is abstract \class{dabc::NetworkTransport} class, which introduces such kind of 
+functionality. This tranport locally connected only to one port and all data
+sends/receives via network connections to/from remote node. 
+
+For the moment \dabc~ has two implementations of network transports: 
+for socket and InfiniBand verbs.
+To use network transport on the nodes, one should follow two step strategy. 
+On first step on all nodes necessary devices and modules should be created:
+\begin{small}
+\begin{verbatim}
+...
+dabc::mgr()->CreateDevice(dabc::typeSocketDevice, "UserDev");
+dabc::mgr()->CreateModule("UserModule", "MyModule");
+...
+\end{verbatim}     
+\end{small}
+
+Than during second step on master node 
+(where \keyw{dabc::mgr()->IsMainManager()} is true)  
+one should call:
+\begin{small}
+\begin{verbatim}
+...
+dabc::mgr()->ConnectPorts("Node0$MyModule/Input", "Node1$MyModule/Output", "UserDev");
+...
+\end{verbatim}     
+\end{small}
+ 
+Such call starts complicated sequence, when first server socket will be started by device "UserDev" on node "Node0",
+than device "UserDev" on "Node1" will try to connect that server socket and than on both nodes appropriate
+transports will be created, using negotiated sockets. 
+
+Exactly for this kind of actions user \dabc~ state machine has 
+two commands "DoConfigure" and "DoEnable". Accordingly class
+\class{dabc::Application} has two methods \func{CreateAppModules()} and 
+\func{ConnectAppModules()} 
+(see correspondent section for more details).  
+
+
+\subsection{Data transport}
+
+In general case, to implement user-specific transport, one should subclass from
+\class{dabc::Transport}. But this requires exact knowledge how threads working in \dabc~,
+how one should organize input/output queues, how transport should request data from
+memory pool, which initialization commands used by the framework. 
+To simplify transport development and provide all basic services 
+class \class{dabc::DataTransport} was developed.  
+
+User should redefine following virtual methods for implement data input: 
+
+\bbul
+\item [\func{Read\_Size()}] : 
+   Should return size of buffer, required to read next portion of data from
+   user data source. For instance, in many file formats one has header before
+   each portion of data. This method than should be used to read such header
+   and define required buffer size. Method can also return following values:
+   \bdes
+   \item[\keyw{di\_EndOfStream}] - end of stream, normal close of the input
+   \item[\keyw{di\_Repeat}]      - nothing to read now, call again as soon as possible
+   \item[\keyw{di\_RepeatTimeout}] - nothing to read now, try again after timeout
+   \item[\keyw{di\_Error}]         - error, close transport
+   \edes
+
+\item [\func{Read\_Timeout()}] :
+   Defines timeout (in seconds) for operation like \func{Read\_Size()}
+   
+\item [\func{Read\_Start()}] : transport gets a 
+   \func{Buffer* buf} to be filled in the read. Actual filling may be done
+   asynchronously to the calling thread, e.~g.~ by DMA. Thus
+   this function may initiate the asynchronous read here and return
+   immeadeately before the read is complete. 
+   For synchronous filling of the buffer, this function should do nothing.
+   
+   
+\item [\func{Read\_Complete()}] :
+   Called before the framework transfers the \func{Buffer* buf}
+   to the connected port. The transport should no sooner return this function
+    than the reading of this buffer (e.~g.~ by DMA) 
+    is complete. In case of synchronous reading, the buffer filling is also
+    initiated here. For asynchronous reading, 
+    buffer filling has been initiated before
+    in func{unsigned Read\_Start(Buffer* buf)} and this function just waits
+    for a "buffer complete" state from the filling device.
       
-% \item  The virtual \func{bool Send(Buffer* buf)} and \func{bool Recv(Buffer* \&buf)} methods of the 
-%       \class{dabc::Transport} subclass must implement the actual transport 
-%       from and to a connected port, respectively.
+\item [\func{Read\_CallBack()}] :
+   this method MUST be called by transport when \func{Read\_Start()} 
+   returns \func{di\_CallBack}. It is only way to "restart" event loop in the transport (Sergei, please explain more!)
 
-\item  The special transport class \class{dabc::DataTransport} 
-(inherits from \class{dabc::Transport})
-       should be used as base class to implement a user defined transport 
-      (e.~g.~ read from a user defined hardware board).
-      This class already provides queues for (optionally)
-      input and output buffers and a data backpressure mechanism. 
-      The user subclass must implement virtual methods 
-      to perform the data transport which are called implicitely from 
-      the framework at the right time:
-\begin{compactdesc}
-	
-	\item [\func{unsigned Read\_Size()}] : 
-	Should specify the required buffer size to be read from the device, 
-	e.~g.~ the DMA memory size. Framework will then allocate a \func{Buffer}
-	of appropriate size for the \func{Read\_*} functions
+\ebul
 
-	\item [\func{unsigned Read\_Start(Buffer* buf)}] : transport gets a 
-	\func{Buffer* buf} to be filled in the read. Actual filling may be done
-	asynchronously to the calling thread, e.~g.~ by DMA. Thus
-	this function may initiate the asynchronous read here and return
-	immeadeately before the read is complete. 
-	For synchronous filling of the buffer, this function should do nothing.
-	
-	
-	\item [\func{unsigned Read\_Complete(Buffer* buf)}] :
-	Called before the framework transfers the \func{Buffer* buf}
-	to the connected port. The transport should no sooner return this function
-	 than the reading of this buffer (e.~g.~ by DMA) 
-	 is complete. In case of synchronous reading, the buffer filling is also
-	 initiated here. For asynchronous reading, 
-	 buffer filling has been initiated before
-	 in func{unsigned Read\_Start(Buffer* buf)} and this function just waits
-	 for a "buffer complete" state from the filling device.
-      
-	\item [\func{void Read\_CallBack(unsigned compl\_res = DataInput::di\_Ok)}] :
-	this method MUST be called by transport when \func{Read\_Start()} 
-	returns \func{di\_CallBack}. It is only way to "restart" event loop in the transport (Sergei, please explain more!)
-	
-	\item [\func{double Read\_Timeout()}] :
-	Defines timeout for operation in ms? TO BE EXPLAINED
-	
-	\item [\func{bool WriteBuffer(Buffer* buf)}] : 
-	The arriving \func{Buffer* buf} is synchronously written to the device.	
-         
-	\item [\func{void ProcessPoolChanged(MemoryPool* pool)}] : 	
-	Called when a func{MemoryPool} changes the buffer set up. 
-	This allows to work directly on the buffers
-	of a memory pool, e.~g.~ to initialize all buffers for DMA when
-	memory pool is created.  
-	  
+When implementing data output, user should just implement \func{WriteBuffer()} virtual method.  
 
-\end{compactdesc}
-      
-      
-\item  The virtual \func{ExecuteCommand()} method of \class{dabc::Device} 
-      subclass may implement the callbacks of the defined commands.
+In some cases user may redefine \func{ProcessPoolChanged()}, which is called when
+memory pool changes its layout - new buffers were allocated or released. 
+It may be required for DMA operations, where each buffer from memory pool
+should be initialised once before it can be used for data transport.   
 
 
-\end{compactenum}
+
+
+\subsection{Input/output objects}
+
+
+
 
 \section{Factories}
 The set up of the application specific objects is done 

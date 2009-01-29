@@ -53,7 +53,7 @@ namespace dabc {
          bool IsErrorState() const { return fErrorState; }
 
          // this method should be called if error is detected
-         // and transport object must be cleaned up and destoyed
+         // and transport object must be cleaned up and destroyed
          virtual void ErrorCloseTransport();
 
       public:

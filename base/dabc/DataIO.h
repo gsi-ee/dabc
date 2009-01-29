@@ -7,20 +7,20 @@ namespace dabc {
    class WorkingProcessor;
    class Command;
 
+   enum DataInputCodes {
+      di_ValidSize     = 0xFFFFFFF0,   // last valid size for buffer
+      di_None          = 0xFFFFFFF1,   // invalid return code
+      di_Repeat        = 0xFFFFFFF2,   // no data in input, try as soon as possible
+      di_RepeatTimeOut = 0xFFFFFFF3,   // no data in input, try with timeout
+      di_EndOfStream   = 0xFFFFFFF4,   // no more data in input is expected, object can be destroyed
+      di_Ok            = 0xFFFFFFF5,   // normal code
+      di_CallBack      = 0xFFFFFFF6,   // data source want to work via callback
+      di_Error         = 0xFFFFFFF7,   // error
+      di_SkipBuffer    = 0xFFFFFFF8    // when doing complete, buffer cannot be filled
+   };
+
    class DataInput {
       public:
-         enum DataInputCodes {
-            di_ValidSize     = 0xFFFFFFF0,   // last valid size for buffer
-            di_None          = 0xFFFFFFF1,   // invalid return code
-            di_Repeat        = 0xFFFFFFF2,   // no data in input, try as soon as possible
-            di_RepeatTimeOut = 0xFFFFFFF3,   // no data in input, try with timeout
-            di_EndOfStream   = 0xFFFFFFF4,   // no more data in input is expected, object can be destroyed
-            di_Ok            = 0xFFFFFFF5,   // normal code
-            di_CallBack      = 0xFFFFFFF6,   // data source want to work via callback
-            di_Error         = 0xFFFFFFF7,   // error
-            di_SkipBuffer    = 0xFFFFFFF8    // when doing complete, buffer cannot be filled
-         };
-
 
          virtual ~DataInput() {}
 
@@ -31,8 +31,8 @@ namespace dabc {
          virtual bool Read_Init(Command* cmd = 0, WorkingProcessor* port = 0) { return false; }
 
          // Generic input interface
-         // Read_Size() -  defines required buffer size for next opeartion
-         // Read_Start() - intermidiate call with buffer of requested size
+         // Read_Size() -  defines required buffer size for next operation
+         // Read_Start() - intermediate call with buffer of requested size
          // Read_Complete() - fill buffer with the data
 
          // Method must return size of next buffer

@@ -185,7 +185,7 @@ void TestMbsTrServer(const char* server)
 
    if (inp->OpenTransportServer(server)) {
 
-      while ((inp->Read_Size()<=dabc::DataInput::di_ValidSize) && (cnt<10000)) {
+      while ((inp->Read_Size() <= dabc::di_ValidSize) && (cnt<10000)) {
          inp->Read_Complete(0);
          if (cnt<100)
             DOUT1((" Event buffer %p", inp->GetEventBuffer()));
@@ -216,11 +216,11 @@ void TestMbsInputFile(const char* fname)
 
    dabc::Buffer* buf = dabc::Buffer::CreateBuffer(1024);
 
-   while ((sz = inp->Read_Size()) <= dabc::DataInput::di_ValidSize) {
+   while ((sz = inp->Read_Size()) <= dabc::di_ValidSize) {
 
       buf->RellocateBuffer(sz);
 
-      if (inp->Read_Complete(buf)!=dabc::DataInput::di_Ok) break;
+      if (inp->Read_Complete(buf)!=dabc::di_Ok) break;
       if (cnt<5)
          IterateBuffer(buf);
 
@@ -252,7 +252,7 @@ void TestMbsIO(const char* fname, const char* outname)
 
       unsigned sz = 0;
 
-      while ((sz = inp->Read_Size()) <= dabc::DataInput::di_ValidSize) {
+      while ((sz = inp->Read_Size()) <= dabc::di_ValidSize) {
 
          buf->RellocateBuffer(sz);
 

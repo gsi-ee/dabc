@@ -94,11 +94,11 @@ unsigned roc::Transport::Read_Start(dabc::Buffer* buf)
 {
    int req = fxBoard->requestData(fReqNumMsgs);
 
-   if (req==2) return dabc::DataInput::di_CallBack;
+   if (req==2) return dabc::di_CallBack;
 
-   if (req==1) return dabc::DataInput::di_Ok;
+   if (req==1) return dabc::di_Ok;
 
-   return dabc::DataInput::di_Error;
+   return dabc::di_Error;
 }
 
 unsigned roc::Transport::Read_Complete(dabc::Buffer* buf)
@@ -138,7 +138,7 @@ unsigned roc::Transport::Read_Complete(dabc::Buffer* buf)
       buf->SetDataSize(fullsz);
    } else {
       EOUT(("Roc:%u No way to fill data - data size %u", fuBoardId, fullsz));
-      return dabc::DataInput::di_SkipBuffer;
+      return dabc::di_SkipBuffer;
    }
 
 //   DOUT1(("Read buffer of size %u", fullsz));
@@ -180,12 +180,12 @@ unsigned roc::Transport::Read_Complete(dabc::Buffer* buf)
 
    if (buf->GetDataSize()==0) {
       EOUT(("No data was read !!!!!!"));
-      return dabc::DataInput::di_SkipBuffer;
+      return dabc::di_SkipBuffer;
    }
 
 //   DOUT1(("Brd:%u Read_Complete done", fuBoardId));
 
-   return dabc::DataInput::di_Ok;
+   return dabc::di_Ok;
 }
 
 void roc::Transport::ComplteteBufferReading()

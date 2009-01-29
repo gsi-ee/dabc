@@ -253,7 +253,7 @@ bool mbs::EvapiInput::Close()
 
 unsigned mbs::EvapiInput::Read_Size()
 {
-   if ((fMode<0) || fFinished) return di_EndOfStream;
+   if ((fMode<0) || fFinished) return dabc::di_EndOfStream;
 
    DOUT5(("Call ReadNextBuffer"));
 
@@ -267,17 +267,17 @@ unsigned mbs::EvapiInput::Read_Size()
       case GETEVT__NOMORE:
          DOUT1(("!!!!!!!!!!!!! Read_Size File is finished !!!!!!!!!!!!"));
          fFinished = true;
-         return di_EndOfStream;
+         return dabc::di_EndOfStream;
    }
 
    ShowMbsError(status, "Reading event source");
 
-   return di_Error;
+   return dabc::di_Error;
 }
 
 unsigned mbs::EvapiInput::Read_Complete(dabc::Buffer* buf)
 {
-   if ((fMode<0) || (buf==0) || (fEventHeader==0)) return di_Error;
+   if ((fMode<0) || (buf==0) || (fEventHeader==0)) return dabc::di_Error;
 
    buf->SetTypeId(mbt_MbsEvents);
 
@@ -289,7 +289,7 @@ unsigned mbs::EvapiInput::Read_Complete(dabc::Buffer* buf)
 
    memcpy(buf->GetDataLocation(), fEventHeader, size);
 
-   return di_Ok;
+   return dabc::di_Ok;
 }
 
 void* mbs::EvapiInput::GetEventBuffer()

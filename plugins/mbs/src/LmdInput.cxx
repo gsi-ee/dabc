@@ -101,7 +101,7 @@ unsigned mbs::LmdInput::Read_Size()
    // get size of the buffer which should be read from the file
 
    if (!fFile.IsReadMode())
-      if (!OpenNextFile()) return di_EndOfStream;
+      if (!OpenNextFile()) return dabc::di_EndOfStream;
 
    return fBufferSize;
 }
@@ -113,7 +113,7 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
 
    do {
 
-       if (!fFile.IsReadMode()) return di_Error;
+       if (!fFile.IsReadMode()) return dabc::di_Error;
 
        bufsize = buf->GetDataSize();
 
@@ -121,7 +121,7 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
 
        if (numev==0) {
           DOUT1(("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf->GetDataSize()));
-          if (!OpenNextFile()) return di_EndOfStream;
+          if (!OpenNextFile()) return dabc::di_EndOfStream;
        }
 
    } while (numev==0);
@@ -130,5 +130,5 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
    buf->SetDataSize(bufsize);
    buf->SetTypeId(mbs::mbt_MbsEvents);
 
-   return di_Ok;
+   return dabc::di_Ok;
 }

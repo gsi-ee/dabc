@@ -27,19 +27,19 @@ pci::Transport::~Transport()
 unsigned pci::Transport::Read_Size()
 {
    int res = fPCIDevice->GetReadLength();
-   return res>0 ? res : dabc::DataInput::di_Error;
+   return res>0 ? res : dabc::di_Error;
 }
 
 unsigned pci::Transport::Read_Start(dabc::Buffer* buf)
 {
-   return fPCIDevice->ReadPCIStart(buf) ? dabc::DataInput::di_Ok : dabc::DataInput::di_Error;
+   return fPCIDevice->ReadPCIStart(buf) ? dabc::di_Ok : dabc::di_Error;
 //return true;
 }
 
 
 unsigned pci::Transport::Read_Complete(dabc::Buffer* buf)
 {
-   return fPCIDevice->ReadPCIComplete(buf) > 0 ? dabc::DataInput::di_Ok : dabc::DataInput::di_Error;
+   return fPCIDevice->ReadPCIComplete(buf) > 0 ? dabc::di_Ok : dabc::di_Error;
 //return fPCIDevice->ReadPCI(buf);
 }
 

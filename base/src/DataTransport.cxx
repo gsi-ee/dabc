@@ -22,7 +22,7 @@ dabc::DataTransport::DataTransport(Device* dev, Port* port, bool doinput, bool d
    fInpLoopActive(false),
    fNextDataSize(0),
    fCurrentBuf(0),
-   fComplRes(DataInput::di_None),
+   fComplRes(di_None),
    fPoolChangeCounter(0)
 {
    fPool = port->GetMemoryPool();
@@ -258,20 +258,20 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
          state = inpError;
       } else {
 
-         if (fComplRes == DataInput::di_None)
+         if (fComplRes == di_None)
             fComplRes = Read_Complete(currbuf);
 
          switch (fComplRes) {
-            case DataInput::di_Ok:
+            case di_Ok:
                state = inpReady;
                break;
-            case DataInput::di_SkipBuffer:
+            case di_SkipBuffer:
                dabc::Buffer::Release(currbuf);
                currbuf = 0;
                DOUT1(("Skip input buffer"));
                state = inpReady;
                break;
-            case DataInput::di_EndOfStream:
+            case di_EndOfStream:
                dabc::Buffer::Release(currbuf);
                currbuf = 0;
                DOUT1(("End of stream"));
@@ -301,11 +301,11 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
          if (fNextDataSize > 0)
             state = inpNeedBuffer;
          else
-         if (fNextDataSize == DataInput::di_Repeat) {
+         if (fNextDataSize == di_Repeat) {
             // repeat process input as soon as possible
             dofireevent = true;
          } else
-         if (fNextDataSize == DataInput::di_RepeatTimeOut) {
+         if (fNextDataSize == di_RepeatTimeOut) {
             // repeat process after timeout
             ret_tmout = Read_Timeout();
             if (ret_tmout>0)
@@ -316,7 +316,7 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
             }
 
          } else
-         if (fNextDataSize!=DataInput::di_EndOfStream) {
+         if (fNextDataSize != di_EndOfStream) {
             EOUT(("Reading error"));
             state = inpError;
          }
@@ -337,7 +337,7 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
          } else {
             currbuf->SetDataSize(fNextDataSize);
             state = inpPrepare;
-            fComplRes = DataInput::di_Ok;
+            fComplRes = di_Ok;
             dofireevent = true;
          }
       }
@@ -384,11 +384,11 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
 
    if (state == inpPrepare)
        switch (Read_Start(currbuf)) {
-          case DataInput::di_Ok:
+          case di_Ok:
              // this will allows to call Read_Complete method in next iteration
-             fComplRes = DataInput::di_None;
+             fComplRes = di_None;
              break;
-          case DataInput::di_CallBack:
+          case di_CallBack:
              // if we starts callback, just not fire event
              dofireevent = false;
              break;

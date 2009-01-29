@@ -46,18 +46,18 @@ namespace dabc {
          // which must be reimplemented in derived classes
 
          // meaning of the next methods are the same as from DataInput/DataOutput classes
-         virtual unsigned Read_Size() { return DataInput::di_RepeatTimeOut; }
+         virtual unsigned Read_Size() { return di_RepeatTimeOut; }
          // In addition to DataInput, can returns:
          //    di_CallBack      - read must be confirmed by Read_CallBack
-         virtual unsigned Read_Start(Buffer* buf) { return DataInput::di_Ok; }
-         virtual unsigned Read_Complete(Buffer* buf) { return DataInput::di_EndOfStream; }
+         virtual unsigned Read_Start(Buffer* buf) { return di_Ok; }
+         virtual unsigned Read_Complete(Buffer* buf) { return di_EndOfStream; }
 
          // Defines timeout for operation
          virtual double Read_Timeout() { return 0.1; }
 
          // This method MUST be called by transport, when Read_Start returns di_CallBack
          // It is only way to "restart" event loop in the transport
-         void Read_CallBack(unsigned compl_res = DataInput::di_Ok);
+         void Read_CallBack(unsigned compl_res = di_Ok);
 
          virtual bool WriteBuffer(Buffer* buf) { return false; }
          virtual void FlushOutput() {}
