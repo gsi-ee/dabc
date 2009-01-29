@@ -232,13 +232,13 @@ parameters which are in this file are optional.
 }
 \section{\mbs\ upgrade for \dabc}
 To have minimal changes, we use standard collector and transport. Two changes:
-\subsubsection{Increased buffer size support}
+\subsection{Increased buffer size support}
 This is done in a completely compatible way. The only problem is the 16 bit {\tt i\_used field} in the buffer header keeping the number of 16 bit data words (behind buffer header). With a new rule we store this number in 32 bit field {\tt l\_free[2]}. Only if dlen is less equal {\tt MAX\_\_DLEN} defined as {\tt (16K-sizeof(bufhe))/2} this number is also stored in {\tt i\_used} as before. Modifications have to be made in all \mbs\ modules accessing {\tt i\_used}. Modules outside \mbs\ can be modified on demand to support large buffers. Current buffers still can be handled without change.\\
 When \mbs\ writes large buffer files only the used part of the file header is written. Number of 16 bit words behind buffer header structure is stored in {\tt filhe\_used}.
 Event API f\_evt is updated to handle large buffers on input.
 Note: By setup the number of buffers per stream can be set to one. This suppresses event spanning.
 Large buffers can be used by standard \mbs.
-\subsubsection{Variable sized buffers}
+\subsection{Variable sized buffers}
 As a second step variable sized buffers are implemented. They get a new type 100. The allocated buffers are still fixed length as before. However, the \mbs\ transport would write only the used part of the buffers to clients. Processing these buffers a module must first read the header, then get the used size from {\tt iUsedWords} ({\tt free[2]}) and read the rest. Modules outside \mbs\ must be modified to process such buffers.
 In \mbs, after stream buffers are created, buffer types are set to 100 by a new command {\tt enable dabc} in transport. This command also sets the transport synchronous mode. In this mode transport processes streams only if a client is connected.
 \subsection{New LMD file format}
