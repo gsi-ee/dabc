@@ -1,31 +1,14 @@
 [user/user-exa-mbs.tex]
-\section{Example \mbs~ event building}
-\subsection{\mbs~ upgrade for \dabc}
-To have minimal changes, we use standard collector and transport. Two changes:
-\subsubsection{Increased buffer size support}
-This is done in a completely compatible way. The only problem is the 16 bit {\tt i\_used field} in the buffer header keeping the number of 16 bit data words (behind buffer header). With a new rule we store this number in 32 bit field {\tt l\_free[2]}. Only if dlen is less equal {\tt MAX\_\_DLEN} defined as {\tt (16K-sizeof(bufhe))/2} this number is also stored in {\tt i\_used} as before. Modifications have to be made in all \mbs~ modules accessing {\tt i\_used}. Modules outside \mbs~ can be modified on demand to support large buffers. Current buffers still can be handled without change.\\
-When \mbs~ writes large buffer files only the used part of the file header is written. Number of 16 bit words behind buffer header structure is stored in {\tt filhe\_used}.
-Event API f\_evt is updated to handle large buffers on input.
-Note: By setup the number of buffers per stream can be set to one. This suppresses event spanning.
-Large buffers can be used by standard \mbs.
-\subsubsection{Variable sized buffers}
-As a second step variable sized buffers are implemented. They get a new type 100. The allocated buffers are still fixed length as before. However, the \mbs~ transport would write only the used part of the buffers to clients. Processing these buffers a module must first read the header, then get the used size from {\tt iUsedWords} ({\tt free[2]}) and read the rest. Modules outside \mbs~ must be modified to process such buffers.
-In \mbs, after stream buffers are created, buffer types are set to 100 by a new command {\tt enable dabc} in transport. This command also sets the transport synchronous mode. In this mode transport processes streams only if a client is connected.
-\subsection{New LMD file format}
-With \dabc~ as event builder for \mbs~ there is no need to write files in \mbs. This gives more freedom to design a new file format. This format will be written by \dabc~ and read by {\tt fLmd} functions (get event). The format is quite simpler than the old one, because it has no buffer structure causing so much complications by event spanning.
-
-A file has a file header as before, but with a fixed size and a variable part (size {\tt iUsedWords}).
-Behind the header follow data elements with {\tt sMbsHeader} headers (length, type, subtype) allowing to identify and process or skip them. Besides event data, time stamps may be inserted from the original \mbs~ formatted buffers to preserve this time information. Writing/reading such a file is very straight forward. The file header contains the number of data elements and the maximum size of elements. This information is collected throughout the file writing and written on close into the file header. The file header is an {\tt sMbsFileHeader} structure.
-{\tt iMaxWords} is the maximum size of elements,
-{\tt iElements} is the number of data elements.
-
-The file size is no longer restricted to 2GB. Optionally an element index is written at the end of the file. This allows for random access of elements in the file through this index table. The table itself has 32-bit values for the element offsets (in 32-bit). It can therefore address offsets up to 16GB in the file. If larger files are needed, the table can be created with 64-bit values giving unlimited addressing.
-
-Note: This file format needs the rewind file function because the file header must be rewritten to store {\tt iMaxWords}, {\tt iElements}, and optionally the offset of the index table. This function is currently not implemented in the {\tt RFIO} package, but will be done.
+\section{Example \mbs\ event building}
 \section{\mbs\ GUI}
-\subsection{\mbs~ launch panel}
+The \dabc\ GUI can be used to control a stand alone \mbs\ system
+or a combined \mbs\ (front-ends) \dabc\ (event builder) system.
+To control a standard \mbs\ nothing has to be done by the user on the \mbs\ side.
+Of cause, the \mbs\ itself must have been build with the DIM option (since version v5.1).
+\subsection{\mbs\ launch panel}
 \figpng{user-gui-pan-mbs}{MBS launcher.}{htb}{0}{0.6}
-Values from file {\tt MbsLaunch.xml} (default, may be saved to other file).
+Values from file {\tt MbsLaunch.xml} (default, may be saved to other file,
+see \paref{user:guiSaveRestore}).
 {\small \begin{verbatim}
 <?xml version="1.0" encoding="utf-8"?>
 <MbsLaunch>
@@ -42,7 +25,7 @@ Values from file {\tt MbsLaunch.xml} (default, may be saved to other file).
 \item[MbsUserPath]: User working directory. The GUI need not to have
 access to the filesystem.
 \item[MbsSystemPath]:  Path where the \mbs\ is installed. GUI needs no access to this path.
-\item[MbsScript]: An execution script located relativ to \mbs path.
+\item[MbsScript]: An execution script located relativ to \mbs\ path.
 It sets all \mbs\ related variables and executes a program given as argument.
 \item[MbsCommand]: Script command (argument to MbsScript).
 \item[MbsServers]: Number of nodes plus prompter. This information
@@ -50,17 +33,223 @@ is minimum for the GUI to know when all \mbs\ nodes are up. The GUI waits until
 this number of DIM servers is up and running.
 \edes
 \subsubsection{\mbs\ launcher buttons}
-\icon{fileclose} Close window\\
-\icon{savewin} Save panel settings\\
-\icon{connprm} Startup all tasks\\
-\icon{conndsp} conndsp Connect single MBS\\
-\icon{dabcconfig} Configure\\
-\icon{dabcstart} Start acquisition\\
-\icon{dabcstop} Hold acquisition\\
-\icon{mbsstop} Stop acquisition\\
-\icon{disconn} Shut down all \\
-\icon{info} Show acquisition\\
-\icon{rshmbs} \mbs\ remote shell script\\
-\icon{control} Shell script\\
-\subsection{Combined \dabc~ and \mbs~ launch panel}
+\icon{fileclose} Close window.\\
+\icon{savewin} Save panel settings.\\
+\icon{connprm}  Execute script \verba{prmstartup.sc} at master node.
+Starts prompter, dispatchers and message loggers and waits untill they are up.
+A progress panel pops up during that time
+(see \paref{user:guiProgress}).\\
+\icon{conndsp} Execute script \verba{dimstartup.sc} at master node.
+Starts dispatcher and message logger for single node \mbs.\\
+\icon{dabcconfig} Configure. Execute \verba{startup.scom} in prompter.\\
+\icon{dabcstart} \comm{Start acquisition}.\\
+\icon{dabcstop} Hold acquisition. Execute \comm{stop acquisition}.\\
+\icon{mbsstop} Stop acquisition. Execute \verba{shutdown.scom} in prompter.
+Prompter, dispatcher and message loggers should still be running.\\
+\icon{disconn} Shut down all. Execute script \verba{prmshutdown.sc} at master node.
+After 2 seconds trigger the main \keyw{Update}.\\
+\icon{info} \comm{Show acquisition}. Output in log panel.\\
+\icon{rshmbs} Executes \keyw{Script} with argument \keyw{Command} at master node.\\
+\icon{controlmbs} Shell script
+
+\subsection{Combined \dabc\ and \mbs\ launch panel}
+\figpng{user-gui-pan-dabcmbs}{Combined DABC and MBS launcher.}{htb}{0}{0.7}
 This panel is simply a superposition of the single ones.
+\subsubsection{Combined \dabc\ and \mbs\ launcher buttons}
+\icon{fileclose} Close window.\\
+\icon{savewin} Save panel settings.\\
+\icon{connprm}  Execute script \verba{dabcstartup.sc} at \dabc\ master node.
+Starts DIM servers.
+Execute script \verba{prmstartup.sc} at \mbs\ master node.
+Starts prompter, dispatchers and message loggers.
+Waits for all components.
+A progress panel pops up during that time
+(see \paref{user:guiProgress}).
+If all components are up trigger the main \keyw{Update}.\\
+\icon{dabcconfig} Configure. Execute \verba{startup.scom} in \mbs\ prompter.
+Executes state transition command \comm{Configure}
+on \dabc\ master node and wait for the transition.
+All plug-in components are created. Then execute \comm{Enable}.
+If all components are up trigger the main \comm{Update}.\\
+\icon{dabcstart} Start \mbs\ acquisition, then executes \dabc\ \comm{Start} command.
+All components go into running state \keyw{Running}.\\
+\icon{dabcstop} Hold acquisition. Execute \mbs\ \comm{stop acquisition}.
+Execute \dabc\ \comm{Stop} command.
+All components go into standby state \keyw{Ready}.\\
+\icon{mbsstop} Executes \dabc\ \comm{Halt} command.
+This closes all plug-ins. States go into \keyw{Halted}. 
+Execute \verba{shutdown.scom} in \mbs\ prompter.
+Prompter, dispatcher and message loggers should still be running.
+Next must be shut down or configure.
+After two seconds trigger the main \keyw{Update}.\\
+\icon{disconn} Shut down all. Execute \comm{EXIT} command on all \dabc\ nodes.
+Execute script \verba{prmshutdown.sc} at \mbs\ master node.
+After two seconds trigger the main \keyw{Update}.\\
+\icon{info} \comm{Show acquisition}. Output in log panel.\\
+\icon{rshmbs} Executes \keyw{Script} with argument \keyw{Command} at master node.\\
+\icon{controlmbs} Shell script for \mbs\ master node.\\
+\icon{controldabc} Shell script for \dabc\ master node.
+\subsection{\mbs\ command panel}
+\figpng{user-gui-pan-cmd-mbs}{Command panel.}{htb}{0}{0.9}
+Fig. \paref{fig:user-gui-pan-cmd-mbs} shows
+on the left side the command tree. Double click (or \keyw{RETURN}) on a command
+executes the command. The top tree level is the executing \mbs\ task,
+below that are the commands, and the master node (prompter node) is the only node
+below each command. However,
+command is sent to the prompter node, but executed on the current node 
+which is displayed in the info panel
+(see Fig. \paref{fig:user-gui-pan-info}).
+Click on a command opens at the right side the argument panel.
+Entering argument values and \keyw{RETURN} executes the command.
+\section{\mbs\ DIM parameters}
+\subsection{\mbs\ states}
+\bdes
+\item[Acquisition/State] \keyw{Running} \keyw{Stopped} 
+\item[BuildingMode/State]\keyw{Delayed} \keyw{Immediate}\keyw{} \keyw{}
+\item[EventBuilding/State]\keyw{Working} \keyw{Suspended}\keyw{} \keyw{}
+\item[FileOpen/State]\keyw{File open} \keyw{File closed}
+\item[RunMode/State] \keyw{DABC connected} \keyw{MBS to DABC} \keyw{Transport client} \keyw{MBS standalone}
+\item[SpillOn/State]\keyw{Spill ON} \keyw{Spill OFF}
+\edes
+\subsection{\mbs\ rates}
+\bdes
+\item[MSG/DataRateKb] KByte/s
+\item[MSG/DataTrendKb] KBytes/s as trend
+\item[MSG/EventRate] Events/s
+\item[MSG/EventTrend] Events/s as trend
+\item[MSG/StreamRateKb] Stream server Kbyte/s
+\item[MSG/StreamTrendKb] Stream server Kbyte/s as trend
+\item[MSG/FileFilled] File filled in percent
+\item[MSG/StreamsFull] Number of full streams in percent
+\edes
+\subsection{\mbs\ infos}
+Shown in info window.
+\bdes
+\item[MSG/eFile] Name of file.
+\item[MSG/ePerform] Events, MBytes, Events/s and MBytes/s.
+\item[MSG/eSetup] Name of setup file loaded.
+\item[PRM/Current] Current command execution node (master node only).
+\item[PRM/NodeList] List of nodes (master node only).
+\edes
+\subsection{\mbs\ tasks}
+When a task is started a parameter with it's name is created.
+The value is the task name. If the task is stopped,
+color changes to gray and value is preceded by "no".
+Task list is shown in info window.
+\bdes
+\item[MSG/Dispatch]
+\item[MSG/MsgLog]
+\item[MSG/ReadMeb]
+\item[MSG/Collector]
+\item[MSG/Transport]
+\item[MSG/EventServ]
+\item[MSG/Util]
+\item[MSG/ReadCam]
+\item[MSG/EsoneServ]
+\item[MSG/StreamServ]
+\item[MSG/Histogram]
+\item[MSG/Prompt]
+\item[MSG/Rate]
+\item[MSG/SMI]
+\item[MSG/Sender]
+\item[MSG/Receiver]
+\item[MSG/AsynchReceiver]
+\item[MSG/Rising]
+\item[MSG/TimeOrder]
+\item[MSG/VmeServ]
+\edes
+\subsection{\mbs\ text}
+\bdes
+\item[MSG/GuiNode] Node where GUI runs
+\item[MSG/Date] Date as written in file header
+\item[MSG/Run] Run ID  as written in file header
+\item[MSG/Experiment] Experiment as written in file header
+\item[MSG/User] Lynx user name as written in file header
+\edes
+\subsection{\mbs\ numbers}
+\bdes
+\item[MSG/BufferSize]
+\item[MSG/Buffers]
+\item[MSG/Events]
+\item[MSG/FileMbytes]
+\item[MSG/FlushTime]
+\item[MSG/MBytes]
+\item[MSG/StreamKeep] 
+\item[MSG/StreamMbytes]
+\item[MSG/StreamScale]
+\item[MSG/StreamSync]
+\edes
+\section{\mbs\ user working directory}
+\subsection{GUI setup}
+Optional file \verba{.guirc} in the \mbs\ working directory
+specifies which rate meters and states shall appear
+in the GUI. Upper limits of the rate meters can be specified.
+This file can be copied from \$MBSROOT/set. Only the
+parameters which are in this file are optional.
+{\small {\begin{verbatim}
+## This file controls the rate meter and state appearance.
+## File name must be .guirc and in the MBS working directory.
+## The value numbers are the maximum values for rate meters
+## Colons only if value is specified!
+## Node names must be uppercase, * wildcards all
+## RunMode shows if MBS is set into DABC event builder mode 
+## and client is connected.
+
+##========= All nodes:
+##---- Rates:
+* EventRate     : 10000.
+* EventTrend    : 10000.
+* DataRateKb    : 16000.
+* DataTrendKb   : 16000.
+* StreamRateKb  : 16000.
+* StreamTrendKb : 16000.
+# ++ File filling status in percent, typically only on one node (transport)
+#* FileFilled   :   100.
+* StreamsFull   :   100.
+
+##---- States:
+# ++ Delayed or immediate event building:
+* BuildingMode
+# ++ Current eventbuilding running or suspended:
+* EventBuilding
+# ++ Running mode, stand alone or DABC:
+* RunMode
+# ++ Shows spill signal:
+#* SpillOn
+# ++ Shows if file is open, typically only on one node (transport)
+#* FileOpen
+
+##======== Node XXX
+#XXX EventRate   : 10000.
+#XXX DataRateKb  : 16000.
+#XXX RunMode
+#XXX FileOpen
+#XXX FileFilled  :   100.
+#XXX SpillOn
+#XXX EventTrend  : 10000.
+#XXX DataTrendKb : 16000.
+\end{verbatim}
+}
+\section{\mbs\ upgrade for \dabc}
+To have minimal changes, we use standard collector and transport. Two changes:
+\subsubsection{Increased buffer size support}
+This is done in a completely compatible way. The only problem is the 16 bit {\tt i\_used field} in the buffer header keeping the number of 16 bit data words (behind buffer header). With a new rule we store this number in 32 bit field {\tt l\_free[2]}. Only if dlen is less equal {\tt MAX\_\_DLEN} defined as {\tt (16K-sizeof(bufhe))/2} this number is also stored in {\tt i\_used} as before. Modifications have to be made in all \mbs\ modules accessing {\tt i\_used}. Modules outside \mbs\ can be modified on demand to support large buffers. Current buffers still can be handled without change.\\
+When \mbs\ writes large buffer files only the used part of the file header is written. Number of 16 bit words behind buffer header structure is stored in {\tt filhe\_used}.
+Event API f\_evt is updated to handle large buffers on input.
+Note: By setup the number of buffers per stream can be set to one. This suppresses event spanning.
+Large buffers can be used by standard \mbs.
+\subsubsection{Variable sized buffers}
+As a second step variable sized buffers are implemented. They get a new type 100. The allocated buffers are still fixed length as before. However, the \mbs\ transport would write only the used part of the buffers to clients. Processing these buffers a module must first read the header, then get the used size from {\tt iUsedWords} ({\tt free[2]}) and read the rest. Modules outside \mbs\ must be modified to process such buffers.
+In \mbs, after stream buffers are created, buffer types are set to 100 by a new command {\tt enable dabc} in transport. This command also sets the transport synchronous mode. In this mode transport processes streams only if a client is connected.
+\subsection{New LMD file format}
+With \dabc\ as event builder for \mbs\ there is no need to write files in \mbs. This gives more freedom to design a new file format. This format will be written by \dabc\ and read by {\tt fLmd} functions (get event). The format is quite simpler than the old one, because it has no buffer structure causing so much complications by event spanning.
+
+A file has a file header as before, but with a fixed size and a variable part (size {\tt iUsedWords}).
+Behind the header follow data elements with {\tt sMbsHeader} headers (length, type, subtype) allowing to identify and process or skip them. Besides event data, time stamps may be inserted from the original \mbs\ formatted buffers to preserve this time information. Writing/reading such a file is very straight forward. The file header contains the number of data elements and the maximum size of elements. This information is collected throughout the file writing and written on close into the file header. The file header is an {\tt sMbsFileHeader} structure.
+{\tt iMaxWords} is the maximum size of elements,
+{\tt iElements} is the number of data elements.
+
+The file size is no longer restricted to 2GB. Optionally an element index is written at the end of the file. This allows for random access of elements in the file through this index table. The table itself has 32-bit values for the element offsets (in 32-bit). It can therefore address offsets up to 16GB in the file. If larger files are needed, the table can be created with 64-bit values giving unlimited addressing.
+
+Note: This file format needs the rewind file function because the file header must be rewritten to store {\tt iMaxWords}, {\tt iElements}, and optionally the offset of the index table. This function is currently not implemented in the {\tt RFIO} package, but will be done.
+

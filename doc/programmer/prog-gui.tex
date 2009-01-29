@@ -9,12 +9,12 @@ builds most of the panels from the services available.
 Thus it can control and monitor any system running DIM servers conforming to
 rules described in the following. 
 According the description above it does the following:
-\begin{compactitem}[$\bullet$]
+\bbul
 \item Get list of commands and parameters and create objects for each.
 \item Put parameters in a table.
 \item Put commands in a command tree.
 \item Create graphics panels for rate meters, states, histograms, and infos.
-\end{compactitem}
+\ebul
 
 \section{DIM Usage}
 \index{DIM!Introduction}
@@ -710,10 +710,15 @@ public class MiniPanel  extends xPanelPrompt
 The constructor must not have arguments! Icon, name and tooltip have to be
 passed by getter function to the caller (the GUI desktop). Layout is mandatory.
 Declarations have been masked out in the code snippets.
+There are some icons one could use for the prompter panels:\\
+\icon{usericonblue} usericonblue 
+\icon{usericonred} usericonred 
+\icon{usericongreen} usericongreen 
+\icon{usericonyellow} usericonyellow 
 {\small \begin{verbatim}
 public MiniPanel(){
    super("MyPanel");
-   menuIcon=xSet.getIcon("Myicon.png");
+   menuIcon=xSet.getIcon("icons/usericongreen.png");
    name=new String("MyPanel");
    tooltip=new String("Launch my panel");
    layout = xSet.getLayout(name);
@@ -735,13 +740,17 @@ public xiUserCommand getUserCommand(){return null;}
 The \func{init} is called once after constructor. Here we have to setup all panels.
 We have in the main panel three lines: one text prompt, a text button, and a check box.
 At the bottom we have one icon button which would open the display frame.
+There are some icons one could use for that:\\
+\icon{windowblue} windowblue 
+\icon{windowred} windowred 
+\icon{windowgreen} windowgreen 
 {\small \begin{verbatim}
 public void init(xiDesktop desktop, ActionListener al){
 desk=desktop; // save
 prompt=addPrompt("My Command: ","Defaultvalue","prompt",20,this);
 addTextButton("This is a test button","button","Tool tip, whatever it does",this);
 check=addCheckBox("Data server on/off","check",this);
-graphIcon   = xSet.getIcon("icons/usergraphics.png");
+graphIcon   = xSet.getIcon("icons/windowgreen.png");
 addButton("Display","Display info",graphIcon,this);
 state = new xState("ServerState", xState.XSIZE,xState.YSIZE);
 stapan=new xPanelGraphics(new Dimension(160,50),1); // one column of states
