@@ -118,7 +118,7 @@ xSet.setColorBack(back);
     disIcon     = xSet.getIcon("icons/disconn.png");
     infoIcon    = xSet.getIcon("icons/info.png");
     winIcon     = xSet.getIcon("icons/rshmbs.png");
-    workIcon    = xSet.getIcon("icons/control.png");
+    workIcon    = xSet.getIcon("icons/controlmbs.png");
     configIcon  = xSet.getIcon("icons/mbsconfig.png");
     startIcon   = xSet.getIcon("icons/mbsstart.png");
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
