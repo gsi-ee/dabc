@@ -144,4 +144,14 @@ b is for begin, e for end
 \figpng{emptyfig}{Figure must be done.}{htb}{0}{0.3}
 \figpdf{dabc_sw-over_3}{PDF figure.}{htb}{0}{0.5}
 Creates labels \verba{fig:filename}
+\lsubsection{dabc-edit-sections}{Sections with labels}
+\begin{verbatim}
+\lsection{label}{headline}
+\lsubsection{label}{headline}
+\lsubsubsection{label}{headline}
+\paref{label}
+\end{verbatim}
+These create labels and sections. The \verba{paref}
+inserts the reference together with the page number.
+Description see \paref{dabc-edit-sections}.
 \section{Naming conventions}

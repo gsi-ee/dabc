@@ -246,6 +246,9 @@
 }
 \newcommand{\icon}[1]{\includegraphics{#1.png} \rule{0cm}{0.7cm}}
 \newcommand{\paref}[1]{\ref{#1}, page \pageref{#1}}
+\newcommand{\lsection}[2]{\section{#2}\label{#1}}
+\newcommand{\lsubsection}[2]{\subsection{#2}\label{#1}}
+\newcommand{\lsubsubsection}[2]{\subsubsection{#2}\label{#1}}
 % compact lists etc
 % -----------------------------------------------------------------
 \newcommand{\bbul}{\begin{compactitem}[$\bullet$]}
