@@ -20,6 +20,7 @@ user/user-docrev.tex \
 user/user-command.tex \
 user/user-parameter.tex \
 user/user-plugin.tex \
+user/user-gui.tex \
 user/user-setup.tex \
 user/user-overview.tex \
 user/user-exa-mbs.tex \
