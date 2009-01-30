@@ -478,3 +478,281 @@ configure combiner from three MBS transport servers:
 \end{verbatim}
 \end{small}
 
+\section{\mbs\ upgrade for \dabc}
+This section is rather for the \mbs\ programmer than for application programmers.
+To have minimal changes, we use standard collector and transport. Two changes:
+\subsection{Increased buffer size support}
+For the following see data structures \paref{prog:mbs-file-header} and \paref{prog:mbs-buffer-header}.
+This is done in a completely compatible way. The only problem is the 16 bit {\tt i\_used} field in the old buffer header structure keeping the number of 16 bit data words (behind buffer header). 
+The other 16b bits are used for event spanning.
+With a new rule we store this number in 32 bit field \decl{l\_free[2]}
+, now \decl{iUsedWords}. Only if old \decl{l\_dlen}, now \decl{iMaxWords} is less equal {\tt MAX\_\_DLEN} defined as {\tt (32K-sizeof(bufhe))/2} this number is also stored in {\tt i\_used} as before. Modifications have to be made in all \mbs\ modules accessing {\tt i\_used}. Modules outside \mbs\ can be modified on demand to support large buffers. Current buffers still can be handled without change.\\
+When \mbs\ writes large buffer files only the used part of the file header is written. Number of 16 bit words behind buffer header structure is stored in {\tt filhe\_used}.
+Event API f\_evt is updated to handle large buffers on input.
+Note: By setup the number of buffers per stream can be set to one. This suppresses event spanning.
+Large buffers can be used by standard \mbs.
+\subsection{Variable sized buffers}
+As a second step variable sized buffers are implemented. They get a new type 100. The allocated buffers are still fixed length as before. However, the \mbs\ transport would write only the used part of the buffers to clients. Processing these buffers a module must first read the header, then get the used size from {\tt iUsedWords} (old {\tt l\_free[2]}) and read the rest. Modules outside \mbs\ must be modified to process such buffers.
+In \mbs, after stream buffers are created, buffer types are set to 100 by a new command \comm{enable dabc} in transport. This command also sets the transport synchronous mode. In this mode transport processes streams only if a client is connected.
+\subsection{New LMD file format}
+With \dabc\ as event builder for \mbs\ there is no need to write files in \mbs. This gives more freedom to design a new file format. This format will be written by \dabc\ and read by {\tt fLmd} functions (get event). The format is quite simpler than the old one, because it has no buffer structure causing so much complications by event spanning. The data elements itself, mainly the events, remain unchanged.
+
+A file has a file header as before, but with a fixed size part and a variable part 
+(size {\tt iUsedWords}).
+
+Behind the header follow data elements with {\tt sMbsHeader} headers (length, type, subtype) allowing to identify and process or skip them. Elements must be sized in 4 byte units.
+Besides event data, time stamps may be inserted from the original \mbs\ formatted buffers to preserve this time information. Writing/reading such a file is very straight forward. The file header contains the number of data elements (\verba{iElements}) and the maximum size of elements (\verba{iMaxWords}). This information is collected throughout the file writing and written on close into the file header. The file header is an {\tt sMbsFileHeader} structure.
+
+The file size is no longer restricted to 2GB. Optionally an element index is written at the end of the file. This allows for random access of elements in the file through this index table. The table itself has 32-bit values for the element offsets (in 32-bit). It can therefore address offsets up to 16GB in the file. If larger files are needed, the table can be created with 64-bit values giving unlimited addressing.
+
+Note: This file format needs the \verba{rewind} file function because the file header must be rewritten to store {\tt iMaxWords}, {\tt iElements}, and optionally the offset of the index table. This function is currently not implemented in the {\tt RFIO} package, but will be done.
+
+\lsubsection{prog:mbs-data-struct}{\mbs\ data structures}
+All structures are defined independent on endianess. When bytes must be swapped, always 4 bytes are swapped. Fields 8 bytes long must be handled separately.
+Smaller items must be accessed by mask\&shift.
+This makes code independent of endian.
+\subsubsection{Connect to \mbs\ transport}
+Structure used to talk between client and transport server.
+Client connects to server (\mbs) and reads this structure first.
+Structure maps the \decl{sMbsTransportInfo} info buffer.
+{\small \begin{verbatim}
+typedef struct{
+  uint32_t iEndian;      // byte order. Set to 1 by sender 
+  uint32_t iMaxBytes;    // maximum buffer size                   
+  uint32_t iBuffers;     // buffers per stream (should be 1 for DABC mode)
+  uint32_t iStreams;     // number of streams (=0 for DABC mode)                   
+} sMbsTransportInfo;
+\end{verbatim}
+}
+
+\lsubsubsection{prog:mbs-buffer-header}{Buffer header}
+Buffer header, maps \decl{s\_bufhe}, some fields used in different way.
+The main difference is the usage of \decl{iUsedWords} for the data length.
+{\small \begin{verbatim}
+typedef struct{
+  uint32_t iMaxWords;    // compatible with s_bufhe (total buffer size - header)
+  uint32_t iType;        // compatible with s_bufhe, low=type (=100), high=subtype
+  uint32_t iUsed;        // not used for iMaxWords>MAX__DLEN (16360), low 16bits only
+  uint32_t iBuffer;      // compatible with s_bufhe
+  uint32_t iElements;    // compatible with s_bufhe
+  uint32_t iTemp;        // Used volatile
+  uint32_t iTimeSpecSec; // compatible with s_bufhe (2*32bit) (struct timespec)
+  uint32_t iTimeSpecNanoSec; // compatible with s_bufhe (2*32bit) (struct timespec)
+  uint32_t iEndian;      // compatible with s_bufhe free[0]
+  uint32_t iWrittenEndian; // LMD__ENDIAN_BIG, LMD__ENDIAN_LITTLE, LMD__ENDIAN_UNKNOWN
+  uint32_t iUsedWords;   // total words without header, free[2]
+  uint32_t iFree3;       // free[3]
+} sMbsBufferHeader;
+\end{verbatim}
+}
+\lsubsubsection{prog:mbs-file-header}{File header}
+File header, maps \decl{s\_bufhe}, some fields used in different way.
+{\small \begin{verbatim}
+typedef struct{
+  uint32_t iMaxWords;    // Size of largest element in file
+  uint32_t iType;        // compatible with s_bufhe, low=type (=100), high=subtype
+  lmdoff_t iTableOffset; // optional offset to element index table in file
+  uint32_t iElements;    // Number of elements in file
+  uint32_t iOffsetSize;  // Offset size, 4 or 8 [bytes]
+  uint32_t iTimeSpecSec; // compatible with s_bufhe (2*32bit) (struct timespec)
+  uint32_t iTimeSpecNanoSec; // compatible with s_bufhe (2*32bit) (struct timespec)
+  uint32_t iEndian;      // compatible with s_bufhe free[0]
+  uint32_t iWrittenEndian; // LMD__ENDIAN_BIG, LMD__ENDIAN_LITTLE, LMD__ENDIAN_UNKNOWN
+  uint32_t iUsedWords;   // total words following header, free[2]
+  uint32_t iFree3;       // free[3]
+} sMbsFileHeader;
+\end{verbatim}
+}
+\subsubsection{Data element structures}
+\bbul
+\item Time stamp
+{\small \begin{verbatim}
+typedef struct{
+  uint32_t iMaxWords; 
+  uint32_t iType; 
+  uint32_t iTimeSpecSec;
+  uint32_t iTimeSpecNanoSec;
+} sMbsTimeStamp;
+\end{verbatim}
+}
+\item Common data item header
+{\small \begin{verbatim}
+typedef struct{
+  uint32_t iWords;       // following data words
+  uint32_t iType;        // compatible with s_ve10_1, low=type (=10), high=subtype
+} sMbsHeader;
+\end{verbatim}
+}
+\item \mbs\ event header (type 10,1)
+{\small \begin{verbatim}
+typedef struct{
+  uint32_t iWords;       // data words + 4
+  uint32_t iType;        // compatible with s_ve10_1, low=type (=10), high=subtype
+  uint32_t iTrigger;
+  uint32_t iEventNumber;
+} sMbsEventHeader;
+\end{verbatim}
+}
+\item \mbs\ subevent header
+{\small \begin{verbatim}
+typedef struct{
+  uint32_t iWords;       // data words + 2
+  uint32_t iType;        // compatible with s_ves10_1, low=type (=10), high=subtype
+  uint32_t iSubeventID;  // 2 low bytes=procid, next byte=subcrate, high byte control 
+} sMbsSubeventHeader;
+\end{verbatim}
+}
+\ebul
+\subsubsection{Some fixed numbers}
+{\small \begin{verbatim}
+#define LMD__TYPE_FILE_HEADER_101_1   0x00010065
+#define LMD__TYPE_EVENT_HEADER_10_1   0x0001000a
+#define LMD__TYPE_FILE_INDEX_101_2    0x00020065
+#define LMD__TYPE_BUFFER_HEADER_10_1  0x0001000a
+#define LMD__TYPE_BUFFER_HEADER_100_1 0x00010064
+#define LMD__TYPE_TIME_STAMP_11_1     0x0001000b
+#define LMD__INDEX         1
+#define LMD__OVERWRITE     1
+#define LMD__LARGE_FILE    1
+#define LMD__BUFFER        1
+#define LMD__NO_INDEX      0
+#define LMD__NO_OVERWRITE  0
+#define LMD__NO_LARGE_FILE 0
+#define LMD__NO_BUFFER     0
+#define LMD__NO_VERBOSE    0
+#define LMD__VERBOSE       1
+#define LMD__ENDIAN_BIG    2
+#define LMD__ENDIAN_LITTLE 1
+#define LMD__ENDIAN_UNKNOWN 0
+\end{verbatim}
+}
+\subsection{\mbs\ update for DIM control}
+\subsubsection{New or modified files}
+\strong{New files:}
+\bdes
+\item [f\_dim\_server.c, f\_dim\_server.h] : all DIM functions.
+\item [dimstartup.sc, dimshutdown.sc] : for single node
+\item [prmstartup.sc, prmshutdown.sc, dimremote\_exe.sc] : for multi node, propagate \keyw{DIM\_DNS\_NODE}
+\item [m\_launch.c] : fork programs to appear without path in ps output.
+\item [m\_cmd2xml.c] : Generate xml command description file from output of show command
+\edes
+\strong{Modified:}
+\bdes
+\item [alias.com] : add launch alias
+\item [m\_prompt.c]
+\item [m\_dispatch.c]
+\item [m\_msg\_log.c]
+\item [f\_ifa.c, f\_ifa.h]
+\item [f\_mg\_msg\_output.c]
+\item [f\_mg\_msg\_thread.c] : in /mbs/v51 has argument which is not specified in call!
+\item [f\_pr\_reset.c] : kill processes in defined order.
+\item [f\_stccomm.c] : Socket created in stc\_createserver will be shut down and closed by stc\_close.
+\item [m\_wait\_for.c] : Dont wait for zombies.
+\item [remote\_exe.sc] : use m\_launch to run program.
+\item [Makefile] : modules using DIM must include DIM path, all programs must link DIM library.
+\edes
+\subsubsection{f\_stccomm}
+On the server side \verba{stc\_createserver} fills structure \verba{s\_tcpcomm} with socket number\\ (\verba{s\_tcpcomm.sock\_rw}). \verba{stc\_acceptclient} returnes socket number of connection. This socket must be closed by \verba{stc\_discclient(socket)}. \verba{stc\_close} shuts down and closes socket \verba{s\_tcpcomm.socket}, not \verba{s\_tcpcomm.sock\_rw}. 
+
+Therefore a server side \verba{stc\_close} did not close the server socket. This has been changed in that \verba{s\_tcpcomm.socket} is now equal \verba{s\_tcpcomm.sock\_rw}. When a server called \verba{stc\_close} no more accept is possible as opposed to the current behavior.
+
+On the client side a \verba{stc\_connectserver} returns the socket as well as setting\\ \verba{s\_tcpcomm.socket}. Therefore in this case \verba{stc\_close} was always shutting down and closing the socket, whereas \verba{stc\_discclient(socket)} closes the socket.
+\subsubsection{MBS launcher}
+\begin{verbatim}
+  launch <program> [<program path>] [. <program args>]
+\end{verbatim}
+If no program path is given, \keyw{MBSROOT} bin directory is assumed. Note that in the launched program environment PWD is the path from where \verba{m\_launch} was called, whereas the current path is the one of the program. Therefore program must \verba{chdir(getenv("PWD"))} to work on the expected directory.
+\subsubsection{\mbs\ DIM commands and parameters}
+The parameters and commands follow the \dabc\ naming conventions. The DIM command \comm{MbsCommand} is generic. The argument string is any \mbs\ command. Other often used commands are provided as DIM commands. All \verba{.scom} files are provided as DIM commands. New program \verba{cmd2xml} generates an xml file with the \dabc\ formatted description of all MBS commands.
+\subsubsection{DIM control modes}
+\mbs\ can be controlled through DIM in two modes: single and multimode. In single mode the dispatcher is a DIM command server, the message logger a DIM parameter server for messages and status information (selected from DAQ status). In multinode mode the prompter is the DIM command server and the message loggers are status servers. The master message logger also is the DIM message server.
+
+The table \paref{prog:mbs-modes} shows an overview of the different operation modes.
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|p{2.0cm}|p{4.0cm}|p{4.0cm}|p{2cm}|}      \hline
+Mode   & Interactive      & DIM GUI     & Remote GUI \\ \hline
+Single & Dispatcher:TTY   & DIM command & - \\ \hline
+       & Logger: TTY,file & DIM status+message, file & - \\ \hline
+Multi  & Dispatcher:TCP   & TCP & TCP \\ \hline
+       & Prompter:TTY     & DIM command & TCP \\ \hline
+       & MasterLogger:TTY+file & file & file \\ \hline
+       & Msg server       & DIM status+message & Msg server \\ \hline
+       & TCP inputs       & TCP inputs & TCP inputs \\ \hline
+       & SlaveLogger:TCP  & TCP,DIM status & TCP \\ \hline
+\end{tabular}
+\end{center}
+\caption{\mbs\ operation modes.}
+\label{prog:mbs-modes}
+\end{table}
+\subsubsection{Single node mode}
+There are two new scripts to start and shutdown a single node MBS: \\
+\verba{dimstartup.sc} and \verba{dimshutdown.sc}. \\
+These are called by \verba{rsh} from the GUI node. Arguments are the path of \keyw{MBSROOT} and the user working path. For starting the DIM server also the DIM name server node is passed.
+\begin{verbatim}
+dimstartup.sc $MBSROOT $PWD $DIM_DNS_NODE 
+\end{verbatim}
+launches \verba{m\_dispatch -dim} after waiting for all 60xx sockets closed.
+\begin{verbatim}
+dimshutdown.sc $MBSROOT $PWD 
+\end{verbatim}
+calls \verba{m\_remote reset -l}.
+When dispatcher is started with \keyw{-dim} message logger is started with argv[1] = \keyw{dim} (otherwise \keyw{task}). Then the DIM commands are defined and dispatcher goes into \verba{pause()}
+ loop (needed with non threaded DIM version for keep alive signals).
+
+When message logger is started with argv[1] = \keyw{dim} it creates the DIM parameters and starts a thread to update these every second. One DIM parameter is used for the messages and updated when a message arrives. Messages from local tasks are received in a thread (\verba{f\_mg\_msg\_thread}) and either sent to master message logger (when this one is slave) or processed by \verba{f\_mg\_msg\_output}. This function updates the DIM message parameter when in DIM mode, sends message to connected remote message client or prints it if not, and writes log file.
+\subsubsection{Multi node mode}
+In multi node mode the MBS nodes are controlled through one master node where a prompter is running. The prompter can be started (and stopped) interactively, or from a remote node by script. There are two new scripts to start and shutdown a multi node MBS from a remote node (GUI): \\
+\verba{prmstartup.sc} and \verba{prmshutdown.sc}. \\
+These are called by \verba{rsh} from the GUI node. Arguments are the path of \keyw{MBSROOT} and the user working path. For starting the DIM server also the DIM name server node is passed.
+\begin{verbatim}
+prmstartup.sc $MBSROOT $PWD $DIM_DNS_NODE $REMOTE_NODE 
+\end{verbatim}
+launches \verba{m\_prompt -dim -r <remotenode>} after waiting for all 60xx sockets closed.
+\begin{verbatim}
+prmshutdown.sc $MBSROOT $PWD 
+\end{verbatim}
+calls \verba{m\_remote reset -l task=m\_prompt}. With \verba{m\_wait\_for -task m\_prompt} it waits for prompter to be stopped, then calls \verba{m\_remote reset} (all nodes from \verba{node\_list.txt}).
+For the message logger modes see table \paref{prog:mbs-msg-modes}.
+ When prompter is started with \keyw{-dim} it starts the master message logger with argv[1] = \keyw{masterdim }(otherwise = \keyw{master}). When prompter is started with the -r <remote argument>, the remote node name is passed as argv[2] to the message logger.
+
+All dispatchers are started in the MBS prompter by \verba{f\_ifa\_init(NodeList,DimNameServer)} function. It calls per node from \verba{NodeList f\_ifa\_remote} which starts the dispatcher in function \verba{f\_ifa\_rsh\_proc\_start} by script \verba{dimremote\_exe.sc} (DIM mode) or \verba{remote\_exe.sc} (normal mode).
+When prompter is started with \keyw{-dim} then the DIM command server is started. Otherwise it starts TCP server on port 6006 (if started with the -r <remotenode> option) waiting for connection of GUI client and reading commands, or reading commands from terminal.
+\begin{verbatim}
+dimremote_exe.sc $MBSROOT $PWD $DIM_DNS_NODE $PROMPTER_NODE 
+\end{verbatim}
+launches \verba{m\_dispatch -dim -<prompternode>}. 
+The dispatchers start their message logger with the same argument (prompter node) and 
+optional argv[2] = \keyw{slavedim}. On the prompter node, however, the message logger should already run (started by prompter).
+
+Because started with argv[2] = -<prompternode> the dispatchers then start a TCP server waiting on port 6004 for connection of prompter. When prompter connects, dispatcher sends process id. Then waits for commands. Command completion is sent back. Prompter may terminate, start again and connect.
+
+The master logger starts a server in a thread waiting on port 6005 for connections of message logger slaves. For each slave a new thread is started waiting for messages of the slave. These threads are protected by mutex. Only one thread can write into logfile. However, slaves do not write logfile. If prompter was started from remote, master message logger starts server on port 6007 waiting for remote message client to connect.
+\begin{table}[h]
+\begin{center}
+\begin{tabular}{|p{3.3cm}|p{0.6cm}|p{0.7cm}|p{3.6cm}|p{5.9cm}|}      \hline
+argv & TCP & Slave & DIM & remote \\ \hline
+none & 0 & 0 & - & - \\ \hline
+\keyw{task} & 0 & 0 & - & - \\ \hline
+\keyw{master} & 1 & 0 & - & pth\_server$\rightarrow$pth\_links \\ \hline
+\keyw{dim} & 0 & 0 & msg,status,pth\_dim\_serv &   \\ \hline
+\keyw{masterdim} & 1 & 0 & msg,status,pth\_dim\_serv & pth\_server$\rightarrow$pth\_links \\ \hline
+masternode & 1 & 1 & - & connect masternode \\ \hline
+\keyw{masterdim} any & 1 & 0 & msg,status,pth\_dim\_serv & pth\_server$\rightarrow$pth\_links \\ \hline
+masternode \keyw{slavedim} & 1 & 1 & status,pth\_dim\_serv & connect masternode \\ \hline
+\keyw{master} remotenode & 1 & 0 & msg,status,pth\_dim\_serv & pth\_rem\_serv,pth\_server $\rightarrow$pth\_links \\ \hline
+\end{tabular}
+\end{center}
+\caption{\mbs\ Message logger modes.}
+\label{prog:mbs-msg-modes}
+\end{table}
+If remote node is specified, \verba{pth\_rem\_serv} thread waits for connection of a message client. After connection global \verba{l\_tcp\_chan\_rem} is set and \verba{f\_mg\_msg\_output} send messages to that socket.
+As TCP master the \verba{pth\_server} thread waits for connections of message slaves. After connection starts \verba{pth\_links} thread to read messages and process in \verba{f\_mg\_msg\_output} (mutex locked).
+As TCP slave connect to <masternode>, set global \verba{l\_tcp\_chan}. In DIM mode create services and start \verba{pth\_dim\_serv} to update every second. In all cases \verba{f\_mg\_msg\_thread} is called where in slave mode messages are sent to the master, otherwise processed by \verba{f\_mg\_msg\_output}.
+
+\subsubsection{MBS controlled by DIM}
+Graphics on Eigene Dateien/experiments/mbs
+\figpng{prog-mbs-dim1}{Single node \mbs\ controlled by DIM.}{htb}{0}{1}
+\figpng{prog-mbs-tcp}{Multi node \mbs\ controlled by TCP.}{htb}{0}{1}
+\figpng{prog-mbs-dim2}{Multi node \mbs\ controlled by DIM.}{htb}{0}{1}
+

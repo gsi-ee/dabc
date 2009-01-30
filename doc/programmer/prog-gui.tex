@@ -29,7 +29,8 @@ In addition to the data and format string one longword called \verba{quality} is
 
 \subsection{\dabc\ DIM naming conventions}
 \index{DIM!Conventions}
-\index{DABC!DIM conventions}
+\index{DABC!DIM naming conventions}
+\index{Conventions!DIM service names}
 When the number and kind of services of DIM servers often change it would be very convenient if a generic GUI would show all available services without further programming. It would be also very nice if standard graphical elements would be used to display certain parameters like rate meters. If we have many services it would be convenient to have a naming convention which allows to build tree structures on the GUI.
 
 Naming conventions for generic \gui\ (line breaks for better reading):
@@ -192,6 +193,7 @@ Inside the internal frames two types of panels are often used: prompter panels a
 graphics panels.
 \subsection{Prompter panels}
 Prompter panels can be implemented subclassing class \class{xPanelPrompt}.
+Example: \dabc\ launch panel.
 The layout is in rows. A row can be a prompter line (\class{JLabel} label and \class{JTextField} input field),
 a text button \class{JButton}, or a \class{JLabel} label and \class{JCheckBox}. At the bottom there is a \class{JToolBar}
 where buttons with icons can be placed. The prompter class must implement the 
@@ -797,6 +799,7 @@ With the checker we toggle the \class{xState} state {\keyw{ServerState} in scree
 The \class{xiDimParameter} param to be toggled we will find in the next.
 To get access to DIM parameters we must implement \func{setDimServices}.
 We suggest that there is a parameter \param{*Setup\_File*} which has a string value.
+The \class{myInfoHandler} class is described next.
 {\small \begin{verbatim}
 public void setDimServices(xiDimBrowser browser){
 Vector<xiDimParameter> vipar=browser.getParameters();
