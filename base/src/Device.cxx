@@ -35,7 +35,7 @@ void dabc::Device::TransportDestroyed(Transport *tr)
    // while we destroy transport only in Cleanup branch
    if (tr->IsDoingCleanup()) return;
 
-//   EOUT(("Transport %p deleted ubnormal", tr));
+   EOUT(("Transport %p of device %s deleted abnormal", tr, GetName()));
 
    // this is not a normal situation, but do it
    LockGuard lock(fDeviceMutex);

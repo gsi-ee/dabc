@@ -446,7 +446,7 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
    if (cmd->IsName("DoCommandRecv")) {
       const char* cmddata = cmd->GetPar("cmddata");
 
-      DOUT3(( "DoCommandRecv cmd:%s", cmddata));
+      DOUT3(("DoCommandRecv cmd:%s", cmddata));
 
       RecvOverCommandChannel(cmddata);
    } else
