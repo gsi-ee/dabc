@@ -244,6 +244,9 @@
 \label{fig:#1} % give it a name for references
 \end{figure}
 }
+
+\definecolor{FrontLetter}{rgb}{0.0,0.5,0.5}
+
 \newcommand{\icon}[1]{\includegraphics{#1.png} \rule{0cm}{0.7cm}}
 \newcommand{\paref}[1]{\ref{#1}, page \pageref{#1}}
 \newcommand{\lsection}[2]{\section{#2}\label{#1}}
