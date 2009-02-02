@@ -164,6 +164,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
          exit(1);
       }
 
+/*
       int cnt = 100;
 
       while ((cnt-->0) && (NumActiveNodes()<numnodes)) {
@@ -173,6 +174,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       if (NumActiveNodes() < numnodes) {
          EOUT(("Not all nodes are connected. Try to continue"));
       }
+*/
 
    } else {
 
@@ -213,7 +215,9 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       }
    }
 
+/*
    DOUT3(("Is it OK ?????"));
+
 
    if (IsMainManager()) {
 
@@ -225,6 +229,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
            if ((node!=NodeId()) && !IsNodeActive(node))
               DOUT1(("  Node %d is not active", node));
    }
+*/
 }
 
 void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, const char* controllerID)

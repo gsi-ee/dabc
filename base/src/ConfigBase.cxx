@@ -693,7 +693,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
       } else
          res += dabc::format(" if [ ! -f %s ] ; then echo maincfgfile = %s missed; exit 12; fi; ", topcfgfile, topcfgfile);
 
-      res += dabc::format(" echo test on node %s done;", hostname.c_str());
+      res += dabc::format(" echo Test on node %s done;", hostname.c_str());
 
    } else
 
@@ -792,11 +792,11 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
    } else
 
    if (kind == kindKill) {
-      res += " killall --quiet dabc_run";
+      res += dabc::format(" killall --quiet dabc_run; echo Kill on node %s done;", hostname.c_str());
    } else
 
    if (kind == kindStop) {
-      res += " pkill -SIGINT dabc_run";
+      res += dabc::format(" pkill -SIGINT dabc_run; echo Stop on node %s done;", hostname.c_str());
    }
 
    return res;

@@ -102,6 +102,22 @@ bool SMChange(const char* smcmdname)
    return res;
 }
 
+bool WaitActiveNodes(double tmout)
+{
+   dabc::TimeStamp_t t1 = TimeStamp();
+
+   do {
+     if (dabc::mgr()->NumActiveNodes() == dabc::mgr()->NumNodes())
+        if (dabc::mgr()->TestActiveNodes()) return true;
+
+     dabc::MicroSleep(10000);
+
+   } while (dabc::TimeDistance(t1, TimeStamp()) < tmout);
+
+   return false;
+}
+
+
 int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int nodeid, int numnodes)
 {
    DOUT0(("Run cluster application!!! %d %d %s", nodeid, numnodes, (connid ? connid : "---")));
@@ -125,6 +141,11 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
    if (nodeid==0) {
        if (!dabc::mgr()->HasClusterInfo()) {
           EOUT(("Cannot access cluster information from main node"));
+          return 1;
+       }
+
+       if (!WaitActiveNodes(10.)) {
+          EOUT(("Cannot connect to all active nodes !!!"));
           return 1;
        }
 
@@ -171,6 +192,9 @@ int RunClusterDimApplucation(dabc::Configuration* cfg, int nodeid, bool dorun)
    }
 
    if (dorun && (nodeid==0)) {
+
+      if (!WaitActiveNodes(10.))
+         EOUT(("Cannot connect to all active nodes !!!"));
 
       SMChange(dabc::Manager::stcmdDoConfigure);
 

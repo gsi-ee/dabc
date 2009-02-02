@@ -1107,6 +1107,9 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          cmd_res = cmd_postponed;
       }
    } else
+   if (cmd->IsName("Ping"))
+      cmd_res = cmd_true;
+   else
       cmd_res = cmd_false;
 
    return cmd_res;
@@ -1595,6 +1598,19 @@ int dabc::Manager::NumActiveNodes()
    for (int n=0;n<NumNodes();n++)
       if (IsNodeActive(n)) cnt++;
    return cnt;
+}
+
+bool dabc::Manager::TestActiveNodes(double tmout)
+{
+   CommandClient cli;
+
+   for (int node=0; node<NumNodes(); node++)
+      if ((node!=NodeId()) && IsNodeActive(node)) {
+         Command* cmd = new Command("Ping");
+         SubmitRemote(cli, cmd, node);
+      }
+
+   return cli.WaitCommands(tmout);
 }
 
 int dabc::Manager::DefineNodeId(const char* nodename)

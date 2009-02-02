@@ -445,6 +445,8 @@ namespace dabc {
          virtual bool IsNodeActive(int num) { return num==0; }
          /** Returns number of currently active nodes */
          int NumActiveNodes();
+         /** Test active nodes - try to execute simpe ping command on each active node */
+         bool TestActiveNodes(double tmout = 5.);
          /** Establish/test connection to control system */
          virtual bool ConnectControl(const char* connid) { return true; }
 
