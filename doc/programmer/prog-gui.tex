@@ -484,7 +484,8 @@ The update is done in \func{actionPerformed} of \class{xDesktop}, command \keyw{
 Sequence on update:
 \bnum
 \item Call \func{releaseDimServices} of all application and prompter panels.
-\item Call \func{xDimBrowser.releaseServices}.
+\item Call \func{xDimBrowser.releaseServices} which deactivates all parameters and removes all
+application handlers.
 \item Discard the parameter and command panel and call Java garbage collector.
 At this point no more references to parameters or commands should exist and
 all objects can be removed.
