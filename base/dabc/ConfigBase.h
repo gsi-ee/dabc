@@ -131,29 +131,26 @@ namespace dabc {
          bool IsXDAQ() const { return fVersion==0; }
          bool IsNative() const { return fVersion>0; }
 
-         // returns number of nodes in xml file
+         /** returns number of nodes in xml file */
          unsigned NumNodes();
 
-         // returns number of nodes, which must be control by the control system
+         /** returns number of nodes, which must be control by the control system */
          unsigned NumControlNodes();
 
-         // defines sequence number in list of control nodes
+         /** defines sequence number in list of control nodes */
          unsigned ControlSequenceId(unsigned id);
 
-         // returns nodename of specified context
+         /** returns nodename of specified context */
          std::string NodeName(unsigned id);
 
-         // returns name of specified context
+         /** returns name of specified context */
          std::string ContextName(unsigned id);
 
-         // method used by run.sh script to produce command line when test(0), run(1), conn(2), kill(3) application
+         /** method used by run.sh script to produce command line */
          std::string SshArgs(unsigned id = 0, int ctrlkind = kindNone, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);
 
+         /** Replaces entries like ${name} be variable value */
          std::string ResolveEnv(const std::string& arg);
-
-         bool HasContext(unsigned id);
-
-         static bool ProduceClusterFile(const char* fname, int numnodes);
    };
 
 }

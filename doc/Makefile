@@ -17,9 +17,6 @@ environment/dabc-preface.tex \
 environment/dabc-work.tex \
 user/steer-user.tex \
 user/user-docrev.tex \
-user/user-command.tex \
-user/user-parameter.tex \
-user/user-plugin.tex \
 user/user-gui.tex \
 user/user-setup.tex \
 user/user-overview.tex \

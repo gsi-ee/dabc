@@ -94,13 +94,10 @@ bool SMChange(const char* smcmdname)
 
    if (!res) {
       EOUT(("State change %s fail EXIT!!!! ", smcmdname));
-
-      EOUT(("EMERGENCY EXIT!!!!"));
-
       exit(1);
    }
 
-   DOUT1(("SM command %s done", smcmdname));
+   DOUT1(("State change %s done", smcmdname));
 
    return res;
 }

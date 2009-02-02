@@ -306,40 +306,6 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindChild(XMLNodePointer_t node, const 
    return 0;
 }
 
-bool dabc::ConfigBase::ProduceClusterFile(const char* fname, int numnodes)
-{
-   XmlEngine xml;
-
-
-   XMLNodePointer_t rootnode = xml.NewChild(0, 0, xmlRootNode);
-   xml.NewIntAttr(rootnode, xmlVersionAttr, 1);
-
-   for(int n=0;n<numnodes;n++) {
-      XMLNodePointer_t contnode = xml.NewChild(rootnode, 0, xmlContext);
-
-      xml.NewAttr(contnode, 0, xmlHostAttr,n==0 ? "lxg0526" : FORMAT(("lxi%03d", n+5)));
-      xml.NewAttr(contnode, 0, xmlNameAttr, FORMAT(("Cont%d", n)));
-
-//      XMLNodePointer_t runnode = xml.NewChild(contnode, 0, xmlRunNode);
-//      xml.NewChild(runnode, 0, xmlSshUser, "linev");
-//      xml.NewChild(runnode, 0, xmlSshPort, "22");
-   }
-
-   XMLNodePointer_t defnode = xml.NewChild(rootnode, 0, xmlDefualtsNode);
-   XMLNodePointer_t contnode = xml.NewChild(defnode, 0, xmlContext);
-   xml.NewAttr(contnode, 0, xmlNameAttr, "*");
-   XMLNodePointer_t runnode = xml.NewChild(contnode, 0, xmlRunNode);
-   xml.NewChild(runnode, 0, xmlSshUser, "linev");
-   xml.NewChild(runnode, 0, xmlSshPort, "22");
-
-   XMLDocPointer_t doc = xml.NewDoc();
-   xml.DocSetRootElement(doc, rootnode);
-   xml.SaveDoc(doc, fname);
-   xml.FreeDoc(doc);
-
-   return true;
-}
-
 dabc::XMLNodePointer_t dabc::ConfigBase::FindItemMatch(XMLNodePointer_t& lastmatch,
                                                        XMLNodePointer_t node,
                                                        const char* sub1,
@@ -834,9 +800,4 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
    }
 
    return res;
-}
-
-bool dabc::ConfigBase::HasContext(unsigned id)
-{
-   return IsXDAQ() ? (XDAQ_FindContext(id) != 0) : (FindContext(id) != 0);
 }
