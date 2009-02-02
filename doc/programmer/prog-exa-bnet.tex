@@ -2,60 +2,67 @@
 \label{prog_exabnet}
 \section{Overview}
 
-In complex experiments there are lot of front-end systems, which runs in parallel.
-They takes data and marks them with trigger information or just with time stamps.
-To be able analyze such data, all portions belonging to the same event (or time stamp),   
-should be combined in one processing unit. Such task usually called event building.
+Complex experiments feature a lot of front-end systems running in parallel.
+These take data and mark them with trigger information, or just with time stamps.
+To completely analyze such data, all portions belonging to the same event 
+(or time stamp), must be combined in one processing unit. 
+Such task is usually called "event building".
 
-To support event building functionality in DABC, special sub-framework called 
-BNET (building network) was introduced. 
-It's main aim - simplify implementation of experiment-specific event building, 
-distributed over several nodes.
+To support event building functionality in \dabc~ , a special sub-framework called 
+BNET ("Building NETwork") was introduced. 
+Its main purpose is to simplify the experiment-specific implementation of  
+such event building, distributed over several network nodes.
 
-Typical event building network contains several \strong{readout} nodes, 
-which are connected to some number of data sources each.
-In readout node one reads data from data sources and combines
-together data parts, which logically belongs together (so-called subevent building).
-In case of trigerred system one combines together data, which has same trigger number.
-In case of time-stamped data one combines together data which belongs to the same 
-time interval. While one have several readout nodes, to build complete event, one
-should bring together all data, which belongs to same trigger (or time interval) into
-the same \strong{builder} node. 
-One typically has not single but several builder nodes, therefore
-full connectivity between all readouts and all builder nodes should be introduced.
-Once all subevents delivered to the same builder node, one can build complete event 
-and store it on the file or tape. 
+A typical event building network contains several \strong{readout} nodes, 
+which are each connected to several data sources.
+A readout node reads data from its data sources and combines
+together data parts which logically belong together; this is called "subevent building".
+In case of a triggered system it combines together data with the same trigger number;
+in case of time-stamped data it combines together data which belongs to the same 
+time interval. 
+Because there are several readout nodes, building a complete event requires to 
+bring together all data of the same trigger number (or time interval, resp.) 
+into the same \strong{builder} node. 
+Typically the system has not only a single builder node, 
+but several of them; so full connectivity between all readouts and 
+all builder nodes is necessary.
+Once all corresponding subevents have been delivered to the same builder node, 
+the complete event may be build and eventually stored on disk or tape. 
 
-
-BNET framework defines required functional units (modules), 
-which should be used in application, 
-and provides implementation of several important components.
-BNET also defines topology of these functional units, which can be customized up
-to definite level.
+For such use case,
+the BNET framework defines a programming interface 
+to implement the functional units (i.~e.~ applications and modules), 
+and it already provides several important components.
+BNET also defines the topology of these functional units
+which can be customized up to a definite level.
 
 
 \section{Controller application}
 
-Event building task usually distributed over several nodes, 
-which should be controlled.
-Therefore in BNET all nodes classified by their functionality on two kinds: controller and
-workers. Workers perform all kinds of data transport and analysis codes while controller 
-configures and steers all workers. 
+The event building task is usually distributed over several nodes 
+which must be controlled and synchronized.
+Therefore in BNET all nodes are classified by their functionality 
+in two kinds: \strong{controller} node, and
+\strong{worker} nodes. Workers perform all 
+data transport, and run the (sub-)event building code. 
+The controller configures and steers all workers. 
 
-Functionality of controller is implemented in \class{bnet::ClusterApplication} class.
-Via controlling interface cluster controller distributes commands, coming from operator,
-to all workers, observes status of all workers and reconfigures them automatically when 
-errors are detected.
+The controller node is implemented as \class{bnet::ClusterApplication} class.
+Via the control system interface the cluster controller distributes commands
+from the operator GUI to all workers. 
+It observes the state of all workers, 
+and may reconfigure them automatically if errors are detected.
 
-Functionality of \class{bnet::ClusterApplication} based on state-machine logic of DABC.
-It means, that all actions performed during state changing command, implemented  
-in virtual \func{DoStateTransition} method. State transition on cluster controller requires,
-that appropriate state transition performed on all worker nodes.
-
-Technically it means, that command, which is executed on cluster controller only than 
-can be completed, when state transition commands on all workers are completed. This
-is implemented with use of class \class{dabc::CommandsSet} - 
-see method \func{StartClusterSMCommand} for details.  
+The functionality of \class{bnet::ClusterApplication} is based on state-machine logic 
+of \dabc~.
+All actions are performed during the execution of a state changing command, implemented  
+in virtual method \func{DoStateTransition()}. 
+A state transition on the cluster controller node means
+that the appropriate state transition is performed on all worker nodes.
+Technically speaking: a state machine command which is executed on the cluster 
+controller is only completed if the state transition commands on all workers are successfully completed. This
+is implemented by means of class \class{dabc::CommandsSet}  
+(see method \func{StartClusterSMCommand()} for details).  
   
 Class \class{bnet::ClusterApplication} has following configuration parameters:
 
@@ -69,30 +76,38 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
 
-Class \class{bnet::ClusterApplication} is fully functional and can be used as is in real work.
+Class \class{bnet::ClusterApplication} is fully functional and can be used as is for 
+a real cluster set-up.
  
  
 \section{Worker application}
  
-Basic functionality of worker implemented in \class{bnet::WorkerApplication} class.
-Its main aim - by commands from cluster controller instantiate all necessary modules, 
-configure and connect them together. 
+The basic functionality of a worker is implemented in \class{bnet::WorkerApplication} class.
+Its main purpose is to instantiate, configure, connect, and run all working modules,
+triggered by commands from the cluster controller. 
 
-Main functionality of \class{bnet::WorkerApplication} class is implemented 
-in virtual \func{CreateAppModules} method, which is called during transition 
-from Halted to Configured state. In this method all local modules are instantiated 
-and configured. Some of these modules should be experiment specific, therefore 
-class \class{bnet::WorkerApplication} provide number of virtual methods, where 
-experiment-specific components should be created:
+
+Main functionality of \class{bnet::WorkerApplication} is implemented 
+in virtual method \func{CreateAppModules()} which is called during transition 
+from \keyw{Halted} to \keyw{Configured} state. In this method all local modules are instantiated 
+and configured. Some of these modules depend on the actual experiment, therefore 
+class \class{bnet::WorkerApplication} provides a number of virtual methods
+to create experiment-specific components:
 \bbul
-\item \func{CreateCombiner}  - create module to combine several data sources and produce ready subevents 
-\item \func{CreateBuilder}   - create module, which combines N subevents to complete event 
-\item \func{CreateFilter}    - optional filter module to filter out events 
-\item \func{CreateReadout}   - creates readout (transport) connected to data source
-\item \func{CreateStorage}   - creates storage (transport) to store data on disk/tape 
+\item \func{CreateCombiner()}  - create a module combining several data sources to produce a subevent 
+\item \func{CreateBuilder()}   - create a module which combines $N$ subevents to a complete event 
+\item \func{CreateFilter()}    - optional filter module to filter out events 
+\item \func{CreateReadout()}   - creates a readout transport connected to a data source
+\item \func{CreateStorage()}   - creates a storage transport to store data on disk/tape 
 \ebul
 
-Class \class{bnet::WorkerApplication} has following parameters:
+The user  must define his/her own application class
+which inherits from \class{bnet::WorkerApplication},
+implementing these virtual methods.
+
+
+Class \class{bnet::WorkerApplication} has the following "public" 
+configuration parameters:
 
 \begin{tabular}{llll}
 \hline
@@ -114,12 +129,8 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
 
-To implement experiment-specific BNET application, user should first of all create 
-its own application class, which inherits from \class{bnet::WorkerApplication} and
-implement mentioned above virtual methods. If required, one can also add more parameters.
-
-Class \class{bnet::WorkerApplication} has also number of parameters, which
-are not seen by control system and cannot be configured via xml file:
+There are also number of "private" parameters which
+are not seen by control system and cannot be configured via XML file:
 
 \begin{tabular}{llll}
 \hline
@@ -140,15 +151,19 @@ Name &  Type &  Dflt & Description  \\
 These parameters are set during initialization phase.
 Some of them like \param{CfgEventsCombine} should be used by modules for it's configuration.  
 
+If required, the user subclass of \class{bnet::WorkerApplication}
+may define additional configuration parameters.
+
 
 \section{Combiner module}
 
-Combiner module merges together several data sources and produces 
-subevents packets.
-Subevent here means that data from all sources, which corresponds to the same
-event (or time frame) should be placed in same \class{dabc::Buffer} object.
-This buffer object should has header with unique identifier of type
-\decl{bnet::EventId} - 64-bit unsigned integer. 
+The combiner module merges together several data sources and produces 
+subevent packets.
+Here a "subevent" means that data from all sources which belong to the same
+event (or time frame, resp.) are put
+into the same \class{dabc::Buffer} object.
+This buffer object should have a  header with a unique identifier of type
+\decl{bnet::EventId}; this is a 64-bit unsigned integer. 
 
 \begin{small}
 \begin{verbatim}
@@ -160,12 +175,13 @@ This buffer object should has header with unique identifier of type
 \end{verbatim}
 \end{small}
 
-Subevent identifier should has increasing number without gap. When
-no data for specific identifier is available, empty buffer with no data and
-correct header should be delivered to output.
+The subevent identifier number should 
+be subsequently increasing without a gap. When
+no data for the current identifier is available, an empty buffer with no data and
+correct header must be delivered to the output.
 
-There is \class{bnet::CombinerModule} class, which provides prototype 
-of combiner module. It uses following parameters:
+Class \class{bnet::CombinerModule} provides the prototype 
+of a combiner module. It uses the following single parameter:
 
 \begin{tabular}{llll}
 \hline
@@ -176,79 +192,87 @@ Name &  Type &  Dflt & Description  \\
 \end{tabular}
 
 Actually, parameter \param{NumReadouts} may not be defined in the configuration of the module itself.
-While class \class{bnet::WorkerApplication} already has parameter with such name,
-its value will be directly used for model configuration.     
+Since class \class{bnet::WorkerApplication} already has a parameter of such name,
+its value will be directly used for the module configuration.     
 
-When implementing experiment-specific combiner class, 
-one should either derive it's from \class{bnet::CombinerModule} class or 
-start its implementation from scratch. One can add more experiment-specific
+When implementing an experiment-specific combiner class, 
+one should either derive it from \class{bnet::CombinerModule} class,
+or start "from scratch" by
+subclassing \class{dabc::ModuleSync} or \class{dabc::ModuleAsync}.
+One may add more experiment-specific
 parameters to the module. 
 
 
 \section{Network topology}
 
-Topology (connectivity) of network between workers defined by parameters 
-\param{IsSender} and \param{IsReceiver} of \class{bnet::WorkerApplication} class. 
-By setting these parameters one can configure role of each worker:
+The connection topology of the event building network is defined by parameters 
+\param{IsSender} and \param{IsReceiver} of \class{bnet::WorkerApplication}. 
+These parameters configure the roles of each worker node:
 \bbul
 \item collector of data from data source(s) and sender to event builder
 \item receiever of data from collectors and builder of complete events
 \item both functions at the same application  
 \ebul
-It is required that at least one from both parameters has true value.
+It is required that at least one of both parameters has a \keyw{true} value.
+During configuration,
+the cluster controller establishes the connections between the workers such,
+that each sender module is connected with all receiver modules. This guarantees 
+that each receiever node gets data from all sources,
+necessary to perform the full event building.
 
-Cluster controller during configuration establish connections between workers so,
-that each sender module connected with all receiver modules. This guarantees, that 
-each receiever can get necessary data from all data sources and perform event building.
+The two classes \class{bnet::SenderModule}, and \class{bnet::ReceiverModule},
+implement the functionality of data sender, and data receiver, respectively. 
+These classes are instantiated by
+\class{bnet::WorkerApplication} and should not be modified by the user.     
 
-There are two bnet classes: \class{bnet::SenderModule} and \class{bnet::ReceiverModule},
-which implement functionality of sender and receiver respectively. 
-These classes instantiated by
-\class{bnet::WorkerApplication} and should not be modified by user.     
-
-Subevents buffers, produced by combiner module, will be delivered 
-to sender module. Based on event identifier, buffer will be 
-send to specific receiver, where event with such id will be build. 
-For now simple round-robin schedule is used by BNET, but in next DABC versions
-one or several others data transfer schedules will be implemented.
-Idea of BNET framework is that such improvments should be possible without
-changing of user code.  
+The subevents buffers, as produced by the combiner module, are delivered 
+to the sender module. Based on the event identifier, the buffer is 
+send to that specific receiver where the event with such id will be build. 
+For now a simple round-robin schedule is used by BNET, but in next 
+\dabc~ versions one or several other data transfer schedules will be implemented.
+One idea of the BNET framework is that such improvements are possible without
+changing the user application code.  
 
 
 \section{Event builder module}
 
-Task of receiver module is to collect all buffers with same event identifier and
+The task of the receiver module is to collect all buffers of the 
+same event identifier and
 deliver them at once to the event builder module.
 
-To build experiment-specific builder module, one can derive it from
-\class{bnet::BuilderModule} class or start it from scratch. 
-Event builder module has one input and one output. Over input module gets
-N buffers with subevents for same event identifier. Over output module should deliver
+To define an experiment-specific builder module, one can either derive it from
+\class{bnet::BuilderModule} class, or implement it "from scratch"
+ by subclassing \class{dabc::ModuleSync} or \class{dabc::ModuleAsync}. 
+The event builder module has one input and one output. Over the input port 
+it gets
+$N$ buffers with subevents for the same event identifier. 
+Over the output port it should deliver one
 buffer with build events. 
  
-When user inherits its builder module from \class{bnet::BuilderModule} class,
-it is enough to implement virtual \func{DoBuildEvent} method, 
-which gets as argument list from N buffers with subevents. 
-Format of output buffer is completely user-defined. 
-One allowed to fill several events into the same output buffer if necessary.    
+When the user inherits his/her builder module from \class{bnet::BuilderModule},
+it is enough to implement the virtual \func{DoBuildEvent()} method, 
+which gets as argument a list of $N$ buffers with subevents. 
+The format of the output buffer is completely user-defined. 
+It is allowed to fill several events into the same output buffer if necessary.    
 
 
 \section{Filter module}
 
-This is optional component of BNET for situation, when build events should be filtered
+This is an optional component of BNET if build events shall be filtered
 before they are stored. To implement such filter, 
-one can derived it from \class{bnet::FilterModule} and reimplement virtual method
-\func{TestBuffer}. As alternative, filterring can be implemented directly in the 
+one can derive it from \class{bnet::FilterModule} and reimplement virtual method
+\func{TestBuffer()}. As an alternative, filtering can be implemented directly in the 
 event builder module.  
 
 
 \section{BNET test application}
 \label{prog_exabnet_test}
-This is test application, which is designed for testing different asspects of BNET
-without necessity to have real data sources. Complete source code and configurations 
-examples can be found in \$DABCSYS/applications/bnet-test directory.  
+This application may test different asspects of a BNET
+without the necessity to have real data sources. The complete source code 
+and configuration
+examples can be found in {\tt \$DABCSYS/applications/bnet-test} directory.  
 
-Example contains following classes:
+The example contains following classes:
 \bbul
 \item  \class{bnet::TestGeneratorModule}
 \item  \class{bnet::TestCombinerModule}
@@ -259,8 +283,8 @@ Example contains following classes:
 \ebul
 
 There are several examples of configuration files. For instance,
-configuration with 4 worker nodes with sender and receiver functionality each
-showin in SetupBnet.xml example:
+the configuration of 4 worker nodes with sender and receiver functionality each
+is shown in {\tt SetupBnet.xml}:
 
 \begin{small}
 \begin{verbatim}
@@ -301,25 +325,27 @@ showin in SetupBnet.xml example:
 
 Here one can see cluster controller apllication in the beginning, configured to
 use \class{dabc::SocketDevice} for workers connections. And there are four workers
-with same configurations parameters, which can be found in <Defaults> section.
+with the same configurations parameters which can be found in <Defaults> section.
 In section <Context name="Worker*"> one sees, 
-that \param{IsGenerator}, \param{IsSender} and \param{IsReceiver} parameters are set to true.
-This defines so-called all-to-all topology, when each node can communicates with all other nodes including itself.   
-Parameter \param{NumReadouts}=4 means that there are 4 inputs on each combiner resulting 
-in 16 data sources over complete system.
+that \param{IsGenerator}, \param{IsSender} and \param{IsReceiver} parameters are 
+all set to \keyw{true}.
+This defines the so-called "all-to-all" topology, i.~e.~ each node communicates with all other nodes including itself.   
+Parameter \param{NumReadouts}=4 means that there are 4 inputs on each combiner, 
+resulting  in 16 data sources for the complete system.
 
 To run this example, one should specify correct host names for all contexts and 
-run example with \verba{run.sh SetupBnet.xml} command.      
+start it with \verba{run.sh SetupBnet.xml} command.      
 
-Example can be used as template for developing user-specific application.
-One can change functionality of combiner and builder modules and provide 
-real readout instead of generator module. 
+This can be used as template for developing a user-specific application.
+One can change functionality of combiner and builder modules, and provide a 
+real readout instead of the generator module. 
 
 
 \section{BNET for MBS application}
 
-This is ready-ro-use implementation of distributed event building for MBS.
-Source code can be found in \$DABCSYS/applications/bnet-mbs. It contains following
+This is a ready-ro-use implementation of distributed event building for MBS.
+The source code can be found in 
+{\tt \$DABCSYS/applications/bnet-mbs}. It contains following
 classes:
 \bbul
 \item  \class{bnet::MbsCombinerModule}
@@ -330,12 +356,11 @@ classes:
 
 Class \class{bnet::MbsCombinerModule} combines together  
 events with the same event identifier from all inputs. 
-In cluster application parameter \param{NumEventsCombine} defines how many
-events should be bundled togther in one buffer. It is crutial that transport
-buffer size should be big enough for such number of subevents. 
-Cluster parameter \param{NumEventsCombine} during initialisation copied to each
-worker parameter \param{CfgEventsCombine}, which finally used in \class{bnet::MbsCombinerModule}
-during initialisation: 
+In the cluster application parameter \param{NumEventsCombine} defines how many
+events should be bundled together in one buffer. It is crucial that transport
+buffer size is big enough for such number of subevents. During initialisation,
+cluster parameter \param{NumEventsCombine}  is copied to each
+worker parameter \param{CfgEventsCombine}, which is finally used in \class{bnet::MbsCombinerModule}: 
    
 \begin{small}
 \begin{verbatim}
@@ -346,31 +371,31 @@ bnet::MbsCombinerModule::MbsCombinerModule(...
 \end{verbatim}
 \end{small}
 
-For the moment \class{bnet::MbsCombinerModule} skips event, 
-when it is not present on local data all inputs. 
+For the moment \class{bnet::MbsCombinerModule} skips an event, 
+if it is not present on all local data inputs. 
 
-Class \class{bnet::MbsBuilderModule} builds mbs events from 
-delivered by receiver module buffers. It also use parameter
-\param{CfgEventsCombine} from application to be sure how many real MBS events
-contained in input buffers.
+Class \class{bnet::MbsBuilderModule} builds MBS events from
+the buffers as delivered by the receiver module. It also takes 
+application parameter \param{CfgEventsCombine} to tell how many real MBS events
+are contained in the input buffers.
   
 Application class \class{bnet::MbsWorkerApplication} implements several methods to
 correctly instantiate combiner and builder modules.
-It also implement virtual method \func{CreateReadout}, where approprite input transport 
-for combiner module should be created. In case of mbs there are three possibilities:
+It also implements virtual method \func{CreateReadout()}, where the input transport 
+for the combiner module is created. In case of MBS there are three possibilities:
 \bnum
 \item when \param{IsGenerator}=true module \class{mbs::GeneratorModule} connected as data input 
-\item when appropriate readout parameter (like \param{Input0Cfg} for first input) has filename with 
-      ".lmd" in the end, specified file as data input will be used
-\item value of readout parameter \param{Input0Cfg} will be used as MBS server name for
-      connecting of \class{mbs::ClientTransport} to appropriate data input         
+\item when the appropriate readout parameter (like \param{Input0Cfg} for the first input) 
+is a filename with ".lmd" suffix, the specified file will be used as data input
+\item otherwise, the value of readout parameter (like \param{Input0Cfg}) will be used as MBS server name for connecting of \class{mbs::ClientTransport} to the appropriate data input         
 \enum
-In virtual method \func{CreateStorage} output lmd file will be created, if 
+In virtual method \func{CreateStorage()} an output {\tt\*.lmd} file will be created, if 
 parameter \param{StoragePar} value is not empty.
 
-There is example "SetupBnetMbs.xml" file, which contains running example for 
-MBS event building of with 2 readout nodes, connected with 2 generators each and 
-2 event builder nodes. Configuration file can be customised via variables definition in the beginning:
+Example file {\tt SetupBnetMbs.xml}
+shows the configuration for an MBS event building with 2 readout nodes, connected with 2 generators each and 2 event builder nodes. 
+This configuration file can be customised via {\tt <Variables>} definitions 
+in the beginning:
 \begin{small}
 \begin{verbatim}
 <?xml version="1.0"?>
@@ -388,6 +413,6 @@ MBS event building of with 2 readout nodes, connected with 2 generators each and
 \end{verbatim}
 \end{small}
 
-Here \keyw{node0} specifies node where cluster controller will runs, \keyw{node1} and \keyw{node3} used as readout nodes,
-\keyw{node2} and \keyw{node4} as builder nodes. On all four worker nodes one mbs generator
-application will be started. To run application, just type \verba{run.sh SetupBnetMbs.xml}.  
+Here \keyw{node0} specifies the node where the cluster controller will run, \keyw{node1} and \keyw{node3} are used as readout nodes,
+\keyw{node2} and \keyw{node4} as builder nodes. On all four worker nodes one MBS generator
+application will be started. To run the application, just type \verba{run.sh SetupBnetMbs.xml}.  
