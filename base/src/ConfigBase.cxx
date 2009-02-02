@@ -628,7 +628,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
    if (strcmp(skind, "start")==0) kind = kindStart; else
    if (strcmp(skind, "stop")==0) kind = kindStop; else
    if (strcmp(skind, "test")==0) kind = kindTest; else
-   if (strcmp(skind, "run")==0) kind = kindTest; else
+   if (strcmp(skind, "run")==0) kind = kindRun; else
    if (strcmp(skind, "conn")==0) kind = kindConn;
 
    if (kind<0) return std::string("");
@@ -659,7 +659,6 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
    std::string testcmd = Find1(contnode, "", xmlRunNode, xmlSshTest);
 
    std::string debugger = Find1(contnode, "", xmlRunNode, xmlDebugger);
-   std::string logfile = Find1(contnode, "", xmlRunNode, xmlLogfile);
    std::string ldpath = Find1(contnode, "", xmlRunNode, xmlLDPATH);
    std::string cfgfile = Find1(contnode, "", xmlRunNode, xmlConfigFile);
    std::string cfgid = Find1(contnode, "", xmlRunNode, xmlConfigFileId);
@@ -732,7 +731,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
 
    } else
 
-   if (kind == kindStart) {
+   if ((kind == kindStart) || (kind == kindRun)) {
       // this is main run arguments
 
       if (!initcmd.empty()) res += dabc::format(" %s;", initcmd.c_str());
@@ -782,11 +781,6 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
          res += dabc::format("%u", id);
       }
 
-      if (!logfile.empty()) {
-         res += " -logfile ";
-         res += logfile;
-      }
-
       if (ctrlkind == kindSctrl)
          res += " -sctrl ";
       else
@@ -815,7 +809,10 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
 
       if (ctrlkind != kindDim)
          if (connstr!=0) res += dabc::format(" -conn %s", connstr);
+
+      if (kind == kindRun) res += " -run";
    } else
+
    if (kind == kindConn) {
       // this is way to get connection string
       if (connstr==0) {
@@ -827,9 +824,11 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
       } else
          res = "";
    } else
+
    if (kind == kindKill) {
       res += " killall --quiet dabc_run";
    } else
+
    if (kind == kindStop) {
       res += " pkill -SIGINT dabc_run";
    }

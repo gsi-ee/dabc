@@ -55,7 +55,7 @@ namespace dabc {
 
    class ConfigBase {
       protected:
-         enum ESshArgsKinds { kindTest, kindStart, kindStop, kindKill, kindConn };
+         enum ESshArgsKinds { kindTest, kindStart, kindRun, kindStop, kindKill, kindConn };
 
          XmlEngine         fXml;
          XMLDocPointer_t   fDoc;

@@ -58,7 +58,7 @@ int RunSimpleApplication(dabc::Configuration* cfg)
    DOUT1(("Application mainloop is now running"));
    DOUT1(("       Press ctrl-C for stop"));
 
-   cfg->StoreObject("Manager.xml", dabc::mgr());
+//   cfg->StoreObject("Manager.xml", dabc::mgr());
 
    dabc::mgr()->RunManagerMainLoop();
 
@@ -77,7 +77,7 @@ int RunSimpleApplication(dabc::Configuration* cfg)
       return 1;
    }
 
-   dabc::Logger::Instance()->ShowStat();
+//   dabc::Logger::Instance()->ShowStat();
 
    return 0;
 }
@@ -99,6 +99,8 @@ bool SMChange(const char* smcmdname)
 
       exit(1);
    }
+
+   DOUT1(("SM command %s done", smcmdname));
 
    return res;
 }
@@ -133,13 +135,7 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
 
        SMChange(dabc::Manager::stcmdDoConfigure);
 
-       DOUT1(("Create done"));
-
-       //dabc::SetDebugLevel(5);
-
        SMChange(dabc::Manager::stcmdDoEnable);
-
-       DOUT1(("Connection done"));
 
        SMChange(dabc::Manager::stcmdDoStart);
 
@@ -153,20 +149,17 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
 
        dabc::ShowLongSleep("Again main loop", 15); //10
 
-       DOUT1(("Calling stop"));
-
        SMChange(dabc::Manager::stcmdDoStop);
-
-       DOUT1(("Calling halt"));
 
        SMChange(dabc::Manager::stcmdDoHalt);
 
        DOUT1(("RunTest done"));
    }
+
    return 0;
 }
 
-int RunClusterDimApplucation(dabc::Configuration* cfg, int nodeid)
+int RunClusterDimApplucation(dabc::Configuration* cfg, int nodeid, bool dorun)
 {
    DOUT0(("Run cluster DIM application node %d!!!", nodeid));
 
@@ -180,6 +173,16 @@ int RunClusterDimApplucation(dabc::Configuration* cfg, int nodeid)
       return 1;
    }
 
+   if (dorun && (nodeid==0)) {
+
+      SMChange(dabc::Manager::stcmdDoConfigure);
+
+      SMChange(dabc::Manager::stcmdDoEnable);
+
+      SMChange(dabc::Manager::stcmdDoStart);
+
+   }
+
    dabc::mgr()->RunManagerMainLoop();
 
    return 0;
@@ -191,13 +194,13 @@ int main(int numc, char* args[])
    dabc::SetDebugLevel(1);
 
    const char* configuration = "SetupRoc.xml";
-   const char* logfile = 0;
 
    if(numc > 1) configuration = args[1];
 
    unsigned nodeid = 1000000;
    unsigned numnodes = 0;
    unsigned configid = 0;
+   bool dorun = false;
 
    const char* connid = 0;
 
@@ -211,10 +214,6 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
-      if (strcmp(arg,"-logfile")==0) {
-         if (cnt < numc)
-            logfile = args[cnt++];
-      } else
       if (strcmp(arg,"-cfgid")==0) {
          if (cnt < numc)
             configid = (unsigned) atoi(args[cnt++]);
@@ -238,7 +237,12 @@ int main(int numc, char* args[])
          ctrlkind = dabc::ConfigBase::kindDim;
          if (cnt < numc)
             dimnode = args[cnt++];
-      }
+      } else
+      if (strcmp(arg,"-run")==0)
+         dorun = true;
+      else
+      if (strcmp(arg,"-norun")==0)
+         dorun = false;
    }
 
    if (numnodes==0) numnodes = cfg.NumControlNodes();
@@ -246,7 +250,7 @@ int main(int numc, char* args[])
 
    DOUT1(("Using config file: %s id: %u", configuration, configid));
 
-   if (!cfg.SelectContext(configid, nodeid, numnodes, logfile, dimnode)) {
+   if (!cfg.SelectContext(configid, nodeid, numnodes, dimnode)) {
       EOUT(("Did not found context"));
       return 1;
    }
@@ -292,7 +296,7 @@ int main(int numc, char* args[])
       res = RunSimpleApplication(&cfg);
    else
    if (ctrlkind == dabc::ConfigBase::kindDim)
-      res = RunClusterDimApplucation(&cfg, nodeid);
+      res = RunClusterDimApplucation(&cfg, nodeid, dorun);
    else
       res = RunClusterApplucation(&cfg, connid, nodeid, numnodes);
 

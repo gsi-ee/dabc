@@ -3,17 +3,12 @@
 echo "Shell script to run dabc application in simple (without XDAQ/dim) environment"
 echo "  Usage: run.sh filename.xml [run|start|stop|test|kill]  [-v|--verbose] [-dim|-sctrl]"
 
-#arg1="ssh lxi002"
-#arg='. gsi_environment.sh; echo $HOST : $HOST; ls'
-#$arg1 $arg
-#exit 0
-
 XMLFILE=$1
 shift
 if [ ! -f $XMLFILE ] ; then echo "file $XMLFILE not exists"; exit 1; fi
 
 VERBOSE=false
-RUNMODE=run
+RUNMODE=start
 CTRLMODE=
 
 while [[ "x$1" != "x" ]] ; do
@@ -65,11 +60,11 @@ currdir=`pwd`
 # first loop, where only test/stop/kill are done
 ###########################################################
 
-if [[ "$RUNMODE" != "start" ]] 
+if [[ "$RUNMODE" == "test" || "$RUNMODE" == "stop" || "$RUNMODE" == "kill" ]] 
 then
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
-   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -ssh $RUNMODE`
+   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -mode $RUNMODE`
    retval=$?
    if [ $retval -ne 0 ]; then
       echo "Cannot identify test call args for node $counter  err = $retval"
@@ -97,7 +92,7 @@ connstr=file.id
 
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
-   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -ssh start`
+   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -mode $RUNMODE`
    retval=$?
    if [ $retval -ne 0 ]; then
       echo "Cannot identify test call args for node $counter  err = $retval"
@@ -119,7 +114,7 @@ do
    # only required for SimpleControl, for DIM control must be deactivated
    ####################################################################
    
-   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -ssh conn`
+   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -mode conn`
    
    if [[ "x$callargs" != "x" ]]
    then

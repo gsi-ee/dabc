@@ -112,7 +112,7 @@ dabc::Configuration::~Configuration()
 {
 }
 
-bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile, const char* dimnode)
+bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* dimnode)
 {
    fSelected = IsXDAQ() ? XDAQ_FindContext(cfgid) : FindContext(cfgid);
 
@@ -157,8 +157,6 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    }
 
    std::string log;
-
-   if (logfile!=0) log = logfile; else
    if (IsNative()) {
       log = Find1(fSelected, "", xmlRunNode, xmlLogfile);
    } else {

@@ -47,7 +47,7 @@ namespace dabc {
          Configuration(const char* fname = 0);
          virtual ~Configuration();
 
-         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* logfile = 0, const char* dimnode = 0);
+         bool SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* dimnode = 0);
 
          std::string MgrHost() const { return fMgrHost; }
          const char* MgrName() const { return fMgrName.c_str(); }

@@ -47,7 +47,7 @@ int main(int numc, char* args[])
          std::cout << res << std::endl;
          std::cout.flush();
       } else
-      if (strcmp(arg,"-ssh") == 0) {
+      if (strcmp(arg,"-mode") == 0) {
          const char* kind = (cnt < numc) ? args[cnt++] : "start";
          std::string res = cfg.SshArgs(configid, ctrlkind, kind, configuration, workdir, connstr);
          if (res.length()==0) return 7;
