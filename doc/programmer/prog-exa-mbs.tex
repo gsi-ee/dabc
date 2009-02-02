@@ -2,37 +2,43 @@
 
 \section{Overview}
 
-MBS (Multi Branch System) is standard DAQ system of GSI.
-Support of MBS in DABC includes several components:
+MBS (Multi Branch System) is the standard DAQ system of GSI.
+Support of MBS in \dabc~ includes several components:
 \bbul
 \item type definitions for different MBS structures  
 \item iterator classes for reading/creating MBS event/subevent data 
-\item support of new LMD file format  
+\item support of new {\tt .lmd} file format  
 \item \class{mbs::ClientTransport} for connecting to MBS servers  
 \item \class{mbs::ServerTransport} to "emulate" running MBS servers  
 \item \class{mbs::CombinerModule} for performing mbs events building   
 \item \class{mbs::GeneratorModule} for generating random mbs events 
 \ebul
 
-This plugin is part of standard DABC distribution.  
-All sources can be found in \$DABCSYS/plugin/mbs directory.
-All these sources compiled into library libDabcMbs.so, which is placed in \$DABCSYS/lib. 
+This plugin is part of the standard \dabc~ distribution.  
+All sources can be found in the {\tt \$DABCSYS/plugin/mbs} directory.
+All these sources are compiled into library {\tt libDabcMbs.so}
+which is located in {\tt \$DABCSYS/lib}. 
 
-\section{Events iterators}
+\section{Event iterators}
 
-MBS defines own event/subevent structures. To access such events data,
-number of structures are defined in "mbs/LmdTypeDefs.h" and "mbs/MbsTypeDefs.h".
-In first file structure \class{mbs::Header} is defined, which is just container for 
-arbitrary raw data. Such container is used to store/read data from LMD files.
-In "mbs/MbsTypeDefs.h" file following structures are defined:
+The MBS system has native event and subevent formats. 
+To access such event data, several structures are introduced in 
+{\tt mbs/LmdTypeDefs.h} and {\tt mbs/MbsTypeDefs.h}.
+In the first file, structure \class{mbs::Header} is defined
+which is just a container for arbitrary raw data. 
+Such container is used to store data to, or to read data from 
+{\tt .lmd} files, resp.
+In file {\tt mbs/MbsTypeDefs.h} the following structures are defined:
 \bbul
 \item \class{mbs::EventHeader} - MBS event header of 10-1 type 
 \item \class{mbs::SubeventHeader} - MBS subevent header of 10-1 type 
 \ebul
-DABC operates with buffer (type \keyw{mbt\_MbsEvents}), where several subsequent 
-MBS events (there is no buffer header in front!). To iterate over all events in such
-buffer class \class{mbs::ReadIterator} was designed (defined in "mbs/Iterator.h"). It provides
-possibility to iterate (access) over all events in buffer in following way:
+\dabc~ operates with buffers of type \keyw{mbt\_MbsEvents} that contain
+several subsequent MBS events; there is no buffer header in front here. 
+To iterate over all events in such
+buffer and to access them, class \class{mbs::ReadIterator} is provided 
+(as defined in {\tt mbs/Iterator.h}).  
+This is done in the following way:
 
 \begin{small}
 \begin{verbatim}
@@ -56,9 +62,9 @@ void Print(dabc::Buffer* buf)
 \end{verbatim}
 \end{small}
 
-Another class \class{mbs::WriteIterator} is developed to fill number  
-of MBS events into \class{dabc::Buffer}. Way to use this iterator 
-illustrated by following code:
+Another class \class{mbs::WriteIterator} fills 
+MBS events into \class{dabc::Buffer}. 
+This is illustrated by the following code:
 
 \begin{small}
 \begin{verbatim}
@@ -81,46 +87,58 @@ void Fill(dabc::Buffer* buf)
 \end{verbatim}
 \end{small}
 
+Method \func{NewEvent()} will create and event header of the event id
+\func{evntid} at the current iterator position in the buffer. 
+In a similar way, method \func{NewSubevent()}
+will put a subevent header of the specified arguments there. Access to the
+data pointer after the last event or subevent header is done by
+\func{iter.rawdata()} method. Finally, \func{FinishSubevent()} and
+\func{FinishEvent()} will complete the subevent, or event definition, resp.
 
 \section{File I/O}
+MBS uses the {\tt .lmd}  ("List Mode Data") file format. 
+Class \class{mbs::LmdFile} provides a
+C++ interface for reading and writing such files.
 
-LMD file format used in MBS. There is class \class{mbs::LmdFile}, which provide
-C++ interface for reading/writing such lmd file.
+To use \class{mbs::LmdFile} as input, or output transport of the module, 
+classes \class{mbs::LmdInput} 
+and \class{mbs::LmdOutput} were developed, resp. 
 
-To use \class{mbs::LmdFile} as input/output transport of the module, classes \class{mbs::LmdInput} 
-and \class{mbs::LmdOutput} were developed. 
-
-In general case, to provide user-specific input/output capability over port, 
-one should implement complete \class{dabc::Transport} interface, which includes 
-event handling, queue organization, complex initialization sequence. 
-All this necessary for cases like socket or InfiniBand transports, 
-but too complicated for simple cases as file I/O. Therefore, special kind of
-transport \class{dabc::DataIOTransport} was developed, which handle most of such complex tasks
-and requires to implement relatively simple \class{dabc::DataInput} and
+In general, to provide user-specific input/output capability over a port, 
+one should implement the complete \class{dabc::Transport} interface, which includes 
+event handling, queue organization, and a complex initialization sequence. 
+All this is necessary for cases like socket or {\em InfiniBand} transports, 
+but too complicated for simple cases as file I/O. Therefore, a special kind of
+transport \class{dabc::DataIOTransport} was developed, 
+which handles most of such complex tasks
+and reduces the implementation effort to the 
+relatively simple \class{dabc::DataInput} and
 \class{dabc::DataOutput} interfaces.
 
-Class \class{mbs::LmdOutput} inherits \class{dabc::DataOutput} and provides possibility to save 
-MBS events, placed in \class{dabc::Buffer} objects, in LMD file. 
+Class \class{mbs::LmdOutput} inherits \class{dabc::DataOutput} 
+and implements to save 
+MBS events, if contained in \class{dabc::Buffer} objects, into an {\tt \*.lmd} file. 
 In addition to \class{mbs::LmdFile} functionality, it allows to create
-multiple files when file size limit is exceeded. Class has following parameters:
+multiple files when a file size limit is exceeded. The class has following parameters:
 \bbul
 \item \param{MbsFileName}      - name of lmd file (including .lmd extension)  
 \item \param{MbsFileSizeLimit} - size limit (in Mb) of single file, 0 - no limit
 \ebul
 
 Class \class{mbs::LmdInput} inherits \class{dabc::DataInput} and allows to read 
-MBS events from LMD file(s) and provide them over input ports into module. 
+MBS events from {\tt \*.lmd} file(s) and to provide them over input ports into a module. 
 It has following parameters:
 \bbul
 \item \param{MbsFileName} - name of lmd file (multicast symbols * and ? supported)  
 \item \param{BufferSize}  - buffer size to read data
 \ebul
 
-\func{CreateDataInput} and \func{CreateDataOutput} methods were implemented in \class{mbs::Factory} class, 
-that user can instantiate these classes using plugin meachanism of DABC. 
+\func{CreateDataInput()} and \func{CreateDataOutput()} methods were implemented in \class{mbs::Factory} class such, 
+that a user can instantiate these classes 
+via the \dabc~ plugin mechanism. 
   
 
-Here is an example, how output file for generator module can be configured:
+Here is an example how the output file for a generator module can be configured:
    
 \begin{small}
 \begin{verbatim}
@@ -135,10 +153,11 @@ Here is an example, how output file for generator module can be configured:
 \end{verbatim}
 \end{small}
        
-Here one first creates module and than configure (via command) type of
-output transport and its parameters.        
+At first the module is created; then the type of
+output transport and its parameters are set via command.        
        
-Another example shows, how several input files can be configured for combiner:
+Another example shows how several input files can be configured 
+for a combiner module:
    
 \begin{small}
 \begin{verbatim}
@@ -158,20 +177,22 @@ Another example shows, how several input files can be configured for combiner:
 \end{verbatim}
 \end{small}
 
-In this example one create module with 3 inputs and than for each input port lmd file transport is created.
+In this example one creates  a module with 3 inputs and connects each input port 
+with an {\tt *.lmd} file transport.
 
 
 \section{Socket classes}
 
-All communication with MBS servers performed via socket. DABC has number
-of class for socket handling, included in base package (libDabcBase.so).
-Main idea of these classes is to handle socket operations (creation, connection, sending, receiving and 
-error handling) in form of event processing. 
+All communication with the MBS nodes is performed via tcp sockets. 
+The \dabc~  base package {\tt libDabcBase.so} implements a number
+of classes for general socket handling. The
+main idea of these classes is to handle socket operations (creation, connection, sending, receiving, and error handling) by means of event processing callbacks. 
 
-Class \class{dabc::SocketThread} organises event loop, produced by sockets.
-Each system socket assigned with instance of \class{dabc::SocketProcessor} class. 
-Processing of socket events done in virtual methods
-of class \class{dabc::SocketProcessor}, which has several subclasses for different 
+Class \class{dabc::SocketThread} organises the event loop
+that handles such event signals produced by a socket.
+Each system socket is assigned to an instance of \class{dabc::SocketProcessor}. 
+The actual socket event processing is then done in virtual methods
+of class \class{dabc::SocketProcessor} which has several subclasses for different 
 kinds of sockets: 
 \bbul
 \item  - \class{dabc::SocketServerProcessor} - server socket for connection  
@@ -179,24 +200,25 @@ kinds of sockets:
 \item  - \class{dabc::SocketIOProcessor} - send/recv handling  
 \ebul
 
-One can use \class{dabc::SocketThread} together with other kind of processors
-like module classes, but not wise-versa (one cannot use socket processors inside other
-thread types). Therefore, it is possible to run module and all its
-socket transports in one single thread if socket thread for such module created in
-advance (see MBS generator example).
+One can use a \class{dabc::SocketThread} together with other kind of processors
+like module classes, but not vice-versa: one cannot use socket processors inside other
+thread types. Therefore, it is possible to run module with all 
+socket transports in one single thread, if the socket thread for such module is created in
+advance (see MBS generator example in section \ref{exa_mbs_eventsgenerator}).
   
 
 \section{Server transport}
 
-Class \class{mbs::ServerTransport} was developed to provide MBS servers functionality in DABC.
-Using this class one can emulate work of MBS transport server and MBS stream server. 
-This is also good example for usage of \class{dabc::SocketProcessor} classes.
+Class \class{mbs::ServerTransport} provides 
+the functionalities of an {\em MBS transport server} or and  
+{\em MBS stream server} in \dabc~. 
+This is also a good example of the \class{dabc::SocketProcessor} classes.
 
-Implementation of \class{mbs::ServerTransport} based on generic class \class{dabc::Transport} and 
-internally uses two kinds of sockets: socket for handling connection and I/O socket for 
-sending data.
+\class{mbs::ServerTransport} is based on the generic class \class{dabc::Transport} and 
+uses internally  two kinds of sockets: one socket for the connection handling,
+and another "I/O" socket for sending data.
   
-Server transport has following parameters:
+The server transport has following parameters:
 
 \begin{tabular}{llll}
 \hline
@@ -207,7 +229,7 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
 
-These parameters can be set in xml file like here:
+These parameters can be set in the XML configuration file like this:
 \begin{small}
 \begin{verbatim}
 ...
@@ -221,7 +243,8 @@ These parameters can be set in xml file like here:
 \end{verbatim}
 \end{small}
 
-Than, to create such transport, following code should be executed:
+To create such transport and connect it to the module's output port, 
+the following code should be executed:
 \begin{small}
 \begin{verbatim}
   ...
@@ -232,7 +255,9 @@ Than, to create such transport, following code should be executed:
 \end{small}
 
 
-Another possibility to specify these parameters - use \comm{dabc::CmdCreateTransport}:
+Another possibility to specify these parameters consists in the 
+command \comm{dabc::CmdCreateTransport} which may wrap such values:
+
 \begin{small}
 \begin{verbatim}
   ...
@@ -249,8 +274,8 @@ Another possibility to specify these parameters - use \comm{dabc::CmdCreateTrans
 
 \section{Client transport}
 
-Class \class{mbs::ClientTransport} allows connect DABC with MBS. 
-For the moment MBS transport and stream servers are supported.  
+Class \class{mbs::ClientTransport} allows to connect \dabc~ with MBS. 
+At the moment the MBS {\em transport} and {\em stream} servers are supported.  
 
 Client transport has following parameters:
 
@@ -266,7 +291,7 @@ Name &  Type &  Dflt & Description  \\
 
 
 
-To create client connection, following pease of code should be used:
+To create client connection, the following piece of code should be used:
 
 \begin{small}
 \begin{verbatim}
@@ -283,13 +308,13 @@ To create client connection, following pease of code should be used:
 
  
 
-\section{Events generator}
+\section{Event generator}
+\label{exa_mbs_eventsgenerator}
 
-
-Class \class{mbs::GeneratorModule} is an example of simple module design, 
+Class \class{mbs::GeneratorModule} is an example of a simple module  
 which just fills buffers with random MBS 
-events and provides them to the output. 
-Schematically implementation of module can be shown as:
+events, and provides them to the output port. 
+Schematically the implementation of this module looks like this:
 
 \begin{small}
 \begin{verbatim}
@@ -319,19 +344,24 @@ public:
 \end{verbatim}
 \end{small}
 
-In module constructor pool handle create to declare that module requires
-memory pool with 10 buffers of defined size. Buffer size here 
-taken as configuration parameter. When output port is created, pool handle and
-default queue size is specified.
+In the module constructor a pool handle is created, declaring a required
+memory pool with 10 buffers of defined size \func{fBufferSize}. 
+The buffer size is taken from a configuration parameter with name 
+\func{dabc::xmlBufferSize} (this string constant is 
+predefined as "BufferSize").
+When the output port is created, this pool handle and
+a default queue size is specified.
 
-The only virtual method which should be implemented for generator module is
-\func{ProcessOutputEvent}. This function call every time when free space in port
-output queue is appears. It means, when module starts, it immediately gets 
-N times (size of output queue, here 5) this call while there is N empty places in the queue.
-The only action here is take new buffer from memory pool, fill it with rundom
-events and send to output.    
+The only virtual method implemented for generator module is
+\func{ProcessOutputEvent()}. This function is called every time when a free 
+buffer slot appears in the port output queue. Thus, when the module starts
+processing, this call will be immediately executed 
+$N$ times (size of output queue, here 5), because there are $N$ empty 
+entries in the queue.
+The only action here is to take a new buffer from the memory pool, 
+fill it with random events and send it to output port.    
 
-Real class \class{mbs::GeneratorModule} included in libDabcMbs.so library and has
+The actual \class{mbs::GeneratorModule} is part of the {\tt libDabcMbs.so} library and has
 following parameters:
 
 \begin{tabular}{llll}
@@ -346,9 +376,10 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
   
-There is also \func{StartMbsGenerator} function to instantiate and run generator module.
-It demonstrates, how thread of type \class{dabc::SocketThread} can be created
-and used by both module and transport object. 
+There following function \func{StartMbsGenerator()} instantiates and runs 
+the generator module.
+It also demonstrates how a thread of type \class{dabc::SocketThread} can be created
+and used by both a module and a transport object. 
 \begin{small}
 \begin{verbatim}
 extern "C" void StartMbsGenerator()
@@ -361,8 +392,8 @@ extern "C" void StartMbsGenerator()
 \end{verbatim}
 \end{small}
 
-To run generator module with all default parameters, 
-simple xml file should be used:   
+To run the generator module with all default parameters, 
+this simple XML file is sufficient:   
 \begin{small}
 \begin{verbatim}
 <?xml version="1.0"?>
@@ -377,7 +408,7 @@ simple xml file should be used:
 \end{verbatim}
 \end{small}
 
-One can also specify all module and transport parameters directly:
+Besides one may specify all module and transport parameters explicitely here:
 \begin{small}
 \begin{verbatim}
 <?xml version="1.0"?>
@@ -404,12 +435,12 @@ One can also specify all module and transport parameters directly:
 \end{verbatim}
 \end{small}
 
-There is example \$DABCSYS/application/mbs/GeneratorTest.xml file,  
-which demonstrate  usage of generator module. 
+Example file {\tt \$DABCSYS/application/mbs/GeneratorTest.xml}  
+demonstrates the usage of a generator module. 
 
 
 \section{MBS event building}
-Class \class{mbs::CombinerModule} provides possibility to combine events from
+Class \class{mbs::CombinerModule} allows to combine events from
 several running MBS systems. It has following parameters:
 
 \begin{tabular}{llll}
@@ -423,12 +454,13 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
 
-Module can has two outputs: for file storage (port name FileOutput) and for 
-providing data further over MBS server (port name ServerOutput). 
+The module implements two optional output ports: 
+for file storage (port name "FileOutput"), and for 
+providing data further over an MBS server (port name "ServerOutput"). 
 
-There is function \func{StartMbsCombiner}, which initialized combiner module and starts
-data taking. Example configuration file \$DABCSYS/applications/mbs/Combiner.xml shows how to 
-configure combiner from three MBS transport servers: 
+Function \func{StartMbsCombiner()} initializes the combiner module and starts
+data taking. The following example configuration file {\tt \$DABCSYS/applications/mbs/Combiner.xml} shows how to 
+configure a combiner module reading from three MBS transport servers: 
 
 \begin{small}
 \begin{verbatim}
