@@ -26,7 +26,7 @@ dabc::Module::Module(const char* name, Command* cmd) :
    fInputPorts(),
    fOutputPorts(),
    fPorts(),
-   fWorkingPool(0),
+   fPoolHandels(),
    fReplyes(true, true),
    fLostEvents(128, true)
 {
@@ -117,7 +117,7 @@ dabc::Parameter* dabc::Module::CreatePoolUsageParameter(const char* name, double
 {
    Parameter* par = CreateParDouble(name, 0.);
 
-   PoolHandle* pool = Pool(poolname);
+   PoolHandle* pool = FindPool(poolname);
    if (pool) pool->SetUsageParameter(par, interval);
 
    return par;
@@ -252,11 +252,11 @@ dabc::PoolHandle* dabc::Module::CreatePoolHandle(const char* poolname, BufferSiz
       return 0;
    }
 
-   dabc::PoolHandle* handle = Pool(poolname);
+   dabc::PoolHandle* handle = FindPool(poolname);
 
    if (handle==0) handle = new dabc::PoolHandle(this, poolname, pool, size, number, increment);
 
-   if (fWorkingPool==0) fWorkingPool = handle;
+   fPoolHandels.push_back(handle->ItemId());
 
    return handle;
 }
@@ -308,9 +308,6 @@ void dabc::Module::ItemDestroyed(ModuleItem* item)
 {
    unsigned id = item->ItemId();
 
-   if (fWorkingPool==item)
-      fWorkingPool = 0;
-
    for (unsigned n=0;n<fInputPorts.size();n++)
       if (fInputPorts[n] == id) {
          fInputPorts.erase(fInputPorts.begin()+n);
@@ -326,6 +323,12 @@ void dabc::Module::ItemDestroyed(ModuleItem* item)
    for (unsigned n=0;n<fPorts.size();n++)
       if (fPorts[n] == id) {
          fPorts.erase(fPorts.begin()+n);
+         break;
+      }
+
+   for (unsigned n=0;n<fPoolHandels.size();n++)
+      if (fPoolHandels[n] == id) {
+         fPoolHandels.erase(fPoolHandels.begin()+n);
          break;
       }
 
@@ -367,9 +370,14 @@ dabc::Port* dabc::Module::FindPort(const char* name)
 
 dabc::PoolHandle* dabc::Module::FindPool(const char* name)
 {
-   if ((fWorkingPool!=0) && fWorkingPool->IsName(name)) return fWorkingPool;
-
    return dynamic_cast<dabc::PoolHandle*> (FindChild(name));
+}
+
+dabc::PoolHandle* dabc::Module::Pool(unsigned n) const
+{
+   if (n>=fPoolHandels.size()) return 0;
+   ModuleItem* item = GetItem(fPoolHandels[n]);
+   return item && (item->GetType()==mitPool) ? (PoolHandle*) item : 0;
 }
 
 dabc::Port* dabc::Module::GetPortItem(unsigned id) const

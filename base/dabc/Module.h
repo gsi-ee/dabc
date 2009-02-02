@@ -54,16 +54,16 @@ namespace dabc {
       enum  { evntReinjectlost = evntFirstUser, evntReplyCommand };
 
       protected:
-         typedef std::vector<unsigned> PortsIndexVector;
+         typedef std::vector<unsigned> ItemsIndexVector;
 
          enum EModuleRunState { msHalted, msStopped, msRunning };
 
          EModuleRunState          fRunState;    // module running state
          PointersVector           fItems;       // map for fast search of module items
-         PortsIndexVector         fInputPorts;  // map for fast access to input ports
-         PortsIndexVector         fOutputPorts; // map for fast access to output ports
-         PortsIndexVector         fPorts;       // map for fast access to IOports
-         PoolHandle              *fWorkingPool; // pointer on first created pool
+         ItemsIndexVector         fInputPorts;  // map for fast access to input ports
+         ItemsIndexVector         fOutputPorts; // map for fast access to output ports
+         ItemsIndexVector         fPorts;       // map for fast access to i/o ports
+         ItemsIndexVector         fPoolHandels; // map for fast access to memory pools handles
          CommandsQueue            fReplyes;     // reply queue
          Queue<EventId>           fLostEvents;  // events, coming while module is sleeping
 
@@ -81,8 +81,7 @@ namespace dabc {
 
          // end of public methods, rest later will be moved to protected area
 
-         PoolHandle* Pool(const char* name = 0)
-           { return ((name==0) || (*name==0)) ? fWorkingPool : FindPool(name); }
+         PoolHandle* Pool(unsigned n = 0) const;
 
          unsigned NumInputs() const { return fInputPorts.size(); }
          unsigned NumOutputs() const { return fOutputPorts.size(); }

@@ -129,13 +129,7 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
           return 1;
        }
 
-//       dabc::SetDebugLevel(1);
-
-       dabc::CpuStatistic cpu;
-
        DOUT1(("RunTest start"));
-
-    //   ChangeRemoteParameter(m, 2, "Input0Cfg", "ABB");
 
        SMChange(dabc::Manager::stcmdDoConfigure);
 
@@ -149,8 +143,6 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
 
        SMChange(dabc::Manager::stcmdDoStart);
 
-       cpu.Reset();
-
        dabc::ShowLongSleep("Main loop", 15); //15
 
        SMChange(dabc::Manager::stcmdDoStop);
@@ -161,8 +153,6 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
 
        dabc::ShowLongSleep("Again main loop", 15); //10
 
-       cpu.Measure();
-
        DOUT1(("Calling stop"));
 
        SMChange(dabc::Manager::stcmdDoStop);
@@ -170,8 +160,6 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
        DOUT1(("Calling halt"));
 
        SMChange(dabc::Manager::stcmdDoHalt);
-
-       DOUT1(("CPU usage %5.1f", cpu.CPUutil()*100.));
 
        DOUT1(("RunTest done"));
    }
