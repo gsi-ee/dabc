@@ -16,17 +16,48 @@ public interface xiDimParameter
  * @return completion status.
  */
 public abstract boolean setParameter(String value);
+/**
+ * @return Meter record.
+ */
 public abstract xRecordMeter getMeter();
+/**
+ * @return State record.
+ */
 public abstract xRecordState getState();
+/**
+ * @return Info record.
+ */
 public abstract xRecordInfo getInfo();
+/**
+ * @return Histogram record.
+ */
 public abstract xRecordHisto getHisto();
 /**
- * @return interface to parser provides access to all name fields.
+ * @return Active state of parameter.
+ */
+public abstract boolean parameterActive();
+/**
+ * @return Interface to parser provides access to all name fields.
  */
 public abstract xiParser getParserInfo();
+/**
+ * @return Parameter string value.
+ */
 public abstract String getValue();
+/**
+ * @return Parameter integer (32) value.
+ */
 public abstract int getIntValue();
+/**
+ * @return Parameter long (64) value.
+ */
 public abstract long getLongValue();
+/**
+ * @return Parameter float value.
+ */
 public abstract float getFloatValue();
+/**
+ * @return Parameter double value.
+ */
 public abstract double getDoubleValue();
 }

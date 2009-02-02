@@ -204,6 +204,9 @@ if(histo!=null)histo.redraw();
 isactive=true;
 } else isactive=false;
 }
+public boolean parameterActive(){
+	return isactive;
+}
 /**
  * Initializes name parser. Creates XML parser. Creates command to set parameter value by preceding underscore
  * to the parameter name. Value is set to string of NOLINK. 
