@@ -5,7 +5,7 @@ The \dabc\ GUI can be used to control a stand alone \mbs\ system
 or a combined \mbs\ (front-ends) \dabc\ (event builder) system.
 To control a standard \mbs\ nothing has to be done by the user on the \mbs\ side.
 Of cause, the \mbs\ itself must have been build with the DIM option (since version v5.1).
-\subsection{\mbs\ launch panel}
+\lsubsection{user:launchMbs}{\mbs\ launch panel}
 \figpng{user-gui-pan-mbs}{MBS launcher.}{htb}{0}{0.6}
 Values from file {\tt MbsLaunch.xml} (default, may be saved to other file,
 see \paref{user:guiSaveRestore}).
@@ -32,6 +32,8 @@ It sets all \mbs\ related variables and executes a program given as argument.
 is minimum for the GUI to know when all \mbs\ nodes are up. The GUI waits until
 this number of DIM servers is up and running.
 \edes
+That file can be created from within the GUI in the \mbs\ launcher panel.
+Enter all values necessary, and store them. 
 \subsubsection{\mbs\ launcher buttons}
 \icon{fileclose} Close window.\\
 \icon{savewin} Save panel settings.\\
@@ -52,7 +54,7 @@ After 2 seconds trigger the main \keyw{Update}.\\
 \icon{rshmbs} Executes \keyw{Script} with argument \keyw{Command} at master node.\\
 \icon{controlmbs} Shell script
 
-\subsection{Combined \dabc\ and \mbs\ launch panel}
+\lsubsection{user:launchDabcMbs}{Combined \dabc\ and \mbs\ launch panel}
 \figpng{user-gui-pan-dabcmbs}{Combined DABC and MBS launcher.}{htb}{0}{0.7}
 This panel is simply a superposition of the single ones.
 \subsubsection{Combined \dabc\ and \mbs\ launcher buttons}

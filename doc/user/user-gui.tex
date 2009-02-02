@@ -8,6 +8,7 @@ main GUI menu.
 
 The standard part builds a set of panels (windows) according the parameters
 the DIM servers offer. Only services from one single DIM name server
+(\keyw{DIM\_DNS\_NODE})
 defining a name space can be processed.
 
 The GUI needs no file access to the \dabc\ working directory.
@@ -23,31 +24,44 @@ The layout of the GUI can be adjusted to individual needs.
 It is strongly recommended to save these settings to see the same layout
 after a restart of the GUI. The GUI can be restarted any time.
 \dabc\ and \mbs\ systems continue without GUI.
+
+The GUI is packed in a JAR file \verba{xgui.jar} which can be moved everywhere. The file must be in the
+\keyw{CLASSPATH} paths together with the \verba{\$DIMDIR/jdim/classes} path.
+The GUI is invoked by \keyw{java -Xmx200m xgui.xGui}.
 \section{GUI Panels}
 \figpng{user-gui-main-buttons}{Main buttons.}{htb}{0}{1.0}
 Fig. \paref{fig:user-gui-main-buttons} shows the the main menu of \dabc\ (minimal view).\\
-\figpng{user-gui-full-screen}{Full screen.}{htb}{0}{1.0}
+\figpng{user-gui-full-screen}{More typical full screen view.}{htb}{0}{1.0}
 Fig. \paref{fig:user-gui-full-screen} shows a more typical view of a running \dabc.\\
-\icon{fileclose} Close\\
+\icon{fileclose} Close without prompt. The \dabc\ will continue to run.
+The GUI may be started anywhere again. In case you saved the layout (see \paref{user:guiSaveRestore})
+and you start the GUI from the same directory it will look pretty much the same as you left it. \\
 \icon{control} Test, shell script\\
-\icon{savewin} Save settings: window layout, record attributes, parameter selection filters.\\
-\icon{dabcmbsicon} \dabc\ \mbs\ launcher\\
-\icon{dabcicon} \dabc\ launcher\\
-\icon{mbsicon} \mbs\ launcher\\
-\icon{browser}  Browser.\\
-\icon{comicon} Command.\\
-\icon{paramwin} Parameter table\\
-\icon{usericon} Parameter selection panel\\
-\icon{meterwin} Rate meter panel\\
-\icon{histowin} Histogram panel\\
-\icon{statewin} State panel\\
-\icon{infowin} Info panel\\
-\icon{logwin} Log panel\\\\
+\icon{savewin} Save settings: window layout, record attributes, parameter selection filters.
+Details see \paref{user:guiSaveRestore}.\
+\icon{dabcmbsicon} \dabc\ \mbs\ launcher, see \paref{user:launchDabcMbs}.\\
+\icon{dabcicon} \dabc\ launcher, see \paref{user:launchDabc}.\\
+\icon{mbsicon} \mbs\ launcher, see \paref{user:launchMbs}.\\
+\icon{browser}  Browser. Update DIM service list from DIM name server.
+New parameters and commands are added. Existing ones are not removed,
+but only deactivated. Parameters and Commands are sorted alphabetically by name.
+This update function is called whenever the frontend systems might have
+added or deleted DIM services. In normal operation there is noe need to update manually.\\
+\icon{comicon} Open command panel (\paref{user:CommandPanel}).\\
+\icon{paramwin} Open parameter table (\paref{user:ParTabPanel}).\\
+\icon{usericon} Open parameter selection panel (\paref{user:ParSelPanel}).\\
+\icon{meterwin} Open rate meter panel (\paref{user:MonitorPanels}).\\
+\icon{histowin} Open histogram panel (\paref{user:MonitorPanels}).\\
+\icon{statewin} Open state panel (\paref{user:MonitorPanels}).\\
+\icon{infowin} Open info panel (\paref{user:MonitorPanels}).\\
+\icon{logwin} Open log panel (\paref{user:MonitorPanels}).\\
+\icon{usericongreen} Eventually one might see additional icons from application panels
+(this one is only a dummy).\\
 The three launcher panels (\dabc, \mbs, combined \dabc\ and \mbs) 
 are used depending on the
 application to be controlled. Eventually an application provides 
 additional specific panels.
-\subsection{\dabc~ launch panel}
+\lsubsection{user:launchDabc}{\dabc~ launch panel}
 \figpng{user-gui-pan-dabc}{DABC launcher.}{htb}{0}{0.6}
 Values from file {\tt DabcLaunch.xml} (default, may be saved to other file,
 see \paref{user:guiSaveRestore}).
@@ -69,7 +83,7 @@ Can be one of the worker nodes.
 \item[DabcName:] A unique name inside \dabc\ of the system.
 \item[DabcUserPath:] User working directory. The GUI need not to have
 access to the filesystem. 
-\item[DabcSystemPath:] Path where the \dabc\ is installed. GUI needs no access to this path.
+\item[DabcSystemPath:] Path where the \dabc\ is installed.
 \item[DabcSetup:] Setup file name.
 \item[DabcScript:] Command to be executed in an ssh at the master node.
 \item[DabcServers:] Number of workers and controllers. This information
@@ -107,8 +121,7 @@ shut down or configure.\\
 trigger the main \keyw{Update}.\\
 \icon{exitall} Shut down all by script. This is the hard shut down.\\
 \icon{controldabc} \verba{ssh} shell script execution on master node.\\
-\subsection{Action in progress}
-\label{user:guiProgress}
+\lsubsection{user:guiProgress}{Action in progress}
 \figpng{user-gui-pan-progress}{Launching progress.}{htb}{0}{0.6}
 When starting up, configure or shut down the GUI has to wait
 until the front-ends have completed the action.
@@ -119,7 +132,7 @@ Please wait until the popup disappears.
 This panel is a specific application panel and described in the \mbs\ section.
 \subsection{Combined \dabc~ and \mbs~ launch panel}
 This panel is a specific application panel and described in the \mbs\ section.
-\subsection{Command panel}
+\lsubsection{user:CommandPanel}{Command panel}
 \figpng{user-gui-pan-cmd-dabc}{Command panel.}{htb}{0}{0.9}
 Fig. \paref{fig:user-gui-pan-cmd-dabc} shows
 on the left side the command tree. Normally the tree is built
@@ -131,7 +144,29 @@ Command is sent to the current node which is displayed in the info panel
 (see Fig. \paref{fig:user-gui-pan-info}).
 Click on a command opens at the right side the argument panel.
 Entering argument values and \keyw{RETURN} executes the command.
-\subsection{Monitoring panels}
+\lsubsection{user:ParTabPanel}{Parameter table}
+\figpng{user-gui-pan-partab}{Parameter table.}{htb}{0}{0.9}
+The parameter table holds all parameters which can be visible.
+The table can be ordered by columns (click on column header). 
+The parameter values can be changed
+in the \keyw{Set value} column if no minus sign is in there.
+The column width can be adjusted and is saved/restored by main save button
+(see \paref{user:guiSaveRestore}).
+\lsubsubsection{user:ParSelPanel}{Parameter selection}
+\figpng{user-gui-pan-parsel}{Parameter selection panel and selected parameter list.}{htb}{0}{1.0}
+To get a more selective view on the parameters one can specify
+filters in the panel shown at the left side of Fig. \paref{fig:user-gui-pan-parsel}. 
+Text substrings for each of the four name fields
+can be specified as well as a selection of record types.
+With the check boxes the filter function for each of these can (de)activated.
+The parameter list at the right window in Fig. \paref{fig:user-gui-pan-parsel}
+shows only the parameters matching all filters.
+
+If the data field is white the parameter can be changed.
+This cannot be done in place because the parameter might be
+updated in the mean time. Instead press \keyw{RETURN} in the field.
+A prompter will pop up to enter the value.
+\lsubsection{user:MonitorPanels}{Monitoring panels}
 \subsubsection{Rate meters}
 \figpng{user-gui-pan-rate}{Rates.}{htb}{0}{0.7}
 All rate meters are displayed in the meter panel. Meters can be removed
@@ -163,33 +198,9 @@ and a brief state description (see Fig. \paref{fig:user-gui-pan-state}).
 \figpng{user-gui-pan-info}{Info.}{htb}{0}{0.7}
 Information records mainly display one line of text with a color
 (see Fig. \paref{fig:user-gui-pan-info}).
-\subsection{Parameter table}
-\figpng{user-gui-pan-partab}{Parameter table.}{htb}{0}{0.9}
-The parameter table holds all parameters which can be visible.
-The table can be ordered by columns (click on column header). 
-The parameter values can be changed
-in the \keyw{Set value} column if no minus sign is in there.
-The column width can be adjusted and is saved/restored by main save button
-(see \paref{user:guiSaveRestore}).
-\subsubsection{Parameter selection}
-\figpng{user-gui-pan-parsel}{Parameter selection panel and selected parameter list.}{htb}{0}{1.0}
-To get a more selective view on the parameters one can specify
-filters in the panel shown at the left side of Fig. \paref{fig:user-gui-pan-parsel}. 
-Text substrings for each of the four name fields
-can be specified as well as a selection of record types.
-With the check boxes the filter function for each of these can (de)activated.
-The parameter list at the right window in Fig. \paref{fig:user-gui-pan-parsel}
-shows only the parameters matching all filters.
-
-If the data field is white the parameter can be changed.
-This cannot be done in place because the parameter might be
-updated in the mean time. Instead press \keyw{RETURN} in the field.
-A prompter will pop up to enter the value.
-\subsection{Logging window}
+\subsubsection{Logging window}
 \figpng{user-gui-pan-log}{Logging.}{htb}{0}{1.0}
 Fig. \paref{fig:user-gui-pan-log} show the logging window.
-%\section{GUI save/restore setups}
-%\label{user:guiSaveRestore}
 \lsection{user:guiSaveRestore}{GUI save/restore setups}
 There are several setups which can be stored in XML files and are retrieved
 when the \gui\ is started again. The file names can be specified by
