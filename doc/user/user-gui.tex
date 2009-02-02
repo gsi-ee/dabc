@@ -29,8 +29,8 @@ The GUI is packed in a JAR file \verba{xgui.jar} which can be moved everywhere. 
 \keyw{CLASSPATH} paths together with the \verba{\$DIMDIR/jdim/classes} path.
 The GUI is invoked by \keyw{java -Xmx200m xgui.xGui}.
 \section{GUI Panels}
-\figpng{user-gui-main-buttons}{Main buttons.}{htb}{0}{1.0}
-Fig. \paref{fig:user-gui-main-buttons} shows the the main menu of \dabc\ (minimal view).\\
+\figpng{user-gui-main-buttons}{Main buttons.}{htb}{0}{0.8}
+Fig. \paref{fig:user-gui-main-buttons} shows the main menu of \dabc\ (minimal view).\\
 \figpng{user-gui-full-screen}{More typical full screen view.}{htb}{0}{1.0}
 Fig. \paref{fig:user-gui-full-screen} shows a more typical view of a running \dabc.\\
 \icon{fileclose} Close without prompt. The \dabc\ will continue to run.
@@ -46,7 +46,7 @@ Details see \paref{user:guiSaveRestore}.\
 New parameters and commands are added. Existing ones are not removed,
 but only deactivated. Parameters and Commands are sorted alphabetically by name.
 This update function is called whenever the frontend systems might have
-added or deleted DIM services. In normal operation there is noe need to update manually.\\
+added or deleted DIM services. In normal operation there is no need to update manually.\\
 \icon{comicon} Open command panel (\paref{user:CommandPanel}).\\
 \icon{paramwin} Open parameter table (\paref{user:ParTabPanel}).\\
 \icon{usericon} Open parameter selection panel (\paref{user:ParSelPanel}).\\
@@ -109,7 +109,8 @@ all panels from scratch according the parameters offered by the servers.\\
 \icon{dabcconfig} Configure. Executes state transition command \comm{Configure}
 on master node and waits for the transition.
 All plug-in components are created. Then execute \keyw{Enable}.
-Waits until all workers go into \keyw{Ready} state. Now the \dabc\ is ready to run.\\
+Waits until all workers go into \keyw{Ready} state. Now the \dabc\ is ready to run.
+Triggers the main \keyw{Update}\\
 \icon{dabcstart} Start acquisition. Executes \comm{Start} command.
 All components go into running state \keyw{Running}.\\
 \icon{dabcstop} Hold acquisition. Executes \comm{Stop} command.
@@ -129,9 +130,9 @@ During that time a progress window similar to the one shown
 in Fig. \paref{fig:user-gui-pan-progress} pops up.
 Please wait until the popup disappears.
 \subsection{\mbs~ launch panel}
-This panel is a specific application panel and described in the \mbs\ section.
+This panel is a specific application panel and described in the \mbs\ section \paref{user:launchMbs}.
 \subsection{Combined \dabc~ and \mbs~ launch panel}
-This panel is a specific application panel and described in the \mbs\ section.
+This panel is a specific application panel and described in the \mbs\ section \paref{user:launchDabcMbs}.
 \lsubsection{user:CommandPanel}{Command panel}
 \figpng{user-gui-pan-cmd-dabc}{Command panel.}{htb}{0}{0.9}
 Fig. \paref{fig:user-gui-pan-cmd-dabc} shows
@@ -169,7 +170,8 @@ A prompter will pop up to enter the value.
 \lsubsection{user:MonitorPanels}{Monitoring panels}
 \subsubsection{Rate meters}
 \figpng{user-gui-pan-rate}{Rates.}{htb}{0}{0.7}
-All rate meters are displayed in the meter panel. Meters can be removed
+All rate meters are displayed in the meter panel, Fig.\paref{user-gui-pan-rate}. 
+Meters can be removed
 in the parameter table (See Fig. \paref{fig:user-gui-pan-partab}) 
 with the \keyw{Show} buttons like the other graphical parameters.
 Saving the setup, the visibility will be preserved.
@@ -189,7 +191,9 @@ All settings are saved with the setup and restored on GUI startup
 (see \paref{user:guiSaveRestore}).
 \subsubsection{Histograms}
 Histogram panels are handled in pretty much the same way as the rate meters.
-Histograms can have arbitrary size.
+\figpng{user-gui-pan-histo}{Histograms.}{htb}{0}{1.0}
+All histograms are displayed in the histogram panel, Fig.\paref{user-gui-pan-histo}. 
+Histograms can have arbitrary size set in \keyw{Layout} menu.
 \subsubsection{States}
 \figpng{user-gui-pan-state}{States.}{htb}{0}{1.0}
 States are records having a number for severity (0 to 4), a color,

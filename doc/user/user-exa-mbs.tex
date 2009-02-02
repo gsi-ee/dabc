@@ -5,6 +5,7 @@ The \dabc\ GUI can be used to control a stand alone \mbs\ system
 or a combined \mbs\ (front-ends) \dabc\ (event builder) system.
 To control a standard \mbs\ nothing has to be done by the user on the \mbs\ side.
 Of cause, the \mbs\ itself must have been build with the DIM option (since version v5.1).
+The \mbs\ runs like with the prompter. Central log file is written as usual.
 \lsubsection{user:launchMbs}{\mbs\ launch panel}
 \figpng{user-gui-pan-mbs}{MBS launcher.}{htb}{0}{0.6}
 Values from file {\tt MbsLaunch.xml} (default, may be saved to other file,
@@ -36,14 +37,16 @@ That file can be created from within the GUI in the \mbs\ launcher panel.
 Enter all values necessary, and store them. 
 \subsubsection{\mbs\ launcher buttons}
 \icon{fileclose} Close window.\\
-\icon{savewin} Save panel settings.\\
+\icon{savewin} Save panel settings, see \paref{user:guiSaveRestore}.\\
 \icon{connprm}  Execute script \verba{prmstartup.sc} at master node.
 Starts prompter, dispatchers and message loggers and waits untill they are up.
-A progress panel pops up during that time
-(see \paref{user:guiProgress}).\\
+Trigger the main \keyw{Update}.
+A progress panel pops up during that time (see \paref{user:guiProgress}).\\
 \icon{conndsp} Execute script \verba{dimstartup.sc} at master node.
-Starts dispatcher and message logger for single node \mbs.\\
-\icon{dabcconfig} Configure. Execute \verba{startup.scom} in prompter.\\
+Starts dispatcher and message logger for single node \mbs.
+Trigger the main \keyw{Update}.\\
+\icon{dabcconfig} Configure. Execute \verba{startup.scom} in prompter (dispatcher).
+Trigger the main \keyw{Update}.\\
 \icon{dabcstart} \comm{Start acquisition}.\\
 \icon{dabcstop} Hold acquisition. Execute \comm{stop acquisition}.\\
 \icon{mbsstop} Stop acquisition. Execute \verba{shutdown.scom} in prompter.
@@ -56,10 +59,10 @@ After 2 seconds trigger the main \keyw{Update}.\\
 
 \lsubsection{user:launchDabcMbs}{Combined \dabc\ and \mbs\ launch panel}
 \figpng{user-gui-pan-dabcmbs}{Combined DABC and MBS launcher.}{htb}{0}{0.7}
-This panel is simply a superposition of the single ones.
+This panel shown in Fig. \pageref{user-gui-pan-dabcmbs} is simply a superposition of the single ones.
 \subsubsection{Combined \dabc\ and \mbs\ launcher buttons}
 \icon{fileclose} Close window.\\
-\icon{savewin} Save panel settings.\\
+\icon{savewin} Save panel settings, see \paref{user:guiSaveRestore}.\\
 \icon{connprm}  Execute script \verba{dabcstartup.sc} at \dabc\ master node.
 Starts DIM servers.
 Execute script \verba{prmstartup.sc} at \mbs\ master node.
@@ -106,12 +109,12 @@ Entering argument values and \keyw{RETURN} executes the command.
 \section{\mbs\ DIM parameters}
 \subsection{\mbs\ states}
 \bdes
-\item[Acquisition/State] \keyw{Running} \keyw{Stopped} 
-\item[BuildingMode/State]\keyw{Delayed} \keyw{Immediate}\keyw{} \keyw{}
-\item[EventBuilding/State]\keyw{Working} \keyw{Suspended}\keyw{} \keyw{}
-\item[FileOpen/State]\keyw{File open} \keyw{File closed}
-\item[RunMode/State] \keyw{DABC connected} \keyw{MBS to DABC} \keyw{Transport client} \keyw{MBS standalone}
-\item[SpillOn/State]\keyw{Spill ON} \keyw{Spill OFF}
+\item[Acquisition/State] \keyw{Running} | \keyw{Stopped} 
+\item[BuildingMode/State] \keyw{Delayed} | \keyw{Immediate}
+\item[EventBuilding/State] \keyw{Working} | \keyw{Suspended}
+\item[FileOpen/State] \keyw{File open} | \keyw{File closed}
+\item[RunMode/State] \keyw{DABC connected} | \keyw{MBS to DABC} | \keyw{Transport client} | \keyw{MBS standalone}
+\item[SpillOn/State] \keyw{Spill ON} | \keyw{Spill OFF}
 \edes
 \subsection{\mbs\ rates}
 \bdes
@@ -171,11 +174,11 @@ Task list is shown in info window.
 \subsection{\mbs\ numbers}
 \bdes
 \item[MSG/BufferSize]
-\item[MSG/Buffers]
-\item[MSG/Events]
-\item[MSG/FileMbytes]
+\item[MSG/Buffers] collected so far.
+\item[MSG/Events] collected so far.
+\item[MSG/FileMbytes] written in file.
 \item[MSG/FlushTime]
-\item[MSG/MBytes]
+\item[MSG/MBytes] collected so far.
 \item[MSG/StreamKeep] 
 \item[MSG/StreamMbytes]
 \item[MSG/StreamScale]

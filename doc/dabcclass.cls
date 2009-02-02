@@ -220,7 +220,7 @@
 
 % semantic fontstyles
 % -----------------------------------------------------------------
-\newcommand{\verba}[1]{{\tt {\large #1}}}
+\newcommand{\verba}[1]{{\tt #1}}
 \newcommand{\decl}[1]{{\tt #1}}
 \newcommand{\class}[1]{{\bf{\em #1}}}
 \newcommand{\func}[1]{{\sl #1}}
@@ -246,6 +246,12 @@
 }
 
 \definecolor{FrontLetter}{rgb}{0.0,0.5,0.5}
+\definecolor{DabcGreen}{rgb}{0.0,0.5,0.0}
+\definecolor{DabcRed}{rgb}{0.5,0.0,0.0}
+\definecolor{DabcBlue}{rgb}{0.0,0.0,0.5}
+\definecolor{MbsGreen}{rgb}{0.0,0.5,0.0}
+\definecolor{MbsCyan}{rgb}{0.0,0.5,0.5}
+\definecolor{MbsBlue}{rgb}{0.0,0.0,0.5}
 
 \newcommand{\icon}[1]{\includegraphics{#1.png} \rule{0cm}{0.7cm}}
 \newcommand{\paref}[1]{\ref{#1}, page \pageref{#1}}
