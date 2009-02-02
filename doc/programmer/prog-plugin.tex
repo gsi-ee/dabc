@@ -248,7 +248,7 @@ Method &  Description \\
 
 By reimplementing one or several from these methods, one can react on correspondent events.
 
-Actually, all events are dispatched to the mentioned above metyhods by method 
+Actually, all events are dispatched to the mentioned above methods by method 
 \func{ProcessUserEvent()}. 
 The method called by the working thread
 whenever {\bf any} event for this module shall be processed.
@@ -433,7 +433,7 @@ where appropriate transport for specified port created.
 \subsection{Local transport}
 
 For connection between two local ports \class{dabc::LocalTransport} is used.
-It organizes queue, which shared between connected ports and pefromes
+It organizes queue, which shared between connected ports and performes
 movement of \class{dabc::Buffer} pointer to/from this queue.
 If correspondent modules runs in the same thread, 
 local transport works without any mutexes locking.
@@ -520,7 +520,7 @@ User should redefine following virtual methods for implement data input:
    
 \item [\func{Read\_Start()}] : Starts reading of buffer. Should return:
    \bdes
-   \item[\keyw{dabc::di\_Ok}]       - normal case, call of \func{Read\_Comlete()} will follow
+   \item[\keyw{dabc::di\_Ok}]       - normal case, call of \func{Read\_Complete()} will follow
    \item[\keyw{dabc::di\_Error}]    - error, skip buffer, starts again from \func{Read\_Size()}
    \item[\keyw{dabc::di\_CallBack}] - asynchron readout, user should call \func{Read\_CallBack()}  
    \edes
@@ -589,7 +589,7 @@ The specific application controlling code is defined in the \class{dabc::Applica
 
 On startup time, the \class{dabc::Application} is instantiated
 by means of a factory method \func{CreateApplication()}.
-As argument, factories gets application class name, provided from configuration file.
+As argument, factories get application class name, provided from configuration file.
 Thus, to use his/her application implementation, 
 the user must provide a \class{dabc::Factory} that defines such method.
 
@@ -604,7 +604,7 @@ Main aim of application class - add user-specific actions during
 execution of state machine commands. Application has virtual method 
 \func{DoStateTransition()} which is called from SM during state change.
 As argument, name of state transition command is delivered. 
-There are following SM commands exists:
+There are following SM commands:
 
 \bdes
 \item[\keyw{dabc::Manager::stcmdDoConfigure}] - creates all necessary application components: devices, modules, memory pools
@@ -616,7 +616,7 @@ There are following SM commands exists:
 \edes
   
 Class \class{dabc::Application} already has default implementation for
-\func{DoStateTransition()} method, where number of virtual methods are called:
+\func{DoStateTransition()} method, where some virtual methods are called:
 
 \bdes
 \item[\func{CreateAppModules()}] - creates all necessary application components

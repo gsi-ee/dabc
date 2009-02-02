@@ -57,7 +57,7 @@ available resources explicitly whenever it is entered.
            
 \subsection{Commands}
 \index{Core classes !dabc::Command}
-A module may register commands in the constructor and may define 
+A module may register \class{dabc::Command} objects in the constructor and may define 
 command actions by overwriting a virtual command callback method \func{ExecuteCommand}.
 
 \subsection{Parameters}
@@ -84,7 +84,7 @@ The manager receives and \strong{dispatches commands}
 to the destination module where they are queued and eventually executed 
 by the module thread (see section \ref{prog_overview_modules}).
 Additionally, the manager has an independent manager thread. 
-This thread used for manager commands execution, parameters timeout processing and so on. 
+This thread is used for manager commands execution, parameters timeout processing and so on. 
  
  
 \subsection{Memory and buffers}
@@ -302,7 +302,7 @@ the control system may use local parameter objects for
 {\sl Monitoring} the components. When monitoring parameters change, 
 the control system is updated by interface methods of the 
 manager and may refresh the GUI representation.
-Chapter \ref{prog_setup} will explain the usage of paramters for configuration
+Chapter \ref{prog_setup} will explain the usage of parameters for configuration
 in detail. 
 
 
@@ -396,7 +396,7 @@ The DABC distribution contains the following packages:
 \item [Core system] : This is plain C++ code and independent of any external framework.
 \item [Bnet plugin] : Depends on the core system only.
 \item [Transport plugins] :  Network transport for  \textit{tcp/ip} sockets and \textit{InfiniBand} verbs. Additionally, 
-transports for gsi \textit{Multi Branch System} \mbs~ connections (socket, filesystem) is provided. Optionally, example transport packages may be installed that
+transports for GSI \textit{Multi Branch System} \mbs\ connections (socket, filesystem) is provided. Optionally, example transport packages may be installed that
 illustrate the readout of a \textit{PCIe} board, or data taking via \textit{UDP} from
 an external readout controller (ROC) board.
 \item [Control and configuration system]: The general implementation is depending on the DIM framework only.
