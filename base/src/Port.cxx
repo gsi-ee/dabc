@@ -121,9 +121,10 @@ bool dabc::Port::AssignTransport(Transport* tr, CommandClientBase* cli)
 int dabc::Port::ExecuteCommand(Command* cmd)
 {
    if (cmd->IsName("AssignTransport")) {
-      DOUT5(("%s Get AssignTransport command", GetFullName().c_str()));
       Transport* oldtr = fTransport;
       fTransport = (Transport*) cmd->GetPtr("#Transport");
+
+      DOUT3(("%s Get AssignTransport command old %p new %p", GetFullName().c_str(), oldtr, fTransport));
 
       if (oldtr!=0) oldtr->AssignPort(0);
 
@@ -133,6 +134,11 @@ int dabc::Port::ExecuteCommand(Command* cmd)
       fOutputPending = 0;
 
       ProduceUserEvent(fTransport==0 ? evntPortDisconnect : evntPortConnect);
+
+      if (GetModule()->IsRunning() && fTransport)
+         fTransport->StartTransport();
+
+      DOUT3(("%s processed AssignTransport command cansend %s", GetFullName().c_str(), DBOOL(CanSend())));
    } else
       return cmd_false;
 

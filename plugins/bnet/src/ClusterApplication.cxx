@@ -7,6 +7,7 @@
 #include "dabc/logging.h"
 #include "dabc/timing.h"
 #include "dabc/Configuration.h"
+#include "dabc/CommandDefinition.h"
 
 #include "bnet/GlobalDFCModule.h"
 #include "bnet/WorkerApplication.h"
@@ -99,6 +100,13 @@ bnet::ClusterApplication::ClusterApplication() :
    CreateParInt(xmlCtrlPoolSize,      2*0x100000);
    CreateParInt(xmlTransportBuffer,       8*1024);
    CreateParBool(xmlIsRunning, false);
+
+   dabc::CommandDefinition* def = NewCmdDef("StartFiles");
+   def->AddArgument("FileBase", dabc::argString, true);
+   def->Register();
+
+   def = NewCmdDef("StopFiles");
+   def->Register();
 
    DOUT1(("Net device = %s numnodes = %d",NetDevice().c_str(), GetParInt(CfgNumNodes)));
 }
@@ -216,6 +224,35 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
             break;
          }
       }
+   } else
+   if (cmd->IsName("StartFiles") || cmd->IsName("StopFiles")) {
+
+      dabc::CommandsSet* set = 0;
+
+      for (unsigned nodeid = 0; nodeid < fNodeNames.size(); nodeid++) {
+         if (!(fNodeMask[nodeid] & mask_Receiever)) continue;
+
+         const char* nodename = fNodeNames[nodeid].c_str();
+
+         std::string filename = cmd->GetStr("FileBase", "");
+         if (filename.length() > 0)
+            filename += dabc::format("_%u", nodeid);
+
+         dabc::Command* wcmd = 0;
+         if (filename.length()>0) {
+            wcmd = new dabc::Command("StartFile");
+            wcmd->SetStr("FileName", filename);
+         } else
+            wcmd = new dabc::Command("StopFile");
+
+         if (set==0) set = new dabc::CommandsSet(cmd);
+         dabc::mgr()->SubmitRemote(*set, wcmd, nodename, dabc::xmlAppDfltName);
+      }
+
+      dabc::CommandsSet::Completed(set, SMCommandTimeout());
+
+      cmd_res = set ? cmd_postponed : cmd_true;
+
    } else
 
       cmd_res = dabc::Application::ExecuteCommand(cmd);

@@ -173,7 +173,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
          if ((numfinished<numstopacq) && (nevent<fCfgEventsCombine))
             EOUT(("!!! Not all buffers finished after Stop ACQ  numstopacq:%u  numfinished:%u", numstopacq, numfinished));
 
-         DOUT1(("Flush output buffer and wait until restart"));
+         DOUT5(("Flush output buffer and wait until restart"));
 
          FinishOutputBuffer();
 

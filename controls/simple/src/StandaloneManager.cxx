@@ -94,14 +94,10 @@ dabc::StandaloneManager::~StandaloneManager()
    else
       WaitDisconnectCmdChannel();
 
-   DOUT0(("Finish 0"));
-
    fCmdChannel = 0;
    CleanupManager(77);
 
    destroy();
-
-   DOUT0(("Finish 1"));
 
    DOUT3(("dabc::StandaloneManager::~StandaloneManager() done"));
 }

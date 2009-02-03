@@ -1,6 +1,7 @@
 #include "dabc/logging.h"
 #include "dabc/statistic.h"
 #include "dabc/Manager.h"
+#include "dabc/Application.h"
 #include "dabc/Configuration.h"
 #include "dabc/Factory.h"
 
@@ -120,7 +121,7 @@ bool WaitActiveNodes(double tmout)
 
 int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int nodeid, int numnodes)
 {
-   DOUT0(("Run cluster application!!! %d %d %s", nodeid, numnodes, (connid ? connid : "---")));
+   DOUT1(("Run application node:%d numnodes:%d conn:%s", nodeid, numnodes, (connid ? connid : "---")));
 
    cfg->LoadLibs();
 
@@ -157,7 +158,17 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
 
        SMChange(dabc::Manager::stcmdDoStart);
 
-       dabc::ShowLongSleep("Main loop", 15); //15
+       dabc::ShowLongSleep("Main loop", 5); //15
+
+       dabc::Command* cmd = new dabc::Command("StartFiles");
+       cmd->SetStr("FileBase","abc");
+       dabc::mgr()->GetApp()->Execute(cmd);
+
+       dabc::ShowLongSleep("Main loop", 5); //15
+
+       dabc::mgr()->GetApp()->Execute("StopFiles");
+
+       dabc::ShowLongSleep("Main loop", 5); //15
 
        SMChange(dabc::Manager::stcmdDoStop);
 

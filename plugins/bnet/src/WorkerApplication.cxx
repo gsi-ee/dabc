@@ -8,6 +8,8 @@
 #include "dabc/timing.h"
 #include "dabc/CommandsSet.h"
 
+#include "dabc/CommandDefinition.h"
+
 
 bnet::WorkerApplication::WorkerApplication(const char* classname) :
    dabc::Application(classname)
@@ -35,7 +37,6 @@ bnet::WorkerApplication::WorkerApplication(const char* classname) :
    CreateParStr(parSendStatus, "oooo");
    CreateParStr(parRecvStatus, "oooo");
 
-
    SetParDflts(0);  // make next parameters not visible outside
 
    CreateParInt(CfgNodeId, dabc::mgr()->NodeId());
@@ -50,6 +51,13 @@ bnet::WorkerApplication::WorkerApplication(const char* classname) :
    CreateParStr(CfgReadoutPool, ReadoutPoolName);
 
    SetParDflts();
+
+   dabc::CommandDefinition* def = NewCmdDef("StartFile");
+   def->AddArgument("FileName", dabc::argString, true);
+   def->Register();
+
+   def = NewCmdDef("StopFile");
+   def->Register();
 
    DOUT1(("!!!! Worker plugin created name = %s!!!!", GetName()));
 }
@@ -175,9 +183,15 @@ int bnet::WorkerApplication::ExecuteCommand(dabc::Command* cmd)
       ApplyNodeConfig(cmd);
       cmd_res = cmd_postponed;
    } else
-//   if (cmd->IsName("CheckModulesStatus")) {
-//      cmd_res = CheckWorkerModules();
-//   } else
+   if (cmd->IsName("StartFile") || cmd->IsName("StopFile")) {
+      SetParStr(xmlStoragePar, cmd->GetStr("FileName",""));
+
+      if (IsReceiver()) {
+         const char* outportname = IsFilter() ? "Filter/Output" : "Builder/Output";
+         cmd_res = cmd_bool(CreateStorage(outportname));
+      }
+   } else
+
       cmd_res = dabc::Application::ExecuteCommand(cmd);
 
    return cmd_res;

@@ -453,8 +453,6 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
       dabc::mgr()->GetApp()->InvokeCheckModulesCmd();
 
-//      dabc::mgr()->Submit(dabc::mgr()->LocalCmd(new dabc::Command("CheckModulesStatus"), dabc::xmlAppDfltName));
-
       return;
    }
 
