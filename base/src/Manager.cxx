@@ -280,19 +280,19 @@ dabc::Manager::~Manager()
    // normally, as last operation in the main() program must be HaltManeger(true)
    // call, which suspend and erase all items in manager
 
-   DOUT0(("Start ~Manager"));
+   DOUT3(("Start ~Manager"));
 
    fSMmodule = 0;
 
    HaltManager();
 
-   DOUT0(("~Manager -> CancelCommands() locked:%s cmds:%u",
+   DOUT3(("~Manager -> CancelCommands() locked:%s cmds:%u",
          DBOOL((fCmdsMutex ? fCmdsMutex->IsLocked() : false)),
          _NumSubmCmds()));
 
    CancelCommands();
 
-   DOUT0(("~Manager -> DeleteChilds()"));
+   DOUT3(("~Manager -> DeleteChilds()"));
 
    DestroyAllPars();
 
@@ -648,7 +648,7 @@ void dabc::Manager::DoHaltManager()
    DOUT3(("Deleting application"));
    delete GetApp();
 
-   DOUT0(("Deleting all modules"));
+   DOUT3(("Deleting all modules"));
    // than we delete all modules
 
    DoDeleteAllModules();
@@ -664,7 +664,7 @@ void dabc::Manager::DoHaltManager()
    Folder* df = GetDevicesFolder();
    if (df) df->DeleteChilds();
 
-   DOUT0(("Calling destructor of all memory pools"));
+   DOUT3(("Calling destructor of all memory pools"));
    DeleteChilds(-1, clMemoryPool);
 
    // to be on the safe side, destroy everything in the queue
@@ -774,7 +774,7 @@ int dabc::Manager::PreviewCommand(Command* cmd)
 
    if ((managername.size()==0) || (IsName(managername.c_str()))) {
 
-      // this is local command submision
+      // this is local command submission
       CommandReceiver* rcv = 0;
 
       if ((itemname!=0) && (strlen(itemname)>0)) {

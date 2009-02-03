@@ -5,6 +5,7 @@
 #include "dabc/Parameter.h"
 #include "dabc/Manager.h"
 #include "dabc/Iterator.h"
+#include "dabc/CommandDefinition.h"
 
 dabc::WorkingProcessor::WorkingProcessor() :
    fProcessorThread(0),
@@ -153,6 +154,13 @@ void dabc::WorkingProcessor::ExitMainLoop()
 
    if (ProcessorThread())
       ProcessorThread()->ExitMainLoop(this);
+}
+
+dabc::CommandDefinition* dabc::WorkingProcessor::NewCmdDef(const char* cmdname)
+{
+   if ((cmdname==0) || (strlen(cmdname)==0) || (fParsHolder==0)) return 0;
+
+   return new dabc::CommandDefinition(fParsHolder, cmdname);
 }
 
 

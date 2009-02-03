@@ -19,14 +19,9 @@ dabc::CommandDefinition::~CommandDefinition()
 
 void dabc::CommandDefinition::Register(bool on)
 {
-   Module* m = GetParent() ? dynamic_cast<Module*>(GetParent()->GetParent()) : 0;
-
-   DOUT3((" CommandDefinition::Register(%s) mgr = %p mdl %p cmd %s", DBOOL(on), dabc::mgr(), m, GetName()));
-
    if (dabc::mgr())
-      dabc::mgr()->CommandRegistration(m, this, on);
+      dabc::mgr()->CommandRegistration(this, on);
 }
-
 
 void dabc::CommandDefinition::AddArgument(const char* name,
                                           CommandArgumentType typ,

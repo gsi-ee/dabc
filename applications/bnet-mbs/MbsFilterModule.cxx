@@ -21,6 +21,9 @@ bool bnet::MbsFilterModule::TestBuffer(dabc::Buffer* buf)
    if (fTotalCnt++ % 100 == 0)
       DOUT5(("Total filtered buffers %d", fTotalCnt));
 
+   /*
+
+
    unsigned numevnts = mbs::ReadIterator::NumEvents(buf);
 
    DOUT1(("NumEvents %u", numevnts));
@@ -37,6 +40,8 @@ bool bnet::MbsFilterModule::TestBuffer(dabc::Buffer* buf)
                rawdata[0], rawdata[1]));
       }
    }
+
+   */
 
    return (fTotalCnt++ % 2) > 0;
 }

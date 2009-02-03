@@ -213,11 +213,9 @@ void dimc::Manager::UpdateStatusRecord()
 
 
 
-
-
-void dimc::Manager::CommandRegistration(dabc::Module* m, dabc::CommandDefinition* def, bool reg)
+void dimc::Manager::CommandRegistration(dabc::CommandDefinition* def, bool reg)
 {
-  std::string registername=fRegistry->CreateFullParameterName(m->GetName(),def->GetName());
+  std::string registername=fRegistry->CreateFullParameterName(def->GetParent()->GetName(), def->GetName());
   if(reg)
    {
       DOUT5(("dimc::Manager::CommandRegistration registers %s \n",registername.c_str()));
@@ -227,12 +225,8 @@ void dimc::Manager::CommandRegistration(dabc::Module* m, dabc::CommandDefinition
    {
       DOUT5(("dimc::Manager::CommandRegistration unregisters %s \n",registername.c_str()));
       fRegistry->UnRegisterModuleCommand(registername);
-
    }
-
 }
-
-
 
 
 bool dimc::Manager::Subscribe(dabc::Parameter* par, int remnode, const char* remname)

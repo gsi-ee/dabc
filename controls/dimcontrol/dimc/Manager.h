@@ -56,7 +56,7 @@ namespace dimc {
          virtual bool CanSendCmdToManager(const char* mgrname);
          virtual bool SendOverCommandChannel(const char* managername, const char* cmddata);
          virtual void ParameterEvent(dabc::Parameter* par, int event);
-         virtual void CommandRegistration(dabc::Module* m, dabc::CommandDefinition* def, bool reg);
+         virtual void CommandRegistration(dabc::CommandDefinition* def, bool reg);
 
          virtual int ExecuteCommand(dabc::Command* cmd);
 

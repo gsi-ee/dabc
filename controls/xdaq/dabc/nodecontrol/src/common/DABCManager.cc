@@ -194,9 +194,9 @@ void dabc::xd::Manager::ParameterEvent(dabc::Parameter* par, int event)
 
 }
 
-void dabc::xd::Manager::CommandRegistration(dabc::Module* m, dabc::CommandDefinition* def, bool reg)
+void dabc::xd::Manager::CommandRegistration(dabc::CommandDefinition* def, bool reg)
 {
-  std::string registername=fxRegistry->CreateFullParameterName(m->GetName(),def->GetName());
+  std::string registername=fxRegistry->CreateFullParameterName(def->GetParent()->GetName(),def->GetName());
   if(reg)
    {
       //std::cout <<"******** Manager::CommandRegistration register "<<registername << std::endl;

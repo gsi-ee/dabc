@@ -13,8 +13,8 @@
 #include "dabc/Port.h"
 #include "dabc/Timer.h"
 #include "dabc/Parameter.h"
-#include "dabc/CommandDefinition.h"
 #include "dabc/Application.h"
+#include "dabc/CommandDefinition.h"
 
 // __________________________________________________________________
 
@@ -121,13 +121,6 @@ dabc::Parameter* dabc::Module::CreatePoolUsageParameter(const char* name, double
    if (pool) pool->SetUsageParameter(par, interval);
 
    return par;
-}
-
-dabc::CommandDefinition* dabc::Module::NewCmdDef(const char* cmdname)
-{
-   if (cmdname==0) return 0;
-
-   return new dabc::CommandDefinition(GetCmdDefFolder(true), cmdname);
 }
 
 dabc::Timer* dabc::Module::CreateTimer(const char* name, double period_sec, bool synchron)
@@ -259,11 +252,6 @@ dabc::PoolHandle* dabc::Module::CreatePoolHandle(const char* poolname, BufferSiz
    fPoolHandels.push_back(handle->ItemId());
 
    return handle;
-}
-
-dabc::Folder* dabc::Module::GetCmdDefFolder(bool force)
-{
-   return GetFolder("Commands", force, true);
 }
 
 dabc::Folder* dabc::Module::GetTimersFolder(bool force)

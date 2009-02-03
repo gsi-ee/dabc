@@ -18,7 +18,7 @@ namespace dabc {
    class Basic;
    class Folder;
    class Parameter;
-
+   class CommandDefinition;
 
    class WorkingProcessor : public CommandReceiver {
 
@@ -140,6 +140,9 @@ namespace dabc {
          void SetParsHolder(Folder* holder, const char* subfolder = 0);
          void SetParDflts(int visibility = 1, bool fixed = false);
          virtual WorkingProcessor* GetCfgMaster() { return 0; }
+
+
+         CommandDefinition* NewCmdDef(const char* cmdname);
 
          // methods for parameters creation
          Parameter* CreatePar(int kind, const char* name, const char* initvalue = 0);

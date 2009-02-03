@@ -581,7 +581,7 @@ namespace dabc {
          // virtual method to deliver some events to control system
          virtual void ModuleExecption(Module* m, const char* msg);
          virtual void ParameterEvent(Parameter* par, int event) {}
-         virtual void CommandRegistration(Module* m, CommandDefinition* def, bool reg) {}
+         virtual void CommandRegistration(CommandDefinition* def, bool reg) {}
 
          // methods, used for remote command execution
          virtual bool CanSendCmdToManager(const char*) { return false; }

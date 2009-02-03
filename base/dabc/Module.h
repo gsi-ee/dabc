@@ -41,7 +41,6 @@ namespace dabc {
    class Port;
    class Timer;
    class Transport;
-   class CommandDefinition;
 
    class Module : public Folder,
                   public WorkingProcessor,
@@ -98,7 +97,6 @@ namespace dabc {
          unsigned OutputNumber(Port* port);
          unsigned IOPortNumber(Port* port);
 
-         Folder* GetCmdDefFolder(bool force = false);
          Folder* GetTimersFolder(bool force = false);
 
          ModuleItem* GetItem(unsigned id) const { return id<fItems.size() ? (ModuleItem*) fItems.at(id) : 0; }
@@ -150,8 +148,6 @@ namespace dabc {
          Port* CreateOutput(const char* name, PoolHandle* pool = 0, unsigned queue = 10, BufferSize_t headersize = 0)
            { return CreateIOPort(name, pool, 0, queue, headersize); }
          Port* CreateIOPort(const char* name, PoolHandle* pool = 0, unsigned recvqueue = 10, unsigned sendqueue = 10, BufferSize_t headersize = 0);
-
-         CommandDefinition* NewCmdDef(const char* cmdname);
 
          RateParameter* CreateRateParameter(const char* name, bool sync = true, double interval = 1., const char* inpportname = 0, const char* outportname = 0);
 
