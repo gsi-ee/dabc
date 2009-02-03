@@ -2,45 +2,50 @@
 
 \section{Overview}
 
-CBM readout controller (ROC) is FPGA-based board, which is aimed to readout
-nXYTER chip and transport data over Ethernet to PC. Software package ROClib 
-provides basic functionality to readout data from ROC.
+The CBM ReadOut Controller ({\em ROC}) is an FPGA-based board
+to configure and read out the
+{\em nXYTER} chip \cite{nxyter}, and to transport the acquired data over Ethernet to a PC. 
+The software package {\em ROClib} 
+provides the basic functionality to work with such {\em ROC}.
  
-To support usage of ROC in DABC, following classes were designed:
+To support the usage of {\em ROC} in \dabc~, the following classes 
+were implemented:
 \bbul
-\item \class{roc::Device}  device class, wrapper for SysCoreController 
-\item \class{roc::Transport}  access to SysCoreBoard functionality 
-\item \class{roc::CombinerModule}  module to combine data from several ROCs in single output  
-\item \class{roc::CalibrationModule}  module to calibrate time scale in ROC data  
-\item \class{roc::ReadoutApplication}  application to perform readout from ROC boards   
-\item \class{roc::Factory}  factory class to organize plugin 
+\item \class{roc::Device}  device class, wrapper for the \class{SysCoreController}
+class of {\em ROClib} 
+\item \class{roc::Transport}  corresponding transport, with access to the functionality of \class{SysCoreBoard} class of {\em ROClib} 
+\item \class{roc::CombinerModule}  module to combine data from several {\em ROCs} into a single output port 
+\item \class{roc::CalibrationModule}  module to calibrate the time scale in {\em ROC} data  
+\item \class{roc::ReadoutApplication}  application to perform readout from {\em ROC} boards   
+\item \class{roc::Factory}  factory class to organize these plugins 
 \ebul
 
 
 \section{Device and transport}
 
-ROC device class \class{roc::Device} inherits from two classes: \class{dabc::Device} and \class{SysCoreControl},
-where \class{SysCoreControl} provides simultaneous access to several ROC boards. 
-Normally instance of device class corresponds to physical device or board, 
-but here device object used rather as central collection of \class{SysCoreBoard} objects and
-as thread provider.
+The {\em ROC} device class \class{roc::Device} inherits from two classes: \class{dabc::Device} and \class{SysCoreControl},
+where \class{SysCoreControl} provides simultaneous access to several {\em ROC} boards. 
+Usually the instance of a device class corresponds to one physical device or board, 
+but here the device object is rather used as central collection of \class{SysCoreBoard} objects, and as thread provider.
 
-Each instance of \class{roc::Transport} has a pointer to \class{SysCoreBoard} object,
-over which data taking from specific ROC is performed. 
-Implementation of class \class{roc::Transport} based on \class{dabc::DataTransport} class.
-Class \class{dabc::DataTransport} uses event loop mechanism and does not requires explicit thread.
-This feature allows to run several instances of such transports in the same thread.
-In ROC case all \class{roc::Transport} instances uses thread of \class{roc::Device}.     
-Lets try to describe how class \class{roc::Transport} is working.
+Each instance of \class{roc::Transport} has a pointer to a \class{SysCoreBoard} object
+which handles data taking from a specific {\em ROC}. 
+The implementation of \class{roc::Transport} is based on the \class{dabc::DataTransport} class (see section \ref{prog_plugin_device_datatransport}) which
+runs as \class{WorkingProcessor} with an asynchronous event handling mechanism,
+so it does not require a dedicated thread.
+This feature allows to process several instances of such transports in the same thread.
+In the {\em ROC} case, all \class{roc::Transport} instances use the thread of \class{roc::Device}.   
+  
+Let's have a look how \class{roc::Transport} is working:
+When the connected module starts, method \func{StartTransport()} is called,
+which will invoke \func{SysCoreBoard::startDaq()} to start data taking. 
+After that, the buffer filling loop consists in subsequent calls of \func{Read\_Size()}, \func{Read\_Start()} and \func{Read\_Complete()}
+functions, implementing the interface of \class{dabc::DataTransport} 
+(see section \ref{prog_plugin_device_datatransport}). 
 
-In the beginning of event loop (when module starts) \func{roc::Transport::StartTransport} is called, which
-is used to call \func{SysCoreBoard::startDaq} to start data taking. After that
-event loop consist from subsequent calls of \func{Read\_Size}, \func{Read\_Start} and \func{Read\_Complete}
-functions, derived from \class{dabc::DataTransport} class. 
-
-Aim of \func{Read\_Size} method is to define size of next buffer, required for data reading. 
-In case of \class{roc::Transport} this size
-is fixed and defined by configuration parameter:  
+Method \func{Read\_Size()} defines the size of the next buffer, 
+required for data reading. In case of \class{roc::Transport} this size
+is fixed and is taken from a configuration parameter:  
 
 \begin{verbatim}
 unsigned roc::Transport::Read_Size()
@@ -49,13 +54,9 @@ unsigned roc::Transport::Read_Size()
 }
 \end{verbatim}
     
-When system deliver buffer of requested size, \func{Read\_Start} function is called to start reading 
-of that buffer from data source. \class{SysCoreBoard} internally has its own buffer, therefore call 
-\func{SysCoreBoard::requestData} either inform that required number of messages already received or
-one should wait. Waiting in thread logic will mean that thread should be blocked and 
-cannot be used by other transport. Therefore, another approach is used - ROClib will provide 
-call back of virtual \func{SysCoreControl::DataCallBack} method when required amount of data is there.
-Implementation of method is looks like:
+When the system has delivered a buffer of the requested size,  
+function \func{Read\_Start()} is called to start reading 
+of that buffer from the data source:
 
 \begin{verbatim}
 unsigned roc::Transport::Read_Start(dabc::Buffer* buf)
@@ -67,8 +68,22 @@ unsigned roc::Transport::Read_Start(dabc::Buffer* buf)
 }
 \end{verbatim}
 
-In case when data already exists in internal buffer of \class{SysCoreBoard} object, \keyw{dabc::DataInput::di\_Ok} 
-is returned and than immediately \func{Read\_Complete} will be called, which finally fill output buffer:
+The \class{SysCoreBoard} (accessed by pointer {\tt fxBoard})
+keeps internally  own buffers of the received UDP messages.
+The call \func{SysCoreBoard::requestData()} informs by return value
+either that the required number of messages is already received,
+or that the caller should wait (i.~e.~ poll this method here until
+it returns that all data is ready). 
+However, waiting would mean that the working thread was blocked and 
+could not run the other transport instances. Therefore, another approach is used: 
+The {\em ROClib} will call back the virtual method \func{SysCoreControl::DataCallBack()}  
+when the required amount of data is there. This method
+is implemented for \class{roc::Transport} to complete filling the current
+\class{dabc::Buffer}.
+
+If data already exists in the internal buffers of \class{SysCoreBoard},
+the value \keyw{dabc::DataInput::di\_Ok} 
+is returned; then the \class{DataTransport} framework will immediately call \func{Read\_Complete()} which finally fills the \dabc~ buffer:
 
 \begin{verbatim}
 unsigned roc::Transport::Read_Complete(dabc::Buffer* buf)
@@ -84,60 +99,70 @@ unsigned roc::Transport::Read_Complete(dabc::Buffer* buf)
 }
 \end{verbatim}
 
-Returned from function \func{Read\_Start} value \keyw{dabc::DataInput::di\_CallBack} indicates 
-that event loop should be suspended. When required amount of data received by ROClib,
-it produces call of \func{SysCoreControl::DataCallBack} method, which is reimplemented in \class{roc::Device} 
-class and calls following method of \class{roc::Transport}: 
+The return value \keyw{dabc::DataInput::di\_CallBack}
+of function \func{Read\_Start()} indicates 
+that processing of this transport should be suspended, 
+because the requested amount of data is not ready yet.
+When all this data has been received by the {\em ROClib},
+it will invoke method \func{SysCoreControl::DataCallBack()} 
+which is reimplemented in subclass \class{roc::Device},
+simply forwarding to
+the following method of \class{roc::Transport}: 
 
 \begin{verbatim}
-void roc::Transport::ComplteteBufferReading()
+void roc::Transport::CompleteBufferReading()
 {
    unsigned res = Read_Complete(fCurrentBuf);
    Read_CallBack(res);
 }
 \end{verbatim}
 
-While required amount of data is received,
-one only retrieves it with the same \func{Read\_Complete} method and 
-reactivate event loop by calling \func{Read\_CallBack}.   
+As the required amount of data is ready now,
+one only retrieves it to the current buffer with the same 
+\func{Read\_Complete()} method, and 
+reactivates the processing of this transport instance
+by calling \func{Read\_CallBack()}.   
 
 
 \section{Combiner module}
 
-Class \class{roc::CombinerModule} is designed to combine data from several ROC boards in one MBS event. It also performs sorting of
-data according timestamp, resolves last epoch bits and fixes several coding errors (class \class{SysCoreSorter} is
+Class \class{roc::CombinerModule} combines data from several ROC boards in one MBS event. It also performs sorting of data according the timestamp, resolves the "last epoch" bits, and fixes several coding errors (class \class{SysCoreSorter} is
 used for this).
 
-Module has following configuration parameters:
+The module has following configuration parameters:
 \bbul
-\item \param{NumRocs}     - number of ROC boards, connected to combiner [default 1]  
-\item \param{BufferSize}  - size of buffer, used to read data from ROCs [default 16386]
+\item \param{NumRocs}     - number of {\em ROC} boards, connected to combiner [default 1]  
+\item \param{BufferSize}  - size of buffer, used to read data from {\em ROCs} [default 16384]
 \item \param{NumOutputs}  - number of outputs [default 2]
 \ebul
 
-As output MBS events are provided. Each MBS event contain ROC messages between two sync markers.
-For each ROC separate MBS event allocated. Field iSubcrate contains ROC id.
+As output \mbs~ events are provided. Each \mbs~ event contains {\em ROC} messages between two {\em sync markers}.
+For each {\em ROC} a separate \mbs~ subevent is allocated; 
+field \func{iSubcrate} of the subevent header contains the {\em ROC} id.
 
 
 \section{Calibration module}
 
-Class \class{roc::CalibrationModule} perform calibration of time scale for all
-ROCs and merging all messages in single data stream. As output, MBS event with single
+Class \class{roc::CalibrationModule} performs the calibration of the time scale for all
+{\em ROCs} and merges all messages into a single data stream. 
+As output, an \mbs~ event with a single
 subevent is produced. 
 
-Module has following configuration parameters:
+The module has following configuration parameters:
 \bbul
 \item \param{NumRocs}     - number of ROC boards, which should be provided in MBS event [default 2]  
-\item \param{BufferSize}  - size of buffer, used to produce output data [default 16386]
+\item \param{BufferSize}  - size of buffer, used to produce output data [default 16384]
 \item \param{NumOutputs}  - number of outputs [default 2]
 \ebul
  
 
 \section{Readout application}
 
-The main aim of \class{roc::ReadoutApplication} class is configure and run application,
-which combines readout of data from several ROCs, store it into lmd file and optionally 
-create mbs stream server to observe data from remote Go4 GUI.
+The main aim of \class{roc::ReadoutApplication} class is to configure and run 
+the application which combines the data readouts from several {\em ROC}s.
+It can store the data into a {\tt \*.lmd} file, and it  
+may provide  \mbs~ {\em stream} or {\em transport} servers 
+for online monitoring, e.~g.~ with a remote {\em Go4} analysis.
 It has following configuration parameters:
 
 \bbul
@@ -146,44 +171,55 @@ It has following configuration parameters:
 \item \param{DoCalibr}  - defines calibration mode (see further)
 \item \param{BufferSize} - size of buffer
 \item \param{NumBuffers} - number of buffers
-\item \param{MbsServerKind} - kind of MBS server (None, Stream, Transport)
-\item \param{RawFile} - name of lmd file to store combined data
-\item \param{CalibrFile} - name of lmd file to store calibrated data
-\item \param{MbsFileSizeLimit} - maximum size of each file, in Mb
+\item \param{MbsServerKind} - kind of MBS server ("None", "Stream", "Transport")
+\item \param{RawFile} - name of {\tt \*.lmd} file to store "raw" combined data (after
+\class{CombinerModule})
+\item \param{CalibrFile} - name of {\tt \*.lmd} file to store "calibrated" data (after
+\class{CalibrationModule})
+\item \param{MbsFileSizeLimit} - maximum size of each file, in Mb. If the written data 
+would exceed this size, a new output file is automatically opened with a sequence number appended to the file name.
 \ebul
 
 Three calibration modes are supported:
 \bbul
-\item \param{DoCalibr}=0 - Only CombinerModule is instantiated, which produces kind of ROC "raw" data 
-\item \param{DoCalibr}=1 - Both CombinerModule and CalibrationModule are instantiated   
-\item \param{DoCalibr}=2 - Only CalibrationModule, used to convert raw data from lmd files into calibrated format.
+\item \param{DoCalibr}=0 - Only the \class{CombinerModule} is instantiated, which produces a kind of {\em ROC} "raw" data 
+\item \param{DoCalibr}=1 - Both \class{CombinerModule} and \class{CalibrationModule} are instantiated   
+\item \param{DoCalibr}=2 - Only the \class{CalibrationModule} is instantiated. 
+This is used to convert "raw" data read from {\tt .lmd} files into the "calibrated" format.
 \ebul
 
-In all modes output in form of raw or (and) calibrated data can be stored in lmd file(s),
-defined by \param{RawFile} and \param{CalibdFile} parameters respectively. Last mode is special case,
-when \param{RawFile} specifies not output but input file for the calibration module.
+In all modes output in form of raw or (and) calibrated data can be stored in 
+{\tt .lmd} file(s), defined by \param{RawFile} and \param{CalibdFile} parameters respectively. The last mode is a special case,
+since \param{RawFile} does not specify the output, but the input file for the 
+calibration module.
 
 
 \section{Factory}
 
-Factory class \class{roc::Factory} implements several methods to create
-ROC-specific application, device and modules.    
+Factory class \class{roc::Factory} implements several methods to create the 
+{\em ROC}-specific application, device and modules, as described in section 
+\ref{prog_plugin_factory}.    
 
 
 \section{Source and compilation}
 
-Source code for all classes can be found in \$DABCSYS/plugins/roc directory. 
-Compiled library libDabcKnut.so should be found in \$DABCSYS/lib directory.
-If one need to modify some code in this library, one should copy sources in 
-user directory and call "make" in this directory. In this case library can be found
-in directory like \$ARCH/lib, where \$ARCH is current CPU architecture (for instance, i686).
+The source code of all classes can be found in 
+{\tt \$DABCSYS/plugins/roc} directory. 
+Compiled library {\tt libDabcKnut.so} is in directory
+{\tt \$DABCSYS/lib} .
+If one needs to modify some code in this library, one should copy the sources to 
+a user directory and call "make" in this directory. In this case the library 
+is build into
+a subdirectory, named like {\tt \$ARCH/lib}, where {\tt \$ARCH} 
+is the current CPU architecture (for instance, "i686").
 
  
-\section{Running ROC application}
+\section{Running the {\em ROC} application}
 
-To run readout application, approprite xml configuration file should be created.
-There are two examples of configuration files in \$DABCSYS/applications/roc.
-In Readout.xml one founds example of readout from 3 ROCs: 
+To run the readout application, an approprite XML configuration file 
+is required. There are two examples of configuration files in {\tt \$DABCSYS/applications/roc}.
+
+File {\tt Readout.xml} configures the readout from 3 ROCs: 
 
 \begin{verbatim}
 <?xml version="1.0"?>
@@ -211,12 +247,18 @@ In Readout.xml one founds example of readout from 3 ROCs:
 </dabc>
 \end{verbatim}
 
-While this is single-node application, to run it, dabc\_run executable can be used:
-\verba{dabc\_run Readout.xml}. dabc\_run executable will load specified libraries,
-create application, configure it and switch system in running mode.   
+Because this is a single-node application, 
+it can be started directly from a shell 
+by calling the standard \func{dabc\_run}
+executable with the configuration file name as argument:
+\verba{dabc\_run Readout.xml}. 
+This executable will load the specified libraries,
+create the application, configure it, and switch the system in 
+the \keyw{Running} state.   
 
-In Calibr.xml shown special case of configuration to convert raw data 
-into calibrated files without running any real DAQ. 
+File  {\tt Calibr.xml} shows the special case of a configuration to convert 
+"raw" data into "calibrated" data without running any real DAQ:
+
 
 \begin{verbatim}
 <?xml version="1.0"?>
@@ -241,5 +283,12 @@ into calibrated files without running any real DAQ.
 </dabc>
 \end{verbatim}
 
+Here the "raw" data is read from the files matching the name wildcard pattern 
+as defined in the {\tt <RawFile>} tag. Note that this example will 
+read subsequently all data of run "028" which possibly was saved
+into several files with subsequent numbers appended to their names, due to the 
+{\tt <MbsFileSizeLimit>} mechanism as described above.
+The "calibrated" data is written as usual to the output file
+as specified in the {\tt <CalibrFile>} tag.
 
  
