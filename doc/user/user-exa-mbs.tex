@@ -2,7 +2,7 @@
 \section{\mbs\ event building}
 \subsection{\mbs\ setup}
 Any \mbs\ system can be controlled by the \dabc\ GUI.
-It can run in two operation modes: with \mbs\ event builder or \dabc event builder.
+It can run in two operation modes: with \mbs\ event builder or \dabc\ event builder.
 The first case means a standard \mbs\ system.
 To control a standard \mbs\ nothing has to be done by the user on the \mbs\ side.
 Of cause, the \mbs\ itself must have been build with the DIM option (since version v5.1).
@@ -33,14 +33,14 @@ access to that filesystem.
 \item[MbsSystemPath]:  Path on Lynx where the \mbs\ is installed. GUI needs no access to this path.
 \item[MbsScript]: \mbs\ script to be executed via \keyw{rsh} (see button below).
 An execution script located relativ to \mbs\ path.
-Script \verba{script/remote_exe.sc}
+Script \verba{script/remote\_exe.sc}
 sets all \mbs\ related variables and executes a program given as argument
 on user path. Arguments:
 \bcir
 \item \mbs\ system path (inserted by GUI). Script sets \keyw{MBSROOT} to this.
 \item \mbs\ user path (inserted by GUI). Script changes directory to this
 \item Program name.
-\item \mbs\ path of program. Script executes \verbs{m\_launch} which forks
+\item \mbs\ path of program. Script executes \verba{m\_launch} which forks
 program from this path.
 \item Optional dot if arguments follow.
 \item More arguments passed to program. 
@@ -84,20 +84,20 @@ That means that each node runs the \keyw{Readout} - \keyw{Collector} - \keyw{Tra
 chain. The \dabc\ event builders connect to these transports.
 The \mbs\ buffer size should be set to the stream size and the number of buffers per
 stream must be set to one.
-\subsubsection{\dabc\ setup}
+\subsection{\dabc\ setup}
 On the \dabc\ user working directory we need configuration files.
 
 Summary of parameters:
 \bdes
-\item[MbsFileName]
-\item[MbsFileSizeLimit]
-\item[BufferSize]
+\item[MbsFileName] File name for lmd file. Overwritten by command.
+\item[MbsFileSizeLimit] File closes when size is reached, and new file opens.
+\item[BufferSize] Should match \mbs\ buffer size.
 \item[MbsServerKind] \keyw{Transport} | \keyw{Stream}.
 \item[MbsServerPort] Port number transport (6000).
 \item[MbsServerName] \mbs\ node of transport.
-\item[NumInputs]
-\item[DoFile]
-\item[DoServer]
+\item[NumInputs] Number of \mbs\ channels for one combiner.
+\item[DoFile] Provide output file.
+\item[DoServer] Provide server.
 \edes
 These parameters are used to configure an event generator:
 \bdes
@@ -117,7 +117,7 @@ with three input ports and two output ports.
 Now we can use the combined launcher panel to startup \mbs\ and \dabc.
 \lsubsection{user:launchDabcMbs}{Combined \dabc\ and \mbs\ launch panel}
 \figpng{user-gui-pan-dabcmbs}{Combined DABC and MBS launcher.}{htb}{0}{0.7}
-This panel shown in Fig. \pageref{user-gui-pan-dabcmbs} is simply a superposition of the single ones.
+This panel shown in Fig. \pageref{fig:user-gui-pan-dabcmbs} is simply a superposition of the single ones.
 \subsubsection{Combined \dabc\ and \mbs\ launcher buttons}
 \icon{fileclose} Close window.\\
 \icon{savewin} Save panel settings, see \paref{user:guiSaveRestore}.\\
@@ -293,5 +293,4 @@ parameters which are in this file are optional.
 #XXX DataTrendKb : 16000.
 \end{verbatim}
 }
-\subsection{\dabc\ configuration}
 
