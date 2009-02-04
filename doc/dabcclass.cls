@@ -122,59 +122,59 @@
 
 % define layout of chapter heading
 % --------------------------------
-\def\@makechapterhead#1{%
- %  \twocolumn[%
- \noindent\begin{minipage}{\textwidth}%
-                 \raggedright
- \huge\bf  \thechapter\quad #1\par
-            \vspace*{-3mm}%
-            \rule{\textwidth}{0.8pt}%
-            \vspace*{+8mm}%
-       \end{minipage}%
-  % ]%
-}
+% \def\@makechapterhead#1{%
+%  %  \twocolumn[%
+%  \noindent\begin{minipage}{\textwidth}%
+%                  \raggedright
+%  \huge\bf  \thechapter\quad #1\par
+%             \vspace*{-3mm}%
+%             \rule{\textwidth}{0.8pt}%
+%             \vspace*{+8mm}%
+%        \end{minipage}%
+%   % ]%
+% }
+% 
+% \def\@makeschapterhead#1{%
+%  %  \twocolumn[%
+% \noindent\begin{minipage}{\textwidth}%
+%                  \raggedright
+%                 \huge\bf #1\par
+%             \vspace*{-3mm}%
+%             \rule{\textwidth}{0.8pt}%
+%             \vspace*{+8mm}%
+%        \end{minipage}%
+%  %  ]%
+% }
 
-\def\@makeschapterhead#1{%
- %  \twocolumn[%
-\noindent\begin{minipage}{\textwidth}%
-                 \raggedright
-                \huge\bf #1\par
-            \vspace*{-3mm}%
-            \rule{\textwidth}{0.8pt}%
-            \vspace*{+8mm}%
-       \end{minipage}%
- %  ]%
-}
+%\def\chapter{\thispagestyle{plain}\secdef\@chapter\@schapter}
 
-\def\chapter{\thispagestyle{plain}\secdef\@chapter\@schapter}
-
-\def\@chapter[#1]#2{\ifnum \c@secnumdepth >\m@ne
-        \refstepcounter{chapter}%
-        \typeout{\@chapapp\space\thechapter.}%
-        \addcontentsline{toc}{chapter}{\protect
-        \numberline{\thechapter}#1}\else
-      \addcontentsline{toc}{chapter}{#1}\fi
-   \chaptermark{#1}%
-   \addtocontents{lof}%
-       {\protect\addvspace{10\p@}}
-   \addtocontents{lot}%
-       {\protect\addvspace{10\p@}}
-   \@makechapterhead{#1}
-}
-
-\def\Chapter#1{\addcontentsline{toc}{chapter}{#1}%
-       \markboth{}{}\noindent
-       \begin{minipage}{\textwidth}%
-                 \raggedright
-                \huge\bf #1\par
-            \vspace*{-3mm}%
-            \rule{\textwidth}{0.8pt}%
-            \vspace*{+8mm}%
-       \end{minipage}%
-       \thispagestyle{plain}%
-}
-
-\def\@schapter#1{\@makeschapterhead{#1}}
+% \def\@chapter[#1]#2{\ifnum \c@secnumdepth >\m@ne
+%         \refstepcounter{chapter}%
+%         \typeout{\@chapapp\space\thechapter.}%
+%         \addcontentsline{toc}{chapter}{\protect
+%         \numberline{\thechapter}#1}\else
+%       \addcontentsline{toc}{chapter}{#1}\fi
+%    \chaptermark{#1}%
+%    \addtocontents{lof}%
+%        {\protect\addvspace{10\p@}}
+%    \addtocontents{lot}%
+%        {\protect\addvspace{10\p@}}
+%    \@makechapterhead{#1}
+% }
+% 
+% \def\Chapter#1{\addcontentsline{toc}{chapter}{#1}%
+%        \markboth{}{}\noindent
+%        \begin{minipage}{\textwidth}%
+%                  \raggedright
+%                 \huge\bf #1\par
+%             \vspace*{-3mm}%
+%             \rule{\textwidth}{0.8pt}%
+%             \vspace*{+8mm}%
+%        \end{minipage}%
+%        \thispagestyle{plain}%
+% }
+% 
+% \def\@schapter#1{\@makeschapterhead{#1}}
 
 
 % change "bibliography" (standard for report) to "references"
@@ -230,6 +230,7 @@
 \newcommand{\param}[1]{{\sf #1}}
 \newcommand{\comm}[1]{{\sf #1}}
 
+% shortcut for figures
 \newcommand{\figpng}[5]{
 \begin{figure}[#3]
 \centering\includegraphics[angle=#4,width=#5\textwidth]{#1.png} % png file
@@ -255,9 +256,13 @@
 
 \newcommand{\icon}[1]{\includegraphics{#1.png} \rule{0cm}{0.7cm}}
 \newcommand{\paref}[1]{\ref{#1}, page \pageref{#1}}
-\newcommand{\lsection}[2]{\section{#2}\label{#1}}
-\newcommand{\lsubsection}[2]{\subsection{#2}\label{#1}}
-\newcommand{\lsubsubsection}[2]{\subsubsection{#2}\label{#1}}
+% calling \lsection[1]{2}{3}
+% enters 1 in ToC, 2 as label, 3 is head line.
+% calling \lsection{2}{3}
+% enters 3 in ToC, 2 as label, 3 is head line.
+\newcommand{\lsection}[3][\@defaultarg]{\def\@defaultarg{#3}\section[#1]{#3}\label{#2}}
+\newcommand{\lsubsection}[3][\@defaultarg]{\def\@defaultarg{#3}\subsection[#1]{#3}\label{#2}}
+\newcommand{\lsubsubsection}[3][\@defaultarg]{\def\@defaultarg{#3}\subsubsection[#1]{#3}\label{#2}}
 % compact lists etc
 % -----------------------------------------------------------------
 \newcommand{\bbul}{\begin{compactitem}[$\bullet$]}

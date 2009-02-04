@@ -1,6 +1,6 @@
 [user/user-exa-mbs.tex]
-\section{\mbs\ event building}
-\subsection{\mbs\ setup}
+\section[MBS event building]{\mbs\ event building}
+\subsection[MBS setup]{\mbs\ setup}
 Any \mbs\ system can be controlled by the \dabc\ GUI.
 It can run in two operation modes: with \mbs\ event builder or \dabc\ event builder.
 The first case means a standard \mbs\ system.
@@ -9,7 +9,7 @@ Of cause, the \mbs\ itself must have been build with the DIM option (since versi
 Central log file is written as usual.
 Optionally one can provide a text file with specifications which parameters
 shall appear on screen (see \paref{user:MbsDimconfig}).
-\lsubsection{user:launchMbs}{\mbs\ launch panel}
+\lsubsection[MBS launch panel]{user:launchMbs}{\mbs\ launch panel}
 \figpng{user-gui-pan-mbs}{MBS launcher.}{htb}{0}{0.6}
 Fig. \paref{fig:user-gui-pan-mbs} show the panel to be used to control
 a standard \mbs.
@@ -52,7 +52,7 @@ this number of DIM servers is up and running.
 \edes
 That file can be created from within the GUI in the \mbs\ launcher panel.
 Enter all values necessary, and store them. 
-\subsubsection{\mbs\ launcher buttons}
+\subsubsection[MBS launcher buttons]{\mbs\ launcher buttons}
 \icon{fileclose} Close window.\\
 \icon{savewin} Save panel settings, see \paref{user:guiSaveRestore}.\\
 \icon{connprm}  Execute script \verba{prmstartup.sc} at master node.
@@ -74,8 +74,8 @@ After 2 seconds trigger the main \keyw{Update}.\\
 \icon{rshmbs} Executes \keyw{Script} with argument \keyw{Command} at master node.\\
 \icon{controlmbs} Shell script.
 
-\section{\dabc\ event building}
-\subsection{\mbs\ setup}
+\section[DABC event building]{\dabc\ event building}
+\subsection[MBS setup]{\mbs\ setup}
 When we want to use \dabc\ nodes as event builders, we need a different
 setup on the \mbs\ side. We assume that we have more than one
 \mbs\ node. Such multi-node system is controlled by a prompter.
@@ -84,7 +84,7 @@ That means that each node runs the \keyw{Readout} - \keyw{Collector} - \keyw{Tra
 chain. The \dabc\ event builders connect to these transports.
 The \mbs\ buffer size should be set to the stream size and the number of buffers per
 stream must be set to one.
-\subsection{\dabc\ setup}
+\subsection[DABC setup]{\dabc\ setup}
 On the \dabc\ user working directory we need configuration files.
 
 Summary of parameters:
@@ -115,10 +115,10 @@ We have one module \keyw{Combiner} (could be different name from context)
 with three input ports and two output ports.
 
 Now we can use the combined launcher panel to startup \mbs\ and \dabc.
-\lsubsection{user:launchDabcMbs}{Combined \dabc\ and \mbs\ launch panel}
+\lsubsection[Combined DABC and MBS launch panel]{user:launchDabcMbs}{Combined \dabc\ and \mbs\ launch panel}
 \figpng{user-gui-pan-dabcmbs}{Combined DABC and MBS launcher.}{htb}{0}{0.7}
 This panel shown in Fig. \pageref{fig:user-gui-pan-dabcmbs} is simply a superposition of the single ones.
-\subsubsection{Combined \dabc\ and \mbs\ launcher buttons}
+\subsubsection[Combined DABC and MBS launcher buttons]{Combined \dabc\ and \mbs\ launcher buttons}
 \icon{fileclose} Close window.\\
 \icon{savewin} Save panel settings, see \paref{user:guiSaveRestore}.\\
 \icon{connprm}  Execute script \verba{dabcstartup.sc} at \dabc\ master node.
@@ -152,7 +152,7 @@ After two seconds trigger the main \keyw{Update}.\\
 \icon{rshmbs} Executes \keyw{Script} with argument \keyw{Command} at master node.\\
 \icon{controlmbs} Shell script for \mbs\ master node.\\
 \icon{controldabc} Shell script for \dabc\ master node.
-\subsection{\mbs\ command panel}
+\subsection[MBS command panel]{\mbs\ command panel}
 \figpng{user-gui-pan-cmd-mbs}{Command panel.}{htb}{0}{0.9}
 Fig. \paref{fig:user-gui-pan-cmd-mbs} shows
 on the left side the command tree. Double click (or \keyw{RETURN}) on a command
@@ -164,8 +164,8 @@ which is displayed in the info panel
 (see Fig. \paref{fig:user-gui-pan-info}).
 Click on a command opens at the right side the argument panel.
 Entering argument values and \keyw{RETURN} executes the command.
-\section{\mbs\ DIM parameters}
-\subsection{\mbs\ states}
+\section[MBS DIM parameters]{\mbs\ DIM parameters}
+\subsection[MBS states]{\mbs\ states}
 \bdes
 \item[Acquisition/State] \keyw{Running} | \keyw{Stopped} 
 \item[BuildingMode/State] \keyw{Delayed} | \keyw{Immediate}
@@ -174,7 +174,7 @@ Entering argument values and \keyw{RETURN} executes the command.
 \item[RunMode/State] \keyw{DABC connected} | \keyw{MBS to DABC} | \keyw{Transport client} | \keyw{MBS standalone}
 \item[SpillOn/State] \keyw{Spill ON} | \keyw{Spill OFF}
 \edes
-\subsection{\mbs\ rates}
+\subsection[MBS rates]{\mbs\ rates}
 \bdes
 \item[MSG/DataRateKb] KByte/s
 \item[MSG/DataTrendKb] KBytes/s as trend
@@ -185,7 +185,7 @@ Entering argument values and \keyw{RETURN} executes the command.
 \item[MSG/FileFilled] File filled in percent
 \item[MSG/StreamsFull] Number of full streams in percent
 \edes
-\subsection{\mbs\ infos}
+\subsection[MBS infos]{\mbs\ infos}
 Shown in info window.
 \bdes
 \item[MSG/eFile] Name of file.
@@ -194,7 +194,7 @@ Shown in info window.
 \item[PRM/Current] Current command execution node (master node only).
 \item[PRM/NodeList] List of nodes (master node only).
 \edes
-\subsection{\mbs\ tasks}
+\subsection[MBS tasks]{\mbs\ tasks}
 When a task is started a parameter with it's name is created.
 The value is the task name. If the task is stopped,
 color changes to gray and value is preceded by "no".
@@ -221,7 +221,7 @@ Task list is shown in info window.
 \item[MSG/TimeOrder]
 \item[MSG/VmeServ]
 \edes
-\subsection{\mbs\ text}
+\subsection[MBS text]{\mbs\ text}
 \bdes
 \item[MSG/GuiNode] Node where GUI runs
 \item[MSG/Date] Date as written in file header
@@ -229,7 +229,7 @@ Task list is shown in info window.
 \item[MSG/Experiment] Experiment as written in file header
 \item[MSG/User] Lynx user name as written in file header
 \edes
-\subsection{\mbs\ numbers}
+\subsection[MBS numbers]{\mbs\ numbers}
 \bdes
 \item[MSG/BufferSize]
 \item[MSG/Buffers] collected so far.
@@ -243,7 +243,7 @@ Task list is shown in info window.
 \item[MSG/StreamSync]
 \edes
 \section{Working directories}
-\lsubsection{user:MbsDimconfig}{\mbs\ configuration of DIM}
+\lsubsection[MBS configuration of DIM]{user:MbsDimconfig}{\mbs\ configuration of DIM}
 Optional file \verba{.guirc} in the \mbs\ working directory
 specifies which rate meters and states shall appear
 in the GUI. Upper limits of the rate meters can be specified.

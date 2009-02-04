@@ -27,7 +27,7 @@ DIM provides the possibility to specify parameters and command arguments as prim
 Thus a client can generically access parameter structures, but without semantical interpretation.
 In addition to the data and format string one longword called \verba{quality} is sent.
 
-\subsection{\dabc\ DIM naming conventions}
+\subsection[DABC DIM naming conventions]{\dabc\ DIM naming conventions}
 \index{DIM!Conventions}
 \index{DABC!DIM naming conventions}
 \index{Conventions!DIM service names}
@@ -45,7 +45,7 @@ Example:
 }
 We recommend to forbid spaces in any name fields. Dots should not be used except in names (last field). The generic \gui\ can handle only services from one server name space 
 (defined by \keyw{DIM\_DNS\_NODE}). For \dabc\ and \mbs\ this servernamespace is set to \keyw{DABC}.
-\subsection{\dabc\ DIM records}
+\subsection[DABC DIM records]{\dabc\ DIM records}
 For generic GUIs we need something similar to the EPICS records. This means to define structures which can be identified. How shall they be indentified? One possibility would be to prefix a type to the parameter name, i.e. \verba{rate:DataRate}. Another to use the quality longword. This longword can be set by the server. One could mask the bytes of this longword for different information:
 {\small \begin{verbatim}
    mode (MSB)| visibility | type | status (LSB)
@@ -167,7 +167,7 @@ If a parameter should be changable from the \gui, there must be a command for th
 Argument is a string of form \verba{name=value}. In the parameter table of the \gui\ one field can be provided to enter a new value and the command \comm{SetParameter} is used to set the new value.
 \subsection{Application servers}
 Any application which can implement DIM services can be controlled by the generic \gui\ if it follows the protocol described above. The first application was \dabc, the second one \mbs.
-\subsection{\dabc\ GUI usage of DIM}
+\subsection[DABC GUI usage of DIM]{\dabc\ GUI usage of DIM}
 The service names follow a structured syntax as described above. The name fields are used to
 build trees (for commands). Using the DIM quality longword (delivered by the server together
 with each update) simple aggregated data services (records) are defined.
@@ -208,21 +208,21 @@ is a parameter. All items must have the same size.
 Currently no menu bar is supported.
 \section{GUI Panels}
 Brief description of panels implemented in the \gui.
-\subsection{\dabc\ launch panel}
+\subsection[DABC launch panel]{\dabc\ launch panel}
 \class{xPanelDabc} extending \class{xPanelPrompt}.\\
 Form to enter all information needed to startup \dabc\ tasks and
 buttons to execute standard commands.
 The values of the form (internally stored in \class{xFormDabc} extending of \class{xForm})
 can be saved to an XML file and are restored from it. File name is either
 \verba{DabcLaunch.xml} or translation of \keyw{DABC\_LAUNCH\_DABC}, respectively.
-\subsection{\mbs\ launch panel}
+\subsection[MBS launch panel]{\mbs\ launch panel}
 \class{xPanelMbs} extending \class{xPanelPrompt}.\\
 Form to enter all information needed to startup \mbs\ tasks and
 buttons to execute standard commands.
 The values of the form (internally stored in \class{xFormMbs} extending of \class{xForm})
 can be saved to an XML file and are restored from it. File name is either
 \verba{MbsLaunch.xml} or translation of \keyw{DABC\_LAUNCH\_MBS}, respectively.
-\subsection{Combined \dabc\ and \mbs\ launch panel}
+\subsection[Combined DABC and MBS launch panel]{Combined \dabc\ and \mbs\ launch panel}
 \class{xPanelDabcMbs} extending \class{xPanelPrompt}.\\
 It is a combination of both, \dabc\ and \mbs\ launch panel.
 \subsection{Parameter table}
@@ -346,7 +346,7 @@ File {\tt Layout.xml}
 </Layout>
 \end{verbatim}
 }
-\subsection{\dabc\ launch panel values}
+\subsection[DABC launch panel values]{\dabc\ launch panel values}
 File {\tt DabcLaunch.xml}
 {\small \begin{verbatim}
 <?xml version="1.0" encoding="utf-8"?>
@@ -361,7 +361,7 @@ File {\tt DabcLaunch.xml}
 </DabcLaunch>
 \end{verbatim}
 }
-\subsection{\mbs\ launch panel values}
+\subsection[MBS launch panel values]{\mbs\ launch panel values}
 File {\tt MbsLaunch.xml}
 {\small \begin{verbatim}
 <?xml version="1.0" encoding="utf-8"?>

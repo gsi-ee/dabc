@@ -439,7 +439,7 @@ Example file {\tt \$DABCSYS/application/mbs/GeneratorTest.xml}
 demonstrates the usage of a generator module. 
 
 
-\section{MBS event building}
+\section[MBS event building]{\mbs\ event building}
 Class \class{mbs::CombinerModule} allows to combine events from
 several running MBS systems. It has following parameters:
 
@@ -510,7 +510,7 @@ configure a combiner module reading from three MBS transport servers:
 \end{verbatim}
 \end{small}
 
-\section{\mbs\ upgrade for \dabc}
+\section[MBS upgrade for DABC]{\mbs\ upgrade for \dabc}
 This section is rather for the \mbs\ programmer than for application programmers.
 To have minimal changes, we use standard collector and transport. Two changes:
 \subsection{Increased buffer size support}
@@ -541,11 +541,11 @@ The file size is no longer restricted to 2GB. Optionally an element index is wri
 
 Note: This file format needs the \verba{rewind} file function because the file header must be rewritten to store {\tt iMaxWords}, {\tt iElements}, and optionally the offset of the index table. This function is currently not implemented in the {\tt RFIO} package, but will be done.
 
-\lsubsection{prog:mbs-data-struct}{\mbs\ data structures}
+\lsubsection[MBS data structures]{prog:mbs-data-struct}{\mbs\ data structures}
 All structures are defined independent on endianess. When bytes must be swapped, always 4 bytes are swapped. Fields 8 bytes long must be handled separately.
 Smaller items must be accessed by mask\&shift.
 This makes code independent of endian.
-\subsubsection{Connect to \mbs\ transport}
+\subsubsection[Connect to MBS transport]{Connect to \mbs\ transport}
 Structure used to talk between client and transport server.
 Client connects to server (\mbs) and reads this structure first.
 Structure maps the \decl{sMbsTransportInfo} info buffer.
@@ -660,7 +660,7 @@ typedef struct{
 #define LMD__ENDIAN_UNKNOWN 0
 \end{verbatim}
 }
-\subsection{\mbs\ update for DIM control}
+\subsection[MBS update for DIM control]{\mbs\ update for DIM control}
 \subsubsection{New or modified files}
 \strong{New files:}
 \bdes
@@ -691,12 +691,12 @@ On the server side \verba{stc\_createserver} fills structure \verba{s\_tcpcomm} 
 Therefore a server side \verba{stc\_close} did not close the server socket. This has been changed in that \verba{s\_tcpcomm.socket} is now equal \verba{s\_tcpcomm.sock\_rw}. When a server called \verba{stc\_close} no more accept is possible as opposed to the current behavior.
 
 On the client side a \verba{stc\_connectserver} returns the socket as well as setting\\ \verba{s\_tcpcomm.socket}. Therefore in this case \verba{stc\_close} was always shutting down and closing the socket, whereas \verba{stc\_discclient(socket)} closes the socket.
-\subsubsection{MBS launcher}
+\subsubsection[MBS launcher]{\mbs\ launcher}
 \begin{verbatim}
   launch <program> [<program path>] [. <program args>]
 \end{verbatim}
 If no program path is given, \keyw{MBSROOT} bin directory is assumed. Note that in the launched program environment PWD is the path from where \verba{m\_launch} was called, whereas the current path is the one of the program. Therefore program must \verba{chdir(getenv("PWD"))} to work on the expected directory.
-\subsubsection{\mbs\ DIM commands and parameters}
+\subsubsection[MBS DIM commands and parameters]{\mbs\ DIM commands and parameters}
 The parameters and commands follow the \dabc\ naming conventions. The DIM command \comm{MbsCommand} is generic. The argument string is any \mbs\ command. All \verba{.scom} files are provided as DIM commands. New program \verba{cmd2xml} generates an xml file with the \dabc\ formatted description of all MBS commands.
 \subsubsection{DIM control modes}
 \mbs\ can be controlled through DIM in two modes: single and multimode. In single mode the dispatcher is a DIM command server, the message logger a DIM parameter server for messages and status information (selected from DAQ status). In multinode mode the prompter is the DIM command server and the message loggers are status servers. The master message logger also is the DIM message server.
