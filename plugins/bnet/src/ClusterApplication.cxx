@@ -71,21 +71,24 @@ bnet::ClusterApplication::ClusterApplication() :
       // no need to subscribe on status of itself - it is not exists
       if (n == dabc::Manager::Instance()->NodeId()) continue;
 
-      std::string holdername = dabc::xmlAppDfltName;
+      const char* holdername = dabc::xmlAppDfltName;
 
-      std::string parname;
+      std::string parname, remname;
 
       dabc::formats(parname,"Worker%dStatus",n);
       dabc::Parameter* par = CreateParStr(parname.c_str(), "Off");
-      dabc::Manager::Instance()->Subscribe(par, n, (holdername + "." + parStatus).c_str());
+      dabc::formats(remname,"%s.%s", parStatus, holdername);
+      dabc::Manager::Instance()->Subscribe(par, n, remname.c_str());
 
       dabc::formats(parname,"Worker%dRecvStatus",n);
       par = CreateParStr(parname.c_str(), "oooo");
-      dabc::Manager::Instance()->Subscribe(par, n, (holdername + "." + parRecvStatus).c_str());
+      dabc::formats(remname,"%s.%s", parRecvStatus, holdername);
+      dabc::Manager::Instance()->Subscribe(par, n, remname.c_str());
 
       dabc::formats(parname,"Worker%dSendStatus",n);
       par = CreateParStr(parname.c_str(), "oooo");
-      dabc::Manager::Instance()->Subscribe(par, n, (holdername + "." + parSendStatus).c_str());
+      dabc::formats(remname,"%s.%s", parSendStatus, holdername);
+      dabc::Manager::Instance()->Subscribe(par, n, remname.c_str());
    }
 
    SetParDflts();

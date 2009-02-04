@@ -70,7 +70,7 @@ public:
     /**
      * Export Parameter par as DIM service. Keep in registry list.
      */
-  void RegisterParameter(dabc::Parameter* par, bool allowdimchange=true);
+  void RegisterParameter(dabc::Parameter* par, const std::string& registername, bool allowdimchange=true);
 
 /*
  * update DIM service if parameter is changed
@@ -262,7 +262,9 @@ public:
     /** Evaluate DIM prefix from given cluster node id.*/
     std::string GetDIMPrefix(unsigned n) { return n<fClusterInfo.size() ? fClusterInfo[n].fDimPrefix : std::string(); }
 
-    std::string GetDIMPrefixByName(std::string mgrname);
+    std::string GetDIMPrefixByName(const std::string& mgrname);
+
+    bool IsManagerActive(const std::string& mgrname);
 
 
     /** hold prefix for dim server name , e.g. DABC  */

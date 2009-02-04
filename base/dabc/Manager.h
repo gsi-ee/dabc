@@ -488,6 +488,9 @@ namespace dabc {
 
          static bool LoadLibrary(const char* libname, const char* startfunc = 0);
 
+         std::string BuildControlName(Basic* obj);
+         Basic* FindControlObject(const char* name);
+
          bool InstallCtrlCHandler();
          void ProcessCtrlCSignal();
          void RaiseCtrlCSignal();

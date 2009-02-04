@@ -358,6 +358,7 @@ dabc::MemoryPool::MemoryPool(Basic* parent, const char* name) :
    fCleanupStatus(stOff),
    fCleanupTmout(5.)
 {
+   SetParsHolder(this);
 }
 
 

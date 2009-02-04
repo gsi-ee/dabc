@@ -87,7 +87,7 @@ std::string dimc::Registry::ReduceDIMName(const std::string& dimname)
  return rname;
 }
 
-std::string dimc::Registry::GetDIMPrefixByName(std::string mgrname)
+std::string dimc::Registry::GetDIMPrefixByName(const std::string& mgrname)
 {
    for (unsigned cnt=0; cnt<fClusterInfo.size(); cnt++)
       if (fClusterInfo[cnt].fMgrName == mgrname)
@@ -95,6 +95,15 @@ std::string dimc::Registry::GetDIMPrefixByName(std::string mgrname)
 
    EOUT(("Didnot found DIM prefix for manager %s", mgrname.c_str()));
    return fDimPrefix;
+}
+
+bool dimc::Registry::IsManagerActive(const std::string& mgrname)
+{
+   for (unsigned cnt=0; cnt<fClusterInfo.size(); cnt++)
+      if (fClusterInfo[cnt].fMgrName == mgrname)
+         return fClusterInfo[cnt].fActive;
+
+   return false;
 }
 
 std::string dimc::Registry::CreateFullParameterName(const std::string& modulename, const std::string& varname)
@@ -137,41 +146,18 @@ return descrname;
 }
 
 
-void dimc::Registry::RegisterParameter(dabc::Parameter* par, bool allowdimchange)
+void dimc::Registry::RegisterParameter(dabc::Parameter* par, const std::string& registername, bool allowdimchange)
 {
    if(par==0) return;
-   std::string recname="";
-   dabc::Basic* holder=par->GetHolder();
-   if(holder)
-      {
-         if(holder==fManager)
-            {
-               //std::cout <<"hhhhh ParameterEvent: manager is holder. no prefix"<< std::endl;
-            }
-         else
-            {
-               recname=holder->GetName();
-            }
-      }
-   //   std::cout <<"got holder name:"<<recname <<": for parameter "<<par->GetName()<< std::endl;
-     ////// optional/debug: test type of holder. may use this for more precise naming later?
-     //   dabc::Application* apl= dynamic_cast<dabc::Application*>(holder);
-     //   dabc::GenericDevice* dev= dynamic_cast<dabc::GenericDevice*>(holder);;
-     //   dabc::Module* module=dynamic_cast<dabc::Module*>(holder);
-     //   if(apl)  std::cout <<" -holder is Application."<<std::endl;
-     //   if(dev)  std::cout <<" -holder is GenericDevice."<<std::endl;
-     //   if(module)  std::cout <<" -holder is Module."<<std::endl;
-   ////////////////////////////////
 
-   std::string registername=CreateFullParameterName(recname.c_str(),par->GetName());
-   std::string dimname=BuildDIMName(registername);
-   if(FindDIMService(dimname)!=0)
-      {
-         std::cout <<"AddParameter: service "<<dimname<<" already exisiting!" << std::endl;
-         return; // TODO: error handling, exceptions!
-      }
-   dimc::ServiceEntry* nentry= new dimc::ServiceEntry(par,dimname);
-   AddService(nentry,allowdimchange,false);
+   std::string dimname = BuildDIMName(registername);
+   if(FindDIMService(dimname)!=0) {
+      EOUT(("Service %s already existing!", dimname.c_str()));
+      // TODO: error handling, exceptions!
+   } else {
+      dimc::ServiceEntry* nentry= new dimc::ServiceEntry(par,dimname);
+      AddService(nentry, allowdimchange, false);
+   }
 }
 
 void dimc::Registry::AddService(dimc::ServiceEntry* nentry, bool allowdimchange, bool iscommanddescriptor)
@@ -323,7 +309,7 @@ void dimc::Registry::DefineDIMCommand(const std::string &name)
 {
    std::string dimname=BuildDIMName(name);
    DimCommand* ncom= new DimCommand(dimname.c_str(), "C", fDimServer);
-dabc::LockGuard g(&fMainMutex); // only protect our own list, do not lock dim
+   dabc::LockGuard g(&fMainMutex); // only protect our own list, do not lock dim
    fDimCommands.push_back(ncom);
    //std::cout <<"added dim command " <<dimname << std::endl;
 }
@@ -336,11 +322,11 @@ void dimc::Registry::StartDIMServer(const std::string& servername, const std::st
    {
       DimServer::setDnsNode (dnsnode.c_str(), dnsport);
       DimClient::setDnsNode (dnsnode.c_str(), dnsport);
-      DOUT0(("dimc::Registry starting DIM server of name %s for dns %s:%d",servername.c_str(),dnsnode.c_str(),dnsport));
+      DOUT2(("dimc::Registry starting DIM server of name %s for dns %s:%d",servername.c_str(),dnsnode.c_str(),dnsport));
    }
  else
    {
-      DOUT0(("dimc::Registry starting DIM server of name %s for DIM_DNS_NODE  %s:%d",servername.c_str(),DimServer::getDnsNode(),DimServer::getDnsPort()));
+      DOUT2(("dimc::Registry starting DIM server of name %s for DIM_DNS_NODE  %s:%d",servername.c_str(),DimServer::getDnsNode(),DimServer::getDnsPort()));
    }
  fDimServer->Start(servername, dnsnode, dnsport);
 }
@@ -418,7 +404,7 @@ dimc::ServiceEntry* service=FindDIMService(name);
 if(service)
    {
       //std::cout <<"Setting dim service "<< name << std::endl;
-      DOUT0(("Setting dim service %s to %s",name.c_str(),nval.c_str()));
+      DOUT4(("Setting dim service %s to %s",name.c_str(),nval.c_str()));
       service->SetValue(nval);
    }
 }
@@ -624,7 +610,7 @@ void dimc::Registry::OnDIMCommand(DimCommand* com)
    std::string cname=com->getName();
    std::string rname = ReduceDIMName(cname);
    std::string par = com->getString();
-   DOUT0(("OnDimCommand %s - %s", rname.c_str(), par.c_str()));
+   DOUT3(("OnDimCommand %s - %s", rname.c_str(), par.c_str()));
 
    SubmitLocalDIMCommand(rname,par); // decouple execution from dim thread!
 }
@@ -641,12 +627,12 @@ try{
    std::string parameter = password+" "+par; // blank in between!
 
    //std::cout <<"SendDIMCommand with cmd="<<fullcommand<<", par="<<parameter << std::endl;
-   DOUT0(("SendDIMCommand with cmd=%s, par=%s",fullcommand.c_str(),parameter.c_str()));
+   DOUT3(("SendDIMCommand with cmd=%s, par=%s",fullcommand.c_str(),parameter.c_str()));
 
 
    int ret=DimClient::sendCommand (fullcommand.c_str(), (char*) parameter.c_str());
    if(ret!=1)
-            EOUT(("dimc::Registry::SendDIMCommand failed with return code %d",ret));
+       EOUT(("dimc::Registry::SendDIMCommand failed with return code %d",ret));
 //   // note that DIM return code is unreliable when we send from within command callback!
    }
 catch(std::exception& e)
@@ -704,12 +690,11 @@ void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::st
 
 
          // wrap other dim commands to be executed in manager thread:
-         dimc::Command* command= new dimc::Command(com.c_str(),parameter.c_str());
+         dimc::Command* command= new dimc::Command(com.c_str(), parameter.c_str());
          if(command->IsName(_DIMC_COMMAND_SETPAR_))
                command->SetCommandName(_DIMC_COMMAND_SETDIMPAR_); // avoid confusion with default core SetParameter command
          fManager->Submit(command);
       }
-
 
 }
 

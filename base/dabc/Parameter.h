@@ -64,8 +64,6 @@ namespace dabc {
          virtual bool SetValue(const std::string &value) { return false; }
          virtual void FillInfo(std::string& info);
 
-         Basic* GetHolder();
-
          // these methods change parameter value not directly,
          // but via parameters list object. This is required in case
          // if parameters belong to object with its own tread otherwise

@@ -228,7 +228,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
 
    if (cfg) fCfgHost = cfg->MgrHost();
 
-   SetParsHolder(this, "Pars");
+   SetParsHolder(this);
 
    // we create recursive mutex to avoid problem in Folder::GetFolder method,
    // where constructor is called under locked mutex,
@@ -608,6 +608,46 @@ dabc::MemoryPool* dabc::Manager::FindPool(const char* name)
    return dynamic_cast<dabc::MemoryPool*> (FindChild(name));
 }
 
+std::string dabc::Manager::BuildControlName(Basic* obj)
+{
+   std::string res;
+
+   if (obj==0) return res;
+   res = obj->GetName();
+
+   Basic* prnt = obj->GetParent();
+   while ((prnt!=0) && (prnt!=this)) {
+      res += ".";
+      res += prnt->GetName();
+      prnt = prnt->GetParent();
+   }
+
+   return res;
+}
+
+dabc::Basic* dabc::Manager::FindControlObject(const char* name)
+{
+   if ((name==0) || (strlen(name)==0)) return 0;
+
+   Folder* prnt = this;
+
+   std::string fullname = name;
+
+   size_t pos = 0;
+
+   while ((pos = fullname.find_last_of('.')) != std::string::npos) {
+      const char* prntname = fullname.c_str() + pos + 1;
+
+      prnt = dynamic_cast<Folder*> (prnt->FindChild(prntname));
+      if (prnt==0) return 0;
+
+      fullname.erase(pos);
+   }
+
+   return prnt->FindChild(fullname.c_str());
+}
+
+
 bool dabc::Manager::DeletePool(const char* name)
 {
    return Execute(new CmdDeletePool(name));
@@ -776,11 +816,11 @@ int dabc::Manager::PreviewCommand(Command* cmd)
 
       // this is local command submission
       CommandReceiver* rcv = 0;
+      Basic* obj = 0;
 
-      if ((itemname!=0) && (strlen(itemname)>0)) {
-         Basic* obj = FindChild(itemname);
-         if (obj!=0) rcv = obj->GetCmdReceiver();
-      }
+      if ((itemname!=0) && (strlen(itemname)>0)) obj = FindChild(itemname);
+
+      if (obj!=0) rcv = obj->GetCmdReceiver();
 
       cmd->RemovePar("_ItemName_");
 
@@ -789,6 +829,10 @@ int dabc::Manager::PreviewCommand(Command* cmd)
       if (rcv!=0) {
          rcv->Submit(cmd);
          cmd_res = cmd_postponed;
+      } else
+      if ((obj!=0) && cmd->IsName(CmdSetParameter::CmdName())) {
+         dabc::Parameter* par = dynamic_cast<dabc::Parameter*> (obj);
+         if (par && par->InvokeChange(cmd)) cmd_res = cmd_postponed;
       }
 
    } else
@@ -814,12 +858,6 @@ int dabc::Manager::PreviewCommand(Command* cmd)
       } else
          cmd_res = cmd_postponed;
    }
-
-   if (cmd_res == cmd_ignore)
-      if (cmd->IsName(CmdSetParameter::CmdName())) {
-         dabc::Parameter* par = dynamic_cast<dabc::Parameter*>(FindChild(cmd->GetStr("ParName")));
-         cmd_res = (par && par->InvokeChange(cmd)) ? cmd_postponed : cmd_ignore;
-      }
 
    if (cmd_res == cmd_ignore)
       cmd_res = WorkingProcessor::PreviewCommand(cmd);
@@ -1042,6 +1080,8 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       if (pool) delete pool;
    } else
    if (cmd->IsName(CmdStateTransition::CmdName())) {
+      DOUT0(("Invoke state transition %s", cmd->GetStr("Cmd")));
+
       InvokeStateTransition(cmd->GetStr("Cmd"), cmd);
       cmd_res = cmd_postponed;
    } else
@@ -1717,6 +1757,8 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
 
    if (app==0) return false;
 
+   DOUT4(("DoStateTransition %s", stcmd));
+
    const char* tgtstate = TargetStateName(stcmd);
 
    bool res = app->DoStateTransition(stcmd);
@@ -1724,6 +1766,8 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
    if (!res) tgtstate = stFailure;
 
    if (!Execute(new CmdSetParameter(stParName, tgtstate))) res = false;
+
+   DOUT4(("DoStateTransition %s res = %s", stcmd, DBOOL(res)));
 
    return res;
 }

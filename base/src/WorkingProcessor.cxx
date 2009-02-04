@@ -492,8 +492,13 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 {
    int cmd_res = cmd_ignore;
 
+   DOUT5(("WorkingProcessor::PreviewCommand %s", cmd->GetName()));
+
    if (cmd->IsName(CmdSetParameter::CmdName())) {
+
       Parameter* par = FindPar(cmd->GetPar("ParName"));
+
+      DOUT5(("Found par %s = %p", cmd->GetPar("ParName"), par));
 
       if (par==0) {
          EOUT(("Did not found parameter %s", cmd->GetPar("ParName")));

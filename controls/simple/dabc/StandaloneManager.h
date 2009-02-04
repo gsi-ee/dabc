@@ -70,8 +70,6 @@ namespace dabc {
 
          virtual int ExecuteCommand(Command* cmd);
 
-         Parameter* FindControlParameter(const char* name);
-
          void SubscribedParChanged(ParamReg& reg);
 
          void CheckSubscriptionList();

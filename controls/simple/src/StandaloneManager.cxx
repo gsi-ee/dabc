@@ -415,33 +415,6 @@ bool dabc::StandaloneManager::SendOverCommandChannel(const char* managername, co
    return fCmdChannel->Submit(cmd);
 }
 
-dabc::Parameter* dabc::StandaloneManager::FindControlParameter(const char* name)
-{
-   std::string holdername;
-
-   const char* pos = strrchr(name, '.');
-
-   if (pos!=0) {
-      holdername.assign(name, pos - name);
-      name = pos + 1;
-   }
-
-   if (holdername.length()==0) return FindPar(name);
-
-   dabc::Iterator iter(this);
-
-   while (iter.next()) {
-      Parameter* par = dynamic_cast<Parameter*> (iter.current());
-      if (par==0) continue;
-
-      if (!par->GetHolder()->IsName(holdername.c_str())) continue;
-
-      if (par->IsName(name)) return par;
-   }
-
-   return 0;
-}
-
 int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
 {
    if (cmd->IsName("DoCommandRecv")) {
@@ -511,7 +484,7 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       const char* srcname = cmd->GetStr("SrcName", "");
       const char* tgtname = cmd->GetStr("TgtName", "");
 
-      dabc::Parameter* par = FindControlParameter(srcname);
+      dabc::Parameter* par = dynamic_cast<dabc::Parameter*> (FindControlObject(srcname));
       // dynamic_cast<dabc::Parameter*>(FindChild(srcname));
 
       if (par==0) {
@@ -604,7 +577,7 @@ void dabc::StandaloneManager::SubscribedParChanged(ParamReg& reg)
    // check if this is master parameter and it is active
    if (!reg.active || !reg.ismaster) return;
 
-   std::string value, remname(reg.remname);
+   std::string value;
 
    // here send to remote node command to update slave parameter value
    if (!reg.par->GetValue(value)) {
@@ -614,11 +587,11 @@ void dabc::StandaloneManager::SubscribedParChanged(ParamReg& reg)
    }
 
    DOUT3(( "Subscribed parameter changed %s tgt:%d %s",
-      reg.par->GetName(), reg.tgtnode, remname.c_str()));
+      reg.par->GetName(), reg.tgtnode, reg.remname.c_str()));
 
-   Command* cmd = new CmdSetParameter(remname.c_str(), value.c_str());
+   Command* cmd = new CmdSetParameter(reg.par->GetName(), value.c_str());
 
-   if (!Submit(RemoteCmd(cmd, reg.tgtnode, 0)))
+   if (!Submit(RemoteCmd(cmd, reg.tgtnode, reg.remname.c_str())))
       EOUT(("Cannot send parameter change"));
 
    DOUT3(("SubscribedParChanged completed"));

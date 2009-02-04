@@ -73,11 +73,6 @@ void dabc::Parameter::Changed()
    if (IsDebugOutput()) DoDebugOutput();
 }
 
-dabc::Basic* dabc::Parameter::GetHolder()
-{
-   return fLst ? fLst->fParsHolder : 0;
-}
-
 bool dabc::Parameter::InvokeChange(const char* value)
 {
    return fLst ? fLst->InvokeParChange(this, value, 0) : false;

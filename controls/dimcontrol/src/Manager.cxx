@@ -97,16 +97,14 @@ void dimc::Manager::Shutdown()
 
 bool dimc::Manager::CanSendCmdToManager(const char* mgrname)
 {
-   return true;
+   return fRegistry->IsManagerActive(mgrname);
 }
 
 
 
 bool dimc::Manager::SendOverCommandChannel(const char* managername, const char* cmddata)
 {
-   std::string commandname=_DIMC_COMMAND_MANAGER_;
-     //std::cout <<"SendOverCommandChannel with string:"<<cmddata << std::endl;
-   fRegistry->SendDIMCommand(managername, commandname, cmddata);
+   fRegistry->SendDIMCommand(managername, _DIMC_COMMAND_MANAGER_, cmddata);
    return true;
 }
 
@@ -148,13 +146,13 @@ int dimc::Manager::ExecuteCommand(dabc::Command* cmd)
 
 void dimc::Manager::ParameterEvent(dabc::Parameter* par, int event)
 {
-   std::string pname=par->GetName();
+   std::string pname = par->GetName();
    //DOUT5(("dimc::Manager::ParameterEvent %d for %s \n",event,pname.c_str()));
    dabc::Manager::ParameterEvent(par, event);
    switch(event)
     {
        case 0: // creation of new parameter
-          fRegistry->RegisterParameter(par,true);
+          fRegistry->RegisterParameter(par, BuildControlName(par), true);
           break;
        case 1: // parameter is updated in module
           fRegistry->ParameterUpdated(par);
@@ -214,13 +212,15 @@ void dimc::Manager::UpdateStatusRecord()
 
 void dimc::Manager::CommandRegistration(dabc::CommandDefinition* def, bool reg)
 {
-  std::string registername = fRegistry->CreateFullParameterName(def->GetParent()->GetName(), def->GetName());
+//  std::string registername = fRegistry->CreateFullParameterName(def->GetParent()->GetName(), def->GetName());
 
-  DOUT5(("dimc::Manager::CommandRegistration %s %s", (reg ? "registers" : "unregisters"), registername.c_str()));
+   std::string registername = BuildControlName(def);
 
-  if(reg)
-      fRegistry->RegisterUserCommand(registername,def);
-  else
+   DOUT5(("dimc::Manager::CommandRegistration %s %s", (reg ? "registers" : "unregisters"), registername.c_str()));
+
+   if(reg)
+      fRegistry->RegisterUserCommand(registername, def);
+   else
       fRegistry->UnRegisterUserCommand(registername);
 }
 
