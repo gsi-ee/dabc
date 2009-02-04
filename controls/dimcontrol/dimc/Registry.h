@@ -23,6 +23,18 @@ class ParameterInfo;
 class ServiceEntry;
 class Manager;
 
+class RegistryEntry {
+public:
+
+   RegistryEntry() : fMgrName(), fDimServer(), fDimPrefix(), fActive(true) {}
+
+   std::string  fMgrName;
+   std::string  fDimServer;
+   std::string  fDimPrefix;
+   bool         fActive;
+};
+
+
 /** This is the registry of all parameters and commands exported over the
  *  DIM server
  *  */
@@ -123,7 +135,7 @@ public:
 	/**
 	*  Starts the dim server.
 	*/
-    void StartDIMServer(const std::string& dnsnode, unsigned int dnsport);
+    void StartDIMServer(const std::string& servername, const std::string& dnsnode, unsigned int dnsport);
 
     /**
 	*  Stops the dim server.
@@ -218,10 +230,10 @@ public:
 
 
 
-      /**
-	*  Send dim command of comname with string parameter. Destination node is
+   /**
+	 *  Send dim command of comname with string parameter. Destination node is
     * given as full name in target string
-	*/
+    */
     void SendDIMCommand(const std::string& target, const std::string& comname, const std::string& par);
 
 
@@ -235,22 +247,28 @@ public:
     std::string ReduceDIMName(const std::string& dimname);
 
      /** Returns prefix for dim service name of this node. */
-    std::string& GetDIMPrefix();
+    std::string& GetDIMPrefix() { return fDimPrefix; }
 
 
+    unsigned NumNodes() const { return fClusterInfo.size(); }
 
-    /** Evaluate DIM prefix from given cluster node id.*/
-    std::string CreateDIMPrefix(unsigned int nodeid);
+    const char* GetManagerName(unsigned n) { return n<fClusterInfo.size() ? fClusterInfo[n].fMgrName.c_str() : 0; }
 
+    bool IsNodeActive(unsigned n) { return n<fClusterInfo.size() ? fClusterInfo[n].fActive : false; }
 
     /** Evaluate name of dim server from cluster node id*/
-    std::string  GetDIMServerName(unsigned int nodeid);
+    std::string GetDIMServerName(unsigned n) { return n<fClusterInfo.size() ? fClusterInfo[n].fDimServer : std::string(); }
+
+    /** Evaluate DIM prefix from given cluster node id.*/
+    std::string GetDIMPrefix(unsigned n) { return n<fClusterInfo.size() ? fClusterInfo[n].fDimPrefix : std::string(); }
+
+    std::string GetDIMPrefixByName(std::string mgrname);
 
 
     /** hold prefix for dim server name , e.g. DABC  */
     static const std::string gServerPrefix;
 
-    static const std::string& GetServerPrefix(){return gServerPrefix;}
+    static const std::string& GetServerPrefix() { return gServerPrefix; }
 
 
 protected:
@@ -277,15 +295,8 @@ protected:
       /** handle to dim server*/
     dimc::Server* fDimServer;
 
-    /** Configuration for name prefixes*/
-    dabc::Configuration* fConfiguration;
-
     /** hold prefix for dim service names  */
     std::string fDimPrefix;
-
-    /** init switch for dim prefix evaluation*/
-    bool fDimPrefixReady;
-
 
     /** keep track of assigned dim services.*/
     std::vector<dimc::ServiceEntry*> fDimServices;
@@ -301,7 +312,7 @@ protected:
    /** keep track of subscribed parameter info services.*/
     std::vector<dimc::ParameterInfo*> fParamInfos;
 
-
+    std::vector<dimc::RegistryEntry>  fClusterInfo;
 
 };
 

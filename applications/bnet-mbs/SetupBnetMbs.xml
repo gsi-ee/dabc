@@ -102,7 +102,7 @@
         </Run>
         <Application class="bnet::MbsWorker">
            <IsReceiver value="true"/>
-           <IsFilter value="true"/>
+           <IsFilter value="false"/>
            <EventBuffer value="8192"/>
         </Application>
      </Context>

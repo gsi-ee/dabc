@@ -49,7 +49,7 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    dabc::Manager(managername, usecurrentprocess, cfg), fIsMainMgr(false)
 {
    // setup of nodes registry here or in base class?
-   fRegistry=new dimc::Registry(this,cfg);
+   fRegistry=new dimc::Registry(this, cfg);
    // define commands here:
    fRegistry->DefineDIMCommand(dabc::Manager::stcmdDoConfigure);
    fRegistry->DefineDIMCommand(dabc::Manager::stcmdDoEnable);
@@ -62,10 +62,13 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    fRegistry->DefineDIMCommand(_DIMC_COMMAND_SETPAR_);
    fRegistry->DefineDIMCommand(_DIMC_COMMAND_MANAGER_);
 
+   fNodeId = fCfg->MgrNodeId();
+   if(fNodeId==0) fIsMainMgr = true; // TODO: specify main manager from other quality in config?
 
-   fNodeId=fCfg->MgrNodeId();
-   if(fNodeId==0) fIsMainMgr=true; // TODO: specify main manager from other quality in config?
-   SetName(fRegistry->CreateDIMPrefix(fNodeId).c_str()); // required for correct command response
+   DOUT0(("!!!!!!!!!!!!!! Create manager with nodeid %d", fNodeId));
+
+//   SetName(fRegistry->CreateDIMPrefix(fNodeId).c_str()); // required for correct command response
+
    InitSMmodule();
 
    fStatusRecord=new dabc::StatusParameter(this, _DIMC_SERVICE_FSMRECORD_,0);//CurrentState());
@@ -73,7 +76,7 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    UpdateStatusRecord();
    unsigned int dimport=2505;
    if(fCfg->MgrDimPort()!=0) dimport=fCfg->MgrDimPort();
-   fRegistry->StartDIMServer(fCfg->MgrDimNode(),dimport); // 0 port means: use environment variables for dns
+   fRegistry->StartDIMServer(fRegistry->GetDIMServerName(fCfg->MgrNodeId()), fCfg->MgrDimNode(), dimport); // 0 port means: use environment variables for dns
    DOUT0(("+++++++++++++++++ Manager ctor starting dim on dim dns node:%s, port%d",fCfg->MgrDimNode(),fCfg->MgrDimPort()));
 }
 
@@ -107,7 +110,7 @@ bool dimc::Manager::SendOverCommandChannel(const char* managername, const char* 
 {
    std::string commandname=_DIMC_COMMAND_MANAGER_;
      //std::cout <<"SendOverCommandChannel with string:"<<cmddata << std::endl;
-   fRegistry->SendDIMCommand(managername,commandname,cmddata);
+   fRegistry->SendDIMCommand(managername, commandname, cmddata);
    return true;
 }
 
@@ -215,7 +218,10 @@ void dimc::Manager::UpdateStatusRecord()
 
 void dimc::Manager::CommandRegistration(dabc::CommandDefinition* def, bool reg)
 {
-  std::string registername=fRegistry->CreateFullParameterName(def->GetParent()->GetName(), def->GetName());
+  std::string registername = fRegistry->CreateFullParameterName(def->GetParent()->GetName(), def->GetName());
+
+  DOUT0(("CommandRegistration %s", registername.c_str()));
+
   if(reg)
    {
       DOUT5(("dimc::Manager::CommandRegistration registers %s \n",registername.c_str()));
@@ -231,7 +237,7 @@ void dimc::Manager::CommandRegistration(dabc::CommandDefinition* def, bool reg)
 
 bool dimc::Manager::Subscribe(dabc::Parameter* par, int remnode, const char* remname)
 {
-   std::string fulldimname= fRegistry->CreateDIMPrefix(remnode)+remname;
+   std::string fulldimname = fRegistry->GetDIMPrefix(remnode)+remname;
    return (fRegistry->SubscribeParameter(par,fulldimname));
 }
 
@@ -243,18 +249,15 @@ bool dimc::Manager::Unsubscribe(dabc::Parameter* par)
 
 int dimc::Manager::NumNodes()
 {
-   return fCfg->NumNodes();
+   return fRegistry->NumNodes();
 }
 
 const char* dimc::Manager::GetNodeName(int num)
 {
-   std::string name=GetName();
-   if(fCfg!=0) name=fRegistry->CreateDIMPrefix(num);// GetDIMServerName(num); // already adds dabc prefix
-   //std::cout <<"+++++++++++ GetNodeName("<<num<<")="<<name << std::endl;
-   return name.c_str();
+   return fRegistry->GetManagerName(num);
 }
 
 bool dimc::Manager::IsNodeActive(int num)
 {
-   return true;
+   return fRegistry->IsNodeActive(num);
 }

@@ -37,7 +37,7 @@ namespace dimc {
          /** to be called by external shutdown command to properly end the application */
          void Shutdown();
 
-         virtual bool HasClusterInfo() { return true; }
+         virtual bool HasClusterInfo() { return fRegistry!=0; }
          virtual int NumNodes();
          virtual int NodeId() const { return fNodeId; }
          virtual bool IsNodeActive(int num);

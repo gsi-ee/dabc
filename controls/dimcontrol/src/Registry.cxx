@@ -15,17 +15,41 @@
 
 const std::string dimc::Registry::gServerPrefix="DABC/";
 
-dimc::Registry::Registry(dimc::Manager* owner, dabc::Configuration* cfg)
-   : fMainMutex(true), fParseMutex(true), fManager(owner),  fDimServer(0), fConfiguration(cfg), fDimPrefixReady(false)
+dimc::Registry::Registry(dimc::Manager* owner, dabc::Configuration* cfg) :
+   fMainMutex(true),
+   fParseMutex(true),
+   fManager(owner),
+   fDimServer(0),
+   fClusterInfo()
 {
-   fDimServer=dimc::Server::Instance();
+   fDimServer = dimc::Server::Instance();
    fDimServer->SetOwner(this);
    // the DIM initializations:
    fDimServices.clear();
    fDimCommands.clear();
    fModuleCommandNames.clear();
    fParamInfos.clear();
+
+   unsigned nodeid = 0;
+
+   for(unsigned n=0; n<cfg->NumNodes();n++) {
+      if (cfg->ControlSequenceId(n) == 0) continue;
+      fClusterInfo.push_back(RegistryEntry());
+
+      fClusterInfo[nodeid].fMgrName = cfg->ContextName(n);
+
+      fClusterInfo[nodeid].fDimServer = gServerPrefix + cfg->NodeName(n) + dabc::format(":%u",nodeid);
+
+      fClusterInfo[nodeid].fDimPrefix = fClusterInfo[nodeid].fDimServer + "/" + fClusterInfo[nodeid].fMgrName;
+
+      fClusterInfo[nodeid].fActive = true;
+
+      if (cfg->MgrNodeId() == (int) nodeid) fDimPrefix = fClusterInfo[nodeid].fDimPrefix;
+
+      nodeid++;
+   }
 }
+
 
 dimc::Registry::~Registry()
 {
@@ -36,15 +60,11 @@ dimc::Registry::~Registry()
 }
 
 
-
-
-
-
 std::string dimc::Registry::BuildDIMName(const std::string& localname)
 {
- std::string prefix=GetDIMPrefix()+"/";
- std::string dimname=prefix+localname;
- return dimname;
+   std::string prefix=GetDIMPrefix()+"/";
+   std::string dimname=prefix+localname;
+   return dimname;
 
 }
 
@@ -67,49 +87,61 @@ std::string dimc::Registry::ReduceDIMName(const std::string& dimname)
  return rname;
 }
 
-std::string& dimc::Registry::GetDIMPrefix()
+std::string dimc::Registry::GetDIMPrefixByName(std::string mgrname)
 {
-if(!fDimPrefixReady)
-{
-   fDimPrefix=CreateDIMPrefix(fConfiguration->MgrNodeId());
-   fDimPrefixReady=true;
-}
-return fDimPrefix;
+   for (unsigned cnt=0; cnt<fClusterInfo.size(); cnt++)
+      if (fClusterInfo[cnt].fMgrName == mgrname)
+         return fClusterInfo[cnt].fDimPrefix;
+
+   EOUT(("Didnot found DIM prefix for manager %s", mgrname.c_str()));
+   return fDimPrefix;
 }
 
 
+/*
 
 std::string dimc::Registry::CreateDIMPrefix(unsigned int nodeid)
 {
-std::string nodename=GetDIMServerName(nodeid);
-std::string appname=fConfiguration->ContextName(nodeid);
-std::string result=nodename+"/"+appname;
-return result;
+   std::string nodename=GetDIMServerName(nodeid);
+   unsigned ctrlid = fConfiguration->DefineNodeId(nodeid);
+   std::string appname = fConfiguration->ContextName(ctrlid);
+   std::string result=nodename+"/"+appname;
+   return result;
 }
 
+std::string dimc::Registry::CreateDIMPrefixByName(const char* mgrname)
+{
+   int id = fConfiguration->FindContextByName(mgrname);
+   if (id<0) return CreateDIMPrefix(0);
+
+   unsigned ctrlid = fConfiguration->ControlSequenceId(id);
+
+   return CreateDIMPrefix(ctrlid-1);
+}
 
 
 std::string  dimc::Registry::GetDIMServerName(unsigned int nodeid)
 {
-std::string retval;
-std::string servname=fConfiguration->NodeName(nodeid);
-std::string prefix=gServerPrefix;//"DABC/"
-retval=prefix+servname+dabc::format(":%d",nodeid);
-//std::cout <<"GetDIMServerName returns "<<retval << std::endl;
-return retval;
+   std::string retval;
+   unsigned ctrlid = fConfiguration->DefineNodeId(nodeid);
+   std::string servname=fConfiguration->NodeName(ctrlid);
+   std::string prefix=gServerPrefix;//"DABC/"
+   retval=prefix+servname+dabc::format(":%d",nodeid);
+   //std::cout <<"GetDIMServerName returns "<<retval << std::endl;
+   return retval;
 }
 
-
+*/
 
 std::string dimc::Registry::CreateFullParameterName(const std::string& modulename, const std::string& varname)
 {
-dabc::LockGuard g(&fParseMutex);
-if(modulename=="") return varname;
-std::string registername="";
-const char* rname=dimc::nameParser::createFullParameterName(modulename.c_str(),varname.c_str());
-if(rname) registername=rname; // cannot init std::string from null char* ptr
-// TODO: exception if parsing fails
-return registername;
+   dabc::LockGuard g(&fParseMutex);
+   if(modulename=="") return varname;
+   std::string registername="";
+   const char* rname=dimc::nameParser::createFullParameterName(modulename.c_str(),varname.c_str());
+   if(rname) registername=rname; // cannot init std::string from null char* ptr
+   // TODO: exception if parsing fails
+   return registername;
 
 }
 
@@ -335,20 +367,19 @@ dabc::LockGuard g(&fMainMutex); // only protect our own list, do not lock dim
 
 
 
-void dimc::Registry::StartDIMServer(const std::string& dnsnode, unsigned int dnsport)
+void dimc::Registry::StartDIMServer(const std::string& servername, const std::string& dnsnode, unsigned int dnsport)
 {
- std::string servname=GetDIMServerName(fConfiguration->MgrNodeId());
  if(dnsport!=0)
    {
       DimServer::setDnsNode (dnsnode.c_str(), dnsport);
       DimClient::setDnsNode (dnsnode.c_str(), dnsport);
-      DOUT0(("dimc::Registry starting DIM server of name %s for dns %s:%d",servname.c_str(),dnsnode.c_str(),dnsport));
+      DOUT0(("dimc::Registry starting DIM server of name %s for dns %s:%d",servername.c_str(),dnsnode.c_str(),dnsport));
    }
  else
    {
-      DOUT0(("dimc::Registry starting DIM server of name %s for DIM_DNS_NODE  %s:%d",servname.c_str(),DimServer::getDnsNode(),DimServer::getDnsPort()));
+      DOUT0(("dimc::Registry starting DIM server of name %s for DIM_DNS_NODE  %s:%d",servername.c_str(),DimServer::getDnsNode(),DimServer::getDnsPort()));
    }
- fDimServer->Start(servname,dnsnode,dnsport);
+ fDimServer->Start(servername, dnsnode, dnsport);
 }
 
 void dimc::Registry::StopDIMServer()
@@ -641,9 +672,9 @@ void dimc::Registry::SendDIMCommand(const std::string& target, const std::string
 
 {
 try{
-   std::string fullcommand=target+"/"+comname;
+   std::string fullcommand = GetDIMPrefixByName(target) + "/" + comname;
    std::string password="x1gSFfpv0JvDA"; // get this from environment later!
-   std::string parameter=password+" "+par; // blank in between!
+   std::string parameter = password+" "+par; // blank in between!
 
    //std::cout <<"SendDIMCommand with cmd="<<fullcommand<<", par="<<parameter << std::endl;
    DOUT0(("SendDIMCommand with cmd=%s, par=%s",fullcommand.c_str(),parameter.c_str()));

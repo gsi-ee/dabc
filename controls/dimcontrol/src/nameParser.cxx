@@ -221,6 +221,7 @@ bool dimc::nameParser::parseFullName(const char *fullname){
     buildFullName();
     return true;
   }
+  /*
   cout << "Error: " <<
   NameSpace << "/" <<
   NodeName << ":" <<
@@ -229,6 +230,8 @@ bool dimc::nameParser::parseFullName(const char *fullname){
   ApplName << ":" <<
   ApplID << "/" <<
   Name << endl;
+  */
+
   strcpy(FullName,"");
   return false;
 }
