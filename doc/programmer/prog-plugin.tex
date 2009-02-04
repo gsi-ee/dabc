@@ -222,50 +222,53 @@ input and then sends it alternatingly to the first or the second output.
 \label{plugin_module_async}
 
 In contrast to data processing in \class{dabc::ModuleSync} main loop,
-class \class{dabc::ModuleAsync} provides 
-number of callbacks routines which are executed only if dedicated \dabc~ events occurs.
-For instance, when any input port gets new buffer, virtual method \func{ProcessInputEvent} will
+class \class{dabc::ModuleAsync} provides a
+number of callbacks routines which are executed only if dedicated \dabc~ events occur.
+For instance, when any input port gets new buffer, virtual method 
+\func{ProcessInputEvent()} will
 be called. User should reimplement this method to react on the event.
 
-Main advantage of such approach that thread is not blocked and
+The main advantage of such approach is that the thread is not blocked and
 several modules \class{dabc::ModuleAsync} can run within same working thread.
-At the same time, using such programming technique may requires additional 
-bookkeeping while it is not allowed to block callback routine, waiting that
-some resource is available.
+At the same time, using such programming technique may require additional 
+bookkeeping, as it is not allowed to block the callback routine while waiting for
+some resource to be available.
 
 Class \class{dabc::ModuleSync} provides number of methods for handling different events:
 
 \begin{tabular}{ll}
 Method &  Description \\
    \hline
-\func{ProcessInputEvent()} & new buffer in input queue, it can be read with port->Recv() \\
-\func{ProcessOutputEvent()} & new place in output queue is availible, one can use port->Send()  \\
+\func{ProcessInputEvent()} & new buffer in input queue, it can be read 
+with \func{port->Recv()} \\
+\func{ProcessOutputEvent()} & new space in output queue is available, one can use \func{port->Send()}  \\
 \func{ProcessConnectEvent()} & port is connected to transport  \\
 \func{ProcessDisconnectEvent()} & port was disconnected from transport  \\
-\func{ProcessPoolEvent()} & requested buffer can be read with handle->TakeRequestedBuffer()  \\
-\func{ProcessTimerEvent()} & time has fired and event  \\
+\func{ProcessPoolEvent()} & requested buffer can be read with 
+\func{handle->TakeRequestedBuffer()}  \\
+\func{ProcessTimerEvent()} & timer has fired an event  \\
 \end{tabular}
 
-By reimplementing one or several from these methods, one can react on correspondent events.
+By reimplementing one or several of these methods one can react on corresponding events.
 
-Actually, all events are dispatched to the mentioned above methods by method 
+Actually, all events are dispatched to the methods mentioned above  by method 
 \func{ProcessUserEvent()}. 
-The method called by the working thread
+This method is called by the working thread
 whenever {\bf any} event for this module shall be processed.
 However, this virtual method  
 may also directly be re-implemented in the user subclass
 if one wants to treat all events centrally. 
-As arguments one get component pointer (port, timer, ...) and number of
-event type (dabc::evntInput, dabc::evntOutput, ...) 
+As arguments one gets the pointer to the relevant component  (port, timer, ...) 
+and a number describing the event type (dabc::evntInput, dabc::evntOutput, ...) 
  
-Class \class{dabc::ModuleAsync} has no methods, which can block thread.
-Nevertheless user should avoid any kind of polling loops, waiting for some
-other resource (buffer, output queue and so on) - callbacks should \strong{return}
-as soon as possible. In such situation processing can be continued in 
-the other callback, called when required resource is available. 
+Class \class{dabc::ModuleAsync} has no methods which can block.
+Nevertheless the user should avoid any kind of polling loops, waiting for some
+other resource (buffer, output queue and so on) - the callbacks should \strong{return}
+as soon as possible. In such situation, processing must be continued in 
+another callback that is invoked when the required resource is available. 
 This might require an own bookkeeping of such situations (kind of state transition logic). 
 
-Lets consider as an example same repeater module, but implemented with asynchronous module.
+Let's consider as an example the same repeater module, but implemented as asynchronous module:
    
 \begin{small}
 \begin{verbatim}
@@ -303,22 +306,25 @@ public:
 \end{verbatim}
 \end{small}
 
-Constructor of this module has absolutely the same components as in previous example.
+The constructor of this module has absolutely the same components as in previous example.
 One should add \member{fCnt} member to count direction for output of next buffer.
 Value of \member{fCnt} in some sense defines current state of the module. 
- Instaed of main loop one can see two virtual methods for input and output event
+Instead of the {\tt MainLoop()} one can see two virtual methods for input and output event
 processing. In each methods one sees same code, with while loop inside.
 In the loop one checks that input and current output are ready and retransmit buffer.
 When any port (input or output) has no more possibility to transmit data, 
 method will be returned. 
 
-One need \keyw{while} loop here while not every input event and not every output events
-leads to buffer transports. In case, when input queue is empty (\func{CanRecv} returns false) 
-or output queue is full (\func{CanSend} returns false) one cannot transfer buffer from input
-to output, therefore callback must be returned. But next time event processing routine is
-called, one should tranfer several buffers at once. While methods \func{Send} and \func{Recv}  
-cannot block, such \keyw{while} loop will not block too. But in any case one should 
-avoid such \strong{wrong} code:
+One needs a \keyw{while()} loop here because not every input event and not every output events leads to buffer transports. 
+If input queue is empty (\func{CanRecv()} returns false), 
+or output queue is full (\func{CanSend()} returns false), 
+one cannot transfer a buffer from input to output; 
+thus the callback must be returned. 
+But when the event processing routine is called the next time, 
+one should tranfer several buffers at once. 
+Since methods \func{Send()} and \func{Recv()}  
+cannot block, such \keyw{while()} loop will not block either. 
+But in any case one should  avoid such \strong{wrong} code:
 
 \begin{small}
 \begin{verbatim}
@@ -334,11 +340,12 @@ avoid such \strong{wrong} code:
 \end{verbatim}
 \end{small}
 
-Here \keyw{while} loop can wait infinite time until output port will accept new buffer
-and during this time complete thread will be blocked. 
+Here the \keyw{while()} loop can wait for an infinite time 
+until the output port will accept a new buffer,
+and during this time the complete thread will be blocked. 
 
-While both processing methods are the same in the example,  
-one can implement central \func{ProcessUserEvent} method instead:  
+As both processing methods are the same in the example,  
+one can implement central \func{ProcessUserEvent()} method instead:  
  
 \begin{small}
 \begin{verbatim}
@@ -352,12 +359,12 @@ one can implement central \func{ProcessUserEvent} method instead:
 \end{verbatim}
 \end{small}
 
-To introduce time-dependent activity in \class{dabc::ModuleAsync}, 
-one should use timers. Timer object can be created with method 
-\func{CreateTimer}. It delivers timer event with specified intervals, 
+To introduce time-dependent actions in \class{dabc::ModuleAsync}, 
+one should use timers. Timer objects can be created with method 
+\func{CreateTimer()}. It delivers a timer event with specified intervals, 
 which can be processed in \func{ProcessTimerEvent()} method.
 
-One can modify previos example to display number of transported buffers
+One can modify the previous example to display the number of transported buffers
 every 5 seconds.
 
 \begin{small}
@@ -387,9 +394,10 @@ For special set ups (e.g. Bnet), the framework provides
    
 \begin{compactenum}
 
-\item  Instead of implementing \func{MainLoop()}, other virtual 
-      methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
-      implemented that are implicitly called by the superclass \func{MainLoop()}.
+\item  Instead of implementing \func{MainLoop()} (or \func{ProcessUserEvent()}, resp.) 
+other virtual methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
+      implemented that are implicitly called by the superclass \func{MainLoop()} (or
+      by the appropriate event callbacks, resp.).
 \item  The special base classes may provide additional 
       methods to be used for data processing.    
 \end{compactenum}
@@ -401,21 +409,26 @@ All data transport functionality is implemented by
 
 \subsection{Transport}
 
-Actual transport of buffers from/to the port is done by \class{dabc::Transport} class.
-During connection time each module port gets pointer on transport object, which provides
-number of methods for buffers transfer. Typically transport object runs in other thread than module itself, 
-therefore transmission of the buffer happens not immediately after call of 
-\func{dabc::Port::Send()} or \func{dabc::Port::Recv()} methods.
+Actual transport of \class{Buffers} from/to a \class{Port} is done by a \class{dabc::Transport} implementation.
+During connection time each module port gets the pointer to a transport object
+which provides a number of methods for buffer transfer. 
+As the \class{Transport} object typically runs in another thread than the module,
+the transmission of a buffer does not happen immediately when calling 
+\func{dabc::Port::Send()} or \func{dabc::Port::Recv()} methods, but
+the buffer is at first kept in a queue which must be provided by the
+\class{Transport} implementation.
 
  
 
 \subsection{Device}
+\label{prog_plugin_device_device}
+Class \class{dabc::Device} usually (but not always) represents some physical
+device (like a network or a PCIe card) and has the role of a management unit for 
+the \class{Transports} which belong to that device. 
+The \class{Device} is always the owner of its \class{Transport} objects, i.~.e~
+it creates, keeps, and deletes them.
 
-Class \class{dabc::Device} is typically (but not always) represents some physical
-device (like network or PCIe card) and play role of management unit for transports,
-which are logically belong to that device. Device is always owner of transport object.
-
-Device typically created in user application by:
+A \class{Device} is typically created in the user application by:
 \begin{small}
 \begin{verbatim}
 ...
@@ -424,22 +437,36 @@ dabc::mgr()->CreateDevice("roc::Device", "ROC");
 \end{verbatim}     
 \end{small}
 
-Later one can find device with \func{dabc::Manager::FindDevice()} method.
+Later one can find this device with \func{dabc::Manager::FindDevice()} method.
 
-Device should implement method \func{CreateTranport()}, 
-where appropriate transport for specified port created.
- 
+Each \class{dabc::Device} implementation should define the virtual method \func{CreateTransport()} such, that an appropriate \class{Transport} instance 
+is created and connected to the specified \class{Port}.
+This factory method is invoked by the framework when the device is connected to 
+a module port. This is usually specified in the user application by calls
+of\\ 
+{\tt dabc::mgr()->CreateTransport()}, or {\tt dabc::mgr()->ConnectPorts()},
+resp.  
+
+Similar to the \class{Module} functionality, the \class{Device} class
+may export configuration \class{Parameters}. It may also 
+define \class{Commands} which are handled by extending the
+virtual method \func{ExecuteCommand()} with a device specific
+implementation.      
+      
 
 \subsection{Local transport}
 
-For connection between two local ports \class{dabc::LocalTransport} is used.
-It organizes queue, which shared between connected ports and performes
-movement of \class{dabc::Buffer} pointer to/from this queue.
-If correspondent modules runs in the same thread, 
-local transport works without any mutexes locking.
+\class{dabc::LocalTransport} implements
+the connection between two "local" ports,
+i.~e.~ the ports are on the same node with a common memory address space.
+It organizes a queue which is shared between both connected ports,
+and performs the movement of \class{dabc::Buffer} pointer through this queue.
+If corresponding modules run in the same thread, 
+\class{LocalTransport} works without any mutex locking.
 
-To manage local transports, manager always has instance of \class{dabc::LocalDevice} class.
-It can be always found via \func{dabc::mgr()->FindLocalDevice()} call. 
+To manage the \class{LocalTransport}, the \class{dabc::Manager} always has instance of \class{dabc::LocalDevice} class.
+It can be accessed via \func{dabc::mgr()->FindLocalDevice()} call. 
+
 To connect two local ports, one should call:
 \begin{small}
 \begin{verbatim}
@@ -452,15 +479,18 @@ dabc::mgr()->ConnectPorts("Module1/Output", "Module2/Input");
 
 \subsection{Network transport}
 
-This is kind of transport, which is used to connect ports, situated on different nodes.
-There is abstract \class{dabc::NetworkTransport} class, which introduces such kind of 
-functionality. This tranport locally connected only to one port and all data
-sends/receives via network connections to/from remote node. 
+This is a kind of \class{Transport} which is used to 
+connect \class{Ports} on different nodes.
+Abstract base class \class{dabc::NetworkTransport} introduces such kind of 
+functionality: This transport is locally connected  to one port only, 
+and all buffer transfer is done
+via network connections with the remote node. 
 
 For the moment \dabc~ has two implementations of network transports: 
-for socket and InfiniBand verbs.
-To use network transport on the nodes, one should follow two step strategy. 
-On first step on all nodes necessary devices and modules should be created:
+for socket and {\em InfiniBand verbs}.
+To use \class{NetworkTransport} on the nodes, one should follow a two step strategy. 
+At the first step, on all nodes the necessary \class{Devices} and \class{modules} 
+should be created:
 \begin{small}
 \begin{verbatim}
 ...
@@ -470,44 +500,53 @@ dabc::mgr()->CreateModule("UserModule", "MyModule");
 \end{verbatim}     
 \end{small}
 
-Than during second step on master node 
-(where \keyw{dabc::mgr()->IsMainManager()} is true)  
+Then during the second step, on the "master" node 
+(where \keyw{dabc::mgr()->IsMainManager()} is \keyw{true}, 
+see section \label{prog_manager_controls_manager})
 one should call:
 \begin{small}
 \begin{verbatim}
 ...
-dabc::mgr()->ConnectPorts("Node0$MyModule/Input", "Node1$MyModule/Output", "UserDev");
+dabc::mgr()->ConnectPorts("Node0$MyModule/Input", 
+                          "Node1$MyModule/Output", "UserDev");
 ...
 \end{verbatim}     
 \end{small}
  
-Such call starts complicated sequence, when first server socket will be started by device "UserDev" on node "Node0",
-than device "UserDev" on "Node1" will try to connect that server socket and than on both nodes appropriate
-transports will be created, using negotiated sockets. 
+Such call starts an elaborated sequence: At first a server socket will be opened 
+by \class{Device} "UserDev" on node "Node0";
+then \class{Device} "UserDev" on "Node1" will try to connect to that server socket;
+finally, on both nodes appropriate \class{NetworkTransports} 
+will be created, using these negotiated sockets,
+and connected to the ports "\$MyModule/Input", and  "\$MyModule/Output", resp.
 
-Exactly for this kind of actions user \dabc~ state machine has 
-two commands "DoConfigure" and "DoEnable". Accordingly class
+Exactly for this kind of actions the \dabc~ state machine has 
+two transition commands "DoConfigure" and "DoEnable". Accordingly, class
 \class{dabc::Application} has two methods \func{CreateAppModules()} and 
 \func{ConnectAppModules()} (see \ref{prog_plugin_applicaton}).  
 
 
 \subsection{Data transport}
 \label{prog_plugin_device_datatransport}
-In general case, to implement user-specific transport, one should subclass from
-\class{dabc::Transport}. But this requires exact knowledge how threads working in \dabc~,
-how one should organize input/output queues, how transport should request data from
-memory pool, which initialization commands used by the framework. 
+In general, to implement a user-specific transport one should subclass from
+\class{dabc::Transport}. But this requires a deeper knowledge 
+about the \dabc~ mechanisms:
+how threads are working,
+how one should organize input/output queues, how the transport should request data from a
+memory pool, and which initialization commands are used by the framework. 
 To simplify transport development and provide all basic services 
-class \class{dabc::DataTransport} was developed.  
+class \class{dabc::DataTransport} was introduced.  
 
-User should redefine following virtual methods for implement data input: 
+For a \strong{data input} the
+user should implement the  following virtual methods : 
 
 \bbul
 \item [\func{Read\_Size()}] : 
-   Should return size of buffer, required to read next portion of data from
-   user data source. For instance, in many file formats one has header before
-   each portion of data. This method than should be used to read such header
-   and define required buffer size. Method can also return following values:
+   Should return the required buffer size to read next portion of data from
+   the data source. For instance, many file formats have a header before
+   each portion of data, describing the payload size that follows. 
+   This method then should be used to read such header. 
+   Method can also return following values:
    \bdes
    \item[\keyw{dabc::di\_EndOfStream}] - end of stream, normal close of the input
    \item[\keyw{dabc::di\_Repeat}]      - nothing to read now, call again as soon as possible
@@ -522,93 +561,109 @@ User should redefine following virtual methods for implement data input:
    \bdes
    \item[\keyw{dabc::di\_Ok}]       - normal case, call of \func{Read\_Complete()} will follow
    \item[\keyw{dabc::di\_Error}]    - error, skip buffer, starts again from \func{Read\_Size()}
-   \item[\keyw{dabc::di\_CallBack}] - asynchron readout, user should call \func{Read\_CallBack()}  
+   \item[\keyw{dabc::di\_CallBack}] - asynchronous readout, user should call \func{Read\_CallBack()}  
    \edes
-   If \keyw{di\_CallBack} returned, event loop for transport is stopped until
-   user calls \func{Read\_CallBack()} method, providing result of reading: 
-   \keyw{di\_Ok} or \keyw{di\_Error}. This mode is only possible if device driver
-   has its own thread and possibility to call \dabc~ methods. Big advantage of such modus -
-   data transport thread is not blocked by waiting result from device, therefore several
-   transports can share same thread. 
+   If \keyw{di\_CallBack} returned, processing of this transport is suspended until
+   user calls \func{Read\_CallBack()} method, providing the result of reading: 
+   \keyw{di\_Ok} or \keyw{di\_Error}. This mode is only possible if the device driver
+   has its own thread (or DMA engine, resp.) that can perform the readout and then 
+   can call \dabc~ methods. The big advantage of such mode:
+   the data transport thread is not blocked by waiting for a result from the 
+   device, therefore several \class{DataTransports} can share the same thread. 
    
 \item [\func{Read\_Complete()}] :
-   Finish reading of the buffer. Can returns:  
+   Finish reading of the buffer. Can return:  
    \bdes
    \item[\keyw{dabc::di\_Ok}]           - normal, buffer will be delivered to port
    \item[\keyw{dabc::di\_Error}]        - error, close transport
    \item[\keyw{dabc::di\_EndOfStream}]  - end of stream, normal close of the transport
-   \item[\keyw{dabc::di\_SkipBuffer}]   - normal, but buffer will not be deliver to the port
+   \item[\keyw{dabc::di\_SkipBuffer}]   - normal, but buffer will not be delivered to the port
    \item[\keyw{dabc::di\_Repeat}]       - not ready, call again as soon as possible
    \item[\keyw{dabc::di\_RepeatTimeout}] - not ready, call again after timeout
    \edes
-   In simple case actual reading of data performed in this method.
-   Or one can wait that other thread fills buffer. 
-   In this case one should be carefull and not block thread forever - 
-   better return with \keyw{dabc::di\_Repeat}, that thread can continue event loop and 
-   handle other workers.  
+   In the simple case, actual reading of data is directly performed in this method.
+   Otherwise one may wait here until another thread or a DMA transfer,
+   initiated before by \func{Read\_Start()}, has filled the buffer. 
+   In this case one should be carefull and not block thread forever - it is
+   better to return with \keyw{dabc::di\_Repeat}, so the thread can continue 
+   its event loop and handle other workers.  
 \ebul
 
-When implementing data output, user should just implement \func{WriteBuffer()} virtual method.  
+For \strong{data output}, the user should just 
+implement virtual method \func{WriteBuffer()} .  
 
-In some cases user may redefine \func{ProcessPoolChanged()}, which is called when
+In some cases user may redefine \func{ProcessPoolChanged()} which is called when
 memory pool changes its layout - new buffers were allocated or released. 
-It may be required for DMA operations, where each buffer from memory pool
+It may be required for DMA operations, where each buffer from a memory pool
 should be initialised once before it can be used for data transport.   
 
-Instantiation of user written data transport should be done via factory method
-\func{CreateTransport} (see \ref{prog_plugin_factory}). 
-One not need to create user-specific device for data transport - 
-standard local device can be used, while it only required as owner of transport object. 
+% Instantiation of user written \class{DataTransport} should be done via factory method
+% \func{CreateTransport()} (see \ref{prog_plugin_factory}). 
+It is not always necessary to create a user-specific \class{Device} for a user written \class{DataTransport}, since the standard \class{LocalDevice}
+can be used if it is only required as owner for the transport objects.
+In this case, the factory method \func{CreateTransport()} 
+should be provided  already in the user \class{Factory} (see section \ref{prog_plugin_factory}). 
+
+However, some user implementations of \class{DataTransport} may require
+services of a corresponding \class{Device} though. In this
+case, the user should implement a \class{Device} that
+provides the factory method \func{CreateTransport()} (see section \ref{prog_plugin_device_device}). This can instantiate the
+\class{DataTransport} with a back reference to the responsible \class{Device}. 
+
 
 
 \subsection{Input/output objects}
-
-\dabc~ provides possibility to implement simple input/output objects in form
-of classes, derived from \class{dabc::DataInput} and \class{dabc::DataOutput}.
-These classes provides interface similiar to that \class{dabc::DataTransport} has,
-but they are not dependent from any other components (threads, devices and so) 
-and therefore can be used absolutely independent from \dabc~ data flow engine.
-The only feature, which is not supported by \class{dabc::DataInput} - call back 
+Besides the \class{Transports},
+\dabc~ provides an interface for implementing
+a simple input/output by means of base classes
+\class{dabc::DataInput} and \class{dabc::DataOutput}.
+The interface is similar to that of \class{dabc::DataTransport},
+but these classes are not depending on 
+any other components (threads, devices, etc.), 
+and therefore can be applied without the  \dabc~ data flow engine.
+The only feature which is not supported by \class{dabc::DataInput} is the \keyw{CallBack} 
 mode.
 
 In addition, methods \func{dabc::DataInput::Read\_Init()} and
 \func{dabc::DataOutput::Write\_Init()} can be implemented to get 
-configuration from port object, to which i/o object may be assigned to.  
+configuration parameters from the port object to which the i/o object is assigned to.  
 
-Typical use of input/output objects is file I/O. 
-For instance, lmd file handling implemented
+A typical use case of input/output objects is the file I/O. 
+For instance, {\tt\*.lmd} file handling is implemented
 using these classes.
 
 To instantiate such classes, user should inplement factories methods 
 \func{CreateDataInput()} and \func{CreateDataOutput()} (see \ref{prog_plugin_factory}).
 
 
-\section{The DABC Application}
+\section{The \dabc~ Application}
 \label{prog_plugin_applicaton}
 The specific application controlling code is defined in the \class{dabc::Application}.
 
 On startup time, the \class{dabc::Application} is instantiated
 by means of a factory method \func{CreateApplication()}.
-As argument, factories get application class name, provided from configuration file.
+As argument the factories get the application class name, 
+provided from the configuration file.
 Thus, to use his/her application implementation, 
 the user must provide a \class{dabc::Factory} that defines such method.
 
-The manager has exactly one application object - name of this object always "App".
-Application can always be accessed via \func{dabc::mgr()->GetApp()} call. 
+The manager has exactly one application object - the name of this object is always "App".
+The application singleton can be accessed from everywhere 
+via \func{dabc::mgr()->GetApp()} call. 
 
 The application  may register parameters that 
 define the application's configuration. These parameters can be set at 
 runtime from the configuration file or by controls system.
 
-Main aim of application class - add user-specific actions during
-execution of state machine commands. Application has virtual method 
-\func{DoStateTransition()} which is called from SM during state change.
+The application class implements the user-specific actions during
+the state machine transitions. The application has virtual method 
+\func{DoStateTransition()} which is called from the state machine during state change.
 As argument, name of state transition command is delivered. 
-There are following SM commands:
+There are the following state machine commands:
 
 \bdes
 \item[\keyw{dabc::Manager::stcmdDoConfigure}] - creates all necessary application components: devices, modules, memory pools
-\item[\keyw{dabc::Manager::stcmdDoEnable}] - connect local and (or) remote nodes together (if necessary) 
+\item[\keyw{dabc::Manager::stcmdDoEnable}] - connects local and (or) remote nodes together (if necessary) 
 \item[\keyw{dabc::Manager::stcmdDoStart}] - starts execution of user modules 
 \item[\keyw{dabc::Manager::stcmdDoStop}] - stop execution of user modules
 \item[\keyw{dabc::Manager::stcmdDoHalt}] - destroy all components, created during configure
@@ -622,13 +677,13 @@ Class \class{dabc::Application} already has default implementation for
 \item[\func{CreateAppModules()}] - creates all necessary application components
 \item[\func{ConnectAppModules()}] - activity to connect with remote nodes or  
 \item[\func{IsAppModulesConnected()}] - check if connection is already performed  
-\item[\func{BeforeAppModulesStarted()}] - optional activity before modules started 
-\item[\func{AfterAppModulesStopped()}] - optional activity after modules stopped
-\item[\func{BeforeAppModulesDestroyed()}] - optional call before modules destroyed
+\item[\func{BeforeAppModulesStarted()}] - optional activity before modules are started 
+\item[\func{AfterAppModulesStopped()}] - optional activity after modules are stopped
+\item[\func{BeforeAppModulesDestroyed()}] - optional call before modules are destroyed
 \edes
 
-Actually, for single-node application it is enough to implement \func{CreateAppModules()},
-while all other methods have meaningfull implementation for that case. 
+Actually, for a single-node application it is enough to implement \func{CreateAppModules()},
+since all other methods have meaningfull implementation for that case. 
 
 For special DAQ topologies (e.g. Bnet), the framework offers 
 implementations of the \class{dabc::Application} containing the 
@@ -645,16 +700,11 @@ The creation of the application specific objects is done by \class{dabc::Factory
 
 The user must define a \class{dabc::Factory} 
 subclass to add own classes to the system.
-Factory should be instantiated as static singleton - this will create factory  
-immediately after library, containing factory, is loaded. 
-
-Factories are registered and kept in the global manager. 
-The access to the factories' functionality is done via methods of the
-manager that scans all known factories to produce the requested object class. 
-
-The \dabc~ framework provides several factories for predefined 
-implementations (e.~g.~ \class{bnet::SenderModule}, \class{verbs::Device})
-
+The user factory should already be instantiated as global stack object
+in its class implementation code -
+this will create  the factory immediately after the user library has been loaded. 
+On creation time, a factory is registered automatically to the \class{dabc::Manager} 
+instance.
 
 The user factory may implement such methods:
 \bdes
@@ -686,9 +736,10 @@ The user factory may implement such methods:
 	
 \edes      
 
-All mentioned here methods have equivalent methods in \class{dabc::Manager} class.
-Manager simply iterates over all factories and execute appropriate factory method
-until object is created. For instance, to create module, one should do:
+Since all factories are registered and kept in the global \dabc~ manager, 
+all methods mentioned here  have equivalent methods in class \class{dabc::Manager}.
+The manager simply iterates over all factories and executes the appropriate factory method
+until an object of the requested class is created. For instance, to create a module, one should do:
 
 \begin{small}
 \begin{verbatim}
@@ -698,16 +749,17 @@ dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator");
 \end{verbatim}     
 \end{small}
 
-Invocation of these methods in manager is implemented via correspondent commands
+Invocation of these methods in manager is implemented via corresponding commands
 (for instance, \comm{CmdCreateModule} for module creation). 
 These command classes should be used directly, if one wants to deliver extra 
-configuration parameters to objects constructor (most factories methods gets
+configuration parameters to the object's constructor (most factories methods gets
 this command as optional argument). For instance:
 
 \begin{small}
 \begin{verbatim}
 ...
-dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", "Generator");
+dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", 
+                                               "Generator");
 cmd->SetInt("NumSubevents", 5);
 cmd->SetInt("SubeventSize", 64);
 dabc::mgr()->Execute(cmd);
@@ -715,6 +767,8 @@ dabc::mgr()->Execute(cmd);
 \end{verbatim}     
 \end{small}
 
+The \dabc~ framework provides several factories for predefined 
+implementations (e.~g.~ \class{bnet::SenderModule}, \class{verbs::Device})
 
 
 
