@@ -67,6 +67,7 @@ namespace dabc {
 
          void SaveToString(std::string& v);
          bool ReadFromString(const char* s, bool onlyparameters = false);
+         bool ReadParsFromDimString(const char* s);
 
          void AddValuesFrom(const Command* cmd, bool canoverwrite = true);
 

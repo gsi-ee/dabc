@@ -140,17 +140,11 @@ namespace dabc {
          /** defines sequence number in list of controlled nodes */
          unsigned ControlSequenceId(unsigned id);
 
-         /** defines plain node id from control sequence id */
-         unsigned DefineNodeId(unsigned ctrlid);
-
          /** returns nodename of specified context */
          std::string NodeName(unsigned id);
 
          /** returns name of specified context */
          std::string ContextName(unsigned id);
-
-         /** returns id of context with specified name, -1 if not found */
-         int FindContextByName(const char* name);
 
          /** method used by run.sh script to produce command line */
          std::string SshArgs(unsigned id = 0, int ctrlkind = kindNone, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);

@@ -303,6 +303,41 @@ bool dabc::Command::ReadFromString(const char* s, bool onlyparameters)
    return true;
 }
 
+bool dabc::Command::ReadParsFromDimString(const char* pars)
+{
+   if ((pars==0) || (*pars==0)) return true;
+
+   const char* curr = pars;
+
+   while (*curr != 0) {
+      while (*curr==' ') curr++;
+      if (*curr == 0) return true;
+
+      const char* separ = strstr(curr, "=\"");
+      if (separ==0) {
+         EOUT(("Didnot found =\" sequence"));
+         return false;
+      }
+
+      const char* separ2 = strchr(separ+2, '\"');
+      if (separ2==0) {
+         EOUT(("Didnot found closing \" symbol"));
+         return false;
+      }
+
+      std::string name(curr, separ-curr);
+      std::string value(separ + 2, separ2 - separ - 2);
+
+      DOUT1(("Set dim argument %s = %s", name.c_str(), value.c_str()));
+
+      SetPar(name.c_str(), value.c_str());
+      curr = separ2 + 1;
+   }
+
+   return true;
+}
+
+
 void dabc::Command::Reply(Command* cmd, bool res)
 {
    if (cmd==0) return;

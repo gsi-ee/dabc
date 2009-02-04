@@ -65,19 +65,15 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    fNodeId = fCfg->MgrNodeId();
    if(fNodeId==0) fIsMainMgr = true; // TODO: specify main manager from other quality in config?
 
-   DOUT0(("!!!!!!!!!!!!!! Create manager with nodeid %d", fNodeId));
-
-//   SetName(fRegistry->CreateDIMPrefix(fNodeId).c_str()); // required for correct command response
-
    InitSMmodule();
 
    fStatusRecord=new dabc::StatusParameter(this, _DIMC_SERVICE_FSMRECORD_,0);//CurrentState());
    init();
    UpdateStatusRecord();
    unsigned int dimport=2505;
-   if(fCfg->MgrDimPort()!=0) dimport=fCfg->MgrDimPort();
-   fRegistry->StartDIMServer(fRegistry->GetDIMServerName(fCfg->MgrNodeId()), fCfg->MgrDimNode(), dimport); // 0 port means: use environment variables for dns
-   DOUT0(("+++++++++++++++++ Manager ctor starting dim on dim dns node:%s, port%d",fCfg->MgrDimNode(),fCfg->MgrDimPort()));
+   if(fCfg->MgrDimPort()!=0) dimport = fCfg->MgrDimPort();
+   fRegistry->StartDIMServer(fRegistry->GetDIMServerName(fNodeId), fCfg->MgrDimNode(), dimport); // 0 port means: use environment variables for dns
+   DOUT1(("+++++++++++++++++ Manager ctor starting dim on dim dns node:%s, port%d",fCfg->MgrDimNode(),fCfg->MgrDimPort()));
 }
 
 dimc::Manager::~Manager()
@@ -220,25 +216,19 @@ void dimc::Manager::CommandRegistration(dabc::CommandDefinition* def, bool reg)
 {
   std::string registername = fRegistry->CreateFullParameterName(def->GetParent()->GetName(), def->GetName());
 
-  DOUT0(("CommandRegistration %s", registername.c_str()));
+  DOUT5(("dimc::Manager::CommandRegistration %s %s", (reg ? "registers" : "unregisters"), registername.c_str()));
 
   if(reg)
-   {
-      DOUT5(("dimc::Manager::CommandRegistration registers %s \n",registername.c_str()));
-      fRegistry->RegisterModuleCommand(registername,def);
-   }
+      fRegistry->RegisterUserCommand(registername,def);
   else
-   {
-      DOUT5(("dimc::Manager::CommandRegistration unregisters %s \n",registername.c_str()));
-      fRegistry->UnRegisterModuleCommand(registername);
-   }
+      fRegistry->UnRegisterUserCommand(registername);
 }
 
 
 bool dimc::Manager::Subscribe(dabc::Parameter* par, int remnode, const char* remname)
 {
    std::string fulldimname = fRegistry->GetDIMPrefix(remnode)+remname;
-   return (fRegistry->SubscribeParameter(par,fulldimname));
+   return fRegistry->SubscribeParameter(par,fulldimname);
 }
 
 bool dimc::Manager::Unsubscribe(dabc::Parameter* par)

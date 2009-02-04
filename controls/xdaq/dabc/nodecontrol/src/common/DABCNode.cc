@@ -118,13 +118,12 @@ else if(Registry()->FindModuleCommand(rname))
       std::cout <<"Execute Registered ModuleCommand "<< rname <<", string="<<par <<":"<< std::endl;
       std::string modname;
       std::string varname;
-      Registry()->ParseFullParameterName(rname,modname, varname);
+      Registry()->ParseFullParameterName(rname, modname, varname);
       dabc::Command* dabccom= new dabc::Command(varname.c_str());
       std::cout <<" -  commandname is "<<varname << std::endl;
       std::cout <<" -  modulename is "<<modname << std::endl;
       // TODO: fill xml par string to dabccom (special ctor later)
-      CommandClient dummyclient;
-      Manager()->SubmitLocal(dummyclient, dabccom, modname.c_str());
+      dabc::mgr()->Submit(dabc::mgr()->LocalCmd(dabccom, modname.c_str()));
    }
 else
    {

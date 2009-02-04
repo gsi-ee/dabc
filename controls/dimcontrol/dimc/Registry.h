@@ -100,10 +100,10 @@ public:
 
     /** Register new module command of name and with command definition def.
     * Will create dim command and command descriptor record*/
-   void RegisterModuleCommand(std::string name, dabc::CommandDefinition* def);
+   void RegisterUserCommand(std::string name, dabc::CommandDefinition* def);
 
    /** Unregister module command of name*/
-   void UnRegisterModuleCommand(std::string name);
+   void UnRegisterUserCommand(std::string name);
 
 
    /** find out if module command of name exists. Returns false if none*/

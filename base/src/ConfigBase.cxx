@@ -492,17 +492,6 @@ unsigned dabc::ConfigBase::ControlSequenceId(unsigned id)
    return id;
 }
 
-unsigned dabc::ConfigBase::DefineNodeId(unsigned ctrlid)
-{
-   unsigned num = NumNodes();
-
-   for (unsigned n=0; n<num;n++)
-      if (ControlSequenceId(n) == ctrlid + 1) return n;
-
-   return ctrlid;
-}
-
-
 std::string dabc::ConfigBase::NodeName(unsigned id)
 {
    if (IsXDAQ()) return XDAQ_NodeName(id);
@@ -524,14 +513,6 @@ std::string dabc::ConfigBase::ContextName(unsigned id)
    if (res.empty()) res = envHost;
    envHost = oldhost;
    return res;
-}
-
-int dabc::ConfigBase::FindContextByName(const char* name)
-{
-   unsigned cnt = NumNodes();
-   while (cnt-->0)
-     if (ContextName(cnt).compare(name)==0) return cnt;
-   return -1;
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::FindContext(unsigned id)

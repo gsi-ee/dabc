@@ -97,42 +97,6 @@ std::string dimc::Registry::GetDIMPrefixByName(std::string mgrname)
    return fDimPrefix;
 }
 
-
-/*
-
-std::string dimc::Registry::CreateDIMPrefix(unsigned int nodeid)
-{
-   std::string nodename=GetDIMServerName(nodeid);
-   unsigned ctrlid = fConfiguration->DefineNodeId(nodeid);
-   std::string appname = fConfiguration->ContextName(ctrlid);
-   std::string result=nodename+"/"+appname;
-   return result;
-}
-
-std::string dimc::Registry::CreateDIMPrefixByName(const char* mgrname)
-{
-   int id = fConfiguration->FindContextByName(mgrname);
-   if (id<0) return CreateDIMPrefix(0);
-
-   unsigned ctrlid = fConfiguration->ControlSequenceId(id);
-
-   return CreateDIMPrefix(ctrlid-1);
-}
-
-
-std::string  dimc::Registry::GetDIMServerName(unsigned int nodeid)
-{
-   std::string retval;
-   unsigned ctrlid = fConfiguration->DefineNodeId(nodeid);
-   std::string servname=fConfiguration->NodeName(ctrlid);
-   std::string prefix=gServerPrefix;//"DABC/"
-   retval=prefix+servname+dabc::format(":%d",nodeid);
-   //std::cout <<"GetDIMServerName returns "<<retval << std::endl;
-   return retval;
-}
-
-*/
-
 std::string dimc::Registry::CreateFullParameterName(const std::string& modulename, const std::string& varname)
 {
    dabc::LockGuard g(&fParseMutex);
@@ -142,7 +106,6 @@ std::string dimc::Registry::CreateFullParameterName(const std::string& modulenam
    if(rname) registername=rname; // cannot init std::string from null char* ptr
    // TODO: exception if parsing fails
    return registername;
-
 }
 
 
@@ -658,11 +621,12 @@ if(found) OnDIMCommand(com);
 
 void dimc::Registry::OnDIMCommand(DimCommand* com)
 {
-std::string cname=com->getName();
-std::cout <<"found command "<< cname << std::endl;
-std::string rname=ReduceDIMName(cname);
-std::string par=com->getString();
-SubmitLocalDIMCommand(rname,par); // decouple execution from dim thread!
+   std::string cname=com->getName();
+   std::string rname = ReduceDIMName(cname);
+   std::string par = com->getString();
+   DOUT0(("OnDimCommand %s - %s", rname.c_str(), par.c_str()));
+
+   SubmitLocalDIMCommand(rname,par); // decouple execution from dim thread!
 }
 
 
@@ -712,7 +676,7 @@ void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::st
          }
       std::string password=par.substr(0,13);
       // add password check here:
-      std::string parameter=" - no parameter -";
+      std::string parameter;
       if(par.length()>14)
          parameter=par.substr(14);
       //std::cout <<"      password:"<<password <<", parameter:"<<parameter<<"," << std::endl;
@@ -723,17 +687,17 @@ void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::st
    if(FindModuleCommand(com))
       {
          // submit exported module command directly:
-         DOUT3(("Execute Registered ModuleCommand:%s, par=%s",com.c_str(),parameter.c_str()));
+         DOUT1(("Execute Registered ModuleCommand:%s  %s",  com.c_str(), parameter.c_str()));
          //std::cout <<"Execute Registered ModuleCommand "<< com <<", string="<<parameter <<":"<< std::endl;
          std::string modname;
          std::string varname;
-         ParseFullParameterName(com,modname, varname);
-         dabc::Command* dabccom= new dabc::Command(varname.c_str());
+         ParseFullParameterName(com, modname, varname);
+         dabc::Command* dabccom = new dabc::Command(varname.c_str());
+         dabccom->ReadParsFromDimString(parameter.c_str());
 //         std::cout <<" -  commandname is "<<varname << std::endl;
 //         std::cout <<" -  modulename is "<<modname << std::endl;
          // TODO: fill xml par string to dabccom (special ctor later)
-         dabc::CommandClient dummyclient;
-         fManager->SubmitLocal(dummyclient, dabccom, modname.c_str());
+         dabc::mgr()->Submit(dabc::mgr()->LocalCmd(dabccom, modname.c_str()));
       }
    else
       {
@@ -795,7 +759,7 @@ switch(severity)
 
 
 
-void dimc::Registry::RegisterModuleCommand(std::string name, dabc::CommandDefinition* def)
+void dimc::Registry::RegisterUserCommand(std::string name, dabc::CommandDefinition* def)
 {
  {  // begin lockguard
     dabc::LockGuard g(&fMainMutex);
@@ -815,7 +779,7 @@ void dimc::Registry::RegisterModuleCommand(std::string name, dabc::CommandDefini
  AddCommandDescriptor(descrname, descriptor);
 }
 
-void dimc::Registry::UnRegisterModuleCommand(std::string name)
+void dimc::Registry::UnRegisterUserCommand(std::string name)
 {
 bool found=false;
 try
