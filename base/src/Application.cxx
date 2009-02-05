@@ -6,13 +6,11 @@
 
 dabc::Application::Application(const char* classname) :
    Folder(dabc::mgr(), xmlAppDfltName, true),
-   WorkingProcessor(),
+   WorkingProcessor(this),
    fAppClass(classname ? classname : xmlApplication),
    fConnCmd(0),
    fConnTmout(0)
 {
-   SetParsHolder(this);
-
    DOUT3(("Plugin %s created", GetName()));
 }
 

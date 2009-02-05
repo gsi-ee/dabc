@@ -20,7 +20,7 @@
 
 dabc::Module::Module(const char* name, Command* cmd) :
    Folder(dabc::mgr(), (name ? name : (cmd ? cmd->GetStr("Name","module") : "module")), true),
-   WorkingProcessor(),
+   WorkingProcessor(this),
    CommandClientBase(),
    fRunState(msStopped),
    fInputPorts(),
@@ -30,8 +30,6 @@ dabc::Module::Module(const char* name, Command* cmd) :
    fReplyes(true, true),
    fLostEvents(128, true)
 {
-   SetParsHolder(this);
-
    // we will use 3 priority levels:
    //  0 - normal for i/o ,
    //  1 - for commands and replies,
@@ -90,25 +88,20 @@ void dabc::Module::OnThreadAssigned()
    }
 }
 
-dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sync, double interval, const char* inpportname, const char* outportname)
+dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sync, double interval,
+                                                       const char* inpportname, const char* outportname,
+                                                       const char* units, double lower, double upper)
 {
-   RateParameter* par = new RateParameter(this, name, sync, interval);
+   Port* inport = FindPort(inpportname);
+   Port* outport = FindPort(outportname);
 
-   bool isanyport = false;
+   if ((inport!=0) || (outport!=0)) units = "MB/s";
 
-   Port* port = FindPort(inpportname);
-   if (port) {
-      port->SetInpRateMeter(par);
-      isanyport = true;
-   }
+   RateParameter* par = new RateParameter(this, name, sync, interval, units, lower, upper);
 
-   port = FindPort(outportname);
-   if (port) {
-       port->SetOutRateMeter(par);
-       isanyport = true;
-   }
+   if (inport) inport->SetInpRateMeter(par);
 
-   if (isanyport) par->SetUnits("MB/s");
+   if (outport) outport->SetOutRateMeter(par);
 
    return par;
 }

@@ -139,8 +139,7 @@ roc::CalibrationModule::CalibrationModule(const char* name, dabc::Command* cmd) 
 
    CreateInput("Input", fPool, 10);
 
-   dabc::RateParameter* r = CreateRateParameter("CalibrRate", false, 3., "Input");
-   r->SetLimits(0, 10.);
+   dabc::RateParameter* r = CreateRateParameter("CalibrRate", false, 3., "Input", "", "", 0., 10.);
    r->SetDebugOutput(true);
 
    for(int n=0; n<numoutputs; n++)

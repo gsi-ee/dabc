@@ -335,7 +335,7 @@ uint64_t dabc::ReferencesBlock::MemoryPerBuffer()
 
 dabc::MemoryPool::MemoryPool(Basic* parent, const char* name) :
    Folder(parent, name),
-   WorkingProcessor(),
+   WorkingProcessor(this),
    fPoolMutex(0),
    fOwnMutex(false),
    fMemoryLimit(0),
@@ -358,7 +358,6 @@ dabc::MemoryPool::MemoryPool(Basic* parent, const char* name) :
    fCleanupStatus(stOff),
    fCleanupTmout(5.)
 {
-   SetParsHolder(this);
 }
 
 

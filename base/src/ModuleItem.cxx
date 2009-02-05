@@ -2,12 +2,11 @@
 
 dabc::ModuleItem::ModuleItem(int typ, Basic* parent, const char* name) :
    Folder(parent, name),
-   WorkingProcessor(),
+   WorkingProcessor(this),
    fModule(0),
    fItemType(typ),
    fItemId(0)
 {
-   SetParsHolder(this);
    SetParDflts(3);
 
    while ((fModule==0) && (parent!=0)) {

@@ -202,7 +202,7 @@ const char* dabc::Manager::stcmdDoHalt = "DoHalt";
 
 dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configuration* cfg) :
    Folder(0, managername, true),
-   WorkingProcessor(),
+   WorkingProcessor(this),
    CommandClientBase(),
    fMgrMainLoop(false),
    fMgrNormalThrd(!usecurrentprocess),
@@ -227,8 +227,6 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    }
 
    if (cfg) fCfgHost = cfg->MgrHost();
-
-   SetParsHolder(this);
 
    // we create recursive mutex to avoid problem in Folder::GetFolder method,
    // where constructor is called under locked mutex,

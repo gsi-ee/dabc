@@ -17,9 +17,7 @@ bnet::MbsBuilderModule::MbsBuilderModule(const char* name, dabc::Command* cmd) :
    fOut.buf = 0;
    fOut.ready = false;
 
-   fEvntRate = CreateRateParameter("EventRate", false, 1.);
-   fEvntRate->SetUnits("Ev/s");
-   fEvntRate->SetLimits(0, 6000.);
+   fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 10000.);
 }
 
 bnet::MbsBuilderModule::~MbsBuilderModule()
@@ -150,7 +148,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 
       fOut.iter.FinishEvent();
 
-//      if (fEvntRate) fEvntRate->AccountValue(1.);
+      if (fEvntRate) fEvntRate->AccountValue(1.);
 
 //      DOUT1(("$$$$$$$$ Did event %d size %d", evhdr->iCount, evhdr->DataSize()));
 

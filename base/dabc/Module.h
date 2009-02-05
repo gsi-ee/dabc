@@ -149,7 +149,9 @@ namespace dabc {
            { return CreateIOPort(name, pool, 0, queue, headersize); }
          Port* CreateIOPort(const char* name, PoolHandle* pool = 0, unsigned recvqueue = 10, unsigned sendqueue = 10, BufferSize_t headersize = 0);
 
-         RateParameter* CreateRateParameter(const char* name, bool sync = true, double interval = 1., const char* inpportname = 0, const char* outportname = 0);
+         RateParameter* CreateRateParameter(const char* name, bool sync = true, double interval = 1.,
+                                            const char* inpportname = 0, const char* outportname = 0,
+                                            const char* units = 0, double lower = 0., double upper = 0.);
 
          Parameter* CreatePoolUsageParameter(const char* name, double interval = 1., const char* poolname = 0);
 

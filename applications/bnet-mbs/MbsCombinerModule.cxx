@@ -32,9 +32,7 @@ bnet::MbsCombinerModule::MbsCombinerModule(const char* name, dabc::Command* cmd)
    fUsedEvents = new dabc::HistogramParameter(this, "PackedEvents", nchannels);
    fUsedEvents->SetLabels("PackedEvents", "Rel.un");
 
-   fEvntRate = CreateRateParameter("EventRate", false, 1.);
-   fEvntRate->SetUnits("Ev/s");
-   fEvntRate->SetLimits(0, 6000.);
+   fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 20000.);
 }
 
 bnet::MbsCombinerModule::~MbsCombinerModule()
@@ -153,6 +151,8 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
    *((bnet::EventId*) buf()->GetHeader()) = (fMinEvId - 1) / fCfgEventsCombine + 1;
 
 //   DOUT1(("Finish buffer id %d sz %u", (fMinEvId - 1) / fCfgEventsCombine, fullbufsize));
+
+   if (fEvntRate) fEvntRate->AccountValue(NumUsedEvents);
 
    fMinEvId = 0;
    fMaxEvId = 0;

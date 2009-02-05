@@ -10,12 +10,12 @@
 unsigned  dabc::WorkingProcessor::gParsVisibility = 1;
 unsigned  dabc::WorkingProcessor::gParsCfgDefaults = dabc::WorkingProcessor::MakeParsFlags(5, true, false);
 
-dabc::WorkingProcessor::WorkingProcessor() :
+dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorThread(0),
    fProcessorId(0),
    fProcessorPriority(-1), // minimum priority per default
    fProcessorCommands(false, true),
-   fParsHolder(0),
+   fParsHolder(parsholder),
    fProcessorMutex(),
    fParsDefaults(0),
    fProcessorActivateTmout(false),
@@ -36,11 +36,6 @@ dabc::WorkingProcessor::~WorkingProcessor()
    RemoveProcessorFromThread(true);
 
    DOUT5(("~WorkingProcessor %p %d thrd:%p done", this, fProcessorId, fProcessorThread));
-}
-
-void dabc::WorkingProcessor::SetParsHolder(Folder* holder)
-{
-   fParsHolder = holder;
 }
 
 bool dabc::WorkingProcessor::AssignProcessorToThread(WorkingThread* thrd, bool sync)

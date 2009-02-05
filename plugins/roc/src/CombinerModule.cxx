@@ -25,18 +25,14 @@ roc::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
    int numoutputs = GetCfgInt(dabc::xmlNumOutputs, 2, cmd);
 
-   dabc::RateParameter* r = CreateRateParameter("CombinerRate", false, 3.);
-   r->SetUnits("MB/s");
-   r->SetLimits(0, 10.);
+   dabc::RateParameter* r = CreateRateParameter("CombinerRate", false, 3., "", "", "MB/s", 0., 10.);
    r->SetDebugOutput(true);
 
    DOUT1(("new roc::CombinerModule %s buff %d", GetName(), fBufferSize));
    fPool = CreatePoolHandle(roc::xmlRocPool, fBufferSize, 1);
    for(int inp=0; inp < numrocs; inp++)  {
       CreateInput(FORMAT(("Input%d", inp)), fPool, 10);
-
       Input(inp)->SetInpRateMeter(r);
-//      CreateRateParameter(FORMAT(("RocReadout%d", inp)), false, 1., FORMAT(("Input%d", inp)), "");
       fInp.push_back(InputRec());
    }
 

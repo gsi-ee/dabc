@@ -172,7 +172,9 @@ namespace dabc {
 
    class RateParameter : public Parameter {
       public:
-         RateParameter(WorkingProcessor* parent, const char* name, bool synchron, double interval = 1.);
+         RateParameter(WorkingProcessor* parent, const char* name,
+                       bool synchron, double interval = 1., const char* units = 0,
+                       double lower = 0., double upper = 0.);
 
          virtual EParamKind Kind() const { return fSynchron ? parSyncRate : parAsyncRate; }
 
@@ -184,6 +186,9 @@ namespace dabc {
 
          void SetUnits(const char* name);
          void SetLimits(double lower = 0., double upper = 0.);
+
+         virtual bool GetValue(std::string& value) const;
+         virtual bool SetValue(const std::string &value);
 
          virtual void AccountValue(double v);
 

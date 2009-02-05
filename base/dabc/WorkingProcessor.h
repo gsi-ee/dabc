@@ -31,7 +31,7 @@ namespace dabc {
 
          enum { evntFirstUser = 1 };
 
-         WorkingProcessor();
+         WorkingProcessor(Folder* parsholder = 0);
          virtual ~WorkingProcessor();
 
          /** Method returns name of required thread class for processor.
@@ -142,7 +142,6 @@ namespace dabc {
          void LockUnlockPars(bool on);
 
          Folder* MakeFolderForParam(const char* parname);
-         void SetParsHolder(Folder* holder);
 
          static unsigned MakeParsFlags(unsigned visibility = 1, bool fixed = false, bool changable = true);
          unsigned SetParDflts(unsigned visibility = 1, bool fixed = false, bool changable = true);

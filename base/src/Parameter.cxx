@@ -246,7 +246,9 @@ bool dabc::IntParameter::SetInt(int v)
 
 // __________________________________________________________
 
-dabc::RateParameter::RateParameter(WorkingProcessor* parent, const char* name, bool synchron, double interval) :
+dabc::RateParameter::RateParameter(WorkingProcessor* parent,
+                                   const char* name, bool synchron, double interval,
+                                   const char* units, double lower, double upper) :
    Parameter(parent, name),
    fSynchron(synchron),
    fInterval(interval),
@@ -258,14 +260,16 @@ dabc::RateParameter::RateParameter(WorkingProcessor* parent, const char* name, b
    if (fInterval<1e-3) fInterval = 1e-3;
 
    fRecord.value = 0.;
-   fRecord.lower = 0.;
-   fRecord.upper = 0.;
+   fRecord.lower = lower;
+   fRecord.upper = upper;
    fRecord.displaymode = dabc::DISPLAY_BAR;
    fRecord.alarmlower = 0.;
    fRecord.alarmupper = 0.;
-   strcpy(fRecord.color, col_Blue);
-   strcpy(fRecord.alarmcolor, col_Yellow);
-   strcpy(fRecord.units, "1/s");
+   strncpy(fRecord.color, col_Blue, sizeof(fRecord.color));
+   strncpy(fRecord.alarmcolor, col_Yellow, sizeof(fRecord.alarmcolor));
+   strncpy(fRecord.units, units ? units : "1/s", sizeof(fRecord.units));
+
+   DOUT1(("Create ratemeter %s %s %f %f", GetName(), fRecord.units, fRecord.lower, fRecord.upper));
 
    Ready();
 }
@@ -287,6 +291,25 @@ void dabc::RateParameter::ChangeRate(double rate)
       fRecord.value = rate;
    }
    Changed();
+}
+
+bool dabc::RateParameter::GetValue(std::string& value) const
+{
+   LockGuard lock(fValueMutex);
+   dabc::formats(value, "%f", fRecord.value);
+   return true;
+}
+
+bool dabc::RateParameter::SetValue(const std::string &value)
+{
+   double v = 0.;
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed || (value.length()==0)) return false;
+      sscanf(value.c_str(), "%lf", &v);
+   }
+   AccountValue(v);
+   return true;
 }
 
 void dabc::RateParameter::AccountValue(double v)
@@ -410,6 +433,8 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
    std::string v;
 
    if (!cfg.Find(this, v)) return false;
+
+   DOUT0(("!!!!!!!!!!!!!!! Find item for ratemeter %s", GetName()));
 
    LockGuard lock(fValueMutex);
 
