@@ -845,30 +845,15 @@ for(iter=ctrlPars_.begin(); iter!=ctrlPars_.end(); ++iter)
 }
 
 
-
-
-
-
 void dabc::xd::Registry::RegisterModuleParameter(std::string& name, xdata::Serializable *serializable,  bool changable, bool commanddescriptor, dabc::Parameter* corepar)
 {
-    ModuleParameter* nentry= new ModuleParameter(this,
+   ModuleParameter* nentry= new ModuleParameter(this,
                                                          name,
                                                          serializable,
                                                          corepar) ;
   //std::cout <<"RegisterModuleParameter for: "<<name<<"..." << std::endl;
   RegisterControlParameter(nentry,  false, changable, changable, commanddescriptor);
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 void dabc::xd::Registry::DefineDIMCommand(const std::string &name)

@@ -46,12 +46,7 @@ public:
 
 	Registry(dimc::Manager* owner, dabc::Configuration* cfg);
 
-    virtual  ~Registry();
-
-
-   /** returns full parameter name from modulename and simple parameter name.
-     * uses internally name parser with threadsafety*/
-    std::string CreateFullParameterName(const std::string& modulename, const std::string& varname);
+   virtual  ~Registry();
 
     /** parse fullname of parameter and evaluate single module and variable names.
       * uses nameparser with threadlock*/
@@ -278,7 +273,7 @@ protected:
    void AddService(dimc::ServiceEntry* nentry, bool allowdimchange=true, bool iscommanddescriptor=false);
 
    /** Search for DIM service  by name*/
-   ServiceEntry* FindDIMService(std::string name);
+   ServiceEntry* FindDIMService(const std::string& name);
 
    /** Search for DIM service  by parameter reference*/
    ServiceEntry* FindDIMService(dabc::Parameter* par);

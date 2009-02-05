@@ -59,7 +59,7 @@ namespace dabc {
 
          // this all about parameters list, which can be managed for any working processor
 
-         Folder* GetTopParsFolder();
+         Folder* GetTopParsFolder() { return fParsHolder; }
 
          Parameter* FindPar(const char* name) const;
 
@@ -137,7 +137,7 @@ namespace dabc {
          void LockUnlockPars(bool on);
 
          Folder* MakeFolderForParam(const char* parname);
-         void SetParsHolder(Folder* holder, const char* subfolder = 0);
+         void SetParsHolder(Folder* holder);
          void SetParDflts(int visibility = 1, bool fixed = false);
          virtual WorkingProcessor* GetCfgMaster() { return 0; }
 
@@ -162,7 +162,6 @@ namespace dabc {
          CommandsQueue    fProcessorCommands;
 
          Folder*          fParsHolder;
-         std::string      fParsTopFolderName;
 
          Mutex            fProcessorMutex;
 

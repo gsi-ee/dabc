@@ -13,7 +13,6 @@ dabc::WorkingProcessor::WorkingProcessor() :
    fProcessorPriority(-1), // minimum priority per default
    fProcessorCommands(false, true),
    fParsHolder(0),
-   fParsTopFolderName(),
    fProcessorMutex(),
    fParsDfltVisibility(1),
    fParsDfltFixed(false),
@@ -23,9 +22,6 @@ dabc::WorkingProcessor::WorkingProcessor() :
    fProcessorPrevFire(NullTimeStamp),
    fProcessorNextFire(NullTimeStamp)
 {
-   if (fParsTopFolderName.length()>0)
-      if (fParsTopFolderName[fParsTopFolderName.length()-1]!='/')
-         fParsTopFolderName.append("/");
 }
 
 dabc::WorkingProcessor::~WorkingProcessor()
@@ -39,11 +35,9 @@ dabc::WorkingProcessor::~WorkingProcessor()
    DOUT5(("~WorkingProcessor %p %d thrd:%p done", this, fProcessorId, fProcessorThread));
 }
 
-void dabc::WorkingProcessor::SetParsHolder(Folder* holder, const char* subfolder)
+void dabc::WorkingProcessor::SetParsHolder(Folder* holder)
 {
    fParsHolder = holder;
-   if (subfolder!=0) fParsTopFolderName = subfolder;
-                else fParsTopFolderName.clear();
 }
 
 bool dabc::WorkingProcessor::AssignProcessorToThread(WorkingThread* thrd, bool sync)
@@ -168,18 +162,11 @@ dabc::CommandDefinition* dabc::WorkingProcessor::NewCmdDef(const char* cmdname)
 
 dabc::Folder* dabc::WorkingProcessor::MakeFolderForParam(const char* parname)
 {
-   std::string foldname = fParsTopFolderName + dabc::Folder::GetPathName(parname);
+   std::string foldname = dabc::Folder::GetPathName(parname);
 
    if ((foldname.length()==0) || (fParsHolder==0)) return fParsHolder;
 
    return fParsHolder->GetFolder(foldname.c_str(), true, true);
-}
-
-dabc::Folder* dabc::WorkingProcessor::GetTopParsFolder()
-{
-   if ((fParsTopFolderName.length()==0) || (fParsHolder==0)) return fParsHolder;
-
-   return fParsHolder->GetFolder(fParsTopFolderName.c_str(), false, false);
 }
 
 void dabc::WorkingProcessor::SetParDflts(int visibility, bool fixed)
@@ -443,7 +430,6 @@ bool dabc::WorkingProcessor::SetParDouble(const char* name, double value)
 
    return par && (par->Kind()==parDouble) ? ((DoubleParameter*) par)->SetDouble(value) : false;
 }
-
 
 bool dabc::WorkingProcessor::SetParFixed(const char* name, bool on)
 {

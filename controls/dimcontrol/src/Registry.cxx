@@ -106,18 +106,6 @@ bool dimc::Registry::IsManagerActive(const std::string& mgrname)
    return false;
 }
 
-std::string dimc::Registry::CreateFullParameterName(const std::string& modulename, const std::string& varname)
-{
-   dabc::LockGuard g(&fParseMutex);
-   if(modulename=="") return varname;
-   std::string registername="";
-   const char* rname=dimc::nameParser::createFullParameterName(modulename.c_str(),varname.c_str());
-   if(rname) registername=rname; // cannot init std::string from null char* ptr
-   // TODO: exception if parsing fails
-   return registername;
-}
-
-
 void dimc::Registry::ParseFullParameterName(const std::string& fullname, std::string& modname, std::string& varname)
 {
 dabc::LockGuard g(&fParseMutex);
@@ -183,7 +171,7 @@ void dimc::Registry::AddService(dimc::ServiceEntry* nentry, bool allowdimchange,
 void dimc::Registry::ParameterUpdated(dabc::Parameter* par)
 {
    //std::cout << "  +++dimc::Registry::ParameterUpdated for " << par->GetName() << std::endl ;
-   dimc::ServiceEntry* service=FindDIMService(par);
+   dimc::ServiceEntry* service = FindDIMService(par);
    if(service)
        service->Update();
    else if(par)
@@ -229,7 +217,7 @@ delete remservice; // delete outside lock to avoid conflict with dim
 }
 
 
-dimc::ServiceEntry* dimc::Registry::FindDIMService(std::string name)
+dimc::ServiceEntry* dimc::Registry::FindDIMService(const std::string& name)
 {
 dimc::ServiceEntry* ret=0;
 dabc::LockGuard g(&fMainMutex);
@@ -651,56 +639,39 @@ catch(...)
 
 void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::string& par)
 {
-   //DOUT5(("sssssssss SubmitLocalDIMCommand for:%s, par=%s",com.c_str(),par.c_str()));
+   DOUT5(("SubmitLocalDIMCommand for:%s, par=%s", com.c_str(), par.c_str()));
 
    // strip password here:
-      if(par.length()<13)
-         {
-            //std::cout<<" - ERROR: parameter too short:"<<par.length() << std::endl;
-            EOUT(("dimc::Registry::SubmitLocalDIMCommand ERROR: parameter too short:%d ",par.length()));
-            return ;
-         }
-      std::string password=par.substr(0,13);
-      // add password check here:
-      std::string parameter;
-      if(par.length()>14)
-         parameter=par.substr(14);
-      //std::cout <<"      password:"<<password <<", parameter:"<<parameter<<"," << std::endl;
+   if(par.length()<13) {
+      EOUT(("dimc::Registry::SubmitLocalDIMCommand ERROR: parameter too short:%d ",par.length()));
+      return;
+   }
+   std::string password = par.substr(0,13);
+   // TODO: add password check here:
+   std::string parameter;
+   if(par.length()>14) parameter = par.substr(14);
 
-
-
-
-   if(FindModuleCommand(com))
-      {
-         // submit exported module command directly:
-         DOUT1(("Execute Registered ModuleCommand:%s  %s",  com.c_str(), parameter.c_str()));
-         //std::cout <<"Execute Registered ModuleCommand "<< com <<", string="<<parameter <<":"<< std::endl;
-         std::string modname;
-         std::string varname;
-         ParseFullParameterName(com, modname, varname);
-         dabc::Command* dabccom = new dabc::Command(varname.c_str());
-         dabccom->ReadParsFromDimString(parameter.c_str());
-//         std::cout <<" -  commandname is "<<varname << std::endl;
-//         std::cout <<" -  modulename is "<<modname << std::endl;
-         // TODO: fill xml par string to dabccom (special ctor later)
-         dabc::mgr()->Submit(dabc::mgr()->LocalCmd(dabccom, modname.c_str()));
-      }
-   else
-      {
-
-
-         // wrap other dim commands to be executed in manager thread:
-         dimc::Command* command= new dimc::Command(com.c_str(), parameter.c_str());
-         if(command->IsName(_DIMC_COMMAND_SETPAR_))
-               command->SetCommandName(_DIMC_COMMAND_SETDIMPAR_); // avoid confusion with default core SetParameter command
-         fManager->Submit(command);
-      }
-
+   if(FindModuleCommand(com)) {
+      // submit exported module command directly:
+      DOUT3(("Execute Registered ModuleCommand:%s  %s",  com.c_str(), parameter.c_str()));
+      //std::cout <<"Execute Registered ModuleCommand "<< com <<", string="<<parameter <<":"<< std::endl;
+      std::string modname;
+      std::string varname;
+      ParseFullParameterName(com, modname, varname);
+      dabc::Command* dabccom = new dabc::Command(varname.c_str());
+      dabccom->ReadParsFromDimString(parameter.c_str());
+//    std::cout <<" -  commandname is "<<varname << std::endl;
+//    std::cout <<" -  modulename is "<<modname << std::endl;
+      // TODO: fill xml par string to dabccom (special ctor later)
+      dabc::mgr()->Submit(dabc::mgr()->LocalCmd(dabccom, modname.c_str()));
+   } else {
+      // wrap other dim commands to be executed in manager thread:
+      dimc::Command* command= new dimc::Command(com.c_str(), parameter.c_str());
+      if(command->IsName(_DIMC_COMMAND_SETPAR_))
+         command->SetCommandName(_DIMC_COMMAND_SETDIMPAR_); // avoid confusion with default core SetParameter command
+      fManager->Submit(command);
+   }
 }
-
-
-
-
 
 
 void dimc::Registry::OnExitDIMClient(const char* name)
@@ -952,6 +923,3 @@ delete delinfo;
 return result;
 
 }
-
-
-

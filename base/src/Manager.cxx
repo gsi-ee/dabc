@@ -1080,8 +1080,6 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       if (pool) delete pool;
    } else
    if (cmd->IsName(CmdStateTransition::CmdName())) {
-      DOUT0(("Invoke state transition %s", cmd->GetStr("Cmd")));
-
       InvokeStateTransition(cmd->GetStr("Cmd"), cmd);
       cmd_res = cmd_postponed;
    } else

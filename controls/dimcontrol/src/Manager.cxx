@@ -149,25 +149,22 @@ void dimc::Manager::ParameterEvent(dabc::Parameter* par, int event)
    std::string pname = par->GetName();
    //DOUT5(("dimc::Manager::ParameterEvent %d for %s \n",event,pname.c_str()));
    dabc::Manager::ParameterEvent(par, event);
-   switch(event)
-    {
-       case 0: // creation of new parameter
-          fRegistry->RegisterParameter(par, BuildControlName(par), true);
+   switch(event) {
+      case dabc::parCreated: // creation of new parameter
+         fRegistry->RegisterParameter(par, BuildControlName(par), true);
+         break;
+      case dabc::parModified: // parameter is updated in module
+         fRegistry->ParameterUpdated(par);
+         // update state record for gui display from core state string:
+         if(pname==dabc::Manager::stParName) UpdateStatusRecord();
+         break;
+      case dabc::parDestroy: // parameter is deleted
+         fRegistry->UnregisterParameter(par);
+         break;
+      default:
+         EOUT(("dimc::Manager::ParameterEvent - UNKNOWN EVENT ID: %d \n",event));
           break;
-       case 1: // parameter is updated in module
-          fRegistry->ParameterUpdated(par);
-          // update state record for gui display from core state string:
-          if(pname==dabc::Manager::stParName) UpdateStatusRecord();
-          break;
-       case 2: // parameter is deleted
-           fRegistry->UnregisterParameter(par);
-        break;
-       default:
-          EOUT(("dimc::Manager::ParameterEvent - UNKNOWN EVENT ID: %d \n",event));
-        break;
-
-    } // switch
-
+   } // switch
 }
 
 
@@ -205,15 +202,11 @@ void dimc::Manager::UpdateStatusRecord()
          EOUT(("dimc::Manager::UpdateStatusRecord - NEVER COME HERE - UNKNOWN STATE descriptor: %s \n",theState.c_str()));
       }
    fStatusRecord->SetStatus(theState.c_str(), color.c_str());
-
 }
-
 
 
 void dimc::Manager::CommandRegistration(dabc::CommandDefinition* def, bool reg)
 {
-//  std::string registername = fRegistry->CreateFullParameterName(def->GetParent()->GetName(), def->GetName());
-
    std::string registername = BuildControlName(def);
 
    DOUT5(("dimc::Manager::CommandRegistration %s %s", (reg ? "registers" : "unregisters"), registername.c_str()));
