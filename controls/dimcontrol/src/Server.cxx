@@ -6,13 +6,9 @@
 #include "dabc/logging.h"
 #include "dabc/string.h"
 
-#include <iostream>
-
-
 dimc::Server* dimc::Server::gInstance=0;
 
 dabc::Mutex dimc::Server::gGlobalMutex(true);
-
 
 dimc::Server::Server():fOwner(0),fIsStarted(false)
 {
@@ -227,58 +223,45 @@ else
    }
 }
 
-
-
 void dimc::ServiceEntry::SetType(dimc::nameParser::recordtype t)
 {
- fParser.setType(t);
- if(fService)
-   fService->setQuality(fParser.getQuality());
-
-
+   fParser.setType(t);
+   if(fService)
+      fService->setQuality(fParser.getQuality());
 }
-
-
 
 dimc::nameParser::recordtype dimc::ServiceEntry::GetType()
 {
-return (fParser.getType());
+   return (fParser.getType());
 }
 
 void dimc::ServiceEntry::SetVisibility(dimc::nameParser::visiblemask mask)
 {
-fParser.setVisibility(mask);
-if(fService)
-   fService->setQuality(fParser.getQuality());
-
-
+   fParser.setVisibility(mask);
+   if(fService)
+      fService->setQuality(fParser.getQuality());
 }
 
 dimc::nameParser::visiblemask dimc::ServiceEntry::GetVisibility()
 {
-return (fParser.getVisibility());
+   return fParser.getVisibility();
 }
 
 void dimc::ServiceEntry::SetStatus(dimc::nameParser::recordstat s)
 {
-fParser.setStatus(s);
-if(fService)
-   fService->setQuality(fParser.getQuality());
-
-
-
+   fParser.setStatus(s);
+   if(fService)
+      fService->setQuality(fParser.getQuality());
 }
 
 dimc::nameParser::recordstat dimc::ServiceEntry::GetStatus()
 {
-return (fParser.getStatus());
+   return fParser.getStatus();
 }
 
 dimc::nameParser::recordmode dimc::ServiceEntry::GetMode()
 {
-return (fParser.getMode());
-
-
+   return fParser.getMode();
 }
 
 void dimc::ServiceEntry::SetMode(dimc::nameParser::recordmode m)
@@ -289,49 +272,42 @@ if(fService)
 }
 
 
-
-
-
 ///////////////////////////////////////////////////////////////////
 //// ParameterInfo
 ///////////////////////////////////////////////////////////////////
 
 void dimc::ParameterInfo::infoHandler( )
 {
-    // keep debug part
-    time_t time;
-    time = getTimestamp();
-    //std::cout << "ParameterInfo "<<getName()<<"(type="<<fiType<<") received int=" << getInt() << " Time Stamp=" << ctime(&time) << "Quality="<< getQuality() << std::endl;
-    // call parameter update depending on service type:
-    switch (fiType)
-        {
-            case INTEGER:
-                fxPar->InvokeChange(FORMAT(("%d",getInt())));
-                break;
-            case FLOAT:
-                fxPar->InvokeChange(FORMAT(("%f",getFloat())));
-                break;
-            case DOUBLE:
-                fxPar->InvokeChange(FORMAT(("%e",getDouble())));
-                break;
-            case SHORT:
-                 fxPar->InvokeChange(FORMAT(("%d",getShort())));
-                break;
-            case LONGLONG:
-                 fxPar->InvokeChange(FORMAT(("%ld",getLonglong())));
-                break;
-            case STRING:
-                fxPar->InvokeChange(getString());
-                break;
-            case STRUCTURE:
-                fxPar->InvokeChange((char*) getData()); // need method which also uses getSize
-                break;
-            case NONE:
-            default:
-                std::cout <<"Never come here: ParameterInfo  with no type="<<fiType << std::endl;
-                break;
-        };
-
+   // keep debug part
+   // time_t time;
+   // time = getTimestamp();
+   //std::cout << "ParameterInfo "<<getName()<<"(type="<<fiType<<") received int=" << getInt() << " Time Stamp=" << ctime(&time) << "Quality="<< getQuality() << std::endl;
+   // call parameter update depending on service type:
+   switch (fiType) {
+      case INTEGER:
+          fxPar->InvokeChange(FORMAT(("%d",getInt())));
+          break;
+      case FLOAT:
+          fxPar->InvokeChange(FORMAT(("%f",getFloat())));
+          break;
+      case DOUBLE:
+          fxPar->InvokeChange(FORMAT(("%e",getDouble())));
+          break;
+      case SHORT:
+           fxPar->InvokeChange(FORMAT(("%d",getShort())));
+          break;
+      case LONGLONG:
+           fxPar->InvokeChange(FORMAT(("%ld",getLonglong())));
+          break;
+      case STRING:
+          fxPar->InvokeChange(getString());
+          break;
+      case STRUCTURE:
+          fxPar->InvokeChange((char*) getData()); // need method which also uses getSize
+          break;
+      case NONE:
+      default:
+          EOUT(("Never come here: ParameterInfo  with no type= %d", fiType));
+          break;
+   };
 }
-
-

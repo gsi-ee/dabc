@@ -27,7 +27,7 @@ int RunSimpleApplication(dabc::Configuration* cfg)
    cfg->LoadLibs();
 
    const char* appclass = cfg->ConetextAppClass();
-   DOUT0(("Create application of class %s", appclass));
+   DOUT1(("Create application of class %s", appclass));
 
    if (!dabc::mgr()->CreateApplication(appclass)) {
       EOUT(("Cannot create application"));
@@ -126,7 +126,7 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
    cfg->LoadLibs();
 
    const char* appclass = cfg->ConetextAppClass();
-   DOUT0(("Create application of class %s", appclass));
+   DOUT1(("Create application of class %s", appclass));
 
    if (!dabc::mgr()->CreateApplication(appclass)) {
       EOUT(("Cannot create application"));
@@ -195,7 +195,7 @@ int RunClusterDimApplucation(dabc::Configuration* cfg, int nodeid, bool dorun)
    cfg->LoadLibs();
 
    const char* appclass = cfg->ConetextAppClass();
-   DOUT0(("Create application of class %s", appclass));
+   DOUT1(("Create application of class %s", appclass));
 
    if (!dabc::mgr()->CreateApplication(appclass)) {
       EOUT(("Cannot create application"));
@@ -309,6 +309,8 @@ int main(int numc, char* args[])
    } else {
       mgrclass = "Basic";
    }
+
+   DOUT1(("Create manager class %s", mgrclass));
 
    if (!dabc::Factory::CreateManager(mgrclass, &cfg)) {
       EOUT(("Cannot create required manager class %s", mgrclass));

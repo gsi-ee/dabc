@@ -91,10 +91,12 @@ bnet::ClusterApplication::ClusterApplication() :
       dabc::Manager::Instance()->Subscribe(par, n, remname.c_str());
    }
 
-   SetParDflts();
+   SetParDflts(3, false, false); // mark parameters as non-changeable from control
 
    CreateParInt(CfgNumNodes, fNumNodes);
    CreateParInt(CfgNodeId, dabc::mgr()->NodeId());
+
+   SetParDflts();
 
    CreateParStr(xmlNetDevice, dabc::typeSocketDevice);
    CreateParBool(xmlWithController, false);

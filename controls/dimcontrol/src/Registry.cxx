@@ -134,7 +134,7 @@ return descrname;
 }
 
 
-void dimc::Registry::RegisterParameter(dabc::Parameter* par, const std::string& registername, bool allowdimchange)
+void dimc::Registry::RegisterParameter(dabc::Parameter* par, const std::string& registername)
 {
    if(par==0) return;
 
@@ -143,8 +143,8 @@ void dimc::Registry::RegisterParameter(dabc::Parameter* par, const std::string& 
       EOUT(("Service %s already existing!", dimname.c_str()));
       // TODO: error handling, exceptions!
    } else {
-      dimc::ServiceEntry* nentry= new dimc::ServiceEntry(par,dimname);
-      AddService(nentry, allowdimchange, false);
+      dimc::ServiceEntry* nentry= new dimc::ServiceEntry(par, dimname);
+      AddService(nentry, par->IsChangable(), false);
    }
 }
 
@@ -229,8 +229,8 @@ for(iter=fDimServices.begin(); iter!=fDimServices.end(); ++iter)
 		dimc::ServiceEntry* service=*iter;
 		try
 			{
-              std::string sname=service->Name();
-              std::string reducedname=ReduceDIMName(sname);
+              std::string sname = service->Name();
+              std::string reducedname = ReduceDIMName(sname);
               //std::cout <<"reducedname is -"<<reducedname <<"-"<< std::endl;
 
               if(name==sname || name==reducedname)
@@ -607,7 +607,6 @@ void dimc::Registry::OnDIMCommand(DimCommand* com)
 
 
 void dimc::Registry::SendDIMCommand(const std::string& target, const std::string& comname, const std::string& par)
-
 {
 try{
    std::string fullcommand = GetDIMPrefixByName(target) + "/" + comname;
@@ -783,27 +782,17 @@ if(iter!=fModuleCommandNames.end()) rev=true;
 return rev;
 }
 
-
-
-
-
-
-void dimc::Registry::AddCommandDescriptor(std::string name, std::string descr)
+void dimc::Registry::AddCommandDescriptor(const std::string& name, const std::string& descr)
 {
- std::string text(descr);
- std::string dimname=BuildDIMName(name);
- if(FindDIMService(name)!=0)
-    {
-       EOUT(("AddCommandDescriptorRecord: service %s already exisiting! ",name.c_str()));
-       return; // TODO: error handling, exceptions!
-    }
- dimc::ServiceEntry* nentry= new dimc::ServiceEntry(text,dimname);
- AddService(nentry,false, true);
+   if(FindDIMService(name)!=0) {
+      EOUT(("AddCommandDescriptorRecord: service %s already existing! ",name.c_str()));
+      // TODO: error handling, exceptions!
+   } else {
+      std::string dimname = BuildDIMName(name);
+      dimc::ServiceEntry* nentry= new dimc::ServiceEntry(descr, dimname);
+      AddService(nentry,false, true);
+   }
 }
-
-
-
-
 
 
 bool  dimc::Registry::SubscribeParameter(dabc::Parameter* par, const std::string& fulldimname)

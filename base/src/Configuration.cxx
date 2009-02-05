@@ -140,6 +140,8 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
 
    DOUT0(("Select context %u nodeid %u name %s", cfgid, nodeid, fMgrName.c_str()));
 
+   dabc::SetDebugPrefix(fMgrName.c_str());
+
    fMgrNodeId   = nodeid;
    fMgrNumNodes = numnodes;
 
@@ -156,6 +158,8 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
       if (!val.empty()) dabc::SetDebugLevel(atoi(val.c_str()));
       val = Find1(fSelected, "", xmlRunNode, xmlLoglevel);
       if (!val.empty()) dabc::SetFileLevel(atoi(val.c_str()));
+      val = Find1(fSelected, "", xmlRunNode, xmlParslevel);
+      if (!val.empty()) dabc::WorkingProcessor::SetGlobalParsVisibility(atoi(val.c_str()));
    }
 
    std::string log;

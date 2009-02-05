@@ -210,7 +210,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    fReplyesQueue(true, false),
    fDestroyQueue(16, true),
    fParsQueue(1024, true),
-   fParsVisibility(-1),
+   fParsQueueBlocked(true),
    fSendCmdsMutex(0),
    fSendCmdCounter(0),
    fSendCommands(),
@@ -267,11 +267,14 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
       exit(1);
    }
 
+   DOUT0(("Doing manager constructor"));
+
    // create state parameter, inherited class should call init to see it
    CreateParStr(stParName, stHalted);
 
-   // from this moment one can see all parameters events from visibility level 10
-   SetParsVisibility(10);
+   DOUT0(("Finish manager constructor"));
+
+   fParsQueueBlocked = false;
 }
 
 dabc::Manager::~Manager()
@@ -281,6 +284,8 @@ dabc::Manager::~Manager()
    // call, which suspend and erase all items in manager
 
    DOUT3(("Start ~Manager"));
+
+   fParsQueueBlocked = true;
 
    fSMmodule = 0;
 
@@ -417,10 +422,6 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
    {
       LockGuard lock(fMgrMutex);
 
-      if (fParsVisibility<0) {
-         canexecute = false;
-         cansubmit = false;
-      } else
       if (ProcessorThread()) canexecute = ProcessorThread()->IsItself();
 
       switch (evid) {
@@ -445,11 +446,12 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
       }
 
       // mask out all events for parameters with high visibility value
-      if ((fParsVisibility > 0) &&
-          (par->Visibility() > fParsVisibility) &&
-          (evid != parDestroy)) return;
+      if (!par->IsVisible() && (evid != parDestroy)) return;
 
       fParsQueue.Push(ParamRec(par,evid));
+
+      // submit event, but execute it later, when queue is not blocked
+      if (fParsQueueBlocked) return;
    }
 
    if (canexecute)
@@ -471,7 +473,7 @@ void dabc::Manager::ProcessParameterEvent()
       LockGuard lock(fMgrMutex);
       if (fParsQueue.Size()==0) return;
       rec = fParsQueue.Pop();
-      visible = (fParsVisibility<=0) || (rec.par->Visibility() <= fParsVisibility);
+      visible = rec.par->IsVisible();
 
       if (!rec.processed)
 
@@ -1660,12 +1662,6 @@ int dabc::Manager::DefineNodeId(const char* nodename)
          if (strcmp(name, nodename)==0) return n;
    }
    return -1;
-}
-
-void dabc::Manager::SetParsVisibility(int level)
-{
-   LockGuard lock(fMgrMutex);
-   fParsVisibility = level;
 }
 
 bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Command* cmd)

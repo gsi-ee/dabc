@@ -22,6 +22,8 @@ namespace dabc {
 
    class WorkingProcessor : public CommandReceiver {
 
+      enum { parsVisibilityMask = 0xFF, parsFixedMask = 0x100, parsChangableMask = 0x200, parsValidMask = 0x400 };
+
       friend class WorkingThread;
       friend class Parameter;
 
@@ -81,6 +83,9 @@ namespace dabc {
 
          bool HasCfgPar(const char* name, Command* cmd = 0);
 
+         static void SetGlobalParsVisibility(unsigned lvl = 1) { gParsVisibility = lvl; }
+         static void SetParsCfgDefaults(unsigned flags) { gParsCfgDefaults = flags; }
+
       protected:
 
          // Method is called when requested time point is reached
@@ -138,18 +143,24 @@ namespace dabc {
 
          Folder* MakeFolderForParam(const char* parname);
          void SetParsHolder(Folder* holder);
-         void SetParDflts(int visibility = 1, bool fixed = false);
+
+         static unsigned MakeParsFlags(unsigned visibility = 1, bool fixed = false, bool changable = true);
+         unsigned SetParDflts(unsigned visibility = 1, bool fixed = false, bool changable = true);
+         bool GetParDfltsVisible();
+         bool GetParDfltsFixed();
+         bool GetParDfltsChangable();
+
          virtual WorkingProcessor* GetCfgMaster() { return 0; }
 
 
          CommandDefinition* NewCmdDef(const char* cmdname);
 
          // methods for parameters creation
-         Parameter* CreatePar(int kind, const char* name, const char* initvalue = 0);
-         Parameter* CreateParStr(const char* name, const char* initvalue = 0);
-         Parameter* CreateParInt(const char* name, int initvalue = 0);
-         Parameter* CreateParDouble(const char* name, double initvalue = 0.);
-         Parameter* CreateParBool(const char* name, bool initvalue = false);
+         Parameter* CreatePar(int kind, const char* name, const char* initvalue = 0, unsigned flags = 0);
+         Parameter* CreateParStr(const char* name, const char* initvalue = 0, unsigned flags = 0);
+         Parameter* CreateParInt(const char* name, int initvalue = 0, unsigned flags = 0);
+         Parameter* CreateParDouble(const char* name, double initvalue = 0., unsigned flags = 0);
+         Parameter* CreateParBool(const char* name, bool initvalue = false, unsigned flags = 0);
 
          // this method is called after parameter is changed
          // user may add its reaction on this event, but cannot
@@ -165,8 +176,10 @@ namespace dabc {
 
          Mutex            fProcessorMutex;
 
-         int              fParsDfltVisibility;
-         bool             fParsDfltFixed;
+         unsigned         fParsDefaults;
+
+         static unsigned  gParsVisibility; /** system-wide level for visibility of created parameters */
+         static unsigned  gParsCfgDefaults; /** system-wide defaults for config parameters */
 
       private:
          bool TakeActivateData(TimeStamp_t& mark, double& interval);

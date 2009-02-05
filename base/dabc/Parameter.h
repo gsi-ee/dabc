@@ -45,13 +45,14 @@ namespace dabc {
 
          virtual EParamKind Kind() const { return parNone; }
 
-         bool IsVisible() const { return fVisibility > 0; }
-         int Visibility() const { return fVisibility; }
+         bool IsFixed() const;
+         void SetFixed(bool on = true);
+
+         bool IsVisible() const { return fVisible; }
+         bool IsChangable() const { return fChangable; }
 
          virtual void* GetPtr() { return 0; }
 
-         bool IsFixed() const;
-         void SetFixed(bool on = true);
 
          bool IsDebugOutput() const { return fDebug; }
          void SetDebugOutput(bool on = true) { fDebug = on; }
@@ -59,7 +60,7 @@ namespace dabc {
          inline std::string GetStr() const { std::string res; return GetValue(res) ? res : ""; }
          inline bool SetStr(const std::string &value) { return SetValue(value); }
 
-         // this is generic virtual methods to get/set parameter valus in string form
+         // this is generic virtual methods to get/set parameter values in string form
          virtual bool GetValue(std::string& value) const { return false; }
          virtual bool SetValue(const std::string &value) { return false; }
          virtual void FillInfo(std::string& info);
@@ -96,10 +97,11 @@ namespace dabc {
 
          WorkingProcessor* fLst;
          Mutex             fValueMutex;
-         bool              fFixed;
-         int               fVisibility;
-         bool              fDebug;
-         bool              fRegistered; // indicate if parameter is registered in manager
+         bool              fFixed;   /** if true, parameter cannot be changed */
+         bool              fVisible; /** indicates if parameter seen by control system */
+         bool              fChangable; /** indicates if parameter can be modified from control system */
+         bool              fDebug;     /** does parameter produces debug output */
+         bool              fRegistered; /** indicate if parameter is registered in manager */
    };
 
 

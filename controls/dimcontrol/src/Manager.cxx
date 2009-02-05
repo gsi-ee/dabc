@@ -151,7 +151,7 @@ void dimc::Manager::ParameterEvent(dabc::Parameter* par, int event)
    dabc::Manager::ParameterEvent(par, event);
    switch(event) {
       case dabc::parCreated: // creation of new parameter
-         fRegistry->RegisterParameter(par, BuildControlName(par), true);
+         fRegistry->RegisterParameter(par, BuildControlName(par));
          break;
       case dabc::parModified: // parameter is updated in module
          fRegistry->ParameterUpdated(par);

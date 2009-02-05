@@ -37,7 +37,7 @@ bnet::WorkerApplication::WorkerApplication(const char* classname) :
    CreateParStr(parSendStatus, "oooo");
    CreateParStr(parRecvStatus, "oooo");
 
-   SetParDflts(0);  // make next parameters not visible outside
+   SetParDflts(3, false, false);  // make next parameters not changeable from outside
 
    CreateParInt(CfgNodeId, dabc::mgr()->NodeId());
    CreateParInt(CfgNumNodes, dabc::mgr()->NumNodes());

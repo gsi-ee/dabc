@@ -60,12 +60,12 @@ public:
      *  export command descriptor (xml description descr) as string service of name.
      *  Note that this service is never updated after creation and is kept internally here
      */
-   void AddCommandDescriptor(std::string name, std::string descr);
+   void AddCommandDescriptor(const std::string& name, const std::string& descr);
 
     /**
      * Export Parameter par as DIM service. Keep in registry list.
      */
-  void RegisterParameter(dabc::Parameter* par, const std::string& registername, bool allowdimchange=true);
+  void RegisterParameter(dabc::Parameter* par, const std::string& registername);
 
 /*
  * update DIM service if parameter is changed

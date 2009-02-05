@@ -188,6 +188,7 @@ namespace dabc {
    const char* xmlDebuglevel       = "debuglevel";
    const char* xmlLogfile          = "logfile";
    const char* xmlLoglevel         = "loglevel";
+   const char* xmlParslevel        = "parslevel";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
    const char* xmlConfigFile       = "config";
    const char* xmlConfigFileId     = "configid";

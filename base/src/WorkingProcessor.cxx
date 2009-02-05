@@ -7,6 +7,9 @@
 #include "dabc/Iterator.h"
 #include "dabc/CommandDefinition.h"
 
+unsigned  dabc::WorkingProcessor::gParsVisibility = 1;
+unsigned  dabc::WorkingProcessor::gParsCfgDefaults = dabc::WorkingProcessor::MakeParsFlags(5, true, false);
+
 dabc::WorkingProcessor::WorkingProcessor() :
    fProcessorThread(0),
    fProcessorId(0),
@@ -14,14 +17,14 @@ dabc::WorkingProcessor::WorkingProcessor() :
    fProcessorCommands(false, true),
    fParsHolder(0),
    fProcessorMutex(),
-   fParsDfltVisibility(1),
-   fParsDfltFixed(false),
+   fParsDefaults(0),
    fProcessorActivateTmout(false),
    fProcessorActivateMark(NullTimeStamp),
    fProcessorActivateInterv(0.),
    fProcessorPrevFire(NullTimeStamp),
    fProcessorNextFire(NullTimeStamp)
 {
+   SetParDflts(1, false, true);
 }
 
 dabc::WorkingProcessor::~WorkingProcessor()
@@ -169,15 +172,49 @@ dabc::Folder* dabc::WorkingProcessor::MakeFolderForParam(const char* parname)
    return fParsHolder->GetFolder(foldname.c_str(), true, true);
 }
 
-void dabc::WorkingProcessor::SetParDflts(int visibility, bool fixed)
+unsigned dabc::WorkingProcessor::MakeParsFlags(unsigned visibility, bool fixed, bool changable)
 {
-   fParsDfltVisibility = visibility;
-   fParsDfltFixed = fixed;
+   if (visibility > parsVisibilityMask) visibility = parsVisibilityMask;
+
+   return visibility | (fixed ? parsFixedMask : 0) | (changable ? parsChangableMask : 0) | parsValidMask;
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreatePar(int kind, const char* name, const char* initvalue)
+
+unsigned dabc::WorkingProcessor::SetParDflts(unsigned visibility, bool fixed, bool changable)
+{
+   unsigned old = fParsDefaults;
+
+   fParsDefaults = MakeParsFlags(visibility, fixed, changable);
+
+   return old;
+}
+
+bool dabc::WorkingProcessor::GetParDfltsVisible()
+{
+   unsigned level = fParsDefaults & parsVisibilityMask;
+
+   return (level>0) && (level<=gParsVisibility);
+}
+
+bool dabc::WorkingProcessor::GetParDfltsFixed()
+{
+   return fParsDefaults & parsFixedMask;
+}
+
+bool dabc::WorkingProcessor::GetParDfltsChangable()
+{
+   return fParsDefaults & parsChangableMask;
+}
+
+dabc::Parameter* dabc::WorkingProcessor::CreatePar(int kind, const char* name, const char* initvalue, unsigned flags)
 {
    dabc::Parameter* par = 0;
+
+   unsigned oldflags = 0;
+   if (flags & parsValidMask) {
+      oldflags = fParsDefaults;
+      fParsDefaults = flags;
+   }
 
    switch (kind) {
       case dabc::parNone:
@@ -207,30 +244,70 @@ dabc::Parameter* dabc::WorkingProcessor::CreatePar(int kind, const char* name, c
          EOUT(("Unsupported parameter type"));
    }
 
-   if ((par!=0) && (initvalue!=0) && (kind!=dabc::parString))
+   if (flags & parsValidMask)
+      fParsDefaults = oldflags;
+
+   if ((par!=0) && (initvalue!=0) && (kind!=dabc::parString)) {
+      bool wasfixed = par->IsFixed();
+      if (wasfixed) par->SetFixed(false);
       par->SetValue(initvalue);
+      if (wasfixed) par->SetFixed(true);
+   }
 
    return par;
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreateParStr(const char* name, const char* initvalue)
+dabc::Parameter* dabc::WorkingProcessor::CreateParStr(const char* name, const char* initvalue, unsigned flags)
 {
-   return new dabc::StrParameter(this, name, initvalue);
+   unsigned oldflags = 0;
+   if (flags & parsValidMask) {
+      oldflags = fParsDefaults;
+      fParsDefaults = flags;
+   }
+
+   dabc::Parameter* par = new dabc::StrParameter(this, name, initvalue);
+
+   if (flags & parsValidMask)
+      fParsDefaults = oldflags;
+
+   return par;
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreateParInt(const char* name, int initvalue)
+dabc::Parameter* dabc::WorkingProcessor::CreateParInt(const char* name, int initvalue, unsigned flags)
 {
-   return new dabc::IntParameter(this, name, initvalue);
+   unsigned oldflags = 0;
+   if (flags & parsValidMask) {
+      oldflags = fParsDefaults;
+      fParsDefaults = flags;
+   }
+
+   dabc::Parameter* par = new dabc::IntParameter(this, name, initvalue);
+
+   if (flags & parsValidMask)
+      fParsDefaults = oldflags;
+
+   return par;
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreateParDouble(const char* name, double initvalue)
+dabc::Parameter* dabc::WorkingProcessor::CreateParDouble(const char* name, double initvalue, unsigned flags)
 {
-   return new dabc::DoubleParameter(this, name, initvalue);
+   unsigned oldflags = 0;
+   if (flags & parsValidMask) {
+      oldflags = fParsDefaults;
+      fParsDefaults = flags;
+   }
+
+   dabc::Parameter* par = new dabc::DoubleParameter(this, name, initvalue);
+
+   if (flags & parsValidMask)
+      fParsDefaults = oldflags;
+
+   return par;
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreateParBool(const char* name, bool initvalue)
+dabc::Parameter* dabc::WorkingProcessor::CreateParBool(const char* name, bool initvalue, unsigned flags)
 {
-   return CreateParStr(name, initvalue ? xmlTrueValue : xmlFalseValue);
+   return CreateParStr(name, initvalue ? xmlTrueValue : xmlFalseValue, flags);
 }
 
 void dabc::WorkingProcessor::DestroyAllPars()
@@ -328,8 +405,8 @@ std::string dabc::WorkingProcessor::GetCfgStr(const char* name, const std::strin
 
    if (cfgsrc==0) cfgsrc = this;
 
-   Parameter* par = cfgsrc->CreateParStr(name, dfltvalue.c_str());
-   if (par) par->SetFixed(true);
+   cfgsrc->CreateParStr(name, dfltvalue.c_str(), gParsCfgDefaults);
+   // if (par) par->SetFixed(true);
    return cfgsrc->GetParStr(name, dfltvalue);
 }
 
@@ -350,8 +427,8 @@ double dabc::WorkingProcessor::GetCfgDouble(const char* name, double dfltvalue, 
 
    if (cfgsrc==0) cfgsrc = this;
 
-   Parameter* par = cfgsrc->CreateParDouble(name, dfltvalue);
-   if (par) par->SetFixed(true);
+   cfgsrc->CreateParDouble(name, dfltvalue, gParsCfgDefaults);
+//   if (par) par->SetFixed(true);
    return cfgsrc->GetParDouble(name, dfltvalue);
 }
 
@@ -372,8 +449,8 @@ int dabc::WorkingProcessor::GetCfgInt(const char* name, int dfltvalue, Command* 
 
    if (cfgsrc==0) cfgsrc = this;
 
-   Parameter* par = cfgsrc->CreateParInt(name, dfltvalue);
-   if (par) par->SetFixed(true);
+   cfgsrc->CreateParInt(name, dfltvalue, gParsCfgDefaults);
+//   if (par) par->SetFixed(true);
    return cfgsrc->GetParInt(name, dfltvalue);
 }
 
@@ -394,8 +471,8 @@ bool dabc::WorkingProcessor::GetCfgBool(const char* name, bool dfltvalue, Comman
 
    if (cfgsrc==0) cfgsrc = this;
 
-   Parameter* par = cfgsrc->CreateParBool(name, dfltvalue);
-   if (par) par->SetFixed(true);
+   cfgsrc->CreateParBool(name, dfltvalue, gParsCfgDefaults);
+//   if (par) par->SetFixed(true);
    return cfgsrc->GetParBool(name, dfltvalue);
 }
 

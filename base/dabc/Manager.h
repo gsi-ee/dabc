@@ -450,11 +450,6 @@ namespace dabc {
          /** Establish/test connection to control system */
          virtual bool ConnectControl(const char* connid) { return true; }
 
-         /** Returns current visibility level of parameters events */
-         int ParsVisibility() const { return fParsVisibility; }
-         /** Set visibility level of parameters events */
-         void SetParsVisibility(int level = 2);
-
          // Subscribe/unsubscribe parameter against remote (local)
          virtual bool Subscribe(Parameter* par, int remnode, const char* remname) { return false; }
          virtual bool Unsubscribe(Parameter* par) { return false; }
@@ -536,7 +531,7 @@ namespace dabc {
          CommandsQueue         fReplyesQueue;
          Queue<Basic*>         fDestroyQueue;
          Queue<ParamRec>       fParsQueue;
-         int                   fParsVisibility; // maximum level which can be seen by parameters
+         bool                  fParsQueueBlocked;
 
          Mutex                *fSendCmdsMutex;
          int                   fSendCmdCounter;

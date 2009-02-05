@@ -15,8 +15,9 @@ dabc::Parameter::Parameter(WorkingProcessor* lst, const char* name) :
    Basic(lst ? lst->MakeFolderForParam(name) : 0, dabc::Folder::GetObjectName(name)),
    fLst(lst),
    fValueMutex(),
-   fFixed(lst ? lst->fParsDfltFixed : false),
-   fVisibility(lst ? lst->fParsDfltVisibility : 1),
+   fFixed(lst ? lst->GetParDfltsFixed() : false),
+   fVisible(lst ? lst->GetParDfltsVisible() : true),
+   fChangable(lst ? lst->GetParDfltsChangable() : true),
    fDebug(false),
    fRegistered(false)
 {
@@ -115,8 +116,13 @@ bool dabc::Parameter::Read(ConfigIO &cfg)
    std::string value;
    if (!cfg.Find(this, value)) return false;
 
+   bool wasfixed = fFixed;
+   fFixed = false;
+
    DOUT1(("Set par %s = %s", GetFullName().c_str(), value.c_str()));
    SetValue(value.c_str());
+
+   fFixed = wasfixed;
 
    return true;
 }
