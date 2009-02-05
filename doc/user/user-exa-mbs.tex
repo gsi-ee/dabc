@@ -5,6 +5,11 @@ Any \mbs\ system can be controlled by the \dabc\ GUI.
 It can run in two operation modes: with \mbs\ event builder or \dabc\ event builder.
 The first case means a standard \mbs\ system.
 To control a standard \mbs\ nothing has to be done by the user on the \mbs\ side.
+\strong{Note}, however that in the \verba{startup.scom} file the \verba{m\_daq\_rate} task must be
+started as last task (this is probably the case already).
+This task calculates the rates. The GUI waits for this task after execution of
+\verba{startup.scom}. Because \mbs\ has no states there is no other way to
+know when the startup has finished.
 Of cause, the \mbs\ itself must have been build with the DIM option (since version v5.1).
 Central log file is written as usual.
 Optionally one can provide a text file with specifications which parameters
