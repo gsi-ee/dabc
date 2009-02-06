@@ -169,6 +169,13 @@ which is displayed in the info panel
 (see Fig. \paref{fig:user-gui-pan-info}).
 Click on a command opens at the right side the argument panel.
 Entering argument values and \keyw{RETURN} executes the command.
+\figpng{user-gui-pan-cmd-mbs1}{Info and command panel.}{htb}{0}{0.9}
+Only the \mbs\ commands of the running tasks are shown. 
+Fig. \paref{fig:user-gui-pan-cmd-mbs1} shows that only dispatcher and prompter are up
+and therefore only their commands are seen.
+\figpng{user-gui-pan-cmd-mbs2}{Info and command panel.}{htb}{0}{0.9}
+Fig. \paref{fig:user-gui-pan-cmd-mbs2} shows in addition the commands
+of util and transport after configuration.
 \section[MBS DIM parameters]{\mbs\ DIM parameters}
 \subsection[MBS states]{\mbs\ states}
 \bdes
@@ -200,32 +207,29 @@ Shown in info window.
 \item[PRM/NodeList] List of nodes (master node only).
 \edes
 \subsection[MBS tasks]{\mbs\ tasks}
-When a task is started a parameter with it's name is created.
-The value is the task name. If the task is stopped,
-color changes to gray and value is preceded by "no".
-Task list is shown in info window.
-\bdes
-\item[MSG/Dispatch]
-\item[MSG/MsgLog]
-\item[MSG/ReadMeb]
-\item[MSG/Collector]
-\item[MSG/Transport]
-\item[MSG/EventServ]
-\item[MSG/Util]
-\item[MSG/ReadCam]
-\item[MSG/EsoneServ]
-\item[MSG/StreamServ]
-\item[MSG/Histogram]
-\item[MSG/Prompt]
-\item[MSG/Rate]
-\item[MSG/SMI]
-\item[MSG/Sender]
-\item[MSG/Receiver]
-\item[MSG/AsynchReceiver]
-\item[MSG/Rising]
-\item[MSG/TimeOrder]
-\item[MSG/VmeServ]
-\edes
+Task list is shown in info window (name slightly different).
+
+ Dispatch 
+ MsgLog 
+ ReadMeb 
+ Collector 
+ Transport 
+ EventServ 
+ Util 
+ ReadCam 
+ EsoneServ 
+ StreamServ 
+ Histogram 
+ Prompt 
+ Rate 
+ SMI 
+ Sender 
+ Receiver 
+ AsynchReceiver 
+ Rising 
+ TimeOrder 
+ VmeServ 
+
 \subsection[MBS text]{\mbs\ text}
 \bdes
 \item[MSG/GuiNode] Node where GUI runs
