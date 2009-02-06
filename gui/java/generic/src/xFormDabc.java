@@ -29,6 +29,7 @@ protected void setDefaults(){
     Master=new String("<MasterNode>");
     Name=new String("<MasterName>");
     Servers=new String("0");
+    nServers=0;
     UserPath=new String("<UserPath>");
     SystemPath=new String("<DABC system path>");
     Script=new String("<ssh command>");
@@ -84,7 +85,7 @@ LaunchFile=new String(file);
         Setup=((Element)li.item(0)).getAttribute("value");
         li=root.getElementsByTagName("DabcServers");
         Servers=((Element)li.item(0)).getAttribute("value");
-        nServers=1+Integer.parseInt(Servers);// add DNS
+        nServers=Integer.parseInt(Servers);// add DNS
     }
 }
 /**

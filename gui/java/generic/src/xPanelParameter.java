@@ -118,6 +118,9 @@ private void initPanel(Dimension dim){
     } else {
         System.out.println("\nfailed");
         xSet.setMessage("Update parameter list failed!");
+        for(i=0;i<ipar;i++) 
+        	if(vpar.get(i).getDimQuality() == -1)
+        		vpar.get(i).printParameter(true);
         xSet.setSuccess(false);
         statusOK=false;
         return;

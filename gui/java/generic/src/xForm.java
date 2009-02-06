@@ -23,12 +23,16 @@ public xForm(ActionListener a) {action=a;}
 public String getLaunchFile(){return LaunchFile;}
 public String getMaster(){return Master;}
 public String getServers(){return Servers;}
+public int getnServers(){return nServers;}
 public String getUserPath(){return UserPath;}
 public String getSystemPath(){return SystemPath;}
 public String getScript(){return Script;}
 protected void setLaunchFile(String file){LaunchFile=file;}
 protected void setMaster(String master){Master=master;}
-protected void setServers(String servers){Servers=servers;}
+protected void setServers(String servers){
+	Servers=servers;
+    nServers=Integer.parseInt(servers);
+}
 protected void setUserPath(String userpath){UserPath=userpath;}
 protected void setSystemPath(String systempath){SystemPath=systempath;}
 protected void setScript(String script){Script=script;}

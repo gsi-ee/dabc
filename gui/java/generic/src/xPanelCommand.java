@@ -57,7 +57,7 @@ private DefaultMutableTreeNode node1,node2,nodesel;
 private DefaultMutableTreeNode[] nodepath;
 private Object obj;
 private String[] treestr = new String[4];
-private String treepath;
+private String treepath, filter;
 private Vector<xDimCommand> vcom;
 private Vector<JTextField> inputs;
 private Vector<JCheckBox> checkers;
@@ -71,9 +71,10 @@ private xiUserCommand userCmd;
  * @param browser DIM browser.
  * @param dim Size and position of window.
  */
-public xPanelCommand(xDimBrowser browser, Dimension dim) {
+public xPanelCommand(xDimBrowser browser, Dimension dim, String Filter) {
     super(new GridLayout(1,0));
 // xDimCommand list of commands
+    filter=Filter;
     dimbrowser=browser;
     vcom=browser.getCommandList();
     icmd=vcom.size(); // number of commands
@@ -95,6 +96,8 @@ private void initPanel(Dimension dim){
     Boolean sibl;
     while(i<icmd) {
     if(!vcom.get(i).toString(1).startsWith("_")){
+    	if((!vcom.get(i).getParser().getName().startsWith("Mbs"))|
+    	   (filter.contains(vcom.get(i).getParser().getName().substring(3)))){
         if(indent==1) sibl=treestr[indent-1].equals(vcom.get(i).toString(indent-1));
         else
             sibl=treestr[indent-1].equals(vcom.get(i).toString(indent-1))
@@ -107,7 +110,7 @@ private void initPanel(Dimension dim){
             treenode[indent-1].add(treenode[indent]);
             if(indent<3){indent++;i--;}
         } else {indent--;if(indent>0)i--;}
-        }
+        }}
         i++;
     }
     comtree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);

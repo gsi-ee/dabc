@@ -27,6 +27,7 @@ restoreSetup(file);
 protected void setDefaults(){
     Master=new String("<MasterNode>");
     Servers=new String("0");
+    nServers=0;
     UserPath=new String("<UserPath>");
     SystemPath=new String("<MBS system path>");
     Script=new String("script/remote_exe.sc");
@@ -78,7 +79,7 @@ LaunchFile=new String(file);
         Command=((Element)li.item(0)).getAttribute("value");
         li=root.getElementsByTagName("MbsServers");
         Servers=((Element)li.item(0)).getAttribute("value");
-        nServers=1+Integer.parseInt(Servers);// add DNS
+        nServers=Integer.parseInt(Servers);// add DNS
     }
 }
 public String getCommand(){return Command;}

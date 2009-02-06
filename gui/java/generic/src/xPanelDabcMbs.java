@@ -38,16 +38,15 @@ private xFormDabc formDabc;
 private xState progressState;
 private ActionListener action;
 private xTimer etime;
-private int nMbsServers;
+private int nMbsServers, nMbsNodes;
 private int nDabcServers;
 private int nServers;
 private xDimCommand mbsCommand;
 private xDimCommand doConfig, doEnable, doStart, doStop, doHalt;
 private Vector<xDimCommand> doExit;
 private Vector<xDimParameter> runState;
-private Vector<xDimParameter> runMsgLog;
-private Vector<xDimParameter> runRate;
 private Vector<xDimParameter> runMode;
+private Vector<xDimParameter> mbsTaskList;
 private Thread threxe;
 private ActionEvent ae;
 private boolean threadRunning=false;
@@ -63,6 +62,7 @@ private boolean threadRunning=false;
  */
 public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionListener al) {
     super(title);
+    mbsTaskList=new Vector<xDimParameter>(0);
     // get icons
     action=al;
     desk=desktop;
@@ -141,6 +141,7 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     DabcLaunchFile=addPrompt("DABC launch file: ",formDabc.getLaunchFile(),"set",width,this);
     // read defaults from setup file
     nMbsServers=Integer.parseInt(formMbs.getServers());
+    nMbsNodes=nMbsServers-1;
     nDabcServers=Integer.parseInt(formDabc.getServers());
     nServers=nMbsServers+nDabcServers+1; // add DNS
     System.out.println("Total servers needed: DNS + "+(nServers-1));
@@ -188,8 +189,6 @@ int i;
 releaseDimServices();
 System.out.println("DabcMbs setDimServices");
 doExit=new Vector<xDimCommand>(0);
-runMsgLog=new Vector<xDimParameter>(0);
-runRate=new Vector<xDimParameter>(0);
 runState=new Vector<xDimParameter>(0);
 runMode=new Vector<xDimParameter>(0);
 // Scan command list for some commands
@@ -216,10 +215,8 @@ Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
 if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) {
     runState.add(para.get(i));}
-else if(para.get(i).getParser().getFull().indexOf("MSG/MsgLog")>0) {
-    runMsgLog.add(para.get(i));}
-else if(para.get(i).getParser().getFull().indexOf("MSG/Rate")>0) {
-    runRate.add(para.get(i));}
+else if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) 
+	mbsTaskList.add(para.get(i));
 else if(para.get(i).getParser().getFull().indexOf("/RunMode/State")>0) {
     runMode.add(para.get(i));}
 }
@@ -244,15 +241,14 @@ doConfig=null;
 doEnable=null;
 doStart=null;
 doStop=null;
-if(doExit != null) doExit.removeAllElements();
-if(runState != null) runState.removeAllElements();
-if(runMsgLog != null) runMsgLog.removeAllElements();
-if(runRate != null) runRate.removeAllElements();
 doHalt=null;
+if(doExit != null) doExit.removeAllElements();
+if(mbsTaskList != null) mbsTaskList.removeAllElements();
+if(runMode != null) runMode.removeAllElements();
+if(runState != null) runState.removeAllElements();
 doExit=null;
 runState=null;
-runMsgLog=null;
-runRate=null;
+runMode=null;
 }
 // Start internal frame with an xState panel through timer.
 // Timer events are handled by desktop event handler passed to constructor.
@@ -275,37 +271,49 @@ if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
 private void stopProgress(){
     etime.action(new ActionEvent(progress,1,"RemoveFrame"));
 }
-// wait until all parameters from vector match serv (parameters exist).
-// or wait until the number of *MSG/serv parameters reaches the requested number.  
-private boolean waitMbs(int timeout, Vector<xDimParameter> param, String serv){
-int t=0,i;
-int nLoggers;
-if(param == null) setDimServices();
-if(param == null) return false;
-String wild = new String("*MSG/"+serv);
-if(param.size()>0){
-    setProgress(new String("Wait for "+(nMbsServers-1)+" MBS "+serv+" tasks ..."),xSet.blueD());
-    System.out.print("Wait for "+(nMbsServers-1)+" "+serv);
-    while(t < timeout){
-        nLoggers=0;
-        for(i=0;i<param.size();i++)
-            if(param.get(i).getValue().equals(serv))nLoggers++;
-        if(nLoggers == (nMbsServers-1)) return true;
-        System.out.print(".");
-        browser.sleep(1);
-        t++;
-}} else {
-    setProgress(new String("Wait for "+(nMbsServers-1)+" MBS "+serv+" tasks ..."),xSet.blueD());
-    System.out.print("Wait for "+(nMbsServers-1)+" "+wild);
-    while(t < timeout){
-        String[] xx = browser.getServices(wild);
-        if(xx.length == (nMbsServers-1)) return true;
-        System.out.print(".");
-        browser.sleep(1);
-        t++;
-    }
-    }
-    return false;
+private boolean waitMbs(int timeout, String serv){
+	int t=0,i,n;
+	boolean ok=false;
+	// If not there, wait for parameters to be created,
+	// otherwise wait that their values match the task names
+	if(mbsTaskList.size() < nMbsNodes){
+	    setProgress(new String("Wait for "+nMbsNodes+" task lists ..."),xSet.blueD());
+	    System.out.print("Wait for "+nMbsNodes+" task lists ");
+	    while(t < timeout){
+	        String[] xx = browser.getServices("*MSG/TaskList");
+	        if(xx.length == nMbsNodes) {ok=true; break;}
+	        System.out.print(".");
+	        browser.sleep(1);
+	        t++;
+	    }
+	    if(ok){
+	    	t=0;
+		    setProgress(new String("Wait for Mbs Command server ..."),xSet.blueD());
+		    System.out.print(" Wait for Mbs Command server ");
+	        String server = new String(MbsNode.getText().toUpperCase()+":PRM");
+		    while(t < timeout){	    	
+		        System.out.print(".");
+		        browser.sleep(1);
+		        n=browser.getServers().indexOf(server);
+		        if(n >= 0) return true;
+		        t++;
+		    }	    	
+	    }
+	    return false;
+	}
+	if(mbsTaskList.size() == nMbsNodes){
+	    setProgress(new String("Wait for "+nMbsNodes+" "+serv+" tasks ..."),xSet.blueD());
+	    System.out.print("Wait for "+nMbsNodes+" "+serv);
+	    while(t < timeout){
+	        n=0;
+	        for(i=0;i<mbsTaskList.size();i++)
+	            if(mbsTaskList.elementAt(i).getValue().contains(serv))n++;
+	        if(n == nMbsNodes) return true;
+	        System.out.print(".");
+	        browser.sleep(1);
+	        t++;
+	    }}
+	    return false;
 }
 // wait until all runState parameters have the value state.
 private boolean waitState(int timeout, String state){
@@ -453,7 +461,7 @@ int time=0;
             s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep TIME");
         }
         System.out.println("");
-        
+        boolean launchMbs=false;
         setProgress("Launching MBS ...",xSet.blueD());
         cmd = new String(MbsPath.getText()+
                                 "/script/prmstartup.sc "+MbsPath.getText()+" "+
@@ -461,32 +469,33 @@ int time=0;
                                 xSet.getDimDns()+" "+xSet.getGuiNode()+" "+xSet.getAccess());
         xLogger.print(0,MbsMaster+": "+cmd);
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
-        setProgress("Wait for MBS servers ready ...",xSet.blueD());
-        boolean w = waitMbs(20,runMsgLog,"MsgLog");
-        // if(w && (browser.getServers().indexOf(service)!=-1)){
-        browser.sleep(2); // get message loggers the chance to announce prompter
-        System.out.println("\nServers "+browser.getServers());
-        String service = new String(MbsNode.getText().toUpperCase()+":PRM");
-        System.out.print("MBS wait ");
-        time=0;
-        while(browser.getServers().indexOf(service)==-1){
-            System.out.print(".");
-            browser.sleep(1);
-            time++;
-            if(time > 10) break;
-        }
-        if(browser.getServers().indexOf(service)!=-1){
-            System.out.println("\nMBS connnected");
-            setProgress("MBS servers ready",xSet.greenD());
+        	setProgress("Wait for MBS servers ready ...",xSet.blueD());
+        	if(waitMbs(20,"Msg_log")){
+                System.out.println("\nMBS connnected");
+                setProgress("MBS servers ready, update parameters ...",xSet.blueD());
+                xSet.setSuccess(false);
+                etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+                browser.sleep(1);
+                if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+                browser.sleep(1);}
+                if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+                else {
+                	setProgress("OK: MBS servers ready",xSet.greenD());
+                	launchMbs=true;
+                }
+                //setDimServices();
+            } else {
+                System.out.println("MBS Failed ");
+                setProgress("Failed: Launch",xSet.redD());
+                //tellError("MBS servers missing!");
+            }
         } else {
-            System.out.println("\nMBS Failed ");
-            setProgress("Failed: MBS launch",xSet.redD());
-            //tellError("MBS servers missing!");
-        }
-        } else{
-           setProgress("Failed: MBS launch script",xSet.redD());
-           //tellError("MBS startup script failed");
-	}
+            System.out.println("\nMBS startup script Failed ");
+            setProgress("Failed: Launch script",xSet.redD());
+            //tellError("MBS startup script failed");
+            }
+
+    if(launchMbs){
         time=0;
         int nserv=0;
         System.out.print("DABC wait ");
@@ -523,7 +532,7 @@ int time=0;
             else setProgress("Failure: DABC servers not ready",xSet.redD());
             //setDimServices();        
         }
-    }
+    }}
     else if ("mbsTest".equals(Action)) {
         // String cmd = new String(MbsPath.getText()+"/"+
                                 // MbsScript.getText()+" "+
@@ -614,7 +623,7 @@ int time=0;
         xLogger.print(1,"MBS: @startup.scom");
         mbsCommand.exec(xSet.getAccess()+" @startup.scom");
         // first wait for MBS
-        if(!waitMbs(10,runRate,"Rate")){
+        if(!waitMbs(10,"Daq_rate")){
             System.out.println("\nMBS startup failed ");
             setProgress("MBS configure failed",xSet.redD());
             //tellError("MBS tasks missing!");

@@ -70,7 +70,6 @@ init(desktop,actionlistener);
  * @param actionlistener Events can be passed to Desktop action listener.
  */
 private void init(xiDesktop desktop, ActionListener actionlistener){
-    xSet.setColorBack(back);
     desk=desktop;
     action=actionlistener;    // external DABC action listener 
 // Add prompter lines

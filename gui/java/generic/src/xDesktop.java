@@ -187,7 +187,8 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
  // parpan waits until all parameters are registered and updated (quality != -1):
     parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
     browser.enableServices();
-    compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize());
+    String str=mbspan.getTaskList();
+    compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
     // put list of command descriptors from parameters to commands:
     compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
 //    infpan.updateAll();
@@ -590,7 +591,8 @@ public void actionPerformed(ActionEvent e) {
         browser.initServices("*"); 
      // waits until all parameters are registered and updated:
         parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
-        compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize());
+        String str=mbspan.getTaskList();
+        compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
 //        infpan.updateAll();
 //        stapan.updateAll();
 //        metpan.updateAll();
