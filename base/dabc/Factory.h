@@ -32,6 +32,15 @@ namespace dabc {
    class Factory : public Basic {
       friend class Manager;
 
+      struct LibEntry {
+         void*        fLib;
+         std::string  fLibName;
+
+         LibEntry() : fLib(0), fLibName() {}
+         LibEntry(void* lib, const std::string& name) : fLib(lib), fLibName(name) {}
+         LibEntry(const LibEntry& src) : fLib(src.fLib), fLibName(src.fLibName) {}
+      };
+
       public:
          Factory(const char* name);
 
@@ -55,6 +64,10 @@ namespace dabc {
 
          static bool CreateManager(const char* kind, Configuration* cfg);
 
+         static bool LoadLibrary(const std::string& fname);
+
+         static void* FindSymbol(const char* symbol);
+
       protected:
          static const char* DfltAppClass(const char* newdefltclass = 0);
 
@@ -71,6 +84,8 @@ namespace dabc {
             static Mutex m;
             return &m;
          }
+
+         static std::vector<LibEntry> fLibs;
 
          static Factory* NextNewFactory();
    };

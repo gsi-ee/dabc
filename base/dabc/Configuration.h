@@ -60,7 +60,7 @@ namespace dabc {
 
          const char* ConetextAppClass();
 
-         bool LoadLibs(const char* startfunc = 0);
+         bool LoadLibs();
 
          bool ReadPars();
 

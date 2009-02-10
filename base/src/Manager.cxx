@@ -8,7 +8,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
-#include <dlfcn.h>
 
 #include "dabc/logging.h"
 #include "dabc/timing.h"
@@ -1904,57 +1903,6 @@ dabc::Folder* dabc::Manager::ListMatchFiles(const char* typ, const char* filemas
    }
 
    return 0;
-}
-
-bool dabc::Manager::LoadLibrary(const char* libname, const char* startfunc)
-{
-   std::string name = libname;
-
-   while (name.find("${") != name.npos) {
-
-      size_t pos1 = name.find("${");
-      size_t pos2 = name.find("}");
-
-      if ((pos1>pos2) || (pos2==name.npos)) {
-         EOUT(("Wrong variable parenthesis %s", name.c_str()));
-         return false;
-      }
-
-      std::string var(name, pos1+2, pos2-pos1-2);
-
-      name.erase(pos1, pos2-pos1+1);
-
-      if (var.length()>0) {
-         const char* value = getenv(var.c_str());
-         if (value==0)
-            if (var=="DABCSYS") value = ".";
-
-         DOUT3(("LoadLibrary:: Replace variable %s with value %s", var.c_str(), value));
-
-         if (value!=0) name.insert(pos1, value);
-      }
-   }
-
-   void* lib = dlopen(name.c_str(), RTLD_LAZY | RTLD_GLOBAL);
-
-   if (lib==0)
-      EOUT(("Cannot load library %s err:%s", name.c_str(), dlerror()));
-   else {
-      DOUT1(("Library loaded %s", name.c_str()));
-
-      if (startfunc!=0) {
-         typedef void* myfunc();
-
-         myfunc* func = (myfunc*) dlsym(lib, startfunc);
-
-         if (func!=0) {
-            DOUT1(("Find function %s in library", startfunc));
-            func();
-         }
-      }
-   }
-
-   return (lib!=0);
 }
 
 void dabc_Manager_CtrlCHandler(int number)

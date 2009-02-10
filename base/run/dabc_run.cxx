@@ -9,9 +9,22 @@
 
 int RunSimpleFunc(dabc::Configuration* cfg, std::string funcname)
 {
-   cfg->LoadLibs(funcname.c_str());
+   cfg->LoadLibs();
 
    // cfg->StoreObject((funcname + ".xml").c_str(), dabc::mgr());
+
+   typedef void* myfunc();
+
+   myfunc* func = (myfunc*) dabc::Factory::FindSymbol(funcname.c_str());
+
+   if (func!=0) {
+      DOUT1(("Find function %s in library", funcname.c_str()));
+      func();
+   } else {
+      EOUT(("Cannot find start function"));
+      return 1;
+
+   }
 
    DOUT0(("Start main loop"));
 
@@ -293,7 +306,7 @@ int main(int numc, char* args[])
       ctrlkind = dabc::ConfigBase::kindSctrl;
 
    if (ctrlkind == dabc::ConfigBase::kindDim) {
-      if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcDimCtrl.so")) {
+      if (!dabc::Factory::LoadLibrary(cfg.ResolveEnv("${DABCSYS}/lib/libDabcDimCtrl.so"))) {
          EOUT(("Cannot load dim control library"));
          return 1;
       }
@@ -301,7 +314,7 @@ int main(int numc, char* args[])
       mgrclass = "DimControl";
    } else
    if (ctrlkind == dabc::ConfigBase::kindSctrl) {
-      if (!dabc::Manager::LoadLibrary("${DABCSYS}/lib/libDabcSctrl.so")) {
+      if (!dabc::Factory::LoadLibrary(cfg.ResolveEnv("${DABCSYS}/lib/libDabcSctrl.so"))) {
          EOUT(("Cannot load control library"));
          return 1;
       }

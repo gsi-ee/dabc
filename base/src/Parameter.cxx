@@ -434,8 +434,6 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
 
    if (!cfg.Find(this, v)) return false;
 
-   DOUT0(("!!!!!!!!!!!!!!! Find item for ratemeter %s", GetName()));
-
    LockGuard lock(fValueMutex);
 
    if (cfg.Find(this, v, xmlValueAttr))

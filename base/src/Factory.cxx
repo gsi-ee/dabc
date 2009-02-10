@@ -1,9 +1,14 @@
 #include "dabc/Factory.h"
 
+#include <dlfcn.h>
+
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
 #include "dabc/DataIO.h"
 #include "dabc/DataIOTransport.h"
+
+
+std::vector<dabc::Factory::LibEntry> dabc::Factory::fLibs;
 
 const char* dabc::Factory::DfltAppClass(const char* newdefltclass)
 {
@@ -16,6 +21,39 @@ dabc::Factory* dabc::Factory::NextNewFactory()
 {
    dabc::LockGuard lock(FactoriesMutex());
    return Factories()->Size()>0 ? Factories()->Pop() : 0;
+}
+
+bool dabc::Factory::LoadLibrary(const std::string& fname)
+{
+   void* lib = dlopen(fname.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+
+   if (lib==0) {
+      EOUT(("Cannot load library %s err:%s", fname.c_str(), dlerror()));
+      return false;
+   }
+
+   DOUT1(("Library loaded %s", fname.c_str()));
+
+   dabc::LockGuard lock(FactoriesMutex());
+
+   fLibs.push_back(LibEntry(lib, fname));
+
+   return true;
+}
+
+void* dabc::Factory::FindSymbol(const char* symbol)
+{
+   dabc::LockGuard lock(FactoriesMutex());
+
+   for (unsigned n=0;n<fLibs.size();n++) {
+      void* res = dlsym(fLibs[n].fLib, symbol);
+      if (res!=0) {
+         DOUT3(("Found symbol %s in library %s", symbol, fLibs[n].fLibName.c_str()));
+         return res;
+      }
+   }
+
+   return 0;
 }
 
 dabc::Factory::Factory(const char* name) :

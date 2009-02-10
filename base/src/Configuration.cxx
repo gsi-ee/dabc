@@ -3,12 +3,12 @@
 #include <unistd.h>
 #include <fnmatch.h>
 
-
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 #include "dabc/Application.h"
 #include "dabc/Parameter.h"
 #include "dabc/Iterator.h"
+#include "dabc/Factory.h"
 
 bool dabc::Configuration::XDAQ_LoadLibs()
 {
@@ -24,7 +24,7 @@ bool dabc::Configuration::XDAQ_LoadLibs()
          if ((strstr(libname,"libdim")==0) &&
              (strstr(libname,"libDabcBase")==0) &&
              (strstr(libname,"libDabcXDAQControl")==0))
-                dabc::Manager::LoadLibrary(ResolveEnv(libname).c_str());
+                dabc::Factory::LoadLibrary(ResolveEnv(libname));
       }
 
       modnode = fXml.GetNext(modnode);
@@ -214,7 +214,7 @@ const char* dabc::Configuration::ConetextAppClass()
 }
 
 
-bool dabc::Configuration::LoadLibs(const char* startfunc)
+bool dabc::Configuration::LoadLibs()
 {
     if (fSelected==0) return false;
 
@@ -227,8 +227,7 @@ bool dabc::Configuration::LoadLibs(const char* startfunc)
        libname = FindN(fSelected, last, xmlRunNode, xmlUserLib);
        if (libname.empty()) break;
        DOUT1(("Find library %s in config", libname.c_str()));
-       dabc::Manager::LoadLibrary(ResolveEnv(libname).c_str(), startfunc);
-
+       dabc::Factory::LoadLibrary(ResolveEnv(libname));
     } while (true);
 
     return true;
