@@ -36,21 +36,8 @@ see \paref{user:guiSaveRestore}).
 \item[MbsUserPath]: \mbs\ user working directory. The GUI need not to have
 access to that filesystem.
 \item[MbsSystemPath]:  Path on Lynx where the \mbs\ is installed. GUI needs no access to this path.
-\item[MbsScript]: \mbs\ script to be executed via \keyw{rsh} (see button below).
-An execution script located relativ to \mbs\ path.
-Script \verba{script/remote\_exe.sc}
-sets all \mbs\ related variables and executes a program given as argument
-on user path. Arguments:
-\bcir
-\item \mbs\ system path (inserted by GUI). Script sets \keyw{MBSROOT} to this.
-\item \mbs\ user path (inserted by GUI). Script changes directory to this
-\item Program name.
-\item \mbs\ path of program. Script executes \verba{m\_launch} which forks
-program from this path.
-\item Optional dot if arguments follow.
-\item More arguments passed to program. 
-\ecir
-\item[MbsCommand]: Script command (argument to MbsScript).
+\item[MbsCommand]: With \keyw{RET} an \mbs\ command in executed (on current node).
+The shell script button executes this string as \verba{rsh} command on master node.
 \item[MbsServers]: Number of nodes plus prompter. This information
 is minimum for the GUI to know when all \mbs\ nodes are up. The GUI waits until
 this number of DIM servers is up and running.
@@ -76,8 +63,7 @@ Prompter, dispatcher and message loggers should still be running.\\
 \icon{disconn} Shut down all. Execute script \verba{prmshutdown.sc} at master node.
 After 2 seconds trigger the main \keyw{Update}.\\
 \icon{info} \comm{Show acquisition}. Output in log panel.\\
-\icon{rshmbs} Executes \keyw{Script} with argument \keyw{Command} at master node.\\
-\icon{controlmbs} Shell script.
+\icon{controlmbs} Shell script executes command on master node.
 
 \section[DABC event building]{\dabc\ event building}
 \subsection[MBS setup]{\mbs\ setup}
@@ -154,7 +140,6 @@ After two seconds trigger the main \keyw{Update}.\\
 Execute script \verba{prmshutdown.sc} at \mbs\ master node.
 After two seconds trigger the main \keyw{Update}.\\
 \icon{info} \comm{Show acquisition}. Output in log panel.\\
-\icon{rshmbs} Executes \keyw{Script} with argument \keyw{Command} at master node.\\
 \icon{controlmbs} Shell script for \mbs\ master node.\\
 \icon{controldabc} Shell script for \dabc\ master node.
 \subsection[MBS command panel]{\mbs\ command panel}
@@ -185,6 +170,7 @@ of util and transport after configuration.
 \item[FileOpen/State] \keyw{File open} | \keyw{File closed}
 \item[RunMode/State] \keyw{DABC connected} | \keyw{MBS to DABC} | \keyw{Transport client} | \keyw{MBS standalone}
 \item[SpillOn/State] \keyw{Spill ON} | \keyw{Spill OFF}
+\item[Trigger/State] \keyw{Master} | \keyw{Slave}
 \edes
 \subsection[MBS rates]{\mbs\ rates}
 \bdes
@@ -237,6 +223,7 @@ Task list is shown in info window (name slightly different).
 \item[MSG/Run] Run ID  as written in file header
 \item[MSG/Experiment] Experiment as written in file header
 \item[MSG/User] Lynx user name as written in file header
+\item[MSG/Platform] CPU platform
 \edes
 \subsection[MBS numbers]{\mbs\ numbers}
 \bdes
