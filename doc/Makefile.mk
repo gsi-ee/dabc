@@ -1,7 +1,7 @@
 
 exes::
 	@echo "Making docs ..."
-	cd $(DABCSYS)/doc; export TEXINPUTS=$(DABCSYS)/doc//:; make;
+	cd $(DABCSYS)/doc; export TEXINPUTS=$(DABCSYS)/doc//:; export BIBINPUTS=$(DABCSYS)/doc; make;
 
 
 clean::

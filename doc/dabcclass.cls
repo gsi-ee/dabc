@@ -180,17 +180,17 @@
 % change "bibliography" (standard for report) to "references"
 % and adopt layout of heading to those of chapters
 % ------------------------------------------------------------
-\def\bibname{References}
-\def\thebibliography#1{\par\list
-  {\@biblabel{\arabic{enumiv}}}{\settowidth\labelwidth{\@biblabel{#1}}%
-    \leftmargin\labelwidth
-    \advance\leftmargin\labelsep
-    \usecounter{enumiv}%
-    \let\p@enumiv\@empty
-    \def\theenumiv{\arabic{enumiv}}}%
-    \def\newblock{\hskip .11em plus.33em minus.07em}%
-    \sloppy\clubpenalty4000\widowpenalty4000
-    \sfcode`\.=1000\relax}
+% \def\bibname{References}
+% \def\thebibliography#1{\par\list
+%   {\@biblabel{\arabic{enumiv}}}{\settowidth\labelwidth{\@biblabel{#1}}%
+%     \leftmargin\labelwidth
+%     \advance\leftmargin\labelsep
+%     \usecounter{enumiv}%
+%     \let\p@enumiv\@empty
+%     \def\theenumiv{\arabic{enumiv}}}%
+%     \def\newblock{\hskip .11em plus.33em minus.07em}%
+%     \sloppy\clubpenalty4000\widowpenalty4000
+%     \sfcode`\.=1000\relax}
     
 % somehow needed for correct chapter record in table of contents...    
 % -----------------------------------------------------------------
