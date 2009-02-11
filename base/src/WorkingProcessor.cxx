@@ -482,7 +482,7 @@ bool dabc::WorkingProcessor::SetParBool(const char* name, bool value)
 {
    dabc::Parameter* par = FindPar(name);
 
-   return par && (par->Kind()==parString) ? par->SetValue(value ? xmlTrueValue : xmlFalseValue) : false;
+   return par ? par->SetValue(value ? xmlTrueValue : xmlFalseValue) : false;
 }
 
 bool dabc::WorkingProcessor::SetParInt(const char* name, int value)
@@ -491,16 +491,24 @@ bool dabc::WorkingProcessor::SetParInt(const char* name, int value)
 
    DOUT5(("SetParInt par = %p name = %s v = %d", par, name, value));
 
-   return par && (par->Kind()==parInt) ? ((IntParameter*) par)->SetInt(value) : false;
+   if (par==0) return false;
+
+   if (par->Kind()==parInt) return ((IntParameter*) par)->SetInt(value);
+
+   return par->SetValue(dabc::format("%d", value));
 }
 
 bool dabc::WorkingProcessor::SetParDouble(const char* name, double value)
 {
    dabc::Parameter* par = FindPar(name);
 
-   DOUT5(("SetParInt par = %p name = %s v = %d", par, name, value));
+   DOUT5(("SetParDouble par = %p name = %s v = %f", par, name, value));
 
-   return par && (par->Kind()==parDouble) ? ((DoubleParameter*) par)->SetDouble(value) : false;
+   if (par==0) return false;
+
+   if (par->Kind()==parDouble) return ((DoubleParameter*) par)->SetDouble(value);
+
+   return par->SetValue(dabc::format("%f", value));
 }
 
 bool dabc::WorkingProcessor::SetParFixed(const char* name, bool on)

@@ -9,26 +9,43 @@
 #include "dabc/timing.h"
 #endif
 
+#include <vector>
+
 namespace dabc {
 
    class CpuStatistic {
-      public:
-         CpuStatistic();
-         virtual ~CpuStatistic();
+      protected:
 
-         bool Reset();
-         bool Measure();
-
-         double CPUutil();
-
-       protected:
-         bool Get(unsigned long &system, unsigned long &user, unsigned long &idle);
-
-         unsigned long system1, system2;
-         unsigned long user1, user2;
-         unsigned long idle1, idle2;
+         struct SingleCpu {
+            unsigned long last_user, last_sys, last_idle;
+            double user_util, sys_util, cpu_util;
+         };
 
          FILE *fStatFp;
+         FILE *fProcStatFp;
+         std::vector<SingleCpu> fCPUs;
+
+         long unsigned  fVmSize;
+         long unsigned  fVmPeak;
+         long unsigned  fNumThreads;
+
+      public:
+         CpuStatistic(bool withmem = false);
+         virtual ~CpuStatistic();
+
+         bool Measure();
+         bool Reset();
+
+         unsigned NumCPUs() const { return fCPUs.size(); }
+
+         double CPUutil(unsigned n = 0) const { return fCPUs[n].cpu_util; }
+         double UserUtil(unsigned n = 0) const { return fCPUs[n].user_util; }
+         double SysUtil(unsigned n = 0) const { return fCPUs[n].sys_util; }
+
+         long unsigned GetVmSize() const { return fVmSize; }
+         long unsigned GetVmPeak() const { return fVmPeak; }
+         long unsigned GetNumThreads() const { return fNumThreads; }
+
    };
 
    class Ratemeter {

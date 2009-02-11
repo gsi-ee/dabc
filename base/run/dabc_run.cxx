@@ -4,8 +4,9 @@
 #include "dabc/Configuration.h"
 #include "dabc/Factory.h"
 
+#include "dabc/CpuInfoModule.h"
 
-void ClassicalRunFunction()
+extern "C" void ClassicalRunFunction()
 {
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoConfigure);
 
@@ -84,6 +85,11 @@ int RunSctrlApplication(dabc::Configuration& cfg, const char* connid, int nodeid
 int RunDimApplication(dabc::Configuration& cfg, int nodeid, bool dorun)
 {
    DOUT1(("Run cluster DIM application node %d!!!", nodeid));
+
+   dabc::CpuInfoModule* m = new dabc::CpuInfoModule("CpuInfo");
+   m->SetAppId(76);
+   m->AssignProcessorToThread(dabc::mgr()->ProcessorThread());
+   m->Start();
 
    if (dorun) {
 

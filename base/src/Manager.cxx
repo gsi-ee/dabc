@@ -23,7 +23,6 @@
 #include "dabc/SocketDevice.h"
 #include "dabc/WorkingThread.h"
 #include "dabc/SocketThread.h"
-#include "dabc/TimeSyncModule.h"
 #include "dabc/Factory.h"
 #include "dabc/Application.h"
 #include "dabc/Iterator.h"
@@ -31,8 +30,11 @@
 #include "dabc/FileIO.h"
 #include "dabc/BinaryFile.h"
 #include "dabc/DataIOTransport.h"
-#include "dabc/StateMachineModule.h"
 #include "dabc/Configuration.h"
+
+#include "dabc/TimeSyncModule.h"
+#include "dabc/StateMachineModule.h"
+#include "dabc/CpuInfoModule.h"
 
 namespace dabc {
 
@@ -68,8 +70,11 @@ namespace dabc {
 
 dabc::Module* dabc::StdManagerFactory::CreateModule(const char* classname, const char* modulename, Command* cmd)
 {
-   if (strcmp(classname, "TimeSyncModule")==0)
+   if (strcmp(classname, "dabc::TimeSyncModule")==0)
       return new TimeSyncModule(modulename, cmd);
+   else
+   if (strcmp(classname, "dabc::CpuInfoModule")==0)
+      return new CpuInfoModule(modulename, cmd);
 
    return 0;
 }

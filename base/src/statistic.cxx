@@ -4,7 +4,13 @@
 
 #include "dabc/logging.h"
 
-dabc::CpuStatistic::CpuStatistic()
+dabc::CpuStatistic::CpuStatistic(bool withmem) :
+   fStatFp(0),
+   fProcStatFp(0),
+   fCPUs(),
+   fVmSize(0),
+   fVmPeak(0),
+   fNumThreads(0)
 {
    const char* cpu_stat_file = "/proc/stat";
 
@@ -12,10 +18,19 @@ dabc::CpuStatistic::CpuStatistic()
    if (fStatFp==0)
      EOUT(("fopen of %s failed", cpu_stat_file));
 
-   system1 = 0; user1 = 0; idle1 = 0;
-   system2 = 0; user2 = 0; idle2 = 0;
 
-   Reset();
+   if (withmem) {
+      pid_t id = getpid();
+
+      char fname[100];
+      sprintf(fname,"/proc/%d/status", id);
+
+      fProcStatFp = fopen(fname,"r");
+      if (fProcStatFp==0)
+         EOUT(("fopen of %s failed", fname));
+   }
+
+   Measure();
 }
 
 dabc::CpuStatistic::~CpuStatistic()
@@ -23,71 +38,100 @@ dabc::CpuStatistic::~CpuStatistic()
    if (fStatFp!=0)
      if (fclose (fStatFp) != 0)
         EOUT(("fclose of stat file failed"));
+
+   if (fProcStatFp!=0)
+     if (fclose (fProcStatFp) != 0)
+        EOUT(("fclose of proc stat file failed"));
 }
 
-bool dabc::CpuStatistic::Get(unsigned long &system, unsigned long &user, unsigned long &idle)
+bool dabc::CpuStatistic::Measure()
 {
-   system = 0; user = 0; idle = 0;
-
    if (fStatFp==0) return false;
 
-   const char* cpu_str = "cpu";
-   const int stat_buffer_size = 1024;
-   const char* delimiter = " ";
-   static char buffer[stat_buffer_size];
+   rewind(fStatFp);
 
-   if (fflush (fStatFp)) {
-      EOUT(("fflush of cpu stat file failed"));
-      return false;
-   }
+   fflush(fStatFp);
 
-   for (;;) {
-      if ( NULL == fgets (buffer, stat_buffer_size, fStatFp)) {
-         EOUT(("%s not found", cpu_str));
-         return false;
+   char buffer[1024];
+
+   unsigned cnt = 0;
+
+   while (fgets(buffer, sizeof(buffer), fStatFp)) {
+
+      if (strncmp (buffer, "cpu", 3)!=0) break;
+
+      const char* info = buffer;
+
+      while ((*info!=' ') && (*info != 0)) info++;
+      if (*info==0) break;
+
+      unsigned long curr_user(0), curr_nice(0), curr_sys(0), curr_idle(0);
+
+      sscanf(info, "%lu %lu %lu %lu", &curr_user, &curr_nice, &curr_sys, &curr_idle);
+
+      //DOUT0(("Scan:%s", info));
+      //if (cnt==0)
+      //   DOUT0(("Res:%lu %lu %lu %lu", curr_user, curr_nice, curr_sys, curr_idle));
+
+      curr_user += curr_nice;
+
+      unsigned long user(0), sys(0), idle(0);
+
+      if (cnt>=fCPUs.size()) {
+         fCPUs.push_back(SingleCpu());
+      } else {
+         user = curr_user - fCPUs[cnt].last_user;
+         sys = curr_sys - fCPUs[cnt].last_sys;
+         idle = curr_idle - fCPUs[cnt].last_idle;
       }
 
-      if (!strncmp (buffer, cpu_str, strlen (cpu_str))) break;
+      unsigned long total = user + sys + idle;
+      if (total>0) {
+         fCPUs[cnt].user_util = 1. * user / total;
+         fCPUs[cnt].sys_util = 1. * sys / total;
+         fCPUs[cnt].cpu_util = 1. * (user + sys) / total;
+      } else {
+         fCPUs[cnt].user_util = 0.;
+         fCPUs[cnt].sys_util = 0.;
+         fCPUs[cnt].cpu_util = 0.;
+      }
+
+      fCPUs[cnt].last_user = curr_user;
+      fCPUs[cnt].last_sys = curr_sys;
+      fCPUs[cnt].last_idle = curr_idle;
+
+      cnt++;
    }
 
-   (void) strtok (buffer, delimiter);
-   user   = strtoul (strtok (NULL, delimiter), NULL, 0);
-   user  += strtoul (strtok (NULL, delimiter), NULL, 0);
-   system = strtoul (strtok (NULL, delimiter), NULL, 0);
-   idle   = strtoul (strtok (NULL, delimiter), NULL, 0);
-   rewind(fStatFp);
+   if (fProcStatFp != 0) {
+      rewind(fProcStatFp);
+      fflush(fProcStatFp);
+
+      while (fgets(buffer, sizeof(buffer), fProcStatFp)) {
+         if (strncmp(buffer, "VmSize:", 7)==0)
+            sscanf(buffer + 7, "%lu", &fVmSize);
+         else
+         if (strncmp(buffer, "VmPeak:", 7)==0)
+            sscanf(buffer + 7, "%lu", &fVmPeak);
+         else
+         if (strncmp(buffer, "Threads:", 8)==0) {
+           sscanf(buffer + 8, "%lu", &fNumThreads);
+           break;
+         }
+      }
+   }
+
    return true;
 }
 
 bool dabc::CpuStatistic::Reset()
 {
-   return Get(system1, user1, idle1);
+   fCPUs.clear();
+   return Measure();
 }
 
-bool dabc::CpuStatistic::Measure()
-{
-   return Get(system2, user2, idle2);
-}
+// ____________________________________________________________________________
 
-double dabc::CpuStatistic::CPUutil()
-{
-   unsigned long system = system2 - system1;
-   unsigned long user = user2 - user1;
-   unsigned long idle = idle2 - idle1;
-
-   unsigned long total = system + user + idle;
-
-   double util = 0.;
-
-   if (total!=0)
-      util = 1.0 - (1.*idle / total );
-
-//    util = util*2.; // this is only for double processors
-
-    if (util>1.) util = 1.;
-
-    return util;
-}
 
 
 dabc::Ratemeter::Ratemeter()

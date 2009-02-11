@@ -177,7 +177,7 @@ bool dabc::DoubleParameter::SetValue(const std::string &value)
    {
       LockGuard lock(fValueMutex);
       if (fFixed || (value.length()==0)) return false;
-      sscanf(value.c_str(), "%lf", &fValue);
+      if (sscanf(value.c_str(), "%lf", &fValue) != 1) return false;
    }
    Changed();
    return true;
@@ -221,7 +221,7 @@ bool dabc::IntParameter::SetValue(const std::string &value)
    {
       LockGuard lock(fValueMutex);
       if (fFixed || (value.length()==0)) return false;
-      sscanf(value.c_str(), "%d", &fValue);
+      if (sscanf(value.c_str(), "%d", &fValue) != 1) return false;
    }
    Changed();
    return true;
@@ -256,7 +256,6 @@ dabc::RateParameter::RateParameter(WorkingProcessor* parent,
    fLastUpdateTm(NullTimeStamp),
    fDiffSum(0.)
 {
-   SetFixed(true); // one cannot change rate from outside application
    if (fInterval<1e-3) fInterval = 1e-3;
 
    fRecord.value = 0.;
@@ -306,9 +305,9 @@ bool dabc::RateParameter::SetValue(const std::string &value)
    {
       LockGuard lock(fValueMutex);
       if (fFixed || (value.length()==0)) return false;
-      sscanf(value.c_str(), "%lf", &v);
+      if (sscanf(value.c_str(), "%lf", &v)!=1) return false;
    }
-   AccountValue(v);
+   ChangeRate(v);
    return true;
 }
 
@@ -319,7 +318,7 @@ void dabc::RateParameter::AccountValue(double v)
       TimeStamp_t tm = TimeStamp();
       if (IsNullTime(fLastUpdateTm)) fLastUpdateTm = tm;
       double dist = TimeDistance(fLastUpdateTm, tm);
-      if (dist>GetInterval()) {
+      if (dist > GetInterval()) {
          ChangeRate(fTotalSum / dist);
          fTotalSum = 0.;
       }

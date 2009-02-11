@@ -644,7 +644,7 @@ void TimeSyncLoop(dabc::StandaloneManager &m, int deviceid)
    dabc::Command* cmd = 0;
 
    for (int node=0;node<m.NumNodes();node++) {
-      cmd = new dabc::CmdCreateModule("TimeSyncModule","TSync", "TSyncThrd");
+      cmd = new dabc::CmdCreateModule("dabc::TimeSyncModule","TSync", "TSyncThrd");
 
       if (node==0)
          cmd->SetInt("NumSlaves", m.NumNodes()-1);

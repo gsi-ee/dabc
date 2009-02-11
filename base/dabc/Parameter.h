@@ -53,7 +53,6 @@ namespace dabc {
 
          virtual void* GetPtr() { return 0; }
 
-
          bool IsDebugOutput() const { return fDebug; }
          void SetDebugOutput(bool on = true) { fDebug = on; }
 
