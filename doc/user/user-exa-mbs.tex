@@ -14,8 +14,8 @@ Of cause, the \mbs\ itself must have been build with the DIM option (since versi
 Central log file is written as usual.
 Optionally one can provide a text file with specifications which parameters
 shall appear on screen (see \paref{user:MbsDimconfig}).
-\lsubsection[MBS launch panel]{user:launchMbs}{\mbs\ launch panel}
-\figpng{user-gui-pan-mbs}{MBS launcher.}{htb}{0}{0.6}
+\lsubsection[MBS control panel]{user:controlMbs}{\mbs\ control panel}
+\figpng{user-gui-pan-mbs}{MBS  controller.}{htb}{0}{0.6}
 Fig. \paref{fig:user-gui-pan-mbs} show the panel to be used to control
 a standard \mbs.
 Values from file {\tt MbsLaunch.xml} (default, may be saved to other file,
@@ -42,9 +42,9 @@ The shell script button executes this string as \verba{rsh} command on master no
 is minimum for the GUI to know when all \mbs\ nodes are up. The GUI waits until
 this number of DIM servers is up and running.
 \edes
-That file can be created from within the GUI in the \mbs\ launcher panel.
+That file can be created from within the GUI in the \mbs\  controller panel.
 Enter all values necessary, and store them. 
-\subsubsection[MBS launcher buttons]{\mbs\ launcher buttons}
+\subsubsection[MBS  controller buttons]{\mbs\  controller buttons}
 \icon{fileclose} Close window.\\
 \icon{savewin} Save panel settings, see \paref{user:guiSaveRestore}.\\
 \icon{connprm}  Execute script \verba{prmstartup.sc} at master node.
@@ -105,11 +105,11 @@ library, start function and log file name.
 We have one module \keyw{Combiner} (could be different name from context) 
 with three input ports and two output ports.
 
-Now we can use the combined launcher panel to startup \mbs\ and \dabc.
-\lsubsection[Combined DABC and MBS launch panel]{user:launchDabcMbs}{Combined \dabc\ and \mbs\ launch panel}
-\figpng{user-gui-pan-dabcmbs}{Combined DABC and MBS launcher.}{htb}{0}{0.7}
+Now we can use the combined  controller panel to startup \mbs\ and \dabc.
+\lsubsection[Combined DABC and MBS control panel]{user:controlDabcMbs}{Combined \dabc\ and \mbs\ control panel}
+\figpng{user-gui-pan-dabcmbs}{Combined DABC and MBS  controller.}{htb}{0}{0.7}
 This panel shown in Fig. \pageref{fig:user-gui-pan-dabcmbs} is simply a superposition of the single ones.
-\subsubsection[Combined DABC and MBS launcher buttons]{Combined \dabc\ and \mbs\ launcher buttons}
+\subsubsection[Combined DABC and MBS  controller buttons]{Combined \dabc\ and \mbs\  controller buttons}
 \icon{fileclose} Close window.\\
 \icon{savewin} Save panel settings, see \paref{user:guiSaveRestore}.\\
 \icon{connprm}  Execute script \verba{dabcstartup.sc} at \dabc\ master node.
