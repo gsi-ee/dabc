@@ -97,7 +97,6 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     addButton("mbsCleanup","Shutdown all servers",disIcon,this);
     //addButton("mbsCleanup","Reset and cleanup",disIcon,this);
     addButton("mbsShow","Show acquisition",infoIcon,this);
-    addButton("mbsTest","Rsh MbsNode -l Username MbsPath/MbsScript MbsPath MbsUserpath Command",winIcon,this);
     addButton("mbsShell","Rsh MbsNode -l Username Command",mworkIcon,this);
     addButton("dabcShell","ssh DabcNode -l Username Script",dworkIcon,this);
 // Text input fields
@@ -131,8 +130,7 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     DabcServers=addPrompt("DABC servers: ",formDabc.getServers(),"set",width,this);
     MbsPath=addPrompt("MBS system path: ",formMbs.getSystemPath(),"set",width,this);
     MbsUserpath=addPrompt("MBS user path: ",formMbs.getUserPath(),"set",width,this);
-    MbsScript=addPrompt("MBS script: ",formMbs.getScript(),"set",width,this);
-    MbsCommand=addPrompt("MBS command: ",formMbs.getCommand(),"set",width,this);
+    MbsCommand=addPrompt("MBS command: ",formMbs.getCommand(),"mbsCommand",width,this);
     DabcPath=addPrompt("DABC system path: ",formDabc.getSystemPath(),"set",width,this);
     DabcUserpath=addPrompt("DABC user path: ",formDabc.getUserPath(),"set",width,this);
     DabcSetup=addPrompt("DABC setup file: ",formDabc.getSetup(),"set",width,this);
@@ -165,7 +163,6 @@ formMbs.setMaster(MbsNode.getText());
 formMbs.setServers(MbsServers.getText());
 formMbs.setSystemPath(MbsPath.getText());
 formMbs.setUserPath(MbsUserpath.getText());
-formMbs.setScript(MbsScript.getText());
 formMbs.setLaunchFile(MbsLaunchFile.getText());
 formMbs.setCommand(MbsCommand.getText());
 //formMbs.printForm();
@@ -379,18 +376,18 @@ if ("Save".equals(e.getActionCommand())) {
     return;
 }
 
-    if(!threadRunning){
-    Action = new String(e.getActionCommand());
-    // must do confirm here, because in thread it would block forever
-    if ("mbsCleanup".equals(Action)) doit=askQuestion("Confirmation","Shut down and cleanup MBS/DABC?");
-    if(doit){
-        startProgress();
-        ae=e;
-        threxe = new Thread(this);
-        threadRunning=true;
-        threxe.start();
-    }
-    } else tellError("Execution thread not yet finished!");
+if(!threadRunning){
+Action = new String(e.getActionCommand());
+// must do confirm here, because in thread it would block forever
+if ("mbsCleanup".equals(Action)) doit=askQuestion("Confirmation","Shut down and cleanup MBS/DABC?");
+if(doit){
+    startProgress();
+    ae=e;
+    threxe = new Thread(this);
+    threadRunning=true;
+    threxe.start();
+}
+} else tellError("Execution thread not yet finished!");
 }
 // start thread by threxe.start()
 // CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!
@@ -533,45 +530,6 @@ int time=0;
             //setDimServices();        
         }
     }}
-    else if ("mbsTest".equals(Action)) {
-        // String cmd = new String(MbsPath.getText()+"/"+
-                                // MbsScript.getText()+" "+
-                                // MbsPath.getText()+" "+
-                                // MbsUserpath.getText()+" "+
-                                // MbsCommand.getText()
-                                // );
-        // if(mbsshell.rsh(MbsNode.getText(),Username.getText(),cmd,0L)){}
-        String cmd = new String(MbsPath.getText()+"/"+
-                                MbsScript.getText()+" "+
-                                MbsPath.getText()+" "+
-                                "v50/rio3/runmbs "+
-                                "m_evgen_RIO2 v50/rio3/runmbs . x86g-4"
-                                );
-        if(mbsshell.rsh("R3g-2",Username.getText(),cmd,0L)){}
-        cmd = new String(MbsPath.getText()+"/"+
-                                MbsScript.getText()+" "+
-                                MbsPath.getText()+" "+
-                                "v50/rio3/runmbs "+
-                                "m_evgen_RIO3 v50/rio3/runmbs . x86-7"
-                                );
-        if(mbsshell.rsh("R2f-2",Username.getText(),cmd,0L)){}
-    }
-    // else if ("mbsShut".equals(Action)) {
-        // if(doExit == null) setDimServices();
-        // if(doExit != null){
-        // for(int i=0;i<doExit.size();i++){
-            // xLogger.print(1,doExit.get(i).getParser().getFull());
-            // doExit.get(i).exec(xSet.getAccess());
-        // }}  else setProgress("No DABC exit commands available!",xSet.redD());
-        // if(mbsCommand == null) setDimServices();
-        // if(mbsCommand != null){
-        // xLogger.print(1,"MBS: @shutdown.scom");
-        // mbsCommand.exec(xSet.getAccess()+" *::Stop rirec");
-        // mbsCommand.exec(xSet.getAccess()+" @shutdown.scom");
-        // setProgress("OK: Launch DABC, configure!",xSet.greenD());
-	// } else setProgress("No MBS commands available!",xSet.redD());
-    // }
-
     // from here we need commands
     else {
     if(mbsCommand == null) setDimServices();
@@ -683,7 +641,11 @@ int time=0;
         xLogger.print(1,doStop.getParser().getFull());
         doStop.exec(xSet.getAccess());
     }
-    else if ("mbsShow".equals(Action)) {
+    else if ("mbsCommand".equals(Action)) {
+        xLogger.print(1,MbsCommand.getText());
+    	mbsCommand.exec(xSet.getAccess()+" "+MbsCommand.getText());
+    	}
+   else if ("mbsShow".equals(Action)) {
         xLogger.print(1,"MBS: *::Show acqisition");
         mbsCommand.exec(xSet.getAccess()+" *::Show acquisition");
     }

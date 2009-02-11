@@ -30,8 +30,8 @@ protected void setDefaults(){
     nServers=0;
     UserPath=new String("<UserPath>");
     SystemPath=new String("<MBS system path>");
-    Script=new String("script/remote_exe.sc");
     Command=new String("<Command>");
+    Script=new String("");
 }
 protected void printForm(){
 System.out.println(build().toString());
@@ -43,7 +43,6 @@ private StringBuffer build(){
     str.append("<MbsMaster "+xXml.attr("prompt","MBS Master")+xXml.attr("value",Master,"/>\n"));
     str.append("<MbsUserPath "+xXml.attr("prompt","MBS User path")+xXml.attr("value",UserPath,"/>\n"));
     str.append("<MbsSystemPath "+xXml.attr("prompt","MBS system path")+xXml.attr("value",SystemPath,"/>\n"));
-    str.append("<MbsScript "+xXml.attr("prompt","MBS Script")+xXml.attr("value",Script,"/>\n"));
     str.append("<MbsCommand "+xXml.attr("prompt","Script command")+xXml.attr("value",Command,"/>\n"));
     str.append("<MbsServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers,"/>\n"));
     str.append(xXml.tag("MbsLaunch",xXml.CLOSE));
@@ -73,8 +72,6 @@ LaunchFile=new String(file);
         UserPath=((Element)li.item(0)).getAttribute("value");
         li=root.getElementsByTagName("MbsSystemPath");
         SystemPath=((Element)li.item(0)).getAttribute("value");
-        li=root.getElementsByTagName("MbsScript");
-        Script=((Element)li.item(0)).getAttribute("value");
         li=root.getElementsByTagName("MbsCommand");
         Command=((Element)li.item(0)).getAttribute("value");
         li=root.getElementsByTagName("MbsServers");

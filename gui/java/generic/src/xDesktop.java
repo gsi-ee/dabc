@@ -640,7 +640,8 @@ public void actionPerformed(ActionEvent e) {
 
 //Quit the application.
 protected void quit() {
-    System.exit(0);
+    int i=JOptionPane.showInternalConfirmDialog(desktop,"Quit GUI?","GUI can be restarted.", JOptionPane.YES_NO_OPTION); 
+    if(i == 0) System.exit(0);
 }
 
 private xInternalFrame  createFrame(String title, ImageIcon icon, JPanel panel, xLayout la, JMenuBar menu, boolean resize){

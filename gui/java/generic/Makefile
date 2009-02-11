@@ -76,6 +76,7 @@ classes: \
 	application/ColorTest.class \
 	application/MiniPanel.class \
 	application/MbsPanel.class \
+	application/MbsEvGen.class \
 	application/RocPanel.class \
 	application/UserPanel.class
 	
@@ -85,6 +86,8 @@ application/MiniPanel.class: application/MiniPanel.java
 	javac $(FLAGSA) application/MiniPanel.java
 application/MbsPanel.class: application/MbsPanel.java
 	javac $(FLAGSA) application/MbsPanel.java
+application/MbsEvGen.class: application/MbsEvGen.java
+	javac $(FLAGSA) application/MbsEvGen.java
 application/RocPanel.class: application/RocPanel.java
 	javac $(FLAGSA) application/RocPanel.java
 application/UserPanel.class: application/UserPanel.java

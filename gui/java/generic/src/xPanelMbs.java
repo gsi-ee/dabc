@@ -93,7 +93,6 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     addButton("mbsShut","Shutdown tasks (@shutdown)",killIcon,this);
     addButton("mbsCleanup","Shut down servers and cleanup MBS",disIcon,this);
     addButton("mbsShow","Show acquisition",infoIcon,this);
-    addButton("mbsTest","Rsh Node -l Username SystemPath/Script SystemPath Userpath Command",winIcon,this);
     addButton("mbsShell","Rsh Node -l Username Command",mworkIcon,this);
 // Text input fields
     // read defaults from setup file
@@ -121,8 +120,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     MbsServers=addPrompt("Servers: ",formMbs.getServers(),"set",width,this);
     MbsPath=addPrompt("System path: ",formMbs.getSystemPath(),"set",width,this);
     MbsUserpath=addPrompt("User path: ",formMbs.getUserPath(),"set",width,this);
-    MbsScript=addPrompt("Script: ",formMbs.getScript(),"set",width,this);
-    MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"set",width,this);
+    MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
     MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",width,this);
     nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
     nMbsNodes=nMbsServers-2;
@@ -143,7 +141,6 @@ formMbs.setMaster(MbsNode.getText());
 formMbs.setServers(MbsServers.getText());
 formMbs.setSystemPath(MbsPath.getText());
 formMbs.setUserPath(MbsUserpath.getText());
-formMbs.setScript(MbsScript.getText());
 formMbs.setLaunchFile(MbsLaunchFile.getText());
 formMbs.setCommand(MbsCommand.getText());
 //formMbs.printForm();
@@ -159,7 +156,6 @@ if(para != null)for(i=0;i<para.size();i++){
 if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) 
 	str.append(para.get(i).getValue());
 }
-System.out.println("Tasks: "+str.toString());
 return str.toString();
 }
 /**
@@ -327,18 +323,18 @@ if ("mbsSave".equals(e.getActionCommand())) {
     return;
 }
 
-    if(!threadRunning){
-    Action = new String(e.getActionCommand());
-    // must do confirm here, because in thread it would block forever
-    if ("mbsCleanup".equals(Action)) doit=askQuestion("Confirmation","Shut down and cleanup MBS?");
-    if(doit){
-        startProgress();
-        ae=e;
-        threxe = new Thread(this);
-        threadRunning=true;
-        threxe.start();
-    }
-    } else tellError("Execution thread not yet finished!");
+if(!threadRunning){
+Action = new String(e.getActionCommand());
+// must do confirm here, because in thread it would block forever
+if ("mbsCleanup".equals(Action)) doit=askQuestion("Confirmation","Shut down and cleanup MBS?");
+if(doit){
+    startProgress();
+    ae=e;
+    threxe = new Thread(this);
+    threadRunning=true;
+    threxe.start();
+}
+} else tellError("Execution thread not yet finished!");
 }
 // start thread by threxe.start()
 // CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!
@@ -363,30 +359,6 @@ public void run(){
                                 MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getAccess());
         String service = new String(MbsNode.getText().toUpperCase()+":DSP");
         launch(cmd);
-    }
-    else if ("mbsTest".equals(Action)) {
-        String cmd = new String(MbsPath.getText()+"/"+
-                                MbsScript.getText()+" "+
-                                MbsPath.getText()+" "+
-                                MbsUserpath.getText()+" "+
-                                MbsCommand.getText()
-                                );
-        //xLogger.print(0,MbsNode+": "+cmd);
-        // if(mbsshell.rsh(MbsNode.getText(),Username.getText(),cmd,0L)){}
-        cmd = new String(MbsPath.getText()+"/"+
-                                MbsScript.getText()+" "+
-                                MbsPath.getText()+" "+
-                                "v50/rio3/runmbs "+
-                                "m_evgen_RIO2 v50/rio3/runmbs . x86g-4"
-                                );
-        if(mbsshell.rsh("R3g-2",Username.getText(),cmd,0L)){}
-        cmd = new String(MbsPath.getText()+"/"+
-                                MbsScript.getText()+" "+
-                                MbsPath.getText()+" "+
-                                "v50/rio3/runmbs "+
-                                "m_evgen_RIO3 v50/rio3/runmbs . x86-7"
-                                );
-        if(mbsshell.rsh("R2f-2",Username.getText(),cmd,0L)){}
     }
     else if ("mbsShell".equals(Action)) {
         xLogger.print(1,"Shell: "+MbsCommand.getText());
@@ -472,6 +444,10 @@ public void run(){
         xLogger.print(1,"MBS: *::enable dabc");
         mbsCommand.exec(xSet.getAccess()+" *::enable dabc");
     }
+    else if ("mbsCommand".equals(Action)) {
+        xLogger.print(1,MbsCommand.getText());
+    	mbsCommand.exec(xSet.getAccess()+" "+MbsCommand.getText());
+    	}
 }
 //xSet.setDefaultCursor();
 threadRunning=false;
