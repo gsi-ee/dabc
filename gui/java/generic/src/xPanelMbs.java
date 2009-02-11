@@ -82,7 +82,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     startIcon   = xSet.getIcon("icons/mbsstart.png");
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
     // add buttons
-    addButton("mbsQuit","Close window",closeIcon,this);
+//    addButton("mbsQuit","Close window",closeIcon,this);
     addButton("mbsSave","Save form to file",storeIcon,this);
     addButton("prmLaunch","Launch MBS multi node servers",launchIcon,this);
     addButton("mbsLaunch","Launch MBS single node servers",mbsIcon,this);
@@ -96,9 +96,9 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     addButton("mbsShell","Rsh Node -l Username Command",mworkIcon,this);
 // Text input fields
     // read defaults from setup file
-    if(System.getenv("DABC_LAUNCH_MBS")!=null)
-         formMbs=new xFormMbs(System.getenv("DABC_LAUNCH_MBS"));
-    else formMbs=new xFormMbs("MbsLaunch.xml");
+    if(System.getenv("DABC_CONTROL_MBS")!=null)
+         formMbs=new xFormMbs(System.getenv("DABC_CONTROL_MBS"));
+    else formMbs=new xFormMbs("MbsControl.xml");
     formMbs.addActionListener(this);
     Object o=xSet.addObject(formMbs);
     // formMbs=(xFormMbs)xSet.getObject("xgui.xFormMbs"); // how to retrieve

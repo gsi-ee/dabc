@@ -85,7 +85,7 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
     haltIcon    = xSet.getIcon("icons/dabchalt.png");
     // add buttons
-    addButton("mbsQuit","Close window",closeIcon,this);
+//    addButton("mbsQuit","Close window",closeIcon,this);
     addButton("Save","Save forms to files",storeIcon,this);
     addButton("prmLaunch","Launch DABC and MBS servers",launchIcon,this);
     // addButton("mbsLaunch","Launch DABC and MBS dispatcher",mbsIcon,this);
@@ -100,14 +100,14 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     addButton("mbsShell","Rsh MbsNode -l Username Command",mworkIcon,this);
     addButton("dabcShell","ssh DabcNode -l Username Script",dworkIcon,this);
 // Text input fields
-    if(System.getenv("DABC_LAUNCH_MBS")!=null)
-        formMbs=new xFormMbs(System.getenv("DABC_LAUNCH_MBS"),this);
-    else formMbs=new xFormMbs("MbsLaunch.xml",this);
+    if(System.getenv("DABC_CONTROL_MBS")!=null)
+        formMbs=new xFormMbs(System.getenv("DABC_CONTROL_MBS"),this);
+    else formMbs=new xFormMbs("MbsControl.xml",this);
     formMbs.addActionListener(this);
     Object o=xSet.addObject(formMbs);
-    if(System.getenv("DABC_LAUNCH_DABC")!=null)
-        formDabc=new xFormDabc(System.getenv("DABC_LAUNCH_DABC"),this);
-    else formDabc=new xFormDabc("DabcLaunch.xml",this);
+    if(System.getenv("DABC_CONTROL_DABC")!=null)
+        formDabc=new xFormDabc(System.getenv("DABC_CONTROL_DABC"),this);
+    else formDabc=new xFormDabc("DabcControl.xml",this);
     formDabc.addActionListener(this);
     o=xSet.addObject(formDabc);
     int width=25;
@@ -135,8 +135,8 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     DabcUserpath=addPrompt("DABC user path: ",formDabc.getUserPath(),"set",width,this);
     DabcSetup=addPrompt("DABC setup file: ",formDabc.getSetup(),"set",width,this);
     DabcScript=addPrompt("DABC script: ",formDabc.getScript(),"set",width,this);
-    MbsLaunchFile=addPrompt("MBS launch file: ",formMbs.getLaunchFile(),"set",width,this);
-    DabcLaunchFile=addPrompt("DABC launch file: ",formDabc.getLaunchFile(),"set",width,this);
+    MbsLaunchFile=addPrompt("MBS control file: ",formMbs.getLaunchFile(),"set",width,this);
+    DabcLaunchFile=addPrompt("DABC control file: ",formDabc.getLaunchFile(),"set",width,this);
     // read defaults from setup file
     nMbsServers=Integer.parseInt(formMbs.getServers());
     nMbsNodes=nMbsServers-1;

@@ -35,16 +35,16 @@ private Vector<xiUserPanel>     usrpan;
 private ImageIcon browserIcon, histoIcon, stateIcon , infoIcon, paramIcon, commIcon, meterIcon, loggerIcon,
         closeIcon, storeIcon, dabcIcon, winIcon, workIcon, selIcon, launchIcon, killIcon, mbsIcon, dabcmbsIcon;
 private xInternalFrame frSelect, frCommands, frParameters, frMeters, frHistograms, frState, frInfos, 
-        frLogger, frDabcLauncher, frMbsLauncher, frDabcMbsLauncher;
-private Vector<xInternalFrame> frUserLauncher;
+        frLogger, frDabcController, frMbsController, frDabcMbsController;
+private Vector<xInternalFrame> frUserController;
 private Vector<JInternalFrame> frUserFrame;
 private boolean showSelect, showCommands, showParameters, showMeters, showHistograms, showState, showInfos, showLogger,
-        showDabcLauncher, showMbsLauncher, showDabcMbsLauncher;
-private boolean showUserLauncher[];
+        showDabcController, showMbsController, showDabcMbsController;
+private boolean showUserController[];
 private xDimBrowser browser;
 private menuAction maSelect, maLogger, maCommands, maParameters, maMeters, maHistograms, maState, maBrowser, maQuit,
-        maDabcLauncher, maMbsLauncher, maDabcMbsLauncher, maInfos, maSave, maWork;
-private Vector<menuAction> maUserLauncher;
+        maDabcController, maMbsController, maDabcMbsController, maInfos, maSave, maWork;
+private Vector<menuAction> maUserController;
 private String usrHeader, usrGraphics;
 private boolean clearOnUpdate=false;
 private static boolean enableControl=true;
@@ -58,7 +58,7 @@ private String LayoutFile, RecordFile, SelectionFile;
  * @param control If false, no control panels are opened.
  */
 public xDesktop(xiUserPanel userpanel, boolean control) {
-    super("DABC Controls");
+    super("DABC Controls and Monitoring");
     if(userpanel != null){
     	usrpan=new Vector<xiUserPanel>(0);
     	usrpan.add(userpanel);
@@ -79,9 +79,9 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
             catch(IllegalAccessException xx){System.out.println("IllAccess: Error creating "+upl[ii]);}
     }}}
     if(usrpan != null){
-        frUserLauncher = new Vector<xInternalFrame>(0);
-        maUserLauncher = new Vector<menuAction>(0);
-        showUserLauncher = new boolean[usrpan.size()];
+        frUserController = new Vector<xInternalFrame>(0);
+        maUserController = new Vector<menuAction>(0);
+        showUserController = new boolean[usrpan.size()];
     }
     // user frames can be added here
     frUserFrame = new Vector<JInternalFrame>(0);
@@ -124,9 +124,9 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     showState=false;
     showInfos=false;
     showLogger=false;
-    showDabcLauncher=false;
-    showMbsLauncher=true;
-    showDabcMbsLauncher=false;
+    showDabcController=false;
+    showMbsController=true;
+    showDabcMbsController=false;
     xSet.createLayout("Main",        new Point(50,50),   new Dimension(xs,ys),    0, true);
     xSet.createLayout("Command",     new Point(0,230),   new Dimension(650,200),  0, showCommands);
     xSet.createLayout("Parameter",   new Point(0,465),   new Dimension(680,150),  0, showParameters);
@@ -135,9 +135,9 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     xSet.createLayout("State",       new Point(710,0),   new Dimension(100,75),   1, showState);
     xSet.createLayout("Info",        new Point(710,410), new Dimension(100,75),   0, showInfos);
     xSet.createLayout("Histogram",   new Point(710,600), new Dimension(200,150),  3, showHistograms);
-    xSet.createLayout("DabcLauncher",new Point(0,0),     new Dimension(100,100),  0, showDabcLauncher);
-    xSet.createLayout("MbsLauncher", new Point(100,0),   new Dimension(100,100),  0, showMbsLauncher);
-    xSet.createLayout("DabcMbsLauncher", new Point(0,0), new Dimension(100,100),  0, showDabcMbsLauncher);
+    xSet.createLayout("DabcController",new Point(0,0),     new Dimension(100,100),  0, showDabcController);
+    xSet.createLayout("MbsController", new Point(100,0),   new Dimension(100,100),  0, showMbsController);
+    xSet.createLayout("DabcMbsController", new Point(0,0), new Dimension(100,100),  0, showDabcMbsController);
     xSet.createLayout("ParameterSelect", new Point(300,0), new Dimension(100,100),  0, showSelect);
     // columns width of parameter table
     // ID, name, appl, param, value, input, show
@@ -153,9 +153,9 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     if(System.getenv("DABC_PARAMETER_FILTER")!=null) SelectionFile=System.getenv("DABC_PARAMETER_FILTER");
     else SelectionFile=new String("Selection.xml");
     // overwrite appearance for monitor only
-    xSet.getLayout("DabcMbsLauncher").set(null,null,0,enableControl&xSet.getLayout("DabcMbsLauncher").show());    
-    xSet.getLayout("MbsLauncher").set(null,null,0,enableControl&xSet.getLayout("MbsLauncher").show());    
-    xSet.getLayout("DabcLauncher").set(null,null,0,enableControl&xSet.getLayout("DabcLauncher").show());    
+    xSet.getLayout("DabcMbsController").set(null,null,0,enableControl&xSet.getLayout("DabcMbsController").show());    
+    xSet.getLayout("MbsController").set(null,null,0,enableControl&xSet.getLayout("MbsController").show());    
+    xSet.getLayout("DabcController").set(null,null,0,enableControl&xSet.getLayout("DabcController").show());    
     xSet.getLayout("Command").set(null,null,0,enableControl&xSet.getLayout("Command").show());    
     xSet.getLayout("Logger").set(null,null,0,enableControl&xSet.getLayout("Logger").show());    
     xSet.getLayout("Parameter").set(null,null,0,enableControl&xSet.getLayout("Parameter").show());    
@@ -202,7 +202,7 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     } else {
     	for(int ii=0;ii<usrpan.size();ii++){
 	        usrpan.get(ii).init(this,this);
-	        showUserLauncher[ii]=true;
+	        showUserController[ii]=true;
 	        usrpan.get(ii).setDimServices((xiDimBrowser) browser);
     	}
         // Note that first panel in list defines command format!
@@ -236,11 +236,11 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     maInfos          =new menuAction("Infos",          infoIcon,"Open info window.",vk_T,this);
     maLogger         =new menuAction("Logger",         loggerIcon,"Open logger window.",vk_L,this);
     if(usrpan != null) for(int ii=0;ii<usrpan.size();ii++)
-    maUserLauncher.add(new menuAction(usrpan.get(ii).getHeader(),usrpan.get(ii).getIcon(),usrpan.get(ii).getToolTip(),vk_D,this));
+    maUserController.add(new menuAction(usrpan.get(ii).getHeader(),usrpan.get(ii).getIcon(),usrpan.get(ii).getToolTip(),vk_D,this));
     maSelect         =new menuAction("ParameterSelect",   selIcon,"Open parameter selection window.",vk_D,this);
-    maDabcLauncher   =new menuAction("DabcLauncher",   dabcIcon,"Open DABC launcher window.",vk_D,this);
-    maMbsLauncher    =new menuAction("MbsLauncher",    mbsIcon,"Open MBS launcher window.",vk_A,this);
-    maDabcMbsLauncher=new menuAction("DabcMbsLauncher",dabcmbsIcon,"Open DABC-MBS launcher window.",vk_G,this);
+    maDabcController   =new menuAction("DabcController",   dabcIcon,"Open DABC controller window.",vk_D,this);
+    maMbsController    =new menuAction("MbsController",    mbsIcon,"Open MBS controller window.",vk_A,this);
+    maDabcMbsController=new menuAction("DabcMbsController",dabcmbsIcon,"Open DABC-MBS controller window.",vk_G,this);
 
 // Position main window 
     setLocation(xSet.getLayout("Main").getPosition());
@@ -259,18 +259,18 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
         createFrame("Commands",commIcon,compan,xSet.getLayout("Command"),null, true); 
     if(xSet.getLayout("Parameter").show()) frParameters=
         createFrame("Parameters",paramIcon,parpan,xSet.getLayout("Parameter"),null, true); 
-    if(xSet.getLayout("DabcLauncher").show()) frDabcLauncher=
-        createFrame("DabcLauncher",dabcIcon,dabcpan,xSet.getLayout("DabcLauncher"),null, false);
-    if(xSet.getLayout("DabcMbsLauncher").show()) frDabcMbsLauncher=
-        createFrame("DabcMbsLauncher",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsLauncher"),null, false);
-    if(xSet.getLayout("MbsLauncher").show()) frMbsLauncher=
-        createFrame("MbsLauncher",mbsIcon,mbspan,xSet.getLayout("MbsLauncher"),null, false);
+    if(xSet.getLayout("DabcController").show()) frDabcController=
+        createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false);
+    if(xSet.getLayout("DabcMbsController").show()) frDabcMbsController=
+        createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false);
+    if(xSet.getLayout("MbsController").show()) frMbsController=
+        createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false);
     if(xSet.getLayout("ParameterSelect").show()) frSelect=
         createFrame("ParameterSelect",selIcon,selpan,xSet.getLayout("ParameterSelect"),null, false);
     if(usrpan != null){
     	for(int ii=0;ii<usrpan.size();ii++)
     	if(xSet.getLayout(usrpan.get(ii).getHeader())!= null){
-        if(xSet.getLayout(usrpan.get(ii).getHeader()).show()) frUserLauncher.add
+        if(xSet.getLayout(usrpan.get(ii).getHeader()).show()) frUserController.add
            (createFrame(usrpan.get(ii).getHeader(),usrpan.get(ii).getIcon(),(JPanel)usrpan.get(ii),xSet.getLayout(usrpan.get(ii).getHeader()),null, false));
         }}
     if(xSet.getLayout("Meter").show()) metpan.setListener(frMeters=
@@ -298,9 +298,9 @@ private JToolBar createToolBar() {
     toolBar.add(new toolButton(maWork));
     toolBar.add(new toolButton(maSave));
     toolBar.addSeparator();
-    if(enableControl) toolBar.add(new toolButton(maDabcMbsLauncher));
-    if(enableControl) toolBar.add(new toolButton(maDabcLauncher));
-    if(enableControl) toolBar.add(new toolButton(maMbsLauncher));
+    if(enableControl) toolBar.add(new toolButton(maDabcMbsController));
+    if(enableControl) toolBar.add(new toolButton(maDabcController));
+    if(enableControl) toolBar.add(new toolButton(maMbsController));
     toolBar.add(new toolButton(maBrowser));
     toolBar.addSeparator();
     if(enableControl) toolBar.add(new toolButton(maCommands));
@@ -314,7 +314,7 @@ private JToolBar createToolBar() {
     if(usrpan != null){
         toolBar.addSeparator();
     	for(int ii=0;ii<usrpan.size();ii++)
-     	toolBar.add(new toolButton(maUserLauncher.get(ii)));
+     	toolBar.add(new toolButton(maUserController.get(ii)));
     }
     return toolBar;
 }
@@ -326,8 +326,8 @@ private JToolBar createToolBar() {
     // JMenu wmenu = new JMenu("File");
     // wmenu.setMnemonic(KeyEvent.VK_F);
     // menuBar.add(wmenu);
-    // wmenu.add(new JMenuItem(maDabcLauncher));
-    // wmenu.add(new JMenuItem(maMbsLauncher));
+    // wmenu.add(new JMenuItem(maDabcController));
+    // wmenu.add(new JMenuItem(maMbsController));
     // wmenu.add(new JMenuItem(maQuit));
     // JMenu omenu = new JMenu("Windows");
     // omenu.setMnemonic(KeyEvent.VK_W);
@@ -456,17 +456,17 @@ JInternalFrame[] fr=desktop.getAllFrames();
  * @param e event. Switch on action command:<br>
  */
 public void actionPerformed(ActionEvent e) {
-    if ("DabcMbsLauncher".equals(e.getActionCommand())) {frDabcMbsLauncher=
-        createFrame("DabcMbsLauncher",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsLauncher"),null, false);
-        xSet.setLayout("DabcMbsLauncher",null,null,0, true);
+    if ("DabcMbsController".equals(e.getActionCommand())) {frDabcMbsController=
+        createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false);
+        xSet.setLayout("DabcMbsController",null,null,0, true);
         }
-    else if ("DabcLauncher".equals(e.getActionCommand())) {frDabcLauncher=
-        createFrame("DabcLauncher",dabcIcon,dabcpan,xSet.getLayout("DabcLauncher"),null, false);
-        xSet.setLayout("DabcLauncher",null,null,0, true);
+    else if ("DabcController".equals(e.getActionCommand())) {frDabcController=
+        createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false);
+        xSet.setLayout("DabcController",null,null,0, true);
         }
-    else if ("MbsLauncher".equals(e.getActionCommand())) {frMbsLauncher=
-        createFrame("MbsLauncher",mbsIcon,mbspan,xSet.getLayout("MbsLauncher"),null, false); 
-        xSet.setLayout("MbsLauncher",null,null,0, true);
+    else if ("MbsController".equals(e.getActionCommand())) {frMbsController=
+        createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false); 
+        xSet.setLayout("MbsController",null,null,0, true);
         }
     else if ("ParameterSelect".equals(e.getActionCommand())) {frSelect=
         createFrame("ParameterSelect",selIcon,selpan,xSet.getLayout("ParameterSelect"),null, false); 
@@ -540,22 +540,22 @@ public void actionPerformed(ActionEvent e) {
         if(frHistograms   != null) 
         xSet.setLayout("Histogram",
             frHistograms.getLocation(),null, hispan.getColumns()  , xSet.getLayout("Histogram").show());
-        if(frDabcLauncher != null) 
-        xSet.setLayout("DabcLauncher",
-            frDabcLauncher.getLocation(),frDabcLauncher.getSize(),0,xSet.getLayout("DabcLauncher").show());
-        if(frMbsLauncher  != null) 
-        xSet.setLayout("MbsLauncher",
-            frMbsLauncher.getLocation(),frMbsLauncher.getSize(),0, xSet.getLayout("MbsLauncher").show());
-        if(frDabcMbsLauncher  != null) 
-            xSet.setLayout("DabcMbsLauncher",
-                frDabcMbsLauncher.getLocation(),frDabcMbsLauncher.getSize(),0,xSet.getLayout("DabcMbsLauncher").show());
+        if(frDabcController != null) 
+        xSet.setLayout("DabcController",
+            frDabcController.getLocation(),frDabcController.getSize(),0,xSet.getLayout("DabcController").show());
+        if(frMbsController  != null) 
+        xSet.setLayout("MbsController",
+            frMbsController.getLocation(),frMbsController.getSize(),0, xSet.getLayout("MbsController").show());
+        if(frDabcMbsController  != null) 
+            xSet.setLayout("DabcMbsController",
+                frDabcMbsController.getLocation(),frDabcMbsController.getSize(),0,xSet.getLayout("DabcMbsController").show());
         if(frSelect  != null) 
             xSet.setLayout("ParameterSelect",
                 frSelect.getLocation(),frSelect.getSize(),0,xSet.getLayout("ParameterSelect").show());
-        if(frUserLauncher  != null) 
+        if(frUserController  != null) 
         	for(int ii=0;ii<usrpan.size();ii++)
         	xSet.setLayout(usrpan.get(ii).getHeader(),
-            frUserLauncher.get(ii).getLocation(),frUserLauncher.get(ii).getSize(),0,xSet.getLayout(usrpan.get(ii).getHeader()).show());
+            frUserController.get(ii).getLocation(),frUserController.get(ii).getSize(),0,xSet.getLayout(usrpan.get(ii).getHeader()).show());
 
         if(frUserFrame  != null) for(int i = 0; i < frUserFrame.size();i++)
         xSet.setLayout(frUserFrame.get(i).getTitle(),
@@ -628,7 +628,7 @@ public void actionPerformed(ActionEvent e) {
     }
     else if(usrpan != null){ 
     	for(int ii=0;ii<usrpan.size();ii++)
-    	if(usrpan.get(ii).getHeader().equals(e.getActionCommand())) {frUserLauncher.add(
+    	if(usrpan.get(ii).getHeader().equals(e.getActionCommand())) {frUserController.add(
         createFrame(usrpan.get(ii).getHeader(),usrpan.get(ii).getIcon(),(JPanel)usrpan.get(ii),xSet.getLayout(usrpan.get(ii).getHeader()),null, false));
         xSet.setLayout(usrpan.get(ii).getHeader(),null,null,0, true);
         }}

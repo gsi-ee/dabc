@@ -82,7 +82,7 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
     haltIcon    = xSet.getIcon("icons/dabchalt.png");
     exitIcon    = xSet.getIcon("icons/exitall.png");
-    addButton("dabcQuit","Close window",closeIcon,this);
+//    addButton("dabcQuit","Close window",closeIcon,this);
 //    addButton("ReadSetup","Read setup file from user path",setupIcon,this);
 //    addButton("CloseWindows","Close setup windows",wcloseIcon,this);
     addButton("dabcSave","Save this form and setup to files",storeIcon,this);
@@ -97,9 +97,9 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     addButton("dabcShell","ssh Node -l Username Script",dworkIcon,this);
     int width=25;
     // read dabc setup from file
-    if(System.getenv("DABC_LAUNCH_DABC")!=null)
-        formDabc=new xFormDabc(System.getenv("DABC_LAUNCH_DABC"));
-    else formDabc=new xFormDabc("DabcLaunch.xml");
+    if(System.getenv("DABC_CONTROL_DABC")!=null)
+        formDabc=new xFormDabc(System.getenv("DABC_CONTROL_DABC"));
+    else formDabc=new xFormDabc("DabcControl.xml");
     formDabc.addActionListener(this);
     Object o=xSet.addObject(formDabc);
     // formDabc=(xFormDabc)xSet.getObject("xgui.xFormDabc"); // how to retrieve
@@ -122,7 +122,7 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     DabcUserpath=addPrompt("User path: ",formDabc.getUserPath(),"set",width,this);
     DabcSetup=addPrompt("Setup file: ",formDabc.getSetup(),"set",width,this);
     DabcScript=addPrompt("Script: ",formDabc.getScript(),"set",width,this);
-    DabcLaunchFile=addPrompt("Launch file: ",formDabc.getLaunchFile(),"set",width,this);
+    DabcLaunchFile=addPrompt("Control file: ",formDabc.getLaunchFile(),"set",width,this);
     
 // Add checkboxes
 //    getnew = new JCheckBox();

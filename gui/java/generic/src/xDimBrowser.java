@@ -80,13 +80,18 @@ protected String getServers(){
     String[] node;
     String[] srv=DimBrowser.getServices("*/EXIT");
     for(int i=0;i<srv.length;i++){
-        node=srv[i].split("/");
+    	if(srv[i].equals("DIS_DNS/EXIT")) {
+            ii=xSet.getDimDns().indexOf(".");
+            if(ii==-1)list.append("DNS="+xSet.getDimDns());
+            else list.append("DNS="+xSet.getDimDns().substring(0,ii));
+    	} else {
+    	node=srv[i].split("/");
         if(node.length > 2 )item=node[1]; // DABC has DABC/node/EXIT
         else                item=node[0]; // MBS has node:type/EXIT
         ii=item.indexOf(".");
         if(ii==-1)list.append(" "+item);
         else list.append(" "+item.substring(0,ii));
-    }
+    }}
     return list.toString();
 }
 /**
