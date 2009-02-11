@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <dabc version="1">
   <Context host="master" name="Controller:41">
+    <Run>
+      <runfunc value="RunTestBnet"/>
+    </Run>
     <Application class="bnet::Cluster">
        <NetDevice value="verbs::Device"/>
     </Application>

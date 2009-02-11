@@ -1,91 +1,41 @@
 #include "dabc/logging.h"
-#include "dabc/statistic.h"
 #include "dabc/Manager.h"
 #include "dabc/Application.h"
 #include "dabc/Configuration.h"
 #include "dabc/Factory.h"
 
-int RunSimpleApplication(dabc::Configuration& cfg)
+
+void ClassicalRunFunction()
 {
-   if (!dabc::mgr()->CreateApplication(cfg.ConetextAppClass())) {
-      EOUT(("Cannot create application"));
-      return 1;
-   }
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoConfigure);
 
-   cfg.ReadPars();
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoEnable);
 
-   //   cfg->StoreObject("Manager.xml", dabc::mgr());
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
 
-   // set states of manager to running here:
-   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoConfigure));
-      return 1;
-   }
-   DOUT1(("Did configure"));
+   DOUT1(("Application mainloop is now running"));
+   DOUT1(("       Press Ctrl-C for stop"));
 
-   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoEnable)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoEnable));
-      return 1;
-   }
-   DOUT1(("Did enable"));
+   dabc::mgr()->RunManagerMainLoop();
 
-   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoStart)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStart));
-      return 1;
-   }
+   DOUT1(("Normal finish of mainloop"));
 
-//   cfg->StoreObject("Manager.xml", dabc::mgr());
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
 
-   void* func = dabc::Factory::FindSymbol(cfg.RunFuncName());
-   if (func==0) {
-      DOUT1(("Application mainloop is now running"));
-      DOUT1(("       Press ctrl-C for stop"));
-
-      dabc::mgr()->RunManagerMainLoop();
-
-      DOUT1(("Normal finish of mainloop"));
-
-   } else {
-      dabc::Application::ExternalFunction* runfunc = (dabc::Application::ExternalFunction*) func;
-      runfunc();
-   }
-
-//   while(dabc::mgr()->GetApp()->IsModulesRunning()) { ::sleep(1); }
-//   sleep(10);
-
-   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoStop)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStop));
-      return 1;
-   }
-
-   if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoHalt)) {
-      EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoHalt));
-      return 1;
-   }
-
-//   dabc::Logger::Instance()->ShowStat();
-
-   return 0;
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoHalt);
 }
 
-bool SMChange(const char* smcmdname)
+
+int RunSimpleApplication(dabc::Configuration& cfg)
 {
-   dabc::CommandClient cli;
+   dabc::Application::ExternalFunction* runfunc =
+      (dabc::Application::ExternalFunction*)
+         dabc::Factory::FindSymbol(cfg.RunFuncName());
 
-   dabc::Command* cmd = new dabc::CmdStateTransition(smcmdname);
+   if (runfunc==0) ClassicalRunFunction();
+              else runfunc();
 
-   if (!dabc::mgr()->InvokeStateTransition(smcmdname, cli.Assign(cmd))) return false;
-
-   bool res = cli.WaitCommands(10);
-
-   if (!res) {
-      EOUT(("State change %s fail EXIT!!!! ", smcmdname));
-      exit(1);
-   }
-
-   DOUT1(("State change %s done", smcmdname));
-
-   return res;
+   return 0;
 }
 
 bool WaitActiveNodes(double tmout)
@@ -100,21 +50,15 @@ bool WaitActiveNodes(double tmout)
 
    } while (dabc::TimeDistance(t1, TimeStamp()) < tmout);
 
+   EOUT(("Cannot connect to all active nodes !!!"));
+
    return false;
 }
 
 
-int RunSctrlApplication(dabc::Configuration* cfg, const char* connid, int nodeid, int numnodes)
+int RunSctrlApplication(dabc::Configuration& cfg, const char* connid, int nodeid, int numnodes)
 {
    DOUT1(("Run application node:%d numnodes:%d conn:%s", nodeid, numnodes, (connid ? connid : "---")));
-
-   const char* appclass = cfg->ConetextAppClass();
-   DOUT1(("Create application of class %s", appclass));
-
-   if (!dabc::mgr()->CreateApplication(appclass)) {
-      EOUT(("Cannot create application"));
-      return 1;
-   }
 
    if (connid!=0)
        if (!dabc::mgr()->ConnectControl(connid)) {
@@ -122,83 +66,40 @@ int RunSctrlApplication(dabc::Configuration* cfg, const char* connid, int nodeid
           return 1;
        }
 
-   if (nodeid==0) {
-       if (!dabc::mgr()->HasClusterInfo()) {
-          EOUT(("Cannot access cluster information from main node"));
-          return 1;
-       }
+   if ((nodeid==0) && !WaitActiveNodes(10.)) return 1;
 
-       if (!WaitActiveNodes(10.)) {
-          EOUT(("Cannot connect to all active nodes !!!"));
-          return 1;
-       }
+   dabc::Application::ExternalFunction* runfunc =
+      (dabc::Application::ExternalFunction*)
+         dabc::Factory::FindSymbol(cfg.RunFuncName());
 
-       DOUT1(("RunTest start"));
-
-       SMChange(dabc::Manager::stcmdDoConfigure);
-
-       SMChange(dabc::Manager::stcmdDoEnable);
-
-       SMChange(dabc::Manager::stcmdDoStart);
-
-       dabc::ShowLongSleep("Main loop", 5); //15
-
-       dabc::Command* cmd = new dabc::Command("StartFiles");
-       cmd->SetStr("FileBase","abc");
-       dabc::mgr()->GetApp()->Execute(cmd);
-
-       dabc::ShowLongSleep("Main loop", 5); //15
-
-       dabc::mgr()->GetApp()->Execute("StopFiles");
-
-       dabc::ShowLongSleep("Main loop", 5); //15
-
-       SMChange(dabc::Manager::stcmdDoStop);
-
-       sleep(1);
-
-       SMChange(dabc::Manager::stcmdDoStart);
-
-       dabc::ShowLongSleep("Again main loop", 15); //10
-
-       SMChange(dabc::Manager::stcmdDoStop);
-
-       SMChange(dabc::Manager::stcmdDoHalt);
-
-       DOUT1(("RunTest done"));
-   }
+   if (runfunc!=0)
+      runfunc();
+   else
+   if (nodeid==0)
+      ClassicalRunFunction();
 
    return 0;
 }
 
-int RunDimApplication(dabc::Configuration* cfg, int nodeid, bool dorun)
+int RunDimApplication(dabc::Configuration& cfg, int nodeid, bool dorun)
 {
-   DOUT0(("Run cluster DIM application node %d!!!", nodeid));
+   DOUT1(("Run cluster DIM application node %d!!!", nodeid));
 
-   const char* appclass = cfg->ConetextAppClass();
-   DOUT1(("Create application of class %s", appclass));
+   if (dorun) {
 
-   if (!dabc::mgr()->CreateApplication(appclass)) {
-      EOUT(("Cannot create application"));
-      return 1;
-   }
+      if ((nodeid==0) && !WaitActiveNodes(10.)) return 1;
 
-   if (dorun && (nodeid==0)) {
-
-      if (!WaitActiveNodes(10.))
-         EOUT(("Cannot connect to all active nodes !!!"));
-
-      SMChange(dabc::Manager::stcmdDoConfigure);
-      SMChange(dabc::Manager::stcmdDoEnable);
-      SMChange(dabc::Manager::stcmdDoStart);
+      dabc::Application::ExternalFunction* runfunc =
+         (dabc::Application::ExternalFunction*)
+            dabc::Factory::FindSymbol(cfg.RunFuncName());
+      if (runfunc!=0)
+         runfunc();
+      else
+      if (nodeid==0)
+         ClassicalRunFunction();
    }
 
    dabc::mgr()->RunManagerMainLoop();
-
-   if (dorun && (nodeid==0)) {
-      SMChange(dabc::Manager::stcmdDoStop);
-      SMChange(dabc::Manager::stcmdDoHalt);
-   }
 
    return 0;
 }
@@ -306,13 +207,17 @@ int main(int numc, char* args[])
 
    cfg.LoadLibs();
 
+   dabc::mgr()->CreateApplication(cfg.ConetextAppClass());
+
+   cfg.ReadPars();
+
    if (ctrlkind == dabc::ConfigBase::kindDim)
-      res = RunDimApplication(&cfg, nodeid, dorun);
+      res = RunDimApplication(cfg, nodeid, dorun);
    else
    if ((numnodes<2) || (ctrlkind == dabc::ConfigBase::kindNone))
       res = RunSimpleApplication(cfg);
    else
-      res = RunSctrlApplication(&cfg, connid, nodeid, numnodes);
+      res = RunSctrlApplication(cfg, connid, nodeid, numnodes);
 
    delete dabc::mgr();
 

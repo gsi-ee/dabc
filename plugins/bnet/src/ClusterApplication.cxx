@@ -633,3 +633,66 @@ bool bnet::ClusterApplication::DoStateTransition(const char* state_trans_cmd)
 
    return res;
 }
+
+extern "C" void RunTestBnet()
+{
+   DOUT1(("TestBnet start"));
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoConfigure);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoEnable);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
+
+   dabc::ShowLongSleep("Main loop", 10);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
+
+   dabc::ShowLongSleep("Again main loop", 10);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoHalt);
+
+   DOUT1(("TestBnet done"));
+}
+
+
+extern "C" void RunTestBnetFiles()
+{
+
+   DOUT1(("TestBnetFiles start"));
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoConfigure);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoEnable);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
+
+   dabc::ShowLongSleep("Before files", 5); //15
+
+   dabc::Command* cmd = new dabc::Command("StartFiles");
+   cmd->SetStr("FileBase","abc");
+   dabc::mgr()->GetApp()->Execute(cmd);
+
+   dabc::ShowLongSleep("Writing files", 5); //15
+
+   dabc::mgr()->GetApp()->Execute("StopFiles");
+
+   dabc::ShowLongSleep("After files", 5); //15
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
+
+   dabc::ShowLongSleep("Again main loop", 15); //10
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
+
+   dabc::mgr()->ChangeState(dabc::Manager::stcmdDoHalt);
+
+   DOUT1(("TestBnetFiles done"));
+}
+

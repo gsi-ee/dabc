@@ -31,6 +31,7 @@
   <Context host="${node0}" name="Controller">
     <Run>
       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+      <runfunc value="RunTestBnet"/>
     </Run>
     <Application class="bnet::Cluster">
        <NetDevice value="dabc::SocketDevice"/>

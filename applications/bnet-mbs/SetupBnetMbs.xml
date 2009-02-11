@@ -31,6 +31,7 @@
   <Context host="${node0}" name="Controller">
     <Run>
       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+      <runfunc value="RunTestBnet"/>
     </Run>
     <Application class="bnet::Cluster">
        <NetDevice value="dabc::SocketDevice"/>
@@ -61,6 +62,10 @@
           <logfile value="${Context}.log"/>
           <loglevel value="1"/>
        </Run>
+       <Module name="*">
+          <Ratemeter name="Data*" lower="0" upper="20"/>
+          <Ratemeter name="Event*" lower="0" upper="20000"/>
+       </Module>
      </Context>
      <Context name="Gener*">
         <Run>
@@ -83,6 +88,7 @@
           <lib value="libDabcBnet.so"/>
           <lib value="libDabcMbs.so"/>
           <lib value="libBnetMbs.so"/>
+          <parslevel value="5"/>
         </Run>
         <Application class="bnet::MbsWorker">
            <IsSender value="true"/>

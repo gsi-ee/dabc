@@ -138,7 +138,7 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    fMgrName     = ContextName(cfgid);
    envContext   = fMgrName;
 
-   DOUT0(("Select context %u nodeid %u name %s", cfgid, nodeid, fMgrName.c_str()));
+   DOUT2(("Select context %u nodeid %u name %s", cfgid, nodeid, fMgrName.c_str()));
 
    dabc::SetDebugPrefix(fMgrName.c_str());
 

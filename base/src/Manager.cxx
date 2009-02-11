@@ -1703,6 +1703,30 @@ bool dabc::Manager::InvokeStateTransition(const char* state_transition_name, Com
    return false;
 }
 
+bool dabc::Manager::ChangeState(const char* state_transition_cmd, double tmout)
+{
+   bool res = false;
+
+   if (fSMmodule==0)
+      res = DoStateTransition(state_transition_cmd);
+   else {
+      dabc::CommandClient cli;
+
+      dabc::Command* cmd = new dabc::CmdStateTransition(state_transition_cmd);
+
+      if (InvokeStateTransition(state_transition_cmd, cli.Assign(cmd)))
+         res = cli.WaitCommands(tmout);
+   }
+
+   if (!res) {
+      EOUT(("State change %s fail. EXIT!!!! ", state_transition_cmd));
+      exit(1);
+   } else
+      DOUT1(("State change %s done", state_transition_cmd));
+
+   return res;
+}
+
 std::string dabc::Manager::CurrentState() const
 {
    return GetParStr(stParName, stNull);

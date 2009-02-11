@@ -278,16 +278,6 @@ namespace dabc {
            * Automatically called from destructor */
          void HaltManager();
 
-         /** Check if transition allowed */
-         bool IsStateTransitionAllowed(const char* state_transition_cmd, bool errout = false);
-
-         /** Perform action to makes required state transition
-           * Should not be called from manager thread while
-           * it is synchronous and returns only when transition is completed (true) or
-           * error is detected (false) */
-         bool DoStateTransition(const char* state_transition_cmd);
-
-
          // ------------------------- State machine constants and methods ----------------------
 
          static const char* stParName; // name of manager parameter, where current state is stored
@@ -316,6 +306,21 @@ namespace dabc {
            * If command object is specified, it will be replied when state transition is
            * completed or when transition is failed */
          virtual bool InvokeStateTransition(const char* state_transition_name, Command* cmd = 0);
+
+         /** Performs change of state */
+         bool ChangeState(const char* state_transition_cmd, double tmout = 10.);
+
+         /** Check if transition allowed */
+         bool IsStateTransitionAllowed(const char* state_transition_cmd, bool errout = false);
+
+         /** Perform action to makes required state transition
+           * Should not be called from manager thread while
+           * it is synchronous and returns only when transition is completed (true) or
+           * error is detected (false) */
+         bool DoStateTransition(const char* state_transition_cmd);
+
+
+
 
          /** Returns current state name */
          std::string CurrentState() const;

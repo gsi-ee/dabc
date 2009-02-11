@@ -1,6 +1,9 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="lxg0517" name="Controller:41">
+  <Context host="localhost" name="Controller:41">
+    <Run>
+      <runfunc value="RunTestBnet"/>
+    </Run>
     <Application class="bnet::Cluster">
        <NetDevice value="dabc::SocketDevice"/>
     </Application>
