@@ -8,14 +8,11 @@
 #include "dabc/Command.h"
 #include "dabc/logging.h"
 
-
 roc::Factory rocfactory("roc");
-
 
 roc::Factory::Factory(const char* name) :
    dabc::Factory(name)
 {
-   DfltAppClass(xmlReadoutAppClass);
 }
 
 dabc::Application* roc::Factory::CreateApplication(const char* classname, dabc::Command* cmd)

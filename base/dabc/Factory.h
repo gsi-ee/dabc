@@ -66,11 +66,9 @@ namespace dabc {
 
          static bool LoadLibrary(const std::string& fname);
 
-         static void* FindSymbol(const char* symbol);
+         static void* FindSymbol(const std::string& symbol);
 
       protected:
-         static const char* DfltAppClass(const char* newdefltclass = 0);
-
          virtual bool CreateManagerInstance(const char* kind, Configuration* cfg) { return false; }
 
       private:

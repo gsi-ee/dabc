@@ -386,7 +386,7 @@ void TestMemoryPool()
 }
 
 
-extern "C" void StartCoreTest()
+extern "C" void RunCoreTest()
 {
 //   TestMemoryPool();
 
@@ -399,8 +399,6 @@ extern "C" void StartCoreTest()
    TestTimers(1);
    TestTimers(3);
    TestTimers(10);
-
-   dabc::mgr()->RaiseCtrlCSignal();
 }
 
 

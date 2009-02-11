@@ -7,7 +7,7 @@
   <Context host="${genhost}" name="Generator">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsGenerator"/>
+      <func value="InitMbsGenerator"/>
     </Run>
     <Module name="Generator">
        <Port name="Output">
@@ -19,7 +19,7 @@
   <Context host="lxi010" name="Client">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsClient"/>
+      <func value="InitMbsClient"/>
     </Run>
     <Module name="Receiver">
        <BufferSize value="16384"/>

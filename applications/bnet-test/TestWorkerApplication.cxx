@@ -13,7 +13,7 @@
 #include "TestFactory.h"
 
 bnet::TestWorkerApplication::TestWorkerApplication() :
-   WorkerApplication(xmlTestWrokerClass) ,
+   WorkerApplication(xmlTestWorkerClass) ,
    fABBActive(false)
 {
    // register application specific parameters here:

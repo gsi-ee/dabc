@@ -11,7 +11,6 @@ bnet::Factory bnetfactory("bnet");
 bnet::Factory::Factory(const char* name) :
    dabc::Factory(name)
 {
-   DfltAppClass(xmlClusterClass);
 }
 
 

@@ -7,13 +7,24 @@
 dabc::Application::Application(const char* classname) :
    Folder(dabc::mgr(), xmlAppDfltName, true),
    WorkingProcessor(this),
-   fAppClass(classname ? classname : xmlApplication),
+   fAppClass(classname ? classname : typeApplication),
    fConnCmd(0),
-   fConnTmout(0)
+   fConnTmout(0),
+   fInitFunc(0)
 {
-   DOUT3(("Plugin %s created", GetName()));
+   DOUT3(("Application %s created", ClassName()));
 }
 
+dabc::Application::Application(ExternalFunction* initfunc) :
+   Folder(dabc::mgr(), xmlAppDfltName, true),
+   WorkingProcessor(this),
+   fAppClass(typeApplication),
+   fConnCmd(0),
+   fConnTmout(0),
+   fInitFunc(initfunc)
+{
+   DOUT3(("Application %s created", ClassName()));
+}
 
 dabc::Application::~Application()
 {
@@ -32,6 +43,12 @@ dabc::Application::~Application()
 const char* dabc::Application::MasterClassName() const
 {
    return xmlApplication;
+}
+
+bool dabc::Application::CreateAppModules()
+{
+   if (fInitFunc!=0) fInitFunc();
+   return true;
 }
 
 int dabc::Application::ConnectAppModules(Command* cmd)

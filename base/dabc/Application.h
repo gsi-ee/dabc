@@ -16,6 +16,11 @@ namespace dabc {
    class Application : public Folder,
                        public WorkingProcessor {
        public:
+
+          friend class Manager;
+
+          typedef void* ExternalFunction();
+
           Application(const char* classname);
 
           virtual ~Application();
@@ -33,7 +38,7 @@ namespace dabc {
           // Implement them to create modules, test if connection is done and
           // do specific actions before modules stars, after modules stopped and before module destroyed
 
-          virtual bool CreateAppModules() { return true; }
+          virtual bool CreateAppModules();
           virtual int ConnectAppModules(Command* cmd);
           virtual int IsAppModulesConnected() { return 1; } // 0 - error, 1 - ok, 2 - not ready
           virtual bool BeforeAppModulesStarted() { return true; }
@@ -54,11 +59,15 @@ namespace dabc {
           virtual bool Find(ConfigIO &cfg);
 
        protected:
+
+          Application(ExternalFunction* initfunc);
+
           virtual double ProcessTimeout(double last_diff);
 
-          std::string fAppClass;
-          Command* fConnCmd;
-          double fConnTmout;
+          std::string        fAppClass;
+          Command*           fConnCmd;
+          double             fConnTmout;
+          ExternalFunction*  fInitFunc;
 
    };
 

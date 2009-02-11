@@ -42,6 +42,8 @@ namespace dabc {
    const char* typeWorkingThread    = "dabc::WorkingThread";
    const char* typeSocketDevice     = "dabc::SocketDevice";
    const char* typeSocketThread     = "dabc::SocketThread";
+   const char* typeApplication      = "dabc::Application";
+
 }
 
 

@@ -56,7 +56,9 @@ namespace dabc {
          const char* MgrDimNode() const { return fMgrDimNode.c_str(); }
          int MgrDimPort() const { return fMgrDimPort; }
 
-         std::string StartFuncName();
+         std::string InitFuncName();
+         std::string RunFuncName();
+
 
          const char* ConetextAppClass();
 

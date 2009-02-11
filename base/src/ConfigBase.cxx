@@ -193,7 +193,8 @@ namespace dabc {
    const char* xmlConfigFile       = "config";
    const char* xmlConfigFileId     = "configid";
    const char* xmlUserLib          = "lib";
-   const char* xmlUserFunc         = "func";
+   const char* xmlInitFunc         = "func";
+   const char* xmlRunFunc          = "runfunc";
    const char* xmlControlled       = "ctrl";
    const char* xmlDIM_DNS_NODE     = "DIM_DNS_NODE";
    const char* xmlDIM_DNS_PORT     = "DIM_DNS_PORT";

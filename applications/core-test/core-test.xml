@@ -3,7 +3,7 @@
   <Context name="core-test">
     <Run>
       <lib value="libDabcCoreTest.so"/>
-      <func value="StartCoreTest"/>
+      <runfunc value="RunCoreTest"/>
     </Run>
   </Context>
 </dabc>

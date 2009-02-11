@@ -141,6 +141,7 @@ All these methods have following arguments: the parameter name,
 a default value [optional], and a pointer to a \class{Command} object [optional].
 Let's add one configuration parameter to our module constructor:
 
+\begin{small}
 \begin{verbatim}
 UserModule(const char* name, dabc::Command* cmd = 0) : 
         dabc::ModuleAsync(name, cmd)
@@ -151,6 +152,7 @@ UserModule(const char* name, dabc::Command* cmd = 0) :
         CreateTimer("Timer", period, false);
 }
 \end{verbatim}
+\end{small}
 
 Here the period of the timer is set via configuration parameter "Period". 
 How will its value  be defined? 
@@ -167,14 +169,14 @@ which contains values for some or all configuration parameters of the system.
 
 Let's consider this simple but functional configuration file:
 
+\begin{small}
 \begin{verbatim}
-
 <?xml version="1.0"?>
 <dabc version="1">
   <Context host="localhost" name="Generator">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsGenerator"/>
+      <func value="InitMbsGenerator"/>
     </Run>
     <Module name="Generator">
        <Port name="Output">
@@ -184,8 +186,8 @@ Let's consider this simple but functional configuration file:
     </Module>
   </Context>
 </dabc>
-
 \end{verbatim}
+\end{small}
 
 This is an example XML file for an MBS generator, which produces 
 MBS events and provides them to an {\em MBS transport} server. 
@@ -259,6 +261,7 @@ but neither arithmetic nor string operations are supported.
 
 Using variables, one can modify the example in the following way:
 
+\begin{small}
 \begin{verbatim}
 
 <?xml version="1.0"?>
@@ -270,7 +273,7 @@ Using variables, one can modify the example in the following way:
   <Context name="Mgr${myname}">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsGenerator"/>
+      <func value="InitMbsGenerator"/>
     </Run>
     <Module name="${myname}">
        <SubeventSize value="32"/>
@@ -281,8 +284,8 @@ Using variables, one can modify the example in the following way:
     </Module>
   </Context>
 </dabc>
-
 \end{verbatim}
+\end{small}
 
 Here context name and module name are set via {\tt myname} variable,
 and mbs server socket port is set via {\tt myport} variable.
@@ -314,8 +317,8 @@ Another possibility to set several parameters at once
 consists in \strong{wildcard rules} using "*" or "?" symbols.
 These can be defined in a  <Defaults> node: 
 
+\begin{small}
 \begin{verbatim}
-
 <?xml version="1.0"?>
 <dabc version="1">
   <Variables>
@@ -326,7 +329,7 @@ These can be defined in a  <Defaults> node:
   <Context name="Mgr${myname}">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsGenerator"/>
+      <func value="InitMbsGenerator"/>
     </Run>
     <Module name="${myname}">
        <SubeventSize value="32"/>
@@ -343,8 +346,8 @@ These can be defined in a  <Defaults> node:
     </Module>
   </Defaults>
 </dabc>
-
 \end{verbatim}
+\end{small}
 
 In this example for all ports which names begin with the string "Output", 
 and which belong to any module, the output queue length will be 5. 
@@ -362,9 +365,10 @@ Here the use case is that
 an object (like a module) should be created with fixed parameters,
 ignoring the values specified in the configuration file.
 
-In our example one can modify \func{StartMbsGenerator()} function in the following way:
+In our example one can modify \func{InitMbsGenerator()} function in the following way:
+\begin{small}
 \begin{verbatim}
-extern "C" void StartMbsGenerator() 
+extern "C" void InitMbsGenerator() 
 {
   dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", 
                                                  "Generator");
@@ -377,6 +381,7 @@ extern "C" void StartMbsGenerator()
     ...
 }
 \end{verbatim}
+\end{small}
 
 Here one adds an additional parameter of name "SubeventSize" to
 the \class{CmdCreateModule} object, 

@@ -11,7 +11,7 @@ namespace bnet {
 
    class MbsFactory : public dabc::Factory {
    public:
-      MbsFactory(const char* name) : dabc::Factory(name) { DfltAppClass(xmlMbsWorkerClass); }
+      MbsFactory(const char* name) : dabc::Factory(name) {}
 
       virtual dabc::Application* CreateApplication(const char* classname, dabc::Command* cmd);
 

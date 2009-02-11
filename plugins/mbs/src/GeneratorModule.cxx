@@ -97,13 +97,13 @@ void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
    port->Send(buf);
 }
 
-extern "C" void StartMbsGenerator()
+extern "C" void InitMbsGenerator()
 {
    dabc::mgr()->CreateThread("GenThrd", dabc::typeSocketThread);
    dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator", "GenThrd");
    dabc::mgr()->CreateTransport("Generator/Output", mbs::typeServerTransport, "GenThrd");
-   dabc::mgr()->StartModule("Generator");
 }
+
 
 
 class MbsTestReadoutModule : public dabc::ModuleAsync {
@@ -141,32 +141,16 @@ class MbsTestReadoutModule : public dabc::ModuleAsync {
       }
 };
 
-extern "C" void StartMbsClient()
+extern "C" void InitMbsClient()
 {
-//   const char* hostname = "lxg0526";
-//   int nport = 6000;
-
-   if (dabc::mgr()==0) {
-      EOUT(("Manager is not created"));
-      exit(1);
-   }
-
    dabc::Module* m = new MbsTestReadoutModule("Receiver");
 
    dabc::mgr()->MakeThreadForModule(m);
 
    dabc::Command* cmd = new dabc::CmdCreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
-//   cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
-//   cmd->SetStr(mbs::xmlServerName, hostname);
-//   if (nport>0) cmd->SetInt(mbs::xmlServerPort, nport);
-//   cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
 
    if (!dabc::mgr()->Execute(cmd)) {
       EOUT(("Cannot create data input for receiver"));
       exit(1);
    }
-
-   m->Start();
-
-//   dabc::LongSleep(3);
 }

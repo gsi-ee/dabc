@@ -65,7 +65,7 @@
      <Context name="Gener*">
         <Run>
           <lib value="libDabcMbs.so"/>
-          <func value="StartMbsGenerator"/>
+          <func value="InitMbsGenerator"/>
           <ctrl value="false"/>
         </Run>
         <Module name="Generator">

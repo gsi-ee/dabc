@@ -46,6 +46,7 @@ namespace dabc {
    extern const char* typeWorkingThread;
    extern const char* typeSocketDevice;
    extern const char* typeSocketThread;
+   extern const char* typeApplication;
 
    class Basic {
       friend class Folder;

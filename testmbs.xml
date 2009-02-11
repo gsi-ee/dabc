@@ -3,7 +3,7 @@
   <Context host="lxi010" name="Server">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsGenerator"/>
+      <func value="InitMbsGenerator"/>
       <ctrl value="false"/>
     </Run>
     <Module name="Generator">
@@ -18,7 +18,7 @@
   <Context host="lxi009" name="Client">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsClient"/>
+      <func value="InitMbsClient"/>
       <ctrl value="false"/>
     </Run>
     <Module name="Receiver">

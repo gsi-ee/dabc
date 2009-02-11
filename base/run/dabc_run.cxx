@@ -5,51 +5,16 @@
 #include "dabc/Configuration.h"
 #include "dabc/Factory.h"
 
-#include <iostream>
-
-int RunSimpleFunc(dabc::Configuration* cfg, std::string funcname)
+int RunSimpleApplication(dabc::Configuration& cfg)
 {
-   cfg->LoadLibs();
-
-   // cfg->StoreObject((funcname + ".xml").c_str(), dabc::mgr());
-
-   typedef void* myfunc();
-
-   myfunc* func = (myfunc*) dabc::Factory::FindSymbol(funcname.c_str());
-
-   if (func!=0) {
-      DOUT1(("Find function %s in library", funcname.c_str()));
-      func();
-   } else {
-      EOUT(("Cannot find start function"));
-      return 1;
-
-   }
-
-   DOUT0(("Start main loop"));
-
-   dabc::mgr()->RunManagerMainLoop();
-
-   DOUT0(("Finish main loop"));
-
-   return 0;
-}
-
-int RunSimpleApplication(dabc::Configuration* cfg)
-{
-   cfg->LoadLibs();
-
-   const char* appclass = cfg->ConetextAppClass();
-   DOUT1(("Create application of class %s", appclass));
-
-   if (!dabc::mgr()->CreateApplication(appclass)) {
+   if (!dabc::mgr()->CreateApplication(cfg.ConetextAppClass())) {
       EOUT(("Cannot create application"));
       return 1;
    }
 
-   cfg->ReadPars();
+   cfg.ReadPars();
 
-//   cfg->StoreObject("Manager.xml", dabc::mgr());
+   //   cfg->StoreObject("Manager.xml", dabc::mgr());
 
    // set states of manager to running here:
    if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoConfigure)) {
@@ -69,17 +34,24 @@ int RunSimpleApplication(dabc::Configuration* cfg)
       return 1;
    }
 
-   DOUT1(("Application mainloop is now running"));
-   DOUT1(("       Press ctrl-C for stop"));
-
 //   cfg->StoreObject("Manager.xml", dabc::mgr());
 
-   dabc::mgr()->RunManagerMainLoop();
+   void* func = dabc::Factory::FindSymbol(cfg.RunFuncName());
+   if (func==0) {
+      DOUT1(("Application mainloop is now running"));
+      DOUT1(("       Press ctrl-C for stop"));
+
+      dabc::mgr()->RunManagerMainLoop();
+
+      DOUT1(("Normal finish of mainloop"));
+
+   } else {
+      dabc::Application::ExternalFunction* runfunc = (dabc::Application::ExternalFunction*) func;
+      runfunc();
+   }
 
 //   while(dabc::mgr()->GetApp()->IsModulesRunning()) { ::sleep(1); }
 //   sleep(10);
-
-   DOUT1(("Normal finish of mainloop"));
 
    if(!dabc::mgr()->DoStateTransition(dabc::Manager::stcmdDoStop)) {
       EOUT(("State transition %s failed. Abort", dabc::Manager::stcmdDoStop));
@@ -132,11 +104,9 @@ bool WaitActiveNodes(double tmout)
 }
 
 
-int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int nodeid, int numnodes)
+int RunSctrlApplication(dabc::Configuration* cfg, const char* connid, int nodeid, int numnodes)
 {
    DOUT1(("Run application node:%d numnodes:%d conn:%s", nodeid, numnodes, (connid ? connid : "---")));
-
-   cfg->LoadLibs();
 
    const char* appclass = cfg->ConetextAppClass();
    DOUT1(("Create application of class %s", appclass));
@@ -201,11 +171,9 @@ int RunClusterApplucation(dabc::Configuration* cfg, const char* connid, int node
    return 0;
 }
 
-int RunClusterDimApplucation(dabc::Configuration* cfg, int nodeid, bool dorun)
+int RunDimApplication(dabc::Configuration* cfg, int nodeid, bool dorun)
 {
    DOUT0(("Run cluster DIM application node %d!!!", nodeid));
-
-   cfg->LoadLibs();
 
    const char* appclass = cfg->ConetextAppClass();
    DOUT1(("Create application of class %s", appclass));
@@ -221,14 +189,16 @@ int RunClusterDimApplucation(dabc::Configuration* cfg, int nodeid, bool dorun)
          EOUT(("Cannot connect to all active nodes !!!"));
 
       SMChange(dabc::Manager::stcmdDoConfigure);
-
       SMChange(dabc::Manager::stcmdDoEnable);
-
       SMChange(dabc::Manager::stcmdDoStart);
-
    }
 
    dabc::mgr()->RunManagerMainLoop();
+
+   if (dorun && (nodeid==0)) {
+      SMChange(dabc::Manager::stcmdDoStop);
+      SMChange(dabc::Manager::stcmdDoHalt);
+   }
 
    return 0;
 }
@@ -323,7 +293,7 @@ int main(int numc, char* args[])
       mgrclass = "Basic";
    }
 
-   DOUT1(("Create manager class %s", mgrclass));
+   DOUT2(("Create manager class %s", mgrclass));
 
    if (!dabc::Factory::CreateManager(mgrclass, &cfg)) {
       EOUT(("Cannot create required manager class %s", mgrclass));
@@ -332,20 +302,17 @@ int main(int numc, char* args[])
 
    dabc::mgr()->InstallCtrlCHandler();
 
-   std::string funcname = cfg.StartFuncName();
-
    int res = 0;
 
-   if (funcname.length()>0)
-      res = RunSimpleFunc(&cfg, funcname);
-   else
-   if (numnodes<2)
-      res = RunSimpleApplication(&cfg);
-   else
+   cfg.LoadLibs();
+
    if (ctrlkind == dabc::ConfigBase::kindDim)
-      res = RunClusterDimApplucation(&cfg, nodeid, dorun);
+      res = RunDimApplication(&cfg, nodeid, dorun);
    else
-      res = RunClusterApplucation(&cfg, connid, nodeid, numnodes);
+   if ((numnodes<2) || (ctrlkind == dabc::ConfigBase::kindNone))
+      res = RunSimpleApplication(cfg);
+   else
+      res = RunSctrlApplication(&cfg, connid, nodeid, numnodes);
 
    delete dabc::mgr();
 

@@ -264,12 +264,8 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
       exit(1);
    }
 
-   DOUT0(("Doing manager constructor"));
-
    // create state parameter, inherited class should call init to see it
    CreateParStr(stParName, stHalted);
-
-   DOUT0(("Finish manager constructor"));
 
    fParsQueueBlocked = false;
 }
@@ -910,13 +906,14 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       const char* classname = cmd->GetStr("AppClass");
       const char* appthrd = cmd->GetStr("AppThrd");
 
-      if ((classname==0) || (strlen(classname)==0)) classname = Factory::DfltAppClass();
+      if (classname==0) classname = typeApplication;
 
       Application* app = GetApp();
 
       if ((app!=0) && (strcmp(app->ClassName(), classname)==0)) {
          DOUT2(("Application of class %s already exists", classname));
-      } else {
+      } else
+      if (strcmp(classname, typeApplication)!=0) {
          if (app!=0) { delete app; app = 0; }
 
          dabc::Folder* folder = GetFactoriesFolder(false);
@@ -929,13 +926,22 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
                   app = factory->CreateApplication(classname, cmd);
                if (app!=0) break;
             }
+      } else {
+         if (app!=0) { delete app; app = 0; }
 
-         if ((appthrd==0) || (strlen(appthrd)==0)) appthrd = MgrThrdName();
+         void* func = dabc::Factory::FindSymbol(fCfg->InitFuncName());
 
-         if (app!=0) MakeThreadFor(app, appthrd);
+         app = new Application((Application::ExternalFunction*)func);
       }
 
+      if ((appthrd==0) || (strlen(appthrd)==0)) appthrd = MgrThrdName();
+
+      if (app!=0) MakeThreadFor(app, appthrd);
+
       cmd_res = cmd_bool(app!=0);
+
+      if (app!=0) DOUT1(("Create application of class %s", classname));
+             else EOUT(("Cannot create application of class %s", classname));
 
    } else
 

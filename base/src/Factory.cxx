@@ -10,13 +10,6 @@
 
 std::vector<dabc::Factory::LibEntry> dabc::Factory::fLibs;
 
-const char* dabc::Factory::DfltAppClass(const char* newdefltclass)
-{
-   static std::string dflt = "UserApplication";
-   if (newdefltclass!=0) dflt = newdefltclass;
-   return dflt.c_str();
-}
-
 dabc::Factory* dabc::Factory::NextNewFactory()
 {
    dabc::LockGuard lock(FactoriesMutex());
@@ -41,19 +34,21 @@ bool dabc::Factory::LoadLibrary(const std::string& fname)
    return true;
 }
 
-void* dabc::Factory::FindSymbol(const char* symbol)
+void* dabc::Factory::FindSymbol(const std::string& symbol)
 {
+   if (symbol.empty()) return 0;
+
    dabc::LockGuard lock(FactoriesMutex());
 
    for (unsigned n=0;n<fLibs.size();n++) {
-      void* res = dlsym(fLibs[n].fLib, symbol);
+      void* res = dlsym(fLibs[n].fLib, symbol.c_str());
       if (res!=0) {
-         DOUT3(("Found symbol %s in library %s", symbol, fLibs[n].fLibName.c_str()));
+         DOUT3(("Found symbol %s in library %s", symbol.c_str(), fLibs[n].fLibName.c_str()));
          return res;
       }
    }
 
-   return 0;
+   return dlsym(RTLD_DEFAULT, symbol.c_str());
 }
 
 dabc::Factory::Factory(const char* name) :

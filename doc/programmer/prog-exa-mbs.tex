@@ -376,18 +376,16 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
   
-There following function \func{StartMbsGenerator()} instantiates and runs 
-the generator module.
+There following function \func{InitMbsGenerator()} instantiates the generator module.
 It also demonstrates how a thread of type \class{dabc::SocketThread} can be created
 and used by both a module and a transport object. 
 \begin{small}
 \begin{verbatim}
-extern "C" void StartMbsGenerator()
+extern "C" void InitMbsGenerator()
 {
   dabc::mgr()->CreateThread("GenerThrd", dabc::typeSocketThread);
   dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator", "GenerThrd");
   dabc::mgr()->CreateTransport("Generator/Output", mbs::typeServerTransport, "GenerThrd");
-  dabc::mgr()->StartModule("Generator");
 }
 \end{verbatim}
 \end{small}
@@ -401,7 +399,7 @@ this simple XML file is sufficient:
   <Context host="lxi009" name="Server">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsGenerator"/>
+      <func value="InitMbsGenerator"/>
     </Run>
   </Context>
 </dabc>
@@ -416,7 +414,7 @@ Besides one may specify all module and transport parameters explicitely here:
   <Context host="lxi009" name="Server">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsGenerator"/>
+      <func value="InitMbsGenerator"/>
     </Run>
     <Module name="Generator">
        <NumSubevents value="3"/>

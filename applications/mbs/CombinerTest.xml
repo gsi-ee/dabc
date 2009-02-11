@@ -53,7 +53,7 @@
     <Context name="Generator*">
       <Run>
         <lib value="libDabcMbs.so"/>
-        <func value="StartMbsGenerator"/>
+        <func value="InitMbsGenerator"/>
       </Run>
       <Module name="Generator">
          <FirstProcId value="${DABCNODEID}"/>
