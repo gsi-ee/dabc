@@ -30,7 +30,7 @@ bnet::MbsCombinerModule::MbsCombinerModule(const char* name, dabc::Command* cmd)
    if (nchannels < 5) nchannels = 5;
 
    fUsedEvents = new dabc::HistogramParameter(this, "PackedEvents", nchannels);
-   fUsedEvents->SetLabels("PackedEvents", "Rel.un");
+   fUsedEvents->SetLabels("PackedEvents", "cnt");
 
    fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 20000.);
 }

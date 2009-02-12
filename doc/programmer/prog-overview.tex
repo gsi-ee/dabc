@@ -677,8 +677,8 @@ Subclass of \class{dabc::ModuleAsync}.
   \item It has {\bf one} input port connected to the Bnet receiver module. 
       The data frame buffers of all Bnet senders are transferred serially 
       over this port and are then kept as an internal {\bf std::vector} in the Bnet builder module.
-  \item Method \func{DoBuildEvent()} is to be implemented in user defined 
-      subclass (e.~g.~ \class{bnet::MbsBuilderModule}) and is called in module's 
+  \item Method \func{DoBuildEvent()} is to be implemented in user defined subclass \\
+      (e.~g.~ \class{bnet::MbsBuilderModule}) and is called in module's 
       \func{MainLoop()} when a set of corresponding buffers is complete.
   \item It provides {\bf one} output port that may connect to a 
       Bnet filter module, or a user defined output or storage module, resp. 

@@ -591,9 +591,9 @@ bool dabc::HistogramParameter::Fill(float x)
 
       if (fRecord->xlow >= fRecord->xhigh) return false;
 
-      x = (x - fRecord->xlow) / (fRecord->xhigh - fRecord->xlow);
+      x = (x - fRecord->xlow) / (fRecord->xhigh - fRecord->xlow) * fRecord->channels;
 
-      int np = (int) x * fRecord->channels;
+      int np = (int) x;
 
       if ((np<0) || (np>=fRecord->channels)) return false;
 

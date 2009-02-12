@@ -3,16 +3,15 @@
 \section{Introduction}
 %this chapter covers the manager API description
  \index{Core classes !dabc::Manager}
-The \class{Manager} is the central singleton object of the
+The \class{dabc::Manager} is the central singleton object of the
 \dabc~ framework. 
 It combines a number of different roles, such as:
 
 \bcir
-\item object manager;
-\item memory pool manager;
-\item processing thread manager;
-\item event handler;
-\item command dispatcher and executor;
+\item objects manager;
+\item memory pools manager;
+\item threads manager;
+\item commands dispatcher;
 \item run control state manager;
 \item plug-in manager for factories and application;
 \item implementation of control and configuration system
@@ -23,7 +22,7 @@ separate classes, \class{dabc::Manager} class defines the common
 application programmer's interface to access most of these features.
 Since the manager is a singleton,
 these methods are available everywhere in the user code
-by means of the static handle \func{dabc::Manager::mgr()->}.
+by means of the static handle \func{dabc::mgr()->}.
 
 
 The following section \ref{prog_manager_framework} describes such interface methods to
