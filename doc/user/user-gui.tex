@@ -29,6 +29,7 @@ The GUI is packed in a JAR file \verba{xgui.jar} which can be moved everywhere. 
 \keyw{CLASSPATH} paths together with the \verba{\$DIMDIR/jdim/classes} path.
 The GUI is invoked by \keyw{java -Xmx200m xgui.xGui}.
 For standard installations short cuts are provided like \keyw{dabc}.
+
 \section{GUI Panels}
 \figpng{user-gui-main-buttons}{Main toolbar buttons.}{htb}{0}{0.8}
 Fig. \paref{fig:user-gui-main-buttons} shows the main menu of \dabc\ (minimal view).
@@ -42,6 +43,8 @@ If one does not work with \mbs\ plug-ins the control panels for \mbs\
 are of cause not useful.\\
 \figpng{user-gui-full-screen}{More typical full screen view.}{htb}{0}{1.0}
 Fig. \paref{fig:user-gui-full-screen} shows a more typical view of a running \dabc.
+In general, all panels (including the GUI itself) can be closed and reopened any time.
+
 \lsubsection[Main DABC GUI buttons]{user:dabcButtons}{Main \dabc\ GUI buttons}
 \icon{fileclose} Quit GUI. Will prompt (\keyw{RET} will quit). The \dabc\ will continue to run.
 The GUI may be started anywhere again. In case you saved the layout (recommended, see \paref{user:guiSaveRestore})
@@ -73,16 +76,17 @@ The three control panels (\dabc, \mbs, combined \dabc\ and \mbs)
 are used depending on the
 application to be controlled. Eventually an application provides 
 additional specific control panels.
+
 \lsubsection[DABC control panel]{user:controlDabc}{\dabc~ control panel}
 The standard \dabc\ control panel is shown in \paref{fig:user-gui-pan-dabc}.
 As mentioned already some applications may provide their own control panels
 like the \mbs\ applications (see section \paref{user:controlMbs}).
 But most of the buttons are very common.
-From left to right the startup a system, configure it, start
+From left to right they startup a system, configure it, start
 data taking, pause data taking, stop tasks, shut down.
 At the very left we see a save button, at the right a shell execution button.
 \figpng{user-gui-pan-dabc}{DABC controller panel.}{htb}{0}{0.6}
-Values are read from file {\tt DabcLaunch.xml} (default, may be saved/restored to/from other file,
+Values are read from file {\tt DabcControl.xml} (default, may be saved/restored to/from other file,
 see \paref{user:guiSaveRestore}).
 {\small \begin{verbatim}
 <?xml version="1.0" encoding="utf-8"?>
@@ -113,8 +117,9 @@ The name server name is translated from shell environment variable \keyw{DIM\_DN
 the user name from shell environment variable \keyw{USER}. Password can be chosen when
 the first remote shell script is executed (which itself is protected by
 user password). All following commands then need this password.
+
 \subsubsection[DABC controller buttons]{\dabc\ controller buttons}
-\icon{savewin} Save panel settings to the file \keyw{Launch file}.
+\icon{savewin} Save panel settings to the file \keyw{Control file}.
 If you choose a name different from the default you must
 set a shell variable to it to get the values from that file
 (see \paref{user:guiSaveRestore}).\\
@@ -128,18 +133,19 @@ all panels from scratch according the parameters offered by the servers.\\
 on master node and waits for the transition.
 All plug-in components are created. Then execute \keyw{Enable}.
 Waits until all workers go into \keyw{Ready} state. Now the \dabc\ is ready to run.
-Triggers the main GUI \keyw{Update}\\
+Triggers the main GUI \keyw{Update}.\\
 \icon{dabcstart} Start acquisition. Executes \comm{Start} command.
 All components go into running state \keyw{Running}.\\
 \icon{dabcstop} Pause acquisition. Executes \comm{Stop} command.
 All components go into standby state \keyw{Ready}.\\
-\icon{mbsstop} Stop acquisition. Executes \comm{Halt} command.
+\icon{mbsstop} Halt acquisition. Executes \comm{Halt} command.
 This closes all plug-ins. States go into \keyw{Halted}. Next must be
 shut down or configure.\\
 \icon{disconn} Exit all processes by \comm{EXIT} commands. After 2 seconds 
 trigger the main GUI \keyw{Update}.\\
 \icon{exitall} Shut down all processes on all nodes by script. This is the hard shut down.\\
 \icon{controldabc} \verba{ssh} shell script execution on master node.\\
+
 \lsubsection{user:guiProgress}{Action in progress}
 \figpng{user-gui-pan-progress}{Launching progress.}{htb}{0}{0.6}
 When starting up, configure or shut down the GUI has to wait
@@ -147,14 +153,17 @@ until the front-ends have completed the action.
 During that time a progress window similar to the one shown
 in Fig. \paref{fig:user-gui-pan-progress} pops up.
 Please wait until the popup disappears.
+
 \subsection[MBS control panel]{\mbs\ control panel}
 To control and monitor a stand-alone \mbs\ system a dedicated control
 panel is provided by the \mbs\ application.
 This panel is described in the \mbs\ section \paref{user:controlMbs}.
+
 \subsection[Combined DABC and MBS control panel]{Combined \dabc\ and \mbs\ control panel}
 To control and monitor \mbs\ front-ends with \dabc\ event builders a dedicated control
 panel is provided by the \mbs\ application.
 This panel is described in the \mbs\ section \paref{user:controlDabcMbs}.
+
 \lsubsection{user:CommandPanel}{Command panel}
 The control system of \dabc\ and/or the application specific plug-ins
 can define commands. These commands are encoded as DIM services
@@ -178,6 +187,10 @@ from name, application, nodes. Double click (or \keyw{RETURN}) on a treenode
 executes the command on all treenodes below.
 A click on a command opens at the right side the argument panel.
 Entering argument values and \keyw{RETURN} executes the command.
+In the example shown in the figure doble click on \comm{doEnable}
+would execute that command on three nodes.
+Double click on \comm{Eventbuilder} would execute only on two nodes. 
+
 \lsubsection{user:ParTabPanel}{Parameter table}
 \dabc\ parameters are DIM services as the commands. The naming convention is
 the same. The server providing parameters can be make them (no)visible 
@@ -187,7 +200,9 @@ a rate parameter having a value, limits, a color, and a graphic presentation.
 A rate parameter is assumed to be changed and updated regularly.
 The GUI displayes these special parameters in dedicated panels. 
 Parameters are used in all components of \dabc.
-\figpng{user-gui-pan-partab}{Parameter table.}{htb}{0}{0.9}
+\figpng{user-gui-pan-pardabc}{Parameter table.}{htb}{0}{0.9}
+The central place for all parameters in the GUI is the
+parameter table as shwon in Fig. \paref{fig:user-gui-pan-pardabc}.
 The parameter table holds all parameters which are marked by the provider to be visible.
 The parameter values can be changed
 in the \keyw{Set value} column if no minus sign is there in which case the
@@ -198,6 +213,7 @@ to this panel by the buttons.
 The table can be ordered by columns (click on column header). 
 The column width can be adjusted and is saved/restored by main save button
 (see \paref{user:guiSaveRestore}).
+
 \lsubsubsection{user:ParSelPanel}{Parameter selection}
 \figpng{user-gui-pan-parsel}{Parameter selection panel and selected parameter list.}{htb}{0}{1.0}
 To get a more selective view on the parameters one can specify
@@ -213,22 +229,32 @@ If the data field is white the parameter can be changed.
 This cannot be done in place because the parameter might be
 updated in the mean time. Instead press \keyw{RETURN} in the field.
 A prompter will pop up to enter the value.
+
 \lsubsection{user:MonitorPanels}{Monitoring panels}
 As already mentioned the \dabc\ provides definitions of
 special purpose DIM parameters. These \keyw{Records}
 can be recognized by the GUI and are handled in appropriate way.
 Currently there are
 \bcir
-\item Rates
 \item States
+\item Rates
 \item Histograms
 \item Infos
 \ecir
+
+\subsubsection{States}
+\figpng{user-gui-pan-statedabc}{States.}{htb}{0}{0.8}
+States are records having a number for severity (0 to 4), a color,
+and a brief state description (see Fig. \paref{fig:user-gui-pan-statedabc}).
+Of cause the states of the \dabc\ state machine are shown as states.
+Application plug-ins may use this kind of records also for other
+information.
+
 \subsubsection{Rate meters}
 \figpng{user-gui-pan-rate}{Rates.}{htb}{0}{0.7}
 All rate meters are displayed in the meter panel, Fig.\paref{fig:user-gui-pan-rate}. 
 Meters can be removed
-in the parameter table (See Fig. \paref{fig:user-gui-pan-partab}) 
+in the parameter table (See Fig. \paref{fig:user-gui-pan-pardabc}) 
 with the \keyw{Show} buttons like the other graphical parameters.
 Saving the setup, the visibility will be preserved.
 \figpdf{user-gui-rate-set}{Steering menus.}{htb}{0}{1}
@@ -245,22 +271,18 @@ All changes done individually are changing the defaults!
 The global changes can be overwritten by these defaults.
 All settings are saved with the setup and restored on GUI startup
 (see \paref{user:guiSaveRestore}).
+
 \subsubsection{Histograms}
 Histogram panels are handled in pretty much the same way as the rate meters.
 \figpng{user-gui-pan-histo}{Histograms.}{htb}{0}{1.0}
 All histograms are displayed in the histogram panel, Fig.\paref{fig:user-gui-pan-histo}. 
 Histograms can have arbitrary size set in \keyw{Layout} menu.
-\subsubsection{States}
-\figpng{user-gui-pan-statedabc}{States.}{htb}{0}{1.0}
-States are records having a number for severity (0 to 4), a color,
-and a brief state description (see Fig. \paref{fig:user-gui-pan-statedabc}).
-Of cause the states of the \dabc\ state machine are shown as states.
-Application plug-ins may use this kind of records also for other
-information.
+
 \subsubsection{Information}
 \figpng{user-gui-pan-infodabc}{Info.}{htb}{0}{1.0}
 Information records mainly display one line of text with a color
 (see Fig. \paref{fig:user-gui-pan-infodabc}).
+
 \subsubsection{Logging window}
 \figpng{user-gui-pan-logdabc}{Logging.}{htb}{0}{1.0}
 Fig. \paref{fig:user-gui-pan-logdabc} show the logging window.
