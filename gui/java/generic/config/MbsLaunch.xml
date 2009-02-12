@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<MbsLaunch>
-<MbsMaster prompt="MBS Master" value="x86g-4" />
-<MbsUserPath prompt="MBS User path" value="v50/x86/newmbs" />
-<MbsSystemPath prompt="MBS system path" value="/daq/usr/goofy/mbswork/v51" />
-<MbsScript prompt="MBS Script" value="script/remote_exe.sc" />
-<MbsCommand prompt="Script command" value="m_rising v50/x86/newmbs . x86g-4 x86-7" />
-<MbsServers prompt="%Number of needed DIM servers%" value="3" />
-</MbsLaunch>

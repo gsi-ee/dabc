@@ -9,7 +9,9 @@ import java.awt.event.*;
  * @version 1.0
  */
 public class xFormMbs extends xForm {
-private String Command;
+	private String Command;
+	private String Shut;
+	private String Start;
 
 public xFormMbs() {
 setDefaults();
@@ -25,13 +27,14 @@ restoreSetup(file);
 }
 
 protected void setDefaults(){
-    Master=new String("<MasterNode>");
+    Master=new String("%MasterNode%");
     Servers=new String("0");
     nServers=0;
-    UserPath=new String("<UserPath>");
-    SystemPath=new String("<MBS system path>");
-    Command=new String("<Command>");
-    Script=new String("");
+    UserPath=new String("%UserPath%");
+    SystemPath=new String("%MBS system path%");
+    Command=new String("%Command%");
+    Start=new String("startup.scom");
+    Shut=new String("shutdown.scom");
 }
 protected void printForm(){
 System.out.println(build().toString());
@@ -43,8 +46,10 @@ private StringBuffer build(){
     str.append("<MbsMaster "+xXml.attr("prompt","MBS Master")+xXml.attr("value",Master,"/>\n"));
     str.append("<MbsUserPath "+xXml.attr("prompt","MBS User path")+xXml.attr("value",UserPath,"/>\n"));
     str.append("<MbsSystemPath "+xXml.attr("prompt","MBS system path")+xXml.attr("value",SystemPath,"/>\n"));
+    str.append("<MbsStartup "+xXml.attr("prompt","Startup script")+xXml.attr("value",Start,"/>\n"));
+    str.append("<MbsShutdown "+xXml.attr("prompt","Shutdown script")+xXml.attr("value",Shut,"/>\n"));
     str.append("<MbsCommand "+xXml.attr("prompt","Script command")+xXml.attr("value",Command,"/>\n"));
-    str.append("<MbsServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers,"/>\n"));
+    str.append("<MbsServers "+xXml.attr("prompt","%Number of required DIM servers%")+xXml.attr("value",Servers,"/>\n"));
     str.append(xXml.tag("MbsLaunch",xXml.CLOSE));
 return str;
 }
@@ -74,6 +79,10 @@ LaunchFile=new String(file);
         SystemPath=((Element)li.item(0)).getAttribute("value");
         li=root.getElementsByTagName("MbsCommand");
         Command=((Element)li.item(0)).getAttribute("value");
+        li=root.getElementsByTagName("MbsStartup");
+        Start=((Element)li.item(0)).getAttribute("value");
+        li=root.getElementsByTagName("MbsShutdown");
+        Shut=((Element)li.item(0)).getAttribute("value");
         li=root.getElementsByTagName("MbsServers");
         Servers=((Element)li.item(0)).getAttribute("value");
         nServers=Integer.parseInt(Servers);// add DNS
@@ -81,6 +90,10 @@ LaunchFile=new String(file);
 }
 public String getCommand(){return Command;}
 protected void setCommand(String command){Command=command;}
+public String getShut(){return Shut;}
+protected void setShut(String shutdown){Shut=shutdown;}
+public String getStart(){return Start;}
+protected void setStart(String startup){Start=startup;}
 
 }
 

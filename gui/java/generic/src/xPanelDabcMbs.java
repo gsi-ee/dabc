@@ -24,7 +24,7 @@ public class xPanelDabcMbs extends xPanelPrompt implements ActionListener , Runn
 private xRemoteShell mbsshell, dabcshell;
 private ImageIcon storeIcon, closeIcon, winIcon, workIcon, dworkIcon, mworkIcon, launchIcon,  killIcon;
 private ImageIcon mbsIcon, configIcon, enableIcon, startIcon, stopIcon, haltIcon, dabcIcon, disIcon, infoIcon;
-private JTextField MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsScript, MbsCommand, MbsLaunchFile;
+private JTextField MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsStart, MbsShut, MbsCommand, MbsLaunchFile;
 private JTextField DimName, DabcNode, DabcServers, DabcName, DabcUserpath, DabcPath, DabcScript, DabcSetup, DabcLaunchFile;
 private JPasswordField Password;
 private String MbsMaster;
@@ -130,6 +130,8 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     DabcServers=addPrompt("DABC servers: ",formDabc.getServers(),"set",width,this);
     MbsPath=addPrompt("MBS system path: ",formMbs.getSystemPath(),"set",width,this);
     MbsUserpath=addPrompt("MBS user path: ",formMbs.getUserPath(),"set",width,this);
+    MbsStart=addPrompt("MBS Startup: ",formMbs.getStart(),"set",width,this);
+    MbsShut=addPrompt("MBS Shutdown: ",formMbs.getShut(),"set",width,this);
     MbsCommand=addPrompt("MBS command: ",formMbs.getCommand(),"mbsCommand",width,this);
     DabcPath=addPrompt("DABC system path: ",formDabc.getSystemPath(),"set",width,this);
     DabcUserpath=addPrompt("DABC user path: ",formDabc.getUserPath(),"set",width,this);
@@ -163,6 +165,8 @@ formMbs.setMaster(MbsNode.getText());
 formMbs.setServers(MbsServers.getText());
 formMbs.setSystemPath(MbsPath.getText());
 formMbs.setUserPath(MbsUserpath.getText());
+formMbs.setStart(MbsStart.getText());
+formMbs.setShut(MbsShut.getText());
 formMbs.setLaunchFile(MbsLaunchFile.getText());
 formMbs.setCommand(MbsCommand.getText());
 //formMbs.printForm();
@@ -578,8 +582,8 @@ int time=0;
             if(time > 10)break;
         }
         System.out.println(" ");
-        xLogger.print(1,"MBS: @startup.scom");
-        mbsCommand.exec(xSet.getAccess()+" @startup.scom");
+        xLogger.print(1,"MBS: @"+MbsStart.getText());
+        mbsCommand.exec(xSet.getAccess()+" @"+MbsStart.getText());
         // first wait for MBS
         if(!waitMbs(10,"Daq_rate")){
             System.out.println("\nMBS startup failed ");
@@ -653,8 +657,8 @@ int time=0;
         xLogger.print(1,doHalt.getParser().getFull());
         setProgress("Halt DABC, shutdown MBS",xSet.blueD());
         doHalt.exec(xSet.getAccess());
-        xLogger.print(1,"MBS: @shutdown.scom");
-        mbsCommand.exec(xSet.getAccess()+" @shutdown.scom");
+        xLogger.print(1,"MBS: @"+MbsShut.getText());
+        mbsCommand.exec(xSet.getAccess()+" @"+MbsShut.getText());
         browser.sleep(5);
         if(waitState(10,"Halted")){
             System.out.println(" ");

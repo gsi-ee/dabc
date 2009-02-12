@@ -26,14 +26,14 @@ restoreSetup(file);
 }
 
 protected void setDefaults(){
-    Master=new String("<MasterNode>");
-    Name=new String("<MasterName>");
+    Master=new String("%MasterNode%");
+    Name=new String("%MasterName%");
     Servers=new String("0");
     nServers=0;
-    UserPath=new String("<UserPath>");
-    SystemPath=new String("<DABC system path>");
-    Script=new String("<ssh command>");
-    Setup=new String("<DABC setup file>");
+    UserPath=new String("%UserPath%");
+    SystemPath=new String("%DABC system path%");
+    Script=new String("%ssh command%");
+    Setup=new String("%DABC setup file%");
 }
 
 protected void printForm(){
@@ -49,7 +49,7 @@ private StringBuffer build(){
     str.append("<DabcSystemPath "+xXml.attr("prompt","DABC system path")+xXml.attr("value",SystemPath,"/>\n"));
     str.append("<DabcSetup "+xXml.attr("prompt","DABC setup file")+xXml.attr("value",Setup,"/>\n"));
     str.append("<DabcScript "+xXml.attr("prompt","DABC Script")+xXml.attr("value",Script,"/>\n"));
-    str.append("<DabcServers "+xXml.attr("prompt","%Number of needed DIM servers%")+xXml.attr("value",Servers,"/>\n"));
+    str.append("<DabcServers "+xXml.attr("prompt","%Number of required DIM servers%")+xXml.attr("value",Servers,"/>\n"));
     str.append(xXml.tag("DabcLaunch",xXml.CLOSE));
 return str;
 }

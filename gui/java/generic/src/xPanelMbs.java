@@ -31,7 +31,7 @@ private ImageIcon workIcon,mworkIcon;
 private ImageIcon launchIcon;
 private ImageIcon killIcon;
 private ImageIcon storeIcon, mbsIcon, configIcon, startIcon, stopIcon, dabcIcon, disIcon, infoIcon;
-private JTextField DimName, MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsScript, MbsCommand, MbsLaunchFile;
+private JTextField DimName, MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsStart, MbsShut, MbsCommand, MbsLaunchFile;
 private JPasswordField Password;
 private JCheckBox boxTest;
 private String MbsMaster;
@@ -120,6 +120,8 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     MbsServers=addPrompt("Servers: ",formMbs.getServers(),"set",width,this);
     MbsPath=addPrompt("System path: ",formMbs.getSystemPath(),"set",width,this);
     MbsUserpath=addPrompt("User path: ",formMbs.getUserPath(),"set",width,this);
+    MbsStart=addPrompt("Startup: ",formMbs.getStart(),"set",width,this);
+    MbsShut=addPrompt("Shutdown: ",formMbs.getShut(),"set",width,this);
     MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
     MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",width,this);
     nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
@@ -141,6 +143,8 @@ formMbs.setMaster(MbsNode.getText());
 formMbs.setServers(MbsServers.getText());
 formMbs.setSystemPath(MbsPath.getText());
 formMbs.setUserPath(MbsUserpath.getText());
+formMbs.setStart(MbsStart.getText());
+formMbs.setShut(MbsShut.getText());
 formMbs.setLaunchFile(MbsLaunchFile.getText());
 formMbs.setCommand(MbsCommand.getText());
 //formMbs.printForm();
@@ -400,15 +404,15 @@ public void run(){
         return;
     }
     if ("mbsShut".equals(Action)) {
-        xLogger.print(1,"MBS: @shutdown.scom");
+        xLogger.print(1,"MBS: @"+MbsShut.getText());
         setProgress("MBS shutdown",xSet.blueD());
-        mbsCommand.exec(xSet.getAccess()+" @shutdown.scom");
+        mbsCommand.exec(xSet.getAccess()+" @"+MbsShut.getText());
         browser.sleep(5);
         setProgress("OK: MBS servers ready",xSet.greenD());
     }
     else if ("mbsConfig".equals(Action)) {
-        xLogger.print(1,"MBS: @startup.scom");
-        mbsCommand.exec(xSet.getAccess()+" @startup.scom");
+        xLogger.print(1,"MBS: @"+MbsStart.getText());
+        mbsCommand.exec(xSet.getAccess()+" @"+MbsStart.getText());
         setProgress("Start up and configure MBS tasks",xSet.blueD());
             if(waitMbs(20,"Daq_rate ")){
             System.out.println(" ");

@@ -126,8 +126,16 @@ System.out.println("  Value: "+value);
 }
 public void printParameter(boolean comdef){
 if(comdef || (quality != 2304))
-System.out.println(super.getName()+" I:"+myparindex+" TI:"+tabrow+" Q:"+String.format("%08x",quality)+
-" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
+//System.out.println(super.getName()+
+//			" I:"+myparindex+" TI:"+tabrow+
+//			" Q:"+String.format("%08x",quality)+
+//			" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
+System.out.println(super.getName()+
+		" F:"+pars.getFormat() +
+		" Q:"+String.format("%08x",quality)+
+		" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
+
+
 // exclude command descriptors
 // if(quality != 2304) {
 // if(pars.getName().equals("RunStatus"))
@@ -686,7 +694,7 @@ if(skip)return;
             rechis.setSize(histo.getDimension());
             rechis.setPosition(histo.getPosition());
         }
-        rechis.setValue(histoChannels,intArr);
+        if(rechis!=null)rechis.setValue(histoChannels,intArr);
     }
     else if(pars.isStruct()){
         value=new String("structure");
