@@ -19,12 +19,12 @@ namespace dabc {
           *  1 - show CPUinfo as rate parameter
           *  2 - show infos for every cpu
           *  4 - show info for every cpu as ratemeters
-          *  8 - show memory usage
+          *  8 - show memory usage as ratemeter
           */
          int             fKind;
 
       public:
-         CpuInfoModule(const char* name, dabc::Command* cmd = 0);
+         CpuInfoModule(const char* name, dabc::Command* cmd = 0, int kind = -1);
 
          virtual void ProcessTimerEvent(Timer* timer);
    };

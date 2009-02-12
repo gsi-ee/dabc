@@ -86,10 +86,13 @@ int RunDimApplication(dabc::Configuration& cfg, int nodeid, bool dorun)
 {
    DOUT1(("Run cluster DIM application node %d!!!", nodeid));
 
-   dabc::CpuInfoModule* m = new dabc::CpuInfoModule("CpuInfo");
-   m->SetAppId(76);
-   m->AssignProcessorToThread(dabc::mgr()->ProcessorThread());
-   m->Start();
+   int cpuinfo = cfg.ShowCpuInfo();
+   if (cpuinfo>=0) {
+      dabc::CpuInfoModule* m = new dabc::CpuInfoModule("CpuInfo", 0, cpuinfo);
+      m->SetAppId(76);
+      m->AssignProcessorToThread(dabc::mgr()->ProcessorThread());
+      m->Start();
+   }
 
    if (dorun) {
 

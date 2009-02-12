@@ -58,7 +58,7 @@ namespace dabc {
 
          std::string InitFuncName();
          std::string RunFuncName();
-
+         int ShowCpuInfo();
 
          const char* ConetextAppClass();
 

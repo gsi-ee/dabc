@@ -203,6 +203,16 @@ std::string dabc::Configuration::RunFuncName()
    return Find1(fSelected, "", xmlRunNode, xmlRunFunc);
 }
 
+int dabc::Configuration::ShowCpuInfo()
+{
+   if (IsXDAQ() || (fSelected==0)) return -1;
+   std::string res = Find1(fSelected, "", xmlRunNode, xmlCpuInfo);
+   if (res.empty()) return -1;
+   int kind(0);
+   if (sscanf(res.c_str(),"%d",&kind)!=1) return -1;
+   return kind;
+}
+
 const char* dabc::Configuration::ConetextAppClass()
 {
    if (IsXDAQ() || (fSelected==0)) return 0;

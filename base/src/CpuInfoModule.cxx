@@ -1,11 +1,12 @@
 #include "dabc/CpuInfoModule.h"
 
-dabc::CpuInfoModule::CpuInfoModule(const char* name, dabc::Command* cmd) :
+dabc::CpuInfoModule::CpuInfoModule(const char* name, dabc::Command* cmd, int kind) :
    dabc::ModuleAsync(name, cmd),
-   fStat(true)
+   fStat(true),
+   fKind(kind)
 {
    double period = GetCfgDouble("Period", 2., cmd);
-   fKind = GetCfgInt("Kind", 1 + 2 + 8, cmd);
+   if (fKind<0) fKind = GetCfgInt("Kind", 1 + 2, cmd);
 
    CreateTimer("Timer", period);
 
@@ -25,11 +26,13 @@ dabc::CpuInfoModule::CpuInfoModule(const char* name, dabc::Command* cmd) :
         if (fKind & 4)
            CreateRateParameter(FORMAT(("CPU%u", n)), false, period, "", "", "%", 0., 100.);
 
-   if (fKind & 8) {
-      CreateParInt("VmSize", 0);
-      CreateParInt("VmPeak", 0);
-      CreateParInt("NumThreads", 0);
-   }
+   if (fKind & 8)
+      CreateRateParameter("VmSize", true, period, "", "", "KB", 0., 16000.);
+   else
+      CreateParDouble("VmSize", 0);
+
+//      CreateParInt("VmPeak", 0);
+//      CreateParInt("NumThreads", 0);
 }
 
 void dabc::CpuInfoModule::ProcessTimerEvent(Timer* timer)
@@ -45,11 +48,9 @@ void dabc::CpuInfoModule::ProcessTimerEvent(Timer* timer)
 
    if ((fStat.NumCPUs() > 2) && (fKind & 6))
      for (unsigned n=0; n < fStat.NumCPUs() - 1; n++)
-        SetParDouble(FORMAT(("CPU%u", n)), fStat.CPUutil(n+1));
+        SetParDouble(FORMAT(("CPU%u", n)), fStat.CPUutil(n+1)*100.);
 
-   if (fKind & 8) {
-      SetParInt("VmSize", fStat.GetVmSize());
-      SetParInt("VmPeak", fStat.GetVmPeak());
-      SetParInt("NumThreads", fStat.GetNumThreads());
-   }
+//      SetParInt("VmSize", fStat.GetVmSize());
+   SetParInt("VmPeak", fStat.GetVmPeak());
+//      SetParInt("NumThreads", fStat.GetNumThreads());
 }
