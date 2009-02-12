@@ -31,7 +31,7 @@
         <lib value="${DABCSYS}/lib/libpcidriver.so"/>          
         <lib value="${DABCSYS}/lib/libmprace.so"/>
         <lib value="${DABCSYS}/lib/libDabcAbb.so"/>          
-        <lib value="libBnetTest.so"/>
+        <lib value="${DABCSYS}/applications/bnet-test/libBnetTest.so"/>
       </Run>
       <Application class="bnet::TestWorker">
         <IsGenerator value="true"/>

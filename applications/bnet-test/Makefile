@@ -10,7 +10,7 @@ INCLUDES += .
 endif
 
 BNETTEST_LIBNAME     = $(LIB_PREFIX)BnetTest
-BNETTEST_LIB         = $(TGTDLLPATH)/$(BNETTEST_LIBNAME).$(DllSuf)
+BNETTEST_LIB         = $(BNETTESTDIR)/$(BNETTEST_LIBNAME).$(DllSuf)
 
 BNETTEST_S           = $(wildcard $(BNETTESTDIR)*.$(SrcSuf))
 BNETTEST_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETTEST_S))
@@ -20,8 +20,11 @@ ALLDEPENDENC        += $(BNETTEST_D)
 
 libs::  $(BNETTEST_LIB)
 
+clean::
+	rm -f $(BNETTEST_LIB)
+
 $(BNETTEST_LIB):  $(BNETTEST_O)
-	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(TGTDLLPATH)
+	@$(MakeLib) $(BNETTEST_LIBNAME) "$(BNETTEST_O)" $(BNETTESTDIR)
 	@echo "$@  done"
 
 include $(DABCSYS)/config/Makefile.rules

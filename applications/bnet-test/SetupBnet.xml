@@ -22,7 +22,7 @@
     </Context>
     <Context name="Worker*">
        <Run>
-          <lib value="libBnetTest.so"/>
+          <lib value="${DABCSYS}/applications/bnet-test/libBnetTest.so"/>
        </Run>
        <Application class="bnet::TestWorker">
          <IsGenerator value="true"/>

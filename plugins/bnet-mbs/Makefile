@@ -1,7 +1,7 @@
 include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
-BNETMBS_DIR = applications/bnet-mbs/
+BNETMBS_DIR = plugins/bnet-mbs/
 else
 BNETMBS_DIR = 
 INCLUDES += .
@@ -14,7 +14,7 @@ BNETMBS_S           = $(wildcard $(BNETMBS_DIR)*.$(SrcSuf))
 BNETMBS_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BNETMBS_S))
 BNETMBS_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BNETMBS_S))
 
-ALLDEPENDENC        += $(BNETMBS_D) $(BNETMBS_EXED)
+ALLDEPENDENC        += $(BNETMBS_D)
 
 libs:: $(BNETMBS_LIB) 
 
