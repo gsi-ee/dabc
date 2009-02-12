@@ -101,8 +101,7 @@ Instantiate a \class{Module} of class \func{classname} with the object name
 \func{modulename}. Optionally, the name of the working thread \func{thrdname} may
 be specified that shall run this module. If a thread of this name is already exisiting, 
 it will be also applied for the new module; otherwise, a new thread of the name
-will be created. If \func{thrdname} is not defined, \dabc~ will use a new module
-thread automatically with an internal name.
+will be created. If \func{thrdname} is not defined, \dabc~ will use module name for it.
 Returns \keyw{true} or \keyw{false} depending on the instantiation success.
 
 \item[\em bool CreateDevice\small (const char* classname, const char* devname)]:
@@ -118,9 +117,9 @@ Instantiate a \class{Device} of class \func{classname} with the object name
 
 \item[\em bool CreateTransport\small (const char* portname, const char* transportkind, const char* thrdname = 0)] :
 \index{Manager interface !CreateTransport()} 
-Instantiate a \class{Transport} from the \class{Device} of type \func{transportkind} 
-(e.~g.~ "PCI-Device")
-and connect it to the port of full name \func{portname} (e.~g.~ "Readout1/Input"). 
+Instantiate a \class{Transport} of the specified kind \func{transportkind} (e.~g.~ "mbs::ServerTransport")
+and connect it to the port of full name \func{portname} (e.~g.~ "Readout/Input1").
+Kind can specify device name, which than create appropriate transport instance.
 Optionally the name of the working thread
 \func{thrdname} may
 be specified that shall run this transport. If a thread of this name is already exisiting, 
@@ -130,22 +129,21 @@ thread automatically with an internal name.
 Returns \keyw{true} or \keyw{false} depending on the instantiation success.
 
 
-\item[\em FileIO* CreateFileIO\small (const char* typ, const char* name, int option)] :
-\index{Manager interface !CreateFileIO()}
-Returns a new \class{FileIO} of type \func{typ} (e.~g.~ "posix") with name
-\func{name}. The \func{option} value may define the file access option,
-e.~g.~ \keyw{ReadOnly}, \keyw{ReadWrite}, \keyw{WriteOnly}, \keyw{Create}, and 
-\keyw{Recreate}. Current standard implementation is \\
-\class{dabc::PosixFileIO}
-which is provided in the manager by default.
-Returns $0$ if instantiation of desired type fails.
-
+% \item[\em FileIO* CreateFileIO\small (const char* typ, const char* name, int option)] :
+% \index{Manager interface !CreateFileIO()}
+% Returns a new \class{FileIO} of type \func{typ} (e.~g.~ "posix") with name
+% \func{name}. The \func{option} value may define the file access option,
+% e.~g.~ \keyw{ReadOnly}, \keyw{ReadWrite}, \keyw{WriteOnly}, \keyw{Create}, and 
+% \keyw{Recreate}. Current standard implementation is \\
+% \class{dabc::PosixFileIO}
+% which is provided in the manager by default.
+% Returns $0$ if instantiation of desired type fails.
   
 \item[\em bool CreateApplication\small (const char* classname = 0, const char* appthrd = 0)] :
 \index{Manager interface !CreateApplication()}
 Instantiate the \class{Application} of class \func{classname}. Optionally
 the name \func{appthrd} of the main application thread may be specified.
-To be used in the \func{main()} function of the runtime executable on
+Used in the \func{main()} function of the \dabc~ runtime executable on
 inititialization time.
 
 \end{description}	 
@@ -170,7 +168,7 @@ Disables processing for the module of name \func{modulename}.
 
 \item[\em bool StartAllModules\small (int appid = 0)] :
 \index{Manager interface !StartAllModules()}
-Enables processing for all modules with identifier number \func{appid}.
+Enables processing for all modules with apllication identifier number \func{appid}.
 The optional identifier  may be set in the \func{Module} definition
 to select different kinds of modules here. By default, this method will
 start all exisiting modules on this node.
@@ -178,7 +176,7 @@ Returns \keyw{true} of \keyw{false} depending on success.
 
 \item[\em bool StopAllModules\small (int appid = 0)] :
 \index{Manager interface !StopAllModules()}
-Disables processing for all modules with identifier number \func{appid}.
+Disables processing for all modules with application identifier number \func{appid}.
 The optional identifier  may be set in the \func{Module} definition
 to select different kinds of modules here. By default, this method will
 stop all exisiting modules on this node.
@@ -208,7 +206,7 @@ Connects module \class{Port} of full name \func{port1name}
 with another  module \class{Port} of full name \func{port2name}.
 A full port name consists of the module name and a local port name,
 separated by forward slash, e.~g.~ "Readout3/Output", "CombinerModule/Input2".
-Optionally the \class{Device} type for the connection \class{Transport} may
+Optionally the \class{Device} name for the connection may
 be defined with argument \func{devname}. By default, the ports are connected
 with a FIFO-like transport of queued \class{Buffer} references in local memory,
 as managed by \class{dabc::LocalDevice}.			   
@@ -229,7 +227,7 @@ Returns \keyw{true} of
 
 \item[\em bool MakeThreadFor\small (WorkingProcessor* proc, const char* thrdname = 0, unsigned startmode = 0) ] :
 \index{Manager interface !MakeThreadFor()}
-Creates thread for working processor \func{proc} and assigns processor to this thread
+Creates thread for processor \func{proc} and assigns processor to this thread.
 If thread name \func{thrdname} is not specified, a default name is used.
 Value of \func{startmode} specifies initial run state of the thread
 (currently, thread is started if $startmode>0$).
@@ -259,7 +257,7 @@ Prepares the properties of command \func{cmd} for execution on the local node. T
 returned \func{Command*} may be directly used for \func{Submit(cmd)}
 (e.~g.~ \\ {\tt m.Submit(m.LocalCmd(new Command("Start"),"Generator"))});
 it may also be collected in a \class{dabc::CommandsSet}.
-The command receiver is defined by the full name \func{fullitemname} in the object folder structure, e.~g.~ "Modules/ReadoutModule1", or by a unique reduced name, resp.
+The command receiver is defined by the full name \func{fullitemname} in the object folder structure, e.~g.~ "Devices/Socket".
 
 \item[\em Command* LocalCmd\small (Command* cmd, Basic* rcv)] :
 \index{Manager interface !LocalCmd()} 
@@ -293,7 +291,7 @@ The execution node is specified by the unique \func{nodename} as defined
 by the configuration system (see section \ref{prog_manager_controls_manager}).
 The command receiver on that node
 is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "Modules/ReadoutModule1", or by a unique reduced name.
+e.~g.~ "ReadoutModule".
 
 
 
@@ -301,7 +299,7 @@ e.~g.~ "Modules/ReadoutModule1", or by a unique reduced name.
 \index{Manager interface !SubmitLocal()}
 Submits a command \func{cmd} for execution on the local node. The command receiver
 is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "Modules/ReadoutModule1". The caller must provide a command client object
+e.~g.~ "ReadoutModule1". The caller must provide a command client object
 \func{cli} that will receive a command reply depending on the execution success.
 It is recommended to rather prepare a command by means of \func{LocalCmd()} 
 and then use a  plain \func{Submit()}, if command client functionality
@@ -311,7 +309,7 @@ is not necessary.
 
 
 
-\item[\em bool SubmitLocal\small (CommandClientBase\& cli, Command* cmd,Basic* rcv)] :
+\item[\em bool SubmitLocal\small (CommandClientBase\& cli, Command* cmd, Basic* rcv)] :
 \index{Manager interface !SubmitLocal()}
 Submits a command \func{cmd} for execution on the local node. The command receiver
 \func{rcv} is passed directly by reference.
@@ -328,7 +326,7 @@ Submits a command \func{cmd} for execution on a remote node.
 The execution node is specified by the unique \func{nodeid} in the DAQ
 cluster. The command receiver on that node
 is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "Modules/ReadoutModule1", or by a unique reduced name.  
+e.~g.~ "ReadoutModule1".  
 The caller must provide a command client object
 \func{cli} that will receive a command reply depending on the execution success.
 It is recommended to rather prepare a command by means of \func{RemoteCmd()} 
@@ -343,7 +341,7 @@ The execution node is specified by the unique \func{nodename} as defined
 by the configuration system (see section \ref{prog_manager_controls_manager}).
 The command receiver on that node
 is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "Modules/ReadoutModule1", or by a unique reduced name. 
+e.~g.~ "ReadoutModule1". 
 The caller must provide a command client object
 \func{cli} that will receive a command reply depending on the execution success.
 It is recommended to rather prepare a command by means of \func{RemoteCmd()} 
@@ -361,10 +359,9 @@ is not necessary.
 {\small \bf\em const char* poolname, unsigned buffersize, unsigned numbuffers, \\
           unsigned numincrement, unsigned headersize, unsigned numsegments)} : 
 \index{Manager interface !CreateMemoryPool()}   
-Instantiates a \class{MemoryPool} of name \func{poolname}, 
+Instantiates a \class{dabc::MemoryPool} of name \func{poolname}, 
 with \func{numbuffers} buffers of size \func{buffersize}.
-If a pool of this name already exists, it may be extended 
-up to the specified buffer number.
+If a pool of this name already exists, it will be extended.
 The \func{numincrement} value specifies with how many buffers at once the memory pool 
 can optionally be extended on the fly.
 Optional arguments \func{headersize} and \func{numsegments} may
@@ -460,7 +457,8 @@ the \class{dabc::Manager} is also the interface base class for the
 control and configuration system that is applied with \dabc~. 
 
 \subsubsection{Virtual methods}
-The \class{dabc::Manager} defines several virtual methods concerning the {\em finite state machine},the registration and subscription of parameters, the command communication
+The \class{dabc::Manager} defines several virtual methods concerning the {\em finite state machine},
+the registration and subscription of parameters, the command communication
 in-between nodes, and the management of a DAQ cluster, resp.
 These methods have to be implemented for differrent kinds of control systems in
 an appropriate subclass and are described as follows:
@@ -523,15 +521,15 @@ an external state machine shall be used.}
 \item[\em void ParameterEvent(dabc::Parameter* par, int event)] :
 \index{Manager interface !ParameterEvent()} 
 Is invoked by the framework when any \class{Parameter} is created 
-(argument value $event=0$),  changed ($event=1$),
-or destroyed ($event=2$), resp. Pointer \func{par} should be used to access parameter
+(argument value $event=parCreated=0$),  changed ($event=parModified=1$),
+or destroyed ($event=parDestroy=2$), resp. Pointer \func{par} should be used to access parameter
 name and value for export to the control system. 
 
 
 \item[\em void CommandRegistration(dabc::Module* m, dabc::CommandDefinition* def, bool reg)] :
 \index{Manager interface !CommandRegistration()} 
 Is invoked by the framework when any module exports (argument \func{reg} \keyw{true}), or
-unexports (argument \func{reg} \keyw{false}) a \class{dabc::Command}
+unexports (argument \func{reg} \keyw{false}) a command definition object
 to, or from the control system, resp. This allows to invoke such 
 commands via the controls connection from a remote node. 
 The command definition object \func{def}
@@ -552,9 +550,8 @@ cluster. Control system implementation may use a publisher-subscriber mechanism 
 to update the local subscription whenever the remote parameter changes its value.
 
 The actual update handler must call method \func{InvokeChange(const char* val)}
-of the corresponding local representation \func {dabc::Parameter* par} then.
-The new value \func{val} is passed as ({\tt printf()} style formatted) 
-text representation to the parameter which 
+of the local \func {dabc::Parameter* par} then.
+The new value \func{val} is passed to the parameter which 
 will change itself appropriately. This decouples the parameter change
 from the invoking control system callback in a thread-safe manner.
 

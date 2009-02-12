@@ -31,7 +31,7 @@ This is the preferrable mode of operation, because any
 memory allocation may lead to an undefined execution time,
 or could even cause an error, if the system has too few resources. 
 Nevertheless, one can configure a \class{MemoryPool} to be extendable:
-The \class{MemoryPool} will allocate new {\em blocks}, 
+the \class{MemoryPool} will allocate new {\em blocks}, 
 if it has no more memory available to provide a requested \class{Buffer}.   
 
 Each {\em subblock} of the  \class{MemoryPool}  has a 32-bit reference counter 
@@ -78,13 +78,13 @@ void UserModule::ProcessOutputEvent(dabc::Port* port)
 {
    dabc::Buffer* buf = Pool()->TakeBuffer(2048);
    memset(buf->GetDataLocation(), 0, buf->GetDataSize());
-   Output(0)->Send(buf);
+   port->Send(buf);
 }
 \end{verbatim}     
 \end{small}
 
 
-It is also possible to create a mere reference \class{Buffer} object that uses
+It is also possible to create a \class{Buffer} object that reference 
 the same memory of another \class{Buffer}, by means of method
 \func{Buffer::MakeReference()}.
 This will deliver the pointer to a new
@@ -135,7 +135,7 @@ obtained by \func{GetHeader()} method.
 The main difference between header memory and payload memory 
 concerns the behaviour when the \class{Buffer} is send via 
 a "zero copy" network transport implementation, like {\em InfiniBand verbs}:
-In contrast to the payload data, which will be
+in contrast to the payload data, which will be
 transferred directly from the \class{Buffer} memory by DMA, 
 the header contents will be explicitely copied first.
 
@@ -258,7 +258,7 @@ done via following static methods:
 \bbul
 \item[\func{AddMem()}] add configuration for specified buffer size 
 \item[\func{AddRef()}] add configuration for number of references and header sizes 
-\item[\func{AddCfg()}] set generic configuratio like cleanup timeout or size limit 
+\item[\func{AddCfg()}] set generic configuration like cleanup timeout or size limit 
 \ebul
 
 For instance, one can do the following:
@@ -269,9 +269,9 @@ bool UserApplication::CreateAppModules()
 {
    ...
    dabc::Command* cmd = new dabc::CmdCreateMemoryPool("WorkPool");
-   dabc::CmdCreateMemoryPool::AddMem(cmd, 8192, 100);
-   dabc::CmdCreateMemoryPool::AddMem(cmd, 2048, 500);
-   dabc::CmdCreateMemoryPool::AddRef(cmd, 2048, 2000);
+   dabc::CmdCreateMemoryPool::AddMem(cmd, 8192, 100);  // 8K bufs
+   dabc::CmdCreateMemoryPool::AddMem(cmd, 2048, 500);  // 2K bus
+   dabc::CmdCreateMemoryPool::AddRef(cmd, 2048, 64);   // refs with 64 B headers
    dabc::CmdCreateMemoryPool::AddCfg(cmd, true); // set fixed layout
    dabc::mgr()->Execute(cmd);
    ...
@@ -311,7 +311,7 @@ Some \class{WorkingProcessors}
 may require to be invoked not only by events, but also after specified time intervals.
 
 Method \func{dabc::WorkingProcessor::ActivateTimeout()} 
-prepares the thread to execute \\ \func{dabc::WorkingProcessor::ProcessTimeout()}
+requests the thread to execute \\ \func{dabc::WorkingProcessor::ProcessTimeout()}
 after the specified time interval. This virtual method may also be implemented
 by the user.  
  
@@ -320,7 +320,7 @@ by the user.
 \label{prog_services_threads_sockets}
 The POSIX sockets library provides the  handling of all socket operations in 
 an event-like manner, using the \func{select()} function. Such approach was used in  
-\class{dabc::SocketThread} and \class{dabc::SocketProcessor} classes to provide
+\class{dabc::SocketThread} and \class{dabc::SocketProcessor} classes to 
 handle several sockets in parallel from a single thread.
 
 With each \class{dabc::SocketProcessor} a socket descriptor is associated which can
@@ -456,7 +456,7 @@ which should execute a \class{Command}.
 The main place for user code is virtual method \func{ExecuteCommand()} 
 which gets a \class{Command} 
 object as argument. 
-A Typical implementation of this method looks like:
+A typical implementation of this method looks like:
 
 \begin{small}
 \begin{verbatim}
@@ -485,12 +485,12 @@ succesfully, or \keyw{dabc::cmd\_false} otherwise.
 The default implementation of \class{dabc::CommandReceiver} methods performs 
 the command execution in the calling thread.
 However, most command actions may access resources which are also
-used by another working thread assigned to the\class{CommandReceiver} object.
+used by another working thread assigned to the \class{CommandReceiver} object.
 In this case all command execution code had to protect these resources
 by mutex locks (see section \ref{prog_services_threads_mutex}), which
 would decrease performance. Because of this, class
 \class{dabc::WorkingProcessor} inherits from \class{dabc::CommandReceiver},
-and implements several virtual methods (like \func{IsExecutionThread()}, \func{IsExecutionThread(Submit())}) 
+and implements several virtual methods (like \func{IsExecutionThread()}, \func{Submit()}) 
 which are necessary to deliver and execute a command in the thread context of the
 assigned \class{WorkingThread}.
 The user \strong{must not reimplement} these methods again in the derived classes.
