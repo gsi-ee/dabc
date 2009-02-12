@@ -149,8 +149,11 @@ if(fPar)
          }
       else if(dynamic_cast<dabc::HistogramParameter*>(fPar))
          {
-            int recsize=sizeof(dabc::HistogramParameter);
-            fService=new DimService (dimname.c_str(),const_cast<char*>(dabc::HistogramRecDesc), fPar->GetPtr(),recsize);
+            dabc::HistogramParameter* hpar=dynamic_cast<dabc::HistogramParameter*>(fPar);
+            int chan=hpar->GetHistogramRec()->channels;
+            int recsize=sizeof(dabc::HistogramRec) -sizeof(int) + chan*sizeof(int);
+            std::string hformat=std::string(dabc::HistogramRecDesc) + FORMAT((":%d",chan));
+            fService=new DimService (dimname.c_str(),const_cast<char*>(hformat.c_str()), fPar->GetPtr(),recsize);
             SetType(dimc::nameParser::HISTOGRAM);
          }
       else
