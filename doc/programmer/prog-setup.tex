@@ -230,6 +230,8 @@ Usually a <Context> node has a <Run> subnode, where the user may define differen
 \item[func] name of a function which should be called to create modules. 
 This is an alternative to instantiating a subclass of \class{dabc::Application} 
 (compare section \ref{prog_plugin_applicaton})
+\item[runfunc] function name to run some sequence of operations (start, stop, reconfigure) over application. Useful
+for batch mode                 
 \item[port] ssh port number of remote host
 \item[user] account name to be used for ssh (login without password should be possible)
 \item[init] init script, which should be called before dabc application starts
@@ -242,6 +244,8 @@ This is an alternative to instantiating a subclass of \class{dabc::Application}
 \item[loglevel] level of log output to file, default 2 
 \item[DIM\_DNS\_NODE] node name of DIM dns server, used by DIM controls implementation 
 \item[DIM\_DNS\_PORT] port number of DIM dns server, used by DIM controls implementation
+\item[cpuinfo] instantiate \class{dabc::CpuInfoModule} to show CPU and memory usage information. 
+Value must be >= 0. If 0, only two parameters are created, if 15 - several ratemeters will be created.    
 \edes
 
 

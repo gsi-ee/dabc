@@ -50,7 +50,7 @@ void dabc::CpuInfoModule::ProcessTimerEvent(Timer* timer)
      for (unsigned n=0; n < fStat.NumCPUs() - 1; n++)
         SetParDouble(FORMAT(("CPU%u", n)), fStat.CPUutil(n+1)*100.);
 
-//      SetParInt("VmSize", fStat.GetVmSize());
-   SetParInt("VmPeak", fStat.GetVmPeak());
-//      SetParInt("NumThreads", fStat.GetNumThreads());
+   SetParDouble("VmSize", fStat.GetVmSize());
+//   SetParDouble("VmPeak", fStat.GetVmPeak());
+//   SetParDouble("NumThreads", fStat.GetNumThreads());
 }
