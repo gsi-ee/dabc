@@ -1,15 +1,23 @@
 [user/user-setup.tex]
 \lsection[Installing DABC]{user-install}{Installing \dabc}
-\section[Setting up DABC user workspace]{Setting up \dabc\ user workspace}
+\lsection[Setting up DABC user workspace]{user-setup}{Setting up \dabc\ user workspace}
 To operate a \dabc\ application one should create a dedicated 
-working directory
-to keep all relevant files.
+working directory to keep all relevant files:
 \bbul
 \item Setup files for \dabc\ (XML).
-\item Data files for startup panels (XML).
-\item Configuration files for GUI (XML).
 \item Log files (text).
 \ebul
-\subsection[DABC MBS data simulator]{\dabc\ \mbs\ data simulator}
+The GUI may run on a different directory with no access to the \dabc\ working directory.
+There we place:
+\bbul
+\item Data files for startup panels (XML).
+\item Configuration files for GUI (XML).
+\ebul
+Of cause, one can use one directory for all.
+\subsection[DABC data simulator]{\dabc\ data simulator}
+%\paref{user:Bnet}
 \subsection[DABC MBS event server]{\dabc\ \mbs\ event server}
+\paref{user:mbs}
+\subsection{PCI connected front-ends}
+%\paref{user:roc}
 \section{Setting up system}
