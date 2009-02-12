@@ -20,9 +20,9 @@ user/user-docrev.tex \
 user/user-gui.tex \
 user/user-setup.tex \
 user/user-overview.tex \
-user/user-exa-mbs.tex \
-user/user-exa-bnet.tex \
-user/user-exa-roc.tex \
+user/user-app-mbs.tex \
+user/user-app-bnet.tex \
+user/user-app-roc.tex \
 programmer/steer-programmer.tex \
 programmer/prog-docrev.tex \
 programmer/prog-manager.tex \
