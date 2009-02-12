@@ -3,8 +3,6 @@
 SCTRLDIR         = controls/simple
 SCTRLDIRI        = $(SCTRLDIR)/dabc
 SCTRLDIRS        = $(SCTRLDIR)/src
-SCTRLTEST1DIR    = $(SCTRLDIR)/test1
-SCTRLTEST2DIR    = $(SCTRLDIR)/test2
 
 ## must be similar for every module
 
@@ -17,7 +15,6 @@ SCTRL_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(SCTRL_S))
 
 ALLHDRS            += $(patsubst $(SCTRLDIR)/%.h, $(DABCINCPATH)/%.h, $(SCTRL_H))
 ALLDEPENDENC       += $(SCTRL_D) 
-APPLICATIONS_DIRS  += $(SCTRLTEST1DIR) $(SCTRLTEST2DIR) 
 
 libs:: $(DABCSCTRL_LIB)
 
