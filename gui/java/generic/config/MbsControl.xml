@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <MbsLaunch>
-<MbsMaster prompt="MBS Master" value="x86g-4"/>
-<MbsUserPath prompt="MBS User path" value="v50/x86/newmbs"/>
-<MbsSystemPath prompt="MBS system path" value="/daq/usr/goofy/mbswork/v51"/>
-<MbsStartup prompt="" value="startup.scom"/>
-<MbsShutdown prompt="" value="shutdown.scom"/>
-<MbsCommand prompt="Script command" value="sho task"/>
-<MbsServers prompt="%Number of needed DIM servers%" value="3"/>
+<MbsMaster prompt="MBS Master" value="%MasterNode%"/>
+<MbsUserPath prompt="MBS User path" value="%MBS UserPath%"/>
+<MbsSystemPath prompt="MBS system path" value="%MBS system path%"/>
+<MbsStartup prompt="Startup script" value="startup.scom"/>
+<MbsShutdown prompt="Shutdown script" value="shutdown.scom"/>
+<MbsCommand prompt="Script command" value="%MBS Command%"/>
+<MbsServers prompt="%Number of required DIM servers%" value="0"/>
 </MbsLaunch>
