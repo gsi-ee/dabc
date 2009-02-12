@@ -46,13 +46,14 @@ void abb::ReadoutModule::AfterModuleStop()
 
 void abb::ReadoutModule::ProcessUserEvent(dabc::ModuleItem* , uint16_t id)
 {
+dabc::Buffer* ref=0;
 try
    {
    if(id==dabc::evntInput || id==dabc::evntOutput)
       {
       dabc::Port* output = Output(0);
       if(output && !output->CanSend()) return; // leave immediately if we cannot send further
-      dabc::Buffer* ref = Input(0)->Recv();
+      ref = Input(0)->Recv();
       if (ref)
          {
             fRecvRate.Packet(ref->GetDataSize());
