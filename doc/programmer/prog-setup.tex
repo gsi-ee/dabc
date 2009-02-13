@@ -21,7 +21,7 @@ bool   &  StrParameter    & CreateParBool()  & GetParBool()    & SetParBool()   
    \hline
 \end{tabular}
 
-The \func{GetPar...()} methods will internally create a new
+The \func{CreatePar...()} methods will internally create a new
 \class{Parameter} of the specified name if it does not exist before.
 For any type of parameter the \func{GetParStr()} and \func{SetParStr()} methods can be used
 which will deliver the parameter value as text string expression.
@@ -51,20 +51,29 @@ By implementing a suitable reaction in this call,
 one could reconfigure or adjust the running program on the fly.
 
 A parameter object may be "fixed" via \func{Parameter::SetFixed()} method. 
-This disables to change the parameter value, both
+This disables possibility to change the parameter value, both
 from the program and the control/configuration system side. 
 Only when the "fixed" flag is reset to \keyw{false},
 the parameter can be modified again.
 
 Not all parameters objects should be visible to the control system. 
-Each parameter has a \strong {visibility level} 
+Each parameter has a \strong{visibility flag} 
 which is assigned to the parameter instance when it is created.
-A parameter is known to the control system only if its 
-visibility level is smaller than the system visibility level 
-configured with \func{Manager::ParsVisibility()}. 
-The default parameter visiblity level can be set via
-\func{WorkingProcessor::SetParDflts()} function before 
-the parameters objects are created.
+Only when \func{Parameter::IsVisible()} returns \keyw{true}, parameter will be  
+known (visible) to the control system. Even if parameter is seen
+from control system, it only can be changed \strong{from} control system 
+when flag \func{Parameter::IsChangable()} returns \keyw{true}. 
+   
+Default flags values for newly created parameters can be set in
+\func{WorkingProcessor::SetParDflts()} function.
+For visibility user should specify level, which is compared with
+global visibility level for parameters (aka debug level).
+This global level can be changed by
+\func{WorkingProcessor::SetGlobalParsVisibility()} static function or
+in configuration file (value "Context/Run/parslevel"). Normally module parameters
+has visibility level 1, module items (port, pool handle) parameters - 3, 
+configuration parameters - 5. 
+Thus, to see all parameters in control system, one should set "parslevel = 5".
 
 
 \section{Example of parameters usage}
@@ -144,12 +153,12 @@ Let's add one configuration parameter to our module constructor:
 \begin{small}
 \begin{verbatim}
 UserModule(const char* name, dabc::Command* cmd = 0) : 
-        dabc::ModuleAsync(name, cmd)
+   dabc::ModuleAsync(name, cmd)
 {
-        CreateParBool("Output", true);
-        CreateParInt("Counter", 0);
-        double period = GetCfgDouble("Period", 1.0, cmd);
-        CreateTimer("Timer", period, false);
+   CreateParBool("Output", true);
+   CreateParInt("Counter", 0);
+   double period = GetCfgDouble("Period", 1.0, cmd);
+   CreateTimer("Timer", period, false);
 }
 \end{verbatim}
 \end{small}
@@ -246,6 +255,7 @@ for batch mode
 \item[DIM\_DNS\_PORT] port number of DIM dns server, used by DIM controls implementation
 \item[cpuinfo] instantiate \class{dabc::CpuInfoModule} to show CPU and memory usage information. 
 Value must be >= 0. If 0, only two parameters are created, if 15 - several ratemeters will be created.    
+\item[parslevel] level of pars visibility for control system, default 1 
 \edes
 
 
@@ -256,9 +266,11 @@ definitions of one or several variables. Once defined,
 such variables can be used in any place of the configuration file to set parameter values.
 In this case the syntax to set a parameter is:
 
+\begin{small}
 \begin{verbatim}
     <ParameterName value="${VariableName}"/>
 \end{verbatim}
+\end{small}
 
 It is allowed to define a variable as a combination of text with another variable, 
 but neither arithmetic nor string operations are supported. 
@@ -311,9 +323,10 @@ is also available as variable in the configuration file to set parameter values.
 \section{Default values}
 \label{prog_setup_configfile_defaults}
 There are situations when one needs to set the same value to several similar parameters,
-for instance the same output queue length for all output ports in the module. One possible way is to use variables, as described above. 
+for instance the same queue length for all output ports in the module. 
+One possible way is to use syntax as described above. 
 The disadvantage of such approach is that one must expand the XML file
-to set each queue length explicitely from the variable;
+to set each queue length explicitely from the appropriate variable;
 so in case of a big number of ports the file will be very long and 
 confusing to the user.
 
@@ -360,6 +373,14 @@ all contexts of the configuration file,
 i.~e.~ by such rule we set the output queue length for all modules on all nodes. 
 This allows to configure a big multi-node cluster with
 a compact XML file.
+
+Another possibility to set default value for some parameters - create
+parameter with the same name in parent object. Here word \strong{create} 
+is crutial - one should use \func{CreateParInt()} method in module constructor - 
+it is not enough just put additional tag in xml file. For instance, one can
+create parameter "MbsServerPort" in generator module and than 
+MBS server transport, created for output port, will use that value for 
+as default server port number.  
 
 
 \section{Usage of commands for configuration}
