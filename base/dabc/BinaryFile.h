@@ -13,13 +13,13 @@ namespace dabc {
 
 #pragma pack(1)
 
-   typedef struct BinaryFileHeader {
+   struct BinaryFileHeader {
       uint64_t magic;
       uint64_t version;
       uint64_t numbufs;
    };
 
-   typedef struct BinaryFileBufHeader {
+   struct BinaryFileBufHeader {
       uint64_t datalength;
       uint64_t headerlength;
       uint64_t buftype;

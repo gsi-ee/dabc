@@ -92,19 +92,19 @@ namespace bnet {
 
 #pragma pack(1)
 
-   typedef struct SubEventNetHeader {
+   struct SubEventNetHeader {
       uint64_t evid;
       uint64_t srcnode;
       uint64_t tgtnode;
       uint64_t pktid;
    };
 
-   typedef struct EventInfoRec {
+   struct EventInfoRec {
       EventId  evid;
       int64_t  evsize;
    };
 
-   typedef struct EventAssignRec {
+   struct EventAssignRec {
       EventId  evid;
       uint64_t tgtnode;
    };

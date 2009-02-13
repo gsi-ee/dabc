@@ -265,7 +265,7 @@ bool roc::CalibrationModule::DoCalibration()
 
 //      DOUT1(("CALIBR: Analyse event %u of full size %u", inpevhdr->EventNumber(), inpevhdr->FullSize()));
 
-      if (inpevhdr->FullSize() > f_outptr.fullsize())
+      if (inpevhdr->FullSize() > f_outptr.fullsize()){
          if (FlushOutputBuffer())
             continue;
          else {
@@ -275,7 +275,7 @@ bool roc::CalibrationModule::DoCalibration()
             fSkippedEvents++;
             continue;
          }
-
+      }
       // check input event - if it is ok
 
       mbs::SubeventHeader* subevhdr = 0;

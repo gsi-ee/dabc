@@ -6,7 +6,7 @@
 #include "dabc/PoolHandle.h"
 #include "dabc/Port.h"
 
-typedef struct TymeSyncMessage
+struct TymeSyncMessage
 {
    uint64_t msgid;
    uint64_t select_clock_source;

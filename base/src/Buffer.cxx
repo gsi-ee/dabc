@@ -10,9 +10,12 @@ const dabc::BufferSize_t dabc::BufferSizeError = (dabc::BufferSize_t) -1;
 
 void dabc::Buffer::Release(Buffer* buf)
 {
-   if (buf!=0)
-      if (buf->fPool==0) delete buf;
-                    else buf->fPool->ReleaseBuffer(buf);
+   if (buf!=0){
+      if (buf->fPool==0)
+    	  delete buf;
+      else
+    	  buf->fPool->ReleaseBuffer(buf);
+   }
 }
 
 void dabc::Buffer::Release(Buffer* &buf, Mutex* mutex)

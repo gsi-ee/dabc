@@ -1,6 +1,8 @@
 #include "dabc/ConfigBase.h"
 
 #include <fnmatch.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "dabc/logging.h"
 
@@ -564,7 +566,7 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
          XMLNodePointer_t node = FindChild(vars, var.c_str());
          if (node!=0) value = GetNodeValue(node);
 
-         if (value.empty())
+         if (value.empty()){
             if (var==xmlDABCSYS) value = envDABCSYS; else
             if (var==xmlDABCUSERDIR) value = envDABCUSERDIR; else
             if (var==xmlDABCWORKDIR) value = envDABCWORKDIR; else
@@ -572,7 +574,7 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
             if (var==xmlDABCNUMNODES) value = envDABCNUMNODES; else
             if (var==xmlHostAttr) value = envHost; else
             if (var==xmlContext) value = envContext;
-
+         }
          if (value.empty()) value = GetEnv(var.c_str());
 
          if (!value.empty()) name.insert(pos1, value);

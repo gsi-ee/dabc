@@ -5,6 +5,9 @@
 
 #include <string.h>
 
+#include <stdlib.h>
+
+
 #ifndef DABC_logging
 #include "dabc/logging.h"
 #endif
@@ -151,7 +154,7 @@ namespace dabc {
             T* q = new T [newcapacity];
             if (q==0) return false;
 
-            if (fSize>0)
+            if (fSize>0){
                if (fHead>fTail) {
                   memcpy(q, fTail, (fHead - fTail) * sizeof(T));
                } else {
@@ -159,7 +162,7 @@ namespace dabc {
                   memcpy(q, fTail, sz * sizeof(T));
                   memcpy(q + sz, fQueue, (fHead - fQueue) * sizeof(T));
                }
-
+            }
             delete [] fQueue;
 
             fCapacity = newcapacity;

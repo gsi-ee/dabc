@@ -35,6 +35,7 @@ $(DIMDIR):
 	cd $(DABCSYS)/dim; unzip $(DIM_ZIP)  
 
 $(DIM_LIB):
+	@echo "JAVA_HOME=$(JAVA_HOME)"
 	cd $(DIMDIR); export DIMDIR=$(DIMDIR); export OS=$(DIM_OS); export ODIR=$(DIM_ODIR); export JDK_INCLUDE=$(DIM_JDK_INCLUDE); $(MAKE) $(DIM_BUILD_ARGS)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libdim.so $(DIM_LIB)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libjdim.so $(DABCDLLPATH)  

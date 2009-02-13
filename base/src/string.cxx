@@ -1,5 +1,5 @@
 #include "dabc/string.h"
-
+#include <string.h>
 #include <stdarg.h>
 
 void dabc::formats(std::string& sbuf, const char *fmt, ...)

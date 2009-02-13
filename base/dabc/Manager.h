@@ -516,7 +516,7 @@ namespace dabc {
 
       protected:
 
-         typedef struct ParamRec {
+         struct ParamRec {
             Parameter* par;
             int event;
             bool processed;

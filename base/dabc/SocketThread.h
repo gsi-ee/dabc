@@ -233,7 +233,7 @@ namespace dabc {
 
       protected:
 
-         typedef struct ProcRec {
+         struct ProcRec {
              bool      use;  // indicates if processor is used for poll
              uint32_t  indx; // index for dereference of processor from ufds structure
          };

@@ -59,7 +59,7 @@ namespace dabc {
          virtual bool CreateManagerInstance(const char* kind, Configuration* cfg);
    };
 
-   typedef struct DependPair {
+   struct DependPair {
       Basic* src;
       Basic* tgt;
    };

@@ -935,12 +935,14 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
 
          int sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
 
-         if (sockfd > 0)
-            if (connect(sockfd, t->ai_addr, t->ai_addrlen)==0)
+         if (sockfd > 0){
+            if (connect(sockfd, t->ai_addr, t->ai_addrlen)==0){
                if (dabc::SocketThread::SetNonBlockSocket(sockfd))
                   return sockfd;
                else
                   EOUT(("Cannot set non-blocking flag for client socket"));
+            }
+         }
          close(sockfd);
          sockfd = -1;
       }

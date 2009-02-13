@@ -28,14 +28,14 @@ void bnet::FilterModule::MainLoop()
 
       // we just retranslate EOL buffer and stop execution
 
-      if (buf()!=0)
+      if (buf()!=0){
          if (buf()->GetTypeId()==dabc::mbt_EOL) {
             dosend = true;
             dostop = true;
          } else
          if (buf()->GetTypeId()!=dabc::mbt_EOF)
             dosend = TestBuffer(buf());
-
+      }
       if (dosend) {
          DOUT4(("Start send"));
          Send(Output(0), buf);

@@ -452,7 +452,7 @@ void dabc::DataTransport::ProcessOutputEvent()
 
    bool dofire = false;
 
-   if (!IsErrorState())
+   if (!IsErrorState()){
       if (buf->GetTypeId() == dabc::mbt_EOF) {
          // we know that this is very last packet
          // we can close output
@@ -466,13 +466,15 @@ void dabc::DataTransport::ProcessOutputEvent()
       } else {
          // we can do it outside lock while access to file itself is only possible
          // from the FileThread only
-         if (fDoOutput)
+         if (fDoOutput){
            if (WriteBuffer(buf))
               dofire = true;
            else {
               EOUT(("Error when writing buffer to output - close it"));
               ErrorCloseTransport();
            }
+           }
+      }
       }
 
    // release buffer in any case

@@ -303,11 +303,12 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
 
          if (!IsNullTime(last_tm)) {
             tmout -= TimeDistance(last_tm, tm);
-            if (tmout<0)
+            if (tmout<0){
                if (IsTmoutExcept())
                   throw TimeoutException();
                else
                   return false;
+            }
          }
 
          last_tm = tm;

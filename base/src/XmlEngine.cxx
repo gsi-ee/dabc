@@ -1,6 +1,8 @@
 #include "dabc/XmlEngine.h"
 
 #include <fstream>
+#include <stdlib.h>
+#include <string.h>
 
 #include "dabc/logging.h"
 
@@ -77,12 +79,14 @@ namespace dabc {
 
       void OutputCurrent()
       {
-         if (fCurrent!=fBuf)
-            if (fOut!=0)
+         if (fCurrent!=fBuf){
+            if (fOut!=0){
                fOut->write(fBuf, fCurrent-fBuf);
-            else
-            if (fOutStr!=0)
+            }
+            else if (fOutStr!=0){
                fOutStr->append(fBuf, fCurrent-fBuf);
+            }
+         }
          fCurrent = fBuf;
       }
 

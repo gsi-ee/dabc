@@ -132,7 +132,7 @@ namespace mbs {
       bool IsCorrectEndian() const { return iEndian == 1; }
    };
 
-   typedef struct TransportInfo {
+   struct TransportInfo {
       int32_t iEndian;      // byte order. Set to 1 by sender
       int32_t iMaxBytes;    // maximum buffer size
       int32_t iBuffers;     // buffers per stream

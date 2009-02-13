@@ -88,7 +88,7 @@ pl_all=NULL;
     /* process histogram ******************************************************/
     pl_l =         pl_all;
     pr_l =(REAL4 *)pl_all;
-    if(ps_his_head->c_dtype == 'i') l_int=1; else l_int=0;
+    if(*(ps_his_head->c_dtype) == 'i') l_int=1; else l_int=0;
 
     /* print histogram ******************************************************/
     if(strstr(argv[6],"-p") != NULL)

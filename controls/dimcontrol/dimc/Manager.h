@@ -14,10 +14,10 @@
 #define DIMC_MANAGERTYPE "DimControl"
 
 
-class dabc::StateMachineModule;
-class dabc::Command;
-class dabc::Parameter;
-class dabc::Configuration;
+//class dabc::StateMachineModule;
+//class dabc::Command;
+//class dabc::Parameter;
+//class dabc::Configuration;
 
 namespace dimc {
 

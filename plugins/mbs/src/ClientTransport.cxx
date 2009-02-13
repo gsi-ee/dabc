@@ -56,7 +56,7 @@ void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
             fState = ioRecvHeder;
          }
 
-         if (fState == ioWaitBuffer)
+         if (fState == ioWaitBuffer){
             if (!fTransport->RequestBuffer(ReadBufferSize(), fRecvBuffer)) {
                fState = ioError;
                EOUT(("Cannot request buffer from memory pool"));
@@ -69,7 +69,7 @@ void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
                StartRecv(fRecvBuffer, ReadBufferSize());
                fState = ioRecvBuffer;
             }
-
+         }
           if (fState == ioError) {
              EOUT(("Process error"));
              fTransport->CloseTransport();

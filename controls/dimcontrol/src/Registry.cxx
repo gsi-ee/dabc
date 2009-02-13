@@ -12,6 +12,7 @@
 
 #include <iostream>
 #include <vector>
+#include <algorithm>
 
 const std::string dimc::Registry::gServerPrefix="DABC/";
 
@@ -296,7 +297,7 @@ return ret;
 void dimc::Registry::DefineDIMCommand(const std::string &name)
 {
    std::string dimname=BuildDIMName(name);
-   DimCommand* ncom= new DimCommand(dimname.c_str(), "C", fDimServer);
+   DimCommand* ncom= new DimCommand(dimname.c_str(), (char*) std::string("C").c_str(), fDimServer);
    dabc::LockGuard g(&fMainMutex); // only protect our own list, do not lock dim
    fDimCommands.push_back(ncom);
    //std::cout <<"added dim command " <<dimname << std::endl;

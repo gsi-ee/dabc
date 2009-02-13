@@ -1,7 +1,7 @@
 #include "dabc/statistic.h"
 
 #include <math.h>
-
+#include <string.h>
 #include "dabc/logging.h"
 
 dabc::CpuStatistic::CpuStatistic(bool withmem) :

@@ -30,7 +30,7 @@ namespace dabc {
             netot_HdrSend  = 0x004U // use to send only network header without any additional data
          };
 
-         typedef struct NetIORec {
+         struct NetIORec {
             bool     used;
             uint32_t kind;
             uint64_t extras;  // remake with use of unions
@@ -42,7 +42,7 @@ namespace dabc {
 
 #pragma pack(1)
 
-         typedef struct NetworkHeader {
+         struct NetworkHeader {
             uint32_t chkword;
             uint32_t kind;
             uint32_t typid;
