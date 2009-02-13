@@ -452,7 +452,7 @@ int time=0;
         xLogger.print(1,cmd);
         time=0;
         dabcshell.rsh(dabcMaster,Username.getText(),cmd,5L);
-        System.out.print("Wait MBS sockets free ");
+        System.out.print("Wait Mbs sockets free ");
         String s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep TIME");
         while(s.indexOf("TIME")>=0){
             System.out.print(".");
@@ -472,7 +472,7 @@ int time=0;
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         	setProgress("Wait for MBS servers ready ...",xSet.blueD());
         	if(waitMbs(20,"Msg_log")){
-                System.out.println("\nMBS connnected");
+                System.out.println("\nMbs connnected");
                 setProgress("MBS servers ready, update parameters ...",xSet.blueD());
                 xSet.setSuccess(false);
                 etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
@@ -486,20 +486,18 @@ int time=0;
                 }
                 //setDimServices();
             } else {
-                System.out.println("MBS Failed ");
+                System.out.println("Mbs Failed ");
                 setProgress("Failed: Launch",xSet.redD());
-                //tellError("MBS servers missing!");
             }
         } else {
-            System.out.println("\nMBS startup script Failed ");
+            System.out.println("\nMbs startup script Failed ");
             setProgress("Failed: Launch script",xSet.redD());
-            //tellError("MBS startup script failed");
             }
 
     if(launchMbs){
         time=0;
         int nserv=0;
-        System.out.print("DABC wait ");
+        System.out.print("Dabc wait ");
         nserv=browser.getNofServers();
         setProgress(new String("Wait for "+(nServers-1)+" servers ..."),xSet.blueD());
         while(nserv < nServers){
@@ -510,7 +508,7 @@ int time=0;
             nserv=browser.getNofServers();
         }
         if(browser.getNofServers() >= nServers){
-            System.out.println("\nDABC connnected "+nServers+" servers");
+            System.out.println("\nDabc connnected "+nServers+" servers");
             setProgress("OK: MBS and DABC servers ready, update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
@@ -522,7 +520,7 @@ int time=0;
             //setDimServices();        
         }
         else {
-            System.out.println("\nDABC Failed ");
+            System.out.println("\nDabc Failed ");
             setProgress("Servers missing: "+(nServers-nserv)+" from "+nServers+", update parameters ...",xSet.redD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
@@ -570,7 +568,7 @@ int time=0;
     }
     else if ("mbsConfig".equals(Action)) {
         setProgress("Start up and configure MBS tasks",xSet.blueD());
-        System.out.print("Wait MBS transport socket free ");
+        System.out.print("Wait Mbs transport socket free ");
         String s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6000|grep WAIT");
         time=0;
         while(s.indexOf("WAIT")>=0){
@@ -586,9 +584,8 @@ int time=0;
         mbsCommand.exec(xSet.getAccess()+" @"+MbsStart.getText());
         // first wait for MBS
         if(!waitMbs(10,"Daq_rate")){
-            System.out.println("\nMBS startup failed ");
+            System.out.println("\nMbs startup failed ");
             setProgress("MBS configure failed",xSet.redD());
-            //tellError("MBS tasks missing!");
         } else {
             System.out.println(" ");
             xLogger.print(1,"MBS: *::enable dabc");
@@ -615,7 +612,7 @@ int time=0;
                     else setProgress("OK: DABC ready",xSet.greenD());
                 } else setProgress("Failure: DABC not ready",xSet.redD());
             } else {
-                System.out.println("\nDABC configure failed ");
+                System.out.println("\nDabc configure failed ");
                 setProgress("DABC configure failed, update parameters ...",xSet.redD());
                 xSet.setSuccess(false);
                 etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));

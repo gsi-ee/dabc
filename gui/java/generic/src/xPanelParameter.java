@@ -200,14 +200,14 @@ private void initPanel(Dimension dim){
     metpan.updateAll();
     hispan.updateAll();
 }
-private xDimParameter newParameter(String name, String format){
-xDimParameter dimpar;
-         if(format.startsWith("C")) dimpar= new xDimParameter(name,format,"%BrokenLink%",version);
-    else if(format.startsWith("F")) dimpar= new xDimParameter(name,format,(float)-1.,version);
-    else                            dimpar= new xDimParameter(name,format,-1,version);
-    dimpar.setPanels(hispan,metpan,stapan,infpan);
-    return dimpar;
-}
+//private xDimParameter newParameter(String name, String format){
+//xDimParameter dimpar;
+//         if(format.startsWith("C")) dimpar= new xDimParameter(name,format,"%BrokenLink%",version);
+//    else if(format.startsWith("F")) dimpar= new xDimParameter(name,format,(float)-1.,version);
+//    else                            dimpar= new xDimParameter(name,format,-1,version);
+//    dimpar.setPanels(hispan,metpan,stapan,infpan);
+//    return dimpar;
+//}
 //----------------------------------------------------------
 /**
  * Called by desktop before saving layout.

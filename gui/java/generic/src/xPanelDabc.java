@@ -132,7 +132,7 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     dabcshell = new xRemoteShell("ssh");
     nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS
     setDimServices();
-    System.out.println("DABC  servers needed: DNS + "+(nServers-1));
+    System.out.println("Dabc  servers needed: DNS + "+(nServers-1));
     etime = new xTimer(al, false); // fire only once
 }
 
@@ -368,7 +368,7 @@ public void run(){
         int timeout=0;
         int nserv=0;
         if(dabcshell.rsh(dabcMaster,Username.getText(),cmd,5L)){
-            System.out.print("DABC wait "+(nServers-1));
+            System.out.print("Dabc wait "+(nServers-1));
             nserv=browser.getNofServers();
             while(nserv < nServers){
                 setProgress(new String("Wait "+timeout+" [10] for "+(nServers-1)+" servers, found "+nserv),xSet.blueD());
@@ -379,7 +379,7 @@ public void run(){
                 nserv=browser.getNofServers();
             }
         if(nserv >= nServers){
-            System.out.println("\nDABC connnected "+(nServers-1)+" servers");
+            System.out.println("\nDabc connnected "+(nServers-1)+" servers");
             setProgress("OK: DABC servers ready, update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
@@ -447,7 +447,6 @@ public void run(){
         threadRunning=false;
         stopProgress();
         System.out.println("Thread done!!!");
-        //tellError("DABC commands not available!");
         return;
     }
     if ("dabcConfig".equals(Action)) {

@@ -20,9 +20,6 @@ import java.beans.PropertyVetoException;
  */
 public class xGui {
 
-private static xiUserPanel     usrpan;
-private static boolean enableControl=true;
-
 // private PsActionSupport actionHandler;
 public xGui() {
 /**
@@ -37,7 +34,7 @@ xDesktop frame;
     JFrame.setDefaultLookAndFeelDecorated(true);
 
 //Create and set up the window.
-    frame = new xDesktop(usrpan,enableControl);
+    frame = new xDesktop();
     frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 //Display the window.
@@ -62,21 +59,8 @@ System.out.println("No DIM name server defined, set DIM_DNS_NODE!");
 return;
 }
 
+// parse arguments 
 xSet.checkMainArgs(args);
-
-//if(args.length > i){
-//    if(args[i].startsWith("-m")){
-//        enableControl=false;
-//        i++;
-//        }
-//}
-//if(args.length > i){
-//    try{
-//     usrpan = (xiUserPanel) Class.forName(args[i]).newInstance();
-//    }   catch(ClassNotFoundException ee){System.out.println("NotFound: Error creating "+args[i]);}
-//        catch(InstantiationException x){System.out.println("Instant: Error creating "+args[i]);}
-//        catch(IllegalAccessException xx){System.out.println("IllAccess: Error creating "+args[i]);}
-//    }
 
 javax.swing.SwingUtilities.invokeLater(
 new Runnable() {

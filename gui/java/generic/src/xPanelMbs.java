@@ -51,6 +51,8 @@ private Thread threxe;
 private ActionEvent ae;
 private xTimer etime;
 private boolean threadRunning=false;
+private boolean mbsPrompt=false;
+private String cmdPrefix;
 
 /**
  * Constructor of MBS launch panel.
@@ -126,7 +128,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",width,this);
     nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
     nMbsNodes=nMbsServers-2;
-    System.out.println("MBS   servers needed: DNS + "+(nMbsServers-1));   
+    System.out.println("Mbs   servers needed: DNS + "+(nMbsServers-1));   
     mbsshell = new xRemoteShell("rsh");
     String service = new String(MbsNode.getText().toUpperCase()+":PRM");
     String servlist = browser.getServers();
@@ -167,6 +169,7 @@ return str.toString();
  */
 public void setDimServices(){
 int i;
+mbsPrompt=false;
 releaseDimServices();
 System.out.println("Mbs setDimServices");
 Vector<xDimCommand> list=browser.getCommandList();
@@ -175,8 +178,11 @@ if(list.get(i).getParser().getFull().indexOf("/MbsCommand")>0) {mbsCommand=list.
 }
 Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
-if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) mbsTaskList.add(para.get(i));
+	if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) mbsTaskList.add(para.get(i));
+	if(para.get(i).getParser().getFull().indexOf("PRM/NodeList")>0) mbsPrompt=true;
 }
+if(mbsPrompt)cmdPrefix=new String("*::");
+else cmdPrefix=new String("");
 }
 /**
  * Called in xDesktop to release references to DIM services.
@@ -276,7 +282,7 @@ System.out.println("");
 if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 	setProgress("Wait for MBS servers ready ...",xSet.blueD());
 	if(waitMbs(20,"Msg_log")){
-        System.out.println("\nMBS connnected");
+        System.out.println("\nMbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
@@ -287,14 +293,12 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         else setProgress("OK: MBS servers ready",xSet.greenD());
         //setDimServices();
     } else {
-        System.out.println("MBS Failed ");
+        System.out.println("Mbs Failed ");
         setProgress("Failed: Launch",xSet.redD());
-        //tellError("MBS servers missing!");
     }
 } else {
-    System.out.println("\nMBS startup script Failed ");
+    System.out.println("\nMbs startup script Failed ");
     setProgress("Failed: Launch script",xSet.redD());
-    //tellError("MBS startup script failed");
     }
 }
 
@@ -351,14 +355,18 @@ public void run(){
 //xSet.setWaitCursor();
     MbsMaster = MbsNode.getText();
     if ("prmLaunch".equals(Action)) {
-        String cmd = new String(MbsPath.getText()+
+    	mbsPrompt=true;
+    	cmdPrefix=new String("*::");
+    	String cmd = new String(MbsPath.getText()+
                                 "/script/prmstartup.sc "+MbsPath.getText()+" "+
                                 MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getGuiNode()+" "+xSet.getAccess());
         String service = new String(MbsNode.getText().toUpperCase()+":PRM");
         launch(cmd);
     }
     else if ("mbsLaunch".equals(Action)) {
-        String cmd = new String(MbsPath.getText()+
+    	mbsPrompt=false;
+    	cmdPrefix=new String("");
+    	String cmd = new String(MbsPath.getText()+
                                 "/script/dimstartup.sc "+MbsPath.getText()+" "+
                                 MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getAccess());
         String service = new String(MbsNode.getText().toUpperCase()+":DSP");
@@ -396,7 +404,6 @@ public void run(){
     if(mbsCommand == null) setDimServices();
     if(mbsCommand == null) {
         setProgress("MBS commands not available! Launch first.",xSet.redD());
-        //tellError("MBS commands not available!");
         threadRunning=false;
         stopProgress();
         System.out.println("Thread done!!!");
@@ -429,24 +436,27 @@ public void run(){
         } else {
             System.out.println("\nMBS startup failed ");
             setProgress("Fail: Configure",xSet.redD());
-            //tellError("MBS rate meter missing!");
         }
     }
     else if ("mbsStart".equals(Action)) {
-        xLogger.print(1,"MBS: *::Start acquisition");
-        mbsCommand.exec(xSet.getAccess()+" *::Start acquisition");
+    	String cmd = new String(cmdPrefix+"Start acquisition");
+        xLogger.print(1,"MBS: "+cmd);
+        mbsCommand.exec(xSet.getAccess()+" "+cmd);
      }
     else if ("mbsStop".equals(Action)) {
-        xLogger.print(1,"MBS: *::Stop acquisition");
-        mbsCommand.exec(xSet.getAccess()+" *::Stop acquisition");
+    	String cmd = new String(cmdPrefix+"Stop acquisition");
+        xLogger.print(1,"MBS: "+cmd);
+        mbsCommand.exec(xSet.getAccess()+" "+cmd);
     }
     else if ("mbsShow".equals(Action)) {
-        xLogger.print(1,"MBS: *::Show acqisition");
-        mbsCommand.exec(xSet.getAccess()+" *::Show acquisition");
+    	String cmd = new String(cmdPrefix+"Show acquisition");
+        xLogger.print(1,"MBS: "+cmd);
+        mbsCommand.exec(xSet.getAccess()+" "+cmd);
     }
     else if ("mbsDabc".equals(Action)) {
-        xLogger.print(1,"MBS: *::enable dabc");
-        mbsCommand.exec(xSet.getAccess()+" *::enable dabc");
+    	String cmd = new String(cmdPrefix+"enable dabc");
+        xLogger.print(1,"MBS: "+cmd);
+        mbsCommand.exec(xSet.getAccess()+" "+cmd);
     }
     else if ("mbsCommand".equals(Action)) {
         xLogger.print(1,MbsCommand.getText());

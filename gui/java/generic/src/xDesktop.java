@@ -47,7 +47,6 @@ private menuAction maSelect, maLogger, maCommands, maParameters, maMeters, maHis
 private Vector<menuAction> maUserController;
 private String usrHeader, usrGraphics, usrPanels;
 private boolean clearOnUpdate=false;
-private static boolean enableControl=true;
 private String LayoutFile, RecordFile, SelectionFile;
 
 // private PsActionSupport actionHandler;
@@ -57,14 +56,9 @@ private String LayoutFile, RecordFile, SelectionFile;
  as DABC_USER_PANEL and will be instantiated.
  * @param control If false, no control panels are opened.
  */
-public xDesktop(xiUserPanel userpanel, boolean control) {
+public xDesktop() {
     super("DABC Controls and Monitoring");
-//    if(userpanel != null){
-//    	usrpan=new Vector<xiUserPanel>(0);
-//    	usrpan.add(userpanel);
-//    }
-//    enableControl=control;
-    if(!control) System.out.println("Starting in monitor only mode.");
+    if(!xSet.isControl()) System.out.println("Starting in monitor only mode.");
     if(usrpan == null){
     	usrPanels=xSet.getUserPanels(); // specified by shell call
     	if(usrPanels==null) usrPanels=System.getenv("DABC_APPLICATION_PANELS");
@@ -153,14 +147,6 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     xSaveRestore.restoreRecords(RecordFile);
     if(System.getenv("DABC_PARAMETER_FILTER")!=null) SelectionFile=System.getenv("DABC_PARAMETER_FILTER");
     else SelectionFile=new String("Selection.xml");
-    // overwrite appearance for monitor only
-    xSet.getLayout("DabcMbsController").set(null,null,0,xSet.getLayout("DabcMbsController").show());    
-    xSet.getLayout("MbsController").set(null,null,0,xSet.getLayout("MbsController").show());    
-    xSet.getLayout("DabcController").set(null,null,0,xSet.getLayout("DabcController").show());    
-    xSet.getLayout("Command").set(null,null,0,xSet.getLayout("Command").show());    
-    xSet.getLayout("Logger").set(null,null,0,xSet.getLayout("Logger").show());    
-    xSet.getLayout("Parameter").set(null,null,0,xSet.getLayout("Parameter").show());    
-    xSet.getLayout("ParameterSelect").set(null,null,0,xSet.getLayout("ParameterSelect").show());    
     // create the panels
     logpan=new xPanelLogger(xSet.getLayout("Logger").getSize());
     hispan=new xPanelHisto(xSet.getLayout("Histogram").getSize(),xSet.getLayout("Histogram").getColumns());
@@ -171,7 +157,6 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     // Get list of services from DIM server. Handover the graphics panels.
     // The panels are then passed to the parameter objects for update.
     browser = new xDimBrowser(hispan,metpan,stapan,infpan);
-    browser.releaseServices(clearOnUpdate); // remove all parameters
     browser.initServices("*");
     // Register DIM service to get changes in server list. Bottom line displays server list:
     bottomState=new JTextArea("DIM servers: "+browser.getServers());
@@ -188,14 +173,11 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
  // parpan waits until all parameters are registered and updated (quality != -1):
     parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
     browser.enableServices();
+    // This task list is used for a command filter
     String str=mbspan.getTaskList();
     compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
     // put list of command descriptors from parameters to commands:
     compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
-//    infpan.updateAll();
-//    stapan.updateAll();
-//    metpan.updateAll();
-//    hispan.updateAll();
     selpan.setDimServices();
 // user panels
     if(usrpan == null){
@@ -576,7 +558,7 @@ public void actionPerformed(ActionEvent e) {
     }
     else if (("Update".equals(e.getActionCommand())) ||
         ("Browser".equals(e.getActionCommand()))) {
-        //if("Browser".equals(e.getActionCommand()))clearOnUpdate=true;
+        if("Browser".equals(e.getActionCommand()))clearOnUpdate=true;
         // clear all references to DIM services
         mbspan.releaseDimServices();
         dabcpan.releaseDimServices();
@@ -596,10 +578,6 @@ public void actionPerformed(ActionEvent e) {
         parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
         String str=mbspan.getTaskList();
         compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
-//        infpan.updateAll();
-//        stapan.updateAll();
-//        metpan.updateAll();
-//        hispan.updateAll();
         mbspan.setDimServices();
         dabcpan.setDimServices();
         dbspan.setDimServices();
