@@ -275,7 +275,7 @@ void TestMbsIO(const char* fname, const char* outname)
 }
 
 
-   typedef struct abc {
+   struct abc {
      int16_t v1;
      int32_t v2;
      int32_t v3;
