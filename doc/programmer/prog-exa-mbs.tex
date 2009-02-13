@@ -10,7 +10,7 @@ Support of MBS in \dabc~ includes several components:
 \item support of new {\tt .lmd} file format  
 \item \class{mbs::ClientTransport} for connecting to MBS servers  
 \item \class{mbs::ServerTransport} to "emulate" running MBS servers  
-\item \class{mbs::CombinerModule} for performing mbs events building   
+\item \class{mbs::CombinerModule} for performing local mbs events building   
 \item \class{mbs::GeneratorModule} for generating random mbs events 
 \ebul
 
@@ -87,10 +87,9 @@ void Fill(dabc::Buffer* buf)
 \end{verbatim}
 \end{small}
 
-Method \func{NewEvent()} will create and event header of the event id
-\func{evntid} at the current iterator position in the buffer. 
+Method \func{NewEvent()} will put new event header at the current iterator position in the buffer. 
 In a similar way, method \func{NewSubevent()}
-will put a subevent header of the specified arguments there. Access to the
+will put a subevent header with the specified arguments there. Access to the
 data pointer after the last event or subevent header is done by
 \func{iter.rawdata()} method. Finally, \func{FinishSubevent()} and
 \func{FinishEvent()} will complete the subevent, or event definition, resp.
@@ -100,7 +99,7 @@ MBS uses the {\tt .lmd}  ("List Mode Data") file format.
 Class \class{mbs::LmdFile} provides a
 C++ interface for reading and writing such files.
 
-To use \class{mbs::LmdFile} as input, or output transport of the module, 
+To use \class{mbs::LmdFile} as input or output transport of the module, 
 classes \class{mbs::LmdInput} 
 and \class{mbs::LmdOutput} were developed, resp. 
 
@@ -116,8 +115,7 @@ relatively simple \class{dabc::DataInput} and
 \class{dabc::DataOutput} interfaces.
 
 Class \class{mbs::LmdOutput} inherits \class{dabc::DataOutput} 
-and implements to save 
-MBS events, if contained in \class{dabc::Buffer} objects, into an {\tt \*.lmd} file. 
+and allows to save MBS events, contained in \class{dabc::Buffer} objects, into an {\tt *.lmd} file. 
 In addition to \class{mbs::LmdFile} functionality, it allows to create
 multiple files when a file size limit is exceeded. The class has following parameters:
 \bbul
@@ -129,7 +127,7 @@ Class \class{mbs::LmdInput} inherits \class{dabc::DataInput} and allows to read
 MBS events from {\tt \*.lmd} file(s) and to provide them over input ports into a module. 
 It has following parameters:
 \bbul
-\item \param{MbsFileName} - name of lmd file (multicast symbols * and ? supported)  
+\item \param{MbsFileName} - name of lmd file (multicast symbols '*' and '?' are supported)  
 \item \param{BufferSize}  - buffer size to read data
 \ebul
 
@@ -376,7 +374,7 @@ Name &  Type &  Dflt & Description  \\
 \hline
 \end{tabular}
   
-There following function \func{InitMbsGenerator()} instantiates the generator module.
+Function \func{InitMbsGenerator()} can be used to instantiates the generator module.
 It also demonstrates how a thread of type \class{dabc::SocketThread} can be created
 and used by both a module and a transport object. 
 \begin{small}
@@ -433,7 +431,7 @@ Besides one may specify all module and transport parameters explicitely here:
 \end{verbatim}
 \end{small}
 
-Example file {\tt \$DABCSYS/application/mbs/GeneratorTest.xml}  
+Example file {\tt \$DABCSYS/applications/mbs/GeneratorTest.xml}  
 demonstrates the usage of a generator module. 
 
 
@@ -511,21 +509,34 @@ configure a combiner module reading from three MBS transport servers:
 \section[MBS upgrade for DABC]{\mbs\ upgrade for \dabc}
 This section is rather for the \mbs\ programmer than for application programmers.
 To have minimal changes, we use standard collector and transport. Two changes:
+
 \subsection{Increased buffer size support}
 This is done in a completely compatible way. 
-For the following see data structures \paref{prog:mbs-file-header} and \paref{prog:mbs-buffer-header}.
-The only problem is the 16 bit \decl{i\_used} field in the old buffer header \decl{s\_bufhe} structure (new \decl{iUsed}) keeping the number of 16 bit data words (behind buffer header). 
+For the following see data structures \paref{prog:mbs-file-header} 
+and \paref{prog:mbs-buffer-header}. The only problem is the 16 bit \decl{i\_used} field 
+in the old buffer header \decl{s\_bufhe} structure (new \decl{iUsed}) keeping 
+the number of 16 bit data words (behind buffer header). 
 The other 16 bits are used for event spanning.
-With a new rule we store this number in 32 bit field \decl{l\_free[2]}
-, now \decl{iUsedWords}. Only if old \decl{l\_dlen}, now \decl{iMaxWords} is less equal {\tt MAX\_\_DLEN} defined as {\tt (32K-sizeof(bufhe))/2} this number is also stored in {\tt i\_used} 
+With a new rule we store this number in 32 bit field \decl{l\_free[2]}, 
+now \decl{iUsedWords}. Only if old \decl{l\_dlen}, now \decl{iMaxWords} is less equal {\tt MAX\_\_DLEN} defined as {\tt (32K-sizeof(bufhe))/2} this number is also stored in {\tt i\_used} 
 (\decl{iUsed}) as before. Modifications have to be made in all \mbs\ modules accessing {\tt i\_used}. Modules outside \mbs\ can be modified on demand to support large buffers. Current buffers still can be handled without change.\\
 When \mbs\ writes large buffer files only the used part of the file header is written. Number of 16 bit words behind buffer header structure is stored in {\tt filhe\_used}.
 Event API \decl{f\_evt} is updated to handle large buffers on input.
-Note: By setup the number of buffers per stream can be set to one. This suppresses event spanning.
+Note: by setup the number of buffers per stream can be set to one. This suppresses event spanning.
 Large buffers can be used by standard \mbs.
+
 \subsection{Variable sized buffers}
-As a second step variable sized buffers are implemented. They get a new type 100. The allocated buffers are still fixed length as before. However, the \mbs\ transport would write only the used part of the buffers to clients. Processing these buffers a module must first read the header, then get the used size from {\tt iUsedWords} (old {\tt l\_free[2]}) and read the rest. Modules outside \mbs\ must be modified to process such buffers.
-In \mbs, after stream buffers are created, buffer types are set to 100 by a new command \comm{enable dabc} in transport. This command also sets the transport synchronous mode. In this mode transport processes streams only if a client is connected.
+As a second step variable sized buffers are implemented. 
+They get a new type 100. The allocated buffers are still fixed length as before. 
+However, the \mbs\ transport would send only the used part of the buffers to clients. 
+Processing these buffers a module must first read the header, 
+then get the used size from {\tt iUsedWords} (old {\tt l\_free[2]}) and read the rest. 
+Modules outside \mbs\ must be modified to process such buffers.
+In \mbs, after stream buffers are created, buffer types are set to 100 by a 
+new command \comm{enable dabc} in transport. 
+This command also sets the transport synchronous mode. 
+In this mode transport processes streams only if a client is connected.
+
 \subsection{New LMD file format}
 With \dabc\ as event builder for \mbs\ there is no need to write files in \mbs. This gives more freedom to design a new file format. This format will be written by \dabc\ and read by {\tt fLmd} functions (get event). The format is quite simpler than the old one, because it has no buffer structure causing so much complications by event spanning. The data elements itself, mainly the events, remain unchanged.
 
@@ -537,7 +548,7 @@ Besides event data, time stamps may be inserted from the original \mbs\ formatte
 
 The file size is no longer restricted to 2GB. Optionally an element index is written at the end of the file. This allows for random access of elements in the file through this index table. The table itself has 32-bit values for the element offsets (in 32-bit). It can therefore address offsets up to 16GB in the file. If larger files are needed, the table can be created with 64-bit values giving unlimited addressing.
 
-Note: This file format needs the \verba{rewind} file function because the file header must be rewritten to store {\tt iMaxWords}, {\tt iElements}, and optionally the offset of the index table. This function is currently not implemented in the {\tt RFIO} package, but will be done.
+Note: this file format needs the \verba{rewind} file function because the file header must be rewritten to store {\tt iMaxWords}, {\tt iElements}, and optionally the offset of the index table. This function is currently not implemented in the {\tt RFIO} package, but will be done.
 
 \lsubsection[MBS data structures]{prog:mbs-data-struct}{\mbs\ data structures}
 All structures are defined independent on endianess. When bytes must be swapped, always 4 bytes are swapped. Fields 8 bytes long must be handled separately.
@@ -729,12 +740,14 @@ launches \verba{m\_dispatch -dim} after waiting for all 60xx sockets closed.
 dimshutdown.sc $MBSROOT $PWD 
 \end{verbatim}
 calls \verba{m\_remote reset -l}.
-When dispatcher is started with \keyw{-dim} message logger is started with argv[1] = \keyw{dim} (otherwise \keyw{task}). Then the DIM commands are defined and dispatcher goes into \verba{pause()}
+When dispatcher is started with \keyw{-dim}, message logger is started with argv[1] = \keyw{dim} (otherwise \keyw{task}). Then the DIM commands are defined and dispatcher goes into \verba{pause()}
  loop (needed with non threaded DIM version for keep alive signals).
 
-When message logger is started with argv[1] = \keyw{dim} it creates the DIM parameters and starts a thread to update these every second. One DIM parameter is used for the messages and updated when a message arrives. Messages from local tasks are received in a thread (\verba{f\_mg\_msg\_thread}) and either sent to master message logger (when this one is slave) or processed by \verba{f\_mg\_msg\_output}. This function updates the DIM message parameter when in DIM mode, sends message to connected remote message client or prints it if not, and writes log file.
+When message logger is started with argv[1] = \keyw{dim}, it creates the DIM parameters and starts a thread to update these every second. One DIM parameter is used for the messages and updated when a message arrives. Messages from local tasks are received in a thread (\verba{f\_mg\_msg\_thread}) and either sent to master message logger (when this one is slave) or processed by \verba{f\_mg\_msg\_output}. This function updates the DIM message parameter when in DIM mode, sends message to connected remote message client or prints it if not, and writes log file.
+
 \subsubsection{Multi node mode}
-In multi node mode the MBS nodes are controlled through one master node where a prompter is running. The prompter can be started (and stopped) interactively, or from a remote node by script. There are two new scripts to start and shutdown a multi node MBS from a remote node (GUI): \\
+In multi node mode the MBS nodes are controlled through one master node where a prompter is running. 
+The prompter can be started (and stopped) interactively or from a remote node by script. There are two new scripts to start and shutdown a multi node MBS from a remote node (GUI): \\
 \verba{prmstartup.sc} and \verba{prmshutdown.sc}. \\
 These are called by \verba{rsh} from the GUI node. Arguments are the path of \keyw{MBSROOT} and the user working path. For starting the DIM server also the DIM name server node is passed.
 \begin{verbatim}

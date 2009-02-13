@@ -8,15 +8,15 @@ To completely analyze such data, all portions belonging to the same event
 (or time stamp), must be combined in one processing unit. 
 Such task is usually called "event building".
 
-To support event building functionality in \dabc~ , a special sub-framework called 
+To support event building functionality in \dabc, a special sub-framework called 
 BNET ("Building NETwork") was introduced. 
 Its main purpose is to simplify the experiment-specific implementation of  
 such event building, distributed over several network nodes.
 
 A typical event building network contains several \strong{readout} nodes, 
-which are each connected to several data sources.
+each connected to several data sources.
 A readout node reads data from its data sources and combines
-together data parts which logically belong together; this is called "subevent building".
+together data parts which logically belong together; this is called \strong{subevent building}.
 In case of a triggered system it combines together data with the same trigger number;
 in case of time-stamped data it combines together data which belongs to the same 
 time interval. 
@@ -42,7 +42,7 @@ which can be customized up to a definite level.
 The event building task is usually distributed over several nodes 
 which must be controlled and synchronized.
 Therefore in BNET all nodes are classified by their functionality 
-in two kinds: \strong{controller} node, and
+in two kinds: \strong{controller} node and
 \strong{worker} nodes. Workers perform all 
 data transport, and run the (sub-)event building code. 
 The controller configures and steers all workers. 
@@ -291,6 +291,9 @@ is shown in {\tt SetupBnet.xml}:
 <?xml version="1.0"?>
 <dabc version="1">
   <Context host="lxi008" name="Controller:41">
+    <Run>
+      <runfunc value="RunTestBnet"/>
+    </Run>
     <Application class="bnet::Cluster">
        <NetDevice value="dabc::SocketDevice"/>
     </Application>
@@ -309,7 +312,7 @@ is shown in {\tt SetupBnet.xml}:
     </Context>
     <Context name="Worker*">
        <Run>
-          <lib value="libBnetTest.so"/>
+          <lib value="${DABCSYS}/applications/bnet-test/libBnetTest.so"/>
        </Run>
        <Application class="bnet::TestWorker">
          <IsGenerator value="true"/>
@@ -344,9 +347,8 @@ real readout instead of the generator module.
 \section{BNET for MBS application}
 
 This is a ready-ro-use implementation of distributed event building for MBS.
-The source code can be found in 
-{\tt \$DABCSYS/applications/bnet-mbs}. It contains following
-classes:
+The source code can be found in {\tt \$DABCSYS/plugins/bnet-mbs} directory.
+It contains following classes:
 \bbul
 \item  \class{bnet::MbsCombinerModule}
 \item  \class{bnet::MbsBuilderModule}
@@ -392,7 +394,7 @@ is a filename with ".lmd" suffix, the specified file will be used as data input
 In virtual method \func{CreateStorage()} an output {\tt\*.lmd} file will be created, if 
 parameter \param{StoragePar} value is not empty.
 
-Example file {\tt SetupBnetMbs.xml}
+Example file {\tt \$DABCSYS/applications/bnet-mbs/SetupBnetMbs.xml}
 shows the configuration for an MBS event building with 2 readout nodes, connected with 2 generators each and 2 event builder nodes. 
 This configuration file can be customised via {\tt <Variables>} definitions 
 in the beginning:
