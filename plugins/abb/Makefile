@@ -4,7 +4,7 @@
 
 KERNELMODULESDIR = /lib/modules/$(shell uname -r)/build
 ifneq ($(realpath $(KERNELMODULESDIR)),)
-#USEABB    = true
+USEABB    = true
 endif
 
 
