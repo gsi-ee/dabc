@@ -63,8 +63,8 @@ inp/out  & \func{CreateIOPort(name, ...)} & \func{NumIOPorts()} & \func{IOPort(u
 A port usually should be created in the module constructor.
 As first argument in the creation methods a unique port name should be specified.
 As second argument, the pool handle should be
-specified; this defines the memory pool where necessary memory can be fetched for the transports associated with the port. The Length of input or (and) output queue 
-defines how many
+specified; this defines the memory pool where necessary memory can be fetched for the transports associated with the port. 
+The length of input or (and) output queue defines how many
 buffers can be kept in corresponding queue. One also can specify the size of user header,
 which is expected to be transported over the port - it is important for further transport configurations.    
 
@@ -228,8 +228,10 @@ For instance, when any input port gets new buffer, virtual method
 \func{ProcessInputEvent()} will
 be called. User should reimplement this method to react on the event.
 
-The main advantage of such approach is that the thread is not blocked and
-several modules \class{dabc::ModuleAsync} can run within same working thread.
+One should use \class{dabc::ModuleAsync} for situations, when simple main loop approach
+is not possible - for instance, one cannot decide on which input next data is exepected.  
+Also the main advantage of such approach is that the thread is not blocked and
+several \class{dabc::ModuleAsync} modules can run within same working thread.
 At the same time, using such programming technique may require additional 
 bookkeeping, as it is not allowed to block the callback routine while waiting for
 some resource to be available.
@@ -249,7 +251,7 @@ with \func{port->Recv()} \\
 \func{ProcessTimerEvent()} & timer has fired an event  \\
 \end{tabular}
 
-By reimplementing one or several of these methods one can react on corresponding events.
+By reimplementing some of these methods one can react on corresponding events.
 
 Actually, all events are dispatched to the methods mentioned above  by method 
 \func{ProcessUserEvent()}. 
@@ -425,7 +427,7 @@ the buffer is at first kept in a queue which must be provided by the
 Class \class{dabc::Device} usually (but not always) represents some physical
 device (like a network or a PCIe card) and has the role of a management unit for 
 the \class{Transports} which belong to that device. 
-The \class{Device} is always the owner of its \class{Transport} objects, i.~.e~
+The \class{Device} is always the owner of its \class{Transport} objects, i.~e.~
 it creates, keeps, and deletes them.
 
 A \class{Device} is typically created in the user application by:
@@ -482,7 +484,7 @@ dabc::mgr()->ConnectPorts("Module1/Output", "Module2/Input");
 This is a kind of \class{Transport} which is used to 
 connect \class{Ports} on different nodes.
 Abstract base class \class{dabc::NetworkTransport} introduces such kind of 
-functionality: This transport is locally connected  to one port only, 
+functionality: this transport is locally connected  to one port only, 
 and all buffer transfer is done
 via network connections with the remote node. 
 
@@ -513,15 +515,17 @@ dabc::mgr()->ConnectPorts("Node0$MyModule/Input",
 \end{verbatim}     
 \end{small}
  
-Such call starts an elaborated sequence: At first a server socket will be opened 
+Such call starts an elaborated sequence: at first a server socket will be opened 
 by \class{Device} "UserDev" on node "Node0";
 then \class{Device} "UserDev" on "Node1" will try to connect to that server socket;
 finally, on both nodes appropriate \class{NetworkTransports} 
 will be created, using these negotiated sockets,
-and connected to the ports "\$MyModule/Input", and  "\$MyModule/Output", resp.
+and connected to the ports "MyModule/Input", and  "MyModule/Output", resp.
 
 Exactly for this kind of actions the \dabc~ state machine has 
-two transition commands "DoConfigure" and "DoEnable". Accordingly, class
+two transition commands "DoConfigure" and "DoEnable" - first command used to
+create necessary components and second to connect them together. 
+Accordingly, class
 \class{dabc::Application} has two methods \func{CreateAppModules()} and 
 \func{ConnectAppModules()} (see \ref{prog_plugin_applicaton}).  
 
@@ -629,7 +633,7 @@ In addition, methods \func{dabc::DataInput::Read\_Init()} and
 configuration parameters from the port object to which the i/o object is assigned to.  
 
 A typical use case of input/output objects is the file I/O. 
-For instance, {\tt\*.lmd} file handling is implemented
+For instance, {\tt "*.lmd"} file handling is implemented
 using these classes.
 
 To instantiate such classes, user should inplement factories methods 
@@ -684,6 +688,9 @@ Class \class{dabc::Application} already has default implementation for
 
 Actually, for a single-node application it is enough to implement \func{CreateAppModules()},
 since all other methods have meaningfull implementation for that case. 
+In simplest case one can just implememnt C-function, which is called instead \func{CreateAppModules()}
+method of application (name of with function should be specified in configuration file
+in "Run/func" node).
 
 For special DAQ topologies (e.g. Bnet), the framework offers 
 implementations of the \class{dabc::Application} containing the 
