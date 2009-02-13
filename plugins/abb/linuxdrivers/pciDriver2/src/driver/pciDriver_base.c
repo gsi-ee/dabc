@@ -4,12 +4,12 @@
  *
  * $Revision: 1.9 $
  * $Date: 2008/05/16 10:40:53 $
- * 
+ *
  */
 
 /*
  * Change History:
- * 
+ *
  * $Log: pciDriver_base.c,v $
  * Revision 1.9  2008/05/16 10:40:53  adamczew
  * *** empty log message ***
@@ -141,6 +141,10 @@
 #error "This driver has been test only for Kernel 2.6.8 or above."
 #endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,25)
+#error "Too new kernel: This driver has been tested only for Kernel versions below 2.6.25"
+#endif
+
 /* Required includes */
 #include <linux/slab.h>
 #include <linux/types.h>
@@ -250,7 +254,7 @@ static void pcidriver_exit(void);
  #define mod_info( args... ) \
     do { printk( KERN_INFO "%s: ", MODNAME );\
     printk( args ); } while(0)
- #define mod_info_dbg( args... ) 
+ #define mod_info_dbg( args... )
 #endif
 
 #define mod_crit( args... ) \
@@ -303,7 +307,7 @@ typedef struct  {
 	volatile unsigned int *bars_kmapped[6];		/* PCI BARs mmapped in kernel space */
 
 #endif
-	
+
 	spinlock_t kmemlist_lock;			/* Spinlock to lock kmem list operations */
 	struct list_head kmem_list;			/* List of 'kmem_list_entry's associated with this device */
 	atomic_t kmem_count;				/* id for next kmem entry */
@@ -312,7 +316,7 @@ typedef struct  {
 	struct list_head umem_list;			/* List of 'umem_list_entry's associated with this device */
 	atomic_t umem_count;				/* id for next umem entry */
 
-	
+
 } pcidriver_privdata_t;
 
 /* prototypes for IRQ related functions */
@@ -351,7 +355,7 @@ void pcidriver_interrupt_tasklet(unsigned long data);
 int pcidriver_irq_acknowledge(pcidriver_privdata_t *privdata);
 
 #if LINUX_VERSION_CODE <= KERNEL_VERSION(2,6,9)
-/* Not defined yet for these kernels, but needed. 
+/* Not defined yet for these kernels, but needed.
  * So I have to recreate it here in that case */
 int wait_for_completion_interruptible(struct completion *x);
 #endif
@@ -363,7 +367,7 @@ int wait_for_completion_interruptible(struct completion *x);
 static dev_t pcidriver_devt;
 
 /* Holds the class to add sysfs support */
-/* 
+/*
  * simple_class was promoted in kernel 2.6.13 to be the standard class
  * behavior, so we have to check which version to use.
  */
@@ -379,10 +383,10 @@ static atomic_t pcidriver_deviceCount;
 /*
  * This is the table of PCI devices handled by this driver by default
  * If you want to add devices dynamically to this list, do:
- * 
+ *
  *   echo "vendor device" > /sys/bus/pci/drivers/pciDriver/new_id
  * where vendor and device are in hex, without leading '0x'.
- * 
+ *
  * For more info, see <kernel-source>/Documentation/pci.txt
  */
 
@@ -409,7 +413,7 @@ static atomic_t pcidriver_deviceCount;
 /* Identifies the PCI-64 PROGRAPE4 */
 #define PCI64PG4_VENDOR_ID 0x1679
 #define PCI64PG4_DEVICE_ID 0x0005
- 
+
 static struct pci_device_id pcidriver_ids[] = {
 	{ PCI_DEVICE( MPRACE1_VENDOR_ID , MPRACE1_DEVICE_ID ) },		// mpRACE-1
 	{ PCI_DEVICE( PCIXTEST_VENDOR_ID , PCIXTEST_DEVICE_ID ) },		// pcixTest
@@ -475,16 +479,16 @@ static int __init pcidriver_init(void)
 		mod_info("No sysfs support. Module not loaded.\n");
 		goto init_class_fail;
 	}
-		
+
 	/* Register PCI driver */
 	err = pci_register_driver(&pcidriver_driver);
-/* RedHat returns the number of devices instead of zero. Then we better 
+/* RedHat returns the number of devices instead of zero. Then we better
  * check for an error as <0.*/
 	if (err<0) {
 		mod_info( "Couldn't register PCI driver. Module not loaded.\n" );
 		goto init_pcireg_fail;
 	}
-	
+
 	/* Success */
 	mod_info( "Module loaded\n" );
 	return 0;
@@ -510,7 +514,7 @@ static void pcidriver_exit(void)
 #else
 		class_simple_destroy(pcidriver_class);
 #endif
-		
+
 	pci_unregister_driver(&pcidriver_driver);
 	unregister_chrdev_region(pcidriver_devt,MAXDEVICES);
 	mod_info( "Module unloaded\n" );
@@ -538,19 +542,19 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 	int i;
 	pcidriver_privdata_t *privdata;
 	int devid;
-#ifdef ENABLE_IRQ	
+#ifdef ENABLE_IRQ
 	unsigned char int_pin, int_line;
 	unsigned long bar_addr, bar_len, bar_flags;
 #endif
 
-	/* At the moment there is no difference between these boards here, other than 
+	/* At the moment there is no difference between these boards here, other than
 	 * printing a different message in the log.
-	 * 
+	 *
 	 * However, there is some difference in the interrupt handling functions.
-	 */	
+	 */
 	if ( (id->vendor == MPRACE1_VENDOR_ID) &&
 		(id->device == MPRACE1_DEVICE_ID))
-	{	
+	{
 		/* It is a mpRACE-1 */
 		mod_info( "Found mpRACE-1 at %s\n", pdev->dev.bus_id );
 		/* Set bus master */
@@ -591,15 +595,15 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 		/* It is something else */
 		mod_info( "Found unknown board (%x:%x) at %s\n", id->vendor, id->device, pdev->dev.bus_id );
 	}
-	
-	
+
+
 	/* Enable the device */
 	err = pci_enable_device(pdev);
 	if (err) {
 		mod_info( "Couldn't enable device\n" );
 		goto probe_pcien_fail;
 	}
-				
+
 	/* Set Memory-Write-Invalidate support */
 	err = pci_set_mwi(pdev);
 	if (err)
@@ -617,17 +621,17 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 		err = -ENOMSG;
 		goto probe_maxdevices_fail;
 	}
-		
+
 	/* Set private data pointer for this device */
 	privdata = (pcidriver_privdata_t*)kmalloc(sizeof(*privdata), GFP_KERNEL);
 	if (!privdata) {
 		err = -ENOMEM;
 		goto probe_nomem;
 	}
-	
+
 	/* Initialize private data structures */
 	memset( privdata, 0, sizeof( *privdata ) );
-	
+
 	INIT_LIST_HEAD(&(privdata->kmem_list));
 	spin_lock_init(&(privdata->kmemlist_lock));
 	atomic_set(&privdata->kmem_count, 0);
@@ -654,16 +658,16 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 #endif
 		mod_info("Device /dev/%s%d added\n",NODENAME,MINOR(pcidriver_devt) + devid);
 	}
-		
+
 	/* Setup mmaped BARs into kernel space */
 #ifdef ENABLE_IRQ
-	/* at the moment this is used only to INT ack, therefore it is inside 
+	/* at the moment this is used only to INT ack, therefore it is inside
 	 * the ENABLE_IRQ define */
 	for(i=0;i<6;i++)
 		privdata->bars_kmapped[i] = NULL;
-	
+
 	for(i=0;i<6;i++) {
-		
+
 		bar_addr = pci_resource_start( privdata->pdev, i);
 		bar_len  = pci_resource_len( privdata->pdev, i);
 		bar_flags = pci_resource_flags( privdata->pdev, i);
@@ -675,7 +679,7 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 		/* Skip IO regions (map only mem regions) */
 		if (bar_flags & IORESOURCE_IO)
 			continue;
-		
+
 		/* Check if the region is available */
 		err = pci_request_region( privdata->pdev, i, NULL );
 		if (err) {
@@ -687,13 +691,13 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 		/* For x86 this is just a dereference of the pointer, but that is
 		 * not portable. So we need to do the portable way. Thanks Joern!
 		 */
-		
+
 		/* respect the cacheable-bility of the region */
 		if (bar_flags & IORESOURCE_PREFETCH)
 			privdata->bars_kmapped[i] = ioremap( bar_addr, bar_len );
 		else
 			privdata->bars_kmapped[i] = ioremap_nocache( bar_addr, bar_len );
-		
+
 		/* check for error */
 		if (privdata->bars_kmapped[i] == NULL) {
 			err = -EIO;
@@ -702,7 +706,7 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 		}
 	}
 #endif
-	
+
 	/* Initialize the interrupt handler for this device */
 #ifdef ENABLE_IRQ
 	/* Initialize the wait queues */
@@ -710,7 +714,7 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 		init_waitqueue_head( &(privdata->irq_queues[i]) );
 		atomic_set( &(privdata->irq_outstanding[i]), 0 );
 	}
-	
+
 	/* Initialize the irq config */
 	err = pci_read_config_byte(pdev, PCI_INTERRUPT_PIN, &int_pin );
 	if (err) {
@@ -718,20 +722,20 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 		int_pin = 0;
 		mod_info("Error getting the interrupt pin. Disabling interrupts for this device\n");
 	}
-	
+
 	if (int_pin != 0) {
 		err = pci_read_config_byte(pdev, PCI_INTERRUPT_LINE, &int_line );
 		if (err) {
 			int_pin = 0;
-			mod_info("Error getting the interrupt line. Disabling interrupts for this device\n");		
+			mod_info("Error getting the interrupt line. Disabling interrupts for this device\n");
 		} else {
 			/* register interrupt handler */
 			err = request_irq( pdev->irq, pcidriver_irq_handler, SA_SHIRQ, MODNAME, privdata );
-			
+
 			/* request failed, continue without interrupts */
 			if (err) {
 				int_pin = 0;
-				mod_info("Error registering the interrupt handler. Disabling interrupts for this device\n");					
+				mod_info("Error registering the interrupt handler. Disabling interrupts for this device\n");
 			}
 		}
 	}
@@ -766,8 +770,8 @@ static int __devinit pcidriver_probe(struct pci_dev *pdev, const struct pci_devi
 		mod_info( "Couldn't add character device.\n" );
 		goto probe_cdevadd_fail;
 	}
-		
-	/* The device is now Live! */	
+
+	/* The device is now Live! */
 	/* Success */
 	return 0;
 
@@ -785,7 +789,7 @@ probe_nomem:
 	atomic_dec(&pcidriver_deviceCount);
 probe_maxdevices_fail:
 	pci_disable_device(pdev);
-probe_pcien_fail:	
+probe_pcien_fail:
  	return err;
 }
 
@@ -807,7 +811,7 @@ static void __devexit pcidriver_remove(struct pci_dev *pdev)
 	class_device_remove_file( privdata->class_dev, &class_device_attr_kbuffers );
 	class_device_remove_file( privdata->class_dev, &class_device_attr_umappings );
 	class_device_remove_file( privdata->class_dev, &class_device_attr_umem_unmap );
-	
+
 	/* Free all allocated kmem buffers before leaving */
 	pcidriver_kmem_free_all( privdata );
 
@@ -819,7 +823,7 @@ static void __devexit pcidriver_remove(struct pci_dev *pdev)
 	/* Releasing the IRQ handler */
 	if (privdata->irq_enabled != 0)
 		free_irq( privdata->pdev->irq, privdata );
-		
+
 	/* Unmap and release the remapped BARs */
 	for(i=0;i<6;i++) {
 		if (privdata->bars_kmapped[i] != NULL) {
@@ -842,15 +846,15 @@ static void __devexit pcidriver_remove(struct pci_dev *pdev)
 
 	/* Releasing privdata */
 	kfree(privdata);
-	
+
 	/* Disabling PCI device */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,20)
 	/* Starting in 2.6.20, is_enabled does no longer exists.
 	 * Disable is now an atomic counter, so it is safe to just call it. */
-	pci_disable_device(pdev);	
+	pci_disable_device(pdev);
 #else
 	if (pdev->is_enabled)
-		pci_disable_device(pdev);	
+		pci_disable_device(pdev);
 #endif
 
 	mod_info( "Device at %s removed\n", pdev->dev.bus_id );
@@ -875,8 +879,8 @@ void pcidriver_vm_close(struct vm_area_struct * vma) {
 }
 
 /* Maps physical memory to user space */
-/* 
- * This method works only when everything goes fine. If the app crashes, 
+/*
+ * This method works only when everything goes fine. If the app crashes,
  * this creates several problems. Therefore, this method for mapping
  * kernel memory into user space is deprecated.
  */
@@ -885,7 +889,7 @@ struct page *pcidriver_vm_nopage(struct vm_area_struct *vma, unsigned long addre
 	pcidriver_kmem_entry_t *kmem_entry;
 	struct page *page = NOPAGE_SIGBUS;
 	unsigned long pfn_offset,pfn;
-		
+
 	/* Get private data for the page */
 	kmem_entry = vma->vm_private_data;
 
@@ -901,12 +905,12 @@ struct page *pcidriver_vm_nopage(struct vm_area_struct *vma, unsigned long addre
 
 	mod_info_dbg("pfn_offset: %08lx, pfn: %08lx\n",
 		pfn_offset, pfn );
-	
+
 	if (!pfn_valid(pfn)) {
 		mod_info("Invalid pfn in nopage() - 0x%lx \n", pfn);
 		return NOPAGE_SIGBUS;
 	}
-		
+
 	page = pfn_to_page( pfn );
 
 	get_page(page);
@@ -984,7 +988,7 @@ int pcidriver_mmap( struct file *filp, struct vm_area_struct *vma ) {
 			ret = pcidriver_mmap_pci( privdata, vma , bar );
 			break;
 		case PCIDRIVER_MMAP_KMEM:
-			/* Mmap a Kernel buffer */			
+			/* Mmap a Kernel buffer */
 			/* Do it in a separate function */
 			ret = pcidriver_mmap_kmem( privdata, vma );
 			break;
@@ -1013,7 +1017,7 @@ int pcidriver_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, u
 #ifdef ENABLE_IRQ
 	unsigned int irq_source;
 #endif
-	
+
 	/* Get the private data area */
 	privdata = filp->private_data;
 
@@ -1057,7 +1061,7 @@ int pcidriver_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, u
 					break;
 			}
 			break;
-			
+
 		case PCIDRIVER_IOC_PCI_CFG_RD:
 			/* get data from user space */
 			ret = copy_from_user( &pci_cmd, (pci_cfg_cmd *)arg, sizeof(pci_cmd) );
@@ -1080,7 +1084,7 @@ int pcidriver_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, u
 			/* Process the command in a separate function */
 			ret = pcidriver_pci_write( privdata, &pci_cmd );
 			if (ret) return ret;
-			
+
 			/* write data to user space */
 			ret = copy_to_user( (pci_cfg_cmd *)arg, &pci_cmd, sizeof(pci_cmd) );
 			if (ret) return -EFAULT;				/* invalid memory pointer. This should never happen */
@@ -1094,12 +1098,12 @@ int pcidriver_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, u
 			/* Process the command in a separate function */
 			ret = pcidriver_pci_info( privdata, &pci_info );
 			if (ret) return ret;
-			
+
 			/* write data to user space */
 			ret = copy_to_user( (pci_board_info *)arg, &pci_info, sizeof(pci_info) );
 			if (ret) return -EFAULT;				/* invalid memory pointer. This should never happen */
 			break;
-			
+
 		case PCIDRIVER_IOC_KMEM_ALLOC:
 			/* get data from user space */
 			ret = copy_from_user( &khandle, (kmem_handle_t *)arg, sizeof(khandle) );
@@ -1112,8 +1116,8 @@ int pcidriver_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, u
 			/* write data to user space */
 			ret = copy_to_user( (kmem_handle_t *)arg, &khandle, sizeof(khandle) );
 			if (ret) return -EFAULT;				/* invalid memory pointer. This should never happen */
-			
-			break;	
+
+			break;
 
 		case PCIDRIVER_IOC_KMEM_FREE:
 			/* get data from user space */
@@ -1148,7 +1152,7 @@ int pcidriver_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, u
 			/* write data to user space */
 			ret = copy_to_user( (umem_handle_t *)arg, &uhandle, sizeof(uhandle) );
 			if (ret) return -EFAULT;				/* invalid memory pointer. This should never happen */
-		
+
 			break;
 
 		case PCIDRIVER_IOC_UMEM_SGUNMAP:
@@ -1221,18 +1225,18 @@ int pcidriver_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, u
 
 			irq_source = arg;		/*arg is directly the irq source to wait for */
 
-			/* Thanks to Joern for the correction and tips! */ 
+			/* Thanks to Joern for the correction and tips! */
 			temp=1;
 			while (temp) {
 				wait_event_interruptible_timeout( (privdata->irq_queues[irq_source]), (atomic_read(&(privdata->irq_outstanding[irq_source])) > 0), (10*HZ/1000) );
 
 				if (atomic_add_negative( -1, &(privdata->irq_outstanding[irq_source])) )
 					atomic_inc( &(privdata->irq_outstanding[irq_source]) );
-				else 
+				else
 					temp =0;
 			}
-			
-			/* It is ok, nothing more to do. Continue and exit */			
+
+			/* It is ok, nothing more to do. Continue and exit */
 #else
 			mod_info("Asked to wait for interrupt but interrupts are not enabled in the driver\n");
 			return -EFAULT;
@@ -1246,17 +1250,17 @@ int pcidriver_ioctl( struct inode *inode, struct file *filp, unsigned int cmd, u
 
 			irq_source = arg;		/*arg is directly the irq source number */
 			atomic_set( &(privdata->irq_outstanding[irq_source]), 0 );
-			
+
 #else
 			mod_info("Asked to wait for interrupt but interrupts are not enabled in the driver\n");
 			return -EFAULT;
 #endif
 			break;
-			
+
 		default:
 			return -EINVAL;
 	}
-	
+
 	return 0;
 }
 
@@ -1268,9 +1272,9 @@ int pcidriver_mmap_pci( pcidriver_privdata_t *privdata, struct vm_area_struct *v
 	unsigned long bar_addr;
 	unsigned long bar_length, vma_size;
 	unsigned long bar_flags;
-	
+
 	mod_info_dbg("Entering mmap_pci\n");
-	
+
 	/* Get info of the BAR to be mapped */
 	bar_addr = pci_resource_start( privdata->pdev, bar );
 	bar_length = pci_resource_len( privdata->pdev, bar );
@@ -1294,18 +1298,18 @@ int pcidriver_mmap_pci( pcidriver_privdata_t *privdata, struct vm_area_struct *v
 
 		/* Map the BAR */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,12)
-		ret = io_remap_pfn_range( 
-					vmap, 
-					vmap->vm_start, 
-					(bar_addr >> PAGE_SHIFT), 
-					bar_length, 
+		ret = io_remap_pfn_range(
+					vmap,
+					vmap->vm_start,
+					(bar_addr >> PAGE_SHIFT),
+					bar_length,
 					vmap->vm_page_prot );
 #else
-		ret = io_remap_page_range( 
-					vmap, 
-					vmap->vm_start, 
-					bar_addr, 
-					bar_length, 
+		ret = io_remap_page_range(
+					vmap,
+					vmap->vm_start,
+					bar_addr,
+					bar_length,
 					vmap->vm_page_prot );
 #endif
 
@@ -1316,7 +1320,7 @@ int pcidriver_mmap_pci( pcidriver_privdata_t *privdata, struct vm_area_struct *v
 		/* Ensure this VMA is non-cached, if it is not flaged as prefetchable.
 		 * If it is prefetchable, caching is allowed and will give better performance.
 		 * This should be set properly by the BIOS, but we want to be sure. */
-		/* adapted from drivers/char/mem.c, mmap function. */ 
+		/* adapted from drivers/char/mem.c, mmap function. */
 #ifdef pgprot_noncached
 /* Setting noncached disables MTRR registers, and we want to use them.
  * So we take this code out. This can lead to caching problems if and only if
@@ -1325,30 +1329,30 @@ int pcidriver_mmap_pci( pcidriver_privdata_t *privdata, struct vm_area_struct *v
 //		if (!(bar_flags & IORESOURCE_PREFETCH))
 //			vmap->vm_page_prot = pgprot_noncached(vmap->vm_page_prot);
 #endif
-	
+
 		/* Map the BAR */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,10)
-		ret = remap_pfn_range( 
-					vmap, 
-					vmap->vm_start, 
-					(bar_addr >> PAGE_SHIFT), 
+		ret = remap_pfn_range(
+					vmap,
+					vmap->vm_start,
+					(bar_addr >> PAGE_SHIFT),
 					bar_length,
 					vmap->vm_page_prot );
 #else
-		ret = remap_page_range( 
-					vmap, 
-					vmap->vm_start, 
-					bar_addr, 
-					bar_length, 
+		ret = remap_page_range(
+					vmap,
+					vmap->vm_start,
+					bar_addr,
+					bar_length,
 					vmap->vm_page_prot );
-#endif	
+#endif
 	}
 
 	if (ret) {
 		mod_info("remap_pfn_range failed\n");
 		return -EAGAIN;
 	}
-	
+
 	return 0;	/* success */
 }
 
@@ -1357,10 +1361,10 @@ int pcidriver_mmap_kmem( pcidriver_privdata_t *privdata, struct vm_area_struct *
 	unsigned long vma_size;
 	pcidriver_kmem_entry_t *kmem_entry;
 	int ret;
-	
+
 	mod_info_dbg("Entering mmap_kmem\n");
 
-	/* Get latest entry on the kmem_list */	
+	/* Get latest entry on the kmem_list */
 	spin_lock( &(privdata->kmemlist_lock) );
 	if (list_empty( &(privdata->kmem_list) )) {
 		spin_unlock( &(privdata->kmemlist_lock) );
@@ -1428,14 +1432,14 @@ int pcidriver_mmap_kmem( pcidriver_privdata_t *privdata, struct vm_area_struct *
 		mod_info("kmem remap failed: %d\n", ret);
 		return -EAGAIN;
 	}
-		
+
 	return ret;
 }
 
 int pcidriver_pci_read( pcidriver_privdata_t *privdata, pci_cfg_cmd *pci_cmd )
 {
 	int ret = 0;
-	
+
 	switch (pci_cmd->size) {
 		case PCIDRIVER_PCI_CFG_SZ_BYTE:
 			ret = pci_read_config_byte( privdata->pdev, pci_cmd->addr, &(pci_cmd->val.byte) );
@@ -1450,14 +1454,14 @@ int pcidriver_pci_read( pcidriver_privdata_t *privdata, pci_cfg_cmd *pci_cmd )
 			return -EINVAL;		/* Wrong size setting */
 			break;
 	}
-	
+
 	return ret;
 }
 
 int pcidriver_pci_write( pcidriver_privdata_t *privdata, pci_cfg_cmd *pci_cmd )
 {
 	int ret = 0;
-	
+
 	switch (pci_cmd->size) {
 		case PCIDRIVER_PCI_CFG_SZ_BYTE:
 			ret = pci_write_config_byte( privdata->pdev, pci_cmd->addr, pci_cmd->val.byte );
@@ -1472,7 +1476,7 @@ int pcidriver_pci_write( pcidriver_privdata_t *privdata, pci_cfg_cmd *pci_cmd )
 			return -EINVAL;		/* Wrong size setting */
 			break;
 	}
-	
+
 	return ret;
 }
 
@@ -1480,13 +1484,13 @@ int pcidriver_pci_info( pcidriver_privdata_t *privdata, pci_board_info *pci_info
 {
 	int ret = 0;
 	int bar;
-	
+
 	pci_info->vendor_id = privdata->pdev->vendor;
 	pci_info->device_id = privdata->pdev->device;
 	pci_info->bus = privdata->pdev->bus->number;
 	pci_info->slot = PCI_SLOT(privdata->pdev->devfn);
 	pci_info->devfn = privdata->pdev->devfn;
-	
+
 	ret = pci_read_config_byte(privdata->pdev, PCI_INTERRUPT_PIN, &(pci_info->interrupt_pin) );
 	if (ret)
 		return ret;
@@ -1494,12 +1498,12 @@ int pcidriver_pci_info( pcidriver_privdata_t *privdata, pci_board_info *pci_info
 	ret = pci_read_config_byte(privdata->pdev, PCI_INTERRUPT_LINE, &(pci_info->interrupt_line) );
 	if (ret)
 		return ret;
-	
+
 	for(bar=0;bar<6;bar++) {
 		pci_info->bar_start[ bar ] = pci_resource_start( privdata->pdev, bar );
-		pci_info->bar_length[ bar ] = pci_resource_len( privdata->pdev, bar );		
+		pci_info->bar_length[ bar ] = pci_resource_len( privdata->pdev, bar );
 	}
-	
+
 	return 0; /* Success */
 }
 
@@ -1515,17 +1519,17 @@ int pcidriver_kmem_alloc(pcidriver_privdata_t *privdata, kmem_handle_t *kmem_han
 	void *retptr;
 	unsigned long start, end, i;
 	struct page *kpage;
-	
+
 	/* First, allocate memory for the kmem_entry */
 	kmem_entry = (pcidriver_kmem_entry_t *)kmalloc(sizeof(pcidriver_kmem_entry_t), GFP_KERNEL);
 	if (!kmem_entry)
 		goto kmem_alloc_entry_fail;
-		
+
 	memset( kmem_entry, 0, sizeof( *kmem_entry ) );
-	
+
 	/* ...and allocate the DMA memory */
-	/* note this is a memory pair, referencing the same area: the cpu address (cpua) 
-	 * and the PCI bus address (pa). The CPU and PCI addresses may not be the same. 
+	/* note this is a memory pair, referencing the same area: the cpu address (cpua)
+	 * and the PCI bus address (pa). The CPU and PCI addresses may not be the same.
 	 * The CPU sees only CPU addresses, while the device sees only PCI addresses.
 	 * CPU address is used for the mmap (internal to the driver), and
 	 * PCI address is the address passed to the DMA Controller in the device.
@@ -1535,7 +1539,7 @@ int pcidriver_kmem_alloc(pcidriver_privdata_t *privdata, kmem_handle_t *kmem_han
 		goto kmem_alloc_mem_fail;
 	kmem_entry->cpua = (unsigned long)retptr;
 	kmem_handle->pa = (unsigned long)(kmem_entry->dma_handle);
-	
+
 	/* initialize some values... */
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,9)
 	kmem_entry->id = atomic_inc_return(&privdata->kmem_count) - 1;
@@ -1550,11 +1554,11 @@ int pcidriver_kmem_alloc(pcidriver_privdata_t *privdata, kmem_handle_t *kmem_han
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,15)
 	/*
 	 * This is no longer needed starting in kernel 2.6.15,
-	 * as it removed the PG_RESERVED flag bit. 
-	 * 
+	 * as it removed the PG_RESERVED flag bit.
+	 *
 	 * This is documented in the kernel change log, you can also check
 	 * the following links:
-	 * 
+	 *
 	 * http://lwn.net/Articles/161204/
 	 * http://lists.openfabrics.org/pipermail/general/2007-March/034101.html
 	 */
@@ -1585,12 +1589,12 @@ int pcidriver_kmem_alloc(pcidriver_privdata_t *privdata, kmem_handle_t *kmem_han
 	if (!kmem_entry->sysfs_attr.attr.name)
 		goto kmem_alloc_name_fail;
 #endif
-				
+
 	/* Add the kmem_entry to the list of the device */
 	spin_lock( &(privdata->kmemlist_lock) );
 	list_add_tail( &(kmem_entry->list), &(privdata->kmem_list) );
 	spin_unlock( &(privdata->kmemlist_lock) );
-			
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 	/* Add a sysfs attribute for the kmem buffer */
 	/* Does not makes sense for <2.6.13, as we have no mmap support before this version */
@@ -1598,14 +1602,14 @@ int pcidriver_kmem_alloc(pcidriver_privdata_t *privdata, kmem_handle_t *kmem_han
 	kmem_entry->sysfs_attr.attr.owner = THIS_MODULE;
 	kmem_entry->sysfs_attr.show = pcidriver_show_kmem_entry;
 	kmem_entry->sysfs_attr.store = NULL;
-			
+
 	/* name and add attribute */
 	sprintf(kmem_entry->sysfs_attr.attr.name,"kbuf%d",kmem_entry->id);
 	class_device_create_file( privdata->class_dev, &(kmem_entry->sysfs_attr) );
 #endif
 
 	return 0;	/* success */
-	
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 kmem_alloc_name_fail:
 		kfree( kmem_entry->sysfs_attr.attr.name );
@@ -1633,7 +1637,7 @@ int pcidriver_kmem_free_all(  pcidriver_privdata_t *privdata )
 {
 	struct list_head *ptr, *next;
 	pcidriver_kmem_entry_t *kmem_entry;
-	
+
 	/* iterate safely over the entries and delete them */
 	list_for_each_safe( ptr, next, &(privdata->kmem_list) ) {
 		kmem_entry = list_entry(ptr, pcidriver_kmem_entry_t, list );
@@ -1641,7 +1645,7 @@ int pcidriver_kmem_free_all(  pcidriver_privdata_t *privdata )
 	}
 
 	return 0;
-	
+
 }
 
 int pcidriver_kmem_sync( pcidriver_privdata_t *privdata, kmem_sync_t *kmem_sync )
@@ -1703,16 +1707,16 @@ int pcidriver_kmem_free_entry( pcidriver_privdata_t *privdata, pcidriver_kmem_en
 	 * This code is DISABLED.
 	 * Apparently, it is not needed to unreserve them. Doing so here
 	 * hangs the machine. Why?
-	 * 
+	 *
 	 * Uhm.. see links:
-	 * 
+	 *
 	 * http://lwn.net/Articles/161204/
 	 * http://lists.openfabrics.org/pipermail/general/2007-March/034101.html
-	 * 
+	 *
 	 * I insist, this should be enabled, but doing so hangs the machine.
 	 * Literature supports the point, and there is even a similar problem (see link)
 	 * But this is not the case. It seems right to me. but obviously is not.
-	 * 
+	 *
 	 * Anyway, this goes away in kernel >=2.6.15.
 	 */
 	unsigned long start = __pa(kmem_entry->cpua) >> PAGE_SHIFT;
@@ -1721,9 +1725,9 @@ int pcidriver_kmem_free_entry( pcidriver_privdata_t *privdata, pcidriver_kmem_en
 	for(i=start;i<end;i++) {
 		struct page *kpage = pfn_to_page(i);
 		ClearPageReserved(kpage);
-	}	
+	}
 #endif
-#endif		
+#endif
 
 	/* Release DMA memory */
 	pci_free_consistent( privdata->pdev, kmem_entry->size, (void *)(kmem_entry->cpua), kmem_entry->dma_handle );
@@ -1735,7 +1739,7 @@ int pcidriver_kmem_free_entry( pcidriver_privdata_t *privdata, pcidriver_kmem_en
 
 	/* Release kmem_entry memory */
 	kfree(kmem_entry);
-	
+
 	return 0;
 }
 
@@ -1744,11 +1748,11 @@ pcidriver_kmem_entry_t *pcidriver_kmem_find_entry(pcidriver_privdata_t *privdata
 	pcidriver_kmem_entry_t *entry;
 
 	/* should I implement it better using the handle_id? */
-	
+
 	spin_lock( &(privdata->kmemlist_lock) );
 	list_for_each( ptr, &(privdata->kmem_list) ) {
 		entry = list_entry(ptr, pcidriver_kmem_entry_t, list );
-		
+
 		if (entry->dma_handle == kmem_handle->pa) {
 			spin_unlock( &(privdata->kmemlist_lock) );
 			return entry;
@@ -1761,11 +1765,11 @@ pcidriver_kmem_entry_t *pcidriver_kmem_find_entry(pcidriver_privdata_t *privdata
 pcidriver_kmem_entry_t *pcidriver_kmem_find_entry_id(pcidriver_privdata_t *privdata, int id ) {
 	struct list_head *ptr;
 	pcidriver_kmem_entry_t *entry;
-	
+
 	spin_lock( &(privdata->kmemlist_lock) );
 	list_for_each( ptr, &(privdata->kmem_list) ) {
 		entry = list_entry(ptr, pcidriver_kmem_entry_t, list );
-		
+
 		if (entry->id == id) {
 			spin_unlock( &(privdata->kmemlist_lock) );
 			return entry;
@@ -1779,7 +1783,7 @@ pcidriver_kmem_entry_t *pcidriver_kmem_find_entry_id(pcidriver_privdata_t *privd
 
 int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_handle )
 {
-  
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 	int temp;
 	char temps[50];
@@ -1797,9 +1801,9 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
 	 *  - Determine the number of pages
 	 *  - Get the pages for the memory area
 	 * 	- Lock them.
-	 *  - Create a scatter/gather list of the pages 
+	 *  - Create a scatter/gather list of the pages
 	 *  - Map the list from memory to PCI bus addresses
-	 * 
+	 *
 	 * Then, we:
 	 *  - Create an entry on the umem list of the device, to cache the mapping.
 	 *  - Create a sysfs attribute that gives easy access to the SG list
@@ -1808,7 +1812,7 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
 	/* User tryed an overflow! */
 	if ((umem_handle->vma + umem_handle->size) < umem_handle->vma)
 		return -EINVAL;
-	
+
 	/* zero-size?? */
 	if (umem_handle->size == 0)
 		return -EINVAL;
@@ -1833,7 +1837,7 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
 		goto umem_sgmap_pages;
 
   //mod_info( "\npcidriver_umem_sgmap for address %x, size=%d , sg=%x\n", umem_handle->vma, umem_handle->size,sg);
- 
+
 	/* Get the page information */
 	down_read(&current->mm->mmap_sem);
 	res = get_user_pages(
@@ -1844,7 +1848,7 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
 				1,
 				0,  /* do not force, FIXME: shall I? */
 				pages,
-				NULL );				
+				NULL );
 	up_read(&current->mm->mmap_sem);
 
 	/* Error, not all pages mapped */
@@ -1868,7 +1872,7 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
       else
         mod_info( "!!!! pcidriver_umem_sgmap-- SetPageLocked #%d finds reserved page!!!", 0);
 
-   
+
    /*****/
    for(i=1;i<nr_pages;i++) {
 		/* Lock page first */
@@ -1880,7 +1884,7 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
       else
         mod_info( "!!!! pcidriver_umem_sgmap-- SetPageLocked #%d finds reserved page!!!", i);
 
-         
+
 		/* Populate the list */
 		sg[i].page = pages[i];
 		sg[i].offset = 0;
@@ -1913,7 +1917,7 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
 #endif
 	umem_entry->nr_pages = nr_pages;	/* Will be needed when unmapping */
 	umem_entry->pages = pages;
-	umem_entry->nents = nents;	
+	umem_entry->nents = nents;
 	umem_entry->sg = sg;
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
@@ -1929,7 +1933,7 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
 	spin_lock( &(privdata->umemlist_lock) );
 	list_add_tail( &(umem_entry->list), &(privdata->umem_list) );
 	spin_unlock( &(privdata->umemlist_lock) );
-	
+
 	/* Update the Handle with the Handle ID of the entry */
 	umem_handle->handle_id = umem_entry->id;
 
@@ -1939,12 +1943,12 @@ int pcidriver_umem_sgmap( pcidriver_privdata_t *privdata, umem_handle_t *umem_ha
 	umem_entry->sysfs_attr.attr.owner = THIS_MODULE;
 	umem_entry->sysfs_attr.show = pcidriver_show_umem_entry;
 	umem_entry->sysfs_attr.store = NULL;
-			
+
 	/* name and add attribute */
 	sprintf(umem_entry->sysfs_attr.attr.name,"umem%d",umem_entry->id);
 	class_device_create_file( privdata->class_dev, &(umem_entry->sysfs_attr) );
 #endif
-	
+
 	return 0;
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
@@ -1970,19 +1974,19 @@ int pcidriver_umem_sgunmap( pcidriver_privdata_t *privdata, pcidriver_umem_entry
 {
 	int i;
   //mod_info( "\npcidriver_umem_sgunmap for sg %x,\n", umem_entry->sg);
- 
+
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2,6,13)
 	/* Remove the sysfs attribute */
 	class_device_remove_file( privdata->class_dev, &(umem_entry->sysfs_attr) );
 	kfree( umem_entry->sysfs_attr.attr.name );
 #endif
-			
+
 	/* Unmap user memory */
 	pci_unmap_sg( privdata->pdev, umem_entry->sg, umem_entry->nr_pages, PCI_DMA_BIDIRECTIONAL );
 
 	/* Release the pages */
 	if (umem_entry->nr_pages > 0) {
-		for(i=0;i<(umem_entry->nr_pages);i++) {			
+		for(i=0;i<(umem_entry->nr_pages);i++) {
 			/* Mark pages as Dirty and unlock it */
 			if ( !PageReserved( umem_entry->pages[i] )) {
 				SetPageDirty( umem_entry->pages[i] );
@@ -2011,7 +2015,7 @@ int pcidriver_umem_sgunmap( pcidriver_privdata_t *privdata, pcidriver_umem_entry
 
 	/* Release umem_entry memory */
 	kfree(umem_entry);
-	
+
 	return 0;
 }
 
@@ -2019,7 +2023,7 @@ int pcidriver_umem_sgunmap_all( pcidriver_privdata_t *privdata )
 {
 	struct list_head *ptr, *next;
 	pcidriver_umem_entry_t *umem_entry;
-	
+
 	/* iterate safely over the entries and delete them */
 	list_for_each_safe( ptr, next, &(privdata->umem_list) ) {
 		umem_entry = list_entry(ptr, pcidriver_umem_entry_t, list );
@@ -2037,7 +2041,7 @@ int pcidriver_umem_sgget( pcidriver_privdata_t *privdata, umem_sglist_t *umem_sg
 	int idx;
 	dma_addr_t cur_addr;
 	unsigned int cur_size;
-	
+
 	/* Find the associated umem_entry for this buffer */
 	umem_entry = pcidriver_umem_find_entry_id( privdata, umem_sglist->handle_id );
 	if (umem_entry == NULL)
@@ -2057,7 +2061,7 @@ int pcidriver_umem_sgget( pcidriver_privdata_t *privdata, umem_sglist_t *umem_sg
 		umem_sglist->sg[0].size = sg_dma_len( sg );
 		sg++;
 		idx = 0;
-	
+
 		/* Iterate over the SG entries */
 		for(i=1; i< umem_entry->nents; i++, sg++ ) {
 			cur_addr = sg_dma_address( sg );
@@ -2068,14 +2072,14 @@ int pcidriver_umem_sgget( pcidriver_privdata_t *privdata, umem_sglist_t *umem_sg
 				umem_sglist->sg[idx].size += cur_size;
 				continue;
 			}
-		
+
 			/* Check if entry fits before current entry */
 			if ((cur_addr + cur_size) == umem_sglist->sg[idx].addr) {
 				umem_sglist->sg[idx].addr = cur_addr;
-				umem_sglist->sg[idx].size += cur_size;			
+				umem_sglist->sg[idx].size += cur_size;
 				continue;
 			}
-		
+
 			/* None of the above, add new entry */
 			idx++;
 			umem_sglist->sg[idx].addr = cur_addr;
@@ -2084,7 +2088,7 @@ int pcidriver_umem_sgget( pcidriver_privdata_t *privdata, umem_sglist_t *umem_sg
 		/* Set the used size of the SG list */
 		umem_sglist->nents = idx+1;
 	}
-	else {	
+	else {
 		/* Assume pci_map_sg made a good job (ehem..) and just copy it.
 		 * actually, now I assume it just gives them plainly to me. */
 		for(i=0, sg=umem_entry->sg ; i< umem_entry->nents; i++, sg++ ) {
@@ -2143,11 +2147,11 @@ pcidriver_umem_entry_t *pcidriver_umem_find_entry_id( pcidriver_privdata_t *priv
 {
 	struct list_head *ptr;
 	pcidriver_umem_entry_t *entry;
-	
+
 	spin_lock( &(privdata->umemlist_lock) );
 	list_for_each( ptr, &(privdata->umem_list) ) {
 		entry = list_entry(ptr, pcidriver_umem_entry_t, list );
-		
+
 		if (entry->id == id) {
 			spin_unlock( &(privdata->umemlist_lock) );
 			return entry;
@@ -2171,7 +2175,7 @@ irqreturn_t pcidriver_irq_handler( int irq, void *dev_id, struct pt_regs *regs)
 		return IRQ_HANDLED;
 	}
 	else
-		return IRQ_NONE;	
+		return IRQ_NONE;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,11)
@@ -2225,7 +2229,7 @@ out:
 static ssize_t pcidriver_show_irq_count(struct class_device *cls, char *buf)
 {
 	int temp;
-	
+
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 
 	/* output will be truncated to PAGE_SIZE */
@@ -2251,7 +2255,7 @@ static ssize_t pcidriver_show_irq_queues(struct class_device *cls, char *buf)
 static ssize_t pcidriver_show_mmap_mode(struct class_device *cls, char *buf)
 {
 	int temp;
-	
+
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 
 	/* output will be truncated to PAGE_SIZE */
@@ -2263,7 +2267,7 @@ static ssize_t pcidriver_store_mmap_mode(struct class_device *cls, char *buf, si
 {
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 	int temp = -1;
-	
+
 	sscanf(buf,"%d",&temp);
 
 	/* validate input */
@@ -2274,14 +2278,14 @@ static ssize_t pcidriver_store_mmap_mode(struct class_device *cls, char *buf, si
 			break;
 		default:
 			break;
-	}	
+	}
 	return strlen(buf);
 }
 
 static ssize_t pcidriver_show_mmap_area(struct class_device *cls, char *buf)
 {
 	int temp;
-	
+
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 
 	/* output will be truncated to PAGE_SIZE */
@@ -2293,7 +2297,7 @@ static ssize_t pcidriver_store_mmap_area(struct class_device *cls, char *buf, si
 {
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 	int temp = -1;
-	
+
 	sscanf(buf,"%d",&temp);
 
 	/* validate input */
@@ -2308,14 +2312,14 @@ static ssize_t pcidriver_store_mmap_area(struct class_device *cls, char *buf, si
 			break;
 		default:
 			break;
-	}	
+	}
 	return strlen(buf);
 }
 
 static ssize_t pcidriver_show_kmem_count(struct class_device *cls, char *buf)
 {
 	int temp;
-	
+
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 
 	/* output will be truncated to PAGE_SIZE */
@@ -2328,7 +2332,7 @@ static ssize_t pcidriver_store_kmem_alloc(struct class_device *cls, char *buf, s
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 	kmem_handle_t kmem_handle;
 
-	/* FIXME: validate input */	
+	/* FIXME: validate input */
 	sscanf(buf,"%lu",&kmem_handle.size);
 	pcidriver_kmem_alloc(privdata, &kmem_handle );
 
@@ -2340,16 +2344,16 @@ static ssize_t pcidriver_store_kmem_free(struct class_device *cls, char *buf, si
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 	int id;
 	pcidriver_kmem_entry_t *kmem_entry;
-	
-	/* FIXME: validate input */		
+
+	/* FIXME: validate input */
 	sscanf(buf,"%u",&id);
 	if ((id < 0) || (id >= atomic_read(&(privdata->kmem_count))) )
 		return strlen(buf);
-	
+
 	kmem_entry = pcidriver_kmem_find_entry_id(privdata,id);
 	if (kmem_entry == NULL)
 		return strlen(buf);
-		
+
 	pcidriver_kmem_free_entry(privdata, kmem_entry );
 	return strlen(buf);
 }
@@ -2364,17 +2368,17 @@ static ssize_t pcidriver_show_kbuffers(struct class_device *cls, char *buf)
 	/* print the header */
 	temp = snprintf(buf, PAGE_SIZE, "kbuf#\tcpu addr\tsize\n");
 	offset += temp;
-	
+
 	spin_lock( &(privdata->kmemlist_lock) );
 	list_for_each( ptr, &(privdata->kmem_list) ) {
 		entry = list_entry(ptr, pcidriver_kmem_entry_t, list );
-		
+
 		/* print entry info */
 		if (offset > PAGE_SIZE) {
 			spin_unlock( &(privdata->kmemlist_lock) );
 			return PAGE_SIZE;
 		}
-			
+
 		temp = snprintf(buf+offset, PAGE_SIZE-offset, "%3d\t%08lx\t%lu\n", entry->id, (unsigned long)(entry->dma_handle), entry->size );
 		offset += temp;
 	}
@@ -2395,17 +2399,17 @@ static ssize_t pcidriver_show_umappings(struct class_device *cls, char *buf)
 	/* print the header */
 	temp = snprintf(buf, PAGE_SIZE, "umap#\tn_pages\tsg_ents\n");
 	offset += temp;
-	
+
 	spin_lock( &(privdata->umemlist_lock) );
 	list_for_each( ptr, &(privdata->umem_list) ) {
 		entry = list_entry(ptr, pcidriver_umem_entry_t, list );
-		
+
 		/* print entry info */
 		if (offset > PAGE_SIZE) {
 			spin_unlock( &(privdata->umemlist_lock) );
 			return PAGE_SIZE;
 		}
-			
+
 		temp = snprintf(buf+offset, PAGE_SIZE-offset, "%3d\t%lu\t%lu\n", entry->id, (unsigned long)(entry->nr_pages), (unsigned long)(entry->nents) );
 		offset += temp;
 	}
@@ -2421,16 +2425,16 @@ static ssize_t pcidriver_store_umem_unmap(struct class_device *cls, char *buf, s
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 	int id;
 	pcidriver_umem_entry_t *umem_entry;
-	
-	/* FIXME: validate input */		
+
+	/* FIXME: validate input */
 	sscanf(buf,"%u",&id);
 	if ((id < 0) || (id >= atomic_read(&(privdata->umem_count))) )
 		return strlen(buf);
-	
+
 	umem_entry = pcidriver_umem_find_entry_id(privdata,id);
 	if (umem_entry == NULL)
 		return strlen(buf);
-		
+
 	pcidriver_umem_sgunmap(privdata, umem_entry );
 	return strlen(buf);
 }
@@ -2440,7 +2444,7 @@ static ssize_t pcidriver_store_umem_unmap(struct class_device *cls, char *buf, s
 static ssize_t pcidriver_show_kmem_entry(struct class_device *cls, char *buf)
 {
 	int temp;
-	
+
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 
 	/* output will be truncated to PAGE_SIZE */
@@ -2451,7 +2455,7 @@ static ssize_t pcidriver_show_kmem_entry(struct class_device *cls, char *buf)
 static ssize_t pcidriver_show_umem_entry(struct class_device *cls, char *buf)
 {
 	int temp;
-	
+
 	pcidriver_privdata_t *privdata = (pcidriver_privdata_t *)cls->class_data;
 
 	/* output will be truncated to PAGE_SIZE */
