@@ -18,6 +18,7 @@ environment/dabc-work.tex \
 user/steer-user.tex \
 user/user-docrev.tex \
 user/user-gui.tex \
+user/user-gui-mbs.tex \
 user/user-setup.tex \
 user/user-overview.tex \
 user/user-app-mbs.tex \
