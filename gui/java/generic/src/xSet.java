@@ -57,6 +57,12 @@ private static int[] ParTableWidth;
 private static StringBuffer str;
 private static boolean OK;
 private static String msg;
+private static boolean mbs=false;
+private static boolean dabc=false;
+private static boolean dabs=false;
+private static boolean guru=false;
+private static boolean ctrl=false;
+private static String usrpanels;
 
 /**
  * Singleton
@@ -308,4 +314,33 @@ el=(Element)layout.getElementsByTagName(name).item(0);
 sx=el.getAttribute("width").toString().split(",");
 for(int i=0;i<sx.length;i++)ParTableWidth[i]=Integer.parseInt(sx[i]);
 }
+/**
+ * Analyze main argument list.
+ * @param Argument list.
+ */
+protected final static void checkMainArgs(String[] name){
+usrpanels=null;
+ctrl=true;
+dabc=true;
+for(int i=0;i<name.length;i++){
+	     if(name[i].startsWith("-moni")) {ctrl=false;dabc=false;dabs=false;mbs=false;guru=false;}
+	else if(name[i].startsWith("-mbs")&ctrl) {mbs=true;dabc=false;}
+	else if(name[i].startsWith("-dabc")&ctrl) dabc=true;
+	else if(name[i].startsWith("-dabs")&ctrl) {dabs=true;dabc=false;}
+	else if(name[i].startsWith("-guru")&ctrl) guru=true;
+	else if(!name[i].startsWith("-"))usrpanels=new String(name[i]);
+}
+if(guru){
+	ctrl=true;
+	dabc=true;
+	dabs=true;
+	mbs=true;
+}
+}
+protected final static boolean isMbs(){return mbs;}
+protected final static boolean isDabc(){return dabc;}
+protected final static boolean isDabs(){return dabs;}
+protected final static boolean isControl(){return ctrl;}
+protected final static boolean isGuru(){return guru;}
+protected final static String getUserPanels(){return usrpanels;}
 }

@@ -45,7 +45,7 @@ private xDimBrowser browser;
 private menuAction maSelect, maLogger, maCommands, maParameters, maMeters, maHistograms, maState, maBrowser, maQuit,
         maDabcController, maMbsController, maDabcMbsController, maInfos, maSave, maWork;
 private Vector<menuAction> maUserController;
-private String usrHeader, usrGraphics;
+private String usrHeader, usrGraphics, usrPanels;
 private boolean clearOnUpdate=false;
 private static boolean enableControl=true;
 private String LayoutFile, RecordFile, SelectionFile;
@@ -59,19 +59,20 @@ private String LayoutFile, RecordFile, SelectionFile;
  */
 public xDesktop(xiUserPanel userpanel, boolean control) {
     super("DABC Controls and Monitoring");
-    if(userpanel != null){
-    	usrpan=new Vector<xiUserPanel>(0);
-    	usrpan.add(userpanel);
-    }
-    enableControl=control;
+//    if(userpanel != null){
+//    	usrpan=new Vector<xiUserPanel>(0);
+//    	usrpan.add(userpanel);
+//    }
+//    enableControl=control;
     if(!control) System.out.println("Starting in monitor only mode.");
     if(usrpan == null){
-    if(System.getenv("DABC_APPLICATION_PANELS")!=null){
-    	usrpan=new Vector<xiUserPanel>(0);
-        String up=System.getenv("DABC_APPLICATION_PANELS");
-        String[] upl=up.split(",");
-        for(int ii=0;ii<upl.length;ii++){
-        try{
+    	usrPanels=xSet.getUserPanels(); // specified by shell call
+    	if(usrPanels==null) usrPanels=System.getenv("DABC_APPLICATION_PANELS");
+    	if(usrPanels!=null){
+	    	usrpan=new Vector<xiUserPanel>(0);
+	        String[] upl=usrPanels.split(",");
+	        for(int ii=0;ii<upl.length;ii++){
+	        try{
         	System.out.println("Instance "+upl[ii]);
         	usrpan.add((xiUserPanel) Class.forName(upl[ii]).newInstance());
         }   catch(ClassNotFoundException ee){System.out.println("NotFound: Error creating "+upl[ii]);}
@@ -153,13 +154,13 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     if(System.getenv("DABC_PARAMETER_FILTER")!=null) SelectionFile=System.getenv("DABC_PARAMETER_FILTER");
     else SelectionFile=new String("Selection.xml");
     // overwrite appearance for monitor only
-    xSet.getLayout("DabcMbsController").set(null,null,0,enableControl&xSet.getLayout("DabcMbsController").show());    
-    xSet.getLayout("MbsController").set(null,null,0,enableControl&xSet.getLayout("MbsController").show());    
-    xSet.getLayout("DabcController").set(null,null,0,enableControl&xSet.getLayout("DabcController").show());    
-    xSet.getLayout("Command").set(null,null,0,enableControl&xSet.getLayout("Command").show());    
-    xSet.getLayout("Logger").set(null,null,0,enableControl&xSet.getLayout("Logger").show());    
-    xSet.getLayout("Parameter").set(null,null,0,enableControl&xSet.getLayout("Parameter").show());    
-    xSet.getLayout("ParameterSelect").set(null,null,0,enableControl&xSet.getLayout("ParameterSelect").show());    
+    xSet.getLayout("DabcMbsController").set(null,null,0,xSet.getLayout("DabcMbsController").show());    
+    xSet.getLayout("MbsController").set(null,null,0,xSet.getLayout("MbsController").show());    
+    xSet.getLayout("DabcController").set(null,null,0,xSet.getLayout("DabcController").show());    
+    xSet.getLayout("Command").set(null,null,0,xSet.getLayout("Command").show());    
+    xSet.getLayout("Logger").set(null,null,0,xSet.getLayout("Logger").show());    
+    xSet.getLayout("Parameter").set(null,null,0,xSet.getLayout("Parameter").show());    
+    xSet.getLayout("ParameterSelect").set(null,null,0,xSet.getLayout("ParameterSelect").show());    
     // create the panels
     logpan=new xPanelLogger(xSet.getLayout("Logger").getSize());
     hispan=new xPanelHisto(xSet.getLayout("Histogram").getSize(),xSet.getLayout("Histogram").getColumns());
@@ -255,18 +256,22 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
     add(mainpanel); // panel to frame
 
     // create the panel frames which shall be visible:
+    if(xSet.isControl()){
+    if(xSet.getLayout("Logger").show()) logpan.setListener(frLogger=
+        createFrame("Logger",loggerIcon,logpan,xSet.getLayout("Logger"),logpan.createMenuBar(), true));
     if(xSet.getLayout("Command").show()) frCommands=
         createFrame("Commands",commIcon,compan,xSet.getLayout("Command"),null, true); 
     if(xSet.getLayout("Parameter").show()) frParameters=
         createFrame("Parameters",paramIcon,parpan,xSet.getLayout("Parameter"),null, true); 
-    if(xSet.getLayout("DabcController").show()) frDabcController=
+    if(xSet.isDabc()&xSet.getLayout("DabcController").show()) frDabcController=
         createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false);
-    if(xSet.getLayout("DabcMbsController").show()) frDabcMbsController=
+    if(xSet.isDabs()&xSet.getLayout("DabcMbsController").show()) frDabcMbsController=
         createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false);
-    if(xSet.getLayout("MbsController").show()) frMbsController=
+    if(xSet.isMbs()&xSet.getLayout("MbsController").show()) frMbsController=
         createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false);
     if(xSet.getLayout("ParameterSelect").show()) frSelect=
         createFrame("ParameterSelect",selIcon,selpan,xSet.getLayout("ParameterSelect"),null, false);
+    }
     if(usrpan != null){
     	for(int ii=0;ii<usrpan.size();ii++)
     	if(xSet.getLayout(usrpan.get(ii).getHeader())!= null){
@@ -281,8 +286,6 @@ public xDesktop(xiUserPanel userpanel, boolean control) {
         createFrame("States",stateIcon,stapan,xSet.getLayout("State"),stapan.createMenuBar(), false));
     if(xSet.getLayout("Info").show()) infpan.setListener(frInfos=
         createFrame("Infos",infoIcon,infpan,xSet.getLayout("Info"),infpan.createMenuBar(), true));
-    if(xSet.getLayout("Logger").show()) logpan.setListener(frLogger=
-        createFrame("Logger",loggerIcon,logpan,xSet.getLayout("Logger"),logpan.createMenuBar(), true));
 
 // Make dragging a little faster but perhaps uglier.
     desktop.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
@@ -295,22 +298,22 @@ private JToolBar createToolBar() {
     JToolBar toolBar = new JToolBar();
     toolBar.setMargin(new Insets(-4,0,-6,0));
     toolBar.add(new toolButton(maQuit));
-    toolBar.add(new toolButton(maWork));
+    if(xSet.isGuru()) toolBar.add(new toolButton(maWork));
     toolBar.add(new toolButton(maSave));
     toolBar.addSeparator();
-    if(enableControl) toolBar.add(new toolButton(maDabcMbsController));
-    if(enableControl) toolBar.add(new toolButton(maDabcController));
-    if(enableControl) toolBar.add(new toolButton(maMbsController));
-    toolBar.add(new toolButton(maBrowser));
+    if(xSet.isDabs()) toolBar.add(new toolButton(maDabcMbsController));
+    if(xSet.isDabc()) toolBar.add(new toolButton(maDabcController));
+    if(xSet.isMbs())  toolBar.add(new toolButton(maMbsController));
+    if(xSet.isGuru()) toolBar.add(new toolButton(maBrowser));
     toolBar.addSeparator();
-    if(enableControl) toolBar.add(new toolButton(maCommands));
-    if(enableControl) toolBar.add(new toolButton(maParameters));
-    toolBar.add(new toolButton(maSelect));
+    if(xSet.isControl()) toolBar.add(new toolButton(maCommands));
+    if(xSet.isControl()) toolBar.add(new toolButton(maParameters));
+    if(xSet.isControl()) toolBar.add(new toolButton(maSelect));
     toolBar.add(new toolButton(maMeters));
     toolBar.add(new toolButton(maHistograms));
     toolBar.add(new toolButton(maState));
     toolBar.add(new toolButton(maInfos));
-    if(enableControl) toolBar.add(new toolButton(maLogger));
+    if(xSet.isControl()) toolBar.add(new toolButton(maLogger));
     if(usrpan != null){
         toolBar.addSeparator();
     	for(int ii=0;ii<usrpan.size();ii++)
@@ -640,6 +643,7 @@ public void actionPerformed(ActionEvent e) {
 
 //Quit the application.
 protected void quit() {
+	if(xSet.isGuru())System.exit(0);
     int i=JOptionPane.showInternalConfirmDialog(desktop,"Quit GUI?","GUI can be restarted.", JOptionPane.YES_NO_OPTION); 
     if(i == 0) System.exit(0);
 }

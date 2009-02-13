@@ -62,19 +62,22 @@ System.out.println("No DIM name server defined, set DIM_DNS_NODE!");
 return;
 }
 
-if(args.length > i){
-    if(args[i].startsWith("-m")){
-        enableControl=false;
-        i++;
-        }
-}
-if(args.length > i){
-    try{
-     usrpan = (xiUserPanel) Class.forName(args[i]).newInstance();
-    }   catch(ClassNotFoundException ee){System.out.println("NotFound: Error creating "+args[i]);}
-        catch(InstantiationException x){System.out.println("Instant: Error creating "+args[i]);}
-        catch(IllegalAccessException xx){System.out.println("IllAccess: Error creating "+args[i]);}
-    }
+xSet.checkMainArgs(args);
+
+//if(args.length > i){
+//    if(args[i].startsWith("-m")){
+//        enableControl=false;
+//        i++;
+//        }
+//}
+//if(args.length > i){
+//    try{
+//     usrpan = (xiUserPanel) Class.forName(args[i]).newInstance();
+//    }   catch(ClassNotFoundException ee){System.out.println("NotFound: Error creating "+args[i]);}
+//        catch(InstantiationException x){System.out.println("Instant: Error creating "+args[i]);}
+//        catch(IllegalAccessException xx){System.out.println("IllAccess: Error creating "+args[i]);}
+//    }
+
 javax.swing.SwingUtilities.invokeLater(
 new Runnable() {
 public void run() {createAndShowGUI();}
