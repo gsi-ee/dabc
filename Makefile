@@ -19,15 +19,19 @@ include controls/simple/Makefile.mk
 
 -include controls/dimcontrol/Makefile.mk
 
-#DABC_PLUGINS = plugins/mbs plugins/bnet plugins/verbs plugins/roc plugins/abb
+
+DABC_PLUGINS_PACK = plugins/mbs plugins/bnet plugins/bnet-mbs plugins/verbs plugins/root
+DABC_APPLICATIONS_PACK = applications/mbs applications/bnet-mbs applications/bnet-test
+DABC_SCRIPTS_PACK = script/dabclogin-distribution.sh script/dabcstartup.sh script/dabcshutdown.sh script/gdbcmd.txt
+
+DABC_ROC_PACK = plugins/roc applications/roc 
+DABC_ABB_PACK = plugins/abb applications/bnet-test 
 
 DABC_PLUGINS = $(wildcard plugins/*)
 
 DABC_PLUGINS += $(wildcard applications/*)
 
 -include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
-
-# -include controls/xdaq/Makefile.mk
 
 -include gui/java/Makefile.mk
 
@@ -43,9 +47,21 @@ clean::
 	
 package:: clean
 	rm -f dabc.tar.gz
-	tar cf dabc.tar Makefile *.xml base/ build/ config/ controls/simple controls/dimcontrol dim script gui $(DABC_PLUGINS) --exclude=.svn --exclude=*.bak 
+	tar cf dabc.tar Makefile base/ build/ config/ controls/simple controls/dimcontrol dim  gui $(DABC_PLUGINS_PACK) $(DABC_APPLICATIONS_PACK) $(DABC_SCRIPTS_PACK) --exclude=.svn --exclude=*.bak 
 	gzip dabc.tar
 	echo "dabc.tar.gz done" 
+
+packageroc:: clean
+	rm -f roc.tar.gz
+	tar cf roc.tar $(DABC_ROC_PACK) --exclude=.svn --exclude=*.bak 
+	gzip roc.tar
+	echo "roc.tar.gz done" 
+
+packageabb:: clean
+	rm -f abb.tar.gz
+	tar cf abb.tar $(DABC_ABB_PACK) --exclude=.svn --exclude=*.bak 
+	gzip abb.tar
+	echo "abb.tar.gz done" 
 
 
 Dabc_Makefile_rules :=
