@@ -78,6 +78,8 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
          EOUT(("Invalid MBS format on buffer %u size: %u", n, bufs[n]->GetTotalSize()));
          return;
       }
+
+      DOUT5(("Buf %u starts with event %d", n, recs[n].evnt()->EventNumber()));
    }
 
    int nevent = 0;

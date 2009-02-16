@@ -173,6 +173,12 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    if (log.length()>0)
       dabc::Logger::Instance()->LogFile(log.c_str());
 
+   if (IsNative()) {
+      log = Find1(fSelected, "", xmlRunNode, xmlLoglimit);
+      if (log.length()>0)
+         dabc::Logger::Instance()->SetLogLimit(atoi(log.c_str()));
+   }
+
    if (dimnode==0) dimnode = getenv(xmlDIM_DNS_NODE);
 
    if (dimnode!=0) {

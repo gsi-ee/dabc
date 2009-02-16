@@ -67,7 +67,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
       return 0;
    }
 
-   DOUT3(("Produce output buffer for events %u %u", fMinEvId, fMaxEvId));
+   DOUT5(("Produce output buffer for events %u %u", fMinEvId, fMaxEvId));
 
    // define here if we can pack all subevents from all readout channel in
    // transport buffer. If not, just take as much as we can
@@ -165,7 +165,6 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 }
 
 
-
 void bnet::MbsCombinerModule::MainLoop()
 {
    dabc::BufferGuard outbuf;
@@ -228,7 +227,7 @@ void bnet::MbsCombinerModule::MainLoop()
          if (fRecs[ninp].iter.Reset(buf) && fRecs[ninp].iter.NextEvent()) {
             fRecs[ninp].headbuf = buf;
 
-            DOUT5(("Extract first event from %p done ninp %d evid %d", buf, ninp, fRecs[ninp].iter.evnt()->EventNumber()));
+            DOUT5(("First event from ninp %d evid %d", ninp, fRecs[ninp].iter.evnt()->EventNumber()));
          } else {
             // no error recovery, just continue
             EOUT(("Get buffer of non MBS-format"));
@@ -237,8 +236,6 @@ void bnet::MbsCombinerModule::MainLoop()
       }
 
       if (isemptybuffer) continue;
-
-//      DOUT1(("Get buffer on each input n = %d", fCfgEventsCombine));
 
       // now check that every input gets the same eventid
       mbs::EventNumType mineventid = 0;
@@ -249,18 +246,14 @@ void bnet::MbsCombinerModule::MainLoop()
 
          mbs::EventNumType evid = fRecs[ninp].iter.evnt()->EventNumber();
 
-//         DOUT1(("Extract evid from inp %d hfd %p evid %d", ninp, fRecs[ninp].evhdr, evid));
-
          if (ninp==0) {
             mineventid = evid;
             maxeventid = evid;
          } else {
-            if (mineventid < evid) { mineventid = evid; mininp = ninp; } else
-            if (maxeventid > evid) maxeventid = evid;
+            if (evid < mineventid) { mineventid = evid; mininp = ninp; } else
+            if (evid > maxeventid) maxeventid = evid;
          }
       }
-
-//      DOUT1(("Min %d max %d", mineventid, maxeventid));
 
       // if one has not everywhere the same event,
       // skip minimum and continue from the beginning
@@ -306,33 +299,6 @@ void bnet::MbsCombinerModule::MainLoop()
 
          if (!fRecs[ninp].iter.AssignEventPointer(fSubEvnts[recid]))
             EOUT(("Problem to assign event %u from input %d", mineventid, ninp));
-
-//         DOUT1(("Assign event pointer recid %d len %u", recid, fSubEvnts[recid].fullsize()));
-         if (fSubEvnts[recid].fullsize() != 296) {
-            EOUT(("Input %d Recid %d Size missmtach %u evid %u", ninp, recid, fSubEvnts[recid].fullsize(), fMinEvId));
-
-            unsigned numevnts = mbs::ReadIterator::NumEvents(fRecs[ninp].headbuf);
-
-            DOUT1(("Error NumEvents %u  datasize: %u ", numevnts, fRecs[ninp].headbuf->GetDataSize()));
-
-            numevnts = mbs::ReadIterator::NumEvents(fRecs[ninp].headbuf);
-
-            DOUT1(("Error NumEvents %u again?", numevnts));
-
-            mbs::ReadIterator iter(fRecs[ninp].headbuf);
-
-            while (iter.NextEvent()) {
-               DOUT1(("Error Event %u size %u", iter.evnt()->EventNumber(), iter.evnt()->FullSize()));
-
-               while (iter.NextSubEvent()) {
-                  uint32_t* rawdata = (uint32_t*) iter.rawdata();
-                  DOUT1(("Subevent crate %u procid %u size %u rawdata0 %u rawdata1 %u",
-                        iter.subevnt()->iSubcrate, iter.subevnt()->iProcId, iter.subevnt()->FullSize(),
-                        rawdata[0], rawdata[1]));
-               }
-            }
-
-         }
 
          if (fRecs[ninp].iter.evnt()->iTrigger==mbs::tt_StopAcq)
             isstopacq = true;

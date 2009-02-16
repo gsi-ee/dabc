@@ -51,6 +51,7 @@ namespace dabc {
 
          void SetDebugLevel(int level = 0);
          void SetFileLevel(int level = 0);
+         void SetLogLimit(unsigned limit = 100) { fLogLimit = limit; }
          inline int GetDebugLevel() const { return fDebugLevel; }
          inline int GetFileLevel() const { return fFileLevel; }
 
@@ -99,6 +100,7 @@ namespace dabc {
          std::string       fLogFileName; // name of logfile
          double            fLogReopenTime; // last time when logfile was reopened
          bool              fLogFileModified; // true if any string was written into file
+         unsigned          fLogLimit;   // maximum number of log messages before drop
    };
 
    #define DOUT(level, args) \

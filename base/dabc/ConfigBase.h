@@ -35,6 +35,7 @@ namespace dabc {
    extern const char* xmlDebuglevel;
    extern const char* xmlLogfile;
    extern const char* xmlLoglevel;
+   extern const char* xmlLoglimit;
    extern const char* xmlParslevel;
    extern const char* xmlLDPATH;
    extern const char* xmlConfigFile;

@@ -109,6 +109,7 @@ dabc::Logger::Logger(bool withmutex)
    fFile = 0;
    fLogReopenTime = 0.;
    fLogFileModified = false;
+   fLogLimit = 100;
 
    LockGuard lock(fMutex);
    _ExtendLines(1024);
@@ -261,7 +262,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
 
    unsigned mask = level>=0 ? fDebugMask : fErrorMask;
    unsigned fmask = mask | (fFile ? fFileMask : 0);
-   bool drop_msg = (entry->fCounter > 100) &&
+   bool drop_msg = (entry->fCounter > fLogLimit) &&
                    (dabc::TimeDistance(entry->fLastTm, now) < 0.5);
 
    if (drop_msg) entry->fDropCnt++;

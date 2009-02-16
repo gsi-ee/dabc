@@ -12,14 +12,7 @@ bnet::ReceiverModule::ReceiverModule(const char* name, dabc::Command* cmd) :
    fPool(0),
    fRecvRate(),
    fSendNodes(),
-   fInpCounter(0),
-   fEventsPool(),
-   fPoolTail(0),
-   fPoolHead(0),
-   fPoolSize(0),
-   fEventsMap(),
-   fLastEvents(),
-   fPoolTailSending(-1)
+   fInpCounter(0)
 {
    fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
    fCfgNodeId = GetCfgInt(CfgNodeId, 0, cmd);
@@ -36,16 +29,6 @@ bnet::ReceiverModule::ReceiverModule(const char* name, dabc::Command* cmd) :
 
    CreateRateParameter("DataRate", false, 1., "", "Output");
 
-   const unsigned EventsPoolSize = (ReceiverQueueSize + ReceiverOutQueueSize);
-
-   for (unsigned n=0;n<EventsPoolSize;n++) {
-      RecvEventData* ev = new RecvEventData(fCfgNumNodes);
-      fEventsPool.push_back(ev);
-   }
-
-   for (int n=0;n<fCfgNumNodes;n++)
-      fLastEvents.push_back(0);
-
    fSendingCounter = fCfgNumNodes;
    for (int n=0;n<fCfgNumNodes;n++)
       fCurrEvent.push_back(0);
@@ -54,20 +37,6 @@ bnet::ReceiverModule::ReceiverModule(const char* name, dabc::Command* cmd) :
 
 bnet::ReceiverModule::~ReceiverModule()
 {
-   fEventsMap.clear();
-
-   //!!!!!!!!! release used buffers
-
-   for (unsigned n=0;n<fEventsPool.size();n++)
-      delete fEventsPool[n];
-   fEventsPool.clear();
-
-   fPoolTail = 0;
-   fPoolHead = 0;
-   fPoolSize = 0;
-   fPoolTailSending = -1;
-
-   fLastEvents.clear();
 }
 
 int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
@@ -107,241 +76,6 @@ int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
       return dabc::ModuleAsync::ExecuteCommand(cmd);
 
    return cmd_true;
-}
-
-bnet::ReceiverModule::RecvEventData* bnet::ReceiverModule::ProvideEventData(bnet::EventId evid, bool force)
-{
-   if (fPoolSize==0) {
-      if (!force) return 0;
-
-      fPoolSize = 1;
-      fPoolTail = 0;
-      fPoolHead = 0;
-
-      RecvEventData* evnt = fEventsPool[fPoolHead];
-      evnt->evid = evid;
-
-      fEventsMap[evid] = fPoolHead;
-
-      return evnt;
-   }
-
-   if (evid<fEventsPool[fPoolTail]->evid) {
-      EOUT(("Access to event which should not longer exists"));
-      return 0;
-   }
-
-   if (evid > fEventsPool[fPoolHead]->evid) {
-      if (!force) return 0;
-
-      if (fPoolSize==fEventsPool.size()) {
-         EOUT(("No more space for events"));
-         return 0;
-      }
-
-      fPoolSize++;
-      fPoolHead = (fPoolHead+1) % fEventsPool.size();
-
-      RecvEventData* evnt = fEventsPool[fPoolHead];
-      evnt->evid = evid;
-
-      fEventsMap[evid] = fPoolHead;
-
-      return evnt;
-   }
-
-   if (evid==fEventsPool[fPoolTail]->evid) return fEventsPool[fPoolTail];
-
-   if (evid==fEventsPool[fPoolHead]->evid) return fEventsPool[fPoolHead];
-
-   EventsMap::iterator iter = fEventsMap.find(evid);
-
-   if (iter==fEventsMap.end()) {
-      if (force) EOUT(("Cannot produce new entry in the middle of event range"));
-      return 0;
-   }
-
-   RecvEventData* evnt = fEventsPool[iter->second];
-   if (evnt->evid != evid) {
-      EOUT(("Wrong events map"));
-      return 0;
-   }
-   return evnt;
-}
-
-
-bool bnet::ReceiverModule::DoInputRead(int nodeid)
-{
-   if (!Input(nodeid)->CanRecv()) return false;
-
-   dabc::Buffer* buf = Input(nodeid)->Recv();
-
-   if (buf==0) return false;
-
-   fRecvRate.Packet(buf->GetTotalSize());
-
-   if (buf->GetHeaderSize() < sizeof(SubEventNetHeader)) {
-      EOUT(("Wrong header in net packet"));
-      dabc::Buffer::Release(buf);
-      return false;
-   }
-
-   if (buf->GetTypeId() == dabc::mbt_EOF) {
-      DOUT1(("Get EOF from input %d", nodeid));
-      dabc::Buffer::Release(buf);
-      return true;
-   }
-
-   SubEventNetHeader* hdr = (SubEventNetHeader*) buf->GetHeader();
-
-   if (fLastEvents[nodeid]!=0)
-     if (fLastEvents[nodeid] >= hdr->evid) {
-         EOUT(("Event sequence over input %d is broken lastid:%llu now:%llu", nodeid, fLastEvents[nodeid], hdr->evid));
-         dabc::Buffer::Release(buf);
-         return false;
-     }
-
-   RecvEventData* evnt = ProvideEventData(hdr->evid, true);
-   if (evnt==0) {
-      EOUT(("Cannot process event data"));
-      dabc::Buffer::Release(buf);
-      return false;
-   }
-
-   if (evnt->bufs[nodeid] != 0) {
-      EOUT(("Buffer for this event from this input already exists !!!"));
-      dabc::Buffer::Release(buf);
-      return false;
-   }
-
-   DOUT3(("Get event %llu from node %d", hdr->evid, nodeid));
-
-   evnt->bufs[nodeid] = buf;
-   fLastEvents[nodeid] = hdr->evid;
-
-   return true;
-}
-
-
-bnet::EventId bnet::ReceiverModule::DefineMinimumLastEvent()
-{
-   EventId minevid = 0;
-
-   // first, check that event id is minimum
-   for (unsigned n=0;n<fSendNodes.size(); n++) {
-      int nodeid = fSendNodes[n];
-
-      if (fLastEvents[nodeid]==0) return fLastEvents[nodeid];
-
-      if ((minevid==0) || (fLastEvents[nodeid]<minevid))
-         minevid = fLastEvents[nodeid];
-   }
-
-   return minevid;
-}
-
-void bnet::ReceiverModule::ProcessEventNew(dabc::ModuleItem*, uint16_t)
-{
-
-   bool doreadsomething = false;
-
-   bool poolblocked = false;
-
-   do {
-
-      doreadsomething = false;
-
-      // !!!!!!! probably, check if not too many data read in once
-
-      poolblocked = (fPoolSize >= fEventsPool.size() * 0.9) || (fPool->UsedRatio() > 0.8);
-      if (poolblocked) break;
-
-      EventId minevid = DefineMinimumLastEvent();
-
-      // now check only those nodes, which has minimum last id
-      for (unsigned n=0;n<fSendNodes.size(); n++) {
-         int nodeid = fSendNodes[n];
-         if (fLastEvents[nodeid]==minevid)
-            if (DoInputRead(nodeid))
-               doreadsomething = true;
-      }
-
-   } while (doreadsomething);
-
-
-   do {
-
-      while (fPoolTailSending>=0) {
-         if (fPoolSize==0) { fPoolTailSending = -1; return; }
-
-         RecvEventData* evnt = fEventsPool[fPoolTail];
-
-         while ((fPoolTailSending < fCfgNumNodes) && (evnt->bufs[fPoolTailSending] == 0)) fPoolTailSending++;
-
-         if (fPoolTailSending>=fCfgNumNodes) {
-            fPoolTailSending = -1;
-            fPoolTail = (fPoolTail+1) % fEventsPool.size();
-            fPoolSize--;
-            DOUT3(("Erase event %llu", evnt->evid));
-            break;
-         }
-
-         // if cannot send, data, just exit
-         if (!Output(0)->CanSend()) return;
-
-         dabc::Buffer* buf = evnt->bufs[fPoolTailSending];
-         evnt->bufs[fPoolTailSending] = 0;
-         Output(0)->Send(buf);
-
-         fPoolTailSending++;
-      }
-
-      // now check all events in pool that are below defined limit
-      EventId minevid = DefineMinimumLastEvent();
-      // one need at least one packet from each input for starting analysis
-      if (minevid == 0) {
-         if (poolblocked) EOUT(("Pool blocking already, but has no data to process !!!"));
-         return;
-      }
-
-      while (fPoolSize>0) {
-         RecvEventData* evnt = fEventsPool[fPoolTail];
-
-         bool iscomplete = true;
-
-         for (unsigned n=0;n<fSendNodes.size(); n++) {
-            int nodeid = fSendNodes[n];
-            if (evnt->bufs[nodeid] == 0) iscomplete = false;
-         }
-
-         // if last event in the pool is complete, just starts its sending
-         if (iscomplete) {
-            fPoolTailSending = 0;
-            DOUT3(("Complete event %llu, start pushing (%d)", evnt->evid, fPoolSize));
-            break;
-         }
-
-         // this is the case when we accumulating event and did not get it complete yet
-         if (evnt->evid > minevid) {
-//            if (poolblocked) EOUT(("Pool blocking already, but has no enough data to process !!!"));
-            return;
-         }
-
-         // here on all inputs there were packets with bigger event id number,
-         // thus we have no longer possibility to get packet for incomplete event
-
-         for(unsigned n=0;n<evnt->bufs.size();n++)
-            if (evnt->bufs[n]!=0) {
-               dabc::Buffer::Release(evnt->bufs[n]);
-               evnt->bufs[n] = 0;
-            }
-         fPoolTail = (fPoolTail+1) % fEventsPool.size();
-         fPoolSize--;
-
-         EOUT(("Exclude incomplete event %llu", evnt->evid));
-      }
-
-   } while (fPoolTailSending>=0);
 }
 
 void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
@@ -391,7 +125,7 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
          fCurrEvent[nodeid] = hdr->evid;
 
-         DOUT5(("Get event %llu from node %d", hdr->evid, nodeid));
+         DOUT5(("Get event %llu from node %d bufsize %u", hdr->evid, nodeid, buf->GetDataSize()));
       }
 
       // we need either EOL or normal event at each input
@@ -416,7 +150,7 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
       }
 
       if (fCurrEvent[minid] != fCurrEvent[maxid]) {
-         EOUT(("Skip buffer %p from input %d with event %llu (max = %llu) pending %d", Input(minid)->InputBuffer(0), minid, fCurrEvent[minid], fCurrEvent[maxid], Input(minid)->InputPending()));
+         EOUT(("Skip from input %d event %llu (max = %llu) pending %d", minid, fCurrEvent[minid], fCurrEvent[maxid], Input(minid)->InputPending()));
 
          Input(minid)->SkipInputBuffers(1);
          fCurrEvent[minid] = 0;
@@ -441,7 +175,7 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
             Input(nodeid)->SkipInputBuffers(1);
       }
 
-      DOUT1(("Send EOL and stop Receiever module"));
+      DOUT1(("Send EOL and stop Receiver module"));
 
       dabc::Buffer* outbuf = fPool->TakeEmptyBuffer();
       outbuf->SetTypeId(dabc::mbt_EOL);
@@ -475,34 +209,6 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
       }
 
       fCurrEvent[nodeid] = 0;
-   }
-}
-
-
-void bnet::ReceiverModule::ProcessEvent2(dabc::ModuleItem*, uint16_t)
-{
-   if (fInpCounter == fSendNodes.size()) {
-      bool blocked = false;
-
-      for (unsigned n=0; n < fSendNodes.size(); n++)
-        if (!Input(fSendNodes[n])->CanRecv()) blocked = true;
-
-      if (blocked) return;
-
-      fInpCounter = 0;
-   }
-
-   while ((fInpCounter < fSendNodes.size()) && Output(0)->CanSend()) {
-
-//      DOUT1(("Recv buffer from input %d %p", fInpCounter, Input(fInpCounter)));
-
-      dabc::Buffer* buf = Input(fSendNodes[fInpCounter])->Recv();
-
-      fRecvRate.Packet(buf->GetTotalSize());
-
-      Output(0)->Send(buf);
-
-      fInpCounter++;
    }
 }
 
