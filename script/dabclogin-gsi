@@ -70,8 +70,9 @@ fi
 # the dim part:
 export DIMDIR=$VERSIONPATH/dabc/dim/dim
 ODIR=linux
+OS=Linux
 
-export DIMDIR ODIR
+export DIMDIR ODIR OS
 export LD_LIBRARY_PATH=$DIMDIR/$ODIR:$LD_LIBRARY_PATH
 
 

@@ -108,7 +108,7 @@ export DABCSYS=/misc/adamczew/dabc.workspace/dabc
 export PATH=$DABCSYS/bin:$PATH
 
 
-export LD_LIBRARY_PATH=.:$DABCSY/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=.:$DABCSYS/lib:$LD_LIBRARY_PATH
 
 
 #-----------------------------------

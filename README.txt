@@ -1,0 +1,70 @@
+--------------------------------------------------------------
+         The Data Acquisition Backbone Core 
+         DABC Release v1.0.0  (01-March-2009)
+-------------------------------------------------------------
+Copyright (C) 2009- 
+GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+Planckstr. 1
+64291 Darmstadt
+Germany
+Contact:  http://dabc.gsi.de
+------------------------------------------------------------
+Authors: Joern Adamczewski-Musch      
+         Hans Georg Essel             
+         Sergey Linev                          
+
+(Data Processing group at GSI Experiment Electronics department)
+---------------------------------------------------------------
+DISCLAIMER:
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details (http://www.gnu.org).
+---------------------------------------------------------------
+
+These packages are tested on
+    Debian 3.1 (32 bit and AMD 64bit)
+    SuSe 11.0
+    compilers: gcc 3.3.5, gcc 4.3.x
+
+  
+INSTALLATION:
+
+1. Unpack this DABC distribution in the future DABC System directory,
+  e.g. /usr/local/pub/dabc 
+  ("cd /usr/local/pub/dabc; tar zxvf dabc.tar.gz")
+
+2. Edit your dabclogin.sh script:
+  A template for this script is scripts/dabclogin.sh
+  Edit the DABCSYS environment according to your local installation directory
+  Edit the DIM_DNS_NODE environment according to the machine where 
+  the DIM name server will run
+  Put the script at a location in your global $PATH for later login.
+
+3. Execute your ". dabclogin.sh" in your shell to set the environment
+  for compilation.
+
+4. Change to the dabc installation directory and start the build:
+  "cd $DABCSYS; make"
+
+5. after succesful compilation, you may use DABC from any shell after
+exeution of ". dabclogin.sh"
+
+6.use executable "dabc_run" for single node batch mode.
+
+7. For GUI controls: 
+    * Start the DIM name server _once_ on the machine you specified in 
+      the dabclogin.sh by calling "dimDns".
+    * start the dabc GUI in another shell by typing "dabc" 
+      (do not forget to call ". dabclogin.sh" first!)
+
+8. Read the DABC User Manual  for further information how to configure
+  the DABC and how to use the GUI!
+
+Please contact the DABC developer team for any bug reports and wishes!
+
