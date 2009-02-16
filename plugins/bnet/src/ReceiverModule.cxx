@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -207,10 +207,12 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
    while (Output(0)->CanSend() && (fSendingCounter<fSendNodes.size())) {
       int nodeid = fSendNodes[fSendingCounter++];
 
+      dabc::Buffer* buf = 0;
+
       if (!Input(nodeid)->IsConnected())
          EOUT(("Input %d not connected, why come here ?", nodeid));
-
-      dabc::Buffer* buf = Input(nodeid)->Recv();
+      else
+         buf = Input(nodeid)->Recv();
 
 //      DOUT1(("Retranslate buf %p evid %llu from node %d", buf, fCurrEvent[nodeid], nodeid));
 

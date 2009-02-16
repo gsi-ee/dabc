@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -672,9 +672,10 @@ bool dabc::Manager::DoDeleteAllModules(int appid)
 
    do {
       if (m!=0) {
-         DOUT5(("Delete module %s", m->GetName()));
+         DOUT2(("Stop and delete module %s", m->GetName()));
+         m->Stop();
          delete m;
-         DOUT5(("Delete module done"));
+         DOUT2(("Stop and delete module done"));
          m = 0;
       }
 
@@ -1068,7 +1069,12 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
    } else
    if (cmd->IsName(CmdDeleteModule::CmdName())) {
       dabc::Module* m = FindModule(cmd->GetStr("Module",""));
-      if (m!=0) delete m;
+      if (m!=0) {
+         DOUT2(("Stop and delete module %s", m->GetName()));
+         m->Stop();
+         delete m;
+         DOUT2(("Stop and delete module done"));
+      }
 //      DOUT1(("Call module stop %s", (m ? m->GetName() : "null")));
       cmd_res = cmd_bool(m!=0);
    } else
@@ -1795,6 +1801,16 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
    Application* app = GetApp();
 
    if (app==0) return false;
+
+/*
+   if (strcmp(stcmd, stcmdDoHalt) == 0) {
+     SetDebugLevel(2);
+     SetFileLevel(4);
+   } else {
+      SetDebugLevel(0);
+      SetFileLevel(1);
+   }
+*/
 
    DOUT4(("DoStateTransition %s", stcmd));
 
