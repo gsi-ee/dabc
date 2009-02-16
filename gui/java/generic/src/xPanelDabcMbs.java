@@ -423,7 +423,6 @@ int time=0;
         }
         }  else {setProgress("No DABC exit commands available!",xSet.redD());browser.sleep(2);}
         setProgress("Shut down MBS ...",xSet.blueD());
-        if(mbsCommand != null) mbsCommand.exec(xSet.getAccess()+" *::Stop rirec");
         if(mbsCommand != null) mbsCommand.exec(xSet.getAccess()+" *::exit");
         String cmd = new String(MbsPath.getText()+
                                 "/script/prmshutdown.sc "+
