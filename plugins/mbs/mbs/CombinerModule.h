@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -38,6 +38,9 @@ namespace mbs {
 
          bool                       fFileOutput;
          bool                       fServOutput;
+
+         dabc::RateParameter*      fEvntRate;
+         dabc::RateParameter*      fDataRate;
 
          bool BuildEvent();
          bool FlushBuffer();

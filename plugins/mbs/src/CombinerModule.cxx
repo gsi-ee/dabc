@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -50,6 +50,9 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    if (fServOutput) CreateOutput("ServerOutput", fPool, 5);
 
    if (flashtmout>0.) CreateTimer("Flash", flashtmout, false);
+
+   fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 20000.);
+   fDataRate = CreateRateParameter("DataRateKb", false, 1., "", "", "KB/s", 0., 10000.);
 }
 
 mbs::CombinerModule::~CombinerModule()
@@ -159,7 +162,7 @@ bool mbs::CombinerModule::BuildEvent()
       EOUT(("Event size %u too big for buffer %u, skip event %u", subeventssize+ sizeof(mbs::EventHeader), fBufferSize, buildevid));
    else {
 
-      DOUT0(("Build event %u", buildevid));
+      DOUT2(("Build event %u", buildevid));
 
       fOut.NewEvent(buildevid);
       dabc::Pointer ptr;
@@ -176,6 +179,9 @@ bool mbs::CombinerModule::BuildEvent()
             fOut.AddSubevent(ptr);
          }
       fOut.FinishEvent();
+
+      fEvntRate->AccountValue(1.);
+      fDataRate->AccountValue((subeventssize+ sizeof(mbs::EventHeader))/1024.);
 
       // if output buffer filled already, flush it immediately
       if (!fOut.IsPlaceForEvent(0)) FlushBuffer();
@@ -226,7 +232,7 @@ extern "C" void StartMbsCombiner()
           exit(1);
        }
 
-    m->Start();
+//    m->Start();
 
     DOUT0(("Start MBS combiner module done"));
 }
