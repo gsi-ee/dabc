@@ -299,7 +299,7 @@ private JToolBar createToolBar() {
     if(xSet.isDabs()) toolBar.add(new toolButton(maDabcMbsController));
     if(xSet.isDabc()) toolBar.add(new toolButton(maDabcController));
     if(xSet.isMbs())  toolBar.add(new toolButton(maMbsController));
-    if(xSet.isGuru()) toolBar.add(new toolButton(maBrowser));
+    toolBar.add(new toolButton(maBrowser));
     toolBar.addSeparator();
     if(xSet.isControl()) toolBar.add(new toolButton(maCommands));
     if(xSet.isControl()) toolBar.add(new toolButton(maParameters));
