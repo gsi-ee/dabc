@@ -1,6 +1,123 @@
 [user/user-setup.tex]
 \lsection[Installing DABC]{user-install}{Installing \dabc}
-\index{TODO!Install}
+\index{DABC!Installation}
+When working at the gsi linux cluster, the \dabc~ framework is already installed and will
+be maintained by people of the gsi EE department. Here \dabc~ needs just to be
+activated from any gsi shell by typing {\tt . dabclogin}. In this case, 
+please skip this installation section and proceed with following section \ref{user-env} describing
+the set-up of the user environment.
+
+However, if working on a separate DAQ cluster outside gsi, 
+it is mandatory to install the \dabc~ software
+from scratch. 
+Hence the \dabc~ distribution is available for download at \hyperref{http://dabc.gsi.de}{}{}{http://dabc.gsi.de}.
+It is provided as a compressed tarball of sources {\tt dabc1.tar.gz}.
+The following steps describe the recommended installation procedure:
+
+\bnum
+\item {\bf Unpack this \dabc~ distribution} at an appropriate installation directory,
+e.~g.~:
+\begin{verbatim}
+cd /opt/dabc; 
+tar zxvf dabc1.tar.gz
+\end{verbatim}
+This will extract the archive into a subdirectory which is labelled
+with the current version number like {\tt /opt/dabc/dabc\_1\_0.00}.
+This becomes the future \dabc~ system directory.
+
+\item {\bf Prepare the \dabc~ environment login script}:
+A template for this script can be found at {\tt scripts/dabclogin.sh}
+\bbul
+  \item Edit the {\tt DABCSYS} environment according to your local installation directory. 
+  This is done in the following lines:
+  \begin{verbatim}
+  export DABCSYS=/opt/dabc\_installations/dabc_1_0.00  
+  \end{verbatim}  
+  
+  \item Edit the {\tt DIM\_DNS\_NODE} environment according to the machine where 
+  the DIM name server \cite{DIM} for the \dabc~ control system will run:
+   \begin{verbatim}
+  export DIM_DNS_NODE=hostname.domain.de
+  \end{verbatim}  
+  \item Copy the script to a location in your global {\tt \$PATH} for later login,
+  e.~g.~ {\tt /usr/bin}. Alternatively, you
+  may set an \func{alias} to the full pathname of {\tt dabclogin.sh} in your shell profile.
+\ebul
+
+\item Execute the just modified login script in your shell to set the environment:  
+  \begin{verbatim}
+  . dabclogin.sh
+  \end{verbatim} 
+  This will set the environment for the compilation.
+
+\item Change to the \dabc~ installation directory and start the build:
+  \begin{verbatim}
+  cd \$DABCSYS
+  make
+  \end{verbatim} 
+  This will compile the \dabc~ framework and install a suitable version of DIM in a
+  subdirectory of {\tt \$DABCSYS/dim}.
+
+\enum
+
+After succesful compilation, the \dabc~ framework installation is complete
+and can be used from any shell after invoking {\tt . dabclogin.sh}
+The next sections \ref{user-env} and \ref{user-setup} will describe further steps 
+to set-up the \dabc~ working environment for each user.
+
+
+\lsection[Set-up the DABC environment]{user-env}{Set-up the  \dabc~ environment}
+\index{DABC!Environment set-up}
+Once the general \dabc~ framework is installed on a system, still each user
+must "activate" the environment and do further preparations to work with it.
+
+\bnum
+\item Execute the \dabc~ login script in a linux shell to set the environment.
+At gsi linux installation, this is done by  
+\begin{verbatim}
+  . dabclogin
+  \end{verbatim} 
+For the user installation as described in above section \ref{user-install},
+by default the script is named   
+  \begin{verbatim}
+  . dabclogin.sh
+  \end{verbatim} 
+The login script will already enable the \dabc~ framework for
+compilation of user written components. Additionally, 
+the general executable {\tt dabc\_run} now provides
+the \dabc~ runtime environment and may be started directly 
+for simple "batch mode" applications on a single node. 
+
+However, further preparations are necessary if \dabc~ shall be used with
+DIM control system and GUI.
+
+\item Open a dedicated shell on the machine that shall provide the DIM name server,
+e.~g.~ {\tt ssh nsnode.cluster.domain}
+Then call 
+\begin{verbatim}
+. dabclogin.sh
+dimDns  
+\end{verbatim} 
+to launch the DIM name server. This is done \strong{once} at the beginning of
+the DAQ setup; usually the DIM name server needs not to be shut down 
+when \dabc~ applications terminate.
+
+\item Set the DIM name server environment variable in any \dabc~ working shell (e.~g.~
+the shell that will start the dabc gui later):
+\begin{verbatim}
+. dabclogin.sh
+export DIM\_DNS\_NODE=nsnode.cluster.domain
+\end{verbatim} 
+Note that a user installation of \dabc~ framework may set this 
+environment variable already in the general {\tt dabclogin.sh} script, if the DIM name server will 
+mostly run for all users on the same default node (see section \ref{user-install}).  
+
+\item Now the \dabc~ GUI can be started in such prepared shell by typing {\tt dabc}, (or 
+{\tt mbs} for a plain \mbs~ gui, resp.). See below in gui section.  
+
+\enum
+
+
 \lsection[Setting up DABC user workspace]{user-setup}{Setting up \dabc\ user workspace}
 \index{TODO!Setup}
 To operate a \dabc\ application one should create a dedicated 
@@ -24,3 +141,14 @@ the application sections.
 \paref{user:mbs}
 \subsection{PCI connected front-ends}
 %\paref{user:roc}
+
+
+\lsection[Installation of additional plug-ins]{user-plugins}{Installation of additional plug-ins}
+\index{TODO!Plugin installation}
+example abb here to explain what to do. 
+
+\lsubsection[Add plug-in packages to \$DABCSYS]{user-plugins-dabcsys}{Add plug-in packages to \$DABCSYS}
+Describe here what to do if you have dabcsys installation priviliges.
+
+\lsubsection[Plug-in packages in user directory]{user-plugins-userdir}{Plug-in packages in user directory}
+How to use plug-in packages outside dabcsys. modify the library load paths in example

@@ -89,5 +89,5 @@ dabc-requirements.tex
 	pdflatex main-all.tex|./texoutfilter
 	rm -f *.aux *.idx *.ilg *.bbl *.blg *.ind *.log *.out *.toc *.lof
 clean:
-	rm -f main-all.pdf *.aux *.idx *.ilg *.ind *.bbl *.blg *.log *.out *.toc *.lof
+	rm -f *.aux *.idx *.ilg *.ind *.bbl *.blg *.log *.out *.toc *.lof
 	

@@ -7,10 +7,12 @@ echo ====== First pass main-$1.tex ======================
 pdflatex main-$1.tex|../texoutfilter
 echo ====== Index main-$1.isx ======================
 makeindex main-$1.idx
+@echo ==== bibtex pass ===================
+bibtex main-$1
 echo ====== Second pass main-$1.tex generate TOC======================
 pdflatex main-$1.tex|../texoutfilter
 echo ====== Third pass main-$1.tex with TOC ======================
 pdflatex main-$1.tex|../texoutfilter
-rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc *.lof
+rm -f *.aux *.idx *.ilg *.ind *.log *.out *.toc *.lof *.bbl *.blg
 cd ..
 fi
