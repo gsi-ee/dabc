@@ -3,6 +3,7 @@
 # first version 01-Jul-2008, Joern Adamczewski gsi
 # added optional argument to be able to set a local DABCSYS, 18-Jul-2008, HE
 # modified for refactorized workspace 06-11-2008 JAM
+# removed xdaq, added some aliases    17-02-2009 JAM
 #
 echo
 echo "***********************************************************************"
@@ -88,22 +89,7 @@ alias dimBridge=$DIMDIR/$ODIR/DimBridge
 alias dimDid=$DIMDIR/$ODIR/did
 echo "*** enabled DIM at $DIMDIR ."
 
-#----------------------------------
-# the xdaq part:
 
-export XDAQ_PLATFORM=x86
-export PLATFORM=x86
-export XDAQ_OS=linux
-export XDAQ_ROOT=$VERSIONPATH/dabc/xdaq/xdaq/TriDAS
-export XDAQ_DOCUMENT_ROOT=$XDAQ_ROOT/daq
-export XDAQ_VERSION=314
-
-LD_LIBRARY_PATH=$XDAQ_ROOT/$PLATFORM/lib:$LD_LIBRARY_PATH
-export LD_LIBRARY_PATH
-PATH=$XDAQ_ROOT/$PLATFORM/bin:$PATH
-export PATH
-alias xdaq=$XDAQ_ROOT/$PLATFORM/bin/xdaq.exe
-echo "*** enabled XDAQ at $XDAQ_ROOT ."
 #----------------------------------
 # the dabc part:
 
@@ -119,14 +105,20 @@ export LD_LIBRARY_PATH=.:$DABCSYS/lib:$LD_LIBRARY_PATH
 # java gui part:
 #export CLASSPATH=.:$DABCSYS/gui/java/generic/:$DIMDIR/jdim/classes
 export CLASSPATH=.:$DABCSYS/gui/java/packages/xgui.jar:$DIMDIR/jdim/classes
-alias dabc="java -Xmx200m xgui.xGui"
-alias dabcmoni="java -Xmx200m xgui.xGui -moni"
+alias dabc="java -Xmx200m xgui.xGui -dabc"
+alias dabs="java -Xmx200m xgui.xGui -dabs"
+alias moni="java -Xmx200m xgui.xGui -moni"
+alias mbs="java -Xmx200m xgui.xGui -mbs"
+alias guru="java -Xmx200m xgui.xGui -guru"
 
 # Qt configurator frontend:
-. /usr/local/bin/qtlogin 303-04
-alias dabcConfigurator="$DABCSYS/gui/Qt/mbs-configurator/Configurator"
+#. /usr/local/bin/qtlogin 303-04
+#alias dabcConfigurator="$DABCSYS/gui/Qt/mbs-configurator/Configurator"
 
 echo "*** set DABC system directory to $DABCSYS ."
 echo "***********************************************************************"
-echo
-echo "*** Ready. Type dabc to start DABC gui"
+echo "*** Please set the DIM_DNS_NODE environment for the gui!" 
+echo "*** Type dabc to start pure DABC gui"
+echo "*** Type mbs  to start pure MBS gui"
+echo "*** Type dabs to start combined DABC/MBS gui"
+echo "*** Ready." 
