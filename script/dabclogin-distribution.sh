@@ -15,9 +15,9 @@ echo "*** dabclogin setting up Data Acquisition Backbone Core environments..."
 #export DIM_DNS_NODE=$HOSTNAME
 
 # for invoking script from outside, give absolute path here:
-export DABCSYS=/home/adamczew/dabc_install
+export DABCSYS=/opt/dabc_installations/dabc_1_0.00
 # set machine that runs the DIM name server here:
-export DIM_DNS_NODE=depc237
+export DIM_DNS_NODE=hostname.domain.de
 
 
 #----------------------------------
@@ -50,12 +50,17 @@ echo "*** enabled DIM at $DIMDIR ."
 #-----------------------------------
 # java gui part:
 export CLASSPATH=.:$DABCSYS/gui/java/packages/xgui.jar:$DIMDIR/jdim/classes
-alias dabc="java xgui.xGui"
-alias dabcmoni="java -Xmx200m xgui.xGui -moni"
+alias dabc="java -Xmx200m xgui.xGui -dabc"
+alias dabs="java -Xmx200m xgui.xGui -dabs"
+alias moni="java -Xmx200m xgui.xGui -moni"
+alias mbs="java -Xmx200m xgui.xGui -mbs"
+alias guru="java -Xmx200m xgui.xGui -guru"
+
 
 echo "*** set DABC system directory to $DABCSYS ."
 echo "***********************************************************************"
-echo
-echo "*** Ready."
-echo "*** Type dimDns to start DIM name server." 
-echo "*** Type dabc   to start DABC gui"
+echo "*** Type dabc to start pure DABC gui"
+echo "*** Type mbs  to start pure MBS gui"
+echo "*** Type dabs to start combined DABC/MBS gui"
+echo "*** Ready." 
+
