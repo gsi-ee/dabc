@@ -26,7 +26,12 @@ with the current version number like {\tt /opt/dabc/dabc\_1\_0.00}.
 This becomes the future \dabc~ system directory.
 
 \item {\bf Prepare the \dabc~ environment login script}:
-A template for this script can be found at {\tt scripts/dabclogin.sh}
+A template for this script can be found at  
+\begin{verbatim}
+scripts/dabclogin.sh
+\end{verbatim}
+
+
 \bbul
   \item Edit the {\tt DABCSYS} environment according to your local installation directory. 
   This is done in the following lines:
@@ -92,7 +97,10 @@ However, further preparations are necessary if \dabc~ shall be used with
 DIM control system and GUI.
 
 \item Open a dedicated shell on the machine that shall provide the DIM name server,
-e.~g.~ {\tt ssh nsnode.cluster.domain}
+e.~g.~ 
+\begin{verbatim}
+ssh nsnode.cluster.domain
+\end{verbatim}
 Then call 
 \begin{verbatim}
 . dabclogin.sh
@@ -133,6 +141,7 @@ There we place:
 \item Configuration files for GUI (XML).
 \ebul
 Of cause, one can use one directory for all.
+
 The setup files are application specific. Therefore they are described in
 the application sections.
 \subsection[DABC data simulator]{\dabc\ data simulator}
@@ -144,11 +153,144 @@ the application sections.
 
 
 \lsection[Installation of additional plug-ins]{user-plugins}{Installation of additional plug-ins}
-\index{TODO!Plugin installation}
-example abb here to explain what to do. 
+\index{DABC!Plug-in installation}
+Apart from the \dabc\ base package, there may be additional plug-in packages for
+specific use cases. Generally, these plug-in packages may consist of a
+\strong{plugins} part and an \strong{applications} part.
+The {\em plugins} part offers a library
+containing new components (like \class{Devices}, 
+\class{Transports}, or \class{Modules}). The {\em applications} part
+mostly contains the XML setup files to use these new components in the
+\dabc\ runtime environment; however, it 
+may contain an additonal library defining the \dabc\ \class{Application}
+class.
+
+As an example, we may consider a plug-in package for reading out data
+from specific PCIe hardware like the Active Buffer Board \ABB\ \cite{AbbDescription}.
+This package is separately available for download at \hyperref{http://dabc.gsi.de}{}{}{http://dabc.gsi.de}
+and described in detail in chapter \ref{prog-exa-pci-chapter} of the \dabc\ programmer's manual.
+
+There are principally two different ways to install such separate plug-in packages:
+Either within the general {\tt DABCSYS} directory as part of the central \dabc\ installation, as
+described in following section \ref{user-plugins-dabcsys}. Or at an independent location
+in a user directory, as described in section \ref{user-plugins-userdir}.
+
 
 \lsubsection[Add plug-in packages to \$DABCSYS]{user-plugins-dabcsys}{Add plug-in packages to \$DABCSYS}
-Describe here what to do if you have dabcsys installation priviliges.
+This is the recommended way to install a plug-in package if this package should be provided
+for all users of the \dabc\ installation. A typical scenario would be that an
+experimental group owns dedicated DAQ machines with system manager priviliges.
+In this case, the plugin-package may be installed under the same account as the
+central \dabc\ installation (probably, but not necessarily even the \keyw{root} account).
+The new plug-in package should be directly installed in the {\tt \$DABCSYS} directory
+then, with the following steps:
+
+\bnum
+\item Download the plug-in package tarball, e.~g.~ {\tt abb1.tar.gz}
+
+\item Call the {\tt dabclogin.sh} script of the \dabc\ installation (see section user-env)
+
+\item Copy the downloaded tarball to the {\tt \$DABCSYS} directory and unpack it there:
+\begin{verbatim}
+cp abb1.tar.gz $DABCSYS
+cd $DABCSYS
+tar zxvf abb1.tar.gz
+\end{verbatim} 
+This will extract the new components into the appropriate {\tt plugins} and
+{\tt applications} folders below {\tt \$DABCSYS}.
+
+\item Build the new components with the top Makefile of {\tt \$DABCSYS}:
+\begin{verbatim}
+make
+\end{verbatim} 
+
+\item To work with the new components, the configuration script(s) of the {\em applications} part should be copied
+to the personal workspace of each user (see section \ref{user-setup}).
+For the \ABB\ example, this is found at
+\begin{verbatim}
+$DABCSYS/applications/bnet-test/SetupBnetIB-ABB.xml
+\end{verbatim} 
+\enum
+
+
+
+
 
 \lsubsection[Plug-in packages in user directory]{user-plugins-userdir}{Plug-in packages in user directory}
-How to use plug-in packages outside dabcsys. modify the library load paths in example
+This is the case when \dabc\ is installed centrally at the fileserver
+of an institute, and several experimental groups shall use different plug-ins.
+It is also the recommended way if several users 
+want to modify the source code of a plug-in library independently without 
+affecting the general installation.
+
+
+The new plug-in package should be installed in a user directory
+then, with the following steps:
+
+\bnum
+\item Download the plug-in package tarball, e.~g.~ {\tt abb1.tar.gz}
+
+\item Create a directory to contain your additional \dabc\ plugin packages:
+\begin{verbatim}
+mkdir $HOME/mydabcpackages
+\end{verbatim} 
+
+\item Call the {\tt dabclogin.sh} script of the \dabc\ installation (see section user-env)
+
+\item Copy the downloaded tarball to the {\tt \$DABCSYS} directory and unpack it there:
+\begin{verbatim}
+cp abb1.tar.gz $HOME/mydabcpackages
+cd $HOME/mydabcpackages
+tar zxvf abb1.tar.gz
+\end{verbatim} 
+This will extract the new components into the appropriate {\tt plugins} and
+{\tt applications} folders below the working directory. 
+
+\item To build the {\em plugins} part, change to the appropriate package plugin
+directory and invoke the local Makefile, e.~g.~ for the \ABB\ example:
+
+\begin{verbatim}
+cd $HOME/mydabcpackages/plugins/abb
+make
+\end{verbatim} 
+This will create the corresponding plug-in library in a subfolder denoted by the
+computer architecture, e.~g.~:
+\begin{verbatim}
+$HOME/mydabcpackages/plugins/abb/x86_64/lib/libDabcAbb.so
+\end{verbatim} 
+
+
+\item For some plug-ins, there may be also small test executables with different Makefiles in subfolder {\tt test}. These can be optionally build and executed independent of the
+\dabc\ runtime environment.
+
+\item The \dabc\ working directory for the new plug-in will be located in
+subfolder 
+\begin{verbatim}
+applications/plugin-name 
+\end{verbatim}
+For the \ABB\ example, the application
+will set up a builder network with optional Active Buffer Board readouts, so this
+is at
+\begin{verbatim}
+$HOME/mydabcpackages/applications/bnet-test
+\end{verbatim}
+As in this example, there may be an additional library to be build containing the actual
+\class{Application} class. This is done by invoking the Makefile within the directory:
+\begin{verbatim}
+cd $HOME/mydabcpackages/applications/bnet-test
+make
+\end{verbatim}
+Here the application library is produced directly on top of the working directory: 
+\begin{verbatim}
+$HOME/mydabcpackages/applications/bnet-test/libBnetTest.so
+\end{verbatim}
+
+\item The actual locations of the newly build libraries (plugins, and optionally applications part) has to be edited in the 
+\keyw{<lib>} tag of the corresponding \dabc\ setup-file (here: {\tt SetupBnetIB-ABB.xml}).
+The default set-up examples in the plug-in packages assume that the library is located
+at {\tt \$DABCSYS/lib}, as it is in the alternative installation case as described in
+section \ref{user-plugins-dabcsys}.
+
+\enum
+
+
