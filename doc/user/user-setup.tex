@@ -134,16 +134,22 @@ working directory to keep all relevant files:
 \item Setup files for \dabc\ (XML).
 \item Log files (text).
 \ebul
-The GUI may run on a different directory with no access to the \dabc\ working directory.
-There we place:
+The GUI may run on a machine with no access to the \dabc\ working directory,
+e.~g.~ a windows PC.
+Therefore the GUI setup files may use a different
+working directory, containing: 
 \bbul
 \item Data files for startup panels (XML).
 \item Configuration files for GUI (XML).
 \ebul
-Of cause, one can use one directory for all.
+These configuration files for the GUI are described in more detail 
+in the GUI chapter below.
+Of course both setups, for the \dabc\ application and the GUI, can be
+put into one working directory if the GUI has access to it.
 
-The setup files are application specific. Therefore they are described in
-the application sections.
+The \dabc\  setup files are application specific. Therefore they are described in
+the following sections which cover typical example applications.
+
 \subsection[DABC data simulator]{\dabc\ data simulator}
 %\paref{user:Bnet}
 \subsection[DABC MBS event server]{\dabc\ \mbs\ event server}
