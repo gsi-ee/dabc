@@ -14,7 +14,7 @@ MBSDIRI         = $(MBSDIR)/mbs
 MBSDIRS         = $(MBSDIR)/src
 MBSAPIDIR       = $(MBSDIR)/evapi
 MBSFAPIDIR      = $(MBSDIR)/fileapi
-MBSTESTDIR      = $(MBSDIR)/test
+#MBSTESTDIR      = $(MBSDIR)/test
 
 DABCMBS_LIBNAME  = $(LIB_PREFIX)DabcMbs
 DABCMBS_LIB      = $(TGTDLLPATH)/$(DABCMBS_LIBNAME).$(DllSuf)
@@ -53,7 +53,6 @@ MBSFAPI_DISTR   = $(MBSFAPI_CS) $(MBSFAPI_CH) \
 
 ALLHDRS           += $(patsubst $(MBSDIR)/%.h, $(DABCINCPATH)/%.h, $(MBS_H))
 ALLDEPENDENC      += $(MBS_D) $(MBSAPI_CD) $(MBSFAPI_CD)
-APPLICATIONS_DIRS += $(MBSTESTDIR)
 
 libs:: $(DABCMBS_LIB) $(MBSFAPI_PACKAGE)
 

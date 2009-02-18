@@ -19,6 +19,26 @@ include controls/simple/Makefile.mk
 
 -include controls/dimcontrol/Makefile.mk
 
+DABC_PLUGINS = $(wildcard plugins/*)
+
+DABC_PLUGINS += $(wildcard applications/*)
+
+-include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
+
+-include gui/java/Makefile.mk
+
+#-include gui/Qt/Makefile.mk
+
+-include doc/Makefile.mk
+
+libs::
+
+clean::
+
+
+
+
+
 # following lines define the packaging:
 PACKAGE_DIR = ./packages
 DABCPACK_VERS     = dabc_$(MAJOR)_$(MINOR)
@@ -28,21 +48,19 @@ DABCTAR_NAME      = dabc$(MAJOR).tar
 ROCTAR_NAME      = roc$(MAJOR).tar
 ABBTAR_NAME      = abb$(MAJOR).tar
 
+
 DISTR_DIR  = ~/dabc_temp_packaging
 DABCDISTR_DIR  = $(DISTR_DIR)/$(DABCPACK_VERS)
 ROCDISTR_DIR  = $(DISTR_DIR)/$(ROCPACK_VERS)
 ABBDISTR_DIR  = $(DISTR_DIR)/$(ABBPACK_VERS)
 
-DABC_PLUGINS_PACK = plugins/mbs plugins/bnet plugins/bnet-mbs plugins/verbs plugins/root
+DABC_PLUGINS_PACK = plugins/mbs plugins/bnet plugins/bnet-mbs plugins/verbs
 DABC_APPLICATIONS_PACK = applications/mbs applications/bnet-mbs applications/bnet-test
 DABC_SCRIPTS_PACK = script/dabclogin-distribution.sh script/dabcstartup.sh script/dabcshutdown.sh script/gdbcmd.txt
 
 DABC_ROC_PACK = plugins/roc applications/roc 
 DABC_ABB_PACK = plugins/abb applications/bnet-test 
 
-DABC_PLUGINS = $(wildcard plugins/*)
-
-DABC_PLUGINS += $(wildcard applications/*)
 
 # following is for adding header to sources (done once)
 DABC_HEADERS = $(wildcard base/*/*.h)
@@ -57,21 +75,6 @@ DABC_IMPS += $(wildcard applications/*/*.cxx)
 
 DABC_JAVAS = $(wildcard gui/java/generic/src/*.java)
 
-
--include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
-
--include gui/java/Makefile.mk
-
--include gui/Qt/Makefile.mk
-
--include doc/Makefile.mk
-
-# APPLICATIONS_DIRS =
-
-libs::
-
-clean::
-	
 package:: clean
 	@echo "Creating package $(DABCTAR_NAME) ..."
 	tar cf $(DABCTAR_NAME) README.txt LICENSE.txt RELEASENOTES.txt Makefile base/ build/ config/ controls/simple controls/dimcontrol dim  gui/java $(DABC_PLUGINS_PACK) $(DABC_APPLICATIONS_PACK) $(DABC_SCRIPTS_PACK) --exclude=.svn --exclude=*.bak 
