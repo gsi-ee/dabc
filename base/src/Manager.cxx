@@ -285,6 +285,8 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    // create state parameter, inherited class should call init to see it
    CreateParStr(stParName, stHalted);
 
+   ActivateTimeout(1.);
+
    fParsQueueBlocked = false;
 }
 
@@ -516,7 +518,7 @@ void dabc::Manager::ProcessParameterEvent()
 
    if (rec.event == parDestroy) delete rec.par;
 
-   if (activate) ActivateTimeout(interval);
+//   if (activate) ActivateTimeout(interval);
 }
 
 void dabc::Manager::ProcessEvent(EventId evnt)
@@ -2077,12 +2079,14 @@ void dabc::Manager::RunManagerMainLoop()
 
       // to be sure that timeout processing is active
       // only via timeout one should be able to stop processing of main loop
-      bool activate = false;
-      {
-         LockGuard lock(fMgrMutex);
-         activate = (fTimedPars.size()==0);
-      }
-      if (activate) ActivateTimeout(1.);
+//      bool activate = false;
+//      {
+//         LockGuard lock(fMgrMutex);
+//         activate = (fTimedPars.size()==0);
+//      }
+//      if (activate) ActivateTimeout(1.);
+
+      ActivateTimeout(1.);
 
       thrd->MainLoop();
 
