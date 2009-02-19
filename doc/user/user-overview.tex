@@ -1,21 +1,102 @@
 [user/user-overview.tex]
-\section{User manual overview}
-In the following sections we describe the usage on \dabc\ applications.
-\subsection{Download and installation}
-This starts with the installation described in section \paref{user-install}.
-\subsection{Application working directory}
-We assume that all the necessary components of the application are ready.
-All plug-ins are implemented. Then we need mainly the setup files.
-These are typically in a working directory. More in section \paref{user-setup}.
-\subsection{Operation}
-Once we have the working directory setup we can begin.
-In the GUI part we describe the general functionality of the GUI
-which is common for most applications.
 
-More specific functionality is described in the sections of the applications
-(as far as delivered with \dabc).
+\lsection[About DABC]{user-overview-about}{About \dabc\ }
+%Here general philosophy, mabe take part of introduction manual
+The Data Acquisition Backbone Core \dabc\ is a
+Data Acquisition (DAQ) framework with modular components for dataflow on multiple nodes.
+It provides a C++ runtime environment with all basic services, such as:
+threads and event handling; memory management; command execution; 
+configuration; logging; and error handling.
+User written DAQ applications can be run within this environment by
+means of a plug-in mechanism.
 
-As examples we take sometimes the \dabc\ simulator plug-in which runs out of the box.
+\dabc\ contains the \strong{BNET} subframework with additional interfaces 
+to set-up distributed event builder networks. As transport layers for such
+networks, {\em tcp/ip} and {\em InfiniBand/verbs} are supported.
 
-External application specific GUI add-ons cannot be described here.
+\dabc\ supports by default the data formats and readout connections of GSI's standard DAQ system \mbs\ (Multi Branch System). It may also write datafiles with the 
+\mbs\ {\tt *.lmd} format, and it may emulate \mbs\ data server sockets, such as
+{\em stream} or {\em transport} servers.
+
+The \dabc\ control system features a finite state machine
+logic and parameters for monitoring and  configuration. This is also
+designed as a plug-in to the base framework. The current implementation is based
+on the DIM protocol \cite{DIM}.
+A generic Java GUI is provided to operate this standard DIM control system.
+This GUI may also control \mbs\ systems which support the DIM communication.
+It is extendable by user written components. 
+
+
+
+
+\lsection[Outline of this manual]{user-overview-outline}{Outline of this manual}
+This \dabc\ User Manual contains all information that is necessary to
+install and use the \dabc\ framework.
+
+Chapter~\ref{user-setup-chapter} describes how to install the
+\dabc\ packages on any linux machine, and how to set up the working
+environment. Additionally, some typical use cases and their configuration
+files are shown. 
+The following chapters then give more detailed explanations how to operate
+in different modes with the \dabc\ Java GUI:
+
+Chapter~\ref{user-gui-chapter}
+covers the general functionality of the GUI
+which is common for most applications. Especially, this 
+is mostly sufficient
+to control a DAQ cluster purely with one or several \dabc\ nodes.
+
+Chapter~\ref{user-gui-mbs-chapter} describes the \dabc\ GUI 
+in a mode to control a pure \mbs data acquisition system without 
+a native \dabc\ node.
+
+Finally, the GUI mode for a mixed DAQ cluster, both with \dabc\ and \mbs\ nodes, is
+treated in Chapter~\ref{user-app-mbs-chapter}.
+
+However, the scope of the \dabc\ User Manual does not contain 
+detailed descriptions of the \dabc\ framework architecture, 
+the software mechanisms, and the example programs. 
+These subjects are treated thouroughly
+in the \dabc\ Programmer Manual.
+
+\lsection[Release Notes]{user-overview-release}{Release Notes}
+
+\subsection{Version 1.0.0 (March 2009)}
+These are the features of the first official release:
+\bnum
+\item A Data Acquisition framework in C++ language for linux platforms
+   with modular components for dataflow on multiple nodes.
+   
+\item Runtime environment with basic services for:
+   threads, event handling, memory management, command execution, 
+   configuration, logging, error handling
+
+\item Plug-in mechanism for user defined DAQ applications
+
+\item Plug-in mechanism for a control system. Features a finite state machine
+   logic and parameters for monitoring and  configuration.
+   The default implementation is based
+   on the DIM protocol (http://dim.web.cern.ch/dim)
+
+\item Java GUI to operate the standard DIM control system of DABC/MBS. 
+   Fully generic evaluating DABC process variables, but extendable
+   by user written components.
+
+\item Contains a sub-framework to set-up distributed event builder networks (BNET) 
+ 
+\item Supports tcp/ip and InfiniBand/verbs networks for data transport
+
+\item Supports formats and readout of GSI's standard DAQ system MBS
+   (Multi Branch System). May also write data into MBS listmode format,
+   and may emulate MBS socket data servers.
+   Additionally, MBS systems can be controlled by the DABC GUI.  
+\enum
+
+% 
+% More specific functionality is described in the sections of the applications
+% (as far as delivered with \dabc).
+% 
+% As examples we take sometimes the \dabc\ simulator plug-in which runs out of the box.
+% 
+% External application specific GUI add-ons cannot be described here.
 

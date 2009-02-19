@@ -1,4 +1,5 @@
 [user/user-setup.tex]
+\label{user-setup-chapter}
 \lsection[Installing DABC]{user-install}{Installing \dabc}
 \index{DABC!Installation}
 When working at the gsi linux cluster, the \dabc~ framework is already installed and will
@@ -285,7 +286,6 @@ the \keyw{Running} state.
 
 
 \lsubsection[DABC event builder for MBS]{user-setup-mbsbuilder}{\dabc\ event builder for \mbs\ }
-\index{TODO!Mbs eventbuilder example with application instead run func}
 In this case there is still one \dabc\ node which reads data from several
 \mbs\ nodes via {\em Transport} socket connections, and combines them
 into one \mbs\ output event. A simple setup looks like this:
@@ -353,6 +353,17 @@ A full description is in section
 The more elaborate setup files for this \mbs\ use case can be found 
 in directory
 \verba{\$DABCSYS/applications/mbs}
+
+This example can be started and controlled together with the \mbs\ node
+with the \dabc\ GUI, as described in section\paref{user:mbsapp}. 
+The name of the \dabc\ builder \keyw{<Context>} node and
+the setup file name must be specified in the 
+Combined {\em DabcMbsController} panel of the GUI, as shown in
+Fig. \paref{fig:user-gui-pan-dabcmbs}. Here also the \mbs\
+master node running the prompter is set. Of course the \mbs\ setup
+must match the \keyw{<MbsServerName>} definitions 
+of the \dabc\ configuration file.
+
 
 \lsubsection[DABC eventbuilder network (BNET)]{user-setup-bnet}{\dabc\ eventbuilder network (BNET)}
 The full functionality of \dabc\ is shown in the case that the DAQ uses
@@ -431,7 +442,7 @@ Such BNET setup is best started by means of the \dabc\ GUI.
 The name of the controller \keyw{<Context>} node and
 the setup file name must be specified in the control panel of the GUI
 (see section \paref{user:controlDabc}). Then all nodes can be started just by the
-"Launch" button \icon{connprm}. The configuration and run control of the nodes is done by the state machine buttons of the control panel, as described in section \paref{user:controlDabc}.
+"Launch" button \icon{connprm}. The configuration and run control of the nodes is done by the state machine buttons of the control panel.
 
 
 \lsubsection[DABC eventbuilder network (BNET) with MBS]{user-setup-bnetmbs}{\dabc\ eventbuilder network (BNET) with \mbs\ }
