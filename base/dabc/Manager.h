@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -332,12 +332,8 @@ namespace dabc {
            * error is detected (false) */
          bool DoStateTransition(const char* state_transition_cmd);
 
-
-
-
          /** Returns current state name */
          std::string CurrentState() const;
-
 
          // -------------- generic folder structure of manager
 

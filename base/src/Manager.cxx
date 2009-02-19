@@ -1898,11 +1898,16 @@ double dabc::Manager::ProcessTimeout(double last_diff)
 
    LockGuard lock(fMgrMutex);
 
+   Parameter* par = FindPar(stParName);
+   if (par!=0) par->Changed();
+
    for (unsigned n=0;n<fTimedPars.size();n++)
       if (fTimedPars[n]!=0)
          ((Parameter*) fTimedPars[n])->ProcessTimeout(last_diff);
 
-   return (fTimedPars.size()==0 && fMgrNormalThrd) ? -1. : 1.;
+   // return (fTimedPars.size()==0 && fMgrNormalThrd) ? -1. : 1.;
+
+   return 1.;
 }
 
 void dabc::Manager::AddFactory(Factory* factory)
