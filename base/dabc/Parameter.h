@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -249,13 +249,16 @@ namespace dabc {
 
    class InfoParameter : public Parameter {
       public:
-         InfoParameter(WorkingProcessor* parent, const char* name, int verbose = 0);
+         InfoParameter(WorkingProcessor* parent, const char* name, int verbose = 0, const char* color = 0);
 
          virtual EParamKind Kind() const { return parInfo; }
 
          InfoRec* GetInfoRec() { return &fRecord; }
 
          virtual void* GetPtr() { return &fRecord; }
+
+         virtual bool GetValue(std::string &value) const;
+         virtual bool SetValue(const std::string &value);
 
       protected:
 

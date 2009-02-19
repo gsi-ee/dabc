@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -509,13 +509,31 @@ bool dabc::StatusParameter::SetStatus(const char* status, const char* color)
 
 // ___________________________________________________
 
-dabc::InfoParameter::InfoParameter(WorkingProcessor* parent, const char* name, int verbose) :
+dabc::InfoParameter::InfoParameter(WorkingProcessor* parent, const char* name, int verbose, const char* color) :
    Parameter(parent, name)
 {
    fRecord.verbose = verbose;
-   strcpy(fRecord.color,"Cyan");
+   strncpy(fRecord.color, (color ? color : "Cyan"), sizeof(fRecord.color));
    strcpy(fRecord.info, "None"); // info message
    Ready();
+}
+
+bool dabc::InfoParameter::GetValue(std::string &value) const
+{
+   LockGuard lock(fValueMutex);
+   value = fRecord.info;
+   return true;
+}
+
+bool dabc::InfoParameter::SetValue(const std::string &value)
+{
+   {
+      LockGuard lock(fValueMutex);
+      if (fFixed) return false;
+      strncpy(fRecord.info, value.c_str(), sizeof(fRecord.info));
+   }
+   Changed();
+   return true;
 }
 
 // ___________________________________________________

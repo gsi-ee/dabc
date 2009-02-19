@@ -469,7 +469,7 @@ namespace dabc {
          virtual bool Unsubscribe(Parameter* par) { return false; }
 
          /** Provide log message to control system to dysplay on GUI */
-         virtual void LogMessage(const char*) {}
+         virtual void LogMessage(int, const char*) {}
 
          // -------------------------- misc functions ---------------
 
