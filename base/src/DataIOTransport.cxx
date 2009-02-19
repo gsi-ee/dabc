@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -18,14 +18,14 @@ dabc::DataIOTransport::DataIOTransport(Device* dev, Port* port, DataInput* inp, 
    fInput(inp),
    fOutput(out)
 {
-DOUT3(("ddddddddddd dabc::DataIOTransport %p CONSTRUCTOR",this));
+   DOUT3(("dabc::DataIOTransport %p CONSTRUCTOR", this));
 }
 
 dabc::DataIOTransport::~DataIOTransport()
 {
- DOUT3(("ddddddddddd dabc::DataIOTransport %p DESTRUCTOR",this));
- CloseInput();
- CloseOutput();
+   DOUT3(("dabc::DataIOTransport %p DESTRUCTOR", this));
+   CloseInput();
+   CloseOutput();
 }
 
 unsigned dabc::DataIOTransport::Read_Size()
@@ -60,14 +60,14 @@ void dabc::DataIOTransport::FlushOutput()
 
 void dabc::DataIOTransport::CloseInput()
 {
-   DOUT3(("dabc::DataIOTransport::CloseInput() deletes input "));
+   DOUT3(("dabc::DataIOTransport::CloseInput() %p deletes input", this));
    delete fInput;
    fInput = 0;
 }
 
 void dabc::DataIOTransport::CloseOutput()
 {
-   DOUT3(("dabc::DataIOTransport::CloseOutput() deletes output "));
+   DOUT3(("dabc::DataIOTransport::CloseOutput() %p deletes output", this));
    delete fOutput;
    fOutput = 0;
 }

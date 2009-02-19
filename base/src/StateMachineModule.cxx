@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -27,9 +27,17 @@ int dabc::StateMachineModule::ExecuteCommand(Command* cmd)
 
       const char* stcmd = cmd->GetStr("Cmd");
 
-      if (!dabc::mgr()->IsStateTransitionAllowed(stcmd, true)) return cmd_false;
+
+      std::string tgtstate = dabc::mgr()->TargetStateName(stcmd);
 
       std::string prev_state = dabc::mgr()->CurrentState();
+
+      if (prev_state == tgtstate) {
+         DOUT1(("SM Command %s leads to current state, do nothing", stcmd));
+         return cmd_true;
+      }
+
+      if (!dabc::mgr()->IsStateTransitionAllowed(stcmd, true)) return cmd_false;
 
       bool res = dabc::mgr()->DoStateTransition(stcmd);
 
