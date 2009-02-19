@@ -8,8 +8,10 @@ For the \dabc\ side setup files must be provided.
 When we want to use \dabc\ nodes as event builders, we need a different
 setup on the \mbs\ side. We assume that we have more than one
 \mbs\ node. Such multi-node system is controlled by an \mbs\ prompter running on one node.
-The setup has to be changed such that all nodes run as if they are stand alone.
-That means that each node runs the \keyw{Readout} - \keyw{Collector} - \keyw{Transport}
+The setup has to be changed such that all nodes run as if they are stand alone
+(this is done typically by setting \keyw{COL\_MODE} to 0 in the usf setup file).
+That means that each node runs the \keyw{Readout} - \keyw{Collector} - 
+\keyw{Transport} - \keyw{Daq\_rate}
 chain. The \dabc\ event builders connect to these transports.
 The \mbs\ buffer size should be set to the stream size and the number of buffers per
 stream must be set to one.

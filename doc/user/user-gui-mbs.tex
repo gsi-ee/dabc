@@ -15,13 +15,14 @@ started as last task (this is probably the case already).
 This task calculates the rates. The GUI waits for this task after execution of
 the startup file. Because \mbs\ has no states there is no other way to
 know when the startup has finished.
-Of cause, the \mbs\ itself must have been build with the DIM option (since version v5.1).
+Of cause, the \mbs\ itself must have been built with the DIM option (since version v5.1).
 Central log file is written as usual.
 Optionally one can provide a text file with specifications which parameters
 shall appear on screen (see \paref{user:MbsDimconfig}).
 
 For the standard \mbs\ control one needs no \dabc\ installation.
 The GUI jar file is sufficient. DIM must be installed.
+See \paref{user-dimsetup} for preparations.
 
 \lsubsection[MBS control panel]{user:controlMbs}{\mbs\ control panel}
 \figpng{user-gui-pan-mbs}{MBS controller.}{htb}{0}{0.6}
@@ -29,6 +30,9 @@ Fig. \paref{fig:user-gui-pan-mbs} shows the panel to be used to control
 a standard \mbs.
 The values are restored from file {\tt MbsControl.xml} (default, may be saved to other file,
 see \paref{user:guiSaveRestore}).
+The file {\tt MbsControl.xml} can be created easily in the GUI itself
+by filling the input fields of the control panel and save.
+
 {\small \begin{verbatim}
 <?xml version="1.0" encoding="utf-8"?>
 <MbsLaunch>
@@ -41,6 +45,7 @@ see \paref{user:guiSaveRestore}).
 <MbsServers prompt="%Number of needed DIM servers%" value="3" />
 </MbsLaunch>
 \end{verbatim}
+}
 \bdes
 \item[MbsMaster]: Lynx node where the \mbs\ prompter is started.
 \item[MbsUserPath]: \mbs\ user working directory. The GUI need not to have
@@ -189,8 +194,6 @@ parameters which are in this file are optional.
 ## The value numbers are the maximum values for rate meters
 ## Colons only if value is specified!
 ## Node names must be uppercase, * wildcards all
-## RunMode shows if MBS is set into DABC event builder mode 
-## and client is connected.
 
 ##========= All nodes:
 ##---- Rates:
@@ -209,18 +212,16 @@ parameters which are in this file are optional.
 * BuildingMode
 # ++ Current eventbuilding running or suspended:
 * EventBuilding
-# ++ Running mode, stand alone or DABC:
-* RunMode
 # ++ Shows spill signal:
 #* SpillOn
 # ++ Shows if file is open, typically only on one node (transport)
 #* FileOpen
+# ++ Shows if node is trigger master
 #* Trigger
 
 ##======== Node XXX
 #XXX EventRate   : 10000.
 #XXX DataRateKb  : 16000.
-#XXX RunMode
 #XXX FileOpen
 #XXX FileFilled  :   100.
 #XXX SpillOn

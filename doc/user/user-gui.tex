@@ -11,12 +11,13 @@ The standard part builds a set of panels (windows) according the parameters
 the DIM servers offer. Only services from one single DIM name server
 (node name specified as shell variable \keyw{DIM\_DNS\_NODE})
 defining a name space can be processed.
+See \paref{user-dimsetup} for preparations.
 
 The GUI needs no file access to the \dabc\ working directory.
 However, user must have \keyw{ssh} (or \keyw{rsh}) access to
 the \dabc\ (or \mbs) master node.
 Currently the GUI must run under the same account as the \dabc.
-In spectator mode (no commands) the GUI may run under different account.
+In monitoring mode (no commands) the GUI may run under different account.
 Master node must have remote access to all worker nodes.
 The user's \keyw{ssh} settings must enable remote access without
 prompts.
@@ -25,20 +26,6 @@ The layout of the GUI can be adjusted to individual needs.
 It is strongly recommended to save these settings to see the same layout
 after a restart of the GUI. The GUI can be restarted any time.
 \dabc\ and \mbs\ systems continue without GUI.
-
-The GUI is packed in a JAR file \verba{xgui.jar} which can be moved everywhere. The file must be in the
-\keyw{CLASSPATH} paths together with the \verba{\$DIMDIR/jdim/classes} path.
-The GUI is invoked by \keyw{java -Xmx200m xgui.xGui}.
-For standard installations short cuts are provided like:
-\bdes
-\item[dabc]: Start standard \dabc\ GUI with \dabc\ control panel.
-\item[mbs]: Start GUI with \mbs\ control panel only. 
-This is for controlling a stand-alone running \mbs. 
-\item[dabs]: Start GUI with combined \mbs\ and \dabc\ control panel.
-This is for using \dabc\ as event builder with \mbs\ front-ends.
-\item[moni]: Start GUI without active elements. Works then as monitor.
-\item[guru]: Starts GUI with all buttons for all functions.
-\edes
 
 \section{GUI Panels}
 \figpng{user-gui-main-buttons}{Main toolbar buttons.}{htb}{0}{0.8}
@@ -110,6 +97,7 @@ see \paref{user:guiSaveRestore}).
 <DabcServers prompt="%Number of needed DIM servers%" value="5" />
 </DabcLaunch>
 \end{verbatim}
+}
 \bdes
 \item[DabcMaster:] Node where the master controller shall be started.
 Can be one of the worker nodes.
