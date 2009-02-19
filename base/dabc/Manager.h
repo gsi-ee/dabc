@@ -468,6 +468,9 @@ namespace dabc {
          virtual bool Subscribe(Parameter* par, int remnode, const char* remname) { return false; }
          virtual bool Unsubscribe(Parameter* par) { return false; }
 
+         /** Provide log message to control system to dysplay on GUI */
+         virtual void LogMessage(const char*) {}
+
          // -------------------------- misc functions ---------------
 
          /** Displays on std output list of running threads and modules */
