@@ -113,7 +113,7 @@ of util and transport after configuration.
 \item[FileOpen/State] \keyw{File open} | \keyw{File closed}
 \item[RunMode/State] \keyw{DABC connected} | \keyw{MBS to DABC} | \keyw{Transport client} | \keyw{MBS standalone}
 \item[SpillOn/State] \keyw{Spill ON} | \keyw{Spill OFF}
-\item[Trigger/State] \keyw{Master} | \keyw{Slave}
+\item[TriggerMode/State] \keyw{Master} | \keyw{Slave}
 \edes
 \subsection[MBS rates]{\mbs\ rates}
 \bdes
@@ -121,10 +121,14 @@ of util and transport after configuration.
 \item[MSG/DataTrendKb] KBytes/s as trend
 \item[MSG/EventRate] Events/s
 \item[MSG/EventTrend] Events/s as trend
+\item[MSG/EvSizeRateB] Event size sample in bytes
+\item[MSG/EvSizeTrendB] Event size sample in bytes
 \item[MSG/StreamRateKb] Stream server Kbyte/s
 \item[MSG/StreamTrendKb] Stream server Kbyte/s as trend
 \item[MSG/FileFilled] File filled in percent
 \item[MSG/StreamsFull] Number of full streams in percent
+\item[MSG/TriggerRate] Trigger/s of readout tasks
+\item[MSG/TriggernnRate] (nn=01...15) Trigger/s type nn of readout tasks
 \edes
 \subsection[MBS infos]{\mbs\ infos}
 Shown in info window.
@@ -136,29 +140,10 @@ Shown in info window.
 \item[PRM/NodeList] List of nodes (master node only).
 \edes
 \subsection[MBS tasks]{\mbs\ tasks}
-Task list is shown in info window (name slightly different).
+Task list is shown in info window (name slightly different):
 
- Dispatch 
- MsgLog 
- ReadMeb 
- Collector 
- Transport 
- EventServ 
- Util 
- ReadCam 
- EsoneServ 
- StreamServ 
- Histogram 
- Prompt 
- Rate 
- SMI 
- Sender 
- Receiver 
- AsynchReceiver 
- Rising 
- TimeOrder 
- VmeServ 
-
+ Dispatch  Msg\_Log  Read\_Meb  Collector  Transport  Event\_Serv  Util  Read\_Cam  Esone\_Serv  Stream\_Serv 
+ Histogram  Prompt  Rate  SMI  Sender  Receiver  Asynch\_Receiver  Rising  Time\_Order  Vme\_Serv 
 \subsection[MBS text]{\mbs\ text}
 \bdes
 \item[MSG/GuiNode] Node where GUI runs
@@ -180,13 +165,15 @@ Task list is shown in info window (name slightly different).
 \item[MSG/StreamMbytes]
 \item[MSG/StreamScale]
 \item[MSG/StreamSync]
+\item[MSG/UserVal_nn] (nn=00...15) These values can be set in the user readout function.
+\item[MSG/TriggernnCount] (nn=01...15) Trigger counts type nn of readout tasks.
 \edes
 \section{Working directories}
 \lsubsection[MBS configuration of DIM]{user:MbsDimconfig}{\mbs\ configuration of DIM}
 Optional file \verba{.guirc} in the \mbs\ working directory
 specifies which rate meters and states shall appear
 in the GUI. Upper limits of the rate meters can be specified.
-This file can be copied from \$MBSROOT/set. Only the
+This file can be copied from \verba{\$MBSROOT/set}. Only the
 parameters which are in this file are optional.
 {\small {\begin{verbatim}
 ## This file controls the rate meter and state appearance.
@@ -198,14 +185,19 @@ parameters which are in this file are optional.
 ##========= All nodes:
 ##---- Rates:
 * EventRate     : 10000.
-* EventTrend    : 10000.
+#* EventTrend    : 10000.
 * DataRateKb    : 16000.
-* DataTrendKb   : 16000.
-* StreamRateKb  : 16000.
-* StreamTrendKb : 16000.
+#* DataTrendKb   : 16000.
+#* StreamRateKb  : 16000.
+#* StreamTrendKb : 16000.
+#* EvSizeRateB   : 128.
+#* EvSizeTrendB  : 128.
 # ++ File filling status in percent, typically only on one node (transport)
 #* FileFilled   :   100.
-* StreamsFull   :   100.
+#* StreamsFull   :   100.
+#* TriggerRate : 10000.
+# ++ Trigger rates for the individual triggers: 01...15
+#* Trigger01Rate : 10000.
 
 ##---- States:
 # ++ Delayed or immediate event building:
@@ -216,10 +208,17 @@ parameters which are in this file are optional.
 #* SpillOn
 # ++ Shows if file is open, typically only on one node (transport)
 #* FileOpen
-# ++ Shows if node is trigger master
-#* Trigger
+# ++ Show trigger master
+#* TriggerMode
 
-##======== Node XXX
+##---- User integers from daqst, 00...15
+# can be set by f_ut_set_daqst_user(index,value);
+#* UserVal_00
+#* TriggerCount
+# ++ Trigger counts for the individual triggers: 01...15
+#* Trigger01Count
+
+##======== Node XXX (uppercase)
 #XXX EventRate   : 10000.
 #XXX DataRateKb  : 16000.
 #XXX FileOpen
@@ -227,6 +226,7 @@ parameters which are in this file are optional.
 #XXX SpillOn
 #XXX EventTrend  : 10000.
 #XXX DataTrendKb : 16000.
+#XXX TriggerMode
 \end{verbatim}
 }
 
