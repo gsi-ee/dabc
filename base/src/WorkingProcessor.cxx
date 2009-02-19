@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -317,6 +317,12 @@ dabc::Parameter* dabc::WorkingProcessor::CreateParBool(const char* name, bool in
 {
    return CreateParStr(name, initvalue ? xmlTrueValue : xmlFalseValue, flags);
 }
+
+dabc::Parameter* dabc::WorkingProcessor::CreateParInfo(const char* name, int verbose, const char* color)
+{
+   return new InfoParameter(this, name, verbose, color);
+}
+
 
 void dabc::WorkingProcessor::DestroyAllPars()
 {

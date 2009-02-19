@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -64,6 +64,8 @@ bnet::WorkerApplication::WorkerApplication(const char* classname) :
    CreateParStr(CfgReadoutPool, ReadoutPoolName);
 
    SetParDflts();
+
+   CreateParInfo("Info", 0, "Green");
 
    dabc::CommandDefinition* def = NewCmdDef("StartFile");
    def->AddArgument("FileName", dabc::argString, true);
@@ -199,6 +201,11 @@ int bnet::WorkerApplication::ExecuteCommand(dabc::Command* cmd)
    if (cmd->IsName("StartFile") || cmd->IsName("StopFile")) {
       SetParStr(xmlStoragePar, cmd->GetStr("FileName",""));
 
+      if (cmd->IsName("StartFile"))
+         SetParStr("Info", dabc::format("Starting file writing: %s", cmd->GetStr("FileName","")));
+      else
+         SetParStr("Info", "Stopping file writing");
+
       if (IsReceiver()) {
          const char* outportname = IsFilter() ? "Filter/Output" : "Builder/Output";
          cmd_res = cmd_bool(CreateStorage(outportname));
@@ -237,6 +244,8 @@ bool bnet::WorkerApplication::CreateAppModules()
 {
 //   LockUnlockPars(true);
 
+   SetParStr("Info", "Create worker modules");
+
    DOUT1(("CreateAppModules starts dev = %s", GetParStr(CfgNetDevice).c_str()));
 
    SetParStr(bnet::CfgReadoutPool, CombinerModus()==0 ? bnet::ReadoutPoolName : bnet::TransportPoolName);
@@ -245,7 +254,6 @@ bool bnet::WorkerApplication::CreateAppModules()
 
    dabc::BufferSize_t size = 0;
    dabc::BufferNum_t num = 0;
-
 
    if (IsSender() && (CombinerModus()==0)) {
       size = GetParInt(xmlReadoutBuffer, 1024);

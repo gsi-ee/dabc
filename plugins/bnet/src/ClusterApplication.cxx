@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -118,6 +118,8 @@ bnet::ClusterApplication::ClusterApplication() :
    CreateParInt(xmlCtrlPoolSize,      2*0x100000);
    CreateParInt(xmlTransportBuffer,       8*1024);
    CreateParBool(xmlIsRunning, false);
+
+   CreateParInfo("Info", 0, "Green");
 
    dabc::CommandDefinition* def = NewCmdDef("StartFiles");
    def->AddArgument("FileBase", dabc::argString, true);
@@ -244,6 +246,11 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
       }
    } else
    if (cmd->IsName("StartFiles") || cmd->IsName("StopFiles")) {
+
+      if (cmd->IsName("StartFiles"))
+         SetParStr("Info", dabc::format("Start files %s on all builder nodes", cmd->GetStr("FileBase", "")));
+      else
+         SetParStr("Info", "Stopping files on all builder nodes");
 
       dabc::CommandsSet* set = 0;
 
@@ -636,6 +643,8 @@ bool bnet::ClusterApplication::DoStateTransition(const char* state_trans_cmd)
       dabc::LockGuard lock(fSMMutex);
       fSMRunningSMCmd = state_trans_cmd;
    }
+
+   SetParStr("Info", dabc::format("Do transition %s", state_trans_cmd));
 
    bool res = ActualTransition(state_trans_cmd);
 

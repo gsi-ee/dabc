@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -173,6 +173,7 @@ namespace dabc {
          Parameter* CreateParInt(const char* name, int initvalue = 0, unsigned flags = 0);
          Parameter* CreateParDouble(const char* name, double initvalue = 0., unsigned flags = 0);
          Parameter* CreateParBool(const char* name, bool initvalue = false, unsigned flags = 0);
+         Parameter* CreateParInfo(const char* name, int level = 0, const char* color = 0);
 
          // this method is called after parameter is changed
          // user may add its reaction on this event, but cannot
