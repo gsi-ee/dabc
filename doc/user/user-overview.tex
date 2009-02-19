@@ -1,34 +1,4 @@
 [user/user-overview.tex]
-
-\lsection[About DABC]{user-overview-about}{About \dabc\ }
-%Here general philosophy, mabe take part of introduction manual
-The Data Acquisition Backbone Core \dabc\ is a
-Data Acquisition (DAQ) framework with modular components for dataflow on multiple nodes.
-It provides a C++ runtime environment with all basic services, such as:
-threads and event handling; memory management; command execution; 
-configuration; logging; and error handling.
-User written DAQ applications can be run within this environment by
-means of a plug-in mechanism.
-
-\dabc\ contains the \strong{BNET} subframework with additional interfaces 
-to set-up distributed event builder networks. As transport layers for such
-networks, {\em tcp/ip} and {\em InfiniBand/verbs} are supported.
-
-\dabc\ supports by default the data formats and readout connections of GSI's standard DAQ system \mbs\ (Multi Branch System). It may also write datafiles with the 
-\mbs\ {\tt *.lmd} format, and it may emulate \mbs\ data server sockets, such as
-{\em stream} or {\em transport} servers.
-
-The \dabc\ control system features a finite state machine
-logic and parameters for monitoring and  configuration. This is also
-designed as a plug-in to the base framework. The current implementation is based
-on the DIM protocol \cite{DIM}.
-A generic Java GUI is provided to operate this standard DIM control system.
-This GUI may also control \mbs\ systems which support the DIM communication.
-It is extendable by user written components. 
-
-
-
-
 \lsection[Outline of this manual]{user-overview-outline}{Outline of this manual}
 This \dabc\ User Manual contains all information that is necessary to
 install and use the \dabc\ framework.
