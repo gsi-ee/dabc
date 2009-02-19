@@ -120,7 +120,7 @@ try{
     Document document=builder.parse(new InputSource(new StringReader(xmlstring)));
     root=document.getDocumentElement();
 }catch(Exception e){e.printStackTrace();}
-finally{System.out.println(xmlstring);}
+//finally{System.out.println(xmlstring);}
 return root;
 }
 /**

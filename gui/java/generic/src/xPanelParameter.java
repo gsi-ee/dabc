@@ -108,8 +108,8 @@ private void initPanel(Dimension dim){
     System.out.print("Wait for update "+ipar);
     int timeout=0;
     boolean ok=false;
-    int noq=0;
     while(!ok){
+        int noq=0;
         ok=true;
         for(i=0;i<ipar;i++) if(vpar.get(i).getDimQuality() == -1){
         ok=false;
