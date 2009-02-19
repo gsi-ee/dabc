@@ -127,7 +127,8 @@ mostly run for all users on the same default node (see section \ref{user-install
 
 
 \lsection[Setting up DABC user workspace]{user-setup}{Setting up \dabc\ user workspace}
-\index{TODO!Setup}
+\index{DABC!user workspace}
+
 To operate a \dabc\ application one should create a dedicated 
 working directory to keep all relevant files:
 \bbul
@@ -147,14 +148,322 @@ in the GUI chapter below.
 Of course both setups, for the \dabc\ application and the GUI, can be
 put into one working directory if the GUI has access to it.
 
-The \dabc\  setup files are application specific. Therefore they are described in
-the following sections which cover typical example applications.
+The \dabc\  setup files define application specific properties
+by means of XML tags, such as:
+\index{DABC!Configuration file}
 
-\subsection[DABC data simulator]{\dabc\ data simulator}
-%\paref{user:Bnet}
-\subsection[DABC MBS event server]{\dabc\ \mbs\ event server}
-\paref{user:mbs}
-\subsection{PCI connected front-ends}
+\bbul
+\item The nodes of the DAQ cluster described in tag \keyw{<Context>}
+\item Properties of the runtime environment within each\keyw{<Context>}, enclosed
+by the  \keyw{<Run>} tag, such as:
+\bbul
+	\item The libraries to load defined in  \keyw{<lib>} tag  
+	\item The logging output to a file by tags \keyw{<logfile>} and \keyw{<loglevel>}
+	\item Optional a function to run in tag \keyw{<runfunc>}; this is an
+	alternative to using the \dabc\ \class{Application} with the finite state machine.
+\ebul
+\item Properties for the \class{Application} within each \keyw{<Context>}, 
+enclosed by \keyw{<Application>} tags. This defines the \class{Application} classname
+to apply, and \class{Parameter} values by name.
+
+\item Properties for an \class{Device} within each \keyw{<Context>}, 
+enclosed by \keyw{<Devices>} tags. This defines the \class{Device} classname
+to apply, and \class{Parameter} values by name.
+
+\item Properties for an \class{Module} within each \keyw{<Context>}, 
+enclosed by \keyw{<Module>} tags. The \class{Module} is identified by name.
+Within each \keyw{<Module>} block, \class{Parameter} values may be set.
+Additionally, the properties of all \class{Ports} of this \class{Module}
+may be specified in subtags \keyw{<Port>}
+\ebul
+
+A complete description of the configuration file syntax and the parameter set-up
+is given in chapter \ref{prog_setup} of the \dabc\ programmer's
+manual.
+
+
+The following sections contain example configuratons of 
+typical applications.
+
+\lsubsection[Simple MBS data server with DABC]{user-setup-eventserver}{Simple \mbs\ data server with \dabc\ }
+The use case here is that a single \dabc\ node should provide data in the \mbs\
+event format on a server socket to be used by external analyisis and monitoring
+programs like Go4 \cite{go4web}. The event data can be simulated by a generator
+module; or in most practical cases it is the result of a data readout from
+one or several hardware devices.
+
+For the random event generator, such set-up looks like this:
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="lxi009" name="Server">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="InitMbsGenerator"/>
+    </Run>
+    <Module name="Generator">
+       <NumSubevents value="3"/>
+       <FirstProcId value="77"/>
+       <SubeventSize value="128"/>
+       <Go4Random value="false"/>
+       <BufferSize value="16384"/>
+       <Port name="Output">
+          <OutputQueueSize value="5"/>
+          <MbsServerKind value="Stream"/>
+          <MbsServerPort value="6006"/>
+        </Port>
+     </Module>
+  </Context>
+</dabc>
+\end{verbatim}
+\end{small}
+There is only one \keyw{<Context>} node, specified by the nodename, with one
+simple C function \func{InitMbsGenerator()} to run, and with one \keyw{<Module>}
+that produces the event data as specified in its parameters. The data server
+is specified by parameters of the "Output" \keyw{<Port>}: The tag
+\keyw{<MbsServerKind>} can be "Stream" or "Transport" to emulate either variant
+of the standard \mbs\ server sockets. A complete description of this example
+can be found in section \paref{exa_mbs_eventsgenerator} , of the \dabc\ programmer's
+manual. The setup files for standard \mbs\ use cases can be found in directory
+\begin{verbatim}
+$DABCSYS/applications/mbs
+\end{verbatim}
+
+A more practical use case is to prepare data as \mbs\ events that was
+read by \dabc\ from external front-end hardware. This is shown with the
+setup-file for the readout controller ROC example
+(see the full description of this example in chapter \paref{prog-exa-roc}):
+
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+<Context name="Readout">
+  <Run>
+    <lib value="libDabcMbs.so"/>
+    <lib value="libDabcKnut.so"/>
+    <logfile value="Readout.log"/>
+  </Run>
+  <Application class="roc::Readout">
+    <DoCalibr value="0"/>
+    <NumRocs value="3"/>
+    <RocIp0 value="cbmtest01"/>
+    <RocIp1 value="cbmtest02"/>
+    <RocIp2 value="cbmtest04"/>
+    <BufferSize value="65536"/>
+    <NumBuffers value="100"/>
+    <TransportWindow value="30"/>
+    <RawFile value="run090.lmd"/>
+    <MbsServerKind value="Stream"/>
+    <MbsFileSizeLimit value="110"/>
+  </Application>
+ </Context>
+</dabc>
+\end{verbatim}
+\end{small}
+
+Here the parameters are defined for the \keyw{<Application>} instance
+"roc::Readout" that controls  the readout of 3 {\em ROC} nodes via UDP, 
+and combines the data into one \mbs\ event by means of some internal
+\class{Modules}. Hence there is no simple
+run function as above, but the \dabc\ runtime environment will call
+appropriate methods of the \class{Application} to configure and run
+the set-up. Note that in this case the \mbs\ data is not only provided to a
+stream server as defined in \keyw{<MbsServerKind>}, but is also
+written to a {\tt *.lmd} (list mode data) file which can be specified
+in application parameter \keyw{<RawFile>}.
+
+Both single node examples above do not require to be launched from the \dabc\ GUI (although this is possible and may be useful to monitor the data rates and actual parameters).
+They can be started directly from a shell 
+by calling the standard \func{dabc\_run}
+executable with the configuration file name as argument:
+\verba{dabc\_run Readout.xml}. 
+This executable will load the specified libraries,
+create the application, configure it, and switch the system in 
+the \keyw{Running} state.   
+
+
+\lsubsection[DABC event builder for MBS]{user-setup-mbsbuilder}{\dabc\ event builder for \mbs\ }
+\index{TODO!Mbs eventbuilder example with application instead run func}
+In this case there is still one \dabc\ node which reads data from several
+\mbs\ nodes via {\em Transport} socket connections, and combines them
+into one \mbs\ output event. A simple setup looks like this:
+
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="localhost" name="Worker">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="StartMbsCombiner"/>
+      <logfile value="combiner.log"/>
+    </Run>
+    <Module name="Combiner">
+       <NumInputs value="3"/>
+       <DoFile value="false"/>
+       <DoServer value="true"/>
+       <BufferSize value="16384"/>
+       <Port name="Input0">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi009"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="Input1">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi010"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="Input2">
+          <InputQueueSize value="5"/>
+          <MbsServerKind value="Transport"/>
+          <MbsServerName value="lxi011"/>
+          <MbsServerPort value="6000"/>
+       </Port>
+       <Port name="FileOutput">
+          <OutputQueueSize value="5"/>
+          <MbsFileName value="combiner.lmd"/>
+          <MbsFileSizeLimit value="128"/>
+        </Port>
+       <Port name="ServerOutput">
+          <OutputQueueSize value="5"/>
+          <MbsServerKind value="Stream"/>
+        </Port>
+     </Module>
+  </Context>
+</dabc>
+\end{verbatim}
+\end{small}
+
+We have one node \keyw{<Context>} with a simple run function 
+\func{StartMbsCombiner()} that uses a single \keyw{<Module>} to do the
+event combination from three input \keyw{<Port>}s.
+The node names and other parameters of the external \mbs\ connections
+are specified in the \keyw{<MbsServerName>} properties of these ports.
+
+There are two output \keyw{<Port>}s in parallel here: A "FileOutput"
+that writes into a {\tt *.lmd} file as specified in the property 
+\keyw{<MbsFileName>}; and a "ServerOutput" that offers a "Stream" server
+for a monitoring program, as the examples in above section \ref{user-setup-eventserver}.
+A full description is in section
+\paref{exa_mbs_eventbuilding} of the \dabc\ programmer's manual.
+The more elaborate setup files for this \mbs\ use case can be found 
+in directory
+\verba{\$DABCSYS/applications/mbs}
+
+\lsubsection[DABC eventbuilder network (BNET)]{user-setup-bnet}{\dabc\ eventbuilder network (BNET)}
+The full functionality of \dabc\ is shown in the case that the DAQ uses
+an event building network (BNET), transferring the partial data from $n$ readout nodes
+to $m$ event building nodes, such that each event builder can work on the full
+detector data. This scenario is discussed in detail in chapter \paref{prog_exabnet}
+of the \dabc\ programmer's manual. Appropriate configuration files can be found at \\
+{\tt \$DABCSYS/applications/bnet-test} directory.
+An example setup file {\tt SetupBnet.xml} may look like this:
+
+\begin{small}
+\begin{verbatim}
+ <?xml version="1.0"?>
+<dabc version="1">
+  <Context host="localhost" name="Controller:41">
+    <Run>
+      <runfunc value="RunTestBnet"/>
+    </Run>
+    <Application class="bnet::Cluster">
+       <NetDevice value="dabc::SocketDevice"/>
+    </Application>
+  </Context>
+  <Context host="lxi009" name="Worker1:42"/>
+  <Context host="lxi010" name="Worker2:42"/>
+  <Context host="lxi011" name="Worker3:42"/>
+  <Context host="lxi012" name="Worker4:42"/>
+  <Defaults>
+    <Context name="*">
+      <Run>
+        <logfile value="test${DABCNODEID}.log"/>
+        <loglevel value="1"/>
+        <lib value="libDabcBnet.so"/>
+      </Run>
+    </Context>
+    <Context name="*Worker*">
+       <Run>
+          <lib value="${DABCSYS}/applications/bnet-test/libBnetTest.so"/>
+       </Run>
+       <Application class="bnet::TestWorker">
+         <IsGenerator value="true"/>
+         <IsSender value="true"/>
+         <IsReceiver value="true"/>
+         <NumReadouts value="4"/>
+      </Application>       
+    </Context>
+  </Defaults>
+</dabc>
+\end{verbatim}
+\end{small}
+
+The setup of such BNET contains several \keyw{<Context>} nodes. Generally, the
+BNET has two types of nodes: 
+\bbul
+\item One "Controller" node that has a master
+controller functionality, implemented in the \keyw{<Application>} of
+class "bnet::Cluster". The controller node must be specified at the \dabc\ GUI setup
+to receive the direct cluster control commands, e.~g.~ state machine transitions commands. In the \dabc\ BNET framework, the controller also keeps a general
+parameter \keyw{<NetDevice>} for the data connection device of the entire DAQ cluster;
+this can be "dabc::SocketDevice" for tcp/ip, or "verbs::Device" for an {\em InfiniBand}
+cluster.
+
+\item Several "Worker" nodes of an experiment specific \keyw{<Application>}. They
+may be configured for different jobs in the BNET; this example provides
+an \class{Application} class "bnet::TestWorker" with some boolean parameters
+to define the functionality.
+\ebul 
+Note the usage of wildcards "*" in the \keyw{<Context>} names to define
+properties that should be valid for all nodes matching the pattern, e.~g.~
+the libraries to load, or the common application setup for all worker nodes.
+Here there are 4 workers which all produce random event data (enabled in \keyw{<IsGenerator>}),
+and all send their data to all others (enabled in \keyw{<IsSender>}). In parallel,
+they all receive data from the other workers to build the complete event
+(enabled in \keyw{<IsReceiver>}).
+
+Such BNET setup is best started by means of the \dabc\ GUI.
+The name of the controller \keyw{<Context>} node and
+the setup file name must be specified in the control panel of the GUI
+(see section \paref{user:controlDabc}). Then all nodes can be started just by the
+"Launch" button \icon{connprm}. The configuration and run control of the nodes is done by the state machine buttons of the control panel, as described in section \paref{user:controlDabc}.
+
+
+\lsubsection[DABC eventbuilder network (BNET) with MBS]{user-setup-bnetmbs}{\dabc\ eventbuilder network (BNET) with \mbs\ }
+\index{TODO!Mbs BNET example with real mbs nodes instead generators}
+\index{TODO!Adjust old mbs bnet configurator scripts for new xml format?}
+A more realistic example of a BNET uses data which is read from $n$ external \mbs\ 
+nodes, each connected to one \dabc\ readout node, and transferred to
+$m$ \dabc\ eventbuilder nodes.
+Example file {\tt \$DABCSYS/applications/bnet-mbs/SetupBnetMbs.xml}
+shows the configuration for an \mbs\  event building with 2 \dabc\ readout nodes, connected with 2 \mbs\ nodes each (simulated by \dabc\ generator modules here),
+and 2 \dabc\ event builder nodes. A detailled description
+of this setup is given in section \paref{prog_exabnet_mbs} of the \dabc\
+programmer manual.
+The usage of such configuration is similar to the BNET example as
+described above in section \paref{user-setup-bnet}:
+The list of \keyw{<Context>} nodes (or the
+corresponding \keyw{<Variables>}, resp.) 
+must be edited for the actual node names. Additionally the names of the
+\mbs\ nodes for readout should be specified. Then the BNET
+setup may be launched and controlled by the \dabc\ GUI.
+
+
+
+
+
+
+
+% \subsection[DABC data simulator]{\dabc\ data simulator}
+% %\paref{user:Bnet}
+% \subsection[DABC MBS event server]{\dabc\ \mbs\ event server}
+% \paref{user:mbs}
+% \subsection{PCI connected front-ends}
 %\paref{user:roc}
 
 
