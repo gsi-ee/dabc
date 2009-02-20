@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -339,27 +339,48 @@ void dimc::Registry::StopDIMServer()
    DOUT0(("DIM server was stopped."));
 }
 
-void dimc::Registry::UpdateDIMService(const std::string& name, bool logoutput, dimc::nameParser::recordstat recstat)
+
+void dimc::Registry::SetDIMServiceProperties(const std::string& name, bool logoutput, dimc::nameParser::recordstat recstat)
 {
-//std::cout <<"uuuuuuuuuuuu UpdateDIMService for "<<name << std::endl;
-dimc::ServiceEntry* service=FindDIMService(name);
-if(service)
-   {
-      //std::cout <<" - Updating dim service "<< name << std::endl;
-      service->SetStatus(recstat);
-      dimc::nameParser::visiblemask vis=service->GetVisibility();
-      if(logoutput)
-         {
-            service->SetVisibility(vis | DABC_VIS_LOGGABLE);
-            service->Update();
-         }
-      else
-         {
-            service->SetVisibility(vis & (~DABC_VIS_LOGGABLE));
-            service->Update();
-         }
-   }
+   dimc::ServiceEntry* service=FindDIMService(name);
+   if(service)
+      {
+         //std::cout <<" - Setting dim service "<< name << std::endl;
+         service->SetStatus(recstat);
+         dimc::nameParser::visiblemask vis=service->GetVisibility();
+         if(logoutput)
+            {
+               service->SetVisibility(vis | DABC_VIS_LOGGABLE);
+            }
+         else
+            {
+               service->SetVisibility(vis & (~DABC_VIS_LOGGABLE));
+            }
+      }
 }
+
+
+//void dimc::Registry::UpdateDIMService(const std::string& name, bool logoutput, dimc::nameParser::recordstat recstat)
+//{
+////std::cout <<"uuuuuuuuuuuu UpdateDIMService for "<<name << std::endl;
+//dimc::ServiceEntry* service=FindDIMService(name);
+//if(service)
+//   {
+//      //std::cout <<" - Updating dim service "<< name << std::endl;
+//      service->SetStatus(recstat);
+//      dimc::nameParser::visiblemask vis=service->GetVisibility();
+//      if(logoutput)
+//         {
+//            service->SetVisibility(vis | DABC_VIS_LOGGABLE);
+//            service->Update();
+//         }
+//      else
+//         {
+//            service->SetVisibility(vis & (~DABC_VIS_LOGGABLE));
+//            service->Update();
+//         }
+//   }
+//}
 
 
 void dimc::Registry::UpdateDIMServiceAll()

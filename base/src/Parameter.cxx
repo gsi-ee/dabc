@@ -536,6 +536,15 @@ bool dabc::InfoParameter::SetValue(const std::string &value)
    return true;
 }
 
+bool dabc::InfoParameter::SetColor(const std::string &color)
+{
+   LockGuard lock(fValueMutex);
+   if (fFixed) return false;
+   strncpy(fRecord.color, color.c_str(), sizeof(fRecord.color));
+   return true;
+}
+
+
 // ___________________________________________________
 
 dabc::HistogramParameter::HistogramParameter(WorkingProcessor* parent, const char* name, int nchannles) :

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -48,6 +48,8 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
 
        res = dabc::mgr()->CreateTransport(portname, abbdevname);
        if (!res) EOUT(("Cannot create ABB transport"));
+       dabc::mgr()->LogMessage(0,"created ABB readout");
+
    } else {
       // create dummy event generator module:
 
@@ -56,6 +58,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
       modulename += "/Output";
       res = dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
       fABBActive = false;
+      dabc::mgr()->LogMessage(0,"created dummy event generator readout");
    }
 
    return res;
@@ -63,6 +66,9 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
 
 bool bnet::TestWorkerApplication::CreateCombiner(const char* name)
 {
+   dabc::mgr()->LogMessage(0,"Test of message");
+   dabc::mgr()->LogMessage(1,"Test of warning");
+   dabc::mgr()->LogMessage(2,"Test of error");
    return dabc::mgr()->CreateModule("bnet::TestCombinerModule", name, SenderThreadName);
 }
 

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -27,10 +27,6 @@
 #define DIMC_MANAGERTYPE "DimControl"
 
 
-//class dabc::StateMachineModule;
-//class dabc::Command;
-//class dabc::Parameter;
-//class dabc::Configuration;
 
 namespace dimc {
 
@@ -61,7 +57,7 @@ namespace dimc {
 
          virtual bool IsMainManager() { return fIsMainMgr; }
          //void SetMainManager(bool on=true){fIsMainMgr=on;}
-
+         virtual void LogMessage(int prio, const char* mess);
 
       protected:
 
@@ -86,6 +82,11 @@ namespace dimc {
          /** shortcut to fsm status record for gui*/
          dabc::StatusParameter* fStatusRecord;
 
+         /** this parameter contains log message string for gui*/
+         dabc::StrParameter* fLogMessage;
+
+         /** this parameter contains info string for gui*/
+         dabc::InfoParameter* fInfoLine;
 
    };
 

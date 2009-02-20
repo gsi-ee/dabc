@@ -259,6 +259,7 @@ namespace dabc {
 
          virtual bool GetValue(std::string &value) const;
          virtual bool SetValue(const std::string &value);
+         virtual bool SetColor(const std::string &color);
 
       protected:
 

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -81,6 +81,11 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    InitSMmodule();
 
    fStatusRecord=new dabc::StatusParameter(this, _DIMC_SERVICE_FSMRECORD_,0);//CurrentState());
+   fLogMessage=dynamic_cast<dabc::StrParameter*>(CreateParStr(_DIMC_SERVICE_MESSAGE_,"Log message is starting..."));
+   if(fLogMessage==0)
+      EOUT(("!!!! Manager ctor could not create log message string parameter!!!"));
+
+   fInfoLine=new dabc::InfoParameter(this, _DIMC_SERVICE_INFORECORD_, true);
    init();
    UpdateStatusRecord();
    unsigned int dimport=2505;
@@ -256,4 +261,32 @@ const char* dimc::Manager::GetNodeName(int num)
 bool dimc::Manager::IsNodeActive(int num)
 {
    return fRegistry->IsNodeActive(num);
+}
+
+void dimc::Manager::LogMessage(int level, const char* mess)
+{
+   std::string text=mess;
+   dimc::nameParser::recordstat priority=dimc::nameParser::MESSAGE;
+         std::string color="Green";
+         switch(level)
+            {
+               case 0:
+                  priority=dimc::nameParser::MESSAGE;
+                  color="Green";
+                   break;
+               case 1:
+                  priority=dimc::nameParser::WARNING;
+                  color="Yellow";
+                  break;
+               case 2:
+               default:
+                  priority=dimc::nameParser::ERR;
+                  color="Red";
+                  break;
+            }
+   fRegistry->SetDIMServiceProperties(_DIMC_SERVICE_MESSAGE_, true, priority);
+   fLogMessage->SetValue(text); // will do the dim update by parameter event
+   fRegistry->SetDIMServiceProperties(_DIMC_SERVICE_INFORECORD_, false, priority);
+   fInfoLine->SetColor(color);
+   fInfoLine->SetValue(text); // will do the dim update by parameter event
 }

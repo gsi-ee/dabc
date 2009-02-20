@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -150,12 +150,20 @@ public:
 	*/
     void StopDIMServer();
 
-    /**
-	*  Update the service corresponding to the xdaq serializable variable.,
-    * i.e. send new value to registered clients.
-    * optionally, service may tell client to output to log window
-	*/
-    void UpdateDIMService(const std::string& name, bool logoutput=false, dimc::nameParser::recordstat priority=dimc::nameParser::SUCCESS);
+//    /**
+//	*  Update the service corresponding to the xdaq serializable variable.,
+//    * i.e. send new value to registered clients.
+//    * optionally, service may tell client to output to log window
+//	*/
+//    void UpdateDIMService(const std::string& name, bool logoutput=false, dimc::nameParser::recordstat priority=dimc::nameParser::SUCCESS);
+
+
+ /*
+ * Set properties of service of name. logoutput defines if text value should be put
+ * to the GUI logwindow. recordstatus may set message severity etc.
+ */
+    void SetDIMServiceProperties(const std::string& name, bool logoutput=false, dimc::nameParser::recordstat recstat=dimc::nameParser::SUCCESS);
+
 
     /**
 	*  Update all existing dim services, i.e. send new values to registered
