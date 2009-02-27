@@ -82,10 +82,7 @@ namespace dimc {
          /** shortcut to fsm status record for gui*/
          dabc::StatusParameter* fStatusRecord;
 
-         /** this parameter contains log message string for gui*/
-         dabc::StrParameter* fLogMessage;
-
-         /** this parameter contains info string for gui*/
+         /** this parameter contains info/logging string for gui*/
          dabc::InfoParameter* fInfoLine;
 
    };

@@ -281,9 +281,10 @@ in detail.
 \section{Package and library organisation}
 The complete system consists of different packages. 
 
-\figpng{emptyfig}{The \dabc~ packages}{htb}{0}{.6}
-
-
+\figpdf{DABCcomponents}{Schematic view of the distributed \dabc~ components (coloured) and
+user specific extensions (white)}{htb}{0}{.9}
+ 
+   
 
 \subsection{Core system}
 The \strong{Core system} package defines all base classes and interfaces
@@ -320,7 +321,7 @@ Alternatively, the \strong{Plugin packages} may be installed in a user directory
    implement user specific code in subclasses. The \strong{Bnet package} provides a 
    factory to create specific Bnet modules by class name. It also 
    provides application classes to define generic functionalities for 
-   worker nodes  and    controller nodes . These may be used as base classes
+   worker nodes  and    controller nodes. These may be used as base classes
    in further \strong{Application packages}.
    
 \subsubsection{Transport packages}

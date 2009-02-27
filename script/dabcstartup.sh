@@ -24,5 +24,5 @@ cd $DABC_USER_DIR
 echo   dabcstartup for plain dim control....
 #printenv 
 # $5 $6 $7 $8
-$DABCSYS/bin/run.sh $DABC_XDAQ_CONFIG start -dim -v 
+$DABCSYS/bin/run.sh $DABC_XDAQ_CONFIG start -dim
 echo        dabcstartup is complete. --- 

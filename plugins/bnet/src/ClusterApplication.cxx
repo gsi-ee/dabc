@@ -119,14 +119,13 @@ bnet::ClusterApplication::ClusterApplication() :
    CreateParInt(xmlTransportBuffer,       8*1024);
    CreateParBool(xmlIsRunning, false);
 
-   CreateParInfo("Info", 0, "Green");
+   CreateParInfo("Info", 1, "Green");
 
    dabc::CommandDefinition* def = NewCmdDef("StartFiles");
    def->AddArgument("FileBase", dabc::argString, true);
    def->Register();
 
-   def = NewCmdDef("StopFiles");
-   def->Register();
+   NewCmdDef("StopFiles")->Register();
 
    DOUT1(("Net device = %s numnodes = %d",NetDevice().c_str(), GetParInt(CfgNumNodes)));
 }
@@ -165,8 +164,22 @@ bool bnet::ClusterApplication::CreateAppModules()
       dabc::mgr()->MakeThreadForModule(m, "GlobalContr");
    }
 
+//   dabc::CommandDefinition* def = NewCmdDef("StartFiles");
+//   def->AddArgument("FileBase", dabc::argString, true);
+//   def->Register();
+//
+//   NewCmdDef("StopFiles")->Register();
+
    return true;
 }
+
+bool bnet::ClusterApplication::BeforeAppModulesDestroyed()
+{
+//   DeleteCmdDef("StartFiles");
+//   DeleteCmdDef("StopFiles");
+   return true;
+}
+
 
 int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
 {

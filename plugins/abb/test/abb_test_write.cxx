@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -85,10 +85,8 @@ int main(int numc, char* args[])
    DOUT1(("Connected module to ABB device = %s", DBOOL(res)));
 
    //// TEST: connect with null transport
-//    cmd = new dabc::Command("NullConnect");
-//    cmd->SetStr("Port", "ABB_Sender/Output");
-//    res=manager.Execute(cmd, 5);
-//    DOUT1(("Connected module to NULL transport, result= %s", DBOOL(res)));
+//  res = manager.CreateTranport("ABB_Sender/Output", dabc::typeNullTransport);
+//  DOUT1(("Connected module to NULL transport, result= %s", DBOOL(res)));
    /////////// end TEST
 //   DOUT1(("Sleeping 3 s..."));
 //   sleep(3); // wait until mappping is complete

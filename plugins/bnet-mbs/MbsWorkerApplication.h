@@ -9,6 +9,8 @@ namespace bnet {
       public:
          MbsWorkerApplication();
 
+         virtual int ExecuteCommand(dabc::Command* cmd);
+
          virtual bool CreateReadout(const char* portname, int portnumber);
 
          virtual bool CreateCombiner(const char* name);
@@ -16,6 +18,12 @@ namespace bnet {
          virtual bool CreateFilter(const char* name);
 
          virtual bool CreateStorage(const char* portname);
+
+         virtual bool CreateOutFile(const char* portname, const std::string& filename);
+
+         virtual bool BeforeAppModulesDestroyed();
+
+         bool CreateOutServer(const std::string& serverkind);
    };
 }
 

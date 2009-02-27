@@ -65,14 +65,15 @@ bnet::WorkerApplication::WorkerApplication(const char* classname) :
 
    SetParDflts();
 
-   CreateParInfo("Info", 0, "Green");
+   CreateParInfo("Info", 1, "Green");
 
-   dabc::CommandDefinition* def = NewCmdDef("StartFile");
-   def->AddArgument("FileName", dabc::argString, true);
-   def->Register();
+   if (IsReceiver()) {
+      dabc::CommandDefinition* def = NewCmdDef("StartFile");
+      def->AddArgument("FileName", dabc::argString, true);
+      def->Register();
 
-   def = NewCmdDef("StopFile");
-   def->Register();
+      NewCmdDef("StopFile")->Register();
+   }
 
    DOUT1(("!!!! Worker plugin created name = %s!!!!", GetName()));
 }
@@ -92,12 +93,13 @@ std::string bnet::WorkerApplication::ReadoutPar(int nreadout) const
 
 bool bnet::WorkerApplication::CreateStorage(const char* portname)
 {
-   dabc::Command* cmd = new dabc::Command("NullConnect");
-   cmd->SetStr("Port", portname);
-
-   return dabc::mgr()->Execute(cmd, 5);
+   return CreateOutFile(portname, GetParStr(xmlStoragePar));
 }
 
+bool bnet::WorkerApplication::CreateOutFile(const char* portname, const std::string&)
+{
+   return dabc::mgr()->CreateTransport(portname, "");
+}
 
 void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 {
@@ -199,16 +201,17 @@ int bnet::WorkerApplication::ExecuteCommand(dabc::Command* cmd)
       cmd_res = cmd_postponed;
    } else
    if (cmd->IsName("StartFile") || cmd->IsName("StopFile")) {
-      SetParStr(xmlStoragePar, cmd->GetStr("FileName",""));
+
+      std::string filename = cmd->GetStr("FileName","");
 
       if (cmd->IsName("StartFile"))
-         SetParStr("Info", dabc::format("Starting file writing: %s", cmd->GetStr("FileName","")));
+         SetParStr("Info", dabc::format("Starting file writing: %s", filename.c_str()));
       else
          SetParStr("Info", "Stopping file writing");
 
       if (IsReceiver()) {
          const char* outportname = IsFilter() ? "Filter/Output" : "Builder/Output";
-         cmd_res = cmd_bool(CreateStorage(outportname));
+         cmd_res = cmd_bool(CreateOutFile(outportname, filename));
       }
    } else
 
@@ -335,12 +338,15 @@ bool bnet::WorkerApplication::CreateAppModules()
       if (!CreateStorage(outportname)) {
          EOUT(("Not able to create storage for port %s", outportname));
       }
+
+//      dabc::CommandDefinition* def = NewCmdDef("StartFile");
+//      def->AddArgument("FileName", dabc::argString, true);
+//      def->Register();
+//
+//      NewCmdDef("StopFile")->Register();
    }
 
-//   SetParFixed(parStatus,  false);
    SetParStr(parStatus, "Ready");
-
-//   SetParFixed(parStatus,  true);
 
    SetParBool(CfgConnected, false);
 
@@ -350,4 +356,12 @@ bool bnet::WorkerApplication::CreateAppModules()
 int bnet::WorkerApplication::IsAppModulesConnected()
 {
    return GetParBool(CfgConnected) ? 1 : 2;
+}
+
+bool bnet::WorkerApplication::BeforeAppModulesDestroyed()
+{
+//   DeleteCmdDef("StartFile");
+//   DeleteCmdDef("StopFile");
+
+   return true;
 }

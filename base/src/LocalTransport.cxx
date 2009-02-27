@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -210,24 +210,8 @@ bool dabc::LocalDevice::ConnectPorts(Port* port1, Port* port2, CommandClientBase
    return res;
 }
 
-bool dabc::LocalDevice::MakeNullTransport(Port* port)
-{
-   if (port==0) return false;
-
-   NullTransport* tr = new NullTransport(this);
-
-   port->AssignTransport(tr);
-
-   DOUT3(("Create null device for port %s", port->GetFullName().c_str()));
-
-   return true;
-}
-
 int dabc::LocalDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
-   if (cmd->GetBool("IsNull"))
-      return MakeNullTransport(port);
-
    dabc::Port* port2 = dabc::mgr()->FindPort(cmd->GetPar("Port2Name"));
 
    if (port2==0) return false;

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -146,7 +146,8 @@ int dabc::Port::ExecuteCommand(Command* cmd)
       fInputPending = 0;
       fOutputPending = 0;
 
-      ProduceUserEvent(fTransport==0 ? evntPortDisconnect : evntPortConnect);
+      if ((oldtr!=0) && (fTransport==0)) ProduceUserEvent(evntPortDisconnect); else
+      if ((oldtr==0) && (fTransport!=0)) ProduceUserEvent(evntPortConnect);
 
       if (GetModule()->IsRunning() && fTransport)
          fTransport->StartTransport();
@@ -190,7 +191,6 @@ bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
    if (fTransport==0) {
       dabc::Buffer::Release(buf);
       return false;
-//      throw PortOutputException(this, "No transport");
    }
 
    if (!CanSend()) {

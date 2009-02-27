@@ -68,6 +68,9 @@ namespace dabc {
 
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option);
          virtual Folder* ListMatchFiles(const char* typ, const char* filemask);
+
+         virtual Transport* CreateTransport(Port* port, const char* typ, const char* thrdname, Command* cmd);
+
       protected:
          virtual bool CreateManagerInstance(const char* kind, Configuration* cfg);
    };
@@ -102,6 +105,19 @@ dabc::Device* dabc::StdManagerFactory::CreateDevice(const char* classname,
    if (strcmp(classname, "LocalDevice")==0)
       return new LocalDevice(dabc::mgr()->GetDevicesFolder(true), devname);
    return 0;
+}
+
+dabc::Transport* dabc::StdManagerFactory::CreateTransport(Port* port, const char* typ, const char* thrdname, Command* cmd)
+{
+   if (strcmp(typ,typeNullTransport)!=0) return 0;
+
+   dabc::Device* dev = dabc::mgr()->FindLocalDevice();
+   if (dev==0) {
+      EOUT(("Local device not found"));
+      return 0;
+   }
+
+   return new NullTransport((dabc::LocalDevice*) dev);
 }
 
 dabc::WorkingThread* dabc::StdManagerFactory::CreateThread(const char* classname, const char* thrdname, const char* thrddev, Command* cmd)
@@ -1011,6 +1027,10 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       if (dev!=0) {
          dev->Submit(cmd);
          cmd_res = cmd_postponed;
+      } else
+      if ((transportkind==0) || (strlen(transportkind)==0)) {
+         port->AssignTransport(0);
+         cmd_res = cmd_true;
       } else {
          Transport* tr = 0;
 
@@ -1041,15 +1061,6 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
 
       cmd_res = cmd_bool(CreateThread(thrdname, thrdclass, 0, thrddev, cmd)!=0);
 
-   } else
-   if (cmd->IsName("NullConnect")) {
-      Port* port = FindPort(cmd->GetPar("Port"));
-      LocalDevice* dev = (LocalDevice*) FindLocalDevice();
-
-      if (dev && port)
-         cmd_res = dev->MakeNullTransport(port);
-      else
-         cmd_res = cmd_false;
    } else
    if (cmd->IsName(CmdCreateMemoryPool::CmdName())) {
       cmd_res = cmd_bool(DoCreateMemoryPool(cmd));
@@ -1900,8 +1911,8 @@ double dabc::Manager::ProcessTimeout(double last_diff)
 
    LockGuard lock(fMgrMutex);
 
-   Parameter* par = FindPar(stParName);
-   if (par!=0) par->Changed();
+//   Parameter* par = FindPar(stParName);
+//   if (par!=0) par->Changed();
 
    for (unsigned n=0;n<fTimedPars.size();n++)
       if (fTimedPars[n]!=0)

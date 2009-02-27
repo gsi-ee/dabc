@@ -27,6 +27,10 @@ DIM_JDK_INCLUDE=
 endif
 endif
 
+ifeq ($(wildcard /usr/include/Mrm/MrmAppl.h)$(wildcard /usr/local/include/Mrm/MrmAppl.h),)
+DIM_BUILD_ARGS+= GUI=no
+endif
+
 DIM_ODIR = linux
 DIM_OS = Linux
 

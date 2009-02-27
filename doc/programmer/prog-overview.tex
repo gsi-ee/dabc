@@ -309,7 +309,8 @@ The complete system consists of different packages.
 Each package is represented by a subproject of the source code with own namespace. 
 There may be one or more shared libraries for each package. Main packages are as follows: 
 
-\figpng{emptyfig}{The \dabc~ packages}{htb}{0}{.6}
+\figpdf{DABCcomponents}{Schematic view of the distributed \dabc~ components (coloured) and
+user specific extensions (white)}{htb}{0}{.9}
 
 
 
@@ -383,7 +384,7 @@ application (e.g. subclass of \class{bnet::WorkerApplication}).
 Additionally, they may provide experiment specific \class{dabc::Module} classes.
 
 When installed centrally, the \strong{Application packages} are kept in subfolders of the \\  
-\verba{\$DABCSYS/applications} directory. Alternatively, an \strong{Application package} may be installed in a user directory and linked against the \strong{Core system} installation and the required \strong{Plugin packages}.
+\small{\verba{\$DABCSYS/applications}} directory. Alternatively, an \strong{Application package} may be installed in a user directory and linked against the \strong{Core system} installation and the required \strong{Plugin packages}.
 
 
      
@@ -422,6 +423,9 @@ available as DIM services.
 \label{prog_core_classes}
 The most important classes of the \dabc~ core system are described in the following.
 
+\figpdf{mainclasses}{Simplified UML diagram of the most important \dabc\ classes for active components. Framework base classes are coloured in green. Some implementation examples are shown with other corresponding colours: sockets, {\em verbs}, Bnet, PCI, and \mbs\ . See text for details.}{htb}{0}{1.1}
+
+
 %\begin{compactdesc}
 \begin{description}
 
@@ -444,7 +448,8 @@ Represents a command object. A command
 
 \item[\class{dabc::Parameter}] :  \index{Core classes !dabc::Parameter} 
 Parameter object that may be monitored or 
-   changed from control system. Any \class{dabc::WorkingProcessor} implementation 
+   changed from control system. Any \\
+   \class{dabc::WorkingProcessor} implementation 
    may register its own parameters. Parameter can be used for configuration of object 
    at creation time (via configuration file), monitoring of object properties in GUI or
    manipulating of object properties at runtime, changing parameter values via controlling 
@@ -527,7 +532,8 @@ As an example, \class{dabc::NetworkTransport} implements the transport between m
 
 \item[\class{dabc::Device}] : \index{Core classes !dabc::Device}
 Device class used for creation and configuration of transport objects.
-Is a subclass of \class{dabc::WorkingProcessor}. 
+Is a subclass of \\
+\class{dabc::WorkingProcessor}. 
    The \class{dabc::Transport} and \class{dabc::Device} base classes have various implementations:
 \begin{compactitem}[$\bullet$]
 \item \class{dabc::LocalTransport} and \class{dabc::LocalDevice} for memory transport within same process
@@ -578,12 +584,16 @@ May define additional commands.
 %\end{compactdesc}
 \end{description}
 
-\figpng{emptyfig}{Simplified {\em core} classes diagram}{htb}{0}{.6}
+
 
 
 \subsection{BNET classes}
 \label{prog_bnet_classes}
 The classes of the Bnet package, providing functionalities of the event builder network.
+\figpdf{bnetclasses}{Simplified UML diagram of the {\em Bnet} classes: green - \dabc\ base classes; dark green - Bnet interface classes; magenta - Bnet implementation classes;
+yellow - \mbs\ implementation example. See text for details.}{htb}{0}{1.1}
+
+
 
 %\begin{compactdesc}
 \begin{description}
@@ -622,7 +632,8 @@ Subclass of \class{dabc::ModuleSync}. Framework class
    (i.e. simulated) data.
 \begin{compactenum}
   \item Method \func{GeneratePacket(buffer)} is to be implemented in application 
-      defined subclass (e.g. \class{bnet::MbsGeneratorModule}) and is called frequently 
+      defined subclass (e.~g.~ \\
+      \class{bnet::MbsGeneratorModule}) and is called frequently 
       in module's \func{MainLoop()}. 
   \item Each filled buffer is forwarded to the single output port of the module. 
 \end{compactenum}
@@ -703,4 +714,3 @@ Subclass of \class{dabc::ModuleSync}.
 %\end{compactdesc}
 \end{description}
 
-\figpng{emptyfig}{Simplified {\em Bnet} class diagram}{htb}{0}{.6}

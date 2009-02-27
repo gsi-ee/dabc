@@ -527,7 +527,17 @@ if(meter != null){
 } else System.out.println("No meter to set for "+pars.getFull());
 }}
 
-public xRecordState getState(){return recsta;}
+public xRecordState getState(){
+	if(recsta != null) recsta.setVisible(paraShown);
+	return recsta;
+	}
+public void setAttributeState(){
+if(recsta!=null){
+	if(stat != null){
+	    paint=recsta.isVisible().booleanValue();
+	} else System.out.println("No State to set for "+pars.getFull());
+	}	
+}
 public xRecordInfo getInfo(){return recinf;}
 
 public xRecordHisto getHisto(){
@@ -579,6 +589,8 @@ if(skip)return;
     format=getFormat();
     if(!pars.getFull().equals(super.getName()))
         System.out.println("ERROR: "+pars.getFull()+" != "+super.getName());
+    else if(format == null)
+        System.out.println("ERROR: "+pars.getFull()+" no format!");
     else if(!pars.getFormat().equals(format))
         System.out.println("ERROR: "+pars.getFormat()+" != "+format);
 
@@ -626,7 +638,7 @@ if(skip)return;
         }
         if(severity == iNolink){
             color=new String("Gray");
-            value=sNolink;
+            value=new String(sNolink+" "+pars.getFull());
             severity=0;
             //quality=-1;
         } else {

@@ -95,8 +95,8 @@ protected String getServers(){
     for(int i=0;i<srv.length;i++){
     	if(srv[i].equals("DIS_DNS/EXIT")) {
             ii=xSet.getDimDns().indexOf(".");
-            if(ii==-1)list.append("DNS="+xSet.getDimDns());
-            else list.append("DNS="+xSet.getDimDns().substring(0,ii));
+            if(ii==-1)list.append(" DNS="+xSet.getDimDns());
+            else list.append(" DNS="+xSet.getDimDns().substring(0,ii));
     	} else {
     	node=srv[i].split("/");
         if(node.length > 2 )item=node[1]; // DABC has DABC/node/EXIT

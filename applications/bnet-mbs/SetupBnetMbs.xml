@@ -1,34 +1,19 @@
 <?xml version="1.0"?>
 <dabc version="1">
   <Variables>
-     <node0 value="lxi008"/>
-     <node1 value="lxi009"/>
-     <node2 value="lxi010"/>
-     <node3 value="lxi011"/>
-     <node4 value="lxi012"/>
-     <custport value="16015"/>
+  <!--Enter the values for specific setup-->
+  <ctrl value="Linux controller node"/>
+     <mbs1 value="MBS readout node"/>
+     <mbs2 value="MBS readout node"/>
+     <read1 value="DABC readout node"/>
+     <read2 value="DABC readout node"/>
+     <eb1 value="DABC event builder node"/>
+     <eb2 value="DABC event builder node"/>
+     <bufsize value="65536"/>
+     <custport value="6000"/>
   </Variables>
-  <Context host="${node1}" name="Gener_${host}">
-    <Module name="Generator">
-       <FirstProcId value="0"/>
-    </Module>
-  </Context>
-  <Context host="${node2}" name="Gener_${host}">
-    <Module name="Generator">
-       <FirstProcId value="2"/>
-    </Module>
-  </Context>
-  <Context host="${node3}" name="Gener_${host}">
-    <Module name="Generator">
-       <FirstProcId value="4"/>
-    </Module>
-  </Context>
-  <Context host="${node4}" name="Gener_${host}">
-    <Module name="Generator">
-       <FirstProcId value="6"/>
-    </Module>
-  </Context>
-  <Context host="${node0}" name="Controller">
+  <!--Configure controller node-->
+  <Context host="${ctrl}" name="Controller">
     <Run>
       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
       <runfunc value="RunTestBnet"/>
@@ -36,26 +21,29 @@
     <Application class="bnet::Cluster">
        <NetDevice value="dabc::SocketDevice"/>
        <CtrlBuffer value="2048"/>
-       <TransportBuffer value="8192"/>
+       <TransportBuffer value="${bufsize}"/>
        <NumEventsCombine value="1"/>
     </Application>
   </Context>
-  <Context host="${node1}" name="Read_${host}">
+  <!--Configure readout node-->
+  <Context host="${read1}" name="Read_${mbs1}">
     <Application class="bnet::MbsWorker">
-       <NumReadouts value="2"/>
-       <Input0Cfg value="${node3}"/>
-       <Input1Cfg value="${node4}"/>
+       <NumReadouts value="1"/>
+       <Input0Cfg value="${mbs1}"/>
     </Application>
   </Context>
-  <Context host="${node3}" name="Read_${host}">
+  <!--Configure readout node-->
+  <Context host="${read2}" name="Read_${mbs2}">
     <Application class="bnet::MbsWorker">
-       <NumReadouts value="2"/>
-       <Input0Cfg value="${node1}"/>
-       <Input1Cfg value="${node2}"/>
+       <NumReadouts value="1"/>
+       <Input0Cfg value="${mbs2}"/>
     </Application>
   </Context>
-  <Context host="${node2}" name="Build_${host}"/>
-  <Context host="${node4}" name="Build_${host}"/>
+  <!--Configure event builder node-->
+  <Context host="${eb1}" name="Builder1"/>
+  <!--Configure event builder node-->
+  <Context host="${eb2}" name="Builder2"/>
+  <!--Set default values for contexts-->
   <Defaults>
      <Context name="*">
        <Run>
@@ -67,32 +55,15 @@
           <Ratemeter name="Event*" lower="0" upper="20000"/>
        </Module>
      </Context>
-     <Context name="Gener*">
-        <Run>
-          <lib value="libDabcMbs.so"/>
-          <func value="InitMbsGenerator"/>
-          <ctrl value="false"/>
-        </Run>
-        <Module name="Generator">
-           <BufferSize value="8192"/>
-           <Go4Random value="false"/>
-           <SubeventSize value="128"/>
-           <Port name="Output">
-              <OutputQueueSize value="5"/>
-              <MbsServerPort value="${custport}"/>
-           </Port>
-        </Module>
-     </Context>
      <Context name="Read*">
         <Run>
           <lib value="libDabcBnet.so"/>
           <lib value="libDabcMbs.so"/>
           <lib value="libBnetMbs.so"/>
-          <parslevel value="5"/>
         </Run>
         <Application class="bnet::MbsWorker">
            <IsSender value="true"/>
-           <ReadoutBuffer value="8192"/>
+           <ReadoutBuffer value="${bufsize}"/>
         </Application>
         <Module name="Combiner">
            <Port name="Input*">
@@ -109,7 +80,7 @@
         <Application class="bnet::MbsWorker">
            <IsReceiver value="true"/>
            <IsFilter value="false"/>
-           <EventBuffer value="8192"/>
+           <EventBuffer value="${bufsize}"/>
         </Application>
      </Context>
   </Defaults>

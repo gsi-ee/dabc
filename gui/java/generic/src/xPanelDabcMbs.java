@@ -35,7 +35,7 @@ import java.util.*;
 public class xPanelDabcMbs extends xPanelPrompt implements ActionListener , Runnable
 {
 private xRemoteShell mbsshell, dabcshell;
-private ImageIcon storeIcon, closeIcon, winIcon, workIcon, dworkIcon, mworkIcon, launchIcon,  killIcon;
+private ImageIcon storeIcon, closeIcon, exitIcon, winIcon, workIcon, dworkIcon, mworkIcon, launchIcon,  killIcon;
 private ImageIcon mbsIcon, configIcon, enableIcon, startIcon, stopIcon, haltIcon, dabcIcon, disIcon, infoIcon;
 private JTextField MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsStart, MbsShut, MbsCommand, MbsLaunchFile;
 private JTextField DimName, DabcNode, DabcServers, DabcName, DabcUserpath, DabcPath, DabcScript, DabcSetup, DabcLaunchFile;
@@ -58,6 +58,7 @@ private xDimCommand mbsCommand;
 private xDimCommand doConfig, doEnable, doStart, doStop, doHalt;
 private Vector<xDimCommand> doExit;
 private Vector<xDimParameter> runState;
+private Vector<xDimParameter> mbsRunning;
 private Vector<xDimParameter> runMode;
 private Vector<xDimParameter> mbsTaskList;
 private Thread threxe;
@@ -97,6 +98,7 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     startIcon   = xSet.getIcon("icons/mbsstart.png");
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
     haltIcon    = xSet.getIcon("icons/dabchalt.png");
+    exitIcon    = xSet.getIcon("icons/exitall.png");
     // add buttons
 //    addButton("mbsQuit","Close window",closeIcon,this);
     addButton("Save","Save forms to files",storeIcon,this);
@@ -107,7 +109,8 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     addButton("mbsStart","Start acquisition",startIcon,this);
     addButton("mbsStop","Stop acquisition",stopIcon,this);
     addButton("dabcHalt","Stop DABC threads and MBS tasks",haltIcon,this);
-    addButton("mbsCleanup","Shutdown all servers",disIcon,this);
+    addButton("exitCleanup","Shutdown all servers",disIcon,this);
+    addButton("shellCleanup","Cleanup all by shell",exitIcon,this);
     //addButton("mbsCleanup","Reset and cleanup",disIcon,this);
     addButton("mbsShow","Show acquisition",infoIcon,this);
     addButton("mbsShell","Rsh MbsNode -l Username Command",mworkIcon,this);
@@ -204,6 +207,7 @@ releaseDimServices();
 System.out.println("DabcMbs setDimServices");
 doExit=new Vector<xDimCommand>(0);
 runState=new Vector<xDimParameter>(0);
+mbsRunning=new Vector<xDimParameter>(0);
 runMode=new Vector<xDimParameter>(0);
 // Scan command list for some commands
 Vector<xDimCommand> list=browser.getCommandList();
@@ -231,6 +235,8 @@ if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) {
     runState.add(para.get(i));}
 else if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) 
 	mbsTaskList.add(para.get(i));
+else if(para.get(i).getParser().getFull().indexOf("/Acquisition/State")>0) 
+	mbsRunning.add(para.get(i));
 else if(para.get(i).getParser().getFull().indexOf("/RunMode/State")>0) {
     runMode.add(para.get(i));}
 }
@@ -260,9 +266,11 @@ if(doExit != null) doExit.removeAllElements();
 if(mbsTaskList != null) mbsTaskList.removeAllElements();
 if(runMode != null) runMode.removeAllElements();
 if(runState != null) runState.removeAllElements();
+if(mbsRunning != null) mbsRunning.removeAllElements();
 doExit=null;
 runState=null;
 runMode=null;
+mbsRunning=null;
 }
 // Start internal frame with an xState panel through timer.
 // Timer events are handled by desktop event handler passed to constructor.
@@ -337,7 +345,7 @@ System.out.print("Wait for state "+state);
     while(t < timeout){
     ok=true;
     for(int i=0;i<runState.size();i++){
-        if(!runState.get(i).getValue().equals(state)) ok=false;
+        if(!runState.get(i).getValue().equals(state)) {ok=false;break;}
     }
         if(ok) return true;
         setProgress(new String("Wait for DABC state "+state+" "+t+" ["+timeout+"]"),xSet.blueD());
@@ -359,6 +367,24 @@ System.out.print("Wait for run mode "+mode);
     }
         if(ok) return true;
         setProgress(new String("Wait for MBS run mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
+        System.out.print(".");
+        browser.sleep(1);
+        t++;
+    }
+    return false;
+}
+//wait until all runMode parameters match mode.
+private boolean waitRun(int timeout, String mode){
+int t=0;
+boolean ok;
+System.out.print("Wait for acquisition mode "+mode);
+    while(t < timeout){
+    ok=true;
+    for(int i=0;i<mbsRunning.size();i++){
+        if(mbsRunning.get(i).getValue().indexOf(mode) <0) {ok=false;break;}
+    }
+        if(ok) return true;
+        setProgress(new String("Wait for MBS acquisition mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
         System.out.print(".");
         browser.sleep(1);
         t++;
@@ -396,7 +422,9 @@ if ("Save".equals(e.getActionCommand())) {
 if(!threadRunning){
 Action = new String(e.getActionCommand());
 // must do confirm here, because in thread it would block forever
-if ("mbsCleanup".equals(Action)) doit=askQuestion("Confirmation","Shut down and cleanup MBS/DABC?");
+if (("exitCleanup".equals(Action))||("shellCleanup".equals(Action))){
+doit=askQuestion("Confirmation","Shut down and cleanup MBS/DABC?");
+}
 if(doit){
     startProgress();
     ae=e;
@@ -426,15 +454,38 @@ int time=0;
         //xLogger.print(1,MbsCommand);
         if(dabcshell.rsh(DabcNode.getText(),Username.getText(),DabcScript.getText(),0L)){}
     }
-    else if ("mbsCleanup".equals(Action)) {
-        if(doExit == null) setDimServices();
-        if(doExit != null){
-        setProgress("Exit DABC ...",xSet.blueD());
-        for(int i=0;i<doExit.size();i++){
-            xLogger.print(1,doExit.get(i).getParser().getFull());
-            doExit.get(i).exec(xSet.getAccess());
-        }
-        }  else {setProgress("No DABC exit commands available!",xSet.redD());browser.sleep(2);}
+    else if (("exitCleanup".equals(Action))||("shellCleanup".equals(Action))){
+    	if ("exitCleanup".equals(Action)) {
+//    		if(doExit == null) setDimServices();
+//    		if(doExit != null){
+//    			setProgress("Exit DABC ...",xSet.blueD());
+//    			for(int i=0;i<doExit.size();i++){
+//    				xLogger.print(1,doExit.get(i).getParser().getFull());
+//    				doExit.get(i).exec(xSet.getAccess());
+//    			}
+//    		}  else {
+//    			setProgress("No DABC exit commands available!",xSet.redD());
+//    			browser.sleep(2);
+//    			}
+            setProgress("DABC cleanup ...",xSet.blueD());
+            String cmd = new String(DabcPath.getText()+
+                                "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
+                                DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
+                                xSet.getDimDns()+" "+dabcMaster+" stop &");
+            xLogger.print(1,cmd);
+            dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);    		
+			browser.sleep(2);
+    	}
+    	else {
+            setProgress("DABC cleanup ...",xSet.blueD());
+            String cmd = new String(DabcPath.getText()+
+                                "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
+                                DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
+                                xSet.getDimDns()+" "+dabcMaster+" kill &");
+            xLogger.print(1,cmd);
+            dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);    		
+			browser.sleep(2);
+		}
         setProgress("Shut down MBS ...",xSet.blueD());
         if(mbsCommand != null) mbsCommand.exec(xSet.getAccess()+" *::exit");
         String cmd = new String(MbsPath.getText()+
@@ -645,13 +696,19 @@ int time=0;
     else if ("mbsStart".equals(Action)) {
         xLogger.print(1,"MBS: *::Start acquisition");
         mbsCommand.exec(xSet.getAccess()+" *::Start acquisition");
+        if(waitRun(10,"Running"))
+        setProgress("OK: all running",xSet.greenD());
+        else setProgress("LOOK: not all running",xSet.redD());
         xLogger.print(1,doStart.getParser().getFull());
         doStart.exec(xSet.getAccess());
     }
     else if ("mbsStop".equals(Action)) {
         xLogger.print(1,"MBS: *::Stop acquisition");
         mbsCommand.exec(xSet.getAccess()+" *::Stop acquisition");
-        xLogger.print(1,doStop.getParser().getFull());
+        if(waitRun(10,"Stopped"))
+        setProgress("OK: all stopped",xSet.greenD());
+        else setProgress("LOOK: not all stopped",xSet.redD());
+       xLogger.print(1,doStop.getParser().getFull());
         doStop.exec(xSet.getAccess());
     }
     else if ("mbsCommand".equals(Action)) {

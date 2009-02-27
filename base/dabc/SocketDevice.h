@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -76,7 +76,7 @@ namespace dabc {
          virtual const char* ClassName() const { return dabc::typeSocketDevice; }
 
          SocketServerProcessor* fServer;
-         std::string                 fServerCmdChannel; // name (pass) of command channel
+         std::string            fServerCmdChannel; // name (pass) of command channel
          PointersVector         fConnRecs; // list of connections recs
          PointersVector         fProtocols; // list of protocol start processors
          long                   fConnCounter;

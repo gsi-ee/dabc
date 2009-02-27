@@ -60,6 +60,7 @@ private JOptionPane confirm;
 private int nMbsServers, nMbsNodes;
 private xDimCommand mbsCommand=null;
 private Vector<xDimParameter> mbsTaskList;
+private Vector<xDimParameter> mbsRunning;
 private Thread threxe;
 private ActionEvent ae;
 private xTimer etime;
@@ -182,8 +183,9 @@ return str.toString();
  */
 public void setDimServices(){
 int i;
-mbsPrompt=false;
 releaseDimServices();
+mbsRunning=new Vector<xDimParameter>(0);
+mbsPrompt=false;
 System.out.println("Mbs setDimServices");
 Vector<xDimCommand> list=browser.getCommandList();
 for(i=0;i<list.size();i++){
@@ -192,7 +194,10 @@ if(list.get(i).getParser().getFull().indexOf("/MbsCommand")>0) {mbsCommand=list.
 Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
 	if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) mbsTaskList.add(para.get(i));
-	if(para.get(i).getParser().getFull().indexOf("PRM/NodeList")>0) mbsPrompt=true;
+	else if(para.get(i).getParser().getFull().indexOf("PRM/NodeList")>0) mbsPrompt=true;
+	else if(para.get(i).getParser().getFull().indexOf("/Acquisition/State")>0) {
+		mbsRunning.add(para.get(i));
+	}
 }
 if(mbsPrompt)cmdPrefix=new String("*::");
 else cmdPrefix=new String("");
@@ -204,6 +209,8 @@ public void releaseDimServices(){
 System.out.println("Mbs releaseDimServices");
     mbsCommand=null;
     mbsTaskList.removeAllElements();
+    if(mbsRunning != null) mbsRunning.removeAllElements();
+    mbsRunning=null;
 }
 
 // Start internal frame with an xState panel through timer.
@@ -235,8 +242,8 @@ boolean ok=false;
 // If not there, wait for parameters to be created,
 // otherwise wait that their values match the task names
 if(mbsTaskList.size() < nMbsNodes){
-    setProgress(new String("Wait for "+nMbsNodes+" task lists ..."),xSet.blueD());
-    System.out.print("Wait for "+nMbsNodes+" task lists ");
+    setProgress(new String("Wait for "+nMbsNodes+" Info servers ..."),xSet.blueD());
+    System.out.print("Wait for "+nMbsNodes+" Info servers ");
     while(t < timeout){
         String[] xx = browser.getServices("*MSG/TaskList");
         if(xx.length == nMbsNodes) {ok=true; break;}
@@ -276,6 +283,24 @@ if(mbsTaskList.size() == nMbsNodes){
     return false;
 }
 
+//wait until all runMode parameters match mode.
+private boolean waitRun(int timeout, String mode){
+int t=0;
+boolean ok;
+System.out.print("Wait for acquisition mode "+mode);
+    while(t < timeout){
+    ok=true;
+    for(int i=0;i<mbsRunning.size();i++){
+        if(mbsRunning.get(i).getValue().indexOf(mode) <0) {ok=false;break;}
+    }
+        if(ok) return true;
+        setProgress(new String("Wait for MBS acquisition mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
+        System.out.print(".");
+        browser.sleep(1);
+        t++;
+    }
+    return false;
+}
 private void launch(String cmd){
 int time=0;
 int num=0;
@@ -294,7 +319,7 @@ setProgress("Launch MBS ...",xSet.blueD());
 System.out.println("");
 if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-	if(waitMbs(20,"Msg_log")){
+	if(waitMbs(25,"Msg_log")){
         System.out.println("\nMbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
@@ -455,11 +480,17 @@ public void run(){
     	String cmd = new String(cmdPrefix+"Start acquisition");
         xLogger.print(1,"MBS: "+cmd);
         mbsCommand.exec(xSet.getAccess()+" "+cmd);
+        if(waitRun(10,"Running"))
+            setProgress("OK: all running",xSet.greenD());
+        else setProgress("LOOK: not all running",xSet.redD());
      }
     else if ("mbsStop".equals(Action)) {
     	String cmd = new String(cmdPrefix+"Stop acquisition");
         xLogger.print(1,"MBS: "+cmd);
         mbsCommand.exec(xSet.getAccess()+" "+cmd);
+        if(waitRun(10,"Stopped"))
+        setProgress("OK: all stopped",xSet.greenD());
+        else setProgress("LOOK: not all stopped",xSet.redD());
     }
     else if ("mbsShow".equals(Action)) {
     	String cmd = new String(cmdPrefix+"Show acquisition");

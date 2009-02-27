@@ -81,11 +81,8 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    InitSMmodule();
 
    fStatusRecord=new dabc::StatusParameter(this, _DIMC_SERVICE_FSMRECORD_,0);//CurrentState());
-   fLogMessage=dynamic_cast<dabc::StrParameter*>(CreateParStr(_DIMC_SERVICE_MESSAGE_,"Log message is starting..."));
-   if(fLogMessage==0)
-      EOUT(("!!!! Manager ctor could not create log message string parameter!!!"));
-
-   fInfoLine=new dabc::InfoParameter(this, _DIMC_SERVICE_INFORECORD_, true);
+   fInfoLine = 0;
+//   fInfoLine=new dabc::InfoParameter(this, _DIMC_SERVICE_INFORECORD_, true);
    init();
    UpdateStatusRecord();
    unsigned int dimport=2505;
@@ -265,6 +262,8 @@ bool dimc::Manager::IsNodeActive(int num)
 
 void dimc::Manager::LogMessage(int level, const char* mess)
 {
+   if (fInfoLine==0) return;
+
    std::string text=mess;
    dimc::nameParser::recordstat priority=dimc::nameParser::MESSAGE;
          std::string color="Green";
@@ -284,9 +283,7 @@ void dimc::Manager::LogMessage(int level, const char* mess)
                   color="Red";
                   break;
             }
-   fRegistry->SetDIMServiceProperties(_DIMC_SERVICE_MESSAGE_, true, priority);
-   fLogMessage->SetValue(text); // will do the dim update by parameter event
-   fRegistry->SetDIMServiceProperties(_DIMC_SERVICE_INFORECORD_, false, priority);
+   fRegistry->SetDIMServiceProperties(_DIMC_SERVICE_INFORECORD_, true, priority);
    fInfoLine->SetColor(color);
    fInfoLine->SetValue(text); // will do the dim update by parameter event
 }

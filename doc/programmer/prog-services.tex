@@ -2,6 +2,9 @@
 
 \section{Memory management}
 \label{prog_services_memory}
+\figpdf{memorypool}{Schema of \dabc\ \class{MemoryPool} with {\em blocks} and {\em subblocks}, \class{Buffers} with {\em segments}, and \class{Pointer} object. A \class{PoolHandle} is used to access the pool from within a \class{Module}. See text for details.}{htb}{0}{.9}
+
+
 \subsection{Zero-copy approach}
 The \dabc~ framework is based on a dataflow concept: Data buffers are 
 flowing through many components like \class{Modules}, \class{Transports}, 
@@ -25,6 +28,8 @@ the {\em subblocks}; the size of each {\em subblock} is defined as
 a power of 2 (e.~g.~ 4096 bytes). The \class{MemoryPool} can have 
 several memory {\em blocks} with different {\em subblock} sizes.
 
+
+
 Usually a \class{MemoryPool} has a fixed structure: the memory is allocated once 
 and will not change during the complete run. 
 This is the preferrable mode of operation, because any 
@@ -43,11 +48,10 @@ can refer to the same {\em subblock}.
 The user can request a new \class{Buffer} from the \class{MemoryPool} with method \func{TakeBuffer()}. This method returns a \class{dabc::Buffer} instance 
 with an internal reference to a formerly unused {\em subblock} 
 of the appropriate size. The reference counter of this {\em subblock} is incremented
-then. To release a \class{Buffer}, one should call static method \func{dabc::Buffer::Release()}.  
+then. To release a \class{Buffer}, one should call static method \\ \func{dabc::Buffer::Release()}.  
 This will delete the \class{Buffer} object and decrement 
 again the {\em subblock} reference counter.
 
-\figpng{emptyfig}{Schema of buffers with segmentts and memory pool with blocks and subblocks}{htb}{0}{.6}
 
 
 \subsection{Buffer}

@@ -360,27 +360,6 @@ void dimc::Registry::SetDIMServiceProperties(const std::string& name, bool logou
 }
 
 
-//void dimc::Registry::UpdateDIMService(const std::string& name, bool logoutput, dimc::nameParser::recordstat recstat)
-//{
-////std::cout <<"uuuuuuuuuuuu UpdateDIMService for "<<name << std::endl;
-//dimc::ServiceEntry* service=FindDIMService(name);
-//if(service)
-//   {
-//      //std::cout <<" - Updating dim service "<< name << std::endl;
-//      service->SetStatus(recstat);
-//      dimc::nameParser::visiblemask vis=service->GetVisibility();
-//      if(logoutput)
-//         {
-//            service->SetVisibility(vis | DABC_VIS_LOGGABLE);
-//            service->Update();
-//         }
-//      else
-//         {
-//            service->SetVisibility(vis & (~DABC_VIS_LOGGABLE));
-//            service->Update();
-//         }
-//   }
-//}
 
 
 void dimc::Registry::UpdateDIMServiceAll()

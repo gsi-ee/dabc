@@ -13,6 +13,7 @@
  ********************************************************************/
 package xgui;
 import java.util.*;
+import org.w3c.dom.*;
 /**
  * Dim record data for state.
  * @author Hans G. Essel
@@ -37,4 +38,13 @@ Value=value;
 }
 public String getValue(){return Value;}
 public int getSeverity(){return Severity;}
+public String XmlLine(){
+	String str = String.format("<State name=\"%s\" visible=\"%s\"/>\n",
+	getName(),isVisible().toString());
+	return str;}
+public void restoreRecord(Element el){
+	String att;
+	    att=el.getAttribute("visible");
+	    if(att.length()>0)setVisible(att);
+	}
 } // class xRecordState

@@ -108,12 +108,15 @@ private void initPanel(Dimension dim){
     System.out.print("Wait for update "+ipar);
     int timeout=0;
     boolean ok=false;
+    int noq=0;
+    int comdef=0;
     while(!ok){
-        int noq=0;
-        ok=true;
+        noq=0;
+        comdef=0;
+               ok=true;
         for(i=0;i<ipar;i++) if(vpar.get(i).getDimQuality() == -1){
-        ok=false;
-        noq++;
+        	if(vpar.get(i).isCommandDescriptor()) comdef++;
+        	else {ok=false; noq++;}
         // vpar.get(i).releaseService();
         // vpar.get(i).setParameterActiv(false);
         // System.out.println("Replace  "+vpar.get(i).getParser().getFull()+ " "+vpar.get(i).getParser().getFormat());
@@ -121,13 +124,13 @@ private void initPanel(Dimension dim){
         // vpar.set(i,p);
         }
         if(ok)break;
-        System.out.print("."+noq);
+        System.out.print("."+noq+"("+comdef+")");
         dimbrowser.sleep(2);
         timeout++;
         if(timeout > 3)break;
     }
     if(ok) {
-        System.out.println(" done");
+        System.out.println(" done, missing pars "+noq+", comdefs "+comdef);
     } else {
         System.out.println("\nfailed");
         xSet.setMessage("Update parameter list failed!");
@@ -144,6 +147,7 @@ private void initPanel(Dimension dim){
     NodeList list = xSet.getRecordXml();
     if(list != null){
     for(ii=0;ii<ipar;ii++) {
+        xRecordState recsta=vpar.get(ii).getState();
         xRecordMeter recmet=vpar.get(ii).getMeter();
         xRecordHisto rechis=vpar.get(ii).getHisto();
         for(int i=0;i<list.getLength();i++){
@@ -156,6 +160,10 @@ private void initPanel(Dimension dim){
             else if(rechis != null){
                 rechis.restoreRecord(el);
                 vpar.get(ii).setAttributeHisto(); // from rechis
+                }
+            else if(recsta != null){
+                recsta.restoreRecord(el);
+                vpar.get(ii).setAttributeState(); // from rechis
                 }
             break;
             }

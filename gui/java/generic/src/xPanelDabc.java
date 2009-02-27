@@ -105,8 +105,8 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     addButton("dabcStart","Start",startIcon,this);
     addButton("dabcStop","Stop",stopIcon,this);
     addButton("dabcHalt","Halt",haltIcon,this);
-    addButton("dabcExit","Exit and shut down",killIcon,this);
-    addButton("dabcCleanup","Cleanup DABC",exitIcon,this);
+    addButton("dabcExit","Exit all DABC tasks",killIcon,this);
+    addButton("dabcCleanup","Kill all DABC tasks",exitIcon,this);
     addButton("dabcShell","ssh Node -l Username Script",dworkIcon,this);
     int width=25;
     // read dabc setup from file
@@ -226,7 +226,7 @@ private void stopProgress(){
 private boolean waitState(int timeout, String state){
 int t=0;
 boolean ok;
-System.out.print("Wait for "+state);
+System.out.println("Wait for "+state);
     while(t < timeout){
         ok=true;
         for(int i=0;i<runState.size();i++){
@@ -420,7 +420,7 @@ public void run(){
             String cmd = new String(DabcPath.getText()+
                                 "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
                                 DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
-                                xSet.getDimDns()+" "+dabcMaster+" &");
+                                xSet.getDimDns()+" "+dabcMaster+" kill &");
             xLogger.print(1,cmd);
             dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);
             setProgress("OK: DABC down, update parameters ...",xSet.blueD());
@@ -434,23 +434,30 @@ public void run(){
             else setProgress("OK: DABC down",xSet.greenD());
      }
     else if ("dabcExit".equals(Action)) {
-        setProgress("Exit DABC ...",xSet.blueD());
-        if(doExit != null){
-            for(int i=0;i<doExit.size();i++){
-                xLogger.print(1,doExit.elementAt(i).getParser().getFull());
-                doExit.elementAt(i).exec(xSet.getAccess());
-            }
-            setProgress("OK: DABC down, update parameters ...",xSet.blueD());
-            browser.sleep(2);
-            xSet.setSuccess(false);
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);
-            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);}
-            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-            else setProgress("OK: DABC down",xSet.greenD());
-        }
-        else setProgress("No DABC exit commands available!",xSet.redD());
+        setProgress("DABC Exit ...",xSet.blueD());
+        String cmd = new String(DabcPath.getText()+
+                            "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
+                            DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
+                            xSet.getDimDns()+" "+dabcMaster+" stop &");
+        xLogger.print(1,cmd);
+        dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);    		
+		browser.sleep(2);
+//        if(doExit != null){
+//            for(int i=0;i<doExit.size();i++){
+//                xLogger.print(1,doExit.elementAt(i).getParser().getFull());
+//                doExit.elementAt(i).exec(xSet.getAccess());
+//            }
+//            setProgress("OK: DABC down, update parameters ...",xSet.blueD());
+//            browser.sleep(2);
+//            xSet.setSuccess(false);
+//            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//            browser.sleep(1);
+//            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//            browser.sleep(1);}
+//            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+//            else setProgress("OK: DABC down",xSet.greenD());
+//        }
+//        else setProgress("No DABC exit commands available!",xSet.redD());
     }
     // all following need the commands
     else {

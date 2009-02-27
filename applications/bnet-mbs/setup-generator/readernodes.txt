@@ -1,2 +1,0 @@
-lxi009.gsi.de:x86g-4.gsi.de:x86g-7.gsi.de
-lxi010.gsi.de:x86g-3.gsi.de

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -52,7 +52,7 @@ dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ
 
    int portnum = port->GetCfgInt(xmlServerPort, DefualtServerPort(kind), cmd);
 
-   dabc::Device* dev = (dabc::Device*) dabc::mgr()->FindLocalDevice();
+   dabc::Device* dev = dabc::mgr()->FindLocalDevice();
    if (dev==0) {
       EOUT(("Local device not found"));
       return 0;

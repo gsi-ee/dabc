@@ -208,7 +208,7 @@ $(PACKAGE)/xParTable.class : $(SOURCEDIR)/xParTable.java
 	javac $(FLAGS) $(SOURCEDIR)/xParTable.java
 
 clean:
-	rm -f $(PACKAGE)/*.class
+	rm -f $(PACKAGE)/*.class application/*.class
 	rm -f $(JARFILE)
 	
 cleandoc:

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -31,29 +31,29 @@
 #endif
 
 namespace dabc {
-   
+
    class LocalDevice;
-   
+
    class LocalTransport : public Transport {
       friend class LocalDevice;
-      protected: 
+      protected:
          LocalTransport            *fOther;
          BuffersQueue               fQueue;
-         Mutex                     *fMutex; 
+         Mutex                     *fMutex;
          bool                       fMutexOwner;
          bool                       fMemCopy;
-         
+
          virtual void PortChanged();
-         
+
          virtual bool _IsReadyForCleanup();
-         
-      public:  
+
+      public:
          LocalTransport(LocalDevice* dev, Port* port, Mutex* mutex, bool owner, bool memcopy);
          virtual ~LocalTransport();
 
          virtual bool ProvidesInput() { return (fOther!=0) && (fQueue.Capacity()>0); }
          virtual bool ProvidesOutput() { return fOther ? fOther->fQueue.Capacity()>0 : false; }
-         
+
          virtual bool Recv(Buffer* &);
          virtual unsigned RecvQueueSize() const;
          virtual Buffer* RecvBuffer(unsigned indx) const;
@@ -61,13 +61,13 @@ namespace dabc {
          virtual unsigned SendQueueSize();
          virtual unsigned MaxSendSegments() { return 9999; }
    };
-   
+
    // _______________________________________________________
-   
+
    class NullTransport : public Transport {
       public:
          NullTransport(LocalDevice* dev);
-         
+
          virtual bool ProvidesInput() { return false; }
          virtual bool ProvidesOutput() { return true; }
 
@@ -78,22 +78,20 @@ namespace dabc {
          virtual unsigned SendQueueSize() { return 0; }
          virtual unsigned MaxSendSegments() { return 9999; }
    };
-   
+
    // _______________________________________________________________
 
-   
+
    class LocalDevice : public Device {
       public:
          LocalDevice(Basic* parent, const char* name);
 
          bool ConnectPorts(Port* port1, Port* port2, CommandClientBase* cli = 0);
-         
-         bool MakeNullTransport(Port* port);
-         
+
          virtual int CreateTransport(Command* cmd, dabc::Port* port);
-         
+
          virtual int ExecuteCommand(Command* cmd);
-         
+
          virtual const char* ClassName() const { return "LocalDevice"; }
    };
 

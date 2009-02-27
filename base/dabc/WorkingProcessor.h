@@ -164,8 +164,8 @@ namespace dabc {
 
          virtual WorkingProcessor* GetCfgMaster() { return 0; }
 
-
          CommandDefinition* NewCmdDef(const char* cmdname);
+         bool DeleteCmdDef(const char* cmdname);
 
          // methods for parameters creation
          Parameter* CreatePar(int kind, const char* name, const char* initvalue = 0, unsigned flags = 0);

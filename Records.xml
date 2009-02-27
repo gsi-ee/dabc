@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Record>
+<Meter name="DABC/lxi008:0/Controller/CPUutil.CpuInfo" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000100.0" color="Blue"/>
+<Meter name="DABC/lxi009:1/Read_lxi009/CPUutil.CpuInfo" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000100.0" color="Blue"/>
+<Meter name="DABC/lxi009:1/Read_lxi009/DataRate.Sender" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000020.0" color="Blue"/>
+<Meter name="DABC/lxi009:1/Read_lxi009/EventRate.Combiner" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00020000.0" color="Blue"/>
+<Histo name="DABC/lxi009:1/Read_lxi009/PackedEvents.Combiner" visible="true" mode="0" log="false" width="200" height="150" color="Blue"/>
+<Meter name="DABC/lxi010:3/Build_lxi010/CPUutil.CpuInfo" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000100.0" color="Blue"/>
+<Meter name="DABC/lxi010:3/Build_lxi010/DataRate.Receiver" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000020.0" color="Blue"/>
+<Meter name="DABC/lxi010:3/Build_lxi010/EventRate.Builder" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00020000.0" color="Blue"/>
+<Meter name="DABC/lxi011:2/Read_lxi011/CPUutil.CpuInfo" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000100.0" color="Blue"/>
+<Meter name="DABC/lxi011:2/Read_lxi011/DataRate.Sender" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000020.0" color="Blue"/>
+<Meter name="DABC/lxi011:2/Read_lxi011/EventRate.Combiner" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00020000.0" color="Blue"/>
+<Histo name="DABC/lxi011:2/Read_lxi011/PackedEvents.Combiner" visible="true" mode="0" log="false" width="200" height="150" color="Blue"/>
+<Meter name="DABC/lxi012:4/Build_lxi012/CPUutil.CpuInfo" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000100.0" color="Blue"/>
+<Meter name="DABC/lxi012:4/Build_lxi012/DataRate.Receiver" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00000020.0" color="Blue"/>
+<Meter name="DABC/lxi012:4/Build_lxi012/EventRate.Builder" visible="true" mode="1" auto="false" log="false" low="00000000.0" up="00020000.0" color="Blue"/>
+</Record>

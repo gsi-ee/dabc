@@ -19,11 +19,10 @@ export DIM_DNS_NODE=$4
 export DABC_GUI_NODE=$5
 cd $DABC_USER_DIR
 
-
 echo   dabcshutdown for plain dim control....
 #printenv 
 # $5 $6 $7 $8
-$DABCSYS/bin/run.sh $DABC_XDAQ_CONFIG kill -v 
+$DABCSYS/bin/run.sh $DABC_XDAQ_CONFIG $6 
 
 echo        dabcshutdown is complete. ---
 

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -48,14 +48,14 @@ dabc::Module::Module(const char* name, Command* cmd) :
    //  1 - for commands and replies,
    //  2 - for sys commands (in modules thread itself)
 
-   CommandDefinition* def = NewCmdDef("SetPriority");
-   def->AddArgument("Priority", argInt, true);
-   def->Register(true);
-
-   def = NewCmdDef(CmdSetParameter::CmdName());
-   def->AddArgument("ParName", argString, true);
-   def->AddArgument("ParValue", argString, true);
-   def->Register(true);
+//   CommandDefinition* def = NewCmdDef("SetPriority");
+//   def->AddArgument("Priority", argInt, true);
+//   def->Register(true);
+//
+//   def = NewCmdDef(CmdSetParameter::CmdName());
+//   def->AddArgument("ParName", argString, true);
+//   def->AddArgument("ParValue", argString, true);
+//   def->Register(true);
 }
 
 dabc::Module::~Module()

@@ -150,13 +150,6 @@ public:
 	*/
     void StopDIMServer();
 
-//    /**
-//	*  Update the service corresponding to the xdaq serializable variable.,
-//    * i.e. send new value to registered clients.
-//    * optionally, service may tell client to output to log window
-//	*/
-//    void UpdateDIMService(const std::string& name, bool logoutput=false, dimc::nameParser::recordstat priority=dimc::nameParser::SUCCESS);
-
 
  /*
  * Set properties of service of name. logoutput defines if text value should be put

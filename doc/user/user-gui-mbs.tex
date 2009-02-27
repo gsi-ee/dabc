@@ -170,14 +170,14 @@ Task list is shown in info window (name slightly different):
 \edes
 \section{Working directories}
 \lsubsection[MBS configuration of DIM]{user:MbsDimconfig}{\mbs\ configuration of DIM}
-Optional file \verba{.guirc} in the \mbs\ working directory
+Optional text file \verba{dimsetup} in the \mbs\ working directory
 specifies which rate meters and states shall appear
 in the GUI. Upper limits of the rate meters can be specified.
 This file can be copied from \verba{\$MBSROOT/set}. Only the
 parameters which are in this file are optional.
 {\small {\begin{verbatim}
 ## This file controls the rate meter and state appearance.
-## File name must be .guirc and in the MBS working directory.
+## File name must be dimsetup and in the MBS working directory.
 ## The value numbers are the maximum values for rate meters
 ## Colons only if value is specified!
 ## Node names must be uppercase, * wildcards all

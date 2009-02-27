@@ -4,6 +4,7 @@
 #include "MbsCombinerModule.h"
 #include "MbsFilterModule.h"
 #include "MbsBuilderModule.h"
+#include "SplitterModule.h"
 
 bnet::MbsFactory bnetmbsfactory("bnet-mbs");
 
@@ -28,6 +29,9 @@ dabc::Module* bnet::MbsFactory::CreateModule(const char* classname, const char* 
    else
    if (strcmp(classname, "bnet::MbsBuilderModule")==0)
       return new bnet::MbsBuilderModule(modulename, cmd);
+   else
+   if (strcmp(classname, "dabc::SplitterModule")==0)
+      return new dabc::SplitterModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

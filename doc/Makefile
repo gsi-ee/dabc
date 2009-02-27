@@ -1,7 +1,5 @@
-all: documents
+docs:: main-all.pdf
 
-documents: \
-	main-all.pdf
 main-all.pdf : main-all.tex \
 dabcclass.cls \
 templates/XXX-docrev.tex \
@@ -87,7 +85,10 @@ dabc-requirements.tex
 	pdflatex main-all.tex|./texoutfilter
 	@echo ==== 3rd pass =====================
 	pdflatex main-all.tex|./texoutfilter
+#	@echo ==== 4th pass =====================
+#	pdflatex main-all.tex|./texoutfilter
 	rm -f *.aux *.idx *.ilg *.bbl *.blg *.ind *.log *.out *.toc *.lof
-clean:
-	rm -f *.aux *.idx *.ilg *.ind *.bbl *.blg *.log *.out *.toc *.lof
+	
+clean::
+	rm -f *.pdf *.aux *.idx *.ilg *.ind *.bbl *.blg *.log *.out *.toc *.lof
 	

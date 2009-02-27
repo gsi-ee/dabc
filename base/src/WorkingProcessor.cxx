@@ -168,6 +168,17 @@ dabc::CommandDefinition* dabc::WorkingProcessor::NewCmdDef(const char* cmdname)
    return new dabc::CommandDefinition(fParsHolder, cmdname);
 }
 
+bool dabc::WorkingProcessor::DeleteCmdDef(const char* cmdname)
+{
+   if ((cmdname==0) || (strlen(cmdname)==0) || (fParsHolder==0)) return false;
+
+   CommandDefinition* cmd = dynamic_cast<CommandDefinition*> (fParsHolder->FindChild(cmdname));
+
+   if (cmd!=0) delete cmd;
+
+   return cmd!=0;
+}
+
 
 // all about parameters handling
 

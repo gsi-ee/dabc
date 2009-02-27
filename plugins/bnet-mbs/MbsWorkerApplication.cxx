@@ -2,17 +2,43 @@
 
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
+#include "dabc/CommandDefinition.h"
 
 #include "mbs/Factory.h"
 
-#include "MbsCombinerModule.h"
-#include "MbsBuilderModule.h"
-#include "MbsFilterModule.h"
+#include "mbs/MbsTypeDefs.h"
+
 #include "MbsFactory.h"
 
 bnet::MbsWorkerApplication::MbsWorkerApplication() :
    WorkerApplication(xmlMbsWorkerClass)
 {
+   CreateParStr("DoServer", "");
+
+   if (IsReceiver()) {
+      dabc::CommandDefinition* def = NewCmdDef("StartServer");
+      def->AddArgument("Kind", dabc::argString, false);
+      def->Register();
+      NewCmdDef("StopServer")->Register();
+   }
+}
+
+int bnet::MbsWorkerApplication::ExecuteCommand(dabc::Command* cmd)
+{
+   int cmd_res = cmd_true;
+
+   if (cmd->IsName("StartServer")) {
+      std::string kind = cmd->GetStr("Kind", "");
+      if (kind.empty()) kind = mbs::ServerKindToStr(mbs::StreamServer);
+      cmd_res = cmd_bool(CreateOutServer(kind));
+      SetParStr("Info", dabc::format("Start MBS server Kind:%s res:%s", kind.c_str(), DBOOL(cmd_res)));
+   } else
+   if (cmd->IsName("StopServer")) {
+      cmd_res = cmd_bool(CreateOutServer(""));
+      SetParStr("Info", dabc::format("Stop MBS server res:%s", DBOOL(cmd_res)));
+   } else
+      cmd_res = bnet::WorkerApplication::ExecuteCommand(cmd);
+   return cmd_res;
 }
 
 
@@ -36,13 +62,11 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
       cmd->SetStr(mbs::xmlFileName, cfg);
       if (!dabc::mgr()->Execute(cmd, 10)) return false;
    } else {
-
       dabc::Command* cmd = new dabc::CmdCreateTransport(portname, mbs::typeClientTransport, "MbsReadoutThrd");
       cmd->SetStr(mbs::xmlServerName, cfg);
 
       if (!dabc::mgr()->Execute(cmd, 10)) return false;
    }
-
 
    DOUT1(("Create input for port:%s cfg:%s done", portname, cfg.c_str()));
 
@@ -66,24 +90,71 @@ bool bnet::MbsWorkerApplication::CreateFilter(const char* name)
 
 bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
 {
-   std::string outfile = GetParStr(xmlStoragePar);
+   if (dabc::mgr()->FindModule("Splitter") == 0) {
+      dabc::Command* cmd = new dabc::CmdCreateModule("dabc::SplitterModule", "Splitter", "MbsOutThrd");
+      cmd->SetStr(dabc::xmlPoolName, bnet::EventPoolName);
+      cmd->SetInt(dabc::xmlNumOutputs, 2);
+      if (!dabc::mgr()->Execute(cmd)) return false;
 
-   DOUT3(("!!! CreateStorage port:%s par:%s", portname, outfile.c_str()));
+      if (!dabc::mgr()->ConnectPorts(portname, "Splitter/Input")) return false;
+   }
 
-   if (outfile.length()==0)
-      return bnet::WorkerApplication::CreateStorage(portname);
+//   dabc::CommandDefinition* def = NewCmdDef("StartServer");
+//   def->AddArgument("Kind", dabc::argString, false);
+//   def->Register();
+//   NewCmdDef("StopServer")->Register();
 
-   dabc::Command* cmd = new dabc::CmdCreateTransport(portname, mbs::typeLmdOutput, "MbsIOThrd");
-   cmd->SetStr(mbs::xmlFileName, outfile);
-
-   bool res = dabc::mgr()->Execute(cmd, 5);
-
-   DOUT1(("Create output for port %s res = %s", portname, DBOOL(res)));
-
-   return res;
+   return CreateOutFile(portname, GetParStr(xmlStoragePar)) &&
+          CreateOutServer(GetParStr("DoServer"));
 }
 
+bool bnet::MbsWorkerApplication::CreateOutFile(const char* portname, const std::string& filename)
+{
+   if (dabc::mgr()->FindModule("Splitter") == 0) return false;
 
+   if (filename.empty()) {
+      if (!dabc::mgr()->CreateTransport("Splitter/Output0", "")) return false;
+   } else {
+      dabc::Command* cmd = new dabc::CmdCreateTransport("Splitter/Output0", mbs::typeLmdOutput, "MbsOutThrd");
+      cmd->SetStr(mbs::xmlFileName, filename);
+      if (!dabc::mgr()->Execute(cmd, 5)) {
+         EOUT(("Cannot create output file %s", filename.c_str()));
+         return false;
+      }
+      DOUT1(("Create output file = %s", filename.c_str()));
+   }
+   return true;
+}
 
+bool bnet::MbsWorkerApplication::CreateOutServer(const std::string& serverkind)
+{
+   if (dabc::mgr()->FindModule("Splitter") == 0) return false;
 
+   if (serverkind.empty()) {
+      if (!dabc::mgr()->CreateTransport("Splitter/Output1", "")) return false;
+   } else {
+      DOUT0(("Start CreateOutServer"));
 
+      dabc::Command* cmd = new dabc::CmdCreateTransport("Splitter/Output1", mbs::typeServerTransport, "MbsOutServThrd");
+      if ((serverkind != mbs::ServerKindToStr(mbs::TransportServer)) &&
+          (serverkind != mbs::ServerKindToStr(mbs::StreamServer)))
+            cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
+         else
+            cmd->SetStr(mbs::xmlServerKind, serverkind.c_str());
+      cmd->SetInt(dabc::xmlBufferSize, GetParInt(xmlEventBuffer, 16834));
+      if (!dabc::mgr()->Execute(cmd, 5)) {
+         EOUT(("Cannot create output server of kind %s", serverkind.c_str()));
+         return false;
+      }
+      DOUT0(("Create output server of kind %s", serverkind.c_str()));
+   }
+   return true;
+}
+
+bool bnet::MbsWorkerApplication::BeforeAppModulesDestroyed()
+{
+//   DeleteCmdDef("StartServer");
+//   DeleteCmdDef("StopServer");
+
+   return bnet::WorkerApplication::BeforeAppModulesDestroyed();
+}

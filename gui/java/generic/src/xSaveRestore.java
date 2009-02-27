@@ -40,6 +40,8 @@ public static final void saveRecords(Vector<xiDimParameter> vpar, String file){
         if(recmet!=null)str.append(recmet.XmlLine());
         xRecordHisto rechis=vpar.get(i).getHisto();
         if(rechis!=null)str.append(rechis.XmlLine());
+        xRecordState recsta=vpar.get(i).getState();
+        if(recsta!=null)str.append(recsta.XmlLine());
     }
     str.append(xXml.tag("Record",xXml.CLOSE));
     xXml.write(file, str.toString());

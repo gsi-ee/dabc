@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DabcLaunch>
+<DabcMaster prompt="DABC Master" value="lxi008"/>
+<DabcName prompt="DABC Name" value="Controller"/>
+<DabcUserPath prompt="DABC user path" value="/misc/linev/workspace/dabc"/>
+<DabcSystemPath prompt="DABC system path" value="/misc/linev/workspace/dabc"/>
+<DabcSetup prompt="DABC setup file" value="SetupBnetMbs.xml"/>
+<DabcScript prompt="DABC Script" value=""/>
+<DabcServers prompt="%Number of required DIM servers%" value="1"/>
+</DabcLaunch>
