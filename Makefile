@@ -135,14 +135,15 @@ packagegui: all
 	@rm -rf $(DISTR_DIR)
 	@echo "Package $(GUITAR_NAME).gz done in $(PACKAGE_DIR)"
 
-packages: packagegui package packageroc packageabb 
+packages: packagegui package packageroc packageabb src
 	
 src: clean
 	tar chf dabc.tar Makefile *.txt base config build script controls/simple controls/dimcontrol --exclude=.svn
 	tar rhf dabc.tar plugins applications --exclude=plugins/abb/linuxdrivers --exclude=.svn
 	rm -f dabc.tar.gz 
-	gzip dabc.tar  
-	@echo "Source package done"  
+	gzip dabc.tar
+	@mkdir -p $(PACKAGE_DIR); mv -f dabc.tar.gz $(PACKAGE_DIR)
+	@echo "Source package dabc.tar.gz done"  
 	
 
 addheaders:: clean
