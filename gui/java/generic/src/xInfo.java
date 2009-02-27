@@ -187,7 +187,7 @@ public void redraw(int severity, String colorname, String value, boolean draw){
 if(severity == 0) sInfo=new String(value);
 else if(severity == 1) sInfo=new String(sHead+value);
 else sInfo=new String(sHead+value);
-    setColor(colorname);
-    if(draw)redraw();
+setColor(colorname);
+if(draw)redraw();
 }
 }

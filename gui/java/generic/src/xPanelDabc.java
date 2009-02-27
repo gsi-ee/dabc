@@ -354,6 +354,7 @@ if(!threadRunning){
         ae=e;
         threxe = new Thread(this);
         threadRunning=true;
+        xSet.setProcessing(true);
         threxe.start();
     }
     } else tellError("Execution thread not yet finished!");
@@ -465,6 +466,7 @@ public void run(){
     if(doHalt == null) {
         setProgress("No DABC commands available!",xSet.redD());
         threadRunning=false;
+        xSet.setProcessing(false);
         stopProgress();
         System.out.println("Thread done!!!");
         return;
@@ -526,6 +528,7 @@ public void run(){
     }
 }
 threadRunning=false;
+xSet.setProcessing(false);
 stopProgress();
 System.out.println("Thread done!!!");
 }

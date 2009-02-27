@@ -571,7 +571,13 @@ public void actionPerformed(ActionEvent e) {
     }
     else if (("Update".equals(e.getActionCommand())) ||
         ("Browser".equals(e.getActionCommand()))) {
-        if("Browser".equals(e.getActionCommand()))clearOnUpdate=true;
+        if("Browser".equals(e.getActionCommand())){
+        	if(xSet.isProcessing()) {
+        		System.out.println("Busy, no update");
+        		return;
+        	}
+        	clearOnUpdate=true;
+        }
         // clear all references to DIM services
         mbspan.releaseDimServices();
         dabcpan.releaseDimServices();

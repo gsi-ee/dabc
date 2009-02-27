@@ -429,6 +429,7 @@ if(doit){
     startProgress();
     ae=e;
     threxe = new Thread(this);
+    xSet.setProcessing(true);
     threadRunning=true;
     threxe.start();
 }
@@ -601,6 +602,7 @@ int time=0;
     if(mbsCommand == null) {
         setProgress("MBS commands not available!",xSet.redD());
         threadRunning=false;
+        xSet.setProcessing(false);
         stopProgress();
         System.out.println("Thread done!!!");
         return;
@@ -609,6 +611,7 @@ int time=0;
     if(doHalt == null) {
         setProgress("DABC doHalt not available!",xSet.redD());
         threadRunning=false;
+        xSet.setProcessing(false);
         stopProgress();
         System.out.println("Thread done!!!");
         return;
@@ -617,6 +620,7 @@ int time=0;
     if(doEnable == null) {
         setProgress("DABC doEnable not available!",xSet.redD());
         threadRunning=false;
+        xSet.setProcessing(false);
         stopProgress();
         System.out.println("Thread done!!!");
         return;
@@ -625,6 +629,7 @@ int time=0;
     if(doConfig == null) {
         setProgress("DABC doConfig not available!",xSet.redD());
         threadRunning=false;
+        xSet.setProcessing(false);
         stopProgress();
         System.out.println("Thread done!!!");
         return;
@@ -741,6 +746,7 @@ int time=0;
     }
 }
 threadRunning=false;
+xSet.setProcessing(false);
 stopProgress();
 System.out.println("Thread done!!!");
 }

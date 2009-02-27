@@ -75,6 +75,7 @@ private static boolean dabc=false;
 private static boolean dabs=false;
 private static boolean guru=false;
 private static boolean ctrl=false;
+private static boolean progress=false;
 private static String usrpanels;
 
 /**
@@ -355,5 +356,7 @@ protected final static boolean isDabc(){return dabc;}
 protected final static boolean isDabs(){return dabs;}
 protected final static boolean isControl(){return ctrl;}
 protected final static boolean isGuru(){return guru;}
+protected final static boolean isProcessing(){return progress;}
+protected final static void setProcessing(boolean active){progress=active;}
 protected final static String getUserPanels(){return usrpanels;}
 }

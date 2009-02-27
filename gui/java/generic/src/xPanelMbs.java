@@ -377,6 +377,7 @@ if(doit){
     startProgress();
     ae=e;
     threxe = new Thread(this);
+    xSet.setProcessing(true);
     threadRunning=true;
     threxe.start();
 }
@@ -443,6 +444,7 @@ public void run(){
     if(mbsCommand == null) {
         setProgress("MBS commands not available! Launch first.",xSet.redD());
         threadRunning=false;
+        xSet.setProcessing(false);
         stopProgress();
         System.out.println("Thread done!!!");
 //xSet.setDefaultCursor();
@@ -509,6 +511,7 @@ public void run(){
 }
 //xSet.setDefaultCursor();
 threadRunning=false;
+xSet.setProcessing(false);
 stopProgress();
 System.out.println("Thread done!!!");
 }
