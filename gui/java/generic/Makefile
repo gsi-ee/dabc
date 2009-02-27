@@ -212,7 +212,7 @@ clean:
 	rm -f $(JARFILE)
 	
 cleandoc:
-	rm -Rf doc/*
+	rm -rf doc/* javadoc2tex
 	
 jar: $(JARFILE)
 
@@ -224,6 +224,7 @@ $(JARFILE): JarHeader.txt $(wildcard $(PACKAGE)/*.class) $(wildcard icons/*.png)
 	
 	
 doc: javadoc2tex doc/index.html doc/xgui.tex
+
 doc/index.html : \
 	$(SOURCEDIR)/xiDesktop.java \
 	$(SOURCEDIR)/xiDimParameter.java \
@@ -270,8 +271,11 @@ doc/index.html : \
 	$(SOURCEDIR)/xGui.java \
 	$(SOURCEDIR)/xDesktop.java
 	javadoc -d doc -author -version -doctitle "DABC Generic Java GUI" $(SOURCEDIR)/x*.java
+
 javadoc2tex: javadoc2tex.c
 	gcc javadoc2tex.c -o javadoc2tex
+#	chmod u+x javadoc2tex
+	
 doc/xgui.tex: doc/index.html
 	javadoc -author H.G.Essel -noinherited -title "DABC Generic Java GUI programming" -doclet org.wonderly.doclets.TexDoclet -docletpath $(JARDIR)/texdoclet.jar -output doc/xgui.tex $(SOURCEDIR)/x*.java
 	./javadoc2tex doc/xgui.tex doc/xguiref.tex
