@@ -1,5 +1,5 @@
 
-exes::
+docs::
 	@echo "Making docs ..."
 	cd $(DABCSYS)/doc; export TEXINPUTS=$(DABCSYS)/doc//:; export BIBINPUTS=$(DABCSYS)/doc; make;
 

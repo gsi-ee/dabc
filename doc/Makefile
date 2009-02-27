@@ -1,4 +1,4 @@
-docs:: main-all.pdf
+all:: main-all.pdf
 
 main-all.pdf : main-all.tex \
 dabcclass.cls \
