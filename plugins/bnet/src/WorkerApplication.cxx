@@ -363,5 +363,14 @@ bool bnet::WorkerApplication::BeforeAppModulesDestroyed()
 //   DeleteCmdDef("StartFile");
 //   DeleteCmdDef("StopFile");
 
+   SetParStr("Info", "Delete worker modules");
+
    return true;
+}
+
+bool bnet::WorkerApplication::DoStateTransition(const char* state_trans_name)
+{
+   SetParStr("Info", dabc::format("Do transition %s", state_trans_name));
+
+   return dabc::Application::DoStateTransition(state_trans_name);
 }

@@ -58,6 +58,8 @@ namespace bnet {
 
          static std::string ReadoutParName(int nreadout);
 
+         virtual bool DoStateTransition(const char* state_trans_name);
+
       protected:
 
          virtual void DiscoverNodeConfig(dabc::Command* cmd);
