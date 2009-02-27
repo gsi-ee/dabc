@@ -1,4 +1,7 @@
-all:: main-all.pdf
+all:: texoutfilter main-all.pdf
+
+texoutfilter: texoutfilter.c
+	gcc texoutfilter.c -o texoutfilter
 
 main-all.pdf : main-all.tex \
 dabcclass.cls \
@@ -90,5 +93,5 @@ dabc-requirements.tex
 	rm -f *.aux *.idx *.ilg *.bbl *.blg *.ind *.log *.out *.toc *.lof
 	
 clean::
-	rm -f *.pdf *.aux *.idx *.ilg *.ind *.bbl *.blg *.log *.out *.toc *.lof
+	rm -f *.pdf *.aux *.idx *.ilg *.ind *.bbl *.blg *.log *.out *.toc *.lof texoutfilter
 	
