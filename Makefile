@@ -44,11 +44,11 @@ PACKAGE_DIR    = ./packages
 DABCPACK_VERS  = dabc_v$(MAJOR).$(MINOR)
 ROCPACK_VERS   = roc_v$(MAJOR).$(MINOR)
 ABBPACK_VERS   = abb_v$(MAJOR).$(MINOR)
-GUIPACK_VERS   = gui_v$(MAJOR).$(MINOR)
+GUIPACK_VERS   = dabcgui_v$(MAJOR).$(MINOR)
 DABCTAR_NAME   = dabc_v$(MAJOR).$(MINOR).tar
 ROCTAR_NAME    = roc_v$(MAJOR).$(MINOR).tar
 ABBTAR_NAME    = abb_v$(MAJOR).$(MINOR).tar
-GUITAR_NAME    = gui_v$(MAJOR).$(MINOR).tar
+GUITAR_NAME    = dabcgui_v$(MAJOR).$(MINOR).tar
 
 DISTR_DIR  = ~/dabc_temp_packaging
 DABCDISTR_DIR  = $(DISTR_DIR)/$(DABCPACK_VERS)
