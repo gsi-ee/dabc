@@ -209,10 +209,8 @@ $(PACKAGE)/xParTable.class : $(SOURCEDIR)/xParTable.java
 
 clean:
 	rm -f $(PACKAGE)/*.class application/*.class
-	rm -f $(JARFILE)
-	
-cleandoc:
-	rm -rf doc/* javadoc2tex
+	rm -f $(JARFILE) javadoc2tex
+	rm -rf doc
 	
 jar: $(JARFILE)
 
@@ -223,7 +221,13 @@ $(JARFILE): JarHeader.txt $(wildcard $(PACKAGE)/*.class) $(wildcard icons/*.png)
 	mv $(PACKAGE).jar $(JARDIR)
 	
 	
-doc: javadoc2tex doc/index.html doc/xgui.tex
+doc: docdir javadoc2tex doc/index.html doc/xgui.tex
+
+docdir:
+	mkdir -p doc
+
+javadoc2tex: javadoc2tex.c
+	gcc javadoc2tex.c -o javadoc2tex
 
 doc/index.html : \
 	$(SOURCEDIR)/xiDesktop.java \
@@ -272,10 +276,6 @@ doc/index.html : \
 	$(SOURCEDIR)/xDesktop.java
 	javadoc -d doc -author -version -doctitle "DABC Generic Java GUI" $(SOURCEDIR)/x*.java
 
-javadoc2tex: javadoc2tex.c
-	gcc javadoc2tex.c -o javadoc2tex
-#	chmod u+x javadoc2tex
-	
 doc/xgui.tex: doc/index.html
 	javadoc -author H.G.Essel -noinherited -title "DABC Generic Java GUI programming" -doclet org.wonderly.doclets.TexDoclet -docletpath $(JARDIR)/texdoclet.jar -output doc/xgui.tex $(SOURCEDIR)/x*.java
 	./javadoc2tex doc/xgui.tex doc/xguiref.tex

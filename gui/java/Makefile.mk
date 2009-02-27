@@ -13,6 +13,6 @@ docs::
 
 clean::
 	@echo "Cleaning java gui..."
-	@cd $(DABCSYS)/gui/java/generic; $(MAKE) clean; $(MAKE) cleandoc
+	@cd $(DABCSYS)/gui/java/generic; $(MAKE) clean
 	
 endif
