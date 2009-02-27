@@ -18,7 +18,7 @@ know when the startup has finished.
 Of cause, the \mbs\ itself must have been built with the DIM option (since version v5.1).
 Central log file is written as usual.
 Optionally one can provide a text file with specifications which parameters
-shall appear on screen (see \paref{user:MbsDimconfig}).
+shall be published by DIM (see \paref{user:MbsDimconfig}).
 
 For the standard \mbs\ control one needs no \dabc\ installation.
 The GUI jar file is sufficient. DIM must be installed.
@@ -130,6 +130,14 @@ of util and transport after configuration.
 \item[MSG/TriggerRate] Trigger/s of readout tasks
 \item[MSG/TriggernnRate] (nn=01...15) Trigger/s type nn of readout tasks
 \edes
+\subsection[MBS histograms]{\mbs\ histograms}
+Shown in histo window.
+\bdes
+\item[MSG/TrigCountHis] Histogram with 16 channels for counts of trigger types (0 = total)
+as seen by the readout task.
+\item[MSG/TrigRateHis] Histogram with 16 channels for count rates of trigger types (0 = total)
+as seen by the readout task.
+\edes
 \subsection[MBS infos]{\mbs\ infos}
 Shown in info window.
 \bdes
@@ -142,7 +150,8 @@ Shown in info window.
 \subsection[MBS tasks]{\mbs\ tasks}
 Task list is shown in info window (name slightly different):
 
- Dispatch  Msg\_Log  Read\_Meb  Collector  Transport  Event\_Serv  Util  Read\_Cam  Esone\_Serv  Stream\_Serv 
+ Dispatch  Msg\_Log  Read\_Meb  Collector  Transport  Event\_Serv  
+ Util  Read\_Cam  Esone\_Serv  Stream\_Serv 
  Histogram  Prompt  Rate  SMI  Sender  Receiver  Asynch\_Receiver  Rising  Time\_Order  Vme\_Serv 
 \subsection[MBS text]{\mbs\ text}
 \bdes
@@ -171,10 +180,13 @@ Task list is shown in info window (name slightly different):
 \section{Working directories}
 \lsubsection[MBS configuration of DIM]{user:MbsDimconfig}{\mbs\ configuration of DIM}
 Optional text file \verba{dimsetup} in the \mbs\ working directory
-specifies which rate meters and states shall appear
+specifies which rate meters, histograms or states shall appear
 in the GUI. Upper limits of the rate meters can be specified.
-This file can be copied from \verba{\$MBSROOT/set}. Only the
+This file can be copied from \verba{\$MBSROOT/set/dimsetup}. Only the
 parameters which are in this file are optional.
+
+\strong{Note}, that a file name of an open lmd file is only displayed when
+either \keyw{FileOpen} or \keyw{FileFilled} is selected for this node. 
 {\small {\begin{verbatim}
 ## This file controls the rate meter and state appearance.
 ## File name must be dimsetup and in the MBS working directory.
@@ -217,6 +229,10 @@ parameters which are in this file are optional.
 #* TriggerCount
 # ++ Trigger counts for the individual triggers: 01...15
 #* Trigger01Count
+
+##---- Histograms
+#* TrigCountHis
+#* TrigRateHis
 
 ##======== Node XXX (uppercase)
 #XXX EventRate   : 10000.
