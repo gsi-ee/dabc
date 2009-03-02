@@ -46,24 +46,29 @@ INSTALLATION:
   the DIM name server will run
   Put the script at a location in your global $PATH for later login.
 
-3. Execute your ". dabclogin.sh" in your shell to set the environment
+3. To compile DIM with Java extensions, JDK_INCLUDE variable should be set.
+   By default, $JAVA_HOME/include path is used by DABC. This means, that
+   JAVA_HOME should point on JDK installation, JVM is not sufficient.
+   One can set JDK_INCLUDE explicitly in dabclogin.sh script.  
+   
+4. Execute your ". dabclogin.sh" in your shell to set the environment
   for compilation.
 
-4. Change to the dabc installation directory and start the build:
+5. Change to the dabc installation directory and start the build:
   "cd $DABCSYS; make"
 
-5. after succesful compilation, you may use DABC from any shell after
-exeution of ". dabclogin.sh"
+6. after successful compilation, you may use DABC from any shell after
+execution of ". dabclogin.sh"
 
-6.use executable "dabc_run" for single node batch mode.
+7.use executable "dabc_run" for single node batch mode.
 
-7. For GUI controls: 
+8. For GUI controls: 
     * Start the DIM name server _once_ on the machine you specified in 
       the dabclogin.sh by calling "dimDns".
     * start the dabc GUI in another shell by typing "dabc" 
       (do not forget to call ". dabclogin.sh" first!)
 
-8. Read the DABC User Manual  for further information how to configure
+9. Read the DABC User Manual  for further information how to configure
   the DABC and how to use the GUI!
 
 Please contact the DABC developer team for any bug reports and wishes!
