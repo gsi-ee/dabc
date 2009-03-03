@@ -914,14 +914,10 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       Module* m = FindModule(modulename);
 
       if (m!=0) {
-          DOUT4(("Module name %s already exists", modulename));
+         DOUT4(("Module name %s already exists", modulename));
       } else {
-
-         Application* app = GetApp();
-         if (app) m = app->CreateModule(classname, modulename, cmd);
-
          Folder* folder = GetFactoriesFolder(false);
-         if ((folder!=0) && (m==0))
+         if (folder!=0)
             for (unsigned n=0;n<folder->NumChilds();n++) {
                Factory* factory =
                   dynamic_cast<dabc::Factory*> (folder->GetChild(n));

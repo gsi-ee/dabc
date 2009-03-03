@@ -393,7 +393,16 @@ double dabc::WorkingProcessor::GetParDouble(const char* name, double defvalue) c
 {
    dabc::Parameter* par = FindPar(name);
 
-   return par && (par->Kind()==parDouble) ? ((DoubleParameter*) par)->GetDouble() : defvalue;
+   if (par==0) return defvalue;
+
+   if (par->Kind()==parDouble) return ((DoubleParameter*) par)->GetDouble();
+
+   std::string sbuf;
+   if (!par->GetValue(sbuf)) return defvalue;
+
+   double value(defvalue);
+
+   return sscanf(sbuf.c_str(), "%lf", &value) == 1 ? value : defvalue;
 }
 
 bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const
