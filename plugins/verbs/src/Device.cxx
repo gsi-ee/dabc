@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -217,7 +217,10 @@ void verbs::PoolRegistry::_UpdateMRStructure()
           ((f_mr[n]==0) || (fBlockChanged[n] != fPool->MemBlockChangeCounter(n))) ) {
               if (f_mr[n]!=0) {
                  ibv_dereg_mr(f_mr[n]);
+                 f_mr[n] = 0;
               }
+
+              if ((fPool->GetMemBlock(n)==0) || (fPool->GetMemBlockSize(n)==0)) continue;
 
               f_mr[n] = ibv_reg_mr(fVerbs->pd(),
                                    fPool->GetMemBlock(n),
