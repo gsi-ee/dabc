@@ -319,7 +319,7 @@ setProgress("Launch MBS ...",xSet.blueD());
 System.out.println("");
 if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-	if(waitMbs(25,"Msg_log")){
+	if(waitMbs(5+5*nMbsNodes,"Msg_log")){
         System.out.println("\nMbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
@@ -461,7 +461,7 @@ public void run(){
         xLogger.print(1,"MBS: @"+MbsStart.getText());
         mbsCommand.exec(xSet.getAccess()+" @"+MbsStart.getText());
         setProgress("Start up and configure MBS tasks",xSet.blueD());
-            if(waitMbs(20,"Daq_rate ")){
+            if(waitMbs(5+5*nMbsNodes,"Daq_rate ")){
             System.out.println(" ");
             browser.sleep(2); // get message loggers the chance to announce new tasks
             xSet.setSuccess(false);
@@ -482,7 +482,7 @@ public void run(){
     	String cmd = new String(cmdPrefix+"Start acquisition");
         xLogger.print(1,"MBS: "+cmd);
         mbsCommand.exec(xSet.getAccess()+" "+cmd);
-        if(waitRun(10,"Running"))
+        if(waitRun(5+3*nMbsNodes,"Running"))
             setProgress("OK: all running",xSet.greenD());
         else setProgress("LOOK: not all running",xSet.redD());
      }
@@ -490,7 +490,7 @@ public void run(){
     	String cmd = new String(cmdPrefix+"Stop acquisition");
         xLogger.print(1,"MBS: "+cmd);
         mbsCommand.exec(xSet.getAccess()+" "+cmd);
-        if(waitRun(10,"Stopped"))
+        if(waitRun(5+3*nMbsNodes,"Stopped"))
         setProgress("OK: all stopped",xSet.greenD());
         else setProgress("LOOK: not all stopped",xSet.redD());
     }

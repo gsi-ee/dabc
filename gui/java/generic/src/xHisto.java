@@ -349,10 +349,12 @@ public void update(Graphics g)
         gg.drawString(sXaxis,iXax,iy-4);
         gg.drawString(sLog,ix-30,30);
         gg.setColor(cCol);
+	if(iPixelX != null){
         if(bar){
         	int ixw=iPixelX[1]-iPixelX[0];
             for(int i=0;i<iChan;i++)gg.drawRect(iPixelX[i],iPixelY[i],ixw,iy0-iPixelY[i]);
             }else if(iChan>0)gg.drawPolyline(iPixelX,iPixelY,iChan);
+	}
 // save current transform
         AffineTransform af = gg.getTransform();
         gg.rotate(-Math.PI/2.0); // rotate left 90
