@@ -580,6 +580,7 @@ public void actionPerformed(ActionEvent e) {
         	clearOnUpdate=true;
         }
         // clear all references to DIM services
+		System.out.println("----- update");
         mbspan.releaseDimServices();
         dabcpan.releaseDimServices();
         dbspan.releaseDimServices();
@@ -620,6 +621,7 @@ public void actionPerformed(ActionEvent e) {
             // xSet.setLayout("Info",null,null,0, true);
             // frInfos.addWindow(infpan);
         // }
+		System.out.println("----- update finished");
     }
     else if ("DisplayFrame".equals(e.getActionCommand())) {
         addFrame((xInternalFrame)e.getSource(), false); // do not manage

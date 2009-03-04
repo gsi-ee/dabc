@@ -147,9 +147,8 @@ protected void releaseServices(boolean cleanup){
 if(cleanup){
 System.out.println("Browser releaseServices, rebuild all");
     if(vpar != null){
-        Iterator<xDimParameter> vi = vpar.listIterator();
         for(i=0;i<vpar.size();i++){
-            par=vi.next();
+            par=vpar.get(i);
             par.releaseService();
             par.setParameterActiv(false);
         }
@@ -165,9 +164,8 @@ System.out.println("Browser releaseServices, rebuild all");
 } else {
 System.out.println("Browser releaseServices, update");
     if(vpar != null){
-        Iterator<xDimParameter> vi = vpar.listIterator();
         for(i=0;i<vpar.size();i++){
-            par=vi.next();
+            par=vpar.get(i);
             par.removeInfoHandler();// clear all registrations of user handlers
             par.setParameterActiv(false);
         }

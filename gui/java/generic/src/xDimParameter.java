@@ -18,14 +18,13 @@ import java.util.*;
 import dim.*;
 /**
  * A list of these objects is the central management of DIM parameters.
- * It implements the DIM handler, creates the graphical elements, the records keeping
+ * It has a DIM handler, creates the graphical elements, the records keeping
  * parameter values, and interface functions to access these values.
  * It also has reference to table model. On parameter update, the table and all graphical objects are updated.
  * @author Hans G. Essel
  * @version 1.0
  */
 public class xDimParameter implements xiDimParameter {
-	//public class xDimParameter extends DimInfo implements xiDimParameter {
 private xParser pars, compars;
 private xXmlParser xmlpars;
 private DimHandler dimhandler;
@@ -96,14 +95,11 @@ private boolean skip=false;
  * @param version instance number (for internal debugging only)
  */
 public xDimParameter(String name, String format, int noLink, int version){
-    //super(name,noLink);
     Version=version;
     sNolink=new String("%BROKEN%");
     iNolink=noLink;
     initParser(name,format);
     dimhandler = new DimHandler(name,noLink,this);
-// if(pars.getName().equals("NodeList"))
-// System.out.println(Version+" crepar "+pars.getFull());
 }
 /**
  * DIM float parameter. Calls initParser
@@ -113,7 +109,6 @@ public xDimParameter(String name, String format, int noLink, int version){
  * @param version instance number (for internal debugging only)
  */
 public xDimParameter(String name, String format, float noLink, int version){
-    //super(name,noLink);
     Version=version;
     sNolink=new String("%BROKEN%");
     fNolink=noLink;
@@ -128,7 +123,6 @@ public xDimParameter(String name, String format, float noLink, int version){
  * @param version instance number (for internal debugging only)
  */
 public xDimParameter(String name, String format, String noLink, int version){
-    //super(name,noLink);
     Version=version;
     sNolink=new String(noLink);
     initParser(name,format);
@@ -144,10 +138,6 @@ protected void initParser(String name, String format){
     pars = new xParser();
     xmlpars = new xXmlParser();
     i=pars.parse(name,xParser.PARSE_STORE_FULL); // check, parse and store
-    // create command to set parameter
-//    pars.setName(new String("_"+pars.getName()));
-//    setcommand=pars.getFull(true);
-//    i=pars.parse(name,xParser.PARSE_STORE_FULL); // check, parse and store
     i=pars.format(format,xParser.PARSE_STORE_FULL); // check, parse and store
     value=new String(sNolink);
 }
@@ -160,28 +150,28 @@ protected void releaseService(){
 	dimhandler=null;
 }
 public void printParameter(int index){
-//System.out.println(index+": "+super.getName());
+System.out.println(index+": "+dimhandler.getName());
 if(quality != 2304){
 System.out.println("  I:"+myparindex+" TI:"+tabrow+" Q:"+quality+" Active:"+isactive+" Shown: "+paraShown);
 System.out.println("  Value: "+value);
 }
 }
 public void printParameter(boolean comdef){
-//if(comdef || (quality != 2304))
-//System.out.println(super.getName()+
-//			" I:"+myparindex+" TI:"+tabrow+
-//			" Q:"+String.format("%08x",quality)+
-//			" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
-//System.out.println(super.getName()+
-//		" F:"+pars.getFormat() +
-//		" Q:"+String.format("%08x",quality)+
-//		" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
+if(comdef || (quality != 2304))
+System.out.println(dimhandler.getName()+
+		" F:"+pars.getFormat() +
+		" Q:"+String.format("%08x",quality)+
+		" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
 
+//System.out.println(dimhandler.getName()+
+//" I:"+myparindex+" TI:"+tabrow+
+//" Q:"+String.format("%08x",quality)+
+//" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
 
 // exclude command descriptors
 // if(quality != 2304) {
 // if(pars.getName().equals("RunStatus"))
-// System.out.println(super.getName()+"  Value: "+value);
+// System.out.println(dimhandler.getName()+"  Value: "+value);
 //}
 }
 
@@ -301,7 +291,7 @@ if(pars.isVisible()){
     row.add(new Boolean(paraShown)); // set by the create.. functions
     tabmod.addRow(row);
     setTableIndex(rowindex); // only now we can use the new row
-//    print(super.getName()+" i="+rowindex,LF);
+//    print(dimhandler.getName()+" i="+rowindex,LF);
     ret = true;
 }
 return ret;
@@ -434,7 +424,6 @@ protected void createInfo(Boolean create){
 int len;
 if(pars.isInfo()){
     if(create){
-    //System.out.println("Create "+super.getName());
         if(info == null){
             len=pars.getNodeName().indexOf(".");
             if(len == -1)len=pars.getNodeName().length();
@@ -576,40 +565,25 @@ if(histo != null){
 } else System.out.println("No histo to set for "+pars.getFull());
 }}
 
-
-
-
-
-
-
-
-
+// This class holds mainly the infoHandler.
+// If it is created, infoHandler might be called immediately.
+// Therefore in constructor of xDimParameter this class is instantiated
+// after init. Otherwise e.g. parser could be not yet available. 
 private class DimHandler extends DimInfo{
-	private xDimParameter mydimparam;
+private xDimParameter mydimparam;
 
-	public DimHandler(String name, int noLink, xDimParameter dimpar){
-	    super(name,noLink);
-	    mydimparam=dimpar;
-	}
-	public DimHandler(String name, float noLink, xDimParameter dimpar){
-	    super(name,noLink);
-	    mydimparam=dimpar;
-	}
-	public DimHandler(String name, String noLink, xDimParameter dimpar){
-	    super(name,noLink);
-	    mydimparam=dimpar;
-	}
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
+public DimHandler(String name, int noLink, xDimParameter dimpar){
+    super(name,noLink);
+    mydimparam=dimpar;
+}
+public DimHandler(String name, float noLink, xDimParameter dimpar){
+    super(name,noLink);
+    mydimparam=dimpar;
+}
+public DimHandler(String name, String noLink, xDimParameter dimpar){
+    super(name,noLink);
+    mydimparam=dimpar;
+}
 /**
  * Info handler.
  * Checks the incoming name and format against the stored ones.
@@ -622,13 +596,10 @@ String format=new String("NOFORM");
 String node;
 String lname=new String("LNAME");
 String pname=new String("PNAME");
-// System.out.println(isactive+" q "+super.getQuality()+" "+super.getName()+"  Value: "+value);
 // check name and format
 // quality is sent correctly for broken links.
 // whith first reconnect LSBit seems to be zero!
 // Fortunately we do not use this bit
-// if((quality!=-1)&&(quality!=super.getQuality()))
-// System.out.println("Mismatch quality: "+pars.getFull()+" was "+quality+" new "+super.getQuality());
 try{
 	quality=super.getQuality();
     lname=super.getName();
@@ -642,7 +613,6 @@ try{
 	else if(!pars.getFormat().equals(format))
 	    System.out.println("ERROR: "+pars.getFormat()+" != "+format);
 } catch (NullPointerException e){
-	System.out.println(e);
     System.out.println("ERROR: NULL "+lname+" qual "+quality);
 	if(format == null)
 	    System.out.println("ERROR: no format for "+lname);
@@ -651,7 +621,7 @@ try{
 }
 pars.parseQuality(quality);  
 
-if(dolog)System.out.print(pars.getFull());
+if(dolog)System.out.print(pars.getFull()); // diagnostics
 
 	if(pars.isCommandDescriptor()){
         int len=pars.getFull().length();
@@ -682,8 +652,6 @@ if(dolog)System.out.print(pars.getFull());
             color=new String(getString());
             value=new String(getString());
         }
-    // if(pars.getFull().indexOf("X86G-4/Acquis")>0) System.out.println(":"+value);
-    // if(pars.getFull().indexOf("/RunStatus")>0) System.out.println(pars.getFull()+":"+value);
         if(paint && (stat==null)) createState(true);
         if(stat!=null)stat.redraw(severity,color,value,isactive);
         recsta.setValue(severity,color,value);
@@ -876,9 +844,6 @@ if(dolog)System.out.print(pars.getFull());
         for(int i=0;i<userHandler.size();i++)userHandler.get(i).infoHandler(mydimparam);
     }
 if(dolog)System.out.println(" "+value);
-//if(!pars.getName().contains("Rate0")) skip=true;
-//print(value,LF);
-//} else System.out.println("Deprecated parameter: "+super.getName());
 } // info handler
 } // class DimHandler
 } // class xDimParameter

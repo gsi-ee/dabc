@@ -105,7 +105,7 @@ private void initPanel(Dimension dim){
         vpar.get(i).setTableIndex(-1);
         vpar.get(i).setLogging(false);
     }
-    dimbrowser.sleep(2);
+    dimbrowser.sleep(1);
     System.out.print("Wait for update "+ipar);
     int timeout=0;
     boolean ok=false;
@@ -126,7 +126,7 @@ private void initPanel(Dimension dim){
         }
         if(ok)break;
         System.out.print("."+noq+"("+comdef+")");
-        dimbrowser.sleep(2);
+        dimbrowser.sleep(1);
         timeout++;
         if(timeout > 3)break;
     }

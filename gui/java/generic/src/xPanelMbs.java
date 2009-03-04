@@ -341,9 +341,8 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        browser.sleep(1);
         if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        browser.sleep(1);}
+        browser.sleep(2);}
         if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
         else setProgress("OK: MBS servers ready",xSet.greenD());
         //setDimServices();
@@ -446,9 +445,8 @@ public void run(){
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);
             if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);}
+            browser.sleep(2);}
             if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
             else setProgress("OK: MBS shut down",xSet.greenD());
             //setDimServices();
@@ -480,13 +478,12 @@ public void run(){
         setProgress("Start up and configure MBS tasks",xSet.blueD());
             if(waitMbs(5+5*nMbsNodes,"Daq_rate ")){
             System.out.println(" ");
-            browser.sleep(2); // get message loggers the chance to announce new tasks
             xSet.setSuccess(false);
             setProgress("Update parameters ...",xSet.blueD());
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);
             if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);}
+            browser.sleep(2);
+            }
             if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
             else setProgress("OK: MBS tasks ready",xSet.greenD());
             //setDimServices();
