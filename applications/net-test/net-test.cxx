@@ -355,14 +355,14 @@ extern "C" void RunAllToAll()
 
 
 /* Adresse für multicast IP */
-const char* mcast_host = "224.0.0.1";
-const int mcast_port = 1234;
-struct ip_mreq command;
+const char* mcast_host = "224.0.0.15";
+const int mcast_port = 7234;
 
 int setup_multicast_socket () {
   int loop = 1;
   int socket_descriptor;
   struct sockaddr_in sin;
+  struct ip_mreq command;
 
   memset (&sin, 0, sizeof (sin));
   sin.sin_family = AF_INET;
@@ -432,6 +432,23 @@ extern "C" void RunMulticastTest()
       address.sin_addr.s_addr = inet_addr (mcast_host);
       address.sin_port = htons (mcast_port);
 
+//      if(bind(socket_descriptor,
+//               (struct sockaddr *)&address,
+//                 sizeof(address)) < 0) {
+//         EOUT(("bind"));
+//         return;
+//      }
+//
+//      int loop = 1;
+//      if (setsockopt(socket_descriptor,
+//                     IPPROTO_IP,
+//                     IP_MULTICAST_LOOP,
+//                     &loop, sizeof (loop)) < 0) {
+//         EOUT(("setsockopt:IP_MULTICAST_LOOP"));
+//         return;
+//      }
+
+
       char msg[1000];
 
       int cnt = 0;
@@ -446,10 +463,16 @@ extern "C" void RunMulticastTest()
                    (struct sockaddr *) &address,
                    sizeof (address)) < 0) {
              EOUT(("sendto()"));
-             return;
+             break;
           }
-          dabc::MicroSleep(100000);
-        }
+
+//        if (send(socket_descriptor, msg, strlen(msg)+1, 0) <0) {
+//           EOUT(("send()"));
+//           break;
+//        }
+
+        dabc::MicroSleep(100000);
+      }
 
       close(socket_descriptor);
 
@@ -464,30 +487,41 @@ extern "C" void RunMulticastTest()
       int socket;
       struct sockaddr_in sin;
       struct hostent *server_host_name;
+      struct ip_mreq command;
 
       if ((server_host_name = gethostbyname (mcast_host)) == 0) {
-           EOUT(("gethostbyname"));
-           return;
-        }
-        socket = setup_multicast_socket ();
-        /* Broadcast-Nachrichten empfangen */
-        while (iter++ < 50) {
-           sin_len = sizeof (sin);
-           if (recvfrom ( socket, message, 256, 0,
-                         (struct sockaddr *) &sin, &sin_len) == -1) {
-              EOUT(("recvfrom"));
-          }
-          DOUT0(("Antwort #%-2d vom Server: %s", iter, message));
-          dabc::MicroSleep(1000);
-        }
-        /* Multicast Socket aus der Gruppe entfernen */
-        if (setsockopt ( socket,
-                         IPPROTO_IP,
-                         IP_DROP_MEMBERSHIP,
-                         &command, sizeof (command)) < 0 ) {
-            EOUT(("setsockopt:IP_DROP_MEMBERSHIP"));
-        }
-        close (socket);
+         EOUT(("gethostbyname"));
+         return;
+      }
+      socket = setup_multicast_socket ();
+      /* Broadcast-Nachrichten empfangen */
+      while (iter++ < 50) {
+//         sin_len = sizeof (sin);
+//         if (recvfrom ( socket, message, 256, 0,
+//                       (struct sockaddr *) &sin, &sin_len) == -1) {
+//            EOUT(("recvfrom"));
+//        }
+
+         if (recv(socket, message, 256, 0) < 0) {
+             EOUT(("recv"));
+             break;
+         }
+
+        DOUT0(("Antwort #%-2d vom Server: %s", iter, message));
+        dabc::MicroSleep(1000);
+      }
+
+      command.imr_multiaddr.s_addr = inet_addr (mcast_host);
+      command.imr_interface.s_addr = htonl (INADDR_ANY);
+
+      /* Multicast Socket aus der Gruppe entfernen */
+      if (setsockopt ( socket,
+                       IPPROTO_IP,
+                       IP_DROP_MEMBERSHIP,
+                       &command, sizeof (command)) < 0 ) {
+         EOUT(("setsockopt:IP_DROP_MEMBERSHIP"));
+      }
+      close (socket);
    }
 
 }
