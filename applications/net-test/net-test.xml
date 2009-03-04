@@ -12,6 +12,13 @@
          <runfunc value="RunAllToAll"/>
          <sockethost value="${host}"/>
        </Run>
+       <User>
+         <NetDevice value="dabc::SocketDevice"/>
+         <BufferSize value="8000"/>
+         <OutputQueueSize value="4"/>
+         <InputQueueSize value="8"/>
+         <UseAcknowledge value="0"/>
+       </User>
      </Context>
   </Defaults>
 </dabc>

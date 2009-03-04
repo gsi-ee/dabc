@@ -33,6 +33,7 @@ namespace dabc {
    extern const char* xmlClassAttr;
    extern const char* xmlValueAttr;
    extern const char* xmlRunNode;
+   extern const char* xmlUserNode;
    extern const char* xmlSshUser;
    extern const char* xmlSshPort;
    extern const char* xmlSshInit;

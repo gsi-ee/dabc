@@ -73,6 +73,9 @@ namespace dabc {
          std::string RunFuncName();
          int ShowCpuInfo();
 
+         std::string GetUserPar(const char* name, const char* dflt = 0);
+         int GetUserParInt(const char* name, int dflt = 0);
+
          const char* ConetextAppClass();
 
          bool LoadLibs();

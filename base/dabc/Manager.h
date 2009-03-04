@@ -473,6 +473,8 @@ namespace dabc {
 
          // -------------------------- misc functions ---------------
 
+         Configuration* cfg() const { return fCfg; }
+
          /** Displays on std output list of running threads and modules */
          void Print();
 

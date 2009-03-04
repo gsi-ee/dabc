@@ -188,6 +188,7 @@ namespace dabc {
    const char* xmlClassAttr        = "class";
    const char* xmlValueAttr        = "value";
    const char* xmlRunNode          = "Run";
+   const char* xmlUserNode         = "User";
    const char* xmlSshUser          = "user";
    const char* xmlSshPort          = "port";
    const char* xmlSshInit          = "init";

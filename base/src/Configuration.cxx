@@ -238,6 +238,20 @@ int dabc::Configuration::ShowCpuInfo()
    return kind;
 }
 
+std::string dabc::Configuration::GetUserPar(const char* name, const char* dflt)
+{
+   if (IsXDAQ() || (fSelected==0)) return std::string("");
+   return Find1(fSelected, dflt ? dflt : "", xmlUserNode, name);
+}
+
+int dabc::Configuration::GetUserParInt(const char* name, int dflt)
+{
+   std::string sres = GetUserPar(name);
+   if (sres.empty()) return dflt;
+   int res(dflt);
+   return sscanf(sres.c_str(),"%d",&res) == 1 ? res : dflt;
+}
+
 const char* dabc::Configuration::ConetextAppClass()
 {
    if (IsXDAQ() || (fSelected==0)) return 0;

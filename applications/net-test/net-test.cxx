@@ -11,6 +11,7 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
+
 #include "dabc/logging.h"
 #include "dabc/timing.h"
 #include "dabc/ModuleAsync.h"
@@ -27,16 +28,17 @@
 #include "dabc/statistic.h"
 #include "dabc/TimeSyncModule.h"
 #include "dabc/Factory.h"
+#include "dabc/Configuration.h"
 
 
 #include <map>
 #include <math.h>
 #include <queue>
 
-const int TestBufferSize = 8*1024;
-const int TestSendQueueSize = 5;
-const int TestRecvQueueSize = 10;
-const bool TestUseAckn = false;
+int TestBufferSize = 8*1024;
+int TestSendQueueSize = 5;
+int TestRecvQueueSize = 10;
+bool TestUseAckn = false;
 
 const int FirstNode = 0;
 
@@ -267,7 +269,14 @@ extern "C" void RunAllToAll()
    if (dabc::mgr()->NodeId()!=0) return;
    int numnodes = dabc::mgr()->NumNodes();
 
-   DOUT0(("Run All-to-All test numnodes = %d", numnodes));
+   std::string devclass = dabc::mgr()->cfg()->GetUserPar("NetDevice", dabc::typeSocketDevice);
+
+   TestBufferSize = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlBufferSize, TestBufferSize);
+   TestSendQueueSize = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlOutputQueueSize, TestSendQueueSize);
+   TestRecvQueueSize = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlInputQueueSize, TestRecvQueueSize);
+   TestUseAckn = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlUseAcknowledge, TestUseAckn ? 1 : 0) > 0;
+
+   DOUT0(("Run All-to-All test numnodes = %d buffer size = %d", numnodes, TestBufferSize));
 
    bool res = false;
 
@@ -295,14 +304,11 @@ extern "C" void RunAllToAll()
 
    const char* devname = "Test1Dev";
 
-   const char* deviceclass = dabc::typeSocketDevice;
-//   if (deviceid==2) deviceclass = "verbs::Device";
-
    for (int node = 0; node < numnodes; node++)
-      dabc::mgr()->SubmitRemote(cli, new dabc::CmdCreateDevice(deviceclass, devname), node);
+      dabc::mgr()->SubmitRemote(cli, new dabc::CmdCreateDevice(devclass.c_str(), devname), node);
 
    if (!cli.WaitCommands(5)) {
-      EOUT(("Cannot create devices of class %s", deviceclass));
+      EOUT(("Cannot create devices of class %s", devclass.c_str()));
       return;
    }
 
