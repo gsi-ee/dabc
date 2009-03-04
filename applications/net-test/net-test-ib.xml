@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="lxi009"/>
-  <Context host="lxi010"/>
-  <Context host="lxi011"/>
-  <Context host="lxi012"/>
+  <Context host="master"/>
+  <Context host="node01"/>
+  <Context host="node02"/>
+  <Context host="node03"/>
   <Defaults>
      <Context name="*">
        <Run>
+         <lib value="libDabcVerbs.so"/>
          <lib value="libDabcNetTest.so"/>
          <debuglevel value="0"/>
          <runfunc value="RunAllToAll"/>
-         <sockethost value="${host}"/>
        </Run>
        <User>
-         <NetDevice value="dabc::SocketDevice"/>
-         <BufferSize value="8000"/>
+         <NetDevice value="verbs::Device"/>
+         <BufferSize value="80000"/>
          <OutputQueueSize value="4"/>
          <InputQueueSize value="8"/>
          <UseAcknowledge value="0"/>
