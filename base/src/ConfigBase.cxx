@@ -800,15 +800,44 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
    } else
 
    if (kind == kindConn) {
-      // this is way to get connection string
-      if (connstr==0) {
-         res += " echo No connection string specified; exit 1";
-      } else
+
       if ((ControlSequenceId(id)==1) && (ctrlkind != kindDim)) {
-         if (!workdir.empty()) res += dabc::format(" cd %s;", workdir.c_str());
-         res += dabc::format(" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr);
+         if (connstr==0)
+            res = " echo No connection string specified; exit 1";
+         else {
+            res = "scp -q ";
+
+            if (!portid.empty())
+               res += dabc::format("-P %s ", portid.c_str());
+
+            if (!username.empty()) {
+               res += username;
+               res += "@";
+            }
+
+            res += hostname;
+            res += ":";
+
+            if (!workdir.empty()) {
+               res += workdir;
+               if (workdir[workdir.length()-1] != '/') res += "/";
+            }
+
+            res += connstr;
+         }
       } else
          res = "";
+
+      // this is way to get connection string
+//      if (connstr==0) {
+//         res += " echo No connection string specified; exit 1";
+//      } else
+//      if ((ControlSequenceId(id)==1) && (ctrlkind != kindDim)) {
+//         if (!workdir.empty()) res += dabc::format(" cd %s;", workdir.c_str());
+//         res += dabc::format(" if [ -f %s ] ; then cat %s; rm -f %s; fi", connstr, connstr, connstr);
+//      } else
+//         res = "";
+
    } else
 
    if (kind == kindKill) {

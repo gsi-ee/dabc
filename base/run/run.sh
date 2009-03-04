@@ -88,7 +88,11 @@ fi
 if [[ "$RUNMODE" == "run" || "$RUNMODE" == "start" ]]
 then
 
-connstr=file.id
+remconnfile=dabc_server.id
+lclconnfile=dabc_conn.id
+connstr=$remconnfile
+
+rm -f $remconnfile $lclconnfile
 
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
@@ -118,17 +122,22 @@ do
    
    if [[ "x$callargs" != "x" ]]
    then
-      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
+      connstr=""
+   
+      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs $lclconnfile; fi
       
-      for (( cnt=10; cnt>0; cnt=cnt-1)) ; do 
-         connstr=`$callargs`
-         retval=$?
-         if [ $retval -ne 0 ]; then
-            echo "Get connect information fails err = $retval"
-            exit $retval
-         fi
+      for (( cnt=10; cnt>0; cnt=cnt-1)) ; do
+       
+         $callargs $lclconnfile 2>/dev/null
+         
+         if [ -f $lclconnfile ]; then 
+            connstr=`cat $lclconnfile` 
+         fi  
+         
          if [[ "x$connstr" == "x" ]] ; then sleep 1; else cnt=0; fi
       done 
+
+      rm -f $remconnfile $lclconnfile
 
       if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: Connection string is $connstr; fi
    fi
