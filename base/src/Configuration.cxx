@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -22,6 +22,8 @@
 #include "dabc/Parameter.h"
 #include "dabc/Iterator.h"
 #include "dabc/Factory.h"
+#include "dabc/SocketDevice.h"
+
 
 bool dabc::Configuration::XDAQ_LoadLibs()
 {
@@ -190,6 +192,10 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
       log = Find1(fSelected, "", xmlRunNode, xmlLoglimit);
       if (log.length()>0)
          dabc::Logger::Instance()->SetLogLimit(atoi(log.c_str()));
+
+      std::string sockethost = Find1(fSelected, "", xmlRunNode, xmlSocketHost);
+      if (!sockethost.empty())
+         dabc::SocketDevice::SetLocalHost(sockethost);
    }
 
    if (dimnode==0) dimnode = getenv(xmlDIM_DNS_NODE);

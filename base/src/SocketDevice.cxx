@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -456,7 +456,7 @@ bool dabc::SocketDevice::ClientConnect(Command* cmd, Port* port, const char* por
 
 bool dabc::SocketDevice::SubmitRemoteCommand(const char* serverid, const char* channelid, Command* cmd)
 {
-   // this id containes channelid, command string length and local uniquie id
+   // this id contains channel id, command string length and local unique id
    std::string connid, scmd;
 
    cmd->SaveToString(scmd);
@@ -824,20 +824,24 @@ int dabc::SocketDevice::CreateTransport(Command* cmd, Port* port)
    return cmd_false;
 }
 
-char dabc::SocketDevice::fLocalHostIP[100] = "";
+std::string dabc::SocketDevice::fLocalHost;
 
-void dabc::SocketDevice::SetLocalHostIP(const char* ip)
+void dabc::SocketDevice::SetLocalHost(const std::string& host)
 {
-   strncpy(fLocalHostIP, ip, sizeof(fLocalHostIP));
+   fLocalHost = host;
 }
 
-const char* dabc::SocketDevice::GetLocalHost()
+std::string dabc::SocketDevice::GetLocalHost(bool force)
 {
-   if (strlen(fLocalHostIP)==0)
-      if (gethostname(fLocalHostIP, sizeof(fLocalHostIP))) {
+   std::string host = fLocalHost;
+   if (host.empty() && force) {
+      char sbuf[500];
+      if (gethostname(sbuf, sizeof(sbuf))) {
          EOUT(("Error to get local host name"));
-         strcpy(fLocalHostIP,"localhost");
-      }
+         host = "localhost";
+      } else
+         host = sbuf;
+   }
 
-   return fLocalHostIP;
+   return host;
 }

@@ -546,7 +546,7 @@ extern "C" void RunAllToAll()
 //   if (numc>3) devices = atoi(args[3]);
 //   if (numc>4) controllerID = args[4];
 //
-////   if (numc>5) dabc::SocketDevice::SetLocalHostIP(args[5]);
+////   if (numc>5) dabc::SocketDevice::SetLocalHost(args[5]);
 //
 //   dabc::SetDebugLevel(1);
 //

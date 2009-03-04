@@ -44,8 +44,8 @@ namespace dabc {
 
          virtual int CreateTransport(Command* cmd, Port* port);
 
-         static void SetLocalHostIP(const char* ip);
-         static const char* GetLocalHost();
+         static void SetLocalHost(const std::string& host);
+         static std::string GetLocalHost(bool force = false);
 
       protected:
 
@@ -81,7 +81,7 @@ namespace dabc {
          PointersVector         fProtocols; // list of protocol start processors
          long                   fConnCounter;
 
-         static char            fLocalHostIP[100];
+         static std::string     fLocalHost;
    };
 
 }

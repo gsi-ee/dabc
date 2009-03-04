@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -185,8 +185,7 @@ namespace dabc {
 
          int ServerPortNumber() const { return fServerPortNumber; }
          const char* ServerHostName() { return fServerHostName.c_str(); }
-         std::string ServerId() { return FORMAT(("%s:%d", ServerHostName(), ServerPortNumber())); }
-
+         std::string ServerId() { return dabc::format("%s:%d", ServerHostName(), ServerPortNumber()); }
 
       protected:
 

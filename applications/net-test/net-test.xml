@@ -8,8 +8,9 @@
      <Context name="*">
        <Run>
          <lib value="libDabcNetTest.so"/>
-         <debuglevel value="0"/>
+         <debuglevel value="1"/>
          <runfunc value="RunAllToAll"/>
+         <sockethost value="${host}"/>
        </Run>
      </Context>
   </Defaults>

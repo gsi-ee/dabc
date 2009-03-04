@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -539,7 +539,7 @@ dabc::SocketServerProcessor::SocketServerProcessor(int serversocket, int portnum
    fServerPortNumber(portnum),
    fServerHostName()
 {
-   fServerHostName = dabc::SocketDevice::GetLocalHost();
+   fServerHostName = dabc::SocketDevice::GetLocalHost(true);
 
 //   dabc::SocketThread::DefineHostName();
 
@@ -863,14 +863,15 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
      hints.ai_family   = AF_UNSPEC; //AF_INET;
      hints.ai_socktype = SOCK_STREAM;
 
-     const char* myhostname = 0;
+     std::string localhost = dabc::SocketDevice::GetLocalHost(false);
+
+     const char* myhostname = localhost.empty() ? 0 : localhost.c_str();
      char service[100];
      sprintf(service, "%d", portnum);
 
-//     myhostname = dabc::SocketDevice::GetLocalHost();
      int n = getaddrinfo(myhostname, service, &hints, &info);
 
-     DOUT1(("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "localhost"), service, n));
+     DOUT1(("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "---"), service, n));
 
      if (n < 0) {
         EOUT(("Cannot get addr info for service %s:%s", (myhostname ? myhostname : "localhost"), service));
@@ -879,10 +880,8 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 
      for (struct addrinfo *t = info; t; t = t->ai_next) {
 
-
         sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
         if (sockfd >= 0) {
-
 
            int opt = 1;
 
