@@ -144,6 +144,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     nMbsNodes=nMbsServers-2;
     System.out.println("Mbs   servers needed: DNS + "+(nMbsServers-1));   
     mbsshell = new xRemoteShell("rsh");
+    checkDir();
     String service = new String(MbsNode.getText().toUpperCase()+":PRM");
     String servlist = browser.getServers();
     if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
@@ -151,6 +152,21 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
     setDimServices();
     etime = new xTimer(al, false); // fire only once
+}
+
+private void checkDir(){
+    String check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
+    String result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
+    if(result.indexOf(formMbs.getStart()) < 0){
+    	tellError("Not found: "+check);
+    	System.out.println("Not found: "+check);
+    }
+    check = new String(formMbs.getUserPath()+"/"+formMbs.getShut());
+    result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
+    if(result.indexOf(formMbs.getShut()) < 0){
+    	tellError("Not found: "+check);
+    	System.out.println("Not found: "+check);
+    }
 }
 
 private void setLaunch(){
@@ -163,6 +179,7 @@ formMbs.setStart(MbsStart.getText());
 formMbs.setShut(MbsShut.getText());
 formMbs.setLaunchFile(MbsLaunchFile.getText());
 formMbs.setCommand(MbsCommand.getText());
+checkDir();
 //formMbs.printForm();
 }
 /**

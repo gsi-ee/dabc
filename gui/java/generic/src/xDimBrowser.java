@@ -114,12 +114,14 @@ protected int getNofServers(){
     String[] srv=DimBrowser.getServices("*/EXIT");
     return srv.length;
 }
-protected void listServices(boolean all){
+protected void listServices(boolean all, String filter){
+	boolean doall=filter.equals("*");
     if(vpar != null){
-        Iterator<xDimParameter> vi = vpar.listIterator();
         for(i=0;i<vpar.size();i++){
-            par=vi.next();
-            par.printParameter(all);
+            if(doall || (vpar.get(i).getParser().getFull().contains(filter)))vpar.get(i).printParameter(all);
+        }
+        for(i=0;i<vpar.size();i++){
+        	if(doall || (vpar.get(i).getParser().getFull().contains(filter)))vpar.get(i).setLogging(true);
         }
     }
 }
@@ -130,10 +132,8 @@ protected void listServices(boolean all){
 protected void enableServices(){
     if(vpar != null){
     System.out.println("Browser enableServices");
-        Iterator<xDimParameter> vi = vpar.listIterator();
         for(i=0;i<vpar.size();i++){
-            par=vi.next();
-            par.setParameterActiv(true);
+            vpar.get(i).setParameterActiv(true);
         }
     }
 }

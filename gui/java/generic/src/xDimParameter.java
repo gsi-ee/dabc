@@ -30,7 +30,7 @@ private xXmlParser xmlpars;
 private boolean isactive=false;
 private int i,ii;
 private int quality=-1;
-private boolean doprint=false;
+private boolean doprint=false, dolog=false;
 private int[] intarr;
 private long[] longarr;
 private float[] floatarr;
@@ -227,6 +227,9 @@ isactive=true;
 }
 public boolean parameterActive(){
 	return isactive;
+}
+protected void setLogging(boolean yes){
+	dolog=yes;
 }
 /**
  * Initializes name parser. Creates XML parser. Creates command to set parameter value by preceding underscore
@@ -571,6 +574,7 @@ public void infoHandler(){
 int[] intArr; 
 String format;
 String node;
+String lname;
 if(skip)return;
 // System.out.println(isactive+" q "+super.getQuality()+" "+super.getName()+"  Value: "+value);
 // check name and format
@@ -579,22 +583,22 @@ if(skip)return;
 // Fortunately we do not use this bit
 // if((quality!=-1)&&(quality!=super.getQuality()))
 // System.out.println("Mismatch quality: "+pars.getFull()+" was "+quality+" new "+super.getQuality());
-// if(pars.getName().equals("CfgNodeId.BnetPlugin"))System.out.println(pars.getFull()+" t="+tabrow+" "+value);
-//if(pars.getName().equals("RunStatus"))System.out.println(pars.getFull()+" t="+tabrow+" "+value);
-    quality=super.getQuality();
-    //System.out.println(quality+" "+super.getName());
-    pars.parseQuality(quality);    
-    // if(pars.getFull().indexOf("X86G-4/Acquis")>0) System.out.print(pars.getFull());
-    // if(pars.getFull().indexOf("/RunStatus")>0) System.out.println(pars.getFull());
+try{
+	quality=super.getQuality();
+    lname=super.getName();
     format=getFormat();
-    if(!pars.getFull().equals(super.getName()))
-        System.out.println("ERROR: "+pars.getFull()+" != "+super.getName());
-    else if(format == null)
-        System.out.println("ERROR: "+pars.getFull()+" no format!");
-    else if(!pars.getFormat().equals(format))
-        System.out.println("ERROR: "+pars.getFormat()+" != "+format);
+	pars.parseQuality(quality);    
+	if(!pars.getFull().equals(lname))
+	    System.out.println("ERROR: "+pars.getFull()+" != "+lname);
+	else if(!pars.getFormat().equals(format))
+	    System.out.println("ERROR: "+pars.getFormat()+" != "+format);
+} catch (NullPointerException e){
+    System.out.println("ERROR : "+pars.getFull());
+    return;
+}
+if(dolog)System.out.print(pars.getFull());
 
-    else if(pars.isCommandDescriptor()){
+	if(pars.isCommandDescriptor()){
         int len=pars.getFull().length();
         String s= new String(getString());
         if(!s.equals(sNolink)){
@@ -816,6 +820,7 @@ if(skip)return;
     if(userHandler != null)
         for(int i=0;i<userHandler.size();i++)userHandler.get(i).infoHandler(this);
     }
+if(dolog)System.out.println(" "+value);
 //if(!pars.getName().contains("Rate0")) skip=true;
 //print(value,LF);
 //} else System.out.println("Deprecated parameter: "+super.getName());

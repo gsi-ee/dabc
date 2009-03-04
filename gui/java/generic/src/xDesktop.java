@@ -500,7 +500,8 @@ public void actionPerformed(ActionEvent e) {
         }
     else if ("Test".equals(e.getActionCommand())) {
     	printFrame();
-        browser.listServices(false); // exclude command definitions
+    	String filter=JOptionPane.showInputDialog("Filter","*");
+        browser.listServices(false, filter); // exclude command definitions
     }
     else if ("Quit".equals(e.getActionCommand())) {
         // String[] srvcs;

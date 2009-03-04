@@ -143,12 +143,21 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
 //    addCheckBox("Get new setup",getnew);
 
     dabcshell = new xRemoteShell("ssh");
+    checkDir();
     nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS
     setDimServices();
     System.out.println("Dabc  servers needed: DNS + "+(nServers-1));
     etime = new xTimer(al, false); // fire only once
 }
 
+private void checkDir(){
+	String check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
+	String result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
+	if(result.indexOf(formDabc.getSetup()) < 0){
+		tellError("Not found: "+check);
+		System.out.println("Not found: "+check);
+	}
+}
 private void setLaunch(){
 xSet.setAccess(Password.getPassword());
 formDabc.setMaster(DabcNode.getText());
@@ -159,6 +168,7 @@ formDabc.setScript(DabcScript.getText());
 formDabc.setLaunchFile(DabcLaunchFile.getText());
 formDabc.setName(DabcName.getText());
 formDabc.setSetup(DabcSetup.getText());
+checkDir();
 //formDabc.printForm();
 }
 /**
@@ -417,22 +427,22 @@ public void run(){
         dabcshell.rsh(DabcNode.getText(),Username.getText(),DabcScript.getText(),0L);
     }
     else if ("dabcCleanup".equals(Action)) {
-            setProgress("DABC cleanup ...",xSet.blueD());
-            String cmd = new String(DabcPath.getText()+
-                                "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
-                                DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
-                                xSet.getDimDns()+" "+dabcMaster+" kill &");
-            xLogger.print(1,cmd);
-            dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);
-            setProgress("OK: DABC down, update parameters ...",xSet.blueD());
-            browser.sleep(2);
-            xSet.setSuccess(false);
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);
-            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);}
-            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-            else setProgress("OK: DABC down",xSet.greenD());
+        setProgress("DABC cleanup ...",xSet.blueD());
+        String cmd = new String(DabcPath.getText()+
+                            "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
+                            DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
+                            xSet.getDimDns()+" "+dabcMaster+" kill &");
+        xLogger.print(1,cmd);
+        dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);
+        setProgress("OK: DABC down, update parameters ...",xSet.blueD());
+        browser.sleep(2);
+        xSet.setSuccess(false);
+        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+        browser.sleep(1);
+        if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+        browser.sleep(1);}
+        if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+        else setProgress("OK: DABC down",xSet.greenD());
      }
     else if ("dabcExit".equals(Action)) {
         setProgress("DABC Exit ...",xSet.blueD());
@@ -443,24 +453,16 @@ public void run(){
         xLogger.print(1,cmd);
         dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);    		
 		browser.sleep(2);
-//        if(doExit != null){
-//            for(int i=0;i<doExit.size();i++){
-//                xLogger.print(1,doExit.elementAt(i).getParser().getFull());
-//                doExit.elementAt(i).exec(xSet.getAccess());
-//            }
-//            setProgress("OK: DABC down, update parameters ...",xSet.blueD());
-//            browser.sleep(2);
-//            xSet.setSuccess(false);
-//            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-//            browser.sleep(1);
-//            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-//            browser.sleep(1);}
-//            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-//            else setProgress("OK: DABC down",xSet.greenD());
-//        }
-//        else setProgress("No DABC exit commands available!",xSet.redD());
-    }
-    // all following need the commands
+        setProgress("OK: DABC down, update parameters ...",xSet.blueD());
+        browser.sleep(2);
+        xSet.setSuccess(false);
+        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+        browser.sleep(1);
+        if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+        browser.sleep(1);}
+        if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+        else setProgress("OK: DABC down",xSet.greenD());
+        }
     else {
     if(doHalt == null) setDimServices();
     if(doHalt == null) {

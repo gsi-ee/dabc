@@ -103,6 +103,7 @@ private void initPanel(Dimension dim){
 // Parameters are inactive at this point.
     for(i=0;i<ipar;i++) {
         vpar.get(i).setTableIndex(-1);
+        vpar.get(i).setLogging(false);
     }
     dimbrowser.sleep(2);
     System.out.print("Wait for update "+ipar);

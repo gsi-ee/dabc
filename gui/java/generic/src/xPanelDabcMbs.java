@@ -164,6 +164,7 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     
     mbsshell = new xRemoteShell("rsh");
     dabcshell = new xRemoteShell("ssh");
+    checkDir();
     String service = new String(MbsNode.getText().toUpperCase()+":PRM");
     String servlist = browser.getServers();
     if(servlist.indexOf(service)>=0) setProgress("MBS connected",xSet.greenD());
@@ -173,6 +174,27 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     etime = new xTimer(al, false); // fire only once
     dabcMaster = DabcNode.getText();
     MbsMaster = MbsNode.getText();
+}
+
+private void checkDir(){
+	String check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
+	String result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
+	if(result.indexOf(formDabc.getSetup()) < 0){
+		tellError("Not found: "+check);
+		System.out.println("Not found: "+check);
+	}
+	check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
+    result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
+    if(result.indexOf(formMbs.getStart()) < 0){
+    	tellError("Not found: "+check);
+    	System.out.println("Not found: "+check);
+    }
+    check = new String(formMbs.getUserPath()+"/"+formMbs.getShut());
+    result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
+    if(result.indexOf(formMbs.getShut()) < 0){
+    	tellError("Not found: "+check);
+    	System.out.println("Not found: "+check);
+    }
 }
 
 private void setLaunch(){
@@ -195,6 +217,8 @@ formDabc.setScript(DabcScript.getText());
 formDabc.setLaunchFile(DabcLaunchFile.getText());
 formDabc.setName(DabcName.getText());
 formDabc.setSetup(DabcSetup.getText());
+
+checkDir();
 //formDabc.printForm();
 }
 // get from command list special commands for buttons.
@@ -456,40 +480,26 @@ int time=0;
         if(dabcshell.rsh(DabcNode.getText(),Username.getText(),DabcScript.getText(),0L)){}
     }
     else if (("exitCleanup".equals(Action))||("shellCleanup".equals(Action))){
+        setProgress("DABC cleanup ...",xSet.blueD());
+        String cmd;
     	if ("exitCleanup".equals(Action)) {
-//    		if(doExit == null) setDimServices();
-//    		if(doExit != null){
-//    			setProgress("Exit DABC ...",xSet.blueD());
-//    			for(int i=0;i<doExit.size();i++){
-//    				xLogger.print(1,doExit.get(i).getParser().getFull());
-//    				doExit.get(i).exec(xSet.getAccess());
-//    			}
-//    		}  else {
-//    			setProgress("No DABC exit commands available!",xSet.redD());
-//    			browser.sleep(2);
-//    			}
-            setProgress("DABC cleanup ...",xSet.blueD());
-            String cmd = new String(DabcPath.getText()+
+            cmd = new String(DabcPath.getText()+
                                 "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
                                 DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
                                 xSet.getDimDns()+" "+dabcMaster+" stop &");
-            xLogger.print(1,cmd);
-            dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);    		
-			browser.sleep(2);
     	}
     	else {
-            setProgress("DABC cleanup ...",xSet.blueD());
-            String cmd = new String(DabcPath.getText()+
+            cmd = new String(DabcPath.getText()+
                                 "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
                                 DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
                                 xSet.getDimDns()+" "+dabcMaster+" kill &");
-            xLogger.print(1,cmd);
-            dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);    		
-			browser.sleep(2);
 		}
+        xLogger.print(1,cmd);
+        dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);    		
+		browser.sleep(2);
         setProgress("Shut down MBS ...",xSet.blueD());
         if(mbsCommand != null) mbsCommand.exec(xSet.getAccess()+" *::exit");
-        String cmd = new String(MbsPath.getText()+
+        cmd = new String(MbsPath.getText()+
                                 "/script/prmshutdown.sc "+
                                 MbsPath.getText()+" "+
                                 MbsUserpath.getText());
