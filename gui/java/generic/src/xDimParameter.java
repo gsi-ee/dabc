@@ -24,9 +24,11 @@ import dim.*;
  * @author Hans G. Essel
  * @version 1.0
  */
-public class xDimParameter extends DimInfo implements xiDimParameter {
+public class xDimParameter implements xiDimParameter {
+	//public class xDimParameter extends DimInfo implements xiDimParameter {
 private xParser pars, compars;
 private xXmlParser xmlpars;
+private DimHandler dimhandler;
 private boolean isactive=false;
 private int i,ii;
 private int quality=-1;
@@ -41,7 +43,6 @@ private long lvalue;
 private int ivalue;
 private float fvalue;
 private double dvalue;
-private String editvalue;
 private String setcommand;
 private int tabrow=-1, myparindex=-1;
 private boolean tabinit=false;
@@ -95,11 +96,12 @@ private boolean skip=false;
  * @param version instance number (for internal debugging only)
  */
 public xDimParameter(String name, String format, int noLink, int version){
-    super(name,noLink);
+    //super(name,noLink);
     Version=version;
     sNolink=new String("%BROKEN%");
     iNolink=noLink;
     initParser(name,format);
+    dimhandler = new DimHandler(name,noLink,this);
 // if(pars.getName().equals("NodeList"))
 // System.out.println(Version+" crepar "+pars.getFull());
 }
@@ -111,11 +113,12 @@ public xDimParameter(String name, String format, int noLink, int version){
  * @param version instance number (for internal debugging only)
  */
 public xDimParameter(String name, String format, float noLink, int version){
-    super(name,noLink);
+    //super(name,noLink);
     Version=version;
     sNolink=new String("%BROKEN%");
     fNolink=noLink;
     initParser(name,format);
+    dimhandler = new DimHandler(name,noLink,this);
 }
 /**
  * DIM string parameter. Calls initParser
@@ -125,28 +128,54 @@ public xDimParameter(String name, String format, float noLink, int version){
  * @param version instance number (for internal debugging only)
  */
 public xDimParameter(String name, String format, String noLink, int version){
-    super(name,noLink);
+    //super(name,noLink);
     Version=version;
     sNolink=new String(noLink);
     initParser(name,format);
+    dimhandler = new DimHandler(name,noLink,this);
+}
+/**
+ * Initializes name parser. Creates XML parser. Creates command to set parameter value by preceding underscore
+ * to the parameter name. Value is set to string of NOLINK. 
+ * @param name DABC format parameter name
+ * @param format DIM format list
+ */
+protected void initParser(String name, String format){
+    pars = new xParser();
+    xmlpars = new xXmlParser();
+    i=pars.parse(name,xParser.PARSE_STORE_FULL); // check, parse and store
+    // create command to set parameter
+//    pars.setName(new String("_"+pars.getName()));
+//    setcommand=pars.getFull(true);
+//    i=pars.parse(name,xParser.PARSE_STORE_FULL); // check, parse and store
+    i=pars.format(format,xParser.PARSE_STORE_FULL); // check, parse and store
+    value=new String(sNolink);
+}
+
+public String getName(){
+	return pars.getFull();
+}
+protected void releaseService(){
+	dimhandler.releaseService();
+	dimhandler=null;
 }
 public void printParameter(int index){
-System.out.println(index+": "+super.getName());
+//System.out.println(index+": "+super.getName());
 if(quality != 2304){
 System.out.println("  I:"+myparindex+" TI:"+tabrow+" Q:"+quality+" Active:"+isactive+" Shown: "+paraShown);
 System.out.println("  Value: "+value);
 }
 }
 public void printParameter(boolean comdef){
-if(comdef || (quality != 2304))
+//if(comdef || (quality != 2304))
 //System.out.println(super.getName()+
 //			" I:"+myparindex+" TI:"+tabrow+
 //			" Q:"+String.format("%08x",quality)+
 //			" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
-System.out.println(super.getName()+
-		" F:"+pars.getFormat() +
-		" Q:"+String.format("%08x",quality)+
-		" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
+//System.out.println(super.getName()+
+//		" F:"+pars.getFormat() +
+//		" Q:"+String.format("%08x",quality)+
+//		" Active:"+isactive+" Shown: "+paraShown+" Value: "+value);
 
 
 // exclude command descriptors
@@ -232,24 +261,6 @@ protected void setLogging(boolean yes){
 	dolog=yes;
 }
 /**
- * Initializes name parser. Creates XML parser. Creates command to set parameter value by preceding underscore
- * to the parameter name. Value is set to string of NOLINK. 
- * @param name DABC format parameter name
- * @param format DIM format list
- */
-protected void initParser(String name, String format){
-    pars = new xParser();
-    xmlpars = new xXmlParser();
-    i=pars.parse(name,xParser.PARSE_STORE_FULL); // check, parse and store
-    // create command to set parameter
-    pars.setName(new String("_"+pars.getName()));
-    setcommand=pars.getFull(true);
-    i=pars.parse(name,xParser.PARSE_STORE_FULL); // check, parse and store
-    i=pars.format(format,xParser.PARSE_STORE_FULL); // check, parse and store
-    editvalue=new String("-");
-    value=new String(sNolink);
-}
-/**
  * Adds a new row to the table. Called in xPanelParameter.initPanel.
  * Only visible parameters are handled. Graphical elements are created like meters,
  * if they are monitored.
@@ -290,7 +301,7 @@ if(pars.isVisible()){
     row.add(new Boolean(paraShown)); // set by the create.. functions
     tabmod.addRow(row);
     setTableIndex(rowindex); // only now we can use the new row
-    print(super.getName()+" i="+rowindex,LF);
+//    print(super.getName()+" i="+rowindex,LF);
     ret = true;
 }
 return ret;
@@ -315,7 +326,6 @@ protected void setTableIndex(int index) {tabrow=index;}
 public boolean setParameter(String arg){
 //    System.out.println(setcommand+" "+arg);
 if(pars.isChangable()){
-    editvalue=arg;
     if((!pars.isArray()) && (!pars.isStruct())){
         compars=new xParser();
         compars.parse(pars.getFull(),xParser.PARSE_STORE_FULL); // check, parse and store
@@ -565,6 +575,41 @@ if(histo != null){
     paint=rechis.isVisible().booleanValue();
 } else System.out.println("No histo to set for "+pars.getFull());
 }}
+
+
+
+
+
+
+
+
+
+private class DimHandler extends DimInfo{
+	private xDimParameter mydimparam;
+
+	public DimHandler(String name, int noLink, xDimParameter dimpar){
+	    super(name,noLink);
+	    mydimparam=dimpar;
+	}
+	public DimHandler(String name, float noLink, xDimParameter dimpar){
+	    super(name,noLink);
+	    mydimparam=dimpar;
+	}
+	public DimHandler(String name, String noLink, xDimParameter dimpar){
+	    super(name,noLink);
+	    mydimparam=dimpar;
+	}
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 /**
  * Info handler.
  * Checks the incoming name and format against the stored ones.
@@ -572,10 +617,11 @@ if(histo != null){
  */
 public void infoHandler(){
 int[] intArr; 
-String format;
-String node;
-String lname;
 if(skip)return;
+String format=new String("NOFORM");
+String node;
+String lname=new String("LNAME");
+String pname=new String("PNAME");
 // System.out.println(isactive+" q "+super.getQuality()+" "+super.getName()+"  Value: "+value);
 // check name and format
 // quality is sent correctly for broken links.
@@ -587,15 +633,24 @@ try{
 	quality=super.getQuality();
     lname=super.getName();
     format=getFormat();
-	pars.parseQuality(quality);    
-	if(!pars.getFull().equals(lname))
+	if(format == null)
+	    System.out.println("ERROR: no format for "+lname);
+	else if(pars == null)
+	    System.out.println("ERROR: no parser for "+lname);
+	else if(!pars.getFull().equals(lname))
 	    System.out.println("ERROR: "+pars.getFull()+" != "+lname);
 	else if(!pars.getFormat().equals(format))
 	    System.out.println("ERROR: "+pars.getFormat()+" != "+format);
 } catch (NullPointerException e){
-    System.out.println("ERROR : "+pars.getFull());
+	System.out.println(e);
+    System.out.println("ERROR: NULL "+lname+" qual "+quality);
+	if(format == null)
+	    System.out.println("ERROR: no format for "+lname);
+	else System.out.println("ERROR: format "+format);
     return;
 }
+pars.parseQuality(quality);  
+
 if(dolog)System.out.print(pars.getFull());
 
 	if(pars.isCommandDescriptor()){
@@ -818,11 +873,12 @@ if(dolog)System.out.print(pars.getFull());
     }
     // call user info handlers if attached:
     if(userHandler != null)
-        for(int i=0;i<userHandler.size();i++)userHandler.get(i).infoHandler(this);
+        for(int i=0;i<userHandler.size();i++)userHandler.get(i).infoHandler(mydimparam);
     }
 if(dolog)System.out.println(" "+value);
 //if(!pars.getName().contains("Rate0")) skip=true;
 //print(value,LF);
 //} else System.out.println("Deprecated parameter: "+super.getName());
 } // info handler
+} // class DimHandler
 } // class xDimParameter
