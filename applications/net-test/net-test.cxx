@@ -342,6 +342,159 @@ extern "C" void RunAllToAll()
    StopAll();
 }
 
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <errno.h>
+
+
+/* Adresse für multicast IP */
+const char* mcast_host = "224.0.0.1";
+const int mcast_port = 1234;
+struct ip_mreq command;
+
+int setup_multicast_socket () {
+  int loop = 1;
+  int socket_descriptor;
+  struct sockaddr_in sin;
+
+  memset (&sin, 0, sizeof (sin));
+  sin.sin_family = AF_INET;
+  sin.sin_addr.s_addr = htonl (INADDR_ANY);
+  sin.sin_port = htons (mcast_port);
+  if((socket_descriptor=socket (PF_INET, SOCK_DGRAM, 0)) == -1) {
+     EOUT(("socket()"));
+     return -1;
+  }
+  /* Mehreren Prozessen erlauben den selben Port zu nutzen */
+  loop = 1;
+  if (setsockopt ( socket_descriptor,
+                   SOL_SOCKET,
+                   SO_REUSEADDR,
+                   &loop, sizeof (loop)) < 0) {
+     EOUT(("setsockopt:SO_REUSEADDR"));
+     return -1;
+  }
+  if(bind( socket_descriptor,
+           (struct sockaddr *)&sin,
+           sizeof(sin)) < 0) {
+     EOUT(("bind"));
+     return -1;
+  }
+  /* Broadcast auf dieser Maschine zulassen */
+  loop = 1;
+  if (setsockopt ( socket_descriptor,
+                   IPPROTO_IP,
+                   IP_MULTICAST_LOOP,
+                   &loop, sizeof (loop)) < 0) {
+     EOUT(("setsockopt:IP_MULTICAST_LOOP"));
+     return -1;
+  }
+
+  /* Join the broadcast group: */
+  command.imr_multiaddr.s_addr = inet_addr (mcast_host);
+  command.imr_interface.s_addr = htonl (INADDR_ANY);
+  if (command.imr_multiaddr.s_addr == -1) {
+     EOUT(("%s ist keine Multicast-Adresse", mcast_host));
+     return -1;
+  }
+  if (setsockopt ( socket_descriptor,
+                   IPPROTO_IP,
+                   IP_ADD_MEMBERSHIP,
+                   &command, sizeof (command)) < 0) {
+    EOUT(("setsockopt:IP_ADD_MEMBERSHIP"));
+    return -1;
+  }
+  return socket_descriptor;
+}
+
+
+extern "C" void RunMulticastTest()
+{
+   if (dabc::mgr()->NodeId()==0) {
+      // this is sender
+      int socket_descriptor;
+      struct sockaddr_in address;
+
+      socket_descriptor = socket (AF_INET, SOCK_DGRAM, 0);
+      if (socket_descriptor == -1) {
+         EOUT(("socket()"));
+         return;
+      }
+      memset (&address, 0, sizeof (address));
+      address.sin_family = AF_INET;
+      address.sin_addr.s_addr = inet_addr (mcast_host);
+      address.sin_port = htons (mcast_port);
+
+      char msg[1000];
+
+      int cnt = 0;
+
+      /* Broadcasting beginnen */
+      while (cnt++ < 100) {
+        sprintf(msg, "Broadcast test #%d", cnt);
+
+        if (sendto( socket_descriptor,
+                    msg, strlen(msg)+1,
+                    0,
+                   (struct sockaddr *) &address,
+                   sizeof (address)) < 0) {
+             EOUT(("sendto()"));
+             return;
+          }
+          dabc::MicroSleep(100000);
+        }
+
+      close(socket_descriptor);
+
+      DOUT0(("Server is finished..."));
+
+   } else {
+      // all other are receivers
+
+      int iter = 0;
+      socklen_t sin_len;
+      char message[256];
+      int socket;
+      struct sockaddr_in sin;
+      struct hostent *server_host_name;
+
+      if ((server_host_name = gethostbyname (mcast_host)) == 0) {
+           EOUT(("gethostbyname"));
+           return;
+        }
+        socket = setup_multicast_socket ();
+        /* Broadcast-Nachrichten empfangen */
+        while (iter++ < 50) {
+           sin_len = sizeof (sin);
+           if (recvfrom ( socket, message, 256, 0,
+                         (struct sockaddr *) &sin, &sin_len) == -1) {
+              EOUT(("recvfrom"));
+          }
+          DOUT0(("Antwort #%-2d vom Server: %s", iter, message));
+          dabc::MicroSleep(1000);
+        }
+        /* Multicast Socket aus der Gruppe entfernen */
+        if (setsockopt ( socket,
+                         IPPROTO_IP,
+                         IP_DROP_MEMBERSHIP,
+                         &command, sizeof (command)) < 0 ) {
+            EOUT(("setsockopt:IP_DROP_MEMBERSHIP"));
+        }
+        close (socket);
+   }
+
+}
+
+
+
+
 //class Test1WorkerModule : public dabc::ModuleSync {
 //   protected:
 //

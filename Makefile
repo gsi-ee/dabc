@@ -138,7 +138,7 @@ packagegui: all
 packages: packagegui package packageroc packageabb src
 	
 src: clean
-	tar chf dabc.tar Makefile *.txt base config build script controls/simple controls/dimcontrol --exclude=.svn
+	tar chf dabc.tar Makefile *.txt base config build script controls/simple dim/*.zip dim/Makefile.mk controls/dimcontrol --exclude=.svn
 	tar rhf dabc.tar plugins applications --exclude=plugins/abb/linuxdrivers --exclude=.svn
 	rm -f dabc.tar.gz 
 	gzip dabc.tar

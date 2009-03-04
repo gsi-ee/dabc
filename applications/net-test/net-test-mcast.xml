@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="lxi009"/>
+  <Context host="lxi010"/>
+  <Context host="lxi011"/>
+  <Context host="lxi012"/>
+  <Defaults>
+     <Context name="*">
+       <Run>
+         <lib value="libDabcNetTest.so"/>
+         <debuglevel value="1"/>
+         <runfunc value="RunMulticastTest"/>
+       </Run>
+     </Context>
+  </Defaults>
+</dabc>
