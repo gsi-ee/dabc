@@ -16,6 +16,8 @@
 #include <sys/poll.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
@@ -153,7 +155,8 @@ dabc::SocketIOProcessor::SocketIOProcessor(int fd) :
    fRecvIOV(0),
    fRecvIOVSize(0),
    fRecvIOVFirst(0),
-   fRecvIOVNumber(0)
+   fRecvIOVNumber(0),
+   fRecvSingle(false)
 {
    #ifdef SOCKET_PROFILING
        fSendOper = 0;
@@ -244,6 +247,7 @@ bool dabc::SocketIOProcessor::StartRecv(void* buf, size_t size, bool usemsg)
    fRecvIOVNumber = 1;
    fRecvIOV[0].iov_base = buf;
    fRecvIOV[0].iov_len = size;
+   fRecvSingle = false;
 
    SetDoingInput(true);
    FireEvent(evntSocketRead);
@@ -286,10 +290,10 @@ bool dabc::SocketIOProcessor::StartSend(Buffer* buf, bool usemsg)
 
 bool dabc::SocketIOProcessor::StartRecv(Buffer* buf, BufferSize_t datasize, bool usemsg)
 {
-   return StartNetRecv(0, 0, buf, datasize, usemsg);
+   return StartNetRecv(0, 0, buf, datasize, usemsg, false);
 }
 
-bool dabc::SocketIOProcessor::StartNetRecv(void* hdr, BufferSize_t hdrsize, Buffer* buf, BufferSize_t datasize, bool usemsg)
+bool dabc::SocketIOProcessor::StartNetRecv(void* hdr, BufferSize_t hdrsize, Buffer* buf, BufferSize_t datasize, bool usemsg, bool singleoper)
 {
    // datasize==0 here really means that there is no data to get !!!!
 
@@ -304,6 +308,7 @@ bool dabc::SocketIOProcessor::StartNetRecv(void* hdr, BufferSize_t hdrsize, Buff
 
    fRecvUseMsg = usemsg;
    fRecvIOVFirst = 0;
+   fRecvSingle = singleoper;
 
    int indx = 0;
 
@@ -404,8 +409,6 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
           } else
              res = recv(fSocket, fRecvIOV[fRecvIOVFirst].iov_base, fRecvIOV[fRecvIOVFirst].iov_len, MSG_DONTWAIT | MSG_NOSIGNAL);
 
-//          DOUT1(("res = %d", res));
-
           #ifdef SOCKET_PROFILING
              TimeStamp_t tm2 = TimeStamp();
              fRecvTime += TimeDistance(tm1, tm2);
@@ -419,6 +422,16 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
 
           if (res<0) {
              if (errno!=EAGAIN) OnSocketError(errno, "When recvmsg()");
+             return;
+          }
+
+          if (fRecvSingle) {
+             // for datagram the only recv message is possible
+             fRecvIOVFirst = 0;
+             fRecvIOVNumber = 0;
+             fRecvSingle = false;
+             SetDoingInput(false);
+             OnRecvCompleted();
              return;
           }
 
@@ -455,7 +468,6 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
        case evntSocketWrite: {
 
           if (fSendIOVNumber==0) return; // nothing to send
-
 
           #ifdef SOCKET_PROFILING
              fSendOper++;
@@ -830,7 +842,7 @@ bool dabc::SocketThread::SetNonBlockSocket(int fd)
    int opts = fcntl(fd, F_GETFL);
    if (opts < 0) {
       EOUT(("fcntl(F_GETFL) failed"));
-       return false;
+      return false;
    }
    opts = (opts | O_NONBLOCK);
    if (fcntl(fd, F_SETFL,opts) < 0) {
@@ -962,6 +974,115 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
    }
 
    return -1;
+}
+
+int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
+{
+   if ((host==0) || (strlen(host)==0)) {
+      host = "224.0.0.15";
+      EOUT(("Multicast address not specified, use %s", host));
+   }
+
+   if (port<=0) {
+      port = 4576;
+      EOUT(("Multicast port not specified, use %d", port));
+   }
+
+   struct hostent *server_host_name = gethostbyname(host);
+   if (server_host_name==0) {
+      EOUT(("Cannot get host information for %s", host));
+      return -1;
+   }
+
+   int socket_descriptor = socket (PF_INET, SOCK_DGRAM, 0);
+   if (socket_descriptor<0) {
+      EOUT(("Cannot create datagram socket"));
+      return -1;
+   }
+
+   if (isrecv) {
+
+      struct sockaddr_in sin;
+      struct ip_mreq command;
+
+      memset (&sin, 0, sizeof (sin));
+      sin.sin_family = PF_INET;
+      sin.sin_addr.s_addr = htonl (INADDR_ANY);
+      sin.sin_port = htons (port);
+      // Allow to use same port by many processes
+      int loop = 1;
+      if (setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR,
+                     &loop, sizeof (loop)) < 0) {
+          EOUT(("Cannot setsockopt SO_REUSEADDR"));
+      }
+      if(bind(socket_descriptor, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+          EOUT(("Fail to bind socket with port %d", port));
+          close(socket_descriptor);
+          return -1;
+      }
+
+      // Allow to receive broadcast to this port
+      loop = 1;
+      if (setsockopt (socket_descriptor, IPPROTO_IP, IP_MULTICAST_LOOP,
+                      &loop, sizeof (loop)) < 0) {
+         EOUT(("Fail setsockopt IP_MULTICAST_LOOP"));
+         close(socket_descriptor);
+         return -1;
+      }
+
+      // Join the multicast group
+      command.imr_multiaddr.s_addr = inet_addr (host);
+      command.imr_interface.s_addr = htonl (INADDR_ANY);
+      if (command.imr_multiaddr.s_addr == (in_addr_t)-1) {
+         EOUT(("%s is not valid address", host));
+         close(socket_descriptor);
+         return -1;
+      }
+      if (setsockopt(socket_descriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+                     &command, sizeof (command)) < 0) {
+          EOUT(("File setsockopt IP_ADD_MEMBERSHIP"));
+          close(socket_descriptor);
+          return -1;
+      }
+   } else {
+     struct sockaddr_in address;
+
+     memset (&address, 0, sizeof (address));
+     address.sin_family = AF_INET;
+     address.sin_addr.s_addr = inet_addr (host);
+     address.sin_port = htons (port);
+
+     if (connect(socket_descriptor, (struct sockaddr *) &address,
+           sizeof (address)) < 0) {
+        EOUT(("Fail to connect to host % port %s", host, port));
+        close(socket_descriptor);
+        return -1;
+     }
+  }
+
+  return socket_descriptor;
+}
+
+void dabc::SocketThread::CloseMulticast(int handle, const char* host, bool isrecv)
+{
+   if (handle<0) return;
+
+   if (isrecv) {
+
+      struct ip_mreq command;
+
+      command.imr_multiaddr.s_addr = inet_addr (host);
+      command.imr_interface.s_addr = htonl (INADDR_ANY);
+
+      // Remove socket from multicast group
+      if (setsockopt (handle, IPPROTO_IP, IP_DROP_MEMBERSHIP,
+                      &command, sizeof (command)) < 0 ) {
+         EOUT(("Fail setsockopt:IP_DROP_MEMBERSHIP"));
+      }
+   }
+
+   if (close(handle) < 0)
+      EOUT(("Error in socketclose"));
 }
 
 dabc::SocketClientProcessor* dabc::SocketThread::CreateClientProcessor(const char* serverid)

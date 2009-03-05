@@ -20,6 +20,10 @@
 #include "dabc/CommandClient.h"
 
 
+const char* dabc::xmlSocketMPort = "MPort";
+const char* dabc::xmlSocketMHost = "MHost";
+const char* dabc::xmlSocketMRecv = "MRecv";
+
 #define SocketServerTmout 0.2
 
 // this is fixed-size message for exhanging during protocol execution
@@ -780,7 +784,7 @@ bool dabc::SocketDevice::RemoteCommandReplyed(SocketProtocolProcessor* proc, con
       rec->fCmd->AddValuesFrom(rescmd);
       dabc::Command::Reply(rec->fCmd, rescmd->GetResult());
    } else {
-      EOUT(("Cannot decode extren cmd: %s", scmd));
+      EOUT(("Cannot decode external cmd: %s", scmd));
       dabc::Command::Reply(rec->fCmd, false);
       res = false;
    }
@@ -812,14 +816,54 @@ void dabc::SocketDevice::DestroyProcessor(SocketProtocolProcessor* proc, bool re
 
 int dabc::SocketDevice::CreateTransport(Command* cmd, Port* port)
 {
-   bool isserver = cmd->GetBool("IsServer", true);
-
    const char* portname = cmd->GetPar("PortName");
 
-//   DOUT1(("dabc::SocketDevice::CreateTransport %s",portname));
+   if (cmd->HasPar("IsServer")) {
 
-   if (isserver ? ServerConnect(cmd, port, portname) : ClientConnect(cmd, port, portname))
-      return cmd_postponed;
+      bool isserver = cmd->GetBool("IsServer", true);
+
+//   DOUT1(("dabc::SocketDevice::CreateTransport %s", portname));
+
+     if (isserver ? ServerConnect(cmd, port, portname) : ClientConnect(cmd, port, portname))
+        return cmd_postponed;
+   }
+
+
+   std::string mhost = port->GetCfgStr(xmlSocketMHost, "", cmd);
+
+   if (!mhost.empty()) {
+      int mport = port->GetCfgInt(xmlSocketMPort, 7654, cmd);
+      bool mrecv = port->GetCfgBool(xmlSocketMRecv, port->InputQueueCapacity() > 0, cmd);
+
+      if (mrecv && (port->InputQueueCapacity()==0)) {
+         EOUT(("Wrong Multicast configuration - port %s cannot recv packets", portname));
+         return cmd_false;
+      } else
+      if (!mrecv && (port->OutputQueueCapacity()==0)) {
+         EOUT(("Wrong Multicast configuration - port %s cannot send packets", portname));
+         return cmd_false;
+      }
+
+      int handle = dabc::SocketThread::StartMulticast(mhost.c_str(), mport, mrecv);
+      if (handle<0) return cmd_false;
+
+      if (!dabc::SocketThread::SetNonBlockSocket(handle)) {
+         dabc::SocketThread::CloseMulticast(handle, mhost.c_str(), mrecv);
+         return cmd_false;
+      }
+
+      std::string newthrdname = port->GetCfgStr(xmlTrThread, ProcessorThreadName(), cmd);
+
+      SocketTransport* tr = new SocketTransport(this, port, false, handle, true);
+      if (dabc::mgr()->MakeThreadFor(tr, newthrdname.c_str())) {
+         DOUT1(("TRANSPORT %s multicast thrd %s", mhost.c_str(), newthrdname.c_str()));
+         port->AssignTransport(tr);
+         return cmd_true;
+      } else {
+         EOUT(("No thread for transport"));
+         delete tr;
+      }
+   }
 
    return cmd_false;
 }

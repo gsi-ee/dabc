@@ -8,9 +8,12 @@
      <Context name="*">
        <Run>
          <lib value="libDabcNetTest.so"/>
-         <debuglevel value="1"/>
          <runfunc value="RunMulticastTest"/>
        </Run>
+       <User>
+         <MHost value="224.0.0.15"/>
+         <MPort value="7434"/>
+       </User>
      </Context>
   </Defaults>
 </dabc>

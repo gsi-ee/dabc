@@ -44,7 +44,7 @@ const int FirstNode = 0;
 
 //#include <iostream>
 
-class Test1SendModule : public dabc::ModuleAsync {
+class NetTestSenderModule : public dabc::ModuleAsync {
    protected:
       dabc::PoolHandle*   fPool;
       bool                fCanSend;
@@ -52,7 +52,7 @@ class Test1SendModule : public dabc::ModuleAsync {
       bool                fChaotic;
 
    public:
-      Test1SendModule(const char* name, dabc::Command* cmd) :
+      NetTestSenderModule(const char* name, dabc::Command* cmd) :
          dabc::ModuleAsync(name, cmd)
       {
          int nports = GetCfgInt("NumPorts", 3, cmd);
@@ -128,13 +128,13 @@ class Test1SendModule : public dabc::ModuleAsync {
 };
 
 
-class Test1RecvModule : public dabc::ModuleAsync {
+class NetTestReceiverModule : public dabc::ModuleAsync {
    protected:
       dabc::PoolHandle*    fPool;
       int                  fSleepTime;
 
    public:
-      Test1RecvModule(const char* name, dabc::Command* cmd) :
+      NetTestReceiverModule(const char* name, dabc::Command* cmd) :
          dabc::ModuleAsync(name, cmd)
       {
          // we will use queue (second true) in the signal to detect order of signal fire
@@ -191,6 +191,55 @@ class Test1RecvModule : public dabc::ModuleAsync {
       }
 };
 
+class NetTestMcastModule : public dabc::ModuleAsync {
+   protected:
+      bool fReceiver;
+      int  fCounter;
+
+   public:
+      NetTestMcastModule(const char* name, dabc::Command* cmd) :
+         dabc::ModuleAsync(name, cmd)
+      {
+         fReceiver = GetCfgBool("IsReceiver", true, cmd);
+
+         CreatePoolHandle("MPool", 1024, 10);
+
+         fCounter = 0;
+
+         if (fReceiver)
+            CreateInput("Input", Pool(), 5);
+         else {
+            CreateOutput("Output", Pool(), 5);
+            CreateTimer("Timer1", 0.1);
+         }
+      }
+
+      void ProcessInputEvent(dabc::Port* port)
+      {
+         dabc::Buffer* buf = port->Recv();
+         if (buf==0) { EOUT(("AAAAAAA")); return; }
+         DOUT0(("Counter %3d Size %u Msg %s", fCounter++, buf->GetDataSize(), buf->GetDataLocation()));
+         dabc::Buffer::Release(buf);
+      }
+
+      void ProcessTimerEvent(dabc::Timer* timer)
+      {
+         if (!Output()->CanSend()) return;
+         dabc::Buffer* buf = Pool()->TakeBuffer(0);
+         if (buf==0) return;
+
+         sprintf((char*)buf->GetDataLocation(),"Message %3d from sender", fCounter++);
+
+         buf->SetDataSize(strlen((char*)buf->GetDataLocation())+1);
+
+         DOUT0(("Sending %3d Size %u Msg %s", fCounter, buf->GetDataSize(), buf->GetDataLocation()));
+
+         Output()->Send(buf);
+      }
+
+};
+
+
 
 class NetTestFactory : public dabc::Factory  {
    public:
@@ -199,11 +248,14 @@ class NetTestFactory : public dabc::Factory  {
 
       virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
       {
-         if (strcmp(classname,"Test1SendModule")==0)
-            return new Test1SendModule(modulename, cmd);
+         if (strcmp(classname,"NetTestSenderModule")==0)
+            return new NetTestSenderModule(modulename, cmd);
          else
-         if (strcmp(classname,"Test1RecvModule")==0)
-            return new Test1RecvModule(modulename, cmd);
+         if (strcmp(classname,"NetTestReceiverModule")==0)
+            return new NetTestReceiverModule(modulename, cmd);
+         else
+         if (strcmp(classname,"NetTestMcastModule")==0)
+            return new NetTestMcastModule(modulename, cmd);
 //         else
 //         if (strcmp(classname,"Test1WorkerModule")==0)
 //            return new Test1WorkerModule(modulename, cmd);
@@ -284,7 +336,7 @@ extern "C" void RunAllToAll()
 
    for (int node=0;node<numnodes;node++) {
       dabc::Command* cmd =
-         new dabc::CmdCreateModule("Test1RecvModule","Receiver");
+         new dabc::CmdCreateModule("NetTestReceiverModule","Receiver");
       cmd->SetInt("NumPorts", numnodes-1);
       cmd->SetInt("BufferSize", TestBufferSize);
       dabc::mgr()->SubmitRemote(cli, cmd, node);
@@ -292,7 +344,7 @@ extern "C" void RunAllToAll()
 
    for (int node=0;node<numnodes;node++) {
       dabc::Command* cmd =
-         new dabc::CmdCreateModule("Test1SendModule","Sender");
+         new dabc::CmdCreateModule("NetTestSenderModule","Sender");
       cmd->SetInt("NumPorts", numnodes-1);
       cmd->SetInt("BufferSize", TestBufferSize);
       dabc::mgr()->SubmitRemote(cli, cmd, node);
@@ -342,138 +394,18 @@ extern "C" void RunAllToAll()
    StopAll();
 }
 
-#include <stdio.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 
-
-/* Adresse für multicast IP */
-const char* mcast_host = "224.0.0.15";
-const int mcast_port = 7234;
-
-int setup_multicast_socket (bool recv = true) {
-
-
-   struct hostent *server_host_name = gethostbyname (mcast_host);
-   if (server_host_name==0) {
-      EOUT(("gethostbyname"));
-      return -1;
-   }
-
-  int socket_descriptor = socket (PF_INET, SOCK_DGRAM, 0);
-  if (socket_descriptor<0) {
-     EOUT(("socket()"));
-     return -1;
-  }
-
-  if (recv) {
-
-     struct sockaddr_in sin;
-     struct ip_mreq command;
-
-     memset (&sin, 0, sizeof (sin));
-     sin.sin_family = PF_INET;
-     sin.sin_addr.s_addr = htonl (INADDR_ANY);
-     sin.sin_port = htons (mcast_port);
-     /* Mehreren Prozessen erlauben den selben Port zu nutzen */
-     int loop = 1;
-     if (setsockopt ( socket_descriptor,
-                      SOL_SOCKET,
-                      SO_REUSEADDR,
-                      &loop, sizeof (loop)) < 0) {
-        EOUT(("setsockopt:SO_REUSEADDR"));
-        return -1;
-     }
-     if(bind( socket_descriptor,
-              (struct sockaddr *)&sin,
-              sizeof(sin)) < 0) {
-        EOUT(("bind"));
-        close(socket_descriptor);
-        return -1;
-     }
-
-     /* Broadcast auf dieser Maschine zulassen */
-     loop = 1;
-     if (setsockopt ( socket_descriptor,
-                      IPPROTO_IP,
-                      IP_MULTICAST_LOOP,
-                      &loop, sizeof (loop)) < 0) {
-        EOUT(("setsockopt:IP_MULTICAST_LOOP"));
-        close(socket_descriptor);
-        return -1;
-     }
-
-     /* Join the broadcast group: */
-     command.imr_multiaddr.s_addr = inet_addr (mcast_host);
-     command.imr_interface.s_addr = htonl (INADDR_ANY);
-     if (command.imr_multiaddr.s_addr == -1) {
-        EOUT(("%s ist keine Multicast-Adresse", mcast_host));
-        close(socket_descriptor);
-        return -1;
-     }
-     if (setsockopt ( socket_descriptor,
-                      IPPROTO_IP,
-                      IP_ADD_MEMBERSHIP,
-                      &command, sizeof (command)) < 0) {
-       EOUT(("setsockopt:IP_ADD_MEMBERSHIP"));
-       close(socket_descriptor);
-       return -1;
-     }
-  } else {
-     struct sockaddr_in address;
-
-     memset (&address, 0, sizeof (address));
-     address.sin_family = AF_INET;
-     address.sin_addr.s_addr = inet_addr (mcast_host);
-     address.sin_port = htons (mcast_port);
-
-     if (connect(socket_descriptor, (struct sockaddr *) &address,
-           sizeof (address)) < 0) {
-        EOUT(("Connect"));
-        close(socket_descriptor);
-        return -1;
-     }
-  }
-
-  return socket_descriptor;
-}
-
-void close_multicast_socket(int socket_descriptor, bool recv = true)
+extern "C" void RunSocketMulticastTest()
 {
-   if (socket_descriptor<0) return;
 
-   if (recv) {
+   std::string mcast_host = dabc::mgr()->cfg()->GetUserPar("MHost", "224.0.0.15");
 
-      struct ip_mreq command;
+   int mcast_port = dabc::mgr()->cfg()->GetUserParInt("MPort", 7234);
 
-      command.imr_multiaddr.s_addr = inet_addr (mcast_host);
-      command.imr_interface.s_addr = htonl (INADDR_ANY);
-
-      /* Multicast Socket aus der Gruppe entfernen */
-      if (setsockopt ( socket_descriptor,
-                       IPPROTO_IP,
-                       IP_DROP_MEMBERSHIP,
-                       &command, sizeof (command)) < 0 ) {
-         EOUT(("setsockopt:IP_DROP_MEMBERSHIP"));
-      }
-   }
-
-   close(socket_descriptor);
-}
-
-
-extern "C" void RunMulticastTest()
-{
    bool isrecv = dabc::mgr()->NodeId() > 0;
 
-   int socket = setup_multicast_socket(isrecv);
+   int socket = dabc::SocketThread::StartMulticast(mcast_host.c_str(), mcast_port, isrecv);
+
    if (socket<0) return;
 
    int cnt = 0;
@@ -491,10 +423,34 @@ extern "C" void RunMulticastTest()
       }
    }
 
-   close_multicast_socket(socket, isrecv);
+   dabc::SocketThread::CloseMulticast(socket, mcast_host.c_str(), isrecv);
 }
 
+extern "C" void RunMulticastTest()
+{
+   std::string mcast_host = dabc::mgr()->cfg()->GetUserPar("MHost", "224.0.0.15");
+   int mcast_port = dabc::mgr()->cfg()->GetUserParInt("MPort", 7234);
+   bool isrecv = dabc::mgr()->NodeId() > 0;
 
+   dabc::mgr()->CreateDevice(dabc::typeSocketDevice, "MDev");
+
+   dabc::Command* cmd = new dabc::CmdCreateModule("NetTestMcastModule", "MM");
+   cmd->SetBool("IsReceiver", isrecv);
+   dabc::mgr()->Execute(cmd);
+
+   cmd = new dabc::CmdCreateTransport(isrecv ? "MM/Input" : "MM/Output", "MDev");
+   cmd->SetInt(dabc::xmlSocketMPort, mcast_port);
+   cmd->SetStr(dabc::xmlSocketMHost, mcast_host);
+   dabc::mgr()->Execute(cmd);
+
+   dabc::mgr()->StartAllModules();
+
+   dabc::LongSleep(5);
+
+   dabc::mgr()->StopAllModules();
+
+   DOUT0(("Multicast test done"));
+}
 
 
 //class Test1WorkerModule : public dabc::ModuleSync {
@@ -553,7 +509,7 @@ extern "C" void RunMulticastTest()
 //
 //   for (int node=FirstNode;node<m.NumNodes();node++) {
 //      dabc::Command* cmd =
-//         new dabc::CmdCreateModule("Test1RecvModule","Receiver");
+//         new dabc::CmdCreateModule("NetTestReceiverModule","Receiver");
 //      cmd->SetInt("NumPorts", m.NumNodes()-1-FirstNode);
 //      cmd->SetInt("BufferSize", TestBufferSize);
 //      m.SubmitRemote(cli, cmd, node);
@@ -561,7 +517,7 @@ extern "C" void RunMulticastTest()
 //
 //   for (int node=FirstNode;node<m.NumNodes();node++) {
 //      dabc::Command* cmd =
-//         new dabc::CmdCreateModule("Test1SendModule","Sender");
+//         new dabc::CmdCreateModule("NetTestSenderModule","Sender");
 //      cmd->SetInt("NumPorts", m.NumNodes()-1-FirstNode);
 //      cmd->SetInt("BufferSize", TestBufferSize);
 //      m.SubmitRemote(cli, cmd, node);

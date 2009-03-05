@@ -193,7 +193,7 @@ namespace dabc {
             SetPar("Port1Name", port1fullname);
             SetPar("Port2Name", port2fullname);
             SetPar("Device", device);
-            SetPar("TrThread", trthread);
+            SetPar(xmlTrThread, trthread);
          }
    };
 

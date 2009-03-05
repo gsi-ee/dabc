@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -15,9 +15,10 @@
 
 #include "dabc/SocketDevice.h"
 
-dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useackn, int fd) :
+dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useackn, int fd, bool isdatagram) :
    NetworkTransport(dev),
    SocketIOProcessor(fd),
+   fIsDatagram(isdatagram),
    fHeaders(0),
    fSendQueue(),
    fRecvQueue(),
@@ -201,10 +202,18 @@ do_compl:
          fRecvRecid = fRecvQueue.Pop();
       }
 
-      fRecvStatus = 1;
+      if (fIsDatagram) {
+         fRecvStatus = 2;
 
-      // do normal recv of the header data without evolving messages
-      StartRecv(fRecs[fRecvRecid].header, sizeof(NetworkHeader), false);
+         dabc::Buffer* buf = fRecs[fRecvRecid].buf;
+
+         StartNetRecv(fRecs[fRecvRecid].header, fFullHeaderSize, buf, buf->GetTotalSize(), true, true);
+
+      } else {
+         fRecvStatus = 1;
+         // do normal recv of the header data without evolving messages
+         StartRecv(fRecs[fRecvRecid].header, sizeof(NetworkHeader), false);
+      }
    }
 }
 

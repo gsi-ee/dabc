@@ -47,10 +47,12 @@ namespace dabc {
    const char* xmlNumOutputs        = "NumOutputs";
    const char* xmlUseAcknowledge    = "UseAcknowledge";
    const char* xmlFlashTimeout      = "FlashTimeout";
-
+   const char* xmlTrThread          = "TrThread";
 
    const char* xmlTrueValue         = "true";
    const char* xmlFalseValue        = "false";
+
+
 
    const char* typeWorkingThread    = "dabc::WorkingThread";
    const char* typeSocketDevice     = "dabc::SocketDevice";

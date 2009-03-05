@@ -107,9 +107,8 @@ namespace dabc {
          bool StartSend(Buffer* buf, bool usemsg = false);
          bool StartRecv(Buffer* buf, BufferSize_t datasize, bool usemsg = false);
 
-         bool StartNetRecv(void* hdr, BufferSize_t hdrsize, Buffer* buf, BufferSize_t datasize, bool usemsg = true);
+         bool StartNetRecv(void* hdr, BufferSize_t hdrsize, Buffer* buf, BufferSize_t datasize, bool usemsg = true, bool singleoper = false);
          bool StartNetSend(void* hdr, BufferSize_t hdrsize, Buffer* buf, bool usemsg = true);
-
 
       protected:
 
@@ -133,6 +132,7 @@ namespace dabc {
          unsigned      fRecvIOVSize;    // number of elements in recv vector
          unsigned      fRecvIOVFirst;   // number of element in recv IOV where transfer is started
          unsigned      fRecvIOVNumber;  // number of elements in current recv operation
+         bool          fRecvSingle;     // true if the only recv is allowed
 
 #ifdef SOCKET_PROFILING
          long           fSendOper;
@@ -238,6 +238,8 @@ namespace dabc {
          static int StartServer(int& nport, int portmin=-1, int portmax=-1);
          static std::string DefineHostName();
          static int StartClient(const char* host, int nport);
+         static int StartMulticast(const char* host, int port, bool isrecv = true);
+         static void CloseMulticast(int handle, const char* host, bool isrecv = true);
 
          static SocketServerProcessor* CreateServerProcessor(int nport, int portmin=-1, int portmax=-1);
 
