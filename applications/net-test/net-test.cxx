@@ -358,172 +358,140 @@ extern "C" void RunAllToAll()
 const char* mcast_host = "224.0.0.15";
 const int mcast_port = 7234;
 
-int setup_multicast_socket () {
-  int loop = 1;
-  int socket_descriptor;
-  struct sockaddr_in sin;
-  struct ip_mreq command;
+int setup_multicast_socket (bool recv = true) {
 
-  memset (&sin, 0, sizeof (sin));
-  sin.sin_family = AF_INET;
-  sin.sin_addr.s_addr = htonl (INADDR_ANY);
-  sin.sin_port = htons (mcast_port);
-  if((socket_descriptor=socket (PF_INET, SOCK_DGRAM, 0)) == -1) {
+
+   struct hostent *server_host_name = gethostbyname (mcast_host);
+   if (server_host_name==0) {
+      EOUT(("gethostbyname"));
+      return -1;
+   }
+
+  int socket_descriptor = socket (PF_INET, SOCK_DGRAM, 0);
+  if (socket_descriptor<0) {
      EOUT(("socket()"));
      return -1;
   }
-  /* Mehreren Prozessen erlauben den selben Port zu nutzen */
-  loop = 1;
-  if (setsockopt ( socket_descriptor,
-                   SOL_SOCKET,
-                   SO_REUSEADDR,
-                   &loop, sizeof (loop)) < 0) {
-     EOUT(("setsockopt:SO_REUSEADDR"));
-     return -1;
-  }
-  if(bind( socket_descriptor,
-           (struct sockaddr *)&sin,
-           sizeof(sin)) < 0) {
-     EOUT(("bind"));
-     return -1;
-  }
-  /* Broadcast auf dieser Maschine zulassen */
-  loop = 1;
-  if (setsockopt ( socket_descriptor,
-                   IPPROTO_IP,
-                   IP_MULTICAST_LOOP,
-                   &loop, sizeof (loop)) < 0) {
-     EOUT(("setsockopt:IP_MULTICAST_LOOP"));
-     return -1;
+
+  if (recv) {
+
+     struct sockaddr_in sin;
+     struct ip_mreq command;
+
+     memset (&sin, 0, sizeof (sin));
+     sin.sin_family = PF_INET;
+     sin.sin_addr.s_addr = htonl (INADDR_ANY);
+     sin.sin_port = htons (mcast_port);
+     /* Mehreren Prozessen erlauben den selben Port zu nutzen */
+     int loop = 1;
+     if (setsockopt ( socket_descriptor,
+                      SOL_SOCKET,
+                      SO_REUSEADDR,
+                      &loop, sizeof (loop)) < 0) {
+        EOUT(("setsockopt:SO_REUSEADDR"));
+        return -1;
+     }
+     if(bind( socket_descriptor,
+              (struct sockaddr *)&sin,
+              sizeof(sin)) < 0) {
+        EOUT(("bind"));
+        close(socket_descriptor);
+        return -1;
+     }
+
+     /* Broadcast auf dieser Maschine zulassen */
+     loop = 1;
+     if (setsockopt ( socket_descriptor,
+                      IPPROTO_IP,
+                      IP_MULTICAST_LOOP,
+                      &loop, sizeof (loop)) < 0) {
+        EOUT(("setsockopt:IP_MULTICAST_LOOP"));
+        close(socket_descriptor);
+        return -1;
+     }
+
+     /* Join the broadcast group: */
+     command.imr_multiaddr.s_addr = inet_addr (mcast_host);
+     command.imr_interface.s_addr = htonl (INADDR_ANY);
+     if (command.imr_multiaddr.s_addr == -1) {
+        EOUT(("%s ist keine Multicast-Adresse", mcast_host));
+        close(socket_descriptor);
+        return -1;
+     }
+     if (setsockopt ( socket_descriptor,
+                      IPPROTO_IP,
+                      IP_ADD_MEMBERSHIP,
+                      &command, sizeof (command)) < 0) {
+       EOUT(("setsockopt:IP_ADD_MEMBERSHIP"));
+       close(socket_descriptor);
+       return -1;
+     }
+  } else {
+     struct sockaddr_in address;
+
+     memset (&address, 0, sizeof (address));
+     address.sin_family = AF_INET;
+     address.sin_addr.s_addr = inet_addr (mcast_host);
+     address.sin_port = htons (mcast_port);
+
+     if (connect(socket_descriptor, (struct sockaddr *) &address,
+           sizeof (address)) < 0) {
+        EOUT(("Connect"));
+        close(socket_descriptor);
+        return -1;
+     }
   }
 
-  /* Join the broadcast group: */
-  command.imr_multiaddr.s_addr = inet_addr (mcast_host);
-  command.imr_interface.s_addr = htonl (INADDR_ANY);
-  if (command.imr_multiaddr.s_addr == -1) {
-     EOUT(("%s ist keine Multicast-Adresse", mcast_host));
-     return -1;
-  }
-  if (setsockopt ( socket_descriptor,
-                   IPPROTO_IP,
-                   IP_ADD_MEMBERSHIP,
-                   &command, sizeof (command)) < 0) {
-    EOUT(("setsockopt:IP_ADD_MEMBERSHIP"));
-    return -1;
-  }
   return socket_descriptor;
 }
 
-
-extern "C" void RunMulticastTest()
+void close_multicast_socket(int socket_descriptor, bool recv = true)
 {
-   if (dabc::mgr()->NodeId()==0) {
-      // this is sender
-      int socket_descriptor;
-      struct sockaddr_in address;
+   if (socket_descriptor<0) return;
 
-      socket_descriptor = socket (AF_INET, SOCK_DGRAM, 0);
-      if (socket_descriptor == -1) {
-         EOUT(("socket()"));
-         return;
-      }
-      memset (&address, 0, sizeof (address));
-      address.sin_family = AF_INET;
-      address.sin_addr.s_addr = inet_addr (mcast_host);
-      address.sin_port = htons (mcast_port);
+   if (recv) {
 
-//      if(bind(socket_descriptor,
-//               (struct sockaddr *)&address,
-//                 sizeof(address)) < 0) {
-//         EOUT(("bind"));
-//         return;
-//      }
-//
-//      int loop = 1;
-//      if (setsockopt(socket_descriptor,
-//                     IPPROTO_IP,
-//                     IP_MULTICAST_LOOP,
-//                     &loop, sizeof (loop)) < 0) {
-//         EOUT(("setsockopt:IP_MULTICAST_LOOP"));
-//         return;
-//      }
-
-
-      char msg[1000];
-
-      int cnt = 0;
-
-      /* Broadcasting beginnen */
-      while (cnt++ < 100) {
-        sprintf(msg, "Broadcast test #%d", cnt);
-
-        if (sendto( socket_descriptor,
-                    msg, strlen(msg)+1,
-                    0,
-                   (struct sockaddr *) &address,
-                   sizeof (address)) < 0) {
-             EOUT(("sendto()"));
-             break;
-          }
-
-//        if (send(socket_descriptor, msg, strlen(msg)+1, 0) <0) {
-//           EOUT(("send()"));
-//           break;
-//        }
-
-        dabc::MicroSleep(100000);
-      }
-
-      close(socket_descriptor);
-
-      DOUT0(("Server is finished..."));
-
-   } else {
-      // all other are receivers
-
-      int iter = 0;
-      socklen_t sin_len;
-      char message[256];
-      int socket;
-      struct sockaddr_in sin;
-      struct hostent *server_host_name;
       struct ip_mreq command;
-
-      if ((server_host_name = gethostbyname (mcast_host)) == 0) {
-         EOUT(("gethostbyname"));
-         return;
-      }
-      socket = setup_multicast_socket ();
-      /* Broadcast-Nachrichten empfangen */
-      while (iter++ < 50) {
-//         sin_len = sizeof (sin);
-//         if (recvfrom ( socket, message, 256, 0,
-//                       (struct sockaddr *) &sin, &sin_len) == -1) {
-//            EOUT(("recvfrom"));
-//        }
-
-         if (recv(socket, message, 256, 0) < 0) {
-             EOUT(("recv"));
-             break;
-         }
-
-        DOUT0(("Antwort #%-2d vom Server: %s", iter, message));
-        dabc::MicroSleep(1000);
-      }
 
       command.imr_multiaddr.s_addr = inet_addr (mcast_host);
       command.imr_interface.s_addr = htonl (INADDR_ANY);
 
       /* Multicast Socket aus der Gruppe entfernen */
-      if (setsockopt ( socket,
+      if (setsockopt ( socket_descriptor,
                        IPPROTO_IP,
                        IP_DROP_MEMBERSHIP,
                        &command, sizeof (command)) < 0 ) {
          EOUT(("setsockopt:IP_DROP_MEMBERSHIP"));
       }
-      close (socket);
    }
 
+   close(socket_descriptor);
+}
+
+
+extern "C" void RunMulticastTest()
+{
+   bool isrecv = dabc::mgr()->NodeId() > 0;
+
+   int socket = setup_multicast_socket(isrecv);
+   if (socket<0) return;
+
+   int cnt = 0;
+   char msg[256];
+
+   while (cnt++ < 50) {
+
+      if (isrecv) {
+         if (recv(socket, msg, sizeof(msg), 0)>0)
+           DOUT0(("Reply #%2d Msg: %s", cnt, msg));
+      } else {
+         sprintf(msg, "Broadcast test #%d", cnt);
+         if (send(socket, msg, strlen(msg)+1, 0) < 0) EOUT(("send()"));
+         dabc::MicroSleep(100000);
+      }
+   }
+
+   close_multicast_socket(socket, isrecv);
 }
 
 
