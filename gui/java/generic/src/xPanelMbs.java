@@ -155,8 +155,10 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
 }
 
 private void checkDir(){
-    String check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
-    String result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
+String check, result;
+if(!formMbs.getUserPath().contains("%")){
+    check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
+    result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
     if(result.indexOf(formMbs.getStart()) < 0){
     	tellError("Not found: "+check);
     	System.out.println("Not found: "+check);
@@ -167,6 +169,12 @@ private void checkDir(){
     	tellError("Not found: "+check);
     	System.out.println("Not found: "+check);
     }
+    check = new String(formMbs.getSystemPath()+"/alias.com");
+    result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
+    if(result.indexOf("alias.com") < 0){
+    	tellError("Not found: "+check);
+    	System.out.println("Not found: "+check);
+}	}
 }
 
 private void setLaunch(){
@@ -242,7 +250,6 @@ private void startProgress(){
     progress.setupFrame(workIcon, null, progressState, true);
     etime.action(new ActionEvent(progress,1,"DisplayFrame"));
 }
-// Fire event handler of desktop through timer.
 private void setProgress(String info, Color color){
 setTitle(info,color);
 if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
@@ -330,6 +337,14 @@ while(s.indexOf("TIME")>=0){
     time++;
     setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
     s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep TIME");
+}
+s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 61|grep TIME");
+while(s.indexOf("TIME")>=0){
+    System.out.print(".");
+    browser.sleep(1);
+    time++;
+    setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
+    s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 61|grep TIME");
 }
 time=0;
 setProgress("Launch MBS ...",xSet.blueD());
@@ -499,14 +514,16 @@ public void run(){
         if(waitRun(5+3*nMbsNodes,"Running"))
             setProgress("OK: all running",xSet.greenD());
         else setProgress("LOOK: not all running",xSet.redD());
+        System.out.println(" ");
      }
     else if ("mbsStop".equals(Action)) {
     	String cmd = new String(cmdPrefix+"Stop acquisition");
         xLogger.print(1,"MBS: "+cmd);
         mbsCommand.exec(xSet.getAccess()+" "+cmd);
-        if(waitRun(5+3*nMbsNodes,"Stopped"))
+        if(waitRun(5+5*nMbsNodes,"Stopped"))
         setProgress("OK: all stopped",xSet.greenD());
         else setProgress("LOOK: not all stopped",xSet.redD());
+        System.out.println(" ");
     }
     else if ("mbsShow".equals(Action)) {
     	String cmd = new String(cmdPrefix+"Show acquisition");

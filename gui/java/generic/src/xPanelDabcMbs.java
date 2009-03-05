@@ -177,12 +177,21 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
 }
 
 private void checkDir(){
-	String check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
-	String result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
+String check, result;
+if(!formDabc.getUserPath().contains("%")){
+	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
+	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
 	if(result.indexOf(formDabc.getSetup()) < 0){
 		tellError("Not found: "+check);
 		System.out.println("Not found: "+check);
 	}
+	check = new String(formDabc.getSystemPath()+"/Makefile");
+	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
+	if(result.indexOf("Makefile") < 0){
+		tellError("Not found: "+check);
+		System.out.println("Not found: "+check);
+	}}
+if(!formMbs.getUserPath().contains("%")){
 	check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
     result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
     if(result.indexOf(formMbs.getStart()) < 0){
@@ -195,6 +204,12 @@ private void checkDir(){
     	tellError("Not found: "+check);
     	System.out.println("Not found: "+check);
     }
+    check = new String(formMbs.getSystemPath()+"/alias.com");
+    result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
+    if(result.indexOf("alias.com") < 0){
+    	tellError("Not found: "+check);
+    	System.out.println("Not found: "+check);
+    }}
 }
 
 private void setLaunch(){
@@ -534,6 +549,14 @@ int time=0;
             time++;
             setProgress("Wait MBS sockets free "+time+"["+20+"]",xSet.blueD());
             s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep TIME");
+        }
+        s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 61|grep TIME");
+        while(s.indexOf("TIME")>=0){
+            System.out.print(".");
+            browser.sleep(1);
+            time++;
+            setProgress("Wait MBS sockets free "+time+"["+20+"]",xSet.blueD());
+            s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 61|grep TIME");
         }
         System.out.println("");
         boolean launchMbs=false;

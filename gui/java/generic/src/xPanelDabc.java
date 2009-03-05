@@ -151,12 +151,20 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
 }
 
 private void checkDir(){
-	String check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
-	String result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
+String check, result;
+if(!formDabc.getUserPath().contains("%")){
+	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
+	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
 	if(result.indexOf(formDabc.getSetup()) < 0){
 		tellError("Not found: "+check);
 		System.out.println("Not found: "+check);
 	}
+	check = new String(formDabc.getSystemPath()+"/Makefile");
+	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
+	if(result.indexOf("Makefile") < 0){
+		tellError("Not found: "+check);
+		System.out.println("Not found: "+check);
+}	}
 }
 private void setLaunch(){
 xSet.setAccess(Password.getPassword());

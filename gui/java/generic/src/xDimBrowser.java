@@ -167,7 +167,7 @@ System.out.println("Browser releaseServices, update");
         for(i=0;i<vpar.size();i++){
             par=vpar.get(i);
             par.removeInfoHandler();// clear all registrations of user handlers
-            par.setParameterActiv(false);
+            par.setParameterActiv(false);// prevent graphics actions in handlers
         }
     }
 }
