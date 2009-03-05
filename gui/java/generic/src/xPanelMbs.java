@@ -351,7 +351,7 @@ setProgress("Launch MBS ...",xSet.blueD());
 System.out.println("");
 if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-	if(waitMbs(5+5*nMbsNodes,"Msg_log")){
+	if(waitMbs(5+6*nMbsNodes,"Msg_log")){
         System.out.println("\nMbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
