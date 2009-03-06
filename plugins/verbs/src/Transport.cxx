@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -21,26 +21,55 @@
 #include "verbs/ComplQueue.h"
 #include "verbs/MemoryPool.h"
 
-verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::Port* port, bool useackn) :
+verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::Port* port,
+                            bool useackn, struct ibv_gid* multi_gid) :
    dabc::NetworkTransport(verbs),
    Processor(qp),
    fCQ(cq),
+   fInitOk(false),
    fPoolReg(0),
    f_rwr(0),
    f_swr(0),
    f_sge(0),
    fHeadersPool(0),
    fSegmPerOper(2),
-   fFastPost(true)
+   fFastPost(true),
+   f_ud_ah(0),
+   f_ud_qpn(0),
+   f_ud_qkey(0),
+   f_multi(false),
+   f_multi_lid(0)
 {
+   if (qp==0) return;
+
    Init(port, useackn);
+
+   if (multi_gid) {
+      if (!QP()->InitUD()) return;
+
+      memcpy(f_multi_gid, *multi_gid, sizeof(struct ibv_gid));
+
+      if (!fVerbs->RegisterMultiCastGroup(&f_multi_gid, f_multi_lid)) return;
+
+      f_ud_ah = fVerbs->CreateMAH(&f_multi_gid, f_multi_lid);
+      if (f_ud_ah==0) return;
+
+      f_ud_qpn = VERBS_MCAST_QPN;
+      f_ud_qkey = VERBS_DEFAULT_QKEY;
+
+      if (!QP()->AttachMcast(&f_multi_gid, f_multi_lid)) return;
+
+      f_multi = true;
+   }
 
    fFastPost = Device::IsThreadSafeVerbs();
 
    if (fPool!=0) {
       fPoolReg = verbs->RegisterPool(fPool);
-   } else
+   } else {
       EOUT(("Cannot make verbs transport without memory pool"));
+      return;
+   }
 
    if (fNumRecs>0) {
       fHeadersPool = new MemoryPool(verbs, "HeadersPool", fNumRecs, fFullHeaderSize, false, true);
@@ -77,18 +106,31 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
          f_rwr[n].next      = NULL;
       }
    }
+
+   fInitOk = true;
 }
 
 verbs::Transport::~Transport()
 {
    DOUT3(("verbs::Transport::~Transport %p starts", this));
 
-
    // we need this while at some point verbs thread will try to access
    // qp, which is destroyed at that moment
    RemoveProcessorFromThread(true);
 
    DOUT3(("verbs::Transport::~Transport %p id: %d locked:%s", this, GetId(), DBOOL(fMutex.IsLocked())));
+
+   if (f_multi) {
+      QP()->DetachMcast(&f_multi_gid, f_multi_lid);
+
+      fVerbs->UnRegisterMultiCastGroup(&f_multi_gid, f_multi_lid);
+      f_multi = false;
+   }
+
+   if(f_ud_ah!=0) {
+      ibv_destroy_ah(f_ud_ah);
+      f_ud_ah = 0;
+   }
 
    QueuePair* delqp = 0;
 
@@ -119,8 +161,15 @@ verbs::Transport::~Transport()
    fPoolReg = 0;
 
    DOUT3(("verbs::Transport::~Transport %p done", this));
-
 }
+
+void verbs::Transport::SetUdAddr(struct ibv_ah *ud_ah, uint32_t ud_qpn, uint32_t ud_qkey)
+{
+   f_ud_ah = ud_ah;
+   f_ud_qpn = ud_qpn;
+   f_ud_qkey = ud_qkey;
+}
+
 
 void verbs::Transport::_SubmitRecv(uint32_t recid)
 {
@@ -185,6 +234,12 @@ void verbs::Transport::_SubmitSend(uint32_t recid)
    f_swr[recid].opcode   = IBV_WR_SEND;
    f_swr[recid].next     = NULL;
    f_swr[recid].send_flags = IBV_SEND_SIGNALED;
+
+   if (f_ud_ah) {
+      f_swr[recid].wr.ud.ah          = f_ud_ah;
+      f_swr[recid].wr.ud.remote_qpn  = f_ud_qpn;
+      f_swr[recid].wr.ud.remote_qkey = f_ud_qkey;
+   }
 
    dabc::Buffer* buf = fRecs[recid].buf;
 

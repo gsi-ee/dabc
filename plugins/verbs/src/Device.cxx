@@ -22,6 +22,8 @@
 #include <netinet/in.h>
 
 
+const char* verbs::xmlMcastAddr = "McastAddr";
+
 #ifndef  __NO_MULTICAST__
 #include "verbs/OpenSM.h"
 #else
@@ -517,14 +519,16 @@ struct ibv_ah* verbs::Device::CreateMAH(ibv_gid* mgid, uint32_t mlid, int mport)
    return f_ah;
 }
 
-void verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
-                                     ComplQueue* &port_cq, QueuePair* &port_qp)
+bool verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
+                                 Thread* &thrd, ComplQueue* &port_cq, QueuePair* &port_qp)
 {
    ibv_qp_type qp_type = IBV_QPT_RC;
 
    if (conn_type>0) qp_type = (ibv_qp_type) conn_type;
 
-   Thread* thrd = MakeThread(thrd_name, true);
+   thrd = MakeThread(thrd_name, true);
+
+   if (thrd==0) return false;
 
    bool isowncq = IsAllocateIndividualCQ() && !thrd->IsFastModus();
 
@@ -536,8 +540,10 @@ void verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int co
    port_qp = new QueuePair(this, qp_type,
                            port_cq, port->NumOutputBuffersRequired(), fDeviceAttr.max_sge - 1,
                            port_cq, port->NumInputBuffersRequired(), /*fDeviceAttr.max_sge / 2*/ 2);
-    if (!isowncq)
-       port_cq = 0;
+   if (!isowncq)
+      port_cq = 0;
+
+   return true;
 }
 
 dabc::Folder* verbs::Device::GetPoolRegFolder(bool force)
@@ -649,12 +655,49 @@ verbs::Thread* verbs::Device::MakeThread(const char* name, bool force)
 
 int verbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
-   bool isserver = cmd->GetBool("IsServer", true);
-
    const char* portname = cmd->GetPar("PortName");
 
-   if (isserver ? ServerConnect(cmd, port, portname) : ClientConnect(cmd, port, portname))
-      return cmd_postponed;
+   if (cmd->HasPar("IsServer")) {
+
+      bool isserver = cmd->GetBool("IsServer", true);
+      if (isserver ? ServerConnect(cmd, port, portname) : ClientConnect(cmd, port, portname))
+         return cmd_postponed;
+   }
+
+   std::string maddr = port->GetCfgStr(xmlMcastAddr, "", cmd);
+
+   if (!maddr.empty()) {
+      std::string thrdname = port->GetCfgStr(dabc::xmlTrThread, ProcessorThreadName(), cmd);
+
+      ComplQueue* port_cq = 0;
+      QueuePair*  port_qp = 0;
+      Thread*     thrd = 0;
+
+      struct ibv_gid multi_gid;
+
+      if (!ConvertStrToGid(maddr, multi_gid)) {
+         EOUT(("Cannot convert address %s to ibv_gid type", maddr.c_str()));
+         return cmd_false;
+      }
+
+      std::string buf;
+      ConvertGidToStr(multi_gid, buf);
+      if (buf!=maddr) {
+         EOUT(("Addresses not the same: %s - %s", maddr.c_str(), buf.c_str()));
+         return cmd_false;
+      }
+
+      if (CreatePortQP(thrdname.c_str(), port, IBV_QPT_UD, thrd, port_cq, port_qp)) {
+         Transport* tr = new Transport(this, port_cq, port_qp, port, false, &multi_gid);
+
+         if (tr->IsInitOk()) {
+            tr->AssignProcessorToThread(thrd);
+            port->AssignTransport(tr);
+            return cmd_true;
+         } else
+            delete tr;
+      }
+   }
 
    return cmd_false;
 }
@@ -673,4 +716,23 @@ int verbs::Device::ExecuteCommand(dabc::Command* cmd)
       cmd_res = dabc::Device::ExecuteCommand(cmd);
 
    return cmd_res;
+}
+
+
+bool verbs::ConvertStrToGid(const std::string& s, struct ibv_gid &gid)
+{
+   return sscanf(s.c_str(),
+                 "%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX",
+                 gid+0, gid+1, gid+2, gid+3, gid+4, gid+5, gid+6, gid+7,
+                 gid+8, gid+9, gid+10, gid+11, gid+12, gid+13, gid+14, gid+15) == 16;
+}
+
+std::string verbs::ConvertGidToStr(struct ibv_gid &gid)
+{
+   std::string res;
+
+   dabc::formats(res, "%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX",
+                       gid+0, gid+1, gid+2, gid+3, gid+4, gid+5, gid+6, gid+7,
+                       gid+8, gid+9, gid+10, gid+11, gid+12, gid+13, gid+14, gid+15);
+  return res;
 }

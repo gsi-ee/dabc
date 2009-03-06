@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -37,6 +37,8 @@ namespace verbs {
    class Thread;
    class ProtocolProcessor;
 
+   extern const char* xmlMcastAddr;
+
    // ________________________________________________________
 
    class PoolRegistry : public dabc::Basic {
@@ -65,7 +67,7 @@ namespace verbs {
          void CleanMRStructure();
 
       protected:
-         Device       *fVerbs;
+         Device            *fVerbs;
          dabc::MemoryPool  *fPool;
          dabc::Mutex*       fWorkMutex;
          int                fUsage;
@@ -126,8 +128,8 @@ namespace verbs {
          bool OpenVerbs(bool withmulticast = false, const char* devicename = 0, int ibport = -1);
          bool CloseVerbs();
 
-         void CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
-                           ComplQueue* &port_cq, QueuePair* &port_qp);
+         bool CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
+                           Thread* &thrd, ComplQueue* &port_cq, QueuePair* &port_qp);
          void CreateVerbsTransport(const char* thrdname, const char* portname, bool useackn, ComplQueue* cq, QueuePair* qp);
 
          virtual int CreateTransport(dabc::Command* cmd, dabc::Port* port);
@@ -149,8 +151,12 @@ namespace verbs {
          bool fAllocateIndividualCQ; // for connections individual CQ will be used
 
          static bool fThreadSafeVerbs;  // identifies if verbs is thread safe
-
    };
+
+
+   extern bool ConvertStrToGid(const std::string& s, struct ibv_gid &gid);
+   extern std::string ConvertGidToStr(struct ibv_gid &gid);
+
 }
 
 #endif

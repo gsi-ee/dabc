@@ -398,9 +398,9 @@ extern "C" void RunAllToAll()
 extern "C" void RunSocketMulticastTest()
 {
 
-   std::string mcast_host = dabc::mgr()->cfg()->GetUserPar("MHost", "224.0.0.15");
+   std::string mcast_host = dabc::mgr()->cfg()->GetUserPar(dabc::xmlMcastAddr, "224.0.0.15");
 
-   int mcast_port = dabc::mgr()->cfg()->GetUserParInt("MPort", 7234);
+   int mcast_port = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlMcastPort, 7234);
 
    bool isrecv = dabc::mgr()->NodeId() > 0;
 
@@ -428,19 +428,21 @@ extern "C" void RunSocketMulticastTest()
 
 extern "C" void RunMulticastTest()
 {
-   std::string mcast_host = dabc::mgr()->cfg()->GetUserPar("MHost", "224.0.0.15");
-   int mcast_port = dabc::mgr()->cfg()->GetUserParInt("MPort", 7234);
+   std::string devclass = dabc::mgr()->cfg()->GetUserPar("Device", dabc::typeSocketDevice);
+
+   std::string mcast_host = dabc::mgr()->cfg()->GetUserPar(dabc::xmlMcastAddr, "224.0.0.15");
+   int mcast_port = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlMcastPort, 7234);
    bool isrecv = dabc::mgr()->NodeId() > 0;
 
-   dabc::mgr()->CreateDevice(dabc::typeSocketDevice, "MDev");
+   if (dabc::mgr()->CreateDevice(devclass.c_str(), "MDev")) return;
 
    dabc::Command* cmd = new dabc::CmdCreateModule("NetTestMcastModule", "MM");
    cmd->SetBool("IsReceiver", isrecv);
    dabc::mgr()->Execute(cmd);
 
    cmd = new dabc::CmdCreateTransport(isrecv ? "MM/Input" : "MM/Output", "MDev");
-   cmd->SetInt(dabc::xmlSocketMPort, mcast_port);
-   cmd->SetStr(dabc::xmlSocketMHost, mcast_host);
+   cmd->SetStr(dabc::xmlMcastAddr, mcast_host);
+   cmd->SetInt(dabc::xmlMcastPort, mcast_port);
    dabc::mgr()->Execute(cmd);
 
    dabc::mgr()->StartAllModules();

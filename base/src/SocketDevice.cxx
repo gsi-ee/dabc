@@ -19,11 +19,6 @@
 #include "dabc/Port.h"
 #include "dabc/CommandClient.h"
 
-
-const char* dabc::xmlSocketMPort = "MPort";
-const char* dabc::xmlSocketMHost = "MHost";
-const char* dabc::xmlSocketMRecv = "MRecv";
-
 #define SocketServerTmout 0.2
 
 // this is fixed-size message for exhanging during protocol execution
@@ -412,7 +407,7 @@ bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* por
 
       new_rec = new NewConnectRec(needreply? 0 : cmd, portname, 0, connid.c_str(), timeout + SocketServerTmout);
 
-      new_rec->fThreadName = cmd->GetStr("TrThread","");
+      new_rec->fThreadName = cmd->GetStr(xmlTrThread,"");
    }
 
    if (needreply)
@@ -449,7 +444,7 @@ bool dabc::SocketDevice::ClientConnect(Command* cmd, Port* port, const char* por
    client->SetConnHandler(this, connid);
 
    NewConnectRec* rec = new NewConnectRec(cmd, portname, client, connid, timeout + SocketServerTmout);
-   rec->fThreadName = cmd->GetStr("TrThread", "");
+   rec->fThreadName = cmd->GetStr(xmlTrThread, "");
 
    AddRec(rec);
 
@@ -829,11 +824,11 @@ int dabc::SocketDevice::CreateTransport(Command* cmd, Port* port)
    }
 
 
-   std::string mhost = port->GetCfgStr(xmlSocketMHost, "", cmd);
+   std::string mhost = port->GetCfgStr(xmlMcastAddr, "", cmd);
 
    if (!mhost.empty()) {
-      int mport = port->GetCfgInt(xmlSocketMPort, 7654, cmd);
-      bool mrecv = port->GetCfgBool(xmlSocketMRecv, port->InputQueueCapacity() > 0, cmd);
+      int mport = port->GetCfgInt(xmlMcastPort, 7654, cmd);
+      bool mrecv = port->GetCfgBool(xmlMcastRecv, port->InputQueueCapacity() > 0, cmd);
 
       if (mrecv && (port->InputQueueCapacity()==0)) {
          EOUT(("Wrong Multicast configuration - port %s cannot recv packets", portname));

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -130,10 +130,9 @@ bool verbs::QueuePair::InitUD()
       default: EOUT(("Wrong mtu value %u", fVerbs->mtu()));
    }
 
-   attr.path_mtu = IBV_MTU_1024;
+   // attr.path_mtu = IBV_MTU_1024;
 
-   if (ibv_modify_qp(qp(), &attr,
-              IBV_QP_STATE )) {
+   if (ibv_modify_qp(qp(), &attr, IBV_QP_STATE )) {
        EOUT(("Failed to modify UD QP to RTR"));
       return false;
    }

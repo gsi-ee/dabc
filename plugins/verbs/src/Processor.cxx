@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -302,7 +302,7 @@ bool verbs::ConnectProcessor::TrySendConnRequest(ProtocolProcessor* rec)
 
    if (fUseMulti && fMultiAH && (tgt_ah==0)) {
        tgt_ah = fMultiAH;
-       tgt_qpn = 0xffffff;
+       tgt_qpn = VERBS_MCAST_QPN;
    }
 
    if (tgt_ah==0) {

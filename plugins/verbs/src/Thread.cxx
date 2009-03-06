@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -41,7 +41,7 @@ namespace verbs {
          double fLastTm;
 
       public:
-         VerbsTimeoutProcessor(Thread* thrd) :
+         TimeoutProcessor(Thread* thrd) :
             dabc::WorkingProcessor(),
             fVerbsThrd(thrd),
             fLastTm(-1)
@@ -433,7 +433,7 @@ bool verbs::Thread::DoServer(dabc::Command* cmd, dabc::Port* port, const char* p
 
    cmd->SetUInt("ServerHeaderSize", port->UserHeaderSize());
 
-   rec->fThrdName = cmd->GetStr("TrThread","");
+   rec->fThrdName = cmd->GetStr(dabc::xmlTrThread,"");
 
    fDevice->CreatePortQP(rec->fThrdName.c_str(), port, rec->fConnType, rec->fPortCQ, rec->fPortQP);
 
@@ -484,7 +484,7 @@ bool verbs::Thread::DoClient(dabc::Command* cmd, dabc::Port* port, const char* p
    rec->fConnType = cmd->GetInt("VerbsConnType", IBV_QPT_RC);
    rec->fKindStatus = 111; // this indicate, that we send request to server
 
-   rec->fThrdName = cmd->GetStr("TrThread","");
+   rec->fThrdName = cmd->GetStr(dabc::xmlTrThread,"");
 
    fDevice->CreatePortQP(rec->fThrdName.c_str(), port, rec->fConnType, rec->fPortCQ, rec->fPortQP);
 

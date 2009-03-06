@@ -11,8 +11,8 @@
          <runfunc value="RunMulticastTest"/>
        </Run>
        <User>
-         <MHost value="224.0.0.15"/>
-         <MPort value="7434"/>
+         <McastAddr value="224.0.0.15"/>
+         <McastPort value="7434"/>
        </User>
      </Context>
   </Defaults>

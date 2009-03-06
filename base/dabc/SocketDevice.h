@@ -24,11 +24,6 @@
 
 namespace dabc {
 
-   extern const char* xmlSocketMPort;
-   extern const char* xmlSocketMHost;
-   extern const char* xmlSocketMRecv;
-
-
    class NewConnectRec;
    class SocketProtocolProcessor;
 

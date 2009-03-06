@@ -52,6 +52,10 @@ namespace dabc {
    const char* xmlTrueValue         = "true";
    const char* xmlFalseValue        = "false";
 
+   const char* xmlMcastAddr         = "McastAddr";
+   const char* xmlMcastPort         = "McastPort";
+   const char* xmlMcastRecv         = "McastRecv";
+
 
 
    const char* typeWorkingThread    = "dabc::WorkingThread";
