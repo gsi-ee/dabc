@@ -30,19 +30,10 @@
 #include "dabc/Factory.h"
 #include "dabc/Configuration.h"
 
-
-#include <map>
-#include <math.h>
-#include <queue>
-
 int TestBufferSize = 8*1024;
 int TestSendQueueSize = 5;
 int TestRecvQueueSize = 10;
 bool TestUseAckn = false;
-
-const int FirstNode = 0;
-
-//#include <iostream>
 
 class NetTestSenderModule : public dabc::ModuleAsync {
    protected:
@@ -394,38 +385,6 @@ extern "C" void RunAllToAll()
    StopAll();
 }
 
-
-extern "C" void RunSocketMulticastTest()
-{
-
-   std::string mcast_host = dabc::mgr()->cfg()->GetUserPar(dabc::xmlMcastAddr, "224.0.0.15");
-
-   int mcast_port = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlMcastPort, 7234);
-
-   bool isrecv = dabc::mgr()->NodeId() > 0;
-
-   int socket = dabc::SocketThread::StartMulticast(mcast_host.c_str(), mcast_port, isrecv);
-
-   if (socket<0) return;
-
-   int cnt = 0;
-   char msg[256];
-
-   while (cnt++ < 50) {
-
-      if (isrecv) {
-         if (recv(socket, msg, sizeof(msg), 0)>0)
-           DOUT0(("Reply #%2d Msg: %s", cnt, msg));
-      } else {
-         sprintf(msg, "Broadcast test #%d", cnt);
-         if (send(socket, msg, strlen(msg)+1, 0) < 0) EOUT(("send()"));
-         dabc::MicroSleep(100000);
-      }
-   }
-
-   dabc::SocketThread::CloseMulticast(socket, mcast_host.c_str(), isrecv);
-}
-
 extern "C" void RunMulticastTest()
 {
    std::string devclass = dabc::mgr()->cfg()->GetUserPar("Device", dabc::typeSocketDevice);
@@ -433,7 +392,7 @@ extern "C" void RunMulticastTest()
    std::string mcast_host = dabc::mgr()->cfg()->GetUserPar(dabc::xmlMcastAddr, "224.0.0.15");
    int mcast_port = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlMcastPort, 7234);
    bool isrecv = dabc::mgr()->NodeId() > 0;
-   
+
    DOUT1(("Create device %s", devclass.c_str()));
 
    if (!dabc::mgr()->CreateDevice(devclass.c_str(), "MDev")) return;
