@@ -532,6 +532,9 @@ int time=0;
         else setProgress("MBS rundown failure!",xSet.redD());
     }
     else if ("prmLaunch".equals(Action)) {
+    	if(nServers == browser.getNofServers())
+            setProgress("DABC already launched!",xSet.greenD());
+    	else {
         setProgress("Launching DABC ...",xSet.blueD());
         String cmd = new String(DabcPath.getText()+
                                 "/script/dabcstartup.sh "+DabcPath.getText()+" "+
@@ -589,42 +592,42 @@ int time=0;
             setProgress("Failed: Launch script",xSet.redD());
             }
 
-    if(launchMbs){
-        time=0;
-        int nserv=0;
-        System.out.print("Dabc wait ");
-        nserv=browser.getNofServers();
-        setProgress(new String("Wait for "+(nServers-1)+" servers ..."),xSet.blueD());
-        while(nserv < nServers){
-            System.out.print(".");
-            browser.sleep(1);
-            time++;
-            if(time > 10) break;
-            nserv=browser.getNofServers();
-        }
-        if(browser.getNofServers() >= nServers){
-            System.out.println("\nDabc connnected "+nServers+" servers");
-            setProgress("OK: MBS and DABC servers ready, update parameters ...",xSet.blueD());
-            xSet.setSuccess(false);
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);}
-            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-            else setProgress("OK: MBS and DABC servers ready",xSet.greenD());
-            //setDimServices();        
-        }
-        else {
-            System.out.println("\nDabc Failed ");
-            setProgress("Servers missing: "+(nServers-nserv)+" from "+nServers+", update parameters ...",xSet.redD());
-            xSet.setSuccess(false);
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);}
-            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-            else setProgress("Failure: DABC servers not ready",xSet.redD());
-            //setDimServices();        
-        }
-    }}
+        if(launchMbs){
+	        time=0;
+	        int nserv=0;
+	        System.out.print("Dabc wait ");
+	        nserv=browser.getNofServers();
+	        setProgress(new String("Wait for "+(nServers-1)+" servers ..."),xSet.blueD());
+	        while(nserv < nServers){
+	            System.out.print(".");
+	            browser.sleep(1);
+	            time++;
+	            if(time > 10) break;
+	            nserv=browser.getNofServers();
+	        }
+	        if(browser.getNofServers() >= nServers){
+	            System.out.println("\nDabc connnected "+nServers+" servers");
+	            setProgress("OK: MBS and DABC servers ready, update parameters ...",xSet.blueD());
+	            xSet.setSuccess(false);
+	            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+	            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+	            browser.sleep(1);}
+	            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+	            else setProgress("OK: MBS and DABC servers ready",xSet.greenD());
+	            //setDimServices();        
+	        }
+	        else {
+	            System.out.println("\nDabc Failed ");
+	            setProgress("Servers missing: "+(nServers-nserv)+" from "+nServers+", update parameters ...",xSet.redD());
+	            xSet.setSuccess(false);
+	            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+	            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+	            browser.sleep(1);}
+	            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+	            else setProgress("Failure: DABC servers not ready",xSet.redD());
+	            //setDimServices();        
+	        }
+    }}}
     // from here we need commands
     else {
     if(mbsCommand == null) setDimServices();
@@ -664,6 +667,9 @@ int time=0;
         return;
     }
     else if ("mbsConfig".equals(Action)) {
+        if(waitState(1,"Ready")) setProgress("DABC already Ready",xSet.greenD());
+        else if(waitState(1,"Running")) setProgress("DABC already Running",xSet.greenD());
+        else {
         setProgress("Start up and configure MBS tasks",xSet.blueD());
         System.out.print("Wait Mbs transport socket free ");
         String s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6000|grep WAIT");
@@ -721,7 +727,7 @@ int time=0;
                 //setDimServices();
             }
         }
-    }
+    }}
     else if ("dabcEnable".equals(Action)) {
         xLogger.print(1,doEnable.getParser().getFull());
         doEnable.exec(xSet.getAccess());

@@ -485,11 +485,11 @@ public void run(){
         return;
     }
     if ("dabcConfig".equals(Action)) {
-        setProgress("Configure DABC",xSet.blueD());
-        xLogger.print(1,doConfig.getParser().getFull());
         if(waitState(1,"Ready")) setProgress("DABC already Ready",xSet.greenD());
         else if(waitState(1,"Running")) setProgress("DABC already Running",xSet.greenD());
         else {
+        setProgress("Configure DABC",xSet.blueD());
+        xLogger.print(1,doConfig.getParser().getFull());
         doConfig.exec(xSet.getAccess());
         if(waitState(10,"Configured")){
             setProgress("OK: DABC configured, enable ...",xSet.blueD());
