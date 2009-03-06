@@ -14,6 +14,7 @@
 #include "verbs/MemoryPool.h"
 
 #include "verbs/Device.h"
+#include "verbs/QueuePair.h"
 
 verbs::MemoryPool::MemoryPool(Device* verbs,
                               const char* name,

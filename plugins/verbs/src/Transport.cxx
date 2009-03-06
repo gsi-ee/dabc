@@ -51,10 +51,11 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
 
       memcpy(f_multi_gid.raw, multi_gid->raw, sizeof(f_multi_gid.raw));
 
-      DOUT0(("Init multicast group %s", ConvertGidToStr(f_multi_gid).c_str()));
+      f_multi = verbs->ManageMulticast(Device::mcst_Register, f_multi_gid, f_multi_lid);
 
-      fmulti = verbs->ManageMulticast(Device::mcst_Init, f_multi_gid, f_multi_lid);
-      if (!fmulti) return;
+      DOUT1(("Init multicast group LID:%x %s", f_multi_lid, ConvertGidToStr(f_multi_gid).c_str()));
+
+      if (!f_multi) return;
 
       f_ud_ah = verbs->CreateMAH(f_multi_gid, f_multi_lid);
       if (f_ud_ah==0) return;

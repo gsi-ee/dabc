@@ -493,7 +493,8 @@ int verbs::Device::ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid)
          return mcst_Error;
       case mcst_Init:
          mlid = 0;
-         if (fOsm->QueryMyltucastGroup(mgid.raw, mlid)) return mcst_Ok;
+         if (fOsm->QueryMyltucastGroup(mgid.raw, mlid)) 
+	    if (mlid!=0) return mcst_Ok;
          if (fOsm->ManageMultiCastGroup(true, mgid.raw, &mlid)) return mcst_Unregister;
          return mcst_Error;
       case mcst_Unregister:
@@ -507,8 +508,6 @@ int verbs::Device::ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid)
 
 struct ibv_ah* verbs::Device::CreateMAH(ibv_gid& mgid, uint32_t mlid, int mport)
 {
-   if (mgid==0) return 0;
-
    ibv_ah_attr mah_attr;
    memset(&mah_attr, 0, sizeof(ibv_ah_attr));
 

@@ -434,7 +434,7 @@ extern "C" void RunMulticastTest()
    int mcast_port = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlMcastPort, 7234);
    bool isrecv = dabc::mgr()->NodeId() > 0;
    
-   DOUT0(("Create device %s", devclass.c_str()));
+   DOUT1(("Create device %s", devclass.c_str()));
 
    if (!dabc::mgr()->CreateDevice(devclass.c_str(), "MDev")) return;
 
@@ -447,8 +447,7 @@ extern "C" void RunMulticastTest()
    cmd->SetInt(dabc::xmlMcastPort, mcast_port);
    dabc::mgr()->Execute(cmd);
 
-   DOUT0(("Create transport for addr %s", mcast_host.c_str()));
-
+   DOUT1(("Create transport for addr %s", mcast_host.c_str()));
 
    dabc::mgr()->StartAllModules();
 

@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="lxi008"/>
-  <Context host="lxi010"/>
-  <Context host="lxi012"/>
-  <Context host="lxi014"/>
+  <Context host="master"/>
+  <Context host="node01"/>
+  <Context host="node02"/>
+  <Context host="node03"/>
   <Defaults>
      <Context name="*">
        <Run>
@@ -12,7 +12,7 @@
        </Run>
        <User>
          <McastAddr value="224.0.0.15"/>
-         <McastPort value="7434"/>
+         <McastPort value="1234"/>
        </User>
      </Context>
   </Defaults>
