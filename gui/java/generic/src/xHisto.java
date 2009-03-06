@@ -74,6 +74,7 @@ private int ix0;
 private int iID=0;
 private int mode=0;
 private boolean drag=true;
+private boolean dragging=false;
 private boolean isLog=false;
 private boolean bar=false;
 private String sHead;
@@ -383,6 +384,7 @@ public void update(Graphics g)
  * @param draw True: call redraw, otherwise no repaint.
  */
 public void redraw(int channels, int[] iBuffer, boolean draw){
+	if(dragging) return; // mouse is dragging, do not disturb
     iChan=channels;
     iData = iBuffer;
     if(iPixelY == null){
@@ -414,6 +416,7 @@ public void redraw()
     double dMax;
     double off0;
 
+	if(dragging) return; // mouse is dragging, do not disturb
     iLastx=-1;
 
     iMaxold=iMax;
@@ -475,6 +478,7 @@ public void redraw(String head, String cont, String xaxis,
     double dMax;
     double off0;
 
+	if(dragging) return; // mouse is dragging, do not disturb
     iChan=channels;
     sHead=head;
     sCont = cont;
@@ -607,6 +611,7 @@ public void actionPerformed(ActionEvent a){
         men.setVisible(true);
         men.show(me.getComponent(),me.getX(),me.getY());
     }
+    else if(me.getButton()==MouseEvent.BUTTON1)dragging=true;
 }
 //****************************************************
 public void mouseClicked(MouseEvent me)
@@ -644,7 +649,8 @@ public void mouseReleased(MouseEvent me)
 // this is called before click
     drag=true; // enable cross cursor drawing
     if(me.getButton()==MouseEvent.BUTTON1){
-        iLastx=-1;
+    	dragging=false;
+    	iLastx=-1;
         repaint();
     }}
 //****************************************************
@@ -669,10 +675,10 @@ public void mouseDragged(MouseEvent me)
             }
             iLastx =  x;
             iLasty =  y;
-            int i = (iLastx-ix0)*iChan/ixs;
-            int j = (-iLasty+iy0)*iMax/iys;
+            long i = (iLastx-ix0)*iChan/ixs;
+            long j = (-iLasty+iy0)*(iMax/iys);
             if(i < 0) i = 0;  if(i >= iChan) i = iChan-1;
-            sCoord = new String(" "+i+","+j+" ");
+            sCoord = String.format(" %d, %d",i,j);
             iposx=iLastx+3;
             iposy=iLasty-4;
             if(iLastx > ix/2) iposx=iLastx-3-fm.stringWidth(sCoord);
