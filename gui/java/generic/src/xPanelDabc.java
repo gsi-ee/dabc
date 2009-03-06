@@ -391,6 +391,9 @@ public void run(){
         xLogger.print(1,Action);
     }
     else if ("dabcLaunch".equals(Action)) {
+    	if(nServers == browser.getNofServers())
+            setProgress("DABC already launched!",xSet.greenD());
+    	else {
         setProgress("Launch DABC servers ...",xSet.blueD());
         String cmd = new String(DabcPath.getText()+
                                 "/script/dabcstartup.sh "+DabcPath.getText()+" "+
@@ -428,7 +431,7 @@ public void run(){
         }
         }
         else setProgress("Failed: DABC startup script",xSet.redD());
-    }
+    }}
     else if ("dabcShell".equals(Action)) {
         //xLogger.print(1,Command);
         xLogger.print(1,"dabcShell: "+DabcScript.getText());
@@ -484,6 +487,9 @@ public void run(){
     if ("dabcConfig".equals(Action)) {
         setProgress("Configure DABC",xSet.blueD());
         xLogger.print(1,doConfig.getParser().getFull());
+        if(waitState(1,"Ready")) setProgress("DABC already Ready",xSet.greenD());
+        else if(waitState(1,"Running")) setProgress("DABC already Running",xSet.greenD());
+        else {
         doConfig.exec(xSet.getAccess());
         if(waitState(10,"Configured")){
             setProgress("OK: DABC configured, enable ...",xSet.blueD());
@@ -503,7 +509,7 @@ public void run(){
                 //setDimServices();
             } else setProgress("DABC enable failed",xSet.greenD());
         } else setProgress("DABC configure failed",xSet.redD());
-    }
+    }}
     else if ("dabcEnable".equals(Action)) {
         xLogger.print(1,doEnable.getParser().getFull());
         doEnable.exec(xSet.getAccess());
@@ -520,7 +526,7 @@ public void run(){
         doHalt.exec(xSet.getAccess());
         browser.sleep(3);
             if(waitState(10,"Halted")){
-            setProgress("OK: DABC halteded, update parameters ...",xSet.blueD());
+            setProgress("OK: DABC halted, update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
             browser.sleep(1);
