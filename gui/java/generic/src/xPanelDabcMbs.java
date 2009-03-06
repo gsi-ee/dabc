@@ -667,9 +667,17 @@ int time=0;
         return;
     }
     else if ("mbsConfig".equals(Action)) {
-        if(waitState(1,"Ready")) setProgress("DABC already Ready",xSet.greenD());
-        else if(waitState(1,"Running")) setProgress("DABC already Running",xSet.greenD());
-        else {
+        if(waitState(1,"Ready")) {
+            xLogger.print(1,doHalt.getParser().getFull());
+            setProgress("Before configure, Halt DABC",xSet.blueD());
+            doHalt.exec(xSet.getAccess());
+            waitState(10,"Halted");        
+        }else if(waitState(1,"Running")){
+            xLogger.print(1,doHalt.getParser().getFull());
+            setProgress("Before configure, Halt DABC",xSet.blueD());
+            doHalt.exec(xSet.getAccess());        	
+            waitState(10,"Halted");
+        }
         setProgress("Start up and configure MBS tasks",xSet.blueD());
         System.out.print("Wait Mbs transport socket free ");
         String s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6000|grep WAIT");
@@ -727,7 +735,7 @@ int time=0;
                 //setDimServices();
             }
         }
-    }}
+    }
     else if ("dabcEnable".equals(Action)) {
         xLogger.print(1,doEnable.getParser().getFull());
         doEnable.exec(xSet.getAccess());
