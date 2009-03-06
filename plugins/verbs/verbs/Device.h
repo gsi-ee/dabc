@@ -154,8 +154,8 @@ namespace verbs {
    };
 
 
-   extern bool ConvertStrToGid(const std::string& s, struct ibv_gid &gid);
-   extern std::string ConvertGidToStr(struct ibv_gid &gid);
+   extern bool ConvertStrToGid(const std::string& s, ibv_gid &gid);
+   extern std::string ConvertGidToStr(ibv_gid &gid);
 
 }
 

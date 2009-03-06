@@ -673,15 +673,14 @@ int verbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
       QueuePair*  port_qp = 0;
       Thread*     thrd = 0;
 
-      struct ibv_gid multi_gid;
+      ibv_gid multi_gid;
 
       if (!ConvertStrToGid(maddr, multi_gid)) {
          EOUT(("Cannot convert address %s to ibv_gid type", maddr.c_str()));
          return cmd_false;
       }
 
-      std::string buf;
-      ConvertGidToStr(multi_gid, buf);
+      std::string buf = ConvertGidToStr(multi_gid);
       if (buf!=maddr) {
          EOUT(("Addresses not the same: %s - %s", maddr.c_str(), buf.c_str()));
          return cmd_false;
@@ -719,20 +718,25 @@ int verbs::Device::ExecuteCommand(dabc::Command* cmd)
 }
 
 
-bool verbs::ConvertStrToGid(const std::string& s, struct ibv_gid &gid)
+bool verbs::ConvertStrToGid(const std::string& s, ibv_gid &gid)
 {
-   return sscanf(s.c_str(),
-                 "%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX",
-                 gid+0, gid+1, gid+2, gid+3, gid+4, gid+5, gid+6, gid+7,
-                 gid+8, gid+9, gid+10, gid+11, gid+12, gid+13, gid+14, gid+15) == 16;
+   unsigned raw[16];
+
+   if (sscanf(s.c_str(),
+                 "%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X:%2X",
+                 raw, raw+1, raw+2, raw+3, raw+4, raw+5, raw+6, raw+7,
+                 raw+8, raw+9, raw+10, raw+11, raw+12, raw+13, raw+14, raw+15) != 16) return false;
+   for (unsigned n=0;n<16;n++)
+      gid.raw[n] = raw[n];
+   return true;	 
 }
 
-std::string verbs::ConvertGidToStr(struct ibv_gid &gid)
+std::string verbs::ConvertGidToStr(ibv_gid &gid)
 {
    std::string res;
 
    dabc::formats(res, "%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX",
-                       gid+0, gid+1, gid+2, gid+3, gid+4, gid+5, gid+6, gid+7,
-                       gid+8, gid+9, gid+10, gid+11, gid+12, gid+13, gid+14, gid+15);
+                       gid.raw[0], gid.raw[1], gid.raw[2], gid.raw[3], gid.raw[4], gid.raw[5], gid.raw[6], gid.raw[7],
+                       gid.raw[8], gid.raw[9], gid.raw[10], gid.raw[11], gid.raw[12], gid.raw[13], gid.raw[14], gid.raw[15]);
   return res;
 }

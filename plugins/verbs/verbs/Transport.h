@@ -22,10 +22,9 @@
 #include "verbs/Processor.h"
 #endif
 
-struct ibv_mr;
-struct ibv_recv_wr;
-struct ibv_send_wr;
-struct ibv_sge;
+#ifndef VERBS_Device
+#include "verbs/Device.h"
+#endif
 
 namespace verbs {
 
@@ -58,7 +57,7 @@ namespace verbs {
          uint32_t             f_ud_qpn;
          uint32_t             f_ud_qkey;
          bool                 f_multi;     // is transport qp connected to multicast group
-         struct ibv_gid       f_multi_gid;
+         ibv_gid              f_multi_gid;
          uint16_t             f_multi_lid;
 
          virtual void _SubmitSend(uint32_t recid);
@@ -70,7 +69,7 @@ namespace verbs {
 
       public:
          Transport(Device* dev, ComplQueue* cq, QueuePair* qp,
-                   dabc::Port* port, bool useackn, struct ibv_gid* multi_gid = 0);
+                   dabc::Port* port, bool useackn, ibv_gid* multi_gid = 0);
          virtual ~Transport();
 
          bool IsInitOk() const { return fInitOk; }

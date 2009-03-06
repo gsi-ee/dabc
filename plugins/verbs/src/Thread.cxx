@@ -434,8 +434,10 @@ bool verbs::Thread::DoServer(dabc::Command* cmd, dabc::Port* port, const char* p
    cmd->SetUInt("ServerHeaderSize", port->UserHeaderSize());
 
    rec->fThrdName = cmd->GetStr(dabc::xmlTrThread,"");
+   
+   Thread* thrd;
 
-   fDevice->CreatePortQP(rec->fThrdName.c_str(), port, rec->fConnType, rec->fPortCQ, rec->fPortQP);
+   fDevice->CreatePortQP(rec->fThrdName.c_str(), port, rec->fConnType, thrd, rec->fPortCQ, rec->fPortQP);
 
    rec->AssignProcessorToThread(this, false);
 
@@ -486,7 +488,9 @@ bool verbs::Thread::DoClient(dabc::Command* cmd, dabc::Port* port, const char* p
 
    rec->fThrdName = cmd->GetStr(dabc::xmlTrThread,"");
 
-   fDevice->CreatePortQP(rec->fThrdName.c_str(), port, rec->fConnType, rec->fPortCQ, rec->fPortQP);
+   Thread* thrd;
+
+   fDevice->CreatePortQP(rec->fThrdName.c_str(), port, rec->fConnType, thrd, rec->fPortCQ, rec->fPortQP);
 
    rec->AssignProcessorToThread(this, false);
 

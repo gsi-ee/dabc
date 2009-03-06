@@ -22,7 +22,7 @@
 #include "verbs/MemoryPool.h"
 
 verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::Port* port,
-                            bool useackn, struct ibv_gid* multi_gid) :
+                            bool useackn, ibv_gid* multi_gid) :
    dabc::NetworkTransport(verbs),
    Processor(qp),
    fCQ(cq),
@@ -47,7 +47,7 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
    if (multi_gid) {
       if (!QP()->InitUD()) return;
 
-      memcpy(f_multi_gid, *multi_gid, sizeof(struct ibv_gid));
+      memcpy(f_multi_gid.raw, multi_gid->raw, sizeof(f_multi_gid.raw));
 
       if (!fVerbs->RegisterMultiCastGroup(&f_multi_gid, f_multi_lid)) return;
 
