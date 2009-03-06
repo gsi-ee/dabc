@@ -39,8 +39,7 @@ public final static void print(int severity, String s){
 Date date=new Date();
 String logdate=new String(dateform.format(date));
 if(logpan!=null){
-logpan.print(logdate);
-logpan.print(" |"+sSev[severity]+"| "+s+"\n");
+logpan.print(logdate+" |"+sSev[severity]+"| "+s+"\n");
 }
 else {
 System.out.print(logdate);

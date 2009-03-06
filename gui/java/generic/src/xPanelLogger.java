@@ -32,6 +32,7 @@ import javax.swing.JTextPane;
 import javax.swing.event.*;
 import java.awt.event.*;
 import java.awt.Insets;
+import java.util.StringTokenizer;
 //import javax.swing.GroupLayout;
 
 import java.net.URL;
@@ -57,6 +58,7 @@ private JScrollPane textpan;
 private JPanel pan;
 private JTextArea textar;
 private ActionListener action=null;
+private int lines, maxlines=1000, trunclines=100;
 // private GroupLayout.SequentialGroup vGroup;
 // private GroupLayout.ParallelGroup pGroup;
 /**
@@ -82,8 +84,20 @@ public xPanelLogger(Dimension dim) {
 }
 
 public void print(String s){
+lines++;
 textar.append(s);
+if(lines > maxlines) truncate();
 textpan.getVerticalScrollBar().setValue(1000000); // to see the last line
+}
+
+public void truncate(){
+	String[] str=textar.getText().split("\n");
+	textar.setText(null);
+	lines=0;
+	for(int i=trunclines;i<str.length;i++){
+		textar.append(str[i]+"\n");
+		lines++;
+	}
 }
 
 // public void updateAll(){
@@ -109,7 +123,9 @@ public void setListener(ActionListener al){
 }
 //React to menu selections.
 public void actionPerformed(ActionEvent e) {
-    if ("Save".equals(e.getActionCommand())) System.out.println("Save");
+    if ("Save".equals(e.getActionCommand())) {
+    	System.out.println(textar.getText());
+    }
 }
 public void internalFrameClosed(InternalFrameEvent e) {
 System.out.println("Frame logger closed");
