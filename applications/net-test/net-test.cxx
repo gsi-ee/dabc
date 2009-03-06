@@ -433,8 +433,10 @@ extern "C" void RunMulticastTest()
    std::string mcast_host = dabc::mgr()->cfg()->GetUserPar(dabc::xmlMcastAddr, "224.0.0.15");
    int mcast_port = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlMcastPort, 7234);
    bool isrecv = dabc::mgr()->NodeId() > 0;
+   
+   DOUT0(("Create device %s", devclass.c_str()));
 
-   if (dabc::mgr()->CreateDevice(devclass.c_str(), "MDev")) return;
+   if (!dabc::mgr()->CreateDevice(devclass.c_str(), "MDev")) return;
 
    dabc::Command* cmd = new dabc::CmdCreateModule("NetTestMcastModule", "MM");
    cmd->SetBool("IsReceiver", isrecv);
@@ -444,6 +446,9 @@ extern "C" void RunMulticastTest()
    cmd->SetStr(dabc::xmlMcastAddr, mcast_host);
    cmd->SetInt(dabc::xmlMcastPort, mcast_port);
    dabc::mgr()->Execute(cmd);
+
+   DOUT0(("Create transport for addr %s", mcast_host.c_str()));
+
 
    dabc::mgr()->StartAllModules();
 

@@ -45,13 +45,16 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
    Init(port, useackn);
 
    if (multi_gid) {
+   
       if (!QP()->InitUD()) return;
-
+      
       memcpy(f_multi_gid.raw, multi_gid->raw, sizeof(f_multi_gid.raw));
 
-      if (!fVerbs->RegisterMultiCastGroup(&f_multi_gid, f_multi_lid)) return;
+      DOUT0(("Init multicast group %s", ConvertGidToStr(f_multi_gid).c_str()));
 
-      f_ud_ah = fVerbs->CreateMAH(&f_multi_gid, f_multi_lid);
+      if (!verbs->RegisterMultiCastGroup(&f_multi_gid, f_multi_lid)) return;
+
+      f_ud_ah = verbs->CreateMAH(&f_multi_gid, f_multi_lid);
       if (f_ud_ah==0) return;
 
       f_ud_qpn = VERBS_MCAST_QPN;
@@ -123,7 +126,7 @@ verbs::Transport::~Transport()
    if (f_multi) {
       QP()->DetachMcast(&f_multi_gid, f_multi_lid);
 
-      fVerbs->UnRegisterMultiCastGroup(&f_multi_gid, f_multi_lid);
+      ((verbs::Device*) GetDevice())->UnRegisterMultiCastGroup(&f_multi_gid, f_multi_lid);
       f_multi = false;
    }
 

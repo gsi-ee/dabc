@@ -321,13 +321,11 @@ bool verbs::OpenSM::ManageMultiCastGroup(bool isadd,
     IB_MCR_COMPMASK_LIFE |
     IB_MCR_COMPMASK_LIFE_SEL;
 
-
    bool res = Query_SA(isadd ? OSMV_QUERY_UD_MULTICAST_SET :
                                OSMV_QUERY_UD_MULTICAST_DELETE,
                        comp_mask,
                        &mc_req_rec,
                        &res_sa_mad);
-
 
    if (!res) return false;
 

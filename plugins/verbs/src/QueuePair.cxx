@@ -31,8 +31,8 @@ uint32_t verbs::QueuePair::fQPCounter = 0;
 // static int __qpcnt__ = 0;
 
 verbs::QueuePair::QueuePair(Device* verbs, ibv_qp_type qp_type,
-                       ComplQueue* send_cq, int send_depth, int max_send_sge,
-                       ComplQueue* recv_cq, int recv_depth, int max_recv_sge) :
+                            ComplQueue* send_cq, int send_depth, int max_send_sge,
+                            ComplQueue* recv_cq, int recv_depth, int max_recv_sge) :
    fVerbs(verbs),
    fType(qp_type),
    f_qp(0),

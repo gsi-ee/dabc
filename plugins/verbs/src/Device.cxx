@@ -536,14 +536,19 @@ bool verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int co
       port_cq = new ComplQueue(fContext, port->NumOutputBuffersRequired() + port->NumInputBuffersRequired() + 2, thrd->Channel());
    else
       port_cq = thrd->MakeCQ();
+      
+   int num_send_seg = fDeviceAttr.max_sge - 1;
+   if (conn_type==IBV_QPT_UD) num_send_seg = fDeviceAttr.max_sge - 5; // I do not now why, but otherwise it fails
+   if (num_send_seg<2) num_send_seg = 2;
 
    port_qp = new QueuePair(this, qp_type,
-                           port_cq, port->NumOutputBuffersRequired(), fDeviceAttr.max_sge - 1,
+                           port_cq, port->NumOutputBuffersRequired(), num_send_seg,
                            port_cq, port->NumInputBuffersRequired(), /*fDeviceAttr.max_sge / 2*/ 2);
+
    if (!isowncq)
       port_cq = 0;
 
-   return true;
+   return port_qp->qp()!=0;
 }
 
 dabc::Folder* verbs::Device::GetPoolRegFolder(bool force)
@@ -733,10 +738,14 @@ bool verbs::ConvertStrToGid(const std::string& s, ibv_gid &gid)
 
 std::string verbs::ConvertGidToStr(ibv_gid &gid)
 {
+   unsigned raw[16];
+   for (unsigned n=0;n<16;n++)
+      raw[n] = gid.raw[n];
+
    std::string res;
 
-   dabc::formats(res, "%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX:%2hX",
-                       gid.raw[0], gid.raw[1], gid.raw[2], gid.raw[3], gid.raw[4], gid.raw[5], gid.raw[6], gid.raw[7],
-                       gid.raw[8], gid.raw[9], gid.raw[10], gid.raw[11], gid.raw[12], gid.raw[13], gid.raw[14], gid.raw[15]);
+   dabc::formats(res, "%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X",
+                       raw[0], raw[1], raw[2], raw[3], raw[4], raw[5], raw[6], raw[7],
+                       raw[8], raw[9], raw[10], raw[11], raw[12], raw[13], raw[14], raw[15]);
   return res;
 }

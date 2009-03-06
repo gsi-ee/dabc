@@ -43,7 +43,6 @@ namespace verbs {
       };
 
       protected:
-         Device              *fVerbs;
          ComplQueue          *fCQ;
          bool                 fInitOk;
          PoolRegistry        *fPoolReg;
