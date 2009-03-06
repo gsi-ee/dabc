@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -23,7 +23,7 @@ verbs::MemoryPool::MemoryPool(Device* verbs,
                               bool without_wr) :
    dabc::MemoryPool(0, name),
    fUD(isud),
-   fSendBufferOffset(isud ? 40 : 0),
+   fSendBufferOffset(isud ? VERBS_UD_MEMADDON : 0),
    fReg(0),
    f_rwr(0),
    f_swr(0),

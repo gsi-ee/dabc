@@ -37,32 +37,35 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
    f_ud_ah(0),
    f_ud_qpn(0),
    f_ud_qkey(0),
-   f_multi(false),
-   f_multi_lid(0)
+   f_multi(0),
+   f_multi_lid(0),
+   f_multi_attch(false)
 {
    if (qp==0) return;
 
    Init(port, useackn);
 
    if (multi_gid) {
-   
+
       if (!QP()->InitUD()) return;
-      
+
       memcpy(f_multi_gid.raw, multi_gid->raw, sizeof(f_multi_gid.raw));
 
       DOUT0(("Init multicast group %s", ConvertGidToStr(f_multi_gid).c_str()));
 
-      if (!verbs->RegisterMultiCastGroup(&f_multi_gid, f_multi_lid)) return;
+      fmulti = verbs->ManageMulticast(Device::mcst_Init, f_multi_gid, f_multi_lid);
+      if (!fmulti) return;
 
-      f_ud_ah = verbs->CreateMAH(&f_multi_gid, f_multi_lid);
+      f_ud_ah = verbs->CreateMAH(f_multi_gid, f_multi_lid);
       if (f_ud_ah==0) return;
 
       f_ud_qpn = VERBS_MCAST_QPN;
       f_ud_qkey = VERBS_DEFAULT_QKEY;
 
-      if (!QP()->AttachMcast(&f_multi_gid, f_multi_lid)) return;
+      f_multi_attch = port->InputQueueCapacity() > 0;
 
-      f_multi = true;
+      if (f_multi_attch)
+         if (!QP()->AttachMcast(&f_multi_gid, f_multi_lid)) return;
    }
 
    fFastPost = Device::IsThreadSafeVerbs();
@@ -75,7 +78,8 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
    }
 
    if (fNumRecs>0) {
-      fHeadersPool = new MemoryPool(verbs, "HeadersPool", fNumRecs, fFullHeaderSize, false, true);
+      fHeadersPool = new MemoryPool(verbs, "HeadersPool", fNumRecs,
+            fFullHeaderSize + (IsUD() ? VERBS_UD_MEMADDON : 0), IsUD(), true);
 
       // we use at least 2 segments per operation, one for header and one for buffer itself
       fSegmPerOper = fQP->NumSendSegs();
@@ -87,7 +91,7 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
 
       for (uint32_t n=0;n<fNumRecs;n++) {
 
-         SetRecHeader(n, fHeadersPool->GetBufferLocation(n));
+         SetRecHeader(n, fHeadersPool->GetSendBufferLocation(n));
 
          for (unsigned seg_cnt=0; seg_cnt<fSegmPerOper; seg_cnt++) {
             unsigned nseg = n*fSegmPerOper + seg_cnt;
@@ -124,10 +128,11 @@ verbs::Transport::~Transport()
    DOUT3(("verbs::Transport::~Transport %p id: %d locked:%s", this, GetId(), DBOOL(fMutex.IsLocked())));
 
    if (f_multi) {
-      QP()->DetachMcast(&f_multi_gid, f_multi_lid);
+      if (f_multi_attch)
+         QP()->DetachMcast(&f_multi_gid, f_multi_lid);
 
-      ((verbs::Device*) GetDevice())->UnRegisterMultiCastGroup(&f_multi_gid, f_multi_lid);
-      f_multi = false;
+      ((verbs::Device*) GetDevice())->ManageMulticast(f_multi, f_multi_gid, f_multi_lid);
+      f_multi = 0;
    }
 
    if(f_ud_ah!=0) {
@@ -189,8 +194,13 @@ void verbs::Transport::_SubmitRecv(uint32_t recid)
    f_rwr[recid].num_sge   = 1;
    f_rwr[recid].next      = NULL;
 
-   f_sge[segid].addr = (uintptr_t) fRecs[recid].header;
-   f_sge[segid].length = fFullHeaderSize;
+   if (IsUD()) {
+      f_sge[segid].addr = (uintptr_t)  fHeadersPool->GetBufferLocation(recid);
+      f_sge[segid].length = fFullHeaderSize + VERBS_UD_MEMADDON;
+   } else {
+      f_sge[segid].addr = (uintptr_t)  fRecs[recid].header;
+      f_sge[segid].length = fFullHeaderSize;
+   }
    f_sge[segid].lkey = fHeadersPool->GetLkey(recid);
 
    if ((buf!=0) && (fPoolReg!=0)) {

@@ -53,7 +53,7 @@ int null_gid(union ibv_gid *gid)
 }
 
 // this boolean indicates if one can use verbs calls from different threads
-// if no, all post/recv/complition operation for all QP/CQ will happens in the same thread
+// if no, all post/recv/completion operation for all QP/CQ will happens in the same thread
 
 bool verbs::Device::fThreadSafeVerbs = true;
 
@@ -468,28 +468,44 @@ struct ibv_ah* verbs::Device::CreateAH(uint32_t dest_lid, int dest_port)
    return ah;
 }
 
-bool verbs::Device::RegisterMultiCastGroup(ibv_gid* mgid, uint16_t& mlid)
+int verbs::Device::ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid)
 {
-   mlid = 0;
+   // Use MulticastActions for
+   // action = mcst_Error - do nothing    return mcst_Error
+   // action = mcst_Ok - do nothing       return mcst_Ok
+   // action = mcst_Register - register,  return mcst_Unregister/mcst_Error
+   // action = mcst_Query - query         return mcst_Ok/mcst_Error
+   // action = mcst_Init - query or reg   return mcst_Ok/mcst_Unregister/mcst_Error
+   // action = mcst_Unregister - unreg    return mcst_Ok/mcst_Error
+
 #ifndef  __NO_MULTICAST__
-   if ((mgid==0) || (fOsm==0)) return false;
-   return fOsm->ManageMultiCastGroup(true, mgid->raw, &mlid);
-#else
-   return false;
+   if (fOsm==0) return 0;
+   switch (action) {
+      case mcst_Error: return mcst_Error;
+      case mcst_Ok: return mcst_Ok;
+      case mcst_Register:
+         mlid = 0;
+         if (fOsm->ManageMultiCastGroup(true, mgid.raw, &mlid)) return mcst_Unregister;
+         return mcst_Error;
+      case mcst_Query:
+         mlid = 0;
+         if (fOsm->QueryMyltucastGroup(mgid.raw, mlid)) return mcst_Ok;
+         return mcst_Error;
+      case mcst_Init:
+         mlid = 0;
+         if (fOsm->QueryMyltucastGroup(mgid.raw, mlid)) return mcst_Ok;
+         if (fOsm->ManageMultiCastGroup(true, mgid.raw, &mlid)) return mcst_Unregister;
+         return mcst_Error;
+      case mcst_Unregister:
+         if (fOsm->ManageMultiCastGroup(false, mgid.raw, &mlid)) return mcst_Ok;
+         return mcst_Error;
+   }
 #endif
+
+   return mcst_Error;
 }
 
-bool verbs::Device::UnRegisterMultiCastGroup(ibv_gid* mgid, uint16_t mlid)
-{
-#ifndef  __NO_MULTICAST__
-   if ((mgid==0) || (fOsm==0)) return false;
-   return fOsm->ManageMultiCastGroup(false, mgid->raw, &mlid);
-#else
-   return false;
-#endif
-}
-
-struct ibv_ah* verbs::Device::CreateMAH(ibv_gid* mgid, uint32_t mlid, int mport)
+struct ibv_ah* verbs::Device::CreateMAH(ibv_gid& mgid, uint32_t mlid, int mport)
 {
    if (mgid==0) return 0;
 
@@ -499,15 +515,15 @@ struct ibv_ah* verbs::Device::CreateMAH(ibv_gid* mgid, uint32_t mlid, int mport)
    mah_attr.dlid = mlid; // in host order ?
    mah_attr.port_num = mport>=0 ? mport : IbPort();
    mah_attr.sl = 0;
-   mah_attr.static_rate = 0; //0x83; // shold be copied from mmember rec
+   mah_attr.static_rate = 0; //0x83; // should be copied from mmember rec
 
    mah_attr.is_global  = 1;
-   memcpy(&(mah_attr.grh.dgid), mgid, sizeof(ibv_gid));
+   memcpy(&(mah_attr.grh.dgid), &mgid, sizeof(ibv_gid));
    mah_attr.grh.sgid_index = 0; // GetGidIndex(mgid);
 
-   mah_attr.grh.flow_label = 0; // shold be copied from mmember rec
-   mah_attr.grh.hop_limit = 63; // shold be copied from mmember rec
-   mah_attr.grh.traffic_class = 0; // shold be copied from mmember rec
+   mah_attr.grh.flow_label = 0; // should be copied from mmember rec
+   mah_attr.grh.hop_limit = 63; // should be copied from mmember rec
+   mah_attr.grh.traffic_class = 0; // should be copied from mmember rec
 
    //DOUT1(("Addr %02x %02x", ah_attr.grh.dgid.raw[0], ah_attr.grh.dgid.raw[1]));
 
@@ -536,7 +552,7 @@ bool verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int co
       port_cq = new ComplQueue(fContext, port->NumOutputBuffersRequired() + port->NumInputBuffersRequired() + 2, thrd->Channel());
    else
       port_cq = thrd->MakeCQ();
-      
+
    int num_send_seg = fDeviceAttr.max_sge - 1;
    if (conn_type==IBV_QPT_UD) num_send_seg = fDeviceAttr.max_sge - 5; // I do not now why, but otherwise it fails
    if (num_send_seg<2) num_send_seg = 2;
@@ -564,8 +580,8 @@ verbs::PoolRegistry* verbs::Device::FindPoolRegistry(dabc::MemoryPool* pool)
    if (fold==0) return 0;
 
    for (unsigned n=0; n<fold->NumChilds(); n++) {
-       PoolRegistry* reg = (PoolRegistry*) fold->GetChild(n);
-       if ((reg!=0) && (reg->GetPool()==pool)) return reg;
+      PoolRegistry* reg = (PoolRegistry*) fold->GetChild(n);
+      if ((reg!=0) && (reg->GetPool()==pool)) return reg;
    }
 
    return 0;
@@ -733,7 +749,7 @@ bool verbs::ConvertStrToGid(const std::string& s, ibv_gid &gid)
                  raw+8, raw+9, raw+10, raw+11, raw+12, raw+13, raw+14, raw+15) != 16) return false;
    for (unsigned n=0;n<16;n++)
       gid.raw[n] = raw[n];
-   return true;	 
+   return true;
 }
 
 std::string verbs::ConvertGidToStr(ibv_gid &gid)

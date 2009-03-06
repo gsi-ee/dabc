@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -72,8 +72,7 @@ void TOsm_query_callback(osmv_query_res_t * p_rec )
 
   if( p_rec->status != IB_SUCCESS )
     if ( p_rec->status != IB_INVALID_PARAMETER )
-       EOUT(("TOsm_query_result: "
-             "Error on query (%s)\n", ib_get_err_str( p_rec->status )));
+       EOUT(("TOsm_query_result: Error on query (%s)", ib_get_err_str( p_rec->status )));
 }
 
 
@@ -184,9 +183,9 @@ bool verbs::OpenSM::Close()
 
 
 bool verbs::OpenSM::Query_SA(osmv_query_type_t query_type,
-                          uint64_t          comp_mask,
-                          ib_member_rec_t   *mc_req,
-                          ib_sa_mad_t  *res)
+                             uint64_t          comp_mask,
+                             ib_member_rec_t   *mc_req,
+                             ib_sa_mad_t       *res)
 {
   ib_api_status_t status = IB_SUCCESS;
 

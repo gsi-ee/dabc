@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -460,7 +460,7 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
 
 int dabc::NetworkTransport::PackHeader(uint32_t recid)
 {
-   // function packs netwrok header and return size which must be transported
+   // function packs network header and return size which must be transported
 
    NetworkHeader* hdr = (NetworkHeader*) fRecs[recid].header;
    Buffer* buf = fRecs[recid].buf;

@@ -55,9 +55,10 @@ namespace verbs {
          struct ibv_ah       *f_ud_ah;
          uint32_t             f_ud_qpn;
          uint32_t             f_ud_qkey;
-         bool                 f_multi;     // is transport qp connected to multicast group
+         int                  f_multi;     // return value by ManageMulticast
          ibv_gid              f_multi_gid;
          uint16_t             f_multi_lid;
+         bool                 f_multi_attch; // true if QP was attached to multicast group
 
          virtual void _SubmitSend(uint32_t recid);
          virtual void _SubmitRecv(uint32_t recid);
@@ -72,6 +73,7 @@ namespace verbs {
          virtual ~Transport();
 
          bool IsInitOk() const { return fInitOk; }
+         bool IsUD() const { return f_ud_ah!=0; }
 
          void SetUdAddr(struct ibv_ah *ud_ah, uint32_t ud_qpn, uint32_t ud_qkey);
 

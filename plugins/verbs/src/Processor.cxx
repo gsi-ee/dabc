@@ -138,11 +138,11 @@ verbs::ConnectProcessor::ConnectProcessor(Thread* thrd) :
    SetQP(qp);
 
   if (dev->IsMulticast())
-      if (dev->RegisterMultiCastGroup(&VerbsConnThrd_Multi_Gid, fMultiLID)) {
+      if (dev->ManageMulticast(Device::mcst_Register, VerbsConnThrd_Multi_Gid, fMultiLID)) {
          fUseMulti = true;
 
          if (qp->AttachMcast(&VerbsConnThrd_Multi_Gid, fMultiLID))
-            fMultiAH = dev->CreateMAH(&VerbsConnThrd_Multi_Gid, fMultiLID);
+            fMultiAH = dev->CreateMAH(VerbsConnThrd_Multi_Gid, fMultiLID);
       }
 
    fPool = new MemoryPool(dev, "ConnPool", ServQueueSize*2, ServBufferSize, true);
@@ -164,7 +164,7 @@ verbs::ConnectProcessor::~ConnectProcessor()
 
       fQP->DetachMcast(&VerbsConnThrd_Multi_Gid, fMultiLID);
 
-      dev->UnRegisterMultiCastGroup(&VerbsConnThrd_Multi_Gid, fMultiLID);
+      dev->ManageMulticast(Device::mcst_Unregister, VerbsConnThrd_Multi_Gid, fMultiLID);
       fUseMulti = false;
    }
 

@@ -89,6 +89,8 @@ namespace verbs {
 
       public:
 
+         enum MulticastActions { mcst_Error = 0, mcst_Ok, mcst_Register, mcst_Query, mcst_Init, mcst_Unregister };
+
          Device(dabc::Basic* parent, const char* name);
          virtual ~Device();
 
@@ -102,9 +104,8 @@ namespace verbs {
 
          struct ibv_ah* CreateAH(uint32_t dest_lid, int dest_port = -1);
 
-         bool RegisterMultiCastGroup(ibv_gid* mgid, uint16_t& mlid);
-         bool UnRegisterMultiCastGroup(ibv_gid* mgid, uint16_t mlid);
-         struct ibv_ah* CreateMAH(ibv_gid* mgid, uint32_t mlid, int dest_port = -1);
+         int ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid);
+         struct ibv_ah* CreateMAH(ibv_gid& mgid, uint32_t mlid, int dest_port = -1);
 
          virtual bool ServerConnect(dabc::Command* cmd, dabc::Port* port, const char*);
          virtual bool ClientConnect(dabc::Command* cmd, dabc::Port* port, const char*);

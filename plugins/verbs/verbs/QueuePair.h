@@ -19,6 +19,7 @@
 #define VERBS_MAX_INLINE  256
 #define VERBS_DEFAULT_QKEY 0x01234567
 #define VERBS_MCAST_QPN  0xffffff
+#define VERBS_UD_MEMADDON  40
 
 
 #define VERBSQP_RC 0
