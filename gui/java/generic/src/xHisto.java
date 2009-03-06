@@ -675,10 +675,11 @@ public void mouseDragged(MouseEvent me)
             }
             iLastx =  x;
             iLasty =  y;
-            long i = (iLastx-ix0)*iChan/ixs;
-            long j = (-iLasty+iy0)*(iMax/iys);
+            int i = (iLastx-ix0)*iChan/ixs;
+            int j = (-iLasty+iy0)*(iMax/iys);
             if(i < 0) i = 0;  if(i >= iChan) i = iChan-1;
-            sCoord = String.format(" %d, %d",i,j);
+            if(j > 100000) sCoord = String.format(" %d, %10.5e",i,(float)j);
+            else           sCoord = String.format(" %d, %d",i,j);
             iposx=iLastx+3;
             iposy=iLasty-4;
             if(iLastx > ix/2) iposx=iLastx-3-fm.stringWidth(sCoord);

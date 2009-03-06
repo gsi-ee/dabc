@@ -338,13 +338,13 @@ while(s.indexOf("TIME")>=0){
     setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
     s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep TIME");
 }
-s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 61|grep TIME");
+s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6100|grep TIME");
 while(s.indexOf("TIME")>=0){
     System.out.print(".");
     browser.sleep(1);
     time++;
     setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
-    s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 61|grep TIME");
+    s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6100|grep TIME");
 }
 time=0;
 setProgress("Launch MBS ...",xSet.blueD());

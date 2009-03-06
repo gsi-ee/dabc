@@ -391,7 +391,7 @@ public void run(){
         xLogger.print(1,Action);
     }
     else if ("dabcLaunch".equals(Action)) {
-        setProgress("Launch DABC servers, wait 5 sec ...",xSet.blueD());
+        setProgress("Launch DABC servers ...",xSet.blueD());
         String cmd = new String(DabcPath.getText()+
                                 "/script/dabcstartup.sh "+DabcPath.getText()+" "+
                                 DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
@@ -399,7 +399,7 @@ public void run(){
         xLogger.print(1,cmd);
         int timeout=0;
         int nserv=0;
-        if(dabcshell.rsh(dabcMaster,Username.getText(),cmd,5L)){
+        if(dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L)){
             System.out.print("Dabc wait "+(nServers-1));
             nserv=browser.getNofServers();
             while(nserv < nServers){

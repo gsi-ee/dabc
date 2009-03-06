@@ -523,7 +523,6 @@ int time=0;
             setProgress("OK: MBS and DABC shut down, update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);
             if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
             browser.sleep(1);}
             if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
@@ -533,14 +532,14 @@ int time=0;
         else setProgress("MBS rundown failure!",xSet.redD());
     }
     else if ("prmLaunch".equals(Action)) {
-        setProgress("Launching DABC, wait 5 sec ...",xSet.blueD());
+        setProgress("Launching DABC ...",xSet.blueD());
         String cmd = new String(DabcPath.getText()+
                                 "/script/dabcstartup.sh "+DabcPath.getText()+" "+
                                 DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
                                 xSet.getDimDns()+" "+dabcMaster+" "+xSet.getAccess()+" &");
         xLogger.print(1,cmd);
         time=0;
-        dabcshell.rsh(dabcMaster,Username.getText(),cmd,5L);
+        dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);
         System.out.print("Wait Mbs sockets free ");
         String s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep TIME");
         while(s.indexOf("TIME")>=0){
@@ -550,13 +549,13 @@ int time=0;
             setProgress("Wait MBS sockets free "+time+"["+20+"]",xSet.blueD());
             s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep TIME");
         }
-        s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 61|grep TIME");
+        s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6100|grep TIME");
         while(s.indexOf("TIME")>=0){
             System.out.print(".");
             browser.sleep(1);
             time++;
             setProgress("Wait MBS sockets free "+time+"["+20+"]",xSet.blueD());
-            s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 61|grep TIME");
+            s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6100|grep TIME");
         }
         System.out.println("");
         boolean launchMbs=false;
@@ -568,12 +567,11 @@ int time=0;
         xLogger.print(0,MbsMaster+": "+cmd);
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-        	if(waitMbs(20,"Msg_log")){
+        	if(waitMbs(5+6*nMbsNodes,"Msg_log")){
                 System.out.println("\nMbs connnected");
                 setProgress("MBS servers ready, update parameters ...",xSet.blueD());
                 xSet.setSuccess(false);
                 etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-                browser.sleep(1);
                 if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
                 browser.sleep(1);}
                 if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
@@ -609,7 +607,6 @@ int time=0;
             setProgress("OK: MBS and DABC servers ready, update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);
             if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
             browser.sleep(1);}
             if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
@@ -621,7 +618,6 @@ int time=0;
             setProgress("Servers missing: "+(nServers-nserv)+" from "+nServers+", update parameters ...",xSet.redD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);
             if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
             browser.sleep(1);}
             if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
@@ -734,7 +730,7 @@ int time=0;
     else if ("mbsStart".equals(Action)) {
         xLogger.print(1,"MBS: *::Start acquisition");
         mbsCommand.exec(xSet.getAccess()+" *::Start acquisition");
-        if(waitRun(10,"Running"))
+        if(waitRun(5+3*nMbsNodes,"Running"))
         setProgress("OK: all running",xSet.greenD());
         else setProgress("LOOK: not all running",xSet.redD());
         xLogger.print(1,doStart.getParser().getFull());
@@ -743,7 +739,7 @@ int time=0;
     else if ("mbsStop".equals(Action)) {
         xLogger.print(1,"MBS: *::Stop acquisition");
         mbsCommand.exec(xSet.getAccess()+" *::Stop acquisition");
-        if(waitRun(10,"Stopped"))
+        if(waitRun(5+5*nMbsNodes,"Stopped"))
         setProgress("OK: all stopped",xSet.greenD());
         else setProgress("LOOK: not all stopped",xSet.redD());
        xLogger.print(1,doStop.getParser().getFull());
@@ -769,7 +765,6 @@ int time=0;
             setProgress("OK: DABC halted, MBS servers ready, update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);
             if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
             browser.sleep(1);}
             if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
