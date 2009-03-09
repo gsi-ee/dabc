@@ -190,7 +190,7 @@ bool dabc::Configuration::LoadLibs()
        libname = FindN(fSelected, last, xmlRunNode, xmlUserLib);
        if (libname.empty()) break;
        DOUT2(("Find library %s in config", libname.c_str()));
-       dabc::Factory::LoadLibrary(ResolveEnv(libname));
+       if (!dabc::Factory::LoadLibrary(ResolveEnv(libname))) return false;
     } while (true);
 
     return true;

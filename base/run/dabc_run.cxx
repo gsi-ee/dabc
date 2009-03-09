@@ -227,17 +227,19 @@ int main(int numc, char* args[])
 
    int res = 0;
 
-   cfg.LoadLibs();
+   if (!cfg.LoadLibs()) res = -2;
 
-   dabc::mgr()->CreateApplication(cfg.ConetextAppClass());
+   if (res==0)
+     if (!dabc::mgr()->CreateApplication(cfg.ConetextAppClass())) res = -3;
 
-   if (ctrlkind == dabc::ConfigBase::kindDim)
-      res = RunDimApplication(cfg, nodeid, dorun);
-   else
-   if ((numnodes<2) || (ctrlkind == dabc::ConfigBase::kindNone))
-      res = RunSimpleApplication(cfg);
-   else
-      res = RunSctrlApplication(cfg, connid, nodeid, numnodes);
+   if (res==0)
+      if (ctrlkind == dabc::ConfigBase::kindDim)
+         res = RunDimApplication(cfg, nodeid, dorun);
+      else
+      if ((numnodes<2) || (ctrlkind == dabc::ConfigBase::kindNone))
+         res = RunSimpleApplication(cfg);
+      else
+         res = RunSctrlApplication(cfg, connid, nodeid, numnodes);
 
    delete dabc::mgr();
 
