@@ -96,10 +96,22 @@ rm -f $remconnfile $lclconnfile
 
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
+   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -mode copy`
+   retval=$?
+   if [ $retval -ne 0 ]; then
+      echo "Cannot define copy args for node $counter  err = $retval"
+      exit $retval
+   fi
+   
+   if [[ "x$callargs" != "x" ]]; then
+      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
+      $callargs > /dev/null 2>&1
+   fi;
+
    callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -mode $RUNMODE`
    retval=$?
    if [ $retval -ne 0 ]; then
-      echo "Cannot identify test call args for node $counter  err = $retval"
+      echo "Cannot define call args for node $counter  err = $retval"
       exit $retval
    fi
 

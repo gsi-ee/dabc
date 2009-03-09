@@ -186,7 +186,7 @@ int main(int numc, char* args[])
    if (numnodes==0) numnodes = cfg.NumControlNodes();
    if (nodeid > numnodes) nodeid = configid;
 
-   DOUT1(("Using config file: %s id: %u", configuration, configid));
+   DOUT1(("Using config file: %s id: %u conn: %s", configuration, configid, connid));
 
    if (!cfg.SelectContext(configid, nodeid, numnodes, dimnode)) {
       EOUT(("Did not found context"));
@@ -230,8 +230,6 @@ int main(int numc, char* args[])
    cfg.LoadLibs();
 
    dabc::mgr()->CreateApplication(cfg.ConetextAppClass());
-
-   cfg.ReadPars();
 
    if (ctrlkind == dabc::ConfigBase::kindDim)
       res = RunDimApplication(cfg, nodeid, dorun);

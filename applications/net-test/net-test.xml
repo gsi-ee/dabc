@@ -11,6 +11,7 @@
          <debuglevel value="0"/>
          <runfunc value="RunAllToAll"/>
          <sockethost value="${host}"/>
+         <copycfg value="true"/>
        </Run>
        <User>
          <NetDevice value="dabc::SocketDevice"/>

@@ -49,9 +49,6 @@ namespace dabc {
          std::string      fMgrDimNode;
          int              fMgrDimPort;
 
-         bool XDAQ_LoadLibs();
-         bool XDAQ_ReadPars();
-
          Basic* GetObjParent(Basic* obj, int lvl);
 
          XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char* name);
@@ -79,8 +76,6 @@ namespace dabc {
          const char* ConetextAppClass();
 
          bool LoadLibs();
-
-         bool ReadPars();
 
          virtual bool CreateItem(const char* name, const char* value = 0);
          virtual bool CreateAttr(const char* name, const char* value);

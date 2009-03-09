@@ -24,87 +24,6 @@
 #include "dabc/Factory.h"
 #include "dabc/SocketDevice.h"
 
-
-bool dabc::Configuration::XDAQ_LoadLibs()
-{
-   XMLNodePointer_t modnode = fXml.GetChild(fSelected);
-
-   while (modnode!=0) {
-      if (strcmp(fXml.GetNodeName(modnode), xmlXDAQModule)==0) {
-
-         const char* libname = fXml.GetNodeContent(modnode);
-
-         DOUT1(("Find lib %s", libname));
-
-         if ((strstr(libname,"libdim")==0) &&
-             (strstr(libname,"libDabcBase")==0) &&
-             (strstr(libname,"libDabcXDAQControl")==0))
-                dabc::Factory::LoadLibrary(ResolveEnv(libname));
-      }
-
-      modnode = fXml.GetNext(modnode);
-   }
-
-   return true;
-}
-
-bool dabc::Configuration::XDAQ_ReadPars()
-{
-
-   XMLNodePointer_t appnode = fXml.GetChild(fSelected);
-
-   if (!IsNodeName(appnode, xmlXDAQApplication)) {
-      EOUT(("%s node in context not found", xmlXDAQApplication));
-      return false;
-   }
-
-   XMLNodePointer_t propnode = fXml.GetChild(appnode);
-   if (!IsNodeName(propnode, xmlXDAQproperties)!=0) {
-      EOUT(("%s node not found", xmlXDAQproperties));
-      return false;
-   }
-
-   XMLNodePointer_t parnode = fXml.GetChild(propnode);
-
-   Application* app = mgr()->GetApp();
-
-   while (parnode != 0) {
-      const char* parname = fXml.GetNodeName(parnode);
-      const char* parvalue = fXml.GetNodeContent(parnode);
-//      const char* partyp = xml.GetAttr(parnode, "xsi:type");
-
-      if (strcmp(parname,xmlXDAQdebuglevel)==0) {
-         dabc::SetDebugLevel(atoi(parvalue));
-         DOUT1(("Set debug level = %s", parvalue));
-      } else {
-         const char* separ = strchr(parname, '.');
-         if ((separ!=0) && (app!=0)) {
-            std::string shortname(parname, separ-parname);
-            const char* ownername = separ+1;
-
-            if (app->IsName(ownername)) {
-               Parameter* par = app->FindPar(shortname.c_str());
-               if (par!=0) {
-                  par->SetValue(parvalue);
-                  DOUT1(("Set parameter %s = %s", parname, parvalue));
-               }
-               else
-                  EOUT(("Not found parameter %s in plugin", shortname.c_str()));
-            } else {
-               EOUT(("Not find owner %s for parameter %s", ownername, parname));
-            }
-         }
-      }
-
-      parnode = fXml.GetNext(parnode);
-   }
-
-   return true;
-}
-
-// ___________________________________________________________________________________
-
-
 dabc::Configuration::Configuration(const char* fname) :
    ConfigBase(fname),
    ConfigIO(),
@@ -129,7 +48,7 @@ dabc::Configuration::~Configuration()
 
 bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes, const char* dimnode)
 {
-   fSelected = IsXDAQ() ? XDAQ_FindContext(cfgid) : FindContext(cfgid);
+   fSelected = FindContext(cfgid);
 
    if (fSelected==0) return false;
 
@@ -138,7 +57,7 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
 
    envDABCSYS = GetEnv(xmlDABCSYS);
 
-   if (IsNative()) envDABCUSERDIR = Find1(fSelected, "", xmlRunNode, xmlDABCUSERDIR);
+   envDABCUSERDIR = Find1(fSelected, "", xmlRunNode, xmlDABCUSERDIR);
    if (envDABCUSERDIR.empty()) envDABCUSERDIR = GetEnv(xmlDABCUSERDIR);
 
    char sbuf[1000];
@@ -168,35 +87,25 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
       dabc::SetFileLevel(1);
    }
 
-   if (IsNative()) {
-      std::string val = Find1(fSelected, "", xmlRunNode, xmlDebuglevel);
-      if (!val.empty()) dabc::SetDebugLevel(atoi(val.c_str()));
-      val = Find1(fSelected, "", xmlRunNode, xmlLoglevel);
-      if (!val.empty()) dabc::SetFileLevel(atoi(val.c_str()));
-      val = Find1(fSelected, "", xmlRunNode, xmlParslevel);
-      if (!val.empty()) dabc::WorkingProcessor::SetGlobalParsVisibility(atoi(val.c_str()));
-   }
+   std::string val = Find1(fSelected, "", xmlRunNode, xmlDebuglevel);
+   if (!val.empty()) dabc::SetDebugLevel(atoi(val.c_str()));
+   val = Find1(fSelected, "", xmlRunNode, xmlLoglevel);
+   if (!val.empty()) dabc::SetFileLevel(atoi(val.c_str()));
+   val = Find1(fSelected, "", xmlRunNode, xmlParslevel);
+   if (!val.empty()) dabc::WorkingProcessor::SetGlobalParsVisibility(atoi(val.c_str()));
 
-   std::string log;
-   if (IsNative()) {
-      log = Find1(fSelected, "", xmlRunNode, xmlLogfile);
-   } else {
-      log = fMgrName;
-      log += ".log";
-   }
+   std::string log = Find1(fSelected, "", xmlRunNode, xmlLogfile);
 
    if (log.length()>0)
       dabc::Logger::Instance()->LogFile(log.c_str());
 
-   if (IsNative()) {
-      log = Find1(fSelected, "", xmlRunNode, xmlLoglimit);
-      if (log.length()>0)
-         dabc::Logger::Instance()->SetLogLimit(atoi(log.c_str()));
+   log = Find1(fSelected, "", xmlRunNode, xmlLoglimit);
+   if (log.length()>0)
+      dabc::Logger::Instance()->SetLogLimit(atoi(log.c_str()));
 
-      std::string sockethost = Find1(fSelected, "", xmlRunNode, xmlSocketHost);
-      if (!sockethost.empty())
-         dabc::SocketDevice::SetLocalHost(sockethost);
-   }
+   std::string sockethost = Find1(fSelected, "", xmlRunNode, xmlSocketHost);
+   if (!sockethost.empty())
+      dabc::SocketDevice::SetLocalHost(sockethost);
 
    if (dimnode==0) dimnode = getenv(xmlDIM_DNS_NODE);
 
@@ -216,21 +125,21 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
 
 std::string dabc::Configuration::InitFuncName()
 {
-   if (IsXDAQ() || (fSelected==0)) return std::string("");
+   if (fSelected==0) return std::string("");
 
    return Find1(fSelected, "", xmlRunNode, xmlInitFunc);
 }
 
 std::string dabc::Configuration::RunFuncName()
 {
-   if (IsXDAQ() || (fSelected==0)) return std::string("");
+   if (fSelected==0) return std::string("");
 
    return Find1(fSelected, "", xmlRunNode, xmlRunFunc);
 }
 
 int dabc::Configuration::ShowCpuInfo()
 {
-   if (IsXDAQ() || (fSelected==0)) return -1;
+   if (fSelected==0) return -1;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlCpuInfo);
    if (res.empty()) return -1;
    int kind(0);
@@ -240,7 +149,7 @@ int dabc::Configuration::ShowCpuInfo()
 
 std::string dabc::Configuration::GetUserPar(const char* name, const char* dflt)
 {
-   if (IsXDAQ() || (fSelected==0)) return std::string("");
+   if (fSelected==0) return std::string("");
    return Find1(fSelected, dflt ? dflt : "", xmlUserNode, name);
 }
 
@@ -254,7 +163,7 @@ int dabc::Configuration::GetUserParInt(const char* name, int dflt)
 
 const char* dabc::Configuration::ConetextAppClass()
 {
-   if (IsXDAQ() || (fSelected==0)) return 0;
+   if (fSelected==0) return 0;
 
    XMLNodePointer_t node = fXml.GetChild(fSelected);
 
@@ -274,8 +183,6 @@ bool dabc::Configuration::LoadLibs()
 {
     if (fSelected==0) return false;
 
-    if (IsXDAQ()) return XDAQ_LoadLibs();
-
     std::string libname;
     XMLNodePointer_t last = 0;
 
@@ -288,16 +195,6 @@ bool dabc::Configuration::LoadLibs()
 
     return true;
 }
-
-bool dabc::Configuration::ReadPars()
-{
-   if (fSelected==0) return false;
-
-   if (IsXDAQ()) return XDAQ_ReadPars();
-
-   return true;
-}
-
 
 bool dabc::Configuration::CreateItem(const char* name, const char* value)
 {
@@ -364,7 +261,7 @@ bool dabc::Configuration::StoreObject(const char* fname, Basic* obj)
 
 bool dabc::Configuration::FindItem(const char* name)
 {
-   if (!IsNative() || (fCurrItem==0)) return false;
+   if (fCurrItem==0) return false;
 
    if (fCurrChld==0)
       fCurrChld = fXml.GetChild(fCurrItem);
