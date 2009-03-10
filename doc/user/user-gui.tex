@@ -11,7 +11,7 @@ The standard part builds a set of panels (windows) according the parameters
 the DIM servers offer. Only services from one single DIM name server
 (node name specified as shell variable \keyw{DIM\_DNS\_NODE})
 defining a name space can be processed.
-See \paref{user-dimsetup} for preparations.
+See \paref{user:MbsDimconfig} for preparations.
 
 The GUI needs no file access to the \dabc\ working directory.
 However, user must have \keyw{ssh} (or \keyw{rsh}) access to
@@ -53,12 +53,11 @@ must be saved by similar buttons in these panels.\\
 \icon{dabcmbsicon} Open \dabc\ \mbs\ control panel, see \paref{user:controlDabcMbs}.\\
 \icon{dabcicon} Open \dabc\ control panel, see \paref{user:controlDabc}.\\
 \icon{mbsicon} Open \mbs\ control panel, see \paref{user:controlMbs}.\\
-\icon{browser} Refresh. Update DIM service list from DIM name server.
-New parameters and commands are added. Existing ones are not removed,
-but only deactivated. Parameters and Commands are sorted alphabetically by name.
+\icon{browser} Refresh. All parameters and commands are removed. 
+Rebuild DIM service list from DIM name server.
+Parameters and Commands are sorted alphabetically by name.
 All panels are updated.
-This update function is called automatically whenever the frontend systems might have
-added or deleted DIM services. In normal operation there is no need to update manually.\\
+In normal operation there is no need to refresh manually.\\
 \icon{comicon} Open command panel (\paref{user:CommandPanel}).\\
 \icon{paramwin} Open parameter table (\paref{user:ParTabPanel}).\\
 \icon{usericon} Open parameter selection panel (\paref{user:ParSelPanel}).\\
@@ -109,7 +108,8 @@ access to the filesystem.
 \item[DabcScript:] Command to be executed in an ssh at the master node.
 \item[DabcServers:] Number of workers and controllers. This information
 is minimum for the GUI to know when all \dabc\ nodes are up. The GUI waits until
-this number of DIM servers is up and running.
+this number of DIM servers is up and running. \strong{Note} that this number 
+must be consistent with the \dabc\ setup file used.
 \edes
 The name server name is translated from shell environment variable \keyw{DIM\_DNS\_NODE},
 the user name from shell environment variable \keyw{USER}. Password can be chosen when
@@ -172,12 +172,12 @@ each command. Commands are executed in all components of \dabc.
 The \dabc\ naming convention for commands and parameters defines four main name fields
 separated by slashes:
 \bnum
-\item DIM server name space (example DABC)
-\item Node (example dabcWorker1)
-\item Application (example Combiner)
-\item Name (example doConfigure)
+\item DIM server name space (example: DABC)
+\item Node (example: lxg0523)
+\item Application (example: Controller:41)
+\item Name (example: doEnable)
 \enum 
-Example: \comm{DABC/dabcWorker1/Combiner/doConfigure}.
+Example: \comm{DABC/lxg0523/Controller:41/doEnable}.
 \figpng{user-gui-pan-cmd-dabc}{Command panel.}{htb}{0}{0.9}
 Fig. \paref{fig:user-gui-pan-cmd-dabc} shows
 on the left side the command tree. The tree is built
@@ -185,7 +185,7 @@ from name, application, nodes. Double click (or \keyw{RETURN}) on a treenode
 executes the command on all treenodes below.
 A click on a command opens at the right side the argument panel.
 Entering argument values and \keyw{RETURN} executes the command.
-In the example shown in the figure doble click on \comm{doEnable}
+In the example shown in the figure double click on \comm{doEnable}
 would execute that command on three nodes.
 Double click on \comm{Eventbuilder} would execute only on two nodes. 
 
@@ -230,7 +230,7 @@ A prompter will pop up to enter the value.
 
 \lsubsection{user:MonitorPanels}{Monitoring panels}
 As already mentioned the \dabc\ provides definitions of
-special purpose DIM parameters. These \keyw{Records}
+special purpose DIM parameters. These \func{Records}
 can be recognized by the GUI and are handled in appropriate way.
 Currently there are
 \bcir
@@ -255,7 +255,7 @@ Meters can be removed
 in the parameter table (See Fig. \paref{fig:user-gui-pan-pardabc}) 
 with the \keyw{Show} buttons like the other graphical parameters.
 Saving the setup, the visibility will be preserved.
-\figpdf{user-gui-rate-set}{Steering menus.}{htb}{0}{1}
+\figpdf{user-gui-rate-set}{Steering menus.}{htb}{0}{0.8}
 
 On the left side in Fig. \paref{fig:user-gui-rate-set} the \keyw{Settings}
 menu is shown. It affects all items in the panel. One can \keyw{Zoom}
@@ -284,6 +284,7 @@ Information records mainly display one line of text with a color
 \subsubsection{Logging window}
 \figpng{user-gui-pan-logdabc}{Logging.}{htb}{0}{1.0}
 Fig. \paref{fig:user-gui-pan-logdabc} show the logging window.
+
 \lsection{user:guiSaveRestore}{GUI save/restore setups}
 There are several setups which can be stored in XML files and are retrieved
 when the \gui\ is started again. The file names can be specified by

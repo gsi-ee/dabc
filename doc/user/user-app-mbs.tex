@@ -1,111 +1,11 @@
 [user/user-app-mbs.tex]
 \label{user-app-mbs-chapter}
-\lsection[Simple MBS data server with DABC]{user-app-mbs-eventserver}{Simple \mbs\ data server with \dabc\ }
-The use case here is that a single \dabc\ node should provide data in the \mbs\
-event format on a server socket to be used by external analyisis and monitoring
-programs like Go4 \cite{go4web}. The event data can be simulated by a generator
-module; or in most practical cases it is the result of a data readout from
-one or several hardware devices.
-
-For the random event generator, such set-up looks like this:
-\begin{small}
-\begin{verbatim}
-<?xml version="1.0"?>
-<dabc version="1">
-  <Context host="lxi009" name="Server">
-    <Run>
-      <lib value="libDabcMbs.so"/>
-      <func value="InitMbsGenerator"/>
-    </Run>
-    <Module name="Generator">
-       <NumSubevents value="3"/>
-       <FirstProcId value="77"/>
-       <SubeventSize value="128"/>
-       <Go4Random value="false"/>
-       <BufferSize value="16384"/>
-       <Port name="Output">
-          <OutputQueueSize value="5"/>
-          <MbsServerKind value="Stream"/>
-          <MbsServerPort value="6006"/>
-        </Port>
-     </Module>
-  </Context>
-</dabc>
-\end{verbatim}
-\end{small}
-There is only one \keyw{<Context>} node, specified by the nodename, with one
-simple C function \func{InitMbsGenerator()} to run, and with one \keyw{<Module>}
-that produces the event data as specified in its parameters. The data server
-is specified by parameters of the "Output" \keyw{<Port>}: The tag
-\keyw{<MbsServerKind>} can be "Stream" or "Transport" to emulate either variant
-of the standard \mbs\ server sockets. A complete description of this example
-can be found in section \paref{exa_mbs_eventsgenerator} , of the \dabc\ programmer's
-manual. The setup files for standard \mbs\ use cases can be found in directory
-\begin{verbatim}
-$DABCSYS/applications/mbs
-\end{verbatim}
-
-A more practical use case is to prepare data as \mbs\ events that was
-read by \dabc\ from external front-end hardware. This is shown with the
-setup-file for the readout controller ROC example
-(see the full description of this example in chapter \paref{prog-exa-roc}):
-
-\begin{small}
-\begin{verbatim}
-<?xml version="1.0"?>
-<dabc version="1">
-<Context name="Readout">
-  <Run>
-    <lib value="libDabcMbs.so"/>
-    <lib value="libDabcKnut.so"/>
-    <logfile value="Readout.log"/>
-  </Run>
-  <Application class="roc::Readout">
-    <DoCalibr value="0"/>
-    <NumRocs value="3"/>
-    <RocIp0 value="cbmtest01"/>
-    <RocIp1 value="cbmtest02"/>
-    <RocIp2 value="cbmtest04"/>
-    <BufferSize value="65536"/>
-    <NumBuffers value="100"/>
-    <TransportWindow value="30"/>
-    <RawFile value="run090.lmd"/>
-    <MbsServerKind value="Stream"/>
-    <MbsFileSizeLimit value="110"/>
-  </Application>
- </Context>
-</dabc>
-\end{verbatim}
-\end{small}
-
-Here the parameters are defined for the \keyw{<Application>} instance
-"roc::Readout" that controls  the readout of 3 {\em ROC} nodes via UDP, 
-and combines the data into one \mbs\ event by means of some internal
-\class{Modules}. Hence there is no simple
-run function as above, but the \dabc\ runtime environment will call
-appropriate methods of the \class{Application} to configure and run
-the set-up. Note that in this case the \mbs\ data is not only provided to a
-stream server as defined in \keyw{<MbsServerKind>}, but is also
-written to a {\tt *.lmd} (list mode data) file which can be specified
-in application parameter \keyw{<RawFile>}.
-
-Both single node examples above do not require to be launched from the \dabc\ GUI (although this is possible and may be useful to monitor the data rates and actual parameters).
-They can be started directly from a shell 
-by calling the standard \func{dabc\_run}
-executable with the configuration file name as argument:
-\verba{dabc\_run Readout.xml}. 
-This executable will load the specified libraries,
-create the application, configure it, and switch the system in 
-the \keyw{Running} state.   
-
-
 
 \lsection[MBS event building with DABC]{user:mbsapp}{\mbs\ event building with \dabc}
 
 In this case one \dabc\ node reads data from several
 \mbs\ nodes via {\em Transport} socket connections, and combines them
 into one \mbs\ output event. 
-
 
 To run \mbs\ front-ends with \dabc\ nodes as event builders some
 modifications of the \mbs\ setup files must be done.
@@ -114,14 +14,16 @@ For the \dabc\ side setup files must be provided.
 \subsection[MBS setup]{\mbs\ setup}
 When we want to use \dabc\ nodes as event builders, we need a different
 setup on the \mbs\ side. We assume that we have more than one
-\mbs\ node. Such multi-node system is controlled by an \mbs\ prompter running on one node.
-The setup has to be changed such that all nodes run as if they are stand alone
+\mbs\ node. Such a multi-node system is controlled by an \mbs\ prompter running on one node.
+\bbul
+\item The setup has to be changed such that all nodes run as if they are stand alone
 (this is done typically by setting \keyw{COL\_MODE} to 0 in the usf setup file).
-That means that each node runs the \keyw{Readout} - \keyw{Collector} - 
+That means that each node must run the \keyw{Readout} - \keyw{Collector} - 
 \keyw{Transport} - \keyw{Daq\_rate}
-chain. The \dabc\ event builders connect to these transports.
-The \mbs\ buffer size should be set to the stream size and the number of buffers per
+chain. The \dabc\ event builders connect to the transports.
+\item The \mbs\ buffer size should be set to the stream size and the number of buffers per
 stream must be set to one.
+\ebul
 
 \subsection[DABC setup]{\dabc\ setup}
 On the \dabc\ user working directory we need configuration files.
@@ -138,7 +40,7 @@ Summary of parameters:
 \item[DoFile] Provide output file.
 \item[DoServer] Provide server.
 \edes
-These parameters are used to configure an event generator:
+These parameters are used to configure an optional event generator:
 \bdes
 \item[NumSubevents]
 \item[FirstProcId]
@@ -148,40 +50,31 @@ These parameters are used to configure an event generator:
 \index{TODO!dabcsetupfiles}
 
 The following example configuration file {\tt \$DABCSYS/applications/mbs/Combiner.xml} shows how to 
-configure one combiner module reading from three \mbs\ transport servers.
+configure one combiner module reading from two \mbs\ transport servers.
 A simple setup looks like this:
 
 \begin{small}
 \begin{verbatim}
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="localhost" name="Worker">
+  <Context host="localhost" name="MbsEb">
     <Run>
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsCombiner"/>
-      <logfile value="combiner.log"/>
     </Run>
     <Module name="Combiner">
-       <NumInputs value="3"/>
+       <NumInputs value="2"/>
        <DoFile value="false"/>
        <DoServer value="true"/>
        <BufferSize value="16384"/>
        <Port name="Input0">
-          <InputQueueSize value="5"/>
           <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi009"/>
+          <MbsServerName value="X86-xx"/>
           <MbsServerPort value="6000"/>
        </Port>
        <Port name="Input1">
-          <InputQueueSize value="5"/>
           <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi010"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="Input2">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi011"/>
+          <MbsServerName value="X86-yy"/>
           <MbsServerPort value="6000"/>
        </Port>
        <Port name="FileOutput">
@@ -190,7 +83,6 @@ A simple setup looks like this:
           <MbsFileSizeLimit value="128"/>
         </Port>
        <Port name="ServerOutput">
-          <OutputQueueSize value="5"/>
           <MbsServerKind value="Stream"/>
         </Port>
      </Module>
@@ -199,29 +91,27 @@ A simple setup looks like this:
 \end{verbatim}
 \end{small}
 
-We have one node \keyw{<Context>} with a simple run function 
-\func{StartMbsCombiner()} that uses a single \keyw{<Module>} to do the
-event combination from three input \keyw{<Port>}s.
+We have one node (\keyw{Context}) with a simple run function 
+\func{StartMbsCombiner()} that uses a single \keyw{Module} to do the
+event combination from two input \keyw{Port}s.
 The node names and other parameters of the external \mbs\ connections
-are specified in the \keyw{<MbsServerName>} properties of these ports.
+are specified in the \keyw{MbsServerName} properties of these ports.
 Of course the \mbs\ setup must match these definitions. 
 
-There are two output \keyw{<Port>}s in parallel here: A "FileOutput"
+There are two output \keyw{Port}s in parallel here: A \keyw{FileOutput}
 that writes into a {\tt *.lmd} file as specified in the property 
-\keyw{<MbsFileName>}; and a "ServerOutput" that offers a "Stream" server
-for a monitoring program, as the examples in above section \ref{user-setup-eventserver}.
-A full description is in section
-\paref{exa_mbs_eventbuilding} of the \dabc\ programmer's manual.
-
+\keyw{MbsFileName}; and a \keyw{ServerOutput} that offers a standard \mbs\ stream server
+for a monitoring program.
+A full description is in Programmer Manual section
+\paref{exa_mbs_eventbuilding}.
 
 Now we can use the combined  controller panel to startup \mbs\ and \dabc.
 
 \lsubsection[Combined DABC and MBS control panel]{user:controlDabcMbs}{Combined \dabc\ and \mbs\ control panel}
-\figpng{user-gui-pan-dabcmbs}{Combined DABC and MBS  controller.}{htb}{0}{0.7}
-This panel shown in Fig. \paref{fig:user-gui-pan-dabcmbs} is simply a superposition of the single ones.
-Here the name of the \dabc\ builder \keyw{<Context>} node and
-the \dabc\ setup file name must be specified. Also the \mbs\
-master node running the prompter is . 
+\figpng{user-gui-pan-dabcmbs1}{Combined DABC and MBS  controller.}{htb}{0}{0.7}
+This panel shown in Fig. \paref{fig:user-gui-pan-dabcmbs1} is simply a superposition of the single ones.
+Here the  \keyw{Context} name of the \dabc\ node and
+the \dabc\ setup file name must be specified. Number of \dabc\ servers is one.
 
 \subsubsection[Combined DABC and MBS  controller buttons]{Combined \dabc\ and \mbs\  controller buttons}
 \icon{savewin} Save panel settings, see \paref{user:guiSaveRestore}.\\
@@ -229,18 +119,23 @@ master node running the prompter is .
 Starts DIM servers.
 Execute script \verba{prmstartup.sc} at \mbs\ master node.
 Starts prompter, dispatchers and message loggers.
-Waits for all components.
+Waits for all components (Sum of DIM servers) are running.
 A progress panel pops up during that time
 (see \paref{user:guiProgress}).
 If all components are up trigger the main \keyw{Update}.\\
 \icon{dabcconfig} Configure. Execute user's \mbs\ startup procedure in prompter.
+Waits for all \mbs\ \verba{Daq\_rate} tasks are running.
 Executes state transition command \comm{Configure}
 on \dabc\ master node and wait for the transition.
 All plug-in components are created. Then execute \comm{Enable}.
 If all components are up trigger the main \comm{Update}.\\
-\icon{dabcstart} Start \mbs\ acquisition, then executes \dabc\ \comm{Start} command.
+\icon{dabcstart} Start \mbs\ acquisition, 
+wait for all
+acquisition states \keyw{Running}, then execute \dabc\ \comm{Start} command.
 All components go into running state \keyw{Running}.\\
-\icon{dabcstop} Pause acquisition. Execute \mbs\ \comm{stop acquisition}.
+\icon{dabcstop} Pause acquisition. Execute \mbs\ \comm{stop acquisition},
+wait for all
+acquisition states \keyw{Stopped}.
 Execute \dabc\ \comm{Stop} command.
 All components go into standby state \keyw{Ready}.\\
 \icon{mbsstop} Halt acquisition. Executes \dabc\ \comm{Halt} command.
@@ -256,5 +151,101 @@ After two seconds trigger the main \keyw{Update}.\\
 \icon{controlmbs} Shell script for \mbs\ master node.\\
 \icon{controldabc} Shell script for \dabc\ master node.
 
+\lsection[MBS and DABC with Bnet]{user-app-mbs-multieb}{\mbs\ and \dabc\ with Bnet}
+The following example configuration file {\tt \$DABCSYS/applications/bnet-mbs/SetupBnetMbs.xml} shows how to configure two \dabc\ nodes reading from two \mbs\ transport servers and two event builder nodes.
+Another node is used as controller.
 
-%\lsection[BNET with MBS and DABC]{user-setup-eventserver}{BNET with \mbs\ and \dabc\ }
+The example setup file shows two techniques: first the use of XML variables which are
+set at the beginning, and can then be referenced, second the specification of default values
+for parameters of contexts or modules. 
+\begin{small}
+\begin{verbatim}
+<?xml version="1.0"?>
+<dabc version="1">
+  <!-- Enter the values for specific setup -->
+  <Variables>
+     <ctrl value="lxg0523"/>
+     <mbs1 value="r3g-100"/>
+     <mbs2 value="r3g-101"/>
+     <read1 value="lx1001"/>
+     <read2 value="lx1002"/>
+     <eb1 value="lx1003"/>
+     <eb2 value="lx1004"/>
+     <bufsize value="65536"/>
+     <custport value="6000"/>
+  </Variables>
+  <Context host="${ctrl}" name="Controller">
+    <Run>
+      <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
+      <runfunc value="RunTestBnet"/>
+    </Run>
+    <Application class="bnet::Cluster">
+       <NetDevice value="dabc::SocketDevice"/>
+       <CtrlBuffer value="2048"/>
+       <TransportBuffer value="${bufsize}"/>
+       <NumEventsCombine value="1"/>
+    </Application>
+  </Context>
+  <Context host="${read1}" name="Read1">
+    <Application class="bnet::MbsWorker">
+       <NumReadouts value="1"/>
+       <Input0Cfg value="${mbs1}"/>
+    </Application>
+  </Context>
+  <Context host="${read2}" name="Read2">
+    <Application class="bnet::MbsWorker">
+       <NumReadouts value="1"/>
+       <Input0Cfg value="${mbs2}"/>
+    </Application>
+  </Context>
+  <Context host="${eb1}" name="Build1"/>
+  <Context host="${eb2}" name="Build2"/>
+  <Defaults>
+     <Context name="*">
+       <Run>
+          <logfile value="${Context}.log"/>
+          <loglevel value="1"/>
+          <cpuinfo value="1"/>
+       </Run>
+       <Module name="*">
+          <Ratemeter name="Data*" lower="0" upper="20"/>
+          <Ratemeter name="Event*" lower="0" upper="20000"/>
+       </Module>
+     </Context>
+     <Context name="Read*">
+        <Run>
+          <lib value="libDabcBnet.so"/>
+          <lib value="libDabcMbs.so"/>
+          <lib value="libBnetMbs.so"/>
+        </Run>
+        <Application class="bnet::MbsWorker">
+           <IsSender value="true"/>
+           <ReadoutBuffer value="${bufsize}"/>
+        </Application>
+        <Module name="Combiner">
+           <Port name="Input*">
+              <MbsServerPort value="${custport}"/>
+              <InputQueueLength value="20"/>
+           </Port>
+        </Module>
+     </Context>
+     <Context name="Build*">
+        <Run>
+          <lib value="libDabcBnet.so"/>
+          <lib value="libDabcMbs.so"/>
+          <lib value="libBnetMbs.so"/>
+        </Run>
+        <Application class="bnet::MbsWorker">
+           <IsReceiver value="true"/>
+           <IsFilter value="false"/>
+           <EventBuffer value="${bufsize}"/>
+        </Application>
+     </Context>
+  </Defaults>
+</dabc>
+\end{verbatim}
+\end{small}
+With the same setup of the two \mbs\ nodes as before we can run this example.
+In the \dabc\ control panel we only have to change the number of \dabc\ servers (5),
+and the name of the setup file.
+

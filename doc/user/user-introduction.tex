@@ -43,28 +43,28 @@ may run as a chain in one single thread.
 \subsubsection{Synchronous module} 
 Each synchronous module is executed by a 
 dedicated working thread. The thread executes a
- method \func{MainLoop()} with arbitrary code, which {\sl may block} 
+ method \func{MainLoop()} with arbitrary code, which may block 
 the thread. In blocking calls of the framework (resource or 
 port wait), optionally command callbacks may be executed 
 implicitly.
-A {\sl timeout} may be set for all blocking calls; this can 
+A timeout may be set for all blocking calls; this can 
 optionally throw an exception when the time is up. On timeout 
 with exception, either the \func{MainLoop()} is left and the exception 
 is then handled in the framework thread; or the \func{MainLoop()} itself 
 catches and handles the exception. On state machine commands (e.g. 
-\comm{Halt} or \comm{Suspend}, see section \ref{prog_fsm}), 
+\comm{Halt} or \comm{Suspend}, see Programmer Manual section \ref{prog_fsm}), 
 the blocking calls are also left by exception, 
 thus putting the mainloop thread into a stopped state.
 
 \subsubsection{Asynchronous module}
- Several asynchronous modules may be run by a {\sl shared working thread}. 
-The thread processes an  {\sl event queue} and executes 
-appropriate  {\sl callback functions} 
+ Several asynchronous modules may be run by a shared working thread. 
+The thread processes an event queue and executes 
+appropriate callback functions 
 of the module that is the receiver of the event. Events are fired for data input 
 or output, command execution, and if a requested resource (e.g. memory buffer) 
 is available. \strong{The callback functions must never block the working thread}. 
-Instead, the callback must \strong{return} if further processing requires 
-to wait for a requested resource. Thus each callback function must check the 
+Instead, the callback must return if further processing requires 
+to wait for a requested resource. Therefore each callback function must check the 
 available resources explicitly whenever it is entered.
            
 \subsection{Commands}
@@ -75,32 +75,29 @@ command actions by overwriting a virtual command callback method \func{ExecuteCo
 \subsection{Parameters}
 A module may register \class{Parameter} \index{Core classes !dabc::Parameter} objects. 
 Parameters are accessible by name; their values can be monitored and optionally changed by 
-the controls system. Initial parameter values can be set from xml configuration files.   
+the controls system. Initial parameter values can be set from XML configuration files.   
 
 \subsection{Manager}
 The modules are organized and controlled by one manager object
 which is persistent independent of the application's state.
 
-The manager is an \strong{object manager} that owns and keeps all 
+The manager is an object manager that owns and keeps all 
 registered basic objects into a folder structure. 
 
-Moreover, the manager defines the \strong{interface to the control system}. 
+Moreover, the manager defines the interface to the control system. 
 This covers registering, sending, and receiving of commands; registering, 
 updating, unregistering of parameters; error logging and global error handling. 
 
-The manager receives and \strong{dispatches commands} 
+The manager receives and dispatches commands 
 to the destination modules where they are queued and eventually executed 
-by the modules threads (see section \ref{prog_overview_modules}).
+by the modules threads (see Programmer Manual section \ref{prog_overview_modules}).
 The manager has an independent manager thread, used for 
 manager commands execution, parameters timeout processing and so on. 
- 
  
 \subsection{Memory and buffers}
 Data in memory is referred by \class{Buffer} \index{Core classes !dabc::Buffer} objects. 
 Allocated memory areas are kept in \class{MemoryPool}
 \index{Core classes !dabc::MemoryPool} objects. 
-   
-
 In general case a buffer contains a list of references to scattered memory 
 fragments from memory pool. Typically a buffer references exactly one segment.
 Buffers may have an empty list of references. In addition, buffers can be supplied
@@ -137,7 +134,8 @@ or bidirectional ports. The ports are owned by the module.
 Outside the modules the ports are connected to \class{Transport}
 \index{Core classes !dabc::Transport}  objects.
 On each node, a transport may either transfer buffers between 
-the ports of different modules (local data transport), or it may connect the module port to a data 
+the ports of different modules (local data transport without copy), 
+or it may connect the module port to a data 
 source or sink (e.~g.~ file i/o, network connection, hardware readout).
 
 In the latter case, it is also possible  to connect ports of two modules on 
@@ -150,12 +148,12 @@ A transport belongs to a \class{Device} \index{Core classes !dabc::Device}
  object of a 
 corresponding type that manages it. Such a device may have one or several transports.  
 The threads that run the transport functionality are
-created by the device. If the \class{Transport} implementation 
+created by the device. If the Transport implementation 
 shall be able to block (e.~g.~ on socket receive), there can be only 
 one transport for this thread. 
 
-A \class{Device} instance usually represents an I/O component (e.~g.~ network card); 
-there may be more than one \class{Device} instances of the same 
+A device object usually represents an I/O component (e.~g.~ network card). 
+There may be several device objects of the same 
 type in an application scope. 
 The device objects are owned by the manager 
 singleton; transport objects are owned and managed by their corresponding device.  
@@ -173,14 +171,14 @@ commands. This is the same functionality as available for modules.
 The \class{Application} \index{Core classes !dabc::Application}
 is a singleton object that represents the running application of the DAQ node 
 (i.~e.~ one per system process). It provides the main configuration parameters
-and defines the runtime actions in the different control system states (see section \ref{prog_fsm}).
-In contrast to the \class{Manager} implementation that defines a framework control system (e.g. DIM, EPICS), the \class{Application} defines the experiment specific behaviour of the DAQ.
+and defines the runtime actions for the different control system states (see Programmer Manual section \ref{prog_fsm}).
+In contrast to the Manager implementation that defines a framework control system (e.g. DIM, EPICS), the Application defines the experiment specific behaviour of the DAQ.
 
 \section{Controls and configuration}
 \subsection{Finite state machine}
 %\label{prog_fsm}
 
-The running state of the DAQ system is ruled by a {\sl Finite State Machine} 
+The running state of the DAQ system is ruled by a Finite State Machine 
 \cite{Wikipedia-Statemachine} 
 on  each node of the cluster. The manager provides an interface to switch the application 
 state by the external control system. This may be done by calling 
@@ -195,10 +193,7 @@ e.g. in \keyw{Halted} state, all modules are deleted and thus do not
 have an internal state. The granularity of the control system state 
 machine is not finer than the node application.
 
-
 \figpdf{statemachine}{The finite state machine as defined by the manager.}{htb}{0}{.8}
-
-
 
 There are 5 generic states to treat all set-ups: 
 \index{Finite state machine ! states}
@@ -246,7 +241,7 @@ The state transitions between the 5 generic states correspond to
 \end{compactdesc}
 
 \subsection{Commands}
-The control system may send (user defined) commands to each 
+The control system may send (user defined) commands to any 
    component (module , device, application). Execution of these commands is 
    independent of the state machine transitions.
 
@@ -267,27 +262,24 @@ independent of the configuration set up (e.g. switching on
 debug output, change details of processing parameters).
       
 The current parameters  may be stored back to the XML file.
-
       
 Apart from the configuration, 
 the control system may use local parameter objects for 
-{\sl Monitoring} the components. When monitoring parameters change, 
+monitoring the components. When monitored parameters change, 
 the control system is updated by interface methods of the 
 manager and may refresh the GUI representation.
-Chapter \ref{prog_setup} will explain the usage of parameters for configuration
+Programmer Manual Chapter \paref{prog_setup} will explain the usage of parameters for configuration
 in detail. 
 
 
 \section{Package and library organisation}
-The complete system consists of different packages. 
+The complete system consists of several packages. 
 
 \figpdf{DABCcomponents}{Schematic view of the distributed \dabc~ components (coloured) and
 user specific extensions (white)}{htb}{0}{.9}
  
-   
-
 \subsection{Core system}
-The \strong{Core system} package defines all base classes and interfaces
+The Core system package defines all base classes and interfaces
 and implements basic functionalities for object organization, memory management, 
 thread control, and event communication. 
    
@@ -318,10 +310,10 @@ Alternatively, the \strong{Plugin packages} may be installed in a user directory
    This package depends on the \strong{Core system} and implements 
    modules to cover a generic event builder network. 
    It defines interfaces (virtual methods) of the special Bnet modules to 
-   implement user specific code in subclasses. The \strong{Bnet package} provides a 
+   implement user specific code in subclasses. The Bnet package provides a 
    factory to create specific Bnet modules by class name. It also 
    provides application classes to define generic functionalities for 
-   worker nodes  and    controller nodes. These may be used as base classes
+   worker nodes  and controller nodes. These may be used as base classes
    in further \strong{Application packages}.
    
 \subsubsection{Transport packages}
@@ -340,17 +332,15 @@ Alternatively, the \strong{Plugin packages} may be installed in a user directory
 They depend on the \strong{Core system}, and may depend 
 on several \strong{transport packages}, on the \strong{Bnet package}, or other plugin packages. 
 They may also depend on other application packages. 
-\strong{Application packages} provide the actual implementation of the core interface class
+Application packages provide the actual implementation of the core interface class
 \class{Application} that defines the set-up and behaviour of the DAQ application in 
 different execution states. This may be a subclass of specific existing 
 application. 
 Additionally, they may provide experiment specific \class{Module} classes.
 
-When installed centrally, the \strong{Application packages} are kept in subfolders of the 
-\verba{\$DABCSYS/applications} directory. Alternatively, an \strong{Application package} may be installed in a user directory and linked against the \strong{Core system} installation and the required \strong{Plugin packages}.
+When installed centrally, the Application packages are kept in subfolders of the 
+\verba{\$DABCSYS/applications} directory. Alternatively, an Application package may be installed in a user directory and linked against the \strong{Core system} installation and the required \strong{Plugin packages}.
 
-
-     
 \subsection{Distribution contents}
 The DABC distribution contains the following packages:
 

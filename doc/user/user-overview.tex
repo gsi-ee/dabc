@@ -3,30 +3,30 @@
 This \dabc\ User Manual contains all information that is necessary to
 install and use the \dabc\ framework.
 
-Chapter \ref{user-introduction} should be useful to understand the
+Chapter \paref{user-introduction} should be useful to understand the
 most commonly used terms of \dabc.
 
-Chapter~\ref{user-setup-chapter} describes how to install the
+Chapter \paref{user-setup-chapter} describes how to install the
 \dabc\ packages on any linux machine, and how to set up the working
 environment. Additionally, some typical use cases and their configuration
 files are shown. 
 The following chapters then give more detailed explanations how to operate
 in different modes with the \dabc\ Java GUI:
 
-Chapter~\ref{user-gui-chapter}
+Chapter \paref{user-gui-chapter}
 covers the general functionality of the GUI
 which is common for most applications. Especially, this 
 is mostly sufficient
 to control a DAQ cluster purely with one or several \dabc\ nodes.
 
-Chapter~\ref{user-gui-mbs-chapter} describes the \dabc\ GUI 
+Chapter \paref{user-gui-mbs-chapter} describes the \dabc\ GUI 
 in a mode to control a pure \mbs data acquisition system without 
 a native \dabc\ node.
 
 The application use case for a mixed DAQ cluster, both with \dabc\ and \mbs\ nodes, is
-treated in Chapter~\ref{user-app-mbs-chapter}.
+treated in Chapter \paref{user-app-mbs-chapter}.
 
-Finally, Chapter~\ref{user-app-bnet-chapter} describes the use case of
+Finally, Chapter \paref{user-app-bnet-chapter} describes the use case of
 a \dabc\ builder network (BNET), both with and without using \mbs\ .
 
 However, the scope of the \dabc\ User Manual does not contain 
@@ -37,7 +37,13 @@ in the \dabc\ Programmer Manual.
 
 \lsection[Release Notes]{user-overview-release}{Release Notes}
 
-\subsection{Version 1.0.0 (26. February 2009)}
+\subsection{Version 1.0.01 (10. March 2009)}
+\bbul
+\item Bugfix: suppress output of scripts running from ssh (caused problems with GUI).
+\item Bugfix: GUI: Register DIM service after full instantiation of parameter object.
+\item Bugfix: GUI: Histogram drawer had uninitialized field.
+\ebul
+\subsection{Version 1.0.00 (26. February 2009)}
 These are the features of the first official release:
 \bnum
 \item A Data Acquisition framework in C++ language for linux platforms

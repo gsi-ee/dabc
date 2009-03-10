@@ -4,7 +4,7 @@
 \subsection[MBS setup]{\mbs\ setup}
 Any \mbs\ system can be controlled by the \dabc\ GUI.
 It can run in two operation modes: with \mbs\ event builder or \dabc\ event builder
-(see \paref{user:mbsapp}.
+(see \paref{user:mbsapp}).
 The first case means a standard \mbs\ system.
 
 To control a standard \mbs\ nothing has to be done by the user on the \mbs\ side.
@@ -22,7 +22,7 @@ shall be published by DIM (see \paref{user:MbsDimconfig}).
 
 For the standard \mbs\ control one needs no \dabc\ installation.
 The GUI jar file is sufficient. DIM must be installed.
-See \paref{user-dimsetup} for preparations.
+See installation guide on the download page.
 
 \lsubsection[MBS control panel]{user:controlMbs}{\mbs\ control panel}
 \figpng{user-gui-pan-mbs}{MBS controller.}{htb}{0}{0.6}
@@ -74,17 +74,17 @@ A progress panel pops up during that time (see \paref{user:guiProgress}).\\
 Starts dispatcher and message logger for single node \mbs.
 Trigger the main \keyw{Update}.\\
 \icon{dabcconfig} Configure. Execute user's \mbs\ startup procedure in prompter (dispatcher).
-Trigger the main \keyw{Update}.\\
-\icon{dabcstart} Start acquisition. Execute \comm{Start acquisition}.\\
-\icon{dabcstop} Pause acquisition. Execute \comm{Stop acquisition}.\\
+Wait for all \verba{m\_daq\_rate} tasks are running. Trigger the main \keyw{Update}.\\
+\icon{dabcstart} Start acquisition. Execute \comm{Start acquisition}. Wait for all
+acquisition states go into \keyw{Running}.\\
+\icon{dabcstop} Pause acquisition. Execute \comm{Stop acquisition}. Wait for all
+acquisition states go into \keyw{Stopped}.\\
 \icon{mbsstop} Halt acquisition. Execute user's \mbs\ shutdown procedure in prompter.
 Prompter, dispatcher and message loggers should still be running.\\
 \icon{disconn} Shut down all. Execute script \verba{prmshutdown.sc} at master node.
 After 2 seconds trigger the main \keyw{Update}.\\
 \icon{info} \comm{Show acquisition}. Output in log panel.\\
 \icon{controlmbs} Shell script executes command on master node.
-
-
 \subsection[MBS command panel]{\mbs\ command panel}
 \figpng{user-gui-pan-cmd-mbs}{Command panel.}{htb}{0}{0.9}
 Fig. \paref{fig:user-gui-pan-cmd-mbs} shows
@@ -97,13 +97,15 @@ which is displayed in the info panel
 (see Fig. \paref{fig:user-gui-pan-cmd-mbs2}).
 Click on a command opens at the right side the argument panel.
 Entering argument values and \keyw{RETURN} executes the command.
-\figpng{user-gui-pan-cmd-mbs1}{Info and command panel.}{htb}{0}{0.9}
+\figpng{user-gui-pan-cmd-mbs1}{Info and command panel.}{htb}{0}{0.7}
+
 Only the \mbs\ commands of the running tasks are shown. 
 Fig. \paref{fig:user-gui-pan-cmd-mbs1} shows that only dispatcher and prompter are up
 and therefore only their commands are seen.
-\figpng{user-gui-pan-cmd-mbs2}{Info and command panel.}{htb}{0}{0.9}
+\figpng{user-gui-pan-cmd-mbs2}{Info and command panel.}{htb}{0}{0.7}
 Fig. \paref{fig:user-gui-pan-cmd-mbs2} shows in addition the commands
 of util and transport after configuration.
+
 \section[MBS DIM parameters]{\mbs\ DIM parameters}
 \subsection[MBS states]{\mbs\ states}
 \bdes

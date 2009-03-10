@@ -2,33 +2,34 @@
 \label{user-setup-chapter}
 \lsection[Installing DABC]{user-install}{Installing \dabc}
 \index{DABC!Installation}
-When working at the gsi linux cluster, the \dabc~ framework is already installed and will
-be maintained by people of the gsi EE department. Here \dabc~ needs just to be
-activated from any gsi shell by typing {\tt . dabclogin}. In this case, 
-please skip this installation section and proceed with following section \ref{user-env} describing
+When working at the GSI linux cluster, the \dabc\ framework is already installed and will
+be maintained by people of the gsi EE department. Here \dabc\ needs just to be
+activated from any GSI shell by typing \verba{.~dabclogin} (dot space). In this case, 
+please skip this installation section and proceed with following section \paref{user-env} describing
 the set-up of the user environment.
 
-However, if working on a separate DAQ cluster outside gsi, 
-it is mandatory to install the \dabc~ software
+However, if working on a separate DAQ cluster outside GSI, 
+it is mandatory to install the \dabc\ software
 from scratch. 
-Hence the \dabc~ distribution is available for download at \hyperref{http://dabc.gsi.de}{}{}{http://dabc.gsi.de}.
-It is provided as a compressed tarball of sources {\tt dabc1.tar.gz}.
+Hence the \dabc\ distribution is available for download at \hyperref{http://dabc.gsi.de}{}{}{http://dabc.gsi.de}.
+It is provided as a compressed tarball of sources \verba{dabc\_vn.m.ss.tar.gz}
+where n m and ss are version numbers.
 The following steps describe the recommended installation procedure:
 
 \bnum
-\item {\bf Unpack this \dabc~ distribution} at an appropriate installation directory,
+\item {\bf Unpack this \dabc\ distribution} at an appropriate installation directory,
 e.~g.~:
 \begin{small}
 \begin{verbatim}
 cd /opt/dabc; 
-tar zxvf dabc1.tar.gz
+tar zxvf dabc_v1.0.00.tar.gz
 \end{verbatim}
 \end{small}
 This will extract the archive into a subdirectory which is labelled
-with the current version number like {\tt /opt/dabc/dabc\_1\_0.00}.
-This becomes the future \dabc~ system directory.
+with the current version number like \verba{/opt/dabc/dabc\_v1.0.00}.
+This becomes the future \dabc\ system directory.
 
-\item {\bf Prepare the \dabc~ environment login script}:
+\item {\bf Prepare the \dabc\ environment login script}:
 A template for this script can be found at  
 \begin{small}
 \begin{verbatim}
@@ -36,82 +37,73 @@ scripts/dabclogin.sh
 \end{verbatim}
 \end{small}
 
-
 \bbul
-  \item Edit the {\tt DABCSYS} environment according to your local installation directory. 
-  This is done in the following lines:
-  \begin{small}
-  \begin{verbatim}
-  export DABCSYS=/opt/dabc/dabc_1_0.00  
-  \end{verbatim}  
-  \end{small}
-  
-  \item Edit the {\tt DIM\_DNS\_NODE} environment according to the machine where 
-  the DIM name server \cite{DIM} for the \dabc~ control system will run:
-  \begin{small}
-  \begin{verbatim}
-  export DIM_DNS_NODE=hostname.domain.de
-  \end{verbatim}  
-  \end{small}
-  \item Copy the script to a location in your global {\tt \$PATH} for later login,
-  e.~g.~ {\tt /usr/bin}. Alternatively, you
-  may set an \func{alias} to the full pathname of {\tt dabclogin.sh} in your shell profile.
+\item Edit the \verba{DABCSYS} environment according to your local installation directory. 
+This is done in the following lines:
+\begin{small}
+\begin{verbatim}
+export DABCSYS=/opt/dabc/dabc_1_0.00  
+\end{verbatim}  
+\end{small}
+\item Copy the script to a location in your global \verba{\$PATH} for later login,
+e.~g.\ \verba{/usr/bin}. Alternatively, you
+may set an \func{alias} to the full pathname of \verba{dabclogin.sh} in your shell profile.
 \ebul
 
 \item Execute the just modified login script in your shell to set the environment:  
-  \begin{small}
-  \begin{verbatim}
-  . dabclogin.sh
-  \end{verbatim} 
-  \end{small}
-   This will set the environment for the compilation.
+\begin{small}
+\begin{verbatim}
+. dabclogin.sh
+\end{verbatim} 
+\end{small}
+This will set the environment for the compilation.
 
-\item Change to the \dabc~ installation directory and start the build:
-  \begin{small}
-  \begin{verbatim}
-  cd $DABCSYS
-  make
-  \end{verbatim} 
-  \end{small}
-   This will compile the \dabc~ framework and install a suitable version of DIM in a
-   subdirectory of {\tt \$DABCSYS/dim}.
+\item Change to the \dabc\ installation directory and start the build:
+\begin{small}
+\begin{verbatim}
+cd $DABCSYS
+make
+\end{verbatim} 
+\end{small}
+This will compile the \dabc\ framework and install a suitable version of DIM in a
+subdirectory of \verba{\$DABCSYS/dim}.
 
 \enum
 
-After succesful compilation, the \dabc~ framework installation is complete
-and can be used from any shell after invoking {\tt . dabclogin.sh}
-The next sections \ref{user-env} and \ref{user-setup} will describe further steps 
-to set-up the \dabc~ working environment for each user.
+After succesful compilation, the \dabc\ framework installation is complete
+and can be used from any shell after invoking \verba{.~dabclogin.sh}
+The next sections \paref{user-env} and \paref{user-setup} will describe further steps 
+to set-up the \dabc\ working environment for each user.
 
 
-\lsection[Set-up the DABC environment]{user-env}{Set-up the  \dabc~ environment}
+\lsection[Set-up the DABC environment]{user-env}{Set-up the  \dabc\ environment}
 \index{DABC!Environment set-up}
-Once the general \dabc~ framework is installed on a system, still each user
+Once the general \dabc\ framework is installed on a system, still each user
 must "activate" the environment and do further preparations to work with it.
 
 \bnum
-\item Execute the \dabc~ login script in a linux shell to set the environment.
-At gsi linux installation, this is done by  
+\item Execute the \dabc\ login script in a linux shell to set the environment.
+At GSI linux installation, this is done by  
 \begin{small}
 \begin{verbatim}
   . dabclogin
 \end{verbatim} 
 \end{small}
-For the user installation as described in above section \ref{user-install},
+For the user installation as described in above section \paref{user-install},
 by default the script is named   
-  \begin{small}
-  \begin{verbatim}
+\begin{small}
+\begin{verbatim}
   . dabclogin.sh
-  \end{verbatim}
-  \end{small}
+\end{verbatim}
+\end{small}
 
-The login script will already enable the \dabc~ framework for
+The login script will already enable the \dabc\ framework for
 compilation of user written components. Additionally, 
-the general executable {\tt dabc\_run} now provides
-the \dabc~ runtime environment and may be started directly 
+the general executable \verba{dabc\_run} now provides
+the \dabc\ runtime environment and may be started directly 
 for simple "batch mode" applications on a single node. 
 
-However, further preparations are necessary if \dabc~ shall be used with
+However, further preparations are necessary if \dabc\ shall be used with
 DIM control system and GUI.
 
 \item Open a dedicated shell on the machine that shall provide the DIM name server,
@@ -119,20 +111,17 @@ e.~g.~
 \begin{small}
 \begin{verbatim}
 ssh nsnode.cluster.domain
-\end{verbatim}
-\end{small}
-Then call 
-\begin{small}
-\begin{verbatim}
+export DIM_DNS_NODE=nsnode.cluster.domain
 . dabclogin.sh
-dimDns  
+dimDns &
+dimDid &
 \end{verbatim} 
 \end{small}
 to launch the DIM name server. This is done \strong{once} at the beginning of
 the DAQ setup; usually the DIM name server needs not to be shut down 
-when \dabc~ applications terminate.
+when \dabc\ applications terminate. The DID is useful for inspecting DIM services.
 
-\item Set the DIM name server environment variable in any \dabc~ working shell (e.~g.~
+\item Set the DIM name server environment variable in any \dabc\ working shell (e.~g.~
 the shell that will start the dabc gui later):
 \begin{small}
 \begin{verbatim}
@@ -140,12 +129,9 @@ the shell that will start the dabc gui later):
 export DIM_DNS_NODE=nsnode.cluster.domain
 \end{verbatim} 
 \end{small}
-Note that a user installation of \dabc~ framework may set this 
-environment variable already in the general {\tt dabclogin.sh} script, if the DIM name server will 
-mostly run for all users on the same default node (see section \ref{user-install}).  
 
-\item Now the \dabc~ GUI can be started in such prepared shell by typing {\tt dabc}, (or 
-{\tt mbs} for a plain \mbs~ gui, resp.). See below in gui section.  
+\item Now the \dabc\ GUI can be started in such prepared shell by typing \verba{dabc}, (or 
+\verba{mbs} for a plain \mbs\ gui, resp.). See below in gui section.  
 
 \enum
 
@@ -160,7 +146,7 @@ The following section \paref{user-setup}
 gives a general description of the setup file syntax.
 
 The GUI may run on a machine with no access to the \dabc\ working directory,
-e.~g.~ a windows PC.
+e.~g.\ a windows PC.
 Therefore the GUI setup files may use a different
 working directory, containing: 
 \bbul
@@ -168,7 +154,7 @@ working directory, containing:
 \item Configuration files for GUI (XML).
 \ebul
 These configuration files for the GUI are described in more detail 
-in Chapter~\paref{user-gui-chapter}.
+in Chapter \paref{user-gui-chapter}.
 
 Of course both setups, for the \dabc\ application and the GUI, can be
 put into one working directory if the GUI has access to it.
@@ -214,7 +200,7 @@ of this manual.
 
 
 \lsubsection[Basic syntax]{user-setup-syntax}{Basic syntax}
-A \dabc~ configuration file should always contain <dabc> as root node. 
+A \dabc\ configuration file should always contain <dabc> as root node. 
 Inside the <dabc> node one or several <Context> nodes should exists.
 Each <Context> node represents the {\em application context} which runs as
 independent executable. 
@@ -235,13 +221,13 @@ In the example file one sees several parameters for the output port of
 the generator module.  
 
 \lsubsection[Run arguments]{user-setup-run}{Run arguments}
-Usually a <Context> node has a <Run> subnode, where the user may define different parameters, relevant for running the \dabc~ executable:
+Usually a <Context> node has a <Run> subnode, where the user may define different parameters, relevant for running the \dabc\ executable:
 
 \bdes
 \item[lib] name of a library which should be loaded. Several libraries can be specified.
 \item[func] name of a function which should be called to create modules. 
 This is an alternative to instantiating a subclass of \class{dabc::Application} 
-(compare section \ref{prog_plugin_applicaton})
+(compare section \paref{prog_plugin_applicaton})
 \item[runfunc] function name to run some sequence of operations (start, stop, reconfigure) over application. Useful
 for batch mode                 
 \item[port] ssh port number of remote host
@@ -250,7 +236,7 @@ for batch mode
 \item[test] test script, which is called when test sequence is run by run.sh script
 \item[timeout] ssh timeout 
 \item[debugger] argument to run with a debugger. Value should be like "gdb -x run.txt --args", where file run.txt should contain commands "r bt q".
-\item[workdir] directory where \dabc~ executable should start
+\item[workdir] directory where \dabc\ executable should start
 \item[debuglevel] level of debug output on console, default 1
 \item[logfile] filename for log output, default none  
 \item[loglevel] level of log output to file, default 2 
@@ -304,13 +290,13 @@ Using variables, one can modify the example in the following way:
 \end{verbatim}
 \end{small}
 
-Here context name and module name are set via {\tt myname} variable,
-and mbs server socket port is set via {\tt myport} variable.
+Here context name and module name are set via \verba{myname} variable,
+and mbs server socket port is set via \verba{myport} variable.
 
 There are several variables which are predefined by the configuration system:
 
 \bbul
-\item DABCSYS - top directory of \dabc~ installation
+\item DABCSYS - top directory of \dabc\ installation
 \item DABCUSERDIR - user-specified directory
 \item DABCWORKDIR - current working directory
 \item DABCNUMNODES - number of <Context> nodes in configuration files
@@ -369,7 +355,7 @@ In this example for all ports which names begin with the string "Output",
 and which belong to any module, the output queue length will be 5. 
 A wildcard rule of this form will be applied for 
 all contexts of the configuration file, 
-i.~e.~ by such rule we set the output queue length for all modules on all nodes. 
+i.~e.\ by such rule we set the output queue length for all modules on all nodes. 
 This allows to configure a big multi-node cluster with
 a compact XML file.
 
@@ -399,12 +385,12 @@ class.
 As an example, we may consider a plug-in package for reading out data
 from specific PCIe hardware like the Active Buffer Board \ABB\ \cite{AbbDescription}.
 This package is separately available for download at \hyperref{http://dabc.gsi.de}{}{}{http://dabc.gsi.de}
-and described in detail in chapter \ref{prog-exa-pci-chapter} of the \dabc\ programmer's manual.
+and described in detail in chapter \paref{prog-exa-pci-chapter} of the \dabc\ programmer's manual.
 
 There are principally two different ways to install such separate plug-in packages:
-Either within the general {\tt DABCSYS} directory as part of the central \dabc\ installation, as
-described in following section \ref{user-plugins-dabcsys}. Or at an independent location
-in a user directory, as described in section \ref{user-plugins-userdir}.
+Either within the general \verba{DABCSYS} directory as part of the central \dabc\ installation, as
+described in following section \paref{user-plugins-dabcsys}. Or at an independent location
+in a user directory, as described in section \paref{user-plugins-userdir}.
 
 
 \lsubsection[Add plug-in packages to \$DABCSYS]{user-plugins-dabcsys}{Add plug-in packages to \$DABCSYS}
@@ -413,30 +399,30 @@ for all users of the \dabc\ installation. A typical scenario would be that an
 experimental group owns dedicated DAQ machines with system manager priviliges.
 In this case, the plugin-package may be installed under the same account as the
 central \dabc\ installation (probably, but not necessarily even the \keyw{root} account).
-The new plug-in package should be directly installed in the {\tt \$DABCSYS} directory
+The new plug-in package should be directly installed in the \verba{\$DABCSYS} directory
 then, with the following steps:
 
 \bnum
-\item Download the plug-in package tarball, e.~g.~ {\tt abb1.tar.gz}
+\item Download the plug-in package tarball, e.~g.\ \verba{abb1.tar.gz}
 
-\item Call the {\tt dabclogin.sh} script of the \dabc\ installation (see section user-env)
+\item Call the \verba{dabclogin.sh} script of the \dabc\ installation (see section user-env)
 
-\item Copy the downloaded tarball to the {\tt \$DABCSYS} directory and unpack it there:
+\item Copy the downloaded tarball to the \verba{\$DABCSYS} directory and unpack it there:
 \begin{verbatim}
 cp abb1.tar.gz $DABCSYS
 cd $DABCSYS
 tar zxvf abb1.tar.gz
 \end{verbatim} 
-This will extract the new components into the appropriate {\tt plugins} and
-{\tt applications} folders below {\tt \$DABCSYS}.
+This will extract the new components into the appropriate \verba{plugins} and
+\verba{applications} folders below \verba{\$DABCSYS}.
 
-\item Build the new components with the top Makefile of {\tt \$DABCSYS}:
+\item Build the new components with the top Makefile of \verba{\$DABCSYS}:
 \begin{verbatim}
 make
 \end{verbatim} 
 
 \item To work with the new components, the configuration script(s) of the {\em applications} part should be copied
-to the personal workspace of each user (see section \ref{user-setup}).
+to the personal workspace of each user (see section \paref{user-setup}).
 For the \ABB\ example, this is found at
 \begin{verbatim}
 $DABCSYS/applications/bnet-test/SetupBnetIB-ABB.xml
@@ -459,26 +445,26 @@ The new plug-in package should be installed in a user directory
 then, with the following steps:
 
 \bnum
-\item Download the plug-in package tarball, e.~g.~ {\tt abb1.tar.gz}
+\item Download the plug-in package tarball, e.~g.\ \verba{abb1.tar.gz}
 
 \item Create a directory to contain your additional \dabc\ plugin packages:
 \begin{verbatim}
 mkdir $HOME/mydabcpackages
 \end{verbatim} 
 
-\item Call the {\tt dabclogin.sh} script of the \dabc\ installation (see section user-env)
+\item Call the \verba{dabclogin.sh} script of the \dabc\ installation (see section user-env)
 
-\item Copy the downloaded tarball to the {\tt \$DABCSYS} directory and unpack it there:
+\item Copy the downloaded tarball to the \verba{\$DABCSYS} directory and unpack it there:
 \begin{verbatim}
 cp abb1.tar.gz $HOME/mydabcpackages
 cd $HOME/mydabcpackages
 tar zxvf abb1.tar.gz
 \end{verbatim} 
-This will extract the new components into the appropriate {\tt plugins} and
-{\tt applications} folders below the working directory. 
+This will extract the new components into the appropriate \verba{plugins} and
+\verba{applications} folders below the working directory. 
 
 \item To build the {\em plugins} part, change to the appropriate package plugin
-directory and invoke the local Makefile, e.~g.~ for the \ABB\ example:
+directory and invoke the local Makefile, e.~g.\ for the \ABB\ example:
 
 \begin{verbatim}
 cd $HOME/mydabcpackages/plugins/abb
@@ -491,7 +477,7 @@ $HOME/mydabcpackages/plugins/abb/x86_64/lib/libDabcAbb.so
 \end{verbatim} 
 
 
-\item For some plug-ins, there may be also small test executables with different Makefiles in subfolder {\tt test}. These can be optionally build and executed independent of the
+\item For some plug-ins, there may be also small test executables with different Makefiles in subfolder \verba{test}. These can be optionally build and executed independent of the
 \dabc\ runtime environment.
 
 \item The \dabc\ working directory for the new plug-in will be located in
@@ -517,10 +503,10 @@ $HOME/mydabcpackages/applications/bnet-test/libBnetTest.so
 \end{verbatim}
 
 \item The actual locations of the newly build libraries (plugins, and optionally applications part) has to be edited in the 
-\keyw{<lib>} tag of the corresponding \dabc\ setup-file (here: {\tt SetupBnetIB-ABB.xml}).
+\keyw{<lib>} tag of the corresponding \dabc\ setup-file (here: \verba{SetupBnetIB-ABB.xml}).
 The default set-up examples in the plug-in packages assume that the library is located
-at {\tt \$DABCSYS/lib}, as it is in the alternative installation case as described in
-section \ref{user-plugins-dabcsys}.
+at \verba{\$DABCSYS/lib}, as it is in the alternative installation case as described in
+section \paref{user-plugins-dabcsys}.
 
 \enum
 
