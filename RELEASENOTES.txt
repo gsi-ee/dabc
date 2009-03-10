@@ -21,22 +21,22 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
-Changes in version 1.0.1 (10 March 2009) 
+Changes in version 1.0.01 (10 March 2009) 
 
-   1. Fix several small errors in Verbs plugin
-   2. Add IP multicast support in SocketTransport
-   3. Add IB multicast support in verbs::Transport
-   4. Possibility to add user-defined parameters directly in xml file - 
-      in Context/User section
-   5. If Context/Run/copycfg = true, config file will be copied to working
-      directory of specified node, useful for cluster without common file system
-   6. Implement all-to-all and multicast tests in net-test application   
-    
-    Bugfix xHisto.java
-    After create before redraw internal array was not allocated.
+   1. Add IP multicast support in SocketTransport.
+   2. Add IB multicast support in verbs::Transport.
+   3. Possibility to add user-defined parameters directly in xml file - 
+      in Context/User section.
+   4. If Context/Run/copycfg = true, config file will be copied to working
+      directory of specified node, useful for cluster without common file system.
+   5. Implement all-to-all and multicast tests in net-test application.
+   6. Bugfix: several minor errors in Verbs plugin.
+   7. Bugfix: suppress output of scripts running from ssh (caused problems with GUI).
+   8. Bugfix: GUI: Register DIM service after full instantiation of parameter object.
+   9. Bugfix: GUI: Histogram drawer had uninitialized field.
 
 
-Features of version 1.0.0 (26. February 2009):
+Features of version 1.0.00 (26. February 2009):
 
 1. A Data Acquisition framework in C++ language for linux platforms
    with modular components for dataflow on multiple nodes.

@@ -38,11 +38,20 @@ in the \dabc\ Programmer Manual.
 \lsection[Release Notes]{user-overview-release}{Release Notes}
 
 \subsection{Version 1.0.01 (10. March 2009)}
-\bbul
+\bnum
+\item Add IP multicast support in SocketTransport.
+\item Add IB multicast support in verbs::Transport.
+\item Possibility to add user-defined parameters directly in xml file - 
+      in Context/User section.
+\item If Context/Run/copycfg = true, config file will be copied to working
+      directory of specified node, useful for cluster without common file system.
+\item Implement all-to-all and multicast tests in net-test application.
+\item Bugfix several minor errors in Verbs plugin.
 \item Bugfix: suppress output of scripts running from ssh (caused problems with GUI).
 \item Bugfix: GUI: Register DIM service after full instantiation of parameter object.
 \item Bugfix: GUI: Histogram drawer had uninitialized field.
-\ebul
+\enum
+
 \subsection{Version 1.0.00 (26. February 2009)}
 These are the features of the first official release:
 \bnum
