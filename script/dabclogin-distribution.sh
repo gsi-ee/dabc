@@ -10,15 +10,8 @@ echo "*** dabclogin setting up Data Acquisition Backbone Core environments..."
 #----------------------------------
 # user installation settings:
 
-# for direct invoking script in the installation directory:
-#export DABCSYS=`pwd`
-#export DIM_DNS_NODE=$HOSTNAME
-
-# for invoking script from outside, give absolute path here:
+# Set DABCSYS to absolute path:
 export DABCSYS=/opt/dabc_installations/dabc_1_0.00
-# set machine that runs the DIM name server here:
-export DIM_DNS_NODE=hostname.domain.de
-
 
 #----------------------------------
 # the dabc part:
@@ -62,5 +55,8 @@ echo "***********************************************************************"
 echo "*** Type dabc to start pure DABC gui"
 echo "*** Type mbs  to start pure MBS gui"
 echo "*** Type dabs to start combined DABC/MBS gui"
+echo ">>> Set DIM_DNS_NODE to the node to run the DIM name server"
+echo ">>> Start DIM name server on that node by dimDns"
+echo ">>> Start DIM browser on that node by dimDid (recommended)"
 echo "*** Ready." 
 
