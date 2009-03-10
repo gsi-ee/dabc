@@ -230,12 +230,28 @@ class NetTestMcastModule : public dabc::ModuleAsync {
 
 };
 
+class NetTestApplication : public dabc::Application {
+   public:
+      NetTestApplication() : dabc::Application("NetTestApplication")
+      {
+         CreateParStr("Kind", "all-to-all");
+      }
+};
+
 
 
 class NetTestFactory : public dabc::Factory  {
    public:
 
       NetTestFactory(const char* name) : dabc::Factory(name) {}
+
+      virtual dabc::Application* CreateApplication(const char* classname, dabc::Command* cmd)
+      {
+         if (strcmp(classname, "NetTestApplication")==0)
+            return new NetTestApplication();
+         return dabc::Factory::CreateApplication(classname, cmd);
+      }
+
 
       virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
       {

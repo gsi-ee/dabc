@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -71,9 +71,9 @@ namespace dabc {
          //    di_RepeatTimeout - not ready, call again after timeout
          virtual unsigned Read_Complete(Buffer* buf) { return di_EndOfStream; }
 
-         // One can use timeout (in seconds) in the case
-         // if Read_Size returns -1 and we do not want to pool all the time
-         // around this method.
+         // Timeout (in seconds) used when Read_Size or Read_Complete
+         // returns di_RepeatTimeout to wait some time
+         // before new action on DataInput object will be performed.
          virtual double GetTimeout() { return 0.1; }
 
          // return pointer on buffer object with currently available data

@@ -20,9 +20,20 @@ but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
-3. March 2009
-Bugfix xHisto.java
-After create before redraw internal array was not allocated.
+
+Changes in version 1.0.1 (10 March 2009) 
+
+   1. Fix several small errors in Verbs plugin
+   2. Add IP multicast support in SocketTransport
+   3. Add IB multicast support in verbs::Transport
+   4. Possibility to add user-defined parameters directly in xml file - 
+      in Context/User section
+   5. If Context/Run/copycfg = true, config file will be copied to working
+      directory of specified node, useful for cluster without common file system
+   6. Implement all-to-all and multicast tests in net-test application   
+    
+    Bugfix xHisto.java
+    After create before redraw internal array was not allocated.
 
 
 Features of version 1.0.0 (26. February 2009):
