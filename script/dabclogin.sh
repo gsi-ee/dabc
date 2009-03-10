@@ -14,4 +14,6 @@ alias dabc="java -Xmx200m xgui.xGui"
 
 alias dabcmoni="java -Xmx200m xgui.xGui -moni"
 
-export DIM_DNS_NODE=lxg0526
+echo ">>> Set DIM_DNS_NODE to the node to run the DIM name server"
+echo ">>> Start DIM name server on that node by dimDns"
+echo ">>> Start DIM browser on that node by dimDid (recommended)"
