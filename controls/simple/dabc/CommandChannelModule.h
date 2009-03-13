@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -25,12 +25,16 @@ namespace dabc {
 
    class CommandChannelModule : public ModuleAsync {
       protected:
-         PoolHandle*  fPool;
          bool           fIsMaster;
          CommandsQueue* fCmdOutQueue;
       public:
          CommandChannelModule(int numnodes);
          virtual ~CommandChannelModule();
+
+         static const char* CmdPoolName() { return "CommandChannelPool"; }
+         static int CmdBufSize() { return 16*1024 - 16; }
+
+         virtual WorkingProcessor* GetCfgMaster() { return 0; }
 
          MemoryPool* GetPool();
 

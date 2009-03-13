@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -22,19 +22,16 @@
 #include "dabc/Port.h"
 #include "dabc/Manager.h"
 
-const int CommandBufferSize = 16*1024 - 16;
-
 dabc::CommandChannelModule::CommandChannelModule(int numnodes) :
    ModuleAsync("CommandChannel"),
-   fPool(0),
    fCmdOutQueue(0)
 {
-   fPool = CreatePoolHandle("CommandChannelPool", CommandBufferSize, 100);
+   CreatePoolHandle(CmdPoolName(), CmdBufSize(), 10);
 
    fCmdOutQueue = new CommandsQueue(false, false);
 
    for (int n=0;n<numnodes;n++)
-      CreateIOPort(FORMAT(("Port%d",n)), fPool, 5, 5, 0);
+      CreateIOPort(FORMAT(("Port%d",n)), Pool(), 5, 5, 0);
 }
 
 dabc::CommandChannelModule::~CommandChannelModule()
@@ -130,7 +127,7 @@ void dabc::CommandChannelModule::SendSubmittedCommands()
 
       // take buffer without request, while we anyhow get event when send is completed and
       // device will release buffer anyhow
-      dabc::Buffer* buf = fPool->TakeBuffer(CommandBufferSize);
+      dabc::Buffer* buf = Pool()->TakeBuffer(CmdBufSize());
       // if one has no buffers in pool, one should wait more time
       if (buf==0) break;
 
@@ -163,5 +160,5 @@ void dabc::CommandChannelModule::SendSubmittedCommands()
 
 dabc::MemoryPool* dabc::CommandChannelModule::GetPool()
 {
-   return fPool ? fPool->getPool() : 0;
+   return Pool() ? Pool()->getPool() : 0;
 }

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -928,7 +928,7 @@ dabc::Buffer* dabc::MemoryPool::_TakeBuffer(BufferSize_t size, BufferSize_t hdrs
    }
 
    if (master==0) {
-      EOUT(("No master blocks with so big buffer %u", size));
+      EOUT(("Pool:%s No master blocks with so big buffer %u", GetName(), size));
       return 0;
    }
 
