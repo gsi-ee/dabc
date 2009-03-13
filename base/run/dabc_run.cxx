@@ -89,7 +89,7 @@ int RunSctrlApplication(dabc::Configuration& cfg, const char* connid, int nodeid
    if (runfunc!=0)
       runfunc();
    else
-   if (nodeid==0)
+   if (!dabc::mgr()->GetApp()->IsSlaveApp())
       ClassicalRunFunction();
 
    return 0;
@@ -117,7 +117,7 @@ int RunDimApplication(dabc::Configuration& cfg, int nodeid, bool dorun)
       if (runfunc!=0)
          runfunc();
       else
-      if (nodeid==0)
+      if (!dabc::mgr()->GetApp()->IsSlaveApp())
          ClassicalRunFunction();
    }
 

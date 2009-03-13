@@ -232,10 +232,58 @@ class NetTestMcastModule : public dabc::ModuleAsync {
 
 class NetTestApplication : public dabc::Application {
    public:
-      NetTestApplication() : dabc::Application("NetTestApplication")
+
+      enum EKinds { kindAllToAll, kindMulticast };
+
+      NetTestApplication() : dabc::Application("NetTestApp")
       {
          CreateParStr("Kind", "all-to-all");
+
+         CreateParStr("NetDevice", dabc::typeSocketDevice);
+
+         CreateParStr(dabc::xmlMcastAddr, "224.0.0.15");
+         CreateParInt(dabc::xmlMcastPort, 7234);
       }
+
+      virtual bool IsSlaveApp() { return false; }
+
+      int Kind()
+      {
+         if (GetParStr("Kind") == "all-to-all") return kindAllToAll;
+         if (GetParStr("Kind") == "multicast") return kindMulticast;
+         return kindAllToAll;
+      }
+
+      virtual bool CreateAppModules()
+      {
+         std::string devclass = GetParStr("NetDevice");
+
+         if (Kind() == kindAllToAll) {
+
+         } else
+         if (Kind() == kindMulticast) {
+            bool isrecv = dabc::mgr()->NodeId() > 0;
+
+            DOUT1(("Create device %s", devclass.c_str()));
+
+            if (!dabc::mgr()->CreateDevice(devclass.c_str(), "MDev")) return false;
+
+            dabc::Command* cmd = new dabc::CmdCreateModule("NetTestMcastModule", "MM");
+            cmd->SetBool("IsReceiver", isrecv);
+            if (!dabc::mgr()->Execute(cmd)) return false;
+
+            if (!dabc::mgr()->CreateTransport(isrecv ? "MM/Input" : "MM/Output", "MDev")) return false;
+
+            DOUT1(("Create multicast modules done"));
+
+            return true;
+         }
+
+         return false;
+
+      }
+
+
 };
 
 
@@ -247,7 +295,7 @@ class NetTestFactory : public dabc::Factory  {
 
       virtual dabc::Application* CreateApplication(const char* classname, dabc::Command* cmd)
       {
-         if (strcmp(classname, "NetTestApplication")==0)
+         if (strcmp(classname, "NetTestApp")==0)
             return new NetTestApplication();
          return dabc::Factory::CreateApplication(classname, cmd);
       }

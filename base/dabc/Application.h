@@ -42,6 +42,8 @@ namespace dabc {
 
           virtual int ExecuteCommand(dabc::Command* cmd);
 
+          virtual bool IsSlaveApp() { return false; }
+
           virtual bool DoStateTransition(const char* state_trans_name);
 
           // These methods are called in the state transition process,

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="lxi009"/>
+  <Context host="lxi010"/>
+  <Context host="lxi011"/>
+  <Context host="lxi012"/>
+  <Defaults>
+     <Context name="*">
+       <Run>
+         <lib value="libDabcNetTest.so"/>
+         <sockethost value="${host}"/>
+       </Run>
+       <Application class="NetTestApp">
+         <Kind value="multicast"/>
+         <NetDevice value="dabc::SocketDevice"/>
+         <McastAddr value="224.0.0.15"/>
+         <McastPort value="1234"/>
+         <BufferSize value="1024"/>
+         <OutputQueueSize value="4"/>
+         <InputQueueSize value="8"/>
+         <UseAcknowledge value="false"/>
+       </Application>
+     </Context>
+  </Defaults>
+</dabc>

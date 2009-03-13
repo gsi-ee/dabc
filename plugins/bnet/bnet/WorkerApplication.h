@@ -29,6 +29,8 @@ namespace bnet {
       public:
          WorkerApplication(const char* classname);
 
+         virtual bool IsSlaveApp() { return true; }
+
          int   CombinerModus() const { return GetParInt(xmlCombinerModus, 0); }
          int   NumReadouts() const { return GetParInt(xmlNumReadouts, 1); }
          std::string ReadoutPar(int nreadout = 0) const;

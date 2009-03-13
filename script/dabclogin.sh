@@ -2,6 +2,11 @@
 
 echo "Simple DABC login"
 
+if [[ "x$JAVA_HOME" == "x" && -d /usr/lib/jvm/java-1.5.0-sun ]] ;
+then
+   export JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+fi
+
 export DABCSYS=`pwd`
 
 export PATH=$DABCSYS/bin:$PATH
