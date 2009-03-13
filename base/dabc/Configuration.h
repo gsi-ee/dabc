@@ -69,6 +69,7 @@ namespace dabc {
          std::string InitFuncName();
          std::string RunFuncName();
          int ShowCpuInfo();
+         int GetRunTime();
 
          std::string GetUserPar(const char* name, const char* dflt = 0);
          int GetUserParInt(const char* name, int dflt = 0);

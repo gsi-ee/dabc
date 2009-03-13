@@ -81,6 +81,14 @@ namespace dabc {
             { SetStr("PoolName", name); }
    };
 
+   class CmdCheckConnModule : public Command {
+      public:
+         static const char* CmdName() { return "CheckConn"; }
+
+         CmdCheckConnModule(const char* modulename) : Command(CmdName())
+            { SetPar("Module", modulename); }
+   };
+
    class CmdStartModule : public Command {
       public:
          static const char* CmdName() { return "StartModule"; }
@@ -370,7 +378,7 @@ namespace dabc {
 
          const char* CurrentThrdName();
 
-         void RunManagerMainLoop();
+         void RunManagerMainLoop(int runtime = 0);
 
          // ---------------- modules manipulation ------------------
 

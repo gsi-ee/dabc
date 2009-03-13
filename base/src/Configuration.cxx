@@ -147,6 +147,17 @@ int dabc::Configuration::ShowCpuInfo()
    return kind;
 }
 
+int dabc::Configuration::GetRunTime()
+{
+   if (fSelected==0) return 0;
+   std::string res = Find1(fSelected, "", xmlRunNode, xmlRunTime);
+   if (res.empty()) return 0;
+   int runtime(0);
+   if (sscanf(res.c_str(),"%d",&runtime)!=1) return 0;
+   return runtime;
+
+}
+
 std::string dabc::Configuration::GetUserPar(const char* name, const char* dflt)
 {
    if (fSelected==0) return std::string("");

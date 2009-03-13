@@ -30,7 +30,7 @@ extern "C" void ClassicalRunFunction()
    DOUT1(("Application mainloop is now running"));
    DOUT1(("       Press Ctrl-C for stop"));
 
-   dabc::mgr()->RunManagerMainLoop();
+   dabc::mgr()->RunManagerMainLoop(dabc::mgr()->cfg()->GetRunTime());
 
    DOUT1(("Normal finish of mainloop"));
 
@@ -119,9 +119,11 @@ int RunDimApplication(dabc::Configuration& cfg, int nodeid, bool dorun)
       else
       if (!dabc::mgr()->GetApp()->IsSlaveApp())
          ClassicalRunFunction();
-   }
+      else
+         dabc::mgr()->RunManagerMainLoop();
+   } else
+      dabc::mgr()->RunManagerMainLoop();
 
-   dabc::mgr()->RunManagerMainLoop();
 
    return 0;
 }

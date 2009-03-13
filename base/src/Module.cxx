@@ -233,7 +233,12 @@ bool dabc::Module::DoStop()
 
 int dabc::Module::ExecuteCommand(Command* cmd)
 {
-   // return false if command cannot be processed
+   if (cmd->IsName(CmdCheckConnModule::CmdName())) {
+      for (unsigned n=0;n<NumIOPorts();n++)
+         if (IOPort(n) && !IOPort(n)->IsConnected()) return cmd_false;
+
+      return cmd_true;
+   }
 
    return CommandReceiver::ExecuteCommand(cmd);
 }

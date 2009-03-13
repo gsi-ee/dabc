@@ -9,13 +9,14 @@
        <Run>
          <lib value="libDabcNetTest.so"/>
          <sockethost value="${host}"/>
+         <runtime value="10"/>
        </Run>
        <Application class="NetTestApp">
-         <Kind value="multicast"/>
+         <Kind value="all-to-all"/>
          <NetDevice value="dabc::SocketDevice"/>
          <McastAddr value="224.0.0.15"/>
          <McastPort value="1234"/>
-         <BufferSize value="1024"/>
+         <BufferSize value="8000"/>
          <OutputQueueSize value="4"/>
          <InputQueueSize value="8"/>
          <UseAcknowledge value="false"/>

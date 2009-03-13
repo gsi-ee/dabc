@@ -1064,16 +1064,22 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
    if (cmd->IsName(CmdCleanupManager::CmdName())) {
       cmd_res = DoCleanupManager(cmd->GetInt("AppId", 0));
    } else
+   if (cmd->IsName(CmdCheckConnModule::CmdName())) {
+      dabc::Module* m = FindModule(cmd->GetStr("Module",""));
+      if (m!=0) {
+         m->Submit(cmd);
+         cmd_res = cmd_postponed;
+      } else
+         cmd_res = cmd_false;
+   } else
    if (cmd->IsName(CmdStartModule::CmdName())) {
       dabc::Module* m = FindModule(cmd->GetStr("Module",""));
-      if (m!=0) m->Start();
-//      DOUT1(("Call module start %s", (m ? m->GetName() : "null")));
+      if (m!=0) m->Stop();
       cmd_res = cmd_bool(m!=0);
    } else
    if (cmd->IsName(CmdStopModule::CmdName())) {
       dabc::Module* m = FindModule(cmd->GetStr("Module",""));
       if (m!=0) m->Stop();
-//      DOUT1(("Call module stop %s", (m ? m->GetName() : "null")));
       cmd_res = cmd_bool(m!=0);
    } else
    if (cmd->IsName(CmdDeleteModule::CmdName())) {
@@ -2067,7 +2073,7 @@ void dabc::Manager::ProcessCtrlCSignal()
    exit(0);
 }
 
-void dabc::Manager::RunManagerMainLoop()
+void dabc::Manager::RunManagerMainLoop(int runtime)
 {
    DOUT2(("Enter dabc::Manager::RunManagerMainLoop"));
 
@@ -2080,7 +2086,11 @@ void dabc::Manager::RunManagerMainLoop()
 
    if (fMgrNormalThrd) {
       DOUT3(("Manager has normal thread - just wait until application modules are stopped"));
-      while(!fMgrStopped) { dabc::LongSleep(1); }
+      while(!fMgrStopped) {
+         dabc::LongSleep(1);
+         if (runtime>0)
+           if (--runtime==0) break;
+      }
    } else {
       DOUT3(("Manager uses main process as thread - run mainloop ourself"));
 

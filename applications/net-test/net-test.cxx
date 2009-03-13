@@ -29,6 +29,7 @@
 #include "dabc/TimeSyncModule.h"
 #include "dabc/Factory.h"
 #include "dabc/Configuration.h"
+#include "dabc/CommandsSet.h"
 
 int TestBufferSize = 8*1024;
 int TestSendQueueSize = 5;
@@ -260,6 +261,20 @@ class NetTestApplication : public dabc::Application {
 
          if (Kind() == kindAllToAll) {
 
+            if (!dabc::mgr()->CreateDevice(devclass.c_str(), "NetDev")) return false;
+
+            dabc::Command* cmd =
+               new dabc::CmdCreateModule("NetTestReceiverModule", "Receiver");
+            cmd->SetInt("NumPorts", dabc::mgr()->NumNodes()-1);
+            if (!dabc::mgr()->Execute(cmd)) return false;
+
+            cmd = new dabc::CmdCreateModule("NetTestSenderModule","Sender");
+            cmd->SetInt("NumPorts", dabc::mgr()->NumNodes()-1);
+            if (!dabc::mgr()->Execute(cmd)) return false;
+
+            return true;
+
+
          } else
          if (Kind() == kindMulticast) {
             bool isrecv = dabc::mgr()->NodeId() > 0;
@@ -281,6 +296,53 @@ class NetTestApplication : public dabc::Application {
 
          return false;
 
+      }
+
+
+      virtual int ConnectAppModules(dabc::Command* cmd)
+      {
+         if ((Kind() == kindAllToAll) && (dabc::mgr()->NodeId()==0)) {
+
+            dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
+
+            for (int nsender = 0; nsender < dabc::mgr()->NumNodes(); nsender++) {
+               for (int nreceiver = 0; nreceiver < dabc::mgr()->NumNodes(); nreceiver++) {
+                   if (nsender==nreceiver) continue;
+
+                   std::string port1name, port2name;
+
+                   dabc::formats(port1name, "%s$Sender/Output%d", dabc::mgr()->GetNodeName(nsender), (nreceiver>nsender ? nreceiver-1 : nreceiver));
+                   dabc::formats(port2name, "%s$Receiver/Input%d", dabc::mgr()->GetNodeName(nreceiver), (nsender>nreceiver ? nsender-1 : nsender));
+
+                   dabc::Command* cmd =
+                      new dabc::CmdConnectPorts(port1name.c_str(),
+                                                port2name.c_str(),
+                                                "NetDev");
+
+                   dabc::mgr()->Submit(set->Assign(cmd));
+               }
+            }
+
+            dabc::CommandsSet::Completed(set, 10.);
+
+            return cmd_postponed;
+         }
+
+         return dabc::Application::ConnectAppModules(cmd);
+      }
+
+      virtual int IsAppModulesConnected()
+      {
+         if (Kind() == kindAllToAll) {
+
+            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Receiver"))) return 2;
+
+            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Sender"))) return 2;
+
+            return 1;
+         }
+
+         return dabc::Application::IsAppModulesConnected();
       }
 
 
