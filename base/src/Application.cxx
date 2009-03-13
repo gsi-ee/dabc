@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -72,14 +72,13 @@ int dabc::Application::ConnectAppModules(Command* cmd)
    }
 
    int res = IsAppModulesConnected();
-   if (res==1) return cmd_true;
-   if (res==0) return cmd_false;
 
-   fConnCmd = cmd;
-   fConnTmout = SMCommandTimeout() - 0.5;
-   if (fConnTmout<0.5) fConnTmout = 0.5;
-   ActivateTimeout(0.2);
-   return cmd_postponed;
+   if (res == cmd_postponed) {
+      fConnTmout = SMCommandTimeout() - 0.5;
+      if (fConnTmout<0.5) fConnTmout = 0.5;
+      ActivateTimeout(0.2);
+   }
+   return res;
 }
 
 int dabc::Application::ExecuteCommand(dabc::Command* cmd)
@@ -122,10 +121,10 @@ double dabc::Application::ProcessTimeout(double last_diff)
 
    int res = IsAppModulesConnected();
 
-   if ((res==2) && (fConnTmout<0)) res = 0;
+   if ((res==cmd_postponed) && (fConnTmout<0)) res = cmd_false;
 
-   if ((res==1) || (res==0)) {
-      dabc::Command::Reply(fConnCmd, (res==1));
+   if ((res==cmd_false) || (res==cmd_true)) {
+      dabc::Command::Reply(fConnCmd, (res==cmd_true));
       fConnCmd = 0;
       return -1;
    }

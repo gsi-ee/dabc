@@ -355,7 +355,7 @@ bool bnet::WorkerApplication::CreateAppModules()
 
 int bnet::WorkerApplication::IsAppModulesConnected()
 {
-   return GetParBool(CfgConnected) ? 1 : 2;
+   return GetParBool(CfgConnected) ? cmd_true : cmd_postponed;
 }
 
 bool bnet::WorkerApplication::BeforeAppModulesDestroyed()

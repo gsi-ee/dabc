@@ -202,16 +202,31 @@ class NetTestMcastModule : public dabc::ModuleAsync {
             CreateInput("Input", Pool());
          else {
             CreateOutput("Output", Pool());
-            CreateTimer("Timer1", 0.1);
+//            CreateTimer("Timer1", 0.1);
          }
+
+         CreateRateParameter("DataRate", false, 3., "Input", "Output");
       }
 
       void ProcessInputEvent(dabc::Port* port)
       {
          dabc::Buffer* buf = port->Recv();
          if (buf==0) { EOUT(("AAAAAAA")); return; }
-         DOUT0(("Counter %3d Size %u Msg %s", fCounter++, buf->GetDataSize(), buf->GetDataLocation()));
+
+//         DOUT0(("Process input event %d", buf->GetDataSize()));
+
+//         DOUT0(("Counter %3d Size %u Msg %s", fCounter++, buf->GetDataSize(), buf->GetDataLocation()));
          dabc::Buffer::Release(buf);
+      }
+
+      void ProcessOutputEvent(dabc::Port* port)
+      {
+         dabc::Buffer* buf = Pool()->TakeBuffer();
+         if (buf==0) { EOUT(("AAAAAAA")); return; }
+
+         buf->SetDataSize(1000);
+//         DOUT0(("Process output event %d", buf->GetDataSize()));
+         port->Send(buf);
       }
 
       void ProcessTimerEvent(dabc::Timer* timer)
@@ -229,6 +244,10 @@ class NetTestMcastModule : public dabc::ModuleAsync {
          Output()->Send(buf);
       }
 
+      void AfterModuleStop()
+      {
+         DOUT0(("Mcast module rate %s", GetParStr("DataRate").c_str()));
+      }
 };
 
 class NetTestApplication : public dabc::Application {
@@ -349,13 +368,13 @@ class NetTestApplication : public dabc::Application {
 
 	         DOUT0(("Check for modules connected"));
 
-            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Receiver"))) return 2;
+            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Receiver"))) return cmd_postponed;
 
-            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Sender"))) return 2;
+            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Sender"))) return cmd_postponed;
 
 	         DOUT0(("Check for modules connected done"));
 
-            return 1;
+            return cmd_true;
          }
 
          return dabc::Application::IsAppModulesConnected();

@@ -53,7 +53,7 @@ namespace dabc {
 
           virtual bool CreateAppModules();
           virtual int ConnectAppModules(Command* cmd);
-          virtual int IsAppModulesConnected() { return 1; } // 0 - error, 1 - ok, 2 - not ready
+          virtual int IsAppModulesConnected() { return cmd_true; } // cmd_false, cmd_true, cmd_postponed
           virtual bool BeforeAppModulesStarted() { return true; }
           virtual bool AfterAppModulesStopped() { return true; }
           virtual bool BeforeAppModulesDestroyed() { return true; }
