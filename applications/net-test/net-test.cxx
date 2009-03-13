@@ -63,7 +63,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
             port->SetOutRateMeter(rate);
          }
 
-         fCanSend = false;
+         fCanSend = GetCfgBool("CanSend", false, cmd);
          fPortCnt = 0;
 
          DOUT1(("new TSendModule %s nports = %d buf = %d done", GetName(), NumOutputs(), buffsize));
@@ -275,6 +275,7 @@ class NetTestApplication : public dabc::Application {
 
             cmd = new dabc::CmdCreateModule("NetTestSenderModule","Sender");
             cmd->SetInt("NumPorts", dabc::mgr()->NumNodes()-1);
+            cmd->SetBool("CanSend", true);
             if (!dabc::mgr()->Execute(cmd)) return false;
 
             DOUT0(("Create all-to-all modules done"));
@@ -310,7 +311,7 @@ class NetTestApplication : public dabc::Application {
       {
          if ((Kind() == kindAllToAll) && (dabc::mgr()->NodeId()==0)) {
 
-	    DOUT0(("Start submit connection commands"));
+            DOUT0(("Start submit connection commands"));
 
             dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
 
@@ -333,8 +334,8 @@ class NetTestApplication : public dabc::Application {
             }
 
             dabc::CommandsSet::Completed(set, 10.);
-	    
-	    DOUT0(("Submit connection commands done"));
+
+	         DOUT0(("Submit connection commands done"));
 
             return cmd_postponed;
          }
@@ -345,21 +346,21 @@ class NetTestApplication : public dabc::Application {
       virtual int IsAppModulesConnected()
       {
          if (Kind() == kindAllToAll) {
-	 
-	    DOUT0(("Check for modules connected"));
+
+	         DOUT0(("Check for modules connected"));
 
             if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Receiver"))) return 2;
 
             if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Sender"))) return 2;
 
-	    DOUT0(("Check for modules connected done"));
+	         DOUT0(("Check for modules connected done"));
 
             return 1;
          }
 
          return dabc::Application::IsAppModulesConnected();
       }
-      
+
       virtual bool BeforeAppModulesStarted()
       {
          DOUT0(("BeforeAppModulesStarted()"));
