@@ -194,14 +194,14 @@ class NetTestMcastModule : public dabc::ModuleAsync {
       {
          fReceiver = GetCfgBool("IsReceiver", true, cmd);
 
-         CreatePoolHandle("MPool", 1024, 10);
+         CreatePoolHandle("MPool");
 
          fCounter = 0;
 
          if (fReceiver)
-            CreateInput("Input", Pool(), 5);
+            CreateInput("Input", Pool());
          else {
-            CreateOutput("Output", Pool(), 5);
+            CreateOutput("Output", Pool());
             CreateTimer("Timer1", 0.1);
          }
       }
@@ -217,7 +217,7 @@ class NetTestMcastModule : public dabc::ModuleAsync {
       void ProcessTimerEvent(dabc::Timer* timer)
       {
          if (!Output()->CanSend()) return;
-         dabc::Buffer* buf = Pool()->TakeBuffer(0);
+         dabc::Buffer* buf = Pool()->TakeBuffer(1024);
          if (buf==0) return;
 
          sprintf((char*)buf->GetDataLocation(),"Message %3d from sender", fCounter++);
@@ -244,6 +244,11 @@ class NetTestApplication : public dabc::Application {
 
          CreateParStr(dabc::xmlMcastAddr, "224.0.0.15");
          CreateParInt(dabc::xmlMcastPort, 7234);
+
+         CreateParInt(dabc::xmlBufferSize, 1024);
+         CreateParInt(dabc::xmlOutputQueueSize, 4);
+         CreateParInt(dabc::xmlInputQueueSize, 8);
+         CreateParBool(dabc::xmlUseAcknowledge, false);
       }
 
       virtual bool IsSlaveApp() { return false; }
@@ -271,6 +276,8 @@ class NetTestApplication : public dabc::Application {
             cmd = new dabc::CmdCreateModule("NetTestSenderModule","Sender");
             cmd->SetInt("NumPorts", dabc::mgr()->NumNodes()-1);
             if (!dabc::mgr()->Execute(cmd)) return false;
+
+            DOUT0(("Create all-to-all modules done"));
 
             return true;
 
@@ -303,6 +310,8 @@ class NetTestApplication : public dabc::Application {
       {
          if ((Kind() == kindAllToAll) && (dabc::mgr()->NodeId()==0)) {
 
+	    DOUT0(("Start submit connection commands"));
+
             dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
 
             for (int nsender = 0; nsender < dabc::mgr()->NumNodes(); nsender++) {
@@ -314,16 +323,18 @@ class NetTestApplication : public dabc::Application {
                    dabc::formats(port1name, "%s$Sender/Output%d", dabc::mgr()->GetNodeName(nsender), (nreceiver>nsender ? nreceiver-1 : nreceiver));
                    dabc::formats(port2name, "%s$Receiver/Input%d", dabc::mgr()->GetNodeName(nreceiver), (nsender>nreceiver ? nsender-1 : nsender));
 
-                   dabc::Command* cmd =
+                   dabc::Command* subcmd =
                       new dabc::CmdConnectPorts(port1name.c_str(),
                                                 port2name.c_str(),
                                                 "NetDev");
 
-                   dabc::mgr()->Submit(set->Assign(cmd));
+                   dabc::mgr()->Submit(set->Assign(subcmd));
                }
             }
 
             dabc::CommandsSet::Completed(set, 10.);
+	    
+	    DOUT0(("Submit connection commands done"));
 
             return cmd_postponed;
          }
@@ -334,15 +345,25 @@ class NetTestApplication : public dabc::Application {
       virtual int IsAppModulesConnected()
       {
          if (Kind() == kindAllToAll) {
+	 
+	    DOUT0(("Check for modules connected"));
 
             if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Receiver"))) return 2;
 
             if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Sender"))) return 2;
 
+	    DOUT0(("Check for modules connected done"));
+
             return 1;
          }
 
          return dabc::Application::IsAppModulesConnected();
+      }
+      
+      virtual bool BeforeAppModulesStarted()
+      {
+         DOUT0(("BeforeAppModulesStarted()"));
+         return true;
       }
 
 

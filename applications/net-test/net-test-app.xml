@@ -16,7 +16,7 @@
          <NetDevice value="dabc::SocketDevice"/>
          <McastAddr value="224.0.0.15"/>
          <McastPort value="1234"/>
-         <BufferSize value="8000"/>
+         <BufferSize value="2048"/>
          <OutputQueueSize value="4"/>
          <InputQueueSize value="8"/>
          <UseAcknowledge value="false"/>
