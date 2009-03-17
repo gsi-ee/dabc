@@ -74,6 +74,7 @@ int dabc::Application::ConnectAppModules(Command* cmd)
    int res = IsAppModulesConnected();
 
    if (res == cmd_postponed) {
+      fConnCmd = cmd;
       fConnTmout = SMCommandTimeout() - 0.5;
       if (fConnTmout<0.5) fConnTmout = 0.5;
       ActivateTimeout(0.2);
@@ -116,6 +117,8 @@ int dabc::Application::ExecuteCommand(dabc::Command* cmd)
 double dabc::Application::ProcessTimeout(double last_diff)
 {
    // we using timeout events to check if connection is established
+
+   if (fConnCmd==0) return -1;
 
    fConnTmout -= last_diff;
 
