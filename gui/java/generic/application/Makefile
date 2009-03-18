@@ -1,3 +1,4 @@
+# Must set CLASSPATH to xgui.jar and DIM:
 #FLAGSA=-d . -classpath xgui.jar:$(DIMDIR)/jdim/classes
   
 all: classes
