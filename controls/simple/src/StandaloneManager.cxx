@@ -159,7 +159,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       Command* scmd = new Command("StartServer");
       scmd->SetStr("CmdChannel", "StdMgrCmd");
       scmd->SetKeepAlive(true);
-      Submit(cli.Assign(SetCmdRcv(scmd, fCmdDevName.c_str())));
+      Submit(cli.Assign(SetCmdReceiver(scmd, fCmdDevName.c_str())));
 
       if (cli.WaitCommands(10)) {
          fCmdDeviceId = scmd->GetPar("ConnId");
@@ -194,7 +194,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
 
       Device::MakeRemoteCommand(cmdr, controllerID, "StdMgrCmd");
 
-      Submit(cli.Assign(SetCmdRcv(cmdr, fCmdDevName.c_str())));
+      Submit(cli.Assign(SetCmdReceiver(cmdr, fCmdDevName.c_str())));
 
       if (cli.WaitCommands(7)) {
          DOUT2(("RegisterSlave execution OK serv = %s connid = %s",
@@ -214,7 +214,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       cmd->SetPar("ConnId", cmdr->GetPar("ConnId"));
       cmd->SetPar("ServerId", cmdr->GetPar("ServerId"));
       cmd->SetBool("ServerUseAckn", true);
-      Submit(cli.Assign(SetCmdRcv(cmd, fCmdDevName.c_str())));
+      Submit(cli.Assign(SetCmdReceiver(cmd, fCmdDevName.c_str())));
 
       dabc::Command::Finalise(cmdr);
 
@@ -288,7 +288,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       Command* scmd = new Command("StartServer");
 //      scmd->SetStr("CmdChannel","StdMgrCmd");
       scmd->SetKeepAlive(true);
-      Submit(cli.Assign(SetCmdRcv(scmd, fCmdDevName.c_str())));
+      Submit(cli.Assign(SetCmdReceiver(scmd, fCmdDevName.c_str())));
 
       if (cli.WaitCommands(10)) {
          fCmdDeviceId = scmd->GetPar("ConnId");
@@ -310,7 +310,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       for (int nslave=1; nslave < NumNodes(); nslave++) {
          Command* cmd = new CmdDirectConnect(true, FORMAT(("CommandChannel/Port%d", nslave-1)));
          cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", nslave)));
-         Submit(cli.Assign(SetCmdRcv(cmd, fCmdDevName.c_str())));
+         Submit(cli.Assign(SetCmdReceiver(cmd, fCmdDevName.c_str())));
       }
 
    } else {
@@ -322,7 +322,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", fNodeId)));
       cmd->SetPar("ServerId", controllerID);
       cmd->SetBool("ServerUseAckn", true);
-      Submit(cli.Assign(SetCmdRcv(cmd, fCmdDevName.c_str())));
+      Submit(cli.Assign(SetCmdReceiver(cmd, fCmdDevName.c_str())));
    }
 
    bool res = cli.WaitCommands(5);
@@ -351,7 +351,7 @@ void dabc::StandaloneManager::DisconnectCmdChannels()
 
    for (int node=1;node<NumNodes();node++)
       if (IsNodeActive(node))
-         Submit(cli.Assign(SetCmdRcv(new dabc::Command("DisconnectCmdChannel"), GetNodeName(node), "")));
+         Submit(cli.Assign(SetCmdReceiver(new dabc::Command("DisconnectCmdChannel"), GetNodeName(node), "")));
 
    bool res = cli.WaitCommands(10);
 
@@ -482,7 +482,7 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       Command* ccmd = new CmdDirectConnect(true, FORMAT(("CommandChannel/Port%d", slaveid-1)));
       ccmd->SetPar("ConnId", connid.c_str());
       ccmd->SetBool("ServerUseAckn", true);
-      Submit(Assign(SetCmdRcv(ccmd, fCmdDevName.c_str())));
+      Submit(Assign(SetCmdReceiver(ccmd, fCmdDevName.c_str())));
 
       // reply with complete info that client can start connection
       cmd->SetStr("MainMgr", GetName());
@@ -606,7 +606,7 @@ void dabc::StandaloneManager::SubscribedParChanged(ParamReg& reg)
 
    Command* cmd = new CmdSetParameter(reg.par->GetName(), value.c_str());
 
-   if (!Submit(SetCmdRcv(cmd, reg.tgtnode, reg.remname.c_str())))
+   if (!Submit(SetCmdReceiver(cmd, reg.tgtnode, reg.remname.c_str())))
       EOUT(("Cannot send parameter change"));
 
    DOUT3(("SubscribedParChanged completed"));
@@ -657,7 +657,7 @@ bool dabc::StandaloneManager::Unsubscribe(Parameter* par)
                Command* cmd = new Command("UnsubscribeParam");
                cmd->SetStr("TgtName", fullname);
                cmd->SetInt("TgtNode", NodeId());
-               cmds.Push(SetCmdRcv(cmd, curr->srcnode, 0));
+               cmds.Push(SetCmdReceiver(cmd, curr->srcnode, 0));
             }
          }
       }
@@ -727,7 +727,7 @@ void dabc::StandaloneManager::CheckSubscriptionList()
                cmd->SetStr("SrcName", curr->remname);
                cmd->SetStr("TgtName", fullname);
                cmd->SetInt("TgtNode", NodeId());
-               Submit(SetCmdRcv(cmd, curr->srcnode, 0));
+               Submit(SetCmdReceiver(cmd, curr->srcnode, 0));
             }
          }
       } else {

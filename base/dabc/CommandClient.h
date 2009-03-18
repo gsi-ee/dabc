@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -23,23 +23,23 @@
 #endif
 
 namespace dabc {
-    
-   class Command; 
+
+   class Command;
    class Mutex;
    class Condition;
    class Manager;
 
    class CommandClientBase {
-      friend class Command; 
-       
+      friend class Command;
+
       public:
          CommandClientBase();
          virtual ~CommandClientBase();
-         
+
          Command* Assign(Command* cmd);
-         
+
          int CancelCommands();
-         
+
       protected:
          class stl_commands_list;
 
@@ -53,9 +53,9 @@ namespace dabc {
          Mutex                *fCmdsMutex;
          stl_commands_list    *fSubmCmds;
    };
-   
+
    // ___________________________________________________________________
-  
+
   /**
     * Base class for processing of commands.
     */
@@ -67,57 +67,55 @@ namespace dabc {
             cmd_false = false,
             cmd_true = true,
             cmd_ignore = 3333,
-            cmd_postponed = 7777  
-         }; 
-       
+            cmd_postponed = 7777
+         };
+
       static int cmd_bool(bool res) { return res ? cmd_true : cmd_false; }
-       
-      protected: 
+
+      protected:
          // this method is called when command should be executed
          int ProcessCommand(Command* cmd);
          virtual int PreviewCommand(Command* cmd) { return cmd_ignore; }
          virtual int ExecuteCommand(Command* cmd);
-         
+
          virtual bool IsExecutionThread() { return true; }
-         
+
          virtual ~CommandReceiver() {}
-       
+
       public:
          virtual bool Submit(Command* cmd);
-         bool SubmitCl(CommandClientBase& cl, Command* cmd) { return Submit(cl.Assign(cmd)); }
-         bool SubmitCl(CommandClientBase* cl, Command* cmd) { return Submit(cl ? cl->Assign(cmd) : cmd); }
-         
+
          bool Execute(Command* cmd, double timeout_sec = -1.);
          bool Execute(const char* cmdname, double timeout_sec = -1.);
-         
+
          int ExecuteInt(const char* cmdname, const char* intresname, double timeout_sec = -1.);
          std::string ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec = -1.);
    };
 
    // ___________________________________________________________________
-   
+
    class CommandClient : public CommandClientBase {
       public:
          CommandClient(bool keep_cmds = false);
          virtual ~CommandClient();
-      
+
          bool WaitCommands(double timeout_sec = -1.);
-         
+
          bool IsKeepCommands() const { return fKeepCmds; }
-         
+
          CommandsQueue& ReplyedCmds() { return fReplyedCmds; }
-         
+
          void Reset();
-         
-      protected: 
-      
+
+      protected:
+
          virtual bool _ProcessReply(Command* cmd);
-         
+
          bool                  fKeepCmds;
          Condition            *fReplyCond;
          CommandsQueue         fReplyedCmds;
          bool                  fReplyedRes;
-         
+
    };
 
 }

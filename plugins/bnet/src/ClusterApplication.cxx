@@ -283,7 +283,7 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
          } else
             wcmd = new dabc::Command("StopFile");
 
-         dabc::mgr()->SetCmdRcv(wcmd, nodename, dabc::xmlAppDfltName);
+         dabc::SetCmdReceiver(wcmd, nodename, dabc::xmlAppDfltName);
 
          if (set==0) set = new dabc::CommandsSet(cmd);
          dabc::mgr()->Submit(set->Assign(wcmd));
@@ -335,7 +335,7 @@ bool bnet::ClusterApplication::StartDiscoverConfig(dabc::Command* mastercmd)
       cmd->SetInt(xmlCtrlBuffer, GetParInt(xmlCtrlBuffer));
       cmd->SetStr(xmlNetDevice, NetDevice().c_str());
 
-      dabc::mgr()->SetCmdRcv(cmd, nodename, dabc::xmlAppDfltName);
+      dabc::SetCmdReceiver(cmd, nodename, dabc::xmlAppDfltName);
 
       if (set==0) set = new ClusterDiscoverSet(this, mastercmd);
 
@@ -372,7 +372,7 @@ bool bnet::ClusterApplication::StartClusterSMCommand(dabc::Command* mastercmd)
 
       DOUT4(("Submit SMcmd:%s to node %s", smcmdname, nodename));
 
-      dabc::mgr()->SetCmdRcv(cmd, nodename, "");
+      dabc::SetCmdReceiver(cmd, nodename, "");
 
       if (set==0) set = new dabc::CommandsSet(mastercmd);
 
@@ -408,7 +408,7 @@ bool bnet::ClusterApplication::StartConfigureApply(dabc::Command* mastercmd)
       cmd->SetStr(parSendMask, send_mask.c_str());
       cmd->SetStr(parRecvMask, recv_mask.c_str());
 
-      dabc::mgr()->SetCmdRcv(cmd, nodename, dabc::xmlAppDfltName);
+      dabc::SetCmdReceiver(cmd, nodename, dabc::xmlAppDfltName);
 
       if (set==0) set = new dabc::CommandsSet(mastercmd);
 
@@ -472,9 +472,9 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
 
       dabc::CommandsSet* set = new dabc::CommandsSet(0, false);
 
-      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command(DiscoverCmdName), this));
-      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command("ConnectModules"), this));
-      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command("ApplyConfig"), this));
+      set->Add(dabc::SetCmdReceiver(new dabc::Command(DiscoverCmdName), this));
+      set->Add(dabc::SetCmdReceiver(new dabc::Command("ConnectModules"), this));
+      set->Add(dabc::SetCmdReceiver(new dabc::Command("ApplyConfig"), this));
 
       dabc::CommandsSet::Completed(set, SMCommandTimeout());
 
@@ -490,25 +490,25 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
       // in this case active command will be replyed
       dabc::CommandsSet* set = new dabc::CommandsSet(0, false);
 
-      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command(DiscoverCmdName), this));
+      set->Add(dabc::SetCmdReceiver(new dabc::Command(DiscoverCmdName), this));
 
       dabc::Command* dcmd = new dabc::Command("ClusterSMCommand");
       dcmd->SetStr("CmdName", dabc::Manager::stcmdDoConfigure);
       dcmd->SetInt("NodeId", nodeid);
-      set->Add(dabc::mgr()->SetCmdRcv(dcmd, this));
+      set->Add(dabc::SetCmdReceiver(dcmd, this));
 
-      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command("ConnectModules"), this));
-      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command("ApplyConfig"), this));
+      set->Add(dabc::SetCmdReceiver(new dabc::Command("ConnectModules"), this));
+      set->Add(dabc::SetCmdReceiver(new dabc::Command("ApplyConfig"), this));
 
       dcmd = new dabc::Command("ClusterSMCommand");
       dcmd->SetStr("CmdName", dabc::Manager::stcmdDoEnable);
       dcmd->SetInt("NodeId", nodeid);
-      set->Add(dabc::mgr()->SetCmdRcv(dcmd, this));
+      set->Add(dabc::SetCmdReceiver(dcmd, this));
 
       dcmd = new dabc::Command("ClusterSMCommand");
       dcmd->SetStr("CmdName", dabc::Manager::stcmdDoStart);
       dcmd->SetInt("NodeId", nodeid);
-      set->Add(dabc::mgr()->SetCmdRcv(dcmd, this));
+      set->Add(dabc::SetCmdReceiver(dcmd, this));
 
       dabc::CommandsSet::Completed(set, SMCommandTimeout());
 

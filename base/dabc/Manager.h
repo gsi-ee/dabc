@@ -418,19 +418,6 @@ namespace dabc {
          /** Delete memory pool */
          bool DeletePool(const char* name);
 
-         // ----------- commands submission -------------------
-
-         // next methods prepare commands arguments so, that
-         // they can be directly submitted to the manager via submit
-         // for instance m.Submit(m.SetCmdRcv(new Command("Start"), "Generator"));
-         // This queues commands first in manager queue and than submitted to specified
-         // object. If object has own thread, it will be used for command execution
-
-         Command* SetCmdRcv(Command* cmd, const char* itemname);
-         Command* SetCmdRcv(Command* cmd, const char* nodename, const char* itemname);
-         Command* SetCmdRcv(Command* cmd, int nodeid, const char* itemname);
-         Command* SetCmdRcv(Command* cmd, Basic* rcv);
-
          // ---------------- interface to control system -------------
 
          /** indicate if manager play central role in the system */
@@ -609,6 +596,18 @@ namespace dabc {
    };
 
    inline dabc::Manager* mgr() { return dabc::Manager::Instance(); }
+
+
+   /** These functions prepare commands arguments so, that
+     * they can be directly submitted to the manager via submit for instance:
+     *    dabc::mgr()->Submit(SetCmdReceiver(new Command("Start"), "Generator"));
+     * Command will be queued in manager queue and than submitted to specified
+     * object. If object has own thread, it will be used for command execution */
+
+   extern Command* SetCmdReceiver(Command* cmd, const char* itemname);
+   extern Command* SetCmdReceiver(Command* cmd, const char* nodename, const char* itemname);
+   extern Command* SetCmdReceiver(Command* cmd, int nodeid, const char* itemname);
+   extern Command* SetCmdReceiver(Command* cmd, Basic* rcv);
 
 }
 

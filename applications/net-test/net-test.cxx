@@ -442,7 +442,7 @@ bool StartStopAll(bool isstart)
       dabc::Command* cmd = 0;
       if (isstart) cmd = new dabc::CmdStartAllModules;
               else cmd = new dabc::CmdStopAllModules;
-      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "");
+      dabc::SetCmdReceiver(cmd, node, "");
       dabc::mgr()->Submit(cli.Assign(cmd));
    }
 
@@ -459,7 +459,7 @@ bool EnableSending(bool on = true)
    for (int node=0;node<dabc::mgr()->NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("EnableSending");
       cmd->SetBool("Enable", on);
-      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "Sender");
+      dabc::SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(node), "Sender");
 
       dabc::mgr()->Submit(cli.Assign(cmd));
    }
@@ -490,7 +490,7 @@ extern "C" void RunAllToAll()
          new dabc::CmdCreateModule("NetTestReceiverModule","Receiver");
       cmd->SetInt("NumPorts", numnodes-1);
       cmd->SetInt("BufferSize", TestBufferSize);
-      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "");
+      dabc::SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(node), "");
 
       dabc::mgr()->Submit(cli.Assign(cmd));
    }
@@ -500,7 +500,7 @@ extern "C" void RunAllToAll()
          new dabc::CmdCreateModule("NetTestSenderModule","Sender");
       cmd->SetInt("NumPorts", numnodes-1);
       cmd->SetInt("BufferSize", TestBufferSize);
-      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "");
+      dabc::SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(node), "");
 
       dabc::mgr()->Submit(cli.Assign(cmd));
    }
@@ -513,7 +513,7 @@ extern "C" void RunAllToAll()
 
    for (int node = 0; node < numnodes; node++) {
       dabc::Command* cmd = new dabc::CmdCreateDevice(devclass.c_str(), devname);
-      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "");
+      dabc::SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(node), "");
       dabc::mgr()->Submit(cli.Assign(cmd));
    }
 
@@ -537,7 +537,7 @@ extern "C" void RunAllToAll()
                                        devname, "TransportThrd");
           cmd->SetBool(dabc::xmlUseAcknowledge, TestUseAckn);
 
-          dabc::mgr()->SubmitCl(cli, cmd);
+          dabc::mgr()->Submit(cli.Assign(cmd));
       }
    }
    res = cli.WaitCommands(5);

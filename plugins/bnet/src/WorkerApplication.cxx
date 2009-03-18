@@ -152,19 +152,19 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
       cmd->SetBool("Standalone", !GetParBool(CfgController));
       cmd->SetStr(parRecvMask, GetParStr(CfgRecvMask));
 
-      set->Add(dabc::mgr()->SetCmdRcv(cmd, "Sender"));
+      set->Add(dabc::SetCmdReceiver(cmd, "Sender"));
    }
 
    if (IsReceiver()) {
       dabc::Command* cmd = new dabc::Command("Configure");
       cmd->SetStr(parSendMask, GetParStr(CfgSendMask));
-      set->Add(dabc::mgr()->SetCmdRcv(cmd, "Receiver"));
+      set->Add(dabc::SetCmdReceiver(cmd, "Receiver"));
 
       cmd = new dabc::CmdSetParameter(parSendMask, GetParStr(CfgSendMask).c_str());
-      set->Add(dabc::mgr()->SetCmdRcv(cmd, "Builder"));
+      set->Add(dabc::SetCmdReceiver(cmd, "Builder"));
    }
 
-   set->Add(dabc::mgr()->SetCmdRcv(new dabc::CmdSetParameter(CfgConnected, true), this));
+   set->Add(dabc::SetCmdReceiver(new dabc::CmdSetParameter(CfgConnected, true), this));
 
    dabc::CommandsSet::Completed(set, SMCommandTimeout());
 

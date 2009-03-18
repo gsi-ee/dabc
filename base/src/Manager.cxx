@@ -781,47 +781,6 @@ const char* dabc::Manager::ExtractManagerName(const char* fullname, std::string&
    return pos;
 }
 
-dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, const char* itemname)
-{
-   // we set "_ItemName_" parameter to be able identify receiver for the command
-
-   if (cmd)
-      cmd->SetStr("_ItemName_", itemname ? itemname : "");
-
-   return cmd;
-}
-
-dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, const char* nodename, const char* itemname)
-{
-   if ((nodename==0) || (IsName(nodename)))
-      return SetCmdRcv(cmd, itemname);
-
-   std::string fullname = nodename;
-   fullname.append("$");
-   if (itemname!=0) fullname.append(itemname);
-
-   return SetCmdRcv(cmd, fullname.c_str());
-}
-
-dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, int nodeid, const char* itemname)
-{
-   return SetCmdRcv(cmd, GetNodeName(nodeid), itemname);
-}
-
-dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, Basic* rcv)
-{
-   if (cmd==0) return 0;
-
-   if (rcv==0) return SetCmdRcv(cmd, "");
-
-   std::string s = rcv->GetFullName(this);
-
-   if (rcv->GetCmdReceiver()==0)
-      EOUT(("Object %s cannot be used to receive commands", s.c_str()));
-
-   return SetCmdRcv(cmd, s.c_str());
-}
-
 int dabc::Manager::PreviewCommand(Command* cmd)
 {
    // check if command dedicated for other node, module and so on
@@ -1176,7 +1135,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          newcmd->SetInt("#_PCID_", parentid);
          newcmd->ClearResult();
 
-         SetCmdRcv(newcmd, manager1name.c_str(), remrecvname.c_str());
+         SetCmdReceiver(newcmd, manager1name.c_str(), remrecvname.c_str());
 
          if (!Submit(Assign(newcmd)))
             EOUT(("Cannot submit remote command"));
@@ -1396,7 +1355,7 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
 
       std::string devname("Devices/"); devname += prnt->GetStr("Device");
 
-      SetCmdRcv(newcmd, manager2name.c_str(), devname.c_str());
+      SetCmdReceiver(newcmd, manager2name.c_str(), devname.c_str());
 
       if (!Submit(Assign(newcmd))) {
          Command* prnt = TakeInternalCmd("_PCID_", parentid);
@@ -1686,7 +1645,7 @@ bool dabc::Manager::TestActiveNodes(double tmout)
    for (int node=0; node<NumNodes(); node++)
       if ((node!=NodeId()) && IsNodeActive(node)) {
          Command* cmd = new Command("Ping");
-         SetCmdRcv(cmd, GetNodeName(node), "");
+         SetCmdReceiver(cmd, GetNodeName(node), "");
          Submit(cli.Assign(cmd));
       }
 
@@ -2144,4 +2103,48 @@ bool dabc::Manager::Find(ConfigIO &cfg)
       if (!cfg.CheckAttr(xmlNameAttr, GetName())) return false;
 
    return true;
+}
+
+// __________________________________________________________________
+
+
+dabc::Command* dabc::SetCmdReceiver(Command* cmd, const char* itemname)
+{
+   // we set "_ItemName_" parameter to be able identify receiver for the command
+
+   if (cmd)
+      cmd->SetStr("_ItemName_", itemname ? itemname : "");
+
+   return cmd;
+}
+
+dabc::Command* dabc::SetCmdReceiver(Command* cmd, const char* nodename, const char* itemname)
+{
+   if ((nodename==0) || (strlen(nodename)==0) || dabc::mgr()->IsName(nodename))
+      return SetCmdReceiver(cmd, itemname);
+
+   std::string fullname = nodename;
+   fullname.append("$");
+   if (itemname!=0) fullname.append(itemname);
+
+   return SetCmdReceiver(cmd, fullname.c_str());
+}
+
+dabc::Command* dabc::SetCmdReceiver(Command* cmd, int nodeid, const char* itemname)
+{
+   return SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(nodeid), itemname);
+}
+
+dabc::Command* dabc::SetCmdReceiver(Command* cmd, Basic* rcv)
+{
+   if (cmd==0) return 0;
+
+   if (rcv==0) return SetCmdReceiver(cmd, "");
+
+   std::string s = rcv->GetFullName(dabc::mgr());
+
+   if (rcv->GetCmdReceiver()==0)
+      EOUT(("Object %s cannot be used to receive commands", s.c_str()));
+
+   return SetCmdReceiver(cmd, s.c_str());
 }

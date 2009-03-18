@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -26,8 +26,8 @@ namespace dabc {
 
    /** CommandsSet - class provides possibility to submit/control execution of commands sets
      * It's main idea - several commands can be submitted in parallel or sequential and
-     * only when all of them is completed, master command is replyed with true argument
-     * One also can specify timeout interval, after which master command will be replyed with false.
+     * only when all of them is completed, master command is replied with true argument
+     * One also can specify timeout interval, after which master command will be replied with false.
      * There are two ways to assign command to the set -
      * 1. Use CommandSet as client. It means, command submitted immediately and
      *    CommandSet is only analyzes reply of this command to see if result is ok.
