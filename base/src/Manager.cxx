@@ -781,6 +781,35 @@ const char* dabc::Manager::ExtractManagerName(const char* fullname, std::string&
    return pos;
 }
 
+dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, const char* itemname)
+{
+   // we set "_ItemName_" parameter to be able identify receiver for the command
+
+   if (cmd)
+      cmd->SetStr("_ItemName_", itemname ? itemname : "");
+
+   return cmd;
+}
+
+dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, const char* nodename, const char* itemname)
+{
+   if ((nodename==0) || (IsName(nodename)))
+      return SetCmdRcv(cmd, itemname);
+
+   std::string fullname = nodename;
+   fullname.append("$");
+   if (itemname!=0) fullname.append(itemname);
+
+   return SetCmdRcv(cmd, fullname.c_str());
+}
+
+dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, int nodeid, const char* itemname)
+{
+   return SetCmdRcv(cmd, GetNodeName(nodeid), itemname);
+}
+
+
+
 dabc::Command* dabc::Manager::LocalCmd(Command* cmd, const char* fullitemname)
 {
    if (cmd==0) return 0;

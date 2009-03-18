@@ -251,102 +251,23 @@ then asynchronously executed there. The \class{Manager} will either forward the 
 to its receiver, if such is specified as command parameter; or the \class{Manager} working thread itself will execute the command.
 Thus method does not block and returns \keyw{true} if it accepts the command for execution, otherwise \keyw{false}. 
       
-\item[\em Command* LocalCmd\small (Command* cmd, const char* fullitemname = "")] :
-\index{Manager interface !LocalCmd()}
-Prepares the properties of command \func{cmd} for execution on the local node. The
-returned \func{Command*} may be directly used for \func{Submit(cmd)}
-(e.~g.~ \\ {\tt m.Submit(m.LocalCmd(new Command("Start"),"Generator"))});
-it may also be collected in a \class{dabc::CommandsSet}.
-The command receiver is defined by the full name \func{fullitemname} in the object folder structure, e.~g.~ "Devices/Socket".
 
-\item[\em Command* LocalCmd\small (Command* cmd, Basic* rcv)] :
-\index{Manager interface !LocalCmd()} 
-Prepares the properties of command \func{cmd} for execution on the local node. The
-returned \func{Command*} may be directly used for \func{Submit(cmd)}
-(e.~g.~ \\ {\tt m.Submit(m.LocalCmd(new Command("Start"),generator))});
-it may also be collected in a \class{dabc::CommandsSet}.
-The command receiver \func{rcv} is passed directly by reference.
-
-
-\item[\em Command* RemoteCmd(Command* cmd, int nodeid, const char* itemname = "")] :
-\index{Manager interface !RemoteCmd()}
-Prepares a command \func{cmd} for execution on a remote node. 
-The returned \func{Command*} may be directly used for \func{Submit(cmd)}
-(e.~g.~ \\ {\tt m.Submit(m.RemoteCmd(new Command("Start"),3 ,"Generator"))});
-it may also be collected in a \class{dabc::CommandsSet}.
-The execution node is specified by the unique \func{nodeid} in the DAQ
-cluster. The command receiver on that node
-is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "Modules/ReadoutModule1", or by a unique reduced name.
-
-
-\item[\em Command* RemoteCmd\small (Command* cmd, const char* nodename, 
-const char* itemname = "")]:
-\index{Manager interface !RemoteCmd()}
-Prepares a command \func{cmd} for execution on a remote node. 
-The returned \func{Command*} may be directly used for \func{Submit(cmd)}
-(e.~g.~ \\{\tt m.Submit(m.RemoteCmd(new Command("Start"),"node01","Generator"))});
-it may also be collected in a \class{dabc::CommandsSet}.
-The execution node is specified by the unique \func{nodename} as defined
-by the configuration system (see section \ref{prog_manager_controls_manager}).
-The command receiver on that node
-is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "ReadoutModule".
-
-
-
-\item[\em bool SubmitLocal\small (CommandClientBase\& cli, Command* cmd, const char* fullitemname = "")] :
-\index{Manager interface !SubmitLocal()}
-Submits a command \func{cmd} for execution on the local node. The command receiver
-is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "ReadoutModule1". The caller must provide a command client object
-\func{cli} that will receive a command reply depending on the execution success.
-It is recommended to rather prepare a command by means of \func{LocalCmd()} 
-and then use a  plain \func{Submit()}, if command client functionality
-is not necessary.
-
-
-
-
-
-\item[\em bool SubmitLocal\small (CommandClientBase\& cli, Command* cmd, Basic* rcv)] :
-\index{Manager interface !SubmitLocal()}
-Submits a command \func{cmd} for execution on the local node. The command receiver
-\func{rcv} is passed directly by reference.
-The caller must provide a command client object
-\func{cli} that will receive a command reply depending on the execution success.
-It is recommended to rather prepare a command by means of \func{LocalCmd()} 
-and then use a  plain \func{Submit()}, if command client functionality
-is not necessary.
-
-\item[\em bool SubmitRemote ] {\small \bf\em (} \\
-{\small \bf\em CommandClientBase\& cli, Command* cmd, int nodeid, const char* itemname = "") } :
-\index{Manager interface !SubmitRemote()}
-Submits a command \func{cmd} for execution on a remote node. 
-The execution node is specified by the unique \func{nodeid} in the DAQ
-cluster. The command receiver on that node
-is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "ReadoutModule1".  
-The caller must provide a command client object
-\func{cli} that will receive a command reply depending on the execution success.
-It is recommended to rather prepare a command by means of \func{RemoteCmd()} 
-and then use a  plain \func{Submit()}, if command client functionality
-is not necessary.
-
-\item[\em bool SubmitRemote] {\small \bf\em (} \\
-{\small \bf\em CommandClientBase\& cli, Command* cmd, const char* nodename, const char* itemname = "") }:
-\index{Manager interface !SubmitRemote()}
-Submits a command \func{cmd} for execution on a remote node. 
-The execution node is specified by the unique \func{nodename} as defined
-by the configuration system (see section \ref{prog_manager_controls_manager}).
-The command receiver on that node
-is defined by the full name \func{fullitemname} in the object folder structure,
-e.~g.~ "ReadoutModule1". 
-The caller must provide a command client object
-\func{cli} that will receive a command reply depending on the execution success.
-It is recommended to rather prepare a command by means of \func{RemoteCmd()} 
-and then use a  plain \func{Submit()}, if command client functionality
-is not necessary.
+\item[\em Command* SetCmdRcv\small (Command* cmd, const char* itemname)] :
+\item[\em Command* SetCmdRcv\small (Command* cmd, const char* nodename, const char* itemname)] :
+\item[\em Command* SetCmdRcv\small (Command* cmd, int nodeid, const char* itemname)] :
+\index{Manager interface !SetCmdRcv()}
+Set receiver attribute of command \func{cmd}. The \func{itemname} is
+item name of the local node like "Module1". One can also specify 
+\func{nodename} or \func{nodeid} of the node, to which command should be submitted.
+Returns pointer on the command itself.
+One can use \func{SetCmdRcv} to submit command like:
+\begin{small}
+\begin{verbatim}
+dabc::mgr()->Submit(dabc::mgr()->SetCmdRcv(cmd, "Module1"));
+dabc::mgr()->Submit(dabc::mgr()->SetCmdRcv(cmd, "Node1", "Module1"));
+dabc::mgr()->Submit(cli.Assign(dabc::mgr()->SetCmdRcv(cmd, 0, "Module1")));
+\end{verbatim}
+\end{small}
 
 
 \end{description}

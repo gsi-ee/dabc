@@ -421,10 +421,16 @@ namespace dabc {
          // ----------- commands submission -------------------
 
          // next methods prepare commands arguments so, that
-         // they can be directly submitted to the maneger via submit
+         // they can be directly submitted to the manager via submit
          // for instance m.Submit(m.LocalCmd(new Command("Start"), "Generator"));
          // This queues commands first in manager queue and than submitted to sepcified
          // object. If object has own thread, it will be used for command execution
+
+         Command* SetCmdRcv(Command* cmd, const char* itemname = "");
+         Command* SetCmdRcv(Command* cmd, const char* nodename, const char* itemname);
+         Command* SetCmdRcv(Command* cmd, int nodeid, const char* itemname);
+
+
 
          Command* LocalCmd(Command* cmd, const char* fullitemname = "");
 

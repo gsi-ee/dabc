@@ -159,7 +159,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       Command* scmd = new Command("StartServer");
       scmd->SetStr("CmdChannel", "StdMgrCmd");
       scmd->SetKeepAlive(true);
-      SubmitLocal(cli, scmd, fCmdDevName.c_str());
+      Submit(cli.Assign(SetCmdRcv(scmd, fCmdDevName.c_str())));
 
       if (cli.WaitCommands(10)) {
          fCmdDeviceId = scmd->GetPar("ConnId");
@@ -192,7 +192,9 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       cmdr->SetInt("SlaveNodeId", fNodeId);
       cmdr->SetKeepAlive(true);
 
-      SubmitLocal(cli, Device::MakeRemoteCommand(cmdr, controllerID, "StdMgrCmd"), fCmdDevName.c_str());
+      Device::MakeRemoteCommand(cmdr, controllerID, "StdMgrCmd");
+
+      Submit(cli.Assign(SetCmdRcv(cmdr, fCmdDevName.c_str())));
 
       if (cli.WaitCommands(7)) {
          DOUT2(("RegisterSlave execution OK serv = %s connid = %s",
@@ -212,7 +214,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       cmd->SetPar("ConnId", cmdr->GetPar("ConnId"));
       cmd->SetPar("ServerId", cmdr->GetPar("ServerId"));
       cmd->SetBool("ServerUseAckn", true);
-      SubmitLocal(cli, cmd, fCmdDevName.c_str());
+      Submit(cli.Assign(SetCmdRcv(cmd, fCmdDevName.c_str())));
 
       dabc::Command::Finalise(cmdr);
 
@@ -286,7 +288,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       Command* scmd = new Command("StartServer");
 //      scmd->SetStr("CmdChannel","StdMgrCmd");
       scmd->SetKeepAlive(true);
-      SubmitLocal(cli, scmd, fCmdDevName.c_str());
+      Submit(cli.Assign(SetCmdRcv(scmd, fCmdDevName.c_str())));
 
       if (cli.WaitCommands(10)) {
          fCmdDeviceId = scmd->GetPar("ConnId");
@@ -308,7 +310,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       for (int nslave=1; nslave < NumNodes(); nslave++) {
          Command* cmd = new CmdDirectConnect(true, FORMAT(("CommandChannel/Port%d", nslave-1)));
          cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", nslave)));
-         SubmitLocal(cli, cmd, fCmdDevName.c_str());
+         Submit(cli.Assign(SetCmdRcv(cmd, fCmdDevName.c_str())));
       }
 
    } else {
@@ -320,7 +322,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", fNodeId)));
       cmd->SetPar("ServerId", controllerID);
       cmd->SetBool("ServerUseAckn", true);
-      SubmitLocal(cli, cmd, fCmdDevName.c_str());
+      Submit(cli.Assign(SetCmdRcv(cmd, fCmdDevName.c_str())));
    }
 
    bool res = cli.WaitCommands(5);
@@ -480,7 +482,7 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       Command* ccmd = new CmdDirectConnect(true, FORMAT(("CommandChannel/Port%d", slaveid-1)));
       ccmd->SetPar("ConnId", connid.c_str());
       ccmd->SetBool("ServerUseAckn", true);
-      SubmitLocal(*this, ccmd, fCmdDevName.c_str());
+      Submit(Assign(SetCmdRcv(ccmd, fCmdDevName.c_str())));
 
       // reply with complete info that client can start connection
       cmd->SetStr("MainMgr", GetName());
