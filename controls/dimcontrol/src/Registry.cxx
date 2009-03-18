@@ -676,7 +676,7 @@ void dimc::Registry::SubmitLocalDIMCommand(const std::string& com, const std::st
 //    std::cout <<" -  commandname is "<<varname << std::endl;
 //    std::cout <<" -  modulename is "<<modname << std::endl;
       // TODO: fill xml par string to dabccom (special ctor later)
-      dabc::mgr()->Submit(dabc::mgr()->LocalCmd(dabccom, modname.c_str()));
+      dabc::mgr()->Submit(dabc::mgr()->SetCmdRcv(dabccom, modname.c_str()));
    } else {
       // wrap other dim commands to be executed in manager thread:
       dimc::Command* command= new dimc::Command(com.c_str(), parameter.c_str());

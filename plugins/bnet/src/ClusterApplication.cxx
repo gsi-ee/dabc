@@ -421,7 +421,6 @@ bool bnet::ClusterApplication::StartConfigureApply(dabc::Command* mastercmd)
          dabc::Command* cmd = new dabc::Command("Configure");
          cmd->SetStr(parSendMask, send_mask.c_str());
          cmd->SetStr(parRecvMask, recv_mask.c_str());
-//         set->Add(dabc::mgr()->LocalCmd(cmd, m));
          if (set==0) set = new dabc::CommandsSet(mastercmd);
          m->Submit(set->Assign(cmd));
       }
@@ -473,9 +472,9 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
 
       dabc::CommandsSet* set = new dabc::CommandsSet(0, false);
 
-      set->Add(dabc::mgr()->LocalCmd(new dabc::Command(DiscoverCmdName), this));
-      set->Add(dabc::mgr()->LocalCmd(new dabc::Command("ConnectModules"), this));
-      set->Add(dabc::mgr()->LocalCmd(new dabc::Command("ApplyConfig"), this));
+      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command(DiscoverCmdName), this));
+      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command("ConnectModules"), this));
+      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command("ApplyConfig"), this));
 
       dabc::CommandsSet::Completed(set, SMCommandTimeout());
 
@@ -491,25 +490,25 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
       // in this case active command will be replyed
       dabc::CommandsSet* set = new dabc::CommandsSet(0, false);
 
-      set->Add(dabc::mgr()->LocalCmd(new dabc::Command(DiscoverCmdName), this));
+      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command(DiscoverCmdName), this));
 
       dabc::Command* dcmd = new dabc::Command("ClusterSMCommand");
       dcmd->SetStr("CmdName", dabc::Manager::stcmdDoConfigure);
       dcmd->SetInt("NodeId", nodeid);
-      set->Add(dabc::mgr()->LocalCmd(dcmd, this));
+      set->Add(dabc::mgr()->SetCmdRcv(dcmd, this));
 
-      set->Add(dabc::mgr()->LocalCmd(new dabc::Command("ConnectModules"), this));
-      set->Add(dabc::mgr()->LocalCmd(new dabc::Command("ApplyConfig"), this));
+      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command("ConnectModules"), this));
+      set->Add(dabc::mgr()->SetCmdRcv(new dabc::Command("ApplyConfig"), this));
 
       dcmd = new dabc::Command("ClusterSMCommand");
       dcmd->SetStr("CmdName", dabc::Manager::stcmdDoEnable);
       dcmd->SetInt("NodeId", nodeid);
-      set->Add(dabc::mgr()->LocalCmd(dcmd, this));
+      set->Add(dabc::mgr()->SetCmdRcv(dcmd, this));
 
       dcmd = new dabc::Command("ClusterSMCommand");
       dcmd->SetStr("CmdName", dabc::Manager::stcmdDoStart);
       dcmd->SetInt("NodeId", nodeid);
-      set->Add(dabc::mgr()->LocalCmd(dcmd, this));
+      set->Add(dabc::mgr()->SetCmdRcv(dcmd, this));
 
       dabc::CommandsSet::Completed(set, SMCommandTimeout());
 

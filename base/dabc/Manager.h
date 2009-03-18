@@ -422,22 +422,14 @@ namespace dabc {
 
          // next methods prepare commands arguments so, that
          // they can be directly submitted to the manager via submit
-         // for instance m.Submit(m.LocalCmd(new Command("Start"), "Generator"));
-         // This queues commands first in manager queue and than submitted to sepcified
+         // for instance m.Submit(m.SetCmdRcv(new Command("Start"), "Generator"));
+         // This queues commands first in manager queue and than submitted to specified
          // object. If object has own thread, it will be used for command execution
 
-         Command* SetCmdRcv(Command* cmd, const char* itemname = "");
+         Command* SetCmdRcv(Command* cmd, const char* itemname);
          Command* SetCmdRcv(Command* cmd, const char* nodename, const char* itemname);
          Command* SetCmdRcv(Command* cmd, int nodeid, const char* itemname);
-
-
-         Command* LocalCmd(Command* cmd, const char* fullitemname = "");
-
-         Command* LocalCmd(Command* cmd, Basic* rcv);
-
-         Command* RemoteCmd(Command* cmd, const char* nodename, const char* itemname = "");
-
-         Command* RemoteCmd(Command* cmd, int nodeid, const char* itemname = "");
+         Command* SetCmdRcv(Command* cmd, Basic* rcv);
 
          // ---------------- interface to control system -------------
 

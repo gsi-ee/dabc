@@ -123,7 +123,7 @@ else if(Registry()->FindModuleCommand(rname))
       std::cout <<" -  commandname is "<<varname << std::endl;
       std::cout <<" -  modulename is "<<modname << std::endl;
       // TODO: fill xml par string to dabccom (special ctor later)
-      dabc::mgr()->Submit(dabc::mgr()->LocalCmd(dabccom, modname.c_str()));
+      dabc::mgr()->Submit(dabc::mgr()->SetCmdRcv(dabccom, modname.c_str()));
    }
 else
    {

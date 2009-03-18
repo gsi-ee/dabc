@@ -606,7 +606,7 @@ void dabc::StandaloneManager::SubscribedParChanged(ParamReg& reg)
 
    Command* cmd = new CmdSetParameter(reg.par->GetName(), value.c_str());
 
-   if (!Submit(RemoteCmd(cmd, reg.tgtnode, reg.remname.c_str())))
+   if (!Submit(SetCmdRcv(cmd, reg.tgtnode, reg.remname.c_str())))
       EOUT(("Cannot send parameter change"));
 
    DOUT3(("SubscribedParChanged completed"));
@@ -657,7 +657,7 @@ bool dabc::StandaloneManager::Unsubscribe(Parameter* par)
                Command* cmd = new Command("UnsubscribeParam");
                cmd->SetStr("TgtName", fullname);
                cmd->SetInt("TgtNode", NodeId());
-               cmds.Push(RemoteCmd(cmd, curr->srcnode, 0));
+               cmds.Push(SetCmdRcv(cmd, curr->srcnode, 0));
             }
          }
       }
@@ -727,7 +727,7 @@ void dabc::StandaloneManager::CheckSubscriptionList()
                cmd->SetStr("SrcName", curr->remname);
                cmd->SetStr("TgtName", fullname);
                cmd->SetInt("TgtNode", NodeId());
-               Submit(RemoteCmd(cmd, curr->srcnode, 0));
+               Submit(SetCmdRcv(cmd, curr->srcnode, 0));
             }
          }
       } else {

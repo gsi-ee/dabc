@@ -147,41 +147,24 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
 
    dabc::CommandsSet* set = new dabc::CommandsSet(cmd, false);
 
-   dabc::Module* m = 0;
-
    if (IsSender()) {
+      dabc::Command* cmd = new dabc::Command("Configure");
+      cmd->SetBool("Standalone", !GetParBool(CfgController));
+      cmd->SetStr(parRecvMask, GetParStr(CfgRecvMask));
 
-      m = dabc::mgr()->FindModule("Sender");
-      if (m) {
-         dabc::Command* cmd = new dabc::Command("Configure");
-         cmd->SetBool("Standalone", !GetParBool(CfgController));
-         cmd->SetStr(parRecvMask, GetParStr(CfgRecvMask));
-
-         set->Add(dabc::mgr()->LocalCmd(cmd, m));
-//         m->Submit(*set, cmd);
-      } else
-         EOUT(("Cannot find Sender module"));
+      set->Add(dabc::mgr()->SetCmdRcv(cmd, "Sender"));
    }
 
    if (IsReceiver()) {
-      m = dabc::mgr()->FindModule("Receiver");
-      if (m) {
-         dabc::Command* cmd = new dabc::Command("Configure");
-         cmd->SetStr(parSendMask, GetParStr(CfgSendMask));
-         set->Add(dabc::mgr()->LocalCmd(cmd, m));
-//         m->Submit(*set, cmd);
-      } else
-         EOUT(("Cannot find receiver module"));
+      dabc::Command* cmd = new dabc::Command("Configure");
+      cmd->SetStr(parSendMask, GetParStr(CfgSendMask));
+      set->Add(dabc::mgr()->SetCmdRcv(cmd, "Receiver"));
 
-      m = dabc::mgr()->FindModule("Builder");
-      if (m) {
-         dabc::Command* cmd = new dabc::CmdSetParameter(parSendMask, GetParStr(CfgSendMask).c_str());
-         set->Add(dabc::mgr()->LocalCmd(cmd, m));
-      } else
-         EOUT(("Cannot find builder module"));
+      cmd = new dabc::CmdSetParameter(parSendMask, GetParStr(CfgSendMask).c_str());
+      set->Add(dabc::mgr()->SetCmdRcv(cmd, "Builder"));
    }
 
-   set->Add(dabc::mgr()->LocalCmd(new dabc::CmdSetParameter(CfgConnected, true), this));
+   set->Add(dabc::mgr()->SetCmdRcv(new dabc::CmdSetParameter(CfgConnected, true), this));
 
    dabc::CommandsSet::Completed(set, SMCommandTimeout());
 

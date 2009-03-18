@@ -808,54 +808,18 @@ dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, int nodeid, const char* it
    return SetCmdRcv(cmd, GetNodeName(nodeid), itemname);
 }
 
-
-
-dabc::Command* dabc::Manager::LocalCmd(Command* cmd, const char* fullitemname)
+dabc::Command* dabc::Manager::SetCmdRcv(Command* cmd, Basic* rcv)
 {
    if (cmd==0) return 0;
 
-   // we should always set "_ItemName_" variable to be able identify command
-   // later that it is not directly for manager, but for some item in manager
-
-   cmd->SetStr("_ItemName_", fullitemname ? fullitemname : "");
-
-   return cmd;
-}
-
-dabc::Command* dabc::Manager::LocalCmd(Command* cmd, Basic* rcv)
-{
-   if (cmd==0) return 0;
-
-   if ((rcv==0) || (rcv->GetCmdReceiver()==0)) {
-      EOUT(("Object cannot be used to recieve commands"));
-      dabc::Command::Reply(cmd, false);
-      return 0;
-   }
+   if (rcv==0) return SetCmdRcv(cmd, "");
 
    std::string s = rcv->GetFullName(this);
 
-   DOUT5(("Redirect cmd %s to item %s", cmd->GetName(), s.c_str()));
+   if (rcv->GetCmdReceiver()==0)
+      EOUT(("Object %s cannot be used to receive commands", s.c_str()));
 
-   return LocalCmd(cmd, s.c_str());
-}
-
-dabc::Command* dabc::Manager::RemoteCmd(Command* cmd, const char* nodename, const char* itemname)
-{
-   if (cmd==0) return 0;
-
-   if ((nodename==0) || (IsName(nodename)))
-      return LocalCmd(cmd, itemname);
-
-   std::string fullname = nodename;
-   fullname.append("$");
-   if (itemname!=0) fullname.append(itemname);
-
-   return LocalCmd(cmd, fullname.c_str());
-}
-
-dabc::Command* dabc::Manager::RemoteCmd(Command* cmd, int nodeid, const char* itemname)
-{
-   return RemoteCmd(cmd, GetNodeName(nodeid), itemname);
+   return SetCmdRcv(cmd, s.c_str());
 }
 
 int dabc::Manager::PreviewCommand(Command* cmd)

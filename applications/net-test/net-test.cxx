@@ -114,8 +114,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
       void AfterModuleStop()
       {
-         fCanSend = false;
-         DOUT0(("TSendModule finish Rate %s", GetParStr("OutRate").c_str()));
+         DOUT0(("SenderModule finish Rate %s", GetParStr("OutRate").c_str()));
       }
 };
 
@@ -179,7 +178,7 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
 
       void AfterModuleStop()
       {
-         DOUT0(("TRecvModule finish Rate %s", GetParStr("InpRate").c_str()));
+         DOUT0(("ReceiverModule finish Rate %s", GetParStr("InpRate").c_str()));
       }
 };
 
