@@ -435,15 +435,20 @@ NetTestFactory nettest("net-test");
 
 
 
-bool StartAll()
+bool StartStopAll(bool isstart)
 {
    dabc::CommandClient cli;
 
-   for (int node=0;node<dabc::mgr()->NumNodes();node++)
-      dabc::mgr()->SubmitRemote(cli, new dabc::CmdStartAllModules(), node);
+   for (int node=0;node<dabc::mgr()->NumNodes();node++) {
+      dabc::Command* cmd = 0;
+      if (isstart) cmd = new dabc::CmdStartAllModules;
+              else cmd = new dabc::CmdStopAllModules;
+      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "");
+      dabc::mgr()->Submit(cli.Assign(cmd));
+   }
 
    bool res = cli.WaitCommands(3);
-   DOUT0(("StartAll() res = %s", DBOOL(res)));
+   DOUT0(("%s all() res = %s", (isstart ? "Start" : "Stop"), DBOOL(res)));
 
    return res;
 }
@@ -455,23 +460,12 @@ bool EnableSending(bool on = true)
    for (int node=0;node<dabc::mgr()->NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("EnableSending");
       cmd->SetBool("Enable", on);
-      dabc::mgr()->SubmitRemote(cli, cmd, node, "Sender");
+      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "Sender");
+
+      dabc::mgr()->Submit(cli.Assign(cmd));
    }
 
    return cli.WaitCommands(3);
-}
-
-bool StopAll()
-{
-   dabc::CommandClient cli;
-
-   for (int node=0;node<dabc::mgr()->NumNodes();node++)
-      dabc::mgr()->SubmitRemote(cli, new dabc::CmdStopAllModules(), node);
-
-   bool res = cli.WaitCommands(3);
-   DOUT0(("StopAll() res = %s", DBOOL(res)));
-
-   return res;
 }
 
 extern "C" void RunAllToAll()
@@ -497,7 +491,9 @@ extern "C" void RunAllToAll()
          new dabc::CmdCreateModule("NetTestReceiverModule","Receiver");
       cmd->SetInt("NumPorts", numnodes-1);
       cmd->SetInt("BufferSize", TestBufferSize);
-      dabc::mgr()->SubmitRemote(cli, cmd, node);
+      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "");
+
+      dabc::mgr()->Submit(cli.Assign(cmd));
    }
 
    for (int node=0;node<numnodes;node++) {
@@ -505,7 +501,9 @@ extern "C" void RunAllToAll()
          new dabc::CmdCreateModule("NetTestSenderModule","Sender");
       cmd->SetInt("NumPorts", numnodes-1);
       cmd->SetInt("BufferSize", TestBufferSize);
-      dabc::mgr()->SubmitRemote(cli, cmd, node);
+      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "");
+
+      dabc::mgr()->Submit(cli.Assign(cmd));
    }
 
    res = cli.WaitCommands(5);
@@ -514,8 +512,11 @@ extern "C" void RunAllToAll()
 
    const char* devname = "Test1Dev";
 
-   for (int node = 0; node < numnodes; node++)
-      dabc::mgr()->SubmitRemote(cli, new dabc::CmdCreateDevice(devclass.c_str(), devname), node);
+   for (int node = 0; node < numnodes; node++) {
+      dabc::Command* cmd = new dabc::CmdCreateDevice(devclass.c_str(), devname);
+      dabc::mgr()->SetCmdRcv(cmd, dabc::mgr()->GetNodeName(node), "");
+      dabc::mgr()->Submit(cli.Assign(cmd));
+   }
 
    if (!cli.WaitCommands(5)) {
       EOUT(("Cannot create devices of class %s", devclass.c_str()));
@@ -543,13 +544,13 @@ extern "C" void RunAllToAll()
    res = cli.WaitCommands(5);
    DOUT1(("ConnectAllModules() res = %s", DBOOL(res)));
 
-   StartAll();
+   StartStopAll(true);
 
    EnableSending(true);
 
    dabc::ShowLongSleep("Waiting", 10);
 
-   StopAll();
+   StartStopAll(false);
 }
 
 extern "C" void RunMulticastTest()

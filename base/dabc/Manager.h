@@ -431,7 +431,6 @@ namespace dabc {
          Command* SetCmdRcv(Command* cmd, int nodeid, const char* itemname);
 
 
-
          Command* LocalCmd(Command* cmd, const char* fullitemname = "");
 
          Command* LocalCmd(Command* cmd, Basic* rcv);
@@ -439,13 +438,6 @@ namespace dabc {
          Command* RemoteCmd(Command* cmd, const char* nodename, const char* itemname = "");
 
          Command* RemoteCmd(Command* cmd, int nodeid, const char* itemname = "");
-
-         bool SubmitRemote(CommandClientBase& cli, Command* cmd, const char* nodename, const char* itemname = "")
-           { return SubmitCl(cli, RemoteCmd(cmd, nodename, itemname)); }
-
-         bool SubmitRemote(CommandClientBase& cli, Command* cmd, int nodeid, const char* itemname = "")
-           { return SubmitCl(cli, RemoteCmd(cmd, nodeid, itemname)); }
-
 
          // ---------------- interface to control system -------------
 
