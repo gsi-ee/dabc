@@ -440,12 +440,6 @@ namespace dabc {
 
          Command* RemoteCmd(Command* cmd, int nodeid, const char* itemname = "");
 
-         bool SubmitLocal(CommandClientBase& cli, Command* cmd, const char* fullitemname = "")
-            { return SubmitCl(cli, LocalCmd(cmd, fullitemname)); }
-
-         bool SubmitLocal(CommandClientBase& cli, Command* cmd, Basic* rcv)
-           { return SubmitCl(cli, LocalCmd(cmd, rcv)); }
-
          bool SubmitRemote(CommandClientBase& cli, Command* cmd, const char* nodename, const char* itemname = "")
            { return SubmitCl(cli, RemoteCmd(cmd, nodename, itemname)); }
 

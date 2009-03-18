@@ -1212,7 +1212,9 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          newcmd->SetInt("#_PCID_", parentid);
          newcmd->ClearResult();
 
-         if (!SubmitRemote(*this, newcmd, manager1name.c_str(), remrecvname.c_str()))
+         SetCmdRcv(newcmd, manager1name.c_str(), remrecvname.c_str());
+
+         if (!Submit(Assign(newcmd)))
             EOUT(("Cannot submit remote command"));
 
          cmd_res = cmd_postponed;
@@ -1430,7 +1432,9 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
 
       std::string devname("Devices/"); devname += prnt->GetStr("Device");
 
-      if (!SubmitRemote(*this, newcmd, manager2name.c_str(), devname.c_str())) {
+      SetCmdRcv(newcmd, manager2name.c_str(), devname.c_str());
+
+      if (!Submit(Assign(newcmd))) {
          Command* prnt = TakeInternalCmd("_PCID_", parentid);
          dabc::Command::Reply(prnt, false);
       }
@@ -1718,7 +1722,8 @@ bool dabc::Manager::TestActiveNodes(double tmout)
    for (int node=0; node<NumNodes(); node++)
       if ((node!=NodeId()) && IsNodeActive(node)) {
          Command* cmd = new Command("Ping");
-         SubmitRemote(cli, cmd, node);
+         SetCmdRcv(cmd, GetNodeName(node), "");
+         Submit(cli.Assign(cmd));
       }
 
    return cli.WaitCommands(tmout);

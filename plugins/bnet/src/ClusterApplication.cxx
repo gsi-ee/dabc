@@ -283,8 +283,10 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
          } else
             wcmd = new dabc::Command("StopFile");
 
+         dabc::mgr()->SetCmdRcv(wcmd, nodename, dabc::xmlAppDfltName);
+
          if (set==0) set = new dabc::CommandsSet(cmd);
-         dabc::mgr()->SubmitRemote(*set, wcmd, nodename, dabc::xmlAppDfltName);
+         dabc::mgr()->Submit(set->Assign(wcmd));
       }
 
       dabc::CommandsSet::Completed(set, SMCommandTimeout());
@@ -333,9 +335,11 @@ bool bnet::ClusterApplication::StartDiscoverConfig(dabc::Command* mastercmd)
       cmd->SetInt(xmlCtrlBuffer, GetParInt(xmlCtrlBuffer));
       cmd->SetStr(xmlNetDevice, NetDevice().c_str());
 
+      dabc::mgr()->SetCmdRcv(cmd, nodename, dabc::xmlAppDfltName);
+
       if (set==0) set = new ClusterDiscoverSet(this, mastercmd);
 
-      dabc::mgr()->SubmitRemote(*set, cmd, nodename, dabc::xmlAppDfltName);
+      dabc::mgr()->Submit(set->Assign(cmd));
    }
 
    dabc::CommandsSet::Completed(set, SMCommandTimeout());
@@ -368,9 +372,11 @@ bool bnet::ClusterApplication::StartClusterSMCommand(dabc::Command* mastercmd)
 
       DOUT4(("Submit SMcmd:%s to node %s", smcmdname, nodename));
 
+      dabc::mgr()->SetCmdRcv(cmd, nodename, "");
+
       if (set==0) set = new dabc::CommandsSet(mastercmd);
 
-      dabc::mgr()->SubmitRemote(*set, cmd, nodename);
+      dabc::mgr()->Submit(set->Assign(cmd));
    }
 
    DOUT3(("StartSMClusterCommand %s sel:%d", smcmdname, selectid));
@@ -402,9 +408,11 @@ bool bnet::ClusterApplication::StartConfigureApply(dabc::Command* mastercmd)
       cmd->SetStr(parSendMask, send_mask.c_str());
       cmd->SetStr(parRecvMask, recv_mask.c_str());
 
+      dabc::mgr()->SetCmdRcv(cmd, nodename, dabc::xmlAppDfltName);
+
       if (set==0) set = new dabc::CommandsSet(mastercmd);
 
-      dabc::mgr()->SubmitRemote(*set, cmd, nodename, dabc::xmlAppDfltName);
+      dabc::mgr()->Submit(set->Assign(cmd));
    }
 
    if (WithController()) {

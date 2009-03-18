@@ -351,7 +351,7 @@ void dabc::StandaloneManager::DisconnectCmdChannels()
 
    for (int node=1;node<NumNodes();node++)
       if (IsNodeActive(node))
-         SubmitRemote(cli, new dabc::Command("DisconnectCmdChannel"), node);
+         Submit(cli.Assign(SetCmdRcv(new dabc::Command("DisconnectCmdChannel"), GetNodeName(node), "")));
 
    bool res = cli.WaitCommands(10);
 

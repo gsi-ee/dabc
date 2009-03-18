@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="localhost" name="Controller:41">
+  <Context host="localhost" name="Controller">
     <Run>
       <runfunc value="RunTestBnet"/>
     </Run>
@@ -8,10 +8,10 @@
        <NetDevice value="dabc::SocketDevice"/>
     </Application>
   </Context>
-  <Context host="lxi009" name="Worker1:42"/>
-  <Context host="lxi010" name="Worker2:42"/>
-  <Context host="lxi011" name="Worker3:42"/>
-  <Context host="lxi012" name="Worker4:42"/>
+  <Context host="lxi017" name="Worker1"/>
+  <Context host="lxi019" name="Worker2"/>
+  <Context host="lxi020" name="Worker3"/>
+  <Context host="lxi021" name="Worker4"/>
   <Defaults>
     <Context name="*">
       <Run>
