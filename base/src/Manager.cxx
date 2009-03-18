@@ -1124,7 +1124,9 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
                return cmd_false;
             }
 
-            remrecvname = std::string("Devices/") + cmd->GetStr("Device");
+            remrecvname = DevicesFolderName();
+            remrecvname += "/";
+            remrecvname += cmd->GetStr("Device");
 
             newcmd = new CmdDirectConnect(true, port1name, true);
             // copy all additional values from
@@ -1353,7 +1355,9 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
       newcmd->SetBool("ClientSide", true);
       newcmd->ClearResult();
 
-      std::string devname("Devices/"); devname += prnt->GetStr("Device");
+      std::string devname = DevicesFolderName();
+      devname += "/";
+      devname += prnt->GetStr("Device");
 
       SetCmdReceiver(newcmd, manager2name.c_str(), devname.c_str());
 

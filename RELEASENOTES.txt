@@ -21,6 +21,13 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
+
+Changes in version 1.0.02
+   1. With run.sh one can distribute (copy) configuration file to target nodes. 
+   2. Remove old SubmitLocal, SubmitRemote, LocalCmd, RemoteCmd - 
+      all these methods replaced by new function, called SetCmdReceiver.
+   3. Add application in net-test, one can control its execution from gui.   
+
 Changes in version 1.0.01 (10 March 2009) 
 
    1. Add IP multicast support in SocketTransport.

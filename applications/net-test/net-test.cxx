@@ -447,7 +447,7 @@ bool StartStopAll(bool isstart)
    }
 
    bool res = cli.WaitCommands(3);
-   DOUT0(("%s all() res = %s", (isstart ? "Start" : "Stop"), DBOOL(res)));
+   DOUT0(("%s all res = %s", (isstart ? "Start" : "Stop"), DBOOL(res)));
 
    return res;
 }
