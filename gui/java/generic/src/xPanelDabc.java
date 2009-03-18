@@ -124,7 +124,7 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     Password.setEchoChar('*');
     Password.addActionListener(this);
     Password.setActionCommand("setpwd");
-    
+   
     addPrompt("Name server: ",DimName);
     addPrompt("User name: ",Username);
     addPrompt("Password [RET]: ",Password);
