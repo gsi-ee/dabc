@@ -628,7 +628,7 @@ INTS4 f_evt_get_open(INTS4 l_mode, CHARS *pc_server, s_evt_channel *ps_chan,
          ps_chan->l_channel_no=-1;
          return(GETEVT__NOLMDFILE);
        }
-       
+
        /* read file header and first buffer and check for goosy header */
        if(l_filehead == 1) {
          lseek(ps_chan->l_channel_no, 0, SEEK_SET);  /* rewind file */
@@ -924,7 +924,7 @@ INTS4 f_evt_get_event(s_evt_channel *ps_chan, INTS4 **ppl_buffer, INTS4 **ppl_go
       while (ps_chan->l_buf_posi >= ps_chan->l_buf_lmt)
       {
          /* if this i/o buffer is read to end */
-         /* end of this read_buffer which may contain several GOOSY buffers*/ 
+         /* end of this read_buffer which may contain several GOOSY buffers*/
          if(ps_chan->l_io_buf_posi>=ps_chan->l_io_buf_size)
          {
             if((l_temp=f_evt_get_newbuf(ps_chan))!=GETEVT__SUCCESS) return(l_temp);
@@ -959,7 +959,7 @@ INTS4 f_evt_get_event(s_evt_channel *ps_chan, INTS4 **ppl_buffer, INTS4 **ppl_go
 
       /* if ps_chan->l_buf_posi is not start of an event and ps_chan->l_first_buf =1  *
        * then skip to next event                                   */
-      if((ps_chan->ps_bufhe->h_end==1)&&((ps_chan->l_first_buf==1) || (l_prev_ok == 0))) {      
+      if((ps_chan->ps_bufhe->h_end==1)&&((ps_chan->l_first_buf==1) || (l_prev_ok == 0))) {
          /* if the first buffer is spanned at begin, then skip */
          ps_chan->l_first_buf=0; /* 24-Apr-1996 */
          l_prev_ok=1; /* 2001 HE */
@@ -1194,9 +1194,8 @@ sd_string.dsc$a_pointer = (char *) &s_varstr_file;
       return(PUTEVT__FILE_EXIST);
    else
    {
-      sprintf(c_mode,"mrs=%d, rfm=fix",l_size);
       if((ps_chan->l_channel_no=open(c_file,PUT__CRT_FLAG,
-         DEF_FILE_ACCE,c_mode) )== -1)
+         DEF_FILE_ACCE) )== -1)
          return(PUTEVT__FAILURE);
 #endif
       /* open OK */

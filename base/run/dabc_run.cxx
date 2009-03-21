@@ -234,7 +234,7 @@ int main(int numc, char* args[])
    if (res==0)
      if (!dabc::mgr()->CreateApplication(cfg.ConetextAppClass())) res = -3;
 
-   if (res==0)
+   if (res==0) {
       if (ctrlkind == dabc::ConfigBase::kindDim)
          res = RunDimApplication(cfg, nodeid, dorun);
       else
@@ -242,6 +242,7 @@ int main(int numc, char* args[])
          res = RunSimpleApplication(cfg);
       else
          res = RunSctrlApplication(cfg, connid, nodeid, numnodes);
+   }
 
    delete dabc::mgr();
 

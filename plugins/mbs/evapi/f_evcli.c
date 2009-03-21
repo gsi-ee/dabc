@@ -1556,16 +1556,16 @@ int             l_maxbytes;
      pl = (int *) &p_clntbuf->c_buffer[148];
      for (j=0; j<5; j++)
      {
-        printf("%8x:%8x ",pl,*(pl));
+        printf("%8p:%8x ",pl, (unsigned)*(pl));
         pl++;
-        printf("%8x:%8x ",pl,*(pl));
+        printf("%8p:%8x ",pl, (unsigned)*(pl));
         pl++;
-        printf("%8x:%8x ",pl,*(pl));
+        printf("%8p:%8x ",pl, (unsigned)*(pl));
         pl++;
 
         printf("\n");
      }
-     printf("D-%s: **Rd 2nd Buf: at %8x (buf[%d]) to %8x = %d b\n",
+     printf("D-%s: **Rd 2nd Buf: at %8p (buf[%d]) to %8p = %d b\n",
             c_modnam,
             (char *) &p_clntbuf->c_buffer[CLNT__RESTBUF],
             CLNT__RESTBUF,
@@ -1621,11 +1621,11 @@ int             l_maxbytes;
      pl = (int *) &p_clntbuf->c_buffer[148];
      for (j=0; j<5; j++)
      {
-        printf("%8x:%8x ",pl,*(pl));
+        printf("%8p:%8x ",pl,*(pl));
         pl++;
-        printf("%8x:%8x ",pl,*(pl));
+        printf("%8p:%8x ",pl,*(pl));
         pl++;
-        printf("%8x:%8x ",pl,*(pl));
+        printf("%8p:%8x ",pl,*(pl));
         pl++;
 
         printf("\n");

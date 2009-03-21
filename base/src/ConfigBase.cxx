@@ -502,11 +502,12 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, int ctrlkind, const char* ski
    if (workdir.empty()) workdir = topworkdir;
 
    std::string workcfgfile = cfgfile;
-   if (cfgfile.empty())
+   if (cfgfile.empty()) {
       if (copycfg)
          workcfgfile = dabc::format("node%03u_%s", id, topcfgfile);
       else
          workcfgfile = topcfgfile;
+   }
 
    res = "ssh -x ";
 
