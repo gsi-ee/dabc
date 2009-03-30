@@ -20,6 +20,18 @@ export LD_LIBRARY_PATH=.:$DABCSYS/lib:$LD_LIBRARY_PATH
 
 
 #--------------------------------
+if [[ "x$JAVA_HOME" == "x" ]] ; then 
+   if [[ -d /usr/lib/jvm/java-1.5.0-sun ]] ; 
+     then
+       export JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+       echo "Java location (JAVA_HOME) set to $JAVA_HOME"
+     else
+       echo "!!!!!!!!! Java location (JAVA_HOME) not specified !!!!!!!!!"
+     fi
+fi
+
+
+#--------------------------------
 # the dim part:
 # we use DIM as included with DABC distribution:
 export DIMDIR=$DABCSYS/dim/dim_v18r0

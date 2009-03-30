@@ -2,9 +2,14 @@
 
 echo "Simple DABC login"
 
-if [[ "x$JAVA_HOME" == "x" && -d /usr/lib/jvm/java-1.5.0-sun ]] ;
-then
-   export JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+if [[ "x$JAVA_HOME" == "x" ]] ; then 
+   if [[ -d /usr/lib/jvm/java-1.5.0-sun ]] ; 
+     then
+       export JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+       echo "Java location (JAVA_HOME) set to $JAVA_HOME"
+     else
+       echo "!!!!!!!!! Java location (JAVA_HOME) not specified !!!!!!!!!"
+     fi
 fi
 
 export DABCSYS=`pwd`
