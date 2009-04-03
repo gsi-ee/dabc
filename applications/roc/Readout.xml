@@ -3,7 +3,7 @@
 <Context name="Readout">
   <Run>
     <lib value="libDabcMbs.so"/>
-    <lib value="libDabcKnut.so"/>
+    <lib value="libDabcRoc.so"/>
     <logfile value="Readout.log"/>
   </Run>
   <Application class="roc::Readout">

@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -13,7 +13,6 @@
  ********************************************************************/
 #include "roc/CalibrationModule.h"
 
-#include "roc/Commands.h"
 #include "roc/Device.h"
 
 #include "dabc/logging.h"
@@ -25,8 +24,8 @@
 #include "dabc/Manager.h"
 #include "dabc/Application.h"
 
-#include "SysCoreControl.h"
-#include "SysCoreSorter.h"
+#include "nxyter/Sorter.h"
+#include "nxyter/Data.h"
 
 #include "mbs/LmdTypeDefs.h"
 #include "mbs/MbsTypeDefs.h"
@@ -321,7 +320,7 @@ bool roc::CalibrationModule::DoCalibration()
             EOUT(("Add subcrate %u", subevhdr->iSubcrate));
 
             fCalibr.push_back(CalibRec(subevhdr->iSubcrate));
-            fCalibr[subevntcnt-1].sorter = new SysCoreSorter(fBufferSize / 6, fBufferSize / 6, 4096);
+            fCalibr[subevntcnt-1].sorter = new nxyter::Sorter(fBufferSize / 6, fBufferSize / 6, 4096);
          }
 
          rec0 = &(fCalibr[0]);
@@ -336,7 +335,7 @@ bool roc::CalibrationModule::DoCalibration()
          if (iserrdata) continue;
 
 
-         SysCoreData* data = (SysCoreData*) subevhdr->RawData();
+         nxyter::Data* data = (nxyter::Data*) subevhdr->RawData();
 
 //         if (rec->rocid==1) {
 //            unsigned numdata = subevhdr->RawDataSize() / 6;
@@ -344,7 +343,7 @@ bool roc::CalibrationModule::DoCalibration()
 //               data->printData(3);
 //               data++;
 //            }
-//            data = (SysCoreData*) subevhdr->RawData();
+//            data = (nxyter::Data*) subevhdr->RawData();
 //         }
 
 
@@ -371,14 +370,14 @@ bool roc::CalibrationModule::DoCalibration()
             rec->last_epoch = epoch1 - 8;
          }
 
-         data = (SysCoreData*) ((char*) subevhdr->RawData() + subevhdr->RawDataSize() - 6);
+         data = (nxyter::Data*) ((char*) subevhdr->RawData() + subevhdr->RawDataSize() - 6);
          if (!data->isSyncMsg()) {
             EOUT(("Should be sync event in the end"));
             iserrdata = true;
             continue;
          }
 
-         SysCoreData* last_sync = data--;
+         nxyter::Data* last_sync = data--;
 
          bool is_extra_last_epoch = data->isEpochMsg();
 
@@ -408,7 +407,7 @@ bool roc::CalibrationModule::DoCalibration()
             continue;
          }
 
-         rec->evnt_len = SysCoreData::CalcDistance(rec->evnt1_tm, rec->evnt2_tm);
+         rec->evnt_len = nxyter::Data::CalcDistance(rec->evnt1_tm, rec->evnt2_tm);
          if (rec->evnt_len == 0) {
 //            EOUT(("Roc:%u Zero event length!!!", rec->rocid));
             iserrdata = true;
@@ -459,7 +458,7 @@ bool roc::CalibrationModule::DoCalibration()
 //               rec->rocid, k, b, b_e, b_f, b_e + b_f - b));
          }
 
-         rec->data = (SysCoreData*) subevhdr->RawData();
+         rec->data = (nxyter::Data*) subevhdr->RawData();
          rec->numdata = subevhdr->RawDataSize()/6 - 1;
          if (is_extra_last_epoch) rec->numdata--;
       }
@@ -589,7 +588,7 @@ bool roc::CalibrationModule::DoCalibration()
       bool far_epoch_jump = false;
 
 
-//      data = (SysCoreData*) f_outptr();
+//      data = (nxyter::Data*) f_outptr();
 //      data->setMessageType(ROC_MSG_EPOCH);
 //      data->setRocNumber(0);
 //      data->setEpoch(rec0->evnt_epoch);
@@ -686,7 +685,7 @@ bool roc::CalibrationModule::DoCalibration()
 
                if (fLastOutTm!=0)
                   if (fLastOutTm > fulltm) {
-                     if (SysCoreData::CalcDistance(fLastOutTm, fulltm) > 16 * 0x4000) minrec->stamp_copy = false;
+                     if (nxyter::Data::CalcDistance(fLastOutTm, fulltm) > 16 * 0x4000) minrec->stamp_copy = false;
 
                      EOUT(("Missmatch in time order iscorrect = %s!!!", DBOOL(minrec->stamp_copy)));
                   }
@@ -715,7 +714,7 @@ bool roc::CalibrationModule::DoCalibration()
                      break;
                   }
 
-                  SysCoreData* data = (SysCoreData*) f_outptr();
+                  nxyter::Data* data = (nxyter::Data*) f_outptr();
                   data->setMessageType(ROC_MSG_EPOCH);
                   data->setRocNumber(0);
                   data->setEpoch(next_epoch);
@@ -738,7 +737,7 @@ bool roc::CalibrationModule::DoCalibration()
 
                f_outptr.copyfrom(minrec->data, 6);
 
-               SysCoreData* data = (SysCoreData*) f_outptr();
+               nxyter::Data* data = (nxyter::Data*) f_outptr();
                data->setRocNumber(minrec->rocid);
                if (data->isHitMsg()) {
                   data->setLastEpoch(0);

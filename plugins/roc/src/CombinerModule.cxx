@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -12,8 +12,9 @@
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
 #include "roc/CombinerModule.h"
-#include "roc/Commands.h"
+
 #include "roc/Device.h"
+#include "nxyter/Data.h"
 
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"
@@ -22,8 +23,6 @@
 #include "dabc/Port.h"
 #include "dabc/Pointer.h"
 #include "dabc/Manager.h"
-
-#include "SysCoreControl.h"
 
 #include "mbs/LmdTypeDefs.h"
 #include "mbs/MbsTypeDefs.h"
@@ -100,7 +99,7 @@ bool roc::CombinerModule::FindNextEvent(unsigned ninp)
 
    if (rec->isready) return true;
 
-   SysCoreData databuf, *data(0);
+   nxyter::Data databuf, *data(0);
 
    while ((buf = Input(ninp)->InputBuffer(rec->curr_nbuf)) != 0) {
       if (rec->curr_indx >= buf->GetTotalSize()) {
@@ -123,9 +122,9 @@ bool roc::CombinerModule::FindNextEvent(unsigned ninp)
 
       while (ptr.fullsize()>=6) {
          if (ptr.rawsize()>=6) {
-            data = (SysCoreData*) ptr();
+            data = (nxyter::Data*) ptr();
          } else {
-            EOUT(("Segmented SysCoreData ???"));
+            EOUT(("Segmented nxyter::Data ???"));
             ptr.copyto(&databuf, 6);
             data = &databuf;
          }
@@ -424,7 +423,7 @@ unsigned roc::CombinerModule::FillRawSubeventsBuffer(dabc::Pointer& outptr)
 
       unsigned subeventsize = 6;
 
-      SysCoreData* data = (SysCoreData*) outptr();
+      nxyter::Data* data = (nxyter::Data*) outptr();
       data->setMessageType(ROC_MSG_EPOCH);
       data->setRocNumber(rec->rocid);
       data->setEpoch(rec->prev_epoch);
@@ -454,7 +453,7 @@ unsigned roc::CombinerModule::FillRawSubeventsBuffer(dabc::Pointer& outptr)
       filled_size+=subeventsize;
       subhdr->SetRawDataSize(subeventsize);
 
-      data = (SysCoreData*) subhdr->RawData();
+      data = (nxyter::Data*) subhdr->RawData();
 
       if (data->getMessageType() != ROC_MSG_EPOCH)
          EOUT(("internal error !!!!!!"));
@@ -468,7 +467,7 @@ unsigned roc::CombinerModule::FillRawSubeventsBuffer(dabc::Pointer& outptr)
 void roc::CombinerModule::DumpData(dabc::Pointer ptr)
 {
    while (ptr.fullsize()>=6) {
-      SysCoreData* data = (SysCoreData*) ptr();
+      nxyter::Data* data = (nxyter::Data*) ptr();
       data->printData(3);
       ptr.shift(6);
    }

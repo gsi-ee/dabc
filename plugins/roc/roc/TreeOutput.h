@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -38,7 +38,9 @@ typedef unsigned ULong64_t;
 
 #endif
 
-class SysCoreData;
+namespace nxyter {
+   class Data;
+}
 
 namespace roc {
 
@@ -55,13 +57,13 @@ namespace roc {
          bool IsOk() const { return fTree!=0; }
 
       protected:
-         void WriteNextData(SysCoreData* data);
+         void WriteNextData(nxyter::Data* data);
 
          std::string fFileName;
          int         fSizeLimit;
 
-         TTree*   fTree;
-         TFile*   fFile;
+         TTree*      fTree;
+         TFile*      fFile;
 
          UChar_t     f_rocid;
          UChar_t     f_nxyter;

@@ -34,17 +34,24 @@ $(BLD_DIR)/dummy.d: $(AUTO_DIRS) build-init
 $(AUTO_DIRS):
 	@for DIR in $@; do (if [ ! -f $$DIR ] ; then mkdir -p $$DIR; fi); done
 
-## Extentions rules
+## Extensions rules
 
 .SUFFIXES: .$(SrcSuf) .$(DepSuf) .$(HedSuf) .$(CSuf)
 
 $(BLD_DIR)/%.$(ObjSuf): %.$(SrcSuf)
 	$(CXX) -c $< $(OPTFLAGS) $(CXXFLAGS) -o $@ 
 
+%.$(ObjSuf): %.$(SrcSuf)
+	$(CXX) -c $< $(OPTFLAGS) $(CXXFLAGS) -o $@ 
+
 $(BLD_DIR)/%.$(ObjSuf): %.$(CSuf)
 	$(CC) -c $< $(OPTFLAGS) $(CFLAGS) -o $@
 
 $(BLD_DIR)/%.$(DepSuf): %.$(SrcSuf)
+	@echo "Dependency: $@"
+	@$(MakeDepend) "$(CXXFLAGS)" $@  $<  $*
+
+%.$(DepSuf): %.$(SrcSuf)
 	@echo "Dependency: $@"
 	@$(MakeDepend) "$(CXXFLAGS)" $@  $<  $*
 

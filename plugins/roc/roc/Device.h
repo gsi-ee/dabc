@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -11,21 +11,13 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
+
 #ifndef ROC_Device
 #define ROC_Device
 
-//#include <queue>
-
-#include "dabc/Basic.h"
+#ifndef DABC_Device
 #include "dabc/Device.h"
-#include "dabc/Buffer.h"
-
-#include "SysCoreControl.h"
-
-namespace dabc{
-   class MemoryPool;
-   class Command;
-};
+#endif
 
 namespace roc {
 
@@ -46,8 +38,9 @@ namespace roc {
       proc_MergedEvent  = 3    // sorted and synchronised data from several rocs (iSubcrate = upper rocid bits)
    };
 
-   class Device : public dabc::Device,
-                     protected SysCoreControl {
+   class Device : public dabc::Device {
+         int fErrNo;
+
       public:
 
          Device(dabc::Basic* parent, const char* name);
@@ -55,21 +48,15 @@ namespace roc {
 
          virtual const char* ClassName() const { return "roc::Device"; }
 
-         int AddBoard(const char* address, unsigned ctlPort);
-
-         SysCoreBoard* GetBoard(unsigned id);
-
          virtual int ExecuteCommand(dabc::Command* cmd);
 
          virtual int CreateTransport(dabc::Command* cmd, dabc::Port* port);
 
-      protected:
-
-         virtual bool DoDeviceCleanup(bool full = false);
-
-         virtual void DataCallBack(SysCoreBoard* brd);
+         virtual int errno() const { return fErrNo; }
+         virtual bool poke(uint32_t addr, uint32_t value);
+         virtual uint32_t peek(uint32_t addr);
    };
 
 }
 
-#endif //ROCDEVICE_H
+#endif

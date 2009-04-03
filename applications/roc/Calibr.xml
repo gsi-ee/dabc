@@ -3,7 +3,7 @@
 <Context name="Calibr">
   <Run>
     <lib value="libDabcMbs.so"/>
-    <lib value="libDabcKnut.so"/>
+    <lib value="libDabcRoc.so"/>
     <logfile value="Calibr.log"/>
   </Run>
   <Application class="roc::Readout">

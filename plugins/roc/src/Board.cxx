@@ -11,30 +11,56 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
-#include "dabc_root/RootTreeOutput.h"
 
-#include "TTree.h"
+#include "roc/Board.h"
 
-
-dabc_root::RootTreeOutput::RootTreeOutput() :
-   DataOutput(),
-   fTree(0)
+roc::Board::Board() :
+   fRole(roleNone)
 {
 }
 
-dabc_root::RootTreeOutput::~RootTreeOutput()
+roc::Board::~Board()
 {
-   delete fTree;
-   fTree = 0;
 }
 
-bool dabc_root::RootTreeOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+roc::Board* roc::Board::Connect(const char* name, BoardRole role)
+{
+   return 0;
+}
+
+int roc::Board::errno() const
+{
+   return 0;
+}
+
+
+bool roc::Board::poke(uint32_t addr, uint32_t value)
+{
+   return true;
+}
+
+uint32_t roc::Board::peek(uint32_t addr)
+{
+   return 0;
+}
+
+bool roc::Board::startDaq()
+{
+   return true;
+}
+
+bool roc::Board::suspendDaq()
+{
+   return true;
+}
+
+bool roc::Board::stopDaq()
+{
+   return true;
+}
+
+bool roc::Board::getNextData(nxyter::Data& data, double tmout)
 {
    return false;
 }
 
-
-bool dabc_root::RootTreeOutput::WriteBuffer(dabc::Buffer* buf)
-{
-   return true;
-}

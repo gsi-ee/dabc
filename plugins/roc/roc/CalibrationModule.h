@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -19,8 +19,11 @@
 
 #include <vector>
 
-class SysCoreSorter;
-class SysCoreData;
+namespace nxyter {
+   class Sorter;
+   class Data;
+}
+
 
 namespace roc {
 
@@ -42,7 +45,7 @@ namespace roc {
             uint32_t       calibr_b_e; // calibration coeff B, integer part (in epochs size)
             double         calibr_b_f; // calibration coeff B, float path (in epoch fraction)
             unsigned       weight;     // weight of coefficients
-            SysCoreSorter* sorter;
+            nxyter::Sorter* sorter;
 
             uint64_t       evnt1_tm;    // time of event in the beginning
             uint64_t       evnt2_tm;    // time of event in the end
@@ -50,7 +53,7 @@ namespace roc {
             uint32_t       evnt2_num;   // number of event in the end
             uint64_t       evnt_len;    // time length of the event
 
-            SysCoreData*   data;        // data (original or sorted, depeding from stage)
+            nxyter::Data*    data;        // data (original or sorted, depeding from stage)
             unsigned       numdata;     // number of data sill to process
 
             uint32_t       front_epoch; // value of front epoch, relative to which delta t is calculating

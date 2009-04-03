@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -21,9 +21,8 @@
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Factory.h"
 
-#include "roc/Commands.h"
+#include "roc/Defines.h"
 
-#include "SysCoreDefines.h"
 
 const char* roc::xmlDoCalibr          = "DoCalibr";
 const char* roc::xmlRocIp             = "RocIp";
@@ -70,14 +69,14 @@ bool roc::ReadoutApplication::CreateAppModules()
    bool res = false;
    dabc::Command* cmd;
 
-   std::string devname = "ROC";
+   fDevName = "ROC";
 
    dabc::mgr()->CreateMemoryPool(roc::xmlRocPool,
                                  GetParInt(dabc::xmlBufferSize, 8192),
                                  GetParInt(dabc::xmlNumBuffers, 100));
 
    if (DoTaking()) {
-      res = dabc::mgr()->CreateDevice("roc::Device", devname.c_str());
+      res = dabc::mgr()->CreateDevice("roc::UdpDevice", fDevName.c_str());
       DOUT1(("Create Roc Device = %s", DBOOL(res)));
       if(!res) return false;
 
@@ -107,7 +106,7 @@ bool roc::ReadoutApplication::CreateAppModules()
    //// connect module to ROC device, one transport for each board:
 
       for(int t=0; t<NumRocs(); t++) {
-         cmd = new dabc::CmdCreateTransport(FORMAT(("RocComb/Input%d", t)), devname.c_str()); // container for additional board parameters
+         cmd = new dabc::CmdCreateTransport(FORMAT(("RocComb/Input%d", t)), fDevName.c_str()); // container for additional board parameters
          cmd->SetStr(roc::xmlBoardIP, RocIp(t));
          res = dabc::mgr()->Execute(cmd);
          DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t).c_str(), DBOOL(res)));
@@ -180,42 +179,37 @@ bool roc::ReadoutApplication::CreateAppModules()
    return true;
 }
 
-bool roc::ReadoutApplication::WriteRocRegister(int rocid, int registr, int value)
+roc::Device* roc::ReadoutApplication::GetBoardDevice(int indx)
 {
-   dabc::Device* dev = dabc::mgr()->FindDevice("ROC");
-   if (dev==0) return false;
-
-   return dev->Execute(new roc::CommandWriteRegister(rocid, registr, value));
+   return dynamic_cast<roc::Device*> (dabc::mgr()->FindDevice(fDevName.c_str()));
 }
 
-
-bool roc::ReadoutApplication::ConfigureRoc(int index)
+bool roc::ReadoutApplication::ConfigureRoc(int indx)
 {
+   roc::Device* dev = GetBoardDevice(indx);
+   if (dev==0) return false;
+
    bool res = true;
 
-
-   res = res && WriteRocRegister(index, ROC_NX_SELECT, 0);
-   res = res && WriteRocRegister(index, ROC_NX_ACTIVE, 0);
-//   if (index==0)
-      res = res && WriteRocRegister(index, ROC_SYNC_M_SCALEDOWN, 1);
-   res = res && WriteRocRegister(index, ROC_AUX_ACTIVE, 3);
-
+//   res = res && dev->Poke(ROC_NX_SELECT, 0);
+//   res = res && dev->Poke(ROC_NX_ACTIVE, 0);
+   res = res && dev->poke(ROC_SYNC_M_SCALEDOWN, 1);
+   res = res && dev->poke(ROC_AUX_ACTIVE, 3);
 
 /*
-   res = res && WriteRocRegister(index, ROC_ACTIVATE_LOW_LEVEL, 1);
-   res = res && WriteRocRegister(index, ROC_DO_TESTSETUP,1);
-   res = res && WriteRocRegister(index, ROC_ACTIVATE_LOW_LEVEL,0);
+   res = res && dev->poke(ROC_ACTIVATE_LOW_LEVEL, 1);
+   res = res && dev->poke(ROC_DO_TESTSETUP,1);
+   res = res && dev->poke(ROC_ACTIVATE_LOW_LEVEL,0);
 
-   res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 0,255);
-   res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 1,255);
-   res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 2,0);
-   res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 18,35);
-   res = res && WriteRocRegister(index, ROC_NX_REGISTER_BASE + 32,1);
+   res = res && dev->poke(ROC_NX_REGISTER_BASE + 0,255);
+   res = res && dev->poke(ROC_NX_REGISTER_BASE + 1,255);
+   res = res && dev->poke(ROC_NX_REGISTER_BASE + 2,0);
+   res = res && dev->poke(ROC_NX_REGISTER_BASE + 18,35);
+   res = res && dev->poke(ROC_NX_REGISTER_BASE + 32,1);
 
-   res = res && WriteRocRegister(index, ROC_FIFO_RESET,1);
-   res = res && WriteRocRegister(index, ROC_BUFFER_FLUSH_TIMER,1000);
+   res = res && dev->poke(ROC_FIFO_RESET,1);
+   res = res && dev->poke(ROC_BUFFER_FLUSH_TIMER,1000);
 */
-
    return res;
 }
 
@@ -229,4 +223,3 @@ bool roc::ReadoutApplication::IsModulesRunning()
 
    return true;
 }
-

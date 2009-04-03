@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -33,6 +33,9 @@ namespace roc {
    extern const char* xmlReadoutAppClass;
 
    class ReadoutApplication : public dabc::Application {
+      protected:
+         std::string  fDevName;
+         roc::Device* GetBoardDevice(int indx = 0);
       public:
          ReadoutApplication();
 
@@ -62,8 +65,6 @@ namespace roc {
 
         /** Send configuration to connected roc*/
         bool ConfigureRoc(int index=0);
-
-        bool WriteRocRegister(int rocid, int registr, int value);
    };
 }
 

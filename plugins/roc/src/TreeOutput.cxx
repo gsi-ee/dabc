@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -18,7 +18,7 @@
 
 #include "roc/Device.h"
 
-#include "SysCoreData.h"
+#include "nxyter/Data.h"
 
 #ifdef DABC_ROOT
 
@@ -65,7 +65,7 @@ bool roc::TreeOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* por
 
 
 
-void roc::TreeOutput::WriteNextData(SysCoreData* data)
+void roc::TreeOutput::WriteNextData(nxyter::Data* data)
 {
    f_rocid = data->getRocNumber();
 
@@ -73,7 +73,7 @@ void roc::TreeOutput::WriteNextData(SysCoreData* data)
       if (fValidEpoch[f_rocid]) {
          f_nxyter = data->getNxNumber();
          f_id = data->getId();
-         f_timestamp = SysCoreData::FullTimeStamp(fLastEpoch[f_rocid], data->getNxTs());
+         f_timestamp = nxyter::Data::FullTimeStamp(fLastEpoch[f_rocid], data->getNxTs());
          f_value = data->getAdcValue();
          fTree->Fill();
       }
@@ -88,7 +88,7 @@ void roc::TreeOutput::WriteNextData(SysCoreData* data)
       if (fValidEpoch[f_rocid]) {
          f_nxyter = 0xff; // mark of sync signal
          f_id = data->getSyncChNum();
-         f_timestamp = SysCoreData::FullTimeStamp(fLastEpoch[f_rocid], data->getSyncTs());
+         f_timestamp = nxyter::Data::FullTimeStamp(fLastEpoch[f_rocid], data->getSyncTs());
          f_value = data->getSyncEvNum();
          fTree->Fill();
       }
@@ -97,7 +97,7 @@ void roc::TreeOutput::WriteNextData(SysCoreData* data)
       if (fValidEpoch[f_rocid]) {
          f_nxyter = 0xfe; // mark aux signal
          f_id = data->getAuxChNum();
-         f_timestamp = SysCoreData::FullTimeStamp(fLastEpoch[f_rocid], data->getAuxTs());
+         f_timestamp = nxyter::Data::FullTimeStamp(fLastEpoch[f_rocid], data->getAuxTs());
          f_value = data->getAuxFalling();
          fTree->Fill();
       }
@@ -113,7 +113,7 @@ bool roc::TreeOutput::WriteBuffer(dabc::Buffer* buf)
 
       while (dataptr.fullsize()>=6) {
 
-         WriteNextData((SysCoreData*) dataptr.ptr());
+         WriteNextData((nxyter::Data*) dataptr.ptr());
 
          dataptr.shift(6);
       }
@@ -140,7 +140,7 @@ bool roc::TreeOutput::WriteBuffer(dabc::Buffer* buf)
             dabc::Pointer dataptr(subevhdr->RawData(), subevhdr->RawDataSize());
 
             while (dataptr.fullsize()>=0) {
-               WriteNextData((SysCoreData*) dataptr());
+               WriteNextData((nxyter::Data*) dataptr());
                dataptr.shift(6);
             }
          }
@@ -193,7 +193,7 @@ roc::TreeOutput::~TreeOutput()
 {
 }
 
-void roc::TreeOutput::WriteNextData(SysCoreData* data)
+void roc::TreeOutput::WriteNextData(nxyter::Data*)
 {
 }
 

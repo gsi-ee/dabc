@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -14,7 +14,6 @@
 #include "roc/Factory.h"
 #include "roc/CombinerModule.h"
 #include "roc/CalibrationModule.h"
-#include "roc/Device.h"
 #include "roc/TreeOutput.h"
 #include "roc/ReadoutApplication.h"
 
@@ -56,11 +55,12 @@ dabc::Module* roc::Factory::CreateModule(const char* classname, const char* modu
 
 dabc::Device* roc::Factory::CreateDevice(const char* classname, const char* devname, dabc::Command* cmd)
 {
-   if (strcmp(classname,"roc::Device")!=0) return 0;
+   if (strcmp(classname,"roc::UdpDevice")==0) {
+      DOUT1(("roc::Factory::CreateDevice - Creating ROC UdpDevice %s ...", devname));
+      return 0;
+   }
 
-   DOUT1(("roc::Factory::CreateDevice - Creating  ROC device %s ...", devname));
-   roc::Device* dev = new  roc::Device(dabc::mgr()->GetDevicesFolder(true), devname);
-   return dev;
+   return 0;
 }
 
 dabc::DataOutput* roc::Factory::CreateDataOutput(const char* typ)
