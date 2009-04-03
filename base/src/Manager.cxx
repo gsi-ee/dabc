@@ -201,8 +201,8 @@ dabc::Folder* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
 
 bool dabc::StdManagerFactory::CreateManagerInstance(const char* kind, Configuration* cfg)
 {
-   if ((kind==0) || (strcmp(kind,"Basic")==0)) {
-      new dabc::Manager(cfg->MgrName(), true, cfg);
+   if ((kind==0) || (strcmp(kind, "Basic")==0)) {
+      new dabc::Manager(cfg ? cfg->MgrName() : "mgr", true, cfg);
       return true;
    }
 
@@ -1901,9 +1901,9 @@ bool dabc::Manager::CreateApplication(const char* classname, const char* appthrd
    return Execute(new CmdCreateApplication(classname, appthrd));
 }
 
-bool dabc::Manager::CreateDevice(const char* classname, const char* devname)
+bool dabc::Manager::CreateDevice(const char* classname, const char* devname, const char* devthrd)
 {
-   return Execute(new CmdCreateDevice(classname, devname));
+   return Execute(new CmdCreateDevice(classname, devname, devthrd));
 }
 
 bool dabc::Manager::CreateModule(const char* classname, const char* modulename, const char* thrdname)

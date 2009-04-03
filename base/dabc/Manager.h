@@ -154,11 +154,12 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateDevice"; }
 
-         CmdCreateDevice(const char* devclass, const char* devname) :
+         CmdCreateDevice(const char* devclass, const char* devname, const char* thrdname = 0) :
             Command(CmdName())
          {
             SetStr("DevClass", devclass);
             SetStr("DevName", devname);
+            SetPar("Thread", thrdname);
          }
    };
 
@@ -495,7 +496,7 @@ namespace dabc {
 
          bool CreateApplication(const char* classname = 0, const char* appthrd = 0);
 
-         bool CreateDevice(const char* classname, const char* devname);
+         bool CreateDevice(const char* classname, const char* devname, const char* devthrd = 0);
 
          WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, unsigned startmode = 0, const char* devname = 0, Command* cmd = 0);
 

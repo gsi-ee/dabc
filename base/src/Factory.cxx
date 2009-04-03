@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -79,7 +79,7 @@ dabc::Factory::Factory(const char* name) :
 
 bool dabc::Factory::CreateManager(const char* kind, Configuration* cfg)
 {
-   if ((Factories()==0) || (cfg==0)) return false;
+   if (Factories()==0) return false;
 
    if (dabc::mgr() != 0) {
       EOUT(("Manager instance already exists"));

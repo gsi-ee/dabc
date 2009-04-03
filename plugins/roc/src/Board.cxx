@@ -14,18 +14,44 @@
 
 #include "roc/Board.h"
 
-roc::Board::Board() :
+#include "dabc/Command.h"
+#include "dabc/Manager.h"
+#include "dabc/Factory.h"
+
+#include "roc/Device.h"
+#include "roc/Defines.h"
+
+
+roc::Board::Board(Device* dev, BoardRole role) :
+   fDev(dev),
    fRole(roleNone)
 {
 }
 
 roc::Board::~Board()
 {
+   if (fDev) fDev->DestroyProcessor();
 }
 
 roc::Board* roc::Board::Connect(const char* name, BoardRole role)
 {
-   return 0;
+   if (dabc::mgr()==0)
+      if (!dabc::Factory::CreateManager()) return 0;
+
+   const char* devname = "RocUdp";
+
+   dabc::Command* cmd = new dabc::CmdCreateDevice(typeUdpDevice, devname);
+   cmd->SetStr(roc::xmlBoardIP, name);
+   if (!dabc::mgr()->Execute(cmd)) return 0;
+
+   roc::Device* dev = dynamic_cast<roc::Device*> (dabc::mgr()->FindDevice(devname));
+   if (dev==0) return 0;
+
+   dev->poke(ROC_MASTER_LOGIN, 0);
+
+   dev->peek(ROC_NUMBER);
+
+   return new roc::Board(dev, role);
 }
 
 int roc::Board::errno() const

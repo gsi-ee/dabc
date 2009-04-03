@@ -11,11 +11,14 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
+
 #include "roc/Factory.h"
+
 #include "roc/CombinerModule.h"
 #include "roc/CalibrationModule.h"
 #include "roc/TreeOutput.h"
 #include "roc/ReadoutApplication.h"
+#include "roc/UdpDevice.h"
 
 #include "dabc/Command.h"
 #include "dabc/logging.h"
@@ -55,9 +58,19 @@ dabc::Module* roc::Factory::CreateModule(const char* classname, const char* modu
 
 dabc::Device* roc::Factory::CreateDevice(const char* classname, const char* devname, dabc::Command* cmd)
 {
-   if (strcmp(classname,"roc::UdpDevice")==0) {
+   const char* thrdname = cmd ? cmd->GetPar("Thread") : 0;
+
+   if (strcmp(classname, roc::typeUdpDevice)==0) {
       DOUT1(("roc::Factory::CreateDevice - Creating ROC UdpDevice %s ...", devname));
-      return 0;
+
+      roc::UdpDevice* dev = new roc::UdpDevice(dabc::mgr()->GetDevicesFolder(true), devname, thrdname, cmd);
+
+      if (!dev->IsConnected()) {
+         delete dev;
+         return 0;
+      }
+
+      return dev;
    }
 
    return 0;

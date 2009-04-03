@@ -156,7 +156,8 @@ dabc::SocketIOProcessor::SocketIOProcessor(int fd) :
    fRecvIOVSize(0),
    fRecvIOVFirst(0),
    fRecvIOVNumber(0),
-   fRecvSingle(false)
+   fRecvSingle(false),
+   fLastRecvSize(0)
 {
    #ifdef SOCKET_PROFILING
        fSendOper = 0;
@@ -233,7 +234,7 @@ bool dabc::SocketIOProcessor::StartSend(void* buf, size_t size, bool usemsg)
    return true;
 }
 
-bool dabc::SocketIOProcessor::StartRecv(void* buf, size_t size, bool usemsg)
+bool dabc::SocketIOProcessor::StartRecv(void* buf, size_t size, bool usemsg, bool singleoper)
 {
    if (fRecvIOVNumber>0) {
       EOUT(("Current recv operation not yet completed"));
@@ -247,10 +248,30 @@ bool dabc::SocketIOProcessor::StartRecv(void* buf, size_t size, bool usemsg)
    fRecvIOVNumber = 1;
    fRecvIOV[0].iov_base = buf;
    fRecvIOV[0].iov_len = size;
-   fRecvSingle = false;
+   fRecvSingle = singleoper;
 
    SetDoingInput(true);
    FireEvent(evntSocketRead);
+
+   return true;
+}
+
+bool dabc::SocketIOProcessor::LetRecv(void* buf, size_t size, bool singleoper)
+{
+   if (fRecvIOVNumber>0) {
+      EOUT(("Current recv operation not yet completed"));
+      return false;
+   }
+
+   if (fRecvIOVSize<1) AllocateRecvIOV(8);
+
+   fRecvUseMsg = false;
+   fRecvIOVFirst = 0;
+   fRecvIOVNumber = 1;
+   fRecvIOV[0].iov_base = buf;
+   fRecvIOV[0].iov_len = size;
+   fRecvSingle = singleoper;
+   SetDoingInput(true);
 
    return true;
 }
@@ -261,31 +282,6 @@ bool dabc::SocketIOProcessor::StartSend(Buffer* buf, bool usemsg)
    // where only buffer itself without header is transported
 
    return StartNetSend(0, 0, buf, usemsg);
-
-/*   if (fSendIOVNumber>0) {
-      EOUT(("Current send operation not yet completed"));
-      return false;
-   }
-
-   if (buf==0) return false;
-
-   if (fSendIOVSize < buf->NumSegments()) AllocateSendIOV(buf->NumSegments());
-
-   fSendUseMsg = usemsg;
-   fSendIOVFirst = 0;
-   fSendIOVNumber = buf->NumSegments();
-
-   for (unsigned nseg=0; nseg<buf->NumSegments(); nseg++) {
-      fSendIOV[nseg].iov_base = buf->GetDataLocation(nseg);
-      fSendIOV[nseg].iov_len = buf->GetDataSize(nseg);
-   }
-
-   SetDoingOutput(true);
-   FireEvent(evntSocketWrite);
-
-   return true;
-
-*/
 }
 
 bool dabc::SocketIOProcessor::StartRecv(Buffer* buf, BufferSize_t datasize, bool usemsg)
@@ -380,13 +376,15 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
     switch (GetEventCode(evnt)) {
        case evntSocketRead: {
 
-          if (fRecvIOVNumber==0) return; // nothing to recv
+          if (fRecvIOVNumber==0)
+             if (!OnRecvProvideBuffer()) return; // nothing to recv
 
           #ifdef SOCKET_PROFILING
              fRecvOper++;
              TimeStamp_t tm1 = TimeStamp();
           #endif
 
+          fLastRecvSize = 0;
           ssize_t res = 0;
 
 //          DOUT1(("Socket %d fRecvIOV = %p fRecvIOVFirst = %u number %u iov: %p %u",
@@ -424,6 +422,8 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
              if (errno!=EAGAIN) OnSocketError(errno, "When recvmsg()");
              return;
           }
+
+          fLastRecvSize = res;
 
           if (fRecvSingle) {
              // for datagram the only recv message is possible
@@ -1016,9 +1016,9 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
           EOUT(("Cannot setsockopt SO_REUSEADDR"));
       }
       if(bind(socket_descriptor, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-          EOUT(("Fail to bind socket with port %d", port));
-          close(socket_descriptor);
-          return -1;
+         EOUT(("Fail to bind socket with port %d", port));
+         close(socket_descriptor);
+         return -1;
       }
 
       // Allow to receive broadcast to this port
@@ -1054,7 +1054,7 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
 
      if (connect(socket_descriptor, (struct sockaddr *) &address,
            sizeof (address)) < 0) {
-        EOUT(("Fail to connect to host % port %s", host, port));
+        EOUT(("Fail to connect to host %s port %d", host, port));
         close(socket_descriptor);
         return -1;
      }
@@ -1084,6 +1084,60 @@ void dabc::SocketThread::CloseMulticast(int handle, const char* host, bool isrec
    if (close(handle) < 0)
       EOUT(("Error in socketclose"));
 }
+
+
+int dabc::SocketThread::StartUdp(int& portnum, int portmin, int portmax)
+{
+
+   int fd = socket(PF_INET, SOCK_DGRAM, 0);
+   if (fd<0) return -1;
+
+   struct sockaddr_in m_addr;
+   int numtests = 1; // at least test value of portnum
+   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
+
+   if (SetNonBlockSocket(fd))
+      for(int ntest=0;ntest<numtests;ntest++) {
+         if ((ntest==0) && (portnum<0)) continue;
+         if (ntest>0) portnum = portmin - 1 + ntest;
+
+         memset(&m_addr, 0, sizeof(m_addr));
+         m_addr.sin_family = AF_INET;
+         m_addr.sin_port = htons(portnum);
+
+         if (!bind(fd, (struct sockaddr *)&m_addr, sizeof(m_addr))) return fd;
+      }
+
+   close(fd);
+   return -1;
+}
+
+int dabc::SocketThread::ConnectUdp(int fd, const char* remhost, int remport)
+{
+   if (fd<0) return fd;
+
+   struct hostent *host = gethostbyname(remhost);
+   if ((host==0) || (host->h_addrtype!=AF_INET)) {
+      EOUT(("Cannot get host information for %s", remhost));
+      close(fd);
+      return -1;
+   }
+
+   struct sockaddr_in address;
+
+   memset (&address, 0, sizeof (address));
+   address.sin_family = AF_INET;
+   memcpy(&address.sin_addr.s_addr, host->h_addr_list[0], host->h_length);
+   address.sin_port = htons (remport);
+
+   if (connect(fd, (struct sockaddr *) &address, sizeof (address)) < 0) {
+      EOUT(("Fail to connect to host %s port %d", remhost, remport));
+      close(fd);
+      return -1;
+   }
+   return fd;
+}
+
 
 dabc::SocketClientProcessor* dabc::SocketThread::CreateClientProcessor(const char* serverid)
 {

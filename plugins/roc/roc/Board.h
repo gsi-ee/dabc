@@ -24,11 +24,15 @@ namespace roc {
 
    enum BoardRole { roleNone, roleObserver, roleMaster, roleDAQ };
 
+   class Device;
+
    class Board {
       protected:
+         Device   *fDev;
          BoardRole fRole;
 
-         Board();
+         Board(Device* dev = 0, BoardRole role = roleNone);
+
       public:
          virtual ~Board();
 

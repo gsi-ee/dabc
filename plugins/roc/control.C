@@ -22,7 +22,7 @@
 #endif
 // we need include only when we want to compile script
 
-void control(const char* boardaddr = "lxi010")
+void control(const char* boardaddr = "lxg0526")
 {
    if (strlen(boardaddr)==0) {
       cerr << "BoardIP cannot be defined. Exit." << endl;
@@ -36,6 +36,9 @@ void control(const char* boardaddr = "lxi010")
    }
 
    cout << " Board addr:" << boardaddr << endl;
+
+   delete brd; return;
+
 
    brd->poke(ROC_DO_TESTSETUP,1);
 

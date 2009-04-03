@@ -102,7 +102,8 @@ namespace dabc {
          virtual void ProcessEvent(EventId);
 
          bool StartSend(void* buf, size_t size, bool usemsg = false);
-         bool StartRecv(void* buf, size_t size, bool usemsg = false);
+         bool StartRecv(void* buf, size_t size, bool usemsg = false, bool singleoper = false);
+         bool LetRecv(void* buf, size_t size, bool singleoper = true);
 
          bool StartSend(Buffer* buf, bool usemsg = false);
          bool StartRecv(Buffer* buf, BufferSize_t datasize, bool usemsg = false);
@@ -115,6 +116,7 @@ namespace dabc {
          void AllocateSendIOV(unsigned size);
          void AllocateRecvIOV(unsigned size);
 
+         virtual bool OnRecvProvideBuffer() { return false; }
          virtual void OnSendCompleted() {}
          virtual void OnRecvCompleted() {}
 
@@ -133,6 +135,7 @@ namespace dabc {
          unsigned      fRecvIOVFirst;   // number of element in recv IOV where transfer is started
          unsigned      fRecvIOVNumber;  // number of elements in current recv operation
          bool          fRecvSingle;     // true if the only recv is allowed
+         unsigned      fLastRecvSize;   // size of last recv opearation
 
 #ifdef SOCKET_PROFILING
          long           fSendOper;
@@ -236,10 +239,13 @@ namespace dabc {
 
          static bool SetNonBlockSocket(int fd);
          static int StartServer(int& nport, int portmin=-1, int portmax=-1);
+         static int StartUdp(int& nport, int portmin=-1, int portmax=-1);
          static std::string DefineHostName();
          static int StartClient(const char* host, int nport);
          static int StartMulticast(const char* host, int port, bool isrecv = true);
          static void CloseMulticast(int handle, const char* host, bool isrecv = true);
+         static int ConnectUdp(int fd, const char* remhost, int remport);
+
 
          static SocketServerProcessor* CreateServerProcessor(int nport, int portmin=-1, int portmax=-1);
 

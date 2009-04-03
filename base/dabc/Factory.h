@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -75,7 +75,7 @@ namespace dabc {
 
          virtual DataOutput* CreateDataOutput(const char* typ) { return 0; }
 
-         static bool CreateManager(const char* kind, Configuration* cfg);
+         static bool CreateManager(const char* kind = 0, Configuration* cfg = 0);
 
          static bool LoadLibrary(const std::string& fname);
 

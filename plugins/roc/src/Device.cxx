@@ -19,6 +19,9 @@ const char* roc::xmlRocPool         = "RocPool";
 const char* roc::xmlTransportWindow = "TransportWindow";
 const char* roc::xmlBoardIP         = "BoardIP";
 
+const char* roc::typeUdpDevice      = "roc::UdpDevice";
+
+
 roc::Device::Device(dabc::Basic* parent, const char* name) :
    dabc::Device(parent, name),
    fErrNo(0)

@@ -26,6 +26,9 @@ namespace roc {
    extern const char* xmlTransportWindow;
    extern const char* xmlBoardIP;
 
+
+   extern const char* typeUdpDevice;
+
    enum ERocBufferTypes {
       rbt_RawRocData     = 234
    };
@@ -39,6 +42,8 @@ namespace roc {
    };
 
    class Device : public dabc::Device {
+      protected:
+
          int fErrNo;
 
       public:
