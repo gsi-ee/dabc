@@ -25,14 +25,24 @@
 
 roc::UdpControlSocket::UdpControlSocket(UdpDevice* dev, int fd) :
    dabc::SocketIOProcessor(fd),
-   fDev(dev)
+   fDev(dev),
+   fControlMutex(),
+   fCtrlState(ctrlReady),
+   fControlCond(&fControlMutex),
+   fControlCmd(0),
+   fControlSendSize(0),
+   fPacketCounter(0)
+
 {
    // we will react on all input packets
    SetDoingInput(true);
+
 }
 
 roc::UdpControlSocket::~UdpControlSocket()
 {
+   completeLoop(false);
+
    if (fDev) fDev->fCtrlCh = 0;
    fDev = 0;
 }
@@ -40,19 +50,150 @@ roc::UdpControlSocket::~UdpControlSocket()
 void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
 {
    switch (dabc::GetEventCode(evnt)) {
-      case evntSendCtrl:
-         DOUT0(("Send packet of size %u", fDev->controlSendSize));
-         StartSend(&(fDev->controlSend), fDev->controlSendSize);
+
+      case evntDoCtrl: {
+         if (fControlSend==0) return;
+         StartSend(fControlSend, fControlSendSize);
+         double tmout = fFastMode ? (fLoopCnt++ < 4 ? 0.01 : fLoopCnt*0.1) : 1.;
+         fTotalTmoutSec -= tmout;
+         ActivateTimeout(tmout);
          break;
+      }
+
       case evntSocketRead: {
-         ssize_t len = DoRecvBuffer(&fRecvBuf, sizeof(fRecvBuf));
-         if ((len>0) && fDev)
-            fDev->processCtrlMessage(&fRecvBuf, len);
+         UdpMessageFull* buf = fControlRecv;
+         if (buf==0) buf = &fRecvBuf;
+
+         ssize_t len = DoRecvBuffer(buf, sizeof(UdpMessageFull));
+         if (len<=0) return;
+
+         if ((fControlRecv != 0) &&
+             (fControlRecv->password == htonl(ROC_PASSWORD)) &&
+             (fControlSend->id == fControlRecv->id) &&
+             (fControlSend->tag == fControlRecv->tag)) {
+            completeLoop(true);
+         } else
+         if (fDev)
+            fDev->processCtrlMessage(buf, len);
          break;
       }
       default:
          dabc::SocketIOProcessor::ProcessEvent(evnt);
    }
+}
+
+double roc::UdpControlSocket::ProcessTimeout(double last_diff)
+{
+   if (fShowProgress) {
+       std::cout << ".";
+       std::cout.flush();
+   }
+
+   if (fTotalTmoutSec <= 0.) {
+      // stop doing;
+      completeLoop(false);
+      return -1.;
+   }
+
+   if (fFastMode || (fTotalTmoutSec <=5.)) {
+      FireEvent(evntDoCtrl);
+      return -1.;
+   }
+
+   fTotalTmoutSec -= 1.;
+
+   return 1.;
+}
+
+bool roc::UdpControlSocket::completeLoop(bool res)
+{
+   if (fShowProgress) {
+       std::cout << std::endl;
+       std::cout.flush();
+       fShowProgress = false;
+   }
+
+   dabc::Command* cmd = 0;
+
+   {
+      dabc::LockGuard guard(fControlMutex);
+
+      if (fCtrlState == ctrlReady) return false;
+
+      if (fControlCmd==0) {
+         fCtrlState = res ? ctrlGotReply : ctrlTimedout;
+         fControlCond._DoFire();
+      } else {
+         cmd = fControlCmd;
+         fControlCmd = 0;
+         fCtrlState = ctrlReady;
+      }
+   }
+
+   if (cmd) dabc::Command::Reply(cmd, res);
+
+   return true;
+}
+
+bool roc::UdpControlSocket::startCtrlLoop(
+      dabc::Command* cmd,
+      UdpMessage* send_buf, unsigned sendsize,
+      UdpMessageFull* recv_buf,
+      double total_tmout_sec, bool show_progress)
+{
+   {
+      dabc::LockGuard guard(fControlMutex);
+
+      if ((send_buf==0) || (recv_buf==0) || (sendsize==0)) return false;
+
+      if (fCtrlState!=ctrlReady) {
+         EOUT(("cannot start operation - somebody else uses control loop"));
+         return false;
+      }
+
+      fCtrlState = ctrlWaitReply;
+   }
+
+   fControlCmd = cmd;
+
+   fControlSend = send_buf;
+   fControlRecv = recv_buf;
+   fControlSendSize = sendsize;
+
+   fControlSend->password = htonl(ROC_PASSWORD);
+   fControlSend->id = htonl(fPacketCounter++);
+   fControlRecv->id = ~fControlSend->id;
+
+   // send aligned to 4 bytes packet to the ROC
+
+   while ((fControlSendSize < MAX_UDP_PAYLOAD) &&
+          (fControlSendSize + UDP_PAYLOAD_OFFSET) % 4) fControlSendSize++;
+
+   fTotalTmoutSec = total_tmout_sec;
+   fShowProgress = show_progress;
+
+   if (fTotalTmoutSec>20.) fShowProgress = true;
+
+   // in fast mode we will try to resend as fast as possible
+   fFastMode = (fTotalTmoutSec < 10.) && !fShowProgress;
+   fLoopCnt = 0;
+
+   FireEvent(evntDoCtrl);
+
+   return true;
+}
+
+bool roc::UdpControlSocket::waitCtrlLoop(double total_tmout_sec)
+{
+   dabc::LockGuard guard(fControlMutex);
+
+   fControlCond._DoWait(total_tmout_sec + 1.);
+
+   bool res = (fCtrlState == ctrlGotReply);
+
+   fCtrlState = ctrlReady;
+
+   return res;
 }
 
 // __________________________________________________________
@@ -65,10 +206,8 @@ roc::UdpDevice::UdpDevice(dabc::Basic* parent, const char* name, const char* thr
    fRocIp(),
    fCtrlPort(0),
    fCtrlCh(0),
-   fCond(),
    fDataPort(0),
    fDataCh(0),
-   ctrlState_(ctrlReady),
    controlSendSize(0),
    isBrdStat(false),
    displayConsoleOutput_(false)
@@ -257,75 +396,18 @@ bool roc::UdpDevice::performCtrlLoop(double total_tmout_sec, bool show_progress)
       return false;
    }
 
-   {
-      // before we start sending, indicate that we now in control loop
-      // and can accept replies from ROC
-      dabc::LockGuard guard(fCond.CondMutex());
-      if (fCtrlCh==0) return false;
-      if (ctrlState_!=ctrlReady) {
-         EOUT(("cannot start operation - somebody else uses control loop"));
-         return false;
-      }
+   if (fCtrlCh==0) return false;
 
-      ctrlState_ = ctrlWaitReply;
-   }
+   if (!fCtrlCh->startCtrlLoop(0,
+         &controlSend, controlSendSize,
+         &controlRecv, total_tmout_sec, show_progress)) return false;
 
-   controlSend.password = htonl(ROC_PASSWORD);
-   controlSend.id = htonl(currentMessagePacketId++);
-
-   bool res = false;
-
-   // send aligned to 4 bytes packet to the ROC
-
-   while ((controlSendSize < MAX_UDP_PAYLOAD) &&
-          (controlSendSize + UDP_PAYLOAD_OFFSET) % 4) controlSendSize++;
-
-   if (total_tmout_sec>20.) show_progress = true;
-
-   // in fast mode we will try to resend as fast as possible
-   bool fast_mode = (total_tmout_sec < 10.) && !show_progress;
-   int loopcnt = 0;
-   bool wasprogressout = false;
-   bool doresend = true;
-
-   do {
-      if (doresend) {
-         if (fCtrlCh==0) break;
-         fCtrlCh->FireEvent(roc::UdpControlSocket::evntSendCtrl);
-         doresend = false;
-      }
-
-      double wait_tm = fast_mode ? (loopcnt++ < 4 ? 0.01 : loopcnt*0.1) : 1.;
-
-      dabc::LockGuard guard(fCond.CondMutex());
-
-      fCond._DoWait(wait_tm);
-
-      // resend packet in fast mode always, in slow mode only in the end of interval
-      doresend = fast_mode ? true : total_tmout_sec <=5.;
-
-      total_tmout_sec -= wait_tm;
-
-      if (ctrlState_ == ctrlGotReply)
-         res = true;
-      else
-      if (show_progress) {
-          std::cout << ".";
-          std::cout.flush();
-          wasprogressout = true;
-      }
-   } while (!res && (total_tmout_sec>0.));
-
-   if (wasprogressout) std::cout << std::endl;
-
-   dabc::LockGuard guard(fCond.CondMutex());
-   ctrlState_ = ctrlReady;
-   return res;
+   return fCtrlCh->waitCtrlLoop(total_tmout_sec);
 }
 
 void roc::UdpDevice::processCtrlMessage(UdpMessageFull* pkt, unsigned len)
 {
-   // procees PEEK or POKE reply messages from ROC
+   // process PEEK or POKE reply messages from ROC
 
    if(pkt->tag == ROC_CONSOLE) {
       pkt->address = ntohl(pkt->address);
@@ -343,25 +425,7 @@ void roc::UdpDevice::processCtrlMessage(UdpMessageFull* pkt, unsigned len)
             if (displayConsoleOutput_)
                DOUT0(("Error addr 0x%04x in cosle message\n", pkt->address));
       }
-
-      return;
    }
-
-   dabc::LockGuard guard(fCond.CondMutex());
-
-   // check first that user waits for reply
-   if (ctrlState_ != ctrlWaitReply) return;
-
-   // if packed id is not the same, do not react
-   if(controlSend.id != pkt->id) return;
-
-   // if packed tag is not the same, do not react
-   if(controlSend.tag != pkt->tag) return;
-
-   memcpy(&controlRecv, pkt, len);
-
-   ctrlState_ = ctrlGotReply;
-   fCond._DoFire();
 }
 
 void roc::UdpDevice::setBoardStat(void* rawdata, bool print)

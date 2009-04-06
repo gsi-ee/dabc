@@ -39,15 +39,44 @@ namespace roc {
       friend class UdpDevice;
       protected:
 
-         enum EUdpEvents { evntSendCtrl = evntSocketLast + 1 };
+         enum ECtrlState { ctrlReady, ctrlWaitReply, ctrlGotReply, ctrlTimedout };
+
+         enum EUdpEvents { evntDoCtrl = evntSocketLast + 1,  };
 
          UdpDevice*      fDev;
+
+         dabc::Mutex     fControlMutex;
+         ECtrlState      fCtrlState;
+         dabc::Condition fControlCond;
+         dabc::Command*  fControlCmd;
+         UdpMessage*     fControlSend;
+         unsigned        fControlSendSize;
+         UdpMessageFull* fControlRecv;
+
          UdpMessageFull  fRecvBuf;
+         uint32_t        fPacketCounter;
+
+         double          fTotalTmoutSec;
+         bool            fShowProgress;
+         bool            fFastMode;
+         int             fLoopCnt;
+
       public:
          UdpControlSocket(UdpDevice* dev, int fd);
          virtual ~UdpControlSocket();
 
+         virtual double ProcessTimeout(double last_diff);
+
          virtual void ProcessEvent(dabc::EventId evnt);
+
+         bool startCtrlLoop(dabc::Command* cmd,
+                            UdpMessage* send_buf, unsigned sendsize,
+                            UdpMessageFull* recv_buf,
+                            double total_tmout_sec, bool show_progress);
+
+         bool completeLoop(bool res);
+
+         bool waitCtrlLoop(double total_tmout_sec);
    };
 
 
@@ -59,25 +88,19 @@ namespace roc {
 
       protected:
 
-         enum ECtrlState { ctrlReady, ctrlWaitReply, ctrlGotReply };
-
          bool              fConnected;
 
          std::string       fRocIp;
 
          int               fCtrlPort;
          UdpControlSocket *fCtrlCh;
-         dabc::Condition   fCond;
 
          int               fDataPort;
          UdpDataSocket    *fDataCh;
 
-         ECtrlState        ctrlState_;
          UdpMessageFull    controlSend;
          unsigned          controlSendSize; // size of control data to be send
          UdpMessageFull    controlRecv;
-
-         uint32_t currentMessagePacketId;
 
          UdpStatistic      brdStat;    // last available statistic block
          bool              isBrdStat;  // is block statistic contains valid data
