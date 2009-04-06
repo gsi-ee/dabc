@@ -29,7 +29,7 @@ void control(const char* boardaddr = "lxg0526")
       return;
    }
 
-   roc::Board* brd = roc::Board::Connect(boardaddr);
+   roc::Board* brd = roc::Board::Connect(boardaddr, roc::roleDAQ);
    if (brd==0) {
       cerr << "Cannot connect to board " << boardaddr << endl;
       return;
@@ -37,7 +37,7 @@ void control(const char* boardaddr = "lxg0526")
 
    cout << " Board addr:" << boardaddr << endl;
 
-   delete brd; return;
+   roc::Board::Close(brd); return;
 
 
    brd->poke(ROC_DO_TESTSETUP,1);
@@ -60,7 +60,7 @@ void control(const char* boardaddr = "lxg0526")
 
    bool res = brd->startDaq();
    cout << "starting readout..." << (res ? "OK" : "Fail") << endl;
-   if (!res) { delete brd; return; }
+   if (!res) { roc::Board::Close(brd); return; }
 
    nxyter::Data data;
    long numdata = 0;
@@ -84,5 +84,5 @@ void control(const char* boardaddr = "lxg0526")
 
    cout << numdata << " messages received" << endl;
 
-   delete brd;
+   roc::Board::Close(brd);
 }

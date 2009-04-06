@@ -27,6 +27,10 @@
 #include "dabc/SocketThread.h"
 #endif
 
+#ifndef ROC_UdpTransport
+#include "roc/UdpTransport.h"
+#endif
+
 namespace roc {
 
    class UdpDevice;
@@ -37,8 +41,8 @@ namespace roc {
 
          enum EUdpEvents { evntSendCtrl = evntSocketLast + 1 };
 
-         UdpDevice*  fDev;
-         UdpMessageFull   fRecvBuf;
+         UdpDevice*      fDev;
+         UdpMessageFull  fRecvBuf;
       public:
          UdpControlSocket(UdpDevice* dev, int fd);
          virtual ~UdpControlSocket();
@@ -46,18 +50,27 @@ namespace roc {
          virtual void ProcessEvent(dabc::EventId evnt);
    };
 
+
    class UdpDevice : public dabc::Device,
                      public roc::UdpBoard {
 
       friend class UdpControlSocket;
+      friend class UdpDataSocket;
 
       protected:
 
          enum ECtrlState { ctrlReady, ctrlWaitReply, ctrlGotReply };
 
          bool              fConnected;
-         UdpControlSocket* fCtrl;
+
+         std::string       fRocIp;
+
+         int               fCtrlPort;
+         UdpControlSocket *fCtrlCh;
          dabc::Condition   fCond;
+
+         int               fDataPort;
+         UdpDataSocket    *fDataCh;
 
          ECtrlState        ctrlState_;
          UdpMessageFull    controlSend;
@@ -81,6 +94,7 @@ namespace roc {
          bool uploadDataToRoc(char* buf, unsigned len);
 
          virtual bool initialise(BoardRole role);
+         virtual void* getdeviceptr() { return this; }
 
          virtual int ExecuteCommand(dabc::Command* cmd);
 

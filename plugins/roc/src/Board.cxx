@@ -73,6 +73,15 @@ roc::Board* roc::Board::Connect(const char* name, BoardRole role)
    return brd;
 }
 
+bool roc::Board::Close(Board* brd)
+{
+   if (brd==0) return false;
+   dabc::Device* dev = (dabc::Device*) brd->getdeviceptr();
+   if (dev==0) return false;
+   dev->DestroyProcessor();
+   return true;
+}
+
 
 bool roc::Board::startDaq()
 {

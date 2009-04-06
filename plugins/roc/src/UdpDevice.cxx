@@ -33,7 +33,7 @@ roc::UdpControlSocket::UdpControlSocket(UdpDevice* dev, int fd) :
 
 roc::UdpControlSocket::~UdpControlSocket()
 {
-   if (fDev) fDev->fCtrl = 0;
+   if (fDev) fDev->fCtrlCh = 0;
    fDev = 0;
 }
 
@@ -61,17 +61,20 @@ void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
 roc::UdpDevice::UdpDevice(dabc::Basic* parent, const char* name, const char* thrdname, dabc::Command* cmd) :
    dabc::Device(parent, name),
    roc::UdpBoard(),
-   fCtrl(0),
+   fConnected(false),
+   fRocIp(),
+   fCtrlPort(0),
+   fCtrlCh(0),
    fCond(),
+   fDataPort(0),
+   fDataCh(0),
    ctrlState_(ctrlReady),
    controlSendSize(0),
    isBrdStat(false),
    displayConsoleOutput_(false)
 {
-   fConnected = false;
-
-   std::string remhost = GetCfgStr(roc::xmlBoardIP, "", cmd);
-   if (remhost.length()==0) return;
+   fRocIp = GetCfgStr(roc::xmlBoardIP, "", cmd);
+   if (fRocIp.length()==0) return;
 
    if (!dabc::mgr()->MakeThreadFor(this, thrdname)) return;
 
@@ -79,28 +82,35 @@ roc::UdpDevice::UdpDevice(dabc::Basic* parent, const char* name, const char* thr
 
    int fd = dabc::SocketThread::StartUdp(nport, nport, nport+1000);
 
-   DOUT0(("Socket %d port %d  remote %s", fd, nport, remhost.c_str()));
+   DOUT1(("Socket %d port %d  remote %s", fd, nport, fRocIp.c_str()));
 
-   fd = dabc::SocketThread::ConnectUdp(fd, remhost.c_str(), ROC_DEFAULT_CTRLPORT);
+   fd = dabc::SocketThread::ConnectUdp(fd, fRocIp.c_str(), ROC_DEFAULT_CTRLPORT);
 
    if (fd<=0) return;
 
-   fCtrl = new UdpControlSocket(this, fd);
+   fCtrlCh = new UdpControlSocket(this, fd);
 
-   fCtrl->AssignProcessorToThread(ProcessorThread());
+   fCtrlCh->AssignProcessorToThread(ProcessorThread());
 
-   DOUT1(("Create control socket for port %d connected to host %s", nport, remhost.c_str()));
+   DOUT0(("Create control socket %d for port %d connected to host %s", fd, nport, fRocIp.c_str()));
 
+   fCtrlPort = nport;
    fConnected = true;
 }
 
 roc::UdpDevice::~UdpDevice()
 {
-   if (fCtrl) {
-      fCtrl->fDev = 0;
-      fCtrl->DestroyProcessor();
+   if (fCtrlCh) {
+      fCtrlCh->fDev = 0;
+      fCtrlCh->DestroyProcessor();
    }
-   fCtrl = 0;
+   fCtrlCh = 0;
+
+   if (fDataCh) {
+      fDataCh->fDev = 0;
+      fDataCh->DestroyProcessor();
+   }
+   fDataCh = 0;
 }
 
 int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
@@ -120,8 +130,30 @@ bool roc::UdpDevice::initialise(BoardRole role)
 {
    DOUT0(("Starting initialize"));
 
+   if (fCtrlCh==0) return false;
+
    if ((role==roleMaster) || (role == roleDAQ)) {
       if (!poke(ROC_MASTER_LOGIN, 0)) return false;
+
+      int nport = fCtrlPort + 1;
+
+      int fd = dabc::SocketThread::StartUdp(nport, nport, nport+1000);
+
+      fd = dabc::SocketThread::ConnectUdp(fd, fRocIp.c_str(), ROC_DEFAULT_DATAPORT);
+
+      if (fd<=0) return false;
+
+      if (!poke(ROC_MASTER_DATAPORT, nport)) {
+         close(fd);
+         return false;
+      }
+
+      fDataPort = nport;
+
+      fDataCh = new UdpDataSocket(this, fd);
+      fDataCh->AssignProcessorToThread(ProcessorThread());
+
+      DOUT0(("Create data socket %d for port %d connected to host %s", fd, nport, fRocIp.c_str()));
    }
 
    fRocNumber = peek(ROC_NUMBER);
@@ -229,7 +261,7 @@ bool roc::UdpDevice::performCtrlLoop(double total_tmout_sec, bool show_progress)
       // before we start sending, indicate that we now in control loop
       // and can accept replies from ROC
       dabc::LockGuard guard(fCond.CondMutex());
-      if (fCtrl==0) return false;
+      if (fCtrlCh==0) return false;
       if (ctrlState_!=ctrlReady) {
          EOUT(("cannot start operation - somebody else uses control loop"));
          return false;
@@ -250,7 +282,7 @@ bool roc::UdpDevice::performCtrlLoop(double total_tmout_sec, bool show_progress)
 
    if (total_tmout_sec>20.) show_progress = true;
 
-   // if fast mode we will try to resend as fast as possible
+   // in fast mode we will try to resend as fast as possible
    bool fast_mode = (total_tmout_sec < 10.) && !show_progress;
    int loopcnt = 0;
    bool wasprogressout = false;
@@ -258,8 +290,8 @@ bool roc::UdpDevice::performCtrlLoop(double total_tmout_sec, bool show_progress)
 
    do {
       if (doresend) {
-         if (fCtrl==0) break;
-         fCtrl->FireEvent(roc::UdpControlSocket::evntSendCtrl);
+         if (fCtrlCh==0) break;
+         fCtrlCh->FireEvent(roc::UdpControlSocket::evntSendCtrl);
          doresend = false;
       }
 

@@ -105,9 +105,9 @@ namespace roc {
       protected:
 
          UdpBoard();
+         virtual ~UdpBoard();
 
       public:
-         virtual ~UdpBoard();
 
          /** Send console command
           * Via this function you can send remote console commands.

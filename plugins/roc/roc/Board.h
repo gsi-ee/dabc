@@ -50,11 +50,12 @@ namespace roc {
          int            fRocNumber;
 
          Board();
+         virtual ~Board();
 
          virtual bool initialise(BoardRole role) = 0;
+         virtual void* getdeviceptr() = 0;
 
       public:
-         virtual ~Board();
 
          BoardRole Role() const { return fRole; }
          int errno() const { return fErrNo; }
@@ -70,6 +71,7 @@ namespace roc {
          bool getNextData(nxyter::Data& data, double tmout = 1.);
 
          static Board* Connect(const char* name, BoardRole role = roleObserver);
+         static bool Close(Board* brd);
    };
 
 }
