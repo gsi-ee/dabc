@@ -16,7 +16,7 @@
 #include "dabc/logging.h"
 #include "mbs/MbsTypeDefs.h"
 
-#include "roc/Device.h"
+#include "roc/Board.h"
 
 #include "nxyter/Data.h"
 

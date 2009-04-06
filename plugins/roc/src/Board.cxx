@@ -17,20 +17,28 @@
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/Factory.h"
+#include "dabc/Device.h"
 
-#include "roc/Device.h"
 #include "roc/Defines.h"
 
 
-roc::Board::Board(Device* dev, BoardRole role) :
-   fDev(dev),
-   fRole(roleNone)
+const char* roc::xmlNumRocs         = "NumRocs";
+const char* roc::xmlRocPool         = "RocPool";
+const char* roc::xmlTransportWindow = "TransportWindow";
+const char* roc::xmlBoardIP         = "BoardIP";
+
+const char* roc::typeUdpDevice      = "roc::UdpDevice";
+
+
+roc::Board::Board() :
+   fRole(roleNone),
+   fErrNo(0),
+   fRocNumber(0)
 {
 }
 
 roc::Board::~Board()
 {
-   if (fDev) fDev->DestroyProcessor();
 }
 
 roc::Board* roc::Board::Connect(const char* name, BoardRole role)
@@ -44,33 +52,27 @@ roc::Board* roc::Board::Connect(const char* name, BoardRole role)
    cmd->SetStr(roc::xmlBoardIP, name);
    if (!dabc::mgr()->Execute(cmd)) return 0;
 
-   roc::Device* dev = dynamic_cast<roc::Device*> (dabc::mgr()->FindDevice(devname));
+   dabc::Device* dev = dabc::mgr()->FindDevice(devname);
    if (dev==0) return 0;
 
+   std::string sptr = dev->ExecuteStr("GetBoardPtr", "BoardPtr");
+   void *ptr = 0;
 
-   if (!dev->initialise(role)) {
+   if (sptr.empty() || (sscanf(sptr.c_str(),"%p", &ptr) != 1)) {
       dev->DestroyProcessor();
       return 0;
    }
 
-   return new roc::Board(dev, role);
+   roc::Board* brd = (roc::Board*) ptr;
+
+   if ((brd==0) || !brd->initialise(role)) {
+      dev->DestroyProcessor();
+      return 0;
+   }
+
+   return brd;
 }
 
-int roc::Board::errno() const
-{
-   return fDev ? fDev->errno() : 0;
-}
-
-
-bool roc::Board::poke(uint32_t addr, uint32_t value, double tmout)
-{
-   return fDev ? fDev->poke(addr, value, tmout) : false;
-}
-
-uint32_t roc::Board::peek(uint32_t addr, double tmout)
-{
-   return fDev ? fDev->peek(addr, tmout) : 0;
-}
 
 bool roc::Board::startDaq()
 {

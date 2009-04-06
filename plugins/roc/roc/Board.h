@@ -24,31 +24,50 @@ namespace roc {
 
    enum BoardRole { roleNone, roleObserver, roleMaster, roleDAQ };
 
-   class Device;
+   // this is value of subevent iProc in mbs event
+   // For raw data rocid stored in iSubcrate, for merged data iSubcrate stores higher bits
+   enum ERocMbsTypes {
+      proc_RocEvent     = 1,   // complete event from one roc board (iSubcrate = rocid)
+      proc_ErrEvent     = 2,   // one or several events with corrupted data inside (iSubcrate = rocid)
+      proc_MergedEvent  = 3    // sorted and synchronised data from several rocs (iSubcrate = upper rocid bits)
+   };
+
+   extern const char* xmlNumRocs;
+   extern const char* xmlRocPool;
+   extern const char* xmlTransportWindow;
+   extern const char* xmlBoardIP;
+
+   extern const char* typeUdpDevice;
+
+   enum ERocBufferTypes {
+      rbt_RawRocData     = 234
+   };
 
    class Board {
       protected:
-         Device   *fDev;
-         BoardRole fRole;
+         BoardRole      fRole;
+         int            fErrNo;
+         int            fRocNumber;
 
-         Board(Device* dev = 0, BoardRole role = roleNone);
+         Board();
+
+         virtual bool initialise(BoardRole role) = 0;
 
       public:
          virtual ~Board();
 
          BoardRole Role() const { return fRole; }
+         int errno() const { return fErrNo; }
+         int rocNumber() const { return fRocNumber; }
 
-         int errno() const;
-
-         bool poke(uint32_t addr, uint32_t value, double tmout = 5.);
-         uint32_t peek(uint32_t addr, double tmout = 5.);
+         virtual bool poke(uint32_t addr, uint32_t value, double tmout = 5.) = 0;
+         virtual uint32_t peek(uint32_t addr, double tmout = 5.) = 0;
 
          bool startDaq();
          bool suspendDaq();
          bool stopDaq();
 
          bool getNextData(nxyter::Data& data, double tmout = 1.);
-
 
          static Board* Connect(const char* name, BoardRole role = roleObserver);
    };

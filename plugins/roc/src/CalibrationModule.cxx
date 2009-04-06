@@ -13,7 +13,7 @@
  ********************************************************************/
 #include "roc/CalibrationModule.h"
 
-#include "roc/Device.h"
+#include "roc/Board.h"
 
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"

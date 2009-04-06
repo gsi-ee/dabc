@@ -17,6 +17,7 @@ NXYTERDIRS      = $(ROCDIR)/src_nxyter
 
 ROC_LINKDEF     = $(ROCDIR)/LinkDef.h
 ROC_DICH        = roc/Board.h \
+                  roc/UdpBoard.h \
                   roc/Defines.h \
                   nxyter/Data.h \
                   nxyter/Sorter.h

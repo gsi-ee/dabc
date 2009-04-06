@@ -59,7 +59,8 @@ void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
 
 
 roc::UdpDevice::UdpDevice(dabc::Basic* parent, const char* name, const char* thrdname, dabc::Command* cmd) :
-   roc::Device(parent, name),
+   dabc::Device(parent, name),
+   roc::UdpBoard(),
    fCtrl(0),
    fCond(),
    ctrlState_(ctrlReady),
@@ -102,15 +103,26 @@ roc::UdpDevice::~UdpDevice()
    fCtrl = 0;
 }
 
+int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
+{
+   if (cmd->IsName("GetBoardPtr")) {
+
+      roc::Board* brd = static_cast<roc::Board*> (this);
+      cmd->SetStr("BoardPtr", dabc::format("%p", brd));
+      return cmd_true;
+   }
+
+   return dabc::Device::ExecuteCommand(cmd);
+}
+
+
 bool roc::UdpDevice::initialise(BoardRole role)
 {
    DOUT0(("Starting initialize"));
 
-
    if ((role==roleMaster) || (role == roleDAQ)) {
       if (!poke(ROC_MASTER_LOGIN, 0)) return false;
    }
-
 
    fRocNumber = peek(ROC_NUMBER);
    if (errno()!=0) return false;
@@ -140,7 +152,7 @@ bool roc::UdpDevice::initialise(BoardRole role)
 
 int roc::UdpDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
-   return roc::Device::CreateTransport(cmd, port);
+   return dabc::Device::CreateTransport(cmd, port);
 }
 
 bool roc::UdpDevice::poke(uint32_t addr, uint32_t value, double tmout)
@@ -246,7 +258,7 @@ bool roc::UdpDevice::performCtrlLoop(double total_tmout_sec, bool show_progress)
 
    do {
       if (doresend) {
-         if (fCtrl==0) return false;
+         if (fCtrl==0) break;
          fCtrl->FireEvent(roc::UdpControlSocket::evntSendCtrl);
          doresend = false;
       }

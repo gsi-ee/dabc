@@ -22,7 +22,7 @@
 #include "dabc/Module.h"
 
 #include "roc/Factory.h"
-#include "roc/Device.h"
+#include "roc/Board.h"
 
 namespace roc {
 
@@ -35,7 +35,7 @@ namespace roc {
    class ReadoutApplication : public dabc::Application {
       protected:
          std::string  fDevName;
-         roc::Device* GetBoardDevice(int indx = 0);
+         roc::Board* GetBoard(int indx = 0);
       public:
          ReadoutApplication();
 

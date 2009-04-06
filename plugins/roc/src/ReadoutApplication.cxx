@@ -17,6 +17,7 @@
 #include "dabc/Command.h"
 #include "dabc/timing.h"
 #include "dabc/CommandsSet.h"
+#include "dabc/Device.h"
 
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Factory.h"
@@ -179,36 +180,43 @@ bool roc::ReadoutApplication::CreateAppModules()
    return true;
 }
 
-roc::Device* roc::ReadoutApplication::GetBoardDevice(int indx)
+roc::Board* roc::ReadoutApplication::GetBoard(int indx)
 {
-   return dynamic_cast<roc::Device*> (dabc::mgr()->FindDevice(fDevName.c_str()));
+   dabc::Device* dev = dabc::mgr()->FindDevice(fDevName.c_str());
+   if (dev==0) return 0;
+
+   std::string sptr = dev->ExecuteStr("GetBoardPtr", "BoardPtr");
+   void *ptr = 0;
+
+   if (sptr.empty() || (sscanf(sptr.c_str(),"%p", &ptr) != 1)) return 0;
+   return (roc::Board*) ptr;
 }
 
 bool roc::ReadoutApplication::ConfigureRoc(int indx)
 {
-   roc::Device* dev = GetBoardDevice(indx);
-   if (dev==0) return false;
+   roc::Board* brd = GetBoard(indx);
+   if (brd==0) return false;
 
    bool res = true;
 
-//   res = res && dev->Poke(ROC_NX_SELECT, 0);
-//   res = res && dev->Poke(ROC_NX_ACTIVE, 0);
-   res = res && dev->poke(ROC_SYNC_M_SCALEDOWN, 1);
-   res = res && dev->poke(ROC_AUX_ACTIVE, 3);
+//   res = res && brd->Poke(ROC_NX_SELECT, 0);
+//   res = res && brd->Poke(ROC_NX_ACTIVE, 0);
+   res = res && brd->poke(ROC_SYNC_M_SCALEDOWN, 1);
+   res = res && brd->poke(ROC_AUX_ACTIVE, 3);
 
 /*
-   res = res && dev->poke(ROC_ACTIVATE_LOW_LEVEL, 1);
-   res = res && dev->poke(ROC_DO_TESTSETUP,1);
-   res = res && dev->poke(ROC_ACTIVATE_LOW_LEVEL,0);
+   res = res && brd->poke(ROC_ACTIVATE_LOW_LEVEL, 1);
+   res = res && brd->poke(ROC_DO_TESTSETUP,1);
+   res = res && brd->poke(ROC_ACTIVATE_LOW_LEVEL,0);
 
-   res = res && dev->poke(ROC_NX_REGISTER_BASE + 0,255);
-   res = res && dev->poke(ROC_NX_REGISTER_BASE + 1,255);
-   res = res && dev->poke(ROC_NX_REGISTER_BASE + 2,0);
-   res = res && dev->poke(ROC_NX_REGISTER_BASE + 18,35);
-   res = res && dev->poke(ROC_NX_REGISTER_BASE + 32,1);
+   res = res && brd->poke(ROC_NX_REGISTER_BASE + 0,255);
+   res = res && brd->poke(ROC_NX_REGISTER_BASE + 1,255);
+   res = res && brd->poke(ROC_NX_REGISTER_BASE + 2,0);
+   res = res && brd->poke(ROC_NX_REGISTER_BASE + 18,35);
+   res = res && brd->poke(ROC_NX_REGISTER_BASE + 32,1);
 
-   res = res && dev->poke(ROC_FIFO_RESET,1);
-   res = res && dev->poke(ROC_BUFFER_FLUSH_TIMER,1000);
+   res = res && brd->poke(ROC_FIFO_RESET,1);
+   res = res && brd->poke(ROC_BUFFER_FLUSH_TIMER,1000);
 */
    return res;
 }

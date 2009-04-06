@@ -13,7 +13,7 @@
  ********************************************************************/
 #include "roc/CombinerModule.h"
 
-#include "roc/Device.h"
+#include "roc/Board.h"
 #include "nxyter/Data.h"
 
 #include "dabc/logging.h"

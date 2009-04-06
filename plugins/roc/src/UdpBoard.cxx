@@ -12,18 +12,13 @@
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
 
-#ifdef __CINT__
+#include "roc/UdpBoard.h"
 
-#pragma link off all globals;
-#pragma link off all classes;
-#pragma link off all functions;
+roc::UdpBoard::UdpBoard() :
+   roc::Board()
+{
+}
 
-#pragma link C++ nestedclasses;
-#pragma link C++ namespace roc;
-#pragma link C++ class roc::Board;
-#pragma link C++ class roc::UdpBoard;
-#pragma link C++ namespace nxyter;
-#pragma link C++ class nxyter::Data;
-#pragma link C++ class nxyter::Sorter;
-
-#endif
+roc::UdpBoard::~UdpBoard()
+{
+}
