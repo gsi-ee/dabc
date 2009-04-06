@@ -19,6 +19,10 @@
 #include "dabc/Device.h"
 #endif
 
+#ifndef ROC_Board
+#include "roc/Board.h"
+#endif
+
 namespace roc {
 
    extern const char* xmlNumRocs;
@@ -42,9 +46,13 @@ namespace roc {
    };
 
    class Device : public dabc::Device {
-      protected:
+      friend class roc::Board;
 
-         int fErrNo;
+      protected:
+         int         fErrNo;
+         uint32_t    fRocNumber;
+
+         virtual bool initialise(BoardRole role) { return false; }
 
       public:
 
@@ -57,9 +65,11 @@ namespace roc {
 
          virtual int CreateTransport(dabc::Command* cmd, dabc::Port* port);
 
+         uint32_t rocNumber() const { return fRocNumber; }
+
          virtual int errno() const { return fErrNo; }
-         virtual bool poke(uint32_t addr, uint32_t value);
-         virtual uint32_t peek(uint32_t addr);
+         virtual bool poke(uint32_t addr, uint32_t value, double tmout = 5.);
+         virtual uint32_t peek(uint32_t addr, double tmout = 5.);
    };
 
 }

@@ -40,8 +40,8 @@ namespace roc {
 
          int errno() const;
 
-         bool poke(uint32_t addr, uint32_t value);
-         uint32_t peek(uint32_t addr);
+         bool poke(uint32_t addr, uint32_t value, double tmout = 5.);
+         uint32_t peek(uint32_t addr, double tmout = 5.);
 
          bool startDaq();
          bool suspendDaq();

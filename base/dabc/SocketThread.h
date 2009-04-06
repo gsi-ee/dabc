@@ -123,6 +123,8 @@ namespace dabc {
          inline bool IsDoingSend() const { return fSendIOVNumber>0; }
          inline bool IsDoingRecv() const { return fRecvIOVNumber>0; }
 
+         ssize_t DoRecvBuffer(void* buf, ssize_t len);
+
          bool          fSendUseMsg;     // use sendmsg for transport
          struct iovec* fSendIOV;        // sending io vector for gather list
          unsigned      fSendIOVSize;    // total number of elements in send vector

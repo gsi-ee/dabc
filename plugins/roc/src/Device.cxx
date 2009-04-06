@@ -24,7 +24,8 @@ const char* roc::typeUdpDevice      = "roc::UdpDevice";
 
 roc::Device::Device(dabc::Basic* parent, const char* name) :
    dabc::Device(parent, name),
-   fErrNo(0)
+   fErrNo(0),
+   fRocNumber(0)
 {
 
 }
@@ -46,13 +47,13 @@ int roc::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 }
 
 
-bool roc::Device::poke(uint32_t addr, uint32_t value)
+bool roc::Device::poke(uint32_t addr, uint32_t value, double tmout)
 {
    fErrNo = 0;
    return true;
 }
 
-uint32_t roc::Device::peek(uint32_t addr)
+uint32_t roc::Device::peek(uint32_t addr, double tmout)
 {
    fErrNo = 0;
    return 0;

@@ -85,6 +85,25 @@ namespace roc {
    };
 
 
+   /** ISE Binfile header
+    * A bitfile from Xilinx ISE consists of a binfile and a fileheader.
+    * We need only a bin file for reprogramming the virtex. So
+    * we use this header in front of the bin file
+    * to store it on the Actel Flash. Its size is 512 bytes.
+    * Behind the Header, the binfile will be written to the flash */
+
+   union ISEBinfileHeader {
+      struct {
+         uint8_t ident[4];
+         uint32_t headerSize;
+         uint32_t binfileSize;
+         uint8_t XORCheckSum;
+         uint8_t bitfileName[65];
+         uint32_t timestamp;
+      };
+      uint8_t bytes[512];
+   };
+
    class UdpDevice;
 
    class UdpControlSocket : public dabc::SocketIOProcessor {
@@ -100,20 +119,20 @@ namespace roc {
          virtual ~UdpControlSocket();
 
          virtual void ProcessEvent(dabc::EventId evnt);
-
-         virtual bool OnRecvProvideBuffer();
-         virtual void OnRecvCompleted();
    };
 
    class UdpDevice : public roc::Device {
       friend class UdpControlSocket;
 
       protected:
+
+         enum ECtrlState { ctrlReady, ctrlWaitReply, ctrlGotReply };
+
          bool              fConnected;
          UdpControlSocket* fCtrl;
          dabc::Condition   fCond;
 
-         int               ctrlState_;
+         ECtrlState        ctrlState_;
          UdpMessageFull    controlSend;
          unsigned          controlSendSize; // size of control data to be send
          UdpMessageFull    controlRecv;
@@ -129,6 +148,14 @@ namespace roc {
          void processCtrlMessage(UdpMessageFull* pkt, unsigned len);
          void setBoardStat(void* rawdata, bool print);
 
+         int pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatelen, double tmout = 2.);
+         int parseBitfileHeader(char* pBuffer, unsigned int nLen);
+         uint8_t calcBinXOR(const char* filename);
+         bool uploadDataToRoc(char* buf, unsigned len);
+
+         virtual bool initialise(BoardRole role);
+
+
       public:
 
          UdpDevice(dabc::Basic* parent, const char* name, const char* thrdname, dabc::Command* cmd);
@@ -142,8 +169,24 @@ namespace roc {
 
          virtual int CreateTransport(dabc::Command* cmd, dabc::Port* port);
 
-         virtual bool poke(uint32_t addr, uint32_t value);
-         virtual uint32_t peek(uint32_t addr);
+         virtual bool poke(uint32_t addr, uint32_t value, double tmout = 5.);
+         virtual uint32_t peek(uint32_t addr, double tmout = 5.);
+
+         /** Send console command
+          * Via this function you can send remote console commands.
+          * It works like telnet.
+          * It is developed mainly for debugging reasons. */
+         bool sendConsoleCommand(const char* cmd);
+
+         /** Upload bit file to ROC
+          * Uploads bitfile to specified position (0 or 1)
+          * Returns true if upload was successful. */
+         bool uploadBitfile(const char* filename, int position);
+
+         bool uploadSDfile(const char* filename, const char* sdfilename = 0);
+
+         bool saveConfig(const char* filename = 0);
+         bool loadConfig(const char* filename = 0);
    };
 
 }

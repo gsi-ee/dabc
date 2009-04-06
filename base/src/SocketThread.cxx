@@ -370,6 +370,17 @@ bool dabc::SocketIOProcessor::StartNetSend(void* hdr, BufferSize_t hdrsize, Buff
    return true;
 }
 
+ssize_t dabc::SocketIOProcessor::DoRecvBuffer(void* buf, ssize_t len)
+{
+   ssize_t res = recv(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
+
+   if (res==0) OnConnectionClosed(); else
+   if (res<0) {
+     if (errno!=EAGAIN) OnSocketError(errno, "When recvmsg()");
+   }
+
+   return res;
+}
 
 void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
 {

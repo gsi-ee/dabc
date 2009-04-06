@@ -47,27 +47,29 @@ roc::Board* roc::Board::Connect(const char* name, BoardRole role)
    roc::Device* dev = dynamic_cast<roc::Device*> (dabc::mgr()->FindDevice(devname));
    if (dev==0) return 0;
 
-   dev->poke(ROC_MASTER_LOGIN, 0);
 
-   dev->peek(ROC_NUMBER);
+   if (!dev->initialise(role)) {
+      dev->DestroyProcessor();
+      return 0;
+   }
 
    return new roc::Board(dev, role);
 }
 
 int roc::Board::errno() const
 {
-   return 0;
+   return fDev ? fDev->errno() : 0;
 }
 
 
-bool roc::Board::poke(uint32_t addr, uint32_t value)
+bool roc::Board::poke(uint32_t addr, uint32_t value, double tmout)
 {
-   return true;
+   return fDev ? fDev->poke(addr, value, tmout) : false;
 }
 
-uint32_t roc::Board::peek(uint32_t addr)
+uint32_t roc::Board::peek(uint32_t addr, double tmout)
 {
-   return 0;
+   return fDev ? fDev->peek(addr, tmout) : 0;
 }
 
 bool roc::Board::startDaq()
