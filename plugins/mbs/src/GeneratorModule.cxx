@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -17,6 +17,7 @@
 
 #include "dabc/Port.h"
 #include "dabc/PoolHandle.h"
+#include "dabc/Application.h"
 #include "dabc/Manager.h"
 #include "mbs/Iterator.h"
 
@@ -119,51 +120,77 @@ extern "C" void InitMbsGenerator()
 
 
 
-class MbsTestReadoutModule : public dabc::ModuleAsync {
+mbs::ReadoutModule::ReadoutModule(const char* name,  dabc::Command* cmd) :
+    dabc::ModuleAsync(name, cmd)
+{
+	dabc::BufferSize_t size = GetCfgInt(dabc::xmlBufferSize, 16*1024, cmd);
 
-   public:
-      MbsTestReadoutModule(const char* name) :
-         dabc::ModuleAsync(name)
-      {
-         dabc::BufferSize_t size = GetCfgInt(dabc::xmlBufferSize, 16*1024);
+	dabc::PoolHandle* pool = CreatePoolHandle("Pool1", size, 5);
 
-         dabc::PoolHandle* pool = CreatePoolHandle("Pool1", size, 5);
+	dabc::Port* port = CreateInput("Input", pool, 5);
 
-         dabc::Port* port = CreateInput("Input", pool, 5);
+	port->GetCfgStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer), cmd);
+	port->GetCfgStr(mbs::xmlServerName, "lxg0526", cmd);
+	port->GetCfgInt(mbs::xmlServerPort, DefualtServerPort(mbs::TransportServer), cmd);
 
-         port->GetCfgStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
-         port->GetCfgStr(mbs::xmlServerName, "lxg0526");
-         port->GetCfgInt(mbs::xmlServerPort, DefualtServerPort(mbs::TransportServer));
+	DOUT1(("Start as client for node %s:%d", port->GetParStr(mbs::xmlServerName).c_str(), port->GetParInt(mbs::xmlServerPort)));
+}
 
-         DOUT1(("Start as client for node %s:%d", port->GetParStr(mbs::xmlServerName).c_str(), port->GetParInt(mbs::xmlServerPort)));
-      }
+void mbs::ReadoutModule::ProcessInputEvent(dabc::Port* port)
+{
+	dabc::Buffer* buf = port->Recv();
 
-      virtual void ProcessInputEvent(dabc::Port* port)
-      {
-         dabc::Buffer* buf = port->Recv();
+	unsigned cnt = mbs::ReadIterator::NumEvents(buf);
 
-         unsigned cnt = mbs::ReadIterator::NumEvents(buf);
+	DOUT1(("Found %u events in MBS buffer", cnt));
 
-         DOUT1(("Found %u events in MBS buffer", cnt));
+	dabc::Buffer::Release(buf);
+}
 
-         dabc::Buffer::Release(buf);
-      }
 
-      virtual void AfterModuleStop()
-      {
-      }
-};
+mbs::TransmitterModule::TransmitterModule(const char* name, dabc::Command* cmd) :
+	dabc::ModuleAsync(name, cmd)
+{
+	dabc::BufferSize_t size = GetCfgInt(dabc::xmlBufferSize, 16*1024, cmd);
+
+	CreatePoolHandle("Pool", size, 5);
+
+	CreateInput("Input", Pool(), 5);
+
+	CreateOutput("Output", Pool(), 5);
+}
+
+void mbs::TransmitterModule::retransmit()
+{
+	bool dostop = false;
+	while (Output(0)->CanSend() && Input(0)->CanRecv()) {
+		dabc::Buffer* buf = Input(0)->Recv();
+		if (buf->GetTypeId() == dabc::mbt_EOF) {
+			DOUT0(("See EOF - stop module"));
+			dostop = true;
+		}
+		Output(0)->Send(buf);
+	}
+
+	if (dostop) {
+	   Stop();
+	   dabc::mgr()->GetApp()->InvokeCheckModulesCmd();
+	}
+}
 
 extern "C" void InitMbsClient()
 {
-   dabc::Module* m = new MbsTestReadoutModule("Receiver");
+   dabc::mgr()->CreateModule("mbs::ReadoutModule", "Receiver", "ModuleThrd");
 
-   dabc::mgr()->MakeThreadForModule(m);
-
-   dabc::Command* cmd = new dabc::CmdCreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
-
-   if (!dabc::mgr()->Execute(cmd)) {
-      EOUT(("Cannot create data input for receiver"));
-      exit(1);
-   }
+   dabc::mgr()->CreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
 }
+
+extern "C" void InitMbsTransmitter()
+{
+   dabc::mgr()->CreateModule("mbs::TransmitterModule", "Transmitter", "WorkerThrd");
+
+   dabc::mgr()->CreateTransport("Transmitter/Input", mbs::typeTextInput, "WorkerThrd");
+
+   dabc::mgr()->CreateTransport("Transmitter/Output", mbs::typeServerTransport, "MbsTransport");
+}
+

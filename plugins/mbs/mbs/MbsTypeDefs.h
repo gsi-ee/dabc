@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -176,6 +176,7 @@ namespace mbs {
 
    extern const char* typeLmdInput;
    extern const char* typeLmdOutput;
+   extern const char* typeTextInput;
    extern const char* typeServerTransport;
    extern const char* typeClientTransport;
 
@@ -184,6 +185,12 @@ namespace mbs {
    extern const char* xmlServerName;
    extern const char* xmlServerKind;
    extern const char* xmlServerPort;
+
+   extern const char* xmlTextDataFormat;
+   extern const char* xmlTextNumData;
+   extern const char* xmlTextHeaderLines;
+   extern const char* xmlTextCharBuffer;
+
 };
 
 #endif

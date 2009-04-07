@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="Test">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="InitMbsTransmitter"/>
+    </Run>
+    <Module name="Transmitter">
+       <BufferSize value="16384"/>
+       <Port name="Input">
+          <MbsFileName value="/home/linev/wind.dat"/>
+          <MbsTextFormat value="float"/>
+          <MbsTextNumData value="15"/>
+          <MbsTextHeader value="0"/>
+       </Port>
+       <Port name="Output">
+          <MbsServerKind value="Stream"/>
+        </Port>
+     </Module>
+  </Context>
+</dabc>

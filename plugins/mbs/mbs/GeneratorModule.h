@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -41,6 +41,26 @@ namespace mbs {
          GeneratorModule(const char* name, dabc::Command* cmd = 0);
 
          virtual void ProcessOutputEvent(dabc::Port* port);
+   };
+
+
+   class ReadoutModule : public dabc::ModuleAsync {
+
+      public:
+         ReadoutModule(const char* name, dabc::Command* cmd = 0);
+
+         virtual void ProcessInputEvent(dabc::Port* port);
+   };
+
+   class TransmitterModule : public dabc::ModuleAsync {
+         void retransmit();
+
+      public:
+      	TransmitterModule(const char* name, dabc::Command* cmd = 0);
+
+         virtual void ProcessInputEvent(dabc::Port*) { retransmit(); }
+
+         virtual void ProcessOutputEvent(dabc::Port*) { retransmit(); }
    };
 
 }

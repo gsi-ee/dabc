@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -19,6 +19,7 @@
 
 const char* mbs::typeLmdInput         = "mbs::LmdInput";
 const char* mbs::typeLmdOutput        = "mbs::LmdOutput";
+const char* mbs::typeTextInput        = "mbs::TextInput";
 const char* mbs::typeServerTransport  = "mbs::ServerTransport";
 const char* mbs::typeClientTransport  = "mbs::ClientTransport";
 
@@ -27,6 +28,11 @@ const char* mbs::xmlSizeLimit         = "MbsFileSizeLimit";
 const char* mbs::xmlServerName        = "MbsServerName";
 const char* mbs::xmlServerKind        = "MbsServerKind";
 const char* mbs::xmlServerPort        = "MbsServerPort";
+
+const char* mbs::xmlTextDataFormat    = "MbsTextFormat";
+const char* mbs::xmlTextNumData       = "MbsTextNumData";
+const char* mbs::xmlTextHeaderLines   = "MbsTextHeader";
+const char* mbs::xmlTextCharBuffer    = "MbsCharBuffer";
 
 unsigned mbs::EventHeader::NumSubevents() const
 {

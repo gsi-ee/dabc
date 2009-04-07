@@ -23,6 +23,7 @@
 #include "mbs/EventAPI.h"
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
+#include "mbs/TextInput.h"
 #include "mbs/ServerTransport.h"
 #include "mbs/ClientTransport.h"
 #include "mbs/GeneratorModule.h"
@@ -106,6 +107,9 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ)
    if (strcmp(typ, typeLmdInput)==0) {
       return new mbs::LmdInput();
    } else
+   if (strcmp(typ, typeTextInput)==0) {
+      return new mbs::TextInput();
+   } else
    if (strcmp(typ, xmlEvapiType) == 0) {
       return new mbs::EvapiInput(xmlEvapiFile);
    } else
@@ -156,6 +160,12 @@ dabc::Module* mbs::Factory::CreateModule(const char* classname, const char* modu
    else
    if (strcmp(classname, "mbs::CombinerModule")==0)
       return new mbs::CombinerModule(modulename, cmd);
+   else
+   if (strcmp(classname, "mbs::ReadoutModule")==0)
+      return new mbs::ReadoutModule(modulename, cmd);
+   else
+   if (strcmp(classname, "mbs::TransmitterModule")==0)
+      return new mbs::TransmitterModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
