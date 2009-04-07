@@ -45,8 +45,6 @@ namespace dabc {
 
          Command* _Assign(Command* cmd);
          void _Forget(Command* cmd);
-         bool _CommandReplyed(Command* cmd, bool res);
-
          virtual bool _ProcessReply(Command* cmd) = 0;
          unsigned _NumSubmCmds();
 

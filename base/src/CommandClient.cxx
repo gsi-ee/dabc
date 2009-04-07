@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -76,19 +76,6 @@ void dabc::CommandClientBase::_Forget(Command* cmd)
    cmd->fClient = 0;
    cmd->fClientMutex = 0;
 }
-
-bool dabc::CommandClientBase::_CommandReplyed(Command* cmd, bool res)
-{
-   // this method is called when command is replied
-   // if returned true means we get control over command object
-   // if returned false, object will be finalized
-
-   // first, we "forget" command - client has no reply job with it
-   _Forget(cmd);
-
-   return _ProcessReply(cmd);
-}
-
 
 int dabc::CommandClientBase::CancelCommands()
 {

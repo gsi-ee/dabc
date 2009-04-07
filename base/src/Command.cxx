@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -363,10 +363,14 @@ void dabc::Command::Reply(Command* cmd, bool res)
 
       LockGuard guard(cmd->fClientMutex);
 
-      DOUT5(("Reply command %p %s Client %p", cmd, cmd->GetName(), cmd->fClient));
+      CommandClientBase* client = cmd->fClient;
 
-      if (cmd->fClient)
-         proseccreply = cmd->fClient->_CommandReplyed(cmd, res);
+      DOUT5(("Reply command %p %s Client %p", cmd, cmd->GetName(), client));
+
+      if (client) {
+         client->_Forget(cmd);
+         proseccreply = client->_ProcessReply(cmd);
+      }
 
       DOUT5(("Reply command %p done process %s", cmd, DBOOL(proseccreply)));
    }

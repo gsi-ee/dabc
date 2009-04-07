@@ -27,23 +27,19 @@
 roc::UdpControlSocket::UdpControlSocket(UdpDevice* dev, int fd) :
    dabc::SocketIOProcessor(fd),
    fDev(dev),
-   fControlMutex(),
-   fCtrlState(ctrlReady),
-   fControlCond(&fControlMutex),
-   fControlCmd(0),
+   fUdpCmds(false, false),
+   fCtrlRuns(false),
    fControlSendSize(0),
    fPacketCounter(0)
 
 {
    // we will react on all input packets
    SetDoingInput(true);
-
-   fControlRes = 0;
 }
 
 roc::UdpControlSocket::~UdpControlSocket()
 {
-   completeLoop(false);
+   fUdpCmds.Cleanup();
 
    if (fDev) fDev->fCtrlCh = 0;
    fDev = 0;
@@ -53,8 +49,9 @@ void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
 {
    switch (dabc::GetEventCode(evnt)) {
 
-      case evntDoCtrl: {
-         if (fDev==0) return;
+      case evntSendCtrl: {
+         DOUT0(("Send requests of size %d", fControlSendSize));
+
          StartSend(&fControlSend, fControlSendSize);
          double tmout = fFastMode ? (fLoopCnt++ < 4 ? 0.01 : fLoopCnt*0.1) : 1.;
          fTotalTmoutSec -= tmout;
@@ -64,21 +61,27 @@ void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
 
       case evntSocketRead: {
          ssize_t len = DoRecvBuffer(&fControlRecv, sizeof(UdpMessageFull));
+
+         DOUT0(("Get answer of size %d", len));
+
          if (len<=0) return;
 
-//         DOUT0(("Recv packet of size %d", len));
-
-         if ((fControlRecv.password == htonl(ROC_PASSWORD)) &&
+         if (fCtrlRuns &&
+             (fControlRecv.password == htonl(ROC_PASSWORD)) &&
              (fControlSend.id == fControlRecv.id) &&
              (fControlSend.tag == fControlRecv.tag)) {
-//            DOUT0(("Recv correct answer %p", fControlRes));
-            if (fControlRes) memcpy(fControlRes, &fControlRecv, len);
-            completeLoop(true);
+                completeLoop(true);
          } else
          if (fDev)
             fDev->processCtrlMessage(&fControlRecv, len);
          break;
       }
+
+      case evntCheckCmd: {
+         checkCommandsQueue();
+         break;
+      }
+
       default:
          dabc::SocketIOProcessor::ProcessEvent(evnt);
    }
@@ -98,7 +101,7 @@ double roc::UdpControlSocket::ProcessTimeout(double last_diff)
    }
 
    if (fFastMode || (fTotalTmoutSec <=5.)) {
-      FireEvent(evntDoCtrl);
+      FireEvent(evntSendCtrl);
       return -1.;
    }
 
@@ -107,7 +110,7 @@ double roc::UdpControlSocket::ProcessTimeout(double last_diff)
    return 1.;
 }
 
-bool roc::UdpControlSocket::completeLoop(bool res)
+void roc::UdpControlSocket::completeLoop(bool res)
 {
    if (fShowProgress) {
        std::cout << std::endl;
@@ -115,26 +118,10 @@ bool roc::UdpControlSocket::completeLoop(bool res)
        fShowProgress = false;
    }
 
-   dabc::Command* cmd = 0;
-
-   {
-      dabc::LockGuard guard(fControlMutex);
-
-      if (fCtrlState == ctrlReady) return false;
-
-      if (fControlCmd==0) {
-         fCtrlState = res ? ctrlGotReply : ctrlTimedout;
-         fControlCond._DoFire();
-      } else {
-         cmd = fControlCmd;
-         fControlCmd = 0;
-         fCtrlState = ctrlReady;
-      }
-
-      fControlRes = 0;
-   }
-
-   if (cmd) {
+   dabc::Command* cmd = fUdpCmds.Pop();
+   if (cmd==0) {
+      EOUT(("Something wrong"));
+   } else {
       if (cmd->IsName(CmdPeek::CmdName())) {
          cmd->SetUInt(ValuePar, res ? ntohl(fControlRecv.value): 0);
          cmd->SetUInt(ErrNoPar, res ? ntohl(fControlRecv.address) : 6);
@@ -143,52 +130,70 @@ bool roc::UdpControlSocket::completeLoop(bool res)
          cmd->SetUInt(ErrNoPar, res ? ntohl(fControlRecv.value) : 6);
       }
       dabc::Command::Reply(cmd, res);
-      if (fDev) fDev->FireEvent(UdpDevice::eventCheckUdpCmds);
    }
 
-   return true;
+   fCtrlRuns = false;
+
+   checkCommandsQueue();
 }
 
-bool roc::UdpControlSocket::lockCtrlLoop()
+int roc::UdpControlSocket::ExecuteCommand(dabc::Command* cmd)
 {
-   if (IsExecutionThread()) {
-      EOUT(("Cannot perform control loop from own thread, one should use command submission !!!"));
-      return false;
-   }
+   fUdpCmds.Push(cmd);
 
-   dabc::LockGuard guard(fControlMutex);
+   DOUT0(("Get command %s", cmd->GetName()));
 
-   if (fCtrlState!=ctrlReady) {
-      EOUT(("cannot start operation - somebody else uses control loop"));
-      return false;
-   }
+   checkCommandsQueue();
+   return cmd_postponed;
+}
 
-   fCtrlState = ctrlLocked;
+void roc::UdpControlSocket::checkCommandsQueue()
+{
+   if (fCtrlRuns) return;
 
-   fTotalTmoutSec = 5.;
+   if (fUdpCmds.Size()==0) return;
+
+   dabc::Command* cmd = fUdpCmds.Front();
+
    fShowProgress = false;
+   fTotalTmoutSec = cmd->GetDouble(TmoutPar, 5.0);
 
-   fControlCmd = 0;
-   fControlRes = 0;
+   if (cmd->IsName(CmdPoke::CmdName())) {
+       uint32_t addr = cmd->GetUInt(AddrPar, 0);
+       uint32_t value = cmd->GetUInt(ValuePar, 0);
 
-   return true;
-}
+       switch (addr) {
+          case ROC_CFG_WRITE:
+          case ROC_CFG_READ:
+          case ROC_OVERWRITE_SD_FILE:
+          case ROC_DO_AUTO_DELAY:
+          case ROC_DO_AUTO_LATENCY:
+          case ROC_FLASH_KIBFILE_FROM_DDR:
+             if (fTotalTmoutSec < 10) fTotalTmoutSec = 10.;
+             fShowProgress = true;
+             break;
+       }
 
-bool roc::UdpControlSocket::startCtrlLoop(dabc::Command* cmd)
-{
-   {
-      dabc::LockGuard guard(fControlMutex);
+       fControlSend.tag = ROC_POKE;
+       fControlSend.address = htonl(addr);
+       fControlSend.value = htonl(value);
 
-       if (fCtrlState != ctrlLocked) {
-         EOUT(("cannot start operation - somebody else uses control loop"));
-         return false;
-      }
+       fControlSendSize = sizeof(UdpMessage);
 
-      fCtrlState = ctrlWaitReply;
-
-      fControlRes = cmd ? 0 : &(fDev->controlRecv);
-
-      fControlCmd = cmd;
+       void* ptr = cmd->GetPtr(RawDataPar, 0);
+       if (ptr) {
+          memcpy(fControlSend.rawdata, ptr, value);
+          fControlSendSize += value;
+       }
+   } else
+   if (cmd->IsName(CmdPeek::CmdName())) {
+      fControlSend.tag = ROC_PEEK;
+      fControlSend.address = htonl(cmd->GetUInt(AddrPar, 0));
+      fControlSendSize = sizeof(UdpMessage);
+   } else {
+      dabc::Command::Reply(fUdpCmds.Pop(), false);
+      FireEvent(evntCheckCmd);
+      return;
    }
 
    fControlSend.password = htonl(ROC_PASSWORD);
@@ -205,30 +210,10 @@ bool roc::UdpControlSocket::startCtrlLoop(dabc::Command* cmd)
    fFastMode = (fTotalTmoutSec < 10.) && !fShowProgress;
    fLoopCnt = 0;
 
-   FireEvent(evntDoCtrl);
 
-   return true;
-}
+   fCtrlRuns = true;
 
-
-bool roc::UdpControlSocket::doCtrlLoop()
-{
-   double tmout = fTotalTmoutSec;
-
-   if (!startCtrlLoop(0)) return false;
-
-   // from here we just waiting for result
-
-   dabc::LockGuard guard(fControlMutex);
-
-   fControlCond._DoWait(tmout + 1.);
-
-   bool res = (fCtrlState == ctrlGotReply);
-
-   fCtrlState = ctrlReady;
-   fControlRes = 0;
-
-   return res;
+   FireEvent(evntSendCtrl);
 }
 
 // __________________________________________________________
@@ -239,7 +224,6 @@ roc::UdpDevice::UdpDevice(dabc::Basic* parent, const char* name, const char* thr
    roc::UdpBoard(),
    fConnected(false),
    fRocIp(),
-   fUdpCmds(false, false),
    fCtrlPort(0),
    fCtrlCh(0),
    fDataPort(0),
@@ -276,7 +260,6 @@ roc::UdpDevice::~UdpDevice()
 {
    if (fCtrlCh) {
       fCtrlCh->fDev = 0;
-      fCtrlCh->fControlRes = 0;
       fCtrlCh->DestroyProcessor();
       fCtrlCh = 0;
    }
@@ -310,45 +293,12 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
    } else
    if (cmd->IsName(CmdPeek::CmdName()) ||
        cmd->IsName(CmdPoke::CmdName())) {
-      fUdpCmds.Push(cmd);
-      ProcessNextUdpCommand();
+      if (fCtrlCh==0) return cmd_false;
+      fCtrlCh->Submit(cmd);
       return cmd_postponed;
    }
 
    return dabc::Device::ExecuteCommand(cmd);
-}
-
-
-void roc::UdpDevice::ProcessNextUdpCommand()
-{
-   if (fUdpCmds.Size()==0) return;
-
-   if (fCtrlCh==0) {
-      fUdpCmds.Cleanup();
-      return;
-   }
-
-   if (!fCtrlCh->lockCtrlLoop()) return;
-
-   dabc::Command* cmd = fUdpCmds.Pop();
-
-
-   double tmout = cmd->GetDouble(TmoutPar, 5.0);
-
-   if (cmd->IsName(CmdPoke::CmdName())) {
-       uint32_t addr = cmd->GetUInt(AddrPar, 0);
-       uint32_t value = cmd->GetUInt(ValuePar, 0);
-       preparePoke(addr, value, tmout);
-   } else
-   if (cmd->IsName(CmdPeek::CmdName())) {
-      uint32_t addr = cmd->GetUInt(AddrPar, 0);
-      preparePeek(addr, tmout);
-   } else {
-      dabc::Command::Reply(cmd, false);
-      return;
-   }
-
-   fCtrlCh->startCtrlLoop(cmd);
 }
 
 
@@ -413,57 +363,20 @@ int roc::UdpDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
    return dabc::Device::CreateTransport(cmd, port);
 }
 
-
-void roc::UdpDevice::preparePeek(uint32_t addr, double tmout)
-{
-   fCtrlCh->fControlSend.tag = ROC_PEEK;
-   fCtrlCh->fControlSend.address = htonl(addr);
-   fCtrlCh->fControlSendSize = sizeof(UdpMessage);
-
-   fCtrlCh->fTotalTmoutSec = tmout;
-   fCtrlCh->fShowProgress = false;
-}
-
-void roc::UdpDevice::preparePoke(uint32_t addr, uint32_t value, double tmout)
-{
-   bool show_progress = false;
-
-   // define operations, which takes longer time as usual one
-   switch (addr) {
-      case ROC_CFG_WRITE:
-      case ROC_CFG_READ:
-      case ROC_OVERWRITE_SD_FILE:
-      case ROC_DO_AUTO_DELAY:
-      case ROC_DO_AUTO_LATENCY:
-      case ROC_FLASH_KIBFILE_FROM_DDR:
-         if (tmout < 10) tmout = 10.;
-         show_progress = true;
-         break;
-   }
-
-   fCtrlCh->fControlSend.tag = ROC_POKE;
-   fCtrlCh->fControlSend.address = htonl(addr);
-   fCtrlCh->fControlSend.value = htonl(value);
-   fCtrlCh->fControlSendSize = sizeof(UdpMessage);
-
-   fCtrlCh->fTotalTmoutSec = tmout;
-   fCtrlCh->fShowProgress = show_progress;
-
-}
-
-
 bool roc::UdpDevice::poke(uint32_t addr, uint32_t value, double tmout)
 {
    fErrNo = 0;
    if (fCtrlCh==0) { fErrNo = 8; return false; }
-   if (!fCtrlCh->lockCtrlLoop()) { fErrNo = 9; return false; }
 
-   preparePoke(addr, value, tmout);
+   dabc::Command* cmd = new CmdPoke(addr, value, tmout);
+   cmd->SetKeepAlive(true);
 
-   if (fCtrlCh->doCtrlLoop())
-      fErrNo = ntohl(controlRecv.value);
+   if (fCtrlCh->Execute(cmd, tmout + 1.))
+      fErrNo = cmd->GetUInt(ErrNoPar, 6);
    else
-      fErrNo = 6;
+      fErrNo = 7;
+
+   dabc::Command::Finalise(cmd);
 
    DOUT0(("Roc:%s Poke(0x%04x, 0x%04x) res = %d\n", GetName(), addr, value, fErrNo));
 
@@ -472,21 +385,21 @@ bool roc::UdpDevice::poke(uint32_t addr, uint32_t value, double tmout)
 
 uint32_t roc::UdpDevice::peek(uint32_t addr, double tmout)
 {
-   DOUT0(("Starting peek"));
-
    fErrNo = 0;
    if (fCtrlCh==0) { fErrNo = 8; return false; }
-   if (!fCtrlCh->lockCtrlLoop()) { fErrNo = 9; return false; }
+
+   dabc::Command* cmd = new CmdPeek(addr, tmout);
+   cmd->SetKeepAlive(true);
 
    uint32_t res = 0;
 
-   preparePeek(addr, tmout);
-
-   if (fCtrlCh->doCtrlLoop()) {
-      res = ntohl(controlRecv.value);
-      fErrNo = ntohl(controlRecv.address);
+   if (fCtrlCh->Execute(cmd, tmout + 1.)) {
+      fErrNo = cmd->GetUInt(ErrNoPar, 6);
+      res = cmd->GetUInt(ValuePar, 0);
    } else
-      fErrNo = 6;
+      fErrNo = 7;
+
+   dabc::Command::Finalise(cmd);
 
    DOUT0(("Roc:%s Peek(0x%04x, 0x%04x) res = %d\n", GetName(), addr, res, fErrNo));
 
@@ -539,36 +452,32 @@ void roc::UdpDevice::setBoardStat(void* rawdata, bool print)
              brdStat.takePerf*1e-3,"%", brdStat.dispPerf*1e-3,"%", brdStat.sendPerf*1e-3,"%"));
 }
 
-bool roc::UdpDevice::pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatelen, double tmout)
+bool roc::UdpDevice::pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatalen, double tmout)
 {
    fErrNo = 0;
    if (fCtrlCh==0) { fErrNo = 8; return false; }
-   if (!fCtrlCh->lockCtrlLoop()) { fErrNo = 9; return false; }
 
-   fCtrlCh->fControlSend.tag = ROC_POKE;
-   fCtrlCh->fControlSend.address = htonl(address);
-   fCtrlCh->fControlSend.value = htonl(rawdatelen);
-   memcpy(fCtrlCh->fControlSend.rawdata, rawdata, rawdatelen);
-   fCtrlCh->fControlSendSize = sizeof(UdpMessage) + rawdatelen;
+   dabc::Command* cmd = new CmdPoke(address, rawdatalen, tmout);
+   cmd->SetPtr(RawDataPar, (void*) rawdata);
+   cmd->SetKeepAlive(true);
 
-   fCtrlCh->fTotalTmoutSec = tmout;
-   fCtrlCh->fShowProgress = tmout > 3.;
-
-   if (fCtrlCh->doCtrlLoop())
-      fErrNo = ntohl(controlRecv.value);
+   if (fCtrlCh->Execute(cmd, tmout + 1.))
+      fErrNo = cmd->GetUInt(ErrNoPar, 6);
    else
-      fErrNo = 6;
+      fErrNo = 7;
 
-   DOUT1(("Roc:%s PokeRaw(0x%04x, 0x%04x) res = %d\n", GetName(), address, rawdatelen, fErrNo));
+   dabc::Command::Finalise(cmd);
 
-   return fErrNo!=0;
+   DOUT0(("Roc:%s PokeRaw(0x%04x, 0x%04x) res = %d\n", GetName(), address, rawdatalen, fErrNo));
+
+   return fErrNo == 0;
 }
 
 bool roc::UdpDevice::sendConsoleCommand(const char* cmd)
 {
    unsigned length = cmd ? strlen(cmd) + 1 : 0;
 
-   if ((length<2) || (length > sizeof(controlRecv.rawdata))) return false;
+   if ((length<2) || (length > sizeof(UdpMessageFull) - sizeof(UdpMessage))) return false;
 
    pokeRawData(ROC_CONSOLE_CMD, cmd, length);
 
@@ -694,7 +603,7 @@ bool roc::UdpDevice::uploadDataToRoc(char* buf, unsigned datalen)
 {
    poke(ROC_CLEAR_FILEBUFFER, 1);
 
-   uint32_t maxsendsize = sizeof(controlRecv.rawdata);
+   uint32_t maxsendsize = sizeof(UdpMessageFull) - sizeof(UdpMessage);
 
    unsigned pos = 0;
 
@@ -711,7 +620,6 @@ bool roc::UdpDevice::uploadDataToRoc(char* buf, unsigned datalen)
    }
    return true;
 }
-
 
 bool roc::UdpDevice::uploadBitfile(const char* filename, int position)
 {
