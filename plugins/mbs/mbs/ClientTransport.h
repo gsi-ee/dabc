@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -45,7 +45,10 @@ namespace mbs {
       enum EIOState { ioInit, ioRecvInfo, ioReady, ioRecvHeder, ioWaitBuffer, ioRecvBuffer, ioClosing,  ioError };
 
       public:
-         enum EEvents { evDataInput = evntSocketLast + 1, evRecvInfo, evReactivate, evSendClose };
+         enum EEvents { evDataInput = evntSocketLast,
+                        evRecvInfo,
+                        evReactivate,
+                        evSendClose };
 
          ClientIOProcessor(ClientTransport* cl, int fd);
          virtual ~ClientIOProcessor();

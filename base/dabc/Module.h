@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -63,7 +63,7 @@ namespace dabc {
       friend class ModuleItem;
       friend class Port;
 
-      enum  { evntReinjectlost = evntFirstUser, evntReplyCommand };
+      enum  { evntReinjectlost = evntFirstSystem, evntReplyCommand };
 
       protected:
          typedef std::vector<unsigned> ItemsIndexVector;

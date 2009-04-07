@@ -39,9 +39,9 @@ namespace roc {
       friend class UdpDevice;
       protected:
 
-         enum ECtrlState { ctrlReady, ctrlWaitReply, ctrlGotReply, ctrlTimedout };
+         enum ECtrlState { ctrlReady, ctrlLocked, ctrlWaitReply, ctrlGotReply, ctrlTimedout };
 
-         enum EUdpEvents { evntDoCtrl = evntSocketLast + 1,  };
+         enum EUdpEvents { evntDoCtrl = evntSocketLast,  };
 
          UdpDevice*      fDev;
 
@@ -49,11 +49,10 @@ namespace roc {
          ECtrlState      fCtrlState;
          dabc::Condition fControlCond;
          dabc::Command*  fControlCmd;
-         UdpMessage*     fControlSend;
+         UdpMessageFull  fControlSend;
          unsigned        fControlSendSize;
-         UdpMessageFull* fControlRecv;
-
-         UdpMessageFull  fRecvBuf;
+         UdpMessageFull  fControlRecv;
+         UdpMessageFull *fControlRes;
          uint32_t        fPacketCounter;
 
          double          fTotalTmoutSec;
@@ -69,28 +68,32 @@ namespace roc {
 
          virtual void ProcessEvent(dabc::EventId evnt);
 
-         bool startCtrlLoop(dabc::Command* cmd,
-                            UdpMessage* send_buf, unsigned sendsize,
-                            UdpMessageFull* recv_buf,
-                            double total_tmout_sec, bool show_progress);
-
          bool completeLoop(bool res);
 
-         bool waitCtrlLoop(double total_tmout_sec);
+         bool lockCtrlLoop();
+
+         bool startCtrlLoop(dabc::Command* cmd);
+
+         bool doCtrlLoop();
    };
 
 
    class UdpDevice : public dabc::Device,
                      public roc::UdpBoard {
 
+      enum EUdpDeviceEvents { eventCheckUdpCmds = eventDeviceLast,
+                              eventUdpDeviceLast };
+
+
       friend class UdpControlSocket;
       friend class UdpDataSocket;
 
       protected:
-
          bool              fConnected;
 
          std::string       fRocIp;
+
+         dabc::CommandsQueue  fUdpCmds;
 
          int               fCtrlPort;
          UdpControlSocket *fCtrlCh;
@@ -98,20 +101,18 @@ namespace roc {
          int               fDataPort;
          UdpDataSocket    *fDataCh;
 
-         UdpMessageFull    controlSend;
-         unsigned          controlSendSize; // size of control data to be send
          UdpMessageFull    controlRecv;
 
          UdpStatistic      brdStat;    // last available statistic block
          bool              isBrdStat;  // is block statistic contains valid data
 
-         bool              displayConsoleOutput_; // display output, comming from ROC
+         bool              displayConsoleOutput_; // display output, coming from ROC
 
-         bool performCtrlLoop(double total_tmout_sec, bool show_progress);
+
          void processCtrlMessage(UdpMessageFull* pkt, unsigned len);
          void setBoardStat(void* rawdata, bool print);
 
-         int pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatelen, double tmout = 2.);
+         bool pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatelen, double tmout = 2.);
          int parseBitfileHeader(char* pBuffer, unsigned int nLen);
          uint8_t calcBinXOR(const char* filename);
          bool uploadDataToRoc(char* buf, unsigned len);
@@ -120,6 +121,13 @@ namespace roc {
          virtual void* getdeviceptr() { return this; }
 
          virtual int ExecuteCommand(dabc::Command* cmd);
+
+         virtual void ProcessEvent(dabc::EventId evnt);
+
+         void ProcessNextUdpCommand();
+
+         void preparePeek(uint32_t addr, double tmout);
+         void preparePoke(uint32_t addr, uint32_t value, double tmout);
 
       public:
 

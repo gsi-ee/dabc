@@ -42,11 +42,11 @@ namespace dabc {
       public:
 
          enum ESocketEvents {
-            evntSocketRead = evntFirstUser,
+            evntSocketRead = evntFirstSystem,
             evntSocketWrite,
             evntSocketError,
             evntSocketStartConnect,
-            evntSocketLast // from this event user can specified it own events
+            evntSocketLast // from this event number one can add more socket system events
          };
 
          SocketProcessor(int fd = -1);

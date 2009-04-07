@@ -38,7 +38,8 @@ namespace dabc {
       enum ESocketTranportEvents {
             evntActivateSend = evntSocketLast,
             evntActivateRecv,
-            evntActiavtePool
+            evntActiavtePool,
+            evntSocketTrLast
          };
 
       protected:

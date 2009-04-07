@@ -42,7 +42,7 @@ namespace dabc {
 
       public:
 
-         enum { evntFirstUser = 1 };
+         enum { evntFirstSystem = 1, evntFirstUser = 1000 };
 
          WorkingProcessor(Folder* parsholder = 0);
          virtual ~WorkingProcessor();

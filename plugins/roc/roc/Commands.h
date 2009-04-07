@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -11,104 +11,48 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
+
 #ifndef ROC_Commands
 #define ROC_Commands
 
+
+#ifndef DABC_Command
 #include "dabc/Command.h"
+#endif
 
-#define DABC_ROC_COMMAND_WRITE_REGISTER    "WriteRocRegister"
-#define DABC_ROC_COMMAND_READ_REGISTER     "ReadRocRegister"
-#define DABC_ROC_COMMAND_START_DAQ         "StartRocDaq"
-#define DABC_ROC_COMMAND_STOP_DAQ          "StopRocDaq"
-#define DABC_ROC_COMMAND_START_PULSER      "StartRocPulser"
-#define DABC_ROC_COMMAND_STOP_PULSER       "StopRocPulser"
+namespace roc {
 
-#define DABC_ROC_COMPAR_BOARDNUMBER        "BoardIdNumber"
+   extern const char* AddrPar;
+   extern const char* ValuePar;
+   extern const char* ErrNoPar;
+   extern const char* TmoutPar;
 
-#define DABC_ROC_COMPAR_ADDRESS            "RegisterAddress"
-#define DABC_ROC_COMPAR_VALUE              "RegisterValue"
-#define DABC_ROC_COMPAR_PULSE_RESETDELAY   "PulseResetDelay"
-#define DABC_ROC_COMPAR_PULSE_LENGTH       "PulseLength"
-#define DABC_ROC_COMPAR_PULSE_NUMBER       "PulseNumber"
+   class CmdPoke : public dabc::Command {
+     public:
 
+        static const char* CmdName() { return "Poke"; }
 
-
-namespace roc{
-
-
-/** this command sets value to roc register*/
-  class CommandWriteRegister : public dabc::Command {
-      public:
-         CommandWriteRegister(unsigned int boardNum, unsigned int address, unsigned int value) :
-            dabc::Command(DABC_ROC_COMMAND_WRITE_REGISTER)
-            {
-               SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
-               SetInt(DABC_ROC_COMPAR_ADDRESS, address);
-               SetInt(DABC_ROC_COMPAR_VALUE, value);
-            }
+        CmdPoke(uint32_t address, uint32_t value) :
+            dabc::Command(CmdName())
+        {
+           SetUInt(AddrPar, address);
+           SetUInt(ValuePar, value);
+        }
    };
 
-/** this command reads value from roc register. Command reply will contain result (??).*/
-  class CommandReadRegister : public dabc::Command {
-      public:
-         CommandReadRegister(unsigned int boardNum, unsigned int address) :
-            dabc::Command(DABC_ROC_COMMAND_READ_REGISTER)
-            {
-               SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
-               SetInt(DABC_ROC_COMPAR_ADDRESS, address);
-            }
+  class CmdPeek : public dabc::Command {
+     public:
+
+        static const char* CmdName() { return "Peek"; }
+
+        CmdPeek(uint32_t address) :
+            dabc::Command(CmdName())
+        {
+           SetUInt(AddrPar, address);
+        }
    };
 
-
-/** this command starts data transfer from ROC.*/
-  class CommandStartDAQ : public dabc::Command {
-      public:
-         CommandStartDAQ(unsigned int boardNum) :
-            dabc::Command(DABC_ROC_COMMAND_START_DAQ)
-            {
-               SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
-            }
-   };
-
-/** this command stops data transfer from ROC.*/
-  class CommandStopDAQ : public dabc::Command {
-      public:
-         CommandStopDAQ(unsigned int boardNum) :
-            dabc::Command(DABC_ROC_COMMAND_STOP_DAQ)
-            {
-               SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
-            }
-   };
-
-
-/** this command starts ROC test pulser.*/
-  class CommandStartPulser : public dabc::Command {
-      public:
-         CommandStartPulser(unsigned int boardNum, unsigned int pulseResetDelay, unsigned int pulseLen, unsigned int pulseNum) :
-            dabc::Command(DABC_ROC_COMMAND_START_PULSER)
-            {
-               SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
-               SetInt(DABC_ROC_COMPAR_PULSE_RESETDELAY, pulseResetDelay);
-               SetInt(DABC_ROC_COMPAR_PULSE_LENGTH, pulseLen);
-               SetInt(DABC_ROC_COMPAR_PULSE_NUMBER, pulseNum);
-            }
-   };
-
-
-
-/** this command stops test pulser.*/
-  class CommandStopPulser : public dabc::Command {
-      public:
-         CommandStopPulser(unsigned int boardNum) :
-            dabc::Command(DABC_ROC_COMMAND_STOP_PULSER)
-            {
-               SetInt(DABC_ROC_COMPAR_BOARDNUMBER, boardNum);
-            }
-   };
-
-
-} // end namspace roc
-
+}
 
 #endif
 

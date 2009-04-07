@@ -35,7 +35,7 @@ namespace roc {
                          public dabc::Transport {
       friend class UdpDevice;
       protected:
-         enum EUdpEvents { evntSendReq = evntSocketLast + 1 };
+         enum EUdpEvents { evntSendReq = evntSocketLast };
 
          enum EDaqState { daqInit, daqStarting, daqRuns, daqStopping, daqStopped, daqFails };
 

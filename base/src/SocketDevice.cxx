@@ -66,11 +66,12 @@ namespace dabc {
    // it also used to transport commands on remote side and execute them
 
    class SocketProtocolProcessor : public SocketIOProcessor,
-                                public CommandClientBase {
+                                   public CommandClientBase {
 
       friend class SocketDevice;
 
-      enum EProtocolEvents { evntProtocolReplyCmd = evntSocketLast };
+      enum EProtocolEvents { evntProtocolReplyCmd = evntSocketLast,
+                             evntSocketProtLast };
 
       protected:
 

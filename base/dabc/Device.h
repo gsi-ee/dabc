@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -37,6 +37,8 @@ namespace dabc {
       friend class Transport;
 
       protected:
+         enum EDeviceEvents { eventDeviceLast = evntFirstUser };
+
          Device(Basic* parent, const char* name);
 
          void TransportCreated(Transport *tr);
