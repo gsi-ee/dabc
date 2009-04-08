@@ -20,6 +20,7 @@
 #include "dabc/Device.h"
 
 #include "roc/Defines.h"
+#include "roc/ReadoutModule.h"
 
 
 const char* roc::xmlNumRocs         = "NumRocs";
@@ -33,7 +34,8 @@ const char* roc::typeUdpDevice      = "roc::UdpDevice";
 roc::Board::Board() :
    fRole(roleNone),
    fErrNo(0),
-   fRocNumber(0)
+   fRocNumber(0),
+   fReadout(0)
 {
 }
 
@@ -70,6 +72,20 @@ roc::Board* roc::Board::Connect(const char* name, BoardRole role)
       return 0;
    }
 
+   if (role == roleDAQ) {
+      roc::ReadoutModule* m = new roc::ReadoutModule("Readout");
+      dabc::mgr()->MakeThreadForModule(m, "ReadoutThrd");
+
+      if (!dabc::mgr()->CreateTransport("Readout/Input", devname)) {
+         EOUT(("Cannot connect readout module to device %s", devname));
+         dabc::mgr()->DeleteModule("Readout");
+      }
+
+      brd->SetReadout(m);
+
+      dabc::lgr()->SetLogLimit(1000000);
+   }
+
    return brd;
 }
 
@@ -85,16 +101,38 @@ bool roc::Board::Close(Board* brd)
 
 bool roc::Board::startDaq()
 {
+   DOUT0(("Starting DAQ !!!!"));
+
+   if (fReadout==0) return false;
+
+   fReadout->Start();
+
    return true;
 }
 
 bool roc::Board::suspendDaq()
 {
+   DOUT0(("Suspend DAQ !!!!"));
+
+   if (fReadout==0) return false;
+
+   dabc::Device* dev = (dabc::Device*) getdeviceptr();
+   if (dev==0) return false;
+
+   dev->Submit(new dabc::Command("SuspendDaq"));
+
+
    return true;
 }
 
 bool roc::Board::stopDaq()
 {
+   DOUT0(("Stop DAQ !!!!"));
+
+   if (fReadout==0) return false;
+
+   fReadout->Stop();
+
    return true;
 }
 

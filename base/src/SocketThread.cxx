@@ -376,11 +376,24 @@ ssize_t dabc::SocketIOProcessor::DoRecvBuffer(void* buf, ssize_t len)
 
    if (res==0) OnConnectionClosed(); else
    if (res<0) {
-     if (errno!=EAGAIN) OnSocketError(errno, "When recvmsg()");
+     if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
    }
 
    return res;
 }
+
+ssize_t dabc::SocketIOProcessor::DoSendBuffer(void* buf, ssize_t len)
+{
+   ssize_t res = send(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
+
+   if (res==0) OnConnectionClosed(); else
+   if (res<0) {
+     if (errno!=EAGAIN) OnSocketError(errno, "When send()");
+   }
+
+   return res;
+}
+
 
 void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
 {

@@ -39,6 +39,9 @@ namespace mbs {
          virtual unsigned Read_Size();
          virtual unsigned Read_Complete(dabc::Buffer* buf);
 
+         virtual unsigned RawDataSize();
+         virtual unsigned FillRawData(const char* str, void* rawdata, unsigned maxsize);
+
       protected:
          bool CloseFile();
 

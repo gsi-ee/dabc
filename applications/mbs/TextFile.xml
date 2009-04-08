@@ -8,13 +8,13 @@
     <Module name="Transmitter">
        <BufferSize value="16384"/>
        <Port name="Input">
-          <MbsFileName value="/home/linev/wind.dat"/>
+          <MbsFileName value="/misc/linev/wind.dat"/>
           <MbsTextFormat value="float"/>
           <MbsTextNumData value="15"/>
           <MbsTextHeader value="0"/>
        </Port>
        <Port name="Output">
-          <MbsServerKind value="Stream"/>
+          <MbsServerKind value="Transport"/>
         </Port>
      </Module>
   </Context>

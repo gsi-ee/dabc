@@ -37,7 +37,15 @@ void control(const char* boardaddr = "lxg0526")
 
    cout << " Board addr:" << boardaddr << endl;
 
-   roc::Board::Close(brd); return;
+   brd->startDaq();
+
+   gSystem->Sleep(50);
+
+   brd->stopDaq();
+
+   roc::Board::Close(brd);
+
+   return;
 
 
    brd->poke(ROC_DO_TESTSETUP,1);

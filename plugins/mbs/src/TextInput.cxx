@@ -151,12 +151,12 @@ unsigned mbs::TextInput::Read_Size()
 
 unsigned mbs::TextInput::Read_Complete(dabc::Buffer* buf)
 {
-	unsigned rawdatasize = fNumData * fDataUnitSize;
+	unsigned rawdatasize = RawDataSize();
 
    mbs::WriteIterator iter(buf);
    while (iter.NewEvent(fEventCounter)) {
    	// check if we have enough place for next subevent,
-      if (!iter.NewSubevent(rawdatasize, 0, 0)) break;
+      if (!iter.NewSubevent(rawdatasize, 1, 0)) break;
 
       // fill raw data iter.rawdata() with 0
       memset(iter.rawdata(), 0, rawdatasize);
@@ -189,52 +189,10 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer* buf)
 
       } while (strlen(buf)==0);
 
-      // use stream top decode all values from buffer
-      std::istringstream src(fCharBuffer);
+      unsigned filledsize = FillRawData(fCharBuffer, iter.rawdata(), rawdatasize);
+      if (filledsize==0) return dabc::di_Error;
 
-      switch (fFormatId) {
-			case 1: {
-				int32_t* tgt = (int32_t*) iter.rawdata();
-				for(int n=0;n<fNumData;n++) {
-				 src >> *tgt;
-				 if (src.fail()) {
-					EOUT(("Fail to decode stream into int32_t, cnt = %d", n));
-					EOUT(("Error Line %s", fCharBuffer));
-					return dabc::di_Error;
-				 }
-				 tgt++;
-				}
-			}
-
-        case 2: {
-           uint32_t* tgt = (uint32_t*) iter.rawdata();
-           for(int n=0;n<fNumData;n++) {
-       	    src >> *tgt;
-       	    if (src.fail()) {
-       		   EOUT(("Fail to decode stream into uint32_t, cnt = %d", n));
-       		   EOUT(("Error Line %s", fCharBuffer));
-       		   return dabc::di_Error;
-       	    }
-       	    tgt++;
-           }
-        }
-
-        default: {
-
-          float* tgt = (float*) iter.rawdata();
-          for(int n=0;n<fNumData;n++) {
-      	    src >> *tgt;
-      	    if (src.fail()) {
-      		   EOUT(("Fail to decode stream into float, cnt = %d", n));
-      		   EOUT(("Error Line %s", fCharBuffer));
-      		   return dabc::di_Error;
-      	    }
-      	    tgt++;
-          }
-        }
-      }
-
-      iter.FinishSubEvent(rawdatasize);
+      iter.FinishSubEvent(filledsize);
 
       if (!iter.FinishEvent()) {
       	EOUT(("Problem with iterator"));
@@ -248,4 +206,68 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer* buf)
    }
 
    return dabc::di_Ok;
+}
+
+unsigned mbs::TextInput::RawDataSize()
+{
+   /** Return raw data size (upper limit), required for single event */
+
+   return fNumData * fDataUnitSize;
+}
+
+unsigned mbs::TextInput::FillRawData(const char* str, void* rawdata, unsigned maxsize)
+{
+   /** Decode raw data from text string into subevent,
+    * Return actual filled event size, 0 - error */
+
+   std::istringstream src(str);
+
+   switch (fFormatId) {
+      case 0: {
+         float* tgt = (float*) rawdata;
+         for(int n=0;n<fNumData;n++) {
+            src >> *tgt;
+            if (src.fail()) {
+              EOUT(("Fail to decode stream into float, cnt = %d", n));
+              EOUT(("Error Line %s", str));
+              return 0;
+            }
+            tgt++;
+         }
+         break;
+      }
+
+      case 1: {
+         int32_t* tgt = (int32_t*) rawdata;
+         for(int n=0;n<fNumData;n++) {
+          src >> *tgt;
+          if (src.fail()) {
+            EOUT(("Fail to decode stream into int32_t, cnt = %d", n));
+            EOUT(("Error Line %s", str));
+            return 0;
+          }
+          tgt++;
+         }
+         break;
+      }
+
+     case 2: {
+        uint32_t* tgt = (uint32_t*) rawdata;
+        for(int n=0;n<fNumData;n++) {
+          src >> *tgt;
+          if (src.fail()) {
+            EOUT(("Fail to decode stream into uint32_t, cnt = %d", n));
+            EOUT(("Error Line %s", str));
+            return 0;
+          }
+          tgt++;
+        }
+        break;
+     }
+
+     default:
+        return 0;
+   }
+
+   return maxsize;
 }

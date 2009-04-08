@@ -16,6 +16,7 @@
 
 #include "roc/CombinerModule.h"
 #include "roc/CalibrationModule.h"
+#include "roc/ReadoutModule.h"
 #include "roc/TreeOutput.h"
 #include "roc/ReadoutApplication.h"
 #include "roc/UdpDevice.h"
@@ -43,14 +44,16 @@ dabc::Module* roc::Factory::CreateModule(const char* classname, const char* modu
    DOUT1(("roc::Factory::CreateModule called for class:%s, module:%s", classname, modulename));
 
    if (strcmp(classname, "roc::CombinerModule")==0) {
-      dabc::Module* mod= new roc::CombinerModule(modulename,cmd);
       DOUT1(("roc::Factory::CreateModule - Created RocCombiner module %s ", modulename));
-      return mod;
+      return new roc::CombinerModule(modulename,cmd);
    } else
    if (strcmp(classname, "roc::CalibrationModule")==0) {
-      dabc::Module* mod = new roc::CalibrationModule(modulename, cmd);
       DOUT1(("roc::Factory::CreateModule - Created roc::CalibrationModule module %s ", modulename));
-      return mod;
+      return new roc::CalibrationModule(modulename, cmd);
+   } else
+   if (strcmp(classname, "roc::ReadoutModule")==0) {
+      DOUT1(("roc::Factory::CreateModule - Created roc::ReadoutModule module %s ", modulename));
+      return new roc::ReadoutModule(modulename, cmd);
    }
 
    return 0;

@@ -25,7 +25,7 @@ namespace roc {
 
       public:
 
-         ReadoutModule(const char* name, dabc::Command* cmd);
+         ReadoutModule(const char* name, dabc::Command* cmd = 0);
          virtual ~ReadoutModule();
 
          virtual void ProcessInputEvent(dabc::Port* port);

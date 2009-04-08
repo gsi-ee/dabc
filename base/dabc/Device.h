@@ -41,8 +41,8 @@ namespace dabc {
 
          Device(Basic* parent, const char* name);
 
-         void TransportCreated(Transport *tr);
-         void TransportDestroyed(Transport *tr);
+         virtual void TransportCreated(Transport *tr);
+         virtual void TransportDestroyed(Transport *tr);
 
          virtual bool DoDeviceCleanup(bool full = false);
 

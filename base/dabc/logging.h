@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -168,6 +168,8 @@ namespace dabc {
    extern void SetDebugLevel(int level = 0);
    extern void SetFileLevel(int level = 0);
    extern void SetDebugPrefix(const char* prefix = 0);
+
+   extern Logger* lgr();
 };
 
 #endif

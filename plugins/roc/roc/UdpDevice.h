@@ -39,7 +39,7 @@ namespace roc {
       friend class UdpDevice;
       protected:
 
-         enum EUdpEvents { evntSendCtrl = evntSocketLast,
+         enum EUdpEvents { evntSendCtrl = evntSocketLast + 1,
                            evntCheckCmd };
 
          UdpDevice*      fDev;
@@ -115,7 +115,7 @@ namespace roc {
 
          virtual void ProcessEvent(dabc::EventId evnt);
 
-         void ProcessNextUdpCommand();
+         virtual void TransportDestroyed(dabc::Transport *tr);
 
       public:
 

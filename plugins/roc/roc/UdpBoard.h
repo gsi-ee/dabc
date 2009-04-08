@@ -26,6 +26,8 @@ namespace roc {
    #define MAX_UDP_PAYLOAD 1472
    #define MESSAGES_PER_PACKET 243
 
+#pragma pack(push, 1)
+
    struct UdpMessage
    {
       uint8_t  tag;
@@ -99,6 +101,7 @@ namespace roc {
       uint8_t bytes[512];
    };
 
+#pragma pack(pop)
 
    class UdpBoard : public roc::Board {
 

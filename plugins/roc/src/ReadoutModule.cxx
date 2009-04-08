@@ -16,6 +16,7 @@
 
 #include "roc/Board.h"
 
+#include "dabc/Port.h"
 
 roc::ReadoutModule::ReadoutModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd)
@@ -40,6 +41,8 @@ roc::ReadoutModule::~ReadoutModule()
 
 void roc::ReadoutModule::ProcessInputEvent(dabc::Port* inport)
 {
+   dabc::Buffer* buf = inport->Recv();
+   dabc::Buffer::Release(buf);
 }
 
 void roc::ReadoutModule::ProcessOutputEvent(dabc::Port* inport)

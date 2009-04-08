@@ -18,6 +18,7 @@
 #include <fstream>
 
 #include "dabc/Manager.h"
+#include "dabc/Port.h"
 
 #include "roc/Defines.h"
 #include "roc/Commands.h"
@@ -50,9 +51,9 @@ void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
    switch (dabc::GetEventCode(evnt)) {
 
       case evntSendCtrl: {
-         DOUT0(("Send requests of size %d", fControlSendSize));
+         DOUT5(("Send requests of size %d tag %d", fControlSendSize, fControlSend.tag));
 
-         StartSend(&fControlSend, fControlSendSize);
+         DoSendBuffer(&fControlSend, fControlSendSize);
          double tmout = fFastMode ? (fLoopCnt++ < 4 ? 0.01 : fLoopCnt*0.1) : 1.;
          fTotalTmoutSec -= tmout;
          ActivateTimeout(tmout);
@@ -62,7 +63,9 @@ void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
       case evntSocketRead: {
          ssize_t len = DoRecvBuffer(&fControlRecv, sizeof(UdpMessageFull));
 
-         DOUT0(("Get answer of size %d", len));
+         UdpDataPacket* pkt = (UdpDataPacket*) &fControlRecv;
+
+         DOUT0(("Get answer of size %d pktid %d", len, ntohl(pkt->pktid)));
 
          if (len<=0) return;
 
@@ -89,6 +92,11 @@ void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
 
 double roc::UdpControlSocket::ProcessTimeout(double last_diff)
 {
+   if (!fCtrlRuns) {
+      EOUT(("Should not happen - just ignore"));
+      return -1.;
+   }
+
    if (fShowProgress) {
        std::cout << ".";
        std::cout.flush();
@@ -133,6 +141,8 @@ void roc::UdpControlSocket::completeLoop(bool res)
    }
 
    fCtrlRuns = false;
+
+   ActivateTimeout(-1.);
 
    checkCommandsQueue();
 }
@@ -185,10 +195,18 @@ void roc::UdpControlSocket::checkCommandsQueue()
           memcpy(fControlSend.rawdata, ptr, value);
           fControlSendSize += value;
        }
+
+       DOUT0(("DoPoke (%04x, %04x)", addr, value));
    } else
    if (cmd->IsName(CmdPeek::CmdName())) {
       fControlSend.tag = ROC_PEEK;
       fControlSend.address = htonl(cmd->GetUInt(AddrPar, 0));
+      fControlSendSize = sizeof(UdpMessage);
+   } else
+   if (cmd->IsName("SuspendDaq")) {
+      fControlSend.tag = ROC_POKE;
+      fControlSend.address = htonl(ROC_SUSPEND_DAQ);
+      fControlSend.value = htonl(1);
       fControlSendSize = sizeof(UdpMessage);
    } else {
       dabc::Command::Reply(fUdpCmds.Pop(), false);
@@ -209,7 +227,6 @@ void roc::UdpControlSocket::checkCommandsQueue()
    // in fast mode we will try to resend as fast as possible
    fFastMode = (fTotalTmoutSec < 10.) && !fShowProgress;
    fLoopCnt = 0;
-
 
    fCtrlRuns = true;
 
@@ -271,15 +288,19 @@ roc::UdpDevice::~UdpDevice()
    }
 }
 
+void roc::UdpDevice::TransportDestroyed(dabc::Transport *tr)
+{
+   if (fDataCh == tr) {
+      EOUT(("!!!!!!!!!!! Data channel deleted !!!!!!!!!!!"));
+      fDataCh = 0;
+   }
+}
+
+
+
 void roc::UdpDevice::ProcessEvent(dabc::EventId evnt)
 {
-   switch (dabc::GetEventCode(evnt)) {
-      case eventCheckUdpCmds:
-         ProcessNextUdpCommand();
-         break;
-      default:
-         dabc::Device::ProcessEvent(evnt);
-   }
+   dabc::Device::ProcessEvent(evnt);
 }
 
 
@@ -291,7 +312,8 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
       cmd->SetStr("BoardPtr", dabc::format("%p", brd));
       return cmd_true;
    } else
-   if (cmd->IsName(CmdPeek::CmdName()) ||
+   if (cmd->IsName("SuspendDaq") ||
+       cmd->IsName(CmdPeek::CmdName()) ||
        cmd->IsName(CmdPoke::CmdName())) {
       if (fCtrlCh==0) return cmd_false;
       fCtrlCh->Submit(cmd);
@@ -360,7 +382,13 @@ bool roc::UdpDevice::initialise(BoardRole role)
 
 int roc::UdpDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
-   return dabc::Device::CreateTransport(cmd, port);
+   if (fDataCh == 0) return cmd_false;
+
+   fDataCh->ConfigureFor(port);
+
+   port->AssignTransport(fDataCh);
+
+   return cmd_true;
 }
 
 bool roc::UdpDevice::poke(uint32_t addr, uint32_t value, double tmout)

@@ -43,14 +43,20 @@ namespace roc {
       rbt_RawRocData     = 234
    };
 
+   class ReadoutModule;
+
    class Board {
       protected:
          BoardRole      fRole;
          int            fErrNo;
          int            fRocNumber;
 
+         ReadoutModule *fReadout;
+
          Board();
          virtual ~Board();
+
+         void SetReadout(ReadoutModule* m) { fReadout = m; }
 
          virtual bool initialise(BoardRole role) = 0;
          virtual void* getdeviceptr() = 0;
