@@ -39,6 +39,10 @@
 #include "roc/UdpBoard.h"
 #endif
 
+#ifndef NXYTER_Sorter
+#include "nxyter/Sorter.h"
+#endif
+
 #include <list>
 
 namespace roc {
@@ -53,7 +57,9 @@ namespace roc {
       protected:
          enum EUdpEvents { evntStartDaq = evntSocketLast + 1,
                            evntStopDaq,
-                           evntConfirmCmd };
+                           evntConfirmCmd,
+                           evntFillBuffer,
+                           evntCheckRequest };
 
          enum EDaqState { daqInit, daqStarting, daqRuns, daqStopping, daqStopped, daqFails };
 
@@ -80,6 +86,11 @@ namespace roc {
 
          UdpDataPacketFull  fRecvBuf;
 
+         unsigned           fBufferSize;
+
+         dabc::MemoryPool  *fPool;
+
+
          unsigned rocNumber;
 
          unsigned transferWindow;      // maximum value for credits
@@ -97,14 +108,16 @@ namespace roc {
          unsigned      ringSize;     // number of items in ring buffer
 
 
-         dabc::Mutex     dataMutex_;    // locks access to receieved data
-//         pthread_cond_t  dataCond_;     // condition to synchronise data consumer
+         dabc::Mutex     dataMutex_;    // locks access to received data
+//         pthread_cond_t  dataCond_;     // condition to synchronize data consumer
          unsigned        dataRequired_; // specifies how many messages required consumer
          unsigned        consumerMode_; // 0 - no consumer, 1 - waits condition, 2 - call back to controller
          bool            fillingData_;  // true, if consumer thread fills data from ring buffer
-         uint8_t readBuf_[1800];       // intermidiate buffer for getNextData()
-         unsigned readBufSize_;
-         unsigned readBufPos_;
+         uint8_t readBuf_[1800];       // intermediate buffer for getNextData()
+         unsigned        readBufSize_;
+         unsigned        readBufPos_;
+
+         nxyter::Sorter* sorter_;
 
          std::list<ResendPkt>   packetsToResend;
 
@@ -122,15 +135,16 @@ namespace roc {
 
          void ConfigureFor(dabc::Port* port);
 
+         void TryToFillOutputBuffer();
+         void CheckNextRequest();
+
          void KnutresetDaq();
-
          bool KnutstartDaq(unsigned trWin = 40);
-
          void KnutsendDataRequest(UdpDataRequestFull* pkt);
-
          bool Knut_checkDataRequest(UdpDataRequestFull* req, double curr_tm, bool check_retrans);
          void KnutaddDataPacket(UdpDataPacketFull* p, unsigned l);
          bool Knut_checkAvailData(unsigned num_msg);
+         bool KnutfillData(void* buf, unsigned& sz);
 
       public:
          UdpDataSocket(UdpDevice* dev, int fd);
@@ -150,7 +164,6 @@ namespace roc {
 
          virtual void StartTransport();
          virtual void StopTransport();
-
    };
 
 }

@@ -36,6 +36,8 @@ roc::UdpDataSocket::UdpDataSocket(UdpDevice* dev, int fd) :
    // we will react on all input packets
    SetDoingInput(true);
 
+   fBufferSize = 0;
+
    rocNumber = 0;
    daqActive_ = false;
    daqState = daqInit;
@@ -61,6 +63,8 @@ roc::UdpDataSocket::UdpDataSocket(UdpDevice* dev, int fd) :
    ringHeadId = 0;
    ringTail = 0;
    ringSize = 0;
+
+   sorter_ = 0;
 }
 
 roc::UdpDataSocket::~UdpDataSocket()
@@ -72,6 +76,10 @@ roc::UdpDataSocket::~UdpDataSocket()
 void roc::UdpDataSocket::ConfigureFor(dabc::Port* port)
 {
    fQueue.Allocate(port->InputQueueCapacity());
+   fBufferSize = port->GetCfgInt(dabc::xmlBufferSize, 0);
+   fPool = port->GetMemoryPool();
+
+   DOUT0(("Pool = %p buffer size = %u", fPool, fBufferSize));
 }
 
 void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
@@ -117,6 +125,14 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
          break;
       }
 
+      case evntFillBuffer:
+         TryToFillOutputBuffer();
+         break;
+
+      case evntCheckRequest:
+         CheckNextRequest();
+         break;
+
       default:
          dabc::SocketIOProcessor::ProcessEvent(evnt);
    }
@@ -136,9 +152,13 @@ bool roc::UdpDataSocket::_ProcessReply(dabc::Command* cmd)
 bool roc::UdpDataSocket::Recv(dabc::Buffer* &buf)
 {
    buf = 0;
-   dabc::LockGuard lock(fQueueMutex);
-   if (fQueue.Size()<=0) return false;
-   buf = fQueue.Pop();
+   {
+      dabc::LockGuard lock(fQueueMutex);
+      if (fQueue.Size()<=0) return false;
+      buf = fQueue.Pop();
+   }
+   FireEvent(evntFillBuffer);
+
    return buf!=0;
 }
 
@@ -159,6 +179,7 @@ dabc::Buffer* roc::UdpDataSocket::RecvBuffer(unsigned indx) const
 
 bool roc::UdpDataSocket::ProcessPoolRequest()
 {
+   FireEvent(evntFillBuffer);
    return true;
 }
 
@@ -174,6 +195,66 @@ void roc::UdpDataSocket::StopTransport()
    FireEvent(evntStopDaq);
 }
 
+void roc::UdpDataSocket::TryToFillOutputBuffer()
+{
+   {
+      dabc::LockGuard lock(fQueueMutex);
+      if (fQueue.Full()) return;
+   }
+
+   if (!Knut_checkAvailData(dataRequired_)) return;
+
+   dabc::Buffer* buf = fPool->TakeBufferReq(this, fBufferSize);
+
+   if (buf==0) return;
+
+   unsigned sz = buf->GetDataSize();
+
+   DOUT1(("Try to fill buffer of size %u reqmsg %u", sz, dataRequired_));
+
+   if (!KnutfillData(buf->GetDataLocation(), sz)) {
+      dabc::Buffer::Release(buf);
+      return;
+   }
+
+   DOUT1(("Did fill buffer, ressize %u  isavail %s", sz, DBOOL(Knut_checkAvailData(dataRequired_))));
+
+   buf->SetDataSize(sz);
+
+   {
+      dabc::LockGuard lock(fQueueMutex);
+
+      fQueue.Push(buf);
+   }
+
+   FireInput();
+}
+
+void roc::UdpDataSocket::CheckNextRequest()
+{
+   bool dosendreq = false;
+   UdpDataRequestFull req;
+   double curr_tm = TimeStamp() * 1e-6;
+
+   {
+//      dabc::LockGuard guard(dataMutex_);
+
+      dosendreq = Knut_checkDataRequest(&req, curr_tm, true);
+   }
+
+   if (dosendreq)
+      KnutsendDataRequest(&req);
+}
+
+double roc::UdpDataSocket::ProcessTimeout(double)
+{
+   CheckNextRequest();
+   return 0.01;
+}
+
+// _________________________________________________________
+
+
 bool roc::UdpDataSocket::KnutstartDaq(unsigned trWin)
 {
    KnutresetDaq();
@@ -181,13 +262,18 @@ bool roc::UdpDataSocket::KnutstartDaq(unsigned trWin)
    bool res = true;
 
    {
-      dabc::LockGuard guard(dataMutex_);
+//      dabc::LockGuard guard(dataMutex_);
       daqActive_ = true;
       daqState = daqStarting;
       transferWindow = trWin < 4 ? 4 : trWin;
 
       ringCapacity = trWin * 10;
       if (ringCapacity<100) ringCapacity = 100;
+
+      if (ringCapacity * MESSAGES_PER_PACKET * 6 < fBufferSize * 2)
+         ringCapacity = 2 * fBufferSize / (MESSAGES_PER_PACKET * 6);
+
+      dataRequired_ = fBufferSize / 6;
 
       ringBuffer = new UdpDataPacketFull[ringCapacity];
       ringHead = 0;
@@ -208,7 +294,7 @@ bool roc::UdpDataSocket::KnutstartDaq(unsigned trWin)
 
    if (!res) {
       EOUT(("Fail to start DAQ\n"));
-      dabc::LockGuard guard(dataMutex_);
+//      dabc::LockGuard guard(dataMutex_);
       daqActive_ = false;
       daqState = daqFails;
    }
@@ -218,7 +304,7 @@ bool roc::UdpDataSocket::KnutstartDaq(unsigned trWin)
 
 void roc::UdpDataSocket::KnutresetDaq()
 {
-   dabc::LockGuard guard(dataMutex_);
+//   dabc::LockGuard guard(dataMutex_);
 
    daqActive_ = false;
    daqState = daqInit;
@@ -246,7 +332,7 @@ void roc::UdpDataSocket::KnutsendDataRequest(UdpDataRequestFull* pkt)
 {
    uint32_t pkt_size = sizeof(UdpDataRequest) + pkt->numresend * sizeof(uint32_t);
 
-   // make request always 4 byte alligned
+   // make request always 4 byte aligned
    while ((pkt_size < MAX_UDP_PAYLOAD) &&
           (pkt_size + UDP_PAYLOAD_OFFSET) % 4) pkt_size++;
 
@@ -277,7 +363,7 @@ void roc::UdpDataSocket::KnutsendDataRequest(UdpDataRequestFull* pkt)
 
 bool roc::UdpDataSocket::Knut_checkDataRequest(UdpDataRequestFull* req, double curr_tm, bool check_retrans)
 {
-   // try to send credits increment anytime when 1/2 of maximum is available
+   // try to send credits increment any time when 1/2 of maximum is available
 
    if (!daqActive_) return false;
 
@@ -365,14 +451,14 @@ void roc::UdpDataSocket::KnutaddDataPacket(UdpDataPacketFull* src, unsigned l)
 
    UdpDataPacketFull* tgt = 0;
 
-   DOUT4(("Packet id:%u size %u reqid:%u", ntohl(src->pktid), ntohl(src->nummsg), ntohl(src->lastreqid)));
+   DOUT1(("Packet id:%u size %u reqid:%u", ntohl(src->pktid), ntohl(src->nummsg), ntohl(src->lastreqid)));
 
    double curr_tm = TimeStamp() * 1e-6;
 
 //   bool data_call_back = false;
 
    {
-      dabc::LockGuard guard(dataMutex_);
+//      dabc::LockGuard guard(dataMutex_);
 
       if (!daqActive_) return;
 
@@ -473,21 +559,12 @@ void roc::UdpDataSocket::KnutaddDataPacket(UdpDataPacketFull* src, unsigned l)
 
       // one should have definite amount of valid packets in data queue
 
-//      if (consumerMode_ && _checkAvailData(dataRequired_))
-//         if (consumerMode_ == 1)
-//            pthread_cond_signal(&dataCond_);
-//         else {
-//            consumerMode_ = 0;
-//            dataRequired_ = 0;
-//            data_call_back = true;
-//         }
    }
+
+   TryToFillOutputBuffer();
 
    if (dosendreq)
       KnutsendDataRequest(&req);
-
-//   if (data_call_back)
-//      controler_->DataCallBack(this);
 }
 
 bool roc::UdpDataSocket::Knut_checkAvailData(unsigned num_msg)
@@ -510,21 +587,82 @@ bool roc::UdpDataSocket::Knut_checkAvailData(unsigned num_msg)
    return false;
 }
 
-double roc::UdpDataSocket::ProcessTimeout(double last_diff)
+bool roc::UdpDataSocket::KnutfillData(void* buf, unsigned& sz)
 {
+   char* tgt = (char*) buf;
+   unsigned fullsz = sz;
+   sz = 0;
 
-   bool dosendreq = false;
-   UdpDataRequestFull req;
-   double curr_tm = TimeStamp() * 1e-6;
+   unsigned start(0), stop(0), count(0);
 
+
+   // in first lock take region, where we can copy data from
    {
-      dabc::LockGuard guard(dataMutex_);
+//      dabc::LockGuard guard(dataMutex_);
 
-      dosendreq = Knut_checkDataRequest(&req, curr_tm, true);
+      if (fillingData_) {
+          EOUT(("Other consumer fills data from buffer !!!\n"));
+          return false;
+      }
+
+      // no data to fill at all
+      if (ringSize == 0) return false;
+
+      fillingData_ = true;
+
+      start = ringTail; stop = ringTail;
+      while (stop!=ringHead) {
+         if (ringBuffer[stop].lastreqid == 0) break;
+         stop = (stop + 1) % ringCapacity;
+      }
    }
 
-   if (dosendreq)
-      KnutsendDataRequest(&req);
+   // now out of locked region start data filling
 
-   return 0.01;
+   if (sorter_) sorter_->startFill(buf, fullsz);
+
+   while (start != stop) {
+      UdpDataPacketFull* pkt = ringBuffer + start;
+
+      if (sorter_) {
+         // -1 while sorter want to put epoch, but did not do this
+         if (sorter_->sizeFilled() >= (fullsz/6 - 1)) break;
+
+         sorter_->addData((nxyter::Data*) pkt->msgs, pkt->nummsg);
+      } else {
+         unsigned pktsize = pkt->nummsg * 6;
+         if (pktsize>fullsz) {
+            if (sz==0)
+               EOUT(("Buffer size %u is too small for complete packet size %u\n", fullsz, pktsize));
+            break;
+         }
+
+         memcpy(tgt, pkt->msgs, pktsize);
+
+         sz+=pktsize;
+         tgt+=pktsize;
+         fullsz-=pktsize;
+      }
+
+      pkt->lastreqid = 0; // mark as no longer used
+      start = (start+1) % ringCapacity;
+      count++; // how many packets taken from buffer
+   }
+
+   if (sorter_) {
+      sz = sorter_->sizeFilled() * 6;
+      sorter_->stopFill();
+   }
+
+   {
+//      dabc::LockGuard guard(dataMutex_);
+
+      ringTail = start;
+      fillingData_ = false;
+      ringSize -= count;
+   }
+
+   if (sz>0) FireEvent(evntCheckRequest);
+
+   return sz>0;
 }
