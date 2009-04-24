@@ -382,6 +382,36 @@ ssize_t dabc::SocketIOProcessor::DoRecvBuffer(void* buf, ssize_t len)
    return res;
 }
 
+ssize_t dabc::SocketIOProcessor::DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len)
+{
+   struct iovec iov[2];
+
+   iov[0].iov_base = hdr;
+   iov[0].iov_len = hdrlen;
+
+   iov[1].iov_base = buf;
+   iov[1].iov_len = len;
+
+   struct msghdr msg;
+
+   msg.msg_name = 0;
+   msg.msg_namelen = 0;
+   msg.msg_iov = iov;
+   msg.msg_iovlen = buf ? 2 : 1;
+   msg.msg_control = 0;
+   msg.msg_controllen = 0;
+   msg.msg_flags = 0;
+
+   ssize_t res = recvmsg(fSocket, &msg, MSG_DONTWAIT | MSG_NOSIGNAL);
+
+   if (res==0) OnConnectionClosed(); else
+   if (res<0) {
+     if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
+   }
+
+   return res;
+}
+
 ssize_t dabc::SocketIOProcessor::DoSendBuffer(void* buf, ssize_t len)
 {
    ssize_t res = send(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);

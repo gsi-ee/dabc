@@ -22,3 +22,5 @@ roc::UdpBoard::UdpBoard() :
 roc::UdpBoard::~UdpBoard()
 {
 }
+
+const char* roc::xmlTransferWindow = "RocTransferWindow";

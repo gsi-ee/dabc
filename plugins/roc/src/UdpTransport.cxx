@@ -24,6 +24,8 @@
 
 #include <math.h>
 
+#define UDP_DATA_SIZE (sizeof(UdpDataPacketFull) - sizeof(UdpDataPacket))
+
 roc::UdpDataSocket::UdpDataSocket(UdpDevice* dev, int fd) :
    dabc::SocketIOProcessor(fd),
    dabc::Transport(dev),
@@ -31,44 +33,38 @@ roc::UdpDataSocket::UdpDataSocket(UdpDevice* dev, int fd) :
    dabc::CommandClientBase(),
    fDev(dev),
    fQueueMutex(),
-   fQueue(1)
+   fQueue(1),
+   fReadyBuffers(0),
+   fTransportBuffers(0),
+   fResend()
 {
    // we will react on all input packets
    SetDoingInput(true);
 
+   fTgtBuf = 0;
+   fTgtBufIndx = 0;
+   fTgtShift = 0;
+   fTgtPtr = 0;
+   fTgtCheckGap = false;
+
+   fTgtNextId = 0;
+   fTgtTailId = 0;
+
    fBufferSize = 0;
+   fTransferWindow = 10;
 
    rocNumber = 0;
    daqActive_ = false;
    daqState = daqInit;
 
-
-   transferWindow = 60;
-
-//   pthread_mutex_init(&dataMutex_, NULL);
-//  pthread_cond_init(&dataCond_, NULL);
-   dataRequired_ = 0;
-   consumerMode_ = 0;
-   fillingData_ = false;
-
-   readBufSize_ = 0;
-   readBufPos_ = 0;
-
    fTotalRecvPacket = 0;
    fTotalResubmPacket = 0;
-
-   ringBuffer = 0;
-   ringCapacity = 0;
-   ringHead = 0;
-   ringHeadId = 0;
-   ringTail = 0;
-   ringSize = 0;
-
-   sorter_ = 0;
 }
 
 roc::UdpDataSocket::~UdpDataSocket()
 {
+   ResetDaq();
+
    if (fDev) fDev->fDataCh = 0;
    fDev = 0;
 }
@@ -77,7 +73,14 @@ void roc::UdpDataSocket::ConfigureFor(dabc::Port* port)
 {
    fQueue.Allocate(port->InputQueueCapacity());
    fBufferSize = port->GetCfgInt(dabc::xmlBufferSize, 0);
+   fTransferWindow = port->GetCfgInt(roc::xmlTransferWindow, 40);
    fPool = port->GetMemoryPool();
+   fReadyBuffers = 0;
+
+   fTgtCheckGap = false;
+
+   // one cannot have too much resend requests
+   fResend.Allocate(port->InputQueueCapacity() * fBufferSize / UDP_DATA_SIZE);
 
    DOUT0(("Pool = %p buffer size = %u", fPool, fBufferSize));
 }
@@ -86,16 +89,20 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
 {
    switch (dabc::GetEventCode(evnt)) {
       case evntSocketRead: {
-         memset(&fRecvBuf, 0, sizeof(fRecvBuf));
-         ssize_t len = DoRecvBuffer(&fRecvBuf, sizeof(fRecvBuf));
+         ssize_t len = DoRecvBufferHdr(&fTgtHdr, sizeof(UdpDataPacket),
+                                        fTgtPtr, UDP_DATA_SIZE);
          if (len>0) {
-            DOUT5(("READ Packet %d len %d", ntohl(fRecvBuf.pktid), len));
-            KnutaddDataPacket(&fRecvBuf, len);
+            fTotalRecvPacket++;
+            DOUT5(("READ Packet %d len %d", ntohl(fTgtHdr.pktid), len));
+            AddDataPacket(len);
          }
+
          break;
       }
 
       case evntStartDaq: {
+         ResetDaq();
+
          daqState = daqStarting;
          dabc::Command* cmd = new CmdPoke(ROC_START_DAQ , 1);
          fDevice->Submit(Assign(cmd));
@@ -104,6 +111,12 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
 
       case evntStopDaq: {
          daqState = daqStopping;
+
+         fTgtBuf = 0;
+         fTgtBufIndx = 0;
+         fTgtShift = 0;
+         fTgtPtr = 0;
+
          dabc::Command* cmd = new CmdPoke(ROC_STOP_DAQ, 1);
          fDevice->Submit(Assign(cmd));
          break;
@@ -111,11 +124,15 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
 
       case evntConfirmCmd: {
          if (dabc::GetEventArg(evnt) == 0) {
+            ResetDaq();
             daqState = daqFails;
             ActivateTimeout(-1.);
          } else
          if (daqState == daqStarting) {
-            KnutstartDaq(40);
+            daqActive_ = true;
+
+            AddBuffersToQueue();
+
             ActivateTimeout(0.0001);
          } else
          if (daqState == daqStopping) {
@@ -126,11 +143,7 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
       }
 
       case evntFillBuffer:
-         TryToFillOutputBuffer();
-         break;
-
-      case evntCheckRequest:
-         CheckNextRequest();
+         AddBuffersToQueue();
          break;
 
       default:
@@ -154,8 +167,9 @@ bool roc::UdpDataSocket::Recv(dabc::Buffer* &buf)
    buf = 0;
    {
       dabc::LockGuard lock(fQueueMutex);
-      if (fQueue.Size()<=0) return false;
+      if (fReadyBuffers==0) return false;
       buf = fQueue.Pop();
+      fReadyBuffers--;
    }
    FireEvent(evntFillBuffer);
 
@@ -166,12 +180,14 @@ unsigned  roc::UdpDataSocket::RecvQueueSize() const
 {
    dabc::LockGuard guard(fQueueMutex);
 
-   return fQueue.Size();
+   return fReadyBuffers;
 }
 
 dabc::Buffer* roc::UdpDataSocket::RecvBuffer(unsigned indx) const
 {
    dabc::LockGuard lock(fQueueMutex);
+
+   if (indx>=fReadyBuffers) return 0;
 
    return fQueue.Item(indx);
 }
@@ -195,74 +211,367 @@ void roc::UdpDataSocket::StopTransport()
    FireEvent(evntStopDaq);
 }
 
-void roc::UdpDataSocket::TryToFillOutputBuffer()
+void roc::UdpDataSocket::AddBuffersToQueue()
 {
-   {
-      dabc::LockGuard lock(fQueueMutex);
-      if (fQueue.Full()) return;
-   }
-
-   if (!Knut_checkAvailData(dataRequired_)) return;
-
-   dabc::Buffer* buf = fPool->TakeBufferReq(this, fBufferSize);
-
-   if (buf==0) return;
-
-   unsigned sz = buf->GetDataSize();
-
-   DOUT1(("Try to fill buffer of size %u reqmsg %u", sz, dataRequired_));
-
-   if (!KnutfillData(buf->GetDataLocation(), sz)) {
-      dabc::Buffer::Release(buf);
-      return;
-   }
-
-   DOUT1(("Did fill buffer, ressize %u  isavail %s", sz, DBOOL(Knut_checkAvailData(dataRequired_))));
-
-   buf->SetDataSize(sz);
+   unsigned cnt = 0;
 
    {
       dabc::LockGuard lock(fQueueMutex);
+      cnt = fQueue.Capacity() - fQueue.Size();
+   }
 
+   bool isanynew = false;
+
+   while (cnt) {
+      dabc::Buffer* buf = fPool->TakeBufferReq(this, fBufferSize);
+      if (buf==0) break;
+
+      fTransportBuffers++;
+      if (fTgtBuf==0) {
+         fTgtBuf = buf;
+         fTgtShift = 0;
+         fTgtPtr = (char*) buf->GetDataLocation();
+      }
+
+      isanynew = true;
+      cnt--;
+      dabc::LockGuard lock(fQueueMutex);
       fQueue.Push(buf);
    }
 
-   FireInput();
+   if (isanynew) CheckNextRequest();
 }
 
-void roc::UdpDataSocket::CheckNextRequest()
+bool roc::UdpDataSocket::CheckNextRequest(bool check_retrans)
 {
-   bool dosendreq = false;
    UdpDataRequestFull req;
    double curr_tm = TimeStamp() * 1e-6;
 
-   {
-//      dabc::LockGuard guard(dataMutex_);
+   if (!daqActive_) return false;
 
-      dosendreq = Knut_checkDataRequest(&req, curr_tm, true);
+   // send request each 0.2 sec,
+   // if there is no replies on last request send it much faster - every 0.01 sec.
+   bool dosend =
+      fabs(curr_tm - lastRequestTm) > (lastRequestSeen ? 0.2 : 0.01);
+
+   int can_send = 0;
+   if (fTgtBuf) {
+      can_send += (fBufferSize - fTgtShift) / UDP_DATA_SIZE;
+      if (fTransportBuffers > 0)
+         can_send += (fTransportBuffers - 1) * fBufferSize / UDP_DATA_SIZE;
    }
 
-   if (dosendreq)
-      KnutsendDataRequest(&req);
+   if (can_send > (int) fTransferWindow) can_send = fTransferWindow;
+
+   if (fResend.Size() >= fTransferWindow) can_send = 0; else
+   if (can_send + fResend.Size() > fTransferWindow)
+      can_send = fTransferWindow - fResend.Size();
+
+   req.frontpktid = fTgtNextId + can_send;
+
+   // if newly calculated front id bigger than last
+   if ((req.frontpktid - lastSendFrontId) < 0x80000000) {
+
+     if ((req.frontpktid - lastSendFrontId) >= fTransferWindow / 3) dosend = true;
+
+   } else
+      req.frontpktid = lastSendFrontId;
+
+   req.tailpktid = fTgtTailId;
+
+   req.numresend = 0;
+
+   if (can_send==0) dosend = false;
+
+   if (!check_retrans && !dosend) return false;
+
+   for (unsigned n=0; n<fResend.Size(); n++) {
+      ResendInfo* entry = fResend.ItemPtr(n);
+
+      if ((entry->numtry>0) && (fabs(curr_tm - entry->lasttm)) < 0.1) continue;
+
+      entry->lasttm = curr_tm;
+      entry->numtry++;
+      if (entry->numtry < 8) {
+         req.resend[req.numresend++] = entry->pktid;
+
+         dosend = true;
+
+         if (req.numresend >= sizeof(req.resend) / 4) {
+            EOUT(("Number of resends more than one can pack in the retransmit packet"));
+            break;
+         }
+
+      } else {
+         EOUT(("Roc:%u Drop pkt %u\n", rocNumber, entry->pktid));
+
+         fTgtCheckGap = true;
+
+         memset(entry->ptr, 0, UDP_DATA_SIZE);
+
+         nxyter::Data* data = (nxyter::Data*) entry->ptr;
+         data->setRocNumber(rocNumber);
+         data->setMessageType(ROC_MSG_SYS);
+         data->setSysMesType(5); // this is lost packet mark
+
+         fResend.RemoveItem(n);
+         n--;
+      }
+
+   }
+
+   if (!dosend) return false;
+
+   uint32_t pkt_size = sizeof(UdpDataRequest) + req.numresend * sizeof(uint32_t);
+
+   // make request always 4 byte aligned
+   while ((pkt_size < MAX_UDP_PAYLOAD) &&
+          (pkt_size + UDP_PAYLOAD_OFFSET) % 4) pkt_size++;
+
+   lastRequestTm = curr_tm;
+   lastRequestSeen = false;
+   lastSendFrontId = req.frontpktid;
+   lastRequestId++;
+
+//   if (pkt->numresend)
+//      DOUT(("Request:%u request front:%u tail:%u resubm:%u\n", lastRequestId, pkt->frontpktid, pkt->tailpktid, pkt->numresend));
+
+   DOUT1(("Send request id:%u  Range: %u - %u nresend:%d resend[0] = %d tgtbuf %p ptr %p tgtsize %u",
+         lastRequestId, req.tailpktid, req.frontpktid, req.numresend,
+         req.numresend > 0 ? req.resend[0] : -1, fTgtBuf, fTgtPtr, fTransportBuffers));
+
+   req.password = htonl(ROC_PASSWORD);
+   req.reqpktid = htonl(lastRequestId);
+   req.frontpktid = htonl(req.frontpktid);
+   req.tailpktid = htonl(req.tailpktid);
+   for (uint32_t n=0; n < req.numresend; n++)
+      req.resend[n] = htonl(req.resend[n]);
+   req.numresend = htonl(req.numresend);
+
+   DoSendBuffer(&req, pkt_size);
+
+   return true;
 }
 
 double roc::UdpDataSocket::ProcessTimeout(double)
 {
-   CheckNextRequest();
+   if (!daqActive_) return -1;
+
+   if (fTgtBuf == 0)
+      AddBuffersToQueue();
+   else
+      CheckNextRequest();
+
    return 0.01;
 }
 
-// _________________________________________________________
+void roc::UdpDataSocket::ResetDaq()
+{
+   daqActive_ = false;
+   daqState = daqInit;
+
+   fTransportBuffers = 0;
+
+   fTgtBuf = 0;
+   fTgtBufIndx = 0;
+   fTgtShift = 0;
+   fTgtPtr = 0;
+
+   fTgtNextId = 0;
+   fTgtTailId = 0;
+   fTgtCheckGap = false;
+
+   lastRequestId = 0;
+   lastSendFrontId = 0;
+   lastRequestTm = 0.;
+   lastRequestSeen = true;
+
+   fResend.Reset();
+
+   dabc::LockGuard lock(fQueueMutex);
+   fQueue.Cleanup();
+   fReadyBuffers = 0;
+
+}
+
+
+
+void roc::UdpDataSocket::AddDataPacket(int len)
+{
+   if (fTgtPtr==0) {
+      EOUT(("Packet received without having place for it!"));
+      return;
+   }
+
+   if (len <= (int) sizeof(UdpDataPacket)) {
+      EOUT(("Too few data received %d", len));
+      return;
+   }
+
+   uint32_t src_pktid = ntohl(fTgtHdr.pktid);
+
+   DOUT0(("Packet id:%05u Head:%05u", src_pktid, fTgtNextId));
+
+   if (ntohl(fTgtHdr.lastreqid) == lastRequestId) lastRequestSeen = true;
+
+   uint32_t gap = src_pktid - fTgtNextId;
+
+   int data_len = len - sizeof(UdpDataPacket);
+
+   bool checkready = false;
+
+   if (gap < fBufferSize / UDP_DATA_SIZE * fTransportBuffers) {
+
+      if (gap>0) {
+         // some packets are lost on the way, move pointer forward and
+         // remember packets which should be resubmit
+         void* src = fTgtPtr;
+
+         while (fTgtNextId != src_pktid) {
+
+            ResendInfo* info = fResend.PushEmpty();
+
+            info->pktid = fTgtNextId;
+            info->addtm = 0.;
+            info->lasttm = 0.;
+            info->numtry = 0;
+            info->buf = fTgtBuf;
+            info->bufindx = fTgtBufIndx;
+            info->ptr = fTgtPtr;
+
+            fTgtNextId++;
+            fTgtShift += UDP_DATA_SIZE;
+            fTgtPtr += UDP_DATA_SIZE;
+
+            if (fTgtBuf->GetDataSize() - fTgtShift < UDP_DATA_SIZE) {
+               fTgtBufIndx++;
+               if (fTgtBufIndx >= fTransportBuffers) {
+                  EOUT(("One get packet out of the available buffer spaces !!!!"));
+                  return;
+               }
+
+               {
+                  dabc::LockGuard lock(fQueueMutex);
+                  fTgtBuf = fQueue.Item(fReadyBuffers + fTgtBufIndx);
+               }
+
+               fTgtPtr = (char*) fTgtBuf->GetDataLocation();
+               fTgtShift = 0;
+            }
+         }
+
+         // copy data which was received into the wrong place of the buffers
+         memcpy(fTgtPtr, src, data_len);
+      }
+
+      // from here just normal situation when next packet is arrived
+
+      if (fResend.Size()==0) fTgtTailId = fTgtNextId;
+
+      fTgtNextId++;
+
+      fTgtShift += data_len;
+      fTgtPtr += data_len;
+
+      if (fTgtBuf->GetDataSize() - fTgtShift < UDP_DATA_SIZE) {
+         fTgtPtr = 0;
+         fTgtBuf->SetDataSize(fTgtShift);
+         fTgtShift = 0;
+         fTgtBuf = 0;
+         fTgtBufIndx++;
+         checkready = true;
+      }
+   } else {
+      // this is retransmitted packet
+      for (unsigned n=0; n<fResend.Size(); n++) {
+         ResendInfo* entry = fResend.ItemPtr(n);
+         if (entry->pktid != src_pktid) continue;
+
+         fTotalResubmPacket++;
+
+         memcpy(entry->ptr, fTgtPtr, data_len);
+         if (data_len < (int) UDP_DATA_SIZE) {
+            void* restptr = (char*) entry->ptr + data_len;
+            memset(restptr, 0, UDP_DATA_SIZE - data_len);
+            fTgtCheckGap = true;
+         }
+
+         fResend.RemoveItem(n);
+
+         checkready = true;
+
+         break;
+      }
+   }
+
+   if (checkready && (fTgtBufIndx>0)) {
+      unsigned minindx = fTgtBufIndx;
+
+      for (unsigned n=0; n<fResend.Size(); n++) {
+         unsigned indx = fResend.ItemPtr(n)->bufindx;
+         if (indx < minindx) minindx = indx;
+      }
+
+      if (minindx>0) {
+
+         fTransportBuffers -= minindx;
+         fTgtBufIndx -= minindx;
+         for (unsigned n=0; n<fResend.Size(); n++)
+            fResend.ItemPtr(n)->bufindx -= minindx;
+
+         {
+            dabc::LockGuard lock(fQueueMutex);
+
+            // check all buffers on gaps, if necessary
+            if (fTgtCheckGap)
+               for (unsigned n=0;n<minindx;n++) {
+                  dabc::Buffer* buf = fQueue.Item(fReadyBuffers + n);
+                  CompressBuffer(buf);
+               }
+
+            fReadyBuffers += minindx;
+         }
+
+         while (minindx--) FireInput();
+      }
+   }
+
+   if ((fTgtBuf==0) && (fTgtBufIndx<fTransportBuffers)) {
+      dabc::LockGuard lock(fQueueMutex);
+      fTgtBuf = fQueue.Item(fReadyBuffers + fTgtBufIndx);
+      fTgtPtr = (char*) fTgtBuf->GetDataLocation();
+      fTgtShift = 0;
+      // one can disable checks once we have no data in queues at all
+      if ((fTgtBufIndx==0) && (fResend.Size()==0)) {
+         if (fTgtCheckGap) DOUT0(("!!! DISABLE COMPRESS !!!"));
+         fTgtCheckGap = false;
+      }
+   }
+
+   if (fTgtBuf == 0)
+      AddBuffersToQueue();
+   else
+      CheckNextRequest();
+}
+
+void roc::UdpDataSocket::CompressBuffer(dabc::Buffer* buf)
+{
+   EOUT(("Implement buffer compress !!!!!!!"));
+}
+
+
+/*
 
 
 bool roc::UdpDataSocket::KnutstartDaq(unsigned trWin)
 {
-   KnutresetDaq();
+   ResetDaq();
+   daqActive_ = true;
+   daqState = daqStarting;
 
    bool res = true;
 
    {
-//      dabc::LockGuard guard(dataMutex_);
       daqActive_ = true;
       daqState = daqStarting;
       transferWindow = trWin < 4 ? 4 : trWin;
@@ -302,32 +611,6 @@ bool roc::UdpDataSocket::KnutstartDaq(unsigned trWin)
    return res;
 }
 
-void roc::UdpDataSocket::KnutresetDaq()
-{
-//   dabc::LockGuard guard(dataMutex_);
-
-   daqActive_ = false;
-   daqState = daqInit;
-
-   lastRequestId = 0;
-   lastRequestTm = 0.;
-   lastRequestSeen = true;
-   lastSendFrontId = 0;
-
-   packetsToResend.clear();
-
-   if (ringBuffer) {
-      delete [] ringBuffer;
-      ringBuffer = 0;
-   }
-
-   ringCapacity = 0;
-   ringHead = 0;
-   ringHeadId = 0;
-   ringTail = 0;
-   ringSize = 0;
-}
-
 void roc::UdpDataSocket::KnutsendDataRequest(UdpDataRequestFull* pkt)
 {
    uint32_t pkt_size = sizeof(UdpDataRequest) + pkt->numresend * sizeof(uint32_t);
@@ -356,9 +639,6 @@ void roc::UdpDataSocket::KnutsendDataRequest(UdpDataRequestFull* pkt)
    pkt->numresend = htonl(pkt->numresend);
 
    DoSendBuffer(pkt, pkt_size);
-
-//   if (dataSocket_)
-//      dataSocket_->SendToBuf(getIpAddress(), getDataPort(), (char*)pkt, pkt_size);
 }
 
 bool roc::UdpDataSocket::Knut_checkDataRequest(UdpDataRequestFull* req, double curr_tm, bool check_retrans)
@@ -394,7 +674,7 @@ bool roc::UdpDataSocket::Knut_checkDataRequest(UdpDataRequestFull* req, double c
 
    if (!check_retrans && !dosend) return false;
 
-   std::list<ResendPkt>::iterator iter = packetsToResend.begin();
+   std::list<ResendInfo>::iterator iter = packetsToResend.begin();
    while (iter!=packetsToResend.end()) {
      if ((iter->numtry==0) || (fabs(curr_tm - iter->lasttm)) > 0.1) {
         iter->lasttm = curr_tm;
@@ -412,7 +692,7 @@ bool roc::UdpDataSocket::Knut_checkDataRequest(UdpDataRequestFull* req, double c
 
         } else {
 
-            std::list<ResendPkt>::iterator deliter = iter;
+            std::list<ResendInfo>::iterator deliter = iter;
 
             unsigned target = ringHead + iter->pktid - ringHeadId;
             while (target >= ringCapacity) target += ringCapacity;
@@ -476,7 +756,7 @@ void roc::UdpDataSocket::KnutaddDataPacket(UdpDataPacketFull* src, unsigned l)
          while (ringHeadId != src_pktid) {
             // this is indicator of lost packets
             docheckretr = true;
-            packetsToResend.push_back(ResendPkt(ringHeadId));
+            packetsToResend.push_back(ResendInfo(ringHeadId));
 
             ringHeadId++;
             ringHead = (ringHead+1) % ringCapacity;
@@ -507,7 +787,7 @@ void roc::UdpDataSocket::KnutaddDataPacket(UdpDataPacketFull* src, unsigned l)
             tgt = 0;
          } else {
             // remove id from resend list
-            std::list<ResendPkt>::iterator iter = packetsToResend.begin();
+            std::list<ResendInfo>::iterator iter = packetsToResend.begin();
             while (iter!=packetsToResend.end()) {
                if (iter->pktid == src_pktid) {
                   packetsToResend.erase(iter);
@@ -561,7 +841,7 @@ void roc::UdpDataSocket::KnutaddDataPacket(UdpDataPacketFull* src, unsigned l)
 
    }
 
-   TryToFillOutputBuffer();
+   AddBufferToQueue();
 
    if (dosendreq)
       KnutsendDataRequest(&req);
@@ -666,3 +946,4 @@ bool roc::UdpDataSocket::KnutfillData(void* buf, unsigned& sz)
 
    return sz>0;
 }
+*/

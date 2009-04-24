@@ -28,6 +28,9 @@ namespace roc {
 
 #pragma pack(push, 1)
 
+   extern const char* xmlTransferWindow;
+
+
    struct UdpMessage
    {
       uint8_t  tag;

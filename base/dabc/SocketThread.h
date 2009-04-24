@@ -124,6 +124,7 @@ namespace dabc {
          inline bool IsDoingRecv() const { return fRecvIOVNumber>0; }
 
          ssize_t DoRecvBuffer(void* buf, ssize_t len);
+         ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len);
          ssize_t DoSendBuffer(void* buf, ssize_t len);
 
          bool          fSendUseMsg;     // use sendmsg for transport

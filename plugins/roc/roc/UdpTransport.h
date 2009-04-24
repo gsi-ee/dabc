@@ -39,10 +39,6 @@
 #include "roc/UdpBoard.h"
 #endif
 
-#ifndef NXYTER_Sorter
-#include "nxyter/Sorter.h"
-#endif
-
 #include <list>
 
 namespace roc {
@@ -58,21 +54,38 @@ namespace roc {
          enum EUdpEvents { evntStartDaq = evntSocketLast + 1,
                            evntStopDaq,
                            evntConfirmCmd,
-                           evntFillBuffer,
-                           evntCheckRequest };
+                           evntFillBuffer };
 
          enum EDaqState { daqInit, daqStarting, daqRuns, daqStopping, daqStopped, daqFails };
 
 
-         struct ResendPkt {
+         struct ResendInfo {
 
-            ResendPkt(uint32_t id = 0) :
-               pktid(id), addtm(0.), lasttm(0.), numtry(0) {}
+            uint32_t pktid;    // id of packet
+            double   addtm;    // time when gap was add
+            double   lasttm;   // time when last request was send
+            int      numtry;   // how many requests was send
+            dabc::Buffer* buf; // buffer pointer
+            unsigned bufindx;  // index of buffer in the queue
+            char*         ptr; // target location
 
-            uint32_t pktid;  // id of packet
-            double   addtm;  // last resend time
-            double   lasttm;  // last resend time
-            int      numtry;
+            ResendInfo(unsigned id = 0) :
+               pktid(id),
+               addtm(0.),
+               lasttm(0.),
+               numtry(0),
+               buf(0),
+               bufindx(0),
+               ptr(0) {}
+
+            ResendInfo(const ResendInfo& src) :
+               pktid(src.pktid),
+               addtm(src.addtm),
+               lasttm(src.lasttm),
+               numtry(src.numtry),
+               buf(src.buf),
+               bufindx(src.bufindx),
+               ptr(src.ptr) {}
 
          };
 
@@ -81,45 +94,36 @@ namespace roc {
          dabc::Mutex        fQueueMutex;
          dabc::BuffersQueue fQueue;
 
+         unsigned           fReadyBuffers; // how many buffers in queue can be provided to user
+         unsigned           fTransportBuffers; // how many buffers can be used for transport
+
+         dabc::Buffer*      fTgtBuf;   // pointer on buffer, where next portion can be received
+         unsigned           fTgtBufIndx; // queue index of target buffer - use fQueue.Item(fReadyBuffers + fTgtBufIndx)
+         unsigned           fTgtShift; // current shift in the buffer
+         UdpDataPacket      fTgtHdr;   // place where data header should be received
+         char*              fTgtPtr;   // location where next data should be received
+         uint32_t           fTgtNextId; // expected id of next packet
+         uint32_t           fTgtTailId; // first id of packet which can not be dropped on ROC side
+         bool               fTgtCheckGap;  // true if one should check gaps
+
+         dabc::Queue<ResendInfo>  fResend;
+
          bool               daqActive_;
          EDaqState          daqState;
 
          UdpDataPacketFull  fRecvBuf;
 
          unsigned           fBufferSize;
+         unsigned           fTransferWindow;
 
          dabc::MemoryPool  *fPool;
 
-
-         unsigned rocNumber;
-
-         unsigned transferWindow;      // maximum value for credits
-
-         uint32_t lastRequestId;   // last request id
          double   lastRequestTm;   // time when last request was send
          bool     lastRequestSeen; // indicate if we seen already reply on last request
+         uint32_t lastRequestId;   // last request id
          uint32_t lastSendFrontId; // last send id of front packet
 
-         UdpDataPacketFull* ringBuffer; // ring buffer for data
-         unsigned      ringCapacity; // capacity of ring buffer
-         unsigned      ringHead;     // head of ring buffer (first free place)
-         uint32_t      ringHeadId;   // expected packet id for head buffer
-         unsigned      ringTail;     // tail of ring buffer (last valid packet)
-         unsigned      ringSize;     // number of items in ring buffer
-
-
-         dabc::Mutex     dataMutex_;    // locks access to received data
-//         pthread_cond_t  dataCond_;     // condition to synchronize data consumer
-         unsigned        dataRequired_; // specifies how many messages required consumer
-         unsigned        consumerMode_; // 0 - no consumer, 1 - waits condition, 2 - call back to controller
-         bool            fillingData_;  // true, if consumer thread fills data from ring buffer
-         uint8_t readBuf_[1800];       // intermediate buffer for getNextData()
-         unsigned        readBufSize_;
-         unsigned        readBufPos_;
-
-         nxyter::Sorter* sorter_;
-
-         std::list<ResendPkt>   packetsToResend;
+         unsigned rocNumber;
 
          uint64_t fTotalRecvPacket;
          uint64_t fTotalResubmPacket;
@@ -135,16 +139,13 @@ namespace roc {
 
          void ConfigureFor(dabc::Port* port);
 
-         void TryToFillOutputBuffer();
-         void CheckNextRequest();
+         void AddBuffersToQueue();
+         bool CheckNextRequest(bool check_retrans = true);
 
-         void KnutresetDaq();
-         bool KnutstartDaq(unsigned trWin = 40);
-         void KnutsendDataRequest(UdpDataRequestFull* pkt);
-         bool Knut_checkDataRequest(UdpDataRequestFull* req, double curr_tm, bool check_retrans);
-         void KnutaddDataPacket(UdpDataPacketFull* p, unsigned l);
-         bool Knut_checkAvailData(unsigned num_msg);
-         bool KnutfillData(void* buf, unsigned& sz);
+         void AddDataPacket(int len);
+         void CompressBuffer(dabc::Buffer* buf);
+
+         void ResetDaq();
 
       public:
          UdpDataSocket(UdpDevice* dev, int fd);

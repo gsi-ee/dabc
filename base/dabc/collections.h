@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -240,6 +240,19 @@ namespace dabc {
             } else {
                EOUT(("No more space in fixed queue size = %d", fSize));
             }
+         }
+
+         T* PushEmpty()
+         {
+            if ((fSize<fCapacity) || (fCanExpand && Expand())) {
+               T* res = fHead;
+               if (++fHead==fBorder) fHead = fQueue;
+               fSize++;
+               return res;
+            }
+
+            EOUT(("No more space in fixed queue size = %d", fSize));
+            return 0;
          }
 
          void PopOnly()
