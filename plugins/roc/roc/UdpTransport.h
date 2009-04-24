@@ -62,8 +62,7 @@ namespace roc {
          struct ResendInfo {
 
             uint32_t pktid;    // id of packet
-            double   addtm;    // time when gap was add
-            double   lasttm;   // time when last request was send
+            double   lasttm;   // when request was send last time
             int      numtry;   // how many requests was send
             dabc::Buffer* buf; // buffer pointer
             unsigned bufindx;  // index of buffer in the queue
@@ -71,7 +70,6 @@ namespace roc {
 
             ResendInfo(unsigned id = 0) :
                pktid(id),
-               addtm(0.),
                lasttm(0.),
                numtry(0),
                buf(0),
@@ -80,7 +78,6 @@ namespace roc {
 
             ResendInfo(const ResendInfo& src) :
                pktid(src.pktid),
-               addtm(src.addtm),
                lasttm(src.lasttm),
                numtry(src.numtry),
                buf(src.buf),
@@ -105,6 +102,8 @@ namespace roc {
          uint32_t           fTgtNextId; // expected id of next packet
          uint32_t           fTgtTailId; // first id of packet which can not be dropped on ROC side
          bool               fTgtCheckGap;  // true if one should check gaps
+
+         char               fTempBuf[2000]; // buffer to recv packet when no regular place is available
 
          dabc::Queue<ResendInfo>  fResend;
 
@@ -139,10 +138,10 @@ namespace roc {
 
          void ConfigureFor(dabc::Port* port);
 
-         void AddBuffersToQueue();
+         void AddBuffersToQueue(bool checkanyway = false);
          bool CheckNextRequest(bool check_retrans = true);
 
-         void AddDataPacket(int len);
+         void AddDataPacket(int len, void* tgt);
          void CompressBuffer(dabc::Buffer* buf);
 
          void ResetDaq();

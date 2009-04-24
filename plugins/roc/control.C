@@ -39,7 +39,7 @@ void control(const char* boardaddr = "lxg0526")
 
    brd->startDaq();
 
-   gSystem->Sleep(500);
+   gSystem->Sleep(10000);
 
    brd->stopDaq();
 

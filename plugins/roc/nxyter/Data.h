@@ -295,6 +295,7 @@ namespace nxyter {
 
          // ____________________________ common function ______________________
 
+         inline bool isNopMsg() const { return getMessageType() == ROC_MSG_NOP; }
          inline bool isHitMsg() const { return getMessageType() == ROC_MSG_HIT; }
          inline bool isEpochMsg() const { return getMessageType() == ROC_MSG_EPOCH; }
          inline bool isSyncMsg() const { return getMessageType() == ROC_MSG_SYNC; }
@@ -313,6 +314,8 @@ namespace nxyter {
                   return FullTimeStamp((getSyncEpochLowBit() == (epoch & 0x1)) ? epoch : epoch - 1, getSyncTs());
                case ROC_MSG_AUX:
                   return FullTimeStamp((getAuxEpochLowBit() == (epoch & 0x1)) ? epoch : epoch - 1, getAuxTs());
+               default:
+                  return FullTimeStamp(epoch, 0);
             }
             return 0;
          }

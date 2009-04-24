@@ -89,12 +89,15 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
 {
    switch (dabc::GetEventCode(evnt)) {
       case evntSocketRead: {
+         void *tgt = fTgtPtr;
+         if (tgt==0) tgt = fTempBuf;
+
          ssize_t len = DoRecvBufferHdr(&fTgtHdr, sizeof(UdpDataPacket),
-                                        fTgtPtr, UDP_DATA_SIZE);
+                                        tgt, UDP_DATA_SIZE);
          if (len>0) {
             fTotalRecvPacket++;
             DOUT5(("READ Packet %d len %d", ntohl(fTgtHdr.pktid), len));
-            AddDataPacket(len);
+            AddDataPacket(len, tgt);
          }
 
          break;
@@ -208,10 +211,13 @@ void roc::UdpDataSocket::StartTransport()
 
 void roc::UdpDataSocket::StopTransport()
 {
+
+   DOUT0(("Num recv packet %ld", fTotalRecvPacket));
+
    FireEvent(evntStopDaq);
 }
 
-void roc::UdpDataSocket::AddBuffersToQueue()
+void roc::UdpDataSocket::AddBuffersToQueue(bool checkanyway)
 {
    unsigned cnt = 0;
 
@@ -239,7 +245,7 @@ void roc::UdpDataSocket::AddBuffersToQueue()
       fQueue.Push(buf);
    }
 
-   if (isanynew) CheckNextRequest();
+   if (isanynew || checkanyway) CheckNextRequest();
 }
 
 bool roc::UdpDataSocket::CheckNextRequest(bool check_retrans)
@@ -257,9 +263,10 @@ bool roc::UdpDataSocket::CheckNextRequest(bool check_retrans)
    int can_send = 0;
    if (fTgtBuf) {
       can_send += (fBufferSize - fTgtShift) / UDP_DATA_SIZE;
-      if (fTransportBuffers > 0)
-         can_send += (fTransportBuffers - 1) * fBufferSize / UDP_DATA_SIZE;
+      can_send += (fTransportBuffers - fTgtBufIndx - 1) * fBufferSize / UDP_DATA_SIZE;
    }
+
+//   DOUT0(("TgtIndx %u Can_send %d ", fTgtBufIndx, can_send));
 
    if (can_send > (int) fTransferWindow) can_send = fTransferWindow;
 
@@ -333,12 +340,9 @@ bool roc::UdpDataSocket::CheckNextRequest(bool check_retrans)
    lastSendFrontId = req.frontpktid;
    lastRequestId++;
 
-//   if (pkt->numresend)
-//      DOUT(("Request:%u request front:%u tail:%u resubm:%u\n", lastRequestId, pkt->frontpktid, pkt->tailpktid, pkt->numresend));
-
-   DOUT1(("Send request id:%u  Range: %u - %u nresend:%d resend[0] = %d tgtbuf %p ptr %p tgtsize %u",
-         lastRequestId, req.tailpktid, req.frontpktid, req.numresend,
-         req.numresend > 0 ? req.resend[0] : -1, fTgtBuf, fTgtPtr, fTransportBuffers));
+//   DOUT1(("Send request id:%u  Range: 0x%04x - 0x%04x nresend:%d resend[0] = 0x%04x tgtbuf %p ptr %p tgtsize %u",
+//         lastRequestId, req.tailpktid, req.frontpktid, req.numresend,
+//         req.numresend > 0 ? req.resend[0] : 0, fTgtBuf, fTgtPtr, fTransportBuffers));
 
    req.password = htonl(ROC_PASSWORD);
    req.reqpktid = htonl(lastRequestId);
@@ -358,7 +362,7 @@ double roc::UdpDataSocket::ProcessTimeout(double)
    if (!daqActive_) return -1;
 
    if (fTgtBuf == 0)
-      AddBuffersToQueue();
+      AddBuffersToQueue(true);
    else
       CheckNextRequest();
 
@@ -396,10 +400,17 @@ void roc::UdpDataSocket::ResetDaq()
 
 
 
-void roc::UdpDataSocket::AddDataPacket(int len)
+void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
 {
-   if (fTgtPtr==0) {
-      EOUT(("Packet received without having place for it!"));
+   uint32_t src_pktid = ntohl(fTgtHdr.pktid);
+
+   if (tgt==0) {
+      DOUT0(("Packet 0x%04x has no place buf %p bufindx %u queue %u ready %u", src_pktid, fTgtBuf, fTgtBufIndx, fQueue.Size(), fReadyBuffers));
+      for (unsigned n=0;n < fResend.Size(); n++)
+         DOUT0(("   Need resend 0x%04x retry %d", fResend.ItemPtr(n)->pktid, fResend.ItemPtr(n)->numtry));
+
+      CheckNextRequest();
+
       return;
    }
 
@@ -408,9 +419,7 @@ void roc::UdpDataSocket::AddDataPacket(int len)
       return;
    }
 
-   uint32_t src_pktid = ntohl(fTgtHdr.pktid);
-
-   DOUT0(("Packet id:%05u Head:%05u", src_pktid, fTgtNextId));
+//   DOUT0(("Packet id:0x%04x Head:0x%04x", src_pktid, fTgtNextId));
 
    if (ntohl(fTgtHdr.lastreqid) == lastRequestId) lastRequestSeen = true;
 
@@ -420,7 +429,7 @@ void roc::UdpDataSocket::AddDataPacket(int len)
 
    bool checkready = false;
 
-   if (gap < fBufferSize / UDP_DATA_SIZE * fTransportBuffers) {
+   if ((fTgtPtr==tgt) && (gap < fBufferSize / UDP_DATA_SIZE * fTransportBuffers)) {
 
       if (gap>0) {
          // some packets are lost on the way, move pointer forward and
@@ -432,7 +441,6 @@ void roc::UdpDataSocket::AddDataPacket(int len)
             ResendInfo* info = fResend.PushEmpty();
 
             info->pktid = fTgtNextId;
-            info->addtm = 0.;
             info->lasttm = 0.;
             info->numtry = 0;
             info->buf = fTgtBuf;
@@ -482,14 +490,14 @@ void roc::UdpDataSocket::AddDataPacket(int len)
          checkready = true;
       }
    } else {
-      // this is retransmitted packet
+      // this is retransmitted packet, may be received in temporary place
       for (unsigned n=0; n<fResend.Size(); n++) {
          ResendInfo* entry = fResend.ItemPtr(n);
          if (entry->pktid != src_pktid) continue;
 
          fTotalResubmPacket++;
 
-         memcpy(entry->ptr, fTgtPtr, data_len);
+         memcpy(entry->ptr, tgt, data_len);
          if (data_len < (int) UDP_DATA_SIZE) {
             void* restptr = (char*) entry->ptr + data_len;
             memset(restptr, 0, UDP_DATA_SIZE - data_len);
@@ -543,7 +551,7 @@ void roc::UdpDataSocket::AddDataPacket(int len)
       fTgtShift = 0;
       // one can disable checks once we have no data in queues at all
       if ((fTgtBufIndx==0) && (fResend.Size()==0)) {
-         if (fTgtCheckGap) DOUT0(("!!! DISABLE COMPRESS !!!"));
+//         if (fTgtCheckGap) DOUT0(("!!! DISABLE COMPRESS !!!"));
          fTgtCheckGap = false;
       }
    }
@@ -556,7 +564,29 @@ void roc::UdpDataSocket::AddDataPacket(int len)
 
 void roc::UdpDataSocket::CompressBuffer(dabc::Buffer* buf)
 {
-   EOUT(("Implement buffer compress !!!!!!!"));
+   nxyter::Data* src = (nxyter::Data*) buf->GetDataLocation();
+   unsigned numdata = buf->GetDataSize() / sizeof(nxyter::Data);
+   unsigned numtgt = 0;
+
+   if (numdata==0) return;
+
+   nxyter::Data* tgt = src;
+
+   while (numdata--) {
+      if (src->isNopMsg())
+         src++;
+      else {
+         if (tgt!=src) memcpy(tgt, src, sizeof(nxyter::Data));
+         src++;
+         tgt++;
+         numtgt++;
+      }
+   }
+
+   if (numtgt==0)
+      EOUT(("Zero size after compress !!!"));
+
+   buf->SetDataSize(numtgt*sizeof(nxyter::Data));
 }
 
 
