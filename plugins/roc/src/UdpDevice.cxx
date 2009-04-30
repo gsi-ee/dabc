@@ -19,6 +19,7 @@
 
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
+#include "dabc/CommandsSet.h"
 
 #include "roc/Defines.h"
 #include "roc/Commands.h"
@@ -31,7 +32,7 @@ roc::UdpControlSocket::UdpControlSocket(UdpDevice* dev, int fd) :
    fUdpCmds(false, false),
    fCtrlRuns(false),
    fControlSendSize(0),
-   fPacketCounter(0)
+   fPacketCounter(1)
 
 {
    // we will react on all input packets
@@ -63,9 +64,7 @@ void roc::UdpControlSocket::ProcessEvent(dabc::EventId evnt)
       case evntSocketRead: {
          ssize_t len = DoRecvBuffer(&fControlRecv, sizeof(UdpMessageFull));
 
-         UdpDataPacket* pkt = (UdpDataPacket*) &fControlRecv;
-
-         DOUT0(("Get answer of size %d pktid %d", len, ntohl(pkt->pktid)));
+//         DOUT0(("Get answer of size %d req %d answ %d", len, ntohl(fControlSend.id), ntohl(fControlRecv.id)));
 
          if (len<=0) return;
 
@@ -150,9 +149,6 @@ void roc::UdpControlSocket::completeLoop(bool res)
 int roc::UdpControlSocket::ExecuteCommand(dabc::Command* cmd)
 {
    fUdpCmds.Push(cmd);
-
-   DOUT0(("Get command %s", cmd->GetName()));
-
    checkCommandsQueue();
    return cmd_postponed;
 }
@@ -176,8 +172,8 @@ void roc::UdpControlSocket::checkCommandsQueue()
           case ROC_CFG_WRITE:
           case ROC_CFG_READ:
           case ROC_OVERWRITE_SD_FILE:
-          case ROC_DO_AUTO_DELAY:
-          case ROC_DO_AUTO_LATENCY:
+//          case ROC_DO_AUTO_DELAY:
+//          case ROC_DO_AUTO_LATENCY:
           case ROC_FLASH_KIBFILE_FROM_DDR:
              if (fTotalTmoutSec < 10) fTotalTmoutSec = 10.;
              fShowProgress = true;
@@ -195,8 +191,6 @@ void roc::UdpControlSocket::checkCommandsQueue()
           memcpy(fControlSend.rawdata, ptr, value);
           fControlSendSize += value;
        }
-
-       DOUT0(("DoPoke (%04x, %04x)", addr, value));
    } else
    if (cmd->IsName(CmdPeek::CmdName())) {
       fControlSend.tag = ROC_PEEK;
@@ -257,8 +251,6 @@ roc::UdpDevice::UdpDevice(dabc::Basic* parent, const char* name, const char* thr
 
    int fd = dabc::SocketThread::StartUdp(nport, nport, nport+1000);
 
-   DOUT1(("Socket %d port %d  remote %s", fd, nport, fRocIp.c_str()));
-
    fd = dabc::SocketThread::ConnectUdp(fd, fRocIp.c_str(), ROC_DEFAULT_CTRLPORT);
 
    if (fd<=0) return;
@@ -267,7 +259,7 @@ roc::UdpDevice::UdpDevice(dabc::Basic* parent, const char* name, const char* thr
 
    fCtrlCh->AssignProcessorToThread(ProcessorThread());
 
-   DOUT0(("Create control socket %d for port %d connected to host %s", fd, nport, fRocIp.c_str()));
+   DOUT2(("Create control socket %d for port %d connected to host %s", fd, nport, fRocIp.c_str()));
 
    fCtrlPort = nport;
    fConnected = true;
@@ -307,7 +299,6 @@ void roc::UdpDevice::ProcessEvent(dabc::EventId evnt)
 int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
 {
    if (cmd->IsName("GetBoardPtr")) {
-
       roc::Board* brd = static_cast<roc::Board*> (this);
       cmd->SetStr("BoardPtr", dabc::format("%p", brd));
       return cmd_true;
@@ -318,6 +309,59 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
       if (fCtrlCh==0) return cmd_false;
       fCtrlCh->Submit(cmd);
       return cmd_postponed;
+   } else
+   if (cmd->IsName("PrepareStartDaq")) {
+
+      if ((fCtrlCh==0) || (fDataCh==0)) return cmd_false;
+
+      // one can use direct call to data ch while it runs in the same thread
+      int res = fDataCh->prepareForDaq();
+
+      if (res==2) return cmd_true;
+      if (res==0) return cmd_false;
+
+      dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
+      // one can set here more parameters, adding more commands into set
+      dabc::Command* subcmd = new CmdPoke(ROC_START_DAQ , 1);
+      fCtrlCh->Submit(set->Assign(subcmd));
+
+      dabc::CommandsSet::Completed(set, 4.);
+
+      return cmd_postponed;
+   } else
+   if (cmd->IsName("PrepareSuspendDaq")) {
+      if ((fCtrlCh==0) || (fDataCh==0)) return cmd_false;
+
+      if (!fDataCh->prepareForSuspend()) return cmd_false;
+
+      dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
+      dabc::Command* subcmd = new CmdPoke(ROC_SUSPEND_DAQ, 1);
+      fCtrlCh->Submit(set->Assign(subcmd));
+      dabc::CommandsSet::Completed(set, 4.);
+
+      return cmd_postponed;
+   } else
+   if (cmd->IsName("PrepareStopDaq")) {
+      if ((fCtrlCh==0) || (fDataCh==0)) return cmd_false;
+
+      if (!fDataCh->prepareForStop()) return cmd_false;
+
+      dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
+      dabc::Command* subcmd = new CmdPoke(ROC_STOP_DAQ, 1);
+      fCtrlCh->Submit(set->Assign(subcmd));
+      dabc::CommandsSet::Completed(set, 4.);
+
+      return cmd_postponed;
+   } else
+   if (cmd->IsName("Disconnect")) {
+      if (fCtrlCh==0) return cmd_false;
+
+      dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
+      dabc::Command* subcmd = new CmdPoke(ROC_MASTER_LOGOUT, 1);
+      fCtrlCh->Submit(set->Assign(subcmd));
+      dabc::CommandsSet::Completed(set, 4.);
+
+      return cmd_postponed;
    }
 
    return dabc::Device::ExecuteCommand(cmd);
@@ -326,7 +370,7 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
 
 bool roc::UdpDevice::initialise(BoardRole role)
 {
-   DOUT0(("Starting initialize"));
+   DOUT2(("Starting UdpDevice::initialize"));
 
    if (fCtrlCh==0) return false;
 
@@ -351,7 +395,7 @@ bool roc::UdpDevice::initialise(BoardRole role)
       fDataCh = new UdpDataSocket(this, fd);
       fDataCh->AssignProcessorToThread(ProcessorThread());
 
-      DOUT0(("Create data socket %d for port %d connected to host %s", fd, nport, fRocIp.c_str()));
+      DOUT2(("Create data socket %d for port %d connected to host %s", fd, nport, fRocIp.c_str()));
    }
 
    fRocNumber = peek(ROC_NUMBER);
@@ -360,21 +404,21 @@ bool roc::UdpDevice::initialise(BoardRole role)
    uint32_t sw_ver = peek(ROC_SOFTWARE_VERSION);
    if (errno()!=0) return false;
 
-   if((sw_ver >= 0x01070000) || (sw_ver < 0x01060000)) {
-      EOUT(("The ROC you want to access has software version %x \n", sw_ver));
-      EOUT(("This C++ access class only supports boards with major version 1.6 == %x\n", 0x01060000));
+   if((sw_ver >= 0x01080000) || (sw_ver < 0x01070000)) {
+      EOUT(("The ROC you want to access has software version %x", sw_ver));
+      EOUT(("This C++ access class only supports boards with major version 1.7 == %x", 0x01070000));
    }
-   DOUT0(("ROC software version is: 0x%x\n", sw_ver));
+   DOUT0(("ROC software version is: 0x%x", sw_ver));
 
    uint32_t hw_ver = peek(ROC_HARDWARE_VERSION);
    if (errno()!=0) return false;
 
-   if((hw_ver >= 0x01070000) || (hw_ver < 0x01060000)) {
-      EOUT(("The ROC you want to access has hardware version %x \n", hw_ver));
-      EOUT(("Please update your hardware to major version 1.6 == %x\n", 0x01060000));
+   if((hw_ver >= 0x01080000) || (hw_ver < 0x01070000)) {
+      EOUT(("The ROC you want to access has hardware version %x", hw_ver));
+      EOUT(("Please update your hardware to major version 1.7 == %x", 0x01070000));
    }
 
-   DOUT0(("ROC hardware version is: 0x%x\n", hw_ver));
+   DOUT0(("ROC hardware version is: 0x%x", hw_ver));
 
    return true;
 }
@@ -406,7 +450,7 @@ bool roc::UdpDevice::poke(uint32_t addr, uint32_t value, double tmout)
 
    dabc::Command::Finalise(cmd);
 
-   DOUT0(("Roc:%s Poke(0x%04x, 0x%04x) res = %d\n", GetName(), addr, value, fErrNo));
+   DOUT2(("Roc:%s Poke(0x%04x, 0x%04x) res = %d", GetName(), addr, value, fErrNo));
 
    return fErrNo == 0;
 }
@@ -429,7 +473,7 @@ uint32_t roc::UdpDevice::peek(uint32_t addr, double tmout)
 
    dabc::Command::Finalise(cmd);
 
-   DOUT0(("Roc:%s Peek(0x%04x, 0x%04x) res = %d\n", GetName(), addr, res, fErrNo));
+   DOUT2(("Roc:%s Peek(0x%04x, 0x%04x) res = %d", GetName(), addr, res, fErrNo));
 
    return res;
 }

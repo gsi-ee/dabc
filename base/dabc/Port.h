@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -77,9 +77,6 @@ namespace dabc {
          virtual void DoStart();
          virtual void DoStop();
 
-         inline void FireInput() { FireEvent(evntInput); }
-         inline void FireOutput() { FireEvent(evntOutput); }
-
          virtual void ProcessEvent(EventId evid);
 
          Port(Basic* parent,
@@ -123,7 +120,6 @@ namespace dabc {
 
          unsigned MaxSendSegments() { return fTransport ? fTransport->MaxSendSegments() : 0; }
 
-
          unsigned InputQueueSize() { return fTransport ? fTransport->RecvQueueSize() : 0; }
          unsigned InputPending() const { return fInputPending; }
          bool InputQueueFull() { return InputPending() == InputQueueSize(); }
@@ -137,9 +133,11 @@ namespace dabc {
 
          bool SkipInputBuffers(unsigned num=1);
 
-
          void SetInpRateMeter(RateParameter* p) { fInpRate = p; }
          void SetOutRateMeter(RateParameter* p) { fOutRate = p; }
+
+         inline void FireInput() { FireEvent(evntInput); }
+         inline void FireOutput() { FireEvent(evntOutput); }
    };
 
 }

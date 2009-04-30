@@ -120,7 +120,7 @@ namespace dabc {
 
          virtual CommandReceiver* GetCmdReceiver() { return this; }
 
-         // generic event processing function
+         // generic users event processing function
          virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid) {}
 
          // some useful routines for I/O handling

@@ -67,7 +67,7 @@ void* dabc::Factory::FindSymbol(const std::string& symbol)
 dabc::Factory::Factory(const char* name) :
    Basic(0, name)
 {
-   DOUT1(("Factory %s is created", name));
+   DOUT2(("Factory %s is created", name));
 
    if (Manager::Instance())
       Manager::Instance()->AddFactory(this);

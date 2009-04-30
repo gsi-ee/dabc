@@ -15,13 +15,21 @@
 #ifndef ROC_ReadoutModule
 #define ROC_ReadoutModule
 
+#ifndef DABC_ModuleAsync
 #include "dabc/ModuleAsync.h"
+#endif
+
+#include "nxyter/Data.h"
 
 namespace roc {
 
    class ReadoutModule : public dabc::ModuleAsync {
       protected:
          unsigned fBufferSize;
+
+         dabc::Condition fDataCond;
+         dabc::Buffer*   fCurrBuf;
+         dabc::BufferSize_t fCurrBufPos;
 
       public:
 
@@ -31,6 +39,11 @@ namespace roc {
          virtual void ProcessInputEvent(dabc::Port* port);
 
          virtual void ProcessOutputEvent(dabc::Port* port);
+
+         virtual void AfterModuleStop();
+
+
+         bool getNextData(nxyter::Data& data, double tmout = 1.);
    };
 }
 

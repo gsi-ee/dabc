@@ -21,7 +21,6 @@
 
 namespace roc {
 
-
    #define UDP_PAYLOAD_OFFSET 42
    #define MAX_UDP_PAYLOAD 1472
    #define MESSAGES_PER_PACKET 243

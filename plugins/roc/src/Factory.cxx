@@ -41,18 +41,18 @@ dabc::Application* roc::Factory::CreateApplication(const char* classname, dabc::
 
 dabc::Module* roc::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
 {
-   DOUT1(("roc::Factory::CreateModule called for class:%s, module:%s", classname, modulename));
+   DOUT2(("roc::Factory::CreateModule called for class:%s, module:%s", classname, modulename));
 
    if (strcmp(classname, "roc::CombinerModule")==0) {
-      DOUT1(("roc::Factory::CreateModule - Created RocCombiner module %s ", modulename));
+      DOUT2(("roc::Factory::CreateModule - Created RocCombiner module %s ", modulename));
       return new roc::CombinerModule(modulename,cmd);
    } else
    if (strcmp(classname, "roc::CalibrationModule")==0) {
-      DOUT1(("roc::Factory::CreateModule - Created roc::CalibrationModule module %s ", modulename));
+      DOUT2(("roc::Factory::CreateModule - Created roc::CalibrationModule module %s ", modulename));
       return new roc::CalibrationModule(modulename, cmd);
    } else
    if (strcmp(classname, "roc::ReadoutModule")==0) {
-      DOUT1(("roc::Factory::CreateModule - Created roc::ReadoutModule module %s ", modulename));
+      DOUT2(("roc::Factory::CreateModule - Created roc::ReadoutModule module %s ", modulename));
       return new roc::ReadoutModule(modulename, cmd);
    }
 
@@ -64,7 +64,7 @@ dabc::Device* roc::Factory::CreateDevice(const char* classname, const char* devn
    const char* thrdname = cmd ? cmd->GetPar("Thread") : 0;
 
    if (strcmp(classname, roc::typeUdpDevice)==0) {
-      DOUT1(("roc::Factory::CreateDevice - Creating ROC UdpDevice %s ...", devname));
+      DOUT2(("roc::Factory::CreateDevice - Creating ROC UdpDevice %s ...", devname));
 
       roc::UdpDevice* dev = new roc::UdpDevice(dabc::mgr()->GetDevicesFolder(true), devname, thrdname, cmd);
 

@@ -215,7 +215,7 @@ int main(int numc, char* args[])
       }
       mgrclass = "Standalone";
    } else {
-      mgrclass = "Basic";
+      mgrclass = "BasicExtra";
    }
 
    DOUT2(("Create manager class %s", mgrclass));

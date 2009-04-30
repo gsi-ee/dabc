@@ -71,7 +71,6 @@ namespace dabc {
 
          virtual double ProcessTimeout(double);
 
-         Manager           *fMgr;         // pointer on manager
          CommandReceiver   *fReceiver;    // actual receiver of set command
          Command           *fMain;        // master command
          bool               fParallelExe; // parallel execution of all commands

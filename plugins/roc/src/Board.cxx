@@ -45,6 +45,8 @@ roc::Board::~Board()
 
 roc::Board* roc::Board::Connect(const char* name, BoardRole role)
 {
+   dabc::SetDebugLevel(0);
+
    if (dabc::mgr()==0)
       if (!dabc::Factory::CreateManager()) return 0;
 
@@ -73,12 +75,12 @@ roc::Board* roc::Board::Connect(const char* name, BoardRole role)
    }
 
    if (role == roleDAQ) {
-      roc::ReadoutModule* m = new roc::ReadoutModule("Readout");
+      roc::ReadoutModule* m = new roc::ReadoutModule("RocReadout");
       dabc::mgr()->MakeThreadForModule(m, "ReadoutThrd");
 
-      if (!dabc::mgr()->CreateTransport("Readout/Input", devname)) {
+      if (!dabc::mgr()->CreateTransport("RocReadout/Input", devname)) {
          EOUT(("Cannot connect readout module to device %s", devname));
-         dabc::mgr()->DeleteModule("Readout");
+         dabc::mgr()->DeleteModule("RocReadout");
       }
 
       brd->SetReadout(m);
@@ -94,6 +96,11 @@ bool roc::Board::Close(Board* brd)
    if (brd==0) return false;
    dabc::Device* dev = (dabc::Device*) brd->getdeviceptr();
    if (dev==0) return false;
+
+   brd->SetReadout(0);
+   dabc::mgr()->DeleteModule("RocReadout");
+
+   if (!dev->Execute("Disconnect", 4.)) return false;
    dev->DestroyProcessor();
    return true;
 }
@@ -101,9 +108,13 @@ bool roc::Board::Close(Board* brd)
 
 bool roc::Board::startDaq()
 {
-   DOUT0(("Starting DAQ !!!!"));
+   DOUT2(("Starting DAQ !!!!"));
 
-   if (fReadout==0) return false;
+   dabc::Device* dev = (dabc::Device*) getdeviceptr();
+
+   if ((fReadout==0) || (dev==0)) return false;
+
+   if (!dev->Execute("PrepareStartDaq", 5)) return false;
 
    fReadout->Start();
 
@@ -112,24 +123,24 @@ bool roc::Board::startDaq()
 
 bool roc::Board::suspendDaq()
 {
-   DOUT0(("Suspend DAQ !!!!"));
-
-   if (fReadout==0) return false;
+   DOUT2(("Suspend DAQ !!!!"));
 
    dabc::Device* dev = (dabc::Device*) getdeviceptr();
    if (dev==0) return false;
 
-   dev->Submit(new dabc::Command("SuspendDaq"));
-
+   if (!dev->Execute("PrepareSuspendDaq", 5.)) return false;
 
    return true;
 }
 
 bool roc::Board::stopDaq()
 {
-   DOUT0(("Stop DAQ !!!!"));
+   DOUT2(("Stop DAQ !!!!"));
 
-   if (fReadout==0) return false;
+   dabc::Device* dev = (dabc::Device*) getdeviceptr();
+   if ((dev==0) || (fReadout==0)) return false;
+
+   if (!dev->Execute("PrepareStopDaq", 5)) return false;
 
    fReadout->Stop();
 
@@ -138,6 +149,5 @@ bool roc::Board::stopDaq()
 
 bool roc::Board::getNextData(nxyter::Data& data, double tmout)
 {
-   return false;
+   return fReadout ? fReadout->getNextData(data, tmout) : false;
 }
-

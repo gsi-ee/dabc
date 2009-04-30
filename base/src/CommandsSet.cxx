@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -19,7 +19,6 @@
 dabc::CommandsSet::CommandsSet(Command* cmd, bool parallel_exe) :
    CommandClientBase(),
    WorkingProcessor(),
-   fMgr(dabc::mgr()),
    fReceiver(dabc::mgr()),
    fMain(cmd),
    fParallelExe(parallel_exe),
@@ -75,20 +74,15 @@ bool dabc::CommandsSet::_ProcessReply(Command* cmd)
    if (!fCompleted) return keep_cmd;
 
    if (((_NumSubmCmds()==0) && (fCmdsSet.Size()==0)) || !fMainRes) {
-      DOUT5(("CommandsSet::MainReply %s", (fMain ? fMain->GetName() : "---")));
+
+      DOUT3(("CommandsSet::MainReply %s res %s", (fMain ? fMain->GetName() : "---"), DBOOL(fMainRes)));
 
       dabc::Command::Reply(fMain, fMainRes);
       fMain = 0;
 
-      if (fMgr) {
-//         DestroyProcessor();
-//         RemoveProcessorFromThread(false);
-         if (fNeedDestroy) {
-            fNeedDestroy = false;
-            fMgr->DeleteAnyObject(this);
-         }
-      } else {
-         EOUT(("Manager was not specified. Memory leak"));
+      if (fNeedDestroy) {
+         fNeedDestroy = false;
+         dabc::mgr()->DeleteAnyObject(this);
       }
    } else
    if ((_NumSubmCmds()==0) || fParallelExe)
@@ -119,7 +113,7 @@ void dabc::CommandsSet::Reset(bool mainres)
 
    dabc::Command::Reply(cmd, mainres);
 
-   // command must be detroyed by the user
+   // command must be destroyed by the user
 }
 
 bool dabc::CommandsSet::_SubmitNextCommands()
@@ -179,17 +173,17 @@ void dabc::CommandsSet::Completed(dabc::CommandsSet* set, double timeout_sec)
 
    if (is_done) {
       // no need locking here - nobody can access fMain at this point
-      DOUT5(("Finish main %p while it is completed", set->fMain));
+      DOUT3(("Main command %s completed with res %s", set->fMain->GetName(), DBOOL(set->fMainRes)));
+
       dabc::Command::Reply(set->fMain, set->fMainRes);
       set->fMain = 0;
 
       delete set;
    } else {
       if (timeout_sec>0) {
-         set->AssignProcessorToThread(set->fMgr->ProcessorThread());
+         set->AssignProcessorToThread(dabc::mgr()->ProcessorThread());
          set->ActivateTimeout(timeout_sec);
       }
-      DOUT5(("Main command %p keeped alive", set->fMain));
    }
 }
 

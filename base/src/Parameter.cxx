@@ -281,7 +281,7 @@ dabc::RateParameter::RateParameter(WorkingProcessor* parent,
    strncpy(fRecord.alarmcolor, col_Yellow, sizeof(fRecord.alarmcolor));
    strncpy(fRecord.units, units ? units : "1/s", sizeof(fRecord.units));
 
-   DOUT1(("Create ratemeter %s %s %f %f", GetName(), fRecord.units, fRecord.lower, fRecord.upper));
+   DOUT2(("Create ratemeter %s %s %f %f", GetName(), fRecord.units, fRecord.lower, fRecord.upper));
 
    Ready();
 }

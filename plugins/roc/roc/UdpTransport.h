@@ -51,12 +51,20 @@ namespace roc {
                          protected dabc::CommandClientBase {
       friend class UdpDevice;
       protected:
-         enum EUdpEvents { evntStartDaq = evntSocketLast + 1,
-                           evntStopDaq,
+         enum EUdpEvents { evntStartTransport = evntSocketLast + 1,
+                           evntStopTransport,
                            evntConfirmCmd,
                            evntFillBuffer };
 
-         enum EDaqState { daqInit, daqStarting, daqRuns, daqStopping, daqStopped, daqFails };
+         enum EDaqState { daqInit,       // initial state
+                          daqPrepared,   // poke(start_daq) done by device, waiting for module
+                          daqStarting,   // daq runs, but no any start daq message was seen
+                          daqRuns,       // normal working mode
+                          daqSuspending, // we looking for the stop message in data stream
+                          daqStopping,   // poke(stop_daq) done by device, just wait for module close
+                          daqStopped,    // daq stopped, equal to initial state
+                          daqFails       // error state
+                        };
 
 
          struct ResendInfo {
@@ -127,6 +135,9 @@ namespace roc {
          uint64_t fTotalRecvPacket;
          uint64_t fTotalResubmPacket;
 
+         double             fFlashTimeout;  // after such timeout partially filled packed will be delivered
+         dabc::TimeStamp_t  fLastDelivery;  // time of last delivery
+
 
          virtual bool _ProcessReply(dabc::Command* cmd);
 
@@ -143,8 +154,13 @@ namespace roc {
 
          void AddDataPacket(int len, void* tgt);
          void CompressBuffer(dabc::Buffer* buf);
+         void CheckReadyBuffers(bool doflush = false);
 
          void ResetDaq();
+
+         int prepareForDaq(); // 0 - error, 1 - did, 2 - running
+         bool prepareForSuspend();
+         bool prepareForStop();
 
       public:
          UdpDataSocket(UdpDevice* dev, int fd);

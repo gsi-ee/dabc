@@ -201,8 +201,9 @@ dabc::Folder* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
 
 bool dabc::StdManagerFactory::CreateManagerInstance(const char* kind, Configuration* cfg)
 {
-   if ((kind==0) || (strcmp(kind, "Basic")==0)) {
-      new dabc::Manager(cfg ? cfg->MgrName() : "mgr", true, cfg);
+   if ((kind==0) || (strcmp(kind, "Basic")==0) || (strcmp(kind, "BasicExtra")==0)) {
+      bool usecurrentrocess = (kind!=0) && (strcmp(kind, "BasicExtra")==0);
+      new dabc::Manager(cfg ? cfg->MgrName() : "mgr", usecurrentrocess, cfg);
       return true;
    }
 
@@ -285,6 +286,8 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
       while ((factory = Factory::NextNewFactory()) != 0)
          AddFactory(factory);
    }
+
+   DOUT3(("Manager thread is current process %s", DBOOL(usecurrentprocess)));
 
    MakeThreadFor(this, MgrThrdName(), usecurrentprocess ? 1 : 0);
 
@@ -1587,7 +1590,7 @@ bool dabc::Manager::MakeThreadFor(WorkingProcessor* proc, const char* thrdname, 
    std::string newname;
 
    if ((thrdname==0) || (strlen(thrdname)==0)) {
-      EOUT(("Thread name not specified - generate default"));
+      DOUT2(("Thread name not specified - generate default"));
       newname = MakeThreadName("Thread");
       thrdname = newname.c_str();
    }

@@ -22,7 +22,7 @@
 #endif
 // we need include only when we want to compile script
 
-void control(const char* boardaddr = "lxg0526")
+void control(const char* boardaddr = "cbmtest08")
 {
    if (strlen(boardaddr)==0) {
       cerr << "BoardIP cannot be defined. Exit." << endl;
@@ -37,60 +37,45 @@ void control(const char* boardaddr = "lxg0526")
 
    cout << " Board addr:" << boardaddr << endl;
 
-   brd->startDaq();
-
-   gSystem->Sleep(10000);
-
-   brd->stopDaq();
-
-   roc::Board::Close(brd);
-
-   return;
-
-
-   brd->poke(ROC_DO_TESTSETUP,1);
-
-   brd->poke(ROC_NX_REGISTER_BASE + 0,255);
-   brd->poke(ROC_NX_REGISTER_BASE + 1,255);
-   brd->poke(ROC_NX_REGISTER_BASE + 2,0);
-   brd->poke(ROC_NX_REGISTER_BASE + 18,35);
-
-   brd->poke(ROC_NX_REGISTER_BASE + 32,1);
-
-   brd->poke(ROC_TESTPULSE_RESET_DELAY, 100);
-   brd->poke(ROC_TESTPULSE_LENGTH, 500);
-   brd->poke(ROC_TESTPULSE_NUMBER, 10);
-
-   brd->poke(ROC_FIFO_RESET, 1);
-   brd->poke(ROC_BUFFER_FLUSH_TIMER,1000);
-
-   brd->poke(ROC_TESTPULSE_START, 1);
-
    bool res = brd->startDaq();
-   cout << "starting readout..." << (res ? "OK" : "Fail") << endl;
-   if (!res) { roc::Board::Close(brd); return; }
+
+   if (!res) {
+      cout << "Cannot start daq " << endl;
+      roc::Board::Close(brd);
+      return;
+   }
+
+
+   uint32_t readValue, op;
+
+   gBenchmark->Start("1000peek");
+   for (op=0;op<1000;op++)
+      readValue = brd->peek(0x100000);
+   gBenchmark->Show("1000peek");
+
 
    nxyter::Data data;
    long numdata = 0;
 
    gBenchmark->Start("GetData");
 
-   while (brd->getNextData(data, 0.1)) {
-      data.printData(7);
+   cout << "Start getting data " << endl;
+
+   while (brd->getNextData(data, 2.5)) {
+//      data.printData(7);
       numdata++;
 
-      if (data.isStopDaqMsg()) break;
+      if (data.isStopDaqMsg()) { cout << "GET It" << endl;  break; }
 
-      if (numdata==100) res = brd->suspendDaq();
+      if (numdata==1000) res = brd->suspendDaq();
    }
 
    res = brd->stopDaq();
 
-   cout << "Stop DAQ " << (res ? "OK" : "Fails") << endl;
+   cout << "Stop DAQ " << (res ? "OK" : "Fails") << " Get " << numdata << " messages" << endl;
 
    gBenchmark->Show("GetData");
 
-   cout << numdata << " messages received" << endl;
-
    roc::Board::Close(brd);
+
 }

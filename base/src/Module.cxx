@@ -418,7 +418,6 @@ void dabc::Module::GetUserEvent(ModuleItem* item, uint16_t evid)
       fLostEvents.Push(CodeEvent(evid, item->ItemId()));
 }
 
-
 void dabc::Module::ProcessEvent(EventId evid)
 {
    switch (dabc::GetEventCode(evid)) {
