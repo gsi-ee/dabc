@@ -52,7 +52,11 @@ dimc::Registry::Registry(dimc::Manager* owner, dabc::Configuration* cfg) :
 
       fClusterInfo[nodeid].fMgrName = cfg->ContextName(n);
 
-      fClusterInfo[nodeid].fDimServer = gServerPrefix + cfg->NodeName(n) + dabc::format(":%u",nodeid);
+      std::string nodename = cfg->NodeName(n);
+      if (nodename.empty()) nodename = cfg->ContextName(n);
+      if (nodename.empty()) nodename = "Mgr";
+
+      fClusterInfo[nodeid].fDimServer = gServerPrefix + nodename + dabc::format(":%u",nodeid);
 
       fClusterInfo[nodeid].fDimPrefix = fClusterInfo[nodeid].fDimServer + "/" + fClusterInfo[nodeid].fMgrName;
 

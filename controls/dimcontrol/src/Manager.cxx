@@ -87,6 +87,7 @@ dimc::Manager::Manager(const char* managername, bool usecurrentprocess, dabc::Co
    UpdateStatusRecord();
    unsigned int dimport=2505;
    if(fCfg->MgrDimPort()!=0) dimport = fCfg->MgrDimPort();
+
    fRegistry->StartDIMServer(fRegistry->GetDIMServerName(fNodeId), fCfg->MgrDimNode(), dimport); // 0 port means: use environment variables for dns
    DOUT1(("+++++++++++++++++ Manager ctor starting dim on dim dns node:%s, port%d",fCfg->MgrDimNode(),fCfg->MgrDimPort()));
 }
