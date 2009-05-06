@@ -187,6 +187,9 @@ public int parse(String full, boolean store){
  * @return 0 OK,  -1 syntax error
  */
 public int parse(String full, boolean store, boolean command){
+// in case of parsing error, getFull and getCommand return empty string
+   fullname=new String("");
+   comname=new String("");
     String[] nodec;
     String[] applc;
     nodeID=null;
