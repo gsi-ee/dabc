@@ -38,9 +38,9 @@ $(DIMDIR):
 	@echo "Extract dim zip file"
 	cd $(DABCSYS)/dim; unzip $(DIM_ZIP)  
 
-$(DIM_LIB):
+$(DIM_LIB): $(DIMDIR)
 	@echo "JAVA_HOME=$(JAVA_HOME)"
-	cd $(DIMDIR); export DIMDIR=$(DIMDIR); export OS=$(DIM_OS); export ODIR=$(DIM_ODIR); export JDK_INCLUDE=$(DIM_JDK_INCLUDE); $(MAKE) $(DIM_BUILD_ARGS)
+	cd $(DIMDIR); export DIMDIR=$(DIMDIR); export OS=$(DIM_OS); export ODIR=$(DIM_ODIR); export JDK_INCLUDE=$(DIM_JDK_INCLUDE); make -j1 $(DIM_BUILD_ARGS)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libdim.so $(DIM_LIB)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libjdim.so $(DABCDLLPATH)  
 	cp -f $(DIMDIR)/$(DIM_ODIR)/dns $(DABCBINPATH)/dimDns  
@@ -48,7 +48,7 @@ $(DIM_LIB):
 #	cd $(DIMDIR)/jdim/classes; jar cf dim.jar dim/*.class
 #	mv -f $(DIMDIR)/jdim/classes/dim.jar $(DABCDLLPATH)
 
-libs:: $(DIMDIR) $(DIM_LIB)
+libs:: $(DIM_LIB)
 
 clean::
 	cd $(DABCSYS)/dim; rm -rf $(DIM_VERSION)
