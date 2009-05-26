@@ -20,7 +20,7 @@
 #include "dabc/SocketThread.h"
 #include "dabc/Port.h"
 
-#include "mbs/EventAPI.h"
+
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
 #include "mbs/TextInput.h"
@@ -28,6 +28,10 @@
 #include "mbs/ClientTransport.h"
 #include "mbs/GeneratorModule.h"
 #include "mbs/CombinerModule.h"
+
+#ifdef MBSEVAPI
+#include "mbs/EventAPI.h"
+#endif
 
 mbs::Factory mbsfactory("mbs");
 
@@ -109,7 +113,10 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ)
    } else
    if (strcmp(typ, typeTextInput)==0) {
       return new mbs::TextInput();
-   } else
+   }
+#ifdef MBSEVAPI
+
+   else
    if (strcmp(typ, xmlEvapiType) == 0) {
       return new mbs::EvapiInput(xmlEvapiFile);
    } else
@@ -131,6 +138,7 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ)
    if (strcmp(typ, xmlEvapiRemoteEventServer) == 0) {
       return new mbs::EvapiInput(xmlEvapiRemoteEventServer);
    }
+#endif
 
    return 0;
 }
@@ -144,10 +152,13 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ)
 
    if (strcmp(typ, typeLmdOutput)==0) {
       return new mbs::LmdOutput();
-   } else
+   }
+#ifdef MBSEVAPI
+   else
    if (strcmp(typ, xmlEvapiOutFile) == 0) {
       return new mbs::EvapiOutput();
    }
+#endif
 
    return 0;
 }
