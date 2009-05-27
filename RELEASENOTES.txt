@@ -26,7 +26,10 @@ Changes in version 1.0.02
    1. With run.sh one can distribute (copy) configuration file to target nodes. 
    2. Remove old SubmitLocal, SubmitRemote, LocalCmd, RemoteCmd - 
       all these methods replaced by new function, called SetCmdReceiver.
-   3. Add application in net-test, one can control its execution from gui.   
+   3. Add application in net-test, one can control its execution from gui.
+   4. Fix problem with DIM server when host name was not specified
+   5. Make compilation of old mbs evapi optional - it is not used in real application.
+      If necessary, one can compile it with "make MBSEVAPI=1" call.    
 
 Changes in version 1.0.01 (10 March 2009) 
 
