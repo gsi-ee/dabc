@@ -16,7 +16,8 @@
 
 #include "roc/UdpDevice.h"
 #include "roc/Commands.h"
-#include "roc/Defines.h"
+#include "roc/defines.h"
+#include "roc/udpdefines.h"
 #include "nxyter/Data.h"
 
 #include "dabc/timing.h"
@@ -60,7 +61,7 @@ roc::UdpDataSocket::UdpDataSocket(UdpDevice* dev, int fd) :
    fTotalRecvPacket = 0;
    fTotalResubmPacket = 0;
 
-   fFlashTimeout = 5.5;
+   fFlashTimeout = .5;
    fLastDelivery = dabc::NullTimeStamp;
 }
 
@@ -99,7 +100,7 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
                                         tgt, UDP_DATA_SIZE);
          if (len>0) {
             fTotalRecvPacket++;
-            DOUT5(("READ Packet %d len %d", ntohl(fTgtHdr.pktid), len));
+//            DOUT0(("READ Packet %d len %d", ntohl(fTgtHdr.pktid), len));
             AddDataPacket(len, tgt);
          }
 
@@ -117,6 +118,7 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
          if (daqState == daqPrepared) {
             daqState = daqStarting;
             daqActive_ = true;
+            fLastDelivery = TimeStamp();
             AddBuffersToQueue();
             ActivateTimeout(0.0001);
             return;
@@ -125,7 +127,7 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
          ResetDaq();
 
          daqState = daqStarting;
-         dabc::Command* cmd = new CmdPoke(ROC_START_DAQ , 1);
+         dabc::Command* cmd = new CmdPut(ROC_START_DAQ , 1);
          fDevice->Submit(Assign(cmd));
          break;
       }
@@ -144,7 +146,10 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
          fTgtShift = 0;
          fTgtPtr = 0;
 
-         dabc::Command* cmd = new CmdPoke(ROC_STOP_DAQ, 1);
+         fLastDelivery = dabc::NullTimeStamp;
+
+
+         dabc::Command* cmd = new CmdPut(ROC_STOP_DAQ, 1);
          fDevice->Submit(Assign(cmd));
          break;
       }
@@ -157,9 +162,8 @@ void roc::UdpDataSocket::ProcessEvent(dabc::EventId evnt)
          } else
          if (daqState == daqStarting) {
             daqActive_ = true;
-
+            fLastDelivery = TimeStamp();
             AddBuffersToQueue();
-
             ActivateTimeout(0.0001);
          } else
          if (daqState == daqSuspending) {
@@ -227,14 +231,14 @@ bool roc::UdpDataSocket::ProcessPoolRequest()
 
 void roc::UdpDataSocket::StartTransport()
 {
-   DOUT1(("Starting UDP transport "));
+   DOUT2(("Starting UDP transport "));
 
    FireEvent(evntStartTransport);
 }
 
 void roc::UdpDataSocket::StopTransport()
 {
-   DOUT1(("Stopping udp transport %ld", fTotalRecvPacket));
+   DOUT2(("Stopping udp transport %ld", fTotalRecvPacket));
 
    FireEvent(evntStopTransport);
 }
@@ -390,8 +394,10 @@ double roc::UdpDataSocket::ProcessTimeout(double)
 
    // check if we should flush current buffer
    if (!dabc::IsNullTime(fLastDelivery) &&
-        (dabc::TimeDistance(fLastDelivery, TimeStamp()) > fFlashTimeout))
-            CheckReadyBuffers(true);
+       (dabc::TimeDistance(fLastDelivery, TimeStamp()) > fFlashTimeout)) {
+          DOUT0(("Doing flush"));
+          CheckReadyBuffers(true);
+   }
 
    return 0.01;
 }
@@ -450,11 +456,13 @@ void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
 
    if (ntohl(fTgtHdr.lastreqid) == lastRequestId) lastRequestSeen = true;
 
+   int nummsgs = ntohl(fTgtHdr.nummsg);
+
    uint32_t gap = src_pktid - fTgtNextId;
 
-   int data_len = len - sizeof(UdpDataPacket);
+   int data_len = nummsgs * 6;
 
-//   DOUT0(("Packet id:0x%04x Head:0x%04x NumMsgs:%d", src_pktid, fTgtNextId, data_len / 6));
+//   DOUT0(("Packet id:0x%04x Head:0x%04x NumMsgs:%d ", src_pktid, fTgtNextId, nummsgs));
 
    bool packetaccepted = false;
    bool doflush = false;
@@ -562,7 +570,6 @@ void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
          // data->printData(7);
          if (data->isStartDaqMsg()) {
             // when we get first message, one should start counting delivery
-            fLastDelivery = TimeStamp();
             DOUT2(("Find start message"));
             if (daqState == daqStarting)
                daqState = daqRuns;

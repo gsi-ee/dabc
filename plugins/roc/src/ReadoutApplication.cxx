@@ -22,7 +22,7 @@
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Factory.h"
 
-#include "roc/Defines.h"
+#include "roc/defines.h"
 
 
 const char* roc::xmlDoCalibr          = "DoCalibr";
@@ -199,24 +199,24 @@ bool roc::ReadoutApplication::ConfigureRoc(int indx)
 
    bool res = true;
 
-//   res = res && brd->Poke(ROC_NX_SELECT, 0);
-//   res = res && brd->Poke(ROC_NX_ACTIVE, 0);
-   res = res && brd->poke(ROC_SYNC_M_SCALEDOWN, 1);
-   res = res && brd->poke(ROC_AUX_ACTIVE, 3);
+//   res = res && brd->put(ROC_NX_SELECT, 0);
+//   res = res && brd->put(ROC_NX_ACTIVE, 0);
+   res = res && brd->put(ROC_SYNC_M_SCALEDOWN, 1);
+   res = res && brd->put(ROC_AUX_ACTIVE, 3);
 
 /*
-   res = res && brd->poke(ROC_ACTIVATE_LOW_LEVEL, 1);
-   res = res && brd->poke(ROC_DO_TESTSETUP,1);
-   res = res && brd->poke(ROC_ACTIVATE_LOW_LEVEL,0);
+   res = res && brd->put(ROC_ACTIVATE_LOW_LEVEL, 1);
+   res = res && brd->put(ROC_DO_TESTSETUP,1);
+   res = res && brd->put(ROC_ACTIVATE_LOW_LEVEL,0);
 
-   res = res && brd->poke(ROC_NX_REGISTER_BASE + 0,255);
-   res = res && brd->poke(ROC_NX_REGISTER_BASE + 1,255);
-   res = res && brd->poke(ROC_NX_REGISTER_BASE + 2,0);
-   res = res && brd->poke(ROC_NX_REGISTER_BASE + 18,35);
-   res = res && brd->poke(ROC_NX_REGISTER_BASE + 32,1);
+   res = res && brd->put(ROC_NX_REGISTER_BASE + 0,255);
+   res = res && brd->put(ROC_NX_REGISTER_BASE + 1,255);
+   res = res && brd->put(ROC_NX_REGISTER_BASE + 2,0);
+   res = res && brd->put(ROC_NX_REGISTER_BASE + 18,35);
+   res = res && brd->put(ROC_NX_REGISTER_BASE + 32,1);
 
-   res = res && brd->poke(ROC_FIFO_RESET,1);
-   res = res && brd->poke(ROC_BUFFER_FLUSH_TIMER,1000);
+   res = res && brd->put(ROC_FIFO_RESET,1);
+   res = res && brd->put(ROC_BUFFER_FLUSH_TIMER,1000);
 */
    return res;
 }

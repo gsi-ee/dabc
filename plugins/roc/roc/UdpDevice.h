@@ -95,7 +95,7 @@ namespace roc {
          int               fDataPort;
          UdpDataSocket    *fDataCh;
 
-         UdpStatistic      brdStat;    // last available statistic block
+         BoardStatistic    brdStat;    // last available statistic block
          bool              isBrdStat;  // is block statistic contains valid data
 
          bool              displayConsoleOutput_; // display output, coming from ROC
@@ -103,7 +103,7 @@ namespace roc {
          void processCtrlMessage(UdpMessageFull* pkt, unsigned len);
          void setBoardStat(void* rawdata, bool print);
 
-         bool pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatalen, double tmout = 2.);
+         int pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatalen, double tmout = 0.);
          int parseBitfileHeader(char* pBuffer, unsigned int nLen);
          uint8_t calcBinXOR(const char* filename);
          bool uploadDataToRoc(char* buf, unsigned len);
@@ -133,8 +133,11 @@ namespace roc {
 
          // interface part of roc::UdpBoard
 
-         virtual bool poke(uint32_t addr, uint32_t value, double tmout = 5.);
-         virtual uint32_t peek(uint32_t addr, double tmout = 5.);
+         virtual int put(uint32_t addr, uint32_t value, double tmout = 0.);
+         virtual int get(uint32_t addr, uint32_t& value, double tmout = 0.);
+
+
+         BoardStatistic* takeStat(double tmout = 0.01, bool print = false);
 
          virtual bool sendConsoleCommand(const char* cmd);
 

@@ -28,12 +28,12 @@ namespace roc {
    extern const char* TmoutPar;
    extern const char* RawDataPar;
 
-   class CmdPoke : public dabc::Command {
+   class CmdPut : public dabc::Command {
      public:
 
-        static const char* CmdName() { return "Poke"; }
+        static const char* CmdName() { return "CmdPut"; }
 
-        CmdPoke(uint32_t address, uint32_t value, double tmout = 5.) :
+        CmdPut(uint32_t address, uint32_t value, double tmout = 5.) :
             dabc::Command(CmdName())
         {
            SetUInt(AddrPar, address);
@@ -42,12 +42,12 @@ namespace roc {
         }
    };
 
-  class CmdPeek : public dabc::Command {
+  class CmdGet : public dabc::Command {
      public:
 
-        static const char* CmdName() { return "Peek"; }
+        static const char* CmdName() { return "CmdGet"; }
 
-        CmdPeek(uint32_t address, double tmout = 5.) :
+        CmdGet(uint32_t address, double tmout = 5.) :
             dabc::Command(CmdName())
         {
            SetUInt(AddrPar, address);

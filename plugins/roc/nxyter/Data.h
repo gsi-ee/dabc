@@ -246,7 +246,7 @@ namespace nxyter {
             return (data[3] >> 4) & 1;
          }
 
-         inline void setAucChNum(uint8_t v)
+         inline void setAuxChNum(uint8_t v)
          {
             data[0] = (data[0] & ~0x3) | ((v >> 5) & 0x3);
             data[1] = (data[1] & ~0xf8) | (v << 3);

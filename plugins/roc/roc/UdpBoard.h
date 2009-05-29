@@ -72,7 +72,7 @@ namespace roc {
       uint8_t msgs[MAX_UDP_PAYLOAD - sizeof(struct UdpDataPacket)];
    };
 
-   struct UdpStatistic {
+   struct BoardStatistic {
       uint32_t   dataRate;   // data taking rate in  B/s
       uint32_t   sendRate;   // network send rate in B/s
       uint32_t   recvRate;   // network recv rate in B/s
@@ -114,11 +114,58 @@ namespace roc {
 
       public:
 
+
+         //! getSW_Version
+         /*!
+          * Returns the Software-Version of the ROC.
+          */
+         uint32_t getSW_Version();
+
+         //! BURST
+         /*!
+          * \param val Is Burst on? (1 is yes, 0 is no)
+          *
+          * Activates/Deactivates the burst.
+          * Burst means using OCM-Bus for intra ROC communication.
+          * This is currently NOT supported, due to wrong timing calculations by Xilinx EDK 8.2i and ISE 8.2i.
+          */
+         void BURST(uint32_t val);
+
+
+         bool getLowHighWater(int& lowWater, int& highWater);
+         bool setLowHighWater(int lowWater, int highWater);
+
+         //! takeStat
+         /*!
+         * Returns statistic block over roc::Board.
+         * If \param tmout bigger than 0, first request to board will be produced,
+         * otherwise last available statistic block will be delivered
+         * If \para, print is enabled, statistic block will be printed on display
+         */
+
+         virtual BoardStatistic* takeStat(double tmout = 0.01, bool print = false) = 0;
+
+
+         //! setConsoleOutput
+         /*!
+         * Enables/disables console output of the ROC
+         * /param terminal defines if output on RS232 console will be provoded
+         * /param network defines if output will be send over netowrk to user terminal
+         */
+         void setConsoleOutput(bool terminal = false, bool network = false);
+
          /** Send console command
           * Via this function you can send remote console commands.
           * It works like telnet.
           * It is developed mainly for debugging reasons. */
          virtual bool sendConsoleCommand(const char* cmd) = 0;
+
+         //! switchToConsole
+         /*!
+          * Changes the ROC input to RS232.
+          * Network control is instantly lost and has to be reactivated via RS232.
+          */
+         void switchToConsole();
 
          /** Upload bit file to ROC
           * Uploads bitfile to specified position (0 or 1)
@@ -129,8 +176,6 @@ namespace roc {
 
          virtual bool saveConfig(const char* filename = 0) = 0;
          virtual bool loadConfig(const char* filename = 0) = 0;
-
-
    };
 
 }

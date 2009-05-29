@@ -17,7 +17,7 @@
 #include "Riostream.h"
 #include "TBenchmark.h"
 #include "roc/Board.h"
-#include "roc/Defines.h"
+#include "roc/defines.h"
 #include "nxyter/Data.h"
 #endif
 // we need include only when we want to compile script
@@ -37,6 +37,21 @@ void control(const char* boardaddr = "cbmtest08")
 
    cout << " Board addr:" << boardaddr << endl;
 
+
+   uint32_t readValue, op;
+
+   gBenchmark->Start("1000gets");
+   for (op=0;op<1000;op++)
+      brd->get(0x100000, readValue);
+   gBenchmark->Show("1000gets");
+
+   brd->GPIO_setActive(1, 1, 0, 0);
+   brd->GPIO_setScaledown(0);
+
+//   roc::Board::Close(brd);
+//   return;
+
+
    bool res = brd->startDaq();
 
    if (!res) {
@@ -45,15 +60,6 @@ void control(const char* boardaddr = "cbmtest08")
       return;
    }
 
-
-   uint32_t readValue, op;
-
-   gBenchmark->Start("1000peek");
-   for (op=0;op<1000;op++)
-      readValue = brd->peek(0x100000);
-   gBenchmark->Show("1000peek");
-
-
    nxyter::Data data;
    long numdata = 0;
 
@@ -61,13 +67,15 @@ void control(const char* boardaddr = "cbmtest08")
 
    cout << "Start getting data " << endl;
 
-   while (brd->getNextData(data, 2.5)) {
-//      data.printData(7);
+   while (brd->getNextData(data, 5.5)) {
+//      printf("%6d  ", numdata); data.printData(7);
       numdata++;
 
-      if (data.isStopDaqMsg()) { cout << "GET It" << endl;  break; }
+      if (data.isStartDaqMsg()) cout << "GET Start" << endl;
+      if (data.isStopDaqMsg()) { cout << "GET End" << endl;  break; }
+      if (data.isNopMsg()) cout << "NOP !?" << endl;
 
-      if (numdata==1000) res = brd->suspendDaq();
+      if (numdata==100000) res = brd->suspendDaq();
    }
 
    res = brd->stopDaq();

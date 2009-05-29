@@ -21,7 +21,8 @@
 #include "dabc/Port.h"
 #include "dabc/CommandsSet.h"
 
-#include "roc/Defines.h"
+#include "roc/defines.h"
+#include "roc/udpdefines.h"
 #include "roc/Commands.h"
 
 #define SC_BITFILE_BUFFER_SIZE 4194304
@@ -129,11 +130,11 @@ void roc::UdpControlSocket::completeLoop(bool res)
    if (cmd==0) {
       EOUT(("Something wrong"));
    } else {
-      if (cmd->IsName(CmdPeek::CmdName())) {
+      if (cmd->IsName(CmdGet::CmdName())) {
          cmd->SetUInt(ValuePar, res ? ntohl(fControlRecv.value): 0);
          cmd->SetUInt(ErrNoPar, res ? ntohl(fControlRecv.address) : 6);
       } else
-      if (cmd->IsName(CmdPoke::CmdName())) {
+      if (cmd->IsName(CmdPut::CmdName())) {
          cmd->SetUInt(ErrNoPar, res ? ntohl(fControlRecv.value) : 6);
       }
       dabc::Command::Reply(cmd, res);
@@ -164,7 +165,7 @@ void roc::UdpControlSocket::checkCommandsQueue()
    fShowProgress = false;
    fTotalTmoutSec = cmd->GetDouble(TmoutPar, 5.0);
 
-   if (cmd->IsName(CmdPoke::CmdName())) {
+   if (cmd->IsName(CmdPut::CmdName())) {
        uint32_t addr = cmd->GetUInt(AddrPar, 0);
        uint32_t value = cmd->GetUInt(ValuePar, 0);
 
@@ -192,7 +193,7 @@ void roc::UdpControlSocket::checkCommandsQueue()
           fControlSendSize += value;
        }
    } else
-   if (cmd->IsName(CmdPeek::CmdName())) {
+   if (cmd->IsName(CmdGet::CmdName())) {
       fControlSend.tag = ROC_PEEK;
       fControlSend.address = htonl(cmd->GetUInt(AddrPar, 0));
       fControlSendSize = sizeof(UdpMessage);
@@ -304,8 +305,8 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
       return cmd_true;
    } else
    if (cmd->IsName("SuspendDaq") ||
-       cmd->IsName(CmdPeek::CmdName()) ||
-       cmd->IsName(CmdPoke::CmdName())) {
+       cmd->IsName(CmdGet::CmdName()) ||
+       cmd->IsName(CmdPut::CmdName())) {
       if (fCtrlCh==0) return cmd_false;
       fCtrlCh->Submit(cmd);
       return cmd_postponed;
@@ -322,7 +323,7 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
 
       dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
       // one can set here more parameters, adding more commands into set
-      dabc::Command* subcmd = new CmdPoke(ROC_START_DAQ , 1);
+      dabc::Command* subcmd = new CmdPut(ROC_START_DAQ , 1);
       fCtrlCh->Submit(set->Assign(subcmd));
 
       dabc::CommandsSet::Completed(set, 4.);
@@ -335,7 +336,7 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
       if (!fDataCh->prepareForSuspend()) return cmd_false;
 
       dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
-      dabc::Command* subcmd = new CmdPoke(ROC_SUSPEND_DAQ, 1);
+      dabc::Command* subcmd = new CmdPut(ROC_SUSPEND_DAQ, 1);
       fCtrlCh->Submit(set->Assign(subcmd));
       dabc::CommandsSet::Completed(set, 4.);
 
@@ -347,7 +348,7 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
       if (!fDataCh->prepareForStop()) return cmd_false;
 
       dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
-      dabc::Command* subcmd = new CmdPoke(ROC_STOP_DAQ, 1);
+      dabc::Command* subcmd = new CmdPut(ROC_STOP_DAQ, 1);
       fCtrlCh->Submit(set->Assign(subcmd));
       dabc::CommandsSet::Completed(set, 4.);
 
@@ -357,7 +358,7 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
       if (fCtrlCh==0) return cmd_false;
 
       dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
-      dabc::Command* subcmd = new CmdPoke(ROC_MASTER_LOGOUT, 1);
+      dabc::Command* subcmd = new CmdPut(ROC_MASTER_LOGOUT, 1);
       fCtrlCh->Submit(set->Assign(subcmd));
       dabc::CommandsSet::Completed(set, 4.);
 
@@ -375,7 +376,7 @@ bool roc::UdpDevice::initialise(BoardRole role)
    if (fCtrlCh==0) return false;
 
    if ((role==roleMaster) || (role == roleDAQ)) {
-      if (!poke(ROC_MASTER_LOGIN, 0)) return false;
+      if (put(ROC_MASTER_LOGIN, 0)!=0) return false;
 
       int nport = fCtrlPort + 1;
 
@@ -385,7 +386,7 @@ bool roc::UdpDevice::initialise(BoardRole role)
 
       if (fd<=0) return false;
 
-      if (!poke(ROC_MASTER_DATAPORT, nport)) {
+      if (put(ROC_MASTER_DATAPORT, nport)!=0) {
          close(fd);
          return false;
       }
@@ -398,11 +399,11 @@ bool roc::UdpDevice::initialise(BoardRole role)
       DOUT2(("Create data socket %d for port %d connected to host %s", fd, nport, fRocIp.c_str()));
    }
 
-   fRocNumber = peek(ROC_NUMBER);
-   if (errno()!=0) return false;
+   if (get(ROC_NUMBER, fRocNumber)!=0) return false;
 
-   uint32_t sw_ver = peek(ROC_SOFTWARE_VERSION);
-   if (errno()!=0) return false;
+   uint32_t sw_ver(0), hw_ver(0);
+
+   if (get(ROC_SOFTWARE_VERSION,sw_ver) !=0) return false;
 
    if((sw_ver >= 0x01080000) || (sw_ver < 0x01070000)) {
       EOUT(("The ROC you want to access has software version %x", sw_ver));
@@ -410,8 +411,7 @@ bool roc::UdpDevice::initialise(BoardRole role)
    }
    DOUT0(("ROC software version is: 0x%x", sw_ver));
 
-   uint32_t hw_ver = peek(ROC_HARDWARE_VERSION);
-   if (errno()!=0) return false;
+   if (get(ROC_HARDWARE_VERSION, hw_ver) != 0) return false;
 
    if((hw_ver >= 0x01080000) || (hw_ver < 0x01070000)) {
       EOUT(("The ROC you want to access has hardware version %x", hw_ver));
@@ -435,45 +435,46 @@ int roc::UdpDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
    return cmd_true;
 }
 
-bool roc::UdpDevice::poke(uint32_t addr, uint32_t value, double tmout)
+int roc::UdpDevice::put(uint32_t addr, uint32_t value, double tmout)
 {
-   fErrNo = 0;
-   if (fCtrlCh==0) { fErrNo = 8; return false; }
+   if (fCtrlCh==0) return 8;
 
-   dabc::Command* cmd = new CmdPoke(addr, value, tmout);
+   if (tmout <= 0.) tmout = getDefaultTmout();
+
+   dabc::Command* cmd = new CmdPut(addr, value, tmout);
    cmd->SetKeepAlive(true);
 
-   if (fCtrlCh->Execute(cmd, tmout + 1.))
-      fErrNo = cmd->GetUInt(ErrNoPar, 6);
-   else
-      fErrNo = 7;
+   int res = 7;
+
+   if (fCtrlCh->Execute(cmd, tmout + .1))
+      res = cmd->GetInt(ErrNoPar, 6);
 
    dabc::Command::Finalise(cmd);
 
-   DOUT2(("Roc:%s Poke(0x%04x, 0x%04x) res = %d", GetName(), addr, value, fErrNo));
+   DOUT2(("Roc:%s Poke(0x%04x, 0x%04x) res = %d", GetName(), addr, value, res));
 
-   return fErrNo == 0;
+   return res;
 }
 
-uint32_t roc::UdpDevice::peek(uint32_t addr, double tmout)
+int roc::UdpDevice::get(uint32_t addr, uint32_t& value, double tmout)
 {
-   fErrNo = 0;
-   if (fCtrlCh==0) { fErrNo = 8; return false; }
+   if (fCtrlCh==0) return 8;
 
-   dabc::Command* cmd = new CmdPeek(addr, tmout);
+   if (tmout <= 0.) tmout = getDefaultTmout();
+
+   dabc::Command* cmd = new CmdGet(addr, tmout);
    cmd->SetKeepAlive(true);
 
-   uint32_t res = 0;
+   int res = 7;
 
-   if (fCtrlCh->Execute(cmd, tmout + 1.)) {
-      fErrNo = cmd->GetUInt(ErrNoPar, 6);
-      res = cmd->GetUInt(ValuePar, 0);
-   } else
-      fErrNo = 7;
+   if (fCtrlCh->Execute(cmd, tmout + .1)) {
+      res = cmd->GetInt(ErrNoPar, 6);
+      value = cmd->GetUInt(ValuePar, 0);
+   }
 
    dabc::Command::Finalise(cmd);
 
-   DOUT2(("Roc:%s Peek(0x%04x, 0x%04x) res = %d", GetName(), addr, res, fErrNo));
+   DOUT2(("Roc:%s Peek(0x%04x, 0x%04x) res = %d", GetName(), addr, value, res));
 
    return res;
 }
@@ -503,7 +504,7 @@ void roc::UdpDevice::processCtrlMessage(UdpMessageFull* pkt, unsigned len)
 
 void roc::UdpDevice::setBoardStat(void* rawdata, bool print)
 {
-   UdpStatistic* src = (UdpStatistic*) rawdata;
+   BoardStatistic* src = (BoardStatistic*) rawdata;
 
    if (src!=0) {
       brdStat.dataRate = ntohl(src->dataRate);
@@ -524,25 +525,42 @@ void roc::UdpDevice::setBoardStat(void* rawdata, bool print)
              brdStat.takePerf*1e-3,"%", brdStat.dispPerf*1e-3,"%", brdStat.sendPerf*1e-3,"%"));
 }
 
-bool roc::UdpDevice::pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatalen, double tmout)
+roc::BoardStatistic* roc::UdpDevice::takeStat(double tmout, bool print)
 {
-   fErrNo = 0;
-   if (fCtrlCh==0) { fErrNo = 8; return false; }
+   void *rawdata = 0;
 
-   dabc::Command* cmd = new CmdPoke(address, rawdatalen, tmout);
+   if (tmout > 0.) {
+      uint32_t readValue;
+      int res = get(ROC_STATBLOCK, readValue, tmout);
+      if (res!=0) return 0;
+      rawdata = fCtrlCh->fControlRecv.rawdata;
+   }
+
+   setBoardStat(rawdata, print);
+
+   return isBrdStat ? &brdStat : 0;
+}
+
+int roc::UdpDevice::pokeRawData(uint32_t address, const void* rawdata, uint32_t rawdatalen, double tmout)
+{
+   if (fCtrlCh==0) return 8;
+
+   if (tmout <= 0.) tmout = getDefaultTmout();
+
+   dabc::Command* cmd = new CmdPut(address, rawdatalen, tmout);
    cmd->SetPtr(RawDataPar, (void*) rawdata);
    cmd->SetKeepAlive(true);
 
+   int res = 7;
+
    if (fCtrlCh->Execute(cmd, tmout + 1.))
-      fErrNo = cmd->GetUInt(ErrNoPar, 6);
-   else
-      fErrNo = 7;
+      res = cmd->GetInt(ErrNoPar, 6);
 
    dabc::Command::Finalise(cmd);
 
-   DOUT0(("Roc:%s PokeRaw(0x%04x, 0x%04x) res = %d\n", GetName(), address, rawdatalen, fErrNo));
+   DOUT0(("Roc:%s PokeRaw(0x%04x, 0x%04x) res = %d\n", GetName(), address, rawdatalen, res));
 
-   return fErrNo == 0;
+   return res;
 }
 
 bool roc::UdpDevice::sendConsoleCommand(const char* cmd)
@@ -551,11 +569,7 @@ bool roc::UdpDevice::sendConsoleCommand(const char* cmd)
 
    if ((length<2) || (length > sizeof(UdpMessageFull) - sizeof(UdpMessage))) return false;
 
-   pokeRawData(ROC_CONSOLE_CMD, cmd, length);
-
-   if (fErrNo==1) fErrNo = 0;
-
-   return errno() == 0;
+   return pokeRawData(ROC_CONSOLE_CMD, cmd, length) == 0;
 }
 
 bool roc::UdpDevice::saveConfig(const char* filename)
@@ -564,7 +578,7 @@ bool roc::UdpDevice::saveConfig(const char* filename)
 
    DOUT1(("Save config file %s on ROC\n",filename ? filename : ""));
 
-   return pokeRawData(ROC_CFG_WRITE, filename, len, 10.);
+   return pokeRawData(ROC_CFG_WRITE, filename, len, 10.) == 0;
 }
 
 bool roc::UdpDevice::loadConfig(const char* filename)
@@ -573,7 +587,7 @@ bool roc::UdpDevice::loadConfig(const char* filename)
 
    DOUT1(("Load config file %s on ROC\n",filename ? filename : ""));
 
-   return pokeRawData(ROC_CFG_READ, filename, len, 10.);
+   return pokeRawData(ROC_CFG_READ, filename, len, 10.) == 0;
 }
 
 
@@ -673,7 +687,7 @@ uint8_t roc::UdpDevice::calcBinXOR(const char* filename)
 
 bool roc::UdpDevice::uploadDataToRoc(char* buf, unsigned datalen)
 {
-   poke(ROC_CLEAR_FILEBUFFER, 1);
+   put(ROC_CLEAR_FILEBUFFER, 1);
 
    uint32_t maxsendsize = sizeof(UdpMessageFull) - sizeof(UdpMessage);
 
@@ -683,7 +697,7 @@ bool roc::UdpDevice::uploadDataToRoc(char* buf, unsigned datalen)
       uint32_t sendsize = datalen - pos;
       if (sendsize > maxsendsize) sendsize = maxsendsize;
 
-      if (!pokeRawData(ROC_FBUF_START + pos, buf + pos, sendsize)) {
+      if (pokeRawData(ROC_FBUF_START + pos, buf + pos, sendsize)!=0) {
          EOUT(("Failed data packet with addr %u", pos));
          return false;
       }
@@ -782,24 +796,26 @@ bool roc::UdpDevice::uploadBitfile(const char* filename, int position)
       return false;
    }
 
-   uint8_t ROCchecksum = peek(ROC_CHECK_BITFILEBUFFER);
+   uint32_t ROCchecksum(0);
+
+   get(ROC_CHECK_BITFILEBUFFER, ROCchecksum);
 
    if(ROCchecksum != XORbitfileCheckSum) {
-      DOUT0(("--- Upload failed !!!---\n"));
+      DOUT0(("--- Upload failed !!!---"));
       delete [] bitfileBuffer;
       delete [] buffer;
       return false;
    }
 
-   DOUT1(("Start flashing - wait ~200 s.\n"));
+   DOUT1(("Start flashing - wait ~200 s."));
 
    ROCchecksum = ~XORbitfileCheckSum;
 
-   if (poke(ROC_FLASH_KIBFILE_FROM_DDR, position, 300.)) {
+   if (put(ROC_FLASH_KIBFILE_FROM_DDR, position, 300.)==0) {
       if(position == 0)
-         ROCchecksum = peek(ROC_CHECK_BITFILEFLASH0);
+         get(ROC_CHECK_BITFILEFLASH0, ROCchecksum);
       else
-         ROCchecksum = peek(ROC_CHECK_BITFILEFLASH1);
+         get(ROC_CHECK_BITFILEFLASH1, ROCchecksum);
    }
 
    delete [] bitfileBuffer;
@@ -862,7 +878,8 @@ bool roc::UdpDevice::uploadSDfile(const char* filename, const char* sdfilename)
       return false;
    }
 
-   uint8_t ROCchecksum = peek(ROC_CHECK_FILEBUFFER);
+   uint32_t ROCchecksum(0);
+   get(ROC_CHECK_FILEBUFFER, ROCchecksum);
 
    if (ROCchecksum != XORCheckSum) {
       EOUT(("File XOR checks sum %u differ from uploaded %u\n",
@@ -878,7 +895,7 @@ bool roc::UdpDevice::uploadSDfile(const char* filename, const char* sdfilename)
    DOUT0(("Start %s file writing, please wait ~%2.0f sec\n", sdfilename, waittime));
 
    // take 30 sec more for any unexpectable delays
-   int res = poke(ROC_OVERWRITE_SD_FILE, 1, waittime + 30.);
+   int res = put(ROC_OVERWRITE_SD_FILE, 1, waittime + 30.);
 //   int res = 0;
 
    if (res==0)

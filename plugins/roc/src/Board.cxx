@@ -19,7 +19,7 @@
 #include "dabc/Factory.h"
 #include "dabc/Device.h"
 
-#include "roc/Defines.h"
+#include "roc/defines.h"
 #include "roc/ReadoutModule.h"
 
 
@@ -33,8 +33,8 @@ const char* roc::typeUdpDevice      = "roc::UdpDevice";
 
 roc::Board::Board() :
    fRole(roleNone),
-   fErrNo(0),
    fRocNumber(0),
+   fDefaultTimeout(2.),
    fReadout(0)
 {
 }
@@ -106,7 +106,197 @@ bool roc::Board::Close(Board* brd)
 }
 
 
-bool roc::Board::startDaq()
+
+void roc::Board::setROC_Number(uint32_t num)
+{
+   put(ROC_NUMBER, num);
+}
+
+uint32_t roc::Board::getROC_Number()
+{
+   uint32_t num = 0;
+   get(ROC_NUMBER, num);
+   return num;
+}
+
+uint32_t roc::Board::getHW_Version()
+{
+   uint32_t val = 0;
+   get(ROC_HARDWARE_VERSION, val);
+   return val;
+}
+
+void roc::Board::reset_FIFO()
+{
+   put(ROC_FIFO_RESET, 1);
+   put(ROC_FIFO_RESET, 0);
+   reset_MISS();
+}
+
+uint32_t roc::Board::getFIFO_empty()
+{
+   uint32_t val;
+   get(ROC_NX_FIFO_EMPTY, val);
+   return val;
+}
+
+uint32_t roc::Board::getFIFO_full()
+{
+   uint32_t val;
+   get(ROC_NX_FIFO_FULL, val);
+   return val;
+}
+
+uint32_t roc::Board::getMISS()
+{
+   uint32_t val;
+   get(ROC_NX_MISS, val);
+   return val;
+}
+
+void roc::Board::reset_MISS()
+{
+   put(ROC_NX_MISS_RESET, 1);
+   put(ROC_NX_MISS_RESET, 0);
+}
+
+void roc::Board::setParityCheck(uint32_t val)
+{
+   put(ROC_PARITY_CHECK, val);
+}
+
+void roc::Board::RESET()
+{
+   put(ROC_SYSTEM_RESET, 1);
+}
+
+void roc::Board::TestPulse(uint32_t length, uint32_t number)
+{
+   put(ROC_TESTPULSE_LENGTH, length - 1);
+   put(ROC_TESTPULSE_NUMBER, number * 2);
+   put(ROC_TESTPULSE_START, 1);
+}
+
+void roc::Board::TestPulse(uint32_t delay, uint32_t length, uint32_t number)
+{
+   put(ROC_TESTPULSE_RESET_DELAY, delay  - 1);
+   put(ROC_TESTPULSE_LENGTH, length - 1);
+   put(ROC_TESTPULSE_NUMBER, number * 2);
+   NX_reset();
+}
+
+void roc::Board::NX_reset()
+{
+   put(ROC_NX_INIT, 0);
+   put(ROC_NX_RESET, 0);
+   put(ROC_NX_RESET, 1);
+   put(ROC_NX_INIT, 1);
+   put(ROC_NX_INIT, 0);
+}
+
+
+void roc::Board::NX_setActive(uint32_t mask)
+{
+   put(ROC_NX_ACTIVE, mask & 0xf);
+}
+
+uint32_t roc::Board::NX_getActive()
+{
+   uint32_t mask(0);
+   if (!get(ROC_NX_ACTIVE, mask)) return 0;
+   return mask;
+}
+
+
+void roc::Board::NX_setActive(int nx1, int nx2, int nx3, int nx4)
+{
+   NX_setActive((nx1 ? 1 : 0) | (nx2 ? 2 : 0) | (nx3 ? 4 : 0) | (nx4 ? 8 : 0));
+}
+
+
+void roc::Board::setLTS_Delay(uint32_t val)
+{
+   put(ROC_DELAY_LTS, val);
+}
+
+
+void roc::Board::GPIO_setActive(uint32_t mask)
+{
+   put(ROC_AUX_ACTIVE, mask);
+}
+
+uint32_t roc::Board::GPIO_getActive()
+{
+   uint32_t mask(0);
+   if (get(ROC_AUX_ACTIVE, mask)!=0) return 0;
+   return mask;
+}
+
+
+void roc::Board::GPIO_setActive(int gpio1, int gpio2, int gpio3, int gpio4)
+{
+   uint32_t mask = 0;
+
+   if (gpio1>0) mask |= 1;
+   if (gpio2>0) mask |= 2;
+   if (gpio3>0) mask |= 4;
+   if (gpio4>0) mask |= 8;
+
+   GPIO_setActive(mask);
+
+}
+
+void roc::Board::GPIO_getActive(int& gpio1, int& gpio2, int& gpio3, int& gpio4)
+{
+   uint32_t mask = GPIO_getActive();
+
+   gpio1 = (mask & 1) ? 1 : 0;
+   gpio2 = (mask & 2) ? 1 : 0;
+   gpio3 = (mask & 4) ? 1 : 0;
+   gpio4 = (mask & 8) ? 1 : 0;
+}
+
+void roc::Board::GPIO_setBAUD(uint32_t BAUD_START, uint32_t BAUD1, uint32_t BAUD2)
+{
+   put(ROC_SYNC_BAUD_START, BAUD_START);
+   put(ROC_SYNC_BAUD1, BAUD1);
+   put(ROC_SYNC_BAUD2, BAUD2);
+}
+
+void roc::Board::GPIO_setMHz(int MHz)
+{
+   int Baud1, Baud2, Start;
+   float realMHz;
+
+   if (MHz>65) {
+      EOUT(("setMHz: %d is not a valid MHz value!\n"));
+      return;
+   }
+
+   Baud1 = int(250. / float(MHz) + 0.5);
+   Baud2 = int(500. / float(MHz) + 0.5) - Baud1;
+   Start = Baud2 / 2;
+   if (Start<=2) Start=2;
+
+   DOUT0(("Start: %d Baud1: %d Baud2: %d\n", Start, Baud1, Baud2));
+
+   realMHz = 250. / (((float)Baud1 + (float)Baud2) / 2);
+
+   DOUT0(("The set Baudrate corresponds %7.3f MHz.\n", realMHz));
+   if (realMHz!=MHz)
+      DOUT0(("The differnece to the passed Parameter is caused by the hardware restrictions. \n"));
+
+   GPIO_setBAUD (Start, Baud1, Baud2);
+}
+
+
+void roc::Board::GPIO_setScaledown(uint32_t val)
+{
+   put(ROC_SYNC_M_SCALEDOWN, val);
+}
+
+
+bool roc::Board::startDaq(unsigned)
 {
    DOUT2(("Starting DAQ !!!!"));
 
