@@ -19,8 +19,17 @@ ROC_LINKDEF     = $(ROCDIR)/LinkDef.h
 ROC_DICH        = roc/Board.h \
                   roc/UdpBoard.h \
                   roc/defines.h \
+                  roc/udpdefines.h \
+                  roc/ADCchip.h \
+                  roc/Calibrate.h \
+                  roc/FEBboard.h \
+                  roc/FEBs.h \
+                  roc/Peripheral.h \
+                  roc/Test.h \
                   nxyter/Data.h \
-                  nxyter/Sorter.h
+                  nxyter/Sorter.h \
+                  nxyter/Chip.h \
+                  nxyter/I2Cbus.h
 
 ROC_LIBNAME     = $(LIB_PREFIX)DabcRoc
 ROC_LIB         = $(TGTDLLPATH)/$(ROC_LIBNAME).$(DllSuf)

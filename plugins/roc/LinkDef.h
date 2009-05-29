@@ -19,11 +19,22 @@
 #pragma link off all functions;
 
 #pragma link C++ nestedclasses;
-#pragma link C++ namespace roc;
-#pragma link C++ class roc::Board;
-#pragma link C++ class roc::UdpBoard;
+
 #pragma link C++ namespace nxyter;
 #pragma link C++ class nxyter::Data;
 #pragma link C++ class nxyter::Sorter;
+#pragma link C++ class nxyter::I2Cbus;
+#pragma link C++ class nxyter::Chip;
+
+#pragma link C++ namespace roc;
+#pragma link C++ class roc::Board;
+#pragma link C++ class roc::UdpBoard;
+#pragma link C++ class roc::Peripheral;
+#pragma link C++ class roc::FEBboard;
+#pragma link C++ class roc::FEB1nxC;
+#pragma link C++ class roc::FEB2nx;
+#pragma link C++ class roc::FEB4nx;
+#pragma link C++ class roc::Test;
+#pragma link C++ class roc::Calibrate;
 
 #endif

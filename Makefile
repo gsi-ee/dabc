@@ -41,12 +41,11 @@ clean::
 
 # following lines define the packaging:
 PACKAGE_DIR    = ./packages
-DABCPACK_VERS  = dabc_v$(MAJOR).$(MINOR)
-ROCPACK_VERS   = roc_v$(MAJOR).$(MINOR)
+DABCPACK_VERS  = dabc-$(MAJOR).$(MINOR)
 ABBPACK_VERS   = abb_v$(MAJOR).$(MINOR)
 GUIPACK_VERS   = dabcgui_v$(MAJOR).$(MINOR)
-DABCTAR_NAME   = dabc_v$(MAJOR).$(MINOR).tar
-ROCTAR_NAME    = roc_v$(MAJOR).$(MINOR).tar
+DABCTAR_NAME   = dabc-$(MAJOR).$(MINOR).tar
+ROCTAR_NAME    = dabcroc.tar
 ABBTAR_NAME    = abb_v$(MAJOR).$(MINOR).tar
 GUITAR_NAME    = dabcgui_v$(MAJOR).$(MINOR).tar
 
@@ -81,11 +80,12 @@ DABC_JAVA_APPS = $(wildcard gui/java/generic/application/*.java)
 
 package: clean
 	@echo "Creating package $(DABCTAR_NAME) ..."
-	tar cf $(DABCTAR_NAME) README.txt LICENSE.txt RELEASENOTES.txt  Makefile base/ build/ config/ controls/simple controls/dimcontrol dim  gui/java $(DABC_PLUGINS_PACK) $(DABC_APPLICATIONS_PACK) $(DABC_SCRIPTS_PACK) --exclude=.svn --exclude=*.log --exclude=*.bak 
+	tar cf $(DABCTAR_NAME) README.txt LICENSE.txt RELEASENOTES.txt  base/ build/*.sh config/ controls/simple controls/dimcontrol dim  gui/java $(DABC_PLUGINS_PACK) $(DABC_APPLICATIONS_PACK) $(DABC_SCRIPTS_PACK) --exclude=.svn --exclude=*.log --exclude=*.bak 
 	@mkdir -p $(DISTR_DIR); cd $(DISTR_DIR); mkdir -p $(DABCPACK_VERS)
 	@mv $(DABCTAR_NAME) $(DABCDISTR_DIR)
 	@cd $(DABCDISTR_DIR); tar xf $(DABCTAR_NAME); rm -f $(DABCTAR_NAME)
 	@mv -f $(DABCDISTR_DIR)/script/dabclogin-distribution.sh $(DABCDISTR_DIR)/script/dabclogin.sh
+	@cp -f build/Makefile.distr $(DABCDISTR_DIR)/Makefile
 #	@mv -f $(DABCDISTR_DIR)/doc/main-all.pdf $(DABCDISTR_DIR)/doc/dabcmanual.pdf
 	@cd $(DISTR_DIR); chmod u+w *; chmod u+w */*; chmod u+w */*/*; tar chf $(DABCTAR_NAME) $(DABCPACK_VERS) --exclude=$(DABCTAR_NAME)*; gzip -f $(DABCTAR_NAME)
 	@mkdir -p $(PACKAGE_DIR)
@@ -93,20 +93,14 @@ package: clean
 	@rm -f -r $(DISTR_DIR)/*
 	@rmdir $(DISTR_DIR)
 	@echo "Package $(DABCTAR_NAME).gz done in $(PACKAGE_DIR)"
-	
 
 packageroc: clean
-	@echo "Creating package $(ROCTAR_NAME) ..."
-	@mkdir -p $(DISTR_DIR); cd $(DISTR_DIR); mkdir -p $(ROCPACK_VERS)
-	tar cf $(ROCTAR_NAME)  $(DABC_ROC_PACK) --exclude=.svn --exclude=*.bak --exclude=*.log 
-	@mv $(ROCTAR_NAME) $(ROCDISTR_DIR)
-	@cd $(ROCDISTR_DIR); tar xf $(ROCTAR_NAME); rm -f $(ROCTAR_NAME)
-	@cd $(DISTR_DIR); chmod u+w *; chmod u+w */*; chmod u+w */*/*; cd $(ROCPACK_VERS); tar chf $(ROCTAR_NAME) * --exclude=$(ROCTAR_NAME)*; gzip -f $(ROCTAR_NAME)
-	@mkdir -p $(PACKAGE_DIR)
-	@mv -f $(DISTR_DIR)/$(ROCPACK_VERS)/$(ROCTAR_NAME).gz $(PACKAGE_DIR)
-	@rm -f -r $(DISTR_DIR)/*
-	@rmdir $(DISTR_DIR)
-	@echo "Package $(ROCTAR_NAME).gz done in $(PACKAGE_DIR)"
+	tar chf $(ROCTAR_NAME) *.txt base config build/*.sh script --exclude=.svn
+	tar rhf $(ROCTAR_NAME) plugins/mbs plugins/roc applications/mbs applications/roc --exclude=.svn
+	@mkdir -p $(PACKAGE_DIR); mv -f $(ROCTAR_NAME) $(PACKAGE_DIR)
+	cp -f build/Makefile.distr $(PACKAGE_DIR)/Makefile 
+	cd $(PACKAGE_DIR); tar rhf $(ROCTAR_NAME) Makefile; rm -f $(ROCTAR_NAME).gz; gzip $(ROCTAR_NAME); rm -f Makefile 
+	@echo "Source package $(ROCTAR_NAME).gz done"  
 
 packageabb: clean
 	@echo "Creating package $(ABBTAR_NAME) ..."

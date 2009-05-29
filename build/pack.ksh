@@ -3,7 +3,7 @@
 # $2 - headername
 HEAD=$2
 if [ "x$HEAD" == "x" ]; then
-   HEAD=header.txt
+   HEAD=build/header.txt
 fi
 echo pack $1 ...
 cat $HEAD $1 >dummy.tmp

@@ -1,0 +1,39 @@
+# Top make file of DABC project
+
+DABCMAINMAKE = true
+
+DABCSYS := $(CURDIR)
+
+include config/Makefile.config
+
+## disable possibility, that rules included many times 
+Dabc_Makefile_rules = true
+
+CREATE_DIRS += $(DABCDLLPATH) $(DABCINCPATH) $(DABCBINPATH)
+
+include base/Makefile.mk
+
+-include controls/simple/Makefile.mk
+
+-include dim/Makefile.mk
+
+-include controls/dimcontrol/Makefile.mk
+
+DABC_PLUGINS = $(wildcard plugins/*)
+
+DABC_PLUGINS += $(wildcard applications/*)
+
+-include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
+
+-include gui/java/Makefile.mk
+
+#-include gui/Qt/Makefile.mk
+
+-include doc/Makefile.mk
+
+libs::
+
+clean::
+
+Dabc_Makefile_rules :=
+include config/Makefile.rules
