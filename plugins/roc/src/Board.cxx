@@ -119,6 +119,11 @@ uint32_t roc::Board::getROC_Number()
    return num;
 }
 
+uint32_t roc::Board::getSW_Version()
+{
+   return KNUT_VERSION;
+}
+
 uint32_t roc::Board::getHW_Version()
 {
    uint32_t val = 0;

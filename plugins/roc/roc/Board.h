@@ -19,7 +19,6 @@
 
 #include "nxyter/Data.h"
 
-
 namespace roc {
 
    enum BoardRole { roleNone, roleObserver, roleMaster, roleDAQ };
@@ -81,6 +80,8 @@ namespace roc {
          // --------------------------------------------------------------------
          // methods for controlling ROC and components
          // --------------------------------------------------------------------
+
+         virtual uint32_t getSW_Version();
 
          //! getROC_Number
          /*!

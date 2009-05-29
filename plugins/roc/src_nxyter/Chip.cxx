@@ -6,6 +6,11 @@
 
 #include "nxyter/Chip.h"
 
+#include "roc/defines.h"
+
+#include "dabc/logging.h"
+
+
 //-------------------------------------------------------------------------------
 nxyter::Chip::Chip(roc::Board* board, int num, int con) :
    roc::Peripheral(board),
@@ -29,7 +34,7 @@ nxyter::Chip::~Chip()
 void nxyter::Chip::setNumber(int num)
 {
    if ((num >= 0) && (num <= 3)) fNumber = num;
-   else EOUT(("Not a valid I2C-Number!\n"));
+   else EOUT(("Not a valid I2C-Number!"));
 }
 //-------------------------------------------------------------------------------
 

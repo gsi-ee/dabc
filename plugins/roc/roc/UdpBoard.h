@@ -119,7 +119,7 @@ namespace roc {
          /*!
           * Returns the Software-Version of the ROC.
           */
-         uint32_t getSW_Version();
+         virtual uint32_t getSW_Version();
 
          //! BURST
          /*!
