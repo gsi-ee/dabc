@@ -10,8 +10,8 @@ DIM_LIB = $(DABCDLLPATH)/libdim.so
 
 DIM_JDK_INCLUDE = $(JDK_INCLUDE)
 
-ifndef JDK_INCLUDE
-ifdef JAVA_HOME
+ifeq ($(DIM_JDK_INCLUDE),)
+ifneq ($(JAVA_HOME),)
 DIM_JDK_INCLUDE = $(JAVA_HOME)/include
 endif
 endif
@@ -41,7 +41,9 @@ $(DIMDIR):
 $(DIM_LIB): $(DIMDIR)
 	@echo "JAVA_HOME=$(JAVA_HOME)"
 	cd $(DIMDIR); export DIMDIR=$(DIMDIR); export OS=$(DIM_OS); export ODIR=$(DIM_ODIR); export JDK_INCLUDE=$(DIM_JDK_INCLUDE); make -j1 $(DIM_BUILD_ARGS)
+ifneq ($(DIM_JDK_INCLUDE),)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libdim.so $(DIM_LIB)
+endif
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libjdim.so $(DABCDLLPATH)  
 	cp -f $(DIMDIR)/$(DIM_ODIR)/dns $(DABCBINPATH)/dimDns  
 	@echo "Dim library build"

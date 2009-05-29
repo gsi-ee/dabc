@@ -1,14 +1,14 @@
 ## normally should be like this for every module, but can be specific
 
-
+ifdef USEABB
 
 KERNELMODULESDIR = /lib/modules/$(shell uname -r)/build
-ifneq ($(realpath $(KERNELMODULESDIR)),)
-USEABB    = true
+ifeq ($(realpath $(KERNELMODULESDIR)),)
+USEABB  =
 endif
 
 
-ifdef USEABB 
+ifneq ($(USEABB),) 
 
 ABB_INCLUDES :=
 
@@ -105,5 +105,7 @@ $(ABB_O) $(ABB_D): INCLUDES += $(ABB_INCLUDES)
 $(ABB_O) $(ABB_D): DEFINITIONS += $(ABB_DEFINITIONS)
 
 include $(DABCSYS)/config/Makefile.rules
+
+endif
 
 endif
