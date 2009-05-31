@@ -230,8 +230,8 @@ namespace roc {
 
          //! startDaq
          /*!
-         * This function should be called when startting DAQ, not only poke(ROC_START_DAQ, 1)
-         * It reset all counter, initialise buffer and at the end start DAQ
+         * This function should be called when starting DAQ, not only poke(ROC_START_DAQ, 1)
+         * It reset all counter, initialize buffer and at the end start DAQ
          * \param trWindow sets number of udp packet, which can be transported by board without confirmation
          */
          bool startDaq(unsigned = 40);
@@ -263,7 +263,7 @@ namespace roc {
 
          bool getNextData(nxyter::Data& data, double tmout = 1.);
 
-         static Board* Connect(const char* name, BoardRole role = roleObserver);
+         static Board* Connect(const char* name, BoardRole role = roleDAQ);
          static bool Close(Board* brd);
    };
 
