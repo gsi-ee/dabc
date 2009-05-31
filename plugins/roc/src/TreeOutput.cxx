@@ -67,7 +67,7 @@ bool roc::TreeOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* por
 
 void roc::TreeOutput::WriteNextData(nxyter::Data* data)
 {
-   f_rocid = data->getRocNumber();
+   f_rocid = data->rocNumber();
 
    if (data->getMessageType() == ROC_MSG_HIT) { // hit
       if (fValidEpoch[f_rocid]) {

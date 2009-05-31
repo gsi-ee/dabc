@@ -63,12 +63,6 @@ ALLDEPENDENC    += $(ROC_D) $(NXYTER_D) $(ROC_DD)
 
 libs:: $(ROC_LIB) 
 
-ifdef GO4SYS
-exes::
-	@echo "Build go4 monitor analsysis for roc application"
-	@cd $(ROCDIRGO4); make all
-endif
-
 ##### local rules #####
 
 $(DABCINCPATH)/%.h: $(ROCDIR)/%.h

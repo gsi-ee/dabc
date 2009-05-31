@@ -213,7 +213,7 @@ bool nxyter::Sorter::addData(nxyter::Data* new_data, unsigned num_msg, bool flus
             }
             break;
          case ROC_MSG_EPOCH:
-            fRocId = data->getRocNumber();
+            fRocId = data->rocNumber();
 
             fIntBufCurrRealEpoch = data->getEpoch();
             // when we start filling from indx==0, there is no data in buffer

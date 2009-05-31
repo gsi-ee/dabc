@@ -132,7 +132,7 @@ bool roc::CombinerModule::FindNextEvent(unsigned ninp)
 
          if (data->isEpochMsg()) { // epoch marker
             rec->curr_epoch = data->getEpoch();
-            rec->rocid = data->getRocNumber();
+            rec->rocid = data->rocNumber();
             rec->iscurrepoch = true;
          } else
          if (data->isSyncMsg()) {

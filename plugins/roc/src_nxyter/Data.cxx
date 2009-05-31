@@ -1,17 +1,3 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
-
 #include "nxyter/Data.h"
 
 #include <string.h>
@@ -65,7 +51,7 @@ void nxyter::Data::printData(unsigned kind) const
       printf("%02X:%02X:%02X:%02X:%02X:%02X ", data[0], data[1], data[2], data[3], data[4], data[5]);
 
    if (kind & 1)
-     printf("Msg:%u Roc:%u ", getMessageType(), getRocNumber());
+     printf("Msg:%u Roc:%u ", getMessageType(), rocNumber());
 
    if (kind & 2)
       switch (getMessageType()) {
@@ -93,3 +79,4 @@ void nxyter::Data::printData(unsigned kind) const
 
    printf("\n");
 }
+
