@@ -27,6 +27,7 @@ const char* roc::xmlNumRocs         = "NumRocs";
 const char* roc::xmlRocPool         = "RocPool";
 const char* roc::xmlTransportWindow = "TransportWindow";
 const char* roc::xmlBoardIP         = "BoardIP";
+const char* roc::xmlRole            = "Role";
 
 const char* roc::typeUdpDevice      = "roc::UdpDevice";
 
@@ -54,6 +55,7 @@ roc::Board* roc::Board::Connect(const char* name, BoardRole role)
 
    dabc::Command* cmd = new dabc::CmdCreateDevice(typeUdpDevice, devname);
    cmd->SetStr(roc::xmlBoardIP, name);
+   cmd->SetInt(roc::xmlRole, role);
    if (!dabc::mgr()->Execute(cmd)) return 0;
 
    dabc::Device* dev = dabc::mgr()->FindDevice(devname);
@@ -68,11 +70,6 @@ roc::Board* roc::Board::Connect(const char* name, BoardRole role)
    }
 
    roc::Board* brd = (roc::Board*) ptr;
-
-   if ((brd==0) || !brd->initialise(role)) {
-      dev->DestroyProcessor();
-      return 0;
-   }
 
    if (role == roleDAQ) {
       roc::ReadoutModule* m = new roc::ReadoutModule("RocReadout");

@@ -28,8 +28,9 @@ GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
 These packages are tested on
-    Debian 3.1 (32 bit and AMD 64bit)
-    SuSe 11.0
+    Debian 3.1 woody (32 bit and AMD 64bit)
+    Debian 4.0 Etch (32 bit)
+    SuSe 11.1 (64bit)
     compilers: gcc 3.3.5, gcc 4.3.x
 
   

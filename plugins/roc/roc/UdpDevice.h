@@ -108,7 +108,7 @@ namespace roc {
          uint8_t calcBinXOR(const char* filename);
          bool uploadDataToRoc(char* buf, unsigned len);
 
-         virtual bool initialise(BoardRole role);
+         virtual bool init(bool withdatach);
          virtual void* getdeviceptr() { return this; }
 
          virtual int ExecuteCommand(dabc::Command* cmd);

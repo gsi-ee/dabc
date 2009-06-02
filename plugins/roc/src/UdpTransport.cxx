@@ -186,7 +186,7 @@ bool roc::UdpDataSocket::_ProcessReply(dabc::Command* cmd)
 {
    bool res = cmd->GetResult();
 
-   DOUT0(("Replyed cmd %s res = %s ", cmd->GetName(), DBOOL(res)));
+   DOUT3(("roc::UdpDataSocket::_ProcessReply cmd %s res = %s ", cmd->GetName(), DBOOL(res)));
 
    FireEvent(evntConfirmCmd, res ? 1 : 0);
 
@@ -395,7 +395,7 @@ double roc::UdpDataSocket::ProcessTimeout(double)
    // check if we should flush current buffer
    if (!dabc::IsNullTime(fLastDelivery) &&
        (dabc::TimeDistance(fLastDelivery, TimeStamp()) > fFlashTimeout)) {
-          DOUT0(("Doing flush"));
+          DOUT2(("Doing flush"));
           CheckReadyBuffers(true);
    }
 
@@ -537,7 +537,7 @@ void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
          ResendInfo* entry = fResend.ItemPtr(n);
          if (entry->pktid != src_pktid) continue;
 
-         DOUT0(("Get retransmitted packet 0x%04x", src_pktid));
+         DOUT3(("Get retransmitted packet 0x%04x", src_pktid));
 
          fTotalResubmPacket++;
 

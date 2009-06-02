@@ -264,6 +264,10 @@ roc::UdpDevice::UdpDevice(dabc::Basic* parent, const char* name, const char* thr
 
    fCtrlPort = nport;
    fConnected = true;
+
+   int role = GetCfgInt(roc::xmlRole, roc::roleDAQ, cmd);
+
+   if (!init((role==roleMaster) || (role == roleDAQ))) fConnected = false;
 }
 
 roc::UdpDevice::~UdpDevice()
@@ -369,13 +373,13 @@ int roc::UdpDevice::ExecuteCommand(dabc::Command* cmd)
 }
 
 
-bool roc::UdpDevice::initialise(BoardRole role)
+bool roc::UdpDevice::init(bool withdatach)
 {
    DOUT2(("Starting UdpDevice::initialize"));
 
    if (fCtrlCh==0) return false;
 
-   if ((role==roleMaster) || (role == roleDAQ)) {
+   if (withdatach) {
       if (put(ROC_MASTER_LOGIN, 0)!=0) return false;
 
       int nport = fCtrlPort + 1;
@@ -426,6 +430,8 @@ bool roc::UdpDevice::initialise(BoardRole role)
 
 int roc::UdpDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
+   DOUT0(("Create transport for port %p  ch %p", port, fDataCh));
+
    if (fDataCh == 0) return cmd_false;
 
    fDataCh->ConfigureFor(port);

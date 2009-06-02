@@ -35,6 +35,7 @@ namespace roc {
    extern const char* xmlRocPool;
    extern const char* xmlTransportWindow;
    extern const char* xmlBoardIP;
+   extern const char* xmlRole;
 
    extern const char* typeUdpDevice;
 
@@ -57,7 +58,6 @@ namespace roc {
 
          void SetReadout(ReadoutModule* m) { fReadout = m; }
 
-         virtual bool initialise(BoardRole role) = 0;
          virtual void* getdeviceptr() = 0;
 
       public:

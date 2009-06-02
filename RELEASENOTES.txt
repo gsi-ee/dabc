@@ -29,7 +29,9 @@ Changes in version 1.0.02
    3. Add application in net-test, one can control its execution from gui.
    4. Fix problem with DIM server when host name was not specified
    5. Make compilation of old mbs evapi optional - it is not used in real application.
-      If necessary, one can compile it with "make MBSEVAPI=1" call.    
+      If necessary, one can compile it with "make MBSEVAPI=1" call.
+   6. ROC plugin is completely rewritten to replace KNUT library.
+      ROClib makefile build so, that it can use directly DABC classes.    
 
 Changes in version 1.0.01 (10 March 2009) 
 

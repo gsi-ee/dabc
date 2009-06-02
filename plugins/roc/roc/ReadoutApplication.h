@@ -34,7 +34,6 @@ namespace roc {
 
    class ReadoutApplication : public dabc::Application {
       protected:
-         std::string  fDevName;
          roc::Board* GetBoard(int indx = 0);
       public:
          ReadoutApplication();

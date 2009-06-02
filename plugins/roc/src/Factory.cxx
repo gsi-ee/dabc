@@ -69,7 +69,7 @@ dabc::Device* roc::Factory::CreateDevice(const char* classname, const char* devn
       roc::UdpDevice* dev = new roc::UdpDevice(dabc::mgr()->GetDevicesFolder(true), devname, thrdname, cmd);
 
       if (!dev->IsConnected()) {
-         delete dev;
+         dev->DestroyProcessor();
          return 0;
       }
 

@@ -70,22 +70,39 @@ bool roc::ReadoutApplication::CreateAppModules()
    bool res = false;
    dabc::Command* cmd;
 
-   fDevName = "ROC";
-
    dabc::mgr()->CreateMemoryPool(roc::xmlRocPool,
                                  GetParInt(dabc::xmlBufferSize, 8192),
                                  GetParInt(dabc::xmlNumBuffers, 100));
 
    if (DoTaking()) {
-      res = dabc::mgr()->CreateDevice("roc::UdpDevice", fDevName.c_str());
-      DOUT1(("Create Roc Device = %s", DBOOL(res)));
-      if(!res) return false;
 
       cmd = new dabc::CmdCreateModule("roc::CombinerModule", "RocComb", "RocCombThrd");
       cmd->SetInt(dabc::xmlNumOutputs, 2);
       res = dabc::mgr()->Execute(cmd);
       DOUT1(("Create ROC combiner module = %s", DBOOL(res)));
       if(!res) return false;
+
+      for(int t=0; t<NumRocs(); t++) {
+
+         std::string devname = dabc::format("Roc%ddev", t);
+
+         dabc::Command* cmd = new dabc::CmdCreateDevice(typeUdpDevice, devname.c_str(), "RocsDevThread");
+         cmd->SetStr(roc::xmlBoardIP, RocIp(t));
+         cmd->SetInt(roc::xmlRole, roleDAQ);
+
+         if (!dabc::mgr()->Execute(cmd)) {
+            EOUT(("Cannot create device %s for roc %s", devname.c_str(), RocIp(t).c_str()));
+            return false;
+         }
+
+         ConfigureRoc(t);
+
+         if (!dabc::mgr()->CreateTransport(FORMAT(("RocComb/Input%d", t)), devname.c_str(), "RocsDevThread")) {
+            EOUT(("Cannot connect readout module to device %s", devname.c_str()));
+            return false;
+         }
+      }
+
    }
 
    if (DoCalibr()) {
@@ -99,26 +116,6 @@ bool roc::ReadoutApplication::CreateAppModules()
          res = dabc::mgr()->ConnectPorts("RocComb/Output0", "RocCalibr/Input");
          DOUT1(("Connect readout and calibr modules = %s", DBOOL(res)));
          if(!res) return false;
-      }
-   }
-
-   if (DoTaking()) {
-
-   //// connect module to ROC device, one transport for each board:
-
-      for(int t=0; t<NumRocs(); t++) {
-         cmd = new dabc::CmdCreateTransport(FORMAT(("RocComb/Input%d", t)), fDevName.c_str()); // container for additional board parameters
-         cmd->SetStr(roc::xmlBoardIP, RocIp(t));
-         res = dabc::mgr()->Execute(cmd);
-         DOUT1(("Connected readout module input %d  to ROC board %s, result %s",t, RocIp(t).c_str(), DBOOL(res)));
-         if(!res) return false;
-      }
-
-      // configure loop over all connected rocs:
-       for(int t=0; t<NumRocs();++t) {
-          res = ConfigureRoc(t);
-          DOUT1(("Configure ROC %d returns %s", t, DBOOL(res)));
-          if(!res) return false;
       }
    }
 
@@ -182,7 +179,9 @@ bool roc::ReadoutApplication::CreateAppModules()
 
 roc::Board* roc::ReadoutApplication::GetBoard(int indx)
 {
-   dabc::Device* dev = dabc::mgr()->FindDevice(fDevName.c_str());
+   std::string devname = dabc::format("Roc%ddev", indx);
+
+   dabc::Device* dev = dabc::mgr()->FindDevice(devname.c_str());
    if (dev==0) return 0;
 
    std::string sptr = dev->ExecuteStr("GetBoardPtr", "BoardPtr");
@@ -195,30 +194,15 @@ roc::Board* roc::ReadoutApplication::GetBoard(int indx)
 bool roc::ReadoutApplication::ConfigureRoc(int indx)
 {
    roc::Board* brd = GetBoard(indx);
-   if (brd==0) return false;
+   if (brd==0) {
+      EOUT(("Cannot configure ROC[%d]", indx));
+      return false;
+   }
 
-   bool res = true;
+   brd->GPIO_setActive(1,1,0,0);
+   brd->GPIO_setScaledown(1);
 
-//   res = res && brd->put(ROC_NX_SELECT, 0);
-//   res = res && brd->put(ROC_NX_ACTIVE, 0);
-   res = res && brd->put(ROC_SYNC_M_SCALEDOWN, 1);
-   res = res && brd->put(ROC_AUX_ACTIVE, 3);
-
-/*
-   res = res && brd->put(ROC_ACTIVATE_LOW_LEVEL, 1);
-   res = res && brd->put(ROC_DO_TESTSETUP,1);
-   res = res && brd->put(ROC_ACTIVATE_LOW_LEVEL,0);
-
-   res = res && brd->put(ROC_NX_REGISTER_BASE + 0,255);
-   res = res && brd->put(ROC_NX_REGISTER_BASE + 1,255);
-   res = res && brd->put(ROC_NX_REGISTER_BASE + 2,0);
-   res = res && brd->put(ROC_NX_REGISTER_BASE + 18,35);
-   res = res && brd->put(ROC_NX_REGISTER_BASE + 32,1);
-
-   res = res && brd->put(ROC_FIFO_RESET,1);
-   res = res && brd->put(ROC_BUFFER_FLUSH_TIMER,1000);
-*/
-   return res;
+   return true;
 }
 
 bool roc::ReadoutApplication::IsModulesRunning()
