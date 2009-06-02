@@ -292,8 +292,6 @@ bool roc::UdpDataSocket::CheckNextRequest(bool check_retrans)
       can_send += (fTransportBuffers - fTgtBufIndx - 1) * fBufferSize / UDP_DATA_SIZE;
    }
 
-//   DOUT0(("TgtIndx %u Can_send %d ", fTgtBufIndx, can_send));
-
    if (can_send > (int) fTransferWindow) can_send = fTransferWindow;
 
    if (fResend.Size() >= fTransferWindow) can_send = 0; else
@@ -366,7 +364,7 @@ bool roc::UdpDataSocket::CheckNextRequest(bool check_retrans)
    lastSendFrontId = req.frontpktid;
    lastRequestId++;
 
-//   DOUT1(("Send request id:%u  Range: 0x%04x - 0x%04x nresend:%d resend[0] = 0x%04x tgtbuf %p ptr %p tgtsize %u",
+//   DOUT0(("Send request id:%u  Range: 0x%04x - 0x%04x nresend:%d resend[0] = 0x%04x tgtbuf %p ptr %p tgtsize %u",
 //         lastRequestId, req.tailpktid, req.frontpktid, req.numresend,
 //         req.numresend > 0 ? req.resend[0] : 0, fTgtBuf, fTgtPtr, fTransportBuffers));
 
@@ -478,6 +476,8 @@ void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
 
             ResendInfo* info = fResend.PushEmpty();
 
+//            DOUT0(("!!!! Lost packet 0x%04x", fTgtNextId));
+
             info->pktid = fTgtNextId;
             info->lasttm = 0.;
             info->numtry = 0;
@@ -489,7 +489,8 @@ void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
             fTgtShift += UDP_DATA_SIZE;
             fTgtPtr += UDP_DATA_SIZE;
 
-            if (fTgtBuf->GetDataSize() - fTgtShift < UDP_DATA_SIZE) {
+            if (fTgtShift + UDP_DATA_SIZE > fTgtBuf->GetDataSize()) {
+               fTgtBuf->SetDataSize(fTgtShift);
                fTgtBufIndx++;
                if (fTgtBufIndx >= fTransportBuffers) {
                   EOUT(("One get packet out of the available buffer spaces !!!!"));
@@ -521,7 +522,7 @@ void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
       fTgtShift += data_len;
       fTgtPtr += data_len;
 
-      if (fTgtBuf->GetDataSize() - fTgtShift < UDP_DATA_SIZE) {
+      if (fTgtBuf->GetDataSize() < fTgtShift + UDP_DATA_SIZE) {
          fTgtPtr = 0;
          fTgtBuf->SetDataSize(fTgtShift);
          fTgtShift = 0;
@@ -550,6 +551,10 @@ void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
 
          fResend.RemoveItem(n);
 
+         // if all packets retransmitted, one can allow to skip buffers on roc,
+         // beside next packet, which is required
+         if (fResend.Size()==0) fTgtTailId = fTgtNextId - 1;
+
          packetaccepted = true;
 
          break;
@@ -557,8 +562,10 @@ void roc::UdpDataSocket::AddDataPacket(int len, void* tgt)
 
    }
 
-   if (!packetaccepted)
-      EOUT(("Packet %p was not accepted, FLUSH?", src_pktid));
+   if (!packetaccepted) {
+      EOUT(("Packet 0x%04x was not accepted - FLUSH???  ready = %u transport = %u tgtindx = %u buf %p", src_pktid, fReadyBuffers, fTransportBuffers, fTgtBufIndx, fTgtBuf));
+//      dabc::SetDebugLevel(1);
+   }
 
    // check incoming data for stop/start messages
    if (packetaccepted && (data_len>0) && (tgt!=0) && ((daqState == daqStarting) || (daqState == daqSuspending))) {
@@ -643,6 +650,8 @@ void roc::UdpDataSocket::CheckReadyBuffers(bool doflush)
          unsigned indx = fResend.ItemPtr(n)->bufindx;
          if (indx < minindx) minindx = indx;
       }
+
+//      DOUT0(("CheckReadyBuffers minindx = %u resend = %u", minindx, fResend.Size()));
 
       if (minindx>0) {
 

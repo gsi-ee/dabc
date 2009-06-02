@@ -77,6 +77,8 @@ void roc::CombinerModule::ProcessInputEvent(dabc::Port* inport)
 
       dabc::Buffer* buf = inport->Recv();
 
+      DumpData(dabc::Pointer(buf));
+
       if (Output(0)->CanSend())
          Output(0)->Send(buf);
       else
@@ -118,6 +120,9 @@ bool roc::CombinerModule::FindNextEvent(unsigned ninp)
 //      bool dodump = (rec->curr_indx == 0);
 
       dabc::Pointer ptr(buf); ptr.shift(rec->curr_indx);
+
+      if (buf->GetDataSize() % 6)
+         EOUT(("Taking buffer %u size %u mod %u", rec->curr_nbuf, buf->GetDataSize(), buf->GetDataSize() % 6));
 
 //      if (dodump) DumpData(ptr);
 
@@ -203,6 +208,8 @@ bool roc::CombinerModule::SkipEvent(unsigned inpid)
    rec->isnext     = false;
 
    if (rec->prev_nbuf>0) {
+//      DOUT0(("On input %u Skip buffers %u", inpid, rec->prev_nbuf));
+
       Input(inpid)->SkipInputBuffers(rec->prev_nbuf);
       rec->curr_nbuf -= rec->prev_nbuf;
       rec->prev_nbuf = 0;
@@ -247,7 +254,7 @@ void roc::CombinerModule::TryToProduceEventBuffers()
          return;
       }
 
-      // try to detect case of upper border crossong
+      // try to detect case of upper border crossing
       if (min_evnt != max_evnt)
          if ((min_evnt < 0x10000) && (max_evnt > 0xff0000L)) {
             evnt_cut = 0x800000;
@@ -276,14 +283,14 @@ void roc::CombinerModule::TryToProduceEventBuffers()
          if (ninp==0) {
              if  (inp->prev_evnt != (inp->prev_epoch & 0xffffff)) {
                 if (fErrorOutput)
-                   EOUT(("Missmtach in epoch %8x and event number %6x for ROC0",
+                   EOUT(("Mismatch in epoch %8x and event number %6x for ROC0",
                          inp->prev_epoch, inp->prev_evnt));
 //                inp->data_err = true;
              }
 
              if  (inp->next_evnt != (inp->next_epoch & 0xffffff)) {
                 if (fErrorOutput)
-                   EOUT(("Missmtach in epoch %8x and event number %6x for ROC0",
+                   EOUT(("Mismatch in epoch %8x and event number %6x for ROC0",
                          inp->next_epoch, inp->next_evnt));
 //                inp->data_err = true;
              }
@@ -293,7 +300,7 @@ void roc::CombinerModule::TryToProduceEventBuffers()
          } else {
             if (inp->next_evnt != fInp[0].next_evnt) {
 //               if (fErrorOutput)
-                  EOUT(("Next event missmatch between ROC0:%06x and ROC%u:%06x",
+                  EOUT(("Next event mismatch between ROC0:%06x and ROC%u:%06x",
                         fInp[0].next_evnt, ninp, inp->next_evnt));
                inp->data_err = true;
             }
@@ -467,9 +474,20 @@ unsigned roc::CombinerModule::FillRawSubeventsBuffer(dabc::Pointer& outptr)
 
 void roc::CombinerModule::DumpData(dabc::Pointer ptr)
 {
+   static uint32_t lastepoch(0);
+
    while (ptr.fullsize()>=6) {
       nxyter::Data* data = (nxyter::Data*) ptr();
       data->printData(3);
+
+      if (data->isEpochMsg()) {
+         uint32_t epoch = data->getEpoch();
+         if (epoch < lastepoch) EOUT(("ERROR epoch"));
+         lastepoch = epoch;
+      } else
+      if (data->isSyncMsg())
+         if (data->getSyncEvNum() != lastepoch & 0xffffff) EOUT(("ERROR sync"));
+
       ptr.shift(6);
    }
 }

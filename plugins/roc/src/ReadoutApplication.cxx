@@ -70,6 +70,8 @@ bool roc::ReadoutApplication::CreateAppModules()
    bool res = false;
    dabc::Command* cmd;
 
+   dabc::lgr()->SetLogLimit(1000000);
+
    dabc::mgr()->CreateMemoryPool(roc::xmlRocPool,
                                  GetParInt(dabc::xmlBufferSize, 8192),
                                  GetParInt(dabc::xmlNumBuffers, 100));
