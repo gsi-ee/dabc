@@ -207,7 +207,7 @@ namespace roc {
          void GPIO_setBAUD(uint32_t BAUD_START, uint32_t BAUD1, uint32_t BAUD2);
          void GPIO_setScaledown(uint32_t val);
 
-         // DAQ functionis
+         // DAQ functions
 
 
          //! getLowHighWater
@@ -226,7 +226,11 @@ namespace roc {
           */
          virtual bool setLowHighWater(int lowWater, int highWater) = 0;
 
-
+         //! setUseSorter
+         /*!
+          * Enable / disable usage of time sorter for nxyter data
+         */
+         void setUseSorter(bool on = true);
 
          //! startDaq
          /*!

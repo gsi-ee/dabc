@@ -134,7 +134,7 @@ bool nxyter::Sorter::addData(nxyter::Data* new_data, unsigned num_msg, bool flus
 
 //               if (data->getNxTs() > 0x3fe0) printf("CANBE REALLY???\n");
 
-            }else
+            } else
             if (fIntBufCurrEpoch > 0) {
                // here we must check that last epoch bit set correctly
                // lets suppose that hit time is correct, try to estimate when we should detect him
@@ -268,6 +268,11 @@ bool nxyter::Sorter::addData(nxyter::Data* new_data, unsigned num_msg, bool flus
             break;
          case ROC_MSG_SYS:
             fIntBufTimes[indx] = fIntBuffCurrMaxTm;
+            if (data->isStopDaqMsg()) {
+               if (fDoDebugOutput)
+                  printf(("Found stop daq msg, force flush!!!\n"));
+               flush_data = true;
+            }
             break;
          default:
             fIntBufTimes[indx] = tmEmpty;

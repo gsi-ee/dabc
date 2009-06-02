@@ -22,7 +22,9 @@ roc::ReadoutModule::ReadoutModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd),
    fDataCond(),
    fCurrBuf(0),
-   fCurrBufPos(0)
+   fCurrBufPos(0),
+   fSorter(0),
+   fSorterPos(0)
 {
    fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
    int numoutputs = GetCfgInt(dabc::xmlNumOutputs, 1, cmd);
@@ -36,10 +38,30 @@ roc::ReadoutModule::ReadoutModule(const char* name, dabc::Command* cmd) :
 
    for(int n=0; n<numoutputs; n++)
       CreateOutput(FORMAT(("Output%d", n)), Pool(), 10);
+
+   setUseSorter(GetCfgBool("UserSorter", false));
 }
 
 roc::ReadoutModule::~ReadoutModule()
 {
+   if (fSorter) {
+      delete fSorter;
+      fSorter = 0;
+   }
+}
+
+void roc::ReadoutModule::setUseSorter(bool on)
+{
+   dabc::LockGuard lock(fDataCond.CondMutex());
+
+   if (on && (fSorter==0)) {
+      fSorterPos = 0;
+      fSorter = new nxyter::Sorter(fBufferSize/6 * 2, fBufferSize/6 * 2, fBufferSize/6);
+   } else
+   if (!on && (fSorter!=0)) {
+      delete fSorter;
+      fSorter = 0;
+   }
 }
 
 void roc::ReadoutModule::AfterModuleStop()
@@ -88,20 +110,45 @@ bool roc::ReadoutModule::getNextData(nxyter::Data& data, double tmout)
    {
       dabc::LockGuard lock(fDataCond.CondMutex());
 
-      if (fCurrBuf==0)
-         fDataCond._DoWait(tmout);
+      if (fSorter==0) {
+         if (fCurrBuf==0)
+            fDataCond._DoWait(tmout);
 
-      if (fCurrBuf!=0) {
-//         DOUT0(("Get next data buff %p pos %u", fCurrBuf, fCurrBufPos));
+         if (fCurrBuf!=0) {
+            //         DOUT0(("Get next data buff %p pos %u", fCurrBuf, fCurrBufPos));
 
-         void* src = (char*) (fCurrBuf->GetDataLocation()) + fCurrBufPos;
-         memcpy(&data, src, sizeof(nxyter::Data));
-         fCurrBufPos += sizeof(nxyter::Data);
-         res = true;
-         if (fCurrBufPos >= fCurrBuf->GetDataSize()) {
-            buf = fCurrBuf;
-            fCurrBuf = 0;
-            fCurrBufPos = 0;
+            void* src = (char*) (fCurrBuf->GetDataLocation()) + fCurrBufPos;
+            memcpy(&data, src, sizeof(nxyter::Data));
+            fCurrBufPos += sizeof(nxyter::Data);
+            res = true;
+            if (fCurrBufPos >= fCurrBuf->GetDataSize()) {
+               buf = fCurrBuf;
+               fCurrBuf = 0;
+               fCurrBufPos = 0;
+            }
+         }
+      } else {
+         if (fSorter->sizeFilled()==fSorterPos) {
+            if (fSorterPos>0) {
+               fSorter->shiftFilledData(fSorterPos);
+               fSorterPos = 0;
+            }
+
+            if (fCurrBuf==0)
+               fDataCond._DoWait(tmout);
+            if (fCurrBuf!=0) {
+               buf = fCurrBuf;
+               fCurrBuf = 0;
+               // DOUT0(("Add buffer of size %u", buf->GetDataSize() / 6));
+               fSorter->addData((nxyter::Data*) buf->GetDataLocation(), buf->GetDataSize()/6);
+               // DOUT0(("After add filled size %u", fSorter->sizeFilled()));
+            }
+         }
+
+         if (fSorter->sizeFilled()>fSorterPos) {
+            memcpy(&data, fSorter->filledBuf() + fSorterPos, sizeof(nxyter::Data));
+            fSorterPos++;
+            res = true;
          }
       }
    }

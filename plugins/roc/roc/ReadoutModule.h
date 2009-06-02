@@ -20,6 +20,7 @@
 #endif
 
 #include "nxyter/Data.h"
+#include "nxyter/Sorter.h"
 
 namespace roc {
 
@@ -30,6 +31,9 @@ namespace roc {
          dabc::Condition fDataCond;
          dabc::Buffer*   fCurrBuf;
          dabc::BufferSize_t fCurrBufPos;
+
+         nxyter::Sorter*  fSorter;
+         unsigned fSorterPos; // position in sorter output buffer
 
       public:
 
@@ -42,6 +46,7 @@ namespace roc {
 
          virtual void AfterModuleStop();
 
+         void setUseSorter(bool on = true);
 
          bool getNextData(nxyter::Data& data, double tmout = 1.);
    };

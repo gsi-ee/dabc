@@ -300,6 +300,11 @@ void roc::Board::GPIO_setScaledown(uint32_t val)
    put(ROC_SYNC_M_SCALEDOWN, val);
 }
 
+void roc::Board::setUseSorter(bool on)
+{
+   if (fReadout) fReadout->setUseSorter(on);
+}
+
 
 bool roc::Board::startDaq(unsigned)
 {
