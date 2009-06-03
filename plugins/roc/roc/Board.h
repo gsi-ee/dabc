@@ -28,7 +28,7 @@ namespace roc {
    enum ERocMbsTypes {
       proc_RocEvent     = 1,   // complete event from one roc board (iSubcrate = rocid)
       proc_ErrEvent     = 2,   // one or several events with corrupted data inside (iSubcrate = rocid)
-      proc_MergedEvent  = 3    // sorted and synchronised data from several rocs (iSubcrate = upper rocid bits)
+      proc_MergedEvent  = 3    // sorted and synchronized data from several rocs (iSubcrate = upper rocid bits)
    };
 
    extern const char* xmlNumRocs;
@@ -80,6 +80,8 @@ namespace roc {
          // --------------------------------------------------------------------
          // methods for controlling ROC and components
          // --------------------------------------------------------------------
+
+         static const char* VersionToStr(char* buf, uint32_t ver);
 
          virtual uint32_t getSW_Version();
 

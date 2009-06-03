@@ -219,7 +219,7 @@ bool roc::CalibrationModule::DoCalibration()
          continue;
       }
 
-      // assign pointer on the begginnig of the first buffer
+      // assign pointer on the beginning of the first buffer
       if (f_inpptr.fullsize()==0) {
          dabc::Buffer* buf = Input(0)->InputBuffer(0);
 
@@ -264,7 +264,7 @@ bool roc::CalibrationModule::DoCalibration()
       mbs::EventHeader* inpevhdr = (mbs::EventHeader*) f_inpptr();
 
       if (f_inpptr.fullsize() < inpevhdr->FullSize()) {
-         EOUT(("Missmatch in beginning !!!!!!! rest: %u  evnt: %u  buf:%u",
+         EOUT(("Mismatch in beginning !!!!!!! rest: %u  evnt: %u  buf:%u",
             f_inpptr.fullsize(), inpevhdr->FullSize(), Input(0)->InputBuffer(0)->GetDataSize()));
          f_inpptr.reset();
          Input(0)->SkipInputBuffers(1);
@@ -275,7 +275,7 @@ bool roc::CalibrationModule::DoCalibration()
 
 //      if (fSkippedEvents + fBuildEvents > 5500) exit(1);
 
-//      DOUT1(("CALIBR: Analyse event %u of full size %u", inpevhdr->EventNumber(), inpevhdr->FullSize()));
+//      DOUT1(("CALIBR: Analyze event %u of full size %u", inpevhdr->EventNumber(), inpevhdr->FullSize()));
 
       if (inpevhdr->FullSize() > f_outptr.fullsize()){
          if (FlushOutputBuffer())
@@ -317,16 +317,16 @@ bool roc::CalibrationModule::DoCalibration()
          subevntcnt++;
 
          if (subevntcnt > fCalibr.size()) {
-            EOUT(("Add subcrate %u", subevhdr->iSubcrate));
+            DOUT0(("Add subcrate %u", subevhdr->iSubcrate));
 
             fCalibr.push_back(CalibRec(subevhdr->iSubcrate));
-            fCalibr[subevntcnt-1].sorter = new nxyter::Sorter(fBufferSize / 6, fBufferSize / 6, 4096);
+            fCalibr[subevntcnt-1].sorter = new nxyter::Sorter(fBufferSize / 6 * 2, fBufferSize / 6 * 2, fBufferSize/6);
          }
 
          rec0 = &(fCalibr[0]);
          CalibRec *rec = &(fCalibr[subevntcnt-1]);
          if (rec->rocid != (unsigned) subevhdr->iSubcrate) {
-            EOUT(("Missmatch in ROCs ids cnt:%u %u %u",  subevntcnt, rec->rocid, subevhdr->iSubcrate));
+            EOUT(("Mismatch in ROCs ids cnt:%u %u %u",  subevntcnt, rec->rocid, subevhdr->iSubcrate));
             iserrdata = true;
             continue;
          }
@@ -368,6 +368,10 @@ bool roc::CalibrationModule::DoCalibration()
          if (!rec->is_last_epoch) {
             rec->is_last_epoch = true;
             rec->last_epoch = epoch1 - 8;
+            if (rec->last_epoch > epoch1) {
+               EOUT(("Roc%u Overflows by first last_epoch assignment, set to 0", rec->rocid));
+               rec->last_epoch = 0;
+            }
          }
 
          data = (nxyter::Data*) ((char*) subevhdr->RawData() + subevhdr->RawDataSize() - 6);
@@ -423,13 +427,14 @@ bool roc::CalibrationModule::DoCalibration()
                     continue;
                 }
 
-
-         DOUT1(("Roc:%u Evnt1:%6x Evnt2:%6x", rec->rocid, rec->evnt1_num, rec->evnt2_num));
+//         DOUT1(("Roc:%u %s Evnt1:%06x ep1 %08x Evnt2:%06x ep2 %08x len %06x",
+//                 rec->rocid, DBOOL(rec!=rec0),
+//                 rec->evnt1_num, epoch1, rec->evnt2_num, epoch2, rec->evnt_len));
 
          if (rec!=rec0) {
 
             if ((rec->evnt1_num != rec0->evnt1_num) || (rec->evnt2_num != rec0->evnt2_num)) {
-               EOUT(("Events numbers missmatch !!!"));
+               EOUT(("Events numbers mismatch !!!"));
                iserrdata = true;
                continue;
             }
@@ -437,7 +442,7 @@ bool roc::CalibrationModule::DoCalibration()
             double k = 1. / rec->evnt_len * rec0->evnt_len;
 
             if ((k<0.99) || (k>1.01)) {
-               // EOUT(("Coefficient K:%5.3f too far from 1.0, error", k));
+               EOUT(("Coefficient K:%5.3f too far from 1.0, error", k));
                iserrdata = true;
                continue;
             }
@@ -450,8 +455,12 @@ bool roc::CalibrationModule::DoCalibration()
             if (rec->NeedBCoef()) {
                uint32_t b_e = uint32_t(rec0->evnt1_tm >> 14) - uint32_t(rec->evnt1_tm >> 14);
                double b_f = 1.* (rec0->evnt1_tm % 16384) / 16384. - (k-1.) * (rec->evnt1_tm / 16384) - k * (rec->evnt1_tm % 16384) / 16384.;
+
                rec->RecalculateCalibr(k, b_e, b_f);
+
+//               DOUT1(("Roc:%u k = %7.5f be = %08x bf = %7.3f", rec->rocid, k, b_e, b_f));
             } else
+//               DOUT1(("Roc:%u k = %7.5f", rec->rocid, k));
                rec->RecalculateCalibr(k);
 
 //            DOUT1(("Roc:%u Calibr K:%7.5f B:%10.2f b_e:%u b_f:%6.4f   b_diff:%5.3f",
@@ -463,11 +472,17 @@ bool roc::CalibrationModule::DoCalibration()
          if (is_extra_last_epoch) rec->numdata--;
       }
 
-      // now try to afjust front output epoch on all channels
+      // now try to adjust front output epoch on all channels
       if (!iserrdata) {
 
          uint32_t min_cal_epoch = 0xFFFFFFFF;
 //         0x100000000LL;
+
+         // such method to define minimum epoch is not safe, while
+         // in case of overflow epoch=1 in time not before epoch=0xffffffff,
+         // but rather wise-versa. The only chance to avoid this
+         // subtract some constant (here 8) from mathematical minimum and
+         // believe that calibrated epochs not much far from one other as this constant, divided by two
 
          for(unsigned n=0;n<fCalibr.size();n++) {
             CalibRec *rec = &(fCalibr[n]);
@@ -478,6 +493,9 @@ bool roc::CalibrationModule::DoCalibration()
 
             // here one not interesting in fraction
             rec->CalibrEpoch(cal_epoch);
+
+//            DOUT1(("Roc%u front epoch %08x calepoch %08x k = %7.5f  b_e = %08x  b_f = %5.2f",
+//                  n, rec->front_epoch, cal_epoch, rec->calibr_k, rec->calibr_b_e, rec->calibr_b_f));
 
             if (cal_epoch < min_cal_epoch) min_cal_epoch = cal_epoch;
          }
@@ -495,7 +513,7 @@ bool roc::CalibrationModule::DoCalibration()
 
             double fraction = rec->CalibrEpoch(cal_epoch);
 
-            if (cal_epoch - fFrontOutEpoch < 8) {
+            if (cal_epoch - fFrontOutEpoch < 8 / 2) {
                EOUT(("Rounding problem !!!!!!!!!!!!!!!!!!"));
                exit(1);
             }
@@ -676,7 +694,7 @@ bool roc::CalibrationModule::DoCalibration()
 
          if (minrec != 0) {
 
-//            DOUT1(("Minumum rec has ROC:%u stamp:%x DoCopy:%d", minrec->rocid, minrec->stamp, minrec->stamp_copy));
+//            DOUT1(("Minimum rec has ROC:%u stamp:%x DoCopy:%d", minrec->rocid, minrec->stamp, minrec->stamp_copy));
 /*
             if (minrec->stamp_copy) {
                uint64_t fulltm = (uint64_t(fFrontOutEpoch) << 14) | minrec->stamp;

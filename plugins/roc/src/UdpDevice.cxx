@@ -403,34 +403,32 @@ bool roc::UdpDevice::init(bool withdatach)
       DOUT2(("Create data socket %d for port %d connected to host %s", fd, nport, fRocIp.c_str()));
    }
 
-   if (get(ROC_NUMBER, fRocNumber)!=0) return false;
+   fRocNumber = getROC_Number();
 
-   uint32_t sw_ver(0), hw_ver(0);
+   uint32_t sw_ver = getSW_Version();
+   uint32_t hw_ver = getHW_Version();
 
-   if (get(ROC_SOFTWARE_VERSION,sw_ver) !=0) return false;
-
-   if((sw_ver >= 0x01080000) || (sw_ver < 0x01070000)) {
-      EOUT(("The ROC you want to access has software version %x", sw_ver));
-      EOUT(("This C++ access class only supports boards with major version 1.7 == %x", 0x01070000));
-   }
-   DOUT0(("ROC software version is: 0x%x", sw_ver));
-
-   if (get(ROC_HARDWARE_VERSION, hw_ver) != 0) return false;
+   char sbuf[100];
 
    if((hw_ver >= 0x01080000) || (hw_ver < 0x01070000)) {
       EOUT(("The ROC you want to access has hardware version %x", hw_ver));
       EOUT(("Please update your hardware to major version 1.7 == %x", 0x01070000));
    }
+   DOUT0(("ROC%u hardware version is: %s", fRocNumber, VersionToStr(sbuf, hw_ver)));
 
-   DOUT0(("ROC hardware version is: 0x%x", hw_ver));
+   if((sw_ver >= 0x01080000) || (sw_ver < 0x01070000)) {
+      EOUT(("The ROC you want to access has software version %x", sw_ver));
+      EOUT(("This C++ access class only supports boards with major version 1.7 == %x", 0x01070000));
+   }
+   DOUT0(("ROC%u software version is: %s", fRocNumber, VersionToStr(sbuf, sw_ver)));
 
-   return true;
+   return (sw_ver!=0) && (hw_ver!=0);
 }
 
 
 int roc::UdpDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
-   DOUT0(("Create transport for port %p  ch %p", port, fDataCh));
+   DOUT1(("Create transport for port %p  ch %p", port, fDataCh));
 
    if (fDataCh == 0) return cmd_false;
 

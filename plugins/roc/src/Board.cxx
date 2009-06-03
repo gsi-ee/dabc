@@ -102,6 +102,11 @@ bool roc::Board::Close(Board* brd)
    return true;
 }
 
+const char* roc::Board::VersionToStr(char* buf, uint32_t ver)
+{
+   sprintf(buf,"%u.%u.%u.%u", ver >> 24, (ver >> 16) & 0xff, (ver >> 8) & 0xff, ver & 0xff);
+   return buf;
+}
 
 
 void roc::Board::setROC_Number(uint32_t num)
