@@ -13,7 +13,7 @@
  ********************************************************************/
 #include "verbs/OpenSM.h"
 
-#include <opensm/osm_helper.h>
+#include <infiniband/opensm/osm_helper.h>
 
 #include "dabc/logging.h"
 #include "verbs/QueuePair.h"
@@ -120,8 +120,12 @@ bool verbs::OpenSM::Init()
       return false;
    }
 
+
+// the only change from OFED 1.2 to 1.4 
+//   status = osm_mad_pool_init( &f_mad_pool, f_log ); 
+
    osm_mad_pool_construct( &f_mad_pool);
-   status = osm_mad_pool_init( &f_mad_pool, f_log );
+   status = osm_mad_pool_init( &f_mad_pool);
    if( status != IB_SUCCESS ) {
       osm_log(f_log, OSM_LOG_ERROR, "problem with mad_pool\n" );
       return false;

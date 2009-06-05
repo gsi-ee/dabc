@@ -295,7 +295,7 @@ verbs::Device::~Device()
    if (f) {
       for (int n=f->NumChilds()-1; n>=0; n--) {
          Thread* thrd = dynamic_cast<Thread*> (f->GetChild(n));
-         if (thrd && (thrd->GetDevice()==this))
+         if (thrd && (thrd->GetDevice()==this)) {
             if (!thrd->IsItself()) {
                if (thrd==ProcessorThread()) EOUT(("AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBB"));
                delete thrd;
@@ -303,6 +303,7 @@ verbs::Device::~Device()
                thrd->CloseThread();
                dabc::mgr()->DestroyObject(thrd);
             }
+         }
       }
    }
 

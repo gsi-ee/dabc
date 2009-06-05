@@ -18,8 +18,8 @@
 
 #define OSM_VENDOR_INTF_OPENIB
 
-#include <vendor/osm_vendor_api.h>
-#include <vendor/osm_vendor_sa_api.h>
+#include <infiniband/vendor/osm_vendor_api.h>
+#include <infiniband/vendor/osm_vendor_sa_api.h>
 
 namespace verbs {
 

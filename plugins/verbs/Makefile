@@ -1,46 +1,28 @@
-# in the beginning initialise all OFED variables and check if one has OFED installed
-# to change default configuration, it is enough to change OFED_DIR and OFED_LIBDIR
-# the rest can remain as is
-# If required, support of VERBS MCAST can be enabled  
-
-ifndef OFED_DIR
-OFED_DIR        = /usr/local/ofed
-endif
-
-ifndef OFED_LIBDIR
-OFED_LIBDIR     = $(OFED_DIR)/lib64
-endif
-
-ifndef OFED_MCAST
-OFED_MCAST      = false
-endif
- 
-ifndef OFED_LIBS
-OFED_LIBS       = -libverbs
-endif
-
-ifeq ($(OFED_MCAST), true)
-OFED_INCLUDES += /usr/include/infiniband
-OFED_LIBS     += -lopensm -losmcomp -losmvendor -lrt
-endif
 
 # switch to enable OFED library support 
 ifndef USEOFEDVERBS
-ifneq ($(wildcard $(OFED_LIBDIR))$(wildcard $(OFED_DIR)),)
+ifneq ($(wildcard /usr/lib64/libibverbs.*)$(wildcard /usr/lib/libibverbs.*),)
 USEOFEDVERBS    = true
 endif
 endif
 
-
-ifdef USEOFEDVERBS
+ifeq ($(USEOFEDVERBS),true)
 
 include $(DABCSYS)/config/Makefile.config
+
+OFED_INCLUDES   =
+OFED_LIBS       = -libverbs
 
 ifdef DABCMAINMAKE
 VERBSDIR = plugins/verbs
 else
 VERBSDIR = .
-INCLUDES += $(VERBSDIR)
+OFED_INCLUDES += .
+endif
+
+ifeq ($(OFED_MCAST), true)
+OFED_INCLUDES += /usr/include/infiniband
+OFED_LIBS     += -lopensm -losmcomp -losmvendor -lrt
 endif
 
 

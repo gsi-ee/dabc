@@ -31,7 +31,7 @@ ibv_gid VerbsConnThrd_Multi_Gid =  {   {
     } };
 
 
-typedef struct VerbsConnectData
+struct VerbsConnectData
 {
    uint64_t kind; // 111 - client request, 222 - server accept, 333 - server reject
 
@@ -53,8 +53,6 @@ typedef struct VerbsConnectData
    uint64_t ConnType;
    char     ConnId[128];
 };
-
-
 
 
 verbs::Processor::Processor(QueuePair* qp) :
@@ -409,11 +407,12 @@ double verbs::ProtocolProcessor::ProcessTimeout(double last_diff)
 
    double next_tmout = 0.5; // default timeout
 
-   if (fKindStatus!=0)
+   if (fKindStatus!=0) {
      if (conn->TrySendConnRequest(this))
         next_tmout = 1.0;
      else
         next_tmout = 0.1; // repeat after short time;
+   }
 
    return next_tmout;
 }
