@@ -408,19 +408,17 @@ bool roc::UdpDevice::init(bool withdatach)
    uint32_t sw_ver = getSW_Version();
    uint32_t hw_ver = getHW_Version();
 
-   char sbuf[100];
-
    if((hw_ver >= 0x01080000) || (hw_ver < 0x01070000)) {
       EOUT(("The ROC you want to access has hardware version %x", hw_ver));
       EOUT(("Please update your hardware to major version 1.7 == %x", 0x01070000));
    }
-   DOUT0(("ROC%u hardware version is: %s", fRocNumber, VersionToStr(sbuf, hw_ver)));
+   DOUT0(("ROC%u hardware version is: %s", fRocNumber, VersionToStr(hw_ver)));
 
    if((sw_ver >= 0x01080000) || (sw_ver < 0x01070000)) {
       EOUT(("The ROC you want to access has software version %x", sw_ver));
       EOUT(("This C++ access class only supports boards with major version 1.7 == %x", 0x01070000));
    }
-   DOUT0(("ROC%u software version is: %s", fRocNumber, VersionToStr(sbuf, sw_ver)));
+   DOUT0(("ROC%u software version is: %s", fRocNumber, VersionToStr(sw_ver)));
 
    return (sw_ver!=0) && (hw_ver!=0);
 }

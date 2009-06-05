@@ -81,7 +81,7 @@ namespace roc {
          // methods for controlling ROC and components
          // --------------------------------------------------------------------
 
-         static const char* VersionToStr(char* buf, uint32_t ver);
+         static const char* VersionToStr(uint32_t ver);
 
          virtual uint32_t getSW_Version();
 
