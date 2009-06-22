@@ -138,7 +138,6 @@ void roc::Board::reset_FIFO()
 {
    put(ROC_FIFO_RESET, 1);
    put(ROC_FIFO_RESET, 0);
-   reset_MISS();
 }
 
 uint32_t roc::Board::getFIFO_empty()
@@ -155,19 +154,6 @@ uint32_t roc::Board::getFIFO_full()
    return val;
 }
 
-uint32_t roc::Board::getMISS()
-{
-   uint32_t val;
-   get(ROC_NX_MISS, val);
-   return val;
-}
-
-void roc::Board::reset_MISS()
-{
-   put(ROC_NX_MISS_RESET, 1);
-   put(ROC_NX_MISS_RESET, 0);
-}
-
 void roc::Board::setParityCheck(uint32_t val)
 {
    put(ROC_PARITY_CHECK, val);
@@ -176,6 +162,11 @@ void roc::Board::setParityCheck(uint32_t val)
 void roc::Board::RESET()
 {
    put(ROC_SYSTEM_RESET, 1);
+}
+
+void roc::Board::DEBUG_MODE(uint32_t val)
+{
+   put(ROC_DEBUG_MODE, val);
 }
 
 void roc::Board::TestPulse(uint32_t length, uint32_t number)
@@ -211,7 +202,7 @@ void roc::Board::NX_setActive(uint32_t mask)
 uint32_t roc::Board::NX_getActive()
 {
    uint32_t mask(0);
-   if (!get(ROC_NX_ACTIVE, mask)) return 0;
+   if (get(ROC_NX_ACTIVE, mask)!=0) mask = 0;
    return mask;
 }
 
@@ -228,50 +219,109 @@ void roc::Board::setLTS_Delay(uint32_t val)
 }
 
 
-void roc::Board::GPIO_setActive(uint32_t mask)
-{
-   put(ROC_AUX_ACTIVE, mask);
-}
-
-uint32_t roc::Board::GPIO_getActive()
+//-------------------------------------------------------------------------------
+uint32_t roc::Board::getTHROTTLE()
 {
    uint32_t mask(0);
-   if (get(ROC_AUX_ACTIVE, mask)!=0) return 0;
+   get(ROC_THROTTLE, mask);
    return mask;
 }
+//-------------------------------------------------------------------------------
 
 
-void roc::Board::GPIO_setActive(int gpio1, int gpio2, int gpio3, int gpio4)
+
+//-------------------------------------------------------------------------------
+uint32_t roc::Board::GPIO_getCONFIG()
 {
-   uint32_t mask = 0;
+   uint32_t mask(0);
+   get(ROC_GPIO_CONFIG, mask);
+   return mask;
+}
+//-------------------------------------------------------------------------------
 
-   if (gpio1>0) mask |= 1;
-   if (gpio2>0) mask |= 2;
-   if (gpio3>0) mask |= 4;
-   if (gpio4>0) mask |= 8;
 
-   GPIO_setActive(mask);
 
+//-------------------------------------------------------------------------------
+void roc::Board::GPIO_setCONFIG(uint32_t mask)
+{
+   put(ROC_GPIO_CONFIG, mask);
+}
+//-------------------------------------------------------------------------------
+
+
+bool roc::Board::GPIO_packCONFIG(uint32_t& mask, int gpio_nr, int additional, int throttling, int falling, int rising)
+{
+   if ((gpio_nr<2)||(gpio_nr>7)) return false;
+
+   if ((gpio_nr==2)||(gpio_nr==3)) {
+     rising = falling | rising;
+     falling = 0;
+   }
+
+   mask = mask & (~(0xf<<(4*gpio_nr)));
+
+   uint32_t submask = ((additional ? 8 : 0)|(throttling ? 4 : 0)|(falling ? 2: 0)|(rising ? 1 : 0));
+
+   mask = mask | ( submask << (4*gpio_nr));
+
+   return true;
 }
 
-void roc::Board::GPIO_getActive(int& gpio1, int& gpio2, int& gpio3, int& gpio4)
+bool roc::Board::GPIO_unpackCONFIG(uint32_t mask, int gpio_nr, int& additional, int& throttling, int& falling, int& rising)
 {
-   uint32_t mask = GPIO_getActive();
+   if ((gpio_nr<2)||(gpio_nr>7)) return false;
 
-   gpio1 = (mask & 1) ? 1 : 0;
-   gpio2 = (mask & 2) ? 1 : 0;
-   gpio3 = (mask & 4) ? 1 : 0;
-   gpio4 = (mask & 8) ? 1 : 0;
+   uint32_t submask = (mask >> (4*gpio_nr)) & 0xf;
+
+   additional = (submask & 8) ? 1 : 0;
+   throttling = (submask & 4) ? 1 : 0;
+   falling = (submask & 2) ? 1 : 0;
+   rising  = (submask & 1) ? 1 : 0;
+
+   if ((gpio_nr==2)||(gpio_nr==3)) {
+     rising = falling | rising;
+     falling = 0;
+   }
+
+   return true;
 }
 
-void roc::Board::GPIO_setBAUD(uint32_t BAUD_START, uint32_t BAUD1, uint32_t BAUD2)
+//-------------------------------------------------------------------------------
+void roc::Board::GPIO_setCONFIG(int gpio_nr, int additional, int throttling, int falling, int rising)
 {
-   put(ROC_SYNC_BAUD_START, BAUD_START);
-   put(ROC_SYNC_BAUD1, BAUD1);
-   put(ROC_SYNC_BAUD2, BAUD2);
-}
+   uint32_t mask = GPIO_getCONFIG();
 
-void roc::Board::GPIO_setMHz(int MHz)
+   if (GPIO_packCONFIG(mask, gpio_nr, additional, throttling, falling, rising))
+      GPIO_setCONFIG(mask);
+}
+//-------------------------------------------------------------------------------
+
+
+
+
+//-------------------------------------------------------------------------------
+void roc::Board::GPIO_setBAUD(int gpio_nr, uint32_t BAUD_START, uint32_t BAUD1, uint32_t BAUD2)
+{
+   if (gpio_nr==1) {
+      put(ROC_SYNC1_BAUD_START, BAUD_START);
+      put(ROC_SYNC1_BAUD1, BAUD1);
+      put(ROC_SYNC1_BAUD2, BAUD2);
+   } else if (gpio_nr==2) {
+      put(ROC_SYNC2_BAUD_START, BAUD_START);
+      put(ROC_SYNC2_BAUD1, BAUD1);
+      put(ROC_SYNC2_BAUD2, BAUD2);
+   } else if (gpio_nr==3) {
+      put(ROC_SYNC3_BAUD_START, BAUD_START);
+      put(ROC_SYNC3_BAUD1, BAUD1);
+      put(ROC_SYNC3_BAUD2, BAUD2);
+   }
+}
+//-------------------------------------------------------------------------------
+
+
+
+//-------------------------------------------------------------------------------
+void roc::Board::GPIO_setMHz(int gpio_nr, int MHz)
 {
    int Baud1, Baud2, Start;
    float realMHz;
@@ -294,14 +344,18 @@ void roc::Board::GPIO_setMHz(int MHz)
    if (realMHz!=MHz)
       DOUT0(("The differnece to the passed Parameter is caused by the hardware restrictions. \n"));
 
-   GPIO_setBAUD (Start, Baud1, Baud2);
+   GPIO_setBAUD (gpio_nr, Start, Baud1, Baud2);
 }
+//-------------------------------------------------------------------------------
 
 
+//-------------------------------------------------------------------------------
 void roc::Board::GPIO_setScaledown(uint32_t val)
 {
-   put(ROC_SYNC_M_SCALEDOWN, val);
+   put(ROC_SYNC1_M_SCALEDOWN, val);
 }
+//-------------------------------------------------------------------------------
+
 
 void roc::Board::setUseSorter(bool on)
 {

@@ -7,9 +7,7 @@
 #include "roc/ADCchip.h"
 
 #include "roc/defines.h"
-
 #include "dabc/logging.h"
-
 
 //-------------------------------------------------------------------------------
 roc::ADCchip::ADCchip(roc::Board* board) : roc::Peripheral(board)
@@ -31,7 +29,7 @@ roc::ADCchip::~ADCchip()
 void roc::ADCchip::setConnector(int num)
 {
     if ((num >= CON19) && (num <= CON20)) fADC_Connector = num;
-    else EOUT(("Not a valid ADC-Connector!%d", num));
+    else EOUT(("Not a valid ADC-Connector!%d \n", num));
 }
 //-------------------------------------------------------------------------------
 
@@ -194,3 +192,26 @@ void roc::ADCchip::setSHIFT(uint32_t shift)  {
    setBUFG(bufg_select);
 }
 //-------------------------------------------------------------------------------
+
+
+
+//-------------------------------------------------------------------------------
+uint32_t roc::ADCchip::getADCdirect(int con, int num) {
+   uint32_t val=0;
+
+   if ((con==CON19)&&(num==PORT_A)) brd().get(ROC_ADC_DIRECT_1a, val);
+   if ((con==CON19)&&(num==PORT_B)) brd().get(ROC_ADC_DIRECT_1b, val);
+   if ((con==CON19)&&(num==PORT_C)) brd().get(ROC_ADC_DIRECT_1c, val);
+   if ((con==CON19)&&(num==PORT_D)) brd().get(ROC_ADC_DIRECT_1d, val);
+   if ((con==CON20)&&(num==PORT_A)) brd().get(ROC_ADC_DIRECT_2a, val);
+   if ((con==CON20)&&(num==PORT_B)) brd().get(ROC_ADC_DIRECT_2b, val);
+   if ((con==CON20)&&(num==PORT_C)) brd().get(ROC_ADC_DIRECT_2c, val);
+   if ((con==CON20)&&(num==PORT_D)) brd().get(ROC_ADC_DIRECT_2d, val);
+
+   return val;
+}
+//-------------------------------------------------------------------------------
+
+
+
+

@@ -6,15 +6,20 @@
 
 #include "roc/Calibrate.h"
 
-#include "roc/defines.h"
-#include "dabc/logging.h"
-
 #include "roc/UdpBoard.h"
+#include "roc/defines.h"
 
 #include <time.h>
 #include <sys/time.h>
 
+#include "dabc/logging.h"
+
+
 #include <stdexcept>
+
+#include <iostream>
+using namespace std;
+
 
 //-------------------------------------------------------------------------------
 roc::Calibrate::Calibrate(roc::Board* board) : Peripheral(board)
@@ -41,7 +46,7 @@ void roc::Calibrate::addFEB(roc::FEBboard* _feb)
 
 roc::FEBboard& roc::Calibrate::FEB(int n)
 {
-   if ((n>=(int)_febs.size()) || (n<0)) throw std::out_of_range("FATAL ERROR: You tried to access a FEB Number, that is not available!\r\n");
+   if ((n>=_febs.size()) || (n<0)) throw std::out_of_range("FATAL ERROR: You tried to access a FEB Number, that is not available!\r\n");
    return *_febs[n];
 }
 
@@ -73,15 +78,16 @@ int roc::Calibrate::gui_prepare(int feb, int nx_number)
    fNX_number = nx_number;
    fFEB_Number = feb;
 
-   for (int i=0; i<=15; i++) {
+   for (int i=0; i<=15; i++)
        FEB(feb).NX(nx_number).I2C().setRegister(i, 0xFF);
-   }
+
    FEB(feb).NX(nx_number).I2C().setRegister(3, 0x0F);
 
    brd().setLTS_Delay(fLTS_Delay);
 
-   roc::UdpBoard* udp = dynamic_cast<roc::UdpBoard*> (fBoard);
+   roc::UdpBoard* udp = dynamic_cast<roc::UdpBoard*> (getBoard());
    if (udp) udp->BURST(0);
+
    return 0;
 }
 //-------------------------------------------------------------------------------
@@ -99,9 +105,10 @@ int roc::Calibrate::prepare(int feb, int nx_number)
 
    brd().setLTS_Delay(fLTS_Delay);
 
-   fBoard->GPIO_setActive(0, 0, 0, 0);
+   //fBoard->GPIO_setActive(0, 0, 0, 0);
+   fBoard->GPIO_setCONFIG(0);
 
-   if (verbose()) DOUT0(("Preparing NX %d ...", nx_number));
+   if (verbose()) DOUT0(("Preparing NX %d ...\n", nx_number));
 
    if (FEB(fFEB_Number).NX(fNX_number).getNumber()==0) brd().NX_setActive(1, 0, 0, 0);
    if (FEB(fFEB_Number).NX(fNX_number).getNumber()==1) brd().NX_setActive(0, 1, 0, 0);
@@ -110,7 +117,7 @@ int roc::Calibrate::prepare(int feb, int nx_number)
 
    FEB(feb).NX(nx_number).setChannelDelay(8);
 
-   roc::UdpBoard* udp = dynamic_cast<roc::UdpBoard*> (fBoard);
+   roc::UdpBoard* udp = dynamic_cast<roc::UdpBoard*> (getBoard());
    if (udp) udp->BURST(0);
 
    FEB(feb).NX(nx_number).I2C().setRegister(16,160);
@@ -132,15 +139,15 @@ int roc::Calibrate::prepare(int feb, int nx_number)
    FEB(feb).NX(nx_number).I2C().setRegister(32, 0);
    FEB(feb).NX(nx_number).I2C().setRegister(33, 11);
 
-   for (i=0; i<=15; i++) {
+   for (i=0; i<=15; i++)
        FEB(feb).NX(nx_number).I2C().setRegister(i, 0xFF);
-   }
+
    FEB(feb).NX(nx_number).I2C().setRegister(3, 0x0F);
 
    brd().NX_reset();
    brd().reset_FIFO();
 
-   if (verbose()) DOUT0(("Ready for TestPulse..."));
+   if (verbose()) DOUT0(("Ready for TestPulse...\n"));
 
    return 0;
 }
@@ -154,12 +161,12 @@ int roc::Calibrate::prepare(int feb, int nx_number)
 int roc::Calibrate::autolatency(int range_min, int range_max)
 {
    int latency, shift, sr_init, bufg, deadcount, ok;
-   int avg, max, maxl(0), maxs(0), maxb(0), maxn, maxo, invalid(0), allinvalid(0);
+   int avg, max, maxl=0, maxs=0, maxb=0, maxn, maxo, invalid=0, allinvalid=0;
    uint32_t nx, adc, id;
    int anz;
    nxyter::Data data;
 
-   DOUT0(("Autolatency..."));
+   cout << "Autolatency..." << endl;
 
    max=0xFFFF;
    for (latency = range_min*8; latency <= range_max*8; latency+=8){
@@ -194,7 +201,7 @@ int roc::Calibrate::autolatency(int range_min, int range_max)
                    adc = data.getAdcValue();
                    nx = data.getNxNumber();
                    id = data.getId();
-                   if (((int) nx == FEB(fFEB_Number).NX(fNX_number).getNumber()) && (id==31)) {
+                   if ((nx==FEB(fFEB_Number).NX(fNX_number).getNumber()) && (id==31)) {
                      avg+=adc;
                      anz++;
                    } else {
@@ -207,7 +214,7 @@ int roc::Calibrate::autolatency(int range_min, int range_max)
                 }
 
                 if (my_stop()>=5) {
-                   EOUT(("ERROR: Not enough Testpulse data! (Recieved %d values)", anz));
+                   printf("ERROR: Not enough Testpulse data! (Recieved %d values)\r\n", anz);
                    Stop_DAQ();
                    return -1;
                 }
@@ -217,7 +224,7 @@ int roc::Calibrate::autolatency(int range_min, int range_max)
 
             if (anz>0) avg = avg / anz;
             else avg = 0;
-            if (verbose()) DOUT0(("%d --- %d, %d, %d --- avg: %X (invalid: % d)", anz, latency, shift, bufg, avg, invalid));
+            if (verbose()) DOUT0(("%d --- %d, %d, %d --- avg: %X (invalid: % d)\r\n", anz, latency, shift, bufg, avg, invalid));
             if (avg<max) {
                max=avg;
                maxl = latency;
@@ -227,16 +234,14 @@ int roc::Calibrate::autolatency(int range_min, int range_max)
          }
       }
    }
-   if (verbose()) DOUT0(("Measured a minimum ADC value of 0x%X, using a latency of %d, a shift of %d and bufg_sel of %d", max, maxl, maxs, maxb));
-   if (allinvalid>64000) DOUT0(("WARNING: Due to the high noise (~ %d%%) these values are not very significant!", 100*allinvalid/(2500*32*(range_max-range_min+1))));
-   else DOUT0(("INFO: Noise ~%d%%", 100*allinvalid/(2500*32*(range_max-range_min+1))));
-   if (verbose()) DOUT0((""));
+   if (verbose()) DOUT0(("Measured a minimum ADC value of 0x%X, using a latency of %d, a shift of %d and bufg_sel of %d\r\n", max, maxl, maxs, maxb));
+   if (allinvalid>64000) DOUT0(("WARNING: Due to the high noise (~ %d%%) these values are not very significant!\r\n", 100*allinvalid/(2500*32*(range_max-range_min+1))));
+   else DOUT0(("INFO: Noise ~%d%%\r\n", 100*allinvalid/(2500*32*(range_max-range_min+1))));
+   if (verbose()) DOUT0(("\n"));
 
    FEB(fFEB_Number).ADC().setSHIFT((maxs<<1)+maxb);
 
-
-
-   if (verbose()) DOUT0(("Edge detection..."));
+   if (verbose()) DOUT0(("Edge detection...\r\n"));
    maxo=0xFFFF; maxn=0xFFFF;
    for (latency = maxl; (maxn <= maxo + 200) && (latency>=0); latency--){
       FEB(fFEB_Number).ADC().setChannelLatency(FEB(fFEB_Number).NX(fNX_number).getNumber()+1, latency);
@@ -259,7 +264,7 @@ int roc::Calibrate::autolatency(int range_min, int range_max)
              adc = data.getAdcValue();
              nx = data.getNxNumber();
              id = data.getId();
-             if (((int) nx == FEB(fFEB_Number).NX(fNX_number).getNumber()) && (id==31)) {
+             if ((nx==FEB(fFEB_Number).NX(fNX_number).getNumber()) && (id==31)) {
                avg+=adc;
                anz++;
              } else {
@@ -270,7 +275,7 @@ int roc::Calibrate::autolatency(int range_min, int range_max)
              //printf("timeout\r\n");
           }
           if (my_stop()>=5) {
-             EOUT(("ERROR: Not enough Testpulse data!"));
+             printf("ERROR: Not enough Testpulse data!\r\n");
              return -1;
           }
       }
@@ -278,19 +283,19 @@ int roc::Calibrate::autolatency(int range_min, int range_max)
 
       if (anz>0) avg = avg / anz;
       else avg = 0;
-      if (verbose()) DOUT0(("%d --- %d --- avg: %X", anz, latency, avg));
+      if (verbose()) DOUT0(("%d --- %d --- avg: %X\r\n", anz, latency, avg));
       maxo=maxn;
       maxn=avg;
    }
 
    maxl = latency + 5;
 
-   DOUT0(("Latency: %d", maxl));
-   DOUT0(("sr_init: %d", maxs));
-   DOUT0(("bufg   : %d", maxb));
+   printf ("Latency: %d\r\n", maxl);
+   printf ("sr_init: %d\r\n", maxs);
+   printf ("bufg   : %d\r\n", maxb);
 
    FEB(fFEB_Number).ADC().setChannelLatency(FEB(fFEB_Number).NX(fNX_number).getNumber()+1, maxl);
-   if (verbose()) DOUT0(("OK.", maxl));
+   if (verbose()) DOUT0(("OK.\r\n", maxl));
 
    return 0;
 }
@@ -301,17 +306,18 @@ int roc::Calibrate::autolatency(int range_min, int range_max)
 //-------------------------------------------------------------------------------
 int roc::Calibrate::autodelay()
 {
-   uint32_t deadcount, anz, min, max;
+   uint32_t deadcount, anz, min, i, max;
    uint32_t val, nx, id, ts, TS, low, high, delay;
    nxyter::Data data;
 
+   brd().DEBUG_MODE(1);
    FEB(fFEB_Number).NX(fNX_number).setChannelDelay(8);
    brd().NX_reset();
 
    FEB(fFEB_Number).NX(fNX_number).I2C().setRegister(32, 1);
 
-   DOUT0(("Autodelay..."));
-   if (verbose()) DOUT0(("Writing Pulse ..."));
+   cout << "Autodelay..." << endl;
+   if (verbose()) DOUT0(("Writing Pulse ...\n"));
 
    brd().TestPulse (2000, 5000);
 
@@ -319,11 +325,13 @@ int roc::Calibrate::autodelay()
    anz=0;
    deadcount=0;
 
-   if (verbose()) DOUT0(("Receiving Data ..."));
+   if (verbose()) DOUT0(("Receiving Data ...\n"));
 
    my_start();
 
    while (anz<500) {
+
+       brd().TestPulse (2000, 5000);
 
        if (brd().getFIFO_empty()) break;
 
@@ -331,44 +339,48 @@ int roc::Calibrate::autodelay()
         brd().get(ROC_NX_DATA, nx);
         brd().get(ROC_LT_LOW, low);
         brd().get(ROC_LT_HIGH, high);
-        brd().get(ROC_AUX_DATA_LOW, val);
-        brd().get(ROC_AUX_DATA_HIGH, val);
+
+        //printf("read -- ADC:%X\tNX:%X\tLT%X.%X\r\n", val, nx, high, low);
 
         id = (nx & 0x00007F00)>>8;
         ts = ((nx & 0x7F000000)>>17)+((nx & 0x007F0000)>>16);
         TS = ungray(ts^(0x3FFF), 14);
         delay = (((low>>3)&0x1FF) - (TS>>5)) & 0x1FF;
 
-        if (((nx & 0x80000000)>>31) && (((nx & 0x18)>>3)== (uint32_t) FEB(fFEB_Number).NX(fNX_number).getNumber()) && (ungray(id, 7)==31)) {
+        if (((nx & 0x80000000)>>31) && (((nx & 0x18)>>3)==FEB(fFEB_Number).NX(fNX_number).getNumber()) && (ungray(id, 7)==31)) {
+          //printf("valid -- DV:%d\tNX:%d\tID:%d\tNX-TS:%X\tLTS:%X\tdelay:%d\r\n", (nx & 0x80000000)>>31, (nx & 0x18)>>3, ungray(id, 7), TS, low, delay);
           if (delay < min) min = delay;
           anz++;
        } else {
           //printf("invalid -- DV:%d\tNX:%d\tID:%d\r\n", (nx & 0x80000000)>>31, (nx & 0x18)>>3, ungray(id, 7));
        }
        if (my_stop()>=5) {
-          EOUT(("ERROR: Not enough Testpulse data!"));
+          printf("ERROR: Not enough Testpulse data!\r\n");
+          brd().DEBUG_MODE(0);
           return -1;
        }
    }
 
-   if (verbose()) DOUT0(("Measured Values: %d", anz));
+   if (verbose()) DOUT0(("Measured Values: %d\r\n", anz));
 
    if (anz < 500) {
-      EOUT(("ERROR: NOT ENOUGH DATA!\r\nAutodelay expects min. 500 Samples.", anz));
+      printf("ERROR: NOT ENOUGH DATA!\r\nAutodelay expects min. 500 Samples.\r\n", anz);
+      brd().DEBUG_MODE(0);
       return -1;
    }
 
-   if (verbose()) DOUT0(("Minimum Delay: %d", min));
+   if (verbose()) DOUT0(("Minimum Delay: %d\r\n", min));
 
    max = fLTS_Delay - min;
 
    delay = max*8 + 16;
 
+   brd().DEBUG_MODE(0);
    FEB(fFEB_Number).NX(fNX_number).setChannelDelay(delay);
    brd().NX_reset();
 
-   DOUT0(("Set new delay of %d.", delay));
-   if (verbose()) DOUT0(("OK."));
+   printf("Set new delay of %d.\r\n", delay);
+   if (verbose()) DOUT0(("OK.\r\n"));
 
    return 0;
 
@@ -379,13 +391,13 @@ int roc::Calibrate::autodelay()
 
 
 //-------------------------------------------------------------------------------
-int roc::Calibrate::Start_DAQ()
-{
+int roc::Calibrate::Start_DAQ() {
    nxyter::Data data;
 
    //Start DAQ:
+   //cout << "starting readout..." << endl;
    if (!fBoard->startDaq(30)) {
-       EOUT(("Start DAQ fails"));
+       cout << "Start DAQ fails" << endl;
        return -1;
    }
 
@@ -393,9 +405,10 @@ int roc::Calibrate::Start_DAQ()
    while (my_stop()<5)
       if (fBoard->getNextData(data, 0.1))
         if (data.isStartDaqMsg()) break;
+   //cout << "Start DAQ Message received" << endl;
 
    if (my_stop()>=5) {
-      EOUT(("Start DAQ acknowledge failed"));
+      printf("Start DAQ acknowledge failed");
       return -1;
    }
 
@@ -407,15 +420,15 @@ int roc::Calibrate::Start_DAQ()
 
 
 //-------------------------------------------------------------------------------
-int roc::Calibrate::Stop_DAQ()
-{
+int roc::Calibrate::Stop_DAQ() {
    nxyter::Data data;
 
    //Finish DAQ
    if (fBoard->stopDaq()) {
+       //cout << "Stop DAQ done" << endl;
        return 0;
     } else {
-       EOUT(("Stop DAQ fails"));
+       cout << "Stop DAQ fails" << endl;
        return -1;
     }
     return 0;

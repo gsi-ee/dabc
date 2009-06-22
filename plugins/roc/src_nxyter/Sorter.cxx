@@ -1,20 +1,4 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
-
 #include "nxyter/Sorter.h"
-
-#include "nxyter/Data.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -97,7 +81,9 @@ void nxyter::Sorter::cleanBuffers()
 
    fAccumMissed = 0;
    fLastOutEpoch = 0;
+
 }
+
 
 void nxyter::Sorter::stopFill()
 {
@@ -134,7 +120,7 @@ bool nxyter::Sorter::addData(nxyter::Data* new_data, unsigned num_msg, bool flus
 
 //               if (data->getNxTs() > 0x3fe0) printf("CANBE REALLY???\n");
 
-            } else
+            }else
             if (fIntBufCurrEpoch > 0) {
                // here we must check that last epoch bit set correctly
                // lets suppose that hit time is correct, try to estimate when we should detect him
@@ -504,3 +490,5 @@ bool nxyter::Sorter::shiftFilledData(unsigned num)
 
    return true;
 }
+
+

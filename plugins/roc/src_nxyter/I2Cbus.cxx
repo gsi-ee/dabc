@@ -7,8 +7,8 @@
 #include "nxyter/I2Cbus.h"
 
 #include "roc/defines.h"
-
 #include "dabc/logging.h"
+
 
 //-------------------------------------------------------------------------------
 nxyter::I2Cbus::I2Cbus(roc::Board* board, int num) :
@@ -73,7 +73,7 @@ void nxyter::I2Cbus::setRegister(int reg, uint32_t val)
      brd().get(ROC_I2C2_ERROR, err);
    }
    if (verbose() && (err==1))
-      EOUT(("Error writing Value %u to Register %d, of I2C-Bus number %d", val, reg, fI2C_Number));
+      EOUT(("Error writing Value %u to Register %d, of I2C-Bus number %d\n", val, reg, fI2C_Number));
 
 }
 //-------------------------------------------------------------------------------
@@ -105,8 +105,8 @@ uint32_t nxyter::I2Cbus::getRegister(int reg)
 void nxyter::I2Cbus::listRegisters()
 {
    for (int i=0; i<=45; i++) {
-      int val = getRegister(i);
-      DOUT0(("Register %d:\t%d\t0x%X", i, val, val));
+      uint32_t val = getRegister(i);
+      printf ("Register %d:\t%u\t0x%X\r\n", i, val, val);
    }
 }
 //-------------------------------------------------------------------------------

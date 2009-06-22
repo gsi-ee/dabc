@@ -19,19 +19,19 @@ namespace roc {
    class FEB1nxC : public FEBboard {
       public:
          FEB1nxC(roc::Board* board, int Connector, bool init = true);
-         virtual void Init();
+         virtual void Init(bool reseti2c = true);
    };
 
    class FEB2nx : public FEBboard {
       public:
          FEB2nx(roc::Board* board, int Connector, bool init = true);
-         virtual void Init();
+         virtual void Init(bool reseti2c = true);
    };
 
    class FEB4nx : public FEBboard {
       public:
          FEB4nx(roc::Board* board, bool init = true);
-         virtual void Init();
+         virtual void Init(bool reseti2c = true);
    };
 
 }

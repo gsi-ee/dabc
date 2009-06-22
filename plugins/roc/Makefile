@@ -9,6 +9,9 @@ ROCDIR = .
 INCLUDES += $(ROCDIR)
 endif
 
+ROC_EXTRALIBS = 
+
+
 ROCDIRI         = $(ROCDIR)/roc
 ROCDIRS         = $(ROCDIR)/src
 ROCDIRGO4       = $(ROCDIR)/go4monitor
@@ -49,9 +52,10 @@ NXYTER_D        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(NXYTER_S))
 
 ROC_DS          = $(BLD_DIR)/$(ROCDIR)/G_Roc.$(SrcSuf)
 
-ifdef ROOTSYS
+ifdef DABC_ISROOT
 ROC_DO          = $(patsubst %.$(SrcSuf), %.$(ObjSuf), $(ROC_DS))
 ROC_DD          = $(patsubst %.$(SrcSuf), %.$(DepSuf), $(ROC_DS))
+ROC_EXTRALIBS  += $(DABC_ROOTLIBS)
 endif
 
 # used in the main Makefile
@@ -70,25 +74,24 @@ $(DABCINCPATH)/%.h: $(ROCDIR)/%.h
 	@cp -f $< $@
 
 $(ROC_LIB):  $(ROC_O) $(ROC_DO) $(NXYTER_O)
-	@$(MakeLib) $(ROC_LIBNAME) "$(ROC_O) $(ROC_DO) $(NXYTER_O)" $(TGTDLLPATH) 
+	@$(MakeLib) $(ROC_LIBNAME) "$(ROC_O) $(ROC_DO) $(NXYTER_O)" $(TGTDLLPATH) "$(ROC_EXTRALIBS)"
 
 ########### extra rules #############
 
-ifdef ROOTSYS
+ifdef DABC_ISROOT
 
 libs:: $(ROC_LIBMAP)
 
 $(ROC_DS): $(ROC_LINKDEF) $(patsubst %.h, $(ROCDIR)/%.h, $(ROC_DICH))
 	echo "Generating root dictionary $(ROC_DS) ..."
-	$(ROOTSYS)/bin/rootcint -f $@ -c -p $(INCLUDES:%=-I%) $(ROC_DICH) $(ROC_LINKDEF)
+	$(DABC_ROOTBIN)rootcint -f $@ -c -p $(INCLUDES:%=-I%) $(ROC_DICH) $(ROC_LINKDEF)
 
 $(ROC_LIBMAP): $(ROC_LINKDEF) $(ROC_LIB)
 	@echo 'Building: $@'
-	@$(ROOTSYS)/bin/rlibmap -o $@ -l $(ROC_LIB) -d $(DABCDLLPATH)/libDabcMbs.$(DllSuf) $(DABCBASE_LIB) -c $(ROC_LINKDEF)
+	$(DABC_ROOTBIN)rlibmap -o $@ -l $(ROC_LIB) -d $(DABCDLLPATH)/libDabcMbs.$(DllSuf) $(DABCBASE_LIB) -c $(ROC_LINKDEF)
 
+$(ROC_DO) $(ROC_DD) : INCLUDES += $(DABC_ROOTINCDIR) $(DABCINCPATH)
 
-$(ROC_DO) $(ROC_DD) : INCLUDES += $(ROOTSYS)/include $(DABCINCPATH)
 endif
-
 
 include $(DABCSYS)/config/Makefile.rules

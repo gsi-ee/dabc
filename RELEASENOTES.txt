@@ -31,7 +31,9 @@ Changes in version 1.0.02
    5. Make compilation of old mbs evapi optional - it is not used in real application.
       If necessary, one can compile it with "make MBSEVAPI=1" call.
    6. ROC plugin is completely rewritten to replace KNUT library.
-      ROClib makefile build so, that it can use directly DABC classes.    
+      ROClib makefile build so, that it can use directly DABC classes.
+   7. Tested on SuSE11.1 86_64 with InfiniBand OFED 1.4.1 - worked with 
+      minimum makefile changes.          
 
 Changes in version 1.0.01 (10 March 2009) 
 

@@ -125,21 +125,6 @@ namespace roc {
           */
          void reset_FIFO();
 
-         //! reset_MISS
-         /*!
-          * Resets the misscounter.
-          * This function will be removed soon and it's functionality will be included into a FIFO reset.
-          */
-         void reset_MISS();
-
-
-         //! getMISS
-         /*!
-          * Returns the number of missed hits caused by a full FIFO.
-          */
-         uint32_t getMISS();
-
-
          //! setParityCheck
          /*!
           * \param val Is parity checking on? (1 is yes, 0 is no)
@@ -155,6 +140,7 @@ namespace roc {
           */
          void RESET();
 
+         void DEBUG_MODE(uint32_t val);
 
          //! TestPulse
          /*!
@@ -200,14 +186,15 @@ namespace roc {
           */
          void setLTS_Delay(uint32_t val);
 
-
-         void GPIO_setActive(uint32_t mask);
-         uint32_t GPIO_getActive();
-         void GPIO_setActive(int gpio1, int gpio2, int gpio3, int gpio4);
-         void GPIO_getActive(int& gpio1, int& gpio2, int& gpio3, int& gpio4);
-         void GPIO_setMHz(int MHz);
-         void GPIO_setBAUD(uint32_t BAUD_START, uint32_t BAUD1, uint32_t BAUD2);
+         uint32_t getTHROTTLE();
+         uint32_t GPIO_getCONFIG();
+         void GPIO_setCONFIG(uint32_t mask);
+         void GPIO_setCONFIG(int gpio_nr, int additional, int throttling, int falling, int rising);
+         void GPIO_setMHz(int gpio_nr, int MHz);
+         void GPIO_setBAUD(int gpio_nr, uint32_t BAUD_START, uint32_t BAUD1, uint32_t BAUD2);
          void GPIO_setScaledown(uint32_t val);
+         static bool GPIO_packCONFIG(uint32_t& mask, int gpio_nr, int additional, int throttling, int falling, int rising);
+         static bool GPIO_unpackCONFIG(uint32_t mask, int gpio_nr, int& additional, int& throttling, int& falling, int& rising);
 
          // DAQ functions
 

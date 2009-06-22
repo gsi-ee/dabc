@@ -69,7 +69,7 @@ void nxyter::Data::printData(unsigned kind) const
             printf("SyncChn:%1x EpochLSB:%1x Ts:%04x Evnt:%06x  Flag:%02x", getSyncChNum(), getSyncEpochLowBit(), getSyncTs(), getSyncEvNum(), getSyncStFlag());
             break;
          case ROC_MSG_AUX:
-            printf("AuxChn:%02x EpochLSB:%1x Ts:%04x Falling:%1x", getAuxChNum(), getAuxEpochLowBit(), getAuxTs(), getAuxFalling());
+            printf("AuxChn:%02x EpochLSB:%1x Ts:%04x Falling:%1x PileUp:%1x", getAuxChNum(), getAuxEpochLowBit(), getAuxTs(), getAuxFalling(), getAuxPileUp());
             break;
          case ROC_MSG_SYS:
             printf("SysType:%2x SysEpoch:%08x Nx:%1x", getSysMesType(), getSysMesEpoch(), getNxNumber());

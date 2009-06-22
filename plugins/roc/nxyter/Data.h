@@ -226,6 +226,12 @@ class Data
                 ((data[3] & 0xe0) >> 4);
       }
 
+      // AUX PileUp, 1 bit
+      inline uint8_t getAuxPileUp() const
+      {
+         return (data[3] >> 3) & 1;
+      }
+
       // AUX rising or failing edge, 1 bit
       inline uint8_t getAuxFalling() const
       {

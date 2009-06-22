@@ -737,7 +737,7 @@ void dabc::SocketClientProcessor::ProcessEvent(dabc::EventId evnt)
        }
 
        case evntSocketStartConnect: {
-          // start next attemp for connection
+          // start next attempt for connection
 
           if (IsDoingOutput()) {
              EOUT(("Something wrong !!!!"));
@@ -1333,7 +1333,7 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
       fPipeFired = false;
    }
 
-   // if we really has any events, analyse all of them and push in the queue
+   // if we really has any events, analyze all of them and push in the queue
    if (poll_res>0)
       for (int n=1; n<numufds;n++) {
 

@@ -34,6 +34,8 @@ class ADCchip : public Peripheral
       void setChannelLatency(int channel, uint32_t val);
       void setChannelPort(int channel, uint32_t val);
 
+      uint32_t getADCdirect(int con, int num);
+
       uint32_t getSR_INIT();
       void setSR_INIT(uint32_t val);
       uint32_t getBUFG();

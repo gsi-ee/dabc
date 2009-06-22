@@ -60,7 +60,7 @@ void roc::FEBboard::reset_I2C()
 //-------------------------------------------------------------------------------
 nxyter::Chip &roc::FEBboard::NX(int index)
 {
-   if (index>=(int)fNX.size()) throw std::out_of_range("FATAL ERROR: You tried to access an nXYTER Number, that is not available!\r\n");
+   if (index>=fNX.size()) throw std::out_of_range("FATAL ERROR: You tried to access an nXYTER Number, that is not available!\r\n");
    return *fNX[index];
 }
 //-------------------------------------------------------------------------------

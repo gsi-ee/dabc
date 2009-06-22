@@ -16,7 +16,7 @@
 #define ROC_DEFINES
 
 
-#define KNUT_VERSION                   0x01070001   //All parts share the first 4 digits
+#define KNUT_VERSION                   0x01070501   //All parts share the first 4 digits
 
 #define ROC_SUCCESS                      0    //Success
 #define ROC_READBACK_ERROR               1    //Readback failed (different value)
@@ -38,8 +38,8 @@
 
 #define ROC_HARDWARE_VERSION               0x00600      // r    Hardware-Version
 #define ROC_SYSTEM_RESET                   0x00604      // w    reboots the system completely
-#define ROC_FIFO_RESET                     0x00018       // w    reset all FIFOs
-#define ROC_NUMBER                         0x00040
+#define ROC_FIFO_RESET                     0x00018      // w    reset all FIFOs
+#define ROC_NUMBER                         0x00040 // r/w
 
 #define ROC_TESTPULSE_RESET_DELAY          0x00050       // w
 #define ROC_TESTPULSE_LENGTH               0x00054       // w
@@ -50,12 +50,29 @@
 #define ROC_FEB4NX                         0x0040C      // r/w If it is set to 1, the use of the inputs is changed in a way, that the FEB4nx can be utilized.
 #define ROC_PARITY_CHECK                   0x00408      // r/w
 
-#define ROC_SYNC_M_SCALEDOWN               0x00500      // w
-#define ROC_SYNC_BAUD_START                0x00504      // w
-#define ROC_SYNC_BAUD1                     0x00508      // w
-#define ROC_SYNC_BAUD2                     0x0050C      // w
+#define ROC_SYNC1_M_SCALEDOWN              0x00500      // w
+#define ROC_SYNC1_BAUD_START               0x00504      // w
+#define ROC_SYNC1_BAUD1                    0x00508      // w
+#define ROC_SYNC1_BAUD2                    0x0050C      // w
+#define ROC_SYNC2_BAUD_START               0x00514      // w
+#define ROC_SYNC2_BAUD1                    0x00518      // w
+#define ROC_SYNC2_BAUD2                    0x0051C      // w
+#define ROC_SYNC3_BAUD_START               0x00524      // w
+#define ROC_SYNC3_BAUD1                    0x00528      // w
+#define ROC_SYNC3_BAUD2                    0x0052C      // w
 
-#define ROC_AUX_ACTIVE                     0x00510      // r/w
+#define ROC_GPIO_CONFIG                    0x00580      // r/w
+
+#define ROC_THROTTLE                       0x0060C      // r
+
+#define ROC_ADC_DIRECT_1a                  0x00700      // r
+#define ROC_ADC_DIRECT_1b                  0x00704      // r
+#define ROC_ADC_DIRECT_1c                  0x00708      // r
+#define ROC_ADC_DIRECT_1d                  0x0070C      // r
+#define ROC_ADC_DIRECT_2a                  0x00710      // r
+#define ROC_ADC_DIRECT_2b                  0x00714      // r
+#define ROC_ADC_DIRECT_2c                  0x00718      // r
+#define ROC_ADC_DIRECT_2d                  0x0071C      // r
 
 #define ROC_I2C1_DATA                      0x10000    // r/w
 #define ROC_I2C1_RESET                     0x10004    // w    //ACTIVE LOW!
@@ -80,9 +97,6 @@
 #define ROC_LT_LOW                         0x00020       // r    Die unteren 32 bit des LTS (muessen zuerst gelesen werden!)
 #define ROC_LT_HIGH                        0x00024       // r    Die oberen 32 bit des LTS (muessen nach LT_LOW gelesen werden!)
 
-#define ROC_NX_MISS                        0x00030       // r    Wieviele Ereignisse konnten nicht in der FIFO gespeichert werden?
-#define ROC_NX_MISS_RESET                  0x00034       // w    Den Ereigniscounter reseten. (1 schreiben erzeugt Single Pulse)
-
 #define ROC_ADC_DATA                       0x00100      // r
 
 #define ROC_ADC_REG                        0x00100      // w
@@ -96,16 +110,6 @@
 #define ROC_BURST1                         0x00200      // r
 #define ROC_BURST2                         0x00204      // r
 #define ROC_BURST3                         0x00208      // r
-
-#define ROC_DEBUG_NX                       0x00300      // r
-#define ROC_DEBUG_LTL                      0x00304      // r
-#define ROC_DEBUG_LTH                      0x00308      // r
-#define ROC_DEBUG_ADC                      0x0030C      // r
-#define ROC_DEBUG_NX2                      0x00310      // r
-#define ROC_DEBUG_LTL2                     0x00314      // r
-#define ROC_DEBUG_LTH2                     0x00318      // r
-#define ROC_DEBUG_ADC2                     0x0031C      // r
-
 
 #define ROC_SR_INIT                        0x00104      // r/w
 #define ROC_BUFG_SELECT                    0x00108      // r/w
@@ -123,17 +127,29 @@
 #define ROC_ADC_LATENCY3                   0x00148      // r/w
 #define ROC_ADC_LATENCY4                   0x0014C      // r/w
 
-#define ROC_AUX_DATA_LOW                   0x00150      // r
-#define ROC_AUX_DATA_HIGH                  0x00154      // r
-
 #define ROC_ADC_PORT_SELECT1               0x00160      // r/w
 #define ROC_ADC_PORT_SELECT2               0x00164      // r/w
 #define ROC_ADC_PORT_SELECT3               0x00168      // r/w
 #define ROC_ADC_PORT_SELECT4               0x0016C      // r/w
 
+#define ROC_DEBUG_MODE                     0x00608      // w
+
 //ROC/FEB Parameters
 #define CON19                       0
 #define CON20                       1
+
+#define PORT_A                      0
+#define PORT_B                      1
+#define PORT_C                      2
+#define PORT_D                      3
+
+#define SYNC_M                      1
+#define SYNC_S0                     2
+#define SYNC_S1                     3
+#define AUX0                        4
+#define AUX1                        5
+#define AUX2                        6
+#define AUX3                        7
 
 #endif /*DEFINES_H_*/
 

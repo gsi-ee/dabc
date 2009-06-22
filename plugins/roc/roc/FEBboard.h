@@ -40,7 +40,7 @@ class FEBboard : public Peripheral
       ADCchip &ADC() { return fADC; }
       int getConnector() { return fConnector; }
 
-      virtual void Init() {}
+      virtual void Init(bool reseti2c = true) {}
 };
 
 }

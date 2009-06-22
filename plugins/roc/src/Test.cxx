@@ -7,11 +7,8 @@
 #include "roc/Test.h"
 
 #include "roc/FEBs.h"
-
-#include "roc/defines.h"
-#include "dabc/logging.h"
-
 #include "roc/UdpBoard.h"
+#include "dabc/logging.h"
 
 #include <iostream>
 using namespace std;
@@ -45,7 +42,11 @@ bool roc::Test::FULL_TEST()
       if (Search_and_Connect_FEB())
          if (ADC_SPI_Test()) Full_Data_Test();
 
-   return Summary();
+   if (Summary()) {
+      Persistence();
+      return true;
+   }
+   return false;
 }
 //-------------------------------------------------------------------------------
 
@@ -53,23 +54,20 @@ bool roc::Test::FULL_TEST()
 //-------------------------------------------------------------------------------
 bool roc::Test::Persistence()
 {
-   roc::UdpBoard* udp = dynamic_cast<roc::UdpBoard*> (fBoard);
-   if (udp==0) {
-      EOUT(("Cannot store - no udp channel found"));
-      return false;
-   }
-
    string input;
 
-   DOUT0((""));
-   DOUT0(("----------------------------------------------------------"));
-   DOUT0(("--                      PERSISTENCE                     --"));
-   DOUT0(("----------------------------------------------------------"));
-   DOUT0((""));
-   DOUT0(("Save measured values on ROC's SD-Card"));
-   udp->saveConfig();
-   DOUT0(("Data stored."));
-   return true;
+   cout << endl;
+   cout << "----------------------------------------------------------" << endl;
+   cout << "--                      PERSISTENCE                     --" << endl;
+   cout << "----------------------------------------------------------" << endl;
+   cout << endl;
+   cout << "Do you want to save the measured values on ROC's SD-Card? (y/n)" << endl;
+   cin >> input;
+   if (input=="y") {
+      roc::UdpBoard* udp = dynamic_cast<roc::UdpBoard*> (getBoard());
+      if (udp) udp->saveConfig();
+      cout << endl << "Data stored." << endl;
+   }
 }
 //-------------------------------------------------------------------------------
 
@@ -78,35 +76,39 @@ bool roc::Test::Persistence()
 //-------------------------------------------------------------------------------
 bool roc::Test::Summary()
 {
-   DOUT0((""));
-   DOUT0(("----------------------------------------------------------"));
-   DOUT0(("--                       SUMMARY                        --"));
-   DOUT0(("----------------------------------------------------------"));
-   DOUT0((""));
-
-   if (fDataOK==true)
-      DOUT0(("All test were successful."));
-   else
-      EOUT(("The test routines returned an error."));
-
-   DOUT0(("The following FEBs were detected:"));
-   DOUT0(("CON19: "));
-   if (fC19==0) DOUT0(("    No Board"));
-   if (fC19==1) DOUT0(("    FEB1nxC"));
-   if (fC19==2) DOUT0(("    FEB2nx"));
-   if (fC19==4) DOUT0(("    FEB4nx"));
-   DOUT0(("CON20: "));
-   if (fC20==0) DOUT0(("    No Board"));
-   if (fC20==1) DOUT0(("    FEB1nxC"));
-   if (fC20==2) DOUT0(("    FEB2nx"));
-   if (fC19==4) DOUT0(("    FEB4nx"));
-   DOUT0((""));
+   cout << endl;
+   cout << "----------------------------------------------------------" << endl;
+   cout << "--                       SUMMARY                        --" << endl;
+   cout << "----------------------------------------------------------" << endl;
+   cout << endl;
 
    if (fDataOK==true) {
-      DOUT0(("Autolatency and Autodelay could be performed."));
-      DOUT0(("You can find the detected values above."));
-   } else
-      EOUT(("Autolatency and Autodelay could NOT be performed."));
+      cout << "All test were successfull." << endl;
+   } else {
+      cout << "The test routines returned an error." << endl;
+   }
+
+   cout << "The following FEBs were detected:" << endl;
+   cout << endl;
+   cout << "CON19: " << endl;
+   if (fC19==0) cout << "    No Board" << endl;
+   if (fC19==1) cout << "    FEB1nxC" << endl;
+   if (fC19==2) cout << "    FEB2nx" << endl;
+   if (fC19==4) cout << "    FEB4nx" << endl;
+   cout << endl;
+   cout << "CON20: " << endl;
+   if (fC20==0) cout << "    No Board" << endl;
+   if (fC20==1) cout << "    FEB1nxC" << endl;
+   if (fC20==2) cout << "    FEB2nx" << endl;
+   if (fC19==4) cout << "    FEB4nx" << endl;
+   cout << endl;
+
+   if (fDataOK==true) {
+      cout << "Autolatency and Autodelay could be performed." << endl;
+      cout << "You can find the detected values above." << endl;
+   } else {
+      cout << "Autolatency and Autodelay could NOT be performed." << endl;
+   }
    return fDataOK;
 }
 //-------------------------------------------------------------------------------
@@ -118,7 +120,7 @@ bool roc::Test::Full_Data_Test()
    int feb, nx;
    uint32_t threshold, val;
 
-   DOUT0((""));
+   cout << endl;
 
    for (feb=0; feb<fFebn; feb++) {
      for (nx=0; nx<fNxn[feb]; nx++) {
@@ -134,6 +136,8 @@ bool roc::Test::Full_Data_Test()
          cout << "-- Performing Full Data Test for nXYTER #" << FEB(feb).NX(nx).getNumber() << " on " << ((FEB(feb).ADC().getConnector()==CON19)?"CON19":"CON20") << endl;
          cout << "----------------------------------------------------------" << endl;
          if (verbose()) DOUT0(("Searching for a good threshold (Reg18)... "));
+
+         brd().DEBUG_MODE(1);
          for (threshold=100; threshold>0; threshold--){
              if (verbose()) std::cout << threshold << " " << std::flush;
              FEB(feb).NX(nx).I2C().setRegister(18, threshold);
@@ -143,6 +147,8 @@ bool roc::Test::Full_Data_Test()
              usleep(10000);
              if (brd().getFIFO_full()) break;
          }
+         brd().DEBUG_MODE(0);
+
          cout << endl;
          if (threshold==0) {
             cout << "No response to any Threshold!" << endl;
@@ -182,8 +188,7 @@ bool roc::Test::Full_Data_Test()
 
 
 //-------------------------------------------------------------------------------
-bool roc::Test::ADC_SPI_Test()
-{
+bool roc::Test::ADC_SPI_Test(){
    int feb;
 
    cout << endl;
@@ -301,19 +306,17 @@ bool roc::Test::ROC_HW_Test()
 {
    uint32_t val=0;
 
-   DOUT0((""));
-
-   roc::UdpBoard* udp = dynamic_cast<roc::UdpBoard*> (fBoard);
+   cout << endl;
+   roc::UdpBoard* udp = dynamic_cast<roc::UdpBoard*> (getBoard());
    if (udp) udp->setConsoleOutput(true);
-
-   brd().get(ROC_HARDWARE_VERSION, val);
+   val = brd().getHW_Version();
    if((val >= 0x01080000) || (val < 0x01070000)) {
        printf("The ROC you want to access has the wrong hardware version: %X\r\n", val);
        cout << "This C++ access class only supports boards with major version 1.7 in Software and Hardware." << endl;
        cout << "ROC Hardware Check: FAILED!" << endl;
        return false;
     }
-    DOUT0(("ROC Hardware Check: PASSED."));
+    cout << "ROC Hardware Check: PASSED." << endl;
     return true;
 }
 //-------------------------------------------------------------------------------

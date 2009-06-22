@@ -201,8 +201,9 @@ bool roc::ReadoutApplication::ConfigureRoc(int indx)
       return false;
    }
 
-   brd->GPIO_setActive(1,1,0,0);
-   brd->GPIO_setScaledown(1);
+   brd->GPIO_setCONFIG(SYNC_M, 0, 0, 1, 1);
+   brd->GPIO_setCONFIG(SYNC_S0, 0, 0, 1, 1);
+   brd->GPIO_setScaledown(3);
 
    return true;
 }

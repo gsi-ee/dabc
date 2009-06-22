@@ -21,10 +21,11 @@ roc::FEB1nxC::FEB1nxC(roc::Board* board, int conn, bool init) :
 //-------------------------------------------------------------------------------
 
 
-void roc::FEB1nxC::Init()
+void roc::FEB1nxC::Init(bool reseti2c)
 {
    NX(0).I2C().setSlaveAddr(8);
-   reset_I2C();
+
+   if (reseti2c) reset_I2C();
 
    ADC().setRegister(33, 3);
 
@@ -57,12 +58,12 @@ roc::FEB2nx::FEB2nx(roc::Board* board, int conn, bool init) :
 }
 //-------------------------------------------------------------------------------
 
-void roc::FEB2nx::Init()
+void roc::FEB2nx::Init(bool reseti2c)
 {
    NX(0).I2C().setSlaveAddr(8);
    NX(1).I2C().setSlaveAddr(9);
 
-   reset_I2C();
+   if (reseti2c) reset_I2C();
 
    ADC().setRegister(33, 3);
 
@@ -97,14 +98,14 @@ roc::FEB4nx::FEB4nx(roc::Board* board, bool init) :
 
 //-------------------------------------------------------------------------------
 
-void roc::FEB4nx::Init()
+void roc::FEB4nx::Init(bool reseti2c)
 {
    NX(0).I2C().setSlaveAddr(8);
    NX(1).I2C().setSlaveAddr(9);
    NX(2).I2C().setSlaveAddr(10);
    NX(3).I2C().setSlaveAddr(11);
 
-   reset_I2C();
+   if (reseti2c) reset_I2C();
 
    ADC().setRegister(33, 3);
 

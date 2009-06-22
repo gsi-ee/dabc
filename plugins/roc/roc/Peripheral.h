@@ -1,5 +1,5 @@
-#ifndef ROC_Peripheral
-#define ROC_Peripheral
+#ifndef SYSCOREPERIPHERAL_H_
+#define SYSCOREPERIPHERAL_H_
 
 //============================================================================
 /*! \file roc/Peripheral.h
@@ -27,6 +27,8 @@ class Peripheral {
       virtual ~Peripheral() {}
 
       roc::Board& brd();
+
+      roc::Board* getBoard() const { return fBoard; }
 
       void setVerbose(bool on = true) { fVerbose = on; }
       bool verbose() const { return fVerbose; }

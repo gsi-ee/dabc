@@ -1,6 +1,7 @@
-ifdef ROOTSYS
-
 include $(DABCSYS)/config/Makefile.config
+
+ifdef DABC_ISROOT
+
 
 ifdef DABCMAINMAKE
 DABCROOTDIR = plugins/root
@@ -36,12 +37,13 @@ $(DABCINCPATH)/%.h: $(DABCROOTDIR)/%.h
 	@cp -f $< $@
 
 $(DABCROOT_LIB):   $(DABCROOT_O)
-	@$(MakeLib) $(DABCROOT_LIBNAME) "$(DABCROOT_O)" $(TGTDLLPATH) "$(shell $(ROOTSYS)/bin/root-config --libs)"
+	@$(MakeLib) $(DABCROOT_LIBNAME) "$(DABCROOT_O)" $(TGTDLLPATH) "$(DABC_ROOTLIBS)"
 
 
 ########### extra roles #############
-$(DABCROOT_O) $(DABCROOT_D): INCLUDES += $(ROOTSYS)/include
+$(DABCROOT_O) $(DABCROOT_D): INCLUDES += $(DABC_ROOTINCDIR)
+
+endif
 
 include $(DABCSYS)/config/Makefile.rules
 
-endif
