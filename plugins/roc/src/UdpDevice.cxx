@@ -439,44 +439,45 @@ int roc::UdpDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 
 int roc::UdpDevice::put(uint32_t addr, uint32_t value, double tmout)
 {
-   if (fCtrlCh==0) return 8;
+   int res = 9;
 
-   if (tmout <= 0.) tmout = getDefaultTmout();
+   if (fCtrlCh!=0) {
+      if (tmout <= 0.) tmout = getDefaultTmout();
 
-   dabc::Command* cmd = new CmdPut(addr, value, tmout);
-   cmd->SetKeepAlive(true);
+      dabc::Command* cmd = new CmdPut(addr, value, tmout);
+      cmd->SetKeepAlive(true);
 
-   int res = 7;
+      if (fCtrlCh->Execute(cmd, tmout + .1))
+         res = cmd->GetInt(ErrNoPar, 6);
 
-   if (fCtrlCh->Execute(cmd, tmout + .1))
-      res = cmd->GetInt(ErrNoPar, 6);
+      dabc::Command::Finalise(cmd);
+   }
 
-   dabc::Command::Finalise(cmd);
-
-   DOUT2(("Roc:%s Poke(0x%04x, 0x%04x) res = %d", GetName(), addr, value, res));
+   ShowOperRes("get", addr, value, res);
 
    return res;
 }
 
 int roc::UdpDevice::get(uint32_t addr, uint32_t& value, double tmout)
 {
-   if (fCtrlCh==0) return 8;
+   int res = 9;
 
-   if (tmout <= 0.) tmout = getDefaultTmout();
+   if (fCtrlCh!=0) {
+      if (tmout <= 0.) tmout = getDefaultTmout();
 
-   dabc::Command* cmd = new CmdGet(addr, tmout);
-   cmd->SetKeepAlive(true);
+      dabc::Command* cmd = new CmdGet(addr, tmout);
+      cmd->SetKeepAlive(true);
 
-   int res = 7;
 
-   if (fCtrlCh->Execute(cmd, tmout + .1)) {
-      res = cmd->GetInt(ErrNoPar, 6);
-      value = cmd->GetUInt(ValuePar, 0);
+      if (fCtrlCh->Execute(cmd, tmout + .1)) {
+         res = cmd->GetInt(ErrNoPar, 6);
+         value = cmd->GetUInt(ValuePar, 0);
+      }
+
+      dabc::Command::Finalise(cmd);
    }
 
-   dabc::Command::Finalise(cmd);
-
-   DOUT2(("Roc:%s Peek(0x%04x, 0x%04x) res = %d", GetName(), addr, value, res));
+   ShowOperRes("put", addr, value, res);
 
    return res;
 }
@@ -813,7 +814,7 @@ bool roc::UdpDevice::uploadBitfile(const char* filename, int position)
 
    ROCchecksum = ~XORbitfileCheckSum;
 
-   if (put(ROC_FLASH_KIBFILE_FROM_DDR, position, 300.)==0) {
+   if (put(ROC_FLASH_KIBFILE_FROM_DDR, position, 300.) ==0 ) {
       if(position == 0)
          get(ROC_CHECK_BITFILEFLASH0, ROCchecksum);
       else
@@ -892,7 +893,7 @@ bool roc::UdpDevice::uploadSDfile(const char* filename, const char* sdfilename)
    }
 
    // one need about 1.5 sec to write single 4K block on SD-card :((
-   double waittime = ((bufSize - 1024) / 4096 + 1.) * 1.52 + 0.5;
+   double waittime = ((bufSize - 1024) / 4096 + 1.) * 0.3;
 
    DOUT0(("Start %s file writing, please wait ~%2.0f sec\n", sdfilename, waittime));
 

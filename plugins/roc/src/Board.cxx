@@ -102,6 +102,29 @@ bool roc::Board::Close(Board* brd)
    return true;
 }
 
+void roc::Board::ShowOperRes(const char* oper, uint32_t addr, uint32_t value, int res)
+{
+   DOUT2(("Roc:%u %s(0x%04x, 0x%04x) res = %d", fRocNumber, oper, addr, value, res));
+
+   if (res!=0) {
+      const char* errcode = "Unknown error code";
+      switch (res) {
+         case 1: errcode = "Readback failed (different value)"; break;
+         case 2: errcode = "Wrong / unexisting address"; break;
+         case 3: errcode = "Wrong value"; break;
+         case 4: errcode = "Permission denied (to low level addresses)"; break;
+         case 5: errcode = "The called function needs longer to run"; break;
+         case 6: errcode = "Some slow control udp-data packets got lost"; break;
+         case 7: errcode = "No Response (No Ack) Error on I2C bus"; break;
+         case 8: errcode = "Operation not allowed - probably, somebody else uses ROC"; break;
+         case 9: errcode = "Operation failed"; break;
+      }
+
+      DOUT0(("\033[91m Error Roc:%u %s(0x%04x, 0x%04x) res = %d %s \033[0m", fRocNumber, oper, addr, value, res, errcode));
+   }
+}
+
+
 const char* roc::Board::VersionToStr(uint32_t ver)
 {
    static char sbuf[100];

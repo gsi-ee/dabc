@@ -95,7 +95,7 @@ package: clean
 	@echo "Package $(DABCTAR_NAME).gz done in $(PACKAGE_DIR)"
 
 packageroc: clean
-	tar chf $(ROCTAR_NAME) *.txt base config build/*.sh script --exclude=.svn
+	tar chf $(ROCTAR_NAME) *.txt base config build/*.sh --exclude=.svn
 	tar rhf $(ROCTAR_NAME) plugins/mbs plugins/roc applications/mbs applications/roc --exclude=.svn
 	@mkdir -p $(PACKAGE_DIR); mv -f $(ROCTAR_NAME) $(PACKAGE_DIR)
 	cp -f build/Makefile.distr $(PACKAGE_DIR)/Makefile 

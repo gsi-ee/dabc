@@ -20,6 +20,8 @@
 #include "dabc/Command.h"
 #endif
 
+#include <stdint.h>
+
 namespace roc {
 
    extern const char* AddrPar;

@@ -60,6 +60,8 @@ namespace roc {
 
          virtual void* getdeviceptr() = 0;
 
+         void ShowOperRes(const char* oper, uint32_t addr, uint32_t value, int res);
+
       public:
 
          BoardRole Role() const { return fRole; }
