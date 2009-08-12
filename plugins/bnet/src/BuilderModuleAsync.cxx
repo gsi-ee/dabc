@@ -11,7 +11,7 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
-#include "bnet/BuilderModule.h"
+#include "bnet/BuilderModuleAsync.h"
 
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"
@@ -21,14 +21,12 @@
 
 #include "bnet/common.h"
 
-bnet::BuilderModule::BuilderModule(const char* name, dabc::Command* cmd) :
-   dabc::ModuleSync(name, cmd),
+bnet::BuilderModuleAsync::BuilderModuleAsync(const char* name, dabc::Command* cmd) :
+   dabc::ModuleAsync(name, cmd),
    fInpPool(0),
    fOutPool(0),
    fNumSenders(1)
 {
-   SetSyncCommands(true);
-
    fOutPool = CreatePoolHandle(GetCfgStr(dabc::xmlOutputPoolName, bnet::EventPoolName, cmd).c_str());
 
    CreateOutput("Output", fOutPool, BuilderOutQueueSize);
@@ -42,52 +40,54 @@ bnet::BuilderModule::BuilderModule(const char* name, dabc::Command* cmd) :
    CreateParStr(parSendMask, "xxxx");
 }
 
-bnet::BuilderModule::~BuilderModule()
+bnet::BuilderModuleAsync::~BuilderModuleAsync()
 {
    for (unsigned n=0; n<fBuffers.size(); n++)
       dabc::Buffer::Release(fBuffers[n]);
    fBuffers.clear();
 }
 
-void bnet::BuilderModule::MainLoop()
+void bnet::BuilderModuleAsync::BeforeModuleStart()
 {
-   DOUT3(("In builder %u buffers collected",  fBuffers.size()));
-
    fNumSenders = bnet::NodesVector(GetParStr(parSendMask)).size();
+}
 
-   while (ModuleWorking()) {
+void bnet::BuilderModuleAsync::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
+{
+   while (true) {
 
-      bool iseol = false;
-
-      // read N buffers from input
-      while (fBuffers.size() < (unsigned) fNumSenders) {
-         dabc::Buffer* buf = Recv(Input(0));
+      while (Input()->CanRecv() && (fBuffers.size() < fNumSenders)) {
+         dabc::Buffer* buf = Input()->Recv();
          if (buf==0)
-            EOUT(("Cannot read buffer from input"));
+            EOUT(("Cannot read buffer from input - hard error"));
          else {
             fBuffers.push_back(buf);
 
-            if (buf->GetTypeId() == dabc::mbt_EOL) {
-               iseol = true;
-               if (fBuffers.size() > 1) EOUT(("EOL buffer is not first !!!!"));
-               break;
-            }
+            // should we check EOL status already here ???
+            if (buf->GetTypeId() == dabc::mbt_EOL) break;
          }
       }
 
+      bool iseol = false;
+      for (unsigned n=0;n<fBuffers.size();n++)
+         if (fBuffers[n]->GetTypeId() == dabc::mbt_EOL) iseol = true;
+
+      // if we cannot send - nothing to do
+      if (!Output()->CanSend()) return;
+
+      if ((fBuffers.size() < fNumSenders) && !iseol) return;
+
       if (iseol) {
          DOUT1(("Send EOL buffer to the output"));
-         dabc::BufferGuard eolbuf = fOutPool->TakeEmptyBuffer();
-         eolbuf()->SetTypeId(dabc::mbt_EOL);
-         Send(Output(0), eolbuf);
+         dabc::Buffer* eolbuf = fOutPool->TakeEmptyBuffer();
+         eolbuf->SetTypeId(dabc::mbt_EOL);
+         Output(0)->Send(eolbuf);
       } else
-         // produce output
          DoBuildEvent(fBuffers);
 
-      // release N buffers
+      // release all buffers
       for (unsigned n=0;n<fBuffers.size();n++)
          dabc::Buffer::Release(fBuffers[n]);
       fBuffers.clear();
    }
-
 }

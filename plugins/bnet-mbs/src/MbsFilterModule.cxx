@@ -1,4 +1,4 @@
-#include "MbsFilterModule.h"
+#include "bnet/MbsFilterModule.h"
 
 #include "dabc/logging.h"
 

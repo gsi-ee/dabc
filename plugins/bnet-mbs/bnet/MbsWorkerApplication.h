@@ -7,7 +7,7 @@ namespace bnet {
 
    class MbsWorkerApplication : public WorkerApplication {
       public:
-         MbsWorkerApplication();
+         MbsWorkerApplication(const char* classname = 0);
 
          virtual int ExecuteCommand(dabc::Command* cmd);
 

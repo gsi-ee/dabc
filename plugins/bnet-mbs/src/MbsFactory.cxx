@@ -1,10 +1,10 @@
-#include "MbsFactory.h"
+#include "bnet/MbsFactory.h"
 
-#include "MbsWorkerApplication.h"
-#include "MbsCombinerModule.h"
-#include "MbsFilterModule.h"
-#include "MbsBuilderModule.h"
-#include "SplitterModule.h"
+#include "bnet/MbsWorkerApplication.h"
+#include "bnet/MbsCombinerModule.h"
+#include "bnet/MbsFilterModule.h"
+#include "bnet/MbsBuilderModule.h"
+#include "bnet/SplitterModule.h"
 
 bnet::MbsFactory bnetmbsfactory("bnet-mbs");
 

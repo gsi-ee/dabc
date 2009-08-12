@@ -226,6 +226,23 @@ bool bnet::WorkerApplication::CheckWorkerModules()
    return true;
 }
 
+std::string bnet::WorkerApplication::GetCombinerInputName(const char* name, int n)
+{
+   return dabc::format("%s/Input%d", name, n);
+}
+
+std::string bnet::WorkerApplication::GetCombinerOutputName(const char* name)
+{
+   return dabc::format("%s/Output", name);
+}
+
+std::string bnet::WorkerApplication::GetFilterOutputName(const char* name)
+{
+   return dabc::format("%s/Output", name);
+}
+
+
+
 bool bnet::WorkerApplication::CreateAppModules()
 {
 //   LockUnlockPars(true);
@@ -299,27 +316,27 @@ bool bnet::WorkerApplication::CreateAppModules()
    if (IsSender()) {
 
       for (int nr=0;nr<NumReadouts();nr++)
-        if (!CreateReadout(FORMAT(("Combiner/Input%d", nr)), nr)) {
+        if (!CreateReadout(GetCombinerInputName("Combiner", nr).c_str(), nr)) {
            EOUT(("Cannot create readout channel %d", nr));
            return false;
         }
 
-      dabc::mgr()->ConnectPorts("Combiner/Output", "Sender/Input");
+      dabc::mgr()->ConnectPorts(GetCombinerOutputName("Combiner").c_str(), "Sender/Input");
    }
 
    if (IsReceiver()) {
       dabc::mgr()->ConnectPorts("Receiver/Output", "Builder/Input");
 
-      const char* outportname = 0;
+      std::string outportname;
 
       if (IsFilter()) {
          dabc::mgr()->ConnectPorts("Builder/Output", "Filter/Input");
-         outportname = "Filter/Output";
+         outportname = GetFilterOutputName("Filter");
       } else
          outportname = "Builder/Output";
 
-      if (!CreateStorage(outportname)) {
-         EOUT(("Not able to create storage for port %s", outportname));
+      if (!CreateStorage(outportname.c_str())) {
+         EOUT(("Not able to create storage for port %s", outportname.c_str()));
       }
 
 //      dabc::CommandDefinition* def = NewCmdDef("StartFile");

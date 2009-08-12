@@ -33,6 +33,8 @@ namespace dabc {
 
    const char* xmlPoolName          = "PoolName";
    const char* xmlWorkPool          = "WorkPool";
+   const char* xmlInputPoolName     = "InputPoolName";
+   const char* xmlOutputPoolName    = "OutputPoolName";
    const char* xmlFixedLayout       = "FixedLayout";
    const char* xmlSizeLimitMb       = "SizeLimitMb";
    const char* xmlCleanupTimeout    = "CleanupTimeout";

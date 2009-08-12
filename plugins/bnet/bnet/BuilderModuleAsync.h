@@ -11,10 +11,10 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
-#ifndef BNET_BuilderModule
-#define BNET_BuilderModule
+#ifndef BNET_BuilderModuleAsync
+#define BNET_BuilderModuleAsync
 
-#include "dabc/ModuleSync.h"
+#include "dabc/ModuleAsync.h"
 
 #include "dabc/Buffer.h"
 
@@ -22,22 +22,24 @@
 
 namespace bnet {
 
-   class BuilderModule : public dabc::ModuleSync {
+   class BuilderModuleAsync : public dabc::ModuleAsync {
 
       protected:
          dabc::PoolHandle*    fInpPool;
          dabc::PoolHandle*    fOutPool;
-         int                  fNumSenders;
+         unsigned             fNumSenders;
          dabc::BufferSize_t   fOutBufferSize;
 
          std::vector<dabc::Buffer*> fBuffers;
 
-         BuilderModule(const char* name, dabc::Command* cmd = 0);
+         BuilderModuleAsync(const char* name, dabc::Command* cmd = 0);
 
       public:
-         virtual ~BuilderModule();
+         virtual ~BuilderModuleAsync();
 
-         virtual void MainLoop();
+         virtual void BeforeModuleStart();
+
+         virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
 
          virtual void DoBuildEvent(std::vector<dabc::Buffer*>& bufs) {}
    };

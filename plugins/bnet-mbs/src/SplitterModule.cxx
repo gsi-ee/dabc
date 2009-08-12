@@ -1,4 +1,4 @@
-#include "SplitterModule.h"
+#include "bnet/SplitterModule.h"
 
 #include "dabc/Port.h"
 #include "dabc/Buffer.h"
@@ -7,9 +7,8 @@ dabc::SplitterModule::SplitterModule(const char* name, Command* cmd) :
    ModuleAsync(name, cmd)
 {
    int numout = GetCfgInt(xmlNumOutputs, 2, cmd);
-   std::string poolname = GetCfgStr(xmlPoolName, "Pool", cmd);
 
-   CreatePoolHandle(poolname.c_str());
+   CreatePoolHandle(GetCfgStr(xmlPoolName, "Pool", cmd).c_str());
 
    CreateInput("Input", Pool(0));
 

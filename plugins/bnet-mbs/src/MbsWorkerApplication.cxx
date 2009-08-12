@@ -1,4 +1,4 @@
- #include "MbsWorkerApplication.h"
+ #include "bnet/MbsWorkerApplication.h"
 
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
@@ -8,10 +8,10 @@
 
 #include "mbs/MbsTypeDefs.h"
 
-#include "MbsFactory.h"
+#include "bnet/MbsFactory.h"
 
-bnet::MbsWorkerApplication::MbsWorkerApplication() :
-   WorkerApplication(xmlMbsWorkerClass)
+bnet::MbsWorkerApplication::MbsWorkerApplication(const char* classname) :
+   WorkerApplication(classname ? classname : xmlMbsWorkerClass)
 {
    CreateParStr("DoServer", "");
 

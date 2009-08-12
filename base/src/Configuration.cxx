@@ -404,7 +404,7 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
 
          if ((fCurrItem!=0) && ((findattr==0) || fXml.HasAttr(fCurrItem, findattr))) {
             res = findattr ? GetAttrValue(findattr) : GetNodeValue(fCurrItem);
-            DOUT1(("Exact found %s res = %s", obj->GetFullName().c_str(), res.c_str()));
+            DOUT3(("Exact par found %s res = %s", obj->GetFullName().c_str(), res.c_str()));
             return true;
          }
       }

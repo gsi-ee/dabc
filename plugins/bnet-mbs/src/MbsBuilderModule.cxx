@@ -1,4 +1,4 @@
-#include "MbsBuilderModule.h"
+#include "bnet/MbsBuilderModule.h"
 
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"
@@ -185,7 +185,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
       }
 
       if (numfinished>0) {
-         if (numfinished<bufs.size()) EOUT(("!!!!!!!!! Error - not all subbuffers are finished"));
+         if (numfinished<bufs.size()) EOUT(("!!!!!!!!! Error - not all sub-buffers are finished"));
          return;
       }
    }

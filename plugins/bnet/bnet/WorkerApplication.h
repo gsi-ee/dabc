@@ -47,6 +47,10 @@ namespace bnet {
          virtual bool CreateBuilder(const char* name) { return false; }
          virtual bool CreateFilter(const char* name) { return false; }
 
+         virtual std::string GetCombinerInputName(const char* name, int n);
+         virtual std::string GetCombinerOutputName(const char* name);
+         virtual std::string GetFilterOutputName(const char* name);
+
          virtual bool CreateStorage(const char* portname);
 
          virtual bool CreateOutFile(const char* portname, const std::string& filename);

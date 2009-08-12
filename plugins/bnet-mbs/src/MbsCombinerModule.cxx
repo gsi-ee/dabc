@@ -1,4 +1,4 @@
-#include "MbsCombinerModule.h"
+#include "bnet/MbsCombinerModule.h"
 
 #include "dabc/logging.h"
 #include "dabc/string.h"
