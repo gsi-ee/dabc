@@ -1,4 +1,0 @@
-# Permissions for the fpga devices
-
-fpga*:root:users:0660
-

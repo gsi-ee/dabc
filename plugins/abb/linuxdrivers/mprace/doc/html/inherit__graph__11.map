@@ -1,5 +1,0 @@
-base referer
-rect $classmprace_1_1Pin.html 5,54 99,78
-rect $classmprace_1_1PinInRegister.html 169,6 324,30
-rect $classmprace_1_1RegisterAsPin.html 168,54 325,78
-rect $classmprace_1_1RegisterAsPinTristate.html 147,102 347,126
