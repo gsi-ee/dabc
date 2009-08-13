@@ -138,6 +138,8 @@ namespace dabc {
 
          inline void FireInput() { FireEvent(evntInput); }
          inline void FireOutput() { FireEvent(evntOutput); }
+
+         int GetTransportParameter(const char* name);
    };
 
 }

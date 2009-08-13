@@ -235,3 +235,8 @@ bool dabc::Port::SkipInputBuffers(unsigned num)
    }
    return true;
 }
+
+int dabc::Port::GetTransportParameter(const char* name)
+{
+   return fTransport ? fTransport->GetParameter(name) : 0;
+}

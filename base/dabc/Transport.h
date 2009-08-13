@@ -69,6 +69,8 @@ namespace dabc {
          // and transport object must be cleaned up and destroyed
          virtual void ErrorCloseTransport();
 
+         virtual int GetParameter(const char* name) { return 0; }
+
       public:
          virtual ~Transport();
 

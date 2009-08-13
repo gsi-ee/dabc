@@ -36,6 +36,9 @@ extern "C" void ClassicalRunFunction()
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
 
+   // this is workaround for roc transport - it is not fast enough to get reply on put(stop_daq) command
+   dabc::MicroSleep(200000);
+
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoHalt);
 }
 
