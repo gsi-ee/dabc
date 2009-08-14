@@ -115,13 +115,15 @@ bool bnet::MbsWorkerApplication::CreateOutFile(const char* portname, const std::
    if (filename.empty()) {
       if (!dabc::mgr()->CreateTransport("Splitter/Output0", "")) return false;
    } else {
+      DOUT0(("Start Create output file = %s", filename.c_str()));
+
       dabc::Command* cmd = new dabc::CmdCreateTransport("Splitter/Output0", mbs::typeLmdOutput, "MbsOutThrd");
       cmd->SetStr(mbs::xmlFileName, filename);
       if (!dabc::mgr()->Execute(cmd, 5)) {
          EOUT(("Cannot create output file %s", filename.c_str()));
          return false;
       }
-      DOUT1(("Create output file = %s", filename.c_str()));
+      DOUT0(("Create output file = %s", filename.c_str()));
    }
    return true;
 }

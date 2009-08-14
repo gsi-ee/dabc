@@ -32,7 +32,7 @@ endif
 #OPTIONS      += -g 
 OPTIONS      += -O
 
-DEFINITIONS   = Linux FILEONLY
+DEFINITIONS   = Linux FILEONLY _LARGEFILE64_SOURCE
 
 INCLUDES      =
 

@@ -119,6 +119,8 @@ bnet::ClusterApplication::ClusterApplication() :
    CreateParInt(xmlTransportBuffer,       8*1024);
    CreateParBool(xmlIsRunning, false);
 
+   CreateParStr(xmlFileBase, "");
+
    CreateParInfo("Info", 1, "Green");
 
    dabc::CommandDefinition* def = NewCmdDef("StartFiles");
@@ -616,6 +618,8 @@ bool bnet::ClusterApplication::ExecuteClusterSMCommand(const char* smcmdname)
 
 bool bnet::ClusterApplication::ActualTransition(const char* state_trans_name)
 {
+   std::string filebase = GetParStr(xmlFileBase,"");
+
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoConfigure)==0) {
       if (!Execute(DiscoverCmdName)) return false;
       if (!Execute("CreateAppModules")) return false;
@@ -628,6 +632,12 @@ bool bnet::ClusterApplication::ActualTransition(const char* state_trans_name)
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoStart)==0) {
       if (!ExecuteClusterSMCommand(state_trans_name)) return false;
+      if (filebase.length()>0) {
+         DOUT0(("Start files with base  = %s", filebase.c_str()));
+         dabc::Command* cmd = new dabc::Command("StartFiles");
+         cmd->SetStr("FileBase", filebase);
+         if (!Execute(cmd)) return false;
+      }
       if (!Execute("BeforeAppModulesStarted", SMCommandTimeout())) return false;
       if (!dabc::mgr()->StartAllModules()) return false;
       if (!Execute(new dabc::CmdSetParameter(xmlIsRunning, true))) return false;
@@ -636,6 +646,8 @@ bool bnet::ClusterApplication::ActualTransition(const char* state_trans_name)
       if (!Execute(new dabc::CmdSetParameter(xmlIsRunning, false))) return false;
       if (!dabc::mgr()->StopAllModules()) return false;
       if (!Execute("AfterAppModulesStopped", SMCommandTimeout())) return false;
+      if (filebase.length()>0)
+         if (!Execute("StopFiles")) return false;
       if (!ExecuteClusterSMCommand(state_trans_name)) return false;
    } else
    if (strcmp(state_trans_name, dabc::Manager::stcmdDoHalt)==0) {
@@ -675,6 +687,8 @@ bool bnet::ClusterApplication::DoStateTransition(const char* state_trans_cmd)
 
    return res;
 }
+
+
 
 extern "C" void RunTestBnet()
 {

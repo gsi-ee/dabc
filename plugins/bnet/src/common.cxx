@@ -51,6 +51,9 @@ const char* bnet::xmlEventPoolSize     = "EventPoolSize";
 const char* bnet::xmlCtrlBuffer        = "CtrlBuffer";
 const char* bnet::xmlCtrlPoolSize      = "CtrlPoolSize";
 
+const char* bnet::xmlFileBase          = "FileBase";
+
+
 const char* bnet::CfgNodeId            = "CfgNodeId";
 const char* bnet::CfgNumNodes          = "CfgNumNodes";
 const char* bnet::CfgController        = "CfgController";

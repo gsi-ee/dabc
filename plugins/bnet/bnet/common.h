@@ -55,6 +55,8 @@ namespace bnet {
    extern const char* xmlCtrlBuffer;
    extern const char* xmlCtrlPoolSize;
 
+   extern const char* xmlFileBase;
+
    extern const char* parStatus;
    extern const char* parRecvStatus;
    extern const char* parSendStatus;

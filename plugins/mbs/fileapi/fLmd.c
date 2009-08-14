@@ -13,6 +13,7 @@
 #endif
 
 #ifdef Linux /* Linux */
+#include <stdio.h>
 #include <unistd.h>
 #include <pwd.h>
 #include <sys/timeb.h>
@@ -124,12 +125,15 @@ uint32_t iLargeFile){      // LMD__[NO_]LARGE_FILE
   pLmdControl->iLeftWords=iBytes/2;
   // open file
   if(iOver == LMD__NO_OVERWRITE){  // do not overwrite
-  if((pLmdControl->fFile=(FILE *)fopen64(Filename,"r") )!=NULL){
-    printf("fLmdPutOpen: File exists: %s\n",Filename);
-    fLmdCleanup(pLmdControl);
-    fclose(pLmdControl->fFile);
-    return(PUTLMD__FILE_EXIST);
-  }}
+     pLmdControl->fFile = fopen64(Filename,"r");
+
+     if(pLmdControl->fFile!=NULL){
+        printf("fLmdPutOpen: File exists: %s\n",Filename);
+        fLmdCleanup(pLmdControl);
+        fclose(pLmdControl->fFile);
+        return(PUTLMD__FILE_EXIST);
+     }
+  }
 
   if((pLmdControl->fFile=(FILE *)fopen64(Filename,"w+") )== NULL){
     printf("fLmdPutOpen: Error open file %s\n",Filename);
@@ -354,7 +358,7 @@ uint32_t iPort){
 
   int32_t stat;
 
-  if(iBuffers > 1){printf("fLmdInittMbs: Event spanning not supported!\n");return(LMD__FAILURE);}
+  if(iBuffers > 1){printf("fLmdInitMbs: Event spanning not supported!\n");return(LMD__FAILURE);}
   if(iStreams > 0){printf("fLmdInitMbs: MBS not in DABC mode!\n");return(LMD__FAILURE);}
   pLmdControl->iPort=iPort;
   strcpy(pLmdControl->cFile,Nodename);
@@ -596,7 +600,7 @@ uint32_t *iBytesUsed){
   leftBytes = pLmdControl->iLeftWords*2;
   if(leftBytes>0) {
       if (leftBytes > iBytes) {
-         printf("fLmdGetBuffer: stored peace of data (%u) larger than provided buffer (%u)\n",
+         printf("fLmdGetBuffer: stored piece of data (%u) larger than provided buffer (%u)\n",
                     leftBytes, iBytes);
          return(LMD__FAILURE);
       }
@@ -906,7 +910,8 @@ uint32_t fLmdOffsetWrite(sLmdControl *pLmdControl)
 {
   int32_t iReturn;
   char *pbuf;
-  lmdoff_t current;
+  fpos64_t curr_pos;
+  uint64_t current;
   sMbsHeader *pTableHead;
   pTableHead=(sMbsHeader *)malloc(16); // header with 8 bytes data for future use.
   memset(pTableHead,0,16);
@@ -914,7 +919,9 @@ uint32_t fLmdOffsetWrite(sLmdControl *pLmdControl)
   pTableHead->iType=LMD__TYPE_FILE_INDEX_101_2;
 /*   printf("Table: words:%d type:%08x offbytes:%d\n", */
 /*     pTableHead->iWords,pTableHead->iType,pLmdControl->iOffsetSize); */
-  iReturn=fgetpos64(pLmdControl->fFile,(lmdoff_t *)&current);
+  iReturn=fgetpos64(pLmdControl->fFile, &curr_pos);
+  current = *((uint64_t*) &curr_pos);
+
   iReturn=fLmdWriteBuffer(pLmdControl, (char *)pTableHead,16);
   free(pTableHead);
   pbuf=(char *)pLmdControl->pOffset4; // try short table
@@ -925,12 +932,14 @@ uint32_t fLmdOffsetWrite(sLmdControl *pLmdControl)
     pLmdControl->pMbsFileHeader->iTableOffset = *(pLmdControl->pOffset8+pLmdControl->iElements);
   if(pLmdControl->pOffset4)
     pLmdControl->pMbsFileHeader->iTableOffset = *(pLmdControl->pOffset4+pLmdControl->iElements);
+
   if(current/4 != pLmdControl->pMbsFileHeader->iTableOffset){
     printf("Table offset mismatch: current:%lld calculated:%lld, cur-cal %lld\n",
 	   current/4,pLmdControl->pMbsFileHeader->iTableOffset,
 	   current/4-pLmdControl->pMbsFileHeader->iTableOffset);
     return(LMD__FAILURE);
     }
+
   if(iReturn != (pLmdControl->iElements+1)*pLmdControl->iOffsetSize){
     printf("Table write error \n");
     return(LMD__FAILURE);

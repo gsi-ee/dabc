@@ -193,8 +193,12 @@ int bnet::WorkerApplication::ExecuteCommand(dabc::Command* cmd)
          SetParStr("Info", "Stopping file writing");
 
       if (IsReceiver()) {
-         const char* outportname = IsFilter() ? "Filter/Output" : "Builder/Output";
-         cmd_res = cmd_bool(CreateOutFile(outportname, filename));
+         std::string outportname = IsFilter() ? GetFilterOutputName("Filter") : "Builder/Output";
+
+         DOUT0(("Create file output for port %s", outportname.c_str()));
+
+         cmd_res = cmd_bool(CreateOutFile(outportname.c_str(), filename));
+         DOUT0(("Create file output done"));
       }
    } else
 
