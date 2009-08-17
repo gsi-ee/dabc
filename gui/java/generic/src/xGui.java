@@ -68,9 +68,17 @@ System.out.println("From      : "+System.getProperties().getProperty("java.home"
 
 // Without DIM name server nothing can go
 if(System.getenv("DIM_DNS_NODE")==null){
-System.out.println("No DIM name server defined, set DIM_DNS_NODE!");
-return;
-}
+	System.out.println("No DIM name server defined, set DIM_DNS_NODE!");
+	return;
+	}
+if(System.getenv("HOST")==null){
+	System.out.println("No HOST name defined, set HOST to GUI node name!");
+	return;
+	}
+if(System.getenv("USER")==null){
+	System.out.println("No USER name defined, set USER to user name!");
+	return;
+	}
 
 // parse arguments 
 xSet.checkMainArgs(args);

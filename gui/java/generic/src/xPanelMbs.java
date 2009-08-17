@@ -43,7 +43,7 @@ private ImageIcon winIcon;
 private ImageIcon workIcon,mworkIcon;
 private ImageIcon launchIcon;
 private ImageIcon killIcon;
-private ImageIcon storeIcon, mbsIcon, configIcon, startIcon, stopIcon, dabcIcon, disIcon, infoIcon;
+private ImageIcon storeIcon, mbsIcon, configIcon, startIcon, stopIcon, dabcIcon, disIcon, infoIcon, eventIcon;
 private JTextField DimName, MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsStart, MbsShut, MbsCommand, MbsLaunchFile;
 private JPasswordField Password;
 private JCheckBox boxTest;
@@ -89,6 +89,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     mbsIcon     = xSet.getIcon("icons/conndsp.png");
     disIcon     = xSet.getIcon("icons/disconn.png");
     infoIcon    = xSet.getIcon("icons/info.png");
+    eventIcon   = xSet.getIcon("icons/typevent.png");
     dabcIcon    = xSet.getIcon("icons/dabcicon.png");
     winIcon     = xSet.getIcon("icons/rshmbs.png");
     workIcon    = xSet.getIcon("icons/control.png");
@@ -109,6 +110,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     addButton("mbsShut","Shutdown tasks (@shutdown)",killIcon,this);
     addButton("mbsCleanup","Shut down servers and cleanup MBS",disIcon,this);
     addButton("mbsShow","Show acquisition",infoIcon,this);
+    addButton("mbsEvent","Type event",eventIcon,this);
     addButton("mbsShell","Rsh Node -l Username Command",mworkIcon,this);
 // Text input fields
     // read defaults from setup file
@@ -138,8 +140,8 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     MbsUserpath=addPrompt("User path: ",formMbs.getUserPath(),"set",width,this);
     MbsStart=addPrompt("Startup: ",formMbs.getStart(),"set",width,this);
     MbsShut=addPrompt("Shutdown: ",formMbs.getShut(),"set",width,this);
-    MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
     MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",width,this);
+    MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
     nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
     nMbsNodes=nMbsServers-2;
     System.out.println("Mbs   servers needed: DNS + "+(nMbsServers-1));   
@@ -527,6 +529,11 @@ public void run(){
     }
     else if ("mbsShow".equals(Action)) {
     	String cmd = new String(cmdPrefix+"Show acquisition");
+        xLogger.print(1,"MBS: "+cmd);
+        mbsCommand.exec(xSet.getAccess()+" "+cmd);
+    }
+    else if ("mbsEvent".equals(Action)) {
+    	String cmd = new String(cmdPrefix+"Type event -buf -verb");
         xLogger.print(1,"MBS: "+cmd);
         mbsCommand.exec(xSet.getAccess()+" "+cmd);
     }
