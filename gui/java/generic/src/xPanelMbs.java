@@ -110,7 +110,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     addButton("mbsShut","Shutdown tasks (@shutdown)",killIcon,this);
     addButton("mbsCleanup","Shut down servers and cleanup MBS",disIcon,this);
     addButton("mbsShow","Show acquisition",infoIcon,this);
-    addButton("mbsEvent","Type event",eventIcon,this);
+    addButton("mbsEvent","Type event (check current node)",eventIcon,this);
     addButton("mbsShell","Rsh Node -l Username Command",mworkIcon,this);
 // Text input fields
     // read defaults from setup file

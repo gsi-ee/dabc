@@ -127,6 +127,7 @@ str=null;
  * @return True: XML string contains values of arguments.
  */
 public boolean isChanged(){return ischanged;}
+protected void isChanged(boolean changed){ischanged=changed;}
 /**
  * @return Component name
  */

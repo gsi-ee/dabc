@@ -50,6 +50,7 @@ import java.awt.event.MouseListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseAdapter;
 import java.util.*;
+import org.w3c.dom.*;
 /**
  * Panel for command tree
  * @see xDimCommand
@@ -253,6 +254,7 @@ if(!done && (xmlp != null)){
 // application can specify if this command needs XML arguments or not
     if(userCmd != null) xmlargs=userCmd.getArgumentStyleXml(xmlp.getCommandScope(),cmd.getParser().getFull());
 // Store values in xml description without header
+//    System.out.println(xmlp.getXmlString());
     xmlp.newCommand(xmlp.getCommandName(),false,xmlp.getCommandScope(),true); // values have changed
     in=0;
     for(int i=0;i<inputs.size();i++){
@@ -277,6 +279,7 @@ if(!done && (xmlp != null)){
     }
 // finalize XML string
     xmlp.parseXmlString(xmlp.getCommandName(),xmlp.getXmlString());
+//    System.out.println(xmlp.getXmlString());
 // build arg=value arg=value string
     in=0;
     for(int i=0;i<inputs.size();i++){
@@ -413,15 +416,56 @@ protected void setUserCommand(xiUserCommand format){userCmd=format;}
  * @param desc Descriptor list as returned from xPanelParameter.getCommandDescriptors()
  * @see xPanelParameter
  */
- protected void setCommandDescriptors(Vector<xXmlParser> desc){
-// look through command definitions to find the commands
-    for(int i=0;i<vcom.size();i++){
-    for(int ii=0;ii<desc.size();ii++){
-        xXmlParser xmlp=desc.elementAt(ii);
-        if(vcom.get(i).getParser().getFull().equals(xmlp.getName())){
-            vcom.get(i).setXmlParser(xmlp);
-            break;
-    }}}
+protected void setCommandDescriptors(Vector<xXmlParser> desc){
+	Element root,com,arg;
+	NodeList comlist, arglist;
+	xXmlParser xmlp;
+	StringBuffer str;
+	System.out.println("Set command definitions");
+// look if we have saved and restored definitions with values
+	Vector<String> comdefs=new Vector<String>();
+	comlist = xSet.getCommandXml();
+	if(comlist != null){ // get definitions
+		// build vector with definitions
+		for(int i=0;i<comlist.getLength();i++){
+			com=(Element)comlist.item(i);
+			str=new StringBuffer();
+			str.append("<command ");
+			str.append(xXml.attr("name",com.getAttribute("name")));
+			str.append(xXml.attr("scope",com.getAttribute("scope")));
+			str.append(xXml.attr("content",com.getAttribute("content"),">\n"));
+			arglist=com.getElementsByTagName("*");
+			for(int ii=0;ii<arglist.getLength();ii++){
+				arg=(Element)arglist.item(ii);
+				str.append("<argument ");
+				str.append(xXml.attr("name",arg.getAttribute("name")));
+				str.append(xXml.attr("type",arg.getAttribute("type")));
+				str.append(xXml.attr("value",arg.getAttribute("value")));
+				str.append(xXml.attr("required",arg.getAttribute("required"),"/>\n"));
+			}
+			str.append(xXml.tag("command",xXml.CLOSE));
+			comdefs.add(str.toString());
+		}
+	}
+	// look through command definitions to find the commands
+	for(int i=0;i<vcom.size();i++){
+// look for definitions for this command
+		for(int ii=0;ii<comdefs.size();ii++){
+			if(comdefs.get(ii).indexOf(vcom.get(i).getParser().getApplication())>0){
+			System.out.println("Attributes "+vcom.get(i).getParser().getApplication());
+			xmlp=new xXmlParser();
+			xmlp.parseXmlString(vcom.get(i).getParser().getFull(),comdefs.get(ii));
+			xmlp.isChanged(true); // otherwise this would not be stored
+			vcom.get(i).setXmlParser(xmlp); // will not be overwritten
+		}}
+		// no definitions yet, take initial ones
+			for(int ii=0;ii<desc.size();ii++){
+			xmlp=desc.elementAt(ii);
+			if(vcom.get(i).getParser().getFull().equals(xmlp.getName())){
+				vcom.get(i).setXmlParser(xmlp);
+				break;
+			}}
+		}
 }
 }
 

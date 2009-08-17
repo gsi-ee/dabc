@@ -32,6 +32,7 @@ import javax.swing.JTextPane;
 import javax.swing.event.*;
 import java.awt.event.*;
 import java.awt.Insets;
+import java.awt.Font;
 import java.util.StringTokenizer;
 //import javax.swing.GroupLayout;
 
@@ -76,6 +77,8 @@ public xPanelLogger(Dimension dim) {
     c.gridheight = 1;
     c.insets = new Insets(0,0,0,0);
     textar=new JTextArea();
+    // 1.6:  textar.setFont(new Font(Font.MONOSPACED,Font.BOLD,8));
+    textar.setFont(new Font("Monospaced",0,12));
     textpan=new JScrollPane(textar);
     textpan.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
     textpan.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);

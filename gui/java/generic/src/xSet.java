@@ -64,6 +64,7 @@ private static Color colorText=new Color(1.0f, 1.0f, 1.0f);
 private static Vector<xLayout> layouts = new Vector<xLayout>();
 private static Vector<Object> objects = new Vector<Object>();
 private static NodeList records=null;
+private static NodeList commands=null;
 private static JDesktopPane desktop=null;
 private static JFrame guiframe=null;
 private static int[] ParTableWidth;
@@ -117,9 +118,13 @@ public final static Color grayD(){return grayD;}
 public final static Color white(){return white;}  
 
 protected final static void setRecordXml(NodeList list){
-records=list;
-}
-protected static final NodeList getRecordXml(){return records;}
+	records=list;
+	}
+	protected static final NodeList getRecordXml(){return records;}
+protected final static void setCommandXml(NodeList list){
+	commands=list;
+	}
+protected static final NodeList getCommandXml(){return commands;}
 /**
  * Adds object to repository (only one per class!).
  * @param object Object to add.

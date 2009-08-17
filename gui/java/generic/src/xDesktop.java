@@ -60,7 +60,7 @@ private menuAction maSelect, maLogger, maCommands, maParameters, maMeters, maHis
 private Vector<menuAction> maUserController;
 private String usrHeader, usrGraphics, usrPanels;
 private boolean clearOnUpdate=false;
-private String LayoutFile, RecordFile, SelectionFile;
+private String LayoutFile, RecordFile, CommandFile, SelectionFile;
 
 // private PsActionSupport actionHandler;
 /**
@@ -158,6 +158,9 @@ public xDesktop() {
     if(System.getenv("DABC_RECORD_ATTRIBUTES")!=null) RecordFile=System.getenv("DABC_RECORD_ATTRIBUTES");
     else RecordFile=new String("Records.xml");
     xSaveRestore.restoreRecords(RecordFile);
+    if(System.getenv("DABC_COMMAND_ATTRIBUTES")!=null) CommandFile=System.getenv("DABC_COMMAND_ATTRIBUTES");
+    else CommandFile=new String("Commands.xml");
+    xSaveRestore.restoreCommands(CommandFile);
     if(System.getenv("DABC_PARAMETER_FILTER")!=null) SelectionFile=System.getenv("DABC_PARAMETER_FILTER");
     else SelectionFile=new String("Selection.xml");
     // create the panels
@@ -564,6 +567,7 @@ public void actionPerformed(ActionEvent e) {
         xSet.setLayout("Main", getLocation(), getSize() , 0, true);
         parpan.saveColWidth();
         xSaveRestore.saveLayouts(LayoutFile);
+        xSaveRestore.saveCommands(browser.getCommandList(),CommandFile);
         xSaveRestore.saveRecords(browser.getParameters(),RecordFile);
         xSaveRestore.restoreRecords(RecordFile);
         selpan.saveSetup(SelectionFile);

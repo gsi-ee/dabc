@@ -65,6 +65,46 @@ Element root,elem,el;
     else xSet.setRecordXml(null); 
 }
 /**
+ * Save all records attached to parameters (meters and histograms).
+ * @param vpar Vector of xiDimParameters.
+ * @param file Xml file name.
+ */
+public static final void saveCommands(Vector<xDimCommand> vcom, String file){
+    StringBuffer str=new StringBuffer();
+    int icom=vcom.size();
+	System.out.println("Store command attributes to "+file);
+    str.append(xXml.header());
+    str.append(xXml.tag("Commands",xXml.OPEN));
+    for(int i=0;i<icom;i++) {
+    	if(vcom.get(i).getXmlParser()!=null){
+    	if(vcom.get(i).getXmlParser().isChanged()){
+        		str.append(vcom.get(i).getXmlParser().getXmlString());
+        		System.out.println("Attributes "+vcom.get(i).getParser().getApplication());
+        }}
+    }
+    str.append(xXml.tag("Commands",xXml.CLOSE));
+    xXml.write(file, str.toString());
+}
+/**
+ * Restore all records attached to parameters (meters and histograms).
+ * XML tree is stored in xSet and can be retrieved by getRecordXml 
+ * called in xPanelParameter.
+ * @param file Xml file name.
+ * @see xSet
+ * @see xPanelParameter
+ */
+public static final void restoreCommands(String file){
+Element root;
+NodeList comlist;
+comlist=null;
+root=xXml.read(file);
+if(root != null){
+	comlist = root.getElementsByTagName("command");
+	System.out.println("Restore command attributes from "+file);
+}
+xSet.setCommandXml(comlist); 
+}
+/**
  * Save layouts to xml file
  * @param file File name (ending with .xml).
  * @see xSet

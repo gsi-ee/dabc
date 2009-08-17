@@ -93,6 +93,27 @@ try{
 }catch(IOException ioe){System.out.println("Error writing XML file "+file);}
 }
 /**
+ * Read xml file
+ * @param file File name (ending with .xml).
+ * @param xml Xml string to read.
+ */
+public final static String read(String file, int bytes){
+	char buf[]=new char[bytes];
+	FileReader fw;
+	int i=0;
+try{
+    fw = new FileReader(file);
+}catch(FileNotFoundException ioe){
+	System.out.println("Error opening XML file "+file);
+	return null;}
+try{
+i=fw.read(buf,0,bytes);
+fw.close();
+}catch(IOException ioe){System.out.println("Error reading XML file "+file);}
+    if(i==bytes)System.out.println("File truncated "+file);
+return new String(buf);
+}
+/**
  * Read XML file
  * @param file File name (ending with .xml).
  * @return Top element.
