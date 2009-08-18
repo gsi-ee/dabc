@@ -199,7 +199,7 @@ public void valueChanged(TreeSelectionEvent e) {
                 }
             }
     if(cmd != null) {
-        setPromptPanel(cmd.getXmlParser(),cmd.getParser().getName(), cmd.getType());
+        setPromptPanel(cmd);
         addPromptButton("Execute");
         Args.revalidate();
         }
@@ -239,16 +239,8 @@ StringBuffer sb=null;
 int in=0;
 xXmlParser xmlp =cmd.getXmlParser();
 sb=new StringBuffer();
-// No XML command description,
-// build simple command string, i.e. only one text field
-if(inputs.size() == 1){
-if(argnames[0].equals("*")){
-    sb.append(inputs.elementAt(0).getText());
-    cmd.exec(xSet.getAccess()+" "+sb.toString());
-    done=true;
-}}
 // we have an XML description
-if(!done && (xmlp != null)){ 
+if(xmlp != null){ 
 // System.out.println(xmlp.getName());
 // System.out.println(xmlp.getXmlString());
 // application can specify if this command needs XML arguments or not
@@ -278,9 +270,18 @@ if(!done && (xmlp != null)){
         in++;
     }
 // finalize XML string
-    xmlp.parseXmlString(xmlp.getCommandName(),xmlp.getXmlString());
+    xmlp.parseXmlString(xmlp.getName(),xmlp.getXmlString());
 //    System.out.println(xmlp.getXmlString());
-// build arg=value arg=value string
+    // handle simple command with only one string argument
+    // separately. Just give string as argument
+    if(argnames[0].equals("*")){
+        sb.append(inputs.elementAt(0).getText());
+        // two spaces because in MBS the scom scripts
+        // have no space at the end of command. If this is fixed,
+        // single spce would do.
+        cmd.exec(xSet.getAccess()+"  "+sb.toString());
+        done=true;
+    } else { // build arg=value arg=value string
     in=0;
     for(int i=0;i<inputs.size();i++){
         if(inputs.elementAt(i).getText().length() > 0){
@@ -311,7 +312,7 @@ if(!done && (xmlp != null)){
         else        cmd.exec(xSet.getAccess()+" "+sb.toString());
         done=true;
     }
-}
+}}
 xLogger.print(1,cmd.getParser().getFull()+" "+sb.toString());
 }
 private void addPrompt(String label, JTextField input){
@@ -363,11 +364,19 @@ private void addPromptHeader(String command, String scope){
     Args.setBorder(bord);
     gridconst.anchor = GridBagConstraints.EAST;
 }
-private void setPromptPanel(xXmlParser xparser, String command, String type){
+private void setPromptPanel(xDimCommand cmd){
 int iInputs=0, iCheckers=0;
+xXmlParser xparser=cmd.getXmlParser();
+String command=cmd.getParser().getName();
+String type=cmd.getType();
 JCheckBox cb;
 inputs=new Vector<JTextField>();
 checkers=new Vector<JCheckBox>();
+if(xparser==null){ // create default one
+	xparser=new xXmlParser();
+	xparser.standard(cmd.getParser().getFull(),command,"MBS");
+	cmd.setXmlParser(xparser);
+}
 if(xparser!=null){
     int nargs=xparser.getNargs();
     argnames=new String[nargs];
@@ -382,8 +391,7 @@ if(xparser!=null){
             checkers.add(cb);
             addCheckBox(argnames[ii],checkers.elementAt(iCheckers));
             iCheckers++;
-        }
-        else {
+        } else {
             inputs.add(new JTextField(xparser.getArgumentValue(ii),18));
             addPrompt(" "+
                 new String(argnames[ii]+" ( "+
@@ -393,16 +401,7 @@ if(xparser!=null){
             iInputs++;
         }
     }
-} else {
-    inputs.add(new JTextField("",18));
-    argnames=new String[1];
-    argtypes=new String[1];
-    argtypes[0]="C";
-    argnames[0]="*"; // these are returned as value only, without name=
-    addPromptHeader(command,"Common");
-    addPrompt(new String(" * ( "+type+" ) : "),inputs.elementAt(0));
-}
-}
+}}
 /**
  * Called by desktop, format from xiUserPanel.getUserCommand()
  * @param format format.getArgumentStyleXml(...) function is called
@@ -432,6 +431,7 @@ protected void setCommandDescriptors(Vector<xXmlParser> desc){
 			str=new StringBuffer();
 			str.append("<command ");
 			str.append(xXml.attr("name",com.getAttribute("name")));
+			str.append(xXml.attr("dim",com.getAttribute("dim")));
 			str.append(xXml.attr("scope",com.getAttribute("scope")));
 			str.append(xXml.attr("content",com.getAttribute("content"),">\n"));
 			arglist=com.getElementsByTagName("*");
@@ -451,8 +451,8 @@ protected void setCommandDescriptors(Vector<xXmlParser> desc){
 	for(int i=0;i<vcom.size();i++){
 // look for definitions for this command
 		for(int ii=0;ii<comdefs.size();ii++){
-			if(comdefs.get(ii).indexOf(vcom.get(i).getParser().getApplication())>0){
-			System.out.println("Attributes "+vcom.get(i).getParser().getApplication());
+			if(comdefs.get(ii).indexOf(vcom.get(i).getParser().getFull())>0){
+			System.out.println("Restore arguments of "+vcom.get(i).getParser().getFull());
 			xmlp=new xXmlParser();
 			xmlp.parseXmlString(vcom.get(i).getParser().getFull(),comdefs.get(ii));
 			xmlp.isChanged(true); // otherwise this would not be stored

@@ -37,6 +37,25 @@ private boolean ischanged=false;
 public xXmlParser(){
 }
 /**
+ * Build internal standard XML string buffer, one string argument.
+ * <br> command name="" dim="" scope="" content="default"
+ * @param name Name of the service
+ * @param command Name of the command
+ * @param scope String for scope, e.g. MBS
+ */
+public void standard(String name, String command, String scope){
+	cname=new String(name);
+	newCommand(command, false, scope, false);
+	addArgument("*", "C", "", "OPT");
+	str.append(xXml.tag("command",xXml.CLOSE));
+	finalized=true;
+	xml=str.toString();
+	root=xXml.string(xml);
+	args=root.getElementsByTagName("argument");
+	domcreated=true;
+	str=null;
+}
+/**
  * Starts to build internal XML string buffer.
  * <br> command name="" scope="" content="default"
  * @param command Name of the command
@@ -74,6 +93,7 @@ str=new StringBuffer();
 if(header)str.append(xXml.header());
 str.append("<command "+
 		xXml.attr("name",command)+
+		xXml.attr("dim",cname)+
 		xXml.attr("scope",scope)+
 		xXml.attr("content",content,">\n"));
 }

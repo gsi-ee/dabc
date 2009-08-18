@@ -649,6 +649,7 @@ public void actionPerformed(ActionEvent e) {
 protected void quit() {
 	if(xSet.isGuru())System.exit(0);
     int i=JOptionPane.showInternalConfirmDialog(desktop,"Quit GUI?","GUI can be restarted.", JOptionPane.YES_NO_OPTION); 
+    xSaveRestore.saveCommands(browser.getCommandList(),CommandFile);
     if(i == 0) System.exit(0);
 }
 

@@ -210,6 +210,7 @@ protected void initServices(String wildcard){
                 servlist[i]=3; // free format command
                 //System.out.println(srvcs[i]);
             }}}
+    System.out.println("Init Command Services: "+ncom);
     String[] parlist = new String[npar];
     String[] comlist = new String[ncom];
     ncom=0;
@@ -220,7 +221,6 @@ protected void initServices(String wildcard){
         if(servlist[i]==1){ // command
             ist=pars.parse(srvcs[i],xParser.PARSE_STORE_FULL); // parse, compose and store
             comlist[ncom++]=pars.toString(xParser.IS_COMMAND) +" "+DimBrowser.getFormat(srvcs[i]);
-            //System.out.println(comlist[ncom-1]);
         }else if(servlist[i]==2){ // parameter
             parlist[npar++]=srvcs[i]+" "+DimBrowser.getFormat(srvcs[i]);
         }else if(servlist[i]==3){ // server EXIT
@@ -228,7 +228,7 @@ protected void initServices(String wildcard){
             String full = new String(it[0]+"/EXIT/$:0/"+it[1]);
             ist=pars.parse(full,xParser.PARSE_STORE_FULL,xParser.IS_COMMAND); // parse, compose and store
             comlist[ncom++]=pars.toString(xParser.IS_COMMAND) +" "+DimBrowser.getFormat(srvcs[i]);
-    }
+        }
 // sort both lists
     List<String> plist = Arrays.asList(parlist);
     Collections.sort(plist);

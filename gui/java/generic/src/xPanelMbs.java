@@ -216,7 +216,8 @@ mbsPrompt=false;
 System.out.println("Mbs setDimServices");
 Vector<xDimCommand> list=browser.getCommandList();
 for(i=0;i<list.size();i++){
-if(list.get(i).getParser().getFull().indexOf("/MbsCommand")>0) {mbsCommand=list.get(i);break;}
+if(list.get(i).getParser().getFull().indexOf("/MbsCommand")>0) {
+	mbsCommand=list.get(i);break;}
 }
 Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
@@ -299,8 +300,9 @@ if(mbsTaskList.size() == nMbsNodes){
     System.out.print("Wait for "+nMbsNodes+" "+serv);
     while(t < timeout){
         n=0;
-        for(i=0;i<mbsTaskList.size();i++)
+        for(i=0;i<mbsTaskList.size();i++){
             if(mbsTaskList.elementAt(i).getValue().contains(serv))n++;
+        }
         if(n == nMbsNodes) return true;
         System.out.print(".");
         browser.sleep(1);
@@ -458,8 +460,10 @@ public void run(){
                                 MbsPath.getText()+" "+
                                 MbsUserpath.getText());
         //xLogger.print(0,MbsMaster+": "+cmd);
-        setProgress("Shut down MBS, update parameters ...",xSet.blueD());
+        setProgress("Shut down MBS, wait 5s ...",xSet.blueD());
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
+            browser.sleep(5);
+            setProgress("Update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
             if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
