@@ -424,7 +424,7 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
          prnt = GetObjParent(obj, level);
          if (prnt == 0) return false;
 
-         DOUT3(("Search parent %s", prnt->GetName()));
+         DOUT3(("Search parent %s level %d", prnt->GetName(), level));
 
          if (prnt->Find(*this)) {
             if (level--==0) {
@@ -441,7 +441,8 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
             if (level > maxlevel) break;
             fCurrChld = fCurrItem;
             fCurrItem = fXml.GetParent(fCurrItem);
-         }
+         } else
+            break; // FIXME: fixes problem with empty <Module name="*"> node in BNet configurations, but can introduce others
       }
 
       maxlevel--;
