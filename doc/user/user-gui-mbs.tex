@@ -7,14 +7,18 @@ It can run in two operation modes: with \mbs\ event builder or \dabc\ event buil
 (see \paref{user:mbsapp}).
 The first case means a standard \mbs\ system.
 
-To control a standard \mbs\ nothing has to be done by the user on the \mbs\ side.
-The node running the GUI must get granted \verba{rsh} access at least to the
-\mbs\ node where the prompter shall run.
-\strong{Note}, however that in the user's \mbs\ startup file (typically \verba{startup.scom}) the \verba{m\_daq\_rate} task must be
-started as last task (this is probably the case already).
+To control a standard \mbs\ nothing has to be done by the user on the \mbs\ side.\\
+\strong{Except}
+\bbul
+\item The node running the GUI must get granted \verba{rsh} access at least to the
+\mbs\ node where the prompter or dispatcher shall run. This means that the node name and user name of the GUI node must be in 
+the \verba{.rhosts} file in the Lynx home directory 
+\item The node name of the Lynx node itself also must be in \verba{.rhosts}.
+\item In the user's \mbs\ startup file (typically \verba{startup.scom}) the \verba{m\_daq\_rate} task must be started as last task (this is probably the case already).
 This task calculates the rates. The GUI waits for this task after execution of
 the startup file. Because \mbs\ has no states there is no other way to
 know when the startup has finished.
+\ebul
 Of cause, the \mbs\ itself must have been built with the DIM option (since version v5.1).
 Central log file is written as usual.
 Optionally one can provide a text file with specifications which parameters

@@ -2,11 +2,17 @@
 \label{user-setup-mbsgui-chapter}
 \lsection[Installing GUI]{user-install}{Installing GUI}
 
+\subsection{Linux at GSI}
 When working at the GSI linux cluster, the \dabc\ framework including Java GUI is already installed and will
 be maintained by people of the GSI EE department. Here \dabc\ needs just to be
-activated from any GSI shell by typing \verba{.~dabclogin} (dot space). In this case, 
-please skip this installation section and proceed with following section describing
-the set-up of the user environment (\paref{user:mbs}).
+activated from any GSI shell by typing: 
+\begin{small}
+\begin{verbatim}
+. dabclogin
+\end{verbatim}
+\end{small}
+Note the space behind the dot.
+In this case, please skip this installation section. 
 
 However, if working on a separate node outside GSI, 
 it is mandatory to install the \dabc\ Java GUI software
@@ -57,8 +63,9 @@ may set an \func{alias} to the full pathname of \verba{guilogin.sh} in your shel
 \end{verbatim} 
 \end{small}
 This will set the environment to run the GUI.
+\enum
 
-\item Batch file for Windows:
+\subsection{Windows}
 On Windows one needs the xgui.jar file only. The GUI itself can be started from a
 little BAT file like:
 \begin{small}
@@ -72,10 +79,10 @@ java -Xmx200m xgui.xGui -mbs
 \end{verbatim} 
 \end{small}
 To start GUI from desktop one has to create a Verknuepfung (RMB on file), then change Icon in Eigenschaften (RMB), then drag Verknuepfung to desktop.
-\enum
 
-
-One more thing is necessary for DIM control and GUI: the DIM name server.
+\subsection{Starting the GUI}
+When the installation is done, or at GSI after \verba{dabclogin},
+one more thing is necessary for DIM control and GUI: the DIM name server.
 It must run on a node accessible from all \mbs\ nodes and the node the GUI shall run. 
 
 \bnum
@@ -119,6 +126,6 @@ working directory, containing:
 \item Configuration files for GUI (XML).
 \ebul
 These configuration files for the GUI are described in more detail 
-in Chapter \paref{user-gui-chapter}.
+in Chapters \paref{user-gui-chapter} and \paref{user:mbs}.
 
 
