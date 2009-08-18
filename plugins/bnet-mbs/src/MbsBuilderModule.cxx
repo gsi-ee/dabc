@@ -18,7 +18,7 @@ bnet::MbsBuilderModule::MbsBuilderModule(const char* name, dabc::Command* cmd) :
    fOut.ready = false;
 
    fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 10000.);
-   fEvntRate->SetDebugOutput(true);
+//   fEvntRate->SetDebugOutput(true);
 }
 
 bnet::MbsBuilderModule::~MbsBuilderModule()

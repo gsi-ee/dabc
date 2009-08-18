@@ -426,6 +426,8 @@ bool dabc::RateParameter::Store(ConfigIO &cfg)
 
    cfg.CreateAttr("alarmcolor", fRecord.alarmcolor);
 
+   cfg.CreateAttr("debug", IsDebugOutput() ? "true" : "false");
+
    cfg.PopItem();
 
    return true;
@@ -476,6 +478,9 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
 
    if (cfg.Find(this, v, "alarmcolor"))
       if (!v.empty()) strncpy(fRecord.alarmcolor, v.c_str(), sizeof(fRecord.alarmcolor));
+
+   if (cfg.Find(this, v, "debug"))
+      if (!v.empty()) SetDebugOutput((v == "true") || (v=="1") || (v=="TRUE"));
 
    return true;
 }

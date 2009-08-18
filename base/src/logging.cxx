@@ -229,19 +229,19 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
 
    if (mask & lFile) {
       if (str.length() > 0) str+=" ";
-      str += "File:";
+//      str += "File:";
       str += entry->fFileName;
    }
 
    if (mask & lFunc) {
-      if (str.length() > 0) str+=" ";
-      str += "Func:";
+      if (str.length() > 0) str+=":";
+//      str += "Func:";
       str += entry->fFuncName;
    }
 
    if (mask & lLine) {
-      if (str.length() > 0) str+=" ";
-      str += dabc::format("Line:%u", entry->fLine);
+      if (str.length() > 0) str+=":";
+      str += dabc::format("%u", entry->fLine);
    }
 
    if (mask & lMessage) {
