@@ -235,6 +235,7 @@ private void executeCommands(){
 private void executeCommand(xDimCommand cmd){
 boolean done=false;
 boolean xmlargs=false;
+boolean hasargs=false;
 StringBuffer sb=null;
 int in=0;
 xXmlParser xmlp =cmd.getXmlParser();
@@ -247,7 +248,9 @@ if(xmlp != null){
     if(userCmd != null) xmlargs=userCmd.getArgumentStyleXml(xmlp.getCommandScope(),cmd.getParser().getFull());
 // Store values in xml description without header
 //    System.out.println(xmlp.getXmlString());
+    hasargs=xmlp.hasArgs();
     xmlp.newCommand(xmlp.getCommandName(),false,xmlp.getCommandScope(),true); // values have changed
+    if(hasargs){
     in=0;
     for(int i=0;i<inputs.size();i++){
         xmlp.addArgument(argnames[in],
@@ -268,20 +271,21 @@ if(xmlp != null){
                 "false",
                 xmlp.getArgumentRequired(in));
         in++;
-    }
+    }} //has args
 // finalize XML string
     xmlp.parseXmlString(xmlp.getName(),xmlp.getXmlString());
 //    System.out.println(xmlp.getXmlString());
     // handle simple command with only one string argument
     // separately. Just give string as argument
-    if(argnames[0].equals("*")){
+    if(hasargs){
+        if(argnames[0].equals("*")){
         sb.append(inputs.elementAt(0).getText());
         // two spaces because in MBS the scom scripts
         // have no space at the end of command. If this is fixed,
         // single spce would do.
         cmd.exec(xSet.getAccess()+"  "+sb.toString());
         done=true;
-    } else { // build arg=value arg=value string
+        } else { // build arg=value arg=value string
     in=0;
     for(int i=0;i<inputs.size();i++){
         if(inputs.elementAt(i).getText().length() > 0){
@@ -306,13 +310,13 @@ if(xmlp != null){
         sb.append(" ");
         }
         in++;
-    }
+    }}} // has args
     if(!done){
         if(xmlargs) cmd.exec(xSet.getAccess()+" "+xmlp.getXmlString());
         else        cmd.exec(xSet.getAccess()+" "+sb.toString());
         done=true;
     }
-}}
+} // has XML
 xLogger.print(1,cmd.getParser().getFull()+" "+sb.toString());
 }
 private void addPrompt(String label, JTextField input){

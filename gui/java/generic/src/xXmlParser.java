@@ -29,6 +29,7 @@ private StringBuffer str;
 private boolean finalized=false;
 private boolean domcreated=false;
 private boolean ischanged=false;
+private boolean hasargs=false;
 
 /**
  * The XML parser can be used to build a command description string.
@@ -88,6 +89,7 @@ if(changed) content = new String("values");
 else        content = new String("default");
 xml=null;
 finalized=false;
+hasargs=false;
 ischanged=changed;
 str=new StringBuffer();
 if(header)str.append(xXml.header());
@@ -106,13 +108,14 @@ str.append("<command "+
  * @param required Specifies if argument is required. Stored as string "true" or "false".
  */
 public void addArgument(String argument, String type, String value, String required){
-if(!finalized) 
+if(!finalized){ 
+hasargs=true;
 str.append("<argument "+
 		xXml.attr("name",argument)+
 		xXml.attr("type",type)+
 		xXml.attr("value",value)+
 		xXml.attr("required",required,"/>\n"));
-}
+}}
 /**
  * @return Finalized internal XML string buffer, or XML string read by parseXmlString.
  */
@@ -138,6 +141,7 @@ xXml.write(file,xml);
 public void parseXmlString(String name, String xmlstring){
 root=xXml.string(xmlstring);
 args=root.getElementsByTagName("argument");
+hasargs=(args.getLength()>0);
 domcreated=true;
 cname=new String(name);
 xml=xmlstring;
@@ -164,6 +168,10 @@ public String getCommandScope(){return root.getAttribute("scope");}
  * @return Command content field
  */
 public String getCommandContent(){return root.getAttribute("content");}
+/**
+ * @return Number of arguments
+ */
+public boolean hasArgs(){return hasargs;}
 /**
  * @return Number of arguments
  */
