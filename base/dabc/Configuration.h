@@ -86,12 +86,12 @@ namespace dabc {
          bool StoreObject(const char* fname, Basic* obj);
 
          std::string GetAttrValue(const char* name);
-         bool FindItem(Basic* obj, std::string& res, const char* finditem = 0, const char* findattr = 0);
 
          virtual bool FindItem(const char* name);
          virtual bool CheckAttr(const char* name, const char* value);
 
          virtual bool Find(Basic* obj, std::string& value, const char* findattr = 0);
+         bool FindItem(Basic* obj, std::string& res, const char* finditem = 0, const char* findattr = 0);
    };
 
 

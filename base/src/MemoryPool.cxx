@@ -548,7 +548,7 @@ bool dabc::MemoryPool::_ExtendArr(void* arr, BlockNum_t &capacity)
 
 dabc::MemoryBlock* dabc::MemoryPool::_AllocateMemBlock(BufferSize_t buffersize, BufferNum_t numbuffers, unsigned align, bool withqueue)
 {
-   DOUT1(("_AllocateMemBlock pool:%s bufsize:%u number:%u align:%u", GetName(), buffersize, numbuffers, align));
+   DOUT2(("_AllocateMemBlock pool:%s bufsize:%u number:%u align:%u", GetName(), buffersize, numbuffers, align));
 
    if (fNumMem>=fMemCapacity)
       if (!_ExtendArr(&fMem, fMemCapacity)) return 0;
@@ -565,8 +565,7 @@ dabc::MemoryBlock* dabc::MemoryPool::_AllocateMemBlock(BufferSize_t buffersize, 
    fMem[fNumMem] = block;
    fNumMem++;
 
-
-   DOUT1(("Pool:%s  Mem[%u] : blocksize %llu  bufsize %u used %u", GetName(), fNumMem-1, block->BlockSize(), block->BufferSize(), block->NumUsedBuffers()));
+   DOUT2(("Pool:%s  Mem[%u] : blocksize %llu  bufsize %u used %u", GetName(), fNumMem-1, block->BlockSize(), block->BufferSize(), block->NumUsedBuffers()));
 
    block->fChangeCounter = ++fChangeCounter;
 
@@ -1384,7 +1383,7 @@ bool dabc::MemoryPool::Reconstruct(dabc::Command* cmd)
    bool fixlayout = GetCfgBool(xmlFixedLayout, false, cmd);
 
    if (fixlayout) {
-      DOUT1(("Fix layout of pool %s", GetName()));
+      DOUT2(("Fix layout of pool %s", GetName()));
       SetLayoutFixed();
    }
 

@@ -377,7 +377,7 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
       maxlevel++;
    }
 
-   DOUT3(("Configuration::Find object %s lvl = %d  attr = %s",
+   DOUT3(("Configuration::FindItem object %s lvl = %d  attr = %s",
           obj->GetFullName().c_str(), maxlevel, (findattr ? findattr : "---")));
 
    if (prnt==0) return false;
@@ -424,7 +424,9 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
          prnt = GetObjParent(obj, level);
          if (prnt == 0) return false;
 
-         DOUT3(("Search parent %s level %d", prnt->GetName(), level));
+//         DOUT3(("Search parent %s level %d", prnt->GetName(), level));
+
+         XMLNodePointer_t curr = fCurrItem;
 
          if (prnt->Find(*this)) {
             if (level--==0) {
@@ -436,13 +438,32 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
                }
             }
          } else
+         if (curr != fCurrItem) {
+
+            EOUT(("FIXME: should not happen"));
+            EOUT(("FIXME: problem in hierarchy search for %s lvl %d prnt %s", obj->GetFullName().c_str(), level, prnt->GetName()));
+            EOUT(("fCurrChld %p   curr %p  fCurrItem %p", fCurrChld, curr, fCurrItem));
+
+            // it can happen when node name is ok, but attribute did not match
+            // normally wrong attribute should rollback hierarchy back
+
+            fCurrChld = fCurrItem;
+            fCurrItem = fXml.GetParent(fCurrItem);
+
+            // check again that only one level was moved
+            if (curr!=fCurrItem) { EOUT(("FIXME: big step"));  break; }
+         } else
          if (fCurrChld == 0) {
+            // object was not found, we increment depth level and try to continue our search
             level++;
             if (level > maxlevel) break;
             fCurrChld = fCurrItem;
             fCurrItem = fXml.GetParent(fCurrItem);
-         } else
-            break; // FIXME: fixes problem with empty <Module name="*"> node in BNet configurations, but can introduce others
+            if (fCurrItem==0) {
+               EOUT(("FIXME: Wrong hierarchy search - one should repair it"));
+               break;
+            }
+         }
       }
 
       maxlevel--;

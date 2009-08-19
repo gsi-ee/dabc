@@ -33,18 +33,18 @@ dabc::PoolHandle::PoolHandle(Basic* parent, const char* name, MemoryPool* pool,
    fUpdateTimeout(-1),
    fStoreHandle(false)
 {
-   if ((number>0) || (increment>0) || (size>0)) {
-      fStoreHandle = (pool==0) || !pool->IsMemLayoutFixed();
-      if (size>0) fRequiredSize = GetCfgInt(xmlBufferSize, size);
-      if (number>0) fRequiredNumber = GetCfgInt(xmlNumBuffers, number);
-      if (increment>0) fRequiredIncrement = GetCfgInt(xmlNumIncrement, increment);
+   if ((number>0) || (increment>0) || (size>0))
+      fStoreHandle = !fPool->IsMemLayoutFixed();
+
+   if (size>0) fRequiredSize = GetCfgInt(xmlBufferSize, size);
+   if (number>0) fRequiredNumber = GetCfgInt(xmlNumBuffers, number);
+   if (increment>0) fRequiredIncrement = GetCfgInt(xmlNumIncrement, increment);
+
+   if (fStoreHandle) {
+      if (fRequiredSize==0) fRequiredSize = dabc::DefaultBufferSize;
+      fPool->AddMemReq(fRequiredSize, fRequiredNumber, fRequiredIncrement, 0);
+      fPool->AddRefReq(0, fRequiredNumber*2, fRequiredIncrement, 0);
    }
-
-   if (fRequiredSize==0) fRequiredSize = dabc::DefaultBufferSize;
-
-   fPool->AddMemReq(fRequiredSize, fRequiredNumber, fRequiredIncrement, 0);
-
-   fPool->AddRefReq(0, fRequiredNumber*2, fRequiredIncrement, 0);
 }
 
 dabc::PoolHandle::~PoolHandle()
@@ -117,7 +117,9 @@ bool dabc::PoolHandle::Store(ConfigIO &cfg)
 
 bool dabc::PoolHandle::Find(ConfigIO &cfg)
 {
-   if (!fStoreHandle) return true;
+   // we must return false if we not intend to search handle,
+   // if return true, dabc::Configuration class think that hierarchy exists and will try to travel that hierarchy back
+   if (!fStoreHandle) return false;
 
    if (!cfg.FindItem(clPoolHandle)) return false;
 

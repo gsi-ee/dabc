@@ -446,7 +446,11 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
 
    std::string v;
 
-   if (!cfg.Find(this, v)) return false;
+//   if (!cfg.Find(this, v)) return false;
+
+   bool res = cfg.Find(this, v);
+   DOUT0(("Find ratemeter %s = %s", GetFullName().c_str(), DBOOL(res)));
+   if (!res) return false;
 
    LockGuard lock(fValueMutex);
 
@@ -481,6 +485,8 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
 
    if (cfg.Find(this, v, "debug"))
       if (!v.empty()) SetDebugOutput((v == "true") || (v=="1") || (v=="TRUE"));
+
+   DOUT0(("Finish ratemeter %s ok", GetName()));
 
    return true;
 }
