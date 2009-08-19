@@ -15,6 +15,8 @@ bnet::MbsWorkerApplication::MbsWorkerApplication(const char* classname) :
 {
    CreateParStr("DoServer", "");
 
+   CreateParInt(mbs::xmlSizeLimit, 0);
+
    if (IsReceiver()) {
       dabc::CommandDefinition* def = NewCmdDef("StartServer");
       def->AddArgument("Kind", dabc::argString, false);
@@ -114,6 +116,9 @@ bool bnet::MbsWorkerApplication::CreateOutFile(const char* portname, const std::
 
    if (filename.empty()) {
       if (!dabc::mgr()->CreateTransport("Splitter/Output0", "")) return false;
+
+      SetParStr("Info", dabc::format("Stop file writing"));
+
    } else {
       DOUT0(("Start Create output file = %s", filename.c_str()));
 
@@ -124,6 +129,7 @@ bool bnet::MbsWorkerApplication::CreateOutFile(const char* portname, const std::
          return false;
       }
       DOUT0(("Create output file = %s", filename.c_str()));
+      SetParStr("Info", dabc::format("Start file writing %s", filename.c_str()));
    }
    return true;
 }

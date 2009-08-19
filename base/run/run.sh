@@ -1,7 +1,31 @@
 #!/bin/bash
 
-echo "Shell script to run dabc application in simple (without XDAQ/dim) environment"
-echo "  Usage: run.sh filename.xml [run|start|stop|test|kill]  [-v|--verbose] [-dim|-sctrl]"
+
+if [[ "$1" == "-version" ]] ; then
+   echo "DABC version 1.03"
+   exit 0
+fi
+
+echo "Shell script to run dabc application"
+
+if [[ "$1" == "" || "$1" == "?" || "$1" == "-help" || "$1" == "-h" || "$1" == "/?" ]] ; then
+   echo "Usage: run.sh filename.xml [run|start|stop|test|kill]  [-v|--verbose] [-dim|-sctrl]"
+   echo "    filename.xml - xml file with application(s) configuration "
+   echo "Run options: "
+   echo "    start[default] - only start application"
+   echo "    run - start, initialize and run application"
+   echo "    test - test content of xml file, check if login on specified node" 
+   echo "            is allowed, test if run directory exists"
+   echo "    stop - stop running application, emulates Ctrl-C"
+   echo "    kill - kill running application, using kill command"
+   echo "For test, stop, kill commands node id can be specified like run.sh file.xml test 3"
+   echo "Ctrl options: "
+   echo "    -dim - use DIM for application control, DIM name server should run and "
+   echo "              DIM_DNS_NODE should be configured in xml file or as enviroment variable"
+   echo "    -sctrl - simplified socket-based control to test application without DIM/GUI"
+   echo "    -verbose - provide output of all commands, applied by script"
+   exit 0
+fi   
 
 XMLFILE=$1
 shift
@@ -10,6 +34,7 @@ if [ ! -f $XMLFILE ] ; then echo "file $XMLFILE not exists"; exit 1; fi
 VERBOSE=false
 RUNMODE=start
 CTRLMODE=
+SELECTNODE=-1
 
 while [[ "x$1" != "x" ]] ; do
    if [[ "$1" == "-v" || "$1" == "--vebrose" ]] ; then 
@@ -17,7 +42,13 @@ while [[ "x$1" != "x" ]] ; do
    elif [[ "$1" == "-dim" || "$1" == "-sctrl" ]] ; then
       CTRLMODE=$1;
    else
-      RUNMODE=$1;   
+      RUNMODE=$1; 
+      if [[ "$RUNMODE" == "test" || "$RUNMODE" == "stop" || "$RUNMODE" == "kill" ]] ; then
+         if [[ $2 == $(($2)) ]]; then
+            SELECTNODE=$2
+            shift  
+         fi
+      fi  
    fi  
    shift
 done
@@ -64,23 +95,26 @@ if [[ "$RUNMODE" == "test" || "$RUNMODE" == "stop" || "$RUNMODE" == "kill" ]]
 then
 for (( counter=0; counter<numnodes; counter=counter+1 ))
 do
-   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -mode $RUNMODE`
-   retval=$?
-   if [ $retval -ne 0 ]; then
-      echo "Cannot identify test call args for node $counter  err = $retval"
-      exit $retval
-   fi
-   
-   if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
-   
-   $callargs
+   if (( $SELECTNODE==-1 || $SELECTNODE==$counter )) ; then 
 
-   retval=$? 
-   if [[ "$RUNMODE" == "test" || "$RUNMODE" == "run" ]] ; then 
-      if [ $retval -ne 0 ] ; then
-         echo Mode $RUNMODE fail for node $counter with err = $retval
-         exit $retval
-      fi
+	   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -mode $RUNMODE`
+	   retval=$?
+	   if [ $retval -ne 0 ]; then
+	      echo "Cannot identify test call args for node $counter  err = $retval"
+	      exit $retval
+	   fi
+	   
+	   if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
+	   
+	   $callargs
+	
+	   retval=$? 
+	   if [[ "$RUNMODE" == "test" || "$RUNMODE" == "run" ]] ; then 
+	      if [ $retval -ne 0 ] ; then
+	         echo Mode $RUNMODE fail for node $counter with err = $retval
+	         exit $retval
+	      fi
+	   fi
    fi
 done
 fi
