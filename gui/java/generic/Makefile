@@ -216,7 +216,7 @@ jar: $(JARFILE)
 
 
 $(JARFILE): JarHeader.txt $(wildcard $(PACKAGE)/*.class) $(wildcard icons/*.png)  
-	jar -cmf JarHeader.txt $(PACKAGE).jar $(PACKAGE)/*.class icons
+	jar -cmf JarHeader.txt $(PACKAGE).jar $(PACKAGE)/*.class icons/*.png
 #	jar -tf $(PACKAGE).jar
 	mv $(PACKAGE).jar $(JARDIR)
 	
