@@ -460,9 +460,10 @@ public void run(){
                                 MbsPath.getText()+" "+
                                 MbsUserpath.getText());
         //xLogger.print(0,MbsMaster+": "+cmd);
-        setProgress("Shut down MBS, wait 5s ...",xSet.blueD());
+        setProgress("Shut down MBS, wait ...",xSet.blueD());
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
-            browser.sleep(5);
+        	if(waitMbs(5+6*nMbsNodes,"BROKEN")){
+            //browser.sleep(5);
             setProgress("Update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
@@ -472,7 +473,9 @@ public void run(){
             else setProgress("OK: MBS shut down",xSet.greenD());
             //setDimServices();
             System.out.println("Run down finished");
-    }}
+        	} else setProgress("MBS shut down not finished?",xSet.redD());
+        	
+        }}
     else {
 
 // all others need mbscommand
