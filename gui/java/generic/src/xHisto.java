@@ -385,6 +385,7 @@ public void update(Graphics g)
  */
 public void redraw(int channels, int[] iBuffer, boolean draw){
 	if(dragging) return; // mouse is dragging, do not disturb
+    if(channels<1)return;
     iChan=channels;
     iData = iBuffer;
     if(iPixelY == null){

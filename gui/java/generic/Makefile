@@ -20,6 +20,7 @@ classes: \
 	$(PACKAGE)/xForm.class \
 	$(PACKAGE)/xFormMbs.class \
 	$(PACKAGE)/xFormDabc.class \
+	$(PACKAGE)/xFormRunInfo.class \
 	$(PACKAGE)/xTimer.class \
 	$(PACKAGE)/xLayout.class \
 	$(PACKAGE)/xCrypt.class \
@@ -64,6 +65,7 @@ classes: \
 	$(PACKAGE)/xDimBrowser.class \
 	$(PACKAGE)/xiUserCommand.class \
 	$(PACKAGE)/xiUserPanel.class \
+	$(PACKAGE)/xPanelRunInfo.class \
 	$(PACKAGE)/xPanelDabc.class \
 	$(PACKAGE)/xPanelMbs.class \
 	$(PACKAGE)/xPanelDabcMbs.class \
@@ -108,6 +110,8 @@ $(PACKAGE)/xFormMbs.class : $(SOURCEDIR)/xFormMbs.java
 	javac $(FLAGS) $(SOURCEDIR)/xFormMbs.java
 $(PACKAGE)/xFormDabc.class : $(SOURCEDIR)/xFormDabc.java
 	javac $(FLAGS) $(SOURCEDIR)/xFormDabc.java
+$(PACKAGE)/xFormRunInfo.class : $(SOURCEDIR)/xFormRunInfo.java
+	javac $(FLAGS) $(SOURCEDIR)/xFormRunInfo.java
 $(PACKAGE)/xTimer.class : $(SOURCEDIR)/xTimer.java
 	javac $(FLAGS) $(SOURCEDIR)/xTimer.java
 $(PACKAGE)/xCrypt.class : $(SOURCEDIR)/xCrypt.java
@@ -186,6 +190,8 @@ $(PACKAGE)/xPanelPrompt.class : $(SOURCEDIR)/xPanelPrompt.java
 	javac $(FLAGS) $(SOURCEDIR)/xPanelPrompt.java
 $(PACKAGE)/xDimNameInfo.class : $(SOURCEDIR)/xDimNameInfo.java
 	javac $(FLAGS) $(SOURCEDIR)/xDimNameInfo.java
+$(PACKAGE)/xPanelRunInfo.class : $(SOURCEDIR)/xPanelRunInfo.java
+	javac $(FLAGS) $(SOURCEDIR)/xPanelRunInfo.java
 $(PACKAGE)/xPanelDabc.class : $(SOURCEDIR)/xPanelDabc.java
 	javac $(FLAGS) $(SOURCEDIR)/xPanelDabc.java
 $(PACKAGE)/xPanelDabcMbs.class : $(SOURCEDIR)/xPanelDabcMbs.java
@@ -255,6 +261,7 @@ doc/index.html : \
 	$(SOURCEDIR)/xPanelLogger.java \
 	$(SOURCEDIR)/xPanelPrompt.java \
 	$(SOURCEDIR)/xDimNameInfo.java \
+	$(SOURCEDIR)/xPanelFileHeader.java \
 	$(SOURCEDIR)/xPanelDabc.java \
 	$(SOURCEDIR)/xPanelDabcMbs.java \
 	$(SOURCEDIR)/xPanelMbs.java \

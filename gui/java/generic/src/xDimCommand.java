@@ -71,6 +71,7 @@ protected xParser getParser(){return pars;}
  * @return data type
  */
 protected String getType(){return pars.getTypeList()[0];}
+
 // xiDimCommand
 public void exec(String arg){
 int iarg=0;

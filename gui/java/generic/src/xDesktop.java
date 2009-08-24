@@ -72,20 +72,21 @@ private String LayoutFile, RecordFile, CommandFile, SelectionFile;
 public xDesktop() {
     super("DABC Controls and Monitoring");
     if(!xSet.isControl()) System.out.println("Starting in monitor only mode.");
-    if(usrpan == null){
-    	usrPanels=xSet.getUserPanels(); // specified by shell call
-    	if(usrPanels==null) usrPanels=System.getenv("DABC_APPLICATION_PANELS");
-    	if(usrPanels!=null){
-	    	usrpan=new Vector<xiUserPanel>(0);
-	        String[] upl=usrPanels.split(",");
-	        for(int ii=0;ii<upl.length;ii++){
-	        try{
-        	System.out.println("Instance "+upl[ii]);
-        	usrpan.add((xiUserPanel) Class.forName(upl[ii]).newInstance());
-        }   catch(ClassNotFoundException ee){System.out.println("NotFound: Error creating "+upl[ii]);}
-            catch(InstantiationException x){System.out.println("Instant: Error creating "+upl[ii]);}
-            catch(IllegalAccessException xx){System.out.println("IllAccess: Error creating "+upl[ii]);}
-    }}}
+	usrpan=new Vector<xiUserPanel>(0);
+	usrpan.add(new xPanelRunInfo());
+	usrPanels=xSet.getUserPanels(); // specified by shell call
+	if(usrPanels==null) usrPanels=System.getenv("DABC_APPLICATION_PANELS");
+	if(usrPanels!=null){
+    	usrpan=new Vector<xiUserPanel>(0);
+        String[] upl=usrPanels.split(",");
+        for(int ii=0;ii<upl.length;ii++){
+        try{
+    	System.out.println("Instance "+upl[ii]);
+    	usrpan.add((xiUserPanel) Class.forName(upl[ii]).newInstance());
+	    }   catch(ClassNotFoundException ee){System.out.println("NotFound: Error creating "+upl[ii]);}
+	        catch(InstantiationException x){System.out.println("Instant: Error creating "+upl[ii]);}
+	        catch(IllegalAccessException xx){System.out.println("IllAccess: Error creating "+upl[ii]);}
+    }}
     if(usrpan != null){
         frUserController = new Vector<xInternalFrame>(0);
         maUserController = new Vector<menuAction>(0);
