@@ -17,10 +17,12 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.ImageIcon;
 import javax.swing.JTextField;
+import javax.swing.JTextArea;
 import javax.swing.JCheckBox;
 import javax.swing.JPanel;
 import javax.swing.JDesktopPane;
 import javax.swing.JSplitPane;
+import javax.swing.JScrollPane;
 import org.w3c.dom.*;
 import dim.*;
 /**
@@ -38,6 +40,7 @@ private String tooltip;
 private ActionListener action;
 private JTextField run, exper, line;
 private JCheckBox checkfull;
+private JTextArea comar;
 private xiDesktop desk;
 private xiDimBrowser brows;
 private xiDimCommand mbsSetHead=null;
@@ -58,7 +61,7 @@ private boolean only;
  */
 public xPanelRunInfo(){
 // Head line (title) inside window
-	   super("Run Information <TAB><RET>");
+	   super("Run Information");
 	   menuIcon=xSet.getIcon("icons/filenew.png");
 	   name=new String("RunInfo"); // name for prompter panel
 	   panelLayout=xSet.getLayout(name); // restored from setup?
@@ -92,7 +95,9 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
     int width=30;
     run=addPrompt("Run [64]: ",formRun.getRun(),"set",width,this);
     exper=addPrompt("Experiment [64]: ",formRun.getExperiment(),"set",width,this);
-    line=addPrompt("Comment [76]: ",formRun.getComment(),"set",width,this);
+//    line=addPrompt("Comment [76]: ",formRun.getComment(),"set",width,this);
+    comar=addTextArea(formRun.getComment(),"set",5,width,this);
+    addTextButton("Save run information for file header","set","Save run information",this);
 }
 //Release local references to DIM parameters and commands (xiUserPanel)
 //otherwise we would get memory leaks!
@@ -116,6 +121,7 @@ for(int i=0;i<vicom.size();i++){
 //---- Handle the menu actions ---------------------------------------
 public void actionPerformed(ActionEvent e) {
 String arg;
+String line;
 String cmd = new String(e.getActionCommand());
 
 if ("set".equals(cmd)) {
@@ -125,19 +131,30 @@ formRun.setRun(arg);
 arg=new String(exper.getText());
 if(arg.length()>64)arg=arg.substring(0,64);
 formRun.setExperiment(arg);
-arg=new String(line.getText());
-if(arg.length()>76)arg=arg.substring(0,76);
+//arg=new String(line.getText());
+//if(arg.length()>76)arg=arg.substring(0,76);
+arg=new String(comar.getText());
 formRun.setComment(arg);
 formRun.saveSetup(file);
 if(mbsSetHead != null){
 xLogger.print(1,"MBS: SetFileHeader -clear");
 xLogger.print(1,"MBS: SetFileHeader -run \""+formRun.getRun()+"\"");
 xLogger.print(1,"MBS: SetFileHeader -exp \""+formRun.getExperiment()+"\"");
-xLogger.print(1,"MBS: SetFileHeader -line \""+formRun.getComment()+"\"");
 mbsSetHead.exec(xSet.getAccess()+" x -clear");
 mbsSetHead.exec(xSet.getAccess()+" \""+formRun.getRun()+"\" -run");
 mbsSetHead.exec(xSet.getAccess()+" \""+formRun.getExperiment()+"\" -exp");
-mbsSetHead.exec(xSet.getAccess()+" \""+formRun.getComment()+"\" -comm");
+// break comment into lines
+int len=arg.length();
+int offset=0;
+int chars=74;
+while(len > 0){
+	if(chars>len)chars=len;
+	line=arg.substring(offset,offset+chars);
+	xLogger.print(1,"MBS: SetFileHeader -comm \""+line+"\"");
+	mbsSetHead.exec(xSet.getAccess()+" \""+line+"\" -comm");
+	len -= chars;
+	offset += chars;
+}
 }}
 else System.out.println("Ignore "+cmd);
 }

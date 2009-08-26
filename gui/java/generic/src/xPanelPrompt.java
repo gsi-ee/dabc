@@ -25,6 +25,7 @@ import javax.swing.border.TitledBorder;
 import javax.swing.BorderFactory;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.JTextArea;
 import javax.swing.JCheckBox;
 //import javax.swing.GroupLayout;
 
@@ -166,6 +167,28 @@ public void addCheckBox(String label, JCheckBox check){
     gridconst.fill = GridBagConstraints.HORIZONTAL;
     gridconst.weightx = 1.0;
     pan.add(check, gridconst);
+}
+/**
+ * Add text area in column.
+ * @param text Text of area.
+ * @param cmd command. 
+ * @param rows rows (height)
+ * @param cols columns (width)
+ * @param al Action listener handling command.
+ */
+public JTextArea addTextArea(String text, String cmd, int rows, int cols, ActionListener al){
+    JTextArea ta = new JTextArea(text,rows,cols);
+    ta.setLineWrap(true);
+    //ta.setActionCommand(cmd);
+    //ta.addActionListener(al);
+    JScrollPane textpan=new JScrollPane(ta);
+    textpan.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+    textpan.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    gridconst.gridwidth = GridBagConstraints.REMAINDER;     //end row
+    gridconst.fill = GridBagConstraints.HORIZONTAL;
+    gridconst.weightx = 1.0;
+    pan.add(textpan, gridconst);
+    return ta;
 }
 /**
  * Add text button in column.

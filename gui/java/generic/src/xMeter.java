@@ -58,7 +58,7 @@ private int iMax;
 private int iCurL;
 private int iyOff;
 private int iDim=0;
-private int iYpos;
+private int iYpos, iXpos=0;
 private int iInit;
 private int iMode, defMode;
 private int ixpol[]={1,2,3};
@@ -184,6 +184,8 @@ private void initMeter(String name, double min, double max, int xlen, int ylen, 
     if(iy<YSIZE)iy=YSIZE;
     iAngle = 0;
     iYpos=iy-49;
+    iXpos=14;
+    iDim=ix-5-iXpos;
     fCur=min;
     // if(boArc){
         // ix=XSIZE;
@@ -195,7 +197,6 @@ private void initMeter(String name, double min, double max, int xlen, int ylen, 
     if(boTrend||boStat){
         iYpos = iy-58; // was 17
         fCur=0.0;
-        iDim=ix-8-iYpos;
         fTrend   = new double[iDim];
         fStat   = new double[iDim];
         ixVal = new int[iDim];
@@ -206,7 +207,7 @@ private void initMeter(String name, double min, double max, int xlen, int ylen, 
             fStat[l]=0.0;
             fTrend[l]=0.0;
             iyVal[l]=iyOff;
-            ixVal[l]=(int) ((float)l * (float)(ix-8-iYpos) / (float)iDim) + 4 + iYpos;
+            ixVal[l]=(int) ((float)l * (float)(iDim) / (float)iDim) + 1 + iXpos;
         }
         iNum=0;
         iTimes=1;
@@ -394,10 +395,12 @@ public int getID(){return iID;}
 public Point getPosition(){return new Point(getX(),getY());};
 public Dimension getDimension(){return new Dimension(ix,iy);};
 public void setSizeXY(){setPreferredSize(new Dimension(ix,iy));}
+
 public void setSizeXY(Dimension dd){
     ix=(int)dd.getWidth();
     iy=(int)dd.getHeight();
     iInit=0;
+    iDim=0;
     imStore = null;
     createScale();
     clearStat();
@@ -461,7 +464,7 @@ int ioff=iy-37; // was 38
                 fStat[l]=0.0;
                 ddCont=0.0; // this will trigger to create iyVal from fStat new with next redraw
                 iyVal[l]=iyOff;
-                ixVal[l]=(int) ((float)l * (float)(ix-8-iYpos) / (float)iDim) + 4 + iYpos;
+                ixVal[l]=(int) ((float)l * (float)(iDim) / (float)iDim) + 1 + iXpos;
             }
             iYpos = iy-58; // was 17
             setLimits(fMin,fMax);
@@ -486,6 +489,7 @@ public void setMode(int mode){
     boBar = false;
     boTrend=false;
     boStat =false;
+    iDim=0;
     if(mode == ARC){
         boArc = true;
         iYpos=iy-49;
@@ -504,7 +508,7 @@ public void setMode(int mode){
                 // fStat[l]=0.0;
                 ddCont=0.0; // this will trigger to create iyVal from fStat new with next redraw
                 iyVal[l]=iyOff;
-                ixVal[l]=(int) ((float)l * (float)(ix-8-iYpos) / (float)iDim) + 4 + iYpos;
+                ixVal[l]=(int) ((float)l * (float)(iDim) / (float)iDim) + 1 + iXpos;
             }
             iYpos = iy-58; // was 17
             setLimits(fMin,fMax);
@@ -519,7 +523,7 @@ public void setMode(int mode){
                 // fStat[l]=0.0;
                 ddCont=0.0; // this will trigger to create iyVal from fStat new with next redraw
                 iyVal[l]=iyOff;
-                ixVal[l]=(int) ((float)l * (float)(ix-8-iYpos) / (float)iDim) + 4 + iYpos;
+                ixVal[l]=(int) ((float)l * (float)(iDim) / (float)iDim) + 1 + iXpos;
             }
             iYpos = iy-58; // was 17
             setLimits(fMin,fMax);
@@ -562,7 +566,7 @@ private void toggleTrend(boolean stat){
             // fStat[l]=0.0;
             ddCont=0.0; // this will trigger to create iyVal from fStat new with next redraw
             iyVal[l]=iyOff;
-            ixVal[l]=(int) ((float)l * (float)(ix-8-iYpos) / (float)iDim) + 4 + iYpos;
+            ixVal[l]=(int) ((float)l * (float)(iDim) / (float)iDim) + 1 + iXpos;
         }
         iYpos = iy-58; // was 17
         setLimits(fMin,fMax);
@@ -648,12 +652,12 @@ public void update(Graphics g){
     }
     if(boTrend){
         gg.setColor(cColText);
-        gg.drawRect(iYpos+3,iYpos,ix-iYpos-6,41); // 41=iy-34
+        gg.drawRect(iXpos,iYpos,ix-iXpos-6,41); // 41=iy-34
         gg.drawString("Time",ix/2,iy-4);
     }
     if(boStat){
         gg.setColor(cColText);
-        gg.drawRect(iYpos+3,iYpos,ix-iYpos-6,41); // 41=iy-34
+        gg.drawRect(iXpos,iYpos,ix-iXpos-6,41); // 41=iy-34
         gg.drawString(sMin,iYpos+5,iy-4);
         gg.drawString(sMax,ix-3-iMaxL,iy-4);
     }
@@ -747,8 +751,8 @@ public void update(Graphics g){
         // whole image is rotated around upper left corner
         // Therefore we must pull down y
         gg.setColor(cColText);
-        if(boStat)gg.drawString(sCont,20,iYpos-2);
-        if(boTrend)gg.drawString(sMin+":"+sMax,5,iYpos-2);
+        if(boStat)gg.drawString(sCont,20,iXpos-2);
+        if(boTrend)gg.drawString(sMin+":"+sMax,5,iXpos-2);
         //if(boTrend)gg.drawString(sMax,27,iYpos-2);
         // restore transform
         gg.setTransform(af);

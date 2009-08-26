@@ -270,9 +270,15 @@ public xDesktop() {
         createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false);
     if(xSet.getLayout("ParameterSelect").show()) frSelect=
         createFrame("ParameterSelect",selIcon,selpan,xSet.getLayout("ParameterSelect"),null, false);
+    if(usrpan != null){
+    	if(xSet.getLayout(usrpan.get(0).getHeader())!= null){
+        if(xSet.getLayout(usrpan.get(0).getHeader()).show()) 
+        	frUserController.add(createFrame(
+        		usrpan.get(0).getHeader(),usrpan.get(0).getIcon(),(JPanel)usrpan.get(0),xSet.getLayout(usrpan.get(0).getHeader()),null, false));
+        }}
     }
     if(usrpan != null){
-    	for(int ii=0;ii<usrpan.size();ii++)
+    	for(int ii=1;ii<usrpan.size();ii++)
     	if(xSet.getLayout(usrpan.get(ii).getHeader())!= null){
         if(xSet.getLayout(usrpan.get(ii).getHeader()).show()) frUserController.add
            (createFrame(usrpan.get(ii).getHeader(),usrpan.get(ii).getIcon(),(JPanel)usrpan.get(ii),xSet.getLayout(usrpan.get(ii).getHeader()),null, false));
@@ -314,8 +320,9 @@ private JToolBar createToolBar() {
     toolBar.add(new toolButton(maInfos));
     if(xSet.isControl()) toolBar.add(new toolButton(maLogger));
     if(usrpan != null){
+    	if(xSet.isControl()) toolBar.add(new toolButton(maUserController.get(0))); // RunInfo
         toolBar.addSeparator();
-    	for(int ii=0;ii<usrpan.size();ii++)
+    	for(int ii=1;ii<usrpan.size();ii++)
      	toolBar.add(new toolButton(maUserController.get(ii)));
     }
     return toolBar;
