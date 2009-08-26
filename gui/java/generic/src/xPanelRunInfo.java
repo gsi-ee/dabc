@@ -13,6 +13,7 @@
  ********************************************************************/
 package xgui;
 import java.util.*;
+import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.ImageIcon;
@@ -97,7 +98,8 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
     exper=addPrompt("Experiment [64]: ",formRun.getExperiment(),"set",width,this);
 //    line=addPrompt("Comment [76]: ",formRun.getComment(),"set",width,this);
     comar=addTextArea(formRun.getComment(),"set",5,width,this);
-    addTextButton("Save run information for file header","set","Save run information",this);
+    comar.setFont(new Font("Monospaced",0,12));
+    addTextButton("Save run information for file header","set","Use RET in text field to separate lines.",this);
 }
 //Release local references to DIM parameters and commands (xiUserPanel)
 //otherwise we would get memory leaks!
@@ -122,6 +124,8 @@ for(int i=0;i<vicom.size();i++){
 public void actionPerformed(ActionEvent e) {
 String arg;
 String line;
+String subline;
+int len, offset,chars;
 String cmd = new String(e.getActionCommand());
 
 if ("set".equals(cmd)) {
@@ -144,17 +148,24 @@ mbsSetHead.exec(xSet.getAccess()+" x -clear");
 mbsSetHead.exec(xSet.getAccess()+" \""+formRun.getRun()+"\" -run");
 mbsSetHead.exec(xSet.getAccess()+" \""+formRun.getExperiment()+"\" -exp");
 // break comment into lines
-int len=arg.length();
-int offset=0;
-int chars=74;
-while(len > 0){
-	if(chars>len)chars=len;
-	line=arg.substring(offset,offset+chars);
-	xLogger.print(1,"MBS: SetFileHeader -comm \""+line+"\"");
-	mbsSetHead.exec(xSet.getAccess()+" \""+line+"\" -comm");
-	len -= chars;
-	offset += chars;
-}
+try{
+StringTokenizer st = new StringTokenizer(arg,"\n\b\r");
+int tokens=st.countTokens();
+	for(int i=0;i<tokens;i++){
+	line= st.nextToken();
+	len=line.length();
+	offset=0;
+	chars=74;
+	while(len > 0){
+		if(chars>len)chars=len;
+		subline=line.substring(offset,offset+chars);
+		xLogger.print(1,"MBS: SetFileHeader -comm \""+subline+"\"");
+		mbsSetHead.exec(xSet.getAccess()+" \""+subline+"\" -comm");
+		len -= chars;
+		offset += chars;
+	}
+	}}
+catch(NoSuchElementException ee){System.out.println("EOF");}
 }}
 else System.out.println("Ignore "+cmd);
 }
