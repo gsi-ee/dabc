@@ -428,6 +428,8 @@ bool dabc::RateParameter::Store(ConfigIO &cfg)
 
    cfg.CreateAttr("debug", IsDebugOutput() ? "true" : "false");
 
+   cfg.CreateAttr("interval", FORMAT(("%f", fInterval)));
+
    cfg.PopItem();
 
    return true;
@@ -446,11 +448,7 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
 
    std::string v;
 
-//   if (!cfg.Find(this, v)) return false;
-
-   bool res = cfg.Find(this, v);
-   DOUT0(("Find ratemeter %s = %s", GetFullName().c_str(), DBOOL(res)));
-   if (!res) return false;
+   if (!cfg.Find(this, v)) return false;
 
    LockGuard lock(fValueMutex);
 
@@ -486,7 +484,8 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
    if (cfg.Find(this, v, "debug"))
       if (!v.empty()) SetDebugOutput((v == "true") || (v=="1") || (v=="TRUE"));
 
-   DOUT0(("Finish ratemeter %s ok", GetName()));
+   if (cfg.Find(this, v, "interval"))
+      if (!v.empty()) sscanf(v.c_str(), "%lf", &fInterval);
 
    return true;
 }
