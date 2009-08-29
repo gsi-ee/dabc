@@ -170,7 +170,9 @@ unsigned dabc::Command::GetUInt(const char* name, unsigned deflt) const
    const char* val = GetPar(name);
    if (val==0) return deflt;
 
-   return (unsigned) atol(val);
+   unsigned res = 0;
+   if (sscanf(val, "%u", &res) != 1) return deflt;
+   return res;
 }
 
 void dabc::Command::SetPtr(const char* name, void* p)
