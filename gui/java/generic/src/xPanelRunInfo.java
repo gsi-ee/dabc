@@ -145,6 +145,7 @@ xLogger.print(1,"MBS: SetFileHeader -clear");
 xLogger.print(1,"MBS: SetFileHeader -run \""+formRun.getRun()+"\"");
 xLogger.print(1,"MBS: SetFileHeader -exp \""+formRun.getExperiment()+"\"");
 mbsSetHead.exec(xSet.getAccess()+" x -clear");
+mbsSetHead.exec(xSet.getAccess()+" x -file"); // dummy file name, will be ovewrwritten
 mbsSetHead.exec(xSet.getAccess()+" \""+formRun.getRun()+"\" -run");
 mbsSetHead.exec(xSet.getAccess()+" \""+formRun.getExperiment()+"\" -exp");
 // break comment into lines
