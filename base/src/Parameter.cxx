@@ -261,7 +261,8 @@ bool dabc::IntParameter::SetInt(int v)
 
 dabc::RateParameter::RateParameter(WorkingProcessor* parent,
                                    const char* name, bool synchron, double interval,
-                                   const char* units, double lower, double upper) :
+                                   const char* units, double lower, double upper,
+                                   int debug_width, int debug_prec) :
    Parameter(parent, name),
    fSynchron(synchron),
    fInterval(interval),
@@ -283,6 +284,11 @@ dabc::RateParameter::RateParameter(WorkingProcessor* parent,
 
    DOUT2(("Create ratemeter %s %s %f %f", GetName(), fRecord.units, fRecord.lower, fRecord.upper));
 
+   SetDebugOutput(debug_width>0);
+
+   fOutWidth = debug_width>0 ? debug_width : 5;
+   fOutPrecision = debug_width>0 ? debug_prec : 1;
+
    Ready();
 }
 
@@ -290,13 +296,13 @@ void dabc::RateParameter::DoDebugOutput()
 {
    LockGuard lock(fValueMutex);
 
-   DOUT0(("%s = %5.1f %s", GetName(), fRecord.value, fRecord.units));
+   DOUT0(("%s = %*.*f %s", GetName(), fOutWidth, fOutPrecision, fRecord.value, fRecord.units));
 }
 
 
 void dabc::RateParameter::ChangeRate(double rate)
 {
-   DOUT5(("Change rate %s - %5.1f %s", GetName(), rate, fRecord.units));
+   DOUT5(("Change rate %s - %5.2f %s", GetName(), rate, fRecord.units));
 
    {
       LockGuard lock(fValueMutex);
@@ -486,6 +492,12 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
 
    if (cfg.Find(this, v, "interval"))
       if (!v.empty()) sscanf(v.c_str(), "%lf", &fInterval);
+
+   if (cfg.Find(this, v, "width"))
+      if (!v.empty()) sscanf(v.c_str(), "%d", &fOutWidth);
+
+   if (cfg.Find(this, v, "prec"))
+      if (!v.empty()) sscanf(v.c_str(), "%d", &fOutPrecision);
 
    return true;
 }

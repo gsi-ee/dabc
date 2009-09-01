@@ -103,14 +103,15 @@ void dabc::Module::OnThreadAssigned()
 
 dabc::RateParameter* dabc::Module::CreateRateParameter(const char* name, bool sync, double interval,
                                                        const char* inpportname, const char* outportname,
-                                                       const char* units, double lower, double upper)
+                                                       const char* units, double lower, double upper,
+                                                       int debug_width, int debug_prec)
 {
    Port* inport = FindPort(inpportname);
    Port* outport = FindPort(outportname);
 
    if ((inport!=0) || (outport!=0)) units = "MB/s";
 
-   RateParameter* par = new RateParameter(this, name, sync, interval, units, lower, upper);
+   RateParameter* par = new RateParameter(this, name, sync, interval, units, lower, upper, debug_width, debug_prec);
 
    if (inport) inport->SetInpRateMeter(par);
 

@@ -412,14 +412,16 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
 
    fCurrStrict = false;
 
+   bool search_in_normal_path = true; // first try to search in normal position, but with cast syntax
+
    do {
 
       DOUT3(("Start search with maxlevel = %d", maxlevel));
 
-      fCurrItem = Dflts();
+      fCurrItem = search_in_normal_path ? fSelected : Dflts();
       fCurrChld = 0;
+      level = search_in_normal_path ? maxlevel-1 : maxlevel;
 
-      level = maxlevel;
       while (level >= 0) {
          prnt = GetObjParent(obj, level);
          if (prnt == 0) return false;
@@ -466,15 +468,18 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
          }
       }
 
-      maxlevel--;
-
-      while (maxlevel > 0) {
-         prnt = GetObjParent(obj, maxlevel);
-         if (prnt->UseMasterClassName()) {
-            DOUT3(("Try with master %s", prnt->GetName()));
-            break;
-         }
+      if (search_in_normal_path)
+         search_in_normal_path = false;
+      else {
          maxlevel--;
+         while (maxlevel > 0) {
+            prnt = GetObjParent(obj, maxlevel);
+            if (prnt->UseMasterClassName()) {
+               DOUT3(("Try with master %s", prnt->GetName()));
+               break;
+            }
+            maxlevel--;
+         }
       }
 
    } while (maxlevel>0);

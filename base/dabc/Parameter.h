@@ -186,7 +186,8 @@ namespace dabc {
       public:
          RateParameter(WorkingProcessor* parent, const char* name,
                        bool synchron, double interval = 1., const char* units = 0,
-                       double lower = 0., double upper = 0.);
+                       double lower = 0., double upper = 0.,
+                       int debug_width = 0, int debug_prec = 1);
 
          virtual EParamKind Kind() const { return fSynchron ? parSyncRate : parAsyncRate; }
 
@@ -228,6 +229,8 @@ namespace dabc {
          double      fTotalSum;
          TimeStamp_t fLastUpdateTm; // used in synchron mode
          double      fDiffSum;      // used in asynchron mode
+         int         fOutWidth;     // debug output width for ratemeter
+         int         fOutPrecision; // debug output precision
    };
 
 

@@ -164,7 +164,8 @@ namespace dabc {
 
          RateParameter* CreateRateParameter(const char* name, bool sync = true, double interval = 1.,
                                             const char* inpportname = 0, const char* outportname = 0,
-                                            const char* units = 0, double lower = 0., double upper = 0.);
+                                            const char* units = 0, double lower = 0., double upper = 0.,
+                                            int debug_width = 0, int debug_prec = 1);
 
          Parameter* CreatePoolUsageParameter(const char* name, double interval = 1., const char* poolname = 0);
 
