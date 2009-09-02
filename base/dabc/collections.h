@@ -319,6 +319,8 @@ namespace dabc {
          unsigned Size() const { return fSize; }
 
          bool Full() const { return Capacity() == Size(); }
+
+         bool Empty() const { return Size() == 0; }
    };
 
    // _______________________________________________________________

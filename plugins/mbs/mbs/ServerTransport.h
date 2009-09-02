@@ -66,19 +66,21 @@ namespace mbs {
          virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const char* info);
 
-         inline void FireDataOutput() { FireEvent(evMbsDataOutput); }
+         inline void FireDataOutput() { FireEvent(evMbsDataOutput, 0); }
+         inline void FireNewBuffer() { FireEvent(evMbsDataOutput, 1); }
          virtual void ProcessEvent(dabc::EventId);
 
       protected:
          virtual double ProcessTimeout(double last_diff);
 
-
          ServerTransport*      fTransport;
          mbs::TransportInfo    fServInfo; // data, send by transport server in the beginning
          EIOState              fState;
          char                  f_sbuf[12]; // input buffer to get request
-         dabc::Buffer*         fSendBuf;
          mbs::BufferHeader     fHeader;
+         dabc::BuffersQueue    fSendQueue; // small (size=2) intermediate queue to get buffers from transport
+         long                  fSendBuffers;
+         long                  fDroppedBuffers;
    };
 
    // _________________________________________________________________
@@ -98,11 +100,10 @@ namespace mbs {
          // here is call-backs from different processors
          void ProcessConnectionRequest(int fd);
          void SocketIOClosed(ServerIOProcessor* proc);
-         dabc::Buffer* TakeFrontBuffer();
          void DropFrontBufferIfQueueFull();
+         bool MoveFrontBuffer(ServerIOProcessor* callproc);
 
          // this is normal transport functionality
-
          virtual bool ProvidesInput() { return false; }
          virtual bool ProvidesOutput() { return true; }
          virtual void PortChanged();
@@ -118,10 +119,9 @@ namespace mbs {
          dabc::Mutex             fMutex;
          dabc::BuffersQueue      fOutQueue;
          ServerConnectProcessor* fServerPort; // socket for connections handling
-         ServerIOProcessor*      fIOSocket; // actual socket for I/O operation
+         //ServerIOProcessor*      fIOSocket; // actual socket for I/O operation
+         std::vector<ServerIOProcessor*> fIOSockets; // all connected I/O sockets
          uint32_t                fMaxBufferSize; // maximum size of the buffer, which can be send over channel, used for old transports
-         long                    fSendBuffers;
-         long                    fDroppedBuffers;
    };
 
 }
