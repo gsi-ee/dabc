@@ -368,8 +368,7 @@ bool mbs::ServerTransport::Send(dabc::Buffer* buf)
          if (fIOSockets.size()>0)
             fIOSockets[0]->FireNewBuffer();
          else
-            testdrop = true; // drop all buffers if there is no connections for them
-         // (Kind() == mbs::StreamServer);
+            testdrop = (Kind() == mbs::StreamServer);
       }
    }
 
