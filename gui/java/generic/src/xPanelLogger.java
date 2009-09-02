@@ -89,7 +89,12 @@ public xPanelLogger(Dimension dim) {
 public void print(String s){
 lines++;
 textar.append(s);
-if(lines > maxlines) truncate();
+if(lines > maxlines){
+	int max=textpan.getVerticalScrollBar().getMaximum();
+	truncate();
+	textpan.getVerticalScrollBar().getModel().setExtent(0);
+	textpan.getVerticalScrollBar().setMaximum(max);
+	}
 textpan.getVerticalScrollBar().setValue(1000000); // to see the last line
 }
 

@@ -658,7 +658,7 @@ public void update(Graphics g){
     if(boStat){
         gg.setColor(cColText);
         gg.drawRect(iXpos,iYpos,ix-iXpos-6,41); // 41=iy-34
-        gg.drawString(sMin,iYpos+5,iy-4);
+        gg.drawString(sMin,iXpos,iy-4);
         gg.drawString(sMax,ix-3-iMaxL,iy-4);
     }
     gg.setColor(cColHead);

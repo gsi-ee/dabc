@@ -577,7 +577,6 @@ public void actionPerformed(ActionEvent e) {
         xSaveRestore.saveLayouts(LayoutFile);
         xSaveRestore.saveCommands(browser.getCommandList(),CommandFile);
         xSaveRestore.saveRecords(browser.getParameters(),RecordFile);
-        xSaveRestore.restoreRecords(RecordFile);
         selpan.saveSetup(SelectionFile);
         JOptionPane.showInternalMessageDialog(
             desktop, "Layout saved: "+RecordFile+" "+SelectionFile+" "+LayoutFile, "Information",JOptionPane.INFORMATION_MESSAGE);
@@ -657,7 +656,6 @@ public void actionPerformed(ActionEvent e) {
 protected void quit() {
 	if(xSet.isGuru())System.exit(0);
     int i=JOptionPane.showInternalConfirmDialog(desktop,"Quit GUI?","GUI can be restarted.", JOptionPane.YES_NO_OPTION); 
-    xSaveRestore.saveCommands(browser.getCommandList(),CommandFile);
     if(i == 0) System.exit(0);
 }
 
