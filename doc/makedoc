@@ -4,6 +4,8 @@ echo 'args: directory'
 else
 gcc texoutfilter.c -o texoutfilter
 cd $1
+echo $PWD
+ls -al *.tex
 echo ====== First pass main-$1.tex ======================
 pdflatex main-$1.tex|../texoutfilter
 echo ====== Index main-$1.isx ======================
