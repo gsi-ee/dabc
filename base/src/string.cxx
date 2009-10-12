@@ -14,27 +14,29 @@
 #include "dabc/string.h"
 #include <string.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 void dabc::formats(std::string& sbuf, const char *fmt, ...)
 {
    if (!fmt || (strlen(fmt)==0)) return;
 
    va_list args;
-   va_start(args, fmt);
-
-   int   result(128), length(128);
-   char *buffer = 0;
-   while (result==length) {
+   int length(256), result(0);
+   char *buffer(0);
+   while (1) {
       if (buffer) delete [] buffer;
-      length *= 2;
-      buffer = new char [length + 1];
-      memset(buffer, 0, length + 1);
+      buffer = new char [length];
+
+      va_start(args, fmt);
       result = vsnprintf(buffer, length, fmt, args);
-      if (result<0) break;
+      va_end(args);
+
+      if (result<0) length *= 2; else                 // this is error handling in glibc 2.0
+      if (result>=length) length = result + 1; else   // this is error handling in glibc 2.1
+      break;
    }
    sbuf.assign(buffer);
    delete [] buffer;
-   va_end(args);
 }
 
 std::string dabc::format(const char *fmt, ...)
@@ -42,17 +44,21 @@ std::string dabc::format(const char *fmt, ...)
    if (!fmt || (strlen(fmt)==0)) return std::string("");
 
    va_list args;
-   va_start(args, fmt);
-
-   int   result = -1, length = 256;
-   char *buffer = 0;
-   while (result<0) {
+   int length(256), result(0);
+   char *buffer(0);
+   while (1) {
       if (buffer) delete [] buffer;
-      buffer = new char [length + 1];
-      memset(buffer, 0, length + 1);
+      buffer = new char [length];
+
+      va_start(args, fmt);
       result = vsnprintf(buffer, length, fmt, args);
-      length *= 2;
+      va_end(args);
+
+      if (result<0) length *= 2; else                 // this is error handling in glibc 2.0
+      if (result>=length) length = result + 1; else   // this is error handling in glibc 2.1
+      break;
    }
+
    std::string s(buffer);
    delete [] buffer;
    va_end(args);
