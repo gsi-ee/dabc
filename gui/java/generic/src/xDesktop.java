@@ -72,12 +72,12 @@ private String LayoutFile, RecordFile, CommandFile, SelectionFile;
 public xDesktop() {
     super("DABC Controls and Monitoring");
     if(!xSet.isControl()) System.out.println("Starting in monitor only mode.");
-	usrpan=new Vector<xiUserPanel>(0);
+	usrpan=new Vector<xiUserPanel>(0); // create here or below
 	usrpan.add(new xPanelRunInfo());
 	usrPanels=xSet.getUserPanels(); // specified by shell call
 	if(usrPanels==null) usrPanels=System.getenv("DABC_APPLICATION_PANELS");
 	if(usrPanels!=null){
-    	usrpan=new Vector<xiUserPanel>(0);
+    	//usrpan=new Vector<xiUserPanel>(0); // only if not created above
         String[] upl=usrPanels.split(",");
         for(int ii=0;ii<upl.length;ii++){
         try{
@@ -563,7 +563,7 @@ public void actionPerformed(ActionEvent e) {
             xSet.setLayout("ParameterSelect",
                 frSelect.getLocation(),frSelect.getSize(),0,xSet.getLayout("ParameterSelect").show());
         if(frUserController  != null) 
-        	for(int ii=0;ii<usrpan.size();ii++)
+        	for(int ii=0;ii<usrpan.size()&ii<frUserController.size();ii++)
         	xSet.setLayout(usrpan.get(ii).getHeader(),
             frUserController.get(ii).getLocation(),frUserController.get(ii).getSize(),0,xSet.getLayout(usrpan.get(ii).getHeader()).show());
 
