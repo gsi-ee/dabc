@@ -146,3 +146,18 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
 
    return dabc::di_Ok;
 }
+
+mbs::EventHeader* mbs::LmdInput::ReadEvent()
+{
+   while (true) {
+       if (!fFile.IsReadMode()) return 0;
+
+       mbs::EventHeader* hdr = fFile.ReadEvent();
+       if (hdr!=0) return hdr;
+
+       DOUT1(("File %s return 0 - end of file", fCurrentFileName.c_str()));
+       if (!OpenNextFile()) return 0;
+   }
+
+   return 0;
+}

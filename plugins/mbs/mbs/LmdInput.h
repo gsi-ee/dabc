@@ -40,6 +40,9 @@ namespace mbs {
          virtual unsigned Read_Size();
          virtual unsigned Read_Complete(dabc::Buffer* buf);
 
+         // alternative way to read mbs events from LmdInput - no any dabc buffer are used
+         mbs::EventHeader* ReadEvent();
+
       protected:
          bool CloseFile();
 
