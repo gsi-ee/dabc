@@ -99,22 +99,6 @@ packageroc: clean
 	@echo "Source package $(ROCTAR_NAME).gz done"  
 
 
-DABC_ABB_PACK = plugins/abb applications/bnet-test 
-
-
-packageabb: clean
-	@echo "Creating package $(ABBTAR_NAME) ..."
-	tar cf $(ABBTAR_NAME)  $(DABC_ABB_PACK) --exclude=.svn --exclude=*.bak --exclude=*.log 
-	@mkdir -p $(DISTR_DIR); cd $(DISTR_DIR); mkdir -p $(ABBPACK_VERS)
-	@mv $(ABBTAR_NAME) $(ABBDISTR_DIR)
-	@cd $(ABBDISTR_DIR); tar xf $(ABBTAR_NAME); rm -f $(ABBTAR_NAME)
-	@cd $(DISTR_DIR); chmod u+w *; chmod u+w */*; chmod u+w */*/*; cd $(ABBPACK_VERS) ;tar chf $(ABBTAR_NAME) *  --exclude=$(ABBTAR_NAME)*; gzip -f $(ABBTAR_NAME)
-	@mkdir -p $(PACKAGE_DIR)
-	@mv -f $(DISTR_DIR)/$(ABBPACK_VERS)/$(ABBTAR_NAME).gz $(PACKAGE_DIR)
-	@rm -f -r $(DISTR_DIR)/*
-	@rmdir $(DISTR_DIR)
-	@echo "Package $(ABBTAR_NAME).gz done in $(PACKAGE_DIR)"
-	
 packagegui: all
 	@echo "Creating package $(GUITAR_NAME) ..."
 	@mkdir -p $(DISTR_DIR); cd $(DISTR_DIR); mkdir -p $(GUIPACK_VERS)
@@ -129,7 +113,7 @@ packagegui: all
 	@rm -rf $(DISTR_DIR)
 	@echo "Package $(GUITAR_NAME).gz done in $(PACKAGE_DIR)"
 
-packages: packagegui package packageroc packageabb src
+packages: packagegui package packageroc src
 	
 src: clean
 	tar chf dabc.tar Makefile *.txt base config build script controls/simple dim controls/dimcontrol --exclude=.svn
