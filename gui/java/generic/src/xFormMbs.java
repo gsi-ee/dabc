@@ -63,6 +63,7 @@ private StringBuffer build(){
     str.append("<MbsShutdown "+xXml.attr("prompt","Shutdown script")+xXml.attr("value",Shut,"/>\n"));
     str.append("<MbsCommand "+xXml.attr("prompt","Script command")+xXml.attr("value",Command,"/>\n"));
     str.append("<MbsServers "+xXml.attr("prompt","%Number of required DIM servers%")+xXml.attr("value",Servers,"/>\n"));
+    str.append("<Minimized "+xXml.attr("value",Shrink,"/>\n"));
     str.append(xXml.tag("MbsLaunch",xXml.CLOSE));
 return str;
 }
@@ -99,6 +100,9 @@ LaunchFile=new String(file);
         li=root.getElementsByTagName("MbsServers");
         Servers=((Element)li.item(0)).getAttribute("value");
         nServers=Integer.parseInt(Servers);// add DNS
+        li=root.getElementsByTagName("Minimized");
+        if(li.getLength() > 0)
+        Shrink=new Boolean(((Element)li.item(0)).getAttribute("value")).booleanValue();
     }
 }
 public String getCommand(){return Command;}

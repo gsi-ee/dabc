@@ -29,6 +29,7 @@ protected String UserPath;
 protected String SystemPath;
 protected String Script;
 protected String LaunchFile;
+protected boolean Shrink=false;
 protected ActionListener action;
 
 public xForm() {}
@@ -40,6 +41,8 @@ public int getnServers(){return nServers;}
 public String getUserPath(){return UserPath;}
 public String getSystemPath(){return SystemPath;}
 public String getScript(){return Script;}
+public boolean isShrink(){return Shrink;}
+protected void setShrink(boolean shrink){Shrink=shrink;}
 protected void setLaunchFile(String file){LaunchFile=file;}
 protected void setMaster(String master){Master=master;}
 protected void setServers(String servers){

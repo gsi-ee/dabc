@@ -63,6 +63,7 @@ private StringBuffer build(){
     str.append("<DabcSetup "+xXml.attr("prompt","DABC setup file")+xXml.attr("value",Setup,"/>\n"));
     str.append("<DabcScript "+xXml.attr("prompt","DABC Script")+xXml.attr("value",Script,"/>\n"));
     str.append("<DabcServers "+xXml.attr("prompt","%Number of required DIM servers%")+xXml.attr("value",Servers,"/>\n"));
+    str.append("<Minimized "+xXml.attr("value",Shrink,"/>\n"));
     str.append(xXml.tag("DabcLaunch",xXml.CLOSE));
 return str;
 }
@@ -99,6 +100,9 @@ LaunchFile=new String(file);
         li=root.getElementsByTagName("DabcServers");
         Servers=((Element)li.item(0)).getAttribute("value");
         nServers=Integer.parseInt(Servers);// add DNS
+        li=root.getElementsByTagName("Minimized");
+        if(li.getLength() > 0)
+        Shrink=new Boolean(((Element)li.item(0)).getAttribute("value")).booleanValue();
     }
 }
 /**

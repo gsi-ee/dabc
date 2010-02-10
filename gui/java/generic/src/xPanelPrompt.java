@@ -60,6 +60,7 @@ private JButton button;
 private ImageIcon Icon;
 private TitledBorder titleborder;
 private JOptionPane confirm;
+private ActionListener action=null;
 // private GroupLayout.SequentialGroup vGroup;
 // private GroupLayout.ParallelGroup pGroup;
 /**
@@ -104,6 +105,15 @@ public xPanelPrompt(String title, Dimension dim) {
     tool.setMargin(new Insets(-4,0,-6,0));
     add(tool,BorderLayout.SOUTH);
 }
+public void setListener(ActionListener al){
+    action=al;
+}
+public void cleanupPanel(){
+	pan.removeAll();
+}
+public void refreshPanel(){
+if(action!=null)action.actionPerformed(null);
+}
 /**
  * Add prompter line in column.
  * @param label Label for prompt.
@@ -132,9 +142,11 @@ public void addPrompt(String label, JTextField input){
  */
 public JTextField addPrompt(String label, String value, String cmd, int width, ActionListener al){
     JTextField tf=new JTextField(value,width);
+    if(width > 0){
     tf.setActionCommand(cmd);
     tf.addActionListener(al);
     addPrompt(label,tf);
+    }
     return tf;
 }
 /**
@@ -224,6 +236,26 @@ public void addButton(String cmd, String tt, ImageIcon icon, ActionListener al){
     button.setToolTipText(tt);
     button.setBorderPainted(false);
     tool.add(button);
+}
+/**
+ * Add tool bar button.
+ * @param cmd Button command. 
+ * @param icon Button icon.
+ * @selected icon Button pressed icon
+ * @param tt Tool tip text.
+ * @param al Action listener handling button command.
+ */
+public JButton addButton(String cmd, String tt, ImageIcon icon, ImageIcon selected, ActionListener al){
+    JButton button = new JButton(icon);
+    button.setSelectedIcon(selected);
+    button.setRolloverSelectedIcon(selected);
+    button.setActionCommand(cmd);
+    button.addActionListener(al);
+    button.setText("");
+    button.setToolTipText(tt);
+    button.setBorderPainted(false);
+    tool.add(button);
+    return button;
 }
 /**
  * Set title and color of title boarder.

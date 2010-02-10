@@ -35,11 +35,12 @@ import java.util.*;
 public class xPanelDabcMbs extends xPanelPrompt implements ActionListener , Runnable
 {
 private xRemoteShell mbsshell, dabcshell;
-private ImageIcon storeIcon, closeIcon, exitIcon, winIcon, workIcon, dworkIcon, mworkIcon, launchIcon,  killIcon;
+private ImageIcon storeIcon, closeIcon, exitIcon, winIcon, workIcon, dworkIcon, mworkIcon, launchIcon,  killIcon, shrinkIcon, enlargeIcon;
 private ImageIcon mbsIcon, configIcon, enableIcon, startIcon, stopIcon, haltIcon, dabcIcon, disIcon, infoIcon;
 private JTextField MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsStart, MbsShut, MbsCommand, MbsLaunchFile;
 private JTextField DimName, DabcNode, DabcServers, DabcName, DabcUserpath, DabcPath, DabcScript, DabcSetup, DabcLaunchFile;
 private JPasswordField Password;
+private JButton shrinkButton;
 private String MbsMaster;
 private String dabcMaster;
 private String Action;
@@ -64,6 +65,9 @@ private Vector<xDimParameter> mbsTaskList;
 private Thread threxe;
 private ActionEvent ae;
 private boolean threadRunning=false;
+private int width=25;
+private int mini=25;
+private int progressY=200;
 
 /**
  * Constructor of MBS+DABC launch panel.
@@ -99,8 +103,11 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
     haltIcon    = xSet.getIcon("icons/dabchalt.png");
     exitIcon    = xSet.getIcon("icons/exitall.png");
+    shrinkIcon  = xSet.getIcon("icons/shrink.png");
+    enlargeIcon = xSet.getIcon("icons/enlarge.png");
     // add buttons
 //    addButton("mbsQuit","Close window",closeIcon,this);
+    shrinkButton=addButton("shrink","Minimize/maximize panel",shrinkIcon,enlargeIcon,this);
     addButton("Save","Save forms to files",storeIcon,this);
     addButton("prmLaunch","Launch DABC and MBS servers",launchIcon,this);
     // addButton("mbsLaunch","Launch DABC and MBS dispatcher",mbsIcon,this);
@@ -126,7 +133,7 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     else formDabc=new xFormDabc("DabcControl.xml",this);
     formDabc.addActionListener(this);
     o=xSet.addObject(formDabc);
-    int width=25;
+    
     DimName=new JTextField(xSet.getDimDns(),width);
     DimName.setEditable(false);
     Username=new JTextField(xSet.getUserName(),width);
@@ -136,25 +143,7 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     Password.addActionListener(this);
     Password.setActionCommand("setpwd");
 // add prompt/input fields
-    addPrompt("Name server: ",DimName);
-    addPrompt("User name: ",Username);
-    addPrompt("Password [RET]: ",Password);
-    MbsNode=addPrompt("MBS master node: ",formMbs.getMaster(),"set",width,this);
-    MbsServers=addPrompt("MBS servers: ",formMbs.getServers(),"set",width,this);
-    DabcNode=addPrompt("DABC master node: ",formDabc.getMaster(),"set",width,this);
-    DabcName=addPrompt("DABC master name: ",formDabc.getName(),"set",width,this);
-    DabcServers=addPrompt("DABC servers: ",formDabc.getServers(),"set",width,this);
-    MbsPath=addPrompt("MBS system path: ",formMbs.getSystemPath(),"set",width,this);
-    MbsUserpath=addPrompt("MBS user path: ",formMbs.getUserPath(),"set",width,this);
-    MbsStart=addPrompt("MBS Startup: ",formMbs.getStart(),"set",width,this);
-    MbsShut=addPrompt("MBS Shutdown: ",formMbs.getShut(),"set",width,this);
-    MbsCommand=addPrompt("MBS command: ",formMbs.getCommand(),"mbsCommand",width,this);
-    DabcPath=addPrompt("DABC system path: ",formDabc.getSystemPath(),"set",width,this);
-    DabcUserpath=addPrompt("DABC user path: ",formDabc.getUserPath(),"set",width,this);
-    DabcSetup=addPrompt("DABC setup file: ",formDabc.getSetup(),"set",width,this);
-    DabcScript=addPrompt("DABC script: ",formDabc.getScript(),"set",width,this);
-    MbsLaunchFile=addPrompt("MBS control file: ",formMbs.getLaunchFile(),"set",width,this);
-    DabcLaunchFile=addPrompt("DABC control file: ",formDabc.getLaunchFile(),"set",width,this);
+    addPromptLines();
     // read defaults from setup file
     nMbsServers=Integer.parseInt(formMbs.getServers());
     nMbsNodes=nMbsServers-1;
@@ -176,6 +165,34 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     MbsMaster = MbsNode.getText();
 }
 
+private void addPromptLines(){
+	mini=width;
+	progressY=200;
+    if(formDabc.isShrink()){
+    	mini=0; // do not show
+    	shrinkButton.setSelected(true);
+    	progressY=20; // position of progress window
+    }
+    if(mini > 0)addPrompt("Name server: ",DimName);
+    if(mini > 0)addPrompt("User name: ",Username);
+	addPrompt("Password [RET]: ",Password);
+    MbsNode=addPrompt("MBS master node: ",formMbs.getMaster(),"set",mini,this);
+    MbsServers=addPrompt("MBS servers: ",formMbs.getServers(),"set",mini,this);
+    DabcNode=addPrompt("DABC master node: ",formDabc.getMaster(),"set",mini,this);
+    DabcName=addPrompt("DABC master name: ",formDabc.getName(),"set",mini,this);
+    DabcServers=addPrompt("DABC servers: ",formDabc.getServers(),"set",mini,this);
+    MbsPath=addPrompt("MBS system path: ",formMbs.getSystemPath(),"set",mini,this);
+    MbsUserpath=addPrompt("MBS user path: ",formMbs.getUserPath(),"set",mini,this);
+    MbsStart=addPrompt("MBS Startup: ",formMbs.getStart(),"set",mini,this);
+    MbsShut=addPrompt("MBS Shutdown: ",formMbs.getShut(),"set",mini,this);
+    DabcPath=addPrompt("DABC system path: ",formDabc.getSystemPath(),"set",mini,this);
+    DabcUserpath=addPrompt("DABC user path: ",formDabc.getUserPath(),"set",mini,this);
+    DabcSetup=addPrompt("DABC setup file: ",formDabc.getSetup(),"set",mini,this);
+    MbsLaunchFile=addPrompt("MBS launch file: ",formMbs.getLaunchFile(),"set",mini,this);
+    DabcLaunchFile=addPrompt("DABC launch file: ",formDabc.getLaunchFile(),"set",mini,this);
+    MbsCommand=addPrompt("MBS command: ",formMbs.getCommand(),"mbsCommand",width,this);
+    DabcScript=addPrompt("DABC script: ",formDabc.getScript(),"dabcShell",width,this);
+}
 private void checkDir(){
 String check, result;
 if(!formDabc.getUserPath().contains("%")){
@@ -233,7 +250,6 @@ formDabc.setLaunchFile(DabcLaunchFile.getText());
 formDabc.setName(DabcName.getText());
 formDabc.setSetup(DabcSetup.getText());
 
-checkDir();
 //formDabc.printForm();
 }
 // get from command list special commands for buttons.
@@ -315,7 +331,7 @@ mbsRunning=null;
 // Timer events are handled by desktop event handler passed to constructor.
 private void startProgress(){
     xLayout la= new xLayout("progress");
-    la.set(new Point(50,200), new Dimension(300,100),0,true);
+    la.set(new Point(50,progressY), new Dimension(300,100),0,true);
     progress=new xInternalFrame("Work in progress, please wait", la);
     progressState=new xState("Current action:",350,30);
     progressState.redraw(-1,"Green","Starting", true);
@@ -441,12 +457,22 @@ public void actionPerformed(ActionEvent e) {
 boolean doit=true;
 if ("set".equals(e.getActionCommand())) {
 setLaunch();
+checkDir();
 return;
 }
 if ("setpwd".equals(e.getActionCommand())) {
 setLaunch();
 return;
 }
+if ("shrink".equals(e.getActionCommand())) {
+	shrinkButton.setSelected(!shrinkButton.isSelected());
+	formDabc.setShrink(shrinkButton.isSelected());
+	formMbs.setShrink(shrinkButton.isSelected());
+	cleanupPanel();
+	addPromptLines();
+	refreshPanel();
+	return;
+	}
 
 if ("Save".equals(e.getActionCommand())) {
     xLogger.print(1,Action);
@@ -485,11 +511,13 @@ int time=0;
         xLogger.print(1,Action);
     }
     else if ("mbsShell".equals(Action)) {
+        setLaunch();
         xLogger.print(1,"Shell: "+MbsCommand.getText());
         //xLogger.print(1,MbsCommand);
         if(mbsshell.rsh(MbsNode.getText(),Username.getText(),MbsCommand.getText(),0L)){}
     }
     else if ("dabcShell".equals(Action)) {
+        setLaunch();
         xLogger.print(1,"Shell: "+DabcScript.getText());
         //xLogger.print(1,MbsCommand);
         if(dabcshell.rsh(DabcNode.getText(),Username.getText(),DabcScript.getText(),0L)){}
@@ -760,6 +788,7 @@ int time=0;
         doStop.exec(xSet.getAccess());
     }
     else if ("mbsCommand".equals(Action)) {
+        setLaunch();
         xLogger.print(1,MbsCommand.getText());
     	mbsCommand.exec(xSet.getAccess()+" "+MbsCommand.getText());
     	}

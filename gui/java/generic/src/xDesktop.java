@@ -262,12 +262,12 @@ public xDesktop() {
         createFrame("Commands",commIcon,compan,xSet.getLayout("Command"),null, true); 
     if(xSet.getLayout("Parameter").show()) frParameters=
         createFrame("Parameters",paramIcon,parpan,xSet.getLayout("Parameter"),null, true); 
-    if(xSet.isDabc()&xSet.getLayout("DabcController").show()) frDabcController=
-        createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false);
-    if(xSet.isDabs()&xSet.getLayout("DabcMbsController").show()) frDabcMbsController=
-        createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false);
-    if(xSet.isMbs()&xSet.getLayout("MbsController").show()) frMbsController=
-        createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false);
+    if(xSet.isDabc()&xSet.getLayout("DabcController").show()) dabcpan.setListener(frDabcController=
+        createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false));
+    if(xSet.isDabs()&xSet.getLayout("DabcMbsController").show()) dbspan.setListener(frDabcMbsController=
+        createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false));
+    if(xSet.isMbs()&xSet.getLayout("MbsController").show()) mbspan.setListener(frMbsController=
+        createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false));
     if(xSet.getLayout("ParameterSelect").show()) frSelect=
         createFrame("ParameterSelect",selIcon,selpan,xSet.getLayout("ParameterSelect"),null, false);
     if(usrpan != null){
@@ -465,16 +465,16 @@ JInternalFrame[] fr=desktop.getAllFrames();
  * @param e event. Switch on action command:<br>
  */
 public void actionPerformed(ActionEvent e) {
-    if ("DabcMbsController".equals(e.getActionCommand())) {frDabcMbsController=
-        createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false);
+    if ("DabcMbsController".equals(e.getActionCommand())) {dbspan.setListener(frDabcMbsController=
+        createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false));
         xSet.setLayout("DabcMbsController",null,null,0, true);
         }
-    else if ("DabcController".equals(e.getActionCommand())) {frDabcController=
-        createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false);
+    else if ("DabcController".equals(e.getActionCommand())) {dabcpan.setListener(frDabcController=
+        createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false));
         xSet.setLayout("DabcController",null,null,0, true);
         }
-    else if ("MbsController".equals(e.getActionCommand())) {frMbsController=
-        createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false); 
+    else if ("MbsController".equals(e.getActionCommand())) {mbspan.setListener(frMbsController=
+        createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false)); 
         xSet.setLayout("MbsController",null,null,0, true);
         }
     else if ("ParameterSelect".equals(e.getActionCommand())) {frSelect=

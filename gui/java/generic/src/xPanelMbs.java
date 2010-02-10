@@ -42,11 +42,12 @@ private ImageIcon closeIcon ;
 private ImageIcon winIcon;
 private ImageIcon workIcon,mworkIcon;
 private ImageIcon launchIcon;
-private ImageIcon killIcon;
+private ImageIcon killIcon, shrinkIcon, enlargeIcon;
 private ImageIcon storeIcon, mbsIcon, configIcon, startIcon, stopIcon, dabcIcon, disIcon, infoIcon, eventIcon;
 private JTextField DimName, MbsNode, MbsServers, Username, MbsUserpath, MbsPath, MbsStart, MbsShut, MbsCommand, MbsLaunchFile;
 private JPasswordField Password;
 private JCheckBox boxTest;
+private JButton shrinkButton;
 private String MbsMaster;
 private String Action;
 private String Access;
@@ -67,6 +68,9 @@ private xTimer etime;
 private boolean threadRunning=false;
 private boolean mbsPrompt=false;
 private String cmdPrefix;
+private int width=25;
+private int mini=25;
+private int progressY=200;
 
 /**
  * Constructor of MBS launch panel.
@@ -98,8 +102,11 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     configIcon  = xSet.getIcon("icons/mbsconfig.png");
     startIcon   = xSet.getIcon("icons/mbsstart.png");
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
+    shrinkIcon  = xSet.getIcon("icons/shrink.png");
+    enlargeIcon = xSet.getIcon("icons/enlarge.png");
     // add buttons
 //    addButton("mbsQuit","Close window",closeIcon,this);
+    shrinkButton=addButton("shrink","Minimize/maximize panel",shrinkIcon,enlargeIcon,this);
     addButton("mbsSave","Save form to file",storeIcon,this);
     addButton("prmLaunch","Launch MBS multi node servers",launchIcon,this);
     addButton("mbsLaunch","Launch MBS single node servers",mbsIcon,this);
@@ -112,6 +119,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     addButton("mbsShow","Show acquisition",infoIcon,this);
     addButton("mbsEvent","Type event (check current node)",eventIcon,this);
     addButton("mbsShell","Rsh Node -l Username Command",mworkIcon,this);
+    //addButton("enlarge","Maximum info",enlargeIcon,this);
 // Text input fields
     // read defaults from setup file
     if(System.getenv("DABC_CONTROL_MBS")!=null)
@@ -121,7 +129,6 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     Object o=xSet.addObject(formMbs);
     // formMbs=(xFormMbs)xSet.getObject("xgui.xFormMbs"); // how to retrieve
 
-    int width=25;
     DimName=new JTextField(xSet.getDimDns(),width);
     DimName.setEditable(false);
     Username=new JTextField(xSet.getUserName(),width);
@@ -131,17 +138,7 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     Password.addActionListener(this);
     Password.setActionCommand("setpwd");
 // add prompt/input fields
-    addPrompt("Name server: ",DimName);
-    addPrompt("User name: ",Username);
-    addPrompt("Password [RET]: ",Password);
-    MbsNode=addPrompt("Master node: ",formMbs.getMaster(),"set",width,this);
-    MbsServers=addPrompt("Servers: ",formMbs.getServers(),"set",width,this);
-    MbsPath=addPrompt("System path: ",formMbs.getSystemPath(),"set",width,this);
-    MbsUserpath=addPrompt("User path: ",formMbs.getUserPath(),"set",width,this);
-    MbsStart=addPrompt("Startup: ",formMbs.getStart(),"set",width,this);
-    MbsShut=addPrompt("Shutdown: ",formMbs.getShut(),"set",width,this);
-    MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",width,this);
-    MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
+    addPromptLines();
     nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
     nMbsNodes=nMbsServers-2;
     System.out.println("Mbs   servers needed: DNS + "+(nMbsServers-1));   
@@ -156,6 +153,26 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
     etime = new xTimer(al, false); // fire only once
 }
 
+private void addPromptLines(){
+	mini=width;
+	progressY=200;
+    if(formMbs.isShrink()){
+    	mini=0; // do not show
+    	shrinkButton.setSelected(true);
+    	progressY=20; // position of progress window
+    }
+    if(mini > 0)addPrompt("Name server: ",DimName);
+    if(mini > 0)addPrompt("User name: ",Username);
+    addPrompt("Password [RET]: ",Password);
+    MbsNode=addPrompt("Master node: ",formMbs.getMaster(),"set",mini,this);
+    MbsServers=addPrompt("Servers: ",formMbs.getServers(),"set",mini,this);
+    MbsPath=addPrompt("System path: ",formMbs.getSystemPath(),"set",mini,this);
+    MbsUserpath=addPrompt("User path: ",formMbs.getUserPath(),"set",mini,this);
+    MbsStart=addPrompt("Startup: ",formMbs.getStart(),"set",mini,this);
+    MbsShut=addPrompt("Shutdown: ",formMbs.getShut(),"set",mini,this);
+    MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",mini,this);
+    MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
+}
 private void checkDir(){
 String check, result;
 if(!formMbs.getUserPath().contains("%")){
@@ -189,7 +206,6 @@ formMbs.setStart(MbsStart.getText());
 formMbs.setShut(MbsShut.getText());
 formMbs.setLaunchFile(MbsLaunchFile.getText());
 formMbs.setCommand(MbsCommand.getText());
-checkDir();
 //formMbs.printForm();
 }
 /**
@@ -245,7 +261,7 @@ System.out.println("Mbs releaseDimServices");
 // Timer events are handled by desktop event handler passed to constructor.
 private void startProgress(){
     xLayout la= new xLayout("progress");
-    la.set(new Point(50,200), new Dimension(300,100),0,true);
+    la.set(new Point(50,progressY), new Dimension(300,100),0,true);
     progress=new xInternalFrame("Work in progress, please wait", la);
     progressState=new xState("Current action:",350,30);
     progressState.redraw(-1,"Green","Starting", true);
@@ -386,12 +402,21 @@ public void actionPerformed(ActionEvent e) {
 boolean doit=true;
 if ("set".equals(e.getActionCommand())) {
 setLaunch();
+checkDir();
 return;
 }
 if ("setpwd".equals(e.getActionCommand())) {
 setLaunch();
 return;
 }
+if ("shrink".equals(e.getActionCommand())) {
+	shrinkButton.setSelected(!shrinkButton.isSelected());
+	formMbs.setShrink(shrinkButton.isSelected());
+	cleanupPanel();
+	addPromptLines();
+	refreshPanel();
+	return;
+	}
 nMbsServers=1+formMbs.getnServers();
 nMbsNodes=nMbsServers-2;
 

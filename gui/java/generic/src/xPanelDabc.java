@@ -38,9 +38,10 @@ import java.awt.Color;
 public class xPanelDabc extends xPanelPrompt implements ActionListener, Runnable 
 {
 private xRemoteShell dabcshell;
-private ImageIcon storeIcon, closeIcon, dabcIcon, launchIcon, killIcon, workIcon, dworkIcon;
+private ImageIcon storeIcon, closeIcon, dabcIcon, launchIcon, killIcon, workIcon, dworkIcon, shrinkIcon, enlargeIcon;
 private ImageIcon configIcon, enableIcon, startIcon, stopIcon, haltIcon, exitIcon, setupIcon, wcloseIcon;
 private JTextField DimName, DabcNode, DabcServers, DabcName, Username, DabcUserpath, DabcPath, DabcScript, DabcSetup, DabcLaunchFile;
+private JButton shrinkButton;
 private JPasswordField Password;
 private JCheckBox getnew;
 private xDimBrowser browser;
@@ -65,6 +66,9 @@ private Vector<String> names;
 private Vector<String> types;
 private Vector<String> values;
 private Vector<String> titles;
+private int width=25;
+private int mini=25;
+private int progressY=200;
 
 /**
  * Constructor of DABC launch panel.
@@ -95,9 +99,12 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     stopIcon    = xSet.getIcon("icons/dabcstop.png");
     haltIcon    = xSet.getIcon("icons/dabchalt.png");
     exitIcon    = xSet.getIcon("icons/exitall.png");
+    shrinkIcon  = xSet.getIcon("icons/shrink.png");
+    enlargeIcon = xSet.getIcon("icons/enlarge.png");
 //    addButton("dabcQuit","Close window",closeIcon,this);
 //    addButton("ReadSetup","Read setup file from user path",setupIcon,this);
 //    addButton("CloseWindows","Close setup windows",wcloseIcon,this);
+    shrinkButton=addButton("shrink","Minimize/maximize panel",shrinkIcon,enlargeIcon,this);
     addButton("dabcSave","Save this form and setup to files",storeIcon,this);
     addButton("dabcLaunch","Launch DABC",launchIcon,this);
     addButton("dabcConfig","Configure DABC",configIcon,this);
@@ -125,17 +132,7 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     Password.addActionListener(this);
     Password.setActionCommand("setpwd");
    
-    addPrompt("Name server: ",DimName);
-    addPrompt("User name: ",Username);
-    addPrompt("Password [RET]: ",Password);
-    DabcNode=addPrompt("Master node: ",formDabc.getMaster(),"set",width,this);
-    DabcName=addPrompt("Master name: ",formDabc.getName(),"set",width,this);
-    DabcServers=addPrompt("Servers: ",formDabc.getServers(),"set",width,this);
-    DabcPath=addPrompt("System path: ",formDabc.getSystemPath(),"set",width,this);
-    DabcUserpath=addPrompt("User path: ",formDabc.getUserPath(),"set",width,this);
-    DabcSetup=addPrompt("Setup file: ",formDabc.getSetup(),"set",width,this);
-    DabcScript=addPrompt("Script: ",formDabc.getScript(),"set",width,this);
-    DabcLaunchFile=addPrompt("Control file: ",formDabc.getLaunchFile(),"set",width,this);
+    addPromptLines();
     
 // Add checkboxes
 //    getnew = new JCheckBox();
@@ -150,6 +147,26 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
     etime = new xTimer(al, false); // fire only once
 }
 
+private void addPromptLines(){
+	mini=width;
+	progressY=200;
+    if(formDabc.isShrink()){
+    	mini=0; // do not show
+    	shrinkButton.setSelected(true);
+    	progressY=20; // position of progress window
+    }
+    if(mini > 0)addPrompt("Name server: ",DimName);
+    if(mini > 0)addPrompt("User name: ",Username);
+	addPrompt("Password [RET]: ",Password);
+	DabcNode=addPrompt("Master node: ",formDabc.getMaster(),"set",mini,this);
+	DabcName=addPrompt("Master name: ",formDabc.getName(),"set",mini,this);
+	DabcServers=addPrompt("Servers: ",formDabc.getServers(),"set",mini,this);
+	DabcPath=addPrompt("System path: ",formDabc.getSystemPath(),"set",mini,this);
+	DabcUserpath=addPrompt("User path: ",formDabc.getUserPath(),"set",mini,this);
+	DabcSetup=addPrompt("Setup file: ",formDabc.getSetup(),"set",mini,this);
+	DabcLaunchFile=addPrompt("Launch file: ",formDabc.getLaunchFile(),"set",mini,this);
+	DabcScript=addPrompt("Script: ",formDabc.getScript(),"dabcScript",width,this);
+}
 private void checkDir(){
 String check, result;
 if(!formDabc.getUserPath().contains("%")){
@@ -176,7 +193,6 @@ formDabc.setScript(DabcScript.getText());
 formDabc.setLaunchFile(DabcLaunchFile.getText());
 formDabc.setName(DabcName.getText());
 formDabc.setSetup(DabcSetup.getText());
-checkDir();
 //formDabc.printForm();
 }
 /**
@@ -222,7 +238,7 @@ runState=null;
 // Timer events are handled by desktop event handler passed to constructor.
 private void startProgress(){
     xLayout la= new xLayout("progress");
-    la.set(new Point(50,200), new Dimension(300,100),0,true);
+    la.set(new Point(50,progressY), new Dimension(300,100),0,true);
     progress=new xInternalFrame("Work in progress, please wait", la);
     progressState=new xState("Current action:",350,30);
     progressState.redraw(-1,"Green","Starting", true);
@@ -274,12 +290,21 @@ public void actionPerformed(ActionEvent e) {
 boolean doit=true;
 if ("set".equals(e.getActionCommand())) {
 setLaunch();
+checkDir();
 return;
 }
 if ("setpwd".equals(e.getActionCommand())) {
 setLaunch();
 return;
 }
+if ("shrink".equals(e.getActionCommand())) {
+	shrinkButton.setSelected(!shrinkButton.isSelected());
+	formDabc.setShrink(shrinkButton.isSelected());
+	cleanupPanel();
+	addPromptLines();
+	refreshPanel();
+	return;
+	}
 if ("ReadSetup".equals(e.getActionCommand())) {
 int off[]=new int[100],len[]=new int[100],ind,i;
     String name,header;
@@ -432,6 +457,12 @@ public void run(){
         }
         else setProgress("Failed: DABC startup script",xSet.redD());
     }}
+    else if ("dabcScript".equals(Action)) {
+        //xLogger.print(1,Command);
+    	setLaunch();
+        xLogger.print(1,"dabcShell: "+DabcScript.getText());
+        dabcshell.rsh(DabcNode.getText(),Username.getText(),DabcScript.getText(),0L);
+    }
     else if ("dabcShell".equals(Action)) {
         //xLogger.print(1,Command);
         xLogger.print(1,"dabcShell: "+DabcScript.getText());
