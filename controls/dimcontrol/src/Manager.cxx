@@ -13,6 +13,8 @@
  ********************************************************************/
 #include "dimc/Manager.h"
 
+#include <iostream>
+#include <stdlib.h>
 
 #include "dabc/logging.h"
 #include "dabc/Configuration.h"
@@ -24,9 +26,6 @@
 
 #include "dimc/Commands.h"
 #include "dimc/Registry.h"
-
-#include <iostream>
-
 
 
 /*************************************************************************************

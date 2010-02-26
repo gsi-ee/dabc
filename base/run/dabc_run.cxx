@@ -11,6 +11,7 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
+#include <stdlib.h>
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 #include "dabc/Application.h"

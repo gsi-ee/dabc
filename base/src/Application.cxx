@@ -13,6 +13,8 @@
  ********************************************************************/
 #include "dabc/Application.h"
 
+#include <string.h>
+
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 #include "dabc/Configuration.h"

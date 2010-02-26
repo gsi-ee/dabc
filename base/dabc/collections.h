@@ -15,6 +15,8 @@
 #define DABC_collections
 
 #include <stdint.h>
+#include <string.h>
+
 
 #ifndef DABC_logging
 #include "dabc/logging.h"

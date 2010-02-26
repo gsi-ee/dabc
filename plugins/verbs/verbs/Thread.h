@@ -106,7 +106,7 @@ namespace verbs {
 
          bool StartConnectProcessor();
 
-         virtual int ExecuteThreadCommand(Command* cmd);
+         virtual int ExecuteThreadCommand(dabc::Command* cmd);
 
          virtual dabc::EventId WaitEvent(double tmout);
 

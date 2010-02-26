@@ -682,7 +682,7 @@ int verbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 
       bool isserver = cmd->GetBool("IsServer", true);
       if (isserver ? ServerConnect(cmd, port, portname) : ClientConnect(cmd, port, portname))
-         return cmd_postponed;
+         return dabc::cmd_postponed;
    }
 
    std::string maddr = port->GetCfgStr(xmlMcastAddr, "", cmd);
@@ -698,13 +698,13 @@ int verbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 
       if (!ConvertStrToGid(maddr, multi_gid)) {
          EOUT(("Cannot convert address %s to ibv_gid type", maddr.c_str()));
-         return cmd_false;
+         return dabc::cmd_false;
       }
 
       std::string buf = ConvertGidToStr(multi_gid);
       if (buf!=maddr) {
          EOUT(("Addresses not the same: %s - %s", maddr.c_str(), buf.c_str()));
-         return cmd_false;
+         return dabc::cmd_false;
       }
 
       if (CreatePortQP(thrdname.c_str(), port, IBV_QPT_UD, thrd, port_cq, port_qp)) {
@@ -713,23 +713,23 @@ int verbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
          if (tr->IsInitOk()) {
             tr->AssignProcessorToThread(thrd);
             port->AssignTransport(tr);
-            return cmd_true;
+            return dabc::cmd_true;
          } else
             delete tr;
       }
    }
 
-   return cmd_false;
+   return dabc::cmd_false;
 }
 
 int verbs::Device::ExecuteCommand(dabc::Command* cmd)
 {
-   int cmd_res = cmd_true;
+   int cmd_res = dabc::cmd_true;
 
    DOUT5(("Execute command %s", cmd->GetName()));
 
    if (cmd->IsName("StartServer")) {
-	   std::string servid;
+      std::string servid;
       ((Thread*) ProcessorThread())->FillServerId(servid);
       cmd->SetPar("ConnId", servid.c_str());
    } else

@@ -13,8 +13,9 @@
  ********************************************************************/
 #include "dabc/WorkingThread.h"
 
-#include "dabc/WorkingProcessor.h"
+#include <stdlib.h>
 
+#include "dabc/WorkingProcessor.h"
 #include "dabc/Command.h"
 
 #ifdef DO_INDEX_CHECK

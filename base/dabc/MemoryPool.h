@@ -34,6 +34,8 @@
 #include "dabc/Command.h"
 #endif
 
+#include <stdlib.h>
+
 namespace dabc {
 
    class Buffer;

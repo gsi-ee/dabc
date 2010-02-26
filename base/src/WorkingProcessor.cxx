@@ -13,6 +13,8 @@
  ********************************************************************/
 #include "dabc/WorkingProcessor.h"
 
+#include <stdlib.h>
+
 #include "dabc/Folder.h"
 #include "dabc/Command.h"
 #include "dabc/Parameter.h"

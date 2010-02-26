@@ -76,7 +76,7 @@ namespace verbs {
 // ____________________________________________________________________
 
 verbs::Thread::Thread(Device* dev, dabc::Basic* parent, const char* name) :
-	dabc::WorkingThread(parent, name),
+   dabc::WorkingThread(parent, name),
    fDevice(dev),
    fChannel(0),
 #ifndef VERBS_USING_PIPE

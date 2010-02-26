@@ -15,6 +15,8 @@
 
 #include <list>
 
+#include <stdlib.h>
+
 #include "dabc/threads.h"
 #include "dabc/logging.h"
 #include "dabc/timing.h"

@@ -14,10 +14,10 @@
 #include "dabc/Parameter.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 
 #include "dabc/Manager.h"
-// #include "dabc/Command.h"
 #include "dabc/CommandClient.h"
 #include "dabc/logging.h"
 #include "dabc/Iterator.h"
