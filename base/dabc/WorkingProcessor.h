@@ -39,6 +39,7 @@ namespace dabc {
 
       friend class WorkingThread;
       friend class Parameter;
+      friend class Command;
 
       public:
 
@@ -58,7 +59,7 @@ namespace dabc {
 
          // call this method when you want to be called after specified time period
          // 0 means to get called as soon as possible
-         // <0 means cancel (deactivate) if possible (when it is not too late in time) previousely scheduled timeout
+         // <0 means cancel (deactivate) if possible (when it is not too late in time) previously scheduled timeout
          // >0 activate after specified interval
          void ActivateTimeout(double tmout_sec);
 
@@ -86,8 +87,9 @@ namespace dabc {
          // these methods should be used either in constructor or in
          // dependent objects constructor (like Transport for Port)
          // Cfg means that parameter with given name will be created and its value
-         // will be delivered back. Also will be checked if appropriate parameter exists in module itslef
-         // As last possibility, command values will be searched.
+         // will be delivered back. Also will be checked if appropriate parameter
+         // already exists in top configuration object (module, application)
+         // If specified, command arguments list will be searched.
          // Priority: (max) Command, own parameter, external parameter, default value (min)
          std::string GetCfgStr(const char* name, const std::string& dfltvalue, Command* cmd = 0);
          int GetCfgInt(const char* name, int dfltvalue, Command* cmd = 0);
@@ -98,6 +100,12 @@ namespace dabc {
 
          static void SetGlobalParsVisibility(unsigned lvl = 1) { gParsVisibility = lvl; }
          static void SetParsCfgDefaults(unsigned flags) { gParsCfgDefaults = flags; }
+
+         bool NewCmd_Submit(Command* cmd);
+
+         int NewCmd_Execute(Command* cmd, double tmout = -1.);
+
+         int NewCmd_Execute(const char* cmdname, double tmout = -1.);
 
       protected:
 
@@ -128,6 +136,16 @@ namespace dabc {
          bool ActivateMainLoop();
          void ExitMainLoop();
          void SingleLoop(double tmout) { ProcessorThread()->SingleLoop(this, tmout); }
+
+
+
+         int NewCmd_DoCommandExecute(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
+         int NewCmd_DoCommandExecute(WorkingProcessor* dest, const char* cmdname, double tmout = -1.);
+         int NewCmd_ProcessCommand(dabc::Command* cmd);
+         bool NewCmd_ProcessReply(dabc::Command* cmd);
+         bool NewCmd_GetReply(dabc::Command* cmd);
+         void NewCmd__Forget(dabc::Command* cmd);
+
 
          virtual void DoProcessorMainLoop() {}
          virtual void DoProcessorAfterMainLoop() {}
@@ -184,6 +202,11 @@ namespace dabc {
          uint32_t         fProcessorId;
          int              fProcessorPriority;
          CommandsQueue    fProcessorCommands;
+
+         CommandsQueue    fProcessorNewCommands;
+         CommandsQueue    fProcessorReplyCommands;
+         Command*         fProcessorExecutingCmd;          // processor waits until this command is executed
+         bool             fProcessorExecutingFlag;         // indicates if waiting loop of processor still active
 
          Folder*          fParsHolder;
 

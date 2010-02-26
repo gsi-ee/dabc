@@ -75,7 +75,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
             fCanSend = cmd->GetBool("Enable", true);
             if (fCanSend) StartSending();
             fPortCnt = 0;
-            return cmd_true;
+            return dabc::cmd_true;
          }
 
          return ModuleAsync::ExecuteCommand(cmd);
@@ -159,7 +159,7 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
          } else
             return ModuleAsync::ExecuteCommand(cmd);
 
-         return cmd_true;
+         return dabc::cmd_true;
       }
 
       void ProcessInputEvent(dabc::Port* port)
@@ -355,7 +355,7 @@ class NetTestApplication : public dabc::Application {
 
 	         DOUT0(("Submit connection commands done"));
 
-            return cmd_postponed;
+            return dabc::cmd_postponed;
          }
 
          return dabc::Application::ConnectAppModules(cmd);
@@ -367,13 +367,13 @@ class NetTestApplication : public dabc::Application {
 
 	         DOUT0(("Check for modules connected"));
 
-            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Receiver"))) return cmd_postponed;
+            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Receiver"))) return dabc::cmd_postponed;
 
-            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Sender"))) return cmd_postponed;
+            if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Sender"))) return dabc::cmd_postponed;
 
 	         DOUT0(("Check for modules connected done"));
 
-            return cmd_true;
+            return dabc::cmd_true;
          }
 
          return dabc::Application::IsAppModulesConnected();

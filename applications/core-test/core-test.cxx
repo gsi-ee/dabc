@@ -11,6 +11,7 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
+
 #include "dabc/logging.h"
 
 #include "dabc/FileIO.h"
@@ -415,4 +416,68 @@ extern "C" void RunCoreTest()
 }
 
 
+
+class TestModuleCmd : public dabc::ModuleAsync {
+   protected:
+      int                 fNext; // -1 reply, or number of next in chain
+
+   public:
+      TestModuleCmd(const char* name, int next) :
+         dabc::ModuleAsync(name),
+         fNext(next)
+      {
+      }
+
+      virtual int ExecuteCommand(dabc::Command* cmd)
+      {
+         DOUT0(("Module %s execute command %s", GetName(), cmd->GetName()));
+
+         if (fNext<0) return dabc::cmd_true;
+
+         std::string nextname = dabc::format("Module%d", fNext);
+         dabc::Module* next = dabc::mgr()->FindModule(nextname.c_str());
+         if (next==0) return dabc::cmd_false;
+
+         int res = NewCmd_DoCommandExecute(next, "MyCmd");
+
+         return res>0 ? res+1 : 0;
+      }
+};
+
+
+void TestCmdChain(int number)
+{
+   DOUT0(("==============================================="));
+   DOUT0(("Test cmd chain of %d modules", number));
+
+   dabc::Module* m0 = 0;
+
+   for (int n=0;n<number;n++) {
+      dabc::Module* m = new TestModuleCmd(FORMAT(("Module%d",n)), n==number-1 ? -1 : n+1);
+
+      dabc::mgr()->MakeThreadForModule(m, n<number/2 ? "MainThread0" : "MainThread1");
+
+      if (n==0) m0 = m;
+   }
+
+   dabc::mgr()->StartAllModules();
+
+   int res = m0->NewCmd_Execute("MyCommand");
+
+   DOUT0(("Execution result = %d", res));
+
+   dabc::mgr()->StopAllModules();
+
+   dabc::mgr()->CleanupManager();
+
+   DOUT0(("Did manager cleanup"));
+}
+
+
+extern "C" void RunCmdTest()
+{
+//   TestMemoryPool();
+
+   TestCmdChain(10);
+}
 

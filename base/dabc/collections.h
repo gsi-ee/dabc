@@ -16,11 +16,6 @@
 
 #include <stdint.h>
 
-#include <string.h>
-
-#include <stdlib.h>
-
-
 #ifndef DABC_logging
 #include "dabc/logging.h"
 #endif
@@ -351,8 +346,6 @@ namespace dabc {
 
          void Cleanup();
    };
-
-
 
 };
 

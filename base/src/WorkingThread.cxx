@@ -21,11 +21,25 @@
 unsigned dabc::WorkingThread::maxlimit = 1000;
 #endif
 
+class dabc::WorkingThread::ExecProcessor : public dabc::WorkingProcessor {
+   public:
+      ExecProcessor() : dabc::WorkingProcessor() {}
+
+      virtual int ExecuteCommand(Command* cmd)
+      {
+         return fProcessorThread->ExecuteThreadCommand(cmd);
+      }
+
+
+   protected:
+
+};
+
+
 dabc::WorkingThread::WorkingThread(Basic* parent, const char* name, unsigned numqueus) :
    Basic(parent, name),
    Thread(),
    Runnable(),
-   CommandReceiver(),
    fState(stCreated),
    fThrdWorking(false),
    fNoLongerUsed(false),
@@ -34,12 +48,12 @@ dabc::WorkingThread::WorkingThread(Basic* parent, const char* name, unsigned num
    fWorkCond(&fWorkMutex),
    fQueues(0),
    fNumQueues(numqueus),
-   fSysCommands(false, false),
    fTime(),
    fNextTimeout(NullTimeStamp),
    fProcessors(),
    fExplicitLoop(0),
-   fExitExplicitLoop(false)
+   fExitExplicitLoop(false),
+   fExec(0)
 {
    if (fNumQueues>0) {
      fQueues = new EventsQueue[fNumQueues];
@@ -50,6 +64,12 @@ dabc::WorkingThread::WorkingThread(Basic* parent, const char* name, unsigned num
    DOUT3(("Thread %s created", GetName()));
 
    fProcessors.push_back(0); // exclude id==0
+
+   fExec = new ExecProcessor;
+   fExec->fProcessorId = fProcessors.size();
+   fProcessors.push_back(fExec);
+   fExec->fProcessorThread = this;
+
 }
 
 dabc::WorkingThread::~WorkingThread()
@@ -68,6 +88,10 @@ dabc::WorkingThread::~WorkingThread()
    }
 
    delete [] fQueues; fQueues = 0;
+
+   fExec->fProcessorId = 0;
+   fExec->fProcessorThread = 0;
+   delete fExec; fExec = 0;
 
    fNumQueues = 0;
 
@@ -173,7 +197,7 @@ bool dabc::WorkingThread::Start(double timeout_sec, bool withoutthrd)
    else
       Thread::UseCurrentAsSelf();
 
-   bool res = Execute("ConfirmStart", timeout_sec);
+   bool res = fExec->NewCmd_Execute("ConfirmStart", timeout_sec);
 
    LockGuard guard(fWorkMutex);
    fState = res ? stRunning : stError;
@@ -215,7 +239,7 @@ bool dabc::WorkingThread::Stop(bool waitjoin, double timeout_sec)
 
    DOUT3(("Start execute ConfirmStop"));
 
-   if (needstop) res = Execute("ConfirmStop", timeout_sec);
+   if (needstop) res = fExec->NewCmd_Execute("ConfirmStop", timeout_sec);
 
    DOUT3(("Did execute ConfirmStop"));
 
@@ -244,7 +268,7 @@ void dabc::WorkingThread::SetWorkingFlag(bool on)
 
 bool dabc::WorkingThread::Sync(double timeout_sec)
 {
-   return Execute("ConfirmSync", timeout_sec);
+   return fExec->NewCmd_Execute("ConfirmSync", timeout_sec);
 }
 
 bool dabc::WorkingThread::SetExplicitLoop(WorkingProcessor* proc)
@@ -297,21 +321,6 @@ void dabc::WorkingThread::RunExplicitLoop()
 }
 
 
-bool dabc::WorkingThread::Submit(Command* cmd)
-{
-   {
-      LockGuard guard(fWorkMutex);
-
-      if (IsThrdWorking()) {
-        fSysCommands.Push(cmd);
-        _Fire(evntSysCmd, 0);
-         return true;
-      }
-   }
-
-   return CommandReceiver::Submit(cmd);
-}
-
 void dabc::WorkingThread::FireDoNothingEvent()
 {
    // used by timeout object to activate thread and leave WaitEvent function
@@ -319,7 +328,7 @@ void dabc::WorkingThread::FireDoNothingEvent()
    Fire(CodeEvent(evntDoNothing), -1);
 }
 
-int dabc::WorkingThread::ExecuteCommand(Command* cmd)
+int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
 {
    DOUT3(("WorkingThread::Execute command %s", cmd->GetName()));
 
@@ -444,114 +453,149 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
       WorkingProcessor* proc = fProcessors[itemid];
       if (proc) proc->ProcessEvent(evnt);
    } else
-    switch (GetEventCode(evnt)) {
-       case evntSysCmd: {
 
-           dabc::Command* cmd = 0;
-           {
-              LockGuard guard(fWorkMutex);
-              cmd = fSysCommands.Pop();
-           }
+   switch (GetEventCode(evnt)) {
+      case evntProcCmd: {
+         uint32_t procid = GetEventArg(evnt);
 
-           ProcessCommand(cmd);
-           break;
-       }
+         if (procid >= fProcessors.size()) {
+            DOUT3(("evntProcCmd - mismatch in processor id:%u sz:%u ",procid, fProcessors.size()));
+            break;
+         }
 
-       case evntProcCmd: {
-          uint32_t procid = GetEventArg(evnt);
+         WorkingProcessor* proc = fProcessors[procid];
 
-          if (procid >= fProcessors.size()) {
-             DOUT3(("evntProcCmd - missmatch in processor id:%u sz:%u ",procid, fProcessors.size()));
-             break;
-          }
+         if (proc) {
+            Command* cmd = proc->fProcessorCommands.Pop();
+            if (cmd) proc->ProcessCommand(cmd);
+         } else {
+            DOUT3(("WorkingProcessor with such id no longer exists"));
+         }
 
-          WorkingProcessor* proc = fProcessors[procid];
+         break;
+      }
 
-          if (proc) {
-             Command* cmd = proc->fProcessorCommands.Pop();
-             if (cmd) proc->ProcessCommand(cmd);
-          } else {
-             DOUT3(("WorkingProcessor with such id no longer exists"));
-          }
+      case evntProcNewCmd: {
+         uint32_t procid = GetEventArg(evnt);
 
-          break;
-       }
+         if (procid >= fProcessors.size()) {
+            DOUT3(("evntProcCmd - mismatch in processor id:%u sz:%u ",procid, fProcessors.size()));
+            break;
+         }
 
-       case evntCheckTmout: {
-          uint32_t tmid = GetEventArg(evnt);
+         WorkingProcessor* proc = fProcessors[procid];
 
-          if (tmid >= fProcessors.size()) {
-             DOUT3(("evntCheckTmout - missmatch in processor id:%u sz:%u ", tmid, fProcessors.size()));
-             break;
-          }
+         if (proc) {
+            Command* cmd = proc->fProcessorNewCommands.Pop();
+            if (cmd) proc->NewCmd_ProcessCommand(cmd);
+         } else {
+            DOUT3(("WorkingProcessor with such id no longer exists"));
+         }
 
-          WorkingProcessor* src = fProcessors[tmid];
-          if (src==0) {
-             DOUT3(("WorkingProcessor %u no longer exists", tmid));
-             break;
-          }
+         break;
+      }
 
-          TimeStamp_t mark(NullTimeStamp);
-          double interv(0);
+      case evntProcNewReply: {
+         uint32_t procid = GetEventArg(evnt);
 
-          if (src->TakeActivateData(mark, interv)) {
-             if (interv<0) {
-                src->fProcessorNextFire = NullTimeStamp;
-                src->fProcessorPrevFire = NullTimeStamp;
-             } else {
-                // if one activate timeout with positive interval, immulate
-                // that one already has previous call to ProcessTimeout
-                if (IsNullTime(src->fProcessorPrevFire) && (interv>0))
-                   src->fProcessorPrevFire = mark;
+         if (procid >= fProcessors.size()) {
+            DOUT3(("evntProcCmd - mismatch in processor id:%u sz:%u ",procid, fProcessors.size()));
+            break;
+         }
 
-                mark = TimeShift(mark, interv);
+         WorkingProcessor* proc = fProcessors[procid];
 
-                // set activation time only in the case if no other active timeout was used
-                if (IsNullTime(src->fProcessorNextFire) ||
-                    TimeDistance(mark, src->fProcessorNextFire) > 0.) {
-                       src->fProcessorNextFire = mark;
-                       CheckTimeouts(true);
-                    }
-             }
+         if (proc) {
+            Command* cmd = proc->fProcessorReplyCommands.Pop();
 
-          }
+            if (cmd) {
+               if (cmd == proc->fProcessorExecutingCmd)
+                  proc->fProcessorExecutingFlag = false;
+               else
+                  if (proc->NewCmd_ProcessReply(cmd))
+                     dabc::Command::Finalise(cmd);
+            }
+         } else {
+            DOUT3(("WorkingProcessor with such id no longer exists"));
+         }
 
-          break;
-       }
+         break;
+      }
 
-       case evntRebuildProc: {
-          unsigned old_size = GetEventArg(evnt);
-          if (old_size==fProcessors.size()) {
-             unsigned new_size = fProcessors.size();
+      case evntCheckTmout: {
+         uint32_t tmid = GetEventArg(evnt);
 
-             while ((new_size>1) && (fProcessors[new_size-1]==0)) new_size--;
+         if (tmid >= fProcessors.size()) {
+            DOUT3(("evntCheckTmout - mismatch in processor id:%u sz:%u ", tmid, fProcessors.size()));
+            break;
+         }
 
-             fProcessors.resize(new_size);
+         WorkingProcessor* src = fProcessors[tmid];
+         if (src==0) {
+            DOUT3(("WorkingProcessor %u no longer exists", tmid));
+            break;
+         }
 
-             DOUT3(("Thrd:%s Shrink processors size to %u", GetName(), new_size));
+         TimeStamp_t mark(NullTimeStamp);
+         double interv(0);
 
-          } else
-             DOUT3(("Processors sizes changed during evntRebuildProc event"));
-          break;
-       }
+         if (src->TakeActivateData(mark, interv)) {
+            if (interv<0) {
+               src->fProcessorNextFire = NullTimeStamp;
+               src->fProcessorPrevFire = NullTimeStamp;
+            } else {
+               // if one activate timeout with positive interval, immulate
+               // that one already has previous call to ProcessTimeout
+               if (IsNullTime(src->fProcessorPrevFire) && (interv>0))
+                  src->fProcessorPrevFire = mark;
 
-       case evntDoNothing:
-          break;
+               mark = TimeShift(mark, interv);
 
-       default:
-          EOUT(("Uncknown event %u arg %u", GetEventCode(evnt), GetEventArg(evnt)));
-          break;
-    }
+               // set activation time only in the case if no other active timeout was used
+               if (IsNullTime(src->fProcessorNextFire) ||
+                     TimeDistance(mark, src->fProcessorNextFire) > 0.) {
+                  src->fProcessorNextFire = mark;
+                  CheckTimeouts(true);
+               }
+            }
+
+         }
+
+         break;
+      }
+
+      case evntRebuildProc: {
+         unsigned old_size = GetEventArg(evnt);
+         if (old_size==fProcessors.size()) {
+            unsigned new_size = fProcessors.size();
+
+            while ((new_size>1) && (fProcessors[new_size-1]==0)) new_size--;
+
+            fProcessors.resize(new_size);
+
+            DOUT3(("Thrd:%s Shrink processors size to %u", GetName(), new_size));
+
+         } else
+            DOUT3(("Processors sizes changed during evntRebuildProc event"));
+         break;
+      }
+
+      case evntDoNothing:
+         break;
+
+      default:
+         EOUT(("Unknown event %u arg %u", GetEventCode(evnt), GetEventArg(evnt)));
+         break;
+   }
 
    DOUT5(("Thrd:%s Item:%u Event:%u arg:%u done", GetName(), itemid, GetEventCode(evnt), GetEventArg(evnt)));
-
 }
 
 bool dabc::WorkingThread::AddProcessor(WorkingProcessor* proc, bool sync)
 {
    Command* cmd = new Command("AddProcessor");
    cmd->SetPtr("WorkingProcessor", proc);
-   return sync ? Execute(cmd) : Submit(cmd);
+   return sync ? fExec->NewCmd_Execute(cmd) : fExec->NewCmd_Submit(cmd);
 }
 
 bool dabc::WorkingThread::SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd)
@@ -573,11 +617,53 @@ bool dabc::WorkingThread::SubmitProcessorCmd(WorkingProcessor* proc, Command* cm
    return true;
 }
 
-void dabc::WorkingThread::SysCommand(const char* cmdname, WorkingProcessor* proc)
+bool dabc::WorkingThread::NewCmd_SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd)
+{
+   if (!IsThrdWorking()) {
+      EOUT(("Fails for command %s", cmd->GetName()));
+      dabc::Command::Reply(cmd, false);
+      return false;
+   }
+
+   DOUT5(("Get processor command %s numq %d arg %d", cmd->GetName(), fNumQueues,  (fNumQueues>1) ? 1 : 0));
+
+   proc->fProcessorNewCommands.Push(cmd);
+
+   LockGuard guard(fWorkMutex);
+
+   _Fire(CodeEvent(evntProcNewCmd, 0, proc->fProcessorId), 0);
+
+   return true;
+
+}
+
+bool dabc::WorkingThread::NewCmd_SubmitProcessorReplyCmd(WorkingProcessor* proc, Command* cmd)
+{
+   if (!IsThrdWorking()) return false;
+
+   DOUT5(("Get processor command %s numq %d arg %d", cmd->GetName(), fNumQueues, (fNumQueues>1) ? 1 : 0));
+
+   proc->fProcessorReplyCommands.Push(cmd);
+
+   LockGuard guard(fWorkMutex);
+
+   _Fire(CodeEvent(evntProcNewReply, 0, proc->fProcessorId), 0);
+
+   return true;
+}
+
+int dabc::WorkingThread::Execute(dabc::Command* cmd, double tmout)
+{
+   if (IsItself()) return fExec->NewCmd_DoCommandExecute(fExec, cmd);
+              else return fExec->NewCmd_Execute(cmd);
+}
+
+
+int dabc::WorkingThread::SysCommand(const char* cmdname, WorkingProcessor* proc)
 {
    Command* cmd = new Command(cmdname);
    cmd->SetInt("ProcessorId", proc->fProcessorId);
-   Execute(cmd);
+   return Execute(cmd);
 }
 
 void dabc::WorkingThread::RemoveProcessor(WorkingProcessor* proc)
@@ -598,14 +684,14 @@ void dabc::WorkingThread::ExitMainLoop(WorkingProcessor* proc)
    }
 
    SysCommand("ExitMainLoop", proc);
-   Execute("ConfirmSync");
+   fExec->NewCmd_Execute("ConfirmSync");
 }
 
 void dabc::WorkingThread::DestroyProcessor(WorkingProcessor* proc)
 {
    Command* cmd = new Command("DestroyProcessor");
    cmd->SetInt("ProcessorId", proc->fProcessorId);
-   Submit(cmd);
+   fExec->NewCmd_Submit(cmd);
 }
 
 double dabc::WorkingThread::CheckTimeouts(bool forcerecheck)

@@ -28,6 +28,10 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorId(0),
    fProcessorPriority(-1), // minimum priority per default
    fProcessorCommands(false, true),
+   fProcessorNewCommands(false, true),
+   fProcessorReplyCommands(true, true),
+   fProcessorExecutingCmd(0),
+   fProcessorExecutingFlag(false),
    fParsHolder(parsholder),
    fProcessorMutex(),
    fParsDefaults(0),
@@ -597,7 +601,9 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 {
    int cmd_res = cmd_ignore;
 
-   DOUT5(("WorkingProcessor::PreviewCommand %s", cmd->GetName()));
+   if (cmd==0) exit(1);
+
+   DOUT3(("WorkingProcessor::PreviewCommand %s", cmd->GetName()));
 
    if (cmd->IsName(CmdSetParameter::CmdName())) {
 
@@ -631,5 +637,209 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 
    return cmd_res;
 }
+
+/** This method should be used to execute command synchronously from processor itself.
+ *  Method let thread event loop running.
+ */
+
+int dabc::WorkingProcessor::NewCmd_DoCommandExecute(dabc::WorkingProcessor* dest, dabc::Command* cmd, double tmout)
+{
+
+   if ((fProcessorThread==0) && (dest!=0))
+      return dest->NewCmd_Execute(cmd, tmout);
+
+
+   int res = cmd_true;
+
+   if ((cmd==0) || (dest==0))
+      res = cmd_false;
+   else {
+      LockGuard lock(fProcessorMutex);
+
+      if (fProcessorExecutingCmd!=0) {
+         EOUT(("Processor already executing command"));
+         res = cmd_false;
+      } else {
+         fProcessorExecutingCmd = cmd;
+         cmd->fProcessor = this;
+         cmd->fProcessorMutex = &fProcessorMutex;
+
+         fProcessorExecutingFlag = true;
+      }
+   }
+
+   if (res==cmd_false) {
+      dabc::Command::Finalise(cmd);
+      return cmd_false;
+   }
+
+   if (dest->NewCmd_Submit(cmd)) {
+      // here one should wait for reply event during specified time
+
+      TimeStamp_t last_tm = NullTimeStamp;
+
+      while (fProcessorExecutingFlag) {
+
+         // account timeout
+         if (tmout>0.) {
+            TimeStamp_t tm = fProcessorThread ? fProcessorThread->ThrdTimeStamp() : TimeStamp();
+
+            if (!IsNullTime(last_tm)) {
+               tmout -= TimeDistance(last_tm, tm);
+               if (tmout<=0.) { res = cmd_false; break; }
+            }
+            last_tm = tm;
+         };
+
+         SingleLoop(tmout);
+      }
+
+   } else
+      res = cmd_false;
+
+
+   {
+      LockGuard lock(fProcessorMutex);
+      if (fProcessorExecutingCmd) {
+         fProcessorExecutingCmd->fProcessor = 0;
+         fProcessorExecutingCmd->fProcessorMutex = 0;
+      }
+
+      cmd = fProcessorExecutingCmd;
+
+      fProcessorExecutingCmd = 0;
+      fProcessorExecutingFlag = false;
+   }
+
+   if (res == cmd_true)
+      res = cmd->GetResult();
+
+   dabc::Command::Finalise(cmd);
+
+   return res;
+}
+
+int dabc::WorkingProcessor::NewCmd_DoCommandExecute(WorkingProcessor* dest, const char* cmdname, double tmout)
+{
+   return NewCmd_DoCommandExecute(dest, new dabc::Command(cmdname), tmout);
+}
+
+
+int dabc::WorkingProcessor::NewCmd_Execute(Command* cmd, double tmout)
+{
+   if (fProcessorThread==0)
+      return NewCmd_ProcessCommand(cmd);
+
+   if (fProcessorThread && fProcessorThread->IsItself()) {
+      DOUT5(("Direct execute from thread itself %s", cmd->GetName()));
+
+      return NewCmd_DoCommandExecute(this, cmd, tmout);
+   }
+
+   dabc::Condition cond;
+
+   cmd->fProcessorMutex = cond.CondMutex();
+   cmd->fProcessorCond = &cond;
+
+   if (!NewCmd_Submit(cmd)) {
+      dabc::Command::Finalise(cmd);
+      return cmd_false;
+   }
+
+   int res = cmd_false;
+
+   if (cond.DoWait(tmout))
+      res = cmd->GetResult();
+
+   dabc::Command::Finalise(cmd);
+
+   return res;
+}
+
+int dabc::WorkingProcessor::NewCmd_Execute(const char* cmdname, double tmout)
+{
+   return NewCmd_Execute(new dabc::Command(cmdname), tmout);
+}
+
+
+bool dabc::WorkingProcessor::NewCmd_Submit(dabc::Command* cmd)
+{
+   if (fProcessorThread)
+      return fProcessorThread->NewCmd_SubmitProcessorCmd(this, cmd);
+
+   return NewCmd_ProcessCommand(cmd) != cmd_false;;
+}
+
+int dabc::WorkingProcessor::NewCmd_ProcessCommand(dabc::Command* cmd)
+{
+   /// this method perform command processing
+   // return true if command processed and result is true
+
+   if (cmd==0) return cmd_false;
+
+   DOUT5(("ProcessCommand command %p cli:%p", cmd, this));
+
+   int cmd_res = cmd_ignore;
+
+   if (cmd->IsCanceled())
+      cmd_res = cmd_false;
+   else
+      cmd_res = PreviewCommand(cmd);
+
+   if (cmd_res == cmd_ignore)
+      cmd_res = ExecuteCommand(cmd);
+
+   if (cmd_res == cmd_ignore) {
+      EOUT(("Command ignored %s", cmd->GetName()));
+      cmd_res = cmd_false;
+   }
+
+   bool completed = (cmd_res>=0);
+
+   DOUT5(("Execute command %p %s res = %d", cmd, (completed ? cmd->GetName() : "-----"), cmd_res));
+
+   if (completed)
+      dabc::Command::Reply(cmd, cmd_res);
+
+   DOUT5(("ProcessCommand command %p done res = %d", cmd, cmd_res));
+
+   return cmd_res;
+}
+
+bool dabc::WorkingProcessor::NewCmd_ProcessReply(dabc::Command* cmd)
+{
+   // returns true, if object can be deleted, otherwise user is responsible for the command
+
+   return true;
+}
+
+
+bool dabc::WorkingProcessor::NewCmd_GetReply(dabc::Command* cmd)
+{
+   // return true indicates that responsibility is completely back to this processor,
+   // return false will cause immediate deletion of the command
+
+   if (fProcessorThread)
+      if (fProcessorThread->NewCmd_SubmitProcessorReplyCmd(this, cmd)) return true;
+
+   if (cmd == fProcessorExecutingCmd) { fProcessorExecutingFlag = false; return true; }
+
+   return !NewCmd_ProcessReply(cmd);
+}
+
+void dabc::WorkingProcessor::NewCmd__Forget(dabc::Command* cmd)
+{
+   // exclude command from any lists, while command will be destroyed immediately
+   // Actually, command should never be in the list when it is destroyed.
+   // If something goes wrong, one should call dabc::Command::Reply(cmd, false).
+   // In this place just exit
+
+   if (cmd==0) return;
+
+   EOUT(("_Forget should never be called, just exit"));
+
+   exit(1);
+}
+
 
 

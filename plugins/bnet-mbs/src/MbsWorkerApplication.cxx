@@ -27,7 +27,7 @@ bnet::MbsWorkerApplication::MbsWorkerApplication(const char* classname) :
 
 int bnet::MbsWorkerApplication::ExecuteCommand(dabc::Command* cmd)
 {
-   int cmd_res = cmd_true;
+   int cmd_res = dabc::cmd_true;
 
    if (cmd->IsName("StartServer")) {
       std::string kind = cmd->GetStr("Kind", "");

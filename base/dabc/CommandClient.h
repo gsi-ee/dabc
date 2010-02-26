@@ -18,13 +18,16 @@
 #include "dabc/collections.h"
 #endif
 
+#ifndef DABC_Command
+#include "dabc/Command.h"
+#endif
+
 #ifndef DABC_string
 #include "dabc/string.h"
 #endif
 
 namespace dabc {
 
-   class Command;
    class Mutex;
    class Condition;
    class Manager;
@@ -61,12 +64,6 @@ namespace dabc {
 
    class CommandReceiver {
       public:
-         enum CommandRes {
-            cmd_false = false,
-            cmd_true = true,
-            cmd_ignore = 3333,
-            cmd_postponed = 7777
-         };
 
       static int cmd_bool(bool res) { return res ? cmd_true : cmd_false; }
 

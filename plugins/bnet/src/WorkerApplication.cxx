@@ -173,7 +173,7 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
 
 int bnet::WorkerApplication::ExecuteCommand(dabc::Command* cmd)
 {
-   int cmd_res = cmd_true;
+   int cmd_res = dabc::cmd_true;
 
    if (cmd->IsName("DiscoverWorkerConfig")) {
       DiscoverNodeConfig(cmd);
@@ -181,7 +181,7 @@ int bnet::WorkerApplication::ExecuteCommand(dabc::Command* cmd)
    if (cmd->IsName("ApplyConfigNode")) {
       DOUT3(( "Get reconfigure recvmask = %s", cmd->GetStr(parRecvMask)));
       ApplyNodeConfig(cmd);
-      cmd_res = cmd_postponed;
+      cmd_res = dabc::cmd_postponed;
    } else
    if (cmd->IsName("StartFile") || cmd->IsName("StopFile")) {
 
@@ -359,7 +359,7 @@ bool bnet::WorkerApplication::CreateAppModules()
 
 int bnet::WorkerApplication::IsAppModulesConnected()
 {
-   return GetParBool(CfgConnected) ? cmd_true : cmd_postponed;
+   return GetParBool(CfgConnected) ? dabc::cmd_true : dabc::cmd_postponed;
 }
 
 bool bnet::WorkerApplication::BeforeAppModulesDestroyed()

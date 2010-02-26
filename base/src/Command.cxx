@@ -16,6 +16,8 @@
 #include <map>
 
 #include "dabc/CommandClient.h"
+#include "dabc/WorkingProcessor.h"
+
 #include "dabc/logging.h"
 #include "dabc/threads.h"
 
@@ -28,7 +30,10 @@ dabc::Command::Command(const char* name) :
    fClient(0),
    fClientMutex(0),
    fKeepAlive(false),
-   fCanceled(false)
+   fCanceled(false),
+   fProcessor(0),
+   fProcessorMutex(0),
+   fProcessorCond(0)
 {
    DOUT5(("New command %p name %s", this, GetName()));
 }
@@ -38,30 +43,41 @@ dabc::Command::~Command()
    // this need to be sure, that command is not attached to the client
    CleanClient();
 
+   CleanProcessor();
+
    delete fParams;
    fParams = 0;
 
    DOUT5(("Delete command %p name %s", this, GetName()));
 }
 
-void dabc::Command::_CleanClient()
-{
-   if (fClient) fClient->_Forget(this);
-   fClient = 0;
-   fClientMutex = 0;
-}
-
-
 void dabc::Command::CleanClient()
 {
    LockGuard lock(fClientMutex);
-   _CleanClient();
+   if (fClient) fClient->_Forget(this);
+   fClient = 0;
+   fClientMutex = 0;
 }
 
 bool dabc::Command::IsClient()
 {
    LockGuard lock(fClientMutex);
    return fClient!=0;
+}
+
+
+bool dabc::Command::IsProcessor()
+{
+   LockGuard lock(fProcessorMutex);
+   return fProcessor!=0;
+}
+
+void dabc::Command::CleanProcessor()
+{
+   LockGuard lock(fProcessorMutex);
+   if (fProcessor) fProcessor->NewCmd__Forget(this);
+   fProcessor = 0;
+   fProcessorMutex = 0;
 }
 
 
@@ -353,12 +369,12 @@ bool dabc::Command::ReadParsFromDimString(const char* pars)
 }
 
 
-void dabc::Command::Reply(Command* cmd, bool res)
+void dabc::Command::Reply(Command* cmd, int res)
 {
    if (cmd==0) return;
    cmd->SetResult(res);
 
-   bool proseccreply = false;
+   bool processreply = false;
 
    {
       DOUT5(("Cmd %p Client mutex locked %s", cmd, DBOOL((cmd->fClientMutex ? cmd->fClientMutex->IsLocked() : false))));
@@ -371,13 +387,35 @@ void dabc::Command::Reply(Command* cmd, bool res)
 
       if (client) {
          client->_Forget(cmd);
-         proseccreply = client->_ProcessReply(cmd);
+         processreply = client->_ProcessReply(cmd);
       }
 
-      DOUT5(("Reply command %p done process %s", cmd, DBOOL(proseccreply)));
+      DOUT5(("Reply command %p done process %s", cmd, DBOOL(processreply)));
    }
 
-   if (!proseccreply) Finalise(cmd);
+   if (!processreply) {
+
+      WorkingProcessor* proc = 0;
+
+      {
+         LockGuard guard(cmd->fProcessorMutex);
+         proc = cmd->fProcessor;
+         cmd->fProcessor = 0;
+         cmd->fProcessorMutex = 0;
+
+         if (cmd->fProcessorCond) {
+            cmd->fProcessorCond->_DoFire();
+            cmd->fProcessorCond = 0;
+            processreply = true;
+            proc = 0;
+         }
+      }
+
+      if (proc) processreply = proc->NewCmd_GetReply(cmd);
+
+   }
+
+   if (!processreply) Finalise(cmd);
 }
 
 void dabc::Command::Finalise(Command* cmd)
@@ -390,6 +428,15 @@ void dabc::Command::Finalise(Command* cmd)
    if (cmd->IsKeepAlive()) {
       cmd->CleanClient();
       cmd->SetKeepAlive(false);
+      return;
    }
-      else delete cmd;
+
+   // execute cleanup method outside destructor to avoid potential problems
+   // with virtual tables
+
+   cmd->CleanClient();
+
+   cmd->CleanProcessor();
+
+   delete cmd;
 }

@@ -100,7 +100,7 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
    } else
       return dabc::ModuleAsync::ExecuteCommand(cmd);
 
-   return cmd_true;
+   return dabc::cmd_true;
 }
 
 void bnet::SenderModule::ReactOnDisconnect(dabc::Port* port)

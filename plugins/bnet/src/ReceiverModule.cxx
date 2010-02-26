@@ -88,7 +88,7 @@ int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
 
       return dabc::ModuleAsync::ExecuteCommand(cmd);
 
-   return cmd_true;
+   return dabc::cmd_true;
 }
 
 void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)

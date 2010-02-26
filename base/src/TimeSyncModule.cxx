@@ -79,7 +79,7 @@ void dabc::TimeSyncModule::OnThreadAssigned()
    Module::OnThreadAssigned();
 
    if (ProcessorThread())
-      ProcessorThread()->Execute("EnableFastModus");
+      ProcessorThread()->Execute(new dabc::Command("EnableFastModus"));
 }
 
 

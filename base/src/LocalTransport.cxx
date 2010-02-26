@@ -181,7 +181,7 @@ bool dabc::LocalDevice::ConnectPorts(Port* port1, Port* port2, CommandClientBase
    if (port1->GetPoolHandle() && port2->GetPoolHandle()) {
       memcopy = ! port1->GetPoolHandle()->IsName(port2->GetPoolHandle()->GetName());
       if (memcopy) {
-         EOUT(("Transport between ports %s %s will be with memopy",
+         EOUT(("Transport between ports %s %s will be with memcpy",
                  port1->GetFullName().c_str(), port2->GetFullName().c_str()));
       }
    }

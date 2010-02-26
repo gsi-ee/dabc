@@ -50,7 +50,7 @@ dabc::Command* dabc::CommandClientBase::_Assign(Command* cmd)
    if ((cmd==0) || (cmd->fClient == this)) return 0;
 
    if (cmd->fClient!=0) {
-      EOUT(("Commnd is assigned to other client - fatal error"));
+      EOUT(("Command is assigned to other client - fatal error"));
       return 0;
    }
 
@@ -92,9 +92,7 @@ int dabc::CommandClientBase::CancelCommands()
 
    while (fSubmCmds->size()>0) {
       Command* cmd = fSubmCmds->front();
-      std::string v;
-      cmd->SaveToString(v);
-      EOUT(("Need to forget command %s",  v.c_str()));
+      EOUT(("Need to forget command %s",  cmd->GetName()));
       cmd->SetCanceled();
       _Forget(cmd);
    }
@@ -305,7 +303,7 @@ bool dabc::CommandClient::WaitCommands(double timeout_sec)
 
    double waittm = timeout_sec;
 
-   DOUT5(("Clinet:%p Thread:%d WaitCommands %3.1f size %d locked %s", this, Thread::Self(), timeout_sec, _NumSubmCmds(), DBOOL(fCmdsMutex->IsLocked())));
+   DOUT5(("Client:%p Thread:%d WaitCommands %3.1f size %d locked %s", this, Thread::Self(), timeout_sec, _NumSubmCmds(), DBOOL(fCmdsMutex->IsLocked())));
 
    do {
       {

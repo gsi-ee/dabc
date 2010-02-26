@@ -26,8 +26,8 @@
 #include "dabc/collections.h"
 #endif
 
-#ifndef DABC_CommandClient
-#include "dabc/CommandClient.h"
+#ifndef DABC_Command
+#include "dabc/Command.h"
 #endif
 
 #ifndef DABC_timing
@@ -50,15 +50,19 @@ namespace dabc {
 
    class WorkingThread : public Basic,
                          protected Thread,
-                         protected Runnable,
-                         public CommandReceiver {
+                         protected Runnable {
 
       friend class WorkingProcessor;
 
+      class ExecProcessor;
+
+      friend class ExecProcessor;
+
       public:
 
-         enum EEvents { evntSysCmd = 1,
-                        evntProcCmd,
+         enum EEvents { evntProcCmd = 1,
+                        evntProcNewCmd,
+                        evntProcNewReply,
                         evntCheckTmout,
                         evntRebuildProc,
                         evntDoNothing,
@@ -94,13 +98,13 @@ namespace dabc {
 
          inline TimeSource* ThrdTimeSource() { return &fTime; }
 
-         virtual bool Submit(Command* cmd);
-
          virtual const char* ClassName() const { return typeWorkingThread; }
 
          virtual bool CompatibleClass(const char* clname) const;
 
          void FireDoNothingEvent();
+
+         int Execute(Command* cmd, double tmout = -1);
 
       protected:
 
@@ -108,9 +112,7 @@ namespace dabc {
 
          typedef Queue<EventId> EventsQueue;
 
-         // these are method from comman receiver
-         virtual int ExecuteCommand(Command* cmd);
-         virtual bool IsExecutionThread() { return IsItself(); }
+         virtual int ExecuteThreadCommand(Command* cmd);
 
          virtual EventId WaitEvent(double tmout);
 
@@ -159,8 +161,11 @@ namespace dabc {
          double CheckTimeouts(bool forcerecheck = false);
 
          bool AddProcessor(WorkingProcessor* proc, bool sync = true);
-         void SysCommand(const char* cmdname, WorkingProcessor* proc);
+         int SysCommand(const char* cmdname, WorkingProcessor* proc);
          bool SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd);
+         bool NewCmd_SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd);
+         bool NewCmd_SubmitProcessorReplyCmd(WorkingProcessor* proc, Command* cmd);
+
          void RemoveProcessor(WorkingProcessor* proc);
          void DestroyProcessor(WorkingProcessor* proc);
 
@@ -185,8 +190,6 @@ namespace dabc {
          EventsQueue         *fQueues;
          int                  fNumQueues;
 
-         CommandsQueue        fSysCommands;
-
          TimeSource           fTime;        // source of time stamps
          TimeStamp_t          fNextTimeout; // indicate when we expects next timeout
 
@@ -194,6 +197,8 @@ namespace dabc {
 
          WorkingProcessor*    fExplicitLoop;
          bool                 fExitExplicitLoop; // set to true, when one should exit from main loop
+
+         ExecProcessor*       fExec; // processor to execute commands in the thread
    };
 }
 

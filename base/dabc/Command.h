@@ -21,11 +21,21 @@
 namespace dabc {
 
    class CommandClientBase;
+   class WorkingProcessor;
    class Mutex;
+   class Condition;
+
+   enum CommandRes {
+      cmd_false = 0,
+      cmd_true = 1,
+      cmd_ignore = -1,
+      cmd_postponed = -2
+   };
 
    class Command : public Basic {
 
       friend class CommandClientBase;
+      friend class WorkingProcessor;
 
       protected:
 
@@ -33,13 +43,15 @@ namespace dabc {
 
          CommandParametersList* fParams;
          CommandClientBase*     fClient;
-         Mutex*                 fClientMutex; // pointer on client mutex, must be locked when we access cleint itself
+         Mutex*                 fClientMutex; // pointer on client mutex, must be locked when we access client itself
          bool                   fKeepAlive;   // if true, object should not be deleted by client, but later by user
          bool                   fCanceled;    // true if command was canceled by client, will not be executed
 
-         virtual ~Command();
+         WorkingProcessor*      fProcessor;       /** pointer on processor, waiting for command execution */
+         Mutex*                 fProcessorMutex;  /** processor mutex, used for access fProcessor pointer */
+         Condition*             fProcessorCond;   /** pointer on the condition, used for waiting of result */
 
-         void _CleanClient();
+         virtual ~Command();
 
          void SetCanceled() { fCanceled = true; }
 
@@ -84,14 +96,17 @@ namespace dabc {
 
          void AddValuesFrom(const Command* cmd, bool canoverwrite = true);
 
-         void SetResult(bool res) { SetBool("_result_", res); }
-         bool GetResult() const { return GetBool("_result_", false); }
+         void SetResult(int res) { SetInt("_result_", res); }
+         int GetResult() const { return GetInt("_result_", 0); }
          void ClearResult() { RemovePar("_result_"); }
 
          bool IsClient();
          void CleanClient();
 
-         static void Reply(Command* cmd, bool res = true);
+         bool IsProcessor();
+         void CleanProcessor();
+
+         static void Reply(Command* cmd, int res = 1);
          static void Finalise(Command* cmd);
    };
 

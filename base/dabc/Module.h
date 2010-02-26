@@ -140,7 +140,7 @@ namespace dabc {
 
          // user must redefine method when it want to execute commands.
          // If method return true or false (cmd_true or cmd_false),
-         // command considered as executed and will be replyed
+         // command considered as executed and will be replied
          // Any other arguments (cmd_postponed) means that execution
          // will be postponed in the module itself
          // User must call Module::ExecuteCommand() to enable processing of standard commands

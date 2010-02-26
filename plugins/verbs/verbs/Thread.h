@@ -96,8 +96,6 @@ namespace verbs {
 
          bool IsFastModus() const { return fFastModus > 0; }
 
-         virtual int ExecuteCommand(dabc::Command* cmd);
-
          virtual const char* ClassName() const { return VERBS_THRD_CLASSNAME; }
 
          virtual bool CompatibleClass(const char* clname) const;
@@ -107,6 +105,8 @@ namespace verbs {
       protected:
 
          bool StartConnectProcessor();
+
+         virtual int ExecuteThreadCommand(Command* cmd);
 
          virtual dabc::EventId WaitEvent(double tmout);
 

@@ -16,6 +16,7 @@
 
 #include "dabc/logging.h"
 #include "dabc/Configuration.h"
+#include "dabc/Command.h"
 #include "dabc/CommandDefinition.h"
 #include "dabc/Parameter.h"
 #include "dabc/Module.h"
@@ -157,7 +158,7 @@ int dimc::Manager::ExecuteCommand(dabc::Command* cmd)
       {
          return dabc::Manager::ExecuteCommand(cmd);
       }
-   return cmd_true;
+   return dabc::cmd_true;
 }
 
 void dimc::Manager::ParameterEvent(dabc::Parameter* par, int event)

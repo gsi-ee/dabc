@@ -13,6 +13,9 @@
  ********************************************************************/
 #include "dabc/collections.h"
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "dabc/threads.h"
 #include "dabc/Command.h"
 #include "dabc/Buffer.h"

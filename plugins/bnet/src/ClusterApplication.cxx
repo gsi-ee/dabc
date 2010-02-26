@@ -188,7 +188,7 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
    // This is actual place, where commands is executed or
    // slave commands are submitted and awaited certain time
 
-   int cmd_res = cmd_false;
+   int cmd_res = dabc::cmd_false;
 
 //   dabc::Manager* mgr = dabc::mgr();
 
@@ -196,24 +196,24 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
 
    if (cmd->IsName(DiscoverCmdName)) {
       // first, try to start discover, if required
-      if (StartDiscoverConfig(cmd)) cmd_res = cmd_postponed;
+      if (StartDiscoverConfig(cmd)) cmd_res = dabc::cmd_postponed;
    } else
    if (cmd->IsName("ConnectModules")) {
 
       // return true while no connection is required
-      if (StartModulesConnect(cmd)) cmd_res = cmd_postponed;
-                               else cmd_res = cmd_true;
+      if (StartModulesConnect(cmd)) cmd_res = dabc::cmd_postponed;
+                               else cmd_res = dabc::cmd_true;
    } else
    if (cmd->IsName("ClusterSMCommand")) {
-      if (StartClusterSMCommand(cmd)) cmd_res = cmd_postponed;
+      if (StartClusterSMCommand(cmd)) cmd_res = dabc::cmd_postponed;
    } else
    if (cmd->IsName("ApplyConfig")) {
-      if (StartConfigureApply(cmd)) cmd_res = cmd_postponed;
+      if (StartConfigureApply(cmd)) cmd_res = dabc::cmd_postponed;
    } else
    if (cmd->IsName("DiscoverWorkerConfig")) {
       if (cmd->GetPar("_ReplyRes_")==0) {
          EOUT(("AAAAAAAAAAAAA Something wrong with discover AAAAAAAAAAA"));
-         return cmd_false;
+         return dabc::cmd_false;
       }
 
       int nodeid = cmd->GetInt("DestId");
@@ -222,7 +222,7 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
 
       if ((nodeid<0) || ((unsigned) nodeid >= fNodeMask.size())) {
          EOUT(("Discovery problem - wrong node id:%d", nodeid));
-         return cmd_false;
+         return dabc::cmd_false;
       }
 
       if (cmd->GetBool("_ReplyRes_", false)) {
@@ -244,18 +244,18 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
 
       fNodeMask[nodeid] = mask;
 
-      cmd_res = cmd_true;
+      cmd_res = dabc::cmd_true;
 
    } else
    if (cmd->IsName("TestClusterStates")) {
 
-      cmd_res = cmd_true;
+      cmd_res = dabc::cmd_true;
 
       for (int nodeid=0;nodeid<fNumNodes; nodeid++) {
          if (!dabc::mgr()->IsNodeActive(nodeid)) continue;
 
          if (dabc::mgr()->CurrentState() != NodeCurrentState(nodeid)) {
-            cmd_res = cmd_false;
+            cmd_res = dabc::cmd_false;
             break;
          }
       }
@@ -293,7 +293,7 @@ int bnet::ClusterApplication::ExecuteCommand(dabc::Command* cmd)
 
       dabc::CommandsSet::Completed(set, SMCommandTimeout());
 
-      cmd_res = set ? cmd_postponed : cmd_true;
+      cmd_res = set ? dabc::cmd_postponed : dabc::cmd_true;
 
    } else
 

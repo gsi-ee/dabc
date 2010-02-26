@@ -183,16 +183,18 @@ verbs::ComplQueue* verbs::Thread::MakeCQ()
    return fMainCQ;
 }
 
-int verbs::Thread::ExecuteCommand(dabc::Command* cmd)
+
+int verbs::Thread::ExecuteThreadCommand(dabc::Command* cmd)
 {
-   int cmd_res = cmd_true;
+   int cmd_res = dabc::cmd_true;
+
    if (cmd->IsName("EnableFastModus"))
       fFastModus = cmd->GetInt("PoolingCounter", 1000);
    else
    if (cmd->IsName("DisableFastModus"))
       fFastModus = 0;
    else
-      cmd_res = WorkingThread::ExecuteCommand(cmd);
+      cmd_res = WorkingThread::ExecuteThreadCommand(cmd);
 
    return cmd_res;
 }
