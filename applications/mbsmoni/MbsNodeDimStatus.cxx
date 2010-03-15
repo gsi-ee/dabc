@@ -116,7 +116,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list)
     DeNodeTime=MD_add_info("NodeTime",&eNodeTime,1,"White","");
     return;
   }
-  conf=fopen("dimsetup","r");
+  conf=fopen("dimsetup.txt","r");
   if(conf!=0){
     bEventRate=0;
     bDataRateKb=0;
