@@ -49,7 +49,7 @@ int main(int argc,char **argv)
         l_status = f_mbs_status (argv[i],ps_daqst[i]);
         if(l_status > 0) node[i]->MD_update("");
         else printf("Error getting MBS status from %s\n",argv[i]);
-        pc = ps_daqst[i]->c_date+13;
+        pc = ps_daqst[i]->c_date+13; // only min:sec
         strcat(c_times,pc);strcat(c_times," ");
       }
       node[0]->MD_update(c_times);
