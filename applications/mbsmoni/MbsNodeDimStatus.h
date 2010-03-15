@@ -13,7 +13,7 @@
 #include "s_set_mo.h"
 #include "s_daqst.h"
 #include "dis.hxx"
-#include "dabcRecords.h"
+#include "dimRecords.h"
 
 class MbsNodeDimStatus{
 public:

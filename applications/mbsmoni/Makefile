@@ -1,7 +1,5 @@
 include $(DABCSYS)/config/Makefile.config
 
-MBSMONI=1
-
 ifdef DABCMAINMAKE
 MBSMONIDIR = applications/mbsmoni
 else
@@ -9,39 +7,38 @@ MBSMONIDIR = .
 INCLUDES += $(MBSMONIDIR)
 endif
 
-MBSMONI_LIBNAME  = $(LIB_PREFIX)MbsDimStatus
-MBSMONI_LIB      = $(MBSMONIDIR)/$(MBSMONI_LIBNAME).$(DllSuf)
+MBSMONI_EXENAME  = mMbsDimStatus
+MBSMONI_EXE      = $(MBSMONIDIR)/$(MBSMONI_EXENAME)
 
 MBSMONI_PACKAGE = $(MBSMONIDIR)/mbsmoni.tar.gz
 
-ifdef MBSMONI
-
-MBSMONI_H        = $(wildcard $(MBSMONIDIR)/*.$(HedSuf))
-MBSMONI_C       = $(wildcard $(MBSMONIDIR)/*.$(CSuf))
-MBSMONI_CO       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBSMONI_C))
-MBSMONI_CD       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(DepSuf), $(MBSMONI_C))
+MBSMONI_H         = $(wildcard $(MBSMONIDIR)/*.$(HedSuf))
+MBSMONI_C         = $(wildcard $(MBSMONIDIR)/*.$(CSuf))
+MBSMONI_CO        = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBSMONI_C))
+MBSMONI_CD        = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(DepSuf), $(MBSMONI_C))
 MBSMONI_CX        = $(wildcard $(MBSMONIDIR)/*.$(SrcSuf))
 MBSMONI_CXO       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBSMONI_CX))
 MBSMONI_CXD       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(MBSMONI_CX))
 
 MBSMONI_DEFINITIONS = Linux 
-else
-MBSMONI_EXCLUDE +=  $(wildcard $(MBSMONIDIR)/*.$(HedSuf)) \
-                    $(wildcard $(MBSMONIDIR)/*.$(SrcSuf)) \
-                    $(wildcard $(MBSMONIDIR)/*.$(CSuf)) \
-endif
+
 
 # used in the main Makefile
 
 ALLDEPENDENC += $(MBSMONI_CD) $(MBSMONI_CXD)
-ALLHDRS      += $(patsubst $(MBSMONIDIR)/%.h, $(DABCINCPATH)/%.h, $(MBSMONI_H))
 
-libs:: $(MBSMONI_LIB)
+exes:: $(MBSMONI_EXE)
+
 clean::
-	rm -f $(MBSMONI_LIB)
+	rm -f $(MBSMONI_EXE)
 
-$(MBSMONI_LIB):   $(MBSMONI_CO) $(MBSMONI_CXO)
-	@$(MakeLib) $(MBSMONI_LIBNAME) "$(DABCMBS_CO) $(DABCMBS_CXO)" $(MBSMONIDIR)
+$(MBSMONI_EXE):   $(MBSMONI_CO) $(MBSMONI_CXO)
+	$(LD) $(LDFLAGS) $(MBSMONI_CO) $(MBSMONI_CXO) -lrt -L$(DABCDLLPATH) -ldim $(OutPutOpt) $(MBSMONI_EXE)
 
+$(MBSMONI_CXO) : DEFINITIONS += $(MBSMONI_DEFINITIONS) 
+
+$(MBSMONI_CO) : C_DEFINITIONS += $(MBSMONI_DEFINITIONS)
+
+$(MBSMONI_CXO) : INCLUDES += $(DIMDIR)/dim
 
 include $(DABCSYS)/config/Makefile.rules
