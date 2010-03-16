@@ -40,7 +40,8 @@ if(strchr(argv[l_1st],'@')!=0){
 	pc=argv[l_1st]+1; // behind @
 	ifstream fnodes(pc);
 	if(!fnodes) { cout<<"File not found "<<pc<<endl; exit(0); }
-	else while(fnodes.getline(c_line,sizeof(c_line)))strcpy(list[listc++],c_line);
+	else while(fnodes.getline(c_line,sizeof(c_line)))
+	if((c_line[0]!='#')&&(c_line[0]!='!')&&(c_line[0]!=0))strcpy(list[listc++],c_line);
 } else for(i=l_1st;i<argc;i++)strcpy(list[listc++],argv[i]);
 
 strcpy(c_nodelist,"Monitoring ");
