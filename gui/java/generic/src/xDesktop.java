@@ -260,16 +260,12 @@ public xDesktop() {
         createFrame("Logger",loggerIcon,logpan,xSet.getLayout("Logger"),logpan.createMenuBar(), true));
     if(xSet.getLayout("Command").show()) frCommands=
         createFrame("Commands",commIcon,compan,xSet.getLayout("Command"),null, true); 
-    if(xSet.getLayout("Parameter").show()) frParameters=
-        createFrame("Parameters",paramIcon,parpan,xSet.getLayout("Parameter"),null, true); 
     if(xSet.isDabc()&xSet.getLayout("DabcController").show()) dabcpan.setListener(frDabcController=
         createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false));
     if(xSet.isDabs()&xSet.getLayout("DabcMbsController").show()) dbspan.setListener(frDabcMbsController=
         createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false));
     if(xSet.isMbs()&xSet.getLayout("MbsController").show()) mbspan.setListener(frMbsController=
         createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false));
-    if(xSet.getLayout("ParameterSelect").show()) frSelect=
-        createFrame("ParameterSelect",selIcon,selpan,xSet.getLayout("ParameterSelect"),null, false);
     if(usrpan != null){
     	if(xSet.getLayout(usrpan.get(0).getHeader())!= null){
         if(xSet.getLayout(usrpan.get(0).getHeader()).show()) 
@@ -283,6 +279,10 @@ public xDesktop() {
         if(xSet.getLayout(usrpan.get(ii).getHeader()).show()) frUserController.add
            (createFrame(usrpan.get(ii).getHeader(),usrpan.get(ii).getIcon(),(JPanel)usrpan.get(ii),xSet.getLayout(usrpan.get(ii).getHeader()),null, false));
         }}
+    if(xSet.getLayout("ParameterSelect").show()) frSelect=
+        createFrame("ParameterSelect",selIcon,selpan,xSet.getLayout("ParameterSelect"),null, false);
+    if(xSet.getLayout("Parameter").show()) frParameters=
+        createFrame("Parameters",paramIcon,parpan,xSet.getLayout("Parameter"),null, true); 
     if(xSet.getLayout("Meter").show()) metpan.setListener(frMeters=
         createFrame("RateMeters",meterIcon,metpan,xSet.getLayout("Meter"),metpan.createMenuBar(), false));
     if(xSet.getLayout("Histogram").show()) hispan.setListener(frHistograms=
@@ -312,8 +312,8 @@ private JToolBar createToolBar() {
     toolBar.add(new toolButton(maBrowser));
     toolBar.addSeparator();
     if(xSet.isControl()) toolBar.add(new toolButton(maCommands));
-    if(xSet.isControl()) toolBar.add(new toolButton(maParameters));
-    if(xSet.isControl()) toolBar.add(new toolButton(maSelect));
+    toolBar.add(new toolButton(maParameters));
+    toolBar.add(new toolButton(maSelect));
     toolBar.add(new toolButton(maMeters));
     toolBar.add(new toolButton(maHistograms));
     toolBar.add(new toolButton(maState));
