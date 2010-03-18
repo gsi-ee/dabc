@@ -10,14 +10,14 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list)
   DrStreamsFull   =0; bStreamsFull   = 0; rMaxStreamsFull   = 100;
   DrFileFilled    =0; bFileFilled    = 0; rMaxFileFilled    = 100;
   DrEventRate     =0; bEventRate     = 1; rMaxEventRate     = 10000;
-  DrEventTrend    =0; bEventTrend    = 1; rMaxEventTrend    = 10000;
+  DrEventTrend    =0; bEventTrend    = 0; rMaxEventTrend    = 10000;
   DrDataRateKb    =0; bDataRateKb    = 1; rMaxDataRateKb    = 10000;
-  DrDataTrendKb   =0; bDataTrendKb   = 1; rMaxDataTrendKb   = 10000;
+  DrDataTrendKb   =0; bDataTrendKb   = 0; rMaxDataTrendKb   = 10000;
   DrEvSizeRateB   =0; bEvSizeRateB   = 0; rMaxEvSizeRateB   = 10000;
   DrEvSizeTrendB  =0; bEvSizeTrendB  = 0; rMaxEvSizeTrendB  = 10000;
   DrStreamRateKb  =0; bStreamRateKb  = 0; rMaxStreamRateKb  = 10000;
   DrStreamTrendKb =0; bStreamTrendKb = 0; rMaxStreamTrendKb = 10000;
-  DrTriggerRate   =0; bTriggerRate   = 1; rMaxTriggerRate   = 10000;
+  DrTriggerRate   =0; bTriggerRate   = 0; rMaxTriggerRate   = 10000;
   DrTrigger01Rate =0; bTrigger01Rate = 0; rMaxTrigger01Rate = 10000;
   DrTrigger02Rate =0; bTrigger02Rate = 0; rMaxTrigger02Rate = 10000;
   DrTrigger03Rate =0; bTrigger03Rate = 0; rMaxTrigger03Rate = 10000;
@@ -38,7 +38,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list)
   DhTrigCountHis =0; bTrigCountHis = 0; chTrigCountHis = 16; rMinTrigCountHis = 0; rMaxTrigCountHis = 15;
   DhTrigRateHis  =0; bTrigRateHis  = 0; chTrigRateHis  = 16; rMinTrigRateHis  = 0; rMaxTrigRateHis  = 15;
 
-  DsTriggerMode   =0; bTriggerMode   = 1;
+  DsTriggerMode   =0; bTriggerMode   = 0;
   DsSpillOn       =0; bSpillOn       = 0;
   DsRunMode       =0; bRunMode       = 0;
   DsFileOpen      =0; bFileOpen      = 0;
@@ -121,7 +121,6 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list)
   if(conf!=0){
     bEventRate=0;
     bDataRateKb=0;
-    bTriggerRate=0;
     while(fgets(line,127,conf)!=NULL){
       if(line[0]!='#'){
         if(strstr(line,cLocalNode)||(strchr(line,'*')!=NULL)){

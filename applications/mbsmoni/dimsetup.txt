@@ -7,11 +7,11 @@
 ##========= All nodes:
 ##---- Rates:
 * EventRate     : 300000.
-* EventTrend    : 300000.
+#* EventTrend    : 300000.
 * DataRateKb    : 50000.
-* DataTrendKb   : 50000.
-* StreamRateKb  : 10000.
-* StreamTrendKb : 10000.
+#* DataTrendKb   : 50000.
+#* StreamRateKb  : 10000.
+#* StreamTrendKb : 10000.
 #* EvSizeRateB   : 128.
 #* EvSizeTrendB  : 128.
 # ++ File filling status in percent, typically only on one node (transport)

@@ -16,6 +16,7 @@
 // This byte is the last of process name table, so never used.
 // In MBS the problem can be fixed. Then this workaround can be rolled back.
 // Reason is that client must close socket before server.
+
 #include "typedefs.h"
 #include <stdlib.h>
 #include <stdio.h>
@@ -168,7 +169,7 @@ INTS4 f_ut_status_r(s_daqst *ps_daqst, INTS4 l_tcp)
 	  // MBS v44 and previous no longer supported
 	  return(-1);
   }
-  // MBS v50
+  // MBS v45, v50
   if(ps_daqst->l_version == 2)
     {
 	  k=(48+n_trg*3)*4; // up to bl_n_evt inclusive
