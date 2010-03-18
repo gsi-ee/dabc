@@ -140,7 +140,7 @@ public xPanelDabc(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLi
 //    addCheckBox("Get new setup",getnew);
 
     dabcshell = new xRemoteShell("ssh");
-    checkDir();
+    if(xSet.isDabc())checkDir();
     nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS
     setDimServices();
     System.out.println("Dabc  servers needed: DNS + "+(nServers-1));
@@ -169,6 +169,7 @@ private void addPromptLines(){
 }
 private void checkDir(){
 String check, result;
+System.out.println("DABC +++++ check directories");
 if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
 	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);

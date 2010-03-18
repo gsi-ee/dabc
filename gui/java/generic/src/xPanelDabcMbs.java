@@ -153,7 +153,7 @@ public xPanelDabcMbs(String title, xDimBrowser diminfo, xiDesktop desktop, Actio
     
     mbsshell = new xRemoteShell("rsh");
     dabcshell = new xRemoteShell("ssh");
-    checkDir();
+    if(xSet.isDabs())checkDir();
     String service = new String(MbsNode.getText().toUpperCase()+":PRM");
     String servlist = browser.getServers();
     if(servlist.indexOf(service)>=0) setProgress("MBS connected",xSet.greenD());
@@ -195,6 +195,7 @@ private void addPromptLines(){
 }
 private void checkDir(){
 String check, result;
+System.out.println("DABC and MBS +++++ check directories");
 if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
 	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
