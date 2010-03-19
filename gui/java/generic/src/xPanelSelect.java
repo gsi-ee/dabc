@@ -105,7 +105,7 @@ int width=14;
     addButton("Display","Display parameter list",menuIcon,this);
 // store position and size of graphics frame
     p1lo=xSet.getLayout(p1name); // if not loaded from setup file create new one
-    if(p1lo == null)p1lo=xSet.createLayout(p1name,new Point(100,400), new Dimension(800,200),1,true);
+    if(p1lo == null)p1lo=xSet.createLayout(p1name,new Point(100,400), new Dimension(800,200),1,false);
 // create the compound for the graphics panels
     if(p1lo.show()){
         int topdivisions=0;

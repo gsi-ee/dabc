@@ -128,22 +128,22 @@ public xDesktop() {
     showSelect=false;
     showCommands=false;
     showParameters=false;
-    showMeters=false;
+    showMeters=true;
     showHistograms=false;
-    showState=false;
-    showInfos=false;
+    showState=true;
+    showInfos=true;
     showLogger=false;
     showDabcController=false;
-    showMbsController=true;
+    showMbsController=false;
     showDabcMbsController=false;
     xSet.createLayout("Main",        new Point(50,50),   new Dimension(xs,ys),    0, true);
     xSet.createLayout("Command",     new Point(0,230),   new Dimension(650,200),  0, showCommands);
     xSet.createLayout("Parameter",   new Point(0,465),   new Dimension(680,150),  0, showParameters);
     xSet.createLayout("Logger",      new Point(0,650),   new Dimension(680,150),  0, showLogger);
-    xSet.createLayout("Meter",       new Point(880,0),   new Dimension(100,75),   2, showMeters);
-    xSet.createLayout("State",       new Point(710,0),   new Dimension(100,75),   1, showState);
-    xSet.createLayout("Info",        new Point(710,410), new Dimension(100,75),   0, showInfos);
-    xSet.createLayout("Histogram",   new Point(710,600), new Dimension(200,150),  3, showHistograms);
+    xSet.createLayout("Meter",       new Point(200,0),   new Dimension(100,75),   2, showMeters);
+    xSet.createLayout("State",       new Point(420,0),   new Dimension(100,75),   1, showState);
+    xSet.createLayout("Info",        new Point(0,410), new Dimension(100,75),   0, showInfos);
+    xSet.createLayout("Histogram",   new Point(0,600), new Dimension(200,150),  3, showHistograms);
     xSet.createLayout("DabcController",new Point(0,0),     new Dimension(100,100),  0, showDabcController);
     xSet.createLayout("MbsController", new Point(100,0),   new Dimension(100,100),  0, showMbsController);
     xSet.createLayout("DabcMbsController", new Point(0,0), new Dimension(100,100),  0, showDabcMbsController);
@@ -272,7 +272,7 @@ public xDesktop() {
         	frUserController.add(createFrame(
         		usrpan.get(0).getHeader(),usrpan.get(0).getIcon(),(JPanel)usrpan.get(0),xSet.getLayout(usrpan.get(0).getHeader()),null, false));
         }}
-    }
+    } // control mode
     if(usrpan != null){
     	for(int ii=1;ii<usrpan.size();ii++)
     	if(xSet.getLayout(usrpan.get(ii).getHeader())!= null){
