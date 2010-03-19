@@ -23,7 +23,7 @@ using namespace std;
 class MbsNodeDimStatus{
 public:
   MbsNodeDimStatus();
-  MbsNodeDimStatus(char *node, void *, char *list);
+  MbsNodeDimStatus(char *node, void *, char *list, char *setup);
   ~MbsNodeDimStatus();
   int  Start(char *);
   void Update(char *);
@@ -140,6 +140,7 @@ private:
   char cLocalNode[64];
   char cPrefix[64];
   char cServerName[64];
+  char cSetupFile[64];
   int fileOn;
   s_daqst *ps_daqst;
 };

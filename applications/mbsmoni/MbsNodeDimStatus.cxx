@@ -4,7 +4,7 @@
 //=================================================
 MbsNodeDimStatus::MbsNodeDimStatus(){  }
 MbsNodeDimStatus::~MbsNodeDimStatus(){  }
-MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list)
+MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *setup)
 {
 	// note that daq status is yet cleared here
   DrStreamsFull   =0; bStreamsFull   = 0; rMaxStreamsFull   = 100;
@@ -110,6 +110,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list)
   char *pc;
   float value;
   ps_daqst=(s_daqst *)daqst;
+  strcpy(cSetupFile,setup);
   strcpy(cLocalNode,node);
   sprintf(cPrefix,"MBS/%s/Logger/",cLocalNode);
   if(ps_daqst == 0){
@@ -117,7 +118,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list)
     DeNodeTime=AddInfo("NodeTime",&eNodeTime,1,"White","");
     return;
   }
-  conf=fopen("dimsetup.txt","r");
+  conf=fopen(cSetupFile,"r");
   if(conf!=0){
     bEventRate=0;
     bDataRateKb=0;
@@ -198,6 +199,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list)
     }
     fclose(conf);
   }
+  else cout<<"Setup file "<<cSetupFile<<" not found!"<<endl;
   fileOn=bFileOpen+bFileFilled;
 
   DcUser      =AddValue("User","C",sizeof(ps_daqst->c_user),(unsigned int *)&ps_daqst->c_user);
