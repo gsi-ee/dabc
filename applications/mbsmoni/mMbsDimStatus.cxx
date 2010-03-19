@@ -23,7 +23,12 @@ strcpy(c_line,RATEDESC);
 strcpy(c_line,INFODESC);
 
 if(argc == 1){
-	cout << "[-t sec] [@]node [node2 [node3 ...]]" << endl;
+	system("cat $DABCSYS/applications/mbsmoni/readme.txt");
+	cout << "mbsmoni [-t sec] [@]node [node2 [node3 ...]]" << endl;
+	exit(0);
+}
+if(getenv("DIM_DNS_NODE")==0){
+	cout << "Set DIM_DNS_NODE to node where DIM name server is running" << endl;
 	exit(0);
 }
 // first two args can be time [sec]
