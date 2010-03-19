@@ -438,7 +438,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
          dabc::Module* next = dabc::mgr()->FindModule(nextname.c_str());
          if (next==0) return dabc::cmd_false;
 
-         int res = NewCmd_DoCommandExecute(next, "MyCmd");
+         int res = NewCmd_ExecuteIn(next, "MyCmd");
 
          return res>0 ? res+1 : 0;
       }

@@ -139,8 +139,8 @@ namespace dabc {
 
 
 
-         int NewCmd_DoCommandExecute(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
-         int NewCmd_DoCommandExecute(WorkingProcessor* dest, const char* cmdname, double tmout = -1.);
+         int NewCmd_ExecuteIn(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
+         int NewCmd_ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout = -1.);
          int NewCmd_ProcessCommand(dabc::Command* cmd);
          bool NewCmd_ProcessReply(dabc::Command* cmd);
          bool NewCmd_GetReply(dabc::Command* cmd);
@@ -210,7 +210,7 @@ namespace dabc {
 
          Folder*          fParsHolder;
 
-         Mutex            fProcessorMutex;
+         Mutex            fProcessorPrivateMutex;          // use to protect some private members of processor like timeout data
 
          unsigned         fParsDefaults;
 

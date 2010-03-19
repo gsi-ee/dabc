@@ -545,7 +545,7 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
                src->fProcessorNextFire = NullTimeStamp;
                src->fProcessorPrevFire = NullTimeStamp;
             } else {
-               // if one activate timeout with positive interval, immulate
+               // if one activate timeout with positive interval, emulate
                // that one already has previous call to ProcessTimeout
                if (IsNullTime(src->fProcessorPrevFire) && (interv>0))
                   src->fProcessorPrevFire = mark;
@@ -655,7 +655,7 @@ bool dabc::WorkingThread::NewCmd_SubmitProcessorReplyCmd(WorkingProcessor* proc,
 
 int dabc::WorkingThread::Execute(dabc::Command* cmd, double tmout)
 {
-   if (IsItself()) return fExec->NewCmd_DoCommandExecute(fExec, cmd);
+   if (IsItself()) return fExec->NewCmd_ExecuteIn(fExec, cmd);
               else return fExec->NewCmd_Execute(cmd);
 }
 

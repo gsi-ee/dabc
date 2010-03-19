@@ -864,15 +864,14 @@ void dabc::MemoryPool::ReleaseBuffer(Buffer* buf)
 
       if (fReqQueue.Size()==0) return;
 
-      if (ProcessorThread()==0){
-          if (!_ProcessRequests()) return;
-		  }
-	  else {
-		  if (!fEvntFired) {
-			  fEvntFired = true;
-			  FireEvent(evntProcessRequests);
-			  }
-		  return;
+      if (ProcessorThread()==0) {
+         if (!_ProcessRequests()) return;
+      } else {
+         if (!fEvntFired) {
+            fEvntFired = true;
+            FireEvent(evntProcessRequests);
+         }
+         return;
        }
    }
 

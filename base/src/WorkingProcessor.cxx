@@ -35,7 +35,7 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorExecutingCmd(0),
    fProcessorExecutingFlag(false),
    fParsHolder(parsholder),
-   fProcessorMutex(),
+   fProcessorPrivateMutex(),
    fParsDefaults(0),
    fProcessorActivateTmout(false),
    fProcessorActivateMark(NullTimeStamp),
@@ -120,7 +120,7 @@ void dabc::WorkingProcessor::ActivateTimeout(double tmout_sec)
    bool dofire = false;
 
    {
-      LockGuard lock(fProcessorMutex);
+      LockGuard lock(fProcessorPrivateMutex);
 
       dofire = !fProcessorActivateTmout;
 
@@ -135,7 +135,7 @@ void dabc::WorkingProcessor::ActivateTimeout(double tmout_sec)
 
 bool dabc::WorkingProcessor::TakeActivateData(TimeStamp_t& mark, double& interval)
 {
-   LockGuard lock(fProcessorMutex);
+   LockGuard lock(fProcessorPrivateMutex);
    if (!fProcessorActivateTmout) return false;
 
    mark = fProcessorActivateMark;
@@ -644,7 +644,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
  *  Method let thread event loop running.
  */
 
-int dabc::WorkingProcessor::NewCmd_DoCommandExecute(dabc::WorkingProcessor* dest, dabc::Command* cmd, double tmout)
+int dabc::WorkingProcessor::NewCmd_ExecuteIn(dabc::WorkingProcessor* dest, dabc::Command* cmd, double tmout)
 {
 
    if ((fProcessorThread==0) && (dest!=0))
@@ -656,7 +656,7 @@ int dabc::WorkingProcessor::NewCmd_DoCommandExecute(dabc::WorkingProcessor* dest
    if ((cmd==0) || (dest==0))
       res = cmd_false;
    else {
-      LockGuard lock(fProcessorMutex);
+      LockGuard lock(fProcessorPrivateMutex);
 
       if (fProcessorExecutingCmd!=0) {
          EOUT(("Processor already executing command"));
@@ -664,7 +664,7 @@ int dabc::WorkingProcessor::NewCmd_DoCommandExecute(dabc::WorkingProcessor* dest
       } else {
          fProcessorExecutingCmd = cmd;
          cmd->fProcessor = this;
-         cmd->fProcessorMutex = &fProcessorMutex;
+         cmd->fProcessorMutex = &fProcessorPrivateMutex;
 
          fProcessorExecutingFlag = true;
       }
@@ -701,7 +701,7 @@ int dabc::WorkingProcessor::NewCmd_DoCommandExecute(dabc::WorkingProcessor* dest
 
 
    {
-      LockGuard lock(fProcessorMutex);
+      LockGuard lock(fProcessorPrivateMutex);
       if (fProcessorExecutingCmd) {
          fProcessorExecutingCmd->fProcessor = 0;
          fProcessorExecutingCmd->fProcessorMutex = 0;
@@ -721,9 +721,9 @@ int dabc::WorkingProcessor::NewCmd_DoCommandExecute(dabc::WorkingProcessor* dest
    return res;
 }
 
-int dabc::WorkingProcessor::NewCmd_DoCommandExecute(WorkingProcessor* dest, const char* cmdname, double tmout)
+int dabc::WorkingProcessor::NewCmd_ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout)
 {
-   return NewCmd_DoCommandExecute(dest, new dabc::Command(cmdname), tmout);
+   return NewCmd_ExecuteIn(dest, new dabc::Command(cmdname), tmout);
 }
 
 
@@ -735,7 +735,7 @@ int dabc::WorkingProcessor::NewCmd_Execute(Command* cmd, double tmout)
    if (fProcessorThread && fProcessorThread->IsItself()) {
       DOUT5(("Direct execute from thread itself %s", cmd->GetName()));
 
-      return NewCmd_DoCommandExecute(this, cmd, tmout);
+      return NewCmd_ExecuteIn(this, cmd, tmout);
    }
 
    dabc::Condition cond;
