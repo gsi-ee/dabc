@@ -232,7 +232,9 @@ for(int i=0;i<vipar.size();i++){
     }}
     else if(xip.isState()){ // with this, we take all states
         if(full.indexOf("RunMode")<0){
-        state=new xState(new String(xip.getNodeName()+":"+xip.getApplicationName()),200,xState.YSIZE);
+            if(xip.getName().equals("State"))
+                 state=new xState(new String(xip.getNodeName()+":"+xip.getApplicationName()),200,xState.YSIZE);
+            else state=new xState(new String(xip.getNodeName()+":"+xip.getName()),200,xState.YSIZE);
         states.add(state); // add to local list
         state.setColorBack(back);
         // add reference to record data to local list

@@ -405,8 +405,11 @@ if(pars.isState()){
         if(stat == null){
             len=pars.getNodeName().indexOf(".");
             if(len == -1)len=pars.getNodeName().length();
-            stat = new xState(new String(pars.getNodeName().substring(0,len)+":"+pars.getApplicationName()),
-                xState.XSIZE,xState.YSIZE);
+            if(pars.getName().equals("State"))
+                stat = new xState(new String(pars.getNodeName().substring(0,len)+":"+pars.getApplicationName()),
+                        xState.XSIZE,xState.YSIZE);
+            else stat = new xState(new String(pars.getNodeName().substring(0,len)+":"+pars.getName()),
+                    xState.XSIZE,xState.YSIZE);
             stat.setColorBack(xSet.getColorBack());
         }
         if(tabinit){

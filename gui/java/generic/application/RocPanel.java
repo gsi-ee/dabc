@@ -223,7 +223,9 @@ for(int i=0;i<vipar.size();i++){
         brows.addInfoHandler(vipar.get(i),this); // register this xiUserInfoHandler
     }
     if(p.isState()){ // with this, we take all states
-        state=new xState(new String(p.getNodeName()+":"+p.getApplicationName()),xState.XSIZE,xState.YSIZE);
+        if(p.getName().equals("State"))
+             state=new xState(new String(p.getNodeName()+":"+p.getApplicationName()),xState.XSIZE,xState.YSIZE);
+        else state=new xState(new String(p.getNodeName()+":"+p.getName()),xState.XSIZE,xState.YSIZE);
         states.add(state); // add to local list
         state.setColorBack(back);
         // add reference to record data to local list
