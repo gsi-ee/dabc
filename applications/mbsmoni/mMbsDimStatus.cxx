@@ -32,6 +32,10 @@ if(getenv("DIM_DNS_NODE")==0){
 	cout << "Set DIM_DNS_NODE to node where DIM name server is running" << endl;
 	exit(0);
 }
+if(getenv("LOGNAME")==0){
+	cout << "Set LOGNAME to user name" << endl;
+	exit(0);
+}
 strcpy(c_setup,"dimsetup.txt");
 // first args can be time [sec] or setup
 if(strstr(argv[l_1st],"-t") !=0) { //time
@@ -79,7 +83,7 @@ for(i=0;i<listc;i++){
 	node[i] = new MbsNodeDimStatus(list[i],ps_daqst[i],"", c_setup);
 }
 // start serving
-sprintf(c_dim,"MBS-%s",c_host);
+sprintf(c_dim,"MBS-%s-%s",c_host,getenv("LOGNAME"));
 DimServer::start(c_dim);
 cout<<"DIM server "<<c_dim<<" started"<<endl;
 cout<<"DIM setup file: "<<c_setup<<endl;

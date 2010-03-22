@@ -25,7 +25,6 @@ public:
   MbsNodeDimStatus();
   MbsNodeDimStatus(char *node, void *, char *list, char *setup);
   ~MbsNodeDimStatus();
-  int  Start(char *);
   void Update(char *);
   void Reset(){if(ps_daqst != 0)memset(ps_daqst,0,sizeof(s_daqst));}
 private:
@@ -137,7 +136,7 @@ private:
   char cRun[64]; DimService *DcRun;
   char cExp[64]; DimService *DcExp;
 
-  char cLocalNode[64];
+  char cMbsNode[64];
   char cPrefix[64];
   char cServerName[64];
   char cSetupFile[64];

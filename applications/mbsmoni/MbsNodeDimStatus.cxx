@@ -6,12 +6,13 @@ MbsNodeDimStatus::MbsNodeDimStatus(){  }
 MbsNodeDimStatus::~MbsNodeDimStatus(){  }
 MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *setup)
 {
-	// note that daq status is yet cleared here
+// note that daq status is yet cleared here
+// Rate meters
   DrStreamsFull   =0; bStreamsFull   = 0; rMaxStreamsFull   = 100;
   DrFileFilled    =0; bFileFilled    = 0; rMaxFileFilled    = 100;
-  DrEventRate     =0; bEventRate     = 1; rMaxEventRate     = 10000;
+  DrEventRate     =0; bEventRate     = 0; rMaxEventRate     = 10000;
   DrEventTrend    =0; bEventTrend    = 0; rMaxEventTrend    = 10000;
-  DrDataRateKb    =0; bDataRateKb    = 1; rMaxDataRateKb    = 10000;
+  DrDataRateKb    =0; bDataRateKb    = 0; rMaxDataRateKb    = 10000;
   DrDataTrendKb   =0; bDataTrendKb   = 0; rMaxDataTrendKb   = 10000;
   DrEvSizeRateB   =0; bEvSizeRateB   = 0; rMaxEvSizeRateB   = 10000;
   DrEvSizeTrendB  =0; bEvSizeTrendB  = 0; rMaxEvSizeTrendB  = 10000;
@@ -33,19 +34,18 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   DrTrigger13Rate =0; bTrigger13Rate = 0; rMaxTrigger13Rate = 10000;
   DrTrigger14Rate =0; bTrigger14Rate = 0; rMaxTrigger14Rate = 10000;
   DrTrigger15Rate =0; bTrigger15Rate = 0; rMaxTrigger15Rate = 10000;
-
-
+// Histograms
   DhTrigCountHis =0; bTrigCountHis = 0; chTrigCountHis = 16; rMinTrigCountHis = 0; rMaxTrigCountHis = 15;
   DhTrigRateHis  =0; bTrigRateHis  = 0; chTrigRateHis  = 16; rMinTrigRateHis  = 0; rMaxTrigRateHis  = 15;
-
+// States
   DsTriggerMode   =0; bTriggerMode   = 0;
   DsSpillOn       =0; bSpillOn       = 0;
   DsRunMode       =0; bRunMode       = 0;
   DsFileOpen      =0; bFileOpen      = 0;
   DsBuildingMode  =0; bBuildingMode  = 0;
   DsEventBuilding =0; bEventBuilding = 0;
-  DsRunning       =0; bRunning       = 1;
-
+  DsRunning       =0; bRunning       = 0;
+// Info lines
   DeNodeTime  =0;
   DeNodeList =0;
   DeTaskList =0;
@@ -53,7 +53,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   DeFile     =0;
   DeSetup    =0;
   DeMlSetup  =0;
-
+// Plain integers
   DiEvents       =0; bEvents       = 1;
   DiBuffers      =0; bBuffers      = 1;
   DiMBytes       =0; bMBytes       = 1;
@@ -97,7 +97,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   DiTrigger13Count =0; bTrigger13Count = 0;
   DiTrigger14Count =0; bTrigger14Count = 0;
   DiTrigger15Count =0; bTrigger15Count = 0;
-
+// Plain strings
   DcNodeList =0;
   DcCurNode  =0;
   DcDate     =0;
@@ -110,25 +110,31 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   char *pc;
   float value;
   ps_daqst=(s_daqst *)daqst;
+  gethostname(cServerName,128);
   strcpy(cSetupFile,setup);
-  strcpy(cLocalNode,node);
-  sprintf(cPrefix,"MBS/%s/Logger/",cLocalNode);
+  strcpy(cMbsNode,node);
+  sprintf(cPrefix,"MBS-%s/%s/%s/",cServerName,cMbsNode,getenv("LOGNAME"));
   if(ps_daqst == 0){
     DeNodeList=AddInfo("NodeList",&eNodeList,1,"White",list);
     DeNodeTime=AddInfo("NodeTime",&eNodeTime,1,"White","");
     return;
   }
+  bEventRate =1;
+  bDataRateKb=1;
+  bRunning   =1;
   conf=fopen(cSetupFile,"r");
   if(conf!=0){
-    bEventRate=0;
+    bEventRate =0;
     bDataRateKb=0;
+    bRunning   =0;
     while(fgets(line,127,conf)!=NULL){
       if(line[0]!='#'){
-        if(strstr(line,cLocalNode)||(strchr(line,'*')!=NULL)){
+        if(strstr(line,cMbsNode)||(strchr(line,'*')!=NULL)){
           pc=strchr(line,':');
           value=10000.;
           if(pc!=NULL)sscanf(pc+1,"%f",&value);
           if(strstr(line,"SpillOn"))bSpillOn=1;
+          else if(strstr(line,"Running"))       bRunning=1;
           else if(strstr(line,"TrigCountHis"))  bTrigCountHis=1;
           else if(strstr(line,"TrigRateHis"))   bTrigRateHis=1;
           else if(strstr(line,"TriggerMode"))   bTriggerMode=1;
@@ -308,7 +314,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   // severity of states must not be -1 because that is the NOLINK value.
   // Negative value (-2) means suppress severity
 
-  DsRunning   =AddState("Acquisition",&sRunning,-2,"Gray","Stopped");
+  if(bRunning) DsRunning=AddState("Acquisition",&sRunning,-2,"Gray","Stopped");
   if(bRunMode) DsRunMode=AddState("RunMode",&sRunMode,-2,"Gray","MBS standalone");
   if(bBuildingMode) DsBuildingMode=
     AddState("BuildingMode",&sBuildingMode,-2,"Gray","Immediate");
@@ -331,14 +337,6 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   if(bTrigRateHis)DhTrigRateHis=
     AddHisto("TrigRateHis",&hTrigRateHis,chTrigRateHis,
         rMinTrigRateHis,rMaxTrigRateHis,"Red","Trigger#","Counts");
-}
-
-//=================================================
-int MbsNodeDimStatus::Start(char *name)
-{
-  sprintf(cServerName,"%s:%s",cLocalNode,name);
-  dis_start_serving(cServerName);
-  return 0;
 }
 //=================================================
 void MbsNodeDimStatus::Update(char *times)
@@ -373,7 +371,7 @@ void MbsNodeDimStatus::Update(char *times)
   if(DrEventRate)DrEventRate->updateService();
   if(DrEvSizeRateB)DrEvSizeRateB->updateService();
   if(DrDataRateKb)DrDataRateKb->updateService();
-  if(ps_daqst->bh_running[SYS__stream_serv]&&DrStreamRateKb)DrStreamRateKb->updateService();
+  if(DrStreamRateKb)DrStreamRateKb->updateService();
   rEventTrend.value=rEventRate.value;
   rEvSizeTrendB.value=rEvSizeRateB.value;
   rDataTrendKb.value=rDataRateKb.value;
@@ -381,7 +379,7 @@ void MbsNodeDimStatus::Update(char *times)
   if(DrEventTrend)DrEventTrend->updateService();
   if(DrEvSizeTrendB)DrEvSizeTrendB->updateService();
   if(DrDataTrendKb)DrDataTrendKb->updateService();
-  if(ps_daqst->bh_running[SYS__stream_serv]&&DrStreamTrendKb)DrStreamTrendKb->updateService();
+  if(DrStreamTrendKb)DrStreamTrendKb->updateService();
 
   // if transport is not there, daq cannot be running
   if((ps_daqst->bh_running[SYS__transport]==0)&&(ps_daqst->bh_running[SYS__ds]==0)){
@@ -398,25 +396,21 @@ void MbsNodeDimStatus::Update(char *times)
 
   // severity of states must not be -1 because that is the NOLINK value.
   // Negative value (-2) means suppress severity
-  if(ps_daqst->bh_acqui_running)
-    SetState(&sRunning,-2, "Green","Running");
-  else SetState(&sRunning,-2, "Red",  "Stopped");
+  if(DsRunning) {
+	if(ps_daqst->bh_acqui_running) SetState(&sRunning,-2, "Green","Running");
+    else                           SetState(&sRunning,-2, "Red",  "Stopped");
+  }
+  if(ps_daqst->bl_delayed_eb_ena) SetState(&sBuildingMode,-2, "Blue","Delayed");
+  else                            SetState(&sBuildingMode,-2, "Green",  "Immediate");
 
-  if(ps_daqst->bl_delayed_eb_ena)
-    SetState(&sBuildingMode,-2, "Blue","Delayed");
-  else SetState(&sBuildingMode,-2, "Green",  "Immediate");
+  if(ps_daqst->bl_event_build_on) SetState(&sEventBuilding,-2, "Green","Working");
+  else                            SetState(&sEventBuilding,-2, "Blue",  "Suspended");
 
-  if(ps_daqst->bl_event_build_on)
-    SetState(&sEventBuilding,-2, "Green","Working");
-  else SetState(&sEventBuilding,-2, "Blue",  "Suspended");
+  if(ps_daqst->bl_spill_on > 0) SetState(&sSpillOn,-2, "Green","Spill ON");
+  else                          SetState(&sSpillOn,-2, "Red",  "Spill OFF");
 
-  if(ps_daqst->bl_spill_on > 0)
-    SetState(&sSpillOn,-2, "Green","Spill ON");
-  else SetState(&sSpillOn,-2, "Red",  "Spill OFF");
-
-  if(ps_daqst->bh_trig_master > 0)
-    SetState(&sTriggerMode,-2, "Green","Master");
-  else SetState(&sTriggerMode,-2, "Gray",  "Slave");
+  if(ps_daqst->bh_trig_master > 0) SetState(&sTriggerMode,-2, "Green","Master");
+  else                             SetState(&sTriggerMode,-2, "Gray",  "Slave");
 
   strcpy(full,"Loaded setup: ");
   if(strlen(ps_daqst->c_setup_name)){
@@ -475,7 +469,7 @@ void MbsNodeDimStatus::Update(char *times)
   if(DsBuildingMode)DsBuildingMode->updateService();
   if(DsEventBuilding)DsEventBuilding->updateService();
   if(DsTriggerMode) DsTriggerMode->updateService();
-  DsRunning->updateService();
+  if(DsRunning) DsRunning->updateService();
   DePerform->updateService();
   DeTaskList->updateService();
 
@@ -600,9 +594,9 @@ DimService * MbsNodeDimStatus::AddState(char *name, dabcState *state, int value,
 {
   DimService * service=0;
   char full[128];
-  sprintf(cPrefix,"MBS/%s/Logger/",cLocalNode);
   memset(state,0,sizeof(dabcState));
-  sprintf(full,"MBS/%s/%s/State",cLocalNode,name);
+  sprintf(full,"MBS-%s/%s/%s/%s",cServerName,cMbsNode,name,"State");
+  sprintf(full,"%s%s",cPrefix,name);
   SetState(state,value,color,text);
   service=new DimService(full,STATEDESC,state,sizeof(dabcState));
   service->setQuality(BuildQuality(UPTODATE,STATE,MONITOR,NOMODE));
