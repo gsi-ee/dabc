@@ -405,7 +405,7 @@ if(pars.isState()){
         if(stat == null){
             len=pars.getNodeName().indexOf(".");
             if(len == -1)len=pars.getNodeName().length();
-            if(pars.getName().equals("State"))
+            if(pars.getName().equals("RunStatus"))
                 stat = new xState(new String(pars.getNodeName().substring(0,len)+":"+pars.getApplicationName()),
                         xState.XSIZE,xState.YSIZE);
             else stat = new xState(new String(pars.getNodeName().substring(0,len)+":"+pars.getName()),

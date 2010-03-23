@@ -206,7 +206,7 @@ for(int i=0;i<vipar.size();i++){
         meterrecs.add(vipar.get(i).getMeter());
     }
     if(p.isState()){ // with this, we take all states
-        if(p.getName().equals("State"))
+        if(p.getName().equals("RunStatus"))
              state=new xState(new String(p.getNodeName()+":"+p.getApplicationName()),xState.XSIZE,xState.YSIZE);
         else state=new xState(new String(p.getNodeName()+":"+p.getName()),xState.XSIZE,xState.YSIZE);
         states.add(state); // add to local list
@@ -237,7 +237,7 @@ for(int i=0;i<vipar.size();i++){
         }
     //else if(full.indexOf("/Acquisition/")>0) {
     else if(full.indexOf("xxx")>0) { // here we could select by name
-        if(p.getName().equals("State"))
+        if(p.getName().equals("RunStatus"))
              state=new xState(new String(p.getNodeName()+":"+p.getApplicationName()),xState.XSIZE,xState.YSIZE);
         else state=new xState(new String(p.getNodeName()+":"+p.getName()),xState.XSIZE,xState.YSIZE);
         state.setColorBack(back);
