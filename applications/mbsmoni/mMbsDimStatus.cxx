@@ -83,7 +83,7 @@ for(i=0;i<listc;i++){
 	node[i] = new MbsNodeDimStatus(list[i],ps_daqst[i],"", c_setup);
 }
 // start serving
-sprintf(c_dim,"MBS-%s-%s",c_host,getenv("LOGNAME"));
+sprintf(c_dim,"%s_%s_%s",list[0],c_host,getenv("LOGNAME"));
 DimServer::start(c_dim);
 cout<<"DIM server "<<c_dim<<" started"<<endl;
 cout<<"DIM setup file: "<<c_setup<<endl;
