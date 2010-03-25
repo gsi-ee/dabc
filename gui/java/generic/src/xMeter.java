@@ -317,7 +317,7 @@ public void setColor(String colorname){
 private void askLimits(){
 double low=fMin,high=fMax;
     boAutoScale=false;
-    String str=JOptionPane.showInputDialog("Enter limits: low,high",
+    String str=JOptionPane.showInputDialog(this,"Enter limits: low,high",
         new String(Double.toString(fMin)+","+Double.toString(fMax)));
     if(str != null){
     String f[]=str.split(",");

@@ -114,7 +114,7 @@ private void initPanel(Dimension dim){
     while(!ok){
         noq=0;
         comdef=0;
-               ok=true;
+        ok=true;
         for(i=0;i<ipar;i++) if(vpar.get(i).getDimQuality() == -1){
         	if(vpar.get(i).isCommandDescriptor()) comdef++;
         	else {ok=false; noq++;}

@@ -127,7 +127,9 @@ public void internalFrameIconified(InternalFrameEvent e){}
 public void internalFrameOpened(InternalFrameEvent e){}
 // Component listener
 public void componentHidden(ComponentEvent e) {}
-public void componentMoved(ComponentEvent e) {}
+public void componentMoved(ComponentEvent e) {
+	layout.set(getLocation(),getSize(),0,false);
+}
 public void componentShown(ComponentEvent e) {}
 /**
  * Set new preferred size when resizable was enabled, otherwise noop.

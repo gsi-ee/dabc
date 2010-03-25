@@ -612,9 +612,9 @@ try{
 	else if(pars == null)
 	    System.out.println("ERROR: no parser for "+lname);
 	else if(!pars.getFull().equals(lname))
-	    System.out.println("ERROR: "+pars.getFull()+" != "+lname);
+	    System.out.println("ERROR name: "+pars.getFull()+" != "+lname);
 	else if(!pars.getFormat().equals(format))
-	    System.out.println("ERROR: "+pars.getFormat()+" != "+format);
+	    System.out.println("ERROR format: "+pars.getFormat()+" != "+format);
 } catch (NullPointerException e){
     System.out.println("ERROR: NULL "+lname+" qual "+quality);
 	if(format == null)

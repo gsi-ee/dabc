@@ -276,14 +276,14 @@ repaint();
 public void tellError(String msg){
 // first argument must be a component which is displayed. 
 // Therefore we use desktop. 
-JOptionPane.showInternalMessageDialog(xSet.getDesktop(), msg, "Error",JOptionPane.ERROR_MESSAGE);
+JOptionPane.showInternalMessageDialog(this, msg, "Error",JOptionPane.ERROR_MESSAGE);
 }
 /**
  * Modal pop up window with info message.
  * @param msg Info message
  */
 public void tellInfo(String msg){
-JOptionPane.showInternalMessageDialog(xSet.getDesktop(), msg, "Information",JOptionPane.INFORMATION_MESSAGE);
+JOptionPane.showInternalMessageDialog(this, msg, "Information",JOptionPane.INFORMATION_MESSAGE);
 }
 /**
  * Modal pop up window with question.
@@ -292,7 +292,7 @@ JOptionPane.showInternalMessageDialog(xSet.getDesktop(), msg, "Information",JOpt
  * @return True, if answer was yes.
  */
 public boolean askQuestion(String title, String question){
-    int i=JOptionPane.showInternalConfirmDialog(xSet.getDesktop(),question,title, JOptionPane.YES_NO_OPTION); 
+    int i=JOptionPane.showInternalConfirmDialog(this,question,title, JOptionPane.YES_NO_OPTION); 
     return (i == 0);
 }
 /**
@@ -301,13 +301,13 @@ public boolean askQuestion(String title, String question){
  * @param Default Default text.
  */
 public String askInput(String title, String Default){
- return JOptionPane.showInputDialog(title,Default);
+ return JOptionPane.showInputDialog(this,title,Default);
 }/**
  * Modal pop up window to enter text.
  * @param title Text describing input.
  */
 public String askInput(String title){
- return JOptionPane.showInputDialog(title);
+ return JOptionPane.showInputDialog(this,title);
 }}
 
 

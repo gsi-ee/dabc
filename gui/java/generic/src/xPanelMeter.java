@@ -111,7 +111,7 @@ for(int i=0;i<elements;i++) list.elementAt(i).setAutoScale(on);
 // from pull down menu.
 private void askLimits(){
 double low=0.0,high=100.0;
-    String str=JOptionPane.showInputDialog("Enter limits: low,high",
+    String str=JOptionPane.showInputDialog(this,"Enter limits: low,high",
         new String(Double.toString(low)+","+Double.toString(high)));
     if(str != null){
     String f[]=str.split(",");

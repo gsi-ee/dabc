@@ -267,7 +267,7 @@ public boolean getLogScale(){return isLog;}
 // only used by external panels to resize.
 private void askSize(){
 int x,y;
-    String str=JOptionPane.showInputDialog("Enter size: x,y",
+    String str=JOptionPane.showInputDialog(this,"Enter size: x,y",
         new String(Integer.toString(ix)+","+Integer.toString(iy)));
     String f[]=str.split(",");
     x=Integer.parseInt(f[0]);

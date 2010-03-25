@@ -57,7 +57,6 @@ private xInternalFrame progress;
 private xState progressState;
 private xFormMbs formMbs;
 private ActionListener action;
-private JOptionPane confirm;
 private int nMbsServers, nMbsNodes;
 private xDimCommand mbsCommand=null;
 private Vector<xDimParameter> mbsTaskList;
@@ -70,7 +69,7 @@ private boolean mbsPrompt=false;
 private String cmdPrefix;
 private int width=25;
 private int mini=25;
-private int progressY=200;
+private Point progressP;
 
 /**
  * Constructor of MBS launch panel.
@@ -155,11 +154,9 @@ public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionLis
 
 private void addPromptLines(){
 	mini=width;
-	progressY=200;
     if(formMbs.isShrink()){
     	mini=0; // do not show
     	shrinkButton.setSelected(true);
-    	progressY=20; // position of progress window
     }
     if(mini > 0)addPrompt("Name server: ",DimName);
     if(mini > 0)addPrompt("User name: ",Username);
@@ -261,8 +258,10 @@ System.out.println("Mbs releaseDimServices");
 // Start internal frame with an xState panel through timer.
 // Timer events are handled by desktop event handler passed to constructor.
 private void startProgress(){
+	progressP=xSet.getLayout("MbsController").getPosition();
     xLayout la= new xLayout("progress");
-    la.set(new Point(50,progressY), new Dimension(300,100),0,true);
+//    la.set(new Point(progressX,progressY), new Dimension(300,100),0,true);
+    la.set(progressP, new Dimension(300,100),0,true);
     progress=new xInternalFrame("Work in progress, please wait", la);
     progressState=new xState("Current action:",350,30);
     progressState.redraw(-1,"Green","Starting", true);
@@ -346,6 +345,16 @@ System.out.print("Wait for acquisition mode "+mode);
     }
     return false;
 }
+// Wait for number of servers
+private boolean waitServers(int servers, int time){
+	int t=0;
+    while(xSet.getNofServers()!=servers){
+    	t++;
+    	browser.sleep(1);
+    	if(t == time) break;
+    }
+    return(!(t==time));
+}
 private void launch(String cmd){
 int time=0;
 int num=0;
@@ -372,7 +381,8 @@ setProgress("Launch MBS ...",xSet.blueD());
 System.out.println("");
 if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-	if(waitMbs(5+6*nMbsNodes,"Msg_log")){
+//	if(waitMbs(5+6*nMbsNodes,"Msg_log")){
+    if(waitServers(nMbsServers-1,10)){
         System.out.println("\nMbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
@@ -488,8 +498,8 @@ public void run(){
         //xLogger.print(0,MbsMaster+": "+cmd);
         setProgress("Shut down MBS, wait ...",xSet.blueD());
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
-        	if(waitMbs(5+6*nMbsNodes,"BROKEN")){
-            //browser.sleep(5);
+//        	if(waitMbs(5+6*nMbsNodes,"BROKEN")){
+            if(waitServers(0,10)){
             setProgress("Update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
             etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
@@ -528,15 +538,16 @@ public void run(){
         setProgress("Start up and configure MBS tasks",xSet.blueD());
             if(waitMbs(5+5*nMbsNodes,"Daq_rate ")){
             System.out.println(" ");
-            xSet.setSuccess(false);
-            setProgress("Update parameters ...",xSet.blueD());
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(2);
-            }
-            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-            else setProgress("OK: MBS tasks ready",xSet.greenD());
+//            xSet.setSuccess(false);
+//            setProgress("Update parameters ...",xSet.blueD());
+//            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//            browser.sleep(2);
+//            }
+//            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+//            else setProgress("OK: MBS tasks ready",xSet.greenD());
             //setDimServices();
+            setProgress("OK: MBS tasks ready",xSet.greenD());
         } else {
             System.out.println("\nMBS startup failed ");
             setProgress("Fail: Configure",xSet.redD());

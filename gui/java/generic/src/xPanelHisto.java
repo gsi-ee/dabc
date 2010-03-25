@@ -187,7 +187,7 @@ public void addHistogram(xHisto histo){
 private void askSize(){
 int ix,iy;
     histo=(xHisto)list.elementAt(0);
-    String str=JOptionPane.showInputDialog("Enter size: x,y",
+    String str=JOptionPane.showInputDialog(this,"Enter size: x,y",
         new String(Integer.toString(histo.getSizeX())+","+Integer.toString(histo.getSizeY())));
     if(str != null){
     String f[]=str.split(",");

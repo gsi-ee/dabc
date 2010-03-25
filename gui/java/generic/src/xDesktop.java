@@ -591,6 +591,7 @@ public void actionPerformed(ActionEvent e) {
         	clearOnUpdate=true;
         }
         // clear all references to DIM services
+    	clearOnUpdate=true;
 		System.out.println("----- update");
         mbspan.releaseDimServices();
         dabcpan.releaseDimServices();

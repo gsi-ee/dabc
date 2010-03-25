@@ -26,6 +26,7 @@ import dim.*;
 public class xDimNameInfo extends DimInfo {
 private JTextArea lab;
 private StringBuffer serverlist;
+private int nDataServers=0;
 
 /**
  * Constructor of DIM parameter handler.
@@ -53,6 +54,8 @@ public xDimNameInfo(String service, JTextArea label){
 public void infoHandler(){
     String[] name;
     String str=getString();
+    name=str.split("\\|"); // split around "|"
+    if(name.length > 1)nDataServers=name.length-1; // exclude DNS
     boolean append=str.startsWith("+");
     boolean remove=str.startsWith("-");
     String[] items=str.split("@");
@@ -64,11 +67,14 @@ public void infoHandler(){
     else str=new String(" "+str);
     if(append) {
         serverlist.append(str);
-    }
+        nDataServers++;
+        }
     if(remove) {
+        nDataServers--;
         int off=serverlist.indexOf(str);
         if(off > 0) serverlist.replace(off,off+str.length(),"");
     }
     if((append||remove)&&(lab != null))lab.setText(serverlist.toString());
+xSet.setNofServers(nDataServers);
 }
 }

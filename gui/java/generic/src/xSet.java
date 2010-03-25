@@ -78,6 +78,7 @@ private static boolean guru=false;
 private static boolean ctrl=false;
 private static boolean progress=false;
 private static String usrpanels;
+private static int nDataServers=0; 
 
 /**
  * Singleton
@@ -332,6 +333,18 @@ Element el;
 el=(Element)layout.getElementsByTagName(name).item(0);
 sx=el.getAttribute("width").toString().split(",");
 for(int i=0;i<sx.length;i++)ParTableWidth[i]=Integer.parseInt(sx[i]);
+}
+/**
+ * @returns number of DIM servers excludinmg name server
+ */
+protected final static int getNofServers(){
+	return nDataServers;
+}
+/**
+ * @param servers number of DIM servers excludinmg name server
+ */
+protected final static void setNofServers(int servers){
+	nDataServers=servers;
 }
 /**
  * Analyze main argument list.
