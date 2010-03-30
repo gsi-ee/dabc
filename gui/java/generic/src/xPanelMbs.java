@@ -360,21 +360,27 @@ int time=0;
 int num=0;
 setProgress("Launch MBS",xSet.blueD());
 System.out.print("Wait sockets free ");
-String s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep -v 6004|grep TIME");
+//String s=mbsshell.rshout(MbsMaster,Username.getText(),
+//		"netstat|grep \"\\.600. \"|grep -v \"\\.6.. \"|grep -v 6004|grep TIME");
+String s="TIME";
 while(s.indexOf("TIME")>=0){
     System.out.print(".");
     browser.sleep(1);
     time++;
     setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
-    s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 600|grep -v 6004|grep TIME");
+    s=mbsshell.rshout(MbsMaster,Username.getText(),
+	"netstat|grep \"\\.600. \"|grep -v \"\\.6.. \"|grep -v 6004|grep TIME");
 }
-s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6100|grep TIME");
+//s=mbsshell.rshout(MbsMaster,Username.getText(),
+//		"netstat|grep \"\\.61.. \"|grep TIME");
+s="TIME";
 while(s.indexOf("TIME")>=0){
     System.out.print(".");
     browser.sleep(1);
     time++;
     setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
-    s=mbsshell.rshout(MbsMaster,Username.getText(),"netstat|grep 6100|grep TIME");
+    s=mbsshell.rshout(MbsMaster,Username.getText(),
+	"netstat|grep \"\\.61.. \"|grep TIME");
 }
 time=0;
 setProgress("Launch MBS ...",xSet.blueD());
@@ -386,6 +392,7 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         System.out.println("\nMbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
+        browser.sleep(2);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
         if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
         browser.sleep(2);}

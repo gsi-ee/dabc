@@ -31,6 +31,7 @@ import java.beans.PropertyVetoException;
  */
 public class xDesktop extends JFrame implements xiDesktop, ActionListener {
 private JTextArea bottomState;
+private JToolBar toolBar;
 private JPanel mainpanel;
 private JDesktopPane    desktop;
 private xPanelSelect    selpan;
@@ -71,7 +72,10 @@ private String LayoutFile, RecordFile, CommandFile, SelectionFile;
  */
 public xDesktop() {
     super("DABC Controls and Monitoring");
-    if(!xSet.isControl()) System.out.println("Starting in monitor only mode.");
+    if(xSet.isMbs())      setTitle("MBS Controls and Monitoring");
+    if(xSet.isDabs())     setTitle("MBS+DABC Controls and Monitoring");
+    if(!xSet.isControl()) setTitle("Generic Monitoring");
+    if(xSet.isGuru())     setTitle("Guru Controls and Monitoring");
 	usrpan=new Vector<xiUserPanel>(0); // create here or below
 	usrpan.add(new xPanelRunInfo());
 	usrPanels=xSet.getUserPanels(); // specified by shell call
@@ -300,7 +304,7 @@ public xDesktop() {
 private JToolBar createToolBar() {
 //Create the toolbar.
     JButton button;
-    JToolBar toolBar = new JToolBar();
+    toolBar = new JToolBar();
     toolBar.setMargin(new Insets(-4,0,-6,0));
     toolBar.add(new toolButton(maQuit));
     if(xSet.isGuru()) toolBar.add(new toolButton(maWork));
@@ -351,7 +355,7 @@ private JToolBar createToolBar() {
     // return menuBar;
 // }
 
-private void printFrame(){
+private void printFrames(){
     JInternalFrame[] fr=desktop.getAllFrames();
     for(int i=0;i<fr.length;i++)
       System.out.println("Frame "+fr[i].getTitle());
@@ -510,7 +514,7 @@ public void actionPerformed(ActionEvent e) {
         xSet.setLayout("Logger",null,null,0, true);
         }
     else if ("Test".equals(e.getActionCommand())) {
-    	printFrame();
+    	printFrames();
     	String filter=JOptionPane.showInputDialog("Filter","*");
         browser.listServices(false, filter); // exclude command definitions
     }
@@ -591,7 +595,6 @@ public void actionPerformed(ActionEvent e) {
         	clearOnUpdate=true;
         }
         // clear all references to DIM services
-    	clearOnUpdate=true;
 		System.out.println("----- update");
         mbspan.releaseDimServices();
         dabcpan.releaseDimServices();

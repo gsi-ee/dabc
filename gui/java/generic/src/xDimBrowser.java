@@ -121,7 +121,7 @@ protected void listServices(boolean all, String filter){
             if(doall || (vpar.get(i).getParser().getFull().contains(filter)))vpar.get(i).printParameter(all);
         }
         for(i=0;i<vpar.size();i++){
-        	if(doall || (vpar.get(i).getParser().getFull().contains(filter)))vpar.get(i).setLogging(true);
+        	if(doall || (vpar.get(i).getParser().getFull().contains(filter)))vpar.get(i).setLogging(!doall);
         }
     }
 }
