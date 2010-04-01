@@ -26,7 +26,7 @@ public:
   MbsNodeDimStatus(char *node, void *, char *list, char *setup);
   ~MbsNodeDimStatus();
   void Update(char *);
-  void Reset(){if(ps_daqst != 0)memset(ps_daqst,0,sizeof(s_daqst));}
+  void Reset();
 private:
   DimService * AddHisto(char *name, dabcHistogram **histo, int chan, float min, float max, char *color, char *lett, char *cont);
   DimService * AddRate(char *name, dabcRate *rate, char *color, char *text, int mode, float ul);

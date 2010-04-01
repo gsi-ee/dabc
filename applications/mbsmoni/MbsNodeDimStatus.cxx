@@ -338,6 +338,13 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
     AddHisto("TrigRateHis",&hTrigRateHis,chTrigRateHis,
         rMinTrigRateHis,rMaxTrigRateHis,"Red","Trigger#","Counts");
 }
+void MbsNodeDimStatus::Reset(){
+	if(ps_daqst == 0){
+		return;
+	}
+	memset(ps_daqst,0,sizeof(s_daqst));
+	return;
+}
 //=================================================
 void MbsNodeDimStatus::Update(char *times)
 {
@@ -393,24 +400,28 @@ void MbsNodeDimStatus::Update(char *times)
     if(ps_daqst->bl_trans_connected == 1)SetState(&sRunMode,-2, "Green","Transport client");
     else                                 SetState(&sRunMode,-2, "Gray", "MBS standalone");
   }
+  if(ps_daqst->l_version == 0)SetState(&sRunMode,-2, "Gray", "Unknown");
 
   // severity of states must not be -1 because that is the NOLINK value.
   // Negative value (-2) means suppress severity
-  if(DsRunning) {
-	if(ps_daqst->bh_acqui_running) SetState(&sRunning,-2, "Green","Running");
-    else                           SetState(&sRunning,-2, "Red",  "Stopped");
-  }
+  if(ps_daqst->bh_acqui_running) SetState(&sRunning,-2, "Green","Running");
+  else                           SetState(&sRunning,-2, "Red",  "Stopped");
+  if(ps_daqst->l_version == 0)SetState(&sRunning,-2, "Gray", "Unknown");
   if(ps_daqst->bl_delayed_eb_ena) SetState(&sBuildingMode,-2, "Blue","Delayed");
   else                            SetState(&sBuildingMode,-2, "Green",  "Immediate");
+  if(ps_daqst->l_version == 0)SetState(&sBuildingMode,-2, "Gray", "Unknown");
 
   if(ps_daqst->bl_event_build_on) SetState(&sEventBuilding,-2, "Green","Working");
   else                            SetState(&sEventBuilding,-2, "Blue",  "Suspended");
+  if(ps_daqst->l_version == 0)SetState(&sEventBuilding,-2, "Gray", "Unknown");
 
   if(ps_daqst->bl_spill_on > 0) SetState(&sSpillOn,-2, "Green","Spill ON");
   else                          SetState(&sSpillOn,-2, "Red",  "Spill OFF");
+  if(ps_daqst->l_version == 0)SetState(&sSpillOn,-2, "Gray", "Unknown");
 
   if(ps_daqst->bh_trig_master > 0) SetState(&sTriggerMode,-2, "Green","Master");
   else                             SetState(&sTriggerMode,-2, "Gray",  "Slave");
+  if(ps_daqst->l_version == 0)SetState(&sTriggerMode,-2, "Gray", "Unknown");
 
   strcpy(full,"Loaded setup: ");
   if(strlen(ps_daqst->c_setup_name)){
@@ -422,18 +433,21 @@ void MbsNodeDimStatus::Update(char *times)
     strcat(full,ps_daqst->c_ml_setup_name);
     SetInfo(&eSetup,1, "Green",full);
   }
+  if(ps_daqst->l_version == 0) SetInfo(&eSetup,1, "Gray",full);
   DeSetup->updateService();
-  memset(full,0,128);
-  strcpy(color,"White");
-  for(i=0;i<(int)ps_daqst->l_procs_run;i++){
-    if(ps_daqst->l_pid[i]>0){
-      pc=strstr(ps_daqst->c_pname[i],"m_");
-      pc += 2;
-      strcpy(name,pc);
-      name[0] = name[0]-32; // First upper case
-      strcat(full,name);
-      strcat(full," ");
-    } else strcpy(color,"Red");}
+  sprintf(full,"v%2d ",ps_daqst->l_version);
+  if(ps_daqst->l_version) {
+	  strcpy(color,"White");
+	  for(i=0;i<(int)ps_daqst->l_procs_run;i++){
+		if(ps_daqst->l_pid[i]>0){
+		  pc=strstr(ps_daqst->c_pname[i],"m_");
+		  pc += 2;
+		  strcpy(name,pc);
+		  name[0] = name[0]-32; // First upper case
+		  strcat(full,name);
+		  strcat(full," ");
+		} else strcpy(color,"Red");
+    }}
   SetInfo(&eTaskList,1,color,full);
 
   sprintf(full,"Events: %10d, MBytes: %6d, E/s: %6d, MB/s: %6.2f",
@@ -460,7 +474,10 @@ void MbsNodeDimStatus::Update(char *times)
         SetState(&sFileOpen,1, "Red","File closed");
       }
     }}
-
+  if(ps_daqst->l_version == 0){
+      SetInfo(&eFile,1,"Gray","Unknown");
+      SetState(&sFileOpen,1, "Gray","Unknown");
+  }
   if(DeFile) DeFile->updateService();
   if(DrFileFilled)DrFileFilled->updateService();
   if(DsFileOpen)DsFileOpen->updateService();
