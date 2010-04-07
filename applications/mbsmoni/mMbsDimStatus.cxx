@@ -13,7 +13,7 @@ extern "C" {char *f_ut_time(char *);}
 /**************************************************************************/
 int main(int argc,char **argv)
 {
-INTS4 i,l_status, l_sec=1, l_1st=1, l_delay=0, listc=0;
+INTS4 i,l_status, l_sec=1, l_1st=1, listc=0;
 char c_dim[128], c_host[128],c_nodelist[512],c_time[64];
 char c_times[128],c_line[64],c_setup[256],*pc_nodes=0,*pc;
 s_daqst *ps_daqst[20];

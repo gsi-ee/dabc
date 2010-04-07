@@ -423,7 +423,7 @@ void MbsNodeDimStatus::Update(char *times)
   else                             SetState(&sTriggerMode,-2, "Gray",  "Slave");
   if(ps_daqst->l_version == 0)SetState(&sTriggerMode,-2, "Gray", "Unknown");
 
-  strcpy(full,"Loaded setup: ");
+  sprintf(full,"%s, Loaded setup: ",ps_daqst->c_user);
   if(strlen(ps_daqst->c_setup_name)){
     strcat(full,ps_daqst->c_setup_name);
     SetInfo(&eSetup,1, "Green",full);
