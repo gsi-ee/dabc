@@ -20,6 +20,7 @@ s_daqst *ps_daqst[20];
 int active[20];
 MbsNodeDimStatus *node[20], *server;
 char list[20][32];
+FILE *conf;
 strcpy(c_line,HISTOGRAMDESC);
 strcpy(c_line,STATEDESC);
 strcpy(c_line,RATEDESC);
@@ -46,7 +47,14 @@ if(getenv("LOGNAME")==0){
 	cout << "Set LOGNAME to user name" << endl;
 	exit(0);
 }
-strcpy(c_setup,"dimsetup.txt");
+if(conf=fopen("dimsetup.txt","r")){
+    fclose(conf);
+    strcpy(c_setup,"dimsetup.txt");
+}
+if(conf=fopen("dimsetup","r")){
+    fclose(conf);
+    strcpy(c_setup,"dimsetup");
+}
 // first args can be time [sec] or setup
 if(strstr(argv[l_1st],"-t") !=0) { //time
 	if(argc > (l_1st+2)){

@@ -76,6 +76,7 @@ private:
   dabcState sBuildingMode; DimService *DsBuildingMode; int bBuildingMode;
   dabcState sEventBuilding; DimService *DsEventBuilding; int bEventBuilding;
   dabcState sRunning; DimService *DsRunning; int bRunning;
+  dabcState sRfioServer; DimService *DsRfioServer; int bRfioServer;
 
   dabcInfo eNodeTime; DimService *DeNodeTime;
   dabcInfo eNodeList; DimService *DeNodeList;
@@ -95,6 +96,8 @@ private:
   int iStreamScale; DimService *DiStreamScale; int bStreamScale;
   int iStreamSync; DimService *DiStreamSync; int bStreamSync;
   int iStreamKeep; DimService *DiStreamKeep; int bStreamKeep;
+  int iNofStreams; DimService *DiNofStreams; int bNofStreams;
+  int iStreamBufs; DimService *DiStreamBufs; int bStreamBufs;
   int iUserVal_00; DimService *DiUserVal_00; int bUserVal_00;
   int iUserVal_01; DimService *DiUserVal_01; int bUserVal_01;
   int iUserVal_02; DimService *DiUserVal_02; int bUserVal_02;

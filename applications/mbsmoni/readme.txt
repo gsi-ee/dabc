@@ -27,7 +27,7 @@ The program creates DIM services for all MBS nodes specified
 and updates them periodically reading the MBS status.
 Besides as arguments the list of nodes to be monitored 
 can also be in a text file (@file).
-Services to be provided can be configured in file dimsetup.txt
+Services to be provided can be configured in file dimsetup
 or file specified with -s.
 (copy template from $DABCSYS/applications/mbsmoni)
 With one name server a second MBS monitor can be started only on

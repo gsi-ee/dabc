@@ -45,6 +45,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   DsBuildingMode  =0; bBuildingMode  = 0;
   DsEventBuilding =0; bEventBuilding = 0;
   DsRunning       =0; bRunning       = 0;
+  DsRfioServer    =0; bRfioServer    = 0;
 // Info lines
   DeNodeTime  =0;
   DeNodeList =0;
@@ -63,6 +64,8 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   DiFlushTime    =0; bFlushTime    = 1;
   DiStreamScale  =0; bStreamScale  = 1;
   DiStreamSync   =0; bStreamSync   = 1;
+  DiNofStreams   =0; bNofStreams   = 1;
+  DiStreamBufs   =0; bStreamBufs   = 1;
   DiStreamKeep =0; bStreamKeep = 1;
   DiUserVal_00 =0; bUserVal_00 = 0;
   DiUserVal_01 =0; bUserVal_01 = 0;
@@ -151,6 +154,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
           else if(strstr(line,"DataTrendKb"))  {bDataTrendKb=1;rMaxDataTrendKb=value;}
           else if(strstr(line,"StreamRateKb")) {bStreamRateKb=1;rMaxStreamRateKb=value;}
           else if(strstr(line,"StreamTrendKb")){bStreamTrendKb=1;rMaxStreamTrendKb=value;}
+          else if(strstr(line,"RfioServer"))    bRfioServer=1;
           else if(strstr(line,"UserVal_00"))bUserVal_00=1;
           else if(strstr(line,"UserVal_01"))bUserVal_01=1;
           else if(strstr(line,"UserVal_02"))bUserVal_02=1;
@@ -222,6 +226,8 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   DiStreamScale =AddValue("StreamScale","I",sizeof(int),&ps_daqst->bl_strsrv_scale);
   DiStreamSync  =AddValue("StreamSync","I",sizeof(int),&ps_daqst->bl_strsrv_sync);
   DiStreamKeep  =AddValue("StreamKeep","I",sizeof(int),&ps_daqst->bl_strsrv_keep);
+  DiStreamBufs  =AddValue("StreamBufs","I",sizeof(int),&ps_daqst->bl_no_stream_buf);
+  DiNofStreams  =AddValue("NofStreams","I",sizeof(int),&ps_daqst->bl_no_streams);
 
   if(bUserVal_00) DiUserVal_00 =AddValue("UserVal_00","I",sizeof(int),&ps_daqst->bl_user[0]);
   if(bUserVal_01) DiUserVal_01 =AddValue("UserVal_01","I",sizeof(int),&ps_daqst->bl_user[1]);
@@ -314,6 +320,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
   // severity of states must not be -1 because that is the NOLINK value.
   // Negative value (-2) means suppress severity
 
+  DsRfioServer =AddState("RfioServer",&sRfioServer,-2,"Gray","Not connected");
   if(bRunning) DsRunning=AddState("Acquisition",&sRunning,-2,"Gray","Stopped");
   if(bRunMode) DsRunMode=AddState("RunMode",&sRunMode,-2,"Gray","MBS standalone");
   if(bBuildingMode) DsBuildingMode=
@@ -388,6 +395,9 @@ void MbsNodeDimStatus::Update(char *times)
   if(DrDataTrendKb)DrDataTrendKb->updateService();
   if(DrStreamTrendKb)DrStreamTrendKb->updateService();
 
+  if(ps_daqst->bl_rfio_connected)
+       SetState(&sRfioServer,-2, "Green","Connected");
+  else SetState(&sRfioServer,-2, "Red",  "Not connected");
   // if transport is not there, daq cannot be running
   if((ps_daqst->bh_running[SYS__transport]==0)&&(ps_daqst->bh_running[SYS__ds]==0)){
     ps_daqst->bh_acqui_running=0;
@@ -478,6 +488,7 @@ void MbsNodeDimStatus::Update(char *times)
       SetInfo(&eFile,1,"Gray","Unknown");
       SetState(&sFileOpen,1, "Gray","Unknown");
   }
+  if(DsRfioServer) DsRfioServer->updateService();
   if(DeFile) DeFile->updateService();
   if(DrFileFilled)DrFileFilled->updateService();
   if(DsFileOpen)DsFileOpen->updateService();

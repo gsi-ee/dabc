@@ -8,33 +8,48 @@
 ### ========= All nodes:
 ### ---- Rates: -----
 * EventRate     : 300000.
-#* EventTrend    : 300000.
+* EventTrend    : 300000.
 * DataRateKb    : 50000.
-#* DataTrendKb   : 50000.
-#* StreamRateKb  : 10000.
-#* StreamTrendKb : 10000.
+* DataTrendKb   : 50000.
+* StreamRateKb  : 10000.
+* StreamTrendKb : 10000.
 #* EvSizeRateB   : 128.
 #* EvSizeTrendB  : 128.
 ### -- File filling status in percent, typically only on one node (transport)
-#* FileFilled   :   100.
+* FileFilled   :   100.
 #* StreamsFull   :   100.
 #* TriggerRate : 10000.
 ### -- Trigger rates for the individual triggers: 01...15
 #* Trigger01Rate : 10000.
+#* Trigger02Rate : 10000.
+#* Trigger03Rate : 10000.
+#* Trigger04Rate : 10000.
+#* Trigger05Rate : 10000.
+#* Trigger06Rate : 10000.
+#* Trigger07Rate : 10000.
+#* Trigger08Rate : 10000.
+#* Trigger09Rate : 10000.
+#* Trigger10Rate : 10000.
+#* Trigger11Rate : 10000.
+#* Trigger12Rate : 10000.
+#* Trigger13Rate : 10000.
+#* Trigger14Rate : 10000.
+#* Trigger15Rate : 10000.
 
 ###---- States: -----
 ### -- Acquisition running
 * Running
 ### -- Delayed or immediate event building:
-#* BuildingMode
+* BuildingMode
 # -- Current event building running or suspended:
-#* EventBuilding
+* EventBuilding
 # -- Shows spill signal:
-#* SpillOn
+* SpillOn
 ### -- Shows if file is open, typically only on one node (transport)
-#* FileOpen
+* FileOpen
 ### -- Show trigger master
-#* TriggerMode
+* TriggerMode
+* RfioServer
 
 ###---- User integers from daqst, 00...15 -----
 # can be set by f_ut_set_daqst_user(index,value);
