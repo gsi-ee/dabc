@@ -174,13 +174,13 @@ if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
 	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
 	if(result.indexOf(formDabc.getSetup()) < 0){
-		tellError("Not found: "+check);
+		tellError(xSet.getDesktop(),"Not found: "+check);
 		System.out.println("Not found: "+check);
 	}
 	check = new String(formDabc.getSystemPath()+"/Makefile");
 	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
 	if(result.indexOf("Makefile") < 0){
-		tellError("Not found: "+check);
+		tellError(xSet.getDesktop(),"Not found: "+check);
 		System.out.println("Not found: "+check);
 }	}
 }
@@ -318,7 +318,7 @@ int off[]=new int[100],len[]=new int[100],ind,i;
     if(setup == null){
         setup=new xSetup();
         if(!setup.parseSetup(DabcUserpath.getText()+"/"+DabcSetup.getText())) {
-            tellError("Setup parse failed");
+            tellError(this,"Setup parse failed");
             System.out.println("Setup parse failed: "+DabcUserpath.getText()+"/"+DabcSetup.getText());
             getnew.setSelected(true);
             setup=null;
@@ -372,9 +372,9 @@ else if ("dabcSave".equals(e.getActionCommand())) {
     String msg=new String("Dabc launch: "+DabcLaunchFile.getText());
     if(setup != null){
         for(int i=0;i<PanelSetupList.size();i++)PanelSetupList.get(i).updateList();
-        if(!setup.updateSetup()) tellError("Setup update failed");
+        if(!setup.updateSetup()) tellError(this,"Setup update failed");
         else { 
-        if(!setup.writeSetup(DabcUserpath.getText()+"/"+DabcSetup.getText())) tellError("Write setup failed");
+        if(!setup.writeSetup(DabcUserpath.getText()+"/"+DabcSetup.getText())) tellError(this,"Write setup failed");
         else {
             String mes=new String(msg+"\nDabc setup: "+DabcUserpath.getText()+"/"+DabcSetup.getText());
             tellInfo(mes);
@@ -401,7 +401,7 @@ if(!threadRunning){
         xSet.setProcessing(true);
         threxe.start();
     }
-    } else tellError("Execution thread not yet finished!");
+    } else tellError(this,"Execution thread not yet finished!");
 }
 // start thread by threxe.start()
 // CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!

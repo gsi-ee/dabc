@@ -110,15 +110,15 @@ else if ("MyResize".equals(e.getActionCommand())){
  * Store layout (position and size)
  */
 public void internalFrameClosing(InternalFrameEvent e) {
-//System.out.println("Frame closing: "+getTitle());
-layout.set(getLocation(),getSize(),0,false);
+//System.out.println("Frame closing : "+getTitle()+" "+layout.getName()+" false");
+	layout.set(getLocation(),getSize(),0,false);
 }
 /**
  * Store layout (position and size)
  */
 public void internalFrameClosed(InternalFrameEvent e){
-//System.out.println("Frame closed : "+getTitle());
-layout.set(getLocation(),getSize(),0,false);
+//System.out.println("Frame closed : "+getTitle()+" "+layout.getName()+" false");
+	layout.set(getLocation(),getSize(),0,false);
 }
 public void internalFrameActivated(InternalFrameEvent e){}
 public void internalFrameDeactivated(InternalFrameEvent e){}
@@ -128,6 +128,7 @@ public void internalFrameOpened(InternalFrameEvent e){}
 // Component listener
 public void componentHidden(ComponentEvent e) {}
 public void componentMoved(ComponentEvent e) {
+//	System.out.println("Frame moved : "+getTitle()+" "+layout.getName()+" false");
 	layout.set(getLocation(),getSize(),0,false);
 }
 public void componentShown(ComponentEvent e) {}

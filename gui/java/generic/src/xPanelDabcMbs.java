@@ -200,32 +200,32 @@ if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
 	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
 	if(result.indexOf(formDabc.getSetup()) < 0){
-		tellError("Not found: "+check);
+		tellError(xSet.getDesktop(),"Not found: "+check);
 		System.out.println("Not found: "+check);
 	}
 	check = new String(formDabc.getSystemPath()+"/Makefile");
 	result = dabcshell.rshout(formDabc.getMaster(),xSet.getUserName(),"ls "+check);
 	if(result.indexOf("Makefile") < 0){
-		tellError("Not found: "+check);
+		tellError(xSet.getDesktop(),"Not found: "+check);
 		System.out.println("Not found: "+check);
 	}}
 if(!formMbs.getUserPath().contains("%")){
 	check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
     result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
     if(result.indexOf(formMbs.getStart()) < 0){
-    	tellError("Not found: "+check);
+    	tellError(xSet.getDesktop(),"Not found: "+check);
     	System.out.println("Not found: "+check);
     }
     check = new String(formMbs.getUserPath()+"/"+formMbs.getShut());
     result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
     if(result.indexOf(formMbs.getShut()) < 0){
-    	tellError("Not found: "+check);
+    	tellError(xSet.getDesktop(),"Not found: "+check);
     	System.out.println("Not found: "+check);
     }
     check = new String(formMbs.getSystemPath()+"/alias.com");
     result = mbsshell.rshout(formMbs.getMaster(),xSet.getUserName(),"ls "+check);
     if(result.indexOf("alias.com") < 0){
-    	tellError("Not found: "+check);
+    	tellError(xSet.getDesktop(),"Not found: "+check);
     	System.out.println("Not found: "+check);
     }}
 }
@@ -499,7 +499,7 @@ if(doit){
     threadRunning=true;
     threxe.start();
 }
-} else tellError("Execution thread not yet finished!");
+} else tellError(this,"Execution thread not yet finished!");
 }
 // start thread by threxe.start()
 // CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!

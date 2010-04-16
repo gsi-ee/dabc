@@ -210,7 +210,8 @@ public xDesktop() {
 	        usrpan.get(ii).setDimServices((xiDimBrowser) browser);
     	}
         // Note that first panel in list defines command format!
-        compan.setUserCommand(usrpan.get(0).getUserCommand());
+    	// 0 is RunInfo panel
+        if(usrpan.size()>1)compan.setUserCommand(usrpan.get(1).getUserCommand());
     }
     
 // create the actions for buttons and menu items
@@ -271,7 +272,7 @@ public xDesktop() {
     if(xSet.isMbs()&xSet.getLayout("MbsController").show()) mbspan.setListener(frMbsController=
         createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false));
     if(usrpan != null){
-    	if(xSet.getLayout(usrpan.get(0).getHeader())!= null){
+    	if(xSet.getLayout(usrpan.get(0).getHeader())!= null){//RunInfo
         if(xSet.getLayout(usrpan.get(0).getHeader()).show()) 
         	frUserController.add(createFrame(
         		usrpan.get(0).getHeader(),usrpan.get(0).getIcon(),(JPanel)usrpan.get(0),xSet.getLayout(usrpan.get(0).getHeader()),null, false));
@@ -621,7 +622,7 @@ public void actionPerformed(ActionEvent e) {
         if(usrpan != null){
         	for(int ii=0;ii<usrpan.size();ii++)
         		usrpan.get(ii).setDimServices(browser);
-            compan.setUserCommand(usrpan.get(0).getUserCommand());
+        	if(usrpan.size()>1)compan.setUserCommand(usrpan.get(1).getUserCommand());
         }
         browser.enableServices();
         
@@ -637,6 +638,16 @@ public void actionPerformed(ActionEvent e) {
             // frInfos.addWindow(infpan);
         // }
 		System.out.println("----- update finished");
+    }
+    else if ("RebuildCommands".equals(e.getActionCommand())) {
+        String str=mbspan.getTaskList();
+        compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
+        if(usrpan != null){
+        	if(usrpan.size()>1)compan.setUserCommand(usrpan.get(1).getUserCommand());
+        }
+        compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
+        if(frCommands   != null) frCommands.addWindow(compan);
+		System.out.println("----- rebuild commands finished");
     }
     else if ("DisplayFrame".equals(e.getActionCommand())) {
         addFrame((xInternalFrame)e.getSource(), false); // do not manage
@@ -658,6 +669,7 @@ public void actionPerformed(ActionEvent e) {
 
 //Quit the application.
 protected void quit() {
+    xSaveRestore.saveCommands(browser.getCommandList(),CommandFile);
 	if(xSet.isGuru())System.exit(0);
     int i=JOptionPane.showInternalConfirmDialog(desktop,"Quit GUI?","GUI can be restarted.", JOptionPane.YES_NO_OPTION); 
     if(i == 0) System.exit(0);

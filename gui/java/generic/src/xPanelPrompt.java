@@ -32,6 +32,7 @@ import javax.swing.JCheckBox;
 import java.net.URL;
 import java.io.IOException;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.BorderLayout;
@@ -273,10 +274,10 @@ repaint();
  * Modal pop up window with error message.
  * @param msg Error message
  */
-public void tellError(String msg){
+public void tellError(Component parent, String msg){
 // first argument must be a component which is displayed. 
 // Therefore we use desktop. 
-JOptionPane.showInternalMessageDialog(this, msg, "Error",JOptionPane.ERROR_MESSAGE);
+JOptionPane.showInternalMessageDialog(parent, msg, "Error",JOptionPane.ERROR_MESSAGE);
 }
 /**
  * Modal pop up window with info message.
