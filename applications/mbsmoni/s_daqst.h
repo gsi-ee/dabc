@@ -1,3 +1,27 @@
+ /* The Data Acquisition Backbone Core (DABC)
+ ********************************************************************
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
+ * Planckstr. 1
+ * 64291 Darmstadt
+ * Germany
+ * Contact:  http://dabc.gsi.de
+ ********************************************************************
+ * This software can be used under the GPL license agreements as stated
+ * in LICENSE.txt file which is part of the distribution.
+ ********************************************************************/
+// $Id: s_daqst.h 478 2009-10-29 12:26:09Z goofy $
+//-----------------------------------------------------------------------
+//       The GSI Online Offline Object Oriented (Go4) Project
+//         Experiment Data Processing at EE department, GSI
+//-----------------------------------------------------------------------
+// Copyright (C) 2000- GSI Helmholtzzentrum für Schwerionenforschung GmbH
+//                     Planckstr. 1, 64291 Darmstadt, Germany
+// Contact:            http://go4.gsi.de
+//-----------------------------------------------------------------------
+// This software can be used under the license agreements as stated
+// in Go4License.txt file which is part of the distribution.
+//-----------------------------------------------------------------------
 #include "typedefs.h"
 /*
  * N. Kurz
