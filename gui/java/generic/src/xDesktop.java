@@ -62,13 +62,15 @@ private Vector<menuAction> maUserController;
 private String usrHeader, usrGraphics, usrPanels;
 private boolean clearOnUpdate=false;
 private String LayoutFile, RecordFile, CommandFile, SelectionFile;
+private String ActionCommand;
+private String lastframe;
 
 // private PsActionSupport actionHandler;
 /**
  * Creates the top level GUI.
- * @param userpanel Optional user panel. If null, user panel class name could alternatively be specified
- as DABC_USER_PANEL and will be instantiated.
- * @param control If false, no control panels are opened.
+ * usrPanels are optional user panel names. 
+ * If null, user panel class name could alternatively be specified
+ * as DABC_USER_PANEL and will be instantiated.
  */
 public xDesktop() {
     super("DABC Controls and Monitoring");
@@ -393,15 +395,20 @@ addFrame(frame, true);
  */
 public void addFrame(JInternalFrame frame, boolean manage){
 boolean create=true;
+//System.out.println("Add frame \""+frame.getTitle()+"\" to desktop");
 if(!findFrame(frame.getTitle())){
-//System.out.println("Add frame "+frame.getTitle()+" to desktop");
+	//JInternalFrame[] fr=desktop.getAllFrames(); // length is next index
+    //System.out.println("Added frame "+fr.length+" \""+frame.getTitle()+"\" to desktop");
     desktop.add(frame); 
+//    fr=desktop.getAllFrames();
+//    for(int i=fr.length-1;i>=0;i--)
+//    	System.out.println("        frame "+i+" \""+fr[i].getTitle()+"\"");
     frame.moveToFront();
     if(manage){
         for(int i=0;i<frUserFrame.size();i++)
             if(frUserFrame.get(i).getTitle().equals(frame.getTitle())) create=false;
         if(create) {
-//System.out.println("Add frame "+frame.getTitle()+" to list");
+        //System.out.println("Added frame "+frUserFrame.size()+" \""+frame.getTitle()+"\" to list");
         frUserFrame.add(frame); 
 }}}}
 
@@ -411,18 +418,20 @@ if(!findFrame(frame.getTitle())){
  * @param title Title of the frame to be removed.
  */
 public void removeFrame(String title){
-JInternalFrame[] fr=desktop.getAllFrames();
+	//System.out.println("Frame \""+title+"\" to remove");
+	JInternalFrame[] fr=desktop.getAllFrames();
 for(int i=fr.length-1;i>=0;i--) {
-//System.out.println("        frame "+fr[i].getTitle());
+//System.out.println("        frame "+i+" \""+fr[i].getTitle()+"\"");
     if(fr[i].getTitle().equals(title)) {
-//System.out.println("Dispose frame "+title+" from desktop");
         fr[i].dispose();
+        //System.out.println("Disposed frame \""+title+"\" from desktop");
     }}
 for(int i=frUserFrame.size()-1;i>=0;i--)
     if(frUserFrame.get(i).getTitle().equals(title)){
-//System.out.println("Remove frame "+title+" from list");
         frUserFrame.remove(i);
-}}
+        //System.out.println("Removed frame "+i+" \""+title+"\" from list");
+}
+}
 
 // xiDesktop implementation
 /**
@@ -445,8 +454,10 @@ try{
  */
 public void toFront(String title){
 JInternalFrame[] fr=desktop.getAllFrames();
-    for(int i=0;i<fr.length;i++) 
+try{
+for(int i=0;i<fr.length;i++) 
         if(fr[i].getTitle().equals(title)) fr[i].toFront();
+}catch(ArrayIndexOutOfBoundsException x){System.out.println("Frame \""+title+"\" tofront exc");}
 }
 
 // React to menu selections of main window.
@@ -470,56 +481,59 @@ JInternalFrame[] fr=desktop.getAllFrames();
  * @param e event. Switch on action command:<br>
  */
 public void actionPerformed(ActionEvent e) {
-    if ("DabcMbsController".equals(e.getActionCommand())) {dbspan.setListener(frDabcMbsController=
+	if(e.getActionCommand() == null) ActionCommand=xSet.getActionCommand();
+	else                          ActionCommand=e.getActionCommand();
+    //System.out.println("**** Desktop action "+ActionCommand);
+    if ("DabcMbsController".equals(ActionCommand)) {dbspan.setListener(frDabcMbsController=
         createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false));
         xSet.setLayout("DabcMbsController",null,null,0, true);
         }
-    else if ("DabcController".equals(e.getActionCommand())) {dabcpan.setListener(frDabcController=
+    else if ("DabcController".equals(ActionCommand)) {dabcpan.setListener(frDabcController=
         createFrame("DabcController",dabcIcon,dabcpan,xSet.getLayout("DabcController"),null, false));
         xSet.setLayout("DabcController",null,null,0, true);
         }
-    else if ("MbsController".equals(e.getActionCommand())) {mbspan.setListener(frMbsController=
+    else if ("MbsController".equals(ActionCommand)) {mbspan.setListener(frMbsController=
         createFrame("MbsController",mbsIcon,mbspan,xSet.getLayout("MbsController"),null, false)); 
         xSet.setLayout("MbsController",null,null,0, true);
         }
-    else if ("ParameterSelect".equals(e.getActionCommand())) {frSelect=
+    else if ("ParameterSelect".equals(ActionCommand)) {frSelect=
         createFrame("ParameterSelect",selIcon,selpan,xSet.getLayout("ParameterSelect"),null, false); 
         xSet.setLayout("ParameterSelect",null,null,0, true);
         }
-    else if ("Commands".equals(e.getActionCommand())) {frCommands=
+    else if ("Commands".equals(ActionCommand)) {frCommands=
         createFrame("Commands",commIcon,compan,xSet.getLayout("Command"),null, true);
         xSet.setLayout("Command",null,null,0, true);
         }
-    else if ("Parameters".equals(e.getActionCommand())) {frParameters=
+    else if ("Parameters".equals(ActionCommand)) {frParameters=
         createFrame("Parameters",paramIcon,parpan,xSet.getLayout("Parameter"),null, true);
         xSet.setLayout("Parameter",null,null,0, true);
         }
-    else if ("Meters".equals(e.getActionCommand())) {metpan.setListener(frMeters=
+    else if ("Meters".equals(ActionCommand)) {metpan.setListener(frMeters=
         createFrame("RateMeters",meterIcon,metpan,xSet.getLayout("Meter"),metpan.createMenuBar(), false));
         xSet.setLayout("Meter",null,null,0, true);
         }
-    else if ("Histograms".equals(e.getActionCommand())) {hispan.setListener(frHistograms=
+    else if ("Histograms".equals(ActionCommand)) {hispan.setListener(frHistograms=
         createFrame("Histograms",histoIcon,hispan,xSet.getLayout("Histogram"),hispan.createMenuBar(), false));
         xSet.setLayout("Histogram",null,null,0, true);
         }
-    else if ("States".equals(e.getActionCommand())) {stapan.setListener(frState=
+    else if ("States".equals(ActionCommand)) {stapan.setListener(frState=
         createFrame("State",stateIcon,stapan,xSet.getLayout("State"),stapan.createMenuBar(), false));
         xSet.setLayout("State",null,null,0, true);
         }
-    else if ("Infos".equals(e.getActionCommand())) {infpan.setListener(frInfos=
+    else if ("Infos".equals(ActionCommand)) {infpan.setListener(frInfos=
         createFrame("Infos",infoIcon,infpan,xSet.getLayout("Info"),infpan.createMenuBar(), true));
         xSet.setLayout("Info",null,null,0, true);
         }
-    else if ("Logger".equals(e.getActionCommand())) {logpan.setListener(frLogger=
+    else if ("Logger".equals(ActionCommand)) {logpan.setListener(frLogger=
         createFrame("Logger",loggerIcon,logpan,xSet.getLayout("Logger"),logpan.createMenuBar(), true));
         xSet.setLayout("Logger",null,null,0, true);
         }
-    else if ("Test".equals(e.getActionCommand())) {
+    else if ("Test".equals(ActionCommand)) {
     	printFrames();
     	String filter=JOptionPane.showInputDialog("Filter","*");
         browser.listServices(false, filter); // exclude command definitions
     }
-    else if ("Quit".equals(e.getActionCommand())) {
+    else if ("Quit".equals(ActionCommand)) {
         // String[] srvcs;
         // int i=0;
         // xDimParameter di;
@@ -532,7 +546,7 @@ public void actionPerformed(ActionEvent e) {
        // }
        quit();
     }
-    else if ("Save".equals(e.getActionCommand())) {
+    else if ("Save".equals(ActionCommand)) {
     
         if(frCommands     != null) 
         xSet.setLayout("Command",  
@@ -586,9 +600,9 @@ public void actionPerformed(ActionEvent e) {
         JOptionPane.showInternalMessageDialog(
             desktop, "Layout saved: "+RecordFile+" "+SelectionFile+" "+LayoutFile, "Information",JOptionPane.INFORMATION_MESSAGE);
     }
-    else if (("Update".equals(e.getActionCommand())) ||
-        ("Browser".equals(e.getActionCommand()))) {
-        if("Browser".equals(e.getActionCommand())){
+    else if (("Update".equals(ActionCommand)) ||
+        ("Browser".equals(ActionCommand))) {
+        if("Browser".equals(ActionCommand)){
         	if(xSet.isProcessing()) {
         		System.out.println("Busy, no update");
         		return;
@@ -639,7 +653,7 @@ public void actionPerformed(ActionEvent e) {
         // }
 		System.out.println("----- update finished");
     }
-    else if ("RebuildCommands".equals(e.getActionCommand())) {
+    else if ("RebuildCommands".equals(ActionCommand)) {
         String str=mbspan.getTaskList();
         compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
         if(usrpan != null){
@@ -649,20 +663,22 @@ public void actionPerformed(ActionEvent e) {
         if(frCommands   != null) frCommands.addWindow(compan);
 		System.out.println("----- rebuild commands finished");
     }
-    else if ("DisplayFrame".equals(e.getActionCommand())) {
+    else if ("DisplayFrame".equals(ActionCommand)) { //used for progress window
+    	lastframe=((xInternalFrame)e.getSource()).getTitle();
         addFrame((xInternalFrame)e.getSource(), false); // do not manage
     }
-    else if ("RemoveFrame".equals(e.getActionCommand())) {
-        removeFrame(((xInternalFrame)e.getSource()).getTitle());
+    else if ("RemoveFrame".equals(ActionCommand)) { //used for progress window
+        //removeFrame(((xInternalFrame)e.getSource()).getTitle()); // Java 6
+        removeFrame(lastframe);
     }
     else if(usrpan != null){ 
     	for(int ii=0;ii<usrpan.size();ii++)
-    	if(usrpan.get(ii).getHeader().equals(e.getActionCommand())) {frUserController.add(
+    	if(usrpan.get(ii).getHeader().equals(ActionCommand)) {frUserController.add(
         createFrame(usrpan.get(ii).getHeader(),usrpan.get(ii).getIcon(),(JPanel)usrpan.get(ii),xSet.getLayout(usrpan.get(ii).getHeader()),null, false));
         xSet.setLayout(usrpan.get(ii).getHeader(),null,null,0, true);
         }}
     else {
-    System.out.println("Unsolicited event:"+e.getActionCommand());
+    System.out.println("Unsolicited event:"+ActionCommand);
     }
 } // actionPerformed
 

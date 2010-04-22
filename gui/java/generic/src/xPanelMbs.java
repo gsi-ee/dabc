@@ -80,95 +80,95 @@ private Point progressP;
  * Passed actions are: Update, DisplayFrame, RemoveFrame.
  */
 public xPanelMbs(String title, xDimBrowser diminfo, xiDesktop desktop, ActionListener al) {
-    super(title);
-    mbsTaskList=new Vector<xDimParameter>(0);
-    // get icons
-    action=al;
-    desk=desktop;
-    browser=diminfo;
-    storeIcon   = xSet.getIcon("icons/savewin.png");
-    launchIcon  = xSet.getIcon("icons/connprm.png");
-    killIcon    = xSet.getIcon("icons/dabchalt.png");
-    mbsIcon     = xSet.getIcon("icons/conndsp.png");
-    disIcon     = xSet.getIcon("icons/disconn.png");
-    infoIcon    = xSet.getIcon("icons/info.png");
-    eventIcon   = xSet.getIcon("icons/typevent.png");
-    dabcIcon    = xSet.getIcon("icons/dabcicon.png");
-    winIcon     = xSet.getIcon("icons/rshmbs.png");
-    workIcon    = xSet.getIcon("icons/control.png");
-    mworkIcon   = xSet.getIcon("icons/controlmbs.png");
-    closeIcon   = xSet.getIcon("icons/fileclose.png");
-    configIcon  = xSet.getIcon("icons/mbsconfig.png");
-    startIcon   = xSet.getIcon("icons/mbsstart.png");
-    stopIcon    = xSet.getIcon("icons/dabcstop.png");
-    shrinkIcon  = xSet.getIcon("icons/shrink.png");
-    enlargeIcon = xSet.getIcon("icons/enlarge.png");
-    // add buttons
+super(title);
+mbsTaskList=new Vector<xDimParameter>(0);
+// get icons
+action=al;
+desk=desktop;
+browser=diminfo;
+storeIcon   = xSet.getIcon("icons/savewin.png");
+launchIcon  = xSet.getIcon("icons/connprm.png");
+killIcon    = xSet.getIcon("icons/dabchalt.png");
+mbsIcon     = xSet.getIcon("icons/conndsp.png");
+disIcon     = xSet.getIcon("icons/disconn.png");
+infoIcon    = xSet.getIcon("icons/info.png");
+eventIcon   = xSet.getIcon("icons/typevent.png");
+dabcIcon    = xSet.getIcon("icons/dabcicon.png");
+winIcon     = xSet.getIcon("icons/rshmbs.png");
+workIcon    = xSet.getIcon("icons/control.png");
+mworkIcon   = xSet.getIcon("icons/controlmbs.png");
+closeIcon   = xSet.getIcon("icons/fileclose.png");
+configIcon  = xSet.getIcon("icons/mbsconfig.png");
+startIcon   = xSet.getIcon("icons/mbsstart.png");
+stopIcon    = xSet.getIcon("icons/dabcstop.png");
+shrinkIcon  = xSet.getIcon("icons/shrink.png");
+enlargeIcon = xSet.getIcon("icons/enlarge.png");
+// add buttons
 //    addButton("mbsQuit","Close window",closeIcon,this);
-    shrinkButton=addButton("shrink","Minimize/maximize panel",shrinkIcon,enlargeIcon,this);
-    addButton("mbsSave","Save form to file",storeIcon,this);
-    addButton("prmLaunch","Launch MBS multi node servers",launchIcon,this);
-    addButton("mbsLaunch","Launch MBS single node servers",mbsIcon,this);
-    addButton("mbsConfig","Configure MBS (@startup)",configIcon,this);
-    // addButton("mbsDabc","Set DABC mode",dabcIcon,this);
-    addButton("mbsStart","Start acquisition",startIcon,this);
-    addButton("mbsStop","Stop acquisition",stopIcon,this);
-    addButton("mbsShut","Shutdown tasks (@shutdown)",killIcon,this);
-    addButton("mbsCleanup","Shut down servers and cleanup MBS",disIcon,this);
-    addButton("mbsShow","Show acquisition",infoIcon,this);
-    addButton("mbsEvent","Type event (check current node)",eventIcon,this);
-    addButton("mbsShell","Rsh Node -l Username Command",mworkIcon,this);
-    //addButton("enlarge","Maximum info",enlargeIcon,this);
+shrinkButton=addButton("shrink","Minimize/maximize panel",shrinkIcon,enlargeIcon,this);
+addButton("mbsSave","Save form to file",storeIcon,this);
+addButton("prmLaunch","Launch MBS multi node servers",launchIcon,this);
+addButton("mbsLaunch","Launch MBS single node servers",mbsIcon,this);
+addButton("mbsConfig","Configure MBS (@startup)",configIcon,this);
+// addButton("mbsDabc","Set DABC mode",dabcIcon,this);
+addButton("mbsStart","Start acquisition",startIcon,this);
+addButton("mbsStop","Stop acquisition",stopIcon,this);
+addButton("mbsShut","Shutdown tasks (@shutdown)",killIcon,this);
+addButton("mbsCleanup","Shut down servers and cleanup MBS",disIcon,this);
+addButton("mbsShow","Show acquisition",infoIcon,this);
+addButton("mbsEvent","Type event (check current node)",eventIcon,this);
+addButton("mbsShell","Rsh Node -l Username Command",mworkIcon,this);
+//addButton("enlarge","Maximum info",enlargeIcon,this);
 // Text input fields
-    // read defaults from setup file
-    if(System.getenv("DABC_CONTROL_MBS")!=null)
-         formMbs=new xFormMbs(System.getenv("DABC_CONTROL_MBS"));
-    else formMbs=new xFormMbs("MbsControl.xml");
-    formMbs.addActionListener(this);
-    Object o=xSet.addObject(formMbs);
-    // formMbs=(xFormMbs)xSet.getObject("xgui.xFormMbs"); // how to retrieve
+// read defaults from setup file
+if(System.getenv("DABC_CONTROL_MBS")!=null)
+     formMbs=new xFormMbs(System.getenv("DABC_CONTROL_MBS"));
+else formMbs=new xFormMbs("MbsControl.xml");
+formMbs.addActionListener(this);
+Object o=xSet.addObject(formMbs);
+// formMbs=(xFormMbs)xSet.getObject("xgui.xFormMbs"); // how to retrieve
 
-    DimName=new JTextField(xSet.getDimDns(),width);
-    DimName.setEditable(false);
-    Username=new JTextField(xSet.getUserName(),width);
-    Username.setEditable(false);
-    Password=new JPasswordField(width);
-    Password.setEchoChar('*');
-    Password.addActionListener(this);
-    Password.setActionCommand("setpwd");
+DimName=new JTextField(xSet.getDimDns(),width);
+DimName.setEditable(false);
+Username=new JTextField(xSet.getUserName(),width);
+Username.setEditable(false);
+Password=new JPasswordField(width);
+Password.setEchoChar('*');
+Password.addActionListener(this);
+Password.setActionCommand("setpwd");
 // add prompt/input fields
-    addPromptLines();
-    nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
-    nMbsNodes=nMbsServers-2;
-    System.out.println("Mbs   servers needed: DNS + "+(nMbsServers-1));   
-    mbsshell = new xRemoteShell("rsh");
-    if(xSet.isMbs())checkDir();
-    String service = new String(MbsNode.getText().toUpperCase()+":PRM");
-    String servlist = browser.getServers();
-    if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
-    service = new String(MbsNode.getText().toUpperCase()+":DSP");
-    if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
-    setDimServices();
-    etime = new xTimer(al, false); // fire only once
+addPromptLines();
+nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
+nMbsNodes=nMbsServers-2;
+System.out.println("Mbs   servers needed: DNS + "+(nMbsServers-1));   
+mbsshell = new xRemoteShell("rsh");
+if(xSet.isMbs())checkDir();
+String service = new String(MbsNode.getText().toUpperCase()+":PRM");
+String servlist = browser.getServers();
+if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
+service = new String(MbsNode.getText().toUpperCase()+":DSP");
+if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
+setDimServices();
+etime = new xTimer(al, false); // fire only once
 }
 
 private void addPromptLines(){
-	mini=width;
-    if(formMbs.isShrink()){
-    	mini=0; // do not show
-    	shrinkButton.setSelected(true);
-    }
-    if(mini > 0)addPrompt("Name server: ",DimName);
-    if(mini > 0)addPrompt("User name: ",Username);
-    addPrompt("Password [RET]: ",Password);
-    MbsNode=addPrompt("Master node: ",formMbs.getMaster(),"set",mini,this);
-    MbsServers=addPrompt("Servers: ",formMbs.getServers(),"set",mini,this);
-    MbsPath=addPrompt("System path: ",formMbs.getSystemPath(),"set",mini,this);
-    MbsUserpath=addPrompt("User path: ",formMbs.getUserPath(),"set",mini,this);
-    MbsStart=addPrompt("Startup: ",formMbs.getStart(),"set",mini,this);
-    MbsShut=addPrompt("Shutdown: ",formMbs.getShut(),"set",mini,this);
-    MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",mini,this);
-    MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
+mini=width;
+if(formMbs.isShrink()){
+	mini=0; // do not show
+	shrinkButton.setSelected(true);
+}
+if(mini > 0)addPrompt("Name server: ",DimName);
+if(mini > 0)addPrompt("User name: ",Username);
+addPrompt("Password [RET]: ",Password);
+MbsNode=addPrompt("Master node: ",formMbs.getMaster(),"set",mini,this);
+MbsServers=addPrompt("Servers: ",formMbs.getServers(),"set",mini,this);
+MbsPath=addPrompt("System path: ",formMbs.getSystemPath(),"set",mini,this);
+MbsUserpath=addPrompt("User path: ",formMbs.getUserPath(),"set",mini,this);
+MbsStart=addPrompt("Startup: ",formMbs.getStart(),"set",mini,this);
+MbsShut=addPrompt("Shutdown: ",formMbs.getShut(),"set",mini,this);
+MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",mini,this);
+MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
 }
 private void checkDir(){
 String check, result;
@@ -191,9 +191,8 @@ if(!formMbs.getUserPath().contains("%")){
     if(result.indexOf("alias.com") < 0){
     	tellError(xSet.getDesktop(),"Not found: "+check);
     	System.out.println("Not found: "+check);
-}	}
-}
-
+    }
+}}
 private void setLaunch(){
 xSet.setAccess(Password.getPassword());
 formMbs.setMaster(MbsNode.getText());
@@ -207,7 +206,7 @@ formMbs.setCommand(MbsCommand.getText());
 //formMbs.printForm();
 }
 /**
- * Called in xDesktop to get list of tasks.
+ * Called in xDesktop to get list of tasks. Command list is filtered.
  */
 public String getTaskList(){
 int i;
@@ -237,9 +236,7 @@ Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
 	if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) mbsTaskList.add(para.get(i));
 	else if(para.get(i).getParser().getFull().indexOf("PRM/NodeList")>0) mbsPrompt=true;
-	else if(para.get(i).getParser().getFull().indexOf("/Acquisition/State")>0) {
-		mbsRunning.add(para.get(i));
-	}
+	else if(para.get(i).getParser().getFull().indexOf("/Acquisition/State")>0) mbsRunning.add(para.get(i));
 }
 if(mbsPrompt)cmdPrefix=new String("*::");
 else cmdPrefix=new String("");
@@ -249,25 +246,28 @@ else cmdPrefix=new String("");
  */
 public void releaseDimServices(){
 System.out.println("Mbs releaseDimServices");
-    mbsCommand=null;
-    mbsTaskList.removeAllElements();
-    if(mbsRunning != null) mbsRunning.removeAllElements();
-    mbsRunning=null;
+mbsCommand=null;
+mbsTaskList.removeAllElements();
+if(mbsRunning != null) mbsRunning.removeAllElements();
+mbsRunning=null;
 }
 
 // Start internal frame with an xState panel through timer.
 // Timer events are handled by desktop event handler passed to constructor.
+// Note that etime.action calls handler directly. To run handler through
+// timer event, use etime.start(). Because the timer is set up to
+// fire only once, it stops after that.
 private void startProgress(){
-	progressP=xSet.getLayout("MbsController").getPosition();
-    xLayout la= new xLayout("progress");
+progressP=xSet.getLayout("MbsController").getPosition();
+xLayout la= new xLayout("progress");
 //    la.set(new Point(progressX,progressY), new Dimension(300,100),0,true);
-    la.set(progressP, new Dimension(300,100),0,true);
-    progress=new xInternalFrame("Work in progress, please wait", la);
-    progressState=new xState("Current action:",350,30);
-    progressState.redraw(-1,"Green","Starting", true);
-    progressState.setSizeXY();
-    progress.setupFrame(workIcon, null, progressState, true);
-    etime.action(new ActionEvent(progress,1,"DisplayFrame"));
+la.set(progressP, new Dimension(300,100),0,true);
+progress=new xInternalFrame("Work in progress, please wait", la);
+progressState=new xState("Current action:",350,30);
+progressState.redraw(-1,"Green","Starting", true);
+progressState.setSizeXY();
+progress.setupFrame(workIcon, null, progressState, true);
+etime.action(new ActionEvent(progress,1,"DisplayFrame"));
 }
 private void setProgress(String info, Color color){
 setTitle(info,color);
@@ -275,13 +275,18 @@ if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
 }
 // Fire event handler of desktop through timer.
 private void stopProgress(){
-//etime.setActionCommand(progress.getTitle()); // Java 1.6
-    etime.action(new ActionEvent(progress,1,"RemoveFrame"));
+//etime.setInitialDelay(1000);
+//etime.setDelay(1000);
+//System.out.println("=== Timer action stop");
+// etime.setActionCommand("RemoveFrame"); // Java 6 only
+xSet.setActionCommand("RemoveFrame"); // Java < 6 
+etime.start(); // fires event with ActionCommand=null, then stop
 }
 
-private boolean waitMbs(int timeout, String serv){
+private boolean waitMbs(int timeout, String serv, boolean running){
 int t=0,i,n;
 boolean ok=false;
+if(running){ // wait for task to run
 // If not there, wait for parameters to be created,
 // otherwise wait that their values match the task names
 if(mbsTaskList.size() < nMbsNodes){
@@ -310,7 +315,7 @@ if(mbsTaskList.size() < nMbsNodes){
 	    }	    	
     }
     return false;
-}
+}// tasklists not there
 if(mbsTaskList.size() == nMbsNodes){
     setProgress(new String("Wait for "+nMbsNodes+" "+serv+" tasks ..."),xSet.blueD());
     System.out.print("Wait for "+nMbsNodes+" "+serv);
@@ -325,6 +330,21 @@ if(mbsTaskList.size() == nMbsNodes){
         t++;
     }}
     return false;
+} // check if task running
+else { // check if task is gone
+    setProgress(new String("Wait for "+nMbsNodes+" "+serv+" tasks stop ..."),xSet.blueD());
+    System.out.print("Wait for "+nMbsNodes+" "+serv+" stop");
+    while(t < timeout){
+        n=0;
+        for(i=0;i<mbsTaskList.size();i++){
+            if(mbsTaskList.elementAt(i).getValue().contains(serv))n++;
+        }
+        if(n == 0) return true;
+        System.out.print(".");
+        browser.sleep(1);
+        t++;
+    }}
+    return false;
 }
 
 //wait until all runMode parameters match mode.
@@ -332,36 +352,33 @@ private boolean waitRun(int timeout, String mode){
 int t=0;
 boolean ok;
 System.out.print("Wait for acquisition mode "+mode);
-    while(t < timeout){
+while(t < timeout){
     ok=true;
-    for(int i=0;i<mbsRunning.size();i++){
+    for(int i=0;i<mbsRunning.size();i++)
         if(mbsRunning.get(i).getValue().indexOf(mode) <0) {ok=false;break;}
-    }
-        if(ok) return true;
-        setProgress(new String("Wait for MBS acquisition mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
-        System.out.print(".");
-        browser.sleep(1);
-        t++;
-    }
-    return false;
+    if(ok) return true;
+    setProgress(new String("Wait for MBS acquisition mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
+    System.out.print(".");
+    browser.sleep(1);
+    t++;
+}
+return false;
 }
 // Wait for number of servers
 private boolean waitServers(int servers, int time){
-	int t=0;
-    while(xSet.getNofServers()!=servers){
-    	t++;
-    	browser.sleep(1);
-    	if(t == time) break;
-    }
-    return(!(t==time));
+int t=0;
+while(xSet.getNofServers()!=servers){
+	t++;
+	browser.sleep(1);
+	if(t == time) break;
+}
+return(!(t==time));
 }
 private void launch(String cmd){
 int time=0;
 int num=0;
 setProgress("Launch MBS",xSet.blueD());
 System.out.print("Wait sockets free ");
-//String s=mbsshell.rshout(MbsMaster,Username.getText(),
-//		"netstat|grep \"\\.600. \"|grep -v \"\\.6.. \"|grep -v 6004|grep TIME");
 String s="TIME";
 while(s.indexOf("TIME")>=0){
     System.out.print(".");
@@ -371,8 +388,6 @@ while(s.indexOf("TIME")>=0){
     s=mbsshell.rshout(MbsMaster,Username.getText(),
 	"netstat|grep \"\\.600. \"|grep -v \"\\.6.. \"|grep -v 6004|grep TIME");
 }
-//s=mbsshell.rshout(MbsMaster,Username.getText(),
-//		"netstat|grep \"\\.61.. \"|grep TIME");
 s="TIME";
 while(s.indexOf("TIME")>=0){
     System.out.print(".");
@@ -387,18 +402,16 @@ setProgress("Launch MBS ...",xSet.blueD());
 System.out.println("");
 if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-//	if(waitMbs(5+6*nMbsNodes,"Msg_log")){
     if(waitServers(nMbsServers-1,10)){
-        System.out.println("\nMbs connnected");
+        System.out.println("Mbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
-        browser.sleep(2);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        browser.sleep(2);}
+        if(!xSet.isSuccess()) {
+        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+        }
         if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
         else setProgress("OK: MBS servers ready",xSet.greenD());
-        //setDimServices();
     } else {
         System.out.println("Mbs Failed ");
         setProgress("Failed: Launch",xSet.redD());
@@ -406,9 +419,8 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 } else {
     System.out.println("\nMbs startup script Failed ");
     setProgress("Failed: Launch script",xSet.redD());
-    }
 }
-
+}
 //React to menu selections.
 /**
  * Handle events.
@@ -419,13 +431,13 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 public void actionPerformed(ActionEvent e) {
 boolean doit=true;
 if ("set".equals(e.getActionCommand())) {
-setLaunch();
-checkDir();
-return;
+	setLaunch();
+	checkDir();
+	return;
 }
 if ("setpwd".equals(e.getActionCommand())) {
-setLaunch();
-return;
+	setLaunch();
+	return;
 }
 if ("shrink".equals(e.getActionCommand())) {
 	shrinkButton.setSelected(!shrinkButton.isSelected());
@@ -434,7 +446,7 @@ if ("shrink".equals(e.getActionCommand())) {
 	addPromptLines();
 	refreshPanel();
 	return;
-	}
+}
 nMbsServers=1+formMbs.getnServers();
 nMbsNodes=nMbsServers-2;
 
@@ -470,132 +482,128 @@ if(doit){
  */
 public void run(){
 //xSet.setWaitCursor();
-    MbsMaster = MbsNode.getText();
-    if ("prmLaunch".equals(Action)) {
-    	mbsPrompt=true;
-    	cmdPrefix=new String("*::");
-    	String cmd = new String(MbsPath.getText()+
-                                "/script/prmstartup.sc "+MbsPath.getText()+" "+
-                                MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getGuiNode()+" "+xSet.getAccess());
-        String service = new String(MbsNode.getText().toUpperCase()+":PRM");
-        launch(cmd);
-    }
-    else if ("mbsLaunch".equals(Action)) {
-    	mbsPrompt=false;
-    	cmdPrefix=new String("");
-    	String cmd = new String(MbsPath.getText()+
-                                "/script/dimstartup.sc "+MbsPath.getText()+" "+
-                                MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getAccess());
-        String service = new String(MbsNode.getText().toUpperCase()+":DSP");
-        launch(cmd);
-    }
-    else if ("mbsShell".equals(Action)) {
-        xLogger.print(1,"Shell: "+MbsCommand.getText());
-        //xLogger.print(1,MbsCommand);
+MbsMaster = MbsNode.getText();
+if ("prmLaunch".equals(Action)) {
+	mbsPrompt=true;
+	cmdPrefix=new String("*::");
+	String cmd = new String(MbsPath.getText()+
+                            "/script/prmstartup.sc "+MbsPath.getText()+" "+
+                            MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getGuiNode()+" "+xSet.getAccess());
+    String service = new String(MbsNode.getText().toUpperCase()+":PRM");
+    launch(cmd);
+}
+else if ("mbsLaunch".equals(Action)) {
+	mbsPrompt=false;
+	cmdPrefix=new String("");
+	String cmd = new String(MbsPath.getText()+
+                            "/script/dimstartup.sc "+MbsPath.getText()+" "+
+                            MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getAccess());
+    String service = new String(MbsNode.getText().toUpperCase()+":DSP");
+    launch(cmd);
+}
+else if ("mbsShell".equals(Action)) {
+    xLogger.print(1,"Shell: "+MbsCommand.getText());
+    //xLogger.print(1,MbsCommand);
         if(mbsshell.rsh(MbsNode.getText(),Username.getText(),MbsCommand.getText(),0L)){}
    }
-    else if ("mbsQuit".equals(Action)) {
-        xLogger.print(1,Action);
+else if ("mbsQuit".equals(Action)) {
+    xLogger.print(1,Action);
+}
+else if ("mbsCleanup".equals(Action)) {
+    String cmd = new String(MbsPath.getText()+
+                            "/script/prmshutdown.sc "+
+                            MbsPath.getText()+" "+
+                            MbsUserpath.getText());
+    //xLogger.print(0,MbsMaster+": "+cmd);
+    setProgress("Shut down MBS, wait ...",xSet.blueD());
+    if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
+        if(waitServers(0,10)){
+        setProgress("Update parameters ...",xSet.blueD());
+        xSet.setSuccess(false);
+        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+        if(!xSet.isSuccess()) {
+        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+        }
+        if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+        else                  setProgress("OK: MBS shut down",xSet.greenD());
+        System.out.println("Run down finished");
+    	} else setProgress("MBS shut down not finished?",xSet.redD());
+    	
     }
-    else if ("mbsCleanup".equals(Action)) {
-        String cmd = new String(MbsPath.getText()+
-                                "/script/prmshutdown.sc "+
-                                MbsPath.getText()+" "+
-                                MbsUserpath.getText());
-        //xLogger.print(0,MbsMaster+": "+cmd);
-        setProgress("Shut down MBS, wait ...",xSet.blueD());
-        if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
-//        	if(waitMbs(5+6*nMbsNodes,"BROKEN")){
-            if(waitServers(0,10)){
-            setProgress("Update parameters ...",xSet.blueD());
-            xSet.setSuccess(false);
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(2);}
-            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-            else setProgress("OK: MBS shut down",xSet.greenD());
-            //setDimServices();
-            System.out.println("Run down finished");
-        	} else setProgress("MBS shut down not finished?",xSet.redD());
-        	
-        }}
-    else {
+}
+else {
 
 // all others need mbscommand
-    if(mbsCommand == null) setDimServices();
-    if(mbsCommand == null) {
-        setProgress("MBS commands not available! Launch first.",xSet.redD());
-        threadRunning=false;
-        xSet.setProcessing(false);
-        stopProgress();
-        System.out.println("Thread done!!!");
+if(mbsCommand == null) setDimServices();
+if(mbsCommand == null) {
+    setProgress("MBS commands not available! Launch first.",xSet.redD());
+    threadRunning=false;
+    xSet.setProcessing(false);
+    stopProgress();
+    System.out.println("Thread done!!!");
 //xSet.setDefaultCursor();
-        return;
-    }
-    if ("mbsShut".equals(Action)) {
-        xLogger.print(1,"MBS: @"+MbsShut.getText());
-        setProgress("MBS shutdown",xSet.blueD());
-        mbsCommand.exec(xSet.getAccess()+" @"+MbsShut.getText());
-        browser.sleep(5);
-        setProgress("OK: MBS servers ready",xSet.greenD());
-    }
-    else if ("mbsConfig".equals(Action)) {
-        xLogger.print(1,"MBS: @"+MbsStart.getText());
-        mbsCommand.exec(xSet.getAccess()+" @"+MbsStart.getText());
-        setProgress("Start up and configure MBS tasks",xSet.blueD());
-            if(waitMbs(5+5*nMbsNodes,"Daq_rate ")){
-            System.out.println(" ");
-            xSet.setSuccess(false);
-            setProgress("Update commands ...",xSet.blueD());
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"RebuildCommands"));
-            //if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"RebuildCommands"));
-            //}
-            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-            else setProgress("OK: MBS tasks ready",xSet.greenD());
-            //setDimServices();
-            setProgress("OK: MBS tasks ready",xSet.greenD());
-        } else {
-            System.out.println("\nMBS startup failed ");
-            setProgress("Fail: Configure",xSet.redD());
-        }
-    }
-    else if ("mbsStart".equals(Action)) {
-    	String cmd = new String(cmdPrefix+"Start acquisition");
-        xLogger.print(1,"MBS: "+cmd);
-        mbsCommand.exec(xSet.getAccess()+" "+cmd);
-        if(waitRun(5+3*nMbsNodes,"Running"))
-            setProgress("OK: all running",xSet.greenD());
-        else setProgress("LOOK: not all running",xSet.redD());
+    return;
+}
+if ("mbsShut".equals(Action)) {
+    xLogger.print(1,"MBS: @"+MbsShut.getText());
+    setProgress("MBS shutdown",xSet.blueD());
+    mbsCommand.exec(xSet.getAccess()+" @"+MbsShut.getText());
+    waitMbs(5+5*nMbsNodes,"Daq_rate ",false);
+    setProgress("OK: MBS servers ready",xSet.greenD());
+}
+else if ("mbsConfig".equals(Action)) {
+    xLogger.print(1,"MBS: @"+MbsStart.getText());
+    mbsCommand.exec(xSet.getAccess()+" @"+MbsStart.getText());
+    setProgress("Start up and configure MBS tasks",xSet.blueD());
+    if(waitMbs(5+5*nMbsNodes,"Daq_rate ",true)){
         System.out.println(" ");
-     }
-    else if ("mbsStop".equals(Action)) {
-    	String cmd = new String(cmdPrefix+"Stop acquisition");
-        xLogger.print(1,"MBS: "+cmd);
-        mbsCommand.exec(xSet.getAccess()+" "+cmd);
-        if(waitRun(5+5*nMbsNodes,"Stopped"))
-        setProgress("OK: all stopped",xSet.greenD());
-        else setProgress("LOOK: not all stopped",xSet.redD());
-        System.out.println(" ");
+        xSet.setSuccess(false);
+        setProgress("Update commands ...",xSet.blueD());
+        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"RebuildCommands"));
+        if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+        else                  setProgress("OK: MBS tasks ready",xSet.greenD());
+    } else {
+        System.out.println("\nMBS startup failed ");
+        setProgress("Fail: Configure",xSet.redD());
     }
-    else if ("mbsShow".equals(Action)) {
-    	String cmd = new String(cmdPrefix+"Show acquisition");
-        xLogger.print(1,"MBS: "+cmd);
-        mbsCommand.exec(xSet.getAccess()+" "+cmd);
-    }
-    else if ("mbsEvent".equals(Action)) {
-    	String cmd = new String(cmdPrefix+"Type event -buf -verb");
-        xLogger.print(1,"MBS: "+cmd);
-        mbsCommand.exec(xSet.getAccess()+" "+cmd);
-    }
-    else if ("mbsDabc".equals(Action)) {
-    	String cmd = new String(cmdPrefix+"enable dabc");
-        xLogger.print(1,"MBS: "+cmd);
-        mbsCommand.exec(xSet.getAccess()+" "+cmd);
-    }
-    else if ("mbsCommand".equals(Action)) {
-        xLogger.print(1,MbsCommand.getText());
-    	mbsCommand.exec(xSet.getAccess()+" "+MbsCommand.getText());
-    	}
+}
+else if ("mbsStart".equals(Action)) {
+	String cmd = new String(cmdPrefix+"Start acquisition");
+    xLogger.print(1,"MBS: "+cmd);
+    mbsCommand.exec(xSet.getAccess()+" "+cmd);
+    if(waitRun(5+3*nMbsNodes,"Running"))
+         setProgress("OK: all running",xSet.greenD());
+    else setProgress("LOOK: not all running",xSet.redD());
+    System.out.println(" ");
+}
+else if ("mbsStop".equals(Action)) {
+	String cmd = new String(cmdPrefix+"Stop acquisition");
+    xLogger.print(1,"MBS: "+cmd);
+    mbsCommand.exec(xSet.getAccess()+" "+cmd);
+    if(waitRun(5+5*nMbsNodes,"Stopped"))
+    	 setProgress("OK: all stopped",xSet.greenD());
+    else setProgress("LOOK: not all stopped",xSet.redD());
+    System.out.println(" ");
+}
+else if ("mbsShow".equals(Action)) {
+	String cmd = new String(cmdPrefix+"Show acquisition");
+    xLogger.print(1,"MBS: "+cmd);
+    mbsCommand.exec(xSet.getAccess()+" "+cmd);
+}
+else if ("mbsEvent".equals(Action)) {
+	String cmd = new String(cmdPrefix+"Type event -buf -verb");
+    xLogger.print(1,"MBS: "+cmd);
+    mbsCommand.exec(xSet.getAccess()+" "+cmd);
+}
+else if ("mbsDabc".equals(Action)) {
+	String cmd = new String(cmdPrefix+"enable dabc");
+    xLogger.print(1,"MBS: "+cmd);
+    mbsCommand.exec(xSet.getAccess()+" "+cmd);
+}
+else if ("mbsCommand".equals(Action)) {
+    xLogger.print(1,MbsCommand.getText());
+	mbsCommand.exec(xSet.getAccess()+" "+MbsCommand.getText());
+	}
 }
 //xSet.setDefaultCursor();
 threadRunning=false;

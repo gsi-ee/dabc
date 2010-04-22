@@ -95,7 +95,8 @@ try{
 /**
  * Read xml file
  * @param file File name (ending with .xml).
- * @param xml Xml string to read.
+ * @param bytes maximum bytes to read.
+ * @return String
  */
 public final static String read(String file, int bytes){
 	char buf[]=new char[bytes];

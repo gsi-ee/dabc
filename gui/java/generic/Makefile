@@ -261,7 +261,7 @@ doc/index.html : \
 	$(SOURCEDIR)/xPanelLogger.java \
 	$(SOURCEDIR)/xPanelPrompt.java \
 	$(SOURCEDIR)/xDimNameInfo.java \
-	$(SOURCEDIR)/xPanelFileHeader.java \
+	$(SOURCEDIR)/xPanelRunInfo.java \
 	$(SOURCEDIR)/xPanelDabc.java \
 	$(SOURCEDIR)/xPanelDabcMbs.java \
 	$(SOURCEDIR)/xPanelMbs.java \

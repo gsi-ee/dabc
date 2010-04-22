@@ -65,8 +65,8 @@ Element root,elem,el;
     else xSet.setRecordXml(null); 
 }
 /**
- * Save all records attached to parameters (meters and histograms).
- * @param vpar Vector of xiDimParameters.
+ * Save all records attached to command arguments.
+ * @param vcom Vector of xDimCommands.
  * @param file Xml file name.
  */
 public static final void saveCommands(Vector<xDimCommand> vcom, String file){

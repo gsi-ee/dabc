@@ -360,14 +360,14 @@ if(mbsCommand != null) {
     if(demo) mbsCommand.exec(xSet.getAccess()+" *::start rirec");
     else     mbsCommand.exec(xSet.getAccess()+" *::Start acquisition");
     }
-else tellError("Command not available!");
+else tellError(this,"Command not available!");
 }
 else if ("mbsStop".equals(e.getActionCommand())) {
 if(mbsCommand != null) {
     if(demo) mbsCommand.exec(xSet.getAccess()+" *::stop rirec");
     else     mbsCommand.exec(xSet.getAccess()+" *::Stop acquisition");
     }
-else tellError("Command not available!");
+else tellError(this,"Command not available!");
 }
 //-----------
 else if ("userDisp".equals(e.getActionCommand())) {
@@ -379,11 +379,11 @@ if(!desk.findFrame(p1name)){
 //-----------
 else if ("MbsShow".equals(e.getActionCommand())) {
 if(mbsCommand != null) mbsCommand.exec(xSet.getAccess()+" Sho acq");
-else tellError("Command not available!");
+else tellError(this,"Command not available!");
 } 
 else if ("MbsCommand".equals(e.getActionCommand())) {
 if(mbsCommand != null) mbsCommand.exec(xSet.getAccess()+" "+prompt1.getText());
-else tellError("Command not available!");
+else tellError(this,"Command not available!");
 } else {
 MbsListener.actionPerformed(e);
 } }

@@ -54,11 +54,6 @@ private String srun, sexp, sline, file;
 private boolean only;
 /**
  * Creates panel to specify run information.
- * @param file XML file to restore values (Selection.xml).
- * @param title Title of panel.
- * @param browser DIM browser interface. 
- * @param desktop Desktop interface to open the windows.
- * @param actionlistener Events can be passed to Desktop action listener.
  */
 public xPanelRunInfo(){
 // Head line (title) inside window
@@ -101,14 +96,19 @@ public void init(xiDesktop desktop, ActionListener actionlistener){
     comar.setFont(new Font("Monospaced",0,12));
     addTextButton("Save run information for file header","set","Use RET in text field to separate lines.",this);
 }
-//Release local references to DIM parameters and commands (xiUserPanel)
-//otherwise we would get memory leaks!
+/**
+ * Release local references to DIM parameters and commands (xiUserPanel).
+ * otherwise we would get memory leaks!
+ */
 public void releaseDimServices(){
  System.out.println("RunInfo releaseDimServices");
  mbsSetHead=null;
 }
-//Setup references to DIM parameters and commands (xiUserPanel)
-//Called after releaseDimServices() after every change in DIM services
+/**
+ * Setup references to DIM parameters and commands (xiUserPanel).
+ * Called after releaseDimServices() after every change in DIM services
+ * @param browser DIM browser interface.
+ */
 public void setDimServices(xiDimBrowser browser){
  System.out.println("RunInfo setDimServices");
 //get list of commands, look for generic MBS command

@@ -79,6 +79,7 @@ private static boolean ctrl=false;
 private static boolean progress=false;
 private static String usrpanels;
 private static int nDataServers=0; 
+private static String actioncommand;
 
 /**
  * Singleton
@@ -286,6 +287,17 @@ Access = new String(xCrypt.crypt("x1",new String(access)));
  */
 public final static String getAccess(){return Access;}
 /**
+ * Store action command (used by timers with Java < 6).
+ * @param command Action command.
+ */
+protected final static void setActionCommand(String command){
+actioncommand = new String(command);
+}
+/**
+ * @return Action command.
+ */
+protected final static String getActionCommand(){return actioncommand;}
+/**
  * Dimension adder for convenience.
  * @param d1 First dimension
  * @param d2 Second dimension
@@ -335,7 +347,7 @@ sx=el.getAttribute("width").toString().split(",");
 for(int i=0;i<sx.length;i++)ParTableWidth[i]=Integer.parseInt(sx[i]);
 }
 /**
- * @returns number of DIM servers excludinmg name server
+ * @return number of DIM servers excludinmg name server
  */
 protected final static int getNofServers(){
 	return nDataServers;
@@ -348,19 +360,19 @@ protected final static void setNofServers(int servers){
 }
 /**
  * Analyze main argument list.
- * @param Argument list.
+ * @param arglist Argument list.
  */
-protected final static void checkMainArgs(String[] name){
+protected final static void checkMainArgs(String[] arglist){
 usrpanels=null;
 ctrl=true;
 dabc=true;
-for(int i=0;i<name.length;i++){
-	     if(name[i].startsWith("-moni")) {ctrl=false;dabc=false;dabs=false;mbs=false;guru=false;}
-	else if(name[i].startsWith("-mbs")&ctrl) {mbs=true;dabc=false;}
-	else if(name[i].startsWith("-dabc")&ctrl) dabc=true;
-	else if(name[i].startsWith("-dabs")&ctrl) {dabs=true;dabc=false;}
-	else if(name[i].startsWith("-guru")&ctrl) guru=true;
-	else if(!name[i].startsWith("-"))usrpanels=new String(name[i]);
+for(int i=0;i<arglist.length;i++){
+	     if(arglist[i].startsWith("-moni")) {ctrl=false;dabc=false;dabs=false;mbs=false;guru=false;}
+	else if(arglist[i].startsWith("-mbs")&ctrl) {mbs=true;dabc=false;}
+	else if(arglist[i].startsWith("-dabc")&ctrl) dabc=true;
+	else if(arglist[i].startsWith("-dabs")&ctrl) {dabs=true;dabc=false;}
+	else if(arglist[i].startsWith("-guru")&ctrl) guru=true;
+	else if(!arglist[i].startsWith("-"))usrpanels=new String(arglist[i]);
 }
 if(guru){
 	ctrl=true;

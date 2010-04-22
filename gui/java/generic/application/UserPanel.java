@@ -351,7 +351,7 @@ if(mbsCommand != null) {
         }
     else mbsCommand.exec("*::Start rirec");
     }
-else tellError("Command not available!");
+else tellError(this,"Command not available!");
 }
 //-----------
 else if ("userStop".equals(e.getActionCommand())) {
@@ -359,7 +359,7 @@ if(mbsCommand != null) {
     if(check2.isSelected()) mbsCommand.exec("@shutdown");
     else mbsCommand.exec("*::Stop rirec");
     }
-else tellError("Command not available!");
+else tellError(this,"Command not available!");
 }
 //-----------
 else if ("userDisp".equals(e.getActionCommand())) {

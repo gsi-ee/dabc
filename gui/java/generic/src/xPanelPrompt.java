@@ -242,7 +242,7 @@ public void addButton(String cmd, String tt, ImageIcon icon, ActionListener al){
  * Add tool bar button.
  * @param cmd Button command. 
  * @param icon Button icon.
- * @selected icon Button pressed icon
+ * @param selected icon Button pressed icon
  * @param tt Tool tip text.
  * @param al Action listener handling button command.
  */

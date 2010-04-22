@@ -54,6 +54,7 @@ public xDimNameInfo(String service, JTextArea label){
 public void infoHandler(){
     String[] name;
     String str=getString();
+    //System.out.println("-----"+str);
     name=str.split("\\|"); // split around "|"
     if(name.length > 1)nDataServers=name.length-1; // exclude DNS
     boolean append=str.startsWith("+");
