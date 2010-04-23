@@ -393,8 +393,8 @@ else if ("dabcSave".equals(e.getActionCommand())) {
 if(!threadRunning){
     Action = new String(e.getActionCommand());
     // must do confirm here, because in thread it would block forever
-    if ("dabcExit".equals(Action)) doit=askQuestion("Confirmation","Exit, shut down and cleanup DABC?");
-    if ("dabcCleanup".equals(Action)) doit=askQuestion("Confirmation","Kill DABC tasks?");
+    if (("dabcExit".equals(Action)) && (!xSet.isGuru())) doit=askQuestion("Confirmation","Exit, shut down and cleanup DABC?");
+    if (("dabcCleanup".equals(Action)) && (!xSet.isGuru())) doit=askQuestion("Confirmation","Kill DABC tasks?");
     if(doit){
         startProgress();
         ae=e;

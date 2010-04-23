@@ -104,7 +104,7 @@ stopIcon    = xSet.getIcon("icons/dabcstop.png");
 shrinkIcon  = xSet.getIcon("icons/shrink.png");
 enlargeIcon = xSet.getIcon("icons/enlarge.png");
 // add buttons
-//    addButton("mbsQuit","Close window",closeIcon,this);
+// addButton("mbsQuit","Close window",closeIcon,this);
 shrinkButton=addButton("shrink","Minimize/maximize panel",shrinkIcon,enlargeIcon,this);
 addButton("mbsSave","Save form to file",storeIcon,this);
 addButton("prmLaunch","Launch MBS multi node servers",launchIcon,this);
@@ -462,7 +462,7 @@ if ("mbsSave".equals(e.getActionCommand())) {
 if(!threadRunning){
 Action = new String(e.getActionCommand());
 // must do confirm here, because in thread it would block forever
-if ("mbsCleanup".equals(Action)) doit=askQuestion("Confirmation","Shut down and cleanup MBS?");
+if (("mbsCleanup".equals(Action))&&(!xSet.isGuru()))doit=askQuestion("Confirmation","Shut down and cleanup MBS?");
 if(doit){
     startProgress();
     ae=e;
