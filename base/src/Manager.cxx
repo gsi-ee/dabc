@@ -530,10 +530,11 @@ void dabc::Manager::ProcessParameterEvent()
                if (fTimedPars.size()==0) { activate = true; interval = -1.; }
                break;
          }
-   }
+//   } // unlock
 
    // generate parameter event from the manager thread
    if (!rec.processed && visible) ParameterEvent(rec.par, rec.event);
+} // unlock
 
    if (rec.event == parDestroy) delete rec.par;
 

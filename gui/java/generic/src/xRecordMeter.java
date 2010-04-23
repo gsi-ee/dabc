@@ -71,15 +71,25 @@ public double getUpper(){return Up;}
 public String getUnits(){return Units;}
 
 public String XmlLine(){
-String str = String.format("<Meter name=\"%s\" visible=\"%s\" mode=\"%d\" auto=\"%s\" log=\"%s\" low=\"%010.1f\" up=\"%010.1f\" color=\"%s\"/>\n",
-getName(),isVisible().toString(),getMode(),getAutoScale().toString(),getLogScale().toString(),getLower(),getUpper(),getColor());
-return str;}
-
+String mode="";
+     if(Mode == xMeter.ARC)  mode="ARC";
+else if(Mode == xMeter.BAR)  mode="BAR";
+else if(Mode == xMeter.TREND)mode="TREND";
+else if(Mode == xMeter.STAT) mode="STAT";
+String str = String.format("<Meter name=\"%s\" visible=\"%s\" mode=\"%s\" auto=\"%s\" log=\"%s\" low=\"%010.1f\" up=\"%010.1f\" color=\"%s\"/>\n",
+getName(),isVisible().toString(),mode,getAutoScale().toString(),getLogScale().toString(),getLower(),getUpper(),getColor());
+return str;
+}
 public void restoreRecord(Element el){
 String att;
     // setName(el.getAttribute("name").toString());
     att=el.getAttribute("mode");
-    if(att.length()>0)Mode=Integer.parseInt(att);
+    if(att.length()>0){
+    	if(att.equals("ARC"))       Mode=xMeter.ARC;
+    	else if(att.equals("BAR"))  Mode=xMeter.BAR;
+    	else if(att.equals("TREND"))Mode=xMeter.TREND;
+    	else if(att.equals("STAT")) Mode=xMeter.STAT;
+    }
     att=el.getAttribute("low");
     if(att.length()>0)Low=Double.parseDouble(att);
     att=el.getAttribute("up");

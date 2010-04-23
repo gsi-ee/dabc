@@ -601,14 +601,17 @@ public void actionPerformed(ActionEvent e) {
             desktop, "Layout saved: "+RecordFile+" "+SelectionFile+" "+LayoutFile, "Information",JOptionPane.INFORMATION_MESSAGE);
     }
     else if (("Update".equals(ActionCommand)) ||
-        ("Browser".equals(ActionCommand))) {
+            ("Rebuild".equals(ActionCommand)) ||
+            ("Browser".equals(ActionCommand))) {
         if("Browser".equals(ActionCommand)){
-        	if(xSet.isProcessing()) {
+        	if(xSet.isProcessing()) { // MBS or DABC command tread running
         		System.out.println("Busy, no update");
         		return;
         	}
         	clearOnUpdate=true;
         }
+        if("Rebuild".equals(ActionCommand))
+        	clearOnUpdate=true;
         // clear all references to DIM services
 		System.out.println("----- update");
         mbspan.releaseDimServices();
