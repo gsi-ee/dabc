@@ -316,6 +316,7 @@ if(xmlp != null){
         else        cmd.exec(xSet.getAccess()+" "+sb.toString());
         done=true;
     }
+    xSaveRestore.updateCommands(vcom);
 } // has XML
 xLogger.print(1,cmd.getParser().getFull()+" "+sb.toString());
 }

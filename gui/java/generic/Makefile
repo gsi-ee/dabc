@@ -69,9 +69,9 @@ classes: \
 	$(PACKAGE)/xPanelDabc.class \
 	$(PACKAGE)/xPanelMbs.class \
 	$(PACKAGE)/xPanelDabcMbs.class \
+	$(PACKAGE)/xSaveRestore.class \
 	$(PACKAGE)/xPanelCommand.class \
 	$(PACKAGE)/xPanelParameter.class \
-	$(PACKAGE)/xSaveRestore.class \
 	$(PACKAGE)/xPanelSelect.class \
 	$(PACKAGE)/xDesktop.class \
 	$(PACKAGE)/xGui.class \

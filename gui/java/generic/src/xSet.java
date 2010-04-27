@@ -122,7 +122,9 @@ public final static Color white(){return white;}
 protected final static void setRecordXml(NodeList list){
 	records=list;
 	}
-	protected static final NodeList getRecordXml(){return records;}
+protected static final NodeList getRecordXml(){
+	return records;
+	}
 protected final static void setCommandXml(NodeList list){
 	commands=list;
 	}

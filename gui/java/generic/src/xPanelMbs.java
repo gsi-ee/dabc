@@ -557,11 +557,9 @@ else if ("mbsConfig".equals(Action)) {
     setProgress("Start up and configure MBS tasks",xSet.blueD());
     if(waitMbs(5+5*nMbsNodes,"Daq_rate ",true)){
         System.out.println(" ");
-        xSet.setSuccess(false);
         setProgress("Update commands ...",xSet.blueD());
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"RebuildCommands"));
-        if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-        else                  setProgress("OK: MBS tasks ready",xSet.greenD());
+        setProgress("OK: MBS tasks ready",xSet.greenD());
     } else {
         System.out.println("\nMBS startup failed ");
         setProgress("Fail: Configure",xSet.redD());

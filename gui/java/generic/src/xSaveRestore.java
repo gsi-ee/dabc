@@ -50,10 +50,10 @@ public static final void saveRecords(Vector<xiDimParameter> vpar, String file){
 /**
  * Restore all records attached to parameters (meters and histograms).
  * XML tree is stored in xSet and can be retrieved by getRecordXml 
- * called in xPanelParameter.
+ * called in xDesktop.
  * @param file Xml file name.
  * @see xSet
- * @see xPanelParameter
+ * @see xDesktop
  */
 public static final void restoreRecords(String file){
 Element root,elem,el;
@@ -65,7 +65,7 @@ Element root,elem,el;
     else xSet.setRecordXml(null); 
 }
 /**
- * Save all records attached to command arguments.
+ * Save all attributes of command arguments.
  * @param vcom Vector of xDimCommands.
  * @param file Xml file name.
  */
@@ -86,23 +86,54 @@ public static final void saveCommands(Vector<xDimCommand> vcom, String file){
     xXml.write(file, str.toString());
 }
 /**
- * Restore all records attached to parameters (meters and histograms).
- * XML tree is stored in xSet and can be retrieved by getRecordXml 
- * called in xPanelParameter.
+ * Restore all attributes attached to commands from file.
+ * Only once.
+ * XML tree is stored in xSet and can be retrieved by getCommandXml 
+ * called in xDesktop.
  * @param file Xml file name.
  * @see xSet
- * @see xPanelParameter
+ * @see xDesktop
  */
 public static final void restoreCommands(String file){
-Element root;
-NodeList comlist;
-comlist=null;
-root=xXml.read(file);
-if(root != null){
-	comlist = root.getElementsByTagName("command");
-	System.out.println("Restore command attributes from "+file);
+	Element root;
+	NodeList comlist;
+	if(xSet.getCommandXml()==null){
+		comlist=null;
+		root=xXml.read(file);
+		if(root != null){
+			comlist = root.getElementsByTagName("command");
+			System.out.println("Restore command attributes from "+file);
+		}
+		xSet.setCommandXml(comlist); 
+	}
 }
-xSet.setCommandXml(comlist); 
+/**
+ * Save all attributes of command arguments in xSet.
+ * Called in xPanelCommand after comman execution.
+ * @param vcom Vector of xDimCommands.
+ */
+public static final void updateCommands(Vector<xDimCommand> vcom){
+	Element root;
+	NodeList comlist;
+    StringBuffer str=new StringBuffer();
+    int icom=vcom.size();
+	System.out.println("Update command attributes");
+    str.append(xXml.header());
+    str.append(xXml.tag("Commands",xXml.OPEN));
+    for(int i=0;i<icom;i++) {
+    	if(vcom.get(i).getXmlParser()!=null){
+    	if(vcom.get(i).getXmlParser().isChanged()){
+        		str.append(vcom.get(i).getXmlParser().getXmlString());
+        		System.out.println("Update arguments of "+vcom.get(i).getParser().getFull());
+        }}
+    }
+    str.append(xXml.tag("Commands",xXml.CLOSE));
+	comlist=null;
+	root=xXml.string(str.toString());
+	if(root != null){
+		comlist = root.getElementsByTagName("command");
+	}
+	xSet.setCommandXml(comlist); 
 }
 /**
  * Save layouts to xml file

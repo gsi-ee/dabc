@@ -664,7 +664,6 @@ public void actionPerformed(ActionEvent e) {
         }
         compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
         if(frCommands   != null) frCommands.addWindow(compan);
-        xSet.setSuccess(true);
 		System.out.println("----- rebuild commands finished");
     }
     else if ("DisplayFrame".equals(ActionCommand)) { //used for progress window
