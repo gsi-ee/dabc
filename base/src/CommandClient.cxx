@@ -225,7 +225,7 @@ bool dabc::CommandReceiver::Execute(const char* cmdname, double timeout_sec)
 int dabc::CommandReceiver::ExecuteInt(const char* cmdname, const char* intresname, double timeout_sec)
 {
    dabc::Command* cmd = new dabc::Command(cmdname);
-   cmd->SetKeepAlive(true);
+   cmd->SetKeepAlive();
 
    int res = -1;
 
@@ -240,7 +240,7 @@ int dabc::CommandReceiver::ExecuteInt(const char* cmdname, const char* intresnam
 std::string dabc::CommandReceiver::ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec)
 {
    dabc::Command* cmd = new dabc::Command(cmdname);
-   cmd->SetKeepAlive(true);
+   cmd->SetKeepAlive();
 
    std::string res;
 

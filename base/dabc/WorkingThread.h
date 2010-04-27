@@ -61,8 +61,6 @@ namespace dabc {
       public:
 
          enum EEvents { evntProcCmd = 1,
-                        evntProcNewCmd,
-                        evntProcNewReply,
                         evntCheckTmout,
                         evntRebuildProc,
                         evntDoNothing,
@@ -163,8 +161,6 @@ namespace dabc {
          bool AddProcessor(WorkingProcessor* proc, bool sync = true);
          int SysCommand(const char* cmdname, WorkingProcessor* proc);
          bool SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd);
-         bool NewCmd_SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd);
-         bool NewCmd_SubmitProcessorReplyCmd(WorkingProcessor* proc, Command* cmd);
 
          void RemoveProcessor(WorkingProcessor* proc);
          void DestroyProcessor(WorkingProcessor* proc);

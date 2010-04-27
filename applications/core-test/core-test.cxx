@@ -462,7 +462,10 @@ void TestCmdChain(int number)
 
    dabc::mgr()->StartAllModules();
 
-   int res = m0->NewCmd_Execute("MyCommand");
+   DOUT0(("==============================================="));
+   DOUT0(("Inject command"));
+
+   int res = m0->NewCmd_Execute("MyCommand",2);
 
    DOUT0(("Execution result = %d", res));
 

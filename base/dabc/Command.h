@@ -21,9 +21,11 @@
 namespace dabc {
 
    class CommandClientBase;
+   class WorkingThread;
    class WorkingProcessor;
    class Mutex;
    class Condition;
+   class CommandsQueue;
 
    enum CommandRes {
       cmd_false = 0,
@@ -35,6 +37,8 @@ namespace dabc {
    class Command : public Basic {
 
       friend class CommandClientBase;
+      friend class WorkingThread;
+      friend class CommandsQueue;
       friend class WorkingProcessor;
 
       protected:
@@ -42,18 +46,24 @@ namespace dabc {
          class CommandParametersList;
 
          CommandParametersList* fParams;
+
          CommandClientBase*     fClient;
          Mutex*                 fClientMutex; // pointer on client mutex, must be locked when we access client itself
-         bool                   fKeepAlive;   // if true, object should not be deleted by client, but later by user
+         int                    fKeepAlive;   // if true, object should not be deleted by client, but later by user
          bool                   fCanceled;    // true if command was canceled by client, will not be executed
 
-         WorkingProcessor*      fProcessor;       /** pointer on processor, waiting for command execution */
-         Mutex*                 fProcessorMutex;  /** processor mutex, used for access fProcessor pointer */
-         Condition*             fProcessorCond;   /** pointer on the condition, used for waiting of result */
+         Mutex*                 fCommandMutex;    /** command mutex, not used for command parameters, derived for caller thread */
+
+         WorkingProcessor*      fCallerProcessor; /** pointer on caller processor */
+         unsigned               fCmdId;           /** Current command id */
+         bool                   fExeReady;        /** Indicate if execution of command is ready */
 
          virtual ~Command();
 
          void SetCanceled() { fCanceled = true; }
+
+         void CleanCaller();
+
 
       public:
 
@@ -61,8 +71,7 @@ namespace dabc {
 
          void SetCommandName(const char* name) { SetName(name); }
 
-         bool IsKeepAlive() const { return fKeepAlive; }
-         void SetKeepAlive(bool on = true) { fKeepAlive = on; }
+         void SetKeepAlive() { fKeepAlive++; }
 
          bool IsCanceled() const { return fCanceled; }
 
@@ -102,9 +111,6 @@ namespace dabc {
 
          bool IsClient();
          void CleanClient();
-
-         bool IsProcessor();
-         void CleanProcessor();
 
          static void Reply(Command* cmd, int res = 1);
          static void Finalise(Command* cmd);

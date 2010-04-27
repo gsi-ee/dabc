@@ -29,11 +29,13 @@ dabc::Command::Command(const char* name) :
    fParams(0),
    fClient(0),
    fClientMutex(0),
-   fKeepAlive(false),
+   fKeepAlive(0),
    fCanceled(false),
-   fProcessor(0),
-   fProcessorMutex(0),
-   fProcessorCond(0)
+
+   fCommandMutex(0),
+   fCallerProcessor(0),
+   fCmdId(0),
+   fExeReady(false)
 {
    DOUT5(("New command %p name %s", this, GetName()));
 }
@@ -43,7 +45,7 @@ dabc::Command::~Command()
    // this need to be sure, that command is not attached to the client
    CleanClient();
 
-   CleanProcessor();
+   CleanCaller();
 
    delete fParams;
    fParams = 0;
@@ -66,18 +68,9 @@ bool dabc::Command::IsClient()
 }
 
 
-bool dabc::Command::IsProcessor()
+void dabc::Command::CleanCaller()
 {
-   LockGuard lock(fProcessorMutex);
-   return fProcessor!=0;
-}
-
-void dabc::Command::CleanProcessor()
-{
-   LockGuard lock(fProcessorMutex);
-   if (fProcessor) fProcessor->NewCmd__Forget(this);
-   fProcessor = 0;
-   fProcessorMutex = 0;
+   fCallerProcessor = 0;
 }
 
 
@@ -395,22 +388,8 @@ void dabc::Command::Reply(Command* cmd, int res)
 
    if (!processreply) {
 
-      WorkingProcessor* proc = 0;
-
-      {
-         LockGuard guard(cmd->fProcessorMutex);
-         proc = cmd->fProcessor;
-         cmd->fProcessor = 0;
-         cmd->fProcessorMutex = 0;
-
-         if (cmd->fProcessorCond) {
-            cmd->fProcessorCond->_DoFire();
-            cmd->fProcessorCond = 0;
-            processreply = true;
-            proc = 0;
-         }
-      }
-
+      WorkingProcessor* proc = cmd->fCallerProcessor;
+      cmd->fCallerProcessor = 0;
       if (proc) processreply = proc->NewCmd_GetReply(cmd);
 
    }
@@ -425,9 +404,10 @@ void dabc::Command::Finalise(Command* cmd)
    // this is a way to keep object "alive" - means not destroy it
    // second call, which should be done from the user, must finally delete it
 
-   if (cmd->IsKeepAlive()) {
+   if (cmd->fKeepAlive > 0) {
       cmd->CleanClient();
-      cmd->SetKeepAlive(false);
+      cmd->CleanCaller();
+      cmd->fKeepAlive--;
       return;
    }
 
@@ -436,7 +416,7 @@ void dabc::Command::Finalise(Command* cmd)
 
    cmd->CleanClient();
 
-   cmd->CleanProcessor();
+   cmd->CleanCaller();
 
    delete cmd;
 }

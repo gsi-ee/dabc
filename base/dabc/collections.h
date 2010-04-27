@@ -333,17 +333,28 @@ namespace dabc {
    // _______________________________________________________________
 
    class CommandsQueue {
+
+      public:
+
+         enum EKind { kindNone, kindSubmit, kindReply, kindExe };
+
       protected:
+
          Queue<Command*>    fQueue;
-         bool               fReplyQueue;
+         EKind              fKind;
          Mutex              *fCmdsMutex;
+         uint32_t           fIdCounter;
 
       public:
          CommandsQueue(bool replyqueue = false, bool withmutex = true);
+         CommandsQueue(EKind kind);
          virtual ~CommandsQueue();
-         void Push(Command* cmd);
+         uint32_t Push(Command* cmd);
          Command* Pop();
+         Command* PopWithId(uint32_t id);
          Command* Front();
+         bool HasCommand(Command* cmd);
+         bool RemoveCommand(Command* cmd);
          unsigned Size();
 
          void Cleanup();

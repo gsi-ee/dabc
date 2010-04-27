@@ -173,7 +173,7 @@ bool dabc::WorkingThread::Start(double timeout_sec, bool withoutthrd)
             needkill = true;
             break;
          case stChanging:
-            EOUT(("Status is chaning from other thread. Not supported"));
+            EOUT(("Status is changing from other thread. Not supported"));
             return false;
          default:
             EOUT(("Forgot something???"));
@@ -353,6 +353,7 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
       proc->fProcessorId = fProcessors.size();
       fProcessors.push_back(proc);
       proc->fProcessorThread = this;
+      proc->fProcessorMainMutex = &fWorkMutex;
 
       ProcessorNumberChanged();
 
@@ -452,7 +453,11 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
 
    if (itemid>0) {
       WorkingProcessor* proc = fProcessors[itemid];
-      if (proc) proc->ProcessEvent(evnt);
+      if (proc)
+         if (GetEventCode(evnt) < WorkingProcessor::evntFirstSystem)
+            proc->ProcessCoreEvent(evnt);
+         else
+            proc->ProcessEvent(evnt);
    } else
 
    switch (GetEventCode(evnt)) {
@@ -469,53 +474,6 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
          if (proc) {
             Command* cmd = proc->fProcessorCommands.Pop();
             if (cmd) proc->ProcessCommand(cmd);
-         } else {
-            DOUT3(("WorkingProcessor with such id no longer exists"));
-         }
-
-         break;
-      }
-
-      case evntProcNewCmd: {
-         uint32_t procid = GetEventArg(evnt);
-
-         if (procid >= fProcessors.size()) {
-            DOUT3(("evntProcCmd - mismatch in processor id:%u sz:%u ",procid, fProcessors.size()));
-            break;
-         }
-
-         WorkingProcessor* proc = fProcessors[procid];
-
-         if (proc) {
-            Command* cmd = proc->fProcessorNewCommands.Pop();
-            if (cmd) proc->NewCmd_ProcessCommand(cmd);
-         } else {
-            DOUT3(("WorkingProcessor with such id no longer exists"));
-         }
-
-         break;
-      }
-
-      case evntProcNewReply: {
-         uint32_t procid = GetEventArg(evnt);
-
-         if (procid >= fProcessors.size()) {
-            DOUT3(("evntProcCmd - mismatch in processor id:%u sz:%u ",procid, fProcessors.size()));
-            break;
-         }
-
-         WorkingProcessor* proc = fProcessors[procid];
-
-         if (proc) {
-            Command* cmd = proc->fProcessorReplyCommands.Pop();
-
-            if (cmd) {
-               if (cmd == proc->fProcessorExecutingCmd)
-                  proc->fProcessorExecutingFlag = false;
-               else
-                  if (proc->NewCmd_ProcessReply(cmd))
-                     dabc::Command::Finalise(cmd);
-            }
          } else {
             DOUT3(("WorkingProcessor with such id no longer exists"));
          }
@@ -618,47 +576,10 @@ bool dabc::WorkingThread::SubmitProcessorCmd(WorkingProcessor* proc, Command* cm
    return true;
 }
 
-bool dabc::WorkingThread::NewCmd_SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd)
-{
-   if (!IsThrdWorking()) {
-      EOUT(("Fails for command %s", cmd->GetName()));
-      dabc::Command::Reply(cmd, false);
-      return false;
-   }
-
-   DOUT5(("Get processor command %s numq %d arg %d", cmd->GetName(), fNumQueues,  (fNumQueues>1) ? 1 : 0));
-
-   proc->fProcessorNewCommands.Push(cmd);
-
-   LockGuard guard(fWorkMutex);
-
-   _Fire(CodeEvent(evntProcNewCmd, 0, proc->fProcessorId), 0);
-
-   return true;
-
-}
-
-bool dabc::WorkingThread::NewCmd_SubmitProcessorReplyCmd(WorkingProcessor* proc, Command* cmd)
-{
-   if (!IsThrdWorking()) return false;
-
-   DOUT5(("Get processor command %s numq %d arg %d", cmd->GetName(), fNumQueues, (fNumQueues>1) ? 1 : 0));
-
-   proc->fProcessorReplyCommands.Push(cmd);
-
-   LockGuard guard(fWorkMutex);
-
-   _Fire(CodeEvent(evntProcNewReply, 0, proc->fProcessorId), 0);
-
-   return true;
-}
-
 int dabc::WorkingThread::Execute(dabc::Command* cmd, double tmout)
 {
-   if (IsItself()) return fExec->NewCmd_ExecuteIn(fExec, cmd);
-              else return fExec->NewCmd_Execute(cmd);
+   return fExec->NewCmd_Execute(cmd);
 }
-
 
 int dabc::WorkingThread::SysCommand(const char* cmdname, WorkingProcessor* proc)
 {
@@ -744,4 +665,6 @@ double dabc::WorkingThread::CheckTimeouts(bool forcerecheck)
 
    return min_tmout;
 }
+
+
 

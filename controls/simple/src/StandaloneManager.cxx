@@ -158,7 +158,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
 
       Command* scmd = new Command("StartServer");
       scmd->SetStr("CmdChannel", "StdMgrCmd");
-      scmd->SetKeepAlive(true);
+      scmd->SetKeepAlive();
       Submit(cli.Assign(SetCmdReceiver(scmd, fCmdDevName.c_str())));
 
       if (cli.WaitCommands(10)) {
@@ -190,7 +190,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       Command* cmdr = new Command("RegisterSlave");
       cmdr->SetStr("SlaveName", GetName());
       cmdr->SetInt("SlaveNodeId", fNodeId);
-      cmdr->SetKeepAlive(true);
+      cmdr->SetKeepAlive();
 
       Device::MakeRemoteCommand(cmdr, controllerID, "StdMgrCmd");
 
@@ -287,7 +287,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       // start server without extra cmd channel
       Command* scmd = new Command("StartServer");
 //      scmd->SetStr("CmdChannel","StdMgrCmd");
-      scmd->SetKeepAlive(true);
+      scmd->SetKeepAlive();
       Submit(cli.Assign(SetCmdReceiver(scmd, fCmdDevName.c_str())));
 
       if (cli.WaitCommands(10)) {

@@ -1610,15 +1610,21 @@ bool dabc::Manager::MakeThreadForModule(Module* m, const char* thrdname)
    return MakeThreadFor(m, thrdname);
 }
 
-const char* dabc::Manager::CurrentThrdName()
+dabc::WorkingThread* dabc::Manager::CurrentThread()
 {
    Folder* f = GetThreadsFolder(false);
-   if (f==0) return "no threrads";
-   for (unsigned n=0; n < f->NumChilds(); n++) {
-      WorkingThread* thrd = dynamic_cast<WorkingThread*> (f->GetChild(n));
-      if (thrd && thrd->IsItself()) return thrd->GetName();
-   }
-   return "uncknown";
+   if (f!=0)
+      for (unsigned n=0; n < f->NumChilds(); n++) {
+         WorkingThread* thrd = dynamic_cast<WorkingThread*> (f->GetChild(n));
+         if (thrd && thrd->IsItself()) return thrd;
+      }
+   return 0;
+}
+
+const char* dabc::Manager::CurrentThrdName()
+{
+   WorkingThread* thrd = CurrentThread();
+   return thrd ? thrd->GetName() : "uncknown";
 }
 
 void dabc::Manager::DoPrint()

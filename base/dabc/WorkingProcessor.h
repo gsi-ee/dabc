@@ -43,7 +43,9 @@ namespace dabc {
 
       public:
 
-         enum { evntFirstSystem = 1, evntFirstUser = 1000 };
+         enum { evntFirstCore   = 1,
+                evntFirstSystem = 100,
+                evntFirstUser =   1000 };
 
          WorkingProcessor(Folder* parsholder = 0);
          virtual ~WorkingProcessor();
@@ -101,11 +103,22 @@ namespace dabc {
          static void SetGlobalParsVisibility(unsigned lvl = 1) { gParsVisibility = lvl; }
          static void SetParsCfgDefaults(unsigned flags) { gParsCfgDefaults = flags; }
 
+         /** ! Assign command with processor before command be submitted to other processor
+          * This produce NewCmd_ReplyCommand() call when command execution is finished */
+         bool NewCmd_Assign(Command* cmd);
+
+         /** Submit command for execution in the processor */
          bool NewCmd_Submit(Command* cmd);
 
+         /** Execute command in the processor. Event loop of caller thread is kept running */
          int NewCmd_Execute(Command* cmd, double tmout = -1.);
 
+         /* Wrap of previous method, provided for convenience */
          int NewCmd_Execute(const char* cmdname, double tmout = -1.);
+
+         /** Reimplement this method to react on command reply
+          * Return true if command can be destroyed by framework*/
+         virtual bool NewCmd_ReplyCommand(Command* cmd) { return true; }
 
       protected:
 
@@ -119,10 +132,22 @@ namespace dabc {
 
          virtual double ProcessTimeout(double last_diff) { return -1.; }
 
+         inline void _FireEvent(uint16_t evid)
+         {
+            if (fProcessorThread && (fProcessorId>0))
+               fProcessorThread->_Fire(CodeEvent(evid, fProcessorId), fProcessorPriority);
+         }
+
          inline void FireEvent(uint16_t evid)
          {
             if (fProcessorThread && (fProcessorId>0))
                fProcessorThread->Fire(CodeEvent(evid, fProcessorId), fProcessorPriority);
+         }
+
+         inline void _FireEvent(uint16_t evid, uint32_t arg)
+         {
+            if (fProcessorThread && (fProcessorId>0))
+               fProcessorThread->_Fire(CodeEvent(evid, fProcessorId, arg), fProcessorPriority);
          }
 
          inline void FireEvent(uint16_t evid, uint32_t arg)
@@ -138,13 +163,12 @@ namespace dabc {
          void SingleLoop(double tmout) { ProcessorThread()->SingleLoop(this, tmout); }
 
 
-
          int NewCmd_ExecuteIn(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
          int NewCmd_ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout = -1.);
-         int NewCmd_ProcessCommand(dabc::Command* cmd);
+
+         int NewCmd_ProcessSubmit(dabc::Command* cmd);
          bool NewCmd_ProcessReply(dabc::Command* cmd);
          bool NewCmd_GetReply(dabc::Command* cmd);
-         void NewCmd__Forget(dabc::Command* cmd);
 
 
          virtual void DoProcessorMainLoop() {}
@@ -201,16 +225,16 @@ namespace dabc {
          WorkingThread*   fProcessorThread;
          uint32_t         fProcessorId;
          int              fProcessorPriority;
+
          CommandsQueue    fProcessorCommands;
 
-         CommandsQueue    fProcessorNewCommands;
-         CommandsQueue    fProcessorReplyCommands;
-         Command*         fProcessorExecutingCmd;          // processor waits until this command is executed
-         bool             fProcessorExecutingFlag;         // indicates if waiting loop of processor still active
+         Mutex*           fProcessorMainMutex;            // pointer on main thread mutex
+
+         CommandsQueue    fProcessorSubmCommands;          // list of submitted commands, protected via main thread mutex
+         CommandsQueue    fProcessorReplyCommands;          // list of reply commands, protected via main thread mutex
+         CommandsQueue    fProcessorExeCommands;           // list of commands, which are currently executed by processor, protected via main thread mutex
 
          Folder*          fParsHolder;
-
-         Mutex            fProcessorPrivateMutex;          // use to protect some private members of processor like timeout data
 
          unsigned         fParsDefaults;
 
@@ -218,7 +242,12 @@ namespace dabc {
          static unsigned  gParsCfgDefaults; /** system-wide defaults for config parameters */
 
       private:
+         enum { evntSubmitCommand = evntFirstCore,
+                evntReplyCommand };
+
+
          bool TakeActivateData(TimeStamp_t& mark, double& interval);
+         void ProcessCoreEvent(EventId);
 
          bool             fProcessorActivateTmout; // used in activate to deliver timestamp to thread, locked by mutex
          TimeStamp_t      fProcessorActivateMark; // used in activate to deliver timestamp to thread, locked by mutex

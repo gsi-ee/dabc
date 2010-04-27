@@ -377,6 +377,8 @@ namespace dabc {
 
          std::string MakeThreadName(const char* base = "Thread");
 
+         WorkingThread* CurrentThread();
+
          const char* CurrentThrdName();
 
          void RunManagerMainLoop(int runtime = 0);
