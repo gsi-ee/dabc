@@ -26,6 +26,7 @@
 #include "dabc/Timer.h"
 #include "dabc/WorkingThread.h"
 #include "dabc/MemoryPool.h"
+#include "dabc/CommandsSet.h"
 
 #define BUFFERSIZE 1024
 #define QUEUESIZE 5
@@ -420,19 +421,23 @@ extern "C" void RunCoreTest()
 class TestModuleCmd : public dabc::ModuleAsync {
    protected:
       int                 fNext; // -1 reply, or number of next in chain
+      int                 fCount;
 
    public:
       TestModuleCmd(const char* name, int next) :
          dabc::ModuleAsync(name),
-         fNext(next)
+         fNext(next),
+         fCount(0)
       {
       }
 
       virtual int ExecuteCommand(dabc::Command* cmd)
       {
-         DOUT0(("Module %s execute command %s", GetName(), cmd->GetName()));
+         DOUT0(("Module %s execute command %s Exequeue %u", GetName(), cmd->GetName(), fProcessorExeCommands.Size()));
 
          if (fNext<0) return dabc::cmd_true;
+
+         if (fCount++>10) return dabc::cmd_true;
 
          std::string nextname = dabc::format("Module%d", fNext);
          dabc::Module* next = dabc::mgr()->FindModule(nextname.c_str());
@@ -453,7 +458,7 @@ void TestCmdChain(int number)
    dabc::Module* m0 = 0;
 
    for (int n=0;n<number;n++) {
-      dabc::Module* m = new TestModuleCmd(FORMAT(("Module%d",n)), n==number-1 ? -1 : n+1);
+      dabc::Module* m = new TestModuleCmd(FORMAT(("Module%d",n)), n==number-1 ? 0 : n+1);
 
       dabc::mgr()->MakeThreadForModule(m, n<number/2 ? "MainThread0" : "MainThread1");
 
@@ -463,13 +468,60 @@ void TestCmdChain(int number)
    dabc::mgr()->StartAllModules();
 
    DOUT0(("==============================================="));
-   DOUT0(("Inject command"));
+   DOUT0(("Inject command m0 = %p %s", m0, m0->GetName()));
 
    int res = m0->NewCmd_Execute("MyCommand",2);
 
    DOUT0(("Execution result = %d", res));
 
    dabc::mgr()->StopAllModules();
+
+   for (int n=0;n<number;n++)
+      dabc::mgr()->DeleteModule(FORMAT(("Module%d",n)));
+
+   dabc::mgr()->CleanupManager();
+
+   DOUT0(("Did manager cleanup"));
+}
+
+void TestCmdSet(int number)
+{
+   DOUT0(("==============================================="));
+   DOUT0(("Test cmd set with %d modules", number));
+
+   printf("????????????????????????????\n");
+
+   for (int n=0;n<number;n++) {
+      dabc::Module* m = new TestModuleCmd(FORMAT(("SetModule%d",n)), -1);
+
+      dabc::mgr()->MakeThreadForModule(m, (n % 2) ? "SetThread0" : "SetThread1");
+   }
+
+   dabc::mgr()->StartAllModules();
+
+   DOUT0(("==============================================="));
+   DOUT0(("Create set"));
+
+   dabc::NewCommandsSet set;
+
+   for (int n=0;n<number;n++) {
+      dabc::Command* cmd = new dabc::Command("MyCommand");
+
+      SetCmdReceiver(cmd, FORMAT(("SetModule%d",n)));
+
+      set.Add(cmd);
+   }
+
+   DOUT0(("Inject set"));
+
+   int res = set.Run(2.);
+
+   DOUT0(("SET result = %d", res));
+
+   dabc::mgr()->StopAllModules();
+
+   for (int n=0;n<number;n++)
+      dabc::mgr()->DeleteModule(FORMAT(("SetModule%d",n)));
 
    dabc::mgr()->CleanupManager();
 
@@ -482,5 +534,14 @@ extern "C" void RunCmdTest()
 //   TestMemoryPool();
 
    TestCmdChain(10);
+
+   TestCmdChain(10);
+
+   TestCmdSet(5);
+
+   TestCmdSet(10);
+
+   TestCmdSet(15);
+
 }
 

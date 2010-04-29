@@ -30,12 +30,12 @@ dabc::Command::Command(const char* name) :
    fClient(0),
    fClientMutex(0),
    fKeepAlive(0),
-   fCanceled(false),
 
-   fCommandMutex(0),
+   fValid(true),
    fCallerProcessor(0),
    fCmdId(0),
-   fExeReady(false)
+   fExeReady(false),
+   fCanceled(false)
 {
    DOUT5(("New command %p name %s", this, GetName()));
 }
@@ -49,6 +49,8 @@ dabc::Command::~Command()
 
    delete fParams;
    fParams = 0;
+
+   fValid = false;
 
    DOUT5(("Delete command %p name %s", this, GetName()));
 }
@@ -365,6 +367,12 @@ bool dabc::Command::ReadParsFromDimString(const char* pars)
 void dabc::Command::Reply(Command* cmd, int res)
 {
    if (cmd==0) return;
+
+   if (!cmd->fValid) {
+      EOUT(("Command %p no longer valid", cmd));
+      return;
+   }
+
    cmd->SetResult(res);
 
    bool processreply = false;
@@ -401,6 +409,11 @@ void dabc::Command::Finalise(Command* cmd)
 {
    if (cmd==0) return;
 
+   if (!cmd->fValid) {
+      EOUT(("Command %p no longer valid", cmd));
+      return;
+   }
+
    // this is a way to keep object "alive" - means not destroy it
    // second call, which should be done from the user, must finally delete it
 
@@ -419,4 +432,16 @@ void dabc::Command::Finalise(Command* cmd)
    cmd->CleanCaller();
 
    delete cmd;
+}
+
+void dabc::Command::Cancel(Command* cmd)
+{
+   if (cmd==0) return;
+
+   if (!cmd->fValid) {
+      EOUT(("Command %p no longer valid", cmd));
+      return;
+   }
+
+   cmd->fCanceled = true;
 }

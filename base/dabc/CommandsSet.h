@@ -79,6 +79,75 @@ namespace dabc {
          bool               fCompleted;
          bool               fNeedDestroy; // true if object must be destroyed
    };
+
+
+   class NewCommandsSet : public WorkingProcessor {
+      public:
+         NewCommandsSet();
+         virtual ~NewCommandsSet();
+
+         /** Set receiver of commands, when set is activated
+          * By default, manager is receiver of commands */
+         void SetReceiver(WorkingProcessor* proc);
+
+         /** Add new command to the set.
+          * Command will be submitted to specified receiver during Run
+          * If receiver not specified, default receiever will be used */
+         void Add(Command* cmd, WorkingProcessor* recv = 0);
+
+         virtual int ExecuteCommand(Command* cmd);
+
+         virtual bool NewCmd_ReplyCommand(Command* cmd);
+
+         int Run(double tmout = 0.);
+
+         /** Return total number of commands in the set */
+         unsigned GetNumber() const;
+
+         /** Return command from commands set.
+          * If command was not completed, return 0 */
+         dabc::Command* GetCommand(unsigned n);
+
+         /** Return command result
+          * If command was not completed, returns cmd_timedout */
+         int GetCmdResult(unsigned n);
+
+      protected:
+
+         struct CmdRec {
+            dabc::Command*    cmd;
+            WorkingProcessor* recv;
+            int               state; // 0 - init, 1 - submitted, 2 - replied
+            bool CanFree() { return state != 1; }
+         };
+
+         void CleanupCmds();
+
+         bool SubmitNextCommand();
+
+         int CheckExecutionResult();
+
+
+         /** Actual receiver of commands, default is manager */
+         WorkingProcessor  *fReceiver;
+
+         /** Master command */
+         Command           *fMain;
+
+         /** List of commands, which should be submitted to receiver */
+         Queue<CmdRec>      fCmds;
+
+         /** Is execution of command done parallel - all they submitted immediately */
+         bool               fParallelExe;
+
+         /** Confirmation command */
+         Command           *fConfirm;
+
+         /** Execution timeout for command */
+         double             fTimeout;
+
+   };
+
 }
 
 #endif

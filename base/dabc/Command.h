@@ -30,8 +30,10 @@ namespace dabc {
    enum CommandRes {
       cmd_false = 0,
       cmd_true = 1,
-      cmd_ignore = -1,
-      cmd_postponed = -2
+
+      cmd_timedout = -1,
+      cmd_ignore = -2,
+      cmd_postponed = -3
    };
 
    class Command : public Basic {
@@ -50,13 +52,12 @@ namespace dabc {
          CommandClientBase*     fClient;
          Mutex*                 fClientMutex; // pointer on client mutex, must be locked when we access client itself
          int                    fKeepAlive;   // if true, object should not be deleted by client, but later by user
-         bool                   fCanceled;    // true if command was canceled by client, will not be executed
 
-         Mutex*                 fCommandMutex;    /** command mutex, not used for command parameters, derived for caller thread */
-
-         WorkingProcessor*      fCallerProcessor; /** pointer on caller processor */
+         bool                   fValid;           /** true until destructor, way to detect object destroyment */
+         WorkingProcessor*      fCallerProcessor; /** pointer to caller processor */
          unsigned               fCmdId;           /** Current command id */
          bool                   fExeReady;        /** Indicate if execution of command is ready */
+         bool                   fCanceled;        /** indicates if command canceled by caller */
 
          virtual ~Command();
 
@@ -112,8 +113,16 @@ namespace dabc {
          bool IsClient();
          void CleanClient();
 
+         /** Method to inform caller that command is executed.
+          * After this call command pointer must not be used in caller */
          static void Reply(Command* cmd, int res = 1);
+
+         /** Method to cleanup command. If required, object will be destroyed */
          static void Finalise(Command* cmd);
+
+         /** Method to cancel command execution (if possible).
+          * Should only be used from place, where command was created */
+         static void Cancel(Command* cmd);
    };
 
 }

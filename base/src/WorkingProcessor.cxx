@@ -713,6 +713,8 @@ int dabc::WorkingProcessor::NewCmd_ExecuteIn(dabc::WorkingProcessor* dest, dabc:
    cmd->fExeReady = false;
    cmd->fCallerProcessor = this;
 
+   DOUT5(("Calling ExecteIn in thread %s", fProcessorThread->GetName()));
+
    // we can access fProcessorExeCommands directly, while it accessed only from caller thread
    fProcessorExeCommands.Push(cmd);
 
@@ -848,12 +850,12 @@ bool dabc::WorkingProcessor::NewCmd_Submit(dabc::Command* cmd)
    return res;
 }
 
-int dabc::WorkingProcessor::NewCmd_ProcessSubmit(dabc::Command* cmd)
+void dabc::WorkingProcessor::NewCmd_ProcessSubmit(dabc::Command* cmd)
 {
    /// this method perform command processing
    // return true if command processed and result is true
 
-   if (cmd==0) return cmd_false;
+   if (cmd==0) return;
 
    DOUT5(("ProcessSubmit command %p id %u processor:%p", cmd, cmd->fCmdId, this));
 
@@ -874,27 +876,22 @@ int dabc::WorkingProcessor::NewCmd_ProcessSubmit(dabc::Command* cmd)
 
    bool completed = (cmd_res>=0);
 
-   DOUT5(("Execute command %p %s res = %d", cmd, (completed ? cmd->GetName() : "-----"), cmd_res));
+   DOUT5(("Execute command %p : %s res = %d", cmd, (completed ? cmd->GetName() : "-- not allowed --"), cmd_res));
 
    if (completed)
       dabc::Command::Reply(cmd, cmd_res);
-
-   DOUT5(("ProcessCommand command %p done res = %d", cmd, cmd_res));
-
-   return cmd_res;
 }
 
-bool dabc::WorkingProcessor::NewCmd_ProcessReply(dabc::Command* cmd)
+void dabc::WorkingProcessor::NewCmd_ProcessReply(dabc::Command* cmd)
 {
    // returns true, if object can be deleted, otherwise user is responsible for the command
-   if (cmd==0) return true;
+   if (cmd==0) return;
 
-   if (fProcessorExeCommands.HasCommand(cmd)) {
+   if (fProcessorExeCommands.HasCommand(cmd))
       cmd->fExeReady = true;
-      return false;
-   }
-
-   return NewCmd_ReplyCommand(cmd);
+   else
+      if (NewCmd_ReplyCommand(cmd))
+         dabc::Command::Finalise(cmd);
 }
 
 

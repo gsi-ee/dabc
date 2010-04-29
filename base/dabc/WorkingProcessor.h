@@ -166,8 +166,8 @@ namespace dabc {
          int NewCmd_ExecuteIn(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
          int NewCmd_ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout = -1.);
 
-         int NewCmd_ProcessSubmit(dabc::Command* cmd);
-         bool NewCmd_ProcessReply(dabc::Command* cmd);
+         void NewCmd_ProcessSubmit(dabc::Command* cmd);
+         void NewCmd_ProcessReply(dabc::Command* cmd);
          bool NewCmd_GetReply(dabc::Command* cmd);
 
 

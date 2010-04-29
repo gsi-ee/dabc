@@ -125,8 +125,8 @@ bool dabc::Port::AssignTransport(Transport* tr, CommandClientBase* cli)
    if (ProcessorThread()!=0) {
       if (cli!=0) cmd = cli->Assign(cmd);
       Submit(cmd);
-   }
-                        else Execute(cmd);
+   } else
+      Execute(cmd);
 
    return true;
 }
