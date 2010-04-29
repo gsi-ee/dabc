@@ -374,29 +374,33 @@ while(xSet.getNofServers()!=servers){
 }
 return(!(t==time));
 }
+private void waitSockets(boolean all){
+	int time=0;
+	System.out.print("Wait sockets free ");
+	String s="WAIT";
+	while(s.indexOf("WAIT")>=0){
+	    System.out.print(".");
+	    browser.sleep(1);
+	    time++;
+	    setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
+	    s=mbsshell.rshout(MbsMaster,Username.getText(),
+		"netstat|grep \"\\.600. \"|grep -v \"\\.6.. \"|grep -v 6004|grep WAIT");
+	}
+	s="WAIT";
+	while(s.indexOf("WAIT")>=0){
+	    System.out.print(".");
+	    browser.sleep(1);
+	    time++;
+	    setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
+	    s=mbsshell.rshout(MbsMaster,Username.getText(),
+		"netstat|grep \"\\.61.. \"|grep WAIT");
+	}	
+}
 private void launch(String cmd){
 int time=0;
 int num=0;
 setProgress("Launch MBS",xSet.blueD());
-System.out.print("Wait sockets free ");
-String s="TIME";
-while(s.indexOf("TIME")>=0){
-    System.out.print(".");
-    browser.sleep(1);
-    time++;
-    setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
-    s=mbsshell.rshout(MbsMaster,Username.getText(),
-	"netstat|grep \"\\.600. \"|grep -v \"\\.6.. \"|grep -v 6004|grep TIME");
-}
-s="TIME";
-while(s.indexOf("TIME")>=0){
-    System.out.print(".");
-    browser.sleep(1);
-    time++;
-    setProgress("Wait sockets free "+time+"["+20+"]",xSet.blueD());
-    s=mbsshell.rshout(MbsMaster,Username.getText(),
-	"netstat|grep \"\\.61.. \"|grep TIME");
-}
+waitSockets(true); // wait for MBS and NxN sockets
 time=0;
 setProgress("Launch MBS ...",xSet.blueD());
 System.out.println("");
@@ -552,6 +556,7 @@ if ("mbsShut".equals(Action)) {
     setProgress("OK: MBS servers ready",xSet.greenD());
 }
 else if ("mbsConfig".equals(Action)) {
+	waitSockets(false); // wait for MBS
     xLogger.print(1,"MBS: @"+MbsStart.getText());
     mbsCommand.exec(xSet.getAccess()+" @"+MbsStart.getText());
     setProgress("Start up and configure MBS tasks",xSet.blueD());
