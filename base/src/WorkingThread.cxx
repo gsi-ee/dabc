@@ -148,6 +148,20 @@ void dabc::WorkingThread::SingleLoop(WorkingProcessor* proc, double tmout_user) 
    if (evid!=NullEventId) ProcessEvent(evid);
 }
 
+void dabc::WorkingThread::RunEventLoop(double tm)
+{
+   TimeStamp_t last_tm = ThrdTimeStamp();
+
+   do {
+      SingleLoop(0, 0);
+
+      TimeStamp_t curr_tm = ThrdTimeStamp();
+      tm -= TimeDistance(last_tm, curr_tm);
+      last_tm = curr_tm;
+
+   } while (tm > 0.);
+}
+
 
 bool dabc::WorkingThread::Start(double timeout_sec, bool withoutthrd)
 {

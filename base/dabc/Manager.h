@@ -383,6 +383,8 @@ namespace dabc {
 
          void RunManagerMainLoop(int runtime = 0);
 
+         void Sleep(double tmout);
+
          // ---------------- modules manipulation ------------------
 
          void StartModule(const char* modulename);

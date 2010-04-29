@@ -484,7 +484,7 @@ void TestCmdChain(int number)
    DOUT0(("Did manager cleanup"));
 }
 
-void TestCmdSet(int number)
+void TestCmdSet(int number, bool sync)
 {
    DOUT0(("==============================================="));
    DOUT0(("Test cmd set with %d modules", number));
@@ -502,21 +502,25 @@ void TestCmdSet(int number)
    DOUT0(("==============================================="));
    DOUT0(("Create set"));
 
-   dabc::NewCommandsSet set;
+   dabc::NewCommandsSet* set = new dabc::NewCommandsSet;
 
    for (int n=0;n<number;n++) {
       dabc::Command* cmd = new dabc::Command("MyCommand");
-
       SetCmdReceiver(cmd, FORMAT(("SetModule%d",n)));
-
-      set.Add(cmd);
+      set->Add(cmd);
    }
 
    DOUT0(("Inject set"));
 
-   int res = set.Run(2.);
-
-   DOUT0(("SET result = %d", res));
+   if (sync) {
+      int res = set->ExecuteSet(2.);
+      delete set;
+      DOUT0(("SET result = %d", res));
+   } else {
+      set->SubmitSet(0, 2.);
+      dabc::mgr()->Sleep(1.);
+      DOUT0(("Sleep DONE"));
+   }
 
    dabc::mgr()->StopAllModules();
 
@@ -537,11 +541,11 @@ extern "C" void RunCmdTest()
 
    TestCmdChain(10);
 
-   TestCmdSet(5);
+   TestCmdSet(5, true);
 
-   TestCmdSet(10);
+   TestCmdSet(10, false);
 
-   TestCmdSet(15);
+   TestCmdSet(15, true);
 
 }
 

@@ -1621,6 +1621,21 @@ dabc::WorkingThread* dabc::Manager::CurrentThread()
    return 0;
 }
 
+void dabc::Manager::Sleep(double tmout)
+{
+   if (tmout<=0.) return;
+
+   WorkingThread* thrd = CurrentThread();
+
+   if (thrd==0) {
+      while (tmout>1) { dabc::LongSleep(1); tmout-=1.; }
+      dabc::MicroSleep(int(tmout*1e6));
+   }
+   else
+      thrd->RunEventLoop(tmout);
+}
+
+
 const char* dabc::Manager::CurrentThrdName()
 {
    WorkingThread* thrd = CurrentThread();

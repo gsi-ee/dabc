@@ -215,10 +215,10 @@ double dabc::CommandsSet::ProcessTimeout(double)
 dabc::NewCommandsSet::NewCommandsSet() :
    WorkingProcessor(),
    fReceiver(dabc::mgr()),
-   fMain(0),
    fCmds(10, true),
    fParallelExe(true),
-   fConfirm(0)
+   fConfirm(0),
+   fSyncMode(false)
 {
 }
 
@@ -311,11 +311,15 @@ bool dabc::NewCommandsSet::NewCmd_ReplyCommand(Command* cmd)
 
    int res = CheckExecutionResult();
 
-   if ((res!=cmd_postponed) && (fConfirm!=0)) {
-      DOUT0(("Set replies confirm command !!!"));
+   if (res!=cmd_postponed) {
+      DOUT0(("SET COMPLETED res = %d !!!", res));
 
-      dabc::Command::Reply(fConfirm, res);
-      fConfirm = 0;
+      if (fConfirm!=0) {
+         dabc::Command::Reply(fConfirm, res);
+         fConfirm = 0;
+      }
+
+      if (!fSyncMode) DestroyProcessor();
    }
 
    // keep commands stored to have access to them later
@@ -361,8 +365,10 @@ int dabc::NewCommandsSet::CheckExecutionResult()
    return res;
 }
 
-int dabc::NewCommandsSet::Run(double tmout)
+int dabc::NewCommandsSet::ExecuteSet(double tmout)
 {
+   WorkingThread curr(0, "Current");
+
    if (ProcessorThread()==0) {
       if (dabc::mgr()==0) {
          EOUT(("Cannot use CommandsSet without running manager !!!"));
@@ -371,8 +377,9 @@ int dabc::NewCommandsSet::Run(double tmout)
 
       WorkingThread* thrd = dabc::mgr()->CurrentThread();
       if (thrd==0) {
-         EOUT(("Cannot use commands set outside DABC threads !!!"));
-         return cmd_false;
+         DOUT0(("Cannot use commands set outside DABC threads, create dummy !!!"));
+         curr.Start(0, true);
+         thrd = &curr;
       }
 
       DOUT0(("Assign SET to thread %s", thrd->GetName()));
@@ -382,6 +389,8 @@ int dabc::NewCommandsSet::Run(double tmout)
 
    DOUT0(("Calling AnyCommand"));
 
+   fSyncMode = true;
+
    int res = NewCmd_ExecuteIn(this, "AnyCommand", tmout);
 
    DOUT0(("Calling AnyCommand res = %d", res));
@@ -389,5 +398,48 @@ int dabc::NewCommandsSet::Run(double tmout)
    RemoveProcessorFromThread(true);
 
    return res;
+}
+
+bool dabc::NewCommandsSet::SubmitSet(Command* rescmd, double tmout)
+{
+   if (ProcessorThread()==0) {
+      if (dabc::mgr()==0) {
+         EOUT(("Cannot use CommandsSet without running manager !!!"));
+         return false;
+      }
+
+      WorkingThread* thrd = dabc::mgr()->CurrentThread();
+      if (thrd==0) thrd = dabc::mgr()->ProcessorThread();
+      if (thrd==0) {
+         EOUT(("Cannot use commands set outside DABC threads !!!"));
+         return false;
+      }
+
+      DOUT0(("Assign SET to thread %s", thrd->GetName()));
+
+      AssignProcessorToThread(thrd);
+   }
+
+   if (rescmd==0) rescmd = new dabc::Command("AnyCommand");
+
+   fSyncMode = false;
+
+   if (tmout>0) ActivateTimeout(tmout);
+
+   return NewCmd_Submit(rescmd);
+}
+
+double dabc::NewCommandsSet::ProcessTimeout(double last_diff)
+{
+   EOUT(("CommandsSet Timeout !!!!!!!!!!!!!"));
+
+   if (fConfirm!=0) {
+      dabc::Command::Reply(fConfirm, cmd_timedout);
+      fConfirm = 0;
+   }
+
+   if (!fSyncMode) DestroyProcessor();
+
+   return -1;
 }
 

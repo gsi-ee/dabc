@@ -81,25 +81,33 @@ namespace dabc {
    };
 
 
-   class NewCommandsSet : public WorkingProcessor {
+   class NewCommandsSet : protected WorkingProcessor {
       public:
          NewCommandsSet();
          virtual ~NewCommandsSet();
 
-         /** Set receiver of commands, when set is activated
+         /** Set default receiver for commands in the set.
           * By default, manager is receiver of commands */
          void SetReceiver(WorkingProcessor* proc);
 
+         /** Set how commands from set executed - parallel (simultaneously) or sequential */
+         void SetParallelExe(bool on = true) { fParallelExe = on; }
+
          /** Add new command to the set.
           * Command will be submitted to specified receiver during Run
-          * If receiver not specified, default receiever will be used */
+          * If receiver not specified, default receiver will be used */
          void Add(Command* cmd, WorkingProcessor* recv = 0);
 
-         virtual int ExecuteCommand(Command* cmd);
+         /** Runs commands set synchronously with caller.
+          * Execute all commands and returns cmd_true only when commands are executed
+          * Result of each command execution can be accessed via GetCmdResult() method */
+         int ExecuteSet(double tmout = 0.);
 
-         virtual bool NewCmd_ReplyCommand(Command* cmd);
-
-         int Run(double tmout = 0.);
+         /** Submit commands set for asynchronous execution.
+          * Set will be assigned to current thread.
+          * When all commands are executed, optional rescmd can be completed.
+          * If tmout is specified (more than 0.), commands set will be terminated. */
+         bool SubmitSet(Command* rescmd = 0, double tmout = 0.);
 
          /** Return total number of commands in the set */
          unsigned GetNumber() const;
@@ -113,6 +121,12 @@ namespace dabc {
          int GetCmdResult(unsigned n);
 
       protected:
+
+         virtual int ExecuteCommand(Command* cmd);
+
+         virtual bool NewCmd_ReplyCommand(Command* cmd);
+
+         virtual double ProcessTimeout(double last_diff);
 
          struct CmdRec {
             dabc::Command*    cmd;
@@ -131,9 +145,6 @@ namespace dabc {
          /** Actual receiver of commands, default is manager */
          WorkingProcessor  *fReceiver;
 
-         /** Master command */
-         Command           *fMain;
-
          /** List of commands, which should be submitted to receiver */
          Queue<CmdRec>      fCmds;
 
@@ -145,6 +156,9 @@ namespace dabc {
 
          /** Execution timeout for command */
          double             fTimeout;
+
+         /** Indicates execution mode */
+         bool               fSyncMode;
 
    };
 
