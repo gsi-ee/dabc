@@ -29,7 +29,6 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorThread(0),
    fProcessorId(0),
    fProcessorPriority(-1), // minimum priority per default
-   fProcessorCommands(false, true),
 
    fProcessorMainMutex(0),
    fProcessorSubmCommands(CommandsQueue::kindSubmit),
@@ -99,23 +98,6 @@ void dabc::WorkingProcessor::DestroyProcessor()
       delete this;
 }
 
-
-bool dabc::WorkingProcessor::Submit(Command* cmd)
-{
-   DOUT5(("Submit command %s to thread %p %d", cmd->GetName(), fProcessorThread,
-         fProcessorThread ? fProcessorThread->Id() : 0));
-
-   if (fProcessorThread)
-      return fProcessorThread->SubmitProcessorCmd(this, cmd);
-
-   return dabc::CommandReceiver::Submit(cmd);
-}
-
-bool dabc::WorkingProcessor::IsExecutionThread()
-{
-   return (fProcessorThread==0) || fProcessorThread->IsItself();
-}
-
 void dabc::WorkingProcessor::ActivateTimeout(double tmout_sec)
 {
    LockGuard lock(fProcessorMainMutex);
@@ -160,7 +142,7 @@ void dabc::WorkingProcessor::ProcessCoreEvent(EventId evnt)
          if (cmd==0)
             EOUT(("evntSubmitCommand: No command with specified id %u", GetEventArg(evnt)));
          else
-            NewCmd_ProcessSubmit(cmd);
+            ProcessSubmit(cmd);
 
          break;
       }
@@ -177,7 +159,7 @@ void dabc::WorkingProcessor::ProcessCoreEvent(EventId evnt)
          if (cmd==0)
             EOUT(("evntReplyCommand: no command with specified id %u", GetEventArg(evnt)));
          else
-            NewCmd_ProcessReply(cmd);
+            ProcessReply(cmd);
 
          break;
       }
@@ -644,8 +626,6 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 {
    int cmd_res = cmd_ignore;
 
-   if (cmd==0) exit(1);
-
    DOUT3(("WorkingProcessor::PreviewCommand %s", cmd->GetName()));
 
    if (cmd->IsName(CmdSetParameter::CmdName())) {
@@ -675,8 +655,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
       }
 
       // ParameterChanged(par);
-   } else
-      cmd_res = CommandReceiver::PreviewCommand(cmd);
+   }
 
    return cmd_res;
 }
@@ -685,7 +664,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
  *  Method let thread event loop running.
  */
 
-int dabc::WorkingProcessor::NewCmd_ExecuteIn(dabc::WorkingProcessor* dest, dabc::Command* cmd, double tmout)
+int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Command* cmd, double tmout)
 {
    int res = cmd_true;
 
@@ -720,7 +699,7 @@ int dabc::WorkingProcessor::NewCmd_ExecuteIn(dabc::WorkingProcessor* dest, dabc:
 
    TimeStamp_t last_tm = NullTimeStamp;
 
-   if (dest->NewCmd_Submit(cmd)) {
+   if (dest->Submit(cmd)) {
 
 //      DOUT0(("Command is submitted, we start waiting for result"));
 
@@ -753,12 +732,12 @@ int dabc::WorkingProcessor::NewCmd_ExecuteIn(dabc::WorkingProcessor* dest, dabc:
 }
 
 
-int dabc::WorkingProcessor::NewCmd_ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout)
+int dabc::WorkingProcessor::ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout)
 {
-   return NewCmd_ExecuteIn(dest, new dabc::Command(cmdname), tmout);
+   return ExecuteIn(dest, new dabc::Command(cmdname), tmout);
 }
 
-int dabc::WorkingProcessor::NewCmd_Execute(Command* cmd, double tmout)
+int dabc::WorkingProcessor::Execute(Command* cmd, double tmout)
 {
    if (cmd==0) return cmd_false;
 
@@ -789,7 +768,7 @@ int dabc::WorkingProcessor::NewCmd_Execute(Command* cmd, double tmout)
    if ((thrd==0) && (dabc::mgr()!=0))
       thrd = dabc::mgr()->CurrentThread();
 
-   if (thrd) return ((WorkingProcessor*) thrd->fExec)->NewCmd_ExecuteIn(this, cmd, tmout);
+   if (thrd) return ((WorkingProcessor*) thrd->fExec)->ExecuteIn(this, cmd, tmout);
 
    // if there is no Thread with such id (most probably, some user-managed thrd)
    // than we create fake object only to handle commands and events,
@@ -800,15 +779,47 @@ int dabc::WorkingProcessor::NewCmd_Execute(Command* cmd, double tmout)
 
    WorkingThread curr(0, "Current");
    curr.Start(0, true);
-   return ((WorkingProcessor*) curr.fExec)->NewCmd_ExecuteIn(this, cmd, tmout);
+   return ((WorkingProcessor*) curr.fExec)->ExecuteIn(this, cmd, tmout);
 }
 
-int dabc::WorkingProcessor::NewCmd_Execute(const char* cmdname, double tmout)
+int dabc::WorkingProcessor::Execute(const char* cmdname, double tmout)
 {
-   return NewCmd_Execute(new dabc::Command(cmdname), tmout);
+   return Execute(new dabc::Command(cmdname), tmout);
 }
 
-bool dabc::WorkingProcessor::NewCmd_Assign(Command* cmd)
+int dabc::WorkingProcessor::ExecuteInt(const char* cmdname, const char* intresname, double timeout_sec)
+{
+   dabc::Command* cmd = new dabc::Command(cmdname);
+   cmd->SetKeepAlive();
+
+   int res = -1;
+
+   if (Execute(cmd, timeout_sec))
+      res = cmd->GetInt(intresname, -1);
+
+   dabc::Command::Finalise(cmd);
+
+   return res;
+}
+
+std::string dabc::WorkingProcessor::ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec)
+{
+   dabc::Command* cmd = new dabc::Command(cmdname);
+   cmd->SetKeepAlive();
+
+   std::string res;
+
+   if (Execute(cmd, timeout_sec))
+      res = cmd->GetStr(strresname, "");
+
+   dabc::Command::Finalise(cmd);
+
+   return res;
+}
+
+
+
+bool dabc::WorkingProcessor::Assign(Command* cmd)
 {
    if (cmd==0) return false;
 
@@ -824,7 +835,7 @@ bool dabc::WorkingProcessor::NewCmd_Assign(Command* cmd)
    return true;
 }
 
-bool dabc::WorkingProcessor::NewCmd_Submit(dabc::Command* cmd)
+bool dabc::WorkingProcessor::Submit(dabc::Command* cmd)
 {
    if (cmd==0) return false;
 
@@ -850,7 +861,7 @@ bool dabc::WorkingProcessor::NewCmd_Submit(dabc::Command* cmd)
    return res;
 }
 
-void dabc::WorkingProcessor::NewCmd_ProcessSubmit(dabc::Command* cmd)
+void dabc::WorkingProcessor::ProcessSubmit(dabc::Command* cmd)
 {
    /// this method perform command processing
    // return true if command processed and result is true
@@ -882,7 +893,7 @@ void dabc::WorkingProcessor::NewCmd_ProcessSubmit(dabc::Command* cmd)
       dabc::Command::Reply(cmd, cmd_res);
 }
 
-void dabc::WorkingProcessor::NewCmd_ProcessReply(dabc::Command* cmd)
+void dabc::WorkingProcessor::ProcessReply(dabc::Command* cmd)
 {
    // returns true, if object can be deleted, otherwise user is responsible for the command
    if (cmd==0) return;
@@ -890,12 +901,12 @@ void dabc::WorkingProcessor::NewCmd_ProcessReply(dabc::Command* cmd)
    if (fProcessorExeCommands.HasCommand(cmd))
       cmd->fExeReady = true;
    else
-      if (NewCmd_ReplyCommand(cmd))
+      if (ReplyCommand(cmd))
          dabc::Command::Finalise(cmd);
 }
 
 
-bool dabc::WorkingProcessor::NewCmd_GetReply(dabc::Command* cmd)
+bool dabc::WorkingProcessor::GetReply(dabc::Command* cmd)
 {
    if (cmd==0) return false;
 
@@ -910,4 +921,20 @@ bool dabc::WorkingProcessor::NewCmd_GetReply(dabc::Command* cmd)
    _FireEvent(evntReplyCommand, id);
 
    return true;
+}
+
+void dabc::WorkingProcessor::CancelCommands()
+{
+   fProcessorSubmCommands.Cleanup();
+   fProcessorReplyCommands.Cleanup();
+}
+
+void dabc::WorkingProcessor::ProcessorSleep(double tmout)
+{
+   if (ProcessorThread())
+      ProcessorThread()->RunEventLoop(tmout);
+   else {
+      while (tmout>1) { dabc::LongSleep(1); tmout-=1.; }
+      dabc::MicroSleep(int(tmout*1e6));
+   }
 }

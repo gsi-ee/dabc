@@ -38,8 +38,6 @@ namespace dabc {
 
           virtual ~Application();
 
-          virtual CommandReceiver* GetCmdReceiver() { return this; }
-
           virtual int ExecuteCommand(dabc::Command* cmd);
 
           virtual bool IsSlaveApp() { return false; }
@@ -70,6 +68,8 @@ namespace dabc {
 
           virtual bool Store(ConfigIO &cfg);
           virtual bool Find(ConfigIO &cfg);
+
+          virtual WorkingProcessor* GetCmdReceiver() { return this; }
 
        protected:
 

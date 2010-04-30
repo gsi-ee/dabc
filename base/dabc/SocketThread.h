@@ -157,7 +157,7 @@ namespace dabc {
 
    class SocketConnectProcessor : public SocketProcessor {
       protected:
-         CommandReceiver* fConnRcv;
+         WorkingProcessor* fConnRcv;
          std::string fConnId;
 
       public:
@@ -168,13 +168,13 @@ namespace dabc {
          {
          }
 
-         void SetConnHandler(CommandReceiver* rcv, const char* connid)
+         void SetConnHandler(WorkingProcessor* rcv, const char* connid)
          {
             fConnRcv = rcv;
             fConnId = connid;
          }
 
-         CommandReceiver* GetConnRecv() const { return fConnRcv; }
+         WorkingProcessor* GetConnRecv() const { return fConnRcv; }
          const char* GetConnId() const { return fConnId.c_str(); }
    };
 

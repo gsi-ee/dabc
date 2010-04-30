@@ -443,7 +443,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
          dabc::Module* next = dabc::mgr()->FindModule(nextname.c_str());
          if (next==0) return dabc::cmd_false;
 
-         int res = NewCmd_ExecuteIn(next, "MyCmd");
+         int res = ExecuteIn(next, "MyCmd");
 
          return res>0 ? res+1 : 0;
       }
@@ -470,7 +470,7 @@ void TestCmdChain(int number)
    DOUT0(("==============================================="));
    DOUT0(("Inject command m0 = %p %s", m0, m0->GetName()));
 
-   int res = m0->NewCmd_Execute("MyCommand",2);
+   int res = m0->Execute("MyCommand",2);
 
    DOUT0(("Execution result = %d", res));
 
@@ -489,8 +489,6 @@ void TestCmdSet(int number, bool sync)
    DOUT0(("==============================================="));
    DOUT0(("Test cmd set with %d modules", number));
 
-   printf("????????????????????????????\n");
-
    for (int n=0;n<number;n++) {
       dabc::Module* m = new TestModuleCmd(FORMAT(("SetModule%d",n)), -1);
 
@@ -502,7 +500,7 @@ void TestCmdSet(int number, bool sync)
    DOUT0(("==============================================="));
    DOUT0(("Create set"));
 
-   dabc::NewCommandsSet* set = new dabc::NewCommandsSet;
+   dabc::CommandsSet* set = new dabc::CommandsSet;
 
    for (int n=0;n<number;n++) {
       dabc::Command* cmd = new dabc::Command("MyCommand");

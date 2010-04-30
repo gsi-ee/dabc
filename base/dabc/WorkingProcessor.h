@@ -14,10 +14,6 @@
 #ifndef DABC_WorkingProcessor
 #define DABC_WorkingProcessor
 
-#ifndef DABC_CommandClient
-#include "dabc/CommandClient.h"
-#endif
-
 #ifndef DABC_WorkingThread
 #include "dabc/WorkingThread.h"
 #endif
@@ -33,7 +29,7 @@ namespace dabc {
    class Parameter;
    class CommandDefinition;
 
-   class WorkingProcessor : public CommandReceiver {
+   class WorkingProcessor {
 
       enum { parsVisibilityMask = 0xFF, parsFixedMask = 0x100, parsChangableMask = 0x200, parsValidMask = 0x400 };
 
@@ -42,6 +38,8 @@ namespace dabc {
       friend class Command;
 
       public:
+
+         static int cmd_bool(bool v) { return v ? cmd_true : cmd_false; }
 
          enum { evntFirstCore   = 1,
                 evntFirstSystem = 100,
@@ -71,8 +69,6 @@ namespace dabc {
          uint32_t ProcessorId() const { return fProcessorId; }
 
          void DestroyProcessor();
-
-         virtual bool Submit(Command* cmd);
 
 
          // this all about parameters list, which can be managed for any working processor
@@ -104,23 +100,37 @@ namespace dabc {
          static void SetParsCfgDefaults(unsigned flags) { gParsCfgDefaults = flags; }
 
          /** ! Assign command with processor before command be submitted to other processor
-          * This produce NewCmd_ReplyCommand() call when command execution is finished */
-         bool NewCmd_Assign(Command* cmd);
+          * This produce ReplyCommand() call when command execution is finished */
+         bool Assign(Command* cmd);
 
          /** Submit command for execution in the processor */
-         bool NewCmd_Submit(Command* cmd);
+         bool Submit(Command* cmd);
 
          /** Execute command in the processor. Event loop of caller thread is kept running */
-         int NewCmd_Execute(Command* cmd, double tmout = -1.);
+         int Execute(Command* cmd, double tmout = -1.);
 
          /* Wrap of previous method, provided for convenience */
-         int NewCmd_Execute(const char* cmdname, double tmout = -1.);
+         int Execute(const char* cmdname, double tmout = -1.);
+
+         int ExecuteInt(const char* cmdname, const char* intresname, double timeout_sec = -1.);
+
+         std::string ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec = -1.);
+
+
+      protected:
+
+         /** This method called before command will be executed.
+          *  Only if cmd_ignore is returned, ExecuteCommand will be called for this command
+          *  Otherwise command is replied with returned value */
+         virtual int PreviewCommand(Command* cmd);
+
+         /** Main method were command is executed */
+         virtual int ExecuteCommand(Command* cmd) { return cmd_false; }
 
          /** Reimplement this method to react on command reply
           * Return true if command can be destroyed by framework*/
-         virtual bool NewCmd_ReplyCommand(Command* cmd) { return true; }
+         virtual bool ReplyCommand(Command* cmd) { return true; }
 
-      protected:
 
          // Method is called when requested time point is reached
          // Rewrite method in derived class to react on this event
@@ -162,25 +172,21 @@ namespace dabc {
          void ExitMainLoop();
          void SingleLoop(double tmout) { ProcessorThread()->SingleLoop(this, tmout); }
 
+         void ProcessorSleep(double tmout);
 
-         int NewCmd_ExecuteIn(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
-         int NewCmd_ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout = -1.);
 
-         void NewCmd_ProcessSubmit(dabc::Command* cmd);
-         void NewCmd_ProcessReply(dabc::Command* cmd);
-         bool NewCmd_GetReply(dabc::Command* cmd);
+         int ExecuteIn(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
+         int ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout = -1.);
+
+         void CancelCommands();
 
 
          virtual void DoProcessorMainLoop() {}
          virtual void DoProcessorAfterMainLoop() {}
 
-         virtual bool IsExecutionThread();
-
          // method called immediately after processor was assigned to thread
          // called comes from the thread context
          virtual void OnThreadAssigned() {}
-
-         virtual int PreviewCommand(Command* cmd);
 
          void DestroyAllPars();
          void DestroyPar(const char* name) { DestroyPar(FindPar(name)); }
@@ -226,12 +232,10 @@ namespace dabc {
          uint32_t         fProcessorId;
          int              fProcessorPriority;
 
-         CommandsQueue    fProcessorCommands;
-
          Mutex*           fProcessorMainMutex;            // pointer on main thread mutex
 
          CommandsQueue    fProcessorSubmCommands;          // list of submitted commands, protected via main thread mutex
-         CommandsQueue    fProcessorReplyCommands;          // list of reply commands, protected via main thread mutex
+         CommandsQueue    fProcessorReplyCommands;         // list of reply commands, protected via main thread mutex
          CommandsQueue    fProcessorExeCommands;           // list of commands, which are currently executed by processor, protected via main thread mutex
 
          Folder*          fParsHolder;
@@ -248,6 +252,11 @@ namespace dabc {
 
          bool TakeActivateData(TimeStamp_t& mark, double& interval);
          void ProcessCoreEvent(EventId);
+
+         void ProcessSubmit(dabc::Command* cmd);
+         void ProcessReply(dabc::Command* cmd);
+         bool GetReply(dabc::Command* cmd);
+
 
          bool             fProcessorActivateTmout; // used in activate to deliver timestamp to thread, locked by mutex
          TimeStamp_t      fProcessorActivateMark; // used in activate to deliver timestamp to thread, locked by mutex

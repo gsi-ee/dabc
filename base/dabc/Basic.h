@@ -25,7 +25,7 @@
 namespace dabc {
 
    class Manager;
-   class CommandReceiver;
+   class WorkingProcessor;
    class Folder;
    class Mutex;
    class Configuration;
@@ -86,7 +86,6 @@ namespace dabc {
 
          inline Mutex* GetMutex() const { return fMutex; }
          inline Basic* GetParent() const { return fParent; }
-         virtual CommandReceiver* GetCmdReceiver() { return 0; }
 
          virtual void AddChild(Basic* obj);
          virtual void RemoveChild(Basic* obj);
@@ -110,6 +109,8 @@ namespace dabc {
          virtual bool Store(ConfigIO &cfg) { return true; }
          virtual bool Find(ConfigIO &cfg);
          virtual bool Read(ConfigIO &cfg) { return true; }
+
+         virtual WorkingProcessor* GetCmdReceiver() { return 0; }
 
          static long NumInstances() { return gNumInstances; }
 

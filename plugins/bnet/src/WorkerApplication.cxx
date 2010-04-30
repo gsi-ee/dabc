@@ -134,18 +134,18 @@ void bnet::WorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
    }
 }
 
-void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
+void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* mastercmd)
 {
 //   LockUnlockPars(false);
 
-   SetParBool(CfgController, cmd->GetBool(CfgController, 0));
-   SetParStr(CfgSendMask, cmd->GetStr(parSendMask, "xxxx"));
-   SetParStr(CfgRecvMask, cmd->GetStr(parRecvMask, "xxxx"));
-   SetParStr(CfgClusterMgr, cmd->GetStr(CfgClusterMgr,""));
+   SetParBool(CfgController, mastercmd->GetBool(CfgController, 0));
+   SetParStr(CfgSendMask, mastercmd->GetStr(parSendMask, "xxxx"));
+   SetParStr(CfgRecvMask, mastercmd->GetStr(parRecvMask, "xxxx"));
+   SetParStr(CfgClusterMgr, mastercmd->GetStr(CfgClusterMgr,""));
 
 //   LockUnlockPars(true);
 
-   dabc::CommandsSet* set = new dabc::CommandsSet(cmd, false);
+   dabc::CommandsSet* set = new dabc::CommandsSet(ProcessorThread(), false);
 
    if (IsSender()) {
       dabc::Command* cmd = new dabc::Command("Configure");
@@ -166,7 +166,7 @@ void bnet::WorkerApplication::ApplyNodeConfig(dabc::Command* cmd)
 
    set->Add(dabc::SetCmdReceiver(new dabc::CmdSetParameter(CfgConnected, true), this));
 
-   dabc::CommandsSet::Completed(set, SMCommandTimeout());
+   set->SubmitSet(mastercmd, SMCommandTimeout());
 
    DOUT3(("ApplyNodeConfig invoked"));
 }

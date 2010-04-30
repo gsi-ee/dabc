@@ -60,8 +60,7 @@ namespace dabc {
 
       public:
 
-         enum EEvents { evntProcCmd = 1,
-                        evntCheckTmout,
+         enum EEvents { evntCheckTmout = 1,
                         evntRebuildProc,
                         evntDoNothing,
                         evntLastSysCmd,
@@ -165,7 +164,6 @@ namespace dabc {
 
          bool AddProcessor(WorkingProcessor* proc, bool sync = true);
          int SysCommand(const char* cmdname, WorkingProcessor* proc);
-         bool SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd);
 
          void RemoveProcessor(WorkingProcessor* proc);
          void DestroyProcessor(WorkingProcessor* proc);

@@ -20,7 +20,6 @@
 #include "dabc/PoolHandle.h"
 #include "dabc/Module.h"
 #include "dabc/Manager.h"
-#include "dabc/CommandsSet.h"
 
 dabc::LocalTransport::LocalTransport(LocalDevice* dev, Port* port, Mutex* mutex, bool owner, bool memcopy) :
    Transport(dev),
@@ -163,7 +162,7 @@ dabc::LocalDevice::LocalDevice(Basic* parent, const char* name) :
    AssignProcessorToThread(dabc::mgr()->ProcessorThread());
 }
 
-bool dabc::LocalDevice::ConnectPorts(Port* port1, Port* port2, CommandClientBase* cli)
+bool dabc::LocalDevice::ConnectPorts(Port* port1, Port* port2)
 {
    if ((port1==0) || (port2==0)) return false;
 
@@ -204,8 +203,9 @@ bool dabc::LocalDevice::ConnectPorts(Port* port1, Port* port2, CommandClientBase
    tr1->fOther = tr2;
    tr2->fOther = tr1;
 
-   bool res = port1->AssignTransport(tr1, cli);
-   res = res && port2->AssignTransport(tr2, cli);
+   bool res = true;
+   if (!port1->AssignTransport(tr1)) res = false;
+   if (!port2->AssignTransport(tr2)) res = false;
 
    return res;
 }
@@ -221,32 +221,17 @@ int dabc::LocalDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 
 int dabc::LocalDevice::ExecuteCommand(dabc::Command* cmd)
 {
-   int cmd_res = cmd_true;
-
    if (cmd->IsName(CmdConnectPorts::CmdName())) {
       Port* port1 = dabc::mgr()->FindPort(cmd->GetPar("Port1Name"));
       Port* port2 = dabc::mgr()->FindPort(cmd->GetPar("Port2Name"));
 
       if ((port1==0) || (port2==0)) {
          EOUT(("Port(s) are not found"));
-         cmd_res = cmd_false;
-      } else {
-         CommandsSet* set = new CommandsSet(cmd);
-
-         bool res = ConnectPorts(port1, port2, set);
-
-         if (!res) {
-            delete set;
-            cmd_res = cmd_false;
-         } else {
-            cmd_res = cmd_postponed;
-            dabc::CommandsSet::Completed(set, 3.);
-            DOUT4(("LocalTransport completes commandset %p", set));
-         }
+         return cmd_false;
       }
-   } else
-      cmd_res = dabc::Device::ExecuteCommand(cmd);
 
-   return cmd_res;
+      return  cmd_bool(ConnectPorts(port1, port2));
+   }
+
+   return dabc::Device::ExecuteCommand(cmd);
 }
-

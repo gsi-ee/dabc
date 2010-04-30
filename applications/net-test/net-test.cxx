@@ -331,7 +331,7 @@ class NetTestApplication : public dabc::Application {
 
             DOUT0(("Start submit connection commands"));
 
-            dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
+            dabc::CommandsSet* set = new dabc::CommandsSet(ProcessorThread());
 
             for (int nsender = 0; nsender < dabc::mgr()->NumNodes(); nsender++) {
                for (int nreceiver = 0; nreceiver < dabc::mgr()->NumNodes(); nreceiver++) {
@@ -347,11 +347,11 @@ class NetTestApplication : public dabc::Application {
                                                 port2name.c_str(),
                                                 "NetDev");
 
-                   dabc::mgr()->Submit(set->Assign(subcmd));
+                   set->Add(subcmd, dabc::mgr());
                }
             }
 
-            dabc::CommandsSet::Completed(set, 10.);
+            set->SubmitSet(cmd, 10.);
 
 	         DOUT0(("Submit connection commands done"));
 
@@ -436,17 +436,17 @@ NetTestFactory nettest("net-test");
 
 bool StartStopAll(bool isstart)
 {
-   dabc::CommandClient cli;
+   dabc::CommandsSet cli;
 
    for (int node=0;node<dabc::mgr()->NumNodes();node++) {
       dabc::Command* cmd = 0;
       if (isstart) cmd = new dabc::CmdStartAllModules;
               else cmd = new dabc::CmdStopAllModules;
       dabc::SetCmdReceiver(cmd, node, "");
-      dabc::mgr()->Submit(cli.Assign(cmd));
+      cli.Add(cmd, dabc::mgr());
    }
 
-   bool res = cli.WaitCommands(3);
+   int res = cli.ExecuteSet(3);
    DOUT0(("%s all res = %s", (isstart ? "Start" : "Stop"), DBOOL(res)));
 
    return res;
@@ -454,17 +454,17 @@ bool StartStopAll(bool isstart)
 
 bool EnableSending(bool on = true)
 {
-   dabc::CommandClient cli;
+   dabc::CommandsSet cli;
 
    for (int node=0;node<dabc::mgr()->NumNodes();node++) {
       dabc::Command* cmd = new dabc::Command("EnableSending");
       cmd->SetBool("Enable", on);
       dabc::SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(node), "Sender");
 
-      dabc::mgr()->Submit(cli.Assign(cmd));
+      cli.Add(cmd, dabc::mgr());
    }
 
-   return cli.WaitCommands(3);
+   return cli.ExecuteSet(3) == dabc::cmd_true;
 }
 
 extern "C" void RunAllToAll()
@@ -483,7 +483,7 @@ extern "C" void RunAllToAll()
 
    bool res = false;
 
-   dabc::CommandClient cli;
+   dabc::CommandsSet cli;
 
    for (int node=0;node<numnodes;node++) {
       dabc::Command* cmd =
@@ -492,7 +492,7 @@ extern "C" void RunAllToAll()
       cmd->SetInt("BufferSize", TestBufferSize);
       dabc::SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(node), "");
 
-      dabc::mgr()->Submit(cli.Assign(cmd));
+      cli.Add(cmd, dabc::mgr());
    }
 
    for (int node=0;node<numnodes;node++) {
@@ -502,25 +502,29 @@ extern "C" void RunAllToAll()
       cmd->SetInt("BufferSize", TestBufferSize);
       dabc::SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(node), "");
 
-      dabc::mgr()->Submit(cli.Assign(cmd));
+      cli.Add(cmd, dabc::mgr());
    }
 
-   res = cli.WaitCommands(5);
+   res = cli.ExecuteSet(5);
 
    DOUT0(("CreateAllModules() res = %s", DBOOL(res)));
+
+   cli.Cleanup();
 
    const char* devname = "Test1Dev";
 
    for (int node = 0; node < numnodes; node++) {
       dabc::Command* cmd = new dabc::CmdCreateDevice(devclass.c_str(), devname);
       dabc::SetCmdReceiver(cmd, dabc::mgr()->GetNodeName(node), "");
-      dabc::mgr()->Submit(cli.Assign(cmd));
+      cli.Add(cmd, dabc::mgr());
    }
 
-   if (!cli.WaitCommands(5)) {
+   if (!cli.ExecuteSet(5)) {
       EOUT(("Cannot create devices of class %s", devclass.c_str()));
       return;
    }
+
+   cli.Cleanup();
 
    for (int nsender = 0; nsender < numnodes; nsender++) {
       for (int nreceiver = 0; nreceiver < numnodes; nreceiver++) {
@@ -537,10 +541,10 @@ extern "C" void RunAllToAll()
                                        devname, "TransportThrd");
           cmd->SetBool(dabc::xmlUseAcknowledge, TestUseAckn);
 
-          dabc::mgr()->Submit(cli.Assign(cmd));
+          cli.Add(cmd, dabc::mgr());
       }
    }
-   res = cli.WaitCommands(5);
+   res = cli.ExecuteSet(5);
    DOUT1(("ConnectAllModules() res = %s", DBOOL(res)));
 
    StartStopAll(true);
@@ -637,7 +641,7 @@ extern "C" void RunMulticastTest()
 //
 //void CreateAllModules(dabc::StandaloneManager &m, int numworkers = 0)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=FirstNode;node<m.NumNodes();node++) {
 //      dabc::Command* cmd =
@@ -669,7 +673,7 @@ extern "C" void RunMulticastTest()
 //
 //void ConnectModules(dabc::StandaloneManager &m, int deviceid = 1)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   const char* devname = "Test1Dev";
 //
@@ -710,7 +714,7 @@ extern "C" void RunMulticastTest()
 //
 //void SetPriorities(dabc::StandaloneManager &m, int prio = 0)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=FirstNode;node<m.NumNodes();node++) {
 //      dabc::Command* cmd = new dabc::Command("SetPriority");
@@ -729,7 +733,7 @@ extern "C" void RunMulticastTest()
 //
 //void ChangeSleepTime(dabc::StandaloneManager &m, int tm=0, int selectnode = -1)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=FirstNode;node<m.NumNodes();node++) {
 //      if ((selectnode>=0) && (node!=selectnode)) continue;
@@ -742,7 +746,7 @@ extern "C" void RunMulticastTest()
 //
 //void StopAll(dabc::StandaloneManager &m)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=FirstNode;node<m.NumNodes();node++)
 //      m.SubmitRemote(cli, new dabc::CmdStopAllModules(), node);
@@ -752,7 +756,7 @@ extern "C" void RunMulticastTest()
 //
 //void CleanupAll(dabc::StandaloneManager &m)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=FirstNode;node<m.NumNodes();node++)
 //      m.SubmitRemote(cli, new dabc::CmdCleanupManager(), node);
@@ -1089,7 +1093,7 @@ extern "C" void RunMulticastTest()
 //
 //void CreateAllModules2(dabc::StandaloneManager &m, int buffersize, int numworkers = 0)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=0;node<m.NumNodes();node++) {
 //      dabc::Command* cmd =
@@ -1121,7 +1125,7 @@ extern "C" void RunMulticastTest()
 //
 //void ConnectModules2(dabc::StandaloneManager &m, int deviceid = 1)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   const char* devname = "Test2Dev";
 //   const char* deviceclass = dabc::typeSocketDevice;
@@ -1160,7 +1164,7 @@ extern "C" void RunMulticastTest()
 //
 //void SetPriorities2(dabc::StandaloneManager &m, int prio = 0)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=0;node<m.NumNodes();node++) {
 //      dabc::Command* cmd = new dabc::Command("SetPriority");
@@ -1179,7 +1183,7 @@ extern "C" void RunMulticastTest()
 //
 //void StartAll2(dabc::StandaloneManager &m, int numworkers = 0)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=0;node<m.NumNodes();node++)
 //      m.SubmitRemote(cli, new dabc::CmdStartAllModules(), node);
@@ -1190,7 +1194,7 @@ extern "C" void RunMulticastTest()
 //
 //void EnableSending2(dabc::StandaloneManager &m, bool on = true, int maxnode = -1)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=0;node< (maxnode>=0 ? maxnode : m.NumNodes()); node++) {
 //      dabc::Command* cmd = new dabc::Command("EnableSending");
@@ -1202,7 +1206,7 @@ extern "C" void RunMulticastTest()
 //
 //void ChangeSleepTime2(dabc::StandaloneManager &m, int tm=0, int selectnode = -1)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=0;node<m.NumNodes();node++) {
 //      if ((selectnode>=0) && (node!=selectnode)) continue;
@@ -1215,7 +1219,7 @@ extern "C" void RunMulticastTest()
 //
 //void StopAll2(dabc::StandaloneManager &m)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=0;node<m.NumNodes();node++)
 //      m.SubmitRemote(cli, new dabc::CmdStopAllModules(), node);
@@ -1225,7 +1229,7 @@ extern "C" void RunMulticastTest()
 //
 //void CleanupAll2(dabc::StandaloneManager &m)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   for (int node=0;node<m.NumNodes();node++)
 //      m.SubmitRemote(cli, new dabc::CmdCleanupManager(), node);
@@ -1237,7 +1241,7 @@ extern "C" void RunMulticastTest()
 //{
 //   DOUT1(("STANDALONE TEST N = %d", nmodules));
 //
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   const char* thrdname = 0; // "CommonThread";
 //
@@ -1326,7 +1330,7 @@ extern "C" void RunMulticastTest()
 //
 //void OneToAllLoop2(dabc::StandaloneManager &m, int deviceid)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   long arena1 = dabc::GetProcVirtMem();
 //   DOUT1(("OneToAllLoop Start with: %ld",arena1));
@@ -1396,7 +1400,7 @@ extern "C" void RunMulticastTest()
 //
 //void TimeSyncLoop2(dabc::StandaloneManager &m, int deviceid)
 //{
-//   dabc::CommandClient cli;
+//   dabc::CommandsSet cli;
 //
 //   const char* devname = "TSyncDev";
 //   const char* deviceclass = dabc::typeSocketDevice;

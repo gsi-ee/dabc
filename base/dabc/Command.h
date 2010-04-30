@@ -20,7 +20,6 @@
 
 namespace dabc {
 
-   class CommandClientBase;
    class WorkingThread;
    class WorkingProcessor;
    class Mutex;
@@ -38,7 +37,6 @@ namespace dabc {
 
    class Command : public Basic {
 
-      friend class CommandClientBase;
       friend class WorkingThread;
       friend class CommandsQueue;
       friend class WorkingProcessor;
@@ -49,10 +47,7 @@ namespace dabc {
 
          CommandParametersList* fParams;
 
-         CommandClientBase*     fClient;
-         Mutex*                 fClientMutex; // pointer on client mutex, must be locked when we access client itself
-         int                    fKeepAlive;   // if true, object should not be deleted by client, but later by user
-
+         int                    fKeepAlive;       /** if true, object should not be deleted by client, but later by user */
          bool                   fValid;           /** true until destructor, way to detect object destroyment */
          WorkingProcessor*      fCallerProcessor; /** pointer to caller processor */
          unsigned               fCmdId;           /** Current command id */
@@ -109,9 +104,6 @@ namespace dabc {
          void SetResult(int res) { SetInt("_result_", res); }
          int GetResult() const { return GetInt("_result_", 0); }
          void ClearResult() { RemovePar("_result_"); }
-
-         bool IsClient();
-         void CleanClient();
 
          /** Method to inform caller that command is executed.
           * After this call command pointer must not be used in caller */

@@ -18,7 +18,6 @@
 
 
 #include "dabc/Manager.h"
-#include "dabc/CommandClient.h"
 #include "dabc/logging.h"
 #include "dabc/Iterator.h"
 #include "dabc/WorkingProcessor.h"

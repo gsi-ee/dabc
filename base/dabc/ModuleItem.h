@@ -83,6 +83,8 @@ namespace dabc {
 
          virtual WorkingProcessor* GetCfgMaster() { return GetModule(); }
 
+         virtual WorkingProcessor* GetCmdReceiver() { return this; }
+
          virtual void DoStart() {}
          virtual void DoStop() {}
 

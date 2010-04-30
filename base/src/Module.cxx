@@ -34,13 +34,11 @@
 dabc::Module::Module(const char* name, Command* cmd) :
    Folder(dabc::mgr(), (name ? name : (cmd ? cmd->GetStr("Name","module") : "module")), true),
    WorkingProcessor(this),
-   CommandClientBase(),
    fRunState(msStopped),
    fInputPorts(),
    fOutputPorts(),
    fPorts(),
    fPoolHandels(),
-   fReplyes(true, true),
    fLostEvents(128, true)
 {
    // we will use 3 priority levels:
@@ -190,6 +188,11 @@ int dabc::Module::PreviewCommand(Command* cmd)
       } else
          cmd_res = cmd_false;
    } else
+   if (cmd->IsName(CmdCheckConnModule::CmdName())) {
+      cmd_res = cmd_true;
+      for (unsigned n=0;n<NumIOPorts();n++)
+         if (IOPort(n) && !IOPort(n)->IsConnected()) cmd_res = cmd_false;
+   } else
       cmd_res = WorkingProcessor::PreviewCommand(cmd);
 
    if (cmd_res!=cmd_ignore)
@@ -232,18 +235,6 @@ bool dabc::Module::DoStop()
    return true;
 }
 
-int dabc::Module::ExecuteCommand(Command* cmd)
-{
-   if (cmd->IsName(CmdCheckConnModule::CmdName())) {
-      for (unsigned n=0;n<NumIOPorts();n++)
-         if (IOPort(n) && !IOPort(n)->IsConnected()) return cmd_false;
-
-      return cmd_true;
-   }
-
-   return CommandReceiver::ExecuteCommand(cmd);
-}
-
 dabc::PoolHandle* dabc::Module::CreatePoolHandle(const char* poolname, BufferSize_t size, BufferNum_t number, BufferNum_t increment)
 {
    dabc::MemoryPool* pool = dabc::mgr()->FindPool(poolname);
@@ -269,17 +260,6 @@ dabc::PoolHandle* dabc::Module::CreatePoolHandle(const char* poolname, BufferSiz
 dabc::Folder* dabc::Module::GetTimersFolder(bool force)
 {
    return GetFolder("Timers", force, true);
-}
-
-bool dabc::Module::_ProcessReply(Command* cmd)
-{
-   // here one get completion from command
-   // one should redirect it to the signal
-
-   if (cmd==0) return false;
-   fReplyes.Push(cmd);
-   FireEvent(evntReplyCommand);
-   return true;
 }
 
 void dabc::Module::ItemCreated(ModuleItem* item)
@@ -437,13 +417,6 @@ void dabc::Module::ProcessEvent(EventId evid)
 
          if (fLostEvents.Size() > 0) FireEvent(evntReinjectlost);
          break;
-
-      case evntReplyCommand: {
-         dabc::Command* cmd = fReplyes.Pop();
-         if (ReplyCommand(cmd))
-            dabc::Command::Finalise(cmd);
-         break;
-      }
 
       default:
          dabc::WorkingProcessor::ProcessEvent(evid);

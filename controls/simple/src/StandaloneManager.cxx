@@ -23,6 +23,7 @@
 #include "dabc/Iterator.h"
 #include "dabc/Factory.h"
 #include "dabc/Configuration.h"
+#include "dabc/CommandsSet.h"
 
 #include "dabc/CommandChannelModule.h"
 
@@ -152,16 +153,16 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
    fCmdChannel->Start();
    DOUT3(( "Started CommandChannelModule module"));
 
-   dabc::CommandClient cli;
+   dabc::CommandsSet cli;
 
    if (IsMainManager()) {
 
       Command* scmd = new Command("StartServer");
       scmd->SetStr("CmdChannel", "StdMgrCmd");
       scmd->SetKeepAlive();
-      Submit(cli.Assign(SetCmdReceiver(scmd, fCmdDevName.c_str())));
+      cli.Add(SetCmdReceiver(scmd, fCmdDevName.c_str()), this);
 
-      if (cli.WaitCommands(10)) {
+      if (cli.ExecuteSet(10)) {
          fCmdDeviceId = scmd->GetPar("ConnId");
 
          std::ofstream f(controllerID);
@@ -190,19 +191,20 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       Command* cmdr = new Command("RegisterSlave");
       cmdr->SetStr("SlaveName", GetName());
       cmdr->SetInt("SlaveNodeId", fNodeId);
-      cmdr->SetKeepAlive();
 
       Device::MakeRemoteCommand(cmdr, controllerID, "StdMgrCmd");
 
-      Submit(cli.Assign(SetCmdReceiver(cmdr, fCmdDevName.c_str())));
+      cli.Add(SetCmdReceiver(cmdr, fCmdDevName.c_str()), this);
 
-      if (cli.WaitCommands(7)) {
-         DOUT2(("RegisterSlave execution OK serv = %s connid = %s",
-           cmdr->GetStr("ServerId","null"), cmdr->GetPar("ConnId")));
-      } else {
+      if (cli.ExecuteSet(7)!=dabc::cmd_true) {
          EOUT(("RegisterSlave command fail. Halt"));
          exit(1);
       }
+
+      cmdr = cli.GetCommand(0);
+
+      DOUT2(("RegisterSlave execution OK serv = %s connid = %s",
+        cmdr->GetStr("ServerId","null"), cmdr->GetPar("ConnId")));
 
       fMainMgrName = cmdr->GetStr("MainMgr","Node0");
       fClusterNames[0] = fMainMgrName;
@@ -214,13 +216,12 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       cmd->SetPar("ConnId", cmdr->GetPar("ConnId"));
       cmd->SetPar("ServerId", cmdr->GetPar("ServerId"));
       cmd->SetBool("ServerUseAckn", true);
-      Submit(cli.Assign(SetCmdReceiver(cmd, fCmdDevName.c_str())));
 
-      dabc::Command::Finalise(cmdr);
+      cli.Cleanup();
 
-      bool res = cli.WaitCommands(5);
+      cli.Add(SetCmdReceiver(cmd, fCmdDevName.c_str()), this);
 
-      if (!res) {
+      if (cli.ExecuteSet(5)!=dabc::cmd_true) {
          EOUT(("Not able to connect commands channel"));
          exit(1);
       }
@@ -276,7 +277,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
    fCmdChannel->Start();
    DOUT3(( "Started CommandChannelModule module"));
 
-   dabc::CommandClient cli;
+   dabc::CommandsSet cli;
 
    ChangeManagerName(FORMAT(("Node%d", fNodeId)));
 
@@ -287,20 +288,20 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       // start server without extra cmd channel
       Command* scmd = new Command("StartServer");
 //      scmd->SetStr("CmdChannel","StdMgrCmd");
-      scmd->SetKeepAlive();
-      Submit(cli.Assign(SetCmdReceiver(scmd, fCmdDevName.c_str())));
+      cli.Add(SetCmdReceiver(scmd, fCmdDevName.c_str()), this);
 
-      if (cli.WaitCommands(10)) {
-         fCmdDeviceId = scmd->GetPar("ConnId");
-
-         std::ofstream f(controllerID);
-         f << fCmdDeviceId << std::endl;
-         dabc::Command::Finalise(scmd);
-      } else {
+      if (cli.ExecuteSet(10)!=dabc::cmd_true) {
          EOUT(("Cannot start server. HALT"));
          dabc::Command::Finalise(scmd);
          exit(1);
       }
+
+      fCmdDeviceId = scmd->GetPar("ConnId");
+      std::ofstream f(controllerID);
+      f << fCmdDeviceId << std::endl;
+
+      cli.Cleanup();
+
 
       fClusterNames[0] = "Node0";
 
@@ -310,7 +311,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       for (int nslave=1; nslave < NumNodes(); nslave++) {
          Command* cmd = new CmdDirectConnect(true, FORMAT(("CommandChannel/Port%d", nslave-1)));
          cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", nslave)));
-         Submit(cli.Assign(SetCmdReceiver(cmd, fCmdDevName.c_str())));
+         cli.Add(SetCmdReceiver(cmd, fCmdDevName.c_str()), this);
       }
 
    } else {
@@ -322,10 +323,10 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       cmd->SetPar("ConnId", FORMAT(("CommandChannel-node%d", fNodeId)));
       cmd->SetPar("ServerId", controllerID);
       cmd->SetBool("ServerUseAckn", true);
-      Submit(cli.Assign(SetCmdReceiver(cmd, fCmdDevName.c_str())));
+      cli.Add(SetCmdReceiver(cmd, fCmdDevName.c_str()), this);
    }
 
-   bool res = cli.WaitCommands(5);
+   bool res = cli.ExecuteSet(5) == dabc::cmd_true;
 
    if (!res) {
       EOUT(("Not able to connect commands channel"));
@@ -347,13 +348,13 @@ void dabc::StandaloneManager::DisconnectCmdChannels()
 
    if (fCmdChannel==0) return;
 
-   dabc::CommandClient cli;
+   dabc::CommandsSet cli;
 
    for (int node=1;node<NumNodes();node++)
       if (IsNodeActive(node))
-         Submit(cli.Assign(SetCmdReceiver(new dabc::Command("DisconnectCmdChannel"), GetNodeName(node), "")));
+         cli.Add(SetCmdReceiver(new dabc::Command("DisconnectCmdChannel"), GetNodeName(node), ""), this);
 
-   bool res = cli.WaitCommands(10);
+   bool res = cli.ExecuteSet(10) == dabc::cmd_true;
 
    if (!res) {
       EOUT(("Cannot disconnect correctly command channels"));
@@ -482,7 +483,8 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       Command* ccmd = new CmdDirectConnect(true, FORMAT(("CommandChannel/Port%d", slaveid-1)));
       ccmd->SetPar("ConnId", connid.c_str());
       ccmd->SetBool("ServerUseAckn", true);
-      Submit(Assign(SetCmdReceiver(ccmd, fCmdDevName.c_str())));
+      Assign(SetCmdReceiver(ccmd, fCmdDevName.c_str()));
+      Submit(ccmd);
 
       // reply with complete info that client can start connection
       cmd->SetStr("MainMgr", GetName());

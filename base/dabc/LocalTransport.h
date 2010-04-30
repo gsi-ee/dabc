@@ -86,7 +86,7 @@ namespace dabc {
       public:
          LocalDevice(Basic* parent, const char* name);
 
-         bool ConnectPorts(Port* port1, Port* port2, CommandClientBase* cli = 0);
+         bool ConnectPorts(Port* port1, Port* port2);
 
          virtual int CreateTransport(Command* cmd, dabc::Port* port);
 

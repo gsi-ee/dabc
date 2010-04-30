@@ -105,7 +105,7 @@ namespace dabc {
          unsigned NumOutputBuffersRequired() const;
          unsigned NumInputBuffersRequired() const;
 
-         bool AssignTransport(Transport* tr, CommandClientBase* cli = 0);
+         bool AssignTransport(Transport* tr);
          bool IsConnected() const { return fTransport!=0; }
          void Disconnect();
 

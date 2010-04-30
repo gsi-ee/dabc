@@ -212,7 +212,7 @@ bool dabc::WorkingThread::Start(double timeout_sec, bool withoutthrd)
    else
       Thread::UseCurrentAsSelf();
 
-   bool res = fExec->NewCmd_Execute("ConfirmStart", timeout_sec);
+   bool res = fExec->Execute("ConfirmStart", timeout_sec);
 
    LockGuard guard(fWorkMutex);
    fState = res ? stRunning : stError;
@@ -254,7 +254,7 @@ bool dabc::WorkingThread::Stop(bool waitjoin, double timeout_sec)
 
    DOUT3(("Start execute ConfirmStop"));
 
-   if (needstop) res = fExec->NewCmd_Execute("ConfirmStop", timeout_sec);
+   if (needstop) res = fExec->Execute("ConfirmStop", timeout_sec);
 
    DOUT3(("Did execute ConfirmStop"));
 
@@ -283,7 +283,7 @@ void dabc::WorkingThread::SetWorkingFlag(bool on)
 
 bool dabc::WorkingThread::Sync(double timeout_sec)
 {
-   return fExec->NewCmd_Execute("ConfirmSync", timeout_sec);
+   return fExec->Execute("ConfirmSync", timeout_sec);
 }
 
 bool dabc::WorkingThread::SetExplicitLoop(WorkingProcessor* proc)
@@ -475,26 +475,6 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
    } else
 
    switch (GetEventCode(evnt)) {
-      case evntProcCmd: {
-         uint32_t procid = GetEventArg(evnt);
-
-         if (procid >= fProcessors.size()) {
-            DOUT3(("evntProcCmd - mismatch in processor id:%u sz:%u ",procid, fProcessors.size()));
-            break;
-         }
-
-         WorkingProcessor* proc = fProcessors[procid];
-
-         if (proc) {
-            Command* cmd = proc->fProcessorCommands.Pop();
-            if (cmd) proc->ProcessCommand(cmd);
-         } else {
-            DOUT3(("WorkingProcessor with such id no longer exists"));
-         }
-
-         break;
-      }
-
       case evntCheckTmout: {
          uint32_t tmid = GetEventArg(evnt);
 
@@ -568,31 +548,13 @@ bool dabc::WorkingThread::AddProcessor(WorkingProcessor* proc, bool sync)
 {
    Command* cmd = new Command("AddProcessor");
    cmd->SetPtr("WorkingProcessor", proc);
-   return sync ? fExec->NewCmd_Execute(cmd) : fExec->NewCmd_Submit(cmd);
+   return sync ? fExec->Execute(cmd) : fExec->Submit(cmd);
 }
 
-bool dabc::WorkingThread::SubmitProcessorCmd(WorkingProcessor* proc, Command* cmd)
-{
-   if (!IsThrdWorking()) {
-      EOUT(("Fails for command %s", cmd->GetName()));
-      dabc::Command::Reply(cmd, false);
-      return false;
-   }
-
-   DOUT5(("Get processor command %s numq %d arg %d", cmd->GetName(), fNumQueues,  (fNumQueues>1) ? 1 : 0));
-
-   proc->fProcessorCommands.Push(cmd);
-
-   LockGuard guard(fWorkMutex);
-
-   _Fire(CodeEvent(evntProcCmd, 0, proc->fProcessorId), 0);
-
-   return true;
-}
 
 int dabc::WorkingThread::Execute(dabc::Command* cmd, double tmout)
 {
-   return fExec->NewCmd_Execute(cmd);
+   return fExec->Execute(cmd, tmout);
 }
 
 int dabc::WorkingThread::SysCommand(const char* cmdname, WorkingProcessor* proc)
@@ -620,14 +582,14 @@ void dabc::WorkingThread::ExitMainLoop(WorkingProcessor* proc)
    }
 
    SysCommand("ExitMainLoop", proc);
-   fExec->NewCmd_Execute("ConfirmSync");
+   fExec->Execute("ConfirmSync");
 }
 
 void dabc::WorkingThread::DestroyProcessor(WorkingProcessor* proc)
 {
    Command* cmd = new Command("DestroyProcessor");
    cmd->SetInt("ProcessorId", proc->fProcessorId);
-   fExec->NewCmd_Submit(cmd);
+   fExec->Submit(cmd);
 }
 
 double dabc::WorkingThread::CheckTimeouts(bool forcerecheck)

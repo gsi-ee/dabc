@@ -30,10 +30,6 @@
 #include "dabc/Command.h"
 #endif
 
-#ifndef DABC_CommandClient
-#include "dabc/CommandClient.h"
-#endif
-
 #ifndef DABC_timing
 #include "dabc/timing.h"
 #endif
@@ -56,14 +52,13 @@ namespace dabc {
    class Transport;
 
    class Module : public Folder,
-                  public WorkingProcessor,
-                  public CommandClientBase {
+                  public WorkingProcessor {
 
       friend class Manager;
       friend class ModuleItem;
       friend class Port;
 
-      enum  { evntReinjectlost = evntFirstSystem, evntReplyCommand };
+      enum  { evntReinjectlost = evntFirstSystem };
 
       protected:
          typedef std::vector<unsigned> ItemsIndexVector;
@@ -76,7 +71,6 @@ namespace dabc {
          ItemsIndexVector         fOutputPorts; // map for fast access to output ports
          ItemsIndexVector         fPorts;       // map for fast access to i/o ports
          ItemsIndexVector         fPoolHandels; // map for fast access to memory pools handles
-         CommandsQueue            fReplyes;     // reply queue
          Queue<EventId>           fLostEvents;  // events, coming while module is sleeping
 
       protected:
@@ -118,7 +112,7 @@ namespace dabc {
          inline bool IsStopped() const { return fRunState == msStopped; }
          inline bool IsHalted() const { return fRunState == msHalted; }
 
-         virtual CommandReceiver* GetCmdReceiver() { return this; }
+         virtual WorkingProcessor* GetCmdReceiver() { return this; }
 
          // generic users event processing function
          virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid) {}
@@ -144,13 +138,13 @@ namespace dabc {
          // Any other arguments (cmd_postponed) means that execution
          // will be postponed in the module itself
          // User must call Module::ExecuteCommand() to enable processing of standard commands
-         virtual int ExecuteCommand(Command* cmd);
+         virtual int ExecuteCommand(Command* cmd) { return dabc::WorkingProcessor::ExecuteCommand(cmd); }
 
          // This is place of user code when command completion is arrived
          // User can implement any analysis of command data in this method
          // If returns true, command object will be delete automatically,
          // otherwise ownership delegated to user.
-         virtual bool ReplyCommand(Command* cmd) { return true; }
+         virtual bool ReplyCommand(Command* cmd) { return dabc::WorkingProcessor::ReplyCommand(cmd); }
 
          // =======================================================
 
@@ -174,8 +168,6 @@ namespace dabc {
          bool ShootTimer(const char* name, double delay_sec = 0.);
 
          Port* GetPortItem(unsigned id) const;
-
-         virtual bool _ProcessReply(Command* cmd);
 
          TimeStamp_t ThrdTimeStamp() { return ProcessorThread() ? ProcessorThread()->ThrdTimeStamp() : NullTimeStamp; }
          TimeSource* GetThrdTimeSource() { return ProcessorThread() ? ProcessorThread()->ThrdTimeSource() : 0; }

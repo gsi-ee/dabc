@@ -17,7 +17,6 @@
 
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
-#include "dabc/CommandClient.h"
 
 #define SocketServerTmout 0.2
 
@@ -65,13 +64,11 @@ namespace dabc {
    // when socket connection is established
    // it also used to transport commands on remote side and execute them
 
-   class SocketProtocolProcessor : public SocketIOProcessor,
-                                   public CommandClientBase {
+   class SocketProtocolProcessor : public SocketIOProcessor {
 
       friend class SocketDevice;
 
-      enum EProtocolEvents { evntProtocolReplyCmd = evntSocketLast,
-                             evntSocketProtLast };
+      enum EProtocolEvents { evntSocketProtLast = evntSocketLast };
 
       protected:
 
@@ -87,7 +84,6 @@ namespace dabc {
 
          SocketProtocolProcessor(int connfd, SocketDevice* dev, NewConnectRec* rec) :
             dabc::SocketIOProcessor(connfd),
-            CommandClientBase(),
             fDevice(dev),
             fRec(rec),
             fStatus(rec==0 ? stServerProto : stClientProto),
@@ -107,11 +103,30 @@ namespace dabc {
             fDevice->DestroyProcessor(this, res);
          }
 
-         bool _ProcessReply(Command* cmd)
+         bool ReplyCommand(Command* cmd)
          {
-            if ((fRec==0) || (fRec->fCmd!=cmd)) return false;
+            if (fStatus!=stWaitCmdReply) {
+               EOUT(("Internal problem"));
+               FinishWork(false);
+               return true;
+            }
 
-            FireEvent(evntProtocolReplyCmd);
+            if ((fRec==0) || (fRec->fCmd!=cmd)) {
+               EOUT(("Something wrong with replied command"));
+               FinishWork(false);
+               return true;
+            }
+
+            fRec->fCmd->SaveToString(fRec->fCmdStrBuf);
+            fRec->fCmd = 0;
+
+            unsigned cmdlen = fRec->fCmdStrBuf.length() + 1;
+
+            snprintf(fOutBuf, sizeof(fOutBuf), "%u", cmdlen);
+
+            fStatus = stSendReplySize;
+
+            StartSend(fOutBuf, ProtocolMsgSize);
 
             return true;
          }
@@ -270,38 +285,6 @@ namespace dabc {
             }
 
             return true;
-         }
-
-         virtual void ProcessEvent(dabc::EventId evnt)
-         {
-            switch (GetEventCode(evnt)) {
-               case evntProtocolReplyCmd: {
-                  if (fStatus!=stWaitCmdReply) {
-                     EOUT(("Internal problem"));
-                     FinishWork(false);
-                     return;
-                  }
-
-                  fRec->fCmd->SaveToString(fRec->fCmdStrBuf);
-
-                  dabc::Command::Finalise(fRec->fCmd);
-
-                  fRec->fCmd = 0;
-
-                  unsigned cmdlen = fRec->fCmdStrBuf.length() + 1;
-
-                  snprintf(fOutBuf, sizeof(fOutBuf), "%u", cmdlen);
-
-                  fStatus = stSendReplySize;
-
-                  StartSend(fOutBuf, ProtocolMsgSize);
-
-                  break;
-               }
-
-               default:
-                 SocketIOProcessor::ProcessEvent(evnt);
-            }
          }
    };
 }

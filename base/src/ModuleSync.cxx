@@ -274,8 +274,12 @@ void dabc::ModuleSync::StopUntilRestart()
 
 void dabc::ModuleSync::AsyncProcessCommands()
 {
-   while (fNewCommands.Size()>0)
-      ProcessCommand(fNewCommands.Pop());
+   while (fNewCommands.Size()>0) {
+      dabc::Command* cmd = fNewCommands.Pop();
+      int cmd_res = ExecuteCommand(cmd);
+      if (cmd_res>=0)
+         dabc::Command::Reply(cmd, cmd_res);
+   }
 }
 
 void dabc::ModuleSync::ProcessUserEvent(ModuleItem* item, uint16_t evid)

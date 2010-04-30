@@ -18,10 +18,6 @@
 #include "dabc/Folder.h"
 #endif
 
-#ifndef DABC_CommandClient
-#include "dabc/CommandClient.h"
-#endif
-
 #ifndef DABC_WorkingProcessor
 #include "dabc/WorkingProcessor.h"
 #endif
@@ -268,8 +264,7 @@ namespace dabc {
 
 
    class Manager : public Folder,
-                   public WorkingProcessor,
-                   public CommandClientBase {
+                   public WorkingProcessor {
 
       friend class Basic;
       friend class Factory;
@@ -284,7 +279,7 @@ namespace dabc {
 
          void ChangeManagerName(const char* newname);
 
-         enum MgrEvents { evntDestroyObj = evntFirstUser, evntManagerReply, evntManagerParam };
+         enum MgrEvents { evntDestroyObj = evntFirstUser, evntManagerParam };
 
       public:
 
@@ -299,6 +294,8 @@ namespace dabc {
            * Normally, last command before exit from main program.
            * Automatically called from destructor */
          void HaltManager();
+
+         virtual WorkingProcessor* GetCmdReceiver() { return this; }
 
          // ------------------------- State machine constants and methods ----------------------
 
@@ -529,7 +526,6 @@ namespace dabc {
          bool                  fMgrNormalThrd; // indicate if manager has normal thread
 
          Mutex                *fMgrMutex; // main mutex to protect manager queues
-         CommandsQueue         fReplyesQueue;
          Queue<Basic*>         fDestroyQueue;
          Queue<ParamRec>       fParsQueue;
          bool                  fParsQueueBlocked;
@@ -551,7 +547,6 @@ namespace dabc {
 
          static Manager       *fInstance;
 
-         virtual bool _ProcessReply(Command* cmd);
          virtual double ProcessTimeout(double last_diff);
 
          bool DoCreateMemoryPool(Command* cmd);
@@ -565,8 +560,7 @@ namespace dabc {
 
          virtual int PreviewCommand(Command* cmd);
          virtual int ExecuteCommand(Command* cmd);
-
-         virtual bool PostCommandProcess(Command*);
+         virtual bool ReplyCommand(Command*);
 
          int AddInternalCmd(Command* cmd, const char* lblname);
          Command* FindInternalCmd(const char* lblname, int id);

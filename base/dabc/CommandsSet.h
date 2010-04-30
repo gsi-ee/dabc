@@ -14,10 +14,6 @@
 #ifndef DABC_CommandsSet
 #define DABC_CommandsSet
 
-#ifndef DABC_CommandClient
-#include "dabc/CommandClient.h"
-#endif
-
 #ifndef DABC_WorkingProcessor
 #include "dabc/WorkingProcessor.h"
 #endif
@@ -37,54 +33,10 @@ namespace dabc {
      * is configured and no more commands will be added.
      */
 
-   class CommandsSet : public CommandClientBase,
-                       public WorkingProcessor {
-
+   class CommandsSet : protected WorkingProcessor {
       public:
-         CommandsSet(Command* main_cmd, bool parallel_exe = true);
+         CommandsSet(WorkingThread* thrd = 0, bool parallel = true);
          virtual ~CommandsSet();
-
-         // Set receiver of commands, when set is activated
-         // By default, manager is receiver of commands
-         void SetReceiver(CommandReceiver* rcv);
-
-         // add new command to the set
-         void Add(Command* cmd);
-
-         // call this method after all commands is submitted to set
-         // if execution is completed at that time, set will be safely deleted
-         // no action with set variable is not allowed after this call
-         static void Completed(dabc::CommandsSet* set, double timeout_sec = -1);
-
-         void Reset(bool mainres = false);
-
-         // redefine this method to react on the reply of slave command
-         // return true, if command object is reused in the method
-         // false mean that user has nothing to do with the command
-         virtual bool ProcessCommandReply(Command*) { return false; }
-
-      protected:
-
-         virtual bool _ProcessReply(Command* cmd);
-
-         bool _SubmitNextCommands();
-
-         virtual double ProcessTimeout(double);
-
-         CommandReceiver   *fReceiver;    // actual receiver of set command
-         Command           *fMain;        // master command
-         bool               fParallelExe; // parallel execution of all commands
-         CommandsQueue      fCmdsSet;     // set of all commands, submitted to the set
-         bool               fMainRes;
-         bool               fCompleted;
-         bool               fNeedDestroy; // true if object must be destroyed
-   };
-
-
-   class NewCommandsSet : protected WorkingProcessor {
-      public:
-         NewCommandsSet();
-         virtual ~NewCommandsSet();
 
          /** Set default receiver for commands in the set.
           * By default, manager is receiver of commands */
@@ -95,8 +47,10 @@ namespace dabc {
 
          /** Add new command to the set.
           * Command will be submitted to specified receiver during Run
-          * If receiver not specified, default receiver will be used */
-         void Add(Command* cmd, WorkingProcessor* recv = 0);
+          * If receiver not specified, default receiver will be used
+          * User can submit commands itself after he add command to the set (do_submit should be false),
+          * but commands set should be created with thread parameter specified */
+         void Add(Command* cmd, WorkingProcessor* recv = 0, bool do_submit = true);
 
          /** Runs commands set synchronously with caller.
           * Execute all commands and returns cmd_true only when commands are executed
@@ -120,13 +74,22 @@ namespace dabc {
           * If command was not completed, returns cmd_timedout */
          int GetCmdResult(unsigned n);
 
+         void Cleanup();
+
       protected:
 
          virtual int ExecuteCommand(Command* cmd);
 
-         virtual bool NewCmd_ReplyCommand(Command* cmd);
+         virtual bool ReplyCommand(Command* cmd);
 
          virtual double ProcessTimeout(double last_diff);
+
+         /** Method called when execution of set is finished. Can be reimplemented by user */
+         virtual void SetCompleted(int res) {}
+
+         /** Method called when execution of set is finished. Can be reimplemented by user */
+         virtual void SetCommandCompleted(Command* cmd) {}
+
 
          struct CmdRec {
             dabc::Command*    cmd;
@@ -159,6 +122,9 @@ namespace dabc {
 
          /** Indicates execution mode */
          bool               fSyncMode;
+
+         /** Indicates if set execution is completed */
+         bool               fCompleted;
 
    };
 

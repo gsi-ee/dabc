@@ -29,6 +29,7 @@
 #include "dabc/Port.h"
 #include "dabc/Module.h"
 #include "dabc/Command.h"
+#include "dabc/CommandsSet.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/Device.h"
 #include "dabc/PoolHandle.h"
@@ -237,11 +238,9 @@ const char* dabc::Manager::stcmdDoHalt = "DoHalt";
 dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configuration* cfg) :
    Folder(0, managername, true),
    WorkingProcessor(this),
-   CommandClientBase(),
    fMgrMainLoop(false),
    fMgrNormalThrd(!usecurrentprocess),
    fMgrMutex(0),
-   fReplyesQueue(true, false),
    fDestroyQueue(16, true),
    fParsQueue(1024, true),
    fParsQueueBlocked(true),
@@ -323,9 +322,7 @@ dabc::Manager::~Manager()
 
    HaltManager();
 
-   DOUT3(("~Manager -> CancelCommands() locked:%s cmds:%u",
-         DBOOL((fCmdsMutex ? fCmdsMutex->IsLocked() : false)),
-         _NumSubmCmds()));
+   DOUT3(("~Manager -> CancelCommands()"));
 
    CancelCommands();
 
@@ -547,16 +544,6 @@ void dabc::Manager::ProcessEvent(EventId evnt)
       case evntDestroyObj:
          ProcessDestroyQueue();
          break;
-      case evntManagerReply: {
-         Command* cmd = 0;
-         {
-            LockGuard lock(fMgrMutex);
-            cmd = fReplyesQueue.Pop();
-         }
-         if (PostCommandProcess(cmd))
-            dabc::Command::Finalise(cmd);
-         break;
-      }
       case evntManagerParam: {
          ProcessParameterEvent();
          break;
@@ -803,7 +790,7 @@ int dabc::Manager::PreviewCommand(Command* cmd)
    if ((managername.size()==0) || (IsName(managername.c_str()))) {
 
       // this is local command submission
-      CommandReceiver* rcv = 0;
+      WorkingProcessor* rcv = 0;
       Basic* obj = 0;
 
       if ((itemname!=0) && (strlen(itemname)>0)) obj = FindChild(itemname);
@@ -1142,8 +1129,9 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          newcmd->ClearResult();
 
          SetCmdReceiver(newcmd, manager1name.c_str(), remrecvname.c_str());
+         Assign(newcmd);
 
-         if (!Submit(Assign(newcmd)))
+         if (!Submit(newcmd))
             EOUT(("Cannot submit remote command"));
 
          cmd_res = cmd_postponed;
@@ -1221,8 +1209,9 @@ void dabc::Manager::RecvOverCommandChannel(const char* cmddata)
       cmd->RemovePar("_sendcmd_");
 
       DOUT5(("RecvRemoteCommand %s", cmd->GetName()));
+      Assign(cmd);
 
-      Submit(Assign(cmd));
+      Submit(cmd);
    } else {
       // this is for replies
       int cmdid = cmd->GetInt("_cmdid_",-1);
@@ -1303,9 +1292,9 @@ void dabc::Manager::ModuleExecption(Module* m, const char* msg)
    EOUT(("EXCEPTION Module: %s message %s", m->GetName(), msg));
 }
 
-bool dabc::Manager::PostCommandProcess(Command* cmd)
+bool dabc::Manager::ReplyCommand(Command* cmd)
 {
-   // PostCommandProcess return true, when command can be safely deleted
+   // ReplyCommand return true, when command can be safely deleted
 
    if (cmd->GetPar("_remotereply_srcid_")) {
       std::string mgrname = cmd->GetStr("_remotereply_srcid_");
@@ -1315,8 +1304,6 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
       cmd->SaveToString(sbuf);
 
       SendOverCommandChannel(mgrname.c_str(), sbuf.c_str());
-
-      return true;
    } else
    if (cmd->IsName(CmdConnectPorts::CmdName())) {
 
@@ -1364,12 +1351,14 @@ bool dabc::Manager::PostCommandProcess(Command* cmd)
       devname += prnt->GetStr("Device");
 
       SetCmdReceiver(newcmd, manager2name.c_str(), devname.c_str());
+      Assign(newcmd);
 
-      if (!Submit(Assign(newcmd))) {
+      if (!Submit(newcmd)) {
          Command* prnt = TakeInternalCmd("_PCID_", parentid);
          dabc::Command::Reply(prnt, false);
       }
-   }
+   } else
+      return dabc::WorkingProcessor::ReplyCommand(cmd);
 
    return true;
 }
@@ -1404,19 +1393,6 @@ bool dabc::Manager::CleanupManager(int appid)
 void dabc::Manager::Print()
 {
    Execute("Print");
-}
-
-bool dabc::Manager::_ProcessReply(Command* cmd)
-{
-   DOUT4(("ProcessReply %s evnt:%d", cmd->GetName(), evntManagerReply));
-
-   {
-      LockGuard lock(fMgrMutex);
-      fReplyesQueue.Push(cmd);
-   }
-
-   FireEvent(evntManagerReply);
-   return true;
 }
 
 void dabc::Manager::DestroyObject(Basic* obj)
@@ -1630,8 +1606,7 @@ void dabc::Manager::Sleep(double tmout)
    if (thrd==0) {
       while (tmout>1) { dabc::LongSleep(1); tmout-=1.; }
       dabc::MicroSleep(int(tmout*1e6));
-   }
-   else
+   } else
       thrd->RunEventLoop(tmout);
 }
 
@@ -1669,16 +1644,16 @@ int dabc::Manager::NumActiveNodes()
 
 bool dabc::Manager::TestActiveNodes(double tmout)
 {
-   CommandClient cli;
+   CommandsSet cli;
 
    for (int node=0; node<NumNodes(); node++)
       if ((node!=NodeId()) && IsNodeActive(node)) {
          Command* cmd = new Command("Ping");
          SetCmdReceiver(cmd, GetNodeName(node), "");
-         Submit(cli.Assign(cmd));
+         cli.Add(cmd, this);
       }
 
-   return cli.WaitCommands(tmout);
+   return cli.ExecuteSet(tmout);
 }
 
 int dabc::Manager::DefineNodeId(const char* nodename)
@@ -1735,12 +1710,14 @@ bool dabc::Manager::ChangeState(const char* state_transition_cmd, double tmout)
    if (fSMmodule==0)
       res = DoStateTransition(state_transition_cmd);
    else {
-      dabc::CommandClient cli;
+      dabc::CommandsSet cli(CurrentThread());
 
       dabc::Command* cmd = new dabc::CmdStateTransition(state_transition_cmd);
 
-      if (InvokeStateTransition(state_transition_cmd, cli.Assign(cmd)))
-         res = cli.WaitCommands(tmout);
+      cli.Add(cmd, 0, false);
+
+      if (InvokeStateTransition(state_transition_cmd, cmd))
+         res = cli.ExecuteSet(tmout);
    }
 
    if (!res) {

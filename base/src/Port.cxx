@@ -117,18 +117,11 @@ unsigned dabc::Port::NumInputBuffersRequired() const
    return sz;
 }
 
-bool dabc::Port::AssignTransport(Transport* tr, CommandClientBase* cli)
+bool dabc::Port::AssignTransport(Transport* tr)
 {
    Command* cmd = new Command("AssignTransport");
    cmd->SetPtr("#Transport", tr);
-
-   if (ProcessorThread()!=0) {
-      if (cli!=0) cmd = cli->Assign(cmd);
-      Submit(cmd);
-   } else
-      Execute(cmd);
-
-   return true;
+   return Execute(cmd)==cmd_true;
 }
 
 int dabc::Port::ExecuteCommand(Command* cmd)

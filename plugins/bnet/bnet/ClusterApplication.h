@@ -43,6 +43,8 @@ namespace bnet {
          // this is public method, which must be used from SM thread
          virtual bool DoStateTransition(const char* state_trans_name);
 
+         void DiscoverCommandCompleted(dabc::Command* cmd);
+
       protected:
 
          std::string NodeCurrentState(int nodeid);

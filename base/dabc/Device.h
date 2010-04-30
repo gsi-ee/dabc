@@ -60,8 +60,6 @@ namespace dabc {
 
          virtual int ExecuteCommand(dabc::Command* cmd);
 
-         virtual CommandReceiver* GetCmdReceiver() { return this; }
-
          virtual int CreateTransport(Command* cmd, Port* port) { return cmd_false; }
 
          virtual bool SubmitRemoteCommand(const char* servid, const char* channelid, Command* cmd) { return false; }

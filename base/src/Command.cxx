@@ -15,7 +15,6 @@
 
 #include <map>
 
-#include "dabc/CommandClient.h"
 #include "dabc/WorkingProcessor.h"
 
 #include "dabc/logging.h"
@@ -23,14 +22,10 @@
 
 class dabc::Command::CommandParametersList : public std::map<std::string, std::string> {};
 
-
 dabc::Command::Command(const char* name) :
    Basic(0, name),
    fParams(0),
-   fClient(0),
-   fClientMutex(0),
    fKeepAlive(0),
-
    fValid(true),
    fCallerProcessor(0),
    fCmdId(0),
@@ -43,8 +38,6 @@ dabc::Command::Command(const char* name) :
 dabc::Command::~Command()
 {
    // this need to be sure, that command is not attached to the client
-   CleanClient();
-
    CleanCaller();
 
    delete fParams;
@@ -54,21 +47,6 @@ dabc::Command::~Command()
 
    DOUT5(("Delete command %p name %s", this, GetName()));
 }
-
-void dabc::Command::CleanClient()
-{
-   LockGuard lock(fClientMutex);
-   if (fClient) fClient->_Forget(this);
-   fClient = 0;
-   fClientMutex = 0;
-}
-
-bool dabc::Command::IsClient()
-{
-   LockGuard lock(fClientMutex);
-   return fClient!=0;
-}
-
 
 void dabc::Command::CleanCaller()
 {
@@ -377,30 +355,9 @@ void dabc::Command::Reply(Command* cmd, int res)
 
    bool processreply = false;
 
-   {
-      DOUT5(("Cmd %p Client mutex locked %s", cmd, DBOOL((cmd->fClientMutex ? cmd->fClientMutex->IsLocked() : false))));
-
-      LockGuard guard(cmd->fClientMutex);
-
-      CommandClientBase* client = cmd->fClient;
-
-      DOUT5(("Reply command %p %s Client %p", cmd, cmd->GetName(), client));
-
-      if (client) {
-         client->_Forget(cmd);
-         processreply = client->_ProcessReply(cmd);
-      }
-
-      DOUT5(("Reply command %p done process %s", cmd, DBOOL(processreply)));
-   }
-
-   if (!processreply) {
-
-      WorkingProcessor* proc = cmd->fCallerProcessor;
-      cmd->fCallerProcessor = 0;
-      if (proc) processreply = proc->NewCmd_GetReply(cmd);
-
-   }
+   WorkingProcessor* proc = cmd->fCallerProcessor;
+   cmd->fCallerProcessor = 0;
+   if (proc) processreply = proc->GetReply(cmd);
 
    if (!processreply) Finalise(cmd);
 }
@@ -418,7 +375,6 @@ void dabc::Command::Finalise(Command* cmd)
    // second call, which should be done from the user, must finally delete it
 
    if (cmd->fKeepAlive > 0) {
-      cmd->CleanClient();
       cmd->CleanCaller();
       cmd->fKeepAlive--;
       return;
@@ -426,8 +382,6 @@ void dabc::Command::Finalise(Command* cmd)
 
    // execute cleanup method outside destructor to avoid potential problems
    // with virtual tables
-
-   cmd->CleanClient();
 
    cmd->CleanCaller();
 
