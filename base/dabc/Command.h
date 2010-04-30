@@ -25,6 +25,8 @@ namespace dabc {
    class Mutex;
    class Condition;
    class CommandsQueue;
+   class CallersQueue;
+
 
    enum CommandRes {
       cmd_false = 0,
@@ -45,21 +47,13 @@ namespace dabc {
 
          class CommandParametersList;
 
-         CommandParametersList* fParams;
-
-         int                    fKeepAlive;       /** if true, object should not be deleted by client, but later by user */
-         bool                   fValid;           /** true until destructor, way to detect object destroyment */
-         WorkingProcessor*      fCallerProcessor; /** pointer to caller processor */
+         CommandParametersList* fParams;          /** list of command parameters */
+         CallersQueue*          fCallers;         /** list of callers */
          unsigned               fCmdId;           /** Current command id */
-         bool                   fExeReady;        /** Indicate if execution of command is ready */
-         bool                   fCanceled;        /** indicates if command canceled by caller */
 
          virtual ~Command();
 
-         void SetCanceled() { fCanceled = true; }
-
-         void CleanCaller();
-
+         void AddCaller(WorkingProcessor* proc, bool* exe_ready = 0);
 
       public:
 
@@ -67,9 +61,8 @@ namespace dabc {
 
          void SetCommandName(const char* name) { SetName(name); }
 
-         void SetKeepAlive() { fKeepAlive++; }
-
-         bool IsCanceled() const { return fCanceled; }
+         /** Method allows to access command handler after proc->Execute(cmd) is done */
+         void SetKeepAlive() { AddCaller(0, 0); }
 
          bool HasPar(const char* name) const;
          void SetPar(const char* name, const char* value);
@@ -104,6 +97,7 @@ namespace dabc {
          void SetResult(int res) { SetInt("_result_", res); }
          int GetResult() const { return GetInt("_result_", 0); }
          void ClearResult() { RemovePar("_result_"); }
+         bool HasResult() const { return HasPar("_result_"); }
 
          /** Method to inform caller that command is executed.
           * After this call command pointer must not be used in caller */
@@ -111,10 +105,6 @@ namespace dabc {
 
          /** Method to cleanup command. If required, object will be destroyed */
          static void Finalise(Command* cmd);
-
-         /** Method to cancel command execution (if possible).
-          * Should only be used from place, where command was created */
-         static void Cancel(Command* cmd);
    };
 
 }

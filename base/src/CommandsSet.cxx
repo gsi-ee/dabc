@@ -50,9 +50,9 @@ void dabc::CommandsSet::CleanupCmds()
    for (unsigned n=0; n<fCmds.Size();n++) {
       if (fCmds.Item(n).CanFree())
          dabc::Command::Finalise(fCmds.Item(n).cmd);
-      else
-         dabc::Command::Cancel(fCmds.Item(n).cmd);
    }
+
+   fCmds.Reset();
 }
 
 

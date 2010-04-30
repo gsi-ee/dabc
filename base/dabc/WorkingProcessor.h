@@ -41,9 +41,11 @@ namespace dabc {
 
          static int cmd_bool(bool v) { return v ? cmd_true : cmd_false; }
 
-         enum { evntFirstCore   = 1,
-                evntFirstSystem = 100,
-                evntFirstUser =   1000 };
+         enum {
+            evntFirstCore   = 1,    // events   1  .. 99 used only by Processor itself
+            evntFirstSystem = 100,  // events 100 .. 999 used only inside DABC class
+            evntFirstUser =   1000  // event from 1000 are available for users
+         };
 
          WorkingProcessor(Folder* parsholder = 0);
          virtual ~WorkingProcessor();
@@ -154,16 +156,22 @@ namespace dabc {
                fProcessorThread->Fire(CodeEvent(evid, fProcessorId), fProcessorPriority);
          }
 
-         inline void _FireEvent(uint16_t evid, uint32_t arg)
+         inline void _FireEvent(uint16_t evid, uint32_t arg, int pri = -1)
          {
             if (fProcessorThread && (fProcessorId>0))
-               fProcessorThread->_Fire(CodeEvent(evid, fProcessorId, arg), fProcessorPriority);
+               fProcessorThread->_Fire(CodeEvent(evid, fProcessorId, arg), pri < 0 ? fProcessorPriority : pri);
          }
 
-         inline void FireEvent(uint16_t evid, uint32_t arg)
+         inline void FireEvent(uint16_t evid, uint32_t arg, int pri = -1)
          {
             if (fProcessorThread && (fProcessorId>0))
-               fProcessorThread->Fire(CodeEvent(evid, fProcessorId, arg), fProcessorPriority);
+               fProcessorThread->Fire(CodeEvent(evid, fProcessorId, arg), pri < 0 ? fProcessorPriority : pri);
+         }
+
+         inline void FireDoNothingEvent()
+         {
+            if (fProcessorThread && (fProcessorId>0))
+               fProcessorThread->FireDoNothingEvent();
          }
 
          virtual void ProcessEvent(EventId);
@@ -236,7 +244,6 @@ namespace dabc {
 
          CommandsQueue    fProcessorSubmCommands;          // list of submitted commands, protected via main thread mutex
          CommandsQueue    fProcessorReplyCommands;         // list of reply commands, protected via main thread mutex
-         CommandsQueue    fProcessorExeCommands;           // list of commands, which are currently executed by processor, protected via main thread mutex
 
          Folder*          fParsHolder;
 
@@ -253,8 +260,6 @@ namespace dabc {
          bool TakeActivateData(TimeStamp_t& mark, double& interval);
          void ProcessCoreEvent(EventId);
 
-         void ProcessSubmit(dabc::Command* cmd);
-         void ProcessReply(dabc::Command* cmd);
          bool GetReply(dabc::Command* cmd);
 
 

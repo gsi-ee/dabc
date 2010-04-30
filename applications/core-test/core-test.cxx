@@ -199,7 +199,7 @@ void TestChain(bool isM, int number, int testkind = 0)
 
       fGlobalCnt = 0;
 
-      dabc::SetDebugLevel(1);
+      dabc::SetDebugLevel(0);
 
       dabc::mgr()->StartAllModules();
       dabc::TimeStamp_t tm1 = TimeStamp();
@@ -207,12 +207,12 @@ void TestChain(bool isM, int number, int testkind = 0)
       dabc::SetDebugLevel(1);
 
       cpu.Reset();
-
       dabc::ShowLongSleep("Main loop", 5);
-
       cpu.Measure();
 
-//      dabc::SetDebugLevel(5);
+      dabc::SetDebugLevel(1);
+
+//      DOUT0(("Current Thread %p name %s manager thread %p", dabc::mgr()->CurrentThread(), dabc::mgr()->CurrentThrdName(), dabc::mgr()->ProcessorThread()));
 
       dabc::mgr()->StopAllModules();
 
@@ -433,7 +433,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
 
       virtual int ExecuteCommand(dabc::Command* cmd)
       {
-         DOUT0(("Module %s execute command %s Exequeue %u", GetName(), cmd->GetName(), fProcessorExeCommands.Size()));
+         DOUT0((" ++++++++++++ Module %s execute command %s ++++++++++++++", GetName(), cmd->GetName()));
 
          if (fNext<0) return dabc::cmd_true;
 

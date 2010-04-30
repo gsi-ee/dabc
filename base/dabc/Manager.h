@@ -279,7 +279,7 @@ namespace dabc {
 
          void ChangeManagerName(const char* newname);
 
-         enum MgrEvents { evntDestroyObj = evntFirstUser, evntManagerParam };
+         enum MgrEvents { evntDestroyObj = evntFirstSystem, evntManagerParam };
 
       public:
 

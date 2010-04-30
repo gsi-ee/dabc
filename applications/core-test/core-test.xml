@@ -3,9 +3,9 @@
   <Context name="core-test">
     <Run>
       <lib value="libDabcCoreTest.so"/>
-      <runfunc value="RunCmdTest"/>
+      <runfunc value="RunCoreTest"/>
       <logfile value="core-test.log"/>
-      <loglimit value="10000"/>
+      <loglimit value="10000000000"/>
     </Run>
   </Context>
 </dabc>

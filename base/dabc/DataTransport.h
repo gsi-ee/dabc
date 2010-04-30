@@ -51,7 +51,7 @@ namespace dabc {
                          public WorkingProcessor,
                          protected MemoryPoolRequester {
 
-      enum EDataEvents { evDataInput = 1, evDataOutput };
+      enum EDataEvents { evDataInput = evntFirstSystem, evDataOutput };
 
       protected:
 

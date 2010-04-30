@@ -13,44 +13,63 @@
  ********************************************************************/
 #include "dabc/Command.h"
 
-#include <map>
-
 #include "dabc/WorkingProcessor.h"
-
 #include "dabc/logging.h"
 #include "dabc/threads.h"
 
+#include <map>
+
+
 class dabc::Command::CommandParametersList : public std::map<std::string, std::string> {};
+
+namespace dabc {
+
+   struct CallerRec {
+      WorkingProcessor* proc;
+      bool*             exe_ready;
+      CallerRec() : proc(0), exe_ready(0) {}
+   };
+
+   class CallersQueue : public Queue<CallerRec> {} ;
+
+}
+
 
 dabc::Command::Command(const char* name) :
    Basic(0, name),
    fParams(0),
-   fKeepAlive(0),
-   fValid(true),
-   fCallerProcessor(0),
-   fCmdId(0),
-   fExeReady(false),
-   fCanceled(false)
+   fCallers(0),
+   fCmdId(0)
 {
    DOUT5(("New command %p name %s", this, GetName()));
 }
 
 dabc::Command::~Command()
 {
-   // this need to be sure, that command is not attached to the client
-   CleanCaller();
+   if (fCallers) {
+      delete fCallers;
+      fCallers = 0;
+   }
 
-   delete fParams;
-   fParams = 0;
-
-   fValid = false;
+   if (fParams) {
+      delete fParams;
+      fParams = 0;
+   }
 
    DOUT5(("Delete command %p name %s", this, GetName()));
 }
 
-void dabc::Command::CleanCaller()
+void dabc::Command::AddCaller(WorkingProcessor* proc, bool* exe_ready)
 {
-   fCallerProcessor = 0;
+  if (fCallers==0) {
+     fCallers = new CallersQueue;
+     fCallers->Init(8, true);
+  }
+
+  CallerRec* rec = fCallers->PushEmpty();
+
+  rec->proc = proc;
+  rec->exe_ready = exe_ready;
 }
 
 
@@ -344,58 +363,36 @@ bool dabc::Command::ReadParsFromDimString(const char* pars)
 
 void dabc::Command::Reply(Command* cmd, int res)
 {
-   if (cmd==0) return;
-
-   if (!cmd->fValid) {
-      EOUT(("Command %p no longer valid", cmd));
-      return;
-   }
-
-   cmd->SetResult(res);
-
-   bool processreply = false;
-
-   WorkingProcessor* proc = cmd->fCallerProcessor;
-   cmd->fCallerProcessor = 0;
-   if (proc) processreply = proc->GetReply(cmd);
-
-   if (!processreply) Finalise(cmd);
+   if (cmd) cmd->SetResult(res);
+   dabc::Command::Finalise(cmd);
 }
 
 void dabc::Command::Finalise(Command* cmd)
 {
    if (cmd==0) return;
 
-   if (!cmd->fValid) {
-      EOUT(("Command %p no longer valid", cmd));
-      return;
-   }
+   bool process = false;
 
-   // this is a way to keep object "alive" - means not destroy it
-   // second call, which should be done from the user, must finally delete it
+   do {
 
-   if (cmd->fKeepAlive > 0) {
-      cmd->CleanCaller();
-      cmd->fKeepAlive--;
-      return;
-   }
+      CallerRec rec;
 
-   // execute cleanup method outside destructor to avoid potential problems
-   // with virtual tables
+      if (cmd->fCallers && cmd->fCallers->Size()>0) {
+         rec = cmd->fCallers->PopBack();
+         process = true;
+         if (cmd->fCallers->Size()==0) {
+            delete cmd->fCallers;
+            cmd->fCallers = 0;
+         }
+      }
 
-   cmd->CleanCaller();
+      if (process) {
+         if (rec.exe_ready) *rec.exe_ready = true;
+         if (rec.proc)
+            if (rec.exe_ready) rec.proc->FireDoNothingEvent();
+                          else process = rec.proc->GetReply(cmd);
+      }
+   } while (!process && cmd->fCallers);
 
-   delete cmd;
-}
-
-void dabc::Command::Cancel(Command* cmd)
-{
-   if (cmd==0) return;
-
-   if (!cmd->fValid) {
-      EOUT(("Command %p no longer valid", cmd));
-      return;
-   }
-
-   cmd->fCanceled = true;
+   if (!process) delete cmd;
 }

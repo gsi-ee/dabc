@@ -279,7 +279,6 @@ namespace dabc {
             return *fTail;
          }
 
-
          T Item(unsigned indx) const
          {
             #ifdef DO_INDEX_CHECK
@@ -302,6 +301,24 @@ namespace dabc {
             T* item = fTail + indx;
             if (item>=fBorder) item -= fCapacity;
             return item;
+         }
+
+         T Back() const
+         {
+            #ifdef DO_INDEX_CHECK
+               if (fSize==0) EOUT(("Queue is empty"));
+            #endif
+            return Item(fSize-1);
+         }
+
+         T PopBack()
+         {
+            #ifdef DO_INDEX_CHECK
+               if (fSize==0) EOUT(("Queue is empty"));
+            #endif
+            T* res = ItemPtr(fSize-1);
+            RemoveItem(fSize-1);
+            return *res;
          }
 
          void Reset()

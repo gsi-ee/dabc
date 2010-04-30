@@ -33,7 +33,6 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorMainMutex(0),
    fProcessorSubmCommands(CommandsQueue::kindSubmit),
    fProcessorReplyCommands(CommandsQueue::kindReply),
-   fProcessorExeCommands(CommandsQueue::kindExe),
 
    fParsHolder(parsholder),
    fParsDefaults(0),
@@ -128,21 +127,55 @@ bool dabc::WorkingProcessor::TakeActivateData(TimeStamp_t& mark, double& interva
 
 void dabc::WorkingProcessor::ProcessCoreEvent(EventId evnt)
 {
+   DOUT5(("Processor %p %u thrd %p CoreEvent %u", this, fProcessorId, fProcessorThread, GetEventCode(evnt)));
+
    switch (GetEventCode(evnt)) {
       case evntSubmitCommand: {
 
-//         DOUT0(("Process evntSubmitCommand arg %u", GetEventArg(evnt)));
+         DOUT5(("Process evntSubmitCommand proc %p %u thrd %p arg %u", this, fProcessorId, fProcessorThread, GetEventArg(evnt)));
+
+         unsigned size = 0;
 
          dabc::Command* cmd = 0;
          {
             LockGuard lock(fProcessorMainMutex);
+            size = fProcessorSubmCommands.Size();
             cmd = fProcessorSubmCommands.PopWithId(GetEventArg(evnt));
          }
 
-         if (cmd==0)
-            EOUT(("evntSubmitCommand: No command with specified id %u", GetEventArg(evnt)));
-         else
-            ProcessSubmit(cmd);
+         if (cmd==0) {
+            EOUT(("evntSubmitCommand: No command with specified id %u size %u was %u", GetEventArg(evnt), fProcessorSubmCommands.Size(), size));
+            exit(1);
+         } else {
+//            DOUT0(("ProcessSubmit Cmd %p start", cmd));
+
+//            DOUT5(("ProcessSubmit command %p id %u processor:%p", cmd, cmd->fCmdId, this));
+
+            int cmd_res = PreviewCommand(cmd);
+
+//            DOUT0(("ProcessSubmit Cmd %p preview = %d", cmd, cmd_res));
+
+            if (cmd_res == cmd_ignore) {
+               cmd_res = ExecuteCommand(cmd);
+//               DOUT0(("ProcessSubmit Cmd %p exe = %d", cmd, cmd_res));
+            }
+
+            if (cmd_res == cmd_ignore) {
+               EOUT(("Command ignored %s", cmd->GetName()));
+               cmd_res = cmd_false;
+            }
+
+            bool completed = (cmd_res>=0);
+
+//            DOUT5(("Execute command %p : %s res = %d", cmd, (completed ? cmd->GetName() : "-- not allowed --"), cmd_res));
+
+//            DOUT0(("ProcessSubmit Cmd %p completed %s", cmd, DBOOL(completed)));
+
+            if (completed)
+               dabc::Command::Reply(cmd, cmd_res);
+
+//            DOUT0(("ProcessSubmit Cmd %p end", cmd));
+         }
 
          break;
       }
@@ -158,8 +191,10 @@ void dabc::WorkingProcessor::ProcessCoreEvent(EventId evnt)
 
          if (cmd==0)
             EOUT(("evntReplyCommand: no command with specified id %u", GetEventArg(evnt)));
-         else
-            ProcessReply(cmd);
+         else {
+            if (ReplyCommand(cmd))
+               dabc::Command::Finalise(cmd);
+         }
 
          break;
       }
@@ -689,13 +724,11 @@ int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Comman
       return cmd_false;
    }
 
-   cmd->fExeReady = false;
-   cmd->fCallerProcessor = this;
+   bool exe_ready = false;
+
+   cmd->AddCaller(this, &exe_ready);
 
    DOUT5(("Calling ExecteIn in thread %s", fProcessorThread->GetName()));
-
-   // we can access fProcessorExeCommands directly, while it accessed only from caller thread
-   fProcessorExeCommands.Push(cmd);
 
    TimeStamp_t last_tm = NullTimeStamp;
 
@@ -703,8 +736,8 @@ int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Comman
 
 //      DOUT0(("Command is submitted, we start waiting for result"));
 
-      // we can access cmd->fExeReady directly, while this flag only access from caller thread
-      while (!cmd->fExeReady) {
+      // we can access exe_ready directly, while this flag only access from caller thread
+      while (!exe_ready) {
 
          // account timeout
          if (tmout>0.) {
@@ -723,9 +756,9 @@ int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Comman
       }
    }
 
-   if (cmd->fExeReady) res = cmd->GetResult();
+   DOUT5(("Proc %p Cmd %p ready = %s", this, cmd, DBOOL(exe_ready)));
 
-   fProcessorExeCommands.RemoveCommand(cmd);
+   if (exe_ready) res = cmd->GetResult();
 
    dabc::Command::Finalise(cmd);
    return res;
@@ -830,7 +863,7 @@ bool dabc::WorkingProcessor::Assign(Command* cmd)
       return false;
    }
 
-   cmd->fCallerProcessor = this;
+   cmd->AddCaller(this, 0);
 
    return true;
 }
@@ -850,9 +883,9 @@ bool dabc::WorkingProcessor::Submit(dabc::Command* cmd)
       } else {
          uint32_t id = fProcessorSubmCommands.Push(cmd);
 
-//         DOUT0(("Submit command %s with id %u to processor %p thrd %p", cmd->GetName(), id, this, fProcessorThread));
+         DOUT5(("Submit command %s with id %u to processor %p %u thrd %p", cmd->GetName(), id, this, fProcessorId, fProcessorThread));
 
-         _FireEvent(evntSubmitCommand, id);
+         _FireEvent(evntSubmitCommand, id, 0);
       }
    }
 
@@ -860,51 +893,6 @@ bool dabc::WorkingProcessor::Submit(dabc::Command* cmd)
 
    return res;
 }
-
-void dabc::WorkingProcessor::ProcessSubmit(dabc::Command* cmd)
-{
-   /// this method perform command processing
-   // return true if command processed and result is true
-
-   if (cmd==0) return;
-
-   DOUT5(("ProcessSubmit command %p id %u processor:%p", cmd, cmd->fCmdId, this));
-
-   int cmd_res = cmd_ignore;
-
-   if (cmd->IsCanceled())
-      cmd_res = cmd_false;
-   else
-      cmd_res = PreviewCommand(cmd);
-
-   if (cmd_res == cmd_ignore)
-      cmd_res = ExecuteCommand(cmd);
-
-   if (cmd_res == cmd_ignore) {
-      EOUT(("Command ignored %s", cmd->GetName()));
-      cmd_res = cmd_false;
-   }
-
-   bool completed = (cmd_res>=0);
-
-   DOUT5(("Execute command %p : %s res = %d", cmd, (completed ? cmd->GetName() : "-- not allowed --"), cmd_res));
-
-   if (completed)
-      dabc::Command::Reply(cmd, cmd_res);
-}
-
-void dabc::WorkingProcessor::ProcessReply(dabc::Command* cmd)
-{
-   // returns true, if object can be deleted, otherwise user is responsible for the command
-   if (cmd==0) return;
-
-   if (fProcessorExeCommands.HasCommand(cmd))
-      cmd->fExeReady = true;
-   else
-      if (ReplyCommand(cmd))
-         dabc::Command::Finalise(cmd);
-}
-
 
 bool dabc::WorkingProcessor::GetReply(dabc::Command* cmd)
 {
@@ -918,7 +906,7 @@ bool dabc::WorkingProcessor::GetReply(dabc::Command* cmd)
    }
 
    uint32_t id = fProcessorReplyCommands.Push(cmd);
-   _FireEvent(evntReplyCommand, id);
+   _FireEvent(evntReplyCommand, id, 0);
 
    return true;
 }

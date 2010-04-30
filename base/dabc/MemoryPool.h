@@ -171,7 +171,7 @@ namespace dabc {
    class MemoryPool : public Folder,
                       public WorkingProcessor {
 
-      enum  { evntProcessRequests = evntFirstUser };
+      enum  { evntProcessRequests = evntFirstSystem };
 
       enum ECleanupStatus { stOff, stMemCleanup, stRefCleanup };
 

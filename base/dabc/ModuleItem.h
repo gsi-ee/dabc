@@ -45,7 +45,7 @@ namespace dabc {
     };
 
    enum EModuleEvents {
-           evntNone = 0,
+           evntNone = WorkingProcessor::evntFirstSystem,
            evntInput,
            evntOutput,
            evntPool,
