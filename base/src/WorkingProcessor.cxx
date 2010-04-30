@@ -14,6 +14,7 @@
 #include "dabc/WorkingProcessor.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 #include "dabc/Folder.h"
 #include "dabc/Command.h"
@@ -923,6 +924,6 @@ void dabc::WorkingProcessor::ProcessorSleep(double tmout)
       ProcessorThread()->RunEventLoop(tmout);
    else {
       while (tmout>1) { dabc::LongSleep(1); tmout-=1.; }
-      dabc::MicroSleep(int(tmout*1e6));
+      dabc::MicroSleep(lrint(tmout*1e6));
    }
 }

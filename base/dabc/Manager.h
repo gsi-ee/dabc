@@ -380,7 +380,9 @@ namespace dabc {
 
          void RunManagerMainLoop(int runtime = 0);
 
-         void Sleep(double tmout);
+         /** Perform sleeping with event loop running.
+          *  If prefix specified, output on terminal is performed */
+         void Sleep(double tmout, const char* prefix = 0);
 
          // ---------------- modules manipulation ------------------
 

@@ -228,5 +228,5 @@ extern "C" void StartClient()
 
    m->Start();
 
-//   dabc::LongSleep(3);
+//   dabc::mgr()->Sleep(3);
 }

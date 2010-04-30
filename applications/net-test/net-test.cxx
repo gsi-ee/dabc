@@ -551,7 +551,7 @@ extern "C" void RunAllToAll()
 
    EnableSending(true);
 
-   dabc::ShowLongSleep("Waiting", 10);
+   dabc::mgr()->Sleep(10, "Waiting");
 
    StartStopAll(false);
 }
@@ -581,7 +581,7 @@ extern "C" void RunMulticastTest()
 
    dabc::mgr()->StartAllModules();
 
-   dabc::LongSleep(5);
+   dabc::mgr()->Sleep(5);
 
    dabc::mgr()->StopAllModules();
 
@@ -777,7 +777,7 @@ extern "C" void RunMulticastTest()
 //
 //   DOUT1(("Start called"));
 //
-//   dabc::ShowLongSleep("Working", 3);
+//   dabc::mgr()->Sleep(3, "Working");
 //   DOUT1(("Work finished"));
 //
 //   m->Stop();
@@ -836,7 +836,7 @@ extern "C" void RunMulticastTest()
 //       EnableSending(manager, true);
 ////       CheckLocking();
 //
-//       dabc::ShowLongSleep("Main loop", 5);
+//       dabc::mgr()->Sleep(5, "Main loop");
 //
 //       EnableSending(manager, false);
 //
@@ -884,7 +884,7 @@ extern "C" void RunMulticastTest()
 //       EnableSending(manager, true);
 ////       CheckLocking();
 //
-//       dabc::ShowLongSleep("Main loop", 5);
+//       dabc::mgr()->Sleep(5, "Main loop");
 //
 //       EnableSending(manager, false);
 //       sleep(1);
@@ -1458,13 +1458,13 @@ extern "C" void RunMulticastTest()
 //   m.SubmitLocal(cli, cmd, "TSync");
 //   res = cli.WaitCommands(5);
 //
-//   dabc::ShowLongSleep("First pause", 5);
+//   dabc::mgr()->Sleep(5, "First pause");
 //
 //   cmd = new dabc::CommandDoTimeSync(false, 100, true, true);
 //   m.SubmitLocal(cli, cmd, "TSync");
 //   res = cli.WaitCommands(5);
 //
-//   dabc::ShowLongSleep("Second pause", 10);
+//   dabc::mgr()->Sleep(5, "Second pause");
 //
 //   cmd = new dabc::CommandDoTimeSync(false, 100, false, false);
 //   m.SubmitLocal(cli, cmd, "TSync");

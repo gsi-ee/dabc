@@ -207,7 +207,7 @@ void TestChain(bool isM, int number, int testkind = 0)
       dabc::SetDebugLevel(1);
 
       cpu.Reset();
-      dabc::ShowLongSleep("Main loop", 5);
+      dabc::mgr()->Sleep(5, "Main loop");
       cpu.Measure();
 
       dabc::SetDebugLevel(1);
@@ -278,7 +278,7 @@ void TestTimers(int number)
 
    cpu.Reset();
 
-   dabc::ShowLongSleep("Main loop", 5);
+   dabc::mgr()->Sleep(5, "Main loop");
 
    cpu.Measure();
 

@@ -691,13 +691,13 @@ extern "C" void RunTestBnet()
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
 
-   dabc::ShowLongSleep("Main loop", 10);
+   dabc::mgr()->Sleep(10, "Main loop");
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
 
-   dabc::ShowLongSleep("Again main loop", 10);
+   dabc::mgr()->Sleep(10, "Again main loop");
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
 
@@ -718,23 +718,23 @@ extern "C" void RunTestBnetFiles()
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
 
-   dabc::ShowLongSleep("Before files", 5); //15
+   dabc::mgr()->Sleep(5, "Before files"); //15
 
    dabc::Command* cmd = new dabc::Command("StartFiles");
    cmd->SetStr("FileBase","abc");
    dabc::mgr()->GetApp()->Execute(cmd);
 
-   dabc::ShowLongSleep("Writing files", 5); //15
+   dabc::mgr()->Sleep(5, "Writing files"); //15
 
    dabc::mgr()->GetApp()->Execute("StopFiles");
 
-   dabc::ShowLongSleep("After files", 5); //15
+   dabc::mgr()->Sleep(5, "After files"); //15
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
 
-   dabc::ShowLongSleep("Again main loop", 15); //10
+   dabc::mgr()->Sleep(15, "Again main loop"); //10
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
 

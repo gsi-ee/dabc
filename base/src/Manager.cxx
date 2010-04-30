@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <signal.h>
+#include <math.h>
 
 #include "dabc/logging.h"
 #include "dabc/timing.h"
@@ -1597,17 +1598,35 @@ dabc::WorkingThread* dabc::Manager::CurrentThread()
    return 0;
 }
 
-void dabc::Manager::Sleep(double tmout)
+void dabc::Manager::Sleep(double tmout, const char* prefix)
 {
    if (tmout<=0.) return;
 
    WorkingThread* thrd = CurrentThread();
 
    if (thrd==0) {
-      while (tmout>1) { dabc::LongSleep(1); tmout-=1.; }
-      dabc::MicroSleep(int(tmout*1e6));
+      if (prefix) {
+         dabc::ShowLongSleep(prefix, lrint(tmout));
+      } else {
+         while (tmout>1) { dabc::LongSleep(1); tmout-=1.; }
+         dabc::MicroSleep(lrint(tmout*1e6));
+      }
    } else
+   if (prefix==0)
       thrd->RunEventLoop(tmout);
+   else {
+      long cnt = lrint(tmout);
+      DOUT1(("%s - sleep for %5.1f s", prefix, tmout));
+      fprintf(stdout, "%s    ", prefix);
+      while (tmout>0) {
+         double tm = tmout>1. ? 1. : tmout;
+         fprintf(stdout, "\b\b\b%3ld", cnt--);
+         fflush(stdout);
+         thrd->RunEventLoop(tm);
+         tmout-=tm;
+      }
+      fprintf(stdout, "\n"); fflush(stdout);
+   }
 }
 
 
