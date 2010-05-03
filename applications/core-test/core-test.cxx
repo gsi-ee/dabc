@@ -240,8 +240,8 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
          fCounter1(0),
          fCounter2(0)
       {
-         CreateTimer("Timer1", 0.001, true);
-         CreateTimer("Timer2", 0.001, false);
+         CreateTimer("Timer1", 0.01, true);
+         CreateTimer("Timer2", 0.01, false);
       }
 
       virtual void ProcessTimerEvent(dabc::Timer* timer)

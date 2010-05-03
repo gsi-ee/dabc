@@ -1616,16 +1616,15 @@ void dabc::Manager::Sleep(double tmout, const char* prefix)
       thrd->RunEventLoop(tmout);
    else {
       long cnt = lrint(tmout);
-      DOUT1(("%s - sleep for %5.1f s", prefix, tmout));
-      fprintf(stdout, "%s    ", prefix);
+      DOUT1(("%s - sleep for %3.1f s", prefix, tmout));
       while (tmout>0) {
          double tm = tmout>1. ? 1. : tmout;
-         fprintf(stdout, "\b\b\b%3ld", cnt--);
+         fprintf(stdout, "\b\b\b\b\b%3ld", cnt--);
          fflush(stdout);
          thrd->RunEventLoop(tm);
          tmout-=tm;
       }
-      fprintf(stdout, "\n"); fflush(stdout);
+      fprintf(stdout, "\b\b\b\b\b"); fflush(stdout);
    }
 }
 

@@ -62,12 +62,10 @@ double dabc::Timer::ProcessTimeout(double last_diff)
 
    fInaccuracy += (last_diff - fPeriod);
    
-   if (fInaccuracy>=fPeriod) {
-      fInaccuracy -= fPeriod;
-      return 0.; 
-   }
-   
    double res = fPeriod - fInaccuracy;
-   fInaccuracy = 0.;
+   if (res < 0) res = 0;
+
+   //DOUT0(("Timer %s lastdif = %5.4f next %5.4f", GetName(), last_diff, res));
+
    return res;
 }
