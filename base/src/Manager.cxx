@@ -206,6 +206,7 @@ bool dabc::StdManagerFactory::CreateManagerInstance(const char* kind, Configurat
    if ((kind==0) || (strcmp(kind, "Basic")==0) || (strcmp(kind, "BasicExtra")==0)) {
       bool usecurrentrocess = (kind!=0) && (strcmp(kind, "BasicExtra")==0);
       new dabc::Manager(cfg ? cfg->MgrName() : "mgr", usecurrentrocess, cfg);
+      dabc::mgr()->init();
       return true;
    }
 
@@ -244,7 +245,6 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    fMgrMutex(0),
    fDestroyQueue(16, true),
    fParsQueue(1024, true),
-   fParsQueueBlocked(true),
    fSendCmdsMutex(0),
    fSendCmdCounter(0),
    fSendCommands(),
@@ -305,8 +305,6 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    CreateParStr(stParName, stHalted);
 
    ActivateTimeout(1.);
-
-   fParsQueueBlocked = false;
 }
 
 dabc::Manager::~Manager()
@@ -316,8 +314,6 @@ dabc::Manager::~Manager()
    // call, which suspend and erase all items in manager
 
    DOUT3(("Start ~Manager"));
-
-   fParsQueueBlocked = true;
 
    fSMmodule = 0;
 
@@ -358,20 +354,9 @@ dabc::Manager::~Manager()
 void dabc::Manager::init()
 {
    // method should be called from inherited class constructor to reactivate
-   // all parameters events, which are created before
+   // all parameters events, which are created before (no longer used this way)
 
-   unsigned cnt = 0;
-
-   {
-      LockGuard lock(fMgrMutex);
-      cnt = fParsQueue.Size();
-   }
-
-   bool canexecute = ((ProcessorThread()==0) ||  ProcessorThread()->IsItself());
-
-   while (cnt-->0)
-      if (canexecute) ProcessParameterEvent();
-                else  FireEvent(evntManagerParam);
+   DOUT5(("Call dabc::Manager::init"));
 }
 
 void dabc::Manager::destroy()
@@ -446,13 +431,8 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
 {
    if (par==0) return;
 
-   bool canexecute = true;
-   bool cansubmit = true;
-
    {
       LockGuard lock(fMgrMutex);
-
-      if (ProcessorThread()) canexecute = ProcessorThread()->IsItself();
 
       switch (evid) {
          case parCreated:
@@ -479,16 +459,11 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
       if (!par->IsVisible() && (evid != parDestroy)) return;
 
       fParsQueue.Push(ParamRec(par,evid));
-
-      // submit event, but execute it later, when queue is not blocked
-      if (fParsQueueBlocked) return;
    }
 
-   if (canexecute)
-      ProcessParameterEvent();
-   else
-   if (cansubmit)
-      FireEvent(evntManagerParam);
+//   DOUT0(("FireParamEvent id %d par %s", evid, par->GetName()));
+
+   FireEvent(evntManagerParam);
 }
 
 void dabc::Manager::ProcessParameterEvent()
@@ -501,9 +476,12 @@ void dabc::Manager::ProcessParameterEvent()
 
    {
       LockGuard lock(fMgrMutex);
+
       if (fParsQueue.Size()==0) return;
       rec = fParsQueue.Pop();
       visible = rec.par->IsVisible();
+
+//      DOUT0(("ProcessParameterEvent %s", rec.par->GetName()));
 
       if (!rec.processed)
 
@@ -512,6 +490,8 @@ void dabc::Manager::ProcessParameterEvent()
                rec.par->fRegistered = true;
 
                if (rec.par->NeedTimeout()) {
+                  DOUT0(("Need timeout %s", rec.par->GetName()));
+
                   if (fTimedPars.size()==0) { activate = true; interval = 0.; }
                   fTimedPars.push_back(rec.par);
                }
@@ -1615,16 +1595,8 @@ void dabc::Manager::Sleep(double tmout, const char* prefix)
    if (prefix==0)
       thrd->RunEventLoop(tmout);
    else {
-      long cnt = lrint(tmout);
       DOUT1(("%s - sleep for %3.1f s", prefix, tmout));
-      while (tmout>0) {
-         double tm = tmout>1. ? 1. : tmout;
-         fprintf(stdout, "\b\b\b\b\b%3ld", cnt--);
-         fflush(stdout);
-         thrd->RunEventLoop(tm);
-         tmout-=tm;
-      }
-      fprintf(stdout, "\b\b\b\b\b"); fflush(stdout);
+      thrd->RunEventLoop(tmout, true);
    }
 }
 

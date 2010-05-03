@@ -14,6 +14,8 @@
 #include "dabc/WorkingThread.h"
 
 #include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
 
 #include "dabc/WorkingProcessor.h"
 #include "dabc/Command.h"
@@ -148,18 +150,45 @@ void dabc::WorkingThread::SingleLoop(WorkingProcessor* proc, double tmout_user) 
    if (evid!=NullEventId) ProcessEvent(evid);
 }
 
-void dabc::WorkingThread::RunEventLoop(double tm)
+void dabc::WorkingThread::RunEventLoop(double tm, bool dooutput)
 {
    TimeStamp_t last_tm = ThrdTimeStamp();
+   TimeStamp_t last_out = last_tm;
+
+   if (tm<0) {
+      EOUT(("negative (endless) timeout specified - set default (0 sec)"));
+      tm = 0;
+   }
+
+   if (dooutput) {
+      fprintf(stdout, "\b\b\b%3ld", lrint(tm)); fflush(stdout);
+   }
 
    do {
-      SingleLoop(0, 0);
+      double wait_tm = (tm <= 0) ? 0 : tm;
+      if (dooutput && (wait_tm>0.2)) wait_tm = 0.2;
+
+      SingleLoop(0, wait_tm);
 
       TimeStamp_t curr_tm = ThrdTimeStamp();
-      tm -= TimeDistance(last_tm, curr_tm);
-      last_tm = curr_tm;
 
+      tm -= TimeDistance(last_tm, curr_tm);
+
+      if (dooutput && (TimeDistance(last_out, curr_tm)>1.)) {
+         fprintf(stdout, "\b\b\b%3ld", lrint(tm));
+         fflush(stdout);
+         last_out = curr_tm;
+      }
+
+//      DOUT0(("Run event loop for %5.1f real %5.1f rest %5.1f ", wait_tm, TimeDistance(last_tm, curr_tm), tm));
+
+      last_tm = curr_tm;
    } while (tm > 0.);
+
+   if (dooutput) {
+      fprintf(stdout, "\b\b\b");
+      fflush(stdout);
+   }
 }
 
 
@@ -212,7 +241,7 @@ bool dabc::WorkingThread::Start(double timeout_sec, bool withoutthrd)
    else
       Thread::UseCurrentAsSelf();
 
-   bool res = fExec->Execute("ConfirmStart", timeout_sec);
+   bool res = fExec->Execute("ConfirmStart", timeout_sec) == cmd_true;
 
    LockGuard guard(fWorkMutex);
    fState = res ? stRunning : stError;

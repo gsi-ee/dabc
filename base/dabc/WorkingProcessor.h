@@ -31,7 +31,12 @@ namespace dabc {
 
    class WorkingProcessor {
 
-      enum { parsVisibilityMask = 0xFF, parsFixedMask = 0x100, parsChangableMask = 0x200, parsValidMask = 0x400 };
+      enum EParsMasks {
+            parsVisibilityMask = 0xFF,
+            parsFixedMask = 0x100,
+            parsChangableMask = 0x200,
+            parsValidMask = 0x400
+      };
 
       friend class WorkingThread;
       friend class Parameter;
@@ -41,11 +46,18 @@ namespace dabc {
 
          static int cmd_bool(bool v) { return v ? cmd_true : cmd_false; }
 
-         enum {
+         enum EProcessorEventsCodes {
             evntFirstCore   = 1,    // events   1  .. 99 used only by Processor itself
             evntFirstSystem = 100,  // events 100 .. 999 used only inside DABC class
             evntFirstUser =   1000  // event from 1000 are available for users
          };
+
+         enum EPriotiryLevels {
+              priorityMaximum = 0,   // event queue with number 0 always has highest priority
+              priorityMinimum = -1,  // this event will be submitted to queue with maximum number
+              priorityDefault = -7   // this code will be replaced with default priority for specified operation
+         };
+
 
          WorkingProcessor(Folder* parsholder = 0);
          virtual ~WorkingProcessor();
@@ -70,8 +82,14 @@ namespace dabc {
 
          uint32_t ProcessorId() const { return fProcessorId; }
 
-         void DestroyProcessor();
+         /** Synchronize processor with caller thread.
+          *  Means let processor to execute all queued commands and process all queued events. */
+         void SyncProcessor();
 
+         /** Destroy processor asynchronously.
+          * Can be called from any method of processor itself.
+          * Replacement to operation delete this; */
+         void DestroyProcessor();
 
          // this all about parameters list, which can be managed for any working processor
 
@@ -106,7 +124,7 @@ namespace dabc {
          bool Assign(Command* cmd);
 
          /** Submit command for execution in the processor */
-         bool Submit(Command* cmd);
+         bool Submit(Command* cmd, int priority = priorityDefault);
 
          /** Execute command in the processor. Event loop of caller thread is kept running */
          int Execute(Command* cmd, double tmout = -1.);

@@ -18,6 +18,7 @@
 #include "dabc/ModuleAsync.h"
 #include "dabc/ModuleSync.h"
 #include "dabc/Port.h"
+#include "dabc/Parameter.h"
 #include "dabc/PoolHandle.h"
 #include "dabc/Buffer.h"
 #include "dabc/Manager.h"
@@ -233,22 +234,30 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
    protected:
       long                fCounter1;
       long                fCounter2;
+      dabc::RateParameter*  fRate;
 
    public:
-      TimeoutTestModuleAsync(const char* name) :
+      TimeoutTestModuleAsync(const char* name, bool withrate = false) :
          dabc::ModuleAsync(name),
          fCounter1(0),
-         fCounter2(0)
+         fCounter2(0),
+         fRate(0)
       {
          CreateTimer("Timer1", 0.01, true);
          CreateTimer("Timer2", 0.01, false);
+
+         if (withrate) {
+            fRate = CreateRateParameter("Rate", false, 1.);
+            fRate->SetDebugOutput(true);
+         }
       }
 
       virtual void ProcessTimerEvent(dabc::Timer* timer)
       {
-         if (timer->IsName("Timer1"))
+         if (timer->IsName("Timer1")) {
             fCounter1++;
-         else
+            if (fRate) fRate->AccountValue(500);
+         } else
             fCounter2++;
       }
 
@@ -265,7 +274,7 @@ void TestTimers(int number)
    DOUT0(("Test timers with %d modules, running in the same thread", number));
 
    for (int n=0;n<number;n++) {
-      dabc::Module* m = new TimeoutTestModuleAsync(FORMAT(("Module%d",n)));
+      dabc::Module* m = new TimeoutTestModuleAsync(FORMAT(("Module%d",n)), (number==1));
 
       dabc::mgr()->MakeThreadForModule(m, "MainThread");
    }
@@ -404,6 +413,10 @@ void TestMemoryPool()
 extern "C" void RunCoreTest()
 {
 //   TestMemoryPool();
+
+//   TestTimers(1);
+//   return;
+
 
    TestChain(true, 10);
 

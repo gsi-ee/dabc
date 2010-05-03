@@ -228,6 +228,8 @@ int main(int numc, char* args[])
       EOUT(("Cannot create required manager class %s", mgrclass));
       return 1;
    }
+   // ensure that all submitted events are processed
+   dabc::mgr()->SyncProcessor();
 
    dabc::mgr()->InstallCtrlCHandler();
 

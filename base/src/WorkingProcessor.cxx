@@ -691,6 +691,10 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
       }
 
       // ParameterChanged(par);
+   } else
+   if (cmd->IsName("SyncProcessor")) {
+      // this is just dummy command, which is submitted with minimum priority
+      cmd_res = cmd_true;
    }
 
    return cmd_res;
@@ -733,7 +737,7 @@ int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Comman
 
    TimeStamp_t last_tm = NullTimeStamp;
 
-   if (dest->Submit(cmd)) {
+   if (dest->Submit(cmd, tmout<-100 ? priorityMinimum : priorityDefault)) {
 
 //      DOUT0(("Command is submitted, we start waiting for result"));
 
@@ -836,6 +840,11 @@ int dabc::WorkingProcessor::ExecuteInt(const char* cmdname, const char* intresna
    return res;
 }
 
+void dabc::WorkingProcessor::SyncProcessor()
+{
+   Execute("SyncProcessor", -1000.);
+}
+
 std::string dabc::WorkingProcessor::ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec)
 {
    dabc::Command* cmd = new dabc::Command(cmdname);
@@ -869,11 +878,13 @@ bool dabc::WorkingProcessor::Assign(Command* cmd)
    return true;
 }
 
-bool dabc::WorkingProcessor::Submit(dabc::Command* cmd)
+bool dabc::WorkingProcessor::Submit(dabc::Command* cmd, int priority)
 {
    if (cmd==0) return false;
 
    bool res = true;
+
+   if (priority == priorityDefault) priority = 0;
 
    {
       LockGuard lock(fProcessorMainMutex);
@@ -886,7 +897,7 @@ bool dabc::WorkingProcessor::Submit(dabc::Command* cmd)
 
          DOUT5(("Submit command %s with id %u to processor %p %u thrd %p", cmd->GetName(), id, this, fProcessorId, fProcessorThread));
 
-         _FireEvent(evntSubmitCommand, id, 0);
+         _FireEvent(evntSubmitCommand, id, priority);
       }
    }
 

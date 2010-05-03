@@ -55,6 +55,7 @@ namespace dabc {
    class FileIO;
    class StateMachineModule;
    class Configuration;
+   class StdManagerFactory;
 
    class CmdCreateModule : public Command {
       public:
@@ -270,6 +271,7 @@ namespace dabc {
       friend class Factory;
       friend class Parameter;
       friend class CommandDefinition;
+      friend class StdManagerFactory;
 
       protected:
 
@@ -530,7 +532,6 @@ namespace dabc {
          Mutex                *fMgrMutex; // main mutex to protect manager queues
          Queue<Basic*>         fDestroyQueue;
          Queue<ParamRec>       fParsQueue;
-         bool                  fParsQueueBlocked;
 
          Mutex                *fSendCmdsMutex;
          int                   fSendCmdCounter;

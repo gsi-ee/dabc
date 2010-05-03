@@ -301,7 +301,7 @@ void dabc::RateParameter::DoDebugOutput()
 
 void dabc::RateParameter::ChangeRate(double rate)
 {
-   DOUT5(("Change rate %s - %5.2f %s", GetName(), rate, fRecord.units));
+   DOUT4(("Change rate %s - %5.2f %s", GetName(), rate, fRecord.units));
 
    {
       LockGuard lock(fValueMutex);
@@ -339,6 +339,7 @@ void dabc::RateParameter::AccountValue(double v)
       if (dist > GetInterval()) {
          ChangeRate(fTotalSum / dist);
          fTotalSum = 0.;
+         fLastUpdateTm = tm;
       }
    } else {
       LockGuard lock(fValueMutex);
@@ -354,7 +355,17 @@ void dabc::RateParameter::ProcessTimeout(double last_diff)
    bool isnewrate = false;
    double newrate = 0.;
 
-   {
+   if (fSynchron) {
+      TimeStamp_t tm = TimeStamp();
+      if (IsNullTime(fLastUpdateTm)) fLastUpdateTm = tm;
+      double dist = TimeDistance(fLastUpdateTm, tm);
+      if (dist > GetInterval()) {
+         newrate = fTotalSum / dist;
+         isnewrate = true;
+         fTotalSum = 0.;
+         fLastUpdateTm = tm;
+      }
+   } else {
       LockGuard lock(fValueMutex);
       fDiffSum += last_diff;
 
