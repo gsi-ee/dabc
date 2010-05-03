@@ -65,6 +65,7 @@ namespace dabc {
          virtual bool IsNodeActive(int num);
          virtual const char* GetNodeName(int num);
          virtual bool ConnectControl(const char* connid);
+         virtual void DisconnectControl();
 
          virtual bool Subscribe(Parameter* par, int remnode, const char* remname);
          virtual bool Unsubscribe(Parameter* par);

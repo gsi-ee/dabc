@@ -77,7 +77,7 @@ void dabc::SocketTransport::OnConnectionClosed()
 
 void dabc::SocketTransport::OnSocketError(int errnum, const char* info)
 {
-   EOUT((" Connection error"));
+   EOUT((" Connection error socket %d errnum %d info %s", fSocket, errnum, info ));
 
    ErrorCloseTransport();
 }

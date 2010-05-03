@@ -101,20 +101,28 @@ dabc::StandaloneManager::StandaloneManager(const char* name, int nodeid, int num
 
 dabc::StandaloneManager::~StandaloneManager()
 {
-   DOUT3(("dabc::StandaloneManager::~StandaloneManager() starts"));
+   DOUT3(("~StandaloneManager() starts"));
 
+   destroy();
+
+   DOUT3(("~StandaloneManager() done"));
+}
+
+void dabc::StandaloneManager::DisconnectControl()
+{
    if (IsMainManager())
       DisconnectCmdChannels();
    else
       WaitDisconnectCmdChannel();
 
+   DOUT0(("++++++++++++++++++ Did disconnect ++++++++++++++++++"));
+
    fCmdChannel = 0;
    CleanupManager(77);
 
-   destroy();
-
-   DOUT3(("dabc::StandaloneManager::~StandaloneManager() done"));
+   DOUT0(("Did cleanup 77"));
 }
+
 
 bool dabc::StandaloneManager::ConnectControl(const char* connid)
 {
@@ -151,7 +159,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
    dev->SetAppId(77);
 
    fCmdChannel->Start();
-   DOUT3(( "Started CommandChannelModule module"));
+   DOUT3(("Started CommandChannelModule module"));
 
    dabc::CommandsSet cli;
 
@@ -162,7 +170,12 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       scmd->SetKeepAlive();
       cli.Add(SetCmdReceiver(scmd, fCmdDevName.c_str()), this);
 
-      if (cli.ExecuteSet(10)) {
+      int res = cli.ExecuteSet(10);
+
+      DOUT0(("StartServer Res = %d", res));
+
+      if (res>0) {
+//      if (cli.ExecuteSet(10)) {
          fCmdDeviceId = scmd->GetPar("ConnId");
 
          std::ofstream f(controllerID);
@@ -356,20 +369,25 @@ void dabc::StandaloneManager::DisconnectCmdChannels()
 
    bool res = cli.ExecuteSet(10) == dabc::cmd_true;
 
-   if (!res) {
+   if (res)
+      DOUT1(("StandaloneManager::DisconnectCmdChannels done"));
+   else
       EOUT(("Cannot disconnect correctly command channels"));
-   }
+
 }
 
 void dabc::StandaloneManager::WaitDisconnectCmdChannel()
 {
    if (fCmdChannel==0) return;
 
-   // first, wait that "DisconnectCmdChannel" is coming
-   fStopCond.DoWait();
+   // first, wait that "DisconnectCmdChannel" is coming, if not, cleanup itself
+   bool res = fStopCond.DoWait();
+
+   DOUT0(("First wait = %s", DBOOL(res)));
 
    // second, wait several seconds that connection is broken
-   bool res = fStopCond.DoWait(5.);
+   res = fStopCond.DoWait(5.);
+   DOUT0(("Second wait = %s", DBOOL(res)));
 
    if (!res) {
       EOUT(("Stop condition was not correctly fired"));
@@ -493,6 +511,9 @@ int dabc::StandaloneManager::ExecuteCommand(Command* cmd)
       cmd->SetStr("ConnId", connid);
    } else
    if (cmd->IsName("DisconnectCmdChannel")) {
+
+      DOUT0(("Firing stop condition !!!!"));
+
       // release condition first time
       fStopCond.DoFire();
    } else

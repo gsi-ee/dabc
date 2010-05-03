@@ -110,7 +110,7 @@ namespace dabc {
          virtual bool Find(ConfigIO &cfg);
          virtual bool Read(ConfigIO &cfg) { return true; }
 
-         virtual WorkingProcessor* GetCmdReceiver() { return 0; }
+         virtual WorkingProcessor* GetObjectProcessor() { return 0; }
 
          static long NumInstances() { return gNumInstances; }
 

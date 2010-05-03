@@ -313,35 +313,60 @@ dabc::Manager::~Manager()
    // normally, as last operation in the main() program must be HaltManeger(true)
    // call, which suspend and erase all items in manager
 
+   dabc::SetDebugLevel(3);
+
+
    DOUT3(("Start ~Manager"));
+
+   DoCleanupManager(-1);
+
+   DOUT3(("~Manager -> Did DoCleanupManager(-1)"));
+
 
    fSMmodule = 0;
 
-   HaltManager();
+   DoHaltManager();
 
    DOUT3(("~Manager -> CancelCommands()"));
 
    CancelCommands();
 
-   DOUT3(("~Manager -> DeleteChilds()"));
+   DOUT3(("~Manager -> DeleteAllPars()"));
 
    DestroyAllPars();
 
+   DOUT3(("~Manager -> DeleteChilds() %p", ProcessorThread()));
+
+
+   dabc::SetDebugLevel(5);
+
    DeleteChilds();
+
+   dabc::SetDebugLevel(3);
 
    {
       LockGuard lock(fMgrMutex);
       _SetParent(0, 0);
    }
 
+   DOUT3(("~Manager -> DestroyQueue"));
+
    while (fDestroyQueue.Size()>0)
       delete fDestroyQueue.Pop();
 
+   DOUT3(("~Manager -> ~fDepend"));
+
    delete fDepend; fDepend = 0;
+
+   DOUT3(("~Manager -> ~fSendCmdsMutex"));
 
    delete fSendCmdsMutex; fSendCmdsMutex = 0;
 
+   DOUT3(("~Manager -> ~fMgrMutex"));
+
    delete fMgrMutex; fMgrMutex = 0;
+
+   DOUT3(("~Manager -> Last"));
 
    if (fInstance==this) {
       DOUT0(("Real EXIT"));
@@ -362,6 +387,7 @@ void dabc::Manager::init()
 void dabc::Manager::destroy()
 {
    DestroyPar(stParName);
+   SyncProcessor();
 }
 
 void dabc::Manager::InitSMmodule()
@@ -490,7 +516,7 @@ void dabc::Manager::ProcessParameterEvent()
                rec.par->fRegistered = true;
 
                if (rec.par->NeedTimeout()) {
-                  DOUT0(("Need timeout %s", rec.par->GetName()));
+                  DOUT4(("Need timeout for parameter %s", rec.par->GetName()));
 
                   if (fTimedPars.size()==0) { activate = true; interval = 0.; }
                   fTimedPars.push_back(rec.par);
@@ -664,6 +690,7 @@ bool dabc::Manager::DoDeleteAllModules(int appid)
       if (m!=0) {
          DOUT2(("Stop and delete module %s", m->GetName()));
          m->Stop();
+         m->Halt();
          delete m;
          DOUT2(("Stop and delete module done"));
          m = 0;
@@ -692,7 +719,7 @@ void dabc::Manager::DoHaltManager()
    DOUT3(("Deleting application"));
    delete GetApp();
 
-   DOUT3(("Deleting all modules"));
+   DOUT0(("Deleting all modules"));
    // than we delete all modules
 
    DoDeleteAllModules();
@@ -776,11 +803,11 @@ int dabc::Manager::PreviewCommand(Command* cmd)
 
       if ((itemname!=0) && (strlen(itemname)>0)) obj = FindChild(itemname);
 
-      if (obj!=0) rcv = obj->GetCmdReceiver();
+      if (obj!=0) rcv = obj->GetObjectProcessor();
 
       cmd->RemovePar("_ItemName_");
 
-      DOUT5(("Manager get command %s for item %s : %p", cmd->GetName(), (itemname ? itemname : "null"), rcv));
+      DOUT5(("Manager get command %s for item %s : obj:%p rcv:%p", cmd->GetName(), (itemname ? itemname : "null"), obj, rcv));
 
       if (rcv!=0) {
          rcv->Submit(cmd);
@@ -998,7 +1025,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
    } else
    if (cmd->IsName(CmdStartModule::CmdName())) {
       dabc::Module* m = FindModule(cmd->GetStr("Module",""));
-      if (m!=0) m->Stop();
+      if (m!=0) m->Start();
       cmd_res = cmd_bool(m!=0);
    } else
    if (cmd->IsName(CmdStopModule::CmdName())) {
@@ -1011,6 +1038,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       if (m!=0) {
          DOUT2(("Stop and delete module %s", m->GetName()));
          m->Stop();
+         m->Halt();
          delete m;
          DOUT2(("Stop and delete module done"));
       }
@@ -2139,7 +2167,7 @@ dabc::Command* dabc::SetCmdReceiver(Command* cmd, Basic* rcv)
 
    std::string s = rcv->GetFullName(dabc::mgr());
 
-   if (rcv->GetCmdReceiver()==0)
+   if (rcv->GetObjectProcessor()==0)
       EOUT(("Object %s cannot be used to receive commands", s.c_str()));
 
    return SetCmdReceiver(cmd, s.c_str());

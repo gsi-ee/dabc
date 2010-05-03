@@ -297,7 +297,7 @@ namespace dabc {
            * Automatically called from destructor */
          void HaltManager();
 
-         virtual WorkingProcessor* GetCmdReceiver() { return this; }
+         virtual WorkingProcessor* GetObjectProcessor() { return this; }
 
          // ------------------------- State machine constants and methods ----------------------
 
@@ -448,6 +448,8 @@ namespace dabc {
          bool TestActiveNodes(double tmout = 5.);
          /** Establish/test connection to control system */
          virtual bool ConnectControl(const char* connid) { return true; }
+         /** Disconnect connection to control system */
+         virtual void DisconnectControl() { }
 
          // Subscribe/unsubscribe parameter against remote (local)
          virtual bool Subscribe(Parameter* par, int remnode, const char* remname) { return false; }

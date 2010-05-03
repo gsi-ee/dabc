@@ -204,8 +204,8 @@ bool dabc::LocalDevice::ConnectPorts(Port* port1, Port* port2)
    tr2->fOther = tr1;
 
    bool res = true;
-   if (!port1->AssignTransport(tr1)) res = false;
-   if (!port2->AssignTransport(tr2)) res = false;
+   if (!port1->AssignTransport(tr1, true)) res = false;
+   if (!port2->AssignTransport(tr2, true)) res = false;
 
    return res;
 }

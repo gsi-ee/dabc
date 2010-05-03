@@ -69,6 +69,11 @@ class NetTestSenderModule : public dabc::ModuleAsync {
          DOUT1(("new TSendModule %s nports = %d buf = %d done", GetName(), NumOutputs(), buffsize));
       }
 
+      ~NetTestSenderModule()
+      {
+         DOUT0(("Calling ~NetTestSenderModule()"));
+      }
+
       int ExecuteCommand(dabc::Command* cmd)
       {
          if (cmd->IsName("EnableSending")) {
@@ -150,6 +155,11 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
          DOUT1(("new TRecvModule %s nports:%d buf:%d", GetName(), nports, buffsize));
 
          fSleepTime = 0;
+      }
+
+      virtual ~NetTestReceiverModule()
+      {
+          DOUT0(("Calling ~NetTestReceiverModule"));
       }
 
       int ExecuteCommand(dabc::Command* cmd)

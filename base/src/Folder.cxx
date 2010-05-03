@@ -105,6 +105,7 @@ void dabc::Folder::DeleteChilds(int appid, const char* classname)
          } while (child == 0);
       }
 
+      if (child) DOUT5(("Delete child %p %s", child, child->GetName()));
       delete child;
 
    } while (child!=0);

@@ -76,6 +76,7 @@ namespace dabc {
 
          virtual void DoStart();
          virtual void DoStop();
+         virtual void DoHalt();
 
          virtual void ProcessEvent(EventId evid);
 
@@ -105,7 +106,7 @@ namespace dabc {
          unsigned NumOutputBuffersRequired() const;
          unsigned NumInputBuffersRequired() const;
 
-         bool AssignTransport(Transport* tr);
+         bool AssignTransport(Transport* tr, bool sync = false);
          bool IsConnected() const { return fTransport!=0; }
          void Disconnect();
 

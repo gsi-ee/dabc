@@ -165,6 +165,13 @@ void dabc::Module::Stop()
    DOUT4(("Stop module %s thrd %s done", GetName(), DNAME(ProcessorThread())));
 }
 
+bool dabc::Module::Halt()
+{
+   DOUT4(("Halt module %s", GetName()));
+
+   return Execute("HaltModule")==cmd_true;
+}
+
 int dabc::Module::PreviewCommand(Command* cmd)
 {
    // this hook in command execution routine allows us to "preview"
@@ -181,6 +188,10 @@ int dabc::Module::PreviewCommand(Command* cmd)
    if (cmd->IsName("StopModule"))
       cmd_res = cmd_bool(DoStop());
    else
+   if (cmd->IsName("HaltModule")) {
+      if (fRunState == msHalted) cmd_res = cmd_true;
+                            else cmd_res = cmd_bool(DoHalt());
+   } else
    if (cmd->IsName("SetPriority")) {
       if (ProcessorThread()) {
          ProcessorThread()->SetPriority(cmd->GetInt("Priority",0));
@@ -234,6 +245,22 @@ bool dabc::Module::DoStop()
 
    return true;
 }
+
+bool dabc::Module::DoHalt()
+{
+   fRunState = msHalted;
+
+   for (unsigned n=0;n<fItems.size();n++) {
+      ModuleItem* item = (ModuleItem*) fItems.at(n);
+      if (item) {
+         item->fHalted = true;
+         item->DoHalt();
+      }
+   }
+
+   return true;
+}
+
 
 dabc::PoolHandle* dabc::Module::CreatePoolHandle(const char* poolname, BufferSize_t size, BufferNum_t number, BufferNum_t increment)
 {

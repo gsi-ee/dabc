@@ -117,11 +117,12 @@ unsigned dabc::Port::NumInputBuffersRequired() const
    return sz;
 }
 
-bool dabc::Port::AssignTransport(Transport* tr)
+bool dabc::Port::AssignTransport(Transport* tr, bool sync)
 {
    Command* cmd = new Command("AssignTransport");
    cmd->SetPtr("#Transport", tr);
-   return Execute(cmd)==cmd_true;
+   if (sync) return Execute(cmd)==cmd_true;
+   return Submit(cmd);
 }
 
 int dabc::Port::ExecuteCommand(Command* cmd)
@@ -130,7 +131,7 @@ int dabc::Port::ExecuteCommand(Command* cmd)
       Transport* oldtr = fTransport;
       fTransport = (Transport*) cmd->GetPtr("#Transport");
 
-      DOUT3(("%s Get AssignTransport command old %p new %p", GetFullName().c_str(), oldtr, fTransport));
+      DOUT5(("%s Get AssignTransport command old %p new %p", GetFullName().c_str(), oldtr, fTransport));
 
       if (oldtr!=0) oldtr->AssignPort(0);
 
@@ -145,7 +146,7 @@ int dabc::Port::ExecuteCommand(Command* cmd)
       if (GetModule()->IsRunning() && fTransport)
          fTransport->StartTransport();
 
-      DOUT3(("%s processed AssignTransport command cansend %s", GetFullName().c_str(), DBOOL(CanSend())));
+      DOUT5(("%s processed AssignTransport command cansend %s", GetFullName().c_str(), DBOOL(CanSend())));
    } else
       return cmd_false;
 
@@ -171,6 +172,12 @@ void dabc::Port::DoStop()
    if (fTransport!=0)
       fTransport->StopTransport();
 }
+
+void dabc::Port::DoHalt()
+{
+   Disconnect();
+}
+
 
 bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
 {

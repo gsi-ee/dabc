@@ -41,6 +41,8 @@ namespace dabc {
 
          Device(Basic* parent, const char* name);
 
+         virtual WorkingProcessor* GetObjectProcessor() { return this; }
+
          virtual void TransportCreated(Transport *tr);
          virtual void TransportDestroyed(Transport *tr);
 

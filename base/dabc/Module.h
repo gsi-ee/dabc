@@ -82,8 +82,15 @@ namespace dabc {
 
          // this methods can be used from outside of module
 
+         /** Starts execution of the module code */
          void Start();
+
+         /** Stops execution of the module code */
          void Stop();
+
+         /** Prepares module for calling destructor
+          * Module cannot be reused after this call */
+         bool Halt();
 
          // end of public methods, rest later will be moved to protected area
 
@@ -112,7 +119,7 @@ namespace dabc {
          inline bool IsStopped() const { return fRunState == msStopped; }
          inline bool IsHalted() const { return fRunState == msHalted; }
 
-         virtual WorkingProcessor* GetCmdReceiver() { return this; }
+         virtual WorkingProcessor* GetObjectProcessor() { return this; }
 
          // generic users event processing function
          virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid) {}
@@ -178,6 +185,8 @@ namespace dabc {
 
          bool DoStop();
          bool DoStart();
+
+         virtual bool DoHalt();
 
          virtual void OnThreadAssigned();
          virtual int PreviewCommand(Command* cmd);

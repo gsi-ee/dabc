@@ -102,6 +102,8 @@ namespace dabc {
            * execution until new Start of the module is called from outside */
          void StopUntilRestart();
 
+         virtual bool DoHalt();
+
       private:
 
          virtual void DoProcessorMainLoop();

@@ -489,8 +489,8 @@ void TestCmdChain(int number)
 
    dabc::mgr()->StopAllModules();
 
-   for (int n=0;n<number;n++)
-      dabc::mgr()->DeleteModule(FORMAT(("Module%d",n)));
+//   for (int n=0;n<number;n++)
+//      dabc::mgr()->DeleteModule(FORMAT(("Module%d",n)));
 
    dabc::mgr()->CleanupManager();
 
@@ -530,13 +530,13 @@ void TestCmdSet(int number, bool sync)
    } else {
       set->SubmitSet(0, 2.);
       dabc::mgr()->Sleep(1.);
-      DOUT0(("Sleep DONE"));
+      DOUT0(("SET result = uncknown"));
    }
 
    dabc::mgr()->StopAllModules();
 
-   for (int n=0;n<number;n++)
-      dabc::mgr()->DeleteModule(FORMAT(("SetModule%d",n)));
+//   for (int n=0;n<number;n++)
+//      dabc::mgr()->DeleteModule(FORMAT(("SetModule%d",n)));
 
    dabc::mgr()->CleanupManager();
 
@@ -550,7 +550,7 @@ extern "C" void RunCmdTest()
 
    TestCmdChain(10);
 
-   TestCmdChain(10);
+   TestCmdChain(20);
 
    TestCmdSet(5, true);
 

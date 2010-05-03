@@ -93,7 +93,10 @@ void dabc::Transport::ErrorCloseTransport()
    bool old = fErrorState;
    fErrorState = true;
 
-   if (!old) DettachPort();
+   if (!old) {
+      DOUT0(("Detach port due to error condition"));
+      DettachPort();
+   }
 }
 
 
@@ -120,6 +123,8 @@ void dabc::Transport::DettachPort()
       if (fPort!=0)
          if (fPort->AssignTransport(0)) return;
    }
+
+   DOUT5(("DettachPort forced %p", this));
 
    // if fPort is not set or not like to disconnect, force it
    AssignPort(0);

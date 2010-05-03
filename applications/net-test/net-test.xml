@@ -1,17 +1,19 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="lxi017"/>
-  <Context host="lxi019"/>
-  <Context host="lxi020"/>
-  <Context host="lxi021"/>
+  <Context host="lxi009"/>
+  <Context host="lxi010"/>
+  <Context host="lxi011"/>
+  <Context host="lxi012"/>
   <Defaults>
      <Context name="*">
        <Run>
          <lib value="libDabcNetTest.so"/>
          <debuglevel value="0"/>
+         <loglevel value="1"/>
+         <logfile value="${Context}.log"/>
          <runfunc value="RunAllToAll"/>
          <sockethost value="${host}"/>
-         <copycfg value="true"/>
+         <copycfg value="false"/>
        </Run>
        <User>
          <NetDevice value="dabc::SocketDevice"/>

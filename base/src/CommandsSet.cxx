@@ -100,7 +100,7 @@ int dabc::CommandsSet::ExecuteCommand(Command* cmd)
       return WorkingProcessor::ExecuteCommand(cmd);
    }
 
-   DOUT0(("CommandsSet get command %s", cmd->GetName()));
+   DOUT4(("CommandsSet get command %s", cmd->GetName()));
 
    // first submit commands which should be submitted
    while (SubmitNextCommand())
@@ -115,7 +115,7 @@ int dabc::CommandsSet::ExecuteCommand(Command* cmd)
       fCompleted = true;
    }
 
-   DOUT0(("Set execution res = %d", res));
+   DOUT4(("CommandsSet execution res = %d", res));
 
    return res;
 }
@@ -127,6 +127,8 @@ bool dabc::CommandsSet::ReplyCommand(Command* cmd)
          if (fCmds.Item(n).state != 1)
             EOUT(("Wrong state %d for command %s at reply", fCmds.Item(n).state, cmd->GetName()));
          fCmds.ItemPtr(n)->state = 2;
+
+         DOUT5(("Command %s replied res = %d", cmd->GetName(), cmd->GetResult()));
          break;
       }
    }
@@ -138,7 +140,7 @@ bool dabc::CommandsSet::ReplyCommand(Command* cmd)
    int res = CheckExecutionResult();
 
    if (res!=cmd_postponed) {
-      DOUT0(("SET COMPLETED res = %d !!!", res));
+      DOUT4(("CommandsSet completed res = %d !!!", res));
 
       if (!fCompleted) SetCompleted(res);
       fCompleted = true;
@@ -161,7 +163,7 @@ bool dabc::CommandsSet::SubmitNextCommand()
       if (fCmds.Item(n).state==0)
          if (fCmds.Item(n).recv) {
 
-            DOUT0(("CommandsSet distributes cmd %s  item %u size %u", fCmds.Item(n).cmd->GetName(), n, fCmds.Size()));
+            DOUT5(("CommandsSet distributes cmd %s  item %u size %u", fCmds.Item(n).cmd->GetName(), n, fCmds.Size()));
 
             fCmds.ItemPtr(n)->state = 1;
 
@@ -209,25 +211,25 @@ int dabc::CommandsSet::ExecuteSet(double tmout)
 
       WorkingThread* thrd = dabc::mgr()->CurrentThread();
       if (thrd==0) {
-         DOUT0(("Cannot use commands set outside DABC threads, create dummy !!!"));
+         DOUT4(("Cannot use commands set outside DABC threads, create dummy !!!"));
          curr.Start(0, true);
          thrd = &curr;
       }
 
-      DOUT0(("Assign SET to thread %s", thrd->GetName()));
+      DOUT4(("Assign SET to thread %s", thrd->GetName()));
 
       AssignProcessorToThread(thrd);
 
       didassign = true;
    }
 
-   DOUT0(("Calling AnyCommand"));
+   DOUT4(("Calling AnyCommand"));
 
    fSyncMode = true;
 
    int res = ExecuteIn(this, "AnyCommand", tmout);
 
-   DOUT0(("Calling AnyCommand res = %d", res));
+   DOUT4(("Calling AnyCommand res = %d", res));
 
    if (didassign)
       RemoveProcessorFromThread(true);

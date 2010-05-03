@@ -64,7 +64,7 @@ bool WaitActiveNodes(double tmout)
      if (dabc::mgr()->NumActiveNodes() == dabc::mgr()->NumNodes())
         if (dabc::mgr()->TestActiveNodes()) return true;
 
-     dabc::MicroSleep(10000);
+     dabc::mgr()->Sleep(0.01);
 
    } while (dabc::TimeDistance(t1, TimeStamp()) < tmout);
 
@@ -76,7 +76,7 @@ bool WaitActiveNodes(double tmout)
 
 int RunSctrlApplication(dabc::Configuration& cfg, const char* connid, int nodeid, int numnodes)
 {
-   DOUT1(("Run application node:%d numnodes:%d conn:%s", nodeid, numnodes, (connid ? connid : "---")));
+   DOUT0(("Run application node:%d numnodes:%d conn:%s", nodeid, numnodes, (connid ? connid : "---")));
 
    if (connid!=0)
        if (!dabc::mgr()->ConnectControl(connid)) {
@@ -95,6 +95,8 @@ int RunSctrlApplication(dabc::Configuration& cfg, const char* connid, int nodeid
    else
    if (!dabc::mgr()->GetApp()->IsSlaveApp())
       ClassicalRunFunction();
+
+   dabc::mgr()->DisconnectControl();
 
    return 0;
 }
@@ -249,6 +251,8 @@ int main(int numc, char* args[])
       else
          res = RunSctrlApplication(cfg, connid, nodeid, numnodes);
    }
+
+   dabc::mgr()->HaltManager();
 
    delete dabc::mgr();
 

@@ -83,14 +83,16 @@ namespace dabc {
 
          virtual WorkingProcessor* GetCfgMaster() { return GetModule(); }
 
-         virtual WorkingProcessor* GetCmdReceiver() { return this; }
+         virtual WorkingProcessor* GetObjectProcessor() { return this; }
 
          virtual void DoStart() {}
          virtual void DoStop() {}
+         virtual void DoHalt() {}
 
          Module*  fModule;
          int      fItemType;
          unsigned fItemId;
+         bool     fHalted;              /** indicates if item was halted */
    };
 
    class ModuleItemException : public ModuleException {

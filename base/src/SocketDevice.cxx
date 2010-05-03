@@ -551,9 +551,9 @@ int dabc::SocketDevice::ExecuteCommand(dabc::Command* cmd)
 {
    int cmd_res = cmd_true;
 
-   DOUT5(("Execute command %s", cmd->GetName()));
-
    if (cmd->IsName("StartServer")) {
+      DOUT0(("Socket start server"));
+
       std::string servid;
       cmd_res = StartServerThread(cmd, servid, cmd->GetPar("CmdChannel"));
       cmd->SetPar("ConnId", servid.c_str());

@@ -69,7 +69,7 @@ namespace dabc {
           virtual bool Store(ConfigIO &cfg);
           virtual bool Find(ConfigIO &cfg);
 
-          virtual WorkingProcessor* GetCmdReceiver() { return this; }
+          virtual WorkingProcessor* GetObjectProcessor() { return this; }
 
        protected:
 

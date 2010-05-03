@@ -42,6 +42,16 @@ dabc::ModuleSync::~ModuleSync()
    }
 }
 
+bool dabc::ModuleSync::DoHalt()
+{
+   fRunState = msHalted;
+
+   ExitMainLoop();
+
+   return dabc::Module::DoHalt();
+}
+
+
 bool dabc::ModuleSync::WaitConnect(Port* port, double timeout)
    throw (PortException, StopException, TimeoutException)
 {

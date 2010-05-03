@@ -206,7 +206,8 @@ void dabc::WorkingProcessor::ProcessCoreEvent(EventId evnt)
 
 void dabc::WorkingProcessor::ProcessEvent(EventId evnt)
 {
-   EOUT(("Event %u arg:%u not processed", GetEventCode(evnt), GetEventArg(evnt)));
+   EOUT(("Event %u arg:%u not processed req:%s", GetEventCode(evnt), GetEventArg(evnt),
+         (RequiredThrdClass() ? RequiredThrdClass() : "dflt")));
 }
 
 bool dabc::WorkingProcessor::ActivateMainLoop()
@@ -662,7 +663,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 {
    int cmd_res = cmd_ignore;
 
-   DOUT3(("WorkingProcessor::PreviewCommand %s", cmd->GetName()));
+   DOUT5(("WorkingProcessor::PreviewCommand %s", cmd->GetName()));
 
    if (cmd->IsName(CmdSetParameter::CmdName())) {
 
@@ -715,7 +716,7 @@ int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Comman
       LockGuard lock(fProcessorMainMutex);
 
       if (fProcessorThread==0) {
-         EOUT(("Cannot execute command without working thread"));
+         EOUT(("Cannot execute command %s without working thread", cmd->GetName()));
          res = cmd_false;
       } else
       if (!fProcessorThread->IsItself()) {
@@ -790,7 +791,7 @@ int dabc::WorkingProcessor::Execute(Command* cmd, double tmout)
       LockGuard lock(fProcessorMainMutex);
 
       if (fProcessorThread==0) {
-         EOUT(("Cannot execute command without working thread"));
+         EOUT(("Cannot execute command %s without working thread", cmd->GetName()));
          res = cmd_false;
       } else
       if (fProcessorThread->IsItself()) thrd = fProcessorThread;
@@ -813,7 +814,7 @@ int dabc::WorkingProcessor::Execute(Command* cmd, double tmout)
    // but not really take over thread mainloop
    // This object is not seen from the manager, therefore many such instances may exist in parallel
 
-   DOUT0(("We really creating dummy thread for cmd %s", cmd->GetName()));
+   DOUT5(("We really creating dummy thread for cmd %s", cmd->GetName()));
 
    WorkingThread curr(0, "Current");
    curr.Start(0, true);
@@ -842,7 +843,8 @@ int dabc::WorkingProcessor::ExecuteInt(const char* cmdname, const char* intresna
 
 void dabc::WorkingProcessor::SyncProcessor()
 {
-   Execute("SyncProcessor", -1000.);
+   if (ProcessorThread()!=0)
+      Execute("SyncProcessor", -1000.);
 }
 
 std::string dabc::WorkingProcessor::ExecuteStr(const char* cmdname, const char* strresname, double timeout_sec)

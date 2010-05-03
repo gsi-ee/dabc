@@ -18,7 +18,8 @@ dabc::ModuleItem::ModuleItem(int typ, Basic* parent, const char* name) :
    WorkingProcessor(this),
    fModule(0),
    fItemType(typ),
-   fItemId(0)
+   fItemId(0),
+   fHalted(false)
 {
    SetParDflts(3);
 
