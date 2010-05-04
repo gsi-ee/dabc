@@ -261,7 +261,7 @@ bool dabc::Module::DoHalt()
 
    fRunState = msHalted;
 
-   DOUT0(("Module %s halted numports %d", GetName(), NumIOPorts()));
+   DOUT3(("Module %s halted numports %d", GetName(), NumIOPorts()));
 
    return true;
 }
@@ -307,7 +307,7 @@ void dabc::Module::ItemCreated(ModuleItem* item)
 
    if (id>moduleitemMaxId) {
       EOUT(("Item id is too big, event propagation will not work"));
-      exit(1);
+      exit(104);
    }
 
    if (ProcessorThread()!=0)

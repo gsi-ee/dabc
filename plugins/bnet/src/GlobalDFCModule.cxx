@@ -193,7 +193,7 @@ void bnet::GlobalDFCModule::TrySendEventsAssignment(bool force)
       dabc::Buffer* sendbuf = buf->MakeReference();
       if (sendbuf==0) {
          EOUT(("Not able to make new reference !!!!!"));
-         exit(1);
+         exit(122);
       }
 
 //      DOUT1(("Sending response to node %d size %d", n, sendbuf->GetTotalSize()));

@@ -88,6 +88,8 @@ bool dabc::Device::DoDeviceCleanup(bool full)
 
       DOUT5(("Device %s Delete transport %p", GetName(), tr));
 
+      tr->DoTransportHalt();
+
       delete tr;
 
       DOUT5(("Device %s Delete transport %p done", GetName(), tr));

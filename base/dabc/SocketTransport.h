@@ -60,6 +60,9 @@ namespace dabc {
 
          virtual void ErrorCloseTransport();
 
+         virtual void DoTransportHalt();
+
+
          bool        fIsDatagram;  // indicate if this is datagram socket and one can only user recv once per data packaet
          char*       fHeaders;
          RecIdsQueue fSendQueue;

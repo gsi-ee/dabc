@@ -322,10 +322,6 @@ dabc::SocketDevice::~SocketDevice()
 
 bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, const char* cmdchannel)
 {
-   static int gcnt = 0;
-
-   int cnt = gcnt++;
-
    if (fServer==0) {
       fServer = dabc::SocketThread::CreateServerProcessor(
             cmd->GetInt("SocketPort", -1),

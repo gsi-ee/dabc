@@ -120,7 +120,7 @@ void dabc::CommandChannelModule::SendSubmittedCommands()
 
       if (outport==0) {
          EOUT(("FALSE PORT id %d", portid));
-         exit(1);
+         exit(114);
       }
 
       if (!outport->CanSend()) break;

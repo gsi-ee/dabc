@@ -208,7 +208,7 @@ void verbs::Transport::_SubmitRecv(uint32_t recid)
 
       if (buf->NumSegments() >= fSegmPerOper) {
          EOUT(("Too many segments"));
-         exit(1);
+         exit(146);
       }
 
       dabc::LockGuard lock(fPoolReg->WorkMutex());
@@ -261,7 +261,7 @@ void verbs::Transport::_SubmitSend(uint32_t recid)
 
       if (buf->NumSegments() >= fSegmPerOper) {
          EOUT(("Too many segments"));
-         exit(1);
+         exit(147);
       }
 
       dabc::LockGuard lock(fPoolReg->WorkMutex());

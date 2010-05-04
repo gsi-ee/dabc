@@ -235,7 +235,7 @@ void verbs::PoolRegistry::_UpdateMRStructure()
 
               if (f_mr[n]==0) {
                  EOUT(("Fail to registry VERBS memory - HALT"));
-                 exit(1);
+                 exit(138);
               }
               fBlockChanged[n] = fPool->MemBlockChangeCounter(n);
           } else
@@ -264,7 +264,7 @@ verbs::Device::Device(dabc::Basic* parent, const char* name) :
 
    if (!OpenVerbs(true)) {
       EOUT(("FATAL. Cannot start VERBS device"));
-      exit(1);
+      exit(139);
    }
 
    DOUT3(("Creating VERBS thread %s", GetName()));

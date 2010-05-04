@@ -192,7 +192,7 @@ void bnet::SenderModule::StandaloneProcessEvent(dabc::ModuleItem* item, uint16_t
       bnet::EventId* header = (bnet::EventId*) buf->GetHeader();
       if (header==0) {
          EOUT(("Fail to get header from buffer"));
-         exit(1);
+         exit(123);
       }
 
       bnet::EventId evid = *header;
@@ -290,7 +290,7 @@ void bnet::SenderModule::ProcessInputEvent(dabc::Port* port)
       bnet::EventId* header = (bnet::EventId*) buf->GetHeader();
       if (header==0) {
          EOUT(("Fail to get header from buffer"));
-         exit(1);
+         exit(124);
       }
 
       bnet::EventId eventid = *header;

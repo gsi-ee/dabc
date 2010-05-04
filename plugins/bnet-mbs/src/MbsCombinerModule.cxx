@@ -117,7 +117,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 
       if (!iter.NewEvent()) {
          EOUT(("Cannot start new event"));
-         exit(1);
+         exit(128);
       }
 
       iter.evnt()->CopyHeader(srchdr);
@@ -131,7 +131,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 
          if (!iter.AddSubevent(subevptr)) {
             EOUT(("Cannot add subevent size recid = %d size = %u %u", recid, subevptr.fullsize(), fSubEvnts[recid].fullsize()));
-            exit(1);
+            exit(129);
          }
       }
 

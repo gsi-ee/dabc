@@ -144,7 +144,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
 
    if ((dev==0) || (dev->ProcessorThread()==0)) {
       EOUT(("Cannot create device %s of class %s  for command channel. Abort", devname, devclass));
-      exit(1);
+      exit(115);
    }
 
    fCmdDevName = dev->GetFullName(this);
@@ -181,7 +181,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       } else {
          EOUT(("Cannot start server. HALT"));
          dabc::Command::Finalise(scmd);
-         exit(1);
+         exit(116);
       }
 
 /*
@@ -208,7 +208,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
 
       if (Execute(cmdr, 7)!=dabc::cmd_true) {
          EOUT(("RegisterSlave command fail. Halt"));
-         exit(1);
+         exit(117);
       }
 
       DOUT2(("RegisterSlave execution OK serv = %s connid = %s",
@@ -229,7 +229,7 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
 
       if (dev->Execute(cmd, 5)!=dabc::cmd_true) {
          EOUT(("Not able to connect commands channel"));
-         exit(1);
+         exit(118);
       }
 
    }
@@ -265,7 +265,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
 
    if ((dev==0) || (dev->ProcessorThread()==0)) {
       EOUT(("Cannot create device %s of class %s  for command channel. Abort", devname, devclass));
-      exit(1);
+      exit(119);
    }
 
    fCmdDevName = dev->GetFullName(this /*dev->GetParent()*/);
@@ -300,7 +300,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       if (cli.ExecuteSet(10)!=dabc::cmd_true) {
          EOUT(("Cannot start server. HALT"));
          dabc::Command::Finalise(scmd);
-         exit(1);
+         exit(120);
       }
 
       fCmdDeviceId = scmd->GetPar("ConnId");
@@ -337,7 +337,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
 
    if (!res) {
       EOUT(("Not able to connect commands channel"));
-      exit(1);
+      exit(121);
    }
 
    MicroSleep(1000000);

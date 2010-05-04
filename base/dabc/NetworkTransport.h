@@ -103,6 +103,8 @@ namespace dabc {
 
          virtual void PortChanged();
 
+         virtual void ErrorCloseTransport();
+
          uint32_t _TakeRec(Buffer* buf, uint32_t kind = 0, uint64_t extras = 0);
          void _ReleaseRec(uint32_t recid);
          void SetRecHeader(uint32_t recid, void* header);

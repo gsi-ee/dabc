@@ -53,7 +53,7 @@ void dabc::Pointer::long_shift(BufferSize_t sz)
 
          if (fPtr==0) {
             EOUT(("Internal Problem !!!!"));
-            exit(1);
+            exit(108);
          }
 
          fPtr += fRawSize;
@@ -62,7 +62,7 @@ void dabc::Pointer::long_shift(BufferSize_t sz)
       } else
       if (fSegm > fBuf->NumSegments()) {
          EOUT(("Segment Id is larger than exists in buffer"));
-         exit(1);
+         exit(109);
          return;
       }
 

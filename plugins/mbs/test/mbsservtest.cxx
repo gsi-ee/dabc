@@ -179,7 +179,7 @@ extern "C" void StartGenerator()
 {
     if (dabc::mgr()==0) {
        EOUT(("Manager is not created"));
-       exit(1);
+       exit(134);
     }
 
     DOUT0(("Start MBS generator module"));
@@ -192,7 +192,7 @@ extern "C" void StartGenerator()
     cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
     if (!dabc::mgr()->Execute(cmd)) {
        EOUT(("Cannot create MBS transport server"));
-       exit(1);
+       exit(135);
     }
 
     m->Start();
@@ -205,7 +205,7 @@ extern "C" void StartClient()
 
    if (dabc::mgr()==0) {
       EOUT(("Manager is not created"));
-      exit(1);
+      exit(136);
    }
 
    DOUT1(("Start as client for node %s:%d", hostname, nport));
@@ -223,7 +223,7 @@ extern "C" void StartClient()
 
    if (!dabc::mgr()->Execute(cmd)) {
       EOUT(("Cannot create data input for receiver"));
-      exit(1);
+      exit(137);
    }
 
    m->Start();

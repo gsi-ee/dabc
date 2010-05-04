@@ -205,7 +205,7 @@ extern "C" void StartMbsCombiner()
 {
     if (dabc::mgr()==0) {
        EOUT(("Manager is not created"));
-       exit(1);
+       exit(130);
     }
 
     DOUT0(("Start MBS combiner module"));
@@ -216,20 +216,20 @@ extern "C" void StartMbsCombiner()
     for (unsigned n=0;n<m->NumInputs();n++)
        if (!dabc::mgr()->CreateTransport(FORMAT(("Combiner/Input%u", n)), mbs::typeClientTransport, "MbsTransport")) {
           EOUT(("Cannot create MBS client transport"));
-          exit(1);
+          exit(131);
        }
 
     if (m->IsServOutput()) {
        if (!dabc::mgr()->CreateTransport("Combiner/ServerOutput", mbs::typeServerTransport, "MbsOutTransport")) {
           EOUT(("Cannot create MBS server"));
-          exit(1);
+          exit(132);
        }
     }
 
     if (m->IsFileOutput())
        if (!dabc::mgr()->CreateTransport("Combiner/FileOutput", mbs::typeLmdOutput, "MbsOutTransport")) {
           EOUT(("Cannot create MBS file output"));
-          exit(1);
+          exit(133);
        }
 
 //    m->Start();

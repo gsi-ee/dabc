@@ -132,6 +132,14 @@ void dabc::NetworkTransport::PortChanged()
       FillRecvQueue();
 }
 
+void dabc::NetworkTransport::ErrorCloseTransport()
+{
+
+
+   dabc::Transport::ErrorCloseTransport();
+}
+
+
 void dabc::NetworkTransport::Cleanup()
 {
    // first, exclude possibility to get callback from pool
@@ -187,7 +195,7 @@ uint32_t dabc::NetworkTransport::_TakeRec(Buffer* buf, uint32_t kind, uint64_t e
 
    EOUT(("Cannot allocate NetIORec. Halt"));
    EOUT(("SendQueue %u RecvQueue %u NumRecs %u used %u", fOutputQueueSize, fInputQueueSize, fNumRecs, fNumUsedRecs));
-   exit(1);
+   exit(105);
    return 0;
 }
 
@@ -363,7 +371,7 @@ void dabc::NetworkTransport::_SubmitAllowedSendOperations()
 
 void dabc::NetworkTransport::ProcessSendCompl(uint32_t recid)
 {
-   if (recid>=fNumRecs) { EOUT(("Recid fail %u %u", recid, fNumRecs)); exit(1); }
+   if (recid>=fNumRecs) { EOUT(("Recid fail %u %u", recid, fNumRecs)); exit(106); }
 
    Buffer* buf = 0;
    bool dofire = false;
@@ -407,7 +415,7 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
 
    if (recid>=fNumRecs) {
       EOUT(("Recid fail tr %p %u %u", this, recid, fNumRecs));
-      exit(1);
+      exit(107);
    }
 
    Buffer* buf = 0;

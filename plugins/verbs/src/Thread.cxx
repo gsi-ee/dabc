@@ -96,7 +96,7 @@ verbs::Thread::Thread(Device* dev, dabc::Basic* parent, const char* name) :
    fChannel = ibv_create_comp_channel(fDevice->context());
    if (fChannel==0) {
       EOUT(("Cannot create completion channel - HALT"));
-      exit(1);
+      exit(143);
    }
 
    fWCSize = 128;
@@ -116,7 +116,7 @@ verbs::Thread::Thread(Device* dev, dabc::Basic* parent, const char* name) :
 
    if (!fLoopBackQP->Connect(GetDevice()->lid(), fLoopBackQP->qp_num(), fLoopBackQP->local_psn())) {
       EOUT(("fLoopBackQP CONNECTION FAILED"));
-      exit(1);
+      exit(144);
    }
 
    fLoopBackPool = new MemoryPool(GetDevice(), "LoopBackPool", 2, 16, false);
@@ -313,8 +313,8 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
    if(ev_ctx!=0) {
       ComplQueueContext* cq_ctx = (ComplQueueContext*) ev_ctx;
       if (cq_ctx->own_cq != ev_cq) {
-         EOUT(("Missmatch in cq context"));
-         exit(1);
+         EOUT(("Mismatch in cq context"));
+         exit(145);
       }
 
       cq_ctx->events_get++;

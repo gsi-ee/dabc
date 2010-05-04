@@ -298,7 +298,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
       dev->SetAppId(7);
    else {
       EOUT(("Problem to create local device"));
-      exit(1);
+      exit(102);
    }
 
    // create state parameter, inherited class should call init to see it
@@ -1734,7 +1734,7 @@ bool dabc::Manager::ChangeState(const char* state_transition_cmd, double tmout)
 
    if (!res) {
       EOUT(("State change %s fail. EXIT!!!! ", state_transition_cmd));
-      exit(1);
+      exit(103);
    } else
       DOUT1(("State change %s done", state_transition_cmd));
 

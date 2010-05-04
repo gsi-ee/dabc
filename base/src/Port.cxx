@@ -177,7 +177,7 @@ void dabc::Port::DoStop()
 
 void dabc::Port::DoHalt()
 {
-   DOUT0(("Halt port %s Transport %p", GetName(), fTransport));
+   DOUT0(("Halt port %s Transport %p", GetFullName().c_str(), fTransport));
 
    while (SkipInputBuffers(1));
 

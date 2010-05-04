@@ -1,6 +1,10 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="lxi009"/>
+  <Context host="lxi009">
+    <Run>
+       <debugger value="gdb -q -x gdb.cmd --args"/>
+    </Run>
+  </Context>
   <Context host="lxi010"/>
   <Context host="lxi011"/>
   <Context host="lxi012"/>
@@ -9,7 +13,8 @@
        <Run>
          <lib value="libDabcNetTest.so"/>
          <debuglevel value="0"/>
-         <loglevel value="1"/>
+         <debugger value="gdb -q -x gdb.cmd --args"/>
+         <loglevel value="3"/>
          <logfile value="${Context}.log"/>
          <loglimit value="10000000000"/>
          <runfunc value="RunAllToAll"/>

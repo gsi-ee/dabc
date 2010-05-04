@@ -39,7 +39,7 @@ void bnet::MbsBuilderModule::StartOutputBuffer(dabc::BufferSize_t bufsize)
 
       if (!fOut.iter.Reset(fOut.buf)) {
          EOUT(("Problem to start with MBS buffer"));
-         exit(1);
+         exit(125);
       }
    }
 }
@@ -72,7 +72,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 
       if (bufs[n]==0) {
          EOUT(("Buffer %d is NULL !!!!!!!!!!!!!!!", n));
-         exit(1);
+         exit(126);
       }
 
       if (!recs[n].Reset(bufs[n]) || !recs[n].NextEvent()) {
@@ -124,7 +124,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 
          if (!fOut.iter.IsPlaceForEvent(subeventslen)) {
             EOUT(("Single event do not pass in to the buffers"));
-            exit(1);
+            exit(127);
          }
       }
 

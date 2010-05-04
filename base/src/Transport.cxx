@@ -35,7 +35,7 @@ dabc::Transport::Transport(Device* dev) :
 
 dabc::Transport::~Transport()
 {
-   if (GetDevice()) GetDevice()->TransportDestroyed(this);
+//   if (GetDevice()) GetDevice()->TransportDestroyed(this);
 
    gNumTransports--;
 

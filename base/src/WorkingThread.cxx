@@ -320,7 +320,7 @@ bool dabc::WorkingThread::SetExplicitLoop(WorkingProcessor* proc)
 {
    if (!IsItself()) {
       EOUT(("Call from other thread - absolutely wrong"));
-      exit(1);
+      exit(113);
    }
 
    if (fExplicitLoop!=0)
@@ -408,10 +408,10 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
 
       if (id>0) {
 
-         DOUT5(("Thrd:%s Remove processor %u", GetName(), id));
-
          if (id<fProcessors.size()) {
             if (fProcessors[id]) fProcessors[id]->fProcessorId = 0;
+
+            DOUT3(("Thrd:%s Remove processor %u %p", GetName(), id, fProcessors[id]));
 
             fProcessors[id] = 0;
             // rebuild processors vector after we process all other events now in the queue
@@ -425,7 +425,7 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
 
          ProcessorNumberChanged();
 
-         DOUT5(("Thrd:%s Remove processor %u done", GetName(), id));
+         DOUT3(("Thrd:%s Remove processor %u done", GetName(), id));
       }
    } else
    if (cmd->IsName("DestroyProcessor")) {

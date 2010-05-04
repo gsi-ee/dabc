@@ -120,7 +120,7 @@ verbs::ConnectProcessor::ConnectProcessor(Thread* thrd) :
 
    if (ServBufferSize < sizeof(VerbsConnectData)) {
       EOUT(("VerbsConnectData do not fit in UD buffer %d", sizeof(VerbsConnectData)));
-      exit(1);
+      exit(140);
    }
 
    fCQ = new ComplQueue(dev->context(), ServQueueSize*3, thrd->Channel());
@@ -130,7 +130,7 @@ verbs::ConnectProcessor::ConnectProcessor(Thread* thrd) :
                              fCQ, ServQueueSize, 1);
    if (!qp->InitUD()) {
       EOUT(("fConnQP INIT FALSE"));
-      exit(1);
+      exit(141);
    }
 
    SetQP(qp);
@@ -305,7 +305,7 @@ bool verbs::ConnectProcessor::TrySendConnRequest(ProtocolProcessor* rec)
 
    if (tgt_ah==0) {
       EOUT(("=========== AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"));
-      exit(1);
+      exit(142);
    }
 
 //       fConnQP->Post_Send_UD(ref, (uint64_t) ref, tgt_ah, tgt_qpn);

@@ -129,7 +129,7 @@ namespace dabc {
       {
          if (fUsage[id]==0) {
             EOUT(("Internal error"));
-            exit(1);
+            exit(101);
          }
          fUsage[id]++;
       }

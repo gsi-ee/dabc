@@ -291,7 +291,7 @@ void dabc::TimeSyncModule::ProcessInputEvent(Port* port)
           port->Send(buf);
       } else {
          EOUT(("Work buffer is empty. Hard error. Halt"));
-         exit(1);
+         exit(112);
       }
    } else {
       double now = fTimeSource->GetTimeStamp();

@@ -77,7 +77,7 @@ void dabc::SocketTransport::OnConnectionClosed()
 
 void dabc::SocketTransport::OnSocketError(int errnum, const char* info)
 {
-   EOUT((" Connection error socket %d errnum %d info %s", fSocket, errnum, info ));
+   EOUT(("tr %p Connection error socket %d errnum %d info %s", this, fSocket, errnum, info ));
 
    ErrorCloseTransport();
 }
@@ -90,6 +90,14 @@ void dabc::SocketTransport::ErrorCloseTransport()
 
    dabc::NetworkTransport::ErrorCloseTransport();
 }
+
+void dabc::SocketTransport::DoTransportHalt()
+{
+   RemoveProcessorFromThread(true);
+   fSendStatus = 0;
+   fRecvStatus = 0;
+}
+
 
 bool dabc::SocketTransport::ProcessPoolRequest()
 {
@@ -166,6 +174,11 @@ do_compl:
 
       fRecvStatus = 2;
 
+      if ((fRecs==0) || (fRecvRecid>fNumRecs)) {
+         EOUT(("Completely wrong recs = %p num = %u id = %u", fRecs, fNumRecs, fRecvRecid));
+         exit(75);
+      }
+
       NetworkHeader* nethdr = (NetworkHeader*) fRecs[fRecvRecid].header;
 
       if (nethdr->typid == dabc::mbt_EOL) {
@@ -182,7 +195,7 @@ do_compl:
          EOUT(("Fatal - no buffer to receive data rec %d  buf %p sz1:%d sz2:%d pool:%s",
                  fRecvRecid, buf, nethdr->size, buf->GetTotalSize(), fPool->GetName()));
          fPool->Print();
-         exit(1);
+         exit(110);
       }
 
       void* hdr = 0;
@@ -191,7 +204,7 @@ do_compl:
 
       if (!StartNetRecv(hdr, fFullHeaderSize - sizeof(NetworkHeader), buf, nethdr->size)) {
          EOUT(("Cannot start recv - fatal error"));
-         exit(1);
+         exit(111);
       }
    } else {
       {
