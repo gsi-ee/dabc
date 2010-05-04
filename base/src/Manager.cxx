@@ -1728,14 +1728,8 @@ bool dabc::Manager::ChangeState(const char* state_transition_cmd, double tmout)
    if (fSMmodule==0)
       res = DoStateTransition(state_transition_cmd);
    else {
-      dabc::CommandsSet cli(CurrentThread());
-
       dabc::Command* cmd = new dabc::CmdStateTransition(state_transition_cmd);
-
-      cli.Add(cmd, 0, false);
-
-      if (InvokeStateTransition(state_transition_cmd, cmd))
-         res = cli.ExecuteSet(tmout);
+      res = (Execute(cmd) == cmd_true);
    }
 
    if (!res) {

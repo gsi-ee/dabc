@@ -73,6 +73,8 @@ int dabc::Application::ConnectAppModules(Command* cmd)
       return cmd_false;
    }
 
+   DOUT0(("Call ConnectAppModules"));
+
    int res = IsAppModulesConnected();
 
    if (res == cmd_postponed) {
@@ -124,17 +126,24 @@ double dabc::Application::ProcessTimeout(double last_diff)
 
    fConnTmout -= last_diff;
 
+   DOUT0(("Process timeout"));
+
    int res = IsAppModulesConnected();
 
-   if ((res==cmd_postponed) && (fConnTmout<0)) res = cmd_false;
-
-   if ((res==cmd_false) || (res==cmd_true)) {
-      dabc::Command::Reply(fConnCmd, (res==cmd_true));
-      fConnCmd = 0;
-      return -1;
+   if ((res==cmd_postponed) && (fConnTmout<0)) {
+      EOUT(("Connection timedout"));
+      res = cmd_false;
    }
 
-   return 0.2;
+   if ((res==cmd_false) || (res==cmd_true)) {
+      DOUT0(("Modules connected res = %d", res));
+
+      dabc::Command::Reply(fConnCmd, (res==cmd_true));
+      fConnCmd = 0;
+      return -1.;
+   }
+
+   return 0.5;
 }
 
 

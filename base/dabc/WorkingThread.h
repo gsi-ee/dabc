@@ -54,6 +54,16 @@ namespace dabc {
 
       friend class WorkingProcessor;
 
+      class IntGuard {
+         private:
+            int*  fInt;
+
+         public:
+            IntGuard(int* value) { fInt = value; if (fInt) (*fInt)++; }
+            IntGuard(int& value) { fInt = &value; (*fInt)++; }
+            ~IntGuard() { if (fInt) (*fInt)--; }
+      };
+
       class ExecProcessor;
 
       friend class ExecProcessor;
@@ -191,6 +201,7 @@ namespace dabc {
 
          TimeSource           fTime;        // source of time stamps
          TimeStamp_t          fNextTimeout; // indicate when we expects next timeout
+         int                  fProcessingTimeouts; // indicate recursion in timeouts processing
 
          ProcessorsVector     fProcessors;   // vector of all processors
 

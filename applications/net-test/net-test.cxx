@@ -381,7 +381,7 @@ class NetTestApplication : public dabc::Application {
 
             if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Sender"))) return dabc::cmd_postponed;
 
-	         DOUT0(("Check for modules connected done"));
+//	         DOUT0(("Check for modules connected done"));
 
             return dabc::cmd_true;
          }

@@ -53,6 +53,7 @@ dabc::WorkingThread::WorkingThread(Basic* parent, const char* name, unsigned num
    fNumQueues(numqueus),
    fTime(),
    fNextTimeout(NullTimeStamp),
+   fProcessingTimeouts(0),
    fProcessors(),
    fExplicitLoop(0),
    fExitExplicitLoop(false),
@@ -623,6 +624,10 @@ void dabc::WorkingThread::DestroyProcessor(WorkingProcessor* proc)
 
 double dabc::WorkingThread::CheckTimeouts(bool forcerecheck)
 {
+   if (fProcessingTimeouts>0) return -1.;
+
+   IntGuard guard(fProcessingTimeouts);
+
    TimeStamp_t now;
 
    if (!forcerecheck) {
@@ -670,6 +675,3 @@ double dabc::WorkingThread::CheckTimeouts(bool forcerecheck)
 
    return min_tmout;
 }
-
-
-

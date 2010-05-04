@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="lxi017"/>
-  <Context host="lxi019"/>
-  <Context host="lxi020"/>
-  <Context host="lxi021"/>
+  <Context host="lxi009"/>
+  <Context host="lxi010"/>
+  <Context host="lxi011"/>
+  <Context host="lxi012"/>
   <Defaults>
      <Context name="*">
        <Run>
@@ -16,7 +16,7 @@
          <NetDevice value="dabc::SocketDevice"/>
          <McastAddr value="224.0.0.15"/>
          <McastPort value="1234"/>
-         <BufferSize value="2048"/>
+         <BufferSize value="8192"/>
          <OutputQueueSize value="4"/>
          <InputQueueSize value="8"/>
          <UseAcknowledge value="false"/>

@@ -137,20 +137,15 @@ void dabc::WorkingProcessor::ProcessCoreEvent(EventId evnt)
 
          DOUT5(("Process evntSubmitCommand proc %p %u thrd %p arg %u", this, fProcessorId, fProcessorThread, GetEventArg(evnt)));
 
-         unsigned size = 0;
-
          dabc::Command* cmd = 0;
          {
             LockGuard lock(fProcessorMainMutex);
-            size = fProcessorSubmCommands.Size();
             cmd = fProcessorSubmCommands.PopWithId(GetEventArg(evnt));
-            if (cmd==0)
-              EOUT(("evntSubmitCommand: No command with specified id %u", GetEventArg(evnt)));
          }
+
 
          ProcessCommand(cmd);
 
-         // process commands in order how they were submitted
          while ((fProcessorCommandsLevel==0) && (fProcessorCommands.Size()>0))
             ProcessCommand(fProcessorCommands.Pop());
 
@@ -184,14 +179,16 @@ void dabc::WorkingProcessor::ProcessCommand(dabc::Command* cmd)
 {
    if (cmd==0) return;
 
-   // when other command is in processing sate,
-   // and this cmd not need to be synchron, one can process them later
+   // when other command is in processing state,
+   // and this cmd not need to be synchronous,
+   // one can process such command later
+   // synchronous command must be processed immediately
    if ((fProcessorCommandsLevel>0) && !cmd->IsLastCallerSync()) {
       fProcessorCommands.Push(cmd);
       return;
    }
 
-   fProcessorCommandsLevel++;
+   WorkingThread::IntGuard guard(fProcessorCommandsLevel);
 
    int cmd_res = PreviewCommand(cmd);
 
@@ -207,13 +204,7 @@ void dabc::WorkingProcessor::ProcessCommand(dabc::Command* cmd)
 
    if (completed)
       dabc::Command::Reply(cmd, cmd_res);
-
-   fProcessorCommandsLevel--;
-
-
 }
-
-
 
 void dabc::WorkingProcessor::ProcessEvent(EventId evnt)
 {
