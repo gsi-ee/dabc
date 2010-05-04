@@ -326,8 +326,6 @@ bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, co
 
    int cnt = gcnt++;
 
-   DOUT0(("Device %s StartServerThread  curr = %p cnt = %d cmds =  %u", GetName(), fServer, cnt, fProcessorCommands.Size()));
-
    if (fServer==0) {
       fServer = dabc::SocketThread::CreateServerProcessor(
             cmd->GetInt("SocketPort", -1),
@@ -346,8 +344,6 @@ bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, co
 
    servid = fServer->ServerId();
 
-   DOUT0(("Device %s StartServerThread  curr = %p cnt = %d done", GetName(), fServer, cnt));
-
    return true;
 }
 
@@ -358,7 +354,7 @@ bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* por
    if (port==0) return false;
 
    std::string servid;
-   DOUT0(("Start server before port %s connect", portname));
+//   DOUT0(("Start server before port %s connect", portname));
 
    if (!StartServerThread(cmd, servid)) {
       EOUT(("Not started server thread %s", cmd->GetName()));

@@ -126,8 +126,6 @@ double dabc::Application::ProcessTimeout(double last_diff)
 
    fConnTmout -= last_diff;
 
-   DOUT0(("Process timeout"));
-
    int res = IsAppModulesConnected();
 
    if ((res==cmd_postponed) && (fConnTmout<0)) {
@@ -138,7 +136,7 @@ double dabc::Application::ProcessTimeout(double last_diff)
    if ((res==cmd_false) || (res==cmd_true)) {
       DOUT0(("Modules connected res = %d", res));
 
-      dabc::Command::Reply(fConnCmd, (res==cmd_true));
+      dabc::Command::Reply(fConnCmd, res);
       fConnCmd = 0;
       return -1.;
    }

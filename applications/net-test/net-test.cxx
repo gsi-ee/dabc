@@ -375,7 +375,7 @@ class NetTestApplication : public dabc::Application {
       {
          if (Kind() == kindAllToAll) {
 
-	         DOUT0(("Check for modules connected"));
+//	         DOUT0(("Check for modules connected"));
 
             if (!dabc::mgr()->Execute(new dabc::CmdCheckConnModule("Receiver"))) return dabc::cmd_postponed;
 
