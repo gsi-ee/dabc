@@ -71,7 +71,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
       ~NetTestSenderModule()
       {
-         DOUT0(("Calling ~NetTestSenderModule()"));
+         DOUT0(("~NetTestSenderModule() %s", GetName()));
       }
 
       int ExecuteCommand(dabc::Command* cmd)

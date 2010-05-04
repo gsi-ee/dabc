@@ -161,16 +161,13 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
    fCmdChannel->Start();
    DOUT3(("Started CommandChannelModule module"));
 
-   dabc::CommandsSet cli;
-
    if (IsMainManager()) {
 
       Command* scmd = new Command("StartServer");
       scmd->SetStr("CmdChannel", "StdMgrCmd");
       scmd->SetKeepAlive();
-      cli.Add(SetCmdReceiver(scmd, fCmdDevName.c_str()), this);
 
-      int res = cli.ExecuteSet(10);
+      int res = dev->Execute(scmd, 10);
 
       DOUT0(("StartServer Res = %d", res));
 
@@ -204,17 +201,15 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       Command* cmdr = new Command("RegisterSlave");
       cmdr->SetStr("SlaveName", GetName());
       cmdr->SetInt("SlaveNodeId", fNodeId);
+      cmdr->SetKeepAlive();
 
       Device::MakeRemoteCommand(cmdr, controllerID, "StdMgrCmd");
+      SetCmdReceiver(cmdr, fCmdDevName.c_str());
 
-      cli.Add(SetCmdReceiver(cmdr, fCmdDevName.c_str()), this);
-
-      if (cli.ExecuteSet(7)!=dabc::cmd_true) {
+      if (Execute(cmdr, 7)!=dabc::cmd_true) {
          EOUT(("RegisterSlave command fail. Halt"));
          exit(1);
       }
-
-      cmdr = cli.GetCommand(0);
 
       DOUT2(("RegisterSlave execution OK serv = %s connid = %s",
         cmdr->GetStr("ServerId","null"), cmdr->GetPar("ConnId")));
@@ -230,14 +225,13 @@ void dabc::StandaloneManager::ConnectCmdChannel(int numnodes, int deviceid, cons
       cmd->SetPar("ServerId", cmdr->GetPar("ServerId"));
       cmd->SetBool("ServerUseAckn", true);
 
-      cli.Cleanup();
+      dabc::Command::Finalise(cmdr);
 
-      cli.Add(SetCmdReceiver(cmd, fCmdDevName.c_str()), this);
-
-      if (cli.ExecuteSet(5)!=dabc::cmd_true) {
+      if (dev->Execute(cmd, 5)!=dabc::cmd_true) {
          EOUT(("Not able to connect commands channel"));
          exit(1);
       }
+
    }
 
 /*

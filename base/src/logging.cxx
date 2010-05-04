@@ -303,6 +303,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
       if (str.length()>0) {
          fprintf(fFile, str.c_str());
          fprintf(fFile, "\n");
+         fflush(fFile);
          fLogFileModified = true;
       }
       _DoCheckTimeout();

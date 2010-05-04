@@ -58,8 +58,7 @@ dabc::Module::Module(const char* name, Command* cmd) :
 
 dabc::Module::~Module()
 {
-   DOUT3(( "dabc::Module::~Module() %s thrd = %s mgr = %p",
-             GetName(), DNAME(ProcessorThread()), dabc::mgr()));
+   DOUT3(( "dabc::Module::~Module() %s starts", GetName()));
 
    fRunState = msHalted;
 
@@ -71,13 +70,15 @@ dabc::Module::~Module()
    // all ModuleItem objects will try to access Module method ItemDestroyed
    // If it happens in Basic destructor, object as it is no longer exists
 
-   DOUT5(("Module:%s deletes all childs", GetName()));
+   DOUT3(("Module:%s deletes all parameters", GetName()));
 
    DestroyAllPars();
 
+   DOUT3(("Module:%s deletes all childs", GetName()));
+
    DeleteChilds();
 
-   DOUT5((" dabc::Module::~Module() %s done", GetName()));
+   DOUT3((" dabc::Module::~Module() %s done", GetName()));
 }
 
 dabc::WorkingProcessor* dabc::Module::GetCfgMaster()
@@ -232,7 +233,7 @@ bool dabc::Module::DoStart()
 
 bool dabc::Module::DoStop()
 {
-   if (!IsRunning()) return false;
+   if (!IsRunning()) return true;
 
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
@@ -248,7 +249,7 @@ bool dabc::Module::DoStop()
 
 bool dabc::Module::DoHalt()
 {
-   fRunState = msHalted;
+   BeforeModuleHalt();
 
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
@@ -257,6 +258,10 @@ bool dabc::Module::DoHalt()
          item->DoHalt();
       }
    }
+
+   fRunState = msHalted;
+
+   DOUT0(("Module %s halted numports %d", GetName(), NumIOPorts()));
 
    return true;
 }

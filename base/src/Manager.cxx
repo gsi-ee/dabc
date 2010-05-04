@@ -313,7 +313,7 @@ dabc::Manager::~Manager()
    // normally, as last operation in the main() program must be HaltManeger(true)
    // call, which suspend and erase all items in manager
 
-   dabc::SetDebugLevel(3);
+//   dabc::SetDebugLevel(3);
 
 
    DOUT3(("Start ~Manager"));
@@ -338,11 +338,11 @@ dabc::Manager::~Manager()
    DOUT3(("~Manager -> DeleteChilds() %p", ProcessorThread()));
 
 
-   dabc::SetDebugLevel(5);
+//   dabc::SetDebugLevel(5);
 
    DeleteChilds();
 
-   dabc::SetDebugLevel(3);
+//   dabc::SetDebugLevel(3);
 
    {
       LockGuard lock(fMgrMutex);

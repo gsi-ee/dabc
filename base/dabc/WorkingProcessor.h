@@ -258,10 +258,13 @@ namespace dabc {
          uint32_t         fProcessorId;
          int              fProcessorPriority;
 
-         Mutex*           fProcessorMainMutex;            // pointer on main thread mutex
+         Mutex*           fProcessorMainMutex;         // pointer on main thread mutex
 
-         CommandsQueue    fProcessorSubmCommands;          // list of submitted commands, protected via main thread mutex
-         CommandsQueue    fProcessorReplyCommands;         // list of reply commands, protected via main thread mutex
+         CommandsQueue    fProcessorSubmCommands;      // list of submitted commands, protected via main thread mutex
+         CommandsQueue    fProcessorReplyCommands;     // list of reply commands, protected via main thread mutex
+
+         CommandsQueue    fProcessorCommands;          // list of commands, which must be processed later
+         int              fProcessorCommandsLevel;     /** Number of process commands recursion */
 
          Folder*          fParsHolder;
 
@@ -278,6 +281,8 @@ namespace dabc {
          bool TakeActivateData(TimeStamp_t& mark, double& interval);
          void ProcessCoreEvent(EventId);
 
+
+         void ProcessCommand(dabc::Command* cmd);
          bool GetReply(dabc::Command* cmd);
 
 

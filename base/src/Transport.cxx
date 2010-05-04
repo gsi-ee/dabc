@@ -46,7 +46,7 @@ void dabc::Transport::AssignPort(Port* port)
 {
    // method must be called from the port (module) thread
 
-   DOUT5((" Transport::AssignPort 1 new = %p old = %p locked = %s", port, fPort, DBOOL(fPortMutex.IsLocked())));
+   DOUT3((" Transport::AssignPort 1 new = %p old = %p locked = %s", port, fPort, DBOOL(fPortMutex.IsLocked())));
 
    bool changed = false;
    {
@@ -59,7 +59,7 @@ void dabc::Transport::AssignPort(Port* port)
       if (changed) fTransportStatus = fPort ? stAssigned : stNeedCleanup;
    }
 
-   DOUT5((" Transport::AssignPort 2 new = %p changed = %s", fPort, DBOOL(changed)));
+   DOUT3((" Transport::AssignPort 2 new = %p changed = %s", fPort, DBOOL(changed)));
 
    if (changed) PortChanged();
 

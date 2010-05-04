@@ -34,6 +34,8 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorMainMutex(0),
    fProcessorSubmCommands(CommandsQueue::kindSubmit),
    fProcessorReplyCommands(CommandsQueue::kindReply),
+   fProcessorCommands(CommandsQueue::kindSubmit),
+   fProcessorCommandsLevel(0),
 
    fParsHolder(parsholder),
    fParsDefaults(0),
@@ -142,41 +144,15 @@ void dabc::WorkingProcessor::ProcessCoreEvent(EventId evnt)
             LockGuard lock(fProcessorMainMutex);
             size = fProcessorSubmCommands.Size();
             cmd = fProcessorSubmCommands.PopWithId(GetEventArg(evnt));
+            if (cmd==0)
+              EOUT(("evntSubmitCommand: No command with specified id %u", GetEventArg(evnt)));
          }
 
-         if (cmd==0) {
-            EOUT(("evntSubmitCommand: No command with specified id %u size %u was %u", GetEventArg(evnt), fProcessorSubmCommands.Size(), size));
-            exit(1);
-         } else {
-//            DOUT0(("ProcessSubmit Cmd %p start", cmd));
+         ProcessCommand(cmd);
 
-//            DOUT5(("ProcessSubmit command %p id %u processor:%p", cmd, cmd->fCmdId, this));
-
-            int cmd_res = PreviewCommand(cmd);
-
-//            DOUT0(("ProcessSubmit Cmd %p preview = %d", cmd, cmd_res));
-
-            if (cmd_res == cmd_ignore) {
-               cmd_res = ExecuteCommand(cmd);
-//               DOUT0(("ProcessSubmit Cmd %p exe = %d", cmd, cmd_res));
-            }
-
-            if (cmd_res == cmd_ignore) {
-               EOUT(("Command ignored %s", cmd->GetName()));
-               cmd_res = cmd_false;
-            }
-
-            bool completed = (cmd_res>=0);
-
-//            DOUT5(("Execute command %p : %s res = %d", cmd, (completed ? cmd->GetName() : "-- not allowed --"), cmd_res));
-
-//            DOUT0(("ProcessSubmit Cmd %p completed %s", cmd, DBOOL(completed)));
-
-            if (completed)
-               dabc::Command::Reply(cmd, cmd_res);
-
-//            DOUT0(("ProcessSubmit Cmd %p end", cmd));
-         }
+         // process commands in order how they were submitted
+         while ((fProcessorCommandsLevel==0) && (fProcessorCommands.Size()>0))
+            ProcessCommand(fProcessorCommands.Pop());
 
          break;
       }
@@ -203,6 +179,41 @@ void dabc::WorkingProcessor::ProcessCoreEvent(EventId evnt)
          EOUT(("Core event %u arg:%u not processed", GetEventCode(evnt), GetEventArg(evnt)));
    }
 }
+
+void dabc::WorkingProcessor::ProcessCommand(dabc::Command* cmd)
+{
+   if (cmd==0) return;
+
+   // when other command is in processing sate,
+   // and this cmd not need to be synchron, one can process them later
+   if ((fProcessorCommandsLevel>0) && !cmd->IsLastCallerSync()) {
+      fProcessorCommands.Push(cmd);
+      return;
+   }
+
+   fProcessorCommandsLevel++;
+
+   int cmd_res = PreviewCommand(cmd);
+
+   if (cmd_res == cmd_ignore)
+      cmd_res = ExecuteCommand(cmd);
+
+   if (cmd_res == cmd_ignore) {
+      EOUT(("Command ignored %s", cmd->GetName()));
+      cmd_res = cmd_false;
+   }
+
+   bool completed = (cmd_res>=0);
+
+   if (completed)
+      dabc::Command::Reply(cmd, cmd_res);
+
+   fProcessorCommandsLevel--;
+
+
+}
+
+
 
 void dabc::WorkingProcessor::ProcessEvent(EventId evnt)
 {

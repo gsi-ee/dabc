@@ -45,7 +45,6 @@ dabc::NetworkTransport::NetworkTransport(Device* device) :
    fAcknReadyCounter(0),
    fFullHeaderSize(0),
    fUserHeaderSize(0)
-
 {
 }
 
@@ -140,7 +139,7 @@ void dabc::NetworkTransport::Cleanup()
    // release buffers without involving of lock
    // therefore we use intermediate queue, which we release at very end
 
-   DOUT5(("Calling NetworkTransport::Cleanup() %p id = %d", this, GetId()));
+   DOUT3(("Calling NetworkTransport::Cleanup() %p id = %d", this, GetId()));
 
    dabc::BuffersQueue relqueue(fNumRecs);
 
@@ -162,11 +161,11 @@ void dabc::NetworkTransport::Cleanup()
       delete[] fRecs; fRecs = 0; fNumRecs = 0;
    }
 
-   DOUT5(("Calling NetworkTransport::Cleanup() %p  relqueue %u", this, relqueue.Size()));
+   DOUT3(("Calling NetworkTransport::Cleanup() %p  relqueue %u", this, relqueue.Size()));
 
    relqueue.Cleanup();
 
-   DOUT5(("Calling NetworkTransport::Cleanup() done %p", this));
+   DOUT3(("Calling NetworkTransport::Cleanup() done %p", this));
 }
 
 uint32_t dabc::NetworkTransport::_TakeRec(Buffer* buf, uint32_t kind, uint64_t extras)
@@ -406,7 +405,10 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
    // should try to speed up its threads and probably, for some time switch
    // in polling mode
 
-   if (recid>=fNumRecs) { EOUT(("Recid fail %u %u", recid, fNumRecs)); exit(1); }
+   if (recid>=fNumRecs) {
+      EOUT(("Recid fail tr %p %u %u", this, recid, fNumRecs));
+      exit(1);
+   }
 
    Buffer* buf = 0;
    uint32_t kind = 0;

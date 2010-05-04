@@ -119,6 +119,8 @@ unsigned dabc::Port::NumInputBuffersRequired() const
 
 bool dabc::Port::AssignTransport(Transport* tr, bool sync)
 {
+   if (fHalted) return false;
+
    Command* cmd = new Command("AssignTransport");
    cmd->SetPtr("#Transport", tr);
    if (sync) return Execute(cmd)==cmd_true;
@@ -175,9 +177,12 @@ void dabc::Port::DoStop()
 
 void dabc::Port::DoHalt()
 {
+   DOUT0(("Halt port %s Transport %p", GetName(), fTransport));
+
+   while (SkipInputBuffers(1));
+
    Disconnect();
 }
-
 
 bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
 {

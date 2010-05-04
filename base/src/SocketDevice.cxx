@@ -322,6 +322,8 @@ dabc::SocketDevice::~SocketDevice()
 
 bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, const char* cmdchannel)
 {
+   DOUT0(("Device %s StartServerThread  curr = %p", GetName(), fServer));
+
    if (fServer==0) {
       SocketServerProcessor* new_serv =
          dabc::SocketThread::CreateServerProcessor(
@@ -346,7 +348,7 @@ bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, co
       }
 
       if (new_serv!=0) {
-         EOUT(("Cannot use server - other is running"));
+         EOUT(("Dev %s cannot use new server - other is running", GetName()));
          delete new_serv;
       }
    }
@@ -365,6 +367,8 @@ bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* por
    if (port==0) return false;
 
    std::string servid;
+   DOUT0(("Start server before port connect %s", portname));
+
    if (!StartServerThread(cmd, servid)) {
       EOUT(("Not started server thread %s", cmd->GetName()));
       return false;

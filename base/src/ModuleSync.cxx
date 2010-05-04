@@ -44,8 +44,6 @@ dabc::ModuleSync::~ModuleSync()
 
 bool dabc::ModuleSync::DoHalt()
 {
-   fRunState = msHalted;
-
    ExitMainLoop();
 
    return dabc::Module::DoHalt();

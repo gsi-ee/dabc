@@ -72,6 +72,13 @@ void dabc::Command::AddCaller(WorkingProcessor* proc, bool* exe_ready)
   rec->exe_ready = exe_ready;
 }
 
+bool dabc::Command::IsLastCallerSync()
+{
+   if ((fCallers==0) || (fCallers->Size()==0)) return false;
+
+   return fCallers->Back().exe_ready != 0;
+}
+
 
 void dabc::Command::SetPar(const char* name, const char* value)
 {

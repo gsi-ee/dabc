@@ -53,8 +53,6 @@ namespace dabc {
 
          virtual ~Command();
 
-         void AddCaller(WorkingProcessor* proc, bool* exe_ready = 0);
-
       public:
 
          Command(const char* name = "Command");
@@ -105,6 +103,12 @@ namespace dabc {
 
          /** Method to cleanup command. If required, object will be destroyed */
          static void Finalise(Command* cmd);
+
+      private:
+
+         void AddCaller(WorkingProcessor* proc, bool* exe_ready = 0);
+
+         bool IsLastCallerSync();
    };
 
 }

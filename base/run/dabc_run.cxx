@@ -252,6 +252,10 @@ int main(int numc, char* args[])
          res = RunSctrlApplication(cfg, connid, nodeid, numnodes);
    }
 
+//   dabc::SetDebugLevel(3);
+
+   DOUT3(("Start manager halt"));
+
    dabc::mgr()->HaltManager();
 
    delete dabc::mgr();

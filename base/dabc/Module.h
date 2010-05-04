@@ -139,6 +139,10 @@ namespace dabc {
          virtual void BeforeModuleStart() {}
          virtual void AfterModuleStop() {}
 
+         /** This method called during shutdown process of the module.
+          * Here one can close opened files, release all reserved buffers and so on. */
+         virtual void BeforeModuleHalt() {}
+
          // user must redefine method when it want to execute commands.
          // If method return true or false (cmd_true or cmd_false),
          // command considered as executed and will be replied

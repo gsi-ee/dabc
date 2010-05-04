@@ -11,6 +11,7 @@
          <debuglevel value="0"/>
          <loglevel value="1"/>
          <logfile value="${Context}.log"/>
+         <loglimit value="10000000000"/>
          <runfunc value="RunAllToAll"/>
          <sockethost value="${host}"/>
          <copycfg value="false"/>
