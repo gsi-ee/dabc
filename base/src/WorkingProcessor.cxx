@@ -188,6 +188,8 @@ void dabc::WorkingProcessor::ProcessCommand(dabc::Command* cmd)
       return;
    }
 
+   DOUT3(("ProcessCommand cmd %p %s lvl %d isync %s", cmd, cmd->GetName(), fProcessorCommandsLevel, DBOOL(cmd->IsLastCallerSync())));
+
    WorkingThread::IntGuard guard(fProcessorCommandsLevel);
 
    int cmd_res = PreviewCommand(cmd);
@@ -204,6 +206,8 @@ void dabc::WorkingProcessor::ProcessCommand(dabc::Command* cmd)
 
    if (completed)
       dabc::Command::Reply(cmd, cmd_res);
+
+   DOUT3(("ProcessCommand cmd %p lvl %d done", cmd, fProcessorCommandsLevel));
 }
 
 void dabc::WorkingProcessor::ProcessEvent(EventId evnt)

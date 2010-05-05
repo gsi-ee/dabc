@@ -1,10 +1,6 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="lxi009">
-    <Run>
-       <debugger value="gdb -q -x gdb.cmd --args"/>
-    </Run>
-  </Context>
+  <Context host="lxi013"/>
   <Context host="lxi010"/>
   <Context host="lxi011"/>
   <Context host="lxi012"/>

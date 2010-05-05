@@ -134,8 +134,6 @@ void dabc::NetworkTransport::PortChanged()
 
 void dabc::NetworkTransport::ErrorCloseTransport()
 {
-
-
    dabc::Transport::ErrorCloseTransport();
 }
 
@@ -276,10 +274,10 @@ unsigned dabc::NetworkTransport::SendQueueSize()
 
 void dabc::NetworkTransport::FillRecvQueue(Buffer* freebuf)
 {
-   // method used to keep recieve queue filled
+   // method used to keep receive queue filled
    // Sometime one need to reinject buffer, which was received as "fast",
    // therefore its processing finished in transport thread and we can
-   // use it again in recieve queue.
+   // use it again in receive queue.
 
    unsigned newitems = 0;
 
@@ -315,7 +313,7 @@ void dabc::NetworkTransport::FillRecvQueue(Buffer* freebuf)
    }
 
    if (freebuf!=0) {
-      EOUT(("Not used explicitely requested buffer %d %d", fInputQueueSize, fInputQueueLength));
+      EOUT(("Not used explicitly requested buffer %d %d", fInputQueueSize, fInputQueueLength));
    }
 
    // we must release buffer if we cannot use it

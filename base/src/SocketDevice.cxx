@@ -315,9 +315,15 @@ dabc::SocketDevice::~SocketDevice()
       pr->DestroyProcessor();
    }
 
-   LockGuard guard(DeviceMutex());
-   delete fServer;
-   fServer = 0;
+   SocketServerProcessor* serv = 0;
+   {
+      LockGuard guard(DeviceMutex());
+      serv = fServer;
+      fServer = 0;
+   }
+
+   delete serv;
+
 }
 
 bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, const char* cmdchannel)
@@ -560,21 +566,25 @@ int dabc::SocketDevice::ExecuteCommand(dabc::Command* cmd)
          fProtocols.push_back(proto);
       } else
       if (strcmp(typ, "Client")==0) {
-         LockGuard guard(DeviceMutex());
-         NewConnectRec* rec = _FindRec(connid);
-         if (rec==0) {
-            EOUT(("Client connected for not exiting rec %s", connid));
-            close(fd);
-            cmd_res = cmd_false;
-         } else {
+         SocketProtocolProcessor* proto = 0;
 
-            DOUT3(("Create client protocol for socket %d connid:%s", fd, connid));
+         {
+            LockGuard guard(DeviceMutex());
+            NewConnectRec* rec = _FindRec(connid);
+            if (rec==0) {
+               EOUT(("Client connected for not exiting rec %s", connid));
+               close(fd);
+               cmd_res = cmd_false;
+            } else {
 
-            SocketProtocolProcessor* proto = new SocketProtocolProcessor(fd, this, rec);
-            rec->fClient = 0; // if we get command, client is detroyed
-            rec->fProtocol = proto;
-            proto->AssignProcessorToThread(ProcessorThread());
+               DOUT3(("Create client protocol for socket %d connid:%s", fd, connid));
+
+               proto = new SocketProtocolProcessor(fd, this, rec);
+               rec->fClient = 0; // if we get command, client is destroyed
+               rec->fProtocol = proto;
+            }
          }
+         if (proto) proto->AssignProcessorToThread(ProcessorThread());
       } else
       if (strcmp(typ, "Error")==0) {
          NewConnectRec* rec = 0;
@@ -649,15 +659,22 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const 
 {
    NewConnectRec* rec = proc->fRec;
 
+   bool destr = false;
+
    {
       LockGuard guard(DeviceMutex());
       if ((rec==0) || !fConnRecs.has_ptr(rec)){
          EOUT(("Protocol completed without rec"));
          fProtocols.remove(proc);
-         proc->DestroyProcessor();
-         return;
+         destr = true;
       }
    }
+
+   if (destr) {
+      proc->DestroyProcessor();
+      return;
+   }
+
 
    bool res = true;
    if (inmsg) res = (strcmp(inmsg, "accepted")==0);

@@ -726,6 +726,8 @@ void dabc::Manager::DoHaltManager()
 
    DOUT3(("Do device cleanup"));
 
+//   dabc::SetDebugLevel(5);
+
    DoCleanupDevices(true);
 
    // special case - verbs objects may in destroy queue and must be deleted before devices
