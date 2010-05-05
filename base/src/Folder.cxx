@@ -100,7 +100,6 @@ void dabc::Folder::DeleteChilds(int appid, const char* classname)
             if ((classname!=0) && strcmp(classname, child->ClassName())!=0) {
                cnt++;
                child = 0;
-
             }
          } while (child == 0);
       }

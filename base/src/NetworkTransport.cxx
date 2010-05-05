@@ -413,7 +413,8 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
 
    if (recid>=fNumRecs) {
       EOUT(("Recid fail tr %p %u %u", this, recid, fNumRecs));
-      exit(107);
+      return;
+//      exit(107);
    }
 
    Buffer* buf = 0;

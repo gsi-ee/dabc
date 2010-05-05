@@ -23,7 +23,8 @@ dabc::Device::Device(Basic* parent, const char* name) :
    WorkingProcessor(),
    fDeviceMutex(true),
    fTransports(),
-   fDelTrans()
+   fCleanupCmds(CommandsQueue::kindSubmit),
+   fCleanupForce(false)
 {
 }
 
@@ -32,7 +33,7 @@ dabc::Device::~Device()
    // by this call we synchronise us with anything else
    // that can happen on the device
 
-   DOUT5((" ~Device %s prior:%d", GetName(), ProcessorPriority()));
+   DOUT3((" ~Device %s prior:%d", GetName(), ProcessorPriority()));
 
    CleanupDevice(true);
 }
@@ -63,6 +64,8 @@ bool dabc::Device::DoDeviceCleanup(bool full)
 
    DOUT3(("DoDeviceCleanup %s mutex locked %s", GetName(), DBOOL(fDeviceMutex.IsLocked())));
 
+   PointersVector fDelTrans;
+
    {
       LockGuard lock(fDeviceMutex);
 
@@ -85,7 +88,6 @@ bool dabc::Device::DoDeviceCleanup(bool full)
 
    DOUT3(("DoDeviceCleanup %s middle locked %s", GetName(), DBOOL(fDeviceMutex.IsLocked())));
 
-
    while (fDelTrans.size()>0) {
       Transport* tr = (Transport*) fDelTrans[0];
       fDelTrans.remove_at(0);
@@ -103,7 +105,7 @@ bool dabc::Device::DoDeviceCleanup(bool full)
 
    }
 
-   DOUT3(("DoDeviceCleanup %s done locked %s", GetName(), DBOOL(fDeviceMutex.IsLocked())));
+   // DOUT3(("DoDeviceCleanup %s done locked %s", GetName(), DBOOL(fDeviceMutex.IsLocked())));
 
    return true;
 }
@@ -142,9 +144,32 @@ int dabc::Device::ExecuteCommand(dabc::Command* cmd)
 {
    int cmd_res = cmd_true;
 
-   if (cmd->IsName("CleanupDevice"))
-      cmd_res = DoDeviceCleanup(cmd->GetBool("Force", false));
-   else
+   if (cmd->IsName("CleanupDevice")) {
+      fCleanupCmds.Push(cmd);
+
+      if (cmd->GetBool("Force", false)) fCleanupForce = true;
+
+      // this is workaround for async and sync call of cleanup device
+      // commands will be queued and completed only when we really finish device cleanup
+      if (fCleanupCmds.Size()==1) {
+
+         bool cleanup_res = true;
+
+         unsigned cmd_cnt(1);
+
+         do {
+            bool force = fCleanupForce;
+            cmd_cnt = fCleanupCmds.Size();
+            fCleanupForce = false;
+            cleanup_res = DoDeviceCleanup(force);
+         } while (fCleanupForce || (cmd_cnt != fCleanupCmds.Size()));
+
+         while (fCleanupCmds.Size()>0)
+            dabc::Command::Reply(fCleanupCmds.Pop(), cleanup_res);
+      }
+
+      cmd_res = cmd_postponed;
+   } else
    if (cmd->IsName(CmdCreateTransport::CmdName()) ||
        cmd->IsName(CmdDirectConnect::CmdName())) {
       Port* port = dabc::mgr()->FindPort(cmd->GetPar("PortName"));

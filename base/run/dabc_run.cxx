@@ -137,7 +137,7 @@ int RunDimApplication(dabc::Configuration& cfg, int nodeid, bool dorun)
 
 int main(int numc, char* args[])
 {
-   dabc::SetDebugLevel(1);
+//   dabc::SetDebugLevel(1);
 
    const char* configuration = "SetupRoc.xml";
 
@@ -252,7 +252,7 @@ int main(int numc, char* args[])
          res = RunSctrlApplication(cfg, connid, nodeid, numnodes);
    }
 
-//   dabc::SetDebugLevel(3);
+//   dabc::SetDebugLevel(1);
 
    DOUT3(("!!!!!!!!!!!!!!! Start manager halt !!!!!!!!"));
 

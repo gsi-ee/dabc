@@ -35,7 +35,7 @@ dabc::Transport::Transport(Device* dev) :
 
 dabc::Transport::~Transport()
 {
-//   if (GetDevice()) GetDevice()->TransportDestroyed(this);
+   if (GetDevice()) GetDevice()->TransportDestroyed(this);
 
    gNumTransports--;
 
@@ -94,7 +94,7 @@ void dabc::Transport::ErrorCloseTransport()
    fErrorState = true;
 
    if (!old) {
-      DOUT0(("Detach port due to error condition"));
+      DOUT3(("Detach port due to error condition"));
       DettachPort();
    }
 }

@@ -376,7 +376,7 @@ dabc::MemoryPool::MemoryPool(Basic* parent, const char* name) :
 
 dabc::MemoryPool::~MemoryPool()
 {
-   DOUT0(("POOOOOOOOOL Deleting: %s %p", GetName(), this));
+   DOUT3(("POOOOOOOOOL Deleting: %s %p", GetName(), this));
 
    unsigned n1(0), n2(0);
    for (BlockNum_t nblock = 0; nblock<fNumMem; nblock++) {
@@ -390,7 +390,7 @@ dabc::MemoryPool::~MemoryPool()
 
    ReleaseMemory();
 
-   DOUT0(("POOOOOOOOOL Deleting done: %s %p", GetName(), this));
+   DOUT3(("POOOOOOOOOL Deleting done: %s %p", GetName(), this));
 }
 
 

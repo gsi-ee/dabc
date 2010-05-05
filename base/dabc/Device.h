@@ -54,7 +54,8 @@ namespace dabc {
 
          Mutex           fDeviceMutex;
          PointersVector  fTransports; // transports, created by the device (owner)
-         PointersVector  fDelTrans;   /** FIXME list of transports for deletion, due to multiple call of CleanupDevice */
+         CommandsQueue   fCleanupCmds; /** FIXME avoid async/sync cleanup commands mixture */
+         bool            fCleanupForce;
 
       public:
          virtual ~Device();

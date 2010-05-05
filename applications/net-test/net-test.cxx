@@ -71,7 +71,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
       ~NetTestSenderModule()
       {
-         DOUT0(("~NetTestSenderModule() %s", GetName()));
+         DOUT3(("~NetTestSenderModule() %s", GetName()));
       }
 
       int ExecuteCommand(dabc::Command* cmd)
@@ -159,7 +159,7 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
 
       virtual ~NetTestReceiverModule()
       {
-          DOUT0(("Calling ~NetTestReceiverModule"));
+          DOUT3(("Calling ~NetTestReceiverModule"));
       }
 
       int ExecuteCommand(dabc::Command* cmd)
@@ -391,7 +391,7 @@ class NetTestApplication : public dabc::Application {
 
       virtual bool BeforeAppModulesStarted()
       {
-         DOUT0(("BeforeAppModulesStarted()"));
+         DOUT1(("BeforeAppModulesStarted()"));
          return true;
       }
 

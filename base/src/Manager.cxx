@@ -719,7 +719,7 @@ void dabc::Manager::DoHaltManager()
    DOUT3(("Deleting application"));
    delete GetApp();
 
-   DOUT0(("Deleting all modules"));
+   DOUT3(("Deleting all modules"));
    // than we delete all modules
 
    DoDeleteAllModules();

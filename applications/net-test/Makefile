@@ -18,7 +18,7 @@ ALLDEPENDENC += $(NETTEST_D)
 libs::  $(NETTEST_LIB)
 
 clean::
-	rm -f $(NETTEST_LIB)
+	rm -f $(NETTEST_LIB) $(NETTESTDIR)*.log
 
 $(NETTEST_LIB):  $(NETTEST_O)
 	@$(MakeLib) $(NETTEST_LIBNAME) "$(NETTEST_O)" $(NETTESTDIR)
