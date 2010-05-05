@@ -54,6 +54,9 @@ namespace dabc {
          virtual void StartTransport() {}
          virtual void StopTransport() {}
 
+         virtual void DoTransportHalt() {}
+
+
          MemoryPool* GetPortPool();
 
          static long gNumTransports;
