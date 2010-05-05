@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <dabc version="1">
   <Variables>
-     <node0 value="lxi008"/>
-     <node1 value="lxi009"/>
-     <node2 value="lxi010"/>
-     <node3 value="lxi011"/>
-     <node4 value="lxi012"/>
+     <node0 value="lxi010"/>
+     <node1 value="lxi011"/>
+     <node2 value="lxi012"/>
+     <node3 value="lxi013"/>
+     <node4 value="lxi014"/>
      <custport value="16015"/>
   </Variables>
   <Context host="${node1}" name="Gener_${host}">

@@ -8,14 +8,14 @@
        <NetDevice value="dabc::SocketDevice"/>
     </Application>
   </Context>
-  <Context host="lxi017" name="Worker1"/>
-  <Context host="lxi019" name="Worker2"/>
-  <Context host="lxi020" name="Worker3"/>
-  <Context host="lxi021" name="Worker4"/>
+  <Context host="lxi010" name="Worker1"/>
+  <Context host="lxi011" name="Worker2"/>
+  <Context host="lxi012" name="Worker3"/>
+  <Context host="lxi013" name="Worker4"/>
   <Defaults>
     <Context name="*">
       <Run>
-        <logfile value="test${DABCNODEID}.log"/>
+        <logfile value="test_${DABCNODEID}.log"/>
         <loglevel value="1"/>
         <lib value="libDabcBnet.so"/>
       </Run>

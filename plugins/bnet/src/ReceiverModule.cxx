@@ -237,6 +237,6 @@ void bnet::ReceiverModule::BeforeModuleStart()
 
 void bnet::ReceiverModule::AfterModuleStop()
 {
-   DOUT1(("ReceiverModule Rate %5.1f Network %5.1f",
+   DOUT0(("ReceiverModule Rate %5.1f Network %5.1f",
       fRecvRate.GetRate(), fRecvRate.GetRate() / fSendNodes.size() * (fSendNodes.size()-1)));
 }

@@ -438,7 +438,7 @@ void bnet::ClusterApplication::ParameterChanged(dabc::Parameter* par)
 
    bool isnormalsmcmd = false;
 
-   DOUT2(("STATE CHANGED node:%d name:%s", nodeid, state.c_str()));
+   DOUT0(("STATE CHANGED node:%d name:%s", nodeid, state.c_str()));
 
    {
       dabc::LockGuard lock(fSMMutex);
@@ -687,7 +687,11 @@ extern "C" void RunTestBnet()
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoConfigure);
 
+   dabc::mgr()->Sleep(1);
+
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoEnable);
+
+   dabc::mgr()->Sleep(1);
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
 
@@ -695,11 +699,15 @@ extern "C" void RunTestBnet()
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
 
+   dabc::mgr()->Sleep(1);
+
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStart);
 
    dabc::mgr()->Sleep(10, "Again main loop");
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
+
+   dabc::mgr()->Sleep(1);
 
    dabc::mgr()->ChangeState(dabc::Manager::stcmdDoHalt);
 

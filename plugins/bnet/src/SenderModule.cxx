@@ -397,5 +397,5 @@ void bnet::SenderModule::BeforeModuleStart()
 
 void bnet::SenderModule::AfterModuleStop()
 {
-   DOUT1(("SenderModule Rate %5.1f", fSendRate.GetRate()));
+   DOUT0(("SenderModule Rate %5.1f", fSendRate.GetRate()));
 }

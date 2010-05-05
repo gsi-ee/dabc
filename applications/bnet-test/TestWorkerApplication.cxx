@@ -96,7 +96,4 @@ void bnet::TestWorkerApplication::DiscoverNodeConfig(dabc::Command* cmd)
 
    if (IsReceiver())
       SetParInt(xmlEventBuffer, GetParInt(xmlTransportBuffer) * (GetParInt(CfgNumNodes) - 1));
-
 }
-
-
