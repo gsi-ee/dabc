@@ -258,6 +258,8 @@ int main(int numc, char* args[])
 
    dabc::mgr()->HaltManager();
 
+   DOUT3(("!!!!!!!!!!!!!!! destroy manager !!!!!!!!"));
+
    delete dabc::mgr();
 
    return res;

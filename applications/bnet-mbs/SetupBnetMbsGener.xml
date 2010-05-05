@@ -32,6 +32,7 @@
     <Run>
       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
       <runfunc value="RunTestBnet"/>
+      <debugger value="gdb -q -x gdb.cmd --args"/>
     </Run>
     <Application class="bnet::Cluster">
        <NetDevice value="dabc::SocketDevice"/>
@@ -60,7 +61,7 @@
      <Context name="*">
        <Run>
           <logfile value="${Context}.log"/>
-          <loglevel value="1"/>
+          <loglevel value="3"/>
        </Run>
        <Module name="*">
           <Ratemeter name="Data*" lower="0" upper="20"/>

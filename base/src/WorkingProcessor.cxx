@@ -868,8 +868,6 @@ std::string dabc::WorkingProcessor::ExecuteStr(const char* cmdname, const char* 
    return res;
 }
 
-
-
 bool dabc::WorkingProcessor::Assign(Command* cmd)
 {
    if (cmd==0) return false;

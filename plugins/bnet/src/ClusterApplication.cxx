@@ -133,6 +133,8 @@ bnet::ClusterApplication::~ClusterApplication()
 {
    // unregister dependency for all state parameters
 
+   DOUT0(("Start ~ClusterApplication"));
+/*
    for (int id=0;id<fNumNodes;id++) {
       std::string parname = FORMAT(("State_%d", id));
       dabc::Parameter* par = FindPar(parname.c_str());
@@ -141,6 +143,8 @@ bnet::ClusterApplication::~ClusterApplication()
          DestroyPar(par);
       }
    }
+*/
+   DOUT0(("Finish ~ClusterApplication"));
 }
 
 std::string bnet::ClusterApplication::NodeCurrentState(int nodeid)

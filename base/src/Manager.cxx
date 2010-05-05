@@ -743,8 +743,6 @@ void dabc::Manager::DoHaltManager()
    // to be on the safe side, destroy everything in the queue
    ProcessDestroyQueue();
 
-   RemoveProcessorFromThread(true);
-
    DOUT3(("Done DoHaltManager"));
 }
 
@@ -752,6 +750,14 @@ void dabc::Manager::DoHaltManager()
 void dabc::Manager::HaltManager()
 {
    Execute("HaltManager");
+
+   DOUT3((" +++++++++ DO SYNC +++++++++"));
+
+   SyncProcessor();
+
+   DOUT3((" +++++++++ DO REMOVE +++++++++"));
+
+   RemoveProcessorFromThread(true);
 
    // here we stopping and delete all threads
    Folder* df = GetThreadsFolder(false);

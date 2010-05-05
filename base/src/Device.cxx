@@ -105,7 +105,7 @@ bool dabc::Device::DoDeviceCleanup(bool full)
 
    }
 
-   // DOUT3(("DoDeviceCleanup %s done locked %s", GetName(), DBOOL(fDeviceMutex.IsLocked())));
+   DOUT3(("DoDeviceCleanup %s done locked %s", GetName(), DBOOL(fDeviceMutex.IsLocked())));
 
    return true;
 }

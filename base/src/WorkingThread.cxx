@@ -604,7 +604,7 @@ void dabc::WorkingThread::ExitMainLoop(WorkingProcessor* proc)
 {
    if (IsItself()) {
       if (fExplicitLoop == proc) {
-         EOUT(("Cannot leave main loop like this - did something stuiped"));
+         DOUT0(("Cannot leave main loop like this - did something stupid"));
          fExitExplicitLoop = true;
       }
 

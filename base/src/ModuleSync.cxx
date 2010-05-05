@@ -44,7 +44,9 @@ dabc::ModuleSync::~ModuleSync()
 
 bool dabc::ModuleSync::DoHalt()
 {
-   ExitMainLoop();
+//   DOUT0(("Call ExitMainLoop for module %s", GetName()));
+//   ExitMainLoop();
+//   DOUT0(("Did ExitMainLoop for module %s", GetName()));
 
    return dabc::Module::DoHalt();
 }
