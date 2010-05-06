@@ -43,7 +43,8 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorActivateMark(NullTimeStamp),
    fProcessorActivateInterv(0.),
    fProcessorPrevFire(NullTimeStamp),
-   fProcessorNextFire(NullTimeStamp)
+   fProcessorNextFire(NullTimeStamp),
+   fProcessorRecursion(0)
 {
    SetParDflts(1, false, true);
 }
@@ -713,6 +714,8 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 
 int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Command* cmd, double tmout)
 {
+   WorkingThread::IntGuard iguard(fProcessorRecursion);
+
    int res = cmd_true;
 
    if (cmd==0) {
@@ -938,7 +941,7 @@ void dabc::WorkingProcessor::CancelCommands()
 void dabc::WorkingProcessor::ProcessorSleep(double tmout)
 {
    if (ProcessorThread())
-      ProcessorThread()->RunEventLoop(tmout);
+      ProcessorThread()->RunEventLoop(this, tmout);
    else {
       while (tmout>1) { dabc::LongSleep(1); tmout-=1.; }
       dabc::MicroSleep(lrint(tmout*1e6));

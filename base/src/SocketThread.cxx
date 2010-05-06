@@ -434,6 +434,10 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
           if (fRecvIOVNumber==0)
              if (!OnRecvProvideBuffer()) return; // nothing to recv
 
+          if ((fRecvIOV==0) || (fSocket<0)) {
+             EOUT(("HARD PROBLEM when reading socket"));
+          }
+
           #ifdef SOCKET_PROFILING
              fRecvOper++;
              TimeStamp_t tm1 = TimeStamp();
@@ -528,6 +532,10 @@ void dabc::SocketIOProcessor::ProcessEvent(dabc::EventId evnt)
              fSendOper++;
              TimeStamp_t tm1 = TimeStamp();
           #endif
+
+          if ((fSocket<0) || (fSendIOV==0)) {
+             EOUT(("HARD PROBLEM when trying write socket"));
+          }
 
           ssize_t res = 0;
 

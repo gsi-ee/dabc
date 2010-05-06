@@ -154,7 +154,7 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
    DOUT1(("Start called"));
 
    for (int n=0;n<100;n++) {
-      dabc::MicroSleep(100000);
+      dabc::mgr()->Sleep(0.1);
       if (!m->IsRunning()) break;
    }
 

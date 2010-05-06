@@ -1632,10 +1632,10 @@ void dabc::Manager::Sleep(double tmout, const char* prefix)
       }
    } else
    if (prefix==0)
-      thrd->RunEventLoop(tmout);
+      thrd->RunEventLoop(0, tmout);
    else {
       DOUT1(("%s - sleep for %3.1f s", prefix, tmout));
-      thrd->RunEventLoop(tmout, true);
+      thrd->RunEventLoop(0, tmout, true);
    }
 }
 

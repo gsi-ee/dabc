@@ -116,7 +116,7 @@ namespace dabc {
          /** Runs thread event loop for specified time.
           * If time less than 0, event function called at least once.
           * Should be used at the places where user want to sleep inside processor. */
-         void RunEventLoop(double tm, bool dooutput = false);
+         void RunEventLoop(WorkingProcessor* proc, double tm, bool dooutput = false);
 
       protected:
 

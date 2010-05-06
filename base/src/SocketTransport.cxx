@@ -70,7 +70,7 @@ void dabc::SocketTransport::_SubmitRecv(uint32_t recid)
 
 void dabc::SocketTransport::OnConnectionClosed()
 {
-   DOUT2(("Connection closed"));
+   DOUT2(("Connection closed - close transport"));
 
    ErrorCloseTransport();
 }

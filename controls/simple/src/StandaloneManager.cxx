@@ -333,7 +333,7 @@ void dabc::StandaloneManager::ConnectCmdChannelOld(int numnodes, int deviceid, c
       exit(121);
    }
 
-   MicroSleep(1000000);
+   Sleep(1.);
    DOUT1(("Is it OK ?????"));
 
    if (IsMainManager()) {

@@ -151,7 +151,7 @@ void dabc::WorkingThread::SingleLoop(WorkingProcessor* proc, double tmout_user) 
    if (evid!=NullEventId) ProcessEvent(evid);
 }
 
-void dabc::WorkingThread::RunEventLoop(double tm, bool dooutput)
+void dabc::WorkingThread::RunEventLoop(WorkingProcessor* proc, double tm, bool dooutput)
 {
    TimeStamp_t last_tm = ThrdTimeStamp();
    TimeStamp_t last_out = last_tm;
@@ -434,8 +434,10 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
       fProcessors[id] = 0;
 
       DOUT3(("Destroy processor %u %p", id, proc));
-      if (proc) delete proc;
-           else res = cmd_false;
+      if (proc) {
+         if (proc->fProcessorRecursion>0) EOUT(("Processor %p Recursion = %d", proc, proc->fProcessorRecursion));
+         delete proc;
+      }  else res = cmd_false;
    } else
 
    if (cmd->IsName("ExitMainLoop")) {
@@ -497,11 +499,14 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
 
    if (itemid>0) {
       WorkingProcessor* proc = fProcessors[itemid];
-      if (proc)
+      if (proc) {
+         WorkingThread::IntGuard iguard(proc->fProcessorRecursion);
+
          if (GetEventCode(evnt) < WorkingProcessor::evntFirstSystem)
             proc->ProcessCoreEvent(evnt);
          else
             proc->ProcessEvent(evnt);
+      }
    } else
 
    switch (GetEventCode(evnt)) {

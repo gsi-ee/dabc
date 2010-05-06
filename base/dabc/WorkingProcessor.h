@@ -292,6 +292,7 @@ namespace dabc {
 
          TimeStamp_t      fProcessorPrevFire; // used in thread
          TimeStamp_t      fProcessorNextFire; // used in thread
+         int              fProcessorRecursion; /** counts how many recursive calls of ProcessEvent */
    };
 
    class ConfigSource {
