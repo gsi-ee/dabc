@@ -3,12 +3,12 @@
   <Variables>
   <!--Enter the values for specific setup-->
   <ctrl value="Linux controller node"/>
-     <mbs1 value="MBS  readout node"/>
-     <mbs2 value="MBS  readout node"/>
-     <read1 value="DABC  readout node"/>
-     <read2 value="DABC  readout node"/>
-     <eb1 value="DABC  event builder node"/>
-     <eb2 value="DABC  event builder node"/>
+     <mbs1 value="MBS readout node"/>
+     <mbs2 value="MBS readout node"/>
+     <read1 value="DABC readout node"/>
+     <read2 value="DABC readout node"/>
+     <eb1 value="DABC event builder node"/>
+     <eb2 value="DABC event builder node"/>
      <bufsize value="65536"/>
      <custport value="6000"/>
   </Variables>

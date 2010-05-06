@@ -291,6 +291,8 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
 
    MakeThreadFor(this, MgrThrdName(), usecurrentprocess ? 1 : 0);
 
+   DOUT0(("Manager Thread = %p", ProcessorThread()));
+
    CreateDevice("LocalDevice", LocalDeviceName());
 
    Device* dev = FindDevice(LocalDeviceName());
@@ -302,7 +304,6 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    }
 
    // create state parameter, inherited class should call init to see it
-   CreateParStr(stParName, stHalted);
 
    ActivateTimeout(1.);
 }
@@ -380,6 +381,8 @@ void dabc::Manager::init()
 {
    // method should be called from inherited class constructor to reactivate
    // all parameters events, which are created before (no longer used this way)
+
+   CreateParStr(stParName, stHalted);
 
    DOUT5(("Call dabc::Manager::init"));
 }

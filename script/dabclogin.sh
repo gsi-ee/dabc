@@ -18,7 +18,7 @@ export PATH=$DABCSYS/bin:$PATH
 
 export LD_LIBRARY_PATH=$DABCSYS/lib:$LD_LIBRARY_PATH
 
-export CLASSPATH=.:$DABCSYS/gui/java/packages/xgui.jar:$DABCSYS/dim/dim_v18r0/jdim/classes
+export CLASSPATH=.:$DABCSYS/gui/java/packages/xgui.jar:$DABCSYS/dim/dim_v19r9/jdim/classes
 
 alias dabc="java -Xmx200m xgui.xGui"
 

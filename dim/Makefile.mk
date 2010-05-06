@@ -47,6 +47,7 @@ ifneq ($(DIM_JDK_INCLUDE),)
 endif
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libjdim.so $(DABCDLLPATH)  
 	cp -f $(DIMDIR)/$(DIM_ODIR)/dns $(DABCBINPATH)/dimDns  
+	cp -f $(DIMDIR)/$(DIM_ODIR)/did $(DABCBINPATH)/dimDid  
 	@echo "Dim library build"
 #	cd $(DIMDIR)/jdim/classes; jar cf dim.jar dim/*.class
 #	mv -f $(DIMDIR)/jdim/classes/dim.jar $(DABCDLLPATH)
