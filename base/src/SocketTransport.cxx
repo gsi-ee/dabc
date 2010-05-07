@@ -91,11 +91,12 @@ void dabc::SocketTransport::ErrorCloseTransport()
    dabc::NetworkTransport::ErrorCloseTransport();
 }
 
-void dabc::SocketTransport::DoTransportHalt()
+void dabc::SocketTransport::DestroyTransport()
 {
-   RemoveProcessorFromThread(true);
    fSendStatus = 0;
    fRecvStatus = 0;
+
+   DestroyProcessor();
 }
 
 

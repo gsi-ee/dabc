@@ -318,7 +318,7 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
 
    while (!fWaitRes || (fLoopStatus==stSuspend)) {
 
-      if ((ProcessorThread()==0) || IsHalted())
+      if ((ProcessorThread()==0) || IsHalted() || IsProcessorDestroyment())
          throw StopException();
 
       // account timeout only in running state

@@ -54,7 +54,8 @@ namespace dabc {
          virtual void StartTransport() {}
          virtual void StopTransport() {}
 
-         virtual void DoTransportHalt() {}
+         /** Method is used to asynchronously destroy transport instance */
+         virtual void DestroyTransport();
 
 
          MemoryPool* GetPortPool();

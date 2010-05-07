@@ -346,3 +346,8 @@ bool verbs::Transport::ProcessPoolRequest()
    FireEvent(evntVerbsPool);
    return true;
 }
+
+void verbs::Transport::DestroyTransport()
+{
+   DestroyProcessor();
+}

@@ -199,6 +199,7 @@ namespace dabc {
          void SingleLoop(double tmout) { ProcessorThread()->SingleLoop(this, tmout); }
 
          void ProcessorSleep(double tmout);
+         inline bool IsProcessorDestroyment() const { return fProcessorDestroyment; }
 
 
          int ExecuteIn(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
@@ -293,6 +294,7 @@ namespace dabc {
          TimeStamp_t      fProcessorPrevFire; // used in thread
          TimeStamp_t      fProcessorNextFire; // used in thread
          int              fProcessorRecursion; /** counts how many recursive calls of ProcessEvent */
+         bool             fProcessorDestroyment; /** indicates if we start destroyment of processor */
    };
 
    class ConfigSource {

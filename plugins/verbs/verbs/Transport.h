@@ -65,6 +65,8 @@ namespace verbs {
 
          virtual bool ProcessPoolRequest();
 
+         virtual void DestroyTransport();
+
          virtual void ProcessEvent(dabc::EventId evnt);
 
       public:

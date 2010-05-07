@@ -44,7 +44,8 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorActivateInterv(0.),
    fProcessorPrevFire(NullTimeStamp),
    fProcessorNextFire(NullTimeStamp),
-   fProcessorRecursion(0)
+   fProcessorRecursion(0),
+   fProcessorDestroyment(false)
 {
    SetParDflts(1, false, true);
 }
@@ -95,6 +96,10 @@ void dabc::WorkingProcessor::RemoveProcessorFromThread(bool forget_thread)
 
 void dabc::WorkingProcessor::DestroyProcessor()
 {
+   if (fProcessorDestroyment) return;
+
+   fProcessorDestroyment = true;
+
    if (fProcessorThread)
       fProcessorThread->DestroyProcessor(this);
    else
@@ -763,7 +768,9 @@ int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Comman
                if (tmout<=0.) { res = cmd_false; break; }
             }
             last_tm = tm;
-         };
+         }
+
+         if (IsProcessorDestroyment()) { res = cmd_false; break; }
 
 //         DOUT0(("Calling single loop %5.1f", (tmout<=0) ? 0.1 : tmout));
 

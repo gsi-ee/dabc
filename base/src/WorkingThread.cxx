@@ -25,16 +25,39 @@ unsigned dabc::WorkingThread::maxlimit = 1000;
 #endif
 
 class dabc::WorkingThread::ExecProcessor : public dabc::WorkingProcessor {
+   protected:
+
+      CommandsQueue fPostponed;
    public:
-      ExecProcessor() : dabc::WorkingProcessor() {}
+      ExecProcessor() :
+         dabc::WorkingProcessor(),
+         fPostponed(CommandsQueue::kindSubmit)
+      {
+
+      }
 
       virtual int ExecuteCommand(Command* cmd)
       {
          return fProcessorThread->ExecuteThreadCommand(cmd);
       }
 
+      void AddPostponed(Command* cmd)
+      {
+         fPostponed.Push(cmd);
+         ActivateTimeout(0.001);
+      }
 
-   protected:
+      virtual double ProcessTimeout(double last_diff)
+      {
+         if (fPostponed.Size()==0) return -1;
+         dabc::Command* cmd = fPostponed.Pop();
+
+         int res = fProcessorThread->ExecuteThreadCommand(cmd);
+
+         if (res!=cmd_postponed) dabc::Command::Reply(cmd, res);
+
+         return (fPostponed.Size()==0) ? -1. : 0.001;
+      }
 
 };
 
@@ -153,38 +176,37 @@ void dabc::WorkingThread::SingleLoop(WorkingProcessor* proc, double tmout_user) 
 
 void dabc::WorkingThread::RunEventLoop(WorkingProcessor* proc, double tm, bool dooutput)
 {
-   TimeStamp_t last_tm = ThrdTimeStamp();
-   TimeStamp_t last_out = last_tm;
+   TimeStamp_t first_tm = ThrdTimeStamp();
 
    if (tm<0) {
       EOUT(("negative (endless) timeout specified - set default (0 sec)"));
       tm = 0;
    }
 
-   if (dooutput) {
-      fprintf(stdout, "\b\b\b%3ld", lrint(tm)); fflush(stdout);
-   }
+   long last_out = -1;
 
-   do {
-      double wait_tm = (tm <= 0) ? 0 : tm;
+   while (true) {
+      double dist = TimeDistance(first_tm, ThrdTimeStamp());
+
+      double wait_tm = (dist < tm) ? tm - dist : 0;
       if (dooutput && (wait_tm>0.2)) wait_tm = 0.2;
 
-      SingleLoop(0, wait_tm);
+      if (proc && proc->IsProcessorDestroyment()) break;
 
-      TimeStamp_t curr_tm = ThrdTimeStamp();
+      SingleLoop(proc, wait_tm);
 
-      tm -= TimeDistance(last_tm, curr_tm);
-
-      if (dooutput && (TimeDistance(last_out, curr_tm)>1.)) {
-         fprintf(stdout, "\b\b\b%3ld", lrint(tm));
-         fflush(stdout);
-         last_out = curr_tm;
+      if (dooutput) {
+         long curr_out = lrint(tm - dist);
+         if (curr_out<0) curr_out = 0;
+         if (curr_out!=last_out) {
+            fprintf(stdout, "\b\b\b%3ld", curr_out);
+            fflush(stdout);
+            last_out = curr_out;
+         }
       }
 
-//      DOUT0(("Run event loop for %5.1f real %5.1f rest %5.1f ", wait_tm, TimeDistance(last_tm, curr_tm), tm));
-
-      last_tm = curr_tm;
-   } while (tm > 0.);
+      if (dist>=tm) break;
+   }
 
    if (dooutput) {
       fprintf(stdout, "\b\b\b");
@@ -431,13 +453,28 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
    if (cmd->IsName("DestroyProcessor")) {
       uint32_t id = (uint32_t) cmd->GetInt("ProcessorId");
       WorkingProcessor* proc = fProcessors[id];
-      fProcessors[id] = 0;
 
       DOUT3(("Destroy processor %u %p", id, proc));
-      if (proc) {
-         if (proc->fProcessorRecursion>0) EOUT(("Processor %p Recursion = %d", proc, proc->fProcessorRecursion));
-         delete proc;
-      }  else res = cmd_false;
+
+      if (proc==0)
+         res = cmd_false;
+      else {
+         if (!proc->fProcessorDestroyment) {
+            EOUT(("Destroyment flag not specified why !!!!!"));
+         }
+
+         if (proc->fProcessorRecursion>0) {
+            EOUT(("Processor %p Recursion = %d", proc, proc->fProcessorRecursion));
+            res = cmd_postponed;
+            fExec->AddPostponed(cmd);
+         } else {
+            fProcessors[id] = 0;
+            delete proc;
+         }
+      }
+
+      fNoLongerUsed = !CheckThreadUsage();
+
    } else
 
    if (cmd->IsName("ExitMainLoop")) {
@@ -466,9 +503,9 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
 
 bool dabc::WorkingThread::CheckThreadUsage()
 {
-   // check if we have any processors
+   // check if we have any processors, exclude exec processor with id=1
 
-   for (unsigned id = 1; id<fProcessors.size(); id++)
+   for (unsigned id = 2; id<fProcessors.size(); id++)
       if (fProcessors[id]) return true;
 
    return false;
@@ -499,7 +536,7 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
 
    if (itemid>0) {
       WorkingProcessor* proc = fProcessors[itemid];
-      if (proc) {
+      if (proc && !proc->fProcessorDestroyment) {
          WorkingThread::IntGuard iguard(proc->fProcessorRecursion);
 
          if (GetEventCode(evnt) < WorkingProcessor::evntFirstSystem)
@@ -624,7 +661,7 @@ void dabc::WorkingThread::DestroyProcessor(WorkingProcessor* proc)
 {
    Command* cmd = new Command("DestroyProcessor");
    cmd->SetInt("ProcessorId", proc->fProcessorId);
-   fExec->Submit(cmd);
+   fExec->Submit(cmd, fNumQueues-1); // submit with minimum priority - allow to complete all other actions
 }
 
 double dabc::WorkingThread::CheckTimeouts(bool forcerecheck)

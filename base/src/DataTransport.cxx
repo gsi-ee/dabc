@@ -57,6 +57,11 @@ dabc::DataTransport::~DataTransport()
    DOUT5(("Destroy DataTransport %u %p done", fProcessorId, this));
 }
 
+void dabc::DataTransport::DestroyTransport()
+{
+   DestroyProcessor();
+}
+
 int dabc::DataTransport::ExecuteCommand(Command* cmd)
 {
    if (cmd->IsName("CloseOperation")) {

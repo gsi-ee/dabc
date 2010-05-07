@@ -42,6 +42,11 @@ dabc::Transport::~Transport()
    DOUT5(("Transport %p destroyed", this));
 }
 
+void dabc::Transport::DestroyTransport()
+{
+   delete this;
+}
+
 void dabc::Transport::AssignPort(Port* port)
 {
    // method must be called from the port (module) thread
@@ -129,6 +134,7 @@ void dabc::Transport::DettachPort()
    // if fPort is not set or not like to disconnect, force it
    AssignPort(0);
 }
+
 
 bool dabc::Transport::IsPortAssigned() const
 {

@@ -93,16 +93,11 @@ bool dabc::Device::DoDeviceCleanup(bool full)
       fDelTrans.remove_at(0);
       if (tr==0) continue;
 
-      DOUT3(("Device %s Halt transport %p", GetName(), tr));
+      DOUT3(("Device %s destroy transport %p", GetName(), tr));
 
-      tr->DoTransportHalt();
-
-      DOUT3(("Device %s Delete transport %p", GetName(), tr));
-
-      delete tr;
+      tr->DestroyTransport();
 
       DOUT3(("Device %s Delete transport %p done", GetName(), tr));
-
    }
 
    DOUT3(("DoDeviceCleanup %s done locked %s", GetName(), DBOOL(fDeviceMutex.IsLocked())));
