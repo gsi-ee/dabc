@@ -1482,12 +1482,10 @@ void dabc::Manager::DoCleanupDevices(bool force)
 
 bool dabc::Manager::DoCleanupManager(int appid)
 {
-//   SetDebugLevel(5);
-
    DOUT3(("DoCleanupManager appid = %d", appid));
 
-   // than we can safely delete all modules, while no execution can happen
 
+   DOUT3(("Delete modules with app id %d", appid));
    DoDeleteAllModules(appid);
 
    DOUT3(( "Cleanup all devices"));
@@ -1507,8 +1505,6 @@ bool dabc::Manager::DoCleanupManager(int appid)
    DoCleanupThreads();
 
    DOUT3(("DoCleanupManager appid = %d done", appid));
-
-//   SetDebugLevel(1);
 
    return true;
 }
