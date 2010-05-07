@@ -36,6 +36,8 @@ namespace mbs {
    class ServerTransport;
 
    class ServerConnectProcessor : public dabc::SocketServerProcessor {
+      friend class ServerTransport;
+
       public:
          ServerConnectProcessor(ServerTransport* tr, int serversocket, int portnum);
 

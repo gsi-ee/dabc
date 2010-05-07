@@ -115,7 +115,7 @@ dabc::TimeSource::TimeSource(bool usefast)
    if (fUseFast) {
       double cpu_mhz = Linux_get_cpu_mhz();
       if (cpu_mhz>0) fTimeScale = 1./cpu_mhz; else {
-         DOUT0(("Use slow timing"));
+         DOUT5(("Use slow timing"));
          fUseFast = false;
       }
    }

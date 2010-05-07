@@ -218,7 +218,7 @@ mbs::ServerTransport::ServerTransport(dabc::Device* dev, dabc::Port* port,
 {
    fServerPort = new ServerConnectProcessor(this, serversocket, portnum);
 
-   dabc::Manager::Instance()->MakeThreadFor(fServerPort, thrdname.c_str());
+   dabc::mgr()->MakeThreadFor(fServerPort, thrdname.c_str());
 }
 
 mbs::ServerTransport::~ServerTransport()
@@ -227,14 +227,18 @@ mbs::ServerTransport::~ServerTransport()
 
    fOutQueue.Cleanup();
 
-   for (unsigned n=0; n<fIOSockets.size();n++) {
-      DOUT1(("Close I/O socket %p", fIOSockets[n]));
-      delete fIOSockets[n];
-   }
+   for (unsigned n=0; n<fIOSockets.size();n++)
+      if (fIOSockets[n]) {
+         fIOSockets[n]->fTransport = 0;
+         DOUT1(("Close I/O socket %p", fIOSockets[n]));
+         fIOSockets[n]->DestroyProcessor();
+         fIOSockets[n] = 0;
+      }
 
    if (fServerPort) {
       DOUT3(("mbs::ServerTransport Close server port socket"));
-      delete fServerPort;
+      fServerPort->fTransport = 0;
+      fServerPort->DestroyProcessor();
       fServerPort = 0;
    }
 

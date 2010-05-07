@@ -210,7 +210,8 @@ mbs::ClientTransport::ClientTransport(dabc::Device* dev, dabc::Port* port, int k
 mbs::ClientTransport::~ClientTransport()
 {
    if (fIOProcessor!=0) {
-      delete fIOProcessor;
+      fIOProcessor->fTransport = 0;
+      fIOProcessor->DestroyProcessor();
       fIOProcessor = 0;
    }
 }
