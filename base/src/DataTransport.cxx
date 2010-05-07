@@ -188,7 +188,6 @@ bool dabc::DataTransport::Send(Buffer* buf)
    }
 
    if (!res) {
-      dabc::Buffer::Release(buf);
       EOUT(("AAAAAAAAAAA !!!!!!!!!!! %d %d ", fOutQueue.Size(), fOutQueue.Capacity()));
    } else
       FireEvent(evDataOutput);

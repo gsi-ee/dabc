@@ -48,7 +48,7 @@ $(DABCINCPATH)/%.h: $(DABC_BASEDIR)/%.h
 	@cp -f $< $@
 
 $(DABCBASE_LIB):   $(BASE_O)
-	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_O)" $(DABCDLLPATH) "-lpthread -ldl"
+	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_O)" $(DABCDLLPATH) "-lpthread -ldl -lrt"
 
 #$(DABCBASE_SLIB): $(BASE_O)
 #	$(AR) $(ARFLAGS) $(DABCBASE_SLIB) $(BASE_O)
@@ -57,7 +57,7 @@ $(DABC_BASEEXE):  $(BASERUN_O) $(DABCBASE_LIB)
 	$(LD) $(LDFLAGS) $(BASERUN_O) $(LIBS_CORESET) $(OutPutOpt) $(DABC_BASEEXE)
 
 $(DABC_XMLEXE) : $(DABC_XMLEXEO) $(DABC_BASESUB_O) 
-	$(LD) $(LDFLAGS) $(DABC_XMLEXEO) $(DABC_BASESUB_O) -pthread $(OutPutOpt) $(DABC_XMLEXE)
+	$(LD) $(LDFLAGS) $(DABC_XMLEXEO) $(DABC_BASESUB_O) -lpthread -lrt $(OutPutOpt) $(DABC_XMLEXE)
 
 $(DABC_BASESH): $(BASERUN_SH)
 	@cp -f $< $@

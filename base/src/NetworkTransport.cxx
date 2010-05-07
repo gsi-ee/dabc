@@ -193,8 +193,7 @@ uint32_t dabc::NetworkTransport::_TakeRec(Buffer* buf, uint32_t kind, uint64_t e
 
    EOUT(("Cannot allocate NetIORec. Halt"));
    EOUT(("SendQueue %u RecvQueue %u NumRecs %u used %u", fOutputQueueSize, fInputQueueSize, fNumRecs, fNumUsedRecs));
-   exit(105);
-   return 0;
+   return fNumRecs;
 }
 
 void dabc::NetworkTransport::_ReleaseRec(uint32_t recid)
@@ -250,6 +249,7 @@ bool dabc::NetworkTransport::Send(Buffer* buf)
 
    fOutputQueueSize++;
    uint32_t recid = _TakeRec(buf, netot_Send);
+   if (recid==fNumRecs) return false;
 
    BufferSize_t hdrsize = buf->GetHeaderSize();
    if (hdrsize>fUserHeaderSize) hdrsize = fUserHeaderSize;

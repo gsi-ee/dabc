@@ -13,14 +13,13 @@
  ********************************************************************/
 #include "dabc/timing.h"
 
-#include <sys/timex.h>
-#include <sys/time.h>
+// #include <sys/timex.h>
+// #include <sys/time.h>
 #include <time.h>
+#include <math.h>
 #include <unistd.h>
 
 #include "dabc/logging.h"
-
-double gLinuxCPUMhz = 1.0;
 
 dabc::TimeSource dabc::gStamping(true);
 
@@ -30,40 +29,63 @@ const dabc::TimeStamp_t dabc::NullTimeStamp = 0.;
 double Linux_get_cpu_mhz()
 {
    FILE* f;
-   char buf[256];
-   double mhz = 0.0;
+   char buf[1024];
+   float mhz = -1;
 
    f = fopen("/proc/cpuinfo","r");
-   if (!f)
-      return 0.0;
+   if (!f) return -1;
+
+   bool ismyamd = false;
+   bool isconst_tsc = false;
+
+   double max_ghz = -1;
+
    while(fgets(buf, sizeof(buf), f)) {
-      double m;
-      int rc;
-      rc = sscanf(buf, "cpu MHz : %lf", &m);
-      if (rc != 1) {   // PPC has a different format
-         rc = sscanf(buf, "clock : %lf", &m);
-         if (rc != 1)
-            continue;
-      }
-      if (mhz == 0.0) {
-         mhz = m;
+      float m;
+      if (strstr(buf,"AMD Opteron(tm) Processor 248")!=0) {
+         ismyamd = true;
          continue;
       }
-      if (mhz != m) {
-          EOUT(("Conflicting CPU frequency values detected: %lf != %lf\n", mhz, m));
-          return 1000.0;
+
+      if (strstr(buf,"model name")!=0) {
+         const char* pos = strstr(buf,"@");
+         if (pos==0) continue;
+         if (sscanf(pos+1, "%fGHz", &m) != 1) continue;
+         if (max_ghz<0) max_ghz = m;
+         if (fabs(max_ghz-m)>0.1) { max_ghz = -1; break; }
+      }
+
+      if (strstr(buf,"constant_tsc")!=0) {
+         isconst_tsc = true;
+         continue;
+      }
+      if (sscanf(buf, "cpu MHz : %f", &m) == 1) {
+         if (mhz < 0.) mhz = m;
+         if (fabs(mhz-m)>10.) {
+//          EOUT(("Conflicting CPU frequency values detected: %f != %f, use slow timing", mhz, m));
+            mhz = -1;
+            break;
+         }
       }
    }
    fclose(f);
-   return mhz;
+
+   if (isconst_tsc && (max_ghz>0.)) return max_ghz*1000.;
+
+//   DOUT0(("Find MHZ = %5.3f isamd = %s const_tsc = %s", mhz, DBOOL(ismyamd), DBOOL(isconst_tsc)));
+
+   return ismyamd ? mhz : -1;
 }
 
 dabc::cycles_t dabc::GetSlowClock()
 {
-   ntptimeval val;
-   ntp_gettime(&val);
+//   ntptimeval val;
+//   ntp_gettime(&val);
+//   return val.time.tv_sec * 1000000UL + val.time.tv_usec;
 
-   return val.time.tv_sec * 1000000UL + val.time.tv_usec;
+   timespec tm;
+   clock_gettime(CLOCK_MONOTONIC, &tm);
+   return tm.tv_sec*1000000000LL + tm.tv_nsec;
 }
 
 #ifdef DABC_SLOWTIMING
@@ -74,24 +96,6 @@ dabc::cycles_t dabc::GetFastClock()
 }
 
 #endif   
-
-namespace dabc {
-
-   double GetClockConvertion(bool isfast)
-   {
-      if (!isfast) return 1.;
-      
-      if (gLinuxCPUMhz<10) 
-         gLinuxCPUMhz = Linux_get_cpu_mhz();
-         
-      if (gLinuxCPUMhz<10) {
-         EOUT(("Cannot define CPU clock, use default 2200")); 
-         gLinuxCPUMhz = 2200.;   
-      }
-      
-      return 1./gLinuxCPUMhz;
-   }
-}
 
 // __________________________________________________
 
@@ -105,12 +109,18 @@ dabc::TimeSource::TimeSource(bool usefast)
 #else
    fUseFast = gForceSlowTiming ? false : usefast;
 #endif
-   
-   static cycles_t firstslowclock = GetSlowClock();
-   static cycles_t firstfastclock = GetFastClock();
 
-   fClockShift = fUseFast ? firstfastclock : firstslowclock; 
-   fTimeScale = GetClockConvertion(fUseFast);
+   fTimeScale = 0.001;
+   
+   if (fUseFast) {
+      double cpu_mhz = Linux_get_cpu_mhz();
+      if (cpu_mhz>0) fTimeScale = 1./cpu_mhz; else {
+         DOUT0(("Use slow timing"));
+         fUseFast = false;
+      }
+   }
+
+   fClockShift = fUseFast ? GetFastClock() : GetSlowClock();
    fTimeShift = 0.; 
 }
 

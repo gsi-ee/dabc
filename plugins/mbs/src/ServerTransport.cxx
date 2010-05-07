@@ -372,10 +372,7 @@ bool mbs::ServerTransport::Send(dabc::Buffer* buf)
       }
    }
 
-   if (!res) {
-      dabc::Buffer::Release(buf);
-      EOUT(("Not able put buffer in the queue"));
-   }
+   if (!res) EOUT(("Not able put buffer in the queue"));
 
    if (testdrop) DropFrontBufferIfQueueFull();
 

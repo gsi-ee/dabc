@@ -98,22 +98,21 @@ dabc::Buffer* dabc::LocalTransport::RecvBuffer(unsigned indx) const
 
 bool dabc::LocalTransport::Send(Buffer* buf)
 {
-   if (buf==0) return false;
+   if ((buf==0) || (fOther==0)) return false;
 
-   if (fOther==0) {
-      dabc::Buffer::Release(buf);
-      return false;
-   }
+   Buffer* newbuf = 0;
 
    if (fMemCopy && buf) {
       MemoryPool* pool = fOther->GetPortPool();
-      Buffer* newbuf = pool ? pool->TakeBuffer(buf->GetTotalSize(), buf->GetHeaderSize()) : 0;
+      newbuf = pool ? pool->TakeBuffer(buf->GetTotalSize(), buf->GetHeaderSize()) : 0;
       if (newbuf!=0)
          newbuf->CopyFrom(buf);
-      else
+      else {
          EOUT(("Cannot memcpy in localtransport while no new buffer can be ordered"));
-      dabc::Buffer::Release(buf);
-      buf = newbuf;
+         return false;
+      }
+      // dabc::Buffer::Release(buf);
+      // buf = newbuf;
    }
 
    bool res = false;
@@ -122,11 +121,16 @@ bool dabc::LocalTransport::Send(Buffer* buf)
       LockGuard lock(fMutex);
 
       res = fOther->fQueue.MakePlaceForNext();
-      if (res) fOther->fQueue.Push(buf);
+
+      if (res) fOther->fQueue.Push(newbuf ? newbuf : buf);
    }
 
-   if (res) fOther->FireInput();
-       else dabc::Buffer::Release(buf);
+   if (res) {
+      if (newbuf) dabc::Buffer::Release(buf); // release old buffer
+      fOther->FireInput();
+   } else {
+      dabc::Buffer::Release(newbuf); //release new buffer, old will be released by port
+   }
 
    return res;
 }

@@ -560,3 +560,29 @@ extern "C" void RunCmdTest()
 
 }
 
+
+extern "C" void RunTimeTest()
+{
+   timespec tm;
+   clock_gettime(CLOCK_MONOTONIC, &tm);
+   double abc;
+
+   double tm1 = TimeStamp();
+
+   long long int time0 = tm.tv_sec*1000000000LL + tm.tv_nsec;
+
+   long long int time1 = 0;
+
+
+
+   for (int n=0;n<1000000;n++) {
+//     abc = TimeStamp();
+      clock_gettime(CLOCK_MONOTONIC, &tm);
+      time1 = tm.tv_sec*1000000000LL + tm.tv_nsec - time0;
+   }
+
+   double tm2 = TimeStamp();
+
+
+   DOUT0(("Time = sec %d nsec = %ld  long = %5.3f  long2 = %5.3f", tm.tv_sec, tm.tv_nsec, dabc::TimeDistance(tm1, tm2)*1e6/1000000, time1*1e-9));
+}
