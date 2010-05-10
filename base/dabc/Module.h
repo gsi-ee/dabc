@@ -90,7 +90,7 @@ namespace dabc {
 
          /** Prepares module for calling destructor
           * Module cannot be reused after this call */
-         bool Halt();
+         virtual bool Halt();
 
          // end of public methods, rest later will be moved to protected area
 
@@ -190,7 +190,7 @@ namespace dabc {
          bool DoStop();
          bool DoStart();
 
-         virtual bool DoHalt();
+         int DoHalt();
 
          virtual void OnThreadAssigned();
          virtual int PreviewCommand(Command* cmd);

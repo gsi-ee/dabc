@@ -92,7 +92,6 @@ namespace dabc {
          Module*  fModule;
          int      fItemType;
          unsigned fItemId;
-         bool     fHalted;              /** indicates if item was halted */
    };
 
    class ModuleItemException : public ModuleException {

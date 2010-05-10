@@ -64,6 +64,8 @@ namespace dabc {
          bool ModuleWorking(double timeout = 0.)
             throw (StopException, TimeoutException);
 
+         virtual bool Halt();
+
          virtual void MainLoop() = 0;
 
          uint16_t WaitEvent(double timeout = -1)
@@ -101,8 +103,6 @@ namespace dabc {
          /** Call this method from main loop if one want suspend of module
            * execution until new Start of the module is called from outside */
          void StopUntilRestart();
-
-         virtual bool DoHalt();
 
       private:
 

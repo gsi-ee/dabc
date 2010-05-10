@@ -173,7 +173,7 @@ namespace dabc {
          double CheckTimeouts(bool forcerecheck = false);
 
          bool AddProcessor(WorkingProcessor* proc, bool sync = true);
-         int SysCommand(const char* cmdname, WorkingProcessor* proc);
+         int SysCommand(const char* cmdname, WorkingProcessor* proc, int priority = 0);
 
          void RemoveProcessor(WorkingProcessor* proc);
          void DestroyProcessor(WorkingProcessor* proc);

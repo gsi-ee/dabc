@@ -374,6 +374,8 @@ namespace dabc {
          bool RemoveCommand(Command* cmd);
          unsigned Size();
 
+         void ReplyAll(int res);
+
          void Cleanup();
    };
 

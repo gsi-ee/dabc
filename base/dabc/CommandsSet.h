@@ -61,7 +61,7 @@ namespace dabc {
           * Set will be assigned to current thread.
           * When all commands are executed, optional rescmd can be completed.
           * If tmout is specified (more than 0.), commands set will be terminated. */
-         bool SubmitSet(Command* rescmd = 0, double tmout = 0.);
+         bool SubmitSet(Command* rescmd = 0, double tmout = -1. );
 
          /** Return total number of commands in the set */
          unsigned GetNumber() const;

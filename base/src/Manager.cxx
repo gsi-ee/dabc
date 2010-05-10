@@ -758,6 +758,8 @@ void dabc::Manager::HaltManager()
 
    SyncProcessor();
 
+   HaltProcessor();
+
    DOUT3((" +++++++++ DO REMOVE +++++++++"));
 
    RemoveProcessorFromThread(true);

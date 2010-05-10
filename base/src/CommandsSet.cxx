@@ -70,6 +70,8 @@ void dabc::CommandsSet::Add(Command* cmd, WorkingProcessor* recv, bool do_submit
    rec.recv = recv ? recv : fReceiver;
    rec.state = do_submit ? 0 : 1;
 
+   if (!do_submit) Assign(cmd);
+
    fCmds.Push(rec);
 }
 

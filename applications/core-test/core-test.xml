@@ -3,7 +3,7 @@
   <Context name="core-test">
     <Run>
       <lib value="libDabcCoreTest.so"/>
-      <runfunc value="RunTimeTest"/>
+      <runfunc value="RunCmdTest"/>
       <logfile value="core-test.log"/>
       <loglimit value="10000000000"/>
     </Run>

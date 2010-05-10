@@ -122,6 +122,8 @@ verbs::Transport::~Transport()
 {
    DOUT3(("verbs::Transport::~Transport %p starts", this));
 
+   HaltProcessor();
+
    // we need this while at some point verbs thread will try to access
    // qp, which is destroyed at that moment
    RemoveProcessorFromThread(true);

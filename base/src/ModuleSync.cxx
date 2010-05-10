@@ -37,18 +37,18 @@ dabc::ModuleSync::~ModuleSync()
    // if module assigned to thread, make sure that mainloop of the module is leaved
    ExitMainLoop();
 
+
    if (fLoopStatus != stInit) {
       EOUT(("Problem in destructor - cannot leave normally main loop, must crash :-O"));
    }
 }
 
-bool dabc::ModuleSync::DoHalt()
-{
-//   DOUT0(("Call ExitMainLoop for module %s", GetName()));
-//   ExitMainLoop();
-//   DOUT0(("Did ExitMainLoop for module %s", GetName()));
 
-   return dabc::Module::DoHalt();
+bool dabc::ModuleSync::Halt()
+{
+   ExitMainLoop();
+
+   return dabc::Module::Halt();
 }
 
 
@@ -318,7 +318,7 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
 
    while (!fWaitRes || (fLoopStatus==stSuspend)) {
 
-      if ((ProcessorThread()==0) || IsHalted() || IsProcessorDestroyment())
+      if ((ProcessorThread()==0) || IsHalted() || IsProcessorDestroyment() || IsProcessorHalted())
          throw StopException();
 
       // account timeout only in running state

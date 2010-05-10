@@ -287,6 +287,9 @@ verbs::Device::~Device()
    // before CQ, Channel, PD will be destroyed
    CleanupDevice(true);
 
+
+   HaltProcessor();
+
    DOUT5(("Cleanup verbs device done"));
 
    RemoveProcessorFromThread(true);

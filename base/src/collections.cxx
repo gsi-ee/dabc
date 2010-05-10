@@ -144,8 +144,6 @@ bool dabc::CommandsQueue::RemoveCommand(Command* cmd)
    return false;
 }
 
-
-
 dabc::Command* dabc::CommandsQueue::Front()
 {
    LockGuard guard(fCmdsMutex); 
@@ -157,3 +155,11 @@ unsigned dabc::CommandsQueue::Size()
    LockGuard guard(fCmdsMutex);  
    return fQueue.Size();
 }
+
+void dabc::CommandsQueue::ReplyAll(int res)
+{
+   Command* cmd = 0;
+   while ((cmd = Pop()) != 0)
+     dabc::Command::Reply(cmd, res);
+}
+

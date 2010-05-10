@@ -62,6 +62,8 @@ dabc::Module::~Module()
 
    fRunState = msHalted;
 
+   HaltProcessor();
+
    // by this we stop any further events processing and can be sure that
    // destroying module items will not cause seg.fault
    RemoveProcessorFromThread(true);
@@ -168,9 +170,19 @@ void dabc::Module::Stop()
 
 bool dabc::Module::Halt()
 {
-   DOUT4(("Halt module %s", GetName()));
+   DOUT1(("Halt module %s", GetName()));
 
-   return Execute("HaltModule")==cmd_true;
+   bool res = (Execute("HaltModule")==cmd_true);
+
+   DOUT1(("Halt module %s after exec %s thrd %p", GetName(), DBOOL(res), dabc::mgr()->CurrentThread()));
+
+   if (!HaltProcessor()) res = false;
+
+   DOUT1(("Halt module %s  res %s", GetName(), DBOOL(res)));
+
+   RemoveProcessorFromThread(true);
+
+   return res;
 }
 
 int dabc::Module::PreviewCommand(Command* cmd)
@@ -190,8 +202,7 @@ int dabc::Module::PreviewCommand(Command* cmd)
       cmd_res = cmd_bool(DoStop());
    else
    if (cmd->IsName("HaltModule")) {
-      if (fRunState == msHalted) cmd_res = cmd_true;
-                            else cmd_res = cmd_bool(DoHalt());
+      cmd_res = DoHalt();
    } else
    if (cmd->IsName("SetPriority")) {
       if (ProcessorThread()) {
@@ -247,23 +258,24 @@ bool dabc::Module::DoStop()
    return true;
 }
 
-bool dabc::Module::DoHalt()
+int dabc::Module::DoHalt()
 {
+   if (fRunState == msHalted) return cmd_true;
+
    BeforeModuleHalt();
 
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
-      if (item) {
-         item->fHalted = true;
-         item->DoHalt();
+      if (item==0) continue;
+
+      item->DoHalt();
+      if (!item->HaltProcessor()) {
+         EOUT(("Cannot halt item %s", item->GetFullName().c_str()));
+         return cmd_false;
       }
    }
 
-   fRunState = msHalted;
-
-   DOUT3(("Module %s halted numports %d", GetName(), NumIOPorts()));
-
-   return true;
+   return cmd_true;
 }
 
 

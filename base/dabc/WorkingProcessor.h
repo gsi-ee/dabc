@@ -55,7 +55,8 @@ namespace dabc {
          enum EPriotiryLevels {
               priorityMaximum = 0,   // event queue with number 0 always has highest priority
               priorityMinimum = -1,  // this event will be submitted to queue with maximum number
-              priorityDefault = -7   // this code will be replaced with default priority for specified operation
+              priorityDefault = -7,   // this code will be replaced with default priority for specified operation
+              priorityMagic = -77     // this priority allows to submit commands even when processor is stopped
          };
 
 
@@ -67,6 +68,7 @@ namespace dabc {
          virtual const char* RequiredThrdClass() const { return 0; }
 
          bool AssignProcessorToThread(WorkingThread* thrd, bool sync = true);
+         bool HaltProcessor();
          void RemoveProcessorFromThread(bool forget_thread);
          WorkingThread* ProcessorThread() const { return fProcessorThread; }
          const char* ProcessorThreadName() const { return fProcessorThread ? fProcessorThread->GetName() : 0; }
@@ -127,10 +129,10 @@ namespace dabc {
          bool Submit(Command* cmd, int priority = priorityDefault);
 
          /** Execute command in the processor. Event loop of caller thread is kept running */
-         int Execute(Command* cmd, double tmout = -1.);
+         int Execute(Command* cmd, double tmout = -1., int priority = priorityDefault);
 
          /* Wrap of previous method, provided for convenience */
-         int Execute(const char* cmdname, double tmout = -1.);
+         int Execute(const char* cmdname, double tmout = -1., int priority = priorityDefault);
 
          int ExecuteInt(const char* cmdname, const char* intresname, double timeout_sec = -1.);
 
@@ -164,31 +166,31 @@ namespace dabc {
 
          inline void _FireEvent(uint16_t evid)
          {
-            if (fProcessorThread && (fProcessorId>0))
+            if (fProcessorThread && (fProcessorId>0) && !fProcessorStopped)
                fProcessorThread->_Fire(CodeEvent(evid, fProcessorId), fProcessorPriority);
          }
 
          inline void FireEvent(uint16_t evid)
          {
-            if (fProcessorThread && (fProcessorId>0))
-               fProcessorThread->Fire(CodeEvent(evid, fProcessorId), fProcessorPriority);
+            LockGuard lock(fProcessorMainMutex);
+            _FireEvent(evid);
          }
 
          inline void _FireEvent(uint16_t evid, uint32_t arg, int pri = -1)
          {
-            if (fProcessorThread && (fProcessorId>0))
+            if (fProcessorThread && (fProcessorId>0) && !fProcessorStopped)
                fProcessorThread->_Fire(CodeEvent(evid, fProcessorId, arg), pri < 0 ? fProcessorPriority : pri);
          }
 
          inline void FireEvent(uint16_t evid, uint32_t arg, int pri = -1)
          {
-            if (fProcessorThread && (fProcessorId>0))
-               fProcessorThread->Fire(CodeEvent(evid, fProcessorId, arg), pri < 0 ? fProcessorPriority : pri);
+            LockGuard lock(fProcessorMainMutex);
+            _FireEvent(evid, arg, pri);
          }
 
          inline void FireDoNothingEvent()
          {
-            if (fProcessorThread && (fProcessorId>0))
+            if (fProcessorThread && (fProcessorId>0) && !fProcessorStopped)
                fProcessorThread->FireDoNothingEvent();
          }
 
@@ -200,10 +202,11 @@ namespace dabc {
 
          void ProcessorSleep(double tmout);
          inline bool IsProcessorDestroyment() const { return fProcessorDestroyment; }
+         inline bool IsProcessorHalted() const { return fProcessorHalted; }
+         inline bool IsProcessorStopped() const { return fProcessorStopped; }
 
-
-         int ExecuteIn(WorkingProcessor* dest, Command* cmd, double tmout = -1.);
-         int ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout = -1.);
+         int ExecuteIn(WorkingProcessor* dest, Command* cmd, double tmout = -1., int priority = priorityDefault);
+         int ExecuteIn(WorkingProcessor* dest, const char* cmdname, double tmout = -1., int priority = priorityDefault);
 
          void CancelCommands();
 
@@ -276,25 +279,41 @@ namespace dabc {
 
       private:
          enum { evntSubmitCommand = evntFirstCore,
-                evntReplyCommand };
+                evntReplyCommand,
+                evntPostCommand };
 
 
          bool TakeActivateData(TimeStamp_t& mark, double& interval);
          void ProcessCoreEvent(EventId);
 
 
-         void ProcessCommand(dabc::Command* cmd);
+         int ProcessCommand(dabc::Command* cmd);
          bool GetReply(dabc::Command* cmd);
+
+         inline void CheckHaltCmds(int lvl = 1)
+         {
+            if (fProcessorRecursion==lvl)
+               if (fProcessorHaltCommands.Size()>0) {
+                  {
+                     LockGuard lock(fProcessorMainMutex);
+                     fProcessorHalted = true;
+                  }
+                  fProcessorHaltCommands.ReplyAll(cmd_true);
+               }
+         }
 
 
          bool             fProcessorActivateTmout; // used in activate to deliver timestamp to thread, locked by mutex
          TimeStamp_t      fProcessorActivateMark; // used in activate to deliver timestamp to thread, locked by mutex
          double           fProcessorActivateInterv; // used in activate to deliver timestamp to thread, locked by mutex
 
-         TimeStamp_t      fProcessorPrevFire; // used in thread
-         TimeStamp_t      fProcessorNextFire; // used in thread
-         int              fProcessorRecursion; /** counts how many recursive calls of ProcessEvent */
-         bool             fProcessorDestroyment; /** indicates if we start destroying of processor */
+         TimeStamp_t      fProcessorPrevFire;     /** used in thread for timeout handling */
+         TimeStamp_t      fProcessorNextFire;     /** used in thread for timeout handling */
+         int              fProcessorRecursion;    /** counts how many recursive calls of ProcessEvent */
+         bool             fProcessorDestroyment;  /** indicates if we start destroying of processor */
+         bool             fProcessorHalted;       /** indicates if we doing processor halt */
+         CommandsQueue    fProcessorHaltCommands; /** list of halt commands, which should be replied when processing is really halted */
+         bool             fProcessorStopped;      /** indicate processor stop, no any events can be submitted */
    };
 
    class ConfigSource {

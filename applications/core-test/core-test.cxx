@@ -150,6 +150,8 @@ class TestModuleSync : public dabc::ModuleSync {
       virtual void AfterModuleStop()
       {
          if (fCounter>0) fGlobalCnt = fCounter;
+
+         DOUT0(("Module %s did stop", GetName()));
       }
 };
 
@@ -205,13 +207,12 @@ void TestChain(bool isM, int number, int testkind = 0)
       dabc::mgr()->StartAllModules();
       dabc::TimeStamp_t tm1 = TimeStamp();
 
-      dabc::SetDebugLevel(1);
+      // dabc::SetDebugLevel(1);
 
       cpu.Reset();
       dabc::mgr()->Sleep(5, "Main loop");
       cpu.Measure();
 
-      dabc::SetDebugLevel(1);
 
 //      DOUT0(("Current Thread %p name %s manager thread %p", dabc::mgr()->CurrentThread(), dabc::mgr()->CurrentThrdName(), dabc::mgr()->ProcessorThread()));
 
@@ -224,6 +225,8 @@ void TestChain(bool isM, int number, int testkind = 0)
       DOUT1(("IsM = %s Kind = %d Time = %5.3f Cnt = %ld Per buffer = %5.3f ms CPU = %5.1f",DBOOL(isM), testkind,
          dabc::TimeDistance(tm1,tm2), fGlobalCnt, dabc::TimeDistance(tm1,tm2)/fGlobalCnt*1e3, cpu.CPUutil()*100.));
    }
+
+//   dabc::SetDebugLevel(3);
 
    dabc::mgr()->CleanupManager();
 
@@ -435,12 +438,16 @@ class TestModuleCmd : public dabc::ModuleAsync {
    protected:
       int                 fNext; // -1 reply, or number of next in chain
       int                 fCount;
+      bool                fTimeout;
+      dabc::Command*      fTmCmd;
 
    public:
-      TestModuleCmd(const char* name, int next) :
+      TestModuleCmd(const char* name, int next, bool timeout = false) :
          dabc::ModuleAsync(name),
          fNext(next),
-         fCount(0)
+         fCount(0),
+         fTimeout(timeout),
+         fTmCmd(0)
       {
       }
 
@@ -448,22 +455,50 @@ class TestModuleCmd : public dabc::ModuleAsync {
       {
          DOUT0((" ++++++++++++ Module %s execute command %s ++++++++++++++", GetName(), cmd->GetName()));
 
-         if (fNext<0) return dabc::cmd_true;
-
-         if (fCount++>10) return dabc::cmd_true;
+         if ((fNext<0) || (fCount++>10)) {
+            if (fTimeout && (fTmCmd==0)) {
+               fTmCmd = cmd;
+               ActivateTimeout(5);
+               return dabc::cmd_postponed;
+            }
+            return dabc::cmd_true;
+         }
 
          std::string nextname = dabc::format("Module%d", fNext);
          dabc::Module* next = dabc::mgr()->FindModule(nextname.c_str());
          if (next==0) return dabc::cmd_false;
 
+         if (fTimeout) {
+            Assign(cmd);
+            next->Submit(cmd);
+            return dabc::cmd_postponed;
+         }
+
          int res = ExecuteIn(next, "MyCmd");
 
          return res>0 ? res+1 : 0;
       }
+
+      virtual double ProcessTimeout(double last_diff)
+      {
+         DOUT0((" ++++++++++++ Module %s process timeout diff %5.1f ++++++++++++++", GetName(), last_diff));
+
+         dabc::Command::Reply(fTmCmd, 1);
+         fTmCmd = 0;
+         return -1;
+      }
+
+      virtual bool ReplyCommand(dabc::Command* cmd)
+      {
+         int res = cmd->GetResult();
+         DOUT0(("Module %s Get reply res = %d", GetName(), res));
+         dabc::Command::Reply(cmd, res+1);
+         return false;
+      }
 };
 
 
-void TestCmdChain(int number)
+void TestCmdChain(int number, bool timeout = false)
 {
    DOUT0(("==============================================="));
    DOUT0(("Test cmd chain of %d modules", number));
@@ -471,9 +506,9 @@ void TestCmdChain(int number)
    dabc::Module* m0 = 0;
 
    for (int n=0;n<number;n++) {
-      dabc::Module* m = new TestModuleCmd(FORMAT(("Module%d",n)), n==number-1 ? 0 : n+1);
+      dabc::Module* m = new TestModuleCmd(FORMAT(("Module%d",n)), n==number-1 ? 0 : n+1, timeout);
 
-      dabc::mgr()->MakeThreadForModule(m, n<number/2 ? "MainThread0" : "MainThread1");
+      dabc::mgr()->MakeThreadForModule(m, n % 2 ? "MainThread0" : "MainThread1");
 
       if (n==0) m0 = m;
    }
@@ -548,7 +583,9 @@ extern "C" void RunCmdTest()
 {
 //   TestMemoryPool();
 
-   TestCmdChain(10);
+   TestCmdChain(10, true);
+   return;
+
 
    TestCmdChain(20);
 
@@ -565,7 +602,6 @@ extern "C" void RunTimeTest()
 {
    timespec tm;
    clock_gettime(CLOCK_MONOTONIC, &tm);
-   double abc;
 
    double tm1 = TimeStamp();
 
@@ -585,4 +621,16 @@ extern "C" void RunTimeTest()
 
 
    DOUT0(("Time = sec %d nsec = %ld  long = %5.3f  long2 = %5.3f", tm.tv_sec, tm.tv_nsec, dabc::TimeDistance(tm1, tm2)*1e6/1000000, time1*1e-9));
+}
+
+
+
+extern "C" void RunAllTests()
+{
+   RunCoreTest();
+
+   RunCmdTest();
+
+   RunTimeTest();
+
 }

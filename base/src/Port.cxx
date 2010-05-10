@@ -119,8 +119,6 @@ unsigned dabc::Port::NumInputBuffersRequired() const
 
 bool dabc::Port::AssignTransport(Transport* tr, bool sync)
 {
-   if (fHalted) return false;
-
    Command* cmd = new Command("AssignTransport");
    cmd->SetPtr("#Transport", tr);
    if (sync) return Execute(cmd)==cmd_true;

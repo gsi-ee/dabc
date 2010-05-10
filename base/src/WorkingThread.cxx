@@ -33,7 +33,7 @@ class dabc::WorkingThread::ExecProcessor : public dabc::WorkingProcessor {
          dabc::WorkingProcessor(),
          fPostponed(CommandsQueue::kindSubmit)
       {
-
+         fProcessorPriority = 0;
       }
 
       virtual int ExecuteCommand(Command* cmd)
@@ -191,7 +191,8 @@ void dabc::WorkingThread::RunEventLoop(WorkingProcessor* proc, double tm, bool d
       double wait_tm = (dist < tm) ? tm - dist : 0;
       if (dooutput && (wait_tm>0.2)) wait_tm = 0.2;
 
-      if (proc && proc->IsProcessorDestroyment()) break;
+      if (proc && (proc->IsProcessorDestroyment() || proc->IsProcessorHalted())) break;
+
 
       SingleLoop(proc, wait_tm);
 
@@ -361,6 +362,8 @@ void dabc::WorkingThread::RunExplicitLoop()
 
    fExitExplicitLoop = false;
 
+   WorkingThread::IntGuard iguard(fExplicitLoop->fProcessorRecursion);
+
    try {
 
      fExplicitLoop->DoProcessorMainLoop();
@@ -380,6 +383,8 @@ void dabc::WorkingThread::RunExplicitLoop()
   }
 
   fExplicitLoop->DoProcessorAfterMainLoop();
+
+  fExplicitLoop->CheckHaltCmds();
 
   DOUT5(("Exit from RunExplicitMainLoop"));
 
@@ -496,6 +501,7 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
             fExitExplicitLoop = true;
       }
    } else
+
       res = cmd_false;
 
    return res;
@@ -536,13 +542,15 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
 
    if (itemid>0) {
       WorkingProcessor* proc = fProcessors[itemid];
-      if (proc && !proc->fProcessorDestroyment) {
+      if (proc && !proc->fProcessorDestroyment && !proc->fProcessorHalted) {
          WorkingThread::IntGuard iguard(proc->fProcessorRecursion);
 
          if (GetEventCode(evnt) < WorkingProcessor::evntFirstSystem)
             proc->ProcessCoreEvent(evnt);
          else
             proc->ProcessEvent(evnt);
+
+         proc->CheckHaltCmds();
       }
    } else
 
@@ -626,14 +634,15 @@ bool dabc::WorkingThread::AddProcessor(WorkingProcessor* proc, bool sync)
 
 int dabc::WorkingThread::Execute(dabc::Command* cmd, double tmout)
 {
-   return fExec->Execute(cmd, tmout);
+   return fExec->Execute(cmd, -1., WorkingProcessor::priorityMaximum);
 }
 
-int dabc::WorkingThread::SysCommand(const char* cmdname, WorkingProcessor* proc)
+
+int dabc::WorkingThread::SysCommand(const char* cmdname, WorkingProcessor* proc, int priority)
 {
    Command* cmd = new Command(cmdname);
    cmd->SetInt("ProcessorId", proc->fProcessorId);
-   return Execute(cmd);
+   return fExec->Execute(cmd, -1., priority);
 }
 
 void dabc::WorkingThread::RemoveProcessor(WorkingProcessor* proc)
