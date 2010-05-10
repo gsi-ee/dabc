@@ -142,6 +142,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
     bEventRate =0;
     bDataRateKb=0;
     bRunning   =0;
+    bRunMode   =0;
     while(fgets(line,127,conf)!=NULL){
       if(line[0]!='#'){
         if(strstr(line,cMbsNode)||(strchr(line,'*')!=NULL)){
@@ -154,6 +155,7 @@ MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *se
           else if(strstr(line,"TrigRateHis"))   bTrigRateHis=1;
           else if(strstr(line,"TriggerMode"))   bTriggerMode=1;
           else if(strstr(line,"FileOpen"))      bFileOpen=1;
+          else if(strstr(line,"RunMode"))       bRunMode=1;
           else if(strstr(line,"BuildingMode"))  bBuildingMode=1;
           else if(strstr(line,"EventBuilding")) bEventBuilding=1;
           else if(strstr(line,"StreamsFull"))  {bStreamsFull=1;rMaxStreamsFull=0.0;}

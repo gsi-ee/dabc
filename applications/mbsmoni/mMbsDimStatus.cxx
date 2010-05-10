@@ -59,11 +59,11 @@ if(getenv("LOGNAME")==0){
 	cout << "Set LOGNAME to user name" << endl;
 	exit(0);
 }
-if(conf=fopen("dimsetup.txt","r")){
+if((conf=fopen("dimsetup.txt","r"))){
     fclose(conf);
     strcpy(c_setup,"dimsetup.txt");
 }
-if(conf=fopen("dimsetup","r")){
+if((conf=fopen("dimsetup","r"))){
     fclose(conf);
     strcpy(c_setup,"dimsetup");
 }
