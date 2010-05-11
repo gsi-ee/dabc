@@ -58,10 +58,10 @@ public void infoHandler(){
 	}
 	if(value.equals(last)) count++;
 	else {
-		if(count < 4)System.out.println("ERROR missing states! "+count);
+		if(count < 4)System.out.println("ERROR missing states! "+(count+1)+" of 5");
 		count=0;
 	}
-	System.out.println("j> "+lname+" "+value);
+	//System.out.println("j> "+lname+" "+value);
 	last=new String(value);
 } // handler
 } // dimpar
@@ -75,7 +75,7 @@ public testclient() {
 }
 //------------------------------------------------------
 public static void main(String[] args) {
-int i=0;
+int i=0, num=0;
 Locale.setDefault(new Locale("en","US"));
 System.out.println("Using Java: "+System.getProperties().getProperty("java.version"));
 System.out.println("From      : "+System.getProperties().getProperty("java.home"));
@@ -90,6 +90,8 @@ if(args.length > 0){ // send commands
 	String pref=new String("DABC/"+args[0]+":0/Controller/Do");
 	while(true){
 		DimTimer.sleep(5);
+		num++;
+		System.out.println(num);
 		System.out.println("j> "+pref+"Configure ...");
 		DimClient.sendCommand(pref+"Configure","x1gSFfpv0JvDA");
 		DimTimer.sleep(5);
