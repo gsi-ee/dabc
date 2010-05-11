@@ -24,7 +24,7 @@ import java.beans.PropertyVetoException;
 //------------------------------------------------------
 public class testclient {
 	private String last;
-	private int count=0;
+	private int count, lines;
 //------------------------------------------------------
 private class dimpar extends DimInfo{
 
@@ -61,6 +61,7 @@ public void infoHandler(){
 		if(count < 4)System.out.println("ERROR missing states! "+(count+1)+" of 5");
 		count=0;
 	}
+	System.out.print(count+".");
 	//System.out.println("j> "+lname+" "+value);
 	last=new String(value);
 } // handler

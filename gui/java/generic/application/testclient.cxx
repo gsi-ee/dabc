@@ -5,6 +5,7 @@ using namespace std;
 #include <string.h>
 #include <unistd.h>
 
+//-----------------------------------------------
 class ErrorHandler : public DimErrorHandler
   {
     void errorHandler(int severity, int code, char *msg)
@@ -27,6 +28,7 @@ public:
       }
   };
 
+//-----------------------------------------------
 class ServiceClient : public DimClient
   {
 
@@ -46,6 +48,7 @@ class ServiceClient : public DimClient
     		if(count < 4)cout<< "ERROR missing states! "<<count+1<<" of 5" << endl;
     		count=0;
     	}
+    	cout<<count<<".";
         //cout << "c> "<<name << " : " << sr->state << endl;
     	strcpy(last,sr->state);
        }
@@ -55,6 +58,8 @@ public:
         int type;
         char *name, *format, fullname[132];
         DimInfo *dimi;
+        count=0;
+        lines=0;
         br = new DimBrowser();
         br->getServices("*Status");
         while ((type = br->getNextService(name, format))!= 0)
@@ -76,9 +81,10 @@ private:
         } staterec;
     staterec *sr;
     char last[16];
-    int count;
+    int count, lines;
   };
 
+//-----------------------------------------------
 int main(int argc, char **argv)
   {
 
