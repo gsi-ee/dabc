@@ -34,13 +34,19 @@ class ServiceClient : public DimClient
         DimInfo *dimi;
         char *name,*format,*color,*state;
         int i=1,sev,qual;
-        
+
         dimi   =getInfo();
         name   =dimi->getName();
         format =dimi->getFormat();
         qual   =dimi->getQuality();
         sr     =(staterec *)dimi->getData();
-        cout << name << " : " << sr->state << endl;
+    	if(strcmp(sr->state,last)==0) count++;
+    	else {
+    		if(count < 4)cout<< "ERROR missing states! "<<count << endl;
+    		count=0;
+    	}
+        cout << "c> "<<name << " : " << sr->state << endl;
+    	strcpy(last,sr->state);
        }
 public:
     ServiceClient()
@@ -68,6 +74,8 @@ private:
           char state[16];
         } staterec;
     staterec *sr;
+    char last[16];
+    int count;
   };
 
 int main(int argc, char **argv)
@@ -80,44 +88,42 @@ int main(int argc, char **argv)
     DimBrowser br;
     int type, n;
 
-    if(argc < 2){
-      cout << "ServerName" << endl;
-      exit(0);
-    }
-
-    
     ServiceClient servcli;
-    strcpy(pref,"DABC/");
-    strcat(pref,argv[1]);
-    strcat(pref,":0/Controller/Do");
 
-while (1)
-      {
-        sleep(5);
-        strcpy(cmd,pref);
-        strcat(cmd,"Configure");
-        cout << "> "<<cmd << " ....." << endl;
-        DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
-        sleep(5);
-        strcpy(cmd,pref);
-        strcat(cmd,"Enable");
-        cout << "> "<<cmd << " ....." << endl;
-        DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
-        sleep(5);
-        strcpy(cmd,pref);
-        strcat(cmd,"Start");
-        cout << "> "<<cmd << " ....." << endl;
-        DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
-        sleep(5);
-        strcpy(cmd,pref);
-        strcat(cmd,"Stop");
-        cout << "> "<<cmd << " ....." << endl;
-        DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
-        sleep(5);
-        strcpy(cmd,pref);
-        strcat(cmd,"Halt");
-        cout << "> "<<cmd << " ....." << endl;
-        DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
-      }
+    if(argc > 1){ // send commands
+		strcpy(pref,"DABC/");
+		strcat(pref,argv[1]);
+		strcat(pref,":0/Controller/Do");
+
+		while (1)
+		  {
+			sleep(5);
+			strcpy(cmd,pref);
+			strcat(cmd,"Configure");
+			cout << "c> "<<cmd << " ....." << endl;
+			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
+			sleep(5);
+			strcpy(cmd,pref);
+			strcat(cmd,"Enable");
+			cout << "c> "<<cmd << " ....." << endl;
+			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
+			sleep(5);
+			strcpy(cmd,pref);
+			strcat(cmd,"Start");
+			cout << "c> "<<cmd << " ....." << endl;
+			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
+			sleep(5);
+			strcpy(cmd,pref);
+			strcat(cmd,"Stop");
+			cout << "c> "<<cmd << " ....." << endl;
+			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
+			sleep(5);
+			strcpy(cmd,pref);
+			strcat(cmd,"Halt");
+			cout << "c> "<<cmd << " ....." << endl;
+			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
+		  }
+    } else while (1) sleep(5);
+
     return 0;
   }
