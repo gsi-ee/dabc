@@ -9,7 +9,9 @@ classes: \
 	MbsPanel.class \
 	MbsEvGen.class \
 	RocPanel.class \
-	UserPanel.class
+	UserPanel.class \
+	testclient.class \
+	testclient
 	
 ColorTest.class: ColorTest.java
 	javac $(FLAGSA) ColorTest.java
@@ -29,6 +31,12 @@ RocPanel.class: RocPanel.java
 UserPanel.class: UserPanel.java
 	javac $(FLAGSA) UserPanel.java
 	
+testclient.class: testclient.java
+	javac testclient.java
+	
+testclient: testclient.cxx
+	gcc -g testclient.cxx -o testclient -I$(DIMDIR)/dim -L$(DIMDIR)/linux -ldim -Llinux -lpthread
+	
 clean:
-	rm -f *.class
+	rm -f *.class *.o testclient
     
