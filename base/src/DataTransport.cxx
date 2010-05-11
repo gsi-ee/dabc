@@ -57,9 +57,11 @@ dabc::DataTransport::~DataTransport()
    DOUT5(("Destroy DataTransport %u %p done", fProcessorId, this));
 }
 
-void dabc::DataTransport::DestroyTransport()
+void dabc::DataTransport::HaltTransport()
 {
-   DestroyProcessor();
+   HaltProcessor();
+
+   RemoveProcessorFromThread(true);
 }
 
 int dabc::DataTransport::ExecuteCommand(Command* cmd)

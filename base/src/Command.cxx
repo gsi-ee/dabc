@@ -39,9 +39,12 @@ dabc::Command::Command(const char* name) :
    Basic(0, name),
    fParams(0),
    fCallers(0),
-   fCmdId(0)
+   fCmdId(0),
+   fMutex(0)
 {
    DOUT5(("New command %p name %s", this, GetName()));
+
+   fMutex = new Mutex;
 }
 
 dabc::Command::~Command()
@@ -56,24 +59,45 @@ dabc::Command::~Command()
       fParams = 0;
    }
 
+   delete fMutex; fMutex = 0;
+
    DOUT5(("Delete command %p name %s", this, GetName()));
 }
 
 void dabc::Command::AddCaller(WorkingProcessor* proc, bool* exe_ready)
 {
-  if (fCallers==0) {
-     fCallers = new CallersQueue;
-     fCallers->Init(8, true);
-  }
+   LockGuard lock(fMutex);
 
-  CallerRec* rec = fCallers->PushEmpty();
+   if (fCallers==0) {
+      fCallers = new CallersQueue;
+      fCallers->Init(8, true);
+   }
 
-  rec->proc = proc;
-  rec->exe_ready = exe_ready;
+   CallerRec* rec = fCallers->PushEmpty();
+
+   rec->proc = proc;
+   rec->exe_ready = exe_ready;
+}
+
+void dabc::Command::RemoveCaller(WorkingProcessor* proc)
+{
+   LockGuard lock(fMutex);
+
+   if (fCallers==0) return;
+
+   unsigned n=0;
+
+   while (n<fCallers->Size())
+      if (fCallers->Item(n).proc == proc)
+         fCallers->RemoveItem(n);
+      else
+         n++;
 }
 
 bool dabc::Command::IsLastCallerSync()
 {
+   LockGuard lock(fMutex);
+
    if ((fCallers==0) || (fCallers->Size()==0)) return false;
 
    return fCallers->Back().exe_ready != 0;
@@ -384,12 +408,16 @@ void dabc::Command::Finalise(Command* cmd)
 
       CallerRec rec;
 
-      if (cmd->fCallers && cmd->fCallers->Size()>0) {
-         rec = cmd->fCallers->PopBack();
-         process = true;
-         if (cmd->fCallers->Size()==0) {
-            delete cmd->fCallers;
-            cmd->fCallers = 0;
+      {
+         LockGuard lock(cmd->fMutex);
+
+         if (cmd->fCallers && cmd->fCallers->Size()>0) {
+            rec = cmd->fCallers->PopBack();
+            process = true;
+            if (cmd->fCallers->Size()==0) {
+               delete cmd->fCallers;
+               cmd->fCallers = 0;
+            }
          }
       }
 

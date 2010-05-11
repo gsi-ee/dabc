@@ -81,7 +81,7 @@ namespace dabc {
 
          virtual void ProcessPoolChanged(MemoryPool* pool) {}
 
-         virtual void DestroyTransport();
+         virtual void HaltTransport();
 
       public:
          DataTransport(Device* dev, Port* port, bool doiunput = true, bool dooutput = false);

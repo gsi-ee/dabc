@@ -93,9 +93,13 @@ bool dabc::Device::DoDeviceCleanup(bool full)
       fDelTrans.remove_at(0);
       if (tr==0) continue;
 
+      DOUT3(("Device %s halt transport %p", GetName(), tr));
+
+      tr->HaltTransport();
+
       DOUT3(("Device %s destroy transport %p", GetName(), tr));
 
-      tr->DestroyTransport();
+      delete tr;
 
       DOUT3(("Device %s Delete transport %p done", GetName(), tr));
    }

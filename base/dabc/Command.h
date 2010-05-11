@@ -50,6 +50,7 @@ namespace dabc {
          CommandParametersList* fParams;          /** list of command parameters */
          CallersQueue*          fCallers;         /** list of callers */
          unsigned               fCmdId;           /** Current command id */
+         Mutex*                 fMutex;           /** mutex used to protect callers list */
 
          virtual ~Command();
 
@@ -107,6 +108,8 @@ namespace dabc {
       private:
 
          void AddCaller(WorkingProcessor* proc, bool* exe_ready = 0);
+
+         void RemoveCaller(WorkingProcessor* proc);
 
          bool IsLastCallerSync();
    };

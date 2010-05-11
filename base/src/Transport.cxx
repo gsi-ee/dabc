@@ -42,9 +42,8 @@ dabc::Transport::~Transport()
    DOUT5(("Transport %p destroyed", this));
 }
 
-void dabc::Transport::DestroyTransport()
+void dabc::Transport::HaltTransport()
 {
-   delete this;
 }
 
 void dabc::Transport::AssignPort(Port* port)

@@ -349,7 +349,9 @@ bool verbs::Transport::ProcessPoolRequest()
    return true;
 }
 
-void verbs::Transport::DestroyTransport()
+void verbs::Transport::HaltTransport()
 {
-   DestroyProcessor();
+   HaltProcessor();
+
+   RemoveProcessorFromThread(true);
 }
