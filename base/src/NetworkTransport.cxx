@@ -53,7 +53,7 @@ dabc::NetworkTransport::~NetworkTransport()
    DOUT5((" NetworkTransport::~NetworkTransport() %p", this));
 }
 
-void dabc::NetworkTransport::Init(Port *port, bool useackn)
+void dabc::NetworkTransport::InitNetworkTransport(Port *port, bool useackn)
 {
    // This method must be called from constructor of inherited class or
    // immediately afterwards.
@@ -132,13 +132,13 @@ void dabc::NetworkTransport::PortChanged()
       FillRecvQueue();
 }
 
-void dabc::NetworkTransport::ErrorCloseTransport()
+void dabc::NetworkTransport::CleanupTransport()
 {
-   dabc::Transport::ErrorCloseTransport();
+    dabc::Transport::CleanupTransport();
 }
 
 
-void dabc::NetworkTransport::Cleanup()
+void dabc::NetworkTransport::CleanupNetworkTransport()
 {
    // first, exclude possibility to get callback from pool
    // anyhow, we should lock access to all queues, but
@@ -147,7 +147,7 @@ void dabc::NetworkTransport::Cleanup()
 
    DOUT3(("Calling NetworkTransport::Cleanup() %p id = %d", this, GetId()));
 
-   dabc::BuffersQueue relqueue(fNumRecs);
+   dabc::BuffersQueue relqueue(32, true);
 
    {
       dabc::LockGuard guard(fMutex);
@@ -281,7 +281,7 @@ void dabc::NetworkTransport::FillRecvQueue(Buffer* freebuf)
 
    unsigned newitems = 0;
 
-   if (fPool && !IsErrorState()) {
+   if (fPool && !IsTransportErrorFlag()) {
       dabc::LockGuard guard(fMutex);
 
       while (fInputQueueSize<fInputQueueLength) {

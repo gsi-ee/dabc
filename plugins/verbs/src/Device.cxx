@@ -646,7 +646,7 @@ void verbs::Device::CreateVerbsTransport(const char* thrdname, const char* portn
 
    tr->AssignProcessorToThread(thrd);
 
-   port->AssignTransport(tr);
+   tr->AttachPort(port);
 }
 
 bool verbs::Device::ServerConnect(dabc::Command* cmd, dabc::Port* port, const char* portname)
@@ -715,7 +715,7 @@ int verbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 
          if (tr->IsInitOk()) {
             tr->AssignProcessorToThread(thrd);
-            port->AssignTransport(tr);
+            tr->AttachPort(port);
             return dabc::cmd_true;
          } else
             delete tr;

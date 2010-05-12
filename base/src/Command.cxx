@@ -40,18 +40,25 @@ dabc::Command::Command(const char* name) :
    fParams(0),
    fCallers(0),
    fCmdId(0),
-   fMutex(0)
+   fCmdMutex(0)
 {
    DOUT5(("New command %p name %s", this, GetName()));
 
-   fMutex = new Mutex;
+//   fCmdMutex = new Mutex;
+
 }
 
 dabc::Command::~Command()
 {
-   if (fCallers) {
-      delete fCallers;
-      fCallers = 0;
+   {
+      LockGuard lock(fCmdMutex);
+
+      if (fCallers) {
+         EOUT(("Non empty callers list in cmd %s !!!!!!!!!!!!!!", GetName()));
+         exit(888);
+         delete fCallers;
+         fCallers = 0;
+      }
    }
 
    if (fParams) {
@@ -59,14 +66,14 @@ dabc::Command::~Command()
       fParams = 0;
    }
 
-   delete fMutex; fMutex = 0;
+   delete fCmdMutex; fCmdMutex = 0;
 
    DOUT5(("Delete command %p name %s", this, GetName()));
 }
 
 void dabc::Command::AddCaller(WorkingProcessor* proc, bool* exe_ready)
 {
-   LockGuard lock(fMutex);
+   LockGuard lock(fCmdMutex);
 
    if (fCallers==0) {
       fCallers = new CallersQueue;
@@ -81,11 +88,11 @@ void dabc::Command::AddCaller(WorkingProcessor* proc, bool* exe_ready)
 
 void dabc::Command::RemoveCaller(WorkingProcessor* proc)
 {
-   LockGuard lock(fMutex);
+   LockGuard lock(fCmdMutex);
 
    if (fCallers==0) return;
 
-   unsigned n=0;
+   unsigned n(0);
 
    while (n<fCallers->Size())
       if (fCallers->Item(n).proc == proc)
@@ -96,7 +103,7 @@ void dabc::Command::RemoveCaller(WorkingProcessor* proc)
 
 bool dabc::Command::IsLastCallerSync()
 {
-   LockGuard lock(fMutex);
+   LockGuard lock(fCmdMutex);
 
    if ((fCallers==0) || (fCallers->Size()==0)) return false;
 
@@ -406,10 +413,14 @@ void dabc::Command::Finalise(Command* cmd)
 
    do {
 
+      process = false;
       CallerRec rec;
 
       {
-         LockGuard lock(cmd->fMutex);
+
+         LockGuard lock(cmd->fCmdMutex);
+
+         if (cmd->fCallers==0) break;
 
          if (cmd->fCallers && cmd->fCallers->Size()>0) {
             rec = cmd->fCallers->PopBack();
@@ -421,13 +432,11 @@ void dabc::Command::Finalise(Command* cmd)
          }
       }
 
-      if (process) {
-         if (rec.exe_ready) *rec.exe_ready = true;
-         if (rec.proc)
-            if (rec.exe_ready) rec.proc->FireDoNothingEvent();
-                          else process = rec.proc->GetReply(cmd);
+      if (process && rec.proc) {
+         process = rec.proc->GetCommandReply(cmd, rec.exe_ready);
+         if (!process) { EOUT(("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s", cmd->GetName())); }
       }
-   } while (!process && cmd->fCallers);
+   } while (!process);
 
    if (!process) delete cmd;
 }

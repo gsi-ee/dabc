@@ -36,32 +36,47 @@ dabc::LocalTransport::~LocalTransport()
    DOUT5((" dabc::LocalTransport::~LocalTransport %p calling queue = %d", this, fQueue.Size()));
 
    if (fMutex && fMutexOwner) {
-      if (fOther) fOther->fMutex = 0;
       delete fMutex;
       fMutex = 0;
+      fMutexOwner = false;
    }
 
-   if (fOther!=0)
+   if (fOther!=0) {
+      EOUT(("Other pointer is still there"));
       fOther->fOther = 0; // remove reference on ourself
+   }
 
+   if (fQueue.Size()>0) EOUT(("Queue size is not zero!!!"));
    fQueue.Cleanup();
 }
 
-bool dabc::LocalTransport::_IsReadyForCleanup()
+void dabc::LocalTransport::CleanupTransport()
 {
-   if (!Transport::_IsReadyForCleanup()) return false;
 
-   return fOther ? !fOther->IsPortAssigned() : true;
+   DOUT4(("LocalTransport::CleanupTransport %p other %p", this, fOther));
+
+   {
+      LockGuard lock(fMutex);
+
+      if (fOther!=0) {
+         fOther->fOther = 0; // remove back pointer
+         if (fMutexOwner) { fMutexOwner = false; fOther->fMutexOwner = true; }
+         fOther = 0;
+      }
+
+      if (!fMutexOwner) fMutex = 0;
+   }
+
+//   fQueue.Cleanup(fMutex);
+
+   dabc::Transport::CleanupTransport();
+
+   DOUT4(("LocalTransport::CleanupTransport %p done", this));
 }
+
 
 void dabc::LocalTransport::PortChanged()
 {
-   if (IsPortAssigned()) return;
-
-   DOUT5(("dabc::LocalTransport::PortChanged %p", this));
-
-   // do we need cleanup of queue here, using mutex
-   fQueue.Cleanup(fMutex);
 }
 
 
@@ -208,8 +223,8 @@ bool dabc::LocalDevice::ConnectPorts(Port* port1, Port* port2)
    tr2->fOther = tr1;
 
    bool res = true;
-   if (!port1->AssignTransport(tr1, true)) res = false;
-   if (!port2->AssignTransport(tr2, true)) res = false;
+   if (!tr1->AttachPort(port1, true)) res = false;
+   if (!tr2->AttachPort(port2, true)) res = false;
 
    return res;
 }
@@ -218,7 +233,7 @@ int dabc::LocalDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
 {
    dabc::Port* port2 = dabc::mgr()->FindPort(cmd->GetPar("Port2Name"));
 
-   if (port2==0) return false;
+   if (port2==0) return cmd_false;
 
    return ConnectPorts(port, port2);
 }

@@ -27,7 +27,7 @@ dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useac
    fSendStatus(0),
    fSendRecid(0)
 {
-   Init(port, useackn);
+   InitNetworkTransport(port, useackn);
 
    DOUT3(("Transport %p for port %p created", this, port));
 
@@ -47,7 +47,7 @@ dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useac
 
 dabc::SocketTransport::~SocketTransport()
 {
-   Cleanup();
+   CleanupNetworkTransport();
 
    delete [] fHeaders; fHeaders = 0;
 }
@@ -82,14 +82,6 @@ void dabc::SocketTransport::OnSocketError(int errnum, const char* info)
    ErrorCloseTransport();
 }
 
-void dabc::SocketTransport::ErrorCloseTransport()
-{
-   fSendStatus = 0;
-   fRecvStatus = 0;
-   SetDoingNothing();
-
-   dabc::NetworkTransport::ErrorCloseTransport();
-}
 
 void dabc::SocketTransport::HaltTransport()
 {

@@ -207,7 +207,6 @@ void TestChain(bool isM, int number, int testkind = 0)
       dabc::mgr()->StartAllModules();
       dabc::TimeStamp_t tm1 = TimeStamp();
 
-      // dabc::SetDebugLevel(1);
 
       cpu.Reset();
       dabc::mgr()->Sleep(5, "Main loop");
@@ -216,13 +215,16 @@ void TestChain(bool isM, int number, int testkind = 0)
 
 //      DOUT0(("Current Thread %p name %s manager thread %p", dabc::mgr()->CurrentThread(), dabc::mgr()->CurrentThrdName(), dabc::mgr()->ProcessorThread()));
 
-      dabc::mgr()->StopAllModules();
+//      dabc::SetDebugLevel(5);
+//      dabc::SetFileLevel(5);
+
+        dabc::mgr()->StopAllModules();
 
       dabc::TimeStamp_t tm2 = TimeStamp();
 
       if (fGlobalCnt<=0) fGlobalCnt = 1;
 
-      DOUT1(("IsM = %s Kind = %d Time = %5.3f Cnt = %ld Per buffer = %5.3f ms CPU = %5.1f",DBOOL(isM), testkind,
+      DOUT0(("IsM = %s Kind = %d Time = %5.3f Cnt = %ld Per buffer = %5.3f ms CPU = %5.1f",DBOOL(isM), testkind,
          dabc::TimeDistance(tm1,tm2), fGlobalCnt, dabc::TimeDistance(tm1,tm2)/fGlobalCnt*1e3, cpu.CPUutil()*100.));
    }
 
@@ -266,7 +268,7 @@ class TimeoutTestModuleAsync : public dabc::ModuleAsync {
 
       virtual void AfterModuleStop()
       {
-         DOUT1(("Module %s Timer1 %ld Timer2 %ld", GetName(), fCounter1, fCounter2));
+         DOUT0(("Module %s Timer1 %ld Timer2 %ld", GetName(), fCounter1, fCounter2));
       }
 
 };
@@ -416,10 +418,6 @@ void TestMemoryPool()
 extern "C" void RunCoreTest()
 {
 //   TestMemoryPool();
-
-//   TestTimers(1);
-//   return;
-
 
    TestChain(true, 10);
 
@@ -583,8 +581,8 @@ extern "C" void RunCmdTest()
 {
 //   TestMemoryPool();
 
-   TestCmdChain(10, true);
-   return;
+//   TestCmdChain(10, true);
+//   return;
 
 
    TestCmdChain(20);

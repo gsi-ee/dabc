@@ -50,7 +50,7 @@ namespace dabc {
          CommandParametersList* fParams;          /** list of command parameters */
          CallersQueue*          fCallers;         /** list of callers */
          unsigned               fCmdId;           /** Current command id */
-         Mutex*                 fMutex;           /** mutex used to protect callers list */
+         Mutex*                 fCmdMutex;        /** mutex used to protect callers list */
 
          virtual ~Command();
 

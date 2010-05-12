@@ -714,7 +714,7 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const 
 
             SocketTransport* tr = new SocketTransport(this, port, useackn, fd);
             if (Manager::Instance()->MakeThreadFor(tr, newthrdname))
-               port->AssignTransport(tr);
+               tr->AttachPort(port);
             else {
                EOUT(("No thread for transport"));
                delete tr;
@@ -840,7 +840,7 @@ int dabc::SocketDevice::CreateTransport(Command* cmd, Port* port)
       SocketTransport* tr = new SocketTransport(this, port, false, handle, true);
       if (dabc::mgr()->MakeThreadFor(tr, newthrdname.c_str())) {
          DOUT1(("TRANSPORT %s multicast thrd %s", mhost.c_str(), newthrdname.c_str()));
-         port->AssignTransport(tr);
+         tr->AttachPort(port);
          return cmd_true;
       } else {
          EOUT(("No thread for transport"));

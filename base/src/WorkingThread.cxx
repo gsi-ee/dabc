@@ -96,6 +96,7 @@ dabc::WorkingThread::WorkingThread(Basic* parent, const char* name, unsigned num
    fExec->fProcessorId = fProcessors.size();
    fProcessors.push_back(fExec);
    fExec->fProcessorThread = this;
+   fExec->fProcessorMainMutex = &fWorkMutex;
 
 }
 
@@ -118,6 +119,7 @@ dabc::WorkingThread::~WorkingThread()
 
    fExec->fProcessorId = 0;
    fExec->fProcessorThread = 0;
+   fExec->fProcessorMainMutex = 0;
    delete fExec; fExec = 0;
 
    fNumQueues = 0;
@@ -143,8 +145,6 @@ void* dabc::WorkingThread::MainLoop()
    while (IsThrdWorking()) {
 
       tmout = CheckTimeouts();
-
-      DOUT5(("*** Thrd:%s Wait Event %5.1f", GetName(), tmout));
 
       evid = WaitEvent(tmout);
 
@@ -421,10 +421,11 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
 
       fNoLongerUsed = false;
 
-      proc->fProcessorId = fProcessors.size();
-      fProcessors.push_back(proc);
       proc->fProcessorThread = this;
       proc->fProcessorMainMutex = &fWorkMutex;
+
+      proc->fProcessorId = fProcessors.size();
+      fProcessors.push_back(proc);
 
       ProcessorNumberChanged();
 
@@ -523,11 +524,29 @@ void dabc::WorkingThread::_Fire(EventId arg, int nq)
 
    _PushEvent(arg, nq);
    fWorkCond._DoFire();
+
+//#ifdef DO_INDEX_CHECK
+
+   long sum = 0;
+   for (int n=0;n<fNumQueues;n++) sum+=fQueues[n].Size();
+   if (sum!=fWorkCond._FiredCounter()) {
+      dabc::SetDebugLevel(5);
+      DOUT5(("Thrd %s Error sum1 %ld cond %ld  event code:%u item:%u arg:%u",
+            GetName(), sum, fWorkCond._FiredCounter(),
+            GetEventCode(arg), GetEventItem(arg), GetEventArg(arg)));
+   }
+//#endif
+
 }
 
 dabc::EventId dabc::WorkingThread::WaitEvent(double tmout)
 {
    LockGuard lock(fWorkMutex);
+
+   DOUT5(("*** Thrd:%s Wait Event %5.1f Lock %s cond_cnt %ld q0:%u q1:%u q2:%u",
+         GetName(), tmout, DBOOL(fWorkMutex.IsLocked()), fWorkCond._FiredCounter(),
+         fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size()));
+
    if (fWorkCond._DoWait(tmout)) return _GetNextEvent();
 
    return NullEventId;
@@ -538,10 +557,17 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
 {
    uint16_t itemid = GetEventItem(evnt);
 
-   DOUT5(("*** Thrd:%s Item:%u Event:%u arg:%u", GetName(), itemid, GetEventCode(evnt), GetEventArg(evnt)));
+   DOUT5(("*** Thrd:%s Item:%u Event:%u arg:%u  q0:%u q1:%u q2:%u",
+         GetName(), itemid, GetEventCode(evnt), GetEventArg(evnt),
+         fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size()));
 
    if (itemid>0) {
       WorkingProcessor* proc = fProcessors[itemid];
+
+      DOUT5(("*** Thrd:%s proc:%p destr %s halted %s", GetName(), proc,
+            DBOOL((proc ? proc->fProcessorDestroyment : false)), DBOOL((proc ? proc->fProcessorHalted : false))
+      ));
+
       if (proc && !proc->fProcessorDestroyment && !proc->fProcessorHalted) {
          WorkingThread::IntGuard iguard(proc->fProcessorRecursion);
 

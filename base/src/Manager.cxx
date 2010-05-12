@@ -390,7 +390,6 @@ void dabc::Manager::init()
 void dabc::Manager::destroy()
 {
    DestroyPar(stParName);
-   SyncProcessor();
 }
 
 void dabc::Manager::InitSMmodule()
@@ -691,11 +690,13 @@ bool dabc::Manager::DoDeleteAllModules(int appid)
 
    do {
       if (m!=0) {
-         DOUT2(("Stop and delete module %s", m->GetName()));
+         DOUT3(("Stop module %s", m->GetName()));
          m->Stop();
+         DOUT3(("Halt module %s", m->GetName()));
          m->Halt();
+         DOUT3(("Destroy module %s", m->GetName()));
          delete m;
-         DOUT2(("Stop and delete module done"));
+         DOUT3(("Stop and delete module done"));
          m = 0;
       }
 
@@ -755,8 +756,6 @@ void dabc::Manager::HaltManager()
    Execute("HaltManager");
 
    DOUT3((" +++++++++ DO SYNC +++++++++"));
-
-   SyncProcessor();
 
    HaltProcessor();
 
@@ -989,7 +988,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          cmd_res = cmd_postponed;
       } else
       if ((transportkind==0) || (strlen(transportkind)==0)) {
-         port->AssignTransport(0);
+         port->AssignTransport(0, true);
          cmd_res = cmd_true;
       } else {
          Transport* tr = 0;
@@ -1009,7 +1008,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
             EOUT(("Cannot create transport of kind %s", transportkind));
             cmd_res = cmd_false;
          } else {
-            port->AssignTransport(tr);
+            tr->AttachPort(port);
             cmd_res = cmd_true;
          }
       }
@@ -1075,6 +1074,8 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
 
       int appid = cmd->GetInt("AppId", 0);
 
+      DOUT2(("Manager::StopAllModules appid %d", appid));
+
       Iterator iter(this);
 
       while (iter.next()) {
@@ -1083,6 +1084,9 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
             if ((appid<0) || (m->GetAppId() == appid))
                m->Stop();
       }
+
+      DOUT2(("Manager::StopAllModules appid %d done", appid));
+
    } else
    if (cmd->IsName(CmdDeletePool::CmdName())) {
       dabc::MemoryPool* pool = FindPool(cmd->GetPar("PoolName"));
@@ -1402,6 +1406,8 @@ bool dabc::Manager::StartAllModules(int appid)
 
 bool dabc::Manager::StopAllModules(int appid)
 {
+   DOUT0(("Stop modules"));
+
    return Execute(new CmdStopAllModules(appid));
 }
 
@@ -1486,6 +1492,7 @@ bool dabc::Manager::DoCleanupManager(int appid)
 {
    DOUT3(("DoCleanupManager appid = %d", appid));
 
+//   dabc::SetDebugLevel(5);
 
    DOUT3(("Delete modules with app id %d", appid));
    DoDeleteAllModules(appid);
@@ -1811,7 +1818,7 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
    }
 */
 
-   DOUT4(("DoStateTransition %s", stcmd));
+   DOUT0(("DoStateTransition %s", stcmd));
 
    const char* tgtstate = TargetStateName(stcmd);
 
@@ -1821,7 +1828,7 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
 
    if (!Execute(new CmdSetParameter(stParName, tgtstate))) res = false;
 
-   DOUT4(("DoStateTransition %s res = %s", stcmd, DBOOL(res)));
+   DOUT0(("DoStateTransition %s res = %s", stcmd, DBOOL(res)));
 
    return res;
 }

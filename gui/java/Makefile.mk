@@ -5,6 +5,7 @@ ifneq ($(shell which javac),)
 exes::
 	@echo "Compiling java gui..."
 	cd $(DABCSYS)/gui/java/generic; export DIMDIR=$(DIMDIR); make -j1 all 
+	cd $(DABCSYS)/gui/java/generic/application; export DIMDIR=$(DIMDIR); make -j1 all 
 
 docs::
 	@echo "Compiling java gui docs..."
@@ -23,3 +24,5 @@ endif
 clean::
 	@echo "Cleaning java gui..."
 	@cd $(DABCSYS)/gui/java/generic; $(MAKE) clean
+	@cd $(DABCSYS)/gui/java/generic/application; $(MAKE) clean 
+	

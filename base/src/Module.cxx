@@ -60,13 +60,15 @@ dabc::Module::~Module()
 {
    DOUT3(( "dabc::Module::~Module() %s starts", GetName()));
 
-   fRunState = msHalted;
+   if (fRunState != msHalted) {
+      DoHalt();
 
-   HaltProcessor();
+      HaltProcessor();
 
-   // by this we stop any further events processing and can be sure that
-   // destroying module items will not cause seg.fault
-   RemoveProcessorFromThread(true);
+      // by this we stop any further events processing and can be sure that
+      // destroying module items will not cause seg.fault
+      RemoveProcessorFromThread(true);
+   }
 
    // one should call destructor of children here, while
    // all ModuleItem objects will try to access Module method ItemDestroyed
@@ -170,17 +172,21 @@ void dabc::Module::Stop()
 
 bool dabc::Module::Halt()
 {
-   DOUT1(("Halt module %s", GetName()));
+   DOUT3(("Halt module %s  %p", GetName(), dynamic_cast<WorkingProcessor*> (this)));
 
    bool res = (Execute("HaltModule")==cmd_true);
 
-   DOUT1(("Halt module %s after exec %s thrd %p", GetName(), DBOOL(res), dabc::mgr()->CurrentThread()));
+   DOUT3(("Halt module %s after exec %s issamethrd %s  cmdslvl:%d", GetName(), DBOOL(res), DBOOL(dabc::mgr()->CurrentThread()==ProcessorThread()), fProcessorCommandsLevel));
+
+//   if (IsName("Module9") || IsName("Module8")) dabc::SetDebugLevel(5);
 
    if (!HaltProcessor()) res = false;
 
-   DOUT1(("Halt module %s  res %s", GetName(), DBOOL(res)));
+   DOUT3(("Halt module %s  res %s", GetName(), DBOOL(res)));
 
    RemoveProcessorFromThread(true);
+
+   DOUT3(("Remove from thread %s", GetName()));
 
    return res;
 }
@@ -244,6 +250,8 @@ bool dabc::Module::DoStart()
 
 bool dabc::Module::DoStop()
 {
+   DOUT4(("Module::DoStop %s", GetName()));
+
    if (!IsRunning()) return true;
 
    for (unsigned n=0;n<fItems.size();n++) {
@@ -255,6 +263,8 @@ bool dabc::Module::DoStop()
 
    AfterModuleStop();
 
+   DOUT4(("Module::DoStop %s done", GetName()));
+
    return true;
 }
 
@@ -264,6 +274,8 @@ int dabc::Module::DoHalt()
 
    BeforeModuleHalt();
 
+   int res = cmd_true;
+
    for (unsigned n=0;n<fItems.size();n++) {
       ModuleItem* item = (ModuleItem*) fItems.at(n);
       if (item==0) continue;
@@ -271,11 +283,15 @@ int dabc::Module::DoHalt()
       item->DoHalt();
       if (!item->HaltProcessor()) {
          EOUT(("Cannot halt item %s", item->GetFullName().c_str()));
-         return cmd_false;
+         res = cmd_false;
       }
    }
 
-   return cmd_true;
+   fLostEvents.Reset();
+
+   fRunState = msHalted;
+
+   return res;
 }
 
 
@@ -440,6 +456,7 @@ void dabc::Module::GetUserEvent(ModuleItem* item, uint16_t evid)
    if (IsRunning())
       ProcessUserEvent(item, evid);
    else
+   if (IsStopped())
       fLostEvents.Push(CodeEvent(evid, item->ItemId()));
 }
 
@@ -447,10 +464,14 @@ void dabc::Module::ProcessEvent(EventId evid)
 {
    switch (dabc::GetEventCode(evid)) {
       case evntReinjectlost:
+         DOUT5(("Module %s Reinject lost event num %u", GetName(), fLostEvents.Size()));
+
          if (fLostEvents.Size()>0) {
             EventId user_evnt = fLostEvents.Pop();
 
             ModuleItem* item = GetItem(GetEventItem(user_evnt));
+
+            DOUT5(("Module %s Item %s Lost event %u", GetName(), DNAME(item), GetEventCode(user_evnt)));
 
             if (item!=0)
                GetUserEvent(item, GetEventCode(user_evnt));

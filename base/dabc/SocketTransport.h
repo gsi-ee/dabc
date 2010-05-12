@@ -58,12 +58,10 @@ namespace dabc {
          virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const char* info);
 
-         virtual void ErrorCloseTransport();
-
          virtual void HaltTransport();
 
 
-         bool        fIsDatagram;  // indicate if this is datagram socket and one can only user recv once per data packaet
+         bool        fIsDatagram;  // indicate if this is datagram socket and one can only user recv once per data packet
          char*       fHeaders;
          RecIdsQueue fSendQueue;
          RecIdsQueue fRecvQueue;
@@ -77,7 +75,7 @@ namespace dabc {
          SocketTransport(SocketDevice* dev, Port* port, bool useackn, int fd, bool isdatagram = false);
          virtual ~SocketTransport();
 
-         virtual unsigned MaxSendSegments() { return 1000; }
+         virtual unsigned MaxSendSegments() { return 1000000; }
    };
 }
 

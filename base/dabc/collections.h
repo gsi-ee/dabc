@@ -30,6 +30,7 @@ namespace dabc {
    class Command;
    class Basic;
    class Buffer;
+   class WorkingProcessor;
 
    typedef uint64_t EventId;
 
@@ -353,21 +354,20 @@ namespace dabc {
 
       public:
 
-         enum EKind { kindNone, kindSubmit, kindReply, kindExe };
+         enum EKind { kindNone, kindSubmit, kindReply, kindAssign };
 
       protected:
 
          Queue<Command*>    fQueue;
          EKind              fKind;
-         Mutex              *fCmdsMutex;
          uint32_t           fIdCounter;
 
       public:
-         CommandsQueue(bool replyqueue = false, bool withmutex = true);
-         CommandsQueue(EKind kind);
+         CommandsQueue(EKind kind = kindNone);
          virtual ~CommandsQueue();
          uint32_t Push(Command* cmd);
          Command* Pop();
+         Command* Pop(Mutex* m);
          Command* PopWithId(uint32_t id);
          Command* Front();
          bool HasCommand(Command* cmd);
@@ -376,7 +376,7 @@ namespace dabc {
 
          void ReplyAll(int res);
 
-         void Cleanup();
+         void Cleanup(Mutex* m = 0, WorkingProcessor* proc = 0);
    };
 
 };

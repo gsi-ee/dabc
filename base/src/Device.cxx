@@ -77,7 +77,7 @@ bool dabc::Device::DoDeviceCleanup(bool full)
 
          DOUT3(("Check transport %p", tr));
 
-         if (tr->CheckNeedCleanup(full)) {
+         if (tr->CanCleanupTransport(full)) {
              // by this we exclude any new access to transport from device
              fTransports.remove(tr);
              fDelTrans.push_back(tr);
@@ -92,6 +92,10 @@ bool dabc::Device::DoDeviceCleanup(bool full)
       Transport* tr = (Transport*) fDelTrans[0];
       fDelTrans.remove_at(0);
       if (tr==0) continue;
+
+      DOUT3(("Device %s clenaup transport %p", GetName(), tr));
+
+      tr->MakeTranportCleanup();
 
       DOUT3(("Device %s halt transport %p", GetName(), tr));
 

@@ -45,7 +45,7 @@ namespace dabc {
 
          virtual void PortChanged();
 
-         virtual bool _IsReadyForCleanup();
+         virtual void CleanupTransport();
 
       public:
          LocalTransport(LocalDevice* dev, Port* port, Mutex* mutex, bool owner, bool memcopy);

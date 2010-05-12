@@ -34,6 +34,7 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
    fProcessorMainMutex(0),
    fProcessorSubmCommands(CommandsQueue::kindSubmit),
    fProcessorReplyCommands(CommandsQueue::kindReply),
+   fProcessorAssignCommands(CommandsQueue::kindAssign),
    fProcessorCommands(CommandsQueue::kindSubmit),
    fProcessorCommandsLevel(0),
 
@@ -56,6 +57,8 @@ dabc::WorkingProcessor::WorkingProcessor(Folder* parsholder) :
 dabc::WorkingProcessor::~WorkingProcessor()
 {
    DOUT5(("~WorkingProcessor %p %d thrd:%p", this, fProcessorId, fProcessorThread));
+
+   CancelCommands();
 
    DestroyAllPars();
 
@@ -263,7 +266,7 @@ int dabc::WorkingProcessor::ProcessCommand(dabc::Command* cmd)
    if (completed)
       dabc::Command::Reply(cmd, cmd_res);
 
-   DOUT3(("ProcessCommand cmd %p lvl %d done", cmd, fProcessorCommandsLevel));
+   DOUT3(("ProcessCommand cmd %p lvl %d done still queued %u", cmd, fProcessorCommandsLevel, fProcessorCommands.Size()));
 
    return cmd_res;
 }
@@ -953,6 +956,8 @@ bool dabc::WorkingProcessor::Assign(Command* cmd)
       return false;
    }
 
+   fProcessorAssignCommands.Push(cmd);
+
    cmd->AddCaller(this, 0);
 
    return true;
@@ -967,7 +972,6 @@ bool dabc::WorkingProcessor::Submit(dabc::Command* cmd, int priority)
    {
       LockGuard lock(fProcessorMainMutex);
 
-
       if ((fProcessorThread==0) || (fProcessorId==0)) {
          EOUT(("Command %s cannot be submitted - thread is not assigned", cmd->GetName()));
          res = false;
@@ -976,12 +980,13 @@ bool dabc::WorkingProcessor::Submit(dabc::Command* cmd, int priority)
          res = false;
       } else {
          if (priority == priorityMagic) priority = fProcessorPriority; else
-         if (priority == priorityDefault) priority = fProcessorPriority; else
-         if (priority == priorityMinimum) priority = fProcessorThread->fNumQueues-1;
+         if (priority == priorityDefault) priority = 0; else
+         if (priority == priorityMinimum) priority = -1;
+
 
          uint32_t arg = fProcessorSubmCommands.Push(cmd);
 
-         DOUT5(("Submit command %s with id %u to processor %p %u thrd %p", cmd->GetName(), arg, this, fProcessorId, fProcessorThread));
+         DOUT5(("Submit command %s with id %u to processor %p %u thrd %p priority %d", cmd->GetName(), arg, this, fProcessorId, fProcessorThread, priority));
 
          fProcessorThread->_Fire(CodeEvent(evntSubmitCommand, fProcessorId, arg), priority);
       }
@@ -992,13 +997,25 @@ bool dabc::WorkingProcessor::Submit(dabc::Command* cmd, int priority)
    return res;
 }
 
-bool dabc::WorkingProcessor::GetReply(dabc::Command* cmd)
+bool dabc::WorkingProcessor::GetCommandReply(dabc::Command* cmd, bool* exe_ready)
 {
    if (cmd==0) return false;
 
+   if (fProcessorMainMutex==0) {
+      EOUT(("!!!!!!!!!!! Proc %p GetCommandReply %s without mutex", this, cmd->GetName()));
+   }
+
    LockGuard lock(fProcessorMainMutex);
 
-   if (fProcessorThread==0) {
+   if (exe_ready) {
+      *exe_ready = true;
+      _FireDoNothingEvent();
+      return true;
+   }
+
+   fProcessorAssignCommands.RemoveCommand(cmd);
+
+   if (!_IsFireEvent()) {
       EOUT(("Command %s cannot be get for reply - thread is not assigned", cmd->GetName()));
       return false;
    }
@@ -1011,8 +1028,14 @@ bool dabc::WorkingProcessor::GetReply(dabc::Command* cmd)
 
 void dabc::WorkingProcessor::CancelCommands()
 {
-   fProcessorSubmCommands.Cleanup();
-   fProcessorReplyCommands.Cleanup();
+//   fProcessorSubmCommands.Cleanup(fProcessorMainMutex);
+//   fProcessorReplyCommands.Cleanup(fProcessorMainMutex);
+//   fProcessorAssignCommands.Cleanup(fProcessorMainMutex, this);
+
+   fProcessorSubmCommands.Cleanup(0);
+   fProcessorReplyCommands.Cleanup(0);
+   fProcessorAssignCommands.Cleanup(0, this);
+
 }
 
 void dabc::WorkingProcessor::ProcessorSleep(double tmout)

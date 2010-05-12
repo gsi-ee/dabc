@@ -38,72 +38,66 @@ void dabc::BuffersQueue::Cleanup(Mutex* mutex)
 
 // ____________________________________________________________________
 
-
-dabc::CommandsQueue::CommandsQueue(bool replyqueue, bool withmutex) :
-   fQueue(16, true),
-   fKind(replyqueue ? kindReply : kindSubmit),
-   fCmdsMutex(0),
-   fIdCounter(0)
-{
-   if (withmutex) fCmdsMutex = new Mutex;
-}
-
 dabc::CommandsQueue::CommandsQueue(EKind kind) :
    fQueue(16, true),
    fKind(kind),
-   fCmdsMutex(0),
    fIdCounter(0)
 {
-
 }
 
 
 dabc::CommandsQueue::~CommandsQueue()
 {
    Cleanup();
-
-   if (fCmdsMutex) {   
-      delete fCmdsMutex; 
-      fCmdsMutex = 0;
-   }
 }
 
-void dabc::CommandsQueue::Cleanup()
+void dabc::CommandsQueue::Cleanup(Mutex* m, WorkingProcessor* proc)
 {
    Command* cmd = 0;
    
-   while ((cmd = Pop()) != 0) {
-      DOUT5(("CommandsQueue::Cleanup command %s", cmd->GetName())); 
-      if (fKind == kindReply)
-         dabc::Command::Finalise(cmd);  
-      else   
-         dabc::Command::Reply(cmd, false);
+
+   while ((cmd = Pop(m)) != 0) {
+
+      switch (fKind) {
+         case kindNone:
+            break;
+         case kindSubmit:
+            dabc::Command::Reply(cmd, false);
+            break;
+         case kindReply:
+            dabc::Command::Finalise(cmd);
+            break;
+         case kindAssign:
+            if (proc) cmd->RemoveCaller(proc);
+            break;
+      }
    }
 }
          
 uint32_t dabc::CommandsQueue::Push(Command* cmd)
 { 
-   LockGuard guard(fCmdsMutex);
    fQueue.Push(cmd);
 
-   if ((fKind == kindReply) || (fKind == kindSubmit)) {
-      do { fIdCounter++; } while (fIdCounter==0);
-      cmd->fCmdId = fIdCounter;
-      return fIdCounter;
-   }
-   return 0;
+   if ((fKind != kindReply) && (fKind != kindSubmit)) return 0;
+
+   do { fIdCounter++; } while (fIdCounter==0);
+   cmd->fCmdId = fIdCounter;
+   return fIdCounter;
 }
          
+dabc::Command* dabc::CommandsQueue::Pop(Mutex* m)
+{
+   LockGuard lock(m);
+   return Pop();
+}
+
 dabc::Command* dabc::CommandsQueue::Pop() 
 {
-   LockGuard guard(fCmdsMutex); 
    return fQueue.Size()>0 ? fQueue.Pop() : 0;
 }
 
 dabc::Command* dabc::CommandsQueue::PopWithId(uint32_t id)
 {
-   LockGuard guard(fCmdsMutex);
-
    if ((fKind == kindReply) || (fKind == kindSubmit))
       for (unsigned n=0;n<fQueue.Size();n++) {
          dabc::Command* cmd = fQueue.Item(n);
@@ -121,8 +115,6 @@ bool dabc::CommandsQueue::HasCommand(Command* cmd)
 {
    if (cmd==0) return false;
 
-   LockGuard guard(fCmdsMutex);
-
    for (unsigned n=0;n<fQueue.Size();n++)
       if (fQueue.Item(n) == cmd) return true;
 
@@ -131,13 +123,11 @@ bool dabc::CommandsQueue::HasCommand(Command* cmd)
 
 bool dabc::CommandsQueue::RemoveCommand(Command* cmd)
 {
-   if (cmd==0) return false;
+   if ((cmd==0) || (fQueue.Size()==0)) return false;
 
-   LockGuard guard(fCmdsMutex);
-
-   for (unsigned n=0;n<fQueue.Size();n++)
-      if (fQueue.Item(n) == cmd) {
-         fQueue.RemoveItem(n);
+   for (unsigned n=fQueue.Size();n>0;n--)
+      if (fQueue.Item(n-1) == cmd) {
+         fQueue.RemoveItem(n-1);
          return true;
       }
 
@@ -146,13 +136,11 @@ bool dabc::CommandsQueue::RemoveCommand(Command* cmd)
 
 dabc::Command* dabc::CommandsQueue::Front()
 {
-   LockGuard guard(fCmdsMutex); 
    return fQueue.Size()>0 ? fQueue.Front() : 0; 
 }
 
 unsigned dabc::CommandsQueue::Size()
 {
-   LockGuard guard(fCmdsMutex);  
    return fQueue.Size();
 }
 

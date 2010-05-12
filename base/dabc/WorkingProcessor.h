@@ -164,9 +164,14 @@ namespace dabc {
 
          virtual double ProcessTimeout(double last_diff) { return -1.; }
 
+         inline bool _IsFireEvent() const
+         {
+            return fProcessorThread && (fProcessorId>0) && !fProcessorStopped;
+         }
+
          inline void _FireEvent(uint16_t evid)
          {
-            if (fProcessorThread && (fProcessorId>0) && !fProcessorStopped)
+            if (_IsFireEvent())
                fProcessorThread->_Fire(CodeEvent(evid, fProcessorId), fProcessorPriority);
          }
 
@@ -178,7 +183,7 @@ namespace dabc {
 
          inline void _FireEvent(uint16_t evid, uint32_t arg, int pri = -1)
          {
-            if (fProcessorThread && (fProcessorId>0) && !fProcessorStopped)
+            if (_IsFireEvent())
                fProcessorThread->_Fire(CodeEvent(evid, fProcessorId, arg), pri < 0 ? fProcessorPriority : pri);
          }
 
@@ -188,10 +193,10 @@ namespace dabc {
             _FireEvent(evid, arg, pri);
          }
 
-         inline void FireDoNothingEvent()
+         inline void _FireDoNothingEvent()
          {
-            if (fProcessorThread && (fProcessorId>0) && !fProcessorStopped)
-               fProcessorThread->FireDoNothingEvent();
+            if (_IsFireEvent())
+               fProcessorThread->_Fire(CodeEvent(WorkingThread::evntDoNothing), -1);
          }
 
          virtual void ProcessEvent(EventId);
@@ -264,8 +269,9 @@ namespace dabc {
 
          Mutex*           fProcessorMainMutex;         // pointer on main thread mutex
 
-         CommandsQueue    fProcessorSubmCommands;      // list of submitted commands, protected via main thread mutex
-         CommandsQueue    fProcessorReplyCommands;     // list of reply commands, protected via main thread mutex
+         CommandsQueue    fProcessorSubmCommands;      /** list of submitted commands, protected via main thread mutex */
+         CommandsQueue    fProcessorReplyCommands;     /** list of reply commands, protected via main thread mutex */
+         CommandsQueue    fProcessorAssignCommands;    /** list of reply commands, protected via main thread mutex */
 
          CommandsQueue    fProcessorCommands;          // list of commands, which must be processed later
          int              fProcessorCommandsLevel;     /** Number of process commands recursion */
@@ -288,7 +294,7 @@ namespace dabc {
 
 
          int ProcessCommand(dabc::Command* cmd);
-         bool GetReply(dabc::Command* cmd);
+         bool GetCommandReply(dabc::Command* cmd, bool* exe_ready);
 
          inline void CheckHaltCmds(int lvl = 1)
          {

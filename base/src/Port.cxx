@@ -133,9 +133,11 @@ int dabc::Port::ExecuteCommand(Command* cmd)
 
       DOUT5(("%s Get AssignTransport command old %p new %p", GetFullName().c_str(), oldtr, fTransport));
 
-      if (oldtr!=0) oldtr->AssignPort(0);
+      if (oldtr!=0) oldtr->SetPort(0);
 
-      if (fTransport!=0) fTransport->AssignPort(this);
+      if (fTransport!=0)
+         if (!fTransport->SetPort(this))
+            fTransport = 0;
 
       fInputPending = 0;
       fOutputPending = 0;
@@ -155,7 +157,7 @@ int dabc::Port::ExecuteCommand(Command* cmd)
 
 void dabc::Port::Disconnect()
 {
-   if (fTransport!=0) fTransport->AssignPort(0);
+   if (fTransport!=0) fTransport->SetPort(0);
    fTransport = 0;
    fInputPending = 0;
    fOutputPending = 0;
@@ -180,6 +182,9 @@ void dabc::Port::DoHalt()
    while (SkipInputBuffers(1));
 
    Disconnect();
+
+   DOUT3(("Halt port %s Transport %p done", GetFullName().c_str(), fTransport));
+
 }
 
 bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)

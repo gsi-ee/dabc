@@ -21,8 +21,8 @@ dabc::ModuleSync::ModuleSync(const char* name, Command* cmd) :
    Module(name, cmd),
    fTmoutExcept(false),
    fDisconnectExcept(false),
-   fSyncCommands(false),
-   fNewCommands(),
+   fSyncCommands(CommandsQueue::kindSubmit),
+   fNewCommands(CommandsQueue::kindSubmit),
    fWaitItem(0),
    fWaitId(0),
    fWaitRes(false),
@@ -32,11 +32,9 @@ dabc::ModuleSync::ModuleSync(const char* name, Command* cmd) :
 
 dabc::ModuleSync::~ModuleSync()
 {
-   fRunState = msHalted;
+   // if module was not yet halted, make sure that mainloop of the module is leaved
 
-   // if module assigned to thread, make sure that mainloop of the module is leaved
-   ExitMainLoop();
-
+   if (fRunState != msHalted) ExitMainLoop();
 
    if (fLoopStatus != stInit) {
       EOUT(("Problem in destructor - cannot leave normally main loop, must crash :-O"));

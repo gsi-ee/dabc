@@ -98,8 +98,6 @@ void dabc::DataTransport::PortChanged()
          Execute("CloseOperation", 1.);
 
       // release buffers as soon as possible, using mutex
-      fInpQueue.Cleanup(&fMutex);
-      fOutQueue.Cleanup(&fMutex);
    }
 }
 
@@ -137,6 +135,15 @@ void dabc::DataTransport::StopTransport()
       fActive = false;
    }
 }
+
+void dabc::DataTransport::CleanupTransport()
+{
+   fInpQueue.Cleanup(&fMutex);
+   fOutQueue.Cleanup(&fMutex);
+
+   dabc::Transport::CleanupTransport();
+}
+
 
 bool dabc::DataTransport::Recv(Buffer* &buf)
 {
@@ -471,7 +478,7 @@ void dabc::DataTransport::ProcessOutputEvent()
 
    bool dofire = false;
 
-   if (!IsErrorState()) {
+   if (!IsTransportErrorFlag()) {
       if (buf->GetTypeId() == dabc::mbt_EOF) {
          // we know that this is very last packet
          // we can close output

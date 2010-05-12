@@ -98,6 +98,8 @@ namespace dabc {
 
          bool _Waiting() const { return fWaiting; }
 
+         long int _FiredCounter() const { return fFiredCounter; }
+
       protected:
 
          Mutex           fInternCondMutex;

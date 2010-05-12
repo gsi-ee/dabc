@@ -43,7 +43,7 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
 {
    if (qp==0) return;
 
-   Init(port, useackn);
+   InitNetworkTransport(port, useackn);
 
    if (multi_gid) {
 
@@ -160,7 +160,7 @@ verbs::Transport::~Transport()
 
    DOUT3(("verbs::Transport::~Transport %p id %d Close", this, GetId()));
 
-   Cleanup();
+   CleanupNetworkTransport();
 
    DOUT3(("verbs::Transport::~Transport %p id %d delete headers pool", this, GetId()));
 

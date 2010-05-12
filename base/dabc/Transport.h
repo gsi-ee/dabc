@@ -34,14 +34,22 @@ namespace dabc {
       friend class Port;
       friend class Device;
 
-      enum TransportStatus { stCreated, stAssigned, stNeedCleanup, stDoingCleanup };
+      enum ETransportState {
+            stCreated,                 /** After transport created */
+            stDoingAttach,             /** Transport call port->AssignTransport and now waits for assignment */
+            stAssigned,                /** Normal working mode for transport */
+            stDoingDettach,            /** This is time when transport want to remove port pointer and waits reply from port */
+            stNeedCleanup,             /** State which requires cleanup of the transport, should be performed from device */
+            stDoingCleanup,            /** Indicates that CleanupTransport is running */
+            stDidCleanup               /** Final state, transport can be halted and destroyed */
+      };
 
       protected:
          Mutex           fPortMutex;
          Port*           fPort;
          Device*         fDevice;
-         TransportStatus fTransportStatus; // this status used together with port mutex only
-         bool            fErrorState;      // set when error is detected
+         ETransportState fTransportState; // this status used together with port mutex only
+         bool            fTransportErrorFlag;     // set when error is detected
 
          Transport(Device* dev);
          void FireInput();
@@ -57,17 +65,33 @@ namespace dabc {
          /** Method is used to asynchronously destroy transport instance */
          virtual void HaltTransport();
 
+         /** Method called at the moment when port pointer is set to 0
+          * Normally called from the Port thread. */
+         virtual void CleanupTransport() {}
+
+         /** Method called from port thread to set fPort pointer
+          * If return false, command rejected and therefore transport pointer should not be used by port
+          * Normally method initiated via AttachPort/DettachPort calls.
+          * /param  called_by_port indicates if called from port thread (default) */
+         bool SetPort(Port* port, bool called_by_port = true);
+
+         /** Method called by device to check if transport can be destroyed,
+          * if /paran force specified, one should tries to dettach port in any cases */
+         bool CanCleanupTransport(bool force);
+
+         /** Method called to complete transport cleanup (if necessary) before
+          * transport will be halted and destroyed */
+         void MakeTranportCleanup();
+
 
          MemoryPool* GetPortPool();
 
          static long gNumTransports;
 
-         virtual bool _IsReadyForCleanup();
-
          // call this method if you want to normally close transport
          void CloseTransport() { DettachPort(); }
 
-         bool IsErrorState() const { return fErrorState; }
+         bool IsTransportErrorFlag() const { return fTransportErrorFlag; }
 
          // this method should be called if error is detected
          // and transport object must be cleaned up and destroyed
@@ -80,9 +104,11 @@ namespace dabc {
 
          Device* GetDevice() const { return fDevice; }
 
-         void AssignPort(Port* port);
+         /** This should be called after transport constructor to
+          * associate transport with port. Runs asynchronousely */
+         bool AttachPort(Port* port, bool sync = false);
+
          void DettachPort();
-         bool CheckNeedCleanup(bool force);
          bool IsDoingCleanup();
 
          bool IsPortAssigned() const;

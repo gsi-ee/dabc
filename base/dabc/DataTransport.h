@@ -114,6 +114,8 @@ namespace dabc {
          virtual void StartTransport();
          virtual void StopTransport();
 
+         virtual void CleanupTransport();
+
          virtual int ExecuteCommand(Command* cmd);
 
          Mutex              fMutex;
