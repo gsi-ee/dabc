@@ -32,7 +32,7 @@ public:
 class ServiceClient : public DimClient
   {
 
-    void infoHandler()
+    void infoHandler() // for all registered services
       {
         DimInfo *dimi;
         char *name,*format,*color,*state;
@@ -48,18 +48,28 @@ class ServiceClient : public DimClient
     		if(count < 4)cout<< "ERROR missing states! "<<count+1<<" of 5" << endl;
     		count=0;
     	}
-    	cout<<count<<".";
+    	cout<<count<<"."<<flush;
+    	if((control<2)&&(lines++ > 40)){cout<<endl;lines=0;}
         //cout << "c> "<<name << " : " << sr->state << endl;
     	strcpy(last,sr->state);
+    	if(strcmp(sr->state,"Halted")  ==0)halt++;
+    	if(strcmp(sr->state,"Ready") ==0)ready++;
+    	if(strcmp(sr->state,"Configured")==0)config++;
+    	if(strcmp(sr->state,"Running")  ==0)run++;
        }
 public:
-    ServiceClient()
+    ServiceClient(int ctrl)
       {
         int type;
         char *name, *format, fullname[132];
         DimInfo *dimi;
         count=0;
         lines=0;
+        control=ctrl;
+        halt=5;
+        ready=5;
+        config=5;
+        run=5;
         br = new DimBrowser();
         br->getServices("*Status");
         while ((type = br->getNextService(name, format))!= 0)
@@ -80,8 +90,10 @@ private:
           char state[16];
         } staterec;
     staterec *sr;
+public:
     char last[16];
-    int count, lines;
+    int count, lines, control;
+    int config, ready, run, halt;
   };
 
 //-----------------------------------------------
@@ -95,7 +107,7 @@ int main(int argc, char **argv)
     DimBrowser br;
     int type, n, num;
 
-    ServiceClient servcli;
+    ServiceClient servcli(argc);
 
     if(argc > 1){ // send commands
 		strcpy(pref,"DABC/");
@@ -111,27 +123,41 @@ int main(int argc, char **argv)
 			strcpy(cmd,pref);
 			strcat(cmd,"Configure");
 			cout << "c> "<<cmd << " ....." << endl;
+			servcli.config=0;
 			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
-			sleep(5);
+			// wait for config=5
+			while(servcli.config != 5) sleep(1);
+			sleep(1);
 			strcpy(cmd,pref);
 			strcat(cmd,"Enable");
 			cout << "c> "<<cmd << " ....." << endl;
+			servcli.ready=0;
 			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
-			sleep(5);
+			// wait for ready
+			while(servcli.ready != 5) sleep(1);
+			sleep(1);
 			strcpy(cmd,pref);
 			strcat(cmd,"Start");
 			cout << "c> "<<cmd << " ....." << endl;
+			servcli.run=0;
 			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
+			// wait for run
+			while(servcli.run != 5) sleep(1);
 			sleep(5);
 			strcpy(cmd,pref);
 			strcat(cmd,"Stop");
 			cout << "c> "<<cmd << " ....." << endl;
+			servcli.ready=0;
 			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
-			sleep(5);
+			while(servcli.ready != 5) sleep(1);
+			sleep(1);
 			strcpy(cmd,pref);
 			strcat(cmd,"Halt");
 			cout << "c> "<<cmd << " ....." << endl;
+			servcli.halt=0;
 			DimClient::sendCommand(cmd,"x1gSFfpv0JvDA");
+			// wait for halt
+			while(servcli.halt != 5) sleep(1);
 		  }
     } else while (1) sleep(5);
 
