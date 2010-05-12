@@ -189,8 +189,11 @@ do_compl:
       if ((buf==0) || (nethdr->size > buf->GetTotalSize())) {
          EOUT(("Fatal - no buffer to receive data rec %d  buf %p sz1:%d sz2:%d pool:%s",
                  fRecvRecid, buf, nethdr->size, buf->GetTotalSize(), fPool->GetName()));
-         fPool->Print();
-         exit(110);
+
+         ErrorCloseTransport();
+         return;
+         // fPool->Print();
+         // exit(110);
       }
 
       void* hdr = 0;
@@ -199,7 +202,8 @@ do_compl:
 
       if (!StartNetRecv(hdr, fFullHeaderSize - sizeof(NetworkHeader), buf, nethdr->size)) {
          EOUT(("Cannot start recv - fatal error"));
-         exit(111);
+         ErrorCloseTransport();
+         return;
       }
    } else {
       {

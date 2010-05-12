@@ -1818,7 +1818,7 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
    }
 */
 
-   DOUT0(("DoStateTransition %s", stcmd));
+   DOUT3(("DoStateTransition %s", stcmd));
 
    const char* tgtstate = TargetStateName(stcmd);
 
@@ -1828,7 +1828,7 @@ bool dabc::Manager::DoStateTransition(const char* stcmd)
 
    if (!Execute(new CmdSetParameter(stParName, tgtstate))) res = false;
 
-   DOUT0(("DoStateTransition %s res = %s", stcmd, DBOOL(res)));
+   DOUT3(("DoStateTransition %s res = %s", stcmd, DBOOL(res)));
 
    return res;
 }

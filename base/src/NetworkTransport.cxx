@@ -420,6 +420,7 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
    Buffer* buf = 0;
    uint32_t kind = 0;
    bool dofire = false;
+   bool doerrclose = false;
 
    {
       dabc::LockGuard guard(fMutex);
@@ -428,6 +429,7 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
 
       if (hdr->chkword != 123) {
          EOUT(("Error in network header magic number"));
+         doerrclose = true;
       }
 
       kind = hdr->kind;
@@ -463,6 +465,9 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
 
    if (dofire)
       FireInput();
+   else
+   if (doerrclose)
+      ErrorCloseTransport();
    else
       FillRecvQueue(buf);
 }
