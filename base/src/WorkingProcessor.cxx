@@ -786,6 +786,19 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
    return cmd_res;
 }
 
+int dabc::WorkingProcessor::ExecuteCommand(Command* cmd)
+{
+   return cmd_false;
+}
+
+bool dabc::WorkingProcessor::ReplyCommand(Command* cmd)
+{
+   /** For backward compatibility keep call to _ProcessReply,
+    *  will be removed with next major release */
+   return ! _ProcessReply(cmd);
+}
+
+
 /** This method should be used to execute command synchronously from processor itself.
  *  Method let thread event loop running.
  */

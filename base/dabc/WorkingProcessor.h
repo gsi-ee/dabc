@@ -154,6 +154,13 @@ namespace dabc {
           * Return true if command can be destroyed by framework*/
          virtual bool ReplyCommand(Command* cmd) { return true; }
 
+         /** For backward compatibility with previous version,
+          * where command processing where integrated with CommandClient class
+          * In that version method was executed under extra mutex (underscore in the name) and
+          * should return false if command can be destroyed
+          * Only for compatibility, will be removed in next major release */
+         virtual bool _ProcessReply(Command* cmd) { return false; }
+
 
          // Method is called when requested time point is reached
          // Rewrite method in derived class to react on this event
