@@ -525,7 +525,7 @@ void dabc::WorkingThread::_Fire(EventId arg, int nq)
    _PushEvent(arg, nq);
    fWorkCond._DoFire();
 
-//#ifdef DO_INDEX_CHECK
+#ifdef DO_INDEX_CHECK
 
    long sum = 0;
    for (int n=0;n<fNumQueues;n++) sum+=fQueues[n].Size();
@@ -535,7 +535,7 @@ void dabc::WorkingThread::_Fire(EventId arg, int nq)
             GetName(), sum, fWorkCond._FiredCounter(),
             GetEventCode(arg), GetEventItem(arg), GetEventArg(arg)));
    }
-//#endif
+#endif
 
 }
 
@@ -564,9 +564,10 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
    if (itemid>0) {
       WorkingProcessor* proc = fProcessors[itemid];
 
-      DOUT5(("*** Thrd:%s proc:%p destr %s halted %s", GetName(), proc,
-            DBOOL((proc ? proc->fProcessorDestroyment : false)), DBOOL((proc ? proc->fProcessorHalted : false))
-      ));
+      DOUT5(("*** Thrd:%s proc:%p destr %s halted %s",
+            GetName(), proc,
+            DBOOL(proc ? proc->fProcessorDestroyment : false),
+            DBOOL(proc ? proc->fProcessorHalted : false) ));
 
       if (proc && !proc->fProcessorDestroyment && !proc->fProcessorHalted) {
          WorkingThread::IntGuard iguard(proc->fProcessorRecursion);
