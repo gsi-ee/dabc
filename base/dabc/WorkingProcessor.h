@@ -144,15 +144,18 @@ namespace dabc {
 
          /** This method called before command will be executed.
           *  Only if cmd_ignore is returned, ExecuteCommand will be called for this command
-          *  Otherwise command is replied with returned value */
+          *  Otherwise command is replied with returned value
+          *  Contrary to ExecuteCommand, PreviewCommand used by dabc classes itself.
+          *  Therefore, if method redefined in inherited class,
+          *  one should always call PreviewCommand of base class first. */
          virtual int PreviewCommand(Command* cmd);
 
-         /** Main method were command is executed */
-         virtual int ExecuteCommand(Command* cmd) { return cmd_false; }
+         /** Main method where commands are executed */
+         virtual int ExecuteCommand(Command* cmd);
 
          /** Reimplement this method to react on command reply
           * Return true if command can be destroyed by framework*/
-         virtual bool ReplyCommand(Command* cmd) { return true; }
+         virtual bool ReplyCommand(Command* cmd);
 
          /** For backward compatibility with previous version,
           * where command processing where integrated with CommandClient class
