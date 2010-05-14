@@ -1028,13 +1028,13 @@ bool dabc::WorkingProcessor::GetCommandReply(dabc::Command* cmd, bool* exe_ready
 
 void dabc::WorkingProcessor::CancelCommands()
 {
-//   fProcessorSubmCommands.Cleanup(fProcessorMainMutex);
-//   fProcessorReplyCommands.Cleanup(fProcessorMainMutex);
-//   fProcessorAssignCommands.Cleanup(fProcessorMainMutex, this);
+   fProcessorSubmCommands.Cleanup(fProcessorMainMutex);
+   fProcessorReplyCommands.Cleanup(fProcessorMainMutex);
+   fProcessorAssignCommands.Cleanup(fProcessorMainMutex, this);
 
-   fProcessorSubmCommands.Cleanup(0);
-   fProcessorReplyCommands.Cleanup(0);
-   fProcessorAssignCommands.Cleanup(0, this);
+//   fProcessorSubmCommands.Cleanup(0);
+//   fProcessorReplyCommands.Cleanup(0);
+//   fProcessorAssignCommands.Cleanup(0, this);
 
 }
 
