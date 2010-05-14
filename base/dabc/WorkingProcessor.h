@@ -122,8 +122,9 @@ namespace dabc {
          static void SetParsCfgDefaults(unsigned flags) { gParsCfgDefaults = flags; }
 
          /** ! Assign command with processor before command be submitted to other processor
-          * This produce ReplyCommand() call when command execution is finished */
-         bool Assign(Command* cmd);
+          * This produce ReplyCommand() call when command execution is finished
+          * Pointer on command itself returned if operation was successful, otherwise 0 */
+         Command* Assign(Command* cmd);
 
          /** Submit command for execution in the processor */
          bool Submit(Command* cmd, int priority = priorityDefault);

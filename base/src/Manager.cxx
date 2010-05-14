@@ -1155,9 +1155,8 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          newcmd->ClearResult();
 
          SetCmdReceiver(newcmd, manager1name.c_str(), remrecvname.c_str());
-         Assign(newcmd);
 
-         if (!Submit(newcmd))
+         if (!Submit(Assign(newcmd)))
             EOUT(("Cannot submit remote command"));
 
          cmd_res = cmd_postponed;
@@ -1235,9 +1234,8 @@ void dabc::Manager::RecvOverCommandChannel(const char* cmddata)
       cmd->RemovePar("_sendcmd_");
 
       DOUT5(("RecvRemoteCommand %s", cmd->GetName()));
-      Assign(cmd);
 
-      Submit(cmd);
+      Submit(Assign(cmd));
    } else {
       // this is for replies
       int cmdid = cmd->GetInt("_cmdid_",-1);
@@ -1377,9 +1375,8 @@ bool dabc::Manager::ReplyCommand(Command* cmd)
       devname += prnt->GetStr("Device");
 
       SetCmdReceiver(newcmd, manager2name.c_str(), devname.c_str());
-      Assign(newcmd);
 
-      if (!Submit(newcmd)) {
+      if (!Submit(Assign(newcmd))) {
          Command* prnt = TakeInternalCmd("_PCID_", parentid);
          dabc::Command::Reply(prnt, false);
       }

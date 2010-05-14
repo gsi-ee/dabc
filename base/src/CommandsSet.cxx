@@ -169,9 +169,7 @@ bool dabc::CommandsSet::SubmitNextCommand()
 
             fCmds.ItemPtr(n)->state = 1;
 
-            Assign(fCmds.Item(n).cmd);
-
-            fCmds.Item(n).recv->Submit(fCmds.Item(n).cmd);
+            fCmds.Item(n).recv->Submit(Assign(fCmds.Item(n).cmd));
 
             return true;
 

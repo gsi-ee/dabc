@@ -467,8 +467,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
          if (next==0) return dabc::cmd_false;
 
          if (fTimeout) {
-            Assign(cmd);
-            next->Submit(cmd);
+            next->Submit(Assign(cmd));
             return dabc::cmd_postponed;
          }
 

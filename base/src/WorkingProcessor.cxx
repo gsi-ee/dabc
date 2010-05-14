@@ -945,22 +945,22 @@ std::string dabc::WorkingProcessor::ExecuteStr(const char* cmdname, const char* 
    return res;
 }
 
-bool dabc::WorkingProcessor::Assign(Command* cmd)
+dabc::Command* dabc::WorkingProcessor::Assign(Command* cmd)
 {
-   if (cmd==0) return false;
+   if (cmd==0) return 0;
 
    LockGuard lock(fProcessorMainMutex);
 
    if (fProcessorThread==0) {
       EOUT(("Command %s cannot be assigned - thread is not assigned", cmd->GetName()));
-      return false;
+      return 0;
    }
 
    fProcessorAssignCommands.Push(cmd);
 
    cmd->AddCaller(this, 0);
 
-   return true;
+   return cmd;
 }
 
 bool dabc::WorkingProcessor::Submit(dabc::Command* cmd, int priority)
