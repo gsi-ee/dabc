@@ -60,8 +60,10 @@ namespace dabc {
 
          void SetCommandName(const char* name) { SetName(name); }
 
-         /** Method allows to access command handler after proc->Execute(cmd) is done */
-         void SetKeepAlive() { AddCaller(0, 0); }
+         /** Method allows to access command handler after proc->Execute(cmd) is done
+          * Parameter /param on is obsolete, only when true function perform any kind of action
+          * Parameter on will be removes with next major release, kept for backward compatibility */
+         void SetKeepAlive(bool on = true) { if (on) AddCaller(0, 0); }
 
          bool HasPar(const char* name) const;
          void SetPar(const char* name, const char* value);

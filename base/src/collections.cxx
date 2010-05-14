@@ -45,6 +45,14 @@ dabc::CommandsQueue::CommandsQueue(EKind kind) :
 {
 }
 
+dabc::CommandsQueue::CommandsQueue(bool isreply, bool) :
+  fQueue(16, true),
+  fKind(isreply ? kindReply : kindSubmit),
+  fIdCounter(0)
+{
+}
+
+
 
 dabc::CommandsQueue::~CommandsQueue()
 {

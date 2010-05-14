@@ -363,7 +363,10 @@ namespace dabc {
          uint32_t           fIdCounter;
 
       public:
-         CommandsQueue(EKind kind = kindNone);
+         /** Normal constructor */
+         CommandsQueue(EKind kind);
+         /** Keep for compatibility with previous version, will be remove with next major release */
+         CommandsQueue(bool isreply = false, bool withmutex = true);
          virtual ~CommandsQueue();
          uint32_t Push(Command* cmd);
          Command* Pop();

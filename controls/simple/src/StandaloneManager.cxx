@@ -647,7 +647,7 @@ bool dabc::StandaloneManager::Subscribe(Parameter* par, int remnode, const char*
 
 bool dabc::StandaloneManager::Unsubscribe(Parameter* par)
 {
-   CommandsQueue cmds;
+   CommandsQueue cmds(CommandsQueue::kindNone);
 
    {
       LockGuard guard(GetMutex());
