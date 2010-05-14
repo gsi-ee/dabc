@@ -162,7 +162,7 @@ bool dabc::CommandsSet::ReplyCommand(Command* cmd)
 bool dabc::CommandsSet::SubmitNextCommand()
 {
    for (unsigned n=0; n<fCmds.Size();n++)
-      if (fCmds.Item(n).state==0)
+      if (fCmds.Item(n).state==0) {
          if (fCmds.Item(n).recv) {
 
             DOUT5(("CommandsSet distributes cmd %s  item %u size %u", fCmds.Item(n).cmd->GetName(), n, fCmds.Size()));
@@ -179,6 +179,7 @@ bool dabc::CommandsSet::SubmitNextCommand()
             EOUT(("Not able submit next command %s", fCmds.Item(n).cmd->GetName()));
             fCmds.ItemPtr(n)->state = 2;
          }
+      }
 
    return false;
 }

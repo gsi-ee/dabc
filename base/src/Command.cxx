@@ -13,6 +13,8 @@
  ********************************************************************/
 #include "dabc/Command.h"
 
+#include <stdlib.h>
+
 #include "dabc/WorkingProcessor.h"
 #include "dabc/logging.h"
 #include "dabc/threads.h"

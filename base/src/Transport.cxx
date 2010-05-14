@@ -13,6 +13,8 @@
  ********************************************************************/
 #include "dabc/Transport.h"
 
+#include <stdlib.h>
+
 #include "dabc/Port.h"
 #include "dabc/logging.h"
 #include "dabc/Device.h"
@@ -247,13 +249,14 @@ bool dabc::Transport::SetPort(Port* port, bool called_by_port)
 
       initiate = cleanup;
 
-      if (cleanup)
+      if (cleanup) {
          if (called_by_port)
             fTransportState = stDoingCleanup;
          else {
             cleanup = false; // we do not call cleanup, just inform device about it
             fTransportState = stNeedCleanup;
          }
+      }
 
    }
 

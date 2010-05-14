@@ -18,6 +18,7 @@
 #include <time.h>
 #include <math.h>
 #include <unistd.h>
+#include <string.h>
 
 #include "dabc/logging.h"
 
