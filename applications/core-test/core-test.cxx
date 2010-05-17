@@ -451,14 +451,22 @@ class TestModuleCmd : public dabc::ModuleAsync {
 
       virtual int ExecuteCommand(dabc::Command* cmd)
       {
-         DOUT0((" ++++++++++++ Module %s execute command %s ++++++++++++++", GetName(), cmd->GetName()));
-
          if ((fNext<0) || (fCount++>10)) {
+
+            if (fTimeout && fTmCmd) {
+               EOUT(("Module %s waiting for timeout - reject cmd %s", GetName(), cmd->GetName()));
+               return dabc::cmd_false;
+            }
+
             if (fTimeout && (fTmCmd==0)) {
                fTmCmd = cmd;
                ActivateTimeout(5);
+               DOUT0(("Module %s activatye timeout", GetName()));
                return dabc::cmd_postponed;
             }
+
+            DOUT0((" ++++++++++++ Module %s execute command %s ++++++++++++++", GetName(), cmd->GetName()));
+
             return dabc::cmd_true;
          }
 
@@ -480,8 +488,13 @@ class TestModuleCmd : public dabc::ModuleAsync {
       {
          DOUT0((" ++++++++++++ Module %s process timeout diff %5.1f ++++++++++++++", GetName(), last_diff));
 
+         if (fTmCmd==0) return -1;
+
+         DOUT0((" ++++++++++++ Module %s execute command %s mutex %s++++++++++++++", GetName(), fTmCmd->GetName(), DBOOL(fProcessorMainMutex->IsLocked())));
          dabc::Command::Reply(fTmCmd, 1);
          fTmCmd = 0;
+         DOUT0((" ++++++++++++ Module %s reply done ++++++++++++++", GetName()));
+
          return -1;
       }
 
@@ -529,43 +542,55 @@ void TestCmdChain(int number, bool timeout = false)
    DOUT0(("Did manager cleanup"));
 }
 
-void TestCmdSet(int number, bool sync)
+void TestCmdSet(int number, bool sync, int numtest = 1, bool errtmout = false)
 {
    DOUT0(("==============================================="));
    DOUT0(("Test cmd set with %d modules", number));
 
    for (int n=0;n<number;n++) {
-      dabc::Module* m = new TestModuleCmd(FORMAT(("SetModule%d",n)), -1);
+      dabc::Module* m = new TestModuleCmd(FORMAT(("SetModule%d",n)), -1, errtmout);
 
       dabc::mgr()->MakeThreadForModule(m, (n % 2) ? "SetThread0" : "SetThread1");
    }
 
    dabc::mgr()->StartAllModules();
 
-   DOUT0(("==============================================="));
-   DOUT0(("Create set"));
+   for (int ntry=0;ntry<numtest;ntry++) {
 
-   dabc::CommandsSet* set = new dabc::CommandsSet;
+      DOUT0(("================ NTRY = %d ===============================", ntry));
+      DOUT0(("Create set"));
 
-   for (int n=0;n<number;n++) {
-      dabc::Command* cmd = new dabc::Command("MyCommand");
-      SetCmdReceiver(cmd, FORMAT(("SetModule%d",n)));
-      set->Add(cmd);
+      dabc::CommandsSet* set = new dabc::CommandsSet;
+
+      set->SetParallelExe(true);
+
+      for (int n=0;n<number;n++) {
+         dabc::Command* cmd = new dabc::Command("MyCommand");
+         SetCmdReceiver(cmd, FORMAT(("SetModule%d",n)));
+         set->Add(cmd);
+      }
+
+      DOUT0(("Inject set"));
+
+//      if (ntry == numtest-1) dabc::SetDebugLevel(5);
+
+      if (sync) {
+         int res = set->ExecuteSet(2.);
+         delete set;
+         DOUT0(("SET result = %d", res));
+      } else {
+         set->SubmitSet(0, 2.);
+         dabc::mgr()->Sleep(1.);
+         DOUT0(("SET result = unknown"));
+      }
    }
 
-   DOUT0(("Inject set"));
 
-   if (sync) {
-      int res = set->ExecuteSet(2.);
-      delete set;
-      DOUT0(("SET result = %d", res));
-   } else {
-      set->SubmitSet(0, 2.);
-      dabc::mgr()->Sleep(1.);
-      DOUT0(("SET result = uncknown"));
-   }
+   DOUT0(("Do stop modules"));
 
    dabc::mgr()->StopAllModules();
+
+   DOUT0(("Did stop modules"));
 
 //   for (int n=0;n<number;n++)
 //      dabc::mgr()->DeleteModule(FORMAT(("SetModule%d",n)));
@@ -578,10 +603,15 @@ void TestCmdSet(int number, bool sync)
 
 extern "C" void RunCmdTest()
 {
-//   TestMemoryPool();
+
+   TestCmdSet(5, true, 3, true);
+   return;
+
 
 //   TestCmdChain(10, true);
 //   return;
+
+
 
 
    TestCmdChain(20);

@@ -230,7 +230,9 @@ int dabc::CommandsSet::ExecuteSet(double tmout)
 
    int res = ExecuteIn(this, "AnyCommand", tmout);
 
-   DOUT4(("Calling AnyCommand res = %d", res));
+   CancelCommands();
+
+   DOUT1(("Calling AnyCommand res = %d", res));
 
    if (didassign)
       RemoveProcessorFromThread(true);

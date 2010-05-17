@@ -144,7 +144,11 @@ void* dabc::WorkingThread::MainLoop()
 
    while (IsThrdWorking()) {
 
+      DOUT5(("*** Thrd:%s Checking timeouts", GetName()));
+
       tmout = CheckTimeouts();
+
+      DOUT5(("*** Thrd:%s Check timeouts %5.3f", GetName(), tmout));
 
       evid = WaitEvent(tmout);
 
@@ -161,6 +165,9 @@ void* dabc::WorkingThread::MainLoop()
 
 void dabc::WorkingThread::SingleLoop(WorkingProcessor* proc, double tmout_user) throw (StopException)
 {
+
+   DOUT5(("*** Thrd:%s SingleLoop user_tmout %5.3f", GetName(), tmout_user));
+
    if (fExitExplicitLoop)
       if (proc==fExplicitLoop)
          throw StopException();
@@ -543,11 +550,16 @@ dabc::EventId dabc::WorkingThread::WaitEvent(double tmout)
 {
    LockGuard lock(fWorkMutex);
 
-   DOUT5(("*** Thrd:%s Wait Event %5.1f Lock %s cond_cnt %ld q0:%u q1:%u q2:%u",
-         GetName(), tmout, DBOOL(fWorkMutex.IsLocked()), fWorkCond._FiredCounter(),
+   DOUT5(("*** Thrd:%s Wait Event %5.1f cond_cnt %ld q0:%u q1:%u q2:%u",
+         GetName(), tmout, fWorkCond._FiredCounter(),
          fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size()));
 
-   if (fWorkCond._DoWait(tmout)) return _GetNextEvent();
+   if (fWorkCond._DoWait(tmout)) {
+      DOUT5(("*** Thrd:%s Wait done", GetName()));
+      return _GetNextEvent();
+   }
+
+   DOUT5(("*** Thrd:%s Wait timedout", GetName()));
 
    return NullEventId;
 }
@@ -566,8 +578,8 @@ void dabc::WorkingThread::ProcessEvent(EventId evnt)
 
       DOUT5(("*** Thrd:%s proc:%p destr %s halted %s",
             GetName(), proc,
-            DBOOL(proc ? proc->fProcessorDestroyment : false),
-            DBOOL(proc ? proc->fProcessorHalted : false) ));
+            DBOOL((proc ? proc->fProcessorDestroyment : false)),
+            DBOOL((proc ? proc->fProcessorHalted : false)) ));
 
       if (proc && !proc->fProcessorDestroyment && !proc->fProcessorHalted) {
          WorkingThread::IntGuard iguard(proc->fProcessorRecursion);
@@ -731,7 +743,11 @@ double dabc::WorkingThread::CheckTimeouts(bool forcerecheck)
          if (!IsNullTime(tmout->fProcessorPrevFire))
             last_diff = TimeDistance(tmout->fProcessorPrevFire, now);
 
+         DOUT5(("*** Thrd:%s Process timeout of processor %p", GetName(), tmout));
+
          dist = tmout->ProcessTimeout(last_diff);
+
+         DOUT5(("*** Thrd:%s Process timeout of processor %p done", GetName(), tmout));
 
          if (dist>=0.) {
             tmout->fProcessorPrevFire = now;

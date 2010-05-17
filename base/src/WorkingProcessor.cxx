@@ -859,8 +859,6 @@ int dabc::WorkingProcessor::ExecuteIn(dabc::WorkingProcessor* dest, dabc::Comman
          // FIXME when break processor, one should cancel command execution correctly
          if (IsProcessorDestroyment() || IsProcessorHalted()) { res = cmd_false; break; }
 
-//         DOUT0(("Calling single loop %5.1f", (tmout<=0) ? 0.1 : tmout));
-
          SingleLoop((tmout<=0) ? 0.1 : tmout);
       }
    }
@@ -999,7 +997,7 @@ bool dabc::WorkingProcessor::Submit(dabc::Command* cmd, int priority)
 
          uint32_t arg = fProcessorSubmCommands.Push(cmd);
 
-         DOUT5(("Submit command %s with id %u to processor %p %u thrd %p priority %d", cmd->GetName(), arg, this, fProcessorId, fProcessorThread, priority));
+         DOUT5(("Submit command %s with id %u to processor %p %u thrd %s priority %d", cmd->GetName(), arg, this, fProcessorId, DNAME(fProcessorThread), priority));
 
          fProcessorThread->_Fire(CodeEvent(evntSubmitCommand, fProcessorId, arg), priority);
       }

@@ -101,6 +101,12 @@ void dabc::Command::RemoveCaller(WorkingProcessor* proc)
          fCallers->RemoveItem(n);
       else
          n++;
+
+   if (fCallers->Size()==0) {
+      delete fCallers;
+      fCallers = 0;
+   }
+
 }
 
 bool dabc::Command::IsLastCallerSync()
@@ -413,6 +419,8 @@ void dabc::Command::Finalise(Command* cmd)
 
    bool process = false;
 
+   DOUT5(("Cmd %s Finalize", cmd->GetName()));
+
    do {
 
       process = false;
@@ -422,7 +430,9 @@ void dabc::Command::Finalise(Command* cmd)
 
          LockGuard lock(cmd->fCmdMutex);
 
-         if (cmd->fCallers==0) break;
+         if ((cmd->fCallers==0) || (cmd->fCallers->Size()==0)) break;
+
+         DOUT5(("Cmd %s Finalize callers %u", cmd->GetName(), cmd->fCallers->Size()));
 
          if (cmd->fCallers && cmd->fCallers->Size()>0) {
             rec = cmd->fCallers->PopBack();

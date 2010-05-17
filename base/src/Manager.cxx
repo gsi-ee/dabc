@@ -1081,8 +1081,10 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
       while (iter.next()) {
          dabc::Module* m = dynamic_cast<dabc::Module*> (iter.current());
          if (m!=0)
-            if ((appid<0) || (m->GetAppId() == appid))
+            if ((appid<0) || (m->GetAppId() == appid)) {
+               DOUT4(("Stop module %s %p", m->GetName(), m));
                m->Stop();
+            }
       }
 
       DOUT2(("Manager::StopAllModules appid %d done", appid));
