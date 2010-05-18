@@ -45,7 +45,7 @@ DABCPACK_VERS  = dabc-$(MAJOR).$(MINOR)
 ABBPACK_VERS   = abb_v$(MAJOR).$(MINOR)
 GUIPACK_VERS   = dabcgui_v$(MAJOR).$(MINOR)
 DABCTAR_NAME   = dabc-$(MAJOR).$(MINOR).tar
-ROCTAR_NAME    = dabcroc.tar
+ROCTAR_NAME    = dabcroc11.tar
 ABBTAR_NAME    = abb_v$(MAJOR).$(MINOR).tar
 GUITAR_NAME    = dabcgui_v$(MAJOR).$(MINOR).tar
 
