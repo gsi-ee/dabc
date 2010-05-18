@@ -291,7 +291,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
 
    MakeThreadFor(this, MgrThrdName(), usecurrentprocess ? 1 : 0);
 
-   DOUT0(("Manager Thread = %p", ProcessorThread()));
+   DOUT3(("Manager Thread = %p", ProcessorThread()));
 
    CreateDevice("LocalDevice", LocalDeviceName());
 
