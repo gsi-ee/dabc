@@ -580,7 +580,7 @@ void TestCmdSet(int number, bool sync, int numtest = 1, bool errtmout = false)
          DOUT0(("SET result = %d", res));
       } else {
          set->SubmitSet(0, 2.);
-         dabc::mgr()->Sleep(1.);
+         dabc::mgr()->Sleep(3.);
          DOUT0(("SET result = unknown"));
       }
    }
@@ -604,14 +604,8 @@ void TestCmdSet(int number, bool sync, int numtest = 1, bool errtmout = false)
 extern "C" void RunCmdTest()
 {
 
-   TestCmdSet(5, true, 3, true);
-   return;
-
-
-//   TestCmdChain(10, true);
+//   TestCmdSet(5, false, 3, true);
 //   return;
-
-
 
 
    TestCmdChain(20);

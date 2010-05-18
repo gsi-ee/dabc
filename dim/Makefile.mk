@@ -42,12 +42,14 @@ $(DIMDIR):
 $(DIM_LIB): $(DIMDIR)
 	@echo "JAVA_HOME=$(JAVA_HOME)"
 	cd $(DIMDIR); export DIMDIR=$(DIMDIR); export OS=$(DIM_OS); export ODIR=$(DIM_ODIR); export JDK_INCLUDE=$(DIM_JDK_INCLUDE); make -j1 $(DIM_BUILD_ARGS)
-ifneq ($(DIM_JDK_INCLUDE),)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libdim.so $(DIM_LIB)
-endif
+ifneq ($(DIM_JDK_INCLUDE),)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libjdim.so $(DABCDLLPATH)  
+endif
 	cp -f $(DIMDIR)/$(DIM_ODIR)/dns $(DABCBINPATH)/dimDns  
+ifneq ($(wildcard $(DIMDIR)/$(DIM_ODIR)/did),)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/did $(DABCBINPATH)/dimDid  
+endif
 	@echo "Dim library build"
 #	cd $(DIMDIR)/jdim/classes; jar cf dim.jar dim/*.class
 #	mv -f $(DIMDIR)/jdim/classes/dim.jar $(DABCDLLPATH)
