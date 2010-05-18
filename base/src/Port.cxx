@@ -177,9 +177,11 @@ void dabc::Port::DoStop()
 
 void dabc::Port::DoHalt()
 {
-   DOUT3(("Halt port %s Transport %p", GetFullName().c_str(), fTransport));
+   DOUT3(("Halt port %s Transport %p pending %u", GetFullName().c_str(), fTransport, InputPending()));
 
    while (SkipInputBuffers(1));
+
+   DOUT3(("Halt port %s disconnect transport %p", GetFullName().c_str(), fTransport));
 
    Disconnect();
 
@@ -224,6 +226,11 @@ dabc::Buffer* dabc::Port::Recv() throw (PortInputException)
 {
    if (fTransport==0) throw PortInputException(this, "No transport");
 
+   if (fInputPending==0)
+      EOUT(("No input pending - recv should fail!!!"));
+   else
+      fInputPending--;
+
    dabc::Buffer* buf(0);
 
    if (!fTransport->Recv(buf)) return 0;
@@ -231,7 +238,6 @@ dabc::Buffer* dabc::Port::Recv() throw (PortInputException)
    if (fInpRate && buf)
       fInpRate->AccountValue((buf->GetTotalSize() + buf->GetHeaderSize())/1024./1024.);
 
-   fInputPending--;
    return buf;
 }
 
@@ -239,7 +245,9 @@ bool dabc::Port::SkipInputBuffers(unsigned num)
 {
    while (num-->0) {
       if (!CanRecv()) return false;
-      dabc::Buffer::Release(Recv());
+      dabc::Buffer* buf = Recv();
+      if (buf==0) return false;
+      dabc::Buffer::Release(buf);
    }
    return true;
 }
