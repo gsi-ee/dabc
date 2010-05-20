@@ -2037,6 +2037,8 @@ void dabc::Manager::ProcessCtrlCSignal()
 
       if (thrd && !fMgrNormalThrd) thrd->SetWorkingFlag(false);
 
+      DOUT0(("Try to stop normally !!!!"));
+
       return;
    }
 
@@ -2095,7 +2097,10 @@ void dabc::Manager::RunManagerMainLoop(int runtime)
 
       ActivateTimeout(1.);
 
-      thrd->MainLoop();
+      if (runtime>0)
+         thrd->RunEventLoop(this, runtime);
+      else
+         thrd->MainLoop();
 
       // set true to be able process some other commands
       thrd->SetWorkingFlag(true);

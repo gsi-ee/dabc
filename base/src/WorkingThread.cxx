@@ -192,7 +192,7 @@ void dabc::WorkingThread::RunEventLoop(WorkingProcessor* proc, double tm, bool d
 
    long last_out = -1;
 
-   while (true) {
+   while (IsThrdWorking()) {
       double dist = TimeDistance(first_tm, ThrdTimeStamp());
 
       double wait_tm = (dist < tm) ? tm - dist : 0;
