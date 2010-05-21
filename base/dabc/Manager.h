@@ -572,7 +572,7 @@ namespace dabc {
          Command* TakeInternalCmd(const char* lblname, int id);
 
          void ProcessDestroyQueue();
-         void ProcessParameterEvent();
+         bool ProcessParameterEvent();
 
          virtual void ProcessEvent(uint64_t evid);
 

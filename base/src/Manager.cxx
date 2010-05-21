@@ -494,7 +494,7 @@ void dabc::Manager::FireParamEvent(Parameter* par, int evid)
    FireEvent(evntManagerParam);
 }
 
-void dabc::Manager::ProcessParameterEvent()
+bool dabc::Manager::ProcessParameterEvent()
 {
    ParamRec rec;
 
@@ -505,7 +505,7 @@ void dabc::Manager::ProcessParameterEvent()
    {
       LockGuard lock(fMgrMutex);
 
-      if (fParsQueue.Size()==0) return;
+      if (fParsQueue.Size()==0) return false;
       rec = fParsQueue.Pop();
       visible = rec.par->IsVisible();
 
@@ -527,7 +527,7 @@ void dabc::Manager::ProcessParameterEvent()
                break;
 
             case parModified:
-               if (!rec.par->fRegistered) return;
+               if (!rec.par->fRegistered) return true;
                break;
 
             case parDestroy:
@@ -536,14 +536,14 @@ void dabc::Manager::ProcessParameterEvent()
                if (fTimedPars.size()==0) { activate = true; interval = -1.; }
                break;
          }
-//   } // unlock
+   } // unlock
 
    // generate parameter event from the manager thread
    if (!rec.processed && visible) ParameterEvent(rec.par, rec.event);
-} // unlock
 
    if (rec.event == parDestroy) delete rec.par;
 
+   return true;
 //   if (activate) ActivateTimeout(interval);
 }
 
@@ -743,6 +743,10 @@ void dabc::Manager::DoHaltManager()
 
    DOUT3(("Calling destructor of all memory pools"));
    DeleteChilds(-1, clMemoryPool);
+
+   // build in protection agains deadlock
+   int cnt=10000;
+   while (cnt && ProcessParameterEvent()) cnt--;
 
    // to be on the safe side, destroy everything in the queue
    ProcessDestroyQueue();
