@@ -336,7 +336,7 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
       if (doreadbegin) {
          fNextDataSize = Read_Size();
 
-         if (fNextDataSize > 0)
+         if (fNextDataSize <= di_ValidSize)
             state = inpNeedBuffer;
          else
          if (fNextDataSize == di_Repeat) {
