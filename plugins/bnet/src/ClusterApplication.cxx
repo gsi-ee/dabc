@@ -52,8 +52,8 @@ namespace bnet {
 // _______________________________________________________________
 
 
-bnet::ClusterApplication::ClusterApplication() :
-   dabc::Application(xmlClusterClass),
+bnet::ClusterApplication::ClusterApplication(const char* clname) :
+   dabc::Application(clname ? clname : xmlClusterClass),
    fSMMutex(),
    fSMRunningSMCmd(),
    fNumNodes(0)
@@ -151,6 +151,26 @@ std::string bnet::ClusterApplication::NodeCurrentState(int nodeid)
 {
    return GetParStr(FORMAT(("State_%d", nodeid)), dabc::Manager::stNull);
 }
+
+int bnet::ClusterApplication::NumWorkers()
+{
+   return fNumNodes;
+}
+
+bool bnet::ClusterApplication::IsWorkerActive(int nodeid)
+{
+   if ((nodeid<0) || (nodeid>=(int)fNodeMask.size())) return false;
+
+   return fNodeMask[nodeid] != 0;
+}
+
+const char* bnet::ClusterApplication::GetWorkerNodeName(int nodeid)
+{
+   if ((nodeid<0) || (nodeid>=(int)fNodeNames.size())) return 0;
+
+   return fNodeNames[nodeid].c_str();
+}
+
 
 bool bnet::ClusterApplication::CreateAppModules()
 {

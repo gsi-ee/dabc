@@ -27,7 +27,7 @@ namespace bnet {
       friend class ClusterModule;
 
       public:
-         ClusterApplication();
+         ClusterApplication(const char* clname = 0);
          virtual ~ClusterApplication();
 
          virtual bool CreateAppModules();
@@ -46,6 +46,15 @@ namespace bnet {
          void DiscoverCommandCompleted(dabc::Command* cmd);
 
       protected:
+
+         /** Return number of workers in configuration */
+         int NumWorkers();
+
+         /** Indicates if worker is really active - has either receiver or sender */
+         bool IsWorkerActive(int nodeid);
+
+         /** return names of worker node name, which can be specified for command receiving */
+         const char* GetWorkerNodeName(int nodeid);
 
          std::string NodeCurrentState(int nodeid);
 
