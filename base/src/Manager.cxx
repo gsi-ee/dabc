@@ -241,6 +241,7 @@ dabc::Manager::Manager(const char* managername, bool usecurrentprocess, Configur
    Folder(0, managername, true),
    WorkingProcessor(this),
    fMgrMainLoop(false),
+   fMgrStopped(false),
    fMgrNormalThrd(!usecurrentprocess),
    fMgrMutex(0),
    fDestroyQueue(16, true),
@@ -1409,8 +1410,6 @@ bool dabc::Manager::StartAllModules(int appid)
 
 bool dabc::Manager::StopAllModules(int appid)
 {
-   DOUT0(("Stop modules"));
-
    return Execute(new CmdStopAllModules(appid));
 }
 
@@ -2008,7 +2007,7 @@ bool dabc::Manager::InstallCtrlCHandler()
       return false;
    }
 
-   DOUT1(("Install Ctrl-C handler from thrd %d", Thread::Self()));
+   DOUT2(("Install Ctrl-C handler from thrd %d", Thread::Self()));
 
    return true;
 }
@@ -2018,7 +2017,7 @@ void dabc::Manager::RaiseCtrlCSignal()
    if (fSigThrd==0)
       EOUT(("No signal handler installed - it is dangerous !!!"));
    else
-      DOUT1(("dabc::Manager::RaiseCtrlCSignal"));
+      DOUT2(("dabc::Manager::RaiseCtrlCSignal"));
 
    kill(0, SIGINT);
 }
@@ -2041,8 +2040,15 @@ void dabc::Manager::ProcessCtrlCSignal()
 
       if (thrd && !fMgrNormalThrd) thrd->SetWorkingFlag(false);
 
-      DOUT0(("Try to stop normally !!!!"));
+      DOUT1(("Try to stop normally !!!!"));
 
+      return;
+   }
+
+   if (!fMgrStopped) {
+      DOUT1(("Ctrl-C out of main loop - set stop flag first"));
+      DOUT1(("Manager should will not start main loop and must exit itself"));
+      fMgrStopped = true;
       return;
    }
 
@@ -2064,7 +2070,7 @@ void dabc::Manager::ProcessCtrlCSignal()
 
    dabc::Logger::Instance()->ShowStat();
 
-   DOUT0(("Exit after Ctrl-C"));
+   DOUT1(("Exit after Ctrl-C"));
 
    exit(0);
 }
@@ -2077,8 +2083,12 @@ void dabc::Manager::RunManagerMainLoop(int runtime)
 
    if (thrd==0) return;
 
+   if (fMgrStopped) {
+      DOUT1(("Manager stopped before entering to the mainloop - stop running"));
+      return;
+   }
+
    fMgrMainLoop = true;
-   fMgrStopped = false;
 
    if (fMgrNormalThrd) {
       DOUT3(("Manager has normal thread - just wait until application modules are stopped"));
@@ -2092,13 +2102,6 @@ void dabc::Manager::RunManagerMainLoop(int runtime)
 
       // to be sure that timeout processing is active
       // only via timeout one should be able to stop processing of main loop
-//      bool activate = false;
-//      {
-//         LockGuard lock(fMgrMutex);
-//         activate = (fTimedPars.size()==0);
-//      }
-//      if (activate) ActivateTimeout(1.);
-
       ActivateTimeout(1.);
 
       if (runtime>0)

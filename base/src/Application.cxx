@@ -73,7 +73,7 @@ int dabc::Application::ConnectAppModules(Command* cmd)
       return cmd_false;
    }
 
-   DOUT0(("Call ConnectAppModules"));
+   DOUT2(("Call ConnectAppModules"));
 
    int res = IsAppModulesConnected();
 
