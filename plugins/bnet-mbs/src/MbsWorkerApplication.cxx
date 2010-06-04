@@ -13,7 +13,7 @@
 bnet::MbsWorkerApplication::MbsWorkerApplication(const char* classname) :
    WorkerApplication(classname ? classname : xmlMbsWorkerClass)
 {
-   CreateParStr("DoServer", "");
+   CreateParStr(mbs::xmlServerKind, "");
 
    CreateParInt(mbs::xmlSizeLimit, 0);
 
@@ -107,7 +107,7 @@ bool bnet::MbsWorkerApplication::CreateStorage(const char* portname)
 //   NewCmdDef("StopServer")->Register();
 
    return CreateOutFile(portname, GetParStr(xmlStoragePar)) &&
-          CreateOutServer(GetParStr("DoServer"));
+          CreateOutServer(GetParStr(mbs::xmlServerKind));
 }
 
 bool bnet::MbsWorkerApplication::CreateOutFile(const char* portname, const std::string& filename)
