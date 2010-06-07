@@ -14,8 +14,25 @@
 #ifndef DABC_records
 #define DABC_records
 
+#define _DABC_HISTOGRAM_RECORD_FORMAT_ 	"L:1;F:1;F:1;C:32;C:32;C:16;L"
+#define _DABC_STATUS_RECORD_FORMAT_ 	"L:1;C:16;C:16"
+#define _DABC_INFO_RECORD_FORMAT_ 		"L:1;C:16;C:128"
+#define _DABC_RATE_RECORD_FORMAT_ 		"F:1;L:1;F:1;F:1;F:1;F:1;C:16;C:16;C:16"
+
+#define _DABC_COLOR_RED_ 		"Red"
+#define _DABC_COLOR_GREEN_ 		"Green"
+#define _DABC_COLOR_BLUE_ 		"Blue"
+#define _DABC_COLOR_CYAN_ 		"Cyan"
+#define _DABC_COLOR_YELLOW_ 	"Yellow"
+#define _DABC_COLOR_MAGENTA_ 	"Magenta"
+
+
+#ifdef __cplusplus // compatibility mode for pure C includes
+
 namespace dabc {
-    
+
+#endif
+
    typedef struct{
       int channels;  // channels of data
       float xlow;
@@ -27,15 +44,11 @@ namespace dabc {
      // DIM record must be allocated by malloc, including this header and the data field.
    } HistogramRec;
 
-   extern const char* HistogramRecDesc;
-
    typedef struct{
       int severity; // (0=success, 1=warning, 2=error, 3=fatal)
       char color[16]; // (color name: Red, Green, Blue, Cyan, Yellow, Magenta)
       char status[16]; // status name
    } StatusRec;
-   
-   extern const char* StatusRecDesc;
 
 
     typedef struct{
@@ -44,7 +57,6 @@ namespace dabc {
     char info[128]; // info message
    } InfoRec;
    
-   extern const char* InfoRecDesc;
 
 
    typedef struct{
@@ -64,7 +76,12 @@ namespace dabc {
         DISPLAY_BAR = 1,
         DISPLAY_TREND = 2,
         DISPLAY_STAT = 3 };
-        
+
+#ifdef __cplusplus
+
+   extern const char* HistogramRecDesc;
+   extern const char* StatusRecDesc;
+   extern const char* InfoRecDesc;
    extern const char* RateRecDesc;
 
    extern const char* col_Red;
@@ -74,6 +91,8 @@ namespace dabc {
    extern const char* col_Yellow;
    extern const char* col_Magenta;
 
-}
+} // namespace
+#endif //c++
+
 
 #endif
