@@ -4,8 +4,6 @@ SOURCEDIR=./src
 CLASSPATH=.:./$(PACKAGE):$(DIMDIR)/jdim/classes
 JARFILE=$(JARDIR)/$(PACKAGE).jar 
 
-
-#CLASSPATH=$(PACKAGE):/misc/goofy/cbm/daq/controls/smi/dim_v16r10/jdim/classes
 # package directory is created automatically
 # One MUST specify where with -d. The package directory MUST NOT specified here
 # because the package directory is created under the specified directory, even if it
