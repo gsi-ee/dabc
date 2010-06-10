@@ -68,7 +68,7 @@ private Vector<String> values;
 private Vector<String> titles;
 private int width=25;
 private int mini=25;
-private int progressY=200;
+private Point progressP;
 
 /**
  * Constructor of DABC launch panel.
@@ -131,14 +131,11 @@ Password=new JPasswordField(width);
 Password.setEchoChar('*');
 Password.addActionListener(this);
 Password.setActionCommand("setpwd");
-   
 addPromptLines();
-    
 // Add checkboxes
 //    getnew = new JCheckBox();
 //    getnew.setSelected(true);
 //    addCheckBox("Get new setup",getnew);
-
 dabcshell = new xRemoteShell("ssh");
 if(xSet.isDabc())checkDir();
 nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS
@@ -146,13 +143,12 @@ setDimServices();
 System.out.println("Dabc  servers needed: DNS + "+(nServers-1));
 etime = new xTimer(al, false); // fire only once
 }
+//----------------------------------------
 private void addPromptLines(){
 mini=width;
-progressY=200;
 if(formDabc.isShrink()){
 	mini=0; // do not show
 	shrinkButton.setSelected(true);
-	progressY=20; // position of progress window
 }
 if(mini > 0)addPrompt("Name server: ",DimName);
 if(mini > 0)addPrompt("User name: ",Username);
@@ -166,6 +162,7 @@ DabcSetup=addPrompt("Setup file: ",formDabc.getSetup(),"set",mini,this);
 DabcLaunchFile=addPrompt("Launch file: ",formDabc.getLaunchFile(),"set",mini,this);
 DabcScript=addPrompt("Script: ",formDabc.getScript(),"dabcScript",width,this);
 }
+//----------------------------------------
 private void checkDir(){
 String check, result;
 System.out.println("DABC +++++ check directories");
@@ -183,6 +180,7 @@ if(!formDabc.getUserPath().contains("%")){
 		System.out.println("Not found: "+check);
 	}
 }}
+//----------------------------------------
 private void setLaunch(){
 xSet.setAccess(Password.getPassword());
 formDabc.setMaster(DabcNode.getText());
@@ -195,6 +193,7 @@ formDabc.setName(DabcName.getText());
 formDabc.setSetup(DabcSetup.getText());
 //formDabc.printForm();
 }
+//----------------------------------------
 /**
  * Called in xDesktop to rebuild references to DIM services.
  */
@@ -218,6 +217,7 @@ Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
 	if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) runState.add(para.get(i));
 }}
+//----------------------------------------
 /**
  * Called in xDesktop to release references to DIM services.
  */
@@ -233,12 +233,16 @@ if(runState != null) runState.removeAllElements();
 doExit=null;
 runState=null;
 }
-
+//----------------------------------------
 // Start internal frame with an xState panel through timer.
 // Timer events are handled by desktop event handler passed to constructor.
+// Note that etime.action calls handler directly. To run handler through
+// timer event, use etime.start(). Because the timer is set up to
+// fire only once, it stops after that.
 private void startProgress(){
+progressP=xSet.getLayout("DabcController").getPosition();
 xLayout la= new xLayout("progress");
-la.set(new Point(50,progressY), new Dimension(300,100),0,true);
+la.set(progressP, new Dimension(300,100),0,true);
 progress=new xInternalFrame("Work in progress, please wait", la);
 progressState=new xState("Current action:",350,30);
 progressState.redraw(-1,"Green","Starting", true);
@@ -247,11 +251,13 @@ progress.setupFrame(workIcon, null, progressState, true);
 //System.out.println("=== Timer action start");
 etime.action(new ActionEvent(progress,1,"DisplayFrame"));
 }
+//----------------------------------------
 // Fire event handler of desktop through timer.
 private void setProgress(String info, Color color){
 setTitle(info,color);
 if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
 }
+//----------------------------------------
 // Fire event handler of desktop through timer.
 private void stopProgress(){
 //etime.setInitialDelay(1000);
@@ -261,7 +267,7 @@ private void stopProgress(){
 xSet.setActionCommand("RemoveFrame"); // Java < 6 
 etime.start(); // fires event with ActionCommand=null, then stop
 }
-
+//----------------------------------------
 // wait until all runState parameters have the value state.
 private boolean waitState(int timeout, String state){
 int t=0;
@@ -280,6 +286,7 @@ while(t < timeout){
 }
 return false;
 }
+//----------------------------------------
 //React to menu selections.
 /**
  * Handle events.
@@ -367,6 +374,7 @@ if ("shrink".equals(e.getActionCommand())) {
 //    desk.toFront("DabcLauncher");
 //    return;
 //}
+//----------------------------------------
 else if ("dabcSave".equals(e.getActionCommand())) {
     xLogger.print(1,Action+" "+DabcLaunchFile.getText());
     setLaunch();
@@ -374,9 +382,9 @@ else if ("dabcSave".equals(e.getActionCommand())) {
     String msg=new String("Dabc launch: "+DabcLaunchFile.getText());
     if(setup != null){
         for(int i=0;i<PanelSetupList.size();i++)PanelSetupList.get(i).updateList();
-        if(!setup.updateSetup()) tellError(this,"Setup update failed");
+        if(!setup.updateSetup()) tellError(xSet.getDesktop(),"Setup update failed");
         else { 
-        if(!setup.writeSetup(DabcUserpath.getText()+"/"+DabcSetup.getText())) tellError(this,"Write setup failed");
+        if(!setup.writeSetup(DabcUserpath.getText()+"/"+DabcSetup.getText())) tellError(xSet.getDesktop(),"Write setup failed");
         else {
             String mes=new String(msg+"\nDabc setup: "+DabcUserpath.getText()+"/"+DabcSetup.getText());
             tellInfo(mes);
@@ -393,6 +401,7 @@ else if ("dabcSave".equals(e.getActionCommand())) {
 if(!threadRunning){
     Action = new String(e.getActionCommand());
     // must do confirm here, because in thread it would block forever
+    doit=true;
     if (("dabcExit".equals(Action)) && (!xSet.isGuru())) doit=askQuestion("Confirmation","Exit, shut down and cleanup DABC?");
     if (("dabcCleanup".equals(Action)) && (!xSet.isGuru())) doit=askQuestion("Confirmation","Kill DABC tasks?");
     if(doit){
@@ -403,7 +412,7 @@ if(!threadRunning){
         xSet.setProcessing(true);
         threxe.start();
     }
-    } else tellError(this,"Execution thread not yet finished!");
+    } else tellError(xSet.getDesktop(),"Execution thread not yet finished!");
 }
 // start thread by threxe.start()
 // CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!
@@ -611,12 +620,12 @@ else if ("dabcHalt".equals(Action)) {
         }
     }
 }
-else if ("dabcEnable".equals(Action)) {
-    xLogger.print(1,doEnable.getParser().getFull());
-    doEnable.exec(xSet.getAccess());
-    waitState(5,"Ready");
-    setProgress("OK: DABC enabled",xSet.greenD());
-}
+// else if ("dabcEnable".equals(Action)) {
+//     xLogger.print(1,doEnable.getParser().getFull());
+//     doEnable.exec(xSet.getAccess());
+//     waitState(5,"Ready");
+//     setProgress("OK: DABC enabled",xSet.greenD());
+// }
 else if ("dabcStart".equals(Action)) {
     xLogger.print(1,doStart.getParser().getFull());
     doStart.exec(xSet.getAccess());

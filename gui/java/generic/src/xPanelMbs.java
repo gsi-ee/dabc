@@ -151,7 +151,7 @@ if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
 setDimServices();
 etime = new xTimer(al, false); // fire only once
 }
-
+//----------------------------------------
 private void addPromptLines(){
 mini=width;
 if(formMbs.isShrink()){
@@ -170,6 +170,7 @@ MbsShut=addPrompt("Shutdown: ",formMbs.getShut(),"set",mini,this);
 MbsLaunchFile=addPrompt("Launch file: ",formMbs.getLaunchFile(),"set",mini,this);
 MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
 }
+//----------------------------------------
 private void checkDir(){
 String check, result;
 System.out.println("MBS +++++ check directories");
@@ -193,6 +194,7 @@ if(!formMbs.getUserPath().contains("%")){
     	System.out.println("Not found: "+check);
     }
 }}
+//----------------------------------------
 private void setLaunch(){
 xSet.setAccess(Password.getPassword());
 formMbs.setMaster(MbsNode.getText());
@@ -205,6 +207,7 @@ formMbs.setLaunchFile(MbsLaunchFile.getText());
 formMbs.setCommand(MbsCommand.getText());
 //formMbs.printForm();
 }
+//----------------------------------------
 /**
  * Called in xDesktop to get list of tasks. Command list is filtered.
  */
@@ -218,6 +221,7 @@ if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0)
 }
 return str.toString();
 }
+//----------------------------------------
 /**
  * Called in xDesktop to rebuild references to DIM services.
  */
@@ -236,11 +240,12 @@ Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
 	if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) mbsTaskList.add(para.get(i));
 	else if(para.get(i).getParser().getFull().indexOf("PRM/NodeList")>0) mbsPrompt=true;
-	else if(para.get(i).getParser().getFull().indexOf("/Acquisition/State")>0) mbsRunning.add(para.get(i));
+	else if(para.get(i).getParser().getFull().indexOf("/Acquisition")>0) mbsRunning.add(para.get(i));
 }
 if(mbsPrompt)cmdPrefix=new String("*::");
 else cmdPrefix=new String("");
 }
+//----------------------------------------
 /**
  * Called in xDesktop to release references to DIM services.
  */
@@ -251,7 +256,7 @@ mbsTaskList.removeAllElements();
 if(mbsRunning != null) mbsRunning.removeAllElements();
 mbsRunning=null;
 }
-
+//----------------------------------------
 // Start internal frame with an xState panel through timer.
 // Timer events are handled by desktop event handler passed to constructor.
 // Note that etime.action calls handler directly. To run handler through
@@ -260,7 +265,6 @@ mbsRunning=null;
 private void startProgress(){
 progressP=xSet.getLayout("MbsController").getPosition();
 xLayout la= new xLayout("progress");
-//    la.set(new Point(progressX,progressY), new Dimension(300,100),0,true);
 la.set(progressP, new Dimension(300,100),0,true);
 progress=new xInternalFrame("Work in progress, please wait", la);
 progressState=new xState("Current action:",350,30);
@@ -269,10 +273,12 @@ progressState.setSizeXY();
 progress.setupFrame(workIcon, null, progressState, true);
 etime.action(new ActionEvent(progress,1,"DisplayFrame"));
 }
+//----------------------------------------
 private void setProgress(String info, Color color){
 setTitle(info,color);
 if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
 }
+//----------------------------------------
 // Fire event handler of desktop through timer.
 private void stopProgress(){
 //etime.setInitialDelay(1000);
@@ -282,7 +288,7 @@ private void stopProgress(){
 xSet.setActionCommand("RemoveFrame"); // Java < 6 
 etime.start(); // fires event with ActionCommand=null, then stop
 }
-
+//----------------------------------------
 private boolean waitMbs(int timeout, String serv, boolean running){
 int t=0,i,n;
 boolean ok=false;
@@ -346,7 +352,7 @@ else { // check if task is gone
     }}
     return false;
 }
-
+//----------------------------------------
 //wait until all runMode parameters match mode.
 private boolean waitRun(int timeout, String mode){
 int t=0;
@@ -364,6 +370,7 @@ while(t < timeout){
 }
 return false;
 }
+//----------------------------------------
 // Wait for number of servers
 private boolean waitServers(int servers, int time){
 int t=0;
@@ -374,6 +381,7 @@ while(xSet.getNofServers()!=servers){
 }
 return(!(t==time));
 }
+//----------------------------------------
 private void waitSockets(boolean all){
 	int time=0;
 	System.out.print("Wait sockets free ");
@@ -396,6 +404,7 @@ private void waitSockets(boolean all){
 		"netstat|grep \"\\.61.. \"|grep WAIT");
 	}	
 }
+//----------------------------------------
 private void launch(String cmd){
 int time=0;
 int num=0;
@@ -425,6 +434,7 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
     setProgress("Failed: Launch script",xSet.redD());
 }
 }
+//----------------------------------------
 //React to menu selections.
 /**
  * Handle events.
@@ -475,8 +485,9 @@ if(doit){
     threadRunning=true;
     threxe.start();
 }
-} else tellError(this,"Execution thread not yet finished!");
+} else tellError(xSet.getDesktop(),"Execution thread not yet finished!");
 }
+//----------------------------------------
 // start thread by threxe.start()
 // CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!
 /**
@@ -493,7 +504,7 @@ if ("prmLaunch".equals(Action)) {
 	String cmd = new String(MbsPath.getText()+
                             "/script/prmstartup.sc "+MbsPath.getText()+" "+
                             MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getGuiNode()+" "+xSet.getAccess());
-    String service = new String(MbsNode.getText().toUpperCase()+":PRM");
+	// String service = new String(MbsNode.getText().toUpperCase()+":PRM");
     launch(cmd);
 }
 else if ("mbsLaunch".equals(Action)) {
@@ -502,7 +513,7 @@ else if ("mbsLaunch".equals(Action)) {
 	String cmd = new String(MbsPath.getText()+
                             "/script/dimstartup.sc "+MbsPath.getText()+" "+
                             MbsUserpath.getText()+" "+xSet.getDimDns()+" "+xSet.getAccess());
-    String service = new String(MbsNode.getText().toUpperCase()+":DSP");
+	//String service = new String(MbsNode.getText().toUpperCase()+":DSP");
     launch(cmd);
 }
 else if ("mbsShell".equals(Action)) {
