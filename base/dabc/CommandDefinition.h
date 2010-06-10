@@ -37,7 +37,8 @@ namespace dabc {
          
          void AddArgument(const char* name, 
                           CommandArgumentType typ,
-                          bool required);
+                          bool required,
+                          const char* dfltvalue = 0);
                           
          const char* GetXml();
          

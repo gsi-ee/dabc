@@ -38,7 +38,8 @@ void dabc::CommandDefinition::Register(bool on)
 
 void dabc::CommandDefinition::AddArgument(const char* name,
                                           CommandArgumentType typ,
-                                          bool required)
+                                          bool required,
+                                          const char* dfltvalue)
 {
    if (fClosed) {
       EOUT(("Command definition %s is closed", GetName()));
@@ -52,8 +53,10 @@ void dabc::CommandDefinition::AddArgument(const char* name,
       case argString: styp = "C"; break;
    }
 
-   fXml += format("  <argument name=\"%s\" type=\"%s\" value=\"\" required=\"%s\"/>\n",
-                      name, styp, (required ? xmlTrueValue : xmlFalseValue));
+   if (dfltvalue==0) dfltvalue = "";
+
+   fXml += format("  <argument name=\"%s\" type=\"%s\" value=\"%s\" required=\"%s\"/>\n",
+                      name, styp, dfltvalue, (required ? xmlTrueValue : xmlFalseValue));
 }
 
 const char* dabc::CommandDefinition::GetXml()

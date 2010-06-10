@@ -16,6 +16,7 @@
 #include "dabc/Port.h"
 #include "dabc/PoolHandle.h"
 #include "dabc/Manager.h"
+#include "dabc/CommandDefinition.h"
 
 mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -53,6 +54,20 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 20000.);
    fDataRate = CreateRateParameter("DataRateKb", false, 1., "", "", "KB/s", 0., 10000.);
+
+   dabc::CommandDefinition* def = NewCmdDef("StartFile");
+   def->AddArgument(mbs::xmlFileName, dabc::argString, true);
+   def->AddArgument(mbs::xmlSizeLimit, dabc::argInt, false, "1000");
+   def->Register();
+
+   NewCmdDef("StopFile")->Register();
+
+   def = NewCmdDef("StartServer");
+   def->AddArgument(mbs::xmlServerKind, dabc::argString, true, mbs::ServerKindToStr(mbs::StreamServer));
+   def->Register();
+
+   NewCmdDef("StopServer")->Register();
+
 }
 
 mbs::CombinerModule::~CombinerModule()
@@ -198,6 +213,36 @@ bool mbs::CombinerModule::BuildEvent()
 }
 
 
+int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
+{
+   if (cmd->IsName("StartFile")) {
+      dabc::Command* dcmd = new dabc::CmdCreateTransport("Combiner/FileOutput", mbs::typeLmdOutput, "MbsFileThrd");
+      dcmd->SetStr(mbs::xmlFileName, Output(1)->GetCfgStr(mbs::xmlFileName,"",cmd));
+      dcmd->SetInt(mbs::xmlSizeLimit, Output(1)->GetCfgInt(mbs::xmlSizeLimit,1000,cmd));
+      return dabc::mgr()->Execute(dcmd);
+   } else
+   if (cmd->IsName("StopFile")) {
+      dabc::Command* dcmd = new dabc::CmdCreateTransport("Combiner/FileOutput", mbs::typeLmdOutput, "MbsFileThrd");
+      dcmd->SetStr(mbs::xmlFileName, "");
+      dcmd->SetInt(mbs::xmlSizeLimit, -1);
+      return dabc::mgr()->Execute(dcmd);
+   } else
+   if (cmd->IsName("StartServer")) {
+      dabc::Command* dcmd = new dabc::CmdCreateTransport("Combiner/ServerOutput", mbs::typeServerTransport, "MbsServThrd");
+      dcmd->SetStr(mbs::xmlServerKind, Output(0)->GetCfgStr(mbs::xmlServerKind, "", cmd));
+      return dabc::mgr()->Execute(dcmd);
+   } else
+   if (cmd->IsName("StopServer")) {
+      dabc::Command* dcmd = new dabc::CmdCreateTransport("Combiner/ServerOutput", mbs::typeServerTransport, "MbsServThrd");
+      dcmd->SetStr(mbs::xmlServerKind, "");
+      return dabc::mgr()->Execute(dcmd);
+   } else
+
+   return dabc::ModuleAsync::ExecuteCommand(cmd);
+
+}
+
+
 // _________________________________________________________________________
 
 
@@ -214,20 +259,20 @@ extern "C" void StartMbsCombiner()
     dabc::mgr()->MakeThreadForModule(m);
 
     for (unsigned n=0;n<m->NumInputs();n++)
-       if (!dabc::mgr()->CreateTransport(FORMAT(("Combiner/Input%u", n)), mbs::typeClientTransport, "MbsTransport")) {
+       if (!dabc::mgr()->CreateTransport(FORMAT(("Combiner/Input%u", n)), mbs::typeClientTransport, "MbsInpThrd")) {
           EOUT(("Cannot create MBS client transport"));
           exit(131);
        }
 
     if (m->IsServOutput()) {
-       if (!dabc::mgr()->CreateTransport("Combiner/ServerOutput", mbs::typeServerTransport, "MbsOutTransport")) {
+       if (!dabc::mgr()->CreateTransport("Combiner/ServerOutput", mbs::typeServerTransport, "MbsServThrd")) {
           EOUT(("Cannot create MBS server"));
           exit(132);
        }
     }
 
     if (m->IsFileOutput())
-       if (!dabc::mgr()->CreateTransport("Combiner/FileOutput", mbs::typeLmdOutput, "MbsOutTransport")) {
+       if (!dabc::mgr()->CreateTransport("Combiner/FileOutput", mbs::typeLmdOutput, "MbsFileThrd")) {
           EOUT(("Cannot create MBS file output"));
           exit(133);
        }

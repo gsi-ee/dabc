@@ -203,7 +203,7 @@ dabc::BufferSize_t dabc::Pointer::distance_to(const Pointer& child) const
 
    BufferSize_t total_distance = 0;
 
-   // potentailly, endless loop, if Buffer is changed in between
+   // potentially, endless loop, if Buffer is changed in between
    while (parent.fSegm < child.fSegm) {
       total_distance += parent.rawsize();
       parent.shift_to_segment();

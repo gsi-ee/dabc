@@ -56,6 +56,8 @@ namespace mbs {
 
          bool IsFileOutput() const { return fFileOutput; }
          bool IsServOutput() const { return fServOutput; }
+
+         virtual int ExecuteCommand(dabc::Command* cmd);
    };
 
 }
