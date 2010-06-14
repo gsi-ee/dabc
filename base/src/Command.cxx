@@ -382,25 +382,42 @@ bool dabc::Command::ReadParsFromDimString(const char* pars)
       while (*curr==' ') curr++;
       if (*curr == 0) return true;
 
+      const char* separ2 = 0;
+
       const char* separ = strstr(curr, "=\"");
-      if (separ==0) {
-         EOUT(("Didnot found =\" sequence"));
-         return false;
-      }
+      std::string name, value;
 
-      const char* separ2 = strchr(separ+2, '\"');
-      if (separ2==0) {
-         EOUT(("Didnot found closing \" symbol"));
-         return false;
-      }
+      if (separ!=0) {
 
-      std::string name(curr, separ-curr);
-      std::string value(separ + 2, separ2 - separ - 2);
+         separ2 = strchr(separ+2, '\"');
+         if (separ2==0) {
+            EOUT(("Didnot found closing \" symbol"));
+            return false;
+         }
+         name.assign(curr, separ-curr);
+         value.assign(separ + 2, separ2 - separ - 2);
+
+         curr = separ2 + 1;
+      } else {
+         separ = strstr(curr, "=");
+
+         if (separ==0) {
+            EOUT(("Didnot found = sign"));
+            return false;
+         }
+
+         name.assign(curr, separ-curr);
+
+         separ2 = strchr(separ+1, ' ');
+         if (separ2 == 0) separ2 = separ + strlen(separ);
+         value.assign(separ + 1, separ2 - separ);
+
+         curr = separ2;
+      }
 
       DOUT1(("Set dim argument %s = %s", name.c_str(), value.c_str()));
 
       SetPar(name.c_str(), value.c_str());
-      curr = separ2 + 1;
    }
 
    return true;

@@ -186,6 +186,17 @@ namespace dabc {
          }
    };
 
+   class CmdDestroyTransport : public Command {
+      public:
+         static const char* CmdName() { return "DestroyTransport"; }
+
+         CmdDestroyTransport(const char* portname) :
+            Command(CmdName())
+         {
+            SetPar("PortName", portname);
+         }
+   };
+
    class CmdConnectPorts: public Command {
       public:
          static const char* CmdName() { return "ConnectPorts"; }

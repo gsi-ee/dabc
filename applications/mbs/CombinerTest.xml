@@ -4,7 +4,7 @@
      <genhost1 value="lxi009"/>
      <genhost2 value="lxi010"/>
      <genhost3 value="lxi011"/>
-     <genport value="6027"/>
+     <genport value="6003"/>
   </Variables>
   <Context host="${genhost1}" name="Generator1"/>
   <Context host="${genhost2}" name="Generator2"/>
@@ -47,6 +47,7 @@
           <OutputQueueSize value="5"/>
           <MbsServerKind value="Stream"/>
         </Port>
+        <Ratemeter name="DataRate" lower="0" upper="50" debug="true"/>
      </Module>
   </Context>
   <Defaults>
@@ -54,6 +55,7 @@
       <Run>
         <lib value="libDabcMbs.so"/>
         <func value="InitMbsGenerator"/>
+        <ctrl value="false"/>
       </Run>
       <Module name="Generator">
          <FirstProcId value="${DABCNODEID}"/>

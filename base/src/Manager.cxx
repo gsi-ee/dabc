@@ -1018,6 +1018,20 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          }
       }
    } else
+   if (cmd->IsName(CmdDestroyTransport::CmdName())) {
+      const char* portname = cmd->GetStr("PortName");
+      Port* port = FindPort(portname);
+
+      if (port==0) {
+         EOUT(("Port %s not found for disconnect", portname));
+         cmd_res = cmd_false;
+      } else {
+         dabc::Module* m = port->GetModule();
+         cmd->SetStr("PortName", port->GetFullName(m));
+         m->Submit(cmd);
+         cmd_res = cmd_postponed;
+      }
+   } else
    if (cmd->IsName(CmdCreateThread::CmdName())) {
       const char* thrdname = cmd->GetStr("ThrdName");
       const char* thrdclass = cmd->GetStr("ThrdClass");

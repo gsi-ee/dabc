@@ -53,7 +53,10 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    if (flashtmout>0.) CreateTimer("Flash", flashtmout, false);
 
    fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 20000.);
-   fDataRate = CreateRateParameter("DataRateKb", false, 1., "", "", "KB/s", 0., 10000.);
+   fDataRate = CreateRateParameter("DataRate", false, 1., "", "", "MB/s", 0., 10.);
+
+   // must be configured in xml file
+   //   fDataRate->SetDebugOutput(true);
 
    dabc::CommandDefinition* def = NewCmdDef("StartFile");
    def->AddArgument(mbs::xmlFileName, dabc::argString, true);
@@ -68,6 +71,7 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    NewCmdDef("StopServer")->Register();
 
+   CreateParInfo("CombinerInfo", 1, "Green");
 }
 
 mbs::CombinerModule::~CombinerModule()
@@ -196,7 +200,7 @@ bool mbs::CombinerModule::BuildEvent()
       fOut.FinishEvent();
 
       fEvntRate->AccountValue(1.);
-      fDataRate->AccountValue((subeventssize+ sizeof(mbs::EventHeader))/1024.);
+      fDataRate->AccountValue((subeventssize + sizeof(mbs::EventHeader))/1024./1024.);
 
       // if output buffer filled already, flush it immediately
       if (!fOut.IsPlaceForEvent(0)) FlushBuffer();
@@ -216,27 +220,46 @@ bool mbs::CombinerModule::BuildEvent()
 int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
 {
    if (cmd->IsName("StartFile")) {
-      dabc::Command* dcmd = new dabc::CmdCreateTransport("Combiner/FileOutput", mbs::typeLmdOutput, "MbsFileThrd");
-      dcmd->SetStr(mbs::xmlFileName, Output(1)->GetCfgStr(mbs::xmlFileName,"",cmd));
-      dcmd->SetInt(mbs::xmlSizeLimit, Output(1)->GetCfgInt(mbs::xmlSizeLimit,1000,cmd));
+      dabc::Port* port = FindPort("FileOutput");
+      if (port==0) port = CreateOutput("FileOutput", fPool, 5);
+
+      std::string filename = port->GetCfgStr(mbs::xmlFileName,"",cmd);
+      int sizelimit = port->GetCfgInt(mbs::xmlSizeLimit,1000,cmd);
+
+      SetParStr("CombinerInfo", dabc::format("Start mbs file %s sizelimit %d mb", filename.c_str(), sizelimit));
+
+      dabc::Command* dcmd = new dabc::CmdCreateTransport(port->GetFullName(dabc::mgr()).c_str(), mbs::typeLmdOutput, "MbsFileThrd");
+      dcmd->SetStr(mbs::xmlFileName, filename);
+      dcmd->SetInt(mbs::xmlSizeLimit, sizelimit);
       return dabc::mgr()->Execute(dcmd);
    } else
    if (cmd->IsName("StopFile")) {
-      dabc::Command* dcmd = new dabc::CmdCreateTransport("Combiner/FileOutput", mbs::typeLmdOutput, "MbsFileThrd");
-      dcmd->SetStr(mbs::xmlFileName, "");
-      dcmd->SetInt(mbs::xmlSizeLimit, -1);
-      return dabc::mgr()->Execute(dcmd);
+      dabc::Port* port = FindPort("FileOutput");
+      if (port!=0) port->Disconnect();
+
+      SetParStr("CombinerInfo", "Stop file");
+
+      return dabc::cmd_true;
    } else
    if (cmd->IsName("StartServer")) {
-      dabc::Command* dcmd = new dabc::CmdCreateTransport("Combiner/ServerOutput", mbs::typeServerTransport, "MbsServThrd");
-      dcmd->SetStr(mbs::xmlServerKind, Output(0)->GetCfgStr(mbs::xmlServerKind, "", cmd));
+      dabc::Port* port = FindPort("ServerOutput");
+      if (port==0) port = CreateOutput("ServerOutput", fPool, 5);
+
+      std::string serverkind = port->GetCfgStr(mbs::xmlServerKind, "", cmd);
+
+      SetParStr("CombinerInfo", dabc::format("Start mbs server %s", serverkind.c_str()));
+
+      dabc::Command* dcmd = new dabc::CmdCreateTransport(port->GetFullName(dabc::mgr()).c_str(), mbs::typeServerTransport, "MbsServThrd");
+      dcmd->SetStr(mbs::xmlServerKind, serverkind);
       return dabc::mgr()->Execute(dcmd);
    } else
    if (cmd->IsName("StopServer")) {
-      dabc::Command* dcmd = new dabc::CmdCreateTransport("Combiner/ServerOutput", mbs::typeServerTransport, "MbsServThrd");
-      dcmd->SetStr(mbs::xmlServerKind, "");
-      return dabc::mgr()->Execute(dcmd);
-   } else
+      dabc::Port* port = FindPort("ServerOutput");
+      if (port!=0) port->Disconnect();
+
+      SetParStr("CombinerInfo", "Stop server");
+      return dabc::cmd_true;
+   }
 
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 
@@ -250,10 +273,10 @@ extern "C" void StartMbsCombiner()
 {
     if (dabc::mgr()==0) {
        EOUT(("Manager is not created"));
-       exit(130);
+       exit(1);
     }
 
-    DOUT0(("Start MBS combiner module"));
+    DOUT0(("Create MBS combiner module"));
 
     mbs::CombinerModule* m = new mbs::CombinerModule("Combiner");
     dabc::mgr()->MakeThreadForModule(m);
@@ -279,6 +302,6 @@ extern "C" void StartMbsCombiner()
 
 //    m->Start();
 
-    DOUT0(("Start MBS combiner module done"));
+//    DOUT0(("Start MBS combiner module done"));
 }
 

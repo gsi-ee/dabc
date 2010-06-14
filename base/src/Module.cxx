@@ -222,6 +222,14 @@ int dabc::Module::PreviewCommand(Command* cmd)
       for (unsigned n=0;n<NumIOPorts();n++)
          if (IOPort(n) && !IOPort(n)->IsConnected()) cmd_res = cmd_false;
    } else
+   if (cmd->IsName(CmdDestroyTransport::CmdName())) {
+      Port* port = FindPort(cmd->GetStr("PortName"));
+      if (port!=0) {
+         cmd_res = cmd_true;
+         port->Disconnect();
+      } else
+         cmd_res = cmd_false;
+   } else
       cmd_res = WorkingProcessor::PreviewCommand(cmd);
 
    if (cmd_res!=cmd_ignore)
