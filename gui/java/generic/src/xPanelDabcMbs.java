@@ -655,7 +655,7 @@ int time=0;
         boolean launchMbs=false;
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-    if(waitServers(nMbsServers-1,10)){
+        	if(waitServers(nMbsServers-1,10)){
                 System.out.println("\nMbs connnected");
                 setProgress("MBS servers ready, update parameters ...",xSet.blueD());
                 xSet.setSuccess(false);

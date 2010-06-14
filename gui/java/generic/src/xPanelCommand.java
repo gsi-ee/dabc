@@ -242,6 +242,8 @@ xXmlParser xmlp =cmd.getXmlParser();
 sb=new StringBuffer();
 // we have an XML description
 if(xmlp != null){ 
+	// MBS commands have scope MBS and do not expect xml string
+	xmlargs=!xmlp.getCommandScope().equals("MBS");
 // System.out.println(xmlp.getName());
 // System.out.println(xmlp.getXmlString());
 // application can specify if this command needs XML arguments or not
