@@ -145,11 +145,11 @@ Password.setActionCommand("setpwd");
 // add prompt/input fields
 addPromptLines();
 // read defaults from setup file
-nMbsServers=Integer.parseInt(formMbs.getServers());
+nMbsServers=Integer.parseInt(formMbs.getServers()); // all without DNS
 nMbsNodes=nMbsServers-1;
-nDabcServers=Integer.parseInt(formDabc.getServers());
-nServers=nMbsServers+nDabcServers+1; // add DNS
-System.out.println("Total servers needed: DNS + "+(nServers-1));
+nDabcServers=Integer.parseInt(formDabc.getServers()); // all without DNS
+nServers=nMbsServers+nDabcServers; // without DNS
+System.out.println("Total servers needed: DNS + "+nServers);
 
 mbsshell = new xRemoteShell("rsh");
 dabcshell = new xRemoteShell("ssh");
@@ -197,7 +197,7 @@ String check, result;
 nMbsServers=Integer.parseInt(formMbs.getServers());
 nMbsNodes=nMbsServers-1;
 nDabcServers=Integer.parseInt(formDabc.getServers());
-nServers=nMbsServers+nDabcServers+1; // add DNS
+nServers=nMbsServers+nDabcServers; // without DNS
 System.out.println("DABC and MBS +++++ check directories");
 if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
@@ -659,7 +659,7 @@ int time=0;
         boolean launchMbs=false;
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-        	if(waitServers(nMbsServers-1,10)){
+        	if(waitServers(nMbsServers,10)){
                 System.out.println("\nMbs connnected");
                 setProgress("MBS servers ready, update parameters ...",xSet.blueD());
                 xSet.setSuccess(false);
@@ -686,7 +686,7 @@ int time=0;
 	        int nserv=0;
 	        System.out.print("Dabc wait ");
 	        nserv=xSet.getNofServers();
-	        setProgress(new String("Wait for "+(nServers-1)+" servers ..."),xSet.blueD());
+	        setProgress(new String("Wait for "+nServers+" servers ..."),xSet.blueD());
 	        while(nserv < nServers){
 	            System.out.print(".");
 	            browser.sleep(1);

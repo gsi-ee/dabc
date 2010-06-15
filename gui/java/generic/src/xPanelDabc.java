@@ -138,9 +138,9 @@ addPromptLines();
 //    addCheckBox("Get new setup",getnew);
 dabcshell = new xRemoteShell("ssh");
 if(xSet.isDabc())checkDir();
-nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS
+nServers=Integer.parseInt(formDabc.getServers()); // all without DNS
 setDimServices();
-System.out.println("Dabc  servers needed: DNS + "+(nServers-1));
+System.out.println("Dabc  servers needed: DNS + "+nServers);
 etime = new xTimer(al, false); // fire only once
 }
 //----------------------------------------
@@ -165,7 +165,7 @@ DabcScript=addPrompt("Script: ",formDabc.getScript(),"dabcScript",width,this);
 //----------------------------------------
 private void checkDir(){
 String check, result;
-nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS
+nServers=Integer.parseInt(formDabc.getServers()); // all without DNS
 System.out.println("DABC +++++ check directories");
 if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
@@ -429,7 +429,7 @@ if ("dabcQuit".equals(Action)) {
     xLogger.print(1,Action);
 }
 else if ("dabcLaunch".equals(Action)) {
-	if(nServers == xSet.getNofServers())
+	if(nServers == xSet.getNofServers()) // without DNS
         setProgress("DABC already launched!",xSet.greenD());
 	else {
     setProgress("Launch DABC servers ...",xSet.blueD());
@@ -441,10 +441,10 @@ else if ("dabcLaunch".equals(Action)) {
     int timeout=0;
     int nserv=0;
     if(dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L)){
-        System.out.print("Dabc wait "+(nServers-1));
+        System.out.print("Dabc wait "+nServers);
         nserv=xSet.getNofServers();
         while(nserv < nServers){
-            setProgress(new String("Wait "+timeout+" [10] for "+(nServers-1)+" servers, found "+nserv),xSet.blueD());
+            setProgress(new String("Wait "+timeout+" [10] for "+nServers+" servers, found "+nserv),xSet.blueD());
             System.out.print("."+nserv);
             browser.sleep(1);
             timeout++;
@@ -452,7 +452,7 @@ else if ("dabcLaunch".equals(Action)) {
             nserv=xSet.getNofServers();
         }
     if(nserv >= nServers){
-        System.out.println("\nDabc connnected "+(nServers-1)+" servers");
+        System.out.println("\nDabc connnected "+nServers+" servers");
         setProgress("OK: DABC servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));

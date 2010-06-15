@@ -138,9 +138,9 @@ Password.addActionListener(this);
 Password.setActionCommand("setpwd");
 // add prompt/input fields
 addPromptLines();
-nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
-nMbsNodes=nMbsServers-2;
-System.out.println("Mbs   servers needed: DNS + "+(nMbsServers-1));   
+nMbsServers=Integer.parseInt(formMbs.getServers());// all without DNS
+nMbsNodes=nMbsServers-1; // one server is prompter/dispatcher
+System.out.println("Mbs   servers needed: DNS + "+nMbsServers);   
 mbsshell = new xRemoteShell("rsh");
 if(xSet.isMbs())checkDir();
 String service = new String(MbsNode.getText().toUpperCase()+":PRM");
@@ -173,8 +173,8 @@ MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
 //----------------------------------------
 private void checkDir(){
 String check, result;
-nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
-nMbsNodes=nMbsServers-2;
+nMbsServers=Integer.parseInt(formMbs.getServers());// all without DNS
+nMbsNodes=nMbsServers-1;
 System.out.println("MBS +++++ check directories");
 if(!formMbs.getUserPath().contains("%")){
     check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
@@ -417,7 +417,7 @@ setProgress("Launch MBS ...",xSet.blueD());
 System.out.println("");
 if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
 	setProgress("Wait for MBS servers ready ...",xSet.blueD());
-    if(waitServers(nMbsServers-1,10)){
+    if(waitServers(nMbsServers,10)){
         System.out.println("Mbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
@@ -463,8 +463,8 @@ if ("shrink".equals(e.getActionCommand())) {
 	refreshPanel();
 	return;
 }
-nMbsServers=1+formMbs.getnServers();
-nMbsNodes=nMbsServers-2;
+nMbsServers=formMbs.getnServers();
+nMbsNodes=nMbsServers-1;
 
 if ("mbsSave".equals(e.getActionCommand())) {
     xLogger.print(1,Action);

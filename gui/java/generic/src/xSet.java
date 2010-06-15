@@ -349,7 +349,7 @@ sx=el.getAttribute("width").toString().split(",");
 for(int i=0;i<sx.length;i++)ParTableWidth[i]=Integer.parseInt(sx[i]);
 }
 /**
- * @return number of DIM servers excludinmg name server
+ * @return number of DIM servers excluding name server
  */
 protected final static int getNofServers(){
 	return nDataServers;
