@@ -4,12 +4,12 @@ ifneq ($(shell which javac),)
 
 exes::
 	@echo "Compiling java gui..."
-	cd $(DABCSYS)/gui/java/generic; export DIMDIR=$(DIMDIR); make -j1 all 
-	cd $(DABCSYS)/gui/java/generic/application; export DIMDIR=$(DIMDIR); make -j1 all 
+	cd $(DABCSYS)/gui/java/generic; export DIMDIR=$(DIMDIR); make 
+	cd $(DABCSYS)/gui/java/generic/application; export DIMDIR=$(DIMDIR); make
 
 docs::
 	@echo "Compiling java gui docs..."
-	cd $(DABCSYS)/gui/java/generic; export DIMDIR=$(DIMDIR); make -j1 doc 
+	cd $(DABCSYS)/gui/java/generic; export DIMDIR=$(DIMDIR); make doc 
 
 else
 

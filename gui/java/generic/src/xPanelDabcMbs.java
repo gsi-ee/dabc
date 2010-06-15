@@ -194,6 +194,10 @@ DabcScript=addPrompt("DABC script: ",formDabc.getScript(),"dabcShell",width,this
 //----------------------------------------
 private void checkDir(){
 String check, result;
+nMbsServers=Integer.parseInt(formMbs.getServers());
+nMbsNodes=nMbsServers-1;
+nDabcServers=Integer.parseInt(formDabc.getServers());
+nServers=nMbsServers+nDabcServers+1; // add DNS
 System.out.println("DABC and MBS +++++ check directories");
 if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());

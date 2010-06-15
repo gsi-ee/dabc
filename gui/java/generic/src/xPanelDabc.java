@@ -165,6 +165,7 @@ DabcScript=addPrompt("Script: ",formDabc.getScript(),"dabcScript",width,this);
 //----------------------------------------
 private void checkDir(){
 String check, result;
+nServers=1+Integer.parseInt(formDabc.getServers()); // add DNS
 System.out.println("DABC +++++ check directories");
 if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());

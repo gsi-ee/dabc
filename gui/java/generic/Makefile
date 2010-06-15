@@ -78,6 +78,7 @@ classes: \
 	application/MbsPanel.class \
 	application/MbsEvGen.class \
 	application/RocPanel.class \
+	application/CbmPanel.class \
 	application/UserPanel.class
 	
 application/ColorTest.class: application/ColorTest.java
@@ -90,6 +91,8 @@ application/MbsEvGen.class: application/MbsEvGen.java
 	javac $(FLAGSA) application/MbsEvGen.java
 application/RocPanel.class: application/RocPanel.java
 	javac $(FLAGSA) application/RocPanel.java
+application/CbmPanel.class: application/CbmPanel.java
+	javac $(FLAGSA) application/CbmPanel.java
 application/UserPanel.class: application/UserPanel.java
 	javac $(FLAGSA) application/UserPanel.java
 $(PACKAGE)/xXml.class : $(SOURCEDIR)/xXml.java

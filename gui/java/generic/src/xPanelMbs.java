@@ -173,6 +173,8 @@ MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
 //----------------------------------------
 private void checkDir(){
 String check, result;
+nMbsServers=1+Integer.parseInt(formMbs.getServers());// add DNS
+nMbsNodes=nMbsServers-2;
 System.out.println("MBS +++++ check directories");
 if(!formMbs.getUserPath().contains("%")){
     check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
