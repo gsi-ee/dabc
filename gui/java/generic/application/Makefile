@@ -10,11 +10,15 @@ classes: \
 	MbsEvGen.class \
 	RocPanel.class \
 	UserPanel.class \
+	CbmPanel.class \
 	testclient.class \
 	testclient
 	
 ColorTest.class: ColorTest.java
 	javac $(FLAGSA) ColorTest.java
+	
+CbmPanel.class: CbmPanel.java
+	javac $(FLAGSA) CbmPanel.java
 	
 MiniPanel.class: MiniPanel.java
 	javac $(FLAGSA) MiniPanel.java
