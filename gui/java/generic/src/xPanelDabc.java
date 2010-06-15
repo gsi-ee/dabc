@@ -165,7 +165,6 @@ DabcScript=addPrompt("Script: ",formDabc.getScript(),"dabcScript",width,this);
 //----------------------------------------
 private void checkDir(){
 String check, result;
-nServers=Integer.parseInt(formDabc.getServers()); // all without DNS
 System.out.println("DABC +++++ check directories");
 if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
@@ -192,6 +191,7 @@ formDabc.setScript(DabcScript.getText());
 formDabc.setLaunchFile(DabcLaunchFile.getText());
 formDabc.setName(DabcName.getText());
 formDabc.setSetup(DabcSetup.getText());
+nServers=Integer.parseInt(formDabc.getServers()); // all without DNS
 //formDabc.printForm();
 }
 //----------------------------------------
@@ -302,13 +302,12 @@ return false;
  */
 public void actionPerformed(ActionEvent e) {
 boolean doit=true;
+setLaunch();
 if ("set".equals(e.getActionCommand())) {
-	setLaunch();
 	checkDir();
 	return;
 }
 if ("setpwd".equals(e.getActionCommand())) {
-	setLaunch();
 	return;
 }
 if ("shrink".equals(e.getActionCommand())) {
@@ -319,66 +318,9 @@ if ("shrink".equals(e.getActionCommand())) {
 	refreshPanel();
 	return;
 }
-//if ("ReadSetup".equals(e.getActionCommand())) {
-//int off[]=new int[100],len[]=new int[100],ind,i;
-//    String name,header;
-//    if(getnew.isSelected()){
-//        setup=null;
-//        if(titles != null) for(i=0;i<titles.size();i++) desk.removeFrame(titles.get(i));
-//        titles=null;
-//    }
-//    getnew.setSelected(false);
-//    if(setup == null){
-//        setup=new xSetup();
-//        if(!setup.parseSetup(DabcUserpath.getText()+"/"+DabcSetup.getText())) {
-//            tellError(this,"Setup parse failed");
-//            System.out.println("Setup parse failed: "+DabcUserpath.getText()+"/"+DabcSetup.getText());
-//            getnew.setSelected(true);
-//            setup=null;
-//            titles=null;
-//            return;
-//        }
-//        names=setup.getNames();
-//        types=setup.getTypes();
-//        values=setup.getValues();
-//        int number=setup.getContextNumber();// number of nodes
-//        PanelSetupList=new Vector<xPanelSetup>(0);
-//        titles=new Vector<String>(0);
-//        ind=1;
-//        off[0]=0; // first offset is 0
-//        for(i=1;i<names.size();i++){
-//            if(names.get(i).equals("Context")) {
-//                off[ind]=i;
-//                len[ind-1]=i-off[ind-1];
-//                ind++;
-//            }
-//        }    
-//        len[ind-1]=names.size()-off[ind-1];
-//        for(i=0;i<ind;i++){ // create the panels
-//            header=new String(values.get(off[i]+1));
-//            titles.add(values.get(off[i]));
-//            PanelSetupList.add(new xPanelSetup(header,names,types,values,off[i],len[i]));
-//        }
-//    }
-//    System.out.println("Setup parse: "+DabcUserpath.getText()+"/"+DabcSetup.getText());
-//    if(titles != null) for(i=0;i<titles.size();i++) desk.removeFrame(titles.get(i));
-//    for(i=0;i<PanelSetupList.size();i++){ // display panels
-//        name=new String(titles.get(i));
-//        xLayout panlo=xSet.getLayout(name); // if not loaded from setup file, create new one
-//        panlo=xSet.getLayout(name);
-//        if(panlo==null)panlo=xSet.createLayout(name,new Point(100+100*i,200+10*i), new Dimension(100,75),1,true);
-//        xInternalCompound ic =new xInternalCompound(name,setupIcon, 0, panlo,null);
-//        ic.rebuild(PanelSetupList.get(i)); 
-//        desk.addFrame(ic); // old frame will be deleted
-//        ic.moveToFront();
-//    }
-//    desk.toFront("DabcLauncher");
-//    return;
-//}
 //----------------------------------------
-else if ("dabcSave".equals(e.getActionCommand())) {
+if ("dabcSave".equals(e.getActionCommand())) {
     xLogger.print(1,Action+" "+DabcLaunchFile.getText());
-    setLaunch();
     formDabc.saveSetup(DabcLaunchFile.getText());
     String msg=new String("Dabc launch: "+DabcLaunchFile.getText());
     if(setup != null){

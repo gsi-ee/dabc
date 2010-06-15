@@ -173,8 +173,6 @@ MbsCommand=addPrompt("Command: ",formMbs.getCommand(),"mbsCommand",width,this);
 //----------------------------------------
 private void checkDir(){
 String check, result;
-nMbsServers=Integer.parseInt(formMbs.getServers());// all without DNS
-nMbsNodes=nMbsServers-1;
 System.out.println("MBS +++++ check directories");
 if(!formMbs.getUserPath().contains("%")){
     check = new String(formMbs.getUserPath()+"/"+formMbs.getStart());
@@ -207,6 +205,8 @@ formMbs.setStart(MbsStart.getText());
 formMbs.setShut(MbsShut.getText());
 formMbs.setLaunchFile(MbsLaunchFile.getText());
 formMbs.setCommand(MbsCommand.getText());
+nMbsServers=Integer.parseInt(formMbs.getServers());// all without DNS
+nMbsNodes=nMbsServers-1;
 //formMbs.printForm();
 }
 //----------------------------------------
@@ -446,13 +446,12 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
  */
 public void actionPerformed(ActionEvent e) {
 boolean doit=true;
+setLaunch(); // update formMbs from panel content
 if ("set".equals(e.getActionCommand())) {
-	setLaunch();
 	checkDir();
 	return;
 }
 if ("setpwd".equals(e.getActionCommand())) {
-	setLaunch();
 	return;
 }
 if ("shrink".equals(e.getActionCommand())) {
@@ -463,12 +462,8 @@ if ("shrink".equals(e.getActionCommand())) {
 	refreshPanel();
 	return;
 }
-nMbsServers=formMbs.getnServers();
-nMbsNodes=nMbsServers-1;
-
 if ("mbsSave".equals(e.getActionCommand())) {
     xLogger.print(1,Action);
-    setLaunch();
     formMbs.saveSetup(MbsLaunchFile.getText());
     String msg=new String("Mbs launch: "+MbsLaunchFile.getText());
     tellInfo(msg);

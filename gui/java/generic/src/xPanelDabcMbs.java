@@ -194,10 +194,6 @@ DabcScript=addPrompt("DABC script: ",formDabc.getScript(),"dabcShell",width,this
 //----------------------------------------
 private void checkDir(){
 String check, result;
-nMbsServers=Integer.parseInt(formMbs.getServers());
-nMbsNodes=nMbsServers-1;
-nDabcServers=Integer.parseInt(formDabc.getServers());
-nServers=nMbsServers+nDabcServers; // without DNS
 System.out.println("DABC and MBS +++++ check directories");
 if(!formDabc.getUserPath().contains("%")){
 	check = new String(formDabc.getUserPath()+"/"+formDabc.getSetup());
@@ -255,6 +251,10 @@ formDabc.setName(DabcName.getText());
 formDabc.setSetup(DabcSetup.getText());
 
 //formDabc.printForm();
+nMbsServers=Integer.parseInt(formMbs.getServers());
+nMbsNodes=nMbsServers-1;
+nDabcServers=Integer.parseInt(formDabc.getServers());
+nServers=nMbsServers+nDabcServers; // without DNS
 }
 //----------------------------------------
 // get from command list special commands for buttons.
@@ -527,13 +527,12 @@ private void waitSockets(boolean all){
  */
 public void actionPerformed(ActionEvent e) {
 boolean doit=true;
-if ("set".equals(e.getActionCommand())) {
 setLaunch();
+if ("set".equals(e.getActionCommand())) {
 checkDir();
 return;
 }
 if ("setpwd".equals(e.getActionCommand())) {
-setLaunch();
 return;
 }
 if ("shrink".equals(e.getActionCommand())) {
@@ -548,7 +547,6 @@ if ("shrink".equals(e.getActionCommand())) {
 
 if ("Save".equals(e.getActionCommand())) {
     xLogger.print(1,Action);
-    setLaunch();
     formDabc.saveSetup(DabcLaunchFile.getText());
     formMbs.saveSetup(MbsLaunchFile.getText());
     String msg=new String("Dabc launch: "+DabcLaunchFile.getText()+"\nMbs  launch: "+MbsLaunchFile.getText());
