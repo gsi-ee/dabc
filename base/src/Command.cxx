@@ -14,12 +14,13 @@
 #include "dabc/Command.h"
 
 #include <stdlib.h>
+#include <map>
 
 #include "dabc/WorkingProcessor.h"
 #include "dabc/logging.h"
 #include "dabc/threads.h"
+#include "dabc/XmlEngine.h"
 
-#include <map>
 
 
 class dabc::Command::CommandParametersList : public std::map<std::string, std::string> {};
@@ -376,49 +377,28 @@ bool dabc::Command::ReadParsFromDimString(const char* pars)
 {
    if ((pars==0) || (*pars==0)) return true;
 
-   const char* curr = pars;
+   XmlEngine xml;
 
-   while (*curr != 0) {
-      while (*curr==' ') curr++;
-      if (*curr == 0) return true;
-
-      const char* separ2 = 0;
-
-      const char* separ = strstr(curr, "=\"");
-      std::string name, value;
-
-      if (separ!=0) {
-
-         separ2 = strchr(separ+2, '\"');
-         if (separ2==0) {
-            EOUT(("Didnot found closing \" symbol"));
-            return false;
-         }
-         name.assign(curr, separ-curr);
-         value.assign(separ + 2, separ2 - separ - 2);
-
-         curr = separ2 + 1;
-      } else {
-         separ = strstr(curr, "=");
-
-         if (separ==0) {
-            EOUT(("Didnot found = sign"));
-            return false;
-         }
-
-         name.assign(curr, separ-curr);
-
-         separ2 = strchr(separ+1, ' ');
-         if (separ2 == 0) separ2 = separ + strlen(separ);
-         value.assign(separ + 1, separ2 - separ);
-
-         curr = separ2;
-      }
-
-      DOUT1(("Set dim argument %s = %s", name.c_str(), value.c_str()));
-
-      SetPar(name.c_str(), value.c_str());
+   XMLNodePointer_t node = xml.ReadSingleNode(pars);
+   if (node==0) {
+      EOUT(("Cannot parse DIM command %s", pars));
+      return false;
    }
+
+   XMLNodePointer_t child = xml.GetChild(node);
+
+   while (child!=0) {
+
+      if (xml.HasAttr(child, "name") && xml.HasAttr(child, "value")) {
+         const char* parname = xml.GetAttr(child, "name");
+         const char* parvalue = xml.GetAttr(child, "value");
+         SetPar(parname, parvalue);
+//         DOUT3(("Param %s = %s", parname, parvalue));
+      }
+      child = xml.GetNext(child);
+   }
+
+   xml.FreeNode(node);
 
    return true;
 }
