@@ -1026,9 +1026,7 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          EOUT(("Port %s not found for disconnect", portname));
          cmd_res = cmd_false;
       } else {
-         dabc::Module* m = port->GetModule();
-         cmd->SetStr("PortName", port->GetFullName(m));
-         m->Submit(cmd);
+         port->Submit(cmd);
          cmd_res = cmd_postponed;
       }
    } else

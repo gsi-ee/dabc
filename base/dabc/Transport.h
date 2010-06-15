@@ -76,7 +76,7 @@ namespace dabc {
          bool SetPort(Port* port, bool called_by_port = true);
 
          /** Method called by device to check if transport can be destroyed,
-          * if /paran force specified, one should tries to dettach port in any cases */
+          * if /param force specified, one should tries to dettach port in any cases */
          bool CanCleanupTransport(bool force);
 
          /** Method called to complete transport cleanup (if necessary) before
@@ -105,7 +105,7 @@ namespace dabc {
          Device* GetDevice() const { return fDevice; }
 
          /** This should be called after transport constructor to
-          * associate transport with port. Runs asynchronousely */
+          * associate transport with port. Runs asynchronously */
          bool AttachPort(Port* port, bool sync = false);
 
          void DettachPort();

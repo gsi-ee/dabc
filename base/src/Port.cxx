@@ -18,6 +18,7 @@
 #include "dabc/PoolHandle.h"
 #include "dabc/Buffer.h"
 #include "dabc/Parameter.h"
+#include "dabc/Manager.h"
 
 dabc::PortException::PortException(Port* port, const char* info) throw() :
    dabc::ModuleItemException(port, info)
@@ -149,6 +150,9 @@ int dabc::Port::ExecuteCommand(Command* cmd)
          fTransport->StartTransport();
 
       DOUT5(("%s processed AssignTransport command cansend %s", GetFullName().c_str(), DBOOL(CanSend())));
+   } else
+   if (cmd->IsName(CmdDestroyTransport::CmdName())) {
+      Disconnect();
    } else
       return cmd_false;
 
