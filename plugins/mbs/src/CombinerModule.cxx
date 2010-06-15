@@ -147,15 +147,15 @@ bool mbs::CombinerModule::BuildEvent()
          mineventid = evid;
          maxeventid = evid;
       } else {
-         if (mineventid < evid) mineventid = evid; else
-         if (maxeventid > evid) maxeventid = evid;
+         if (evid < mineventid) mineventid = evid; else
+         if (evid > maxeventid) maxeventid = evid;
       }
    }
 
    mbs::EventNumType buildevid = mineventid;
    // treat correctly situation of event id overflow
    if (maxeventid!=mineventid)
-      if (maxeventid - mineventid > 0x10000000) buildevid = mineventid;
+      if (maxeventid - mineventid > 0x10000000) buildevid = maxeventid;
 
    uint32_t subeventssize = 0;
 

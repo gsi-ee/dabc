@@ -114,7 +114,7 @@ void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
 extern "C" void InitMbsGenerator()
 {
    dabc::mgr()->CreateThread("GenThrd", dabc::typeSocketThread);
-   dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator", "GenThrd");
+   dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator", "GenModThrd");
    dabc::mgr()->CreateTransport("Generator/Output", mbs::typeServerTransport, "GenThrd");
 }
 
