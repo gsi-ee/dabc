@@ -38,11 +38,18 @@ namespace mbs {
    class ServerConnectProcessor : public dabc::SocketServerProcessor {
       friend class ServerTransport;
 
+      enum EEvents { evntNewBuffer = evntSocketLast+127,
+                     evntMbsServerLast };
+
       public:
          ServerConnectProcessor(ServerTransport* tr, int serversocket, int portnum);
 
+         inline void FireNewBuffer() { FireEvent(evntNewBuffer); }
+
       protected:
          virtual void OnClientConnected(int fd);
+
+         virtual void ProcessEvent(dabc::EventId);
 
          ServerTransport*  fTransport;
    };
@@ -68,12 +75,11 @@ namespace mbs {
          virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const char* info);
 
-         inline void FireDataOutput() { FireEvent(evMbsDataOutput, 0); }
-         inline void FireNewBuffer() { FireEvent(evMbsDataOutput, 1); }
-         virtual void ProcessEvent(dabc::EventId);
+         inline void FireDataOutput() { FireEvent(evMbsDataOutput); }
 
       protected:
          virtual double ProcessTimeout(double last_diff);
+         virtual void ProcessEvent(dabc::EventId);
 
          ServerTransport*      fTransport;
          mbs::TransportInfo    fServInfo; // data, send by transport server in the beginning
@@ -102,8 +108,7 @@ namespace mbs {
          // here is call-backs from different processors
          void ProcessConnectionRequest(int fd);
          void SocketIOClosed(ServerIOProcessor* proc);
-         void DropFrontBufferIfQueueFull();
-         bool MoveFrontBuffer(ServerIOProcessor* callproc);
+         void MoveFrontBuffer(ServerIOProcessor* callproc);
 
          // this is normal transport functionality
          virtual bool ProvidesInput() { return false; }
@@ -117,6 +122,9 @@ namespace mbs {
          virtual unsigned SendQueueSize();
          virtual unsigned MaxSendSegments() { return 9999; }
       protected:
+
+         virtual void HaltTransport();
+
          int                     fKind; // see EMbsServerKinds values
          dabc::Mutex             fMutex;
          dabc::BuffersQueue      fOutQueue;
