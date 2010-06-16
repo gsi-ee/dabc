@@ -122,7 +122,16 @@ namespace dabc {
 
          typedef std::vector<WorkingProcessor*> ProcessorsVector;
 
-         typedef Queue<EventId> EventsQueue;
+         class EventsQueue : public Queue<EventId> {
+            public:
+               int scaler;
+
+               EventsQueue() :
+                  Queue<EventId>(),
+                  scaler(8)
+               {
+               }
+         };
 
          virtual int ExecuteThreadCommand(Command* cmd);
 
@@ -130,13 +139,17 @@ namespace dabc {
 
          void ProcessEvent(EventId evid);
 
+/*
          inline EventId _GetNextEvent()
          {
             for(int nq=0; nq<fNumQueues; nq++)
-              if (fQueues[nq].Size()>0)
-                 return fQueues[nq].Pop();
+               if (fQueues[nq].Size()>0) {
+                  return fQueues[nq].Pop();
             return NullEventId;
-         }
+            }
+*/
+
+         EventId _GetNextEvent();
 
          inline void _PushEvent(EventId arg, int nq)
          {

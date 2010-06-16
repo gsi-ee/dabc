@@ -270,11 +270,14 @@ namespace dabc {
 
          int            fPipe[2];
          long           fFireCounter;
-         long           fPipeFired;  // indicate if somthing was written in pipe
+         long           fPipeFired;  // indicate if something was written in pipe
          bool           fWaitFire;
+         int            fScalerCounter; // variable used to test time to time sockets even if there are events in the queue
          unsigned       f_sizeufds;  // size of the structure, which was allocated
          pollfd        *f_ufds;      // list of file descriptors for poll call
          ProcRec       *f_recs;      // identify used processors
+         bool           fIsAnySocket; // indicates that at least one socket processors in the list
+         bool           fHadSocketEvent; // indicates if previously socket event was detected
 
 #ifdef SOCKET_PROFILING
          long           fWaitCalls;

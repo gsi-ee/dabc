@@ -627,6 +627,7 @@ void dabc::SocketServerProcessor::ProcessEvent(dabc::EventId evnt)
     switch (GetEventCode(evnt)) {
        case evntSocketRead: {
           int connfd = accept(Socket(), 0, 0);
+
           if (connfd<0) {
              EOUT(("Error with accept"));
              return;
@@ -847,9 +848,12 @@ dabc::SocketThread::SocketThread(Basic* parent, const char* name, int numqueues)
    fFireCounter(0),
    fPipeFired(false),
    fWaitFire(false),
+   fScalerCounter(10),
    f_sizeufds(0),
    f_ufds(0),
-   f_recs(0)
+   f_recs(0),
+   fIsAnySocket(false),
+   fHadSocketEvent(true)
 {
 
 #ifdef SOCKET_PROFILING
@@ -1272,9 +1276,26 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
    {
       dabc::LockGuard lock(fWorkMutex);
 
+      // if we already have events in the queue,
+      // check if we take them out or first check if new sockets events there
+
       if (fFireCounter>0) {
-         fFireCounter--;
-         return _GetNextEvent();
+
+         bool returnevent = !fHadSocketEvent;
+
+         if (returnevent)
+            if (fScalerCounter-- <= 0) {
+               fScalerCounter = 10;
+               returnevent = false;
+            }
+
+         if (returnevent) {
+            fFireCounter--;
+            return _GetNextEvent();
+         }
+
+         // we have events in the queue, therefore do not wait - just check new events
+         tmout_sec = 0.;
       }
 
       if (f_ufds==0) return NullEventId;
@@ -1293,6 +1314,7 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
    for(unsigned n=1; n<f_sizeufds; n++) {
       if (!f_recs[n].use) continue;
       SocketProcessor* proc = (SocketProcessor*) fProcessors[n];
+//      if (proc==0) continue;
 
       if (proc->Socket()<=0) continue;
 
@@ -1315,7 +1337,7 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
       numufds++;
    }
 
-   int tmout = tmout_sec < 0 ? -1 : int(tmout_sec*1000.);
+   int tmout = tmout_sec < 0. ? -1 : int(tmout_sec*1000.);
 
    #ifdef SOCKET_PROFILING
      fWaitDone++;
@@ -1342,6 +1364,8 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
       fPipeFired = false;
    }
 
+   fHadSocketEvent = false;
+
    // if we really has any events, analyze all of them and push in the queue
    if (poll_res>0)
       for (int n=1; n<numufds;n++) {
@@ -1352,16 +1376,19 @@ dabc::EventId dabc::SocketThread::WaitEvent(double tmout_sec)
 //            EOUT(("Error on the socket %d", f_ufds[n].fd));
             _PushEvent(CodeEvent(SocketProcessor::evntSocketError, f_recs[n].indx), 0);
             fFireCounter++;
+            fHadSocketEvent = true;
          }
 
          if (f_ufds[n].revents & (POLLIN | POLLPRI)) {
             _PushEvent(CodeEvent(SocketProcessor::evntSocketRead, f_recs[n].indx), 1);
             fFireCounter++;
+            fHadSocketEvent = true;
          }
 
          if (f_ufds[n].revents & POLLOUT) {
             _PushEvent(CodeEvent(SocketProcessor::evntSocketWrite, f_recs[n].indx), 1);
             fFireCounter++;
+            fHadSocketEvent = true;
          }
       }
 
@@ -1389,12 +1416,18 @@ void dabc::SocketThread::ProcessorNumberChanged()
 
    f_recs[0].use = true;
    f_recs[0].indx = 0;
+   fIsAnySocket = false;
 
    for (unsigned indx=1;indx<fProcessors.size();indx++) {
       SocketProcessor* proc = dynamic_cast<SocketProcessor*> (fProcessors[indx]);
 
       f_recs[indx].use = proc!=0;
+
+      if (proc!=0) fIsAnySocket = true;
    }
+
+   // any time new processor is added, check for new socket events
+   fHadSocketEvent = fIsAnySocket;
 
    DOUT5(("ProcessorNumberChanged finished"));
 }

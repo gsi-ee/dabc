@@ -84,8 +84,10 @@ dabc::WorkingThread::WorkingThread(Basic* parent, const char* name, unsigned num
 {
    if (fNumQueues>0) {
      fQueues = new EventsQueue[fNumQueues];
-     for (int n=0;n<fNumQueues;n++)
+     for (int n=0;n<fNumQueues;n++) {
         fQueues[n].Init(256, true);
+        fQueues[n].scaler = 8;
+     }
    }
 
    DOUT3(("Thread %s created", GetName()));
@@ -126,6 +128,24 @@ dabc::WorkingThread::~WorkingThread()
 
    DOUT3(("Thread %s %p destroyed", GetName(), this));
 }
+
+dabc::EventId dabc::WorkingThread::_GetNextEvent()
+{
+   bool wasscaler = false;
+
+   do {
+      wasscaler = false;
+      for(int nq=0; nq<fNumQueues; nq++)
+         if (fQueues[nq].Size()>0) {
+            fQueues[nq].scaler--;
+            if (fQueues[nq].scaler>0) return fQueues[nq].Pop();
+            fQueues[nq].scaler = 8;
+            wasscaler = true;
+         }
+   } while (wasscaler);
+   return NullEventId;
+}
+
 
 bool dabc::WorkingThread::CompatibleClass(const char* clname) const
 {
@@ -449,6 +469,9 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
             DOUT3(("Thrd:%s Remove processor %u %p", GetName(), id, fProcessors[id]));
 
             fProcessors[id] = 0;
+
+            ProcessorNumberChanged();
+
             // rebuild processors vector after we process all other events now in the queue
             Fire(CodeEvent(evntRebuildProc, 0, fProcessors.size()), -1);
          } else {
@@ -457,8 +480,6 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
          }
 
          fNoLongerUsed = !CheckThreadUsage();
-
-         ProcessorNumberChanged();
 
          DOUT3(("Thrd:%s Remove processor %u done", GetName(), id));
       }
@@ -482,6 +503,7 @@ int dabc::WorkingThread::ExecuteThreadCommand(Command* cmd)
             fExec->AddPostponed(cmd);
          } else {
             fProcessors[id] = 0;
+            ProcessorNumberChanged();
             delete proc;
          }
       }
@@ -669,7 +691,6 @@ bool dabc::WorkingThread::AddProcessor(WorkingProcessor* proc, bool sync)
    cmd->SetPtr("WorkingProcessor", proc);
    return sync ? fExec->Execute(cmd) : fExec->Submit(cmd);
 }
-
 
 int dabc::WorkingThread::Execute(dabc::Command* cmd, double tmout)
 {
