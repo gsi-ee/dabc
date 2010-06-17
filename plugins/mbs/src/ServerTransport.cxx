@@ -18,34 +18,6 @@
 #include "dabc/Port.h"
 #include "dabc/Device.h"
 
-mbs::ServerConnectProcessor::ServerConnectProcessor(ServerTransport* tr, int serversocket, int portnum) :
-   dabc::SocketServerProcessor(serversocket, portnum),
-   fTransport(tr)
-{
-}
-
-void mbs::ServerConnectProcessor::OnClientConnected(int connfd)
-{
-   if (fTransport)
-      fTransport->ProcessConnectionRequest(connfd);
-   else {
-      EOUT(("Nobody waits for requested connection"));
-      close(connfd);
-   }
-}
-
-void mbs::ServerConnectProcessor::ProcessEvent(dabc::EventId evnt)
-{
-   if (dabc::GetEventCode(evnt) != evntNewBuffer) {
-      dabc::SocketServerProcessor::ProcessEvent(evnt);
-      return;
-   }
-
-   if (fTransport)
-      fTransport->MoveFrontBuffer(0);
-}
-
-
 // ________________________________________________________________________
 
 mbs::ServerIOProcessor::ServerIOProcessor(ServerTransport* tr, int fd) :
@@ -213,24 +185,21 @@ void mbs::ServerIOProcessor::ProcessEvent(dabc::EventId evnt)
 // _____________________________________________________________________
 
 mbs::ServerTransport::ServerTransport(dabc::Device* dev, dabc::Port* port,
-                                      int kind,
-                                      int serversocket, const std::string& thrdname,
-                                      int portnum,
-                                      uint32_t maxbufsize) :
+                                      int kind, int serversocket, int portnum,
+                                      uint32_t maxbufsize,
+                                      int scale) :
    dabc::Transport(dev),
+   dabc::SocketServerProcessor(serversocket, portnum),
    fKind(kind),
    fMutex(),
    fOutQueue(port->OutputQueueCapacity()),
-   fServerPort(0),
    fIOSockets(),
-   fMaxBufferSize(1024)
+   fMaxBufferSize(1024),
+   fScale(scale),
+   fScaleCounter(0)
 {
-   fServerPort = new ServerConnectProcessor(this, serversocket, portnum);
-
-   dabc::mgr()->MakeThreadFor(fServerPort, thrdname.c_str());
-
-   // calculate next
    while (fMaxBufferSize < maxbufsize) fMaxBufferSize*=2;
+   if ((fScale<1) || (kind != mbs::StreamServer)) fScale = 1;
 }
 
 mbs::ServerTransport::~ServerTransport()
@@ -247,28 +216,40 @@ mbs::ServerTransport::~ServerTransport()
          fIOSockets[n] = 0;
       }
 
-   if (fServerPort) {
-      DOUT0(("Destroy server port"));
-      delete fServerPort;
-      fServerPort = 0;
-      DOUT0(("Destroy server port done"));
-//      DOUT3(("mbs::ServerTransport Close server port socket"));
-//      fServerPort->fTransport = 0;
-//      fServerPort->DestroyProcessor();
-//      fServerPort = 0;
-   }
-
    DOUT3(("mbs::ServerTransport::~ServerTransport done queue:%d", fOutQueue.Size()));
 }
 
+void mbs::ServerTransport::OnClientConnected(int connfd)
+{
+   if (fIOSockets.size()>0) {
+      if (Kind()== mbs::TransportServer)
+         DOUT5(("The only connection meaningful for transport server, but lets try"));
+      DOUT5(("There are %u connections opened, add one more", fIOSockets.size()));
+   }
+
+   ServerIOProcessor* io = new ServerIOProcessor(this, connfd);
+
+   io->AssignProcessorToThread(ProcessorThread());
+
+   DOUT1(("New client for fd:%d total %u", connfd, fIOSockets.size()));
+   io->SendInfo(fMaxBufferSize + sizeof(mbs::BufferHeader), true);
+
+   fIOSockets.push_back(io);
+}
+
+void mbs::ServerTransport::ProcessEvent(dabc::EventId evnt)
+{
+   if (dabc::GetEventCode(evnt) == evntNewBuffer)
+      MoveFrontBuffer(0);
+   else
+      dabc::SocketServerProcessor::ProcessEvent(evnt);
+}
+
+
 void mbs::ServerTransport::HaltTransport()
 {
-   if (fServerPort) {
-      DOUT0(("Halt server transport"));
-      fServerPort->HaltProcessor();
-      fServerPort->RemoveProcessorFromThread(true);
-      DOUT0(("Halt server transport done"));
-   }
+   HaltProcessor();
+   RemoveProcessorFromThread(true);
 }
 
 
@@ -280,29 +261,6 @@ void mbs::ServerTransport::PortChanged()
    fOutQueue.Cleanup(&fMutex);
 }
 
-
-void mbs::ServerTransport::ProcessConnectionRequest(int fd)
-{
-   if (fIOSockets.size()>0) {
-      if (Kind()== mbs::TransportServer) {
-         DOUT1(("The only connection meaningful for transport server, but lets try"));
-//         close(fd);
-//         return;
-      }
-
-      DOUT1(("There are %u connections opened, add one more", fIOSockets.size()));
-   }
-
-   ServerIOProcessor* io = new ServerIOProcessor(this, fd);
-
-   io->AssignProcessorToThread(fServerPort->ProcessorThread());
-
-   DOUT1(("Create IO for client fd:%d done", fd));
-   io->SendInfo(fMaxBufferSize + sizeof(mbs::BufferHeader), true);
-
-   fIOSockets.push_back(io);
-}
-
 void mbs::ServerTransport::SocketIOClosed(ServerIOProcessor* proc)
 {
    for (unsigned n=0;n<fIOSockets.size();n++)
@@ -312,7 +270,7 @@ void mbs::ServerTransport::SocketIOClosed(ServerIOProcessor* proc)
          break;
       }
 
-   fServerPort->FireNewBuffer();
+   FireEvent(evntNewBuffer);
 }
 
 void mbs::ServerTransport::MoveFrontBuffer(ServerIOProcessor* callproc)
@@ -366,7 +324,7 @@ void mbs::ServerTransport::MoveFrontBuffer(ServerIOProcessor* callproc)
 
 bool mbs::ServerTransport::Send(dabc::Buffer* buf)
 {
-   bool res(false), fireout(false);
+   bool res(false), fireout(false), firetransport(false);
    dabc::Buffer* dropbuf(0);
 
    {
@@ -375,14 +333,23 @@ bool mbs::ServerTransport::Send(dabc::Buffer* buf)
       if (Kind() == mbs::StreamServer) {
          // in case of stream server accept any new buffer
          // if necessary, release oldest buffer immediately
-         if (fOutQueue.Full()) dropbuf = fOutQueue.Pop();
-         fOutQueue.Push(buf);
+         fScaleCounter = (fScaleCounter+1) % fScale;
+
+         if (fScaleCounter!=0) {
+            // buffer is just skipped
+            dropbuf = buf;
+         } else {
+            if (fOutQueue.Full()) dropbuf = fOutQueue.Pop();
+            fOutQueue.Push(buf);
+            firetransport = true;
+         }
          res = true;
          fireout = true;
       } else {
          if (!fOutQueue.Full()) {
             fOutQueue.Push(buf);
             res = true;
+            firetransport = true;
          }
       }
    }
@@ -394,7 +361,7 @@ bool mbs::ServerTransport::Send(dabc::Buffer* buf)
    if (fireout) FireOutput();
 
    // if buffer was placed into the queue, try move it inside the
-   if (res) fServerPort->FireNewBuffer();
+   if (firetransport) FireEvent(evntNewBuffer);
 
    return res;
 }

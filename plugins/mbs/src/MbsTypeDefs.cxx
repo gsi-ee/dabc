@@ -28,6 +28,7 @@ const char* mbs::xmlSizeLimit         = "MbsFileSizeLimit";
 const char* mbs::xmlServerName        = "MbsServerName";
 const char* mbs::xmlServerKind        = "MbsServerKind";
 const char* mbs::xmlServerPort        = "MbsServerPort";
+const char* mbs::xmlServerScale       = "MbsServerScale";
 
 const char* mbs::xmlTextDataFormat    = "MbsTextFormat";
 const char* mbs::xmlTextNumData       = "MbsTextNumData";

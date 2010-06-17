@@ -185,6 +185,7 @@ namespace mbs {
    extern const char* xmlServerName;
    extern const char* xmlServerKind;
    extern const char* xmlServerPort;
+   extern const char* xmlServerScale;
 
    extern const char* xmlTextDataFormat;
    extern const char* xmlTextNumData;

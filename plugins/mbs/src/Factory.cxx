@@ -77,7 +77,7 @@ dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ
 
       if (fd<=0) return 0;
 
-      DOUT1(("Creating client kind = %s  host %s port %d thrd %s", kindstr.c_str(), hostname.c_str(), portnum, newthrdname.c_str()));
+      DOUT1(("Creating client kind = %s  host %s port %d", kindstr.c_str(), hostname.c_str(), portnum));
 
       ClientTransport* tr = new ClientTransport(dev, port, kind, fd, newthrdname);
 
@@ -85,14 +85,17 @@ dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ
    }
 
    uint32_t maxbufsize = port->GetCfgInt(dabc::xmlBufferSize, 16*1024, cmd);
+   int scale = port->GetCfgInt(xmlServerScale, 1, cmd);
 
    int servfd = dabc::SocketThread::StartServer(portnum);
 
    if (servfd<0) return 0;
 
-   DOUT1(("!!!!! Starts MBS server kind:%s on port %d maxbufsize %u", kindstr.c_str(), portnum, maxbufsize));
+   DOUT1(("!!!!! Starts MBS server kind:%s on port %d maxbufsize %u scale %d", kindstr.c_str(), portnum, maxbufsize, scale));
 
-   ServerTransport* tr = new ServerTransport(dev, port, kind, servfd, newthrdname, portnum, maxbufsize);
+   ServerTransport* tr = new ServerTransport(dev, port, kind, servfd, portnum, maxbufsize, scale);
+
+   dabc::mgr()->MakeThreadFor(tr, newthrdname.c_str());
 
    // connect to port immediately, even before client(s) really connected
    // This will fill output queue of the transport, but buffers should not be lost

@@ -35,27 +35,6 @@ namespace mbs {
 
    class ServerTransport;
 
-   class ServerConnectProcessor : public dabc::SocketServerProcessor {
-      friend class ServerTransport;
-
-      enum EEvents { evntNewBuffer = evntSocketLast+127,
-                     evntMbsServerLast };
-
-      public:
-         ServerConnectProcessor(ServerTransport* tr, int serversocket, int portnum);
-
-         inline void FireNewBuffer() { FireEvent(evntNewBuffer); }
-
-      protected:
-         virtual void OnClientConnected(int fd);
-
-         virtual void ProcessEvent(dabc::EventId);
-
-         ServerTransport*  fTransport;
-   };
-
-   // _____________________________________________________________________
-
    class ServerIOProcessor : public dabc::SocketIOProcessor {
 
       friend class ServerTransport;
@@ -93,20 +72,21 @@ namespace mbs {
 
    // _________________________________________________________________
 
-   class ServerTransport : public dabc::Transport {
+   class ServerTransport : public dabc::Transport,
+                           public dabc::SocketServerProcessor {
+
+      enum EEvents { evntNewBuffer = evntSocketLast,
+                     evntMbsServerLast };
 
       public:
          ServerTransport(dabc::Device* dev, dabc::Port* port,
-                         int kind,
-                         int serversocket, const std::string& thrdname,
-                         int portnum,
-                         uint32_t maxbufsize = 16*1024);
+                         int kind, int serversocket, int portnum,
+                         uint32_t maxbufsize = 16*1024, int scale = 1);
          virtual ~ServerTransport();
 
          int Kind() const { return fKind; }
 
          // here is call-backs from different processors
-         void ProcessConnectionRequest(int fd);
          void SocketIOClosed(ServerIOProcessor* proc);
          void MoveFrontBuffer(ServerIOProcessor* callproc);
 
@@ -125,13 +105,17 @@ namespace mbs {
 
          virtual void HaltTransport();
 
+         virtual void OnClientConnected(int fd);
+
+         virtual void ProcessEvent(dabc::EventId);
+
          int                     fKind; // see EMbsServerKinds values
          dabc::Mutex             fMutex;
          dabc::BuffersQueue      fOutQueue;
-         ServerConnectProcessor* fServerPort; // socket for connections handling
-         //ServerIOProcessor*      fIOSocket; // actual socket for I/O operation
          std::vector<ServerIOProcessor*> fIOSockets; // all connected I/O sockets
          uint32_t                fMaxBufferSize; // maximum size of the buffer, which can be send over channel, used for old transports
+         int                     fScale;        // scale factor for stream server
+         int                     fScaleCounter; // counter for scaler
    };
 
 }
