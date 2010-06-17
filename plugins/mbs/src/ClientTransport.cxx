@@ -72,7 +72,7 @@ void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
          if (fState == ioWaitBuffer){
             if (!fTransport->RequestBuffer(ReadBufferSize(), fRecvBuffer)) {
                fState = ioError;
-               EOUT(("Cannot request buffer from memory pool"));
+               EOUT(("Cannot request buffer %u from memory pool", ReadBufferSize()));
             } else
             if (fRecvBuffer!=0) {
       //         DOUT1(("Start receiving of buffer %p %u %p len = %d",
@@ -203,8 +203,6 @@ mbs::ClientTransport::ClientTransport(dabc::Device* dev, dabc::Port* port, int k
    fIOProcessor = new ClientIOProcessor(this, fd);
 
    dabc::mgr()->MakeThreadFor(fIOProcessor, thrdname.c_str());
-
-   fIOProcessor->FireEvent(ClientIOProcessor::evRecvInfo);
 }
 
 mbs::ClientTransport::~ClientTransport()
@@ -229,12 +227,14 @@ bool mbs::ClientTransport::ProcessPoolRequest()
 
 void mbs::ClientTransport::PortChanged()
 {
-   if (IsPortAssigned()) return;
-   fInpQueue.Cleanup(&fMutex);
-
-   dabc::LockGuard lock(fMutex);
-
-   if (fIOProcessor) fIOProcessor->FireEvent(ClientIOProcessor::evSendClose);
+   if (IsPortAssigned()) {
+      dabc::LockGuard lock(fMutex);
+      if (fIOProcessor) fIOProcessor->FireEvent(ClientIOProcessor::evRecvInfo);
+   } else {
+      fInpQueue.Cleanup(&fMutex);
+      dabc::LockGuard lock(fMutex);
+      if (fIOProcessor) fIOProcessor->FireEvent(ClientIOProcessor::evSendClose);
+   }
 }
 
 void mbs::ClientTransport::StartTransport()
@@ -290,7 +290,10 @@ bool mbs::ClientTransport::HasPlaceInQueue()
 bool mbs::ClientTransport::RequestBuffer(uint32_t sz, dabc::Buffer* &buf)
 {
    dabc::MemoryPool* pool = GetPortPool();
-   if (pool==0) return false;
+   if (pool==0) {
+      DOUT0(("Client port pool = null port = %p", fPort));
+      return false;
+   }
 
    buf = pool->TakeBufferReq(this, sz);
 

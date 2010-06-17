@@ -246,12 +246,19 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
       if (port==0) port = CreateOutput("ServerOutput", fPool, 5);
 
       std::string serverkind = port->GetCfgStr(mbs::xmlServerKind, "", cmd);
-
-      SetParStr("CombinerInfo", dabc::format("Start mbs server %s", serverkind.c_str()));
+      int kind = StrToServerKind(serverkind.c_str());
+      if (kind==mbs::NoServer) kind = mbs::TransportServer;
+      serverkind = ServerKindToStr(kind);
 
       dabc::Command* dcmd = new dabc::CmdCreateTransport(port->GetFullName(dabc::mgr()).c_str(), mbs::typeServerTransport, "MbsServThrd");
       dcmd->SetStr(mbs::xmlServerKind, serverkind);
-      return dabc::mgr()->Execute(dcmd);
+      dcmd->SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(kind));
+      int res = dabc::mgr()->Execute(dcmd);
+
+      SetParStr("CombinerInfo", dabc::format("%s mbs server %s port %d",
+            ((res==dabc::cmd_true) ? "Start" : " Fail to start"), serverkind.c_str(), DefualtServerPort(kind)));
+
+      return res;
    } else
    if (cmd->IsName("StopServer")) {
       dabc::Port* port = FindPort("ServerOutput");
@@ -280,6 +287,10 @@ extern "C" void StartMbsCombiner()
 
     mbs::CombinerModule* m = new mbs::CombinerModule("Combiner");
     dabc::mgr()->MakeThreadForModule(m);
+
+//    dabc::mgr()->CreateMemoryPool(dabc::xmlWorkPool,
+//                                  m->GetCfgInt(dabc::xmlBufferSize, 8192),
+//                                  m->GetCfgInt(dabc::xmlNumBuffers, 100));
 
     for (unsigned n=0;n<m->NumInputs();n++)
        if (!dabc::mgr()->CreateTransport(FORMAT(("Combiner/Input%u", n)), mbs::typeClientTransport, "MbsInpThrd")) {
