@@ -48,7 +48,7 @@ mbs::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
    fIsGo4RandomFormat = GetCfgBool("Go4Random", true, cmd);
    fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16*1024, cmd);
 
-   DOUT1(("Generator buffer size %u sub %u", fBufferSize, fNumSubevents));
+   DOUT1(("Generator buffer size %u procid %u numsub %u", fBufferSize, fFirstProcId, fNumSubevents));
 
    fPool = CreatePoolHandle("Pool", fBufferSize, 10);
 
@@ -67,7 +67,7 @@ void mbs::GeneratorModule::FillRandomBuffer(dabc::Buffer* buf)
       bool eventdone = true;
 
       for (unsigned subcnt = 0; subcnt < fNumSubevents; subcnt++)
-         if (iter.NewSubevent(fSubeventSize, 0, fFirstProcId + subcnt)) {
+         if (iter.NewSubevent(fSubeventSize, fFirstProcId + subcnt + 1, fFirstProcId + subcnt)) {
 
             unsigned subsz = fSubeventSize;
 

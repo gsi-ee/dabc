@@ -42,6 +42,7 @@ namespace dabc {
    const char* xmlDABCSYS          = "DABCSYS";
    const char* xmlDABCUSERDIR      = "DABCUSERDIR";
    const char* xmlDABCWORKDIR      = "DABCWORKDIR";
+   const char* xmlDABCCFGID        = "DABCCFGID";
    const char* xmlDABCNODEID       = "DABCNODEID";
    const char* xmlDABCNUMNODES     = "DABCNUMNODES";
    const char* xmlCopyCfg          = "copycfg";
@@ -75,6 +76,7 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
    envDABCSYS(),
    envDABCUSERDIR(),
    envDABCNODEID(),
+   envDABCCFGID(),
    envContext()
 {
    if (fname==0) return;
@@ -426,6 +428,7 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
             if (var==xmlDABCUSERDIR) value = envDABCUSERDIR; else
             if (var==xmlDABCWORKDIR) value = envDABCWORKDIR; else
             if (var==xmlDABCNODEID) value = envDABCNODEID; else
+            if (var==xmlDABCCFGID) value = envDABCCFGID; else
             if (var==xmlDABCNUMNODES) value = envDABCNUMNODES; else
             if (var==xmlHostAttr) value = envHost; else
             if (var==xmlContext) value = envContext;

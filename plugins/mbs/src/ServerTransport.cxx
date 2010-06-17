@@ -231,10 +231,11 @@ void mbs::ServerTransport::OnClientConnected(int connfd)
 
    io->AssignProcessorToThread(ProcessorThread());
 
-   DOUT1(("New client for fd:%d total %u", connfd, fIOSockets.size()));
    io->SendInfo(fMaxBufferSize + sizeof(mbs::BufferHeader), true);
 
    fIOSockets.push_back(io);
+
+   DOUT1(("New client for fd:%d total %u", connfd, fIOSockets.size()));
 }
 
 void mbs::ServerTransport::ProcessEvent(dabc::EventId evnt)

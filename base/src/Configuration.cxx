@@ -53,6 +53,7 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
 
    if (fSelected==0) return false;
 
+   envDABCCFGID = dabc::format("%u", cfgid);
    envDABCNODEID = dabc::format("%u", nodeid);
    envDABCNUMNODES = dabc::format("%u", numnodes);
 

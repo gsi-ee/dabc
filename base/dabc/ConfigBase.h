@@ -80,7 +80,8 @@ namespace dabc {
          std::string       envDABCSYS;
          std::string       envDABCUSERDIR;     // dir with user plugin
          std::string       envDABCWORKDIR;     // dir where application is started
-         std::string       envDABCNODEID;      // current node id
+         std::string       envDABCNODEID;      // current node id (controlled node number)
+         std::string       envDABCCFGID;       // current node id in config file
          std::string       envDABCNUMNODES;    // current number of nodes
          std::string       envHost;            // host name of current context
          std::string       envContext;         // name of current context

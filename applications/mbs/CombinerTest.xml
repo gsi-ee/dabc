@@ -9,16 +9,17 @@
   <Context host="${genhost1}" name="Generator1"/>
   <Context host="${genhost2}" name="Generator2"/>
   <Context host="${genhost3}" name="Generator3"/>
-  <Context host="lxi012" name="Combiner">
+  <Context host="lxg0526" name="Combiner">
     <Run>
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsCombiner"/>
       <logfile value="combiner.log"/>
+      <debugger value="gdb -q -x gdb.cmd --args"/>
     </Run>
     <Module name="Combiner">
        <NumInputs value="3"/>
        <DoFile value="false"/>
-       <DoServer value="true"/>
+       <DoServer value="false"/>
        <BufferSize value="16384"/>
        <Port name="Input0">
           <InputQueueSize value="5"/>
@@ -55,10 +56,11 @@
       <Run>
         <lib value="libDabcMbs.so"/>
         <func value="InitMbsGenerator"/>
+        <logfile value="${Context}.log"/>
         <ctrl value="false"/>
       </Run>
       <Module name="Generator">
-         <FirstProcId value="${DABCNODEID}"/>
+         <FirstProcId value="${DABCCFGID}"/>
          <NumSubevents value="1"/>
          <Port name="Output">
             <OutputQueueSize value="5"/>
