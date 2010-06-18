@@ -91,7 +91,9 @@ verbs::Thread::Thread(Device* dev, dabc::Basic* parent, const char* name) :
    fWCSize(0),
    fWCs(0),
    fConnect(0),
-   fFastModus(0)
+   fFastModus(0),
+   fHadVerbsEvent(true),
+   fScalerCounter(10)
 {
    fChannel = ibv_create_comp_channel(fDevice->context());
    if (fChannel==0) {
@@ -229,9 +231,26 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
    {
       dabc::LockGuard lock(fWorkMutex);
 
+      // if we already have events in the queue,
+      // check if we take them out or first check if new verbs events there
+
       if (fFireCounter>0) {
-         fFireCounter--;
-         return _GetNextEvent();
+
+         bool returnevent = !fHadVerbsEvent;
+
+         if (returnevent)
+            if (fScalerCounter-- <= 0) {
+               fScalerCounter = 10;
+               returnevent = false;
+            }
+
+         if (returnevent) {
+            fFireCounter--;
+            return _GetNextEvent();
+         }
+
+         // we have events in the queue, therefore do not wait - just check new events
+         tmout_sec = 0.;
       }
 
       fWaitStatus = wsWaiting;
@@ -338,6 +357,7 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
 
    fWaitStatus = wsWorking;
 
+   fHadVerbsEvent = false;
 
    while (true) {
       if (nevents==0)
@@ -365,6 +385,7 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
 
            _PushEvent(dabc::CodeEvent(evnt, procid, wc->wr_id), 1);
            fFireCounter++;
+           fHadVerbsEvent = true;
 #ifdef VERBS_USING_PIPE
          }
 #else

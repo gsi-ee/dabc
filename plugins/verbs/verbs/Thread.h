@@ -72,6 +72,8 @@ namespace verbs {
          struct ibv_wc*           fWCs; // list of event completion
          ConnectProcessor        *fConnect;  // connection initiation
          long                     fFastModus; // makes polling over MainCQ before starting wait - defines pooling number
+         bool                     fHadVerbsEvent; // indicate if we had verbs event when last time WaitEvent method was called
+         int                      fScalerCounter; // scaling counter which allows check sometimes verbs events
       public:
          // list of all events for all kind of socket processors
 

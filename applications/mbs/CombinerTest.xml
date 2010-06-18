@@ -14,7 +14,7 @@
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsCombiner"/>
       <logfile value="combiner.log"/>
-      <debugger value="gdb -q -x gdb.cmd --args"/>
+<!--      <debugger value="gdb -q -x gdb.cmd --args"/> -->
     </Run>
     <Module name="Combiner">
        <NumInputs value="3"/>
