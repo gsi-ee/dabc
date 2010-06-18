@@ -12,9 +12,11 @@
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
 package xgui;
+import java.lang.*;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.util.*;
+import javax.swing.SwingUtilities;
 import dim.*;
 /**
  * A list of these objects is the central management of DIM parameters.
@@ -24,7 +26,7 @@ import dim.*;
  * @author Hans G. Essel
  * @version 1.0
  */
-public class xDimParameter implements xiDimParameter {
+public class xDimParameter implements xiDimParameter, Runnable {
 private xParser pars, compars;
 private xXmlParser xmlpars;
 private DimHandler dimhandler;
@@ -86,6 +88,7 @@ private xRecordState recsta=null;
 private xRecordInfo recinf=null;
 private boolean LF=true;
 private boolean skip=false;
+private long iUpdates=0;
 
 /**
  * DIM integer parameter. Calls initParser
@@ -127,6 +130,18 @@ public xDimParameter(String name, String format, String noLink, int version){
     sNolink=new String(noLink);
     initParser(name,format);
     dimhandler = new DimHandler(name,noLink,this);
+}
+public void run(){
+//	System.out.println("Run: "+dimhandler.getName());
+    if(meter!=null) meter.redraw((double)fvalue,(quality!=-1), isactive);
+    if(histo!=null) histo.redraw(histoChannels,intarr, isactive);
+    if(stat!=null)  stat.redraw(stateSeverity,color,value,isactive);
+    if(info!=null) info.redraw(stateSeverity,color,value,isactive);
+    if(isactive){
+        if((tabmod!=null)&&(tabrow != -1)){
+        	if(tabrow < tabmod.getRowCount())
+                tabmod.setValueAt(value, tabrow, 5);
+        }}
 }
 /**
  * Initializes name parser. Creates XML parser. Creates command to set parameter value by preceding underscore
@@ -593,7 +608,7 @@ public DimHandler(String name, String noLink, xDimParameter dimpar){
  * Table field and rate meter are updated, if known.
  */
 public void infoHandler(){
-int[] intArr; 
+iUpdates++;
 if(skip)return;
 String format=new String("NOFORM");
 String node;
@@ -623,6 +638,15 @@ try{
     return;
 }
 pars.parseQuality(quality);  
+//if(pars.isState()){
+//	if(pars.getName().equals("RunStatus")){
+//        int stateSeverity=getInt();
+//        color=new String(getString());
+//        value=new String(getString());
+//        System.out.println(dimhandler.getName()+"  State: "+value+" "+iUpdates);
+//	}
+//return;}
+//if(!pars.isState()) return;
 
 if(dolog)System.out.print(pars.getFull()); // diagnostics
 
@@ -641,49 +665,51 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
     }
 
     else if(pars.isState()){
-        int severity=getInt();
+        int stateSeverity=getInt();
         if(recsta==null){
             recsta=new xRecordState(pars.getFull(), pars.getType());
             paint=pars.isMonitor();
         }
-        if(severity == iNolink){
+        if(stateSeverity == iNolink){
             color=new String("Gray");
             value=sNolink;
-            severity=0;
+            stateSeverity=0;
             //quality=-1;
         } else {
             color=new String(getString());
             value=new String(getString());
         }
+        recsta.setValue(stateSeverity,color,value);
         if(paint && (stat==null)) createState(true);
-        if(stat!=null)stat.redraw(severity,color,value,isactive);
-        recsta.setValue(severity,color,value);
+        //SwingUtilities.invokeLater(mydimparam);
+        //if(stat!=null)stat.redraw(stateSeverity,color,value,isactive);
     }
 
     else if(pars.isInfo()){
-        int severity=getInt();
+        int stateSeverity=getInt();
         if(recinf==null){
             recinf=new xRecordInfo(pars.getFull(), pars.getType());
             paint=pars.isMonitor();
         }
-        if(severity == iNolink){
+        if(stateSeverity == iNolink){
             color=new String("Gray");
             value=new String(sNolink+" "+pars.getFull());
-            severity=0;
+            stateSeverity=0;
             //quality=-1;
         } else {
             color=new String(getString());
             value=new String(getString());
         }
+        recinf.setValue(stateSeverity,color,value);
         if(paint && (info==null)) createInfo(true);
-        if(info!=null)info.redraw(severity,color,value,isactive);
-        recinf.setValue(severity,color,value);
+        //SwingUtilities.invokeLater(mydimparam);
+        //if(info!=null)info.redraw(stateSeverity,color,value,isactive);
     }
 
     else if(pars.isRate()){
-        float val=getFloat();
-        if(val==fNolink){
-            val=0;
+        fvalue=getFloat();
+        if(fvalue==fNolink){
+            fvalue=0;
             //quality=-1;
         } else {
         if(!meterInit){
@@ -703,8 +729,8 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
                 meterColor, meterAlarmColor, meterUnits);
             paint=pars.isMonitor();
            }
-        recmet.setValue(val);
-        value=String.valueOf(val);
+        recmet.setValue(fvalue);
+        value=String.valueOf(fvalue);
         if(paint && (meter==null)) {
             createMeter(true);
             meter.setColor(recmet.getColor());
@@ -717,9 +743,10 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             meter.setDefaultMode(recmet.getMode());
         }
         if(meter!=null){
-            meter.redraw((double)val,(quality!=-1), isactive);
             recmet.setSize(meter.getDimension());
             recmet.setPosition(meter.getPosition());
+            //SwingUtilities.invokeLater(mydimparam);
+            //meter.redraw((double)fvalue,(quality!=-1), isactive);
         }
     }
 
@@ -728,7 +755,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
         histoChannels=getInt();
         if(histoChannels == iNolink){
             histoChannels=10;
-            intArr=new int[10];
+            intarr=new int[10];
             //quality=-1;
         } else {
             histoLow=getFloat();
@@ -736,7 +763,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             histoLetter=new String(getString());
             histoContent=new String(getString());
             histoColor=new String(getString());
-            intArr=getIntArray();
+            intarr=getIntArray();
             if(rechis==null) {
                 rechis = new xRecordHisto(pars.getFull(), pars.getType(),
                         histoLow,histoHigh,histoLetter,histoContent,histoColor);
@@ -745,11 +772,12 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
         }
         if(paint && (histo==null)) createHisto(true);
         if(histo!=null){
-            histo.redraw(histoChannels,intArr, isactive);
             rechis.setSize(histo.getDimension());
             rechis.setPosition(histo.getPosition());
+            //SwingUtilities.invokeLater(mydimparam);
+            //histo.redraw(histoChannels,intarr, isactive);
         }
-        if(rechis!=null)rechis.setValue(histoChannels,intArr);
+        if(rechis!=null)rechis.setValue(histoChannels,intarr);
     }
     else if(pars.isStruct()){
         value=new String("structure");
@@ -832,15 +860,16 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
         }	// scalar
     } // no struct, no array
     if(isactive){
+        SwingUtilities.invokeLater(mydimparam);
     if(pars.isLogging()) xLogger.print(pars.getState(),new String(pars.getFull()+": "+value));
     if((tabmod!=null)&&(tabrow != -1)){
-    if(tabrow >= tabmod.getRowCount())
-        System.out.println("Table rows:"+tabmod.getRowCount()+" index:"+tabrow);
-        try{ 
-//        if(pars.getName().equals("CfgNodeId.BnetPlugin"))printParameter(false);
-            tabmod.setValueAt(value, tabrow, 5);
-        } catch (ArrayIndexOutOfBoundsException e){
-            System.out.println("Exception Table index: "+tabrow+" "+super.getName());}
+    	if(tabrow >= tabmod.getRowCount())
+    		System.out.println("Table rows:"+tabmod.getRowCount()+" index:"+tabrow);
+//        try{ 
+//            tabmod.setValueAt(value, tabrow, 5);
+//        } catch (ArrayIndexOutOfBoundsException e){
+//            System.out.println("Exception Table index: "+tabrow+" "+super.getName());
+//        }
     }
     // call user info handlers if attached:
     if(userHandler != null)

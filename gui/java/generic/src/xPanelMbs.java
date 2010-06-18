@@ -483,6 +483,7 @@ if(doit){
     threxe.start();
 }
 } else tellError(xSet.getDesktop(),"Execution thread not yet finished!");
+return;
 }
 //----------------------------------------
 // start thread by threxe.start()

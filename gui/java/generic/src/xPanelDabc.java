@@ -356,6 +356,7 @@ if(!threadRunning){
         threxe.start();
     }
     } else tellError(xSet.getDesktop(),"Execution thread not yet finished!");
+return;
 }
 // start thread by threxe.start()
 // CAUTION: Do not use tellInfo or askQuestion here: Thread will never continue!
