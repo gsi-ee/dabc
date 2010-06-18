@@ -235,7 +235,7 @@ namespace dabc {
          virtual void OnThreadAssigned() {}
 
          void DestroyAllPars();
-         void DestroyPar(const char* name) { DestroyPar(FindPar(name)); }
+         bool DestroyPar(const char* name) { return DestroyPar(FindPar(name)); }
          bool DestroyPar(Parameter* par);
          bool InvokeParChange(Parameter* par, const char* value, Command* cmd);
 

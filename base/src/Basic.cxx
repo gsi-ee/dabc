@@ -44,6 +44,7 @@ namespace dabc {
    const char* xmlHeaderSize        = "HeaderSize";
    const char* xmlNumSegments       = "NumSegments";
    const char* xmlAlignment         = "Alignment";
+   const char* xmlShowInfo          = "ShowInfo";
 
    const char* xmlNumInputs         = "NumInputs";
    const char* xmlNumOutputs        = "NumOutputs";

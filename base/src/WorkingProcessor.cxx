@@ -754,7 +754,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 
       Parameter* par = FindPar(cmd->GetPar("ParName"));
 
-      DOUT5(("Found par %s = %p", cmd->GetPar("ParName"), par));
+      DOUT1(("Found par %s = %p", cmd->GetPar("ParName"), par));
 
       if (par==0) {
          EOUT(("Did not found parameter %s", cmd->GetPar("ParName")));
@@ -769,7 +769,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
       }
 
       if (par->SetValue(value)) {
-         DOUT4(("Change parameter %s to value %s", par->GetName(), value));
+         DOUT1(("Change parameter %s to value %s", par->GetName(), value));
          cmd_res = cmd_true;
       } else {
          EOUT(("Fail to set %s to parameter %s", value, par->GetName()));
@@ -778,6 +778,23 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 
       // ParameterChanged(par);
    } else
+
+   if (cmd->IsName("CreateInfoParameter")) {
+      const char* parname = cmd->GetPar("ParName");
+
+      Parameter* par = FindPar(parname);
+      if (par!=0)
+         cmd_res = cmd_false;
+      else {
+         CreateParInfo(parname, 1 , "Green");
+         cmd_res = cmd_true;
+      }
+   } else
+
+   if (cmd->IsName("DestroyParameter")) {
+      cmd_res = cmd_bool(DestroyPar(cmd->GetPar("ParName")));
+   } else
+
    if (cmd->IsName("SyncProcessor")) {
       // this is just dummy command, which is submitted with minimum priority
       cmd_res = cmd_true;
