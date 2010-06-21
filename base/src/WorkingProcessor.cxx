@@ -462,9 +462,20 @@ dabc::Parameter* dabc::WorkingProcessor::CreateParBool(const char* name, bool in
    return CreateParStr(name, initvalue ? xmlTrueValue : xmlFalseValue, flags);
 }
 
-dabc::Parameter* dabc::WorkingProcessor::CreateParInfo(const char* name, int verbose, const char* color)
+dabc::Parameter* dabc::WorkingProcessor::CreateParInfo(const char* name, int verbose, const char* color, unsigned flags)
 {
-   return new InfoParameter(this, name, verbose, color);
+   unsigned oldflags = 0;
+   if (flags & parsValidMask) {
+      oldflags = fParsDefaults;
+      fParsDefaults = flags;
+   }
+
+   dabc::Parameter* par = new InfoParameter(this, name, verbose, color);
+
+   if (flags & parsValidMask)
+      fParsDefaults = oldflags;
+
+   return par;
 }
 
 
@@ -754,7 +765,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
 
       Parameter* par = FindPar(cmd->GetPar("ParName"));
 
-      DOUT1(("Found par %s = %p", cmd->GetPar("ParName"), par));
+      DOUT3(("Found par %s = %p", cmd->GetPar("ParName"), par));
 
       if (par==0) {
          EOUT(("Did not found parameter %s", cmd->GetPar("ParName")));
@@ -769,7 +780,7 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
       }
 
       if (par->SetValue(value)) {
-         DOUT1(("Change parameter %s to value %s", par->GetName(), value));
+         DOUT3(("Change parameter %s to value %s", par->GetName(), value));
          cmd_res = cmd_true;
       } else {
          EOUT(("Fail to set %s to parameter %s", value, par->GetName()));
@@ -786,8 +797,9 @@ int dabc::WorkingProcessor::PreviewCommand(Command* cmd)
       if (par!=0)
          cmd_res = cmd_false;
       else {
-         CreateParInfo(parname, 1 , "Green");
-         cmd_res = cmd_true;
+         unsigned flags = MakeParsFlags(1, false, false);
+
+         cmd_res = cmd_bool(CreateParInfo(parname, 1 , "Green", flags)!=0);
       }
    } else
 

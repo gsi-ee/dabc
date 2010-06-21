@@ -34,13 +34,24 @@ mbs::LmdOutput::LmdOutput(const char* fname,
    fCurrentFileNumber(0),
    fCurrentFileName(),
    fFile(),
-   fCurrentSize(0)
+   fCurrentSize(0),
+   fInfoPort(0),
+   fInfoPrefix(),
+   fLastInfoTime(dabc::NullTimeStamp)
 {
 }
 
 mbs::LmdOutput::~LmdOutput()
 {
    Close();
+
+   // destroy info parameter
+   if (fInfoPort!=0) {
+      dabc::Command* cmd = new dabc::Command("DestroyParameter");
+      cmd->SetStr("ParName", "LmdFileInfo");
+      fInfoPort->Execute(cmd);
+      fInfoPort = 0;
+   }
 }
 
 bool mbs::LmdOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
@@ -49,11 +60,44 @@ bool mbs::LmdOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port
 
    fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
    fSizeLimit = cfg.GetCfgInt(mbs::xmlSizeLimit, fSizeLimit);
+   bool showinfo = (port!=0) && cfg.GetCfgBool(dabc::xmlShowInfo, true);
 
-   DOUT1(("Create LmdOutput name:%s limit:%llu", fFileName.c_str(), fSizeLimit));
+   if (showinfo) {
+      dabc::Command* cmd = new dabc::Command("CreateInfoParameter");
+      cmd->SetStr("ParName", "LmdFileInfo");
+      if (port->Execute(cmd)==dabc::cmd_true) fInfoPort = port;
+
+      fInfoPrefix = fFileName;
+            // dabc::format("Port %s", port->GetFullName(dabc::mgr()).c_str());
+   }
+
+
+   ShowInfo(FORMAT(("limit:%llu", fSizeLimit)));
 
    return Init();
 }
+
+void mbs::LmdOutput::ShowInfo(const char* info, int force)
+{
+   if (force==1) DOUT2((info)); else
+   if (force==2) EOUT((info));
+
+   if (fInfoPort) {
+      dabc::TimeStamp_t tm = TimeStamp();
+
+      if ((force>0) || dabc::IsNullTime(fLastInfoTime) || (dabc::TimeDistance(fLastInfoTime, tm) > 5.)) {
+         fLastInfoTime = tm;
+
+         std::string s = fInfoPrefix;
+         s += ": ";
+         s += info;
+
+         dabc::Command* cmd = new dabc::CmdSetParameter("LmdFileInfo", s.c_str());
+         fInfoPort->Submit(cmd);
+      }
+   }
+}
+
 
 std::string mbs::LmdOutput::FullFileName(std::string extens)
 {
@@ -109,7 +153,7 @@ bool mbs::LmdOutput::Init()
       if (fCurrentFileNumber <= maxnumber)
          fCurrentFileNumber = maxnumber + 1;
 
-      DOUT1(("Find file %s with maximum number %d, start with %d", mask.c_str(), maxnumber, fCurrentFileNumber));
+      ShowInfo(FORMAT(("start with file number %d", fCurrentFileNumber)));
 
       delete lst;
    }
@@ -128,10 +172,14 @@ bool mbs::LmdOutput::StartNewFile()
 
    std::string fname = FullFileName(dabc::format("_%04d", fCurrentFileNumber));
 
+   fInfoPrefix = fname;
+
    if (!fFile.OpenWrite(fname.c_str(), 0)) {
-       EOUT(("Cannot open file %s for writing, errcode %u", fname.c_str(), fFile.LastError()));
-       return false;
+      ShowInfo(FORMAT(("cannot open file for writing, errcode %u", fFile.LastError())), 2);
+      return false;
    }
+
+   ShowInfo("create for writing");
 
    fCurrentFileName = fname;
    fCurrentSize = 0;
@@ -142,7 +190,9 @@ bool mbs::LmdOutput::StartNewFile()
 bool mbs::LmdOutput::Close()
 {
    if (fFile.IsWriteMode())
-      DOUT1(("Close output lmd file %s", fCurrentFileName.c_str()));
+      ShowInfo("Close file");
+
+   fInfoPrefix = fFileName;
 
    fFile.Close();
    fCurrentFileNumber = 0;
@@ -161,7 +211,7 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
    }
 
    if (buf->GetTypeId() != mbs::mbt_MbsEvents) {
-      EOUT(("Buffer must contain mbs event(s) 10-1, but has type %u", buf->GetTypeId()));
+      ShowInfo(FORMAT(("Buffer must contain mbs event(s) 10-1, but has type %u", buf->GetTypeId())), 2);
       return false;
    }
 
@@ -181,6 +231,17 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
    DOUT4(("Write %u events to lmd file", numevents));
 
    fCurrentSize += buf->GetTotalSize();
+
+   std::string info;
+   info = dabc::format("written %3.1f MB", fCurrentSize/1024./1024.);
+   if (fSizeLimit>0)
+      info += dabc::format(" (%3.1f %s)", 100./fSizeLimit*fCurrentSize, "%");
+
+   ShowInfo(info.c_str(), 0);
+
+//   ShowInfo(FORMAT(("Info anything %lld", fCurrentSize)), 0);
+
+//   return true;
 
    return fFile.WriteEvents((mbs::EventHeader*) buf->GetDataLocation(), numevents);
 }

@@ -339,7 +339,7 @@ void dabc::Module::ItemCreated(ModuleItem* item)
    }
 
    if (ProcessorThread()!=0)
-      item->AssignProcessorToThread(ProcessorThread(), false);
+      item->AssignProcessorToThread(ProcessorThread(), true);
 
 //   DOUT1(("Module:%s Add item:%s Id:%d", GetName(), item->GetName(), id));
 }

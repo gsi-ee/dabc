@@ -22,6 +22,10 @@
 #include "dabc/string.h"
 #endif
 
+#ifndef DABC_timing
+#include "dabc/timing.h"
+#endif
+
 #ifndef MBS_LmdFile
 #include "mbs/LmdFile.h"
 #endif
@@ -45,6 +49,7 @@ namespace mbs {
 
          bool Close();
          bool StartNewFile();
+         void ShowInfo(const char* info, int force = 1);
 
          std::string         fFileName;
          uint64_t            fSizeLimit;
@@ -54,6 +59,10 @@ namespace mbs {
 
          mbs::LmdFile        fFile;
          uint64_t            fCurrentSize;
+
+         dabc::WorkingProcessor* fInfoPort;     // port used to display information about file storage
+         std::string         fInfoPrefix;   // prefix used for info field
+         dabc::TimeStamp_t   fLastInfoTime; // last time info was updated
    };
 }
 

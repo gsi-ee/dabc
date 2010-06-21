@@ -18,7 +18,7 @@
     </Run>
     <Module name="Combiner">
        <NumInputs value="3"/>
-       <DoFile value="false"/>
+       <DoFile value="true"/>
        <DoServer value="false"/>
        <BufferSize value="16384"/>
        <Port name="Input0">
@@ -41,8 +41,9 @@
        </Port>
        <Port name="FileOutput">
           <OutputQueueSize value="5"/>
-          <MbsFileName value="combiner.lmd"/>
-          <MbsFileSizeLimit value="128"/>
+          <MbsFileName value="/data.local1/combiner.lmd"/>
+          <MbsFileSizeLimit value="1500"/>
+          <ShowInfo value="true"/>
         </Port>
        <Port name="ServerOutput">
           <OutputQueueSize value="5"/>
