@@ -160,6 +160,7 @@ public String getName(){
 	return pars.getFull();
 }
 protected void releaseService(){
+	System.out.println(dimhandler.getName()+" released");
 	dimhandler.releaseService();
 	dimhandler=null;
 }

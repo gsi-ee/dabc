@@ -604,16 +604,16 @@ public void actionPerformed(ActionEvent e) {
             ("Rebuild".equals(ActionCommand)) ||
             ("Browser".equals(ActionCommand))) {
         if("Browser".equals(ActionCommand)){
-        	if(xSet.isProcessing()) { // MBS or DABC command tread running
+        	if(xSet.isProcessing()) { // MBS or DABC command thread running
         		System.out.println("Busy, no update");
         		return;
         	}
         	clearOnUpdate=true;
         }
-        if("Rebuild".equals(ActionCommand))
-        	clearOnUpdate=true;
+        if("Rebuild".equals(ActionCommand))	clearOnUpdate=true;
+        clearOnUpdate=false;
         // clear all references to DIM services
-		System.out.println("----- update");
+		System.out.println("----- update, clear: "+clearOnUpdate);
         mbspan.releaseDimServices();
         dabcpan.releaseDimServices();
         dbspan.releaseDimServices();
