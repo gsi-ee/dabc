@@ -274,13 +274,14 @@ private boolean waitState(int timeout, String state){
 int t=0;
 boolean ok;
 System.out.println("Wait for "+state);
-while(t < timeout){
+while(t <= timeout){
     ok=true;
     for(int i=0;i<runState.size();i++){
         if(!runState.elementAt(i).getValue().equals(state)) ok=false;
     }
-    setProgress(new String("Wait for "+state+" "+t+" ["+timeout+"]"),xSet.blueD());
     if(ok) return true;
+    if(t == timeout) return(ok);
+    setProgress(new String("Wait for "+state+" "+t+" ["+timeout+"]"),xSet.blueD());
     if(t>0)System.out.print(".");
     browser.sleep(1);
     t++;
@@ -489,9 +490,9 @@ if(doHalt == null) {
     return;
 }
 if ("dabcConfig".equals(Action)) {
-	System.out.println(xSet.getAccess());
-    if(waitState(1,"Ready")) setProgress("DABC already Ready",xSet.greenD());
-    else if(waitState(1,"Running")) setProgress("DABC already Running",xSet.greenD());
+	System.out.println(doConfig.getParser().getFull()+"Check state");
+    if(waitState(0,"Ready")) setProgress("DABC already Ready",xSet.greenD());
+    else if(waitState(0,"Running")) setProgress("DABC already Running",xSet.greenD());
     else {
     setProgress("Configure DABC ...",xSet.blueD());
     xLogger.print(1,doConfig.getParser().getFull());
@@ -575,14 +576,20 @@ else if ("dabcStart".equals(Action)) {
     doStart.exec(xSet.getAccess());
     if(waitState(5,"Running"))
     	 setProgress("OK: DABC started",xSet.greenD());
-    else setProgress("DABC not started",xSet.redD());
+    else {
+    	System.out.println("Probably not running");
+    	setProgress("DABC not started",xSet.redD());
+    }
 }
 else if ("dabcStop".equals(Action)) {
     xLogger.print(1,doStop.getParser().getFull());
     doStop.exec(xSet.getAccess());
     if(waitState(5,"Ready"))
          setProgress("OK: DABC stopped",xSet.greenD());
-    else setProgress("DABC not stopped",xSet.redD());
+    else {
+    	System.out.println("Probably not stopped");
+    	setProgress("DABC not stopped",xSet.redD());
+    }
 }
 }
 threadRunning=false;

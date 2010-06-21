@@ -132,16 +132,15 @@ public xDimParameter(String name, String format, String noLink, int version){
     dimhandler = new DimHandler(name,noLink,this);
 }
 public void run(){
-//	System.out.println("Run: "+dimhandler.getName());
+//	System.out.println("Run: "+dimhandler.getName()+" a "+isactive+" v "+pars.isVisible());
     if(meter!=null) meter.redraw((double)fvalue,(quality!=-1), isactive);
     if(histo!=null) histo.redraw(histoChannels,intarr, isactive);
     if(stat!=null)  stat.redraw(stateSeverity,color,value,isactive);
-    if(info!=null) info.redraw(stateSeverity,color,value,isactive);
-    if(isactive){
-        if((tabmod!=null)&&(tabrow != -1)){
-        	if(tabrow < tabmod.getRowCount())
-                tabmod.setValueAt(value, tabrow, 5);
-        }}
+    if(info!=null)  info.redraw(stateSeverity,color,value,isactive);
+    if((tabmod!=null)&&(tabrow != -1)){
+		if(tabrow < tabmod.getRowCount())
+            tabmod.setValueAt(value, tabrow, 5);
+    }
 }
 /**
  * Initializes name parser. Creates XML parser. Creates command to set parameter value by preceding underscore
@@ -251,13 +250,12 @@ if(userHandler.get(i).getName().equals(pu.getName())){
  * @param activ true: Activate and redraw all graphic objects, otherwise deactivate.
  */
 protected void setParameterActiv(boolean activ) {
+isactive=activ;
 if(activ){
-if(info!=null)info.redraw();
-if(meter!=null)meter.redraw();
-if(stat!=null)stat.redraw();
-if(histo!=null)histo.redraw();
-isactive=true;
-} else isactive=false;
+//	System.out.println("Set: "+dimhandler.getName()+" a "+isactive+" v "+pars.isVisible());
+	if(pars.isVisible())
+		SwingUtilities.invokeLater(dimhandler.mydimparam);
+}
 }
 public boolean parameterActive(){
 	return isactive;
@@ -638,6 +636,7 @@ try{
     return;
 }
 pars.parseQuality(quality);  
+
 //if(pars.isState()){
 //	if(pars.getName().equals("RunStatus")){
 //        int stateSeverity=getInt();
@@ -859,7 +858,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             }
         }	// scalar
     } // no struct, no array
-    if(isactive){
+    if(isactive && pars.isVisible()){
         SwingUtilities.invokeLater(mydimparam);
     if(pars.isLogging()) xLogger.print(pars.getState(),new String(pars.getFull()+": "+value));
     if((tabmod!=null)&&(tabrow != -1)){
