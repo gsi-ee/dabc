@@ -77,6 +77,7 @@ private boolean drag=true;
 private boolean dragging=false;
 private boolean isLog=false;
 private boolean bar=false;
+private boolean alive;
 private String sHead;
 private String sFullHead;
 private String sCont;
@@ -371,6 +372,15 @@ public void update(Graphics g)
         // dont draw again
         gg.setColor(cCol);
         iLastx=-2;
+    }
+    if(alive){
+    	gg.setColor(cCol);
+    	gg.fillRect(1,1,3,3);
+    	alive=false;
+    } else {
+    	gg.setColor(cColBack);
+    	gg.fillRect(1,1,3,3);
+    	alive=true;
     }
 // draw static image
 //paint(g);
