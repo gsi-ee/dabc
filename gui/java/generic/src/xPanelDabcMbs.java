@@ -263,7 +263,7 @@ nServers=nMbsServers+nDabcServers; // without DNS
  */
 public void setDimServices(){
 int i;
-releaseDimServices();
+if(doExit != null)releaseDimServices();
 System.out.println("DabcMbs setDimServices");
 doExit=new Vector<xDimCommand>(0);
 runState=new Vector<xDimParameter>(0);

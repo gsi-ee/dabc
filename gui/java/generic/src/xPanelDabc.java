@@ -200,7 +200,7 @@ nServers=Integer.parseInt(formDabc.getServers()); // all without DNS
  */
 public void setDimServices(){
 int i;
-releaseDimServices();
+if(doExit != null)releaseDimServices();
 System.out.println("Dabc setDimServices");
 doExit=new Vector<xDimCommand>();
 runState=new Vector<xDimParameter>();

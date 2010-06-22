@@ -229,7 +229,7 @@ return str.toString();
  */
 public void setDimServices(){
 int i;
-releaseDimServices();
+if(mbsCommand != null)releaseDimServices();
 mbsRunning=new Vector<xDimParameter>(0);
 mbsPrompt=false;
 System.out.println("Mbs setDimServices");

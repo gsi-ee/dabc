@@ -71,6 +71,7 @@ private boolean boTrend=false;
 private boolean boStat=false;
 private boolean isLog=false, defLog=false;
 private boolean boAutoScale=true, defAutoScale=true;
+private boolean alive;
 private boolean boLarge=false;
 private String sFullHead1;
 private String sFullHead2;
@@ -615,6 +616,11 @@ public void update(Graphics g){
     gg.fillRect(0,0,ix,iy);
     gg.setColor(cColBack);
     gg.fillRect(1,1,ix-2,iy-2);
+    if(alive){
+    	gg.setColor(cColValue);
+    	gg.fillRect(1,1,3,3);
+    	alive=false;
+    } else alive=true;
     if(boArc){
         iYpos=iy-46; // , upper left corner of arc, was 29 for standard YSIZE ys
         //****gg.setColor(cColValue);
