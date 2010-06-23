@@ -187,7 +187,7 @@ public xDesktop() {
     bottomState.setMargin(new Insets(2,2,2,2));
     bottomState.setForeground(xSet.greenL());
     bottomState.setBackground(xSet.blueD());
-    xDimNameInfo dimservers = new xDimNameInfo("DIS_DNS/SERVER_LIST",bottomState);
+    xDimNameInfo dimservers = new xDimNameInfo("DIS_DNS/SERVER_LIST",bottomState,this);
     // launch panels MBS and DABC and combined
     selpan=new xPanelSelect(SelectionFile,"Parameter selection",browser,this,this);
     mbspan=new xPanelMbs("Login",browser,this,this);
@@ -378,6 +378,14 @@ public boolean findFrame(String title){
     return false;
 }
 
+//xiDesktop implementation
+/**
+ * Update DIM parameter list
+ * @param cleanup remove all services first
+ */
+public void updateDim(boolean cleanup){
+	updateParameters(true, cleanup);
+}
 // xiDesktop implementation
 /**
  * Adds a frame to desktop if a frame with same title does not exist.
@@ -458,6 +466,56 @@ try{
 for(int i=0;i<fr.length;i++) 
         if(fr[i].getTitle().equals(title)) fr[i].toFront();
 }catch(ArrayIndexOutOfBoundsException x){System.out.println("Frame \""+title+"\" tofront exc");}
+}
+
+public void updateParameters(boolean doit, boolean cleanup){
+	if(!doit) return;
+    clearOnUpdate=cleanup;
+    clearOnUpdate=false;
+    // clear all references to DIM services
+	System.out.println("----- update, clear: "+clearOnUpdate);
+    mbspan.releaseDimServices();
+    dabcpan.releaseDimServices();
+    dbspan.releaseDimServices();
+    selpan.releaseDimServices();
+    if(usrpan != null){
+    	for(int ii=0;ii<usrpan.size();ii++)
+    		usrpan.get(ii).releaseDimServices();
+    }
+    parpan=null;
+    compan=null;
+    System.gc(); // garbage collect now to save time later
+    browser.releaseServices(clearOnUpdate); // remove all parameters
+    clearOnUpdate=false;
+    browser.initServices("*"); 
+ // waits until all parameters are registered and updated:
+    parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
+    String str=mbspan.getTaskList();
+    compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
+    mbspan.setDimServices();
+    dabcpan.setDimServices();
+    dbspan.setDimServices();
+    selpan.setDimServices();
+    if(usrpan != null){
+    	for(int ii=0;ii<usrpan.size();ii++)
+    		usrpan.get(ii).setDimServices(browser);
+    	if(usrpan.size()>1)compan.setUserCommand(usrpan.get(1).getUserCommand());
+    }
+    browser.enableServices();
+    
+//put list of command descriptors from parameters to commands:
+    compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
+    if(frParameters != null) frParameters.addWindow(parpan);
+    if(frCommands   != null) frCommands.addWindow(compan);
+    if(frInfos      != null) frInfos.addWindow(infpan);
+    // if(frInfos      != null) {
+        // infpan.setListener(frInfos=
+        // createFrame("Infos",infoIcon,infpan,xSet.getLayout("Info"),infpan.createMenuBar(), true));
+        // xSet.setLayout("Info",null,null,0, true);
+        // frInfos.addWindow(infpan);
+    // }
+	System.out.println("----- update finished");
+
 }
 
 // React to menu selections of main window.
@@ -609,52 +667,11 @@ public void actionPerformed(ActionEvent e) {
         		return;
         	}
         	clearOnUpdate=true;
+            updateParameters(true,clearOnUpdate);
+            return;
         }
         if("Rebuild".equals(ActionCommand))	clearOnUpdate=true;
-        clearOnUpdate=false;
-        // clear all references to DIM services
-		System.out.println("----- update, clear: "+clearOnUpdate);
-        mbspan.releaseDimServices();
-        dabcpan.releaseDimServices();
-        dbspan.releaseDimServices();
-        selpan.releaseDimServices();
-        if(usrpan != null){
-        	for(int ii=0;ii<usrpan.size();ii++)
-        		usrpan.get(ii).releaseDimServices();
-        }
-        parpan=null;
-        compan=null;
-        System.gc(); // garbage collect now to save time later
-        browser.releaseServices(clearOnUpdate); // remove all parameters
-        clearOnUpdate=false;
-        browser.initServices("*"); 
-     // waits until all parameters are registered and updated:
-        parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
-        String str=mbspan.getTaskList();
-        compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
-        mbspan.setDimServices();
-        dabcpan.setDimServices();
-        dbspan.setDimServices();
-        selpan.setDimServices();
-        if(usrpan != null){
-        	for(int ii=0;ii<usrpan.size();ii++)
-        		usrpan.get(ii).setDimServices(browser);
-        	if(usrpan.size()>1)compan.setUserCommand(usrpan.get(1).getUserCommand());
-        }
-        browser.enableServices();
-        
-// put list of command descriptors from parameters to commands:
-        compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
-        if(frParameters != null) frParameters.addWindow(parpan);
-        if(frCommands   != null) frCommands.addWindow(compan);
-        if(frInfos      != null) frInfos.addWindow(infpan);
-        // if(frInfos      != null) {
-            // infpan.setListener(frInfos=
-            // createFrame("Infos",infoIcon,infpan,xSet.getLayout("Info"),infpan.createMenuBar(), true));
-            // xSet.setLayout("Info",null,null,0, true);
-            // frInfos.addWindow(infpan);
-        // }
-		System.out.println("----- update finished");
+        updateParameters(false,clearOnUpdate);
     }
     else if ("RebuildCommands".equals(ActionCommand)) {
         String str=mbspan.getTaskList();

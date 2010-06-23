@@ -59,4 +59,9 @@ public abstract void setFrameSelected(String title, boolean select);
  * @param title Title of the frame.
  */
 public abstract void toFront(String title);
+/**
+ * Update DIM parameter list
+ * @param cleanup remove all services first
+ */
+public abstract void updateDim(boolean cleanup);
 }

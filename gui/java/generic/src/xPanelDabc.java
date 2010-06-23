@@ -55,6 +55,7 @@ private String Action;
 private int nServers;
 private xDimCommand doConfig, doEnable, doStart, doStop, doHalt;
 private Vector<xDimParameter> runState;
+private int nofStates;
 private Vector<xDimCommand> doExit;
 private Thread threxe;
 private ActionEvent ae;
@@ -215,8 +216,12 @@ for(i=0;i<list.size();i++){
 	else if(list.get(i).getParser().getFull().indexOf("/EXIT")>0) doExit.add(list.get(i));
 }
 Vector<xDimParameter> para=browser.getParameterList();
+nofStates=0;
 if(para != null)for(i=0;i<para.size();i++){
-	if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) runState.add(para.get(i));
+	if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) {
+		runState.add(para.get(i));
+		nofStates++;
+	}
 }}
 //----------------------------------------
 /**
@@ -232,7 +237,7 @@ doHalt=null;
 if(doExit != null) doExit.removeAllElements();
 if(runState != null) runState.removeAllElements();
 doExit=null;
-runState=null;
+//runState=null;
 }
 //----------------------------------------
 // Start internal frame with an xState panel through timer.
@@ -273,14 +278,18 @@ etime.start(); // fires event with ActionCommand=null, then stop
 private boolean waitState(int timeout, String state){
 int t=0;
 boolean ok;
+int statesOK=0;
 System.out.println("Wait for "+state);
 while(t <= timeout){
     ok=true;
+    try{
+    	statesOK=0;
     for(int i=0;i<runState.size();i++){
-        if(!runState.elementAt(i).getValue().equals(state)) ok=false;
+        if(runState.elementAt(i).getValue().equals(state)) statesOK++;
     }
-    if(ok) return true;
-    if(t == timeout) return(ok);
+    } catch (NullPointerException e){System.out.println("**** reset runState "+state);statesOK=0;}
+    if(statesOK==nofStates) return true;
+    if(t == timeout) return(statesOK==nofStates);
     setProgress(new String("Wait for "+state+" "+t+" ["+timeout+"]"),xSet.blueD());
     if(t>0)System.out.print(".");
     browser.sleep(1);
@@ -490,19 +499,20 @@ if(doHalt == null) {
     return;
 }
 if ("dabcConfig".equals(Action)) {
-	System.out.println(doConfig.getParser().getFull()+"Check state");
+	System.out.println(doConfig.getParser().getFull()+" Check state");
     if(waitState(0,"Ready")) setProgress("DABC already Ready",xSet.greenD());
     else if(waitState(0,"Running")) setProgress("DABC already Running",xSet.greenD());
     else {
     setProgress("Configure DABC ...",xSet.blueD());
     xLogger.print(1,doConfig.getParser().getFull());
     doConfig.exec(xSet.getAccess());
+    browser.sleep(xSet.getNofServers());
     if(waitState(5,"Configured")){
         setProgress("OK: DABC configured, enable ...",xSet.blueD());
     } else { // retry update
     	setProgress("Retry: DABC configure ...",xSet.redD());
     	System.out.println("Retry configure");
-        xSet.setSuccess(false);
+        xSet.setSuccess(true);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
         if(!xSet.isSuccess()) setProgress("Retry: DABC configure failed",xSet.redD());
         else {
@@ -517,7 +527,7 @@ if ("dabcConfig".equals(Action)) {
 	    xLogger.print(1,doEnable.getParser().getFull());
 	    doEnable.exec(xSet.getAccess());
 	    if(waitState(5,"Ready")){
-	        xSet.setSuccess(false);
+	        xSet.setSuccess(true);
 	        setProgress("OK: DABC enabled, update parameters ...",xSet.blueD());
 	        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
 	        if(!xSet.isSuccess()) { // retry
@@ -528,7 +538,7 @@ if ("dabcConfig".equals(Action)) {
 	    } else { // retry
 	    	setProgress("Retry: DABC enable ...",xSet.redD());
 	    	System.out.println("Retry enable");
-	        xSet.setSuccess(false);
+	        xSet.setSuccess(true);
 	        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
 	        if(!xSet.isSuccess()) setProgress("Retry: DABC enable failed",xSet.redD());
 	        else {
@@ -545,7 +555,8 @@ else if ("dabcHalt".equals(Action)) {
     doHalt.exec(xSet.getAccess());
     if(waitState(5,"Halted")){
         setProgress("OK: DABC halted, update parameters ...",xSet.blueD());
-        xSet.setSuccess(false);
+        System.out.println("OK: DABC halted, update parameters ...");
+        xSet.setSuccess(true);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
         if(!xSet.isSuccess()) {
         	System.out.println("Retry update");
@@ -556,7 +567,7 @@ else if ("dabcHalt".equals(Action)) {
     } else {
     	setProgress("Retry: DABC halt ...",xSet.redD());
     	System.out.println("Retry halt");
-        xSet.setSuccess(false);
+        xSet.setSuccess(true);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
         if(!xSet.isSuccess()) setProgress("Retry: DABC halt failed",xSet.redD());
         else {

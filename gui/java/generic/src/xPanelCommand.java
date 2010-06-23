@@ -459,7 +459,7 @@ protected void setCommandDescriptors(Vector<xXmlParser> desc){
 // look for definitions for this command
 		for(int ii=0;ii<comdefs.size();ii++){
 			if(comdefs.get(ii).indexOf(vcom.get(i).getParser().getFull())>0){
-			System.out.println("Restore arguments of "+vcom.get(i).getParser().getFull());
+			//System.out.println("Restore arguments of "+vcom.get(i).getParser().getFull());
 			xmlp=new xXmlParser();
 			xmlp.parseXmlString(vcom.get(i).getParser().getFull(),comdefs.get(ii));
 			xmlp.isChanged(true); // otherwise this would not be stored

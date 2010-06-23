@@ -79,7 +79,7 @@ public static final void saveCommands(Vector<xDimCommand> vcom, String file){
     	if(vcom.get(i).getXmlParser()!=null){
     	if(vcom.get(i).getXmlParser().isChanged()){
         		str.append(vcom.get(i).getXmlParser().getXmlString());
-        		System.out.println("Store arguments of "+vcom.get(i).getParser().getFull());
+        		//System.out.println("Store arguments of "+vcom.get(i).getParser().getFull());
         }}
     }
     str.append(xXml.tag("Commands",xXml.CLOSE));
@@ -124,7 +124,7 @@ public static final void updateCommands(Vector<xDimCommand> vcom){
     	if(vcom.get(i).getXmlParser()!=null){
     	if(vcom.get(i).getXmlParser().isChanged()){
         		str.append(vcom.get(i).getXmlParser().getXmlString());
-        		System.out.println("Update arguments of "+vcom.get(i).getParser().getFull());
+        		//System.out.println("Update arguments of "+vcom.get(i).getParser().getFull());
         }}
     }
     str.append(xXml.tag("Commands",xXml.CLOSE));
