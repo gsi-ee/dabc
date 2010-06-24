@@ -133,7 +133,7 @@ public xDimParameter(String name, String format, String noLink, int version){
 }
 public void run(){
 //	System.out.println("Run: "+dimhandler.getName()+" a "+isactive+" v "+pars.isVisible());
-    if(meter!=null) meter.redraw((double)fvalue,(quality!=-1), isactive);
+    if(meter!=null) meter.redraw((double)fvalue,(fvalue!=fNolink), isactive);
     if(histo!=null) histo.redraw(histoChannels,intarr, isactive);
     if(stat!=null)  stat.redraw(stateSeverity,color,value,isactive);
     if(info!=null)  info.redraw(stateSeverity,color,value,isactive);
@@ -709,7 +709,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
     else if(pars.isRate()){
         fvalue=getFloat();
         if(fvalue==fNolink){
-            fvalue=0;
+            //fvalue=0;
             //quality=-1;
         } else {
         if(!meterInit){

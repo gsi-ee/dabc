@@ -410,6 +410,8 @@ private void waitSockets(boolean all){
 private void launch(String cmd){
 int time=0;
 int num=0;
+// to avoid unneccessary automatic updates when new services are created:
+xSet.setAutoUpdate(false); // must be enabled after we made the update
 setProgress("Launch MBS",xSet.blueD());
 waitSockets(true); // wait for MBS and NxN sockets
 time=0;
@@ -435,6 +437,7 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
     System.out.println("\nMbs startup script Failed ");
     setProgress("Failed: Launch script",xSet.redD());
 }
+xSet.setAutoUpdate(true); // must be enabled after we made the update
 }
 //----------------------------------------
 //React to menu selections.
@@ -565,6 +568,8 @@ if ("mbsShut".equals(Action)) {
     setProgress("OK: MBS servers ready",xSet.greenD());
 }
 else if ("mbsConfig".equals(Action)) {
+	// to avoid unneccessary automatic updates when new services are created:
+	xSet.setAutoUpdate(false); // must be enabled after we made the update
 	waitSockets(false); // wait for MBS
     xLogger.print(1,"MBS: @"+MbsStart.getText());
     mbsCommand.exec(xSet.getAccess()+" @"+MbsStart.getText());
@@ -578,6 +583,7 @@ else if ("mbsConfig".equals(Action)) {
         System.out.println("\nMBS startup failed ");
         setProgress("Fail: Configure",xSet.redD());
     }
+	xSet.setAutoUpdate(true); // must be enabled after we made the update
 }
 else if ("mbsStart".equals(Action)) {
 	String cmd = new String(cmdPrefix+"Start acquisition");

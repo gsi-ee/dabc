@@ -639,6 +639,8 @@ int time=0;
     	if(nServers == xSet.getNofServers())
             setProgress("DABC already launched!",xSet.greenD());
     	else {
+	    // to avoid unneccessary automatic updates when new services are created:
+		xSet.setAutoUpdate(false); // must be enabled after we made the update
         setProgress("Launching DABC ...",xSet.blueD());
         String cmd = new String(DabcPath.getText()+
                                 "/script/dabcstartup.sh "+DabcPath.getText()+" "+
@@ -714,7 +716,9 @@ int time=0;
 	            else setProgress("Failure: DABC servers not ready",xSet.redD());
 	            //setDimServices();        
 	        }
-    }}}
+    }
+		xSet.setAutoUpdate(true); // must be enabled after we made the update
+}}
     // from here we need commands
     else {
     if(mbsCommand == null) setDimServices();
@@ -765,6 +769,8 @@ int time=0;
             doHalt.exec(xSet.getAccess());        	
             waitState(10,"Halted");
         }
+	    // to avoid unneccessary automatic updates when new services are created:
+		xSet.setAutoUpdate(false); // must be enabled after we made the update
         setProgress("Start up and configure MBS tasks",xSet.blueD());
         waitSockets(false); // wait for MBS
         xLogger.print(1,"MBS: @"+MbsStart.getText());
@@ -811,6 +817,7 @@ int time=0;
                 //setDimServices();
             }
         }
+		xSet.setAutoUpdate(true); // must be enabled after we made the update
     }
 //     else if ("dabcEnable".equals(Action)) {
 //         xLogger.print(1,doEnable.getParser().getFull());
