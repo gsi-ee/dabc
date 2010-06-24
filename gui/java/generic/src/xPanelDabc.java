@@ -385,6 +385,8 @@ else if ("dabcLaunch".equals(Action)) {
 	if(nServers == xSet.getNofServers()) // without DNS
         setProgress("DABC already launched!",xSet.greenD());
 	else {
+    // to avoid unneccessary automatic updates when new services are created:
+    xSet.setAutoUpdate(false); // must be enabled after we made the update
     setProgress("Launch DABC servers ...",xSet.blueD());
     String cmd = new String(DabcPath.getText()+
                             "/script/dabcstartup.sh "+DabcPath.getText()+" "+
@@ -422,6 +424,7 @@ else if ("dabcLaunch".equals(Action)) {
     }
     }
     else setProgress("Failed: DABC startup script",xSet.redD());
+    xSet.setAutoUpdate(true);
 }}
 else if ("dabcScript".equals(Action)) {
     //xLogger.print(1,Command);
@@ -505,6 +508,8 @@ if ("dabcConfig".equals(Action)) {
     else {
     setProgress("Configure DABC ...",xSet.blueD());
     xLogger.print(1,doConfig.getParser().getFull());
+    // to avoid unneccessary automatic updates when new services are created:
+    xSet.setAutoUpdate(false); // must be enabled after we made the update
     doConfig.exec(xSet.getAccess());
     browser.sleep(xSet.getNofServers());
     if(waitState(5,"Configured")){
@@ -512,7 +517,7 @@ if ("dabcConfig".equals(Action)) {
     } else { // retry update
     	setProgress("Retry: DABC configure ...",xSet.redD());
     	System.out.println("Retry configure");
-        xSet.setSuccess(true);
+        xSet.setSuccess(false);
         etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
         if(!xSet.isSuccess()) setProgress("Retry: DABC configure failed",xSet.redD());
         else {
@@ -527,7 +532,7 @@ if ("dabcConfig".equals(Action)) {
 	    xLogger.print(1,doEnable.getParser().getFull());
 	    doEnable.exec(xSet.getAccess());
 	    if(waitState(5,"Ready")){
-	        xSet.setSuccess(true);
+	        xSet.setSuccess(false);
 	        setProgress("OK: DABC enabled, update parameters ...",xSet.blueD());
 	        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
 	        if(!xSet.isSuccess()) { // retry
@@ -538,7 +543,7 @@ if ("dabcConfig".equals(Action)) {
 	    } else { // retry
 	    	setProgress("Retry: DABC enable ...",xSet.redD());
 	    	System.out.println("Retry enable");
-	        xSet.setSuccess(true);
+	        xSet.setSuccess(false);
 	        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
 	        if(!xSet.isSuccess()) setProgress("Retry: DABC enable failed",xSet.redD());
 	        else {
@@ -548,32 +553,35 @@ if ("dabcConfig".equals(Action)) {
 	    }
     }
     }// state was "halted"
+    xSet.setAutoUpdate(true); 
     }
 else if ("dabcHalt".equals(Action)) {
     setProgress("Halt DABC ...",xSet.blueD());
     xLogger.print(1,doHalt.getParser().getFull());
     doHalt.exec(xSet.getAccess());
     if(waitState(5,"Halted")){
-        setProgress("OK: DABC halted, update parameters ...",xSet.blueD());
-        System.out.println("OK: DABC halted, update parameters ...");
-        xSet.setSuccess(true);
-        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        if(!xSet.isSuccess()) {
-        	System.out.println("Retry update");
-        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
-       }
-        if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-        else setProgress("OK: DABC halted, servers ready",xSet.greenD());
+//        setProgress("OK: DABC halted, update parameters ...",xSet.blueD());
+//        System.out.println("OK: DABC halted, update parameters ...");
+//        xSet.setSuccess(true);
+//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//        if(!xSet.isSuccess()) {
+//        	System.out.println("Retry update");
+//        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
+//       }
+//        if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+//        else setProgress("OK: DABC halted, servers ready",xSet.greenD());
+    	setProgress("OK: DABC halted, servers ready",xSet.greenD());
     } else {
-    	setProgress("Retry: DABC halt ...",xSet.redD());
-    	System.out.println("Retry halt");
-        xSet.setSuccess(true);
-        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
-        if(!xSet.isSuccess()) setProgress("Retry: DABC halt failed",xSet.redD());
-        else {
-        	if(waitState(5,"Halted"))setProgress("Retry: DABC halted, servers ready",xSet.greenD());
-        	else setProgress("Retry: DABC halt failed",xSet.redD());
-        }
+    	setProgress("Retry: DABC halt failed",xSet.redD());
+//    	setProgress("Retry: DABC halt ...",xSet.redD());
+//    	System.out.println("Retry halt");
+//        xSet.setSuccess(true);
+//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
+//        if(!xSet.isSuccess()) setProgress("Retry: DABC halt failed",xSet.redD());
+//        else {
+//        	if(waitState(5,"Halted"))setProgress("Retry: DABC halted, servers ready",xSet.greenD());
+//        	else setProgress("Retry: DABC halt failed",xSet.redD());
+//        }
     }
 }
 // else if ("dabcEnable".equals(Action)) {

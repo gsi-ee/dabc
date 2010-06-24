@@ -77,6 +77,7 @@ private static boolean dabs=false;
 private static boolean guru=false;
 private static boolean ctrl=false;
 private static boolean progress=false;
+private static boolean autoupdate=true;
 private static String usrpanels;
 private static int nDataServers=0; 
 private static String actioncommand;
@@ -119,6 +120,12 @@ public final static Color grayL(){return grayL;}
 public final static Color grayD(){return grayD;}  
 public final static Color white(){return white;}  
 
+protected final static void setAutoUpdate(boolean update){
+	autoupdate=update;
+	}
+protected final static boolean isAutoUpdate(){
+	return autoupdate;
+	}
 protected final static void setRecordXml(NodeList list){
 	records=list;
 	}

@@ -667,11 +667,11 @@ public void actionPerformed(ActionEvent e) {
         		return;
         	}
         	clearOnUpdate=true;
-            updateParameters(true,clearOnUpdate);
+            updateParameters(true,true);
             return;
         }
-        if("Rebuild".equals(ActionCommand))	clearOnUpdate=true;
-        updateParameters(false,clearOnUpdate);
+        if("Rebuild".equals(ActionCommand))	updateParameters(true,true);
+        else updateParameters(true,false);
     }
     else if ("RebuildCommands".equals(ActionCommand)) {
         String str=mbspan.getTaskList();

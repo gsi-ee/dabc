@@ -45,7 +45,7 @@ public xDimServiceList(String service, xiDesktop desktop){
 public void run(){
 if(chars>0)
 	System.out.println(getName()+" "+servicelist.charAt(0)+" Service list "+chars+" update "+create);	
-  if(create){
+  if(create && xSet.isAutoUpdate()){
 	  desk.updateDim(false);  
   }
 }
