@@ -362,7 +362,7 @@ System.out.print("Wait for acquisition mode "+mode);
 while(t < timeout){
     Running=0;
     for(int i=0;i<mbsRunning.size();i++)
-        if(mbsRunning.get(i).getValue().indexOf(mode) <0) Running++;
+        if(mbsRunning.get(i).getValue().contains(mode)) Running++;
     if(Running==mbsRunning.size()) return true;
     if(t == timeout) return(Running==mbsRunning.size());
     setProgress(new String("Wait for MBS acquisition mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());

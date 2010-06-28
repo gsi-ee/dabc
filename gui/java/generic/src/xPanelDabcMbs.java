@@ -437,7 +437,7 @@ System.out.print("Wait for DABC state "+state);
 while(t < timeout){
 	statesOK=0;
     for(int i=0;i<runState.size();i++){
-        if(!runState.get(i).getValue().equals(state)) statesOK++;
+        if(runState.get(i).getValue().equals(state)) statesOK++;
     }
     if(statesOK==runState.size()) return true;
     if(t == timeout) return(statesOK==runState.size());
@@ -452,39 +452,41 @@ while(t < timeout){
 // wait until all runMode parameters match mode.
 private boolean waitMbsMode(int timeout, String mode){
 int t=0;
-boolean ok;
+int Mode;
 System.out.print("Wait for MBS run mode "+mode);
-    while(t < timeout){
-    ok=true;
+while(t < timeout){
+    Mode=0;
     for(int i=0;i<runMode.size();i++){
-        if(runMode.get(i).getValue().indexOf(mode) <0) {ok=false;break;}
+        if(runMode.get(i).getValue().contains(mode)) Mode++;
     }
-        if(ok) return true;
-        setProgress(new String("Wait for MBS run mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
-        System.out.print(".");
-        browser.sleep(1);
-        t++;
-    }
-    return false;
+    if(Mode==runMode.size()) return true;
+    if(t == timeout) return(Mode==runMode.size());
+    setProgress(new String("Wait for MBS run mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
+    System.out.print(".");
+    browser.sleep(1);
+    t++;
+}
+return false;
 }
 //----------------------------------------
 //wait until all runMode parameters match mode.
 private boolean waitRun(int timeout, String mode){
 int t=0;
-boolean ok;
+int Running;
 System.out.print("Wait for acquisition mode "+mode);
-    while(t < timeout){
-    ok=true;
+while(t < timeout){
+    Running=0;
     for(int i=0;i<mbsRunning.size();i++){
-        if(mbsRunning.get(i).getValue().indexOf(mode) <0) {ok=false;break;}
+        if(mbsRunning.get(i).getValue().contains(mode)) Running++;
     }
-        if(ok) return true;
-        setProgress(new String("Wait for MBS acquisition mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
-        System.out.print(".");
-        browser.sleep(1);
-        t++;
-    }
-    return false;
+    if(Running==mbsRunning.size()) return true;
+    if(t == timeout) return(Running==mbsRunning.size());
+    setProgress(new String("Wait for MBS acquisition mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
+    System.out.print(".");
+    browser.sleep(1);
+    t++;
+}
+return false;
 }
 //----------------------------------------
 private boolean waitServers(int servers, int time){
