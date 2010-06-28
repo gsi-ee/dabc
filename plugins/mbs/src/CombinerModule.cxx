@@ -18,6 +18,11 @@
 #include "dabc/Manager.h"
 #include "dabc/CommandDefinition.h"
 
+#include <limits.h>
+
+
+
+
 mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd),
    fPool(0),
@@ -27,7 +32,9 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    fOutBuf(0),
    fTmCnt(0),
    fFileOutput(false),
-   fServOutput(false)
+   fServOutput(false),
+   fBuildCompleteEvents(false),
+   fCheckSubIds(false)
 {
 
    fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
@@ -36,19 +43,24 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    int numinp = GetCfgInt(dabc::xmlNumInputs, 2, cmd);
 
-   fFileOutput = GetCfgBool("DoFile", false, cmd);
-   fServOutput = GetCfgBool("DoServer", false, cmd);
+   fFileOutput = GetCfgBool(mbs::xmlFileOutput, false, cmd);
+   fServOutput = GetCfgBool(mbs::xmlServerOutput, false, cmd);
+
+   fBuildCompleteEvents = GetCfgBool(mbs::xmlCombineCompleteOnly, false, cmd);
+   fCheckSubIds = GetCfgBool(mbs::xmlCheckSubeventIds, false, cmd);
+
+   fEventIdTolerance = GetCfgInt(mbs::xmlEvidTolerance, 1000, cmd);
 
    double flashtmout = GetCfgDouble(dabc::xmlFlashTimeout, 1., cmd);
 
    for (int n=0;n<numinp;n++) {
-      CreateInput(FORMAT(("Input%d", n)), fPool, 5);
+      CreateInput(FORMAT((mbs::portInputFmt, n)), fPool, 5);
       fInp.push_back(ReadIterator(0));
    }
 
-   CreateOutput("Output", fPool, 5);
-   if (fFileOutput) CreateOutput("FileOutput", fPool, 5);
-   if (fServOutput) CreateOutput("ServerOutput", fPool, 5);
+   CreateOutput(mbs::portOutput, fPool, 5);
+   if (fFileOutput) CreateOutput(portFileOutput, fPool, 5);
+   if (fServOutput) CreateOutput(mbs::portServerOutput, fPool, 5);
 
    if (flashtmout>0.) CreateTimer("Flash", flashtmout, false);
 
@@ -58,18 +70,18 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    // must be configured in xml file
    //   fDataRate->SetDebugOutput(true);
 
-   dabc::CommandDefinition* def = NewCmdDef("StartFile");
+   dabc::CommandDefinition* def = NewCmdDef(mbs::comStartFile);
    def->AddArgument(mbs::xmlFileName, dabc::argString, true);
    def->AddArgument(mbs::xmlSizeLimit, dabc::argInt, false, "1000");
    def->Register();
 
-   NewCmdDef("StopFile")->Register();
+   NewCmdDef(mbs::comStopFile)->Register();
 
-   def = NewCmdDef("StartServer");
+   def = NewCmdDef(mbs::comStartServer);
    def->AddArgument(mbs::xmlServerKind, dabc::argString, true, mbs::ServerKindToStr(mbs::StreamServer));
    def->Register();
 
-   NewCmdDef("StopServer")->Register();
+   NewCmdDef(mbs::comStopServer)->Register();
 
    CreateParInfo("CombinerInfo", 1, "Green");
 }
@@ -122,6 +134,7 @@ bool mbs::CombinerModule::BuildEvent()
 {
    mbs::EventNumType mineventid = 0;
    mbs::EventNumType maxeventid = 0;
+   mbs::EventNumType buildevid = 0;
 
    for (unsigned ninp=0; ninp<NumInputs(); ninp++) {
 
@@ -150,12 +163,132 @@ bool mbs::CombinerModule::BuildEvent()
          if (evid < mineventid) mineventid = evid; else
          if (evid > maxeventid) maxeventid = evid;
       }
-   }
+   } // for ninp
 
-   mbs::EventNumType buildevid = mineventid;
-   // treat correctly situation of event id overflow
-   if (maxeventid!=mineventid)
-      if (maxeventid - mineventid > 0x10000000) buildevid = maxeventid;
+    bool overflow=false;
+	if (IsBuildCompleteEvents())
+	{
+		// TODO: skip all event inputs with lower ids than maxeventid
+		// probably return to complete this in next BuildEvent call
+		buildevid = maxeventid;
+
+		// TODO: check evid wraparound here!
+		if (maxeventid != mineventid)
+		{
+			if (maxeventid - mineventid > UINT_MAX - GetEventIdTolerance()) // account tolerance range for evid
+				{
+					// check for unsigned wraparound
+					buildevid = mineventid;
+					overflow=true;
+					DOUT1(("Build event: detected event id integer wraparound, using buildid  %u", buildevid));
+				}
+			else if (maxeventid - mineventid > GetEventIdTolerance())
+				{
+					// we exceed setup tolerance, indicate an error
+					EOUT(("Build event: Event id difference %u is exceeding tolerance window %u",maxeventid - mineventid, GetEventIdTolerance() ));
+					Stop();
+					return false; // need to return immediately after stop state is set
+				}
+
+		}
+		bool isok[NumInputs()];
+		for (unsigned ninp = 0; ninp < NumInputs(); ninp++)
+		{
+			isok[ninp] = false;
+			mbs::EventNumType lasteventid=0;
+			bool droppedevents=false;
+			while ((!overflow && fInp[ninp].evnt()->EventNumber() < buildevid)
+						|| (overflow && fInp[ninp].evnt()->EventNumber() > buildevid))
+			{
+				droppedevents=true;
+				lasteventid=fInp[ninp].evnt()->EventNumber();
+				DOUT3(("Combiner Module: Skipping event with id %u on channel %u until reaching buildid=%u", lasteventid, ninp, buildevid));
+				if (fInp[ninp].NextEvent())
+				{
+					// try with next event in buffer
+					continue;
+				}
+				else
+				{
+					// no more event in current buffer, try next
+					dabc::Port* port = Input(ninp);
+					port->SkipInputBuffers(1); // discard old buffer
+					if (fInp[ninp].Reset(port->FirstInputBuffer()))
+					{
+						if (fInp[ninp].NextEvent())
+						{
+							// try first event of new buffer
+							continue;
+						}
+						else
+						{
+							// no event in new buffer, reset for next call
+							fInp[ninp].Reset(0);
+							DOUT3(("Build event: no more event in input buffer, resetting input on channel %u, buildid=%u", ninp, buildevid));
+							break; // leave inner? loop
+						}
+					}
+					else
+					{
+						// no more input buffers in port, reset for next call
+						fInp[ninp].Reset(0);
+						DOUT3(("Build event: no more input buffer, resetting input on channel %u, buildid=%u", ninp, buildevid));
+						break; // leave inner loop
+					}
+				}
+			}; // while
+			if(droppedevents)
+				{
+					DOUT1(("Combiner Module: Input %d dropped all events before id %u to reach build event id %u", ninp, lasteventid, buildevid));
+				}
+
+			if (fInp[ninp].IsBuffer() && fInp[ninp].evnt()->EventNumber() == buildevid)
+			{
+				// check if we really match the buildid on this channel:
+				DOUT5(("Build event: matching build event id on channel %u, buildid=%u", ninp, buildevid));
+				isok[ninp] = true;
+			}
+			else
+			{
+				// this may happen if the port queue was empty before buildevid was reached,
+				// or if buildevid is missing (skipped) on some input ports
+				DOUT3(("Combiner Module: Input %d has not reached build event id %u yet, try next buffer...", ninp, buildevid));
+				isok[ninp] = false;
+			}
+
+		} // for
+
+		  for (unsigned ninp=0; ninp<NumInputs(); ninp++)
+			  {
+				  if(!isok[ninp])
+					  {
+						  return false; // try re-read and evaluate buildid again
+					  }
+			  }
+	}
+	else
+	{
+		// set minimum id found as buildid and only use this events
+		buildevid = mineventid;
+		// treat correctly situation of event id overflow
+//		if (maxeventid != mineventid)
+//			if (maxeventid - mineventid > 0x10000000)
+//				buildevid = maxeventid;
+
+		if (maxeventid != mineventid)
+				{
+					if (maxeventid - mineventid > UINT_MAX)
+						{
+							// check for unsigned wraparound
+							buildevid = maxeventid;
+							overflow=true;
+							DOUT1(("Build event: detected event id integer wraparound, using buildid  %u", buildevid));
+						}
+				}
+
+
+	} // if(fBuildCompleteEvents)
+
 
    uint32_t subeventssize = 0;
 
@@ -177,6 +310,8 @@ bool mbs::CombinerModule::BuildEvent()
       }
    }
 
+
+
    if (!fOut.IsPlaceForEvent(subeventssize))
       EOUT(("Event size %u too big for buffer %u, skip event %u", subeventssize+ sizeof(mbs::EventHeader), fBufferSize, buildevid));
    else {
@@ -195,7 +330,7 @@ bool mbs::CombinerModule::BuildEvent()
 
             fInp[ninp].AssignEventPointer(ptr);
             ptr.shift(sizeof(mbs::EventHeader));
-            fOut.AddSubevent(ptr);
+            fOut.AddSubevent(ptr); // TODO: consistency check of subevent ids -> iterator?
          }
       fOut.FinishEvent();
 
@@ -219,9 +354,9 @@ bool mbs::CombinerModule::BuildEvent()
 
 int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
 {
-   if (cmd->IsName("StartFile")) {
-      dabc::Port* port = FindPort("FileOutput");
-      if (port==0) port = CreateOutput("FileOutput", fPool, 5);
+   if (cmd->IsName(mbs::comStartFile)) {
+      dabc::Port* port = FindPort(mbs::portFileOutput);
+      if (port==0) port = CreateOutput(mbs::portFileOutput, fPool, 5);
 
       std::string filename = port->GetCfgStr(mbs::xmlFileName,"",cmd);
       int sizelimit = port->GetCfgInt(mbs::xmlSizeLimit,1000,cmd);
@@ -233,17 +368,17 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
       dcmd->SetInt(mbs::xmlSizeLimit, sizelimit);
       return dabc::mgr()->Execute(dcmd);
    } else
-   if (cmd->IsName("StopFile")) {
-      dabc::Port* port = FindPort("FileOutput");
+   if (cmd->IsName(mbs::comStopFile)) {
+      dabc::Port* port = FindPort(mbs::portFileOutput);
       if (port!=0) port->Disconnect();
 
       SetParStr("CombinerInfo", "Stop file");
 
       return dabc::cmd_true;
    } else
-   if (cmd->IsName("StartServer")) {
-      dabc::Port* port = FindPort("ServerOutput");
-      if (port==0) port = CreateOutput("ServerOutput", fPool, 5);
+   if (cmd->IsName(mbs::comStartServer)) {
+      dabc::Port* port = FindPort(mbs::portServerOutput);
+      if (port==0) port = CreateOutput(mbs::portServerOutput, fPool, 5);
 
       std::string serverkind = port->GetCfgStr(mbs::xmlServerKind, "", cmd);
       int kind = StrToServerKind(serverkind.c_str());
@@ -260,8 +395,8 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
 
       return res;
    } else
-   if (cmd->IsName("StopServer")) {
-      dabc::Port* port = FindPort("ServerOutput");
+   if (cmd->IsName(mbs::comStopServer)) {
+      dabc::Port* port = FindPort(mbs::portServerOutput);
       if (port!=0) port->Disconnect();
 
       SetParStr("CombinerInfo", "Stop server");

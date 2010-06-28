@@ -27,6 +27,8 @@
 
 namespace mbs {
 
+
+
    class CombinerModule : public dabc::ModuleAsync {
       protected:
          dabc::PoolHandle*          fPool;
@@ -38,6 +40,17 @@ namespace mbs {
 
          bool                       fFileOutput;
          bool                       fServOutput;
+
+         /* switch between partial combining of smallest event ids (false)
+          * and building of complete events only (true)*/
+         bool						fBuildCompleteEvents;
+
+         /*switch on checking duplicate subevent ids in merged events -> indicate setup error*/
+         bool						fCheckSubIds;
+
+         /* defines maximum difference allowed between event id in merged data streams.
+          * if id difference is larger, combiner may stop with error message*/
+         unsigned int				fEventIdTolerance;
 
          dabc::RateParameter*      fEvntRate;
          dabc::RateParameter*      fDataRate;
@@ -56,6 +69,10 @@ namespace mbs {
 
          bool IsFileOutput() const { return fFileOutput; }
          bool IsServOutput() const { return fServOutput; }
+         bool IsBuildCompleteEvents() const { return fBuildCompleteEvents; }
+         bool IsCheckSubIds() const { return fCheckSubIds; }
+
+         unsigned int GetEventIdTolerance() const { return fEventIdTolerance; }
 
          virtual int ExecuteCommand(dabc::Command* cmd);
    };

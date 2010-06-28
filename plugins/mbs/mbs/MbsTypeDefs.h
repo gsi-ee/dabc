@@ -180,6 +180,18 @@ namespace mbs {
    extern const char* typeServerTransport;
    extern const char* typeClientTransport;
 
+   extern const char* comStartServer;
+   extern const char* comStopServer;
+   extern const char* comStartFile;
+   extern const char* comStopFile;
+
+   extern const char* portOutput;
+   extern const char* portOutputFmt;
+   extern const char* portInput;
+   extern const char* portInputFmt;
+   extern const char* portFileOutput;
+   extern const char* portServerOutput;
+
    extern const char* xmlFileName;
    extern const char* xmlSizeLimit;
    extern const char* xmlServerName;
@@ -191,6 +203,12 @@ namespace mbs {
    extern const char* xmlTextNumData;
    extern const char* xmlTextHeaderLines;
    extern const char* xmlTextCharBuffer;
+
+   extern const char* xmlFileOutput;
+   extern const char* xmlServerOutput;
+   extern const char* xmlCombineCompleteOnly;
+   extern const char* xmlCheckSubeventIds;
+   extern const char* xmlEvidTolerance;
 
 };
 

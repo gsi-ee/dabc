@@ -39,7 +39,7 @@ double Gauss_Rnd(double mean, double sigma)
 mbs::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd)
 {
-   fEventCount = 0;
+   fEventCount = GetCfgInt("FirstEventCount", 0, cmd);;
 
    fStartStopPeriod = GetCfgInt("StartStopPeriod", 0, cmd);
    fNumSubevents = GetCfgInt("NumSubevents", 2, cmd);

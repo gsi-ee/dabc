@@ -23,17 +23,44 @@ const char* mbs::typeTextInput        = "mbs::TextInput";
 const char* mbs::typeServerTransport  = "mbs::ServerTransport";
 const char* mbs::typeClientTransport  = "mbs::ClientTransport";
 
-const char* mbs::xmlFileName          = "MbsFileName";
-const char* mbs::xmlSizeLimit         = "MbsFileSizeLimit";
-const char* mbs::xmlServerName        = "MbsServerName";
-const char* mbs::xmlServerKind        = "MbsServerKind";
-const char* mbs::xmlServerPort        = "MbsServerPort";
-const char* mbs::xmlServerScale       = "MbsServerScale";
+
+// Command names used in combiner module:
+const char* mbs::comStartServer  	=     "StartServer";
+const char* mbs::comStopServer 		=     "StopServer";
+const char* mbs::comStartFile  		=     "StartFile";
+const char* mbs::comStopFile 		=     "StopFile";
+
+// port names and name formats:
+const char* mbs::portOutput 			=	"Output";
+const char* mbs::portOutputFmt		=	"Output%d";
+const char* mbs::portInput			=	"Input";
+const char* mbs::portInputFmt		=	"Input%d";
+const char* mbs::portFileOutput		=	"FileOutput";
+const char* mbs::portServerOutput	=	"ServerOutput";
+
+
+// tag names for xml config file:
+const char* mbs::xmlFileName 		= "MbsFileName";
+const char* mbs::xmlSizeLimit 		= "MbsFileSizeLimit";
+const char* mbs::xmlServerName 		= "MbsServerName";
+const char* mbs::xmlServerKind 		= "MbsServerKind";
+const char* mbs::xmlServerPort 		= "MbsServerPort";
+const char* mbs::xmlServerScale 	= "MbsServerScale";
+const char* mbs::xmlFileOutput 		= "DoFile";
+const char* mbs::xmlServerOutput 	= "DoServer";
 
 const char* mbs::xmlTextDataFormat    = "MbsTextFormat";
 const char* mbs::xmlTextNumData       = "MbsTextNumData";
 const char* mbs::xmlTextHeaderLines   = "MbsTextHeader";
 const char* mbs::xmlTextCharBuffer    = "MbsCharBuffer";
+
+
+
+const char* mbs::xmlCombineCompleteOnly 	= "BuildCompleteEvents";
+const char* mbs::xmlCheckSubeventIds		= "CheckSubIds";
+const char* mbs::xmlEvidTolerance			= "MaxDeltaEventId";
+
+
 
 unsigned mbs::EventHeader::NumSubevents() const
 {
