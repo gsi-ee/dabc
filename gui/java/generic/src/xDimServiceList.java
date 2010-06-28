@@ -43,11 +43,10 @@ public xDimServiceList(String service, xiDesktop desktop){
 	System.out.println(" ****** register "+service);
 }
 public void run(){
-if(chars>0)
+if(create && xSet.isAutoUpdate()){
 	System.out.println(getName()+" "+servicelist.charAt(0)+" Service list "+chars+" update "+create);	
-  if(create && xSet.isAutoUpdate()){
-	  desk.updateDim(false);  
-  }
+	desk.updateDim(false);  
+}
 }
 /**
  * The DIM parameter DIS_DNS/SERVICE_LIST is a list of services.

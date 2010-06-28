@@ -122,6 +122,7 @@ public final static Color white(){return white;}
 
 protected final static void setAutoUpdate(boolean update){
 	autoupdate=update;
+	System.out.println("==== set auto update "+update);
 	}
 protected final static boolean isAutoUpdate(){
 	return autoupdate;

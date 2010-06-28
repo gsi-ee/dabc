@@ -31,6 +31,8 @@ classes: \
 	$(PACKAGE)/xConvert.class \
 	$(PACKAGE)/xPanelPrompt.class \
 	$(PACKAGE)/xPanelSetup.class \
+	$(PACKAGE)/xiDesktop.class \
+	$(PACKAGE)/xDimServiceList.class \
 	$(PACKAGE)/xDimNameInfo.class \
 	$(PACKAGE)/xInternalFrame.class \
 	$(PACKAGE)/xInternalCompound.class \
@@ -58,7 +60,6 @@ classes: \
 	$(PACKAGE)/xiDimParameter.class \
 	$(PACKAGE)/xiUserInfoHandler.class \
 	$(PACKAGE)/xiDimBrowser.class \
-	$(PACKAGE)/xiDesktop.class \
 	$(PACKAGE)/xDimParameter.class \
 	$(PACKAGE)/xDimBrowser.class \
 	$(PACKAGE)/xiUserCommand.class \
@@ -191,6 +192,8 @@ $(PACKAGE)/xPanelPrompt.class : $(SOURCEDIR)/xPanelPrompt.java
 	javac $(FLAGS) $(SOURCEDIR)/xPanelPrompt.java
 $(PACKAGE)/xDimNameInfo.class : $(SOURCEDIR)/xDimNameInfo.java
 	javac $(FLAGS) $(SOURCEDIR)/xDimNameInfo.java
+$(PACKAGE)/xDimServiceList.class : $(SOURCEDIR)/xDimServiceList.java
+	javac $(FLAGS) $(SOURCEDIR)/xDimServiceList.java
 $(PACKAGE)/xPanelRunInfo.class : $(SOURCEDIR)/xPanelRunInfo.java
 	javac $(FLAGS) $(SOURCEDIR)/xPanelRunInfo.java
 $(PACKAGE)/xPanelDabc.class : $(SOURCEDIR)/xPanelDabc.java
@@ -261,6 +264,7 @@ doc/index.html : \
 	$(SOURCEDIR)/xXml.java \
 	$(SOURCEDIR)/xPanelLogger.java \
 	$(SOURCEDIR)/xPanelPrompt.java \
+	$(SOURCEDIR)/xDimServiceList.java \
 	$(SOURCEDIR)/xDimNameInfo.java \
 	$(SOURCEDIR)/xPanelRunInfo.java \
 	$(SOURCEDIR)/xPanelDabc.java \
