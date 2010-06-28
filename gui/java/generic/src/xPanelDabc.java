@@ -55,7 +55,6 @@ private String Action;
 private int nServers;
 private xDimCommand doConfig, doEnable, doStart, doStop, doHalt;
 private Vector<xDimParameter> runState;
-private int nofStates;
 private Vector<xDimCommand> doExit;
 private Thread threxe;
 private ActionEvent ae;
@@ -206,7 +205,7 @@ System.out.println("Dabc setDimServices");
 doExit=new Vector<xDimCommand>();
 runState=new Vector<xDimParameter>();
 Vector<xDimCommand> list=browser.getCommandList();
-String pref=new String(DabcName.getText());
+String pref=new String(DabcName.getText()); // controller name
 for(i=0;i<list.size();i++){
 	if(list.get(i).getParser().getFull().indexOf(pref+"/DoConfigure")>0) doConfig=list.get(i);
 	else if(list.get(i).getParser().getFull().indexOf(pref+"/DoEnable")>0) doEnable=list.get(i);
@@ -216,14 +215,12 @@ for(i=0;i<list.size();i++){
 	else if(list.get(i).getParser().getFull().indexOf("/EXIT")>0) doExit.add(list.get(i));
 }
 Vector<xDimParameter> para=browser.getParameterList();
-nofStates=0;
 if(para != null)for(i=0;i<para.size();i++){
-	if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) {
+	// select state of master controller on master node
+	if(para.get(i).getParser().getFull().indexOf(pref+"/RunStatus")>0) {
 		if(para.get(i).getParser().getFull().contains(formDabc.getMaster())){
 			runState.add(para.get(i));
-			nofStates++;
-		}
-	}
+		}}
 }}
 //----------------------------------------
 /**
@@ -279,20 +276,15 @@ etime.start(); // fires event with ActionCommand=null, then stop
 // wait until all runState parameters have the value state.
 private boolean waitState(int timeout, String state){
 int t=0;
-boolean ok;
 int statesOK=0;
 System.out.println("Wait for "+state);
 while(t <= timeout){
-    ok=true;
-    try{
-    	statesOK=0;
+    statesOK=0;
     for(int i=0;i<runState.size();i++){
-    	System.out.println(runState.elementAt(i).getParser().getFull()+" Wait for "+state);
         if(runState.elementAt(i).getValue().equals(state)) statesOK++;
     }
-    } catch (NullPointerException e){System.out.println("**** reset runState "+state);statesOK=0;}
-    if(statesOK==nofStates) return true;
-    if(t == timeout) return(statesOK==nofStates);
+    if(statesOK==runState.size()) return true;
+    if(t == timeout) return(statesOK==runState.size());
     setProgress(new String("Wait for "+state+" "+t+" ["+timeout+"]"),xSet.blueD());
     if(t>0)System.out.print(".");
     browser.sleep(1);
@@ -514,7 +506,7 @@ if ("dabcConfig".equals(Action)) {
     // to avoid unneccessary automatic updates when new services are created:
     xSet.setAutoUpdate(false); // must be enabled after we made the update
     doConfig.exec(xSet.getAccess());
-    browser.sleep(xSet.getNofServers());
+    //browser.sleep(xSet.getNofServers());
     if(waitState(5,"Configured")){
         setProgress("OK: DABC configured, enable ...",xSet.blueD());
     } else { // retry update

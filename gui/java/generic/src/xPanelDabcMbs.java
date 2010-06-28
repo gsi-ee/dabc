@@ -291,8 +291,10 @@ else if(list.get(i).getParser().getFull().indexOf("/EXIT")>0) {
 // Scan parameter list
 Vector<xDimParameter> para=browser.getParameterList();
 if(para != null)for(i=0;i<para.size();i++){
-if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) {
-    runState.add(para.get(i));}
+if(para.get(i).getParser().getFull().indexOf(DabcName.getText()+"/RunStatus")>0) {
+	if(para.get(i).getParser().getFull().contains(formDabc.getMaster())){
+    runState.add(para.get(i));
+    }}
 else if(para.get(i).getParser().getFull().indexOf("MSG/TaskList")>0) 
 	mbsTaskList.add(para.get(i));
 else if(para.get(i).getParser().getFull().indexOf("/Acquisition")>0) 
@@ -329,7 +331,6 @@ if(runMode != null) runMode.removeAllElements();
 if(runState != null) runState.removeAllElements();
 if(mbsRunning != null) mbsRunning.removeAllElements();
 doExit=null;
-runState=null;
 runMode=null;
 mbsRunning=null;
 }
@@ -431,19 +432,20 @@ else { // check if task is gone
 // wait until all runState parameters have the value state.
 private boolean waitState(int timeout, String state){
 int t=0;
-boolean ok;
+int statesOK=0;
 System.out.print("Wait for DABC state "+state);
-    while(t < timeout){
-    ok=true;
+while(t < timeout){
+	statesOK=0;
     for(int i=0;i<runState.size();i++){
-        if(!runState.get(i).getValue().equals(state)) {ok=false;break;}
+        if(!runState.get(i).getValue().equals(state)) statesOK++;
     }
-        if(ok) return true;
-        setProgress(new String("Wait for DABC state "+state+" "+t+" ["+timeout+"]"),xSet.blueD());
-        if(t>0)System.out.print(".");
-        browser.sleep(1);
-        t++;
-    }
+    if(statesOK==runState.size()) return true;
+    if(t == timeout) return(statesOK==runState.size());
+    setProgress(new String("Wait for DABC state "+state+" "+t+" ["+timeout+"]"),xSet.blueD());
+    if(t>0)System.out.print(".");
+    browser.sleep(1);
+    t++;
+}
     return false;
 }
 //----------------------------------------

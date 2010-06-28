@@ -256,7 +256,6 @@ System.out.println("Mbs releaseDimServices");
 mbsCommand=null;
 mbsTaskList.removeAllElements();
 if(mbsRunning != null) mbsRunning.removeAllElements();
-mbsRunning=null;
 }
 //----------------------------------------
 // Start internal frame with an xState panel through timer.
@@ -358,13 +357,14 @@ else { // check if task is gone
 //wait until all runMode parameters match mode.
 private boolean waitRun(int timeout, String mode){
 int t=0;
-boolean ok;
+int Running;
 System.out.print("Wait for acquisition mode "+mode);
 while(t < timeout){
-    ok=true;
+    Running=0;
     for(int i=0;i<mbsRunning.size();i++)
-        if(mbsRunning.get(i).getValue().indexOf(mode) <0) {ok=false;break;}
-    if(ok) return true;
+        if(mbsRunning.get(i).getValue().indexOf(mode) <0) Running++;
+    if(Running==mbsRunning.size()) return true;
+    if(t == timeout) return(Running==mbsRunning.size());
     setProgress(new String("Wait for MBS acquisition mode "+mode+" "+t+" ["+timeout+"]"),xSet.blueD());
     System.out.print(".");
     browser.sleep(1);

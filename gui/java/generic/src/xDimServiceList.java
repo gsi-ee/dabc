@@ -40,12 +40,12 @@ private xiDesktop desk;
 public xDimServiceList(String service, xiDesktop desktop){
     super(service,"none");
     desk=desktop;
-	System.out.println(" ****** register "+service);
+	System.out.println(" *** register "+service);
 }
 public void run(){
-if(create && xSet.isAutoUpdate()){
-	System.out.println(getName()+" "+servicelist.charAt(0)+" Service list "+chars+" update "+create);	
-	desk.updateDim(false);  
+if(xSet.isAutoUpdate()){
+	System.out.println(" *** update   "+getName());	
+	desk.updateDim(false);  // no cleanup
 }
 }
 /**
@@ -58,6 +58,6 @@ public void infoHandler(){
     chars=servicelist.length();
     create=servicelist.startsWith("+");
     remove=servicelist.startsWith("-");
-    if(!remove)SwingUtilities.invokeLater(this);
+    if(create)SwingUtilities.invokeLater(this); // call run
 }
 }
