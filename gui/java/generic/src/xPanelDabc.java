@@ -219,8 +219,10 @@ Vector<xDimParameter> para=browser.getParameterList();
 nofStates=0;
 if(para != null)for(i=0;i<para.size();i++){
 	if(para.get(i).getParser().getFull().indexOf("/RunStatus")>0) {
-		runState.add(para.get(i));
-		nofStates++;
+		if(para.get(i).getParser().getFull().contains(formDabc.getMaster())){
+			runState.add(para.get(i));
+			nofStates++;
+		}
 	}
 }}
 //----------------------------------------
@@ -285,6 +287,7 @@ while(t <= timeout){
     try{
     	statesOK=0;
     for(int i=0;i<runState.size();i++){
+    	System.out.println(runState.elementAt(i).getParser().getFull()+" Wait for "+state);
         if(runState.elementAt(i).getValue().equals(state)) statesOK++;
     }
     } catch (NullPointerException e){System.out.println("**** reset runState "+state);statesOK=0;}
