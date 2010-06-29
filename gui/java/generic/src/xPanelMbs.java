@@ -583,7 +583,9 @@ else if ("mbsConfig".equals(Action)) {
     if(waitMbs(5+5*nMbsNodes,"Daq_rate ",true)){
         System.out.println(" ");
         setProgress("Update commands ...",xSet.blueD());
-        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"RebuildCommands"));
+        dAction.execute("RebuildCommands"); // execute in event thread
+        while(xSet.isDimUpdating())browser.sleep(1);
+//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"RebuildCommands"));
         setProgress("OK: MBS tasks ready",xSet.greenD());
     } else {
         System.out.println("\nMBS startup failed ");

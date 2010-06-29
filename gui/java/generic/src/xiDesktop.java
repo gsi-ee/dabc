@@ -64,4 +64,9 @@ public abstract void toFront(String title);
  * @param cleanup remove all services first
  */
 public abstract void updateDim(boolean cleanup);
+
+/**
+ * Update command list
+ */
+public abstract void rebuildCommands();
 }

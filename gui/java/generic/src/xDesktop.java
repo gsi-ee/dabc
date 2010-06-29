@@ -380,6 +380,19 @@ public boolean findFrame(String title){
 
 //xiDesktop implementation
 /**
+ * Update command list
+ */
+public void rebuildCommands(){
+    String str=mbspan.getTaskList();
+    compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
+    if(usrpan != null){
+    	if(usrpan.size()>1)compan.setUserCommand(usrpan.get(1).getUserCommand());
+    }
+    compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
+    if(frCommands   != null) frCommands.addWindow(compan);
+	System.out.println("----- rebuild commands finished");
+}
+/**
  * Update DIM parameter list
  * @param cleanup remove all services first
  */
@@ -542,7 +555,6 @@ return;
 public void actionPerformed(ActionEvent e) {
 	if(e.getActionCommand() == null) ActionCommand=xSet.getActionCommand();
 	else                          ActionCommand=e.getActionCommand();
-    //System.out.println("**** Desktop action "+ActionCommand);
     if ("DabcMbsController".equals(ActionCommand)) {dbspan.setListener(frDabcMbsController=
         createFrame("DabcMbsController",dabcmbsIcon,dbspan,xSet.getLayout("DabcMbsController"),null, false));
         xSet.setLayout("DabcMbsController",null,null,0, true);
@@ -675,14 +687,7 @@ public void actionPerformed(ActionEvent e) {
         else updateParameters(true,false);
     }
     else if ("RebuildCommands".equals(ActionCommand)) {
-        String str=mbspan.getTaskList();
-        compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
-        if(usrpan != null){
-        	if(usrpan.size()>1)compan.setUserCommand(usrpan.get(1).getUserCommand());
-        }
-        compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
-        if(frCommands   != null) frCommands.addWindow(compan);
-		System.out.println("----- rebuild commands finished");
+    	rebuildCommands();
     }
     else if ("DisplayFrame".equals(ActionCommand)) { //used for progress window
     	lastframe=((xInternalFrame)e.getSource()).getTitle();

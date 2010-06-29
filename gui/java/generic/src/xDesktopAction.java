@@ -36,7 +36,8 @@ public xDesktopAction(xiDesktop desktop){
 }
 public void run(){
 	System.out.println(" *** action command "+command);	
-	desk.updateDim(false);  // no cleanup
+	if(command.equals("Update"))desk.updateDim(false);  // no cleanup
+	else if(command.equals("RebuildCommands"))desk.rebuildCommands(); 
 	xSet.setDimUpdating(false); 
 }
 public void execute(String actioncommand){

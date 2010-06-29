@@ -792,6 +792,8 @@ int time=0;
             System.out.println("\nMbs startup failed ");
             setProgress("MBS configure failed",xSet.redD());
         } else {
+            dAction.execute("RebuildCommands"); // execute in event thread
+            while(xSet.isDimUpdating())browser.sleep(1);
             System.out.println(" ");
             xLogger.print(1,"MBS: *::enable dabc");
             mbsCommand.exec(xSet.getAccess()+" *::enable dabc");
