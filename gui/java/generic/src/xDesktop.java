@@ -469,9 +469,9 @@ for(int i=0;i<fr.length;i++)
 }
 
 public void updateParameters(boolean doit, boolean cleanup){
-	if(!doit) return;
+if(doit){
     clearOnUpdate=cleanup;
-    clearOnUpdate=false;
+    clearOnUpdate=false; // never cleanup for now
     // clear all references to DIM services
 	System.out.println("----- update, clear: "+clearOnUpdate);
     mbspan.releaseDimServices();
@@ -515,7 +515,8 @@ public void updateParameters(boolean doit, boolean cleanup){
         // frInfos.addWindow(infpan);
     // }
 	System.out.println("----- update finished");
-
+}
+return;
 }
 
 // React to menu selections of main window.

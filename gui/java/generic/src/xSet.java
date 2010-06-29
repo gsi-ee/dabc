@@ -78,6 +78,7 @@ private static boolean guru=false;
 private static boolean ctrl=false;
 private static boolean progress=false;
 private static boolean autoupdate=true;
+private static boolean dimupdating=false;
 private static String usrpanels;
 private static int nDataServers=0; 
 private static String actioncommand;
@@ -126,6 +127,14 @@ protected final static void setAutoUpdate(boolean update){
 	}
 protected final static boolean isAutoUpdate(){
 	return autoupdate;
+	}
+protected final static void setDimUpdating(boolean updating){
+	dimupdating=updating;
+	if(dimupdating)System.out.println(" *** dim updating starts ...");
+	else           System.out.println(" *** dim updating finished");
+	}
+protected final static boolean isDimUpdating(){
+	return dimupdating;
 	}
 protected final static void setRecordXml(NodeList list){
 	records=list;

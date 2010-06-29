@@ -32,6 +32,7 @@ classes: \
 	$(PACKAGE)/xPanelPrompt.class \
 	$(PACKAGE)/xPanelSetup.class \
 	$(PACKAGE)/xiDesktop.class \
+	$(PACKAGE)/xDesktopAction.class \
 	$(PACKAGE)/xDimServiceList.class \
 	$(PACKAGE)/xDimNameInfo.class \
 	$(PACKAGE)/xInternalFrame.class \
@@ -102,6 +103,8 @@ $(PACKAGE)/xPanelSelect.class : $(SOURCEDIR)/xPanelSelect.java
 	javac $(FLAGS) $(SOURCEDIR)/xPanelSelect.java
 $(PACKAGE)/xSaveRestore.class : $(SOURCEDIR)/xSaveRestore.java
 	javac $(FLAGS) $(SOURCEDIR)/xSaveRestore.java
+$(PACKAGE)/xDesktopAction.class : $(SOURCEDIR)/xDesktopAction.java
+	javac $(FLAGS) $(SOURCEDIR)/xDesktopAction.java
 $(PACKAGE)/xDesktop.class : $(SOURCEDIR)/xDesktop.java
 	javac $(FLAGS) $(SOURCEDIR)/xDesktop.java
 $(PACKAGE)/xGui.class : $(SOURCEDIR)/xGui.java
@@ -285,6 +288,7 @@ doc/index.html : \
 	$(SOURCEDIR)/xInternalFrame.java \
 	$(SOURCEDIR)/xInternalCompound.java \
 	$(SOURCEDIR)/xGui.java \
+	$(SOURCEDIR)/xDesktopAction.java \
 	$(SOURCEDIR)/xDesktop.java
 	javadoc -d doc -author -version -doctitle "DABC Generic Java GUI" $(SOURCEDIR)/x*.java
 

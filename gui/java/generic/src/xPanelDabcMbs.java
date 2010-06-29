@@ -68,6 +68,7 @@ private boolean threadRunning=false;
 private int width=25;
 private int mini=25;
 private Point progressP;
+private xDesktopAction dAction;
 
 /**
  * Constructor of MBS+DABC launch panel.
@@ -163,6 +164,7 @@ setDimServices();
 etime = new xTimer(al, false); // fire only once
 dabcMaster = DabcNode.getText();
 MbsMaster = MbsNode.getText();
+dAction = new xDesktopAction(desktop);
 }
 //----------------------------------------
 private void addPromptLines(){
@@ -630,9 +632,11 @@ int time=0;
         if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
             setProgress("OK: MBS and DABC shut down, update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);}
+            dAction.execute("Update"); // execute in event thread
+            while(xSet.isDimUpdating())browser.sleep(1);
+//            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//            browser.sleep(1);}
             if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
             else setProgress("OK: MBS and DABC servers down",xSet.greenD());
             System.out.println("Run down finished");
@@ -667,9 +671,9 @@ int time=0;
                 System.out.println("\nMbs connnected");
                 setProgress("MBS servers ready, update parameters ...",xSet.blueD());
                 xSet.setSuccess(false);
-                etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-                if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-                browser.sleep(1);}
+//                etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//                if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//                browser.sleep(1);}
                 if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
                 else {
                 	setProgress("OK: MBS servers ready",xSet.greenD());
@@ -702,9 +706,11 @@ int time=0;
 	            System.out.println("\nDabc connnected "+nServers+" servers");
 	            setProgress("OK: MBS and DABC servers ready, update parameters ...",xSet.blueD());
 	            xSet.setSuccess(false);
-	            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-	            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-	            browser.sleep(1);}
+	            dAction.execute("Update"); // execute in event thread
+	            while(xSet.isDimUpdating())browser.sleep(1);
+//	            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//	            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//	            browser.sleep(1);}
 	            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
 	            else setProgress("OK: MBS and DABC servers ready",xSet.greenD());
 	            //setDimServices();        
@@ -713,9 +719,11 @@ int time=0;
 	            System.out.println("\nDabc Failed ");
 	            setProgress("Servers missing: "+(nServers-nserv)+" from "+nServers+", update parameters ...",xSet.redD());
 	            xSet.setSuccess(false);
-	            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-	            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-	            browser.sleep(1);}
+	            dAction.execute("Update"); // execute in event thread
+	            while(xSet.isDimUpdating())browser.sleep(1);
+//	            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//	            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//	            browser.sleep(1);}
 	            if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
 	            else setProgress("Failure: DABC servers not ready",xSet.redD());
 	            //setDimServices();        
@@ -801,10 +809,12 @@ int time=0;
                     System.out.println(" ");
                     setProgress("OK: DABC ready, MBS servers ready, update parameters ...",xSet.blueD());
                     xSet.setSuccess(false);
-                    etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-                    browser.sleep(1);
-                    if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-                    browser.sleep(1);}
+                    dAction.execute("Update"); // execute in event thread
+                    while(xSet.isDimUpdating())browser.sleep(1);
+//                    etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//                    browser.sleep(1);
+//                    if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//                    browser.sleep(1);}
                     if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
                     else setProgress("OK: DABC ready",xSet.greenD());
                 } else setProgress("Failure: DABC not ready",xSet.redD());
@@ -812,10 +822,12 @@ int time=0;
                 System.out.println("\nDabc configure failed ");
                 setProgress("DABC configure failed, update parameters ...",xSet.redD());
                 xSet.setSuccess(false);
-                etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-                browser.sleep(1);
-                if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-                browser.sleep(1);}
+                dAction.execute("Update"); // execute in event thread
+                while(xSet.isDimUpdating())browser.sleep(1);
+//                etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//                browser.sleep(1);
+//                if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//                browser.sleep(1);}
                 if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
                 else setProgress("DABC configure failed",xSet.redD());
                 //setDimServices();
@@ -866,9 +878,11 @@ int time=0;
             System.out.println(" ");
             setProgress("OK: DABC halted, MBS servers ready, update parameters ...",xSet.blueD());
             xSet.setSuccess(false);
-            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-            browser.sleep(1);}
+            dAction.execute("Update"); // execute in event thread
+            while(xSet.isDimUpdating())browser.sleep(1);
+//            etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//            if(!xSet.isSuccess()) {etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//            browser.sleep(1);}
             if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
             else setProgress("OK: DABC halted, MBS servers ready",xSet.greenD());
             //setDimServices();

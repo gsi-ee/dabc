@@ -70,6 +70,7 @@ private String cmdPrefix;
 private int width=25;
 private int mini=25;
 private Point progressP;
+private xDesktopAction dAction;
 
 /**
  * Constructor of MBS launch panel.
@@ -150,6 +151,7 @@ service = new String(MbsNode.getText().toUpperCase()+":DSP");
 if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
 setDimServices();
 etime = new xTimer(al, false); // fire only once
+dAction = new xDesktopAction(desktop);
 }
 //----------------------------------------
 private void addPromptLines(){
@@ -423,10 +425,12 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         System.out.println("Mbs connnected");
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
-        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        if(!xSet.isSuccess()) {
-        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        }
+        dAction.execute("Update"); // execute in event thread
+        while(xSet.isDimUpdating())browser.sleep(1);
+//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//        if(!xSet.isSuccess()) {
+//        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//        }
         if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
         else setProgress("OK: MBS servers ready",xSet.greenD());
     } else {
@@ -536,10 +540,12 @@ else if ("mbsCleanup".equals(Action)) {
         if(waitServers(0,10)){
         setProgress("Update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
-        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        if(!xSet.isSuccess()) {
-        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        }
+        dAction.execute("Update"); // execute in event thread
+        while(xSet.isDimUpdating())browser.sleep(1);
+//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//        if(!xSet.isSuccess()) {
+//        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//        }
         if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
         else                  setProgress("OK: MBS shut down",xSet.greenD());
         System.out.println("Run down finished");

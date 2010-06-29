@@ -69,6 +69,7 @@ private Vector<String> titles;
 private int width=25;
 private int mini=25;
 private Point progressP;
+private xDesktopAction dAction;
 
 /**
  * Constructor of DABC launch panel.
@@ -142,6 +143,7 @@ nServers=Integer.parseInt(formDabc.getServers()); // all without DNS
 setDimServices();
 System.out.println("Dabc  servers needed: DNS + "+nServers);
 etime = new xTimer(al, false); // fire only once
+dAction = new xDesktopAction(desktop);
 }
 //----------------------------------------
 private void addPromptLines(){
@@ -271,6 +273,37 @@ private void stopProgress(){
 // etime.setActionCommand("RemoveFrame"); // Java 6 only
 xSet.setActionCommand("RemoveFrame"); // Java < 6 
 etime.start(); // fires event with ActionCommand=null, then stop
+}
+//----------------------------------------
+private void shutdown(String mode){
+    setProgress("DABC cleanup ...",xSet.blueD());
+    String cmd = new String(DabcPath.getText()+
+                        "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
+                        DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
+                        xSet.getDimDns()+" "+dabcMaster+" "+mode+" &");
+    xLogger.print(1,cmd);
+    dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);
+    int nserv=xSet.getNofServers();
+    int timeout=0;
+    while(nserv > 0){
+        setProgress(new String("Wait "+timeout+" [10] for server shutdown, found "+nserv),xSet.blueD());
+        System.out.print("."+nserv);
+        browser.sleep(1);
+        timeout++;
+        if(timeout > 10) break;
+        nserv=xSet.getNofServers();
+    }
+    setProgress("OK: DABC down, update parameters ...",xSet.blueD());
+    xSet.setSuccess(false);
+    dAction.execute("Update"); // execute in event thread
+    while(xSet.isDimUpdating())browser.sleep(1);
+//    etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//    if(!xSet.isSuccess()) {
+//    	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
+//    }
+    if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
+    else setProgress("OK: DABC down",xSet.greenD());
+
 }
 //----------------------------------------
 // wait until all runState parameters have the value state.
@@ -405,11 +438,15 @@ else if ("dabcLaunch".equals(Action)) {
         System.out.println("\nDabc connnected "+nServers+" servers");
         setProgress("OK: DABC servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
-        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-        if(!xSet.isSuccess()) {
-        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
-        	browser.sleep(1);
-        }
+        dAction.execute("Update"); // execute in event thread
+        while(xSet.isDimUpdating())browser.sleep(1);
+        
+//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//        if(!xSet.isSuccess()) {
+//        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
+//        	browser.sleep(1);
+//        }
+        
         if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
         else setProgress("OK: DABC servers ready",xSet.greenD());
     }
@@ -433,58 +470,10 @@ else if ("dabcShell".equals(Action)) {
     dabcshell.rsh(DabcNode.getText(),Username.getText(),DabcScript.getText(),0L);
 }
 else if ("dabcCleanup".equals(Action)) {
-    setProgress("DABC cleanup ...",xSet.blueD());
-    String cmd = new String(DabcPath.getText()+
-                        "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
-                        DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
-                        xSet.getDimDns()+" "+dabcMaster+" kill &");
-    xLogger.print(1,cmd);
-    dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);
-    int nserv=xSet.getNofServers();
-    int timeout=0;
-    while(nserv > 0){
-        setProgress(new String("Wait "+timeout+" [10] for server shutdown, found "+nserv),xSet.blueD());
-        System.out.print("."+nserv);
-        browser.sleep(1);
-        timeout++;
-        if(timeout > 10) break;
-        nserv=xSet.getNofServers();
-    }
-    setProgress("OK: DABC down, update parameters ...",xSet.blueD());
-    xSet.setSuccess(false);
-    etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-    if(!xSet.isSuccess()) {
-    	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
-    }
-    if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-    else setProgress("OK: DABC down",xSet.greenD());
+	shutdown("kill");
  }
 else if ("dabcExit".equals(Action)) {
-    setProgress("DABC Exit ...",xSet.blueD());
-    String cmd = new String(DabcPath.getText()+
-                        "/script/dabcshutdown.sh "+DabcPath.getText()+" "+
-                        DabcUserpath.getText()+" "+DabcSetup.getText()+" "+
-                        xSet.getDimDns()+" "+dabcMaster+" stop &");
-    xLogger.print(1,cmd);
-    dabcshell.rsh(dabcMaster,Username.getText(),cmd,0L);    		
-    int nserv=xSet.getNofServers();
-    int timeout=0;
-    while(nserv > 0){
-        setProgress(new String("Wait "+timeout+" [10] for server shutdown, found "+nserv),xSet.blueD());
-        System.out.print("."+nserv);
-        browser.sleep(1);
-        timeout++;
-        if(timeout > 10) break;
-        nserv=xSet.getNofServers();
-    }
-    setProgress("OK: DABC down, update parameters ...",xSet.blueD());
-    xSet.setSuccess(false);
-    etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-    if(!xSet.isSuccess()) {
-    	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
-    }
-    if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-    else setProgress("OK: DABC down",xSet.greenD());
+	shutdown("stop");
 }
 else {
 if(doHalt == null) setDimServices();
@@ -529,10 +518,12 @@ if ("dabcConfig".equals(Action)) {
 	    if(waitState(5,"Ready")){
 	        xSet.setSuccess(false);
 	        setProgress("OK: DABC enabled, update parameters ...",xSet.blueD());
-	        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-	        if(!xSet.isSuccess()) { // retry
-	        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
-	        }
+	        dAction.execute("Update"); // execute in event thread
+	        while(xSet.isDimUpdating())browser.sleep(1);
+//	        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
+//	        if(!xSet.isSuccess()) { // retry
+//	        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Rebuild"));
+//	        }
 	        if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
 	        else setProgress("OK: DABC configured and enabled",xSet.greenD());
 	    } else { // retry
