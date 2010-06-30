@@ -63,7 +63,6 @@ private Vector<xDimParameter> mbsTaskList;
 private Vector<xDimParameter> mbsRunning;
 private Thread threxe;
 private ActionEvent ae;
-private xTimer etime;
 private boolean threadRunning=false;
 private boolean mbsPrompt=false;
 private String cmdPrefix;
@@ -150,7 +149,6 @@ if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
 service = new String(MbsNode.getText().toUpperCase()+":DSP");
 if(servlist.indexOf(service)>=0) setProgress("MBS servers ready",xSet.greenD());
 setDimServices();
-etime = new xTimer(al, false); // fire only once
 dAction = new xDesktopAction(desktop);
 }
 //----------------------------------------
@@ -260,11 +258,7 @@ mbsTaskList.removeAllElements();
 if(mbsRunning != null) mbsRunning.removeAllElements();
 }
 //----------------------------------------
-// Start internal frame with an xState panel through timer.
-// Timer events are handled by desktop event handler passed to constructor.
-// Note that etime.action calls handler directly. To run handler through
-// timer event, use etime.start(). Because the timer is set up to
-// fire only once, it stops after that.
+// Called in actionPerformed: Start internal frame directly.
 private void startProgress(){
 progressP=xSet.getLayout("MbsController").getPosition();
 xLayout la= new xLayout("progress");
@@ -274,7 +268,7 @@ progressState=new xState("Current action:",350,30);
 progressState.redraw(-1,"Green","Starting", true);
 progressState.setSizeXY();
 progress.setupFrame(workIcon, null, progressState, true);
-etime.action(new ActionEvent(progress,1,"DisplayFrame"));
+desk.addFrame(progress, false);
 }
 //----------------------------------------
 private void setProgress(String info, Color color){
@@ -282,14 +276,10 @@ setTitle(info,color);
 if(threadRunning) progressState.redraw(-1,xSet.blueL(),info, true);
 }
 //----------------------------------------
-// Fire event handler of desktop through timer.
+// Called in this thread: Remove frame in event thread.
 private void stopProgress(){
-//etime.setInitialDelay(1000);
-//etime.setDelay(1000);
-//System.out.println("=== Timer action stop");
-// etime.setActionCommand("RemoveFrame"); // Java 6 only
-xSet.setActionCommand("RemoveFrame"); // Java < 6 
-etime.start(); // fires event with ActionCommand=null, then stop
+dAction.execute("RemoveFrame",progress.getTitle()); // execute in event thread
+while(dAction.isRunning())browser.sleep(1);
 }
 //----------------------------------------
 private boolean waitMbs(int timeout, String serv, boolean running){
@@ -426,11 +416,7 @@ if(mbsshell.rsh(MbsMaster,Username.getText(),cmd,0L)){
         setProgress("MBS servers ready, update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
         dAction.execute("Update"); // execute in event thread
-        while(xSet.isDimUpdating())browser.sleep(1);
-//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-//        if(!xSet.isSuccess()) {
-//        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-//        }
+        while(dAction.isRunning())browser.sleep(1);
         if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
         else setProgress("OK: MBS servers ready",xSet.greenD());
     } else {
@@ -541,11 +527,7 @@ else if ("mbsCleanup".equals(Action)) {
         setProgress("Update parameters ...",xSet.blueD());
         xSet.setSuccess(false);
         dAction.execute("Update"); // execute in event thread
-        while(xSet.isDimUpdating())browser.sleep(1);
-//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-//        if(!xSet.isSuccess()) {
-//        	etime.action(new ActionEvent(ae.getSource(),ae.getID(),"Update"));
-//        }
+        while(dAction.isRunning())browser.sleep(1);
         if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
         else                  setProgress("OK: MBS shut down",xSet.greenD());
         System.out.println("Run down finished");
@@ -584,8 +566,7 @@ else if ("mbsConfig".equals(Action)) {
         System.out.println(" ");
         setProgress("Update commands ...",xSet.blueD());
         dAction.execute("RebuildCommands"); // execute in event thread
-        while(xSet.isDimUpdating())browser.sleep(1);
-//        etime.action(new ActionEvent(ae.getSource(),ae.getID(),"RebuildCommands"));
+        while(dAction.isRunning())browser.sleep(1);
         setProgress("OK: MBS tasks ready",xSet.greenD());
     } else {
         System.out.println("\nMBS startup failed ");

@@ -25,6 +25,8 @@ import javax.swing.SwingUtilities;
 public class xDesktopAction implements Runnable{
 private xiDesktop desk;
 private String command;
+private String arg1;
+private boolean Running=false;
 
 /**
  * Constructor of DIM parameter handler.
@@ -38,11 +40,23 @@ public void run(){
 	System.out.println(" *** action command "+command);	
 	if(command.equals("Update"))desk.updateDim(false);  // no cleanup
 	else if(command.equals("RebuildCommands"))desk.rebuildCommands(); 
-	xSet.setDimUpdating(false); 
+	else if(command.equals("RemoveFrame"))desk.removeFrame(arg1);
+	Running=false; 
 }
 public void execute(String actioncommand){
-	xSet.setDimUpdating(true); 
+	Running=true; 
 	command=new String(actioncommand);
     SwingUtilities.invokeLater(this); // call run
 }
+public void execute(String actioncommand, String arg){
+	if(Running){
+		System.out.println(" *** action command "+command+" overrun, skipped!");	
+		return;
+	}
+	Running=true; 
+	arg1=new String(arg);
+	command=new String(actioncommand);
+    SwingUtilities.invokeLater(this); // call run
+}
+public boolean isRunning(){return Running;}
 }
