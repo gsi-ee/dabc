@@ -681,8 +681,6 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
         }
         recsta.setValue(stateSeverity,color,value);
         if(paint && (stat==null)) createState(true);
-        //SwingUtilities.invokeLater(mydimparam);
-        //if(stat!=null)stat.redraw(stateSeverity,color,value,isactive);
     }
 
     else if(pars.isInfo()){
@@ -702,8 +700,6 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
         }
         recinf.setValue(stateSeverity,color,value);
         if(paint && (info==null)) createInfo(true);
-        //SwingUtilities.invokeLater(mydimparam);
-        //if(info!=null)info.redraw(stateSeverity,color,value,isactive);
     }
 
     else if(pars.isRate()){
@@ -745,8 +741,6 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
         if(meter!=null){
             recmet.setSize(meter.getDimension());
             recmet.setPosition(meter.getPosition());
-            //SwingUtilities.invokeLater(mydimparam);
-            //meter.redraw((double)fvalue,(quality!=-1), isactive);
         }
     }
 
@@ -774,8 +768,6 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
         if(histo!=null){
             rechis.setSize(histo.getDimension());
             rechis.setPosition(histo.getPosition());
-            //SwingUtilities.invokeLater(mydimparam);
-            //histo.redraw(histoChannels,intarr, isactive);
         }
         if(rechis!=null)rechis.setValue(histoChannels,intarr);
     }
@@ -865,11 +857,6 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
     if((tabmod!=null)&&(tabrow != -1)){
     	if(tabrow >= tabmod.getRowCount())
     		System.out.println("Table rows:"+tabmod.getRowCount()+" index:"+tabrow);
-//        try{ 
-//            tabmod.setValueAt(value, tabrow, 5);
-//        } catch (ArrayIndexOutOfBoundsException e){
-//            System.out.println("Exception Table index: "+tabrow+" "+super.getName());
-//        }
     }
     // call user info handlers if attached:
     if(userHandler != null)

@@ -63,7 +63,7 @@ private static void createAndShowProgress() {
 	    ImageIcon workIcon = xSet.getIcon("icons/dabcicon.png");
 	    proframe = new JFrame("DABC xGUI");
 	    proframe.setIconImage(workIcon.getImage());
-	    proframe.setLocation(600,500);
+	    proframe.setLocation(400,400);
 	    proframe.setMinimumSize(new Dimension(210,120));
 	    proframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 	    xprogmet=new xMeter(1,"Progress ",0.,100.,200,90,new Color(0.5f,1.f,0.5f));
