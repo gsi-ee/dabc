@@ -60,12 +60,14 @@ private static void createAndShowProgress() {
 	    JFrame.setDefaultLookAndFeelDecorated(true);
 
 	//Create and set up the window.
+	    ImageIcon workIcon = xSet.getIcon("icons/control.png");
 	    proframe = new JFrame("Progress...");
+	    proframe.setIconImage(workIcon.getImage());
 	    proframe.setLocation(100,500);
 	    proframe.setMinimumSize(new Dimension(210,120));
 	    proframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-	    xprogmet=new xMeter(1,"Progress",0.,140.,200,90,new Color(1.0f,1.0f,1.0f));
-	    xprogmet.setLettering("Progress "," Startup","Create","");
+	    xprogmet=new xMeter(1,"Progress",0.,140.,200,90,new Color(0.5f,1.f,0.5f));
+	    xprogmet.setLettering("DABC xGUI "," Startup","Create","");
 	    proframe.getContentPane().add(xprogmet,BorderLayout.CENTER);
 	    proframe.pack();
 	//Display the window.

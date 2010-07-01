@@ -85,7 +85,7 @@ public void run(){
 	switch (dostep) {
 	case 0: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Desktop","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Desktop","");
 	progmet.redraw((double)(dostep*10));
     if(xSet.isMbs())      setTitle("MBS Controls and Monitoring");
     if(xSet.isDabs())     setTitle("MBS+DABC Controls and Monitoring");
@@ -124,7 +124,7 @@ public void run(){
 	
 	case 1: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Layouts","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Layouts","");
 	progmet.redraw((double)(dostep*10));
 // load icons
     storeIcon   = xSet.getIcon("icons/savewin.png");
@@ -195,7 +195,7 @@ public void run(){
 	
 	case 2: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Panels","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Panels","");
 	progmet.redraw((double)(dostep*10));
     // create the panels
     logpan=new xPanelLogger(xSet.getLayout("Logger").getSize());
@@ -211,7 +211,7 @@ public void run(){
 	
 	case 3: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": DIM services","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": DIM services","");
 	progmet.redraw((double)(dostep*10));
     browser = new xDimBrowser(hispan,metpan,stapan,infpan);
     browser.initServices("*");
@@ -220,7 +220,7 @@ public void run(){
 	
 	case 4: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": DIM servers","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": DIM servers","");
 	progmet.redraw((double)(dostep*10));
     // Register DIM service to get changes in server list. Bottom line displays server list:
     bottomState=new JTextArea("DIM servers: "+browser.getServers());
@@ -235,7 +235,7 @@ public void run(){
 	
 	case 5: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Parameter","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Parameter","");
 	progmet.redraw((double)(dostep*10));
     selpan=new xPanelSelect(SelectionFile,"Parameter selection",browser,this,this);
     javax.swing.SwingUtilities.invokeLater(this);
@@ -243,7 +243,7 @@ public void run(){
 	
 	case 6: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": MBS panel","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": MBS panel","");
 	progmet.redraw((double)(dostep*10));
     mbspan=new xPanelMbs("Login",browser,this,this);
     javax.swing.SwingUtilities.invokeLater(this);
@@ -251,7 +251,7 @@ public void run(){
 	
 	case 7: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": DABC panel","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": DABC panel","");
 	progmet.redraw((double)(dostep*10));
     dabcpan=new xPanelDabc("Login",browser,this,this);
     javax.swing.SwingUtilities.invokeLater(this);
@@ -259,7 +259,7 @@ public void run(){
 	
 	case 8: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": DABCMBS panel","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": DABCMBS panel","");
 	progmet.redraw((double)(dostep*10));
     dbspan=new xPanelDabcMbs("Login",browser,this,this);
     javax.swing.SwingUtilities.invokeLater(this);
@@ -267,7 +267,7 @@ public void run(){
 	
 	case 9: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Parameter panel","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Parameter panel","");
 	progmet.redraw((double)(dostep*10));
  // parpan waits until all parameters are registered and updated (quality != -1):
     parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
@@ -276,7 +276,7 @@ public void run(){
 	
 	case 10: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Enable services","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Enable services","");
 	progmet.redraw((double)(dostep*10));
     browser.enableServices();
     // This task list is used for a command filter
@@ -286,7 +286,7 @@ public void run(){
 	
 	case 11: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Commands","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Commands","");
 	progmet.redraw((double)(dostep*10));
     compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),mbsTaskList);
     // put list of command descriptors from parameters to commands:
@@ -311,7 +311,7 @@ public void run(){
 	
 	case 12: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Main panels","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Main panels","");
 	progmet.redraw((double)(dostep*10));
 // create the actions for buttons and menu items
     Integer vk_Q = new Integer(KeyEvent.VK_Q);
@@ -363,7 +363,7 @@ public void run(){
 	
 	case 13: dostep++;	
     System.out.println(xLogger.getDate()+"========== Step "+dostep);
-    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Create frames","");
+    progmet.setLettering("DABC xGUI "," Startup",Integer.toString(dostep)+": Create frames","");
 	progmet.redraw((double)(dostep*10));
     // create the panel frames which shall be visible:
     if(xSet.isControl()){
