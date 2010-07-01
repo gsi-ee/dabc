@@ -29,7 +29,7 @@ import java.beans.PropertyVetoException;
  * @author Hans G. Essel
  * @version 1.0
  */
-public class xDesktop extends JFrame implements xiDesktop, ActionListener {
+public class xDesktop extends JFrame implements Runnable, xiDesktop, ActionListener {
 private JTextArea bottomState;
 private JToolBar toolBar;
 private JPanel mainpanel;
@@ -64,6 +64,10 @@ private boolean clearOnUpdate=false;
 private String LayoutFile, RecordFile, CommandFile, SelectionFile;
 private String ActionCommand;
 private String lastframe;
+private String mbsTaskList;
+private int dostep;
+private xMeter progmet;
+private JFrame progframe;
 
 // private PsActionSupport actionHandler;
 /**
@@ -72,8 +76,17 @@ private String lastframe;
  * If null, user panel class name could alternatively be specified
  * as DABC_USER_PANEL and will be instantiated.
  */
-public xDesktop() {
+public xDesktop(xMeter promet, JFrame proframe) {
     super("DABC Controls and Monitoring");
+    progmet=promet;
+    progframe=proframe;
+}
+public void run(){
+	switch (dostep) {
+	case 0: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Desktop","");
+	progmet.redraw((double)(dostep*10));
     if(xSet.isMbs())      setTitle("MBS Controls and Monitoring");
     if(xSet.isDabs())     setTitle("MBS+DABC Controls and Monitoring");
     if(!xSet.isControl()) setTitle("Generic Monitoring");
@@ -106,6 +119,13 @@ public xDesktop() {
     //setJMenuBar(createTopMenuBar()); // JFrame, pull down menu bar in frame
     desktop = new JDesktopPane(); //a specialized layered pane for the internal frames
     xSet.setDesktop((JFrame)this,desktop);
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 1: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Layouts","");
+	progmet.redraw((double)(dostep*10));
 // load icons
     storeIcon   = xSet.getIcon("icons/savewin.png");
     loggerIcon  = xSet.getIcon("icons/logwin.png");
@@ -170,6 +190,13 @@ public xDesktop() {
     xSaveRestore.restoreCommands(CommandFile);
     if(System.getenv("DABC_PARAMETER_FILTER")!=null) SelectionFile=System.getenv("DABC_PARAMETER_FILTER");
     else SelectionFile=new String("Selection.xml");
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 2: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Panels","");
+	progmet.redraw((double)(dostep*10));
     // create the panels
     logpan=new xPanelLogger(xSet.getLayout("Logger").getSize());
     hispan=new xPanelHisto(xSet.getLayout("Histogram").getSize(),xSet.getLayout("Histogram").getColumns());
@@ -179,8 +206,22 @@ public xDesktop() {
     xLogger.setLoggerPanel(logpan); // Logger must know the panel to write messages to it
     // Get list of services from DIM server. Handover the graphics panels.
     // The panels are then passed to the parameter objects for update.
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 3: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": DIM services","");
+	progmet.redraw((double)(dostep*10));
     browser = new xDimBrowser(hispan,metpan,stapan,infpan);
     browser.initServices("*");
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 4: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": DIM servers","");
+	progmet.redraw((double)(dostep*10));
     // Register DIM service to get changes in server list. Bottom line displays server list:
     bottomState=new JTextArea("DIM servers: "+browser.getServers());
     bottomState.setPreferredSize(new Dimension(100,20));
@@ -189,16 +230,65 @@ public xDesktop() {
     bottomState.setBackground(xSet.blueD());
     xDimNameInfo dimservers = new xDimNameInfo("DIS_DNS/SERVER_LIST",bottomState,this);
     // launch panels MBS and DABC and combined
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 5: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Parameter","");
+	progmet.redraw((double)(dostep*10));
     selpan=new xPanelSelect(SelectionFile,"Parameter selection",browser,this,this);
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 6: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": MBS panel","");
+	progmet.redraw((double)(dostep*10));
     mbspan=new xPanelMbs("Login",browser,this,this);
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 7: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": DABC panel","");
+	progmet.redraw((double)(dostep*10));
     dabcpan=new xPanelDabc("Login",browser,this,this);
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 8: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": DABCMBS panel","");
+	progmet.redraw((double)(dostep*10));
     dbspan=new xPanelDabcMbs("Login",browser,this,this);
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 9: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Parameter panel","");
+	progmet.redraw((double)(dostep*10));
  // parpan waits until all parameters are registered and updated (quality != -1):
     parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 10: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Enable services","");
+	progmet.redraw((double)(dostep*10));
     browser.enableServices();
     // This task list is used for a command filter
-    String str=mbspan.getTaskList();
-    compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),str);
+    mbsTaskList=mbspan.getTaskList();
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 11: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Commands","");
+	progmet.redraw((double)(dostep*10));
+    compan=new xPanelCommand(browser,xSet.getLayout("Command").getSize(),mbsTaskList);
     // put list of command descriptors from parameters to commands:
     compan.setCommandDescriptors(parpan.getCommandDescriptors()); 
     selpan.setDimServices();
@@ -216,6 +306,13 @@ public xDesktop() {
         if(usrpan.size()>1)compan.setUserCommand(usrpan.get(1).getUserCommand());
     }
     
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 12: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Main panels","");
+	progmet.redraw((double)(dostep*10));
 // create the actions for buttons and menu items
     Integer vk_Q = new Integer(KeyEvent.VK_Q);
     Integer vk_O = new Integer(KeyEvent.VK_O);
@@ -261,6 +358,13 @@ public xDesktop() {
     mainpanel.setVisible(true);
     add(mainpanel); // panel to frame
 
+    javax.swing.SwingUtilities.invokeLater(this);
+	break;
+	
+	case 13: dostep++;	
+    System.out.println(xLogger.getDate()+"========== Step "+dostep);
+    progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": Create frames","");
+	progmet.redraw((double)(dostep*10));
     // create the panel frames which shall be visible:
     if(xSet.isControl()){
     if(xSet.getLayout("Logger").show()) logpan.setListener(frLogger=
@@ -301,7 +405,11 @@ public xDesktop() {
 
 // Make dragging a little faster but perhaps uglier.
     desktop.setDragMode(JDesktopPane.OUTLINE_DRAG_MODE);
-}
+	//Display the window.
+    default:
+    setVisible(true);
+    progframe.dispose();
+}} // run and switch
 //----------------------- startup finished -----------------------
 
 private JToolBar createToolBar() {

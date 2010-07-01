@@ -45,6 +45,10 @@ else {
 System.out.print(logdate);
 System.out.println("|"+sSev[severity]+"| "+s);
 }}
+public final static String getDate(){
+	Date date=new Date();
+	return new String(dateform.format(date));
+}
 public final static void setLoggerPanel(xPanelLogger p){
 logpan=p;
 }

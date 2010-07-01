@@ -32,7 +32,9 @@ import java.beans.PropertyVetoException;
  * @version 1.0
  */
 public class xGui {
-
+private static xMeter xprogmet;
+private static JFrame proframe;
+private static int iprogress;
 // private PsActionSupport actionHandler;
 public xGui() {
 /**
@@ -42,17 +44,33 @@ public xGui() {
  */
  }
 private static void createAndShowGUI() {
-xDesktop frame;
-//Make sure we have nice window decorations.
-    JFrame.setDefaultLookAndFeelDecorated(true);
+	xDesktop frame;
+	//Make sure we have nice window decorations.
+	    JFrame.setDefaultLookAndFeelDecorated(true);
 
-//Create and set up the window.
-    frame = new xDesktop();
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	//Create and set up the window.
+	    frame = new xDesktop(xprogmet, proframe);
+	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	    javax.swing.SwingUtilities.invokeLater(frame);
+	//Display the window.
+//	    frame.setVisible(true);
+	}
+private static void createAndShowProgress() {
+	//Make sure we have nice window decorations.
+	    JFrame.setDefaultLookAndFeelDecorated(true);
 
-//Display the window.
-    frame.setVisible(true);
-}
+	//Create and set up the window.
+	    proframe = new JFrame("Progress...");
+	    proframe.setLocation(100,500);
+	    proframe.setMinimumSize(new Dimension(210,120));
+	    proframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	    xprogmet=new xMeter(1,"Progress",0.,140.,200,90,new Color(1.0f,1.0f,1.0f));
+	    xprogmet.setLettering("Progress "," Startup","Create","");
+	    proframe.getContentPane().add(xprogmet,BorderLayout.CENTER);
+	    proframe.pack();
+	//Display the window.
+	    proframe.setVisible(true);
+	}
 
 /**
  * Main entry. Checks for DIM_DNS_NODE and application class argument,
@@ -79,6 +97,26 @@ if(System.getenv("USER")==null){
 	System.out.println("No USER name defined, set USER to user name!");
 	return;
 	}
+
+Thread progress=new Thread(){
+	public void run(){
+		javax.swing.SwingUtilities.invokeLater(
+		new Runnable() {public void run() {createAndShowProgress();}});
+//		while(iprogress<100){
+//			iprogress+=10;
+//			try{
+//			Thread.sleep(500);
+//			}catch(InterruptedException x){}
+//			if(xprogmet != null){
+//			    xprogmet.setLettering("Progress","Startup","Create","");
+//				xprogmet.redraw((double)iprogress);
+//			}
+//		}
+	}
+};
+//progress.start();
+javax.swing.SwingUtilities.invokeLater(
+		new Runnable() {public void run() {createAndShowProgress();}});
 
 // parse arguments 
 xSet.checkMainArgs(args);

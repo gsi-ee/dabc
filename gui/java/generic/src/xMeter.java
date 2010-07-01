@@ -144,30 +144,31 @@ private JInternalFrame extFrame=null;
  * @param c Color of markers
  */
 public xMeter(int mode, String name, double min, double max, int xlength, int ylength, Color c){
- iMode=mode;
- if(mode==BAR)  boBar=true;
-    else if(mode==TREND)boTrend=true;
-    else if(mode==STAT) boStat=true;
-    else        boArc=true;
-    sFullHead1=new String(name);
-    sFullHead2=new String("%none%");
-    sFullHead3=new String("%none%");
-    sUnits=new String("Rate");
-    renderHint=new RenderingHints(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-    renderHint.put(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
-    initMeter(name,min,max,xlength,ylength,c);
-    addMouseListener(this);
-    // look if external frame is still there
-    // if(xSet.getDesktop()!=null){
-    // JInternalFrame[] fr=xSet.getDesktop().getAllFrames();
-    // for(int i=0;i<fr.length;i++){
-        // if(fr[i].getTitle().equals(head)){
-        // extFrame=(xInternalFrame)fr[i];
-        // extMeter=(xMeter)(extFrame.getPanel());
-        // boextMeter=true;
-        // System.out.println("connect meter "+head);
-        // break;
-    // }}}
+	iMode=mode;
+	boArc=false;
+	if(mode==BAR)  boBar=true;
+	else if(mode==TREND)boTrend=true;
+	else if(mode==STAT) boStat=true;
+	else        boArc=true;
+	sFullHead1=new String(name);
+	sFullHead2=new String("%none%");
+	sFullHead3=new String("%none%");
+	sUnits=new String("Rate");
+	renderHint=new RenderingHints(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
+	renderHint.put(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
+	initMeter(name,min,max,xlength,ylength,c);
+	addMouseListener(this);
+	// look if external frame is still there
+	// if(xSet.getDesktop()!=null){
+	// JInternalFrame[] fr=xSet.getDesktop().getAllFrames();
+	// for(int i=0;i<fr.length;i++){
+	// if(fr[i].getTitle().equals(head)){
+	// extFrame=(xInternalFrame)fr[i];
+	// extMeter=(xMeter)(extFrame.getPanel());
+	// boextMeter=true;
+	// System.out.println("connect meter "+head);
+	// break;
+	// }}}
 }
 /**
  * Initializes a meter canvas (called by constructor).
