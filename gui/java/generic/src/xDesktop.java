@@ -90,13 +90,13 @@ if(colR < 0.0)colR=0.0f;
 if(colG > 1.0)colG=1.0f;
 if(colB > 1.0)colB=1.0f;
 //System.out.println(xLogger.getDate()+"========== Step "+dostep);
-progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+": "+titel,"");
+progmet.setLettering("Progress "," Startup",Integer.toString(dostep)+" : "+titel,"");
 progmet.setColor(new Color(colR,colG,colB));
 progmet.redraw((double)(dostep*10));
 }
 public void run(){
 	switch (dostep) {
-	case 0: progressNext(": Layouts");	
+	case 0: progressNext(" Layouts");	
     if(xSet.isMbs())      setTitle("MBS Controls and Monitoring");
     if(xSet.isDabs())     setTitle("MBS+DABC Controls and Monitoring");
     if(!xSet.isControl()) setTitle("Generic Monitoring");
@@ -132,7 +132,7 @@ public void run(){
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 1: progressNext(": Panels");	
+	case 1: progressNext(" Panels");	
 // load icons
     storeIcon   = xSet.getIcon("icons/savewin.png");
     loggerIcon  = xSet.getIcon("icons/logwin.png");
@@ -200,7 +200,7 @@ public void run(){
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 2: progressNext(": DIM services");	
+	case 2: progressNext(" DIM services");	
     // create the panels
     logpan=new xPanelLogger(xSet.getLayout("Logger").getSize());
     hispan=new xPanelHisto(xSet.getLayout("Histogram").getSize(),xSet.getLayout("Histogram").getColumns());
@@ -213,13 +213,13 @@ public void run(){
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 3: progressNext(": DIM servers");	
+	case 3: progressNext(" DIM servers");	
     browser = new xDimBrowser(hispan,metpan,stapan,infpan);
     browser.initServices("*");
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 4: progressNext(": Parameter selection panel");	
+	case 4: progressNext(" Parameter selection panel");	
     // Register DIM service to get changes in server list. Bottom line displays server list:
     bottomState=new JTextArea("DIM servers: "+browser.getServers());
     bottomState.setPreferredSize(new Dimension(100,20));
@@ -231,34 +231,34 @@ public void run(){
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 5: progressNext(": MBS panel");	
+	case 5: progressNext(" MBS panel");	
     selpan=new xPanelSelect(SelectionFile,"Parameter selection",browser,this,this);
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 6: progressNext(": DABC panel");	
+	case 6: progressNext(" DABC panel");	
     mbspan=new xPanelMbs("Login",browser,this,this);
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 7: progressNext(": DABC + MBS panel");	
+	case 7: progressNext(" DABC + MBS panel");	
     dabcpan=new xPanelDabc("Login",browser,this,this);
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 8: progressNext(": Parameter panel");	
+	case 8: progressNext(" Parameter panel");	
     dbspan=new xPanelDabcMbs("Login",browser,this,this);
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 9: progressNext(": Create frames");	
+	case 9: progressNext(" Create frames");	
  // parpan waits until all parameters are registered and updated (quality != -1):
     parpan=new xPanelParameter(browser,xSet.getLayout("Parameter").getSize());
     browser.enableServices();
     javax.swing.SwingUtilities.invokeLater(this);
 	break;
 	
-	case 10: dostep--; progressNext(": Finished"); // this update will be unvisible
+	case 10: dostep--; progressNext(" Finished"); // this update will be unvisible
 	browser.sleep(1);
     // This task list is used for a command filter
     mbsTaskList=mbspan.getTaskList();

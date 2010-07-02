@@ -61,7 +61,8 @@ private static void createAndShowProgress() {
 
 	//Create and set up the window.
 	    ImageIcon workIcon = xSet.getIcon("icons/dabcicon.png");
-	    proframe = new JFrame("DABC xGUI");
+	    proframe = new JFrame("DABC-x-GUI");
+	    proframe.setUndecorated(true);
 	    proframe.setIconImage(workIcon.getImage());
 	    proframe.setLocation(400,400);
 	    proframe.setMinimumSize(new Dimension(210,120));
