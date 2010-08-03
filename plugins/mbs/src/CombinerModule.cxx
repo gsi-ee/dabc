@@ -21,7 +21,7 @@
 #include <limits.h>
 
 
-
+#define MBS_INFONAME "Mbs-Combiner"
 
 mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -83,7 +83,9 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    NewCmdDef(mbs::comStopServer)->Register();
 
-   CreateParInfo("CombinerInfo", 1, "Green");
+   CreateParInfo(MBS_INFONAME, 1, "Green");
+   SetParStr(MBS_INFONAME, dabc::format("Mbs Combiner Module: ready. Mode: full events only:%d, subids check:%d" ,fBuildCompleteEvents,fCheckSubIds));
+
 }
 
 mbs::CombinerModule::~CombinerModule()
@@ -181,12 +183,17 @@ bool mbs::CombinerModule::BuildEvent()
 					buildevid = mineventid;
 					overflow=true;
 					DOUT1(("Build event: detected event id integer wraparound, using buildid  %u", buildevid));
+				    SetParStr(MBS_INFONAME, dabc::format("Mbs Combiner Module: detected event id integer wraparound, using buildid  %u", buildevid));
+
 				}
 			else if (maxeventid - mineventid > GetEventIdTolerance())
 				{
 					// we exceed setup tolerance, indicate an error
 					EOUT(("Build event: Event id difference %u is exceeding tolerance window %u",maxeventid - mineventid, GetEventIdTolerance() ));
-					Stop();
+					SetParStr(MBS_INFONAME, dabc::format("Mbs Combiner Module: Event id difference %u exceeding tolerance window %u, stopping dabc!", maxeventid - mineventid, GetEventIdTolerance()));
+					//Stop();
+					dabc::Manager* mgr=dabc::Manager::Instance();
+					mgr->ChangeState(dabc::Manager::stcmdDoStop);
 					return false; // need to return immediately after stop state is set
 				}
 
@@ -240,6 +247,7 @@ bool mbs::CombinerModule::BuildEvent()
 			if(droppedevents)
 				{
 					DOUT1(("Combiner Module: Input %d dropped all events before id %u to reach build event id %u", ninp, lasteventid, buildevid));
+				    SetParStr(MBS_INFONAME, dabc::format("Mbs Combiner Module: Input %d dropped all events before id %u to reach build event id %u", ninp, lasteventid, buildevid));
 				}
 
 			if (fInp[ninp].IsBuffer() && fInp[ninp].evnt()->EventNumber() == buildevid)
@@ -283,15 +291,73 @@ bool mbs::CombinerModule::BuildEvent()
 							buildevid = maxeventid;
 							overflow=true;
 							DOUT1(("Build event: detected event id integer wraparound, using buildid  %u", buildevid));
+					        SetParStr(MBS_INFONAME, dabc::format("Mbs Combiner Module: detected event id integer wraparound, using buildid  %u", buildevid));
 						}
 				}
-
-
 	} // if(fBuildCompleteEvents)
 
 
-   uint32_t subeventssize = 0;
+	if (IsCheckSubIds())
+	{
+		// check of unique subevent ids:
+		bool duplicatefound=false;
+		std::vector<int16_t> procids;
+		std::vector<int8_t> subcrates;
+		std::vector<int8_t> controls;
+		std::vector<int16_t>::iterator pit;
+		std::vector<int8_t>::iterator sit;
+		std::vector<int8_t>::iterator cit;
+		for (unsigned ninp = 0; ninp < NumInputs(); ninp++)
+		{
+			do
+			{
+				SubeventHeader* subev= fInp[ninp].subevnt();
+				if(subev==0) break;
+				// TODO loop over previous ids and compare
+				pit = find(procids.begin(), procids.end(), subev->iProcId);
+				if(pit!=procids.end())
+					{
+						DOUT1(("Build event: detected duplicate subevent procid %d at input %d!", *pit, ninp));
+						duplicatefound=true;
+					}
+				else
+					{
+						procids.push_back(subev->iProcId);
+					}
+				sit = find(subcrates.begin(),subcrates.end(), subev->iSubcrate);
+				if(sit!=subcrates.end())
+					{
+						DOUT1(("Build event: detected duplicate subevent subcrate id %d at input %d!", *sit, ninp));
+						duplicatefound=true;
+					}
+				else
+					{
+						subcrates.push_back(subev->iSubcrate);
+					}
+				cit = find(controls.begin(),controls.end(), subev->iControl);
+				if(cit!=controls.end())
+					{
+						DOUT1(("Build event: detected duplicate subevent control id %d at input %d!", *cit, ninp));
+						duplicatefound=true;
+					}
+				else
+					{
+						controls.push_back(subev->iControl);
+					}
+			} while(fInp[ninp].NextSubEvent());
+		}
+		if(duplicatefound)
+			{
+				DOUT1(("Build event: stopping combiner module because of not unique subevent ids. Please correct your DAQ set up!"));
+				SetParStr(MBS_INFONAME, dabc::format("Build event: stopping combiner module because of not unique subevent ids. Please correct your DAQ set up!"));
+				//Stop();
+				dabc::Manager* mgr=dabc::Manager::Instance();
+				mgr->ChangeState(dabc::Manager::stcmdDoStop);
+				return false;
+			}
+	} // if checksubids
 
+   uint32_t subeventssize = 0;
    for (unsigned ninp=0; ninp<NumInputs(); ninp++)
       if (fInp[ninp].evnt()->EventNumber() == buildevid)
          subeventssize += fInp[ninp].evnt()->SubEventsSize();
@@ -313,25 +379,31 @@ bool mbs::CombinerModule::BuildEvent()
 
 
    if (!fOut.IsPlaceForEvent(subeventssize))
-      EOUT(("Event size %u too big for buffer %u, skip event %u", subeventssize+ sizeof(mbs::EventHeader), fBufferSize, buildevid));
-   else {
+	   {
+		   EOUT(("Event size %u too big for buffer %u, skip event %u", subeventssize+ sizeof(mbs::EventHeader), fBufferSize, buildevid));
+	   }
+   else
+	   {
 
       DOUT2(("Build event %u", buildevid));
-
       fOut.NewEvent(buildevid);
       dabc::Pointer ptr;
       bool isfirst = true;
       for (unsigned ninp=0; ninp<NumInputs(); ninp++)
-         if (fInp[ninp].evnt()->EventNumber() == buildevid) {
-            if (isfirst) {
-               fOut.evnt()->CopyHeader(fInp[ninp].evnt());
-               isfirst = false;
-            }
+      {
+         if (fInp[ninp].evnt()->EventNumber() == buildevid)
+			 {
+				 if (isfirst)
+					 {
+						 fOut.evnt()->CopyHeader(fInp[ninp].evnt());
+						 isfirst = false;
+					 }
 
             fInp[ninp].AssignEventPointer(ptr);
             ptr.shift(sizeof(mbs::EventHeader));
             fOut.AddSubevent(ptr); // TODO: consistency check of subevent ids -> iterator?
-         }
+			 }
+      }
       fOut.FinishEvent();
 
       fEvntRate->AccountValue(1.);
