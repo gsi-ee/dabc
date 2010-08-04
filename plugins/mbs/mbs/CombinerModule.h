@@ -58,6 +58,19 @@ namespace mbs {
          bool BuildEvent();
          bool FlushBuffer();
 
+         virtual void BeforeModuleStart();
+
+         /* delivers event number for combining process
+          * may be reimplemented in subclass if other eventid than mbs header shall be used*/
+         virtual mbs::EventNumType GetEventId(unsigned int inid);
+
+         /* returns true if input of id has conventional mbs input (header evid is original mbs event number)
+         	 * may return false in subclass for other input types, e.g. ROC (header evid is sync number)*/
+         virtual bool IsMbsInput(unsigned int inid)
+			 {
+				 return true;
+			 }
+
       public:
          CombinerModule(const char* name, dabc::Command* cmd = 0);
          virtual ~CombinerModule();
@@ -74,7 +87,14 @@ namespace mbs {
 
          unsigned int GetEventIdTolerance() const { return fEventIdTolerance; }
 
+	/* returns maximum possible eventnumber for overflow checking*/
+		virtual unsigned int GetOverflowEventNumber() const;
+
+
          virtual int ExecuteCommand(dabc::Command* cmd);
+
+
+
    };
 
 }
