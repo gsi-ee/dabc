@@ -19,6 +19,7 @@
 #include "dabc/CommandDefinition.h"
 
 #include <limits.h>
+#include <algorithm>
 
 
 
