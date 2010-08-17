@@ -51,8 +51,7 @@ private static void createAndShowGUI() {
 	//Create and set up the window.
 	    frame = new xDesktop(xprogmet, proframe);
 	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    try{frame.setAlwaysOnTop(true);} 
-	    catch (SecurityException x){System.out.println("Cannot bring progress window to top!");}
+	    frame.toFront();
 	    javax.swing.SwingUtilities.invokeLater(frame);
 	//Display the window.
 //	    frame.setVisible(true);

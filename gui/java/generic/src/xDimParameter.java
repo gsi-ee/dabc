@@ -364,6 +364,7 @@ if(pars.isRate()){
             if(len1 == -1)len1=pars.getNodeName().length();
             len2=pars.getName().indexOf(".");
             if(len2 == -1)len2=pars.getName().length();
+        	//System.out.println("Crea meter " + pars.getFull());
             meter = new xMeter(xMeter.ARC,
                     new String(pars.getNodeName().substring(0,len1)+":"+pars.getName().substring(0,len2)),
                     0.0,10.0,xMeter.XSIZE,xMeter.YSIZE,new Color(1.0f,0.0f,0.0f));
@@ -680,7 +681,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             value=new String(getString());
         }
         recsta.setValue(stateSeverity,color,value);
-        //if(paint && (stat==null)) createState(true);
+        if(paint && (stat==null)) createState(true);
     }
 
     else if(pars.isInfo()){
@@ -699,7 +700,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             value=new String(getString());
         }
         recinf.setValue(stateSeverity,color,value);
-        //if(paint && (info==null)) createInfo(true);
+        if(paint && (info==null)) createInfo(true);
     }
 
     else if(pars.isRate()){
@@ -709,6 +710,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             //quality=-1;
         } else {
         if(!meterInit){
+        	//System.out.println("Init meter " + pars.getFull());
             meterMode=getInt();
             meterLow=getFloat();
             meterUp=getFloat();
@@ -720,19 +722,20 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             meterInit=true;
         }}
         if(recmet == null){
-            recmet = new xRecordMeter(pars.getFull(), pars.getType(), meterMode,
+        	//System.out.println("New record " + pars.getFull());
+                recmet = new xRecordMeter(pars.getFull(), pars.getType(), meterMode,
                 meterLow, meterUp, meterAlarmLow, meterAlarmUp, 
                 meterColor, meterAlarmColor, meterUnits);
             paint=pars.isMonitor();
            }
         recmet.setValue(fvalue);
         value=String.valueOf(fvalue);
-        if(paint && (meter!=null)) {
-            //createMeter(true);
-            meter.setColor(recmet.getColor());
+        if(paint && (meter==null)) {
+            createMeter(true);
             int i = pars.getNode().indexOf(".");
             if(i >=0) node=pars.getNode().substring(0,i);
             else node=pars.getNode();
+        	meter.setColor(recmet.getColor());
             meter.setLettering(node,pars.getApplication(),pars.getName(),recmet.getUnits());
             meter.setDefaultLimits(recmet.getLower(),recmet.getUpper());
             meter.setDefaultAutoScale(false);
@@ -764,7 +767,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
                 paint=pars.isMonitor();
             }
         }
-        //if(paint && (histo==null)) createHisto(true);
+        if(paint && (histo==null)) createHisto(true);
         if(histo!=null){
             rechis.setSize(histo.getDimension());
             rechis.setPosition(histo.getPosition());

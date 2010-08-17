@@ -216,7 +216,7 @@ private void initPanel(Dimension dim){
                 }
             else if(recsta != null){
                 recsta.restoreRecord(el);
-                vpar.get(ii).setAttributeState(); // from rechis
+                vpar.get(ii).setAttributeState(); // from recsta
                 }
             break;
             }
