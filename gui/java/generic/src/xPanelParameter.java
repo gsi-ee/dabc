@@ -142,35 +142,6 @@ private void initPanel(Dimension dim){
         statusOK=false;
         return;
     }
-    // now all records and graphical objects of the parameters should have been created.
-    // Because the table is not yet built, none is added to the graphics panels.    
-    // See if we must update some values from XML file.
-    NodeList list = xSet.getRecordXml();
-    if(list != null){
-    for(ii=0;ii<ipar;ii++) {
-        xRecordState recsta=vpar.get(ii).getState();
-        xRecordMeter recmet=vpar.get(ii).getMeter();
-        xRecordHisto rechis=vpar.get(ii).getHisto();
-        for(int i=0;i<list.getLength();i++){
-            Element el=(Element)list.item(i);
-            if(el.getAttribute("name").toString().equals(vpar.get(ii).getName())){
-            if(recmet != null){
-                recmet.restoreRecord(el);
-                vpar.get(ii).setAttributeMeter(); // from recmet
-                }
-            else if(rechis != null){
-                rechis.restoreRecord(el);
-                vpar.get(ii).setAttributeHisto(); // from rechis
-                }
-            else if(recsta != null){
-                recsta.restoreRecord(el);
-                vpar.get(ii).setAttributeState(); // from rechis
-                }
-            break;
-            }
-        }
-    }}
-    
     // cleanup graphics panels.
     hispan.cleanup();
     metpan.cleanup();
@@ -217,6 +188,41 @@ private void initPanel(Dimension dim){
 //Add frame to panel
     add(paraView);
 // Rebuild graphics panels
+    for(i=0;i<ipar;i++){
+        if(vpar.get(i).getParser().isRate())     vpar.get(i).createMeter(true);
+        if(vpar.get(i).getParser().isHistogram())vpar.get(i).createHisto(true); 
+        if(vpar.get(i).getParser().isState())    vpar.get(i).createState(true); 
+        if(vpar.get(i).getParser().isInfo())     vpar.get(i).createInfo(true); 
+        }
+    // now all records and graphical objects of the parameters should have been created.
+    // Because the table is not yet built, none is added to the graphics panels.    
+    // See if we must update some values from XML file.
+    NodeList list = xSet.getRecordXml();
+    if(list != null){
+    for(ii=0;ii<ipar;ii++) {
+        xRecordState recsta=vpar.get(ii).getState();
+        xRecordMeter recmet=vpar.get(ii).getMeter();
+        xRecordHisto rechis=vpar.get(ii).getHisto();
+        for(int i=0;i<list.getLength();i++){
+            Element el=(Element)list.item(i);
+            if(el.getAttribute("name").toString().equals(vpar.get(ii).getName())){
+            if(recmet != null){
+                recmet.restoreRecord(el);
+                vpar.get(ii).setAttributeMeter(); // from recmet
+                }
+            else if(rechis != null){
+                rechis.restoreRecord(el);
+                vpar.get(ii).setAttributeHisto(); // from rechis
+                }
+            else if(recsta != null){
+                recsta.restoreRecord(el);
+                vpar.get(ii).setAttributeState(); // from rechis
+                }
+            break;
+            }
+        }
+    }}
+    
     infpan.updateAll();
     stapan.updateAll();
     metpan.updateAll();

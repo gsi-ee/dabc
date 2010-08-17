@@ -680,7 +680,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             value=new String(getString());
         }
         recsta.setValue(stateSeverity,color,value);
-        if(paint && (stat==null)) createState(true);
+        //if(paint && (stat==null)) createState(true);
     }
 
     else if(pars.isInfo()){
@@ -699,7 +699,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             value=new String(getString());
         }
         recinf.setValue(stateSeverity,color,value);
-        if(paint && (info==null)) createInfo(true);
+        //if(paint && (info==null)) createInfo(true);
     }
 
     else if(pars.isRate()){
@@ -727,8 +727,8 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
            }
         recmet.setValue(fvalue);
         value=String.valueOf(fvalue);
-        if(paint && (meter==null)) {
-            createMeter(true);
+        if(paint && (meter!=null)) {
+            //createMeter(true);
             meter.setColor(recmet.getColor());
             int i = pars.getNode().indexOf(".");
             if(i >=0) node=pars.getNode().substring(0,i);
@@ -764,7 +764,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
                 paint=pars.isMonitor();
             }
         }
-        if(paint && (histo==null)) createHisto(true);
+        //if(paint && (histo==null)) createHisto(true);
         if(histo!=null){
             rechis.setSize(histo.getDimension());
             rechis.setPosition(histo.getPosition());

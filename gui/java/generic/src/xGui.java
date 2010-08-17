@@ -51,6 +51,8 @@ private static void createAndShowGUI() {
 	//Create and set up the window.
 	    frame = new xDesktop(xprogmet, proframe);
 	    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+	    try{frame.setAlwaysOnTop(true);} 
+	    catch (SecurityException x){System.out.println("Cannot bring progress window to top!");}
 	    javax.swing.SwingUtilities.invokeLater(frame);
 	//Display the window.
 //	    frame.setVisible(true);
@@ -72,6 +74,8 @@ private static void createAndShowProgress() {
 	    proframe.getContentPane().add(xprogmet,BorderLayout.CENTER);
 	    proframe.pack();
 	//Display the window.
+	    try{proframe.setAlwaysOnTop(true);} 
+	    catch (SecurityException x){System.out.println("Cannot bring progress window to top!");}
 	    proframe.setVisible(true);
 	}
 
@@ -101,32 +105,13 @@ if(System.getenv("USER")==null){
 	return;
 	}
 
-Thread progress=new Thread(){
-	public void run(){
-		javax.swing.SwingUtilities.invokeLater(
-		new Runnable() {public void run() {createAndShowProgress();}});
-//		while(iprogress<100){
-//			iprogress+=10;
-//			try{
-//			Thread.sleep(500);
-//			}catch(InterruptedException x){}
-//			if(xprogmet != null){
-//			    xprogmet.setLettering("Progress","Startup","Create","");
-//				xprogmet.redraw((double)iprogress);
-//			}
-//		}
-	}
-};
-//progress.start();
 javax.swing.SwingUtilities.invokeLater(
-		new Runnable() {public void run() {createAndShowProgress();}});
+	new Runnable() {public void run() {createAndShowProgress();}});
 
 // parse arguments 
 xSet.checkMainArgs(args);
 
 javax.swing.SwingUtilities.invokeLater(
-new Runnable() {
-public void run() {createAndShowGUI();}
-});
+	new Runnable() {public void run() {createAndShowGUI();}});
 }
 }
