@@ -143,11 +143,43 @@ private void initPanel(Dimension dim){
         return;
     }
     // cleanup graphics panels.
+    System.out.println(" ======= Cleanup graphics panels");
     hispan.cleanup();
     metpan.cleanup();
     stapan.cleanup();
     infpan.cleanup();
+    
+    System.out.println(" ======= Restore record attributes");
+    // now all records and graphical objects of the parameters should have been created.
+    // Because the table is not yet built, none is added to the graphics panels.    
+    // See if we must update some values from XML file.
+    NodeList list = xSet.getRecordXml();
+    if(list != null){
+    for(ii=0;ii<ipar;ii++) {
+        xRecordState recsta=vpar.get(ii).getState();
+        xRecordMeter recmet=vpar.get(ii).getMeter();
+        xRecordHisto rechis=vpar.get(ii).getHisto();
+        for(int i=0;i<list.getLength();i++){
+            Element el=(Element)list.item(i);
+            if(el.getAttribute("name").toString().equals(vpar.get(ii).getName())){
+            if(recmet != null){
+                recmet.restoreRecord(el);
+                vpar.get(ii).setAttributeMeter(); // from recmet
+                }
+            else if(rechis != null){
+                rechis.restoreRecord(el);
+                vpar.get(ii).setAttributeHisto(); // from rechis
+                }
+            else if(recsta != null){
+                recsta.restoreRecord(el);
+                vpar.get(ii).setAttributeState(); // from recsta
+                }
+            break;
+            }
+        }
+    }}
 //----------------------------------------------------------
+    System.out.println(" ======= Build parameter table");
 // Create the table for the parameters, specify editable columns
     xParTable partabmod = new xParTable(COLS-2,COLS-1); // column 6 editable, 7 meter button
     partab= new JTable(partabmod);
@@ -188,41 +220,15 @@ private void initPanel(Dimension dim){
 //Add frame to panel
     add(paraView);
 // Rebuild graphics panels
+    System.out.println(" ======= Rebuild graphics panels");
     for(i=0;i<ipar;i++){
         if(vpar.get(i).getParser().isRate())     vpar.get(i).createMeter(true);
         if(vpar.get(i).getParser().isHistogram())vpar.get(i).createHisto(true); 
         if(vpar.get(i).getParser().isState())    vpar.get(i).createState(true); 
         if(vpar.get(i).getParser().isInfo())     vpar.get(i).createInfo(true); 
         }
-    // now all records and graphical objects of the parameters should have been created.
-    // Because the table is not yet built, none is added to the graphics panels.    
-    // See if we must update some values from XML file.
-    NodeList list = xSet.getRecordXml();
-    if(list != null){
-    for(ii=0;ii<ipar;ii++) {
-        xRecordState recsta=vpar.get(ii).getState();
-        xRecordMeter recmet=vpar.get(ii).getMeter();
-        xRecordHisto rechis=vpar.get(ii).getHisto();
-        for(int i=0;i<list.getLength();i++){
-            Element el=(Element)list.item(i);
-            if(el.getAttribute("name").toString().equals(vpar.get(ii).getName())){
-            if(recmet != null){
-                recmet.restoreRecord(el);
-                vpar.get(ii).setAttributeMeter(); // from recmet
-                }
-            else if(rechis != null){
-                rechis.restoreRecord(el);
-                vpar.get(ii).setAttributeHisto(); // from rechis
-                }
-            else if(recsta != null){
-                recsta.restoreRecord(el);
-                vpar.get(ii).setAttributeState(); // from recsta
-                }
-            break;
-            }
-        }
-    }}
     
+    System.out.println(" ======= Update graphics panels");
     infpan.updateAll();
     stapan.updateAll();
     metpan.updateAll();
@@ -303,7 +309,7 @@ public Vector<xXmlParser> getCommandDescriptors(){return descriptors;}
             else{
                 dp = (xDimParameter) model.getValueAt(row, 0);
                 Boolean b = (Boolean)model.getValueAt(row,column);
-                if(dp.getParser().isRate())     dp.createMeter(b); {if(b)metpan.updateAll();}
+                if(dp.getParser().isRate())     dp.activateMeter(b); {if(b)metpan.updateAll();}
                 if(dp.getParser().isHistogram())dp.createHisto(b); {if(b)hispan.updateAll();}
                 if(dp.getParser().isState())    dp.createState(b); {if(b)stapan.updateAll();}
                 if(dp.getParser().isInfo())     dp.createInfo(b); {if(b)infpan.updateAll();}

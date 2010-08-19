@@ -46,6 +46,7 @@ public static final void saveRecords(Vector<xiDimParameter> vpar, String file){
     str.append(xXml.tag("Record",xXml.CLOSE));
     xXml.write(file, str.toString());
 	System.out.println("Store record attributes to "+file);
+	restoreRecords(file);
 }
 /**
  * Restore all records attached to parameters (meters and histograms).

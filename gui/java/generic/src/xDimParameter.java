@@ -280,10 +280,12 @@ boolean show=false;
 if(pars.isVisible()){
     tabmod=table;
     tabinit=true; // otherwise following elements would not be put to panels
-    if(pars.isRate() && paint) {createMeter(true);}
-    if(pars.isInfo() && paint) {createInfo(true);}
-    if(pars.isState() && paint) {createState(true);}
-    if(pars.isHistogram() && paint) {createHisto(true);}
+    if(paint){ // if item exists it will be add to the panel
+	    if(pars.isRate())           createMeter(true);
+	    else if(pars.isInfo())      createInfo(true);
+	    else if(pars.isState())     createState(true);
+	    else if(pars.isHistogram()) createHisto(true);
+    }
     Vector<Object> row = new Vector<Object>();
     row.add(this);
     row.add(pars.getNode().replace(".gsi.de",""));
@@ -316,7 +318,7 @@ return ret;
  */
 protected void setIndex(int index) {
 myparindex=index;
-paraShown=false;
+paraShown=false; // when this is called, none is displayed yet
 }
 /**
  * Called by PanelParameter after sorting
@@ -354,6 +356,10 @@ return false;
 /**
  * @param create Create or remove meter (to/from panel).
  */
+protected void activateMeter(Boolean create){
+	paint=create;
+	createMeter(create);
+}
 protected void createMeter(Boolean create){
 int len1, len2;
 String node;
@@ -364,7 +370,6 @@ if(pars.isRate()){
             if(len1 == -1)len1=pars.getNodeName().length();
             len2=pars.getName().indexOf(".");
             if(len2 == -1)len2=pars.getName().length();
-        	//System.out.println("Crea meter " + pars.getFull());
             meter = new xMeter(xMeter.ARC,
                     new String(pars.getNodeName().substring(0,len1)+":"+pars.getName().substring(0,len2)),
                     0.0,10.0,xMeter.XSIZE,xMeter.YSIZE,new Color(1.0f,0.0f,0.0f));
@@ -381,8 +386,10 @@ if(pars.isRate()){
             // meter.setDefaultMode(recmet.getMode());
         }
         if(tabinit){
-            if(!paraShown)metpan.addMeter(meter);
-            paraShown=true;
+            if(paint && !paraShown){
+            	metpan.addMeter(meter);
+                paraShown=true;
+            }
         }
     } else if(paraShown && (meter != null)) {metpan.removeMeter(meter);paraShown=false;}
 }
@@ -544,7 +551,7 @@ if(meter != null){
     meter.setDefaultMode(recmet.getMode());
     meter.setDefaultLogScale(recmet.getLogScale().booleanValue());
     paint=recmet.isVisible().booleanValue();
-} else System.out.println("No meter to set for "+pars.getFull());
+    } else System.out.println("No meter to set for "+pars.getFull());
 }}
 
 public xRecordState getState(){
