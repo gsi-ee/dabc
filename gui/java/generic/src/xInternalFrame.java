@@ -129,7 +129,7 @@ public void internalFrameOpened(InternalFrameEvent e){}
 public void componentHidden(ComponentEvent e) {}
 public void componentMoved(ComponentEvent e) {
 //	System.out.println("Frame moved : "+getTitle()+" "+layout.getName()+" false");
-	layout.set(getLocation(),getSize(),0,false);
+	layout.set(getLocation(),getSize(),0);
 }
 public void componentShown(ComponentEvent e) {}
 /**

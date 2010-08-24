@@ -149,7 +149,10 @@ protected final static void saveLayouts(String file){
     str.append(xXml.tag("Layout",xXml.OPEN));
     str.append(xXml.tag("WindowLayout",xXml.OPEN));
     // append window specs
-    for(int i =0; i < layouts.size(); i++) str.append(layouts.elementAt(i).XmlLine()); 
+    for(int i =0; i < layouts.size(); i++) {
+//    	System.out.print("Save Layout "+layouts.elementAt(i).XmlLine());
+    	str.append(layouts.elementAt(i).XmlLine()); 
+    }
     str.append(xXml.tag("WindowLayout",xXml.CLOSE));
     // append table specs
     str.append(xXml.tag("TableLayout",xXml.OPEN));

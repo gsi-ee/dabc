@@ -181,6 +181,7 @@ for(int i=0;i < layouts.size();i++)
 // not found, can add
 xLayout lo=new xLayout(name);
 lo.set(new Point(0,0), new Dimension(100,100),0,false);
+//System.out.println("Create Layout "+name);
 layouts.add(lo);
 return lo;
 }
@@ -198,6 +199,7 @@ for(int i=0;i < layouts.size();i++) if(layouts.elementAt(i).getName().equals(nam
 // not found, can add
 xLayout lo=new xLayout(name);
 lo.set(pos,size,columns,visible);
+//System.out.println("Create Layout "+name+" visible="+visible);
 layouts.add(lo);
 return lo;
 }
@@ -214,6 +216,7 @@ return lo;
 public final static boolean setLayout(String name, Point pos, Dimension size, int columns, boolean visible){
 for(int i=0;i < layouts.size();i++){
     if(layouts.elementAt(i).getName().equals(name)){
+    	//System.out.println("Set Layout "+name+" visible="+visible);
     layouts.elementAt(i).set(pos,size,columns,visible);
     return true;
 }}
@@ -346,6 +349,7 @@ protected final static void setWindowLayout(Element layout){
 String[] sx;
 xLayout lo=createLayout(layout.getTagName());
 if(lo == null)lo=getLayout(layout.getTagName());
+//System.out.println("Set window layout "+layout.getTagName()+" visible="+layout.getAttribute("show").toString());
 sx=layout.getAttribute("shape").toString().split(",");
 lo.set(new Point(Integer.parseInt(sx[0]),Integer.parseInt(sx[1])),
     new Dimension(Integer.parseInt(sx[2]),Integer.parseInt(sx[3])),

@@ -45,10 +45,19 @@ public xLayout(String Name) {name=Name;}
  * @param lshow visibility.
  */
 public void set(Point lpos, Dimension lsize, int columns, boolean lshow) {
+	set(lpos, lsize, columns);
+	show=lshow;
+}
+/**
+ * Set layout. Do not change visibility.
+ * @param lpos Position or null.
+ * @param lsize Size or null.
+ * @param columns Columns or 0.
+ */
+public void set(Point lpos, Dimension lsize, int columns) {
 if(lpos != null)  pos=lpos;
 if(lsize != null) size=lsize;
 if(columns != 0)  cols=columns;
-show=lshow;
 }
 /**
  * @return XML formatted line to be inserted in XML file by caller.<br>
@@ -56,7 +65,8 @@ show=lshow;
  */
 public String XmlLine(){
 return String.format("<%s shape=\"%d,%d,%d,%d\" columns=\"%d\" show=\"%b\"/>\n",
-name,(int)pos.getX(),(int)pos.getY(),(int)size.getWidth(),(int)size.getHeight(),cols,show);}
+name,(int)pos.getX(),(int)pos.getY(),(int)size.getWidth(),(int)size.getHeight(),cols,show);
+}
 
 public String getName(){return name;}
 public boolean show(){return show;}
