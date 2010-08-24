@@ -128,7 +128,7 @@ public void internalFrameOpened(InternalFrameEvent e){}
 // Component listener
 public void componentHidden(ComponentEvent e) {}
 public void componentMoved(ComponentEvent e) {
-//	System.out.println("Frame moved : "+getTitle()+" "+layout.getName()+" false");
+	//System.out.println("Frame moved : "+getTitle()+" "+layout.getName());
 	layout.set(getLocation(),getSize(),0);
 }
 public void componentShown(ComponentEvent e) {}
@@ -143,7 +143,8 @@ if(resizable){ // size of mypan must follow size of this frame
          nd=xSet.addDimension(getSize(), new Dimension(-10,-53));
     else nd=xSet.addDimension(getSize(), new Dimension(-10,-32));
     mypan.setPreferredSize(nd);
-    // System.out.println("intfram "+mypan.getClass()+" "+nd);
+	layout.set(getLocation(),getSize(),0);
+    //System.out.println("intfram "+mypan.getClass()+" "+nd);
 }
 else { // Frame size determined by mypan size
     // System.out.println("intfram "+mypan.getClass()+" pref "+mypan.getPreferredSize());

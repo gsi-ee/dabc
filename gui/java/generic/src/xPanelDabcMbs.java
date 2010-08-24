@@ -655,13 +655,8 @@ int time=0;
         	setProgress("Wait for MBS servers ready ...",xSet.blueD());
         	if(waitServers(nMbsServers,10)){
                 System.out.println("\nMbs connnected");
-                setProgress("MBS servers ready, update parameters ...",xSet.blueD());
-                xSet.setSuccess(false);
-                if(!xSet.isSuccess()) setProgress(xSet.getMessage(),xSet.redD());
-                else {
-                	setProgress("OK: MBS servers ready",xSet.greenD());
-                	launchMbs=true;
-                }
+            	setProgress("OK: MBS servers ready",xSet.greenD());
+            	launchMbs=true;
                 //setDimServices();
             } else {
                 System.out.println("Mbs Failed ");
