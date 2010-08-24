@@ -51,6 +51,7 @@ private String sMax;
 private int iMaxL, iValL;
 private boolean withHeader;
 private boolean auto=false;
+private boolean alive;
 float colR, colG, colB;
 private Color cColBack  = new Color(0.0f,0.0f,0.0f);
 private Color cColText  = new Color(1.0f,1.0f,1.0f);
@@ -232,6 +233,11 @@ public void update(Graphics g){
     gg.setColor(cColValue);
     gg.fillRect(barposx+2,barposy+2,(int)(Value*Fact)-4,barwidth-4);
     gg.drawString(sValue,barposx-2-iValL,iy-2);
+    if(alive){
+    	gg.setColor(cColNosp);
+    	gg.fillRect(barposx+1,barposy+1,3,3);
+    	alive=false;
+    } else alive=true;
     if(cColCur != null){
     cColValue=cColCur;
     cColCur=null;

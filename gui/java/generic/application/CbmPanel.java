@@ -49,6 +49,9 @@ private myInfoHandler(String Name, xMeter Meter, xState State){
 }
 public String getName(){return name;
 }
+//NOTE that this infoHandler is invoked in the Java event loop.
+//This means, that graphics actions can be done, but be sure not to
+//block by waiting for something which is provided by another event function (dead lock)
 public void infoHandler(xiDimParameter P){
 	if(meter != null) meter.redraw(
 		P.getMeter().getValue(),true, true);

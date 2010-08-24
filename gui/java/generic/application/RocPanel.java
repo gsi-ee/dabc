@@ -258,6 +258,9 @@ System.out.println("ROC services OK: "+paramOK);
 // ---- xiUserInfoHandler interface methods ----------------------------
 public String getName(){return name;}
 // call back for parameter update (xiUserInfoHandler))
+//NOTE that this infoHandler is invoked in the Java event loop.
+//This means, that graphics actions can be done, but be sure not to
+//block by waiting for something which is provided by another event function (dead lock)
 public void infoHandler(xiDimParameter param){
 // System.out.println("Param: "+par.getParserInfo().getFull()+", value "+par.getRecordMeter().getValue());
 

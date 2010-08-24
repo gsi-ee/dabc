@@ -220,13 +220,13 @@ private void initPanel(Dimension dim){
 //Add frame to panel
     add(paraView);
 // Rebuild graphics panels
-    System.out.println(" ======= Rebuild graphics panels");
-    for(i=0;i<ipar;i++){
-        if(vpar.get(i).getParser().isRate())     vpar.get(i).createMeter(true);
-        if(vpar.get(i).getParser().isHistogram())vpar.get(i).createHisto(true); 
-        if(vpar.get(i).getParser().isState())    vpar.get(i).createState(true); 
-        if(vpar.get(i).getParser().isInfo())     vpar.get(i).createInfo(true); 
-        }
+//    System.out.println(" ======= Rebuild graphics panels");
+//    for(i=0;i<ipar;i++){
+//        if(vpar.get(i).getParser().isRate())          vpar.get(i).createMeter(true);
+//        else if(vpar.get(i).getParser().isHistogram())vpar.get(i).createHisto(true); 
+//        else if(vpar.get(i).getParser().isState())    vpar.get(i).createState(true); 
+//        else if(vpar.get(i).getParser().isInfo())     vpar.get(i).createInfo(true); 
+//        }
     
     System.out.println(" ======= Update graphics panels");
     infpan.updateAll();

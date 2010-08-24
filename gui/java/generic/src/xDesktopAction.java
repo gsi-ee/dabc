@@ -29,13 +29,16 @@ private String arg1;
 private boolean Running=false;
 
 /**
- * Constructor of DIM parameter handler.
- * @param service DIM name of service: DIS_DNS/SERVER_LIST
- * @param label Text area to store the DIM server list. 
+ * Constructor of desktop runnable.
+ * @param desktop Interface to desktop where the commands are implemented.
  */
 public xDesktopAction(xiDesktop desktop){
     desk=desktop;
 }
+/**
+ * Function running on event level.
+ * By command, functions of desktop are called.
+ */
 public void run(){
 	System.out.println(" *** action command "+command);	
 	if(command.equals("Update"))desk.updateDim(false);  // no cleanup
@@ -43,20 +46,31 @@ public void run(){
 	else if(command.equals("RemoveFrame"))desk.removeFrame(arg1);
 	Running=false; 
 }
+/**
+ * Launch a command to be executed at event level.
+ * If previous 
+ * @param actioncommand Command to be executed. 
+ * Dispatch is done in run function. Command functions
+ * are implemented in Desktop.
+ * @see xDesktop
+ */
 public void execute(String actioncommand){
-	Running=true; 
-	command=new String(actioncommand);
-    SwingUtilities.invokeLater(this); // call run
-}
-public void execute(String actioncommand, String arg){
 	if(Running){
 		System.out.println(" *** action command "+command+" overrun, skipped!");	
 		return;
 	}
 	Running=true; 
-	arg1=new String(arg);
 	command=new String(actioncommand);
     SwingUtilities.invokeLater(this); // call run
+}
+/**
+ * Stores argument and callls execute. 
+ * @param actioncommand Command to be executed. 
+ * @param arg Command argument.
+ */
+public void execute(String actioncommand, String arg){
+	arg1=new String(arg);
+	execute(actioncommand);
 }
 public boolean isRunning(){return Running;}
 }

@@ -137,6 +137,9 @@ public void run(){
     if(histo!=null) histo.redraw(histoChannels,intarr, isactive);
     if(stat!=null)  stat.redraw(stateSeverity,color,value,isactive);
     if(info!=null)  info.redraw(stateSeverity,color,value,isactive);
+    // call user info handlers if attached:
+    if(userHandler != null)
+        for(int i=0;i<userHandler.size();i++)userHandler.get(i).infoHandler(this);
     if((tabmod!=null)&&(tabrow != -1)){
 		if(tabrow < tabmod.getRowCount())
             tabmod.setValueAt(value, tabrow, 5);
@@ -385,11 +388,9 @@ if(pars.isRate()){
             // meter.setDefaultAutoScale(false);
             // meter.setDefaultMode(recmet.getMode());
         }
-        if(tabinit){
-            if(paint && !paraShown){
-            	metpan.addMeter(meter);
-                paraShown=true;
-            }
+        if(tabinit && paint && !paraShown){
+        	metpan.addMeter(meter);
+            paraShown=true;
         }
     } else if(paraShown && (meter != null)) {metpan.removeMeter(meter);paraShown=false;}
 }
@@ -409,11 +410,10 @@ if(pars.isHistogram()){
             histo.setColorBack(xSet.getColorBack());
             histo.setColor(histoColor);
         }
-        if(tabinit){
-            if(!paraShown){
+        if(tabinit && paint && !paraShown){
             hispan.addHistogram(histo);
             paraShown=true;
-        }}
+        }
     } else if(paraShown && (histo != null)) {hispan.removeHistogram(histo); paraShown=false;}
 }
 }
@@ -434,11 +434,10 @@ if(pars.isState()){
                     xState.XSIZE,xState.YSIZE);
             stat.setColorBack(xSet.getColorBack());
         }
-        if(tabinit){
-            if(!paraShown){
+        if(tabinit && paint && !paraShown){
             stapan.addState(stat);
             paraShown=true;
-        }}
+        }
     } else if(paraShown && (stat != null)) {stapan.removeState(stat);paraShown=false;}
 }
 }
@@ -455,8 +454,8 @@ if(pars.isInfo()){
             info = new xInfo(new String(pars.getNodeName().substring(0,len)+": "),xInfo.XSIZE,xInfo.YSIZE);
             info.setColorBack(xSet.getColorBack());
         }
-        if(tabinit){
-            if(!paraShown)infpan.addInfo(info);
+        if(tabinit && paint && !paraShown){
+            infpan.addInfo(info);
             paraShown=true;
         }
     } else if(paraShown && (info != null)) {infpan.removeInfo(info);paraShown=false;}
@@ -869,8 +868,8 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
     		System.out.println("Table rows:"+tabmod.getRowCount()+" index:"+tabrow);
     }
     // call user info handlers if attached:
-    if(userHandler != null)
-        for(int i=0;i<userHandler.size();i++)userHandler.get(i).infoHandler(mydimparam);
+//    if(userHandler != null)
+//        for(int i=0;i<userHandler.size();i++)userHandler.get(i).infoHandler(mydimparam);
     }
 if(dolog)System.out.println(" "+value);
 } // info handler
