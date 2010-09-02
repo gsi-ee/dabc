@@ -48,7 +48,7 @@ dabc::Buffer* dabc::Buffer::CreateBuffer(BufferSize_t sz)
 {
    if (sz<=0) return 0;
 
-   dabc::Buffer* buf = new dabc::Buffer::Buffer();
+   dabc::Buffer* buf = new dabc::Buffer();
 
    if (!buf->AllocateInternBuffer(sz)) {
       delete buf;
@@ -328,7 +328,7 @@ dabc::Buffer* dabc::Buffer::MakeReference()
    dabc::Buffer* res = 0;
 
    if (fPool==0) {
-      res = new dabc::Buffer::Buffer();
+      res = new dabc::Buffer();
    } else {
 
      res = fPool->TakeEmptyBuffer(GetHeaderSize());
