@@ -396,7 +396,7 @@ Get list of available services from DIM name server\\
 The references of the graphics panels are passed to the parameter objects.
 \item [\func{addInfoHandler(xiDimParameter p, xiUserInfoHandler ih)}]:
 Interface function to add an additional info handler to a parameter. The \func{infoHandler}
-function of this handler is called at the end of the \func{infoHandler} function
+function of this handler is put into the event queue at the end of the \func{infoHandler} function
 of \class{xDimParameter}. 
 \item [\func{removeInfoHandler(xiDimParameter p, xiUserInfoHandler ih)}]:
 Interface function to remove an info handler added before. 
