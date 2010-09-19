@@ -30,65 +30,83 @@ namespace mbs {
    class CombinerModule : public dabc::ModuleAsync {
       protected:
 
-      struct InputCfg {
-         /** indicates if input is real mbs - means event produced by MBS
-          * Such input is used to set event number in mbs header of output event
-          * Such inputs also analyzed when special trigger numbers are appeared (14-15) */
-         bool real_mbs;
+         struct InputCfg {
+            /** indicates if input is real mbs - means event produced by MBS
+             * Such input is used to set event number in mbs header of output event
+             * Such inputs also analyzed when special trigger numbers are appeared (14-15) */
+            bool real_mbs;
 
-         mbs::EventNumType curr_evnt_num; /** keeps current event number */
+            /** keeps current event number */
+            mbs::EventNumType curr_evnt_num;
 
-         /** Indicates if event number is in event header or moved in data body
-          * Than event number will be searched in subevents */
-         bool real_evnt_num;
+            /** if it is start/stop daq event, treat it in special way */
+            bool curr_evnt_special;
 
-         /** Full id of subevent, where actual event id should be searched */
-         uint32_t evntsrc_fullid;
+            /** Indicates if event number is in event header or moved in data body
+             * Than event number will be searched in subevents */
+            bool real_evnt_num;
 
-         /** Shift in subevent raw data to access event id */
-         uint32_t evntsrc_shift;
+            /** Full id of subevent, where actual event id should be searched */
+            uint32_t evntsrc_fullid;
 
-         InputCfg() :
-            real_mbs(true),
-            curr_evnt_num(0),
-            real_evnt_num(true),
-            evntsrc_fullid(0),
-            evntsrc_shift(0) {}
+            /** Shift in subevent raw data to access event id */
+            uint32_t evntsrc_shift;
 
-         InputCfg(const InputCfg& src) :
-            real_mbs(src.real_mbs),
-            curr_evnt_num(src.curr_evnt_num),
-            real_evnt_num(src.real_evnt_num),
-            evntsrc_fullid(src.evntsrc_fullid),
-            evntsrc_shift(src.evntsrc_shift) {}
-      };
+            /** indicates if input was selected for event buidling */
+            bool selected;
 
-      dabc::PoolHandle*          fPool;
-      unsigned                   fBufferSize;
-      std::vector<ReadIterator>  fInp;
-      std::vector<InputCfg>      fCfg;
-      WriteIterator              fOut;
-      dabc::Buffer*              fOutBuf;
-      int                        fTmCnt;
+            InputCfg() :
+               real_mbs(true),
+               curr_evnt_num(0),
+               curr_evnt_special(false),
+               real_evnt_num(true),
+               evntsrc_fullid(0),
+               evntsrc_shift(0),
+               selected(false) {}
 
-      bool                       fFileOutput;
-      bool                       fServOutput;
+            InputCfg(const InputCfg& src) :
+               real_mbs(src.real_mbs),
+               curr_evnt_num(src.curr_evnt_num),
+               curr_evnt_special(src.curr_evnt_special),
+               real_evnt_num(src.real_evnt_num),
+               evntsrc_fullid(src.evntsrc_fullid),
+               evntsrc_shift(src.evntsrc_shift),
+               selected(src.selected) {}
+         };
 
-      /* switch between partial combining of smallest event ids (false)
-       * and building of complete events only (true)*/
-      bool                       fBuildCompleteEvents;
+         dabc::PoolHandle*          fPool;
+         unsigned                   fBufferSize;
+         std::vector<ReadIterator>  fInp;
+         std::vector<InputCfg>      fCfg;
+         WriteIterator              fOut;
+         dabc::Buffer*              fOutBuf;
+         int                        fTmCnt;
 
-      /*switch on checking duplicate subevent ids in merged events -> indicate setup error*/
-      bool                       fCheckSubIds;
+         bool                       fFileOutput;
+         bool                       fServOutput;
 
-      /** used to exclude higher bits from event id
-       * Can be used when some subsystems does not provide all 32 bits
-       * For instance, ROC SYNC messages has only 24-bit mask */
-      mbs::EventNumType          fEventIdMask;
+         /* switch between partial combining of smallest event ids (false)
+          * and building of complete events only (true)*/
+         bool                       fBuildCompleteEvents;
 
-      /* defines maximum difference allowed between event id in merged data streams.
-       * if id difference is larger, combiner may stop with error message*/
-      mbs::EventNumType          fEventIdTolerance;
+         /*switch on checking duplicate subevent ids in merged events -> indicate setup error*/
+         bool                       fCheckSubIds;
+
+         /** used to exclude higher bits from event id
+           * Can be used when some subsystems does not provide all 32 bits
+           * For instance, ROC SYNC messages has only 24-bit mask */
+         mbs::EventNumType          fEventIdMask;
+
+         /* defines maximum difference allowed between event id in merged data streams.
+          * if id difference is larger, combiner may stop with error message*/
+         mbs::EventNumType          fEventIdTolerance;
+
+         /** Down limit for trigger number, which is recognized as special event
+          * This event is forwarded through combiner without changes.
+          * In normal MBS following special triggers present:
+          * 12/13 - spill ON/OFF 14/15 DAQ start/stop
+          * Therefore, limit should be 12 for such system */
+         int                        fSpecialTriggerLimit;
 
          dabc::RateParameter*       fEvntRate;
          dabc::RateParameter*       fDataRate;

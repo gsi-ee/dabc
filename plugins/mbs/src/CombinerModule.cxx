@@ -54,6 +54,8 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    fEventIdTolerance = GetCfgInt(mbs::xmlEvidTolerance, 0, cmd);
 
+   fSpecialTriggerLimit = GetCfgInt(mbs::xmlSpecialTriggerLimit, 12, cmd);
+
    double flashtmout = GetCfgDouble(dabc::xmlFlashTimeout, 1., cmd);
 
    for (int n=0;n<numinp;n++) {
@@ -149,6 +151,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 {
    // always set event number to 0
    fCfg[ninp].curr_evnt_num = 0;
+   fCfg[ninp].curr_evnt_special = false;
 
    bool foundevent(false);
 
@@ -176,6 +179,13 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
          continue;
       }
 
+      if (fCfg[ninp].real_mbs && (fInp[ninp].evnt()->iTrigger>=fSpecialTriggerLimit)) {
+         // TODO: Probably, one should combine trigger events from all normal mbs channels.
+         foundevent = true;
+         fCfg[ninp].curr_evnt_special = true;
+         fCfg[ninp].curr_evnt_num = fInp[ninp].evnt()->EventNumber();
+         DOUT1(("Found special event with trigger %d on input %u", fInp[ninp].evnt()->iTrigger, ninp));
+      } else
       if (fCfg[ninp].real_evnt_num) {
          foundevent = true;
          fCfg[ninp].curr_evnt_num = fInp[ninp].evnt()->EventNumber() & fEventIdMask;
@@ -214,48 +224,63 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
 bool mbs::CombinerModule::BuildEvent()
 {
-   mbs::EventNumType mineventid(0), maxeventid(0);
+   mbs::EventNumType mineventid(0), maxeventid(0), triggereventid(0);
 
-   bool hasTriggerEvent = false;
+   int hasTriggerEvent = -1;
 
    for (unsigned ninp=0; ninp<NumInputs(); ninp++) {
+
+      fCfg[ninp].selected = false;
 
       if (fInp[ninp].evnt()==0)
          if (!ShiftToNextEvent(ninp)) return false;
 
-      if((fInp[ninp].evnt()->iTrigger==14)  ||  (fInp[ninp].evnt()->iTrigger==15)) {
-         DOUT1(("%s: Found trigger %d event at input %d.",  GetName(), fInp[ninp].evnt()->iTrigger, ninp));
-         hasTriggerEvent = true;
-      }
+      mbs::EventNumType evid = fCfg[ninp].curr_evnt_num;
 
-      mbs::EventNumType evid = CurrEventId(ninp);
-
-      if (ninp==0) {
+      if (ninp==0)  {
          mineventid = evid;
          maxeventid = evid;
       } else {
          if (evid < mineventid) mineventid = evid; else
             if (evid > maxeventid) maxeventid = evid;
       }
+
+      if (fCfg[ninp].curr_evnt_special && (hasTriggerEvent<0)) {
+         hasTriggerEvent = ninp;
+         triggereventid = evid;
+      }
+
    } // for ninp
 
    // we always try to build event with minimum id
-   bool overflow = false;
    mbs::EventNumType buildevid(mineventid);
    mbs::EventNumType diff = maxeventid - mineventid;
 
-   // but due to event counter overflow one should build event with maxid
-   if (diff > fEventIdMask/2) {
-      overflow = true;
-      buildevid = maxeventid;
-      diff = fEventIdMask - diff + 1;
-   }
+   // if any trigger event found, it will be send as is
+   if (hasTriggerEvent>=0) {
+      buildevid = triggereventid;
+      fCfg[hasTriggerEvent].selected = true;
+      diff = 0;
 
-   if ((fEventIdTolerance > 0) && (diff > fEventIdTolerance)) {
-      EOUT(("%s: Event id difference %u is exceeding tolerance window %u",GetName(),  diff, fEventIdTolerance ));
-      SetParStr(GetName(), dabc::format("%s: Event id difference %u exceeding tolerance window %u, stopping dabc!", GetName(), diff, fEventIdTolerance));
-      dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
-      return false; // need to return immediately after stop state is set
+   } else {
+
+      // but due to event counter overflow one should build event with maxid
+      if (diff > fEventIdMask/2) {
+         buildevid = maxeventid;
+         diff = fEventIdMask - diff + 1;
+      }
+
+      if ((fEventIdTolerance > 0) && (diff > fEventIdTolerance)) {
+         EOUT(("%s: Event id difference %u is exceeding tolerance window %u",GetName(),  diff, fEventIdTolerance ));
+         SetParStr(GetName(), dabc::format("%s: Event id difference %u exceeding tolerance window %u, stopping dabc!", GetName(), diff, fEventIdTolerance));
+         dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
+         return false; // need to return immediately after stop state is set
+      }
+
+      // select inputs which will be used for building
+      for (unsigned ninp = 0; ninp < NumInputs(); ninp++)
+         if (fCfg[ninp].curr_evnt_num == buildevid)
+            fCfg[ninp].selected = true;
    }
 
    // calculated result event size and define if mbs header is available
@@ -270,7 +295,8 @@ bool mbs::CombinerModule::BuildEvent()
    bool duplicatefound = false;
 
    for (unsigned ninp = 0; ninp < NumInputs(); ninp++) {
-      if (CurrEventId(ninp) != buildevid) continue;
+      if (!fCfg[ninp].selected) continue;
+
       numusedinp++;
 
       subeventssize += fInp[ninp].evnt()->SubEventsSize();
@@ -287,7 +313,7 @@ bool mbs::CombinerModule::BuildEvent()
          }
    }
 
-   if (fBuildCompleteEvents && (numusedinp < NumInputs())) {
+   if (fBuildCompleteEvents && (numusedinp < NumInputs() && (hasTriggerEvent<0))) {
       static dabc::TimeStamp_t last = 0;
       dabc::TimeStamp_t now = TimeStamp();
       if ((last==0) || (dabc::TimeDistance(last, now) > 1.)) {
@@ -295,7 +321,7 @@ bool mbs::CombinerModule::BuildEvent()
          last = now;
       }
    } else
-   if (duplicatefound) {
+   if (duplicatefound && (hasTriggerEvent<0)) {
       DOUT1(("Skip event %u while duplicates subevents found", buildevid));
    } else {
 
@@ -333,7 +359,7 @@ bool mbs::CombinerModule::BuildEvent()
          dabc::Pointer ptr;
          for (unsigned ninp = 0; ninp < NumInputs(); ninp++) {
 
-            if (CurrEventId(ninp) == buildevid) {
+            if (fCfg[ninp].selected) {
 
                // if header id still not defined, used first
                if (copyMbsHdrId<0) copyMbsHdrId = ninp;
@@ -357,11 +383,10 @@ bool mbs::CombinerModule::BuildEvent()
    } // end of incomplete event
 
    for (unsigned ninp = 0; ninp < NumInputs(); ninp++)
-      if (CurrEventId(ninp) == buildevid)
-         ShiftToNextEvent(ninp);
+      if (fCfg[ninp].selected) ShiftToNextEvent(ninp);
 
    // return true means that method can be called again immediately
-   // in all places one required while loop
+   // in all places one requires while loop
    return true;
 }
 

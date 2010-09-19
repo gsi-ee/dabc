@@ -60,7 +60,7 @@ const char* mbs::xmlCombineCompleteOnly 	= "BuildCompleteEvents";
 const char* mbs::xmlCheckSubeventIds		= "CheckSubIds";
 const char* mbs::xmlEvidMask              = "EventIdMask";
 const char* mbs::xmlEvidTolerance			= "MaxDeltaEventId";
-
+const char* mbs::xmlSpecialTriggerLimit   = "SpecialTriggerLimit";
 
 
 unsigned mbs::EventHeader::NumSubevents() const
