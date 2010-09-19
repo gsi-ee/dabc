@@ -193,8 +193,8 @@ int dabc::Command::GetInt(const char* name, int deflt) const
    const char* val = GetPar(name);
    if (val==0) return deflt;
    int res = 0;
-   if (sscanf(val, "%d", &res) != 1) return deflt;
-   return res;
+   if (dabc::str_to_int(val, &res)) return res;
+   return deflt;
 }
 
 void dabc::Command::SetDouble(const char* name, double v)
@@ -209,8 +209,8 @@ double dabc::Command::GetDouble(const char* name, double deflt) const
    const char* val = GetPar(name);
    if (val==0) return deflt;
    double res = 0.;
-   if (sscanf(val, "%lf", &res) != 1) return deflt;
-   return res;
+   if (dabc::str_to_double(val, &res)) return res;
+   return deflt;
 }
 
 void dabc::Command::SetUInt(const char* name, unsigned v)
@@ -226,8 +226,8 @@ unsigned dabc::Command::GetUInt(const char* name, unsigned deflt) const
    if (val==0) return deflt;
 
    unsigned res = 0;
-   if (sscanf(val, "%u", &res) != 1) return deflt;
-   return res;
+   if (dabc::str_to_uint(val, &res)) return res;
+   return deflt;
 }
 
 void dabc::Command::SetPtr(const char* name, void* p)

@@ -20,6 +20,10 @@ namespace dabc {
 
    extern std::string format(const char *fmt, ...);
    extern void formats(std::string& sbuf, const char *fmt, ...);
+
+   extern bool str_to_int(const char* val, int* res);
+   extern bool str_to_uint(const char* val, unsigned* res);
+   extern bool str_to_double(const char* val, double* res);
 };
 
 #define FORMAT(args) dabc::format args .c_str()

@@ -189,7 +189,7 @@ bool dabc::DoubleParameter::SetValue(const std::string &value)
    {
       LockGuard lock(fValueMutex);
       if (fFixed || (value.length()==0)) return false;
-      if (sscanf(value.c_str(), "%lf", &fValue) != 1) return false;
+      if (!dabc::str_to_double(value.c_str(), &fValue)) return false;
    }
    Changed();
    return true;
@@ -233,7 +233,7 @@ bool dabc::IntParameter::SetValue(const std::string &value)
    {
       LockGuard lock(fValueMutex);
       if (fFixed || (value.length()==0)) return false;
-      if (sscanf(value.c_str(), "%d", &fValue) != 1) return false;
+      if (!dabc::str_to_int(value.c_str(), &fValue)) return false;
    }
    Changed();
    return true;
@@ -323,7 +323,7 @@ bool dabc::RateParameter::SetValue(const std::string &value)
    {
       LockGuard lock(fValueMutex);
       if (fFixed || (value.length()==0)) return false;
-      if (sscanf(value.c_str(), "%lf", &v)!=1) return false;
+      if (!dabc::str_to_double(value.c_str(), &v)) return false;
    }
    ChangeRate(v);
    return true;
@@ -501,13 +501,13 @@ bool dabc::RateParameter::Read(ConfigIO &cfg)
       if (!v.empty()) SetDebugOutput((v == "true") || (v=="1") || (v=="TRUE"));
 
    if (cfg.Find(this, v, "interval"))
-      if (!v.empty()) sscanf(v.c_str(), "%lf", &fInterval);
+      if (!v.empty()) dabc::str_to_double(v.c_str(), &fInterval);
 
    if (cfg.Find(this, v, "width"))
-      if (!v.empty()) sscanf(v.c_str(), "%d", &fOutWidth);
+      if (!v.empty()) dabc::str_to_int(v.c_str(), &fOutWidth);
 
    if (cfg.Find(this, v, "prec"))
-      if (!v.empty()) sscanf(v.c_str(), "%d", &fOutPrecision);
+      if (!v.empty()) dabc::str_to_int(v.c_str(), &fOutPrecision);
 
    return true;
 }

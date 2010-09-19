@@ -202,7 +202,7 @@ bool mbs::WriteIterator::NewEvent(EventNumType event_number, uint32_t minsubeven
    return true;
 }
 
-bool mbs::WriteIterator::NewSubevent(uint32_t minrawsize, uint8_t crate, uint16_t procid)
+bool mbs::WriteIterator::NewSubevent(uint32_t minrawsize, uint8_t crate, uint16_t procid, uint8_t control)
 {
    if (fEvPtr.null()) return false;
 
@@ -213,7 +213,7 @@ bool mbs::WriteIterator::NewSubevent(uint32_t minrawsize, uint8_t crate, uint16_
 
    if (fSubPtr.fullsize() < (sizeof(SubeventHeader) + minrawsize)) return false;
 
-   subevnt()->Init(crate, procid);
+   subevnt()->Init(crate, procid, control);
 
    return true;
 }

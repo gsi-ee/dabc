@@ -69,9 +69,12 @@ dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ
    else
       newthrdname = thrdname;
 
+
    if (!isserver) {
 
       std::string hostname = port->GetCfgStr(xmlServerName, "localhost", cmd);
+
+      DOUT1(("Creating mbs client for host:%s port:%d", hostname.c_str(), portnum));
 
       int fd = dabc::SocketThread::StartClient(hostname.c_str(), portnum);
 

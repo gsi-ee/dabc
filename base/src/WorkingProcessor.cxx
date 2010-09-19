@@ -546,7 +546,7 @@ double dabc::WorkingProcessor::GetParDouble(const char* name, double defvalue) c
 
    double value(defvalue);
 
-   return sscanf(sbuf.c_str(), "%lf", &value) == 1 ? value : defvalue;
+   return dabc::str_to_double(sbuf.c_str(), &value) ? value : defvalue;
 }
 
 bool dabc::WorkingProcessor::GetParBool(const char* name, bool defvalue) const

@@ -32,6 +32,10 @@ namespace mbs {
 
 
    struct SubeventHeader : public Header {
+      union {
+
+        struct {
+
 #if BYTE_ORDER == LITTLE_ENDIAN
       int16_t  iProcId;     /*  Processor ID [as loaded from VAX] */
       int8_t   iSubcrate;   /*  Subcrate number */
@@ -41,14 +45,18 @@ namespace mbs {
       int8_t   iSubcrate;   /*  Subcrate number */
       int16_t  iProcId;     /*  Processor ID [as loaded from VAX] */
 #endif
+        };
 
-      void Init(uint8_t crate = 0, uint16_t procid = 0)
+        uint32_t fFullId;   /** full subevent id */
+      };
+
+      void Init(uint8_t crate = 0, uint16_t procid = 0, uint8_t control = 0)
       {
          iWords = 0;
          iType = MBS_TYPE(10,1);
          iProcId = procid;
          iSubcrate = crate;
-         iControl = 0;
+         iControl = control;
       }
 
       void *RawData() const { return (char*) this + sizeof(SubeventHeader); }
@@ -208,6 +216,7 @@ namespace mbs {
    extern const char* xmlServerOutput;
    extern const char* xmlCombineCompleteOnly;
    extern const char* xmlCheckSubeventIds;
+   extern const char* xmlEvidMask;
    extern const char* xmlEvidTolerance;
 
 };

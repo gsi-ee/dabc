@@ -421,9 +421,9 @@ int dabc::XmlEngine::GetIntAttr(XMLNodePointer_t xmlnode, const char* name)
    // returns value of attribute as integer
 
    if (xmlnode==0) return 0;
-   int res = 0;
+   int res(0);
    const char* attr = GetAttr(xmlnode, name);
-   if (attr) sscanf(attr, "%d", &res);
+   if (attr) dabc::str_to_int(attr, &res);
    return res;
 }
 

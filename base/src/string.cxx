@@ -11,7 +11,9 @@
  * This software can be used under the GPL license agreements as stated
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
+
 #include "dabc/string.h"
+
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -64,3 +66,43 @@ std::string dabc::format(const char *fmt, ...)
    va_end(args);
    return s;
 }
+
+bool dabc::str_to_int(const char* val, int* res)
+{
+   if (val==0) return false;
+   while (*val==' ') val++;
+   if (*val==0) return false;
+
+   if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
+      unsigned ures = 0;
+      if (sscanf(val+2, "%x", &ures) == 1) {
+         *res = ures;
+         return true;
+      }
+   }
+
+   return sscanf(val, "%d", res) == 1;
+}
+
+bool dabc::str_to_uint(const char* val, unsigned* res)
+{
+   if (val==0) return false;
+   while (*val==' ') val++;
+   if (*val==0) return false;
+
+   if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
+      if (sscanf(val+2, "%x", res) == 1) return true;
+   }
+
+   return sscanf(val, "%u", res) == 1;
+}
+
+bool dabc::str_to_double(const char* val, double* res)
+{
+   unsigned ures(0);
+
+   if (str_to_uint(val, &ures)) { *res = ures; return true; }
+
+   return sscanf(val, "%lf", res) == 1;
+}
+

@@ -21,6 +21,17 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
+Changes in version 1.1
+   1. Reorganise command execution - now it is similar to 
+      event processing can be recursive. Means inside command execution
+      another command can be called. proc->Execute(cmd) will not block 
+      neither caller nor receiver thread completely.    
+      Of course, one should avoid circular dependency of commands which 
+      is a normal situation. 
+   2. Allow hexadecimal numbers in configuration file.
+   3. Modify mbs::CombinerModule - it can treat not only pure mbs inputs,
+      but also pseudo events, where event id coded not in event header.
+      Used for CBM ROC - MBS combination.  
 
 Changes in version 1.0.02
    1. With run.sh one can distribute (copy) configuration file to target nodes. 

@@ -34,6 +34,7 @@ namespace mbs {
          uint16_t    fFirstProcId;
          uint32_t    fSubeventSize;
          bool        fIsGo4RandomFormat;
+         uint32_t    fFullId; /** subevent id, if number subevents==1 and nonzero */
 
          void   FillRandomBuffer(dabc::Buffer* buf);
 

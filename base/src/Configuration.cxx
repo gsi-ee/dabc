@@ -145,8 +145,7 @@ int dabc::Configuration::ShowCpuInfo()
    std::string res = Find1(fSelected, "", xmlRunNode, xmlCpuInfo);
    if (res.empty()) return -1;
    int kind(0);
-   if (sscanf(res.c_str(),"%d",&kind)!=1) return -1;
-   return kind;
+   return dabc::str_to_int(res.c_str(), &kind) ? kind : -1;
 }
 
 int dabc::Configuration::GetRunTime()
@@ -155,9 +154,7 @@ int dabc::Configuration::GetRunTime()
    std::string res = Find1(fSelected, "", xmlRunNode, xmlRunTime);
    if (res.empty()) return 0;
    int runtime(0);
-   if (sscanf(res.c_str(),"%d",&runtime)!=1) return 0;
-   return runtime;
-
+   return dabc::str_to_int(res.c_str(), &runtime) ? runtime : 0;
 }
 
 std::string dabc::Configuration::GetUserPar(const char* name, const char* dflt)
@@ -171,7 +168,7 @@ int dabc::Configuration::GetUserParInt(const char* name, int dflt)
    std::string sres = GetUserPar(name);
    if (sres.empty()) return dflt;
    int res(dflt);
-   return sscanf(sres.c_str(),"%d",&res) == 1 ? res : dflt;
+   return dabc::str_to_int(sres.c_str(), &res) ? res : dflt;
 }
 
 const char* dabc::Configuration::ConetextAppClass()

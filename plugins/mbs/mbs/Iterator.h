@@ -64,7 +64,7 @@ namespace mbs {
          bool IsEmpty() const { return fFullSize == 0; }
          bool IsPlaceForEvent(uint32_t subeventsize);
          bool NewEvent(EventNumType event_number = 0, uint32_t subeventsize = 0);
-         bool NewSubevent(uint32_t minrawsize = 0, uint8_t crate = 0, uint16_t procid = 0);
+         bool NewSubevent(uint32_t minrawsize = 0, uint8_t crate = 0, uint16_t procid = 0, uint8_t control = 0);
          bool FinishSubEvent(uint32_t rawdatasz);
 
          bool AddSubevent(const dabc::Pointer& source);

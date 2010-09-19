@@ -58,6 +58,7 @@ const char* mbs::xmlTextCharBuffer    = "MbsCharBuffer";
 
 const char* mbs::xmlCombineCompleteOnly 	= "BuildCompleteEvents";
 const char* mbs::xmlCheckSubeventIds		= "CheckSubIds";
+const char* mbs::xmlEvidMask              = "EventIdMask";
 const char* mbs::xmlEvidTolerance			= "MaxDeltaEventId";
 
 
