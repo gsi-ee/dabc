@@ -126,7 +126,6 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
    switch (fState) {
       case ioRecvInfo:
          fState = ioReady;
-         DOUT1(("Receive server info completed"));
          if (fServInfo.iEndian != 1) {
             mbs::SwapData(&fServInfo, sizeof(fServInfo));
             fSwapping = true;
@@ -136,6 +135,10 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
             EOUT(("Cannot correctly define server endian"));
             fState = ioError;
          }
+
+         if (fState!=ioError)
+            DOUT1(("Receive server info completed new_ftm = %s swap = %s",
+                  DBOOL(fServInfo.iStreams==0), DBOOL(fSwapping)));
 
          FireEvent(evDataInput);
 
@@ -152,7 +155,7 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
          } else
          if (ReadBufferSize() == 0) {
             fState = ioReady;
-            DOUT1(("Keep alive buffer from MBS side"));
+            DOUT5(("Keep alive buffer from MBS side"));
          } else {
             fState = ioWaitBuffer;
          }
