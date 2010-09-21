@@ -26,11 +26,17 @@ mbs::ClientIOProcessor::ClientIOProcessor(ClientTransport* cl, int fd) :
    fSwapping(false),
    fRecvBuffer(0)
 {
+   fServInfo.iStreams = 0; // by default, new format
 }
 
 mbs::ClientIOProcessor::~ClientIOProcessor()
 {
    dabc::Buffer::Release(fRecvBuffer);
+}
+
+bool mbs::ClientIOProcessor::IsDabcEnabledOnMbsSide()
+{
+   return fServInfo.iStreams==0;
 }
 
 unsigned mbs::ClientIOProcessor::ReadBufferSize()
@@ -79,6 +85,9 @@ void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
       //               fRecvBuffer, fRecvBuffer->GetTotalSize(), fRecvBuffer->GetDataLocation(), ReadBufferSize()));
 
                fRecvBuffer->SetTypeId(mbs::mbt_MbsEvents);
+	       
+	       DOUT5(("MBS transport start recv %u", ReadBufferSize()));
+	       
                StartRecv(fRecvBuffer, ReadBufferSize());
                fState = ioRecvBuffer;
             }
@@ -135,27 +144,38 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
             EOUT(("Cannot correctly define server endian"));
             fState = ioError;
          }
+         
+         if ((fState != ioError) && (fServInfo.iStreams != 0) && (fServInfo.iBuffers != 1)) {
+	    EOUT(("Number of buffers %u per stream bigger than 1", fServInfo.iBuffers));
+	    EOUT(("This will lead to event spanning which is not supported by DABC"));
+	    EOUT(("Set buffers number to 1 or call \"enable dabc\" on mbs side"));
+	    fState=ioError;
+	 }
 
-         if (fState!=ioError)
-            DOUT1(("Receive server info completed new_ftm = %s swap = %s",
-                  DBOOL(fServInfo.iStreams==0), DBOOL(fSwapping)));
+         if (fState!=ioError) {
+	    std::string info = "new format";
+	    if (fServInfo.iStreams > 0) dabc::formats(info, "streams = %u", fServInfo.iStreams);
+	   
+            DOUT1(("Get MBS server info: %s, buf_per_stream = %u, swap = %s ",
+                  info.c_str(), fServInfo.iBuffers, DBOOL(fSwapping)));
+	 }
 
          FireEvent(evDataInput);
 
          break;
       case ioRecvHeder:
 
-         DOUT5(("MbsClient:: Header received, rest size = %u used %u", ReadBufferSize(), fHeader.UsedBufferSize()));
-
          if (fSwapping) mbs::SwapData(&fHeader, sizeof(fHeader));
 
+         DOUT5(("MbsClient:: Header received, size %u, rest size = %u used %u", fHeader.BufferLength(), ReadBufferSize(), fHeader.UsedBufferSize()));
+	 
          if (ReadBufferSize() > (unsigned) fServInfo.iMaxBytes) {
             EOUT(("Buffer size %u bigger than allowed by info record %d", ReadBufferSize(), fServInfo.iMaxBytes));
             fState = ioError;
          } else
          if (ReadBufferSize() == 0) {
             fState = ioReady;
-            DOUT5(("Keep alive buffer from MBS side"));
+            DOUT3(("Keep alive buffer from MBS side"));
          } else {
             fState = ioWaitBuffer;
          }
@@ -168,11 +188,18 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
 
 //         DOUT1(("Provide recv buffer %p to transport", fRecvBuffer));
 
-         fRecvBuffer->SetDataSize(fHeader.UsedBufferSize());
-
-         if (fSwapping) mbs::SwapData(fRecvBuffer->GetDataLocation(), fRecvBuffer->GetDataSize());
-
-         fTransport->GetReadyBuffer(fRecvBuffer);
+	 
+	 if (fHeader.UsedBufferSize()>0) {
+            fRecvBuffer->SetDataSize(fHeader.UsedBufferSize());
+            if (fSwapping) mbs::SwapData(fRecvBuffer->GetDataLocation(), fRecvBuffer->GetDataSize());
+	    fTransport->GetReadyBuffer(fRecvBuffer);
+	 } else {
+	    if (IsDabcEnabledOnMbsSide()) EOUT(("Empty buffer from mbs when dabc enabled?"));
+	                             else DOUT3(("Keep alive buffer from MBS"));
+	    dabc::Buffer::Release(fRecvBuffer);
+	 }
+	 
+         
          fRecvBuffer = 0;
          fState = ioReady;
 

@@ -62,6 +62,7 @@ namespace mbs {
       protected:
 
          unsigned             ReadBufferSize();
+	 bool                 IsDabcEnabledOnMbsSide(); // indicates if new format is enabled on mbs side
 
          ClientTransport     *fTransport;
          mbs::TransportInfo   fServInfo; // data, send by transport server in the beginning
