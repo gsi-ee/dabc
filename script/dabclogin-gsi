@@ -4,7 +4,9 @@
 # added optional argument to be able to set a local DABCSYS, 18-Jul-2008, HE
 # modified for refactorized workspace 06-11-2008 JAM
 # removed xdaq, added some aliases    17-02-2009 JAM
-#
+# changed for dim version 19r9, use now repository checkout 1-07-2010 JAM
+# add login for head version, place it like root and go4 not that deep in subdirectories 23-09-2010 SL
+
 echo
 echo "***********************************************************************"
 echo "*** dabclogin setting up Data Acquisition Backbone Core environments..."
@@ -18,7 +20,13 @@ if [ $# -eq 0 ]
 then
 export DABCSYS=$VERSIONPATH/dabc/dabc/dabc
 else
+if [ "$1" == "head" ]
+then
+export DABCSYS=$VERSIONPATH/dabc/head
+else
 export DABCSYS=$1
+fi
+shift
 fi
 #------------------------------------
 # cleanup old library path:
@@ -69,7 +77,7 @@ fi
 
 #--------------------------------
 # the dim part:
-export DIMDIR=$DABCSYS/dim/dim_v18r0
+export DIMDIR=$DABCSYS/dim/dim_v19r9
 ODIR=linux
 OS=Linux
 
