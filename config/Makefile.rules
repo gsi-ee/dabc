@@ -21,6 +21,11 @@ clean::
 	@for DIR in $(AUTO_DIRS); do (if [ ! -f $$DIR ] ; then rm -rf $$DIR; fi); done
 	@rm -rf $(BLD_DIR) 
 
+clean-svn:
+	find . -name ".svn" -type d -exec rm -rf {} \;
+	@echo "Clean svn-specific files done"
+
+
 ifeq ($(DOOPTIMIZATION), false)
 OPTFLAGS = $(DEBUGMODE)
 else
