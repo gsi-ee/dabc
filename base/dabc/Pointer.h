@@ -26,7 +26,7 @@ namespace dabc {
          const Buffer*  fBuf;   // pointer on the buffer
          unsigned       fSegm;  // segment id
          unsigned char* fPtr;   // pointer on the raw buffer
-         BufferSize_t   fRawSize;  // size of contigious memory, pointed by fPtr
+         BufferSize_t   fRawSize;  // size of contiguous memory, pointed by fPtr
          BufferSize_t   fFullSize; // full size of memory from pointer till the end 
        
          void long_shift(BufferSize_t sz);
