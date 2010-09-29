@@ -15,7 +15,10 @@
 #define DABC_Exception
 
 #include <exception>
-#include <string>
+
+#ifndef DABC_string
+#include "dabc/string.h"
+#endif
 
 namespace dabc {
   

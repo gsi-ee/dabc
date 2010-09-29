@@ -18,7 +18,9 @@
 
 #include <vector>
 
+#ifndef DABC_string
 #include "dabc/string.h"
+#endif
 
 namespace bnet {
 

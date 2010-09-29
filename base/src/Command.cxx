@@ -17,11 +17,10 @@
 #include <map>
 
 #include "dabc/WorkingProcessor.h"
+#include "dabc/Url.h"
 #include "dabc/logging.h"
 #include "dabc/threads.h"
 #include "dabc/XmlEngine.h"
-
-
 
 class dabc::Command::CommandParametersList : public std::map<std::string, std::string> {};
 
@@ -261,6 +260,16 @@ void dabc::Command::AddValuesFrom(const dabc::Command* cmd, bool canoverwrite)
       iter++;
    }
 }
+
+bool dabc::Command::AssignUrl(const char* urlstr, bool canoverwrite)
+{
+   dabc::Url url(urlstr);
+   if (!url.IsValid()) return false;
+
+
+   return true;
+}
+
 
 void dabc::Command::SaveToString(std::string& v)
 {

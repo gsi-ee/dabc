@@ -60,6 +60,15 @@ namespace dabc {
    extern const char* xmlTrueValue;
    extern const char* xmlFalseValue;
 
+   // list of parameters, taken from URL
+   // this parameters can be (should be) used in many places, which
+   // allows to specify them through standardized URL syntax
+   extern const char* xmlProtocol;
+   extern const char* xmlHostName;
+   extern const char* xmlFileName;
+   extern const char* xmlUrlName; // host + file (without port)
+   extern const char* xmlPort;
+
    extern const char* xmlMcastAddr;
    extern const char* xmlMcastPort;
    extern const char* xmlMcastRecv;

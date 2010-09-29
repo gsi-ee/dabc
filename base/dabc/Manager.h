@@ -182,9 +182,25 @@ namespace dabc {
          {
             SetPar("PortName", portname);
             SetPar("TransportKind", transportkind);
-            SetPar("TransportThrdName", thrdname);
+            SetPar(xmlTrThread, thrdname);
          }
    };
+
+   class CmdCreateInputTransport : public Command {
+      public:
+         static const char* CmdName() { return "CreateInputTransport"; }
+         static const char* DfltProtoParName() { return "DefaultProtocol"; }
+
+         CmdCreateInputTransport(const char* portname, const char* source, const char* thrdname = 0, const char* dfltprotocol = 0) :
+            Command(CmdName())
+         {
+            SetPar("PortName", portname);
+            SetPar(xmlProtocol, dfltprotocol);
+            SetPar(xmlTrThread, thrdname);
+            AssignUrl(source);
+         }
+   };
+
 
    class CmdDestroyTransport : public Command {
       public:

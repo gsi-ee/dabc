@@ -95,6 +95,9 @@ namespace dabc {
 
          void AddValuesFrom(const Command* cmd, bool canoverwrite = true);
 
+         /** Copies all parameters from URL into the command */
+         bool AssignUrl(const char* url, bool canoverwrite = true);
+
          void SetResult(int res) { SetInt("_result_", res); }
          int GetResult() const { return GetInt("_result_", 0); }
          void ClearResult() { RemovePar("_result_"); }
