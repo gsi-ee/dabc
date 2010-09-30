@@ -79,7 +79,7 @@ namespace mbs {
                      evntMbsServerLast };
 
       public:
-         ServerTransport(dabc::Device* dev, dabc::Port* port,
+         ServerTransport(dabc::Port* port, const std::string& thrdname,
                          int kind, int serversocket, int portnum,
                          uint32_t maxbufsize = 16*1024, int scale = 1);
          virtual ~ServerTransport();

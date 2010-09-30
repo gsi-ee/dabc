@@ -49,8 +49,10 @@ namespace dabc {
          std::string GetProtocol() const { return fProtocol; }
          std::string GetHostName() const { return fHostName; }
          int         GetPort() const     { return fPort; }
+         std::string GetPortStr() const;
          std::string GetFileName() const { return fFileName; }
          std::string GetOptions() const  { return fOptions; }
+         std::string GetFullName() const;
 
    };
 }

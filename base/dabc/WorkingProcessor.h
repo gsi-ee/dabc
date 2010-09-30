@@ -337,21 +337,21 @@ namespace dabc {
       public:
          ConfigSource(Command* cmd = 0, WorkingProcessor* proc = 0) : fCmd(cmd), fProc(proc) {}
 
-         std::string GetCfgStr(const char* name, const std::string& dfltvalue)
+         std::string GetCfgStr(const char* name, const std::string& dfltvalue = "")
          {
             if (fProc) return fProc->GetCfgStr(name, dfltvalue, fCmd);
             if (fCmd) return fCmd->GetStr(name, dfltvalue.c_str());
             return dfltvalue;
          }
 
-         int GetCfgInt(const char* name, int dfltvalue)
+         int GetCfgInt(const char* name, int dfltvalue = 0)
          {
             if (fProc) return fProc->GetCfgInt(name, dfltvalue, fCmd);
             if (fCmd) return fCmd->GetInt(name, dfltvalue);
             return dfltvalue;
          }
 
-         double GetCfgDouble(const char* name, double dfltvalue)
+         double GetCfgDouble(const char* name, double dfltvalue = 0.)
          {
             if (fProc) return fProc->GetCfgDouble(name, dfltvalue, fCmd);
             if (fCmd) return fCmd->GetDouble(name, dfltvalue);
@@ -359,7 +359,7 @@ namespace dabc {
 
          }
 
-         bool GetCfgBool(const char* name, bool dfltvalue)
+         bool GetCfgBool(const char* name, bool dfltvalue = false)
          {
             if (fProc) return fProc->GetCfgBool(name, dfltvalue, fCmd);
             if (fCmd) return fCmd->GetBool(name, dfltvalue);

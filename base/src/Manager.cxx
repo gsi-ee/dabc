@@ -1018,10 +1018,8 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          }
       }
    } else
-   if (cmd->IsName(CmdCreateInputTransport::CmdName())) {
+   if (cmd->IsName(CmdCreateTransportNew::CmdName())) {
       const char* portname = cmd->GetStr("PortName");
-      const char* source = cmd->GetStr("Source");
-
 
       Port* port = FindPort(portname);
 
@@ -1029,8 +1027,14 @@ int dabc::Manager::ExecuteCommand(Command* cmd)
          EOUT(("Port %s not found - cannot create input transport", portname));
          cmd_res = cmd_false;
       } else {
-         std::string thrdname = port->GetCfgStr(xmlTrThread, "", cmd);
+         Transport* tr = 0;
+         Factory* factory = 0;
 
+         dabc::Iterator iter(GetFactoriesFolder(false), 1);
+         while (iter.next_cast(factory)) {
+            tr = factory->CreateTransportNew(port, cmd);
+            if (tr!=0) break;
+         }
       }
 
 

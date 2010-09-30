@@ -142,8 +142,21 @@ bool dabc::Command::HasPar(const char* name) const
    if (fParams==0) return false;
 
    return fParams->find(name) != fParams->end();
+}
+
+bool dabc::Command::IsParValue(const char* name, const char* chkvalue) const
+{
+   const char* parvalue = GetPar(name);
+
+   // if both are 0, they are equal
+   if ((parvalue==0) && (chkvalue==0)) return true;
+
+   if ((parvalue==0) || (chkvalue==0)) return false;
+
+   return strcmp(parvalue, chkvalue) == 0;
 
 }
+
 
 void dabc::Command::RemovePar(const char* name)
 {
@@ -246,6 +259,15 @@ void* dabc::Command::GetPtr(const char* name, void* deflt) const
    return res>0 ? p : deflt;
 }
 
+void dabc::Command::SetParChk(const char* parname, const std::string& parvalue, bool canoverwrite)
+{
+   if ((parname==0) || (strlen(parname)==0) ||  (parvalue.length()==0)) return;
+
+   if (canoverwrite || !HasPar(parname))
+      SetPar(parname, parvalue.c_str());
+}
+
+
 void dabc::Command::AddValuesFrom(const dabc::Command* cmd, bool canoverwrite)
 {
    if ((cmd==0) || (cmd->fParams==0)) return;
@@ -253,10 +275,9 @@ void dabc::Command::AddValuesFrom(const dabc::Command* cmd, bool canoverwrite)
    CommandParametersList::const_iterator iter = cmd->fParams->begin();
 
    while (iter!=cmd->fParams->end()) {
-      const char* parname = iter->first.c_str();
 
-      if (canoverwrite || !HasPar(parname))
-         SetPar(parname, iter->second.c_str());
+      SetParChk(iter->first.c_str(), iter->second, canoverwrite);
+
       iter++;
    }
 }
@@ -266,6 +287,25 @@ bool dabc::Command::AssignUrl(const char* urlstr, bool canoverwrite)
    dabc::Url url(urlstr);
    if (!url.IsValid()) return false;
 
+   SetParChk(xmlProtocol, url.GetProtocol(), canoverwrite);
+   SetParChk(xmlHostName, url.GetHostName(), canoverwrite);
+   SetParChk(xmlFileName, url.GetFileName(), canoverwrite);
+   SetParChk(xmlUrlName, url.GetFullName(), canoverwrite);
+   SetParChk(xmlUrlPort, url.GetPortStr(), canoverwrite);
+
+   std::string options = url.GetOptions();
+
+   while (options.length()>0) {
+      size_t apos = options.find("&");
+      if (apos == std::string::npos) apos = options.length();
+      std::string str = options.substr(0, apos);
+
+      size_t epos = str.find("=");
+      if ((epos > 0) && (epos < str.length()))
+         SetParChk(str.substr(0, epos).c_str(), str.substr(epos+1), canoverwrite);
+
+      options.erase(0, apos);
+   }
 
    return true;
 }

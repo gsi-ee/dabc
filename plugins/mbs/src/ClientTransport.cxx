@@ -222,8 +222,8 @@ void mbs::ClientIOProcessor::OnConnectionClosed()
 // _________________________________________________________________________________
 
 
-mbs::ClientTransport::ClientTransport(dabc::Device* dev, dabc::Port* port, int kind, int fd, const std::string& thrdname) :
-   dabc::Transport(dev),
+mbs::ClientTransport::ClientTransport(dabc::Port* port, int kind, int fd, const std::string& thrdname) :
+   dabc::Transport(dabc::mgr()->FindLocalDevice()),
    dabc::MemoryPoolRequester(),
    fKind(kind),
    fIOProcessor(0),

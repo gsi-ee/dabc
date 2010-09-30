@@ -15,12 +15,13 @@
 
 #include "dabc/logging.h"
 
-dabc::Iterator::Iterator(Basic* topfolder) : 
+dabc::Iterator::Iterator(Basic* topfolder, int maxlevel) :
    fTop(topfolder),
    fCurrent(0),
    fIndexes(),
    fFolders(),
-   fFullName()
+   fFullName(),
+   fMaxLevel(maxlevel)
 {
 }
 
@@ -41,7 +42,8 @@ dabc::Basic* dabc::Iterator::next(bool goinside)
       
       Folder* fCurrentFolder = dynamic_cast<Folder*> (fCurrent);
       
-      if (goinside && (fCurrentFolder!=0) && (fCurrentFolder->NumChilds()>0)) {
+      if (goinside && (fCurrentFolder!=0) && (fCurrentFolder->NumChilds()>0) &&
+           ((fMaxLevel<0) || (sz<fMaxLevel))) {
          fIndexes.resize(sz+1);
          fFolders.resize(sz+1);
          fIndexes[sz] = 0;

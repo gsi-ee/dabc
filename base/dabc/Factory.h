@@ -67,6 +67,8 @@ namespace dabc {
 
          virtual Transport* CreateTransport(Port* port, const char* typ, const char* thrdname, Command* cmd);
 
+         virtual Transport* CreateTransportNew(Port* port, Command* cmd);
+
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option) { return 0; }
 
          virtual Folder* ListMatchFiles(const char* typ, const char* filemask) { return 0; }
@@ -83,6 +85,9 @@ namespace dabc {
 
       protected:
          virtual bool CreateManagerInstance(const char* kind, Configuration* cfg) { return false; }
+
+         virtual Transport* CreateIOTransport(Port* port, Command* cmd, DataInput* inp, DataOutput* out);
+
 
       private:
          static Queue<Factory*> *Factories()

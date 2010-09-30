@@ -67,7 +67,7 @@ namespace dabc {
    extern const char* xmlHostName;
    extern const char* xmlFileName;
    extern const char* xmlUrlName; // host + file (without port)
-   extern const char* xmlPort;
+   extern const char* xmlUrlPort;
 
    extern const char* xmlMcastAddr;
    extern const char* xmlMcastPort;

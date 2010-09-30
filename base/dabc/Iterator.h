@@ -29,8 +29,9 @@ namespace dabc {
          std::vector<unsigned> fIndexes;
          std::vector<dabc::Folder*> fFolders;
          std::string fFullName;
+         int fMaxLevel; /** Limit how deep iterator allowed to go inside hierarchy */
       public:
-         Iterator(Basic* topfolder);
+         Iterator(Basic* topfolder, int maxlevel = -1);
          virtual ~Iterator();
          Basic* next(bool goinside = true);
          Basic* current() const { return fCurrent; }
@@ -38,6 +39,16 @@ namespace dabc {
          const char* fullname() const { return fFullName.c_str(); } 
          const char* name() const { return fCurrent ? fCurrent->GetName() : "none"; }
          
+         template<class T>
+         bool next_cast(T* &ptr, bool goinside = true)
+         {
+            while (next(goinside)) {
+               ptr = dynamic_cast<T*>(current());
+               if (ptr!=0) return true;
+            }
+            return false;
+         }
+
          static void PrintHieararchy(Basic* topfolder);
    };
    

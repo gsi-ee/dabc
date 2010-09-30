@@ -69,6 +69,8 @@ namespace dabc {
          void SetPar(const char* name, const char* value);
          const char* GetPar(const char* name) const;
          void RemovePar(const char* name);
+         bool IsParValue(const char* name, const char* value) const;
+
 
          void SetStr(const char* name, const char* value);
          void SetStr(const char* name, const std::string& value) { SetStr(name, value.c_str()); }
@@ -111,6 +113,8 @@ namespace dabc {
          static void Finalise(Command* cmd);
 
       private:
+
+         void SetParChk(const char* parname, const std::string& parvalue, bool canoverwrite);
 
          void AddCaller(WorkingProcessor* proc, bool* exe_ready = 0);
 

@@ -63,7 +63,7 @@ namespace dabc {
    const char* xmlHostName          = "HostName";
    const char* xmlFileName          = "FileName";
    const char* xmlUrlName           = "UrlName";
-   const char* xmlPort              = "Port";
+   const char* xmlUrlPort           = "UrlPort";
 
    const char* typeWorkingThread    = "dabc::WorkingThread";
    const char* typeSocketDevice     = "dabc::SocketDevice";

@@ -188,6 +188,11 @@ namespace mbs {
    extern const char* typeServerTransport;
    extern const char* typeClientTransport;
 
+   extern const char* protocolLmd;
+   extern const char* protocolMbs;
+   extern const char* protocolMbsTransport;
+   extern const char* protocolMbsStream;
+
    extern const char* comStartServer;
    extern const char* comStopServer;
    extern const char* comStartFile;

@@ -80,7 +80,7 @@ namespace mbs {
       friend class ClientIOProcessor;
 
       public:
-         ClientTransport(dabc::Device* dev, dabc::Port* port, int kind, int fd, const std::string& thrdname);
+         ClientTransport(dabc::Port* port, int kind, int fd, const std::string& thrdname);
          virtual ~ClientTransport();
 
          int Kind() const { return fKind; }

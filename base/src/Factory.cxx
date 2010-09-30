@@ -124,3 +124,44 @@ dabc::Transport* dabc::Factory::CreateTransport(dabc::Port* port, const char* ty
 
    return tr;
 }
+
+dabc::Transport* dabc::Factory::CreateTransportNew(Port* port, Command* cmd)
+{
+
+
+   return 0;
+}
+
+dabc::Transport* dabc::Factory::CreateIOTransport(Port* port, Command* cmd, DataInput* inp, DataOutput* out)
+{
+   if ((inp!=0) && !inp->Read_Init(cmd, port)) {
+      EOUT(("Input object cannot be initialized"));
+      delete inp;
+      inp = 0;
+   }
+
+   if ((out!=0) && !out->Write_Init(cmd, port)) {
+      EOUT(("Output object cannot be initialized"));
+      delete out;
+      out = 0;
+   }
+
+   if ((inp==0) && (out==0)) return 0;
+
+   Device* dev = dabc::mgr()->FindLocalDevice();
+   DataIOTransport* tr = new DataIOTransport(dev, port, inp, out);
+
+   dabc::ConfigSource cfg(cmd, port);
+
+   std::string thrdname = cfg.GetCfgStr(xmlTrThread);
+   if (thrdname.length()==0) thrdname = port->ProcessorThreadName();
+
+   if (!dabc::mgr()->MakeThreadFor(tr, thrdname.c_str())) {
+      EOUT(("Fail to create thread for transport"));
+      delete tr;
+      tr = 0;
+   }
+
+   return tr;
+}
+

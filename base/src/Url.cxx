@@ -73,3 +73,20 @@ bool dabc::Url::SetUrl(const std::string& url)
 
    return fValid;
 }
+
+std::string dabc::Url::GetFullName() const
+{
+   if (fFileName.length()==0) return fHostName;
+   if (fHostName.length()==0) return fFileName;
+
+   return dabc::format("%s/%s", fHostName.c_str(), fFileName.c_str());
+}
+
+std::string dabc::Url::GetPortStr() const
+{
+   if (fPort<=0) return std::string();
+
+   return dabc::format("%d", fPort);
+}
+
+

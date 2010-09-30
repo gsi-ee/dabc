@@ -24,30 +24,35 @@ const char* mbs::typeServerTransport  = "mbs::ServerTransport";
 const char* mbs::typeClientTransport  = "mbs::ClientTransport";
 
 
+const char* mbs::protocolLmd          = "lmd";
+const char* mbs::protocolMbs          = "mbs";
+const char* mbs::protocolMbsTransport = "mbst";
+const char* mbs::protocolMbsStream    = "mbss";
+
 // Command names used in combiner module:
-const char* mbs::comStartServer  	=     "StartServer";
-const char* mbs::comStopServer 		=     "StopServer";
-const char* mbs::comStartFile  		=     "StartFile";
-const char* mbs::comStopFile 		=     "StopFile";
+const char* mbs::comStartServer       = "StartServer";
+const char* mbs::comStopServer        = "StopServer";
+const char* mbs::comStartFile         = "StartFile";
+const char* mbs::comStopFile          = "StopFile";
 
 // port names and name formats:
-const char* mbs::portOutput 			=	"Output";
-const char* mbs::portOutputFmt		=	"Output%d";
-const char* mbs::portInput			=	"Input";
-const char* mbs::portInputFmt		=	"Input%d";
-const char* mbs::portFileOutput		=	"FileOutput";
-const char* mbs::portServerOutput	=	"ServerOutput";
+const char* mbs::portOutput           = "Output";
+const char* mbs::portOutputFmt        = "Output%d";
+const char* mbs::portInput            = "Input";
+const char* mbs::portInputFmt         = "Input%d";
+const char* mbs::portFileOutput       = "FileOutput";
+const char* mbs::portServerOutput     = "ServerOutput";
 
 
 // tag names for xml config file:
-const char* mbs::xmlFileName 		= "MbsFileName";
-const char* mbs::xmlSizeLimit 		= "MbsFileSizeLimit";
-const char* mbs::xmlServerName 		= "MbsServerName";
-const char* mbs::xmlServerKind 		= "MbsServerKind";
-const char* mbs::xmlServerPort 		= "MbsServerPort";
-const char* mbs::xmlServerScale 	= "MbsServerScale";
-const char* mbs::xmlFileOutput 		= "DoFile";
-const char* mbs::xmlServerOutput 	= "DoServer";
+const char* mbs::xmlFileName          = "MbsFileName";
+const char* mbs::xmlSizeLimit         = "MbsFileSizeLimit";
+const char* mbs::xmlServerName        = "MbsServerName";
+const char* mbs::xmlServerKind        = "MbsServerKind";
+const char* mbs::xmlServerPort        = "MbsServerPort";
+const char* mbs::xmlServerScale       = "MbsServerScale";
+const char* mbs::xmlFileOutput        = "DoFile";
+const char* mbs::xmlServerOutput      = "DoServer";
 
 const char* mbs::xmlTextDataFormat    = "MbsTextFormat";
 const char* mbs::xmlTextNumData       = "MbsTextNumData";
@@ -55,11 +60,10 @@ const char* mbs::xmlTextHeaderLines   = "MbsTextHeader";
 const char* mbs::xmlTextCharBuffer    = "MbsCharBuffer";
 
 
-
-const char* mbs::xmlCombineCompleteOnly 	= "BuildCompleteEvents";
-const char* mbs::xmlCheckSubeventIds		= "CheckSubIds";
+const char* mbs::xmlCombineCompleteOnly   = "BuildCompleteEvents";
+const char* mbs::xmlCheckSubeventIds      = "CheckSubIds";
 const char* mbs::xmlEvidMask              = "EventIdMask";
-const char* mbs::xmlEvidTolerance			= "MaxDeltaEventId";
+const char* mbs::xmlEvidTolerance         = "MaxDeltaEventId";
 const char* mbs::xmlSpecialTriggerLimit   = "SpecialTriggerLimit";
 
 
@@ -111,7 +115,7 @@ uint32_t mbs::BufferHeader::UsedBufferSize() const
       case MBS_TYPE(10,1): return i_used * 2;
 
       default: break;
-//         EOUT(("Uncknown buffer type %d-%d", i_type, i_subtype));
+      //         EOUT(("Uncknown buffer type %d-%d", i_type, i_subtype));
    }
 
    return 0;
@@ -122,20 +126,20 @@ void mbs::BufferHeader::SetUsedBufferSize(uint32_t len)
    switch (iType) {
       // new buffer type
       case MBS_TYPE(100,1):
-         iUsedWords = len / 2;
-         if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
+               iUsedWords = len / 2;
+      if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
 
-         break;
+      break;
 
       // old buffer type
       case MBS_TYPE(10,1):
-         i_used = len / 2;
-         if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
-         break;
+               i_used = len / 2;
+      if (iWords==0) SetFullSize(len + sizeof(BufferHeader));
+      break;
 
       default:
-//         EOUT(("Uncknown buffer type %d-%d", i_type, i_subtype));
-        break;
+         //         EOUT(("Uncknown buffer type %d-%d", i_type, i_subtype));
+         break;
    }
 }
 
@@ -150,15 +154,6 @@ void mbs::SwapData(void* data, unsigned bytessize)
       d++;
    }
 }
-
-
-enum EMbsServerKinds {
-      NoServer = 0,
-      TransportServer = 1,
-      StreamServer = 2,
-      OldTransportServer = 3,
-      OldStreamServer = 4
-   };
 
 const char* mbs::ServerKindToStr(int kind)
 {

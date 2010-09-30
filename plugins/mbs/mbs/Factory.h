@@ -26,6 +26,8 @@ namespace mbs {
 
          virtual dabc::Transport* CreateTransport(dabc::Port* port, const char* typ, const char* thrdname, dabc::Command*);
 
+         virtual dabc::Transport* CreateTransportNew(dabc::Port* port, dabc::Command* cmd);
+
          virtual dabc::DataInput* CreateDataInput(const char* typ);
 
          virtual dabc::DataOutput* CreateDataOutput(const char* typ);

@@ -184,11 +184,11 @@ void mbs::ServerIOProcessor::ProcessEvent(dabc::EventId evnt)
 
 // _____________________________________________________________________
 
-mbs::ServerTransport::ServerTransport(dabc::Device* dev, dabc::Port* port,
+mbs::ServerTransport::ServerTransport(dabc::Port* port, const std::string& thrdname,
                                       int kind, int serversocket, int portnum,
                                       uint32_t maxbufsize,
                                       int scale) :
-   dabc::Transport(dev),
+   dabc::Transport(dabc::mgr()->FindLocalDevice()),
    dabc::SocketServerProcessor(serversocket, portnum),
    fKind(kind),
    fMutex(),
@@ -200,6 +200,8 @@ mbs::ServerTransport::ServerTransport(dabc::Device* dev, dabc::Port* port,
 {
    while (fMaxBufferSize < maxbufsize) fMaxBufferSize*=2;
    if ((fScale<1) || (kind != mbs::StreamServer)) fScale = 1;
+
+   dabc::mgr()->MakeThreadFor(this, thrdname.c_str());
 }
 
 mbs::ServerTransport::~ServerTransport()
