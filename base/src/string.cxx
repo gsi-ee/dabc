@@ -99,10 +99,12 @@ bool dabc::str_to_uint(const char* val, unsigned* res)
 
 bool dabc::str_to_double(const char* val, double* res)
 {
+   if (sscanf(val, "%lf", res) == 1) return true;
+
    unsigned ures(0);
 
    if (str_to_uint(val, &ures)) { *res = ures; return true; }
 
-   return sscanf(val, "%lf", res) == 1;
+   return false;
 }
 
