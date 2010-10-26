@@ -139,11 +139,11 @@ bool mbs::CombinerModule::FlushBuffer()
 
 void mbs::CombinerModule::BeforeModuleStart()
 {
-   DOUT1(("BeforeModuleStart of %s is calling first build event...",GetName()));
+   DOUT1(("mbs::CombinerModule::BeforeModuleStart name: %s is calling first build event...", GetName()));
 
    while (BuildEvent());
 
-   DOUT1(("BeforeModuleStart of %s is finished..."));
+   DOUT1(("mbs::CombinerModule::BeforeModuleStart name: %s is finished", GetName()));
 
 }
 
