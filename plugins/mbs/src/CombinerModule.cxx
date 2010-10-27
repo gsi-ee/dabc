@@ -43,6 +43,7 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    int numinp = GetCfgInt(dabc::xmlNumInputs, 2, cmd);
 
+   fDoOutput = GetCfgBool(mbs::xmlNormalOutput, true, cmd);
    fFileOutput = GetCfgBool(mbs::xmlFileOutput, false, cmd);
    fServOutput = GetCfgBool(mbs::xmlServerOutput, false, cmd);
 
@@ -64,7 +65,7 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
       fCfg.push_back(InputCfg());
    }
 
-   CreateOutput(mbs::portOutput, fPool, 5);
+   if (fDoOutput) CreateOutput(mbs::portOutput, fPool, 5);
    if (fFileOutput) CreateOutput(mbs::portFileOutput, fPool, 5);
    if (fServOutput) CreateOutput(mbs::portServerOutput, fPool, 5);
 
@@ -348,7 +349,9 @@ bool mbs::CombinerModule::BuildEvent()
       } else {
 
          if (copyMbsHdrId<0) {
-            EOUT(("Build event: No real mbs event header forund for event %u, use as is", buildevid));
+            // EOUT(("Build event: No real mbs event header found for event %u, use as is", buildevid));
+
+
             // SetParStr(GetName(), dabc::format("%s: No mbs eventid found in mbs event number mode, stop dabc",GetName()));
             // dabc::Manager* mgr=dabc::Manager::Instance();
             // mgr->ChangeState(dabc::Manager::stcmdDoStop);

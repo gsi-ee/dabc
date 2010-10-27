@@ -51,6 +51,7 @@ const char* mbs::xmlServerName        = "MbsServerName";
 const char* mbs::xmlServerKind        = "MbsServerKind";
 const char* mbs::xmlServerPort        = "MbsServerPort";
 const char* mbs::xmlServerScale       = "MbsServerScale";
+const char* mbs::xmlNormalOutput      = "DoOutput";
 const char* mbs::xmlFileOutput        = "DoFile";
 const char* mbs::xmlServerOutput      = "DoServer";
 

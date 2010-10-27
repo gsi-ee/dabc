@@ -82,6 +82,7 @@ namespace mbs {
          dabc::Buffer*              fOutBuf;
          int                        fTmCnt;
 
+         bool                       fDoOutput;
          bool                       fFileOutput;
          bool                       fServOutput;
 

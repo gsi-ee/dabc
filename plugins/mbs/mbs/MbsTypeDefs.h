@@ -217,6 +217,7 @@ namespace mbs {
    extern const char* xmlTextHeaderLines;
    extern const char* xmlTextCharBuffer;
 
+   extern const char* xmlNormalOutput;
    extern const char* xmlFileOutput;
    extern const char* xmlServerOutput;
    extern const char* xmlCombineCompleteOnly;
