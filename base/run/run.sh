@@ -1,8 +1,7 @@
 #!/bin/bash
 
-
 if [[ "$1" == "-version" ]] ; then
-   echo "DABC version 1.03"
+   echo "DABC version 1.1"
    exit 0
 fi
 
@@ -21,7 +20,7 @@ if [[ "$1" == "" || "$1" == "?" || "$1" == "-help" || "$1" == "-h" || "$1" == "/
    echo "For test, stop, kill commands node id can be specified like run.sh file.xml test 3"
    echo "Ctrl options: "
    echo "    -dim - use DIM for application control, DIM name server should run and "
-   echo "              DIM_DNS_NODE should be configured in xml file or as enviroment variable"
+   echo "              DIM_DNS_NODE should be configured in xml file or as environment variable"
    echo "    -sctrl - simplified socket-based control to test application without DIM/GUI"
    echo "    -verbose - provide output of all commands, applied by script"
    exit 0
