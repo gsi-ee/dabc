@@ -90,8 +90,9 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    NewCmdDef(mbs::comStopServer)->Register();
 
-   CreateParInfo(GetName(), 1, "Green");
-   SetParStr(GetName(), dabc::format("%s: ready. Mode: full events only:%d, subids check:%d" ,GetName(),fBuildCompleteEvents,fCheckSubIds));
+   CreateParInfo("MbsCombinerInfo", 1, "Green");
+   fLastInfoTm = TimeStamp();
+   SetInfo(0, dabc::format("MBS combiner module ready. Mode: full events only:%d, subids check:%d" ,fBuildCompleteEvents,fCheckSubIds), true);
 }
 
 mbs::CombinerModule::~CombinerModule()
@@ -102,6 +103,20 @@ mbs::CombinerModule::~CombinerModule()
       fOutBuf = 0;
    }
 }
+
+void mbs::CombinerModule::SetInfo(int lvl, const std::string& info, bool forceinfo)
+{
+   dabc::Logger::Debug(lvl, __FILE__, __LINE__, __func__, info.c_str());
+
+   dabc::TimeStamp_t tm = TimeStamp();
+
+   if (forceinfo || (dabc::TimeDistance(fLastInfoTm, tm) > 2.0)) {
+      SetParStr("MbsCombinerInfo", dabc::format("%s: %s", GetName(), info.c_str()));
+      fLastInfoTm = tm;
+      if (!forceinfo) DOUT0((info.c_str()));
+   }
+}
+
 
 void mbs::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
 {
@@ -272,8 +287,7 @@ bool mbs::CombinerModule::BuildEvent()
       }
 
       if ((fEventIdTolerance > 0) && (diff > fEventIdTolerance)) {
-         EOUT(("%s: Event id difference %u is exceeding tolerance window %u",GetName(),  diff, fEventIdTolerance ));
-         SetParStr(GetName(), dabc::format("%s: Event id difference %u exceeding tolerance window %u, stopping dabc!", GetName(), diff, fEventIdTolerance));
+         SetInfo(-1, dabc::format("Event id difference %u exceeding tolerance window %u, stopping dabc!", diff, fEventIdTolerance), true);
          dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
          return false; // need to return immediately after stop state is set
       }
@@ -315,16 +329,16 @@ bool mbs::CombinerModule::BuildEvent()
    }
 
    if (fBuildCompleteEvents && (numusedinp < NumInputs() && (hasTriggerEvent<0))) {
-      static dabc::TimeStamp_t last = 0;
-      dabc::TimeStamp_t now = TimeStamp();
-      if ((last==0) || (dabc::TimeDistance(last, now) > 1.)) {
-         DOUT1(("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumInputs(), diff));
-         last = now;
-      }
+      SetInfo(3, dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumInputs(), diff));
    } else
    if (duplicatefound && (hasTriggerEvent<0)) {
-      DOUT1(("Skip event %u while duplicates subevents found", buildevid));
+      SetInfo(3, dabc::format("Skip event %u while duplicates subevents found", buildevid));
    } else {
+
+      if (numusedinp < NumInputs())
+         SetInfo(3, dabc::format("Build incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumInputs(), diff));
+      else
+         SetInfo(3, dabc::format("Build event %u with %u inputs", buildevid, numusedinp));
 
       // if there is no place for the event, flush current buffer
       if ((fOutBuf != 0) && !fOut.IsPlaceForEvent(subeventssize))
@@ -336,7 +350,8 @@ bool mbs::CombinerModule::BuildEvent()
          if (fOutBuf == 0) return false;
 
          if (!fOut.Reset(fOutBuf)) {
-            EOUT(("Cannot use buffer for output - hard error!!!!"));
+            SetInfo(-1, "Cannot use buffer for output - hard error!!!!", true);
+
             dabc::Buffer::Release(fOutBuf);
             fOutBuf = 0;
             dabc::mgr()->ChangeState(dabc::Manager::stcmdDoStop);
@@ -349,10 +364,7 @@ bool mbs::CombinerModule::BuildEvent()
       } else {
 
          if (copyMbsHdrId<0) {
-            // EOUT(("Build event: No real mbs event header found for event %u, use as is", buildevid));
-
-
-            // SetParStr(GetName(), dabc::format("%s: No mbs eventid found in mbs event number mode, stop dabc",GetName()));
+            // SetInfo(-1, "No mbs eventid found in mbs event number mode, stop dabc", true);
             // dabc::Manager* mgr=dabc::Manager::Instance();
             // mgr->ChangeState(dabc::Manager::stcmdDoStop);
          }
@@ -403,7 +415,7 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
       std::string filename = port->GetCfgStr(mbs::xmlFileName,"",cmd);
       int sizelimit = port->GetCfgInt(mbs::xmlSizeLimit,1000,cmd);
 
-      SetParStr(GetName(), dabc::format("%s:Start mbs file %s sizelimit %d mb", GetName(), filename.c_str(), sizelimit));
+      SetInfo(1, dabc::format("Start mbs file %s sizelimit %d mb", filename.c_str(), sizelimit), true);
 
       dabc::Command* dcmd = new dabc::CmdCreateTransport(port->GetFullName(dabc::mgr()).c_str(), mbs::typeLmdOutput, "MbsFileThrd");
       dcmd->SetStr(mbs::xmlFileName, filename);
@@ -414,7 +426,7 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
       dabc::Port* port = FindPort(mbs::portFileOutput);
       if (port!=0) port->Disconnect();
 
-      SetParStr(GetName(), dabc::format("%s:Stop file", GetName()));
+      SetInfo(1, "Stop file", true);
 
       return dabc::cmd_true;
    } else
@@ -432,8 +444,8 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
       dcmd->SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(kind));
       int res = dabc::mgr()->Execute(dcmd);
 
-      SetParStr(GetName(), dabc::format("%s: %s mbs server %s port %d",GetName(),
-            ((res==dabc::cmd_true) ? "Start" : " Fail to start"), serverkind.c_str(), DefualtServerPort(kind)));
+      SetInfo(1, dabc::format("%s: %s mbs server %s port %d",GetName(),
+            ((res==dabc::cmd_true) ? "Start" : " Fail to start"), serverkind.c_str(), DefualtServerPort(kind)), true);
 
       return res;
    } else
@@ -441,7 +453,7 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
       dabc::Port* port = FindPort(mbs::portServerOutput);
       if (port!=0) port->Disconnect();
 
-      SetParStr(GetName(), dabc::format("%s: Stop server",GetName()));
+      SetInfo(1, "Stop server", true);
       return dabc::cmd_true;
    } else
    if (cmd->IsName("ConfigureInput")) {

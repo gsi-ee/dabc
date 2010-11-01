@@ -112,6 +112,8 @@ namespace mbs {
          dabc::RateParameter*       fEvntRate;
          dabc::RateParameter*       fDataRate;
 
+         dabc::TimeStamp_t          fLastInfoTm;
+
          bool BuildEvent();
          bool FlushBuffer();
 
@@ -120,6 +122,8 @@ namespace mbs {
          bool ShiftToNextEvent(unsigned ninp);
 
          mbs::EventNumType CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
+
+         void SetInfo(int lvl, const std::string& info, bool forceinfo = false);
 
       public:
 
