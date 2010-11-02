@@ -6,6 +6,7 @@
 # removed xdaq, added some aliases    17-02-2009 JAM
 # changed for dim version 19r9, use now repository checkout 1-07-2010 JAM
 # add login for head version, place it like root and go4 not that deep in subdirectories 23-09-2010 SL
+# add JAVA_HOME and absolute path to Java to prevent default java on Lenny 1-11-2010, SL  
 
 echo
 echo "***********************************************************************"
@@ -16,18 +17,37 @@ fi
 
 VERSIONPATH=/usr/local/pub/$GSI_OS_FLAVOR$GSI_OS_VERSION/$(uname -m)/$GSI_COMPILER_CC
 # look for explicit DABCSYS
-if [ $# -eq 0 ]
-then
-export DABCSYS=$VERSIONPATH/dabc/dabc/dabc
+if [ $# -eq 0 ]; then
+  export DABCSYS=$VERSIONPATH/dabc/r872
+
+elif [ $1 = "pro" ]; then
+  export DABCSYS=$VERSIONPATH/dabc/r872
+  
+elif [ "$1" = "r872" ]; then  
+  export DABCSYS=$VERSIONPATH/dabc/r872
+
+elif [ "$1" = "r878" ]; then  
+  export DABCSYS=$VERSIONPATH/dabc/r878
+
+elif [ "$1" = "head" ]; then  
+  export DABCSYS=$VERSIONPATH/dabc/head
+
 else
-if [ "$1" == "head" ]
-then
-export DABCSYS=$VERSIONPATH/dabc/head
-else
-export DABCSYS=$1
+  export DABCSYS=$1
 fi
+
+if [ ! -d $DABCSYS ]; then
+   echo "Version $DABCSYS not exists"
+   echo "Supported versions : "
+   echo "   head    - current svn trunk (can be changed in any time)"
+   echo "   r872    - stable build from 23.09.10"
+   echo "   r878    - stable build from 29.10.10"
+   echo "   pro     - production, now -> r872"
+   return
+fi
+
 shift
-fi
+
 #------------------------------------
 # cleanup old library path:
   IFSOLD=$IFS
@@ -77,12 +97,28 @@ fi
 
 #--------------------------------
 # the dim part:
+if [ -d $DABCSYS/dim/dim_v18r0 ]; then
+export DIMDIR=$DABCSYS/dim/dim_v18r0
+else
 export DIMDIR=$DABCSYS/dim/dim_v19r9
+fi
+
 ODIR=linux
 OS=Linux
 
 export DIMDIR ODIR OS
 export LD_LIBRARY_PATH=$DIMDIR/$ODIR:$LD_LIBRARY_PATH
+
+
+if [[ "x$JAVA_HOME" == "x" ]] ; then 
+   if [[ -d /usr/lib/jvm/java-1.5.0-sun ]] ; 
+     then
+       export JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+       echo "Java location (JAVA_HOME) set to $JAVA_HOME"
+     else
+       echo "!!!!!!!!! Java location (JAVA_HOME) not specified - try default !!!!!!!!!"
+     fi
+fi
 
 
 
@@ -113,11 +149,20 @@ export LD_LIBRARY_PATH=.:$DABCSYS/lib:$LD_LIBRARY_PATH
 # java gui part:
 #export CLASSPATH=.:$DABCSYS/gui/java/generic/:$DIMDIR/jdim/classes
 export CLASSPATH=.:$DABCSYS/gui/java/packages/xgui.jar:$DIMDIR/jdim/classes
-alias dabc="java -Xmx200m xgui.xGui -dabc"
-alias dabs="java -Xmx200m xgui.xGui -dabs"
-alias moni="java -Xmx200m xgui.xGui -moni"
-alias mbs="java -Xmx200m xgui.xGui -mbs"
-alias guru="java -Xmx200m xgui.xGui -guru"
+if [[ -d $JAVA_HOME ]] ; then
+   alias dabc="$JAVA_HOME/bin/java -Xmx200m xgui.xGui -dabc"
+   alias dabs="$JAVA_HOME/bin/java -Xmx200m xgui.xGui -dabs"
+   alias moni="$JAVA_HOME/bin/java -Xmx200m xgui.xGui -moni"
+   alias mbs="$JAVA_HOME/bin/java -Xmx200m xgui.xGui -mbs"
+   alias guru="$JAVA_HOME/bin/java -Xmx200m xgui.xGui -guru"
+else
+   alias dabc="java -Xmx200m xgui.xGui -dabc"
+   alias dabs="java -Xmx200m xgui.xGui -dabs"
+   alias moni="java -Xmx200m xgui.xGui -moni"
+   alias mbs="java -Xmx200m xgui.xGui -mbs"
+   alias guru="java -Xmx200m xgui.xGui -guru"
+fi
+   
 alias mbsmoni="$DABCSYS/applications/mbsmoni/mMbsDimStatus"
 
 # Qt configurator frontend:
