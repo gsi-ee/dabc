@@ -71,7 +71,8 @@ private static void createAndShowProgress() {
 	    xprogmet=new xMeter(1,"Progress ",0.,100.,200,90,new Color(0.5f,1.f,0.5f));
 	    xprogmet.setLettering("Progress "," Startup","Create","");
 	    xprogmet.redraw((double)0.0);
-	    proframe.getContentPane().add(xprogmet,BorderLayout.CENTER);
+	    //proframe.getContentPane().add(xprogmet,BorderLayout.CENTER);
+	    proframe.add(xprogmet);
 	    proframe.pack();
 	//Display the window.
 	    try{proframe.setAlwaysOnTop(true);} 
