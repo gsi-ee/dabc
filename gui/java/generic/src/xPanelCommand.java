@@ -213,17 +213,20 @@ private void executeCommands(){
     if (nodesel.getLevel() == 0)return;
 //process single leaf (execution node)
     if (nodesel.isLeaf()) {
+    	//System.out.println("Exec 1st level");
         executeCommand((xDimCommand)nodesel.getUserObject());
     } else{ // no leaf, get childs. At least one child must be there!
         node1 = (DefaultMutableTreeNode)nodesel.getFirstChild();
         if(node1.isLeaf()){
             while(node1!=null){
+            	//System.out.println("Exec 2nd level");
                 executeCommand((xDimCommand)node1.getUserObject());
                 node1= node1.getNextSibling();
             }} else{ // no leaf, must have children
             while(node1!=null){
                 node2 = (DefaultMutableTreeNode)node1.getFirstChild();
                 while(node2!=null){
+                	//System.out.println("Exec 3rd level");
                     executeCommand((xDimCommand)node2.getUserObject());
                     node2 = node2.getNextSibling();
                 }
@@ -472,6 +475,11 @@ protected void setCommandDescriptors(Vector<xXmlParser> desc){
 				vcom.get(i).setXmlParser(xmlp);
 				break;
 			}}
+			if(vcom.get(i).getXmlParser()==null){ // if no XML found, create default one
+				xXmlParser xparser=new xXmlParser();
+				xparser.standard(vcom.get(i).getParser().getFull(),vcom.get(i).getParser().getName(),"MBS");
+				vcom.get(i).setXmlParser(xparser);
+			}
 		}
 }
 }
