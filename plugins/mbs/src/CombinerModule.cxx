@@ -73,8 +73,8 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    if (flashtmout>0.) CreateTimer("Flash", flashtmout, false);
 
-   fDataRate = CreateRateParameter(FORMAT(("%sData", ratesprefix.c_str())), false, 1., "", "", "MB/s", 0., 20.);
-   fEvntRate = CreateRateParameter(FORMAT(("%sEvents", ratesprefix.c_str())), false, 1., "", "", "Ev/s", 0., 20000.);
+   fDataRate = CreateRateParameter(FORMAT(("%sData", ratesprefix.c_str())), false, 1., "", "", "MB/s", 0., 0.);
+   fEvntRate = CreateRateParameter(FORMAT(("%sEvents", ratesprefix.c_str())), false, 1., "", "", "Ev/s", 0., 0.);
 
    // must be configured in xml file
    //   fDataRate->SetDebugOutput(true);
