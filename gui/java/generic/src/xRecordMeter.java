@@ -54,6 +54,8 @@ public xRecordMeter(String name, int type, int mode,
     setColor(color);
     setLower(lower);
     setUpper(upper);
+    if(lower>=upper)Auto=new Boolean(true);
+    else Auto=new Boolean(false);
     Units = new String(units);
 }
 public void setValue(double value){Value=value;}

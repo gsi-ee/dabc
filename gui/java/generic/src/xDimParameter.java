@@ -745,6 +745,7 @@ if(dolog)System.out.print(pars.getFull()); // diagnostics
             meter.setLettering(node,pars.getApplication(),pars.getName(),recmet.getUnits());
             meter.setDefaultLimits(recmet.getLower(),recmet.getUpper());
             meter.setDefaultAutoScale(false);
+            meter.setAutoScale(recmet.getAutoScale());
             meter.setDefaultMode(recmet.getMode());
         }
         if(meter!=null){
