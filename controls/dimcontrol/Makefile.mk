@@ -38,13 +38,15 @@ $(DABCINCPATH)/%.h: $(DIMCTRLDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCDIMCTRL_LIB):   $(DIMCTRL_O) $(DABCDLLPATH)/libdim.$(DllSuf)
+$(DABCDIMCTRL_LIB):   $(DIMCTRL_O) 
 	@$(MakeLib) $(DABCDIMCTRL_LIBNAME) "$(DIMCTRL_O)" $(DABCDLLPATH) "-L$(DABCDLLPATH) -ldim"
 
 $(DABCDIMCTRL_SLIB):   $(DIMCTRL_O)
 	$(AR) $(ARFLAGS) $(DABCDIMCTRL_SLIB) $(DIMCTRL_O)
 	
 $(DIMCTRL_O) $(DIMCTRL_D): INCLUDES += $(DIM_INCLUDES) 	
+
+$(DIMCTRL_O) $(DIMCTRL_D): $(DABCDLLPATH)/libdim.$(DllSuf)
 
 else
 

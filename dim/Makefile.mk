@@ -5,7 +5,7 @@ DIM_ZIP = $(DIM_VERSION).zip
 
 ifneq ($(wildcard $(DABCSYS)/dim/$(DIM_ZIP)),)
 
-DIMDIR := $(DABCSYS)/dim/$(DIM_VERSION)
+DIMDIR = $(DABCSYS)/dim/$(DIM_VERSION)
 
 DIM_LIB = $(DABCDLLPATH)/libdim.so
 
@@ -35,11 +35,11 @@ endif
 DIM_ODIR = linux
 DIM_OS = Linux
 
-$(DIMDIR):
+$(DIMDIR): dim/$(DIM_ZIP)
 	@echo "Extract dim zip file"
-	cd $(DABCSYS)/dim; unzip $(DIM_ZIP)  
+	cd $(DABCSYS)/dim; rm -rf $(DIM_VERSION); unzip $(DIM_ZIP)
 
-$(DIM_LIB): $(DIMDIR)
+$(DIM_LIB): $(DIMDIR) dim/Makefile.mk
 	@echo "JAVA_HOME=$(JAVA_HOME)"
 	cd $(DIMDIR); export DIMDIR=$(DIMDIR); export OS=$(DIM_OS); export ODIR=$(DIM_ODIR); export JDK_INCLUDE=$(DIM_JDK_INCLUDE); make -j1 $(DIM_BUILD_ARGS)
 	cp -f $(DIMDIR)/$(DIM_ODIR)/libdim.so $(DIM_LIB)
