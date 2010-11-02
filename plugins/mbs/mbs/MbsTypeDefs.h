@@ -225,6 +225,7 @@ namespace mbs {
    extern const char* xmlEvidMask;
    extern const char* xmlEvidTolerance;
    extern const char* xmlSpecialTriggerLimit;
+   extern const char* xmlCombinerRatesPrefix;
 
 };
 

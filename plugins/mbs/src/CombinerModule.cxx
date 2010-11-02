@@ -55,6 +55,8 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    fEventIdTolerance = GetCfgInt(mbs::xmlEvidTolerance, 0, cmd);
 
+   std::string ratesprefix = GetCfgStr(mbs::xmlCombinerRatesPrefix, "Mbs", cmd);
+
    fSpecialTriggerLimit = GetCfgInt(mbs::xmlSpecialTriggerLimit, 12, cmd);
 
    double flashtmout = GetCfgDouble(dabc::xmlFlashTimeout, 1., cmd);
@@ -71,8 +73,8 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    if (flashtmout>0.) CreateTimer("Flash", flashtmout, false);
 
-   fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 20000.);
-   fDataRate = CreateRateParameter("DataRate", false, 1., "", "", "MB/s", 0., 10.);
+   fDataRate = CreateRateParameter(FORMAT(("%sData", ratesprefix.c_str())), false, 1., "", "", "MB/s", 0., 20.);
+   fEvntRate = CreateRateParameter(FORMAT(("%sEvents", ratesprefix.c_str())), false, 1., "", "", "Ev/s", 0., 20000.);
 
    // must be configured in xml file
    //   fDataRate->SetDebugOutput(true);
