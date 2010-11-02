@@ -466,6 +466,10 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
          fCfg[ninp].evntsrc_fullid = cmd->GetUInt("EvntSrcFullId", fCfg[ninp].evntsrc_fullid);
          fCfg[ninp].evntsrc_shift = cmd->GetUInt("EvntSrcShift", fCfg[ninp].evntsrc_shift);
 
+         std::string ratename = cmd->GetStr("RateName", "");
+         if (ratename.length()>0)
+            CreateRateParameter(ratename.c_str(), false, 1., Input(ninp)->GetName());
+
          DOUT1(("Configure input%u of module %s: RealMbs:%s RealEvntNum:%s EvntSrcFullId: 0x%x EvntSrcShift: %u",
                ninp, GetName(),
                DBOOL(fCfg[ninp].real_mbs), DBOOL(fCfg[ninp].real_evnt_num),
