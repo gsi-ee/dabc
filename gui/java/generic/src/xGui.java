@@ -70,6 +70,7 @@ private static void createAndShowProgress() {
 	    proframe.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 	    xprogmet=new xMeter(1,"Progress ",0.,100.,200,90,new Color(0.5f,1.f,0.5f));
 	    xprogmet.setLettering("Progress "," Startup","Create","");
+	    xprogmet.redraw((double)0.0);
 	    proframe.getContentPane().add(xprogmet,BorderLayout.CENTER);
 	    proframe.pack();
 	//Display the window.
