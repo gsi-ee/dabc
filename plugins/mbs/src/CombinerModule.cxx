@@ -115,7 +115,7 @@ void mbs::CombinerModule::SetInfo(int lvl, const std::string& info, bool forcein
    if (forceinfo || (dabc::TimeDistance(fLastInfoTm, tm) > 2.0)) {
       SetParStr("MbsCombinerInfo", dabc::format("%s: %s", GetName(), info.c_str()));
       fLastInfoTm = tm;
-      if (!forceinfo) DOUT0((info.c_str()));
+      if (!forceinfo) DOUT0(("%s: %s", GetName(), info.c_str()));
    }
 }
 
