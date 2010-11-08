@@ -52,8 +52,13 @@ namespace mbs {
             /** Shift in subevent raw data to access event id */
             uint32_t evntsrc_shift;
 
-            /** indicates if input was selected for event buidling */
+            /** indicates if input was selected for event building */
             bool selected;
+
+            /** indicates if input has valid data */
+            bool valid;
+
+            bool wasexcluded;
 
             InputCfg() :
                real_mbs(true),
@@ -62,7 +67,9 @@ namespace mbs {
                real_evnt_num(true),
                evntsrc_fullid(0),
                evntsrc_shift(0),
-               selected(false) {}
+               selected(false),
+               valid(false),
+               wasexcluded(false) {}
 
             InputCfg(const InputCfg& src) :
                real_mbs(src.real_mbs),
@@ -71,7 +78,9 @@ namespace mbs {
                real_evnt_num(src.real_evnt_num),
                evntsrc_fullid(src.evntsrc_fullid),
                evntsrc_shift(src.evntsrc_shift),
-               selected(src.selected) {}
+               selected(src.selected),
+               valid(src.valid),
+               wasexcluded(src.wasexcluded) {}
          };
 
          dabc::PoolHandle*          fPool;
@@ -81,6 +90,11 @@ namespace mbs {
          WriteIterator              fOut;
          dabc::Buffer*              fOutBuf;
          int                        fTmCnt;
+
+         /**  this counter used to count down interval before incomplete event can be build
+          * even when some inputs has no data at all
+          */
+         int                        fIncompleteCnt;
 
          bool                       fDoOutput;
          bool                       fFileOutput;

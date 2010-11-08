@@ -29,6 +29,7 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
    fOut(0),
    fOutBuf(0),
    fTmCnt(0),
+   fIncompleteCnt(10), // in the beginning wait longer before incomplete event can be build
    fFileOutput(false),
    fServOutput(false),
    fBuildCompleteEvents(false),
@@ -41,7 +42,7 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
 
    fPool = CreatePoolHandle(poolname.c_str(), fBufferSize, 10);
 
-   int numinp = GetCfgInt(dabc::xmlNumInputs, 2, cmd);
+   int numinp = GetCfgInt(dabc::xmlNumInputs, 1, cmd);
 
    fDoOutput = GetCfgBool(mbs::xmlNormalOutput, true, cmd);
    fFileOutput = GetCfgBool(mbs::xmlFileOutput, false, cmd);
@@ -122,8 +123,20 @@ void mbs::CombinerModule::SetInfo(int lvl, const std::string& info, bool forcein
 
 void mbs::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
 {
-   if (fTmCnt > 0) fTmCnt--;
-   if (fTmCnt == 0) FlushBuffer();
+
+   // if one allow to build incomplete events and counter is down to 0,
+   // one should try to build events without some inputs present
+   if (!fBuildCompleteEvents) {
+      if (fIncompleteCnt > 0)
+         fIncompleteCnt--;
+      else
+         while (BuildEvent());
+   }
+
+   if (fTmCnt > 0)
+      fTmCnt--;
+   else
+      FlushBuffer();
 }
 
 void mbs::CombinerModule::ProcessInputEvent(dabc::Port* port)
@@ -148,7 +161,7 @@ bool mbs::CombinerModule::FlushBuffer()
 
    SendToAllOutputs(fOutBuf);
 
-   fTmCnt = 2; // set 2 means that two timeout events should happen before flush will be triggered
+   fTmCnt = 1; // set 1 means that two timeout events should happen before flush will be triggered
 
    fOutBuf = 0;
 
@@ -170,6 +183,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
    // always set event number to 0
    fCfg[ninp].curr_evnt_num = 0;
    fCfg[ninp].curr_evnt_special = false;
+   fCfg[ninp].valid = false;
 
    bool foundevent(false);
 
@@ -235,6 +249,8 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
    // DOUT1(("Inp%u Event%d", ninp, fCfg[ninp].curr_evnt_num));
 
+   fCfg[ninp].valid = true;
+
    return true;
 }
 
@@ -245,17 +261,27 @@ bool mbs::CombinerModule::BuildEvent()
    mbs::EventNumType mineventid(0), maxeventid(0), triggereventid(0);
 
    int hasTriggerEvent = -1;
+   int num_valid = 0;
 
    for (unsigned ninp=0; ninp<NumInputs(); ninp++) {
 
       fCfg[ninp].selected = false;
 
       if (fInp[ninp].evnt()==0)
-         if (!ShiftToNextEvent(ninp)) return false;
+         if (!ShiftToNextEvent(ninp)) {
+            // we can now exclude this input completely
+            if ((fIncompleteCnt==0) && !fBuildCompleteEvents) continue;
+            return false;
+         }
+
+      // if input was completely excluded at some point,
+      // wait certain time before one can exclude somebody else
+      if (fCfg[ninp].wasexcluded) fIncompleteCnt = 5;
+      fCfg[ninp].wasexcluded = false;
 
       mbs::EventNumType evid = fCfg[ninp].curr_evnt_num;
 
-      if (ninp==0)  {
+      if (num_valid == 0)  {
          mineventid = evid;
          maxeventid = evid;
       } else {
@@ -263,12 +289,16 @@ bool mbs::CombinerModule::BuildEvent()
             if (evid > maxeventid) maxeventid = evid;
       }
 
+      num_valid++;
+
       if (fCfg[ninp].curr_evnt_special && (hasTriggerEvent<0)) {
          hasTriggerEvent = ninp;
          triggereventid = evid;
       }
 
    } // for ninp
+
+   if (num_valid==0) return false;
 
    // we always try to build event with minimum id
    mbs::EventNumType buildevid(mineventid);
@@ -296,7 +326,7 @@ bool mbs::CombinerModule::BuildEvent()
 
       // select inputs which will be used for building
       for (unsigned ninp = 0; ninp < NumInputs(); ninp++)
-         if (fCfg[ninp].curr_evnt_num == buildevid)
+         if (fCfg[ninp].valid && (fCfg[ninp].curr_evnt_num == buildevid))
             fCfg[ninp].selected = true;
    }
 
@@ -311,8 +341,12 @@ bool mbs::CombinerModule::BuildEvent()
    // check of unique subevent ids:
    bool duplicatefound = false;
 
+   int firstselected = -1;
+
    for (unsigned ninp = 0; ninp < NumInputs(); ninp++) {
       if (!fCfg[ninp].selected) continue;
+
+      if (firstselected<0) firstselected = ninp;
 
       numusedinp++;
 
@@ -338,9 +372,14 @@ bool mbs::CombinerModule::BuildEvent()
    } else {
 
       if (numusedinp < NumInputs())
-         SetInfo(3, dabc::format("Build incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumInputs(), diff));
-      else
+         SetInfo(3, dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u", buildevid, numusedinp, NumInputs(), firstselected, diff));
+      else {
          SetInfo(3, dabc::format("Build event %u with %u inputs", buildevid, numusedinp));
+
+         // once full event build, one should wait before incomplete event
+         // can be build without any data on the input
+         fIncompleteCnt = 5;
+      }
 
       // if there is no place for the event, flush current buffer
       if ((fOutBuf != 0) && !fOut.IsPlaceForEvent(subeventssize))
@@ -384,6 +423,8 @@ bool mbs::CombinerModule::BuildEvent()
                fInp[ninp].AssignEventPointer(ptr);
                ptr.shift(sizeof(mbs::EventHeader));
                fOut.AddSubevent(ptr);
+            } else {
+               if (!fCfg[ninp].valid) fCfg[ninp].wasexcluded = true;
             }
          }
 
