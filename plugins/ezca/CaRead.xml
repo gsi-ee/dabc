@@ -9,6 +9,7 @@
   </Run> 
   <Application class="ezca::Readout">
     <EpicsIdentifier value="myIOC"/>
+    <EpicsSubeventId value="0x0000008"/>
     <EpicsFlagRec value="adamczewHost:calcExample"/>
     <EpicsEventIDRec value="adamczewHost:aiExample"/>
     <EpicsNumLongRecs value="3"/>

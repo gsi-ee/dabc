@@ -13,7 +13,8 @@ ezca::EpicsInput::EpicsInput(const char* name, uint32_t bufsize) :
    dabc::DataInput(),
    fName(name ? name : "EpicsMonitorInput"),
    fBufferSize(bufsize),
-   fTimeout(0.1)
+   fTimeout(0.1),
+   fSubeventId(0)
 {
 }
 
@@ -30,6 +31,7 @@ bool ezca::EpicsInput::Read_Init(dabc::Command* cmd, dabc::WorkingProcessor* por
    fName = cfg.GetCfgStr(ezca::xmlEpicsName, fName);
    fBufferSize = cfg.GetCfgInt(dabc::xmlBufferSize, fBufferSize);
    fTimeout = cfg.GetCfgDouble(ezca::xmlTimeout, fTimeout);
+   fSubeventId= cfg.GetCfgInt(ezca::xmlEpicsSubeventId, fSubeventId);
    fInfoDescr.SetUpdateRecord(cfg.GetCfgStr(ezca::xmlUpdateFlagRecord, "flag"));
    fInfoDescr.SetIDRecord(cfg.GetCfgStr(ezca::xmlEventIDRecord, "id"));
    int numlongs=cfg.GetCfgInt(ezca::xmlNumLongRecords, 0);
@@ -92,9 +94,10 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
 	totallen += sizeof(mbs::EventHeader);
 	mbs::SubeventHeader* subhdr = (mbs::SubeventHeader*) ptr();
 	subhdr->Init();
-	subhdr->iProcId = ezca::proc_EPICS_Mon;
-	subhdr->iSubcrate = 0; // TODO: configuration of id numbers
-	subhdr->iControl = 0; //ezca::packageStruct;
+	subhdr->fFullId=fSubeventId;
+//	subhdr->iProcId = ezca::proc_EPICS_Mon;
+//	subhdr->iSubcrate = 0; // TODO: configuration of id numbers
+//	subhdr->iControl = 0; //ezca::packageStruct;
 	ptr.shift(sizeof(mbs::SubeventHeader));
 	totallen += sizeof(mbs::SubeventHeader);
 	rawlen=0;

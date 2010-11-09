@@ -41,21 +41,24 @@ namespace ezca {
    /* Timeout for update polling loop*/
    extern const char* xmlTimeout;
 
+   /* full subevent id for epics data*/
+   extern const char* xmlEpicsSubeventId;
+
    extern const char* xmlModuleName;
    extern const char* xmlModuleThread;
 
 
    /* duplicate here identifiers of other mbs payloads*/
-   enum EzcaMbsTypes {
-            proc_RocEvent     = 1,   //!< complete event from one roc board (iSubcrate = rocid)
-            proc_ErrEvent     = 2,   //!< one or several events with corrupted data inside (iSubcrate = rocid)
-            proc_MergedEvent  = 3,   //!< sorted and synchronized data from several rocs (iSubcrate = upper rocid bits)
-            proc_RawData      = 4,   //!< unsorted uncorrelated data from one ROC, no SYNC markers required (mainly for FEET case)
-            proc_Triglog      = 5,   //!< subevent produced by MBS directly with sync number and trigger module scalers
-            proc_TRD_MADC     = 6,   //!< subevent produced by MBS directly with MADC data
-            proc_TRD_Spadic   = 7,    //!< collection of data from susibo board
-            proc_EPICS_Mon    = 8,    //!< epics monitor data
-         };
+//   enum EzcaMbsTypes {
+//            proc_RocEvent     = 1,   //!< complete event from one roc board (iSubcrate = rocid)
+//            proc_ErrEvent     = 2,   //!< one or several events with corrupted data inside (iSubcrate = rocid)
+//            proc_MergedEvent  = 3,   //!< sorted and synchronized data from several rocs (iSubcrate = upper rocid bits)
+//            proc_RawData      = 4,   //!< unsorted uncorrelated data from one ROC, no SYNC markers required (mainly for FEET case)
+//            proc_Triglog      = 5,   //!< subevent produced by MBS directly with sync number and trigger module scalers
+//            proc_TRD_MADC     = 6,   //!< subevent produced by MBS directly with MADC data
+//            proc_TRD_Spadic   = 7,    //!< collection of data from susibo board
+//            proc_EPICS_Mon    = 8,    //!< epics monitor data
+//         };
 
 }
 

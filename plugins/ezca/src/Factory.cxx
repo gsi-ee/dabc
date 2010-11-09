@@ -29,6 +29,8 @@ const char* ezca::xmlNameDoubleRecords			=	"EpicsDoubleRec-";
 
 const char* ezca::xmlTimeout					="PollingTimeout";
 
+const char* ezca::xmlEpicsSubeventId= "EpicsSubeventId";
+
 const char* ezca::xmlModuleName 				= "EpicsModuleName"; // Name of readout module instance
 const char* ezca::xmlModuleThread 			= "EpicsModuleThread"; // Name of thread for readout module
 

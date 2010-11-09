@@ -160,6 +160,9 @@ namespace ezca {
 		 /* timeout (in seconds) for readout polling. */
 		  double	 			fTimeout;
 
+		  /* full id number for epics subevent*/
+		  unsigned int fSubeventId;
+
 
 		 /* Wrapper for ezca get with long values. Contains error message handling.
 		  * Returns ezca error code.*/
