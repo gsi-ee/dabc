@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<dabc version="1">
+ <Context name="Readout">
+  <Run> 
+     <lib value="libDabcMbs.so"/>
+     <lib value="libDabcEzca.so"/>
+     <lib value="/misc/adamczew/epics/myextensions/lib/linux-x86/libezca.so"/>   
+     <logfile value="Ezca.log"/>
+  </Run> 
+  <Application class="ezca::Readout">
+    <EpicsIdentifier value="myIOC"/>
+    <EpicsFlagRec value="adamczewHost:calcExample"/>
+    <EpicsEventIDRec value="adamczewHost:aiExample"/>
+    <EpicsNumLongRecs value="3"/>
+    <EpicsLongRec-0 value="adamczewHost:calcExample1"/>
+    <EpicsLongRec-1 value="adamczewHost:calcExample2"/>
+    <EpicsLongRec-2 value="adamczewHost:calcExample3"/>
+    <EpicsNumDoubleRecs value="1"/>
+    <EpicsDoubleRec-0 value="adamczewHost:aiExample"/>
+	<EpicsDoubleRec-1 value="Current"/>
+	<PollingTimeout  value="0.1"/>
+    <PoolName value="EpicsPool"/>     
+    <BufferSize value="128"/>
+    <NumBuffers value="100"/>
+    <EpicsModuleName value="EpicsMonitor"/>
+    <EpicsModuleThread value="EpicsThread"/>    
+    <MbsServerKind value="Stream"/>
+	<MbsFileName value=""/>
+    <MbsFileSizeLimit value="110"/>
+  </Application>
+  <Module name="EpicsMonitor">
+     <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>
+  </Module>
+ </Context>
+</dabc>
