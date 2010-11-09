@@ -68,6 +68,8 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
       fCfg.push_back(InputCfg());
    }
 
+   fNumObligatoryInputs = NumInputs();
+
    if (fDoOutput) CreateOutput(mbs::portOutput, fPool, 5);
    if (fFileOutput) CreateOutput(mbs::portFileOutput, fPool, 5);
    if (fServOutput) CreateOutput(mbs::portServerOutput, fPool, 5);
@@ -269,10 +271,14 @@ bool mbs::CombinerModule::BuildEvent()
 
       if (fInp[ninp].evnt()==0)
          if (!ShiftToNextEvent(ninp)) {
+            // if optional input is absent just continue
+            if (fCfg[ninp].no_evnt_num) continue;
             // we can now exclude this input completely
             if ((fIncompleteCnt==0) && !fBuildCompleteEvents) continue;
             return false;
          }
+
+      if (fCfg[ninp].no_evnt_num) continue;
 
       // if input was completely excluded at some point,
       // wait certain time before one can exclude somebody else
@@ -326,7 +332,7 @@ bool mbs::CombinerModule::BuildEvent()
 
       // select inputs which will be used for building
       for (unsigned ninp = 0; ninp < NumInputs(); ninp++)
-         if (fCfg[ninp].valid && (fCfg[ninp].curr_evnt_num == buildevid))
+         if (fCfg[ninp].valid && ((fCfg[ninp].curr_evnt_num == buildevid) || fCfg[ninp].no_evnt_num))
             fCfg[ninp].selected = true;
    }
 
@@ -346,12 +352,14 @@ bool mbs::CombinerModule::BuildEvent()
    for (unsigned ninp = 0; ninp < NumInputs(); ninp++) {
       if (!fCfg[ninp].selected) continue;
 
-      if (firstselected<0) firstselected = ninp;
-
-      numusedinp++;
+      if (!fCfg[ninp].no_evnt_num) {
+         // take into account only events with "normal" event number
+         if (firstselected<0) firstselected = ninp;
+         numusedinp++;
+         if (fCfg[ninp].real_mbs && (copyMbsHdrId<0)) copyMbsHdrId = ninp;
+      }
 
       subeventssize += fInp[ninp].evnt()->SubEventsSize();
-      if (fCfg[ninp].real_mbs && (copyMbsHdrId<0)) copyMbsHdrId = ninp;
 
       if (fCheckSubIds)
          while (fInp[ninp].NextSubEvent()) {
@@ -364,15 +372,15 @@ bool mbs::CombinerModule::BuildEvent()
          }
    }
 
-   if (fBuildCompleteEvents && (numusedinp < NumInputs() && (hasTriggerEvent<0))) {
-      SetInfo(3, dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumInputs(), diff));
+   if (fBuildCompleteEvents && (numusedinp < NumObligatoryInputs()) && (hasTriggerEvent<0)) {
+      SetInfo(3, dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumObligatoryInputs(), diff));
    } else
    if (duplicatefound && (hasTriggerEvent<0)) {
       SetInfo(3, dabc::format("Skip event %u while duplicates subevents found", buildevid));
    } else {
 
-      if (numusedinp < NumInputs())
-         SetInfo(3, dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u", buildevid, numusedinp, NumInputs(), firstselected, diff));
+      if (numusedinp < NumObligatoryInputs())
+         SetInfo(3, dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u", buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff));
       else {
          SetInfo(3, dabc::format("Build event %u with %u inputs", buildevid, numusedinp));
 
@@ -424,7 +432,7 @@ bool mbs::CombinerModule::BuildEvent()
                ptr.shift(sizeof(mbs::EventHeader));
                fOut.AddSubevent(ptr);
             } else {
-               if (!fCfg[ninp].valid) fCfg[ninp].wasexcluded = true;
+               if (!fCfg[ninp].valid && !fCfg[ninp].no_evnt_num) fCfg[ninp].wasexcluded = true;
             }
          }
 
@@ -504,6 +512,7 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
       if (ninp<fCfg.size()) {
          fCfg[ninp].real_mbs = cmd->GetBool("RealMbs", fCfg[ninp].real_mbs);
          fCfg[ninp].real_evnt_num = cmd->GetBool("RealEvntNum", fCfg[ninp].real_evnt_num);
+         fCfg[ninp].no_evnt_num = cmd->GetBool("NoEvntNum", fCfg[ninp].no_evnt_num);
          fCfg[ninp].evntsrc_fullid = cmd->GetUInt("EvntSrcFullId", fCfg[ninp].evntsrc_fullid);
          fCfg[ninp].evntsrc_shift = cmd->GetUInt("EvntSrcShift", fCfg[ninp].evntsrc_shift);
 
@@ -511,11 +520,15 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command* cmd)
          if (ratename.length()>0)
             CreateRateParameter(ratename.c_str(), false, 1., Input(ninp)->GetName());
 
+         if (fCfg[ninp].no_evnt_num) {
+            fCfg[ninp].real_mbs = false;
+            if (fNumObligatoryInputs>1) fNumObligatoryInputs--;
+         }
+
          DOUT1(("Configure input%u of module %s: RealMbs:%s RealEvntNum:%s EvntSrcFullId: 0x%x EvntSrcShift: %u",
                ninp, GetName(),
                DBOOL(fCfg[ninp].real_mbs), DBOOL(fCfg[ninp].real_evnt_num),
                fCfg[ninp].evntsrc_fullid, fCfg[ninp].evntsrc_shift));
-
       }
 
       return dabc::cmd_true;

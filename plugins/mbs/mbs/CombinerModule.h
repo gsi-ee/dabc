@@ -46,6 +46,10 @@ namespace mbs {
              * Than event number will be searched in subevents */
             bool real_evnt_num;
 
+            /** Indicates if event number in header is missing (unvalid value)
+             * In this case current data from the input will be add to next mbs event */
+            bool no_evnt_num;
+
             /** Full id of subevent, where actual event id should be searched */
             uint32_t evntsrc_fullid;
 
@@ -65,6 +69,7 @@ namespace mbs {
                curr_evnt_num(0),
                curr_evnt_special(false),
                real_evnt_num(true),
+               no_evnt_num(false),
                evntsrc_fullid(0),
                evntsrc_shift(0),
                selected(false),
@@ -76,6 +81,7 @@ namespace mbs {
                curr_evnt_num(src.curr_evnt_num),
                curr_evnt_special(src.curr_evnt_special),
                real_evnt_num(src.real_evnt_num),
+               no_evnt_num(src.no_evnt_num),
                evntsrc_fullid(src.evntsrc_fullid),
                evntsrc_shift(src.evntsrc_shift),
                selected(src.selected),
@@ -123,6 +129,11 @@ namespace mbs {
           * Therefore, limit should be 12 for such system */
          int                        fSpecialTriggerLimit;
 
+         /** Indicates how many inputs should provide data that event is accepted as full
+          *  Can be less than number of inputs while inputs may be optional
+          */
+         unsigned                   fNumObligatoryInputs;
+
          dabc::RateParameter*       fEvntRate;
          dabc::RateParameter*       fDataRate;
 
@@ -151,6 +162,7 @@ namespace mbs {
 
          bool IsFileOutput() const { return fFileOutput; }
          bool IsServOutput() const { return fServOutput; }
+         unsigned NumObligatoryInputs() const { return fNumObligatoryInputs; }
 
          /* returns maximum possible eventnumber for overflow checking*/
          virtual unsigned int GetOverflowEventNumber() const;
