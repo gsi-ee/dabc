@@ -1,12 +1,12 @@
 
-ifndef EPICS_BASE
-EPICS_BASE=/u/epics/EPICS-3.14.9/base-3.14.9
-endif
-
-
-ifndef EPICS_EXTENSIONS
-EPICS_EXTENSIONS=/misc/adamczew/epics/myextensions 
-endif
+#ifndef EPICS_BASE
+#EPICS_BASE=/u/epics/EPICS-3.14.9/base-3.14.9
+#endif
+#
+#
+#ifndef EPICS_EXTENSIONS
+#EPICS_EXTENSIONS=/misc/adamczew/epics/myextensions 
+#endif
 
 
 
