@@ -27,7 +27,7 @@ const char* ezca::xmlNumDoubleRecords				= 	"EpicsNumDoubleRecs";
 
 const char* ezca::xmlNameDoubleRecords			=	"EpicsDoubleRec-";
 
-const char* ezca::xmlTimeout					="PollingTimeout";
+const char* ezca::xmlTimeout					=  "EpicsPollingTimeout";
 
 const char* ezca::xmlEpicsSubeventId= "EpicsSubeventId";
 
