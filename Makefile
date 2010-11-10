@@ -92,7 +92,7 @@ package: clean
 
 packageroc: clean
 	tar chf $(ROCTAR_NAME) *.txt base config build/*.sh --exclude=.svn
-	tar rhf $(ROCTAR_NAME) plugins/mbs applications/mbs plugins/verbs plugins/bnet plugins/bnet-mbs controls/simple --exclude=.svn
+	tar rhf $(ROCTAR_NAME) plugins/mbs applications/mbs plugins/verbs plugins/bnet plugins/bnet-mbs plugins/ezca controls/simple --exclude=.svn
 	@mkdir -p $(PACKAGE_DIR); mv -f $(ROCTAR_NAME) $(PACKAGE_DIR)
 	cp -f build/Makefile.distr $(PACKAGE_DIR)/Makefile 
 	cd $(PACKAGE_DIR); tar rhf $(ROCTAR_NAME) Makefile; rm -f $(ROCTAR_NAME).gz; gzip $(ROCTAR_NAME); rm -f Makefile 
