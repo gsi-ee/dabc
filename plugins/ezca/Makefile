@@ -14,7 +14,7 @@ ifndef USEEPICS
 
 ifdef EPICS_BASE
 ifdef EPICS_EXTENSIONS
-ifneq ($(wildcard $(EPICS_EXTENSIONS)/lib/linux-x86/libezca.*),)
+ifneq ($(wildcard $(EPICS_EXTENSIONS)/lib/linux-x86/libezca.*)$(wildcard $(EPICS_EXTENSIONS)/lib/linux-x86_64/libezca.*),)
 USEEPICS    = true
 endif
 endif
