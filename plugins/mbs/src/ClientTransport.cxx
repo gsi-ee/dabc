@@ -67,7 +67,7 @@ void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
          if (fState == ioReady) {
             if (!fTransport->HasPlaceInQueue()) return;
             if (fTransport->Kind() == mbs::StreamServer) {
-               strcpy(fSendBuf, "GETVT");
+               strcpy(fSendBuf, "GETEVT");
                StartSend(fSendBuf, 12);
             }
 
