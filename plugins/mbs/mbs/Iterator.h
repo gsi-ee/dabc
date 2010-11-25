@@ -68,10 +68,12 @@ namespace mbs {
          bool FinishSubEvent(uint32_t rawdatasz);
 
          bool AddSubevent(const dabc::Pointer& source);
+         bool AddSubevent(SubeventHeader* sub);
          bool FinishEvent();
 
-         void Close();
+         dabc::Buffer* Close();
 
+         dabc::Buffer* buf() const { return fBuffer; }
          EventHeader* evnt() const { return (EventHeader*) fEvPtr(); }
          SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
          void* rawdata() const { return subevnt() ? subevnt()->RawData() : 0; }

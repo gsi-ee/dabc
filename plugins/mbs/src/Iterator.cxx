@@ -69,8 +69,8 @@ bool mbs::ReadIterator::NextEvent()
    }
 
    if (fEvPtr.fullsize() < evnt()->FullSize()) {
-      EOUT(("Error in MBS format - declared event size %u smaller than actual portion in buffer %u",
-            evnt()->FullSize(), fEvPtr.fullsize()));
+      EOUT(("Error in MBS format - declared event size %u smaller than actual portion in buffer %u buf:%p",
+            evnt()->FullSize(), fEvPtr.fullsize(), fBuffer));
       fEvPtr.reset();
       return false;
 
@@ -162,14 +162,18 @@ bool mbs::WriteIterator::Reset(dabc::Buffer* buf)
    return true;
 }
 
-void mbs::WriteIterator::Close()
+dabc::Buffer* mbs::WriteIterator::Close()
 {
+   dabc::Buffer* res = fBuffer;
+
    fEvPtr.reset();
    fSubPtr.reset();
    if (fBuffer && (fFullSize>0))
       fBuffer->SetDataSize(fFullSize);
    fBuffer = 0;
    fFullSize = 0;
+
+   return res;
 }
 
 bool mbs::WriteIterator::IsPlaceForEvent(uint32_t subeventssize)
@@ -248,6 +252,14 @@ bool mbs::WriteIterator::AddSubevent(const dabc::Pointer& source)
 
    return true;
 }
+
+bool mbs::WriteIterator::AddSubevent(mbs::SubeventHeader* sub)
+{
+   dabc::Pointer ptr(sub, sub->FullSize());
+
+   return AddSubevent(ptr);
+}
+
 
 bool mbs::WriteIterator::FinishEvent()
 {
