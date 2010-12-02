@@ -55,7 +55,7 @@ ROCDISTR_DIR   = $(DISTR_DIR)/$(ROCPACK_VERS)
 ABBDISTR_DIR   = $(DISTR_DIR)/$(ABBPACK_VERS)
 GUIDISTR_DIR   = $(DISTR_DIR)/$(GUIPACK_VERS)
 
-DABC_PLUGINS_PACK = plugins/mbs plugins/bnet plugins/bnet-mbs plugins/verbs
+DABC_PLUGINS_PACK = plugins/mbs plugins/bnet plugins/bnet-mbs plugins/verbs plugins/ezca plugins/mbs-root
 DABC_APPLICATIONS_PACK = applications/mbs applications/bnet-mbs applications/bnet-test
 DABC_SCRIPTS_PACK = script/dabclogin-distribution.sh script/dabcstartup.sh script/dabcshutdown.sh script/gdbcmd.txt
 
