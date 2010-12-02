@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<dabc version="1">
+ <Context name="Readout">
+  <Run>
+    <lib value="libDabcMbs.so"/>
+    <lib value="libDabcMbsRoot.so"/>
+    <lib value="libDabcRoc.so"/>
+    <logfile value="Readout.log"/>
+  </Run>
+  <Application class="roc::Readout">
+    <DoCalibr value="0"/>
+    <SyncScaleDown value="5"/>
+    <NumRocs value="1"/>
+    <RocIp0 value="140.181.119.50"/>
+    <BufferSize value="65536"/>
+    <NumBuffers value="100"/>
+    <TransportWindow value="30"/>
+    <RawFile value="/data.local1/adamczew/RocPulse3.lmd"/>
+    <MbsServerKind value="Stream"/>
+    <CalibrFile value="/data.local1/adamczew/RocCalib.root"/>
+    <RootSplitlevel value="99"/>
+    <RootTreeBufsize value="32000"/>
+    <RootCompression value="5"/>
+    <RootMaxFileSize value="200000000"/>
+    <MbsFileSizeLimit value="110"/>
+  </Application>
+  <Module name="RocComb">
+     <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>
+  </Module>
+ </Context>
+</dabc>
