@@ -202,7 +202,10 @@ bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
 
    if (buf==0) throw PortOutputException(this, "No buffer specified");
 
+   double size_mb = (buf->GetTotalSize() + buf->GetHeaderSize())/1024./1024.;
+
    if (fTransport==0) {
+      if (fOutRate) fOutRate->AccountValue(size_mb);
       dabc::Buffer::Release(buf);
       return false;
    }
@@ -212,15 +215,12 @@ bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
       throw PortOutputException(this, "Output blocked - queue is full");
    }
 
-   double size_mb = (buf->GetTotalSize() + buf->GetHeaderSize())/1024./1024.;
-
    if (!fTransport->Send(buf)) {
       dabc::Buffer::Release(buf);
       return false;
    }
 
-   if (fOutRate)
-      fOutRate->AccountValue(size_mb);
+   if (fOutRate) fOutRate->AccountValue(size_mb);
 
    fOutputPending++;
    return true;
