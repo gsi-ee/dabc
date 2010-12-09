@@ -9,30 +9,30 @@
 #include "ezca/ReadoutApplication.h"
 
 
-const char* ezca::typeEpicsInput 			= "ezca::EpicsInput";
-const char* ezca::nameReadoutAppClass   		= "ezca::Readout";
-const char* ezca::nameReadoutModuleClass   	= "ezca::MonitorModule";
+const char* ezca::typeEpicsInput 			= EZCA_typeEpicsInput;
+const char* ezca::nameReadoutAppClass   		= EZCA_nameReadoutAppClass;
+const char* ezca::nameReadoutModuleClass   	= EZCA_nameReadoutModuleClass;
 
-const char* ezca::xmlEpicsName				= "EpicsIdentifier";
+const char* ezca::xmlEpicsName				= EZCA_xmlEpicsName;
 
-const char* ezca::xmlUpdateFlagRecord 			=  "EpicsFlagRec";
+const char* ezca::xmlUpdateFlagRecord 			=  EZCA_xmlUpdateFlagRecord;
 
-const char* ezca::xmlEventIDRecord				=  "EpicsEventIDRec";
+const char* ezca::xmlEventIDRecord				=  EZCA_xmlEventIDRecord;
 
-const char* ezca::xmlNumLongRecords				= 	"EpicsNumLongRecs";
+const char* ezca::xmlNumLongRecords				= 	EZCA_xmlNumLongRecords;
 
-const char* ezca::xmlNameLongRecords				=	"EpicsLongRec-";
+const char* ezca::xmlNameLongRecords				=	EZCA_xmlNameLongRecords;
 
-const char* ezca::xmlNumDoubleRecords				= 	"EpicsNumDoubleRecs";
+const char* ezca::xmlNumDoubleRecords				= 	EZCA_xmlNumDoubleRecords;
 
-const char* ezca::xmlNameDoubleRecords			=	"EpicsDoubleRec-";
+const char* ezca::xmlNameDoubleRecords			=	EZCA_xmlNameDoubleRecords;
 
-const char* ezca::xmlTimeout					=  "EpicsPollingTimeout";
+const char* ezca::xmlTimeout					=  EZCA_xmlTimeout;
 
-const char* ezca::xmlEpicsSubeventId= "EpicsSubeventId";
+const char* ezca::xmlEpicsSubeventId= EZCA_xmlEpicsSubeventId;
 
-const char* ezca::xmlModuleName 				= "EpicsModuleName"; // Name of readout module instance
-const char* ezca::xmlModuleThread 			= "EpicsModuleThread"; // Name of thread for readout module
+const char* ezca::xmlModuleName 				= EZCA_xmlModuleName; // Name of readout module instance
+const char* ezca::xmlModuleThread 			= EZCA_xmlModuleName; // Name of thread for readout module
 
 
 

@@ -2,8 +2,30 @@
 #define EZCA_DEFINITIONS_H
 
 
+#define EZCA_typeEpicsInput 	  "ezca::EpicsInput"
+#define EZCA_nameReadoutAppClass  "ezca::Readout"
+#define EZCA_nameReadoutModuleClass "ezca::MonitorModule"
 
+#define EZCA_xmlEpicsName "EpicsIdentifier"
 
+#define EZCA_xmlUpdateFlagRecord "EpicsFlagRec"
+
+#define EZCA_xmlEventIDRecord "EpicsEventIDRec"
+
+#define EZCA_xmlNumLongRecords "EpicsNumLongRecs"
+
+#define EZCA_xmlNameLongRecords "EpicsLongRec-"
+
+#define EZCA_xmlNumDoubleRecords "EpicsNumDoubleRecs"
+
+#define EZCA_xmlNameDoubleRecords "EpicsDoubleRec-"
+
+#define EZCA_xmlTimeout "EpicsPollingTimeout"
+
+#define EZCA_xmlEpicsSubeventId "EpicsSubeventId"
+
+#define EZCA_xmlModuleName "EpicsModuleName"
+#define EZCA_xmlModuleThread "EpicsModuleThread"
 
 namespace ezca {
 
