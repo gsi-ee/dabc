@@ -154,7 +154,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
 		double val = 0;
 		if (CA_GetDouble((char*) fInfoDescr.GetDoubleRecord(ix), val) != 0)
 			continue;
-		DOUT1(("EpicsInput DoubleRecord:%s - val= %f ",fInfoDescr.GetDoubleRecord(ix), val));
+		DOUT3(("EpicsInput DoubleRecord:%s - val= %f ",fInfoDescr.GetDoubleRecord(ix), val));
 		// workaround: instead of doubles, we store integers scaled by factor 1000 JAM
                 int tmpval= (int) (val*1000);
                 *((int*) ptr()) = tmpval;
