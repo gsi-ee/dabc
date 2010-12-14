@@ -5,6 +5,9 @@
 #include "mbs/MbsTypeDefs.h"
 #include "ezca/Definitions.h"
 
+#include <sys/timeb.h>
+
+
 //#include "ezcalib.h"
 
 
@@ -74,6 +77,7 @@ unsigned ezca::EpicsInput::Read_Size()
 unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
 {
 	static long evcount=0;
+        long evtnumber=0;
 	// first check the flag record:
 	long flag=0;
         static long oldflag=-1;
@@ -84,7 +88,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
           return dabc::di_RepeatTimeOut;
         }
 	oldflag=flag;
-	long evtnumber=0;
+	
 	if(CA_GetLong((char*) fInfoDescr.GetIDRecord(), evtnumber) != 0) return dabc::di_RepeatTimeOut;
 	DOUT3(("EpicsInput:ReadComplete id record %s = %d ",fInfoDescr.GetIDRecord(), evtnumber));
 	// if this is nonzero, read other records and write buffer
@@ -106,6 +110,17 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
 	ptr.shift(sizeof(mbs::SubeventHeader));
 	totallen += sizeof(mbs::SubeventHeader);
 	rawlen=0;
+        //first payload: id number
+        *((unsigned int*) ptr()) = evtnumber;
+        ptr.shift(sizeof(unsigned int));
+        
+        //secondly: put time
+         // system time expression
+         struct timeb s_timeb;
+         ftime(&s_timeb);
+         *((unsigned int*) ptr()) = s_timeb.time;
+         ptr.shift(sizeof(unsigned int));
+        
 	// first payload: header with number of long records
 	*((unsigned int*) ptr()) = fInfoDescr.NumLongRecords();
 	ptr.shift(sizeof(unsigned int));
