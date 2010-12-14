@@ -113,14 +113,16 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
         //first payload: id number
         *((unsigned int*) ptr()) = evtnumber;
         ptr.shift(sizeof(unsigned int));
-        
+        rawlen += sizeof(unsigned int);
+	totallen += sizeof(unsigned int);
         //secondly: put time
          // system time expression
          struct timeb s_timeb;
          ftime(&s_timeb);
          *((unsigned int*) ptr()) = s_timeb.time;
          ptr.shift(sizeof(unsigned int));
-        
+        rawlen += sizeof(unsigned int);
+	totallen += sizeof(unsigned int);
 	// first payload: header with number of long records
 	*((unsigned int*) ptr()) = fInfoDescr.NumLongRecords();
 	ptr.shift(sizeof(unsigned int));
