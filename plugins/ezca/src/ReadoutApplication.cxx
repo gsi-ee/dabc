@@ -38,7 +38,7 @@ ezca::ReadoutApplication::ReadoutApplication() :
 	CreateParInt(dabc::xmlNumBuffers, 20);
 //	CreateParInt(ezca::xmlEventsPerBuffer, 1);
 //	CreateParInt(ezca::xmlHitDelay, 100);
-	CreateParDouble(ezca::xmlTimeout, 0.1);
+	CreateParDouble(ezca::xmlTimeout, 5);
 
 	CreateParStr(dabc::xmlPoolName, "EpicsPool");
 	CreateParStr(ezca::xmlModuleName, "EpicsMoni");

@@ -13,7 +13,7 @@ ezca::EpicsInput::EpicsInput(const char* name, uint32_t bufsize) :
    dabc::DataInput(),
    fName(name ? name : "EpicsMonitorInput"),
    fBufferSize(bufsize),
-   fTimeout(0.1),
+   fTimeout(1),
    fSubeventId(0)
 {
 }
@@ -76,9 +76,14 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
 	static long evcount=0;
 	// first check the flag record:
 	long flag=0;
+        static long oldflag=-1;
 	if(CA_GetLong((char*) fInfoDescr.GetUpdateRecord(), flag) != 0) return dabc::di_RepeatTimeOut;
 	DOUT3(("EpicsInput:ReadComplete flag record %s = %d ",fInfoDescr.GetUpdateRecord(), flag));
-	if(flag==0) return dabc::di_RepeatTimeOut;
+	if(flag!=0 || flag==oldflag){ 
+          oldflag=flag;
+          return dabc::di_RepeatTimeOut;
+        }
+	oldflag=flag;
 	long evtnumber=0;
 	if(CA_GetLong((char*) fInfoDescr.GetIDRecord(), evtnumber) != 0) return dabc::di_RepeatTimeOut;
 	DOUT3(("EpicsInput:ReadComplete id record %s = %d ",fInfoDescr.GetIDRecord(), evtnumber));
@@ -132,11 +137,13 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
 		double val = 0;
 		if (CA_GetDouble((char*) fInfoDescr.GetDoubleRecord(ix), val) != 0)
 			continue;
-		DOUT3(("EpicsInput DoubleRecord:%s - val= %f ",fInfoDescr.GetDoubleRecord(ix), val));
-		*((double*) ptr()) = val;
-		ptr.shift(sizeof(val));
-		rawlen += sizeof(val);
-		totallen += sizeof(val);
+		DOUT1(("EpicsInput DoubleRecord:%s - val= %f ",fInfoDescr.GetDoubleRecord(ix), val));
+		// workaround: instead of doubles, we store integers scaled by factor 1000 JAM
+                int tmpval= (int) (val*1000);
+                *((int*) ptr()) = tmpval;
+		ptr.shift(sizeof(tmpval));
+		rawlen += sizeof(tmpval);
+		totallen += sizeof(tmpval);
 	}
 
 	// TODO: add other record types here?
