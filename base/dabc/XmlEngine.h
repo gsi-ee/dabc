@@ -90,6 +90,7 @@ namespace dabc {
          void              DocSetRootElement(XMLDocPointer_t xmldoc, XMLNodePointer_t xmlnode);
          XMLNodePointer_t  DocGetRootElement(XMLDocPointer_t xmldoc);
          XMLDocPointer_t   ParseFile(const char* filename, bool showerr = true);
+         XMLDocPointer_t   ParseString(const char* xmlstring, bool showerr = true);
          bool              ValidateVersion(XMLDocPointer_t doc, const char* version = 0);
          void              SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res, int layout = 1);
          XMLNodePointer_t  ReadSingleNode(const char* src);
@@ -105,6 +106,10 @@ namespace dabc {
          void              SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int layout, int level);
          XMLNodePointer_t  ReadNode(XMLNodePointer_t xmlparent, XmlInputStream* inp, int& resvalue);
          void              DisplayError(int error, int linenumber);
+         XMLDocPointer_t   ParseStream(XmlInputStream* input, bool showerr);
+
+         bool              fSkipComments;    //! if true, do not create comments nodes in document during parsing
+
    };
 }
 
