@@ -1,6 +1,6 @@
 ifdef DIMDIR
 
-ifneq ($(shell which javac),)
+ifneq ($(shell which javac 2>/dev/null),)
 
 exes::
 	@echo "Compiling java gui..."
