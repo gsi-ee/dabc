@@ -74,12 +74,12 @@ void dabc::Port::ProcessEvent(EventId evid)
 {
    switch (GetEventCode(evid)) {
       case evntInput:
-         fInputPending++;
+         if (fTransport!=0) fInputPending++;
          ProduceUserEvent(evntInput);
          break;
 
       case evntOutput:
-         fOutputPending--;
+         if (fTransport!=0) fOutputPending--;
          ProduceUserEvent(evntOutput);
          break;
 

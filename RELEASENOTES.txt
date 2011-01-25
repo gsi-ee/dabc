@@ -31,7 +31,9 @@ Changes in version 1.1
    2. Allow hexadecimal numbers in configuration file.
    3. Modify mbs::CombinerModule - it can treat not only pure mbs inputs,
       but also pseudo events, where event id coded not in event header.
-      Used for CBM ROC - MBS combination.  
+      Used for CBM ROC - MBS combination.
+   4. Bugfix in output pending number - was decreased after transport closed 
+      and became negative. Now will always remain 0 when no transport assigned.  
 
 Changes in version 1.0.02
    1. With run.sh one can distribute (copy) configuration file to target nodes. 

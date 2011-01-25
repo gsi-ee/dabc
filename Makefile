@@ -15,9 +15,10 @@ include base/Makefile.mk
 
 include controls/simple/Makefile.mk
 
+ifndef nodim
 -include dim/Makefile.mk
-
 -include controls/dimcontrol/Makefile.mk
+endif
 
 DABC_PLUGINS = $(wildcard plugins/*)
 
@@ -25,7 +26,9 @@ DABC_PLUGINS += $(wildcard applications/*)
 
 -include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
 
+ifndef nogui
 -include gui/java/Makefile.mk
+endif
 
 #-include gui/Qt/Makefile.mk
 

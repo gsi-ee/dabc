@@ -25,12 +25,17 @@ MBSMONI_DEFINITIONS = Linux
 
 # used in the main Makefile
 
+ifndef nodim
+
+
 ALLDEPENDENC += $(MBSMONI_CD) $(MBSMONI_CXD)
 
 exes:: $(MBSMONI_EXE)
 
 clean::
 	rm -f $(MBSMONI_EXE)
+
+
 
 $(MBSMONI_EXE):   $(MBSMONI_CO) $(MBSMONI_CXO) $(DABCDLLPATH)/libdim.$(DllSuf)
 	$(LD) $(LDFLAGS) $(MBSMONI_CO) $(MBSMONI_CXO) -lrt -L$(DABCDLLPATH) -ldim $(OutPutOpt) $(MBSMONI_EXE)
@@ -40,5 +45,7 @@ $(MBSMONI_CXO) : DEFINITIONS += $(MBSMONI_DEFINITIONS)
 $(MBSMONI_CO) : C_DEFINITIONS += $(MBSMONI_DEFINITIONS)
 
 $(MBSMONI_CXO) : INCLUDES += $(DIMDIR)/dim
+
+endif
 
 include $(DABCSYS)/config/Makefile.rules
