@@ -27,12 +27,12 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
-These packages are tested on
+This package was tested on:
     Debian 3.1 woody (32 bit and AMD 64bit)
-    Debian 4.0 Etch (32 bit)
-    SuSe 11.1 (64bit)
-    compilers: gcc 3.3.5, gcc 4.3.x
-
+    Debian 4.0 Etch (32 bit & 64 bit)
+    Debian 5.0 Lenny (32 bit & 64 bit)
+    SuSe 11.1, 11.2, 11.3 (64bit)
+    compilers: gcc 3.3.5, gcc 4.3.x, gcc 4.4.x 
   
 INSTALLATION:
 
