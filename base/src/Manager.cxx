@@ -1279,7 +1279,7 @@ void dabc::Manager::RecvOverCommandChannel(const char* cmddata)
    } else {
       // this is for replies
       int cmdid = cmd->GetInt("_cmdid_",-1);
-      bool cmdres = cmd->GetResult();
+      int cmdres = cmd->GetResult();
 
       Command* initcmd = TakeInternalCmd("_cmdid_", cmdid);
 
@@ -1385,7 +1385,7 @@ bool dabc::Manager::ReplyCommand(Command* cmd)
 
       DOUT5(("!!!!!!!!!!!!  Reply of CmdDirectConnect parent = %d", parentid));
 
-      bool res = cmd->GetResult();
+      int res = cmd->GetResult();
       cmd->ClearResult();
 
       if (cmd->GetBool("ClientSide", false) || !res) {
