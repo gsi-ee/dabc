@@ -175,7 +175,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
       default: EOUT(("Wrong mtu value %u", fVerbs->mtu()));
    }
 
-   attr.path_mtu = IBV_MTU_1024;
+   // attr.path_mtu = IBV_MTU_1024;
 
    attr.dest_qp_num  = dest_qpn;
    attr.rq_psn       = dest_psn;
