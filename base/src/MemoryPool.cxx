@@ -158,8 +158,9 @@ bool dabc::MemoryBlock::TakeBuffer(BufferNum_t& id)
 unsigned dabc::MemoryBlock::SumUsageCounters() const
 {
    unsigned sum = 0;
-   for (BufferNum_t id = 0; id < fNumBuffers; id++)
-      sum += fUsage[id];
+   if (fUsage!=0)
+      for (BufferNum_t id = 0; id < fNumBuffers; id++)
+         sum += fUsage[id];
    return sum;
 }
 
