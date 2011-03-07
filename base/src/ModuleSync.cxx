@@ -21,7 +21,7 @@ dabc::ModuleSync::ModuleSync(const char* name, Command* cmd) :
    Module(name, cmd),
    fTmoutExcept(false),
    fDisconnectExcept(false),
-   fSyncCommands(CommandsQueue::kindSubmit),
+   fSyncCommands(false),
    fNewCommands(CommandsQueue::kindSubmit),
    fWaitItem(0),
    fWaitId(0),
