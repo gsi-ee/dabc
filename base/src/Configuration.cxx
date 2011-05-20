@@ -457,7 +457,10 @@ bool dabc::Configuration::FindItem(Basic* obj, std::string &res, const char* fin
          if (fCurrChld == 0) {
             // object was not found, we increment depth level and try to continue our search
             level++;
-            if (level > maxlevel) break;
+            // FIXME: should be here >= ???
+            // SOLUTION: to be consistent with level initialization, when searched in normal path,
+            // never goes to the level of context (manager) where many similar contexts can exists
+            if (level > (search_in_normal_path ? maxlevel-1 : maxlevel)) break;
             fCurrChld = fCurrItem;
             fCurrItem = fXml.GetParent(fCurrItem);
             if (fCurrItem==0) {
