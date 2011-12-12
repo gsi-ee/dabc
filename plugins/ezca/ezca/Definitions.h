@@ -2,6 +2,13 @@
 #define EZCA_DEFINITIONS_H
 
 
+// this is switch to put double values instead of scaled integers
+#define EZCA_useDOUBLES 1
+
+// scaling factor for double values when converted to ints
+#define EZCA_DOUBLESCALE 1000000000
+
+
 #define EZCA_typeEpicsInput 	  "ezca::EpicsInput"
 #define EZCA_nameReadoutAppClass  "ezca::Readout"
 #define EZCA_nameReadoutModuleClass "ezca::MonitorModule"
@@ -79,7 +86,7 @@ namespace ezca {
 //            proc_Triglog      = 5,   //!< subevent produced by MBS directly with sync number and trigger module scalers
 //            proc_TRD_MADC     = 6,   //!< subevent produced by MBS directly with MADC data
 //            proc_TRD_Spadic   = 7,    //!< collection of data from susibo board
-//            proc_EPICS_Mon    = 8,    //!< epics monitor data
+//            proc_EPICS_Mon    = 10,    //!< epics monitor data
 //         };
 
 }

@@ -19,122 +19,161 @@
 
 
 
-
-
 namespace ezca {
 
-	class InfoDescriptor
-	{
-		protected:
-		/* the update flag record is looked at for all read attempts
-		 * only if this one switches to some "updated" state,
-		 * all the rest of the set up variables are requested
-		 * and put into the output buffer*/
-		std::string fUpdateFlagRecord;
+   class InfoDescriptor {
+      protected:
+         /* the update flag record is looked at for all read attempts
+          * only if this one switches to some "updated" state,
+          * all the rest of the set up variables are requested
+          * and put into the output buffer*/
+         std::string fUpdateFlagRecord;
 
-		/* the id number of the current dataset, i.e. the mbs event number*/
-		std::string fIDNumberRecord;
+         /* the id number of the current dataset, i.e. the mbs event number*/
+         std::string fIDNumberRecord;
 
-		/* contains names of all long integer values to be requested*/
-		std::vector<std::string> fLongRecords;
+         /* contains names of all long integer values to be requested*/
+         std::vector<std::string> fLongRecords;
 
-		/* contains names of all double  values to be requested*/
-		std::vector<std::string> fDoubleRecords;
+         /* string expression for number of long records. For descriptor block*/
+         std::string fNumLongString;
 
-// question: what kind of possible data types are expected to be put into mbs subevent payload?
-//		ezcaByte
-//		ezcaString
-//		ezcaShort
-//		ezcaLong
-//		ezcaFloat
-//		ezcaDouble
-// for the moment, we restrict to long and double
-	public:
+         /* real length of all name strings in long records list*/
+         size_t fLongRecordStringsize;
 
-		InfoDescriptor() {Reset();}
-		virtual ~InfoDescriptor(){;}
+         /* contains names of all double  values to be requested*/
+         std::vector<std::string> fDoubleRecords;
 
-		void Reset(){fUpdateFlagRecord="";fIDNumberRecord="";fLongRecords.clear(); fDoubleRecords.clear();}
+         std::string fNumDoubleString;
 
-		const char* GetUpdateRecord()
-		{
-			return fUpdateFlagRecord.c_str();
-		}
+         /* real length of all name strings in long records list*/
+         size_t fDoubleRecordStringsize;
 
-		void SetUpdateRecord(std::string name)
-		{
-			fUpdateFlagRecord=name;
-		}
+         // question: what kind of possible data types are expected to be put into mbs subevent payload?
+         //		ezcaByte
+         //		ezcaString
+         //		ezcaShort
+         //		ezcaLong
+         //		ezcaFloat
+         //		ezcaDouble
+         // for the moment, we restrict to long and double
+      public:
 
-		const char* GetIDRecord()
-				{
-					return fIDNumberRecord.c_str();
-				}
+         InfoDescriptor()
+         {
+            Reset();
+         }
+         virtual ~InfoDescriptor()
+         {
+            ;
+         }
 
-		void SetIDRecord(std::string name)
-		{
-			fIDNumberRecord=name;
-		}
+         void Reset()
+         {
+            fUpdateFlagRecord = "";
+            fIDNumberRecord = "";
+            fLongRecords.clear();
+            fDoubleRecords.clear();
+            fLongRecordStringsize = 0;
+            fDoubleRecordStringsize = 0;
+         }
 
+         const char* GetUpdateRecord()
+         {
+            return fUpdateFlagRecord.c_str();
+         }
 
-		void AddLongRecord(std::string name)
-		{
-			fLongRecords.push_back(name);
-		}
+         void SetUpdateRecord(std::string name)
+         {
+            fUpdateFlagRecord = name;
+         }
 
+         const char* GetIDRecord()
+         {
+            return fIDNumberRecord.c_str();
+         }
 
-	const char* GetLongRecord(size_t i)
-	{
-		try
-		{
-			return fLongRecords.at(i).c_str();
-		} catch (...) // for out of range exc etc.
-		{
-			return 0;
-		}
-	}
+         void SetIDRecord(std::string name)
+         {
+            fIDNumberRecord = name;
+         }
 
-	unsigned int NumLongRecords()
-	{
-		return fLongRecords.size();
-	}
+         void AddLongRecord(std::string name)
+         {
+            fLongRecords.push_back(name);
+            fLongRecordStringsize+=name.size()+1; // account terminating \0 in buffer
+            char lbuf[128];
+            snprintf(lbuf,128,"%d ", NumLongRecords());
+            fNumLongString=lbuf;
+         }
 
-	void AddDoubleRecord(std::string name)
-	{
-		fDoubleRecords.push_back(name);
-	}
+         const char* GetLongRecord(size_t i)
+         {
+            try {
+               return fLongRecords.at(i).c_str();
+            } catch (...) // for out of range exc etc.
+            {
+               return 0;
+            }
+         }
 
-	const char* GetDoubleRecord(size_t i)
-		{
-			try
-			{
-				return fDoubleRecords.at(i).c_str();
-			} catch (...)// for out of range exc etc.
-			{
-				return 0;
-			}
-		}
+         unsigned int NumLongRecords()
+         {
+            return fLongRecords.size();
+         }
 
+         const std::string & NumLongRecordsString()
+            {
+               return fNumLongString;
+            }
 
+         void AddDoubleRecord(std::string name)
+         {
+            fDoubleRecords.push_back(name);
+            fDoubleRecordStringsize+=name.size()+1; // account terminating \0 in buffer
+            char lbuf[128];
+            snprintf(lbuf,128,"%d ", NumDoubleRecords());
+            fNumDoubleString=lbuf;
+         }
 
+         const char* GetDoubleRecord(size_t i)
+         {
+            try {
+               return fDoubleRecords.at(i).c_str();
+            } catch (...) // for out of range exc etc.
+            {
+               return 0;
+            }
+         }
 
-	unsigned int NumDoubleRecords()
-		{
-			return fDoubleRecords.size();
-		}
-};
+         unsigned int NumDoubleRecords()
+         {
+            return fDoubleRecords.size();
+         }
 
+         const std::string & NumDoubleRecordsString()
+           {
+              return fNumDoubleString;
+           }
 
+         size_t SizeofDoubleRecords()
+         {
+            return fDoubleRecordStringsize;
+         }
 
+         size_t SizeofLongRecords()
+         {
+            return fLongRecordStringsize;
+         }
 
+   };
 
-	/*
-	 * The epics easy channel access data input implementation
-	 *
-	 */
+   /*
+    * The epics easy channel access data input implementation
+    *
+    */
 
-
-   class EpicsInput : public dabc::DataInput {
+   class EpicsInput: public dabc::DataInput {
       public:
          EpicsInput(const char* name = 0, uint32_t bufsize = 0x10000);
          virtual ~EpicsInput();
@@ -144,33 +183,34 @@ namespace ezca {
          virtual unsigned Read_Size();
          virtual unsigned Read_Complete(dabc::Buffer* buf);
 
-         virtual double GetTimeout() { return fTimeout; }
+         virtual double GetTimeout()
+         {
+            return fTimeout;
+         }
 
       protected:
-         std::string         fName;
+         std::string fName;
 
          /* aggregation of all record names to be read.
           * Configurable from  xml*/
          ezca::InfoDescriptor fInfoDescr;
 
          /* size of preallocated memory buffer from pool*/
-         unsigned int            fBufferSize;
+         unsigned int fBufferSize;
 
+         /* timeout (in seconds) for readout polling. */
+         double fTimeout;
 
-		 /* timeout (in seconds) for readout polling. */
-		  double	 			fTimeout;
+         /* full id number for epics subevent*/
+         unsigned int fSubeventId;
 
-		  /* full id number for epics subevent*/
-		  unsigned int fSubeventId;
+         /* Wrapper for ezca get with long values. Contains error message handling.
+          * Returns ezca error code.*/
+         int CA_GetLong(char* name, long& val);
 
-
-		 /* Wrapper for ezca get with long values. Contains error message handling.
-		  * Returns ezca error code.*/
-		 int CA_GetLong(char* name, long& val);
-
-		 /* Wrapper for ezca get with double values. Contains error message handling
-		  * Returns ezca error code.*/
- 	    int CA_GetDouble(char* name, double& val);
+         /* Wrapper for ezca get with double values. Contains error message handling
+          * Returns ezca error code.*/
+         int CA_GetDouble(char* name, double& val);
 
          bool Close();
    };
