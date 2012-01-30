@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DabcLaunch>
+<DabcMaster prompt="DABC Master" value="%MasterNode%"/>
+<DabcName prompt="DABC Name" value="%MasterName%"/>
+<DabcUserPath prompt="DABC user path" value="%DABC UserPath%"/>
+<DabcSystemPath prompt="DABC system path" value="%DABC system path%"/>
+<DabcSetup prompt="DABC setup file" value="%DABC setup file%"/>
+<DabcScript prompt="DABC Script" value="%ssh command%"/>
+<DabcServers prompt="%Number of required DIM servers%" value="0"/>
+</DabcLaunch>

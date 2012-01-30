@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="Generator">
+    <Run>
+      <lib value="libDabcDim.so"/>
+      <lib value="libDabcMbs.so"/>
+      <func value="InitMbsGenerator"/>
+    </Run>
+    <Observer name="dim">
+       <dns value="${DIM_DNS_NODE}"/>
+       <mask value="*"/>
+    </Observer>
+    <Module name="Generator">
+       <Port name="Output">
+          <OutputQueueSize value="5"/>
+          <MbsServerKind value="Stream"/>
+<!--          <MbsServerPort value="${genport}"/> -->
+        </Port>
+     </Module>
+  </Context>
+</dabc>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MbsLaunch>
+<MbsMaster prompt="MBS Master" value="%MasterNode%"/>
+<MbsUserPath prompt="MBS User path" value="%MBS UserPath%"/>
+<MbsSystemPath prompt="MBS system path" value="%MBS system path%"/>
+<MbsStartup prompt="Startup script" value="startup.scom"/>
+<MbsShutdown prompt="Shutdown script" value="shutdown.scom"/>
+<MbsCommand prompt="Script command" value="%MBS Command%"/>
+<MbsServers prompt="%Number of required DIM servers%" value="0"/>
+</MbsLaunch>

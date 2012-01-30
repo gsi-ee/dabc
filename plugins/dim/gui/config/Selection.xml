@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Selection>
+<Full contains="Date" filter="false" />
+<Node contains="X86-7" filter="false" />
+<Application contains="MSG" filter="false" />
+<Name contains="*" filter="false" />
+<Records Only="true" Rates="true" States="false" Infos="false" />
+</Selection>
