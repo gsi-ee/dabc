@@ -1,6 +1,6 @@
 include $(DABCSYS)/config/Makefile.config
 
-DIM_VERSION = dim_v19r20
+DIM_VERSION = dim_v19r27
 
 DIM_ZIP = $(DIM_VERSION).zip
 
