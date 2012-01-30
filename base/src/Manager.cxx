@@ -305,7 +305,7 @@ dabc::Manager::~Manager()
    delete fMgrMutex; fMgrMutex = 0;
 
    if (dabc::mgr()==this) {
-      DOUT0(("Real EXIT"));
+      DOUT1(("Real EXIT"));
       if (dabc::Logger::Instance())
          dabc::Logger::Instance()->LogFile(0);
    } else
@@ -1113,7 +1113,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       std::string mask = cmd.GetStdStr("Mask");
       std::string remote = cmd.GetStdStr("RemoteWorker");
 
-      DOUT0(("Subscription with mask %s", mask.c_str()));
+      DOUT2(("Subscription with mask %s", mask.c_str()));
 
       if (cmd.GetBool("IsSubscribe")) {
 

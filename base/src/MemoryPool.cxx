@@ -771,7 +771,7 @@ bool dabc::MemoryPool::Reconstruct(Command cmd)
    unsigned numsegm = Cfg(xmlNumSegments, cmd).AsUInt(GetDfltNumSegments());
    unsigned align = Cfg(xmlAlignment, cmd).AsUInt(GetDfltAlignment());
 
-   DOUT0(("POOL:%s bufsize:%u X num:%u", GetName(), buffersize, numbuffers));
+   DOUT2(("POOL:%s bufsize:%u X num:%u", GetName(), buffersize, numbuffers));
 
    if (align) SetAlignment(align);
    if (numsegm) SetMaxNumSegments(numsegm);
