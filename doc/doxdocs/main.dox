@@ -1,0 +1,49 @@
+// This is main doxygen file for whole DABC
+
+/*! \mainpage Documentation DABC
+
+\section sect_intro Introduction
+
+DABC is abbreviation for Data Acquisition Backbone Core
+
+DABC contains 
+
+<ul>
+  <li> \ref dabc_core_classes
+  <li> \ref dabc_plugins
+  <li>Applications
+  <li>Control GUI
+</ul>  
+
+*/
+
+/*! \page  dabc_core_classes DABC core classes
+
+<ul>
+  <li> dabc::Thread
+  <li> dabc::Worker
+  <li> dabc::Module
+  <li> dabc::ModuleSync
+  <li> dabc::ModuleAsync
+  <li> dabc::Port
+  <li> dabc::MemoryPool
+  <li> dabc::Transport
+  <li> dabc::Device
+  <li> dabc::Manager
+</ul>  
+
+*/
+
+/*! \page  dabc_plugins DABC plugins
+
+DABC provides method to integrate different user-specific components in form of plugins.
+
+There are several of them, which are distributed together with DABC itself 
+
+<ul>
+  <li> MBS
+  <li> BNet
+  <li> VERBS
+</ul>  
+
+*/

@@ -155,12 +155,12 @@ the \class{Port} of a module and the PCI device.
 It is created in \func{CreateTransport()} of \class{pci::BoardDevice}
 when the user application calls the corresponding \class{Manager}
 method with the names of the port and the device instances, e.~g.~ \\
-{\tt dabc::mgr()->CreateTransport("ReadoutModule/Input", "AbbDevice3");}
+{\tt dabc::mgr.CreateTransport("ReadoutModule/Input", "AbbDevice");}
 
 It extends the base class \class{dabc::DataTransport} which already provides
 generic \class{Buffer} queues with a data backpressure mechanism, 
 both for input and output direction. 
-Because this class is also a \class{WorkingProcessor},
+Because this class is also a \class{Worker},
 each \class{pci::Transport} object has a  dedicated thread that runs
 the IO actions.
 The following virtual methods of \class{dabc::DataTransport} were implemented:
@@ -195,7 +195,7 @@ The functionality is forwarded to \func{ReadPCIComplete()}
 of \class{pci::BoardDevice}. 
 
 
-\item[\em bool WriteBuffer(dabc::Buffer* buf)] :
+\item[\em bool WriteBuffer(const dabc::Buffer& buf)] :
 Write content of \func{buf} to the PCI region 
 as set for the \class{BoardDevice}
 with \func{SetWriteBuffer()}, or \class{CommandSetPCIWriteRegion}, resp.
@@ -404,15 +404,14 @@ method \func{CreateDevice()} of \class{abb::Factory}:
 #define READSIZE 16*1024
 ...
 std::string devname="ABB";
-dabc::Command* dcom = 
-   new dabc::CmdCreateDevice("abb::Device", devname.c_str());
+dabc::CmdCreateDevice dcom("abb::Device", devname.c_str());
 // arguments: (class name, device name)
 // set additional parameters for abb device here:
-dcom->SetInt(ABB_PAR_BOARDNUM, BOARD_NUM);
-dcom->SetInt(ABB_PAR_BAR, 1);
-dcom->SetInt(ABB_PAR_ADDRESS, READADDRESS);
-dcom->SetInt(ABB_PAR_LENGTH, readsize);
-res=manager.Execute(dcom);
+dcom.SetInt(ABB_PAR_BOARDNUM, BOARD_NUM);
+dcom.SetInt(ABB_PAR_BAR, 1);
+dcom.SetInt(ABB_PAR_ADDRESS, READADDRESS);
+dcom.SetInt(ABB_PAR_LENGTH, readsize);
+bool res=dabc::mgr.Execute(dcom);
 DOUT1(("CreateDevice = %s", DBOOL(res)));
 \end{verbatim}
 \end{small}
@@ -434,15 +433,15 @@ method \func{CreateModule()} of \class{abb::Factory}:
 
 \begin{small}
 \begin{verbatim}
-cmd = new dabc::CmdCreateModule("abb::ReadoutModule",
+dabc::CmdCreateModule cmd("abb::ReadoutModule",
                                 "ABB_Readout", 
                                 "ReadoutThread");
 // arguments: (class name, module name, thread name)
-cmd->SetInt(ABB_COMPAR_BUFSIZE, readsize);
-cmd->SetInt(ABB_COMPAR_STALONE,1);
-cmd->SetInt(ABB_COMPAR_QLENGTH, 10);
-cmd->SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
-res=manager.Execute(cmd);
+cmd.SetInt(ABB_COMPAR_BUFSIZE, readsize);
+cmd.SetInt(ABB_COMPAR_STALONE,1);
+cmd.SetInt(ABB_COMPAR_QLENGTH, 10);
+cmd.SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
+bool res=dabc::mgr.Execute(cmd);
 DOUT1(("Create ABB readout module = %s", DBOOL(res)));
 \end{verbatim}
 \end{small}
@@ -493,7 +492,7 @@ Finally, all objects are destroyed and the manager is
 cleaning up the process before the program ends:
 \begin{small}
 \begin{verbatim} 
-manager.CleanupManager();
+dabc::mgr.CleanupApplication();
 \end{verbatim}
 \end{small}
    
@@ -527,15 +526,15 @@ parameters for the module which are then evaluated in
 method \func{CreateModule()} of \class{abb::Factory}:
 \begin{small}
 \begin{verbatim} 
-cmd = new dabc::CmdCreateModule("abb::WriterModule",
+dabc::CmdCreateModule cmd("abb::WriterModule",
                                 "ABB_Sender", 
                                 "WriterThread");
-cmd->SetInt(ABB_COMPAR_BUFSIZE, readsize);
-cmd->SetInt(ABB_COMPAR_STALONE,1);
-cmd->SetInt(ABB_COMPAR_QLENGTH, 10);
-cmd->SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
-cmd->SetStr(ABB_PAR_DEVICE,devname.c_str());
-res = manager.Execute(cmd);
+cmd.SetInt(ABB_COMPAR_BUFSIZE, readsize);
+cmd.SetInt(ABB_COMPAR_STALONE,1);
+cmd.SetInt(ABB_COMPAR_QLENGTH, 10);
+cmd.SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
+cmd.SetStr(ABB_PAR_DEVICE,devname.c_str());
+bool res=dabc::mgr.Execute(cmd);
 DOUT1(("Create ABB writer module = %s", DBOOL(res)));
 \end{verbatim} 
 \end{small}
@@ -643,8 +642,8 @@ the \func{portname} argument of the method:
 \begin{verbatim}
 if(ReadoutPar(portnumber) == "ABB") {
    const char* abbdevname = "ABBDevice";
-   fABBActive = dabc::mgr()->CreateDevice("abb::Device", abbdevname);
-   res = dabc::mgr()->CreateTransport(portname, abbdevname);
+   fABBActive = dabc::mgr.CreateDevice("abb::Device", abbdevname);
+   res = dabc::mgr.CreateTransport(portname, abbdevname);
    if (!res) EOUT(("Cannot create ABB transport"));
 } 
 \end{verbatim}

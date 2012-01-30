@@ -31,7 +31,7 @@ but here the device object is rather used as central collection of \class{SysCor
 Each instance of \class{roc::Transport} has a pointer to a \class{SysCoreBoard} object
 which handles data taking from a specific {\em ROC}. 
 The implementation of \class{roc::Transport} is based on the \class{dabc::DataTransport} class (see section \ref{prog_plugin_device_datatransport}) which
-runs as \class{WorkingProcessor} with an asynchronous event handling mechanism,
+runs as \class{Worker} with an asynchronous event handling mechanism,
 so it does not require an explicit thread.
 This feature allows to process several instances of such transports in the same thread.
 In the {\em ROC} case, all \class{roc::Transport} instances use the thread of \class{roc::Device}.   
@@ -62,7 +62,7 @@ of that buffer from the data source:
 
 \begin{small}
 \begin{verbatim}
-unsigned roc::Transport::Read_Start(dabc::Buffer* buf)
+unsigned roc::Transport::Read_Start(dabc::Buffer& buf)
 {
    int req = fxBoard->requestData(fReqNumMsgs);
    if (req==2) return dabc::DataInput::di_CallBack;

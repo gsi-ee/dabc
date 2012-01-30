@@ -3,11 +3,11 @@
 \section{Parameter class}
 \label{prog_setup_parameter}
 Configuration and status information of objects can be represented by the \class{Parameter} class.
-Any object derived from \class{WorkingProcessor} class
+Any object derived from \class{Worker} class
 (e.~g.~ \class{Application}, \class{Device}, \class{Module}, and \class{Port})
 can have a list of parameters assigned to it.   
   
-There are a number of \class{WorkingProcessor} methods to create parameter objects of different kinds and access their values. 
+There are a number of \class{Worker} methods to create parameter objects of different kinds and access their values. 
 These are shown in the following table:
 
 \begin{tabular}{|l|l|lll|}
@@ -31,8 +31,8 @@ If text of string is "true" (in lower case),
 the boolean value is recognized as \keyw{true}, 
 otherwise as \keyw{false}.
 
-It is recommended to use these \class{WorkingProcessor} methods to create parameters and access their values;
-but one can also use \func{FindPar()} method to find any parameter object 
+It is recommended to use these \class{Worker} methods to create parameters and access their values;
+but one can also use \func{Par()} method to find any parameter object 
 and use its methods directly.   
 
 
@@ -46,7 +46,7 @@ the control system is informed and represents such change in an appropriate GUI 
 On the other hand, if the user modifies a parameter value in the GUI, 
 the value of the parameter object will be changed and the corresponding parent object 
 (\class{Module}, \class{Device}) gets a callback via 
-virtual method \func{ParameterChanged()}. 
+virtual method \func{ParameterChanged() [obsolete] }. 
 By implementing a suitable reaction in this call, 
 one could reconfigure or adjust the running program on the fly.
 
@@ -63,17 +63,6 @@ Only when \func{Parameter::IsVisible()} returns \keyw{true}, parameter will be
 known (visible) to the control system. Even if parameter is seen
 from control system, it only can be changed \strong{from} control system 
 when flag \func{Parameter::IsChangable()} returns \keyw{true}. 
-   
-Default flags values for newly created parameters can be set in
-\func{WorkingProcessor::SetParDflts()} function.
-For visibility user should specify level, which is compared with
-global visibility level for parameters (aka debug level).
-This global level can be changed by
-\func{WorkingProcessor::SetGlobalParsVisibility()} static function or
-in configuration file (value "Context/Run/parslevel"). Normally module parameters
-has visibility level 1, module items (port, pool handle) parameters - 3, 
-configuration parameters - 5. 
-Thus, to see all parameters in control system, one should set "parslevel = 5".
 
 
 \section{Example of parameters usage}
@@ -86,16 +75,16 @@ class UserModule : public dabc::ModuleAsync {
       UserModule(const char* name, dabc::Command* cmd = 0) : 
          dabc::ModuleAsync(name, cmd)
       {
-         CreateParBool("Output", true);
-         CreateParInt("Counter", 0);
+         CreatePar("Output").DfltBool(true);
+         CreatePar("Counter").DfltInt(0);
          CreateTimer("Timer", 1.0, false);
       }
       
       virtual void ProcessTimerEvent(dabc::Timer*)
       {
-         SetParInt("Counter", GetParInt("Counter")+1);
-         if (GetParBool("Output")) 
-            DOUT1(("Counter = %d", GetParInt("Counter")));
+         Par("Counter").SetInt(Par("Counter").AsInt()+1);
+         if (Par("Output").AsBool()) 
+            DOUT1(("Counter = %d", Par("Counter").AsInt()));
       }
 }; 
 \end{verbatim}
@@ -155,9 +144,9 @@ Let's add one configuration parameter to our module constructor:
 UserModule(const char* name, dabc::Command* cmd = 0) : 
    dabc::ModuleAsync(name, cmd)
 {
-   CreateParBool("Output", true);
-   CreateParInt("Counter", 0);
-   double period = GetCfgDouble("Period", 1.0, cmd);
+   CreatePar("Output").DfltBool(true);
+   CreatePar("Counter").DfltInt(0);
+   double period = Cfg("Period", cmd).AsDouble(1.);
    CreateTimer("Timer", period, false);
 }
 \end{verbatim}
@@ -247,7 +236,7 @@ the specified default value $1.0$  will be used.
 % \item[init] init script, which should be called before dabc application starts
 % \item[test] test script, which is called when test sequence is run by run.sh script
 % \item[timeout] ssh timeout 
-% \item[debugger] argument to run with a debugger. Value should be like "gdb -x run.txt --args", where file run.txt should contain commands "r bt q".
+% \item[debugger] argument to run with a debugger. Value should be like "gdb -x run.txt --args", where file run.txt should contain commands "r bt q". Special value "true" starts gdb with prepared commands list, "false" disables debugger.
 % \item[workdir] directory where \dabc~ executable should start
 % \item[debuglevel] level of debug output on console, default 1
 % \item[logfile] filename for log output, default none  
@@ -256,7 +245,6 @@ the specified default value $1.0$  will be used.
 % \item[DIM\_DNS\_PORT] port number of DIM dns server, used by DIM controls implementation
 % \item[cpuinfo] instantiate \class{dabc::CpuInfoModule} to show CPU and memory usage information. 
 % Value must be >= 0. If 0, only two parameters are created, if 15 - several ratemeters will be created.    
-% \item[parslevel] level of pars visibility for control system, default 1 
 % \edes
 % 
 % 
@@ -398,8 +386,8 @@ extern "C" void InitMbsGenerator()
 {
   dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", 
                                                  "Generator");
-  cmd->SetInt("SubeventSize", 128);
-  if (!dabc::mgr()->Execute(cmd)) {
+  cmd.SetInt("SubeventSize", 128);
+  if (!dabc::mgr.Execute(cmd)) {
      EOUT(("Cannot create generator module"));
      exit(1);
   }

@@ -1,4 +1,12 @@
-all:: texoutfilter main-all.pdf
+all:: texoutfilter main-all.pdf dox
+
+clean::
+	rm -f *.pdf *.aux *.idx *.ilg *.ind *.bbl *.blg *.log *.out *.toc *.lof texoutfilter
+	rm -rf html
+
+dox:
+	rm -rf html
+	doxygen DoxygenConfig
 
 texoutfilter: texoutfilter.c
 	gcc texoutfilter.c -o texoutfilter

@@ -56,10 +56,6 @@ Access to a \class{Port} by name. Returns $0$ if port does not exist.
 \item[\em Device* FindDevice\small (const char* name)] :
 Access to a \class{Device} by name. Returns $0$ if device does not exist.
 
-\item[\em Device* FindLocalDevice()] :
-Shortcut to get the "local device" that is responsible for basic transport
-mechanisms like transport of buffers through the local memory.
-         
 \item[\em Factory* FindFactory\small (const char* name)] :
 Access to a \class{Factory} by name. Returns $0$ if factory does not exist.
 
@@ -111,7 +107,7 @@ Instantiate a \class{Device} of class \func{classname} with the object name
 
 
 
-% \item[\em WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, unsigned startmode = 0, const char* devname = 0, Command* cmd = 0)] :
+% \item[\em WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, const char* devname = 0, Command cmd = 0)] :
 
 
 
@@ -166,7 +162,7 @@ queued events belonging to this module, resp.
 Disables processing for the module of name \func{modulename}.
 
 
-\item[\em bool StartAllModules\small (int appid = 0)] :
+\item[\em bool StartAllModules\small ()] :
 \index{Manager interface !StartAllModules()}
 Enables processing for all modules with apllication identifier number \func{appid}.
 The optional identifier  may be set in the \func{Module} definition
@@ -174,7 +170,7 @@ to select different kinds of modules here. By default, this method will
 start all exisiting modules on this node.
 Returns \keyw{true} of \keyw{false} depending on success.
 
-\item[\em bool StopAllModules\small (int appid = 0)] :
+\item[\em bool StopAllModules\small ()] :
 \index{Manager interface !StopAllModules()}
 Disables processing for all modules with application identifier number \func{appid}.
 The optional identifier  may be set in the \func{Module} definition
@@ -189,6 +185,7 @@ Deletes the module of name \func{modulename}. Returns \keyw{true} of
 
 \item[\em bool IsModuleRunning\small (const char* modulename)] :
 \index{Manager interface !IsModuleRunning()}
+Depricated. Use FindModule(modulename).IsRunning() method instead.
 Method returns \keyw{true} if module of name \func{modulename}
 is running, i.~e.~ its processing is enabled. If module does not exist
 or is not active, \keyw{false} is returned. 
@@ -208,8 +205,7 @@ A full port name consists of the module name and a local port name,
 separated by forward slash, e.~g.~ "Readout3/Output", "CombinerModule/Input2".
 Optionally the \class{Device} name for the connection may
 be defined with argument \func{devname}. By default, the ports are connected
-with a FIFO-like transport of queued \class{Buffer} references in local memory,
-as managed by \class{dabc::LocalDevice}.			   
+with a FIFO-like transport of queued \class{Buffer} references in local memory.			   
 			   
 \end{description}
 
@@ -217,15 +213,7 @@ as managed by \class{dabc::LocalDevice}.
 
 \begin{description}
 
-\item[\em bool MakeThreadForModule\small (Module* m, const char* thrdname = 0) ] :
-\index{Manager interface !MakeThreadForModule()} \\
-Creates a thread for module \func{m} and assigns module to this thread.
-If thread name \func{thrdname} is not specified, module name is used.
-Returns \keyw{true} of  
-\keyw{false} depending on success.
-	   
-
-\item[\em bool MakeThreadFor\small (WorkingProcessor* proc, const char* thrdname = 0, unsigned startmode = 0) ] :
+\item[\em bool MakeThreadFor\small (Worker* proc, const char* thrdname = 0, unsigned startmode = 0) ] :
 \index{Manager interface !MakeThreadFor()}
 Creates thread for processor \func{proc} and assigns processor to this thread.
 If thread name \func{thrdname} is not specified, a default name is used.
@@ -243,7 +231,7 @@ Value of \func{startmode} specifies initial run state of the thread
 \label{prog_manager_framework_commands}	
 \begin{description}
  
-\item[\em bool Submit\small (Command* cmd)] :
+\item[\em bool Submit\small (Command cmd)] :
 \index{Manager interface !Submit()}
 This method generally submits a command \func{cmd} for execution.
 The command is put in the queue of its command receiver working thread and is
@@ -255,11 +243,12 @@ but also for any other object on local or remote node. For that one from
 several following functions \func{SetCmdReceiver} should be used.
       
 
-\item[\em Command* SetCmdReceiver\small (Command* cmd, const char* itemname)] :
-\item[\em Command* SetCmdReceiver\small (Command* cmd, Basic* rcv)] :
-\item[\em Command* SetCmdReceiver\small (Command* cmd, const char* nodename, const char* itemname)] :
-\item[\em Command* SetCmdReceiver\small (Command* cmd, int nodeid, const char* itemname)] :
-\index{Manager interface !SetCmdReceiver()}
+\item[\em Command& SetReceiver\small (const char* itemname)] :
+\item[\em Command& SetReceiver\small (Object* rcv)] :
+\item[\em Command& SetReceiver\small (int nodeid, const char* itemname)] :
+
+
+\index{Command interface !SetReceiver()}
 Set receiver attribute of command \func{cmd}. The \func{itemname} is
 item name of the local node like "Module1". One can also specify 
 \func{nodename} or \func{nodeid} of the node, to which command should be submitted.
@@ -267,9 +256,8 @@ Returns pointer on the command itself.
 One can use \func{SetCmdReceiver} to submit command like:
 \begin{small}
 \begin{verbatim}
-dabc::mgr()->Submit(dabc::SetCmdReceiver(cmd, "Module1"));
-dabc::mgr()->Submit(dabc::SetCmdReceiver(cmd, "Node1", "Module1"));
-dabc::mgr()->Submit(cli.Assign(dabc::SetCmdReceiver(cmd, 0, "Module1")));
+dabc::mgr()->Submit(cmd.SetReceiver("Module1"));
+dabc::mgr()->Submit(cmd.SetReceiver(1, "Module1"));
 \end{verbatim}
 \end{small}
 
@@ -295,9 +283,9 @@ The \class{MemoryPool} mechanisms are discussed in detail in
 section \ref{prog_services_memory}.
 Method returns true or false depending on success.	
 
-\item[\em MemoryPool* FindPool\small (const char* name)] :
+\item[\em Reference FindPool\small (const char* name)] :
 \index{Manager interface !FindPool()}   
-Access to memory pool by name \func{name}. Returns 0 if not found.
+Access to memory pool by name \func{name}. Returns empty reference if not found.
 
 \item[\em bool DeletePool\small (const char* name)] :
 \index{Manager interface !DeletePool()}   
@@ -310,14 +298,13 @@ Delete memory pool of name \func{name}. Returns true or false depending on succe
 	 
 \begin{description}	
  
-\item[\em bool CleanupManager\small (int appid = 0) ] :
-\index{Manager interface !CleanupManager()}   
-Safely deletes all modules, memory pools and devices with
-specified application id \func{appid}. The default id 0 effects 
-on all user components. In the end all unused threads are also 
+\item[\em bool CleanupManager\small () ] :
+\index{Manager interface !CleanupApplication()}   
+Safely deletes all modules, memory pools and devices created
+for user application. In the end all unused threads are also 
 destroyed. 
  
-\item[\em virtual void DestroyObject\small (Basic* obj)] :
+\item[\em virtual void DestroyObject\small (Object* obj)] :
 \index{Manager interface !DestroyObject()}   
 Deletes the referenced object \func{obj} in manager thread.
 Useful as safe replacement for call "delete this".
@@ -399,71 +386,11 @@ the object name of the manager; optionally a
 flag indicating to use either the main process or another thread for manager 
 command execution;
 and an optional configuration object \func{cfg}.
-\begin{compactenum}
-
-\item The constructor should initialize the control system implementation.
-
-\item If the default state machine module of the \dabc~ core is used, the constructor
-should invoke method \func{InitSMmodule()}. Otherwise, the constructor must
-initialize an external state machine of the control system, following the
-state and transition names defined as static constants in {\tt dabc/Manager.h}. 
-
-\item The constructor must call method \func{init()} to initialize the base
-functionalities and parameters. This should be done {\em after} the control system
-is ready for handling parameters and commands, and {\em after} the optional \func{InitSMmodule()} call.
-  
-\end{compactenum}     
-
 
      
 \item[\em\~{~}Manager()] :
 The destructor of the subclass. It should cleanup and remove the  
-control system implementation. It must call method \func{destroy()}
-at the end.    
-
-
-\item[\em bool InvokeStateTransition(const char* state\_transition\_name, 
-Command* cmd)] : 
-\index{Manager interface !InvokeStateTransition()} 
-This should initiate the state transition for the given \func{state\_transition\_name}.
-This \strong{must} be an asynchronous function that does not block the calling thread,
-possibliy the main manager thread if the state transition is triggered by a command
-from a remote "master" state machine node. Thus the actual state transition should be performed in a dedicated state-machine thread, calling the synchronous method
-\func{DoStateTransition(const char*)} of the base class (see section \ref{prog_manager_controls_base}).
-
-Synchronization of the state with the invoking client is done by
-the passed command object reference \func{cmd}. 
-This should be used as handle in the static call \func{dabc::Command::Reply(cmd,true)} when the state transition is completed, or \func{dabc::Command::Reply(cmd,false)} when the transition has been failed, resp.
-
-Note that base class \class{dabc::Manager} already implements this method for the 
-\dabc~ default state machine module which is activated in the
-manager constructor with \func{InitSMmodule()}. 
-\strong{It needs a re-implementation only if
-an external state machine shall be used.}
-
-
-
-\item[\em void ParameterEvent(dabc::Parameter* par, int event)] :
-\index{Manager interface !ParameterEvent()} 
-Is invoked by the framework when any \class{Parameter} is created 
-(argument value $event=parCreated=0$),  changed ($event=parModified=1$),
-or destroyed ($event=parDestroy=2$), resp. Pointer \func{par} should be used to access parameter
-name and value for export to the control system. 
-
-
-\item[\em void CommandRegistration(dabc::Module* m, dabc::CommandDefinition* def, bool reg)] :
-\index{Manager interface !CommandRegistration()} 
-Is invoked by the framework when any module exports (argument \func{reg} \keyw{true}), or
-unexports (argument \func{reg} \keyw{false}) a command definition object
-to, or from the control system, resp. This allows to invoke such 
-commands via the controls connection from a remote node. 
-The command definition object \func{def}
-contains a description of possible command parameters; 
-pointer \func{m} should be used to access the owning module and
-get its name. This information may be used to represent the command within
-the controls implementation.
-
-
+control system implementation.    
 
 
 \item[\em bool Subscribe(dabc::Parameter* par, int remnode, 
@@ -486,29 +413,14 @@ The subscription of a local parameter \func{par} to a remote paramter by
 a formerly called \func{Subscribe()} is removed from the control system.
 
 
-\item[\em bool IsMainManager()] :
-\index{Manager interface !IsMainManager()} 
-Should return \keyw{true} if this node is the single 
-master controller node of the DAQ cluster. This node will define
-the master state machine that rules the states 
-of all other nodes.
-Otherwise (returns \keyw{false}) this node is a simple worker node.
-The node properties should be taken from the configuration.
-
-\item[\em bool HasClusterInfo()]:
-\index{Manager interface !HasClusterInfo()} 
-Returns \keyw{true} if this node has complete information of the DAQ cluster.
-
-
 \item[\em int NumNodes()] :
 \index{Manager interface !NumNodes()} 
-Returns the number of all DAQ nodes in the cluster. This may be taken
-from a configuration database, e.~g.~ an XML file, but may also test the
-real number of running nodes each time it's called.
+Returns the number of all nodes in the cluster. This value taken
+from a configuration database, e.~g.~ an XML file.
 
 \item[\em int NodeId() const] : 
 \index{Manager interface !NodeId()} 
-Returns the unique id number of this node in the DAQ cluster.
+Returns the sequence id number of this node in the DAQ cluster.
 This should be taken from the cluster configuration.
 
 \item[\em bool IsNodeActive(int num)] : 
@@ -519,46 +431,8 @@ This may allow to check on runtime if some of the
 configured nodes are not available and should be excluded from the
 DAQ setup.
 
-\item[\em const char* GetNodeName(int num)] :
-\index{Manager interface !GetNodeName()} 
-For each DAQ cluster node of id number \func{num},
-this method must define a unique name representation. 
-The name should represent the node in a human readable
-way, e.~g.~ by means of URL and a functional node description
-("daq01.gsi.de-readout"). It should match the
-description in the cluster configuration.
-Note: \strong{This name must match the local name
-of the manager object on each node}.
 
-
-
-\item[\em bool SendOverCommandChannel(const char* managername, const char* cmddata)] :
-\index{Manager interface !SendOverCommandChannel()} \\
-This method sends a \class{dabc::Command} as a streamed text representation \func{cmddata}
-to a remote DAQ cluster node of name \func{managername}.
-The \func{managername} argument must match one of the names defined in
-\func{GetNodeName(int num)}. The implementation should use
-transport mechanisms of the control system to transfer the
-command string to the remote site 
-(e.~g.~ native control commands that wrap \func{cmddata}).
-The receiver of such commands on the target node
-should call base class method
-\func{RecvOverCommandChannel(const char* cmddata)} to 
-forward the command representation to the core system,
-which will reconstruct and execute the \class{dabc::Command} object. 
-
- 
-\item[\em bool CanSendCmdToManager(const char* mgrname)] :
-\index{Manager interface !CanSendCmdToManager()}
-Returns \keyw{true} if it is possible to send a remote
-command to the manager on DAQ cluster node of name \func{mgrname},
-otherwise \keyw{false}. 
-The node name argument must match one of the names defined in
-\func{GetNodeName(int num)}.
-This method may implement to forbid the sending of commands on some nodes.
-
-
-\item[\em int ExecuteCommand(dabc::Command* cmd)] :
+\item[\em int ExecuteCommand(dabc::Command cmd)] :
 \index{Manager interface !ExecuteCommand()}
 This method executes synchronously any
 \dabc~ command that is submitted to this manager itself.
@@ -594,8 +468,8 @@ transition actions are completed (\keyw{true}) or an error is detected (\keyw{fa
 Note that the real transition actions are still user defined in methods
 of the \class{dabc::Application} implementation.
 
-\item[\em bool IsStateTransitionAllowed(const char* state\_transition\_cmd, bool errout)] :
-\index{Manager interface !IsStateTransitionAllowed()}
+\item[\em bool IsTransitionAllowed(const char* state\_transition\_cmd, bool errout)] :
+\index{Manager interface !IsTransitionAllowed()}
 Checks if state transition of name \func{state\_transition\_cmd} is allowed
 for the default state machine implementation (which should be reproduced exactly by
 any external SM implementation) and returns \keyw{true} or \keyw{false}, resp. Argument
@@ -623,29 +497,25 @@ of a streamed command from the core to a remote manager by transport mechanisms 
 
 
 
-\subsection{Default implementation for DIM}
+\subsection{Implementation for DIM}
 \label{prog_manager_controls_DIM}
-The \dabc~ default controls and configuration system 
-is based on the DIM library \cite{DIM} and is marked by namespace
-\class{dimc::} (for "DIM Control"). 
-% It features the DIM publisher-subscriber mechanism with \dabc~ process records and uses state machine module and XML parser as provided by the \dabc~core system. 
+The \dabc~ provides controls module, based on the DIM library \cite{DIM} and 
+is marked by namespace \class{dimc::} (for "DIM Control"). 
+% It features the DIM publisher-subscriber mechanism with \dabc~ process records 
+and uses state machine module and XML parser as provided by the \dabc~core system. 
 The main classes are described in the following:
 
-\subsubsection{\class{dimc::Manager}}
-\label{prog_manager_controls_DIM_manager}
-\index{DIM Control classes ! dimc::Manager}
-Implements the control system interface of
-\class{dabc::Manager} as described above. 
+\subsubsection{\class{dimc::Observer}}
+\label{prog_manager_controls_DIM_observer}
+\index{DIM Control classes ! dimc::Observer}
+Implements the control system interface of \class{dabc::Worker} as described above. 
 
 \begin{compactenum}
 
-\item It uses the \strong{default state machine module} of the \dabc~ core system.
-This is activated in the constructor by calling
-\func{InitSMmodule()}. Thus virtual method \func{InvokeStateTransition()}
-is \strong{not} re-implemented here.
+\item It uses the \strong{state machine} of the \dabc~ core system.
 
 \item It exports a dedicated \class{dabc::StatusParameter} that is
-synchronized with the value of the core state machine in \func{ParameterEvent()}. 
+synchronized with the value of the state machine in \func{ParameterEvent()}. 
 This parameter is required to display the state of the node on the generic
 Java GUI.
 

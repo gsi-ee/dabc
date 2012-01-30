@@ -141,12 +141,11 @@ Here is an example how the output file for a generator module can be configured:
 \begin{small}
 \begin{verbatim}
    ...
-   dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator");
-   dabc::Command* cmd = 
-      new dabc::CmdCreateTransport("Generator/Output", mbs::typeLmdOutput);
-   cmd->SetStr(mbs::xmlFileName, "output.lmd");
-   cmd->SetInt(mbs::xmlSizeLimit, 100);
-   dabc::mgr()->Execute(cmd);
+   dabc::mgr.CreateModule("mbs::GeneratorModule", "Generator");
+   dabc::CmdCreateTransport cmd("Generator/Output", mbs::typeLmdOutput);
+   cmd.SetStr(mbs::xmlFileName, "output.lmd");
+   cmd.SetInt(mbs::xmlSizeLimit, 100);
+   dabc::mgr.Execute(cmd);
    ...
 \end{verbatim}
 \end{small}
@@ -160,16 +159,14 @@ for a combiner module:
 \begin{small}
 \begin{verbatim}
    ...
-   dabc::Command* cmd = 
-      new dabc::CmdCreateModule("mbs::CombinerModule", "Combiner");
-   cmd->SetInt(dabc::xmlNumInputs, 3);
-   dabc::mgr()->Execute(cmd);
+   dabc::CmdCreateModule cmd("mbs::CombinerModule", "Combiner");
+   cmd.SetInt(dabc::xmlNumInputs, 3);
+   dabc::mgr.Execute(cmd);
    
    for (unisgned n=0;n++;n<3) {
-      cmd = new dabc::CmdCreateTransport(
-         FORMAT(("Combiner/Input%u",n)), mbs::typeLmdInput);
-      cmd->SetStr(mbs::xmlFileName, FORMAT(("input%u_*.lmd",n)));
-      dabc::mgr()->Execute(cmd);
+      dabc::CmdCreateTransport cmd(FORMAT(("Combiner/Input%u",n)), mbs::typeLmdInput);
+      cmd.SetStr(mbs::xmlFileName, FORMAT(("input%u_*.lmd",n)));
+      dabc::mgr.Execute(cmd);
    }   
    ...
 \end{verbatim}
@@ -188,14 +185,14 @@ main idea of these classes is to handle socket operations (creation, connection,
 
 Class \class{dabc::SocketThread} organises the event loop
 that handles such event signals produced by a socket.
-Each system socket is assigned to an instance of \class{dabc::SocketProcessor}. 
+Each system socket is assigned to an instance of \class{dabc::SocketWorker}. 
 The actual socket event processing is then done in virtual methods
-of class \class{dabc::SocketProcessor} which has several subclasses for different 
+of class \class{dabc::SocketWorker} which has several subclasses for different 
 kinds of sockets: 
 \bbul
-\item  - \class{dabc::SocketServerProcessor} - server socket for connection  
-\item  - \class{dabc::SocketClientProcessor} - client socket for connection  
-\item  - \class{dabc::SocketIOProcessor} - send/recv handling  
+\item  - \class{dabc::SocketServerWorker} - server socket for connection  
+\item  - \class{dabc::SocketClientWorker} - client socket for connection  
+\item  - \class{dabc::SocketIOWorker} - send/recv handling  
 \ebul
 
 One can use a \class{dabc::SocketThread} together with other kind of processors
@@ -210,7 +207,7 @@ advance (see MBS generator example in section \ref{exa_mbs_eventsgenerator}).
 Class \class{mbs::ServerTransport} provides 
 the functionalities of an {\em MBS transport server} or and  
 {\em MBS stream server} in \dabc~. 
-This is also a good example of the \class{dabc::SocketProcessor} classes.
+This is also a good example of the \class{dabc::SocketWorker} classes.
 
 \class{mbs::ServerTransport} is based on the generic class \class{dabc::Transport} and 
 uses internally  two kinds of sockets: one socket for the connection handling,
@@ -246,7 +243,7 @@ the following code should be executed:
 \begin{small}
 \begin{verbatim}
   ...
-  dabc::mgr()->CreateTransport("Generator/Output", 
+  dabc::mgr.CreateTransport("Generator/Output", 
                   mbs::typeServerTransport, "GeneratorThrd");
   ...
 \end{verbatim}
@@ -259,11 +256,10 @@ command \comm{dabc::CmdCreateTransport} which may wrap such values:
 \begin{small}
 \begin{verbatim}
   ...
-  dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", 
-                         mbs::typeServerTransport, "MbsTransThrd");
-  cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
-  cmd->SetInt(mbs::xmlServerPort, mbs::DefaultServerPort(mbs::StreamServer) + 5);
-  dabc::mgr()->Execute(cmd);
+  dabc::CmdCreateTransport cmd("Generator/Output", mbs::typeServerTransport, "MbsTransThrd");
+  cmd.SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
+  cmd.SetInt(mbs::xmlServerPort, mbs::DefaultServerPort(mbs::StreamServer) + 5);
+  dabc::mgr.Execute(cmd);
   ...
 \end{verbatim}
 \end{small}
@@ -294,12 +290,12 @@ To create client connection, the following piece of code should be used:
 \begin{small}
 \begin{verbatim}
   ...
-  dabc::Command* cmd = new dabc::CmdCreateTransport("Combiner/Input0", 
+  dabc::CmdCreateTransport cmd("Combiner/Input0", 
                          mbs::typeClientTransport, "MbsTransThrd");
-  cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
-  cmd->SetStr(mbs::xmlServerName, "lxi010.gsi.de");
-  cmd->SetInt(mbs::xmlServerPort, mbs::DefaultServerPort(mbs::StreamServer) + 5);
-  dabc::mgr()->Execute(cmd);
+  cmd.SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
+  cmd.SetStr(mbs::xmlServerName, "lxi010.gsi.de");
+  cmd.SetInt(mbs::xmlServerPort, mbs::DefaultServerPort(mbs::StreamServer) + 5);
+  dabc::mgr.Execute(cmd);
   ...
 \end{verbatim}
 \end{small}
@@ -319,22 +315,17 @@ Schematically the implementation of this module looks like this:
 #include "dabc/ModuleAsync.h"
 
 class GeneratorModule : public dabc::ModuleAsync {
-protected:
-   dabc::PoolHandle*       fPool;
-   dabc::BufferSize_t      fBufferSize;
 public:
-   GeneratorModule(const char* name, dabc::Command* cmd = 0) :
+   GeneratorModule(const char* name, dabc::Command cmd = 0) :
       dabc::ModuleAsync(name, cmd)
    {
-      ...
-      fBufferSize = GetCfgInt(dabc::xmlBufferSize, 16384, cmd);
-      fPool = CreatePoolHandle("Pool", fBufferSize, 10);
-      CreateOutput("Output", fPool, 5);
+      CreatePoolHandle("Pool");
+      CreateOutput("Output", Pool(), 5);
    }
 
    virtual void ProcessOutputEvent(dabc::Port* port)
    {
-      dabc::Buffer* buf = fPool->TakeBuffer(fBufferSize);
+      dabc::Buffer buf = Pool()->TakeBuffer();
       FillRandomBuffer(buf);
       port->Send(buf);
    }
@@ -382,8 +373,8 @@ and used by both a module and a transport object.
 extern "C" void InitMbsGenerator()
 {
   dabc::mgr()->CreateThread("GenerThrd", dabc::typeSocketThread);
-  dabc::mgr()->CreateModule("mbs::GeneratorModule", "Generator", "GenerThrd");
-  dabc::mgr()->CreateTransport("Generator/Output", mbs::typeServerTransport, "GenerThrd");
+  dabc::mgr.CreateModule("mbs::GeneratorModule", "Generator", "GenerThrd");
+  dabc::mgr.CreateTransport("Generator/Output", mbs::typeServerTransport, "GenerThrd");
 }
 \end{verbatim}
 \end{small}

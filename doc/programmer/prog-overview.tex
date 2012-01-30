@@ -429,7 +429,7 @@ The most important classes of the \dabc~ core system are described in the follow
 %\begin{compactdesc}
 \begin{description}
 
-\item[\class{dabc::Basic}] : \index{Core classes !dabc::Basic} The base class for all objects to be kept in \dabc~ collections (e.~g.~ \class{dabc::Folder}).
+\item[\class{dabc::Object}] : \index{Core classes !dabc::Object} The base class for all objects to be kept in \dabc~ collections.
 
 \item[\class{dabc::Command}] : \index{Core classes !dabc::Command}
 Represents a command object. A command 
@@ -449,7 +449,7 @@ Represents a command object. A command
 \item[\class{dabc::Parameter}] :  \index{Core classes !dabc::Parameter} 
 Parameter object that may be monitored or 
    changed from control system. Any \\
-   \class{dabc::WorkingProcessor} implementation 
+   \class{dabc::Worker} implementation 
    may register its own parameters. Parameter can be used for configuration of object 
    at creation time (via configuration file), monitoring of object properties in GUI or
    manipulating of object properties at runtime, changing parameter values via controlling 
@@ -471,22 +471,22 @@ Parameter object that may be monitored or
 \item[\class{dabc::WorkingThread}] : \index{Core classes !dabc::WorkingThread} 
 An object of this class represents a system thread. 
    The working thread may execute one or several jobs; each job is defined 
-   by an instance of \class{dabc::WorkingProcessor}. The working thread waits on an 
+   by an instance of \class{dabc::Worker}. The working thread waits on an 
    event queue (by means of pthread condition) until an event for any 
    associated working processor is received; then the corresponding event action is 
    executed by calling \func{ProcessEvent()} of the corresponding working processor.
 
-\item[\class{dabc::WorkingProcessor}] :  \index{Core classes !dabc::WorkingProcessor} 
+\item[\class{dabc::Worker}] :  \index{Core classes !dabc::Worker} 
    Represents a runnable job. Each 
    working processor is assigned to one working thread instance; 
    this thread can serve several working processors in parallel.
    In a special mode a processor can also run its explicit main loop.  
-   \class{dabc::WorkingProcessor} is a subclass of \class{dabc::CommandReceiver}, 
+   \class{dabc::Worker} is a subclass of \class{dabc::CommandReceiver}, 
    i.e. a working processor may receive and execute commands in its scope. 
 
 \item[\class{dabc::Module}] : \index{Core classes !dabc::Module} 
 A processing unit for one "step" of the dataflow. 
-   Is subclass of \class{dabc::WorkingProcessor}, i.~e.~ the module may be run by an own 
+   Is subclass of \class{dabc::Worker}, i.~e.~ the module may be run by an own 
    dedicated thread, or a working thread may execute several modules that 
    are assigned to it. A module has ports as connectors for the 
    incoming and outgoing data flow.   
@@ -533,20 +533,20 @@ As an example, \class{dabc::NetworkTransport} implements the transport between m
 \item[\class{dabc::Device}] : \index{Core classes !dabc::Device}
 Device class used for creation and configuration of transport objects.
 Is a subclass of \\
-\class{dabc::WorkingProcessor}. 
+\class{dabc::Worker}. 
    The \class{dabc::Transport} and \class{dabc::Device} base classes have various implementations:
 \begin{compactitem}[$\bullet$]
-\item \class{dabc::LocalTransport} and \class{dabc::LocalDevice} for memory transport within same process
+\item \class{dabc::LocalTransport} for memory transport within same process
 \item \class{dabc::SocketTransport} and \class{dabc::SocketDevice} for tcp/ip sockets
 \item \class{verbs::Transport} and \class{verbs::Device} for InfiniBand {\bf verbs} connection
 \item \class{pci::Transport} and \class{pci::BoardDevice} for DMA I/O from PCI or PCIe boards  
 \end{compactitem}
 \item[\class{dabc::Manager}] :  \index{Core classes !dabc::Manager}
 Is manager of everything in DABC. There is the only instance of manager in the process scope,
-availible via \func{dabc::mgr()} or \func{dabc::Manager::Instance()} functions. 
+availible via \func{dabc::mgr()} or \func{dabc::Manager::mgr} functions. 
 It combines different roles: 
 \begin{compactenum}
-      \item It is a manager of all \class{dabc::Basic} objects in the process scope. 
+      \item It is a manager of all \class{dabc::Object} objects in the process scope. 
       Objects (e.~g.~ modules, devices, parameters) are kept 
       in a folder structure and can be identified by full path name. 
       \item It defines the interface to the controls system (state machine, 

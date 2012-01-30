@@ -243,7 +243,7 @@ for batch mode
 \item[init] init script, which should be called before dabc application starts
 \item[test] test script, which is called when test sequence is run by run.sh script
 \item[timeout] ssh timeout 
-\item[debugger] argument to run with a debugger. Value should be like "gdb -x run.txt --args", where file run.txt should contain commands "r bt q".
+\item[debugger] argument to run with a debugger. Value should be like "gdb -x run.txt --args", where file run.txt should contain commands "r bt q". Special value "true" starts gdb with prepared commands list, "false" disables debugger.
 \item[workdir] directory where \dabc\ executable should start
 \item[debuglevel] level of debug output on console, default 1
 \item[logfile] filename for log output, default none  
@@ -252,7 +252,6 @@ for batch mode
 \item[DIM\_DNS\_PORT] port number of DIM dns server, used by DIM controls implementation
 \item[cpuinfo] instantiate \class{dabc::CpuInfoModule} to show CPU and memory usage information. 
 Value must be >= 0. If 0, only two parameters are created, if 15 - several ratemeters will be created.    
-\item[parslevel] level of pars visibility for control system, default 1 
 \edes
 
 \lsubsection[Variables]{user-setup-variables}{Variables}

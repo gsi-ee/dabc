@@ -257,8 +257,7 @@ bool UserApplication::CreateAppModules()
 One can call \func{CreateMemoryPool()} method several times to create 
 memory {\em blocks} for different buffer sizes. As alternative, one can create and 
 configure a command object \comm{dabc::CmdCreateMemoryPool} 
-where all possible settings can be 
-done via following static methods:
+where all possible settings can be done via following methods:
 \bbul
 \item[\func{AddMem()}] add configuration for specified buffer size 
 \item[\func{AddRef()}] add configuration for number of references and header sizes 
@@ -272,25 +271,25 @@ For instance, one can do the following:
 bool UserApplication::CreateAppModules()
 {
    ...
-   dabc::Command* cmd = new dabc::CmdCreateMemoryPool("WorkPool");
-   dabc::CmdCreateMemoryPool::AddMem(cmd, 8192, 100);  // 8K bufs
-   dabc::CmdCreateMemoryPool::AddMem(cmd, 2048, 500);  // 2K bus
-   dabc::CmdCreateMemoryPool::AddRef(cmd, 2048, 64);   // refs with 64 B headers
-   dabc::CmdCreateMemoryPool::AddCfg(cmd, true); // set fixed layout
-   dabc::mgr()->Execute(cmd);
+   dabc::CmdCreateMemoryPool cmd("WorkPool");
+   cmd.AddMem(8192, 100);  // 8K bufs
+   cmd.AddMem(2048, 500);  // 2K bus
+   cmd.AddRef(2048, 64);   // refs with 64 B headers
+   cmd.AddCfg(true); // set fixed layout
+   dabc::mgr.Execute(cmd);
    ...
 }
 \end{verbatim}     
 \end{small}
 
 All parameters, configured for the command, can be set up in the configuration file.
-In this case one should just call {\tt dabc::mgr()->CreateMemoryPool("WorkPool")}. 
+In this case one should just call {\tt dabc::mgr.CreateMemoryPool("WorkPool")}. 
 
 
 \section{Threads organization}
 \label{prog_services_threads}
 Class \class{dabc::WorkingThread} organizes a working loop and performs execution of
-runnable jobs, represented by \class{dabc::WorkingProcessor} class.
+runnable jobs, represented by \class{dabc::Worker} class.
 
 
 \subsection{Working loop}
@@ -300,22 +299,22 @@ The implementation of \class{dabc::WorkingThread} is based on the
  
 The main task of \class{dabc::WorkingThread} is to wait for events (using \func{pthread\_cond\_wait()} function),
 and then execute the event callback in the corresponding
-\class{WorkingProcessor}. 
+\class{Worker}. 
 This functionality is implemented  in \func{dabc::WorkingThread::MainLoop()}.
  
-Usually events are produced by calling \func{dabc::WorkingProcessor::FireEvent()} 
+Usually events are produced by calling \func{dabc::Worker::FireEvent()} 
 method; this method can be invoked from any thread. All events are queued and a
 {\em pthread condition} is fired in this case. 
 The thread, waiting for this condition, is woken up, and the
-next event from the queue will be delivered to the \class{WorkingProcessor} by calling virtual method \func{dabc::WorkingProcessor::ProcessEvent()}. 
+next event from the queue will be delivered to the \class{Worker} by calling virtual method \func{dabc::Worker::ProcessEvent()}. 
 Here any user-specific code can be implemented.
 
 Another task of \class{dabc::WorkingThread} consists in \strong{timeout handling}. 
-Some \class{WorkingProcessors} 
+Some \class{Workers} 
 may require to be invoked not only by events, but also after specified time intervals.
 
-Method \func{dabc::WorkingProcessor::ActivateTimeout()} 
-requests the thread to execute \\ \func{dabc::WorkingProcessor::ProcessTimeout()}
+Method \func{dabc::Worker::ActivateTimeout()} 
+requests the thread to execute \\ \func{dabc::Worker::ProcessTimeout()}
 after the specified time interval. This virtual method may also be implemented
 by the user.  
  
@@ -324,10 +323,10 @@ by the user.
 \label{prog_services_threads_sockets}
 The POSIX sockets library provides the  handling of all socket operations in 
 an event-like manner, using the \func{select()} function. Such approach was used in  
-\class{dabc::SocketThread} and \class{dabc::SocketProcessor} classes to 
+\class{dabc::SocketThread} and \class{dabc::SocketWorker} classes to 
 handle several sockets in parallel from a single thread.
 
-With each \class{dabc::SocketProcessor} a socket descriptor is associated which can
+With each \class{dabc::SocketWorker} a socket descriptor is associated which can
 deliver events like: "can read next portion of data from socket", 
 "sending over socket will not block", "socket is broken", and so on.
 The main loop of \class{dabc::SocketThread} is modified such, that,
@@ -339,7 +338,7 @@ in a non-blocking manner, i.~e.~ one can run several socket
 operations in parallel with one thread.
 
 At the same time, \class{dabc::SocketThread} class allows to run normal jobs,
-implemented with base class \class{dabc::WorkingProcessor}. 
+implemented with base class \class{dabc::Worker}. 
 So within a \class{SocketThread} one can mix socket processors (like 
 some \class{Transports}) with normal processors (like \class{modules}).  
 
@@ -348,7 +347,7 @@ A similar approach was used to support the {\em InfiniBand verbs} API in \dabc.
 
 \subsection{Mutex usage}
 \label{prog_services_threads_mutex}
-All methods of \class{dabc::WorkingThread} and \class{dabc::WorkingProcessor} are thread
+All methods of \class{dabc::WorkingThread} and \class{dabc::Worker} are thread
 safe (except for those started with underscore "\_" symbol). 
 So user code could avoid mutexes completely. But if data is shared between
 \class{Processors} which run in different threads, one should use mutexes though. 
@@ -434,7 +433,7 @@ To instantiate a command, one should do:
 \begin{verbatim}
 ...
 dabc::Command* cmd = new dabc::Command("UserCommand");
-cmd->SetInt("UserArg", 5);
+cmd.SetInt("UserArg", 5);
 ...
 \end{verbatim}     
 \end{small}
@@ -464,16 +463,16 @@ A typical implementation of this method looks like:
 
 \begin{small}
 \begin{verbatim}
-int UserModule::ExecuteCommand(dabc::Command* cmd)
+int UserModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd->IsName("UserCommand")) {
-      int v = cmd->GetInt("UserArg", 0);
+   if (cmd.IsName("UserCommand")) {
+      int v = cmd.GetInt("UserArg", 0);
       DOUT1(("Execute UserCommand with argument = %d", v));
       return dabc::cmd_true;
    } else
-   if (cmd->IsName("UserGetCommand")) {
+   if (cmd.IsName("UserGetCommand")) {
       DOUT1(("Execute UserGetCommand without arguments"));
-      cmd->SetInt("UserRes", fCounter);
+      cmd.SetInt("UserRes", fCounter);
       return dabc::cmd_true;
    } 
       
@@ -493,12 +492,12 @@ used by another working thread assigned to the \class{CommandReceiver} object.
 In this case all command execution code had to protect these resources
 by mutex locks (see section \ref{prog_services_threads_mutex}), which
 would decrease performance. Because of this, class
-\class{dabc::WorkingProcessor} inherits from \class{dabc::CommandReceiver},
+\class{dabc::Worker} inherits from \class{dabc::CommandReceiver},
 and implements several virtual methods (like \func{IsExecutionThread()}, \func{Submit()}) 
 which are necessary to deliver and execute a command in the thread context of the
 assigned \class{WorkingThread}.
 The user \strong{must not reimplement} these methods again in the derived classes.
-In the \dabc~ subclasses of \class{dabc::WorkingProcessor}, like \class{dabc::Module}, \class{dabc::Application}, the custom commands will be executed 
+In the \dabc~ subclasses of \class{dabc::Worker}, like \class{dabc::Module}, \class{dabc::Application}, the custom commands will be executed 
 in the appropriate thread context.  
 
 With method \func{Execute()} of class \class{dabc::CommandReceiver} one can execute 
@@ -509,18 +508,22 @@ Method \func{Execute()} will block
 until the command is executed - this is called the  \strong{synchronous} 
 mode of command execution. Optionally, one can set a timeout - how long the calling thread will wait until the command is executed. 
 
-Method \func{Execute()} can only check if a command is executed succesfully or not,
-as it has a boolean return value. There are advanced methods \func{ExecuteInt()}, and
-\func{ExecuteStr()}, which return the result of a command execution as integer, or string value, resp. They will deliver the final value of the command parameter which is specified
-by name in the second function argument.
+Method \func{Execute()} can be used not only for command execution,
+but also for access to result parameters. First of all, one can get result of command execution
+as integer. Any non-negative value are considered as result of execution (0 == dabc::cmd_false as error)
+and (1 == dabc::cmd_true as ok). Command execution can return any positive value as normal result of execution.
+It is also possible to provide any number of result parameters via command itself.
 For example, the result of command "UserGetCommand" execution from the previous 
 example one can obtain like this:  
 
 \begin{small}
 \begin{verbatim}
 ...
-dabc::Module* m = dabc::mgr()->FindModule("Module1");
-int res = m->ExecuteInt("UserGetCommand", "UserRes");
+dabc::ModuleRef m = dabc::mgr.FindModule("Module1");
+dabc::Command cmd("UserGetCommand");
+if (m.Execute(cmd)) {
+   int res = cmd.GetInt("UserRes");
+}
 ...
 \end{verbatim}     
 \end{small}
@@ -534,6 +537,8 @@ from the return value of \func{Submit()}.
 
 
 \subsection{Command client}
+
+FIXME: This is out-of-date part, should be rewritten
 
 To really work with asynchronous command execution, one should be able to analyse the 
 result of such commands though. This can be done with class \class{dabc::CommandClient}.
@@ -556,10 +561,10 @@ different threads, the commands will be executed \strong{in parallel}. For insta
 ...
 dabc::CommandClient cli;
 for (unsigned n=0; n<10; n++) {
-   dabc::Module* m = dabc::mgr()->FindModule(FORMAT(("Module%u",n)));
-   dabc::Command* cmd = new dabc::Command("UserCommand");
+   dabc::ModuleRef m = dabc::mgr.FindModule(FORMAT(("Module%u",n)));
+   dabc::Command cmd("UserCommand");
    cli.Assign(cmd);
-   m->Submit(cmd);
+   m.Submit(cmd);
 }
 bool res = cli.WaitCommands();
 ...
@@ -589,6 +594,8 @@ DOUT1(("One has %u commands in replyed queue", cli.ReplyedCmds().Size()));
 \end{small}
 
 
+FIXME: This is out-of-date part, should be rewritten
+
 One more use case of the command client interface is the \class{dabc::CommandsSet}. 
 This class inherits from \class{dabc::CommandClientBase},
 the abstract base class for all commands clients. 
@@ -599,16 +606,16 @@ in one module should be distributed to two other modules, one should do:
    
 \begin{small}
 \begin{verbatim}
-int UserModule::ExecuteCommand(dabc::Command* cmd)
+int UserModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd->IsName("MasterCommand")) {
-      dabc::CommandsSet* set = new dabc::CommandsSet(cmd);
+   if (cmd.IsName("MasterCommand")) {
+      dabc::CommandsSet* set = new dabc::CommandsSet(thread());
       
-      dabc::Module* m1 = dabc::mgr()->FindModule("Module1");
-      m1->Submit(set->Assign(new dabc::Command("UserCommand1")); 
+      dabc::ModuleRef m1 = dabc::mgr.FindModule("Module1");
+      m1.Submit(set->Assign(dabc::Command("UserCommand1")); 
 
-      dabc::Module* m2 = dabc::mgr()->FindModule("Module2");
-      m2->Submit(set->Assign(new dabc::Command("UserCommand2")); 
+      dabc::ModuleRef m2 = dabc::mgr.FindModule("Module2");
+      m2.Submit(set->Assign(dabc::Command("UserCommand2")); 
 
       dabc::CommandsSet::Completed(set, 10.);
       

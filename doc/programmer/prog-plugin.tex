@@ -29,7 +29,8 @@ let's consider components which can be used with both types of the module.
 
 \subsection{Pool handles}
 
-Class \class{dabc::PoolHandle} should be used in any module to communicate with \class{dabc::MemoryPool}.
+Class \class{dabc::PoolHandle} should be used in any module 
+to communicate with \class{dabc::MemoryPool}.
 By creating a pool handle with method \func{CreatePoolHandle()}, 
 the module declares that it 
 wants to use buffers from the memory pool as specified by name. 
@@ -38,11 +39,9 @@ A pool handle can be accessed with method \func{dabc::Module::FindPool()} via na
 or with method \func{dabc::Module::Pool()} via handle number (started from 0).
 
 If a pool of the given name does not exist, 
-it will be created automatically at the 
-time of the first request.   
-Buffer size and the number of buffers, 
-which are specified in the \func{CreatePoolHandle()} call,
-play a role in this case only.
+it will be created automatically at the time of the first request.
+When pool created automatically, parameters taken from configuration file
+or from default values.
 
 
 \subsection{Ports}
@@ -99,9 +98,9 @@ Most actions in \dabc~ are performed with help of commands.
 Here is an example how command execution can look like:
 \begin{small}
 \begin{verbatim}
-int UserModule::ExecuteCommand(dabc::Command* cmd) 
+int UserModule::ExecuteCommand(dabc::Command cmd) 
 {
-   if (cmd->IsName("UserPrint")) {
+   if (cmd.IsName("UserPrint")) {
       DOUT1(("Printout from UserModule"));
       return dabc::cmd_true;
    }
@@ -114,11 +113,11 @@ This is invoked somewhere in the code of another component:
 \begin{small}
 \begin{verbatim}
 ...
-dabc::Module* m = dabc::mgr()->FindModule("MyModule"); 
-dabc::Command* cmd = new dabc::Command("UserPrint");
-m->Execute(cmd);
+dabc::ModuleRef m = dabc::mgr.FindModule("MyModule"); 
+dabc::Command cmd("UserPrint");
+m.Execute(cmd);
 // again, but in short form
-m->Execute("UserPrint");
+m.Execute("UserPrint");
 ...
 \end{verbatim}
 \end{small}
@@ -137,9 +136,7 @@ remotely and can be invoked from a controls GUI:
 UserModule::UserModule(const char* name) : dabc::ModuleSync(name) 
 {
    ...
-   dabc::CommandDefinition* def = NewCmdDef("UserPrint");
-   def->AddArgument("Level", dabc::argInt, false); // optional argument
-   def->Register(true);
+   CreateCmdDef("UserPrint").AddArg("Level", "int", false); // optional argument
 }
 \end{verbatim}
 \end{small}
@@ -193,7 +190,7 @@ class RepeaterSync : public dabc::ModuleSync {
 public:
    RepeaterSync(const char* name) : dabc::ModuleSync(name)
    {
-      CreatePoolHandle("Pool", 2048, 1);
+      CreatePoolHandle("Pool");
       CreateInput("Input", Pool(), 5);
       CreateOutput("Output0", Pool(), 5);
       CreateOutput("Output1", Pool(), 5);
@@ -282,7 +279,7 @@ class RepeaterAsync : public dabc::ModuleAsync {
 public:
    RepeaterAsync(const char* name) : dabc::ModuleAsync(name)
    {
-      CreatePoolHandle("Pool", 2048, 1);
+      CreatePoolHandle("Pool");
       CreateInput("Input", Pool(), 5);
       CreateOutput("Output0", Pool(), 5);
       CreateOutput("Output1", Pool(), 5);
@@ -292,7 +289,7 @@ public:
    virtual void ProcessInputEvent(dabc::Port* port) 
    {
       while (Input()->CanRecv() && Output(fCnt % 2)->CanSend()) {
-         dabc::Buffer* buf = Input()->Recv();
+         dabc::Buffer buf = Input()->Recv();
          Output(fCnt++ % 2)->Send(buf);
       }
    }
@@ -300,7 +297,7 @@ public:
    virtual void ProcessOutputEvent(dabc::Port* port) 
    {
       while (Input()->CanRecv() && Output(fCnt % 2)->CanSend()) {
-         dabc::Buffer* buf = Input()->Recv();
+         dabc::Buffer buf = Input()->Recv();
          Output(fCnt++ % 2)->Send(buf);
       }
    }
@@ -446,7 +443,7 @@ is created and connected to the specified \class{Port}.
 This factory method is invoked by the framework when the device is connected to 
 a module port. This is usually specified in the user application by calls
 of\\ 
-{\tt dabc::mgr()->CreateTransport()}, or {\tt dabc::mgr()->ConnectPorts()},
+{\tt dabc::mgr.CreateTransport()}, or {\tt dabc::mgr.Connect()},
 resp.  
 
 Similar to the \class{Module} functionality, the \class{Device} class
@@ -465,9 +462,6 @@ It organizes a queue which is shared between both connected ports,
 and performs the movement of \class{dabc::Buffer} pointer through this queue.
 If corresponding modules run in the same thread, 
 \class{LocalTransport} works without any mutex locking.
-
-To manage the \class{LocalTransport}, the \class{dabc::Manager} always has instance of \class{dabc::LocalDevice} class.
-It can be accessed via \func{dabc::mgr()->FindLocalDevice()} call. 
 
 To connect two local ports, one should call:
 \begin{small}
@@ -525,9 +519,10 @@ and connected to the ports "MyModule/Input", and  "MyModule/Output", resp.
 Exactly for this kind of actions the \dabc~ state machine has 
 two transition commands "DoConfigure" and "DoEnable" - first command used to
 create necessary components and second to connect them together. 
-Accordingly, class
-\class{dabc::Application} has two methods \func{CreateAppModules()} and 
-\func{ConnectAppModules()} (see \ref{prog_plugin_applicaton}).  
+Class \class{dabc::Application} has method \func{CreateAppModules()}, where
+modules should be created and connections should be configured. During second step
+requested connections will be created (by connection manager)
+ (see \ref{prog_plugin_applicaton}).  
 
 
 \subsection{Data transport}
@@ -603,16 +598,13 @@ should be initialised once before it can be used for data transport.
 
 % Instantiation of user written \class{DataTransport} should be done via factory method
 % \func{CreateTransport()} (see \ref{prog_plugin_factory}). 
-It is not always necessary to create a user-specific \class{Device} for a user written \class{DataTransport}, since the standard \class{LocalDevice}
-can be used if it is only required as owner for the transport objects.
-In this case, the factory method \func{CreateTransport()} 
-should be provided  already in the user \class{Factory} (see section \ref{prog_plugin_factory}). 
-
+It is not necessary to create a user-specific \class{Device} 
+for a user written \class{DataTransport}. 
 However, some user implementations of \class{DataTransport} may require
 services of a corresponding \class{Device} though. In this
 case, the user should implement a \class{Device} that
-provides the factory method \func{CreateTransport()} (see section \ref{prog_plugin_device_device}). This can instantiate the
-\class{DataTransport} with a back reference to the responsible \class{Device}. 
+provides the factory method \func{CreateTransport()} (see section \ref{prog_plugin_device_device}). 
+This can instantiate the \class{DataTransport} with a back reference to the responsible \class{Device}. 
 
 
 
@@ -679,8 +671,6 @@ Class \class{dabc::Application} already has default implementation for
 
 \bdes
 \item[\func{CreateAppModules()}] - creates all necessary application components
-\item[\func{ConnectAppModules()}] - activity to connect with remote nodes or  
-\item[\func{IsAppModulesConnected()}] - check if connection is already performed  
 \item[\func{BeforeAppModulesStarted()}] - optional activity before modules are started 
 \item[\func{AfterAppModulesStopped()}] - optional activity after modules are stopped
 \item[\func{BeforeAppModulesDestroyed()}] - optional call before modules are destroyed
@@ -765,11 +755,10 @@ this command as optional argument). For instance:
 \begin{small}
 \begin{verbatim}
 ...
-dabc::Command* cmd = new dabc::CmdCreateModule("mbs::GeneratorModule", 
-                                               "Generator");
-cmd->SetInt("NumSubevents", 5);
-cmd->SetInt("SubeventSize", 64);
-dabc::mgr()->Execute(cmd);
+dabc::CmdCreateModule cmd("mbs::GeneratorModule", "Generator");
+cmd.SetInt("NumSubevents", 5);
+cmd.SetInt("SubeventSize", 64);
+dabc::mgr.Execute(cmd);
 ...
 \end{verbatim}     
 \end{small}
