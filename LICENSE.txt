@@ -1,13 +1,11 @@
---------------------------------------------------------------
-         The Data Acquisition Backbone Core 
--------------------------------------------------------------
-Copyright (C) 2009- 
+----------------------------------------------------------------
+           The Data Acquisition Backbone Core 
+----------------------------------------------------------------
+Copyright (C) 2009 -      
 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
-Planckstr. 1
-64291 Darmstadt
-Germany
+Planckstr. 1, 64291 Darmstadt, Germany
 Contact:  http://dabc.gsi.de
----------------------------------------------------------------
+----------------------------------------------------------------
 DISCLAIMER:
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -18,6 +16,4 @@ This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
 MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details (http://www.gnu.org).
----------------------------------------------------------------
-
-
+----------------------------------------------------------------

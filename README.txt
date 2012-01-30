@@ -1,12 +1,10 @@
 --------------------------------------------------------------
          The Data Acquisition Backbone Core 
-         DABC Release v1.1.0  (25-January-2011)
+         DABC Release v1.9.1  (25-January-2011)
 -------------------------------------------------------------
-Copyright (C) 2009- 
+Copyright (C) 2009 -      
 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
-Planckstr. 1
-64291 Darmstadt
-Germany
+Planckstr. 1, 64291 Darmstadt, Germany
 Contact:  http://dabc.gsi.de
 ------------------------------------------------------------
 Authors: Joern Adamczewski-Musch      
@@ -28,49 +26,38 @@ GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
 This package was tested on:
-    Debian 3.1 woody (32 bit and AMD 64bit)
-    Debian 4.0 Etch (32 bit & 64 bit)
     Debian 5.0 Lenny (32 bit & 64 bit)
-    SuSe 11.1, 11.2, 11.3 (64bit)
-    compilers: gcc 3.3.5, gcc 4.3.x, gcc 4.4.x 
+    SuSe 11.2, 11.4, 12.1 (64bit)
+    compilers: gcc 4.3.2, gcc 4.4.x 
+
   
 INSTALLATION:
 
 1. Unpack this DABC distribution in the future DABC System directory,
-  e.g. /usr/local/pub/dabc 
-  ("cd /usr/local/pub/dabc; tar zxvf dabc.tar.gz")
+   e.g. /usr/local/pub/dabc 
+   ("cd /usr/local/pub/dabc; tar zxvf dabc.tar.gz")
 
-2. Edit your dabclogin.sh script:
-  A template for this script is scripts/dabclogin.sh
-  Edit the DABCSYS environment according to your local installation directory
-  Edit the DIM_DNS_NODE environment according to the machine where 
-  the DIM name server will run
-  Put the script at a location in your global $PATH for later login.
-
-3. To compile DIM with Java extensions, JDK_INCLUDE variable should be set.
+2. To compile DIM with Java extensions, JDK_INCLUDE variable should be set.
    By default, $JAVA_HOME/include path is used by DABC. This means, that
    JAVA_HOME should point on JDK installation, JVM is not sufficient.
-   One can set JDK_INCLUDE explicitly in dabclogin.sh script.  
+   One can set JDK_INCLUDE explicitly before starting compilation.  
    
-4. Execute your ". dabclogin.sh" in your shell to set the environment
-  for compilation.
+3. Change to the dabc installation directory and start the build:
+   "cd $DABCSYS; make"
 
-5. Change to the dabc installation directory and start the build:
-  "cd $DABCSYS; make"
+4. After successful compilation "dabclogin" script will be generated,
+   which should be called like ". dabclogin" before dabc can be used 
 
-6. after successful compilation, you may use DABC from any shell after
-execution of ". dabclogin.sh"
+5. Use executable "dabc_run" for single node batch mode.
 
-7.use executable "dabc_run" for single node batch mode.
-
-8. For GUI controls: 
-    * Start the DIM name server _once_ on the machine you specified in 
-      the dabclogin.sh by calling "dimDns".
-    * start the dabc GUI in another shell by typing "dabc" 
+6. For DIM GUI controls: 
+    * Start the DIM name server _once_ (by typing dimDns)
+    * Specify node where name server is running with 
+      export DIM_DNS_NODE=nodename 
+    * start the dabc GUI in another shell by typing "dabc"
       (do not forget to call ". dabclogin.sh" first!)
 
-9. Read the DABC User Manual  for further information how to configure
-  the DABC and how to use the GUI!
+7. Read the DABC User Manual for further information how to configure
+   the DABC and how to use the GUI!
 
 Please contact the DABC developer team for any bug reports and wishes!
-

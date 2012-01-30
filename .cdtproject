@@ -48,21 +48,6 @@
 </profile>
 </item>
 <item id="org.eclipse.cdt.core.pathentry">
-<pathentry base-path="dabc" include="xdaq/dabc/control/include" kind="inc" path="" system="true"/>
-<pathentry base-path="dabc" include="xdaq/dabc/dataflow/include" kind="inc" path="" system="true"/>
-<pathentry base-path="dabc" include="xdaq/dabc/eventbuilder/include" kind="inc" path="" system="true"/>
-<pathentry base-path="dabc" include="xdaq/dabc/examples/dummydataflow/include" kind="inc" path="" system="true"/>
-<pathentry base-path="dabc" include="xdaq/dabc/examples/oldbenchmarks/include" kind="inc" path="" system="true"/>
-<pathentry base-path="dabc" include="xdaq/dabc/examples/pcigtb/include" kind="inc" path="" system="true"/>
-<pathentry base-path="dabc" include="xdaq/dabc/hal/busAdapter/include" kind="inc" path="" system="true"/>
-<pathentry base-path="dabc" include="xdaq/dabc/hal/examples/PCIGTB2Test/include" kind="inc" path="" system="true"/>
-<pathentry include="/usr/local/pub/debian3.1/gcc335-13/xdaq/V3.7/TriDAS/daq/xdaq/include" kind="inc" path="" system="true"/>
-<pathentry include="/usr/local/pub/debian3.1/gcc335-13/xdaq/V3.7/TriDAS/daq/xdata/include" kind="inc" path="" system="true"/>
-<pathentry include="/usr/local/pub/debian3.1/gcc335-13/xdaq/V3.7/TriDAS/daq/xgi/include" kind="inc" path="" system="true"/>
-<pathentry include="/usr/local/pub/debian3.1/gcc335-13/smixx/dim_v16r0/dim" kind="inc" path="" system="true"/>
-<pathentry kind="src" path=""/>
-<pathentry kind="out" path=""/>
-<pathentry kind="con" path="org.eclipse.cdt.make.core.DISCOVERED_SCANNER_INFO"/>
 </item>
 <item id="org.eclipse.cdt.make.core.buildtargets">
 <buildTargets>
