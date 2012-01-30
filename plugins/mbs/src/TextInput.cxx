@@ -1,16 +1,15 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
 
 #include "mbs/TextInput.h"
 
@@ -47,33 +46,32 @@ mbs::TextInput::TextInput(const char* fname, uint32_t bufsize) :
 
 mbs::TextInput::~TextInput()
 {
+   // FIXME: cleanup should be done much earlier
    CloseFile();
    if (fFilesList) {
-      delete fFilesList;
+      dabc::Object::Destroy(fFilesList);
       fFilesList = 0;
    }
    delete [] fCharBuffer; fCharBuffer = 0;
 }
 
-bool mbs::TextInput::Read_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+bool mbs::TextInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-   dabc::ConfigSource cfg(cmd, port);
-
-   fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
-   fBufferSize = cfg.GetCfgInt(dabc::xmlBufferSize, fBufferSize);
-   fDataFormat = cfg.GetCfgStr(mbs::xmlTextDataFormat, fDataFormat);
-   fNumData = cfg.GetCfgInt(mbs::xmlTextNumData, fNumData);
-   fNumHeaderLines = cfg.GetCfgInt(mbs::xmlTextHeaderLines, fNumHeaderLines);
-   fCharBufferLength = cfg.GetCfgInt(mbs::xmlTextCharBuffer, fCharBufferLength);
+   fFileName = wrk.Cfg(mbs::xmlFileName, cmd).AsStdStr(fFileName);
+   fBufferSize = wrk.Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
+   fDataFormat = wrk.Cfg(mbs::xmlTextDataFormat, cmd).AsStdStr(fDataFormat);
+   fNumData = wrk.Cfg(mbs::xmlTextNumData, cmd).AsInt(fNumData);
+   fNumHeaderLines = wrk.Cfg(mbs::xmlTextHeaderLines, cmd).AsInt(fNumHeaderLines);
+   fCharBufferLength = wrk.Cfg(mbs::xmlTextCharBuffer, cmd).AsInt(fCharBufferLength);
 
    return Init();
 }
 
 bool mbs::TextInput::Init()
 {
-	DOUT0(("File name = %s", fFileName.c_str()));
+   if (fFileName.empty()) return false;
 
-   if (fFileName.length()==0) return false;
+   DOUT0(("File name = %s", fFileName.c_str()));
 
    if (fFilesList!=0) {
       EOUT(("Files list already exists"));
@@ -95,10 +93,10 @@ bool mbs::TextInput::Init()
    }
 
    if (strpbrk(fFileName.c_str(),"*?")!=0)
-      fFilesList = dabc::Manager::Instance()->ListMatchFiles("", fFileName.c_str());
+      fFilesList = dabc::mgr()->ListMatchFiles("", fFileName.c_str());
    else {
-      fFilesList = new dabc::Folder(0, "FilesList", true);
-      new dabc::Basic(fFilesList, fFileName.c_str());
+      fFilesList = new dabc::Object(0, "FilesList", true);
+      new dabc::Object(fFilesList, fFileName.c_str());
    }
    if (fCharBufferLength < 1024) fCharBufferLength = 1024;
    fCharBuffer = new char[fCharBufferLength];
@@ -127,7 +125,7 @@ bool mbs::TextInput::OpenNextFile()
    } else
       fCurrentFileName = nextfilename;
 
-   delete fFilesList->GetChild(0);
+   fFilesList->DeleteChild(0);
 
    return res;
 }
@@ -149,7 +147,7 @@ unsigned mbs::TextInput::Read_Size()
    return fBufferSize;
 }
 
-unsigned mbs::TextInput::Read_Complete(dabc::Buffer* buf)
+unsigned mbs::TextInput::Read_Complete(dabc::Buffer& buf)
 {
 	unsigned rawdatasize = RawDataSize();
 
@@ -163,7 +161,7 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer* buf)
 
       // read next nonempty line into buffer
 
-      const char* buf = 0;
+      const char* sbuf = 0;
       do {
          if (fFile.eof())
          	if (!OpenNextFile()) return dabc::di_EndOfStream;
@@ -182,12 +180,12 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer* buf)
          	return dabc::di_Error;
          }
 
-         buf = fCharBuffer;
-         while ((*buf!=0) && ((*buf==' ') || (*buf=='\t'))) buf++;
+         sbuf = fCharBuffer;
+         while ((*sbuf!=0) && ((*sbuf==' ') || (*sbuf=='\t'))) sbuf++;
 
-         if (strlen(buf)==0) DOUT1(("Empty string eof fail = %d %d", fFile.eof(), fFile.fail()));
+         if (strlen(sbuf)==0) DOUT1(("Empty string eof fail = %d %d", fFile.eof(), fFile.fail()));
 
-      } while (strlen(buf)==0);
+      } while (strlen(sbuf)==0);
 
       unsigned filledsize = FillRawData(fCharBuffer, iter.rawdata(), rawdatasize);
       if (filledsize==0) return dabc::di_Error;
@@ -204,6 +202,8 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer* buf)
       if (fFile.eof())
       	if (!OpenNextFile()) return dabc::di_EndOfStream;
    }
+
+   buf = iter.Close();
 
    return dabc::di_Ok;
 }

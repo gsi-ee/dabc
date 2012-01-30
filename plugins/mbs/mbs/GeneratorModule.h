@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef MBS_GeneratorModule
 #define MBS_GeneratorModule
 
@@ -36,32 +36,47 @@ namespace mbs {
          bool        fIsGo4RandomFormat;
          uint32_t    fFullId; /** subevent id, if number subevents==1 and nonzero */
 
-         void   FillRandomBuffer(dabc::Buffer* buf);
+         bool        fShowInfo;   //!< enable/disable output of generator info
+
+         void   FillRandomBuffer(dabc::Buffer& buf);
 
       public:
-         GeneratorModule(const char* name, dabc::Command* cmd = 0);
+         GeneratorModule(const char* name, dabc::Command cmd = 0);
 
          virtual void ProcessOutputEvent(dabc::Port* port);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
    };
 
 
    class ReadoutModule : public dabc::ModuleAsync {
 
       public:
-         ReadoutModule(const char* name, dabc::Command* cmd = 0);
+         ReadoutModule(const char* name, dabc::Command cmd = 0);
 
          virtual void ProcessInputEvent(dabc::Port* port);
    };
 
    class TransmitterModule : public dabc::ModuleAsync {
+
+      protected:
+
+         bool  fReconnect; // indicate that module should try to reconnect input rather than stop execution
+
          void retransmit();
 
       public:
-      	TransmitterModule(const char* name, dabc::Command* cmd = 0);
+      	TransmitterModule(const char* name, dabc::Command cmd = 0);
 
          virtual void ProcessInputEvent(dabc::Port*) { retransmit(); }
 
          virtual void ProcessOutputEvent(dabc::Port*) { retransmit(); }
+
+         virtual void ProcessDisconnectEvent(dabc::Port* port);
+
+         virtual void ProcessTimerEvent(dabc::Timer* timer);
+
+         virtual void BeforeModuleStart();
    };
 
 }

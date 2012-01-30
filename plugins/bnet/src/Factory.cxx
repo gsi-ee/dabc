@@ -27,7 +27,7 @@ bnet::Factory::Factory(const char* name) :
 }
 
 
-dabc::Application* bnet::Factory::CreateApplication(const char* classname, dabc::Command* cmd)
+dabc::Application* bnet::Factory::CreateApplication(const char* classname, dabc::Command cmd)
 {
    if (strcmp(classname, xmlClusterClass)==0)
       return new bnet::ClusterApplication();
@@ -35,7 +35,7 @@ dabc::Application* bnet::Factory::CreateApplication(const char* classname, dabc:
    return dabc::Factory::CreateApplication(classname, cmd);
 }
 
-dabc::Module* bnet::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
+dabc::Module* bnet::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
 {
 
    if (strcmp(classname, "bnet::GlobalDFCModule")==0)

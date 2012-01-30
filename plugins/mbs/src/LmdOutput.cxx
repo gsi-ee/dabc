@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "mbs/LmdOutput.h"
 
 #include <string.h>
@@ -22,6 +22,7 @@
 #include "dabc/logging.h"
 #include "dabc/Buffer.h"
 #include "dabc/Manager.h"
+#include "dabc/Parameter.h"
 
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
@@ -30,72 +31,64 @@ mbs::LmdOutput::LmdOutput(const char* fname,
                           unsigned sizelimit_mb) :
    dabc::DataOutput(),
    fFileName(fname ? fname : ""),
+   fInfoName(),
+   fInfoTime(),
    fSizeLimit(sizelimit_mb),
    fCurrentFileNumber(0),
    fCurrentFileName(),
    fFile(),
    fCurrentSize(0),
-   fInfoPort(0),
-   fInfoPrefix(),
-   fLastInfoTime(dabc::NullTimeStamp)
+   fTotalSize(0),
+   fTotalEvents(0)
 {
 }
 
 mbs::LmdOutput::~LmdOutput()
 {
    Close();
-
-   // destroy info parameter
-   if (fInfoPort!=0) {
-      dabc::Command* cmd = new dabc::Command("DestroyParameter");
-      cmd->SetStr("ParName", "LmdFileInfo");
-      fInfoPort->Execute(cmd);
-      fInfoPort = 0;
-   }
 }
 
-bool mbs::LmdOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+bool mbs::LmdOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-   dabc::ConfigSource cfg(cmd, port);
+   fFileName = wrk.Cfg(mbs::xmlFileName, cmd).AsStdStr(fFileName);
+   fSizeLimit = wrk.Cfg(mbs::xmlSizeLimit, cmd).AsInt(fSizeLimit);
+   fInfoName = wrk.Cfg("InfoPar", cmd).AsStdStr();
+   fInfoTime.GetNow();
 
-   fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
-   fSizeLimit = cfg.GetCfgInt(mbs::xmlSizeLimit, fSizeLimit);
-   bool showinfo = (port!=0) && cfg.GetCfgBool(dabc::xmlShowInfo, true);
-
-   if (showinfo) {
-      dabc::Command* cmd = new dabc::Command("CreateInfoParameter");
-      cmd->SetStr("ParName", "LmdFileInfo");
-      if (port->Execute(cmd)==dabc::cmd_true) fInfoPort = port;
-
-      fInfoPrefix = fFileName;
-            // dabc::format("Port %s", port->GetFullName(dabc::mgr()).c_str());
-   }
-
-
-   ShowInfo(FORMAT(("limit:%llu", fSizeLimit)));
+   ShowInfo(dabc::format("Set file size limit:%llu", fSizeLimit));
 
    return Init();
 }
 
-void mbs::LmdOutput::ShowInfo(const char* info, int force)
+/** Method to display information from the file output
+ *  Parameter priority has following meaning:
+ *   priority = 0  normal message, will be updated every second
+ *   priority = 1  normal message will be displayed in any case
+ *   priority = 2  error message will be displayed in any case
+ */
+
+void mbs::LmdOutput::ShowInfo(const std::string& info, int priority)
 {
-   if (force==1) DOUT2((info)); else
-   if (force==2) EOUT((info));
+   if ((priority==0) && !fInfoTime.Expired(1.)) return;
 
-   if (fInfoPort) {
-      dabc::TimeStamp_t tm = TimeStamp();
+   fInfoTime.GetNow();
 
-      if ((force>0) || dabc::IsNullTime(fLastInfoTime) || (dabc::TimeDistance(fLastInfoTime, tm) > 5.)) {
-         fLastInfoTime = tm;
-
-         std::string s = fInfoPrefix;
-         s += ": ";
-         s += info;
-
-         dabc::Command* cmd = new dabc::CmdSetParameter("LmdFileInfo", s.c_str());
-         fInfoPort->Submit(cmd);
+   if (fInfoName.empty()) {
+      switch (priority) {
+         case 0:
+         case 1:
+            DOUT1((info.c_str()));
+            break;
+         case 2:
+            EOUT((info.c_str()));
+            break;
       }
+   } else {
+      dabc::Parameter par = dabc::mgr.FindPar(fInfoName);
+      par.SetStr(info);
+      if (priority>0) par.FireModified();
    }
+
 }
 
 
@@ -128,7 +121,7 @@ bool mbs::LmdOutput::Init()
 
    std::string mask = FullFileName("_*");
 
-   dabc::Folder *lst = dabc::Manager::Instance()->ListMatchFiles("", mask.c_str());
+   dabc::Object *lst = dabc::mgr()->ListMatchFiles("", mask.c_str());
 
    if (lst!=0) {
       int maxnumber = -1;
@@ -153,9 +146,9 @@ bool mbs::LmdOutput::Init()
       if (fCurrentFileNumber <= maxnumber)
          fCurrentFileNumber = maxnumber + 1;
 
-      ShowInfo(FORMAT(("start with file number %d", fCurrentFileNumber)));
+      ShowInfo(dabc::format("start with file number %d", fCurrentFileNumber));
 
-      delete lst;
+      dabc::Object::Destroy(lst);
    }
 
    return StartNewFile();
@@ -172,17 +165,15 @@ bool mbs::LmdOutput::StartNewFile()
 
    std::string fname = FullFileName(dabc::format("_%04d", fCurrentFileNumber));
 
-   fInfoPrefix = fname;
-
    if (!fFile.OpenWrite(fname.c_str(), 0)) {
-      ShowInfo(FORMAT(("cannot open file for writing, errcode %u", fFile.LastError())), 2);
+      ShowInfo(dabc::format("%s cannot open file for writing, errcode %u", fname.c_str(), fFile.LastError()), 2);
       return false;
    }
 
-   ShowInfo("create for writing");
-
    fCurrentFileName = fname;
    fCurrentSize = 0;
+
+   ShowInfo(dabc::format("%s open for writing", fCurrentFileName.c_str()), 1);
 
    return true;
 }
@@ -190,9 +181,7 @@ bool mbs::LmdOutput::StartNewFile()
 bool mbs::LmdOutput::Close()
 {
    if (fFile.IsWriteMode())
-      ShowInfo("Close file");
-
-   fInfoPrefix = fFileName;
+      ShowInfo("File closed", 1);
 
    fFile.Close();
    fCurrentFileNumber = 0;
@@ -201,26 +190,26 @@ bool mbs::LmdOutput::Close()
    return true;
 }
 
-bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
+bool mbs::LmdOutput::WriteBuffer(const dabc::Buffer& buf)
 {
-   if (!fFile.IsWriteMode() || (buf==0)) return false;
+   if (!fFile.IsWriteMode() || buf.null()) return false;
 
-   if (buf->GetTypeId() == dabc::mbt_EOF) {
+   if (buf.GetTypeId() == dabc::mbt_EOF) {
       Close();
       return false;
    }
 
-   if (buf->GetTypeId() != mbs::mbt_MbsEvents) {
-      ShowInfo(FORMAT(("Buffer must contain mbs event(s) 10-1, but has type %u", buf->GetTypeId())), 2);
+   if (buf.GetTypeId() != mbs::mbt_MbsEvents) {
+      ShowInfo(dabc::format("Buffer must contain mbs event(s) 10-1, but has type %u", buf.GetTypeId()), 2);
       return false;
    }
 
-   if (buf->NumSegments()>1) {
-      EOUT(("Segmented buffer not (yet) supported"));
+   if (buf.NumSegments()>1) {
+      ShowInfo("Segmented buffer not (yet) supported", 2);
       return false;
    }
 
-   if ((fSizeLimit > 0) && (fCurrentSize + buf->GetTotalSize() > fSizeLimit))
+   if ((fSizeLimit > 0) && (fCurrentSize + buf.GetTotalSize() > fSizeLimit))
       if (!StartNewFile()) {
          EOUT(("Cannot start new file for writing"));
          return false;
@@ -230,18 +219,31 @@ bool mbs::LmdOutput::WriteBuffer(dabc::Buffer* buf)
 
    DOUT4(("Write %u events to lmd file", numevents));
 
-   fCurrentSize += buf->GetTotalSize();
+   fCurrentSize += buf.GetTotalSize();
+   fTotalSize += buf.GetTotalSize();
 
-   std::string info;
-   info = dabc::format("written %3.1f MB", fCurrentSize/1024./1024.);
+   std::string info = fCurrentFileName;
+   size_t pos = info.rfind("/");
+   if (pos!=std::string::npos) info.erase(0, pos);
+
+   if (fTotalSize<1024*1024)
+      info+=dabc::format(" %3u kB", (unsigned) (fTotalSize/1024));
+   else if (fTotalSize<1024*1024*1024)
+      info+=dabc::format(" %3.1f MB", fTotalSize/1024./1024.);
+   else
+      info+=dabc::format(" %4.2f GB", fTotalSize/1024./1024./1024.);
+
+   fTotalEvents += numevents;
+
+   if (fTotalEvents<1000000)
+      info+=dabc::format(" %u events", (unsigned) fTotalEvents);
+   else
+      info+=dabc::format(" %8.3e events", fTotalEvents*1.);
+
    if (fSizeLimit>0)
       info += dabc::format(" (%3.1f %s)", 100./fSizeLimit*fCurrentSize, "%");
 
-   ShowInfo(info.c_str(), 0);
+   ShowInfo(info);
 
-//   ShowInfo(FORMAT(("Info anything %lld", fCurrentSize)), 0);
-
-//   return true;
-
-   return fFile.WriteEvents((mbs::EventHeader*) buf->GetDataLocation(), numevents);
+   return fFile.WriteEvents((mbs::EventHeader*) buf.SegmentPtr(0), numevents);
 }

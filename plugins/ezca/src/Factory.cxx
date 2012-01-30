@@ -46,7 +46,7 @@ ezca::Factory::Factory(const char* name) :
 {
 }
 
-dabc::Application* ezca::Factory::CreateApplication(const char* classname, dabc::Command* cmd)
+dabc::Application* ezca::Factory::CreateApplication(const char* classname, dabc::Command cmd)
 {
    if (strcmp(classname, ezca::nameReadoutAppClass)==0)
       return new ezca::ReadoutApplication();
@@ -54,7 +54,7 @@ dabc::Application* ezca::Factory::CreateApplication(const char* classname, dabc:
    return dabc::Factory::CreateApplication(classname, cmd);
 }
 
-dabc::Module* ezca::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
+dabc::Module* ezca::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
 {
    DOUT2(("ezca::Factory::CreateModule called for class:%s, module:%s", classname, modulename));
 
@@ -77,8 +77,7 @@ dabc::DataInput* ezca::Factory::CreateDataInput(const char* typ)
    return 0;
 }
 
-dabc::Device* ezca::Factory::CreateDevice(const char* classname, const char* devname, dabc::Command* cmd)
+dabc::Device* ezca::Factory::CreateDevice(const char* classname, const char* devname, dabc::Command cmd)
 {
-
    return dabc::Factory::CreateDevice(classname, devname, cmd);
 }

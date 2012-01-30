@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef VERBS_MemoryPool
 #define VERBS_MemoryPool
 
@@ -18,38 +18,48 @@
 #include "dabc/MemoryPool.h"
 #endif
 
-#include <infiniband/verbs.h>
+#ifndef VERBS_Context
+#include "verbs/Context.h"
+#endif
 
 namespace verbs {
 
-   class Device;
    class PoolRegistry;
 
    class MemoryPool : public dabc::MemoryPool {
       protected:
-         bool fUD;
-         unsigned fSendBufferOffset;
-         PoolRegistry *fReg;
-         struct ibv_recv_wr* f_rwr; // field for recieve configs, allocated dynamically
+         bool                fUD;
+         unsigned           fSendBufferOffset;
+         PoolRegistryRef      fReg;
+         struct ibv_recv_wr* f_rwr; // field for receive configs, allocated dynamically
          struct ibv_send_wr* f_swr; // field for send configs, allocated dynamically
-         struct ibv_sge* f_sge;  // memory segement description, used for both send/recv
+         struct ibv_sge*     f_sge;  // memory segment description, used for both send/recv
 
       public:
-    	  MemoryPool(Device* verbs,
-                          const char* name,
-                          int32_t number,
-                          int64_t bufsize,
-                          bool isud,
-                          bool without_wr = false);
+    	  MemoryPool(ContextRef ctx,
+                     const char* name,
+                     int32_t number,
+                     int64_t bufsize,
+                     bool isud,
+                     bool without_wr = false);
 
          virtual ~MemoryPool();
 
-         uint32_t GetLkey(dabc::BufferId_t id);
+         uint32_t GetLkey(unsigned id)
+         {
+            return fReg() ? fReg()->GetLkey(id) : 0;
+         }
 
-         struct ibv_recv_wr* GetRecvWR(dabc::BufferId_t id);
-         struct ibv_send_wr* GetSendWR(dabc::BufferId_t id, uint64_t size);
+         struct ibv_recv_wr* GetRecvWR(unsigned id);
+         struct ibv_send_wr* GetSendWR(unsigned id, uint64_t size);
 
-         void* GetSendBufferLocation(dabc::BufferId_t id);
+         void* GetSendBufferLocation(unsigned id);
+
+         bool TakeRawBuffer(unsigned& indx) { return dabc::MemoryPool::TakeRawBuffer(indx); }
+
+         /** Release raw buffer, allocated before by TakeRawBuffer */
+         void ReleaseRawBuffer(unsigned indx) { dabc::MemoryPool::ReleaseRawBuffer(indx); }
+
    };
 }
 

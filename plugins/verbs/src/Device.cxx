@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "verbs/Device.h"
 
 #include <sys/poll.h>
@@ -37,20 +37,17 @@ const char* verbs::xmlMcastAddr = "McastAddr";
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
 #include "dabc/Factory.h"
+#include "dabc/ConnectionRequest.h"
+#include "dabc/ConnectionManager.h"
 
 #include "verbs/ComplQueue.h"
 #include "verbs/QueuePair.h"
 #include "verbs/Thread.h"
 #include "verbs/Transport.h"
+#include "verbs/MemoryPool.h"
 
 const int LoopBackQueueSize = 8;
 const int LoopBackBufferSize = 64;
-
-int null_gid(union ibv_gid *gid)
-{
-   return !(gid->raw[8] | gid->raw[9] | gid->raw[10] | gid->raw[11] |
-       gid->raw[12] | gid->raw[13] | gid->raw[14] | gid->raw[15]);
-}
 
 // this boolean indicates if one can use verbs calls from different threads
 // if no, all post/recv/completion operation for all QP/CQ will happens in the same thread
@@ -64,9 +61,9 @@ namespace verbs {
 
          virtual dabc::Device* CreateDevice(const char* classname,
                                             const char* devname,
-                                            dabc::Command*);
+                                            dabc::Command cmd);
 
-         virtual dabc::WorkingThread* CreateThread(const char* classname, const char* thrdname, const char* thrddev, dabc::Command* cmd);
+         virtual dabc::Reference CreateThread(dabc::Reference parent, const char* classname, const char* thrdname, const char* thrddev, dabc::Command cmd);
    };
 
 
@@ -75,471 +72,288 @@ namespace verbs {
 
 dabc::Device* verbs::VerbsFactory::CreateDevice(const char* classname,
                                                 const char* devname,
-                                                dabc::Command*)
+                                                dabc::Command cmd)
 {
-	if (strcmp(classname, "verbs::Device")!=0) return 0;
+	if (strcmp(classname, "verbs::Device")!=0)
+	   return dabc::Factory::CreateDevice(classname, devname, cmd);
 
-	return new Device(dabc::mgr()->GetDevicesFolder(true), devname);
+	return new Device(devname);
 }
 
-dabc::WorkingThread* verbs::VerbsFactory::CreateThread(const char* classname, const char* thrdname, const char* thrddev, dabc::Command* cmd)
+dabc::Reference verbs::VerbsFactory::CreateThread(dabc::Reference parent, const char* classname, const char* thrdname, const char* thrddev, dabc::Command cmd)
 {
-   if ((classname==0) || (strcmp(classname, VERBS_THRD_CLASSNAME)!=0)) return 0;
+   if ((classname==0) || (strcmp(classname, VERBS_THRD_CLASSNAME)!=0)) return dabc::Reference();
 
    if (thrddev==0) {
       EOUT(("Device name not specified to create verbs thread"));
-      return 0;
+      return dabc::Reference();
    }
 
-   verbs::Device* dev = dynamic_cast<verbs::Device*> (dabc::mgr()->FindDevice(thrddev));
-   if (dev==0) {
+   verbs::DeviceRef dev = dabc::mgr()->FindDevice(thrddev);
+
+   if (dev.null()) {
       EOUT(("Did not found verbs device with name %s", thrddev));
-      return 0;
+      return dabc::Reference();
    }
 
-   return new verbs::Thread(dev, dabc::mgr()->GetThreadsFolder(true), thrdname);
-}
+   verbs::Thread* thrd = new verbs::Thread(parent, dev()->IbContext(), thrdname);
 
-// *******************************************************************
-
-verbs::PoolRegistry::PoolRegistry(Device* verbs, dabc::MemoryPool* pool, bool local) :
-   dabc::Basic(local ? 0 : verbs->GetPoolRegFolder(true), pool->GetName()),
-   fVerbs(verbs),
-   fPool(pool),
-   fWorkMutex(0),
-   fUsage(0),
-   fLastChangeCounter(0),
-   f_nummr(0),
-   f_mr(0),
-   fBlockChanged(0)
-{
-   if (dabc::mgr() && fPool)
-     dabc::mgr()->RegisterDependency(this, fPool);
-
-   dabc::LockGuard lock(fPool->GetPoolMutex());
-
-   // we only need to lock again pool mutex when pool can be potentially changed
-   // otherwise structure, created once, can be used forever
-   if (!fPool->IsMemLayoutFixed()) fWorkMutex = fPool->GetPoolMutex();
-
-   _UpdateMRStructure();
-}
-
-verbs::PoolRegistry::~PoolRegistry()
-{
-   DOUT3(("~PoolRegistry %s", GetName()));
-
-   if (dabc::mgr() && fPool)
-      dabc::mgr()->UnregisterDependency(this, fPool);
-
-   CleanMRStructure();
-
-   DOUT3(("~PoolRegistry %s done", GetName()));
-
-}
-
-void verbs::PoolRegistry::DependendDestroyed(dabc::Basic* obj)
-{
-   if (obj == fPool) {
-//      EOUT(("!!!!!!!!! Hard error - memory pool %s destroyed behind the scene", fPool->GetName()));
-      CleanMRStructure();
-      fPool = 0;
-      fWorkMutex = 0;
-      DeleteThis();
-   }
-}
-
-void verbs::PoolRegistry::CleanMRStructure()
-{
-   DOUT3(("CleanMRStructure %s call ibv_dereg_mr %u", GetName(), f_nummr));
-
-   for (unsigned n=0;n<f_nummr;n++)
-     if (f_mr[n] != 0) {
-        DOUT3(("CleanMRStructure %s mr[%u] = %p", GetName(), n, f_mr[n]));
-//        if (strcmp(GetName(),"TransportPool")!=0)
-           ibv_dereg_mr(f_mr[n]);
-//        else
-//           EOUT(("Skip ibv_dereg_mr(f_mr[n])"));
-        DOUT3(("CleanMRStructure %s mr[%u] = %p done", GetName(), n, f_mr[n]));
-     }
-
-   delete[] fBlockChanged; fBlockChanged = 0;
-
-   delete[] f_mr;
-   f_mr = 0;
-   f_nummr = 0;
-
-   fLastChangeCounter = 0;
+   return dabc::Reference(thrd);
 }
 
 
-void verbs::PoolRegistry::_UpdateMRStructure()
+// ____________________________________________________________________
+
+
+namespace verbs {
+
+   class ProtocolWorker : public Worker {
+      public:
+         std::string      fReqItem;
+
+         dabc::Command    fLocalCmd; //!< command which should be replied when connection established or failed
+
+         verbs::DeviceRef fDevice;
+
+         dabc::ThreadRef  fPortThrd;
+         QueuePair       *fPortQP;
+         ComplQueue      *fPortCQ;
+
+         // address data of remote side
+         unsigned        fRemoteLID;
+         unsigned        fRemoteQPN;
+         unsigned        fRemotePSN;
+
+         MemoryPool      *fPool;
+
+         bool             fConnected;
+
+      public:
+         ProtocolWorker();
+
+         /*
+         ProtocolWorker(Thread* thrd,
+                           QueuePair* hs_qp,
+                           bool server,
+                           const char* portname,
+                           dabc::Command* cmd);
+         */
+
+         virtual ~ProtocolWorker();
+
+         virtual void VerbsProcessSendCompl(uint32_t);
+         virtual void VerbsProcessRecvCompl(uint32_t);
+         virtual void VerbsProcessOperError(uint32_t);
+
+         virtual void OnThreadAssigned();
+         virtual double ProcessTimeout(double last_diff);
+
+         void Finish(bool res);
+   };
+
+   class ProtocolWorkerRef : public WorkerRef {
+
+      DABC_REFERENCE(ProtocolWorkerRef, WorkerRef, verbs::ProtocolWorker)
+
+   };
+}
+
+
+verbs::ProtocolWorker::ProtocolWorker() :
+   Worker(0),
+   fReqItem(),
+   fLocalCmd(),
+   fPortThrd(0),
+   fPortQP(0),
+   fPortCQ(0),
+   fRemoteLID(0),
+   fRemoteQPN(0),
+   fRemotePSN(0),
+   fPool(0),
+   fConnected(false)
 {
-   if (fPool==0) return;
+}
 
-   if (f_nummr < fPool->NumMemBlocks()) {
-      // this is a case, when pool size was extended
+verbs::ProtocolWorker::~ProtocolWorker()
+{
+   fReqItem.clear();
 
-      struct ibv_mr* *new_mr = new struct ibv_mr* [fPool->NumMemBlocks()];
+   if (fPool) delete fPool; fPool = 0;
 
-      unsigned *new_changed = new unsigned [fPool->NumMemBlocks()];
+   if (fPortQP!=QP()) delete fPortQP;
+   fPortQP = 0;
+   if (fPortCQ) delete fPortCQ;
+   fPortCQ = 0;
 
-      for (unsigned n=0;n<fPool->NumMemBlocks();n++) {
-         new_mr[n] = 0;
-         new_changed[n] = 0;
-         if (n<f_nummr) {
-             new_mr[n] = f_mr[n];
-             new_changed[n] = fBlockChanged[n];
-         }
-      }
+   CloseQP();
+}
 
-      delete[] f_mr;
-      delete[] fBlockChanged;
-
-      f_mr = new_mr;
-      fBlockChanged = new_changed;
-
-   } else
-   if (f_nummr > fPool->NumMemBlocks()) {
-      //  this is a case, when pool size was reduced
-      // first, cleanup no longer avaliable memory regions
-      for (unsigned n=fPool->NumMemBlocks(); n<f_nummr; n++) {
-         if (f_mr[n]) {
-            ibv_dereg_mr(f_mr[n]);
-            f_mr[n] = 0;
-         }
-         fBlockChanged[n] = 0;
-      }
+void verbs::ProtocolWorker::OnThreadAssigned()
+{
+   dabc::ConnectionRequestFull req = dabc::mgr.FindPar(fReqItem);
+   if (req.null()) {
+      Finish(false);
+      return;
    }
 
-   f_nummr = fPool->NumMemBlocks();
+   unsigned bufid = 0;
 
-   for (unsigned n=0;n<f_nummr;n++)
-      if ( fPool->IsMemoryBlock(n) &&
-          ((f_mr[n]==0) || (fBlockChanged[n] != fPool->MemBlockChangeCounter(n))) ) {
-              if (f_mr[n]!=0) {
-                 ibv_dereg_mr(f_mr[n]);
-                 f_mr[n] = 0;
-              }
+   if (req.IsServerSide()) {
+      QP()->Post_Recv(fPool->GetRecvWR(bufid));
+   } else {
+      std::string connid = req.GetConnId();
 
-              if ((fPool->GetMemBlock(n)==0) || (fPool->GetMemBlockSize(n)==0)) continue;
+      strcpy((char*) fPool->GetSendBufferLocation(bufid), connid.c_str());
+      QP()->Post_Send(fPool->GetSendWR(bufid, connid.length()+1));
+   }
 
-              f_mr[n] = ibv_reg_mr(fVerbs->pd(),
-                                   fPool->GetMemBlock(n),
-                                   fPool->GetMemBlockSize(n),
-                                   IBV_ACCESS_LOCAL_WRITE);
+   ActivateTimeout(req.GetConnTimeout());
+}
 
-//                                   (ibv_access_flags) (IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE));
+void verbs::ProtocolWorker::Finish(bool res)
+{
+   fConnected = res;
 
-              DOUT3(("New PoolRegistry %s mr[%u] = %p done", GetName(), n, f_mr[n]));
+   fReqItem.clear();
 
-              if (f_mr[n]==0) {
-                 EOUT(("Fail to registry VERBS memory - HALT"));
-                 exit(138);
-              }
-              fBlockChanged[n] = fPool->MemBlockChangeCounter(n);
-          } else
+   fLocalCmd.ReplyBool(res);
 
-          if (!fPool->IsMemoryBlock(n)) {
-             if (f_mr[n]!=0) ibv_dereg_mr(f_mr[n]);
-             f_mr[n] = 0;
-             fBlockChanged[n] = 0;
-          }
+   fDevice.Release();
 
-   fLastChangeCounter = fPool->GetChangeCounter();
+   DeleteThis();
+}
+
+
+
+double verbs::ProtocolWorker::ProcessTimeout(double last_diff)
+{
+   if (fConnected) return -1;
+
+   EOUT(("HANDSHAKE is timedout"));
+
+   Finish(false);
+
+   return -1;
+}
+
+void verbs::ProtocolWorker::VerbsProcessSendCompl(uint32_t bufid)
+{
+   if (bufid!=0) {
+      EOUT(("Wrong buffer id %u", bufid));
+      return;
+   }
+
+   dabc::ConnectionRequestFull req = dabc::mgr.FindPar(fReqItem);
+   if (req.null()) {
+      EOUT(("Connection request disappear"));
+      Finish(true);
+      return;
+   }
+
+
+   const char* connid = (const char*) fPool->GetSendBufferLocation(bufid);
+
+   if (req.GetConnId().compare(connid)!=0) {
+      EOUT(("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str()));
+   }
+
+   // Here we are sure, that other side receive handshake packet,
+   // therefore we can declare connection as done
+
+
+   TakeQP(); // we remove queue pair from the processor
+
+   dabc::PortRef port = req.GetPort();
+
+   if (!fDevice.null() && !port.null())
+      fDevice()->CreateVerbsTransport(fPortThrd, port(), req.GetUseAckn(), fPortCQ, fPortQP);
+   else {
+      EOUT(("Cannot find verbs::Device to create transport"));
+   }
+
+   fPortQP = 0;
+   fPortCQ = 0;
+
+   DOUT0(("CREATE VERBS CLIENT %s",  req.GetConnId().c_str()));
+
+   Finish(true);
+}
+
+void verbs::ProtocolWorker::VerbsProcessRecvCompl(uint32_t bufid)
+{
+   if (bufid!=0) {
+      EOUT(("Wrong buffer id %u", bufid));
+      return;
+   }
+
+   dabc::ConnectionRequestFull req = dabc::mgr.FindPar(fReqItem);
+
+   const char* connid = (const char*) fPool->GetBufferLocation(bufid);
+
+   if (req.GetConnId().compare(connid)!=0) {
+      EOUT(("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str()));
+   }
+
+   // from here we knew, that client is ready and we also can complete connection
+
+   TakeQP(); // we remove queue pair from the processor
+
+   dabc::PortRef port = req.GetPort();
+
+   if (!fDevice.null() && !port.null())
+      fDevice()->CreateVerbsTransport(fPortThrd, port(), req.GetUseAckn(), fPortCQ, fPortQP);
+   else {
+      EOUT(("Cannot find verbs::Device to create transport"));
+   }
+
+   fPortQP = 0;
+   fPortCQ = 0;
+
+   DOUT0(("CREATE VERBS SERVER %s",  req.GetConnId().c_str()));
+
+   Finish(true);
+}
+
+void verbs::ProtocolWorker::VerbsProcessOperError(uint32_t bufid)
+{
+   EOUT(("VerbsProtocolWorker error"));
+
+   Finish(false);
 }
 
 // ____________________________________________________________________
 
-verbs::Device::Device(dabc::Basic* parent, const char* name) :
-   dabc::Device(parent, name),
-   fIbPort(0),
-   fContext(0),
-   fPD(0),
-   f_mtu(2048),
-   fOsm(0),
+verbs::Device::Device(const char* name) :
+   dabc::Device(name),
+   fIbContext(),
    fAllocateIndividualCQ(false)
 {
-   DOUT3(("Creating VERBS device %s", name));
+   DOUT2(("Creating VERBS device %s  refcnt %u", name, NumReferences()));
 
-   if (!OpenVerbs(true)) {
+   if (!fIbContext.OpenVerbs(true)) {
       EOUT(("FATAL. Cannot start VERBS device"));
       exit(139);
    }
 
-   DOUT3(("Creating VERBS thread %s", GetName()));
+   DOUT3(("Creating thread for device %s", GetName()));
 
-   Thread* thrd = MakeThread(GetName(), true);
+   dabc::mgr()->MakeThreadFor(this, GetName());
 
-   DOUT3(("Assign VERBS device to thread %s", GetName()));
-
-   AssignProcessorToThread(thrd);
-
-   DOUT3(("Creating VERBS device %s done", name));
-
+   DOUT2(("Creating VERBS device %s done refcnt %u", name, NumReferences()));
 }
 
 verbs::Device::~Device()
 {
-   DOUT5(("Start Device::~Device()"));
-
-   // one should call method here, while thread(s) must be deleted
-   // before CQ, Channel, PD will be destroyed
-   CleanupDevice(true);
-
-
-   HaltProcessor();
-
-   DOUT5(("Cleanup verbs device done"));
-
-   RemoveProcessorFromThread(true);
-
-   dabc::Folder* f = dabc::mgr()->GetThreadsFolder();
-   if (f) {
-      for (int n=f->NumChilds()-1; n>=0; n--) {
-         Thread* thrd = dynamic_cast<Thread*> (f->GetChild(n));
-         if (thrd && (thrd->GetDevice()==this)) {
-            if (!thrd->IsItself()) {
-               if (thrd==ProcessorThread()) EOUT(("AAAAAAAAAAAAAAAA BBBBBBBBBBBBBBBBBBB"));
-               delete thrd;
-            } else {
-               thrd->CloseThread();
-               dabc::mgr()->DestroyObject(thrd);
-            }
-         }
-      }
-   }
-
-   DOUT5(("DestroyRegisteredThreads done"));
-
-   CloseVerbs();
-
-   DOUT5(("Stop verbs::Device::~Device()"));
+   DOUT5(("verbs::Device::~Device()"));
 }
 
-bool verbs::Device::OpenVerbs(bool withmulticast, const char* devicename, int ibport)
+void verbs::Device::ObjectCleanup()
 {
-   DOUT4(("Call  verbs::Device::Open"));
-
-#ifndef  __NO_MULTICAST__
-   if (withmulticast) {
-      fOsm = new OpenSM;
-      if (!fOsm->Init()) return false;
-   }
-#endif
-
-   int num_of_hcas = 0;
-
-   struct ibv_device **dev_list = ibv_get_device_list(&num_of_hcas);
-
-   if ((dev_list==0) || (num_of_hcas<=0)) {
-      EOUT(("No verbs devices found"));
-      return false;
-   }
-
-   DOUT4(( "Number of hcas %d", num_of_hcas));
-
-   struct ibv_device *selected_device = 0;
-   uint64_t gid;
-   bool res = false;
-
-   if (devicename==0) {
-      selected_device = dev_list[0];
-      fIbPort = 1;
-      devicename = ibv_get_device_name(selected_device);
-   } else {
-      fIbPort = ibport;
-      if (fIbPort<=0) fIbPort = 1;
-      for (int n=0;n<num_of_hcas;n++)
-         if (strcmp(ibv_get_device_name(dev_list[n]), devicename)==0)
-            selected_device = dev_list[n];
-      if (selected_device==0) {
-         EOUT(("No verbs device with name %s", devicename));
-      }
-   }
-
-   if (selected_device==0) goto cleanup;
-
-   fContext = ibv_open_device(selected_device);
-   if (fContext==0) {
-      EOUT(("Cannot open device %s", devicename));
-      goto cleanup;
-   }
-
-   if (ibv_query_device(fContext, &fDeviceAttr)) {
-      EOUT(("Failed to query device props"));
-      goto cleanup;
-   }
-
-   gid = ibv_get_device_guid(selected_device);
-   DOUT4(( "Open device: %s  gid: %016lx",  devicename, ntohll(gid)));
-
-   fPD = ibv_alloc_pd(fContext);
-   if (fPD==0) {
-      EOUT(("Couldn't allocate protection domain (PD)"));
-      goto cleanup;
-   }
-
-   if (ibv_query_port(fContext, fIbPort, &fPortAttr)) {
-      EOUT(("Fail to query port attributes"));
-      goto cleanup;
-   }
-
-//   PrintDevicesList(true);
-
-   DOUT4(("Call new TVerbsConnMgr(this) done"));
-
-   res = true;
-
-cleanup:
-
-   ibv_free_device_list(dev_list);
-
-   return res;
-
-}
-
-bool verbs::Device::CloseVerbs()
-{
-   if (fContext==0) return true;
-
-   bool res = true;
-
-   dabc::Folder* fold = GetPoolRegFolder(false);
-   if (fold!=0) fold->DeleteChilds();
-
-   if (ibv_dealloc_pd(fPD)) {
-      EOUT(("Fail to deallocate PD"));
-      res = false;
-   }
-   if (ibv_close_device(fContext)) {
-      EOUT(("Fail to close device context"));
-      res = false;
-   }
-
-   fContext = 0;
-
-#ifndef  __NO_MULTICAST__
-   if (fOsm!=0) {
-      fOsm->Close();
-      delete fOsm;
-      fOsm = 0;
-   }
-#endif
-
-   return res;
-}
-
-int verbs::Device::GetGidIndex(ibv_gid* lookgid)
-{
-   ibv_gid gid;
-   int ret = 0;
-
-   DOUT5(( "Serach for gid in table: %016lx : %016lx  ",
-             ntohll(lookgid->global.subnet_prefix),
-             ntohll(lookgid->global.interface_id)));
-
-   for (int i = 0; !ret; i++) {
-      ret = ibv_query_gid(fContext, fIbPort, i, &gid);
-
-        if (ret) break;
-
-        if (null_gid(&gid)) continue;
-
-        DOUT5(( "   gid[%2d]: %016lx : %016lx  ", i,
-             ntohll(gid.global.subnet_prefix),
-             ntohll(gid.global.interface_id)));
-
-        if (!ret && !memcmp(lookgid, &gid, sizeof(ibv_gid))) return i;
-   }
-   return 0;
-}
-
-struct ibv_ah* verbs::Device::CreateAH(uint32_t dest_lid, int dest_port)
-{
-   ibv_ah_attr ah_attr;
-   memset(&ah_attr, 0, sizeof(ah_attr));
-   ah_attr.is_global  = 0;
-   ah_attr.dlid       = dest_lid;
-   ah_attr.sl         = 0;
-   ah_attr.src_path_bits = 0;
-   ah_attr.port_num   = dest_port>=0 ? dest_port : IbPort(); // !!!!!!!  probably, here should be destination port
-
-   ibv_ah *ah = ibv_create_ah(pd(), &ah_attr);
-   if (ah==0) {
-      EOUT(("Failed to create Address Handle"));
-   }
-   return ah;
-}
-
-int verbs::Device::ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid)
-{
-   // Use MulticastActions for
-   // action = mcst_Error - do nothing    return mcst_Error
-   // action = mcst_Ok - do nothing       return mcst_Ok
-   // action = mcst_Register - register,  return mcst_Unregister/mcst_Error
-   // action = mcst_Query - query         return mcst_Ok/mcst_Error
-   // action = mcst_Init - query or reg   return mcst_Ok/mcst_Unregister/mcst_Error
-   // action = mcst_Unregister - unreg    return mcst_Ok/mcst_Error
-
-#ifndef  __NO_MULTICAST__
-   if (fOsm==0) return 0;
-   switch (action) {
-      case mcst_Error: return mcst_Error;
-      case mcst_Ok: return mcst_Ok;
-      case mcst_Register:
-         mlid = 0;
-         if (fOsm->ManageMultiCastGroup(true, mgid.raw, &mlid)) return mcst_Unregister;
-         return mcst_Error;
-      case mcst_Query:
-         mlid = 0;
-         if (fOsm->QueryMyltucastGroup(mgid.raw, mlid)) return mcst_Ok;
-         return mcst_Error;
-      case mcst_Init:
-         mlid = 0;
-         if (fOsm->QueryMyltucastGroup(mgid.raw, mlid)) 
-	    if (mlid!=0) return mcst_Ok;
-         if (fOsm->ManageMultiCastGroup(true, mgid.raw, &mlid)) return mcst_Unregister;
-         return mcst_Error;
-      case mcst_Unregister:
-         if (fOsm->ManageMultiCastGroup(false, mgid.raw, &mlid)) return mcst_Ok;
-         return mcst_Error;
-   }
-#endif
-
-   return mcst_Error;
-}
-
-struct ibv_ah* verbs::Device::CreateMAH(ibv_gid& mgid, uint32_t mlid, int mport)
-{
-   ibv_ah_attr mah_attr;
-   memset(&mah_attr, 0, sizeof(ibv_ah_attr));
-
-   mah_attr.dlid = mlid; // in host order ?
-   mah_attr.port_num = mport>=0 ? mport : IbPort();
-   mah_attr.sl = 0;
-   mah_attr.static_rate = 0; //0x83; // should be copied from mmember rec
-
-   mah_attr.is_global  = 1;
-   memcpy(&(mah_attr.grh.dgid), &mgid, sizeof(ibv_gid));
-   mah_attr.grh.sgid_index = 0; // GetGidIndex(mgid);
-
-   mah_attr.grh.flow_label = 0; // should be copied from mmember rec
-   mah_attr.grh.hop_limit = 63; // should be copied from mmember rec
-   mah_attr.grh.traffic_class = 0; // should be copied from mmember rec
-
-   //DOUT1(("Addr %02x %02x", ah_attr.grh.dgid.raw[0], ah_attr.grh.dgid.raw[1]));
-
-   struct ibv_ah* f_ah = ibv_create_ah(pd(), &mah_attr);
-   if (f_ah==0) {
-     EOUT(("Failed to create Multicast Address Handle"));
-   }
-
-   return f_ah;
+   dabc::Device::ObjectCleanup();
 }
 
 bool verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
-                                 Thread* &thrd, ComplQueue* &port_cq, QueuePair* &port_qp)
+                                 dabc::ThreadRef &thrd, ComplQueue* &port_cq, QueuePair* &port_qp)
 {
    ibv_qp_type qp_type = IBV_QPT_RC;
 
@@ -547,22 +361,24 @@ bool verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int co
 
    thrd = MakeThread(thrd_name, true);
 
-   if (thrd==0) return false;
+   verbs::Thread* thrd_ptr = dynamic_cast<verbs::Thread*> (thrd());
 
-   bool isowncq = IsAllocateIndividualCQ() && !thrd->IsFastModus();
+   if (thrd_ptr == 0) return false;
+
+   bool isowncq = IsAllocateIndividualCQ() && !thrd_ptr->IsFastModus();
 
    if (isowncq)
-      port_cq = new ComplQueue(fContext, port->NumOutputBuffersRequired() + port->NumInputBuffersRequired() + 2, thrd->Channel());
+      port_cq = new ComplQueue(fIbContext, port->NumOutputBuffersRequired() + port->NumInputBuffersRequired() + 2, thrd_ptr->Channel());
    else
-      port_cq = thrd->MakeCQ();
+      port_cq = thrd_ptr->MakeCQ();
 
-   int num_send_seg = fDeviceAttr.max_sge - 1;
-   if (conn_type==IBV_QPT_UD) num_send_seg = fDeviceAttr.max_sge - 5; // I do not now why, but otherwise it fails
+   int num_send_seg = fIbContext.max_sge() - 1;
+   if (conn_type==IBV_QPT_UD) num_send_seg = fIbContext.max_sge() - 5; // I do not now why, but otherwise it fails
    if (num_send_seg<2) num_send_seg = 2;
 
-   port_qp = new QueuePair(this, qp_type,
+   port_qp = new QueuePair(IbContext(), qp_type,
                            port_cq, port->NumOutputBuffersRequired(), num_send_seg,
-                           port_cq, port->NumInputBuffersRequired(), /*fDeviceAttr.max_sge / 2*/ 2);
+                           port_cq, port->NumInputBuffersRequired(), /*fIbContext.max_sge() / 2*/ 2);
 
    if (!isowncq)
       port_cq = 0;
@@ -570,177 +386,219 @@ bool verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int co
    return port_qp->qp()!=0;
 }
 
-dabc::Folder* verbs::Device::GetPoolRegFolder(bool force)
+
+void verbs::Device::CreateVerbsTransport(dabc::ThreadRef thrd, dabc::Reference portref, bool useackn, ComplQueue* cq, QueuePair* qp)
 {
-   return GetFolder("PoolReg", force, true);
-}
+   dabc::Port* port = (dabc::Port*) portref();
 
-verbs::PoolRegistry* verbs::Device::FindPoolRegistry(dabc::MemoryPool* pool)
-{
-   if (pool==0) return 0;
-
-   dabc::Folder* fold = GetPoolRegFolder(false);
-   if (fold==0) return 0;
-
-   for (unsigned n=0; n<fold->NumChilds(); n++) {
-      PoolRegistry* reg = (PoolRegistry*) fold->GetChild(n);
-      if ((reg!=0) && (reg->GetPool()==pool)) return reg;
-   }
-
-   return 0;
-}
-
-verbs::PoolRegistry* verbs::Device::RegisterPool(dabc::MemoryPool* pool)
-{
-   if (pool==0) return 0;
-
-   PoolRegistry* entry = FindPoolRegistry(pool);
-
-   if (entry==0) entry = new PoolRegistry(this, pool);
-
-   entry->IncUsage();
-
-   return entry;
-}
-
-void verbs::Device::UnregisterPool(PoolRegistry* entry)
-{
-   if (entry==0) return;
-
-   DOUT3(("Call UnregisterPool %s", entry->GetName()));
-
-   entry->DecUsage();
-
-   if (entry->GetUsage()<=0) {
-      DOUT3(("Pool %s no longer used in verbs device: %s entry %p", entry->GetName(), GetName(), entry));
-      //delete entry;
-      // entry->GetParent()->RemoveChild(entry);
-      // delete entry;
-
-      //dabc::mgr()->DestroyObject(entry);
-
-      //entry->CleanMRStructure();
-
-      // DOUT1(("Clean entry %p done", entry));
-   }
-
-   DOUT3(("Call UnregisterPool done"));
-}
-
-void verbs::Device::CreateVerbsTransport(const char* thrdname, const char* portname, bool useackn, ComplQueue* cq, QueuePair* qp)
-{
-   if (qp==0) return;
-
-   dabc::Port* port = dabc::mgr()->FindPort(portname);
-
-   Thread* thrd = MakeThread(thrdname, false);
-
-   if ((thrd==0) || (port==0)) {
-      EOUT(("verbs::Thread %s:%p or Port %s:%p is dissapiar!!!", thrdname, thrd, portname, port));
+   if (thrd.null() || (port==0) || (qp==0)) {
+      EOUT(("verbs::Thread %p or Port %p or QueuePair %p disappear!!!", thrd(), port, qp));
       delete qp;
       delete cq;
       return;
    }
 
-   Transport* tr = new Transport(this, cq, qp, port, useackn);
+   Transport* tr = new Transport(fIbContext, cq, qp, portref, useackn);
 
-   tr->AssignProcessorToThread(thrd);
+   dabc::Reference handle(tr);
 
-   tr->AttachPort(port);
-}
-
-bool verbs::Device::ServerConnect(dabc::Command* cmd, dabc::Port* port, const char* portname)
-{
-   if (cmd==0) return false;
-
-   return ((Thread*) ProcessorThread())->DoServer(cmd, port, portname);
-}
-
-bool verbs::Device::ClientConnect(dabc::Command* cmd, dabc::Port* port, const char* portname)
-{
-   if (cmd==0) return false;
-
-   return ((Thread*) ProcessorThread())->DoClient(cmd, port, portname);
-}
-
-bool verbs::Device::SubmitRemoteCommand(const char* servid, const char* channelid, dabc::Command* cmd)
-{
-   return false;
-}
-
-verbs::Thread* verbs::Device::MakeThread(const char* name, bool force)
-{
-   Thread* thrd = dynamic_cast<Thread*> (dabc::Manager::Instance()->FindThread(name, VERBS_THRD_CLASSNAME));
-
-   if (thrd || !force) return thrd;
-
-   return dynamic_cast<Thread*> (dabc::Manager::Instance()->CreateThread(name, VERBS_THRD_CLASSNAME, 0, GetName()));
-}
-
-int verbs::Device::CreateTransport(dabc::Command* cmd, dabc::Port* port)
-{
-   const char* portname = cmd->GetPar("PortName");
-
-   if (cmd->HasPar("IsServer")) {
-
-      bool isserver = cmd->GetBool("IsServer", true);
-      if (isserver ? ServerConnect(cmd, port, portname) : ClientConnect(cmd, port, portname))
-         return dabc::cmd_postponed;
+   if (tr->AssignToThread(thrd))
+      port->AssignTransport(handle, tr);
+   else {
+      EOUT(("No thread for transport"));
+      handle.Destroy();
    }
+}
 
-   std::string maddr = port->GetCfgStr(xmlMcastAddr, "", cmd);
+dabc::ThreadRef verbs::Device::MakeThread(const char* name, bool force)
+{
+   ThreadRef thrd = dabc::mgr()->FindThread(name, VERBS_THRD_CLASSNAME);
+
+   if (!thrd.null() || !force) return thrd;
+
+   return dabc::mgr()->CreateThread(name, VERBS_THRD_CLASSNAME, GetName());
+}
+
+dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, dabc::Reference portref)
+{
+   dabc::Port* port = (dabc::Port*) portref();
+   if (port==0) return 0;
+
+   std::string maddr = port->Cfg(xmlMcastAddr, cmd).AsStdStr();
 
    if (!maddr.empty()) {
-      std::string thrdname = port->GetCfgStr(dabc::xmlTrThread, ProcessorThreadName(), cmd);
-
-      ComplQueue* port_cq = 0;
-      QueuePair*  port_qp = 0;
-      Thread*     thrd = 0;
+      std::string thrdname = port->Cfg(dabc::xmlTrThread,cmd).AsStdStr(ThreadName());
 
       ibv_gid multi_gid;
 
       if (!ConvertStrToGid(maddr, multi_gid)) {
          EOUT(("Cannot convert address %s to ibv_gid type", maddr.c_str()));
-         return dabc::cmd_false;
+         return 0;
       }
 
       std::string buf = ConvertGidToStr(multi_gid);
       if (buf!=maddr) {
          EOUT(("Addresses not the same: %s - %s", maddr.c_str(), buf.c_str()));
-         return dabc::cmd_false;
+         return 0;
       }
 
-      if (CreatePortQP(thrdname.c_str(), port, IBV_QPT_UD, thrd, port_cq, port_qp)) {
-         Transport* tr = new Transport(this, port_cq, port_qp, port, false, &multi_gid);
+      ComplQueue* port_cq(0);
+      QueuePair*  port_qp(0);
+      ThreadRef   thrd;
 
-         if (tr->IsInitOk()) {
-            tr->AssignProcessorToThread(thrd);
-            tr->AttachPort(port);
-            return dabc::cmd_true;
-         } else
-            delete tr;
-      }
+      if (CreatePortQP(thrdname.c_str(), port, IBV_QPT_UD, thrd, port_cq, port_qp))
+         return new Transport(fIbContext, port_cq, port_qp, portref, false, &multi_gid);
    }
 
-   return dabc::cmd_false;
+   return 0;
 }
 
-int verbs::Device::ExecuteCommand(dabc::Command* cmd)
+int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
+{
+   std::string reqitem = cmd.GetStdStr(dabc::ConnectionManagerHandleCmd::ReqArg());
+
+   dabc::ConnectionRequestFull req = dabc::mgr.FindPar(reqitem);
+
+   if (req.null()) return dabc::cmd_false;
+
+   switch (req.progress()) {
+
+      // here on initializes connection
+      case dabc::ConnectionManager::progrDoingInit: {
+         
+         dabc::PortRef port = req.GetPort();
+         if (port.null()) {
+            EOUT(("No port is available for the request"));
+            return dabc::cmd_false;
+         }
+
+         ProtocolWorker* proc = new ProtocolWorker;
+         
+         // FIXME: ConnectionRequest should be used
+         if (!CreatePortQP(req.GetConnThread().c_str(), port(), 0,
+                           proc->fPortThrd, proc->fPortCQ, proc->fPortQP)) {
+            delete proc;
+            return dabc::cmd_false;
+         }
+         
+         std::string portid;
+         
+         dabc::formats(portid,"%04X:%08X:%08X", (unsigned) fIbContext.lid(), (unsigned) proc->fPortQP->qp_num(), (unsigned) proc->fPortQP->local_psn());
+         
+         DOUT0(("CREATE CONNECTION %s", portid.c_str()));
+         
+         if (req.IsServerSide()) {
+            req.SetServerId(portid);
+         } else
+            req.SetClientId(portid);
+         
+         // make backpointers, fCustomData is reference, automatically cleaned up by the connection manager
+         req.SetCustomData(dabc::Reference(proc, true));
+         
+         proc->fReqItem = reqitem;
+
+         proc->fDevice = this;
+
+         return dabc::cmd_true;
+      }
+
+      case dabc::ConnectionManager::progrDoingConnect: {
+         // one should register request and start connection here
+
+         DOUT2(("****** VERBS START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str()));
+         
+         // once connection is started, custom data is no longer necessary by connection record
+         // protocol worker will be cleaned up automatically either when connection is done or when connection is timedout
+
+         // by coping of the reference source reference will be cleaned
+         ProtocolWorkerRef proc = req.TakeCustomData();
+
+         if (proc.null()) {
+            EOUT(("SOMETHING WRONG - NO PROTOCOL PROCESSOR for the connection request"));
+            return dabc::cmd_false;
+         }
+
+         std::string remoteid;
+         bool res = true;
+         
+         if (req.IsServerSide())
+            remoteid = req.GetClientId();
+         else
+            remoteid = req.GetServerId();
+         
+         if (sscanf(remoteid.c_str(),"%X:%X:%X", &proc()->fRemoteLID, &proc()->fRemoteQPN, &proc()->fRemotePSN)!=3) {
+            EOUT(("Cannot decode remote id string %s", remoteid.c_str()));
+            res = false;
+         }
+
+         // reply remote command that one other side can start connection
+         req.ReplyRemoteCommand(res);
+         
+         if (res == dabc::cmd_false) {
+            proc.Release();
+
+            return dabc::cmd_false;
+         }
+
+         DOUT0(("CONNECT TO REMOTE %04x:%08x:%08x - %s", proc()->fRemoteLID, proc()->fRemoteQPN, proc()->fRemotePSN, remoteid.c_str()));
+         
+         // FIXME: remote port should be handled correctly
+         if (proc()->fPortQP->Connect(proc()->fRemoteLID, proc()->fRemoteQPN, proc()->fRemotePSN)) {
+
+            proc()->fPool = new MemoryPool(fIbContext, "HandshakePool", 1, 1024, false);
+            
+            proc()->fLocalCmd = cmd;
+
+            proc()->SetQP(proc()->fPortQP);
+            
+            // we need to preserve thread reference until transport itself will be created
+            proc()->AssignToThread(proc()->fPortThrd.Ref());
+
+            proc.SetOwner(false);
+            
+            return dabc::cmd_postponed;
+         }
+
+         proc.Release();
+
+         return dabc::cmd_false;
+
+         break;
+      }
+
+
+      default:
+         EOUT(("Request from connection manager in undefined situation progress = %d ???", req.progress()));
+         return dabc::cmd_false;
+         break;
+   }
+
+   return dabc::cmd_true;
+}
+
+
+int verbs::Device::ExecuteCommand(dabc::Command cmd)
 {
    int cmd_res = dabc::cmd_true;
 
-   DOUT5(("Execute command %s", cmd->GetName()));
+   DOUT5(("Execute command %s", cmd.GetName()));
 
-   if (cmd->IsName("StartServer")) {
-      std::string servid;
-      ((Thread*) ProcessorThread())->FillServerId(servid);
-      cmd->SetPar("ConnId", servid.c_str());
+   
+   if (cmd.IsName(dabc::ConnectionManagerHandleCmd::CmdName())) {
+
+      cmd_res = HandleManagerConnectionRequest(cmd);
+
    } else
-      cmd_res = dabc::Device::ExecuteCommand(cmd);
+
+     cmd_res = dabc::Device::ExecuteCommand(cmd);
 
    return cmd_res;
 }
 
+double verbs::Device::ProcessTimeout(double last_diff)
+{
+   return -1;
+}
 
 bool verbs::ConvertStrToGid(const std::string& s, ibv_gid &gid)
 {

@@ -8,17 +8,16 @@
 
 #include "bnet/common.h"
 
-bnet::MbsBuilderModule::MbsBuilderModule(const char* name, dabc::Command* cmd) :
-   BuilderModule(name, cmd),
-   fEvntRate(0)
+bnet::MbsBuilderModule::MbsBuilderModule(const char* name, dabc::Command cmd) :
+   BuilderModule(name, cmd)
 {
-   fCfgEventsCombine = GetCfgInt(CfgEventsCombine, 1, cmd);
+   fCfgEventsCombine = Cfg(CfgEventsCombine,cmd).AsInt(1);
 
    fOut.buf = 0;
    fOut.ready = false;
 
-   fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 10000.);
-//   fEvntRate->SetDebugOutput(true);
+   CreatePar("EventRate").SetRatemeter(false, 1.).SetLimits(0.,10000).SetUnits("Ev");
+//   Par("EventRate").SetDebugOutput(true);
 }
 
 bnet::MbsBuilderModule::~MbsBuilderModule()
@@ -47,8 +46,6 @@ void bnet::MbsBuilderModule::StartOutputBuffer(dabc::BufferSize_t bufsize)
 void bnet::MbsBuilderModule::FinishOutputBuffer()
 {
    fOut.iter.Close();
-
-   // if (fEvntRate) fEvntRate->AccountValue(fOut.bufhdr->iNumEvents);
 
    fOut.ready = true;
 }
@@ -151,7 +148,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 
       fOut.iter.FinishEvent();
 
-      if (fEvntRate) fEvntRate->AccountValue(1.);
+      Par("EventRate").SetInt(1);
 
 //      DOUT1(("$$$$$$$$ Did event %d size %d", evhdr->iCount, evhdr->DataSize()));
 

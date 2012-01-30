@@ -13,13 +13,13 @@ namespace ezca {
 
          Factory(const char* name);
 
-         virtual dabc::Application* CreateApplication(const char* classname, dabc::Command* cmd);
+         virtual dabc::Application* CreateApplication(const char* classname, dabc::Command cmd);
 
-         virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command* cmd);
+         virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd);
 
          virtual dabc::DataInput* CreateDataInput(const char* typ);
 
-         virtual dabc::Device* CreateDevice(const char* classname, const char* devname, dabc::Command* cmd);
+         virtual dabc::Device* CreateDevice(const char* classname, const char* devname, dabc::Command cmd);
    };
 
 }

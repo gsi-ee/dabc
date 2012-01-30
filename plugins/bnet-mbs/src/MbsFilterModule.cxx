@@ -9,7 +9,7 @@
 #include "mbs/Iterator.h"
 
 
-bnet::MbsFilterModule::MbsFilterModule(const char* name, dabc::Command* cmd) :
+bnet::MbsFilterModule::MbsFilterModule(const char* name, dabc::Command cmd) :
    FilterModule(name, cmd)
 {
    DOUT5(("Create MbsFilterModule %s", name));

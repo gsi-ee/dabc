@@ -1,22 +1,27 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef VERBS_Thread
 #define VERBS_Thread
 
-#ifndef DABC_WorkingThread
-#include "dabc/WorkingThread.h"
+#ifndef DABC_Thread
+#include "dabc/Thread.h"
 #endif
+
+#ifndef VERBS_Context
+#include "verbs/Context.h"
+#endif
+
 
 #include <map>
 #include <stdint.h>
@@ -34,27 +39,29 @@ namespace dabc {
 
 namespace verbs {
 
-   class Device;
    class MemoryPool;
 
-   class Processor;
-   class TimeoutProcessor;
-   class ProtocolProcessor;
-   class ConnectProcessor;
+   class Worker;
+   class TimeoutWorker;
 
    class QueuePair;
    class ComplQueue;
 
-   class Thread : public dabc::WorkingThread {
+   class Thread : public dabc::Thread {
 
-      typedef std::map<uint32_t, uint32_t>  ProcessorsMap;
+      typedef std::map<uint32_t, uint32_t>  WorkersMap;
 
       enum { LoopBackQueueSize = 10 };
+
+      enum EVerbsThreadEvents {
+         evntEnableCheck = evntLastThrd+1,  //!< event to enable again checking sockets for new events
+         evntLastVerbsThrdEvent             //!< last event, which can be used by verbs thread
+      };
 
       protected:
          enum EWaitStatus { wsWorking, wsWaiting, wsFired };
 
-         Device                  *fDevice;
+         ContextRef                fContext;
          struct ibv_comp_channel *fChannel;
       #ifdef VERBS_USING_PIPE
          int                      fPipe[2];
@@ -62,22 +69,19 @@ namespace verbs {
          QueuePair               *fLoopBackQP;
          MemoryPool              *fLoopBackPool;
          int                      fLoopBackCnt;
-         TimeoutProcessor        *fTimeout; // use to produce timeouts
+         TimeoutWorker           *fTimeout; // use to produce timeouts
       #endif
-         ComplQueue              *fMainCQ;
-         long                     fFireCounter;
+         ComplQueue              *fMainCQ;     // completion queue used for the whole thread to be able organize polling instead of waiting for the completion channel
          EWaitStatus              fWaitStatus;
-         ProcessorsMap            fMap; // for 1000 elements one need about 50 nanosec to get value from it
+         WorkersMap               fMap; // for 1000 elements one need about 50 nanosec to get value from it
          int                      fWCSize; // size of array
          struct ibv_wc*           fWCs; // list of event completion
-         ConnectProcessor        *fConnect;  // connection initiation
          long                     fFastModus; // makes polling over MainCQ before starting wait - defines pooling number
-         bool                     fHadVerbsEvent; // indicate if we had verbs event when last time WaitEvent method was called
-         int                      fScalerCounter; // scaling counter which allows check sometimes verbs events
+         bool                     fCheckNewEvents; // indicate if we should check verbs events even if there are some in the queue
       public:
          // list of all events for all kind of socket processors
 
-         Thread(Device* dev, dabc::Basic* parent, const char* name = "verbsthrd");
+         Thread(dabc::Reference parent, ContextRef ctx, const char* name = "verbsthrd");
          virtual ~Thread();
 
          void CloseThread();
@@ -85,16 +89,6 @@ namespace verbs {
          struct ibv_comp_channel* Channel() const { return fChannel; }
 
          ComplQueue* MakeCQ();
-
-         Device* GetDevice() const { return fDevice; }
-
-         bool DoServer(dabc::Command* cmd, dabc::Port* port, const char* portname);
-         bool DoClient(dabc::Command* cmd, dabc::Port* port, const char* portname);
-         void FillServerId(std::string& id);
-
-         ConnectProcessor* Connect() const { return fConnect; }
-
-         ProtocolProcessor* FindProtocol(const char* connid);
 
          bool IsFastModus() const { return fFastModus > 0; }
 
@@ -106,16 +100,25 @@ namespace verbs {
 
       protected:
 
-         bool StartConnectProcessor();
+         virtual int ExecuteThreadCommand(dabc::Command cmd);
 
-         virtual int ExecuteThreadCommand(dabc::Command* cmd);
+         virtual bool WaitEvent(dabc::EventId& evid, double tmout);
 
-         virtual dabc::EventId WaitEvent(double tmout);
+         virtual void _Fire(const dabc::EventId& evnt, int nq);
 
-         virtual void _Fire(dabc::EventId arg, int nq);
+         virtual void WorkersNumberChanged();
 
-         virtual void ProcessorNumberChanged();
+         virtual void ProcessExtraThreadEvent(const dabc::EventId&);
+
    };
+
+   class ThreadRef : public dabc::ThreadRef {
+
+      DABC_REFERENCE(ThreadRef, dabc::ThreadRef, verbs::Thread)
+
+   };
+
+
 }
 
 #endif

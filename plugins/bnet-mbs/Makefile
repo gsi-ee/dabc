@@ -1,3 +1,5 @@
+ifdef DABC_WITH_BNET
+
 include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
@@ -28,3 +30,5 @@ $(BNETMBS_LIB):   $(BNETMBS_O)
 	@$(MakeLib) $(BNETMBS_LIBNAME) "$(BNETMBS_O)" $(TGTDLLPATH)
 
 include $(DABCSYS)/config/Makefile.rules
+
+endif

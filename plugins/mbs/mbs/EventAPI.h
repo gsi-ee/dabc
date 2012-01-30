@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef MBS_EventAPI
 #define MBS_EventAPI
 
@@ -51,7 +51,7 @@ namespace mbs {
          EvapiInput(const char* kind = 0, const char* name = 0);
          virtual ~EvapiInput();
 
-         virtual bool Read_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
+         virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
 
          void SetTimeout(int timeout = -1) { fTimeout = timeout; }
 
@@ -67,7 +67,7 @@ namespace mbs {
          unsigned GetEventBufferSize();
 
          virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(dabc::Buffer* buf);
+         virtual unsigned Read_Complete(dabc::Buffer& buf);
 
       protected:
 
@@ -110,12 +110,12 @@ namespace mbs {
          EvapiOutput(const char* fname = 0);
          virtual ~EvapiOutput();
 
-         virtual bool Write_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
+         virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
 
          bool CreateOutputFile(const char* name);
          bool Close();
 
-         virtual bool WriteBuffer(dabc::Buffer* buf);
+         virtual bool WriteBuffer(const dabc::Buffer& buf);
 
       protected:
 

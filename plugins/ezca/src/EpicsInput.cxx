@@ -27,23 +27,22 @@ ezca::EpicsInput::~EpicsInput()
    Close();
 }
 
-bool ezca::EpicsInput::Read_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+bool ezca::EpicsInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-	DOUT1(("EpicsInput::Read_Init"));
-	dabc::ConfigSource cfg(cmd, port);
+   DOUT1(("EpicsInput::Read_Init"));
 
-   fName = cfg.GetCfgStr(ezca::xmlEpicsName, fName);
-   fBufferSize = cfg.GetCfgInt(dabc::xmlBufferSize, fBufferSize);
-   fTimeout = cfg.GetCfgDouble(ezca::xmlTimeout, fTimeout);
-   fSubeventId= cfg.GetCfgInt(ezca::xmlEpicsSubeventId, fSubeventId);
-   fInfoDescr.SetUpdateRecord(cfg.GetCfgStr(ezca::xmlUpdateFlagRecord, "flag"));
-   fInfoDescr.SetIDRecord(cfg.GetCfgStr(ezca::xmlEventIDRecord, "id"));
-   int numlongs=cfg.GetCfgInt(ezca::xmlNumLongRecords, 0);
+   fName = wrk.Cfg(ezca::xmlEpicsName, cmd).AsStdStr(fName);
+   fBufferSize = wrk.Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
+   fTimeout = wrk.Cfg(ezca::xmlTimeout, cmd).AsDouble(fTimeout);
+   fSubeventId = wrk.Cfg(ezca::xmlEpicsSubeventId, cmd).AsInt(fSubeventId);
+   fInfoDescr.SetUpdateRecord(wrk.Cfg(ezca::xmlUpdateFlagRecord,cmd).AsStdStr(""));
+   fInfoDescr.SetIDRecord(wrk.Cfg(ezca::xmlEventIDRecord,cmd).AsStdStr("id"));
+   int numlongs = wrk.Cfg(ezca::xmlNumLongRecords, cmd).AsInt(0);
    for(int t=0;t<numlongs;++t)
-      fInfoDescr.AddLongRecord(cfg.GetCfgStr(FORMAT(("%s%d", ezca::xmlNameLongRecords, t)),"dummy"));
-   int numdubs = cfg.GetCfgInt(ezca::xmlNumDoubleRecords, 0);
+      fInfoDescr.AddLongRecord(wrk.Cfg(dabc::format("%s%d", ezca::xmlNameLongRecords, t), cmd).AsStdStr("dummy"));
+   int numdubs = wrk.Cfg(ezca::xmlNumDoubleRecords, cmd).AsInt(0);
    for(int t=0;t<numdubs;++t)
-      fInfoDescr.AddDoubleRecord(cfg.GetCfgStr(FORMAT(("%s%d", ezca::xmlNameDoubleRecords, t)),"dummy"));
+      fInfoDescr.AddDoubleRecord(wrk.Cfg(dabc::format("%s%d", ezca::xmlNameDoubleRecords, t), cmd).AsStdStr("dummy"));
 
    DOUT1(("EpicsInput %s - BufferSize = %d byte, Timeout = %e s, subevtid:%d, update flag:%s id:%s ",
          fName.c_str(), fBufferSize, fTimeout,fSubeventId,fInfoDescr.GetUpdateRecord(),fInfoDescr.GetIDRecord()));
@@ -63,7 +62,7 @@ bool ezca::EpicsInput::Close()
 unsigned ezca::EpicsInput::Read_Size()
 {
    // evaluate real expected size from infodescr entries
-   unsigned int totalsize=sizeof(mbs::EventHeader)+sizeof(mbs::SubeventHeader)+2*sizeof(unsigned int) + 2*sizeof(unsigned int64_t); // header length
+   unsigned int totalsize=sizeof(mbs::EventHeader)+sizeof(mbs::SubeventHeader)+2*sizeof(unsigned int) + 2*sizeof(uint64_t); // header length
 #ifdef EZCA_useDOUBLES
    totalsize+= fInfoDescr.NumLongRecords()*sizeof(int64_t)+ fInfoDescr.NumDoubleRecords()*sizeof(double);
 
@@ -86,7 +85,7 @@ unsigned ezca::EpicsInput::Read_Size()
    return totalsize;
 }
 
-unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
+unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
 {
    static long evcount=0;
    long evtnumber=0;
@@ -126,7 +125,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
 
 
    std::string descriptor; // this contains process variable names description
-   dabc::Pointer ptr(buf);
+   dabc::Pointer ptr=buf.GetPointer();
    DOUT3(("EpicsInput:Got pointer 0x%x, buf size:%d",ptr(),buf.GetTotalSize()));
    unsigned totallen = 0;
    unsigned rawlen = 0;
@@ -160,10 +159,10 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
    rawlen += sizeof(unsigned int);
    totallen += sizeof(unsigned int);
    // first payload: header with number of long records. All aligned to 8 bytes now JAM
-   *((unsigned int64_t*) ptr()) = fInfoDescr.NumLongRecords();
-      ptr.shift(sizeof(unsigned int64_t));
-      rawlen += sizeof(unsigned int64_t);
-      totallen += sizeof(unsigned int64_t);
+   *((uint64_t*) ptr()) = fInfoDescr.NumLongRecords();
+      ptr.shift(sizeof(uint64_t));
+      rawlen += sizeof(uint64_t);
+      totallen += sizeof(uint64_t);
 
       // put number of longs into variable description:
    descriptor.append(fInfoDescr.NumLongRecordsString());
@@ -189,15 +188,15 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
    }
 
    // header with number of double records
-   *((unsigned int64_t*) ptr()) = fInfoDescr.NumDoubleRecords();
-        ptr.shift(sizeof(unsigned int64_t));
-        rawlen += sizeof(unsigned int64_t);
-        totallen += sizeof(unsigned int64_t);
+   *((uint64_t*) ptr()) = fInfoDescr.NumDoubleRecords();
+   ptr.shift(sizeof(uint64_t));
+   rawlen += sizeof(uint64_t);
+   totallen += sizeof(uint64_t);
 
 
    // put number of double into variable description:
-     descriptor.append(fInfoDescr.NumDoubleRecordsString());
-     descriptor.append(1,'\0');
+   descriptor.append(fInfoDescr.NumDoubleRecordsString());
+   descriptor.append(1,'\0');
 
    // data values for double records:
    for (unsigned int ix = 0; ix < fInfoDescr.NumDoubleRecords(); ++ix)
@@ -248,9 +247,9 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer* buf)
 
    subhdr->SetRawDataSize(rawlen);
    evhdr->SetSubEventsSize(sizeof(mbs::SubeventHeader) + rawlen);
-   buf->SetTypeId(mbs::mbt_MbsEvents);
+   buf.SetTypeId(mbs::mbt_MbsEvents);
    DOUT3(("EpicsInput:: totallen = %d, evnum=%d",totallen,evhdr->iEventNumber));
-   buf->SetDataSize(totallen);
+   buf.SetTotalSize(totallen);
    return totallen > 0 ? dabc::di_Ok : dabc::di_RepeatTimeOut;
 }
 

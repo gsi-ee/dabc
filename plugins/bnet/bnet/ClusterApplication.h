@@ -34,16 +34,13 @@ namespace bnet {
 
          virtual bool BeforeAppModulesDestroyed();
 
-         std::string NetDevice() const { return GetParStr(xmlNetDevice, dabc::typeSocketDevice); }
-         bool IsRunning() const { return GetParBool(xmlIsRunning); }
-         bool WithController() const { return GetParBool(xmlWithController, false); }
+         std::string NetDevice() const { return Par(xmlNetDevice).AsStdStr(dabc::typeSocketDevice); }
+         bool IsRunning() const { return Par(xmlIsRunning).AsBool(); }
+         bool WithController() const { return Par(xmlWithController).AsBool(false); }
 
-         virtual int ExecuteCommand(dabc::Command* cmd);
+         virtual int ExecuteCommand(dabc::Command cmd);
 
-         // this is public method, which must be used from SM thread
-         virtual bool DoStateTransition(const char* state_trans_name);
-
-         void DiscoverCommandCompleted(dabc::Command* cmd);
+         void DiscoverCommandCompleted(dabc::Command cmd);
 
       protected:
 
@@ -58,28 +55,24 @@ namespace bnet {
 
          std::string NodeCurrentState(int nodeid);
 
-         bool ActualTransition(const char* state_trans_name);
+         bool ActualTransition(const std::string& trans_name);
 
          enum NodeMaskValues {
             mask_Sender = 0x1,
             mask_Receiever = 0x2 };
 
-         bool ExecuteClusterSMCommand(const char* smcmdname);
+         bool ExecuteClusterSMCommand(const std::string& smcmdname);
 
-         bool StartDiscoverConfig(dabc::Command* mastercmd);
-         bool StartClusterSMCommand(dabc::Command* mastercmd);
-         bool StartModulesConnect(dabc::Command* mastercmd);
-         bool StartConfigureApply(dabc::Command* mastercmd);
-
-         virtual void ParameterChanged(dabc::Parameter* par);
+         bool StartDiscoverConfig(dabc::Command mastercmd);
+         bool StartClusterSMCommand(dabc::Command mastercmd);
+         bool StartModulesConnect(dabc::Command mastercmd);
+         bool StartConfigureApply(dabc::Command mastercmd);
 
          std::vector<int> fNodeMask; // info about items on each node
          std::vector<std::string> fNodeNames; // info about names of currently configured nodes
          std::vector<std::string> fSendMatrix; // info about send connections
          std::vector<std::string> fRecvMatrix; // info about recv connections
 
-         dabc::Mutex fSMMutex;
-         std::string fSMRunningSMCmd;
          int         fNumNodes; // number of nodes when app started
 
    };

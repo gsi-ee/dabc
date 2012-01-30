@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef VERBS_Transport
 #define VERBS_Transport
 
@@ -18,12 +18,12 @@
 #include "dabc/NetworkTransport.h"
 #endif
 
-#ifndef VERBS_Processor
-#include "verbs/Processor.h"
+#ifndef VERBS_Worker
+#include "verbs/Worker.h"
 #endif
 
-#ifndef VERBS_Device
-#include "verbs/Device.h"
+#ifndef VERBS_Context
+#include "verbs/Context.h"
 #endif
 
 namespace verbs {
@@ -31,8 +31,10 @@ namespace verbs {
    class Device;
    class PoolRegistry;
 
-   class Transport : public dabc::NetworkTransport,
-                     public Processor {
+   class Transport : public verbs::Worker,
+                     public dabc::NetworkTransport  {
+
+      DABC_TRANSPORT(verbs::Worker)
 
       friend class Device;
 
@@ -43,9 +45,11 @@ namespace verbs {
       };
 
       protected:
+         verbs::ContextRef   fContext;
+
          ComplQueue          *fCQ;
          bool                 fInitOk;
-         PoolRegistry        *fPoolReg;
+         PoolRegistryRef      fPoolReg;
          struct ibv_recv_wr  *f_rwr; // field for receive config, allocated dynamically
          struct ibv_send_wr  *f_swr; // field for send config, allocated dynamically
          struct ibv_sge      *f_sge; // memory segment description, used for both send/recv
@@ -65,13 +69,16 @@ namespace verbs {
 
          virtual bool ProcessPoolRequest();
 
-         virtual void HaltTransport();
+         virtual void ProcessEvent(const dabc::EventId& evnt);
 
-         virtual void ProcessEvent(dabc::EventId evnt);
+         virtual void CleanupFromTransport(dabc::Object* obj);
+
+         /** \brief Call from inherited class, cleanup transport */
+         virtual void CleanupTransport();
 
       public:
-         Transport(Device* dev, ComplQueue* cq, QueuePair* qp,
-                   dabc::Port* port, bool useackn, ibv_gid* multi_gid = 0);
+         Transport(verbs::ContextRef ctx, ComplQueue* cq, QueuePair* qp,
+                   dabc::Reference port, bool useackn, ibv_gid* multi_gid = 0);
          virtual ~Transport();
 
          bool IsInitOk() const { return fInitOk; }

@@ -86,23 +86,21 @@ bool GenerateMbsPacketForGo4(dabc::Buffer* buf, int &evid)
 
 class GeneratorModule : public dabc::ModuleSync {
    protected:
-      dabc::PoolHandle*       fPool;
       int                     fEventCnt;
       int                     fBufferCnt;
 
    public:
       GeneratorModule(const char* name) :
          dabc::ModuleSync(name),
-         fPool(0),
          fEventCnt(1),
          fBufferCnt(0)
 
       {
          SetSyncCommands(true);
 
-         fPool = CreatePoolHandle("Pool", BUFFERSIZE, 10);
+         CreatePoolHandle("Pool");
 
-         CreateOutput("Output", fPool, 5);
+         CreateOutput("Output", Pool(), 5);
       }
 
 
@@ -115,7 +113,7 @@ class GeneratorModule : public dabc::ModuleSync {
       {
          while (ModuleWorking()) {
 
-            dabc::Buffer* buf = TakeBuffer(fPool, BUFFERSIZE);
+            dabc::Buffer buf = TakeBuffer(Pool());
 
             GenerateMbsPacketForGo4(buf, fEventCnt);
 
@@ -130,7 +128,6 @@ class GeneratorModule : public dabc::ModuleSync {
 
 class TestModuleAsync : public dabc::ModuleAsync {
    protected:
-      dabc::PoolHandle* fPool;
       dabc::Port*         fInput;
       long                fCounter;
       dabc::Ratemeter     fRate;
@@ -138,12 +135,11 @@ class TestModuleAsync : public dabc::ModuleAsync {
    public:
       TestModuleAsync(const char* name) :
          dabc::ModuleAsync(name),
-         fPool(0),
          fInput(0)
       {
-         fPool = CreatePoolHandle("Pool1", BUFFERSIZE, 5);
+         fPool = CreatePoolHandle("Pool1");
 
-         fInput = CreateInput("Input", fPool, 5);
+         fInput = CreateInput("Input", Pool(), 5);
 
          fCounter = 0;
 
@@ -152,9 +148,9 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
       void ProcessInputEvent(dabc::Port* port)
       {
-         dabc::Buffer* buf = fInput->Recv();
+         dabc::Buffer buf = fInput->Recv();
 
-         fRate.Packet(buf->GetTotalSize());
+         fRate.Packet(buf.GetTotalSize());
 
          mbs::ReadIterator iter(buf);
 
@@ -164,7 +160,6 @@ class TestModuleAsync : public dabc::ModuleAsync {
 
          DOUT1(("Found %d events in MBS buffer", cnt));
 
-         dabc::Buffer::Release(buf);
          fCounter++;
       }
 
@@ -185,12 +180,12 @@ extern "C" void StartGenerator()
     DOUT0(("Start MBS generator module"));
 
     dabc::Module* m = new GeneratorModule("Generator");
-    dabc::mgr()->MakeThreadForModule(m);
+    dabc::mgr()->MakeThreadFor(m);
 
-    dabc::Command* cmd = new dabc::CmdCreateTransport("Generator/Output", mbs::typeServerTransport, "MbsTransport");
-    cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
-    cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
-    if (!dabc::mgr()->Execute(cmd)) {
+    dabc::CmdCreateTransport cmd("Generator/Output", mbs::typeServerTransport, "MbsTransport");
+    cmd.SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
+    cmd.SetInt(dabc::xmlBufferSize, BUFFERSIZE);
+    if (!dabc::mgr.Execute(cmd)) {
        EOUT(("Cannot create MBS transport server"));
        exit(135);
     }
@@ -212,16 +207,16 @@ extern "C" void StartClient()
 
    dabc::Module* m = new TestModuleAsync("Receiver");
 
-   dabc::mgr()->MakeThreadForModule(m);
+   dabc::mgr()->MakeThreadFor(m);
 
-   dabc::Command* cmd = new dabc::CmdCreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
-//   cmd->SetBool("IsClient", true);
-   cmd->SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
-   cmd->SetStr(mbs::xmlServerName, hostname);
-   if (nport>0) cmd->SetInt(mbs::xmlServerPort, nport);
-   cmd->SetInt(dabc::xmlBufferSize, BUFFERSIZE);
+   dabc::CmdCreateTransport cmd("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
+//   cmd.SetBool("IsClient", true);
+   cmd.SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::TransportServer));
+   cmd.SetStr(mbs::xmlServerName, hostname);
+   if (nport>0) cmd.SetInt(mbs::xmlServerPort, nport);
+   cmd.SetInt(dabc::xmlBufferSize, BUFFERSIZE);
 
-   if (!dabc::mgr()->Execute(cmd)) {
+   if (!dabc::mgr.Execute(cmd)) {
       EOUT(("Cannot create data input for receiver"));
       exit(137);
    }

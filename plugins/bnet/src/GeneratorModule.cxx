@@ -23,7 +23,7 @@
 #include "bnet/common.h"
 
 
-bnet::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
+bnet::GeneratorModule::GeneratorModule(const char* name, dabc::Command cmd) :
    dabc::ModuleSync(name, cmd),
    fPool(0),
    fEventCnt(1),
@@ -31,18 +31,18 @@ bnet::GeneratorModule::GeneratorModule(const char* name, dabc::Command* cmd) :
 {
    SetSyncCommands(true);
 
-   fPool = CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
+   fPool = CreatePoolHandle(Cfg(CfgReadoutPool, cmd).AsStr(ReadoutPoolName));
 
-   fBufferSize = GetCfgInt(xmlReadoutBuffer, 1024, cmd);
+   fBufferSize = Cfg(xmlReadoutBuffer,cmd).AsInt(1024);
 
    CreateOutput("Output", fPool, ReadoutQueueSize);
 
-   CreateParInt("UniqueId", 0);
+   CreatePar("UniqueId").DfltInt(0);
 }
 
 void bnet::GeneratorModule::MainLoop()
 {
-   fUniqueId = GetParInt("UniqueId", 0);
+   fUniqueId = Par("UniqueId").AsInt(0);
 
 //   DOUT1(("GeneratorModule::MainLoop fUniqueId = %llu", fUniqueId));
 

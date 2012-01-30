@@ -7,16 +7,13 @@
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
 
-bnet::MbsCombinerModule::MbsCombinerModule(const char* name, dabc::Command* cmd) :
+bnet::MbsCombinerModule::MbsCombinerModule(const char* name, dabc::Command cmd) :
    CombinerModule(name, cmd),
    fMinEvId(0),
-   fMaxEvId(0),
-   fUsedEvents(0),
-   fEvntRate(0)
+   fMaxEvId(0)
 {
-
-   fCfgEventsCombine = GetCfgInt(CfgEventsCombine, 1, cmd);
-   fTransportBufferSize = GetCfgInt(xmlTransportBuffer, 1024, cmd);
+   fCfgEventsCombine = Cfg(CfgEventsCombine,cmd).AsInt(1);
+   fTransportBufferSize = Cfg(xmlTransportBuffer,cmd).AsInt(1024);
 
    InputRec rec;
 
@@ -29,10 +26,10 @@ bnet::MbsCombinerModule::MbsCombinerModule(const char* name, dabc::Command* cmd)
    int nchannels = fCfgEventsCombine;
    if (nchannels < 5) nchannels = 5;
 
-   fUsedEvents = new dabc::HistogramParameter(this, "PackedEvents", nchannels);
-   fUsedEvents->SetLabels("PackedEvents", "cnt");
+//   fUsedEvents = new dabc::HistogramParameter(this, "PackedEvents", nchannels);
+//   fUsedEvents->SetLabels("PackedEvents", "cnt");
 
-   fEvntRate = CreateRateParameter("EventRate", false, 1., "", "", "Ev/s", 0., 20000.);
+   CreatePar("EventRate").SetRatemeter(false, 1.).SetUnits("Ev").SetLimits(0.,20000.);
 }
 
 bnet::MbsCombinerModule::~MbsCombinerModule()
@@ -96,7 +93,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
       }
    }
 
-   fUsedEvents->Fill(NumUsedEvents);
+//   fUsedEvents->Fill(NumUsedEvents);
 
    if (NumUsedEvents < fCfgEventsCombine) {
       EOUT(("Can take only %d events from %d, buffer size %u bigger than transport buf %u",
@@ -152,7 +149,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 
 //   DOUT1(("Finish buffer id %d sz %u", (fMinEvId - 1) / fCfgEventsCombine, fullbufsize));
 
-   if (fEvntRate) fEvntRate->AccountValue(NumUsedEvents);
+   Par("EventRate").SetInt(NumUsedEvents);
 
    fMinEvId = 0;
    fMaxEvId = 0;

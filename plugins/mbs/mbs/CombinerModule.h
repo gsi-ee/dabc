@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef MBS_CombinerModule
 #define MBS_CombinerModule
 
@@ -62,8 +62,6 @@ namespace mbs {
             /** indicates if input has valid data */
             bool valid;
 
-            bool wasexcluded;
-
             InputCfg() :
                real_mbs(true),
                curr_evnt_num(0),
@@ -73,8 +71,7 @@ namespace mbs {
                evntsrc_fullid(0),
                evntsrc_shift(0),
                selected(false),
-               valid(false),
-               wasexcluded(false) {}
+               valid(false) {}
 
             InputCfg(const InputCfg& src) :
                real_mbs(src.real_mbs),
@@ -85,22 +82,28 @@ namespace mbs {
                evntsrc_fullid(src.evntsrc_fullid),
                evntsrc_shift(src.evntsrc_shift),
                selected(src.selected),
-               valid(src.valid),
-               wasexcluded(src.wasexcluded) {}
+               valid(src.valid) {}
+
+            void Reset()
+            {
+               real_mbs = true;
+               curr_evnt_num = 0;
+               curr_evnt_special = false;
+               real_evnt_num = true;
+               no_evnt_num = false;
+               evntsrc_fullid = 0;
+               evntsrc_shift = 0;
+               selected = false;
+               valid = false;
+            }
          };
 
-         dabc::PoolHandle*          fPool;
          unsigned                   fBufferSize;
          std::vector<ReadIterator>  fInp;
          std::vector<InputCfg>      fCfg;
          WriteIterator              fOut;
-         dabc::Buffer*              fOutBuf;
-         int                        fTmCnt;
-
-         /**  this counter used to count down interval before incomplete event can be build
-          * even when some inputs has no data at all
-          */
-         int                        fIncompleteCnt;
+         dabc::Buffer               fOutBuf;
+         bool                       fFlushFlag;
 
          bool                       fDoOutput;
          bool                       fFileOutput;
@@ -134,29 +137,35 @@ namespace mbs {
           */
          unsigned                   fNumObligatoryInputs;
 
-         dabc::RateParameter*       fEvntRate;
-         dabc::RateParameter*       fDataRate;
-
-         dabc::TimeStamp_t          fLastInfoTm;
+         std::string                fEventRateName;
+         std::string                fDataRateName;
+         std::string                fInfoName;
 
          bool BuildEvent();
          bool FlushBuffer();
 
          virtual void BeforeModuleStart();
 
+         virtual void AfterModuleStop();
+
          bool ShiftToNextEvent(unsigned ninp);
+
+         /** Method should be used to skip current buffer from the queue */
+         bool ShiftToNextBuffer(unsigned ninp);
 
          mbs::EventNumType CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
 
-         void SetInfo(int lvl, const std::string& info, bool forceinfo = false);
+         void SetInfo(const std::string& info, bool forceinfo = false);
 
       public:
 
-         CombinerModule(const char* name, dabc::Command* cmd = 0);
+         CombinerModule(const char* name, dabc::Command cmd = 0);
          virtual ~CombinerModule();
 
          virtual void ProcessInputEvent(dabc::Port* port);
          virtual void ProcessOutputEvent(dabc::Port* port);
+         virtual void ProcessConnectEvent(dabc::Port* port);
+         virtual void ProcessDisconnectEvent(dabc::Port* port);
 
          virtual void ProcessTimerEvent(dabc::Timer* timer);
 
@@ -167,7 +176,7 @@ namespace mbs {
          /* returns maximum possible eventnumber for overflow checking*/
          virtual unsigned int GetOverflowEventNumber() const;
 
-         virtual int ExecuteCommand(dabc::Command* cmd);
+         virtual int ExecuteCommand(dabc::Command cmd);
    };
 }
 

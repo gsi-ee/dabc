@@ -21,7 +21,7 @@
 
 #include "bnet/common.h"
 
-bnet::BuilderModule::BuilderModule(const char* name, dabc::Command* cmd) :
+bnet::BuilderModule::BuilderModule(const char* name, dabc::Command cmd) :
    dabc::ModuleSync(name, cmd),
    fInpPool(0),
    fOutPool(0),
@@ -29,17 +29,17 @@ bnet::BuilderModule::BuilderModule(const char* name, dabc::Command* cmd) :
 {
    SetSyncCommands(true);
 
-   fOutPool = CreatePoolHandle(GetCfgStr(dabc::xmlOutputPoolName, bnet::EventPoolName, cmd).c_str());
+   fOutPool = CreatePoolHandle(Cfg(dabc::xmlOutputPoolName, cmd).AsStr(bnet::EventPoolName));
 
    CreateOutput("Output", fOutPool, BuilderOutQueueSize);
 
-   fInpPool = CreatePoolHandle(GetCfgStr(dabc::xmlInputPoolName, bnet::TransportPoolName, cmd).c_str());
+   fInpPool = CreatePoolHandle(Cfg(dabc::xmlInputPoolName, cmd).AsStr(bnet::TransportPoolName));
 
-   CreateInput("Input", fInpPool, BuilderInpQueueSize, sizeof(bnet::SubEventNetHeader));
+   CreateInput("Input", fInpPool, BuilderInpQueueSize);
 
-   fOutBufferSize = GetCfgInt(xmlEventBuffer, 2048, cmd);
+   fOutBufferSize = Cfg(xmlEventBuffer,cmd).AsInt(2048);
 
-   CreateParStr(parSendMask, "xxxx");
+   CreatePar(parSendMask).SetStr("xxxx");
 }
 
 bnet::BuilderModule::~BuilderModule()
@@ -53,7 +53,7 @@ void bnet::BuilderModule::MainLoop()
 {
    DOUT3(("In builder %u buffers collected",  fBuffers.size()));
 
-   fNumSenders = bnet::NodesVector(GetParStr(parSendMask)).size();
+   fNumSenders = bnet::NodesVector(Par(parSendMask).AsStdStr()).size();
 
    while (ModuleWorking()) {
 

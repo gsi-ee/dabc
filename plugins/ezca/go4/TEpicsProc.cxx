@@ -32,6 +32,16 @@
 #include "TGo4Version.h"
 
 
+
+extern "C"
+{
+    INTS4 f_ut_utime(INTS4 l_sec, INTS4 l_msec, CHARS *pc_time);
+}
+
+#include "f_ut_utime.h"
+
+
+
 //***********************************************************
 TEpicsProc::TEpicsProc() : TGo4EventProcessor()
 {
@@ -80,7 +90,7 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
    evnt->ResetIterator();
    TGo4MbsSubEvent *psubevt(0);
    while((psubevt = evnt->NextSubEvent()) != 0) { // loop over subevents
-
+	   cout << "**** TEpicsProc: found procid "<< psubevt->GetProcid()<< endl;
 	   if (psubevt->GetProcid() != 8)
       			continue; // only evaluate epics events here
 
@@ -90,7 +100,23 @@ Bool_t TEpicsProc::BuildEvent(TGo4EventElement*)
 	  		   }
 
 	   int* pdata= psubevt->GetDataField();
-	   // first payload: header with number of long records
+
+	   // first we have event id:
+	   if(_VARPRINT_)
+		   {
+			   cout <<endl<<"Got Event id:"<< pdata++ << endl;
+		   }
+	   // then sender time expression:
+	  	   if(_VARPRINT_)
+	  		   {
+	  		   	   UInt_t timeseconds=*pdata++;
+	  		   	   UInt_t timemicros=0;
+	  		   	   char sbuf[1000]; f_ut_utime(timeseconds, timemicros, sbuf);
+	  			   cout <<endl<<"time:"<< sbuf << endl;
+	  		   }
+
+
+	   // real payload: header with number of long records
 	   int numlong=*pdata++;
 	   for(int i=0; i<numlong;++i)
 	   {

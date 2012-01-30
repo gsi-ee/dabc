@@ -45,7 +45,7 @@ namespace bnet {
          ControllerList        fReadyEvnts;
          dabc::BufferSize_t    fBufferSize;
          uint64_t              fTargetCounter;
-         dabc::TimeStamp_t     fLastSendTime;
+         dabc::TimeStamp       fLastSendTime;
 
          int                   fCfgNumNodes;
          NodesVector           fSendNodes;
@@ -54,13 +54,13 @@ namespace bnet {
          void TrySendEventsAssignment(bool force);
 
       public:
-         GlobalDFCModule(const char* name, dabc::Command* cmd = 0);
+         GlobalDFCModule(const char* name, dabc::Command cmd = 0);
          virtual ~GlobalDFCModule();
 
          virtual void ProcessInputEvent(dabc::Port* port);
          virtual void ProcessOutputEvent(dabc::Port* port);
          virtual void ProcessTimerEvent(dabc::Timer* timer);
-         virtual int ExecuteCommand(dabc::Command* cmd);
+         virtual int ExecuteCommand(dabc::Command cmd);
 
    };
 }

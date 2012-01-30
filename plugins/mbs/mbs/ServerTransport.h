@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef MBS_ServerTransport
 #define MBS_ServerTransport
 
@@ -22,8 +22,8 @@
 #include "dabc/SocketThread.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_BuffersQueue
+#include "dabc/BuffersQueue.h"
 #endif
 
 #ifndef MBS_MbsTypeDefs
@@ -35,7 +35,7 @@ namespace mbs {
 
    class ServerTransport;
 
-   class ServerIOProcessor : public dabc::SocketIOProcessor {
+   class ServerIOProcessor : public dabc::SocketIOWorker {
 
       friend class ServerTransport;
 
@@ -58,7 +58,7 @@ namespace mbs {
 
       protected:
          virtual double ProcessTimeout(double last_diff);
-         virtual void ProcessEvent(dabc::EventId);
+         virtual void ProcessEvent(const dabc::EventId&);
 
          ServerTransport*      fTransport;
          mbs::TransportInfo    fServInfo; // data, send by transport server in the beginning
@@ -72,16 +72,17 @@ namespace mbs {
 
    // _________________________________________________________________
 
-   class ServerTransport : public dabc::Transport,
-                           public dabc::SocketServerProcessor {
+   class ServerTransport : public dabc::SocketServerWorker,
+                           public dabc::Transport {
+
+      DABC_TRANSPORT(dabc::SocketServerWorker)
 
       enum EEvents { evntNewBuffer = evntSocketLast,
                      evntMbsServerLast };
 
       public:
-         ServerTransport(dabc::Port* port, const std::string& thrdname,
-                         int kind, int serversocket, int portnum,
-                         uint32_t maxbufsize = 16*1024, int scale = 1);
+         ServerTransport(dabc::Reference port, int kind, int serversocket, int portnum,
+                         uint32_t maxbufsize = 16*1024, int scale = 1, int maxclients = 0);
          virtual ~ServerTransport();
 
          int Kind() const { return fKind; }
@@ -93,21 +94,23 @@ namespace mbs {
          // this is normal transport functionality
          virtual bool ProvidesInput() { return false; }
          virtual bool ProvidesOutput() { return true; }
-         virtual void PortChanged();
 
-         virtual bool Recv(dabc::Buffer* &buf) { return false; }
+         virtual bool Recv(dabc::Buffer&) { return false; }
          virtual unsigned RecvQueueSize() const { return 0; }
-         virtual dabc::Buffer* RecvBuffer(unsigned) const { return 0; }
-         virtual bool Send(dabc::Buffer* mem);
+         virtual dabc::Buffer& RecvBuffer(unsigned) const;
+         virtual bool Send(const dabc::Buffer&);
          virtual unsigned SendQueueSize();
          virtual unsigned MaxSendSegments() { return 9999; }
       protected:
 
-         virtual void HaltTransport();
-
          virtual void OnClientConnected(int fd);
 
-         virtual void ProcessEvent(dabc::EventId);
+         virtual void ProcessEvent(const dabc::EventId&);
+
+         /** Inherited from Transport class, should cleanup everything */
+         virtual void CleanupTransport();
+
+         virtual void CleanupFromTransport(Object* obj);
 
          int                     fKind; // see EMbsServerKinds values
          dabc::Mutex             fMutex;
@@ -116,6 +119,7 @@ namespace mbs {
          uint32_t                fMaxBufferSize; // maximum size of the buffer, which can be send over channel, used for old transports
          int                     fScale;        // scale factor for stream server
          int                     fScaleCounter; // counter for scaler
+         int                     fClientLimit;  // how many clients allowed
    };
 
 }

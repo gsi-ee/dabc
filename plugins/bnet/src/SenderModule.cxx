@@ -19,7 +19,7 @@
 #include "dabc/Port.h"
 #include "dabc/Application.h"
 
-bnet::SenderModule::SenderModule(const char* name, dabc::Command* cmd) :
+bnet::SenderModule::SenderModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fPool(0),
    fMap(),
@@ -33,24 +33,25 @@ bnet::SenderModule::SenderModule(const char* name, dabc::Command* cmd) :
    fCtrlBufSize(0),
    fCtrlOutTime(0.)
 {
-   fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
-   fCfgNodeId = GetCfgInt(CfgNodeId, 0, cmd);
+   fCfgNumNodes = Cfg(CfgNumNodes,cmd).AsInt(1);
+   fCfgNodeId = Cfg(CfgNodeId,cmd).AsInt(0);
 
    fPool = CreatePoolHandle(bnet::TransportPoolName);
 
-   CreateInput("Input", fPool, SenderInQueueSize, sizeof(bnet::EventId));
+   CreatePar("DataRate").SetRatemeter(false, 1.);
+
+
+   CreateInput("Input", fPool, SenderInQueueSize)->SetInpRateMeter(Par("DataRate"));
 
    DOUT1(("Create Sender with %d outputs", fCfgNumNodes));
 
    for (int n=0;n<fCfgNumNodes;n++)
-      CreateOutput(FORMAT(("Output%d", n)), fPool, SenderQueueSize, sizeof(bnet::SubEventNetHeader));
+      CreateOutput(FORMAT(("Output%d", n)), fPool, SenderQueueSize);
 
    fCtrlPool = CreatePoolHandle(bnet::ControlPoolName);
-   fCtrlBufSize = GetCfgInt(xmlCtrlBuffer, 2*1024, cmd);
+   fCtrlBufSize = Cfg(xmlCtrlBuffer,cmd).AsInt(2*1024);
    fCtrlPort = CreateIOPort("CtrlPort", fCtrlPool, CtrlInpQueueSize, CtrlOutQueueSize);
    fCtrlOutTime = 0.;
-
-   CreateRateParameter("DataRate", false, 1., "Input", "");
 }
 
 bnet::SenderModule::~SenderModule()
@@ -63,14 +64,14 @@ bnet::SenderModule::~SenderModule()
    }
 }
 
-int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
+int bnet::SenderModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd->IsName("Configure")) {
+   if (cmd.IsName("Configure")) {
 
       DOUT3(("Get command Configure"));
 
-      fStandalone = cmd->GetBool("Standalone");
-      fRecvNodes.Reset(cmd->GetStr(parRecvMask), fCfgNumNodes);
+      fStandalone = cmd.GetBool("Standalone");
+      fRecvNodes.Reset(cmd.GetStr(parRecvMask), fCfgNumNodes);
 
       for (int node=0;node<fCfgNumNodes;node++)
         if (!fRecvNodes.HasNode(node)) {
@@ -87,7 +88,7 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
       DOUT3(("Sender Configure done nout = %d standalone %s", NumOutputs(), DBOOL(fStandalone)));
 
    } else
-   if (cmd->IsName("GetConfig")) {
+   if (cmd.IsName("GetConfig")) {
       std::string str;
       for (int node=0;node<fCfgNumNodes;node++) {
          dabc::Port* port = Output(node);
@@ -96,7 +97,7 @@ int bnet::SenderModule::ExecuteCommand(dabc::Command* cmd)
          else
             str += "o";
       }
-      cmd->SetStr(parRecvMask, str.c_str());
+      cmd.SetStr(parRecvMask, str.c_str());
    } else
       return dabc::ModuleAsync::ExecuteCommand(cmd);
 
@@ -110,7 +111,7 @@ void bnet::SenderModule::ReactOnDisconnect(dabc::Port* port)
    for (int n=0;n<fCfgNumNodes;n++)
       NewRecvMask += Output(n)->IsConnected() ? "x" : "o";
 
-   std::string oldmask = GetCfgStr(CfgRecvMask, "");
+   std::string oldmask = Cfg(CfgRecvMask).AsStdStr();
 
    if (NewRecvMask == oldmask) {
       DOUT1(("Recv Mask is not changed - still %s", NewRecvMask.c_str()));
@@ -119,12 +120,9 @@ void bnet::SenderModule::ReactOnDisconnect(dabc::Port* port)
 
    DOUT1(("RecvMaskChangeDetected old:%s new:%s", oldmask.c_str(), NewRecvMask.c_str()));
 
-   dabc::Application* app = dabc::mgr()->GetApp();
-   if (app==0) return;
-
-   dabc::Parameter* par = app->FindPar(parRecvStatus);
-   if (par) par->InvokeChange(NewRecvMask.c_str());
-       else EOUT(("Did not fount RecvStatus parameter"));
+   dabc::Parameter par = dabc::mgr.GetApp().Par(parRecvStatus);
+   if (!par.SetStr(NewRecvMask.c_str()))
+      EOUT(("Cannot change RecvStatus parameter"));
 }
 
 void bnet::SenderModule::StandaloneProcessEvent(dabc::ModuleItem* item, uint16_t item_evid)
@@ -183,7 +181,7 @@ void bnet::SenderModule::StandaloneProcessEvent(dabc::ModuleItem* item, uint16_t
 
          Stop();
 
-         dabc::mgr()->GetApp()->InvokeCheckModulesCmd();
+         dabc::mgr.GetApp().CheckWorkDone();
 
          return;
 
@@ -318,12 +316,12 @@ void bnet::SenderModule::CheckNewEvents()
    if (!fCtrlPort->CanSend() || (fNewEvents.size()==0)) return;
 
    if (fNewEvents.size() * sizeof(EventInfoRec) < fCtrlBufSize) {
-      double tm = ThrdTimeStamp();
-      if (fCtrlOutTime == 0.) fCtrlOutTime = tm;
-      if (tm-fCtrlOutTime < 1e5) return;
+      double tm = dabc::Now().AsDouble();
+      if (fCtrlOutTime <= 0.) fCtrlOutTime = tm;
+      if (tm - fCtrlOutTime < 0.1) return;
    }
 
-//   DOUT1(("Take ctrl buf %d %p %p",fCtrlBufSize, fCtrlPool, fCtrlPool->getPool()));
+//   DOUT1(("Take ctrl buf %d %p %p",fCtrlBufSize, fCtrlPool, fCtrlPool->Pool()));
 
    dabc::Buffer* outbuf = fCtrlPool->TakeBuffer(fCtrlBufSize);
    if (outbuf==0) {

@@ -23,7 +23,7 @@ namespace bnet {
          dabc::PoolHandle*   fPool;
 
       public:
-         LocalDFCModule(const char* name, dabc::Command* cmd = 0);
+         LocalDFCModule(const char* name, dabc::Command cmd = 0);
    };
 }
 

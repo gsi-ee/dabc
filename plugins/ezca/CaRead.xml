@@ -9,7 +9,7 @@
   </Run> 
   <Application class="ezca::Readout">
     <EpicsIdentifier value="myIOC"/>
-    <EpicsSubeventId value="0x0000008"/>
+    <EpicsSubeventId value="0x000000A"/>
     <EpicsFlagRec value="adamczewHost:calcExample"/>
     <EpicsEventIDRec value="adamczewHost:aiExample"/>
     <EpicsNumLongRecs value="3"/>
@@ -19,9 +19,9 @@
     <EpicsNumDoubleRecs value="1"/>
     <EpicsDoubleRec-0 value="adamczewHost:aiExample"/>
 	<EpicsDoubleRec-1 value="Current"/>
-	<PollingTimeout  value="0.1"/>
+	<EpicsPollingTimeout  value="0.1"/>
     <PoolName value="EpicsPool"/>     
-    <BufferSize value="128"/>
+    <BufferSize value="1024"/>
     <NumBuffers value="100"/>
     <EpicsModuleName value="EpicsMonitor"/>
     <EpicsModuleThread value="EpicsThread"/>    

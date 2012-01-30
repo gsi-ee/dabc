@@ -67,7 +67,7 @@ namespace bnet {
          void ReactOnDisconnect(dabc::Port* port);
 
       public:
-         SenderModule(const char* name, dabc::Command* cmd = 0);
+         SenderModule(const char* name, dabc::Command cmd = 0);
 
          virtual ~SenderModule();
 
@@ -75,7 +75,7 @@ namespace bnet {
 
          virtual void ProcessInputEvent(dabc::Port* port);
          virtual void ProcessOutputEvent(dabc::Port* port);
-         virtual int ExecuteCommand(dabc::Command* cmd);
+         virtual int ExecuteCommand(dabc::Command cmd);
 
          virtual void BeforeModuleStart();
          virtual void AfterModuleStop();

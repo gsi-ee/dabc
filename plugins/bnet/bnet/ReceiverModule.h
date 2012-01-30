@@ -52,10 +52,10 @@ namespace bnet {
          bool                 fStopSending;
 
       public:
-         ReceiverModule(const char* name, dabc::Command* cmd = 0);
+         ReceiverModule(const char* name, dabc::Command cmd = 0);
          virtual ~ReceiverModule();
 
-         virtual int ExecuteCommand(dabc::Command* cmd);
+         virtual int ExecuteCommand(dabc::Command cmd);
 
          virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
 

@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "verbs/Thread.h"
 
 #include <sys/poll.h>
@@ -26,7 +26,7 @@
 #include "verbs/QueuePair.h"
 #include "verbs/ComplQueue.h"
 #include "verbs/MemoryPool.h"
-#include "verbs/Processor.h"
+#include "verbs/Worker.h"
 
 #ifndef VERBS_USING_PIPE
 
@@ -34,15 +34,15 @@
 
 namespace verbs {
 
-   class TimeoutProcessor : public dabc::WorkingProcessor {
+   class TimeoutWorker : public dabc::Worker {
 
       protected:
          Thread *fVerbsThrd;
          double fLastTm;
 
       public:
-         TimeoutProcessor(Thread* thrd) :
-            dabc::WorkingProcessor(),
+         TimeoutWorker(Thread* thrd) :
+            dabc::Worker(),
             fVerbsThrd(thrd),
             fLastTm(-1)
          {
@@ -57,7 +57,7 @@ namespace verbs {
          void DoTimeout(double tmout)
          {
             fLastTm = tmout;
-            if (ProcessorThread()!=0)
+            if (HasThread())
                ActivateTimeout(tmout);
          }
 
@@ -67,6 +67,8 @@ namespace verbs {
             return -1;
          }
 
+         virtual const char* ClassName() const { return "verbs::TimeoutWorker"; }
+
    };
 
 }
@@ -75,9 +77,9 @@ namespace verbs {
 
 // ____________________________________________________________________
 
-verbs::Thread::Thread(Device* dev, dabc::Basic* parent, const char* name) :
-   dabc::WorkingThread(parent, name),
-   fDevice(dev),
+verbs::Thread::Thread(dabc::Reference parent, verbs::ContextRef ctx, const char* name) :
+   dabc::Thread(parent, name),
+   fContext(ctx),
    fChannel(0),
 #ifndef VERBS_USING_PIPE
    fLoopBackQP(0),
@@ -86,16 +88,13 @@ verbs::Thread::Thread(Device* dev, dabc::Basic* parent, const char* name) :
    fTimeout(0),
 #endif
    fMainCQ(0),
-   fFireCounter(0),
    fWaitStatus(wsWorking),
    fWCSize(0),
    fWCs(0),
-   fConnect(0),
    fFastModus(0),
-   fHadVerbsEvent(true),
-   fScalerCounter(10)
+   fCheckNewEvents(true)
 {
-   fChannel = ibv_create_comp_channel(fDevice->context());
+   fChannel = ibv_create_comp_channel(fContext.context());
    if (fChannel==0) {
       EOUT(("Cannot create completion channel - HALT"));
       exit(143);
@@ -112,16 +111,16 @@ verbs::Thread::Thread(Device* dev, dabc::Basic* parent, const char* name) :
 
    #else
 
-   fLoopBackQP = new QueuePair(GetDevice(), IBV_QPT_RC,
-                             MakeCQ(), LoopBackQueueSize, 1,
-                             MakeCQ(), LoopBackQueueSize, 1);
+   fLoopBackQP = new QueuePair(fContext, IBV_QPT_RC,
+                                MakeCQ(), LoopBackQueueSize, 1,
+                                MakeCQ(), LoopBackQueueSize, 1);
 
-   if (!fLoopBackQP->Connect(GetDevice()->lid(), fLoopBackQP->qp_num(), fLoopBackQP->local_psn())) {
+   if (!fLoopBackQP->Connect(fContext.lid(), fLoopBackQP->qp_num(), fLoopBackQP->local_psn())) {
       EOUT(("fLoopBackQP CONNECTION FAILED"));
       exit(144);
    }
 
-   fLoopBackPool = new MemoryPool(GetDevice(), "LoopBackPool", 2, 16, false);
+   fLoopBackPool = new MemoryPool(fContext, "LoopBackPool", 2, 16, false);
 
    #endif
 
@@ -132,25 +131,26 @@ verbs::Thread::~Thread()
 {
    CloseThread();
 
-   DOUT3(("Verbs thread %s destroyed", GetName()));
+   DOUT3(("Verbs thread %p %s destroyed", this, GetName()));
 }
 
 bool verbs::Thread::CompatibleClass(const char* clname) const
 {
-   if (dabc::WorkingThread::CompatibleClass(clname)) return true;
+   if (dabc::Thread::CompatibleClass(clname)) return true;
    return strcmp(clname, VERBS_THRD_CLASSNAME) == 0;
 }
 
 void verbs::Thread::CloseThread()
 {
-   DOUT3(("verbs::Thread::CloseThread() %s", GetName()));
-
-   if (fConnect!=0) { delete fConnect; fConnect = 0; }
+   DOUT2(("verbs::Thread::CloseThread() %s", GetName()));
 
    if (!IsItself())
-      Stop(true);
+      Stop(2.);
    else
       EOUT(("Bad idea - close thread from itself"));
+
+   DOUT2(("verbs::Thread::CloseThread() %s - did stop", GetName()));
+
 
    #ifdef VERBS_USING_PIPE
    if (fPipe[0] != 0) close(fPipe[0]); fPipe[0] = 0;
@@ -172,41 +172,37 @@ void verbs::Thread::CloseThread()
       fWCSize = 0;
    }
 
-   DOUT3(("verbs::Thread::CloseThread() %s done", GetName()));
+   DOUT2(("verbs::Thread::CloseThread() %s done", GetName()));
 }
-
 
 verbs::ComplQueue* verbs::Thread::MakeCQ()
 {
    if (fMainCQ!=0) return fMainCQ;
 
-   fMainCQ = new ComplQueue(fDevice->context(), 10000, fChannel);
+   fMainCQ = new ComplQueue(fContext, 10000, fChannel);
 
    return fMainCQ;
 }
 
-
-int verbs::Thread::ExecuteThreadCommand(dabc::Command* cmd)
+int verbs::Thread::ExecuteThreadCommand(dabc::Command cmd)
 {
-   int cmd_res = dabc::cmd_true;
-
-   if (cmd->IsName("EnableFastModus"))
-      fFastModus = cmd->GetInt("PoolingCounter", 1000);
-   else
-   if (cmd->IsName("DisableFastModus"))
+   if (cmd.IsName("EnableFastModus")) {
+      fFastModus = cmd.GetInt("PoolingCounter", 1000);
+      return dabc::cmd_true;
+   } else
+   if (cmd.IsName("DisableFastModus")) {
       fFastModus = 0;
-   else
-      cmd_res = WorkingThread::ExecuteThreadCommand(cmd);
+      return dabc::cmd_true;
+   }
 
-   return cmd_res;
+   return dabc::Thread::ExecuteThreadCommand(cmd);
 }
 
-void verbs::Thread::_Fire(dabc::EventId arg, int nq)
+void verbs::Thread::_Fire(const dabc::EventId& evnt, int nq)
 {
-   DOUT2(("verbs::Thread %s   ::_Fire %lx status %d", GetName(), arg, fWaitStatus));
+   DOUT4(("verbs::Thread %s   ::_Fire %s status %d", GetName(), evnt.asstring().c_str(), fWaitStatus));
 
-   _PushEvent(arg, nq);
-   fFireCounter++;
+   _PushEvent(evnt, nq);
    if (fWaitStatus == wsWaiting)
    #ifdef VERBS_USING_PIPE
      {
@@ -223,31 +219,20 @@ void verbs::Thread::_Fire(dabc::EventId arg, int nq)
    #endif
 }
 
-dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
+bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 {
 
 //   if (tmout_sec>=0) EOUT(("Non-empty timeout"));
 
    {
-      dabc::LockGuard lock(fWorkMutex);
+      dabc::LockGuard lock(ThreadMutex());
 
       // if we already have events in the queue,
       // check if we take them out or first check if new verbs events there
 
-      if (fFireCounter>0) {
+      if (_TotalNumberOfEvents() > 0) {
 
-         bool returnevent = !fHadVerbsEvent;
-
-         if (returnevent)
-            if (fScalerCounter-- <= 0) {
-               fScalerCounter = 10;
-               returnevent = false;
-            }
-
-         if (returnevent) {
-            fFireCounter--;
-            return _GetNextEvent();
-         }
+         if (!fCheckNewEvents) return _GetNextEvent(evid);
 
          // we have events in the queue, therefore do not wait - just check new events
          tmout_sec = 0.;
@@ -294,7 +279,7 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
    // if no events on the main channel
    if ((res <= 0) || (ufds[0].revents == 0)) {
 
-      dabc::LockGuard lock(fWorkMutex);
+      dabc::LockGuard lock(ThreadMutex());
       if (fWaitStatus == wsFired) {
          char sbuf;
          read(fPipe[0], &sbuf, 1);
@@ -302,17 +287,15 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
 
       fWaitStatus = wsWorking;
 
-      if (fFireCounter==0) return NullEventId;
-      fFireCounter--;
-      return _GetNextEvent();
+      return _GetNextEvent(evid);
    }
 
 #else
 
    if (tmout_sec>=0.) {
       if (fTimeout==0) {
-         fTimeout = new TimeoutProcessor(this);
-         fTimeout->AssignProcessorToThread(dabc::mgr()->ProcessorThread(), false);
+         fTimeout = new TimeoutWorker(this);
+         fTimeout->AssignToThread(dabc::mgr()->thread(), false);
       }
       fTimeout->DoTimeout(tmout_sec);
    }
@@ -346,7 +329,7 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
 
    } // nevents==0
 
-   dabc::LockGuard lock(fWorkMutex);
+   dabc::LockGuard lock(ThreadMutex());
 
 #ifdef VERBS_USING_PIPE
    if (fWaitStatus == wsFired) {
@@ -357,7 +340,7 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
 
    fWaitStatus = wsWorking;
 
-   fHadVerbsEvent = false;
+   bool isany = false;
 
    while (true) {
       if (nevents==0)
@@ -374,18 +357,22 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
          if (procid!=0) {
             uint16_t evnt = 0;
             if (wc->status != IBV_WC_SUCCESS) {
-               evnt = Processor::evntVerbsError;
+               evnt = Worker::evntVerbsError;
                EOUT(("Verbs error %s isrecv %s operid %u", StatusStr(wc->status), DBOOL(wc->opcode & IBV_WC_RECV), wc->wr_id));
             }
             else
                if (wc->opcode & IBV_WC_RECV)
-                  evnt = Processor::evntVerbsRecvCompl;
+                  evnt = Worker::evntVerbsRecvCompl;
                else
-                  evnt = Processor::evntVerbsSendCompl;
+                  evnt = Worker::evntVerbsSendCompl;
 
-           _PushEvent(dabc::CodeEvent(evnt, procid, wc->wr_id), 1);
-           fFireCounter++;
-           fHadVerbsEvent = true;
+           _PushEvent(dabc::EventId(evnt, procid, wc->wr_id), 1);
+
+           isany = true;
+
+           // FIXME: we should increase number of fired events by worker
+           verbs::Worker* worker = (verbs::Worker*) fWorkers[procid]->work;
+           worker->fWorkerFiredEvents++;
 #ifdef VERBS_USING_PIPE
          }
 #else
@@ -398,160 +385,51 @@ dabc::EventId verbs::Thread::WaitEvent(double tmout_sec)
       }
    }
 
-   if (fFireCounter==0) return NullEventId;
-   fFireCounter--;
-   return _GetNextEvent();
+   // we put additional event to enable again events checking after current events are processed
+   if (isany) {
+      fCheckNewEvents = false;
+      _PushEvent(evntEnableCheck, 1);
+   }
+
+   return _GetNextEvent(evid);
 }
 
-void verbs::Thread::ProcessorNumberChanged()
+void verbs::Thread::ProcessExtraThreadEvent(const dabc::EventId& evid)
 {
-   // we do not need locks while fProcessors and fMap can be changed only inside the thread
+   switch (evid.GetCode()) {
+      case evntEnableCheck:
+         fCheckNewEvents = true;
+         break;
+      default:
+         dabc::Thread::ProcessExtraThreadEvent(evid);
+         break;
+   }
+}
 
-   DOUT5(("ProcessorNumberChanged started size:%u", fProcessors.size() ));
+
+
+
+void verbs::Thread::WorkersNumberChanged()
+{
+   // we do not need locks while fWorkers and fMap can be changed only inside the thread
+
+   DOUT5(("WorkersNumberChanged started size:%u", fWorkers.size() ));
 
    fMap.clear();
 
-   for (unsigned indx=0;indx<fProcessors.size();indx++) {
-      DOUT5(("Test processor %u: %p", indx, fProcessors[indx]));
+   for (unsigned indx=0;indx<fWorkers.size();indx++) {
+      DOUT5(("Test processor %u: %p", indx, fWorkers[indx].work));
 
-      Processor* proc = dynamic_cast<Processor*> (fProcessors[indx]);
+      verbs::Worker* proc = dynamic_cast<verbs::Worker*> (fWorkers[indx]->work);
 
-      if (proc==0) continue;
+      if ((proc==0) || (proc->QP()==0)) continue;
 
-      fMap[proc->QP()->qp_num()] = proc->ProcessorId();
+      fMap[proc->QP()->qp_num()] = proc->WorkerId();
    }
 
-   DOUT5(("ProcessorNumberChanged finished"));
-}
+   fCheckNewEvents = true;
 
-
-bool verbs::Thread::DoServer(dabc::Command* cmd, dabc::Port* port, const char* portname)
-{
-   if ((cmd==0) || (port==0)) return false;
-
-   DOUT3(("verbs::Thread::DoServer %s", portname));
-
-   if (!StartConnectProcessor()) return false;
-
-   QueuePair* hs_qp = new QueuePair(fDevice, IBV_QPT_RC,
-                                    MakeCQ(), 2, 1,
-                                    MakeCQ(), 2, 1);
-
-   ProtocolProcessor* rec = new ProtocolProcessor(this, hs_qp, true, portname, cmd);
-
-   rec->fConnType = cmd->GetInt("VerbsConnType", IBV_QPT_RC);
-   rec->fTimeout = cmd->GetInt("Timeout", 10);
-   const char* connid = cmd->GetPar("ConnId");
-   if (connid!=0)
-      rec->fConnId = connid;
-   else
-      dabc::formats(rec->fConnId, "LID%04x-QPN%08x-CNT%04x", fDevice->lid(), fConnect->QP()->qp_num(), fConnect->NextConnCounter());
-
-   DOUT3(("Start SERVER: %s", rec->fConnId.c_str()));
-
-   cmd->SetPar("ServerId", FORMAT(("%04x:%08x", fDevice->lid(), fConnect->QP()->qp_num())));
-   cmd->SetInt("VerbsConnType", rec->fConnType);
-
-   cmd->SetPar("ConnId", rec->fConnId.c_str());
-
-   cmd->SetUInt("ServerHeaderSize", port->UserHeaderSize());
-
-   rec->fThrdName = cmd->GetStr(dabc::xmlTrThread,"");
-   
-   Thread* thrd;
-
-   fDevice->CreatePortQP(rec->fThrdName.c_str(), port, rec->fConnType, thrd, rec->fPortCQ, rec->fPortQP);
-
-   rec->AssignProcessorToThread(this, false);
-
-   return true;
-}
-
-bool verbs::Thread::DoClient(dabc::Command* cmd, dabc::Port* port, const char* portname)
-{
-   if ((cmd==0) || (port==0)) return false;
-
-   DOUT3(("verbs::Thread::DoClient %s", portname));
-
-   if (!StartConnectProcessor()) return false;
-
-   const char* connid = cmd->GetPar("ConnId");
-   if (connid==0) {
-      EOUT(("Connection ID not specified"));
-      return false;
-   }
-
-   DOUT3(("Start CLIENT: %s", connid));
-
-   unsigned headersize = cmd->GetUInt("ServerHeaderSize", 0);
-   if (headersize != port->UserHeaderSize()) {
-      EOUT(("Missmatch in configured header sizes: %d %d", headersize, port->UserHeaderSize()));
-      port->ChangeUserHeaderSize(headersize);
-   }
-
-   QueuePair* hs_qp = new QueuePair(fDevice, IBV_QPT_RC,
-                                MakeCQ(), 2, 1,
-                                MakeCQ(), 2, 1);
-
-   ProtocolProcessor* rec = new ProtocolProcessor(this, hs_qp, false, portname, cmd);
-
-   rec->fTimeout = cmd->GetInt("Timeout",10);
-   rec->fConnId = connid;
-
-   const char* serverid = cmd->GetPar("ServerId");
-   if (serverid!=0) {
-       unsigned int lid, qpn;
-       sscanf(serverid, "%x:%x", &lid, &qpn);
-       rec->fRemoteLID = lid;
-       rec->fRemoteQPN = qpn;
-   }
-
-   rec->fConnType = cmd->GetInt("VerbsConnType", IBV_QPT_RC);
-   rec->fKindStatus = 111; // this indicate, that we send request to server
-
-   rec->fThrdName = cmd->GetStr(dabc::xmlTrThread,"");
-
-   Thread* thrd;
-
-   fDevice->CreatePortQP(rec->fThrdName.c_str(), port, rec->fConnType, thrd, rec->fPortCQ, rec->fPortQP);
-
-   rec->AssignProcessorToThread(this, false);
-
-   return true;
-}
-
-void verbs::Thread::FillServerId(std::string& servid)
-{
-   StartConnectProcessor();
-
-   dabc::formats(servid, "%04x:%08x", GetDevice()->lid(), fConnect->QP()->qp_num());
-}
-
-bool verbs::Thread::StartConnectProcessor()
-{
-
-   {
-      dabc::LockGuard lock(fWorkMutex);
-      if (fConnect!=0) return true;
-
-      fConnect = new ConnectProcessor(this);
-   }
-
-   fConnect->AssignProcessorToThread(this);
-   return true;
-}
-
-verbs::ProtocolProcessor* verbs::Thread::FindProtocol(const char* connid)
-{
-   dabc::LockGuard lock(fWorkMutex);
-
-   for (unsigned n=1; n<fProcessors.size(); n++) {
-      ProtocolProcessor* proc = dynamic_cast<ProtocolProcessor*> ( fProcessors[n]);
-      if (proc!=0)
-         if (proc->fConnId.compare(connid)==0) return proc;
-   }
-
-   return 0;
+   DOUT5(("WorkersNumberChanged finished"));
 }
 
 const char* verbs::Thread::StatusStr(int code)
@@ -592,6 +470,4 @@ const char* verbs::Thread::StatusStr(int code)
         return verbs_status[i].name;
 
    return "Invalid_VERBS_Status_Code";
-
-
 }

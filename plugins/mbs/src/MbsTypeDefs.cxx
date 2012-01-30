@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "MbsTypeDefs.h"
 
 #include <string.h>
@@ -51,6 +51,7 @@ const char* mbs::xmlServerName        = "MbsServerName";
 const char* mbs::xmlServerKind        = "MbsServerKind";
 const char* mbs::xmlServerPort        = "MbsServerPort";
 const char* mbs::xmlServerScale       = "MbsServerScale";
+const char* mbs::xmlServerLimit       = "MbsServerLimit";
 const char* mbs::xmlNormalOutput      = "DoOutput";
 const char* mbs::xmlFileOutput        = "DoFile";
 const char* mbs::xmlServerOutput      = "DoServer";

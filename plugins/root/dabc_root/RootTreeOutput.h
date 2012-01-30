@@ -30,9 +30,9 @@ namespace dabc_root {
          RootTreeOutput();
          virtual ~RootTreeOutput();
 
-         virtual bool Write_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
+         virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) { return false; }
 
-         virtual bool WriteBuffer(dabc::Buffer* buf);
+         virtual bool WriteBuffer(const dabc::Buffer& buf);
 
       protected:
 

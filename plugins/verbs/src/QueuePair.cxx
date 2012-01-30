@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "verbs/QueuePair.h"
 
 #include <netdb.h>
@@ -30,10 +30,10 @@ uint32_t verbs::QueuePair::fQPCounter = 0;
 
 // static int __qpcnt__ = 0;
 
-verbs::QueuePair::QueuePair(Device* verbs, ibv_qp_type qp_type,
-                            ComplQueue* send_cq, int send_depth, int max_send_sge,
-                            ComplQueue* recv_cq, int recv_depth, int max_recv_sge) :
-   fVerbs(verbs),
+verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
+                                 ComplQueue* send_cq, int send_depth, int max_send_sge,
+                                 ComplQueue* recv_cq, int recv_depth, int max_recv_sge) :
+   fContext(ctx),
    fType(qp_type),
    f_qp(0),
    f_local_psn(0),
@@ -61,7 +61,7 @@ verbs::QueuePair::QueuePair(Device* verbs, ibv_qp_type qp_type,
    attr.cap.max_inline_data = VERBS_MAX_INLINE;
    attr.qp_type = fType;
 
-   f_qp = ibv_create_qp(fVerbs->pd(), &attr);
+   f_qp = ibv_create_qp(fContext.pd(), &attr);
    if (f_qp==0) {
       EOUT(("Couldn't create queue pair (QP)"));
       return;
@@ -70,7 +70,7 @@ verbs::QueuePair::QueuePair(Device* verbs, ibv_qp_type qp_type,
    struct ibv_qp_attr qp_attr;
    qp_attr.qp_state        = IBV_QPS_INIT;
    qp_attr.pkey_index      = 0;
-   qp_attr.port_num        = verbs->IbPort();
+   qp_attr.port_num        = fContext.IbPort();
    int res = 0;
 
    if (qp_type == IBV_QPT_UD) {
@@ -119,18 +119,7 @@ bool verbs::QueuePair::InitUD()
    memset(&attr, 0, sizeof attr);
 
    attr.qp_state       = IBV_QPS_RTR;
-   attr.path_mtu       = IBV_MTU_2048;
-
-   switch (fVerbs->mtu()) {
-      case 256: attr.path_mtu = IBV_MTU_256; break;
-      case 512: attr.path_mtu = IBV_MTU_512; break;
-      case 1024: attr.path_mtu = IBV_MTU_1024; break;
-      case 2048: attr.path_mtu = IBV_MTU_2048; break;
-      case 4096: attr.path_mtu = IBV_MTU_4096; break;
-      default: EOUT(("Wrong mtu value %u", fVerbs->mtu()));
-   }
-
-   // attr.path_mtu = IBV_MTU_1024;
+   attr.path_mtu       = fContext.mtu();
 
    if (ibv_modify_qp(qp(), &attr, IBV_QP_STATE )) {
        EOUT(("Failed to modify UD QP to RTR"));
@@ -152,30 +141,34 @@ bool verbs::QueuePair::InitUD()
    return true;
 }
 
-bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t dest_psn)
+bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t dest_psn, uint8_t src_path_bits)
 {
    if (qp_type() == IBV_QPT_UD) {
-      EOUT(("QueuePair::Connect not supported for unreliable datagramm connection. Use InitUD() instead"));
+      EOUT(("QueuePair::Connect not supported for unreliable datagram connection. Use InitUD() instead"));
       return false;
    }
 
+   DOUT3(("Start QP connect with %x:%x:%x", dest_lid, dest_qpn, dest_psn));
 
    struct ibv_qp_attr attr;
    memset(&attr, 0, sizeof attr);
 
-   attr.qp_state       = IBV_QPS_RTR;
-   attr.path_mtu       = IBV_MTU_2048;
+   attr.qp_state   = IBV_QPS_RTR;
+   attr.path_mtu   = fContext.mtu();
 
-   switch (fVerbs->mtu()) {
+/*
+   switch (f_mtu) {
       case 256: attr.path_mtu = IBV_MTU_256; break;
       case 512: attr.path_mtu = IBV_MTU_512; break;
       case 1024: attr.path_mtu = IBV_MTU_1024; break;
       case 2048: attr.path_mtu = IBV_MTU_2048; break;
       case 4096: attr.path_mtu = IBV_MTU_4096; break;
-      default: EOUT(("Wrong mtu value %u", fVerbs->mtu()));
+      default: EOUT(("Wrong mtu value %u", f_mtu));
    }
+*/
 
-   // attr.path_mtu = IBV_MTU_1024;
+//   FIXME: why mtu was fixed to 1024
+//   attr.path_mtu = IBV_MTU_1024;
 
    attr.dest_qp_num  = dest_qpn;
    attr.rq_psn       = dest_psn;
@@ -187,9 +180,11 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
    attr.ah_attr.is_global  = 0;
    attr.ah_attr.dlid       = dest_lid;
    attr.ah_attr.sl         = 0;
-   attr.ah_attr.src_path_bits = 0;
-   attr.ah_attr.port_num   = fVerbs->IbPort(); // !!!!!!!  probably, here should be destination port
-
+   attr.ah_attr.src_path_bits = src_path_bits;
+   attr.ah_attr.port_num   = fContext.IbPort();
+   
+   DOUT3(("Modify to RTR"));
+   
    if (qp_type() == IBV_QPT_RC) {
       if (ibv_modify_qp(qp(), &attr, (ibv_qp_attr_mask)
              (IBV_QP_STATE              |
@@ -203,7 +198,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
          return false;
       }
    } else
-
+      
    if (qp_type() == IBV_QPT_UC) {
       if (ibv_modify_qp(qp(), &attr, (ibv_qp_attr_mask)
              (IBV_QP_STATE              |
@@ -224,6 +219,8 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
       }
    }
 
+   DOUT3(("Modify to RTS"));
+   
    attr.qp_state   = IBV_QPS_RTS;
    attr.sq_psn     = local_psn();
    if (qp_type() == IBV_QPT_RC) {
@@ -250,18 +247,12 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
       }
    }
 
-//   if (qp_type() == IBV_QPT_UD) {
-//      f_ah = ibv_create_ah(fVerbs->pd(), &(attr.ah_attr));
-//      if (f_ah==0) {
-//         EOUT(("Failed to create AH for UD"));
-//         return false;
-//      }
-//   }
-
    f_remote_lid = dest_lid;
    f_remote_qpn = dest_qpn;
    f_remote_psn = dest_psn;
 
+   DOUT3(("QP connected !!!"));
+   
 //   if (qp_type()!= IBV_QPT_UD)
 //      DOUT1(("DO CONNECT local_qpn=%x remote_qpn=%x", qp_num(), dest_qpn));
 
@@ -276,6 +267,7 @@ bool verbs::QueuePair::Post_Send(struct ibv_send_wr* swr)
       EOUT(("ibv_post_send fails arg %lx", bad_swr->wr_id));
       return false;
    }
+
    return true;
 }
 

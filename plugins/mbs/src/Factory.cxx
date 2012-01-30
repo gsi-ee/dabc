@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "mbs/Factory.h"
 
 #include "dabc/string.h"
@@ -18,8 +18,9 @@
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/SocketThread.h"
+#include "dabc/MemoryPool.h"
 #include "dabc/Port.h"
-
+#include "dabc/Url.h"
 
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
@@ -35,9 +36,20 @@
 
 mbs::Factory mbsfactory("mbs");
 
-dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ, const char* thrdname, dabc::Command* cmd)
+dabc::Transport* mbs::Factory::CreateTransport(dabc::Reference ref, const char* typ, dabc::Command cmd)
 {
-   bool isserver = true;
+   dabc::PortRef portref = ref;
+   if (portref.null()) {
+      EOUT(("Port not specified"));
+      return 0;
+   }
+
+   uint32_t maxbufsize(1024);
+   int scale(1), kind(0), portnum(0), maxclients(0);
+   std::string kindstr, hostname;
+   bool isserver(true);
+   double tmout(1.);
+   dabc::Url kindurl;
 
    if (strcmp(typ, mbs::typeServerTransport)==0)
       isserver = true;
@@ -45,62 +57,101 @@ dabc::Transport* mbs::Factory::CreateTransport(dabc::Port* port, const char* typ
    if (strcmp(typ, mbs::typeClientTransport)==0)
       isserver = false;
    else
-      return dabc::Factory::CreateTransport(port, typ, thrdname, cmd);
+      return dabc::Factory::CreateTransport(portref, typ, cmd);
 
-   std::string kindstr = port->GetCfgStr(xmlServerKind, ServerKindToStr(mbs::TransportServer), cmd);
+   kindstr = portref.Cfg(xmlServerKind, cmd).AsStdStr();
+   kindurl.SetUrl(kindstr, false);
 
-   int kind = StrToServerKind(kindstr.c_str());
-   if (kind == mbs::NoServer) {
-      EOUT(("Wrong configured server type %s, use transport", kindstr.c_str()));
-      kind = mbs::TransportServer;
+   kind = mbs::StreamServer;
+
+   if (!kindstr.empty()) {
+
+      DOUT2(("KIND STR = %s", kindstr.c_str()));
+
+      kind = StrToServerKind(kindurl.GetFullName().c_str());
+
+      if (kind == mbs::NoServer) {
+         EOUT(("Wrong configured server type %s, use stream server", kindstr.c_str()));
+         kind = mbs::StreamServer;
+      }
+
+      portnum = kindurl.GetPort();
+      if (portnum>0)
+         DOUT0(("MBS port %d", portnum));
    }
 
-   int portnum = port->GetCfgInt(xmlServerPort, DefualtServerPort(kind), cmd);
+   tmout = portref.Cfg(dabc::xmlConnTimeout, cmd).AsDouble(0.);
 
-   dabc::Device* dev = dabc::mgr()->FindLocalDevice();
-   if (dev==0) {
-      EOUT(("Local device not found"));
-      return 0;
+   if (isserver) {
+      maxbufsize = portref.Cfg(dabc::xmlBufferSize, cmd).AsUInt(0);
+
+      if (maxbufsize==0) {
+         dabc::MemoryPoolRef pool = portref.GetPool();
+         maxbufsize = pool.GetMaxBufSize();
+      }
+
+      if (maxbufsize==0) maxbufsize = 65536;
+      if (maxbufsize<32) maxbufsize = 32;
+
+      scale = portref.Cfg(xmlServerScale, cmd).AsInt(1);
+      if (scale<1) scale = 1;
+
+      maxclients = portref.Cfg(xmlServerLimit, cmd).AsInt(0);
+      if (maxclients<0) maxclients = 0;
+
+   } else {
+      hostname = portref.Cfg(xmlServerName, cmd).AsStdStr("localhost");
+      DOUT1(("Creating mbs client for host:%s port:%d tmout:%3.1f", hostname.c_str(), portnum, tmout));
+
+      dabc::Url hosturl;
+      hosturl.SetUrl(hostname, false);
+      if (hosturl.GetPort() > 0) {
+         portnum = hosturl.GetPort();
+         hostname = hosturl.GetFullName();
+         DOUT0(("Use custom port %d for client connection to %s host", portnum, hostname.c_str()));
+      }
    }
 
-   std::string newthrdname;
-   if (thrdname==0)
-      newthrdname = dabc::mgr()->MakeThreadName();
-   else
-      newthrdname = thrdname;
+   if (portnum==0)
+      portnum = portref.Cfg(xmlServerPort, cmd).AsInt(DefualtServerPort(kind));
 
+   dabc::TimeStamp tm(dabc::Now());
+   bool firsttime = true;
 
-   if (!isserver) {
+   do {
 
-      std::string hostname = port->GetCfgStr(xmlServerName, "localhost", cmd);
+      if (firsttime) firsttime = false;
+                else dabc::mgr.Sleep(0.01);
 
-      DOUT1(("Creating mbs client for host:%s port:%d", hostname.c_str(), portnum));
+      if (isserver) {
+         int servfd = dabc::SocketThread::StartServer(portnum);
 
-      int fd = dabc::SocketThread::StartClient(hostname.c_str(), portnum);
+         if (servfd>0) {
 
-      if (fd<=0) return 0;
+            DOUT1(("!!!!! Starts MBS server kind:%s on port %d maxbufsize %u scale %d maxclients %d", mbs::ServerKindToStr(kind), portnum, maxbufsize, scale, maxclients));
 
-      DOUT1(("Creating client kind = %s  host %s port %d", kindstr.c_str(), hostname.c_str(), portnum));
+            // connect to port immediately, even before client(s) really connected
+            // This will fill output queue of the transport, but buffers should not be lost
+            // Connection/disconnection of client will be invisible for the module
+            return new ServerTransport(portref, kind, servfd, portnum, maxbufsize, scale, maxclients);
+         }
 
-      return new ClientTransport(port, kind, fd, newthrdname);
-   }
+      } else {
 
-   uint32_t maxbufsize = port->GetCfgInt(dabc::xmlBufferSize, 16*1024, cmd);
-   int scale = port->GetCfgInt(xmlServerScale, 1, cmd);
+         int fd = dabc::SocketThread::StartClient(hostname.c_str(), portnum);
 
-   int servfd = dabc::SocketThread::StartServer(portnum);
+         if (fd>0) {
 
-   if (servfd<0) return 0;
+            DOUT1(("Creating client kind = %s  host %s port %d", mbs::ServerKindToStr(kind), hostname.c_str(), portnum));
 
-   DOUT1(("!!!!! Starts MBS server kind:%s on port %d maxbufsize %u scale %d", kindstr.c_str(), portnum, maxbufsize, scale));
+            return new ClientTransport(portref, kind, fd);
+         }
+      }
 
-   // connect to port immediately, even before client(s) really connected
-   // This will fill output queue of the transport, but buffers should not be lost
-   // Connection/disconnection of client will be invisible for the module
+   } while (!tm.Expired(tmout));
 
-   return new ServerTransport(port, newthrdname, kind, servfd, portnum, maxbufsize, scale);
+   return 0;
 }
-
 
 dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ)
 {
@@ -142,7 +193,6 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const char* typ)
 
 dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ)
 {
-
    if ((typ==0) || (strlen(typ)==0)) return 0;
 
    DOUT3(("Factory::CreateDataOutput typ:%s", typ));
@@ -160,7 +210,7 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const char* typ)
    return 0;
 }
 
-dabc::Module* mbs::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
+dabc::Module* mbs::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
 {
 
    if (strcmp(classname, "mbs::GeneratorModule")==0)
@@ -179,22 +229,17 @@ dabc::Module* mbs::Factory::CreateModule(const char* classname, const char* modu
 }
 
 
-dabc::Transport* mbs::Factory::CreateTransportNew(dabc::Port* port, dabc::Command* cmd)
-{
+// FIXME: implement CreateTransport for all classes, based on URL
 
-   dabc::ConfigSource cfg(cmd, port);
+/*
+
+dabc::Transport* mbs::Factory::CreateTransportNew(dabc::Port* port, dabc::Command cmd)
+{
 
    bool isinput = port->InputQueueCapacity() > 0;
    bool isoutput = (port->InputQueueCapacity() > 0) && !isinput;
 
-   std::string proto = cfg.GetCfgStr(dabc::xmlProtocol);
-
-   if (proto.compare(mbs::protocolLmd)==0) {
-
-      return CreateIOTransport(port, cmd,
-            isinput ? new mbs::LmdInput() : 0,
-            isoutput ? new mbs::LmdOutput() : 0);
-   }
+   std::string proto = port->Cfg(dabc::xmlProtocol, cmd).AsStdStr();
 
    int kind = mbs::NoServer;
 
@@ -204,29 +249,29 @@ dabc::Transport* mbs::Factory::CreateTransportNew(dabc::Port* port, dabc::Comman
    if (proto.compare(mbs::protocolMbsStream) == 0) kind = mbs::StreamServer; else
    if (proto.compare(mbs::protocolMbs) == 0) {
 
-      kind = StrToServerKind(cfg.GetCfgStr("kind").c_str());
+      kind = StrToServerKind(port->Cfg("kind", cmd).AsStr());
 
       if (kind==mbs::NoServer) {
-         portnum = cfg.GetCfgInt(dabc::xmlUrlPort);
+         portnum = port->Cfg(dabc::xmlUrlPort,cmd).AsInt();
 
          kind = mbs::TransportServer;
-         if (cfg.GetCfgInt(dabc::xmlUrlPort) == DefualtServerPort(mbs::StreamServer))
+         if (port->Cfg(dabc::xmlUrlPort,cmd).AsInt() == DefualtServerPort(mbs::StreamServer))
             kind = mbs::StreamServer;
       }
    }
 
    if (kind == mbs::NoServer) return 0;
 
-   if (portnum<=0) portnum = cfg.GetCfgInt(dabc::xmlUrlPort);
+   if (portnum<=0) portnum = port->Cfg(dabc::xmlUrlPort,cmd).AsInt();
 
    if (portnum<=0) portnum = DefualtServerPort(kind);
 
-   std::string thrdname = cfg.GetCfgStr(dabc::xmlTrThread);
-   if (thrdname.length()==0) thrdname = port->ProcessorThreadName();
+   std::string thrdname = port->Cfg(dabc::xmlTrThread, cmd).AsStdStr();
+   if (thrdname.length()==0) thrdname = port->ThreadName();
 
    if (isinput) {
 
-      std::string hostname = cfg.GetCfgStr(dabc::xmlHostName, "localhost");
+      std::string hostname = port->Cfg(dabc::xmlHostName, cmd).AsStdStr("localhost");
 
       DOUT1(("Creating mbs client for host:%s port:%d", hostname.c_str(), portnum));
 
@@ -242,8 +287,8 @@ dabc::Transport* mbs::Factory::CreateTransportNew(dabc::Port* port, dabc::Comman
    int servfd = dabc::SocketThread::StartServer(portnum);
    if (servfd<0) return 0;
 
-   uint32_t maxbufsize = cfg.GetCfgInt(dabc::xmlBufferSize, 16*1024);
-   int scale = cfg.GetCfgInt(xmlServerScale, 1);
+   uint32_t maxbufsize = port->Cfg(dabc::xmlBufferSize, cmd).AsInt(16*1024);
+   int scale = port->Cfg(xmlServerScale, cmd).AsInt(1);
 
    DOUT1(("!!!!! Starts MBS server kind:%s on port %d maxbufsize %u scale %d", ServerKindToStr(kind), portnum, maxbufsize, scale));
 
@@ -251,6 +296,7 @@ dabc::Transport* mbs::Factory::CreateTransportNew(dabc::Port* port, dabc::Comman
    // This will fill output queue of the transport, but buffers should not be lost
    // Connection/disconnection of client will be invisible for the module
 
-   return new ServerTransport(port, thrdname, kind, servfd, portnum, maxbufsize, scale);
+   return new mbs::ServerTransport(port, thrdname, kind, servfd, portnum, maxbufsize, scale);
 }
 
+*/

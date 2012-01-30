@@ -9,7 +9,7 @@ namespace bnet {
       public:
          MbsWorkerApplication(const char* classname = 0);
 
-         virtual int ExecuteCommand(dabc::Command* cmd);
+         virtual int ExecuteCommand(dabc::Command cmd);
 
          virtual bool CreateReadout(const char* portname, int portnumber);
 

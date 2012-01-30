@@ -17,19 +17,20 @@
 #include "dabc/logging.h"
 #include "dabc/PoolHandle.h"
 
-bnet::GlobalDFCModule::GlobalDFCModule(const char* name, dabc::Command* cmd) :
+bnet::GlobalDFCModule::GlobalDFCModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fPool(0),
    fMap(),
    fSendNodes(),
-   fRecvNodes()
+   fRecvNodes(),
+   fLastSendTime()
 {
 
-   fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
+   fCfgNumNodes = Cfg(CfgNumNodes,cmd).AsInt(1);
 
    fPool = CreatePoolHandle(bnet::ControlPoolName);
 
-   fBufferSize = GetCfgInt(xmlCtrlBuffer, 2*1024, cmd);
+   fBufferSize = Cfg(xmlCtrlBuffer,cmd).AsInt(2*1024);
 
    CreatePoolUsageParameter("CtrlPoolUsage", 1., bnet::ControlPoolName);
 
@@ -39,23 +40,21 @@ bnet::GlobalDFCModule::GlobalDFCModule(const char* name, dabc::Command* cmd) :
      CreateIOPort(FORMAT(("Sender%d", n)), fPool, CtrlInpQueueSize, CtrlOutQueueSize);
 
    fTargetCounter = 0;
-
-   fLastSendTime = dabc::NullTimeStamp;
 }
 
 bnet::GlobalDFCModule::~GlobalDFCModule()
 {
 }
 
-int bnet::GlobalDFCModule::ExecuteCommand(dabc::Command* cmd)
+int bnet::GlobalDFCModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd->IsName("Configure")) {
+   if (cmd.IsName("Configure")) {
 
        DOUT3(("Controller Get command Configure"));
 
       // now, create everything that we need
-      fSendNodes.Reset(cmd->GetStr(parSendMask), fCfgNumNodes);
-      fRecvNodes.Reset(cmd->GetStr(parRecvMask), fCfgNumNodes);
+      fSendNodes.Reset(cmd.GetStr(parSendMask), fCfgNumNodes);
+      fRecvNodes.Reset(cmd.GetStr(parRecvMask), fCfgNumNodes);
 
       DOUT1(("Controller Configure done nout = %d", NumOutputs()));
 
@@ -131,12 +130,12 @@ void bnet::GlobalDFCModule::ProcessOutputEvent(dabc::Port* port)
 
 void bnet::GlobalDFCModule::ProcessTimerEvent(dabc::Timer* timer)
 {
-   dabc::TimeStamp_t tm = ThrdTimeStamp();
-   if (dabc::IsNullTime(fLastSendTime)) fLastSendTime = tm;
+   dabc::TimeStamp tm = dabc::Now();
+   if (fLastSendTime.null()) fLastSendTime = tm;
 
 //   DOUT1(("ProcessTimerEvent ready = %d", fReadyEvnts.size()));
 
-   if (dabc::TimeDistance(fLastSendTime, tm) > 1.) TrySendEventsAssignment(true);
+   if (fLastSendTime.Expired(tm, 1.)) TrySendEventsAssignment(true);
 
 //   DOUT1(("ProcessTimerEvent done ready = %d", fReadyEvnts.size()));
 
@@ -203,5 +202,5 @@ void bnet::GlobalDFCModule::TrySendEventsAssignment(bool force)
 
    dabc::Buffer::Release(buf);
 
-   fLastSendTime = ThrdTimeStamp();
+   fLastSendTime = dabc::Now();
 }

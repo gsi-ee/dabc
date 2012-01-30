@@ -40,15 +40,15 @@ namespace bnet {
          // list of subevents, which should be used to produce output buffer
          std::vector<dabc::Pointer> fSubEvnts;
 
-         dabc::HistogramParameter* fUsedEvents;
 
-         dabc::RateParameter*      fEvntRate;
+         // TODO: provide comparable class in new scheme
+         // dabc::HistogramParameter* fUsedEvents;
 
          dabc::Buffer* ProduceOutputBuffer();
          void SkipNotUsedBuffers();
 
       public:
-         MbsCombinerModule(const char* name, dabc::Command* cmd = 0);
+         MbsCombinerModule(const char* name, dabc::Command cmd = 0);
 
          virtual ~MbsCombinerModule();
 

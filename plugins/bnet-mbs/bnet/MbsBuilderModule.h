@@ -9,8 +9,6 @@
 
 #include "mbs/Iterator.h"
 
-#include <vector>
-
 namespace bnet {
 
    class MbsBuilderModule : public BuilderModule {
@@ -25,14 +23,13 @@ namespace bnet {
 
          int                  fCfgEventsCombine;
          OutputRec            fOut;
-         dabc::RateParameter* fEvntRate;
 
          void FinishOutputBuffer();
          void StartOutputBuffer(dabc::BufferSize_t minsize = 0);
          void SendOutputBuffer();
 
       public:
-         MbsBuilderModule(const char* name, dabc::Command* cmd = 0);
+         MbsBuilderModule(const char* name, dabc::Command cmd = 0);
          virtual ~MbsBuilderModule();
 
          virtual void DoBuildEvent(std::vector<dabc::Buffer*>& bufs);

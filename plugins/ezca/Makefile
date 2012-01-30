@@ -34,7 +34,7 @@ include $(DABCSYS)/config/Makefile.config
 
 
 
-
+DOOPTIMIZATION = false
 
 
 
@@ -65,7 +65,7 @@ EZCA_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(EZCA_S))
 EZCA_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(EZCA_S))
 
 # used in the main Makefile
-ALLHDRS           += $(patsubst $(EZCADIR)/%.h, $(DABCINCPATH)/%.h, $(EZCA_H))
+
 ALLDEPENDENC    += $(EZCA_D)
 
 libs:: $(EZCA_LIB)
@@ -75,10 +75,6 @@ clean::
 
 
 ##### local rules #####
-$(DABCINCPATH)/%.h: $(EZCADIR)/%.h
-	@echo "Header: $@" 
-	@cp -f $< $@
-
 
 $(EZCA_O) $(EZCA_D) : INCLUDES += $(EPICS_BASE)/include $(EPICS_BASE)/include/os/Linux $(EPICS_EXTENSIONS)/include 
 

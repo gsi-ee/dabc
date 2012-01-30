@@ -1,30 +1,31 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef VERBS_QueuePair
 #define VERBS_QueuePair
-
-#include <infiniband/verbs.h>
 
 #define VERBS_MAX_INLINE  256
 #define VERBS_DEFAULT_QKEY 0x01234567
 #define VERBS_MCAST_QPN  0xffffff
 #define VERBS_UD_MEMADDON  40
 
-
 #define VERBSQP_RC 0
 #define VERBSQP_UC 1
 #define VERBSQP_UD 2
+
+#ifndef VERBS_Context
+#include "verbs/Context.h"
+#endif
 
 namespace verbs {
 
@@ -33,9 +34,9 @@ namespace verbs {
 
    class QueuePair {
       public:
-         QueuePair(Device* verbs, ibv_qp_type qp_type,
-                 ComplQueue* send_cq, int send_depth, int max_send_sge,
-                 ComplQueue* recv_cq, int recv_depth, int max_recv_sge);
+         QueuePair(ContextRef ctx, ibv_qp_type qp_type,
+                     ComplQueue* send_cq, int send_depth, int max_send_sge,
+                     ComplQueue* recv_cq, int recv_depth, int max_recv_sge);
          virtual ~QueuePair();
 
          struct ibv_qp *qp() const { return f_qp; }
@@ -47,7 +48,11 @@ namespace verbs {
 
          unsigned NumSendSegs() const { return fNumSendSegs; }
 
-         bool Connect(uint16_t lid, uint32_t qpn, uint32_t psn);
+         /** \brief Connect QP to specified remote queue pair
+          *  \param src_path_bits defines low bits of source lid, used by QP.
+          *  It is required when local HCA has multiple LID (LMC>0) and one want to use
+          *  LID address other than default one. */
+         bool Connect(uint16_t lid, uint32_t qpn, uint32_t psn, uint8_t src_path_bits = 0);
          bool InitUD();
 
          uint16_t remote_lid() const { return f_remote_lid; }
@@ -63,7 +68,7 @@ namespace verbs {
       protected:
          static uint32_t fQPCounter;
 
-         Device* fVerbs;
+         ContextRef  fContext;
 
          ibv_qp_type fType;
 

@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 extern "C"
 {
    #include "../evapi/typedefs.h"
@@ -117,36 +117,33 @@ mbs::EvapiInput::~EvapiInput()
    free(fChannel);
 }
 
-bool mbs::EvapiInput::Read_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+bool mbs::EvapiInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-   dabc::ConfigSource cfg(cmd, port);
-
-   fKind = cfg.GetCfgStr(xmlEvapiType, fKind);
-   fName = cfg.GetCfgStr(xmlEvapiSourceName, fName);
+   fKind = wrk.Cfg(xmlEvapiType, cmd).AsStdStr(fKind);
+   fName = wrk.Cfg(xmlEvapiSourceName, cmd).AsStdStr(fName);
 
    if (fKind==xmlEvapiFile) {
-      fTagFile = cfg.GetCfgStr(xmlEvapiTagFile, fTagFile);
+      fTagFile = wrk.Cfg(xmlEvapiTagFile, cmd).AsStdStr(fTagFile);
       return OpenFile(fName.c_str(), fTagFile.c_str());
    } else
    if (fKind==xmlEvapiRFIOFile) {
       return OpenRFIOFile(fName.c_str());
    } else
    if (fKind==xmlEvapiTransportServer) {
-      fTimeout = cfg.GetCfgInt(xmlEvapiTimeout, fTimeout);
+      fTimeout = wrk.Cfg(xmlEvapiTimeout, cmd).AsInt(fTimeout);
       return OpenTransportServer(fName.c_str());
    } else
    if (fKind==xmlEvapiStreamServer) {
-      fTimeout = cfg.GetCfgInt(xmlEvapiTimeout, fTimeout);
+      fTimeout = wrk.Cfg(xmlEvapiTimeout, cmd).AsInt(fTimeout);
       return OpenStreamServer(fName.c_str());
-
    } else
    if (fKind==xmlEvapiEventServer) {
-      fTimeout = cfg.GetCfgInt(xmlEvapiTimeout, fTimeout);
+      fTimeout = wrk.Cfg(xmlEvapiTimeout, cmd).AsInt(fTimeout);
       return OpenEventServer(fName.c_str());
    } else
    if (fKind==xmlEvapiRemoteEventServer) {
-      fRemotePort = cfg.GetCfgInt(xmlEvapiRemoteEventServerPort, fRemotePort);
-      fTimeout = cfg.GetCfgInt(xmlEvapiTimeout, fTimeout);
+      fRemotePort = wrk.Cfg(xmlEvapiRemoteEventServerPort, cmd).AsInt(fRemotePort);
+      fTimeout = wrk.Cfg(xmlEvapiTimeout, cmd).AsInt(fTimeout);
       return OpenRemoteEventServer(fName.c_str(), fRemotePort);
    }
 
@@ -288,19 +285,17 @@ unsigned mbs::EvapiInput::Read_Size()
    return dabc::di_Error;
 }
 
-unsigned mbs::EvapiInput::Read_Complete(dabc::Buffer* buf)
+unsigned mbs::EvapiInput::Read_Complete(dabc::Buffer& buf)
 {
-   if ((fMode<0) || (buf==0) || (fEventHeader==0)) return dabc::di_Error;
+   if ((fMode<0) || buf.null() || (fEventHeader==0)) return dabc::di_Error;
 
-   buf->SetTypeId(mbt_MbsEvents);
-
-   buf->SetHeaderSize(0);
+   buf.SetTypeId(mbt_MbsEvents);
 
    dabc::BufferSize_t size = GetEventBufferSize();
 
-   buf->SetDataSize(size);
+   buf.SetTotalSize(size);
 
-   memcpy(buf->GetDataLocation(), fEventHeader, size);
+   buf.CopyFrom(fEventHeader, size);
 
    return dabc::di_Ok;
 }
@@ -335,11 +330,9 @@ mbs::EvapiOutput::~EvapiOutput()
    free(fChannel);
 }
 
-bool mbs::EvapiOutput::Write_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+bool mbs::EvapiOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-   dabc::ConfigSource cfg(cmd, port);
-
-   fFileName = cfg.GetCfgStr(xmlEvapiOutFileName, fFileName);
+   fFileName = wrk.Cfg(xmlEvapiOutFileName, cmd).AsStdStr(fFileName);
 
    return CreateOutputFile(fFileName.c_str());
 }
@@ -378,7 +371,7 @@ bool mbs::EvapiOutput::Close()
    return true;
 }
 
-bool mbs::EvapiOutput::WriteBuffer(dabc::Buffer* buf)
+bool mbs::EvapiOutput::WriteBuffer(const dabc::Buffer& buf)
 {
    if (fMode<0) return false;
 

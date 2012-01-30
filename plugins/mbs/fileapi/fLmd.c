@@ -72,6 +72,17 @@ int clock_gettime(int clockid, struct timespec *tp)
 
 #include "fLmd.h"
 
+
+#ifdef WITH_DABC
+#define LMD_DEBUG(arg)
+#define LMD_ERROR(arg)
+#else
+#define LMD_DEBUG(arg) printf arg
+#define LMD_ERROR(arg) printf arg
+#endif
+
+
+
 int32_t  fLmdWriteBuffer(sLmdControl *, char *, uint32_t);
 uint32_t fLmdCleanup(sLmdControl *);
 void     fLmdOffsetResize(sLmdControl *, uint32_t);
@@ -151,8 +162,8 @@ uint32_t iLargeFile){      // LMD__[NO_]LARGE_FILE
   pLmdControl->iBytes+=iReturn;
 
   if(iUseOffset == LMD__INDEX)fLmdOffsetResize(pLmdControl,iReturn/4); // create and set first value
-  printf("fLmdPutOpen: %s. Bytes:%d over:%d table:%d large:%d.\n",
-	 Filename,iBytes,iOver,iUseOffset,iLargeFile);
+  LMD_DEBUG(("fLmdPutOpen: %s. Bytes:%d over:%d table:%d large:%d.\n",
+	 Filename,iBytes,iOver,iUseOffset,iLargeFile));
 return(LMD__SUCCESS);
 }
 
@@ -544,7 +555,7 @@ uint32_t iUseOffset){      // LMD__[NO_]INDEX
   pLmdControl->pBuffer=(int16_t *)malloc(bufferBytes);
   pLmdControl->iBufferWords=bufferBytes/2; // will be increased if necessary
 
-  printf("fLmdGetOpen: %s words %u\n", Filename, pLmdControl->iBufferWords);
+  LMD_DEBUG(("fLmdGetOpen: %s words %u\n", Filename, pLmdControl->iBufferWords));
 
   pLmdControl->iLeftWords = 0; // buffer empty, read with first fLmdGetElement
   pLmdControl->pMbsHeader = NULL;
@@ -1008,21 +1019,21 @@ void fLmdPrintBufferHeader(uint32_t iVerbose, sMbsBufferHeader *pMbsBufferHeader
 {
   if(iVerbose){
     if(pMbsBufferHeader){
-    printf("BfHd: # %d, DataWords:%d Type:%08x Elements:%d sec:%d.%d MaxWords:%d\n",
+    LMD_DEBUG(("BfHd: # %d, DataWords:%d Type:%08x Elements:%d sec:%d.%d MaxWords:%d\n",
 	   pMbsBufferHeader->iBuffer,
 	   pMbsBufferHeader->iUsedWords,
 	   pMbsBufferHeader->iType,
 	   pMbsBufferHeader->iElements,
 	   pMbsBufferHeader->iTimeSpecSec,
 	   pMbsBufferHeader->iTimeSpecNanoSec/1000,
-	   pMbsBufferHeader->iMaxWords);
+	   pMbsBufferHeader->iMaxWords));
 }}}
 //===============================================================
 void fLmdPrintFileHeader(uint32_t iVerbose, sMbsFileHeader *pMbsFileHeader)
 {
   if(iVerbose){
     if(pMbsFileHeader){
-    printf("FiHd: DataWords:%d Type:%d.%d Elements:%d sec:%d.%d MaxWords:%d Index: %llx[%d]\n",
+    LMD_DEBUG(("FiHd: DataWords:%d Type:%d.%d Elements:%d sec:%d.%d MaxWords:%d Index: %llx[%d]\n",
 	   pMbsFileHeader->iUsedWords,
 	   pMbsFileHeader->iType&0xffff,
 	   pMbsFileHeader->iType>>16,
@@ -1031,7 +1042,7 @@ void fLmdPrintFileHeader(uint32_t iVerbose, sMbsFileHeader *pMbsFileHeader)
 	   pMbsFileHeader->iTimeSpecNanoSec/1000,
 	   pMbsFileHeader->iMaxWords,
 	   pMbsFileHeader->iTableOffset,
-	   pMbsFileHeader->iOffsetSize);
+	   pMbsFileHeader->iOffsetSize));
 }}}
 //===============================================================
 void fLmdPrintHeader(uint32_t iVerbose, sMbsHeader *pMbsHeader)

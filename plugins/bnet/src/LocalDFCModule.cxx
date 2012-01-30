@@ -18,7 +18,7 @@
 
 #include "bnet/common.h"
 
-bnet::LocalDFCModule::LocalDFCModule(const char* name, dabc::Command* cmd) :
+bnet::LocalDFCModule::LocalDFCModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fPool(0)
 {

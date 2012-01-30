@@ -15,7 +15,7 @@
 
 #include "bnet/common.h"
 
-bnet::FilterModule::FilterModule(const char* name, dabc::Command* cmd) :
+bnet::FilterModule::FilterModule(const char* name, dabc::Command cmd) :
    dabc::ModuleSync(name, cmd)
 {
    fPool = CreatePoolHandle(bnet::EventPoolName);

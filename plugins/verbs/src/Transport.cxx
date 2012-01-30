@@ -1,33 +1,35 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "verbs/Transport.h"
 
 #include "dabc/logging.h"
 #include "dabc/Port.h"
+#include "dabc/Manager.h"
 
 #include "verbs/Device.h"
 #include "verbs/QueuePair.h"
 #include "verbs/ComplQueue.h"
 #include "verbs/MemoryPool.h"
 
-verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::Port* port,
+verbs::Transport::Transport(verbs::ContextRef ctx, ComplQueue* cq, QueuePair* qp, dabc::Reference portref,
                             bool useackn, ibv_gid* multi_gid) :
-   dabc::NetworkTransport(verbs),
-   Processor(qp),
+   Worker(qp),
+   dabc::NetworkTransport(portref, useackn),
+   fContext(ctx),
    fCQ(cq),
    fInitOk(false),
-   fPoolReg(0),
+   fPoolReg(),
    f_rwr(0),
    f_swr(0),
    f_sge(0),
@@ -43,7 +45,9 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
 {
    if (qp==0) return;
 
-   InitNetworkTransport(port, useackn);
+   dabc::Port* port = (dabc::Port*) portref();
+
+   InitNetworkTransport(this);
 
    if (multi_gid) {
 
@@ -51,13 +55,13 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
 
       memcpy(f_multi_gid.raw, multi_gid->raw, sizeof(f_multi_gid.raw));
 
-      f_multi = verbs->ManageMulticast(Device::mcst_Register, f_multi_gid, f_multi_lid);
+      f_multi = fContext.ManageMulticast(ContextRef::mcst_Register, f_multi_gid, f_multi_lid);
 
-      DOUT1(("Init multicast group LID:%x %s", f_multi_lid, ConvertGidToStr(f_multi_gid).c_str()));
+      DOUT3(("Init multicast group LID:%x %s", f_multi_lid, ConvertGidToStr(f_multi_gid).c_str()));
 
       if (!f_multi) return;
 
-      f_ud_ah = verbs->CreateMAH(f_multi_gid, f_multi_lid);
+      f_ud_ah = fContext.CreateMAH(f_multi_gid, f_multi_lid);
       if (f_ud_ah==0) return;
 
       f_ud_qpn = VERBS_MCAST_QPN;
@@ -69,17 +73,18 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
          if (!QP()->AttachMcast(&f_multi_gid, f_multi_lid)) return;
    }
 
-   fFastPost = Device::IsThreadSafeVerbs();
+   fFastPost = verbs::Device::IsThreadSafeVerbs();
 
-   if (fPool!=0) {
-      fPoolReg = verbs->RegisterPool(fPool);
+   if (GetPool()!=0) {
+      fPoolReg = fContext.RegisterPool(GetPool());
+      dabc::mgr()->RegisterDependency(this, fPoolReg());
    } else {
       EOUT(("Cannot make verbs transport without memory pool"));
       return;
    }
 
    if (fNumRecs>0) {
-      fHeadersPool = new MemoryPool(verbs, "HeadersPool", fNumRecs,
+      fHeadersPool = new MemoryPool(fContext, "HeadersPool", fNumRecs,
             fFullHeaderSize + (IsUD() ? VERBS_UD_MEMADDON : 0), IsUD(), true);
 
       // we use at least 2 segments per operation, one for header and one for buffer itself
@@ -116,25 +121,20 @@ verbs::Transport::Transport(Device* verbs, ComplQueue* cq, QueuePair* qp, dabc::
    }
 
    fInitOk = true;
+
+   DOUT3(("verbs::Transport::Transport %p created", this));
 }
 
 verbs::Transport::~Transport()
 {
-   DOUT3(("verbs::Transport::~Transport %p starts", this));
-
-   HaltProcessor();
-
-   // we need this while at some point verbs thread will try to access
-   // qp, which is destroyed at that moment
-   RemoveProcessorFromThread(true);
-
    DOUT3(("verbs::Transport::~Transport %p id: %d locked:%s", this, GetId(), DBOOL(fMutex.IsLocked())));
 
    if (f_multi) {
       if (f_multi_attch)
          QP()->DetachMcast(&f_multi_gid, f_multi_lid);
 
-      ((verbs::Device*) GetDevice())->ManageMulticast(f_multi, f_multi_gid, f_multi_lid);
+      // FIXME - device is no longer available in transport
+      fContext.ManageMulticast(f_multi, f_multi_gid, f_multi_lid);
       f_multi = 0;
    }
 
@@ -158,21 +158,32 @@ verbs::Transport::~Transport()
    delete[] f_swr; f_swr = 0;
    delete[] f_sge; f_sge = 0;
 
-   DOUT3(("verbs::Transport::~Transport %p id %d Close", this, GetId()));
-
-   CleanupNetworkTransport();
-
    DOUT3(("verbs::Transport::~Transport %p id %d delete headers pool", this, GetId()));
 
-   delete fHeadersPool; fHeadersPool = 0;
-
-   DOUT3(("verbs::Transport::~Transport %p unregister pool"));
-
-   ((Device*) fDevice)->UnregisterPool(fPoolReg);
-   fPoolReg = 0;
+   dabc::Object::Destroy(fHeadersPool); fHeadersPool = 0;
 
    DOUT3(("verbs::Transport::~Transport %p done", this));
 }
+
+
+void verbs::Transport::CleanupFromTransport(dabc::Object* obj)
+{
+   if (fPoolReg == obj) {
+      CloseTransport();
+   }
+   dabc::NetworkTransport::CleanupFromTransport(obj);
+}
+
+
+void verbs::Transport::CleanupTransport()
+{
+   DOUT3(("verbs::Transport::~Transport %p unregister pool"));
+   dabc::mgr()->UnregisterDependency(this, fPoolReg());
+   fPoolReg.Release();
+
+   dabc::NetworkTransport::CleanupTransport();
+}
+
 
 void verbs::Transport::SetUdAddr(struct ibv_ah *ud_ah, uint32_t ud_qpn, uint32_t ud_qkey)
 {
@@ -190,7 +201,7 @@ void verbs::Transport::_SubmitRecv(uint32_t recid)
 
    uint32_t segid = recid*fSegmPerOper;
 
-   dabc::Buffer* buf = fRecs[recid].buf;
+   dabc::Buffer& buf = fRecs[recid].buf;
 
    f_rwr[recid].wr_id     = recid;
    f_rwr[recid].sg_list   = &(f_sge[segid]);
@@ -206,24 +217,23 @@ void verbs::Transport::_SubmitRecv(uint32_t recid)
    }
    f_sge[segid].lkey = fHeadersPool->GetLkey(recid);
 
-   if ((buf!=0) && (fPoolReg!=0)) {
+   if (!buf.null() && !fPoolReg.null()) {
 
-      if (buf->NumSegments() >= fSegmPerOper) {
+      if (buf.NumSegments() >= fSegmPerOper) {
          EOUT(("Too many segments"));
          exit(146);
       }
 
-      dabc::LockGuard lock(fPoolReg->WorkMutex());
+      // FIXME: dangerous, acquire mamory pool mutex when transport mutex is locked
+      fPoolReg()->CheckMRStructure();
 
-      fPoolReg->_CheckMRStructure();
-
-      for (unsigned seg=0;seg<buf->NumSegments();seg++) {
-         f_sge[segid+1+seg].addr   = (uintptr_t) buf->GetDataLocation(seg);
-         f_sge[segid+1+seg].length = buf->GetDataSize(seg);
-         f_sge[segid+1+seg].lkey   = fPoolReg->GetLkey(buf->GetId(seg));
+      for (unsigned seg=0;seg<buf.NumSegments();seg++) {
+         f_sge[segid+1+seg].addr   = (uintptr_t) buf.SegmentPtr(seg);
+         f_sge[segid+1+seg].length = buf.SegmentSize(seg);
+         f_sge[segid+1+seg].lkey   = fPoolReg()->GetLkey(buf.SegmentId(seg));
       }
 
-      f_rwr[recid].num_sge  += buf->NumSegments();
+      f_rwr[recid].num_sge  += buf.NumSegments();
    }
 
    if (fFastPost)
@@ -237,11 +247,10 @@ void verbs::Transport::_SubmitSend(uint32_t recid)
 //   DOUT1(("_SubmitSend %u buf:%p", recid, fRecs[recid].buf));
 
    uint32_t segid = recid*fSegmPerOper;
-
-   int hdrsize = PackHeader(recid);
+   int senddtyp = PackHeader(recid);
 
    f_sge[segid].addr = (uintptr_t) fRecs[recid].header;
-   f_sge[segid].length = hdrsize;
+   f_sge[segid].length = fFullHeaderSize;
    f_sge[segid].lkey = fHeadersPool->GetLkey(recid);
 
    f_swr[recid].wr_id    = recid;
@@ -257,29 +266,28 @@ void verbs::Transport::_SubmitSend(uint32_t recid)
       f_swr[recid].wr.ud.remote_qkey = f_ud_qkey;
    }
 
-   dabc::Buffer* buf = fRecs[recid].buf;
+   if ((senddtyp==2) && !fPoolReg.null()) {
 
-   if ((buf!=0) && (fPoolReg!=0)) {
+      dabc::Buffer& buf = fRecs[recid].buf;
 
-      if (buf->NumSegments() >= fSegmPerOper) {
+      if (buf.NumSegments() >= fSegmPerOper) {
          EOUT(("Too many segments"));
          exit(147);
       }
 
-      dabc::LockGuard lock(fPoolReg->WorkMutex());
+      // FIXME: dangerous, acquire mamory pool mutex when transport mutex is locked
+      fPoolReg()->CheckMRStructure();
 
-      fPoolReg->_CheckMRStructure();
-
-      for (unsigned seg=0;seg<buf->NumSegments();seg++) {
-         f_sge[segid+1+seg].addr   = (uintptr_t) buf->GetDataLocation(seg);
-         f_sge[segid+1+seg].length = buf->GetDataSize(seg);
-         f_sge[segid+1+seg].lkey   = fPoolReg->GetLkey(buf->GetId(seg));
+      for (unsigned seg=0;seg<buf.NumSegments();seg++) {
+         f_sge[segid+1+seg].addr   = (uintptr_t) buf.SegmentPtr(seg);
+         f_sge[segid+1+seg].length = buf.SegmentSize(seg);
+         f_sge[segid+1+seg].lkey   = fPoolReg()->GetLkey(buf.SegmentId(seg));
       }
 
-      f_swr[recid].num_sge  += buf->NumSegments();
+      f_swr[recid].num_sge  += buf.NumSegments();
    }
 
-   if ((f_swr[recid].num_sge==1) && (hdrsize<=256))
+   if ((f_swr[recid].num_sge==1) && (f_sge[segid].length<=256))
       // try to send small portion of data as inline
       f_swr[recid].send_flags = (ibv_send_flags) (IBV_SEND_SIGNALED | IBV_SEND_INLINE);
 
@@ -290,31 +298,31 @@ void verbs::Transport::_SubmitSend(uint32_t recid)
 }
 
 
-void verbs::Transport::ProcessEvent(dabc::EventId evnt)
+void verbs::Transport::ProcessEvent(const dabc::EventId& evnt)
 {
-   switch (dabc::GetEventCode(evnt)) {
+   switch (evnt.GetCode()) {
 
       case evntVerbsSendCompl:
-//         DOUT1(("evntVerbsSendCompl %u", GetEventArg(evnt)));
-         ProcessSendCompl(dabc::GetEventArg(evnt));
+//         DOUT1(("evntVerbsSendCompl %u", evnt.GetArg()));
+         ProcessSendCompl(evnt.GetArg());
          break;
 
       case evntVerbsRecvCompl:
-//         DOUT1(("evntVerbsRecvCompl %u", GetEventArg(evnt)));
-         ProcessRecvCompl(dabc::GetEventArg(evnt));
+//         DOUT1(("evntVerbsRecvCompl %u", evnt.GetArg()));
+         ProcessRecvCompl(evnt.GetArg());
          break;
 
       case evntVerbsError:
          EOUT(("Verbs error"));
-         ErrorCloseTransport();
+         CloseTransport(true);
          break;
 
       case evntVerbsSendRec:
-         fQP->Post_Send(&(f_swr[dabc::GetEventArg(evnt)]));
+         fQP->Post_Send(&(f_swr[evnt.GetArg()]));
          break;
 
       case evntVerbsRecvRec:
-         fQP->Post_Recv(&(f_rwr[dabc::GetEventArg(evnt)]));
+         fQP->Post_Recv(&(f_rwr[evnt.GetArg()]));
          break;
 
       case evntVerbsPool:
@@ -322,7 +330,7 @@ void verbs::Transport::ProcessEvent(dabc::EventId evnt)
          break;
 
       default:
-         Processor::ProcessEvent(evnt);
+         Worker::ProcessEvent(evnt);
    }
 }
 
@@ -339,19 +347,11 @@ void verbs::Transport::VerbsProcessRecvCompl(uint32_t arg)
 void verbs::Transport::VerbsProcessOperError(uint32_t)
 {
    EOUT(("Verbs error"));
-   ErrorCloseTransport();
+   CloseTransport(true);
 }
-
 
 bool verbs::Transport::ProcessPoolRequest()
 {
    FireEvent(evntVerbsPool);
    return true;
-}
-
-void verbs::Transport::HaltTransport()
-{
-   HaltProcessor();
-
-   RemoveProcessorFromThread(true);
 }

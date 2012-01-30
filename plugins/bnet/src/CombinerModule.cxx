@@ -23,17 +23,17 @@
 
 #include "bnet/common.h"
 
-bnet::CombinerModule::CombinerModule(const char* name, dabc::Command* cmd) :
+bnet::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    dabc::ModuleSync(name, cmd)
 {
-   fNumReadouts = GetCfgInt(xmlNumReadouts, 1, cmd);
-   fModus = GetCfgInt(xmlCombinerModus, 0, cmd);
+   fNumReadouts = Cfg(xmlNumReadouts,cmd).AsInt(1);
+   fModus = Cfg(xmlCombinerModus,cmd).AsInt(0);
 
-   fInpPool = CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
+   fInpPool = CreatePoolHandle(Cfg(CfgReadoutPool, cmd).AsStr(ReadoutPoolName));
 
    fOutPool = CreatePoolHandle(bnet::TransportPoolName);
 
-   fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize, sizeof(bnet::SubEventNetHeader));
+   fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize);
 
    for (int n=0;n<NumReadouts();n++)
       CreateInput(FORMAT(("Input%d", n)), fInpPool, ReadoutQueueSize);

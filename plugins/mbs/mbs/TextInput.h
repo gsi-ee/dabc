@@ -1,16 +1,15 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
 
 #ifndef MBS_TextInput
 #define MBS_TextInput
@@ -19,11 +18,13 @@
 #include "dabc/DataIO.h"
 #endif
 
-#ifndef DABC_Folder
-#include "dabc/Folder.h"
+#ifndef DABC_Object
+#include "dabc/Object.h"
 #endif
 
 #include <fstream>
+
+#include <stdint.h>
 
 namespace mbs {
 
@@ -32,12 +33,12 @@ namespace mbs {
          TextInput(const char* fname = 0, uint32_t bufsize = 0x10000);
          virtual ~TextInput();
 
-         virtual bool Read_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
+         virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
 
          bool Init();
 
          virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(dabc::Buffer* buf);
+         virtual unsigned Read_Complete(dabc::Buffer& buf);
 
          virtual unsigned RawDataSize();
          virtual unsigned FillRawData(const char* str, void* rawdata, unsigned maxsize);
@@ -54,7 +55,7 @@ namespace mbs {
          int                 fNumHeaderLines; // number of lines in header
          int                 fCharBufferLength;   // buffer for single string
 
-         dabc::Folder*       fFilesList;
+         dabc::Object*       fFilesList;
 
          std::string         fCurrentFileName;
 

@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "mbs/ClientTransport.h"
 
 #include "dabc/Port.h"
@@ -19,27 +19,57 @@
 #include "dabc/Device.h"
 
 
-mbs::ClientIOProcessor::ClientIOProcessor(ClientTransport* cl, int fd) :
-   dabc::SocketIOProcessor(fd),
-   fTransport(cl),
+mbs::ClientTransport::ClientTransport(dabc::Reference port, int kind, int fd) :
+   dabc::SocketIOWorker(fd),
+   dabc::Transport(port),
+   dabc::MemoryPoolRequester(),
    fState(ioInit),
    fSwapping(false),
-   fRecvBuffer(0)
+   fRecvBuffer(),
+   fKind(kind),
+   fMutex(),
+   fInpQueue(GetPort()->InputQueueCapacity())
 {
    fServInfo.iStreams = 0; // by default, new format
+
+   RegisterTransportDependencies(this);
 }
 
-mbs::ClientIOProcessor::~ClientIOProcessor()
+mbs::ClientTransport::~ClientTransport()
 {
-   dabc::Buffer::Release(fRecvBuffer);
+   // FIXME: cleanup should be done much earlier
+
+   DOUT3(("Destroy mbs::ClientTransport::~ClientTransport()"));
+
+   fRecvBuffer.Release();
 }
 
-bool mbs::ClientIOProcessor::IsDabcEnabledOnMbsSide()
+void mbs::ClientTransport::CleanupTransport()
+{
+   fInpQueue.Cleanup(&fMutex);
+   fRecvBuffer.Release();
+
+   // FIXME: check that close is really send to the server
+   FireEvent(evSendClose);
+
+   dabc::Transport::CleanupTransport();
+}
+
+void mbs::ClientTransport::CleanupFromTransport(dabc::Object* obj)
+{
+   if (obj == GetPool()) {
+      fInpQueue.Cleanup(&fMutex);
+   }
+
+   dabc::Transport::CleanupFromTransport(obj);
+}
+
+bool mbs::ClientTransport::IsDabcEnabledOnMbsSide()
 {
    return fServInfo.iStreams==0;
 }
 
-unsigned mbs::ClientIOProcessor::ReadBufferSize()
+unsigned mbs::ClientTransport::ReadBufferSize()
 {
    uint32_t sz = fHeader.BufferLength();
    if (sz < sizeof(fHeader)) {
@@ -51,22 +81,20 @@ unsigned mbs::ClientIOProcessor::ReadBufferSize()
 }
 
 
-void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
+void mbs::ClientTransport::ProcessEvent(const dabc::EventId& evnt)
 {
-//   DOUT0(("ClientIOProcessor::Process event %d", dabc::GetEventCode(evnt)));
+//   DOUT0(("ClientTransport::ProcessEvent event %d", evnt.GetCode()));
 
-   switch (dabc::GetEventCode(evnt)) {
+   switch (evnt.GetCode()) {
 
       case evReactivate:
          // event appears from transport when it sees first empty place in the queue
          if (fState != ioReady) return;
 
       case evDataInput:
-         if (fTransport==0) return;
-
          if (fState == ioReady) {
-            if (!fTransport->HasPlaceInQueue()) return;
-            if (fTransport->Kind() == mbs::StreamServer) {
+            if (!HasPlaceInQueue()) return;
+            if (Kind() == mbs::StreamServer) {
                strcpy(fSendBuf, "GETEVT");
                StartSend(fSendBuf, 12);
             }
@@ -76,52 +104,50 @@ void mbs::ClientIOProcessor::ProcessEvent(dabc::EventId evnt)
          }
 
          if (fState == ioWaitBuffer){
-            if (!fTransport->RequestBuffer(ReadBufferSize(), fRecvBuffer)) {
+            if (!RequestBuffer(ReadBufferSize(), fRecvBuffer)) {
                fState = ioError;
                EOUT(("Cannot request buffer %u from memory pool", ReadBufferSize()));
             } else
-            if (fRecvBuffer!=0) {
-      //         DOUT1(("Start receiving of buffer %p %u %p len = %d",
-      //               fRecvBuffer, fRecvBuffer->GetTotalSize(), fRecvBuffer->GetDataLocation(), ReadBufferSize()));
+               if (!fRecvBuffer.null()) {
+                  //         DOUT1(("Start receiving of buffer %p %u %p len = %d",
+                  //               fRecvBuffer, fRecvBuffer->GetTotalSize(), fRecvBuffer->GetDataLocation(), ReadBufferSize()));
 
-               fRecvBuffer->SetTypeId(mbs::mbt_MbsEvents);
-	       
-	       DOUT5(("MBS transport start recv %u", ReadBufferSize()));
-	       
-               StartRecv(fRecvBuffer, ReadBufferSize());
-               fState = ioRecvBuffer;
-            }
+                  fRecvBuffer.SetTypeId(mbs::mbt_MbsEvents);
+
+                  DOUT5(("MBS transport start recv %u", ReadBufferSize()));
+
+                  StartRecv(fRecvBuffer, ReadBufferSize());
+                  fState = ioRecvBuffer;
+               }
          }
-          if (fState == ioError) {
-             EOUT(("Process error"));
-             fTransport->CloseTransport();
-          }
-          break;
+         if (fState == ioError) {
+            EOUT(("Process error"));
+            CloseTransport(true);
+         }
+         break;
 
       case evRecvInfo:
          if (fState != ioInit) {
             EOUT(("Not an initial state to receive info from server"));
          } else {
-            StartRecv(&fServInfo, sizeof(fServInfo), false);
+            StartRecv(&fServInfo, sizeof(fServInfo));
             fState = ioRecvInfo;
          }
          break;
 
       case evSendClose:
-         if (!IsDoingOutput()) {
-            DOUT1(("Send close"));
-            strcpy(fSendBuf, "CLOSE");
-            StartSend(fSendBuf, 12);
-            fState = ioClosing;
-         }
+         DOUT3(("Send close"));
+         strcpy(fSendBuf, "CLOSE");
+         StartSend(fSendBuf, 12);
+         fState = ioClosing;
          break;
 
       default:
-         dabc::SocketIOProcessor::ProcessEvent(evnt);
+         dabc::SocketIOWorker::ProcessEvent(evnt);
    }
 }
 
-void mbs::ClientIOProcessor::OnSendCompleted()
+void mbs::ClientTransport::OnSendCompleted()
 {
    if ((fState != ioRecvHeder) && (fState != ioClosing)) {
       EOUT(("Complete sending at wrong moment"));
@@ -130,7 +156,7 @@ void mbs::ClientIOProcessor::OnSendCompleted()
    }
 }
 
-void mbs::ClientIOProcessor::OnRecvCompleted()
+void mbs::ClientTransport::OnRecvCompleted()
 {
    switch (fState) {
       case ioRecvInfo:
@@ -144,21 +170,21 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
             EOUT(("Cannot correctly define server endian"));
             fState = ioError;
          }
-         
+
          if ((fState != ioError) && (fServInfo.iStreams != 0) && (fServInfo.iBuffers != 1)) {
-	    EOUT(("Number of buffers %u per stream bigger than 1", fServInfo.iBuffers));
-	    EOUT(("This will lead to event spanning which is not supported by DABC"));
-	    EOUT(("Set buffers number to 1 or call \"enable dabc\" on mbs side"));
-	    fState=ioError;
-	 }
+            EOUT(("Number of buffers %u per stream bigger than 1", fServInfo.iBuffers));
+            EOUT(("This will lead to event spanning which is not supported by DABC"));
+            EOUT(("Set buffers number to 1 or call \"enable dabc\" on mbs side"));
+            fState=ioError;
+         }
 
          if (fState!=ioError) {
-	    std::string info = "new format";
-	    if (fServInfo.iStreams > 0) dabc::formats(info, "streams = %u", fServInfo.iStreams);
-	   
+            std::string info = "new format";
+            if (fServInfo.iStreams > 0) dabc::formats(info, "streams = %u", fServInfo.iStreams);
+
             DOUT1(("Get MBS server info: %s, buf_per_stream = %u, swap = %s ",
                   info.c_str(), fServInfo.iBuffers, DBOOL(fSwapping)));
-	 }
+         }
 
          FireEvent(evDataInput);
 
@@ -168,7 +194,7 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
          if (fSwapping) mbs::SwapData(&fHeader, sizeof(fHeader));
 
          DOUT5(("MbsClient:: Header received, size %u, rest size = %u used %u", fHeader.BufferLength(), ReadBufferSize(), fHeader.UsedBufferSize()));
-	 
+
          if (ReadBufferSize() > (unsigned) fServInfo.iMaxBytes) {
             EOUT(("Buffer size %u bigger than allowed by info record %d", ReadBufferSize(), fServInfo.iMaxBytes));
             fState = ioError;
@@ -188,19 +214,28 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
 
 //         DOUT1(("Provide recv buffer %p to transport", fRecvBuffer));
 
-	 
-	 if (fHeader.UsedBufferSize()>0) {
-            fRecvBuffer->SetDataSize(fHeader.UsedBufferSize());
-            if (fSwapping) mbs::SwapData(fRecvBuffer->GetDataLocation(), fRecvBuffer->GetDataSize());
-	    fTransport->GetReadyBuffer(fRecvBuffer);
-	 } else {
-	    if (IsDabcEnabledOnMbsSide()) EOUT(("Empty buffer from mbs when dabc enabled?"));
-	                             else DOUT3(("Keep alive buffer from MBS"));
-	    dabc::Buffer::Release(fRecvBuffer);
-	 }
-	 
-         
-         fRecvBuffer = 0;
+         if (fHeader.UsedBufferSize()>0) {
+            fRecvBuffer.SetTotalSize(fHeader.UsedBufferSize());
+            if (fSwapping) {
+               dabc::Pointer ptr = fRecvBuffer.GetPointer();
+               while (!ptr.null()) {
+                  mbs::SwapData(ptr(), ptr.rawsize());
+                  fRecvBuffer.Shift(ptr, ptr.rawsize());
+               }
+            }
+
+            // DOUT5(("Recv data into SEG:%u size %u", fRecvBuffer.SegmentId(0), fRecvBuffer.GetTotalSize()));
+            fInpQueue.Push(fRecvBuffer, &fMutex);
+            // DOUT0(("After push buffer %u", fRecvBuffer.GetTotalSize()));
+            FirePortInput();
+         } else {
+            if (IsDabcEnabledOnMbsSide()) EOUT(("Empty buffer from mbs when dabc enabled?"));
+                                     else DOUT3(("Keep alive buffer from MBS"));
+         }
+
+         // ensure that buffer is released
+         fRecvBuffer.Release();
+
          fState = ioReady;
 
          FireEvent(evDataInput);
@@ -212,66 +247,37 @@ void mbs::ClientIOProcessor::OnRecvCompleted()
    }
 }
 
-void mbs::ClientIOProcessor::OnConnectionClosed()
+void mbs::ClientTransport::OnConnectionClosed()
 {
-   if (fTransport) fTransport->SocketClosed(this);
+   DOUT0(("Close client connection"));
 
-   dabc::SocketIOProcessor::OnConnectionClosed();
+   // from this moment we have nothing to do and can close transport
+   CloseTransport();
+
+   dabc::SocketIOWorker::OnConnectionClosed();
 }
 
-// _________________________________________________________________________________
-
-
-mbs::ClientTransport::ClientTransport(dabc::Port* port, int kind, int fd, const std::string& thrdname) :
-   dabc::Transport(dabc::mgr()->FindLocalDevice()),
-   dabc::MemoryPoolRequester(),
-   fKind(kind),
-   fIOProcessor(0),
-   fMutex(),
-   fInpQueue(port->InputQueueCapacity())
-{
-   fIOProcessor = new ClientIOProcessor(this, fd);
-
-   dabc::mgr()->MakeThreadFor(fIOProcessor, thrdname.c_str());
-}
-
-mbs::ClientTransport::~ClientTransport()
-{
-   if (fIOProcessor!=0) {
-      fIOProcessor->fTransport = 0;
-      fIOProcessor->DestroyProcessor();
-      fIOProcessor = 0;
-   }
-}
 
 bool mbs::ClientTransport::ProcessPoolRequest()
 {
-   dabc::LockGuard lock(fMutex);
-
-   if (fIOProcessor==0) return false;
-
-   fIOProcessor->FireEvent(ClientIOProcessor::evDataInput);
+   FireEvent(evDataInput);
 
    return true;
 }
 
-void mbs::ClientTransport::PortChanged()
+void mbs::ClientTransport::PortAssigned()
 {
-   if (IsPortAssigned()) {
-      dabc::LockGuard lock(fMutex);
-      if (fIOProcessor) fIOProcessor->FireEvent(ClientIOProcessor::evRecvInfo);
-   } else {
-      fInpQueue.Cleanup(&fMutex);
-      dabc::LockGuard lock(fMutex);
-      if (fIOProcessor) fIOProcessor->FireEvent(ClientIOProcessor::evSendClose);
-   }
+   FireEvent(evRecvInfo);
 }
 
 void mbs::ClientTransport::StartTransport()
 {
-   dabc::LockGuard lock(fMutex);
-   fRunning = true;
-   if (fIOProcessor) fIOProcessor->FireEvent(ClientIOProcessor::evReactivate);
+   // call performed from port thread, one should protect our data
+   {
+      dabc::LockGuard lock(fMutex);
+      fRunning = true;
+   }
+   FireEvent(evReactivate);
 }
 
 void mbs::ClientTransport::StopTransport()
@@ -280,21 +286,19 @@ void mbs::ClientTransport::StopTransport()
    fRunning = false;
 }
 
-bool mbs::ClientTransport::Recv(dabc::Buffer* &buf)
+bool mbs::ClientTransport::Recv(dabc::Buffer &buf)
 {
-   buf = 0;
-
    bool dofire = false;
 
    {
       dabc::LockGuard lock(fMutex);
       dofire = fInpQueue.Full();
-      buf = fInpQueue.Pop();
+      buf << fInpQueue.Pop();
    }
 
-   if (dofire && fIOProcessor) fIOProcessor->FireEvent(ClientIOProcessor::evReactivate);
+   if (dofire) FireEvent(evReactivate);
 
-   return buf!=0;
+   return !buf.null();
 }
 
 unsigned mbs::ClientTransport::RecvQueueSize() const
@@ -304,11 +308,11 @@ unsigned mbs::ClientTransport::RecvQueueSize() const
    return fInpQueue.Size();
 }
 
-dabc::Buffer* mbs::ClientTransport::RecvBuffer(unsigned indx) const
+dabc::Buffer& mbs::ClientTransport::RecvBuffer(unsigned indx) const
 {
    dabc::LockGuard lock(fMutex);
 
-   return fInpQueue.Item(indx);
+   return fInpQueue.ItemRef(indx);
 }
 
 bool mbs::ClientTransport::HasPlaceInQueue()
@@ -317,39 +321,14 @@ bool mbs::ClientTransport::HasPlaceInQueue()
    return fRunning && !fInpQueue.Full();
 }
 
-bool mbs::ClientTransport::RequestBuffer(uint32_t sz, dabc::Buffer* &buf)
+bool mbs::ClientTransport::RequestBuffer(uint32_t sz, dabc::Buffer &buf)
 {
-   dabc::MemoryPool* pool = GetPortPool();
-   if (pool==0) {
-      DOUT0(("Client port pool = null port = %p", fPort));
+   if (GetPool()==0) {
+      DOUT0(("Client port pool = null port = %p", GetPort()));
       return false;
    }
 
-   buf = pool->TakeBufferReq(this, sz);
+   buf << GetPool()->TakeBufferReq(this, sz);
 
    return true;
-}
-
-void mbs::ClientTransport::GetReadyBuffer(dabc::Buffer* buf)
-{
-
-   {
-      dabc::LockGuard lock(fMutex);
-      fInpQueue.Push(buf);
-   }
-
-   FireInput();
-}
-
-void mbs::ClientTransport::SocketClosed(ClientIOProcessor* proc)
-{
-
-   {
-      dabc::LockGuard lock(fMutex);
-      if (fIOProcessor!=proc) return;
-      fIOProcessor = 0;
-   }
-
-   // from this moment we have nothing to do and can close transport
-   CloseTransport();
 }

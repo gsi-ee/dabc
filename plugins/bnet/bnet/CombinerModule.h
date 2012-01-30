@@ -26,7 +26,7 @@ namespace bnet {
          dabc::PoolHandle*      fOutPool;
          dabc::Port*            fOutPort;
 
-         CombinerModule(const char* name, dabc::Command* cmd = 0);
+         CombinerModule(const char* name, dabc::Command cmd = 0);
 
       public:
 

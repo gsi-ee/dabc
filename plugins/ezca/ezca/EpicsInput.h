@@ -178,10 +178,11 @@ namespace ezca {
          EpicsInput(const char* name = 0, uint32_t bufsize = 0x10000);
          virtual ~EpicsInput();
 
-         virtual bool Read_Init(dabc::Command* cmd = 0, dabc::WorkingProcessor* port = 0);
+         virtual bool Read_Init(const dabc::WorkerRef& wrk,
+               const dabc::Command& cmd);
 
          virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(dabc::Buffer* buf);
+         virtual unsigned Read_Complete(dabc::Buffer& buf);
 
          virtual double GetTimeout()
          {

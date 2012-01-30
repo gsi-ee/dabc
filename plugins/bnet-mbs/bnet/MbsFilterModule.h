@@ -12,7 +12,7 @@ namespace bnet {
          virtual bool TestBuffer(dabc::Buffer*);
 
       public:
-         MbsFilterModule(const char* name, dabc::Command* cmd = 0);
+         MbsFilterModule(const char* name, dabc::Command cmd = 0);
    };
 }
 

@@ -15,7 +15,7 @@
 #define BNET_WorkerApplication
 
 #include "dabc/Application.h"
-#include "dabc/Basic.h"
+#include "dabc/Object.h"
 #include "dabc/threads.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
@@ -29,17 +29,15 @@ namespace bnet {
       public:
          WorkerApplication(const char* classname);
 
-         virtual bool IsSlaveApp() { return true; }
-
-         int   CombinerModus() const { return GetParInt(xmlCombinerModus, 0); }
-         int   NumReadouts() const { return GetParInt(xmlNumReadouts, 1); }
+         int   CombinerModus() const { return Par(xmlCombinerModus).AsInt(0); }
+         int   NumReadouts() const { return Par(xmlNumReadouts).AsInt(1); }
          std::string ReadoutPar(int nreadout = 0) const;
-         bool  IsGenerator() const { return GetParBool(xmlIsGenerator, false); }
-         bool  IsSender() const { return GetParBool(xmlIsSender, false); }
-         bool  IsReceiver() const { return GetParBool(xmlIsReceiever, false); }
-         bool  IsFilter() const { return GetParBool(xmlIsFilter, false); }
+         bool  IsGenerator() const { return Par(xmlIsGenerator).AsBool(false); }
+         bool  IsSender() const { return Par(xmlIsSender).AsBool(false); }
+         bool  IsReceiver() const { return Par(xmlIsReceiever).AsBool(false); }
+         bool  IsFilter() const { return Par(xmlIsFilter).AsBool(false); }
 
-         virtual int ExecuteCommand(dabc::Command* cmd);
+         virtual int ExecuteCommand(dabc::Command cmd);
 
          virtual bool CreateReadout(const char* portname, int portnumber) { return false; }
 
@@ -58,18 +56,14 @@ namespace bnet {
          virtual bool CreateAppModules();
          virtual bool BeforeAppModulesDestroyed();
 
-         virtual int IsAppModulesConnected();
-
          virtual bool IsModulesRunning();
 
          static std::string ReadoutParName(int nreadout);
 
-         virtual bool DoStateTransition(const char* state_trans_name);
-
       protected:
 
-         virtual void DiscoverNodeConfig(dabc::Command* cmd);
-         void ApplyNodeConfig(dabc::Command* cmd);
+         virtual void DiscoverNodeConfig(dabc::Command cmd);
+         void ApplyNodeConfig(dabc::Command cmd);
          bool CheckWorkerModules();
    };
 }

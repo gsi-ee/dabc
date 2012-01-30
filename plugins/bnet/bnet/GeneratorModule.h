@@ -25,7 +25,7 @@ namespace bnet {
          int                       fBufferSize;
          uint64_t                  fUniqueId;
 
-         GeneratorModule(const char* name, dabc::Command* cmd = 0);
+         GeneratorModule(const char* name, dabc::Command cmd = 0);
 
       public:
 

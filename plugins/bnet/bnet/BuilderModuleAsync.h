@@ -32,7 +32,7 @@ namespace bnet {
 
          std::vector<dabc::Buffer*> fBuffers;
 
-         BuilderModuleAsync(const char* name, dabc::Command* cmd = 0);
+         BuilderModuleAsync(const char* name, dabc::Command cmd = 0);
 
       public:
          virtual ~BuilderModuleAsync();

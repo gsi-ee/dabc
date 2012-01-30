@@ -38,9 +38,9 @@
 #include <list>
 
 
-void IterateBuffer(dabc::Buffer* buf)
+void IterateBuffer(const dabc::Buffer& buf)
 {
-   if (buf==0) return;
+   if (buf.null()) return;
 
    mbs::ReadIterator iter(buf);
 
@@ -57,7 +57,6 @@ void IterateBuffer(dabc::Buffer* buf)
 
 class MbsTest1RepeaterModule : public dabc::ModuleAsync {
    protected:
-      dabc::PoolHandle* fPool;
       dabc::Port*         fInpPort;
       dabc::Port*         fOutPort;
       int                 fBufferCnt;
@@ -67,13 +66,11 @@ class MbsTest1RepeaterModule : public dabc::ModuleAsync {
          dabc::ModuleAsync(name)
       {
          // we can use small buffer, while now we can allocate flexible buffer
-         int buffersize = 1024;
+         CreatePoolHandle("MyPool");
 
-         fPool = CreatePoolHandle("MyPool", buffersize, 100);
+         fInpPort = CreateInput("Input", Pool(), 5);
 
-         fInpPort = CreateInput("Input", fPool, 5);
-
-         fOutPort = CreateOutput("Output", fPool, 5);
+         fOutPort = CreateOutput("Output", Pool(), 5);
 
          fBufferCnt = 0;
 
@@ -84,13 +81,13 @@ class MbsTest1RepeaterModule : public dabc::ModuleAsync {
       {
          while (fInpPort->CanRecv() && fOutPort->CanSend())
          {
-            dabc::Buffer* buf = fInpPort->Recv();
+            dabc::Buffer buf = fInpPort->Recv();
 
 //            DOUT1(("Recv buffer %p", buf));
 
-            if (buf==0) continue;
+            if (buf.null()) continue;
 
-            if (buf->GetTypeId() == dabc::mbt_EOF) {
+            if (buf.GetTypeId() == dabc::mbt_EOF) {
                DOUT1(("Find EOF in input stream"));
                fWaitForStop = true;
             } else  {
@@ -135,15 +132,15 @@ void TestMbsFileRepeater(const char* inpfile, const char* outfile, bool new_form
 
    MbsTest1RepeaterModule* m = new MbsTest1RepeaterModule("Repeater");
 
-   mgr.MakeThreadForModule(m, "Thrd1");
+   mgr.MakeThreadFor(m, "Thrd1");
 
-   dabc::Command* cmd = new dabc::CmdCreateTransport("Repeater/Input", mbs::typeLmdInput);
-   cmd->SetStr(mbs::xmlFileName, inpfile);
+   dabc::CmdCreateTransport cmd("Repeater/Input", mbs::typeLmdInput);
+   cmd.SetStr(mbs::xmlFileName, inpfile);
    bool res = mgr.Execute(cmd);
 
-   cmd = new dabc::CmdCreateTransport("Repeater/Output", mbs::typeLmdOutput);
-   cmd->SetStr(mbs::xmlFileName, outfile);
-   res = mgr.Execute(cmd);
+   dabc::CmdCreateTransport cmd2("Repeater/Output", mbs::typeLmdOutput);
+   cmd2.SetStr(mbs::xmlFileName, outfile);
+   res = mgr.Execute(cmd2);
 
    DOUT1(("Init repeater module() res = %s", DBOOL(res)));
 
@@ -176,13 +173,13 @@ void TestMbsInpFile(const char* fname)
 
    if (inp->OpenFile(fname)) {
 
-      dabc::Buffer* buf = 0;
+      dabc::Buffer buf;
 
-      while ((buf = inp->ReadBuffer())>0) {
+      while (!(buf = inp->ReadBuffer()).null()) {
          if (cnt++<10)
             IterateBuffer(buf);
 
-         dabc::Buffer::Release(buf);
+         buf.Release();
       }
    }
 

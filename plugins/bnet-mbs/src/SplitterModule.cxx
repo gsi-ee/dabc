@@ -3,12 +3,12 @@
 #include "dabc/Port.h"
 #include "dabc/Buffer.h"
 
-dabc::SplitterModule::SplitterModule(const char* name, Command* cmd) :
+dabc::SplitterModule::SplitterModule(const char* name, Command cmd) :
    ModuleAsync(name, cmd)
 {
-   int numout = GetCfgInt(xmlNumOutputs, 2, cmd);
+   int numout = Cfg(xmlNumOutputs,cmd).AsInt(2);
 
-   CreatePoolHandle(GetCfgStr(xmlPoolName, "Pool", cmd).c_str());
+   CreatePoolHandle(Cfg(xmlPoolName, cmd).AsStr("Pool"));
 
    CreateInput("Input", Pool(0));
 

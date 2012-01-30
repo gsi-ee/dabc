@@ -19,7 +19,7 @@ MBSFAPIDIR      = $(MBSDIR)/fileapi
 DABCMBS_LIBNAME  = $(LIB_PREFIX)DabcMbs
 DABCMBS_LIB      = $(TGTDLLPATH)/$(DABCMBS_LIBNAME).$(DllSuf)
 
-MBSFAPI_DEFINITIONS = Linux FILEONLY _LARGEFILE64_SOURCE
+MBSFAPI_DEFINITIONS = Linux FILEONLY _LARGEFILE64_SOURCE WITH_DABC
 
 MBS_EXCLUDE      = 
 
@@ -57,7 +57,7 @@ DABCMBS_D += $(MBSAPI_CD)
 MBSAPI_DEFINITIONS = Linux _LARGEFILE64_SOURCE MBSEVAPI
 else
 MBS_EXCLUDE +=  $(MBSDIRI)/EventAPI.$(HedSuf) \
-               $(MBSDIRS)/EventAPI.$(SrcSuf)
+                $(MBSDIRS)/EventAPI.$(SrcSuf)
 endif
 
 
@@ -84,6 +84,9 @@ $(MBSFAPI_PACKAGE) : $(MBSFAPI_H) $(MBSFAPI_S) $(MBSFAPI_DISTR)
 	@cd $(MBSFAPIDIR); tar rf test.tar $(MBSFAPI_DISTR:$(MBSFAPIDIR)/%=%); gzip test.tar  
 	@mv -f $(MBSFAPIDIR)/test.tar.gz $(MBSFAPI_PACKAGE)
 	@echo "$(MBSFAPI_PACKAGE) produced!"
+
+clean::
+	rm -f $(MBSFAPI_PACKAGE)
 
 ########### extra rules #############
 $(MBS_O) $(MBS_D) : DEFINITIONS += $(MBSAPI_DEFINITIONS) 

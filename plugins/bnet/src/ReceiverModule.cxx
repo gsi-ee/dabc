@@ -20,27 +20,28 @@
 #include "dabc/Parameter.h"
 #include "dabc/Application.h"
 
-bnet::ReceiverModule::ReceiverModule(const char* name, dabc::Command* cmd) :
+bnet::ReceiverModule::ReceiverModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fPool(0),
    fRecvRate(),
    fSendNodes(),
    fInpCounter(0)
 {
-   fCfgNumNodes = GetCfgInt(CfgNumNodes, 1, cmd);
-   fCfgNodeId = GetCfgInt(CfgNodeId, 0, cmd);
+   fCfgNumNodes = Cfg(CfgNumNodes,cmd).AsInt(1);
+   fCfgNodeId = Cfg(CfgNodeId,cmd).AsInt(0);
 
    fPool = CreatePoolHandle(bnet::TransportPoolName);
 
+
+   CreatePar("DataRate").SetRatemeter(false, 1.);
+
    // output is always there
-   CreateOutput("Output", fPool, ReceiverOutQueueSize, sizeof(bnet::SubEventNetHeader));
+   CreateOutput("Output", fPool, ReceiverOutQueueSize)->SetOutRateMeter(Par("DataRate"));
 
    DOUT1(("Create Receiver with %d inputs", fCfgNumNodes));
 
    for (int n=0;n<fCfgNumNodes;n++)
-      CreateInput(FORMAT(("Input%d", n)), fPool, ReceiverQueueSize, sizeof(bnet::SubEventNetHeader));
-
-   CreateRateParameter("DataRate", false, 1., "", "Output");
+      CreateInput(FORMAT(("Input%d", n)), fPool, ReceiverQueueSize);
 
    fSendingCounter = fCfgNumNodes;
    for (int n=0;n<fCfgNumNodes;n++)
@@ -52,13 +53,13 @@ bnet::ReceiverModule::~ReceiverModule()
 {
 }
 
-int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
+int bnet::ReceiverModule::ExecuteCommand(dabc::Command cmd)
 {
-   if (cmd->IsName("Configure")) {
+   if (cmd.IsName("Configure")) {
 
       DOUT3(("Get command Configure"));
 
-      fSendNodes.Reset(cmd->GetStr(parSendMask), fCfgNumNodes);
+      fSendNodes.Reset(cmd.GetStr(parSendMask), fCfgNumNodes);
 
       fInpCounter = fSendNodes.size();
 
@@ -73,7 +74,7 @@ int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
 
       DOUT3(("Receiever Configure done ninp = %d", NumInputs()));
    } else
-   if (cmd->IsName("GetConfig")) {
+   if (cmd.IsName("GetConfig")) {
       std::string str = "";
       for (int node=0;node<fCfgNumNodes;node++) {
          dabc::Port* port = Input(node);
@@ -83,7 +84,7 @@ int bnet::ReceiverModule::ExecuteCommand(dabc::Command* cmd)
             str += "o";
       }
 
-      cmd->SetStr(parSendMask, str.c_str());
+      cmd.SetStr(parSendMask, str.c_str());
    } else
 
       return dabc::ModuleAsync::ExecuteCommand(cmd);
@@ -123,7 +124,7 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
             DOUT1(("Find EOF packet in input %d", nodeid));
             skipbuffer = true;
          } else
-         if (buf->GetHeaderSize() < sizeof(SubEventNetHeader)) {
+         if (buf.GetTotalSize() < sizeof(SubEventNetHeader)) {
             EOUT(("Wrong header in net packet"));
             skipbuffer = true;
          }
@@ -198,7 +199,7 @@ void bnet::ReceiverModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
       Stop();
 
-      dabc::mgr()->GetApp()->InvokeCheckModulesCmd();
+      dabc::mgr.GetApp().CheckWorkDone();
 
       return;
    }

@@ -1,16 +1,15 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
 
 #include "mbs/LmdInput.h"
 
@@ -38,21 +37,20 @@ mbs::LmdInput::LmdInput(const char* fname, uint32_t bufsize) :
 
 mbs::LmdInput::~LmdInput()
 {
+   // FIXME: cleanup should be done much earlier
    CloseFile();
    if (fFilesList) {
-      delete fFilesList;
+      dabc::Object::Destroy(fFilesList);
       fFilesList = 0;
    }
 }
 
-bool mbs::LmdInput::Read_Init(dabc::Command* cmd, dabc::WorkingProcessor* port)
+bool mbs::LmdInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-   dabc::ConfigSource cfg(cmd, port);
+   fFileName = wrk.Cfg(mbs::xmlFileName, cmd).AsStdStr(fFileName);
+   fBufferSize = wrk.Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
 
-   fFileName = cfg.GetCfgStr(mbs::xmlFileName, fFileName);
-   fBufferSize = cfg.GetCfgInt(dabc::xmlBufferSize, fBufferSize);
-
-   DOUT1(("BufferSize = %d", fBufferSize));
+   // DOUT1(("BufferSize = %d", fBufferSize));
 
    return Init();
 }
@@ -72,10 +70,10 @@ bool mbs::LmdInput::Init()
    }
 
    if (strpbrk(fFileName.c_str(),"*?")!=0)
-      fFilesList = dabc::Manager::Instance()->ListMatchFiles("", fFileName.c_str());
+      fFilesList = dabc::mgr()->ListMatchFiles("", fFileName.c_str());
    else {
-      fFilesList = new dabc::Folder(0, "FilesList", true);
-      new dabc::Basic(fFilesList, fFileName.c_str());
+      fFilesList = new dabc::Object(0, "FilesList", true);
+      new dabc::Object(fFilesList, fFileName.c_str());
    }
 
    return OpenNextFile();
@@ -93,10 +91,12 @@ bool mbs::LmdInput::OpenNextFile()
 
    if (!res)
       EOUT(("Cannot open file %s for reading, errcode:%u", nextfilename, fFile.LastError()));
-   else
+   else {
       fCurrentFileName = nextfilename;
+      DOUT1(("Open lmd file %s for reading", fCurrentFileName.c_str()));
+   }
 
-   delete fFilesList->GetChild(0);
+   fFilesList->DeleteChild(0);
 
    return res;
 }
@@ -120,7 +120,7 @@ unsigned mbs::LmdInput::Read_Size()
    return fBufferSize;
 }
 
-unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
+unsigned mbs::LmdInput::Read_Complete(dabc::Buffer& buf)
 {
    unsigned numev = 0;
    uint32_t bufsize = 0;
@@ -129,20 +129,21 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer* buf)
 
        if (!fFile.IsReadMode()) return dabc::di_Error;
 
-       bufsize = buf->GetDataSize();
+       // TODO: read into segmented buffer
+       bufsize = buf.SegmentSize(0);
 
-       numev = fFile.ReadBuffer(buf->GetDataLocation(), bufsize);
+       numev = fFile.ReadBuffer(buf.SegmentPtr(0), bufsize);
 
        if (numev==0) {
-          DOUT1(("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf->GetDataSize()));
+          DOUT3(("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf.GetTotalSize()));
           if (!OpenNextFile()) return dabc::di_EndOfStream;
        }
 
    } while (numev==0);
 
    fCurrentRead += bufsize;
-   buf->SetDataSize(bufsize);
-   buf->SetTypeId(mbs::mbt_MbsEvents);
+   buf.SetTotalSize(bufsize);
+   buf.SetTypeId(mbs::mbt_MbsEvents);
 
    return dabc::di_Ok;
 }
