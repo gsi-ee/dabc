@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="lxi026" port="5432"/>
+  <Context host="lxi042" port="5433"/>
+  <Context host="lxi035" port="5434"/>
+  <Context host="lxi034" port="5434"/>
+  <Context host="lxi038" port="5435"/>
+  <Defaults>
+     <Context name="*">
+       <Run>
+         <lib value="libDabcIbTest.so"/>
+         <logfile value="Node${DABCNODEID}.log"/>
+         <debuglevel value="1"/>
+	      <debugger value="false"/>
+         <loglevel value="1"/>
+         <loglimit value="1000000"/>
+         <runtime value="200000"/>
+       </Run>
+       <Application class="IbTestApp">
+         <NetDevice value="dabc::SocketDevice"/>
+         <BufferSize value="80000"/>
+         
+      <!-- allowed: SingleRoute, TimeSync or NormalTest -->
+         <TestKind value="OnlyConnect"/>
+         <TestPattern value="0"/>
+         <TestTime value="10"/>
+         <TestRate value="1000"/>
+         <TestBufferSize value="100000"/>
+         <TestPoolSize value="250"/>
+         <TestOutputQueue value="5"/>
+         <TestInputQueue value="10"/>
+       </Application>
+     </Context>
+  </Defaults>
+</dabc>

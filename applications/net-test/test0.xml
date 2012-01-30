@@ -1,13 +1,10 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="master" port="5432" name="node0"/>
-  <Context host="node01" port="5433" name="node1"/>
-  <Context host="node02" port="5434" name="node2"/>
-  <Context host="node03" port="5435" name="node3"/>
+  <Context host="lxg0526" port="5432" name="n1"/>
+  <Context host="lxg0526" port="5433" name="n2"/>
   <Defaults>
      <Context name="*">
        <Run>
-         <lib value="libDabcVerbs.so"/>
          <lib value="libDabcNetTest.so"/>
          <sockethost value="${host}"/>
          <logfile value="Node${DABCNODEID}.log"/>
@@ -19,21 +16,13 @@
        </Run>
        <Application class="NetTestApp">
          <Kind value="all-to-all"/>
-         <NetDevice value="verbs::Device"/>
+         <NetDevice value="dabc::SocketDevice"/>
          <McastAddr value="224.0.0.15"/>
          <McastPort value="1234"/>
-         <BufferSize value="100000"/>
+         <BufferSize value="81920"/>
          <OutputQueueSize value="4"/>
          <InputQueueSize value="8"/>
          <UseAcknowledge value="false"/>
-         <MemoryPool name="*">
-            <NumBuffers value="200"/>
-            <!-- value of BufferSize can be reused from application -->
-         </MemoryPool>
-         <MemoryPool name="RecvPool">
-            <NumBuffers value="100"/>
-            <!-- value of BufferSize can be reused from application -->
-         </MemoryPool>
        </Application>
      </Context>
   </Defaults>

@@ -20,14 +20,14 @@
 
 #include "bnet/common.h"
 
-bnet::TestFilterModule::TestFilterModule(const char* name, dabc::Command* cmd) :
+bnet::TestFilterModule::TestFilterModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
-   fPool = CreatePoolHandle(bnet::EventPoolName);
+   CreatePoolHandle(bnet::EventPoolName);
 
-   CreateInput("Input", fPool, FilterInpQueueSize);
+   CreateInput("Input", Pool(), FilterInpQueueSize);
 
-   CreateOutput("Output", fPool, FilterOutQueueSize);
+   CreateOutput("Output", Pool(), FilterOutQueueSize);
 }
 
 void bnet::TestFilterModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
@@ -36,20 +36,20 @@ void bnet::TestFilterModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
    while (Input(0)->CanRecv() && Output(0)->CanSend()) {
 
-      dabc::Buffer* buf = Input(0)->Recv();
+      dabc::Buffer buf = Input(0)->Recv();
 
-      if (buf==0) {
+      if (buf.null()) {
          EOUT(("Fail to receive data from Input"));
          return;
       }
 
-      uint64_t* mem = (uint64_t*) buf->GetDataLocation();
+      uint64_t* mem = (uint64_t*) buf.GetPointer()();
       uint64_t evid = mem[0];
 
       if (evid % 2) {
     //   DOUT1(("EVENT KILLED %llu", evid));
-        dabc::Buffer::Release(buf);
+         buf.Release();
       } else
-          Output(0)->Send(buf);
+         Output(0)->Send(buf);
    }
 }

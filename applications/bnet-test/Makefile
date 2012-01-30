@@ -1,5 +1,7 @@
 # this is generic makefile for DABC application
 
+ifdef DABC_WITH_BNET
+
 include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
@@ -29,3 +31,5 @@ $(BNETTEST_LIB):  $(BNETTEST_O)
 	@echo "$@  done"
 
 include $(DABCSYS)/config/Makefile.rules
+
+endif

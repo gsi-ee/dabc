@@ -3,11 +3,13 @@
   <Context name="core-test">
     <Run>
       <lib value="libDabcCoreTest.so"/>
-      <runfunc value="RunCmdTest"/>
+<!-- One can specify here: RunCoreTest, RunTimersTest, RunCmdTest, RunTimeTest, RunPoolTest, RunAllTests  -->       
+      <runfunc value="RunCoreTest"/>
       <logfile value="core-test.log"/>
-      <loglevel value="5"/>
+      <loglevel value="1"/>
+      <debuglevel value="1"/>
       <loglimit value="10000000000"/>
-      <runtime value="5"/>
+      <runtime value="100"/>
     </Run>
   </Context>
 </dabc>

@@ -1,0 +1,32 @@
+  <Defaults>
+     <Context name="*">
+       <Run>
+         <lib value="libDabcIbTest.so"/>
+         <LD_LIBRARY_PATH value="."/>
+         <logfile value="/tmp/Node${DABCNODEID}.log"/>
+         <debuglevel value="1"/>
+	      <debugger value="false"/>
+         <loglevel value="1"/>
+         <loglimit value="1000000"/>
+         <runtime value="200"/>
+       </Run>
+       <Application class="IbTestApp">
+         <NetDevice value="dabc::SocketDevice"/>
+         <BufferSize value="200000"/>
+
+      <!-- allowed: SingleRoute, TimeSync or NormalTest -->
+         <TestKind value="NormalTest"/>
+         <TestNumLids value="16"/>
+         <TestPattern value="0"/>
+         <TestTime value="10"/>
+         <TestRate value="1500"/>
+         <TestBufferSize value="500000"/>
+         <TestPoolSize value="500"/>
+         <TestOutputQueue value="2"/>
+         <TestInputQueue value="4"/>
+         <TestSchedule value="schedule.txt"/>
+         <TestTimeout value="20"/>
+       </Application>
+     </Context>
+  </Defaults>
+</dabc>

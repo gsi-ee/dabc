@@ -21,20 +21,20 @@
 #include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
-bnet::TestCombinerModule::TestCombinerModule(const char* name, dabc::Command* cmd) :
-   dabc::ModuleAsync(name),
+bnet::TestCombinerModule::TestCombinerModule(const char* name, dabc::Command cmd) :
+   dabc::ModuleAsync(name, cmd),
    fNumReadout(1),
    fModus(0)
 {
-   fModus = GetCfgInt(xmlCombinerModus, 0, cmd);
-   fNumReadout = GetCfgInt(xmlNumReadouts, 1, cmd);
-   fOutBufferSize = GetCfgInt(xmlTransportBuffer, 1024, cmd);
+   fModus = Cfg(xmlCombinerModus,cmd).AsInt();
+   fNumReadout = Cfg(xmlNumReadouts,cmd).AsInt(1);
+   fOutBufferSize = Cfg(xmlTransportBuffer,cmd).AsInt(1024);
 
    fOutPool = CreatePoolHandle(bnet::TransportPoolName);
 
-   fInpPool = CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
+   fInpPool = CreatePoolHandle(Cfg(CfgReadoutPool, cmd).AsStr(ReadoutPoolName));
 
-   fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize, sizeof(bnet::EventId));
+   fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize);
 
    for (int n=0;n<fNumReadout;n++) {
       CreateInput(FORMAT(("Input%d", n)), fInpPool, ReadoutQueueSize);
@@ -87,6 +87,7 @@ void bnet::TestCombinerModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
             break;
          default:
             fOutBuffer = MakeMemCopyBuf(evid);
+            break;
       }
 
       if (fOutBuffer==0) return;

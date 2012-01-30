@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="core-test">
+    <Run>
+      <lib value="libDabcCoreTest.so"/>
+      <logfile value="core-test-app.log"/>
+      <loglevel value="1"/>
+      <debuglevel value="1"/>
+      <runtime value="3"/>
+    </Run>
+    
+    <Application class="CoreTestApp">
+       <BufferSize value="8192"/>
+
+       <MemoryPool name="Pool">
+          <NumBuffers value="100"/>
+          <!-- value of BufferSize can be reused from application -->
+       </MemoryPool>
+
+       <Module name="Sender">
+          <Kind value="0"/>
+       </Module>
+
+       <Module name="Receiver">
+          <Kind value="2"/>
+       </Module>
+         
+     </Application>
+    
+  </Context>
+</dabc>

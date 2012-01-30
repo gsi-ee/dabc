@@ -32,7 +32,7 @@
     <Run>
       <lib value="${DABCSYS}/lib/libDabcBnet.so"/>
       <runfunc value="RunTestBnet"/>
-      <debugger value="gdb -q -x gdb.cmd --args"/>
+      <debugger value="true"/>
     </Run>
     <Application class="bnet::Cluster">
        <NetDevice value="dabc::SocketDevice"/>
@@ -89,9 +89,8 @@
           <lib value="libDabcBnet.so"/>
           <lib value="libDabcMbs.so"/>
           <lib value="libBnetMbs.so"/>
-          <parslevel value="5"/>
           <loglevel value="3"/>
-          <debugger value="gdb -q -x gdb.cmd --args"/>
+          <debugger value="true"/>
         </Run>
         <Application class="bnet::MbsWorker">
            <IsSender value="true"/>
@@ -108,7 +107,7 @@
           <lib value="libDabcBnet.so"/>
           <lib value="libDabcMbs.so"/>
           <lib value="libBnetMbs.so"/>
-          <debugger value="gdb -q -x gdb.cmd --args"/>
+          <debugger value="true"/>
         </Run>
         <Application class="bnet::MbsWorker">
            <IsReceiver value="true"/>

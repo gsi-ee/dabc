@@ -40,7 +40,7 @@ namespace bnet {
          dabc::Buffer* MakeMemCopyBuf(uint64_t& evid);
 
       public:
-         TestCombinerModule(const char* name, dabc::Command* cmd = 0);
+         TestCombinerModule(const char* name, dabc::Command cmd = 0);
 
          virtual ~TestCombinerModule();
 

@@ -21,7 +21,7 @@
 
 #include "bnet/common.h"
 
-bnet::TestBuilderModule::TestBuilderModule(const char* name, dabc::Command* cmd) :
+bnet::TestBuilderModule::TestBuilderModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fInpPool(0),
    fOutPool(0),
@@ -33,11 +33,11 @@ bnet::TestBuilderModule::TestBuilderModule(const char* name, dabc::Command* cmd)
 
    fInpPool = CreatePoolHandle(bnet::TransportPoolName);
 
-   CreateInput("Input", fInpPool, BuilderInpQueueSize, sizeof(bnet::SubEventNetHeader));
+   CreateInput("Input", fInpPool, BuilderInpQueueSize);
 
-   fOutBufferSize = GetCfgInt(xmlEventBuffer, 2048, cmd);
+   fOutBufferSize = Cfg(xmlEventBuffer,cmd).AsInt(2048);
 
-   CreateParStr(parSendMask, "xxxx");
+   CreatePar(parSendMask).SetStr("xxxx");
 }
 
 bnet::TestBuilderModule::~TestBuilderModule()
@@ -67,7 +67,7 @@ void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
       uint64_t* mem = (uint64_t*) fBuffers[n]->GetDataLocation();
       if (evid==0) evid = *mem; else
         if (evid!=*mem) {
-            EOUT(("Missmatch in events id %llu %llu", evid, *mem));
+            EOUT(("Mismatch in events id %llu %llu", evid, *mem));
             exit(1);
         }
 
@@ -86,7 +86,7 @@ void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
 
 void bnet::TestBuilderModule::BeforeModuleStart()
 {
-   fNumSenders = bnet::NodesVector(GetParStr(parSendMask)).size();
+   fNumSenders = bnet::NodesVector(Par(parSendMask).AsStdStr()).size();
 
 //   DOUT1(("TestBuilderModule::BeforeModuleStart numsend = %d", fNumSenders));
 }

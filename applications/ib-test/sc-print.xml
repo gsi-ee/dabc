@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="sc-print">
+    <Run>
+      <lib value="libDabcIbTest.so"/>
+      <runfunc value="PrintRouting"/>
+      <debuglevel value="1"/>
+      <debuglimit value="1000000"/>
+      <nodebugprefix value="true"/>
+      <loglevel value="1"/>
+      <loglimit value="10000000"/>
+      <logfile value="sc-print.log"/>
+    </Run>
+    <User>
+       <FileName value="/home/compeng/linev/routing/2011-05-31/10:13:37_route.txt"/>
+<!--       <FileName value="/misc/linev/cluster/loewe/routing/2011-04-24/17:31:47_route.txt"/> -->
+       <Optimize value="false"/>
+    </User>
+  </Context>
+</dabc>

@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="sc-comp">
+    <Run>
+      <lib value="libDabcIbTest.so"/>
+      <runfunc value="CompareRouting"/>
+      <debuglevel value="1"/>
+      <debuglimit value="1000000"/>
+      <nodebugprefix value="true"/>
+      <loglevel value="1"/>
+      <loglimit value="10000000"/>
+      <logfile value="sc-comp.log"/>
+    </Run>
+    <User>
+       <FileName1 value="/misc/linev/cluster/loewe/routing/2011-04-13/09:15:06_route.txt"/>
+       <FileName2 value="/misc/linev/cluster/loewe/routing/2011-04-13/10:30:34_route.txt"/>
+       <FilesList value="${ROUTING_FILES}"/>
+    </User>
+  </Context>
+</dabc>

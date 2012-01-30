@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="sc-test">
+    <Run>
+      <lib value="libDabcIbTest.so"/>
+      <runfunc value="TestSchedule"/>
+      <debuglevel value="1"/>
+      <debuglimit value="10000"/>
+      <loglevel value="1"/>
+      <loglimit value="10000000"/>
+      <logfile value="sc-test.log"/>
+      <nodebugprefix value="true"/>
+    </Run>
+    <User>
+       <FileName value="/misc/linev/cluster/loewe/routing/2011-04-14/15:01:48_route.txt"/>
+       <Optimize value="false"/>
+    </User>
+  </Context>
+</dabc>

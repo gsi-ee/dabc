@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context name="sc-select">
+    <Run>
+      <lib value="libDabcIbTest.so"/>
+      <runfunc value="SelectCSCNodes"/>
+      <debuglevel value="1"/>
+      <debuglimit value="1000000"/>
+      <nodebugprefix value="true"/>
+      <loglevel value="1"/>
+      <loglimit value="10000000"/>
+      <logfile value="sc-select.log"/>
+    </Run>
+    <User>
+       <FilesList value="${ROUTING_FILES}"/>
+       <SelectArgs value="${SELECT_ARGS}"/>
+       <NodesList value="${SELECTED_NODES}"/>
+       <ScheduleFile value="${SCHEDULE_FILE}"/>
+    </User>
+  </Context>
+</dabc>

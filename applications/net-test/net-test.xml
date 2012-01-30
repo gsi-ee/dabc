@@ -1,4 +1,7 @@
 <?xml version="1.0"?>
+
+<!--        NOT TESTED WITH DABC2 -->
+
 <dabc version="1">
   <Context host="lxi013"/>
   <Context host="lxi010"/>
@@ -9,7 +12,7 @@
        <Run>
          <lib value="libDabcNetTest.so"/>
          <debuglevel value="0"/>
-<!--         <debugger value="gdb -q -x gdb.cmd --args"/>  -->
+         <debugger value="false"/>
          <loglevel value="3"/>
          <logfile value="${Context}.log"/>
          <loglimit value="10000000000"/>

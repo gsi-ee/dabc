@@ -24,13 +24,13 @@ namespace bnet {
       protected:
          dabc::PoolHandle*  fInpPool;
          dabc::PoolHandle*  fOutPool;
-         int                  fNumSenders;
-         int                  fOutBufferSize;
+         int                fNumSenders;
+         int                fOutBufferSize;
 
          std::vector<dabc::Buffer*> fBuffers;
 
       public:
-         TestBuilderModule(const char* name, dabc::Command* cmd = 0);
+         TestBuilderModule(const char* name, dabc::Command cmd = 0);
          virtual ~TestBuilderModule();
 
          virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);

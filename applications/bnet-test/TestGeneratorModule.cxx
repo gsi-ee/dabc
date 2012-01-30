@@ -21,15 +21,15 @@
 
 #include "bnet/common.h"
 
-bnet::TestGeneratorModule::TestGeneratorModule(const char* name, dabc::Command* cmd) :
+bnet::TestGeneratorModule::TestGeneratorModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fEventCnt(0)
 {
-   fUniquieId = GetCfgInt("UniqueId", 0, cmd);
+   fUniquieId = Cfg("UniqueId",cmd).AsInt(0);
 
-   fBufferSize = GetCfgInt(xmlReadoutBuffer, 1024, cmd);
+   fBufferSize = Cfg(xmlReadoutBuffer,cmd).AsInt(1024);
 
-   CreatePoolHandle(GetCfgStr(CfgReadoutPool, ReadoutPoolName, cmd).c_str());
+   CreatePoolHandle(Cfg(CfgReadoutPool,cmd).AsStr(ReadoutPoolName));
 
    CreateOutput("Output", Pool(), ReadoutQueueSize);
 

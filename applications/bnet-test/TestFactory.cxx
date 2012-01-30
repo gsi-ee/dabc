@@ -23,7 +23,7 @@ bnet::TestFactory bnettestfactory("bnet-test");
 
 const char* bnet::xmlTestWorkerClass = "bnet::TestWorker";
 
-dabc::Application* bnet::TestFactory::CreateApplication(const char* classname, dabc::Command* cmd)
+dabc::Application* bnet::TestFactory::CreateApplication(const char* classname, dabc::Command cmd)
 {
    if (strcmp(classname, xmlTestWorkerClass)==0)
       return new bnet::TestWorkerApplication();
@@ -31,7 +31,7 @@ dabc::Application* bnet::TestFactory::CreateApplication(const char* classname, d
    return dabc::Factory::CreateApplication(classname, cmd);
 }
 
-dabc::Module* bnet::TestFactory::CreateModule(const char* classname, const char* modulename, dabc::Command* cmd)
+dabc::Module* bnet::TestFactory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
 {
    if (strcmp(classname,"bnet::TestGeneratorModule")==0)
       return new bnet::TestGeneratorModule(modulename, cmd);
