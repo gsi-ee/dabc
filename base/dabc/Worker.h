@@ -1,0 +1,374 @@
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
+#ifndef DABC_Worker
+#define DABC_Worker
+
+#ifndef DABC_Object
+#include "dabc/Object.h"
+#endif
+
+#ifndef DABC_Thread
+#include "dabc/Thread.h"
+#endif
+
+#ifndef DABC_Command
+#include "dabc/Command.h"
+#endif
+
+#ifndef DABC_Parameter
+#include "dabc/Parameter.h"
+#endif
+
+#ifndef DABC_Config
+#include "dabc/Config.h"
+#endif
+
+namespace dabc {
+
+   class ParameterEvent;
+
+   class Worker : public Object {
+
+      enum EParsMasks {
+            parsVisibilityMask = 0xFF,
+            parsFixedMask      = 0x100,
+            parsChangableMask  = 0x200,
+            parsValidMask      = 0x400
+      };
+
+      friend class Thread;
+      friend class Parameter;
+      friend class ParameterContainer;
+      friend class Command;
+      friend class Object;
+
+      private:
+
+         /** \brief Method to 'forget' thread reference
+          */
+         void ClearThreadRef();
+
+      protected:
+         ThreadRef        fThread;                     //!< reference on the thread, once assigned remain whole time
+         uint32_t         fWorkerId;
+         int              fWorkerPriority;             //!< priority of events, submitted by worker to the thread
+
+         Mutex*           fThreadMutex;                //!< pointer on main thread mutex
+
+         // FIXME: most workers should analyze FireEvent to recognize moment when worker is going into halt mode
+         bool             fWorkerActive;               //!< indicates if worker can submit events to the thread
+         unsigned         fWorkerFiredEvents;          //!< indicate current balance between fired and processed events, used to correctly halt worker
+
+         CommandsQueue    fWorkerCommands;             //!< all kinds of commands, processed by the worker
+
+         int              fWorkerCommandsLevel;      /** Number of process commands recursion */
+
+         virtual bool AskToDestroyByThread();
+
+         virtual void ObjectCleanup();
+
+         /** \brief Method to clear object reference, will be called from thread context (when possible) */
+         virtual void ObjectDestroyed(Object*) {}
+
+         /** \brief Method indicates if worker is running in the thread and accepts normal events.
+          * All events accepted by the worker will be delivered and processed.
+          * If destruction or halt of the worker starts, no new events can be submitted (execpt command with magic priority)
+          * In this phase IsWorkerActive() will already return false  */
+         inline bool IsWorkerActive() const { return fWorkerActive; }
+
+         /** \brief Special constructor, designed for inherited classes */
+         Worker(const ConstructorPair& pair, bool owner = true);
+
+      public:
+
+         static int cmd_bool(bool v) { return v ? cmd_true : cmd_false; }
+
+         enum EWorkerEventsCodes {
+            evntFirstCore   = 1,    // events   1  .. 99 used only by Worker itself
+            evntFirstSystem = 100,  // events 100 .. 999 used only inside DABC class
+            evntFirstUser =   1000  // event from 1000 are available for users
+         };
+
+         enum EPriotiryLevels {
+              priorityMaximum = 0,   // event queue with number 0 always has highest priority
+              priorityMinimum = -1,  // this event will be submitted to queue with maximum number
+              priorityDefault = -7,  // this code will be replaced with default priority for specified operation
+              priorityMagic = -77    // this priority allows to submit commands even when processor is stopped
+         };
+
+         Worker(Reference parent, const char* name, bool owner = true);
+         virtual ~Worker();
+
+         virtual const char* ClassName() const { return "Worker"; }
+
+         /** Method returns name of required thread class for processor.
+           * If returns 0 (default) any thread class is sufficient. */
+         virtual const char* RequiredThrdClass() const { return 0; }
+
+         /** \brief Indicates if pointer on thread is not zero; thread-safe */
+         bool HasThread() const;
+
+         /** \brief Assign worker to thread, worker becomes active immediately */
+         bool AssignToThread(ThreadRef thrd, bool sync = true);
+
+         /** \brief Detach worker from the thread, later worker can be assigned to some other thread
+          * Method especially useful to normally finish object recursion (if it possible).
+          * If successful, object can be assigned to new thread again or destroyed.
+          * Worker halt (recursion break) is also performed during object destroyment,
+          * therefore it is not necessary to call this method before destroy of the worker */
+         bool DettachFromThread();
+
+         /** \brief Return reference on the worker thread; thread-safe */
+         ThreadRef thread();
+
+         /** \brief Returns name of the worker thread; thread-safe  */
+         std::string ThreadName() const;
+
+         /** \brief Method used to produce timeout events in the worker
+          *  After specified time interval ProcessTimeout() method of worker will be called.
+          *  Parameter \param tmout_sec can has following meaning:
+          *     = 0 ProcessTimeout() will be called as soon as possible
+          *     < 0 deactivate if possible previously scheduled timeout
+          *     > 0 activate after specified interval
+          *  Returns false if timeout cannot be configured (when thread is not assigned or not active) */
+         bool ActivateTimeout(double tmout_sec);
+
+         void SetWorkerPriority(int nq) { fWorkerPriority = nq; }
+         inline int WorkerPriority() const { return fWorkerPriority; }
+
+         uint32_t WorkerId() const { return fWorkerId; }
+
+         // this all about parameters list, which can be managed for any working processor
+
+         /** \brief Returns reference on worker parameter object */
+         Parameter Par(const std::string& name) const;
+
+         /** \brief Returns configuration record of specified name
+          * Configuration value of specified name searched in following places:
+          * 1. In command parameter
+          * 2. In parameter of such name in the worker itself
+          * 3. In xml file
+          * 4. In parameter of all parents
+          * */
+         Config Cfg(const std::string& name, Command cmd = 0) const;
+
+         /** ! Assign command with processor before command be submitted to other processor
+          * This produce ReplyCommand() call when command execution is finished
+          * Command itself returned if operation was successful, otherwise null() command */
+         Command Assign(Command cmd);
+
+         /** Returns true if command can be submitted to worker */
+         bool CanSubmitCommand() const;
+
+         /** Submit command for execution in the processor */
+         bool Submit(Command cmd);
+
+         /** Execute command in the processor. Event loop of caller thread is kept running */
+         bool Execute(Command cmd, double tmout = -1.);
+
+         bool Execute(const std::string& cmd, double tmout = -1.) { return Execute(Command(cmd), tmout); }
+
+      protected:
+
+         /** This method called before command will be executed.
+          *  Only if cmd_ignore is returned, ExecuteCommand will be called for this command
+          *  Otherwise command is replied with returned value
+          *  Contrary to ExecuteCommand, PreviewCommand used by dabc classes itself.
+          *  Therefore, if method redefined in inherited class,
+          *  one should always call PreviewCommand of base class first. */
+         virtual int PreviewCommand(Command cmd);
+
+         /** Main method where commands are executed */
+         virtual int ExecuteCommand(Command cmd);
+
+         /** Reimplement this method to react on command reply
+          * Return true if command can be destroyed by framework*/
+         virtual bool ReplyCommand(Command cmd);
+
+         // Method is called when requested time point is reached
+         // Rewrite method in derived class to react on this event
+         // return value specifies time interval to the next timeout
+         // Argument last_diff identifies time distance to previous timeout
+         // Return value: <0 - no new timeout is required
+         //               =0 - provide timeout as soon as possible
+         //               >0 - activate timeout after this interval
+         virtual double ProcessTimeout(double last_diff) { return -1.; }
+
+         inline bool _IsFireEvent() const
+         {
+            return fThread() && fWorkerActive;
+         }
+
+         inline bool _FireEvent(uint16_t evid)
+         {
+            if (!_IsFireEvent()) return false;
+            fThread()->_Fire(EventId(evid, fWorkerId), fWorkerPriority);
+            fWorkerFiredEvents++;
+            return true;
+         }
+
+         inline bool FireEvent(uint16_t evid)
+         {
+            LockGuard lock(fThreadMutex);
+            return _FireEvent(evid);
+         }
+
+         inline bool _FireEvent(uint16_t evid, uint32_t arg, int pri = -1)
+         {
+            if (!_IsFireEvent()) return false;
+            fThread()->_Fire(EventId(evid, fWorkerId, arg), pri < 0 ? fWorkerPriority : pri);
+            fWorkerFiredEvents++;
+            return true;
+         }
+
+         inline bool FireEvent(uint16_t evid, uint32_t arg, int pri = -1)
+         {
+            LockGuard lock(fThreadMutex);
+            return _FireEvent(evid, arg, pri);
+         }
+
+         inline bool _FireDoNothingEvent()
+         {
+            if (!_IsFireEvent()) return false;
+            fThread()->_Fire(EventId(Thread::evntDoNothing), -1);
+            return true;
+         }
+
+         virtual void ProcessEvent(const EventId&);
+
+         bool ActivateMainLoop();
+
+         bool SingleLoop(double tmout) { return fThread()->SingleLoop(fWorkerId, tmout); }
+
+         void WorkerSleep(double tmout);
+
+         /** Executes command in specified worker. Call allowed only from worker thred (therefore method protected).
+          * Makes it easy to recognise caller thread and keep its event loop running.
+          * Equivalent to dest->Execute(cmd). */
+         bool ExecuteIn(Worker* dest, Command cmd);
+
+         void CancelCommands();
+
+         virtual void DoWorkerMainLoop() {}
+         virtual void DoWorkerAfterMainLoop() {}
+
+         // method called immediately after processor was assigned to thread
+         // called comes from the thread context
+         virtual void OnThreadAssigned() {}
+
+         virtual bool Find(ConfigIO &cfg);
+
+         Parameter CreatePar(const std::string& name, const std::string& kind = "");
+
+         CommandDefinition CreateCmdDef(const std::string& name);
+
+         /** \brief Method must be used if worker wants to destroy parameter */
+         bool DestroyPar(const std::string& name);
+
+         /** Subscribe to parameter events from local or remote node */
+         bool RegisterForParameterEvent(const std::string& mask, bool onlychangeevent = true);
+
+         /** Unsubscribe to parameter events from local or remote node */
+         bool UnregisterForParameterEvent(const std::string& mask);
+
+         /** Interface method to retrieve subscribed parameter events */
+         virtual void ProcessParameterEvent(const ParameterEvent& evnt) {}
+
+      private:
+
+         enum { evntSubmitCommand = evntFirstCore,
+                evntReplyCommand };
+
+         void ProcessCoreEvent(EventId);
+
+         int ProcessCommand(dabc::Command cmd);
+         bool GetCommandReply(dabc::Command& cmd, bool* exe_ready);
+
+         /** Method called by any parameter object which is belong to the worker.
+          * Method is called from the thread where parameter is changing - it could be not a worker thread.
+          * Means one should use protected by the mutex worker fields.
+          * If monitoring field for parameter is specified, ParameterEvent will be to the worker thread */
+         virtual void WorkerParameterChanged(Parameter par);
+   };
+
+   class WorkerRef : public Reference {
+
+      DABC_REFERENCE(WorkerRef, Reference, Worker)
+
+      public:
+
+         bool Submit(Command cmd);
+
+         bool Execute(Command cmd, double tmout = -1.);
+
+         bool Execute(const std::string& cmd, double tmout = -1.);
+
+         /** \brief Returns reference on parameter */
+         Parameter Par(const std::string& name) const;
+
+         /** \brief Returns configuration record of specified name */
+         Config Cfg(const std::string& name, Command cmd = 0) const;
+
+         /** \brief Returns true when thread is assigned to the worker */
+         bool HasThread() const;
+
+         /** \brief Returns true if command can be submitted to the worker */
+         bool CanSubmitCommand() const;
+
+         /** Synchronize worker with caller thread.
+          *  We let worker to execute all queued commands and process all queued events. */
+         bool SyncWorker(double tmout = -1.);
+
+   };
+
+
+   /** This command used to distribute parameter event to receivers */
+   class CmdParameterEvent : public Command {
+
+      DABC_COMMAND(CmdParameterEvent, "CmdParameterEvent")
+
+
+      CmdParameterEvent(const std::string& parname, const std::string& parvalue, int evid, bool attrmodified = false) :
+         dabc::Command(CmdName())
+      {
+         SetStr("ParName", parname);
+         if (!parvalue.empty()) SetStr("ParValue", parvalue);
+         if (evid!=parModified) Field("Event").SetInt(evid);
+         if (attrmodified) Field("AttrMod").SetBool(true);
+      }
+   };
+
+
+
+   class ParameterEvent : protected CmdParameterEvent {
+      friend class Worker;
+
+      protected:
+         ParameterEvent() : CmdParameterEvent() {}
+
+         ParameterEvent(const Command& cmd) : CmdParameterEvent(cmd) {}
+
+      public:
+
+         std::string ParName() const { return Field("ParName").AsStdStr(); }
+         std::string ParValue() const { return Field("ParValue").AsStdStr(); }
+         int EventId() const { return Field("Event").AsInt(parModified); }
+         bool AttrModified() const { return Field("AttrMod").AsBool(false); }
+   };
+
+
+
+}
+
+#endif

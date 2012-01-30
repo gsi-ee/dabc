@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/logging.h"
 
 #include <stdio.h>
@@ -44,7 +44,7 @@ namespace dabc {
          unsigned         fCounter;
          time_t           fMsgTime; // normal time when message will be output
          std::string      fLastMsg; // last shown message
-         TimeStamp_t      fLastTm;  // dabc (fast) time of last output
+         TimeStamp     fLastTm;  // dabc (fast) time of last output
          unsigned         fDropCnt; // number of dropped messages
          bool             fShown;   // used in statistic output
 
@@ -55,7 +55,7 @@ namespace dabc {
             fLevel(lvl),
             fCounter(0),
             fLastMsg(),
-            fLastTm(0),
+            fLastTm(),
             fDropCnt(0),
             fShown(false)
          {
@@ -110,8 +110,8 @@ dabc::Logger::Logger(bool withmutex)
    fLevel = 1;
    fPrefix = "";
 
-   fDebugMask = lPrefix | lMessage;
-   fErrorMask = lPrefix | lFile | lFunc | lLine | lMessage;
+   fDebugMask = lPrefix | lTStamp  | lMessage;
+   fErrorMask = lPrefix | lTStamp  | lFile | lFunc | lLine | lMessage;
    fFileMask = lNoPrefix | lTime; // disable prefix and enable time
 
    fMutex = withmutex ? new Mutex : 0;
@@ -134,18 +134,26 @@ dabc::Logger::~Logger()
 {
    gDebug = fPrev;
 
+   CloseFile();
+
    {
      LockGuard lock(fMutex);
      for (unsigned n=0; n<fMaxLine; n++)
         if (fLines[n]) delete fLines[n];
      _ExtendLines(0);
-
-     if (fFile) fclose(fFile);
-     fFile = 0;
    }
 
    delete fMutex; fMutex = 0;
 }
+
+void dabc::Logger::CloseFile()
+{
+   LockGuard lock(fMutex);
+
+   if (fFile) fclose(fFile);
+   fFile = 0;
+}
+
 
 void dabc::Logger::SetDebugLevel(int level)
 {
@@ -190,7 +198,7 @@ void dabc::Logger::LogFile(const char* fname)
    if ((fname!=0) && (strlen(fname)>0)) {
       fLogFileName = fname;
       fFile = fopen(fname, "a");
-      fLogReopenTime = TimeStamp();
+      fLogReopenTime = dabc::Now().AsDouble();
       fLogFileModified = false;
    }
 }
@@ -227,6 +235,12 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
       }
    }
 
+   if (mask & lTStamp) {
+      double tm = dabc::Now().AsDouble();
+      if (str.length() > 0) str+=" ";
+      str += dabc::format("%10.6f", tm);
+   }
+
    if (mask & lFile) {
       if (str.length() > 0) str+=" ";
 //      str += "File:";
@@ -256,7 +270,7 @@ void dabc::Logger::_FillString(std::string& str, unsigned mask, LoggerEntry* ent
 
 void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber, const char* funcname, const char* message)
 {
-   TimeStamp_t now = TimeStamp();
+   TimeStamp now = dabc::Now();
 
    LockGuard lock(fMutex);
 
@@ -276,7 +290,7 @@ void dabc::Logger::DoOutput(int level, const char* filename, unsigned linenumber
    unsigned mask = level>=0 ? fDebugMask : fErrorMask;
    unsigned fmask = mask | (fFile ? fFileMask : 0);
    bool drop_msg = (entry->fCounter > fLogLimit) &&
-                   (dabc::TimeDistance(entry->fLastTm, now) < 0.5);
+                   ((now - entry->fLastTm) < 0.5);
 
    if (drop_msg) entry->fDropCnt++;
 
@@ -319,9 +333,9 @@ void dabc::Logger::_DoCheckTimeout()
 {
    if ((fFile==0) || fLogFileName.empty() || !fLogFileModified) return;
 
-   TimeStamp_t now = TimeStamp();
+   double now = dabc::Now().AsDouble();
 
-   if (TimeDistance(fLogReopenTime, now) > 3.) {
+   if ((now - fLogReopenTime) > 3.) {
       fLogReopenTime = now;
       fclose(fFile);
       fFile = fopen(fLogFileName.c_str(), "a");

@@ -12,8 +12,11 @@ AUTO_DIRS += $(sort $(dir $(ALLHDRS)))
 build-init:: $(ALLHDRS)
 endif
 
+ifneq ($(APPLICATIONS_DIRS),)
 apps::
 	@for DIR in $(APPLICATIONS_DIRS); do ($(MAKE) -f $$DIR/Makefile DABCSYS=$(DABCSYS) _topdir_=$$DIR/) done
+endif
+
 
 clean::
 	@echo "Clean in $(CURDIR)" 

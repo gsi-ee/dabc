@@ -1,22 +1,23 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/ModuleAsync.h"
 
 #include "dabc/logging.h"
 #include "dabc/ModuleItem.h"
 #include "dabc/PoolHandle.h"
 #include "dabc/Port.h"
+#include "dabc/Buffer.h"
 
 dabc::ModuleAsync::~ModuleAsync()
 {
@@ -51,8 +52,7 @@ void dabc::ModuleAsync::ProcessPoolEvent(PoolHandle* pool)
 {
    // this is default implementation
 
-   Buffer* buf = pool->TakeRequestedBuffer();
-   dabc::Buffer::Release(buf);
+   pool->TakeRequestedBuffer().Release();
 }
 
 void dabc::ModuleAsync::OnThreadAssigned()

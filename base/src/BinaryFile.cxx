@@ -1,22 +1,20 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/BinaryFile.h"
 
 #include "dabc/FileIO.h"
-
 #include "dabc/logging.h"
-
 #include "dabc/MemoryPool.h"
 
 #define BinaryFileCurrentVersion 1
@@ -41,13 +39,6 @@ dabc::BinaryFileInput::BinaryFileInput(FileIO* io) :
    fVersion = rec.version;
 }
 
-bool dabc::BinaryFileInput::Read_Init(Command* cmd, WorkingProcessor* port)
-{
-   dabc::ConfigSource cfg(cmd, port);
-
-   return false;
-}
-
 dabc::BinaryFileInput::~BinaryFileInput()
 {
    CloseIO();
@@ -69,7 +60,7 @@ unsigned dabc::BinaryFileInput::Read_Size()
 
    if (res==sizeof(fBufHeader)) {
       fReadBufHeader = true;
-      return fBufHeader.headerlength;
+      return fBufHeader.datalength;
    }
    // this is indication of EOF
    if (res==0) return di_EndOfStream;
@@ -78,17 +69,19 @@ unsigned dabc::BinaryFileInput::Read_Size()
    return di_Error;
 }
 
-unsigned dabc::BinaryFileInput::Read_Complete(Buffer* buf)
+unsigned dabc::BinaryFileInput::Read_Complete(Buffer& buf)
 {
-   if ((fIO==0) || !fReadBufHeader || (buf==0)) return di_Error;
+   if ((fIO==0) || !fReadBufHeader || buf.null()) return di_Error;
 
-   buf->SetHeaderSize(fBufHeader.headerlength);
-   if (fBufHeader.headerlength>0)
-      fIO->Read(buf->GetHeader(), fBufHeader.headerlength);
+   if (buf.GetTotalSize() < fBufHeader.datalength) return di_Error;
+   buf.SetTotalSize(fBufHeader.datalength);
+   buf.SetTypeId(fBufHeader.buftype);
 
-   fIO->Read(buf->GetDataLocation(), fBufHeader.datalength);
-   buf->SetDataSize(fBufHeader.datalength);
-   buf->SetTypeId(fBufHeader.buftype);
+   Pointer ptr = buf.GetPointer();
+   while (!ptr.null()) {
+      fIO->Read(ptr(), ptr.rawsize());
+      buf.Shift(ptr, ptr.rawsize());
+   }
 
    fReadBufHeader = false;
 
@@ -112,14 +105,6 @@ dabc::BinaryFileOutput::BinaryFileOutput(FileIO* io) :
    fIO->Write(&rec, sizeof(rec));
 }
 
-bool dabc::BinaryFileOutput::Write_Init(Command* cmd, WorkingProcessor* port)
-{
-
-   dabc::ConfigSource cfg(cmd, port);
-
-   return false;
-}
-
 dabc::BinaryFileOutput::~BinaryFileOutput()
 {
    CloseIO();
@@ -133,24 +118,24 @@ void dabc::BinaryFileOutput::CloseIO()
    }
 }
 
-bool dabc::BinaryFileOutput::WriteBuffer(Buffer* buf)
+bool dabc::BinaryFileOutput::WriteBuffer(const Buffer& buf)
 {
-   if ((fIO==0) || (buf==0)) return false;
+   if ((fIO==0) || buf.null()) return false;
 
    BinaryFileBufHeader hdr;
 
-   hdr.datalength = buf->GetTotalSize();
-   hdr.headerlength = buf->GetHeaderSize();
-   hdr.buftype = buf->GetTypeId();
+   hdr.buftype = buf.GetTypeId();
+   hdr.datalength = buf.GetTotalSize();
 
    fIO->Write(&hdr, sizeof(hdr));
-   if (buf->GetHeaderSize() > 0)
-      fIO->Write(buf->GetHeader(), buf->GetHeaderSize());
 
-   for (unsigned n=0;n<buf->NumSegments();n++)
-      fIO->Write(buf->GetDataLocation(n), buf->GetDataSize(n));
+   Pointer ptr = buf.GetPointer();
+   while (!ptr.null()) {
+      fIO->Write(ptr(), ptr.rawsize());
+      buf.Shift(ptr, ptr.rawsize());
+   }
 
-   fSyncCounter += sizeof(hdr) + hdr.headerlength + hdr.datalength;
+   fSyncCounter += sizeof(hdr) + hdr.datalength;
 
    if (fSyncCounter>1e5) {
       fIO->Sync();

@@ -1,32 +1,33 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/ModuleSync.h"
 
 #include "dabc/logging.h"
 #include "dabc/ModuleItem.h"
 #include "dabc/PoolHandle.h"
+#include "dabc/CommandsQueue.h"
 
-dabc::ModuleSync::ModuleSync(const char* name, Command* cmd) :
+dabc::ModuleSync::ModuleSync(const char* name, Command cmd) :
    Module(name, cmd),
    fTmoutExcept(false),
    fDisconnectExcept(false),
    fSyncCommands(false),
-   fNewCommands(CommandsQueue::kindSubmit),
+   fNewCommands(0),
    fWaitItem(0),
    fWaitId(0),
    fWaitRes(false),
-   fLoopStatus(stInit)
+   fInsideMainLoop(false)
 {
 }
 
@@ -34,21 +35,16 @@ dabc::ModuleSync::~ModuleSync()
 {
    // if module was not yet halted, make sure that mainloop of the module is leaved
 
-   if (fRunState != msHalted) ExitMainLoop();
+   if (IsRunning()) {
+      EOUT(("Problem in sync module %s destructor - cannot leave normally main loop, must crash :-O", GetName()));
+   }
 
-   if (fLoopStatus != stInit) {
-      EOUT(("Problem in destructor - cannot leave normally main loop, must crash :-O"));
+   if (fNewCommands!=0) {
+      EOUT(("Some commands remain event in module %s destructor - BAD", GetName()));
+      delete fNewCommands;
+      fNewCommands = 0;
    }
 }
-
-
-bool dabc::ModuleSync::Halt()
-{
-   ExitMainLoop();
-
-   return dabc::Module::Halt();
-}
-
 
 bool dabc::ModuleSync::WaitConnect(Port* port, double timeout)
    throw (PortException, StopException, TimeoutException)
@@ -71,18 +67,10 @@ bool dabc::ModuleSync::WaitConnect(Port* port, double timeout)
 
 }
 
-bool dabc::ModuleSync::Send(Port* port, Buffer* buf, double timeout)
+bool dabc::ModuleSync::Send(Port* port, const Buffer &buf, double timeout)
    throw (PortOutputException, StopException, TimeoutException)
 {
-   BufferGuard guard(buf);
-
-   return Send(port, guard, timeout);
-}
-
-bool dabc::ModuleSync::Send(Port* port, BufferGuard &buf, double timeout)
-   throw (PortOutputException, StopException, TimeoutException)
-{
-   if ((port==0) || (buf()==0)) return false;
+   if ((port==0) || buf.null()) return false;
 
    uint16_t evid(evntNone);
 
@@ -94,7 +82,7 @@ bool dabc::ModuleSync::Send(Port* port, BufferGuard &buf, double timeout)
             throw PortOutputException(port, "Disconnect");
 
       if (port->CanSend())
-         return port->Send(buf.Take());
+         return port->Send(buf);
 
    } while (WaitItemEvent(timeout, port, &evid));
 
@@ -102,10 +90,10 @@ bool dabc::ModuleSync::Send(Port* port, BufferGuard &buf, double timeout)
 }
 
 
-dabc::Buffer* dabc::ModuleSync::Recv(Port* port, double timeout)
+dabc::Buffer dabc::ModuleSync::Recv(Port* port, double timeout)
    throw (PortInputException, StopException, TimeoutException)
 {
-   if (port==0) return 0;
+   if (port==0) return Buffer();
 
    uint16_t evid(evntNone);
 
@@ -119,10 +107,10 @@ dabc::Buffer* dabc::ModuleSync::Recv(Port* port, double timeout)
 
    } while (WaitItemEvent(timeout, port, &evid));
 
-   return 0;
+   return Buffer();
 }
 
-dabc::Buffer* dabc::ModuleSync::RecvFromAny(Port** port, double timeout)
+dabc::Buffer dabc::ModuleSync::RecvFromAny(Port** port, double timeout)
    throw (PortInputException, StopException, TimeoutException)
 {
    uint16_t evid(evntNone);
@@ -134,7 +122,7 @@ dabc::Buffer* dabc::ModuleSync::RecvFromAny(Port** port, double timeout)
          if (IsDisconnectExcept())
             throw PortInputException((Port*) resitem, "Disconnect");
 
-      if (NumInputs() == 0) return 0;
+      if (NumInputs() == 0) return Buffer();
 
       if (evid == evntInput) shift = InputNumber( (Port*) resitem );
                         else shift = 0;
@@ -148,7 +136,7 @@ dabc::Buffer* dabc::ModuleSync::RecvFromAny(Port** port, double timeout)
       }
    } while (WaitItemEvent(timeout, 0, &evid, &resitem));
 
-   return 0;
+   return Buffer();
 }
 
 
@@ -170,41 +158,41 @@ bool dabc::ModuleSync::WaitInput(Port* port, unsigned minqueuesize, double timeo
    return false;
 }
 
-dabc::Buffer* dabc::ModuleSync::TakeBuffer(PoolHandle* pool, BufferSize_t size, BufferSize_t hdrsize, double timeout)
+dabc::Buffer dabc::ModuleSync::TakeBuffer(PoolHandle* pool, BufferSize_t size, double timeout)
    throw (StopException, TimeoutException)
 {
-   if (pool==0) return 0;
+   if (pool==0) return Buffer();
 
-   dabc::Buffer* buf = pool->TakeRequestedBuffer();
-   if (buf!=0) {
-      EOUT(("There is requested buffer of size %d", buf->GetTotalSize()));
-      dabc::Buffer::Release(buf);
-      buf = 0;
+   dabc::Buffer buf;
+   buf << pool->TakeRequestedBuffer();
+   if (!buf.null()) {
+      EOUT(("There is requested buffer of size %d", buf.GetTotalSize()));
+      buf.Release();
    }
 
    if (timeout==0.)
-      return pool->TakeBuffer(size, hdrsize);
+      return pool->TakeBuffer(size);
 
-   buf = pool->TakeBufferReq(size, hdrsize);
-   if (buf!=0) return buf;
+   buf << pool->TakeBufferReq(size);
+   if (!buf.null()) return buf;
 
    do {
-      buf = pool->TakeRequestedBuffer();
-      if (buf!=0) return buf;
+      buf << pool->TakeRequestedBuffer();
+      if (!buf.null()) return buf;
    } while (WaitItemEvent(timeout, pool));
 
-   return 0;
+   return buf;
 }
 
 bool dabc::ModuleSync::ModuleWorking(double timeout)
    throw (StopException, TimeoutException)
 {
-   // process exact one event without any timeout
-   SingleLoop(0.);
-
    AsyncProcessCommands();
 
-   return !IsHalted();
+   if (!SingleLoop(timeout))
+      throw StopException();
+
+   return true;
 }
 
 uint16_t dabc::ModuleSync::WaitEvent(double timeout)
@@ -217,51 +205,40 @@ uint16_t dabc::ModuleSync::WaitEvent(double timeout)
    return evid;
 }
 
-int dabc::ModuleSync::PreviewCommand(Command* cmd)
+int dabc::ModuleSync::PreviewCommand(Command cmd)
 {
-   int cmd_res = cmd_ignore;
+   if (cmd.IsName("StartModule")) {
+      // module already running
+      if (IsRunning()) return cmd_true;
 
-   if (cmd->IsName("StartModule")) {
-      cmd_res = cmd_true;
-      switch (fLoopStatus) {
-         case stInit:
-            // this call should lead to the initiation of main loop
-            // there as first step, status must be changed
-            cmd_res = cmd_bool(ActivateMainLoop());
-            break;
-         case stRun:
-            // main loop running, do nothing
-            break;
-         case stSuspend:
-            DoStart();
-            fLoopStatus = stRun;
-            break;
-      }
+      if (fInsideMainLoop) return cmd_bool(DoStart());
+
+      return cmd_bool(ActivateMainLoop());
    } else
-   if (cmd->IsName("StopModule")) {
-      cmd_res = cmd_true;
-      switch (fLoopStatus) {
-         case stInit:
-            // call do stop if somebody call stop at this place
-            // actually, nothing should happen
-            DoStop();
-            break;
-         case stRun:
-            DoStop();
-            fLoopStatus = stSuspend;
-            // main loop running, do nothing
-            break;
-         case stSuspend:
-            // here nothing to do
-            break;
-      }
-   } else {
-      cmd_res = Module::PreviewCommand(cmd);
+   if (cmd.IsName("StopModule")) {
+      if (!IsRunning()) return cmd_true;
 
-      if (!fSyncCommands && (cmd_res==cmd_ignore)) {
-         fNewCommands.Push(cmd);
-         cmd_res = cmd_postponed;
+      if (!fInsideMainLoop) {
+         EOUT(("Something wrong, module %s runs without main loop ????", GetName()));
+         return cmd_false;
       }
+
+      AsyncProcessCommands();
+
+      return cmd_bool(DoStop());
+   }
+
+   int cmd_res = Module::PreviewCommand(cmd);
+
+   // asynchronous execution possible only in running mode,
+   // when module is stopped, commands will be executed immediately
+   if (!fSyncCommands && (cmd_res==cmd_ignore) && IsRunning()) {
+
+      if (fNewCommands==0)
+         fNewCommands = new CommandsQueue(CommandsQueue::kindSubmit);
+
+      fNewCommands->Push(cmd);
+      cmd_res = cmd_postponed;
    }
 
    return cmd_res;
@@ -280,14 +257,31 @@ void dabc::ModuleSync::StopUntilRestart()
    DOUT1(("Finish StopUntilRestart for module %s", GetName()));
 }
 
+
+void dabc::ModuleSync::ObjectCleanup()
+{
+   if (fNewCommands!=0) {
+      EOUT(("Some commands remain event when module %s is cleaned up - BAD", GetName()));
+      AsyncProcessCommands();
+   }
+
+   DOUT4(("ModuleSync::ObjectCleanup %s", GetName()));
+
+   dabc::Module::ObjectCleanup();
+}
+
 void dabc::ModuleSync::AsyncProcessCommands()
 {
-   while (fNewCommands.Size()>0) {
-      dabc::Command* cmd = fNewCommands.Pop();
+   if (fNewCommands==0) return;
+
+   while (fNewCommands->Size()>0) {
+      Command cmd = fNewCommands->Pop();
       int cmd_res = ExecuteCommand(cmd);
-      if (cmd_res>=0)
-         dabc::Command::Reply(cmd, cmd_res);
+      if (cmd_res>=0) cmd.Reply(cmd_res);
    }
+
+   delete fNewCommands;
+   fNewCommands = 0;
 }
 
 void dabc::ModuleSync::ProcessUserEvent(ModuleItem* item, uint16_t evid)
@@ -306,26 +300,23 @@ void dabc::ModuleSync::ProcessUserEvent(ModuleItem* item, uint16_t evid)
 
 bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *resevid, ModuleItem** resitem)
   throw (StopException, TimeoutException)
-
 {
    fWaitItem = item;
    fWaitId = 0;
    fWaitRes = false;
 
-   TimeStamp_t last_tm = NullTimeStamp;
+   TimeStamp last_tm, tm;
 
-   while (!fWaitRes || (fLoopStatus==stSuspend)) {
-
-      if ((ProcessorThread()==0) || IsHalted() || IsProcessorDestroyment() || IsProcessorHalted())
-         throw StopException();
+   // if module not in running state, wait item event will block main loop completely
+   while (!fWaitRes || !IsRunning()) {
 
       // account timeout only in running state
-      if ((tmout>=0) && (fLoopStatus==stRun)) {
-         TimeStamp_t tm = ThrdTimeStamp();
+      if ((tmout>=0) && IsRunning()) {
+         tm.GetNow();
 
-         if (!IsNullTime(last_tm)) {
-            tmout -= TimeDistance(last_tm, tm);
-            if (tmout<0){
+         if (!last_tm.null()) {
+            tmout -= (tm - last_tm);
+            if (tmout<0) {
                if (IsTmoutExcept())
                   throw TimeoutException();
                else
@@ -335,9 +326,12 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
 
          last_tm = tm;
       } else
-         last_tm = NullTimeStamp;
+         last_tm.Reset();
 
-      SingleLoop(tmout);
+      // SingleLoop return false only when Worker should be halted,
+      // we use this to stop module and break recursion
+
+      if (!SingleLoop(tmout)) throw StopException();
    }
 
    if (resevid!=0) *resevid = fWaitId;
@@ -346,20 +340,30 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
    return true; // it is normal exit
 }
 
-void dabc::ModuleSync::DoProcessorMainLoop()
+void dabc::ModuleSync::DoWorkerMainLoop()
 {
    DoStart();
 
-   fLoopStatus = stRun;
+   try {
+      fInsideMainLoop = true;
 
-   MainLoop();
+      MainLoop();
 
+      fInsideMainLoop = false;
+   } catch (...) {
+      fInsideMainLoop = false;
+      throw;
+   }
 }
 
-void dabc::ModuleSync::DoProcessorAfterMainLoop()
+void dabc::ModuleSync::DoWorkerAfterMainLoop()
 {
-   if (fLoopStatus == stRun)
-      DoStop();
+   fInsideMainLoop = false;
 
-   fLoopStatus = stInit;
+   if (IsRunning()) {
+      AsyncProcessCommands();
+      DoStop();
+   }
+
+   DOUT3(("Stop sync module %s", GetName()));
 }

@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/Factory.h"
 
 #include <dlfcn.h>
@@ -47,6 +47,15 @@ bool dabc::Factory::LoadLibrary(const std::string& fname)
    return true;
 }
 
+bool dabc::Factory::CreateManager(const std::string& name, Configuration* cfg)
+{
+   if (dabc::mgr.null())
+      new dabc::Manager(name.c_str(), cfg);
+
+   return true;
+}
+
+
 void* dabc::Factory::FindSymbol(const std::string& symbol)
 {
    if (symbol.empty()) return 0;
@@ -65,44 +74,36 @@ void* dabc::Factory::FindSymbol(const std::string& symbol)
 }
 
 dabc::Factory::Factory(const char* name) :
-   Basic(0, name)
+   Object(0, name)
 {
    DOUT2(("Factory %s is created", name));
 
-   if (Manager::Instance())
-      Manager::Instance()->AddFactory(this);
+   if (dabc::mgr())
+      dabc::mgr()->AddFactory(this);
    else {
       dabc::LockGuard lock(FactoriesMutex());
       Factories()->Push(this);
    }
 }
 
-bool dabc::Factory::CreateManager(const char* kind, Configuration* cfg)
+dabc::Transport* dabc::Factory::CreateTransport(Reference ref, const char* typ, dabc::Command cmd)
 {
-   if (Factories()==0) return false;
-
-   if (dabc::mgr() != 0) {
-      EOUT(("Manager instance already exists"));
-      return false;
+   PortRef portref = ref;
+   if (portref.null()) {
+      EOUT(("Port is not specified"));
+      return 0;
    }
+   portref.SetTransient(false);
 
-   for (unsigned n=0;n<Factories()->Size();n++)
-      if (Factories()->Item(n)->CreateManagerInstance(kind, cfg)) return true;
-
-   return false;
-}
-
-dabc::Transport* dabc::Factory::CreateTransport(dabc::Port* port, const char* typ, const char* thrdname, dabc::Command* cmd)
-{
    dabc::DataInput* inp = CreateDataInput(typ);
-   if ((inp!=0) && !inp->Read_Init(cmd, port)) {
+   if ((inp!=0) && !inp->Read_Init(portref, cmd)) {
       EOUT(("Input object %s cannot be initialized", typ));
       delete inp;
       inp = 0;
    }
 
    dabc::DataOutput* out = CreateDataOutput(typ);
-   if ((out!=0) && !out->Write_Init(cmd, port)) {
+   if ((out!=0) && !out->Write_Init(portref, cmd)) {
       EOUT(("Output object %s cannot be initialized", typ));
       delete out;
       out = 0;
@@ -110,58 +111,5 @@ dabc::Transport* dabc::Factory::CreateTransport(dabc::Port* port, const char* ty
 
    if ((inp==0) && (out==0)) return 0;
 
-   Device* dev = dabc::mgr()->FindLocalDevice();
-   DataIOTransport* tr = new DataIOTransport(dev, port, inp, out);
-
-   if ((thrdname==0) || (strlen(thrdname)==0))
-      thrdname = port->ProcessorThreadName();
-
-   if (!dabc::mgr()->MakeThreadFor(tr, thrdname)) {
-      EOUT(("Fail to create thread for transport"));
-      delete tr;
-      tr = 0;
-   }
-
-   return tr;
+   return new dabc::DataIOTransport(portref(), inp, out);
 }
-
-dabc::Transport* dabc::Factory::CreateTransportNew(Port* port, Command* cmd)
-{
-
-
-   return 0;
-}
-
-dabc::Transport* dabc::Factory::CreateIOTransport(Port* port, Command* cmd, DataInput* inp, DataOutput* out)
-{
-   if ((inp!=0) && !inp->Read_Init(cmd, port)) {
-      EOUT(("Input object cannot be initialized"));
-      delete inp;
-      inp = 0;
-   }
-
-   if ((out!=0) && !out->Write_Init(cmd, port)) {
-      EOUT(("Output object cannot be initialized"));
-      delete out;
-      out = 0;
-   }
-
-   if ((inp==0) && (out==0)) return 0;
-
-   Device* dev = dabc::mgr()->FindLocalDevice();
-   DataIOTransport* tr = new DataIOTransport(dev, port, inp, out);
-
-   dabc::ConfigSource cfg(cmd, port);
-
-   std::string thrdname = cfg.GetCfgStr(xmlTrThread);
-   if (thrdname.length()==0) thrdname = port->ProcessorThreadName();
-
-   if (!dabc::mgr()->MakeThreadFor(tr, thrdname.c_str())) {
-      EOUT(("Fail to create thread for transport"));
-      delete tr;
-      tr = 0;
-   }
-
-   return tr;
-}
-

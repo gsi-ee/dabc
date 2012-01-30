@@ -1,34 +1,31 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_Buffer
 #define DABC_Buffer
 
-#include <stdint.h>
+#ifndef DABC_Pointer
+#include "dabc/Pointer.h"
+#endif
+
+#ifndef DABC_Reference
+#include "dabc/Reference.h"
+#endif
 
 namespace dabc {
 
    // buffer id includes memory block id (high 16-bit)  and number inside block (low 16 bit)
    // buffer size if limited by 32 bit - 4 gbyte is pretty enough for single structure
-
-   typedef uint32_t BufferId_t;
-   typedef uint32_t BufferSize_t;
-   typedef uint32_t BlockNum_t; // we use 32 bit only for speed reason, actually only 16 bit are used
-   typedef uint32_t BufferNum_t; // we use 32 bit only for speed reason, actually only 16 bit are used
-
-   static inline BlockNum_t  GetBlockNum(BufferId_t id) { return id >> 16; }
-   static inline BufferNum_t GetBufferNum(BufferId_t id) { return id & 0xffff; }
-   static inline BufferId_t  CodeBufferId(BlockNum_t blocknum, BufferNum_t bufnum) { return (blocknum << 16) | bufnum; }
 
    extern const BufferSize_t BufferSizeError;
 
@@ -44,114 +41,226 @@ namespace dabc {
    };
 
    class MemoryPool;
+   class BuffersQueue;
    class Mutex;
-   struct ReferencesBlock;
 
    struct MemSegment {
-       BufferId_t      id;        // id of the buffer
+       unsigned        id;        // id of the buffer
        BufferSize_t    datasize;  // length of data
-       void*           buffer;    // pointer on the begining of buffer (must be in the area of id)
+       void*           buffer;    // pointer on the beginning of buffer (must be in the area of id)
    };
 
-   class Buffer {
 
+   class Buffer {
       friend class MemoryPool;
-      friend struct ReferencesBlock;
+      friend class BuffersQueue;
 
       protected:
-         Buffer();
-         virtual ~Buffer();
 
-         void ReInit(MemoryPool* pool, BufferId_t refid,
-                     void* header, unsigned headersize,
-                     MemSegment* segm, unsigned numsegments);
-         void ReClose();
+         Reference    fPool;         //!< reference to the pool, prevents pool deletion until buffer is used
+         unsigned     fPoolId;       //!< id, used by pool to identify segments list
 
-         bool RellocateSegments(unsigned newcapacity);
-         bool RellocateHeader(BufferSize_t newcapacity, bool copyoldcontent);
-         bool AllocateInternBuffer(BufferSize_t sz);
+         MemSegment*  fSegments;     //!< list of memory segments, allocated by memory pool
+         unsigned     fNumSegments;  //!< number of entries in segments list
+         unsigned     fCapacity;     //!< capacity of segments list
 
-         MemoryPool*   fPool;
-         uint32_t      fTypeId;
-         MemSegment*   fSegments;
-         unsigned      fCapacity;
-         unsigned      fNumSegments;
-         void*         fHeader;
-         BufferSize_t  fHeaderSize;
-         BufferSize_t  fHeaderCapacity;
-         void*         fInternBuffer; // for the case, when buffer created independent from memory pool
-         BufferSize_t  fInternBufferSize; //
+         uint32_t     fTypeId;       //!< buffer type, identifies content of the buffer
 
-         BufferId_t    fReferenceId; // id of reference for memory pool
-         void*         fOwnHeader; // this is self-allocated header if size of pool-provided header not enougth
-         MemSegment*   fOwnSegments; // this is self-allocated segments if size of pool-provided array not enougth
+         void Locate(BufferSize_t p, unsigned& seg_indx, unsigned& seg_shift) const;
 
       public:
 
-         inline MemoryPool* Pool() const { return fPool; }
+         Buffer();
+         Buffer(const Buffer& src) throw();
+         ~Buffer();
+
+         /** Changes transient state of the buffer. If true, in any assign or method call
+          * all references in buffer will be moved and buffer will be empty afterwards
+          * For instance, after following code:
+          *    dabc::Buffer buf1 = pool->TakeBuffer(4096), buf2;
+          *    buf1.SetTransient(true);
+          *    buf2 = buf1;
+          * Buffer buf2 will reference 4096 bytes long buffer when buf1 will be empty. Code is
+          * equivalent to following:
+          *    dabc::Buffer buf1 = pool->TakeBuffer(4096), buf2;
+          *    buf2 << buf1;
+          **/
+         Buffer& SetTransient(bool on = true) { fPool.SetTransient(on); return *this; }
+
+         /** Return transient state of buffer, see SetTransient for more detailed explanation */
+         bool IsTransient() const { return fPool.IsTransient(); }
+
+         /** Disregard of transient state duplicate instance of Buffer will be created
+          * Means original instance will remain as is.
+          * This method can be time consuming, while pool mutex should be locked and
+          * reference counter of all segments should be incremented.
+          * When created instance destroyed, same operation in reverse order will be performed.
+          * Just do not duplicate buffer without real need for that.  */
+         Buffer Duplicate() const;
 
          void SetTypeId(uint32_t tid) { fTypeId = tid; }
          inline uint32_t GetTypeId() const { return fTypeId; }
 
+         /** Returns true if buffer does not reference any memory
+	     TODO: Check if second condition could be removed, than ispool can be removed */
+         inline bool null() const { return fPool.null() || (NumSegments() == 0); }
+         
+         /** Return true if pool is assigned and list for segments is available */
+         inline bool ispool() const { return !fPool.null(); }
+
          inline unsigned NumSegments() const { return fNumSegments; }
-         inline const MemSegment& Segment(unsigned n = 0) const { return fSegments[n]; }
+         inline unsigned SegmentId(unsigned n = 0) const { return n < NumSegments() ? fSegments[n].id : 0; }
+         inline void* SegmentPtr(unsigned n = 0) const { return n < NumSegments() ? fSegments[n].buffer : 0; }
+         inline BufferSize_t SegmentSize(unsigned n = 0) const { return n < NumSegments() ? fSegments[n].datasize : 0; }
 
-         inline BufferId_t GetId(unsigned n = 0) const { return fSegments[n].id; }
-         inline void* GetDataLocation(unsigned n = 0) const { return fSegments[n].buffer; }
-         inline BufferSize_t GetDataSize(unsigned n = 0) const { return fSegments[n].datasize; }
-
+         /** Return total size of all buffer segments */
          BufferSize_t GetTotalSize() const;
 
-         inline bool SetDataSize(BufferSize_t newsize, unsigned n = 0)
+         /** Set total length of the buffer to specified value
+          *  Size cannot be bigger than original size of the buffer */
+         void SetTotalSize(BufferSize_t len) throw();
+
+         Buffer& operator=(const Buffer& src) throw();
+
+         Buffer& operator<<(const Buffer& src);
+
+         /** \brief Release reference on the pool memory */
+         void Release() throw();
+
+         /** \brief Release reference on the pool memory,
+          * content of object will be changed under locked mutex */
+         void Release(Mutex* m) throw();
+
+         /** Append content of \param src buffer to the existing buffer.
+          * If source buffer belong to other memory pool, content will be copied.
+          * If source buffer is transient, after the call it will be empty */
+         bool Append(Buffer& src) throw();
+
+         /** Prepend content of \param src buffer to the existing buffer.
+          * If source buffer belong to other memory pool, content will be copied.
+          * If source buffer is transient, after the call it will be empty */
+         bool Prepend(Buffer& src) throw();
+
+         /** Insert content of \param src buffer at specified position to the existing buffer.
+          * If source buffer belong to other memory pool, content will be copied.
+          * If source buffer is transient, after the call it will be empty */
+         bool Insert(BufferSize_t pos, Buffer& src) throw();
+
+         /** Convert content of the buffer into std::string */
+         std::string AsStdString();
+
+         // ============ all following methods are relative to current position in the buffer
+
+         /** Initialize pointer instance.
+          * By default, complete buffer content covered by the pointer.
+          * If \param pos specified (non zero), pointer shifted
+          * If \param len specified (non zero), length is specified
+          */
+
+         Pointer GetPointer(BufferSize_t pos = 0, BufferSize_t len = 0) const
          {
-            if ((newsize==0) || (fSegments[n].datasize<newsize)) return false;
-            fSegments[n].datasize = newsize;
-            return true;
+            Pointer res;
+            res.fSegm = 0;
+            res.fPtr = (unsigned char*) SegmentPtr(0);
+            res.fRawSize = SegmentSize(0);
+            res.fFullSize = GetTotalSize();
+            if (pos>0) Shift(res, pos);
+            if (len>0) res.setfullsize(len);
+            return res;
          }
 
-         bool AddBuffer(Buffer* buf, bool adopt = false);
+         void Shift(Pointer& ptr, BufferSize_t len) const;
 
-         bool AddSegment(Buffer* buf, unsigned nseg = 0, BufferSize_t offset = 0, BufferSize_t newsize = 0);
+         /** Calculates distance between two pointers */
+         int Distance(const Pointer& ptr1, const Pointer& ptr2) const;
 
-         bool CopyFrom(Buffer* src);
+         /** Performs memcpy of data from source buffer, starting from specified \param tgtptr position
+          * If len not specified, all data from buffer \param srcbuf will be copied, starting from specified \param srcptr position
+          * Return actual size of memory which was copied. */
+         BufferSize_t CopyFrom(Pointer tgtptr, const Buffer& srcbuf, Pointer srcptr, BufferSize_t len = 0) throw();
 
-         Buffer* MakeReference();
 
-         inline void* GetHeader() const { return fHeaderSize > 0 ? fHeader : 0; }
-         inline BufferSize_t GetHeaderSize() const { return fHeaderSize; }
-         void SetHeaderSize(BufferSize_t sz);
+         /** Copy content of source buffer \param srcbuf to the buffer */
+         BufferSize_t CopyFrom(const Buffer& srcbuf, BufferSize_t len = 0) throw()
+         {
+            return CopyFrom(GetPointer(), srcbuf, srcbuf.GetPointer(), len);
+         }
 
-         // this is the only official method to release buffer
-         // after this call pointer on buffer object is invalid and cannot be used further
-         static void Release(Buffer* buf);
+         /** Performs memcpy of data from source buffer, starting from specified \param tgtptr position
+          * If len not specified, all data from buffer \param srcbuf will be copied, starting from specified \param srcptr position
+          * Return actual size of memory which was copied. */
+         BufferSize_t CopyFrom(Pointer tgtptr, Pointer srcptr, BufferSize_t len = 0) throw();
 
-         // has same meaning as previous, but value of variable is protected by mutex
-         static void Release(Buffer* &buf, Mutex* mutex);
+         /** Performs memcpy of data from raw buffer \param ptr */
+         BufferSize_t CopyFrom(Pointer tgtptr, const void* ptr, BufferSize_t len) throw()
+         {
+            return CopyFrom(tgtptr, Pointer(ptr,len), len);
+         }
 
-         // these methods only for create/reallocation of standalone
-         // (without pool) memory buffer
-         static Buffer* CreateBuffer(BufferSize_t sz);
-         bool RellocateBuffer(BufferSize_t sz);
+         /** Performs memcpy of data from raw buffer \param ptr */
+         BufferSize_t CopyFrom(const void* ptr, BufferSize_t len) throw()
+         {
+            return CopyFrom(GetPointer(), ptr, len);
+
+         }
+
+         /** Copy data from \param src into Buffer memory
+          * Returns byte counts actually copied  */
+         BufferSize_t CopyFromStr(Pointer tgtptr, const char* src, unsigned len = 0) throw();
+
+         BufferSize_t CopyFromStr(const char* src, unsigned len = 0) throw()
+         {
+            return CopyFromStr(GetPointer(), src, len);
+         }
+
+
+         /** Performs memcpy of data into raw buffer \param ptr */
+         BufferSize_t CopyTo(Pointer srcptr, void* ptr, BufferSize_t len) throw();
+
+         /** Performs memcpy of data into raw buffer \param ptr */
+         BufferSize_t CopyTo(void* ptr, BufferSize_t len) throw()
+         {
+            return CopyTo(GetPointer(), ptr, len);
+         }
+
+         /** Returns reference on the part of the memory, referenced by the object.
+          * \param pos specified start point and will be increased when method returns valid buffer.
+          * \param len specifies length of memory piece. If zero is specified,
+          * full size of next segment will be delivered.
+          * \param allowsegmented defines if return memory peace could be segmented or not.
+          * Method returns empty buffer when requested memory size is not available in the source buffer
+          *
+          * This method could be used to manage small peaces of memory in the memory pool with big buffers.
+          * For instance, one need some small headers which should managed separately from the main data.
+          * Than one need to take big buffer from the pool and extract by small pieces:
+          *
+          *  // somewhere in the initialization
+          * Buffer buf = Pool()->TakeBuffer(64000);
+          *
+          *  // later in the code
+          * Buffer data = Input()->Recv();
+          * Buffer hdr = buf.GetNextPart(16)
+          * data.Prepend(hdr);
+          * Output()->Send(data);
+          *
+          * Of course, one should check if buffer is expired and one need to take next piece
+          * from the memory pool.
+          */
+         Buffer GetNextPart(Pointer& ptr, BufferSize_t len, bool allowsegmented = true) throw();
+
+
+         // ===================================================================================
+
+         /** This static method create independent buffer for any other memory pools
+          * Therefore it can be used in standalone case */
+         static Buffer CreateBuffer(BufferSize_t sz, unsigned numrefs = 8, unsigned numsegm = 4) throw();
+
+         /** This static method create Buffer instance, which contains pointer on specified peace of memory
+          * Therefore it can be used in standalone case */
+         static Buffer CreateBuffer(const
+         void* ptr, unsigned size, bool owner = false, unsigned numrefs = 8, unsigned numsegm = 4) throw();
    };
 
-
-   // small object, which helps to release buffer in case of exceptions
-   // works like lockguard
-   class BufferGuard {
-      protected:
-         Buffer* fBuf;
-      public:
-         inline BufferGuard() : fBuf(0) {}
-         inline BufferGuard(Buffer* buf) : fBuf(buf) {}
-         inline BufferGuard(const BufferGuard& buf) : fBuf(const_cast<BufferGuard*>(&buf)->Take()) {}
-         inline ~BufferGuard() { dabc::Buffer::Release(fBuf); }
-
-         inline void operator=(Buffer* buf) { dabc::Buffer::Release(fBuf); fBuf = buf; }
-
-         inline Buffer* operator() () const { return fBuf; }
-         inline Buffer* Take() { Buffer* res = fBuf; fBuf = 0; return res; }
-         inline void Release() { dabc::Buffer::Release(fBuf); fBuf = 0; }
-   };
 };
 
 #endif

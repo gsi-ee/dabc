@@ -1,25 +1,25 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_Parameter
 #define DABC_Parameter
 
-#ifndef DABC_Basic
-#include "dabc/Basic.h"
+#ifndef DABC_Record
+#include "dabc/Record.h"
 #endif
 
-#ifndef DABC_records
-#include "dabc/records.h"
+#ifndef DABC_Object
+#include "dabc/Object.h"
 #endif
 
 #ifndef DABC_timing
@@ -30,274 +30,251 @@
 #include "dabc/threads.h"
 #endif
 
+#include <string.h>
+
 namespace dabc {
 
-   class WorkingProcessor;
+   class Worker;
    class Command;
    class Manager;
+   class Parameter;
 
-   enum EParamKind { parNone, parString, parDouble, parInt, parSyncRate, parAsyncRate, parPoolStatus, parStatus, parHisto, parInfo };
+   enum EParamEvent {
+      parCreated = 0,      //!< produced once when parameter is created
+      parConfigured = 1,   //!< event only for manager, used to react on reconfiguration of parameter
+      parModified = 2,     //!< produced when parameter value modified. Either every change or after time interval (default = 1 sec)
+      parDestroy = 3       //!< produced once when parameter is destroyed
+   };
 
-   enum EParamEvent { parCreated = 0, parModified = 1, parDestroy = 2 };
-
-   class Parameter : public Basic {
-      friend class WorkingProcessor;
+   class ParameterContainer : public RecordContainer {
+      friend class Parameter;
+      friend class Worker;
       friend class Manager;
 
       protected:
-         // make constructor and destructor of parameters protected,
-         // that user cannot call them directly - only via CreatePar() and DestroyPar
 
-         Parameter(WorkingProcessor* lst, const char* name);
-         virtual ~Parameter();
+         enum EStatistic { kindNone, kindRate, kindAverage };
+
+         std::string   fKind;         //!< specified kind of parameter (int, double, info, ratemeter), to be used by reference to decide if object can be assigned
+         TimeStamp     fLastChangeTm; //!< last time when parameter was modified
+         double        fInterval;     //!< how often modified events are produced TODO: should we move it in the normal record field?
+         bool          fAsynchron;    //!< indicates if parameter can produce events asynchronous to the modification of parameter itself
+                                      //!< it is a case for ratemeters
+         EStatistic    fStatistic;    //!< indicates if statistic is calculated: 0 - off, 1 - rate, 2 - average
+         double        fRateValueSum; //!< sum of values
+         double        fRateTimeSum;  //!< sum of time
+         double        fRateNumSum;   //!< sum of accumulated counts
+         bool          fMonitored;    //!< if true parameter change event will be delivered to the worker
+         int           fDebugOutput;  //!< specifies level of debug output   TODO: record field??
+         bool          fAttrModified; //!< indicate if attribute was modified since last parameter event
+         bool          fDeliverAllEvents; //!< if true, any modification event will be delivered, default off
+         int           fRateWidth;    //!< display width of rate variable
+         int           fRatePrec;     //!< display precision of rate variable
+
+         virtual bool SetField(const std::string& name, const char* value, const char* kind);
+         virtual const char* GetField(const std::string& name, const char* dflt = 0);
+
+         /** Method could be used to reject changes of some fields of the parameter
+          * Method called under object mutex */
+         virtual bool _CanChangeField(const std::string&) { return true; }
+
+         /** Method called from manager thread when parameter configured as asynchronous.
+          * It is done intentionally to avoid situation that in non-deterministic way event processing
+          * per-timeout invoked from the worker thread.
+          * TODO: should be invocation of parModified events generally done from the manager thread, or keep it only for asynchron parameters? */
+         void ProcessTimeout(double last_dif);
+
+         ParameterContainer(Reference worker, const std::string& name, const std::string& parkind = "");
+
+         inline void Modified() { FireEvent(parModified); }
+
+         void FireEvent(int id);
+
+         virtual void ObjectCleanup();
+
+         bool _CalcRate(std::string& value);
+
+         /** Specifies that parameter produce 'modified' events synchronous with changes of parameter.
+          * If on=false (asynchronous), events are produced by timeout from manager (with granularity of 1 sec).
+          * Interval specifies how often event should be produced - if 0 specified every parameter change will call parameter modified event.
+          */
+         void SetSynchron(bool on, double interval = 1., bool everyevnt = false);
+
+         Worker* GetWorker() const;
+
+         int GetDebugLevel() const { return Field("debug").AsInt(-1); }
+
+         const std::string GetActualUnits() const;
+
+         /** If true, all events must be delivered to the consumer */
+         bool IsDeliverAllEvents() const;
+
+         /** Internal method, used to inform system that parameter is modified
+          * If configured, also debug output will be produced */
+         void FireModified(const char* value);
 
       public:
 
-         virtual const char* MasterClassName() const { return "Parameter"; }
          virtual const char* ClassName() const { return "Parameter"; }
 
-         virtual EParamKind Kind() const { return parNone; }
-
-         bool IsFixed() const;
-         void SetFixed(bool on = true);
-
-         bool IsVisible() const { return fVisible; }
-         bool IsChangable() const { return fChangable; }
-
-         virtual void* GetPtr() { return 0; }
-
-         bool IsDebugOutput() const { return fDebug; }
-         void SetDebugOutput(bool on = true) { fDebug = on; }
-
-         inline std::string GetStr() const { std::string res; return GetValue(res) ? res : ""; }
-         inline bool SetStr(const std::string &value) { return SetValue(value); }
-
-         // this is generic virtual methods to get/set parameter values in string form
-         virtual bool GetValue(std::string& value) const { return false; }
-         virtual bool SetValue(const std::string &value) { return false; }
-         virtual void FillInfo(std::string& info);
-
-         // these methods change parameter value not directly,
-         // but via parameters list object. This is required in case
-         // if parameters belong to object with its own tread otherwise
-         // one can get concurrent usage/changing of non-locked value of parameter
-         bool InvokeChange(const char* value);
-         bool InvokeChange(dabc::Command* cmd);
-
-         virtual bool Store(ConfigIO &cfg);
-         virtual bool Find(ConfigIO &cfg);
-         virtual bool Read(ConfigIO &cfg);
-
-      protected:
-
-         // reimplement these two methods if one wants some
-         // timeouts processing in the parameter.
-         // First method just indicate if parameters wants to be timedout.
-         // Second method called with time difference to last call that
-         // user should not call timestamp function itself
-         // ProcessTimeout() is called from manager thread, therefore one should protect values with mutex
-         virtual bool NeedTimeout() const { return false; }
-         virtual void ProcessTimeout(double last_diff) { }
-
-         void Ready();
-
-         void Changed();
-
-         static bool FireEvent(Parameter* par, int evid);
-
-         virtual void DoDebugOutput();
-
-         WorkingProcessor* fLst;
-         Mutex             fValueMutex;
-         bool              fFixed;   /** if true, parameter cannot be changed */
-         bool              fVisible; /** indicates if parameter seen by control system */
-         bool              fChangable; /** indicates if parameter can be modified from control system */
-         bool              fDebug;     /** does parameter produces debug output */
-         bool              fRegistered; /** indicate if parameter is registered in manager */
+         const std::string& Kind() const;
    };
 
 
-   class StrParameter : public Parameter {
-      protected:
-         friend class WorkingProcessor;
+   class Parameter : public Record {
 
-         StrParameter(WorkingProcessor* parent, const char* name, const char* istr = 0);
+      friend class Worker;
+      friend class Manager;
+
+      protected:
+
+         virtual const char* ParReferenceKind() { return 0; }
+
+         /** Specifies that parameter produce 'modified' events synchronous with changes of parameter.
+          * If on=false (asynchronous), events are produced by timeout from manager (with granularity of 1 sec).
+          * Interval specifies how often event should be produced - if 0 specified every parameter change will call parameter modified event.
+          */
+         // These method is set parameter fields, specified in the command
+         int ExecuteChange(Command cmd);
+
+         /** Returns true if any parameter attribute was modified since last call to this method */
+         bool TakeAttrModified();
+
+         /** Fire parConfigured event for parameter */
+         void FireConfigured();
 
       public:
 
-         virtual EParamKind Kind() const { return parString; }
+         /** \brief Method used in reference constructor/assignments to verify is object is suitable */
+         template<class T>
+         bool verify_object(Object* src, T* &tgt)
+         {
+            // TODO: should we implement this method ???
+            tgt = dynamic_cast<T*>(src);
+            if (tgt==0) return false;
+            const char* refkind = ParReferenceKind();
+            if (refkind==0) return true;
+            return tgt->Kind() == refkind;
+         }
 
-         virtual bool GetValue(std::string &value) const;
-         virtual bool SetValue(const std::string &value);
 
-         virtual void* GetPtr() { return &fValue; }
+         DABC_REFERENCE(Parameter, Record, ParameterContainer)
 
-      protected:
-         std::string fValue;
+         bool NeedTimeout();
+
+         /** Returns true when parameter event should be delivered to the worker */
+         bool IsMonitored();
+
+         /** Returns reference on the worker */
+         Reference GetWorker() const;
+
+         /** Indicate if parameter is should generate events synchron with code which modified it*/
+         Parameter& SetSynchron(bool on, double interval = 1., bool everyevnt = false);
+
+         /** Converts parameter in ratemeter - all values will be summed up and divided on specified interval.
+          * Result value will have <units>/second dimension */
+         Parameter& SetRatemeter(bool synchron = false, double interval = 1.0);
+
+         /** Returns true if rate measurement is activated */
+         bool IsRatemeter() const;
+
+         /** Disable ratemeter functionality */
+         Parameter& DisableRatemeter();
+
+         /** Converts parameter in statistic variable - all values will be summed up and average over interval will be calculated.
+          * Result will have <units> of original variable */
+         Parameter& SetAverage(bool synchron = false, double interval = 1.0);
+
+         Parameter& DisableAverage();
+
+         /** Returns true if average calculation is active */
+         bool IsAverage() const;
+
+         /** Specify if parameter event should be delivered to the worker */
+         Parameter& SetMonitored(bool on = true);
+
+         /** Enable/disable debug output when parameter value is changed */
+         Parameter& SetDebugOutput(bool on = true, int level = 1) { return SetDebugLevel(on ? level : -1); }
+         Parameter& SetDebugLevel(int level = 1) { Field("debug").SetInt(level); return *this; }
+         int GetDebugLevel() const;
+
+         Parameter& SetUnits(const std::string& unit) { Field("units").SetStr(unit); return *this; }
+         /** Return units of parameter value */
+         const std::string GetUnits() const { return Field("units").AsStdStr(); }
+         /** Return actual units of parameter value, taking into account rate (1/s) unit when enabled */
+         const std::string GetActualUnits() const;
+
+         void SetLowerLimit(double low) { Field("low").SetDouble(low); }
+         double GetLowerLimit() const { return Field("low").AsDouble(); }
+
+         void SetUpperLimit(double up) { Field("up").SetDouble(up); }
+         double GetUpperLimit() const { return Field("up").AsDouble(); }
+
+         Parameter& SetLimits(double low, double up) { SetLowerLimit(low); SetUpperLimit(up); return *this; }
+
+         const std::string Kind() const;
+
+         /** Can be called by user to signal framework that parameter was modified.
+          * Normally happens automatically or by time interval, but with synchronous parameter
+          * last update may be lost. */
+         void FireModified();
    };
 
 
-   class DoubleParameter : public Parameter {
-      protected:
-         friend class WorkingProcessor;
-
-         DoubleParameter(WorkingProcessor* parent, const char* name, double iv = 0.);
-
-      public:
-
-         virtual EParamKind Kind() const { return parDouble; }
-
-         virtual bool GetValue(std::string &value) const;
-         virtual bool SetValue(const std::string &value);
-
-         double GetDouble() const;
-         bool SetDouble(double v);
-
-         virtual void* GetPtr() { return &fValue; }
-
-      protected:
-         double fValue;
-   };
-
-
-   class IntParameter : public Parameter {
-      protected:
-         friend class WorkingProcessor;
-
-         IntParameter(WorkingProcessor* parent, const char* name, int ii = 0);
-
-      public:
-
-         virtual EParamKind Kind() const { return parInt; }
-
-         virtual bool GetValue(std::string &value) const;
-         virtual bool SetValue(const std::string &value);
-
-         int GetInt() const;
-         bool SetInt(int v);
-
-         virtual void* GetPtr() { return &fValue; }
-
-      protected:
-         int fValue;
-   };
-
-   class RateParameter : public Parameter {
-      public:
-         RateParameter(WorkingProcessor* parent, const char* name,
-                       bool synchron, double interval = 1., const char* units = 0,
-                       double lower = 0., double upper = 0.,
-                       int debug_width = 0, int debug_prec = 1);
-
-         virtual EParamKind Kind() const { return fSynchron ? parSyncRate : parAsyncRate; }
-
-         RateRec* GetRateRec() { return &fRecord; }
-
-         void ChangeRate(double rate);
-         double GetInterval() const { return fInterval; }
-         void SetInterval(double v) { fInterval = v; }
-
-         void SetUnits(const char* name);
-         void SetLimits(double lower = 0., double upper = 0.);
-
-         virtual bool GetValue(std::string& value) const;
-         virtual bool SetValue(const std::string &value);
-
-         virtual void AccountValue(double v);
-
-         virtual bool UseMasterClassName() const { return true; }
-
-         virtual bool Store(ConfigIO &cfg);
-         virtual bool Find(ConfigIO &cfg);
-         virtual bool Read(ConfigIO &cfg);
-
-         virtual void* GetPtr() { return &fRecord; }
-
-      protected:
-
-         const char* _GetDisplayMode();
-         void _SetDisplayMode(const char* v);
-
-         virtual bool NeedTimeout() const { return !fSynchron; }
-         virtual void ProcessTimeout(double last_diff);
-
-         virtual void DoDebugOutput();
-
-         RateRec     fRecord;
-         bool        fSynchron;
-         double      fInterval;
-         double      fTotalSum;
-         TimeStamp_t fLastUpdateTm; // used in synchron mode
-         double      fDiffSum;      // used in asynchron mode
-         int         fOutWidth;     // debug output width for ratemeter
-         int         fOutPrecision; // debug output precision
-   };
-
-
-   class StatusParameter : public Parameter {
-      public:
-         StatusParameter(WorkingProcessor* parent, const char* name, int severity = 0);
-
-         virtual EParamKind Kind() const { return parStatus; }
-         bool SetStatus(const char* status, const char* color);
-         StatusRec* GetStatusRec() { return &fRecord; }
-
-         virtual void* GetPtr() { return &fRecord; }
-
-      protected:
-
-         StatusRec   fRecord;
-   };
-
-
+   /** This parameter class can only be used with parameters, created with CreatePar(name, "info") call */
    class InfoParameter : public Parameter {
-      public:
-         InfoParameter(WorkingProcessor* parent, const char* name, int verbose = 0, const char* color = 0);
-
-         virtual EParamKind Kind() const { return parInfo; }
-
-         InfoRec* GetInfoRec() { return &fRecord; }
-
-         virtual void* GetPtr() { return &fRecord; }
-
-         virtual bool GetValue(std::string &value) const;
-         virtual bool SetValue(const std::string &value);
-         virtual bool SetColor(const std::string &color);
 
       protected:
+         // by this we indicate that only parameter specified as info can be referenced
+         virtual const char* ParReferenceKind() { return infokind(); }
 
-         InfoRec   fRecord;
+      public:
+
+         DABC_REFERENCE(InfoParameter, Parameter, ParameterContainer)
+
+         void SetInfo(const std::string& info) { SetStr(info); }
+         std::string GetInfo() const { return AsStdStr(); }
+
+         void SetColor(const std::string& name) { Field("color").SetStr(name); }
+         std::string GetColor() const { return Field("color").AsStdStr("Green"); }
+
+         void SetVerbosity(int level) { Field("verbosity").SetInt(level); }
+         int GetVerbosity() const { return Field("verbosity").AsInt(1); }
+
+         static const char* infokind() { return "info"; }
    };
 
 
-   class HistogramParameter : public Parameter {
-      public:
-         HistogramParameter(WorkingProcessor* parent, const char* name, int nchannles = 100);
-
-         virtual ~HistogramParameter();
-
-         virtual EParamKind Kind() const { return parHisto; }
-
-         void SetLimits(float xmin, float xmax);
-         void SetColor(const char* color);
-         void SetInterval(double sec);
-         void SetLabels(const char* xlabel, const char* ylabel);
-
-         void Clear();
-         bool Fill(float x);
-
-         HistogramRec* GetHistogramRec() { return fRecord; }
-
-         virtual void* GetPtr() { return fRecord; }
+   /** This parameter class can only be used with parameters,
+    * created with CreatePar(name, "cmddef") call or CreateCmdDef(name) */
+   class CommandDefinition : public Parameter {
 
       protected:
+         // by this we indicate that only parameter specified as info can be referenced
+         virtual const char* ParReferenceKind() { return cmddefkind(); }
 
-         bool _CheckChanged(bool force = false);
-         HistogramRec  *fRecord;
+         std::string ArgName(int n) const;
 
-         TimeStamp_t fLastTm; // last time when histogram was updated
-         double fInterval; // interval for histogram update
+      public:
+
+         DABC_REFERENCE(CommandDefinition, Parameter, ParameterContainer)
+
+         CommandDefinition& AddArg(const std::string& name, const std::string& kind = "string", bool required = true, const std::string& dflt = "");
+
+         int NumArgs() const;
+
+         bool HasArg(const std::string& name) const;
+
+         bool GetArg(int n, std::string& name, std::string& kind, bool& required, std::string& dflt) const;
+
+         /** Create command according command definition,
+          * all default and required parameters will be specified */
+         Command MakeCommand() const;
+
+         static const char* cmddefkind() { return "cmddef"; }
+
    };
+
 }
 
 #endif

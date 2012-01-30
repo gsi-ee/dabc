@@ -1,51 +1,45 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/CpuInfoModule.h"
 
-dabc::CpuInfoModule::CpuInfoModule(const char* name, dabc::Command* cmd, int kind) :
+dabc::CpuInfoModule::CpuInfoModule(const char* name, dabc::Command cmd, int kind) :
    dabc::ModuleAsync(name, cmd),
    fStat(true),
    fKind(kind)
 {
-   double period = GetCfgDouble("Period", 2., cmd);
-   if (fKind<0) fKind = GetCfgInt("Kind", 1 + 2, cmd);
+   double period = Cfg("Period",cmd).AsDouble(2);
+   if (fKind<0) fKind = Cfg("Kind",cmd).AsInt(1 + 2);
 
    CreateTimer("Timer", period);
 
-   SetParDflts(1, false, false);
-
-   if (fStat.NumCPUs() > 0){
+   if (fStat.NumCPUs() > 0) {
+      CreatePar("CPUutil").SetLimits(0, 100.).SetUnits("%");
       if (fKind & 1)
-         CreateRateParameter("CPUutil", true, period, "", "", "%", 0., 100.);
-      else
-         CreateParDouble("CPUutil", 0.);
+         Par("CPUutil").SetAverage(true, period);
    }
-   if (fStat.NumCPUs() > 2){
-     for (unsigned n=0; n < fStat.NumCPUs() - 1; n++)
-        if (fKind & 2)
-           CreateParDouble(FORMAT(("CPU%u", n)), 0.);
-        else
-        if (fKind & 4)
-           CreateRateParameter(FORMAT(("CPU%u", n)), false, period, "", "", "%", 0., 100.);
+   if (fStat.NumCPUs() > 2) {
+     for (unsigned n=0; n < fStat.NumCPUs() - 1; n++) {
+        Parameter par = CreatePar(FORMAT(("CPU%u", n))).SetLimits(0, 100.).SetUnits("%");
+        if (fKind & 4) par.SetAverage(true, period);
+     }
    }
-   if (fKind & 8)
-      CreateRateParameter("VmSize", true, period, "", "", "KB", 0., 16000.);
-   else
-      CreateParDouble("VmSize", 0);
 
-//      CreateParInt("VmPeak", 0);
-//      CreateParInt("NumThreads", 0);
+   CreatePar("VmSize").SetLimits(0, 16000.).SetUnits("KB");
+   Par("VmSize").SetAverage(true, period);
+
+//      CreatePar("VmPeak").SetInt(0);
+//      CreatePar("NumThreads").SetInt(0);
 }
 
 void dabc::CpuInfoModule::ProcessTimerEvent(Timer* timer)
@@ -57,13 +51,13 @@ void dabc::CpuInfoModule::ProcessTimerEvent(Timer* timer)
 
    if (fStat.NumCPUs()==0) return;
 
-   SetParDouble("CPUutil", fStat.CPUutil(0)*100.);
+   Par("CPUutil").SetDouble(fStat.CPUutil(0)*100.);
 
    if ((fStat.NumCPUs() > 2) && (fKind & 6))
      for (unsigned n=0; n < fStat.NumCPUs() - 1; n++)
-        SetParDouble(FORMAT(("CPU%u", n)), fStat.CPUutil(n+1)*100.);
+        Par(FORMAT(("CPU%u", n))).SetDouble(fStat.CPUutil(n+1)*100.);
 
-   SetParDouble("VmSize", fStat.GetVmSize());
-//   SetParDouble("VmPeak", fStat.GetVmPeak());
-//   SetParDouble("NumThreads", fStat.GetNumThreads());
+   Par("VmSize").SetDouble(fStat.GetVmSize());
+//   Par("VmPeak").SetInt(fStat.GetVmPeak());
+//   Par("NumThreads").SetInt(fStat.GetNumThreads());
 }

@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_SocketTransport
 #define DABC_SocketTransport
 
@@ -22,16 +22,18 @@
 #include "dabc/SocketThread.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_Queue
+#include "dabc/Queue.h"
 #endif
 
 namespace dabc {
 
    class SocketDevice;
 
-   class SocketTransport : public NetworkTransport,
-                           public SocketIOProcessor {
+   class SocketTransport : public SocketIOWorker,
+                           public NetworkTransport {
+
+      DABC_TRANSPORT(SocketIOWorker)
 
       typedef Queue<uint32_t> RecIdsQueue;
 
@@ -49,8 +51,8 @@ namespace dabc {
 
          virtual bool ProcessPoolRequest();
 
-         // these are methods from SocketIOProcessor
-         virtual void ProcessEvent(dabc::EventId);
+         // these are methods from SocketIOWorker
+         virtual void ProcessEvent(const EventId&);
 
          virtual void OnSendCompleted();
          virtual void OnRecvCompleted();
@@ -58,8 +60,9 @@ namespace dabc {
          virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const char* info);
 
-         virtual void HaltTransport();
+         virtual void CloseTransport(bool witherr = false);
 
+         virtual void CleanupTransport();
 
          bool        fIsDatagram;  // indicate if this is datagram socket and one can only user recv once per data packet
          char*       fHeaders;
@@ -72,7 +75,7 @@ namespace dabc {
 
 
       public:
-         SocketTransport(SocketDevice* dev, Port* port, bool useackn, int fd, bool isdatagram = false);
+         SocketTransport(Reference port, bool useackn, int fd, bool isdatagram = false);
          virtual ~SocketTransport();
 
          virtual unsigned MaxSendSegments() { return 1000000; }

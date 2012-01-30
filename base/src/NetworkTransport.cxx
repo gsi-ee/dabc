@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/NetworkTransport.h"
 
 #include "dabc/logging.h"
@@ -19,15 +19,15 @@
 #include "dabc/Port.h"
 #include "dabc/Manager.h"
 #include "dabc/Device.h"
+#include "dabc/BuffersQueue.h"
 
-dabc::NetworkTransport::NetworkTransport(Device* device) :
-   Transport(device),
+dabc::NetworkTransport::NetworkTransport(Reference port, bool useakn) :
+   Transport(port),
    MemoryPoolRequester(),
    fTransportId(0),
    fIsInput(false),
    fIsOutput(false),
-   fPool(0),
-   fUseAckn(false),
+   fUseAckn(useakn),
    fInputQueueLength(0),
    fOutputQueueLength(0),
    fMutex(),
@@ -38,13 +38,12 @@ dabc::NetworkTransport::NetworkTransport(Device* device) :
    fAcknAllowedOper(0),
    fAcknSendQueue(),
    fAcknSendBufBusy(false),
-   fInputBufferSize(0),
    fInputQueueSize(0),
    fInputQueue(),
    fFirstAckn(true),
    fAcknReadyCounter(0),
    fFullHeaderSize(0),
-   fUserHeaderSize(0)
+   fInlineDataSize(0)
 {
 }
 
@@ -53,7 +52,7 @@ dabc::NetworkTransport::~NetworkTransport()
    DOUT5((" NetworkTransport::~NetworkTransport() %p", this));
 }
 
-void dabc::NetworkTransport::InitNetworkTransport(Port *port, bool useackn)
+void dabc::NetworkTransport::InitNetworkTransport(Object* this_transport)
 {
    // This method must be called from constructor of inherited class or
    // immediately afterwards.
@@ -62,15 +61,20 @@ void dabc::NetworkTransport::InitNetworkTransport(Port *port, bool useackn)
    // we want to call here some virtual methods and therefore,
    // constructor of inherited class must be active already.
 
-   fPool = port->GetMemoryPool();
-   fUseAckn = useackn;
 
-   DOUT3(("Port %s use ackn %s", port->GetName(), DBOOL(fUseAckn)));
+   RegisterTransportDependencies(this_transport);
 
-   fInputQueueLength = port->InputQueueCapacity();
+   if (GetPort()==0) {
+      EOUT(("Already here port is 0 - wrong!!!"));
+      exit(876);
+   }
+
+   DOUT3(("Port %s use ackn %s", GetPort()->GetName(), DBOOL(fUseAckn)));
+
+   fInputQueueLength = GetPort()->InputQueueCapacity();
    fIsInput = fInputQueueLength > 0;
 
-   fOutputQueueLength = port->OutputQueueCapacity();
+   fOutputQueueLength = GetPort()->OutputQueueCapacity();
    fIsOutput = fOutputQueueLength > 0;
 
    if (fUseAckn) {
@@ -85,10 +89,10 @@ void dabc::NetworkTransport::InitNetworkTransport(Port *port, bool useackn)
    fOutputQueueSize = 0;
    fAcknAllowedOper = 0;
 
-   fUserHeaderSize = port->UserHeaderSize();
-   fFullHeaderSize = fUserHeaderSize + sizeof(NetworkHeader);
+   fInlineDataSize = GetPort()->InlineDataSize();
+   fFullHeaderSize = sizeof(NetworkHeader) + fInlineDataSize;
 
-   fNumRecs = port->NumInputBuffersRequired() + port->NumOutputBuffersRequired();
+   fNumRecs = GetPort()->NumInputBuffersRequired() + GetPort()->NumOutputBuffersRequired();
    fRecsCounter = 0;
    fNumUsedRecs = 0;
    if (fNumRecs>0) {
@@ -96,9 +100,9 @@ void dabc::NetworkTransport::InitNetworkTransport(Port *port, bool useackn)
       for (uint32_t n=0;n<fNumRecs;n++) {
          fRecs[n].used = false;
          fRecs[n].kind = 0;
-         fRecs[n].buf = 0;
+         fRecs[n].buf.Release();
          fRecs[n].header = 0;
-         fRecs[n].usrheader = 0;
+         fRecs[n].inlinebuf = 0;
       }
    }
 
@@ -106,12 +110,10 @@ void dabc::NetworkTransport::InitNetworkTransport(Port *port, bool useackn)
       fAcknSendQueue.Allocate(fOutputQueueLength);
 
    if (fInputQueueLength>0) {
-      if (fPool==0) {
+      if (GetPool()==0) {
          EOUT(("Pool required for input transport"));
          return;
       }
-
-      fInputBufferSize = port->GetPoolHandle()->GetRequiredBufferSize();
 
       fInputQueue.Allocate(fInputQueueLength);
 
@@ -122,60 +124,83 @@ void dabc::NetworkTransport::InitNetworkTransport(Port *port, bool useackn)
 void dabc::NetworkTransport::SetRecHeader(uint32_t recid, void* header)
 {
    fRecs[recid].header = header;
-   if (fUserHeaderSize > 0)
-      fRecs[recid].usrheader = (char*) header + sizeof(NetworkHeader);
+   if (fInlineDataSize > 0)
+      fRecs[recid].inlinebuf = (char*) header + sizeof(NetworkHeader);
 }
 
-void dabc::NetworkTransport::PortChanged()
+void dabc::NetworkTransport::PortAssigned()
 {
-   if (IsPortAssigned())
-      FillRecvQueue();
+   DOUT2(("NetworkTransport:: port %s assigned", fPort.GetName()));
+
+   FillRecvQueue();
+}
+
+void dabc::NetworkTransport::CleanupFromTransport(Object* obj)
+{
+   if (obj == GetPool())
+      CleanupNetTransportQueue();
+
+   dabc::Transport::CleanupFromTransport(obj);
 }
 
 void dabc::NetworkTransport::CleanupTransport()
-{
-    dabc::Transport::CleanupTransport();
-}
-
-
-void dabc::NetworkTransport::CleanupNetworkTransport()
 {
    // first, exclude possibility to get callback from pool
    // anyhow, we should lock access to all queues, but
    // release buffers without involving of lock
    // therefore we use intermediate queue, which we release at very end
 
-   DOUT3(("Calling NetworkTransport::Cleanup() %p id = %d", this, GetId()));
+   DOUT3(("Calling NetworkTransport::Cleanup() %p id = %d pool %s", this, GetId(), fPool.GetName()));
 
-   dabc::BuffersQueue relqueue(32, true);
+   CleanupNetTransportQueue();
+
+   DOUT3(("Calling NetworkTransport::Cleanup() done %p", this));
+
+   dabc::Transport::CleanupTransport();
+
+   DOUT3(("Calling Transport::Cleanup() done %p", this));
+
+}
+
+void dabc::NetworkTransport::CleanupNetTransportQueue()
+{
+   unsigned maxsz = 32;
+   {
+      dabc::LockGuard guard(fMutex);
+      maxsz = fNumRecs;
+   }
+
+   dabc::BuffersQueue relqueue(maxsz);
 
    {
       dabc::LockGuard guard(fMutex);
 
       if (fInputQueueLength>0)
-         if (fPool) fPool->RemoveRequester(this);
-
-      fPool = 0;
+         if (GetPool()) GetPool()->RemoveRequester(this);
 
       for (uint32_t n=0;n<fNumRecs;n++)
          if (fRecs[n].used) {
             fRecs[n].used = false;
-            if (fRecs[n].buf) relqueue.Push(fRecs[n].buf);
-            fRecs[n].buf = 0;
+            relqueue.Push(fRecs[n].buf);
          }
 
       delete[] fRecs; fRecs = 0; fNumRecs = 0;
+
+      fInputQueue.Reset();
+
+      fAcknSendQueue.Reset();
    }
 
    DOUT3(("Calling NetworkTransport::Cleanup() %p  relqueue %u", this, relqueue.Size()));
 
-   relqueue.Cleanup();
-
-   DOUT3(("Calling NetworkTransport::Cleanup() done %p", this));
+  relqueue.Cleanup();
 }
 
-uint32_t dabc::NetworkTransport::_TakeRec(Buffer* buf, uint32_t kind, uint64_t extras)
+
+uint32_t dabc::NetworkTransport::_TakeRec(const Buffer& buf, uint32_t kind, uint32_t extras)
 {
+   if (fNumRecs == 0) return 0;
+
    uint32_t cnt = fNumRecs;
    uint32_t recid = 0;
    while (cnt-->0) {
@@ -184,7 +209,7 @@ uint32_t dabc::NetworkTransport::_TakeRec(Buffer* buf, uint32_t kind, uint64_t e
       if (!fRecs[recid].used) {
          fRecs[recid].used = true;
          fRecs[recid].kind = kind;
-         fRecs[recid].buf = buf;
+         fRecs[recid].buf << buf;
          fRecs[recid].extras = extras;
          fNumUsedRecs++;
          return recid;
@@ -199,7 +224,7 @@ uint32_t dabc::NetworkTransport::_TakeRec(Buffer* buf, uint32_t kind, uint64_t e
 void dabc::NetworkTransport::_ReleaseRec(uint32_t recid)
 {
    if (recid<fNumRecs) {
-      fRecs[recid].buf = 0;
+      if (!fRecs[recid].buf.null()) EOUT(("Buffer is not empty when record is released !!!!"));
       fRecs[recid].used = false;
       fNumUsedRecs--;
    } else {
@@ -207,26 +232,24 @@ void dabc::NetworkTransport::_ReleaseRec(uint32_t recid)
    }
 }
 
-bool dabc::NetworkTransport::Recv(Buffer* &buf)
+bool dabc::NetworkTransport::Recv(Buffer &buf)
 {
-   buf = 0;
-
    {
       dabc::LockGuard guard(fMutex);
 
       if (fInputQueue.Size()>0) {
          uint32_t recid = fInputQueue.Pop();
 
-         buf = fRecs[recid].buf;
+         buf << fRecs[recid].buf;
          _ReleaseRec(recid);
 
          fInputQueueSize--;
       }
    }
 
-   if (buf) FillRecvQueue();
+   if (!buf.null()) FillRecvQueue();
 
-   return buf!=0;
+   return !buf.null();
 }
 
 unsigned dabc::NetworkTransport::RecvQueueSize() const
@@ -235,15 +258,17 @@ unsigned dabc::NetworkTransport::RecvQueueSize() const
    return fInputQueue.Size();
 }
 
-dabc::Buffer* dabc::NetworkTransport::RecvBuffer(unsigned indx) const
+dabc::Buffer& dabc::NetworkTransport::RecvBuffer(unsigned indx) const
 {
    dabc::LockGuard guard(fMutex);
-   return indx < fInputQueue.Size() ? fRecs[fInputQueue.Item(indx)].buf : 0;
+   if (indx>=fInputQueue.Size()) throw dabc::Exception("wrong argument in NetworkTransport::RecvBuffer call");
+
+   return fRecs[fInputQueue.Item(indx)].buf;
 }
 
-bool dabc::NetworkTransport::Send(Buffer* buf)
+bool dabc::NetworkTransport::Send(const Buffer& buf)
 {
-   if (buf==0) return false;
+   if (buf.null()) return false;
 
    dabc::LockGuard guard(fMutex);
 
@@ -251,10 +276,7 @@ bool dabc::NetworkTransport::Send(Buffer* buf)
    uint32_t recid = _TakeRec(buf, netot_Send);
    if (recid==fNumRecs) return false;
 
-   BufferSize_t hdrsize = buf->GetHeaderSize();
-   if (hdrsize>fUserHeaderSize) hdrsize = fUserHeaderSize;
-   if ((hdrsize>0) && fRecs[recid].usrheader)
-      memcpy(fRecs[recid].usrheader, buf->GetHeader(), hdrsize);
+   // from this moment buf should be used from record directly
 
    if (fAcknSendQueue.Capacity() > 0) {
       fAcknSendQueue.Push(recid);
@@ -281,20 +303,18 @@ void dabc::NetworkTransport::FillRecvQueue(Buffer* freebuf)
 
    unsigned newitems = 0;
 
-   if (fPool && !IsTransportErrorFlag()) {
+   if (GetPool() && !IsTransportErrorFlag()) {
       dabc::LockGuard guard(fMutex);
 
       while (fInputQueueSize<fInputQueueLength) {
-         Buffer* buf = freebuf;
+         Buffer buf;
+         if (freebuf) buf << *freebuf;
 
-         if (buf==0) {
+         if (buf.null()) {
 
-            buf = fPool->TakeBufferReq(this, fInputBufferSize, fUserHeaderSize);
+            buf = GetPool()->TakeBufferReq(this);
 
-//            if (fPool->IsName("RecvPool"))
-//               DOUT1(("Request RecvPool buf %u %u res:%p", fInputBufferSize, fUserHeaderSize, buf));
-
-            if (buf==0) break;
+            if (buf.null()) break;
          }
 
          uint32_t recvrec = _TakeRec(buf, netot_Recv);
@@ -303,21 +323,12 @@ void dabc::NetworkTransport::FillRecvQueue(Buffer* freebuf)
          _SubmitRecv(recvrec);
 
          // if we get free buffer, just exit and do not try any new requests
-         if (freebuf) {
-            freebuf = 0;
-
-            break;
-//            if (isfastbuf) break;
-         }
+         if (freebuf) break;
       }
    }
 
-   if (freebuf!=0) {
-      EOUT(("Not used explicitly requested buffer %d %d", fInputQueueSize, fInputQueueLength));
-   }
-
-   // we must release buffer if we cannot use it
-   dabc::Buffer::Release(freebuf);
+   // no need to release additional buffer if it was not used, it will be done in upper method
+   // if (freebuf) freebuf->Release();
 
    CheckAcknReadyCounter(newitems);
 }
@@ -327,9 +338,9 @@ bool dabc::NetworkTransport::CheckAcknReadyCounter(unsigned newitems)
    // check if count of newly submitted recv buffers exceed limit
    // after which one should send acknowledge packet to receiver
 
-   DOUT5(("CheckAcknReadyCounter ackn:%s pool:%p inp:%s", DBOOL(fUseAckn), fPool, DBOOL(fIsInput)));
+   DOUT5(("CheckAcknReadyCounter ackn:%s pool:%p inp:%s", DBOOL(fUseAckn), GetPool(), DBOOL(fIsInput)));
 
-   if (!fUseAckn || (fPool==0) || !fIsInput) return false;
+   if (!fUseAckn || (GetPool()==0) || !fIsInput) return false;
 
    dabc::LockGuard guard(fMutex);
 
@@ -351,7 +362,7 @@ bool dabc::NetworkTransport::CheckAcknReadyCounter(unsigned newitems)
 
    fFirstAckn = false;
 
-   uint32_t recid = _TakeRec(0, netot_HdrSend, ackn_limit);
+   uint32_t recid = _TakeRec(Buffer(), netot_HdrSend, ackn_limit);
 
    _SubmitSend(recid);
 
@@ -369,16 +380,16 @@ void dabc::NetworkTransport::_SubmitAllowedSendOperations()
 
 void dabc::NetworkTransport::ProcessSendCompl(uint32_t recid)
 {
-   if (recid>=fNumRecs) { EOUT(("Recid fail %u %u", recid, fNumRecs)); exit(106); }
+   if (recid>=fNumRecs) { EOUT(("Recid fail %u %u", recid, fNumRecs)); return; }
 
-   Buffer* buf = 0;
+   Buffer buf;
    bool dofire = false;
    bool checkackn = false;
 
    {
       dabc::LockGuard guard(fMutex);
 
-      buf = fRecs[recid].buf;
+      buf << fRecs[recid].buf;
 
       if (fRecs[recid].kind & netot_Send) {
          // normal send
@@ -386,7 +397,7 @@ void dabc::NetworkTransport::ProcessSendCompl(uint32_t recid)
          dofire = true;
       } else
       if (fRecs[recid].kind & netot_HdrSend) {
-         if (buf!=0) EOUT(("Non-zero buffer with sending netot_HdrSend"));
+         if (!buf.null()) EOUT(("Non-zero buffer with sending netot_HdrSend"));
          fAcknSendBufBusy = false;
          checkackn = true;
       } else {
@@ -398,9 +409,9 @@ void dabc::NetworkTransport::ProcessSendCompl(uint32_t recid)
 
    // we releasing buffer out of locked area, while it can make indirect call
    // back to tranport instance via memory pool event handling
-   dabc::Buffer::Release(buf);
+   buf.Release();
 
-   if (dofire) FireOutput();
+   if (dofire) FirePortOutput();
 
    if (checkackn) CheckAcknReadyCounter(0);
 }
@@ -417,7 +428,7 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
 //      exit(107);
    }
 
-   Buffer* buf = 0;
+   Buffer buf;
    uint32_t kind = 0;
    bool dofire = false;
    bool doerrclose = false;
@@ -434,13 +445,10 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
 
       kind = hdr->kind;
 
-      buf = fRecs[recid].buf;
-
       // check special case when we send only network header and nothing else
       // for the moment this is only work with AcknCounter, later can be extend for other applications
       if (kind & netot_HdrSend) {
-         uint64_t extras = hdr->size;
-         extras = extras*0x100000000LLU + hdr->hdrsize;
+         uint32_t extras = hdr->size;
 
 //         DOUT1(("Get ackn counter = %llu", extras));
 
@@ -448,58 +456,65 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
          _SubmitAllowedSendOperations();
 
          fInputQueueSize--;
+
+         buf << fRecs[recid].buf;
+
          _ReleaseRec(recid);
       } else {
-         if (buf->NumSegments() > 0) buf->SetDataSize(hdr->size);
-         buf->SetTypeId(hdr->typid);
+//         DOUT0(("ProcessRecvCompl recid %u totalsize %u bufsize %u", recid, hdr->size, fRecs[recid].buf.GetTotalSize()));
 
-         buf->SetHeaderSize(hdr->hdrsize);
+         fRecs[recid].buf.SetTotalSize(hdr->size);
+         fRecs[recid].buf.SetTypeId(hdr->typid);
 
-         if (hdr->hdrsize>0)
-            memcpy(buf->GetHeader(), fRecs[recid].usrheader, hdr->hdrsize);
+         if ((hdr->size>0) && (hdr->size <= fInlineDataSize))
+            fRecs[recid].buf.CopyFrom(fRecs[recid].inlinebuf, hdr->size);
 
          fInputQueue.Push(recid);
          dofire = true;
       }
    }
 
+//   DOUT0(("Network transport complete fire: %s buf %p", DBOOL(dofire), buf));
+
    if (dofire)
-      FireInput();
+      FirePortInput();
    else
    if (doerrclose)
-      ErrorCloseTransport();
+      CloseTransport(true);
    else
-      FillRecvQueue(buf);
+      FillRecvQueue(&buf);
 }
 
 int dabc::NetworkTransport::PackHeader(uint32_t recid)
 {
-   // function packs network header and return size which must be transported
+   // Returns 0 - failure, 1 - only header should be send, 2 - header and buffer should be send */
 
    NetworkHeader* hdr = (NetworkHeader*) fRecs[recid].header;
-   Buffer* buf = fRecs[recid].buf;
 
    if (hdr==0) return 0;
 
    hdr->chkword = 123;
    hdr->kind = fRecs[recid].kind;
-   if (buf==0) {
+   if (fRecs[recid].buf.null()) {
       hdr->size = 0;
       hdr->typid = 0;
-      hdr->hdrsize = 0;
 
       if (hdr->kind & netot_HdrSend) {
          hdr->typid = mbt_AcknCounter;
-         hdr->hdrsize = fRecs[recid].extras % 0x100000000LLU;
-         hdr->size = fRecs[recid].extras / 0x100000000LLU;
-         return sizeof(NetworkHeader);
+         hdr->size = fRecs[recid].extras;
       }
 
-   } else {
-      hdr->size = buf->GetTotalSize();
-      hdr->typid = buf->GetTypeId();
-      hdr->hdrsize = buf->GetHeaderSize();
+      return 1;
    }
 
-   return fFullHeaderSize;
+   hdr->typid = fRecs[recid].buf.GetTypeId();
+   hdr->size = fRecs[recid].buf.GetTotalSize();
+
+   // copy content of the buffer in the inline buffer
+   if ((hdr->size>0) && fRecs[recid].inlinebuf && (hdr->size<=fInlineDataSize)) {
+      fRecs[recid].buf.CopyTo(fRecs[recid].inlinebuf, hdr->size);
+      return 1;
+   }
+
+   return 2;
 }

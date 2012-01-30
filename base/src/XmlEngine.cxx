@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/XmlEngine.h"
 
 #include <fstream>
@@ -194,6 +194,8 @@ namespace dabc {
          free(fBuf); fBuf = 0;
       }
 
+      inline bool SkipComments() const { return false; }
+
       inline bool EndOfFile() { return (fInp!=0) ? fInp->eof() : (fInpStrLen<=0); }
 
       inline bool EndOfStream() { return EndOfFile() && (fCurrent>=fMaxAddr); }
@@ -374,22 +376,7 @@ namespace dabc {
 
 
 //______________________________________________________________________________
-dabc::XmlEngine::XmlEngine()
-{
-   // default (normal) constructor of TXMLEngine class
-   fSkipComments = false;
-}
-
-
-//______________________________________________________________________________
-dabc::XmlEngine::~XmlEngine()
-{
-   // destructor for TXMLEngine object
-
-}
-
-//______________________________________________________________________________
-bool dabc::XmlEngine::HasAttr(XMLNodePointer_t xmlnode, const char* name)
+bool dabc::Xml::HasAttr(XMLNodePointer_t xmlnode, const char* name)
 {
    // checks if node has attribute of specified name
 
@@ -403,7 +390,7 @@ bool dabc::XmlEngine::HasAttr(XMLNodePointer_t xmlnode, const char* name)
 }
 
 //______________________________________________________________________________
-const char* dabc::XmlEngine::GetAttr(XMLNodePointer_t xmlnode, const char* name)
+const char* dabc::Xml::GetAttr(XMLNodePointer_t xmlnode, const char* name)
 {
    // returns value of attribute for xmlnode
 
@@ -418,7 +405,7 @@ const char* dabc::XmlEngine::GetAttr(XMLNodePointer_t xmlnode, const char* name)
 }
 
 //______________________________________________________________________________
-int dabc::XmlEngine::GetIntAttr(XMLNodePointer_t xmlnode, const char* name)
+int dabc::Xml::GetIntAttr(XMLNodePointer_t xmlnode, const char* name)
 {
    // returns value of attribute as integer
 
@@ -430,7 +417,7 @@ int dabc::XmlEngine::GetIntAttr(XMLNodePointer_t xmlnode, const char* name)
 }
 
 //______________________________________________________________________________
-dabc::XMLAttrPointer_t dabc::XmlEngine::NewAttr(XMLNodePointer_t xmlnode, XMLNsPointer_t,
+dabc::XMLAttrPointer_t dabc::Xml::NewAttr(XMLNodePointer_t xmlnode, XMLNsPointer_t,
                                                 const char* name, const char* value)
 {
    // creates new attribute for xmlnode,
@@ -457,7 +444,7 @@ dabc::XMLAttrPointer_t dabc::XmlEngine::NewAttr(XMLNodePointer_t xmlnode, XMLNsP
 }
 
 //______________________________________________________________________________
-dabc::XMLAttrPointer_t dabc::XmlEngine::NewIntAttr(XMLNodePointer_t xmlnode,
+dabc::XMLAttrPointer_t dabc::Xml::NewIntAttr(XMLNodePointer_t xmlnode,
                                                    const char* name,
                                                    int value)
 {
@@ -469,7 +456,7 @@ dabc::XMLAttrPointer_t dabc::XmlEngine::NewIntAttr(XMLNodePointer_t xmlnode,
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::FreeAttr(XMLNodePointer_t xmlnode, const char* name)
+void dabc::Xml::FreeAttr(XMLNodePointer_t xmlnode, const char* name)
 {
    // remove attribute from xmlnode
 
@@ -493,7 +480,7 @@ void dabc::XmlEngine::FreeAttr(XMLNodePointer_t xmlnode, const char* name)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::FreeAllAttr(XMLNodePointer_t xmlnode)
+void dabc::Xml::FreeAllAttr(XMLNodePointer_t xmlnode)
 {
    // Free all attributes of the node
    if (xmlnode==0) return;
@@ -510,7 +497,7 @@ void dabc::XmlEngine::FreeAllAttr(XMLNodePointer_t xmlnode)
 
 
 //______________________________________________________________________________
-dabc::XMLAttrPointer_t dabc::XmlEngine::GetFirstAttr(XMLNodePointer_t xmlnode)
+dabc::XMLAttrPointer_t dabc::Xml::GetFirstAttr(XMLNodePointer_t xmlnode)
 {
    // return first attribute in the list, namespace (if exists) will be skiped
 
@@ -524,7 +511,7 @@ dabc::XMLAttrPointer_t dabc::XmlEngine::GetFirstAttr(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-dabc::XMLAttrPointer_t dabc::XmlEngine::GetNextAttr(XMLAttrPointer_t xmlattr)
+dabc::XMLAttrPointer_t dabc::Xml::GetNextAttr(XMLAttrPointer_t xmlattr)
 {
    // return next attribute in the list
 
@@ -534,7 +521,7 @@ dabc::XMLAttrPointer_t dabc::XmlEngine::GetNextAttr(XMLAttrPointer_t xmlattr)
 }
 
 //______________________________________________________________________________
-const char* dabc::XmlEngine::GetAttrName(XMLAttrPointer_t xmlattr)
+const char* dabc::Xml::GetAttrName(XMLAttrPointer_t xmlattr)
 {
    // return name of the attribute
 
@@ -545,7 +532,7 @@ const char* dabc::XmlEngine::GetAttrName(XMLAttrPointer_t xmlattr)
 }
 
 //______________________________________________________________________________
-const char* dabc::XmlEngine::GetAttrValue(XMLAttrPointer_t xmlattr)
+const char* dabc::Xml::GetAttrValue(XMLAttrPointer_t xmlattr)
 {
    // return value of attribute
 
@@ -556,7 +543,7 @@ const char* dabc::XmlEngine::GetAttrValue(XMLAttrPointer_t xmlattr)
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::XmlEngine::NewChild(XMLNodePointer_t parent, XMLNsPointer_t ns,
+dabc::XMLNodePointer_t dabc::Xml::NewChild(XMLNodePointer_t parent, XMLNsPointer_t ns,
                                       const char* name, const char* content)
 {
    // create new child element for parent node
@@ -587,7 +574,7 @@ dabc::XMLNodePointer_t dabc::XmlEngine::NewChild(XMLNodePointer_t parent, XMLNsP
 }
 
 //______________________________________________________________________________
-dabc::XMLNsPointer_t dabc::XmlEngine::NewNS(XMLNodePointer_t xmlnode, const char* reference, const char* name)
+dabc::XMLNsPointer_t dabc::Xml::NewNS(XMLNodePointer_t xmlnode, const char* reference, const char* name)
 {
    // create namespace attribute for xmlnode.
    // namespace attribute will be always the first in list of node attributes
@@ -612,7 +599,7 @@ dabc::XMLNsPointer_t dabc::XmlEngine::NewNS(XMLNodePointer_t xmlnode, const char
 }
 
 //______________________________________________________________________________
-dabc::XMLNsPointer_t dabc::XmlEngine::GetNS(XMLNodePointer_t xmlnode)
+dabc::XMLNsPointer_t dabc::Xml::GetNS(XMLNodePointer_t xmlnode)
 {
    // return namespace attribute  (if exists)
 
@@ -623,7 +610,7 @@ dabc::XMLNsPointer_t dabc::XmlEngine::GetNS(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-const char* dabc::XmlEngine::GetNSName(XMLNsPointer_t ns)
+const char* dabc::Xml::GetNSName(XMLNsPointer_t ns)
 {
    // return name id of namespace
 
@@ -635,7 +622,7 @@ const char* dabc::XmlEngine::GetNSName(XMLNsPointer_t ns)
 }
 
 //______________________________________________________________________________
-const char* dabc::XmlEngine::GetNSReference(XMLNsPointer_t ns)
+const char* dabc::Xml::GetNSReference(XMLNsPointer_t ns)
 {
    // return reference id of namespace
 
@@ -644,7 +631,7 @@ const char* dabc::XmlEngine::GetNSReference(XMLNsPointer_t ns)
 
 
 //______________________________________________________________________________
-void dabc::XmlEngine::AddChild(XMLNodePointer_t parent, XMLNodePointer_t child)
+void dabc::Xml::AddChild(XMLNodePointer_t parent, XMLNodePointer_t child)
 {
    // add child element to xmlnode
 
@@ -664,7 +651,7 @@ void dabc::XmlEngine::AddChild(XMLNodePointer_t parent, XMLNodePointer_t child)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::AddChildFirst(XMLNodePointer_t parent, XMLNodePointer_t child)
+void dabc::Xml::AddChildFirst(XMLNodePointer_t parent, XMLNodePointer_t child)
 {
    // add node as first child
 
@@ -681,7 +668,7 @@ void dabc::XmlEngine::AddChildFirst(XMLNodePointer_t parent, XMLNodePointer_t ch
 
 
 //______________________________________________________________________________
-bool dabc::XmlEngine::AddComment(XMLNodePointer_t xmlnode, const char* comment)
+bool dabc::Xml::AddComment(XMLNodePointer_t xmlnode, const char* comment)
 {
    // Adds comment line to the node
 
@@ -697,7 +684,7 @@ bool dabc::XmlEngine::AddComment(XMLNodePointer_t xmlnode, const char* comment)
 }
 
 //______________________________________________________________________________
-bool dabc::XmlEngine::AddDocComment(XMLDocPointer_t xmldoc, const char* comment)
+bool dabc::Xml::AddDocComment(XMLDocPointer_t xmldoc, const char* comment)
 {
    // add comment line to the top of the document
 
@@ -714,7 +701,7 @@ bool dabc::XmlEngine::AddDocComment(XMLDocPointer_t xmldoc, const char* comment)
 }
 
 //______________________________________________________________________________
-bool dabc::XmlEngine::AddRawLine(XMLNodePointer_t xmlnode, const char* line)
+bool dabc::Xml::AddRawLine(XMLNodePointer_t xmlnode, const char* line)
 {
    // Add just line into xml file
    // Line should has correct xml syntax that later it can be decoded by xml parser
@@ -731,7 +718,7 @@ bool dabc::XmlEngine::AddRawLine(XMLNodePointer_t xmlnode, const char* line)
 }
 
 //______________________________________________________________________________
-bool dabc::XmlEngine::AddDocRawLine(XMLDocPointer_t xmldoc, const char* line)
+bool dabc::Xml::AddDocRawLine(XMLDocPointer_t xmldoc, const char* line)
 {
    // Add just line on the top of xml document
    // Line should has correct xml syntax that later it can be decoded by xml parser
@@ -749,7 +736,7 @@ bool dabc::XmlEngine::AddDocRawLine(XMLDocPointer_t xmldoc, const char* line)
 
 
 //______________________________________________________________________________
-bool dabc::XmlEngine::AddStyleSheet(XMLNodePointer_t xmlnode,
+bool dabc::Xml::AddStyleSheet(XMLNodePointer_t xmlnode,
                                  const char* href,
                                  const char* type,
                                  const char* title,
@@ -790,7 +777,7 @@ bool dabc::XmlEngine::AddStyleSheet(XMLNodePointer_t xmlnode,
 
 
 //______________________________________________________________________________
-bool dabc::XmlEngine::AddDocStyleSheet(XMLDocPointer_t xmldoc,
+bool dabc::Xml::AddDocStyleSheet(XMLDocPointer_t xmldoc,
                                     const char* href,
                                     const char* type,
                                     const char* title,
@@ -814,7 +801,7 @@ bool dabc::XmlEngine::AddDocStyleSheet(XMLDocPointer_t xmldoc,
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::UnlinkNode(XMLNodePointer_t xmlnode)
+void dabc::Xml::UnlinkNode(XMLNodePointer_t xmlnode)
 {
    // unlink (dettach) xml node from parent
 
@@ -839,7 +826,7 @@ void dabc::XmlEngine::UnlinkNode(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::FreeNode(XMLNodePointer_t xmlnode)
+void dabc::Xml::FreeNode(XMLNodePointer_t xmlnode)
 {
    // release all memory, allocated fro this node and
    // destroyes node itself
@@ -868,7 +855,7 @@ void dabc::XmlEngine::FreeNode(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::UnlinkFreeNode(XMLNodePointer_t xmlnode)
+void dabc::Xml::UnlinkFreeNode(XMLNodePointer_t xmlnode)
 {
    // combined operation. Unlink node and free used memory
 
@@ -877,7 +864,7 @@ void dabc::XmlEngine::UnlinkFreeNode(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-const char* dabc::XmlEngine::GetNodeName(XMLNodePointer_t xmlnode)
+const char* dabc::Xml::GetNodeName(XMLNodePointer_t xmlnode)
 {
    // returns name of xmlnode
 
@@ -885,7 +872,7 @@ const char* dabc::XmlEngine::GetNodeName(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-const char* dabc::XmlEngine::GetNodeContent(XMLNodePointer_t xmlnode)
+const char* dabc::Xml::GetNodeContent(XMLNodePointer_t xmlnode)
 {
    // get contents (if any) of xml node
 
@@ -898,7 +885,7 @@ const char* dabc::XmlEngine::GetNodeContent(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::XmlEngine::GetChild(XMLNodePointer_t xmlnode)
+dabc::XMLNodePointer_t dabc::Xml::GetChild(XMLNodePointer_t xmlnode)
 {
    // returns first child of xml node
 
@@ -909,7 +896,7 @@ dabc::XMLNodePointer_t dabc::XmlEngine::GetChild(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::XmlEngine::GetParent(XMLNodePointer_t xmlnode)
+dabc::XMLNodePointer_t dabc::Xml::GetParent(XMLNodePointer_t xmlnode)
 {
    // returns parent of xmlnode
 
@@ -917,7 +904,7 @@ dabc::XMLNodePointer_t dabc::XmlEngine::GetParent(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::XmlEngine::GetNext(XMLNodePointer_t xmlnode)
+dabc::XMLNodePointer_t dabc::Xml::GetNext(XMLNodePointer_t xmlnode)
 {
    // return next to xmlnode node
 
@@ -925,7 +912,7 @@ dabc::XMLNodePointer_t dabc::XmlEngine::GetNext(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::ShiftToNext(XMLNodePointer_t &xmlnode, bool tonode)
+void dabc::Xml::ShiftToNext(XMLNodePointer_t &xmlnode, bool tonode)
 {
    // shifts specified node to next
 
@@ -937,7 +924,7 @@ void dabc::XmlEngine::ShiftToNext(XMLNodePointer_t &xmlnode, bool tonode)
 }
 
 //______________________________________________________________________________
-bool dabc::XmlEngine::IsEmptyNode(XMLNodePointer_t xmlnode)
+bool dabc::Xml::IsEmptyNode(XMLNodePointer_t xmlnode)
 {
    // return true is this is node with special data like comments to data processing instructions
 
@@ -945,7 +932,7 @@ bool dabc::XmlEngine::IsEmptyNode(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::SkipEmpty(XMLNodePointer_t &xmlnode)
+void dabc::Xml::SkipEmpty(XMLNodePointer_t &xmlnode)
 {
    // Skip all current empty nodes and locate on first "true" node
 
@@ -954,7 +941,7 @@ void dabc::XmlEngine::SkipEmpty(XMLNodePointer_t &xmlnode)
 
 
 //______________________________________________________________________________
-void dabc::XmlEngine::CleanNode(XMLNodePointer_t xmlnode)
+void dabc::Xml::CleanNode(XMLNodePointer_t xmlnode)
 {
    // remove all childs node from xmlnode
 
@@ -973,7 +960,7 @@ void dabc::XmlEngine::CleanNode(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-dabc::XMLDocPointer_t dabc::XmlEngine::NewDoc(const char* version)
+dabc::XMLDocPointer_t dabc::Xml::NewDoc(const char* version)
 {
    // creates new xml document with provided version
 
@@ -992,7 +979,7 @@ dabc::XMLDocPointer_t dabc::XmlEngine::NewDoc(const char* version)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::AssignDtd(XMLDocPointer_t xmldoc, const char* dtdname, const char* rootname)
+void dabc::Xml::AssignDtd(XMLDocPointer_t xmldoc, const char* dtdname, const char* rootname)
 {
    // assignes dtd filename to document
 
@@ -1005,7 +992,7 @@ void dabc::XmlEngine::AssignDtd(XMLDocPointer_t xmldoc, const char* dtdname, con
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::FreeDoc(XMLDocPointer_t xmldoc)
+void dabc::Xml::FreeDoc(XMLDocPointer_t xmldoc)
 {
    // frees allocated document data and deletes document itself
 
@@ -1018,7 +1005,7 @@ void dabc::XmlEngine::FreeDoc(XMLDocPointer_t xmldoc)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::SaveDoc(XMLDocPointer_t xmldoc, const char* filename, int layout)
+void dabc::Xml::SaveDoc(XMLDocPointer_t xmldoc, const char* filename, int layout)
 {
    // store document content to file
    // if layout<=0, no any spaces or newlines will be placed between
@@ -1042,7 +1029,7 @@ void dabc::XmlEngine::SaveDoc(XMLDocPointer_t xmldoc, const char* filename, int 
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::DocSetRootElement(XMLDocPointer_t xmldoc, XMLNodePointer_t xmlnode)
+void dabc::Xml::DocSetRootElement(XMLDocPointer_t xmldoc, XMLNodePointer_t xmlnode)
 {
    // set main (root) node for document
 
@@ -1054,7 +1041,7 @@ void dabc::XmlEngine::DocSetRootElement(XMLDocPointer_t xmldoc, XMLNodePointer_t
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::XmlEngine::DocGetRootElement(XMLDocPointer_t xmldoc)
+dabc::XMLNodePointer_t dabc::Xml::DocGetRootElement(XMLDocPointer_t xmldoc)
 {
    // returns root node of document
 
@@ -1070,7 +1057,7 @@ dabc::XMLNodePointer_t dabc::XmlEngine::DocGetRootElement(XMLDocPointer_t xmldoc
 }
 
 //______________________________________________________________________________
-dabc::XMLDocPointer_t dabc::XmlEngine::ParseFile(const char* filename, bool showerr)
+dabc::XMLDocPointer_t dabc::Xml::ParseFile(const char* filename, bool showerr)
 {
    // parses content of file and tries to produce xml structures
 
@@ -1080,7 +1067,7 @@ dabc::XMLDocPointer_t dabc::XmlEngine::ParseFile(const char* filename, bool show
 }
 
 //______________________________________________________________________________
-dabc::XMLDocPointer_t dabc::XmlEngine::ParseString(const char* xmlstring, bool showerr)
+dabc::XMLDocPointer_t dabc::Xml::ParseString(const char* xmlstring, bool showerr)
 {
    // parses content of string and tries to produce xml structures
 
@@ -1090,7 +1077,7 @@ dabc::XMLDocPointer_t dabc::XmlEngine::ParseString(const char* xmlstring, bool s
 }
 
 //______________________________________________________________________________
-dabc::XMLDocPointer_t dabc::XmlEngine::ParseStream(XmlInputStream* inp, bool showerr)
+dabc::XMLDocPointer_t dabc::Xml::ParseStream(XmlInputStream* inp, bool showerr)
 {
    // parses content of the stream and tries to produce xml structures
 
@@ -1126,7 +1113,7 @@ dabc::XMLDocPointer_t dabc::XmlEngine::ParseStream(XmlInputStream* inp, bool sho
 }
 
 //______________________________________________________________________________
-bool dabc::XmlEngine::ValidateVersion(XMLDocPointer_t xmldoc, const char* version)
+bool dabc::Xml::ValidateVersion(XMLDocPointer_t xmldoc, const char* version)
 {
    // check that first node is xml processing instruction with correct xml version number
 
@@ -1146,7 +1133,7 @@ bool dabc::XmlEngine::ValidateVersion(XMLDocPointer_t xmldoc, const char* versio
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res, int layout)
+void dabc::Xml::SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res, int layout)
 {
    // convert single xml node (and its child node) to string
    // if layout<=0, no any spaces or newlines will be placed between
@@ -1162,7 +1149,7 @@ void dabc::XmlEngine::SaveSingleNode(XMLNodePointer_t xmlnode, std::string* res,
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::XmlEngine::ReadSingleNode(const char* src)
+dabc::XMLNodePointer_t dabc::Xml::ReadSingleNode(const char* src)
 {
    // read single xml node from provided string
 
@@ -1184,7 +1171,7 @@ dabc::XMLNodePointer_t dabc::XmlEngine::ReadSingleNode(const char* src)
 }
 
 //______________________________________________________________________________
-char* dabc::XmlEngine::Makestr(const char* str)
+char* dabc::Xml::Makestr(const char* str)
 {
    // creates char* variable with copy of provided string
 
@@ -1197,7 +1184,7 @@ char* dabc::XmlEngine::Makestr(const char* str)
 }
 
 //______________________________________________________________________________
-char* dabc::XmlEngine::Makenstr(const char* str, int len)
+char* dabc::Xml::Makenstr(const char* str, int len)
 {
    // creates char* variable with copy of len symbols from provided string
 
@@ -1209,7 +1196,7 @@ char* dabc::XmlEngine::Makenstr(const char* str, int len)
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::XmlEngine::AllocateNode(int namelen, XMLNodePointer_t parent)
+dabc::XMLNodePointer_t dabc::Xml::AllocateNode(int namelen, XMLNodePointer_t parent)
 {
    // Allocates new xml node with specified namelength
 
@@ -1232,7 +1219,7 @@ dabc::XMLNodePointer_t dabc::XmlEngine::AllocateNode(int namelen, XMLNodePointer
 }
 
 //______________________________________________________________________________
-dabc::XMLAttrPointer_t dabc::XmlEngine::AllocateAttr(int namelen, int valuelen, XMLNodePointer_t xmlnode)
+dabc::XMLAttrPointer_t dabc::Xml::AllocateAttr(int namelen, int valuelen, XMLNodePointer_t xmlnode)
 {
    // Allocate new attribute with specified name length and value length
 
@@ -1256,7 +1243,7 @@ dabc::XMLAttrPointer_t dabc::XmlEngine::AllocateAttr(int namelen, int valuelen, 
 }
 
 //______________________________________________________________________________
-dabc::XMLNsPointer_t dabc::XmlEngine::FindNs(XMLNodePointer_t xmlnode, const char* name)
+dabc::XMLNsPointer_t dabc::Xml::FindNs(XMLNodePointer_t xmlnode, const char* name)
 {
    // define if namespace of that name exists for xmlnode
 
@@ -1272,7 +1259,7 @@ dabc::XMLNsPointer_t dabc::XmlEngine::FindNs(XMLNodePointer_t xmlnode, const cha
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::TruncateNsExtension(XMLNodePointer_t xmlnode)
+void dabc::Xml::TruncateNsExtension(XMLNodePointer_t xmlnode)
 {
    // removes namespace extension of nodename
 
@@ -1288,7 +1275,7 @@ void dabc::XmlEngine::TruncateNsExtension(XMLNodePointer_t xmlnode)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::UnpackSpecialCharacters(char* target, const char* source, int srclen)
+void dabc::Xml::UnpackSpecialCharacters(char* target, const char* source, int srclen)
 {
    // unpack special symbols, used in xml syntax to code characters
    // these symbols: '<' - &lt, '>' - &gt, '&' - &amp, '"' - &quot
@@ -1318,7 +1305,7 @@ void dabc::XmlEngine::UnpackSpecialCharacters(char* target, const char* source, 
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::OutputValue(char* value, XmlOutputStream* out)
+void dabc::Xml::OutputValue(char* value, XmlOutputStream* out)
 {
    // output value to output stream
    // if symbols '<' '&' '>' '"' appears in the string, they
@@ -1344,7 +1331,7 @@ void dabc::XmlEngine::OutputValue(char* value, XmlOutputStream* out)
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int layout, int level)
+void dabc::Xml::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, int layout, int level)
 {
    // stream data of xmlnode to output
 
@@ -1438,7 +1425,7 @@ void dabc::XmlEngine::SaveNode(XMLNodePointer_t xmlnode, XmlOutputStream* out, i
 }
 
 //______________________________________________________________________________
-dabc::XMLNodePointer_t dabc::XmlEngine::ReadNode(XMLNodePointer_t xmlparent, XmlInputStream* inp, int& resvalue)
+dabc::XMLNodePointer_t dabc::Xml::ReadNode(XMLNodePointer_t xmlparent, XmlInputStream* inp, int& resvalue)
 {
    // Tries to construct xml node from input stream. Node should be
    // child of xmlparent node or it can be closing tag of xmlparent.
@@ -1454,12 +1441,12 @@ dabc::XMLNodePointer_t dabc::XmlEngine::ReadNode(XMLNodePointer_t xmlparent, Xml
 
    SXmlNode_t* node = 0;
 
-   // process comments before we start to analyse any node symbols
+   // process comments before we start to analyze any node symbols
    while (inp->CheckFor("<!--")) {
       int commentlen = inp->SearchFor("-->");
       if (commentlen<=0) { resvalue = -10; return 0; }
 
-      if (!fSkipComments) {
+      if (!inp->SkipComments()) {
          node = (SXmlNode_t*) AllocateNode(commentlen, xmlparent);
          char* nameptr = SXmlNode_t::Name(node);
          node->fType = kXML_COMMENT;
@@ -1625,7 +1612,7 @@ dabc::XMLNodePointer_t dabc::XmlEngine::ReadNode(XMLNodePointer_t xmlparent, Xml
 }
 
 //______________________________________________________________________________
-void dabc::XmlEngine::DisplayError(int error, int linenumber)
+void dabc::Xml::DisplayError(int error, int linenumber)
 {
    // Displays xml parsing error
    switch(error) {

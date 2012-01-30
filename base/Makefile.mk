@@ -14,6 +14,11 @@ BASE_S            = $(wildcard $(DABC_BASEDIRS)/*.$(SrcSuf))
 BASE_O            = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BASE_S))
 BASE_D            = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BASE_S))
 
+
+BASE_SOCKET_O     = $(filter $(BLD_DIR)/$(DABC_BASEDIRS)/Socket%, $(BASE_O))  
+
+BASE_CORE_O       = $(filter-out $(BASE_SOCKET_O), $(BASE_O))  
+
 DABC_BASESUB_S    = $(DABC_BASEDIRS)/threads.$(SrcSuf) \
                     $(DABC_BASEDIRS)/timing.$(SrcSuf) \
                     $(DABC_BASEDIRS)/logging.$(SrcSuf) \
@@ -34,7 +39,7 @@ BASERUN_SH        = $(DABC_BASEDIRRUN)/run.sh
 
 ######### used in main Makefile
 
-ALLHDRS          +=  $(patsubst $(DABC_BASEDIR)/%.h, $(DABCINCPATH)/%.h, $(BASE_H))
+ALLHDRS          += $(DABCINCPATH)/dabc/defines.h $(patsubst $(DABC_BASEDIR)/%.h, $(DABCINCPATH)/%.h, $(BASE_H))
 ALLDEPENDENC     += $(BASE_D) $(BASERUN_D) $(DABC_XMLEXED)
 
 libs:: $(DABCBASE_LIB)
@@ -43,12 +48,41 @@ exes:: $(DABC_BASEEXE) $(DABC_XMLEXE) $(DABC_BASESH)
 
 ##### local rules #####
 
+#$(DABCINCPATH)/dabc:
+#	@mkdir -p $@
+
+$(DABCINCPATH)/dabc/defines.h: config/Makefile.config Makefile $(DABCINCPATH)/dabc
+	@echo "Producing $@"
+	@echo "#ifndef DABC_defines" > $@
+	@echo "#define DABC_defines" >> $@
+	@echo "" >> $@
+	@echo "// Automatically generated file, do not change" >> $@
+	@echo "" >> $@
+	@echo "   #ifndef DEBUGLEVEL" >> $@
+ifdef debug
+	@echo "   #define DEBUGLEVEL $(debug)" >> $@
+else
+	@echo "   #define DEBUGLEVEL 2" >> $@
+endif
+	@echo "   #endif" >> $@
+	@echo "" >> $@
+ifdef extrachecks
+	@echo "   #define DABC_EXTRA_CHECKS" >> $@
+endif
+	@echo "" >> $@
+	@echo "#endif" >> $@
+
 $(DABCINCPATH)/%.h: $(DABC_BASEDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
-$(DABCBASE_LIB):   $(BASE_O)
-	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_O)" $(DABCDLLPATH) "-lpthread -ldl -lrt"
+$(DABCBASE_LIB):   $(BASE_CORE_O) $(BASE_SOCKET_O)
+	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_CORE_O) $(BASE_SOCKET_O)" $(DABCDLLPATH) "-lpthread -ldl -lrt"
+
+#$(DABCSOCKET_LIB): $(BASE_SOCKET_O)
+#	@$(MakeLib) $(DABCSOCKET_LIBNAME) "$(BASE_SOCKET_O)" $(DABCDLLPATH) "-lpthread -ldl -lrt"
+#	@echo sockets: $(BLD_DIR) $(BASE_SOCKET_O)
+#	@echo base: $(BASE_O)
 
 #$(DABCBASE_SLIB): $(BASE_O)
 #	$(AR) $(ARFLAGS) $(DABCBASE_SLIB) $(BASE_O)
@@ -60,4 +94,5 @@ $(DABC_XMLEXE) : $(DABC_XMLEXEO) $(DABC_BASESUB_O)
 	$(LD) $(LDFLAGS) $(DABC_XMLEXEO) $(DABC_BASESUB_O) -lpthread -lrt $(OutPutOpt) $(DABC_XMLEXE)
 
 $(DABC_BASESH): $(BASERUN_SH)
+	@echo "Produce $@"
 	@cp -f $< $@

@@ -1,24 +1,23 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/SocketTransport.h"
 
 #include "dabc/SocketDevice.h"
 
-dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useackn, int fd, bool isdatagram) :
-   NetworkTransport(dev),
-   SocketIOProcessor(fd),
-   fIsDatagram(isdatagram),
+dabc::SocketTransport::SocketTransport(Reference port, bool useackn, int fd, bool isdatagram) :
+   SocketIOWorker(fd, isdatagram, true),
+   NetworkTransport(port, useackn),
    fHeaders(0),
    fSendQueue(),
    fRecvQueue(),
@@ -27,9 +26,9 @@ dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useac
    fSendStatus(0),
    fSendRecid(0)
 {
-   InitNetworkTransport(port, useackn);
+   InitNetworkTransport(this);
 
-   DOUT3(("Transport %p for port %p created", this, port));
+   DOUT3(("Transport %p for port %p created", this, GetPort()));
 
    fHeaders = new char[fFullHeaderSize*fNumRecs];
    for (uint32_t n=0;n<fNumRecs;n++)
@@ -43,11 +42,15 @@ dabc::SocketTransport::SocketTransport(SocketDevice* dev, Port* port, bool useac
    fRecvQueue.Allocate(fInputQueueLength+2);
 
    DOUT5(("Create queues inp: %d out: %d", fInputQueueLength, fOutputQueueLength));
+
+//   SetLogging(true);
 }
 
 dabc::SocketTransport::~SocketTransport()
 {
-   CleanupNetworkTransport();
+   // FIXME: should it go in cleanup ???
+
+   DOUT2(("@@@@@@@@@@@@@@@@@@@ SOCKET TRANSPORT: %p %s destructor @@@@@@@@@@@@@@@@@@@@@@@@@", this, GetName()));
 
    delete [] fHeaders; fHeaders = 0;
 }
@@ -62,37 +65,46 @@ void dabc::SocketTransport::_SubmitSend(uint32_t recid)
 
 void dabc::SocketTransport::_SubmitRecv(uint32_t recid)
 {
-   DOUT5(("_SubmitRecv %u", recid));
-
    fRecvQueue.Push(recid);
+
+//   if (IsLogging())
+//      DOUT0(("_SubmitRecv %u queue %u", recid, fRecvQueue.Size()));
+
    if (fRecvQueue.Size()==1) FireEvent(evntActivateRecv);
 }
+
+void dabc::SocketTransport::CloseTransport(bool witherr)
+{
+   DOUT2(("SOCKET TRANSPORT: %p %s WorkerId=%u CloseTransport witherr %s", this, GetName(), fWorkerId, DBOOL(witherr)));
+
+   CancelIOOperations();
+
+   dabc::NetworkTransport::CloseTransport(witherr);
+}
+
+void dabc::SocketTransport::CleanupTransport()
+{
+   DOUT2(("SOCKET TRANSPORT: %p %s CleanupTransport WorkerId=%u", this, GetName(), fWorkerId));
+
+   CancelIOOperations();
+
+   dabc::NetworkTransport::CleanupTransport();
+}
+
 
 void dabc::SocketTransport::OnConnectionClosed()
 {
    DOUT2(("Connection closed - close transport"));
 
-   ErrorCloseTransport();
+   CloseTransport(true);
 }
 
 void dabc::SocketTransport::OnSocketError(int errnum, const char* info)
 {
    EOUT(("tr %p Connection error socket %d errnum %d info %s", this, fSocket, errnum, info ));
 
-   ErrorCloseTransport();
+   CloseTransport(true);
 }
-
-
-void dabc::SocketTransport::HaltTransport()
-{
-   fSendStatus = 0;
-   fRecvStatus = 0;
-
-   HaltProcessor();
-
-   RemoveProcessorFromThread(true);
-}
-
 
 bool dabc::SocketTransport::ProcessPoolRequest()
 {
@@ -102,9 +114,9 @@ bool dabc::SocketTransport::ProcessPoolRequest()
 }
 
 
-void dabc::SocketTransport::ProcessEvent(dabc::EventId evnt)
+void dabc::SocketTransport::ProcessEvent(const EventId& evnt)
 {
-   switch (GetEventCode(evnt)) {
+   switch (evnt.GetCode()) {
        case evntActivateSend: {
           if (fSendStatus==0) OnSendCompleted();
           break;
@@ -120,12 +132,17 @@ void dabc::SocketTransport::ProcessEvent(dabc::EventId evnt)
           break;
 
        default:
-          dabc::SocketIOProcessor::ProcessEvent(evnt);
+          dabc::SocketIOWorker::ProcessEvent(evnt);
    }
 }
 
 void dabc::SocketTransport::OnSendCompleted()
 {
+   if (!IsTransportWorking()) {
+      EOUT(("!!!!!!!!!!! SendCompleted EVENT when transport no longer working !!!!!!!!!!!! "));
+      return;
+   }
+
    if (fSendStatus==1) {
       ProcessSendCompl(fSendRecid);
       fSendRecid = 0;
@@ -142,23 +159,34 @@ void dabc::SocketTransport::OnSendCompleted()
 
    fSendStatus = 1;
 
-   int hdrsize = PackHeader(fSendRecid);
+   int sendtyp = PackHeader(fSendRecid);
 
-//   DOUT1(("Start sending of rec %u", fSendRecid));
+   if (sendtyp==0) {
+      EOUT(("record failed ", fSendRecid));
+      throw dabc::Exception(("send record failed - should never happen"));
+   }
 
-   if (fRecs[fSendRecid].buf!=0)
-      StartNetSend(fRecs[fSendRecid].header, hdrsize, fRecs[fSendRecid].buf);
+   if (sendtyp == 1)
+      StartSend(fRecs[fSendRecid].header, fFullHeaderSize);
    else
-      StartSend(fRecs[fSendRecid].header, hdrsize, false);
+      StartNetSend(fRecs[fSendRecid].header, fFullHeaderSize, fRecs[fSendRecid].buf);
 }
 
 void dabc::SocketTransport::OnRecvCompleted()
 {
+   if (!IsTransportWorking()) {
+      EOUT(("!!!!!!!!!!! RecvCompleted EVENT when transport no longer working !!!!!!!!!!!! "));
+      return;
+   }
+
+//   if (IsLogging())
+//      DOUT0(("Socket transport complete rec %u status %d ", fRecvRecid, fRecvStatus));
 
 do_compl:
 
    if (fRecvStatus==2) {
       // if we complete receiving of the buffer
+
       ProcessRecvCompl(fRecvRecid);
       fRecvRecid = 0;
       fRecvStatus = 0;
@@ -181,28 +209,22 @@ do_compl:
                  nethdr->size, fFullHeaderSize - sizeof(NetworkHeader)));
       }
 
-      if (nethdr->kind & netot_HdrSend)
+      if (nethdr->kind & netot_HdrSend) {
+         DOUT0(("REDO"));
          goto do_compl;
-
-      dabc::Buffer* buf = fRecs[fRecvRecid].buf;
-
-      if ((buf==0) || (nethdr->size > buf->GetTotalSize())) {
-         EOUT(("Fatal - no buffer to receive data rec %d  buf %p sz1:%d sz2:%d pool:%s",
-                 fRecvRecid, buf, nethdr->size, buf->GetTotalSize(), fPool->GetName()));
-
-         ErrorCloseTransport();
-         return;
-         // fPool->Print();
-         // exit(110);
       }
 
-      void* hdr = 0;
-      if (fFullHeaderSize > sizeof(NetworkHeader))
-        hdr = (char*) fRecs[fRecvRecid].header + sizeof(NetworkHeader);
+      if (nethdr->size > fRecs[fRecvRecid].buf.GetTotalSize()) {
+         EOUT(("Fatal - no buffer to receive data rec %d  sz1:%d sz2:%d pool:%s",
+                 fRecvRecid, nethdr->size, fRecs[fRecvRecid].buf.GetTotalSize(), GetPool()->GetName()));
 
-      if (!StartNetRecv(hdr, fFullHeaderSize - sizeof(NetworkHeader), buf, nethdr->size)) {
+         CloseTransport(true);
+         return;
+      }
+
+      if (!StartRecv(fRecs[fRecvRecid].buf, nethdr->size)) {
          EOUT(("Cannot start recv - fatal error"));
-         ErrorCloseTransport();
+         CloseTransport(true);
          return;
       }
    } else {
@@ -214,17 +236,18 @@ do_compl:
          fRecvRecid = fRecvQueue.Pop();
       }
 
-      if (fIsDatagram) {
+//      if (IsLogging())
+//         DOUT0(("SOCKET TRANSPORT: Start receiving socket %d of rec %u datagramm %s ", Socket(), fRecvRecid, DBOOL(IsDatagramSocket())));
+
+      if (IsDatagramSocket()) {
          fRecvStatus = 2;
 
-         dabc::Buffer* buf = fRecs[fRecvRecid].buf;
-
-         StartNetRecv(fRecs[fRecvRecid].header, fFullHeaderSize, buf, buf->GetTotalSize(), true, true);
+         StartNetRecv(fRecs[fRecvRecid].header, fFullHeaderSize, fRecs[fRecvRecid].buf, fRecs[fRecvRecid].buf.GetTotalSize());
 
       } else {
          fRecvStatus = 1;
          // do normal recv of the header data without evolving messages
-         StartRecv(fRecs[fRecvRecid].header, sizeof(NetworkHeader), false);
+         StartRecv(fRecs[fRecvRecid].header, fFullHeaderSize);
       }
    }
 }

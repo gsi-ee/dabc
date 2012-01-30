@@ -1,21 +1,25 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_SocketThread
 #define DABC_SocketThread
 
-#ifndef DABC_WorkingProcessor
-#include "dabc/WorkingProcessor.h"
+#ifndef DABC_Thread
+#include "dabc/Thread.h"
+#endif
+
+#ifndef DABC_Worker
+#include "dabc/Worker.h"
 #endif
 
 #ifndef DABC_Buffer
@@ -35,7 +39,18 @@ namespace dabc {
 
    class SocketThread;
 
-   class SocketProcessor : public WorkingProcessor {
+   /** \brief SocketWorker is special worker class for handling of socket and socket events
+    * Main aim is to provide asynchronous access to the sockets.
+    * SocketWorker has two boolean variables which indicates if worker wants to send or receive
+    * data from the socket. User should set these flags to true before starting of appropriate operation.
+    * Thread will use these flags to check if such operation can be performed now. If yes,
+    * event evntSocketRead or evntSocketWrite will be generated. User should implement ProcessEvent()
+    * to react on this even and either read or write data on the sockets. Flag will be cleared, therefore
+    * if operation should be continued, user should set flag again. In case of error evntSocketError
+    * will be created and both flags will be cleared.
+    */
+
+   class SocketWorker : public Worker {
 
       friend class SocketThread;
 
@@ -49,15 +64,17 @@ namespace dabc {
             evntSocketLast // from this event number one can add more socket system events
          };
 
-         SocketProcessor(int fd = -1);
+         SocketWorker(int fd = -1, const char* name = 0);
 
-         virtual ~SocketProcessor();
+         virtual ~SocketWorker();
 
          virtual const char* RequiredThrdClass() const { return typeSocketThread; }
 
+         virtual const char* ClassName() const { return "SocketWorker"; }
+
          inline int Socket() const { return fSocket; }
 
-         virtual void ProcessEvent(dabc::EventId);
+         virtual void ProcessEvent(const EventId&);
 
          void CloseSocket();
 
@@ -70,19 +87,21 @@ namespace dabc {
          virtual void OnConnectionClosed();
          virtual void OnSocketError(int errnum, const char* info);
 
+         /** \brief Call method to indicate that worker wants to read data from the socket.
+          * When it will be possible, worker get evntSocketRead event */
+         inline void SetDoingInput(bool on = true) { fDoingInput = on; }
+
+         /** \brief Call method to indicate that worker wants to write data to the socket.
+          * When it will be possible, worker get evntSocketWrite event */
+         inline void SetDoingOutput(bool on = true) { fDoingOutput = on; }
+
          inline bool IsDoingInput() const { return fDoingInput; }
          inline bool IsDoingOutput() const { return fDoingOutput; }
 
-         inline void SetFlags(bool isinp, bool isout)
-         {
-            fDoingInput = isinp;
-            fDoingOutput = isout;
-         }
-
-         inline void SetDoingInput(bool on = true) { fDoingInput = on; }
-         inline void SetDoingOutput(bool on = true) { fDoingOutput = on; }
-         inline void SetDoingNothing() { SetFlags(false, false); }
-         inline void SetDoingAll() { SetFlags(true, true); }
+         ssize_t DoRecvBuffer(void* buf, ssize_t len);
+         ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr = 0, unsigned srcaddrlen = 0);
+         ssize_t DoSendBuffer(void* buf, ssize_t len);
+         ssize_t DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* tgtaddr = 0, unsigned tgtaddrlen = 0);
 
          int           fSocket;
          bool          fDoingInput;
@@ -92,40 +111,10 @@ namespace dabc {
    // ______________________________________________________________________________________
 
 
-   class SocketIOProcessor : public SocketProcessor {
-
-      public:
-         SocketIOProcessor(int fd = 0);
-
-         virtual ~SocketIOProcessor();
-
-         virtual void ProcessEvent(EventId);
-
-         bool StartSend(void* buf, size_t size, bool usemsg = false);
-         bool StartRecv(void* buf, size_t size, bool usemsg = false, bool singleoper = false);
-         bool LetRecv(void* buf, size_t size, bool singleoper = true);
-
-         bool StartSend(Buffer* buf, bool usemsg = false);
-         bool StartRecv(Buffer* buf, BufferSize_t datasize, bool usemsg = false);
-
-         bool StartNetRecv(void* hdr, BufferSize_t hdrsize, Buffer* buf, BufferSize_t datasize, bool usemsg = true, bool singleoper = false);
-         bool StartNetSend(void* hdr, BufferSize_t hdrsize, Buffer* buf, bool usemsg = true);
-
+   class SocketIOWorker : public SocketWorker {
       protected:
-
-         void AllocateSendIOV(unsigned size);
-         void AllocateRecvIOV(unsigned size);
-
-         virtual bool OnRecvProvideBuffer() { return false; }
-         virtual void OnSendCompleted() {}
-         virtual void OnRecvCompleted() {}
-
-         inline bool IsDoingSend() const { return fSendIOVNumber>0; }
-         inline bool IsDoingRecv() const { return fRecvIOVNumber>0; }
-
-         ssize_t DoRecvBuffer(void* buf, ssize_t len);
-         ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len);
-         ssize_t DoSendBuffer(void* buf, ssize_t len);
+         bool          fDatagramSocket; //!< indicate if socket is datagram and all operations should be finished with single call
+         bool          fUseMsgOper;     //!< indicate if sendmsg, recvmsg operations should be used, it is must for the datagram sockets
 
          bool          fSendUseMsg;     // use sendmsg for transport
          struct iovec* fSendIOV;        // sending io vector for gather list
@@ -138,8 +127,8 @@ namespace dabc {
          unsigned      fRecvIOVSize;    // number of elements in recv vector
          unsigned      fRecvIOVFirst;   // number of element in recv IOV where transfer is started
          unsigned      fRecvIOVNumber;  // number of elements in current recv operation
-         bool          fRecvSingle;     // true if the only recv is allowed
-         unsigned      fLastRecvSize;   // size of last recv opearation
+         struct sockaddr_in fRecvAddr;  //!< source address of last receive operation
+         unsigned      fLastRecvSize;   // size of last recv operation
 
 #ifdef SOCKET_PROFILING
          long           fSendOper;
@@ -150,32 +139,83 @@ namespace dabc {
          long           fRecvSize;
 #endif
 
+         virtual const char* ClassName() const { return "SocketIOWorker"; }
+
+         bool IsDatagramSocket() const { return fDatagramSocket; }
+
+         virtual void ProcessEvent(const EventId&);
+
+         void AllocateSendIOV(unsigned size);
+         void AllocateRecvIOV(unsigned size);
+
+         inline bool IsDoingSend() const { return fSendIOVNumber>0; }
+         inline bool IsDoingRecv() const { return fRecvIOVNumber>0; }
+
+         /** \brief Method called when send operation is completed */
+         virtual void OnSendCompleted() {}
+
+         /** \brief Method called when receive operation is completed */
+         virtual void OnRecvCompleted() {}
+
+         /** \brief Method provide address of last receive operation */
+         struct sockaddr_in& GetRecvAddr() { return fRecvAddr; }
+
+         /** \brief Method return size of last buffer read from socket. Useful
+          * only for datagram sockets, which can reads complete packet at once  */
+         unsigned GetRecvSize() const { return fLastRecvSize; }
+
+
+         /** \brief Constructor of SocketIOWorker class */
+         SocketIOWorker(int fd = 0, bool isdatagram = false, bool usemsg = true);
+
+         /** \brief Destructor of SocketIOWorker class */
+         virtual ~SocketIOWorker();
+
+
+         bool StartSend(void* buf, size_t size);
+         bool StartRecv(void* buf, size_t size);
+
+         bool StartSendHdr(void* hdr, unsigned hdrsize, void* buf, size_t size);
+         bool StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size);
+
+         bool StartSend(const Buffer& buf);
+         bool StartRecv(Buffer& buf, BufferSize_t datasize);
+
+         bool StartNetRecv(void* hdr, unsigned hdrsize, Buffer& buf, BufferSize_t datasize);
+         bool StartNetSend(void* hdr, unsigned hdrsize, const Buffer& buf);
+
+         /** \brief Method should be used to cancel all running I/O operation of the socket.
+          * Should be used for instance when worker want to be deleted */
+         void CancelIOOperations();
    };
 
    // ______________________________________________________________________
 
 
-   class SocketConnectProcessor : public SocketProcessor {
+   class SocketConnectWorker : public SocketWorker {
       protected:
-         WorkingProcessor* fConnRcv;
+         Worker* fConnRcv;
          std::string fConnId;
 
       public:
-         SocketConnectProcessor(int fd) :
-            SocketProcessor(fd),
+         SocketConnectWorker(int fd) :
+            SocketWorker(fd),
             fConnRcv(0),
             fConnId()
          {
          }
 
-         void SetConnHandler(WorkingProcessor* rcv, const char* connid)
+         void SetConnHandler(Worker* rcv, const char* connid)
          {
             fConnRcv = rcv;
             fConnId = connid;
          }
 
-         WorkingProcessor* GetConnRecv() const { return fConnRcv; }
+         Worker* GetConnRecv() const { return fConnRcv; }
          const char* GetConnId() const { return fConnId.c_str(); }
+
+         virtual const char* ClassName() const { return "SocketConnectWorker"; }
+
    };
 
    // ________________________________________________________________
@@ -184,15 +224,17 @@ namespace dabc {
    // this object establish server socket, which waits for new connection
    // of course, we do not want to block complete thread for such task :-)
 
-   class SocketServerProcessor : public SocketConnectProcessor {
+   class SocketServerWorker : public SocketConnectWorker {
       public:
-         SocketServerProcessor(int serversocket, int portnum = -1);
+         SocketServerWorker(int serversocket, int portnum = -1);
 
-         virtual void ProcessEvent(dabc::EventId);
+         virtual void ProcessEvent(const EventId&);
 
          int ServerPortNumber() const { return fServerPortNumber; }
          const char* ServerHostName() { return fServerHostName.c_str(); }
          std::string ServerId() { return dabc::format("%s:%d", ServerHostName(), ServerPortNumber()); }
+
+         virtual const char* ClassName() const { return "SocketServerWorker"; }
 
       protected:
 
@@ -204,16 +246,18 @@ namespace dabc {
 
    // ______________________________________________________________
 
-   class SocketClientProcessor : public SocketConnectProcessor {
+   class SocketClientWorker : public SocketConnectWorker {
       public:
-         SocketClientProcessor(const struct addrinfo* serv_addr, int fd = -1);
-         virtual ~SocketClientProcessor();
+         SocketClientWorker(const struct addrinfo* serv_addr, int fd = -1);
+         virtual ~SocketClientWorker();
 
          void SetRetryOpt(int nretry, double tmout = 1.);
 
-         virtual void ProcessEvent(dabc::EventId);
+         virtual void ProcessEvent(const EventId&);
 
          virtual double ProcessTimeout(double);
+
+         virtual const char* ClassName() const { return "SocketClientWorker"; }
 
       protected:
          virtual void OnConnectionEstablished(int fd);
@@ -229,13 +273,19 @@ namespace dabc {
    // ______________________________________________________________
 
 
-   class SocketThread : public WorkingThread {
+   class SocketThread : public Thread {
+      protected:
+         enum ESocketEvents {
+            evntEnableCheck = evntLastThrd+1,  //!< event to enable again checking sockets for new events
+            evntLastSocketThrdEvent            //!< last event, which can be used by socket
+         };
+
 
       public:
 
          // list of all events for all kind of socket processors
 
-         SocketThread(Basic* parent, const char* name = "SocketThrd", int numqueues = 3);
+         SocketThread(Reference parent, const char* name = "SocketThrd", int numqueues = 3);
          virtual ~SocketThread();
 
          virtual const char* ClassName() const { return typeSocketThread; }
@@ -251,9 +301,9 @@ namespace dabc {
          static int ConnectUdp(int fd, const char* remhost, int remport);
 
 
-         static SocketServerProcessor* CreateServerProcessor(int nport, int portmin=-1, int portmax=-1);
+         static SocketServerWorker* CreateServerWorker(int nport, int portmin=-1, int portmax=-1);
 
-         static SocketClientProcessor* CreateClientProcessor(const char* servid);
+         static SocketClientWorker* CreateClientWorker(const char* servid);
 
       protected:
 
@@ -262,22 +312,24 @@ namespace dabc {
              uint32_t  indx; // index for dereference of processor from ufds structure
          };
 
-         virtual dabc::EventId WaitEvent(double tmout);
+         virtual bool WaitEvent(EventId&, double tmout);
 
-         virtual void _Fire(dabc::EventId arg, int nq);
+         virtual void _Fire(const EventId& evnt, int nq);
 
-         virtual void ProcessorNumberChanged();
+         virtual void WorkersNumberChanged();
+
+         virtual void ProcessExtraThreadEvent(EventId evid);
+
 
          int            fPipe[2];
-         long           fFireCounter;
          long           fPipeFired;  // indicate if something was written in pipe
          bool           fWaitFire;
          int            fScalerCounter; // variable used to test time to time sockets even if there are events in the queue
          unsigned       f_sizeufds;  // size of the structure, which was allocated
          pollfd        *f_ufds;      // list of file descriptors for poll call
          ProcRec       *f_recs;      // identify used processors
-         bool           fIsAnySocket; // indicates that at least one socket processors in the list
-         bool           fHadSocketEvent; // indicates if previously socket event was detected
+         bool           fIsAnySocket;   // indicates that at least one socket processors in the list
+         bool           fCheckNewEvents;  //!< flag indicate if sockets should be checked for new events even if there are already events in the queue
 
 #ifdef SOCKET_PROFILING
          long           fWaitCalls;

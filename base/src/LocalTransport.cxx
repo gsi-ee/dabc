@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/LocalTransport.h"
 
 #include "dabc/logging.h"
@@ -21,80 +21,110 @@
 #include "dabc/Module.h"
 #include "dabc/Manager.h"
 
-dabc::LocalTransport::LocalTransport(LocalDevice* dev, Port* port, Mutex* mutex, bool owner, bool memcopy) :
-   Transport(dev),
+dabc::LocalTransport::LocalTransport(Reference port, Mutex* mutex, bool owner, bool memcopy, bool doinp, bool doout) :
+   Worker(0, "LocalTransport", true),
+   Transport(port),
    fOther(0),
-   fQueue(port->InputQueueCapacity()),
+   fQueue(GetPort()->InputQueueCapacity()),
    fMutex(mutex),
    fMutexOwner(owner),
-   fMemCopy(memcopy)
+   fMemCopy(memcopy),
+   fDoInput(doinp),
+   fDoOutput(doout),
+   fRunning(true)
 {
+   RegisterTransportDependencies(this);
 }
 
 dabc::LocalTransport::~LocalTransport()
 {
-   DOUT5((" dabc::LocalTransport::~LocalTransport %p calling queue = %d", this, fQueue.Size()));
+   DOUT2((" dabc::LocalTransport::~LocalTransport %p other %p queue = %d", this, fOther(), fQueue.Size()));
 
    if (fMutex && fMutexOwner) {
+
+      DOUT2(("~LocalTransport %p destroy mutex %p", this, fMutex));
       delete fMutex;
       fMutex = 0;
       fMutexOwner = false;
    }
 
-   if (fOther!=0) {
+   if (fOther()!=0) {
       EOUT(("Other pointer is still there"));
-      fOther->fOther = 0; // remove reference on ourself
+      fOther.Release();
    }
 
    if (fQueue.Size()>0) EOUT(("Queue size is not zero!!!"));
    fQueue.Cleanup();
 }
 
-void dabc::LocalTransport::CleanupTransport()
+void dabc::LocalTransport::CleanupFromTransport(Object* obj)
 {
+   DOUT4(("LocalTransport::CleanupFromTransport %p", obj));
 
-   DOUT4(("LocalTransport::CleanupTransport %p other %p", this, fOther));
-
-   {
-      LockGuard lock(fMutex);
-
-      if (fOther!=0) {
-         fOther->fOther = 0; // remove back pointer
-         if (fMutexOwner) { fMutexOwner = false; fOther->fMutexOwner = true; }
-         fOther = 0;
+   if (obj==fOther()) {
+      DOUT3(("LocalTransport %p remove other %p", this, obj));
+      fOther.Release();
+      if (!fMutexOwner) {
+         DOUT3(("LocalTransport %p !!!!!!!! FORGET MUTEX !!!!!!!!!!!", this));
+         fMutex = 0;
       }
+      CloseTransport();
+   } else
+   if (obj == GetPool()) {
+      // pool reference will be cleaned up in parent class
 
-      if (!fMutexOwner) fMutex = 0;
+      DOUT4(("LocalTransport::CleanupFromTransport %p memory pool mutex %p locked %s size %u", obj, fMutex, DBOOL((fMutex ? fMutex->IsLocked() : false)), fQueue.Size()));
+
+      fQueue.Cleanup(fMutex);
    }
 
-//   fQueue.Cleanup(fMutex);
+   DOUT4(("LocalTransport::CleanupFromTransport %p done", obj));
+
+   dabc::Transport::CleanupFromTransport(obj);
+}
+
+void dabc::LocalTransport::CleanupTransport()
+{
+   DOUT5(("LocalTransport::CleanupTransport %p other %p mutex %p refcounter %u", this, fOther(), fMutex, fObjectRefCnt));
+
+   {
+      // first of all indicate that we are not longer running and will not accept new buffers
+      LockGuard lock(fMutex);
+      fRunning = false;
+   }
+
+   DOUT5(("LocalTransport::CleanupTransport size %u before", fQueue.Size()));
+
+   fQueue.Cleanup(fMutex);
+
+   DOUT5(("LocalTransport::CleanupTransport size %u after", fQueue.Size()));
+
+   // forgot about mutex
+   if (!fMutexOwner) fMutex = 0;
+
+   fOther.Release();
 
    dabc::Transport::CleanupTransport();
 
-   DOUT4(("LocalTransport::CleanupTransport %p done", this));
+   DOUT3(("LocalTransport::CleanupTransport %p done", this));
 }
 
 
-void dabc::LocalTransport::PortChanged()
+bool dabc::LocalTransport::Recv(Buffer &buf)
 {
-}
-
-
-bool dabc::LocalTransport::Recv(Buffer* &buf)
-{
-   buf = 0;
-
    {
       LockGuard lock(fMutex);
 
       if (fQueue.Size()<=0) return false;
 
-      buf = fQueue.Pop();
+      buf << fQueue.Pop();
    }
 
-   if (fOther) fOther->FireOutput();
+   // use port mutex only when other works in different thread
+   if (fOther())
+     ((LocalTransport*) fOther())->FirePortOutput(fMutex!=0);
 
-   return (buf!=0);
+   return !buf.null();
 }
 
 unsigned dabc::LocalTransport::RecvQueueSize() const
@@ -104,47 +134,41 @@ unsigned dabc::LocalTransport::RecvQueueSize() const
    return fQueue.Size();
 }
 
-dabc::Buffer* dabc::LocalTransport::RecvBuffer(unsigned indx) const
+dabc::Buffer& dabc::LocalTransport::RecvBuffer(unsigned indx) const
 {
    LockGuard lock(fMutex);
 
-   return fQueue.Item(indx);
+   return fQueue.ItemRef(indx);
 }
 
-bool dabc::LocalTransport::Send(Buffer* buf)
+bool dabc::LocalTransport::Send(const Buffer& buf)
 {
-   if ((buf==0) || (fOther==0)) return false;
+   LocalTransport* other = (LocalTransport*) fOther();
 
-   Buffer* newbuf = 0;
+   if (buf.null() || (other==0)) return false;
 
-   if (fMemCopy && buf) {
-      MemoryPool* pool = fOther->GetPortPool();
-      newbuf = pool ? pool->TakeBuffer(buf->GetTotalSize(), buf->GetHeaderSize()) : 0;
-      if (newbuf!=0)
-         newbuf->CopyFrom(buf);
-      else {
+   if (fMemCopy && !buf.null()) {
+      MemoryPool* pool = other->GetPool();
+      Buffer newbuf;
+      if (pool)
+         newbuf << pool->TakeBuffer(buf.GetTotalSize());
+      if (!newbuf.null()) {
+         newbuf.CopyFrom(buf);
+         *(const_cast<Buffer*> (&buf)) << newbuf;
+      } else {
          EOUT(("Cannot memcpy in localtransport while no new buffer can be ordered"));
          return false;
       }
-      // dabc::Buffer::Release(buf);
-      // buf = newbuf;
    }
 
    bool res = false;
 
-   {
-      LockGuard lock(fMutex);
-
-      res = fOther->fQueue.MakePlaceForNext();
-
-      if (res) fOther->fQueue.Push(newbuf ? newbuf : buf);
-   }
+   if (other->fRunning)
+      res = other->fQueue.Push(buf, fMutex);
 
    if (res) {
-      if (newbuf) dabc::Buffer::Release(buf); // release old buffer
-      fOther->FireInput();
-   } else {
-      dabc::Buffer::Release(newbuf); //release new buffer, old will be released by port
+      // here one need port mutex when other transport working in another thread
+      other->FirePortInput(fMutex!=0);
    }
 
    return res;
@@ -154,103 +178,68 @@ unsigned dabc::LocalTransport::SendQueueSize()
 {
    LockGuard lock(fMutex);
 
-   return fOther ? fOther->fQueue.Size() : 0;
+   return fOther() ? ((LocalTransport*) fOther())->fQueue.Size() : 0;
 }
 
-// _______________________________________________________________
 
-dabc::NullTransport::NullTransport(LocalDevice* dev) :
-   Transport(dev)
+int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
 {
-}
+   Port* port1 = (Port*) port1ref();
+   Port* port2 = (Port*) port2ref();
 
-bool dabc::NullTransport::Send(Buffer* buf)
-{
-   dabc::Buffer::Release(buf);
-
-   FireOutput();
-
-   return true;
-}
-
-// ____________________________________________________________
-
-dabc::LocalDevice::LocalDevice(Basic* parent, const char* name) :
-   Device(parent, name)
-{
-   AssignProcessorToThread(dabc::mgr()->ProcessorThread());
-}
-
-bool dabc::LocalDevice::ConnectPorts(Port* port1, Port* port2)
-{
-   if ((port1==0) || (port2==0)) return false;
+   if ((port1==0) || (port2==0)) return cmd_false;
 
    Module* m1 = port1->GetModule();
    Module* m2 = port2->GetModule();
 
    bool memcopy = false;
-
    Mutex* mutex = 0;
 
    if ((m1!=0) && (m2!=0))
-      if (m1->ProcessorThread() != m2->ProcessorThread())
+      if (m1->thread()() != m2->thread()())
          mutex = new Mutex;
 
    if (port1->GetPoolHandle() && port2->GetPoolHandle()) {
       memcopy = ! port1->GetPoolHandle()->IsName(port2->GetPoolHandle()->GetName());
       if (memcopy) {
          EOUT(("Transport between ports %s %s will be with memcpy",
-                 port1->GetFullName().c_str(), port2->GetFullName().c_str()));
+                 port1->ItemName().c_str(), port2->ItemName().c_str()));
       }
    }
 
    if (port1->InputQueueCapacity() < port2->OutputQueueCapacity())
       port1->ChangeInputQueueCapacity(port2->OutputQueueCapacity());
+   bool doinp1 = port1->InputQueueCapacity() > 0;
 
    if (port2->InputQueueCapacity() < port1->OutputQueueCapacity())
       port2->ChangeInputQueueCapacity(port1->OutputQueueCapacity());
+   bool doinp2 = port2->InputQueueCapacity() > 0;
 
-   if (port1->UserHeaderSize() < port2->UserHeaderSize())
-      port1->ChangeUserHeaderSize(port2->UserHeaderSize());
+   if (port1->InlineDataSize() < port2->InlineDataSize())
+      port1->ChangeInlineDataSize(port2->InlineDataSize());
    else
-   if (port1->UserHeaderSize() > port2->UserHeaderSize())
-      port2->ChangeUserHeaderSize(port1->UserHeaderSize());
+   if (port1->InlineDataSize() > port2->InlineDataSize())
+      port2->ChangeInlineDataSize(port1->InlineDataSize());
 
-   LocalTransport* tr1 = new LocalTransport(this, port1, mutex, true, memcopy);
-   LocalTransport* tr2 = new LocalTransport(this, port2, mutex, false, memcopy);
+   LocalTransport* tr1 = new LocalTransport(port1ref, mutex, true, memcopy, doinp1, doinp2);
+   LocalTransport* tr2 = new LocalTransport(port2ref, mutex, false, memcopy, doinp2, doinp1);
 
-   tr1->fOther = tr2;
-   tr2->fOther = tr1;
+   Reference ref1(tr1);
+   Reference ref2(tr2);
 
-   bool res = true;
-   if (!tr1->AttachPort(port1, true)) res = false;
-   if (!tr2->AttachPort(port2, true)) res = false;
-
-   return res;
-}
-
-int dabc::LocalDevice::CreateTransport(dabc::Command* cmd, dabc::Port* port)
-{
-   dabc::Port* port2 = dabc::mgr()->FindPort(cmd->GetPar("Port2Name"));
-
-   if (port2==0) return cmd_false;
-
-   return ConnectPorts(port, port2);
-}
-
-int dabc::LocalDevice::ExecuteCommand(dabc::Command* cmd)
-{
-   if (cmd->IsName(CmdConnectPorts::CmdName())) {
-      Port* port1 = dabc::mgr()->FindPort(cmd->GetPar("Port1Name"));
-      Port* port2 = dabc::mgr()->FindPort(cmd->GetPar("Port2Name"));
-
-      if ((port1==0) || (port2==0)) {
-         EOUT(("Port(s) are not found"));
-         return cmd_false;
-      }
-
-      return  cmd_bool(ConnectPorts(port1, port2));
+   if (!tr1->AssignToThread(m1->thread()) || !tr2->AssignToThread(m2->thread())) {
+      ref1.Destroy();
+      ref2.Destroy();
+      return cmd_false;
    }
 
-   return dabc::Device::ExecuteCommand(cmd);
+   tr1->fOther = Reference(tr2);
+   tr2->fOther = Reference(tr1);
+
+   // register many dependencies to be able clear them at right moment
+   dabc::mgr()->RegisterDependency(tr1, tr2, true);
+
+   if (port1->AssignTransport(ref1, tr1) && port2->AssignTransport(ref2, tr2)) return cmd_true;
+
+   return cmd_false;
 }

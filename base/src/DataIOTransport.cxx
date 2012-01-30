@@ -1,20 +1,20 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/DataIOTransport.h"
 
-dabc::DataIOTransport::DataIOTransport(Device* dev, Port* port, DataInput* inp, DataOutput* out) :
-   DataTransport(dev, port, inp!=0, out!=0),
+dabc::DataIOTransport::DataIOTransport(Reference port, DataInput* inp, DataOutput* out) :
+   DataTransport(port, inp!=0, out!=0),
    fInput(inp),
    fOutput(out)
 {
@@ -33,12 +33,12 @@ unsigned dabc::DataIOTransport::Read_Size()
    return fInput ? fInput->Read_Size() : di_Error;
 }
 
-unsigned dabc::DataIOTransport::Read_Start(Buffer* buf)
+unsigned dabc::DataIOTransport::Read_Start(Buffer& buf)
 {
    return fInput ? fInput->Read_Start(buf) : di_Error;
 }
 
-unsigned dabc::DataIOTransport::Read_Complete(Buffer* buf)
+unsigned dabc::DataIOTransport::Read_Complete(Buffer& buf)
 {
    return fInput ? fInput->Read_Complete(buf) : di_Error;
 }
@@ -48,7 +48,7 @@ double dabc::DataIOTransport::Read_Timeout()
    return fInput ? fInput->GetTimeout() : 0.1;
 }
 
-bool dabc::DataIOTransport::WriteBuffer(Buffer* buf)
+bool dabc::DataIOTransport::WriteBuffer(const Buffer& buf)
 {
    return fOutput ? fOutput->WriteBuffer(buf) : false;
 }

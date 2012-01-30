@@ -1,70 +1,67 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/SocketDevice.h"
 
 #include "dabc/SocketTransport.h"
 
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
+#include "dabc/Configuration.h"
+#include "dabc/ConnectionManager.h"
 
 #define SocketServerTmout 0.2
 
-// this is fixed-size message for exhanging during protocol execution
+// this is fixed-size message for exchanging during protocol execution
 #define ProtocolMsgSize 100
-#define ProtocolCmdHeader "Command"
 
 namespace dabc {
 
-   class SocketProtocolProcessor;
+   class SocketProtocolWorker;
+
+   // TODO: Can we use here connection manager name - all information already there
 
    class NewConnectRec {
       public:
-         NewConnectRec(Command* cmd,
-                       const char* portname,
-                       SocketClientProcessor* clnt,
-                       const char* connid,
-                       double tmout) :
-            fCmd(cmd),
-            fPortName(portname),
+         std::string            fReqItem;    //!< reference in connection request
+         SocketClientWorker*    fClient;     //!< client-side processor, to establish connection
+         SocketProtocolWorker*  fProtocol;   //!< protocol processor, to verify connection id
+         double                 fTmOut;      //!< used by device to process connection timeouts
+         std::string            fConnId;     //! connection id
+         Command                fLocalCmd;   //!< command from connection manager which should be replied when connection established or failed
+
+         NewConnectRec(const std::string& item,
+                       ConnectionRequestFull& req,
+                       SocketClientWorker* clnt) :
+            fReqItem(item),
             fClient(clnt),
             fProtocol(0),
-            fConnId(connid),
-            fTmOut(tmout),
-            fCmdStrBuf(),
-            fThreadName()
+            fTmOut(0.),
+            fLocalCmd()
          {
+            fTmOut = req.GetConnTimeout() + SocketServerTmout;
+            fConnId = req.GetConnId();
          }
 
-         Command* fCmd;
-         std::string   fPortName; // this full port name must be used later to assign transport
-         SocketClientProcessor* fClient;
-         SocketProtocolProcessor*  fProtocol;
-         std::string   fConnId;
-         double   fTmOut; // used by device to process connection timeouts
-         std::string   fCmdStrBuf; // buffer, which contains converted to string command
-         std::string   fThreadName; // name of thread for transport
-
          const char* ConnId() const { return fConnId.c_str(); }
-
-         bool IsRemoteCommand() { return fPortName.length()==0; }
+         bool IsConnId(const char* id) { return fConnId.compare(id) == 0; }
    };
 
    // this class is used to perform initial protocol
    // when socket connection is established
    // it also used to transport commands on remote side and execute them
 
-   class SocketProtocolProcessor : public SocketIOProcessor {
+   class SocketProtocolWorker : public SocketIOWorker {
 
       friend class SocketDevice;
 
@@ -72,83 +69,32 @@ namespace dabc {
 
       protected:
 
-         enum EStatus { stServerProto, stClientProto, stSendCmd, stRecvCmd, stWaitCmdReply, stSendReplySize, stRecvReplySize, stSendReply, stRecvReply, stDone, stError };
+         enum EState { stServerProto, stClientProto, stDone, stError };
 
          SocketDevice* fDevice;
          NewConnectRec* fRec;
-         EStatus fStatus;
+         EState fState;
          char fInBuf[ProtocolMsgSize];
          char fOutBuf[ProtocolMsgSize];
-         char* fCmdBuf; // buffer for input/output of cmd buffer
       public:
 
-         SocketProtocolProcessor(int connfd, SocketDevice* dev, NewConnectRec* rec) :
-            dabc::SocketIOProcessor(connfd),
+         SocketProtocolWorker(int connfd, SocketDevice* dev, NewConnectRec* rec) :
+            dabc::SocketIOWorker(connfd),
             fDevice(dev),
             fRec(rec),
-            fStatus(rec==0 ? stServerProto : stClientProto),
-            fCmdBuf(0)
+            fState(rec==0 ? stServerProto : stClientProto)
          {
          }
 
-         virtual ~SocketProtocolProcessor()
+         virtual ~SocketProtocolWorker()
          {
-            if (fCmdBuf) delete [] fCmdBuf;
-            fCmdBuf = 0;
          }
 
          void FinishWork(bool res)
          {
-            fStatus = res ? stDone : stError;
-            fDevice->DestroyProcessor(this, res);
+            fState = res ? stDone : stError;
+            fDevice->DestroyProtocolWorker(this, res);
          }
-
-         bool ReplyCommand(Command* cmd)
-         {
-            if (fStatus!=stWaitCmdReply) {
-               EOUT(("Internal problem"));
-               FinishWork(false);
-               return true;
-            }
-
-            if ((fRec==0) || (fRec->fCmd!=cmd)) {
-               EOUT(("Something wrong with replied command"));
-               FinishWork(false);
-               return true;
-            }
-
-            fRec->fCmd->SaveToString(fRec->fCmdStrBuf);
-            fRec->fCmd = 0;
-
-            unsigned cmdlen = fRec->fCmdStrBuf.length() + 1;
-
-            snprintf(fOutBuf, sizeof(fOutBuf), "%u", cmdlen);
-
-            fStatus = stSendReplySize;
-
-            StartSend(fOutBuf, ProtocolMsgSize);
-
-            return true;
-         }
-
-         void StartCmdBufRecv(int sz)
-         {
-             delete[] fCmdBuf;
-
-             fCmdBuf = new char[sz];
-
-             StartRecv(fCmdBuf, sz);
-         }
-
-         void StartCmdBufSend(std::string& sbuf)
-         {
-             int sz = sbuf.length() + 1;
-             delete[] fCmdBuf;
-             fCmdBuf = new char[sz];
-             strcpy(fCmdBuf, sbuf.c_str());
-             StartSend(fCmdBuf, sz);
-         }
-
 
          void OnConnectionClosed()
          {
@@ -162,12 +108,12 @@ namespace dabc {
 
          virtual void OnThreadAssigned()
          {
-            switch (fStatus) {
+            switch (fState) {
                case stServerProto:
                   StartRecv(fInBuf, ProtocolMsgSize);
                   break;
                case stClientProto:
-                  // we can start both send and recv operations simultaniousely,
+                  // we can start both send and recv operations simultaneously,
                   // while buffer will be received only when server answer on request
                   strcpy(fOutBuf, fRec->ConnId());
                   strcpy(fInBuf, "denied");
@@ -176,14 +122,14 @@ namespace dabc {
                   StartRecv(fInBuf, ProtocolMsgSize);
                   break;
                default:
-                  EOUT(("Wrong status %d", fStatus));
+                  EOUT(("Wrong state %d", fState));
                   FinishWork(false);
             }
          }
 
          virtual void OnSendCompleted()
          {
-            switch (fStatus) {
+            switch (fState) {
                case stServerProto:
                   DOUT5(("Server job finished"));
                   fDevice->ProtocolCompleted(this, 0);
@@ -191,27 +137,15 @@ namespace dabc {
                case stClientProto:
                   DOUT5(("Client send request, wait reply"));
                   break;
-               case stSendCmd:
-                  DOUT5(("Command send, recv reply size"));
-                  StartRecv(fInBuf, ProtocolMsgSize);
-                  fStatus = stRecvReplySize;
-                  break;
-               case stSendReplySize:
-                  StartCmdBufSend(fRec->fCmdStrBuf);
-                  fStatus = stSendReply;
-                  break;
-               case stSendReply:
-                  FinishWork(true);
-                  break;
                default:
-                  EOUT(("Wrong status %d", fStatus));
+                  EOUT(("Wrong state %d", fState));
                   FinishWork(false);
             }
          }
 
          virtual void OnRecvCompleted()
          {
-            switch (fStatus) {
+            switch (fState) {
                case stServerProto:
                   fDevice->ServerProtocolRequest(this, fInBuf, fOutBuf);
                   StartSend(fOutBuf, ProtocolMsgSize);
@@ -220,128 +154,69 @@ namespace dabc {
                   DOUT5(("Client job finished"));
                   fDevice->ProtocolCompleted(this, fInBuf);
                   break;
-               case stRecvCmd:
-                  if (fDevice->SubmitCommandFromRemote(this, fCmdBuf))
-                     fStatus = stWaitCmdReply;
-                  else
-                     FinishWork(false);
-                  break;
-               case stRecvReplySize: {
-
-                  DOUT5(("Get cmd reply size %s", fInBuf));
-
-                  long reply_sz = -1;
-                  sscanf(fInBuf,"%ld", &reply_sz);
-
-                  if (reply_sz<=0) {
-                     EOUT(("when receiving cmd size"));
-                     FinishWork(false);
-                     return;
-                  }
-
-                  StartCmdBufRecv(reply_sz);
-
-                  fStatus = stRecvReply;
-
-                  break;
-               }
-               case stRecvReply: {
-                  DOUT5(("Get cmd reply %s", fCmdBuf));
-
-                  bool res = fDevice->RemoteCommandReplyed(this, fCmdBuf);
-
-                  FinishWork(res);
-
-                  break;
-               }
-
                default:
-                  EOUT(("Wrong status %d", fStatus));
+                  EOUT(("Wrong state %d", fState));
                   FinishWork(false);
             }
          }
-
-         bool StartRemoteCommandJob()
-         {
-            if (fRec==0) {
-               EOUT(("No record for command"));
-               return false;
-            }
-
-            switch (fStatus) {
-               case stServerProto:
-                  // we already submit recv, just wait for completions
-                  fStatus = stRecvCmd;
-                  break;
-
-               case stClientProto:
-                  StartCmdBufSend(fRec->fCmdStrBuf);
-                  fStatus = stSendCmd;
-                  break;
-
-               default:
-                  EOUT(("Wrong status %d", fStatus));
-                  return false;
-            }
-
-            return true;
-         }
    };
+
 }
 
 // ______________________________________________________________________
 
-dabc::SocketDevice::SocketDevice(Basic* parent, const char* name) :
-   dabc::Device(parent, name),
+dabc::SocketDevice::SocketDevice(const char* name) :
+   dabc::Device(name),
    fServer(0),
-   fServerCmdChannel("channel"),
    fConnRecs(),
    fConnCounter(0)
 {
    DOUT5(("Start SocketDevice constructor"));
 
-   Manager::Instance()->MakeThreadFor(this, GetName());
+   dabc::mgr()->MakeThreadFor(this, GetName());
 
    DOUT5(("Did SocketDevice constructor"));
 }
 
 dabc::SocketDevice::~SocketDevice()
 {
+   // FIXME: cleanup should be done much earlier
+
    CleanupRecs(-1);
 
    while (fProtocols.size()>0) {
-      SocketProtocolProcessor* pr = (SocketProtocolProcessor*) fProtocols[0];
+      SocketProtocolWorker* pr = (SocketProtocolWorker*) fProtocols[0];
       fProtocols.remove_at(0);
-      pr->DestroyProcessor();
+      dabc::Object::Destroy(pr);
    }
 
-   SocketServerProcessor* serv = 0;
+   SocketServerWorker* serv = 0;
    {
       LockGuard guard(DeviceMutex());
       serv = fServer;
       fServer = 0;
    }
-
-   delete serv;
-
+   dabc::Object::Destroy(serv);
 }
 
-bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, const char* cmdchannel)
+bool dabc::SocketDevice::StartServerWorker(Command cmd, std::string& servid)
 {
    if (fServer==0) {
-      fServer = dabc::SocketThread::CreateServerProcessor(
-            cmd->GetInt("SocketPort", -1),
-            cmd->GetInt("SocketRangeMin",7000),
-            cmd->GetInt("SocketRangeMax", 9000));
+
+      int port0(-1), portmin(7000), portmax(9000);
+
+      if (!cmd.null()) {
+         port0 = cmd.GetInt("SocketPort", port0);
+         portmin = cmd.GetInt("SocketRangeMin", portmin);
+         portmax = cmd.GetInt("SocketRangeMax", portmax);
+      }
+
+      fServer = dabc::SocketThread::CreateServerWorker(port0, portmin, portmax);
+
       if (fServer==0) return false;
 
       fServer->SetConnHandler(this, "---"); // we have no id for the connection
-      fServer->AssignProcessorToThread(ProcessorThread());
-
-      if (cmdchannel!=0) {
-         fServerCmdChannel = cmdchannel;
-         DOUT1(("Set command channel %s", cmdchannel));
-      }
+      fServer->AssignToThread(thread());
    }
 
    servid = fServer->ServerId();
@@ -349,112 +224,7 @@ bool dabc::SocketDevice::StartServerThread(Command* cmd, std::string& servid, co
    return true;
 }
 
-bool dabc::SocketDevice::ServerConnect(Command* cmd, Port* port, const char* portname)
-{
-   port = dabc::mgr()->FindPort(portname);
-   DOUT3(("ServerConnect %s %p", portname, port));
-   if (port==0) return false;
 
-   std::string servid;
-//   DOUT0(("Start server before port %s connect", portname));
-
-   if (!StartServerThread(cmd, servid)) {
-      EOUT(("Not started server thread %s", cmd->GetName()));
-      return false;
-   }
-
-   NewConnectRec* new_rec = 0;
-   bool needreply = cmd->GetBool("ImmidiateReply", false);
-
-   {
-      LockGuard guard(DeviceMutex());
-
-      std::string connid;
-      if (cmd->GetPar("ConnId")==0)
-         dabc::formats(connid, "%s-%d-%d", fServer->ServerHostName(), fServer->ServerPortNumber(), fConnCounter++);
-      else
-         connid = cmd->GetPar("ConnId");
-
-      cmd->SetPar("ServerId", servid.c_str());
-      cmd->SetPar("ConnId", connid.c_str());
-
-      cmd->SetUInt("ServerHeaderSize", port->UserHeaderSize());
-
-      int timeout = cmd->GetInt("Timeout", 10);
-
-      new_rec = new NewConnectRec(needreply? 0 : cmd, portname, 0, connid.c_str(), timeout + SocketServerTmout);
-
-      new_rec->fThreadName = cmd->GetStr(xmlTrThread,"");
-   }
-
-   if (needreply)
-     dabc::Command::Reply(cmd, true);
-
-   if (new_rec) AddRec(new_rec);
-
-   return true;
-}
-
-bool dabc::SocketDevice::ClientConnect(Command* cmd, Port* port, const char* portname)
-{
-   port = dabc::mgr()->FindPort(portname);
-   DOUT3(("ClientConnect %s %p", portname, port));
-   if (port==0) return false;
-
-   const char* serverid = cmd->GetPar("ServerId");
-
-   SocketClientProcessor* client = dabc::SocketThread::CreateClientProcessor(serverid);
-   if (client==0) return false;
-
-   const char* connid = cmd->GetPar("ConnId");
-   int timeout = cmd->GetInt("Timeout", 10);
-
-   unsigned headersize = cmd->GetUInt("ServerHeaderSize", 0);
-   if (headersize != port->UserHeaderSize()) {
-      EOUT(("Mismatch in configured header sizes: %d %d", headersize, port->UserHeaderSize()));
-      port->ChangeUserHeaderSize(headersize);
-   }
-
-   // try to make little bit faster than timeout expire why we need
-   // some time for the connection protocol
-   client->SetRetryOpt(timeout, 0.9);
-   client->SetConnHandler(this, connid);
-
-   NewConnectRec* rec = new NewConnectRec(cmd, portname, client, connid, timeout + SocketServerTmout);
-   rec->fThreadName = cmd->GetStr(xmlTrThread, "");
-
-   AddRec(rec);
-
-   client->AssignProcessorToThread(ProcessorThread());
-
-   return true;
-}
-
-bool dabc::SocketDevice::SubmitRemoteCommand(const char* serverid, const char* channelid, Command* cmd)
-{
-   // this id contains channel id, command string length and local unique id
-   std::string connid, scmd;
-
-   cmd->SaveToString(scmd);
-   dabc::formats(connid, "%s %s %d %d", ProtocolCmdHeader, channelid, scmd.length()+1, fConnCounter++);
-
-   int timeout = 10;
-
-   SocketClientProcessor* client = dabc::SocketThread::CreateClientProcessor(serverid);
-   if (client==0) return false;
-
-   client->SetRetryOpt(timeout, 0.9);
-   client->SetConnHandler(this, connid.c_str());
-
-   NewConnectRec* rec = new NewConnectRec(cmd, "", client, connid.c_str(), timeout + SocketServerTmout);
-   rec->fCmdStrBuf = scmd;
-
-   AddRec(rec);
-
-   client->AssignProcessorToThread(ProcessorThread());
-
-   return true;
-}
 
 void dabc::SocketDevice::AddRec(NewConnectRec* rec)
 {
@@ -472,9 +242,11 @@ void dabc::SocketDevice::AddRec(NewConnectRec* rec)
 void dabc::SocketDevice::DestroyRec(NewConnectRec* rec, bool res)
 {
    if (rec==0) return;
-   if (rec->fClient) rec->fClient->DestroyProcessor();
-   if (rec->fProtocol) rec->fProtocol->DestroyProcessor();
-   dabc::Command::Reply(rec->fCmd, res);
+   dabc::Object::Destroy(rec->fClient);
+   dabc::Object::Destroy(rec->fProtocol);
+
+   rec->fLocalCmd.ReplyBool(res);
+
    delete rec;
 }
 
@@ -483,7 +255,7 @@ dabc::NewConnectRec* dabc::SocketDevice::_FindRec(const char* connid)
    for (unsigned n=0; n<fConnRecs.size();n++) {
       NewConnectRec* rec = (NewConnectRec*) fConnRecs.at(n);
 
-      if (rec->fConnId.compare(connid)==0) return rec;
+      if (rec->IsConnId(connid)) return rec;
    }
 
    return 0;
@@ -526,47 +298,105 @@ double dabc::SocketDevice::ProcessTimeout(double last_diff)
    return CleanupRecs(last_diff) ? SocketServerTmout : -1;
 }
 
-void dabc::SocketDevice::NewClientRequest(int connfd)
+int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
 {
-   // this method is called when server port object gets new connected client
-   // we should check first if one expects connection or should just close connection
+   std::string reqitem = cmd.GetStdStr(ConnectionManagerHandleCmd::ReqArg());
 
-   SocketProtocolProcessor* proto = new SocketProtocolProcessor(connfd, this, 0);
+   dabc::ConnectionRequestFull req = dabc::mgr.FindPar(reqitem);
 
-   proto->AssignProcessorToThread(ProcessorThread());
+   if (req.null()) return cmd_false;
 
-   LockGuard guard(DeviceMutex());
-   fProtocols.push_back(proto);
+   switch (req.progress()) {
+
+      // here on initializes connection
+      case ConnectionManager::progrDoingInit: {
+         if (req.IsServerSide()) {
+            std::string serverid;
+            if (!StartServerWorker(0, serverid)) return cmd_false;
+            req.SetServerId(serverid);
+         } else
+            req.SetClientId("");
+
+         break;
+      }
+
+      case ConnectionManager::progrDoingConnect: {
+         // one should register request and start connection here
+
+         DOUT2(("****** SOCKET START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str()));
+
+         NewConnectRec* rec = 0;
+
+         if (req.IsServerSide()) {
+
+            rec = new NewConnectRec(reqitem, req, 0);
+
+            AddRec(rec);
+         } else {
+
+            SocketClientWorker* client = dabc::SocketThread::CreateClientWorker(req.GetServerId().c_str());
+            if (client!=0) {
+
+               // try to make little bit faster than timeout expire why we need
+               // some time for the connection protocol
+               client->SetRetryOpt(req.GetConnTimeout(), 0.9);
+               client->SetConnHandler(this, req.GetConnId().c_str());
+
+               rec = new NewConnectRec(reqitem, req, client);
+               AddRec(rec);
+
+               client->AssignToThread(thread());
+            }
+         }
+
+         // reply remote command that one other side can start connection
+
+         req.ReplyRemoteCommand(rec!=0);
+
+         if (rec==0) return cmd_false;
+
+         rec->fLocalCmd = cmd;
+
+         return cmd_postponed;
+
+         break;
+      }
+
+      default:
+         EOUT(("Request from connection manager in undefined situation progress =  %d ???", req.progress()));
+         break;
+   }
+
+   return cmd_true;
 }
 
 
-int dabc::SocketDevice::ExecuteCommand(dabc::Command* cmd)
+int dabc::SocketDevice::ExecuteCommand(Command cmd)
 {
    int cmd_res = cmd_true;
 
-   if (cmd->IsName("StartServer")) {
-      DOUT0(("Socket start server"));
+   if (cmd.IsName(ConnectionManagerHandleCmd::CmdName())) {
 
-      std::string servid;
-      cmd_res = StartServerThread(cmd, servid, cmd->GetPar("CmdChannel"));
-      cmd->SetPar("ConnId", servid.c_str());
+      cmd_res = HandleManagerConnectionRequest(cmd);
+
    } else
-   if (cmd->IsName("SocketConnect")) {
-      const char* typ = cmd->GetStr("Type");
-      const char* connid = cmd->GetStr("ConnId");
-      int fd = cmd->GetInt("fd", -1);
+
+   if (cmd.IsName("SocketConnect")) {
+      const char* typ = cmd.GetStr("Type");
+      const char* connid = cmd.GetStr("ConnId");
+      int fd = cmd.GetInt("fd", -1);
 
       if (strcmp(typ, "Server")==0) {
-         DOUT3(("Create server protocol for socket %d", fd));
+         DOUT2(("SocketDevice:: create server protocol for socket %d connid %s", fd, connid));
 
-         SocketProtocolProcessor* proto = new SocketProtocolProcessor(fd, this, 0);
-         proto->AssignProcessorToThread(ProcessorThread());
+         SocketProtocolWorker* proto = new SocketProtocolWorker(fd, this, 0);
+         proto->AssignToThread(thread());
 
          LockGuard guard(DeviceMutex());
          fProtocols.push_back(proto);
       } else
       if (strcmp(typ, "Client")==0) {
-         SocketProtocolProcessor* proto = 0;
+         SocketProtocolWorker* proto = 0;
 
          {
             LockGuard guard(DeviceMutex());
@@ -576,15 +406,14 @@ int dabc::SocketDevice::ExecuteCommand(dabc::Command* cmd)
                close(fd);
                cmd_res = cmd_false;
             } else {
+               DOUT2(("SocketDevice:: create client protocol for socket %d connid:%s", fd, connid));
 
-               DOUT3(("Create client protocol for socket %d connid:%s", fd, connid));
-
-               proto = new SocketProtocolProcessor(fd, this, rec);
+               proto = new SocketProtocolWorker(fd, this, rec);
                rec->fClient = 0; // if we get command, client is destroyed
                rec->fProtocol = proto;
             }
          }
-         if (proto) proto->AssignProcessorToThread(ProcessorThread());
+         if (proto) proto->AssignToThread(thread());
       } else
       if (strcmp(typ, "Error")==0) {
          NewConnectRec* rec = 0;
@@ -610,37 +439,13 @@ int dabc::SocketDevice::ExecuteCommand(dabc::Command* cmd)
    return cmd_res;
 }
 
-void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolProcessor* proc, const char* inmsg, char* outmsg)
+void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolWorker* proc, const char* inmsg, char* outmsg)
 {
    strcpy(outmsg, "denied");
 
    NewConnectRec* rec = 0;
 
-   if (strncmp(inmsg, ProtocolCmdHeader, strlen(ProtocolCmdHeader))==0) {
-
-      char buf1[ProtocolMsgSize], buf2[ProtocolMsgSize];
-      long cmd_sz(0), cmd_id(0);
-      int res = sscanf(inmsg, "%s %s %ld %ld",
-                       buf1, buf2, &cmd_sz, &cmd_id);
-
-      if ((res!=4) || (cmd_sz==0)) {
-         EOUT(("Invalid command connection id %s", inmsg));
-         return;
-      }
-
-      if ((fServerCmdChannel.length()>0) && (fServerCmdChannel.compare(buf2)!=0)) {
-         EOUT(("Wrong command channel"));
-         return;
-      }
-
-      proc->StartCmdBufRecv(cmd_sz);
-
-      int timeout = 10;
-      rec = new NewConnectRec(0, "", 0, inmsg, timeout + SocketServerTmout);
-      rec->fProtocol = proc;
-
-      AddRec(rec);
-   } else {
+   {
       LockGuard guard(DeviceMutex());
       rec = _FindRec(inmsg);
       if (rec==0) return;
@@ -655,7 +460,7 @@ void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolProcessor* proc, co
 
 }
 
-void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const char* inmsg)
+void dabc::SocketDevice::ProtocolCompleted(SocketProtocolWorker* proc, const char* inmsg)
 {
    NewConnectRec* rec = proc->fRec;
 
@@ -663,7 +468,7 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const 
 
    {
       LockGuard guard(DeviceMutex());
-      if ((rec==0) || !fConnRecs.has_ptr(rec)){
+      if ((rec==0) || !fConnRecs.has_ptr(rec)) {
          EOUT(("Protocol completed without rec"));
          fProtocols.remove(proc);
          destr = true;
@@ -671,10 +476,9 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const 
    }
 
    if (destr) {
-      proc->DestroyProcessor();
+      dabc::Object::Destroy(proc);
       return;
    }
-
 
    bool res = true;
    if (inmsg) res = (strcmp(inmsg, "accepted")==0);
@@ -683,101 +487,42 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolProcessor* proc, const 
 
    if (res) {
 
-      if (rec->IsRemoteCommand()) {
-         // start sending of remote command
-         if (proc->StartRemoteCommandJob()) return;
+      // create transport for the established connection
+      int fd = proc->TakeSocket();
 
+      ConnectionRequestFull req = dabc::mgr.FindPar(rec->fReqItem);
+
+      PortRef port = req.GetPort();
+
+      if (req.null() || port.null()) {
+         EOUT(("Port or request disappear while connection is ready"));
+         close(fd);
          res = false;
-
       } else {
 
-         // create transport for the established connection
-         int fd = proc->TakeSocket();
+         // FIXME: ConnectionRequest should be used
+         std::string newthrdname = req.GetConnThread();
+         if (newthrdname.empty()) newthrdname = ThreadName();
 
-         Port* port = dabc::mgr()->FindPort(rec->fPortName.c_str());
+         DOUT2(("SocketDevice::ProtocolCompleted conn %s thrd %s useakn %s", rec->ConnId(), newthrdname.c_str(), DBOOL(req.GetUseAckn())));
 
-         bool useackn = false;
-         if (rec->fCmd) useackn = rec->fCmd->GetBool(dabc::xmlUseAcknowledge, false);
+         SocketTransport* tr = new SocketTransport(port(), req.GetUseAckn(), fd);
+         Reference handle(tr);
 
-         if (port==0) {
-            EOUT(("Port disappear while connection is ready"));
-            close(fd);
+         if (dabc::mgr()->MakeThreadFor(tr, newthrdname.c_str()))
+            port()->AssignTransport(handle, tr);
+         else {
+            EOUT(("No thread for transport"));
+            handle.Destroy();
             res = false;
-         } else {
-
-            const char* newthrdname = ProcessorThreadName();
-
-            if (rec->fThreadName.length() > 0)
-               newthrdname = rec->fThreadName.c_str();
-
-            DOUT1(("TRANSPORT %s thrd %s", rec->ConnId(), newthrdname));
-
-            SocketTransport* tr = new SocketTransport(this, port, useackn, fd);
-            if (Manager::Instance()->MakeThreadFor(tr, newthrdname))
-               tr->AttachPort(port);
-            else {
-               EOUT(("No thread for transport"));
-               delete tr;
-               res = false;
-            }
          }
       }
    }
 
-   DestroyProcessor(proc, res);
+   DestroyProtocolWorker(proc, res);
 }
 
-bool dabc::SocketDevice::SubmitCommandFromRemote(SocketProtocolProcessor* proc, const char* scmd)
-{
-   NewConnectRec* rec = proc->fRec;
-
-   if ((rec==0) || (rec->fCmd!=0)) {
-      EOUT(("Internal error"));
-      return false;
-   }
-
-   Command* cmd = new Command;
-   if (!cmd->ReadFromString(scmd)) {
-      EOUT(("Cannot transform command from string"));
-      dabc::Command::Finalise(cmd);
-      return false;
-   }
-
-   proc->Assign(cmd);
-
-   rec->fCmd = cmd;
-
-   dabc::mgr()->Submit(cmd);
-
-   return true;
-}
-
-bool dabc::SocketDevice::RemoteCommandReplyed(SocketProtocolProcessor* proc, const char* scmd)
-{
-   NewConnectRec* rec = proc->fRec;
-   if ((rec==0) || (rec->fCmd==0)) {
-      EOUT(("Internal error"));
-      return false;
-   }
-
-   bool res = true;
-
-   Command* rescmd = new Command;
-   if (rescmd->ReadFromString(scmd)) {
-      rec->fCmd->AddValuesFrom(rescmd);
-      dabc::Command::Reply(rec->fCmd, rescmd->GetResult());
-   } else {
-      EOUT(("Cannot decode external cmd: %s", scmd));
-      dabc::Command::Reply(rec->fCmd, false);
-      res = false;
-   }
-   dabc::Command::Finalise(rescmd);
-   rec->fCmd = 0;
-
-   return res;
-}
-
-void dabc::SocketDevice::DestroyProcessor(SocketProtocolProcessor* proc, bool res)
+void dabc::SocketDevice::DestroyProtocolWorker(SocketProtocolWorker* proc, bool res)
 {
    if (proc==0) return;
 
@@ -792,75 +537,51 @@ void dabc::SocketDevice::DestroyProcessor(SocketProtocolProcessor* proc, bool re
          fProtocols.remove(proc);
    }
 
-   proc->DestroyProcessor();
+   dabc::Object::Destroy(proc);
 
    DestroyRec(rec, res);
 }
 
-int dabc::SocketDevice::CreateTransport(Command* cmd, Port* port)
+dabc::Transport* dabc::SocketDevice::CreateTransport(Command cmd, Reference portref)
 {
-   const char* portname = cmd->GetPar("PortName");
+   Port* port = (Port*) portref();
+   if (port==0) return 0;
 
-   if (cmd->HasPar("IsServer")) {
+   const char* portname = cmd.GetField("PortName");
 
-      bool isserver = cmd->GetBool("IsServer", true);
-
-//   DOUT1(("dabc::SocketDevice::CreateTransport %s", portname));
-
-     if (isserver ? ServerConnect(cmd, port, portname) : ClientConnect(cmd, port, portname))
-        return cmd_postponed;
-   }
-
-
-   std::string mhost = port->GetCfgStr(xmlMcastAddr, "", cmd);
+   std::string mhost = port->Cfg(xmlMcastAddr, cmd).AsStdStr();
 
    if (!mhost.empty()) {
-      int mport = port->GetCfgInt(xmlMcastPort, 7654, cmd);
-      bool mrecv = port->GetCfgBool(xmlMcastRecv, port->InputQueueCapacity() > 0, cmd);
+      int mport = port->Cfg(xmlMcastPort,cmd).AsInt(7654);
+      bool mrecv = port->Cfg(xmlMcastRecv,cmd).AsBool(port->InputQueueCapacity() > 0);
 
       if (mrecv && (port->InputQueueCapacity()==0)) {
          EOUT(("Wrong Multicast configuration - port %s cannot recv packets", portname));
-         return cmd_false;
+         return 0;
       } else
       if (!mrecv && (port->OutputQueueCapacity()==0)) {
          EOUT(("Wrong Multicast configuration - port %s cannot send packets", portname));
-         return cmd_false;
+         return 0;
       }
 
-      int handle = dabc::SocketThread::StartMulticast(mhost.c_str(), mport, mrecv);
-      if (handle<0) return cmd_false;
+      int fhandle = dabc::SocketThread::StartMulticast(mhost.c_str(), mport, mrecv);
+      if (fhandle<0) return 0;
 
-      if (!dabc::SocketThread::SetNonBlockSocket(handle)) {
-         dabc::SocketThread::CloseMulticast(handle, mhost.c_str(), mrecv);
-         return cmd_false;
+      if (!dabc::SocketThread::SetNonBlockSocket(fhandle)) {
+         dabc::SocketThread::CloseMulticast(fhandle, mhost.c_str(), mrecv);
+         return 0;
       }
 
-      std::string newthrdname = port->GetCfgStr(xmlTrThread, ProcessorThreadName(), cmd);
+      return new SocketTransport(port, false, fhandle, true);
 
-      SocketTransport* tr = new SocketTransport(this, port, false, handle, true);
-      if (dabc::mgr()->MakeThreadFor(tr, newthrdname.c_str())) {
-         DOUT1(("TRANSPORT %s multicast thrd %s", mhost.c_str(), newthrdname.c_str()));
-         tr->AttachPort(port);
-         return cmd_true;
-      } else {
-         EOUT(("No thread for transport"));
-         delete tr;
-      }
    }
 
-   return cmd_false;
-}
-
-std::string dabc::SocketDevice::fLocalHost;
-
-void dabc::SocketDevice::SetLocalHost(const std::string& host)
-{
-   fLocalHost = host;
+   return 0;
 }
 
 std::string dabc::SocketDevice::GetLocalHost(bool force)
 {
-   std::string host = fLocalHost;
+   std::string host = dabc::Configuration::GetLocalHost();
    if (host.empty() && force) {
       char sbuf[500];
       if (gethostname(sbuf, sizeof(sbuf))) {

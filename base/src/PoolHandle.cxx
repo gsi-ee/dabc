@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/PoolHandle.h"
 
 #include "dabc/Module.h"
@@ -20,52 +20,76 @@
 #include "dabc/Manager.h"
 #include "dabc/Configuration.h"
 
-dabc::PoolHandle::PoolHandle(Basic* parent, const char* name, MemoryPool* pool,
-                             BufferSize_t size, BufferNum_t number, BufferNum_t increment) :
+dabc::PoolHandle::PoolHandle(Reference parent, const char* name, Reference pool) :
    ModuleItem(mitPool, parent, name),
    MemoryPoolRequester(),
    fPool(pool),
-   fRequiredNumber(number),
-   fRequiredIncrement(increment),
-   fRequiredSize(size),
-   fRequiredHeaderSize(0),
-   fUsagePar(0),
-   fUpdateTimeout(-1),
-   fStoreHandle(false)
+   fUsagePar(),
+   fUpdateTimeout(-1)
 {
-   if ((number>0) || (increment>0) || (size>0))
-      fStoreHandle = !fPool->IsMemLayoutFixed();
+   // FIXME - should never happen
 
-   if (size>0) fRequiredSize = GetCfgInt(xmlBufferSize, size);
-   if (number>0) fRequiredNumber = GetCfgInt(xmlNumBuffers, number);
-   if (increment>0) fRequiredIncrement = GetCfgInt(xmlNumIncrement, increment);
-
-   if (fStoreHandle) {
-      if (fRequiredSize==0) fRequiredSize = dabc::DefaultBufferSize;
-      fPool->AddMemReq(fRequiredSize, fRequiredNumber, fRequiredIncrement, 0);
-      fPool->AddRefReq(0, fRequiredNumber*2, fRequiredIncrement, 0);
-   }
+   if (dabc::mgr())
+      dabc::mgr()->RegisterDependency(this, fPool());
+   else
+      EOUT(("dabc::mgr() empty when pool handle %s tries to register dependency", GetName()));
 }
 
 dabc::PoolHandle::~PoolHandle()
 {
-   if (fPool) fPool->RemoveRequester(this);
 }
 
-void dabc::PoolHandle::SetUsageParameter(Parameter* par, double interval)
+dabc::Reference dabc::PoolHandle::GetPoolRef()
 {
-   fUsagePar = dynamic_cast<DoubleParameter*> (par);
+   return fPool.Ref();
+}
+
+void dabc::PoolHandle::ObjectCleanup()
+{
+   DOUT4(("PoolHandle::ObjectCleanup pool = %p", fPool()));
+
+   if (!fPool.null()) {
+      fPool()->RemoveRequester(this);
+
+   // FIXME - should never happen
+      if (dabc::mgr()) 
+         dabc::mgr()->UnregisterDependency(this, fPool());
+      else
+         EOUT(("dabc::mgr() no longer exists when cleanup of pool handle %s ptr:%p", GetName(), this));
+      fPool.Release();
+   }
+
+   dabc::ModuleItem::ObjectCleanup();
+}
+
+void dabc::PoolHandle::ObjectDestroyed(Object* obj)
+{
+   if (obj==fPool()) {
+
+      DOUT4(("PoolHandle::ObjectDestroyed pool = %p", fPool()));
+
+      ThisItemCleaned();
+      fPool()->RemoveRequester(this);
+      fPool.Release();
+   }
+
+   dabc::ModuleItem::ObjectDestroyed(obj);
+}
+
+void dabc::PoolHandle::SetUsageParameter(const std::string& parname, double interval)
+{
+   fUsagePar = parname;
 
    fUpdateTimeout = interval;
 
-   ActivateTimeout(fUsagePar!=0 ? fUpdateTimeout : -1);
+   ActivateTimeout(fUsagePar.empty() ? -1: fUpdateTimeout);
 }
 
 double dabc::PoolHandle::ProcessTimeout(double)
 {
-   if (fUsagePar==0) return -1;
+   if (fUsagePar.empty()) return -1;
 
-   fUsagePar->SetDouble(UsedRatio());
+   GetModule()->Par(fUsagePar).SetDouble(UsedRatio());
 
    return fUpdateTimeout;
 }
@@ -78,9 +102,9 @@ bool dabc::PoolHandle::ProcessPoolRequest()
    return true;
 }
 
-void dabc::PoolHandle::ProcessEvent(EventId evid)
+void dabc::PoolHandle::ProcessEvent(const EventId& evid)
 {
-   switch (GetEventCode(evid)) {
+   switch (evid.GetCode()) {
       case evntPool:
          ProduceUserEvent(evntPool);
          break;
@@ -92,36 +116,21 @@ void dabc::PoolHandle::ProcessEvent(EventId evid)
 
 double dabc::PoolHandle::UsedRatio() const
 {
-   if (fPool==0) return 0.;
-
-   uint64_t totalsize = fPool->GetTotalSize();
-   uint64_t usedsize = fPool->GetUsedSize();
-
-   return totalsize>0 ? 1.* usedsize / totalsize : 0.;
+   return fPool.GetUsedRatio();
 }
 
-bool dabc::PoolHandle::Store(ConfigIO &cfg)
-{
-   if (!fStoreHandle) return true;
-
-   cfg.CreateItem(clPoolHandle);
-
-   cfg.CreateAttr(xmlNameAttr, GetName());
-
-   StoreChilds(cfg);
-
-   cfg.PopItem();
-
-   return true;
-}
+// FIXME: do we need this method at all??? PoolHandle no use in xml file
 
 bool dabc::PoolHandle::Find(ConfigIO &cfg)
 {
    // we must return false if we not intend to search handle,
    // if return true, dabc::Configuration class think that hierarchy exists and will try to travel that hierarchy back
-   if (!fStoreHandle) return false;
 
-   if (!cfg.FindItem(clPoolHandle)) return false;
+   while (cfg.FindItem(clPoolHandle)) {
+      if (cfg.CheckAttr(xmlNameAttr, GetName())) return true;
+   }
 
-   return cfg.CheckAttr(xmlNameAttr, GetName());
+   return false;
+
+
 }

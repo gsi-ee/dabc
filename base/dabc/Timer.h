@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_Timer
 #define DABC_Timer
 
@@ -47,7 +47,7 @@ namespace dabc {
          bool        fSynhron; // indicate if timer tries to keep number of events per second
          double      fInaccuracy; // accumulated inaccuracy of timer in synchron mode
       public:
-         Timer(Basic* parent, const char* name, double timeout = -1., bool synchron = false);
+         Timer(Reference parent, const char* name, double timeout = -1., bool synchron = false);
          virtual ~Timer();
          
          double GetPeriod() const { return fPeriod; }

@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/Parameter.h"
 
 #include <stdio.h>
@@ -20,675 +20,544 @@
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 #include "dabc/Iterator.h"
-#include "dabc/WorkingProcessor.h"
+#include "dabc/Worker.h"
 #include "dabc/ConfigBase.h"
 
-dabc::Parameter::Parameter(WorkingProcessor* lst, const char* name) :
-   Basic(lst ? lst->MakeFolderForParam(name) : 0, dabc::Folder::GetObjectName(name)),
-   fLst(lst),
-   fValueMutex(),
-   fFixed(lst ? lst->GetParDfltsFixed() : false),
-   fVisible(lst ? lst->GetParDfltsVisible() : true),
-   fChangable(lst ? lst->GetParDfltsChangable() : true),
-   fDebug(false),
-   fRegistered(false)
+dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string& name, const std::string& parkind) :
+   dabc::RecordContainer(worker, name),
+   fKind(parkind),
+   fLastChangeTm(),
+   fInterval(1.),
+   fAsynchron(false),
+   fStatistic(kindNone),
+   fRateValueSum(0.),
+   fRateTimeSum(0.),
+   fRateNumSum(0.),
+   fMonitored(false),
+   fAttrModified(false),
+   fDeliverAllEvents(false),
+   fRateWidth(5),
+   fRatePrec(1)
 {
-   DOUT5(("Create parameter %s", GetFullName(dabc::mgr()).c_str()));
 }
 
-dabc::Parameter::~Parameter()
+const std::string dabc::ParameterContainer::GetActualUnits() const
 {
-   DOUT5(("Destroy parameter %s", GetName()));
-   if (GetParent()!=0)
-      EOUT(("Parameter %s not regularly destroyed", GetFullName().c_str()));
+   std::string units = Field("units").AsStdStr();
+
+   LockGuard lock(ObjectMutex());
+   if (fStatistic==kindRate) {
+      if (units.empty()) units = "1/s";
+                    else units += "/s";
+   }
+   return units;
 }
 
-bool dabc::Parameter::FireEvent(Parameter* par, int evid)
+
+bool dabc::ParameterContainer::IsDeliverAllEvents() const
 {
-   if ((dabc::mgr()==0) || (par==0)) return false;
-   dabc::mgr()->FireParamEvent(par, evid);
-   return true;
+   LockGuard lock(ObjectMutex());
+   return fDeliverAllEvents;
 }
 
-bool dabc::Parameter::IsFixed() const
+
+bool dabc::ParameterContainer::SetField(const std::string& name, const char* value, const char* kind)
 {
-   LockGuard lock(fValueMutex);
-   return fFixed;
-}
 
-void dabc::Parameter::SetFixed(bool on)
-{
-   LockGuard lock(fValueMutex);
-   fFixed = on;
-}
+   DOUT4(("Par:%s ParameterContainer::SetField %s = %s kind = %s", GetName(), name.c_str(), value ? value : "---", kind ? kind : "---"));
 
-void dabc::Parameter::FillInfo(std::string& info)
-{
-   std::string mystr;
-   if (GetValue(mystr)) {
-      info.assign("Value: ");
-      info.append(mystr.c_str());
-   } else
-      dabc::Basic::FillInfo(info);
-}
+   bool res(false), fire(false), doset(false), doworker(false);
+   std::string sbuf;
 
-void dabc::Parameter::Ready()
-{
-   FireEvent(this, parCreated);
-}
+   bool is_dflt_name = name.empty() || (name == DefaultFiledName());
 
-void dabc::Parameter::Changed()
-{
-   if (fLst) fLst->ParameterChanged(this);
+   {
+      LockGuard lock(ObjectMutex());
 
-   FireEvent(this, parModified);
+      if (!_CanChangeField(name)) return false;
 
-   if (IsDebugOutput()) DoDebugOutput();
-}
+      doworker = fMonitored;
 
-bool dabc::Parameter::InvokeChange(const char* value)
-{
-   return fLst ? fLst->InvokeParChange(this, value, 0) : false;
-}
+      // remember parameter kind
+      if (fKind.empty() && is_dflt_name && (kind!=0))
+         fKind = kind;
 
-bool dabc::Parameter::InvokeChange(dabc::Command* cmd)
-{
-   return cmd && fLst ? fLst->InvokeParChange(this, 0, cmd) : false;
-}
+      if ((fStatistic!=kindNone) && is_dflt_name && (value!=0)) {
+         bool isint = strpbrk(value,".eE")==0;
+         double value_double(0);
+         int value_int(0);
 
-void dabc::Parameter::DoDebugOutput()
-{
-   std::string str;
-   if (GetValue(str))
-      DOUT0(("%s = %s", GetName(), str.c_str()));
-   else
-      DOUT0(("%s changed", GetName()));
-}
+         if (isint && dabc::str_to_int(value,&value_int)) {
+            value_double = value_int;
+            res = true;
+         }
 
-bool dabc::Parameter::Store(ConfigIO &cfg)
-{
-   std::string s;
+         if (!res)
+            if (dabc::str_to_double(value,&value_double)) res = true;
 
-   if (GetValue(s)) {
-      cfg.CreateItem(GetName());
-      cfg.CreateAttr(xmlValueAttr, s.c_str());
-      cfg.PopItem();
+         if (res) {
+            fRateValueSum += value_double;
+            fRateNumSum+=1.;
+         }
+
+         // if rate calculated asynchron, do rest in timeout processing
+         if (fAsynchron) return res;
+
+         if (res) {
+
+            TimeStamp tm = dabc::Now();
+
+            if (fLastChangeTm.null()) fLastChangeTm = tm;
+
+            fRateTimeSum = tm - fLastChangeTm;
+
+            fire = _CalcRate(sbuf);
+
+            if (fire) {
+               fLastChangeTm = tm;
+               doset = true;
+               value = sbuf.c_str();
+            }
+         }
+
+      } else {
+
+         doset = true;
+
+         if (is_dflt_name) {
+            TimeStamp tm = dabc::Now();
+
+            if (!fAsynchron)
+               if (fLastChangeTm.null() || (fInterval<=0.) || (tm > fLastChangeTm+fInterval)) fire = true;
+
+            if (fire) fLastChangeTm = tm;
+         }
+      }
    }
 
-   return true;
+   if (doset) {
+      res = dabc::RecordContainer::SetField(name, value, kind);
+
+      if (res && !is_dflt_name) {
+         // indicate that not only central value, but also parameter attributes were modified
+         LockGuard lock(ObjectMutex());
+         fAttrModified = true;
+      }
+   }
+
+   // inform worker that parameter is changed
+   if (doset && res && fire && doworker) {
+      Worker* w = GetWorker();
+      if (w) w->WorkerParameterChanged(this);
+   }
+
+   if (fire && res) FireModified(value);
+
+
+   DOUT4(("ParameterContainer::SetField %s = %s  doset %s res %s fire %s",
+         name.c_str(), value ? value : "---", DBOOL(doset), DBOOL(res),DBOOL(fire)));
+
+   return res;
 }
 
-bool dabc::Parameter::Find(ConfigIO &cfg)
+void dabc::ParameterContainer::FireModified(const char* value)
 {
-   return cfg.FindItem(GetName());
+   FireEvent(parModified);
+
+   int doout = GetDebugLevel();
+
+   if (doout>=0)
+      dabc::Logger::Debug(doout, __FILE__, __LINE__, __func__, FORMAT(("%s = %s %s", GetName(), value ? value : "(null)", GetActualUnits().c_str() )));
 }
 
-bool dabc::Parameter::Read(ConfigIO &cfg)
+const char* dabc::ParameterContainer::GetField(const std::string& name, const char* dflt)
 {
+   // FIXME: one should not use const char* as return value - it is not thread safe
+   return RecordContainer::GetField(name, dflt);
+}
+
+
+void dabc::ParameterContainer::FireEvent(int id)
+{
+   if (dabc::mgr())
+      dabc::mgr()->ProduceParameterEvent(this, id);
+}
+
+
+void dabc::ParameterContainer::ObjectCleanup()
+{
+   FireEvent(parDestroy);
+
+   dabc::RecordContainer::ObjectCleanup();
+}
+
+void dabc::ParameterContainer::ProcessTimeout(double last_dif)
+{
+   bool fire(false), doset(false);
    std::string value;
-   if (!cfg.Find(this, value)) return false;
+   const char* cvalue(0);
 
-   bool wasfixed = fFixed;
-   fFixed = false;
-
-   DOUT1(("Set par %s = %s", GetFullName().c_str(), value.c_str()));
-   SetValue(value.c_str());
-
-   fFixed = wasfixed;
-
-   return true;
-}
-
-// __________________________________________________________
-
-dabc::StrParameter::StrParameter(WorkingProcessor* parent, const char* name, const char* istr) :
-   Parameter(parent, name),
-   fValue(istr ? istr : "")
-{
-   Ready();
-}
-
-
-bool dabc::StrParameter::GetValue(std::string& value) const
-{
-   LockGuard lock(fValueMutex);
-   value = fValue;
-   return true;
-}
-
-bool dabc::StrParameter::SetValue(const std::string &value)
-{
-   {
-      LockGuard lock(fValueMutex);
-      if (fFixed) return false;
-      fValue = value;
-   }
-   Changed();
-   return true;
-}
-
-// __________________________________________________________
-
-
-dabc::DoubleParameter::DoubleParameter(WorkingProcessor* parent, const char* name, double iv) :
-   Parameter(parent, name),
-   fValue(iv)
-{
-   Ready();
-}
-
-bool dabc::DoubleParameter::GetValue(std::string &value) const
-{
-   LockGuard lock(fValueMutex);
-   dabc::formats(value, "%lf", fValue);
-   return true;
-}
-
-bool dabc::DoubleParameter::SetValue(const std::string &value)
-{
-   {
-      LockGuard lock(fValueMutex);
-      if (fFixed || (value.length()==0)) return false;
-      if (!dabc::str_to_double(value.c_str(), &fValue)) return false;
-   }
-   Changed();
-   return true;
-}
-
-double dabc::DoubleParameter::GetDouble() const
-{
-   LockGuard lock(fValueMutex);
-   return fValue;
-}
-
-bool dabc::DoubleParameter::SetDouble(double v)
-{
-   {
-      LockGuard lock(fValueMutex);
-      if (fFixed) return false;
-      fValue = v;
-   }
-   Changed();
-   return true;
-}
-
-// __________________________________________________________
-
-dabc::IntParameter::IntParameter(WorkingProcessor* parent, const char* name, int ii) :
-   Parameter(parent, name),
-   fValue(ii)
-{
-   Ready();
-}
-
-bool dabc::IntParameter::GetValue(std::string &value) const
-{
-   LockGuard lock(fValueMutex);
-   dabc::formats(value, "%d", fValue);
-   return true;
-}
-
-bool dabc::IntParameter::SetValue(const std::string &value)
-{
-   {
-      LockGuard lock(fValueMutex);
-      if (fFixed || (value.length()==0)) return false;
-      if (!dabc::str_to_int(value.c_str(), &fValue)) return false;
-   }
-   Changed();
-   return true;
-}
-
-int dabc::IntParameter::GetInt() const
-{
-   LockGuard lock(fValueMutex);
-   return fValue;
-}
-
-bool dabc::IntParameter::SetInt(int v)
-{
-   {
-      LockGuard lock(fValueMutex);
-      if (fFixed) return false;
-      fValue = v;
-   }
-   Changed();
-   return true;
-}
-
-// __________________________________________________________
-
-dabc::RateParameter::RateParameter(WorkingProcessor* parent,
-                                   const char* name, bool synchron, double interval,
-                                   const char* units, double lower, double upper,
-                                   int debug_width, int debug_prec) :
-   Parameter(parent, name),
-   fSynchron(synchron),
-   fInterval(interval),
-   fTotalSum(0.),
-   fLastUpdateTm(NullTimeStamp),
-   fDiffSum(0.)
-{
-   if (fInterval<1e-3) fInterval = 1e-3;
-
-   fRecord.value = 0.;
-   fRecord.lower = lower;
-   fRecord.upper = upper;
-   fRecord.displaymode = dabc::DISPLAY_BAR;
-   fRecord.alarmlower = 0.;
-   fRecord.alarmupper = 0.;
-   strncpy(fRecord.color, col_Blue, sizeof(fRecord.color));
-   strncpy(fRecord.alarmcolor, col_Yellow, sizeof(fRecord.alarmcolor));
-   strncpy(fRecord.units, units ? units : "1/s", sizeof(fRecord.units));
-
-   DOUT2(("Create ratemeter %s %s %f %f", GetName(), fRecord.units, fRecord.lower, fRecord.upper));
-
-   SetDebugOutput(debug_width>0);
-
-   fOutWidth = debug_width>0 ? debug_width : 5;
-   fOutPrecision = debug_width>0 ? debug_prec : 1;
-
-   Ready();
-}
-
-void dabc::RateParameter::DoDebugOutput()
-{
-   LockGuard lock(fValueMutex);
-
-   DOUT0(("%s = %*.*f %s", GetName(), fOutWidth, fOutPrecision, fRecord.value, fRecord.units));
-}
-
-
-void dabc::RateParameter::ChangeRate(double rate)
-{
-   DOUT4(("Change rate %s - %5.2f %s", GetName(), rate, fRecord.units));
+//   DOUT0(("Par %s Process timeout !!!", GetName()));
 
    {
-      LockGuard lock(fValueMutex);
-      fRecord.value = rate;
-   }
-   Changed();
-}
+      LockGuard lock(ObjectMutex());
 
-bool dabc::RateParameter::GetValue(std::string& value) const
-{
-   LockGuard lock(fValueMutex);
-   dabc::formats(value, "%f", fRecord.value);
-   return true;
-}
+      if ((fStatistic!=kindNone) && fAsynchron) {
+         fRateTimeSum += last_dif;
+         fire = _CalcRate(value);
+         if (fire) { fLastChangeTm = dabc::Now(); doset = true; }
+      } else
 
-bool dabc::RateParameter::SetValue(const std::string &value)
-{
-   double v = 0.;
-   {
-      LockGuard lock(fValueMutex);
-      if (fFixed || (value.length()==0)) return false;
-      if (!dabc::str_to_double(value.c_str(), &v)) return false;
-   }
-   ChangeRate(v);
-   return true;
-}
+      if (fAsynchron) {
+         fRateTimeSum += last_dif;
 
-void dabc::RateParameter::AccountValue(double v)
-{
-   if (fSynchron) {
-      fTotalSum += v;
-      TimeStamp_t tm = TimeStamp();
-      if (IsNullTime(fLastUpdateTm)) fLastUpdateTm = tm;
-      double dist = TimeDistance(fLastUpdateTm, tm);
-      if (dist > GetInterval()) {
-         ChangeRate(fTotalSum / dist);
-         fTotalSum = 0.;
-         fLastUpdateTm = tm;
-      }
-   } else {
-      LockGuard lock(fValueMutex);
-      fTotalSum += v;
-   }
-
-}
-
-void dabc::RateParameter::ProcessTimeout(double last_diff)
-{
-   if (last_diff<=0.) return;
-
-   bool isnewrate = false;
-   double newrate = 0.;
-
-   if (fSynchron) {
-      TimeStamp_t tm = TimeStamp();
-      if (IsNullTime(fLastUpdateTm)) fLastUpdateTm = tm;
-      double dist = TimeDistance(fLastUpdateTm, tm);
-      if (dist > GetInterval()) {
-         newrate = fTotalSum / dist;
-         isnewrate = true;
-         fTotalSum = 0.;
-         fLastUpdateTm = tm;
-      }
-   } else {
-      LockGuard lock(fValueMutex);
-      fDiffSum += last_diff;
-
-      if (fDiffSum >= GetInterval()) {
-         isnewrate = true;
-         newrate = fTotalSum / fDiffSum;
-         fTotalSum = 0.;
-         fDiffSum = 0.;
+         if (!fLastChangeTm.null() && (fRateTimeSum>fInterval)) {
+            fire = true;
+            fLastChangeTm.Reset();
+            fRateTimeSum = 0.;
+         }
       }
    }
 
-   if (isnewrate) ChangeRate(newrate);
+   if (doset) {
+      dabc::RecordContainer::SetField("", value.c_str(), RecordField::kind_double());
+      cvalue = value.c_str();
+   } else
+      cvalue = dabc::RecordContainer::GetField("");
+
+   if (fire)
+      FireModified(cvalue);
 }
 
-void dabc::RateParameter::SetUnits(const char* name)
+bool dabc::ParameterContainer::_CalcRate(std::string& value)
 {
-   LockGuard lock(fValueMutex);
-   strncpy(fRecord.units, name, sizeof(fRecord.units)-1);
-}
+   if ((fRateTimeSum < fInterval) || (fRateTimeSum<1e-6)) return false;
 
-void dabc::RateParameter::SetLimits(double lower, double upper)
-{
-   LockGuard lock(fValueMutex);
-   fRecord.lower = lower;
-   fRecord.upper = upper;
-}
+   double res = 0.;
 
-const char* dabc::RateParameter::_GetDisplayMode()
-{
-   switch (fRecord.displaymode) {
-      case DISPLAY_ARC: return "ARC";
-      case DISPLAY_BAR: return "BAR";
-      case DISPLAY_TREND: return "TREND";
-      case DISPLAY_STAT: return "STAT";
+   if (fStatistic==kindRate)
+      res = fRateValueSum / fRateTimeSum;
+   else
+   if ((fStatistic==kindAverage) && (fRateNumSum>0)) {
+      res = fRateValueSum / fRateNumSum;
    }
 
-   return "BAR";
-}
+   fRateValueSum = 0.;
+   fRateTimeSum = 0.;
+   fRateNumSum = 0.;
 
-void dabc::RateParameter::_SetDisplayMode(const char* v)
-{
-    if (v==0) return;
-
-    if (strcmp(v,"ARC")==0) fRecord.displaymode = DISPLAY_ARC; else
-    if (strcmp(v,"BAR")==0) fRecord.displaymode = DISPLAY_BAR; else
-    if (strcmp(v,"TREND")==0) fRecord.displaymode = DISPLAY_TREND; else
-    if (strcmp(v,"STAT")==0) fRecord.displaymode = DISPLAY_STAT;
-}
-
-
-bool dabc::RateParameter::Store(ConfigIO &cfg)
-{
-   LockGuard lock(fValueMutex);
-
-   cfg.CreateItem("Ratemeter");
-
-   cfg.CreateAttr(xmlNameAttr, GetName());
-
-   cfg.CreateAttr(xmlValueAttr, FORMAT(("%f", fRecord.value)));
-
-   cfg.CreateAttr("units", fRecord.units);
-
-   cfg.CreateAttr("displaymode", _GetDisplayMode());
-
-   cfg.CreateAttr("lower", FORMAT(("%f", fRecord.lower)));
-
-   cfg.CreateAttr("upper", FORMAT(("%f", fRecord.upper)));
-
-   cfg.CreateAttr("color", fRecord.color);
-
-   cfg.CreateAttr("alarmlower", FORMAT(("%f", fRecord.alarmlower)));
-
-   cfg.CreateAttr("alarmupper", FORMAT(("%f", fRecord.alarmlower)));
-
-   cfg.CreateAttr("alarmcolor", fRecord.alarmcolor);
-
-   cfg.CreateAttr("debug", IsDebugOutput() ? "true" : "false");
-
-   cfg.CreateAttr("interval", FORMAT(("%f", fInterval)));
-
-   cfg.PopItem();
+   dabc::formats(value, "%*.*f", fRateWidth, fRatePrec, res);
 
    return true;
 }
 
-bool dabc::RateParameter::Find(ConfigIO &cfg)
-{
-   if (!cfg.FindItem("Ratemeter")) return false;
 
-   return cfg.CheckAttr("name", GetName());
+void dabc::ParameterContainer::SetSynchron(bool on, double interval, bool everyevnt)
+{
+   LockGuard lock(ObjectMutex());
+
+   fAsynchron = !on;
+
+   fInterval = interval > 0 ? interval : 0.;
+
+   fDeliverAllEvents = everyevnt;
 }
 
-bool dabc::RateParameter::Read(ConfigIO &cfg)
+dabc::Worker* dabc::ParameterContainer::GetWorker() const
 {
-   // no any suitable matches found for top node
-
-   std::string v;
-
-   if (!cfg.Find(this, v)) return false;
-
-   LockGuard lock(fValueMutex);
-
-   if (cfg.Find(this, v, xmlValueAttr))
-      if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.value);
-
-   if (!v.empty()) DOUT0(("Ratemeter %s value = %s", GetName(), v.c_str()));
-
-   if (cfg.Find(this, v, "units"))
-      if (!v.empty()) strncpy(fRecord.units, v.c_str(), sizeof(fRecord.units));
-
-   if (cfg.Find(this, v, "displaymode"))
-      _SetDisplayMode(v.c_str());
-
-   if (cfg.Find(this, v, "lower"))
-      if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.lower);
-
-   if (cfg.Find(this, v, "upper"))
-      if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.upper);
-
-   if (cfg.Find(this, v, "color"))
-      if (!v.empty()) strncpy(fRecord.color, v.c_str(), sizeof(fRecord.color));
-
-   if (cfg.Find(this, v, "alarmlower"))
-      if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.alarmlower);
-
-   if (cfg.Find(this, v, "alarmupper"))
-      if (!v.empty()) sscanf(v.c_str(), "%f", &fRecord.alarmupper);
-
-   if (cfg.Find(this, v, "alarmcolor"))
-      if (!v.empty()) strncpy(fRecord.alarmcolor, v.c_str(), sizeof(fRecord.alarmcolor));
-
-   if (cfg.Find(this, v, "debug"))
-      if (!v.empty()) SetDebugOutput((v == "true") || (v=="1") || (v=="TRUE"));
-
-   if (cfg.Find(this, v, "interval"))
-      if (!v.empty()) dabc::str_to_double(v.c_str(), &fInterval);
-
-   if (cfg.Find(this, v, "width"))
-      if (!v.empty()) dabc::str_to_int(v.c_str(), &fOutWidth);
-
-   if (cfg.Find(this, v, "prec"))
-      if (!v.empty()) dabc::str_to_int(v.c_str(), &fOutPrecision);
-
-   return true;
-}
-
-// ___________________________________________________
-
-dabc::StatusParameter::StatusParameter(WorkingProcessor* parent, const char* name, int severity) :
-   Parameter(parent, name)
-{
-   fRecord.severity = severity;
-   strcpy(fRecord.color,"Cyan");
-   strcpy(fRecord.status, "None"); // status name
-   Ready();
-}
-
-
-bool dabc::StatusParameter::SetStatus(const char* status, const char* color)
-{
-   {
-      LockGuard lock(fValueMutex);
-      if (fFixed) return false;
-      if(status)
-         strncpy(fRecord.status, status ,16);
-      if (color)
-         strncpy(fRecord.color, color,16);
+   Object* prnt = GetParent();
+   while (prnt!=0) {
+      Worker* w = dynamic_cast<Worker*> (prnt);
+      if (w!=0) return w;
    }
-   Changed();
-   return true;
-
+   return 0;
 }
 
-// ___________________________________________________
-
-dabc::InfoParameter::InfoParameter(WorkingProcessor* parent, const char* name, int verbose, const char* color) :
-   Parameter(parent, name)
+const std::string& dabc::ParameterContainer::Kind() const
 {
-   fRecord.verbose = verbose;
-   strncpy(fRecord.color, (color ? color : "Cyan"), sizeof(fRecord.color));
-   strcpy(fRecord.info, "None"); // info message
-   Ready();
+   LockGuard lock(ObjectMutex());
+   return fKind;
 }
 
-bool dabc::InfoParameter::GetValue(std::string &value) const
+// --------------------------------------------------------------------------------
+
+bool dabc::Parameter::NeedTimeout()
 {
-   LockGuard lock(fValueMutex);
-   value = fRecord.info;
-   return true;
+   LockGuard lock(ObjectMutex());
+
+   return GetObject() ? GetObject()->fAsynchron : false;
 }
 
-bool dabc::InfoParameter::SetValue(const std::string &value)
+bool dabc::Parameter::TakeAttrModified()
 {
-   {
-      LockGuard lock(fValueMutex);
-      if (fFixed) return false;
-      strncpy(fRecord.info, value.c_str(), sizeof(fRecord.info));
-   }
-   Changed();
-   return true;
-}
+   LockGuard lock(ObjectMutex());
 
-bool dabc::InfoParameter::SetColor(const std::string &color)
-{
-   LockGuard lock(fValueMutex);
-   if (fFixed) return false;
-   strncpy(fRecord.color, color.c_str(), sizeof(fRecord.color));
-   return true;
-}
+   bool res = false;
 
-
-// ___________________________________________________
-
-dabc::HistogramParameter::HistogramParameter(WorkingProcessor* parent, const char* name, int nchannles) :
-   Parameter(parent, name),
-   fRecord(0),
-   fLastTm(NullTimeStamp),
-   fInterval(1.)
-{
-   int sz = sizeof(HistogramRec) + (nchannles-1) * sizeof(int);
-
-   fRecord = (HistogramRec*) malloc(sz);
-
-   memset(fRecord, 0, sz);
-   fRecord->channels = nchannles;
-
-   SetColor(col_Blue);
-   SetLimits(0, nchannles);
-
-   Ready();
-}
-
-dabc::HistogramParameter::~HistogramParameter()
-{
-   free(fRecord);
-   fRecord = 0;
-}
-
-void dabc::HistogramParameter::SetLimits(float xmin, float xmax)
-{
-   LockGuard lock(fValueMutex);
-
-   fRecord->xlow = xmin;
-   fRecord->xhigh = xmax;
-}
-
-void dabc::HistogramParameter::SetColor(const char* color)
-{
-   LockGuard lock(fValueMutex);
-
-   strncpy(fRecord->color, color, sizeof(fRecord->color));
-}
-
-void dabc::HistogramParameter::SetLabels(const char* xlabel, const char* ylabel)
-{
-   LockGuard lock(fValueMutex);
-
-   strncpy(fRecord->xlett, xlabel, sizeof(fRecord->xlett));
-   strncpy(fRecord->cont, ylabel, sizeof(fRecord->cont));
-}
-
-
-void dabc::HistogramParameter::SetInterval(double sec)
-{
-   LockGuard lock(fValueMutex);
-
-   fInterval = sec;
-
-   if (fInterval<1e-3) fInterval = 1e-3;
-}
-
-void dabc::HistogramParameter::Clear()
-{
-   {
-      LockGuard lock(fValueMutex);
-
-      int* arr = &(fRecord->data);
-      for (int n=0;n<fRecord->channels;n++)
-         arr[n] = 0;
-
-      _CheckChanged(true);
+   if (GetObject()) {
+      res = GetObject()->fAttrModified;
+      GetObject()->fAttrModified = false;
    }
 
-   Changed();
+   return res;
 }
 
-bool dabc::HistogramParameter::Fill(float x)
+int dabc::Parameter::GetDebugLevel() const
 {
-   bool ch = false;
+   return GetObject() ? GetObject()->GetDebugLevel() : -1;
+}
+
+dabc::Parameter& dabc::Parameter::SetRatemeter(bool synchron, double interval)
+{
+
+   if (GetObject()==0) return *this;
+
+   GetObject()->fRateWidth = Field("width").AsInt(GetObject()->fRateWidth);
+   GetObject()->fRatePrec = Field("prec").AsInt(GetObject()->fRatePrec);
 
    {
-      LockGuard lock(fValueMutex);
+      LockGuard lock(ObjectMutex());
 
-      if ((x<fRecord->xlow) || (x>=fRecord->xhigh)) return false;
+      GetObject()->fStatistic = ParameterContainer::kindRate;
 
-      if (fRecord->xlow >= fRecord->xhigh) return false;
+      GetObject()->fInterval = interval;
 
-      x = (x - fRecord->xlow) / (fRecord->xhigh - fRecord->xlow) * fRecord->channels;
+      GetObject()->fAsynchron = !synchron;
 
-      int np = (int) x;
+      DOUT3(("Asynchron = %s", DBOOL(GetObject()->fAsynchron)));
 
-      if ((np<0) || (np>=fRecord->channels)) return false;
-
-      int* arr = &(fRecord->data);
-
-      arr[np]++;
-
-      ch = _CheckChanged();
+      GetObject()->fRateValueSum = 0.;
+      GetObject()->fRateTimeSum = 0.;
+      GetObject()->fRateNumSum = 0.;
    }
 
-   if (ch) Changed();
+   FireConfigured();
 
-   return true;
+   return *this;
 }
 
-bool dabc::HistogramParameter::_CheckChanged(bool force)
+dabc::Parameter& dabc::Parameter::DisableRatemeter()
 {
-   TimeStamp_t tm = TimeStamp();
+   if (GetObject()==0) return *this;
 
-   if (force || IsNullTime(fLastTm) || (TimeDistance(fLastTm, tm) > fInterval)) {
-      fLastTm = tm;
-      return true;
+   {
+      LockGuard lock(ObjectMutex());
+
+      GetObject()->fStatistic = ParameterContainer::kindNone;
+
+      GetObject()->fAsynchron = false;
    }
 
+   FireConfigured();
+
+   return *this;
+}
+
+bool dabc::Parameter::IsRatemeter() const
+{
+   if (GetObject()==0) return false;
+
+   LockGuard lock(ObjectMutex());
+
+   return GetObject()->fStatistic == ParameterContainer::kindRate;
+}
+
+
+dabc::Parameter& dabc::Parameter::SetAverage(bool synchron, double interval)
+{
+   if (GetObject()==0) return *this;
+
+   GetObject()->fRateWidth = Field("width").AsInt(GetObject()->fRateWidth);
+   GetObject()->fRatePrec = Field("prec").AsInt(GetObject()->fRatePrec);
+
+   {
+      LockGuard lock(ObjectMutex());
+
+      GetObject()->fStatistic = ParameterContainer::kindAverage;
+
+      GetObject()->fInterval = interval;
+
+      GetObject()->fAsynchron = !synchron;
+
+      DOUT3(("Asynchron = %s", DBOOL(GetObject()->fAsynchron)));
+
+      GetObject()->fRateValueSum = 0.;
+      GetObject()->fRateTimeSum = 0.;
+      GetObject()->fRateNumSum = 0.;
+   }
+
+   FireConfigured();
+
+   return *this;
+}
+
+dabc::Parameter& dabc::Parameter::DisableAverage()
+{
+   if (GetObject()==0) return *this;
+
+   {
+      LockGuard lock(ObjectMutex());
+
+      GetObject()->fStatistic = ParameterContainer::kindNone;
+
+      GetObject()->fAsynchron = false;
+   }
+
+   FireConfigured();
+
+   return *this;
+
+}
+
+
+bool dabc::Parameter::IsAverage() const
+{
+   if (GetObject()==0) return false;
+
+   LockGuard lock(ObjectMutex());
+
+   return GetObject()->fStatistic == ParameterContainer::kindAverage;
+}
+
+
+dabc::Parameter& dabc::Parameter::SetSynchron(bool on, double interval, bool everyevnt)
+{
+   if (GetObject()!=0)
+      GetObject()->SetSynchron(on, interval, everyevnt);
+
+   FireConfigured();
+
+   return *this;
+}
+
+
+dabc::Reference dabc::Parameter::GetWorker() const
+{
+   return GetObject() ? GetObject()->GetWorker() : 0;
+}
+
+int dabc::Parameter::ExecuteChange(Command cmd)
+{
+   CmdSetParameter setcmd = cmd;
+
+   bool res = SetStr(setcmd.ParValue().AsStr());
+
+   return res ? cmd_true : cmd_false;
+}
+
+bool dabc::Parameter::IsMonitored()
+{
+   if (GetObject()==0) return false;
+
+   LockGuard lock(ObjectMutex());
+
+   return GetObject()->fMonitored;
+}
+
+dabc::Parameter& dabc::Parameter::SetMonitored(bool on)
+{
+   if (GetObject()!=0) {
+
+      LockGuard lock(ObjectMutex());
+
+      GetObject()->fMonitored = on;
+   }
+
+   return *this;
+}
+
+const std::string dabc::Parameter::Kind() const
+{
+   if (GetObject()==0) return std::string();
+
+   return GetObject()->Kind();
+}
+
+const std::string dabc::Parameter::GetActualUnits() const
+{
+   if (GetObject()==0) return std::string();
+
+   return GetObject()->GetActualUnits();
+}
+
+void dabc::Parameter::FireConfigured()
+{
+   if (GetObject()) GetObject()->FireEvent(parConfigured);
+}
+
+void dabc::Parameter::FireModified()
+{
+   if (GetObject())
+      GetObject()->FireModified(AsStr());
+}
+
+// ========================================================================================
+
+std::string dabc::CommandDefinition::ArgName(int n) const
+{
+   return Field(dabc::format("#Arg%d",n)).AsStdStr();
+}
+
+bool dabc::CommandDefinition::HasArg(const std::string& name) const
+{
+   int num = NumArgs();
+
+   for (int n=0;n<num;n++)
+      if (ArgName(n)==name) return true;
    return false;
 }
+
+
+
+dabc::CommandDefinition& dabc::CommandDefinition::AddArg(const std::string& name, const std::string& kind, bool required, const std::string& dflt)
+{
+   if (name.empty() || (GetObject()==0)) return *this;
+
+   if (!HasArg(name)) {
+      int num = NumArgs();
+      Field(dabc::format("#Arg%d",num)).SetStr(name);
+      Field("#NumArgs").SetInt(num+1);
+   }
+
+   Field(name).SetStr(dflt);
+   Field(name+"_kind").SetStr(kind);
+   Field(name+"_req").SetBool(required);
+
+   FireConfigured();
+
+   return *this;
+}
+
+int dabc::CommandDefinition::NumArgs() const
+{
+   return Field("#NumArgs").AsInt(0);
+}
+
+bool dabc::CommandDefinition::GetArg(int n, std::string& name, std::string& kind, bool& required, std::string& dflt) const
+{
+   name = ArgName(n);
+   if (name.empty()) return false;
+
+   dflt = Field(name).AsStdStr();
+   kind = Field(name+"_kind").AsStdStr();
+   required = Field(name+"_req").AsBool();
+
+   return true;
+}
+
+dabc::Command dabc::CommandDefinition::MakeCommand() const
+{
+   dabc::Command cmd(GetName());
+
+   int num = NumArgs();
+
+   for (int n=0;n<num;n++) {
+      std::string name, kind, dflt;
+      bool required(false);
+      if (GetArg(n,name,kind,required, dflt))
+         if (required || !dflt.empty()) cmd.Field(name).SetStr(dflt);
+   }
+
+   return cmd;
+}
+

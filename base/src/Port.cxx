@@ -1,23 +1,22 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/Port.h"
 
 #include "dabc/logging.h"
 #include "dabc/Module.h"
 #include "dabc/PoolHandle.h"
 #include "dabc/Buffer.h"
-#include "dabc/Parameter.h"
 #include "dabc/Manager.h"
 
 dabc::PortException::PortException(Port* port, const char* info) throw() :
@@ -32,47 +31,99 @@ dabc::Port* dabc::PortException::GetPort() const throw()
 
 // ________________________________________________________________
 
-dabc::Port::Port(Basic* parent,
+dabc::Port::Port(Reference parent,
                  const char* name,
                  PoolHandle* pool,
                  unsigned recvqueue,
-                 unsigned sendqueue,
-                 BufferSize_t usrheadersize) :
+                 unsigned sendqueue) :
    ModuleItem(dabc::mitPort, parent, name),
-   fPool(pool),
+   fPoolHandle(),
+   fPool(),
    fInputQueueCapacity(recvqueue),
    fInputPending(0),
    fOutputQueueCapacity(sendqueue),
    fOutputPending(0),
-   fUsrHeaderSize(usrheadersize),
-   fTransport(0),
-   fInpRate(0),
-   fOutRate(0)
+   fInlineDataSize(0),
+   fInpRate(),
+   fOutRate(),
+   fTrHandle(),
+   fTransport(0)
 {
    if (recvqueue > 0)
-      fInputQueueCapacity = GetCfgInt(xmlInputQueueSize, recvqueue);
+      fInputQueueCapacity = Cfg(xmlInputQueueSize).AsInt(recvqueue);
 
    if (sendqueue > 0)
-      fOutputQueueCapacity = GetCfgInt(xmlOutputQueueSize, sendqueue);
+      fOutputQueueCapacity = Cfg(xmlOutputQueueSize).AsInt(sendqueue);
 
-   if (usrheadersize > 0)
-      fUsrHeaderSize = GetCfgInt(xmlHeaderSize, usrheadersize);
+   fInlineDataSize = Cfg(xmlInlineDataSize).AsInt(fInlineDataSize);
 
-   DOUT5(("Create Port %s with inp %u out %u hdr %u", GetName(), fInputQueueCapacity, fOutputQueueCapacity, fUsrHeaderSize));
+   if (pool!=0) {
+      fPoolHandle = Reference(pool);
+      dabc::mgr()->RegisterDependency(this, fPoolHandle());
+      fPool = pool->GetPoolRef();
+      dabc::mgr()->RegisterDependency(this, fPool());
+   }
+
+   if (GetMemoryPool()==0) {
+      EOUT(("No memory pool for port %s", GetName()));
+      exit(055);
+   }
+
+   DOUT4(("Create Port %s with inp %u out %u hdr %u", GetName(), fInputQueueCapacity, fOutputQueueCapacity, fInlineDataSize));
 }
 
 dabc::Port::~Port()
 {
-   DOUT5(( "Delete port %s %s tr = %p", GetName(), GetFullName().c_str(), fTransport));
+   if (fTransport != 0)
+      EOUT(("Port is not cleaned up - why????"));
 
-   Disconnect();
-
-   DOUT5(( "Delete port %s  done", GetName()));
+   DOUT4(("PORT: destructor %p", this));
 }
 
-void dabc::Port::ProcessEvent(EventId evid)
+
+dabc::ConnectionRequest dabc::Port::GetConnReq(bool force)
 {
-   switch (GetEventCode(evid)) {
+   dabc::ConnectionRequest req = Par(dabc::ConnectionObject::ObjectName());
+
+   if (!req.null() || !force) return req;
+
+   // at the moment when first connection request will be created,
+   // connection manager is activated
+   dabc::mgr.CreateConnectionManager();
+
+   req = new dabc::ConnectionObject(this, dabc::mgr.ComposeUrl(this));
+
+   ConfigIO io(dabc::mgr()->cfg());
+
+   io.ReadRecord(this, dabc::ConnectionObject::ObjectName(), req());
+
+   req()->FireEvent(parCreated);
+
+   return req;
+}
+
+
+dabc::ConnectionRequest dabc::Port::MakeConnReq(const std::string& url, bool isserver)
+{
+   dabc::ConnectionRequest req = GetConnReq(true);
+
+   req.SetInitState();
+
+   req.SetRemoteUrl(url);
+   req.SetServerSide(isserver);
+
+   return req;
+}
+
+void dabc::Port::RemoveConnReq()
+{
+   DestroyPar(dabc::ConnectionObject::ObjectName());
+}
+
+
+void dabc::Port::ProcessEvent(const EventId& evid)
+{
+   switch (evid.GetCode()) {
       case evntInput:
          if (fTransport!=0) fInputPending++;
          ProduceUserEvent(evntInput);
@@ -85,13 +136,18 @@ void dabc::Port::ProcessEvent(EventId evid)
 
       default:
          ModuleItem::ProcessEvent(evid);
+         break;
    }
 }
 
-
-dabc::MemoryPool* dabc::Port::GetMemoryPool() const
+dabc::PoolHandle* dabc::Port::GetPoolHandle() const
 {
-   return fPool ? fPool->getPool() : 0;
+   return (dabc::PoolHandle*) fPoolHandle();
+}
+
+dabc::MemoryPool* dabc::Port::GetMemoryPool()
+{
+   return (dabc::MemoryPool*) fPool();
 }
 
 unsigned dabc::Port::NumOutputBuffersRequired() const
@@ -118,51 +174,133 @@ unsigned dabc::Port::NumInputBuffersRequired() const
    return sz;
 }
 
-bool dabc::Port::AssignTransport(Transport* tr, bool sync)
+bool dabc::Port::AssignTransport(Reference handle, Transport* tr, bool sync)
 {
-   Command* cmd = new Command("AssignTransport");
-   cmd->SetPtr("#Transport", tr);
-   if (sync) return Execute(cmd)==cmd_true;
+   Command cmd("AssignTransport");
+   cmd.SetRef("TrHandle", handle);
+   cmd.SetPtr("#Transport", tr);
+   if (sync) return Execute(cmd);
    return Submit(cmd);
 }
 
-int dabc::Port::ExecuteCommand(Command* cmd)
+void dabc::Port::SetInpRateMeter(const Parameter& ref)
 {
-   if (cmd->IsName("AssignTransport")) {
+   fInpRate = ref.Ref();
+
+   if (fInpRate.GetUnits().empty())
+      fInpRate.SetUnits("MB");
+
+   // TODO: do we need dependency on the rate parameter or it should remain until we release it
+   // dabc::mgr()->RegisterDependency(this, fInpRate());
+}
+
+void dabc::Port::SetOutRateMeter(const Parameter& ref)
+{
+   fOutRate = ref.Ref();
+
+   if (fOutRate.GetUnits().empty())
+      fOutRate.SetUnits("MB");
+
+   // TODO: do we need dependency on the rate parameter or it should remain until we release it
+   // dabc::mgr()->RegisterDependency(this, fOutRate());
+}
+
+int dabc::Port::ExecuteCommand(Command cmd)
+{
+   if (cmd.IsName("AssignTransport")) {
+
       Transport* oldtr = fTransport;
-      fTransport = (Transport*) cmd->GetPtr("#Transport");
+      if (oldtr) oldtr->SetPort(0);
+      fTrHandle.Destroy();
 
-      DOUT5(("%s Get AssignTransport command old %p new %p", GetFullName().c_str(), oldtr, fTransport));
+      fTransport = (Transport*) cmd.GetPtr("#Transport");
+      fTrHandle = cmd.GetRef("TrHandle");
 
-      if (oldtr!=0) oldtr->SetPort(0);
+      DOUT4(("%s Get AssignTransport command old %p new %p", ItemName().c_str(), oldtr, fTransport));
 
       if (fTransport!=0)
-         if (!fTransport->SetPort(this))
+         if (!fTransport->SetPort(this)) {
             fTransport = 0;
+            fTrHandle.Destroy();
+         }
 
       fInputPending = 0;
       fOutputPending = 0;
 
-      if ((oldtr!=0) && (fTransport==0)) ProduceUserEvent(evntPortDisconnect); else
-      if ((oldtr==0) && (fTransport!=0)) ProduceUserEvent(evntPortConnect);
+      if ((oldtr!=0) && (fTransport==0)) {
+         ProduceUserEvent(evntPortDisconnect);
+         GetConnReq(true).ChangeState(ConnectionObject::sDisconnected, true);
+      } else
+      if ((oldtr==0) && (fTransport!=0)) {
+         ProduceUserEvent(evntPortConnect);
+         GetConnReq(true).ChangeState(ConnectionObject::sConnected, true);
+      }
 
       if (GetModule()->IsRunning() && fTransport)
          fTransport->StartTransport();
 
-      DOUT5(("%s processed AssignTransport command cansend %s", GetFullName().c_str(), DBOOL(CanSend())));
-   } else
-   if (cmd->IsName(CmdDestroyTransport::CmdName())) {
-      Disconnect();
-   } else
-      return cmd_false;
+      DOUT5(("%s processed AssignTransport command cansend %s", ItemName().c_str(), DBOOL(CanSend())));
 
-   return cmd_true;
+      return cmd_true;
+   }
+
+   return ModuleItem::ExecuteCommand(cmd);
+}
+
+void dabc::Port::ObjectCleanup()
+{
+   DOUT4(("PORT:%s ObjectCleanup obj=%p", ItemName().c_str(), this));
+
+   // FIXME: should we cleanup transport queue this way? Can transport do itself this job?
+   // while (SkipInputBuffers(1));
+
+   // remove transport
+   Disconnect();
+
+   // clear pool handle reference
+   fPoolHandle.Release();
+
+   // clear pool reference
+   fPool.Release();
+
+   fInpRate.Release();
+   fOutRate.Release();
+
+   dabc::ModuleItem::ObjectCleanup();
+
+   DOUT4(("PORT:%s ObjectCleanup done numref: %u", ItemName().c_str(), NumReferences()));
+}
+
+void dabc::Port::ObjectDestroyed(Object* obj)
+{
+   if (fTrHandle()==obj) {
+      DOUT3(("PORT:%s Transport destroyed", ItemName().c_str()));
+      Disconnect();
+      ProduceUserEvent(evntPortDisconnect);
+      GetConnReq(true).ChangeState(ConnectionObject::sBroken, true);
+      DOUT0(("Inform that state changed port %s", ItemName().c_str()));
+   } else
+   if (fPool()==obj) {
+      // FIXME: should we delete ourself here or produce disconnect message ?
+      fPool.Release();
+   } else
+   if (fPoolHandle()==obj) {
+      fPoolHandle.Release();
+   }
+
+   dabc::ModuleItem::ObjectDestroyed(obj);
 }
 
 void dabc::Port::Disconnect()
 {
-   if (fTransport!=0) fTransport->SetPort(0);
-   fTransport = 0;
+   if (fTransport!=0) {
+      fTransport->SetPort(0);
+      fTransport = 0;
+   }
+
+   DOUT3(("Port %s destroy transport %p", ItemName().c_str(), fTrHandle()));
+
+   fTrHandle.Destroy();
    fInputPending = 0;
    fOutputPending = 0;
 }
@@ -175,58 +313,46 @@ void dabc::Port::DoStart()
 
 void dabc::Port::DoStop()
 {
+   DOUT5(("PORT:%s DoStop=%p transport=%p", ItemName().c_str(), this, fTransport));
+
    if (fTransport!=0)
       fTransport->StopTransport();
 }
 
-void dabc::Port::DoHalt()
-{
-   DOUT3(("Halt port %s Transport %p pending %u", GetFullName().c_str(), fTransport, InputPending()));
-
-   while (SkipInputBuffers(1));
-
-   DOUT3(("Halt port %s disconnect transport %p", GetFullName().c_str(), fTransport));
-
-   Disconnect();
-
-   DOUT3(("Halt port %s Transport %p done", GetFullName().c_str(), fTransport));
-
-}
-
-bool dabc::Port::Send(Buffer* buf) throw (PortOutputException)
+bool dabc::Port::Send(const Buffer& buf) throw (PortOutputException)
 {
    // Sends buffer to the Port
    // If return true, operation is successful
    // If return false, error is occurs
    // In all cases buffer is no longer available to user and will be released by the core
 
-   if (buf==0) throw PortOutputException(this, "No buffer specified");
+   if (buf.null()) throw PortOutputException(this, "No buffer specified");
 
-   double size_mb = (buf->GetTotalSize() + buf->GetHeaderSize())/1024./1024.;
+   double size_mb = buf.GetTotalSize()/1024./1024.;
 
    if (fTransport==0) {
-      if (fOutRate) fOutRate->AccountValue(size_mb);
-      dabc::Buffer::Release(buf);
+      fOutRate.SetDouble(size_mb);
+      (const_cast<Buffer*>(&buf))->Release();
       return false;
    }
 
    if (!CanSend()) {
-      dabc::Buffer::Release(buf);
+      (const_cast<Buffer*>(&buf))->Release();
       throw PortOutputException(this, "Output blocked - queue is full");
    }
 
    if (!fTransport->Send(buf)) {
-      dabc::Buffer::Release(buf);
+      (const_cast<Buffer*>(&buf))->Release();
       return false;
    }
 
-   if (fOutRate) fOutRate->AccountValue(size_mb);
+   fOutRate.SetDouble(size_mb);
 
    fOutputPending++;
    return true;
 }
 
-dabc::Buffer* dabc::Port::Recv() throw (PortInputException)
+dabc::Buffer dabc::Port::Recv() throw (PortInputException)
 {
    if (fTransport==0) throw PortInputException(this, "No transport");
 
@@ -235,12 +361,12 @@ dabc::Buffer* dabc::Port::Recv() throw (PortInputException)
    else
       fInputPending--;
 
-   dabc::Buffer* buf(0);
+   dabc::Buffer buf;
 
-   if (!fTransport->Recv(buf)) return 0;
-
-   if (fInpRate && buf)
-      fInpRate->AccountValue((buf->GetTotalSize() + buf->GetHeaderSize())/1024./1024.);
+   if (fTransport->Recv(buf))
+      fInpRate.SetDouble(buf.GetTotalSize()/1024./1024.);
+//   else 
+//     EOUT(("Didnot get buffer from transport pending %d", fInputPending));
 
    return buf;
 }
@@ -249,9 +375,9 @@ bool dabc::Port::SkipInputBuffers(unsigned num)
 {
    while (num-->0) {
       if (!CanRecv()) return false;
-      dabc::Buffer* buf = Recv();
-      if (buf==0) return false;
-      dabc::Buffer::Release(buf);
+      dabc::Buffer buf = Recv();
+      if (buf.null()) return false;
+      buf.Release();
    }
    return true;
 }
@@ -260,3 +386,39 @@ int dabc::Port::GetTransportParameter(const char* name)
 {
    return fTransport ? fTransport->GetParameter(name) : 0;
 }
+
+dabc::Buffer& dabc::Port::InputBuffer(unsigned indx) const
+{
+   if ((fTransport==0) || (indx>=InputPending()))
+      throw dabc::Exception("Wrong argument in Port::InputBuffer call");
+
+   return fTransport->RecvBuffer(indx);
+}
+
+
+// ====================================================================
+
+bool dabc::PortRef::IsConnected() const
+{
+   return GetObject() ? GetObject()->IsConnected() : false;
+}
+
+bool dabc::PortRef::Disconnect()
+{
+   if (!IsConnected()) return true;
+
+   if (CanSubmitCommand())
+      return GetObject()->AssignTransport(Reference(), 0, true);
+
+   GetObject()->Disconnect();
+
+   return true;
+}
+
+dabc::Reference dabc::PortRef::GetPool()
+{
+   if (GetObject()) return GetObject()->fPool.Ref();
+
+   return dabc::Reference();
+}
+

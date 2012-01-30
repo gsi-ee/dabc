@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_ModuleSync
 #define DABC_ModuleSync
 
@@ -57,14 +57,12 @@ namespace dabc {
    class ModuleSync : public Module {
 
       public:
-         ModuleSync(const char* name, Command* cmd = 0);
+         ModuleSync(const char* name, Command cmd = 0);
 
          virtual ~ModuleSync();
 
          bool ModuleWorking(double timeout = 0.)
             throw (StopException, TimeoutException);
-
-         virtual bool Halt();
 
          virtual void MainLoop() = 0;
 
@@ -72,17 +70,15 @@ namespace dabc {
             throw (StopException, TimeoutException);
          bool WaitConnect(Port* port, double timeout = -1)
             throw (PortException, StopException, TimeoutException);
-         Buffer* Recv(Port* port, double timeout = -1)
+         Buffer Recv(Port* port, double timeout = -1)
             throw (PortInputException, StopException, TimeoutException);
-         Buffer* RecvFromAny(Port** port = 0, double timeout = -1)
+         Buffer RecvFromAny(Port** port = 0, double timeout = -1)
             throw (PortInputException, StopException, TimeoutException);
          bool WaitInput(Port* port, unsigned minqueuesize = 1, double timeout = -1)
             throw (PortInputException, StopException, TimeoutException);
-         Buffer* TakeBuffer(PoolHandle* pool, BufferSize_t size, BufferSize_t hdrsize = 0, double timeout = -1)
+         Buffer TakeBuffer(PoolHandle* pool, BufferSize_t size, double timeout = -1)
             throw (StopException, TimeoutException);
-         bool Send(Port* port, Buffer* buf, double timeout = -1)
-            throw (PortOutputException, StopException, TimeoutException);
-         bool Send(Port* port, BufferGuard& buf, double timeout = -1)
+         bool Send(Port* port, const Buffer& buf, double timeout = -1)
             throw (PortOutputException, StopException, TimeoutException);
 
          void SetTmoutExcept(bool on = true) { fTmoutExcept = on; }
@@ -104,12 +100,14 @@ namespace dabc {
            * execution until new Start of the module is called from outside */
          void StopUntilRestart();
 
+         virtual void ObjectCleanup();
+
       private:
 
-         virtual void DoProcessorMainLoop();
-         virtual void DoProcessorAfterMainLoop();
+         virtual void DoWorkerMainLoop();
+         virtual void DoWorkerAfterMainLoop();
 
-         virtual int PreviewCommand(Command* cmd);
+         virtual int PreviewCommand(Command cmd);
 
          bool WaitItemEvent(double& tmout, ModuleItem* item = 0, uint16_t *resevid = 0, ModuleItem** resitem = 0)
             throw (StopException, TimeoutException);
@@ -119,13 +117,13 @@ namespace dabc {
          bool fTmoutExcept;
          bool fDisconnectExcept;
          bool fSyncCommands;
-         CommandsQueue fNewCommands;
+         CommandsQueue* fNewCommands;
 
-         ModuleItem*  fWaitItem;
-         uint16_t     fWaitId;
-         bool         fWaitRes;
+         ModuleItem*   fWaitItem;
+         uint16_t      fWaitId;
+         bool          fWaitRes;
 
-         ELoopStatus  fLoopStatus;
+         bool          fInsideMainLoop;  //!< flag indicates if main loop is executing
 
    };
 }

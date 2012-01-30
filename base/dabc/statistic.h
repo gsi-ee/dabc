@@ -1,26 +1,22 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_statistic
 #define DABC_statistic
 
 #include <stdio.h>
 
 #include <stdint.h>
-
-#ifndef DABC_timing
-#include "dabc/timing.h"
-#endif
 
 #include <vector>
 
@@ -66,9 +62,9 @@ namespace dabc {
         Ratemeter();
         virtual ~Ratemeter();
 
-        void DoMeasure(double interval_sec, long npoints);
+        void DoMeasure(double interval_sec, long npoints, double firsttm = 0.);
 
-        void Packet(int size);
+        void Packet(int size, double tm = 0.);
         void Reset();
 
         double GetRate();
@@ -82,7 +78,7 @@ namespace dabc {
         static void SaveRatesInFile(const char* fname, Ratemeter** rates, int nrates, bool withsum = false);
 
      protected:
-        TimeStamp_t firstoper, lastoper;
+        double firstoper, lastoper;
         int64_t numoper, totalpacketsize;
 
         double fMeasureInterval; // interval between two points
@@ -92,9 +88,11 @@ namespace dabc {
 
    class Average {
       public:
-         Average() { Reset(); }
-         virtual ~Average() {}
-         void Reset() { num = 0; sum1=0.; sum2=0.; min=0.; max=0.; }
+         Average();
+         virtual ~Average();
+         void AllocateHist(int nbins, double xmin, double xmax);
+         void ShowHist();
+         void Reset();
          void Fill(double zn);
          long Number() const { return num; }
          double Mean() const { return num>0 ? sum1/num : 0.; }
@@ -107,6 +105,12 @@ namespace dabc {
          double sum1;
          double sum2;
          double min, max;
+         long* hist; // histogram, same as in root hist[0], undeflow, hist[n+1] - overflow
+         int nhist;
+         double hist_min;
+         double hist_max;
+
+
    };
 
    long GetProcVirtMem();

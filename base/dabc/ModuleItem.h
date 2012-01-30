@@ -1,33 +1,29 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_ModuleItem
 #define DABC_ModuleItem
 
-#ifndef DABC_Basic
-#include "dabc/Basic.h"
-#endif
-
-#ifndef DABC_WorkingProcessor
-#include "dabc/WorkingProcessor.h"
-#endif
-
-#ifndef DABC_ModuleException
-#include "dabc/ModuleException.h"
+#ifndef DABC_Worker
+#include "dabc/Worker.h"
 #endif
 
 #ifndef DABC_Module
 #include "dabc/Module.h"
+#endif
+
+#ifndef DABC_ModuleException
+#include "dabc/ModuleException.h"
 #endif
 
 #include <stdint.h>
@@ -45,7 +41,7 @@ namespace dabc {
     };
 
    enum EModuleEvents {
-           evntNone = WorkingProcessor::evntFirstSystem,
+           evntNone = Worker::evntFirstSystem,
            evntInput,
            evntOutput,
            evntPool,
@@ -60,13 +56,12 @@ namespace dabc {
            moduleitemAnyId = 65535      // special id to identify any item (used in WaitForEvent)
    };
 
-   class ModuleItem : public Folder,
-                      public WorkingProcessor {
+   class ModuleItem : public Worker {
       friend class Module;
 
       protected:
 
-         ModuleItem(int typ, Basic* parent, const char* name);
+         ModuleItem(int typ, Reference parent, const char* name);
 
       public:
          virtual ~ModuleItem();
@@ -81,13 +76,9 @@ namespace dabc {
          void ProduceUserEvent(uint16_t evid)
            { fModule->GetUserEvent(this, evid); }
 
-         virtual WorkingProcessor* GetCfgMaster() { return GetModule(); }
-
-         virtual WorkingProcessor* GetObjectProcessor() { return this; }
-
          virtual void DoStart() {}
          virtual void DoStop() {}
-         virtual void DoHalt() {}
+         void ThisItemCleaned();
 
          Module*  fModule;
          int      fItemType;
@@ -106,6 +97,13 @@ namespace dabc {
       public:
 
          ModuleItem* GetItem() const throw() { return fItem; }
+   };
+
+
+   class ModuleItemRef : public WorkerRef {
+
+      DABC_REFERENCE(ModuleItemRef, WorkerRef, ModuleItem)
+
    };
 
 }

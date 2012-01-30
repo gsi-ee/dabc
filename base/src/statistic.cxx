@@ -1,21 +1,23 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/statistic.h"
 
 #include <math.h>
 #include <string.h>
+
 #include "dabc/logging.h"
+#include "dabc/timing.h"
 
 dabc::CpuStatistic::CpuStatistic(bool withmem) :
    fStatFp(0),
@@ -160,31 +162,34 @@ dabc::Ratemeter::~Ratemeter()
    Reset();
 }
 
-void dabc::Ratemeter::Packet(int size)
+void dabc::Ratemeter::Packet(int size, double now)
 {
-   TimeStamp_t now = TimeStamp();
-   if (IsNullTime(firstoper)) {
-      lastoper = NullTimeStamp;
+   if (now <= 0.) now = dabc::Now().AsDouble();
+
+   if (firstoper<=0.) {
       firstoper = now;
+      lastoper = 0.;
       numoper = 0;
       totalpacketsize = 0;
-   } else {
+   } else
+   if (now>=firstoper) {
       lastoper = now;
       numoper++;
       totalpacketsize+=size;
-   }
+   } else
+      return; // do not account packets comming before expected start of measurement
 
-   if (fPoints!=0) {
-      double npnt = TimeDistance(firstoper, now) / fMeasureInterval;
+   if ((fPoints!=0) && (fMeasureInterval>0)) {
+      long npnt = lrint((now - firstoper) / fMeasureInterval);
       if ((npnt>=0) && (npnt<fMeasurePoints))
-         fPoints[long(npnt)]+=size / fMeasureInterval;
+         fPoints[npnt] += size / fMeasureInterval;
    }
 }
 
 void dabc::Ratemeter::Reset()
 {
-  firstoper = NullTimeStamp;
-  lastoper = NullTimeStamp;
+  firstoper = 0.;
+  lastoper = 0.;
   numoper = 0;
   totalpacketsize = 0;
 
@@ -202,12 +207,12 @@ double dabc::Ratemeter::GetRate()
 
    double totaltm = GetTotalTime();
    if ((numoper<2) || (totaltm<=0.)) return 0.;
-   return totalpacketsize / totaltm / 1024. / 1024.;
+   return totalpacketsize / totaltm * 1e-6;
 }
 
 double dabc::Ratemeter::GetTotalTime()
 {
-   return TimeDistance(firstoper, lastoper);
+   return lastoper - firstoper;
 }
 
 int dabc::Ratemeter::AverPacketSize()
@@ -216,7 +221,7 @@ int dabc::Ratemeter::AverPacketSize()
    return totalpacketsize/numoper;
 }
 
-void dabc::Ratemeter::DoMeasure(double interval_sec, long npoints)
+void dabc::Ratemeter::DoMeasure(double interval_sec, long npoints, double firsttm)
 {
    Reset();
    fMeasureInterval = interval_sec;
@@ -224,6 +229,8 @@ void dabc::Ratemeter::DoMeasure(double interval_sec, long npoints)
    fPoints = new double[fMeasurePoints];
    for (int n=0;n<fMeasurePoints;n++)
       fPoints[n] = 0.;
+
+   firstoper = firsttm;
 }
 
 void dabc::Ratemeter::SaveRatesInFile(const char* fname, Ratemeter** rates, int nrates, bool withsum)
@@ -265,6 +272,48 @@ void dabc::Ratemeter::SaveInFile(const char* fname)
 
 // ************************************************
 
+dabc::Average::Average()
+{
+   hist = 0;
+   nhist = 0;
+   hist_min = 0.;
+   hist_max = 1.;
+   Reset();
+}
+
+
+dabc::Average::~Average()
+{
+   AllocateHist(0, 0., 1.);
+}
+
+void dabc::Average::AllocateHist(int nbins, double xmin, double xmax)
+{
+   if (hist) { delete[] hist; hist = 0; nhist = 0; }
+
+   if ((nbins>0) && (xmax>xmin)) {
+      hist = new long[nbins+2];
+      nhist = nbins;
+      hist_min = xmin;
+      hist_max = xmax;
+      for (int n=0;n<nhist+2;n++) hist[n] = 0;
+   }
+}
+
+
+void dabc::Average::Reset()
+{
+   num = 0;
+   sum1=0.;
+   sum2=0.;
+   min=0.;
+   max=0.;
+   if (hist && nhist)
+      for (int n=0;n<nhist+2;n++)
+         hist[n] = 0;
+}
+
+
 void dabc::Average::Fill(double zn)
 {
    if (num==0) {
@@ -278,6 +327,16 @@ void dabc::Average::Fill(double zn)
    num++;
    sum1 += zn;
    sum2+= zn*zn;
+
+   if (hist && nhist) {
+      if (zn<hist_min) hist[0]++; else
+      if (zn>=hist_max) hist[nhist+1]++; else {
+         // +0.5 to set integer value in the middle of interval
+         long bin = lrint((zn - hist_min) / (hist_max-hist_min) * nhist  + 0.5);
+         if ((bin>0) && (bin<=nhist)) hist[bin]++;
+                                else EOUT(("Bin error bin = %ld nhist = %d", bin, nhist));
+      }
+   }
 }
 
 double dabc::Average::Dev() const
@@ -293,6 +352,24 @@ void dabc::Average::Show(const char* name, bool showextr)
    else
       DOUT1(("%s = %f +- %f",name,Mean(), Dev()));
 }
+
+void dabc::Average::ShowHist()
+{
+   if ((hist==0) || (nhist==0)) return;
+
+   long sum0(0);
+   for (int n=0;n<nhist+2;n++) sum0+=hist[n];
+   if (sum0<=0) sum0=1;
+
+   DOUT1(("Below %5.2f cnt = %3ld %5.1f", hist_min, hist[0], 100.*hist[0]/sum0));
+   long sum1 = hist[0];
+   for (int n=1;n<=nhist;n++) {
+      sum1+=hist[n];
+      DOUT1(("Bin%02d x:%5.2f = %3ld %5.1f", n, (n - 0.5) / nhist * (hist_max-hist_min) + hist_min, hist[n], 100.*sum1/sum0));
+   }
+   DOUT1(("Over %5.2f cnt = %3ld", hist_max, hist[nhist+1]));
+}
+
 
 // __________________________________________________________________
 

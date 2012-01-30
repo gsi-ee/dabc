@@ -1,29 +1,25 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_MemoryPool
 #define DABC_MemoryPool
 
-#ifndef DABC_Folder
-#include "dabc/Folder.h"
+#ifndef DABC_Worker
+#include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_WorkingProcessor
-#include "dabc/WorkingProcessor.h"
-#endif
-
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_Queue
+#include "dabc/Queue.h"
 #endif
 
 #ifndef DABC_Buffer
@@ -38,19 +34,8 @@
 
 namespace dabc {
 
-   class Buffer;
    class Mutex;
    class MemoryPool;
-
-   // this is alignment for the buffers and memory blocks, created by pool
-   // It must be a power of two and should be like 16 or 32 or 256
-   extern unsigned DefaultMemoryAllign;
-
-   // Default number of preallocated segments in reference array
-   extern unsigned DefaultNumSegments;
-
-   extern unsigned DefaultBufferSize;
-
 
    class MemoryPoolRequester {
       friend class MemoryPool;
@@ -60,346 +45,269 @@ namespace dabc {
 
          MemoryPool*   pool;
          BufferSize_t  bufsize;
-         BufferSize_t  hdrsize;
-         Buffer*       buf;
+         Buffer        buf;
+
+      protected:
+
+         Buffer TakeRequestedBuffer() { return buf; }
+
       public:
       // method must be reimplemented in user code to accept or
       // not buffer which was requested before
       // User returns true if he accept buffer, false means that buffer must be released
 
-         MemoryPoolRequester() : pool(0), bufsize(0), hdrsize(0), buf(0) {}
+         MemoryPoolRequester() : pool(0), bufsize(0), buf() {}
          virtual bool ProcessPoolRequest() = 0;
-         virtual ~MemoryPoolRequester() { if (buf!=0) EOUT(("buf !=0 in requester")); }
-   };
-
-   // _________________________________________________________
-
-   // This is block of buffers, which can be created/destroyed by memory
-   // pool on the "fly". It keeps allocated region and usage information
-
-
-   struct MemoryBlock {
-      typedef uint32_t BufferUsage_t;
-
-      void          *fBlock;         // buffer itself
-      uint64_t       fBlockSize;     // total size of block
-
-      BufferSize_t   fBufferSize;    // size of individual buffer
-      BufferNum_t    fNumBuffers;    // number of buffers in block
-      BufferNum_t    fNumIncrease;   // number of buffers to be increased
-      unsigned       fAlignment;     // alignment as it was specified in Allocate
-
-      BufferId_t     fBlockId;       // id of block itself (only block number in higher bytes)
-      MemoryBlock   *fNextBlock;     // pointer on the next block of the same kind
-
-      BufferUsage_t *fUsage;         // usage counters for individual buffers
-      BufferNum_t    fNumFree;       // total number of still free buffers
-      BufferNum_t    fSeekPos;       // last position where free buffer was found (used when no free queue is exists)
-      BufferNum_t   *fFreeQueue;     // circle queue of free buffers
-      BufferNum_t    fFreeFirst;     // first empty item in fFreeQueue
-      BufferNum_t    fFreeLast;      // last used item in fFreeQueue
-
-      unsigned       fChangeCounter; // value of change counter when block was created
-
-      MemoryBlock();
-      ~MemoryBlock();
-
-      bool IsNull() const { return fBlock==0; }
-
-      bool Allocate(BufferSize_t buffersize, BufferNum_t numbuf,  unsigned align = 0, bool usagequeue = true);
-      bool Release();
-
-      bool IsBlockFree() const { return fNumFree == fNumBuffers; }
-      unsigned NumUsedBuffers() const { return fNumBuffers - fNumFree; }
-      unsigned SumUsageCounters() const;
-
-      inline void* Block() const { return fBlock; }
-      inline uint64_t BlockSize() const { return fBlockSize; }
-
-      BufferSize_t   BufferSize() const { return fBufferSize; }
-      BufferNum_t    NumBuffers() const { return fNumBuffers; }
-      BufferNum_t    NumIncrease() const { return fNumIncrease; }
-      unsigned       Alignment() const { return fAlignment; }
-      bool           UseFreeQueue() const { return fFreeQueue!=0; }
-
-      inline void* RawBuffer(BufferNum_t id) { return (char*) fBlock + ((uint64_t) id) * fBufferSize; }
-
-      bool TakeBuffer(BufferNum_t& id);
-      void IncReference(BufferNum_t id)
-      {
-         if (fUsage[id]==0) {
-            EOUT(("Internal error"));
-            exit(101);
-         }
-         fUsage[id]++;
-      }
-      void DecReference(BufferNum_t id);
-      void CleanAllReferences();
-
-      uint64_t AllocatedMemorySize();
-      uint64_t MemoryPerBuffer();
-   };
-
-   // __________________________________________________________________
-
-   struct ReferencesBlock : public MemoryBlock {
-
-      Buffer      *fArr; // array of references
-      MemoryPool  *fPool; // back pointer on the pool
-      BufferSize_t fHeaderSize; // allocated header size
-      unsigned     fNumSegments; // allocated number of segments per buffer
-
-      ReferencesBlock();
-      ~ReferencesBlock();
-
-      BufferSize_t HeaderSize() const { return fHeaderSize; }
-      unsigned     NumSegments() const { return fNumSegments; }
-
-      bool Allocate(MemoryPool* pool, BufferSize_t headersize, BufferNum_t numrefs, unsigned numsegments);
-      bool Release();
-
-      Buffer* TakeReference(unsigned nseg, BufferSize_t hdrsize, bool force);
-      bool ReleaseReference(Buffer* buf);
-
-      uint64_t AllocatedMemorySize();
-      uint64_t MemoryPerBuffer();
+         virtual ~MemoryPoolRequester() { if (!buf.null()) EOUT(("buf !=0 in requester")); }
    };
 
 
-   // _________________________________________________________
 
-   class MemoryPool : public Folder,
-                      public WorkingProcessor {
+   // =========================== NEW CODE, REPLACEMENT FOR OLD MEMORYPOOL ========================
+
+
+   class MemoryBlock;
+   class MemoryPoolRef;
+
+   class MemoryPool : public Worker {
+      friend class Manager;
+      friend class Buffer;
+      friend class MemoryPoolRef;
 
       enum  { evntProcessRequests = evntFirstSystem };
 
-      enum ECleanupStatus { stOff, stMemCleanup, stRefCleanup };
+      protected:
 
-      friend class Buffer;
+         MemoryBlock* fMem;    //!< list of preallocated memory
+
+         MemoryBlock* fSeg;    //!< list of preallocated segmented lists
+
+         unsigned        fAlignment;      //!< alignment border for memory
+         unsigned        fMaxNumSegments; //!< maximum number of segments in Buffer objects
+
+         // FIXME: request queue could be expand on the fly, do we need this
+         PointersQueue<MemoryPoolRequester> fReqQueue; //!< queue of submitted requests
+
+         bool            fEvntFired;      //!< indicates if event was fired to process memory requests
+
+         unsigned        fChangeCounter;  //!< memory pool change counter, incremented every time memory is allocated or freed
+
+         bool            fUseThread;      //!< indicate if thread functionality should be used to process supplied requests
+
+         static unsigned fDfltAlignment;   //!< default alignment for memory allocation
+         static unsigned fDfltNumSegments; //!< default number of segments in memory pool
+         static unsigned fDfltRefCoeff;    //!< default coefficient for reference creation
+         static unsigned fDfltBufSize;     //!< default buffer size
+
+
+         /** Reserve raw buffer without creating Buffer instance */
+         bool TakeRawBuffer(unsigned& indx);
+
+         /** Release raw buffer, allocated before by TakeRawBuffer */
+         void ReleaseRawBuffer(unsigned indx);
+
+         Buffer _TakeBuffer(BufferSize_t size, bool except, bool reserve_memory = true) throw();
+
+         /** Method to allocate memory for the pool, mutex should be locked */
+         bool _Allocate(BufferSize_t bufsize = 0, unsigned number = 0, unsigned refcoef = 0) throw();
+
+         /** Method called by assignment operator of Buffer class to
+          * create copy of existing buffer - means same segments list and
+          * increase refcounter for all used segments */
+         void DuplicateBuffer(const Buffer& src, Buffer& tgt, bool except = true) throw();
+
+         /** Method used to produce deep copy of source buffer.
+          * Means in any case new space will be reserved and content will be copied */
+         Buffer CopyBuffer(Buffer& src, bool except = true) throw();
+
+         /** Process submitted requests, if returns true if any requests was processed */
+         bool _ProcessRequests();
+
+         /** Inform requesters, that buffer is provided */
+         void ReplyReadyRequests();
+
+         bool _ReleaseBuffer(Buffer& buf) throw();
+
+         /** Method called by buffer to release memory, referenced by the buffer */
+         void ReleaseBuffer(Buffer& buf) throw();
+
+         /** Method increases ref.counuters of all segments */
+         void IncreaseSegmRefs(MemSegment* segm, unsigned num) throw();
+
+         /** Decrease references of specified segments */
+         void DecreaseSegmRefs(MemSegment* segm, unsigned num) throw();
+
+         virtual void OnThreadAssigned() { fUseThread = HasThread(); }
+
+         virtual void ProcessEvent(const EventId&);
 
       public:
-         MemoryPool(Basic* parent, const char* name);
-         virtual ~MemoryPool();
 
-         static BufferSize_t minBufferSize() { return 0x100; }
-         static BufferSize_t maxBufferSize() { return 0x10000000; }
+         MemoryPool(const char* name, bool withmanager = false);
+         virtual ~MemoryPool();
 
          virtual const char* ClassName() const { return clMemoryPool; }
 
-         void UseMutex(Mutex* mutex = 0);
-         inline Mutex* GetPoolMutex() const { return fPoolMutex; }
+         inline Mutex* GetPoolMutex() const { return ObjectMutex(); }
 
-         /** Sets maximum allowed memory to be used by the pool.
-           * Zero means that pool is not allowed at all to dynamically extends memory blocks. */
-         void SetMemoryLimit(uint64_t limit = 0);
+         /** Return true, if memory pool is not yet created */
+         bool IsEmpty() const;
 
-         /** Sets timeout in second after which memory pool can shrink its size back */
-         void SetCleanupTimeout(double tmout = 5.);
+         /** Following methods could be used for configuration of pool before memory pool is allocated */
 
-         void SetLayoutFixed();
+         /** Set alignment of allocated memory */
+         bool SetAlignment(unsigned align);
 
-         /** Allocate memory in one block. Either creates primary block or continues
-           * list of existing ones with probably other buffers numbers */
-         bool AllocateMemory(BufferSize_t buffersize,
-                             BufferNum_t numbuffers,
-                             BufferNum_t increase = 0,
-                             unsigned align = 0x10,
-                             bool withqueue = true);
+         /** Set number of preallocated segments in the buffer.
+          * Buffer cannot contain list bigger than this number */
+         bool SetMaxNumSegments(unsigned num);
 
-         /** Allocate references with preallocated header and segments lists */
-         bool AllocateReferences(BufferSize_t headersize,
-                                 BufferNum_t numrefs,
-                                 BufferNum_t increase = 0,
-                                 unsigned numsegm = 4);
+         /** Allocates memory for the memory pool and creates references.
+          * Only can be called for empty memory pool.
+          * If no values are specified, requested values, configured by modules are used.
+          * TODO: Another alternative is to configure memory pool via xml file */
+         bool Allocate(BufferSize_t bufsize = 0, unsigned number = 0, unsigned refcoef = 0) throw();
 
-         /** These methods used in module constructor to configure pool sizes
-          * instead of creating pool immediately. Appropriate memory and reference block
-          * will be created when first request of memory buffer will be done
-          */
-         bool AddMemReq(BufferSize_t bufsize, BufferNum_t number, BufferNum_t increment, unsigned align);
-         bool AddRefReq(BufferSize_t hdrsize, BufferNum_t number, BufferNum_t increment, unsigned numsegm);
+         /** This is alternative method to supply memory to the pool.
+          * User could allocate buffers itself and provide it to this method.
+          * If specified, memory pool will take ownership over this memory -
+          * means free() function will be called to release this memory */
+         bool Assign(bool isowner, const std::vector<void*>& bufs, const std::vector<unsigned>& sizes, unsigned refcoef = 0) throw();
 
-         // this is information about internal structure
-         // of memory pool and how this structure changes
-         bool IsEmpty() const { return (fNumMem==0) && (fNumRef==0); }
+         /** Return pointers and sizes of all memory buffers in the pool
+          * Could be used by devices and transport to map all buffers into internal structures.
+          * Memory pool mutex must be locked at this point, changecnt can be used to identify
+          * if memory pool was changed since last call */
+         bool _GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigned>& sizes, unsigned* changecnt = 0);
 
-         BlockNum_t NumMemBlocks() const { return fNumMem; }
-         bool IsMemoryBlock(BlockNum_t n) { return n<fNumMem && fMem[n]!=0; }
-         unsigned MemBlockChangeCounter(BlockNum_t n) { return fMem[n]->fChangeCounter; }
-         void* GetMemBlock(BlockNum_t n) const { return fMem[n]->Block(); }
-         uint64_t GetMemBlockSize(BlockNum_t n) const { return fMem[n]->BlockSize(); }
-         unsigned GetChangeCounter() const { return fChangeCounter; }
-         bool IsMemLayoutFixed() const { return fMemLayoutFixed; }
+         /** Return pointers and sizes of all memory buffers in the pool */
+         bool GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigned>& sizes);
 
-         bool CheckChangeCounter(unsigned &cnt);
 
-         BufferNum_t GetNumBuffersInBlock(BlockNum_t block = 0) const { return fMem[block]->NumBuffers(); }
-         inline BufferSize_t GetBufferSize(BufferId_t id) const { return fMem[GetBlockNum(id)]->BufferSize(); }
-         inline void* GetBufferLocation(BufferId_t id) const
-           { return fMem[GetBlockNum(id)]->RawBuffer(GetBufferNum(id)); }
+         /** Release memory and structures, allocated by memory pool */
+         bool Release() throw();
 
-         uint64_t GetTotalSize() const;
-         uint64_t GetUsedSize() const;
+         /** Following methods should be used after memory pool is created */
 
-         bool CanHasBufferSize(BufferSize_t size);
-         bool CanHasHeaderSize(BufferSize_t size);
+         /** Returns alignment, used for memory pool allocation */
+         unsigned GetAlignment() const;
 
-         // this is information about each buffer
+         /** Returns number of preallocated segments */
+         unsigned GetMaxNumSegments() const;
 
-         /** method locked buffer and return reference on it */
-         bool TakeRawBuffer(BufferId_t &id);
+         /** Returns number of preallocated buffers */
+         unsigned GetNumBuffers() const;
 
-         /** release buffer, which was taken before */
-         void ReleaseRawBuffer(BufferId_t id);
+         /** Returns size of preallocated buffer */
+         unsigned GetBufferSize(unsigned id) const;
 
-         /** Mark all raw buffers as unused
-           * Only should be used if no real references exists on raw buffers */
-         void ReleaseAllRawBuffers();
+         /** Returns location of preallocated buffer */
+         void* GetBufferLocation(unsigned id) const;
 
-         // returns Buffer object with writable access to consequent data of specified size
-         // size defines requested buffer area, if = 0 return exactly one buffer
-         // size can be longer as single buffer - pool will try to find several of them one after another
-         // size CANNOT be longer as size of one memory block
-         Buffer* TakeBuffer(BufferSize_t size = 0, BufferSize_t hdrsize = 0);
+         /** Return relative usage of memory pool buffers */
+         double GetUsedRatio() const;
 
-         // return buffer without any data segments
-         Buffer* TakeEmptyBuffer(BufferSize_t hdrsize = 0);
+         /** Return maximum buffer size in the pool */
+         unsigned GetMaxBufSize() const;
 
-         // return buffer or set request to the pool, which will be processed
-         // when new memory is available in the buffer
-         Buffer* TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size = 0, BufferSize_t hdrsize = 0);
+         /** Return minimum buffer size in the pool */
+         unsigned GetMinBufSize() const;
 
-         Buffer* TakeRequestedBuffer(MemoryPoolRequester* req);
+         /** Returns Buffer object with exclusive access rights
+          * \param size defines requested buffer area, if = 0 returns next empty buffer
+          * If size longer as single buffer, memory pool will try to produce segmented list.
+          * Returned object will have at least specified size (means, size can be bigger).
+          * In case when memory pool cannot provide specified memory exception will be thrown */
+         Buffer TakeBuffer(BufferSize_t size = 0) throw();
 
-         // Cancel previously submitted request
-         // May happen, if object want to be deleted
+         /** Returns Buffer object without any memory reserved.
+          * Instance can be used in later code to add references on the memory from other buffers */
+         Buffer TakeEmpty() throw();
+
+         /** Returns Buffer or set request to the pool, which will be processed
+          * when new memory is available in the buffer */
+         Buffer TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size = 0) throw();
+
+         /** Cancel previously submitted request */
          void RemoveRequester(MemoryPoolRequester* req);
 
-         void Print();
+         /** Check if memory pool structure was changed since last call, do not involves memory pool mutex */
+         bool CheckChangeCounter(unsigned &cnt);
 
-         void StoreConfig();
-         bool Reconstruct(dabc::Command* cmd = 0);
+         /** Reconstruct memory pool base on command configuration
+          * If some parameters not specified, configured values from xml file will be used.
+          * As very last point, defaults from static variables will be used */
+         bool Reconstruct(Command cmd);
 
-         virtual bool Store(ConfigIO &cfg);
-         virtual bool Find(ConfigIO &cfg);
+         // these are static methods to change default configuration for all newly created pools
 
-         static dabc::BufferSize_t RoundBufferSize(dabc::BufferSize_t bufsize);
-         static std::string BlockName(dabc::BufferSize_t bufsize);
+         static unsigned GetDfltAlignment() { return fDfltAlignment; }
+         static unsigned GetDfltNumSegments() { return  fDfltNumSegments; }
+         static unsigned GetDfltRefCoeff() { return fDfltRefCoeff; }
+         static unsigned GetDfltBufSize() { return fDfltBufSize; }
 
-      protected:
-
-         bool ReleaseMemory();
-         bool _ExtendArr(void* arr, BlockNum_t &capacity);
-
-         MemoryBlock* _AllocateMemBlock(BufferSize_t buffersize, BufferNum_t numbuffers, unsigned align, bool withqueue);
-         ReferencesBlock* _AllocateRefBlock(BufferSize_t headersize, BufferNum_t numrefs, unsigned numsegm);
-
-         bool _ReleaseLastMemBlock();
-         bool _ReleaseLastRefBlock();
-
-         virtual void ProcessEvent(EventId);
-         virtual double ProcessTimeout(double);
-
-         bool NewReferences(MemSegment* segs, unsigned numsegs);
-         void ReleaseBuffer(Buffer* buf);
-
-         Buffer* _TakeBuffer(BufferSize_t size, BufferSize_t hdrsize);
-         Buffer* _TakeEmptyBuffer(unsigned nseg, BufferSize_t hdrsize);
-         void _ReleaseBuffer(Buffer* buf);
-
-         bool _ProcessRequests();
-         void ReplyReadyRequests();
-
-         bool _CheckCleanupStatus();
-
-         Mutex            *fPoolMutex;
-         bool              fOwnMutex;
-
-         uint64_t          fMemoryLimit; // maximal size of memory, allowed to allocated by memory pool
-         uint64_t          fMemoryAllocated;  // currently allocated memory by the pool (beside few small arrays like fMem or fRef)
-
-         MemoryBlock*     *fMem;           // array of all memory blocks
-         BlockNum_t        fNumMem;        // number of all memory blocks
-         BlockNum_t        fMemCapacity;   // capacity of fMem array
-         BlockNum_t        fMemPrimary;    // number of primary blocks, upper limit for search of different buffer sizes
-         BlockNum_t        fMemSecondary;  // number of secondary blocks, upper limit for cleanup
-         bool              fMemCleanupStatus; // true if last block was free during cleanup loop
-         bool              fMemLayoutFixed; // when set to true, blocks any possibility to change layout of the pool
-         ReferencesBlock* *fRef;
-         BlockNum_t        fNumRef;
-         BlockNum_t        fRefCapacity;
-         BlockNum_t        fRefPrimary;       // number of primary references blocks, upper limit for cleanup
-         bool              fRefCleanupStatus; // true if last block was free during cleanup loop
-
-         unsigned          fChangeCounter;
-
-         Queue<MemoryPoolRequester*>  fReqQueue;
-         bool              fEvntFired; // indicate if we already fire event for requests processing
-         ECleanupStatus    fCleanupStatus;
-         double            fCleanupTmout; // length of cleanup loop
+         static void SetDfltAlignment(unsigned v) { fDfltAlignment = v; }
+         static void SetDfltNumSegments(unsigned v) { fDfltNumSegments = v; }
+         static void SetDfltRefCoeff(unsigned v) { fDfltRefCoeff = v; }
+         static void SetDfltBufSize(unsigned v) { fDfltBufSize = v; }
    };
 
 
    class CmdCreateMemoryPool : public Command {
-      public:
-         static const char* CmdName() { return "CreateMemoryPool"; }
 
-         CmdCreateMemoryPool(const char* poolname) : Command(CmdName())
-         {
-            SetPar(xmlPoolName, poolname);
+      DABC_COMMAND(CmdCreateMemoryPool, "CreateMemoryPool")
+
+      CmdCreateMemoryPool(const char* poolname) : Command(CmdName())
+      {
+         SetStr(xmlPoolName, poolname);
+      }
+
+      void SetMem(unsigned buffersize, unsigned numbuffers, unsigned align = 0)
+      {
+         if (buffersize*numbuffers) {
+            SetUInt(xmlNumBuffers, numbuffers);
+            SetUInt(xmlBufferSize, buffersize);
          }
 
-         static bool AddCfg(Command* cmd,
-                            bool fixedlayout = false,
-                            unsigned size_limit_mb = 0,
-                            double cleanuptmout = -1.)
-         {
-            if ((cmd==0) || !cmd->IsName(CmdName())) return false;
+         if (align) SetUInt(xmlAlignment, align);
+      }
 
-            if (fixedlayout) cmd->SetBool(xmlFixedLayout, fixedlayout);
-            if (size_limit_mb>0) cmd->SetUInt(xmlSizeLimitMb, size_limit_mb);
-            if (cleanuptmout>=0.) cmd->SetDouble(xmlCleanupTimeout, cleanuptmout);
-         }
-
-         static bool AddMem(Command* cmd,
-                           unsigned buffersize,
-                           unsigned numbuffers,
-                           unsigned increment = 0,
-                           unsigned align = 8)
-         {
-            buffersize = dabc::MemoryPool::RoundBufferSize(buffersize);
-
-            if ((cmd==0) || !cmd->IsName(CmdName())) return false;
-
-            if ((buffersize==0) || (numbuffers==0)) return false;
-
-            std::string blockname = dabc::MemoryPool::BlockName(buffersize);
-            cmd->SetUInt((blockname+xmlNumBuffers).c_str(), numbuffers);
-            if (increment>0) cmd->SetUInt((blockname+xmlNumIncrement).c_str(), increment);
-            if (align!=8) cmd->SetUInt((blockname+xmlAlignment).c_str(), align);
-
-            return true;
-         }
-
-         static bool AddRef(Command* cmd,
-                            unsigned numref,
-                            unsigned headersize = 0,
-                            unsigned increment = 0,
-                            unsigned numsegm = 0)
-         {
-            if ((cmd==0) || !cmd->IsName(CmdName())) return false;
-            if (numref==0) return false;
-
-            std::string blockname = dabc::MemoryPool::BlockName(0);
-            cmd->SetUInt((blockname+xmlNumBuffers).c_str(), numref);
-            if (headersize>0) cmd->SetUInt((blockname+xmlHeaderSize).c_str(), headersize);
-            if (increment>0) cmd->SetUInt((blockname+xmlNumIncrement).c_str(), increment);
-            if (numsegm>0) cmd->SetUInt((blockname+xmlNumSegments).c_str(), numsegm);
-
-            return true;
-         }
+      void SetRefs(unsigned refcoeff, unsigned numsegm = 0)
+      {
+         if (refcoeff) SetUInt(xmlRefCoeff, refcoeff);
+         if (numsegm) SetUInt(xmlNumSegments, numsegm);
+      }
 
    };
+
+   class MemoryPoolRef : public WorkerRef {
+
+      DABC_REFERENCE(MemoryPoolRef, WorkerRef, MemoryPool)
+
+      Buffer TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size = 0)
+      {
+         return GetObject() ? GetObject()->TakeBufferReq(req, size) : Buffer();
+      }
+
+      /** Return usage of memory pool */
+      double GetUsedRatio() const
+      {
+         return GetObject() ? GetObject()->GetUsedRatio() : 0.;
+      }
+
+      /** Return maximum buffer size in the pool */
+      unsigned GetMaxBufSize() const
+      {
+         return GetObject() ? GetObject()->GetMaxBufSize() : 0.;
+      }
+
+      /** Return minimum buffer size in the pool */
+      unsigned GetMinBufSize() const
+      {
+         return GetObject() ? GetObject()->GetMinBufSize() : 0.;
+      }
+   };
+
 
 }
 

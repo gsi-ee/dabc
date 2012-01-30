@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/MemoryPool.h"
 
 #include <stdlib.h>
@@ -18,1102 +18,669 @@
 
 #include "dabc/logging.h"
 #include "dabc/threads.h"
+#include "dabc/defines.h"
 #include "dabc/Configuration.h"
 
-unsigned dabc::DefaultMemoryAllign = 16;
-unsigned dabc::DefaultNumSegments = 8;
-unsigned dabc::DefaultBufferSize = 2048;
 
-dabc::MemoryBlock::MemoryBlock() :
-   fBlock(0),
-   fBlockSize(0),
-   fBufferSize(0),
-   fNumBuffers(0),
-   fNumIncrease(0),
-   fAlignment(0),
-   fBlockId(0),
-   fNextBlock(0),
-   fUsage(0),
-   fNumFree(0),
-   fSeekPos(0),
-   fFreeQueue(0),
-   fFreeFirst(0),
-   fFreeLast(0),
-   fChangeCounter(0)
-{
+namespace dabc {
+
+   class MemoryBlock {
+      public:
+
+         struct Entry {
+            void         *buf;     //!< pointer on raw memory
+            BufferSize_t  size;    //!< size of the block
+            bool          owner;   //!< is memory should be released
+            int           refcnt;  //!< usage counter - number of references on the memory
+         };
+
+         typedef Queue<unsigned, false> FreeQueue;
+
+         Entry*    fArr;       //!< array of buffers
+         unsigned  fNumber;    //!< number of buffers
+         FreeQueue fFree;      //!< list of free buffers
+
+         MemoryBlock() :
+            fArr(0),
+            fNumber(0),
+            fFree()
+         {
+         }
+
+         virtual ~MemoryBlock()
+         {
+            Release();
+         }
+
+         inline bool IsAnyFree() const { return !fFree.Empty(); }
+
+         void Release()
+         {
+            if (fArr==0) return;
+
+            for (unsigned n=0;n<fNumber;n++) {
+               if (fArr[n].buf && fArr[n].owner) free(fArr[n].buf);
+               fArr[n].buf = 0;
+            }
+
+            delete[] fArr;
+            fArr = 0;
+            fNumber = 0;
+
+            fFree.Reset();
+         }
+
+         bool Allocate(unsigned number, unsigned size, unsigned align) throw()
+         {
+            Release();
+
+            fArr = new Entry[number];
+            fNumber = number;
+
+            fFree.Allocate(number);
+
+            for (unsigned n=0;n<fNumber;n++) {
+
+               void* buf(0);
+               int res = posix_memalign(&buf, align, size);
+
+               if ((res!=0) || (buf==0)) {
+                  EOUT(("Cannot allocate data for new Memory Block"));
+                  throw dabc::Exception("Cannot allocate buffer");
+                  return false;
+               }
+
+               fArr[n].buf = buf;
+               fArr[n].size = size;
+               fArr[n].owner = true;
+               fArr[n].refcnt = 0;
+
+               fFree.Push(n);
+            }
+
+            return true;
+         }
+
+         bool Assign(bool isowner, const std::vector<void*>& bufs, const std::vector<unsigned>& sizes) throw()
+         {
+            Release();
+
+            fArr = new Entry[bufs.size()];
+            fNumber = bufs.size();
+
+            fFree.Allocate(bufs.size());
+
+            for (unsigned n=0;n<fNumber;n++) {
+               fArr[n].buf = bufs[n];
+               fArr[n].size = sizes[n];
+               fArr[n].owner = isowner;
+               fArr[n].refcnt = 0;
+
+               fFree.Push(n);
+            }
+            return true;
+         }
+
+
+   };
+
+
+
 }
 
-dabc::MemoryBlock::~MemoryBlock()
-{
-   Release();
-}
+// ---------------------------------------------------------------------------------
 
-bool dabc::MemoryBlock::Allocate(BufferSize_t buffersize, BufferNum_t numbuffers, unsigned align, bool usagequeue)
-{
-   if (!Release()) return false;
+unsigned dabc::MemoryPool::fDfltAlignment = 16;
+unsigned dabc::MemoryPool::fDfltNumSegments = 8;
+unsigned dabc::MemoryPool::fDfltRefCoeff = 2;
+unsigned dabc::MemoryPool::fDfltBufSize = 4096;
 
-   if (align==0) {
-      align = sizeof(void*);
-      while (align < dabc::DefaultMemoryAllign) align*=2;
-      if (align!=dabc::DefaultMemoryAllign)
-          EOUT(("Unsuitable align value %u, used %u", dabc::DefaultMemoryAllign, align));
-   }
 
-      if (buffersize % align != 0) buffersize = (buffersize/align + 1) * align;
-
-   uint64_t totalsize = buffersize;
-   totalsize *= numbuffers;
-
-   void* buf = 0;
-
-   DOUT3(("Allocate memory block = %x single = %x number= %u align = %x" , totalsize, buffersize, numbuffers, align));
-
-   int res = posix_memalign(&buf, align, totalsize);
-
-   if ((res!=0) || (buf==0)) {
-      EOUT(("Cannot allocate data for new Memory Block"));
-      return false;
-   }
-
-   BufferUsage_t* usage = new BufferUsage_t[numbuffers];
-   if (usage==0) {
-      EOUT(("Cannot allocate usage array"));
-      free(buf);
-      return false;
-   }
-
-   BufferNum_t* fq = 0;
-   if (usagequeue) {
-      fq = new BufferNum_t[numbuffers];
-      if (fq == 0) {
-         EOUT(("Cannot allocate usage queue"));
-         delete[] usage;
-         free(buf);
-         return false;
-      }
-   }
-
-   fBlock = buf;
-   fBlockSize = totalsize;
-   fBufferSize = buffersize;
-   fNumBuffers = numbuffers;
-   fAlignment = align;
-
-   fUsage = usage;
-   fNumFree = numbuffers;
-   fSeekPos = 0;
-   fFreeQueue = fq;
-   fFreeFirst = 0;
-   fFreeLast = 0;
-
-   for (BufferNum_t id=0;id<fNumBuffers;id++) {
-      fUsage[id] = 0;
-      if (fFreeQueue) fFreeQueue[id] = id;
-   }
-
-   return true;
-}
-
-bool dabc::MemoryBlock::Release()
-{
-   if (fFreeQueue) delete [] fFreeQueue;
-   if (fUsage) delete [] fUsage;
-   if (fBlock) free(fBlock);
-
-   fBlock = 0;
-   fBlockSize = 0;
-   fBufferSize = 0;
-   fNumBuffers = 0;
-   fUsage = 0;
-   fNumFree = 0;
-   fSeekPos = 0;
-   fFreeQueue = 0;
-   fFreeFirst = 0;
-   fFreeLast = 0;
-
-   return true;
-}
-
-bool dabc::MemoryBlock::TakeBuffer(BufferNum_t& id)
-{
-   if (fNumFree==0) return false;
-
-   if (fFreeQueue) {
-      id = fFreeQueue[fFreeFirst++];
-      if (fFreeFirst==fNumBuffers) fFreeFirst = 0;
-   } else {
-      for (BufferNum_t cnt = 0; cnt<fNumBuffers; cnt++) {
-         id = fSeekPos++;
-         if (fSeekPos == fNumBuffers) fSeekPos = 0;
-         if (fUsage[id] == 0) break;
-      }
-   }
-
-   fNumFree--;
-   fUsage[id] = 1;
-
-   return true;
-}
-
-unsigned dabc::MemoryBlock::SumUsageCounters() const
-{
-   unsigned sum = 0;
-   if (fUsage!=0)
-      for (BufferNum_t id = 0; id < fNumBuffers; id++)
-         sum += fUsage[id];
-   return sum;
-}
-
-void dabc::MemoryBlock::DecReference(BufferNum_t id)
-{
-   fUsage[id]--;
-
-   if (fUsage[id] == 0) {
-      fNumFree++;
-      if (fFreeQueue) {
-         fFreeQueue[fFreeLast++] = id;
-         if (fFreeLast==fNumBuffers) fFreeLast = 0;
-      }
-   }
-}
-
-void dabc::MemoryBlock::CleanAllReferences()
-{
-   for (BufferNum_t id=0; id<fNumBuffers; id++) {
-      fUsage[id] = 0;
-      if (fFreeQueue) fFreeQueue[id] = id;
-   }
-
-   fNumFree = fNumBuffers;
-   fFreeFirst = 0;
-   fFreeLast = 0;
-   fSeekPos = 0;
-}
-
-uint64_t dabc::MemoryBlock::AllocatedMemorySize()
-{
-    uint64_t res = BlockSize(); // block itself
-
-    res += fNumBuffers * sizeof(BufferUsage_t); // usage counters
-
-    if (fFreeQueue) res += fNumBuffers * sizeof(BufferNum_t); // free queue
-
-    return res;
-}
-
-uint64_t dabc::MemoryBlock::MemoryPerBuffer()
-{
-   uint64_t res = BufferSize();
-   res += sizeof(BufferUsage_t);
-   if (fFreeQueue) res += sizeof(BufferNum_t);
-   return res;
-}
-
-
-
-// ______________________________________________________________________
-
-dabc::ReferencesBlock::ReferencesBlock() :
-   MemoryBlock(),
-   fArr(0),
-   fPool(0),
-   fHeaderSize(0),
-   fNumSegments(0)
-{
-}
-
-dabc::ReferencesBlock::~ReferencesBlock()
-{
-   Release();
-}
-
-
-bool dabc::ReferencesBlock::Allocate(MemoryPool* pool, BufferSize_t headersize, BufferNum_t numrefs, unsigned numsegments)
-{
-   if (!Release()) return false;
-
-   // align header that address on the segments is also on the right place
-   if (headersize>0) {
-      unsigned align = 4 * sizeof(void*);
-      while (align < headersize) align*=2;
-      headersize = align;
-   }
-
-   if (numsegments==0) numsegments = dabc::DefaultNumSegments;
-   if (numsegments<1) numsegments = 1;
-
-   unsigned datasize = headersize + numsegments*sizeof(MemSegment);
-
-   if (!MemoryBlock::Allocate(datasize, numrefs, 0x10, true)) return false;
-
-   fArr = new Buffer[numrefs];
-
-   if (fArr==0) {
-      MemoryBlock::Release();
-      return false;
-   }
-
-   fPool = pool;
-   fHeaderSize = headersize;
-   // actual number of items due-to align
-   fNumSegments = (fBufferSize - fHeaderSize) / sizeof(MemSegment);
-
-   return true;
-}
-
-bool dabc::ReferencesBlock::Release()
-{
-   if (fArr) delete [] fArr;
-   fArr = 0;
-   fPool = 0,
-   fHeaderSize = 0;
-   fNumSegments = 0;
-
-   return MemoryBlock::Release();
-}
-
-dabc::Buffer* dabc::ReferencesBlock::TakeReference(unsigned nseg, BufferSize_t hdrsize, bool force)
-{
-   BufferNum_t id = 0;
-
-   // if not forced, return 0 when preallocated memory is not enough
-   if (!force && ((nseg > NumSegments()) || (hdrsize > HeaderSize()))) return 0;
-
-
-   if (IsNull()) {
-      if (!Allocate(fPool, fHeaderSize, fNumBuffers,  fNumSegments)) {
-         EOUT(("Hard error - cannot allocate preconfigured references"));
-         return false;
-      }
-      DOUT2(("Allocate preconfigured ref block in pool %s", fPool->GetName()));
-   }
-
-   if (!TakeBuffer(id)) return 0;
-
-   dabc::Buffer* ref = &(fArr[id]);
-
-   void* buf = RawBuffer(id);
-
-   void* header = fHeaderSize > 0 ? buf : 0;
-   MemSegment* segm = (MemSegment*) ((char*) buf + fHeaderSize);
-
-   ref->ReInit(fPool, fBlockId | id, header, fHeaderSize, segm, fNumSegments);
-
-   if (nseg > fNumSegments)
-      if (!ref->RellocateSegments(nseg)) {
-         MemoryBlock::DecReference(id);
-         return 0;
-      }
-   ref->fNumSegments = nseg;
-
-   if (hdrsize > fHeaderSize)
-      if (!ref->RellocateHeader(hdrsize, false)) {
-         MemoryBlock::DecReference(id);
-         return 0;
-      }
-   ref->fHeaderSize = hdrsize;
-
-   return ref;
-}
-
-bool dabc::ReferencesBlock::ReleaseReference(Buffer* buf)
-{
-   unsigned refid = GetBufferNum(buf->fReferenceId);
-
-   #ifdef DO_INDEX_CHECK
-   if (refid>=NumBuffers()) {
-      EOUT(("Error id number of the reference"));
-      return false;
-   }
-   #endif
-
-   buf->ReClose();
-
-   MemoryBlock::DecReference(refid);
-
-   return true;
-}
-
-uint64_t dabc::ReferencesBlock::AllocatedMemorySize()
-{
-   return MemoryBlock::AllocatedMemorySize() + NumBuffers() * sizeof(Buffer);
-}
-
-uint64_t dabc::ReferencesBlock::MemoryPerBuffer()
-{
-   return MemoryBlock::MemoryPerBuffer() + sizeof(Buffer);
-}
-
-// ____________________________________________________________________
-
-
-dabc::MemoryPool::MemoryPool(Basic* parent, const char* name) :
-   Folder(parent, name),
-   WorkingProcessor(this),
-   fPoolMutex(0),
-   fOwnMutex(false),
-   fMemoryLimit(0),
-   fMemoryAllocated(0),
+dabc::MemoryPool::MemoryPool(const char* name, bool withmanager) :
+   dabc::Worker(MakePair(name, withmanager)),
    fMem(0),
-   fNumMem(0),
-   fMemCapacity(0),
-   fMemPrimary(0),
-   fMemSecondary(0),
-   fMemCleanupStatus(0),
-   fMemLayoutFixed(false),
-   fRef(0),
-   fNumRef(0),
-   fRefCapacity(0),
-   fRefPrimary(0),
-   fRefCleanupStatus(0),
-   fChangeCounter(0),
-   fReqQueue(16, true), // one can extend requests on the fly
+   fSeg(0),
+   fAlignment(fDfltAlignment),
+   fMaxNumSegments(fDfltNumSegments),
+   fReqQueue(16),  // FIXME: is size 16 too big/small or should be fixed ????
    fEvntFired(false),
-   fCleanupStatus(stOff),
-   fCleanupTmout(5.)
+   fChangeCounter(0),
+   fUseThread(false)
 {
+   DOUT4(("MemoryPool %p constructor", this));
 }
-
 
 dabc::MemoryPool::~MemoryPool()
 {
-   DOUT3(("POOOOOOOOOL Deleting: %s %p", GetName(), this));
-
-   unsigned n1(0), n2(0);
-   for (BlockNum_t nblock = 0; nblock<fNumMem; nblock++) {
-      n1 += fMem[nblock]->NumUsedBuffers();
-      n2 += fMem[nblock]->SumUsageCounters();
-      DOUT3(("Destroy block %u: Numfree %u NumBuf %u", nblock, fMem[nblock]->fNumFree, fMem[nblock]->fNumBuffers));
-   }
-
-   if (n1>0)
-     EOUT(("!!!!!!!!!!!!!!!!!!!!!! Pool %s, %u buffers used %u times !!!!!!!!!!!!!!!!!!!!!!!!", GetName(), n1, n2));
-
-   ReleaseMemory();
-
-   DOUT3(("POOOOOOOOOL Deleting done: %s %p", GetName(), this));
+   Release();
+   DOUT4(("MemoryPool %p destructor", this));
 }
 
-
-void dabc::MemoryPool::UseMutex(Mutex* mutex)
+bool dabc::MemoryPool::SetAlignment(unsigned align)
 {
-   fPoolMutex = mutex;
-   fOwnMutex = mutex==0;
-   if (fOwnMutex) fPoolMutex = new dabc::Mutex;
-}
-
-void dabc::MemoryPool::SetMemoryLimit(uint64_t limit)
-{
-   LockGuard lock(fPoolMutex);
-   fMemoryLimit = limit;
-}
-
-void dabc::MemoryPool::SetCleanupTimeout(double tmout)
-{
-   LockGuard lock(fPoolMutex);
-   fCleanupTmout = tmout;
-
-   if (fCleanupTmout <= 0.)
-      fCleanupStatus = stOff; // disable any possible cleanup immediately
-}
-
-void dabc::MemoryPool::SetLayoutFixed()
-{
-   LockGuard lock(fPoolMutex);
-   fMemLayoutFixed = true;
-}
-
-bool dabc::MemoryPool::AllocateMemory(BufferSize_t buffersize,
-                                      BufferNum_t numbuffers,
-                                      BufferNum_t increase,
-                                      unsigned align,
-                                      bool withqueue)
-{
-   LockGuard lock(fPoolMutex);
-
-   if (increase>0xffff) increase = 0xffff;
-
-   if (numbuffers==0) {
-      EOUT(("Cannot allocate memory with 0 buffers"));
-      return false;
-   }
-
-   while (numbuffers > 0) {
-
-      BufferNum_t numbufalloc = (numbuffers<0x10000) ? numbuffers : 0xffff;
-
-      MemoryBlock* block = _AllocateMemBlock(buffersize, numbufalloc, align, withqueue);
-
-      if (block==0) return false;
-
-      MemoryBlock* master = 0;
-
-      for (BlockNum_t id = 0; id<fMemPrimary; id++)
-         if (fMem[id]->BufferSize() == buffersize) {
-            master = fMem[id];
-            break;
-         }
-
-      if (master!=0) {
-         while (master->fNextBlock) master = master->fNextBlock;
-         master->fNextBlock = block;
-
-         if (increase < master->NumIncrease()) increase = master->NumIncrease();
-      } else {
-         if (fMemSecondary>fMemPrimary)
-            EOUT(("Not a good idea to create primary block when secondary already existing"));
-         fMemPrimary = fNumMem;
-      }
-
-      fMemSecondary = fMemPrimary;
-
-      block->fNumIncrease = increase;
-
-      numbuffers -= numbufalloc;
-   }
-
+   LockGuard lock(ObjectMutex());
+   if (fMem!=0) return false;
+   fAlignment = align;
    return true;
 }
 
-bool dabc::MemoryPool::AllocateReferences(BufferSize_t headersize,
-                                          BufferNum_t numrefs,
-                                          BufferNum_t increase,
-                                          unsigned numsegm)
+
+unsigned dabc::MemoryPool::GetAlignment() const
 {
-   LockGuard lock(fPoolMutex);
+   LockGuard lock(ObjectMutex());
+   return fAlignment;
+}
 
-   while (numrefs>0) {
-
-      BufferNum_t numrefsalloc = (numrefs < 0x10000) ? numrefs : 0xffff;
-
-      ReferencesBlock* block = _AllocateRefBlock(headersize, numrefsalloc, numsegm);
-
-      if (block==0) return false;
-
-      block->fNumIncrease = increase;
-
-      fRefPrimary = fNumRef;
-
-      numrefs -= numrefsalloc;
-   }
-
+bool dabc::MemoryPool::SetMaxNumSegments(unsigned num)
+{
+   LockGuard lock(ObjectMutex());
+   if (fMem!=0) return false;
+   fMaxNumSegments = num;
    return true;
 }
 
-bool dabc::MemoryPool::ReleaseMemory()
+
+unsigned dabc::MemoryPool::GetMaxNumSegments() const
 {
-   {
-      LockGuard lock(fPoolMutex);
-      while (_ReleaseLastMemBlock());
-      while (_ReleaseLastRefBlock());
-
-      if (fMem) delete [] fMem;
-      fMem = 0; fMemCapacity = 0;
-      fNumMem = 0;
-
-      if (fRef) delete [] fRef;
-      fRef = 0; fRefCapacity = 0;
-      fNumRef = 0;
-   }
-
-   if (fOwnMutex) delete fPoolMutex;
-   fPoolMutex = 0;
-   fOwnMutex = false;
-
-   return true;
+   LockGuard lock(ObjectMutex());
+   return fMaxNumSegments;
 }
 
-bool dabc::MemoryPool::_ExtendArr(void* arr, BlockNum_t &capacity)
+bool dabc::MemoryPool::_Allocate(BufferSize_t bufsize, unsigned number, unsigned refcoef) throw()
 {
-   BlockNum_t newsz = capacity*2;
-   if (newsz<16) newsz = 16;
+   if ((fMem!=0) && (fSeg!=0)) return false;
 
-   void** new_arr = new void* [newsz];
-   if (new_arr==0) return false;
+   if ((bufsize*number==0) || (number*refcoef==0)) return false;
 
-   void** old_arr = *((void***) arr);
+   DOUT3(("POOL:%s Create num:%u X size:%u buffers align:%u", GetName(), number, bufsize, fAlignment));
 
-   for (BlockNum_t n=0;n<newsz;n++)
-     new_arr[n] = 0;
+   fMem = new MemoryBlock;
+   fMem->Allocate(number, bufsize, fAlignment);
 
-   if (old_arr && (capacity>0))
-     for (BlockNum_t n=0;n<capacity;n++)
-        new_arr[n] = old_arr[n];
+   DOUT3(("POOL:%s Create num:%u references with num:%u segments", GetName(), number*refcoef, fMaxNumSegments));
 
-   delete [] old_arr;
-   *((void***) arr) = new_arr;
-   capacity = newsz;
-
-   return true;
-}
-
-dabc::MemoryBlock* dabc::MemoryPool::_AllocateMemBlock(BufferSize_t buffersize, BufferNum_t numbuffers, unsigned align, bool withqueue)
-{
-   DOUT2(("_AllocateMemBlock pool:%s bufsize:%u number:%u align:%u", GetName(), buffersize, numbuffers, align));
-
-   if (fNumMem>=fMemCapacity)
-      if (!_ExtendArr(&fMem, fMemCapacity)) return 0;
-
-   MemoryBlock* block = new MemoryBlock;
-
-   if (!block->Allocate(buffersize, numbuffers, align, withqueue)) {
-      delete block;
-      return 0;
-   }
-
-   block->fBlockId = CodeBufferId(fNumMem, 0);
-
-   fMem[fNumMem] = block;
-   fNumMem++;
-
-   DOUT2(("Pool:%s  Mem[%u] : blocksize %llu  bufsize %u used %u", GetName(), fNumMem-1, block->BlockSize(), block->BufferSize(), block->NumUsedBuffers()));
-
-   block->fChangeCounter = ++fChangeCounter;
-
-   return block;
-}
-
-
-dabc::ReferencesBlock* dabc::MemoryPool::_AllocateRefBlock(BufferSize_t headersize, BufferNum_t numrefs, unsigned numsegm)
-{
-   if (numrefs==0) return 0;
-
-   if (fNumRef>=fRefCapacity)
-      if (!_ExtendArr(&fRef, fRefCapacity)) return 0;
-
-   ReferencesBlock* block = new ReferencesBlock();
-
-   // one should set this id that Allocate initialize references appropriately
-   block->fBlockId = CodeBufferId(fNumRef, 0);
-
-   if (!block->Allocate(this, headersize, numrefs,  numsegm)) {
-      delete block;
-      return false;
-   }
-
-   fRef[fNumRef] = block;
-   fNumRef++;
-
-   DOUT3(("_AllocateMemBlock new block of references %u", numrefs));
-
-   return block;
-}
-
-bool dabc::MemoryPool::_ReleaseLastMemBlock()
-{
-   if (fNumMem==0) return false;
-
-   fNumMem--;
-
-   DOUT3((" _ReleaseLastMemBlock() pool:%s num:%u used %d", GetName(), fNumMem, fMem[fNumMem]->NumUsedBuffers()));
-
-   if (fMem[fNumMem]==0) return true;
-
-   if (!fMem[fNumMem]->Release())
-      EOUT(("Error by block release"));
-
-   for (BlockNum_t id=0;id<fNumMem;id++)
-      if (fMem[id]->fNextBlock==fMem[fNumMem])
-         fMem[id]->fNextBlock = 0;
-
-   delete fMem[fNumMem];
-
-   fMem[fNumMem] = 0;
+   fSeg = new MemoryBlock;
+   fSeg->Allocate(number*refcoef, fMaxNumSegments*sizeof(MemSegment), 16);
 
    fChangeCounter++;
 
    return true;
 }
 
-bool dabc::MemoryPool::_ReleaseLastRefBlock()
+bool dabc::MemoryPool::Allocate(BufferSize_t bufsize, unsigned number, unsigned refcoef) throw()
 {
-   if (fNumRef==0) return false;
+   LockGuard lock(ObjectMutex());
+   return _Allocate(bufsize, number, refcoef);
+}
 
-   fNumRef--;
+bool dabc::MemoryPool::Assign(bool isowner, const std::vector<void*>& bufs, const std::vector<unsigned>& sizes, unsigned refcoef) throw()
+{
+   LockGuard lock(ObjectMutex());
 
-   DOUT3((" _ReleaseLastRefBlock used %d", fRef[fNumRef]->NumUsedBuffers()));
+   if ((fMem!=0) && (fSeg!=0)) return false;
 
-   if (fRef[fNumRef]==0) return true;
+   if ((bufs.size() != sizes.size()) || (bufs.size()==0)) return false;
 
-   if (!fRef[fNumRef]->Release())
-      EOUT(("Error by block release"));
+   if (refcoef==0) refcoef = GetDfltRefCoeff();
 
-   delete fRef[fNumRef];
+   fMem = new MemoryBlock;
+   fMem->Assign(isowner, bufs, sizes);
 
-   fRef[fNumRef] = 0;
+   fSeg = new MemoryBlock;
+   fSeg->Allocate(bufs.size()*refcoef, fMaxNumSegments*sizeof(MemSegment), 16);
+
+   return true;
+}
+
+bool dabc::MemoryPool::Release() throw()
+{
+   LockGuard lock(ObjectMutex());
+
+   if (fMem) {
+      delete fMem;
+      fMem = 0;
+      fChangeCounter++;
+   }
+
+   if (fSeg) {
+      delete fSeg;
+      fSeg = 0;
+      fChangeCounter++;
+   }
 
    return true;
 }
 
 
-uint64_t dabc::MemoryPool::GetTotalSize() const
+bool dabc::MemoryPool::IsEmpty() const
 {
-   uint64_t sum = 0;
-   for (BlockNum_t nblock=0;nblock<fNumMem;nblock++)
-      sum += fMem[nblock]->BlockSize();
-   return sum;
+   LockGuard lock(ObjectMutex());
+
+   return (fMem==0) || (fSeg==0);
 }
 
-uint64_t dabc::MemoryPool::GetUsedSize() const
+unsigned dabc::MemoryPool::GetNumBuffers() const
 {
-   uint64_t sum = 0;
-   for (BlockNum_t nblock=0;nblock<fNumMem;nblock++)
-      sum += fMem[nblock]->BufferSize() * fMem[nblock]->NumUsedBuffers();
-   return sum;
+   LockGuard lock(ObjectMutex());
+
+   return (fMem==0) ? 0 : fMem->fNumber;
 }
 
-bool dabc::MemoryPool::TakeRawBuffer(BufferId_t &id)
+unsigned dabc::MemoryPool::GetBufferSize(unsigned id) const
 {
-   // Raw buffer does not support any kind of extension
+   LockGuard lock(ObjectMutex());
 
-   LockGuard guard(fPoolMutex);
+   return (fMem==0) || (id>=fMem->fNumber) ? 0 : fMem->fArr[id].size;
+}
 
-   BufferNum_t num;
+unsigned dabc::MemoryPool::GetMaxBufSize() const
+{
+   LockGuard lock(ObjectMutex());
 
-   for (BlockNum_t nblock=0;nblock<fNumMem;nblock++)
-      if (fMem[nblock]->TakeBuffer(num)) {
-         id = fMem[nblock]->fBlockId | num;
-         return true;
+   if (fMem==0) return 0;
+
+   unsigned max(0);
+
+   for (unsigned id=0;id<fMem->fNumber;id++)
+      if (fMem->fArr[id].size > max) max = fMem->fArr[id].size;
+
+   return max;
+}
+
+unsigned dabc::MemoryPool::GetMinBufSize() const
+{
+   LockGuard lock(ObjectMutex());
+
+   if (fMem==0) return 0;
+
+   unsigned min(0);
+
+   for (unsigned id=0;id<fMem->fNumber;id++)
+      if ((min==0) || (fMem->fArr[id].size < min)) min = fMem->fArr[id].size;
+
+   return min;
+}
+
+
+void* dabc::MemoryPool::GetBufferLocation(unsigned id) const
+{
+   LockGuard lock(ObjectMutex());
+
+   return (fMem==0) || (id>=fMem->fNumber) ? 0 : fMem->fArr[id].buf;
+}
+
+bool dabc::MemoryPool::_GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigned>& sizes, unsigned* changecnt)
+{
+   if (changecnt!=0) {
+      if (*changecnt == fChangeCounter) return false;
+   }
+
+   if (fMem!=0)
+      for(unsigned n=0;n<fMem->fNumber;n++) {
+         bufs.push_back(fMem->fArr[n].buf);
+         sizes.push_back(fMem->fArr[n].size);
       }
 
-   return false;
+   if (changecnt!=0) *changecnt = fChangeCounter;
+
+   return true;
 }
 
-void dabc::MemoryPool::ReleaseRawBuffer(BufferId_t id)
+bool dabc::MemoryPool::GetPoolInfo(std::vector<void*>& bufs, std::vector<unsigned>& sizes)
 {
-   LockGuard guard(fPoolMutex);
-
-   fMem[GetBlockNum(id)]->DecReference(GetBufferNum(id));
+   LockGuard lock(ObjectMutex());
+   return _GetPoolInfo(bufs, sizes);
 }
 
-void dabc::MemoryPool::ReleaseAllRawBuffers()
-{
-   LockGuard guard(fPoolMutex);
 
-   for (BlockNum_t nblock=0;nblock<fNumMem;nblock++)
-      fMem[nblock]->CleanAllReferences();
+bool dabc::MemoryPool::TakeRawBuffer(unsigned& indx)
+{
+   LockGuard lock(ObjectMutex());
+   if ((fMem==0) || !fMem->IsAnyFree()) return false;
+   indx = fMem->fFree.Pop();
+   return true;
 }
 
-bool dabc::MemoryPool::CanHasBufferSize(BufferSize_t size)
+void dabc::MemoryPool::ReleaseRawBuffer(unsigned indx)
 {
-   for (BlockNum_t n=0;n<fNumMem;n++)
-      if (fMem[n]->BufferSize()>=size) return true;
-
-   return false;
+   LockGuard lock(ObjectMutex());
+   if (fMem) fMem->fFree.Push(indx);
 }
 
-bool dabc::MemoryPool::CanHasHeaderSize(BufferSize_t size)
+dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool reserve_memory) throw()
 {
-   for (BlockNum_t n=0;n<fNumRef;n++)
-      if (fRef[n]->HeaderSize()>=size) return true;
-   return false;
-}
+   Buffer res;
 
-bool dabc::MemoryPool::CheckChangeCounter(unsigned &cnt)
-{
-   LockGuard guard(fPoolMutex);
+//   DOUT0(("_TakeBuffer obj %p", &res));
 
-   bool res = cnt!=fChangeCounter;
+   // if no memory is available, try to allocate it
+   if ((fMem==0) || (fSeg==0)) _Allocate();
 
-   cnt = fChangeCounter;
+   if ((fMem==0) || (fSeg==0)) {
+      if (except) throw dabc::Exception("No memory allocated in the pool");
+      return res;
+   }
+
+   if (!fMem->IsAnyFree() && reserve_memory) {
+      if (except) throw dabc::Exception("No any memory is available in the pool");
+      return res;
+   }
+
+   if (!fSeg->IsAnyFree()) {
+      if (except) throw dabc::Exception("No any segments list available in the pool");
+      return res;
+   }
+
+   if ((size==0) && reserve_memory) size = fMem->fArr[fMem->fFree.Front()].size;
+
+   // first check if required size is available
+   BufferSize_t sum(0);
+   unsigned cnt(0);
+   while (sum<size) {
+      if ((cnt>=fMem->fFree.Size()) || (cnt>=fMaxNumSegments)) {
+         if (except) throw dabc::Exception("Cannot reserve buffer of requested size");
+         return res;
+      }
+
+      unsigned id = fMem->fFree.Item(cnt);
+      sum += fMem->fArr[id].size;
+      cnt++;
+   }
+
+   unsigned refid = fSeg->fFree.Pop();
+   MemSegment* segs = (MemSegment*) fSeg->fArr[refid].buf;
+   if (fSeg->fArr[refid].refcnt!=0)
+      throw dabc::Exception("Segments are not free even is declared so");
+
+   fSeg->fArr[refid].refcnt++;
+   sum = 0;
+   cnt = 0;
+   while (sum<size) {
+      unsigned id = fMem->fFree.Pop();
+
+      if (fMem->fArr[id].refcnt!=0)
+         throw dabc::Exception("Buffer is not free even is declared so");
+
+      segs[cnt].buffer = fMem->fArr[id].buf;
+      segs[cnt].datasize = fMem->fArr[id].size;
+      segs[cnt].id = id;
+
+      // Provide buffer of exactly requested size
+      BufferSize_t restsize = size - sum;
+      if (restsize < segs[cnt].datasize) segs[cnt].datasize = restsize;
+
+      sum += fMem->fArr[id].size;
+
+      // increment reference counter on the memory space
+      fMem->fArr[id].refcnt++;
+
+      cnt++;
+   }
+
+   // create reference to ensure that pool is preserved until all buffers are released
+   res.fPool = _MakeRef();
+
+   // via compiler optimization no any objects copy appears in code like
+   //  dabc::Buffer buf = pool.TakeBuffer(4096)
+   // Therefore no need to mark such intermediate object as transient
+   // not necessary res.SetTransient(true);
+
+   res.fPoolId = refid;
+   res.fCapacity = fMaxNumSegments;
+   res.fSegments = segs;
+   res.fNumSegments = cnt;
+   res.fTypeId = 0;
 
    return res;
 }
 
-dabc::Buffer* dabc::MemoryPool::TakeBuffer(BufferSize_t size, BufferSize_t hdrsize)
+dabc::Buffer dabc::MemoryPool::TakeBuffer(BufferSize_t size) throw()
 {
-   bool process_res = false;
+   bool process_req(false);
+   dabc::Buffer res;
 
-   Buffer* buf = 0;
+//   DOUT0(("TakeBuffer Obj.res = %p", &res));
 
    {
-      LockGuard guard(fPoolMutex);
+      LockGuard lock(ObjectMutex());
 
       if (fReqQueue.Size()>0)
-         process_res = _ProcessRequests();
+         process_req = _ProcessRequests();
 
-      buf = _TakeBuffer(size, hdrsize);
+      res << _TakeBuffer(size, true);
    }
 
-   if (process_res) ReplyReadyRequests();
+   if (process_req) ReplyReadyRequests();
 
-   return buf;
+   return res;
 }
 
-dabc::Buffer* dabc::MemoryPool::TakeEmptyBuffer(BufferSize_t hdrsize)
+dabc::Buffer dabc::MemoryPool::TakeEmpty() throw()
 {
-   LockGuard guard(fPoolMutex);
-
-   return _TakeEmptyBuffer(0, hdrsize);
-}
-
-dabc::Buffer* dabc::MemoryPool::TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size, BufferSize_t hdrsize)
-{
-
-   bool process_res = false;
-
-   Buffer* buf = 0;
+   dabc::Buffer res;
 
    {
-      LockGuard guard(fPoolMutex);
+      LockGuard lock(ObjectMutex());
 
-      if ((req->pool!=0) && (req->pool!=this)) {
-         EOUT(("Hard error - requester used for other pool"));
-         return 0;
+      res << _TakeBuffer(0, true, false);
+   }
+
+   return res;
+}
+
+
+void dabc::MemoryPool::DuplicateBuffer(const Buffer& src, Buffer& tgt, bool except) throw()
+{
+   LockGuard lock(ObjectMutex());
+
+   if ((fSeg==0) || !fSeg->IsAnyFree()) {
+      if (except) throw dabc::Exception("No free segments list available in the pool");
+      return;
+   }
+
+   unsigned refid = fSeg->fFree.Pop();
+   MemSegment* segs = (MemSegment*) fSeg->fArr[refid].buf;
+   fSeg->fArr[refid].refcnt++;
+
+   for (unsigned cnt=0; cnt<src.fNumSegments; cnt++) {
+      segs[cnt] = src.fSegments[cnt];
+
+      // increment reference counter on the memory space
+      fMem->fArr[segs[cnt].id].refcnt++;
+   }
+
+   tgt.fPoolId = refid;
+   tgt.fCapacity = fMaxNumSegments;
+   tgt.fSegments = segs;
+   tgt.fNumSegments = src.fNumSegments;
+   tgt.fTypeId = src.fTypeId;
+}
+
+dabc::Buffer dabc::MemoryPool::CopyBuffer(Buffer& src, bool except) throw()
+{
+   dabc::Buffer res;
+
+   if (src.GetTotalSize()==0) return res;
+
+   res = TakeBuffer(src.GetTotalSize());
+
+   res.CopyFrom(src);
+
+   return res;
+}
+
+
+void dabc::MemoryPool::IncreaseSegmRefs(MemSegment* segm, unsigned num) throw()
+{
+   LockGuard lock(ObjectMutex());
+
+   if (fMem==0)
+      throw dabc::Exception("Memory was not allocated in the pool");
+
+   for (unsigned cnt=0;cnt<num;cnt++) {
+      unsigned id = segm[cnt].id;
+      if (id>fMem->fNumber)
+         throw dabc::Exception("Wrong buffer id in the segments list of buffer");
+
+      if (fMem->fArr[id].refcnt + 1 == 0)
+         throw dabc::Exception("To many references on single segments - how it can be");
+
+      fMem->fArr[id].refcnt++;
+   }
+}
+
+void dabc::MemoryPool::DecreaseSegmRefs(MemSegment* segm, unsigned num) throw()
+{
+   LockGuard lock(ObjectMutex());
+
+   if (fMem==0)
+      throw dabc::Exception("Memory was not allocated in the pool");
+
+   for (unsigned cnt=0;cnt<num;cnt++) {
+      unsigned id = segm[cnt].id;
+      if (id>fMem->fNumber)
+         throw dabc::Exception("Wrong buffer id in the segments list of buffer");
+
+      if (fMem->fArr[id].refcnt == 0)
+         throw dabc::Exception("Reference counter of specified segment is already 0");
+
+      fMem->fArr[id].refcnt--;
+   }
+
+}
+
+bool dabc::MemoryPool::_ReleaseBuffer(Buffer& buf) throw()
+{
+   MemSegment* segs = buf.fSegments;
+   buf.fSegments = 0;
+   unsigned size = buf.fNumSegments;
+   buf.fNumSegments = 0;
+   buf.fCapacity = 0;
+
+   bool isnewfree(false);
+
+   for (unsigned cnt=0; cnt<size; cnt++) {
+      unsigned id = segs[cnt].id;
+
+      // very special case - in some cases part of segments could be disabled in that way
+      // than one should not try to dec ref counter of buffer 0
+      if ((id==0) && (segs[cnt].buffer==0) && (segs[cnt].datasize==0)) continue;
+
+      if (fMem->fArr[id].refcnt == 0) throw dabc::Exception("Memory release more times as it is referenced");
+
+      // decrement reference counter on the memory space
+      fMem->fArr[id].refcnt--;
+
+      if (fMem->fArr[id].refcnt==0) {
+         fMem->fFree.Push(id);
+         isnewfree = true;
       }
+   }
 
-      if ((req->pool==this) && (req->buf==0)) {
-         req->bufsize = size;
-         req->hdrsize = hdrsize;
-      }
+   unsigned refid = buf.fPoolId;
+   buf.fPoolId = 0;
 
-      if (fReqQueue.Size()>0)
-         process_res = _ProcessRequests();
+   if (fSeg->fArr[refid].refcnt!=1) throw dabc::Exception("Segments list should referenced at this time exactly once");
 
-      if (req->buf!=0) {
+   fSeg->fArr[refid].refcnt--;
 
-         buf = req->buf;
+   fSeg->fFree.Push(refid);
 
-         if (req->pool!=0) fReqQueue.Remove(req);
+   return isnewfree;
+}
 
-         req->pool = 0;
-         req->buf = 0;
 
-         if (req->bufsize < size)
-            EOUT(("Mismatch in requested (%u) and obtained (%u) buffer sizes", req->bufsize, size));
+void dabc::MemoryPool::ReleaseBuffer(Buffer& buf) throw()
+{
 
-         if (req->hdrsize < hdrsize)
-            EOUT(("Mismatch in requested (%u) and obtained (%u) header sizes", req->hdrsize, hdrsize));
-      } else {
-         buf = _TakeBuffer(size, hdrsize);
+   bool dofire(false), process_req(false);
 
-         if (buf==0) {
-            req->bufsize = size;
-            req->hdrsize = hdrsize;
-            req->buf = 0;
-            if (req->pool == 0) {
-               req->pool = this;
-               fReqQueue.Push(req);
-            }
+   {
+      LockGuard lock(ObjectMutex());
+
+      bool isnewfree = _ReleaseBuffer(buf);
+
+      if (isnewfree && !fReqQueue.Empty()) {
+
+         if (fUseThread) {
+           if (!fEvntFired) { fEvntFired = true; dofire = true; }
          } else {
-            if (req->pool==this) {
-               EOUT(("Internal error!!!"));
-               req->pool = 0;
-               fReqQueue.Remove(req);
-            }
+            process_req = _ProcessRequests();
          }
       }
    }
 
-   if (process_res) ReplyReadyRequests();
+   // if requests were processed, inform all receivers outside locked area
+   if (process_req) ReplyReadyRequests();
 
-   return buf;
+   // process of submitted requests is only allowed in pool thread (if it is assigned)
+   if (dofire) FireEvent(evntProcessRequests);
 }
 
-dabc::Buffer* dabc::MemoryPool::TakeRequestedBuffer(MemoryPoolRequester* req)
+
+dabc::Buffer dabc::MemoryPool::TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size) throw()
 {
-   LockGuard guard(fPoolMutex);
+   dabc::Buffer res;
 
-   if (req->buf==0) return 0;
+   if (req==0) return res;
 
-   Buffer* buf = req->buf;
-   req->buf = 0;
-   if (req->pool==this) {
-      req->pool = 0;
-      fReqQueue.Remove(req);
+   bool process_req(false);
+
+   {
+
+      LockGuard lock(ObjectMutex());
+
+      if ((req->pool!=0) && (req->pool!=this)) {
+         EOUT(("Requester is used for other memory pool"));
+         throw dabc::Exception("Requester is used for other memory pool");
+         return res;
+      }
+
+      if (!req->buf.null()) {
+         res << req->buf;
+         req->pool = 0;
+
+         if ((size>0) && (size>res.GetTotalSize())) {
+            throw dabc::Exception("Requested buffer size is bigger than already prepared buffer");
+            return res;
+         }
+
+         return res;
+      }
+
+      if (fReqQueue.Size()>0)
+         process_req = _ProcessRequests();
+
+      res << _TakeBuffer(size, true);
+
+      if (res.null()) {
+         req->bufsize = size;
+
+         if (req->pool==0) {
+            req->pool = this;
+            fReqQueue.Push(req);
+         }
+      }
    }
 
-   return buf;
-}
+   if (process_req) ReplyReadyRequests();
 
+   return res;
+}
 
 void dabc::MemoryPool::RemoveRequester(MemoryPoolRequester* req)
 {
-   LockGuard guard(fPoolMutex);
+   if (req==0) return;
 
-   if (req->pool == this) {
-      fReqQueue.Remove(req);
-      if (req->buf)
-        _ReleaseBuffer(req->buf);
-      req->buf = 0;
+   LockGuard lock(ObjectMutex());
+
+   if (req->pool==this) {
       req->pool = 0;
+      fReqQueue.Remove(req);
+
+      _ReleaseBuffer(req->buf);
    }
 }
-
-bool dabc::MemoryPool::NewReferences(MemSegment* segs, unsigned numsegs)
-{
-   LockGuard guard(fPoolMutex);
-
-   for (unsigned nseg=0;nseg<numsegs; nseg++) {
-      MemoryBlock* block = fMem[GetBlockNum(segs[nseg].id)];
-
-      block->IncReference(GetBufferNum(segs[nseg].id));
-   }
-
-   return true;
-}
-
-void dabc::MemoryPool::ReleaseBuffer(Buffer* buf)
-{
-   {
-      LockGuard guard(fPoolMutex);
-
-      _ReleaseBuffer(buf);
-
-      if (_CheckCleanupStatus())
-         ActivateTimeout(fCleanupTmout);
-
-      if (fReqQueue.Size()==0) return;
-
-      if (ProcessorThread()==0) {
-         if (!_ProcessRequests()) return;
-      } else {
-         if (!fEvntFired) {
-            fEvntFired = true;
-            FireEvent(evntProcessRequests);
-         }
-         return;
-       }
-   }
-
-   ReplyReadyRequests();
-}
-
-dabc::Buffer* dabc::MemoryPool::_TakeEmptyBuffer(unsigned nseg, BufferSize_t hdrsize)
-{
-   if (fNumRef==0) return 0;
-
-   Buffer* ref = 0;
-
-   for (BlockNum_t nblock=0;nblock<fNumRef;nblock++)
-      if ((ref = fRef[nblock]->TakeReference(nseg, hdrsize, false)) != 0) break;
-
-   if (ref==0)
-      for (BlockNum_t nblock=0;nblock<fNumRef;nblock++)
-         if ((ref = fRef[nblock]->TakeReference(nseg, hdrsize, true)) != 0) break;
-
-   if ((ref==0) && (fNumRef>0) && !fMemLayoutFixed) {
-      ReferencesBlock* master = fRef[fNumRef-1];
-
-      // check memory limit
-      if ((fMemoryLimit>0) &&
-          (fMemoryAllocated + master->NumIncrease() * master->MemoryPerBuffer() > fMemoryLimit)) return 0;
-
-      ReferencesBlock* block = _AllocateRefBlock(master->HeaderSize(), master->NumIncrease(), master->NumSegments());
-      if (block!=0) {
-         block->fNumIncrease = master->NumIncrease();
-         ref = block->TakeReference(nseg, hdrsize, true);
-      }
-   }
-
-   return ref;
-}
-
-dabc::Buffer* dabc::MemoryPool::_TakeBuffer(BufferSize_t size, BufferSize_t hdrsize)
-{
-   if (fMem==0) return _TakeEmptyBuffer(0, hdrsize);
-
-   if (fNumMem==0) {
-      EOUT(("Cannot take buffer from empty pool"));
-      return 0;
-   }
-
-   MemoryBlock* master = 0;
-   for (unsigned id = 0; id<fMemPrimary; id++) {
-      MemoryBlock* block = fMem[id];
-      if (size==0) size = block->BufferSize();
-      if (block->BufferSize() >= size)
-         if ((master==0) || master->BufferSize() > block->BufferSize()) master = block;
-   }
-
-   if (master==0) {
-      EOUT(("Pool:%s No master blocks with so big buffer %u", GetName(), size));
-      return 0;
-   }
-
-   if (master->IsNull()) {
-      if (!master->Allocate(master->fBufferSize, master->fNumBuffers, master->fAlignment, true)) {
-         EOUT(("Hard error - cannot allocate preconfigured buffer"));
-         return 0;
-      }
-      DOUT2(("Allocate preconfigured mem block in pool %s", GetName()));
-      master->fChangeCounter = ++fChangeCounter;
-   }
-
-   BufferNum_t num = 0;
-   bool res = master->TakeBuffer(num);
-
-   while (!res && (master->fNextBlock!=0)) {
-      master = master->fNextBlock;
-      res = master->TakeBuffer(num);
-   }
-
-   // try if we can expand memory pool and get memory from there
-   if (!res && !fMemLayoutFixed) {
-
-      if (master->NumIncrease()==0) return 0;
-
-      if ((fMemoryLimit>0) &&
-         (fMemoryAllocated + master->NumIncrease() * master->MemoryPerBuffer() > fMemoryLimit)) return 0;
-
-      MemoryBlock* block = _AllocateMemBlock(master->BufferSize(), master->NumIncrease(), master->Alignment(), master->UseFreeQueue());
-
-      if (block==0) return 0;
-
-      block->fNumIncrease = master->NumIncrease();
-      master->fNextBlock = block;
-
-      master = block;
-
-      res = master->TakeBuffer(num);
-   }
-
-   if (!res) return 0;
-
-   Buffer* ref = _TakeEmptyBuffer(1, hdrsize);
-
-   if (ref==0) {
-      master->DecReference(num);
-      return 0;
-   }
-
-   ref->fSegments[0].id = master->fBlockId | num;
-   ref->fSegments[0].buffer = master->RawBuffer(num);
-   ref->fSegments[0].datasize = master->BufferSize();
-
-   return ref;
-}
-
-void dabc::MemoryPool::_ReleaseBuffer(Buffer* buf)
-{
-   for (unsigned nseg=0;nseg<buf->fNumSegments;nseg++) {
-      MemoryBlock* block = fMem[GetBlockNum(buf->fSegments[nseg].id)];
-      block->DecReference(GetBufferNum(buf->fSegments[nseg].id));
-   }
-
-   ReferencesBlock* refblock = fRef[GetBlockNum(buf->fReferenceId)];
-   refblock->ReleaseReference(buf);
-}
-
-bool dabc::MemoryPool::AddMemReq(BufferSize_t bufsize, BufferNum_t number, BufferNum_t increment, unsigned align)
-{
-   LockGuard guard(fPoolMutex);
-
-   if (fMemLayoutFixed) return false;
-
-   if (bufsize==0) bufsize = DefaultBufferSize;
-
-   if ((number==0) && (increment==0)) {
-      EOUT(("Empty mem request to pool %s", GetName()));
-      return false;
-   }
-
-   bufsize = RoundBufferSize(bufsize);
-
-   MemoryBlock* master = 0;
-   for (unsigned id = 0; id<fMemPrimary; id++) {
-      if (fMem[id]->BufferSize() == bufsize) {
-         master = fMem[id];
-         break;
-      }
-   }
-
-   if (master && !master->IsNull()) return false;
-
-   if (master==0) {
-      if (fNumMem>=fMemCapacity)
-         if (!_ExtendArr(&fMem, fMemCapacity)) return false;
-
-      master = new MemoryBlock;
-
-      master->fBlockId = CodeBufferId(fNumMem, 0);
-
-      fMem[fNumMem] = master;
-      fNumMem++;
-
-      fMemPrimary = fNumMem;
-      fMemSecondary = fMemPrimary;
-   }
-
-   master->fBufferSize = bufsize;
-   master->fNumBuffers += number;
-   master->fNumIncrease += increment;
-   master->fAlignment = align;
-
-   return true;
-}
-
-bool dabc::MemoryPool::AddRefReq(BufferSize_t hdrsize, BufferNum_t number, BufferNum_t increment, unsigned numsegm)
-{
-   LockGuard guard(fPoolMutex);
-
-   if (fMemLayoutFixed) return false;
-
-   if ((number==0) && (increment==0)) {
-      EOUT(("Empty ref request to pool %s", GetName()));
-      return false;
-   }
-
-   if (numsegm==0) numsegm = dabc::DefaultNumSegments;
-
-   ReferencesBlock* master = 0;
-
-   for (BlockNum_t nblock=0;nblock<fRefPrimary;nblock++) {
-      ReferencesBlock* block = fRef[nblock];
-
-      if ((block->NumSegments() >= numsegm) && (block->HeaderSize() >= hdrsize)) {
-         if (block->IsNull()) { master = block; break; }
-         if (master==0) master = block;
-      }
-   }
-
-   if ((master!=0) && !master->IsNull()) return false;
-
-   if (master==0) {
-      if (fNumRef>=fRefCapacity)
-         if (!_ExtendArr(&fRef, fRefCapacity)) return false;
-
-      master = new ReferencesBlock();
-
-      // one should set this id that Allocate initialize references appropriately
-      master->fBlockId = CodeBufferId(fNumRef, 0);
-
-      fRef[fNumRef] = master;
-      fNumRef++;
-      fRefPrimary = fNumRef;
-   }
-
-   master->fPool = this;
-   master->fHeaderSize = hdrsize;
-   master->fNumSegments = numsegm;
-   master->fNumBuffers += number;
-   master->fNumIncrease += increment;
-
-   return true;
-}
-
-
-
-void dabc::MemoryPool::ProcessEvent(EventId evid)
-{
-   DOUT4(("Pool %s process event %x locked %s", GetName(), evid, DBOOL(fPoolMutex->IsLocked())));
-
-   bool process_res = false;
-
-   {
-      LockGuard guard(fPoolMutex);
-
-      if (fReqQueue.Size()>0)
-         process_res = _ProcessRequests();
-
-      fEvntFired = false;
-   }
-
-   if (process_res) ReplyReadyRequests();
-
-   DOUT4(("Pool %s process event %x done", GetName(), evid));
-}
-
 
 bool dabc::MemoryPool::_ProcessRequests()
 {
@@ -1125,10 +692,10 @@ bool dabc::MemoryPool::_ProcessRequests()
    for(unsigned n=0; n<fReqQueue.Size(); n++) {
       MemoryPoolRequester* req = fReqQueue.Item(n);
 
-      if (req->buf==0)
-         req->buf = _TakeBuffer(req->bufsize, req->hdrsize);
+      if (req->buf.null())
+         req->buf << _TakeBuffer(req->bufsize, false);
 
-      if (req->buf != 0) res = true;
+      if (!req->buf.null()) res = true;
    }
 
    return res;
@@ -1136,7 +703,7 @@ bool dabc::MemoryPool::_ProcessRequests()
 
 void dabc::MemoryPool::ReplyReadyRequests()
 {
-   MemoryPoolRequester* req = 0;
+   MemoryPoolRequester* req(0);
 
    do {
       // give signal to requester that buffer is ready
@@ -1144,18 +711,14 @@ void dabc::MemoryPool::ReplyReadyRequests()
       if (req!=0)
          if (req->ProcessPoolRequest()) req = 0;
 
-      LockGuard guard(fPoolMutex);
-
-      // cleanup buffer of requester, who do not like to process own request
-      if (req!=0) {
-         _ReleaseBuffer(req->buf);
-         req->buf = 0;
-      }
+      if (req!=0) req->buf.Release();
 
       req = 0;
 
+      LockGuard guard(ObjectMutex());
+
       for(unsigned n=0; n<fReqQueue.Size(); n++)
-         if (fReqQueue.Item(n)->buf != 0) {
+         if (!fReqQueue.Item(n)->buf.null()) {
             req = fReqQueue.Item(n);
             req->pool = 0;
             fReqQueue.RemoveItem(n);
@@ -1164,250 +727,71 @@ void dabc::MemoryPool::ReplyReadyRequests()
    } while (req!=0);
 }
 
-bool dabc::MemoryPool::_CheckCleanupStatus()
+
+void dabc::MemoryPool::ProcessEvent(const EventId& ev)
 {
-   // return true when new loop of the cleanup can be started
-   // in our case it means that we should activate timeout
 
-   if (fCleanupTmout<=0.) return false;
+   if (ev.GetCode() == evntProcessRequests) {
 
-   switch (fCleanupStatus) {
-      case stOff:
-         if ((fNumMem > fMemSecondary) && fMem[fNumMem-1]->IsBlockFree()) {
-            fCleanupStatus = stMemCleanup;
-            fMemCleanupStatus = true;
-         } else
-         if ((fNumRef > fRefPrimary) && fRef[fNumRef-1]->IsBlockFree()) {
-            fCleanupStatus = stRefCleanup;
-            fRefCleanupStatus = true;
-         }
+      bool process_req(false);
 
-         if (fCleanupStatus != stOff) return true;
+      {
+         LockGuard guard(ObjectMutex());
 
-         break;
+         fEvntFired = false;
 
-      case stMemCleanup:
-         if (!fMem[fNumMem-1]->IsBlockFree())
-            fMemCleanupStatus = false;
-         break;
-
-      case stRefCleanup:
-         if (!fRef[fNumRef-1]->IsBlockFree())
-            fRefCleanupStatus = false;
-         break;
-   }
-
-   return false;
-}
-
-double dabc::MemoryPool::ProcessTimeout(double)
-{
-   // check cleanup flags and probably, delete last memory or references block
-
-   DOUT5(("Process timeout status:%d", fCleanupStatus));
-
-   LockGuard guard(fPoolMutex);
-
-   switch (fCleanupStatus) {
-      case stOff:
-         break;
-
-      case stMemCleanup:
-         if (fMemCleanupStatus)
-            _ReleaseLastMemBlock();
-         break;
-
-      case stRefCleanup:
-         if (fRefCleanupStatus)
-            _ReleaseLastRefBlock();
-         break;
-   }
-
-   fCleanupStatus = stOff;
-
-   return _CheckCleanupStatus() ? fCleanupTmout : -1.;
-}
-
-void dabc::MemoryPool::Print()
-{
-   LockGuard guard(fPoolMutex);
-
-   DOUT1(("Pool:%s numem:%d numref:%d fixed:%s", GetName(), fNumMem, fNumRef, DBOOL(fMemLayoutFixed)));
-
-   for (BlockNum_t id=0;id<fNumMem;id++)
-     if (fMem[id]==0)
-        DOUT1(("  Mem[%u] = null", id));
-     else
-        DOUT1(("  Mem[%u] : size %llu  bufsize %u used %u", id, fMem[id]->BlockSize(), fMem[id]->BufferSize(), fMem[id]->NumUsedBuffers()));
-
-   for (BlockNum_t id=0;id<fNumRef;id++)
-     if (fRef[id]==0)
-        DOUT1(("  Ref[%u] = null", id));
-     else
-        DOUT1(("  Ref[%u] : size %llu bufsize %u used %u", id, fRef[id]->BlockSize(), fRef[id]->BufferSize(), fRef[id]->NumUsedBuffers()));
-}
-
-void dabc::MemoryPool::StoreConfig()
-{
-    DeleteChilds();
-
-    CreateParBool(xmlFixedLayout, fMemLayoutFixed);
-    CreateParInt(xmlSizeLimitMb, fMemoryLimit / 1024 / 1024);
-    CreateParDouble(xmlCleanupTimeout, fCleanupTmout);
-
-    if (IsEmpty()) return;
-
-    BufferSize_t  bufsize = minBufferSize();
-
-    while (bufsize <= maxBufferSize()) {
-       BufferNum_t numbuf = 0;
-       BufferNum_t numinc = 0;
-       unsigned align = 0;
-
-       {
-          LockGuard guard(fPoolMutex);
-
-          for (BlockNum_t num=0;num<fNumMem;num++)
-            if (fMem[num]->BufferSize() == bufsize) {
-               numbuf += fMem[num]->NumBuffers();
-               if (fMem[num]->NumIncrease() > numinc)
-                  numinc = fMem[num]->NumIncrease();
-               if (fMem[num]->Alignment() > align)
-                  align = fMem[num]->Alignment();
-            }
-       }
-
-       if (numbuf>0) {
-          std::string blockname = BlockName(bufsize);
-
-          CreateParInt((blockname+xmlNumBuffers).c_str(), numbuf);
-          CreateParInt((blockname+xmlNumIncrement).c_str(), numinc);
-          CreateParInt((blockname+xmlAlignment).c_str(), align);
-       }
-
-       bufsize*=2;
-    }
-
-    BufferNum_t numref = 0;
-    BufferSize_t header = 0;
-    unsigned numsegm = 1;
-    BufferNum_t numinc = 0;
-
-    {
-       LockGuard guard(fPoolMutex);
-
-       for (BlockNum_t num=0;num<fNumRef;num++) {
-          numref += fRef[num]->NumBuffers();
-          if (fRef[num]->HeaderSize() > header)
-             header = fRef[num]->HeaderSize();
-          if (fRef[num]->NumSegments() > numsegm)
-             numsegm = fRef[num]->NumSegments();
-          if (fRef[num]->NumIncrease() > numinc)
-             numinc = fRef[num]->NumIncrease();
-       }
-    }
-
-    if (numref>0) {
-       std::string blockname = BlockName(0);
-
-       CreateParInt((blockname+xmlNumBuffers).c_str(), numref);
-       CreateParInt((blockname+xmlNumIncrement).c_str(), numinc);
-       CreateParInt((blockname+xmlHeaderSize).c_str(), header);
-       CreateParInt((blockname+xmlNumSegments).c_str(), numsegm);
-    }
-}
-
-bool dabc::MemoryPool::Store(ConfigIO &cfg)
-{
-   if (IsEmpty()) return false;
-
-   StoreConfig();
-
-   cfg.CreateItem(clMemoryPool);
-
-   cfg.CreateAttr(xmlNameAttr, GetName());
-
-   StoreChilds(cfg);
-
-   cfg.PopItem();
-
-   return true;
-}
-
-bool dabc::MemoryPool::Reconstruct(dabc::Command* cmd)
-{
-   if (!IsEmpty()) return false;
-
-   BufferSize_t bufsize = minBufferSize();
-
-   while (bufsize <= maxBufferSize()) {
-
-      std::string blockname = BlockName(bufsize);
-
-      if (HasCfgPar((blockname + xmlNumBuffers).c_str(), cmd)) {
-
-         unsigned numbuf = GetCfgInt((blockname + xmlNumBuffers).c_str(), 0, cmd);
-
-         if (numbuf>0) {
-            unsigned numinc = GetCfgInt((blockname + xmlNumIncrement).c_str(), 0, cmd);
-
-            unsigned align = GetCfgInt((blockname + xmlAlignment).c_str(), 8, cmd);
-
-            AllocateMemory(bufsize, numbuf, numinc, align);
-         }
+         process_req = _ProcessRequests();
       }
 
-      bufsize*=2;
+      if (process_req) ReplyReadyRequests();
+
+      return;
    }
 
-   std::string blockname = BlockName(0);
+   dabc::Worker::ProcessEvent(ev);
+}
 
-   if (HasCfgPar((blockname + xmlNumBuffers).c_str(), cmd)) {
-      unsigned numref = GetCfgInt((blockname+xmlNumBuffers).c_str(), 0, cmd);
+bool dabc::MemoryPool::CheckChangeCounter(unsigned &cnt)
+{
+   bool res = cnt!=fChangeCounter;
 
-      if (numref>0) {
-         unsigned numinc = GetCfgInt((blockname+xmlNumIncrement).c_str(), 0, cmd);
-         unsigned header = GetCfgInt((blockname+xmlHeaderSize).c_str(), 0, cmd);
-         unsigned numsegm = GetCfgInt((blockname+xmlNumSegments).c_str(), 0, cmd);
+   cnt = fChangeCounter;
 
-         AllocateReferences(header, numref, numinc, numsegm);
-      }
+   return res;
+}
+
+bool dabc::MemoryPool::Reconstruct(Command cmd)
+{
+   unsigned buffersize = Cfg(xmlBufferSize, cmd).AsUInt(GetDfltBufSize());
+
+//   dabc::SetDebugLevel(2);
+   unsigned numbuffers = Cfg(xmlNumBuffers, cmd).AsUInt();
+//   dabc::SetDebugLevel(0);
+   unsigned refcoeff = Cfg(xmlRefCoeff, cmd).AsUInt(GetDfltRefCoeff());
+   unsigned numsegm = Cfg(xmlNumSegments, cmd).AsUInt(GetDfltNumSegments());
+   unsigned align = Cfg(xmlAlignment, cmd).AsUInt(GetDfltAlignment());
+
+   DOUT0(("POOL:%s bufsize:%u X num:%u", GetName(), buffersize, numbuffers));
+
+   if (align) SetAlignment(align);
+   if (numsegm) SetMaxNumSegments(numsegm);
+
+   return Allocate(buffersize, numbuffers, refcoeff);
+}
+
+double dabc::MemoryPool::GetUsedRatio() const
+{
+   LockGuard lock(ObjectMutex());
+
+   if (fMem==0) return 0.;
+
+   double sum1(0.), sum2(0.);
+   for(unsigned n=0;n<fMem->fNumber;n++) {
+      sum1 += fMem->fArr[n].size;
+      if (fMem->fArr[n].refcnt>0)
+         sum2 += fMem->fArr[n].size;
    }
 
-   unsigned sizelimitmb = GetCfgInt(xmlSizeLimitMb, 0, cmd);
+   return sum1>0. ? sum2/sum1 : 0.;
 
-   if (sizelimitmb>0) SetMemoryLimit(((uint64_t)sizelimitmb) * 1024 * 1024);
-
-   SetCleanupTimeout(GetCfgDouble(xmlCleanupTimeout, -1., cmd));
-
-   bool fixlayout = GetCfgBool(xmlFixedLayout, false, cmd);
-
-   if (fixlayout) {
-      DOUT2(("Fix layout of pool %s", GetName()));
-      SetLayoutFixed();
-   }
-
-   return true;
-}
-
-bool dabc::MemoryPool::Find(ConfigIO &cfg)
-{
-   if (!cfg.FindItem(clMemoryPool)) return false;
-
-   return cfg.CheckAttr(xmlNameAttr, GetName());
-}
-
-dabc::BufferSize_t dabc::MemoryPool::RoundBufferSize(dabc::BufferSize_t bufsize)
-{
-   if (bufsize==0) return 0;
-
-   BufferSize_t size = minBufferSize();
-   while ((size<bufsize) && (size<maxBufferSize())) size*=2;
-   return size;
-}
-
-std::string dabc::MemoryPool::BlockName(dabc::BufferSize_t bufsize)
-{
-   if (bufsize==0) return "References/";
-   return dabc::format("Block_%u/", bufsize);
 }

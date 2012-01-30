@@ -1,28 +1,28 @@
 #!/bin/bash
 
-if [[ "$1" == "-version" ]] ; then
-   echo "DABC version 1.1"
+if [[ "$1" == "-version" || "$1" == "-v" || "$1" == "--version" ]] ; then
+   echo "DABC version 1.9"
    exit 0
 fi
 
-echo "Shell script to run dabc application"
-
 if [[ "$1" == "" || "$1" == "?" || "$1" == "-help" || "$1" == "-h" || "$1" == "/?" ]] ; then
-   echo "Usage: run.sh filename.xml [run|start|stop|test|kill]  [-v|--verbose] [-dim|-sctrl]"
+   echo "Usage: run.sh filename.xml [run|start|stop|copy|test|kill|dellog] [-node N] [-v|-verbose]"
    echo "    filename.xml - xml file with application(s) configuration "
    echo "Run options: "
-   echo "    start[default] - only start application"
+   echo "    start - only start application [default]"
    echo "    run - start, initialize and run application"
    echo "    test - test content of xml file, check if login on specified node" 
    echo "            is allowed, test if run directory exists"
    echo "    stop - stop running application, emulates Ctrl-C"
    echo "    kill - kill running application, using kill command"
-   echo "For test, stop, kill commands node id can be specified like run.sh file.xml test 3"
-   echo "Ctrl options: "
-   echo "    -dim - use DIM for application control, DIM name server should run and "
-   echo "              DIM_DNS_NODE should be configured in xml file or as environment variable"
-   echo "    -sctrl - simplified socket-based control to test application without DIM/GUI"
+   echo "    dellog - delete log files"
+   echo "    copycfg - distribute config files over the nodes"
+   echo "Other options: "
+   echo "    -node N  - perform operation only for specified node"
+   echo "    -from NUM - launch from (including) NUM node"
+   echo "    -to NUM  - launch up to (including) NUM node"
    echo "    -verbose - provide output of all commands, applied by script"
+   echo "    -parallel N - launch dabc application from N parallel scripts"
    exit 0
 fi   
 
@@ -32,32 +32,41 @@ if [ ! -f $XMLFILE ] ; then echo "file $XMLFILE not exists"; exit 1; fi
 
 VERBOSE=false
 RUNMODE=start
-CTRLMODE=
 SELECTNODE=-1
+MAXNODE=-1
+MINNODE=0
+PARALLEL=-1
+SILENT=0
 
 while [[ "x$1" != "x" ]] ; do
-   if [[ "$1" == "-v" || "$1" == "--vebrose" ]] ; then 
-      VERBOSE=true;
-   elif [[ "$1" == "-dim" || "$1" == "-sctrl" ]] ; then
-      CTRLMODE=$1;
-   else
-      RUNMODE=$1; 
-      if [[ "$RUNMODE" == "test" || "$RUNMODE" == "stop" || "$RUNMODE" == "kill" ]] ; then
-         if [[ $2 == $(($2)) ]]; then
-            SELECTNODE=$2
-            shift  
-         fi
-      fi  
+   if [[ "$1" == "-v" || "$1" == "-verbose" || "$1" == "--verbose" ]] ; then 
+      VERBOSE=true
+   elif [[ "$1" == "-multi" || "$1" == "-parallel"  ]] ; then
+      PARALLEL=$2
+      shift
+      if [[ "x$PARALLEL" == "x" ]] ; then PARALLEL=0; fi 
+   elif [[ "$1" == "-node" ]] ; then
+      MINNODE=$2
+      MAXNODE=$2
+      shift
+   elif [[ "$1" == "-from" || "$1" == "-min" ]] ; then
+      MINNODE=$2
+      shift
+   elif [[ "$1" == "-to" || "$1" == "-max" ]] ; then
+      MAXNODE=$2
+      shift
+   elif [[ "$1" == "-silent" ]] ; then
+      SILENT=1
+   else 
+      RUNMODE=$1   
    fi  
    shift
 done
 
-if [[ "$RUNMODE" != "run" && "$RUNMODE" != "start" && "$RUNMODE" != "stop" && "$RUNMODE" != "test" && "$RUNMODE" != "kill" ]] ; then
+if [[ "$RUNMODE" != "run" && "$RUNMODE" != "start" && "$RUNMODE" != "stop" && "$RUNMODE" != "test" && "$RUNMODE" != "copycfg" && "$RUNMODE" != "kill" && "$RUNMODE" != "dellog" ]] ; then
    echo Wrong run mode  = $RUNMODE selected, use test
    RUNMODE=test
 fi 
-
-echo "Chosen run mode = $RUNMODE verbose = $VERBOSE ctrl = $CTRLMODE" 
 
 curdir=`pwd`
 if [[ "x$DABCSYS" == "x" ]] ; then DABCSYS=$curdir; echo DABCSYS not specified, use current dir $DABCSYS; fi
@@ -69,124 +78,118 @@ else
 fi   
 if [[ ! -f $dabc_xml ]] ; then echo Cannot find dabc_xml executable; exit 1; fi
 
-numnodes=`$dabc_xml $XMLFILE -number`
-retval=$?
-if [ $retval -ne 0 ]; then
-   echo Cannot identify number of nodes in $XMLFILE - ret = $retval syntax error?
-   exit $retval
+if (( $MINNODE > $MAXNODE || $PARALLEL >=0 )) ; then
+
+   numnodes=`$dabc_xml $XMLFILE -number`
+   retval=$?
+   if [ $retval -ne 0 ]; then
+      echo Cannot identify number of nodes in $XMLFILE - ret = $retval syntax error?
+      exit $retval
+   fi
+
+   if [[ "x$numnodes" == "x" || "$numnodes" == "0" ]] 
+   then
+      echo "Internal error in dabc_run - cannot identify numnodes in $XMLFILE"
+      exit 1
+   fi
+   
+   if (( $MAXNODE < 0 )) ; then MAXNODE=$(($numnodes-1)); fi 
+   
+   if (( $MAXNODE >= $numnodes )) ; then 
+      echo "Wrong max node id $MAXNODE specified"
+      exit 1
+   fi
+   
+   if (( $MINNODE > $MAXNODE )) ; then
+      echo "Wrong min node id $MINNODE specified"
+      exit 1 
+   fi
+   
+   if (( $PARALLEL == 0 )) ; then
+      if (( $numnodes > 100 )) ; then PARALLEL=8; else PARALLEL=4; fi   
+   elif (( $PARALLEL >= $numnodes/4 )) ; then    
+      $PARALLEL = $numnodes/4
+   fi
+   
+   if (( $numnodes < 4 )) ; then PARALLEL=-1; fi 
 fi
 
-if [[ "x$numnodes" == "x" || "$numnodes" == "0" ]] 
-then
-   echo "Internal error in dabc_run - cannot identify numnodes in $XMLFILE"
-   exit 1
+
+
+if (( SILENT!=1 )) ; then
+   echo "Shell script to run dabc application"
+   if (( $MINNODE == $MAXNODE )) ; then 
+      selstr=" node:$MAXNODE"; 
+   else
+     selstr=" nodes:[$MINNODE..$MAXNODE]";
+   fi  
+   echo "Run mode:$RUNMODE $selstr verbose:$VERBOSE"
 fi
 
-echo "Total numnodes = $numnodes, check all of them that we can log in"
+
+################################################################
+# populate run.sh script for parallel execution (when specified) 
+################################################################
+
+if (( $PARALLEL > 0 )) ; then
+   LAST=$((MINNODE-1))
+   for (( cnt=0; cnt<PARALLEL-1; cnt++ )) ; do
+      FIRST=$((LAST+1))
+      LAST=$((MINNODE+cnt*(MAXNODE-MINNODE+1)/PARALLEL))
+      
+      callargs="$0 $XMLFILE $RUNMODE -from $FIRST -to $LAST"
+
+      if [[ "$VERBOSE" == "true" ]] ; then
+         callargs+=" -v" 
+         echo PARALLEL:: $callargs
+      fi
+      
+      callargs+=" -silent"
+      
+      $callargs &
+   done
+   # last parallel loop performing from current shell
+   MINNODE=$((LAST+1))
+fi
+
 
 currdir=`pwd`
 
 ###########################################################
-# first loop, where only test/stop/kill are done
+# Loop over all nodes 
 ###########################################################
 
-if [[ "$RUNMODE" == "test" || "$RUNMODE" == "stop" || "$RUNMODE" == "kill" ]] 
-then
-for (( counter=0; counter<numnodes; counter=counter+1 ))
-do
-   if (( $SELECTNODE==-1 || $SELECTNODE==$counter )) ; then 
-
-	   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -mode $RUNMODE`
-	   retval=$?
-	   if [ $retval -ne 0 ]; then
-	      echo "Cannot identify test call args for node $counter  err = $retval"
-	      exit $retval
-	   fi
-	   
-	   if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
-	   
-	   $callargs
-	
-	   retval=$? 
-	   if [[ "$RUNMODE" == "test" || "$RUNMODE" == "run" ]] ; then 
-	      if [ $retval -ne 0 ] ; then
-	         echo Mode $RUNMODE fail for node $counter with err = $retval
-	         exit $retval
-	      fi
-	   fi
-   fi
-done
-fi
-
-if [[ "$RUNMODE" == "run" || "$RUNMODE" == "start" ]]
-then
-
-remconnfile=dabc_server.id
-lclconnfile=dabc_conn.id
-connstr=$remconnfile
-
-rm -f $remconnfile $lclconnfile
-
-for (( counter=0; counter<numnodes; counter=counter+1 ))
-do
-   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -mode copy`
+for (( counter=$MINNODE; counter<=$MAXNODE; counter=counter+1 ))
+ do
+ 
+   unset callargs
+   
+   eval callargs=$($dabc_xml $XMLFILE -id $counter -workdir $currdir -mode $RUNMODE)
+   
    retval=$?
    if [ $retval -ne 0 ]; then
-      echo "Cannot define copy args for node $counter  err = $retval"
-      exit $retval
-   fi
-   
-   if [[ "x$callargs" != "x" ]]; then
-      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
-      $callargs > /dev/null 2>&1
-   fi;
-
-   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -mode $RUNMODE`
-   retval=$?
-   if [ $retval -ne 0 ]; then
-      echo "Cannot define call args for node $counter  err = $retval"
-      exit $retval
+     echo "Cannot identify call arguments for node $counter  err = $retval"
+     exit $retval
    fi
 
-   if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs; fi
-   
-   $callargs &
-
-   retval=$?
-   if [ $retval -ne 0 ]; then
-      echo "Run of dabc application for node $counter fails err = $retval"
-      exit $retval
-   fi
-
-   ####################################################################
-   # this is special part to get connection string from first node
-   # only required for SimpleControl, for DIM control must be deactivated
-   ####################################################################
-   
-   callargs=`$dabc_xml $XMLFILE $CTRLMODE -id $counter -workdir $currdir -conn $connstr -mode conn`
-   
-   if [[ "x$callargs" != "x" ]]
-   then
-      connstr=""
-   
-      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $callargs $lclconnfile; fi
+   # call arguments can have several items
+   for indx in ${!callargs[@]}; do
+      arg=${callargs[$indx]}
       
-      for (( cnt=10; cnt>0; cnt=cnt-1)) ; do
-       
-         $callargs $lclconnfile 2>/dev/null
-         
-         if [ -f $lclconnfile ]; then 
-            connstr=`cat $lclconnfile` 
-         fi  
-         
-         if [[ "x$connstr" == "x" ]] ; then sleep 1; else cnt=0; fi
-      done 
+      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: $arg; fi
+      
+      if [[ ${arg:0:1} == "&" ]] ; then
+         ${arg:1} &
+         retval=$?
+      else
+         $arg
+         retval=$?
+      fi
+      
+      if [ $retval -ne 0 ] ; then
+        echo Mode $RUNMODE fail for node $counter with err = $retval
+        # exit $retval
+      fi
+    done
 
-      rm -f $remconnfile $lclconnfile
-
-      if [[ "$VERBOSE" == "true" ]] ; then echo RUN:: Connection string is $connstr; fi
-   fi
-done
-
-fi
-
+ done

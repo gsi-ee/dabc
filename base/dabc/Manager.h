@@ -1,74 +1,66 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_Manager
 #define DABC_Manager
 
-#ifndef DABC_Folder
-#include "dabc/Folder.h"
+#ifndef DABC_Worker
+#include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_WorkingProcessor
-#include "dabc/WorkingProcessor.h"
+#ifndef DABC_Thread
+#include "dabc/Thread.h"
 #endif
 
 #ifndef DABC_Command
 #include "dabc/Command.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_Queue
+#include "dabc/Queue.h"
 #endif
 
-#ifndef DABC_Parameter
-#include "dabc/Parameter.h"
+#ifndef DABC_Application
+#include "dabc/Application.h"
 #endif
 
+#ifndef DABC_Module
+#include "dabc/Module.h"
+#endif
+
+#ifndef DABC_ConnectionRequest
+#include "dabc/ConnectionRequest.h"
+#endif
 
 namespace dabc {
 
    class Mutex;
-   class Module;
-   class WorkingThread;
-   class SocketThread;
+   class Thread;
    class Port;
    class MemoryPool;
    class Manager;
+   class ManagerRef;
    class Device;
-   class Parameter;
-   class CommandDefinition;
-   class Application;
    class Factory;
    class DependPairList;
    class DataInput;
    class DataOutput;
    class FileIO;
-   class StateMachineModule;
    class Configuration;
    class StdManagerFactory;
-
-   class CmdCreateModule : public Command {
-      public:
-         static const char* CmdName() { return "CreateModule"; }
-
-         CmdCreateModule(const char* classname, const char* modulename, const char* thrdname = 0) :
-            Command(CmdName())
-            {
-               SetStr("Class", classname);
-               SetStr("Name", modulename);
-               SetStr("Thread", thrdname);
-            }
-   };
+   class ReferencesVector;
+   class Thread;
+   class ParamEventReceiverList;
 
    class CmdDeletePool : public Command {
       public:
@@ -78,60 +70,55 @@ namespace dabc {
             { SetStr("PoolName", name); }
    };
 
-   class CmdCheckConnModule : public Command {
-      public:
-         static const char* CmdName() { return "CheckConn"; }
 
-         CmdCheckConnModule(const char* modulename) : Command(CmdName())
-            { SetPar("Module", modulename); }
+   class CmdModule : public Command {
+      public:
+         static const char* ModuleArg() { return "Module"; }
+
+         CmdModule(const char* cmdname, const char* module) : Command(cmdname)
+         {
+            SetStr(ModuleArg(), module);
+         }
    };
 
-   class CmdStartModule : public Command {
+   class CmdCreateModule : public CmdModule {
+      public:
+         static const char* CmdName() { return "CreateModule"; }
+
+         CmdCreateModule(const char* classname, const char* modulename, const char* thrdname = 0) :
+            CmdModule(CmdName(), modulename)
+            {
+               SetStr("Class", classname);
+               SetStr("Thread", thrdname);
+            }
+   };
+
+   class CmdStartModule : public CmdModule {
       public:
          static const char* CmdName() { return "StartModule"; }
 
-         CmdStartModule(const char* modulename) : Command(CmdName())
-            { SetPar("Module", modulename); }
+         CmdStartModule(const char* modulename = "*") : CmdModule(CmdName(), modulename) {}
    };
 
-   class CmdStopModule : public Command {
+   class CmdStopModule : public CmdModule {
       public:
          static const char* CmdName() { return "StopModule"; }
 
-         CmdStopModule(const char* modulename) : Command(CmdName())
-           { SetPar("Module", modulename); }
+         CmdStopModule(const char* modulename = "*") : CmdModule(CmdName(), modulename) {}
    };
 
-   class CmdDeleteModule : public Command {
+   class CmdDeleteModule : public CmdModule {
       public:
          static const char* CmdName() { return "DeleteModule"; }
 
-         CmdDeleteModule(const char* modulename) : Command(CmdName())
-            { SetPar("Module", modulename); }
+         CmdDeleteModule(const char* modulename) : CmdModule(CmdName(), modulename) {}
    };
 
-   class CmdStartAllModules : public Command {
-      public:
-         static const char* CmdName() { return "StartAllModules"; }
-
-         CmdStartAllModules(int appid = 0) : Command(CmdName())
-            { SetInt("AppId", appid); }
-   };
-
-   class CmdStopAllModules : public Command {
-      public:
-         static const char* CmdName() { return "StopAllModules"; }
-
-         CmdStopAllModules(int appid = 0) : Command(CmdName())
-            { SetInt("AppId", appid); }
-   };
-
-   class CmdCleanupManager : public Command {
+   class CmdCleanupApplication : public Command {
       public:
          static const char* CmdName() { return "CleanupManager"; }
 
-         CmdCleanupManager(int appid = 0) : Command(CmdName())
-            { SetInt("AppId", appid); }
+         CmdCleanupApplication() : Command(CmdName()) { }
    };
 
    class CmdCreateApplication : public Command {
@@ -156,7 +143,18 @@ namespace dabc {
          {
             SetStr("DevClass", devclass);
             SetStr("DevName", devname);
-            SetPar("Thread", thrdname);
+            SetStr("Thread", thrdname);
+         }
+   };
+
+   class CmdDestroyDevice : public Command {
+      public:
+         static const char* CmdName() { return "DestroyDevice"; }
+
+         CmdDestroyDevice(const char* devname) :
+            Command(CmdName())
+         {
+            SetStr("DevName", devname);
          }
    };
 
@@ -174,42 +172,29 @@ namespace dabc {
    };
 
    class CmdCreateTransport : public Command {
-      public:
-         static const char* CmdName() { return "CreateTransport"; }
 
-         CmdCreateTransport(const char* portname, const char* transportkind, const char* thrdname = 0) :
+      DABC_COMMAND(CmdCreateTransport, "CreateTransport");
+
+         CmdCreateTransport(const std::string& portname, const std::string& transportkind, const std::string& thrdname = "") :
             Command(CmdName())
          {
-            SetPar("PortName", portname);
-            SetPar("TransportKind", transportkind);
-            SetPar(xmlTrThread, thrdname);
+            SetStr("PortName", portname);
+            SetStr("TransportKind", transportkind);
+            SetStr(xmlTrThread, thrdname);
          }
    };
-
-   class CmdCreateTransportNew : public Command {
-      public:
-         static const char* CmdName() { return "CreateTransportNew"; }
-
-         CmdCreateTransportNew(const char* portname, const char* source, const char* default_protocol = 0) :
-            Command(CmdName())
-         {
-            SetPar("PortName", portname);
-            SetPar(xmlProtocol, default_protocol);
-            AssignUrl(source);
-         }
-   };
-
 
    class CmdDestroyTransport : public Command {
-      public:
-         static const char* CmdName() { return "DestroyTransport"; }
 
-         CmdDestroyTransport(const char* portname) :
+      DABC_COMMAND(CmdDestroyTransport, "DestroyTransport");
+
+         CmdDestroyTransport(const std::string& portname) :
             Command(CmdName())
          {
-            SetPar("PortName", portname);
+            SetStr("PortName", portname);
          }
    };
+
 
    class CmdConnectPorts: public Command {
       public:
@@ -218,102 +203,109 @@ namespace dabc {
          CmdConnectPorts(const char* port1fullname,
                          const char* port2fullname,
                          const char* device = 0,
-                         const char* trthread = 0) :
+                         const char* trthread = 0,
+                         bool required = true) :
             Command(CmdName())
          {
-            SetPar("Port1Name", port1fullname);
-            SetPar("Port2Name", port2fullname);
-            SetPar("Device", device);
-            SetPar(xmlTrThread, trthread);
-         }
-   };
-
-   class CmdDirectConnect : public Command {
-      public:
-         static const char* CmdName() { return "DirectConnect"; }
-
-         CmdDirectConnect(bool isserver, const char* portname, bool immidiate_reply = false) :
-            Command(CmdName())
-         {
-            SetPar("PortName", portname);
-            SetBool("IsServer", isserver);
-            SetBool("ImmidiateReply", immidiate_reply);
+            SetStr("Port1Name", port1fullname);
+            SetStr("Port2Name", port2fullname);
+            SetStr("Device", device);
+            SetStr(xmlTrThread, trthread);
+            SetBool("Required", required);
          }
    };
 
    class CmdSetParameter : public Command {
-      public:
-         static const char* CmdName() { return "SetParameter"; }
 
-         CmdSetParameter(const char* parname, const char* value) :
-            Command(CmdName())
-         {
-            SetPar("ParName", parname);
-            SetPar("ParValue", value);
-         }
+      DABC_COMMAND(CmdSetParameter, "SetParameter");
 
-         CmdSetParameter(const char* parname, int value) :
-            Command(CmdName())
-         {
-            SetPar("ParName", parname);
-            SetInt("ParValue", value);
-         }
+      RecordField ParName() { return Field("ParName"); }
 
-         CmdSetParameter(const char* parname, bool value) :
-            Command(CmdName())
-         {
-            SetPar("ParName", parname);
-            SetBool("ParValue", value);
-         }
-
+      RecordField ParValue() { return Field("ParValue"); }
    };
 
-   class CmdStateTransition : public Command {
-      public:
-         static const char* CmdName() { return "StateTransition"; }
+   class CmdShutdownControl : public Command {
+      DABC_COMMAND(CmdShutdownControl, "CmdShutdownControl")
+   };
 
-         CmdStateTransition(const char* state_transition_cmd) :
-            Command(CmdName())
-            {
-               SetStr("Cmd", state_transition_cmd);
-            }
+   /** \brief Command to request current state of known nodes */
+
+   class CmdGetNodesState : public Command {
+      public:
+         static const char* CmdName() { return "CmdGetNodesState"; }
+         static const char* States() { return "States"; }
+         static const char* NodeId() { return "NodeId"; }
+
+         static void SetState(std::string& sbuf, unsigned node, bool on)
+         {
+            while (sbuf.length() <= node) sbuf.append("x");
+            sbuf[node] = on ? 'x' : 'o';
+         }
+
+         static bool GetState(const std::string& sbuf, unsigned node)
+         {
+            if (node>=sbuf.length()) return false;
+            return sbuf[node] == 'x';
+         }
+
+         CmdGetNodesState() : Command(CmdName()) {}
    };
 
    template<class T>
-   class CleanupEnvelope : public Basic {
+   class CleanupEnvelope : public Object {
       protected:
          T* fObj;
       public:
-         CleanupEnvelope(T* obj) : Basic(0, "noname"), fObj(obj) {}
+         CleanupEnvelope(T* obj) : Object(0, "noname"), fObj(obj) {}
          virtual ~CleanupEnvelope() { delete fObj; }
    };
 
+   /** \brief This is central class of DABC which manages everything
+    *
+    * It manages: modules, devices, memory pools
+    *
+    */
 
-   class Manager : public Folder,
-                   public WorkingProcessor {
 
-      friend class Basic;
+   class Manager : public Worker {
+
+      friend class Object;
       friend class Factory;
-      friend class Parameter;
-      friend class CommandDefinition;
+      friend class ParameterContainer;
       friend class StdManagerFactory;
+      friend class ManagerRef;
 
       protected:
 
-         void ObjectDestroyed(Basic* obj);
-
-         const char* ExtractManagerName(const char* fullname, std::string& managername);
-
-         void ChangeManagerName(const char* newname);
-
          enum MgrEvents { evntDestroyObj = evntFirstSystem, evntManagerParam };
+
+         /** Find object in manager hierarchy with specified itemname.
+          * Itemname can be complete url or just local path (islocal = true) */
+         Reference FindItem(const std::string& itemname, bool islocal = false);
+
+         /** Method should be used to produce name of object, which can be used as item name
+          * in different Find methods of manager. Item name later can be used to produce url to the item*/
+         void FillItemName(const Object* ptr, std::string& itemname, bool compact = true);
+
+         ModuleRef FindModule(const char* name);
+
+         Reference GetAppFolder(bool force = false);
+         ApplicationRef GetApp();
+
+         virtual const char* ClassName() const { return "Manager"; }
+
+         WorkerRef DoCreateModule(const char* classname, const char* modulename, const char* thrdname = 0, Command cmd = 0);
+
+         Reference DoCreateObject(const char* classname, const char* objname = 0, Command cmd = 0);
+
+         /** Return reference on command channel, should be used from manager thread only
+          * If force specified, new command channel will be created */
+         WorkerRef GetCommandChannel(bool force = false);
 
       public:
 
-         Manager(const char* managername, bool usecurrentprocess = false, Configuration* cfg = 0);
+         Manager(const char* managername, Configuration* cfg = 0);
          virtual ~Manager();
-
-         static Manager* Instance() { return fInstance; }
 
           // candidates for protected
 
@@ -322,90 +314,44 @@ namespace dabc {
            * Automatically called from destructor */
          void HaltManager();
 
-         virtual WorkingProcessor* GetObjectProcessor() { return this; }
-
-         // ------------------------- State machine constants and methods ----------------------
-
-         static const char* stParName; // name of manager parameter, where current state is stored
-
-         static const char* stNull;       // no connection to state machine
-         static const char* stHalted;
-         static const char* stConfigured;
-         static const char* stReady;
-         static const char* stRunning;
-         static const char* stFailure; // failure during state transition
-         static const char* stError;   // error after state transition is completed
-
-         static const char* stcmdDoConfigure;
-         static const char* stcmdDoEnable;
-         static const char* stcmdDoStart;
-         static const char* stcmdDoStop;
-         static const char* stcmdDoError;
-         static const char* stcmdDoHalt;
-
-         static const char* TargetStateName(const char* stcmd);
-
-         /** Invoke state transition of manager.
-           * Must be overwritten in derived class.
-           * This MUST be asynchronous functions means calling thread should not be blocked.
-           * Actual state transition will be performed in state-machine thread.
-           * If command object is specified, it will be replied when state transition is
-           * completed or when transition is failed */
-         virtual bool InvokeStateTransition(const char* state_transition_name, Command* cmd = 0);
-
-         /** Performs change of state */
-         bool ChangeState(const char* state_transition_cmd, double tmout = 10.);
-
-         /** Check if transition allowed */
-         bool IsStateTransitionAllowed(const char* state_transition_cmd, bool errout = false);
-
-         /** Perform action to makes required state transition
-           * Should not be called from manager thread while
-           * it is synchronous and returns only when transition is completed (true) or
-           * error is detected (false) */
-         bool DoStateTransition(const char* state_transition_cmd);
-
-         /** Returns current state name */
-         std::string CurrentState() const;
-
          // -------------- generic folder structure of manager
 
-         static const char* ThreadsFolderName() { return "Threads"; }
-         static const char* DevicesFolderName() { return "Devices"; }
          static const char* FactoriesFolderName() { return "Factories"; }
-         static const char* LocalDeviceName()   { return "local"; }
+         static const char* ThreadsFolderName() { return "Threads"; }
 
          static const char* MgrThrdName()       { return "ManagerThrd"; }
+         static const char* AppThrdName()       { return "AppThrd"; }
+         static const char* ConnMgrName()       { return "/#ConnMgr"; }
+         static const char* CmdChlName()        { return "/#CommandChl"; }
 
-         Folder* GetFactoriesFolder(bool force = false) { return GetFolder(FactoriesFolderName(), force, false); }
-         Folder* GetDevicesFolder(bool force = false) { return GetFolder(DevicesFolderName(), force, true); }
-         Folder* GetThreadsFolder(bool force = false) { return GetFolder(ThreadsFolderName(), force, true); }
 
-         Module* FindModule(const char* name);
-         Port* FindPort(const char* name);
+         Reference GetFactoriesFolder(bool force = false) { return GetFolder(FactoriesFolderName(), force, false); }
+
+         Reference FindPort(const char* name);
+
          Factory* FindFactory(const char* name);
-         Device* FindDevice(const char* name);
-         WorkingThread* FindThread(const char* name, const char* required_class = 0);
-         Device* FindLocalDevice(const char* name = 0);
-         Application* GetApp();
+         WorkerRef FindDevice(const char* name);
 
          // ------------------ threads manipulation ------------------
 
-         /** Create thread for processor and assigns processor to this thread
-           * Thread name must be specified */
-         bool MakeThreadFor(WorkingProcessor* proc, const char* thrdname = 0, unsigned startmode = 0);
+         Reference GetThreadsFolder(bool force = false) { return GetFolder(ThreadsFolderName(), force, true); }
 
-         /** Create thread for module and assigns module to this thread.
-           * If thread name is not specified, module name is used */
-         bool MakeThreadForModule(Module* m, const char* thrdname = 0);
+         ThreadRef FindThread(const char* name, const char* required_class = 0);
 
-         std::string MakeThreadName(const char* base = "Thread");
+         /** \brief Returns reference on the thread, which is now active.
+          * If thread object for given context does not exists (foreign thread), 0 will be return
+          */
+         ThreadRef CurrentThread();
 
-         WorkingThread* CurrentThread();
+         /** \brief Create thread with specified name and class name
+          * \param startmode indicate if thread is real (=0)  or use current thread (=1) */
+         ThreadRef CreateThread(const std::string& thrdname, const char* classname = 0, const char* devname = 0, Command cmd = 0);
 
-         const char* CurrentThrdName();
+         /** \brief Create thread for processor and assigns processor to this thread */
+         bool MakeThreadFor(Worker* proc, const char* thrdname = 0);
 
-         void RunManagerMainLoop(int runtime = 0);
+         /** \brief Runs manager mainloop. If \param runtime bigger than 0, only specified time will be run */
+         void RunManagerMainLoop(double runtime = 0., bool extern_control = false);
 
          /** Perform sleeping with event loop running.
           *  If prefix specified, output on terminal is performed */
@@ -413,74 +359,41 @@ namespace dabc {
 
          // ---------------- modules manipulation ------------------
 
-         void StartModule(const char* modulename);
-         void StopModule(const char* modulename);
-         bool StartAllModules(int appid = 0);
-         bool StopAllModules(int appid = 0);
-         bool DeleteModule(const char* name);
-         bool IsModuleRunning(const char* name);
          bool IsAnyModuleRunning();
 
          bool ConnectPorts(const char* port1name,
                            const char* port2name,
                            const char* devname = 0);
 
-
          // ----------- memory pools creation/deletion -------------------
 
-         /** Generic method to create memory pool.
-           * Creates (or extends) memory pool with numbuffers buffers of size buffersize.
-           * Together with buffers memory pool creates number of reference objects with
-           * preallocated header and gather list.
-           * One can configure that memory pool can be extended "on the fly" -
-           * numincrement value specifies how much buffers memory pool can extend at once.
-           * In case when expanding of pool is allowed, one can limit total size
-           * of pool via ConfigurePool method. There one can also specify how often
-           * memory pool should try to cleanup unused memory.*/
-         bool CreateMemoryPool(const char* poolname,
-                               unsigned buffersize = 0,
-                               unsigned numbuffers = 0,
-                               unsigned numincrement = 0,
-                               unsigned headersize = 0x20,
-                               unsigned numsegments = 0);
-
-         MemoryPool* FindPool(const char* name);
+         Reference FindPool(const char* name);
 
          /** Delete memory pool */
          bool DeletePool(const char* name);
 
          // ---------------- interface to control system -------------
 
-         /** indicate if manager play central role in the system */
-         virtual bool IsMainManager() { return true; }
-
          /** Return nodes id of local node */
-         virtual int NodeId() const { return 0; }
-
-         /** Indicate, if manager has information about cluster */
-         virtual bool HasClusterInfo() { return false; };
-         /** Returns number of nodes in the cluster */
-         virtual int NumNodes() { return 1; }
+         int NodeId() const { return fNodeId; }
+         /** Returns number of nodes in the cluster FIXME:probably must be removed*/
+         int NumNodes() { return fNumNodes; }
          /** Return name of node */
-         virtual const char* GetNodeName(int nodeid) { return GetName(); }
-         /** Returns id of the node, -1 if error */
-         int DefineNodeId(const char* nodename);
+         std::string GetNodeName(int nodeid);
+
          /** Returns true if node with specified id is active */
          virtual bool IsNodeActive(int num) { return num==0; }
          /** Returns number of currently active nodes */
          int NumActiveNodes();
          /** Test active nodes - try to execute simpe ping command on each active node */
          bool TestActiveNodes(double tmout = 5.);
-         /** Establish/test connection to control system */
-         virtual bool ConnectControl(const char* connid) { return true; }
-         /** Disconnect connection to control system */
-         virtual void DisconnectControl() { }
 
-         // Subscribe/unsubscribe parameter against remote (local)
-         virtual bool Subscribe(Parameter* par, int remnode, const char* remname) { return false; }
-         virtual bool Unsubscribe(Parameter* par) { return false; }
+         /** \brief Establish/test connection to control system */
+         virtual bool ConnectControl();
+         /** \brief Disconnect connection to control system */
+         virtual void DisconnectControl();
 
-         /** Provide log message to control system to dysplay on GUI */
+         /** Provide log message to control system to display on GUI */
          virtual void LogMessage(int, const char*) {}
 
          // -------------------------- misc functions ---------------
@@ -490,133 +403,107 @@ namespace dabc {
          /** Displays on std output list of running threads and modules */
          void Print();
 
-         /** Delete deriver from Basic class object in manager thread.
+         /** Delete derived from Object class object in manager thread.
            * Useful as replacement of call "delete this;" */
-         virtual void DestroyObject(Basic* obj);
+         virtual bool DestroyObject(Reference ref);
 
          /** Delete of any kind of object in manager thread */
-         template<class T> void DeleteAnyObject(T* obj)
+         template<class T> bool DeleteAnyObject(T* obj)
          {
-             DestroyObject(new CleanupEnvelope<T>(obj));
+             return DestroyObject(Reference(new CleanupEnvelope<T>(obj)));
          }
 
          /** Register/unregister dependency between objects
-           * One use dependency to detect situation when dependent (tgt) object is destroyed.
-           * In this case virtual DependendDestroyed() method of src object will be called.
-           * Normally one should "forget" pointer on dependent object at this moment. */
-         bool RegisterDependency(Basic* src, Basic* tgt);
-         bool UnregisterDependency(Basic* src, Basic* tgt);
-
-         /** Method safely deletes all modules, memory pools and devices with
-           * specified application id. appid==0 is default id for all user components.
-           * In the end all unused thread also destroyed */
-         bool CleanupManager(int appid = 0);
-
-         std::string BuildControlName(Basic* obj);
-         Basic* FindControlObject(const char* name);
+           * One use dependency to detect in \param src object situation when
+           * dependent \param tgt object is destroyed.
+           * In this case virtual ObjectDestroyed(tgt) method of src object will be called.
+           * Normally one should "forget" pointer on dependent object at this moment.
+           * In case if reference was used, reference must be released */
+         bool RegisterDependency(Object* src, Object* tgt, bool bidirectional = false);
+         bool UnregisterDependency(Object* src, Object* tgt, bool bidirectional = false);
 
          bool InstallCtrlCHandler();
          void ProcessCtrlCSignal();
-         void RaiseCtrlCSignal();
 
-         virtual bool Store(ConfigIO &cfg);
          virtual bool Find(ConfigIO &cfg);
-
-         bool FindInConfiguration(Folder* fold, const char* itemname);
 
          // ------------ access to factories method -------------
 
          bool CreateApplication(const char* classname = 0, const char* appthrd = 0);
 
-         bool CreateDevice(const char* classname, const char* devname, const char* devthrd = 0);
-
-         WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, unsigned startmode = 0, const char* devname = 0, Command* cmd = 0);
-
-         bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
-
-         bool CreateTransport(const char* portname, const char* transportkind, const char* thrdname = 0);
-
          FileIO* CreateFileIO(const char* typ, const char* name, int option);
 
-         Folder* ListMatchFiles(const char* typ, const char* filemask);
+         Object* ListMatchFiles(const char* typ, const char* filemask);
 
       protected:
 
          struct ParamRec {
-            Parameter* par;
+            Parameter par;  //!< reference on the paramer
             int event;
-            bool processed;
 
-            ParamRec() : par(0), event(0), processed(false) {}
-            ParamRec(Parameter* p, int e) : par(p), event(e), processed(false) {}
-            ParamRec(const ParamRec& src) : par(src.par), event(src.event), processed(src.processed) {}
+            ParamRec() : par(), event(0) {}
+            ParamRec(Parameter p, int e) : par(p), event(e) {}
+            ParamRec(const ParamRec& src) : par(src.par), event(src.event) {}
+            ParamRec& operator=(const ParamRec& src)
+            {
+               par = src.par;
+               event = src.event;
+               return* this;
+            }
+
+            void reset()
+            {
+               par.Release();
+               event = 0;
+            }
          };
 
-         bool                  fMgrMainLoop; // flag indicates if mainloop of manager runs
-         bool                  fMgrStopped; // indicate if manager mainloop is stopped
-         bool                  fMgrNormalThrd; // indicate if manager has normal thread
+         TimeStamp            fMgrStoppedTime; // indicate when manager mainloop was stopped
 
+         // FIXME: revise usage of manager mutex, it is not necessary everywhere
          Mutex                *fMgrMutex; // main mutex to protect manager queues
-         Queue<Basic*>         fDestroyQueue;
-         Queue<ParamRec>       fParsQueue;
 
-         Mutex                *fSendCmdsMutex;
-         int                   fSendCmdCounter;
-         PointersVector        fSendCommands;
+         ReferencesVector     *fDestroyQueue;
+         RecordsQueue<ParamRec> fParsQueue;
 
-         PointersVector        fTimedPars;
+         // TODO: timed parameters should be seen in the special manager folder ?
+         ReferencesVector     *fTimedPars;
 
+         /** list of workers, registered for receiving of parameter events
+          * Used only from manager thread, therefore not protected with mutex */
+         ParamEventReceiverList*  fParEventsReceivers;
+
+         // TODO: dependency pairs should be seen in special manager folder
          DependPairList       *fDepend; // list of objects dependencies
-
-         Thread_t              fSigThrd;
-
-         StateMachineModule   *fSMmodule;
 
          Configuration        *fCfg;
          std::string           fCfgHost;
 
-         static Manager       *fInstance;
+         int                   fNodeId;
+         int                   fNumNodes;
+
+         std::string fLastCreatedDevName;  //!< name of last created device, automatically used for connection establishing
+
+         std::string GetLastCreatedDevName();
 
          virtual double ProcessTimeout(double last_diff);
 
-         bool DoCreateMemoryPool(Command* cmd);
+         bool DoCreateMemoryPool(Command cmd);
 
-         bool DoDeleteAllModules(int appid = -1);
-         void DoCleanupThreads();
-         void DoCleanupDevices(bool force);
-         bool DoCleanupManager(int appid);
-         void DoHaltManager();
+         bool DoCleanupApplication();
          void DoPrint();
 
-         virtual int PreviewCommand(Command* cmd);
-         virtual int ExecuteCommand(Command* cmd);
-         virtual bool ReplyCommand(Command*);
+         virtual int PreviewCommand(Command cmd);
+         virtual int ExecuteCommand(Command cmd);
+         virtual bool ReplyCommand(Command cmd);
 
-         int AddInternalCmd(Command* cmd, const char* lblname);
-         Command* FindInternalCmd(const char* lblname, int id);
-         Command* TakeInternalCmd(const char* lblname, int id);
+         bool ProcessDestroyQueue();
+         bool ProcessParameterEvents();
+         void ProduceParameterEvent(ParameterContainer* par, int evid);
 
-         void ProcessDestroyQueue();
-         bool ProcessParameterEvent();
-
-         virtual void ProcessEvent(uint64_t evid);
-
-         // virtual method to deliver some events to control system
-         virtual void ModuleExecption(Module* m, const char* msg);
-         virtual void ParameterEvent(Parameter* par, int event) {}
-         virtual void CommandRegistration(CommandDefinition* def, bool reg) {}
-
-         // methods, used for remote command execution
-         virtual bool CanSendCmdToManager(const char*) { return false; }
-         virtual bool SendOverCommandChannel(const char* managername, const char* cmddata);
-         void RecvOverCommandChannel(const char* cmddata);
-
-         void FireParamEvent(Parameter* par, int evid);
-
-         void InitSMmodule();
+         virtual void ProcessEvent(const EventId&);
 
          // must be called in inherited class constructor & destructor
-         void init();
          void destroy();
 
       private:
@@ -624,20 +511,106 @@ namespace dabc {
          void AddFactory(Factory* factory);
    };
 
-   inline dabc::Manager* mgr() { return dabc::Manager::Instance(); }
+
+   /** Reference on manager object
+    *  Should be used as thread-safe interface to manager functionality.
+    *  Instance of ManagerRef is available via dabc::mgr function.
+    *  FIXME: in future dabc::mgr() should be manager reference, manager pointer itself
+    *  should not be seen by the user
+    */
+
+   class ManagerRef : public WorkerRef {
+
+      DABC_REFERENCE(ManagerRef, WorkerRef, Manager)
+
+      protected:
+
+         friend class Manager;
+         friend class Worker;
+         friend class Port; // need to activate connection manager
+
+         bool ParameterEventSubscription(Worker* ptr, bool subscribe, const std::string& mask, bool onlychangeevent = true);
+
+         bool CreateConnectionManager();
+
+         /** Returns true, if name of the item should specify name in local context or from remote node */
+         bool IsLocalItem(const std::string& name);
+
+      public:
+
+         ThreadRef CurrentThread();
+
+         Reference GetAppFolder(bool force = false);
+
+         ApplicationRef GetApp();
+
+         /** Method safely deletes all object created for application - modules, devices, memory pools.
+          * All these objects normally collected under "/App" folder, therefore manager cleanup is just
+          * deletion of this folder. Threads are not directly destroyed, while they are collected in other folder,
+          * but they will be destroyed as soon as they are not used. */
+         bool CleanupApplication();
+
+         int NodeId() const;
+
+         int NumNodes() const;
+
+         /** Produces unique url of the object which can be used on other nodes too */
+         std::string ComposeUrl(Object* ptr);
+
+         ThreadRef CreateThread(const std::string& thrdname, const char* classname = 0);
+
+         bool CreateDevice(const char* classname, const char* devname, const char* devthrd = 0);
+         bool DestroyDevice(const char* devname);
+         WorkerRef FindDevice(const std::string& name);
 
 
-   /** These functions prepare commands arguments so, that
-     * they can be directly submitted to the manager via submit for instance:
-     *    dabc::mgr()->Submit(SetCmdReceiver(new Command("Start"), "Generator"));
-     * Command will be queued in manager queue and than submitted to specified
-     * object. If object has own thread, it will be used for command execution */
+         /** Generic method to create memory pool.
+           * Creates memory pool with numbuffers buffers of size buffersize.
+           * Together with buffers memory pool creates number of reference objects.
+           * If zero arguments are specified, configuration from xml file will be used.
+           * If none (arguments or xml file) provides non-zero values, only pool instance
+           * without buffers will be created.
+           * For more sophisticated configuration of memory pool CmdCreateMemoryPool should be used */
+         bool CreateMemoryPool(const char* poolname,
+                               unsigned buffersize = 0,
+                               unsigned numbuffers = 0,
+                               unsigned refcoeff = 0);
 
-   extern Command* SetCmdReceiver(Command* cmd, const char* itemname);
-   extern Command* SetCmdReceiver(Command* cmd, const char* nodename, const char* itemname);
-   extern Command* SetCmdReceiver(Command* cmd, int nodeid, const char* itemname);
-   extern Command* SetCmdReceiver(Command* cmd, Basic* rcv);
+         bool CreateModule(const char* classname, const char* modulename, const char* thrdname = 0);
+         ModuleRef FindModule(const char* name);
+         void StartModule(const char* modulename);
+         void StopModule(const char* modulename);
+         bool StartAllModules();
+         bool StopAllModules();
+         bool DeleteModule(const char* name);
 
+         bool CreateTransport(const std::string& portname, const std::string& transportkind, const std::string& thrdname = "");
+
+         bool ActivateConnections(double tmout);
+
+         Reference FindItem(const std::string& name);
+
+         Reference FindPort(const std::string& port);
+
+         Parameter FindPar(const std::string& parname);
+
+         /**\brief Request connection between two ports.
+          * If both ports belong to local node, they will be connected immediately.
+          * If both ports belong to remote nodes, nothing will happen.
+          * If one of the port is local and other is remote, new connection request will be created.
+          * Depending on current application state connection establishing will be started immediately or will
+          * be performed by DoEnable state transition. */
+         ConnectionRequest Connect(const std::string& port1, const std::string& port2);
+
+         void StopApplication();
+
+         /** Sleep for specified time, keep thread event loop running
+          * See Manager::Sleep() method for more details */
+         void Sleep(double tmout, const char* prefix = 0);
+
+   };
+
+   extern ManagerRef mgr;
 }
 
 #endif

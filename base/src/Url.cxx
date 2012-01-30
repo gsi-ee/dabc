@@ -1,3 +1,16 @@
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/Url.h"
 
 #include "dabc/logging.h"
@@ -21,7 +34,7 @@ dabc::Url::~Url()
 {
 }
 
-bool dabc::Url::SetUrl(const std::string& url)
+bool dabc::Url::SetUrl(const std::string& url, bool showerr)
 {
    fValid = false;
    fUrl.clear();
@@ -65,7 +78,7 @@ bool dabc::Url::SetUrl(const std::string& url)
    pos = fHostName.find(":");
    if (pos != std::string::npos) {
       if (!dabc::str_to_int(fHostName.c_str()+pos+1, &fPort)) {
-         EOUT(("Invalid URL format:%s - wrong port number"));
+         if (showerr) EOUT(("Invalid URL format:%s - wrong port number", fHostName.c_str()));
          fValid = false;
       }
       fHostName.erase(pos);
@@ -89,4 +102,61 @@ std::string dabc::Url::GetPortStr() const
    return dabc::format("%d", fPort);
 }
 
+std::string dabc::Url::ComposeItemName(int nodeid, const std::string& itemname)
+{
+   if (nodeid<0) return std::string();
 
+   return dabc::format("dabc://node%d/%s", nodeid, itemname.length() > 0 ? itemname.c_str() : "");
+}
+
+std::string dabc::Url::ComposePortName(int nodeid, const char* fullportname, int portid)
+{
+   std::string sbuf;
+   if ((nodeid<0) || (fullportname==0)) return sbuf;
+
+   sbuf = ComposeItemName(nodeid, fullportname);
+
+   if (portid>=0)
+      sbuf += dabc::format("%d", portid);
+
+   return sbuf;
+}
+
+bool dabc::Url::DecomposeItemName(const std::string& name, int& nodeid, std::string& fullportname)
+{
+   Url url;
+
+//   DOUT0(("Url %s valid %d protocol %s host %s file %s", name, url.IsValid(), url.GetProtocol().c_str(), url.GetHostName().c_str(), url.GetFileName().c_str()));
+
+   if (!url.SetUrl(name, false)) return false;
+
+   if (url.GetProtocol().length()==0) {
+      fullportname = url.GetFullName();
+      nodeid = -1;
+      return true;
+   }
+
+   if (url.GetProtocol().compare("dabc")!=0) return false;
+
+   std::string node = url.GetHostName();
+   if (node.compare(0, 4, "node")!=0) return false;
+   node.erase(0,4);
+
+   nodeid = -1;
+   if (!str_to_int(node.c_str(), &nodeid)) return false;
+   if (nodeid<0) return false;
+
+   fullportname = url.GetFileName();
+   return true;
+}
+
+
+int dabc::Url::ExtractNodeId(const std::string& url)
+{
+   int nodeid(-1);
+   std::string itemname;
+
+   if (DecomposeItemName(url, nodeid, itemname)) return nodeid;
+
+   return -1;
+}

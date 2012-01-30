@@ -1,20 +1,18 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/timing.h"
 
-// #include <sys/timex.h>
-// #include <sys/time.h>
 #include <time.h>
 #include <math.h>
 #include <unistd.h>
@@ -22,168 +20,125 @@
 
 #include "dabc/logging.h"
 
-dabc::TimeSource dabc::gStamping(true);
+bool dabc::TimeStamp::gFast = false;
 
-const dabc::TimeStamp_t dabc::NullTimeStamp = 0.;
+dabc::TimeStamp::slowclock_t dabc::TimeStamp::gSlowClockZero = dabc::TimeStamp::GetSlowClock();
 
+dabc::TimeStamp::fastclock_t dabc::TimeStamp::gFastClockZero = dabc::TimeStamp::GetFastClock();
 
-double Linux_get_cpu_mhz()
+double dabc::TimeStamp::gFastClockMult = CalculateFastClockMult(); // coefficient for slow timing
+
+dabc::TimeStamp::slowclock_t dabc::TimeStamp::GetSlowClock()
 {
-   FILE* f;
-   char buf[1024];
-   float mhz = -1;
-
-   f = fopen("/proc/cpuinfo","r");
-   if (!f) return -1;
-
-   bool ismyamd = false;
-   bool isconst_tsc = false;
-
-   double max_ghz = -1;
-
-   while(fgets(buf, sizeof(buf), f)) {
-      float m;
-      if (strstr(buf,"AMD Opteron(tm) Processor 248")!=0) {
-         ismyamd = true;
-         continue;
-      }
-
-      if (strstr(buf,"model name")!=0) {
-         const char* pos = strstr(buf,"@");
-         if (pos==0) continue;
-         if (sscanf(pos+1, "%fGHz", &m) != 1) continue;
-         if (max_ghz<0) max_ghz = m;
-         if (fabs(max_ghz-m)>0.1) { max_ghz = -1; break; }
-      }
-
-      if (strstr(buf,"constant_tsc")!=0) {
-         isconst_tsc = true;
-         continue;
-      }
-      if (sscanf(buf, "cpu MHz : %f", &m) == 1) {
-         if (mhz < 0.) mhz = m;
-         if (fabs(mhz-m)>10.) {
-//          EOUT(("Conflicting CPU frequency values detected: %f != %f, use slow timing", mhz, m));
-            mhz = -1;
-            break;
-         }
-      }
-   }
-   fclose(f);
-
-   if (isconst_tsc && (max_ghz>0.)) return max_ghz*1000.;
-
-//   DOUT0(("Find MHZ = %5.3f isamd = %s const_tsc = %s", mhz, DBOOL(ismyamd), DBOOL(isconst_tsc)));
-
-   return ismyamd ? mhz : -1;
-}
-
-dabc::cycles_t dabc::GetSlowClock()
-{
-//   ntptimeval val;
-//   ntp_gettime(&val);
-//   return val.time.tv_sec * 1000000UL + val.time.tv_usec;
-
    timespec tm;
    clock_gettime(CLOCK_MONOTONIC, &tm);
    return tm.tv_sec*1000000000LL + tm.tv_nsec;
 }
 
-#ifdef DABC_SLOWTIMING
 
-dabc::cycles_t dabc::GetFastClock()
+double dabc::TimeStamp::CalculateFastClockMult()
 {
-   return dabc::GetSlowClock(); 
+   // if we cannot define that TSC is available - not use it
+   if (!CheckLinuxTSC()) {
+      gFast = false;
+      return 1e-9;
+   }
+
+   slowclock_t slow1, slow2;
+   fastclock_t fast1, fast2;
+
+   double sum1(0.), sum2(0.), coef(0.);
+
+   const int num = 10;
+
+   double values[num];
+
+   for (int n=0;n<num;n++) {
+
+      slow1 = GetSlowClock();
+      fast1 = GetFastClock();
+
+      // we will use 10 millisecond sleep to increase precision
+      dabc::Sleep(0.01);
+
+      slow2 = GetSlowClock();
+      fast2 = GetFastClock();
+
+      if (fast1 == fast2) {
+         gFast = false;
+         return 1e-9;
+      }
+
+      coef = (slow2-slow1) * 1e-9 / (fast2 - fast1);
+
+      values[n] = coef;
+
+//      printf("Measurement %d  koef = %8.2f %lld %llu\n", n, coef>0 ? 1/coef : -1., slow2-slow1, fast2-fast1);
+
+      sum1 += coef;
+   }
+
+   double aver = num/sum1;
+
+   for (int n=0;n<num;n++) {
+      sum2 += (1/values[n] - aver)*(1/values[n] - aver);
+   }
+
+   double deviat = sqrt(sum2/num);
+
+//   printf("Frequency = %8.2f Hz Deviat = %8.2f (rel:%8.7f) hz\n", aver, deviat, deviat/aver);
+
+   if (deviat/aver>0.0001) {
+//      printf("Cannot use TSC for time measurement\n");
+      gFast = false;
+   } else {
+      gFast = true;
+   }
+
+   return 1./aver;
 }
 
-#endif   
 
-// __________________________________________________
-
-
-bool dabc::TimeSource::gForceSlowTiming = false;
-
-dabc::TimeSource::TimeSource(bool usefast) 
+bool dabc::TimeStamp::CheckLinuxTSC()
 {
-#ifdef DABC_SLOWTIMING
-   fUseFast = false;
-#else
-   fUseFast = gForceSlowTiming ? false : usefast;
-#endif
+   FILE* f = fopen("/proc/cpuinfo","r");
+   if (!f) return false;
 
-   fTimeScale = 0.001;
-   
-   if (fUseFast) {
-      double cpu_mhz = Linux_get_cpu_mhz();
-      if (cpu_mhz>0) fTimeScale = 1./cpu_mhz; else {
-         DOUT5(("Use slow timing"));
-         fUseFast = false;
+   bool can_use_tsc = false;
+   bool isgsiamd = false;
+
+   char buf[1024];
+
+   while(fgets(buf, sizeof(buf), f)) {
+      if (strstr(buf,"AMD Opteron(tm) Processor 248")!=0) {
+         // this is known type of AMD Opteron, we can use it in time measurement
+         isgsiamd = true;
+         break;
+      }
+
+      if (strstr(buf,"constant_tsc")!=0) {
+         can_use_tsc = true;
+         break;
       }
    }
+   fclose(f);
 
-   fClockShift = fUseFast ? GetFastClock() : GetSlowClock();
-   fTimeShift = 0.; 
+   return can_use_tsc || isgsiamd;
 }
 
-dabc::TimeSource::TimeSource(const TimeSource &src) :
-   fUseFast(src.fUseFast),
-   fClockShift(src.fClockShift),
-   fTimeScale(src.fTimeScale),
-   fTimeShift(src.fTimeShift)
+void dabc::Sleep(double tm)
 {
-}
-         
-dabc::TimeSource& dabc::TimeSource::operator=(const TimeSource& rhs)
-{
-   if (this!=&rhs) {
-      fUseFast = rhs.fUseFast;
-      fClockShift = rhs.fClockShift;
-      fTimeScale = rhs.fTimeScale;
-      fTimeShift = rhs.fTimeShift;
-   } 
-   return *this; 
+   if (tm<=0) return;
+
+   struct timespec t;
+   t.tv_sec = lrint(tm); /* Whole seconds */
+   if (t.tv_sec > tm) t.tv_sec--;
+   t.tv_nsec = lrint((tm - t.tv_sec)*1e9); /* nanoseconds */
+
+   if (t.tv_sec==0)
+      usleep(t.tv_nsec / 1000);
+   else
+      nanosleep (&t, 0);
 }
 
-void dabc::TimeSource::AdjustTimeStamp(TimeStamp_t stamp)
-{
-   fTimeShift += (stamp-GetTimeStamp()); 
-}
 
-void dabc::TimeSource::AdjustCalibr(double dshift, double dscale)
-{
-   fTimeShift += dshift;
-   
-   if (dscale!=1.) {
-      fTimeShift += (GetTimeStamp()-fTimeShift)*(1. - dscale);
-      fTimeScale *= dscale;
-   }
-}
-
-void dabc::MicroSleep(int microsec)
-{
-   if (microsec<1) microsec = 1;
-
-   if (microsec>=1000000) {
-       struct timespec t;
-       t.tv_sec = microsec / 1000000; /* Whole seconds */
-       t.tv_nsec = (microsec % 1000000) * 1000;
-       nanosleep (&t, 0);
-   } else
-      usleep(microsec);
-}
-
-void dabc::LongSleep(int sec)
-{
-   MicroSleep(sec*1000000);
-}
-
-void dabc::ShowLongSleep(const char* title, int sec)
-{
-   fprintf(stdout, "%s    ", title);
-   while (sec-->0) {
-      fprintf(stdout, "\b\b\b%3d", sec);
-      fflush(stdout);
-      LongSleep(1);
-   }
-   fprintf(stdout, "\n");
-}

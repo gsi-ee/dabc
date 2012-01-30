@@ -1,257 +1,189 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/Command.h"
 
 #include <stdlib.h>
-#include <map>
 
-#include "dabc/WorkingProcessor.h"
+#include "dabc/Manager.h"
+#include "dabc/Worker.h"
 #include "dabc/Url.h"
+#include "dabc/timing.h"
 #include "dabc/logging.h"
+#include "dabc/Exception.h"
 #include "dabc/threads.h"
 #include "dabc/XmlEngine.h"
 
-class dabc::Command::CommandParametersList : public std::map<std::string, std::string> {};
 
-namespace dabc {
+dabc::CommandContainer::CommandContainer(const char* name) :
+   RecordContainer(name),
+   fCallers(),
+   fTimeout()
+{
+   // object will be destroy as long no references are existing
+   SetFlag(flAutoDestroy, true);
 
-   struct CallerRec {
-      WorkingProcessor* proc;
-      bool*             exe_ready;
-      CallerRec() : proc(0), exe_ready(0) {}
-   };
-
-   class CallersQueue : public Queue<CallerRec> {} ;
-
+   DOUT3(("CMD:%p name %s created", this, GetName()));
 }
 
 
-dabc::Command::Command(const char* name) :
-   Basic(0, name),
-   fParams(0),
-   fCallers(0),
-   fCmdId(0),
-   fCmdMutex(0)
+dabc::CommandContainer::~CommandContainer()
 {
-   DOUT5(("New command %p name %s", this, GetName()));
 
-//   fCmdMutex = new Mutex;
+   if (fCallers.size()>0)
+      EOUT(("Non empty callers list in cmd %s !!!!!!!!!!!!!!", GetName()));
 
-}
+   fCallers.clear();
 
-dabc::Command::~Command()
-{
-   {
-      LockGuard lock(fCmdMutex);
 
-      if (fCallers) {
-         EOUT(("Non empty callers list in cmd %s !!!!!!!!!!!!!!", GetName()));
-         exit(888);
-         delete fCallers;
-         fCallers = 0;
+   // check if reference is remaining !!!
+
+   std::string field;
+
+   do {
+      field = FindField("##REF##*");
+      if (!field.empty()) {
+         EOUT(("Reference %s not cleared correctly", field.c_str()));
+
+         const char* value = GetField(field);
+         if (value!=0) dabc::Command::MakeRef(value).Release();
+
+         // TODO: release of remaining reference
+         SetField(field, 0, 0);
       }
-   }
 
-   if (fParams) {
-      delete fParams;
-      fParams = 0;
-   }
+   } while (!field.empty());
 
-   delete fCmdMutex; fCmdMutex = 0;
 
-   DOUT5(("Delete command %p name %s", this, GetName()));
+   DOUT3(("CMD:%p name %s deleted", this, GetName()));
 }
 
-void dabc::Command::AddCaller(WorkingProcessor* proc, bool* exe_ready)
+
+const std::string dabc::CommandContainer::DefaultFiledName() const
 {
-   LockGuard lock(fCmdMutex);
-
-   if (fCallers==0) {
-      fCallers = new CallersQueue;
-      fCallers->Init(8, true);
-   }
-
-   CallerRec* rec = fCallers->PushEmpty();
-
-   rec->proc = proc;
-   rec->exe_ready = exe_ready;
+   return dabc::Command::ResultParName();
 }
 
-void dabc::Command::RemoveCaller(WorkingProcessor* proc)
+
+
+dabc::Command::Command(const std::string& name) throw()
 {
-   LockGuard lock(fCmdMutex);
+   if (!name.empty()) {
+      SetObject(new dabc::CommandContainer(name.c_str()));
+      SetTransient(false);
+   }
+}
 
-   if (fCallers==0) return;
+bool dabc::Command::CreateContainer(const std::string& name)
+{
+   SetObject(new dabc::CommandContainer(name.c_str()), false);
+   SetTransient(false);
+   return true;
+}
 
-   unsigned n(0);
 
-   while (n<fCallers->Size())
-      if (fCallers->Item(n).proc == proc)
-         fCallers->RemoveItem(n);
+void dabc::Command::AddCaller(Reference worker, bool* exe_ready)
+{
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return;
+
+   LockGuard lock(ObjectMutex());
+
+   cont->fCallers.push_back(CommandContainer::CallerRec(worker, exe_ready));
+}
+
+void dabc::Command::RemoveCaller(Worker* worker, bool* exe_ready)
+{
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return;
+
+   LockGuard lock(ObjectMutex());
+
+   CommandContainer::CallersList::iterator iter = cont->fCallers.begin();
+
+   while (iter != cont->fCallers.end()) {
+
+      if ((iter->worker == worker) && ((exe_ready==0) || (iter->exe_ready==exe_ready)))
+         cont->fCallers.erase(iter++);
       else
-         n++;
-
-   if (fCallers->Size()==0) {
-      delete fCallers;
-      fCallers = 0;
+         iter++;
    }
-
 }
 
 bool dabc::Command::IsLastCallerSync()
 {
-   LockGuard lock(fCmdMutex);
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return false;
 
-   if ((fCallers==0) || (fCallers->Size()==0)) return false;
+   LockGuard lock(ObjectMutex());
 
-   return fCallers->Back().exe_ready != 0;
+   if ((cont->fCallers.size()==0)) return false;
+
+   return cont->fCallers.back().exe_ready != 0;
 }
 
-
-void dabc::Command::SetPar(const char* name, const char* value)
+dabc::Command& dabc::Command::SetTimeout(double tm)
 {
-   if (value==0)
-      RemovePar(name);
-   else {
-      if (fParams==0) fParams = new CommandParametersList;
-      (*fParams)[name] = value;
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont!=0) {
+      LockGuard lock(ObjectMutex());
+      if (tm<=0.)
+         cont->fTimeout.Reset();
+      else {
+         cont->fTimeout.GetNow();
+         cont->fTimeout += tm;
+      }
    }
+
+   return *this;
 }
 
-const char* dabc::Command::GetPar(const char* name) const
+bool dabc::Command::IsTimeoutSet() const
 {
-   if (fParams==0) return 0;
-   CommandParametersList::const_iterator iter = fParams->find(name);
-   if (iter==fParams->end()) return 0;
-   return iter->second.c_str();
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return false;
+   LockGuard lock(ObjectMutex());
+   return !cont->fTimeout.null();
 }
 
-bool dabc::Command::HasPar(const char* name) const
+double dabc::Command::TimeTillTimeout() const
 {
-   if (fParams==0) return false;
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return -1;
 
-   return fParams->find(name) != fParams->end();
+   LockGuard lock(ObjectMutex());
+   if (cont->fTimeout.null()) return -1;
+
+   TimeStamp now = TimeStamp::Now();
+
+   return cont->fTimeout < now ? 0. : cont->fTimeout - now;
 }
 
-bool dabc::Command::IsParValue(const char* name, const char* chkvalue) const
+int dabc::Command::GetPriority() const
 {
-   const char* parvalue = GetPar(name);
-
-   // if both are 0, they are equal
-   if ((parvalue==0) && (chkvalue==0)) return true;
-
-   if ((parvalue==0) || (chkvalue==0)) return false;
-
-   return strcmp(parvalue, chkvalue) == 0;
-
+   return GetInt(PriorityParName(), Worker::priorityDefault);
 }
 
-
-void dabc::Command::RemovePar(const char* name)
-{
-   if (fParams==0) return;
-   CommandParametersList::iterator iter = fParams->find(name);
-   if (iter!=fParams->end())
-     fParams->erase(iter);
-}
-
-void dabc::Command::SetStr(const char* name, const char* value)
-{
-   SetPar(name, value);
-}
-
-const char* dabc::Command::GetStr(const char* name, const char* deflt) const
-{
-   const char* val = GetPar(name);
-   return val ? val : deflt;
-}
-
-void dabc::Command::SetBool(const char* name, bool v)
-{
-   SetPar(name, v ? xmlTrueValue : xmlFalseValue);
-}
-
-bool dabc::Command::GetBool(const char* name, bool deflt) const
-{
-   const char* val = GetPar(name);
-   if (val==0) return deflt;
-
-   if (strcmp(val, xmlTrueValue)==0) return true; else
-   if (strcmp(val, xmlFalseValue)==0) return false;
-
-   return deflt;
-}
-
-void dabc::Command::SetInt(const char* name, int v)
-{
-   char buf[100];
-   sprintf(buf,"%d",v);
-   SetPar(name, buf);
-}
-
-int dabc::Command::GetInt(const char* name, int deflt) const
-{
-   const char* val = GetPar(name);
-   if (val==0) return deflt;
-   int res = 0;
-   if (dabc::str_to_int(val, &res)) return res;
-   return deflt;
-}
-
-void dabc::Command::SetDouble(const char* name, double v)
-{
-   char buf[100];
-   sprintf(buf,"%lf",v);
-   SetPar(name, buf);
-}
-
-double dabc::Command::GetDouble(const char* name, double deflt) const
-{
-   const char* val = GetPar(name);
-   if (val==0) return deflt;
-   double res = 0.;
-   if (dabc::str_to_double(val, &res)) return res;
-   return deflt;
-}
-
-void dabc::Command::SetUInt(const char* name, unsigned v)
-{
-   char buf[100];
-   sprintf(buf, "%u", v);
-   SetPar(name, buf);
-}
-
-unsigned dabc::Command::GetUInt(const char* name, unsigned deflt) const
-{
-   const char* val = GetPar(name);
-   if (val==0) return deflt;
-
-   unsigned res = 0;
-   if (dabc::str_to_uint(val, &res)) return res;
-   return deflt;
-}
-
-void dabc::Command::SetPtr(const char* name, void* p)
+void dabc::Command::SetPtr(const std::string& name, void* p)
 {
    char buf[100];
    sprintf(buf,"%p",p);
-   SetPar(name, buf);
+   SetField(name, buf, "pointer");
 }
 
-void* dabc::Command::GetPtr(const char* name, void* deflt) const
+void* dabc::Command::GetPtr(const std::string& name, void* deflt) const
 {
-   const char* val = GetPar(name);
+   const char* val = GetField(name);
    if (val==0) return deflt;
 
    void* p = 0;
@@ -259,242 +191,132 @@ void* dabc::Command::GetPtr(const char* name, void* deflt) const
    return res>0 ? p : deflt;
 }
 
-void dabc::Command::SetParChk(const char* parname, const std::string& parvalue, bool canoverwrite)
+void dabc::Command::SetRef(const std::string& name, Reference ref)
 {
-   if ((parname==0) || (strlen(parname)==0) ||  (parvalue.length()==0)) return;
+   char buf[100];
 
-   if (canoverwrite || !HasPar(parname))
-      SetPar(parname, parvalue.c_str());
+   if (ref.ConvertToString(buf,sizeof(buf)))
+      SetStr(FORMAT(("##REF##%s", name.c_str())), buf);
+}
+
+dabc::Reference dabc::Command::MakeRef(const std::string& buf)
+{
+   return Reference(buf.c_str(), buf.length());
 }
 
 
-void dabc::Command::AddValuesFrom(const dabc::Command* cmd, bool canoverwrite)
+dabc::Reference dabc::Command::GetRef(const std::string& name)
 {
-   if ((cmd==0) || (cmd->fParams==0)) return;
+   std::string field = dabc::format("##REF##%s", name.c_str());
+   std::string value = GetStdStr(field.c_str());
+   RemoveField(field);
 
-   CommandParametersList::const_iterator iter = cmd->fParams->begin();
-
-   while (iter!=cmd->fParams->end()) {
-
-      SetParChk(iter->first.c_str(), iter->second, canoverwrite);
-
-      iter++;
-   }
-}
-
-bool dabc::Command::AssignUrl(const char* urlstr, bool canoverwrite)
-{
-   dabc::Url url(urlstr);
-   if (!url.IsValid()) return false;
-
-   SetParChk(xmlProtocol, url.GetProtocol(), canoverwrite);
-   SetParChk(xmlHostName, url.GetHostName(), canoverwrite);
-   SetParChk(xmlFileName, url.GetFileName(), canoverwrite);
-   SetParChk(xmlUrlName, url.GetFullName(), canoverwrite);
-   SetParChk(xmlUrlPort, url.GetPortStr(), canoverwrite);
-
-   std::string options = url.GetOptions();
-
-   while (options.length()>0) {
-      size_t apos = options.find("&");
-      if (apos == std::string::npos) apos = options.length();
-      std::string str = options.substr(0, apos);
-
-      size_t epos = str.find("=");
-      if ((epos > 0) && (epos < str.length()))
-         SetParChk(str.substr(0, epos).c_str(), str.substr(epos+1), canoverwrite);
-
-      options.erase(0, apos);
-   }
-
-   return true;
+   return Reference(value.c_str(), value.length());
 }
 
 
-void dabc::Command::SaveToString(std::string& v)
+void dabc::Command::AddValuesFrom(const dabc::Command& cmd, bool canoverwrite)
 {
-   v.clear();
-
-   v = "Command";
-   v+=": ";
-   v+=GetName();
-   v+=";";
-
-   if (fParams==0) return;
-
-   CommandParametersList::iterator iter = fParams->begin();
-
-   for (;iter!=fParams->end();iter++) {
-
-      // exclude streaming of parameters with symbol # in the name
-      if (iter->first.find_first_of("#")!=std::string::npos) continue;
-
-      v+=" ";
-      v+=iter->first;
-      v+=": ";
-      if (iter->second.find_first_of(";:#$")==std::string::npos)
-         v+=iter->second;
-      else {
-         v+="'";
-         v+=iter->second;
-         v+="'";
-//         DOUT1(("!!!!!!!!!!!!!!!!!!! SPECIAL SYNTAX par = %s val = %s", iter->first.c_str(), iter->second.c_str()));
-      }
-
-      v+=";";
-   }
+   Record::AddFieldsFrom(cmd, canoverwrite);
 }
 
-bool dabc::Command::ReadFromString(const char* s, bool onlyparameters)
+void dabc::Command::SaveToString(std::string& v, bool compact)
 {
-   // onlyparameters = true indicates, that only parameters values must be present
-   // in the string, command name should not be in the string at all
-
-   delete fParams; fParams = 0;
-
-   if ((s==0) || (*s==0)) {
-      EOUT(("Empty command"));
-      return false;
-   }
-
-   const char myquote = '\'';
-
-   const char* curr = s;
-
-   int cnt = onlyparameters ? 1 : 0;
-
-   while (*curr != 0) {
-      const char* separ = strchr(curr, ':');
-
-      if (separ==0) {
-         EOUT(("Command format error 1: %s",s));
-         return false;
-      }
-
-      std::string name(curr, separ-curr);
-
-      if (cnt==0)
-        if (name.compare("Command")!=0) {
-          EOUT(("Wrong syntax, starts with: %s, expects: Command", name.c_str()));
-          return false;
-        }
-
-      curr = separ+1;
-      while (*curr == ' ') curr++;
-      if (curr==0) {
-         EOUT(("Command format error 4: %s",s));
-         return false;
-      }
-
-      std::string val;
-
-      if (*curr==myquote) {
-         curr++;
-         separ = strchr(curr, myquote);
-         if ((separ==0) || (*(separ+1) != ';')) {
-            EOUT(("Command format error 2: %s",s));
-            return false;
-         }
-
-         val.assign(curr, separ-curr);
-         separ++;
-
-      } else {
-         separ = strchr(curr, ';');
-         if (separ==0) {
-            EOUT(("Command format error 3: %s",s));
-            return false;
-         }
-         val.assign(curr, separ-curr);
-      }
-
-      if (cnt==0)
-         SetName(val.c_str());
-      else
-         SetPar(name.c_str(), val.c_str());
-
-      cnt++;
-
-      curr = separ+1;
-      while (*curr==' ') curr++;
-   }
-
-   return true;
+   v = SaveToXml(compact);
 }
 
-bool dabc::Command::ReadParsFromDimString(const char* pars)
+bool dabc::Command::ReadFromString(const std::string& v)
 {
-   if ((pars==0) || (*pars==0)) return true;
+   return ReadFromXml(v);
+}
 
-   XmlEngine xml;
-
-   XMLNodePointer_t node = xml.ReadSingleNode(pars);
-   if (node==0) {
-      EOUT(("Cannot parse DIM command %s", pars));
-      return false;
-   }
-
-   XMLNodePointer_t child = xml.GetChild(node);
-
-   while (child!=0) {
-
-      if (xml.HasAttr(child, "name") && xml.HasAttr(child, "value")) {
-         const char* parname = xml.GetAttr(child, "name");
-         const char* parvalue = xml.GetAttr(child, "value");
-         SetPar(parname, parvalue);
-//         DOUT3(("Param %s = %s", parname, parvalue));
-      }
-      child = xml.GetNext(child);
-   }
-
-   xml.FreeNode(node);
-
-   return true;
+void dabc::Command::Print(int lvl, const char* from) const
+{
+   Record::Print(lvl, from);
 }
 
 
-void dabc::Command::Reply(Command* cmd, int res)
+void dabc::Command::Release()
 {
-   if (cmd) cmd->SetResult(res);
-   dabc::Command::Finalise(cmd);
+   dabc::Record::Release();
 }
 
-void dabc::Command::Finalise(Command* cmd)
+void dabc::Command::Cancel()
 {
-   if (cmd==0) return;
+   SetInt("_canceled_",1);
+   dabc::Record::Release();
+}
+
+void dabc::Command::Reply(int res)
+{
+   if (res>=0) SetResult(res);
 
    bool process = false;
 
-   DOUT5(("Cmd %s Finalize", cmd->GetName()));
-
    do {
 
+      CommandContainer* cont = (CommandContainer*) GetObject();
+      if (cont==0) return;
+
       process = false;
-      CallerRec rec;
+      CommandContainer::CallerRec rec;
 
       {
+         LockGuard lock(ObjectMutex());
 
-         LockGuard lock(cmd->fCmdMutex);
+         if (cont->fCallers.size()==0) break;
 
-         if ((cmd->fCallers==0) || (cmd->fCallers->Size()==0)) break;
+         DOUT5(("Cmd %s Finalize callers %u", cont->GetName(), cont->fCallers.size()));
 
-         DOUT5(("Cmd %s Finalize callers %u", cmd->GetName(), cmd->fCallers->Size()));
-
-         if (cmd->fCallers && cmd->fCallers->Size()>0) {
-            rec = cmd->fCallers->PopBack();
-            process = true;
-            if (cmd->fCallers->Size()==0) {
-               delete cmd->fCallers;
-               cmd->fCallers = 0;
-            }
-         }
+         rec = cont->fCallers.back();
+         cont->fCallers.pop_back();
+         process = true;
       }
 
-      if (process && rec.proc) {
-         process = rec.proc->GetCommandReply(cmd, rec.exe_ready);
-         if (!process) { EOUT(("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s", cmd->GetName())); }
+      Worker* worker = (Worker*) rec.worker();
+
+      if (process && worker) {
+         DOUT3(("Call GetCommandReply worker:%p cmd:%p", worker, cont));
+         process = worker->GetCommandReply(*this, rec.exe_ready);
+         if (!process) { EOUT(("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s", GetName())); }
       }
    } while (!process);
 
-   if (!process) delete cmd;
+   DOUT3(("Command %p process %s", GetObject(), DBOOL(process)));
+
+   // in any case release reference at the end
+   Release();
+}
+
+dabc::Command& dabc::Command::SetReceiver(const std::string& itemname)
+{
+   // we set receiver parameter to be able identify receiver for the command
+
+   SetStr(ReceiverParName(), itemname);
+
+   return *this;
+}
+
+dabc::Command& dabc::Command::SetReceiver(int nodeid, const std::string& itemname)
+{
+   if (nodeid<0) return SetReceiver(itemname);
+
+   return SetReceiver(Url::ComposeItemName(nodeid, itemname.c_str()));
+}
+
+dabc::Command& dabc::Command::SetReceiver(int nodeid, Object* rcv)
+{
+   if (rcv==0) return SetReceiver(nodeid, "");
+
+   std::string s = rcv->ItemName();
+
+   if (dynamic_cast<Worker*>(rcv)==0)
+      EOUT(("Object %s cannot be used to receive commands", s.c_str()));
+
+   return SetReceiver(nodeid, s);
+}
+
+dabc::Command& dabc::Command::SetReceiver(Object* rcv)
+{
+   return SetReceiver(-1, rcv);
 }

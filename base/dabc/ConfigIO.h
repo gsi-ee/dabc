@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_ConfigIO
 #define DABC_ConfigIO
 
@@ -18,25 +18,44 @@
 #include "dabc/string.h"
 #endif
 
+#ifndef DABC_XmlEngine
+#include "dabc/XmlEngine.h"
+#endif
+
+#include <list>
+
 namespace dabc {
 
-   class Basic;
+   class Object;
+   class Configuration;
+   class RecordContainer;
 
+   // TODO: later ConfigIO should be non-transient reference on configuration class
    class ConfigIO {
-       public:
-          ConfigIO() {}
-          virtual ~ConfigIO() {}
+      protected:
+         Configuration* fCfg;
 
-          virtual bool CreateItem(const char* name, const char* value = 0) = 0;
-          virtual bool CreateAttr(const char* name, const char* value) = 0;
-          virtual bool PopItem() = 0;
-          virtual bool PushLastItem() = 0;
-          virtual bool CreateIntAttr(const char* name, int value);
+         XMLNodePointer_t fCurrItem; // currently found item
+         XMLNodePointer_t fCurrChld; // selected child in current item
+         bool             fCurrStrict; // must have strict syntax match
 
-          virtual bool FindItem(const char* name) = 0;
-          virtual bool CheckAttr(const char* name, const char* value) = 0;
+         XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char* name);
 
-          virtual bool Find(Basic* obj, std::string& value, const char* findattr = 0) = 0;
+         static Object* GetObjParent(Object* obj, int lvl);
+
+      public:
+         ConfigIO(Configuration* cfg);
+
+         ConfigIO(const ConfigIO& src);
+         virtual ~ConfigIO() {}
+
+         bool FindItem(const char* name);
+
+         /** Check if item, found by FindItem routine, has attribute with specified value
+          * If \param optional specified, attribute value will be checked only when attribute existing */
+         bool CheckAttr(const char* name, const char* value);
+
+         bool ReadRecord(Object* obj, const std::string& name, RecordContainer* cont);
    };
 
 }

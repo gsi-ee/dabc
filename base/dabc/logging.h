@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_logging
 #define DABC_logging
 
@@ -44,7 +44,8 @@ namespace dabc {
             lLevel   = 0x0040,  // show message level
             lMessage = 0x0080,  // show debug message itself
             lNoDrop  = 0x0100,  // disable drop of frequent messages
-            lNoPrefix= 0x0200   // disable prefix output (superior to lPrefix)
+            lNoPrefix= 0x0200,  // disable prefix output (superior to lPrefix)
+            lTStamp  = 0x0400   // show TimeStamp (ms precision)
          };
 
          Logger(bool withmutex = true);
@@ -74,6 +75,9 @@ namespace dabc {
          virtual void LogFile(const char* fname);
 
          void ShowStat(bool tofile = true);
+
+         /** \brief Close any file open by logger */
+         void CloseFile();
 
          static void CheckTimeout();
 

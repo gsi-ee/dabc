@@ -1,42 +1,39 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_DataTransport
 #define DABC_DataTransport
 
-#ifndef DABC_Basic
-#include "dabc/Basic.h"
-#endif
-
 #ifndef DABC_Transport
 #include "dabc/Transport.h"
+#endif
+
+#ifndef DABC_Worker
+#include "dabc/Worker.h"
 #endif
 
 #ifndef DABC_Device
 #include "dabc/Device.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_BuffersQueue
+#include "dabc/BuffersQueue.h"
 #endif
 
 #ifndef DABC_MemoryPool
 #include "dabc/MemoryPool.h"
 #endif
 
-#ifndef DABC_WorkingProcessor
-#include "dabc/WorkingProcessor.h"
-#endif
 
 #ifndef DABC_DataIO
 #include "dabc/DataIO.h"
@@ -47,9 +44,11 @@ namespace dabc {
    class Buffer;
    class MemoryPool;
 
-   class DataTransport : public Transport,
-                         public WorkingProcessor,
+   class DataTransport : public Worker,
+                         public Transport,
                          protected MemoryPoolRequester {
+
+      DABC_TRANSPORT(Worker)
 
       enum EDataEvents { evDataInput = evntFirstSystem, evDataOutput };
 
@@ -62,8 +61,8 @@ namespace dabc {
          virtual unsigned Read_Size() { return di_RepeatTimeOut; }
          // In addition to DataInput, can returns:
          //    di_CallBack      - read must be confirmed by Read_CallBack
-         virtual unsigned Read_Start(Buffer* buf) { return di_Ok; }
-         virtual unsigned Read_Complete(Buffer* buf) { return di_EndOfStream; }
+         virtual unsigned Read_Start(Buffer& buf) { return di_Ok; }
+         virtual unsigned Read_Complete(Buffer& buf) { return di_EndOfStream; }
 
          // Defines timeout for operation
          virtual double Read_Timeout() { return 0.1; }
@@ -72,7 +71,7 @@ namespace dabc {
          // It is only way to "restart" event loop in the transport
          void Read_CallBack(unsigned compl_res = di_Ok);
 
-         virtual bool WriteBuffer(Buffer* buf) { return false; }
+         virtual bool WriteBuffer(const Buffer& buf) { return false; }
          virtual void FlushOutput() {}
 
          // these are extra methods for handling inputs/outputs
@@ -81,28 +80,27 @@ namespace dabc {
 
          virtual void ProcessPoolChanged(MemoryPool* pool) {}
 
-         virtual void HaltTransport();
-
       public:
-         DataTransport(Device* dev, Port* port, bool doiunput = true, bool dooutput = false);
+         DataTransport(Reference port, bool doiunput = true, bool dooutput = false);
          virtual ~DataTransport();
 
          virtual bool ProvidesInput() { return fDoInput; }
          virtual bool ProvidesOutput() { return fDoOutput; }
 
-         virtual bool Recv(Buffer* &buf);
+         virtual bool Recv(Buffer&);
          virtual unsigned RecvQueueSize() const;
-         virtual Buffer* RecvBuffer(unsigned indx) const;
-         virtual bool Send(Buffer* mem);
+         virtual Buffer& RecvBuffer(unsigned indx) const;
+         virtual bool Send(const Buffer&);
          virtual unsigned SendQueueSize();
          virtual unsigned MaxSendSegments() { return 9999; }
+
       protected:
 
          enum EInputStates { inpWorking, inpReady, inpBegin, inpNeedBuffer, inpPrepare, inpError, inpClosed };
 
-         virtual void PortChanged();
+         virtual void PortAssigned();
 
-         virtual void ProcessEvent(EventId);
+         virtual void ProcessEvent(const EventId&);
 
          virtual bool ProcessPoolRequest();
 
@@ -114,21 +112,23 @@ namespace dabc {
          virtual void StartTransport();
          virtual void StopTransport();
 
+         /** \brief Inherited method, used to remove references from the transport */
+         virtual void CleanupFromTransport(Object* obj);
+
          virtual void CleanupTransport();
 
-         virtual int ExecuteCommand(Command* cmd);
+         virtual int ExecuteCommand(Command cmd);
 
          Mutex              fMutex;
          BuffersQueue       fInpQueue;
          BuffersQueue       fOutQueue;
          bool               fActive;
-         MemoryPool        *fPool;
          bool               fDoInput;
          bool               fDoOutput;
          EInputStates       fInpState;
          bool               fInpLoopActive; // indicate if loop around inp is active means inp event or timeout should appear soon
          unsigned           fNextDataSize; // indicate that input has data, but there is no buffer of required size
-         Buffer*            fCurrentBuf;   // currently used buffer
+         Buffer             fCurrentBuf;   // currently used buffer
          unsigned           fComplRes;     // result, assigned to completion operation
          unsigned           fPoolChangeCounter;
    };

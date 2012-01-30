@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_Url
 #define DABC_Url
 
@@ -41,7 +41,7 @@ namespace dabc {
          virtual ~Url();
 
          void Reset();
-         bool SetUrl(const std::string& url);
+         bool SetUrl(const std::string& url, bool showerr = true);
 
          std::string GetUrl() const      { return fUrl; }
          bool IsValid() const            { return fValid; }
@@ -53,6 +53,22 @@ namespace dabc {
          std::string GetFileName() const { return fFileName; }
          std::string GetOptions() const  { return fOptions; }
          std::string GetFullName() const;
+
+
+         /**! \brief Prodoces url string with unique address of specified item */
+         static std::string ComposeItemName(int nodeid, const std::string& itemname = "");
+
+         /**! Method creates url string with port address, which includes nodeid and full portname
+          * If optional parameter portid is specified, it added as last symbols of the address
+          * Like call dabc::Url::ComposePortName(1, "MyModule/Output", 2) will produce string
+          * "dabc://node1/MyModule/Output2" */
+         static std::string ComposePortName(int nodeid, const char* fullportname, int portid = -1);
+
+         /** \brief Method decompose from url nodeid and full item name, which includes all parents */
+         static bool DecomposeItemName(const std::string& url, int& nodeid, std::string& itemtname);
+
+         /** \brief Extracts only nodeid from url, if node is not specified or url is invalid, -1 is returned */
+         static int ExtractNodeId(const std::string& url);
 
    };
 }

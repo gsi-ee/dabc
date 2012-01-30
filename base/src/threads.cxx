@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/threads.h"
 
 #include <signal.h>
@@ -32,6 +32,12 @@ dabc::Mutex::Mutex(bool recursive)
       pthread_mutex_init(&fMutex, 0);
 }
 
+bool dabc::Mutex::TryLock()
+{
+   return pthread_mutex_trylock(&fMutex) != EBUSY;
+}
+
+
 bool dabc::Mutex::IsLocked()
 {
    int res = pthread_mutex_trylock(&fMutex);
@@ -49,9 +55,6 @@ dabc::Condition::Condition(Mutex* ext_mtx) :
    fWaiting(false)
 {
    pthread_cond_init(&fCond, 0);
-
-   fWaitCalled = 0;
-   fWaitDone = 0;
 }
 
 dabc::Condition::~Condition()
@@ -69,14 +72,11 @@ bool dabc::Condition::_DoWait(double wait_seconds)
    // wait_seconds < 0 - wait forever until condition is fired
 
 
-   fWaitCalled++;
-
    if (fFiredCounter==0) {
       if (wait_seconds < 0.) {
          fWaiting = true;
          pthread_cond_wait(&fCond, &fCondMutex->fMutex);
          fWaiting = false;
-         fWaitDone++;
       } else
       if (wait_seconds > 0.) {
          struct timeval tp;
@@ -92,7 +92,6 @@ bool dabc::Condition::_DoWait(double wait_seconds)
          fWaiting = true;
          pthread_cond_timedwait(&fCond, &fCondMutex->fMutex, &tsp);
          fWaiting = false;
-         fWaitDone++;
       }
    }
 
@@ -111,49 +110,61 @@ dabc::Runnable::~Runnable()
    DOUT5(("dabc::Runnable::~Runnable destructor %p", this));
 }
 
-void* StartTRunnable(void* abc)
+extern "C" void CleanupRunnable(void* abc)
+{
+   dabc::Runnable *run = (dabc::Runnable*) abc;
+
+   if (run!=0) run->RunnableCancelled();
+}
+
+extern "C" void* StartTRunnable(void* abc)
 {
    dabc::Runnable *run = (dabc::Runnable*) abc;
 
    void* res = 0;
 
-   if (run!=0)
+   if (run!=0) {
+
+      pthread_cleanup_push(CleanupRunnable, abc);
+
       res = run->MainLoop();
+
+      pthread_cleanup_pop(1);
+   }
 
    pthread_exit(res);
 }
 
-dabc::Thread::Thread() :
+dabc::PosixThread::PosixThread() :
    fThrd()
 {
 }
 
-dabc::Thread::~Thread()
+dabc::PosixThread::~PosixThread()
 {
 }
 
-void dabc::Thread::Start(Runnable* run)
+void dabc::PosixThread::Start(Runnable* run)
 {
    if (run==0) return;
 
    pthread_create(&fThrd, NULL, StartTRunnable, run);
 }
 
-void dabc::Thread::Start(ThreadStartRoutine* func, void* args)
+void dabc::PosixThread::Start(StartRoutine* func, void* args)
 {
    if (func==0) return;
 
    pthread_create(&fThrd, NULL, func, args);
 }
 
-
-void dabc::Thread::Join()
+void dabc::PosixThread::Join()
 {
    void* res = 0;
    pthread_join(fThrd, &res);
 }
 
-void dabc::Thread::SetPriority(int prio)
+void dabc::PosixThread::SetPriority(int prio)
 {
    struct sched_param thread_param;
    int ret = 0;
@@ -165,7 +176,12 @@ void dabc::Thread::SetPriority(int prio)
       EOUT(("pthread_setschedparam ret = %d %d %d %d %d\n", ret, (ret==EPERM), (ret==ESRCH), (ret==EINVAL), (ret==EFAULT)));
 }
 
-void dabc::Thread::Kill(int sig)
+void dabc::PosixThread::Kill(int sig)
 {
    pthread_kill(fThrd, sig);
+}
+
+void dabc::PosixThread::Cancel()
+{
+   pthread_cancel(fThrd);
 }

@@ -1,17 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
-#include "dabc/logging.h"
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #include "dabc/ConfigBase.h"
 
 #include <iostream>
@@ -20,13 +19,9 @@
 
 int main(int numc, char* args[])
 {
-   dabc::SetDebugLevel(1);
-
-   const char* configuration = "SetupRoc.xml";
-   const char* workdir = 0;
-   unsigned configid = 0;
-   const char* connstr = 0;
-   int ctrlkind = dabc::ConfigBase::kindNone;
+   const char* configuration(0);
+   const char* workdir(0);
+   unsigned configid(0);
 
    if(numc > 1) configuration = args[1];
 
@@ -38,12 +33,6 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
-      if (strcmp(arg,"-dim")==0) {
-         ctrlkind = dabc::ConfigBase::kindDim;
-      } else
-      if (strcmp(arg,"-sctrl")==0) {
-         ctrlkind = dabc::ConfigBase::kindSctrl;
-      } else
       if (strcmp(arg,"-id")==0) {
          if (cnt < numc)
             configid = (unsigned) atoi(args[cnt++]);
@@ -51,10 +40,6 @@ int main(int numc, char* args[])
       if (strcmp(arg,"-workdir")==0) {
          if (cnt < numc)
             workdir = args[cnt++];
-      } else
-      if (strcmp(arg,"-conn")==0) {
-         if (cnt < numc)
-            connstr = args[cnt++];
       } else
       if (strcmp(arg,"-number")==0) {
          unsigned res = cfg.NumNodes();
@@ -64,7 +49,7 @@ int main(int numc, char* args[])
       } else
       if (strcmp(arg,"-mode") == 0) {
          const char* kind = (cnt < numc) ? args[cnt++] : "start";
-         std::string res = cfg.SshArgs(configid, ctrlkind, kind, configuration, workdir, connstr);
+         std::string res = cfg.SshArgs(configid, kind, configuration, workdir);
          if (res.length()==0) return 7;
          std::cout << res << std::endl;
          std::cout.flush();

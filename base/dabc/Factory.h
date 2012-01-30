@@ -1,31 +1,36 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_Factory
 #define DABC_Factory
 
-#ifndef DABC_Basic
-#include "dabc/Basic.h"
+#ifndef DABC_Object
+#include "dabc/Object.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_Queue
+#include "dabc/Queue.h"
+#endif
+
+#ifndef DABC_Command
+#include "dabc/Command.h"
 #endif
 
 #ifndef DABC_threads
 #include "dabc/threads.h"
 #endif
 
+#include <vector>
 
 namespace dabc {
 
@@ -35,14 +40,13 @@ namespace dabc {
    class DataOutput;
    class Command;
    class Device;
-   class Folder;
-   class WorkingThread;
+   class Thread;
    class Application;
    class Configuration;
    class Transport;
    class Port;
 
-   class Factory : public Basic {
+   class Factory : public Object {
       friend class Manager;
 
       struct LibEntry {
@@ -57,42 +61,42 @@ namespace dabc {
       public:
          Factory(const char* name);
 
-         virtual Application* CreateApplication(const char* classname, Command* cmd) { return 0; }
+         virtual Application* CreateApplication(const char* classname, Command cmd) { return 0; }
 
-         virtual Device* CreateDevice(const char* classname, const char* devname, Command* cmd) { return 0; }
+         virtual Reference CreateObject(const char* classname, const char* objname, Command cmd) { return 0; }
 
-         virtual WorkingThread* CreateThread(const char* classname, const char* thrdname, const char* thrddev, Command* cmd) { return 0; }
+         virtual Device* CreateDevice(const char* classname, const char* devname, Command cmd) { return 0; }
 
-         virtual Module* CreateModule(const char* classname, const char* modulename, Command* cmd) { return 0; }
+         virtual Reference CreateThread(Reference parent, const char* classname, const char* thrdname, const char* thrddev, Command cmd) { return Reference(); }
 
-         virtual Transport* CreateTransport(Port* port, const char* typ, const char* thrdname, Command* cmd);
+         virtual Module* CreateModule(const char* classname, const char* modulename, Command cmd) { return 0; }
 
-         virtual Transport* CreateTransportNew(Port* port, Command* cmd);
+         virtual Transport* CreateTransport(Reference port, const char* typ, Command cmd);
 
          virtual FileIO* CreateFileIO(const char* typ, const char* name, int option) { return 0; }
 
-         virtual Folder* ListMatchFiles(const char* typ, const char* filemask) { return 0; }
+         virtual Object* ListMatchFiles(const char* typ, const char* filemask) { return 0; }
 
          virtual DataInput* CreateDataInput(const char* typ) { return 0; }
 
          virtual DataOutput* CreateDataOutput(const char* typ) { return 0; }
 
-         static bool CreateManager(const char* kind = 0, Configuration* cfg = 0);
-
          static bool LoadLibrary(const std::string& fname);
 
          static void* FindSymbol(const std::string& symbol);
 
+         static bool CreateManager(const std::string& name = "mgr", Configuration* cfg = 0);
+
       protected:
-         virtual bool CreateManagerInstance(const char* kind, Configuration* cfg) { return false; }
 
-         virtual Transport* CreateIOTransport(Port* port, Command* cmd, DataInput* inp, DataOutput* out);
-
+         /** Method called by the manager during application start.
+          * One can put arbitrary initialization code here - for instance, create some control instances */
+         virtual void Initialize() {}
 
       private:
-         static Queue<Factory*> *Factories()
+         static PointersQueue<Factory> *Factories()
          {
-            static Queue<Factory*> f(16, true);
+            static PointersQueue<Factory> f(16);
             return &f;
          }
          static Mutex* FactoriesMutex()

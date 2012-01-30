@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009-
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_ConfigBase
 #define DABC_ConfigBase
 
@@ -30,6 +30,7 @@ namespace dabc {
    extern const char* xmlVariablesNode;
    extern const char* xmlNameAttr;
    extern const char* xmlHostAttr;
+   extern const char* xmlPortAttr;
    extern const char* xmlClassAttr;
    extern const char* xmlValueAttr;
    extern const char* xmlRunNode;
@@ -44,15 +45,17 @@ namespace dabc {
    extern const char* xmlDABCWORKDIR;
    extern const char* xmlDABCNODEID;
    extern const char* xmlDABCNUMNODES;
+   extern const char* xmlActive;
    extern const char* xmlCopyCfg;
    extern const char* xmlDebugger;
    extern const char* xmlWorkDir;
    extern const char* xmlDebuglevel;
+   extern const char* xmlNoDebugPrefix;
    extern const char* xmlLogfile;
    extern const char* xmlLoglevel;
    extern const char* xmlLoglimit;
-   extern const char* xmlParslevel;
    extern const char* xmlRunTime;
+   extern const char* xmlNormalMainThrd;
    extern const char* xmlLDPATH;
    extern const char* xmlConfigFile;
    extern const char* xmlConfigFileId;
@@ -62,17 +65,18 @@ namespace dabc {
    extern const char* xmlCpuInfo;
    extern const char* xmlSocketHost;
    extern const char* xmlControlled;
-   extern const char* xmlDIM_DNS_NODE;
-   extern const char* xmlDIM_DNS_PORT;
+
+   class ConfigIO;
 
    class ConfigBase {
-      protected:
-         enum ESshArgsKinds { kindTest, kindCopy, kindStart, kindRun, kindStop, kindKill, kindConn };
 
-         XmlEngine         fXml;
+      friend class ConfigIO;
+
+      protected:
+         enum ESshArgsKinds { kindTest, kindCopy, kindStart, kindRun, kindStop, kindKill, kindDellog };
+
          XMLDocPointer_t   fDoc;
          int               fVersion;  // -1 - error, 0 - xdaq, 1 and more - dabc
-         ConfigBase       *fPrnt;  // parent configuration with defaults for some variables
          XMLNodePointer_t  fDflts;
          XMLNodePointer_t  fVariables;
 
@@ -86,7 +90,7 @@ namespace dabc {
          std::string       envHost;            // host name of current context
          std::string       envContext;         // name of current context
 
-
+         XMLNodePointer_t RootNode();
          XMLNodePointer_t Dflts();
          XMLNodePointer_t Variables();
 
@@ -118,17 +122,22 @@ namespace dabc {
 
          std::string GetEnv(const char* name);
 
-         bool IsNodeName(XMLNodePointer_t node, const char* name);
+         static bool IsNodeName(XMLNodePointer_t node, const char* name);
          const char* GetAttr(XMLNodePointer_t node, const char* attr, const char* defvalue = 0);
          int  GetIntAttr(XMLNodePointer_t node, const char* attr, int defvalue = 0);
 
          std::string GetNodeValue(XMLNodePointer_t node);
+         std::string GetAttrValue(XMLNodePointer_t node, const char* name);
+
          XMLNodePointer_t FindChild(XMLNodePointer_t node, const char* name);
          XMLNodePointer_t FindContext(unsigned id);
 
-      public:
-         enum EControlKinds { kindNone, kindSctrl, kindDim };
+         static bool IsWildcard(const char* str);
 
+         /** Identifies, if node can be identified as valid context - no any wildcards in names */
+         static bool IsContextNode(XMLNodePointer_t node);
+
+      public:
          ConfigBase(const char* fname = 0);
          ~ConfigBase();
 
@@ -148,11 +157,17 @@ namespace dabc {
          /** returns nodename of specified context */
          std::string NodeName(unsigned id);
 
+         /** returns communication port of specified context */
+         int NodePort(unsigned id);
+
+         /** returns configured (initial) state of the node */
+         bool NodeActive(unsigned id);
+
          /** returns name of specified context */
          std::string ContextName(unsigned id);
 
          /** method used by run.sh script to produce command line */
-         std::string SshArgs(unsigned id = 0, int ctrlkind = kindNone, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0, const char* connstr = 0);
+         std::string SshArgs(unsigned id = 0, const char* skind = "run", const char* topcfgfile = 0, const char* topworkdir = 0);
 
          /** Replaces entries like ${name} be variable value */
          std::string ResolveEnv(const std::string& arg);

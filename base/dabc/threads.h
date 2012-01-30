@@ -1,25 +1,28 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_threads
 #define DABC_threads
 
 #include <pthread.h>
 
+#include <stdio.h>
+
 namespace dabc {
 
    class Mutex {
      friend class LockGuard;
+     friend class UnlockGuard;
      friend class Condition;
      protected:
         pthread_mutex_t  fMutex;
@@ -28,6 +31,7 @@ namespace dabc {
         virtual ~Mutex() { pthread_mutex_destroy(&fMutex); }
         inline void Lock() { pthread_mutex_lock(&fMutex); }
         inline void Unlock() { pthread_mutex_unlock(&fMutex); }
+        bool TryLock();
         bool IsLocked();
    };
 
@@ -58,6 +62,35 @@ namespace dabc {
            if (fMutex) pthread_mutex_unlock(fMutex);
         }
    };
+
+   class UnlockGuard {
+     protected:
+        pthread_mutex_t* fMutex;
+     public:
+        inline UnlockGuard(const Mutex* mutex) : fMutex(mutex ? (pthread_mutex_t*) &(mutex->fMutex) : 0)
+        {
+           if (fMutex) pthread_mutex_unlock(fMutex);
+        }
+        inline ~UnlockGuard()
+        {
+           if (fMutex) pthread_mutex_lock(fMutex);
+        }
+   };
+
+
+   class IntGuard {
+      private:
+         int*  fInt;
+
+      public:
+         inline IntGuard(const int* value) { fInt = (int*) value; if (fInt) (*fInt)++; }
+         inline IntGuard(const int& value) { fInt = (int*) &value; (*fInt)++; }
+         inline ~IntGuard() { if (fInt) (*fInt)--; }
+
+         inline int* ptr() { return fInt; }
+   };
+
+
 
    // ___________________________________________________________
 
@@ -107,9 +140,6 @@ namespace dabc {
          pthread_cond_t  fCond;
          long int        fFiredCounter;
          bool            fWaiting;
-      public:
-         long            fWaitCalled;
-         long            fWaitDone;
    };
 
    // ___________________________________________________________
@@ -120,31 +150,34 @@ namespace dabc {
       public:
          virtual void* MainLoop() = 0;
 
+         virtual void RunnableCancelled() {}
+
          virtual ~Runnable();
    };
-
-   typedef void* (ThreadStartRoutine)(void*);
 
    // ___________________________________________________________
 
    typedef pthread_t Thread_t;
 
-   class Thread {
+   class PosixThread {
       protected:
          pthread_t    fThrd;
          void         UseCurrentAsSelf() { fThrd = pthread_self(); }
       public:
-         Thread();
-         ~Thread();
+
+         typedef void* (StartRoutine)(void*);
+
+         PosixThread();
+         virtual ~PosixThread();
          void Start(Runnable* run);
-         void Start(ThreadStartRoutine* func, void* args);
+         void Start(StartRoutine* func, void* args);
          void Join();
          void Kill(int sig = 9);
+         void Cancel();
 
          void SetPriority(int prio);
 //         inline bool IsItself() const { return pthread_equal(pthread_self(), fThrd) != 0; }
          inline bool IsItself() const { return fThrd == pthread_self(); }
-
 
          inline Thread_t Id() const { return fThrd; }
 

@@ -1,16 +1,16 @@
-/********************************************************************
- * The Data Acquisition Backbone Core (DABC)
- ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
- * Planckstr. 1
- * 64291 Darmstadt
- * Germany
- * Contact:  http://dabc.gsi.de
- ********************************************************************
- * This software can be used under the GPL license agreements as stated
- * in LICENSE.txt file which is part of the distribution.
- ********************************************************************/
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
 #ifndef DABC_BinaryFile
 #define DABC_BinaryFile
 
@@ -29,12 +29,10 @@ namespace dabc {
    struct BinaryFileHeader {
       uint64_t magic;
       uint64_t version;
-      uint64_t numbufs;
    };
 
    struct BinaryFileBufHeader {
       uint64_t datalength;
-      uint64_t headerlength;
       uint64_t buftype;
    };
 
@@ -45,10 +43,10 @@ namespace dabc {
          BinaryFileInput(FileIO* io);
          virtual ~BinaryFileInput();
 
-         virtual bool Read_Init(Command* cmd = 0, WorkingProcessor* port = 0);
+         virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd) { return true; }
 
          virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(Buffer* buf);
+         virtual unsigned Read_Complete(Buffer& buf);
 
       protected:
          void CloseIO();
@@ -66,14 +64,14 @@ namespace dabc {
          BinaryFileOutput(FileIO* io);
          virtual ~BinaryFileOutput();
 
-         virtual bool Write_Init(Command* cmd = 0, WorkingProcessor* port = 0);
+         virtual bool Write_Init(const WorkerRef& wrk, const Command& cmd) { return true; }
 
-         virtual bool WriteBuffer(Buffer* buf);
+         virtual bool WriteBuffer(const Buffer& buf);
       protected:
          void CloseIO();
 
          FileIO*    fIO;
-         int64_t    fSyncCounter; // byte counter to perform regulary fsync operation
+         int64_t    fSyncCounter; // byte counter to perform regularly fsync operation
    };
 
 }
