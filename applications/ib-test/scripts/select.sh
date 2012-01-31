@@ -4,6 +4,15 @@
 # and produce xml file (or any other files), required to run test on LOEWE-CSC cluster
 # for a moment one can select switch name(s), which should be used
 #    [shell] select.sh ibswitch05 ibswitch06
+# allowed arguments:
+#     nodes         - fill interactive nodes, which can be used 
+#     ibswitchXX    - add all nodes, connected to the specified switch
+#     noibswitchXX  - exclude all nodes, connected to the specified switch
+#     addnodes      - add all nodes
+#     addquads      - add all quads
+#     cpu XX        - from all interactive nodes, select all which has cpu load less than specified in percent
+
+
 
 
 if [[ "$1" == "loewe" ]] ; then

@@ -32,17 +32,20 @@ MBSFAPI_PACKAGE = $(MBSFAPIDIR)/lmdfile.tar.gz
 
 MBSFAPI_CS      = $(MBSFAPIDIR)/fLmd.c
 MBSFAPI_CH      = $(MBSFAPIDIR)/fLmd.h $(MBSFAPIDIR)/sMbs.h 
+MBSFAPI_CO      = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBSFAPI_CS))
+MBSFAPI_CD      = $(patsubst %.$(ObjSuf), %.$(DepSuf), $(MBSFAPI_CO))
+
 MBSFAPI_S       = $(MBSDIRS)/MbsTypeDefs.cxx $(MBSDIRS)/LmdFile.cxx 
 MBSFAPI_H       = $(MBSDIRI)/LmdTypeDefs.h $(MBSDIRI)/MbsTypeDefs.h $(MBSDIRI)/LmdFile.h 
-MBSFAPI_CO      = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBSFAPI_CS))
 MBSFAPI_O       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBSFAPI_S))
-MBSFAPI_CD      = $(patsubst %.$(ObjSuf), %.$(DepSuf), $(MBSFAPI_CO))
+MBSFAPI_D       = $(patsubst %.$(ObjSuf), %.$(DepSuf), $(MBSFAPI_O))
+
 MBSFAPI_DISTR   = $(MBSFAPI_CS) $(MBSFAPI_CH) \
                   $(MBSFAPIDIR)/LinkDef.h $(MBSFAPIDIR)/readme.txt $(MBSFAPIDIR)/Makefile \
                   $(MBSFAPIDIR)/test.cxx $(MBSFAPIDIR)/test.C  
 
 DABCMBS_O       = $(MBS_O) $(MBSFAPI_CO)
-DABCMBS_D       = $(MBS_D) $(MBSFAPI_CD)
+DABCMBS_D       = $(MBS_D) $(MBSFAPI_CD) $(MBSFAPI_D)
 
 ifdef MBSEVAPI
 
@@ -51,8 +54,8 @@ MBSAPI_CS       = $(wildcard $(MBSAPIDIR)/*.$(CSuf))
 MBSAPI_CO       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBSAPI_CS))
 MBSAPI_CD       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(DepSuf), $(MBSAPI_CS))
 
-DABCMBS_O += $(MBSAPI_CO) 
-DABCMBS_D += $(MBSAPI_CD)
+DABCMBS_O      += $(MBSAPI_CO)
+DABCMBS_D      += $(MBSAPI_CD)
 
 MBSAPI_DEFINITIONS = Linux _LARGEFILE64_SOURCE MBSEVAPI
 else
@@ -93,6 +96,6 @@ $(MBS_O) $(MBS_D) : DEFINITIONS += $(MBSAPI_DEFINITIONS)
 $(MBSAPI_CO) $(MBSAPI_CD): C_DEFINITIONS += $(MBSAPI_DEFINITIONS)
 $(MBSFAPI_O) $(MBSFAPI_D): DEFINITIONS += $(MBSFAPI_DEFINITIONS)
 $(MBSFAPI_CO) $(MBSFAPI_CD): C_DEFINITIONS += $(MBSFAPI_DEFINITIONS)
-$(MBSFAPI_O): INCLUDES += $(MBSDIRI) $(MBSFAPIDIR)
+$(MBSFAPI_O) $(MBSFAPI_D) $(MBSFAPI_CD): INCLUDES += $(MBSDIRI) $(MBSFAPIDIR)
 
 include $(DABCSYS)/config/Makefile.rules

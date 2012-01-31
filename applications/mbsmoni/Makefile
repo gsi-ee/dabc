@@ -23,6 +23,8 @@ MBSMONI_CXD       = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(MBSMONI_CX
 MBSMONI_DEFINITIONS = Linux 
 
 
+MBSMONI_DIMLIB = $(DABCDLLPATH)/libdim.$(DllSuf)
+
 # used in the main Makefile
 
 ifndef nodim
@@ -35,16 +37,17 @@ exes:: $(MBSMONI_EXE)
 clean::
 	rm -f $(MBSMONI_EXE)
 
+$(MBSMONI_CD) $(MBSMONI_CXD) : $(MBSMONI_DIMLIB)
 
 
-$(MBSMONI_EXE):   $(MBSMONI_CO) $(MBSMONI_CXO) $(DABCDLLPATH)/libdim.$(DllSuf)
+$(MBSMONI_EXE):   $(MBSMONI_CO) $(MBSMONI_CXO) $(MBSMONI_DIMLIB)
 	$(LD) $(LDFLAGS) $(MBSMONI_CO) $(MBSMONI_CXO) -lrt -L$(DABCDLLPATH) -ldim $(OutPutOpt) $(MBSMONI_EXE)
 
 $(MBSMONI_CXO) : DEFINITIONS += $(MBSMONI_DEFINITIONS) 
 
 $(MBSMONI_CO) : C_DEFINITIONS += $(MBSMONI_DEFINITIONS)
 
-$(MBSMONI_CXO) : INCLUDES += $(DIMDIR)/dim
+$(MBSMONI_CXO) $(MBSMONI_CD) $(MBSMONI_CXD) : INCLUDES += $(DIMDIR)/dim
 
 endif
 

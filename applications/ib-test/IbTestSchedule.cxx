@@ -204,6 +204,7 @@ bool IbTestClusterRouting::ReadFile(std::string filename)
 
          default:
             EOUT(("What???"));
+            break;
       }
 
    }
@@ -1110,6 +1111,20 @@ bool IbTestClusterRouting::SelectNodes(const std::string& all_args, IbTestIntCol
                ids(cnt++) = node;
 
       } else 
+      if (args[n].compare(0, 10, "noibswitch")==0) {
+         // exclude all nodes, connected to specified switch
+         int swid = FindSwitch(args[n].c_str()+2);
+         if (swid<0) { EOUT(("Cannot find switch of name %s", args[n].c_str()+2)); continue; }
+
+         int indx = -1;
+
+         for (int node=0;node<NumNodes();node++)
+            if ((GetNodeSwitch(node)==swid) && ((indx = ids.FindIndex(node))>=0)) {
+               ids.Remove(indx);
+               cnt--;
+            }
+      } else 
+
       if ((find = FindNode(args[n])) >= 0) {
          if (!ids.Find(find)) 
             ids(cnt++) = find;
@@ -2576,6 +2591,7 @@ extern "C" void TestSorting()
 
       default:
          routing.FillRandomIds(ids);
+         break;
    }
 
    DOUT0(("Produce schedule"));

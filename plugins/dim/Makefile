@@ -90,6 +90,9 @@ DIMCTL_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DIMCTL_S)
 ALLHDRS           += $(patsubst $(DIMCTLDIR)/%.h, $(DABCINCPATH)/%.h, $(DIMCTL_H))
 ALLDEPENDENC      += $(DIMCTL_D)
 
+
+$(DIMCTL_D) : $(DIM_LIB)
+
 libs:: $(DIMCTL_LIB) 
 
 

@@ -1,16 +1,15 @@
-  <Defaults>
-     <Context name="*">
-       <Run>
-         <lib value="libDabcIbTest.so"/>
+   <Context name="*">
+     <Run>
+       <lib value="libDabcIbTest.so"/>
          <LD_LIBRARY_PATH value="."/>
          <logfile value="/tmp/Node${DABCNODEID}.log"/>
          <debuglevel value="1"/>
-	      <debugger value="false"/>
+         <debugger value="false"/>
          <loglevel value="1"/>
          <loglimit value="1000000"/>
          <runtime value="200"/>
-       </Run>
-       <Application class="IbTestApp">
+     </Run>
+     <Application class="IbTestApp">
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="200000"/>
 
@@ -27,6 +26,5 @@
          <TestSchedule value="schedule.txt"/>
          <TestTimeout value="20"/>
        </Application>
-     </Context>
-  </Defaults>
+   </Context>
 </dabc>

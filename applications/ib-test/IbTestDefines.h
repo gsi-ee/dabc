@@ -208,6 +208,15 @@ class IbTestColumn {
      T operator()(int n) const { return fVector[n]; }
      T& operator()(int n) { return fVector[n]; }
 
+     bool Remove(int indx) 
+     {
+       if ((indx<0) || (indx>=size())) return false;
+       for (int n=indx;n<size()-1;n++)
+          fVector[n] = fVector[n+1];
+       SetSize(size()-1);
+       return true;
+     }
+
      void Fill(T value)
      {
         for (int n=0;n<size();n++)

@@ -2,6 +2,7 @@
 
 # script to generate dependency file
 # dependency file itself depend from all sources and rebuild automatically
+# 31.01.2012 SL replace makedepend by g++ -MM -MT option
 
 OBJSUF=$1
 DEPSUF=$2
@@ -12,6 +13,15 @@ SRCFILE=$6
 SRCBASE=$7
 
 # echo "SRCBASE = $SRCBASE TGTDIR = $TGTDIR"
+
+
+#echo Calling g++ $CFLAGS $SRCFILE -o $DEPFILE -MM -MT $TGTDIR/$SRCBASE.$OBJSUF $TGTDIR/$SRCBASE.$DEPSUF
+
+g++ $CFLAGS $SRCFILE -o $DEPFILE -MM -MT "$TGTDIR/$SRCBASE.$OBJSUF $TGTDIR/$SRCBASE.$DEPSUF"
+
+exit $?
+
+
 
 touch $DEPFILE
 
