@@ -72,6 +72,8 @@ $(BLD_DIR)/%.$(DepSuf): %.$(CSuf)
 ifeq ($(findstring $(MAKECMDGOALS), $(FASTRULES)),)
 
 ifdef ALLDEPENDENC
+# before dependency can be created one need all headers
+$(ALLDEPENDENC) : $(ALLHDRS)
 -include $(ALLDEPENDENC)
 endif
 
