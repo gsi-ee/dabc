@@ -278,7 +278,7 @@ void dabc::Port::ObjectDestroyed(Object* obj)
       Disconnect();
       ProduceUserEvent(evntPortDisconnect);
       GetConnReq(true).ChangeState(ConnectionObject::sBroken, true);
-      DOUT0(("Inform that state changed port %s", ItemName().c_str()));
+      DOUT2(("Inform that state changed port %s", ItemName().c_str()));
    } else
    if (fPool()==obj) {
       // FIXME: should we delete ourself here or produce disconnect message ?

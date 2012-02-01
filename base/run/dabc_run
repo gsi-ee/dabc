@@ -37,6 +37,7 @@ MAXNODE=-1
 MINNODE=0
 PARALLEL=-1
 SILENT=0
+NUMARGS=0
 
 while [[ "x$1" != "x" ]] ; do
    if [[ "$1" == "-v" || "$1" == "-verbose" || "$1" == "--verbose" ]] ; then 
@@ -61,10 +62,11 @@ while [[ "x$1" != "x" ]] ; do
       RUNMODE=$1   
    fi  
    shift
+   NUMARGS=$((NUMARGS+1))
 done
 
-if [[ "$RUNMODE" != "run" && "$RUNMODE" != "start" && "$RUNMODE" != "stop" && "$RUNMODE" != "test" && "$RUNMODE" != "copycfg" && "$RUNMODE" != "kill" && "$RUNMODE" != "dellog" ]] ; then
-   echo Wrong run mode  = $RUNMODE selected, use test
+if [[ "$RUNMODE" != "run" && "$RUNMODE" != "start" && "$RUNMODE" != "stop" && "$RUNMODE" != "test" && "$RUNMODE" != "copycfg" && "$RUNMODE" != "kill" && "$RUNMODE" != "dellog" && "$RUNMODE" != "" ]] ; then
+   echo Wrong running mode = $RUNMODE selected, use test
    RUNMODE=test
 fi 
 
@@ -77,6 +79,14 @@ else
    dabc_xml=`which dabc_xml`
 fi   
 if [[ ! -f $dabc_xml ]] ; then echo Cannot find dabc_xml executable; exit 1; fi
+
+if [[ -f $DABCSYS/bin/dabc_exe ]] ; then 
+   dabc_exe=$DABCSYS/bin/dabc_exe
+else
+   dabc_exe=`which dabc_exe`
+fi   
+if [[ ! -f $dabc_exe ]] ; then echo Cannot find dabc_exe executable; exit 1; fi
+
 
 if (( $MINNODE > $MAXNODE || $PARALLEL >=0 )) ; then
 
@@ -92,6 +102,18 @@ if (( $MINNODE > $MAXNODE || $PARALLEL >=0 )) ; then
       echo "Internal error in dabc_run - cannot identify numnodes in $XMLFILE"
       exit 1
    fi
+
+
+# if no addition arguments specified and xml file contains single node, run as it was before
+   if [[ "$numnodes" == "1" || "$NUMARGS" == "0" ]]
+   then
+      $dabc_exe $XMLFILE
+      retval=$?
+      exit $retval
+   fi
+       
+
+
    
    if (( $MAXNODE < 0 )) ; then MAXNODE=$(($numnodes-1)); fi 
    

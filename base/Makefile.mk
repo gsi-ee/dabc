@@ -5,9 +5,9 @@ DABC_BASEDIRI    = $(DABC_BASEDIR)/dabc
 DABC_BASEDIRS    = $(DABC_BASEDIR)/src
 DABC_BASEDIRRUN  = $(DABC_BASEDIR)/run
 
-DABC_BASEEXE      = $(DABCBINPATH)/dabc_run
+DABC_BASEEXE      = $(DABCBINPATH)/dabc_exe
 DABC_XMLEXE       = $(DABCBINPATH)/dabc_xml
-DABC_BASESH       = $(DABCBINPATH)/run.sh
+DABC_BASESH       = $(DABCBINPATH)/dabc_run
 
 BASE_H            = $(wildcard $(DABC_BASEDIRI)/*.$(HedSuf))
 BASE_S            = $(wildcard $(DABC_BASEDIRS)/*.$(SrcSuf))
@@ -27,7 +27,7 @@ DABC_BASESUB_S    = $(DABC_BASEDIRS)/threads.$(SrcSuf) \
                     $(DABC_BASEDIRS)/ConfigBase.$(SrcSuf)
 DABC_BASESUB_O    = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DABC_BASESUB_S))
 
-BASERUN_S         = $(wildcard $(DABC_BASEDIRRUN)/dabc_run.$(SrcSuf))
+BASERUN_S         = $(wildcard $(DABC_BASEDIRRUN)/dabc_exe.$(SrcSuf))
 BASERUN_O         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(BASERUN_S))
 BASERUN_D         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(BASERUN_S))
 
@@ -35,7 +35,7 @@ DABC_XMLEXES      = $(wildcard $(DABC_BASEDIRRUN)/dabc_xml.$(SrcSuf))
 DABC_XMLEXEO      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DABC_XMLEXES))
 DABC_XMLEXED      = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABC_XMLEXES))
 
-BASERUN_SH        = $(DABC_BASEDIRRUN)/run.sh
+BASERUN_SH        = $(DABC_BASEDIRRUN)/dabc_run
 
 ######### used in main Makefile
 
