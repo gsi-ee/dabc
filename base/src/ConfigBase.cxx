@@ -715,7 +715,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
          }
       }
 
-      res += " \\$DABCSYS/bin/dabc_run ";
+      res += " \\$DABCSYS/bin/dabc_exe ";
 
       if (!cfgfile.empty()) {
          res += cfgfile;
@@ -745,9 +745,9 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
       }
 
       if (kind == kindKill)
-         res += dabc::format(" killall --quiet dabc_run; echo Kill on node %s done;", hostname.c_str());
+         res += dabc::format(" killall --quiet dabc_exe; echo Kill on node %s done;", hostname.c_str());
       else
-         res += dabc::format(" pkill -SIGINT dabc_run; echo Stop on node %s done;", hostname.c_str());
+         res += dabc::format(" pkill -SIGINT dabc_exe; echo Stop on node %s done;", hostname.c_str());
    } else
 
    if (kind == kindDellog) {

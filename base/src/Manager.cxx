@@ -1589,7 +1589,7 @@ bool dabc::Manager::ConnectControl()
 
    if (NumNodes()==1) return true;
 
-   // FIXME: move this code later in dabc_run - one need connection manager only when
+   // FIXME: move this code later in dabc_exe - one need connection manager only when
    //        several nodes are running and should be connected with each other
 
    return !GetCommandChannel(true).null();
