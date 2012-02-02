@@ -1708,7 +1708,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
          if (fSendRatemeter) fSendRatemeter->Packet(bufsize, sendcompltime);
 
          ReleaseExclusive(resindx);
-      }  // end of send complition part
+      }  // end of send completion part
 
 
       // this is submit of recv operation
