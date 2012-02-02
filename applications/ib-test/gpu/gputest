@@ -1,0 +1,55 @@
+#!/bin/sh
+#SBATCH --ntasks=4
+#SBATCH --cpus-per-task=24
+#SBATCH --error=gputest_err.log
+#SBATCH --output=gputest_out.log
+#SBATCH --job-name=gpu_ib
+#SBATCH --mem-per-cpu=1200
+# #SBATCH --mail-type=ALL
+#SBATCH --partition=test
+#SBATCH --gres=gpu
+#SBATCH --time=0-00:02:00
+#
+export OMP_NUM_THREADS=1
+#srun ./FFT
+#module load amdappsdk/2.6
+#/cm/shared/apps/amdappsdk/2.6/samples/opencl/bin/x86_64/FFT -t
+#./FFT -t
+
+echo number = $SLURM_JOB_NUM_NODES
+echo list = $SLURM_JOB_NODELIST
+echo alias = $SLURM_NODE_ALIASES
+
+nodes=$(scontrol show hostnames $SLURM_JOB_NODELIST)
+
+
+cfgfile="gpu-test.xml"
+
+rm -rf $cfgfile
+
+cat gpu-begin.xml >> $cfgfile 
+
+for node in $nodes; do
+  echo '   <Context host="'$node'" port="5432"/>' >> $cfgfile
+done
+
+cat gpu-end.xml >> $cfgfile 
+
+echo "Do time sync"
+
+
+. ~/dabc/dabclogin
+
+
+dabc_run $cfgfile run
+
+
+echo "Do sleeping 100 sec"
+
+sleep 100
+
+echo "Force stop"
+
+dabc_run $cfgfile stop
+
+dabc_run $cfgfile dellog

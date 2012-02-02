@@ -1046,6 +1046,8 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
 //     while (dabc::Now() < recvtm + delay);
 
    buf.SetTotalSize(sendpacketsize);
+   
+   if (!cmd_res) EOUT(("Command %d failed", cmdid));
 
    return cmdid;
 }
@@ -2401,7 +2403,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
 
 void IbTestWorkerModule::PerformTimingTest()
 {
-   for (int n=0; n<100; n++) {
+   for (int n=0; n<5; n++) {
       DOUT0(("SLEEP 10 sec N=%d", n));
       WorkerSleep(10.);
       if (n%5 == 0)
