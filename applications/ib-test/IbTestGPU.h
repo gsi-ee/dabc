@@ -39,8 +39,6 @@ namespace opencl {
 
       public:
          virtual ~Context();
-
-         unsigned getTotalMemory() const { return totalGlobalMemory; }
    };
 
 
@@ -56,6 +54,8 @@ namespace opencl {
          cl_context context() const { return GetObject() ? GetObject()->fContext : 0; }
 
          cl_device_id deviceid() const { return GetObject() ? GetObject()->deviceid() : 0; }
+
+         unsigned getTotalMemory() const { return GetObject() ? GetObject()->totalGlobalMemory : 0; }
    };
 
 

@@ -1462,8 +1462,9 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    double ratemeterinterval = arguments[8];
    bool canskipoperation = arguments[9] > 0;
 
-   int gpuqueuesize = 10;
-   int dogpuread(0), dogpuwrite(0);
+   int gpuqueuesize(20), gpu_oper_cnt(0);
+   int dogpuwrite = arguments[10];
+   int dogpuread = arguments[11]; 
 
    // when receive operation should be prepared before send is started
    // we believe that 100 microsec is enough
@@ -1641,7 +1642,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    opencl::ContextRef *gpu_ctx(0);
    opencl::Memory** gpu_mem(0);
    int gpu_mem_cnt(0), gpu_mem_num(0);
-   opencl::CommandsQueue *gpu_read_queue(0), gpu_write_queue(0);
+   opencl::CommandsQueue *gpu_read_queue(0), *gpu_write_queue(0);
    opencl::QueueEvent gpu_write_ev, gpu_read_ev;
 
    if ((dogpuread>0) || (dogpuwrite>0)) {
@@ -1657,7 +1658,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       gpu_mem = new opencl::Memory* [gpu_mem_num];
 
       for (int n=0;n<gpu_mem_num;n++) {
-         gpu_mem[n] = new opencl::Memory read_buf(*gpu_ctx, fBufferSize);
+         gpu_mem[n] = new opencl::Memory(*gpu_ctx, fBufferSize);
          if (gpu_mem[n]->null()) {
             EOUT(("Cannot allocate buffer num %d size %d on GPU", n, fBufferSize));
             return false;
@@ -1894,6 +1895,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
                   break;
                case 1:
                   dogpuwrite = 1;
+                  gpu_oper_cnt++;
                   ReleaseExclusive(gpu_write.Pop());
                   break;
                default:
@@ -1933,6 +1935,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
                   dogpuread = 1;
                   gpu_read.Push(gpu_readbufindx);
                   gpu_readbufindx = -1;
+                  gpu_oper_cnt++;
                   break;
                default:
                   break;
@@ -2032,6 +2035,8 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       ReleaseExclusive(gpu_readbufindx);
       gpu_readbufindx = -1;
    }
+   
+   if (gpu_oper_cnt>0) DOUT0(("GPU operations total = %d", gpu_oper_cnt));
 
    // cleanup all GPU-specific parts
    delete gpu_read_queue;
@@ -2226,7 +2231,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
       return true;
    }
 
-   // number of buffers just depends from buffer size and ammount of memory which we want to use
+   // number of buffers just depends from buffer size and amount of memory which we want to use
    // lets take 256 MB as magic number
    // buffers can be distributed between sending and receiving equally
 
@@ -2276,7 +2281,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    }
 
 
-   double arguments[10];
+   double arguments[12];
 
    arguments[0] = bufsize;
    arguments[1] = NumNodes();
@@ -2288,6 +2293,8 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    arguments[7] = datarate;
    arguments[8] = fTrendingInterval; // interval for ratemeter, 0 - off
    arguments[9] = allowed_to_skip ? 1 : 0;
+   arguments[10] = Cfg("TestWrite").AsBool(false) ? 1 : 0;
+   arguments[11] = Cfg("TestRead").AsBool(false) ? 1 : 0;
 
    DOUT0(("====================================="));
    DOUT0(("%s pattern:%d size:%d rate:%d send:%d recv:%d nodes:%d canskip:%s",

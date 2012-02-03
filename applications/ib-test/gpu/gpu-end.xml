@@ -18,12 +18,12 @@
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="10"/>
-         <TestWrite value="true"/>
-         <TestRead value="true"/>
-         <TestRate value="2000"/>
+         <TestWrite value="false"/>
+         <TestRead value="false"/>
+         <TestRate value="1000"/>
          <TestBufferSize value="262144"/>
-         <TestPoolSize value="100"/>
-         <TestOutputQueue value="4"/>
+         <TestPoolSize value="200"/>
+         <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
          <TestSchedule value=""/>
          <TestTimeout value="20"/>
