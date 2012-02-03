@@ -8,7 +8,7 @@
 # #SBATCH --mail-type=ALL
 #SBATCH --partition=test
 #SBATCH --gres=gpu
-#SBATCH --time=0-00:22:00
+#SBATCH --time=0-00:02:00
 
 #SBATCH --nodes=4
 #SBATCH --ntasks-per-node=1
@@ -45,9 +45,9 @@ echo "Do test run"
 dabc_run $cfgfile run
 
 
-echo "Do sleeping 50 sec"
+echo "Do sleeping 70 sec"
 
-sleep 1050
+sleep 70
 
 echo "Force stop"
 

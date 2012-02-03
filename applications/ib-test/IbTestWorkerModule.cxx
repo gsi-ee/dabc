@@ -1021,8 +1021,8 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
 
       case IBTEST_CMD_ASKQUEUE:
          ProcessAskQueue();
+         cmd_res = true;
          break;
-
 
       default:
          cmd_res = true;

@@ -30,6 +30,10 @@ IBTEST_S         = $(wildcard $(IBTESTDIR)*.$(SrcSuf))
 IBTEST_O         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(IBTEST_S))
 IBTEST_D         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(IBTEST_S))
 
+TRACERT_DIR      = $(IBTESTDIR)tracert
+TRACERT_S        = $(wildcard $(TRACERT_DIR)/*.c $(TRACERT_DIR)/*.h)
+TRACERT_EXE      = $(IBTESTDIR)tracert/ibtracertm 
+
 ALLDEPENDENC += $(IBTEST_D)
 
 
@@ -38,14 +42,16 @@ libs::  $(IBTEST_LIB)
 ifeq ($(USEOFEDVERBS), true)
 EXTRAOPT+=-L$(DABCSYS)/lib -lDabcVerbs
 
-libs::
-	cd $(IBTESTDIR)tracert; $(MAKE)
+libs:: $(TRACERT_EXE)
+
+$(TRACERT_EXE) : $(TRACERT_S)
+	cd $(TRACERT_DIR); $(MAKE)
 ifdef DABCMAINMAKE
-	cp -f $(IBTESTDIR)tracert/ibtracertm $(DABCBINPATH)
+	cp -f $(TRACERT_EXE) $(DABCBINPATH)
 endif
 
 clean::
-	cd $(IBTESTDIR)tracert; $(MAKE) clean
+	cd $(TRACERT_DIR); $(MAKE) clean
 
 endif
 

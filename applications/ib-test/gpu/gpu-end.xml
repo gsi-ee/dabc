@@ -7,24 +7,24 @@
        <debugger value="false"/>
        <loglevel value="1"/>
        <loglimit value="1000000"/>
-       <runtime value="1050"/>
+       <runtime value="100"/>
      </Run>
      <Application class="IbTestApp">
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="200000"/>
 
       <!-- allowed: SingleRoute, TimeSync, TestGPU or NormalTest -->
-         <TestKind value="TestGPU"/>
+         <TestKind value="NormalTest"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="10"/>
          <TestWrite value="true"/>
          <TestRead value="true"/>
-         <TestRate value="1500"/>
-         <TestBufferSize value="65536"/>
-         <TestPoolSize value="500"/>
-         <TestOutputQueue value="2"/>
-         <TestInputQueue value="4"/>
+         <TestRate value="2000"/>
+         <TestBufferSize value="262144"/>
+         <TestPoolSize value="100"/>
+         <TestOutputQueue value="4"/>
+         <TestInputQueue value="6"/>
          <TestSchedule value=""/>
          <TestTimeout value="20"/>
        </Application>
