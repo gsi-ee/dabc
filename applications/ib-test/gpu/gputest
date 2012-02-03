@@ -1,6 +1,6 @@
 #!/bin/sh
 #SBATCH --ntasks=4
-#SBATCH --cpus-per-task=24
+#SBATCH --cpus-per-task=1
 #SBATCH --error=gputest_err.log
 #SBATCH --output=gputest_out.log
 #SBATCH --job-name=gpu_ib
@@ -8,7 +8,11 @@
 # #SBATCH --mail-type=ALL
 #SBATCH --partition=test
 #SBATCH --gres=gpu
-#SBATCH --time=0-00:02:00
+#SBATCH --time=0-00:22:00
+
+#SBATCH --nodes=4
+#SBATCH --ntasks-per-node=1
+
 #
 export OMP_NUM_THREADS=1
 #srun ./FFT
@@ -43,7 +47,7 @@ dabc_run $cfgfile run
 
 echo "Do sleeping 50 sec"
 
-sleep 50
+sleep 1050
 
 echo "Force stop"
 

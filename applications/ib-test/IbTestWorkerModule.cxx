@@ -1001,6 +1001,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
             msg->cmddatasize = msg->getresults;
             sendpacketsize += msg->cmddatasize;
             memcpy(msg->cmddata(), fResults, msg->getresults);
+            cmd_res = true;
          }
          break;
 
@@ -1900,8 +1901,8 @@ bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime, bool testwrite
    arguments[1] = testwrite ? 1 : 0;   // do writing
    arguments[2] = testread ? 1 : 0;   // do reading
 
-   DOUT0(("====================================="));
-   DOUT0(("TestGPU size:%d", bufsize));
+   DOUT0(("========================================="));
+   DOUT0(("TestGPU size:%d write:%s read:%s", bufsize, DBOOL(testwrite), DBOOL(testread)));
 
    if (!MasterCommandRequest(IBTEST_CMD_TESTGPU, arguments, sizeof(arguments))) return false;
 
@@ -1958,7 +1959,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
    void* write_ptr = GetPoolBuffer(0);
    void* read_ptr = GetPoolBuffer(1);
 
-   opencl::CommandsQueue queue(ctx);
+   opencl::CommandsQueue wqueue(ctx), rqueue(ctx);
 
    dabc::Ratemeter write_rate, read_rate;
 
@@ -1971,7 +1972,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
    while (!start.Expired(duration)) {
       switch (dowrite) {
          case 1: // submit;
-            if (queue.SubmitWrite(write_ev, write_buf, write_ptr, fBufferSize)) {
+            if (wqueue.SubmitWrite(write_ev, write_buf, write_ptr, fBufferSize)) {
                dowrite = 2;
             } else {
                EOUT(("SubmitWrite failed"));
@@ -1979,7 +1980,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
             }
             break;
          case 2: // wait
-            switch (queue.CheckComplete(write_ev)) {
+            switch (wqueue.CheckComplete(write_ev)) {
                case -1: EOUT(("WaitWrite failed")); dowrite = 0; break;
                case 1: dowrite = 1; if (cnt1++>5) write_rate.Packet(fBufferSize); break;
                default: break;
@@ -1992,7 +1993,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
 
       switch (doread) {
          case 1: // submit;
-            if (queue.SubmitRead(read_ev, read_buf, read_ptr, fBufferSize)) {
+            if (rqueue.SubmitRead(read_ev, read_buf, read_ptr, fBufferSize)) {
                doread = 2;
             } else {
                EOUT(("SubmitRead failed"));
@@ -2000,7 +2001,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
             }
             break;
          case 2: // wait
-            switch (queue.CheckComplete(read_ev)) {
+            switch (rqueue.CheckComplete(read_ev)) {
                case -1: EOUT(("WaitRead failed")); doread = 0; break;
                case 1: doread = 1; if (cnt2++>5) read_rate.Packet(fBufferSize); break;
                default: break;
@@ -2012,8 +2013,8 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
    }
 
    // wait completion of events when some of them not completed
-   if (dowrite == 2) queue.WaitComplete(write_ev, 1.);
-   if (doread == 2) queue.WaitComplete(read_ev, 1.);
+   if (dowrite == 2) wqueue.WaitComplete(write_ev, 1.);
+   if (doread == 2) rqueue.WaitComplete(read_ev, 1.);
 
    fResults[0] = write_rate.GetRate();
    fResults[1] = read_rate.GetRate();
@@ -2569,6 +2570,12 @@ void IbTestWorkerModule::PerformTestGPU()
    bool testread = Cfg("TestRead").AsBool(true);
 
    MasterTestGPU(buffersize, testtime, testwrite, testread);
+
+  for (int bufsize=4096; bufsize<=4096*1024; bufsize*=2) {
+//      MasterTestGPU(bufsize, 5., false, true);
+//      MasterTestGPU(bufsize, 5., true, false);
+      MasterTestGPU(bufsize, 5., true, true);
+  }
 
 }
 

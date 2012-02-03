@@ -7,7 +7,7 @@
        <debugger value="false"/>
        <loglevel value="1"/>
        <loglimit value="1000000"/>
-       <runtime value="100"/>
+       <runtime value="1050"/>
      </Run>
      <Application class="IbTestApp">
          <NetDevice value="dabc::SocketDevice"/>
@@ -18,7 +18,7 @@
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="10"/>
-         <TestWrite value="false"/>
+         <TestWrite value="true"/>
          <TestRead value="true"/>
          <TestRate value="1500"/>
          <TestBufferSize value="65536"/>

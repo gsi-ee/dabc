@@ -25,7 +25,7 @@ namespace opencl {
          cl_uint        maxDimensions;
          size_t        *maxWorkItemSizes;
          cl_ulong       totalLocalMemory;
-
+         cl_ulong       totalGlobalMemory;
 
          cl_device_id deviceid() { return fDevices && (deviceId>=0) ? fDevices[deviceId] : 0; }
 

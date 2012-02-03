@@ -15,14 +15,15 @@ opencl::Context::Context() :
    maxWorkGroupSize(0),
    maxDimensions(0),
    maxWorkItemSizes(0),
-   totalLocalMemory(0)
+   totalLocalMemory(0),
+   totalGlobalMemory(0)
 {
 }
 
 opencl::Context::~Context()
 {
    CloseGPU();
-   DOUT0(("opencl::Context destroyed"));
+   DOUT2(("opencl::Context destroyed"));
 }
 
 bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type deviceType)
@@ -37,7 +38,7 @@ bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type dev
        return false;
     }
 
-    DOUT0(("Selected Platform Vendor : %s", platformVendor));
+    DOUT2(("Selected Platform Vendor : %s", platformVendor));
 
     // Get number of devices available
     cl_uint deviceCount = 0;
@@ -71,7 +72,7 @@ bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type dev
            break;
         }
 
-        DOUT0(("Device %u : %s", i, deviceName));
+        DOUT2(("Device %u : %s", i, deviceName));
     }
 
     free(deviceIds);
@@ -283,6 +284,20 @@ bool opencl::Context::OpenGPU()
       EOUT(("clGetDeviceInfo CL_DEVICE_LOCAL_MEM_SIZES failed."));
       return false;
    }
+
+   status = clGetDeviceInfo(
+               fDevices[deviceId],
+               CL_DEVICE_GLOBAL_MEM_SIZE,
+               sizeof(cl_ulong),
+               (void *)&totalGlobalMemory,
+               NULL);
+
+   if(status!=CL_SUCCESS) {
+      EOUT(("clGetDeviceInfo CL_DEVICE_GLOBAL_MEM_SIZES failed."));
+      return false;
+   }
+
+   DOUT2(("Total memory local %u global = %u", totalLocalMemory, totalGlobalMemory));
 
    return true;
 }
