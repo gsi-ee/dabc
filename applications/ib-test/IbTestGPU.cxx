@@ -1,11 +1,14 @@
 #include "IbTestGPU.h"
 
-#include "dabc/logging.h"
-
 #ifdef WITH_GPU
 
+#include <string.h>
+
+#include "dabc/logging.h"
+#include "dabc/timing.h"
+
 opencl::Context::Context() :
-   dabc::Object(),
+   dabc::Object("Context"),
    fContext(0),
    deviceId(0),
    fDevices(0),
@@ -226,7 +229,7 @@ bool opencl::Context::OpenGPU()
 
    /* Get Device specific Information */
    status = clGetDeviceInfo(
-           devices[deviceId],
+           fDevices[deviceId],
            CL_DEVICE_MAX_WORK_GROUP_SIZE,
            sizeof(size_t),
            (void *)&maxWorkGroupSize,
@@ -238,7 +241,7 @@ bool opencl::Context::OpenGPU()
    }
 
    status = clGetDeviceInfo(
-               devices[deviceId],
+               fDevices[deviceId],
                CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS,
                sizeof(cl_uint),
                (void *)&maxDimensions,
@@ -252,7 +255,7 @@ bool opencl::Context::OpenGPU()
    maxWorkItemSizes = (size_t *)malloc(maxDimensions*sizeof(size_t));
 
    status = clGetDeviceInfo(
-               devices[deviceId],
+               fDevices[deviceId],
                CL_DEVICE_MAX_WORK_ITEM_SIZES,
                sizeof(size_t)*maxDimensions,
                (void *)maxWorkItemSizes,
@@ -264,7 +267,7 @@ bool opencl::Context::OpenGPU()
    }
 
    status = clGetDeviceInfo(
-               devices[deviceId],
+               fDevices[deviceId],
                CL_DEVICE_LOCAL_MEM_SIZE,
                sizeof(cl_ulong),
                (void *)&totalLocalMemory,
@@ -363,7 +366,7 @@ opencl::CommandsQueue::~CommandsQueue()
 }
 
 
-bool opencl::CommandsQueue::SubmitWrite(QueueEvent& evt, const Memory& mem, void* src, unsigned copysize)
+bool opencl::CommandsQueue::SubmitWrite(QueueEvent& evt, Memory& mem, void* src, unsigned copysize)
 {
    if (copysize==0) copysize = mem.size();
 
@@ -390,7 +393,7 @@ bool opencl::CommandsQueue::SubmitWrite(QueueEvent& evt, const Memory& mem, void
    return true;
 }
 
-bool opencl::CommandsQueue::SubmitRead(QueueEvent& evt, const Memory& mem, void* tgt, unsigned copysize)
+bool opencl::CommandsQueue::SubmitRead(QueueEvent& evt, Memory& mem, void* tgt, unsigned copysize)
 {
    if (copysize==0) copysize = mem.size();
 
@@ -418,7 +421,7 @@ bool opencl::CommandsQueue::SubmitRead(QueueEvent& evt, const Memory& mem, void*
 }
 
 /** -1 - error, 0 - not complete, 1 - complete */
-bool opencl::CommandsQueue::CheckComplete(QueueEvent& evt)
+int opencl::CommandsQueue::CheckComplete(QueueEvent& evt)
 {
    cl_int eventStatus = CL_QUEUED;
 
@@ -428,6 +431,7 @@ bool opencl::CommandsQueue::CheckComplete(QueueEvent& evt)
                     sizeof(cl_int),
                     &eventStatus,
                     NULL);
+
    if(status!=CL_SUCCESS) {
       EOUT(("clGetEventInfo failed."));
       return -1;
@@ -448,7 +452,7 @@ bool opencl::CommandsQueue::WaitComplete(QueueEvent& evt, double tm)
          default: break;
       }
 
-   } while (!start.Expired(tm))
+   } while (!start.Expired(tm));
 
    return false;
 }

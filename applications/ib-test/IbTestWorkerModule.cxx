@@ -1960,19 +1960,23 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
 
    opencl::CommandsQueue queue(ctx);
 
-   dabc::Ratemeter write_rate, recv_rate;
+   dabc::Ratemeter write_rate, read_rate;
 
    opencl::QueueEvent write_ev, read_ev;
 
    dabc::TimeStamp start = dabc::Now();
-
+   
+   int cnt = 0;
+   
+   DOUT0(("Start GPU testing %d %d bufsize = %d read_buf.null()= %s readptr %p", dowrite, doread, fBufferSize, DBOOL(read_buf.null()), read_ptr));
 
    while (!start.Expired(duration)) {
       switch (dowrite) {
          case 1: // submit;
-            if (queue.SubmitWrite(write_ev, write_buf, write_ptr, fBufferSize))
+            if (queue.SubmitWrite(write_ev, write_buf, write_ptr, fBufferSize)) {
                dowrite = 2;
-            else {
+               cnt++;
+            } else {
                EOUT(("SubmitWrite failed"));
                dowrite = 0;
             }
@@ -1991,9 +1995,10 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
 
       switch (doread) {
          case 1: // submit;
-            if (queue.SubmitRead(read_ev, read_buf, read_ptr, fBufferSize))
+            if (queue.SubmitRead(read_ev, read_buf, read_ptr, fBufferSize)) {
                doread = 2;
-            else {
+               cnt++;
+            } else {
                EOUT(("SubmitRead failed"));
                doread = 0;
             }
@@ -2010,16 +2015,20 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
       }
    }
 
+   DOUT0(("Stop GPU testing %d %d cnt=%d", dowrite, doread, cnt));
+
    // wait completion of events when some of them not completed
    if (dowrite == 2) queue.WaitComplete(write_ev, 1.);
    if (doread == 2) queue.WaitComplete(read_ev, 1.);
+
+   fResults[0] = write_rate.GetRate();
+   fResults[1] = read_rate.GetRate();
 
    } // end of extra brakets for context
 
    ctx.Release();
 
-   fResults[0] = write_rate.GetRate();
-   fResults[1] = read_rate.GetRate();
+  
 
 #endif
 

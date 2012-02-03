@@ -35,8 +35,7 @@ done
 
 cat gpu-end.xml >> $cfgfile 
 
-echo "Do time sync"
-
+echo "Do test run"
 
 . ~/dabc/dabclogin
 
@@ -44,9 +43,9 @@ echo "Do time sync"
 dabc_run $cfgfile run
 
 
-echo "Do sleeping 100 sec"
+echo "Do sleeping 50 sec"
 
-sleep 100
+sleep 50
 
 echo "Force stop"
 

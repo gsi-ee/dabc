@@ -13,8 +13,8 @@
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="200000"/>
 
-      <!-- allowed: SingleRoute, TimeSync or NormalTest -->
-         <TestKind value="TimeSync"/>
+      <!-- allowed: SingleRoute, TimeSync, TestGPU or NormalTest -->
+         <TestKind value="TestGPU"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="10"/>

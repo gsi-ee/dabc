@@ -68,11 +68,11 @@ namespace opencl {
          Memory(const ContextRef& ref, unsigned sz);
          virtual ~Memory();
 
-         unsigned size() const { return fSize(); }
+         unsigned size() const { return fSize; }
 
          bool null() const { return size() == 0; }
 
-         cl_mem& mem() const { return fMem; }
+         cl_mem& mem() { return fMem; }
 
    };
 
@@ -87,9 +87,9 @@ namespace opencl {
          CommandsQueue(ContextRef ctx);
          virtual ~CommandsQueue();
 
-         bool SubmitWrite(QueueEvent& evt, const Memory& mem, void* src, unsigned copysize = 0);
+         bool SubmitWrite(QueueEvent& evt, Memory& mem, void* src, unsigned copysize = 0);
 
-         bool SubmitRead(QueueEvent& evt, const Memory& mem, void* tgt, unsigned copysize = 0);
+         bool SubmitRead(QueueEvent& evt, Memory& mem, void* tgt, unsigned copysize = 0);
 
          /** -1 - error, 0 - not complete, 1 - complete */
          int CheckComplete(QueueEvent& evt);
