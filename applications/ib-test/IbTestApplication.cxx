@@ -51,6 +51,8 @@ class IbTestApplication : public dabc::Application {
          CreatePar("TestNumLids").DfltInt(1);
          CreatePar("TestSchedule");
          CreatePar("TestTimeout").DfltDouble(20);
+         CreatePar("TestRead").DfltBool(true);
+         CreatePar("TestWrite").DfltBool(true);
 
          DOUT2(("ib-test application was build"));
       }

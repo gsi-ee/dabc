@@ -18,10 +18,8 @@ export OMP_NUM_THREADS=1
 
 echo number = $SLURM_JOB_NUM_NODES
 echo list = $SLURM_JOB_NODELIST
-echo alias = $SLURM_NODE_ALIASES
 
 nodes=$(scontrol show hostnames $SLURM_JOB_NODELIST)
-
 
 cfgfile="gpu-test.xml"
 

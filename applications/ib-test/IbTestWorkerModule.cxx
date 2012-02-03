@@ -1888,7 +1888,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    return true;
 }
 
-bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime)
+bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime, bool testwrite, bool testread)
 {
    int numbuffers = 2;
 
@@ -1897,8 +1897,8 @@ bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime)
    double arguments[3];
 
    arguments[0] = testtime; // how long
-   arguments[1] = 1;   // do writing
-   arguments[2] = 1;   // do reading
+   arguments[1] = testwrite ? 1 : 0;   // do writing
+   arguments[2] = testread ? 1 : 0;   // do reading
 
    DOUT0(("====================================="));
    DOUT0(("TestGPU size:%d", bufsize));
@@ -1919,14 +1919,14 @@ bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime)
 
    for (int n=0;n<NumNodes();n++) {
 
-       DOUT0(("%3d |%10s |%7.1f |%7.1f",
+       DOUT0(("%3d |%10s | %7.1f | %7.1f",
              n, dabc::mgr()->GetNodeName(n).c_str(),
              allres[n*setsize+0], allres[n*setsize+1]));
        sum1 += allres[n*setsize+0];
        sum2 += allres[n*setsize+1];
    }
 
-   DOUT0(("    |  Average  |%7.1f |%7.1f", sum1/NumNodes(), sum2/NumNodes()));
+   DOUT0(("    |  Average  | %7.1f | %7.1f", sum1/NumNodes(), sum2/NumNodes()));
 
    return MasterCommandRequest(IBTEST_CMD_TEST);
 }
@@ -1966,16 +1966,13 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
 
    dabc::TimeStamp start = dabc::Now();
    
-   int cnt = 0;
-   
-   DOUT0(("Start GPU testing %d %d bufsize = %d read_buf.null()= %s readptr %p", dowrite, doread, fBufferSize, DBOOL(read_buf.null()), read_ptr));
+   int cnt1(0), cnt2(0);
 
    while (!start.Expired(duration)) {
       switch (dowrite) {
          case 1: // submit;
             if (queue.SubmitWrite(write_ev, write_buf, write_ptr, fBufferSize)) {
                dowrite = 2;
-               cnt++;
             } else {
                EOUT(("SubmitWrite failed"));
                dowrite = 0;
@@ -1984,7 +1981,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
          case 2: // wait
             switch (queue.CheckComplete(write_ev)) {
                case -1: EOUT(("WaitWrite failed")); dowrite = 0; break;
-               case 1: dowrite = 1; write_rate.Packet(fBufferSize); break;
+               case 1: dowrite = 1; if (cnt1++>5) write_rate.Packet(fBufferSize); break;
                default: break;
             }
 
@@ -1997,7 +1994,6 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
          case 1: // submit;
             if (queue.SubmitRead(read_ev, read_buf, read_ptr, fBufferSize)) {
                doread = 2;
-               cnt++;
             } else {
                EOUT(("SubmitRead failed"));
                doread = 0;
@@ -2006,7 +2002,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
          case 2: // wait
             switch (queue.CheckComplete(read_ev)) {
                case -1: EOUT(("WaitRead failed")); doread = 0; break;
-               case 1: doread = 1; read_rate.Packet(fBufferSize); break;
+               case 1: doread = 1; if (cnt2++>5) read_rate.Packet(fBufferSize); break;
                default: break;
             }
             break;
@@ -2014,8 +2010,6 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
             break;
       }
    }
-
-   DOUT0(("Stop GPU testing %d %d cnt=%d", dowrite, doread, cnt));
 
    // wait completion of events when some of them not completed
    if (dowrite == 2) queue.WaitComplete(write_ev, 1.);
@@ -2571,8 +2565,10 @@ void IbTestWorkerModule::PerformTestGPU()
 {
    int buffersize = Cfg("TestBufferSize").AsInt(128*1024);
    int testtime = Cfg("TestTime").AsInt(10);
+   bool testwrite = Cfg("TestWrite").AsBool(true);
+   bool testread = Cfg("TestRead").AsBool(true);
 
-   MasterTestGPU(buffersize, testtime);
+   MasterTestGPU(buffersize, testtime, testwrite, testread);
 
 }
 

@@ -19,6 +19,12 @@ opencl::Context::Context() :
 {
 }
 
+opencl::Context::~Context()
+{
+   CloseGPU();
+   DOUT0(("opencl::Context destroyed"));
+}
+
 bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type deviceType)
 {
     cl_int status;
@@ -390,7 +396,7 @@ bool opencl::CommandsQueue::SubmitWrite(QueueEvent& evt, Memory& mem, void* src,
        return false;
    }
 
-   return true;
+   return Flush();
 }
 
 bool opencl::CommandsQueue::SubmitRead(QueueEvent& evt, Memory& mem, void* tgt, unsigned copysize)
@@ -417,8 +423,19 @@ bool opencl::CommandsQueue::SubmitRead(QueueEvent& evt, Memory& mem, void* tgt, 
        return false;
    }
 
+   return Flush();
+}
+
+bool opencl::CommandsQueue::Flush()
+{
+   cl_int status = clFlush(fQueue);
+   if (status != CL_SUCCESS) {
+      EOUT(("clFlush failed"));
+      return false;
+   }
    return true;
 }
+
 
 /** -1 - error, 0 - not complete, 1 - complete */
 int opencl::CommandsQueue::CheckComplete(QueueEvent& evt)

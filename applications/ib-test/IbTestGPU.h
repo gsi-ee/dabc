@@ -37,10 +37,8 @@ namespace opencl {
 
          void CloseGPU();
 
-
-
       public:
-         virtual ~Context() { CloseGPU(); }
+         virtual ~Context();
    };
 
 
@@ -91,15 +89,14 @@ namespace opencl {
 
          bool SubmitRead(QueueEvent& evt, Memory& mem, void* tgt, unsigned copysize = 0);
 
+         bool Flush();
+
          /** -1 - error, 0 - not complete, 1 - complete */
          int CheckComplete(QueueEvent& evt);
 
          bool WaitComplete(QueueEvent& evt, double tm = 1.);
 
    };
-
-
-
 
 }
 
