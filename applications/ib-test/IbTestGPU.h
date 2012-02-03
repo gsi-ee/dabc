@@ -39,6 +39,8 @@ namespace opencl {
 
       public:
          virtual ~Context();
+
+         unsigned getTotalMemory() const { return totalGlobalMemory; }
    };
 
 

@@ -8,6 +8,7 @@
 
 #include "dabc/timing.h"
 #include "dabc/logging.h"
+#include "dabc/Queue.h"
 #include "dabc/Manager.h"
 
 #ifdef WITH_GPU
@@ -1461,6 +1462,9 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    double ratemeterinterval = arguments[8];
    bool canskipoperation = arguments[9] > 0;
 
+   int gpuqueuesize = 10;
+   int dogpuread(0), dogpuwrite(0);
+
    // when receive operation should be prepared before send is started
    // we believe that 100 microsec is enough
    double recv_pre_time = 0.0001;
@@ -1619,7 +1623,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
    double lastcmdchecktime = fStamping();
 
-   // counter for must have send operations ovver each channel
+   // counter for must have send operations over each channel
    IbTestIntMatrix sendcounter(NumLids(), NumNodes());
 
    // actual received id from sender
@@ -1627,6 +1631,44 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
    // number of recv skip operations one should do
    IbTestIntMatrix recvskipcounter(NumLids(), NumNodes());
+
+   dabc::Queue<int> gpu_read(gpuqueuesize);
+   dabc::Queue<int> gpu_write(gpuqueuesize);
+
+#ifdef WITH_GPU
+
+   int gpu_readbufindx(-1); // current index in pool, used for GPU read operation
+   opencl::ContextRef *gpu_ctx(0);
+   opencl::Memory** gpu_mem(0);
+   int gpu_mem_cnt(0), gpu_mem_num(0);
+   opencl::CommandsQueue *gpu_read_queue(0), gpu_write_queue(0);
+   opencl::QueueEvent gpu_write_ev, gpu_read_ev;
+
+   if ((dogpuread>0) || (dogpuwrite>0)) {
+      gpu_ctx = new opencl::ContextRef;
+      if (!gpu_ctx->OpenGPU()) return false;
+      gpu_mem_num = gpu_ctx->getTotalMemory() / fBufferSize / 2;
+      if (gpu_mem_num>100) gpu_mem_num = 100;
+      if (gpu_mem_num<2) {
+         EOUT(("Too few memory on GPU for the test - break"));
+         return false;
+      }
+
+      gpu_mem = new opencl::Memory* [gpu_mem_num];
+
+      for (int n=0;n<gpu_mem_num;n++) {
+         gpu_mem[n] = new opencl::Memory read_buf(*gpu_ctx, fBufferSize);
+         if (gpu_mem[n]->null()) {
+            EOUT(("Cannot allocate buffer num %d size %d on GPU", n, fBufferSize));
+            return false;
+         }
+      }
+
+      gpu_read_queue = new opencl::CommandsQueue(*gpu_ctx);
+      gpu_write_queue = new opencl::CommandsQueue(*gpu_ctx);
+   }
+
+#endif
 
    sendcounter.Fill(0);
    recvcounter.Fill(-1);
@@ -1698,7 +1740,15 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
           totalrecvpackets++;
 
-          ReleaseExclusive(resindx);
+          if (dogpuwrite>0) {
+             if (gpu_write.Full()) {
+                ReleaseExclusive(resindx);
+                EOUT(("No more place in gpu_write queue"));
+             } else
+                gpu_write.Push(resindx);
+          } else {
+             ReleaseExclusive(resindx);
+          }
       } else      // end of receiving part
       if (res==10) {
 //         wascompletion = true;
@@ -1781,8 +1831,17 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
                did_submit = true;
                skipsendcounter++;
             } else
-            if ( (SendQueue(lid, node) < max_sending_queue) && (TotalSendQueue() < 2*max_sending_queue) )  {
-               int sendbufindx = GetExclusiveIndx();
+            if ( (SendQueue(lid, node) < max_sending_queue) && (TotalSendQueue() < 2*max_sending_queue) ) {
+
+               int sendbufindx = -1;
+
+               if (dogpuread>0) {
+                  if (!gpu_read.Empty())
+                     sendbufindx = gpu_read.Pop();
+                  else
+                     EOUT(("No enough buffers in gpu_read queue"));
+               } else
+                  sendbufindx = GetExclusiveIndx();
                if (sendbufindx<0) {
                   EOUT(("Not enough buffers"));
                   break;
@@ -1809,6 +1868,81 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
             }
          }
       }
+
+#ifdef WITH_GPU
+
+      switch (dogpuwrite) {
+         case 1: { // submit
+            if (gpu_write.Empty()) break;
+
+            if (gpu_write_queue->SubmitWrite(gpu_write_ev, *(gpu_mem[gpu_mem_cnt]), GetPoolBuffer(gpu_write.Front()), fBufferSize)) {
+               dogpuwrite = 2;
+               gpu_mem_cnt = (gpu_mem_cnt+1) % gpu_mem_num;
+            } else {
+               EOUT(("GPU SubmitWrite failed - disable"));
+               dogpuwrite = 0;
+            }
+
+            break;
+         }
+         case 2: // wait
+            switch (gpu_write_queue->CheckComplete(gpu_write_ev)) {
+               case -1:
+                  EOUT(("GPU WaitWrite failed"));
+                  dogpuwrite = 0;
+                  ReleaseExclusive(gpu_write.Pop());
+                  break;
+               case 1:
+                  dogpuwrite = 1;
+                  ReleaseExclusive(gpu_write.Pop());
+                  break;
+               default:
+                  break;
+            }
+            break;
+         default:
+            break;
+      }
+
+
+      switch (dogpuread) {
+         case 1: // submit
+
+            if (gpu_read.Full()) break;
+
+            if (gpu_readbufindx<0) gpu_readbufindx = GetExclusiveIndx();
+
+            if (gpu_read_queue->SubmitRead(gpu_read_ev, *(gpu_mem[gpu_mem_cnt]), GetPoolBuffer(gpu_readbufindx), fBufferSize)) {
+               dogpuread = 2;
+               gpu_mem_cnt = (gpu_mem_cnt+1) % gpu_mem_num;
+            } else {
+               EOUT(("GPU SubmitRead failed"));
+               dogpuread = 0;
+            }
+            break;
+
+         case 2: // wait
+            switch (gpu_read_queue->CheckComplete(gpu_read_ev)) {
+               case -1:
+                  EOUT(("GPU WaitRead failed"));
+                  ReleaseExclusive(gpu_readbufindx);
+                  gpu_readbufindx = -1;
+                  dogpuread = 0;
+                  break;
+               case 1:
+                  dogpuread = 1;
+                  gpu_read.Push(gpu_readbufindx);
+                  gpu_readbufindx = -1;
+                  break;
+               default:
+                  break;
+            }
+            break;
+         default:
+            break;
+      }
+
+#endif
 
       if (curr_tm > lastcmdchecktime + 0.1) {
          if (Node()>0 && IOPort()->CanRecv()) {
@@ -1886,6 +2020,33 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       delete[] fIndividualRates;
    }
 
+#ifdef WITH_GPU
+
+   // wait completion of events when some of them not completed
+   if (dogpuwrite == 2) {
+      gpu_write_queue->WaitComplete(gpu_write_ev, 1.);
+      ReleaseExclusive(gpu_write.Pop());
+   }
+   if (dogpuread == 2) {
+      gpu_read_queue->WaitComplete(gpu_read_ev, 1.);
+      ReleaseExclusive(gpu_readbufindx);
+      gpu_readbufindx = -1;
+   }
+
+   // cleanup all GPU-specific parts
+   delete gpu_read_queue;
+   delete gpu_write_queue;
+
+   for (int n=0;n<gpu_mem_num;n++)
+      delete gpu_mem[n];
+
+   delete[] gpu_mem;
+
+   delete gpu_ctx;
+
+#endif
+
+
    return true;
 }
 
@@ -1951,7 +2112,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
    opencl::ContextRef ctx;
    if (!ctx.OpenGPU()) return false;
 
-   { // localize all allocations inside brakets - context will be destroyed as last
+   { // localize all allocations inside brackets - context will be destroyed as last
 
    opencl::Memory read_buf(ctx, fBufferSize);
    opencl::Memory write_buf(ctx, fBufferSize);
