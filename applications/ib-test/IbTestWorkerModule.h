@@ -202,20 +202,25 @@ class IbTestWorkerModule : public dabc::ModuleSync {
 
       bool MasterCreatePool(int numbuffers, int buffersize);
 
+      bool MasterTestGPU(int bufsize, int testtime);
+
       bool MasterTimeSync(bool dosynchronisation, int numcycles, bool doscaling = false);
 
       bool MasterTiming();
+
+      bool ExecuteTestGPU(double* arguments);
+
       bool ExecuteTiming(double* arguments);
 
       bool ExecuteAllToAll(double* arguments);
 
       bool MasterAllToAll(int pattern,
-                             int bufsize,
-                             double duration,
-                             int datarate,
-                             int max_sending_queue,
-                             int max_recieving_queue,
-                             bool fromperfmtest = false);
+                          int bufsize,
+                          double duration,
+                          int datarate,
+                          int max_sending_queue,
+                          int max_recieving_queue,
+                          bool fromperfmtest = false);
 
       bool MasterInitMulticast(int mode,
                                int bufsize = 2048,
@@ -229,6 +234,7 @@ class IbTestWorkerModule : public dabc::ModuleSync {
       void MasterCleanup(int mainnode);
       void ProcessCleanup(int64_t* pars);
 
+      void PerformTestGPU();
       void PerformTimingTest();
       void PerformSingleRouteTest();
       void PerformNormalTest();

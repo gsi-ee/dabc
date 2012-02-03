@@ -10,6 +10,10 @@
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 
+#ifdef WITH_GPU
+#include "IbTestGPU.h"
+#endif
+
 
 void TimeStamping::ChangeShift(double shift)
 {
@@ -1108,6 +1112,8 @@ bool IbTestWorkerModule::ExecuteSlaveCommand(int cmdid)
          break;
       }
 
+      case IBTEST_CMD_TESTGPU:
+         return ExecuteTestGPU((double*)fCmdDataBuffer);
 
    }
 
@@ -1307,7 +1313,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
           }
 
           if (rcv->msgid!=repeatcounter) {
-             EOUT(("Missmatch in ID %d %d", rcv->msgid, repeatcounter));
+             EOUT(("Mismatch in ID %d %d", rcv->msgid, repeatcounter));
           }
 
           if (repeatcounter + RecvQueue(sync_lid, nremote) + 1 < numcycles)
@@ -1882,14 +1888,153 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    return true;
 }
 
+bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime)
+{
+   int numbuffers = 2;
+
+   if (!MasterCreatePool(numbuffers, bufsize)) return false;
+
+   double arguments[3];
+
+   arguments[0] = testtime; // how long
+   arguments[1] = 1;   // do writing
+   arguments[2] = 1;   // do reading
+
+   DOUT0(("====================================="));
+   DOUT0(("TestGPU size:%d", bufsize));
+
+   if (!MasterCommandRequest(IBTEST_CMD_TESTGPU, arguments, sizeof(arguments))) return false;
+
+   if (!ExecuteTestGPU(arguments)) return false;
+
+   int setsize = 2;
+   double allres[setsize*NumNodes()];
+   for (int n=0;n<setsize*NumNodes();n++) allres[n] = 0.;
+
+   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
+
+//   DOUT((1,"Results of all-to-all test"));
+   DOUT0(("  # |      Node |   Write |   Read "));
+   double sum1(0.), sum2(0.);
+
+   for (int n=0;n<NumNodes();n++) {
+
+       DOUT0(("%3d |%10s |%7.1f |%7.1f",
+             n, dabc::mgr()->GetNodeName(n).c_str(),
+             allres[n*setsize+0], allres[n*setsize+1]));
+       sum1 += allres[n*setsize+0];
+       sum2 += allres[n*setsize+1];
+   }
+
+   DOUT0(("    |  Average  |%7.1f |%7.1f", sum1/NumNodes(), sum2/NumNodes()));
+
+   return MasterCommandRequest(IBTEST_CMD_TEST);
+}
+
+
+bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
+{
+   AllocResults(2);
+
+#ifdef WITH_GPU
+
+   double duration = arguments[0];
+   int dowrite = arguments[1] > 0. ? 1 : 0;
+   int doread = arguments[2] > 0. ? 1 : 0;
+
+   if ((fBufferSize==0) || (fPool==0)) {
+      EOUT(("No suitable local memory for GPU tests"));
+      return false;
+   }
+
+   opencl::ContextRef ctx;
+   if (!ctx.OpenGPU()) return false;
+
+   { // localize all allocations inside brakets - context will be destroyed as last
+
+   opencl::Memory read_buf(ctx, fBufferSize);
+   opencl::Memory write_buf(ctx, fBufferSize);
+
+   void* write_ptr = GetPoolBuffer(0);
+   void* read_ptr = GetPoolBuffer(1);
+
+   opencl::CommandsQueue queue(ctx);
+
+   dabc::Ratemeter write_rate, recv_rate;
+
+   opencl::QueueEvent write_ev, read_ev;
+
+   dabc::TimeStamp start = dabc::Now();
+
+
+   while (!start.Expired(duration)) {
+      switch (dowrite) {
+         case 1: // submit;
+            if (queue.SubmitWrite(write_ev, write_buf, write_ptr, fBufferSize))
+               dowrite = 2;
+            else {
+               EOUT(("SubmitWrite failed"));
+               dowrite = 0;
+            }
+            break;
+         case 2: // wait
+            switch (queue.CheckComplete(write_ev)) {
+               case -1: EOUT(("WaitWrite failed")); dowrite = 0; break;
+               case 1: dowrite = 1; write_rate.Packet(fBufferSize); break;
+               default: break;
+            }
+
+            break;
+         default:
+            break;
+      }
+
+      switch (doread) {
+         case 1: // submit;
+            if (queue.SubmitRead(read_ev, read_buf, read_ptr, fBufferSize))
+               doread = 2;
+            else {
+               EOUT(("SubmitRead failed"));
+               doread = 0;
+            }
+            break;
+         case 2: // wait
+            switch (queue.CheckComplete(read_ev)) {
+               case -1: EOUT(("WaitRead failed")); doread = 0; break;
+               case 1: doread = 1; read_rate.Packet(fBufferSize); break;
+               default: break;
+            }
+            break;
+         default:
+            break;
+      }
+   }
+
+   // wait completion of events when some of them not completed
+   if (dowrite == 2) queue.WaitComplete(write_ev, 1.);
+   if (doread == 2) queue.WaitComplete(read_ev, 1.);
+
+   } // end of extra brakets for context
+
+   ctx.Release();
+
+   fResults[0] = write_rate.GetRate();
+   fResults[1] = read_rate.GetRate();
+
+#endif
+
+   return true;
+}
+
+
 
 bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
-                                               int bufsize,
-                                               double duration,
-                                               int datarate,
-                                               int max_sending_queue,
-                                               int max_receiving_queue,
-                                               bool fromperfmtest)
+                                        int bufsize,
+                                        double duration,
+                                        int datarate,
+                                        int max_sending_queue,
+                                        int max_receiving_queue,
+                                        bool fromperfmtest)
 {
    // pattern == 0 round-robin schedule
    // pattern == 1 fixed target (shift always 1)
@@ -2413,6 +2558,16 @@ void IbTestWorkerModule::PerformTimingTest()
    }
 }
 
+void IbTestWorkerModule::PerformTestGPU()
+{
+   int buffersize = Cfg("TestBufferSize").AsInt(128*1024);
+   int testtime = Cfg("TestTime").AsInt(10);
+
+   MasterTestGPU(buffersize, testtime);
+
+}
+
+
 void IbTestWorkerModule::PerformSingleRouteTest()
 {
    DOUT0(("This is small suite to test single route performance"));
@@ -2504,8 +2659,12 @@ void IbTestWorkerModule::MainLoop()
 
       MasterTimeSync(true, 200, true);
 
+
       if (fTestKind == "TimeSync") {
          PerformTimingTest();
+      } else
+      if (fTestKind == "TestGPU") {
+         PerformTestGPU();
       } else
       if (fTestKind == "SingleRoute") {
          PerformSingleRouteTest();
