@@ -39,6 +39,8 @@ cat gpu-end.xml >> $cfgfile
 
 echo "Do test run"
 
+rm -f Node*.log
+
 . ~/dabc/dabclogin
 
 
@@ -52,5 +54,7 @@ sleep 70
 echo "Force stop"
 
 dabc_run $cfgfile stop
+
+dabc_run $cfgfile getlog
 
 dabc_run $cfgfile dellog

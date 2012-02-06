@@ -73,7 +73,7 @@ namespace dabc {
       friend class ConfigIO;
 
       protected:
-         enum ESshArgsKinds { kindTest, kindCopy, kindStart, kindRun, kindStop, kindKill, kindDellog };
+         enum ESshArgsKinds { kindTest, kindCopy, kindStart, kindRun, kindStop, kindKill, kindGetlog, kindDellog };
 
          XMLDocPointer_t   fDoc;
          int               fVersion;  // -1 - error, 0 - xdaq, 1 and more - dabc

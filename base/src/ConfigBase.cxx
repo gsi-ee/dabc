@@ -535,6 +535,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
    if (strcmp(skind, "stop")==0) kind = kindStop; else
    if (strcmp(skind, "test")==0) kind = kindTest; else
    if (strcmp(skind, "run")==0) kind = kindRun; else
+   if (strcmp(skind, "getlog")==0) kind = kindGetlog; else
    if (strcmp(skind, "dellog")==0) kind = kindDellog; else
 
    if (kind<0) return std::string("");
@@ -568,7 +569,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
    std::string cfgid = Find1(contnode, "", xmlRunNode, xmlConfigFileId);
    bool copycfg = (Find1(contnode, "", xmlRunNode, xmlCopyCfg) == "true");
    std::string logfile = Find1(contnode, "", xmlRunNode, xmlLogfile);
-   
+
    std::string workdir = envDABCWORKDIR;
    std::string dabcsys = envDABCSYS;
    std::string userdir = envDABCUSERDIR;
@@ -589,9 +590,9 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
       else
          workcfgfile = topcfgfile;
    }
-   
+
    std::string copycmd, logcmd;
-   
+
    bool backgr(false), addcopycmd(false);
 
    if (cfgfile.empty() && copycfg) {
@@ -748,6 +749,35 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
          res += dabc::format(" killall --quiet dabc_exe; echo Kill on node %s done;", hostname.c_str());
       else
          res += dabc::format(" pkill -SIGINT dabc_exe; echo Stop on node %s done;", hostname.c_str());
+   } else
+
+   if (kind == kindGetlog) {
+
+      if (logfile.empty())
+        logcmd = dabc::format("echo no logfile on node id %u  host %u", id, hostname.c_str());
+     else {
+        logcmd = "scp -q ";
+        if (!portid.empty())
+            logcmd += dabc::format("-P %s ", portid.c_str());
+
+        if (!username.empty()) {
+           logcmd += username;
+           logcmd += "@";
+        }
+
+        logcmd += hostname;
+        logcmd += ":";
+
+        // add path to workdir if logfile defined whithout absolute path
+        if (!workdir.empty() && (logfile[0]!='/')) {
+          logcmd += workdir;
+          if (workdir[workdir.length()-1] != '/') logcmd += "/";
+        }
+
+        logcmd += logfile;
+
+        logcmd += " .";
+      }
    } else
 
    if (kind == kindDellog) {

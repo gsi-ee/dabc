@@ -15,6 +15,7 @@ if [[ "$1" == "" || "$1" == "?" || "$1" == "-help" || "$1" == "-h" || "$1" == "/
    echo "            is allowed, test if run directory exists"
    echo "    stop - stop running application, emulates Ctrl-C"
    echo "    kill - kill running application, using kill command"
+   echo "    getlog - copy all individual logfiles to current node (be aware of different log file names)"
    echo "    dellog - delete log files"
    echo "    copycfg - distribute config files over the nodes"
    echo "Other options: "
@@ -58,14 +59,14 @@ while [[ "x$1" != "x" ]] ; do
       shift
    elif [[ "$1" == "-silent" ]] ; then
       SILENT=1
-   else 
-      RUNMODE=$1   
-   fi  
+   else
+      RUNMODE=$1
+   fi
    shift
    NUMARGS=$((NUMARGS+1))
 done
 
-if [[ "$RUNMODE" != "run" && "$RUNMODE" != "start" && "$RUNMODE" != "stop" && "$RUNMODE" != "test" && "$RUNMODE" != "copycfg" && "$RUNMODE" != "kill" && "$RUNMODE" != "dellog" && "$RUNMODE" != "" ]] ; then
+if [[ "$RUNMODE" != "run" && "$RUNMODE" != "start" && "$RUNMODE" != "stop" && "$RUNMODE" != "test" && "$RUNMODE" != "copycfg" && "$RUNMODE" != "kill" && "$RUNMODE" != "getlog" && "$RUNMODE" != "dellog" && "$RUNMODE" != "" ]] ; then
    echo Wrong running mode = $RUNMODE selected, use test
    RUNMODE=test
 fi 

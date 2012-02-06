@@ -1462,7 +1462,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    double ratemeterinterval = arguments[8];
    bool canskipoperation = arguments[9] > 0;
 
-   int gpuqueuesize(20), gpu_oper_cnt(0);
+   int gpuqueuesize(20);
    int dogpuwrite = arguments[10];
    int dogpuread = arguments[11]; 
 
@@ -1610,8 +1610,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       send_total_limit = TotalNumBuffers() / 10 - 1;
       recv_total_limit = TotalNumBuffers() / 10 * 9 - 1;
    }
-   
-   DOUT2(("ExecuteAllToAll: Prepare first operations dosend %s dorecv %s", DBOOL(dosending), DBOOL(doreceiving)));
+
 
 //   if (IsMaster()) {
 //      fSendSch.Print(0);
@@ -1623,6 +1622,8 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    dabc::Average send_start, send_compl, recv_compl, loop_time;
 
    double lastcmdchecktime = fStamping();
+
+   DOUT0(("ExecuteAllToAll: Prepare first operations dosend %s dorecv %s remains:%5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
 
    // counter for must have send operations over each channel
    IbTestIntMatrix sendcounter(NumLids(), NumNodes());
@@ -1641,7 +1642,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    int gpu_readbufindx(-1); // current index in pool, used for GPU read operation
    opencl::ContextRef *gpu_ctx(0);
    opencl::Memory** gpu_mem(0);
-   int gpu_mem_cnt(0), gpu_mem_num(0);
+   int gpu_mem_cnt(0), gpu_mem_num(0), gpu_oper_cnt(0);
    opencl::CommandsQueue *gpu_read_queue(0), *gpu_write_queue(0);
    opencl::QueueEvent gpu_write_ev, gpu_read_ev;
 
@@ -1693,7 +1694,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    double cq_waittime = 0.;
    if (patternid==-2) cq_waittime = 0.001;
 
-   DOUT2(("ExecuteAllToAll: Enter main loop"));
+   DOUT0(("ExecuteAllToAll: Enter main loop remains: %5.3fs", starttime - fStamping()));
 
    while ((curr_tm=fStamping()) < stoptime) {
 
@@ -2295,6 +2296,9 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    arguments[9] = allowed_to_skip ? 1 : 0;
    arguments[10] = Cfg("TestWrite").AsBool(false) ? 1 : 0;
    arguments[11] = Cfg("TestRead").AsBool(false) ? 1 : 0;
+
+   // shift start time for 3 seconds, when GPU is used - buffers registrations takes too much time 
+   if ((arguments[10]>0) || (arguments[11]>0)) arguments[4]+=3;
 
    DOUT0(("====================================="));
    DOUT0(("%s pattern:%d size:%d rate:%d send:%d recv:%d nodes:%d canskip:%s",
