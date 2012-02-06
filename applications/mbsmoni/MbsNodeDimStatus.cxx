@@ -14,9 +14,10 @@
 #include "MbsNodeDimStatus.h"
 
 //=================================================
-MbsNodeDimStatus::MbsNodeDimStatus(){  }
-MbsNodeDimStatus::~MbsNodeDimStatus(){  }
-MbsNodeDimStatus::MbsNodeDimStatus(char *node, void *daqst, char *list, char *setup)
+MbsNodeDimStatus::MbsNodeDimStatus() {}
+MbsNodeDimStatus::~MbsNodeDimStatus() {}
+
+MbsNodeDimStatus::MbsNodeDimStatus(const char *node, void *daqst, const char *list, const char *setup)
 {
 // note that daq status is yet cleared here
 // Rate meters
@@ -367,7 +368,7 @@ void MbsNodeDimStatus::Reset(){
 	return;
 }
 //=================================================
-void MbsNodeDimStatus::Update(char *times)
+void MbsNodeDimStatus::Update(const char *times)
 {
   int i, *pi;
   char *pc;
@@ -595,7 +596,7 @@ void MbsNodeDimStatus::Update(char *times)
   if(bTrigger15Rate){rTrigger15Rate.value=(REAL4)ps_daqst->bl_r_trig[15]; DrTrigger15Rate->updateService();}
 }
 //=================================================
-DimService * MbsNodeDimStatus::AddRate(char *name, dabcRate *rate, char *color, char *text, int mode, float ul)
+DimService * MbsNodeDimStatus::AddRate(const char *name, dabcRate *rate, const char *color, const char *text, int mode, float ul)
 {
   DimService * service=0;
   char full[128];
@@ -610,7 +611,7 @@ DimService * MbsNodeDimStatus::AddRate(char *name, dabcRate *rate, char *color, 
   return service;
 }
 //=================================================
-DimService * MbsNodeDimStatus::AddHisto(char *name, dabcHistogram **histo, int chan, float min, float max, char *color, char *lett, char *cont)
+DimService * MbsNodeDimStatus::AddHisto(const char *name, dabcHistogram **histo, int chan, float min, float max, const char *color, const char *lett, const char *cont)
 {
   DimService * service=0;
   char full[128];
@@ -632,7 +633,7 @@ DimService * MbsNodeDimStatus::AddHisto(char *name, dabcHistogram **histo, int c
   return service;
 }
 //=================================================
-DimService * MbsNodeDimStatus::AddState(char *name, dabcState *state, int value, char *color, char *text)
+DimService * MbsNodeDimStatus::AddState(const char *name, dabcState *state, int value, const char *color, const char *text)
 {
   DimService * service=0;
   char full[128];
@@ -645,7 +646,7 @@ DimService * MbsNodeDimStatus::AddState(char *name, dabcState *state, int value,
   return service;
 }
 //=================================================
-DimService * MbsNodeDimStatus::AddInfo(char *name, dabcInfo *info, int value, char *color, char *text)
+DimService * MbsNodeDimStatus::AddInfo(const char *name, dabcInfo *info, int value, const char *color, const char *text)
 {
   DimService * service=0;
   char full[128];
@@ -657,7 +658,7 @@ DimService * MbsNodeDimStatus::AddInfo(char *name, dabcInfo *info, int value, ch
   return service;
 }
 //=================================================
-DimService * MbsNodeDimStatus::AddValue(char *name, char *type, int size, unsigned int *value)
+DimService * MbsNodeDimStatus::AddValue(const char *name, const char *type, int size, unsigned int *value)
 {
   DimService * service=0;
   char full[128];
@@ -667,7 +668,7 @@ DimService * MbsNodeDimStatus::AddValue(char *name, char *type, int size, unsign
   return service;
 }
 //=================================================
-void MbsNodeDimStatus::SetState(dabcState *state, int value, char *color, char *text)
+void MbsNodeDimStatus::SetState(dabcState *state, int value, const char *color, const char *text)
 {
   state->severity=value;
   memset(state->color,0,16);
@@ -676,12 +677,12 @@ void MbsNodeDimStatus::SetState(dabcState *state, int value, char *color, char *
   strncpy(state->status,text,15);
 }
 //=================================================
-void MbsNodeDimStatus::SetInfo(dabcInfo *info, int value, char *color, char *text)
-  {
-    info->mode=value;
-    memset(info->color,0,16);
-    strcpy(info->color,color);
-    memset(info->text,0,128);
-    strncpy(info->text,text,127);
-  }
+void MbsNodeDimStatus::SetInfo(dabcInfo *info, int value, const char *color, const char *text)
+{
+   info->mode=value;
+   memset(info->color,0,16);
+   strcpy(info->color,color);
+   memset(info->text,0,128);
+   strncpy(info->text,text,127);
+}
 

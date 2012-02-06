@@ -52,7 +52,7 @@ enum visibility {
   IMPORTANT =  8,
   LOGGING   = 16
 };
-static char * HISTOGRAMDESC="L:1;F:1;F:1;C:32;C:32;C:16;L";
+static const char * HISTOGRAMDESC="L:1;F:1;F:1;C:32;C:32;C:16;L";
 typedef struct{
   int channels;  // channels of data
   float xlow;
@@ -62,19 +62,19 @@ typedef struct{
   char color[16];
   int data; // first data word
 } dabcHistogram;
-static char * STATEDESC="L:1;C:16;C:16";
+static const char * STATEDESC="L:1;C:16;C:16";
 typedef struct{
   int severity; // (0=success, 1=warning, 2=error, 3=fatal)
   char color[16]; // (color name)
   char status[16]; // status name
 } dabcState;
-static char * INFODESC="L:1;C:16;C:128";
+static const char * INFODESC="L:1;C:16;C:128";
 typedef struct{
   int mode; // (0=plain text, 1=node plus text)
   char color[16]; // (color name)
   char text[128]; // status name
 } dabcInfo;
-static char * RATEDESC="F:1;L:1;F:1;F:1;F:1;F:1;C:16;C:16;C:16";
+static const char * RATEDESC="F:1;L:1;F:1;F:1;F:1;F:1;C:16;C:16;C:16";
 typedef struct{
   float value;
   int displaymode;

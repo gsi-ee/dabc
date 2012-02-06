@@ -20,7 +20,7 @@
          <TestTime value="10"/>
          <TestWrite value="true"/>
          <TestRead value="true"/>
-         <TestRate value="750"/>
+         <TestRate value="500"/>
          <TestBufferSize value="262144"/>
          <TestPoolSize value="200"/>
          <TestOutputQueue value="3"/>

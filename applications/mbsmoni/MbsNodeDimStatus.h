@@ -35,20 +35,20 @@ using namespace std;
 class MbsNodeDimStatus{
 public:
   MbsNodeDimStatus();
-  MbsNodeDimStatus(char *node, void *, char *list, char *setup);
+  MbsNodeDimStatus(const char *node, void*, const char *list, const char *setup);
   ~MbsNodeDimStatus();
-  void Update(char *);
+  void Update(const char *);
   void Reset();
 private:
-  DimService * AddHisto(char *name, dabcHistogram **histo, int chan, float min, float max, char *color, char *lett, char *cont);
-  DimService * AddRate(char *name, dabcRate *rate, char *color, char *text, int mode, float ul);
-  DimService * AddState(char *name, dabcState *state, int value, char *color, char *text);
-  DimService * AddInfo(char *name, dabcInfo *info, int value, char *color, char *text);
-  DimService * AddValue(char *name, char *type, int size, unsigned int *value);
-  void SetInfo(dabcInfo *info, int value, char *color, char *text);
-  void SetState(dabcState *state, int value, char *color, char *text);
-  int BuildQuality(unsigned int s, unsigned int t, unsigned int v, unsigned int m){
-    return s | (t << 8) | (v << 16) | (m << 24);}
+  DimService * AddHisto(const char *name, dabcHistogram **histo, int chan, float min, float max, const char *color, const char *lett, const char *cont);
+  DimService * AddRate(const char *name, dabcRate *rate, const char *color, const char *text, int mode, float ul);
+  DimService * AddState(const char *name, dabcState *state, int value, const char *color, const char *text);
+  DimService * AddInfo(const char *name, dabcInfo *info, int value, const char *color, const char *text);
+  DimService * AddValue(const char *name, const char *type, int size, unsigned int *value);
+  void SetInfo(dabcInfo *info, int value, const char *color, const char *text);
+  void SetState(dabcState *state, int value, const char *color, const char *text);
+  int BuildQuality(unsigned int s, unsigned int t, unsigned int v, unsigned int m)
+    { return s | (t << 8) | (v << 16) | (m << 24);}
 
   dabcRate rStreamsFull; DimService *DrStreamsFull; int bStreamsFull; float rMaxStreamsFull;
   dabcRate rFileFilled; DimService *DrFileFilled; int bFileFilled; float rMaxFileFilled;

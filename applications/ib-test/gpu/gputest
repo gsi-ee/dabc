@@ -4,7 +4,7 @@
 #SBATCH --error=gputest_err.log
 #SBATCH --output=gputest_out.log
 #SBATCH --job-name=gpu_ib
-#SBATCH --mem-per-cpu=1200
+#SBATCH --mem-per-cpu=4200
 # #SBATCH --mail-type=ALL
 #SBATCH --partition=test
 #SBATCH --gres=gpu
