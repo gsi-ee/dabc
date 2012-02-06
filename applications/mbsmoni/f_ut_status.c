@@ -1,4 +1,4 @@
-// $Id: f_ut_status.c 565 2010-02-03 10:28:26Z goofy $
+// $Id$
 //-----------------------------------------------------------------------
 //       The GSI Online Offline Object Oriented (Go4) Project
 //         Experiment Data Processing at EE department, GSI

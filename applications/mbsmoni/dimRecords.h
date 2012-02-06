@@ -1,4 +1,4 @@
-// $Id: dimRecords.h 478 2009-10-29 12:26:09Z goofy $
+// $Id$
 //-----------------------------------------------------------------------
 //       The GSI Online Offline Object Oriented (Go4) Project
 //         Experiment Data Processing at EE department, GSI

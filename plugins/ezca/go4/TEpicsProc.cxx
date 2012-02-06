@@ -1,4 +1,4 @@
-// $Id: TEpicsProc.cxx 614 2010-04-13 15:39:33Z linev $
+// $Id$
 //-----------------------------------------------------------------------
 //       The GSI Online Offline Object Oriented (Go4) Project
 //         Experiment Data Processing at EE department, GSI

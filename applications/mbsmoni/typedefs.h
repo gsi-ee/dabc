@@ -1,4 +1,4 @@
-// $Id: typedefs.h 595 2010-03-09 06:51:15Z adamczew $
+// $Id$
 //-----------------------------------------------------------------------
 //       The GSI Online Offline Object Oriented (Go4) Project
 //         Experiment Data Processing at EE department, GSI
