@@ -1604,13 +1604,12 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
    int send_total_limit = TotalNumBuffers();
    int recv_total_limit = TotalNumBuffers();
-   
+
    // gave most buffers for receiving
    if (dosending && doreceiving) {
       send_total_limit = TotalNumBuffers() / 10 - 1;
       recv_total_limit = TotalNumBuffers() / 10 * 9 - 1;
    }
-
 
 //   if (IsMaster()) {
 //      fSendSch.Print(0);
@@ -1623,7 +1622,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
    double lastcmdchecktime = fStamping();
 
-   DOUT0(("ExecuteAllToAll: Prepare first operations dosend %s dorecv %s remains:%5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
+   DOUT2(("ExecuteAllToAll: Prepare first operations dosend %s dorecv %s remains: %5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
 
    // counter for must have send operations over each channel
    IbTestIntMatrix sendcounter(NumLids(), NumNodes());
@@ -1642,7 +1641,8 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    int gpu_readbufindx(-1); // current index in pool, used for GPU read operation
    opencl::ContextRef *gpu_ctx(0);
    opencl::Memory** gpu_mem(0);
-   int gpu_mem_cnt(0), gpu_mem_num(0), gpu_oper_cnt(0);
+   int gpu_mem_cnt(0), gpu_mem_num(0);
+   long gpu_oper_cnt(0);
    opencl::CommandsQueue *gpu_read_queue(0), *gpu_write_queue(0);
    opencl::QueueEvent gpu_write_ev, gpu_read_ev;
 
@@ -1687,14 +1687,15 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    int64_t totalrecvmulti = 0;
    int64_t skipsendcounter = 0;
 
-   double last_tm = -1, curr_tm = fStamping();
+   double last_tm = -1, curr_tm = fStamping(), last_recv_tm = fStamping();
 
    dabc::CpuStatistic cpu_stat;
 
    double cq_waittime = 0.;
    if (patternid==-2) cq_waittime = 0.001;
 
-   DOUT0(("ExecuteAllToAll: Enter main loop remains: %5.3fs", starttime - fStamping()));
+   if (dogpuwrite>0 || dogpuread>0)
+      DOUT0(("ExecuteAllToAll: Entering main loop, remains: %5.3fs", starttime - fStamping()));
 
    while ((curr_tm=fStamping()) < stoptime) {
 
@@ -1741,6 +1742,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
           if (fRecvRatemeter) fRecvRatemeter->Packet(bufsize, recv_time);
 
           totalrecvpackets++;
+          last_recv_tm = recv_time;
 
           if (dogpuwrite>0) {
              if (gpu_write.Full()) {
@@ -2036,8 +2038,9 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       ReleaseExclusive(gpu_readbufindx);
       gpu_readbufindx = -1;
    }
-   
-   if (gpu_oper_cnt>0) DOUT0(("GPU operations total = %d", gpu_oper_cnt));
+
+   if (gpu_oper_cnt>0) 
+     DOUT0(("gpu_oper_cnt = %ld recv_cnt %ld send cnt %ld recv_time %5.3f", gpu_oper_cnt, totalrecvpackets, numcomplsend, last_recv_tm - starttime));
 
    // cleanup all GPU-specific parts
    delete gpu_read_queue;
@@ -2297,8 +2300,8 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    arguments[10] = Cfg("TestWrite").AsBool(false) ? 1 : 0;
    arguments[11] = Cfg("TestRead").AsBool(false) ? 1 : 0;
 
-   // shift start time for 3 seconds, when GPU is used - buffers registrations takes too much time 
-   if ((arguments[10]>0) || (arguments[11]>0)) arguments[4]+=3;
+   // shift start/stop time for 3 seconds, when GPU is used - buffers registrations takes too much time 
+   if ((arguments[10]>0) || (arguments[11]>0)) { arguments[4]+=3.; arguments[5]+=3.; }
 
    DOUT0(("====================================="));
    DOUT0(("%s pattern:%d size:%d rate:%d send:%d recv:%d nodes:%d canskip:%s",
