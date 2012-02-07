@@ -1676,6 +1676,13 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       // initialize all buffers we have
       for (int indx=0;indx<fTotalNumBuffers;indx++) {
          opencl::QueueEvent evnt;
+
+         if (!gpu_write_queue->SubmitWrite(evnt, *(gpu_mem[indx % gpu_mem_num]), GetPoolBuffer(indx), fBufferSize)) {
+            EOUT(("Failure when trying write memory %d from pool buffer %d", indx, indx % gpu_mem_num));
+            break;
+         }
+         gpu_write_queue->WaitComplete(evnt, 1.0);
+
          if (!gpu_read_queue->SubmitRead(evnt, *(gpu_mem[indx % gpu_mem_num]), GetPoolBuffer(indx), fBufferSize)) {
             EOUT(("Failure when trying read memory %d to pool buffer %d", indx, indx % gpu_mem_num));
             break;

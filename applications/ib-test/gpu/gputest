@@ -1,5 +1,5 @@
 #!/bin/sh
-#SBATCH --ntasks=4
+# #SBATCH --ntasks=4
 #SBATCH --cpus-per-task=1
 #SBATCH --error=gputest_err.log
 #SBATCH --output=gputest_out.log
@@ -37,21 +37,15 @@ done
 
 cat gpu-end.xml >> $cfgfile 
 
-echo "Do test run"
-
 rm -f Node*.log
 
 . ~/dabc/dabclogin
 
-
 dabc_run $cfgfile run
-
 
 echo "Do sleeping 65 sec"
 
 sleep 65
-
-echo "Force stop"
 
 dabc_run $cfgfile stop
 
