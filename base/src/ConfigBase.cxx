@@ -758,6 +758,10 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
       if (logfile.empty())
         logcmd = dabc::format("echo no logfile on node id %u  host %u", id, hostname.c_str());
      else {
+
+        addcopycmd = true;
+        copycmd = dabc::format("echo Copy logfile %s from node %s", logfile.c_str(), hostname.c_str());
+
         logcmd = "scp -q ";
         if (!portid.empty())
             logcmd += dabc::format("-P %s ", portid.c_str());
@@ -789,7 +793,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
       if (logfile.empty())
         res += dabc::format(" echo no logfile on node %s;", hostname.c_str());
       else
-        res += dabc::format(" rm -f %s; echo Del logfile %s on node %s", logfile.c_str(), logfile.c_str(),hostname.c_str());
+        res += dabc::format(" rm -f %s; echo Del logfile %s on node %s", logfile.c_str(), logfile.c_str(), hostname.c_str());
    }
 
    if (!res.empty())

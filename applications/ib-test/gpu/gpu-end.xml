@@ -17,12 +17,12 @@
          <TestKind value="NormalTest"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
-         <TestTime value="10"/>
+         <TestTime value="20"/>
          <TestWrite value="true"/>
          <TestRead value="true"/>
-         <TestRate value="500"/>
+         <TestRate value="1125"/>
          <TestBufferSize value="262144"/>
-         <TestPoolSize value="200"/>
+         <TestPoolSize value="300"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
          <TestSchedule value=""/>

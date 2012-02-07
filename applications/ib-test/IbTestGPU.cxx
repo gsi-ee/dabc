@@ -322,12 +322,24 @@ bool opencl::ContextRef::OpenGPU()
 
 // ======================================================
 
+opencl::Memory::Memory() :
+  fMem(0),
+  fSize(0)
+{
+}
 
 opencl::Memory::Memory(const ContextRef& ctx, unsigned sz) :
   fMem(0),
   fSize(0)
 {
+   Allocate(ctx, sz);
+}
+
+void opencl::Memory::Allocate(const ContextRef& ctx, unsigned sz)
+{
    if (ctx.null() || (sz==0)) return;
+
+   if (fSize!=0) return;
 
    cl_int status = 0;
 
@@ -357,13 +369,25 @@ opencl::Memory::~Memory()
 
 // ====================================================
 
-opencl::CommandsQueue::CommandsQueue(ContextRef ctx) :
+opencl::CommandsQueue::CommandsQueue() :
    fQueue(0)
+{
+}
+
+opencl::CommandsQueue::CommandsQueue(ContextRef& ctx) :
+   fQueue(0)
+{
+   Allocate(ctx);
+}
+
+void opencl::CommandsQueue::Allocate(ContextRef& ctx)
 {
    if (ctx.null()) {
       EOUT(("Empty context!!!"));
       return;
    }
+
+   if (fQueue!=0) return;
 
    cl_command_queue_properties prop = 0;
    cl_int status = 0;
@@ -378,6 +402,7 @@ opencl::CommandsQueue::CommandsQueue(ContextRef ctx) :
       EOUT(("clCreateCommandQueue failed."));
    }
 }
+
 
 opencl::CommandsQueue::~CommandsQueue()
 {

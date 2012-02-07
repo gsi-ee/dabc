@@ -117,7 +117,7 @@ class IbTestWorkerModule : public dabc::ModuleSync {
       long               fTotalNumBuffers;
 
       TimeStamping       fStamping;
-      double*           fSyncTimes;
+      double*            fSyncTimes;
 
       verbs::ComplQueue  *fMultiCQ;     // completion queue of multicast group
       verbs::QueuePair   *fMultiQP;     // connection to multicastgroup

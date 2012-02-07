@@ -1462,9 +1462,10 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    double ratemeterinterval = arguments[8];
    bool canskipoperation = arguments[9] > 0;
 
-   int gpuqueuesize(20);
-   int dogpuwrite = arguments[10];
-   int dogpuread = arguments[11]; 
+   const unsigned gpuqueuesize(50); // queue which is prepared for IB operation
+   const unsigned gpuopersize(5);   // number of simultaneous GPU operations
+   bool dogpuwrite = arguments[10] > 0;
+   bool dogpuread = arguments[11] > 0;
 
    // when receive operation should be prepared before send is started
    // we believe that 100 microsec is enough
@@ -1638,15 +1639,18 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
 #ifdef WITH_GPU
 
-   int gpu_readbufindx(-1); // current index in pool, used for GPU read operation
+   dabc::Queue<int> gpu_readpoolindx(gpuopersize); // queue of memory pool buffer indexes, used in the reading from GPU
+   dabc::Queue<int> gpu_writepoolindx(gpuopersize); // queue of memory pool buffer indexes, used in the writing to GPU
+   dabc::Queue<opencl::QueueEvent> gpu_read_ev(gpuopersize); // current submitted read events
+   dabc::Queue<opencl::QueueEvent> gpu_write_ev(gpuopersize); // current submitted write events
+
    opencl::ContextRef *gpu_ctx(0);
    opencl::Memory** gpu_mem(0);
    int gpu_mem_cnt(0), gpu_mem_num(0);
    long gpu_oper_cnt(0);
    opencl::CommandsQueue *gpu_read_queue(0), *gpu_write_queue(0);
-   opencl::QueueEvent gpu_write_ev, gpu_read_ev;
 
-   if ((dogpuread>0) || (dogpuwrite>0)) {
+   if (dogpuread || dogpuwrite) {
       gpu_ctx = new opencl::ContextRef;
       if (!gpu_ctx->OpenGPU()) return false;
       gpu_mem_num = gpu_ctx->getTotalMemory() / fBufferSize / 2;
@@ -1668,6 +1672,17 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
       gpu_read_queue = new opencl::CommandsQueue(*gpu_ctx);
       gpu_write_queue = new opencl::CommandsQueue(*gpu_ctx);
+
+      // initialize all buffers we have
+      for (int indx=0;indx<fTotalNumBuffers;indx++) {
+         opencl::QueueEvent evnt;
+         if (!gpu_read_queue->SubmitRead(evnt, *(gpu_mem[indx % gpu_mem_num]), GetPoolBuffer(indx), fBufferSize)) {
+            EOUT(("Failure when trying read memory %d to pool buffer %d", indx, indx % gpu_mem_num));
+            break;
+         }
+         gpu_read_queue->WaitComplete(evnt, 1.0);
+      }
+
    }
 
 #endif
@@ -1875,77 +1890,87 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
 #ifdef WITH_GPU
 
-      switch (dogpuwrite) {
-         case 1: { // submit
-            if (gpu_write.Empty()) break;
+      if (dogpuwrite) {
 
-            if (gpu_write_queue->SubmitWrite(gpu_write_ev, *(gpu_mem[gpu_mem_cnt]), GetPoolBuffer(gpu_write.Front()), fBufferSize)) {
-               dogpuwrite = 2;
-               gpu_mem_cnt = (gpu_mem_cnt+1) % gpu_mem_num;
-            } else {
-               EOUT(("GPU SubmitWrite failed - disable"));
-               dogpuwrite = 0;
-            }
-
-            break;
-         }
-         case 2: // wait
-            switch (gpu_write_queue->CheckComplete(gpu_write_ev)) {
+          // first check if already submitted events completed
+          while (!gpu_write_ev.Empty()) {
+             bool do_again(false);
+             switch (gpu_write_queue->CheckComplete(gpu_write_ev.Front())) {
                case -1:
                   EOUT(("GPU WaitWrite failed"));
-                  dogpuwrite = 0;
-                  ReleaseExclusive(gpu_write.Pop());
+                  dogpuwrite = false;
+                  gpu_write_ev.PopOnly();
+                  ReleaseExclusive(gpu_writepoolindx.Pop());
                   break;
                case 1:
-                  dogpuwrite = 1;
                   gpu_oper_cnt++;
-                  ReleaseExclusive(gpu_write.Pop());
+                  gpu_write_ev.PopOnly();
+                  ReleaseExclusive(gpu_writepoolindx.Pop());
+                  do_again = true;
                   break;
                default:
                   break;
             }
-            break;
-         default:
-            break;
+            if (!do_again) break; 
+          }
+
+          // and now try to submit as much write operations as possible
+          while (!gpu_write_ev.Full() && !gpu_write.Empty()) {
+             int indx = gpu_write.Pop();
+             opencl::QueueEvent evnt;
+             if (gpu_write_queue->SubmitWrite(evnt, *(gpu_mem[gpu_mem_cnt]), GetPoolBuffer(indx), fBufferSize)) {
+                dogpuwrite = 2;
+                gpu_mem_cnt = (gpu_mem_cnt+1) % gpu_mem_num;
+                gpu_write_ev.Push(evnt);
+                gpu_writepoolindx.Push(indx);
+             } else {
+                EOUT(("GPU SubmitWrite failed - disable"));
+                dogpuwrite = false;
+                ReleaseExclusive(indx);
+             }
+          }
       }
 
+      if (dogpuread) {
 
-      switch (dogpuread) {
-         case 1: // submit
+         // first check if already submitted events are processed
+         while (!gpu_read_ev.Empty()) {
+            bool do_again(false);
+            switch (gpu_read_queue->CheckComplete(gpu_read_ev.Front())) {
+               case -1:
+                  EOUT(("GPU WaitRead failed"));
+                  ReleaseExclusive(gpu_readpoolindx.Pop());
+                  gpu_read_ev.PopOnly();
+                  dogpuread = false;
+                  break;
+               case 1:
+                  gpu_read.Push(gpu_readpoolindx.Pop());
+                  gpu_read_ev.PopOnly();
+                  do_again = true;
+                  gpu_oper_cnt++;
+                  break;
+               default:
+                  break;
+            }
+            if (!do_again) break;
+         }
 
-            if (gpu_read.Full()) break;
+         // do not start new read operations when already submitted could fill complete queue
+         while (!gpu_readpoolindx.Full() && (gpu_readpoolindx.Size() + gpu_read.Size() < gpuqueuesize)) {
 
-            if (gpu_readbufindx<0) gpu_readbufindx = GetExclusiveIndx();
+            int indx = GetExclusiveIndx();
+            opencl::QueueEvent evnt;
 
-            if (gpu_read_queue->SubmitRead(gpu_read_ev, *(gpu_mem[gpu_mem_cnt]), GetPoolBuffer(gpu_readbufindx), fBufferSize)) {
-               dogpuread = 2;
+            if (gpu_read_queue->SubmitRead(evnt, *(gpu_mem[gpu_mem_cnt]), GetPoolBuffer(indx), fBufferSize)) {
+               gpu_readpoolindx.Push(indx);
+               gpu_read_ev.Push(evnt);
                gpu_mem_cnt = (gpu_mem_cnt+1) % gpu_mem_num;
             } else {
                EOUT(("GPU SubmitRead failed"));
-               dogpuread = 0;
+               dogpuread = false;
+               break;
             }
-            break;
-
-         case 2: // wait
-            switch (gpu_read_queue->CheckComplete(gpu_read_ev)) {
-               case -1:
-                  EOUT(("GPU WaitRead failed"));
-                  ReleaseExclusive(gpu_readbufindx);
-                  gpu_readbufindx = -1;
-                  dogpuread = 0;
-                  break;
-               case 1:
-                  dogpuread = 1;
-                  gpu_read.Push(gpu_readbufindx);
-                  gpu_readbufindx = -1;
-                  gpu_oper_cnt++;
-                  break;
-               default:
-                  break;
-            }
-            break;
-         default:
-            break;
+         }
       }
 
 #endif
@@ -2029,14 +2054,25 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 #ifdef WITH_GPU
 
    // wait completion of events when some of them not completed
-   if (dogpuwrite == 2) {
-      gpu_write_queue->WaitComplete(gpu_write_ev, 1.);
-      ReleaseExclusive(gpu_write.Pop());
+   if (dogpuwrite) {
+      while (!gpu_write_ev.Empty()) {
+         gpu_write_queue->WaitComplete(gpu_write_ev.Front(), 1.);
+         gpu_write_ev.PopOnly();
+      }
+      while (!gpu_writepoolindx.Empty())
+         ReleaseExclusive(gpu_writepoolindx.Pop());
+      while (!gpu_write.Empty())
+         ReleaseExclusive(gpu_write.Pop());
    }
-   if (dogpuread == 2) {
-      gpu_read_queue->WaitComplete(gpu_read_ev, 1.);
-      ReleaseExclusive(gpu_readbufindx);
-      gpu_readbufindx = -1;
+   if (dogpuread) {
+      while (!gpu_read_ev.Empty()) {
+         gpu_read_queue->WaitComplete(gpu_read_ev.Front(), 1.);
+         gpu_read_ev.PopOnly();
+      }
+      while (!gpu_readpoolindx.Empty())
+         ReleaseExclusive(gpu_readpoolindx.Pop());
+      while (!gpu_read.Empty())
+         ReleaseExclusive(gpu_read.Pop());
    }
 
    if (gpu_oper_cnt>0) 
@@ -2061,7 +2097,8 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
 bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime, bool testwrite, bool testread)
 {
-   int numbuffers = 2;
+   // allocate 512 MB to exclude any cashing effects
+   int numbuffers = 512*1024*1024/bufsize;
 
    if (!MasterCreatePool(numbuffers, bufsize)) return false;
 
@@ -2110,8 +2147,10 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
 #ifdef WITH_GPU
 
    double duration = arguments[0];
-   int dowrite = arguments[1] > 0. ? 1 : 0;
-   int doread = arguments[2] > 0. ? 1 : 0;
+   bool dowrite_oper = arguments[1] > 0.;
+   bool doread_oper = arguments[2] > 0.;
+
+   const int queue_size = 2;
 
    if ((fBufferSize==0) || (fPool==0)) {
       EOUT(("No suitable local memory for GPU tests"));
@@ -2123,68 +2162,91 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
 
    { // localize all allocations inside brackets - context will be destroyed as last
 
-   opencl::Memory read_buf(ctx, fBufferSize);
-   opencl::Memory write_buf(ctx, fBufferSize);
+   int dowrite[queue_size], doread[queue_size];
 
-   void* write_ptr = GetPoolBuffer(0);
-   void* read_ptr = GetPoolBuffer(1);
+   int pool_rbuf[queue_size], pool_wbuf[queue_size];
+
+   opencl::Memory read_buf[queue_size], write_buf[queue_size];
+
+   opencl::QueueEvent write_ev[queue_size], read_ev[queue_size];
 
    opencl::CommandsQueue wqueue(ctx), rqueue(ctx);
 
+   for (int cnt=0;cnt<queue_size;cnt++) {
+      dowrite[cnt] = dowrite_oper ? 1 : 0;
+      doread[cnt] = doread_oper ? 1 : 0;
+      read_buf[cnt].Allocate(ctx, fBufferSize);
+      write_buf[cnt].Allocate(ctx, fBufferSize);
+      pool_rbuf[cnt] = -1;
+      pool_wbuf[cnt] = -1;
+   }
+
    dabc::Ratemeter write_rate, read_rate;
 
-   opencl::QueueEvent write_ev, read_ev;
-
    dabc::TimeStamp start = dabc::Now();
-   
+
    int cnt1(0), cnt2(0);
 
    while (!start.Expired(duration)) {
-      switch (dowrite) {
-         case 1: // submit;
-            if (wqueue.SubmitWrite(write_ev, write_buf, write_ptr, fBufferSize)) {
-               dowrite = 2;
-            } else {
-               EOUT(("SubmitWrite failed"));
-               dowrite = 0;
-            }
-            break;
-         case 2: // wait
-            switch (wqueue.CheckComplete(write_ev)) {
-               case -1: EOUT(("WaitWrite failed")); dowrite = 0; break;
-               case 1: dowrite = 1; if (cnt1++>5) write_rate.Packet(fBufferSize); break;
-               default: break;
-            }
 
-            break;
-         default:
-            break;
-      }
+      for (int cnt=0;cnt<queue_size;cnt++)
+         switch (dowrite[cnt]) {
+            case 1: // submit;
+               pool_wbuf[cnt] = GetExclusiveIndx();
+               if (wqueue.SubmitWrite(write_ev[cnt], write_buf[cnt], GetPoolBuffer(pool_wbuf[cnt]), fBufferSize)) {
+                  dowrite[cnt] = 2;
+               } else {
+                  EOUT(("SubmitWrite failed"));
+                  ReleaseExclusive(pool_wbuf[cnt]);
+                  dowrite[cnt] = 0;
+               }
+               break;
+            case 2: // wait
+               switch (wqueue.CheckComplete(write_ev[cnt])) {
+                  case -1: EOUT(("WaitWrite failed")); dowrite[cnt] = 0; break;
+                  case 1: dowrite[cnt] = 1; ReleaseExclusive(pool_wbuf[cnt]); if (cnt1++>queue_size) write_rate.Packet(fBufferSize); break;
+                  default: break;
+               }
+               break;
+            default:
+               break;
+         }
 
-      switch (doread) {
-         case 1: // submit;
-            if (rqueue.SubmitRead(read_ev, read_buf, read_ptr, fBufferSize)) {
-               doread = 2;
-            } else {
-               EOUT(("SubmitRead failed"));
-               doread = 0;
-            }
-            break;
-         case 2: // wait
-            switch (rqueue.CheckComplete(read_ev)) {
-               case -1: EOUT(("WaitRead failed")); doread = 0; break;
-               case 1: doread = 1; if (cnt2++>5) read_rate.Packet(fBufferSize); break;
-               default: break;
-            }
-            break;
-         default:
-            break;
-      }
+      for (int cnt=0;cnt<queue_size;cnt++)
+         switch (doread[cnt]) {
+            case 1: // submit;
+               pool_rbuf[cnt] = GetExclusiveIndx();
+               if (rqueue.SubmitRead(read_ev[cnt], read_buf[cnt], GetPoolBuffer(pool_rbuf[cnt]), fBufferSize)) {
+                  doread[cnt] = 2;
+               } else {
+                  EOUT(("SubmitRead failed"));
+                  doread[cnt] = 0;
+                  ReleaseExclusive(pool_rbuf[cnt]);
+               }
+               break;
+            case 2: // wait
+               switch (rqueue.CheckComplete(read_ev[cnt])) {
+                  case -1: EOUT(("WaitRead failed")); doread[cnt] = 0; break;
+                  case 1: doread[cnt] = 1; ReleaseExclusive(pool_rbuf[cnt]); if (cnt2++>queue_size) read_rate.Packet(fBufferSize); break;
+                  default: break;
+               }
+               break;
+            default:
+               break;
+         }
    }
 
    // wait completion of events when some of them not completed
-   if (dowrite == 2) wqueue.WaitComplete(write_ev, 1.);
-   if (doread == 2) rqueue.WaitComplete(read_ev, 1.);
+   for (int cnt=0;cnt<queue_size;cnt++) {
+      if (dowrite[cnt] == 2) {
+         wqueue.WaitComplete(write_ev[cnt], 1.);
+         ReleaseExclusive(pool_wbuf[cnt]);
+      }
+      if (doread[cnt] == 2) {
+         rqueue.WaitComplete(read_ev[cnt], 1.);
+         ReleaseExclusive(pool_rbuf[cnt]);
+      }
+    }
 
    fResults[0] = write_rate.GetRate();
    fResults[1] = read_rate.GetRate();
@@ -2192,8 +2254,6 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
    } // end of extra brakets for context
 
    ctx.Release();
-
-  
 
 #endif
 

@@ -47,9 +47,9 @@ rm -f Node*.log
 dabc_run $cfgfile run
 
 
-echo "Do sleeping 70 sec"
+echo "Do sleeping 65 sec"
 
-sleep 70
+sleep 65
 
 echo "Force stop"
 

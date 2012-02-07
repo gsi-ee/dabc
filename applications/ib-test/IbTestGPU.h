@@ -65,8 +65,11 @@ namespace opencl {
          cl_mem     fMem;
          unsigned   fSize;
       public:
+         Memory();
          Memory(const ContextRef& ref, unsigned sz);
          virtual ~Memory();
+
+         void Allocate(const ContextRef& ref, unsigned sz);
 
          unsigned size() const { return fSize; }
 
@@ -84,8 +87,11 @@ namespace opencl {
          cl_command_queue fQueue;   /**< CL command queue */
 
       public:
-         CommandsQueue(ContextRef ctx);
+         CommandsQueue();
+         CommandsQueue(ContextRef& ctx);
          virtual ~CommandsQueue();
+
+         void Allocate(ContextRef& ctx);
 
          bool SubmitWrite(QueueEvent& evt, Memory& mem, void* src, unsigned copysize = 0);
 
