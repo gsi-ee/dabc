@@ -244,6 +244,8 @@ bool IbTestWorkerModule::CreateQPs(void* data)
 
    ibv_qp_type qp_type = IBV_QPT_RC;
 
+//   ibv_qp_type qp_type = IBV_QPT_UC;
+
    int qpdepth = 128;
 
    IbTestConnRec* recs = (IbTestConnRec*) data;

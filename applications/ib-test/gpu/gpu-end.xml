@@ -18,9 +18,9 @@
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="20"/>
-         <TestWrite value="true"/>
-         <TestRead value="true"/>
-         <TestRate value="1150"/>
+         <TestWrite value="false"/>
+         <TestRead value="false"/>
+         <TestRate value="3000"/>
          <TestBufferSize value="524288"/>
          <!--TestBufferSize value="524288"/-->
          <TestPoolSize value="300"/>
