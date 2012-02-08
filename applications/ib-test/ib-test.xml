@@ -1,35 +1,40 @@
 <?xml version="1.0"?>
-<dabc version="1">
-  <Context host="master" port="5432"/>
-  <Context host="node01" port="5433"/>
-  <Context host="node02" port="5434"/>
-  <Context host="node03" port="5435"/>
-  <Defaults>
-     <Context name="*">
-       <Run>
-         <lib value="libDabcIbTest.so"/>
-         <logfile value="Node${DABCNODEID}.log"/>
-         <debuglevel value="1"/>
-         <debugger value="false"/>
-         <loglevel value="2"/>
-         <loglimit value="1000000"/>
-         <runtime value="5000"/>
-         <normalmainthrd value="false"/>
-       </Run>
-       <Application class="IbTestApp">
-      <!-- device used for command communications -->
+<dabc version="2">
+   <!--Context host="master" port="5432"/-->
+   <Context host="node01" port="5433"/>
+   <Context host="node02" port="5434"/>
+   <Context host="node03" port="5435"/>
+   <Context host="*">
+     <Run>
+       <lib value="libDabcIbTest.so"/>
+       <LD_LIBRARY_PATH value="/home/linev/workspace/dabc/applications/ib-test"/>
+       <logfile value="/tmp/Node${DABCNODEID}.log"/>
+       <debuglevel value="1"/>
+       <debugger value="false"/>
+       <loglevel value="1"/>
+       <loglimit value="1000000"/>
+       <runtime value="100"/>
+     </Run>
+     <Application class="IbTestApp">
          <NetDevice value="dabc::SocketDevice"/>
-         <TestNumLids value="1"/>
-      <!-- allowed: OnlyConnect, Simple, SingleRoute, TimeSync or NormalTest -->
+         <BufferSize value="200000"/>
+
+      <!-- allowed: SingleRoute, TimeSync, TestGPU or NormalTest -->
          <TestKind value="NormalTest"/>
+         <TestReliable value="false"/>
+         <TestNumLids value="1"/>
          <TestPattern value="0"/>
-         <TestTime value="5"/>
-         <TestRate value="700"/>
-         <TestBufferSize value="500000"/>
-         <TestPoolSize value="250"/>
-         <TestOutputQueue value="2"/>
-         <TestInputQueue value="4"/>
+         <TestTime value="20"/>
+         <TestWrite value="false"/>
+         <TestRead value="false"/>
+         <TestRate value="100"/>
+         <TestBufferSize value="65536"/>
+         <!--TestBufferSize value="524288"/-->
+         <TestPoolSize value="300"/>
+         <TestOutputQueue value="3"/>
+         <TestInputQueue value="6"/>
+         <TestSchedule value=""/>
+         <TestTimeout value="20"/>
        </Application>
-     </Context>
-  </Defaults>
+   </Context>
 </dabc>

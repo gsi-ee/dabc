@@ -242,9 +242,9 @@ bool IbTestWorkerModule::CreateQPs(void* data)
 
 #ifdef WITH_VERBS
 
-   ibv_qp_type qp_type = IBV_QPT_RC;
+   ibv_qp_type qp_type = Cfg("TestReliable").AsBool(true) ? IBV_QPT_RC : IBV_QPT_UC;
 
-//   ibv_qp_type qp_type = IBV_QPT_UC;
+   if (qp_type == IBV_QPT_UC) DOUT0(("Testing unreliable connections"));
 
    int qpdepth = 128;
 

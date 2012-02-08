@@ -180,8 +180,8 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
    attr.ah_attr.is_global  = 0;
    attr.ah_attr.dlid       = dest_lid;
    attr.ah_attr.sl         = 0;
-   //DOUT0(("Configure static rate"));
-   //attr.ah_attr.static_rate = 3; // SL: no idea how static rate works
+   // DOUT0(("Configure static rate"));
+   // attr.ah_attr.static_rate = 3 /*IBV_RATE_5_GBPS*/; // SL: no idea how static rate works
    attr.ah_attr.src_path_bits = src_path_bits;
    attr.ah_attr.port_num   = fContext.IbPort();
    

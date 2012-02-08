@@ -40,6 +40,7 @@ class IbTestApplication : public dabc::Application {
          CreatePar("NetDevice").DfltStr(dabc::typeSocketDevice);
 
          CreatePar("TestKind").DfltStr("OnlyConnect");
+         CreatePar("TestReliable").DfltBool(true);
 
          CreatePar("TestOutputQueue").DfltInt(5);
          CreatePar("TestInputQueue").DfltInt(10);
