@@ -150,6 +150,15 @@ void dabc::PosixThread::Start(Runnable* run)
 {
    if (run==0) return;
 
+   /** This is example how to set thread affinity */
+/*   cpu_set_t cpuset;
+   CPU_ZERO(&cpuset);
+   for (int j = 0; j < 8; j++)
+      CPU_SET(j, &cpuset);
+   pthread_attr_t attr;
+   pthread_attr_init(&attr);
+   pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
+*/
    pthread_create(&fThrd, NULL, StartTRunnable, run);
 }
 
