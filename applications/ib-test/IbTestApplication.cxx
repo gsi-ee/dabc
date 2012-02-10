@@ -41,6 +41,7 @@ class IbTestApplication : public dabc::Application {
 
          CreatePar("TestKind").DfltStr("OnlyConnect");
          CreatePar("TestReliable").DfltBool(true);
+         CreatePar("TestTimeSyncShort").DfltBool(false);
 
          CreatePar("TestOutputQueue").DfltInt(5);
          CreatePar("TestInputQueue").DfltInt(10);

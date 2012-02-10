@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <dabc version="2">
-   <!--Context host="master" port="5432"/-->
+   <Context host="master" port="5432"/>
    <Context host="node01" port="5433"/>
    <Context host="node02" port="5434"/>
    <Context host="node03" port="5435"/>
@@ -20,8 +20,9 @@
          <BufferSize value="200000"/>
 
       <!-- allowed: SingleRoute, TimeSync, TestGPU or NormalTest -->
-         <TestKind value="NormalTest"/>
+         <TestKind value="TimeSync"/>
          <TestReliable value="false"/>
+         <TestTimeSyncShort value="false"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="20"/>

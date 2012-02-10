@@ -636,6 +636,7 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
    int numcycles = cmddata[0];
    int maxqueuelen = cmddata[1];
    int sync_lid = cmddata[2];
+   bool time_sync_short = cmddata[3] > 0;
 
    if (fPool==0) return false;
 
@@ -644,10 +645,11 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
    int sendbufindx = GetExclusiveIndx();
    IbTestTymeSyncMessage* msg_out = (IbTestTymeSyncMessage*) GetPoolBuffer(sendbufindx);
 
-   while (RecvQueue(sync_lid,0)<maxqueuelen) {
-      int recvbufindx = GetExclusiveIndx();
-      if (!Pool_Post(false, recvbufindx, sync_lid, 0)) return false;
-   }
+
+   if (!time_sync_short)
+      while (RecvQueue(sync_lid,0)<maxqueuelen) {
+         if (!Pool_Post(false, GetExclusiveIndx(), sync_lid, 0)) return false;
+      }
 
    double now;
 
@@ -661,6 +663,9 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
       now = fStamping();
 
       double stoptm = now;
+
+      if (time_sync_short)
+         if (!Pool_Post(false, GetExclusiveIndx(), sync_lid, 0)) return false;
 
       // very first time wait longer, while it may take some time to come
       if (repeatcounter==0) stoptm+=10.; else stoptm+=0.1;
@@ -712,7 +717,7 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
             fStamping.ChangeScale(msg_in->slave_scale);
       }
 
-      if (repeatcounter + RecvQueue(sync_lid,0) + 1 < numcycles)
+      if (!time_sync_short && (repeatcounter + RecvQueue(sync_lid,0) + 1 < numcycles))
          Pool_Post(false, resindx, sync_lid, 0);
       else
          ReleaseExclusive(resindx);
@@ -1183,10 +1188,13 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
 
    int sync_lid = NumLids() / 2;
 
-   int64_t pars[3];
+   bool time_sync_short = Cfg("TestTimeSyncShort").AsBool(false);
+
+   int64_t pars[4];
    pars[0] = numcycles;
    pars[1] = maxqueuelen;
    pars[2] = sync_lid;
+   pars[3] = time_sync_short ? 1 : 0;
    if (!MasterCommandRequest(IBTEST_CMD_TIMESYNC, pars, sizeof(pars))) return false;
 
    if (fSyncTimes==0) {
@@ -1222,10 +1230,11 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
 
       DOUT2(("Start with node %d", nremote));
 
-      // first fill receiving queue
-      while (RecvQueue(sync_lid, nremote)<maxqueuelen) {
-         if (!Pool_Post(false, GetExclusiveIndx(), sync_lid, nremote)) return false;
-      }
+      // first fill receiving queue - only if it is not short case with single buffer
+      if (!time_sync_short)
+         while (RecvQueue(sync_lid, nremote)<maxqueuelen) {
+            if (!Pool_Post(false, GetExclusiveIndx(), sync_lid, nremote)) return false;
+         }
 
       repeatcounter = 0;
 
@@ -1272,6 +1281,10 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
          // from here we start measure time
          double send_time = fStamping();
          double recv_time = send_time;
+
+         // if we try to submit recv buffer only when it is necessary
+         if (time_sync_short)
+            if (!Pool_Post(false, GetExclusiveIndx(), sync_lid, nremote)) return false;
 
          // sent data and do not wait any completion
          if (!Pool_Post(true, sendbufindx, sync_lid, nremote, sizeof(IbTestTymeSyncMessage)))
@@ -1320,7 +1333,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
              EOUT(("Mismatch in ID %d %d", rcv->msgid, repeatcounter));
           }
 
-          if (repeatcounter + RecvQueue(sync_lid, nremote) + 1 < numcycles)
+          if (!time_sync_short && (repeatcounter + RecvQueue(sync_lid, nremote) + 1 < numcycles))
              Pool_Post(false, res_recv_index, sync_lid, nremote);
           else
              ReleaseExclusive(res_recv_index);
@@ -1465,7 +1478,6 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    bool canskipoperation = arguments[9] > 0;
 
    const unsigned gpuqueuesize(50); // queue which is prepared for IB operation
-   const unsigned gpuopersize(5);   // number of simultaneous GPU operations
    bool dogpuwrite = arguments[10] > 0;
    bool dogpuread = arguments[11] > 0;
 
@@ -1640,6 +1652,8 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    dabc::Queue<int> gpu_write(gpuqueuesize);
 
 #ifdef WITH_GPU
+
+   const unsigned gpuopersize(5);   // number of simultaneous GPU operations
 
    dabc::Queue<int> gpu_readpoolindx(gpuopersize); // queue of memory pool buffer indexes, used in the reading from GPU
    dabc::Queue<int> gpu_writepoolindx(gpuopersize); // queue of memory pool buffer indexes, used in the writing to GPU
