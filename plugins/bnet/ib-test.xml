@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<dabc version="2">
+   <Context host="master" port="5432"/>
+   <Context host="node01" port="5433"/>
+   <Context host="node02" port="5434"/>
+   <Context host="node03" port="5435"/>
+   <Context host="*">
+     <Run>
+       <lib value="libDabcVerbs.so"/>
+       <lib value="libDabcBnet.so"/>
+       <!--LD_LIBRARY_PATH value="/home/linev/workspace/dabc/applications/ib-test"/-->
+       <logfile value="Node${DABCNODEID}.log"/>
+       <debuglevel value="1"/>
+       <debugger value="false"/>
+       <loglevel value="1"/>
+       <loglimit value="1000000"/>
+       <runtime value="100"/>
+     </Run>
+     <Application class="bnet::Application">
+         <NetDevice value="dabc::SocketDevice"/>
+         <BufferSize value="200000"/>
+
+      <!-- allowed: OnlyConnect, SingleRoute, TimeSync, TestGPU or NormalTest -->
+         <TestKind value="OnlyConnect"/>
+         <TestReliable value="false"/>
+         <TestNumLids value="1"/>
+         <TestPattern value="0"/>
+         <TestTime value="20"/>
+         <TestWrite value="false"/>
+         <TestRead value="false"/>
+         <TestRate value="100"/>
+         <TestBufferSize value="65536"/>
+         <!--TestBufferSize value="524288"/-->
+         <TestPoolSize value="300"/>
+         <TestOutputQueue value="3"/>
+         <TestInputQueue value="6"/>
+         <TestSchedule value=""/>
+         <TestTimeout value="20"/>
+       </Application>
+   </Context>
+</dabc>

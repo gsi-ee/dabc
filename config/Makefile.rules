@@ -73,7 +73,7 @@ ifeq ($(findstring $(MAKECMDGOALS), $(FASTRULES)),)
 
 ifdef ALLDEPENDENC
 # before dependency can be created one need all headers
-$(ALLDEPENDENC) : $(ALLHDRS)
+# $(ALLDEPENDENC) : $(ALLHDRS)
 -include $(ALLDEPENDENC)
 endif
 

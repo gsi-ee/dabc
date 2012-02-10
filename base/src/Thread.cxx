@@ -342,6 +342,7 @@ bool dabc::Thread::Start(double timeout_sec, bool real_thread)
             return false;
          default:
             EOUT(("Forgot something???"));
+            break;
       }
 
       fState = stChanging;

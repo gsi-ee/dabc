@@ -420,7 +420,7 @@ int verbs::ContextRef::GetGidIndex(ibv_gid* lookgid)
    ibv_gid gid;
    int ret = 0;
 
-   DOUT5(( "Serach for gid in table: %016lx : %016lx  ",
+   DOUT5(( "Search for gid in table: %016lx : %016lx  ",
              ntohll(lookgid->global.subnet_prefix),
              ntohll(lookgid->global.interface_id)));
 

@@ -1,8 +1,6 @@
 ## normally should be like this for every plugin
 ## one can extract complete plugin subdirectory and compile it independent from rest
 
-ifdef DABC_WITH_BNET
-
 include $(DABCSYS)/config/Makefile.config
 
 ifdef DABCMAINMAKE
@@ -42,6 +40,6 @@ $(DABCINCPATH)/%.h: $(BNETDIR)/%.h
 $(DABCBNET_LIB):   $(BNET_O)
 	@$(MakeLib) $(DABCBNET_LIBNAME) "$(BNET_O)" $(TGTDLLPATH)
 
-include $(DABCSYS)/config/Makefile.rules
+$(BNET_O) : DEFINITIONS += $(subst true,WITH_VERBS,$(USEOFEDVERBS))
 
-endif
+include $(DABCSYS)/config/Makefile.rules
