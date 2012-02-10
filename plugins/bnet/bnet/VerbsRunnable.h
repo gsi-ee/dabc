@@ -3,6 +3,10 @@
 
 #include "bnet/TransportRunnable.h"
 
+#include "bnet/defines.h"
+
+
+
 #ifdef WITH_VERBS
 
 #include "verbs/Context.h"
@@ -12,6 +16,18 @@
 
 
 namespace bnet {
+
+
+   #pragma pack(1)
+
+   struct VerbsConnRec {
+      uint32_t lid;
+      uint32_t qp;
+      uint32_t psn;
+   };
+
+#pragma pack()
+
 
 
    class VerbsRunnable : public TransportRunnable {

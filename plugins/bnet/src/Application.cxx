@@ -57,7 +57,8 @@ bool bnet::Application::CreateAppModules()
 
    if (!dabc::mgr.CreateDevice(devclass.c_str(), "NetDev")) return false;
 
-   int connect_packet_size = 1024 + NumNodes() * Par("TestNumLids").AsInt() * sizeof(VerbsConnRec);
+   // int connect_packet_size = 1024 + NumNodes() * Par("TestNumLids").AsInt() * sizeof(VerbsConnRec);
+   int connect_packet_size = 50000;
    int bufsize = 16*1024;
    while (bufsize < connect_packet_size) bufsize*=2;
 

@@ -62,6 +62,8 @@ namespace bnet {
 
          void SetNodeId(int id, int num) { fNodeId = id; fNumNodes = num; }
 
+         int GetCmdBufferSize() const { return fCmdBufferSize; }
+
 
          virtual bool Configure(dabc::Module* m, dabc::Command cmd);
 

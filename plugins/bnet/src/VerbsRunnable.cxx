@@ -1,5 +1,6 @@
 #include "bnet/VerbsRunnable.h"
 
+
 #ifdef WITH_VERBS
 
 bnet::VerbsRunnable::VerbsRunnable() :
@@ -24,7 +25,7 @@ bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::Command cmd)
 
    fRelibaleConn = m->Cfg("TestReliable", cmd).AsBool(true);
 
-   bool res = TransportRunnable::Configure(m);
+   bool res = TransportRunnable::Configure(m, cmd);
 
    if (!res) return false;
 
@@ -92,7 +93,7 @@ bool bnet::VerbsRunnable::ExecuteCreateQPs()
 
          recs[indx].lid = fIbContext.lid() + lid;
 
-         if ((node == Node()) || !IsActiveNode(node)) {
+         if ((node == NodeId()) || !IsActiveNode(node)) {
             recs[indx].qp = 0;
             recs[indx].psn = 0;
          } else {
@@ -105,6 +106,8 @@ bool bnet::VerbsRunnable::ExecuteCreateQPs()
          }
       }
    }
+
+   return true;
 }
 
 void bnet::VerbsRunnable::ResortConnections(void* _recs, void* _conn)
@@ -121,7 +124,6 @@ void bnet::VerbsRunnable::ResortConnections(void* _recs, void* _conn)
 
             memcpy(conn + tgt, recs + src, sizeof(VerbsConnRec));
          }
-
 }
 
 bool bnet::VerbsRunnable::ExecuteConnectQPs()

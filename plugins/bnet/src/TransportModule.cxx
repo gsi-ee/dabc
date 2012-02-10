@@ -81,13 +81,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    int nports = cmd.Field("NumPorts").AsInt(1);
 
-   int connect_packet_size = 1024 + NumNodes() * NumLids() * sizeof(VerbsConnRec);
-
-   fCmdBufferSize = 16*1024;
-   while (fCmdBufferSize < connect_packet_size) fCmdBufferSize*=2;
-
-   fCmdDataBuffer = new char[fCmdBufferSize];
-
    fTestKind = Cfg("TestKind", cmd).AsStdStr();
    fTestPoolSize = Cfg("TestPoolSize", cmd).AsInt(250);
 
@@ -154,6 +147,9 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    // call Configure before runnable has own thread - no any synchronisation problems
    fRunnable->Configure(this, cmd);
+
+   fCmdBufferSize = fRunnable->GetCmdBufferSize();
+   fCmdDataBuffer = new char[fCmdBufferSize];
 
    fRunThread = new dabc::PosixThread();
    fRunThread->Start(fRunnable);
@@ -255,84 +251,11 @@ int bnet::TransportModule::NodeRecvQueue(int node) const
 
 bool bnet::TransportModule::CreateQPs(void* data)
 {
-   CloseQPs();
-   if (data==0) return true;
-
-#ifdef WITH_VERBS
-
-   ibv_qp_type qp_type = Cfg("TestReliable").AsBool(true) ? IBV_QPT_RC : IBV_QPT_UC;
-
-   if (qp_type == IBV_QPT_UC) DOUT0(("Testing unreliable connections"));
-
-   int qpdepth = 128;
-
-   VerbsConnRec* recs = (VerbsConnRec*) data;
-
-   if (fIbContext.null() || (recs==0)) return false;
-
-   fCQ = new verbs::ComplQueue(fIbContext, NumNodes() * qpdepth * 6, 0, true);
-
-   for (int lid = 0; lid<NumLids(); lid++) {
-
-      fQPs[lid] = new verbs::QueuePair* [NumNodes()];
-      for (int n=0;n<NumNodes();n++) fQPs[lid][n] = 0;
-
-      for (int node=0;node<NumNodes();node++) {
-
-         int indx = lid * NumNodes() + node;
-
-         recs[indx].lid = fIbContext.lid() + lid;
-
-         if ((node == Node()) || (!fActiveNodes[node])) {
-            recs[indx].qp = 0;
-            recs[indx].psn = 0;
-         } else {
-            fQPs[lid][node] = new verbs::QueuePair(fIbContext, qp_type, fCQ, qpdepth, 2, fCQ, qpdepth, 2);
-            if (fQPs[lid][node]->qp()==0) return false;
-            recs[indx].qp = fQPs[lid][node]->qp_num();
-            recs[indx].psn = fQPs[lid][node]->local_psn();
-
-            //         DOUT0(("Create QP %d -> %d  %04x:%08x:%08x", Node(), node, recs[node].lid, recs[node].qp, recs[node].psn));
-         }
-      }
-   }
-
-#endif
-
    return true;
 }
 
 bool bnet::TransportModule::ConnectQPs(void* data)
 {
-#ifdef WITH_VERBS
-
-   VerbsConnRec* recs = (VerbsConnRec*) data;
-
-   if (recs==0) return false;
-
-   for (int lid=0; lid<NumLids(); lid++) {
-
-      for (int node=0;node<NumNodes();node++) {
-
-         int indx = lid * NumNodes() + node;
-
-         if ((fQPs[lid][node]==0) || !fActiveNodes[node]) continue;
-
-         // try to block LMC bits
-         // if (IsSlave()) recs[indx].lid = (recs[indx].lid / 16) * 16;
-
-
-         // FIXME: one should deliver destination port as well
-         if (!fQPs[lid][node]->Connect(recs[indx].lid, recs[indx].qp, recs[indx].psn, lid)) return false;
-
-         DOUT3(("Connect QP[%d,%d] -> with  %04x:%08x:%08x", lid, node, recs[indx].lid, recs[indx].qp, recs[indx].psn));
-
-      }
-
-   }
-
-#endif
-
    return true;
 }
 
@@ -340,41 +263,6 @@ bool bnet::TransportModule::ConnectQPs(void* data)
 
 bool bnet::TransportModule::CloseQPs()
 {
-
-#ifdef WITH_VERBS
-
-   if (fMultiQP!=0) { delete fMultiQP; fMultiQP = 0; }
-   if (fMultiCQ!=0) { delete fMultiCQ; fMultiCQ = 0; }
-   if (fMultiPool!=0) { delete fMultiPool; fMultiPool = 0; }
-
-   for (int lid=0; lid<NumLids(); lid++) {
-      if (fQPs[lid]!=0) {
-         for (int n=0;n<NumNodes();n++) delete fQPs[lid][n];
-         delete[] fQPs[lid];
-         fQPs[lid] = 0;
-      }
-
-      delete[] fSendQueue[lid]; fSendQueue[lid] = 0;
-      delete[] fRecvQueue[lid]; fRecvQueue[lid] = 0;
-
-   }
-
-   if (fCQ!=0) {
-      delete fCQ;
-      fCQ = 0;
-   }
-
-
-   if (fPool) {
-      delete fPool;
-      fPool = 0;
-   }
-
-
-
-
-#endif
-
    return true;
 }
 

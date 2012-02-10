@@ -26,16 +26,6 @@ namespace verbs {
 #endif
 
 
-#pragma pack(1)
-
-struct VerbsConnRec {
-   uint32_t lid;
-   uint32_t qp;
-   uint32_t psn;
-};
-
-#pragma pack()
-
 class DoublesVector : public std::vector<double> {
    public:
       DoublesVector() : std::vector<double>() {}
