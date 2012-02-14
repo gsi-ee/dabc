@@ -51,16 +51,16 @@ bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dab
    f_swr = new ibv_send_wr [fNumRecs];
    f_sge = new ibv_sge [fNumRecs*fSegmPerOper];
 
-   fHeaderReg = new PoolRegistry(fIbContext, &fHeaderPool);
+   fHeaderReg = new verbs::PoolRegistry(fIbContext, &fHeaderPool);
 
    fMainReg = fIbContext.RegisterPool(pool);
 
-   for (uint32_t n=0;n<fNumRecs;n++) {
+   for (int n=0;n<fNumRecs;n++) {
 
       // SetRecHeader(n, fHeadersPool->GetSendBufferLocation(n));
 
-      for (unsigned seg_cnt=0; seg_cnt<fSegmPerOper; seg_cnt++) {
-         unsigned nseg = n*fSegmPerOper + seg_cnt;
+      for (int seg_cnt=0; seg_cnt<fSegmPerOper; seg_cnt++) {
+         int nseg = n*fSegmPerOper + seg_cnt;
          f_sge[nseg].addr   = (uintptr_t) 0; // must be specified later
          f_sge[nseg].length = 0; // must be specified later
          f_sge[nseg].lkey   = 0; // must be specified later
@@ -119,7 +119,7 @@ bool bnet::VerbsRunnable::ExecuteCreateQPs(void* args, int argssize)
 
    int qpdepth = 128;
 
-   if (argssize!=NumNodes()*NumLids()*sizeof(VerbsConnRec)) {
+   if ((unsigned) argssize != NumNodes()*NumLids()*sizeof(VerbsConnRec)) {
       EOUT(("Wrong arguments length for CreateQPs"));
       return false;
    }
@@ -206,14 +206,14 @@ bool bnet::VerbsRunnable::ExecuteConnectQPs(void* args, int argssize)
    return true;
 }
 
-bool bnet::VerbsRunnable::DoPrepareRec(OperRec* rec)
+bool bnet::VerbsRunnable::DoPrepareRec(int recid)
 {
    OperRec* rec = GetRec(recid);
 
    uint32_t segid = recid*fSegmPerOper;
 
    f_sge[segid].addr = (uintptr_t) rec->header;
-   f_sge[segid].length = hdrsize;
+   f_sge[segid].length = rec->hdrsize;
    f_sge[segid].lkey = fHeaderReg()->GetLkey(recid);
 
    unsigned num_sge(1);
@@ -227,17 +227,17 @@ bool bnet::VerbsRunnable::DoPrepareRec(OperRec* rec)
       f_swr[recid].wr.ud.remote_qkey = f_ud_qkey;
    }
 */
-   if (!buf.null() && !fMainReg.null()) {
+   if (!rec->buf.null() && !fMainReg.null()) {
 
-      if (buf.NumSegments() >= fSegmPerOper) {
-         EOUT(("Too many segments (%d) in buffer allowed %d", buf.NumSegments(), fSegmPerOper-1));
+      if ((int) rec->buf.NumSegments() >= fSegmPerOper) {
+         EOUT(("Too many segments (%u) in buffer allowed %d", rec->buf.NumSegments(), fSegmPerOper-1));
          exit(147);
       }
 
-      for (unsigned seg=0;seg<buf.NumSegments();seg++) {
-         f_sge[segid+num_sge].addr   = (uintptr_t) buf.SegmentPtr(seg);
-         f_sge[segid+num_sge].length = buf.SegmentSize(seg);
-         f_sge[segid+num_sge].lkey   = fMainReg()->GetLkey(buf.SegmentId(seg));
+      for (unsigned seg=0;seg<rec->buf.NumSegments();seg++) {
+         f_sge[segid+num_sge].addr   = (uintptr_t) rec->buf.SegmentPtr(seg);
+         f_sge[segid+num_sge].length = rec->buf.SegmentSize(seg);
+         f_sge[segid+num_sge].lkey   = fMainReg()->GetLkey(rec->buf.SegmentId(seg));
          num_sge++;
       }
    }

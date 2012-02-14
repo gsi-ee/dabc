@@ -46,8 +46,8 @@ namespace bnet {
          struct ibv_send_wr  *f_swr; // field for send config, allocated dynamically
          struct ibv_sge      *f_sge; // memory segment description, used for both send/recv
 
-         PoolRegistryRef   fHeaderReg;  // verbs registry for headers pool
-         PoolRegistryRef   fMainReg;    // verbs registry for main data pool
+         verbs::PoolRegistryRef   fHeaderReg;  // verbs registry for headers pool
+         verbs::PoolRegistryRef   fMainReg;    // verbs registry for main data pool
 
          virtual bool ExecuteCreateQPs(void* args, int argssize);
          virtual bool ExecuteConnectQPs(void* args, int argssize);
