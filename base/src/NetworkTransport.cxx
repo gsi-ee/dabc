@@ -102,7 +102,8 @@ void dabc::NetworkTransport::InitNetworkTransport(Object* this_transport)
       for (uint32_t n=0;n<fNumRecs;n++) {
          fRecs[n].used = false;
          fRecs[n].kind = 0;
-         fRecs[n].buf.Release();
+         fRecs[n].extras = 0;
+         // fRecs[n].buf.Release();
          fRecs[n].header = 0;
          fRecs[n].inlinebuf = 0;
       }

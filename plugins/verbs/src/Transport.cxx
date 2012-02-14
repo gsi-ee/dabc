@@ -224,7 +224,7 @@ void verbs::Transport::_SubmitRecv(uint32_t recid)
          exit(146);
       }
 
-      // FIXME: dangerous, acquire mamory pool mutex when transport mutex is locked
+      // FIXME: dangerous, acquire memory pool mutex when transport mutex is locked, not necessary any longer
       fPoolReg()->CheckMRStructure();
 
       for (unsigned seg=0;seg<buf.NumSegments();seg++) {

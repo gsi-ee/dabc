@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include <vector>
+
 // maximum command buffer required to provide QPs connection over cluster
 // for 1000 QPs with 16 Lids and 12 byte per QP one require at least  192000 bytes
 
@@ -63,11 +65,29 @@ namespace bnet {
 
   struct TimeSyncMessage
   {
-    int32_t msgid;
-    double  master_time;
-    double  slave_shift;
-    double  slave_time;
-    double  slave_scale;
+     int32_t msgid;
+     double  master_time;
+     double  slave_shift;
+     double  slave_time;
+     double  slave_scale;
+  };
+
+  struct TransportHeader {
+     uint32_t   srcid;   // source node id
+     uint32_t   tgtid;   // target node id
+     uint64_t eventid;   // event id
+  };
+
+  class DoublesVector : public std::vector<double> {
+     public:
+        DoublesVector() : std::vector<double>() {}
+
+        void Sort();
+
+        double Mean(double max_cut = 1.);
+        double Dev(double max_cut = 1.);
+        double Max();
+        double Min();
   };
 
 }

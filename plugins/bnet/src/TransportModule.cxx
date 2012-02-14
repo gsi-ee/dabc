@@ -2,7 +2,6 @@
 
 #include "bnet/defines.h"
 
-#include <algorithm>
 #include <vector>
 #include <math.h>
 
@@ -10,64 +9,11 @@
 #include "dabc/logging.h"
 #include "dabc/Queue.h"
 #include "dabc/Manager.h"
+#include "dabc/PoolHandle.h"
 
 #ifdef WITH_VERBS
 #include "bnet/VerbsRunnable.h"
 #endif
-
-
-void TimeStamping::ChangeShift(double shift)
-{
-   fTimeShift += shift;
-}
-
-void TimeStamping::ChangeScale(double koef)
-{
-   fTimeShift += (get(dabc::Now()) - fTimeShift)*(1. - koef);
-   fTimeScale *= koef;
-}
-
-
-void DoublesVector::Sort()
-{
-   std::sort(begin(), end());
-}
-
-double DoublesVector::Mean(double max_cut)
-{
-   unsigned right = lrint(max_cut*(size()-1));
-
-   double sum(0);
-   for (unsigned n=0; n<=right; n++) sum+=at(n);
-   return right>0 ? sum / (right+1) : 0.;
-}
-
-double DoublesVector::Dev(double max_cut)
-{
-   unsigned right = lrint(max_cut*(size()-1));
-
-   if (right==0) return 0.;
-
-   double sum1(0), sum2(0);
-   for (unsigned n=0; n<=right; n++)
-      sum1+=at(n);
-   sum1 = sum1 / (right+1);
-
-   for (unsigned n=0; n<=right; n++)
-      sum2+=(at(n)-sum1)* (at(n)-sum1);
-
-   return ::sqrt(sum2/(right+1));
-}
-
-double DoublesVector::Min()
-{
-   return size()>0 ? at(0) : 0.;
-}
-
-double DoublesVector::Max()
-{
-   return size()>0 ? at(size()-1) : 0.;
-}
 
 bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    dabc::ModuleSync(name, cmd),
@@ -84,11 +30,13 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fTestKind = Cfg("TestKind", cmd).AsStdStr();
    fTestPoolSize = Cfg("TestPoolSize", cmd).AsInt(250);
 
-   CreatePoolHandle("SendPool");
+   CreatePoolHandle("BnetCtrlPool");
+
+   CreatePoolHandle("BnetDataPool");
 
    for (int n=0;n<nports;n++) {
 //      DOUT0(("Create IOport %d", n));
-      CreateIOPort(FORMAT(("Port%d", n)), Pool(), 1, 1);
+      CreateIOPort(FORMAT(("Port%d", n)), FindPool("BnetCtrlPool"), 1, 1);
   }
 
    fActiveNodes.clear();
@@ -115,8 +63,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    fPool = 0;
    fBufferSize = 0;
-
-   fSyncTimes = 0;
 
    fMultiCQ = 0;
    fMultiQP = 0;
@@ -145,13 +91,17 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    fRunnable->SetNodeId(fNodeNumber, fNumNodes);
 
-   // call Configure before runnable has own thread - no any synchronisation problems
-   fRunnable->Configure(this, cmd);
+   // call Configure before runnable has own thread - no any synchronization problems
+   fRunnable->Configure(this, FindPool("BnetDataPool")->Pool(), cmd);
 
-   fCmdBufferSize = fRunnable->GetCmdBufferSize();
+   fCmdBufferSize = 256*1024;
    fCmdDataBuffer = new char[fCmdBufferSize];
 
    fRunThread = new dabc::PosixThread();
+
+   // set threads id to be able check correctness of calling
+   fRunnable->SetThreadsIds(dabc::PosixThread::Self(), fRunThread->Id());
+
    fRunThread->Start(fRunnable);
 }
 
@@ -183,11 +133,6 @@ bnet::TransportModule::~TransportModule()
    }
 
    AllocResults(0);
-
-   if (fSyncTimes) {
-      delete [] fSyncTimes;
-      fSyncTimes = 0;
-   }
 }
 
 
@@ -536,114 +481,12 @@ void bnet::TransportModule::ReleaseExclusive(int indx, verbs::MemoryPool* pool)
 
 bool bnet::TransportModule::SlaveTimeSync(int64_t* cmddata)
 {
-
-#ifdef WITH_VERBS
-
-   int numcycles = cmddata[0];
+//   int numcycles = cmddata[0];
    int maxqueuelen = cmddata[1];
    int sync_lid = cmddata[2];
+   int nrepeat = cmddata[3];
 
-   if (fPool==0) return false;
-
-   DOUT3(("Start SlaveTimeSync"));
-
-   int sendbufindx = GetExclusiveIndx();
-   TimeSyncMessage* msg_out = (TimeSyncMessage*) GetPoolBuffer(sendbufindx);
-
-   while (RecvQueue(sync_lid,0)<maxqueuelen) {
-      int recvbufindx = GetExclusiveIndx();
-      if (!Pool_Post(false, recvbufindx, sync_lid, 0)) return false;
-   }
-
-   double now;
-
-   dabc::Average slave_oper;
-
-
-   int repeatcounter = 0, nsendcomplited = 0;
-
-   while (repeatcounter<numcycles) {
-
-      now = fStamping();
-
-      double stoptm = now;
-
-      // very first time wait longer, while it may take some time to come
-      if (repeatcounter==0) stoptm+=10.; else stoptm+=0.1;
-
-      int res(0), resnode(0), resindx(-1), reslid(-1);
-
-      while ((res==0) && (now < stoptm)) {
-         res = Pool_Check(resindx, reslid, resnode, stoptm-now, 0.001);
-
-         now = fStamping();
-
-         if (res==10) {
-            if ((resindx==sendbufindx) && (resnode==0) && (reslid==sync_lid)) {
-               res = 0;
-               nsendcomplited++;
-            } else {
-              EOUT(("Error when complete send sync message check_resindx:%s resnode:%d reslid:%d", DBOOL(resindx==sendbufindx), resnode, reslid));
-              return false;
-            }
-         }
-      }
-
-      if ((res!=1) || (resnode!=0) || (reslid!=sync_lid)) {
-         EOUT(("Error when receive %d sync message res:%d resindx:%d resnode:%d reslid:%d", repeatcounter, res, resindx, resnode, reslid));
-         return false;
-      }
-
-      TimeSyncMessage* msg_in = (TimeSyncMessage*) GetPoolBuffer(resindx);
-
-      // if (repeatcounter==0) DOUT0(("Get first sync message from master"));
-
-      msg_out->master_time = 0;
-      msg_out->slave_shift = 0;
-      msg_out->slave_time = now;
-      msg_out->msgid = msg_in->msgid;
-
-      if (!Pool_Post(true, sendbufindx, sync_lid, 0, sizeof(TimeSyncMessage)))
-         return false;
-
-      slave_oper.Fill((fStamping() - now)*1e6);
-
-      if (msg_in->master_time>0) {
-         fStamping.ChangeShift(msg_in->master_time - now);
-      }
-
-      if (msg_in->slave_shift!=0.) {
-         fStamping.ChangeShift(msg_in->slave_shift);
-         if (msg_in->slave_scale!=1.)
-            fStamping.ChangeScale(msg_in->slave_scale);
-      }
-
-      if (repeatcounter + RecvQueue(sync_lid,0) + 1 < numcycles)
-         Pool_Post(false, resindx, sync_lid, 0);
-      else
-         ReleaseExclusive(resindx);
-
-      repeatcounter++;
-   }
-
-//   slave_oper.Show("Slave operation", true);
-
-   double stoptm = fStamping() + 0.1;
-   while ((nsendcomplited<numcycles) && (fStamping()<stoptm)) {
-      int res(0), resnode(0), resindx(0), reslid(0);
-      res = Pool_Check(resindx, reslid, resnode, stoptm - fStamping());
-      if ((res==10) && (resindx==sendbufindx) && (resnode==0)) nsendcomplited++;
-   }
-
-   if (nsendcomplited<numcycles) EOUT(("Not all send operations completed %d", numcycles - nsendcomplited));
-
-   ReleaseExclusive(sendbufindx);
-
-
-#endif
-
-   // delay for other nodes
-   WorkerSleep(0.001);
+   if (fRunnable->RunSyncLoop(false, 0, sync_lid, maxqueuelen, nrepeat)) return false;
 
    return true;
 }
@@ -930,10 +773,8 @@ int bnet::TransportModule::PreprocessSlaveCommand(dabc::Buffer& buf)
          break;
 
       case IBTEST_CMD_CREATEQP: {
-         int ressize(0);
+         int ressize = msg->getresults;
          cmd_res = fRunnable->CreateQPs(msg->cmddata(), ressize);
-         if (ressize!=msg->getresults)
-            EOUT(("Mismatch of expected %d and obtained %d size in CreateQPs command", (int) msg->getresults, ressize));
          msg->cmddatasize = ressize;
          sendpacketsize += ressize;
          break;
@@ -956,27 +797,6 @@ int bnet::TransportModule::PreprocessSlaveCommand(dabc::Buffer& buf)
          cmd_res = true;
          break;
    }
-
-/*
-   if ((msg_in->getresults > 0) && (cmdid==TEST3_CMD_COLLRATE)) {
-      msg_out->cmddatasize = msg_in->getresults* sizeof(double);
-      sendpacketsize += msg_out->cmddatasize;
-
-      int64_t firstpoint = ((int64_t*) msg_in->cmddata)[0];
-      int64_t recvrate = ((int64_t*) msg_in->cmddata)[1];
-      TRatemeter* mtr = recvrate>0 ? fRecvRatemeter : fSendRatemeter;
-      if ((mtr!=0) && (fWorkRatemeter!=0))
-         for(int n=0;n<msg_in->getresults;n++) {
-            double val = mtr->GetPoint(firstpoint + n);
-            if (val==0)
-               if (fWorkRatemeter->GetPoint(firstpoint + n)<=0) val = -1;
-            ((double*)(msg_out->cmddata))[n] = val;
-         }
-   }
-*/
-
-//   if (delay>0)
-//     while (dabc::Now() < recvtm + delay);
 
    buf.SetTotalSize(sendpacketsize);
 
@@ -1097,43 +917,21 @@ bool bnet::TransportModule::MasterTimeSync(bool dosynchronisation, int numcycles
 
    int maxqueuelen = 20;
    if (maxqueuelen > numcycles) maxqueuelen = numcycles;
+   int nrepeat = numcycles/maxqueuelen;
+   if (nrepeat==0) nrepeat=1;
+   numcycles = nrepeat * maxqueuelen;
 
-   if (!MasterCreatePool(maxqueuelen+10, 1024)) return false;
+   int sync_lid = 0;
 
-   int sync_lid = NumLids() / 2;
-
-   int64_t pars[3];
+   int64_t pars[4];
    pars[0] = numcycles;
    pars[1] = maxqueuelen;
    pars[2] = sync_lid;
+   pars[3] = nrepeat;
+
    if (!MasterCommandRequest(IBTEST_CMD_TIMESYNC, pars, sizeof(pars))) return false;
 
-   if (fSyncTimes==0) {
-      fSyncTimes = new double[NumNodes()];
-      for (int n=0;n<NumNodes();n++)
-         fSyncTimes[n] = 0.;
-   }
-
-   double starttm = fStamping();
-
-   int sendbufindx = GetExclusiveIndx();
-   TimeSyncMessage* msg = (TimeSyncMessage*) GetPoolBuffer(sendbufindx);
-
-//   DOUT0(("Send buffer index = %d buf %p", sendbufindx, msg));
-
-   int repeatcounter = 0;
-
-   DoublesVector m_to_s, s_to_m;
-
-   dabc::Average get_shift;
-
-//   dabc::Average a1;
-//   a1.AllocateHist(50, 1., 6.);
-
-   double max_cut = 0.7;
-
-   double time_shift;
-   double set_time_scale, set_time_shift;
+   dabc::TimeStamp starttm = dabc::Now();
 
    for(int nremote=1;nremote<NumNodes();nremote++) {
 
@@ -1141,141 +939,13 @@ bool bnet::TransportModule::MasterTimeSync(bool dosynchronisation, int numcycles
 
       DOUT2(("Start with node %d", nremote));
 
-      // first fill receiving queue
-      while (RecvQueue(sync_lid, nremote)<maxqueuelen) {
-         if (!Pool_Post(false, GetExclusiveIndx(), sync_lid, nremote)) return false;
-      }
+      // configure runnable with parameters, later used for time sync
+      fRunnable->ConfigMasterSync(dosynchronisation, doscaling, numcycles);
 
-      repeatcounter = 0;
-
-//      a1.Reset();
-      m_to_s.clear();
-      s_to_m.clear();
-
-      time_shift = 0.;
-      set_time_shift = 0.;  set_time_scale = 1.;
-
-      while (repeatcounter < numcycles) {
-
-         msg->master_time = 0.;
-         msg->slave_shift = 0.;
-         msg->slave_time = 0;
-         msg->slave_scale = 1.;
-         msg->msgid = repeatcounter;
-
-         bool needreset = false;
-
-         // apply fine shift when 1/3 of work is done
-         if ((repeatcounter==numcycles*2/3) && dosynchronisation) {
-            s_to_m.Sort(); m_to_s.Sort();
-            time_shift = (s_to_m.Mean(max_cut) - m_to_s.Mean(max_cut)) / 2.;
-
-            set_time_shift = time_shift;
-            msg->slave_shift = time_shift;
-            double sync_t = fStamping();
-            if (doscaling) {
-               msg->slave_scale = 1./(1.-time_shift/(sync_t - fSyncTimes[nremote]));
-               set_time_scale = msg->slave_scale;
-            }
-            fSyncTimes[nremote] = sync_t;
-
-            needreset = true;
-         }
-
-         // change slave time with first sync message
-         if ((repeatcounter==0) && dosynchronisation && !doscaling) {
-            msg->master_time = fStamping() + 0.000010;
-            needreset = true;
-         }
-
-         // from here we start measure time
-         double send_time = fStamping();
-         double recv_time = send_time;
-
-         // sent data and do not wait any completion
-         if (!Pool_Post(true, sendbufindx, sync_lid, nremote, sizeof(TimeSyncMessage)))
-            return false;
-
-         // to check how int64_t working post_send_buffer, measure time again
-         double now = fStamping();
-         double stoptm = now + 0.05;
-
-         int res_recv_index(-1), res_send_index(-1);
-         while ((now<stoptm) && ((res_recv_index<0) || (res_send_index<0))) {
-            int resindx, resnode, reslid;
-            int res = Pool_Check(resindx, reslid, resnode, stoptm - now, 0.001);
-
-            now = fStamping();
-
-            if ((res>0) && ((resnode!=nremote) || (reslid != sync_lid))) {
-              EOUT(("Error node number %d or lid %d when complete %s operation", resnode, reslid, ((res==10) ? "send" : "receive")));
-              return false;
-            }
-            if (res==10) { res_send_index = resindx; } else
-            if (res==1) { recv_time = now; res_recv_index = resindx; }
-         }
-
-          if (res_recv_index<0) {
-             EOUT(("TimeSync: Error when complete receive operation"));
-             return false;
-          }
-
-          TimeSyncMessage* rcv = (TimeSyncMessage*) GetPoolBuffer(res_recv_index);
-
-          // use only those round-trip packets, which are not too far from mean value
-          if (needreset) {
-             m_to_s.clear();
-//             a1.Reset();
-             s_to_m.clear();
-             time_shift = 0.;
-          } else
-          if (repeatcounter>0) {
-//             a1.Fill((rcv->slave_time - send_time)*1e6);
-             m_to_s.push_back(rcv->slave_time - send_time);
-             s_to_m.push_back(recv_time - rcv->slave_time);
-          }
-
-          if (rcv->msgid!=repeatcounter) {
-             EOUT(("Mismatch in ID %d %d", rcv->msgid, repeatcounter));
-          }
-
-          if (repeatcounter + RecvQueue(sync_lid, nremote) + 1 < numcycles)
-             Pool_Post(false, res_recv_index, sync_lid, nremote);
-          else
-             ReleaseExclusive(res_recv_index);
-
-          if (res_send_index!=sendbufindx) {
-             EOUT(("TimeSync: Error index when complete send sync message %d != %d", res_send_index, sendbufindx));
-             return false;
-          }
-
-          repeatcounter++;
-
-//           MicroDelay(10);
-      }
-
-      m_to_s.Sort(); s_to_m.Sort();
-      time_shift = (s_to_m.Mean(max_cut) - m_to_s.Mean(max_cut)) / 2.;
-
-      DOUT0(("Round trip to %2d: %5.2f microsec", nremote, m_to_s.Mean(max_cut)*1e6 + s_to_m.Mean(max_cut)*1e6));
-      DOUT0(("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", m_to_s.Mean(max_cut)*1e6, m_to_s.Dev(max_cut)*1e6, m_to_s.Max()*1e6, m_to_s.Min()*1e6));
-      DOUT0(("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", s_to_m.Mean(max_cut)*1e6, s_to_m.Dev(max_cut)*1e6, s_to_m.Max()*1e6, s_to_m.Min()*1e6));
-//      if (nremote==1) a1.ShowHist();
-
-      if (dosynchronisation)
-         DOUT0(("   SET: Shift = %5.2f  Coef = %12.10f", set_time_shift*1e6, set_time_scale));
-      else {
-         DOUT0(("   GET: Shift = %5.2f", time_shift*1e6));
-         get_shift.Fill(time_shift*1e6);
-      }
+      if (fRunnable->RunSyncLoop(true, nremote, sync_lid, maxqueuelen, nrepeat)) return false;
    }
 
-
-   ReleaseExclusive(sendbufindx);
-
-   if (!dosynchronisation) get_shift.Show("GET shift", true);
-
-   DOUT0(("Tyme sync done in %5.4f sec", fStamping() - starttm));
+   DOUT0(("Tyme sync done in %5.4f sec", starttm.SpentTillNow()));
 
    return MasterCommandRequest(IBTEST_CMD_TEST);
 }
@@ -1384,7 +1054,6 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    bool canskipoperation = arguments[9] > 0;
 
    const unsigned gpuqueuesize(50); // queue which is prepared for IB operation
-   const unsigned gpuopersize(5);   // number of simultaneous GPU operations
    bool dogpuwrite = arguments[10] > 0;
    bool dogpuread = arguments[11] > 0;
 

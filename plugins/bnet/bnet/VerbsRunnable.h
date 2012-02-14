@@ -28,8 +28,6 @@ namespace bnet {
 
 #pragma pack()
 
-
-
    class VerbsRunnable : public TransportRunnable {
       protected:
 
@@ -44,9 +42,21 @@ namespace bnet {
          int               *fSendQueue[IBTEST_MAXLID];    // size of individual sending queue
          int               *fRecvQueue[IBTEST_MAXLID];    // size of individual receiving queue
 
-         virtual bool ExecuteCreateQPs();
-         virtual bool ExecuteConnectQPs();
+         struct ibv_recv_wr  *f_rwr; // field for receive config, allocated dynamically
+         struct ibv_send_wr  *f_swr; // field for send config, allocated dynamically
+         struct ibv_sge      *f_sge; // memory segment description, used for both send/recv
+
+         PoolRegistryRef   fHeaderReg;  // verbs registry for headers pool
+         PoolRegistryRef   fMainReg;    // verbs registry for main data pool
+
+         virtual bool ExecuteCreateQPs(void* args, int argssize);
+         virtual bool ExecuteConnectQPs(void* args, int argssize);
          virtual bool ExecuteCloseQPs();
+
+         virtual bool DoPrepareRec(int recid);
+
+         virtual bool DoPerformOperation(int recid);
+         virtual int DoWaitOperation(double waittime, double fasttime);
 
       public:
          VerbsRunnable();
@@ -58,10 +68,9 @@ namespace bnet {
          // maximum size for commands
          virtual int ConnectionBufferSize() { return NumNodes() * NumLids() * sizeof(VerbsConnRec); }
 
-         virtual bool Configure(dabc::Module* m, dabc::Command cmd);
+         virtual bool Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd);
 
          virtual void ResortConnections(void* src, void* tgt);
-
    };
 
 }

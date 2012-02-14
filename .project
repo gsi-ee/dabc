@@ -23,7 +23,7 @@
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildArguments</key>
-					<value>debug=2  -j4</value>
+					<value>-j4</value>
 				</dictionary>
 				<dictionary>
 					<key>org.eclipse.cdt.make.core.buildCommand</key>
@@ -72,7 +72,7 @@
 	</natures>
 	<filteredResources>
 		<filter>
-			<id>1311605716135</id>
+			<id>1329134305585</id>
 			<name></name>
 			<type>26</type>
 			<matcher>
@@ -81,7 +81,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1311605716165</id>
+			<id>1329134305639</id>
 			<name></name>
 			<type>26</type>
 			<matcher>
@@ -90,7 +90,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1311605716244</id>
+			<id>1329134305651</id>
 			<name></name>
 			<type>26</type>
 			<matcher>
@@ -99,7 +99,7 @@
 			</matcher>
 		</filter>
 		<filter>
-			<id>1311605716273</id>
+			<id>1329134305671</id>
 			<name></name>
 			<type>6</type>
 			<matcher>

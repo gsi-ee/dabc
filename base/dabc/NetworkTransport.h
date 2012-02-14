@@ -52,6 +52,8 @@ namespace dabc {
             Buffer   buf;
             void*    header;
             void*    inlinebuf;
+
+            NetIORec() : used(false), kind(0), extras(0), buf(), header(0), inlinebuf(0) {}
          };
 
 

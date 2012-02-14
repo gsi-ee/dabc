@@ -25,38 +25,6 @@ namespace verbs {
 }
 #endif
 
-
-class DoublesVector : public std::vector<double> {
-   public:
-      DoublesVector() : std::vector<double>() {}
-
-      void Sort();
-
-      double Mean(double max_cut = 1.);
-      double Dev(double max_cut = 1.);
-      double Max();
-      double Min();
-};
-
-class TimeStamping {
-   protected:
-      double fTimeShift;
-      double fTimeScale;
-   public:
-      TimeStamping() : fTimeShift(0.), fTimeScale(1.) {}
-      ~TimeStamping() {}
-
-      inline double get(const dabc::TimeStamp &tm) const { return tm()*fTimeScale + fTimeShift; }
-      inline double get(double tm) const { return tm*fTimeScale + fTimeShift; }
-
-      inline double operator()() const { return get(dabc::Now()); }
-      inline double operator()(double tm) const { return get(tm); }
-      inline double operator()(const dabc::TimeStamp &tm) const { return get(tm); }
-
-      void ChangeShift(double shift);
-      void ChangeScale(double koef);
-};
-
 struct ScheduleEntry {
     int    node;
     int    lid;
@@ -113,14 +81,13 @@ class TransportModule : public dabc::ModuleSync {
       long               fTotalNumBuffers;
 
       TimeStamping       fStamping;
-      double*            fSyncTimes;
 
       verbs::ComplQueue  *fMultiCQ;     // completion queue of multicast group
       verbs::QueuePair   *fMultiQP;     // connection to multicastgroup
       verbs::MemoryPool  *fMultiPool;   // memory pool of multicast group
       int                fMultiBufferSize;  //!< requested size of buffers in the mcast pool (actual size can be bigger)
-      int                fMultiRecvQueueSize; // maximal number of items in multicast recieve queue
-      int                fMultiRecvQueue;  // current number of items in multicast recieve queue
+      int                fMultiRecvQueueSize; // maximal number of items in multicast receive queue
+      int                fMultiRecvQueue;  // current number of items in multicast receive queue
       int                fMultiSendQueueSize; // maximal size of send queue
       int                fMultiSendQueue; // current size of send queue
       int                fMultiKind;     // 0 - nothing, 1 - receiver, 10 -sender, 11 - both
