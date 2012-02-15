@@ -143,6 +143,7 @@ bool bnet::TransportRunnable::ExecuteConfigSync(int* args)
    bool ismaster = args[0] > 0;
    fSyncCycle = 0;
    fNumSyncCycles = args[1];
+   fSyncMaxCut = 0.7;
 
    if (ismaster) {
       fDoTimeSync = args[2] > 0;
@@ -151,16 +152,14 @@ bool bnet::TransportRunnable::ExecuteConfigSync(int* args)
       fSyncRecvDone = true; // for the first time we suppose that recv operation is ready and we can send new buffer
 
       // allocate enough space for all time measurements
-      m_to_s.reserve(fNumSyncCycles);
-      s_to_m.reserve(fNumSyncCycles);
+      fSync_m_to_s.reserve(fNumSyncCycles);
+      fSync_s_to_m.reserve(fNumSyncCycles);
 
-      m_to_s.clear();
-      s_to_m.clear();
-      time_shift = 0.;
-      set_time_shift = 0.;
-      set_time_scale = 1.;
-      needreset = false;
-      max_cut = 0.7;
+      fSync_m_to_s.clear();
+      fSync_s_to_m.clear();
+      fSyncSetTimeShift = 0.;
+      fSyncSetTimeScale = 1.;
+      fSyncResetTimes = false;
 
       if ((int) fSyncTimes.size() != NumNodes())
          fSyncTimes.resize(NumNodes(), 0.);
@@ -253,36 +252,36 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
          msg->slave_scale = 1.;
          msg->msgid = fSyncCycle;
 
-         needreset = false;
+         fSyncResetTimes = false;
 
          // apply fine shift when 2/3 of work is done
          if ((fSyncCycle == fNumSyncCycles*2/3) && fDoTimeSync) {
-            s_to_m.Sort(); m_to_s.Sort();
-            time_shift = (s_to_m.Mean(max_cut) - m_to_s.Mean(max_cut)) / 2.;
+            fSync_s_to_m.Sort(); fSync_m_to_s.Sort();
+            double time_shift = (fSync_s_to_m.Mean(fSyncMaxCut) - fSync_m_to_s.Mean(fSyncMaxCut)) / 2.;
 
-            set_time_shift = time_shift;
+            fSyncSetTimeShift = time_shift;
             msg->slave_shift = time_shift;
             double sync_t = fStamping();
             int tgtnode = rec->tgtnode;
             if (fDoScaleSync) {
                msg->slave_scale = 1./(1.-time_shift/(sync_t - fSyncTimes[tgtnode]));
-               set_time_scale = msg->slave_scale;
+               fSyncSetTimeScale = msg->slave_scale;
             }
             fSyncTimes[tgtnode] = sync_t;
 
-            needreset = true;
+            fSyncResetTimes = true;
          }
 
          // change slave time with first sync message
          if ((fSyncCycle==0) && fDoTimeSync && !fDoScaleSync) {
             msg->master_time = fStamping() + 0.000010;
-            needreset = true;
+            fSyncResetTimes = true;
          }
 
          //if (fSyncCycle==0) DOUT0(("Sending first master packet"));
          // DOUT0(("Sending %d master packet", fSyncCycle));
 
-         send_time = recv_time = fStamping();
+         fSyncSendTime = fStamping();
          PerformOperation(recid);
          recid = -1;
          fSyncRecvDone = false;
@@ -320,16 +319,15 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
          return;
       case skind_SyncMasterRecv: {
          //DOUT0(("Complete skind_SyncMasterRecv"));
-         recv_time = fStamping();
+         double recv_time = fStamping();
          TimeSyncMessage* rcv = (TimeSyncMessage*) rec->header;
-         if (needreset) {
-            m_to_s.clear();
-            s_to_m.clear();
-            time_shift = 0.;
+         if (fSyncResetTimes) {
+            fSync_m_to_s.clear();
+            fSync_s_to_m.clear();
          } else {
             // exclude very first packet - it is
-            m_to_s.push_back(rcv->slave_time - send_time);
-            s_to_m.push_back(recv_time - rcv->slave_time);
+            fSync_m_to_s.push_back(rcv->slave_time - fSyncSendTime);
+            fSync_s_to_m.push_back(recv_time - rcv->slave_time);
          }
 
          if (rcv->msgid != fSyncCycle) {
@@ -345,17 +343,16 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
             fSyncMasterRec = -1;
          }
 
-
          if (fSyncCycle==fNumSyncCycles) {
-            m_to_s.Sort(); s_to_m.Sort();
-            time_shift = (s_to_m.Mean(max_cut) - m_to_s.Mean(max_cut)) / 2.;
+            fSync_m_to_s.Sort(); fSync_s_to_m.Sort();
+            double time_shift = (fSync_s_to_m.Mean(fSyncMaxCut) - fSync_m_to_s.Mean(fSyncMaxCut)) / 2.;
 
-            DOUT0(("Round trip to %2d: %5.2f microsec", rec->tgtnode, m_to_s.Mean(max_cut)*1e6 + s_to_m.Mean(max_cut)*1e6));
-            DOUT0(("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", m_to_s.Mean(max_cut)*1e6, m_to_s.Dev(max_cut)*1e6, m_to_s.Max()*1e6, m_to_s.Min()*1e6));
-            DOUT0(("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", s_to_m.Mean(max_cut)*1e6, s_to_m.Dev(max_cut)*1e6, s_to_m.Max()*1e6, s_to_m.Min()*1e6));
+            DOUT0(("Round trip to %2d: %5.2f microsec", rec->tgtnode, fSync_m_to_s.Mean(fSyncMaxCut)*1e6 + fSync_s_to_m.Mean(fSyncMaxCut)*1e6));
+            DOUT0(("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", fSync_m_to_s.Mean(fSyncMaxCut)*1e6, fSync_m_to_s.Dev(fSyncMaxCut)*1e6, fSync_m_to_s.Max()*1e6, fSync_m_to_s.Min()*1e6));
+            DOUT0(("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", fSync_s_to_m.Mean(fSyncMaxCut)*1e6, fSync_s_to_m.Dev(fSyncMaxCut)*1e6, fSync_s_to_m.Max()*1e6, fSync_s_to_m.Min()*1e6));
 
             if (fDoTimeSync)
-               DOUT0(("   SET: Shift = %5.2f  Coef = %12.10f", set_time_shift*1e6, set_time_scale));
+               DOUT0(("   SET: Shift = %5.2f  Coef = %12.10f", fSyncSetTimeShift*1e6, fSyncSetTimeScale));
             else {
                DOUT0(("   GET: Shift = %5.2f", time_shift*1e6));
                //get_shift.Fill(time_shift*1e6);
@@ -373,7 +370,7 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
             TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
             msg_out->master_time = 0;
             msg_out->slave_shift = 0;
-            msg_out->slave_time = recv_time;
+            msg_out->slave_time = fStamping(); // time irrelevant here
             msg_out->msgid = fSyncCycle++;
             // put in the queue buffer which should be replied
             PerformOperation(fSyncSlaveRec);
@@ -383,7 +380,7 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
          fSyncRecvDone = false;
          return;
       case skind_SyncSlaveRecv: {
-         recv_time = fStamping();
+         double recv_time = fStamping();
 
          // if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
          //DOUT0(("Receive master packet on the slave err = %s", DBOOL(rec->err)));

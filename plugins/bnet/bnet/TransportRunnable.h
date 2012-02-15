@@ -119,9 +119,9 @@ namespace bnet {
          bool   fDoTimeSync;
          bool   fDoScaleSync;
          int    fNumSyncCycles;
-         DoublesVector m_to_s, s_to_m, fSyncTimes;
-         double time_shift, set_time_scale, set_time_shift, send_time, recv_time, max_cut;
-         bool   needreset;
+         DoublesVector fSync_m_to_s, fSync_s_to_m, fSyncTimes;
+         double fSyncSetTimeScale, fSyncSetTimeShift, fSyncSendTime, fSyncMaxCut;
+         bool   fSyncResetTimes;
          int    fSyncCycle;
          int    fSyncSlaveRec; // prepeared record for sending reply buffer by slave
          int    fSyncMasterRec; // prepeared record for sending request buffer by master

@@ -2929,7 +2929,10 @@ void IbTestWorkerModule::MainLoop()
 
       MasterTimeSync(true, 200, true);
 
-
+      if (fTestKind == "SimpleSync") {
+         DOUT0(("Sleep 10 sec more before end"));
+         WorkerSleep(10.);
+      } else
       if (fTestKind == "TimeSync") {
          PerformTimingTest();
       } else
