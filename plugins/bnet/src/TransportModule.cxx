@@ -96,13 +96,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    fCmdBufferSize = 256*1024;
    fCmdDataBuffer = new char[fCmdBufferSize];
-
-   fRunThread = new dabc::PosixThread();
-
-   // set threads id to be able check correctness of calling
-   fRunnable->SetThreadsIds(dabc::PosixThread::Self(), fRunThread->Id());
-
-   fRunThread->Start(fRunnable);
 }
 
 bnet::TransportModule::~TransportModule()
@@ -154,6 +147,14 @@ int bnet::TransportModule::ExecuteCommand(dabc::Command cmd)
 void bnet::TransportModule::BeforeModuleStart()
 {
    DOUT2(("IbTestWorkerModule starting"));
+
+   fRunThread = new dabc::PosixThread();
+
+   fRunThread->Start(fRunnable);
+
+   // set threads id to be able check correctness of calling
+   fRunnable->SetThreadsIds(dabc::PosixThread::Self(), fRunThread->Id());
+
 
 #ifdef WITH_VERBS
 
@@ -481,14 +482,14 @@ void bnet::TransportModule::ReleaseExclusive(int indx, verbs::MemoryPool* pool)
 
 bool bnet::TransportModule::SlaveTimeSync(int64_t* cmddata)
 {
-//   int numcycles = cmddata[0];
+   int numcycles = cmddata[0];
    int maxqueuelen = cmddata[1];
    int sync_lid = cmddata[2];
    int nrepeat = cmddata[3];
 
-   if (fRunnable->RunSyncLoop(false, 0, sync_lid, maxqueuelen, nrepeat)) return false;
+   fRunnable->ConfigSync(false, numcycles);
 
-   return true;
+   return fRunnable->RunSyncLoop(false, 0, sync_lid, maxqueuelen, nrepeat);
 }
 
 
@@ -526,7 +527,7 @@ bool bnet::TransportModule::MasterCommandRequest(int cmdid, void* cmddata, int c
 
    for(int node=0;node<NumNodes();node++) if (fActiveNodes[node]) {
 
-      dabc::Buffer buf = TakeBuffer(Pool(), fCmdBufferSize, 1.);
+      dabc::Buffer buf = TakeBuffer(Pool(), fullpacketsize, 1.);
       if (buf.null()) { EOUT(("No empty buffer")); return false; }
 
       CommandMessage* msg = (CommandMessage*) buf.GetPointer()();
@@ -940,9 +941,9 @@ bool bnet::TransportModule::MasterTimeSync(bool dosynchronisation, int numcycles
       DOUT2(("Start with node %d", nremote));
 
       // configure runnable with parameters, later used for time sync
-      fRunnable->ConfigMasterSync(dosynchronisation, doscaling, numcycles);
+      fRunnable->ConfigSync(true, numcycles, dosynchronisation, doscaling);
 
-      if (fRunnable->RunSyncLoop(true, nremote, sync_lid, maxqueuelen, nrepeat)) return false;
+      if (!fRunnable->RunSyncLoop(true, nremote, sync_lid, maxqueuelen, nrepeat)) return false;
    }
 
    DOUT0(("Tyme sync done in %5.4f sec", starttm.SpentTillNow()));
@@ -2194,7 +2195,6 @@ void bnet::TransportModule::MainLoop()
 
    DOUT0(("----------------- DID CONN !!! ------------------- "));
 
-
    MasterTimeSync(true, 200, false);
 
    if (fTestKind != "Simple") {
@@ -2204,7 +2204,10 @@ void bnet::TransportModule::MainLoop()
 
       MasterTimeSync(true, 200, true);
 
-
+      if (fTestKind == "SimpleSync") {
+         DOUT0(("Sleep 10 sec more before end"));
+         WorkerSleep(10.);
+      } else
       if (fTestKind == "TimeSync") {
          PerformTimingTest();
       } else

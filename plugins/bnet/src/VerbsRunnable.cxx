@@ -52,6 +52,7 @@ bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dab
    f_sge = new ibv_sge [fNumRecs*fSegmPerOper];
 
    fHeaderReg = new verbs::PoolRegistry(fIbContext, &fHeaderPool);
+   fHeaderReg()->SyncMRStructure();
 
    fMainReg = fIbContext.RegisterPool(pool);
 
@@ -85,7 +86,9 @@ bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dab
 
 bool bnet::VerbsRunnable::ExecuteCloseQPs()
 {
-   IsTransportThrd(__func__);
+   CheckTransportThrd();
+
+   // DOUT0(("Executing VerbsRunnable::ExecuteCloseQPs()   numruns:%d", fNumRunningRecs));
 
    for (int lid=0; lid<NumLids(); lid++) {
       if (fQPs[lid]!=0) {
@@ -109,7 +112,7 @@ bool bnet::VerbsRunnable::ExecuteCloseQPs()
 
 bool bnet::VerbsRunnable::ExecuteCreateQPs(void* args, int argssize)
 {
-   IsTransportThrd(__func__);
+   CheckTransportThrd();
 
    ExecuteCloseQPs();
 
@@ -160,7 +163,7 @@ bool bnet::VerbsRunnable::ExecuteCreateQPs(void* args, int argssize)
 
 void bnet::VerbsRunnable::ResortConnections(void* _recs, void* _conn)
 {
-   IsModuleThrd(__func__);
+   CheckModuleThrd();
 
    VerbsConnRec* conn = (VerbsConnRec*) _conn;
    VerbsConnRec* recs = (VerbsConnRec*) _recs;
@@ -178,7 +181,7 @@ void bnet::VerbsRunnable::ResortConnections(void* _recs, void* _conn)
 
 bool bnet::VerbsRunnable::ExecuteConnectQPs(void* args, int argssize)
 {
-   IsTransportThrd(__func__);
+   CheckTransportThrd();
 
    VerbsConnRec* recs = (VerbsConnRec*) args;
 
@@ -203,6 +206,8 @@ bool bnet::VerbsRunnable::ExecuteConnectQPs(void* args, int argssize)
       }
    }
 
+   DOUT0(("VerbsRunnable::ExecuteConnectQPs done"));
+
    return true;
 }
 
@@ -210,13 +215,11 @@ bool bnet::VerbsRunnable::DoPrepareRec(int recid)
 {
    OperRec* rec = GetRec(recid);
 
-   uint32_t segid = recid*fSegmPerOper;
+   unsigned segid(recid*fSegmPerOper), num_sge(1);
 
    f_sge[segid].addr = (uintptr_t) rec->header;
    f_sge[segid].length = rec->hdrsize;
    f_sge[segid].lkey = fHeaderReg()->GetLkey(recid);
-
-   unsigned num_sge(1);
 
    // int senddtyp = PackHeader(recid);
 
@@ -265,36 +268,42 @@ bool bnet::VerbsRunnable::DoPrepareRec(int recid)
          break;
    }
 
+/*   DOUT0(("VerbsRunnable::DoPrepareRec recid:%d  %s  numseg:%u  header %p len:%u lkey:%u",
+         recid, rec->kind == kind_Send ? "kind_Send" : "kind_Recv", num_sge,
+        f_sge[segid].addr, f_sge[segid].length,  f_sge[segid].lkey));
+*/
    return true;
 }
 
 bool bnet::VerbsRunnable::DoPerformOperation(int recid)
 {
-   IsTransportThrd(__func__); // executed only in transport
+   CheckTransportThrd(); // executed only in transport
 
    OperRec* rec = GetRec(recid);
    if (rec==0) return false;
 
-   bool res(false);
+   // DOUT0(("VerbsRunnable::DoPerformOperation recid:%d  %s", recid, rec->kind == kind_Send ? "kind_Send" : "kind_Recv"));
 
    switch (rec->kind) {
-      case kind_Send:
-         res = fQPs[rec->tgtindx][rec->tgtnode]->Post_Send(f_swr + recid);
-         break;
-      case kind_Recv:
-         res = fQPs[rec->tgtindx][rec->tgtnode]->Post_Recv(f_rwr + recid);
-         break;
-      default:
+      case kind_None:
          EOUT(("Operation cannot be done in IB"));
          return false;
+
+      case kind_Send:
+         return fQPs[rec->tgtindx][rec->tgtnode]->Post_Send(f_swr + recid);
+
+      case kind_Recv:
+         return fQPs[rec->tgtindx][rec->tgtnode]->Post_Recv(f_rwr + recid);
    }
 
-   return res;
+   EOUT(("Operation cannot be done in IB"));
+
+   return false;
 }
 
 int bnet::VerbsRunnable::DoWaitOperation(double waittime, double fasttime)
 {
-   IsTransportThrd(__func__); // executed only in transport
+   CheckTransportThrd(); // executed only in transport
 
    int res = fCQ->Wait(waittime, fasttime);
 

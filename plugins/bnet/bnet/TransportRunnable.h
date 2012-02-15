@@ -67,8 +67,12 @@ namespace bnet {
          void ChangeScale(double koef);
    };
 
+   class TransportModule;
+
    class TransportRunnable : public dabc::Runnable {
       protected:
+
+         friend class TransportModule;
 
          dabc::Mutex fMutex; /** Main mutex for communication with the transport module */
 
@@ -119,10 +123,23 @@ namespace bnet {
          double time_shift, set_time_scale, set_time_shift, send_time, recv_time, max_cut;
          bool   needreset;
          int    fSyncCycle;
-         int    fSyncSlaveRec; // prepared record for sending reply buffer by slave
+         int    fSyncSlaveRec; // prepeared record for sending reply buffer by slave
+         int    fSyncMasterRec; // prepeared record for sending request buffer by master
+         bool   fSyncRecvDone; // indicates that next recv operation (slave or master) is done
+         bool   fSyncSendDone; // indicates that next send operation (slave or master) is done
 
-         void IsModuleThrd(const char* method = 0);
-         void IsTransportThrd(const char* method = 0);
+
+         #define CheckModuleThrd() \
+            if (dabc::PosixThread::Self() != fModuleThrd) { \
+               EOUT(("%s called from wrong thread - expected module thread", __func__)); \
+               exit(1); \
+            }
+
+         #define CheckTransportThrd() \
+            if (dabc::PosixThread::Self() != fTransportThrd) { \
+               EOUT(("%s called from wrong thread - expected transport thread", __func__)); \
+               exit(1); \
+            }
 
          enum RunnableCommands {
             cmd_None,       // no any command
@@ -168,6 +185,16 @@ namespace bnet {
          virtual bool DoPerformOperation(int recid) { return false; }
          virtual int DoWaitOperation(double waittime, double fasttime) { return false; }
 
+         inline void PerformOperation(int recid)
+         {
+            if (DoPerformOperation(recid)) {
+               fRunningRecs[recid] = true;
+               fNumRunningRecs++;
+            } else {
+               GetRec(recid)->err = true;
+               fCompletedRecs.Push(recid);
+            }
+         }
 
       public:
 
@@ -194,7 +221,7 @@ namespace bnet {
          bool SetActiveNodes(void* data, int datasize);
          bool CreateQPs(void* recs, int recssize);
          bool ConnectQPs(void* recs, int recssize);
-         bool ConfigMasterSync(bool dosync, bool doscale, int nrepeat);
+         bool ConfigSync(bool master, int nrepeat, bool dosync = false, bool doscale = false);
 
          // method to submit time sync operation and wait until all are executed
          bool RunSyncLoop(bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat);

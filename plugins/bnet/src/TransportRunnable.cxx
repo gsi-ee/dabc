@@ -51,22 +51,6 @@ bnet::TransportRunnable::~TransportRunnable()
    }
 }
 
-void bnet::TransportRunnable::IsModuleThrd(const char* method)
-{
-   if (dabc::PosixThread::Self() == fModuleThrd) return;
-
-   EOUT(("%s called from wrong thread - expected module thread", method ? method : "unknown"));
-   exit(1);
-}
-
-void bnet::TransportRunnable::IsTransportThrd(const char* method)
-{
-   if (dabc::PosixThread::Self() == fTransportThrd) return;
-
-   EOUT(("%s called from wrong thread - expected transport thread", method ? method : "unknown"));
-   exit(1);
-}
-
 bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd)
 {
    fActiveNodes = new bool[NumNodes()];
@@ -98,7 +82,9 @@ bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool,
 
 int bnet::TransportRunnable::SubmitCmd(int cmdid, void* args, int argssize)
 {
-   IsModuleThrd(__func__);
+   CheckModuleThrd();
+
+   // DOUT0(("Submitting cmd %d", cmdid));
 
    if (fFreeRecs.Empty()) return -1;
 
@@ -126,7 +112,7 @@ bool bnet::TransportRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
 
    if (recid<0) return false;
 
-   IsModuleThrd(__func__);
+   CheckModuleThrd();
 
    dabc::TimeStamp tm = dabc::Now();
 
@@ -152,37 +138,47 @@ bool bnet::TransportRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
 
 bool bnet::TransportRunnable::ExecuteConfigSync(int* args)
 {
-   IsTransportThrd(__func__);
+   CheckTransportThrd();
 
-   fDoTimeSync = args[0] > 0;
-   fDoScaleSync = args[1] > 0;
-   fNumSyncCycles = args[2];
+   bool ismaster = args[0] > 0;
    fSyncCycle = 0;
-   fSyncSlaveRec = -1;
+   fNumSyncCycles = args[1];
 
-   // allocate enough space for all time measurements
-   m_to_s.reserve(fNumSyncCycles);
-   s_to_m.reserve(fNumSyncCycles);
+   if (ismaster) {
+      fDoTimeSync = args[2] > 0;
+      fDoScaleSync = args[3] > 0;
+      fSyncMasterRec = -1;
+      fSyncRecvDone = true; // for the first time we suppose that recv operation is ready and we can send new buffer
 
-   m_to_s.clear();
-   s_to_m.clear();
-   time_shift = 0.;
-   set_time_shift = 0.;
-   set_time_scale = 1.;
-   needreset = false;
-   max_cut = 0.7;
+      // allocate enough space for all time measurements
+      m_to_s.reserve(fNumSyncCycles);
+      s_to_m.reserve(fNumSyncCycles);
 
-   if ((int) fSyncTimes.size() != NumNodes())
-      fSyncTimes.resize(NumNodes(), 0.);
+      m_to_s.clear();
+      s_to_m.clear();
+      time_shift = 0.;
+      set_time_shift = 0.;
+      set_time_scale = 1.;
+      needreset = false;
+      max_cut = 0.7;
+
+      if ((int) fSyncTimes.size() != NumNodes())
+         fSyncTimes.resize(NumNodes(), 0.);
+   } else {
+      fSyncSlaveRec = -1;
+      fSyncRecvDone = false;
+   }
    return true;
 }
 
 bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int argssize)
 {
-   IsTransportThrd(__func__);
+   CheckTransportThrd();
 
    switch (cmdid) {
       case cmd_None:  return true;
+
+      case cmd_Exit:  return true;
 
       case cmd_ActiveNodes: {
          if (argssize != NumNodes()) {
@@ -210,7 +206,7 @@ bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int
          return ExecuteCloseQPs();
 
       default:
-         EOUT(("Why here??"));
+         EOUT(("Uncknown command %d", cmdid));
          break;
    }
 
@@ -232,6 +228,24 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
          if (rec->tgtindx==cmd_Exit) recid = -111;
          return;
       case skind_SyncMasterSend: {
+         //DOUT0(("Prepare PrepareSpecialKind skind_SyncMasterSend"));
+
+         // send packet immediately only very first time,
+         // in other cases remember id to use it when next reply comes from the slave
+
+         if (fSyncMasterRec>=0) {
+            EOUT(("How it could happend - fSyncMasterRec submitted twice!!!"));
+         }
+
+         // send operation is ready, but we need to wait that recv operation is done
+         if (!fSyncRecvDone) {
+            fSyncMasterRec = recid;
+            recid = -1;
+            return;
+         }
+
+         // send
+
          TimeSyncMessage* msg = (TimeSyncMessage*) rec->header;
          msg->master_time = 0.;
          msg->slave_shift = 0.;
@@ -249,32 +263,43 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
             set_time_shift = time_shift;
             msg->slave_shift = time_shift;
             double sync_t = fStamping();
+            int tgtnode = rec->tgtnode;
             if (fDoScaleSync) {
-               msg->slave_scale = 1./(1.-time_shift/(sync_t - fSyncTimes[rec->tgtnode]));
+               msg->slave_scale = 1./(1.-time_shift/(sync_t - fSyncTimes[tgtnode]));
                set_time_scale = msg->slave_scale;
             }
-            fSyncTimes[rec->tgtnode] = sync_t;
+            fSyncTimes[tgtnode] = sync_t;
 
             needreset = true;
          }
 
          // change slave time with first sync message
-         if ((rec->repeatcnt == fNumSyncCycles) && fDoTimeSync && !fDoScaleSync) {
+         if ((fSyncCycle==0) && fDoTimeSync && !fDoScaleSync) {
             msg->master_time = fStamping() + 0.000010;
             needreset = true;
          }
 
+         //if (fSyncCycle==0) DOUT0(("Sending first master packet"));
+         // DOUT0(("Sending %d master packet", fSyncCycle));
+
          send_time = recv_time = fStamping();
+         PerformOperation(recid);
+         recid = -1;
+         fSyncRecvDone = false;
 
          return;
       }
       case skind_SyncMasterRecv:
+         //DOUT0(("Prepare PrepareSpecialKind skind_SyncMasterRecv repeat = %d", rec->repeatcnt));
          return;
       case skind_SyncSlaveSend:
+         //DOUT0(("Prepare PrepareSpecialKind skind_SyncSlaveSend"));
+
          fSyncSlaveRec = recid;
          recid = -1;
          return;
       case skind_SyncSlaveRecv:
+         //DOUT0(("Prepare PrepareSpecialKind skind_SyncSlaveRecv"));
          return;
 
       default:
@@ -286,12 +311,16 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
 {
    OperRec* rec = GetRec(recid);
 
+   //DOUT0(("Complete skind:%d err:%s", rec->skind, DBOOL(rec->err)));
+
    switch (rec->skind) {
       case skind_None:
          return;
       case skind_SyncMasterSend:
          return;
       case skind_SyncMasterRecv: {
+         //DOUT0(("Complete skind_SyncMasterRecv"));
+         recv_time = fStamping();
          TimeSyncMessage* rcv = (TimeSyncMessage*) rec->header;
          if (needreset) {
             m_to_s.clear();
@@ -308,6 +337,14 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
          }
 
          fSyncCycle++;
+         fSyncRecvDone = true;
+
+         // reactivate send operation
+         if (fSyncMasterRec>=0) {
+            fAcceptedRecs.Push(fSyncMasterRec);
+            fSyncMasterRec = -1;
+         }
+
 
          if (fSyncCycle==fNumSyncCycles) {
             m_to_s.Sort(); s_to_m.Sort();
@@ -328,25 +365,36 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
          return;
       }
       case skind_SyncSlaveSend:
-         return;
-      case skind_SyncSlaveRecv: {
-         if (fSyncSlaveRec<0) {
-            EOUT(("No special record to reply on recv message!!!"));
-            return;
+         // send slave reply only when record is ready, means we not fulfill time constrains
+         // but packet must be send anyway
+         if (fSyncRecvDone && (fSyncSlaveRec==recid)) {
+            EOUT(("Reply on the master request with long delay"));
+            OperRec* recout = GetRec(fSyncSlaveRec);
+            TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
+            msg_out->master_time = 0;
+            msg_out->slave_shift = 0;
+            msg_out->slave_time = recv_time;
+            msg_out->msgid = fSyncCycle++;
+            // put in the queue buffer which should be replied
+            PerformOperation(fSyncSlaveRec);
          }
 
-         OperRec* recout = GetRec(fSyncSlaveRec);
+         fSyncSlaveRec = -1;
+         fSyncRecvDone = false;
+         return;
+      case skind_SyncSlaveRecv: {
+         recv_time = fStamping();
+
+         // if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
+         //DOUT0(("Receive master packet on the slave err = %s", DBOOL(rec->err)));
 
          TimeSyncMessage* msg_in = (TimeSyncMessage*) rec->header;
-         TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
 
-         msg_out->master_time = 0;
-         msg_out->slave_shift = 0;
-         msg_out->slave_time = fStamping();
-         msg_out->msgid = msg_in->msgid;
+         if (fSyncCycle!=msg_in->msgid)
+            EOUT(("Missmatch of sync cycle %u %u on the slave", fSyncCycle, msg_in->msgid));
 
          if (msg_in->master_time>0) {
-            fStamping.ChangeShift(msg_in->master_time - msg_out->slave_time);
+            fStamping.ChangeShift(msg_in->master_time - recv_time);
          }
 
          if (msg_in->slave_shift!=0.) {
@@ -355,8 +403,19 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
                fStamping.ChangeScale(msg_in->slave_scale);
          }
 
+         if (fSyncSlaveRec<0) {
+            fSyncRecvDone = true;
+            return;
+         }
+
+         OperRec* recout = GetRec(fSyncSlaveRec);
+         TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
+         msg_out->master_time = 0;
+         msg_out->slave_shift = 0;
+         msg_out->slave_time = recv_time;
+         msg_out->msgid = fSyncCycle++;
          // put in the queue buffer which should be replied
-         fAcceptedRecs.Push(fSyncSlaveRec);
+         PerformOperation(fSyncSlaveRec);
          fSyncSlaveRec = -1;
 
          return;
@@ -369,42 +428,52 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
 
 bool bnet::TransportRunnable::RunSyncLoop(bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat)
 {
-   IsModuleThrd(__func__);
+   CheckModuleThrd();
+
+   // DOUT0(("Enter sync loop"));
 
    dabc::Queue<int> submoper(queuelen+1);
 
    // first fill receiving queue
-   for (int n=0;n<queuelen;n++) {
-      int recid = PrepareOperation(kind_Recv, sizeof(TimeSyncMessage));
+   for (int n=-1;n<queuelen+1;n++) {
+
+      OperKind kind = (n==-1) || (n==queuelen) ? kind_Send : kind_Recv;
+
+      if ((kind==kind_Send)) {
+         if (ismaster && (n==-1)) continue; // master should submit send at the end
+         if (!ismaster && (n==queuelen)) continue; // slave should submit send in the begin
+      }
+
+      int recid = PrepareOperation(kind, sizeof(TimeSyncMessage));
       OperRec* rec = GetRec(recid);
       if ((recid<0) || (rec==0)) { EOUT(("Internal")); return false; }
-      rec->skind = ismaster ? skind_SyncMasterRecv : skind_SyncSlaveRecv;
-      rec->SetRepeatCnt(nrepeat);
+      if (kind==kind_Recv) {
+         rec->skind = ismaster ? skind_SyncMasterRecv : skind_SyncSlaveRecv;
+         rec->SetRepeatCnt(nrepeat);
+      } else {
+         rec->skind = ismaster ? skind_SyncMasterSend : skind_SyncSlaveSend;
+         rec->SetRepeatCnt(nrepeat * queuelen);
+      }
+
       rec->SetTarget(tgtnode, tgtlid);
       SubmitRec(recid);
       submoper.Push(recid);
    }
 
-   // than submit send packet, which is repeated many times
-   int sendrecid = PrepareOperation(kind_Send, sizeof(TimeSyncMessage));
-   OperRec* sendrec = GetRec(sendrecid);
-   if ((sendrecid<0) || (sendrec==0)) { EOUT(("Internal")); return false; }
-   sendrec->skind = ismaster ? skind_SyncMasterSend : skind_SyncSlaveSend;
-   sendrec->SetRepeatCnt(nrepeat * queuelen);
-   sendrec->SetTarget(tgtnode, tgtlid);
-   SubmitRec(sendrecid);
-   submoper.Push(sendrecid);
+   dabc::TimeStamp start = dabc::Now();
 
-   while (!submoper.Empty()) {
-      int complid = WaitCompleted();
+   while (!submoper.Empty() && !start.Expired(5.)) {
+      int complid = WaitCompleted(0.1);
 
-      if (complid<0) { EOUT(("transport problem")); return false; }
+      if (complid<0) continue;
 
       OperRec* rec = GetRec(complid);
       if (rec->err) EOUT(("Operation error"));
       ReleaseRec(complid);
       submoper.Remove(complid);
    }
+
+   // DOUT0(("%s sync loop finished after %5.3f s on cycle:%d", ismaster ? "Master" : "Slave", start.SpentTillNow(), fSyncCycle));
 
    return true;
 }
@@ -427,13 +496,7 @@ void* bnet::TransportRunnable::MainLoop()
                PrepareSpecialKind(recid);
 
             if (recid>=0) {
-               if (DoPerformOperation(recid)) {
-                  fRunningRecs[recid] = true;
-                  fNumRunningRecs++;
-               } else {
-                  rec->err = true;
-                  fCompletedRecs.Push(recid);
-               }
+               PerformOperation(recid);
             } else {
                // special return value, means exit from the loop
                if (recid==-111) break;
@@ -442,9 +505,20 @@ void* bnet::TransportRunnable::MainLoop()
       }
 
       if (fNumRunningRecs>0) {
-         int recid = DoWaitOperation(0.001,0.00001);
+         double wait_time(0.001), fast_time(0.00001);
+
+         // do not wait at all when new operation need to be submitted
+         if (!fAcceptedRecs.Empty()) {
+            wait_time = 0.;
+            fast_time = 0.;
+         }
+
+         int recid = DoWaitOperation(wait_time, fast_time);
 
          if (recid>=0) {
+            if (!fRunningRecs[recid])
+               EOUT(("Wrongly completed operation which was not active recid:%d", recid));
+
             fRunningRecs[recid] = false;
             fNumRunningRecs--;
 
@@ -452,7 +526,7 @@ void* bnet::TransportRunnable::MainLoop()
 
             if (rec->skind!=skind_None) ProcessSpecialKind(recid);
 
-            if ((rec->repeatcnt-- <= 0) || rec->err) {
+            if ((--rec->repeatcnt <= 0) || rec->err) {
                fCompletedRecs.Push(recid);
             } else
                fAcceptedRecs.Push(recid);
@@ -492,12 +566,13 @@ bool bnet::TransportRunnable::ConnectQPs(void* recs, int recssize)
    return ExecuteCmd(cmd_ConnectQP, recs, recssize);
 }
 
-bool bnet::TransportRunnable::ConfigMasterSync(bool dosync, bool doscale, int nrepeat)
+bool bnet::TransportRunnable::ConfigSync(bool master, int nrepeat, bool dosync, bool doscale)
 {
-   int args[3];
-   args[0] = dosync ? 1 : 0;
-   args[1] = doscale ? 1 : 0;
-   args[2] = nrepeat;
+   int args[4];
+   args[0] = master ? 1 : 0;
+   args[1] = nrepeat;
+   args[2] = dosync ? 1 : 0;
+   args[3] = doscale ? 1 : 0;
 
    return ExecuteCmd(cmd_ConfigSync, args, sizeof(args));
 }
@@ -516,7 +591,7 @@ bool bnet::TransportRunnable::StopRunnable()
 
 int bnet::TransportRunnable::PrepareOperation(OperKind kind, int hdrsize, dabc::Buffer buf)
 {
-   IsModuleThrd(__func__);
+   CheckModuleThrd();
 
    if (fFreeRecs.Empty()) return -1;
 
@@ -554,7 +629,7 @@ int bnet::TransportRunnable::PrepareOperation(OperKind kind, int hdrsize, dabc::
 
 bool bnet::TransportRunnable::ReleaseRec(int recid)
 {
-   IsModuleThrd(__func__);
+   CheckModuleThrd();
 
    if (GetRec(recid) == 0) {
       EOUT(("Wrong RECID"));
@@ -577,7 +652,7 @@ bool bnet::TransportRunnable::ReleaseRec(int recid)
 
 bool bnet::TransportRunnable::SubmitRec(int recid)
 {
-   IsModuleThrd(__func__);
+   CheckModuleThrd();
 
    if (GetRec(recid) == 0) {
       EOUT(("Wrong RECID"));
@@ -601,7 +676,7 @@ int bnet::TransportRunnable::WaitCompleted(double tm)
 {
    // TODO: implement with condition
 
-   IsModuleThrd(__func__);
+   CheckModuleThrd();
 
    dabc::TimeStamp start = dabc::Now();
 

@@ -63,7 +63,6 @@ verbs::ComplQueue::~ComplQueue()
    f_channel = 0;
 }
 
-
 int verbs::ComplQueue::Poll()
 {
    // return 0 if no events
@@ -80,8 +79,8 @@ int verbs::ComplQueue::Poll()
    }
 
    if (f_wc.status != IBV_WC_SUCCESS) {
-      EOUT(("Completion error=%d wr_id=%llu syndrom 0x%x qpnum=%x src_qp=%x",
-      f_wc.status, f_wc.wr_id, f_wc.vendor_err, f_wc.qp_num, f_wc.src_qp));
+      EOUT(("Completion error=%d %s  wr_id=%llu syndrom 0x%x qpnum=%x src_qp=%x",
+      f_wc.status, GetStrError(f_wc.status), f_wc.wr_id, f_wc.vendor_err, f_wc.qp_num, f_wc.src_qp));
       return 2;
    }
 
@@ -169,5 +168,44 @@ void verbs::ComplQueue::AcknoledgeEvents()
       ibv_ack_cq_events(f_cq, fCQContext.events_get);
       fCQContext.events_get = 0;
    }
+}
+
+const char* verbs::ComplQueue::GetStrError(int err)
+{
+   struct discr_t {
+       int code;
+       const char* name;
+   };
+
+   static discr_t errors[] = {
+         { code:IBV_WC_LOC_LEN_ERR, name:"IBV_WC_LOC_LEN_ERR" },
+         { code:IBV_WC_LOC_QP_OP_ERR, name:"IBV_WC_LOC_QP_OP_ERR" },
+         { code:IBV_WC_LOC_EEC_OP_ERR, name:"IBV_WC_LOC_EEC_OP_ERR" },
+         { code:IBV_WC_LOC_PROT_ERR, name:"IBV_WC_LOC_PROT_ERR" },
+         { code:IBV_WC_WR_FLUSH_ERR, name:"IBV_WC_WR_FLUSH_ERR" },
+         { code:IBV_WC_MW_BIND_ERR, name:"IBV_WC_MW_BIND_ERR" },
+         { code:IBV_WC_BAD_RESP_ERR, name:"IBV_WC_BAD_RESP_ERR" },
+         { code:IBV_WC_LOC_ACCESS_ERR, name:"IBV_WC_LOC_ACCESS_ERR" },
+         { code:IBV_WC_REM_INV_REQ_ERR, name:"IBV_WC_REM_INV_REQ_ERR" },
+         { code:IBV_WC_REM_ACCESS_ERR, name:"IBV_WC_REM_ACCESS_ERR" },
+         { code:IBV_WC_REM_OP_ERR, name:"IBV_WC_REM_OP_ERR" },
+         { code:IBV_WC_RETRY_EXC_ERR, name:"IBV_WC_RETRY_EXC_ERR" },
+         { code:IBV_WC_RNR_RETRY_EXC_ERR, name:"IBV_WC_RNR_RETRY_EXC_ERR" },
+         { code:IBV_WC_LOC_RDD_VIOL_ERR, name:"IBV_WC_LOC_RDD_VIOL_ERR" },
+         { code:IBV_WC_REM_INV_RD_REQ_ERR, name:"IBV_WC_REM_INV_RD_REQ_ERR" },
+         { code:IBV_WC_REM_ABORT_ERR, name:"IBV_WC_REM_ABORT_ERR" },
+         { code:IBV_WC_INV_EECN_ERR, name:"IBV_WC_INV_EECN_ERR" },
+         { code:IBV_WC_INV_EEC_STATE_ERR, name:"IBV_WC_INV_EEC_STATE_ERR" },
+         { code:IBV_WC_FATAL_ERR, name:"IBV_WC_FATAL_ERR" },
+         { code:IBV_WC_RESP_TIMEOUT_ERR, name:"IBV_WC_RESP_TIMEOUT_ERR" },
+         { code:IBV_WC_GENERAL_ERR, name:"IBV_WC_GENERAL_ERR" },
+         { code:0, name:0 }
+   };
+
+   for (const discr_t* d = errors; d->name!=0; d++) {
+      if (err==d->code) return d->name;
+   }
+
+   return "noerror";
 }
 

@@ -55,6 +55,8 @@ namespace verbs {
          int Poll();
          int Wait(double timeout, double fasttm = 0.);
          void AcknoledgeEvents();
+
+         static const char* GetStrError(int err);
    };
 }
 

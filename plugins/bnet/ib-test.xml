@@ -20,9 +20,9 @@
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="200000"/>
 
-      <!-- allowed: OnlyConnect, SingleRoute, TimeSync, TestGPU or NormalTest -->
-         <TestKind value="OnlyConnect"/>
-         <TestReliable value="false"/>
+      <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync, SingleRoute, TestGPU or NormalTest -->
+         <TestKind value="SimpleSync"/>
+         <TestReliable value="true"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="20"/>
