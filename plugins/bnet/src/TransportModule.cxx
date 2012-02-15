@@ -59,20 +59,20 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fTotalRecvQueue = 0;
    fTotalNumBuffers = 0;
 
+   for (int lid=0; lid < NumLids(); lid++) {
+      fSendQueue[lid] = new int[NumNodes()];
+      fRecvQueue[lid] = new int[NumNodes()];
+      for (int n=0;n<NumNodes();n++) {
+         fSendQueue[lid][n] = 0;
+         fRecvQueue[lid][n] = 0;
+      }
+   }
+
+
    fCQ = 0;
 
    fPool = 0;
    fBufferSize = 0;
-
-   fMultiCQ = 0;
-   fMultiQP = 0;
-   fMultiPool = 0;
-   fMultiBufferSize = 0;
-   fMultiRecvQueueSize = 0;
-   fMultiRecvQueue = 0;
-   fMultiSendQueueSize = 0;
-   fMultiSendQueue = 0;
-   fMultiKind = 0;
 
    fRecvRatemeter = 0;
    fSendRatemeter = 0;
@@ -125,6 +125,12 @@ bnet::TransportModule::~TransportModule()
       fWorkRatemeter = 0;
    }
 
+   for (int n=0;n<IBTEST_MAXLID;n++) {
+      if (fSendQueue[n]) delete [] fSendQueue[n];
+      if (fRecvQueue[n]) delete [] fRecvQueue[n];
+   }
+
+
    AllocResults(0);
 }
 
@@ -170,8 +176,6 @@ void bnet::TransportModule::AfterModuleStop()
 {
    DOUT2(("IbTestWorkerModule finished"));
 
-   CloseQPs();
-
 #ifdef WITH_VERBS
    fIbContext.Release();
 #endif
@@ -194,62 +198,6 @@ int bnet::TransportModule::NodeRecvQueue(int node) const
       if (fRecvQueue[lid]) sum+=fRecvQueue[lid][node];
    return sum;
 }
-
-bool bnet::TransportModule::CreateQPs(void* data)
-{
-   return true;
-}
-
-bool bnet::TransportModule::ConnectQPs(void* data)
-{
-   return true;
-}
-
-
-
-bool bnet::TransportModule::CloseQPs()
-{
-   return true;
-}
-
-bool bnet::TransportModule::CreateCommPool(int64_t* pars)
-{
-
-#ifdef WITH_VERBS
-
-   if (fPool!=0) { delete fPool; fPool = 0; }
-
-   fPool = new verbs::MemoryPool(fIbContext, "Pool", pars[0], pars[1], false);
-
-   fBufferSize = pars[1];
-
-   for (int lid=0; lid < NumLids(); lid++) {
-      if (fSendQueue[lid]==0)
-         fSendQueue[lid] = new int[NumNodes()];
-      if (fRecvQueue[lid]==0)
-         fRecvQueue[lid] = new int[NumNodes()];
-
-      for (int n=0;n<NumNodes();n++) {
-         fSendQueue[lid][n] = 0;
-         fRecvQueue[lid][n] = 0;
-      }
-   }
-
-   fTotalSendQueue = 0;
-   fTotalRecvQueue = 0;
-
-   fTotalNumBuffers = pars[0];
-
-//   DOUT0(("Create comm pool %p  size %u X %u", fPool, pars[0], pars[1]));
-
-
-   return fPool!=0;
-
-#endif
-
-   return true;
-}
-
 
 bool bnet::TransportModule::Pool_Post(bool issend, int bufindx, int lid, int nremote, int size)
 {
@@ -295,41 +243,6 @@ bool bnet::TransportModule::Pool_Post(bool issend, int bufindx, int lid, int nre
 #endif
 
    return true;
-}
-
-bool bnet::TransportModule::Pool_Post_Mcast(bool issend, int bufindx, int size)
-{
-#ifdef WITH_VERBS
-   if ((fMultiPool==0) || (fMultiQP==0) || (bufindx<0)) return false;
-
-   bool res = false;
-   uint64_t arg = bufindx + (issend ? 1000000U : 0);
-
-   if (issend) {
-      struct ibv_send_wr* swr = fMultiPool->GetSendWR(bufindx, size);
-      swr->wr_id = arg;
-      res = fMultiQP->Post_Send(swr);
-//      DOUT0(("Post send nremote %d buf %d swr %p ", nremote, bufindx, swr));
-
-   } else {
-      struct ibv_recv_wr* rwr = fMultiPool->GetRecvWR(bufindx);
-      rwr->wr_id = arg;
-
-      res = fMultiQP->Post_Recv(rwr);
-
-//      DOUT0(("Post recv remote %d buf %d rwr %p ", nremote, bufindx, rwr));
-   }
-
-   if (res) {
-      if (issend) fMultiSendQueue++;
-             else fMultiRecvQueue++;
-   }
-
-#endif
-
-
-   return true;
-
 }
 
 verbs::ComplQueue* bnet::TransportModule::Pool_CQ_Check(bool &iserror, double waittime)
@@ -407,50 +320,6 @@ int bnet::TransportModule::Pool_Check(int &bufindx, int& lid, int &nremote, doub
 }
 
 
-int bnet::TransportModule::Pool_Check_Mcast(int &bufindx, double waittime, double fasttime)
-{
-   bufindx = -1;
-
-#ifdef WITH_VERBS
-
-   // bool iserror = false;
-   // verbs::ComplQueue* cq = Pool_CQ_Check(iserror, waittime);
-   // if (cq==0) return 0;
-   // if (iserror) return -1;
-
-   verbs::ComplQueue* cq = fMultiCQ;
-   if (cq==0) return -1;
-
-   int res = cq->Wait(waittime, fasttime);
-
-   if (res==2) return -1;
-   if (res!=1) return 0;
-
-   uint64_t arg = cq->arg();
-
-   bufindx = arg % 1000000U;
-   bool issend = (arg / 1000000U) > 0;
-
-   if (issend) fMultiSendQueue--;
-          else fMultiRecvQueue--;
-
-   return issend ? 10 : 1;
-
-#endif
-
-   return 0;
-}
-
-bool bnet::TransportModule::IsMulticastSupported()
-{
-#ifdef WITH_VERBS
-   return fIbContext.IsMulticast();
-
-#endif
-   return false;
-}
-
-
 
 int bnet::TransportModule::GetExclusiveIndx(verbs::MemoryPool* pool)
 {
@@ -489,7 +358,11 @@ bool bnet::TransportModule::SlaveTimeSync(int64_t* cmddata)
 
    fRunnable->ConfigSync(false, numcycles);
 
-   return fRunnable->RunSyncLoop(false, 0, sync_lid, maxqueuelen, nrepeat);
+   bool res = fRunnable->RunSyncLoop(false, 0, sync_lid, maxqueuelen, nrepeat);
+
+   if (res) fRunnable->GetSync(fStamping);
+
+   return res;
 }
 
 
@@ -743,10 +616,6 @@ int bnet::TransportModule::PreprocessSlaveCommand(dabc::Buffer& buf)
          cmd_res = true;
          break;
 
-      case IBTEST_CMD_POOL:
-         cmd_res = CreateCommPool((int64_t*)msg->cmddata());
-         break;
-
       case IBTEST_CMD_ACTIVENODES: {
          uint8_t* buff = (uint8_t*) fCmdDataBuffer;
 
@@ -852,13 +721,6 @@ bool bnet::TransportModule::ExecuteSlaveCommand(int cmdid)
       case IBTEST_CMD_RDMA:
 //            cmd_res = ExecuteRDMA((int64_t*)cmddata);
          break;
-
-      case IBTEST_CMD_TIMING:
-         return ExecuteTiming((double*)fCmdDataBuffer);
-
-      case IBTEST_CMD_TESTGPU:
-         return ExecuteTestGPU((double*)fCmdDataBuffer);
-
    }
 
    return true;
@@ -889,25 +751,6 @@ bool bnet::TransportModule::MasterCloseConnections()
    if (!MasterCommandRequest(IBTEST_CMD_TEST)) return false;
 
    DOUT0(("Comm ports are closed in %5.3fs", tm.SpentTillNow()));
-
-   return true;
-}
-
-
-bool bnet::TransportModule::MasterCreatePool(int numbuffers, int buffersize)
-{
-   dabc::TimeStamp tm = dabc::Now();
-
-   int64_t pars[2];
-   pars[0] = numbuffers;
-   pars[1] = buffersize;
-
-   if (!MasterCommandRequest(IBTEST_CMD_POOL, pars, sizeof(pars))) return false;
-
-   // this is just ensure that all nodes are on ready state
-   if (!MasterCommandRequest(IBTEST_CMD_TEST)) return false;
-
-   DOUT0(("Pool is created after %6.5f", tm.SpentTillNow()));
 
    return true;
 }
@@ -949,95 +792,6 @@ bool bnet::TransportModule::MasterTimeSync(bool dosynchronisation, int numcycles
    DOUT0(("Tyme sync done in %5.4f sec", starttm.SpentTillNow()));
 
    return MasterCommandRequest(IBTEST_CMD_TEST);
-}
-
-
-
-bool bnet::TransportModule::MasterTiming()
-{
-   // here we test how IB is working if
-   // send operation happens before recv.
-   // First node starts send operation to all other,
-   // than we waiting 1 sec and start rec operation on other nodes.
-   // Measured time, which happens after post_recv and first coming packet.
-
-   double arguments[2];
-
-   arguments[0] = fStamping()+1.;
-   arguments[1] = 10;
-
-   if (!MasterCreatePool(lrint(arguments[1])*NumNodes(), 1024*64)) return false;
-
-   DOUT0(("====================================="));
-   DOUT0(("MasterTiming()"));
-
-   if (!MasterCommandRequest(IBTEST_CMD_TIMING, arguments, sizeof(arguments))) return false;
-
-   if (!ExecuteTiming(arguments)) return false;
-
-   int setsize = 2;
-   double allres[setsize*NumNodes()];
-
-   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
-
-   MasterCleanup(0);
-
-   return true;
-}
-
-
-bool bnet::TransportModule::ExecuteTiming(double* arguments)
-{
-   AllocResults(2);
-
-   fResults[0] = 0;
-   fResults[1] = 1;
-
-   double starttm = arguments[0];
-   int numtestbuf = lrint(arguments[1]);
-
-   if (Node()==0) {
-      DOUT0(("Send from first node to all other %d buffers", numtestbuf));
-      for (int k=0;k<numtestbuf;k++)
-        for (int node=1;node<NumNodes();node++)
-          Pool_Post(true, GetExclusiveIndx(), 0, node);
-   }
-
-   DOUT0(("Wait %4.2f s", starttm-fStamping()));
-
-   while (fStamping()<starttm);
-
-   if (Node()>0) {
-//      if (Node()==2) MicroSleep(100000);
-      for (int k=0;k<numtestbuf;k++)
-         Pool_Post(false, GetExclusiveIndx(), 0, 0);
-   }
-
-   double start(0), stop(0);
-
-   int noper = numtestbuf;
-   if (Node()==0) noper*=(NumNodes()-1);
-
-   double now = fStamping();
-
-   while ((noper > 0) && (now < starttm + 5.)) {
-      int res, resindx, resnode, reslid;
-      res = Pool_Check(resindx, reslid, resnode, 0.1);
-      now = fStamping();
-      if (res<0) return false;
-      if (res==0) continue;
-      noper--;
-      ReleaseExclusive(resindx);
-      if (start==0) start = now;
-      stop = now;
-   }
-
-   if (Node()>0)
-      DOUT0(("Start: %7.5f s  Full time = %7.5f s rate %5.1f MB/s", (start-starttm), (stop-start), numtestbuf*64.*1024./(stop-start)*1e-6));
-   else
-      DOUT0(("ExecuteTiming() done"));
-
-   return true;
 }
 
 
@@ -1508,60 +1262,6 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    return true;
 }
 
-bool bnet::TransportModule::MasterTestGPU(int bufsize, int testtime, bool testwrite, bool testread)
-{
-   // allocate 512 MB to exclude any cashing effects
-   int numbuffers = 512*1024*1024/bufsize;
-
-   if (!MasterCreatePool(numbuffers, bufsize)) return false;
-
-   double arguments[3];
-
-   arguments[0] = testtime; // how long
-   arguments[1] = testwrite ? 1 : 0;   // do writing
-   arguments[2] = testread ? 1 : 0;   // do reading
-
-   DOUT0(("========================================="));
-   DOUT0(("TestGPU size:%d write:%s read:%s", bufsize, DBOOL(testwrite), DBOOL(testread)));
-
-   if (!MasterCommandRequest(IBTEST_CMD_TESTGPU, arguments, sizeof(arguments))) return false;
-
-   if (!ExecuteTestGPU(arguments)) return false;
-
-   int setsize = 2;
-   double allres[setsize*NumNodes()];
-   for (int n=0;n<setsize*NumNodes();n++) allres[n] = 0.;
-
-   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
-
-//   DOUT((1,"Results of all-to-all test"));
-   DOUT0(("  # |      Node |   Write |   Read "));
-   double sum1(0.), sum2(0.);
-
-   for (int n=0;n<NumNodes();n++) {
-
-       DOUT0(("%3d |%10s | %7.1f | %7.1f",
-             n, dabc::mgr()->GetNodeName(n).c_str(),
-             allres[n*setsize+0], allres[n*setsize+1]));
-       sum1 += allres[n*setsize+0];
-       sum2 += allres[n*setsize+1];
-   }
-
-   DOUT0(("    |  Average  | %7.1f | %7.1f", sum1/NumNodes(), sum2/NumNodes()));
-
-   return MasterCommandRequest(IBTEST_CMD_TEST);
-}
-
-
-bool bnet::TransportModule::ExecuteTestGPU(double* arguments)
-{
-   AllocResults(2);
-
-   return true;
-}
-
-
-
 bool bnet::TransportModule::MasterAllToAll(int full_pattern,
                                         int bufsize,
                                         double duration,
@@ -1587,37 +1287,6 @@ bool bnet::TransportModule::MasterAllToAll(int full_pattern,
       allowed_to_skip = full_pattern / 10 > 0;
       pattern = pattern % 10;
    }
-
-   bool needmulticast = false; // (pattern==5) || (pattern==6) || (pattern==7);
-
-   if (needmulticast && !IsMulticastSupported()) {
-      EOUT(("Transport not supports multicast"));
-      return true;
-   }
-
-   // number of buffers just depends from buffer size and amount of memory which we want to use
-   // lets take 256 MB as magic number
-   // buffers can be distributed between sending and receiving equally
-
-   int numbuffers = fTestPoolSize*1024*1024 / bufsize;
-
-   if (!MasterCreatePool(numbuffers, bufsize)) return false;
-
-   if (needmulticast) {
-      if ((pattern==5) || (pattern==6) || (pattern==7)) {
-         if (!fromperfmtest || (fMultiQP==0))
-            if (!MasterInitMulticast(1, 2048, 20, 50)) return false;
-      } else {
-         // all nodes, except first can receive (and send) multicast messages
-         DOUT3(("First create multicast groups on nodes [%d, %d]",1, NumNodes()-1));
-         if (!MasterInitMulticast(1, 2048, 4, 20, 1, NumNodes()-1)) return false;
-         // first node will be able only to send multicasts
-         DOUT3(("Now create multicast sender on node 0"));
-         if (!MasterInitMulticast(2, 2048, 4, 20, 0, 0)) return false;
-         DOUT3(("Now multicast is prepared"));
-      }
-   }
-
 
    const char* pattern_name = "---";
    switch (pattern) {
@@ -1729,9 +1398,6 @@ bool bnet::TransportModule::MasterAllToAll(int full_pattern,
    totalskipped = totalskipped / sumcnt;
    if (totalskipped > 0.01) isskipok = false;
 
-   if (needmulticast && !fromperfmtest)
-      if (!MasterInitMulticast(0)) return false;
-
    AllocResults(8);
    fResults[0] = sum1send / sumcnt;
    fResults[1] = sum2recv / sumcnt;
@@ -1758,21 +1424,6 @@ bool bnet::TransportModule::MasterAllToAll(int full_pattern,
 
    return true;
 }
-
-
-bool bnet::TransportModule::MasterInitMulticast(
-                            int mode,
-                            int bufsize,
-                            int send_queue,
-                            int recv_queue,
-                            int firstnode,
-                            int lastnode)
-{
-   return false;
-}
-
-
-
 
 void bnet::TransportModule::ProcessAskQueue()
 {
@@ -1803,27 +1454,14 @@ void bnet::TransportModule::ProcessAskQueue()
         isanydata = true;
       }  // end of send complition part
 
-      // here a part where milticast data can be received
-      if (fMultiCQ && fMultiPool)
-         if (fMultiCQ->Poll()==1) {
-            isanydata = true;
-            int bufindx = fMultiCQ->arg() % 1000000;
-            ReleaseExclusive(bufindx, fMultiPool);
-
-            if (fMultiCQ->arg()>=1000000)
-               fMultiSendQueue--;
-            else
-               fMultiRecvQueue--;
-
-         }
    } while (isanydata && (fStamping()<tm+0.01));
 
 #endif
 
    AllocResults(3);
-   fResults[0] = fMultiQP ? fMultiSendQueue : 0;
-   fResults[1] = fMultiQP ? fMultiRecvQueue : 0;
-   fResults[2] = fMultiQP ? fMultiRecvQueue : 0;
+   fResults[0] =  0;
+   fResults[1] =  0;
+   fResults[2] =  0;
    fResults[0] += TotalSendQueue();
    fResults[1] += TotalRecvQueue();
 }
@@ -1837,8 +1475,6 @@ void bnet::TransportModule::MasterCleanup(int mainnode)
    for (int n=0;n<NumNodes()*setsize;n++)
       allres[n] = 0.;
 
-   long maxmultiqueue(0);
-
    double sumsend(0.), sumrecv(0.), summulti(0.);
 
    if (!MasterCommandRequest(IBTEST_CMD_ASKQUEUE)) return;
@@ -1851,8 +1487,6 @@ void bnet::TransportModule::MasterCleanup(int mainnode)
          sumsend  += allres[n*setsize];
          sumrecv  += allres[n*setsize + 1];
          summulti += allres[n*setsize + 2];
-         if (allres[n*setsize + 2] > maxmultiqueue)
-            maxmultiqueue = lrint(allres[n*setsize + 2]);
       }
 
    //       DOUT0(("Total Tm %5.1f Queue sizes %3.0f %3.0f", fStamping()-tm, sumsend, sumrecv));
@@ -1868,7 +1502,7 @@ void bnet::TransportModule::MasterCleanup(int mainnode)
 
       int64_t pars[2];
       pars[0] = mainnode;
-      pars[1] = maxmultiqueue;
+      pars[1] = 0;
 
       if (!MasterCommandRequest(IBTEST_CMD_CLEANUP, pars, sizeof(pars))) return;
 
@@ -1885,18 +1519,9 @@ void bnet::TransportModule::ProcessCleanup(int64_t* pars)
 {
 //   DOUT((1,"Start cleanup %8.0f %x", starttm, fPool));
 
-//   DOUT((0,"Start cleanup mcast send = %d recv = %d", fMultiSendQueue, fMultiRecvQueue));
-
    if (fPool==0) return;
 
-   int64_t mainnode = pars[0];
-   int64_t maxmultiqueue = pars[1];
-
-   int64_t multisend = 0;
-
-   // send 2 times more mcast packet then necessary
-   if ((fMultiKind / 10 == 1) && fMultiQP && (Node()==mainnode))
-      multisend = maxmultiqueue*2;
+   // int64_t mainnode = pars[0];
 
    double starttm = fStamping();
 
@@ -2028,24 +1653,7 @@ void bnet::TransportModule::ProcessCleanup(int64_t* pars)
             if (Pool_Post(false, resindx, lid, node)) recvoper[lid][node]--;
          }
 
-      if ((multisend>0) && (fMultiSendQueue<fMultiSendQueueSize)) {
-         int sendbufindx = GetExclusiveIndx(fMultiPool);
-         if (sendbufindx>=0) {
-            Pool_Post_Mcast(true, sendbufindx);
-            multisend--;
-         }
-      }
-
       // here a part where milticast data can be received
-      if (fMultiCQ && fMultiPool) {
-         int bufindx;
-         if (Pool_Check_Mcast(bufindx, 0.001)>0)
-            ReleaseExclusive(bufindx, fMultiPool);
-      }
-
-      if (fMultiCQ && fMultiPool)
-         is_ok = (fMultiSendQueue==0) && (fMultiRecvQueue==0);
-
       bool isownpending(false), isotherspending(false), iscontrolpending(false);
 
       for (int node=0;node<NumNodes();node++) {
@@ -2077,8 +1685,6 @@ void bnet::TransportModule::ProcessCleanup(int64_t* pars)
          }
    }
 
-//   DOUT0(("Stop cleanup mcast send = %d recv = %d", fMultiSendQueue, fMultiRecvQueue));
-
    for (int lid=0;lid<NumLids();lid++) {
       delete[] sendoper[lid];
       delete[] recvoper[lid];
@@ -2095,39 +1701,6 @@ void bnet::TransportModule::PerformTimingTest()
       else
          MasterTimeSync(false, 200, false);
    }
-}
-
-void bnet::TransportModule::PerformTestGPU()
-{
-   int buffersize = Cfg("TestBufferSize").AsInt(128*1024);
-   int testtime = Cfg("TestTime").AsInt(10);
-   bool testwrite = Cfg("TestWrite").AsBool(true);
-   bool testread = Cfg("TestRead").AsBool(true);
-
-   MasterTestGPU(buffersize, testtime, testwrite, testread);
-
-  for (int bufsize=4096; bufsize<=4096*1024; bufsize*=2) {
-//      MasterTestGPU(bufsize, 5., false, true);
-//      MasterTestGPU(bufsize, 5., true, false);
-      MasterTestGPU(bufsize, 5., true, true);
-  }
-
-}
-
-
-void bnet::TransportModule::PerformSingleRouteTest()
-{
-   DOUT0(("This is small suite to test single route performance"));
-
-   MasterAllToAll(15, 128*1024, 10., 1000., 5, 10);
-
-   MasterAllToAll(15, 1024*1024, 10., 1000., 5, 10);
-
-   MasterAllToAll(5, 128*1024, 10., 940., 5, 10);
-
-   MasterAllToAll(5, 128*1024, 10., 1900., 5, 10);
-
-   MasterAllToAll(5, 1024*1024, 10., 1945., 5, 10);
 }
 
 void bnet::TransportModule::PerformNormalTest()
@@ -2210,13 +1783,7 @@ void bnet::TransportModule::MainLoop()
       } else
       if (fTestKind == "TimeSync") {
          PerformTimingTest();
-      } else
-      if (fTestKind == "TestGPU") {
-         PerformTestGPU();
-      } else
-      if (fTestKind == "SingleRoute") {
-         PerformSingleRouteTest();
-      } else{
+      } else {
          PerformNormalTest();
       }
 

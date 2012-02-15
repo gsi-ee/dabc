@@ -80,23 +80,13 @@ class TransportModule : public dabc::ModuleSync {
       long               fTotalRecvQueue;
       long               fTotalNumBuffers;
 
-      TimeStamping       fStamping;
-
-      verbs::ComplQueue  *fMultiCQ;     // completion queue of multicast group
-      verbs::QueuePair   *fMultiQP;     // connection to multicastgroup
-      verbs::MemoryPool  *fMultiPool;   // memory pool of multicast group
-      int                fMultiBufferSize;  //!< requested size of buffers in the mcast pool (actual size can be bigger)
-      int                fMultiRecvQueueSize; // maximal number of items in multicast receive queue
-      int                fMultiRecvQueue;  // current number of items in multicast receive queue
-      int                fMultiSendQueueSize; // maximal size of send queue
-      int                fMultiSendQueue; // current size of send queue
-      int                fMultiKind;     // 0 - nothing, 1 - receiver, 10 -sender, 11 - both
+      TimeStamping       fStamping;     // copy of stamping from runnable
 
       dabc::Ratemeter*   fRecvRatemeter;
       dabc::Ratemeter*   fSendRatemeter;
       dabc::Ratemeter*   fWorkRatemeter;
 
-      double             fTrendingInterval;   //!< interval (in seconds) for send/recv rate trending
+      double            fTrendingInterval;   //!< interval (in seconds) for send/recv rate trending
 
       /** array indicating active nodes in the system,
        *  Accumulated in the beginning by the master and distributed to all other nodes.
@@ -133,18 +123,10 @@ class TransportModule : public dabc::ModuleSync {
       inline long TotalNumBuffers() const { return fTotalNumBuffers; }
 
       bool Pool_Post(bool issend, int bufindx, int lid, int nremote, int size = 0);
-      bool Pool_Post_Mcast(bool issend, int bufindx, int size = 0);
       verbs::ComplQueue* Pool_CQ_Check(bool &iserror, double waittime);
       int Pool_Check(int &bufindx, int& lid, int &nremote, double waittime, double fasttime = 0.);
-      int Pool_Check_Mcast(int &bufindx, double waittime, double fasttime = 0.);
-      bool IsMulticastSupported();
-
-      bool CreateQPs(void* data);
-      bool ConnectQPs(void* data);
-      bool CloseQPs();
 
       bool SlaveTimeSync(int64_t* cmddata);
-      bool CreateCommPool(int64_t* cmddata);
 
       int PreprocessSlaveCommand(dabc::Buffer& buf);
       bool ExecuteSlaveCommand(int cmdid);
@@ -163,17 +145,7 @@ class TransportModule : public dabc::ModuleSync {
 
       bool MasterCallExit();
 
-      bool MasterCreatePool(int numbuffers, int buffersize);
-
-      bool MasterTestGPU(int bufsize, int testtime, bool testwrite, bool testread);
-
       bool MasterTimeSync(bool dosynchronisation, int numcycles, bool doscaling = false);
-
-      bool MasterTiming();
-
-      bool ExecuteTestGPU(double* arguments);
-
-      bool ExecuteTiming(double* arguments);
 
       bool ExecuteAllToAll(double* arguments);
 
@@ -185,21 +157,12 @@ class TransportModule : public dabc::ModuleSync {
                           int max_recieving_queue,
                           bool fromperfmtest = false);
 
-      bool MasterInitMulticast(int mode,
-                               int bufsize = 2048,
-                               int send_queue = 5,
-                               int recv_queue = 15,
-                               int firstnode = -1,
-                               int lastnode = -1);
-
       void ProcessAskQueue();
 
       void MasterCleanup(int mainnode);
       void ProcessCleanup(int64_t* pars);
 
-      void PerformTestGPU();
       void PerformTimingTest();
-      void PerformSingleRouteTest();
       void PerformNormalTest();
 
    public:

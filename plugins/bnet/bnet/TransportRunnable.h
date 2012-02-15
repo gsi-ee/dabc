@@ -65,6 +65,9 @@ namespace bnet {
 
          void ChangeShift(double shift);
          void ChangeScale(double koef);
+
+         void GetCoeff(void* args) { ((double*) args)[0] = fTimeShift; ((double*) args)[1] = fTimeScale; }
+         void SetCoeff(void* args) { fTimeShift = ((double*) args)[0]; fTimeScale = ((double*) args)[1]; }
    };
 
    class TransportModule;
@@ -148,6 +151,7 @@ namespace bnet {
             cmd_CreateQP,   // create connection handles - queue pair in IB
             cmd_ConnectQP,  // create connection handles - queue pair in IB
             cmd_ConfigSync, // configure time sync parameters
+            cmd_GetSync,    // return sync coefficients from runnable
             cmd_CloseQP     // create connection handles - queue pair in IB
          };
 
@@ -222,6 +226,7 @@ namespace bnet {
          bool CreateQPs(void* recs, int recssize);
          bool ConnectQPs(void* recs, int recssize);
          bool ConfigSync(bool master, int nrepeat, bool dosync = false, bool doscale = false);
+         bool GetSync(TimeStamping& stamp);
 
          // method to submit time sync operation and wait until all are executed
          bool RunSyncLoop(bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat);

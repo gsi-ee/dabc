@@ -201,6 +201,10 @@ bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int
       case cmd_ConfigSync:
          return ExecuteConfigSync((int*)args);
 
+      case cmd_GetSync:
+         fStamping.GetCoeff(args);
+         return true;
+
       case cmd_CloseQP:
          return ExecuteCloseQPs();
 
@@ -572,6 +576,17 @@ bool bnet::TransportRunnable::ConfigSync(bool master, int nrepeat, bool dosync, 
    args[3] = doscale ? 1 : 0;
 
    return ExecuteCmd(cmd_ConfigSync, args, sizeof(args));
+}
+
+bool bnet::TransportRunnable::GetSync(TimeStamping& stamp)
+{
+   double args[2];
+
+   if (!ExecuteCmd(cmd_GetSync, args, sizeof(args))) return false;
+
+   stamp.SetCoeff(args);
+
+   return true;
 }
 
 
