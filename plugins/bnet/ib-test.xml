@@ -18,24 +18,20 @@
      </Run>
      <Application class="bnet::Application">
          <NetDevice value="dabc::SocketDevice"/>
-         <BufferSize value="200000"/>
+         <BufferSize value="65536"/>
+         <NumBuffers value="1024"/>
 
-      <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync, SingleRoute, TestGPU or NormalTest -->
-         <TestKind value="SimpleSync"/>
+      <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
+         <TestKind value="Normal"/>
          <TestReliable value="true"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
-         <TestTime value="20"/>
-         <TestWrite value="false"/>
-         <TestRead value="false"/>
-         <TestRate value="100"/>
-         <TestBufferSize value="65536"/>
-         <!--TestBufferSize value="524288"/-->
-         <TestPoolSize value="300"/>
+         <TestTime value="1.0"/>
+         <TestRate value="300"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
          <TestSchedule value=""/>
-         <TestTimeout value="20"/>
+         <TestTimeout value="10"/>
        </Application>
    </Context>
 </dabc>

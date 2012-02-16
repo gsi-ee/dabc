@@ -12,19 +12,6 @@
 #include "bnet/Schedule.h"
 #include "bnet/TransportRunnable.h"
 
-#ifdef WITH_VERBS
-#include "verbs/Context.h"
-#include "verbs/ComplQueue.h"
-#include "verbs/QueuePair.h"
-#include "verbs/MemoryPool.h"
-#else
-namespace verbs {
-   class ComplQueue;
-   class QueuePair;
-   class MemoryPool;
-}
-#endif
-
 struct ScheduleEntry {
     int    node;
     int    lid;
@@ -54,31 +41,20 @@ class TransportModule : public dabc::ModuleSync {
        *     */
       std::string         fTestKind;
 
-      /** Size of allocated memory pool in MiBytes, used in all-to-all tests */
-      long                fTestPoolSize;
-
       /** Name of the file with the schedule */
       std::string         fTestScheduleFile;
+
+      int                 fTestBufferSize;
 
       double* fResults;
 
       double fCmdDelay;
 
-#ifdef WITH_VERBS
-
-      verbs::ContextRef  fIbContext;
-
-#endif
-      verbs::ComplQueue* fCQ;                 //!< completion queue, for a moment single
-      verbs::QueuePair** fQPs[IBTEST_MAXLID]; //!< arrays of QueuePairs pointers, NumNodes X NumLids
-
-      verbs::MemoryPool* fPool;         //!< memory pool for tests
-      int                fBufferSize;   //!< requested size of buffers in the pool (actual size can be bigger)
       int               *fSendQueue[IBTEST_MAXLID];    // size of individual sending queue
       int               *fRecvQueue[IBTEST_MAXLID];    // size of individual receiving queue
       long               fTotalSendQueue;
       long               fTotalRecvQueue;
-      long               fTotalNumBuffers;
+      long               fTestNumBuffers;
 
       TimeStamping       fStamping;     // copy of stamping from runnable
 
@@ -100,7 +76,6 @@ class TransportModule : public dabc::ModuleSync {
       IBSchedule  fSendSch;
       IBSchedule  fRecvSch;
 
-
       int Node() const { return fNodeNumber; }
       int NumNodes() const { return fNumNodes; }
       int NumLids() const { return fNumLids; }
@@ -109,10 +84,6 @@ class TransportModule : public dabc::ModuleSync {
 
       void AllocResults(int size);
 
-      int GetExclusiveIndx(verbs::MemoryPool* pool = 0);
-      void* GetPoolBuffer(int indx, verbs::MemoryPool* pool = 0);
-      void ReleaseExclusive(int indx, verbs::MemoryPool* pool = 0);
-
       inline int SendQueue(int lid, int node) const { return (lid>=0) && (lid<NumLids()) && (node>=0) && (node<NumNodes()) && fSendQueue[lid] ? fSendQueue[lid][node] : 0; }
       inline int RecvQueue(int lid, int node) const { return (lid>=0) && (lid<NumLids()) && (node>=0) && (node<NumNodes()) && fRecvQueue[lid] ? fRecvQueue[lid][node] : 0; }
       int NodeSendQueue(int node) const;
@@ -120,18 +91,16 @@ class TransportModule : public dabc::ModuleSync {
 
       inline long TotalSendQueue() const { return fTotalSendQueue; }
       inline long TotalRecvQueue() const { return fTotalRecvQueue; }
-      inline long TotalNumBuffers() const { return fTotalNumBuffers; }
+      inline long TestNumBuffers() const { return fTestNumBuffers; }
 
-      bool Pool_Post(bool issend, int bufindx, int lid, int nremote, int size = 0);
-      verbs::ComplQueue* Pool_CQ_Check(bool &iserror, double waittime);
-      int Pool_Check(int &bufindx, int& lid, int &nremote, double waittime, double fasttime = 0.);
+      bool SubmitToRunnable(int recid, OperRec* rec);
+      int CheckCompletionQueue(double waittm);
 
       bool SlaveTimeSync(int64_t* cmddata);
 
       int PreprocessSlaveCommand(dabc::Buffer& buf);
       bool ExecuteSlaveCommand(int cmdid);
       void SlaveMainLoop();
-
 
       bool MasterCollectActiveNodes();
 
@@ -157,10 +126,10 @@ class TransportModule : public dabc::ModuleSync {
                           int max_recieving_queue,
                           bool fromperfmtest = false);
 
-      void ProcessAskQueue();
+      int ProcessAskQueue(void* tgt);
 
-      void MasterCleanup(int mainnode);
-      void ProcessCleanup(int64_t* pars);
+      bool MasterCleanup();
+      bool ProcessCleanup(int32_t* pars);
 
       void PerformTimingTest();
       void PerformNormalTest();

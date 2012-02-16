@@ -46,6 +46,8 @@ namespace bnet {
       void SetTarget(int node, int indx = 0) { tgtnode = node; tgtindx = indx; }
 
       void SetImmediateTime() { time = 0; }
+
+      void SetTime(double tm) { time = tm; }
    };
 
    class TimeStamping {

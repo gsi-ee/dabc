@@ -28,6 +28,9 @@ bnet::Application::Application() :
 
    CreatePar("NetDevice").DfltStr(dabc::typeSocketDevice);
 
+   CreatePar(dabc::xmlBufferSize).DfltInt(65536);
+   CreatePar(dabc::xmlNumBuffers).DfltInt(1000);
+
    CreatePar("TestKind").DfltStr("OnlyConnect");
    CreatePar("TestReliable").DfltBool(true);
 
@@ -63,8 +66,8 @@ bool bnet::Application::CreateAppModules()
    while (bufsize < connect_packet_size) bufsize*=2;
    dabc::mgr.CreateMemoryPool("BnetCtrlPool", bufsize, NumNodes() * 4, 2);
 
-   bufsize = Cfg("BufferSize").AsInt(65536);
-   int numbuf = Cfg("NumBuffers").AsInt(1024);
+   bufsize = Cfg(dabc::xmlBufferSize).AsInt(65536);
+   int numbuf = Cfg(dabc::xmlNumBuffers).AsInt(1024);
    dabc::mgr.CreateMemoryPool("BnetDataPool", bufsize, numbuf, 2);
 
    dabc::CmdCreateModule cmd("bnet::TransportModule", IBTEST_WORKERNAME, "IbTestThrd");

@@ -654,6 +654,7 @@ bool bnet::TransportRunnable::ReleaseRec(int recid)
    }
 
    fRecs[recid].kind = kind_None;
+   fRecs[recid].skind = skind_None;
 
    fRecs[recid].buf.Release();
 
@@ -692,11 +693,11 @@ int bnet::TransportRunnable::WaitCompleted(double tm)
 
    dabc::TimeStamp start = dabc::Now();
 
-   while (!start.Expired(tm)) {
+   do {
       dabc::LockGuard lock(fMutex);
       if (!fReplyedRecs.Empty())
          return fReplyedRecs.Pop();
-   }
+   } while ((tm>0) && !start.Expired(tm));
 
    return -1;
 }

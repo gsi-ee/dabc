@@ -28,7 +28,9 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    int nports = cmd.Field("NumPorts").AsInt(1);
 
    fTestKind = Cfg("TestKind", cmd).AsStdStr();
-   fTestPoolSize = Cfg("TestPoolSize", cmd).AsInt(250);
+
+   fTestBufferSize = Cfg(dabc::xmlBufferSize, cmd).AsInt(65536);
+   fTestNumBuffers = Cfg(dabc::xmlNumBuffers, cmd).AsInt(1000);
 
    CreatePoolHandle("BnetCtrlPool");
 
@@ -51,13 +53,11 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fCmdDelay = 0.;
 
    for (int n=0;n<IBTEST_MAXLID;n++) {
-      fQPs[n] = 0;
       fSendQueue[n] = 0;
       fRecvQueue[n] = 0;
    }
    fTotalSendQueue = 0;
    fTotalRecvQueue = 0;
-   fTotalNumBuffers = 0;
 
    for (int lid=0; lid < NumLids(); lid++) {
       fSendQueue[lid] = new int[NumNodes()];
@@ -68,11 +68,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
       }
    }
 
-
-   fCQ = 0;
-
-   fPool = 0;
-   fBufferSize = 0;
 
    fRecvRatemeter = 0;
    fSendRatemeter = 0;
@@ -161,24 +156,11 @@ void bnet::TransportModule::BeforeModuleStart()
    // set threads id to be able check correctness of calling
    fRunnable->SetThreadsIds(dabc::PosixThread::Self(), fRunThread->Id());
 
-
-#ifdef WITH_VERBS
-
-   if (!fIbContext.OpenVerbs(true)) {
-      EOUT(("Cannot open verbs context - exit"));
-      dabc::mgr.StopApplication();
-   }
-
-#endif
 }
 
 void bnet::TransportModule::AfterModuleStop()
 {
    DOUT2(("IbTestWorkerModule finished"));
-
-#ifdef WITH_VERBS
-   fIbContext.Release();
-#endif
 }
 
 int bnet::TransportModule::NodeSendQueue(int node) const
@@ -199,153 +181,67 @@ int bnet::TransportModule::NodeRecvQueue(int node) const
    return sum;
 }
 
-bool bnet::TransportModule::Pool_Post(bool issend, int bufindx, int lid, int nremote, int size)
+
+bool bnet::TransportModule::SubmitToRunnable(int recid, OperRec* rec)
 {
-#ifdef WITH_VERBS
-
-   if ((fPool==0) || (lid>=NumLids()) || (fQPs[lid]==0) || (fQPs[lid][nremote]==0) || (bufindx<0)) {
-
-      return false;
-   }
-
-   bool res = false;
-   // we expect maximum 1000000 buffers,
-   // we expect maximum 1000 nodes
-   // we expect maximum 100 lids
-
-   if ((bufindx>=1000000) || (nremote>=1000) || (lid>=100)) { EOUT(("Too large indexes !!!")); exit(5); }
-
-   uint64_t arg = bufindx + nremote*1000000LLU + lid*1000000000LLU + (issend ? 100000000000LLU : 0);
-
-   if (issend) {
-      if (size==0) size = fBufferSize;
-      struct ibv_send_wr* swr = fPool->GetSendWR(bufindx, size);
-      swr->wr_id = arg;
-      res = fQPs[lid][nremote]->Post_Send(swr);
-//      DOUT0(("Post send nremote %d buf %d swr %p ", nremote, bufindx, swr));
-
-   } else {
-      struct ibv_recv_wr* rwr = fPool->GetRecvWR(bufindx);
-      rwr->wr_id = arg;
-
-      res = fQPs[lid][nremote]->Post_Recv(rwr);
-
-//      DOUT0(("Post recv remote %d buf %d rwr %p ", nremote, bufindx, rwr));
-   }
-
-   if (res) {
-      if (issend) { fSendQueue[lid][nremote]++; fTotalSendQueue++; }
-             else { fRecvQueue[lid][nremote]++; fTotalRecvQueue++; }
-   }
-
-   return res;
-
-#endif
-
-   return true;
-}
-
-verbs::ComplQueue* bnet::TransportModule::Pool_CQ_Check(bool &iserror, double waittime)
-{
-   // returns CQ, which gets event, if nothing, return 0
-
-   iserror = false;
-   verbs::ComplQueue* cq = 0;
-   int res = 0;
-
-#ifdef WITH_VERBS
-
-   if (fCQ!=0) {
-      cq = fCQ;
-      if (TotalRecvQueue()+TotalSendQueue() > 0)
-         res = cq->Wait(waittime);
-      else
-         res = 0;
-   }
-
-#endif
-
-   iserror = (res==2);
-
-   return (res==1) ? cq : 0;
-}
-
-int bnet::TransportModule::Pool_Check(int &bufindx, int& lid, int &nremote, double waittime, double fasttime)
-{
-   // Returns: 0 - if nothing
-   //         -1 - if error
-   //          1 - when receiving is complete
-   //         10 - when sending is complete
-
-   bufindx = -1;
-   nremote = -1;
-   lid = -1;
-
-#ifdef WITH_VERBS
-
-   // bool iserror = false;
-   // verbs::ComplQueue* cq = Pool_CQ_Check(iserror, waittime);
-   // if (cq==0) return 0;
-   // if (iserror) return -1;
-
-   verbs::ComplQueue* cq = fCQ;
-   if (cq==0) return -1;
-
-   int res = cq->Wait(waittime, fasttime);
-
-   if (res==2) return -1;
-   if (res!=1) return 0;
-
-   uint64_t arg = cq->arg();
-
-   bufindx = arg % 1000000LLU;
-   nremote = (arg / 1000000LLU) % 1000;
-   lid = (arg / 1000000000LLU) % 100;
-
-   if ((nremote>=NumNodes()) || (lid>=NumLids())) {
-      EOUT(("Wrong result id buf:%d lid:%d node:%d", bufindx, lid, nremote));
+   if ((rec->tgtnode>=NumNodes()) || (rec->tgtindx>=NumLids())) {
+      EOUT(("Wrong record tgt lid:%d node:%d", rec->tgtindx, rec->tgtnode));
       exit(6);
    }
 
-   bool issend = (arg / 100000000000LLU) > 0;
+   switch (rec->kind) {
+      case kind_Send:
+         fSendQueue[rec->tgtindx][rec->tgtnode]++;
+         fTotalSendQueue++;
+         break;
+      case kind_Recv:
+         fRecvQueue[rec->tgtindx][rec->tgtnode]++;
+         fTotalRecvQueue++;
+         break;
+      default:
+         EOUT(("Wrong operation kind"));
+         break;
+   }
 
-   if (issend) { fSendQueue[lid][nremote]--; fTotalSendQueue--; }
-         else { fRecvQueue[lid][nremote]--; fTotalRecvQueue--; }
 
-   return issend ? 10 : 1;
+   if (!fRunnable->SubmitRec(recid)) {
+      EOUT(("Cannot submit receive operation to lid %d node %d", rec->tgtindx, rec->tgtnode));
+      return false;
+   }
 
-#endif
+   return true;
 
-   return 0;
 }
 
 
-
-int bnet::TransportModule::GetExclusiveIndx(verbs::MemoryPool* pool)
+int bnet::TransportModule::CheckCompletionQueue(double waittm)
 {
-   if (pool==0) pool = fPool;
-#ifdef WITH_VERBS
-   unsigned indx;
-   if (pool && pool->TakeRawBuffer(indx)) return indx;
-#endif
-   return -1;
-}
+   int recid = fRunnable->WaitCompleted(waittm);
 
-void* bnet::TransportModule::GetPoolBuffer(int indx, verbs::MemoryPool* pool)
-{
-   if (pool==0) pool = fPool;
-#ifdef WITH_VERBS
-   if (pool && (indx>=0)) return pool->GetSendBufferLocation(indx);
-#endif
-   return 0;
-}
+   OperRec* rec = fRunnable->GetRec(recid);
 
-void bnet::TransportModule::ReleaseExclusive(int indx, verbs::MemoryPool* pool)
-{
-   if (pool==0) pool = fPool;
-#ifdef WITH_VERBS
-   if (pool && (indx>=0)) pool->ReleaseRawBuffer(indx);
-#endif
+   if (rec!=0) {
+      if ((rec->tgtnode>=NumNodes()) || (rec->tgtindx>=NumLids())) {
+         EOUT(("Wrong result id lid:%d node:%d", rec->tgtindx, rec->tgtnode));
+         exit(6);
+      }
+
+      switch (rec->kind) {
+         case kind_Send:
+            fSendQueue[rec->tgtindx][rec->tgtnode]--;
+            fTotalSendQueue--;
+            break;
+         case kind_Recv:
+            fRecvQueue[rec->tgtindx][rec->tgtnode]--;
+            fTotalRecvQueue--;
+            break;
+         default:
+            EOUT(("Wrong operation kind"));
+            break;
+      }
+   }
+
+   return recid;
 }
 
 
@@ -374,7 +270,10 @@ bool bnet::TransportModule::MasterCommandRequest(int cmdid, void* cmddata, int c
     // each slave how long it should be delayed
 
    // if module not working, do not try to do anything else
-   if (!ModuleWorking(0.)) return false;
+   if (!ModuleWorking(0.)) {
+      DOUT0(("Command %d cannot be executed - module is not active", cmdid));
+      return false;
+   }
 
    bool incremental_data = false;
    if (cmddatasize<0) {
@@ -610,9 +509,6 @@ int bnet::TransportModule::PreprocessSlaveCommand(dabc::Buffer& buf)
    switch (cmdid) {
       case IBTEST_CMD_TEST:
 
-#ifdef WITH_VERBS
-         if (fCQ) fCQ->AcknoledgeEvents();
-#endif
          cmd_res = true;
          break;
 
@@ -654,12 +550,17 @@ int bnet::TransportModule::PreprocessSlaveCommand(dabc::Buffer& buf)
          cmd_res = fRunnable->ConnectQPs(fCmdDataBuffer, fCmdDataSize);
          break;
 
+      case IBTEST_CMD_CLEANUP:
+         cmd_res = ProcessCleanup((int32_t*)fCmdDataBuffer);
+         break;
+
       case IBTEST_CMD_CLOSEQP:
          cmd_res = fRunnable->CloseQPs();
          break;
 
       case IBTEST_CMD_ASKQUEUE:
-         ProcessAskQueue();
+         msg->cmddatasize = ProcessAskQueue(msg->cmddata());
+         sendpacketsize += msg->cmddatasize;
          cmd_res = true;
          break;
 
@@ -698,10 +599,6 @@ bool bnet::TransportModule::ExecuteSlaveCommand(int cmdid)
          fRunThread->Join();
 
          dabc::mgr.StopApplication();
-         break;
-
-      case IBTEST_CMD_CLEANUP:
-         ProcessCleanup((int64_t*)fCmdDataBuffer);
          break;
 
       case IBTEST_CMD_ALLTOALL:
@@ -808,13 +705,13 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    double ratemeterinterval = arguments[8];
    bool canskipoperation = arguments[9] > 0;
 
-   const unsigned gpuqueuesize(50); // queue which is prepared for IB operation
-   bool dogpuwrite = arguments[10] > 0;
-   bool dogpuread = arguments[11] > 0;
-
    // when receive operation should be prepared before send is started
    // we believe that 100 microsec is enough
    double recv_pre_time = 0.0001;
+
+   // this is time required to deliver operation to the runnable
+   // 0.5 ms should be enough
+   double submit_pre_time = 0.0005;
 
    AllocResults(14);
 
@@ -938,7 +835,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    if (patternid==6) // disable receive operation 1->0 to check that rest data will be transformed
       for (int nslot=0; nslot<fRecvSch.numSlots(); nslot++)
          if (fRecvSch.Item(nslot, 0).node == 1) {
-            // DOUT0(("Disable recv operation 1->0"));
+            DOUT0(("Disable recv operation 1->0"));
             fRecvSch.Item(nslot, 0).Reset();
           }
 
@@ -948,13 +845,13 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    bool dosending = fSendSch.ShiftToNextOperation(Node(), send_basetm, send_slot);
    bool doreceiving = fRecvSch.ShiftToNextOperation(Node(), recv_basetm, recv_slot);
 
-   int send_total_limit = TotalNumBuffers();
-   int recv_total_limit = TotalNumBuffers();
+   int send_total_limit = TestNumBuffers();
+   int recv_total_limit = TestNumBuffers();
 
    // gave most buffers for receiving
    if (dosending && doreceiving) {
-      send_total_limit = TotalNumBuffers() / 10 - 1;
-      recv_total_limit = TotalNumBuffers() / 10 * 9 - 1;
+      send_total_limit = TestNumBuffers() / 10 - 1;
+      recv_total_limit = TestNumBuffers() / 10 * 9 - 1;
    }
 
 //   if (IsMaster()) {
@@ -962,13 +859,11 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 //      fRecvSch.Print(0);
 //   }
 
-   int res, resindx, resnode, reslid;
-
    dabc::Average send_start, send_compl, recv_compl, loop_time;
 
    double lastcmdchecktime = fStamping();
 
-   DOUT2(("ExecuteAllToAll: Prepare first operations dosend %s dorecv %s remains: %5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
+   DOUT0(("ExecuteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
 
    // counter for must have send operations over each channel
    IbTestIntMatrix sendcounter(NumLids(), NumNodes());
@@ -978,10 +873,6 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
    // number of recv skip operations one should do
    IbTestIntMatrix recvskipcounter(NumLids(), NumNodes());
-
-   dabc::Queue<int> gpu_read(gpuqueuesize);
-   dabc::Queue<int> gpu_write(gpuqueuesize);
-
 
    sendcounter.Fill(0);
    recvcounter.Fill(-1);
@@ -1004,8 +895,9 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    double cq_waittime = 0.;
    if (patternid==-2) cq_waittime = 0.001;
 
-   if (dogpuwrite>0 || dogpuread>0)
-      DOUT0(("ExecuteAllToAll: Entering main loop, remains: %5.3fs", starttime - fStamping()));
+   int recid(-1);
+   OperRec* rec(0);
+
 
    while ((curr_tm=fStamping()) < stoptime) {
 
@@ -1016,81 +908,72 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
       // just indicate that we were active at this time interval
       if (fWorkRatemeter) fWorkRatemeter->Packet(1, curr_tm);
 
-      res = Pool_Check(resindx, reslid, resnode, cq_waittime);
+      recid = CheckCompletionQueue(cq_waittime);
 
-//      bool wascompletion = false;
+      rec = fRunnable->GetRec(recid);
 
-      if (res<0) {
-         EOUT(("Error when Pool_Check"));
-         break;
-      } else
-      if (res==1) { // start of receiving part
-//          wascompletion = true;
-          double* mem = (double*) GetPoolBuffer(resindx);
-          double sendtime = *mem++;
-          int sendcnt = (int) *mem++;
+      if (rec!=0) {
+         switch (rec->kind) {
+            case kind_Send: {
+               double sendtime(0);
+               rec->buf.CopyTo(&sendtime, sizeof(sendtime));
+               numcomplsend++;
 
-//          if (sendcnt!=recvcounter[resnode]+1)
-//             EOUT(("Receive error: source:%d last pkt:%ld  curr:%ld diff:%ld",resnode, recvcounter[resnode], sendcnt, sendcnt-recvcounter[resnode]));
+               double sendcompltime = fStamping();
 
-          int lost = sendcnt - recvcounter(reslid, resnode) - 1;
-          if (lost>0) {
-             numlostpackets += lost;
-             recvskipcounter(reslid, resnode) += lost;
-          }
+               send_compl.Fill(sendcompltime - sendtime);
 
-          recvcounter(reslid, resnode) = sendcnt;
+               sendrate.Packet(bufsize, sendcompltime);
 
-          double recv_time = fStamping();
+               if (fSendRatemeter) fSendRatemeter->Packet(bufsize, sendcompltime);
+               break;
+            }
+            case kind_Recv: {
+               double mem[2] = {0., 0.};
+               rec->buf.CopyTo(mem, sizeof(mem));
+               double sendtime = mem[0];
+               int sendcnt = (int) mem[1];
 
-          recv_compl.Fill(recv_time - sendtime);
+               int lost = sendcnt - recvcounter(rec->tgtindx, rec->tgtnode) - 1;
+               if (lost>0) {
+                  numlostpackets += lost;
+                  recvskipcounter(rec->tgtindx, rec->tgtnode) += lost;
+               }
 
-          recvrate.Packet(bufsize, recv_time);
-          if ((fIndividualRates!=0) && (fIndividualRates[resnode]!=0))
-             fIndividualRates[resnode]->Packet(bufsize, recv_time);
+               recvcounter(rec->tgtindx, rec->tgtnode) = sendcnt;
 
-          if (fRecvRatemeter) fRecvRatemeter->Packet(bufsize, recv_time);
+               double recv_time = fStamping();
 
-          totalrecvpackets++;
-          last_recv_tm = recv_time;
+               recv_compl.Fill(recv_time - sendtime);
 
-          if (dogpuwrite>0) {
-             if (gpu_write.Full()) {
-                ReleaseExclusive(resindx);
-                EOUT(("No more place in gpu_write queue"));
-             } else
-                gpu_write.Push(resindx);
-          } else {
-             ReleaseExclusive(resindx);
-          }
-      } else      // end of receiving part
-      if (res==10) {
-//         wascompletion = true;
-         double* mem = (double*) GetPoolBuffer(resindx);
-         double sendtime = *mem;
-         numcomplsend++;
+               recvrate.Packet(bufsize, recv_time);
+               if ((fIndividualRates!=0) && (fIndividualRates[rec->tgtnode]!=0))
+                  fIndividualRates[rec->tgtnode]->Packet(bufsize, recv_time);
 
-         double sendcompltime = fStamping();
+               if (fRecvRatemeter) fRecvRatemeter->Packet(bufsize, recv_time);
 
-         send_compl.Fill(sendcompltime - sendtime);
+               totalrecvpackets++;
+               last_recv_tm = recv_time;
+               break;
+            }
+            default:
+               EOUT(("Wrong operation kind"));
+               break;
+         }
 
-         sendrate.Packet(bufsize, sendcompltime);
-
-         if (fSendRatemeter) fSendRatemeter->Packet(bufsize, sendcompltime);
-
-         ReleaseExclusive(resindx);
-      }  // end of send completion part
-
+         // buffer will be released as well
+         fRunnable->ReleaseRec(recid);
+      }
 
       // this is submit of recv operation
 
       if (doreceiving && (TotalRecvQueue() < recv_total_limit)) {
 
-         double next_recv_time = recv_basetm + fRecvSch.timeSlot(recv_slot);
+         double next_recv_time = recv_basetm + fRecvSch.timeSlot(recv_slot) - recv_pre_time;
 
          curr_tm = fStamping();
 
-         if (next_recv_time - recv_pre_time < curr_tm) {
+         if (next_recv_time - submit_pre_time < curr_tm) {
             int node = fRecvSch.Item(recv_slot, Node()).node;
             int lid = fRecvSch.Item(recv_slot, Node()).lid;
             bool did_submit = false;
@@ -1102,13 +985,28 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
                did_submit = true;
             } else
             if (RecvQueue(lid, node) < max_receiving_queue) {
-               int recvbufindx = GetExclusiveIndx();
-               if (recvbufindx<0) {
+
+               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+               if (buf.null()) {
                   EOUT(("Not enough buffers"));
                   return false;
                }
 
-               if (!Pool_Post(false, recvbufindx, lid, node)) {
+               // DOUT0(("Submit recv operation for buffer %u", buf.GetTotalSize()));
+
+               recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
+               rec = fRunnable->GetRec(recid);
+
+               if (rec==0) {
+                  EOUT(("Cannot prepare recv operation"));
+                  return false;
+               }
+
+               rec->SetTarget(node, lid);
+               rec->SetTime(next_recv_time);
+
+               if (!SubmitToRunnable(recid,rec)) {
                   EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
                   return false;
                }
@@ -1135,7 +1033,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
          curr_tm = fStamping();
 
-         if ((next_send_time < curr_tm) && (curr_tm<stoptime-0.1)) {
+         if ((next_send_time - submit_pre_time < curr_tm) && (curr_tm<stoptime-0.1)) {
 
             int node = fSendSch.Item(send_slot, Node()).node;
             int lid = fSendSch.Item(send_slot, Node()).lid;
@@ -1147,28 +1045,39 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
             } else
             if ( (SendQueue(lid, node) < max_sending_queue) && (TotalSendQueue() < 2*max_sending_queue) ) {
 
-               int sendbufindx = -1;
+               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
 
-               if (dogpuread>0) {
-                  if (!gpu_read.Empty())
-                     sendbufindx = gpu_read.Pop();
-                  else
-                     EOUT(("No enough buffers in gpu_read queue"));
-               } else
-                  sendbufindx = GetExclusiveIndx();
-               if (sendbufindx<0) {
+               if (buf.null()) {
                   EOUT(("Not enough buffers"));
-                  break;
+                  return false;
                }
-               double* mem = (double*) GetPoolBuffer(sendbufindx);
-               *mem = curr_tm;
-               mem++; *mem = sendcounter(lid,node);
+
+               // DOUT0(("Submit send operation for buffer %u", buf.GetTotalSize()));
+
+               double mem[2] = { curr_tm, sendcounter(lid,node) };
+               buf.CopyFrom(mem, sizeof(mem));
+
+               recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), buf);
+               rec = fRunnable->GetRec(recid);
+
+               if (rec==0) {
+                  EOUT(("Cannot prepare send operation"));
+                  return false;
+               }
+
+               TransportHeader* hdr = (TransportHeader*) rec->header;
+               hdr->srcid = Node();    // source node id
+               hdr->tgtid = node;      // target node id
+               hdr->eventid = 123456;  // event id
 
                send_start.Fill(curr_tm - next_send_time);
 
-               if (!Pool_Post(true, sendbufindx, lid, node, bufsize)) {
-                  EOUT(("ExecuteAllToAll cannot send to lid %d node %d", lid, node));
-                  break;
+               rec->SetTarget(node, lid);
+               rec->SetTime(next_send_time);
+
+               if (!SubmitToRunnable(recid,rec)) {
+                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  return false;
                }
 
                numsendpackets++;
@@ -1314,7 +1223,7 @@ bool bnet::TransportModule::MasterAllToAll(int full_pattern,
    }
 
 
-   double arguments[12];
+   double arguments[10];
 
    arguments[0] = bufsize;
    arguments[1] = NumNodes();
@@ -1326,11 +1235,6 @@ bool bnet::TransportModule::MasterAllToAll(int full_pattern,
    arguments[7] = datarate;
    arguments[8] = fTrendingInterval; // interval for ratemeter, 0 - off
    arguments[9] = allowed_to_skip ? 1 : 0;
-   arguments[10] = Cfg("TestWrite").AsBool(false) ? 1 : 0;
-   arguments[11] = Cfg("TestRead").AsBool(false) ? 1 : 0;
-
-   // shift start/stop time for 3 seconds, when GPU is used - buffers registrations takes too much time
-   if ((arguments[10]>0) || (arguments[11]>0)) { arguments[4]+=3.; arguments[5]+=3.; }
 
    DOUT0(("====================================="));
    DOUT0(("%s pattern:%d size:%d rate:%d send:%d recv:%d nodes:%d canskip:%s",
@@ -1393,7 +1297,7 @@ bool bnet::TransportModule::MasterAllToAll(int full_pattern,
       DOUT0(("Multicast %4.0f/%4.0f = %7.6f%s  Rate = %4.1f",
          totalmultilost, totalmulti, totalmultilost/totalmulti*100., "%", sum3multi/sumcnt));
 
-   MasterCleanup(0);
+   MasterCleanup();
 
    totalskipped = totalskipped / sumcnt;
    if (totalskipped > 0.01) isskipok = false;
@@ -1425,270 +1329,186 @@ bool bnet::TransportModule::MasterAllToAll(int full_pattern,
    return true;
 }
 
-void bnet::TransportModule::ProcessAskQueue()
+int bnet::TransportModule::ProcessAskQueue(void* tgt)
 {
    // method is used to calculate how many queues entries are existing
 
-#ifdef WITH_VERBS
+   dabc::TimeStamp tm = dabc::Now();
 
-   int resindx, resnode, reslid, res;
+   while (!tm.Expired(0.01)) {
+      int recid = CheckCompletionQueue(0.);
+      if (recid<0) break;
+      fRunnable->ReleaseRec(recid);
+   }
+   int32_t* mem = (int32_t*) tgt;
+   for(int node=0;node<NumNodes();node++)
+      for(int nlid=0;nlid<NumLids();nlid++) {
+         *mem++ = SendQueue(nlid, node);
+         *mem++ = RecvQueue(nlid, node);
+      }
 
-   bool isanydata = false;
-
-   double tm = fStamping();
-
-   do {
-
-      isanydata = false;
-      res = Pool_Check(resindx, reslid, resnode, 0.001);
-
-      if (res<0) {
-           EOUT(("Error when Pool_Check"));
-      } else
-      if (res==1) { // start of receiving part
-         ReleaseExclusive(resindx);
-         isanydata = true;
-      } else      // end of receiving part
-      if (res==10) {
-        ReleaseExclusive(resindx);
-        isanydata = true;
-      }  // end of send complition part
-
-   } while (isanydata && (fStamping()<tm+0.01));
-
-#endif
-
-   AllocResults(3);
-   fResults[0] =  0;
-   fResults[1] =  0;
-   fResults[2] =  0;
-   fResults[0] += TotalSendQueue();
-   fResults[1] += TotalRecvQueue();
+   return NumNodes()*NumLids()*2*sizeof(int32_t);
 }
 
-void bnet::TransportModule::MasterCleanup(int mainnode)
+bool bnet::TransportModule::MasterCleanup()
 {
    double tm = fStamping();
 
-   int setsize = 3;
-   double allres[NumNodes()*setsize];
-   for (int n=0;n<NumNodes()*setsize;n++)
-      allres[n] = 0.;
+   int blocksize = NumNodes()*NumLids()*2*sizeof(uint32_t);
 
-   double sumsend(0.), sumrecv(0.), summulti(0.);
+   void* recs = malloc(NumNodes() * blocksize);
+   memset(recs, 0, NumNodes() * blocksize);
 
-   if (!MasterCommandRequest(IBTEST_CMD_ASKQUEUE)) return;
+   // own records will be add automatically
+   if (!MasterCommandRequest(IBTEST_CMD_ASKQUEUE, 0, 0, recs, blocksize)) {
+      EOUT(("Cannot collect queue sizes"));
+      free(recs);
+      return false;
+   }
 
-   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return;
+   // now we should resort connection records, loop over targets
 
-   for (int n=0;n<NumNodes();n++)
-      if (fActiveNodes[n]) {
-         // DOUT0(("   Node %d send %3.0f recv %3.0f", n, allres[n*setsize], allres[n*setsize + 1]));
-         sumsend  += allres[n*setsize];
-         sumrecv  += allres[n*setsize + 1];
-         summulti += allres[n*setsize + 2];
+   DOUT0(("First collect all queue sizes"));
+
+   void* conn = malloc(NumNodes() * blocksize);
+   memset(conn, 0, NumNodes()*blocksize);
+
+   int32_t* src = (int32_t*) recs;
+   int32_t* tgt = (int32_t*) conn;
+
+   int allsend(0), allrecv(0);
+
+   for(int node1=0;node1<NumNodes();node1++)
+      for (int node2=0;node2<NumNodes();node2++)
+         for(int nlid=0;nlid<NumLids();nlid++) {
+            int tgtindx = node1*NumNodes()*NumLids()*2 + node2*NumLids()*2 + nlid*2;
+            int srcindx = node2*NumNodes()*NumLids()*2 + node1*NumLids()*2 + nlid*2;
+            // send operation, which should be executed from node1 -> node2
+            tgt[tgtindx] = src[srcindx + 1];
+            // recv operation, which should be executed on node1 for node2
+            tgt[tgtindx + 1] = src[srcindx];
+
+            allsend += tgt[tgtindx];
+            allrecv += tgt[tgtindx + 1];
       }
 
-   //       DOUT0(("Total Tm %5.1f Queue sizes %3.0f %3.0f", fStamping()-tm, sumsend, sumrecv));
 
-   if (sumsend<0) {
-      EOUT(("!!! PROBLEM with QUEUES !!!!"));
-      for (int lid=0; lid<NumLids(); lid++)
-         for(int n=1;n<NumNodes();n++)
-            EOUT(("To node (%d,%d) send queue %d",lid, n, SendQueue(lid, n)));
-   }
+   DOUT0(("All send %d and recv %d operation", allsend, allrecv));
 
-   if ((sumsend!=0.) || (sumrecv!=0.)) {
+   bool res(true);
+   if ((allsend!=0) || (allrecv!=0))
+       res = MasterCommandRequest(IBTEST_CMD_CLEANUP, conn, -blocksize);
 
-      int64_t pars[2];
-      pars[0] = mainnode;
-      pars[1] = 0;
+   free(recs);
 
-      if (!MasterCommandRequest(IBTEST_CMD_CLEANUP, pars, sizeof(pars))) return;
-
-      ProcessCleanup(pars);
-   }
+   free(conn);
 
    // for syncronisation
-   if (!MasterCommandRequest(IBTEST_CMD_TEST)) return;
+   if (!MasterCommandRequest(IBTEST_CMD_TEST)) res = false;
 
-   DOUT0(("Queues are cleaned in %5.4f s", fStamping() - tm));
+   DOUT0(("Queues are cleaned in %5.4f s res = %s", fStamping() - tm, DBOOL(res)));
+
+   return res;
 }
 
-void bnet::TransportModule::ProcessCleanup(int64_t* pars)
+bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
 {
-//   DOUT((1,"Start cleanup %8.0f %x", starttm, fPool));
+   dabc::TimeStamp tm = dabc::Now();
 
-   if (fPool==0) return;
+   int recid(-1);
+   OperRec* rec(0);
+   int maxqueue(5);
 
-   // int64_t mainnode = pars[0];
+   // execute at maximum 7 seconds
+   while (!tm.Expired(7.)) {
+      recid = CheckCompletionQueue(0.001);
 
-   double starttm = fStamping();
+      rec = fRunnable->GetRec(recid);
 
-   std::vector<double> needsendinfo;
-   needsendinfo.resize(NumNodes(), starttm);
-   std::vector<bool>  needrecvinfo; // indicates if we should recv info from nodes
-   needrecvinfo.resize(NumNodes(), true);
-
-   WorkerSleep(0.001);
-//   DOUT((1,"Cleaned queues"));
-
-   int res, resindx, resnode, reslid;
-
-
-   int* sendoper[IBTEST_MAXLID];
-   int* recvoper[IBTEST_MAXLID];
-   for (int lid=0;lid<NumLids();lid++) {
-      sendoper[lid] = new int[NumNodes()];
-      recvoper[lid] = new int[NumNodes()];
-      for (int node=0;node<NumNodes();node++) {
-         sendoper[lid][node] = 0;
-         recvoper[lid][node] = 0;
-      }
-   }
-
-   bool is_ok = false;
-
-   double now = fStamping();
-
-   // Main loop, not more than 7.5 sec
-   while ((now = fStamping()) < starttm + 7.5) {
-
-      res = Pool_Check(resindx, reslid, resnode, 0.001);
-
-      if (res==1) {
-         // process recv compl event
-         int* mem = (int*) GetPoolBuffer(resindx);
-         if ((reslid==0) && (*mem++==-7654321)) {
-            if (!needrecvinfo[resnode]) EOUT(("We do not want to recv info from node %d", resnode));
-
-            DOUT3(("Get cleanup info from node %d", resnode));
-            for (int lid=0; lid<NumLids(); lid++)
-               sendoper[lid][resnode] = *mem++;
-            for (int lid=0; lid<NumLids(); lid++)
-               recvoper[lid][resnode] = *mem++;
-
-            needrecvinfo[resnode] = *mem++ > 0;
-         }
-
-         // if still necessary packet does not arrives, resubmit packet for waiting
-         if ((reslid==0) && needrecvinfo[resnode] && (RecvQueue(0, resnode)==0))
-            Pool_Post(false, resindx, 0, resnode);
-         else
-            ReleaseExclusive(resindx);
-      } else
-      if (res==10) {
-         // process send complition event
-         ReleaseExclusive(resindx);
-      } else
-      if (res<0) {
-         EOUT(("Problem in Pool_Check"));
+      if (rec!=0) {
+         // buffer will be released as well
+         fRunnable->ReleaseRec(recid);
       }
 
-      // prepare buffers (if necessary) to recieve info from other nodes
-      // it is enough to receive one buffer per remote node, which contains all queues for all lids
+      bool isany = false;
+
       for (int node=0;node<NumNodes();node++)
-         if ((node!=Node()) && needrecvinfo[node] && (RecvQueue(0, node)==0) && fActiveNodes[node]) {
-            resindx = GetExclusiveIndx();
-            if (resindx<0) break;
-
-            DOUT3(("Post buffer for recv cleanup info from node %d", node));
-            Pool_Post(false, resindx, 0, node);
-         }
-
-
-      // now send packet, which inform how many data is required
-      for (int node=0;node<NumNodes();node++) {
-         if ((node==Node()) || !fActiveNodes[node] || !needsendinfo[node]) continue;
-
-         if ((needsendinfo[node] <= 0.) || (needsendinfo[node] > now)) continue;
-
-         // receiver should itself clear first lid queue until we send any info to it
-         if (SendQueue(0, node) > 0) continue;
-
-         resindx = GetExclusiveIndx();
-         if (resindx<0) break;
-
-         int* mem = (int*) GetPoolBuffer(resindx);
-         *mem++ = -7654321;
-
-         // one need to send one buffer less for lid==0 while we should receive this buffer automatically with cleanup info
-         for (int lid=0;lid<NumLids();lid++)
-            *mem++ = RecvQueue(lid, node) - ((lid==0) && needrecvinfo[node] ? 1 : 0);
-         // we also send how many items in the send queue, can be that receiver does not submit them
-
-         bool issendagain = false;
          for (int lid=0;lid<NumLids();lid++) {
-            *mem++ = SendQueue(lid, node);
-            if (SendQueue(lid, node)>0) issendagain = true;
+            int* entry = pars + node*NumLids()*2 + lid*2;
+
+            if ((entry[0]>0) || (entry[1]>0)) isany = true;
+
+            if ((entry[0]>0) && (SendQueue(lid,node)<maxqueue)) {
+               // perform send operation
+               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+               if (buf.null()) {
+                  EOUT(("Not enough buffers"));
+                  return false;
+               }
+
+               recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), buf);
+               rec = fRunnable->GetRec(recid);
+
+               if (rec==0) {
+                  EOUT(("Cannot prepare send operation"));
+                  return false;
+               }
+
+               TransportHeader* hdr = (TransportHeader*) rec->header;
+               hdr->srcid = Node();    // source node id
+               hdr->tgtid = node;      // target node id
+               hdr->eventid = 123456;  // event id
+
+               rec->SetTarget(node, lid);
+               rec->SetImmediateTime();
+
+               if (!SubmitToRunnable(recid,rec)) {
+                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  return false;
+               }
+
+               entry[0]--;
+            }
+
+            if ((entry[1]>0) && (RecvQueue(lid,node)<maxqueue)) {
+               // perform recv operation
+
+               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+               if (buf.null()) {
+                  EOUT(("Not enough buffers"));
+                  return false;
+               }
+
+               recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
+               rec = fRunnable->GetRec(recid);
+
+               if (rec==0) {
+                  EOUT(("Cannot prepare recv operation"));
+                  return false;
+               }
+
+               rec->SetTarget(node, lid);
+               rec->SetImmediateTime();
+
+               if (!SubmitToRunnable(recid,rec)) {
+                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  return false;
+               }
+
+               entry[1]--;
+            }
          }
 
-         // inform other side that we repeat sending again
-         *mem++ = issendagain ? 1 : 0;
-
-         DOUT3(("Send cleanup info to node %d", node));
-         Pool_Post(true, resindx, 0, node);
-
-         // repeat operation after 0.1 sec to ensure that everything went well
-         needsendinfo[node] = issendagain ? (fStamping() + 0.1) : 0.;
-      }
-
-      // send data to other nodes
-      for (int lid=0;lid<NumLids(); lid++)
-         for (int node=0;node<NumNodes();node++) {
-            if ((node==Node()) || (SendQueue(lid,node)>0) || (sendoper[lid][node]<=0)) continue;
-            resindx = GetExclusiveIndx();
-            if (resindx<0) break; // one need many buffers, therefore it is not that bad
-            int* mem = (int*) GetPoolBuffer(resindx);
-            *mem = 55555; // do not missup other nodes
-            if (Pool_Post(true, resindx, lid, node)) sendoper[lid][node]--;
-         }
-
-      // receive data from other nodes
-      for (int lid=0;lid<NumLids(); lid++)
-         for (int node=0;node<NumNodes();node++) {
-            if ((node==Node()) || (RecvQueue(lid,node)>0) || (recvoper[lid][node]==0)) continue;
-            resindx = GetExclusiveIndx();
-            if (resindx<0) break; // one need many buffers, therefore it is not that bad
-            if (Pool_Post(false, resindx, lid, node)) recvoper[lid][node]--;
-         }
-
-      // here a part where milticast data can be received
-      bool isownpending(false), isotherspending(false), iscontrolpending(false);
-
-      for (int node=0;node<NumNodes();node++) {
-         if ((node==Node()) || !fActiveNodes[node]) continue;
-         if (needrecvinfo[node] || (needsendinfo[node]>0.)) iscontrolpending = true;
-
-         for (int lid=0;lid<NumLids(); lid++) {
-            if ((RecvQueue(lid,node)>0) || (SendQueue(lid,node)>0)) isownpending = true;
-            if ((sendoper[lid][node]>0) || (recvoper[lid][node]>0)) isotherspending = true;
-         }
-      }
-
-      is_ok = !isownpending && !isotherspending && !iscontrolpending;
-
-      if (is_ok) {
-        DOUT2(("Cleanup finished after %5.4f s", fStamping()-starttm));
-        break;
-      }
+      // no any operation to execute
+      if (!isany && (TotalSendQueue()==0) && (TotalRecvQueue()==0)) break;
    }
 
-   if (!is_ok) {
-      EOUT(("Cleanup broken"));
-      for (int lid=0;lid<NumLids(); lid++)
-         for (int node=0;node<NumNodes();node++) {
-            if ((node==Node()) || !fActiveNodes[node]) continue;
-            if ((RecvQueue(lid,node)>0) || (SendQueue(lid,node)>0) || (sendoper[lid][node]>0) || (recvoper[lid][node]>0))
-               DOUT3(("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d sendoper = %d recvoper = %d",
-                  lid, node, RecvQueue(lid,node), SendQueue(lid,node), sendoper[lid][node], recvoper[lid][node]));
-         }
-   }
+   if ((TotalSendQueue()!=0) || (TotalRecvQueue()!=0))
+      EOUT(("Cleanup failed still %d send and %d recv operations", TotalSendQueue(), TotalRecvQueue()));
 
-   for (int lid=0;lid<NumLids();lid++) {
-      delete[] sendoper[lid];
-      delete[] recvoper[lid];
-   }
+   return true;
 }
 
 void bnet::TransportModule::PerformTimingTest()
