@@ -286,7 +286,7 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
          // DOUT0(("Sending %d master packet", fSyncCycle));
 
          fSyncSendTime = fStamping();
-         PerformOperation(recid);
+         PerformOperation(recid, fSyncSendTime);
          recid = -1;
          fSyncRecvDone = false;
 
@@ -377,7 +377,7 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
             msg_out->slave_time = fStamping(); // time irrelevant here
             msg_out->msgid = fSyncCycle++;
             // put in the queue buffer which should be replied
-            PerformOperation(fSyncSlaveRec);
+            PerformOperation(fSyncSlaveRec, msg_out->slave_time);
          }
 
          fSyncSlaveRec = -1;
@@ -416,7 +416,7 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
          msg_out->slave_time = recv_time;
          msg_out->msgid = fSyncCycle++;
          // put in the queue buffer which should be replied
-         PerformOperation(fSyncSlaveRec);
+         PerformOperation(fSyncSlaveRec, recv_time);
          fSyncSlaveRec = -1;
 
          return;
@@ -490,14 +490,17 @@ void* bnet::TransportRunnable::MainLoop()
       if (!fAcceptedRecs.Empty()) {
          OperRec* rec = GetRec(fAcceptedRecs.Front());
 
-         if ((rec->time==0) || (rec->time<=fStamping())) {
+         // we need to know time only when operation itself requires time
+         double tm = rec->oper_time>0 ? fStamping() : 0;
+
+         if (rec->oper_time<=tm) {
             int recid = fAcceptedRecs.Pop();
 
             if (rec->skind!=skind_None)
                PrepareSpecialKind(recid);
 
             if (recid>=0) {
-               PerformOperation(recid);
+               PerformOperation(recid, tm);
             } else {
                // special return value, means exit from the loop
                if (recid==-111) break;

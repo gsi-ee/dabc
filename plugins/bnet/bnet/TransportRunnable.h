@@ -30,7 +30,8 @@ namespace bnet {
    struct OperRec {
       OperKind      kind;       // kind of operation
       OperSKind     skind;      // special kind of operation for time sync (and more)
-      double        time;       // time of operation
+      double       oper_time;  // scheduled time of operation
+      double       is_time;    // actual time when operation was executed
       dabc::Buffer  buf;        // buffer for operation
       void*         header;     // pointer on the header, used for debug
       int           hdrsize;    // argument, specified when record was created
@@ -39,15 +40,17 @@ namespace bnet {
       int           repeatcnt;  // how many times operation should be repeated, used for time sync
       bool          err;        // is operation failed or not
 
-      OperRec() : kind(kind_None), skind(skind_None), time(0), buf(), header(0), hdrsize(0), tgtnode(0), tgtindx(0), repeatcnt(0), err(false)  {}
+      OperRec() :
+         kind(kind_None), skind(skind_None),
+            oper_time(0), buf(), header(0), hdrsize(0), tgtnode(0), tgtindx(0), repeatcnt(0), err(false)  {}
 
       void SetRepeatCnt(int cnt) { repeatcnt = cnt; }
 
       void SetTarget(int node, int indx = 0) { tgtnode = node; tgtindx = indx; }
 
-      void SetImmediateTime() { time = 0; }
+      void SetImmediateTime() { oper_time = 0; }
 
-      void SetTime(double tm) { time = tm; }
+      void SetTime(double tm) { oper_time = tm; }
    };
 
    class TimeStamping {
@@ -191,13 +194,15 @@ namespace bnet {
          virtual bool DoPerformOperation(int recid) { return false; }
          virtual int DoWaitOperation(double waittime, double fasttime) { return false; }
 
-         inline void PerformOperation(int recid)
+         inline void PerformOperation(int recid, double tm)
          {
             if (DoPerformOperation(recid)) {
                fRunningRecs[recid] = true;
+               GetRec(recid)->is_time = tm;
                fNumRunningRecs++;
             } else {
                GetRec(recid)->err = true;
+               GetRec(recid)->is_time = tm;
                fCompletedRecs.Push(recid);
             }
          }

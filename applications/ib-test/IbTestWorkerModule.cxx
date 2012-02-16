@@ -1725,7 +1725,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    int64_t totalrecvmulti = 0;
    int64_t skipsendcounter = 0;
 
-   double last_tm = -1, curr_tm = fStamping(), last_recv_tm = fStamping();
+   double last_tm(-1.), curr_tm(0.);
 
    dabc::CpuStatistic cpu_stat;
 
@@ -1780,7 +1780,6 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
           if (fRecvRatemeter) fRecvRatemeter->Packet(bufsize, recv_time);
 
           totalrecvpackets++;
-          last_recv_tm = recv_time;
 
           if (dogpuwrite>0) {
              if (gpu_write.Full()) {
@@ -2099,7 +2098,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    }
 
    if (gpu_oper_cnt>0) 
-     DOUT0(("gpu_oper_cnt = %ld recv_cnt %ld send cnt %ld recv_time %5.3f", gpu_oper_cnt, totalrecvpackets, numcomplsend, last_recv_tm - starttime));
+     DOUT0(("gpu_oper_cnt = %ld recv_cnt %ld send cnt %ld", gpu_oper_cnt, totalrecvpackets, numcomplsend));
 
    // cleanup all GPU-specific parts
    delete gpu_read_queue;

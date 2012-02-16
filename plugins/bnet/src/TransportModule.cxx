@@ -888,7 +888,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    int64_t totalrecvmulti = 0;
    int64_t skipsendcounter = 0;
 
-   double last_tm = -1, curr_tm = fStamping(), last_recv_tm = fStamping();
+   double last_tm(-1), curr_tm(0);
 
    dabc::CpuStatistic cpu_stat;
 
@@ -920,6 +920,8 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
                numcomplsend++;
 
                double sendcompltime = fStamping();
+
+               send_start.Fill(rec->is_time - rec->oper_time);
 
                send_compl.Fill(sendcompltime - sendtime);
 
@@ -953,7 +955,6 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
                if (fRecvRatemeter) fRecvRatemeter->Packet(bufsize, recv_time);
 
                totalrecvpackets++;
-               last_recv_tm = recv_time;
                break;
             }
             default:
@@ -1069,8 +1070,6 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
                hdr->srcid = Node();    // source node id
                hdr->tgtid = node;      // target node id
                hdr->eventid = 123456;  // event id
-
-               send_start.Fill(curr_tm - next_send_time);
 
                rec->SetTarget(node, lid);
                rec->SetTime(next_send_time);
