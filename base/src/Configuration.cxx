@@ -42,13 +42,12 @@ dabc::Configuration::~Configuration()
 {
 }
 
-bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigned numnodes)
+bool dabc::Configuration::SelectContext(unsigned nodeid, unsigned numnodes)
 {
-   fSelected = FindContext(cfgid);
+   fSelected = FindContext(nodeid);
 
    if (fSelected==0) return false;
 
-   envDABCCFGID = dabc::format("%u", cfgid);
    envDABCNODEID = dabc::format("%u", nodeid);
    envDABCNUMNODES = dabc::format("%u", numnodes);
 
@@ -63,14 +62,14 @@ bool dabc::Configuration::SelectContext(unsigned cfgid, unsigned nodeid, unsigne
    else
       envDABCWORKDIR = ".";
 
-   fMgrHost     = NodeName(cfgid);
-   fMgrPort     = NodePort(cfgid);
+   fMgrHost     = NodeName(nodeid);
+   fMgrPort     = NodePort(nodeid);
    envHost      = fMgrHost;
 
-   fMgrName     = ContextName(cfgid);
+   fMgrName     = ContextName(nodeid);
    envContext   = fMgrName;
 
-   DOUT2(("Select context %u nodeid %u name %s", cfgid, nodeid, fMgrName.c_str()));
+   DOUT2(("Select context nodeid %u name %s", nodeid, fMgrName.c_str()));
 
    dabc::SetDebugPrefix(fMgrName.c_str());
 

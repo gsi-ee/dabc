@@ -59,14 +59,11 @@ namespace dabc {
    extern const char* xmlRunTime;
    extern const char* xmlNormalMainThrd;
    extern const char* xmlLDPATH;
-   extern const char* xmlConfigFile;
-   extern const char* xmlConfigFileId;
    extern const char* xmlUserLib;
    extern const char* xmlInitFunc;
    extern const char* xmlRunFunc;
    extern const char* xmlCpuInfo;
    extern const char* xmlSocketHost;
-   extern const char* xmlControlled;
 
    class ConfigIO;
 
@@ -87,7 +84,6 @@ namespace dabc {
          std::string       envDABCUSERDIR;     // dir with user plugin
          std::string       envDABCWORKDIR;     // dir where application is started
          std::string       envDABCNODEID;      // current node id (controlled node number)
-         std::string       envDABCCFGID;       // current node id in config file
          std::string       envDABCNUMNODES;    // current number of nodes
          std::string       envHost;            // host name of current context
          std::string       envContext;         // name of current context
@@ -149,12 +145,6 @@ namespace dabc {
 
          /** returns number of nodes in xml file */
          unsigned NumNodes();
-
-         /** returns number of nodes, which must be control by the control system */
-         unsigned NumControlNodes();
-
-         /** defines sequence number in list of controlled nodes */
-         unsigned ControlSequenceId(unsigned id);
 
          /** returns nodename of specified context */
          std::string NodeName(unsigned id);

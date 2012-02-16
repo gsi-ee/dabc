@@ -122,7 +122,6 @@ int main(int numc, char* args[])
 
    unsigned nodeid = 1000000;
    unsigned numnodes = 0;
-   unsigned configid = 0;
    bool dorun = false;
    bool external_control = false;
 
@@ -137,10 +136,6 @@ int main(int numc, char* args[])
 
       const char* arg = args[cnt++];
 
-      if (strcmp(arg,"-cfgid")==0) {
-         if (cnt < numc)
-            configid = (unsigned) atoi(args[cnt++]);
-      } else
       if (strcmp(arg,"-nodeid")==0) {
          if (cnt < numc)
             nodeid = (unsigned) atoi(args[cnt++]);
@@ -156,12 +151,12 @@ int main(int numc, char* args[])
          dorun = false;
    }
 
-   if (numnodes==0) numnodes = cfg.NumControlNodes();
-   if (nodeid > numnodes) nodeid = configid;
+   if (numnodes==0) numnodes = cfg.NumNodes();
+   if (nodeid > numnodes) nodeid = 0;
 
-   DOUT2(("Using config file: %s id: %u", cfgfile, configid));
+   DOUT2(("Using config file: %s id: %u", cfgfile, nodeid));
 
-   if (!cfg.SelectContext(configid, nodeid, numnodes)) {
+   if (!cfg.SelectContext(nodeid, numnodes)) {
       EOUT(("Did not found context"));
       return 1;
    }

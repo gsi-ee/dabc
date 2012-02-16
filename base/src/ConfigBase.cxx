@@ -45,7 +45,6 @@ namespace dabc {
    const char* xmlDABCSYS          = "DABCSYS";
    const char* xmlDABCUSERDIR      = "DABCUSERDIR";
    const char* xmlDABCWORKDIR      = "DABCWORKDIR";
-   const char* xmlDABCCFGID        = "DABCCFGID";
    const char* xmlDABCNODEID       = "DABCNODEID";
    const char* xmlDABCNUMNODES     = "DABCNUMNODES";
    const char* xmlActive           = "active";
@@ -60,14 +59,11 @@ namespace dabc {
    const char* xmlRunTime          = "runtime";
    const char* xmlNormalMainThrd   = "normalmainthrd";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
-   const char* xmlConfigFile       = "config";
-   const char* xmlConfigFileId     = "configid";
    const char* xmlUserLib          = "lib";
    const char* xmlInitFunc         = "func";
    const char* xmlRunFunc          = "runfunc";
    const char* xmlCpuInfo          = "cpuinfo";
    const char* xmlSocketHost       = "sockethost";
-   const char* xmlControlled       = "ctrl";
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :
@@ -76,7 +72,6 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
    envDABCSYS(),
    envDABCUSERDIR(),
    envDABCNODEID(),
-   envDABCCFGID(),
    envContext()
 {
    if (fname==0) return;
@@ -344,44 +339,6 @@ unsigned dabc::ConfigBase::NumNodes()
    return cnt;
 }
 
-unsigned dabc::ConfigBase::NumControlNodes()
-{
-   if (!IsOk()) return 0;
-
-   XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
-   if (rootnode==0) return 0;
-   XMLNodePointer_t node = Xml::GetChild(rootnode);
-   unsigned cnt = 0;
-   while (node!=0) {
-      if (IsContextNode(node))
-         if (Find1(node, "true", xmlRunNode, xmlControlled) == "true") cnt++;
-      node = Xml::GetNext(node);
-   }
-   return cnt;
-}
-
-unsigned dabc::ConfigBase::ControlSequenceId(unsigned id)
-{
-   if (!IsOk()) return 0;
-
-   XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
-   if (rootnode==0) return id;
-   XMLNodePointer_t node = Xml::GetChild(rootnode);
-   unsigned cnt = 0;
-   unsigned ctrlcnt = 0;
-   while (node!=0) {
-      if (IsContextNode(node)) {
-         bool isctrl = (Find1(node, "true", xmlRunNode, xmlControlled) == "true");
-
-         if (isctrl) ctrlcnt++;
-
-         if (cnt++==id) return isctrl ? ctrlcnt : 0;
-      }
-      node = Xml::GetNext(node);
-   }
-   return id;
-}
-
 std::string dabc::ConfigBase::NodeName(unsigned id)
 {
    XMLNodePointer_t contnode = FindContext(id);
@@ -507,7 +464,6 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
             if (var==xmlDABCUSERDIR) value = envDABCUSERDIR; else
             if (var==xmlDABCWORKDIR) value = envDABCWORKDIR; else
             if (var==xmlDABCNODEID) value = envDABCNODEID; else
-            if (var==xmlDABCCFGID) value = envDABCCFGID; else
             if (var==xmlDABCNUMNODES) value = envDABCNUMNODES; else
             if (var==xmlHostAttr) value = envHost; else
             if (var==xmlContext) value = envContext;
@@ -567,8 +523,6 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
    std::string debugger = Find1(contnode, "", xmlRunNode, xmlDebugger);
    std::string ldpath = Find1(contnode, "", xmlRunNode, xmlLDPATH);
-   std::string cfgfile = Find1(contnode, "", xmlRunNode, xmlConfigFile);
-   std::string cfgid = Find1(contnode, "", xmlRunNode, xmlConfigFileId);
    bool copycfg = (Find1(contnode, "", xmlRunNode, xmlCopyCfg) == "true");
    std::string logfile = Find1(contnode, "", xmlRunNode, xmlLogfile);
 
@@ -578,26 +532,22 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
 
    std::string envdabcsys = GetEnv("DABCSYS");
 
-   if ((topcfgfile==0) && cfgfile.empty()) {
+   if (topcfgfile==0) {
       EOUT(("Config file not defined"));
       return std::string("");
    }
 
    if (workdir.empty()) workdir = topworkdir;
 
-   std::string workcfgfile = cfgfile;
-   if (cfgfile.empty()) {
-      if (copycfg)
-         workcfgfile = dabc::format("node%03u_%s", id, topcfgfile);
-      else
-         workcfgfile = topcfgfile;
-   }
+   std::string workcfgfile = topcfgfile;
+   if (copycfg)
+       workcfgfile = dabc::format("node%03u_%s", id, topcfgfile);
 
    std::string copycmd, logcmd;
 
    bool backgr(false), addcopycmd(false);
 
-   if (cfgfile.empty() && copycfg) {
+   if (copycfg) {
       copycmd = "scp -q ";
       if (!portid.empty())
          copycmd += dabc::format("-P %s ", portid.c_str());
@@ -718,22 +668,8 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
          }
       }
 
-      res += " \\$DABCSYS/bin/dabc_exe ";
-
-      if (!cfgfile.empty()) {
-         res += cfgfile;
-         if (!cfgid.empty()) {
-            res += " -cfgid ";
-            res += cfgid;
-         }
-      } else {
-         res += dabc::format("%s -cfgid %u", workcfgfile.c_str(), id);
-      }
-
-      unsigned ctrldid = ControlSequenceId(id);
-      if (ctrldid>0) ctrldid--;
-
-      res += dabc::format(" -nodeid %u -numnodes %u", ctrldid, NumControlNodes());
+      res += dabc::format(" \\$DABCSYS/bin/dabc_exe %s -nodeid %u -numnodes %u",
+                           workcfgfile.c_str(), id, NumNodes());
 
       if (kind == kindRun) res += " -run";
 
