@@ -164,12 +164,14 @@ namespace dabc {
    class PosixThread {
       protected:
          pthread_t    fThrd;
+         int         fSpecialCpu; // number of specially-allocated CPU for thread
          void         UseCurrentAsSelf() { fThrd = pthread_self(); }
+         static cpu_set_t fSpecialSet; // set of processors, which can be used for special threads
       public:
 
          typedef void* (StartRoutine)(void*);
 
-         PosixThread();
+         PosixThread(int special_cpu = -1);
          virtual ~PosixThread();
          void Start(Runnable* run);
          void Start(StartRoutine* func, void* args);
@@ -184,6 +186,8 @@ namespace dabc {
          inline Thread_t Id() const { return fThrd; }
 
          static Thread_t Self() { return pthread_self(); }
+
+         static bool ReduceAffinity(int reduce = 1);
    };
 
 }

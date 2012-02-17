@@ -65,7 +65,7 @@ bool dabc_InstallCtrlCHandler()
 
 
 
-int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool dorun, bool external_control)
+int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool dorun)
 {
    if (dabc::mgr.null()) return 1;
 
@@ -91,18 +91,16 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
    }
 
    // activate application only with non-controlled mode
-   if (!external_control) {
 
-      dabc::mgr.GetApp().Submit(dabc::InvokeAppRunCmd());
+   dabc::mgr.GetApp().Submit(dabc::InvokeAppRunCmd());
 
-      DOUT0(("Application mainloop is now running"));
-      DOUT0(("       Press Ctrl-C for stop"));
-   }
+   DOUT0(("Application mainloop is now running"));
+   DOUT0(("       Press Ctrl-C for stop"));
 
    // manager main loop will be run for specified time
    // at the exit application either stopped or will be requested to stop
 
-   dabc::mgr()->RunManagerMainLoop(cfg.GetRunTime(), external_control);
+   dabc::mgr()->RunManagerMainLoop(cfg.GetRunTime());
 
    return 0;
 }
@@ -123,7 +121,6 @@ int main(int numc, char* args[])
    unsigned nodeid = 1000000;
    unsigned numnodes = 0;
    bool dorun = false;
-   bool external_control = false;
 
    dabc::Configuration cfg(cfgfile);
    if (!cfg.IsOk()) {
@@ -152,7 +149,7 @@ int main(int numc, char* args[])
    }
 
    if (numnodes==0) numnodes = cfg.NumNodes();
-   if (nodeid > numnodes) nodeid = 0;
+   if (nodeid >= numnodes) nodeid = 0;
 
    DOUT2(("Using config file: %s id: %u", cfgfile, nodeid));
 
@@ -160,6 +157,9 @@ int main(int numc, char* args[])
       EOUT(("Did not found context"));
       return 1;
    }
+
+   // reserve special thread
+   dabc::PosixThread::ReduceAffinity(cfg.NumSpecialProcessors());
 
    DOUT2(("Create manager"));
 
@@ -175,13 +175,13 @@ int main(int numc, char* args[])
    if (res==0)
       dabc::mgr.Execute("InitFactories");
 
-   // TODO: is some situations application is not required
+   // TODO: in some situations application is not required
    if (res==0)
      if (!dabc::mgr()->CreateApplication(cfg.ConetextAppClass())) res = -3;
 
    if (res==0) {
 
-      res = RunApplication(cfg, nodeid, numnodes, dorun, external_control);
+      res = RunApplication(cfg, nodeid, numnodes, dorun);
    }
 
    dabc::mgr()->HaltManager();

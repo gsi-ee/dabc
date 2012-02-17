@@ -353,7 +353,7 @@ namespace dabc {
          bool MakeThreadFor(Worker* proc, const char* thrdname = 0);
 
          /** \brief Runs manager mainloop. If \param runtime bigger than 0, only specified time will be run */
-         void RunManagerMainLoop(double runtime = 0., bool extern_control = false);
+         void RunManagerMainLoop(double runtime = 0.);
 
          /** Perform sleeping with event loop running.
           *  If prefix specified, output on terminal is performed */

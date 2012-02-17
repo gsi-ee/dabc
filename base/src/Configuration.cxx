@@ -149,6 +149,15 @@ bool dabc::Configuration::NormalMainThread()
    return Find1(fSelected, "", xmlRunNode, xmlNormalMainThrd) == xmlTrueValue;
 }
 
+int dabc::Configuration::NumSpecialProcessors()
+{
+   if (fSelected==0) return 0;
+   std::string res = Find1(fSelected, "", xmlRunNode, xmlNumSpecialProc);
+   if (res.empty()) return 0;
+   int runtime(0);
+   return dabc::str_to_int(res.c_str(), &runtime) ? runtime : 0;
+}
+
 
 std::string dabc::Configuration::GetUserPar(const char* name, const char* dflt)
 {

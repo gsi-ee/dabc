@@ -137,8 +137,12 @@ extern "C" void* StartTRunnable(void* abc)
    pthread_exit(res);
 }
 
-dabc::PosixThread::PosixThread() :
-   fThrd()
+
+cpu_set_t dabc::PosixThread::fSpecialSet;
+
+dabc::PosixThread::PosixThread(int special_cpu) :
+   fThrd(),
+   fSpecialCpu(special_cpu)
 {
 }
 
@@ -151,15 +155,32 @@ void dabc::PosixThread::Start(Runnable* run)
    if (run==0) return;
 
    /** This is example how to set thread affinity */
-/*   cpu_set_t cpuset;
-   CPU_ZERO(&cpuset);
-   for (int j = 0; j < 8; j++)
-      CPU_SET(j, &cpuset);
-   pthread_attr_t attr;
-   pthread_attr_init(&attr);
-   pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
-*/
-   pthread_create(&fThrd, NULL, StartTRunnable, run);
+   cpu_set_t mask;
+   CPU_ZERO(&mask);
+
+   int cnt(0);
+   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
+      if (CPU_ISSET(cpu, &fSpecialSet)) {
+         if (cnt++ == fSpecialCpu) {
+            CPU_SET(cpu, &mask);
+            cnt = -1; // indicate that mask make sence
+            break;
+         }
+      }
+
+   if (cnt>=0) {
+      pthread_create(&fThrd, NULL, StartTRunnable, run);
+   } else {
+
+      pthread_attr_t attr;
+      pthread_attr_init(&attr);
+
+      pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &mask);
+
+      pthread_create(&fThrd, &attr, StartTRunnable, run);
+
+      pthread_attr_destroy(&attr);
+   }
 }
 
 void dabc::PosixThread::Start(StartRoutine* func, void* args)
@@ -195,4 +216,61 @@ void dabc::PosixThread::Kill(int sig)
 void dabc::PosixThread::Cancel()
 {
    pthread_cancel(fThrd);
+}
+
+bool dabc::PosixThread::ReduceAffinity(int reduce)
+{
+   cpu_set_t mask;
+
+   CPU_ZERO(&fSpecialSet);
+
+   int res = sched_getaffinity(0, sizeof(mask), &mask);
+
+   if (res!=0) {
+      EOUT(("sched_getaffinity res = %d", res));
+      return false;
+   }
+
+   int numset(0);
+
+   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
+      if (CPU_ISSET(cpu, &mask)) {
+         DOUT0(("  Before: process CPU%d set", cpu));
+         numset++;
+      }
+
+   if (numset<=reduce) {
+      EOUT(("Cannot reduce affinity on %d processors - only %d assigned for process", reduce, numset));
+      return false;
+   }
+
+   int cnt(0);
+
+   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
+      if (CPU_ISSET(cpu, &mask)) {
+         cnt++;
+         if (cnt>numset-reduce) {
+            CPU_CLR(cpu, &mask);
+            CPU_SET(cpu, &fSpecialSet);
+         }
+      }
+
+   res = sched_setaffinity(0, sizeof(mask), &mask);
+   if (res!=0) { EOUT(("sched_setaffinity res = %d", res)); return false; }
+
+   res = sched_getaffinity(0, sizeof(mask), &mask);
+   if (res!=0) {
+      EOUT(("sched_getaffinity res = %d", res));
+      return false;
+   }
+
+   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
+      if (CPU_ISSET(cpu, &mask))
+         DOUT0(("  After: process CPU%d set", cpu));
+
+   return true;
+//      void CPU_CLR(int cpu, cpu_set_t *set);
+//      int CPU_ISSET(int cpu, cpu_set_t *set);
+//      void CPU_SET(int cpu, cpu_set_t *set);
+//      void CPU_ZERO(cpu_set_t *set);
 }

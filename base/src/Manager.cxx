@@ -1501,7 +1501,7 @@ void dabc::Manager::ProcessCtrlCSignal()
    exit(0);
 }
 
-void dabc::Manager::RunManagerMainLoop(double runtime, bool extern_control)
+void dabc::Manager::RunManagerMainLoop(double runtime)
 {
    DOUT2(("Enter dabc::Manager::RunManagerMainLoop"));
 
@@ -1542,7 +1542,7 @@ void dabc::Manager::RunManagerMainLoop(double runtime, bool extern_control)
 
       ApplicationRef app = GetApp();
 
-      if (app.IsFinished() && !extern_control) break;
+      if (app.IsFinished()) break;
 
       // check if stop time was not set
       if (fMgrStoppedTime.null()) {
@@ -1553,14 +1553,14 @@ void dabc::Manager::RunManagerMainLoop(double runtime, bool extern_control)
          if (app.IsWorkDone()) fMgrStoppedTime = now;
       }
 
-      if (!fMgrStoppedTime.null() && !appstopped && !extern_control) {
+      if (!fMgrStoppedTime.null() && !appstopped) {
          appstopped = true;
          app.Submit(InvokeAppFinishCmd());
       }
 
-      // TODO: make 10 second configurable, in case of external control exit immediately
+      // TODO: make 10 second configurable
       if (!fMgrStoppedTime.null())
-         if (now > fMgrStoppedTime + (extern_control ? 0. : 10.)) break;
+         if (now > fMgrStoppedTime + 10.) break;
    }
 
    DOUT2(("Exit dabc::Manager::RunManagerMainLoop"));

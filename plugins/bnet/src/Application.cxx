@@ -31,6 +31,9 @@ bnet::Application::Application() :
    CreatePar(dabc::xmlBufferSize).DfltInt(65536);
    CreatePar(dabc::xmlNumBuffers).DfltInt(1000);
 
+   CreatePar("SpecialThread").DfltBool(false);
+
+
    CreatePar("TestKind").DfltStr("OnlyConnect");
    CreatePar("TestReliable").DfltBool(true);
 

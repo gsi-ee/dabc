@@ -49,6 +49,9 @@ namespace dabc {
    const char* xmlDABCNUMNODES     = "DABCNUMNODES";
    const char* xmlActive           = "active";
    const char* xmlCopyCfg          = "copycfg";
+   const char* xmlStdOut           = "stdout";
+   const char* xmlErrOut           = "errout";
+   const char* xmlNullOut          = "nullout";
    const char* xmlDebugger         = "debugger";
    const char* xmlWorkDir          = "workdir";
    const char* xmlDebuglevel       = "debuglevel";
@@ -58,6 +61,7 @@ namespace dabc {
    const char* xmlLoglevel         = "loglevel";
    const char* xmlRunTime          = "runtime";
    const char* xmlNormalMainThrd   = "normalmainthrd";
+   const char* xmlNumSpecialProc   = "num_special_proc";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
    const char* xmlUserLib          = "lib";
    const char* xmlInitFunc         = "func";
@@ -524,6 +528,9 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
    std::string debugger = Find1(contnode, "", xmlRunNode, xmlDebugger);
    std::string ldpath = Find1(contnode, "", xmlRunNode, xmlLDPATH);
    bool copycfg = (Find1(contnode, "", xmlRunNode, xmlCopyCfg) == "true");
+   std::string dabc_stdout = Find1(contnode, "", xmlRunNode, xmlStdOut);
+   std::string dabc_errout = Find1(contnode, "", xmlRunNode, xmlErrOut);
+   bool nullout = (Find1(contnode, "", xmlRunNode, xmlNullOut) == "true");
    std::string logfile = Find1(contnode, "", xmlRunNode, xmlLogfile);
 
    std::string workdir = envDABCWORKDIR;
@@ -672,6 +679,13 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
                            workcfgfile.c_str(), id, NumNodes());
 
       if (kind == kindRun) res += " -run";
+
+      if (nullout) {
+         res += " >/dev/null 2>/dev/null";
+      } else {
+         if (!dabc_stdout.empty()) { res += " >"; res+=dabc_stdout; }
+         if (!dabc_errout.empty()) { res += " 2>"; res+=dabc_errout; }
+      }
 
       backgr = true;
 

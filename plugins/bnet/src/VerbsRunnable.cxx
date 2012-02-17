@@ -38,14 +38,20 @@ bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dab
 
    fRelibaleConn = m->Cfg("TestReliable", cmd).AsBool(true);
 
-   bool res = TransportRunnable::Configure(m, pool, cmd);
-
-   if (!res) return false;
+   if (!TransportRunnable::Configure(m, pool, cmd)) return false;
 
    if (!fIbContext.OpenVerbs(true)) {
       EOUT(("Cannot initialize VERBs!!!!"));
       return false;
    }
+
+   fCQ = 0;
+   for (int lid=0; lid<IBTEST_MAXLID; lid++) {
+      fQPs[lid] = 0;
+      fSendQueue[lid] = 0;
+      fRecvQueue[lid] = 0;
+   }
+
 
    f_rwr = new ibv_recv_wr [fNumRecs];
    f_swr = new ibv_send_wr [fNumRecs];

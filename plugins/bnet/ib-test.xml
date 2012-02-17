@@ -12,14 +12,18 @@
        <logfile value="Node${DABCNODEID}.log"/>
        <debuglevel value="1"/>
        <debugger value="false"/>
+       <nullout value="false"/>
+       <num_special_proc value="1"/>
        <loglevel value="1"/>
        <loglimit value="1000000"/>
        <runtime value="100"/>
+       <!--runfunc value="test_affinity"/-->
      </Run>
      <Application class="bnet::Application">
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="65536"/>
          <NumBuffers value="1024"/>
+         <SpecialThread value="true"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
          <TestKind value="Normal"/>
@@ -27,7 +31,7 @@
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="1.0"/>
-         <TestRate value="500"/>
+         <TestRate value="250"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
          <TestSchedule value=""/>

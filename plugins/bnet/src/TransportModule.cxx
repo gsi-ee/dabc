@@ -149,13 +149,14 @@ void bnet::TransportModule::BeforeModuleStart()
 {
    DOUT2(("IbTestWorkerModule starting"));
 
-   fRunThread = new dabc::PosixThread();
+   int special_thrd = Cfg("SpecialThread").AsBool(false) ? 0 : -1;
+
+   fRunThread = new dabc::PosixThread(special_thrd); // create thread with specially-allocated CPU
 
    fRunThread->Start(fRunnable);
 
    // set threads id to be able check correctness of calling
    fRunnable->SetThreadsIds(dabc::PosixThread::Self(), fRunThread->Id());
-
 }
 
 void bnet::TransportModule::AfterModuleStop()

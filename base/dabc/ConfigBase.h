@@ -49,6 +49,9 @@ namespace dabc {
    extern const char* xmlDABCNUMNODES;
    extern const char* xmlActive;
    extern const char* xmlCopyCfg;
+   extern const char* xmlStdOut;
+   extern const char* xmlErrOut;
+   extern const char* xmlNullOut;
    extern const char* xmlDebugger;
    extern const char* xmlWorkDir;
    extern const char* xmlDebuglevel;
@@ -58,6 +61,7 @@ namespace dabc {
    extern const char* xmlLoglimit;
    extern const char* xmlRunTime;
    extern const char* xmlNormalMainThrd;
+   extern const char* xmlNumSpecialProc;
    extern const char* xmlLDPATH;
    extern const char* xmlUserLib;
    extern const char* xmlInitFunc;
