@@ -10,7 +10,7 @@
        <lib value="libDabcBnet.so"/>
        <!--LD_LIBRARY_PATH value="/home/linev/workspace/dabc/applications/ib-test"/-->
        <logfile value="Node${DABCNODEID}.log"/>
-       <debuglevel value="1"/>
+       <debuglevel value="0"/>
        <debugger value="false"/>
        <nullout value="false"/>
        <num_special_proc value="1"/>
@@ -30,7 +30,7 @@
          <TestReliable value="true"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
-         <TestTime value="1.0"/>
+         <TestTime value="5.0"/>
          <TestRate value="250"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>

@@ -673,6 +673,8 @@ bool bnet::TransportModule::MasterTimeSync(bool dosynchronisation, int numcycles
 
    if (!MasterCommandRequest(IBTEST_CMD_TIMESYNC, pars, sizeof(pars))) return false;
 
+   WorkerSleep(0.1);
+
    dabc::TimeStamp starttm = dabc::Now();
 
    for(int nremote=1;nremote<NumNodes();nremote++) {
@@ -864,7 +866,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
    double lastcmdchecktime = fStamping();
 
-   DOUT0(("ExecuteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
+   DOUT2(("ExecuteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
 
    // counter for must have send operations over each channel
    IbTestIntMatrix sendcounter(NumLids(), NumNodes());
@@ -899,6 +901,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    int recid(-1);
    OperRec* rec(0);
 
+   fRunnable->ResetStatistic();
 
    while ((curr_tm=fStamping()) < stoptime) {
 
@@ -1108,6 +1111,14 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
       }
    }
 
+   cpu_stat.Measure();
+
+   double r_mean_loop(0.), r_max_loop(0.);
+   int r_long_cnt(0);
+   fRunnable->GetStatistic(r_mean_loop, r_max_loop, r_long_cnt);
+
+   DOUT0(("Mean loop %11.9f max %8.6f Longer loops %d", r_mean_loop, r_max_loop, r_long_cnt));
+
    DOUT3(("Total recv queue %ld limit %ld send queue %ld", TotalSendQueue(), recv_total_limit, TotalRecvQueue()));
    DOUT3(("Do recv %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
          DBOOL(doreceiving), curr_tm, recv_basetm + fRecvSch.timeSlot(recv_slot), recv_slot,
@@ -1119,8 +1130,6 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
          SendQueue(fSendSch.Item(send_slot, Node()).lid, fSendSch.Item(send_slot, Node()).node)));
 
    DOUT3(("Send operations diff %ld: submited %ld, completed %ld", numsendpackets-numcomplsend, numsendpackets, numcomplsend));
-
-   cpu_stat.Measure();
 
    DOUT5(("CPU utilization = %5.1f % ", cpu_stat.CPUutil()*100.));
 
@@ -1144,8 +1153,8 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    fResults[7] = totalrecvmulti;
    fResults[8] = multirate.GetRate();
    fResults[9] = cpu_stat.CPUutil();
-   fResults[10] = loop_time.Mean();
-   fResults[11] = loop_time.Max();
+   fResults[10] = r_mean_loop; // loop_time.Mean();
+   fResults[11] = r_max_loop; // loop_time.Max();
    fResults[12] = (numsendpackets+skipsendcounter) > 0 ? 1.*skipsendcounter / (numsendpackets + skipsendcounter) : 0.;
    fResults[13] = recv_compl.Mean();
 

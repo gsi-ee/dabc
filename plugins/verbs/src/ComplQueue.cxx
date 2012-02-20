@@ -33,7 +33,7 @@ verbs::ComplQueue::ComplQueue(ContextRef ctx, int size,
    }
 
    if (f_channel==0) {
-      EOUT(("Completion channel not specified"));
+      EOUT(("Completion channel not specified ???"));
       return;
    }
 
@@ -97,12 +97,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
    dabc::TimeStamp finish = now + timeout;
    dabc::TimeStamp fastfinish = now + fasttm;
 
-   struct pollfd ufds;
-   int timeout_ms(0), status(0);
-
-   ufds.fd = f_channel->fd;
-   ufds.events = POLLIN;
-   ufds.revents = 0;
+   bool is_event(false);
 
    while (now < finish) {
 
@@ -112,27 +107,65 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
          if (res!=0) return res;
       } else {
 
-         timeout_ms = lrint((finish-now)*1000);
+         int timeout_ms = lrint((finish-now)*1000);
+
+         if (timeout_ms<0) { EOUT(("Negative timeout!!!")); timeout_ms = 0; }
 
          // no need to wait while no timeout is remaining
-         if (timeout_ms==0) return Poll();
+         // if (timeout_ms==0) return Poll();
 
-         status = poll(&ufds, 1, timeout_ms);
+         timeout_ms = 1;
+
+         struct pollfd ufds;
+
+         ufds.fd = f_channel->fd;
+         ufds.events = POLLIN;
+         ufds.revents = 0;
+
+         int status = poll(&ufds, 1, timeout_ms);
 
          if (status==0) return Poll();
 
-         if (status>0) break;
+         if (status>0) { is_event = true; break; }
 
          if ((status==-1) && (errno != EINTR)) {
             EOUT(("Error when waiting IB event"));
             return 2;
          }
+
+/*
+         int timeout_micros = lrint((finish-now)*1000000);
+         if (timeout_micros<0) { EOUT(("Negative timeout!!!")); timeout_micros = 0; }
+         timeout_micros = 0;
+
+         fd_set rfds;
+         struct timeval tv;
+
+         FD_ZERO(&rfds);
+         FD_SET(f_channel->fd, &rfds);
+
+         tv.tv_sec = 0;
+         tv.tv_usec = timeout_micros;
+
+         int retval = select(1, &rfds, NULL, NULL, &tv);
+
+         if (retval<0) {
+            EOUT(("Error when waiting IB event"));
+            return 2;
+         }
+
+         if (retval==0) return Poll();
+
+         break;
+*/
       }
 
       now = dabc::Now();
    }
 
 //   DOUT((3,"After wait revents = %d expects %d",ufds.revents,ufds.events));
+
+   if (!is_event) return Poll();
 
    struct ibv_cq *ev_cq;
    ComplQueueContext *ev_ctx(0);

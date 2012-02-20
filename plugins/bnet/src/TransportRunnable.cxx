@@ -36,6 +36,7 @@ extern "C" void print_affinity()
 bnet::TransportRunnable::TransportRunnable() :
    dabc::Runnable(),
    fMutex(),
+   fCondition(&fMutex),
    fNodeId(0),
    fNumNodes(1),
    fActiveNodes(0),
@@ -51,7 +52,8 @@ bnet::TransportRunnable::TransportRunnable() :
    fHeaderPool("TransportHeaders", false),
    fModuleThrd(),
    fTransportThrd(),
-   fStamping()
+   fStamping(),
+   fLoopTime()
 {
 }
 
@@ -224,6 +226,17 @@ bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int
          fStamping.GetCoeff(args);
          return true;
 
+      case cmd_ResetStat:
+         fLoopTime.Reset();
+         fLoopMaxCnt = 0;
+         return true;
+
+      case cmd_GetStat:
+         ((double*) args)[0] = fLoopTime.Max();
+         ((double*) args)[1] = fLoopTime.Mean();
+         ((double*) args)[2] = fLoopMaxCnt;
+         return true;
+
       case cmd_CloseQP:
          return ExecuteCloseQPs();
 
@@ -250,7 +263,7 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
          if (rec->tgtindx==cmd_Exit) recid = -111;
          return;
       case skind_SyncMasterSend: {
-         //DOUT0(("Prepare PrepareSpecialKind skind_SyncMasterSend"));
+         // DOUT1(("Prepare PrepareSpecialKind skind_SyncMasterSend"));
 
          // send packet immediately only very first time,
          // in other cases remember id to use it when next reply comes from the slave
@@ -339,6 +352,7 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
       case skind_None:
          return;
       case skind_SyncMasterSend:
+         // DOUT1(("skind_SyncMasterSend completed cycle %d", fSyncCycle));
          return;
       case skind_SyncMasterRecv: {
          //DOUT0(("Complete skind_SyncMasterRecv"));
@@ -385,24 +399,28 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
          return;
       }
       case skind_SyncSlaveSend:
+         // DOUT1(("skind_SyncSlaveSend completed %d sendrec %d", fSyncCycle, fSyncSlaveRec));
+
          // send slave reply only when record is ready, means we not fulfill time constrains
          // but packet must be send anyway
-         if (fSyncRecvDone && (fSyncSlaveRec==recid)) {
+         if (fSyncRecvDone /* && (fSyncSlaveRec==recid) */) {
             EOUT(("Reply on the master request with long delay"));
-            OperRec* recout = GetRec(fSyncSlaveRec);
+            OperRec* recout = GetRec(recid);
             TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
             msg_out->master_time = 0;
             msg_out->slave_shift = 0;
             msg_out->slave_time = fStamping(); // time irrelevant here
             msg_out->msgid = fSyncCycle++;
             // put in the queue buffer which should be replied
-            PerformOperation(fSyncSlaveRec, msg_out->slave_time);
+            PerformOperation(recid, msg_out->slave_time);
          }
 
          fSyncSlaveRec = -1;
          fSyncRecvDone = false;
          return;
       case skind_SyncSlaveRecv: {
+         // DOUT1(("skind_SyncSlaveRecv completed %d sendrec %d", fSyncCycle, fSyncSlaveRec));
+
          double recv_time = fStamping();
 
          // if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
@@ -424,6 +442,8 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
          }
 
          if (fSyncSlaveRec<0) {
+            // this is situation that next recv operation faster than previous send is completed
+            // we just indicate that recv was done and send complition should send new buffer
             fSyncRecvDone = true;
             return;
          }
@@ -506,39 +526,60 @@ void* bnet::TransportRunnable::MainLoop()
 
    print_affinity();
 
+   // last time when in/out queue was checked
+   double last_check_time(-1), last_tm(0);
+
+   fLoopMaxCnt = 0;
+
    while (true) {
+
+      double till_next_oper = 1.; // calculate time until next operation
+
+      double currtm = fStamping();
+      if (last_tm>0) {
+         fLoopTime.Fill(currtm - last_tm); // for statistic
+         if (currtm - last_tm > 0.001) fLoopMaxCnt++;
+      }
+      last_tm = currtm;
 
       if (!fAcceptedRecs.Empty()) {
          OperRec* rec = GetRec(fAcceptedRecs.Front());
 
-         // we need to know time only when operation itself requires time
-         double tm = rec->oper_time>0 ? fStamping() : 0;
-
-         if (rec->oper_time<=tm) {
+         if (rec->oper_time <= currtm) {
             int recid = fAcceptedRecs.Pop();
 
             if (rec->skind!=skind_None)
                PrepareSpecialKind(recid);
 
             if (recid>=0) {
-               PerformOperation(recid, tm);
+               PerformOperation(recid, currtm);
             } else {
                // special return value, means exit from the loop
                if (recid==-111) break;
             }
-         }
+         } else
+            till_next_oper = rec->oper_time - currtm;
       }
 
       if (fNumRunningRecs>0) {
-         double wait_time(0.001), fast_time(0.00001);
+//         double wait_time(0.001), fast_time(0.00002);
 
          // do not wait at all when new operation need to be submitted
-         if (!fAcceptedRecs.Empty()) {
+//         if (!fAcceptedRecs.Empty())
+//            if (wait_time > till_next_oper/2)
+//               wait_time  = till_next_oper/2;
+
+         double wait_time(0.0001), fast_time(0.0001);
+
+         // do not wait at all when new operation need to be submitted
+         if (!fAcceptedRecs.Empty() && (till_next_oper<fast_time)) {
             wait_time = 0.;
             fast_time = 0.;
          }
 
          int recid = DoWaitOperation(wait_time, fast_time);
+
+         // if (wait_time>0) last_tm = 0;
 
          if (recid>=0) {
             if (!fRunningRecs[recid])
@@ -549,7 +590,10 @@ void* bnet::TransportRunnable::MainLoop()
 
             OperRec* rec = GetRec(recid);
 
-            if (rec->skind!=skind_None) ProcessSpecialKind(recid);
+            if (rec->skind!=skind_None) {
+               ProcessSpecialKind(recid);
+               last_tm = 0; // do not account time of special operations
+            }
 
             if ((--rec->repeatcnt <= 0) || rec->err) {
                fCompletedRecs.Push(recid);
@@ -558,17 +602,40 @@ void* bnet::TransportRunnable::MainLoop()
          }
       }
 
+      // if next operation comes in 0.1 ms do not start any communications with other thread
+      if (till_next_oper<0.0001) continue;
+
+      // if we have running records, do not check queues very often
+      if (fNumRunningRecs>0)
+         if (currtm < last_check_time + 0.0001) continue;
+
+      // if there are no very urgent operations we could enter locking area
+      // and even set condition
+
+      last_check_time = currtm;
+
       // probably, we should lock mutex not very often
       // TODO: check if next operation very close in time - than go to begin of the loop
       dabc::LockGuard lock(fMutex);
 
       // copy all submitted records to thread
-      while (!fSubmRecs.Empty())
+      while (!fSubmRecs.Empty()) {
          fAcceptedRecs.Push(fSubmRecs.Pop());
+         till_next_oper = 0.; // indicate that next operation can be very soon
+      }
 
       // copy to shared queue executed records
       while (!fCompletedRecs.Empty())
          fReplyedRecs.Push(fCompletedRecs.Pop());
+
+      // if we have nothing to do for very long time, enter wait method for relaxing thread consumption
+      if ((fNumRunningRecs==0) && (fAcceptedRecs.Empty() || (till_next_oper>0.2))) {
+         fCondition._DoReset();
+         fCondition._DoWait(0.001);
+         last_tm = 0; // do not account time when we doing wait
+         while (!fSubmRecs.Empty())
+            fAcceptedRecs.Push(fSubmRecs.Pop());
+      }
    }
 
    DOUT0(("Exit TransportRunnable::MainLoop()"));
@@ -613,6 +680,23 @@ bool bnet::TransportRunnable::GetSync(TimeStamping& stamp)
    return true;
 }
 
+bool bnet::TransportRunnable::ResetStatistic()
+{
+   return ExecuteCmd(cmd_ResetStat);
+}
+
+bool bnet::TransportRunnable::GetStatistic(double& mean_loop, double& max_loop, int& long_cnt)
+{
+   double args[3];
+
+   if (!ExecuteCmd(cmd_GetStat, args, sizeof(args))) return false;
+
+   max_loop = args[0];
+   mean_loop = args[1];
+   long_cnt = (int) args[2];
+
+   return true;
+}
 
 bool bnet::TransportRunnable::CloseQPs()
 {
@@ -704,6 +788,8 @@ bool bnet::TransportRunnable::SubmitRec(int recid)
    }
 
    fSubmRecs.Push(recid);
+
+   fCondition._DoFire();
 
    return true;
 }

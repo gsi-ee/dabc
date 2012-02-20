@@ -97,6 +97,12 @@ namespace dabc {
    // ___________________________________________________________
 
    class Condition {
+      protected:
+         Mutex           fInternCondMutex;
+         Mutex*          fCondMutex;
+         pthread_cond_t  fCond;
+         long int        fFiredCounter;
+         bool            fWaiting;
       public:
          Condition(Mutex* ext_mtx = 0);
          virtual ~Condition();
@@ -113,10 +119,16 @@ namespace dabc {
             return _DoWait(wait_seconds);
          }
 
+         inline void _DoReset()
+         {
+            if (!fWaiting) fFiredCounter = 0;
+         }
+
+
          inline void Reset()
          {
             LockGuard lock(fCondMutex);
-            if (!fWaiting) fFiredCounter = 0;
+            _DoReset();
          }
 
          inline void _DoFire()
@@ -134,14 +146,6 @@ namespace dabc {
          bool _Waiting() const { return fWaiting; }
 
          long int _FiredCounter() const { return fFiredCounter; }
-
-      protected:
-
-         Mutex           fInternCondMutex;
-         Mutex*          fCondMutex;
-         pthread_cond_t  fCond;
-         long int        fFiredCounter;
-         bool            fWaiting;
    };
 
    // ___________________________________________________________

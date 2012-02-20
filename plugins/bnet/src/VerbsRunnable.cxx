@@ -139,6 +139,8 @@ bool bnet::VerbsRunnable::ExecuteCreateQPs(void* args, int argssize)
 
    fCQ = new verbs::ComplQueue(fIbContext, NumNodes() * qpdepth * 6, 0, true);
 
+   DOUT2(("Create CQ length %d", NumNodes() * qpdepth * 6));
+
    for (int lid = 0; lid<NumLids(); lid++) {
 
       fQPs[lid] = new verbs::QueuePair* [NumNodes()];
@@ -155,6 +157,9 @@ bool bnet::VerbsRunnable::ExecuteCreateQPs(void* args, int argssize)
             recs[indx].psn = 0;
          } else {
             fQPs[lid][node] = new verbs::QueuePair(fIbContext, qp_type, fCQ, qpdepth, fSegmPerOper, fCQ, qpdepth, 2);
+
+            DOUT2(("Create QP[%d][%d]  length = %d segm %d", lid, node, qpdepth, fSegmPerOper));
+
             if (fQPs[lid][node]->qp()==0) return false;
             recs[indx].qp = fQPs[lid][node]->qp_num();
             recs[indx].psn = fQPs[lid][node]->local_psn();
@@ -256,8 +261,8 @@ bool bnet::VerbsRunnable::DoPrepareRec(int recid)
          f_swr[recid].wr_id    = recid;  // as operation identifier recid is used
          f_swr[recid].sg_list  = f_sge + segid;
          f_swr[recid].num_sge  = num_sge;
-         f_swr[recid].opcode   = IBV_WR_SEND;
          f_swr[recid].next     = NULL;
+         f_swr[recid].opcode   = IBV_WR_SEND;
          f_swr[recid].send_flags = IBV_SEND_SIGNALED;
          if ((num_sge==1) && (f_sge[segid].length<=256))
             // try to send small portion of data as inline
@@ -309,9 +314,11 @@ bool bnet::VerbsRunnable::DoPerformOperation(int recid)
 
 int bnet::VerbsRunnable::DoWaitOperation(double waittime, double fasttime)
 {
-   CheckTransportThrd(); // executed only in transport
+//   CheckTransportThrd(); // executed only in transport
 
    int res = fCQ->Wait(waittime, fasttime);
+
+//   int res = fCQ->Poll();
 
    if (res==0) return -1;
 

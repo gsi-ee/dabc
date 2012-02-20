@@ -3,6 +3,9 @@
 
 #include "dabc/threads.h"
 
+#include "dabc/statistic.h"
+
+
 #include "dabc/Module.h"
 
 #include "dabc/MemoryPool.h"
@@ -84,6 +87,11 @@ namespace bnet {
 
          dabc::Mutex fMutex; /** Main mutex for communication with the transport module */
 
+         /** Condition can be (not necessary in all cases) used for waiting of
+          * new requests from module */
+         dabc::Condition fCondition;
+
+
          int    fNodeId; // node number
          int    fNumNodes;   // total number of node
          bool*  fActiveNodes; // arrays with active node flags
@@ -123,6 +131,10 @@ namespace bnet {
 
          TimeStamping  fStamping;   // source of global time stamps
 
+         dabc::Average fLoopTime;  // average loop time, for statistic
+         int          fLoopMaxCnt;  // time when loop too big (more than 1 ms)
+
+
          // this variables block used by time synchronization
          bool   fDoTimeSync;
          bool   fDoScaleSync;
@@ -157,7 +169,9 @@ namespace bnet {
             cmd_ConnectQP,  // create connection handles - queue pair in IB
             cmd_ConfigSync, // configure time sync parameters
             cmd_GetSync,    // return sync coefficients from runnable
-            cmd_CloseQP     // create connection handles - queue pair in IB
+            cmd_CloseQP,     // create connection handles - queue pair in IB
+            cmd_ResetStat,   // reset statistic
+            cmd_GetStat      // return statistic
          };
 
          int NodeId() const { return fNodeId; }
@@ -234,6 +248,8 @@ namespace bnet {
          bool ConnectQPs(void* recs, int recssize);
          bool ConfigSync(bool master, int nrepeat, bool dosync = false, bool doscale = false);
          bool GetSync(TimeStamping& stamp);
+         bool ResetStatistic();
+         bool GetStatistic(double& mean_loop, double& max_loop, int& long_cnt);
 
          // method to submit time sync operation and wait until all are executed
          bool RunSyncLoop(bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat);
