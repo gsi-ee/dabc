@@ -31,7 +31,6 @@ namespace bnet {
    class VerbsRunnable : public TransportRunnable {
       protected:
 
-         int  fNumLids;       // maximum number of lids used for communication
          bool fRelibaleConn; // is reliable connection will be used
 
          verbs::ContextRef  fIbContext;
@@ -62,7 +61,6 @@ namespace bnet {
          VerbsRunnable();
          virtual ~VerbsRunnable();
 
-         int NumLids() const { return fNumLids; }
          bool IsReliableConn() const { return fRelibaleConn; }
 
          // maximum size for commands

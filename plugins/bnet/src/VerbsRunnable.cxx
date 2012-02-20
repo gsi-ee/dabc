@@ -5,7 +5,6 @@
 
 bnet::VerbsRunnable::VerbsRunnable() :
    bnet::TransportRunnable(),
-   fNumLids(1),
    fRelibaleConn(true),
    fIbContext(),
    f_rwr(0),
@@ -33,9 +32,6 @@ bnet::VerbsRunnable::~VerbsRunnable()
 
 bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd)
 {
-   fNumLids = m->Cfg("TestNumLids", cmd).AsInt(1);
-   if (fNumLids>IBTEST_MAXLID) fNumLids = IBTEST_MAXLID;
-
    fRelibaleConn = m->Cfg("TestReliable", cmd).AsBool(true);
 
    if (!TransportRunnable::Configure(m, pool, cmd)) return false;

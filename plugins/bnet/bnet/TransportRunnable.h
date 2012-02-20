@@ -42,10 +42,13 @@ namespace bnet {
       int           tgtindx;    // second id for the target, LID number in case of IB
       int           repeatcnt;  // how many times operation should be repeated, used for time sync
       bool          err;        // is operation failed or not
+      int*          queuelen;   // pointer on queue counter
+      int           queuelimit; // limit for queue length
 
       OperRec() :
          kind(kind_None), skind(skind_None),
-            oper_time(0), buf(), header(0), hdrsize(0), tgtnode(0), tgtindx(0), repeatcnt(0), err(false)  {}
+            oper_time(0), buf(), header(0), hdrsize(0), tgtnode(0), tgtindx(0), repeatcnt(0), err(false),
+            queuelen(0) {}
 
       void SetRepeatCnt(int cnt) { repeatcnt = cnt; }
 
@@ -54,6 +57,8 @@ namespace bnet {
       void SetImmediateTime() { oper_time = 0; }
 
       void SetTime(double tm) { oper_time = tm; }
+
+      inline bool IsQueueOk() { return queuelen==0 ? true : *queuelen < queuelimit; }
    };
 
    class TimeStamping {
@@ -91,9 +96,13 @@ namespace bnet {
           * new requests from module */
          dabc::Condition fCondition;
 
+         /** Reply condition, can be used by module to get replies from the runnable */
+         dabc::Condition fReplyCond;
+
 
          int    fNodeId; // node number
          int    fNumNodes;   // total number of node
+         int    fNumLids;
          bool*  fActiveNodes; // arrays with active node flags
 
          /** Short story about each record:
@@ -124,6 +133,9 @@ namespace bnet {
          int       fSegmPerOper;     // maximal allowed number of segments in operation (1 for header + rest for buffer)
          int       fHeaderBufSize;   // size of buffer for header
 
+         std::vector<int> fSendQueue;  // running send queue, NumLids() * NumNodes()
+         std::vector<int> fRecvQueue;  // running recv queue, NumLids() * NumNodes()
+
          dabc::MemoryPool fHeaderPool;  // list of headers for transport operations
 
          dabc::Thread_t fModuleThrd;  // id of module thread, used for debugging
@@ -133,6 +145,9 @@ namespace bnet {
 
          dabc::Average fLoopTime;  // average loop time, for statistic
          int          fLoopMaxCnt;  // time when loop too big (more than 1 ms)
+
+         int          fSendQueueLimit; // limit for send operations in send queue
+         int          fRecvQueueLimit; // limit for recv operations in recv queue
 
 
          // this variables block used by time synchronization
@@ -148,6 +163,8 @@ namespace bnet {
          bool   fSyncRecvDone; // indicates that next recv operation (slave or master) is done
          bool   fSyncSendDone; // indicates that next send operation (slave or master) is done
 
+         int&   SendQueue(int indx, int node) { return fSendQueue[indx*NumNodes() + node]; }
+         int&   RecvQueue(int indx, int node) { return fRecvQueue[indx*NumNodes() + node]; }
 
          #define CheckModuleThrd() \
             if (dabc::PosixThread::Self() != fModuleThrd) { \
@@ -176,6 +193,7 @@ namespace bnet {
 
          int NodeId() const { return fNodeId; }
          int NumNodes() const { return fNumNodes; }
+         int NumLids() const { return fNumLids; }
          bool IsActiveNode(int id) const { return true; }
          int NumRunningRecs() const { return fNumRunningRecs; }
 
@@ -213,6 +231,7 @@ namespace bnet {
             if (DoPerformOperation(recid)) {
                fRunningRecs[recid] = true;
                GetRec(recid)->is_time = tm;
+               // (*(GetRec(recid)->queuelen))++;
                fNumRunningRecs++;
             } else {
                GetRec(recid)->err = true;
@@ -228,7 +247,7 @@ namespace bnet {
          TransportRunnable();
          virtual ~TransportRunnable();
 
-         void SetNodeId(int id, int num) { fNodeId = id; fNumNodes = num; }
+         void SetNodeId(int id, int num, int nlids) { fNodeId = id; fNumNodes = num; fNumLids = nlids; }
 
          void SetThreadsIds(dabc::Thread_t modid, dabc::Thread_t trid) { fModuleThrd = modid; fTransportThrd = trid; }
 
@@ -247,6 +266,7 @@ namespace bnet {
          bool CreateQPs(void* recs, int recssize);
          bool ConnectQPs(void* recs, int recssize);
          bool ConfigSync(bool master, int nrepeat, bool dosync = false, bool doscale = false);
+         bool ConfigQueueLimits(int send_limit, int recv_limit);
          bool GetSync(TimeStamping& stamp);
          bool ResetStatistic();
          bool GetStatistic(double& mean_loop, double& max_loop, int& long_cnt);
@@ -257,10 +277,11 @@ namespace bnet {
          bool CloseQPs();
          bool StopRunnable();
 
+         bool IsFreeRec() const { return !fFreeRecs.Empty(); }
+
          /** Method is preparing all necessary structures for submitting send/recv operation
           * Method executed in caller (module) thread
-          * Return value is record id, -1 - failure
-          */
+          * Return value is record id, -1 - failure    */
          virtual int PrepareOperation(OperKind kind, int hdrsize, dabc::Buffer buf = dabc::Buffer());
 
          OperRec* GetRec(int recid) { return (recid>=0) && (recid<=fNumRecs) ? fRecs + recid : 0; }

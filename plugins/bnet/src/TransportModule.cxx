@@ -32,6 +32,8 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fTestBufferSize = Cfg(dabc::xmlBufferSize, cmd).AsInt(65536);
    fTestNumBuffers = Cfg(dabc::xmlNumBuffers, cmd).AsInt(1000);
 
+   DOUT0(("Test num buffers = %d", fTestNumBuffers));
+
    CreatePoolHandle("BnetCtrlPool");
 
    CreatePoolHandle("BnetDataPool");
@@ -84,7 +86,7 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    if (fRunnable==0) fRunnable = new TransportRunnable();
 
-   fRunnable->SetNodeId(fNodeNumber, fNumNodes);
+   fRunnable->SetNodeId(fNodeNumber, fNumNodes, fNumLids);
 
    // call Configure before runnable has own thread - no any synchronization problems
    fRunnable->Configure(this, FindPool("BnetDataPool")->Pool(), cmd);
@@ -254,6 +256,8 @@ bool bnet::TransportModule::SlaveTimeSync(int64_t* cmddata)
    int nrepeat = cmddata[3];
 
    fRunnable->ConfigSync(false, numcycles);
+
+   fRunnable->ConfigQueueLimits(2, maxqueuelen);
 
    bool res = fRunnable->RunSyncLoop(false, 0, sync_lid, maxqueuelen, nrepeat);
 
@@ -673,6 +677,8 @@ bool bnet::TransportModule::MasterTimeSync(bool dosynchronisation, int numcycles
 
    if (!MasterCommandRequest(IBTEST_CMD_TIMESYNC, pars, sizeof(pars))) return false;
 
+   fRunnable->ConfigQueueLimits(2, maxqueuelen);
+
    WorkerSleep(0.1);
 
    dabc::TimeStamp starttm = dabc::Now();
@@ -713,8 +719,8 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    double recv_pre_time = 0.0001;
 
    // this is time required to deliver operation to the runnable
-   // 0.5 ms should be enough
-   double submit_pre_time = 0.0005;
+   // 5 ms should be enough to be able to use wait in the main loop
+   double submit_pre_time = 0.005;
 
    AllocResults(14);
 
@@ -862,7 +868,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 //      fRecvSch.Print(0);
 //   }
 
-   dabc::Average send_start, send_compl, recv_compl, loop_time;
+   dabc::Average send_start, send_compl, recv_compl, loop_time, wait_time_aver, submit_send;
 
    double lastcmdchecktime = fStamping();
 
@@ -885,6 +891,8 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
    long totalrecvpackets(0), numsendpackets(0), numcomplsend(0);
 
+   long  loop_cnt(0), no_recv_cnt(0), no_send_cnt(0);
+
    int64_t sendmulticounter = 0;
    int64_t skipmulticounter = 0;
    int64_t numlostmulti = 0;
@@ -895,15 +903,18 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
    dabc::CpuStatistic cpu_stat;
 
-   double cq_waittime = 0.;
-   if (patternid==-2) cq_waittime = 0.001;
-
    int recid(-1);
    OperRec* rec(0);
 
+   fRunnable->ConfigQueueLimits(max_sending_queue, max_receiving_queue);
+
    fRunnable->ResetStatistic();
 
+   double next_oper_time(0.);
+
    while ((curr_tm=fStamping()) < stoptime) {
+
+      loop_cnt++;
 
       if ((last_tm>0) && (last_tm>starttime))
          loop_time.Fill(curr_tm - last_tm);
@@ -912,7 +923,21 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
       // just indicate that we were active at this time interval
       if (fWorkRatemeter) fWorkRatemeter->Packet(1, curr_tm);
 
-      recid = CheckCompletionQueue(cq_waittime);
+      // wait only when next operation far away
+      double waittm = 0.;
+      if ((next_oper_time>0) && (next_oper_time > curr_tm+0.003)) waittm = 0.001;
+
+//      if (waittm>0) sched_yield();
+
+      recid = CheckCompletionQueue(waittm);
+      if (waittm>0) {
+         double next_tm = fStamping();
+         wait_time_aver.Fill(next_tm - curr_tm);
+         curr_tm = next_tm;
+      }
+
+
+      next_oper_time = 0;
 
       rec = fRunnable->GetRec(recid);
 
@@ -970,15 +995,32 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
          fRunnable->ReleaseRec(recid);
       }
 
+      double next_recv_time(0.), next_send_time(0.);
+
+      if (doreceiving && fRunnable->IsFreeRec() && (curr_tm<stoptime-0.1))
+         next_recv_time = recv_basetm + fRecvSch.timeSlot(recv_slot) - recv_pre_time;
+
+      if (dosending && fRunnable->IsFreeRec() && (curr_tm<stoptime-0.1))
+         next_send_time = send_basetm + fSendSch.timeSlot(send_slot);
+
+      if (doreceiving && !fRunnable->IsFreeRec()) no_recv_cnt++;
+      if (dosending && !fRunnable->IsFreeRec()) no_send_cnt++;
+
+      // if both operation want to be executed, selected first in the time
+      if (next_recv_time>0. && next_send_time>0.) {
+         if (next_recv_time<next_send_time)
+            next_send_time = 0.;
+         else
+            next_recv_time = 0.;
+      }
+
+
       // this is submit of recv operation
 
-      if (doreceiving && (TotalRecvQueue() < recv_total_limit)) {
-
-         double next_recv_time = recv_basetm + fRecvSch.timeSlot(recv_slot) - recv_pre_time;
-
-         curr_tm = fStamping();
-
-         if (next_recv_time - submit_pre_time < curr_tm) {
+      if (next_recv_time>0.) {
+         if (next_recv_time - submit_pre_time > curr_tm) {
+            next_oper_time = next_recv_time;
+         } else {
             int node = fRecvSch.Item(recv_slot, Node()).node;
             int lid = fRecvSch.Item(recv_slot, Node()).lid;
             bool did_submit = false;
@@ -988,8 +1030,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
                // to receive them - they were skipped by sender most probably
                recvskipcounter(lid, node)--;
                did_submit = true;
-            } else
-            if (RecvQueue(lid, node) < max_receiving_queue) {
+            } else {
 
                dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
 
@@ -1017,10 +1058,6 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
                }
 
                did_submit = true;
-            } else
-            if (canskipoperation) {
-               // skip recv operation - other node may be waiting for me
-               did_submit = true;
             }
 
             // shift to next operation, even if previous was not submitted.
@@ -1032,14 +1069,11 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
          }
       }
 
-      // this is submit of send operation
-      if (dosending && (TotalSendQueue() < send_total_limit)) {
-         double next_send_time = send_basetm + fSendSch.timeSlot(send_slot);
-
-         curr_tm = fStamping();
-
-         if ((next_send_time - submit_pre_time < curr_tm) && (curr_tm<stoptime-0.1)) {
-
+       // this is submit of send operation
+      if (next_send_time > 0.) {
+         if (next_send_time - submit_pre_time > curr_tm) {
+            next_oper_time = next_send_time;
+         } else {
             int node = fSendSch.Item(send_slot, Node()).node;
             int lid = fSendSch.Item(send_slot, Node()).lid;
             bool did_submit = false;
@@ -1047,8 +1081,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
             if (canskipoperation && ((SendQueue(lid, node) >= max_sending_queue) || (TotalSendQueue() >= 2*max_sending_queue)) ) {
                did_submit = true;
                skipsendcounter++;
-            } else
-            if ( (SendQueue(lid, node) < max_sending_queue) && (TotalSendQueue() < 2*max_sending_queue) ) {
+            } else {
 
                dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
 
@@ -1077,6 +1110,8 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
                rec->SetTarget(node, lid);
                rec->SetTime(next_send_time);
+
+               submit_send.Fill(next_send_time - curr_tm);
 
                if (!SubmitToRunnable(recid,rec)) {
                   EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
@@ -1132,6 +1167,13 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    DOUT3(("Send operations diff %ld: submited %ld, completed %ld", numsendpackets-numcomplsend, numsendpackets, numcomplsend));
 
    DOUT5(("CPU utilization = %5.1f % ", cpu_stat.CPUutil()*100.));
+
+   DOUT0(("Send submit time min:%8.6f aver:%8.6f max:%8.6f cnt:%ld", submit_send.Min(), submit_send.Mean(), submit_send.Max(), submit_send.Number()));
+   DOUT0(("Send start time min:%8.6f aver:%8.6f max:%8.6f cnt:%ld", send_start.Min(), send_start.Mean(), send_start.Max(), send_start.Number()));
+   DOUT0(("Real wait time min:%5.4f aver:%5.4f max:%5.4f cnt:%ld", wait_time_aver.Min(), wait_time_aver.Mean(), wait_time_aver.Max(), wait_time_aver.Number()));
+   DOUT0(("Module loop time min:%5.4f aver:%5.4f max:%5.4f cnt:%ld", loop_time.Min(), loop_time.Mean(), loop_time.Max(), loop_time.Number()));
+   DOUT0(("Loop cnt %ld  no_send:%ld %8.6f no_recv:%ld %8.6f", loop_cnt, no_send_cnt, 1.*no_send_cnt/loop_cnt, no_recv_cnt, 1.*no_recv_cnt/loop_cnt));
+
 
    if (numsendpackets!=numcomplsend) {
       EOUT(("Mismatch %d between submitted %ld and completed send operations %ld",numsendpackets-numcomplsend, numsendpackets, numcomplsend));
@@ -1344,8 +1386,8 @@ int bnet::TransportModule::ProcessAskQueue(void* tgt)
 
    dabc::TimeStamp tm = dabc::Now();
 
-   while (!tm.Expired(0.01)) {
-      int recid = CheckCompletionQueue(0.);
+   while (!tm.Expired(0.1)) {
+      int recid = CheckCompletionQueue(0.001);
       if (recid<0) break;
       fRunnable->ReleaseRec(recid);
    }

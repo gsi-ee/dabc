@@ -37,8 +37,10 @@ bnet::TransportRunnable::TransportRunnable() :
    dabc::Runnable(),
    fMutex(),
    fCondition(&fMutex),
+   fReplyCond(&fMutex),
    fNodeId(0),
    fNumNodes(1),
+   fNumLids(1),
    fActiveNodes(0),
    fNumRecs(0),
    fRecs(0),
@@ -53,7 +55,9 @@ bnet::TransportRunnable::TransportRunnable() :
    fModuleThrd(),
    fTransportThrd(),
    fStamping(),
-   fLoopTime()
+   fLoopTime(),
+   fSendQueueLimit(3),
+   fRecvQueueLimit(6)
 {
 }
 
@@ -97,6 +101,9 @@ bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool,
    fDoTimeSync = false;
    fDoScaleSync = false;
    fNumSyncCycles = 100;
+
+   fSendQueue.resize(NumLids() * NumNodes(), 0);
+   fRecvQueue.resize(NumLids() * NumNodes(), 0);
 
    return true;
 }
@@ -247,7 +254,6 @@ bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int
 
    return false;
 }
-
 
 void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
 {
@@ -545,7 +551,7 @@ void* bnet::TransportRunnable::MainLoop()
       if (!fAcceptedRecs.Empty()) {
          OperRec* rec = GetRec(fAcceptedRecs.Front());
 
-         if (rec->oper_time <= currtm) {
+         if ((rec->oper_time <= currtm) && rec->IsQueueOk()) {
             int recid = fAcceptedRecs.Pop();
 
             if (rec->skind!=skind_None)
@@ -595,6 +601,10 @@ void* bnet::TransportRunnable::MainLoop()
                last_tm = 0; // do not account time of special operations
             }
 
+            // decrement appropriate queue counter
+            if (rec->queuelen) (*rec->queuelen)--;
+
+
             if ((--rec->repeatcnt <= 0) || rec->err) {
                fCompletedRecs.Push(recid);
             } else
@@ -602,17 +612,19 @@ void* bnet::TransportRunnable::MainLoop()
          }
       }
 
-      // if next operation comes in 0.1 ms do not start any communications with other thread
-      if (till_next_oper<0.0001) continue;
+      // if next operation comes in 0.01 ms do not start any communications with other thread
+      if (till_next_oper<0.00001) continue;
 
-      // if we have running records, do not check queues very often
+      // if we have running records, do not check queues very often - 1 ms should be enough
       if (fNumRunningRecs>0)
-         if (currtm < last_check_time + 0.0001) continue;
+         if (currtm < last_check_time + 0.001) continue;
 
       // if there are no very urgent operations we could enter locking area
       // and even set condition
 
       last_check_time = currtm;
+
+      sched_yield();
 
       // probably, we should lock mutex not very often
       // TODO: check if next operation very close in time - than go to begin of the loop
@@ -624,12 +636,16 @@ void* bnet::TransportRunnable::MainLoop()
          till_next_oper = 0.; // indicate that next operation can be very soon
       }
 
+      bool isanyreply(false);
       // copy to shared queue executed records
-      while (!fCompletedRecs.Empty())
+      while (!fCompletedRecs.Empty()) {
+         isanyreply = true;
          fReplyedRecs.Push(fCompletedRecs.Pop());
+      }
+      if (isanyreply)  fReplyCond._DoFire();
 
       // if we have nothing to do for very long time, enter wait method for relaxing thread consumption
-      if ((fNumRunningRecs==0) && (fAcceptedRecs.Empty() || (till_next_oper>0.2))) {
+      if (!isanyreply && (fNumRunningRecs==0) && (fAcceptedRecs.Empty() || (till_next_oper>0.2))) {
          fCondition._DoReset();
          fCondition._DoWait(0.001);
          last_tm = 0; // do not account time when we doing wait
@@ -668,6 +684,15 @@ bool bnet::TransportRunnable::ConfigSync(bool master, int nrepeat, bool dosync, 
 
    return ExecuteCmd(cmd_ConfigSync, args, sizeof(args));
 }
+
+bool bnet::TransportRunnable::ConfigQueueLimits(int send_limit, int recv_limit)
+{
+   // limits used from module thread, assigned to record when it is submitted
+   fSendQueueLimit = send_limit;
+   fRecvQueueLimit = recv_limit;
+   return true;
+}
+
 
 bool bnet::TransportRunnable::GetSync(TimeStamping& stamp)
 {
@@ -775,9 +800,28 @@ bool bnet::TransportRunnable::SubmitRec(int recid)
 {
    CheckModuleThrd();
 
-   if (GetRec(recid) == 0) {
+
+   OperRec* rec = GetRec(recid);
+   if (rec == 0) {
       EOUT(("Wrong RECID"));
       return false;
+   }
+
+   // at the moment when record submitted, set queue size
+
+   switch (rec->kind) {
+      case kind_Send:
+         rec->queuelen = &(SendQueue(rec->tgtindx, rec->tgtnode));
+         rec->queuelimit = fSendQueueLimit;
+         break;
+      case kind_Recv:
+         rec->queuelen = &(RecvQueue(rec->tgtindx, rec->tgtnode));
+         rec->queuelimit = fRecvQueueLimit;
+         break;
+      default:
+         rec->queuelen = 0;
+         rec->queuelimit = 0;
+         break;
    }
 
    dabc::LockGuard lock(fMutex);
@@ -797,20 +841,31 @@ bool bnet::TransportRunnable::SubmitRec(int recid)
 
 int bnet::TransportRunnable::WaitCompleted(double tm)
 {
-   // TODO: implement with condition
+   // TODO first : first implement with condition
+   // TODO second: fire event to the module - when it works asynchronousely
 
    CheckModuleThrd();
 
-   dabc::TimeStamp start = dabc::Now();
+   /*
 
+   dabc::TimeStamp start = dabc::Now();
    do {
       dabc::LockGuard lock(fMutex);
       if (!fReplyedRecs.Empty())
          return fReplyedRecs.Pop();
-   } while ((tm>0) && !start.Expired(tm));
+   } while (!start.Expired(tm));
+   */
+
+
+   dabc::LockGuard lock(fMutex);
+   if (!fReplyedRecs.Empty())
+      return fReplyedRecs.Pop();
+
+   fReplyCond._DoReset();
+   fReplyCond._DoWait(tm);
+
+   if (!fReplyedRecs.Empty())
+      return fReplyedRecs.Pop();
 
    return -1;
 }
-
-
-

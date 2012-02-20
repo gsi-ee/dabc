@@ -13,7 +13,7 @@
        <debuglevel value="0"/>
        <debugger value="false"/>
        <nullout value="false"/>
-       <num_special_proc value="1"/>
+       <num_special_proc value="0"/>
        <loglevel value="1"/>
        <loglimit value="1000000"/>
        <runtime value="100"/>
@@ -22,8 +22,8 @@
      <Application class="bnet::Application">
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="65536"/>
-         <NumBuffers value="1024"/>
-         <SpecialThread value="true"/>
+         <NumBuffers value="1000"/>
+         <SpecialThread value="false"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
          <TestKind value="Normal"/>
