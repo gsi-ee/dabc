@@ -62,6 +62,7 @@ namespace dabc {
    extern const char* xmlRunTime;
    extern const char* xmlNormalMainThrd;
    extern const char* xmlNumSpecialProc;
+   extern const char* xmlTaskset;
    extern const char* xmlLDPATH;
    extern const char* xmlUserLib;
    extern const char* xmlInitFunc;

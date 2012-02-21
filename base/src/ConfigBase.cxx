@@ -62,6 +62,7 @@ namespace dabc {
    const char* xmlRunTime          = "runtime";
    const char* xmlNormalMainThrd   = "normalmainthrd";
    const char* xmlNumSpecialProc   = "num_special_proc";
+   const char* xmlTaskset          = "taskset";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
    const char* xmlUserLib          = "lib";
    const char* xmlInitFunc         = "func";
@@ -531,6 +532,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
    std::string dabc_stdout = Find1(contnode, "", xmlRunNode, xmlStdOut);
    std::string dabc_errout = Find1(contnode, "", xmlRunNode, xmlErrOut);
    bool nullout = (Find1(contnode, "", xmlRunNode, xmlNullOut) == "true");
+   std::string tasksetargs = Find1(contnode, "", xmlRunNode, xmlTaskset);
    std::string logfile = Find1(contnode, "", xmlRunNode, xmlLogfile);
 
    std::string workdir = envDABCWORKDIR;
@@ -665,6 +667,11 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
       }
 
       if (!workdir.empty()) res += dabc::format(" cd %s;", workdir.c_str());
+
+      if (!tasksetargs.empty() && (tasksetargs!="false")) {
+         res += " taskset ";
+         res += tasksetargs;
+      }
 
       if (!debugger.empty() && (debugger!="false")) {
          if (debugger == "true")

@@ -240,7 +240,7 @@ bool dabc::PosixThread::ReduceAffinity(int reduce)
 
    for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
       if (CPU_ISSET(cpu, &mask)) {
-         DOUT0(("  Before: process CPU%d set", cpu));
+         // DOUT0(("  Before: process CPU%d set", cpu));
          numset++;
       }
 
@@ -261,8 +261,9 @@ bool dabc::PosixThread::ReduceAffinity(int reduce)
       }
 
    res = sched_setaffinity(0, sizeof(mask), &mask);
-   if (res!=0) { EOUT(("sched_setaffinity res = %d", res)); return false; }
+   if (res!=0) { EOUT(("sched_setaffinity failed res = %d", res)); return false; }
 
+/*
    res = sched_getaffinity(0, sizeof(mask), &mask);
    if (res!=0) {
       EOUT(("sched_getaffinity res = %d", res));
@@ -272,9 +273,12 @@ bool dabc::PosixThread::ReduceAffinity(int reduce)
    for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
       if (CPU_ISSET(cpu, &mask))
          DOUT0(("  After: process CPU%d set", cpu));
+*/
 
    return true;
-//      void CPU_CLR(int cpu, cpu_set_t *set);
+
+
+   //      void CPU_CLR(int cpu, cpu_set_t *set);
 //      int CPU_ISSET(int cpu, cpu_set_t *set);
 //      void CPU_SET(int cpu, cpu_set_t *set);
 //      void CPU_ZERO(cpu_set_t *set);

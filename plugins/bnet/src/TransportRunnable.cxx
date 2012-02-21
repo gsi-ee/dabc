@@ -11,26 +11,6 @@ void bnet::TimeStamping::ChangeScale(double koef)
    fTimeScale *= koef;
 }
 
-#include <sched.h>
-
-extern "C" void print_affinity()
-{
-   pthread_attr_t attr;
-   cpu_set_t mask;
-
-   int s = pthread_getattr_np(pthread_self(), &attr);
-   if (s != 0) EOUT(("pthread_getattr_np failure"));
-
-   s = pthread_attr_getaffinity_np(&attr, sizeof(cpu_set_t), &mask);
-
-   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
-      if (CPU_ISSET(cpu, &mask)) DOUT0(("  Thread CPU%d set", cpu));
-
-   s = pthread_attr_destroy(&attr);
-   if (s != 0) EOUT(("pthread_attr_destroy"));
-}
-
-
 // ==============================================================================
 
 bnet::TransportRunnable::TransportRunnable() :
@@ -530,7 +510,7 @@ void* bnet::TransportRunnable::MainLoop()
 {
    DOUT0(("Enter TransportRunnable::MainLoop()"));
 
-   print_affinity();
+   dabc::PosixThread::PrintThreadAffinity("bnet-transport");
 
    // last time when in/out queue was checked
    double last_check_time(-1), last_tm(0);

@@ -14,6 +14,7 @@
        <debugger value="false"/>
        <nullout value="true"/>
        <num_special_proc value="1"/>
+       <taskset value="-c 0-1"/>
        <loglevel value="1"/>
        <loglimit value="1000000"/>
        <runtime value="100"/>
