@@ -121,6 +121,11 @@ extern "C" void CleanupRunnable(void* abc)
 
 extern "C" void* StartTRunnable(void* abc)
 {
+
+   static int cnt = 0;
+
+   dabc::PosixThread::PrintThreadAffinity(dabc::format("Thread%d",cnt++).c_str());
+
    dabc::Runnable *run = (dabc::Runnable*) abc;
 
    void* res = 0;
@@ -273,4 +278,33 @@ bool dabc::PosixThread::ReduceAffinity(int reduce)
 //      int CPU_ISSET(int cpu, cpu_set_t *set);
 //      void CPU_SET(int cpu, cpu_set_t *set);
 //      void CPU_ZERO(cpu_set_t *set);
+}
+
+
+void dabc::PosixThread::PrintThreadAffinity(const char* name)
+{
+   if (name==0) name = "Thread";
+
+   int s;
+   pthread_attr_t attr;
+
+   s = pthread_getattr_np(pthread_self(), &attr);
+   if (s != 0) { EOUT(("pthread_getattr_np failed for %s", name)); return; }
+
+   cpu_set_t mask;
+   CPU_ZERO(&mask);
+   s = pthread_attr_getaffinity_np(&attr, sizeof(cpu_set_t), &mask);
+   if (s != 0)
+      EOUT(("pthread_attr_getaffinity_np failed"));
+   else {
+      std::string out = name;
+      for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
+         if (CPU_ISSET(cpu, &mask))
+            out+=dabc::format(" CPU%d", cpu);
+      DOUT0((out.c_str()));
+   }
+
+   s = pthread_attr_destroy(&attr);
+   if (s != 0)
+      EOUT(("pthread_attr_destroy failed for %s", name));
 }

@@ -1,15 +1,8 @@
-<?xml version="1.0"?>
-<dabc version="2">
-   <Context host="master" port="5432"/>
-   <Context host="node01" port="5433"/>
-   <Context host="node02" port="5434"/>
-   <Context host="node03" port="5435"/>
    <Context host="*">
      <Run>
        <lib value="libDabcVerbs.so"/>
        <lib value="libDabcBnet.so"/>
-       <!--LD_LIBRARY_PATH value="/home/linev/workspace/dabc/applications/ib-test"/-->
-       <logfile value="Node${DABCNODEID}.log"/>
+       <logfile value="/tmp/Node${DABCNODEID}.log"/>
        <debuglevel value="0"/>
        <debugger value="false"/>
        <nullout value="true"/>

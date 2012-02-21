@@ -192,6 +192,8 @@ namespace dabc {
          static Thread_t Self() { return pthread_self(); }
 
          static bool ReduceAffinity(int reduce = 1);
+
+         static void PrintThreadAffinity(const char* name = 0);
    };
 
 }
