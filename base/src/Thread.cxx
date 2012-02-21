@@ -238,6 +238,8 @@ bool dabc::Thread::CompatibleClass(const char* clname) const
 
 void* dabc::Thread::MainLoop()
 {
+   PrintAffinity(GetName());
+
    EventId evid;
    double tmout;
 

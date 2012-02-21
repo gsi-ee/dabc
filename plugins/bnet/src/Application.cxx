@@ -73,7 +73,7 @@ bool bnet::Application::CreateAppModules()
    int numbuf = Cfg(dabc::xmlNumBuffers).AsInt(1024);
    dabc::mgr.CreateMemoryPool("BnetDataPool", bufsize, numbuf, 2);
 
-   dabc::CmdCreateModule cmd("bnet::TransportModule", IBTEST_WORKERNAME, "IbTestThrd");
+   dabc::CmdCreateModule cmd("bnet::TransportModule", IBTEST_WORKERNAME, "BnetModule");
    cmd.Field("NodeNumber").SetInt(dabc::mgr()->NodeId());
    cmd.Field("NumNodes").SetInt(NumNodes());
    cmd.Field("NumPorts").SetInt((dabc::mgr()->NodeId()==0) ? NumNodes()-1 : 1);

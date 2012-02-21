@@ -121,11 +121,6 @@ extern "C" void CleanupRunnable(void* abc)
 
 extern "C" void* StartTRunnable(void* abc)
 {
-
-   static int cnt = 0;
-
-   dabc::PosixThread::PrintThreadAffinity(dabc::format("Thread%d",cnt++).c_str());
-
    dabc::Runnable *run = (dabc::Runnable*) abc;
 
    void* res = 0;
@@ -285,7 +280,7 @@ bool dabc::PosixThread::ReduceAffinity(int reduce)
 }
 
 
-void dabc::PosixThread::PrintThreadAffinity(const char* name)
+void dabc::PosixThread::PrintAffinity(const char* name)
 {
    if (name==0) name = "Thread";
 
@@ -301,7 +296,7 @@ void dabc::PosixThread::PrintThreadAffinity(const char* name)
    if (s != 0)
       EOUT(("pthread_attr_getaffinity_np failed"));
    else {
-      std::string out = name;
+      std::string out = dabc::format("%s affinity", name);
       for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
          if (CPU_ISSET(cpu, &mask))
             out+=dabc::format(" CPU%d", cpu);

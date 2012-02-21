@@ -161,7 +161,7 @@ int main(int numc, char* args[])
    // reserve special thread
    dabc::PosixThread::ReduceAffinity(cfg.NumSpecialProcessors());
 
-   dabc::PosixThread::PrintThreadAffinity("Process");
+   dabc::PosixThread::PrintAffinity("Process");
 
    DOUT2(("Create manager"));
 

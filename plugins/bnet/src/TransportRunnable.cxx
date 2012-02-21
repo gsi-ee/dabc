@@ -510,7 +510,7 @@ void* bnet::TransportRunnable::MainLoop()
 {
    DOUT0(("Enter TransportRunnable::MainLoop()"));
 
-   dabc::PosixThread::PrintThreadAffinity("bnet-transport");
+   dabc::PosixThread::PrintAffinity("bnet-transport");
 
    // last time when in/out queue was checked
    double last_check_time(-1), last_tm(0);

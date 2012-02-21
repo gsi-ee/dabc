@@ -9,7 +9,7 @@
        <lib value="libDabcVerbs.so"/>
        <lib value="libDabcBnet.so"/>
        <!--LD_LIBRARY_PATH value="/home/linev/workspace/dabc/applications/ib-test"/-->
-       <logfile value="Node${DABCNODEID}.log"/>
+       <logfile value="/tmp/Node${DABCNODEID}.log"/>
        <debuglevel value="0"/>
        <debugger value="false"/>
        <nullout value="true"/>

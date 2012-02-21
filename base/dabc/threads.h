@@ -193,7 +193,7 @@ namespace dabc {
 
          static bool ReduceAffinity(int reduce = 1);
 
-         static void PrintThreadAffinity(const char* name = 0);
+         static void PrintAffinity(const char* name = 0);
    };
 
 }
