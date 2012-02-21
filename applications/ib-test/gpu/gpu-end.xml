@@ -14,15 +14,17 @@
          <BufferSize value="200000"/>
 
       <!-- allowed: SingleRoute, TimeSync, TestGPU or NormalTest -->
-         <TestKind value="NormalTest"/>
+         <TestKind value="TimeSync"/>
+         <TestTimeSyncShort value="true"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
+         <TestReliable value="true"/>
          <TestTime value="20"/>
          <TestWrite value="false"/>
          <TestRead value="false"/>
-         <TestRate value="3000"/>
+         <TestRate value="2000"/>
+         <!--TestBufferSize value="65536"/-->
          <TestBufferSize value="524288"/>
-         <!--TestBufferSize value="524288"/-->
          <TestPoolSize value="300"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>

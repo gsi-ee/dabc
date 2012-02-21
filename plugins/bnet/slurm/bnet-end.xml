@@ -5,6 +5,7 @@
        <logfile value="/tmp/Node${DABCNODEID}.log"/>
        <debuglevel value="0"/>
        <debugger value="false"/>
+       <taskset value="-c 10-12"/>
        <nullout value="true"/>
        <num_special_proc value="1"/>
        <loglevel value="1"/>
@@ -24,7 +25,7 @@
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="5.0"/>
-         <TestRate value="250"/>
+         <TestRate value="1250"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
          <TestSchedule value=""/>

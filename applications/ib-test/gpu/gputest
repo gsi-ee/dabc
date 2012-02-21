@@ -7,7 +7,7 @@
 #SBATCH --mem-per-cpu=4200
 # #SBATCH --mail-type=ALL
 #SBATCH --partition=test
-#SBATCH --gres=gpu
+# #SBATCH --gres=gpu
 #SBATCH --time=0-00:02:00
 
 #SBATCH --nodes=4

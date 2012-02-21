@@ -513,7 +513,7 @@ void* bnet::TransportRunnable::MainLoop()
    dabc::PosixThread::PrintAffinity("bnet-transport");
 
    // last time when in/out queue was checked
-   double last_check_time(-1), last_tm(0);
+   double last_check_time(0.), last_yield_time(0.), last_tm(0);
 
    fLoopMaxCnt = 0;
 
@@ -555,7 +555,7 @@ void* bnet::TransportRunnable::MainLoop()
 //            if (wait_time > till_next_oper/2)
 //               wait_time  = till_next_oper/2;
 
-         double wait_time(0.0001), fast_time(0.0001);
+         double wait_time(0.00001), fast_time(0.00001);
 
          // do not wait at all when new operation need to be submitted
          if (!fAcceptedRecs.Empty() && (till_next_oper<fast_time)) {
@@ -591,20 +591,31 @@ void* bnet::TransportRunnable::MainLoop()
                fAcceptedRecs.Push(recid);
          }
       }
+      
+      // if (fNumRunningRecs==0) last_tm = 0; // do not account loops where no operation submitted
 
-      // if next operation comes in 0.01 ms do not start any communications with other thread
-      if (till_next_oper<0.00001) continue;
+      // if next operation comes in 0.005 ms do not start any communications with other thread
+      if (till_next_oper<0.000005) continue;
 
       // if we have running records, do not check queues very often - 1 ms should be enough
       if (fNumRunningRecs>0)
          if (currtm < last_check_time + 0.001) continue;
+
+
+      // start from rare yield - better switch context ourself than let its doing by system at unpredictable point
+      if (currtm > last_yield_time + 0.005) {
+         sched_yield();
+         last_yield_time = currtm;
+         // last_tm = 0.;
+         continue;
+      }
 
       // if there are no very urgent operations we could enter locking area
       // and even set condition
 
       last_check_time = currtm;
 
-      sched_yield();
+      // last_tm = 0; // exclude locking from accounted loop time
 
       // probably, we should lock mutex not very often
       // TODO: check if next operation very close in time - than go to begin of the loop
