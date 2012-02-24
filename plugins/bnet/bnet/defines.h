@@ -34,7 +34,7 @@
 
 #define IBTEST_CMD_WAIT        80001  // wait for 1 seconds
 #define IBTEST_CMD_MEASURE     80002  // measure command delay
-
+#define IBTEST_CMD_CONNECTDONE 80003  // finilize connections
 
 #define IBTEST_WORKERNAME  "IbTest"
 

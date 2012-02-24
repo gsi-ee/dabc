@@ -90,6 +90,9 @@ class TransportModule : public dabc::ModuleAsync {
       void*  fCmdAllResults;   // buffer where replies from all nodes collected
       int    fCmdResultsPerNode;  // how many data in replied is expected
 
+      void  *fConnRawData, *fConnSortData; // buffers used during connections;
+      dabc::TimeStamp fConnStartTime;  // time when connection was starting
+
       QueueInt   fSyncOper; // queue of the submitted operations for performing sync
 
       dabc::Queue<int>  fExecQueue; // list of commands which must be executed

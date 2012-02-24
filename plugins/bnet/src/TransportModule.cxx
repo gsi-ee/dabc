@@ -103,6 +103,8 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fCmdReplies.resize(0); // indicates if cuurent cmd was replied
    fCmdAllResults = 0;   // buffer where replies from all nodes collected
    fCmdResultsPerNode = 0;  // how many data in replied is expected
+   fConnRawData = 0;
+   fConnSortData = 0;
 
    CreateTimer("Timer", 0.1); // every 100 milisecond
 
@@ -113,7 +115,19 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
       fExecQueue.Push(IBTEST_CMD_TEST); // test connection
       fExecQueue.Push(IBTEST_CMD_MEASURE); // reset first measurement
       for (int n=0;n<10;n++) fExecQueue.Push(IBTEST_CMD_TEST); // test connection
-      fExecQueue.Push(IBTEST_CMD_MEASURE); // do real measurement
+      fExecQueue.Push(IBTEST_CMD_MEASURE); // do real measurement of test loop
+
+      fExecQueue.Push(IBTEST_CMD_CREATEQP);
+      fExecQueue.Push(IBTEST_CMD_CONNECTQP);
+      fExecQueue.Push(IBTEST_CMD_CONNECTDONE);
+      fExecQueue.Push(IBTEST_CMD_TEST); // test that slaves are there
+      fExecQueue.Push(IBTEST_CMD_MEASURE); // reset single measurement
+
+      fExecQueue.Push(IBTEST_CMD_WAIT); // master wait 1 seconds
+
+      fExecQueue.Push(IBTEST_CMD_CLOSEQP); // close connections
+      fExecQueue.Push(IBTEST_CMD_TEST); // test that slaves are there
+
       fExecQueue.Push(IBTEST_CMD_EXIT); // master wait 1 seconds
    }
 }
@@ -1753,6 +1767,44 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
             DOUT0(("Command loop = %5.3f ms", fCmdDelay*1e3));
          }
          fCmdTestLoop.Reset();
+         break;
+
+
+      case IBTEST_CMD_CREATEQP: {
+         fConnStartTime.GetNow();
+
+         int blocksize = fRunnable->ConnectionBufferSize();
+
+         if (blocksize==0) return;
+
+         fConnRawData = malloc(NumNodes() * blocksize);
+         fConnSortData = malloc(NumNodes() * blocksize);
+         memset(fConnRawData, 0, NumNodes() * blocksize);
+         memset(fConnSortData, 0, NumNodes() * blocksize);
+
+         DOUT0(("First collect all QPs info"));
+
+         // own records will be add automatically
+         RequestMasterCommand(IBTEST_CMD_CREATEQP, 0, 0, fConnRawData, blocksize);
+         break;
+      }
+
+      case IBTEST_CMD_CONNECTQP: {
+         fRunnable->ResortConnections(fConnRawData, fConnSortData);
+
+         RequestMasterCommand(IBTEST_CMD_CONNECTQP, fConnSortData, -fRunnable->ConnectionBufferSize());
+         break;
+      }
+
+      case IBTEST_CMD_CONNECTDONE: {
+         free(fConnRawData); fConnRawData = 0;
+         free(fConnSortData); fConnSortData = 0;
+         DOUT0(("Establish connections in %5.4f s ", fConnStartTime.SpentTillNow()));
+         break;
+      }
+
+      case IBTEST_CMD_CLOSEQP:
+         RequestMasterCommand(IBTEST_CMD_CLOSEQP);
          break;
 
       default:
