@@ -9,10 +9,10 @@
        <lib value="libDabcVerbs.so"/>
        <lib value="libDabcBnet.so"/>
        <!--LD_LIBRARY_PATH value="/home/linev/workspace/dabc/applications/ib-test"/-->
-       <logfile value="/tmp/Node${DABCNODEID}.log"/>
+       <logfile value="Node${DABCNODEID}.log"/>
        <debuglevel value="0"/>
        <debugger value="false"/>
-       <nullout value="true"/>
+       <nullout value="false"/>
        <num_special_proc value="1"/>
        <taskset value="-c 0-1"/>
        <loglevel value="1"/>
@@ -27,7 +27,7 @@
          <SpecialThread value="true"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
-         <TestKind value="Normal"/>
+         <TestKind value="OnlyConnect"/>
          <TestReliable value="true"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>

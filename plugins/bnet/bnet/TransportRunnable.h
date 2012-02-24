@@ -5,6 +5,7 @@
 
 #include "dabc/statistic.h"
 
+#include "dabc/Queue.h"
 
 #include "dabc/Module.h"
 
@@ -13,7 +14,10 @@
 #include "bnet/defines.h"
 
 
+
 namespace bnet {
+
+   typedef dabc::Queue<int> QueueInt;
 
    enum OperKind {
       kind_None,
@@ -273,6 +277,8 @@ namespace bnet {
 
          // method to submit time sync operation and wait until all are executed
          bool RunSyncLoop(bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat);
+
+         bool PrepareSyncLoop(QueueInt& submoper, bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat);
 
          bool CloseQPs();
          bool StopRunnable();

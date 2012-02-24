@@ -16,11 +16,9 @@
 
 #define IBTEST_CMD_MAGIC 0x1ff1
 
-#define IBTEST_CMD_NONE        0
+// these commands are send over network
 #define IBTEST_CMD_EXIT        76543201
 #define IBTEST_CMD_TIMESYNC    76543202
-#define IBTEST_CMD_SLEEP       76543203
-#define IBTEST_CMD_CHAOTIC     76543204
 #define IBTEST_CMD_COLLECT     76543205
 #define IBTEST_CMD_TEST        76543206
 #define IBTEST_CMD_CREATEQP    76543207
@@ -29,11 +27,14 @@
 #define IBTEST_CMD_ALLTOALL    76543211
 #define IBTEST_CMD_CLEANUP     76543212
 #define IBTEST_CMD_ASKQUEUE    76543213
-#define IBTEST_CMD_INITMCAST   76543214
-#define IBTEST_CMD_MCAST       76543215
-#define IBTEST_CMD_RDMA        76543216
 #define IBTEST_CMD_COLLRATE    76543217
 #define IBTEST_CMD_ACTIVENODES 76543218
+
+// these commands are local
+
+#define IBTEST_CMD_WAIT        80001  // wait for 1 seconds
+#define IBTEST_CMD_MEASURE     80002  // measure command delay
+
 
 #define IBTEST_WORKERNAME  "IbTest"
 

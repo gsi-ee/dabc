@@ -505,6 +505,45 @@ bool bnet::TransportRunnable::RunSyncLoop(bool ismaster, int tgtnode, int tgtlid
 }
 
 
+bool bnet::TransportRunnable::PrepareSyncLoop(QueueInt& submoper, bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat)
+{
+   CheckModuleThrd();
+
+   // DOUT0(("Enter sync loop"));
+
+   submoper.Reset();
+   submoper.Allocate(queuelen+1);
+
+   // first fill receiving queue
+   for (int n=-1;n<queuelen+1;n++) {
+
+      OperKind kind = (n==-1) || (n==queuelen) ? kind_Send : kind_Recv;
+
+      if ((kind==kind_Send)) {
+         if (ismaster && (n==-1)) continue; // master should submit send at the end
+         if (!ismaster && (n==queuelen)) continue; // slave should submit send in the begin
+      }
+
+      int recid = PrepareOperation(kind, sizeof(TimeSyncMessage));
+      OperRec* rec = GetRec(recid);
+      if ((recid<0) || (rec==0)) { EOUT(("Internal")); return false; }
+      if (kind==kind_Recv) {
+         rec->skind = ismaster ? skind_SyncMasterRecv : skind_SyncSlaveRecv;
+         rec->SetRepeatCnt(nrepeat);
+      } else {
+         rec->skind = ismaster ? skind_SyncMasterSend : skind_SyncSlaveSend;
+         rec->SetRepeatCnt(nrepeat * queuelen);
+      }
+
+      rec->SetTarget(tgtnode, tgtlid);
+      SubmitRec(recid);
+      submoper.Push(recid);
+   }
+
+   return true;
+}
+
+
 
 void* bnet::TransportRunnable::MainLoop()
 {
@@ -591,7 +630,7 @@ void* bnet::TransportRunnable::MainLoop()
                fAcceptedRecs.Push(recid);
          }
       }
-      
+
       // if (fNumRunningRecs==0) last_tm = 0; // do not account loops where no operation submitted
 
       // if next operation comes in 0.005 ms do not start any communications with other thread

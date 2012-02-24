@@ -17,7 +17,7 @@
 #define DABC_timing
 
 namespace dabc {
-   
+
    /** \brief Class for acquiring and holding timestamps.
     * Time measurement is done in seconds relative to program start.
     * In normal case constant tsc counter is used - by program start during 0.1 seconds value of
@@ -124,18 +124,20 @@ namespace dabc {
          /** \brief Method to acquire current time stamp */
          inline void GetNow() { fValue = gFast ? (GetFastClock() - gFastClockZero) * gFastClockMult : (GetSlowClock() - gSlowClockZero) * 1e-9; }
 
+         /** \brief Method to acquire current time stamp plus shift in seconds */
+         inline void GetNow(double shift) { GetNow(); fValue += shift;  }
+
          /** Method return time in second, spent from the time kept in TimeStamp instance */
          inline double SpentTillNow() const { return Now().AsDouble() - AsDouble(); }
 
          /** Method returns true if specified time interval expired
           * relative to time, kept in TimeStamp instance */
-         inline bool Expired(double interval) const { return Now().AsDouble() > AsDouble() + interval; }
+         inline bool Expired(double interval = 0.) const { return Now().AsDouble() > AsDouble() + interval; }
 
          /** Method returns true if specified time interval expired
           * relative to time, kept in TimeStamp instance.
           * Current time provided as \param curr */
          inline bool Expired(const TimeStamp& curr, double interval) const { return curr.AsDouble() > AsDouble() + interval; }
-
 
          /** \brief Method returns TimeStamp instance with current time stamp value, measured
           * either by fast TSC (if it is detected and working correctly), otherwise slow getclock() method

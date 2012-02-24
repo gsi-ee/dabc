@@ -1,7 +1,7 @@
 #ifndef BNET_TransportModule
 #define BNET_TransportModule
 
-#include "dabc/ModuleSync.h"
+#include "dabc/ModuleAsync.h"
 
 
 #include "dabc/timing.h"
@@ -21,7 +21,7 @@ struct ScheduleEntry {
 namespace bnet {
 
 
-class TransportModule : public dabc::ModuleSync {
+class TransportModule : public dabc::ModuleAsync {
 
    protected:
       int                 fNodeNumber;
@@ -46,7 +46,7 @@ class TransportModule : public dabc::ModuleSync {
 
       int                 fTestBufferSize;
 
-      double* fResults;
+      double*            fResults;
 
       double fCmdDelay;
 
@@ -76,6 +76,38 @@ class TransportModule : public dabc::ModuleSync {
       IBSchedule  fSendSch;
       IBSchedule  fRecvSch;
 
+
+      // ================== this is new members for async module ==========================
+
+      enum ModuleCmdState { mcmd_None, mcmd_Exec };
+
+      int fRunningCmdId; // id of running command, 0 if no command is runs
+      ModuleCmdState fCmdState; // that is now happens with the command
+      dabc::TimeStamp fCmdStartTime;  // time when command should finish its execution
+      dabc::TimeStamp fCmdEndTime;  // time when command should finish its execution
+      std::vector<bool> fCmdReplies; // indicates if cuurent cmd was replied
+      dabc::Average fCmdTestLoop; // average time of test loop
+      void*  fCmdAllResults;   // buffer where replies from all nodes collected
+      int    fCmdResultsPerNode;  // how many data in replied is expected
+
+      QueueInt   fSyncOper; // queue of the submitted operations for performing sync
+
+      dabc::Queue<int>  fExecQueue; // list of commands which must be executed
+
+      virtual void ProcessInputEvent(dabc::Port* port);
+      virtual void ProcessOutputEvent(dabc::Port* port);
+      virtual void ProcessTimerEvent(dabc::Timer* timer);
+
+      void ProcessNextSlaveInputEvent();
+
+      bool RequestMasterCommand(int cmdid, void* cmddata = 0, int cmddatasize = 0, void* allresults = 0, int resultpernode = 0);
+
+      bool ProcessReplyBuffer(int nodeid, dabc::Buffer buf);
+
+      void ActivateAllToAll(double* buff);
+
+      // ===================================================================================
+
       int Node() const { return fNodeNumber; }
       int NumNodes() const { return fNumNodes; }
       int NumLids() const { return fNumLids; }
@@ -86,8 +118,6 @@ class TransportModule : public dabc::ModuleSync {
 
       inline int SendQueue(int lid, int node) const { return (lid>=0) && (lid<NumLids()) && (node>=0) && (node<NumNodes()) && fSendQueue[lid] ? fSendQueue[lid][node] : 0; }
       inline int RecvQueue(int lid, int node) const { return (lid>=0) && (lid<NumLids()) && (node>=0) && (node<NumNodes()) && fRecvQueue[lid] ? fRecvQueue[lid][node] : 0; }
-      int NodeSendQueue(int node) const;
-      int NodeRecvQueue(int node) const;
 
       inline long TotalSendQueue() const { return fTotalSendQueue; }
       inline long TotalRecvQueue() const { return fTotalRecvQueue; }
