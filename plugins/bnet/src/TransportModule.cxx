@@ -535,9 +535,7 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
          break;
 
       case IBTEST_CMD_GETSYNC:
-         DOUT0(("GetSYNC"));
          fRunnable->GetSync(fStamping);
-         DOUT0(("GetSYNC done"));
          cmd_res = true;
          break;
 
@@ -1580,7 +1578,7 @@ void bnet::TransportModule::ProcessNextSlaveInputEvent()
 
    switch (fRunningCmdId) {
       case IBTEST_CMD_TIMESYNC: {
-         DOUT0(("Prepare slave sync loop"));
+         // DOUT0(("Prepare slave sync loop"));
          PrepareSyncLoop(0);
          fCmdEndTime.GetNow(5.);
          break;
@@ -1854,7 +1852,6 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
 
       switch (fRunningCmdId) {
          case IBTEST_CMD_TIMESYNC:
-            DOUT0(("Here is slave send:%d recv:%d", TotalSendQueue(), TotalRecvQueue()));
             if ((TotalSendQueue() > 0) || (TotalRecvQueue() > 0) || IsMaster()) break;
             CompleteRunningCommand();
             break;
@@ -1990,7 +1987,6 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          fRunningCmdId = IBTEST_CMD_EXECSYNC;
          fSyncStartTime.GetNow();
          fSlaveSyncNode = 1;
-         DOUT0(("Prepeare master for node %d", fSlaveSyncNode));
          PrepareSyncLoop(fSlaveSyncNode);
          break;
 

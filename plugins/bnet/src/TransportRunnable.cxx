@@ -288,7 +288,7 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
 
          // send
 
-         if (fSyncCycle==0) DOUT0(("Send first master packet"));
+         if (fSyncCycle==0) DOUT1(("Send first master packet"));
 
          TimeSyncMessage* msg = (TimeSyncMessage*) rec->header;
          msg->master_time = 0.;
@@ -339,7 +339,25 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
       case skind_SyncSlaveSend:
          //DOUT0(("Prepare PrepareSpecialKind skind_SyncSlaveSend"));
 
-         fSyncSlaveRec = recid;
+         if (fSyncRecvDone /* && (fSyncSlaveRec==recid) */) {
+            // send slave reply only when record is ready, means we not fulfill time constrains
+            // but packet must be send anyway
+            EOUT(("Reply on the master request with long delay"));
+            OperRec* recout = GetRec(recid);
+            TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
+            msg_out->master_time = 0;
+            msg_out->slave_shift = 0;
+            msg_out->slave_time = fStamping(); // time irrelevant here
+            msg_out->msgid = fSyncCycle++;
+            fSyncSlaveRec = -1;
+            fSyncRecvDone = false;
+            // put in the queue buffer which should be replied
+            PerformOperation(recid, msg_out->slave_time);
+         } else {
+            // normal situation - just remember recid to use it as soon as possible for sendinf
+            fSyncSlaveRec = recid;
+         }
+
          recid = -1;
          return;
       case skind_SyncSlaveRecv:
@@ -410,30 +428,21 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
       case skind_SyncSlaveSend:
          // DOUT1(("skind_SyncSlaveSend completed %d sendrec %d", fSyncCycle, fSyncSlaveRec));
 
-         // send slave reply only when record is ready, means we not fulfill time constrains
-         // but packet must be send anyway
-         if (fSyncRecvDone /* && (fSyncSlaveRec==recid) */) {
-            EOUT(("Reply on the master request with long delay"));
-            OperRec* recout = GetRec(recid);
-            TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
-            msg_out->master_time = 0;
-            msg_out->slave_shift = 0;
-            msg_out->slave_time = fStamping(); // time irrelevant here
-            msg_out->msgid = fSyncCycle++;
-            // put in the queue buffer which should be replied
-            PerformOperation(recid, msg_out->slave_time);
+         if (fSyncSlaveRec>=0) {
+            EOUT(("How can be completed reserved record!!!"));
+            fSyncSlaveRec = -1;
          }
 
-         fSyncSlaveRec = -1;
-         fSyncRecvDone = false;
          return;
       case skind_SyncSlaveRecv: {
          // DOUT1(("skind_SyncSlaveRecv completed %d sendrec %d", fSyncCycle, fSyncSlaveRec));
 
          double recv_time = fStamping();
 
-         if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
-         //DOUT0(("Receive master packet on the slave err = %s", DBOOL(rec->err)));
+         // if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
+
+         // DOUT1(("Slave receive syncpacket: cycle:%d recid:%d", fSyncCycle, fSyncSlaveRec));
+         // DOUT0(("Receive master packet on the slave err = %s", DBOOL(rec->err)));
 
          TimeSyncMessage* msg_in = (TimeSyncMessage*) rec->header;
 
