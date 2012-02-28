@@ -16,7 +16,7 @@ dabc::SplitterModule::SplitterModule(const char* name, Command cmd) :
       CreateOutput(FORMAT(("Output%d", n)), Pool(0));
 }
 
-void dabc::SplitterModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
+void dabc::SplitterModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
 {
    while (Input(0)->CanRecv()) {
       int numconn = 0;

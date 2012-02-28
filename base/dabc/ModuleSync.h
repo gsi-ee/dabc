@@ -96,7 +96,7 @@ namespace dabc {
 
          enum ELoopStatus { stInit, stRun, stSuspend };
 
-         virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid);
+         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
 
          /** Call this method from main loop if one want suspend of module
            * execution until new Start of the module is called from outside */

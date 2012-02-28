@@ -100,8 +100,8 @@ namespace bnet {
           * new requests from module */
          dabc::Condition fCondition;
 
-         /** Reply condition, can be used by module to get replies from the runnable */
-         dabc::Condition fReplyCond;
+         /** Item used to propogate events back to the module */
+         dabc::ModuleItem* fReplyItem;
 
 
          int    fNodeId; // node number
@@ -134,6 +134,7 @@ namespace bnet {
          std::vector<bool> fRunningRecs;  // list of running records - used only in transport thread
          dabc::Queue<int> fCompletedRecs; // list of completed records - used only in transport thread
          dabc::Queue<int> fReplyedRecs;   // list of replies - shared between runnable and module
+         bool             fReplySignalled;  // indicate if reply event was generated after last access to reply queue from module
          int       fSegmPerOper;     // maximal allowed number of segments in operation (1 for header + rest for buffer)
          int       fHeaderBufSize;   // size of buffer for header
 
@@ -251,7 +252,7 @@ namespace bnet {
          TransportRunnable();
          virtual ~TransportRunnable();
 
-         void SetNodeId(int id, int num, int nlids) { fNodeId = id; fNumNodes = num; fNumLids = nlids; }
+         void SetNodeId(int id, int num, int nlids, dabc::ModuleItem* reply) { fNodeId = id; fNumNodes = num; fNumLids = nlids; fReplyItem = reply; }
 
          void SetThreadsIds(dabc::Thread_t modid, dabc::Thread_t trid) { fModuleThrd = modid; fTransportThrd = trid; }
 
@@ -275,11 +276,6 @@ namespace bnet {
          bool ResetStatistic();
          bool GetStatistic(double& mean_loop, double& max_loop, int& long_cnt);
 
-         // method to submit time sync operation and wait until all are executed
-         bool RunSyncLoop(bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat);
-
-         bool PrepareSyncLoop(QueueInt& submoper, bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat);
-
          bool CloseQPs();
          bool StopRunnable();
 
@@ -297,8 +293,9 @@ namespace bnet {
          /** Method used to submit record into runnable queue */
          bool SubmitRec(int recid);
 
-         /** Method to wait complition of any submitted event */
-         int WaitCompleted(double tm=1.0);
+         /** Method to get next completion record id
+          * TODO: probably one could use queue with producer/consumer, in this case one could accept many items at once */
+         int GetCompleted(bool resetsignalled = true);
    };
 
 }

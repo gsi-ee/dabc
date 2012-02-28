@@ -22,7 +22,7 @@ namespace bnet {
       public:
          TestFilterModule(const char* name, dabc::Command cmd = 0);
 
-         virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
+         virtual void ProcessItemEvent(dabc::ModuleItem* item, uint16_t evid);
    };
 }
 

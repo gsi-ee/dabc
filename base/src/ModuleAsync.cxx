@@ -26,7 +26,7 @@ dabc::ModuleAsync::~ModuleAsync()
 }
 
 
-void dabc::ModuleAsync::ProcessUserEvent(ModuleItem* item, uint16_t evid)
+void dabc::ModuleAsync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
 {
     switch (evid) {
        case evntInput:
@@ -46,6 +46,12 @@ void dabc::ModuleAsync::ProcessUserEvent(ModuleItem* item, uint16_t evid)
           break;
        case evntPortDisconnect:
           ProcessDisconnectEvent((Port*) item);
+          break;
+       case evntUser:
+          ProcessUserEvent(item, evid);
+          break;
+       default:
+          if (evid>evntUser) ProcessUserEvent(item, evid);
           break;
     }
 }

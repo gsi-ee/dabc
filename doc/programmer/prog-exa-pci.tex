@@ -310,13 +310,13 @@ Subclass of \class{dabc::ModuleAsync}; generic implementation of a readout modul
 
 \item Module runs either in standalone mode (one input port, no output) for testing; or in regular mode (one input port, one output port)
 
-\item \func{ProcessUserEvent()} defines the module action for any \dabc~ events, 
+\item \func{ProcessItemEvent()} defines the module action for any \dabc~ events, 
 e.~g.~ input port has new buffer. 
 In standalone mode, the received buffer is just released. 
 In regular mode, buffer is send to the output port.
 
 \item It has a \class{dabc::Ratemeter} object which is updated
-for each packet arriving in \func{ProcessUserEvent()}. The average data 
+for each packet arriving in \func{ProcessItemEvent()}. The average data 
 throughput rate is then printed out to the terminal 
 on stopping the module in \func{AfterModuleStop()}.
 Alternatively, by means of method \func{CreateRateParameter()}

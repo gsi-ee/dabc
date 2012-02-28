@@ -19,6 +19,8 @@
 // these commands are send over network
 #define IBTEST_CMD_EXIT        76543201
 #define IBTEST_CMD_TIMESYNC    76543202
+#define IBTEST_CMD_EXECSYNC    76543203
+#define IBTEST_CMD_GETSYNC     76543204
 #define IBTEST_CMD_COLLECT     76543205
 #define IBTEST_CMD_TEST        76543206
 #define IBTEST_CMD_CREATEQP    76543207

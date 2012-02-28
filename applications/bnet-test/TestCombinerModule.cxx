@@ -58,7 +58,7 @@ bnet::TestCombinerModule::~TestCombinerModule()
    DOUT5(("TestCombinerModule destroyed"));
 }
 
-void bnet::TestCombinerModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
+void bnet::TestCombinerModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
 {
    while ((fLastInput>=0) && (fLastInput<fNumReadout)) {
       int ninp = fLastInput;

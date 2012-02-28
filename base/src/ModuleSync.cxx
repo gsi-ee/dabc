@@ -286,7 +286,7 @@ void dabc::ModuleSync::AsyncProcessCommands()
    fNewCommands = 0;
 }
 
-void dabc::ModuleSync::ProcessUserEvent(ModuleItem* item, uint16_t evid)
+void dabc::ModuleSync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
 {
    // no need to store any consequent events
    if (fWaitRes) return;

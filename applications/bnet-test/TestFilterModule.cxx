@@ -30,7 +30,7 @@ bnet::TestFilterModule::TestFilterModule(const char* name, dabc::Command cmd) :
    CreateOutput("Output", Pool(), FilterOutQueueSize);
 }
 
-void bnet::TestFilterModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
+void bnet::TestFilterModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
 {
 //   DOUT1(("!!!!!!!! ProcessInputEvent port = %p", port));
 

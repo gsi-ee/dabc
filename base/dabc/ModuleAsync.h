@@ -32,7 +32,7 @@ namespace dabc {
          // which can be reimplemented in user code
 
          // Either generic event processing function must be reimplemented
-         virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid);
+         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
 
          // Or one can redefine one or several following methods to
          // react on specific events only
@@ -42,6 +42,8 @@ namespace dabc {
          virtual void ProcessTimerEvent(Timer* timer) {}
          virtual void ProcessConnectEvent(Port* port) {}
          virtual void ProcessDisconnectEvent(Port* port) {}
+         virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid) {}
+
       protected:
          virtual void OnThreadAssigned();
    };

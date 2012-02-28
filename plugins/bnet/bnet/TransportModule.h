@@ -7,6 +7,7 @@
 #include "dabc/timing.h"
 #include "dabc/statistic.h"
 #include "dabc/threads.h"
+#include "dabc/CommandsQueue.h"
 
 #include "bnet/defines.h"
 #include "bnet/Schedule.h"
@@ -19,6 +20,32 @@ struct ScheduleEntry {
 };
 
 namespace bnet {
+
+class TransportCmd : public dabc::Command {
+
+   DABC_COMMAND(TransportCmd, "TransportCmd");
+
+   TransportCmd(int id, double timeout = - 1.) :
+      dabc::Command(CmdName())
+   {
+      SetInt("CmdId", id);
+      if (timeout>0.) SetDouble("CmdTimeout", timeout);
+   }
+
+   int GetId() const { return GetInt("CmdId"); }
+   double GetTimeout() { return GetDouble("CmdTimeout", 5.); }
+
+   void SetSyncArg(int nrepeat, bool dosync, bool doscale)
+   {
+      SetInt("NRepeat", nrepeat);
+      SetBool("DoSync", dosync);
+      SetBool("DoScale", doscale);
+   }
+
+   int GetNRepeat() const { return GetInt("NRepeat", 1); }
+   bool GetDoSync() const { return GetBool("DoSync", false); }
+   bool GetDoScale() const { return GetBool("DoScale", false); }
+};
 
 
 class TransportModule : public dabc::ModuleAsync {
@@ -48,7 +75,7 @@ class TransportModule : public dabc::ModuleAsync {
 
       double*            fResults;
 
-      double fCmdDelay;
+      double            fCmdDelay;
 
       int               *fSendQueue[IBTEST_MAXLID];    // size of individual sending queue
       int               *fRecvQueue[IBTEST_MAXLID];    // size of individual receiving queue
@@ -93,13 +120,20 @@ class TransportModule : public dabc::ModuleAsync {
       void  *fConnRawData, *fConnSortData; // buffers used during connections;
       dabc::TimeStamp fConnStartTime;  // time when connection was starting
 
-      QueueInt   fSyncOper; // queue of the submitted operations for performing sync
+      int64_t    fSyncArgs[6];  // arguments for time sync
+      int       fSlaveSyncNode;  // current slave node for time sync
+      dabc::TimeStamp fSyncStartTime;  // time when connection was starting
 
-      dabc::Queue<int>  fExecQueue; // list of commands which must be executed
+      dabc::CommandsQueue  fCmdsQueue; // commands submitted for execution
+
+      TransportCmd      fCurrentCmd; // currently executed command
+
+      dabc::ModuleItem*  fReplyItem; // item is used to generate events from runnable
 
       virtual void ProcessInputEvent(dabc::Port* port);
       virtual void ProcessOutputEvent(dabc::Port* port);
       virtual void ProcessTimerEvent(dabc::Timer* timer);
+      virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
 
       void ProcessNextSlaveInputEvent();
 
@@ -107,7 +141,17 @@ class TransportModule : public dabc::ModuleAsync {
 
       bool ProcessReplyBuffer(int nodeid, dabc::Buffer buf);
 
+      void PrepareSyncLoop(int tgtnode);
+
       void ActivateAllToAll(double* buff);
+
+      void CompleteRunningCommand(int res = dabc::cmd_true);
+
+
+      void ProcessSendCompleted(int recid, OperRec* rec);
+      void ProcessRecvCompleted(int recid, OperRec* rec);
+
+
 
       // ===================================================================================
 
@@ -127,13 +171,8 @@ class TransportModule : public dabc::ModuleAsync {
       inline long TestNumBuffers() const { return fTestNumBuffers; }
 
       bool SubmitToRunnable(int recid, OperRec* rec);
-      int CheckCompletionQueue(double waittm);
 
-      bool SlaveTimeSync(int64_t* cmddata);
-
-      int PreprocessSlaveCommand(dabc::Buffer& buf);
-      bool ExecuteSlaveCommand(int cmdid);
-      void SlaveMainLoop();
+      int PreprocessTransportCommand(dabc::Buffer& buf);
 
       bool MasterCollectActiveNodes();
 
@@ -141,13 +180,9 @@ class TransportModule : public dabc::ModuleAsync {
 
       bool CalibrateCommandsChannel(int nloop = 10);
 
-      bool MasterConnectQPs();
-
       bool MasterCloseConnections();
 
       bool MasterCallExit();
-
-      bool MasterTimeSync(bool dosynchronisation, int numcycles, bool doscaling = false);
 
       bool ExecuteAllToAll(double* arguments);
 
@@ -164,7 +199,6 @@ class TransportModule : public dabc::ModuleAsync {
       bool MasterCleanup();
       bool ProcessCleanup(int32_t* pars);
 
-      void PerformTimingTest();
       void PerformNormalTest();
 
    public:

@@ -251,7 +251,7 @@ with \func{port->Recv()} \\
 By reimplementing some of these methods one can react on corresponding events.
 
 Actually, all events are dispatched to the methods mentioned above  by method 
-\func{ProcessUserEvent()}. 
+\func{ProcessItemEvent()}. 
 This method is called by the working thread
 whenever {\bf any} event for this module shall be processed.
 However, this virtual method  
@@ -344,11 +344,11 @@ until the output port will accept a new buffer,
 and during this time the complete thread will be blocked. 
 
 As both processing methods are the same in the example,  
-one can implement central \func{ProcessUserEvent()} method instead:  
+one can implement central \func{ProcessItemEvent()} method instead:  
  
 \begin{small}
 \begin{verbatim}
-   virtual void ProcessUserEvent(dabc::ModuleItem*, uint16_t)
+   virtual void ProcessItemEvent(dabc::ModuleItem*, uint16_t)
    {
       while (Input()->CanRecv() && Output(fCnt % 2)->CanSend()) {
          dabc::Buffer* buf = Input()->Recv();
@@ -374,7 +374,7 @@ every 5 seconds.
       CreateTimer("Timer1", 5.);
    }
 
-   virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evnt)
+   virtual void ProcessItemEvent(dabc::ModuleItem* item, uint16_t evnt)
    {
       ...
       if (evnt == dabc::evntTimeout) DOUT1(("Buffers count = %d", fCnt));  
@@ -393,7 +393,7 @@ For special set ups (e.g. Bnet), the framework provides
    
 \begin{compactenum}
 
-\item  Instead of implementing \func{MainLoop()} (or \func{ProcessUserEvent()}, resp.) 
+\item  Instead of implementing \func{MainLoop()} (or \func{ProcessItemEvent()}, resp.) 
 other virtual methods (e.g. \func{DoBuildEvent()}, \func{TestBuffer()}) may be 
       implemented that are implicitly called by the superclass \func{MainLoop()} (or
       by the appropriate event callbacks, resp.).

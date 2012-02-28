@@ -504,13 +504,13 @@ Is subclass of \class{dabc::Module}; defines interface for a
 Subclass of \class{dabc::Module}; defines interface for an 
    asynchronous module that must never block the execution. Several 
    \class{dabc::ModuleAsync} objects may be assigned to one working thread. User must 
-   either re-implement virtual method \func{ProcessUserEvent()} wich is called 
+   either re-implement virtual method \func{ProcessItemEvent()} wich is called 
    whenever {\bf any} event for this module (i.e. this working processor) 
    is processed by the working thread. Or the user may implement 
    callbacks for special events (e.g. \func{ProcessInputEvent()}, 
    \func{ProcessOutputEvent()}, \func{ProcessPoolEvent()},..) that are invoked when 
    the corresponding event is processed by the working thread. 
-   The events are dispatched to these callbacks by the \func{ProcessUserEvent()} 
+   The events are dispatched to these callbacks by the \func{ProcessItemEvent()} 
    default implementation then. There are no blocking function available in \class{dabc::ModuleAsync};  
    but the user \strong{must} avoid any polling loops, waiting for resources - 
    event processing function must be returned as soon as possible.

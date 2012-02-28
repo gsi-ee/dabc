@@ -103,6 +103,33 @@ bool dabc::Module::ShootTimer(const char* name, double delay_sec)
    return true;
 }
 
+dabc::ModuleItem* dabc::Module::CreateUserItem(const char* name)
+{
+   return new ModuleItem(mitUser, this, name);
+}
+
+dabc::ModuleItem* dabc::Module::FindUserItem(const char* name)
+{
+   Reference ref = FindChild(name);
+
+   ModuleItem* item = dynamic_cast<dabc::ModuleItem*> (ref());
+
+   return item && (item->GetType()==mitUser) ? item : 0;
+
+}
+
+bool dabc::Module::ProduceUserItemEvent(const char* name)
+{
+   ModuleItem* item = FindUserItem(name);
+
+   if (item==0) return false;
+
+   item->FireUserEvent();
+
+   return true;
+}
+
+
 void dabc::Module::Start()
 {
    DOUT3(("Start module %s thrd %s", GetName(), ThreadName().c_str()));
@@ -374,7 +401,7 @@ dabc::Port* dabc::Module::CreateIOPort(const char* name, PoolHandle* handle, uns
 void dabc::Module::GetUserEvent(ModuleItem* item, uint16_t evid)
 {
    if (IsRunning())
-      ProcessUserEvent(item, evid);
+      ProcessItemEvent(item, evid);
    else
       fLostEvents.Push(EventId(evid, item->ItemId()));
 }

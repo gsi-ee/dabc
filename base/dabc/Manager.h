@@ -177,13 +177,13 @@ namespace dabc {
 
       DABC_COMMAND(CmdCreateTransport, "CreateTransport");
 
-         CmdCreateTransport(const std::string& portname, const std::string& transportkind, const std::string& thrdname = "") :
-            Command(CmdName())
-         {
-            SetStr("PortName", portname);
-            SetStr("TransportKind", transportkind);
-            SetStr(xmlTrThread, thrdname);
-         }
+      CmdCreateTransport(const std::string& portname, const std::string& transportkind, const std::string& thrdname = "") :
+         Command(CmdName())
+      {
+         SetStr("PortName", portname);
+         SetStr("TransportKind", transportkind);
+         SetStr(xmlTrThread, thrdname);
+      }
    };
 
    class CmdDestroyTransport : public Command {

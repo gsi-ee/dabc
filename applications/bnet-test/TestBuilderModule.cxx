@@ -47,7 +47,7 @@ bnet::TestBuilderModule::~TestBuilderModule()
    fBuffers.clear();
 }
 
-void bnet::TestBuilderModule::ProcessUserEvent(dabc::ModuleItem*, uint16_t)
+void bnet::TestBuilderModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
 {
    while (fBuffers.size() < (unsigned) fNumSenders) {
       if (!Input(0)->CanRecv()) return;

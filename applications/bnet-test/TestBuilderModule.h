@@ -33,7 +33,7 @@ namespace bnet {
          TestBuilderModule(const char* name, dabc::Command cmd = 0);
          virtual ~TestBuilderModule();
 
-         virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
+         virtual void ProcessItemEvent(dabc::ModuleItem* item, uint16_t evid);
 
          virtual void BeforeModuleStart();
          virtual void AfterModuleStop();

@@ -1,5 +1,7 @@
 #include "bnet/TransportRunnable.h"
 
+#include "dabc/ModuleItem.h"
+
 void bnet::TimeStamping::ChangeShift(double shift)
 {
    fTimeShift += shift;
@@ -17,7 +19,7 @@ bnet::TransportRunnable::TransportRunnable() :
    dabc::Runnable(),
    fMutex(),
    fCondition(&fMutex),
-   fReplyCond(&fMutex),
+   fReplyItem(0),
    fNodeId(0),
    fNumNodes(1),
    fNumLids(1),
@@ -30,6 +32,7 @@ bnet::TransportRunnable::TransportRunnable() :
    fRunningRecs(),
    fCompletedRecs(),
    fReplyedRecs(),
+   fReplySignalled(false),
    fSegmPerOper(8),
    fHeaderPool("TransportHeaders", false),
    fModuleThrd(),
@@ -71,6 +74,7 @@ bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool,
    fRunningRecs.resize(fNumRecs, false);
    fCompletedRecs.Allocate(fNumRecs);
    fReplyedRecs.Allocate(fNumRecs);
+   fReplySignalled = false;
    for (int n=0;n<fNumRecs;n++)
       fFreeRecs.Push(n);
    fSegmPerOper = 8;
@@ -116,29 +120,46 @@ int bnet::TransportRunnable::SubmitCmd(int cmdid, void* args, int argssize)
 
 bool bnet::TransportRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
 {
+   CheckModuleThrd();
+
+   // FIXME: this method remains only temporary -
+   // one should execute commands in normal queue
+   {
+      dabc::LockGuard lock(fMutex);
+      fReplySignalled = true;
+   }
+
    int recid = SubmitCmd(cmdid, args, argssize);
 
    if (recid<0) return false;
 
-   CheckModuleThrd();
-
    dabc::TimeStamp tm = dabc::Now();
 
    while (!tm.Expired(5.)) {
-      int complid = WaitCompleted();
+      int complid = GetCompleted(false);
 
-      if (complid<0) { EOUT(("Cmd:%d transport problem", cmdid)); return false; }
+      if (complid<0) continue;
 
       bool res = ! GetRec(complid)->err;
 
       ReleaseRec(complid);
 
-      if (complid==recid) return res;
+      if (complid==recid) {
+         dabc::LockGuard lock(fMutex);
+         fReplySignalled = false; // FIXME: workaround, to reenable signalling of records
+         return res;
+      }
 
       EOUT(("Cmd:%d Some other operation completed - wrong!!!", cmdid));
+      exit(5);
    }
 
    EOUT(("Cmd:%d command timedout!!!", cmdid));
+
+   dabc::LockGuard lock(fMutex);
+
+   fReplySignalled = false; // FIXME: workaround, to reenable signalling of records
+
 
    return false;
 }
@@ -266,6 +287,8 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
          }
 
          // send
+
+         if (fSyncCycle==0) DOUT0(("Send first master packet"));
 
          TimeSyncMessage* msg = (TimeSyncMessage*) rec->header;
          msg->master_time = 0.;
@@ -409,7 +432,7 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
 
          double recv_time = fStamping();
 
-         // if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
+         if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
          //DOUT0(("Receive master packet on the slave err = %s", DBOOL(rec->err)));
 
          TimeSyncMessage* msg_in = (TimeSyncMessage*) rec->header;
@@ -450,100 +473,6 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
          return;
    }
 }
-
-
-bool bnet::TransportRunnable::RunSyncLoop(bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat)
-{
-   CheckModuleThrd();
-
-   // DOUT0(("Enter sync loop"));
-
-   dabc::Queue<int> submoper(queuelen+1);
-
-   // first fill receiving queue
-   for (int n=-1;n<queuelen+1;n++) {
-
-      OperKind kind = (n==-1) || (n==queuelen) ? kind_Send : kind_Recv;
-
-      if ((kind==kind_Send)) {
-         if (ismaster && (n==-1)) continue; // master should submit send at the end
-         if (!ismaster && (n==queuelen)) continue; // slave should submit send in the begin
-      }
-
-      int recid = PrepareOperation(kind, sizeof(TimeSyncMessage));
-      OperRec* rec = GetRec(recid);
-      if ((recid<0) || (rec==0)) { EOUT(("Internal")); return false; }
-      if (kind==kind_Recv) {
-         rec->skind = ismaster ? skind_SyncMasterRecv : skind_SyncSlaveRecv;
-         rec->SetRepeatCnt(nrepeat);
-      } else {
-         rec->skind = ismaster ? skind_SyncMasterSend : skind_SyncSlaveSend;
-         rec->SetRepeatCnt(nrepeat * queuelen);
-      }
-
-      rec->SetTarget(tgtnode, tgtlid);
-      SubmitRec(recid);
-      submoper.Push(recid);
-   }
-
-   dabc::TimeStamp start = dabc::Now();
-
-   while (!submoper.Empty() && !start.Expired(5.)) {
-      int complid = WaitCompleted(0.1);
-
-      if (complid<0) continue;
-
-      OperRec* rec = GetRec(complid);
-      if (rec->err) EOUT(("Operation error"));
-      ReleaseRec(complid);
-      submoper.Remove(complid);
-   }
-
-   // DOUT0(("%s sync loop finished after %5.3f s on cycle:%d", ismaster ? "Master" : "Slave", start.SpentTillNow(), fSyncCycle));
-
-   return true;
-}
-
-
-bool bnet::TransportRunnable::PrepareSyncLoop(QueueInt& submoper, bool ismaster, int tgtnode, int tgtlid, int queuelen, int nrepeat)
-{
-   CheckModuleThrd();
-
-   // DOUT0(("Enter sync loop"));
-
-   submoper.Reset();
-   submoper.Allocate(queuelen+1);
-
-   // first fill receiving queue
-   for (int n=-1;n<queuelen+1;n++) {
-
-      OperKind kind = (n==-1) || (n==queuelen) ? kind_Send : kind_Recv;
-
-      if ((kind==kind_Send)) {
-         if (ismaster && (n==-1)) continue; // master should submit send at the end
-         if (!ismaster && (n==queuelen)) continue; // slave should submit send in the begin
-      }
-
-      int recid = PrepareOperation(kind, sizeof(TimeSyncMessage));
-      OperRec* rec = GetRec(recid);
-      if ((recid<0) || (rec==0)) { EOUT(("Internal")); return false; }
-      if (kind==kind_Recv) {
-         rec->skind = ismaster ? skind_SyncMasterRecv : skind_SyncSlaveRecv;
-         rec->SetRepeatCnt(nrepeat);
-      } else {
-         rec->skind = ismaster ? skind_SyncMasterSend : skind_SyncSlaveSend;
-         rec->SetRepeatCnt(nrepeat * queuelen);
-      }
-
-      rec->SetTarget(tgtnode, tgtlid);
-      SubmitRec(recid);
-      submoper.Push(recid);
-   }
-
-   return true;
-}
-
-
 
 void* bnet::TransportRunnable::MainLoop()
 {
@@ -658,30 +587,35 @@ void* bnet::TransportRunnable::MainLoop()
 
       // probably, we should lock mutex not very often
       // TODO: check if next operation very close in time - than go to begin of the loop
-      dabc::LockGuard lock(fMutex);
 
-      // copy all submitted records to thread
-      while (!fSubmRecs.Empty()) {
-         fAcceptedRecs.Push(fSubmRecs.Pop());
-         till_next_oper = 0.; // indicate that next operation can be very soon
-      }
+      bool isdoreply(false);
 
-      bool isanyreply(false);
-      // copy to shared queue executed records
-      while (!fCompletedRecs.Empty()) {
-         isanyreply = true;
-         fReplyedRecs.Push(fCompletedRecs.Pop());
-      }
-      if (isanyreply)  fReplyCond._DoFire();
+      {
+         dabc::LockGuard lock(fMutex);
 
-      // if we have nothing to do for very long time, enter wait method for relaxing thread consumption
-      if (!isanyreply && (fNumRunningRecs==0) && (fAcceptedRecs.Empty() || (till_next_oper>0.2))) {
-         fCondition._DoReset();
-         fCondition._DoWait(0.001);
-         last_tm = 0; // do not account time when we doing wait
-         while (!fSubmRecs.Empty())
+         // copy all submitted records to thread
+         while (!fSubmRecs.Empty()) {
             fAcceptedRecs.Push(fSubmRecs.Pop());
-      }
+            till_next_oper = 0.; // indicate that next operation can be very soon
+         }
+
+         // copy to shared queue executed records
+         while (!fCompletedRecs.Empty()) {
+            if (!fReplySignalled) { isdoreply = true; fReplySignalled = true; }
+            fReplyedRecs.Push(fCompletedRecs.Pop());
+         }
+
+         // if we have nothing to do for very long time, enter wait method for relaxing thread consumption
+         if (!isdoreply && (fNumRunningRecs==0) && (fAcceptedRecs.Empty() || (till_next_oper>0.2))) {
+            fCondition._DoReset();
+            fCondition._DoWait(0.001);
+            last_tm = 0; // do not account time when we doing wait
+            while (!fSubmRecs.Empty())
+               fAcceptedRecs.Push(fSubmRecs.Pop());
+         }
+      } // end of locked mutex
+
+      if (isdoreply && fReplyItem) fReplyItem->FireUserEvent();
    }
 
    DOUT0(("Exit TransportRunnable::MainLoop()"));
@@ -720,6 +654,7 @@ bool bnet::TransportRunnable::ConfigQueueLimits(int send_limit, int recv_limit)
    // limits used from module thread, assigned to record when it is submitted
    fSendQueueLimit = send_limit;
    fRecvQueueLimit = recv_limit;
+
    return true;
 }
 
@@ -869,30 +804,18 @@ bool bnet::TransportRunnable::SubmitRec(int recid)
 }
 
 
-int bnet::TransportRunnable::WaitCompleted(double tm)
+int bnet::TransportRunnable::GetCompleted(bool resetsignalled)
 {
    // TODO first : first implement with condition
    // TODO second: fire event to the module - when it works asynchronousely
 
    CheckModuleThrd();
 
-   /*
-
-   dabc::TimeStamp start = dabc::Now();
-   do {
-      dabc::LockGuard lock(fMutex);
-      if (!fReplyedRecs.Empty())
-         return fReplyedRecs.Pop();
-   } while (!start.Expired(tm));
-   */
-
-
    dabc::LockGuard lock(fMutex);
-   if (!fReplyedRecs.Empty())
-      return fReplyedRecs.Pop();
 
-   fReplyCond._DoReset();
-   fReplyCond._DoWait(tm);
+   // from this moment we decide that module was not signalled
+   // TODO: probably, this flag should be reset only when no items in the queue
+   if (resetsignalled) fReplySignalled = false;
 
    if (!fReplyedRecs.Empty())
       return fReplyedRecs.Pop();

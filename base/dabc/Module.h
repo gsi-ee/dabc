@@ -107,7 +107,7 @@ namespace dabc {
          inline bool IsRunning() const { return fRunState; }
 
          // generic users event processing function
-         virtual void ProcessUserEvent(ModuleItem* item, uint16_t evid) {}
+         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid) {}
 
          // some useful routines for I/O handling
          bool CanSendToAllOutputs() const;
@@ -157,6 +157,10 @@ namespace dabc {
          Timer* CreateTimer(const char* name, double period_sec = 1., bool synchron = false);
          Timer* FindTimer(const char* name);
          bool ShootTimer(const char* name, double delay_sec = 0.);
+
+         ModuleItem* CreateUserItem(const char* name);
+         ModuleItem* FindUserItem(const char* name);
+         bool ProduceUserItemEvent(const char* name);
 
          void GetUserEvent(ModuleItem* item, uint16_t evid);
 

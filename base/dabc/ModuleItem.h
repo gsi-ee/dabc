@@ -35,11 +35,12 @@ namespace dabc {
    class Module;
 
    enum EModuleItemType {
-           mitPort,
-           mitPool,
-           mitParam,
-           mitTimer,
-           mitCmdQueue
+           mitPort,     // port
+           mitPool,     // pool handle
+           mitParam,    // parameter
+           mitTimer,    // timer
+           mitCmdQueue, // commands queue
+           mitUser      // item to produce/receive user-specific events
     };
 
    enum EModuleEvents {
@@ -49,7 +50,8 @@ namespace dabc {
            evntPool,
            evntTimeout,
            evntPortConnect,
-           evntPortDisconnect
+           evntPortDisconnect,
+           evntUser = Worker::evntFirstUser
    };
 
    enum EModelItemConsts {
@@ -72,11 +74,15 @@ namespace dabc {
          inline int GetType() const { return fItemType; }
          inline unsigned ItemId() const { return fItemId; }
 
+         inline void FireUserEvent() { FireEvent(evntUser); }
+
       protected:
          void SetItemId(unsigned id) { fItemId = id; }
 
          void ProduceUserEvent(uint16_t evid)
            { fModule->GetUserEvent(this, evid); }
+
+         virtual void ProcessEvent(const EventId& evid);
 
          virtual void DoStart() {}
          virtual void DoStop() {}
@@ -103,9 +109,7 @@ namespace dabc {
 
 
    class ModuleItemRef : public WorkerRef {
-
       DABC_REFERENCE(ModuleItemRef, WorkerRef, ModuleItem)
-
    };
 
 }

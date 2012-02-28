@@ -51,4 +51,17 @@ void dabc::ModuleItem::ThisItemCleaned()
       fModule->ItemCleaned(this);
 }
 
+void dabc::ModuleItem::ProcessEvent(const EventId& evid)
+{
+   switch (evid.GetCode()) {
+      case evntUser:
+         ProduceUserEvent(evntUser);
+         break;
+
+      default:
+         ModuleItem::ProcessEvent(evid);
+         break;
+   }
+}
+
 
