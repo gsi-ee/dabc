@@ -32,7 +32,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    fTestKind = Cfg("TestKind", cmd).AsStdStr();
 
-   fTestBufferSize = Cfg(dabc::xmlBufferSize, cmd).AsInt(65536);
    fTestNumBuffers = Cfg(dabc::xmlNumBuffers, cmd).AsInt(1000);
 
    DOUT0(("Test num buffers = %d", fTestNumBuffers));
@@ -73,10 +72,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
       }
    }
 
-
-   fRecvRatemeter = 0;
-   fSendRatemeter = 0;
-   fWorkRatemeter = 0;
 
    fTrendingInterval = 0;
 
@@ -166,21 +161,6 @@ bnet::TransportModule::~TransportModule()
    if (fCmdDataBuffer) {
       delete [] fCmdDataBuffer;
       fCmdDataBuffer = 0;
-   }
-
-   if (fRecvRatemeter) {
-      delete fRecvRatemeter;
-      fRecvRatemeter = 0;
-   }
-
-   if (fSendRatemeter) {
-      delete fSendRatemeter;
-      fSendRatemeter = 0;
-   }
-
-   if (fWorkRatemeter) {
-      delete fWorkRatemeter;
-      fWorkRatemeter = 0;
    }
 
    for (int n=0;n<IBTEST_MAXLID;n++) {
@@ -584,62 +564,24 @@ void bnet::TransportModule::ActivateAllToAll(double*)
 
 bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 {
-   int bufsize = arguments[0];
+   fTestBufferSize = arguments[0];
 //   int NumUsedNodes = arguments[1];
    int max_sending_queue = arguments[2];
    int max_receiving_queue = arguments[3];
-   double starttime = arguments[4];
-   double stoptime = arguments[5];
+   fTestStartTime = arguments[4];
+   fTestStopTime = arguments[5];
    int patternid = arguments[6];
    double datarate = arguments[7];
-   double ratemeterinterval = arguments[8];
+   // double ratemeterinterval = arguments[8];
    bool canskipoperation = arguments[9] > 0;
-
-   // when receive operation should be prepared before send is started
-   // we believe that 100 microsec is enough
-   double recv_pre_time = 0.0001;
-
-   // this is time required to deliver operation to the runnable
-   // 5 ms should be enough to be able to use wait in the main loop
-   double submit_pre_time = 0.005;
 
    AllocResults(14);
 
    DOUT2(("ExecuteAllToAll - start"));
 
-   dabc::Ratemeter sendrate, recvrate, multirate;
-   dabc::Ratemeter** fIndividualRates = 0;
-   double fMeasureInterval = 0; // set 0 to disable individual time measurements
-
-   if (fMeasureInterval>0) {
-       fIndividualRates = new dabc::Ratemeter*[NumNodes()];
-       for (int n=0;n<NumNodes();n++) {
-          fIndividualRates[n] = 0;
-          if (n!=Node()) {
-              fIndividualRates[n] = new dabc::Ratemeter;
-              fIndividualRates[n]->DoMeasure(fMeasureInterval, 10000, starttime);
-          }
-       }
-   }
-
-   // this is interval for ratemeter, which can be requested later from master
-   if (ratemeterinterval>0) {
-       if (fRecvRatemeter==0) fRecvRatemeter = new dabc::Ratemeter;
-       if (fSendRatemeter==0) fSendRatemeter = new dabc::Ratemeter;
-       if (fWorkRatemeter==0) fWorkRatemeter = new dabc::Ratemeter;
-
-       long npoints = lrint((stoptime-starttime) / ratemeterinterval);
-       if (npoints>1000000) npoints=1000000;
-       fRecvRatemeter->DoMeasure(ratemeterinterval, npoints, starttime);
-       fSendRatemeter->DoMeasure(ratemeterinterval, npoints, starttime);
-       fWorkRatemeter->DoMeasure(ratemeterinterval, npoints, starttime);
-   } else {
-      if (fRecvRatemeter) { delete fRecvRatemeter; fRecvRatemeter = 0; }
-      if (fSendRatemeter) { delete fSendRatemeter; fSendRatemeter = 0; }
-      if (fWorkRatemeter) { delete fWorkRatemeter; fWorkRatemeter = 0; }
-   }
-
-   // schedule variables
+   fSendRate.Reset();
+   fRecvRate.Reset();
+   fWorkRate.Reset();
 
    for (int lid=0;lid<NumLids();lid++)
       for (int n=0;n<NumNodes();n++) {
@@ -648,7 +590,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
       }
 
    // schstep is in seconds, but datarate in MBytes/sec, therefore 1e-6
-   double schstep = 1e-6 * bufsize / datarate;
+   double schstep = 1e-6 * fTestBufferSize / datarate;
 
    switch(patternid) {
       case 1: // send data to next node
@@ -729,31 +671,18 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
             fRecvSch.Item(nslot, 0).Reset();
           }
 
-   double send_basetm(starttime), recv_basetm(starttime);
-   int send_slot(-1), recv_slot(-1);
+   fSendBaseTime = fTestStartTime;
+   fRecvBaseTime = fTestStartTime;
+   fSendSlotIndx = -1;
+   fRecvSlotIndx = -1;
 
-   bool dosending = fSendSch.ShiftToNextOperation(Node(), send_basetm, send_slot);
-   bool doreceiving = fRecvSch.ShiftToNextOperation(Node(), recv_basetm, recv_slot);
+   fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendBaseTime, fSendSlotIndx);
+   fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvBaseTime, fRecvSlotIndx);
 
-   int send_total_limit = TestNumBuffers();
-   int recv_total_limit = TestNumBuffers();
-
-   // gave most buffers for receiving
-   if (dosending && doreceiving) {
-      send_total_limit = TestNumBuffers() / 10 - 1;
-      recv_total_limit = TestNumBuffers() / 10 * 9 - 1;
-   }
-
-//   if (IsMaster()) {
-//      fSendSch.Print(0);
-//      fRecvSch.Print(0);
-//   }
 
    dabc::Average send_start, send_compl, recv_compl, loop_time, wait_time_aver, submit_send;
 
-   double lastcmdchecktime = fStamping();
-
-   DOUT2(("ExecuteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
+   DOUT2(("ExecuteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(fDoSending), DBOOL(fDoReceiving), fTestStartTime - fStamping()));
 
    // counter for must have send operations over each channel
    IbTestIntMatrix sendcounter(NumLids(), NumNodes());
@@ -793,16 +722,24 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
    double next_oper_time(0.);
 
-   while ((curr_tm=fStamping()) < stoptime) {
+   // when receive operation should be prepared before send is started
+   // we believe that 100 microsec is enough
+   double recv_pre_time = 0.0001;
+
+   // this is time required to deliver operation to the runnable
+   // 5 ms should be enough to be able to use wait in the main loop
+   double submit_pre_time = 0.005;
+
+   while ((curr_tm=fStamping()) < fTestStopTime) {
 
       loop_cnt++;
 
-      if ((last_tm>0) && (last_tm>starttime))
+      if ((last_tm>0) && (last_tm>fTestStartTime))
          loop_time.Fill(curr_tm - last_tm);
       last_tm = curr_tm;
 
       // just indicate that we were active at this time interval
-      if (fWorkRatemeter) fWorkRatemeter->Packet(1, curr_tm);
+      fWorkRate.Packet(1, curr_tm);
 
       // wait only when next operation far away
       double waittm = 0.;
@@ -835,9 +772,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
                send_compl.Fill(sendcompltime - sendtime);
 
-               sendrate.Packet(bufsize, sendcompltime);
-
-               if (fSendRatemeter) fSendRatemeter->Packet(bufsize, sendcompltime);
+               fSendRate.Packet(fTestBufferSize, sendcompltime);
                break;
             }
             case kind_Recv: {
@@ -858,11 +793,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
                recv_compl.Fill(recv_time - sendtime);
 
-               recvrate.Packet(bufsize, recv_time);
-               if ((fIndividualRates!=0) && (fIndividualRates[rec->tgtnode]!=0))
-                  fIndividualRates[rec->tgtnode]->Packet(bufsize, recv_time);
-
-               if (fRecvRatemeter) fRecvRatemeter->Packet(bufsize, recv_time);
+               fRecvRate.Packet(fTestBufferSize, recv_time);
 
                totalrecvpackets++;
                break;
@@ -878,14 +809,14 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
       double next_recv_time(0.), next_send_time(0.);
 
-      if (doreceiving && fRunnable->IsFreeRec() && (curr_tm<stoptime-0.1))
-         next_recv_time = recv_basetm + fRecvSch.timeSlot(recv_slot) - recv_pre_time;
+      if (fDoReceiving && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1))
+         next_recv_time = fRecvBaseTime + fRecvSch.timeSlot(fRecvSlotIndx) - recv_pre_time;
 
-      if (dosending && fRunnable->IsFreeRec() && (curr_tm<stoptime-0.1))
-         next_send_time = send_basetm + fSendSch.timeSlot(send_slot);
+      if (fDoSending && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1))
+         next_send_time = fSendBaseTime + fSendSch.timeSlot(fSendSlotIndx);
 
-      if (doreceiving && !fRunnable->IsFreeRec()) no_recv_cnt++;
-      if (dosending && !fRunnable->IsFreeRec()) no_send_cnt++;
+      if (fDoReceiving && !fRunnable->IsFreeRec()) no_recv_cnt++;
+      if (fDoSending && !fRunnable->IsFreeRec()) no_send_cnt++;
 
       // if both operation want to be executed, selected first in the time
       if (next_recv_time>0. && next_send_time>0.) {
@@ -902,8 +833,8 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
          if (next_recv_time - submit_pre_time > curr_tm) {
             next_oper_time = next_recv_time;
          } else {
-            int node = fRecvSch.Item(recv_slot, Node()).node;
-            int lid = fRecvSch.Item(recv_slot, Node()).lid;
+            int node = fRecvSch.Item(fRecvSlotIndx, Node()).node;
+            int lid = fRecvSch.Item(fRecvSlotIndx, Node()).lid;
             bool did_submit = false;
 
             if ((recvskipcounter(lid, node) > 0) && (RecvQueue(lid, node)>0)) {
@@ -946,7 +877,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
             // we should do here more smart solutions
 
             if (did_submit)
-               doreceiving = fRecvSch.ShiftToNextOperation(Node(), recv_basetm, recv_slot);
+               fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvBaseTime, fRecvSlotIndx);
          }
       }
 
@@ -955,8 +886,8 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
          if (next_send_time - submit_pre_time > curr_tm) {
             next_oper_time = next_send_time;
          } else {
-            int node = fSendSch.Item(send_slot, Node()).node;
-            int lid = fSendSch.Item(send_slot, Node()).lid;
+            int node = fSendSch.Item(fSendSlotIndx, Node()).node;
+            int lid = fSendSch.Item(fSendSlotIndx, Node()).lid;
             bool did_submit = false;
 
             if (canskipoperation && false /*  ((SendQueue(lid, node) >= max_sending_queue) || (TotalSendQueue() >= 2*max_sending_queue))*/ ) {
@@ -1008,24 +939,9 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
             // shift to next operation, in some cases even when previous operation was not performed
             if (did_submit) {
                sendcounter(lid,node)++; // this indicates that we perform operation and moved to next counter
-               dosending = fSendSch.ShiftToNextOperation(Node(), send_basetm, send_slot);
+               fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendBaseTime, fSendSlotIndx);
             }
          }
-      }
-
-      if (curr_tm > lastcmdchecktime + 0.1) {
-         if (Node()>0 && IOPort()->CanRecv()) {
-             // set stop time in 0.1 s to allow completion of all send operation
-             if (curr_tm+0.1 < stoptime) stoptime = curr_tm+0.1;
-             // disable send operation anyhow
-             dosending = false;
-
-             EOUT(("Did emergence stop while command is arrived"));
-             // do not do immediate break
-             // break;
-         }
-         lastcmdchecktime = curr_tm;
-         if (curr_tm < starttime) cpu_stat.Reset();
       }
    }
 
@@ -1037,15 +953,15 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
 
    DOUT0(("Mean loop %11.9f max %8.6f Longer loops %d", r_mean_loop, r_max_loop, r_long_cnt));
 
-   DOUT3(("Total recv queue %ld limit %ld send queue %ld", TotalSendQueue(), recv_total_limit, TotalRecvQueue()));
+   DOUT3(("Total recv queue %ld send queue %ld", TotalSendQueue(), TotalRecvQueue()));
    DOUT3(("Do recv %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
-         DBOOL(doreceiving), curr_tm, recv_basetm + fRecvSch.timeSlot(recv_slot), recv_slot,
-         fRecvSch.Item(recv_slot, Node()).node, fRecvSch.Item(recv_slot, Node()).lid,
-         RecvQueue(fRecvSch.Item(recv_slot, Node()).lid, fRecvSch.Item(recv_slot, Node()).node)));
+         DBOOL(fDoReceiving), curr_tm, fRecvBaseTime + fRecvSch.timeSlot(fRecvSlotIndx), fRecvSlotIndx,
+         fRecvSch.Item(fRecvSlotIndx, Node()).node, fRecvSch.Item(fRecvSlotIndx, Node()).lid,
+         RecvQueue(fRecvSch.Item(fRecvSlotIndx, Node()).lid, fRecvSch.Item(fRecvSlotIndx, Node()).node)));
    DOUT3(("Do send %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
-         DBOOL(dosending), curr_tm, send_basetm + fSendSch.timeSlot(send_slot), send_slot,
-         fSendSch.Item(send_slot, Node()).node, fSendSch.Item(send_slot, Node()).lid,
-         SendQueue(fSendSch.Item(send_slot, Node()).lid, fSendSch.Item(send_slot, Node()).node)));
+         DBOOL(fDoSending), curr_tm, fSendBaseTime + fSendSch.timeSlot(fSendSlotIndx), fSendSlotIndx,
+         fSendSch.Item(fSendSlotIndx, Node()).node, fSendSch.Item(fSendSlotIndx, Node()).lid,
+         SendQueue(fSendSch.Item(fSendSlotIndx, Node()).lid, fSendSch.Item(fSendSlotIndx, Node()).node)));
 
    DOUT3(("Send operations diff %ld: submited %ld, completed %ld", numsendpackets-numcomplsend, numsendpackets, numcomplsend));
 
@@ -1068,15 +984,15 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
        }
    }
 
-   fResults[0] = sendrate.GetRate();
-   fResults[1] = recvrate.GetRate();
+   fResults[0] = fSendRate.GetRate();
+   fResults[1] = fRecvRate.GetRate();
    fResults[2] = send_start.Mean();
    fResults[3] = send_compl.Mean();
    fResults[4] = numlostpackets;
    fResults[5] = totalrecvpackets;
    fResults[6] = numlostmulti;
    fResults[7] = totalrecvmulti;
-   fResults[8] = multirate.GetRate();
+   fResults[8] = 0.;
    fResults[9] = cpu_stat.CPUutil();
    fResults[10] = r_mean_loop; // loop_time.Mean();
    fResults[11] = r_max_loop; // loop_time.Max();
@@ -1089,18 +1005,6 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
       DOUT0(("Multi send: %ld skipped %ld (%5.3f)",
              sendmulticounter, skipmulticounter,
              100.*skipmulticounter/(1.*sendmulticounter+skipmulticounter)));
-
-   if (fIndividualRates!=0) {
-
-      char fname[100];
-      sprintf(fname,"recv_rates_%d.txt",Node());
-
-      dabc::Ratemeter::SaveRatesInFile(fname, fIndividualRates, NumNodes(), true);
-
-      for (int n=0;n<NumNodes();n++)
-         delete fIndividualRates[n];
-      delete[] fIndividualRates;
-   }
 
    return true;
 }
@@ -1459,10 +1363,7 @@ void bnet::TransportModule::PerformNormalTest()
    int testtime = Cfg("TestTime").AsInt(10);
    int testpattern = Cfg("TestPattern").AsInt(0);
 
-//   fTrendingInterval = 0.0002;
    MasterAllToAll(testpattern, buffersize, testtime, rate, outq, inpq);
-//   if (fWorkRatemeter) fWorkRatemeter->SaveInFile("mywork1K.txt");
-//   fTrendingInterval = 0;
 
    MasterAllToAll(testpattern, buffersize, testtime, rate, outq, inpq);
 

@@ -71,8 +71,6 @@ class TransportModule : public dabc::ModuleAsync {
       /** Name of the file with the schedule */
       std::string         fTestScheduleFile;
 
-      int                 fTestBufferSize;
-
       double*            fResults;
 
       double            fCmdDelay;
@@ -84,10 +82,6 @@ class TransportModule : public dabc::ModuleAsync {
       long               fTestNumBuffers;
 
       TimeStamping       fStamping;     // copy of stamping from runnable
-
-      dabc::Ratemeter*   fRecvRatemeter;
-      dabc::Ratemeter*   fSendRatemeter;
-      dabc::Ratemeter*   fWorkRatemeter;
 
       double            fTrendingInterval;   //!< interval (in seconds) for send/recv rate trending
 
@@ -129,6 +123,21 @@ class TransportModule : public dabc::ModuleAsync {
       TransportCmd      fCurrentCmd; // currently executed command
 
       dabc::ModuleItem*  fReplyItem; // item is used to generate events from runnable
+
+
+      // these all about data transfer ....
+
+      int                 fTestBufferSize;
+      double             fTestStartTime, fTestStopTime; // start/stop time for data transfer
+      int                 fSendSlotIndx, fRecvSlotIndx;
+      double              fSendBaseTime, fRecvBaseTime;
+      bool                fDoSending, fDoReceiving;
+
+      dabc::Ratemeter    fWorkRate;
+      dabc::Ratemeter    fSendRate;
+      dabc::Ratemeter    fRecvRate;
+
+
 
       virtual void ProcessInputEvent(dabc::Port* port);
       virtual void ProcessOutputEvent(dabc::Port* port);
