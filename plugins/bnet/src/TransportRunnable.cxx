@@ -545,8 +545,9 @@ void* bnet::TransportRunnable::MainLoop()
             }
 
             // decrement appropriate queue counter
-            if (rec->queuelen) (*rec->queuelen)--;
+            rec->dec_queuelen();
 
+            rec->compl_time = fStamping();
 
             if ((--rec->repeatcnt <= 0) || rec->err) {
                fCompletedRecs.Push(recid);
@@ -731,6 +732,8 @@ int bnet::TransportRunnable::PrepareOperation(OperKind kind, int hdrsize, dabc::
    rec->skind = skind_None;
 
    rec->SetImmediateTime(); // operation will be submitted as soon as possible
+   rec->is_time = 0.;
+   rec->compl_time = 0.;
    rec->tgtnode = 0;  // id of node to submit
    rec->tgtindx = 0;  // second id for the target, LID number in case of IB
    rec->repeatcnt = 1;  // repeat operation once

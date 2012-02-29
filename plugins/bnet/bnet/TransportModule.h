@@ -137,7 +137,7 @@ class TransportModule : public dabc::ModuleAsync {
 
       dabc::CpuStatistic fCpuStat;
 
-      dabc::Average fSendStartTime, fSendComplTime, fRecvComplTime;
+      dabc::Average fSendStartTime, fSendComplTime, fRecvComplTime, fOperBackTime;
 
       int64_t fSkipSendCounter;
 

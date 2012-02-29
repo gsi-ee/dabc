@@ -38,8 +38,9 @@ namespace bnet {
    struct OperRec {
       OperKind      kind;       // kind of operation
       OperSKind     skind;      // special kind of operation for time sync (and more)
-      double       oper_time;  // scheduled time of operation
-      double       is_time;    // actual time when operation was executed
+      double        oper_time;  // scheduled time of operation
+      double        is_time;    // actual time when operation was executed
+      double        compl_time; // actual time when operation was completed
       dabc::Buffer  buf;        // buffer for operation
       void*         header;     // pointer on the header, used for debug
       int           hdrsize;    // argument, specified when record was created
@@ -52,7 +53,8 @@ namespace bnet {
 
       OperRec() :
          kind(kind_None), skind(skind_None),
-            oper_time(0), buf(), header(0), hdrsize(0), tgtnode(0), tgtindx(0), repeatcnt(0), err(false),
+            oper_time(0.), is_time(0.), compl_time(0.),
+            buf(), header(0), hdrsize(0), tgtnode(0), tgtindx(0), repeatcnt(0), err(false),
             queuelen(0) {}
 
       void SetRepeatCnt(int cnt) { repeatcnt = cnt; }
@@ -64,6 +66,9 @@ namespace bnet {
       void SetTime(double tm) { oper_time = tm; }
 
       inline bool IsQueueOk() { return queuelen==0 ? true : *queuelen < queuelimit; }
+
+      inline void inc_queuelen() { if (queuelen) *queuelen++; }
+      inline void dec_queuelen() { if (queuelen) *queuelen--; }
    };
 
    class TimeStamping {
@@ -242,7 +247,7 @@ namespace bnet {
             if (DoPerformOperation(recid)) {
                fRunningRecs[recid] = true;
                GetRec(recid)->is_time = tm;
-               (*(GetRec(recid)->queuelen))++;
+               GetRec(recid)->inc_queuelen();
                fNumRunningRecs++;
             } else {
                GetRec(recid)->err = true;

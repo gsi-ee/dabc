@@ -146,14 +146,15 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_ALLTOALL)); // configure and start all to all execution
 
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, Cfg("TestTime").AsInt(10) + 3)); // master wait 10 seconds
-/*
+
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_GETRUNRES));
       TransportCmd cmd_coll1(BNET_CMD_COLLECT);
       cmd_coll1.SetInt("SetSize", 14*sizeof(double));
       fCmdsQueue.PushD(cmd_coll1);
 
-//      fCmdsQueue.PushD(TransportCmd(BNET_CMD_SHOWRUNRES));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_SHOWRUNRES));
 
-
+/*
       TransportCmd cmd_sync3(BNET_CMD_TIMESYNC, 5.);
       cmd_sync3.SetSyncArg(200, false, false);
       fCmdsQueue.PushD(cmd_sync3);
@@ -516,6 +517,7 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
    fSendStartTime.Reset();
    fSendComplTime.Reset();
    fRecvComplTime.Reset();
+   fOperBackTime.Reset();
 
    DOUT2(("ActiavteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(fDoSending), DBOOL(fDoReceiving), fTestStartTime - fStamping()));
 
@@ -695,6 +697,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          fAllToAllActive = false;
          DOUT0(("All-to-all processing done"));
          fSendStartTime.Show("SendStartTime", true);
+         fOperBackTime.Show("OperBackTime", true);
          return false;
       }
 
@@ -759,7 +762,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                   return false;
                }
 
-               DOUT1(("SubmitRecvOper recid %d node %d lid %d", recid, node, lid));
+               // DOUT1(("SubmitRecvOper recid %d node %d lid %d", recid, node, lid));
 
                did_submit = true;
             }
@@ -822,7 +825,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                   return false;
                }
 
-               DOUT1(("SubmitSendOper recid %d node %d lid %d", recid, node, lid));
+               // DOUT1(("SubmitSendOper recid %d node %d lid %d", recid, node, lid));
 
                fNumSendPackets++;
                did_submit = true;
@@ -1378,26 +1381,26 @@ void bnet::TransportModule::ProcessSendCompleted(int recid, OperRec* rec)
 {
    if (!fAllToAllActive) return;
 
-   DOUT1(("ProcessSendCompleted recid %d err %s", recid, DBOOL(rec->err)));
+   // DOUT1(("ProcessSendCompleted recid %d err %s", recid, DBOOL(rec->err)));
 
-   double sendtime(0);
-   rec->buf.CopyTo(&sendtime, sizeof(sendtime));
    fNumComplSendPackets++;
 
-   double sendcompltime = fStamping();
+   double curr_tm = fStamping();
 
    fSendStartTime.Fill(rec->is_time - rec->oper_time);
 
-   fSendComplTime.Fill(sendcompltime - sendtime);
+   fSendComplTime.Fill(rec->compl_time - rec->is_time);
 
-   fSendRate.Packet(fTestBufferSize, sendcompltime);
+   fOperBackTime.Fill(curr_tm - rec->compl_time);
+
+   fSendRate.Packet(fTestBufferSize, curr_tm);
 }
 
 void bnet::TransportModule::ProcessRecvCompleted(int recid, OperRec* rec)
 {
    if (!fAllToAllActive) return;
 
-   DOUT1(("ProcessRecvCompleted recid %d err %s", recid, DBOOL(rec->err)));
+   // DOUT1(("ProcessRecvCompleted recid %d err %s", recid, DBOOL(rec->err)));
 
    double mem[2] = {0., 0.};
    rec->buf.CopyTo(mem, sizeof(mem));
@@ -1412,11 +1415,13 @@ void bnet::TransportModule::ProcessRecvCompleted(int recid, OperRec* rec)
 
    fRecvOperCounter(rec->tgtindx, rec->tgtnode) = sendcnt;
 
-   double recv_time = fStamping();
+   double curr_tm = fStamping();
 
-   fRecvComplTime.Fill(recv_time - sendtime);
+   fRecvComplTime.Fill(rec->compl_time - sendtime);
 
-   fRecvRate.Packet(fTestBufferSize, recv_time);
+   fOperBackTime.Fill(curr_tm - rec->compl_time);
+
+   fRecvRate.Packet(fTestBufferSize, curr_tm);
 
    fTotalRecvPackets++;
 }
@@ -1666,6 +1671,7 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
       }
 
       case BNET_CMD_SHOWRUNRES: {
+         ShowAllToAllResults();
          CompleteRunningCommand();
          break;
       }
