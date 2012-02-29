@@ -276,7 +276,7 @@ namespace bnet {
          // size required for storing all connection handles of local node
          virtual int ConnectionBufferSize() { return 1024; }
 
-         virtual void ResortConnections(void*, void*) { }
+         virtual void ResortConnections(void*) { }
 
          bool SetActiveNodes(void* data, int datasize);
          bool CreateQPs(void* recs, int recssize);

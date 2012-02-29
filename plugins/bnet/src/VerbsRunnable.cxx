@@ -168,11 +168,16 @@ bool bnet::VerbsRunnable::ExecuteCreateQPs(void* args, int argssize)
    return true;
 }
 
-void bnet::VerbsRunnable::ResortConnections(void* _recs, void* _conn)
+void bnet::VerbsRunnable::ResortConnections(void* _recs)
 {
    CheckModuleThrd();
 
-   VerbsConnRec* conn = (VerbsConnRec*) _conn;
+   int blocksize = ConnectionBufferSize();
+
+   void* tmp = malloc(NumNodes() * blocksize);
+   memset(tmp, 0, NumNodes() * blocksize);
+
+   VerbsConnRec* conn = (VerbsConnRec*) tmp;
    VerbsConnRec* recs = (VerbsConnRec*) _recs;
 
    for (int n1 = 0; n1 < NumNodes(); n1++)
@@ -184,6 +189,10 @@ void bnet::VerbsRunnable::ResortConnections(void* _recs, void* _conn)
 
             memcpy(conn + tgt, recs + src, sizeof(VerbsConnRec));
          }
+
+   memcpy(_recs, tmp, NumNodes() * blocksize);
+
+   free(tmp);
 }
 
 bool bnet::VerbsRunnable::ExecuteConnectQPs(void* args, int argssize)

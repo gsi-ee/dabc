@@ -70,7 +70,7 @@ class TransportModule : public dabc::ModuleAsync {
 
       double*            fResults;
 
-      double            fCmdDelay;
+      double             fCmdDelay;
 
       int               *fSendQueue[BNET_MAXLID];    // size of individual sending queue
       int               *fRecvQueue[BNET_MAXLID];    // size of individual receiving queue
@@ -108,7 +108,6 @@ class TransportModule : public dabc::ModuleAsync {
       void*  fCmdAllResults;   // buffer where replies from all nodes collected
       int    fCmdResultsPerNode;  // how many data in replied is expected
 
-      void  *fConnRawData, *fConnSortData; // buffers used during connections;
       dabc::TimeStamp fConnStartTime;  // time when connection was starting
 
       int64_t    fSyncArgs[6];  // arguments for time sync
@@ -208,8 +207,6 @@ class TransportModule : public dabc::ModuleAsync {
       virtual ~TransportModule();
 
       virtual int ExecuteCommand(dabc::Command cmd);
-
-      virtual void MainLoop();
 
       virtual void BeforeModuleStart();
 

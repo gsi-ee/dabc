@@ -104,8 +104,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fCmdReplies.resize(0); // indicates if cuurent cmd was replied
    fCmdAllResults = 0;   // buffer where replies from all nodes collected
    fCmdResultsPerNode = 0;  // how many data in replied is expected
-   fConnRawData = 0;
-   fConnSortData = 0;
 
    fAllToAllActive = false;
 
@@ -154,12 +152,17 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_SHOWRUNRES));
 
-/*
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_ASKQUEUE));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLEANUP));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_ASKQUEUE));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLEANUP));
+
+
       TransportCmd cmd_sync3(BNET_CMD_TIMESYNC, 5.);
       cmd_sync3.SetSyncArg(200, false, false);
       fCmdsQueue.PushD(cmd_sync3);
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_EXECSYNC));
-*/
+
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLOSEQP)); // close connections
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_TEST)); // test that slaves are there
 
@@ -201,14 +204,18 @@ void bnet::TransportModule::AllocCollResults(int sz)
       fCollectBuffer = malloc(sz);
       fCollectBufferSize = sz;
    }
+
+   if (fCollectBufferSize>0)
+      memset(fCollectBuffer, 0, fCollectBufferSize);
 }
-
-
 
 void bnet::TransportModule::AllocResults(int size)
 {
-   if (fResults!=0) delete[] fResults;
-   fResults = 0;
+   if (fResults!=0) {
+      delete[] fResults;
+      fResults = 0;
+   }
+
    if (size>0) {
       fResults = new double[size];
       for (int n=0;n<size;n++) fResults[n] = 0.;
@@ -927,25 +934,12 @@ bool bnet::TransportModule::MasterCleanup()
 
 bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
 {
-   dabc::TimeStamp tm = dabc::Now();
+   bool isany(true);
 
-   int recid(-1);
-   OperRec* rec(0);
    int maxqueue(5);
 
-   // execute at maximum 7 seconds
-   while (!tm.Expired(7.)) {
-      recid = -1; // CheckCompletionQueue(0.001);
-
-      rec = fRunnable->GetRec(recid);
-
-      if (rec!=0) {
-         // buffer will be released as well
-         fRunnable->ReleaseRec(recid);
-      }
-
-      bool isany = false;
-
+   while (isany) {
+      isany = false;
       for (int node=0;node<NumNodes();node++)
          for (int lid=0;lid<NumLids();lid++) {
             int* entry = pars + node*NumLids()*2 + lid*2;
@@ -953,16 +947,11 @@ bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
             if ((entry[0]>0) || (entry[1]>0)) isany = true;
 
             if ((entry[0]>0) && (SendQueue(lid,node)<maxqueue)) {
-               // perform send operation
-               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+               // perform send operation, buffer can be empty
+               dabc::Buffer buf;
 
-               if (buf.null()) {
-                  EOUT(("Not enough buffers"));
-                  return false;
-               }
-
-               recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), buf);
-               rec = fRunnable->GetRec(recid);
+               int recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), buf);
+               OperRec* rec = fRunnable->GetRec(recid);
 
                if (rec==0) {
                   EOUT(("Cannot prepare send operation"));
@@ -995,8 +984,8 @@ bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
                   return false;
                }
 
-               recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
-               rec = fRunnable->GetRec(recid);
+               int recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
+               OperRec* rec = fRunnable->GetRec(recid);
 
                if (rec==0) {
                   EOUT(("Cannot prepare recv operation"));
@@ -1014,82 +1003,11 @@ bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
                entry[1]--;
             }
          }
-
-      // no any operation to execute
-      if (!isany && (TotalSendQueue()==0) && (TotalRecvQueue()==0)) break;
    }
-
-   if ((TotalSendQueue()!=0) || (TotalRecvQueue()!=0))
-      EOUT(("Cleanup failed still %d send and %d recv operations", TotalSendQueue(), TotalRecvQueue()));
 
    return true;
 }
 
-
-void bnet::TransportModule::MainLoop()
-{
-   if (IsSlave()) {
-      return;
-   }
-
-   std::string fTestKind = Cfg("TestKind").AsStdStr();
-
-
-   DOUT0(("Entering mainloop master: %s test = %s", DBOOL(IsMaster()), fTestKind.c_str()));
-
-   // here we are doing our test sequence (like in former verbs tests)
-
-   // MasterCollectActiveNodes();
-
-   // CalibrateCommandsChannel();
-
-   if (fTestKind == "OnlyConnect") {
-
-      DOUT0(("----------------- TRY ONLY COMMAND CHANNEL ------------------- "));
-
-      // CalibrateCommandsChannel(30);
-
-      // MasterCallExit();
-
-      return;
-   }
-
-
-   DOUT0(("----------------- TRY CONN ------------------- "));
-
-   // MasterConnectQPs();
-
-   DOUT0(("----------------- DID CONN !!! ------------------- "));
-
-   //MasterTimeSync(true, 200, false);
-
-   if (fTestKind != "Simple") {
-
-      DOUT0(("SLEEP 10 sec"));
-      WorkerSleep(10.);
-
-      //MasterTimeSync(true, 200, true);
-
-      if (fTestKind == "SimpleSync") {
-         DOUT0(("Sleep 10 sec more before end"));
-         WorkerSleep(10.);
-      } else
-      if (fTestKind == "TimeSync") {
-         // PerformTimingTest();
-      } else {
-         // PerformNormalTest();
-      }
-
-      //MasterTimeSync(false, 500, false);
-   }
-
-   // MasterCloseConnections();
-
-   // MasterCallExit();
-
-}
-
-// ===================== new async code ================
 
 void bnet::TransportModule::ProcessInputEvent(dabc::Port* port)
 {
@@ -1527,29 +1445,26 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
 
          if (blocksize==0) return;
 
-         fConnRawData = malloc(NumNodes() * blocksize);
-         fConnSortData = malloc(NumNodes() * blocksize);
-         memset(fConnRawData, 0, NumNodes() * blocksize);
-         memset(fConnSortData, 0, NumNodes() * blocksize);
+         AllocCollResults(NumNodes() * blocksize);
 
          DOUT0(("First collect all QPs info"));
 
          // own records will be add automatically
-         RequestMasterCommand(BNET_CMD_CREATEQP, 0, 0, fConnRawData, blocksize);
+         RequestMasterCommand(BNET_CMD_CREATEQP, 0, 0, fCollectBuffer, blocksize);
          break;
       }
 
       case BNET_CMD_CONNECTQP: {
-         fRunnable->ResortConnections(fConnRawData, fConnSortData);
 
-         RequestMasterCommand(BNET_CMD_CONNECTQP, fConnSortData, -fRunnable->ConnectionBufferSize());
+         fRunnable->ResortConnections(fCollectBuffer);
+
+         RequestMasterCommand(BNET_CMD_CONNECTQP, fCollectBuffer, -fRunnable->ConnectionBufferSize());
          break;
       }
 
       case BNET_CMD_CONNECTDONE: {
-         free(fConnRawData); fConnRawData = 0;
-         free(fConnSortData); fConnSortData = 0;
          DOUT0(("Establish connections in %5.4f s ", fConnStartTime.SpentTillNow()));
+         CompleteRunningCommand();
          break;
       }
 
@@ -1663,8 +1578,6 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
 
          AllocCollResults(setsize*NumNodes());
 
-         memset(fCollectBuffer,fCollectBufferSize,0);
-
          RequestMasterCommand(BNET_CMD_COLLECT, 0, 0, fCollectBuffer, setsize);
 
          break;
@@ -1675,6 +1588,50 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          CompleteRunningCommand();
          break;
       }
+
+      case BNET_CMD_ASKQUEUE: {
+         int blocksize = NumNodes()*NumLids()*2*sizeof(uint32_t);
+         AllocCollResults(NumNodes() * blocksize);
+         RequestMasterCommand(BNET_CMD_ASKQUEUE, 0, 0, fCollectBuffer, blocksize);
+         break;
+      }
+
+      case BNET_CMD_CLEANUP: {
+
+         int blocksize = NumNodes()*NumLids()*2*sizeof(uint32_t);
+
+         int32_t* src = (int32_t*) fCollectBuffer;
+         int32_t* tgt = (int32_t*) malloc(NumNodes() * blocksize);
+
+         int allsend(0), allrecv(0);
+
+         for(int node1=0;node1<NumNodes();node1++)
+            for (int node2=0;node2<NumNodes();node2++)
+               for(int nlid=0;nlid<NumLids();nlid++) {
+                  int tgtindx = node1*NumNodes()*NumLids()*2 + node2*NumLids()*2 + nlid*2;
+                  int srcindx = node2*NumNodes()*NumLids()*2 + node1*NumLids()*2 + nlid*2;
+                  // send operation, which should be executed from node1 -> node2
+                  tgt[tgtindx] = src[srcindx + 1];
+
+                  // recv operation, which should be executed on node1 for node2
+                  tgt[tgtindx + 1] = src[srcindx];
+
+                  allsend += tgt[tgtindx];
+                  allrecv += tgt[tgtindx + 1];
+               }
+
+         DOUT0(("All send %d and recv %d operation", allsend, allrecv));
+
+         memcpy(fCollectBuffer, tgt, NumNodes()*blocksize);
+         free(tgt);
+
+         if (allsend+allrecv == 0)
+            CompleteRunningCommand();
+         else
+            RequestMasterCommand(BNET_CMD_CLEANUP, fCollectBuffer, -blocksize);
+         break;
+      }
+
 
       default:
          EOUT(("Command not supported"));

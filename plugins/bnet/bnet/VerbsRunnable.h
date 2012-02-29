@@ -68,7 +68,7 @@ namespace bnet {
 
          virtual bool Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd);
 
-         virtual void ResortConnections(void* src, void* tgt);
+         virtual void ResortConnections(void* buf);
    };
 
 }
