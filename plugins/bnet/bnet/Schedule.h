@@ -155,16 +155,16 @@ namespace bnet {
 
          std::string GetRouteAsString(int node1, int node2, int lid = 0) const;
 
-         void FillRandomIds(IbTestIntColumn& column) const;
+         void FillRandomIds(dabc::IntColumn& column) const;
 
-         void FillBadIdsFor2Switches(IbTestIntColumn& column) const;
+         void FillBadIdsFor2Switches(dabc::IntColumn& column) const;
 
          /** Fill ids of nodes with name like node*, all these nodes can be used for interactive jobs */
-         void FillInteractiveNodes(IbTestIntColumn& column) const;
+         void FillInteractiveNodes(dabc::IntColumn& column) const;
 
          /** Select nodes id according arguments list
           * For a moment it is switch names */
-         bool SelectNodes(const std::string& all_args, IbTestIntColumn& ids);
+         bool SelectNodes(const std::string& all_args, dabc::IntColumn& ids);
 
          /** Method tries to build optimal routes to balance load over spine switches */
          void BuildOptimalRoutes();
@@ -177,10 +177,10 @@ namespace bnet {
          int CheckUsefulLIDs();
 
          /** Save names of selected nodes in the file */
-         bool SaveNodesList(const std::string& fname, const IbTestIntColumn& ids);
+         bool SaveNodesList(const std::string& fname, const dabc::IntColumn& ids);
 
          /** Load nodes names from the file */
-         bool LoadNodesList(const std::string& fname, IbTestIntColumn& ids);
+         bool LoadNodesList(const std::string& fname, dabc::IntColumn& ids);
 
    };
 
@@ -289,17 +289,15 @@ namespace bnet {
 
          double totalTime();
 
-         double calcOccupation();
+         void Print(dabc::IntMatrix* matr);
 
-         void Print(IbTestIntMatrix* matr);
+         double calcBandwidth(dabc::IntMatrix* matr);
 
-         double calcBandwidth(IbTestIntMatrix* matr);
+         void FillRoundRoubin(dabc::IntColumn* ids = 0, double schstep = 1.);
 
-         void FillRoundRoubin(IbTestIntColumn* ids = 0, double schstep = 1.);
+         bool BuildOptimized(IBClusterRouting& routing, dabc::IntColumn* ids = 0, bool show = false);
 
-         bool BuildOptimized(IBClusterRouting& routing, IbTestIntColumn* ids = 0, bool show = false);
-
-         bool BuildRegularSchedule(IBClusterRouting& routing, IbTestIntColumn* ids = 0, bool show = false);
+         bool BuildRegularSchedule(IBClusterRouting& routing, dabc::IntColumn* ids = 0, bool show = false);
 
          double CheckConjunction(IBClusterRouting& routing, bool show = false);
 
@@ -318,10 +316,10 @@ namespace bnet {
          bool RollBack(IBScheduleMoveList& lst);
 
          /** \brief Check that schedule has all necessary transfers */
-         bool ProveSchedule(IbTestIntColumn* ids = 0);
+         bool ProveSchedule(dabc::IntColumn* ids = 0);
 
          /** \brief Select schedule for only specified ids, recode ids according to their sequence number */
-         bool RecodeIds(const IbTestIntColumn& ids, IBSchedule& new_sch);
+         bool RecodeIds(const dabc::IntColumn& ids, IBSchedule& new_sch);
 
          /** \brief Copies schedule content to new object */
          bool CopyTo(IBSchedule& new_sch);

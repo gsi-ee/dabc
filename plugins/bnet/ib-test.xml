@@ -32,7 +32,7 @@
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="5.0"/>
-         <TestRate value="250"/>
+         <TestRate value="20"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
          <TestSchedule value=""/>

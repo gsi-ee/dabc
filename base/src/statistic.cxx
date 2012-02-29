@@ -350,9 +350,9 @@ double dabc::Average::Dev() const
 void dabc::Average::Show(const char* name, bool showextr)
 {
    if (showextr)
-      DOUT1(("%s = %f +- %f (min = %f, max = %f)",name,Mean(), Dev(), min, max));
+      DOUT0(("%s = %f +- %f (min = %f, max = %f)",name,Mean(), Dev(), min, max));
    else
-      DOUT1(("%s = %f +- %f",name,Mean(), Dev()));
+      DOUT0(("%s = %f +- %f",name,Mean(), Dev()));
 }
 
 void dabc::Average::ShowHist()

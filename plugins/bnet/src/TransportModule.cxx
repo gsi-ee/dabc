@@ -10,6 +10,7 @@
 #include "dabc/Queue.h"
 #include "dabc/Manager.h"
 #include "dabc/PoolHandle.h"
+#include "dabc/Timer.h"
 #include "dabc/Port.h"
 
 #ifdef WITH_VERBS
@@ -26,11 +27,9 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fNumNodes = cmd.Field("NumNodes").AsInt(1);
 
    fNumLids = Cfg("TestNumLids", cmd).AsInt(1);
-   if (fNumLids>IBTEST_MAXLID) fNumLids = IBTEST_MAXLID;
+   if (fNumLids>BNET_MAXLID) fNumLids = BNET_MAXLID;
 
    int nports = cmd.Field("NumPorts").AsInt(1);
-
-   fTestKind = Cfg("TestKind", cmd).AsStdStr();
 
    fTestNumBuffers = Cfg(dabc::xmlNumBuffers, cmd).AsInt(1000);
 
@@ -56,7 +55,7 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    fCmdDelay = 0.;
 
-   for (int n=0;n<IBTEST_MAXLID;n++) {
+   for (int n=0;n<BNET_MAXLID;n++) {
       fSendQueue[n] = 0;
       fRecvQueue[n] = 0;
    }
@@ -94,6 +93,9 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fCmdBufferSize = 256*1024;
    fCmdDataBuffer = new char[fCmdBufferSize];
 
+   fCollectBuffer = 0;
+   fCollectBufferSize = 0;
+
    // new members
 
    fRunningCmdId = 0;
@@ -105,49 +107,62 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fConnRawData = 0;
    fConnSortData = 0;
 
+   fAllToAllActive = false;
+
    CreateTimer("Timer", 0.1); // every 100 milisecond
 
+   CreateTimer("AllToAll"); //timer for all-to-all test, shooted individually
+
    if (IsMaster()) {
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_WAIT, 0.3)); // master wait 0.3 seconds
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_ACTIVENODES)); // first collect active nodes
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_TEST)); // test connection
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_MEASURE)); // reset first measurement
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 0.3)); // master wait 0.3 seconds
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_ACTIVENODES)); // first collect active nodes
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_TEST)); // test connection
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_MEASURE)); // reset first measurement
 
-      for (int n=0;n<10;n++) fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_TEST)); // test connection
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_MEASURE)); // do real measurement of test loop
+      for (int n=0;n<10;n++) fCmdsQueue.PushD(TransportCmd(BNET_CMD_TEST)); // test connection
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_MEASURE)); // do real measurement of test loop
 
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_CREATEQP));
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_CONNECTQP));
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_CONNECTDONE));
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_TEST)); // test that slaves are there
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_MEASURE)); // reset single measurement
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_CREATEQP));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_CONNECTQP));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_CONNECTDONE));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_TEST)); // test that slaves are there
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_MEASURE)); // reset single measurement
 
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_WAIT, 1.)); // master wait 1 second
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 1.)); // master wait 1 second
 
-      TransportCmd cmd_sync1(IBTEST_CMD_TIMESYNC, 5.);
+      TransportCmd cmd_sync1(BNET_CMD_TIMESYNC, 5.);
       cmd_sync1.SetSyncArg(200, true, false);
       fCmdsQueue.PushD(cmd_sync1);
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_EXECSYNC));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_EXECSYNC));
 
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_WAIT, 10.)); // master wait 10 seconds
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 10.)); // master wait 10 seconds
 
-      TransportCmd cmd_sync2(IBTEST_CMD_TIMESYNC, 5.);
+      TransportCmd cmd_sync2(BNET_CMD_TIMESYNC, 5.);
       cmd_sync2.SetSyncArg(200, true, true);
       fCmdsQueue.PushD(cmd_sync2);
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_EXECSYNC));
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_GETSYNC));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_EXECSYNC));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_GETSYNC));
 
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_WAIT, 10.)); // master wait 10 seconds
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_ALLTOALL)); // configure and start all to all execution
 
-      TransportCmd cmd_sync3(IBTEST_CMD_TIMESYNC, 5.);
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, Cfg("TestTime").AsInt(10) + 3)); // master wait 10 seconds
+/*
+      TransportCmd cmd_coll1(BNET_CMD_COLLECT);
+      cmd_coll1.SetInt("SetSize", 14*sizeof(double));
+      fCmdsQueue.PushD(cmd_coll1);
+
+//      fCmdsQueue.PushD(TransportCmd(BNET_CMD_SHOWRUNRES));
+
+
+      TransportCmd cmd_sync3(BNET_CMD_TIMESYNC, 5.);
       cmd_sync3.SetSyncArg(200, false, false);
       fCmdsQueue.PushD(cmd_sync3);
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_EXECSYNC));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_EXECSYNC));
+*/
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLOSEQP)); // close connections
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_TEST)); // test that slaves are there
 
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_CLOSEQP)); // close connections
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_TEST)); // test that slaves are there
-
-      fCmdsQueue.PushD(TransportCmd(IBTEST_CMD_EXIT)); // master wait 1 seconds
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_EXIT)); // master wait 1 seconds
    }
 }
 
@@ -163,14 +178,31 @@ bnet::TransportModule::~TransportModule()
       fCmdDataBuffer = 0;
    }
 
-   for (int n=0;n<IBTEST_MAXLID;n++) {
+   for (int n=0;n<BNET_MAXLID;n++) {
       if (fSendQueue[n]) delete [] fSendQueue[n];
       if (fRecvQueue[n]) delete [] fRecvQueue[n];
    }
 
+   AllocCollResults(0);
 
    AllocResults(0);
 }
+
+void bnet::TransportModule::AllocCollResults(int sz)
+{
+   if ((sz>fCollectBufferSize) || (sz==0)) {
+      free(fCollectBuffer);
+      fCollectBuffer = 0;
+      fCollectBufferSize = 0;
+   }
+
+   if (sz>fCollectBufferSize) {
+      fCollectBuffer = malloc(sz);
+      fCollectBufferSize = sz;
+   }
+}
+
+
 
 void bnet::TransportModule::AllocResults(int size)
 {
@@ -231,190 +263,15 @@ bool bnet::TransportModule::SubmitToRunnable(int recid, OperRec* rec)
    return true;
 }
 
-
-bool bnet::TransportModule::MasterCommandRequest(int cmdid, void* cmddata, int cmddatasize, void* allresults, int resultpernode)
-{
-    // Request from master side to move in specific command
-    // Actually, appropriate functions should run at about the
-    // same time while special delay is calculated before and informed
-    // each slave how long it should be delayed
-
-   // if module not working, do not try to do anything else
-/*
-
-   if (!ModuleWorking(0.)) {
-      DOUT0(("Command %d cannot be executed - module is not active", cmdid));
-      return false;
-   }
-
-   bool incremental_data = false;
-   if (cmddatasize<0) {
-      cmddatasize = -cmddatasize;
-      incremental_data = true;
-   }
-
-   int fullpacketsize = sizeof(CommandMessage) + cmddatasize;
-
-   if (resultpernode > cmddatasize) {
-      // special case, to use same buffer on slave for reply,
-      // original buffer size should be not less than requested
-      // therefore we just append fake data
-      fullpacketsize = sizeof(CommandMessage) + resultpernode;
-   }
-
-   if (fullpacketsize>fCmdBufferSize) {
-      EOUT(("Too big command data size %d", cmddatasize));
-      return false;
-   }
-
-   dabc::Buffer buf0;
-
-   for(int node=0;node<NumNodes();node++) if (fActiveNodes[node]) {
-
-      dabc::Buffer buf = TakeBuffer(FindPool("BnetCtrlPool"), fullpacketsize, 1.);
-      if (buf.null()) { EOUT(("No empty buffer")); return false; }
-
-      CommandMessage* msg = (CommandMessage*) buf.GetPointer()();
-
-      msg->magic = IBTEST_CMD_MAGIC;
-      msg->cmdid = cmdid;
-      msg->cmddatasize = cmddatasize;
-      msg->delay = 0;
-      msg->getresults = resultpernode;
-      if ((cmddatasize>0) && (cmddata!=0)) {
-         if (incremental_data)
-            memcpy(msg->cmddata(), (uint8_t*) cmddata + node * cmddatasize, cmddatasize);
-         else
-            memcpy(msg->cmddata(), cmddata, cmddatasize);
-      }
-
-      buf.SetTotalSize(fullpacketsize);
-
-      if (node==0) {
-         buf0 << buf;
-      } else {
-//         DOUT0(("Send buffer to slave %d", node));
-         Send(IOPort(node-1), buf, 1.);
-      }
-   }
-
-   PreprocessTransportCommand(buf0);
-
-   std::vector<bool> replies;
-   replies.resize(NumNodes(), false);
-   bool finished = false;
-
-   while (ModuleWorking() && !finished) {
-      dabc::Buffer buf;
-      buf << buf0;
-      int nodeid = 0;
-
-      if (buf.null()) {
-         dabc::Port* port(0);
-         nodeid = -1;
-         buf = RecvFromAny(&port, 4.);
-         if (port) nodeid = IOPortNumber(port) + 1;
-      }
-
-      if (buf.null() || (nodeid<0)) {
-         for (unsigned n=0;n<replies.size();n++)
-            if (fActiveNodes[n] && !replies[n]) EOUT(("Cannot get any reply from node %u", n));
-         return false;
-      }
-
-//      DOUT0(("Recv reply from slave %d", nodeid));
-
-      replies[nodeid] = true;
-
-      CommandMessage* rcv = (CommandMessage*) buf.GetPointer()();
-
-      if (rcv->magic!=IBTEST_CMD_MAGIC) { EOUT(("Wrong magic")); return false; }
-      if (rcv->cmdid!=cmdid) { EOUT(("Wrong ID")); return false; }
-      if (rcv->node != nodeid) { EOUT(("Wrong node")); return false; }
-
-      if ((allresults!=0) && (resultpernode>0) && (rcv->cmddatasize == resultpernode)) {
-         // DOUT0(("Copy from node %d buffer %d", nodeid, resultpernode));
-         memcpy((uint8_t*)allresults + nodeid*resultpernode, rcv->cmddata(), resultpernode);
-      }
-
-      finished = true;
-
-      for (unsigned n=0;n<replies.size();n++)
-         if (fActiveNodes[n] && !replies[n]) finished = false;
-   }
-
-   // Should we call slave method here ???
-*/
-   return true;
-}
-
-bool bnet::TransportModule::MasterCollectActiveNodes()
-{
-   uint8_t buff[NumNodes()];
-
-   int cnt = 1;
-   buff[0] = 1;
-
-   for(int node=1;node<NumNodes();node++) {
-      bool active = IOPort(node-1)->IsConnected();
-      if (active) cnt++;
-      buff[node] = active ? 1 : 0;
-   }
-
-   DOUT0(("There are %d active nodes, %d missing", cnt, NumNodes() - cnt));
-
-   if (!MasterCommandRequest(IBTEST_CMD_ACTIVENODES, buff, NumNodes())) return false;
-
-   return cnt == NumNodes();
-}
-
-
-bool bnet::TransportModule::CalibrateCommandsChannel(int nloop)
-{
-   dabc::TimeStamp tm;
-
-   dabc::Average aver;
-
-   for (int n=0;n<nloop;n++) {
-      dabc::Sleep(0.001);
-
-      tm = dabc::Now();
-      if (!MasterCommandRequest(IBTEST_CMD_TEST)) return false;
-
-      if (n>0)
-         aver.Fill(dabc::Now()-tm);
-   }
-
-   fCmdDelay = aver.Mean();
-
-   aver.Show("Command loop", true);
-
-   DOUT0(("Command loop = %5.3f ms", fCmdDelay*1e3));
-
-   return true;
-}
-
-bool bnet::TransportModule::MasterCallExit()
-{
-   MasterCommandRequest(IBTEST_CMD_EXIT);
-
-   fRunnable->StopRunnable();
-   fRunThread->Join();
-
-   dabc::mgr.StopApplication();
-
-   return true;
-}
-
 int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
 {
-   if (buf.null()) return IBTEST_CMD_EXIT;
+   if (buf.null()) return BNET_CMD_EXIT;
 
    CommandMessage* msg = (CommandMessage*) buf.SegmentPtr(0);
 
-   if (msg->magic!=IBTEST_CMD_MAGIC) {
+   if (msg->magic!=BNET_CMD_MAGIC) {
        EOUT(("Magic id is not correct"));
-       return IBTEST_CMD_EXIT;
+       return BNET_CMD_EXIT;
    }
 
    int cmdid = msg->cmdid;
@@ -436,11 +293,11 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
    bool cmd_res(false);
 
    switch (cmdid) {
-      case IBTEST_CMD_TEST:
+      case BNET_CMD_TEST:
          cmd_res = true;
          break;
 
-      case IBTEST_CMD_EXIT:
+      case BNET_CMD_EXIT:
          WorkerSleep(0.1);
          DOUT2(("Propose worker to stop"));
          // Stop(); // stop module
@@ -452,7 +309,7 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
          cmd_res = true;
          break;
 
-      case IBTEST_CMD_ACTIVENODES: {
+      case BNET_CMD_ACTIVENODES: {
          uint8_t* buff = (uint8_t*) fCmdDataBuffer;
 
          if (fCmdDataSize!=NumNodes()) {
@@ -469,7 +326,7 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
          break;
       }
 
-      case IBTEST_CMD_COLLECT:
+      case BNET_CMD_COLLECT:
          if ((msg->getresults > 0) && (fResults!=0)) {
             msg->cmddatasize = msg->getresults;
             sendpacketsize += msg->cmddatasize;
@@ -478,7 +335,7 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
          }
          break;
 
-      case IBTEST_CMD_CREATEQP: {
+      case BNET_CMD_CREATEQP: {
          int ressize = msg->getresults;
          cmd_res = fRunnable->CreateQPs(msg->cmddata(), ressize);
          msg->cmddatasize = ressize;
@@ -486,25 +343,25 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
          break;
       }
 
-      case IBTEST_CMD_CONNECTQP:
+      case BNET_CMD_CONNECTQP:
          cmd_res = fRunnable->ConnectQPs(fCmdDataBuffer, fCmdDataSize);
          break;
 
-      case IBTEST_CMD_CLEANUP:
+      case BNET_CMD_CLEANUP:
          cmd_res = ProcessCleanup((int32_t*)fCmdDataBuffer);
          break;
 
-      case IBTEST_CMD_CLOSEQP:
+      case BNET_CMD_CLOSEQP:
          cmd_res = fRunnable->CloseQPs();
          break;
 
-      case IBTEST_CMD_ASKQUEUE:
+      case BNET_CMD_ASKQUEUE:
          msg->cmddatasize = ProcessAskQueue(msg->cmddata());
          sendpacketsize += msg->cmddatasize;
          cmd_res = true;
          break;
 
-      case IBTEST_CMD_TIMESYNC:
+      case BNET_CMD_TIMESYNC:
          // here we just copy arguments for sync command
          if (sizeof(fSyncArgs) != fCmdDataSize) {
             EOUT(("time sync buffer not match!!!"));
@@ -514,8 +371,18 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
          cmd_res = true;
          break;
 
-      case IBTEST_CMD_GETSYNC:
+      case BNET_CMD_GETSYNC:
          fRunnable->GetSync(fStamping);
+         cmd_res = true;
+         break;
+
+      case BNET_CMD_ALLTOALL:
+         ActivateAllToAll((double*)fCmdDataBuffer);
+         cmd_res = true;
+         break;
+
+      case BNET_CMD_GETRUNRES:
+         PrepareAllToAllResults();
          cmd_res = true;
          break;
 
@@ -531,38 +398,7 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
    return cmdid;
 }
 
-bool bnet::TransportModule::MasterCloseConnections()
-{
-   dabc::TimeStamp tm = dabc::Now();
-
-   if (!MasterCommandRequest(IBTEST_CMD_CLOSEQP)) return false;
-
-   // this is just ensure that all nodes are on ready state
-   if (!MasterCommandRequest(IBTEST_CMD_TEST)) return false;
-
-   DOUT0(("Comm ports are closed in %5.3fs", tm.SpentTillNow()));
-
-   return true;
-}
-
-
-void bnet::TransportModule::ActivateAllToAll(double*)
-{
-//   int bufsize = arguments[0];
-//   int NumUsedNodes = arguments[1];
-//   int max_sending_queue = arguments[2];
-//   int max_receiving_queue = arguments[3];
-//   double starttime = arguments[4];
-//   double stoptime = arguments[5];
-//   int patternid = arguments[6];
-//  double datarate = arguments[7];
-//   double ratemeterinterval = arguments[8];
-//   bool canskipoperation = arguments[9] > 0;
-
-}
-
-
-bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
+void bnet::TransportModule::ActivateAllToAll(double* arguments)
 {
    fTestBufferSize = arguments[0];
 //   int NumUsedNodes = arguments[1];
@@ -573,11 +409,9 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    int patternid = arguments[6];
    double datarate = arguments[7];
    // double ratemeterinterval = arguments[8];
-   bool canskipoperation = arguments[9] > 0;
+   // bool canskipoperation = arguments[9] > 0;
 
-   AllocResults(14);
-
-   DOUT2(("ExecuteAllToAll - start"));
+   DOUT2(("ActivateAllToAll - start"));
 
    fSendRate.Reset();
    fRecvRate.Reset();
@@ -654,7 +488,7 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
          break;
    }
 
-   DOUT4(("ExecuteAllToAll: Define schedule"));
+   DOUT4(("ActiavteAllToAll: Define schedule"));
 
    fSendSch.FillReceiveSchedule(fRecvSch);
 
@@ -679,273 +513,50 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
    fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendBaseTime, fSendSlotIndx);
    fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvBaseTime, fRecvSlotIndx);
 
+   fSendStartTime.Reset();
+   fSendComplTime.Reset();
+   fRecvComplTime.Reset();
 
-   dabc::Average send_start, send_compl, recv_compl, loop_time, wait_time_aver, submit_send;
-
-   DOUT2(("ExecuteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(fDoSending), DBOOL(fDoReceiving), fTestStartTime - fStamping()));
+   DOUT2(("ActiavteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(fDoSending), DBOOL(fDoReceiving), fTestStartTime - fStamping()));
 
    // counter for must have send operations over each channel
-   IbTestIntMatrix sendcounter(NumLids(), NumNodes());
+   fSendOperCounter.SetSize(NumLids(), NumNodes());
 
    // actual received id from sender
-   IbTestIntMatrix recvcounter(NumLids(), NumNodes());
+   fRecvOperCounter.SetSize(NumLids(), NumNodes());
 
    // number of recv skip operations one should do
-   IbTestIntMatrix recvskipcounter(NumLids(), NumNodes());
+   fRecvSkipCounter.SetSize(NumLids(), NumNodes());
 
-   sendcounter.Fill(0);
-   recvcounter.Fill(-1);
-   recvskipcounter.Fill(0);
+   fSendOperCounter.Fill(0);
+   fRecvOperCounter.Fill(-1);
+   fRecvSkipCounter.Fill(0);
 
-   long numlostpackets(0);
+   fNumLostPackets = 0;
+   fTotalRecvPackets = 0;
+   fNumSendPackets = 0;
+   fNumComplSendPackets = 0;
 
-   long totalrecvpackets(0), numsendpackets(0), numcomplsend(0);
-
-   long  loop_cnt(0), no_recv_cnt(0), no_send_cnt(0);
-
-   int64_t sendmulticounter = 0;
-   int64_t skipmulticounter = 0;
-   int64_t numlostmulti = 0;
-   int64_t totalrecvmulti = 0;
-   int64_t skipsendcounter = 0;
-
-   double last_tm(-1), curr_tm(0);
-
-   dabc::CpuStatistic cpu_stat;
-
-   int recid(-1);
-   OperRec* rec(0);
+   fSkipSendCounter = 0;
 
    fRunnable->ConfigQueueLimits(max_sending_queue, max_receiving_queue);
 
    fRunnable->ResetStatistic();
 
-   double next_oper_time(0.);
+   fAllToAllActive = true;
 
-   // when receive operation should be prepared before send is started
-   // we believe that 100 microsec is enough
-   double recv_pre_time = 0.0001;
+   ShootTimer("AllToAll", 0.001);
 
-   // this is time required to deliver operation to the runnable
-   // 5 ms should be enough to be able to use wait in the main loop
-   double submit_pre_time = 0.005;
+   DOUT0(("Activate ALL-to-ALL"));
+}
 
-   while ((curr_tm=fStamping()) < fTestStopTime) {
+void bnet::TransportModule::PrepareAllToAllResults()
+{
+   AllocResults(14);
 
-      loop_cnt++;
+   fAllToAllActive = false;
 
-      if ((last_tm>0) && (last_tm>fTestStartTime))
-         loop_time.Fill(curr_tm - last_tm);
-      last_tm = curr_tm;
-
-      // just indicate that we were active at this time interval
-      fWorkRate.Packet(1, curr_tm);
-
-      // wait only when next operation far away
-      double waittm = 0.;
-      if ((next_oper_time>0) && (next_oper_time > curr_tm+0.003)) waittm = 0.001;
-
-//      if (waittm>0) sched_yield();
-
-      recid = -1; // CheckCompletionQueue(waittm);
-      if (waittm>0) {
-         double next_tm = fStamping();
-         wait_time_aver.Fill(next_tm - curr_tm);
-         curr_tm = next_tm;
-      }
-
-
-      next_oper_time = 0;
-
-      rec = fRunnable->GetRec(recid);
-
-      if (rec!=0) {
-         switch (rec->kind) {
-            case kind_Send: {
-               double sendtime(0);
-               rec->buf.CopyTo(&sendtime, sizeof(sendtime));
-               numcomplsend++;
-
-               double sendcompltime = fStamping();
-
-               send_start.Fill(rec->is_time - rec->oper_time);
-
-               send_compl.Fill(sendcompltime - sendtime);
-
-               fSendRate.Packet(fTestBufferSize, sendcompltime);
-               break;
-            }
-            case kind_Recv: {
-               double mem[2] = {0., 0.};
-               rec->buf.CopyTo(mem, sizeof(mem));
-               double sendtime = mem[0];
-               int sendcnt = (int) mem[1];
-
-               int lost = sendcnt - recvcounter(rec->tgtindx, rec->tgtnode) - 1;
-               if (lost>0) {
-                  numlostpackets += lost;
-                  recvskipcounter(rec->tgtindx, rec->tgtnode) += lost;
-               }
-
-               recvcounter(rec->tgtindx, rec->tgtnode) = sendcnt;
-
-               double recv_time = fStamping();
-
-               recv_compl.Fill(recv_time - sendtime);
-
-               fRecvRate.Packet(fTestBufferSize, recv_time);
-
-               totalrecvpackets++;
-               break;
-            }
-            default:
-               EOUT(("Wrong operation kind"));
-               break;
-         }
-
-         // buffer will be released as well
-         fRunnable->ReleaseRec(recid);
-      }
-
-      double next_recv_time(0.), next_send_time(0.);
-
-      if (fDoReceiving && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1))
-         next_recv_time = fRecvBaseTime + fRecvSch.timeSlot(fRecvSlotIndx) - recv_pre_time;
-
-      if (fDoSending && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1))
-         next_send_time = fSendBaseTime + fSendSch.timeSlot(fSendSlotIndx);
-
-      if (fDoReceiving && !fRunnable->IsFreeRec()) no_recv_cnt++;
-      if (fDoSending && !fRunnable->IsFreeRec()) no_send_cnt++;
-
-      // if both operation want to be executed, selected first in the time
-      if (next_recv_time>0. && next_send_time>0.) {
-         if (next_recv_time<next_send_time)
-            next_send_time = 0.;
-         else
-            next_recv_time = 0.;
-      }
-
-
-      // this is submit of recv operation
-
-      if (next_recv_time>0.) {
-         if (next_recv_time - submit_pre_time > curr_tm) {
-            next_oper_time = next_recv_time;
-         } else {
-            int node = fRecvSch.Item(fRecvSlotIndx, Node()).node;
-            int lid = fRecvSch.Item(fRecvSlotIndx, Node()).lid;
-            bool did_submit = false;
-
-            if ((recvskipcounter(lid, node) > 0) && (RecvQueue(lid, node)>0)) {
-               // if packets over this channel were lost, we should not try
-               // to receive them - they were skipped by sender most probably
-               recvskipcounter(lid, node)--;
-               did_submit = true;
-            } else {
-
-               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
-
-               if (buf.null()) {
-                  EOUT(("Not enough buffers"));
-                  return false;
-               }
-
-               // DOUT0(("Submit recv operation for buffer %u", buf.GetTotalSize()));
-
-               recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
-               rec = fRunnable->GetRec(recid);
-
-               if (rec==0) {
-                  EOUT(("Cannot prepare recv operation"));
-                  return false;
-               }
-
-               rec->SetTarget(node, lid);
-               rec->SetTime(next_recv_time);
-
-               if (!SubmitToRunnable(recid,rec)) {
-                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
-                  return false;
-               }
-
-               did_submit = true;
-            }
-
-            // shift to next operation, even if previous was not submitted.
-            // dangerous but it is like it is - we should continue receiving otherwise input will be blocked
-            // we should do here more smart solutions
-
-            if (did_submit)
-               fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvBaseTime, fRecvSlotIndx);
-         }
-      }
-
-       // this is submit of send operation
-      if (next_send_time > 0.) {
-         if (next_send_time - submit_pre_time > curr_tm) {
-            next_oper_time = next_send_time;
-         } else {
-            int node = fSendSch.Item(fSendSlotIndx, Node()).node;
-            int lid = fSendSch.Item(fSendSlotIndx, Node()).lid;
-            bool did_submit = false;
-
-            if (canskipoperation && false /*  ((SendQueue(lid, node) >= max_sending_queue) || (TotalSendQueue() >= 2*max_sending_queue))*/ ) {
-               // TODO: one could skip operation if time is far away from scheduled
-               // TODO: probably, one should implement skip in runnable
-               did_submit = true;
-               skipsendcounter++;
-            } else {
-
-               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
-
-               if (buf.null()) {
-                  EOUT(("Not enough buffers"));
-                  return false;
-               }
-
-               // DOUT0(("Submit send operation for buffer %u", buf.GetTotalSize()));
-
-               double mem[2] = { curr_tm, sendcounter(lid,node) };
-               buf.CopyFrom(mem, sizeof(mem));
-
-               recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), buf);
-               rec = fRunnable->GetRec(recid);
-
-               if (rec==0) {
-                  EOUT(("Cannot prepare send operation"));
-                  return false;
-               }
-
-               TransportHeader* hdr = (TransportHeader*) rec->header;
-               hdr->srcid = Node();    // source node id
-               hdr->tgtid = node;      // target node id
-               hdr->eventid = 123456;  // event id
-
-               rec->SetTarget(node, lid);
-               rec->SetTime(next_send_time);
-
-               submit_send.Fill(next_send_time - curr_tm);
-
-               if (!SubmitToRunnable(recid,rec)) {
-                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
-                  return false;
-               }
-
-               numsendpackets++;
-               did_submit = true;
-            }
-
-            // shift to next operation, in some cases even when previous operation was not performed
-            if (did_submit) {
-               sendcounter(lid,node)++; // this indicates that we perform operation and moved to next counter
-               fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendBaseTime, fSendSlotIndx);
-            }
-         }
-      }
-   }
-
-   cpu_stat.Measure();
+   fCpuStat.Measure();
 
    double r_mean_loop(0.), r_max_loop(0.);
    int r_long_cnt(0);
@@ -963,132 +574,49 @@ bool bnet::TransportModule::ExecuteAllToAll(double* arguments)
          fSendSch.Item(fSendSlotIndx, Node()).node, fSendSch.Item(fSendSlotIndx, Node()).lid,
          SendQueue(fSendSch.Item(fSendSlotIndx, Node()).lid, fSendSch.Item(fSendSlotIndx, Node()).node)));
 
-   DOUT3(("Send operations diff %ld: submited %ld, completed %ld", numsendpackets-numcomplsend, numsendpackets, numcomplsend));
+   DOUT3(("Send operations diff %ld: submited %ld, completed %ld", fNumSendPackets-fNumComplSendPackets, fNumSendPackets, fNumComplSendPackets));
 
-   DOUT5(("CPU utilization = %5.1f % ", cpu_stat.CPUutil()*100.));
+   DOUT5(("CPU utilization = %5.1f % ", fCpuStat.CPUutil()*100.));
 
-   DOUT0(("Send submit time min:%8.6f aver:%8.6f max:%8.6f cnt:%ld", submit_send.Min(), submit_send.Mean(), submit_send.Max(), submit_send.Number()));
-   DOUT0(("Send start time min:%8.6f aver:%8.6f max:%8.6f cnt:%ld", send_start.Min(), send_start.Mean(), send_start.Max(), send_start.Number()));
-   DOUT0(("Real wait time min:%5.4f aver:%5.4f max:%5.4f cnt:%ld", wait_time_aver.Min(), wait_time_aver.Mean(), wait_time_aver.Max(), wait_time_aver.Number()));
-   DOUT0(("Module loop time min:%5.4f aver:%5.4f max:%5.4f cnt:%ld", loop_time.Min(), loop_time.Mean(), loop_time.Max(), loop_time.Number()));
-   DOUT0(("Loop cnt %ld  no_send:%ld %8.6f no_recv:%ld %8.6f", loop_cnt, no_send_cnt, 1.*no_send_cnt/loop_cnt, no_recv_cnt, 1.*no_recv_cnt/loop_cnt));
+   DOUT0(("Send start time min:%8.6f aver:%8.6f max:%8.6f cnt:%ld", fSendStartTime.Min(), fSendStartTime.Mean(), fSendStartTime.Max(), fSendStartTime.Number()));
 
-
-   if (numsendpackets!=numcomplsend) {
-      EOUT(("Mismatch %d between submitted %ld and completed send operations %ld",numsendpackets-numcomplsend, numsendpackets, numcomplsend));
+   if (fNumSendPackets!=fNumComplSendPackets) {
+      EOUT(("Mismatch %d between submitted %ld and completed send operations %ld",fNumSendPackets-fNumComplSendPackets, fNumSendPackets, fNumComplSendPackets));
 
       for (int lid=0;lid<NumLids(); lid++)
         for (int node=0;node<NumNodes();node++) {
           if ((node==Node()) || !fActiveNodes[node]) continue;
-          DOUT5(("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d recvskp %d", lid, node, RecvQueue(lid,node), SendQueue(lid,node), recvskipcounter(lid, node)));
+          DOUT5(("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d recvskp %d", lid, node, RecvQueue(lid,node), SendQueue(lid,node), fRecvSkipCounter(lid, node)));
        }
    }
 
    fResults[0] = fSendRate.GetRate();
    fResults[1] = fRecvRate.GetRate();
-   fResults[2] = send_start.Mean();
-   fResults[3] = send_compl.Mean();
-   fResults[4] = numlostpackets;
-   fResults[5] = totalrecvpackets;
-   fResults[6] = numlostmulti;
-   fResults[7] = totalrecvmulti;
+   fResults[2] = fSendStartTime.Mean();
+   fResults[3] = fSendComplTime.Mean();
+   fResults[4] = fNumLostPackets;
+   fResults[5] = fTotalRecvPackets;
+   fResults[6] = 0;
+   fResults[7] = 0;
    fResults[8] = 0.;
-   fResults[9] = cpu_stat.CPUutil();
+   fResults[9] = fCpuStat.CPUutil();
    fResults[10] = r_mean_loop; // loop_time.Mean();
    fResults[11] = r_max_loop; // loop_time.Max();
-   fResults[12] = (numsendpackets+skipsendcounter) > 0 ? 1.*skipsendcounter / (numsendpackets + skipsendcounter) : 0.;
-   fResults[13] = recv_compl.Mean();
-
-   DOUT5(("Multi: total %ld lost %ld", totalrecvmulti, numlostmulti));
-
-   if (sendmulticounter+skipmulticounter>0)
-      DOUT0(("Multi send: %ld skipped %ld (%5.3f)",
-             sendmulticounter, skipmulticounter,
-             100.*skipmulticounter/(1.*sendmulticounter+skipmulticounter)));
-
-   return true;
+   fResults[12] = (fNumSendPackets+fSkipSendCounter) > 0 ? 1.*fSkipSendCounter / (fNumSendPackets + fSkipSendCounter) : 0.;
+   fResults[13] = fRecvComplTime.Mean();
 }
 
-bool bnet::TransportModule::MasterAllToAll(int full_pattern,
-                                        int bufsize,
-                                        double duration,
-                                        int datarate,
-                                        int max_sending_queue,
-                                        int max_receiving_queue,
-                                        bool fromperfmtest)
+void bnet::TransportModule::ShowAllToAllResults()
 {
-   // pattern == 0 round-robin schedule
-   // pattern == 1 fixed target (shift always 1)
-   // pattern == 2 fixed target (shift always NumNodes / 2)
-   // pattern == 3 one-to-all, one node sending, other receiving
-   // pattern == 4 all-to-one, all sending, one receiving
-   // pattern == 5 even nodes sending data to next odd node (0->1, 2->3, 4->5 and so on)
-   // pattern == 6 same as 0, but node0 will not receive data from node1 (check if rest data will be transformed)
-   // pattern == 7 schedule read from the file
-   // pattern = 10..17, same as 0..7, but allowed to skip send/recv packets when queue full
-
-   bool allowed_to_skip = false;
-   int pattern = full_pattern;
-
-   if ((pattern>=0)  && (pattern<20)) {
-      allowed_to_skip = full_pattern / 10 > 0;
-      pattern = pattern % 10;
-   }
-
-   const char* pattern_name = "---";
-   switch (pattern) {
-      case 1:
-         pattern_name = "ALL-TO-ALL (shift 1)";
-         break;
-      case 2:
-         pattern_name = "ALL-TO-ALL (shift n/2)";
-         break;
-      case 3:
-         pattern_name = "ONE-TO-ALL";
-         break;
-      case 4:
-         pattern_name = "ALL-TO-ONE";
-         break;
-      case 5:
-         pattern_name = "EVEN-TO-ODD";
-         break;
-      case 7:
-         pattern_name = "FILE_BASED";
-         break;
-      default:
-         pattern_name = "ALL-TO-ALL";
-         break;
-   }
-
-
-   double arguments[10];
-
-   arguments[0] = bufsize;
-   arguments[1] = NumNodes();
-   arguments[2] = max_sending_queue;
-   arguments[3] = max_receiving_queue;
-   arguments[4] = fStamping() + fCmdDelay + 1.; // start 1 sec after cmd is delivered
-   arguments[5] = arguments[4] + duration;      // stopping time
-   arguments[6] = pattern;
-   arguments[7] = datarate;
-   arguments[8] = fTrendingInterval; // interval for ratemeter, 0 - off
-   arguments[9] = allowed_to_skip ? 1 : 0;
-
-   DOUT0(("====================================="));
-   DOUT0(("%s pattern:%d size:%d rate:%d send:%d recv:%d nodes:%d canskip:%s",
-         pattern_name, pattern, bufsize, datarate, max_sending_queue, max_receiving_queue, NumNodes(), DBOOL(allowed_to_skip)));
-
-   if (!MasterCommandRequest(IBTEST_CMD_ALLTOALL, arguments, sizeof(arguments))) return false;
-
-   if (!ExecuteAllToAll(arguments)) return false;
-
    int setsize = 14;
-   double allres[setsize*NumNodes()];
-   for (int n=0;n<setsize*NumNodes();n++) allres[n] = 0.;
 
-   if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
+   if (fCollectBufferSize < (int) sizeof(double)*NumNodes()*setsize) {
+      EOUT(("Collected results size too small !!!"));
+      return;
+   }
 
-//   DOUT((1,"Results of all-to-all test"));
+   double* allres = (double*) fCollectBuffer;
+
    DOUT0(("  # |      Node |   Send |   Recv |   Start |S_Compl|R_Compl| Lost | Skip | Loop | Max ms | CPU  | Multicast "));
    double sum1send(0.), sum2recv(0.), sum3multi(0.), sum4cpu(0.);
    int sumcnt = 0;
@@ -1134,35 +662,180 @@ bool bnet::TransportModule::MasterAllToAll(int full_pattern,
    if (totalmulti>0)
       DOUT0(("Multicast %4.0f/%4.0f = %7.6f%s  Rate = %4.1f",
          totalmultilost, totalmulti, totalmultilost/totalmulti*100., "%", sum3multi/sumcnt));
+}
 
-   MasterCleanup();
 
-   totalskipped = totalskipped / sumcnt;
-   if (totalskipped > 0.01) isskipok = false;
+bool bnet::TransportModule::ProcessAllToAllAction()
+{
+   if (!fAllToAllActive) return false;
 
-   AllocResults(8);
-   fResults[0] = sum1send / sumcnt;
-   fResults[1] = sum2recv / sumcnt;
+   double start_tm = 0;
 
-   if ((pattern==3) || (pattern==4)) {
-      fResults[0] = fResults[0] * NumNodes();
-      fResults[1] = fResults[1] * NumNodes();
+   // when receive operation should be prepared before send is started
+   // we believe that 100 microsec is enough (it is latency of runnable)
+   double recv_pre_time = 0.0001;
+
+   // this is time required to deliver operation to the runnable
+   // 5 ms should be enough to be able to use wait in the main loop
+   // this is latency of module
+   double submit_pre_time = 0.005;
+
+   double next_recv_time(0.), next_send_time(0.), next_oper_time(0.);
+
+   int maxcnt(5);
+
+   while ((next_oper_time<=0.) && (maxcnt-->0)) {
+
+      next_oper_time = 0.;
+
+      double curr_tm = fStamping();
+      if (start_tm==0.) start_tm = curr_tm;
+
+      if (curr_tm>fTestStopTime) {
+         fAllToAllActive = false;
+         DOUT0(("All-to-all processing done"));
+         fSendStartTime.Show("SendStartTime", true);
+         return false;
+      }
+
+      if (curr_tm > start_tm + 0.03) {
+         EOUT(("Too long in the loop"));
+         return true;
+      }
+
+      if (fDoReceiving && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1))
+         next_recv_time = fRecvBaseTime + fRecvSch.timeSlot(fRecvSlotIndx) - recv_pre_time;
+
+      if (fDoSending && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1))
+         next_send_time = fSendBaseTime + fSendSch.timeSlot(fSendSlotIndx);
+
+      // if both operation want to be executed, selected first in the time
+      if (next_recv_time>0. && next_send_time>0.) {
+         if (next_recv_time<next_send_time)
+            next_send_time = 0.;
+         else
+            next_recv_time = 0.;
+      }
+
+      // this is submit of recv operation
+
+      if (next_recv_time>0.) {
+         if (next_recv_time - submit_pre_time > curr_tm) {
+            next_oper_time = next_recv_time;
+         } else {
+            int node = fRecvSch.Item(fRecvSlotIndx, Node()).node;
+            int lid = fRecvSch.Item(fRecvSlotIndx, Node()).lid;
+            bool did_submit = false;
+
+            if ((fRecvSkipCounter(lid, node) > 0) && (RecvQueue(lid, node)>0)) {
+               // if packets over this channel were lost, we should not try
+               // to receive them - they were skipped by sender most probably
+               fRecvSkipCounter(lid, node)--;
+               did_submit = true;
+            } else {
+
+               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+               if (buf.null()) {
+                  EOUT(("Not enough buffers"));
+                  return false;
+               }
+
+               // DOUT0(("Submit recv operation for buffer %u", buf.GetTotalSize()));
+
+               int recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
+               OperRec* rec = fRunnable->GetRec(recid);
+
+               if (rec==0) {
+                  EOUT(("Cannot prepare recv operation"));
+                  return false;
+               }
+
+               rec->SetTarget(node, lid);
+               rec->SetTime(next_recv_time);
+
+               if (!SubmitToRunnable(recid,rec)) {
+                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  return false;
+               }
+
+               DOUT1(("SubmitRecvOper recid %d node %d lid %d", recid, node, lid));
+
+               did_submit = true;
+            }
+
+            // shift to next operation, even if previous was not submitted.
+            // dangerous but it is like it is - we should continue receiving otherwise input will be blocked
+            // we should do here more smart solutions
+
+            if (did_submit)
+               fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvBaseTime, fRecvSlotIndx);
+         }
+      }
+
+      // this is submit of send operation
+      if (next_send_time > 0.) {
+         if (next_send_time - submit_pre_time > curr_tm) {
+            next_oper_time = next_send_time;
+         } else {
+            int node = fSendSch.Item(fSendSlotIndx, Node()).node;
+            int lid = fSendSch.Item(fSendSlotIndx, Node()).lid;
+            bool did_submit = false;
+
+            if (/*canskipoperation &&*/ false /*  ((SendQueue(lid, node) >= max_sending_queue) || (TotalSendQueue() >= 2*max_sending_queue))*/ ) {
+               // TODO: one could skip operation if time is far away from scheduled
+               // TODO: probably, one should implement skip in runnable
+               did_submit = true;
+               fSkipSendCounter++;
+            } else {
+
+               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+               if (buf.null()) {
+                  EOUT(("Not enough buffers"));
+                  return false;
+               }
+
+               // DOUT0(("Submit send operation for buffer %u", buf.GetTotalSize()));
+
+               double mem[2] = { curr_tm, fSendOperCounter(lid,node) };
+               buf.CopyFrom(mem, sizeof(mem));
+
+               int recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), buf);
+               OperRec* rec = fRunnable->GetRec(recid);
+
+               if (rec==0) {
+                  EOUT(("Cannot prepare send operation recid = %d", recid));
+                  return true;
+               }
+
+               TransportHeader* hdr = (TransportHeader*) rec->header;
+               hdr->srcid = Node();    // source node id
+               hdr->tgtid = node;      // target node id
+               hdr->eventid = 123456;  // event id
+
+               rec->SetTarget(node, lid);
+               rec->SetTime(next_send_time);
+
+               if (!SubmitToRunnable(recid, rec)) {
+                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  return false;
+               }
+
+               DOUT1(("SubmitSendOper recid %d node %d lid %d", recid, node, lid));
+
+               fNumSendPackets++;
+               did_submit = true;
+            }
+
+            // shift to next operation, in some cases even when previous operation was not performed
+            if (did_submit) {
+               fSendOperCounter(lid,node)++; // this indicates that we perform operation and moved to next counter
+               fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendBaseTime, fSendSlotIndx);
+            }
+         }
+      }
    }
-
-   if ((pattern>=0) && (pattern!=5)) {
-      if (fResults[0] < datarate - 5) isok = false;
-      if (!isskipok) isok = false;
-   }
-
-   fResults[2] = isok ? 1. : 0.;
-   fResults[3] = (totalrecv>0 ? totallost/totalrecv : 0.);
-
-   if (totalmulti>0) {
-      fResults[4] = sum3multi/sumcnt;
-      fResults[5] = totalmultilost/totalmulti;
-   }
-   fResults[6] = sum4cpu/sumcnt;
-   fResults[7] = totalskipped;
 
    return true;
 }
@@ -1198,11 +871,11 @@ bool bnet::TransportModule::MasterCleanup()
    memset(recs, 0, NumNodes() * blocksize);
 
    // own records will be add automatically
-   if (!MasterCommandRequest(IBTEST_CMD_ASKQUEUE, 0, 0, recs, blocksize)) {
-      EOUT(("Cannot collect queue sizes"));
-      free(recs);
-      return false;
-   }
+//   if (!MasterCommandRequest(BNET_CMD_ASKQUEUE, 0, 0, recs, blocksize)) {
+//      EOUT(("Cannot collect queue sizes"));
+//      free(recs);
+//      return false;
+//   }
 
    // now we should resort connection records, loop over targets
 
@@ -1234,15 +907,15 @@ bool bnet::TransportModule::MasterCleanup()
    DOUT0(("All send %d and recv %d operation", allsend, allrecv));
 
    bool res(true);
-   if ((allsend!=0) || (allrecv!=0))
-       res = MasterCommandRequest(IBTEST_CMD_CLEANUP, conn, -blocksize);
+//   if ((allsend!=0) || (allrecv!=0))
+//       res = MasterCommandRequest(BNET_CMD_CLEANUP, conn, -blocksize);
 
    free(recs);
 
    free(conn);
 
    // for syncronisation
-   if (!MasterCommandRequest(IBTEST_CMD_TEST)) res = false;
+//   if (!MasterCommandRequest(BNET_CMD_TEST)) res = false;
 
    DOUT0(("Queues are cleaned in %5.4f s res = %s", fStamping() - tm, DBOOL(res)));
 
@@ -1349,34 +1022,6 @@ bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
    return true;
 }
 
-void bnet::TransportModule::PerformNormalTest()
-{
-//   MasterTiming();
-
-//   DOUT0(("SLEEP 1 sec"));
-//   WorkerSleep(1.);
-
-   int outq = Cfg("TestOutputQueue").AsInt(5);
-   int inpq = Cfg("TestInputQueue").AsInt(10);
-   int buffersize = Cfg("BufferSize").AsInt(128*1024);
-   int rate = Cfg("TestRate").AsInt(1000);
-   int testtime = Cfg("TestTime").AsInt(10);
-   int testpattern = Cfg("TestPattern").AsInt(0);
-
-   MasterAllToAll(testpattern, buffersize, testtime, rate, outq, inpq);
-
-   MasterAllToAll(testpattern, buffersize, testtime, rate, outq, inpq);
-
-//   MasterAllToAll(0, 2*1024,   5., 100., 5, 10);
-
-//   MasterAllToAll(-1, 128*1024, 5., 1000., 5, 10);
-
-//   MasterAllToAll(0,  128*1024, 5., 500., 5, 10);
-
-//   MasterAllToAll(-1, 1024*1024, 5., 900., 2, 4);
-
-//   MasterAllToAll(0, 1024*1024, 5., 2300., 2, 4);
-}
 
 void bnet::TransportModule::MainLoop()
 {
@@ -1384,21 +1029,24 @@ void bnet::TransportModule::MainLoop()
       return;
    }
 
+   std::string fTestKind = Cfg("TestKind").AsStdStr();
+
+
    DOUT0(("Entering mainloop master: %s test = %s", DBOOL(IsMaster()), fTestKind.c_str()));
 
    // here we are doing our test sequence (like in former verbs tests)
 
-   MasterCollectActiveNodes();
+   // MasterCollectActiveNodes();
 
-   CalibrateCommandsChannel();
+   // CalibrateCommandsChannel();
 
    if (fTestKind == "OnlyConnect") {
 
       DOUT0(("----------------- TRY ONLY COMMAND CHANNEL ------------------- "));
 
-      CalibrateCommandsChannel(30);
+      // CalibrateCommandsChannel(30);
 
-      MasterCallExit();
+      // MasterCallExit();
 
       return;
    }
@@ -1426,15 +1074,15 @@ void bnet::TransportModule::MainLoop()
       if (fTestKind == "TimeSync") {
          // PerformTimingTest();
       } else {
-         PerformNormalTest();
+         // PerformNormalTest();
       }
 
       //MasterTimeSync(false, 500, false);
    }
 
-   MasterCloseConnections();
+   // MasterCloseConnections();
 
-   MasterCallExit();
+   // MasterCallExit();
 
 }
 
@@ -1478,17 +1126,12 @@ void bnet::TransportModule::ProcessNextSlaveInputEvent()
    port->Send(buf);
 
    switch (fRunningCmdId) {
-      case IBTEST_CMD_TIMESYNC: {
+      case BNET_CMD_TIMESYNC: {
          // DOUT0(("Prepare slave sync loop"));
          PrepareSyncLoop(0);
          fCmdEndTime.GetNow(5.);
          break;
       }
-
-      case IBTEST_CMD_ALLTOALL:
-         ActivateAllToAll((double*)fCmdDataBuffer);
-         break;
-
       default:
          fRunningCmdId = 0;
          break;
@@ -1540,7 +1183,7 @@ bool bnet::TransportModule::RequestMasterCommand(int cmdid, void* cmddata, int c
 
       CommandMessage* msg = (CommandMessage*) buf.GetPointer()();
 
-      msg->magic = IBTEST_CMD_MAGIC;
+      msg->magic = BNET_CMD_MAGIC;
       msg->cmdid = cmdid;
       msg->cmddatasize = cmddatasize;
       msg->delay = 0;
@@ -1589,7 +1232,7 @@ bool bnet::TransportModule::ProcessReplyBuffer(int nodeid, dabc::Buffer buf)
 
    CommandMessage* rcv = (CommandMessage*) buf.GetPointer()();
 
-   if (rcv->magic!=IBTEST_CMD_MAGIC) { EOUT(("Wrong magic")); return false; }
+   if (rcv->magic!=BNET_CMD_MAGIC) { EOUT(("Wrong magic")); return false; }
    if (rcv->cmdid != fRunningCmdId) { EOUT(("Wrong ID recv %d  cmd %d", rcv->cmdid, fRunningCmdId)); return false; }
    if (rcv->node != nodeid) { EOUT(("Wrong node")); return false; }
 
@@ -1606,7 +1249,7 @@ bool bnet::TransportModule::ProcessReplyBuffer(int nodeid, dabc::Buffer buf)
    if (finished) {
       DOUT2(("Command %d execution finished in %7.6f", fRunningCmdId, fCmdStartTime.SpentTillNow()));
 
-      if (fRunningCmdId == IBTEST_CMD_TEST)
+      if (fRunningCmdId == BNET_CMD_TEST)
          fCmdTestLoop.Fill(fCmdStartTime.SpentTillNow());
 
       CompleteRunningCommand();
@@ -1733,17 +1376,62 @@ void bnet::TransportModule::ProcessUserEvent(dabc::ModuleItem* item, uint16_t ev
 
 void bnet::TransportModule::ProcessSendCompleted(int recid, OperRec* rec)
 {
+   if (!fAllToAllActive) return;
+
+   DOUT1(("ProcessSendCompleted recid %d err %s", recid, DBOOL(rec->err)));
+
+   double sendtime(0);
+   rec->buf.CopyTo(&sendtime, sizeof(sendtime));
+   fNumComplSendPackets++;
+
+   double sendcompltime = fStamping();
+
+   fSendStartTime.Fill(rec->is_time - rec->oper_time);
+
+   fSendComplTime.Fill(sendcompltime - sendtime);
+
+   fSendRate.Packet(fTestBufferSize, sendcompltime);
 }
 
 void bnet::TransportModule::ProcessRecvCompleted(int recid, OperRec* rec)
 {
+   if (!fAllToAllActive) return;
+
+   DOUT1(("ProcessRecvCompleted recid %d err %s", recid, DBOOL(rec->err)));
+
+   double mem[2] = {0., 0.};
+   rec->buf.CopyTo(mem, sizeof(mem));
+   double sendtime = mem[0];
+   int sendcnt = (int) mem[1];
+
+   int lost = sendcnt - fRecvOperCounter(rec->tgtindx, rec->tgtnode) - 1;
+   if (lost>0) {
+      fNumLostPackets += lost;
+      fRecvSkipCounter(rec->tgtindx, rec->tgtnode) += lost;
+   }
+
+   fRecvOperCounter(rec->tgtindx, rec->tgtnode) = sendcnt;
+
+   double recv_time = fStamping();
+
+   fRecvComplTime.Fill(recv_time - sendtime);
+
+   fRecvRate.Packet(fTestBufferSize, recv_time);
+
+   fTotalRecvPackets++;
 }
 
 
 void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
 {
+   if (timer->IsName("AllToAll")) {
+      if (ProcessAllToAllAction()) timer->SingleShoot(0.00001);
+      return;
+   }
+
+
    if ((fRunningCmdId>0) && !fCmdEndTime.null() && fCmdEndTime.Expired()) {
-      if (fRunningCmdId!=IBTEST_CMD_WAIT)
+      if (fRunningCmdId!=BNET_CMD_WAIT)
          EOUT(("Command %d execution timed out", fRunningCmdId));
       CompleteRunningCommand(dabc::cmd_timedout);
    }
@@ -1752,11 +1440,11 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
       // we are in the middle of running operation, in some cases we could activate new actions
 
       switch (fRunningCmdId) {
-         case IBTEST_CMD_TIMESYNC:
+         case BNET_CMD_TIMESYNC:
             if ((TotalSendQueue() > 0) || (TotalRecvQueue() > 0) || IsMaster()) break;
             CompleteRunningCommand();
             break;
-         case IBTEST_CMD_EXECSYNC:
+         case BNET_CMD_EXECSYNC:
             // DOUT0(("Here is master send:%d recv:%d", TotalSendQueue(), TotalRecvQueue()));
             if ((TotalSendQueue() > 0) || (TotalRecvQueue() > 0)) break;
             fSlaveSyncNode++;
@@ -1787,12 +1475,13 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
 
    fCurrentCmd = fCmdsQueue.Pop();
    switch (fCurrentCmd.GetId()) {
-      case IBTEST_CMD_WAIT:
+      case BNET_CMD_WAIT:
          fCmdEndTime.GetNow(fCurrentCmd.GetTimeout());
-         fRunningCmdId = IBTEST_CMD_WAIT;
+         if (fCurrentCmd.GetTimeout()>2) DOUT0(("Master sleeps for %3.1f s", fCurrentCmd.GetTimeout()));
+         fRunningCmdId = BNET_CMD_WAIT;
          break;
 
-      case IBTEST_CMD_ACTIVENODES: {
+      case BNET_CMD_ACTIVENODES: {
          uint8_t buff[NumNodes()];
 
          int cnt(1);
@@ -1805,19 +1494,19 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          }
 
          DOUT0(("There are %d active nodes, %d missing", cnt, NumNodes() - cnt));
-         RequestMasterCommand(IBTEST_CMD_ACTIVENODES, buff, NumNodes());
+         RequestMasterCommand(BNET_CMD_ACTIVENODES, buff, NumNodes());
          break;
       }
 
-      case IBTEST_CMD_TEST:
-         RequestMasterCommand(IBTEST_CMD_TEST);
+      case BNET_CMD_TEST:
+         RequestMasterCommand(BNET_CMD_TEST);
          break;
 
-      case IBTEST_CMD_EXIT:
-         RequestMasterCommand(IBTEST_CMD_EXIT);
+      case BNET_CMD_EXIT:
+         RequestMasterCommand(BNET_CMD_EXIT);
          break;
 
-      case IBTEST_CMD_MEASURE:
+      case BNET_CMD_MEASURE:
          if (fCmdTestLoop.Number() > 1) {
             fCmdDelay = fCmdTestLoop.Mean();
             DOUT0(("Command loop = %5.3f ms", fCmdDelay*1e3));
@@ -1826,7 +1515,7 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          break;
 
 
-      case IBTEST_CMD_CREATEQP: {
+      case BNET_CMD_CREATEQP: {
          fConnStartTime.GetNow();
 
          int blocksize = fRunnable->ConnectionBufferSize();
@@ -1841,29 +1530,29 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          DOUT0(("First collect all QPs info"));
 
          // own records will be add automatically
-         RequestMasterCommand(IBTEST_CMD_CREATEQP, 0, 0, fConnRawData, blocksize);
+         RequestMasterCommand(BNET_CMD_CREATEQP, 0, 0, fConnRawData, blocksize);
          break;
       }
 
-      case IBTEST_CMD_CONNECTQP: {
+      case BNET_CMD_CONNECTQP: {
          fRunnable->ResortConnections(fConnRawData, fConnSortData);
 
-         RequestMasterCommand(IBTEST_CMD_CONNECTQP, fConnSortData, -fRunnable->ConnectionBufferSize());
+         RequestMasterCommand(BNET_CMD_CONNECTQP, fConnSortData, -fRunnable->ConnectionBufferSize());
          break;
       }
 
-      case IBTEST_CMD_CONNECTDONE: {
+      case BNET_CMD_CONNECTDONE: {
          free(fConnRawData); fConnRawData = 0;
          free(fConnSortData); fConnSortData = 0;
          DOUT0(("Establish connections in %5.4f s ", fConnStartTime.SpentTillNow()));
          break;
       }
 
-      case IBTEST_CMD_CLOSEQP:
-         RequestMasterCommand(IBTEST_CMD_CLOSEQP);
+      case BNET_CMD_CLOSEQP:
+         RequestMasterCommand(BNET_CMD_CLOSEQP);
          break;
 
-      case IBTEST_CMD_TIMESYNC: {
+      case BNET_CMD_TIMESYNC: {
          int maxqueuelen = 20;
          if (maxqueuelen > fCurrentCmd.GetNRepeat()) maxqueuelen = fCurrentCmd.GetNRepeat();
          int nrepeat = fCurrentCmd.GetNRepeat()/maxqueuelen;
@@ -1880,20 +1569,106 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          fSyncArgs[5] = fCurrentCmd.GetDoScale() ? 1 : 0;
 
          // this is just distribution of sync over slaves, master will be trigerred additionally
-         RequestMasterCommand(IBTEST_CMD_TIMESYNC, fSyncArgs, sizeof(fSyncArgs));
+         RequestMasterCommand(BNET_CMD_TIMESYNC, fSyncArgs, sizeof(fSyncArgs));
          break;
       }
 
-      case IBTEST_CMD_EXECSYNC:
-         fRunningCmdId = IBTEST_CMD_EXECSYNC;
+      case BNET_CMD_EXECSYNC:
+         fRunningCmdId = BNET_CMD_EXECSYNC;
          fSyncStartTime.GetNow();
          fSlaveSyncNode = 1;
          PrepareSyncLoop(fSlaveSyncNode);
          break;
 
-      case IBTEST_CMD_GETSYNC:
-         RequestMasterCommand(IBTEST_CMD_GETSYNC);
+      case BNET_CMD_GETSYNC:
+         RequestMasterCommand(BNET_CMD_GETSYNC);
          break;
+
+      case BNET_CMD_ALLTOALL: {
+
+         bool allowed_to_skip = false;
+         int pattern = Cfg("TestPattern").AsInt(0);
+
+         if ((pattern>=10) && (pattern<20)) {
+            allowed_to_skip = true;
+            pattern = pattern % 10;
+         }
+
+         const char* pattern_name = "---";
+         switch (pattern) {
+            case 1:
+               pattern_name = "ALL-TO-ALL (shift 1)";
+               break;
+            case 2:
+               pattern_name = "ALL-TO-ALL (shift n/2)";
+               break;
+            case 3:
+               pattern_name = "ONE-TO-ALL";
+               break;
+            case 4:
+               pattern_name = "ALL-TO-ONE";
+               break;
+            case 5:
+               pattern_name = "EVEN-TO-ODD";
+               break;
+            case 7:
+               pattern_name = "FILE_BASED";
+               break;
+            default:
+               pattern_name = "ALL-TO-ALL";
+               break;
+         }
+
+
+         double arguments[10];
+
+         arguments[0] = Cfg("BufferSize").AsInt(128*1024);
+         arguments[1] = NumNodes();
+         arguments[2] = Cfg("TestOutputQueue").AsInt(5);
+         arguments[3] = Cfg("TestInputQueue").AsInt(10);
+         arguments[4] = fStamping() + fCmdDelay + 1.; // start 1 sec after cmd is delivered
+         arguments[5] = arguments[4] + Cfg("TestTime").AsInt(10);    // stopping time
+         arguments[6] = pattern;
+         arguments[7] = Cfg("TestRate").AsInt(1000);
+         arguments[8] = 0; // interval for ratemeter, 0 - off
+         arguments[9] = allowed_to_skip ? 1 : 0;
+
+         DOUT0(("====================================="));
+         DOUT0(("%s pattern:%d size:%d rate:%3.0f send:%d recv:%d nodes:%d canskip:%s",
+               pattern_name, pattern, (int) arguments[0], arguments[7], (int) arguments[2], (int) arguments[3], NumNodes(), DBOOL(allowed_to_skip)));
+
+         RequestMasterCommand(BNET_CMD_ALLTOALL, arguments, sizeof(arguments));
+
+         break;
+      }
+
+      case BNET_CMD_GETRUNRES: {
+         RequestMasterCommand(BNET_CMD_GETRUNRES);
+         break;
+      }
+
+      case BNET_CMD_COLLECT: {
+
+         int setsize = fCurrentCmd.GetInt("SetSize", 0);
+         if (setsize<=0) {
+            EOUT(("no set size was specified"));
+            CompleteRunningCommand(dabc::cmd_false);
+            break;
+         }
+
+         AllocCollResults(setsize*NumNodes());
+
+         memset(fCollectBuffer,fCollectBufferSize,0);
+
+         RequestMasterCommand(BNET_CMD_COLLECT, 0, 0, fCollectBuffer, setsize);
+
+         break;
+      }
+
+      case BNET_CMD_SHOWRUNRES: {
+         CompleteRunningCommand();
+         break;
+      }
 
       default:
          EOUT(("Command not supported"));

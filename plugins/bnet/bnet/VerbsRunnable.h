@@ -36,10 +36,10 @@ namespace bnet {
          verbs::ContextRef  fIbContext;
 
          verbs::ComplQueue* fCQ;                 //!< completion queue, for a moment single
-         verbs::QueuePair** fQPs[IBTEST_MAXLID]; //!< arrays of QueuePairs pointers, NumNodes X NumLids
+         verbs::QueuePair** fQPs[BNET_MAXLID]; //!< arrays of QueuePairs pointers, NumNodes X NumLids
 
-         int               *fSendQueue[IBTEST_MAXLID];    // size of individual sending queue
-         int               *fRecvQueue[IBTEST_MAXLID];    // size of individual receiving queue
+         int               *fSendQueue[BNET_MAXLID];    // size of individual sending queue
+         int               *fRecvQueue[BNET_MAXLID];    // size of individual receiving queue
 
          struct ibv_recv_wr  *f_rwr; // field for receive config, allocated dynamically
          struct ibv_send_wr  *f_swr; // field for send config, allocated dynamically

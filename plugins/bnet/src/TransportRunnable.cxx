@@ -34,6 +34,8 @@ bnet::TransportRunnable::TransportRunnable() :
    fReplyedRecs(),
    fReplySignalled(false),
    fSegmPerOper(8),
+   fCmd(),
+   fCmdState(state_None),
    fHeaderPool("TransportHeaders", false),
    fModuleThrd(),
    fTransportThrd(),
@@ -65,7 +67,7 @@ bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool,
    for (int n=0;n<NumNodes();n++)
       fActiveNodes[n] = true;
 
-   fNumRecs = 100 + NumNodes()*10;   // FIXME - should depend from number of nodes
+   fNumRecs = 1000 + NumNodes()*10;   // FIXME - should depend from number of nodes
    fRecs = new OperRec[fNumRecs];       // operation records
    fFreeRecs.Allocate(fNumRecs);
    fSubmRecs.Allocate(fNumRecs);
@@ -92,76 +94,58 @@ bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool,
    return true;
 }
 
-int bnet::TransportRunnable::SubmitCmd(int cmdid, void* args, int argssize)
+bool bnet::TransportRunnable::SubmitCmd(int cmdid, void* args, int argssize)
 {
    CheckModuleThrd();
 
    // DOUT0(("Submitting cmd %d", cmdid));
 
-   if (fFreeRecs.Empty()) return -1;
+   {
+      dabc::LockGuard lock(fMutex);
+      if (fCmdState != state_None) {
+         EOUT(("Command is not in the initial state!!!"));
+         return false;
+      }
+   }
 
-   int recid = fFreeRecs.Pop();
-   OperRec* rec = GetRec(recid);
+   fCmd = dabc::Command("TransportCmd");
+   fCmd.SetInt("Id", cmdid);
+   fCmd.SetPtr("Args", args);
+   fCmd.SetInt("ArgsSize", argssize);
 
-   rec->kind = kind_None;
-   rec->SetImmediateTime();
-   rec->skind = skind_Command;
-   rec->tgtindx = cmdid;
-
-   rec->header = args;
-   rec->hdrsize = argssize;
-   rec->err = true;
-
-   if (SubmitRec(recid)) return recid;
-
-   fFreeRecs.Push(recid);
-   return -1;
+   dabc::LockGuard lock(fMutex);
+   fCmdState = state_Submitted;
+   return true;
 }
 
 bool bnet::TransportRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
 {
    CheckModuleThrd();
 
-   // FIXME: this method remains only temporary -
-   // one should execute commands in normal queue
-   {
-      dabc::LockGuard lock(fMutex);
-      fReplySignalled = true;
-   }
-
-   int recid = SubmitCmd(cmdid, args, argssize);
-
-   if (recid<0) return false;
+   if (!SubmitCmd(cmdid, args, argssize)) return false;
 
    dabc::TimeStamp tm = dabc::Now();
 
+   bool res(false);
+
    while (!tm.Expired(5.)) {
-      int complid = GetCompleted(false);
 
-      if (complid<0) continue;
-
-      bool res = ! GetRec(complid)->err;
-
-      ReleaseRec(complid);
-
-      if (complid==recid) {
+      {
          dabc::LockGuard lock(fMutex);
-         fReplySignalled = false; // FIXME: workaround, to reenable signalling of records
-         return res;
+
+         if (fCmdState != state_Returned) continue;
+
+         fCmdState = state_None;
       }
 
-      EOUT(("Cmd:%d Some other operation completed - wrong!!!", cmdid));
-      exit(5);
+      res = fCmd.GetResult() == dabc::cmd_true;
+
+      fCmd.Release();
+
+      break;
    }
 
-   EOUT(("Cmd:%d command timedout!!!", cmdid));
-
-   dabc::LockGuard lock(fMutex);
-
-   fReplySignalled = false; // FIXME: workaround, to reenable signalling of records
-
-
-   return false;
+   return res;
 }
 
 
@@ -204,9 +188,12 @@ bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int
    CheckTransportThrd();
 
    switch (cmdid) {
-      case cmd_None:  return true;
+      case cmd_None:
+         return true;
 
-      case cmd_Exit:  return true;
+      case cmd_Exit:
+         fMainLoopActive = false;
+         return true;
 
       case cmd_ActiveNodes: {
          if (argssize != NumNodes()) {
@@ -221,6 +208,7 @@ bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int
 
          return true;
       }
+
       case cmd_CreateQP:
          return ExecuteCreateQPs(args, argssize);
 
@@ -262,12 +250,6 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
 
    switch (rec->skind) {
       case skind_None:
-         return;
-      case skind_Command:
-         rec->err = !ExecuteTransportCommand(rec->tgtindx, rec->header, rec->hdrsize);
-         fCompletedRecs.Push(recid);
-         recid = -1;
-         if (rec->tgtindx==cmd_Exit) recid = -111;
          return;
       case skind_SyncMasterSend: {
          // DOUT1(("Prepare PrepareSpecialKind skind_SyncMasterSend"));
@@ -487,6 +469,8 @@ void* bnet::TransportRunnable::MainLoop()
 {
    DOUT0(("Enter TransportRunnable::MainLoop()"));
 
+   fMainLoopActive = true;
+
    dabc::PosixThread::PrintAffinity("bnet-transport");
 
    // last time when in/out queue was checked
@@ -494,7 +478,9 @@ void* bnet::TransportRunnable::MainLoop()
 
    fLoopMaxCnt = 0;
 
-   while (true) {
+   bool doexecute(false);
+
+   while (fMainLoopActive) {
 
       double till_next_oper = 1.; // calculate time until next operation
 
@@ -578,7 +564,6 @@ void* bnet::TransportRunnable::MainLoop()
       if (fNumRunningRecs>0)
          if (currtm < last_check_time + 0.001) continue;
 
-
       // start from rare yield - better switch context ourself than let its doing by system at unpredictable point
       if (currtm > last_yield_time + 0.005) {
          sched_yield();
@@ -589,6 +574,15 @@ void* bnet::TransportRunnable::MainLoop()
 
       // if there are no very urgent operations we could enter locking area
       // and even set condition
+
+      if (doexecute) {
+         bool res = false;
+         if (fCmd.IsName("TransportCmd"))
+            res = ExecuteTransportCommand(fCmd.GetInt("Id"), fCmd.GetPtr("Args"), fCmd.GetInt("ArgsSize"));
+
+         fCmd.SetResult(res ? dabc::cmd_true : dabc::cmd_false);
+      }
+
 
       last_check_time = currtm;
 
@@ -614,14 +608,27 @@ void* bnet::TransportRunnable::MainLoop()
             fReplyedRecs.Push(fCompletedRecs.Pop());
          }
 
+         // this is return command back to the module
+         if (doexecute && (fCmdState == state_Executed)) {
+            doexecute = false;
+            fCmdState = state_Returned;
+         }
+
+         // this takes ownership over the command
+         if (fCmdState == state_Submitted) {
+            doexecute = true;
+            fCmdState = state_Executed;
+         }
+
          // if we have nothing to do for very long time, enter wait method for relaxing thread consumption
-         if (!isdoreply && (fNumRunningRecs==0) && (fAcceptedRecs.Empty() || (till_next_oper>0.2))) {
+         if (!isdoreply && !doexecute && (fNumRunningRecs==0) && (fAcceptedRecs.Empty() || (till_next_oper>0.2))) {
             fCondition._DoReset();
             fCondition._DoWait(0.001);
             last_tm = 0; // do not account time when we doing wait
             while (!fSubmRecs.Empty())
                fAcceptedRecs.Push(fSubmRecs.Pop());
          }
+
       } // end of locked mutex
 
       if (isdoreply && fReplyItem) fReplyItem->FireUserEvent();

@@ -42,7 +42,7 @@ bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dab
    }
 
    fCQ = 0;
-   for (int lid=0; lid<IBTEST_MAXLID; lid++) {
+   for (int lid=0; lid<BNET_MAXLID; lid++) {
       fQPs[lid] = 0;
       fSendQueue[lid] = 0;
       fRecvQueue[lid] = 0;

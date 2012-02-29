@@ -7,6 +7,8 @@
 
 #include "dabc/Queue.h"
 
+#include "dabc/Command.h"
+
 #include "dabc/Module.h"
 
 #include "dabc/MemoryPool.h"
@@ -27,7 +29,6 @@ namespace bnet {
 
    enum OperSKind {
       skind_None,
-      skind_Command,
       skind_SyncMasterSend,
       skind_SyncMasterRecv,
       skind_SyncSlaveSend,
@@ -125,18 +126,23 @@ namespace bnet {
           *
           * */
 
-         int       fNumRecs;         // number of records
-         OperRec*  fRecs;            // operation records
-         dabc::Queue<int> fFreeRecs; // list of free records - used fully in module thread
-         dabc::Queue<int> fSubmRecs; // list of submitted records - shared between module and transport threads
-         dabc::Queue<int> fAcceptedRecs; // list of accepted records - used only in transport thread
+         int              fNumRecs;        // number of records
+         OperRec*         fRecs;          // operation records
+         dabc::Queue<int> fFreeRecs;      // list of free records - used fully in module thread
+         dabc::Queue<int> fSubmRecs;      // list of submitted records - shared between module and transport threads
+         dabc::Queue<int> fAcceptedRecs;  // list of accepted records - used only in transport thread
          int fNumRunningRecs; // number of submitted records
          std::vector<bool> fRunningRecs;  // list of running records - used only in transport thread
          dabc::Queue<int> fCompletedRecs; // list of completed records - used only in transport thread
          dabc::Queue<int> fReplyedRecs;   // list of replies - shared between runnable and module
          bool             fReplySignalled;  // indicate if reply event was generated after last access to reply queue from module
-         int       fSegmPerOper;     // maximal allowed number of segments in operation (1 for header + rest for buffer)
-         int       fHeaderBufSize;   // size of buffer for header
+         int              fSegmPerOper;     // maximal allowed number of segments in operation (1 for header + rest for buffer)
+         int              fHeaderBufSize;   // size of buffer for header
+
+         dabc::Command    fCmd; // command which could be executed in the runnable loop
+         enum CommandState { state_None, state_Submitted, state_Executed, state_Returned };
+         CommandState     fCmdState;  // state of the command
+         bool             fMainLoopActive;
 
          std::vector<int> fSendQueue;  // running send queue, NumLids() * NumNodes()
          std::vector<int> fRecvQueue;  // running recv queue, NumLids() * NumNodes()
@@ -207,7 +213,7 @@ namespace bnet {
 
          /** Method should be used from module thread to submit new command to the runnable,
           * returned is recid which is handle of the command */
-         int SubmitCmd(int cmdid, void* args = 0, int argssize = 0);
+         bool SubmitCmd(int cmdid, void* args = 0, int argssize = 0);
 
          /** Method should be used from module thread to submit command and wait for its execution */
          bool ExecuteCmd(int cmdid, void* args = 0, int argssize = 0);
@@ -236,7 +242,7 @@ namespace bnet {
             if (DoPerformOperation(recid)) {
                fRunningRecs[recid] = true;
                GetRec(recid)->is_time = tm;
-               // (*(GetRec(recid)->queuelen))++;
+               (*(GetRec(recid)->queuelen))++;
                fNumRunningRecs++;
             } else {
                GetRec(recid)->err = true;

@@ -5,15 +5,12 @@
 
 #include <algorithm>
 
-int IbTestMatrixMean = 1000;
-int IbTestMatrixSigma = 250;
-
-double rand_0_1()
+double dabc::rand_0_1()
 {
    return drand48();
 }
 
-double GaussRand(double mean, double sigma)
+double dabc::GaussRand(double mean, double sigma)
 {
   double x,y,z;
   y = drand48();

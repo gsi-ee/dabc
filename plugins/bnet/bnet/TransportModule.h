@@ -59,14 +59,11 @@ class TransportModule : public dabc::ModuleAsync {
       int                 fCmdDataSize;
       char*               fCmdDataBuffer;
 
+      void*               fCollectBuffer; // buffer to collect results from all nodes
+      int                 fCollectBufferSize;
+
       TransportRunnable*  fRunnable;    // runnable where scheduled transfer is implemented
       dabc::PosixThread*  fRunThread;   // special thread where runnable is executed
-
-      /** \brief symbolic name of global test which should be performed. Can be:
-       *     "TimeSync" - long test of the time synchronization stability
-       *
-       *     */
-      std::string         fTestKind;
 
       /** Name of the file with the schedule */
       std::string         fTestScheduleFile;
@@ -75,8 +72,8 @@ class TransportModule : public dabc::ModuleAsync {
 
       double            fCmdDelay;
 
-      int               *fSendQueue[IBTEST_MAXLID];    // size of individual sending queue
-      int               *fRecvQueue[IBTEST_MAXLID];    // size of individual receiving queue
+      int               *fSendQueue[BNET_MAXLID];    // size of individual sending queue
+      int               *fRecvQueue[BNET_MAXLID];    // size of individual receiving queue
       long               fTotalSendQueue;
       long               fTotalRecvQueue;
       long               fTestNumBuffers;
@@ -127,6 +124,7 @@ class TransportModule : public dabc::ModuleAsync {
 
       // these all about data transfer ....
 
+      bool                fAllToAllActive; // indicates that all-to-all transfer is running
       int                 fTestBufferSize;
       double             fTestStartTime, fTestStopTime; // start/stop time for data transfer
       int                 fSendSlotIndx, fRecvSlotIndx;
@@ -137,7 +135,15 @@ class TransportModule : public dabc::ModuleAsync {
       dabc::Ratemeter    fSendRate;
       dabc::Ratemeter    fRecvRate;
 
+      dabc::CpuStatistic fCpuStat;
 
+      dabc::Average fSendStartTime, fSendComplTime, fRecvComplTime;
+
+      int64_t fSkipSendCounter;
+
+      dabc::IntMatrix fSendOperCounter, fRecvOperCounter, fRecvSkipCounter;
+
+      long fNumLostPackets, fTotalRecvPackets, fNumSendPackets, fNumComplSendPackets;
 
       virtual void ProcessInputEvent(dabc::Port* port);
       virtual void ProcessOutputEvent(dabc::Port* port);
@@ -153,6 +159,12 @@ class TransportModule : public dabc::ModuleAsync {
       void PrepareSyncLoop(int tgtnode);
 
       void ActivateAllToAll(double* buff);
+
+      bool ProcessAllToAllAction();
+
+      void PrepareAllToAllResults();
+
+      void ShowAllToAllResults();
 
       void CompleteRunningCommand(int res = dabc::cmd_true);
 
@@ -171,6 +183,8 @@ class TransportModule : public dabc::ModuleAsync {
       bool IsMaster() const { return Node()==0; }
 
       void AllocResults(int size);
+      void AllocCollResults(int sz);
+
 
       inline int SendQueue(int lid, int node) const { return (lid>=0) && (lid<NumLids()) && (node>=0) && (node<NumNodes()) && fSendQueue[lid] ? fSendQueue[lid][node] : 0; }
       inline int RecvQueue(int lid, int node) const { return (lid>=0) && (lid<NumLids()) && (node>=0) && (node<NumNodes()) && fRecvQueue[lid] ? fRecvQueue[lid][node] : 0; }
@@ -183,32 +197,10 @@ class TransportModule : public dabc::ModuleAsync {
 
       int PreprocessTransportCommand(dabc::Buffer& buf);
 
-      bool MasterCollectActiveNodes();
-
-      bool MasterCommandRequest(int cmdid, void* cmddata = 0, int cmddatasize = 0, void* allresults = 0, int resultpernode = 0);
-
-      bool CalibrateCommandsChannel(int nloop = 10);
-
-      bool MasterCloseConnections();
-
-      bool MasterCallExit();
-
-      bool ExecuteAllToAll(double* arguments);
-
-      bool MasterAllToAll(int pattern,
-                          int bufsize,
-                          double duration,
-                          int datarate,
-                          int max_sending_queue,
-                          int max_recieving_queue,
-                          bool fromperfmtest = false);
-
       int ProcessAskQueue(void* tgt);
 
       bool MasterCleanup();
       bool ProcessCleanup(int32_t* pars);
-
-      void PerformNormalTest();
 
    public:
       TransportModule(const char* name, dabc::Command cmd);

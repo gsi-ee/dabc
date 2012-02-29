@@ -524,7 +524,7 @@ void bnet::IBClusterRouting::BuildOptimalRoutes()
 {
    // it is supposed that first switches are spines
 
-   IbTestIntMatrix paths(NumSwitches(), NumSwitches());
+   dabc::IntMatrix paths(NumSwitches(), NumSwitches());
 
    paths.Fill(0);
 
@@ -569,11 +569,11 @@ void bnet::IBClusterRouting::BuildOptimalRoutes()
 
 void bnet::IBClusterRouting::PrintSpineStatistic()
 {
-   IbTestIntColumn spines(NumSwitches());
+   dabc::IntColumn spines(NumSwitches());
 
    spines.Fill(0);
 
-   IbTestIntMatrix switches[NumSpines()];
+   dabc::IntMatrix switches[NumSpines()];
 
    for (int n=0;n<NumSpines();n++) {
       switches[n].SetSize(NumSwitches(), NumSwitches());
@@ -830,7 +830,7 @@ void bnet::IBClusterRouting::FindSameRouteTwice(bool bothlanes, const IBRoute& r
 
    if (rnd) srand48(345);
 
-   int random_shift = rnd ? lrint(rand_0_1() * (NumNodes()-1)) : 0;
+   int random_shift = rnd ? lrint(dabc::rand_0_1() * (NumNodes()-1)) : 0;
 
    DOUT0(("random_shift = %d rnd = %s", random_shift, DBOOL(rnd)));
 
@@ -974,7 +974,7 @@ void bnet::IBClusterRouting::FindSameRouteTwice(bool bothlanes, const IBRoute& r
       }
 }
 
-void bnet::IBClusterRouting::FillBadIdsFor2Switches(IbTestIntColumn& column) const
+void bnet::IBClusterRouting::FillBadIdsFor2Switches(dabc::IntColumn& column) const
 {
    column.Fill(-1);
    if ((column.size()!=NumNodes()) || (NumNodes() % 2 != 0)) {
@@ -990,7 +990,7 @@ void bnet::IBClusterRouting::FillBadIdsFor2Switches(IbTestIntColumn& column) con
 
 }
 
-void bnet::IBClusterRouting::FillInteractiveNodes(IbTestIntColumn& column) const
+void bnet::IBClusterRouting::FillInteractiveNodes(dabc::IntColumn& column) const
 {
    column.Fill(-1);
    int cnt = 0;
@@ -1012,7 +1012,7 @@ void bnet::IBClusterRouting::FillInteractiveNodes(IbTestIntColumn& column) const
 
 
 
-void bnet::IBClusterRouting::FillRandomIds(IbTestIntColumn& column) const
+void bnet::IBClusterRouting::FillRandomIds(dabc::IntColumn& column) const
 {
    column.Fill(-1);
 
@@ -1022,7 +1022,7 @@ void bnet::IBClusterRouting::FillRandomIds(IbTestIntColumn& column) const
 
    while ((cnt<column.size()) && (ntry++ < column.size()*1000)) {
 
-      int rand_num = lrint(rand_0_1()*NumNodes());
+      int rand_num = lrint(dabc::rand_0_1()*NumNodes());
 
       if ((rand_num<0) || (rand_num>=NumNodes())) continue;
 
@@ -1053,7 +1053,7 @@ int bnet::IBClusterRouting::GetNodeSwitch(int node)
 }
 
 
-bool bnet::IBClusterRouting::SelectNodes(const std::string& all_args, IbTestIntColumn& ids)
+bool bnet::IBClusterRouting::SelectNodes(const std::string& all_args, dabc::IntColumn& ids)
 {
    ids.SetSize(NumNodes());
    ids.Fill(-1);
@@ -1138,7 +1138,7 @@ bool bnet::IBClusterRouting::SelectNodes(const std::string& all_args, IbTestIntC
 }
 
 
-bool bnet::IBClusterRouting::SaveNodesList(const std::string& fname, const IbTestIntColumn& ids)
+bool bnet::IBClusterRouting::SaveNodesList(const std::string& fname, const dabc::IntColumn& ids)
 {
    FILE *f = fopen (fname.c_str(), "w");
 
@@ -1155,7 +1155,7 @@ bool bnet::IBClusterRouting::SaveNodesList(const std::string& fname, const IbTes
    return true;
 }
 
-bool bnet::IBClusterRouting::LoadNodesList(const std::string& fname, IbTestIntColumn& ids)
+bool bnet::IBClusterRouting::LoadNodesList(const std::string& fname, dabc::IntColumn& ids)
 {
 
    FILE *f = fopen (fname.c_str(), "r");
@@ -1361,12 +1361,7 @@ double bnet::IBSchedule::totalTime()
   return res;
 }
 
-double bnet::IBSchedule::calcOccupation()
-{
-   return (1.* totalTime() / numSenders() / IbTestMatrixMean - 1.)*100.;
-}
-
-double bnet::IBSchedule::calcBandwidth(IbTestIntMatrix* matr)
+double bnet::IBSchedule::calcBandwidth(dabc::IntMatrix* matr)
 {
    double time = totalTime();
    if ((time<=0) || (matr==0)) return 0;
@@ -1383,7 +1378,7 @@ double bnet::IBSchedule::calcBandwidth(IbTestIntMatrix* matr)
    return sum/numSenders()/time * 100.;
 }
 
-void bnet::IBSchedule::Print(IbTestIntMatrix* matr)
+void bnet::IBSchedule::Print(dabc::IntMatrix* matr)
 {
    DOUT0(("Print out of schedule:"));
 
@@ -1401,12 +1396,12 @@ void bnet::IBSchedule::Print(IbTestIntMatrix* matr)
      }
    }
 
-   DOUT0(("Schedule end time %6.5f  number of slots %d occupation = + %4.1f %% bandwidth = %5.1f %%",
-            endTime(), numSlots(), calcOccupation(), calcBandwidth(matr)));
+   DOUT0(("Schedule end time %6.5f  number of slots %d bandwidth = %5.1f %%",
+            endTime(), numSlots(), calcBandwidth(matr)));
 }
 
 
-void bnet::IBSchedule::FillRoundRoubin(IbTestIntColumn* ids, double schstep)
+void bnet::IBSchedule::FillRoundRoubin(dabc::IntColumn* ids, double schstep)
 {
 
    int numsenders = ids ? ids->size() : numSenders();
@@ -1435,17 +1430,17 @@ void bnet::IBSchedule::FillRoundRoubin(IbTestIntColumn* ids, double schstep)
    SetEndTime(numSlots()*schstep);
 }
 
-bool bnet::IBSchedule::BuildOptimized(IBClusterRouting& routing, IbTestIntColumn* ids, bool show)
+bool bnet::IBSchedule::BuildOptimized(IBClusterRouting& routing, dabc::IntColumn* ids, bool show)
 {
    int numids = ids ? ids->size() : numSenders();
 
    /** matrix identified if transfer from one node to another should be done */
-   IbTestBoolMatrix transfer(numSenders(), numSenders());
+   dabc::BoolMatrix transfer(numSenders(), numSenders());
    transfer.Fill(false);
 
-   IbTestBoolColumn receivers(numSenders());
+   dabc::BoolColumn receivers(numSenders());
 
-   IbTestIntMatrix occup(routing.NumSwitches(), routing.NumSwitches());
+   dabc::IntMatrix occup(routing.NumSwitches(), routing.NumSwitches());
 
    fNumSlots = 0;
 
@@ -1546,7 +1541,7 @@ bool bnet::IBSchedule::BuildOptimized(IBClusterRouting& routing, IbTestIntColumn
    return false;
 }
 
-bool bnet::IBSchedule::BuildRegularSchedule(IBClusterRouting& routing, IbTestIntColumn* ids, bool show)
+bool bnet::IBSchedule::BuildRegularSchedule(IBClusterRouting& routing, dabc::IntColumn* ids, bool show)
 {
    // all parameters of regular half-fat tree network are define by number of spines
 
@@ -1558,7 +1553,7 @@ bool bnet::IBSchedule::BuildRegularSchedule(IBClusterRouting& routing, IbTestInt
 
    int regular_num_slots = regular_numnodes;
 
-   IbTestIntMatrix coding(regular_numleafs, regular_nodesperswitch);
+   dabc::IntMatrix coding(regular_numleafs, regular_nodesperswitch);
    coding.Fill(-1);
 
    int numids = ids ? ids->size() : routing.NumNodes();
@@ -1660,7 +1655,7 @@ bool bnet::IBSchedule::BuildRegularSchedule(IBClusterRouting& routing, IbTestInt
 
    // from here normal indexes are used, one could forget about recoding
 
-   IbTestIntMatrix occup(routing.NumSwitches(), routing.NumSwitches());
+   dabc::IntMatrix occup(routing.NumSwitches(), routing.NumSwitches());
 
    // loop over all entries to check for bad slots - when lid<0
    for (int nslot=0; nslot < regular_num_slots; nslot++) {
@@ -2177,7 +2172,7 @@ bool bnet::IBSchedule::TryToCompress(IBClusterRouting& routing, bool show, doubl
 
 double bnet::IBSchedule::CheckConjunction(IBClusterRouting& routing, bool show)
 {
-   IbTestIntMatrix occup(routing.NumSwitches(), routing.NumSwitches());
+   dabc::IntMatrix occup(routing.NumSwitches(), routing.NumSwitches());
 
    dabc::Average switch_occup, line_occup, num_conjunc;
 
@@ -2253,9 +2248,9 @@ double bnet::IBSchedule::CheckConjunction(IBClusterRouting& routing, bool show)
 }
 
 
-bool bnet::IBSchedule::ProveSchedule(IbTestIntColumn* ids)
+bool bnet::IBSchedule::ProveSchedule(dabc::IntColumn* ids)
 {
-   IbTestIntMatrix matrix(numSenders(), numSenders());
+   dabc::IntMatrix matrix(numSenders(), numSenders());
    matrix.Fill(0);
 
    for (int nslot=0; nslot<numSlots(); nslot++) {
@@ -2303,7 +2298,7 @@ bool bnet::IBSchedule::ProveSchedule(IbTestIntColumn* ids)
 }
 
 
-bool bnet::IBSchedule::RecodeIds(const IbTestIntColumn& ids, IBSchedule& new_sch)
+bool bnet::IBSchedule::RecodeIds(const dabc::IntColumn& ids, IBSchedule& new_sch)
 {
    new_sch.Allocate(numSlots(), ids.size());
    new_sch.SetNumSlots(numSlots());
@@ -2451,7 +2446,7 @@ void BuildConjunctionCurve(bnet::IBClusterRouting& routing)
 
    for (int num = 50; num <= maxnum; num+=50) {
 
-      IbTestIntColumn ids(num);
+      dabc::IntColumn ids(num);
 
       dabc::Average rel_conj;
 
@@ -2573,7 +2568,7 @@ extern "C" void TestSorting()
 
    if (seed>0) srand48(seed);
 
-   IbTestIntColumn ids(routing.NumNodes());
+   dabc::IntColumn ids(routing.NumNodes());
 
    switch (seed) {
       case 0:
@@ -2647,7 +2642,7 @@ extern "C" void TestSchedule()
 
    if (optimize) routing.BuildOptimalRoutes();
 
-   IbTestIntColumn ids(routing.NumNodes());
+   dabc::IntColumn ids(routing.NumNodes());
 
    int seed = lrint(dabc::Now().AsDouble()*1000000) % 10000;
 
@@ -2713,7 +2708,7 @@ extern "C" void SelectCSCNodes()
 
    if (!routing.ReadFile(files.back())) return;
 
-   IbTestIntColumn ids;
+   dabc::IntColumn ids;
 
    if (all_args=="schedule") {
       if (!routing.LoadNodesList(nodeslistfile, ids)) {
@@ -2774,5 +2769,3 @@ extern "C" void SelectCSCNodes()
    }
 
 }
-
-
