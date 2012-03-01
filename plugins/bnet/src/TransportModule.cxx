@@ -626,13 +626,12 @@ void bnet::TransportModule::ShowAllToAllResults()
 
    double* allres = (double*) fCollectBuffer;
 
-   DOUT0(("  # |      Node |   Send |   Recv |   Start |S_Compl|R_Compl| Lost | Skip | Loop | Max ms | CPU  | Multicast "));
+   DOUT0(("  # |      Node |   Send |   Recv |   Start |S_Compl|R_Compl| Lost | Skip | Loop | Max ms | CPU"));
    double sum1send(0.), sum2recv(0.), sum3multi(0.), sum4cpu(0.);
    int sumcnt = 0;
    bool isok = true;
    bool isskipok = true;
-   double totallost = 0, totalrecv = 0;
-   double totalmultilost = 0, totalmulti = 0, totalskipped = 0;
+   double totallost(0), totalrecv(0), totalskipped(0);
 
    char sbuf1[100], cpuinfobuf[100];
 
@@ -647,13 +646,11 @@ void bnet::TransportModule::ShowAllToAllResults()
        else
           sprintf(cpuinfobuf,"%4.1f%s",allres[n*setsize+9]*100.,"%");
 
-       DOUT0(("%3d |%10s |%7.1f |%7.1f |%8.1f |%6.0f |%6.0f |%5.0f |%s |%5.2f |%7.2f |%s |%5.1f (%5.0f)",
+       DOUT0(("%3d |%10s |%7.1f |%7.1f |%8.1f |%6.0f |%6.0f |%5.0f |%s |%5.2f |%7.2f |%s",
              n, dabc::mgr()->GetNodeName(n).c_str(),
-           allres[n*setsize+0], allres[n*setsize+1], allres[n*setsize+2]*1e6, allres[n*setsize+3]*1e6, allres[n*setsize+13]*1e6, allres[n*setsize+4], sbuf1, allres[n*setsize+10]*1e6, allres[n*setsize+11]*1e3, cpuinfobuf, allres[n*setsize+8], allres[n*setsize+7]));
+           allres[n*setsize+0], allres[n*setsize+1], allres[n*setsize+2]*1e6, allres[n*setsize+3]*1e6, allres[n*setsize+13]*1e6, allres[n*setsize+4], sbuf1, allres[n*setsize+10]*1e6, allres[n*setsize+11]*1e3, cpuinfobuf));
        totallost += allres[n*setsize+4];
        totalrecv += allres[n*setsize+5];
-       totalmultilost += allres[n*setsize+6];
-       totalmulti += allres[n*setsize+7];
 
        // check if send starts in time
        if (allres[n*setsize+2] > 20.) isok = false;
@@ -668,9 +665,6 @@ void bnet::TransportModule::ShowAllToAllResults()
    }
    DOUT0(("          Total |%7.1f |%7.1f | Skip: %4.0f/%4.0f = %3.1f percent",
           sum1send, sum2recv, totallost, totalrecv, 100*(totalrecv>0. ? totallost/(totalrecv+totallost) : 0.)));
-   if (totalmulti>0)
-      DOUT0(("Multicast %4.0f/%4.0f = %7.6f%s  Rate = %4.1f",
-         totalmultilost, totalmulti, totalmultilost/totalmulti*100., "%", sum3multi/sumcnt));
 }
 
 
@@ -691,7 +685,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
    double next_recv_time(0.), next_send_time(0.), next_oper_time(0.);
 
-   int maxcnt(5);
+   int maxcnt(100);
 
    while ((next_oper_time<=0.) && (maxcnt-->0)) {
 
@@ -765,7 +759,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                rec->SetTime(next_recv_time);
 
                if (!SubmitToRunnable(recid,rec)) {
-                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  EOUT(("Cannot submit recv operation to lid %d node %d", lid, node));
                   return false;
                }
 
@@ -828,7 +822,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                rec->SetTime(next_send_time);
 
                if (!SubmitToRunnable(recid, rec)) {
-                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  EOUT(("Cannot submit send operation to lid %d node %d", lid, node));
                   return false;
                }
 
@@ -853,14 +847,6 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 int bnet::TransportModule::ProcessAskQueue(void* tgt)
 {
    // method is used to calculate how many queues entries are existing
-
-   dabc::TimeStamp tm = dabc::Now();
-
-   while (!tm.Expired(0.1)) {
-      int recid = -1; // CheckCompletionQueue(0.001);
-      if (recid<0) break;
-      fRunnable->ReleaseRec(recid);
-   }
    int32_t* mem = (int32_t*) tgt;
    for(int node=0;node<NumNodes();node++)
       for(int nlid=0;nlid<NumLids();nlid++) {
@@ -869,67 +855,6 @@ int bnet::TransportModule::ProcessAskQueue(void* tgt)
       }
 
    return NumNodes()*NumLids()*2*sizeof(int32_t);
-}
-
-bool bnet::TransportModule::MasterCleanup()
-{
-   double tm = fStamping();
-
-   int blocksize = NumNodes()*NumLids()*2*sizeof(uint32_t);
-
-   void* recs = malloc(NumNodes() * blocksize);
-   memset(recs, 0, NumNodes() * blocksize);
-
-   // own records will be add automatically
-//   if (!MasterCommandRequest(BNET_CMD_ASKQUEUE, 0, 0, recs, blocksize)) {
-//      EOUT(("Cannot collect queue sizes"));
-//      free(recs);
-//      return false;
-//   }
-
-   // now we should resort connection records, loop over targets
-
-   DOUT0(("First collect all queue sizes"));
-
-   void* conn = malloc(NumNodes() * blocksize);
-   memset(conn, 0, NumNodes()*blocksize);
-
-   int32_t* src = (int32_t*) recs;
-   int32_t* tgt = (int32_t*) conn;
-
-   int allsend(0), allrecv(0);
-
-   for(int node1=0;node1<NumNodes();node1++)
-      for (int node2=0;node2<NumNodes();node2++)
-         for(int nlid=0;nlid<NumLids();nlid++) {
-            int tgtindx = node1*NumNodes()*NumLids()*2 + node2*NumLids()*2 + nlid*2;
-            int srcindx = node2*NumNodes()*NumLids()*2 + node1*NumLids()*2 + nlid*2;
-            // send operation, which should be executed from node1 -> node2
-            tgt[tgtindx] = src[srcindx + 1];
-            // recv operation, which should be executed on node1 for node2
-            tgt[tgtindx + 1] = src[srcindx];
-
-            allsend += tgt[tgtindx];
-            allrecv += tgt[tgtindx + 1];
-      }
-
-
-   DOUT0(("All send %d and recv %d operation", allsend, allrecv));
-
-   bool res(true);
-//   if ((allsend!=0) || (allrecv!=0))
-//       res = MasterCommandRequest(BNET_CMD_CLEANUP, conn, -blocksize);
-
-   free(recs);
-
-   free(conn);
-
-   // for syncronisation
-//   if (!MasterCommandRequest(BNET_CMD_TEST)) res = false;
-
-   DOUT0(("Queues are cleaned in %5.4f s res = %s", fStamping() - tm, DBOOL(res)));
-
-   return res;
 }
 
 bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
@@ -967,7 +892,7 @@ bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
                rec->SetImmediateTime();
 
                if (!SubmitToRunnable(recid,rec)) {
-                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  EOUT(("Cannot submit send operation to lid %d node %d", lid, node));
                   return false;
                }
 

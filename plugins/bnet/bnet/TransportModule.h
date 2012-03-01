@@ -198,7 +198,6 @@ class TransportModule : public dabc::ModuleAsync {
 
       int ProcessAskQueue(void* tgt);
 
-      bool MasterCleanup();
       bool ProcessCleanup(int32_t* pars);
 
    public:
