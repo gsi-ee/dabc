@@ -67,7 +67,7 @@ bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool,
    for (int n=0;n<NumNodes();n++)
       fActiveNodes[n] = true;
 
-   fNumRecs = 1000 + NumNodes()*10;   // FIXME - should depend from number of nodes
+   fNumRecs = 2000 + NumNodes()*10;   // FIXME - should depend from number of nodes
    fRecs = new OperRec[fNumRecs];       // operation records
    fFreeRecs.Allocate(fNumRecs);
    fSubmRecs.Allocate(fNumRecs);

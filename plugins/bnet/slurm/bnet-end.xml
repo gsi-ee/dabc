@@ -16,7 +16,7 @@
      <Application class="bnet::Application">
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="65536"/>
-         <NumBuffers value="1000"/>
+         <NumBuffers value="2000"/>
          <SpecialThread value="true"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->

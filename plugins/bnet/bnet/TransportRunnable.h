@@ -67,8 +67,8 @@ namespace bnet {
 
       inline bool IsQueueOk() { return queuelen==0 ? true : *queuelen < queuelimit; }
 
-      inline void inc_queuelen() { if (queuelen) *queuelen++; }
-      inline void dec_queuelen() { if (queuelen) *queuelen--; }
+      inline void inc_queuelen() { if (queuelen) (*queuelen)++; }
+      inline void dec_queuelen() { if (queuelen) (*queuelen)--; }
    };
 
    class TimeStamping {

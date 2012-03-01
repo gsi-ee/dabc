@@ -154,6 +154,7 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_ASKQUEUE));
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLEANUP));
+      fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 1.)); // master waits 1 second to let all operations run
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_ASKQUEUE));
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLEANUP));
 
@@ -629,8 +630,7 @@ void bnet::TransportModule::ShowAllToAllResults()
    DOUT0(("  # |      Node |   Send |   Recv |   Start |S_Compl|R_Compl| Lost | Skip | Loop | Max ms | CPU"));
    double sum1send(0.), sum2recv(0.), sum3multi(0.), sum4cpu(0.);
    int sumcnt = 0;
-   bool isok = true;
-   bool isskipok = true;
+   // bool isok(true), isskipok(true);
    double totallost(0), totalrecv(0), totalskipped(0);
 
    char sbuf1[100], cpuinfobuf[100];
@@ -653,7 +653,7 @@ void bnet::TransportModule::ShowAllToAllResults()
        totalrecv += allres[n*setsize+5];
 
        // check if send starts in time
-       if (allres[n*setsize+2] > 20.) isok = false;
+       // if (allres[n*setsize+2] > 20.) isok = false;
 
        sumcnt++;
        sum1send += allres[n*setsize+0];
@@ -661,7 +661,7 @@ void bnet::TransportModule::ShowAllToAllResults()
        sum3multi += allres[n*setsize+8]; // Multi rate
        sum4cpu += allres[n*setsize+9]; // CPU util
        totalskipped += allres[n*setsize+12];
-       if (allres[n*setsize+12]>0.03) isskipok = false;
+       // if (allres[n*setsize+12]>0.03) isskipok = false;
    }
    DOUT0(("          Total |%7.1f |%7.1f | Skip: %4.0f/%4.0f = %3.1f percent",
           sum1send, sum2recv, totallost, totalrecv, 100*(totalrecv>0. ? totallost/(totalrecv+totallost) : 0.)));
