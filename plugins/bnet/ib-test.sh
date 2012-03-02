@@ -1,10 +1,10 @@
 #!/bin/bash
 
-rm *.log
+rm -f *.log
 
 dabc_run ib-test.xml dellog
 
 dabc_run ib-test.xml run
 
-# dabc_run ib-test.xml getlog
+echo call dabc_run ib-test.xml getlog
 

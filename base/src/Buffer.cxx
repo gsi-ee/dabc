@@ -113,7 +113,7 @@ dabc::Buffer& dabc::Buffer::operator=(const Buffer& src) throw()
       fNumSegments = src.fNumSegments;
       fCapacity = src.fCapacity;
       fTypeId = src.fTypeId;
-      
+
       Buffer* obj = const_cast<Buffer*>(&src);
       obj->fPoolId = 0;
       obj->fSegments = 0;
@@ -456,7 +456,7 @@ dabc::BufferSize_t dabc::Buffer::CopyFrom(Pointer tgtptr, Pointer srcptr, Buffer
    return res;
 }
 
-dabc::BufferSize_t dabc::Buffer::CopyTo(Pointer srcptr, void* ptr, BufferSize_t len) throw()
+dabc::BufferSize_t dabc::Buffer::CopyTo(Pointer srcptr, void* ptr, BufferSize_t len) const throw()
 {
    if (len>srcptr.fullsize()) len = srcptr.fullsize();
 

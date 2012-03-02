@@ -104,9 +104,9 @@ namespace dabc {
          inline uint32_t GetTypeId() const { return fTypeId; }
 
          /** Returns true if buffer does not reference any memory
-	     TODO: Check if second condition could be removed, than ispool can be removed */
+             TODO: Check if second condition could be removed, than ispool can be removed */
          inline bool null() const { return fPool.null() || (NumSegments() == 0); }
-         
+
          /** Return true if pool is assigned and list for segments is available */
          inline bool ispool() const { return !fPool.null(); }
 
@@ -217,10 +217,10 @@ namespace dabc {
 
 
          /** Performs memcpy of data into raw buffer \param ptr */
-         BufferSize_t CopyTo(Pointer srcptr, void* ptr, BufferSize_t len) throw();
+         BufferSize_t CopyTo(Pointer srcptr, void* ptr, BufferSize_t len) const throw();
 
          /** Performs memcpy of data into raw buffer \param ptr */
-         BufferSize_t CopyTo(void* ptr, BufferSize_t len) throw()
+         BufferSize_t CopyTo(void* ptr, BufferSize_t len) const throw()
          {
             return CopyTo(GetPointer(), ptr, len);
          }
@@ -259,8 +259,7 @@ namespace dabc {
 
          /** This static method create Buffer instance, which contains pointer on specified peace of memory
           * Therefore it can be used in standalone case */
-         static Buffer CreateBuffer(const
-         void* ptr, unsigned size, bool owner = false, unsigned numrefs = 8, unsigned numsegm = 4) throw();
+         static Buffer CreateBuffer(const void* ptr, unsigned size, bool owner = false, unsigned numrefs = 8, unsigned numsegm = 4) throw();
    };
 
 };

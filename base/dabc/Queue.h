@@ -242,6 +242,8 @@ namespace dabc {
             return *fTail;
          }
 
+         // TODO: implement iterator to access all items in the queue
+
          T& Item(unsigned indx) const
          {
             #ifdef DABC_EXTRA_CHECKS
@@ -272,16 +274,6 @@ namespace dabc {
                if (fSize==0) EOUT(("Queue is empty"));
             #endif
             return Item(fSize-1);
-         }
-
-         T PopBack()
-         {
-            #ifdef DABC_EXTRA_CHECKS
-               if (fSize==0) EOUT(("Queue is empty"));
-            #endif
-            T* res = ItemPtr(fSize-1);
-            RemoveItem(fSize-1);
-            return *res;
          }
 
          void Reset()
@@ -334,13 +326,19 @@ namespace dabc {
     *
     */
 
-   template<class T>
-   class RecordsQueue : protected Queue<T, true> {
-      typedef Queue<T, true> Parent;
+   template<class T, bool canexpand = true>
+   class RecordsQueue : protected Queue<T, canexpand> {
+      typedef Queue<T, canexpand> Parent;
       public:
+         RecordsQueue() : Parent() {}
+
          RecordsQueue(unsigned capacity) : Parent(capacity) {}
 
+         void Allocate(unsigned capacity) { Parent::Allocate(capacity); }
+
          bool Empty() const { return Parent::Empty(); }
+
+         bool Full() const { return Parent::Full(); }
 
          unsigned Size() const { return Parent::Size(); }
 
@@ -350,13 +348,16 @@ namespace dabc {
 
          T& Front() const { return Parent::Front(); }
 
-         void Pop() { Front().reset(); Parent::PopOnly(); }
+         void PopOnly() { Front().reset(); Parent::PopOnly(); }
 
          virtual void CopyTo(T* tgt)
          {
             for (unsigned n=0; n<Size(); n++)
                *tgt++ = Item(n);
          }
+
+         T* PushEmpty() { return Parent::PushEmpty(); }
+
 
          void Reset()
          {

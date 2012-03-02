@@ -1,6 +1,7 @@
 #include "bnet/Factory.h"
 
 #include "bnet/Application.h"
+#include "bnet/GeneratorModule.h"
 #include "bnet/TransportModule.h"
 
 bnet::Factory bnetfactory("bnet");
@@ -23,6 +24,8 @@ dabc::Module* bnet::Factory::CreateModule(const char* classname, const char* mod
    if (strcmp(classname,"bnet::TransportModule")==0)
       return new bnet::TransportModule(modulename, cmd);
 
+   if (strcmp(classname,"bnet::GeneratorModule")==0)
+      return new bnet::GeneratorModule(modulename, cmd);
 
    return 0;
 }

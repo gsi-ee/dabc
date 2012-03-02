@@ -291,6 +291,8 @@ namespace bnet {
          bool StopRunnable();
 
          bool IsFreeRec() const { return !fFreeRecs.Empty(); }
+         int NumFreeRecs() const { return fFreeRecs.Size(); }
+
 
          /** Method is preparing all necessary structures for submitting send/recv operation
           * Method executed in caller (module) thread

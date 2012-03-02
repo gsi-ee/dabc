@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -585,13 +585,13 @@ void TestRecordsQueue()
 
    DOUT0(("Pop record"));
    r = q.Front();
-   q.Pop();
+   q.PopOnly();
 
    DOUT0(("Push 3 records"));
    for (int n=0;n<3;n++) q.Push(r);
 
    DOUT0(("Pop 3 records"));
-   for (int n=0;n<3;n++) q.Pop();
+   for (int n=0;n<3;n++) q.PopOnly();
 
    DOUT0(("Push 2 records"));
    for (int n=0;n<2;n++) q.Push(r);

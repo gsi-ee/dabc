@@ -495,7 +495,7 @@ bool dabc::Manager::ProcessParameterEvents()
          LockGuard lock(fMgrMutex);
          if (fParsQueue.Size()==0) return false;
          rec = fParsQueue.Front();
-         fParsQueue.Pop();
+         fParsQueue.PopOnly();
       }
 
       if (rec.par.null()) continue;

@@ -1314,7 +1314,7 @@ void bnet::IBSchedule::ExcludeInactiveNode(int node)
    }
 }
 
-bool bnet::IBSchedule::ShiftToNextOperation(int node, double& basetm, int& nslot)
+bool bnet::IBSchedule::ShiftToNextOperation(int node, double& basetm, int& nslot, uint64_t* overflowcnt)
 {
    int cnt(0);
 
@@ -1323,6 +1323,7 @@ bool bnet::IBSchedule::ShiftToNextOperation(int node, double& basetm, int& nslot
 
       if (nslot==numSlots()) {
          basetm += endTime();
+         if (overflowcnt) (*overflowcnt)++;
          nslot = 0;
       }
 
@@ -1401,16 +1402,18 @@ void bnet::IBSchedule::Print(dabc::IntMatrix* matr)
 }
 
 
-void bnet::IBSchedule::FillRoundRoubin(dabc::IntColumn* ids, double schstep)
+void bnet::IBSchedule::FillRoundRoubin(dabc::IntColumn* ids, double schstep, bool include_itself)
 {
 
    int numsenders = ids ? ids->size() : numSenders();
 
-   SetNumSlots(numsenders-1);
+   SetNumSlots(include_itself ? numsenders : numsenders-1);
 
    for(int nslot=0;nslot<numSlots();nslot++) {
 
       SetTimeSlot(nslot, schstep*nslot);
+
+      if (include_itself && (nslot== numSlots()-1)) SetTimeSlot(nslot, schstep*(nslot-1));
 
       IBScheduleItem* slot_sch = getScheduleSlot(nslot);
 
@@ -1420,6 +1423,9 @@ void bnet::IBSchedule::FillRoundRoubin(dabc::IntColumn* ids, double schstep)
       for(int nsend=0;nsend<numsenders;nsend++) {
          int nrecv = (nsend + nslot + 1) % numsenders;
 
+         // send package itself
+         if (include_itself && (nslot == numSlots()-1)) nrecv = nsend;
+
          if (ids==0)
             slot_sch[nsend].node = nrecv;
          else
@@ -1427,7 +1433,11 @@ void bnet::IBSchedule::FillRoundRoubin(dabc::IntColumn* ids, double schstep)
       }
    }
 
-   SetEndTime(numSlots()*schstep);
+   if (include_itself)
+      SetEndTime((numSlots()-1)*schstep);
+   else
+      SetEndTime(numSlots()*schstep);
+
 }
 
 bool bnet::IBSchedule::BuildOptimized(IBClusterRouting& routing, dabc::IntColumn* ids, bool show)

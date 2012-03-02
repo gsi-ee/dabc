@@ -40,7 +40,7 @@
 #define BNET_CMD_MEASURE     80002  // measure command delay
 #define BNET_CMD_CONNECTDONE 80003  // finilize connections
 
-#define BNET_WORKERNAME     "IbTest"
+#define BNET_WORKERNAME      "BnetWorker"
 
 #define CMDCH_RECV_ARG        123456
 #define CMDCH_SEND_ARG        654321
@@ -51,8 +51,14 @@
 
 namespace bnet {
 
-   #pragma pack(1)
+   typedef uint64_t EventId;
 
+   struct names {
+//      names() {}
+      static const char* EventLifeTime() { return "TestEventLifeTime"; }
+   };
+
+   #pragma pack(1)
 
    struct CommandMessage
    {
@@ -76,9 +82,12 @@ namespace bnet {
    };
 
    struct TransportHeader {
-      uint32_t   srcid;   // source node id
-      uint32_t   tgtid;   // target node id
-      uint64_t eventid;   // event id
+      uint32_t   srcnode;   // source node id
+      uint32_t   tgtnode;   // target node id
+      EventId    evid;    // event id
+      double     send_tm; // time when operation was send (for debugging)
+      uint32_t   seqid;   // sequence number of transfer - to detect skipped operations
+
    };
 
 #pragma pack()

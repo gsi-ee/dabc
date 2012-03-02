@@ -21,36 +21,57 @@ struct ScheduleEntry {
 
 namespace bnet {
 
-class TransportCmd : public dabc::Command {
+   class TransportCmd : public dabc::Command {
 
-   DABC_COMMAND(TransportCmd, "TransportCmd");
+      DABC_COMMAND(TransportCmd, "TransportCmd");
 
-   TransportCmd(int id, double timeout = - 1.) :
-      dabc::Command(CmdName())
-   {
-      SetInt("CmdId", id);
-      if (timeout>0.) SetDouble("CmdTimeout", timeout);
-   }
+      TransportCmd(int id, double timeout = - 1.) :
+         dabc::Command(CmdName())
+      {
+         SetInt("CmdId", id);
+         if (timeout>0.) SetDouble("CmdTimeout", timeout);
+      }
 
-   int GetId() const { return GetInt("CmdId"); }
-   double GetTimeout() { return GetDouble("CmdTimeout", 5.); }
+      int GetId() const { return GetInt("CmdId"); }
+      double GetTimeout() { return GetDouble("CmdTimeout", 5.); }
 
-   void SetSyncArg(int nrepeat, bool dosync, bool doscale)
-   {
-      SetInt("NRepeat", nrepeat);
-      SetBool("DoSync", dosync);
-      SetBool("DoScale", doscale);
-   }
+      void SetSyncArg(int nrepeat, bool dosync, bool doscale)
+      {
+         SetInt("NRepeat", nrepeat);
+         SetBool("DoSync", dosync);
+         SetBool("DoScale", doscale);
+      }
 
-   int GetNRepeat() const { return GetInt("NRepeat", 1); }
-   bool GetDoSync() const { return GetBool("DoSync", false); }
-   bool GetDoScale() const { return GetBool("DoScale", false); }
-};
+      int GetNRepeat() const { return GetInt("NRepeat", 1); }
+      bool GetDoSync() const { return GetBool("DoSync", false); }
+      bool GetDoScale() const { return GetBool("DoScale", false); }
+   };
+
+   /** Structure to store all relevant information for event buffer
+    * Preserved in the queue until data is not transported
+    */
+
+   enum EventDataState { evd_Init, evd_Scheduled, evd_Ready };
+
+   struct EventDataRec {
+       EventDataState  state;     // actual state of the data
+       bnet::EventId   evid;      // eventid
+       dabc::Buffer    buf;       // buffer with data
+       double          acq_tm;    // time when event was insertred, will be used to remove it
+
+       EventDataRec() : state(evd_Init), evid(0), buf(), acq_tm(0.)  {}
+
+       EventDataRec(const EventDataRec& src) : state(src.state), evid(src.evid), buf(src.buf), acq_tm(src.acq_tm)  {}
+
+       ~EventDataRec() { reset(); }
+
+       void reset() {  state = evd_Init; evid = 0; buf.Release(); acq_tm = 0.; }
+   };
 
 
-class TransportModule : public dabc::ModuleAsync {
+   class TransportModule : public dabc::ModuleAsync {
+      protected:
 
-   protected:
       int                 fNodeNumber;
       int                 fNumNodes;
       int                 fNumLids;
@@ -80,8 +101,6 @@ class TransportModule : public dabc::ModuleAsync {
 
       TimeStamping       fStamping;     // copy of stamping from runnable
 
-      double            fTrendingInterval;   //!< interval (in seconds) for send/recv rate trending
-
       /** array indicating active nodes in the system,
        *  Accumulated in the beginning by the master and distributed to all other nodes.
        *  Should be used in the most tests */
@@ -95,12 +114,7 @@ class TransportModule : public dabc::ModuleAsync {
       IBSchedule  fRecvSch;
 
 
-      // ================== this is new members for async module ==========================
-
-      enum ModuleCmdState { mcmd_None, mcmd_Exec };
-
       int fRunningCmdId; // id of running command, 0 if no command is runs
-      ModuleCmdState fCmdState; // that is now happens with the command
       dabc::TimeStamp fCmdStartTime;  // time when command should finish its execution
       dabc::TimeStamp fCmdEndTime;  // time when command should finish its execution
       std::vector<bool> fCmdReplies; // indicates if cuurent cmd was replied
@@ -125,8 +139,9 @@ class TransportModule : public dabc::ModuleAsync {
 
       bool                fAllToAllActive; // indicates that all-to-all transfer is running
       int                 fTestBufferSize;
-      double             fTestStartTime, fTestStopTime; // start/stop time for data transfer
+      double              fTestStartTime, fTestStopTime; // start/stop time for data transfer
       int                 fSendSlotIndx, fRecvSlotIndx;
+      uint64_t            fSendOverflowCnt, fRecvOverflowCnt;
       double              fSendBaseTime, fRecvBaseTime;
       bool                fDoSending, fDoReceiving;
 
@@ -144,10 +159,22 @@ class TransportModule : public dabc::ModuleAsync {
 
       long fNumLostPackets, fTotalRecvPackets, fNumSendPackets, fNumComplSendPackets;
 
+      // this all about events bookkeeping
+
+      dabc::RecordsQueue<EventDataRec, false>  fEvQueue;
+      double    fEventLifeTime; // time how long event would be preserved in memory
+
+
       virtual void ProcessInputEvent(dabc::Port* port);
       virtual void ProcessOutputEvent(dabc::Port* port);
       virtual void ProcessTimerEvent(dabc::Timer* timer);
       virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
+
+      void ReleaseReadyEvents();
+      void ReadoutNextEvents(dabc::Port* port);
+      EventDataRec* FindEventRec(bnet::EventId evid);
+
+      void ProvideReceivedBuffer(bnet::EventId evid, int nodeid, dabc::Buffer& buf);
 
       void ProcessNextSlaveInputEvent();
 
@@ -171,6 +198,7 @@ class TransportModule : public dabc::ModuleAsync {
       void ProcessSendCompleted(int recid, OperRec* rec);
       void ProcessRecvCompleted(int recid, OperRec* rec);
 
+      bnet::EventId ExtractEventId(const dabc::Buffer& buf);
 
 
       // ===================================================================================
@@ -200,7 +228,8 @@ class TransportModule : public dabc::ModuleAsync {
 
       bool ProcessCleanup(int32_t* pars);
 
-   public:
+      public:
+
       TransportModule(const char* name, dabc::Command cmd);
 
       virtual ~TransportModule();
@@ -210,7 +239,7 @@ class TransportModule : public dabc::ModuleAsync {
       virtual void BeforeModuleStart();
 
       virtual void AfterModuleStop();
-};
+   };
 
 }
 

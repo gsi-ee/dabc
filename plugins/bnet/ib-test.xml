@@ -9,21 +9,22 @@
        <lib value="libDabcVerbs.so"/>
        <lib value="libDabcBnet.so"/>
        <!--LD_LIBRARY_PATH value="/home/linev/workspace/dabc/applications/ib-test"/-->
-       <logfile value="Node${DABCNODEID}.log"/>
+       <logfile value="/tmp/Node${DABCNODEID}.log"/>
        <debuglevel value="0"/>
        <debugger value="false"/>
+       <errout value="/dev/null"/>
        <nullout value="false"/>
        <num_special_proc value="1"/>
        <taskset value="-c 0-1"/>
-       <loglevel value="1"/>
-       <loglimit value="1000000"/>
-       <runtime value="100"/>
+       <loglevel value="0"/>
+       <loglimit value="10000000"/>
+       <runtime value="50"/>
        <!--runfunc value="test_affinity"/-->
      </Run>
      <Application class="bnet::Application">
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="65536"/>
-         <NumBuffers value="2000"/>
+         <NumBuffers value="1000"/>
          <SpecialThread value="true"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
@@ -32,9 +33,11 @@
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="5.0"/>
-         <TestRate value="500"/>
+         <TestRate value="200"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
+         <TestEventQueue value="500"/>
+         <TestEventLifeTime value="3."/>
          <TestSchedule value=""/>
          <TestTimeout value="10"/>
        </Application>

@@ -21,7 +21,8 @@
 bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fStamping(),
-   fCmdsQueue()
+   fCmdsQueue(),
+   fEvQueue()
 {
    fNodeNumber = cmd.Field("NodeNumber").AsInt(0);
    fNumNodes = cmd.Field("NumNodes").AsInt(1);
@@ -42,7 +43,9 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    for (int n=0;n<nports;n++) {
 //      DOUT0(("Create IOport %d", n));
       CreateIOPort(FORMAT(("Port%d", n)), FindPool("BnetCtrlPool"), 1, 1);
-  }
+   }
+
+   CreateInput("DataInput", FindPool("BnetDataPool"), 10);
 
    fActiveNodes.clear();
    fActiveNodes.resize(fNumNodes, true);
@@ -71,9 +74,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
       }
    }
 
-
-   fTrendingInterval = 0;
-
    fRunnable = 0;
    fRunThread = 0;
 
@@ -99,7 +99,6 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    // new members
 
    fRunningCmdId = 0;
-   fCmdState = mcmd_None;
    fCmdEndTime.Reset();  // time when command should finish its execution
    fCmdReplies.resize(0); // indicates if cuurent cmd was replied
    fCmdAllResults = 0;   // buffer where replies from all nodes collected
@@ -110,6 +109,14 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    CreateTimer("Timer", 0.1); // every 100 milisecond
 
    CreateTimer("AllToAll"); //timer for all-to-all test, shooted individually
+
+   // allocation of events queue
+
+   int evqueuesize = Cfg("TestEventQueue", cmd).AsInt(100);
+
+   fEvQueue.Allocate(evqueuesize);
+
+   fEventLifeTime = Cfg(names::EventLifeTime(), cmd).AsDouble(2.);
 
    if (IsMaster()) {
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 0.3)); // master wait 0.3 seconds
@@ -492,8 +499,8 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
 
       default:
          // default, all-to-all round-robin schedule
-         fSendSch.Allocate(NumNodes()-1, NumNodes());
-         fSendSch.FillRoundRoubin(0, schstep);
+         fSendSch.Allocate(NumNodes(), NumNodes());
+         fSendSch.FillRoundRoubin(0, schstep, true);
          break;
    }
 
@@ -521,6 +528,9 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
 
    fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendBaseTime, fSendSlotIndx);
    fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvBaseTime, fRecvSlotIndx);
+
+   fSendOverflowCnt = 0;
+   fRecvOverflowCnt = 0;
 
    fSendStartTime.Reset();
    fSendComplTime.Reset();
@@ -672,6 +682,8 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 {
    if (!fAllToAllActive) return false;
 
+   ReadoutNextEvents(FindPort("DataInput"));
+
    double start_tm = 0;
 
    // when receive operation should be prepared before send is started
@@ -685,7 +697,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
    double next_recv_time(0.), next_send_time(0.), next_oper_time(0.);
 
-   int maxcnt(100);
+   int maxcnt(20);
 
    while ((next_oper_time<=0.) && (maxcnt-->0)) {
 
@@ -706,6 +718,9 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          EOUT(("Too long in the loop"));
          return true;
       }
+
+      next_recv_time = 0;
+      next_send_time = 0;
 
       if (fDoReceiving && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1))
          next_recv_time = fRecvBaseTime + fRecvSch.timeSlot(fRecvSlotIndx) - recv_pre_time;
@@ -731,6 +746,10 @@ bool bnet::TransportModule::ProcessAllToAllAction()
             int lid = fRecvSch.Item(fRecvSlotIndx, Node()).lid;
             bool did_submit = false;
 
+            if (node == Node()) {
+               // this is receive from itself, ignore it while it handled separately
+               did_submit = true;
+            } else
             if ((fRecvSkipCounter(lid, node) > 0) && (RecvQueue(lid, node)>0)) {
                // if packets over this channel were lost, we should not try
                // to receive them - they were skipped by sender most probably
@@ -751,7 +770,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                OperRec* rec = fRunnable->GetRec(recid);
 
                if (rec==0) {
-                  EOUT(("Cannot prepare recv operation"));
+                  EOUT(("Cannot prepare recv operation recid = %d till_oper %5.3f", recid, next_recv_time - curr_tm));
                   return false;
                }
 
@@ -763,7 +782,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                   return false;
                }
 
-               // DOUT1(("SubmitRecvOper recid %d node %d lid %d", recid, node, lid));
+               DOUT1(("SubmitRecvOper recid %d node %d lid %d till oper %8.6f", recid, node, lid, next_recv_time - curr_tm));
 
                did_submit = true;
             }
@@ -773,7 +792,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
             // we should do here more smart solutions
 
             if (did_submit)
-               fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvBaseTime, fRecvSlotIndx);
+               fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvBaseTime, fRecvSlotIndx, &fRecvOverflowCnt);
          }
       }
 
@@ -782,18 +801,42 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          if (next_send_time - submit_pre_time > curr_tm) {
             next_oper_time = next_send_time;
          } else {
+
             int node = fSendSch.Item(fSendSlotIndx, Node()).node;
             int lid = fSendSch.Item(fSendSlotIndx, Node()).lid;
             bool did_submit = false;
 
+            // FIXME: this is primitive calculation,
+            // later event id should be specified in the schedule itself
+            bnet::EventId evid = 1 + fSendOverflowCnt*NumNodes() + node;
+
+            EventDataRec* evrec = FindEventRec(evid);
+
+            if (evrec == 0) {
+               EOUT(("Cannot find event %u at the moment when it should be sumbitted", (unsigned) evid));
+            } else
+            if (node == Node()) {
+               // this is sending of operation to itself, do it directly
+
+               ProvideReceivedBuffer(evid, Node(), evrec->buf);
+               did_submit = true;
+               evrec->state = evd_Ready;
+
+               DOUT1(("Provide event %u to myself", (unsigned) evid));
+
+            } else
             if (/*canskipoperation &&*/ false /*  ((SendQueue(lid, node) >= max_sending_queue) || (TotalSendQueue() >= 2*max_sending_queue))*/ ) {
                // TODO: one could skip operation if time is far away from scheduled
                // TODO: probably, one should implement skip in runnable
                did_submit = true;
                fSkipSendCounter++;
+               fSendOperCounter(lid,node)++;
             } else {
 
-               dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+               // dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+               // this copy references, original buffer from evrec is remained
+               dabc::Buffer buf = evrec->buf;
 
                if (buf.null()) {
                   EOUT(("Not enough buffers"));
@@ -802,21 +845,20 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
                // DOUT0(("Submit send operation for buffer %u", buf.GetTotalSize()));
 
-               double mem[2] = { curr_tm, fSendOperCounter(lid,node) };
-               buf.CopyFrom(mem, sizeof(mem));
-
                int recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), buf);
                OperRec* rec = fRunnable->GetRec(recid);
 
                if (rec==0) {
-                  EOUT(("Cannot prepare send operation recid = %d", recid));
+                  EOUT(("Cannot prepare send operation recid = %d till_oper %5.3f", recid, next_send_time - curr_tm));
                   return true;
                }
 
                TransportHeader* hdr = (TransportHeader*) rec->header;
-               hdr->srcid = Node();    // source node id
-               hdr->tgtid = node;      // target node id
-               hdr->eventid = 123456;  // event id
+               hdr->srcnode   = Node();    // source node id
+               hdr->tgtnode   = node;      // target node id
+               hdr->evid    = evid;      // event id
+               hdr->send_tm = curr_tm;   // time
+               hdr->seqid   = fSendOperCounter(lid,node)++; // sequence number
 
                rec->SetTarget(node, lid);
                rec->SetTime(next_send_time);
@@ -826,16 +868,19 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                   return false;
                }
 
-               // DOUT1(("SubmitSendOper recid %d node %d lid %d", recid, node, lid));
+               DOUT1(("SubmitSendOper recid %d node %d lid %d till oper %8.6f", recid, node, lid, next_send_time - curr_tm));
+
+               evrec->state = evd_Scheduled;
 
                fNumSendPackets++;
+
                did_submit = true;
             }
 
             // shift to next operation, in some cases even when previous operation was not performed
             if (did_submit) {
-               fSendOperCounter(lid,node)++; // this indicates that we perform operation and moved to next counter
-               fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendBaseTime, fSendSlotIndx);
+                // this indicates that we perform operation and moved to next counter
+               fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendBaseTime, fSendSlotIndx, &fSendOverflowCnt);
             }
          }
       }
@@ -884,9 +929,11 @@ bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
                }
 
                TransportHeader* hdr = (TransportHeader*) rec->header;
-               hdr->srcid = Node();    // source node id
-               hdr->tgtid = node;      // target node id
-               hdr->eventid = 123456;  // event id
+               hdr->srcnode = Node();    // source node id
+               hdr->tgtnode = node;      // target node id
+               hdr->evid = 123456;     // event id
+               hdr->send_tm = fStamping();
+               hdr->seqid = 0;
 
                rec->SetTarget(node, lid);
                rec->SetImmediateTime();
@@ -938,6 +985,9 @@ void bnet::TransportModule::ProcessInputEvent(dabc::Port* port)
 {
    unsigned portid = IOPortNumber(port);
 
+   if (port->IsName("DataInput")) {
+      ReadoutNextEvents(port);
+   } else
    if (IsSlave() && (portid==0)) {
       ProcessNextSlaveInputEvent();
    } else
@@ -953,6 +1003,80 @@ void bnet::TransportModule::ProcessOutputEvent(dabc::Port* port)
 {
 
 }
+
+bnet::EventId bnet::TransportModule::ExtractEventId(const dabc::Buffer& buf)
+{
+   bnet::EventId evid(0);
+   buf.CopyTo(&evid, sizeof(evid));
+   return evid;
+}
+
+void bnet::TransportModule::ReadoutNextEvents(dabc::Port* port)
+{
+   if (port==0) return;
+
+   if (!fAllToAllActive) return;
+
+   ReleaseReadyEvents();
+
+   while (port->CanRecv() && !fEvQueue.Full()) {
+      dabc::Buffer buf;
+      buf << port->Recv();
+
+      if (buf.null()) break;
+
+      EventDataRec* rec = fEvQueue.PushEmpty();
+
+      rec->state = evd_Init;
+      rec->buf << buf;
+      rec->buf.SetTransient(false); // we keep reference on the buffer until it is not processed
+      rec->evid = ExtractEventId(rec->buf);
+      rec->acq_tm = fStamping();
+   }
+}
+
+bnet::EventDataRec* bnet::TransportModule::FindEventRec(bnet::EventId evid)
+{
+   // TODO: make searching of even more optimal - one could use map or other methods
+   for (unsigned n=0;n<fEvQueue.Size();n++) {
+      bnet::EventDataRec* rec = &fEvQueue.Item(n);
+      if (rec->evid == evid) return rec;
+   }
+
+   return 0;
+}
+
+
+void bnet::TransportModule::ReleaseReadyEvents()
+{
+   double curr_tm = fStamping();
+
+   while (!fEvQueue.Empty()) {
+      EventDataRec* rec = &fEvQueue.Front();
+
+      if (rec->state == evd_Ready) {
+         fEvQueue.PopOnly();
+         continue;
+      }
+
+      if (curr_tm > rec->acq_tm + fEventLifeTime) {
+         EOUT(("Event %u should be dropped", (unsigned) rec->evid));
+         fEvQueue.PopOnly();
+         continue;
+      }
+
+      return;
+   }
+}
+
+void bnet::TransportModule::ProvideReceivedBuffer(bnet::EventId evid, int nodeid, dabc::Buffer& buf)
+{
+   // here one should collect subevents and build ready event when all parts are there
+
+   // TODO: Make real implementation
+   buf.Release();
+}
+
 
 void bnet::TransportModule::ProcessNextSlaveInputEvent()
 {
@@ -1224,7 +1348,19 @@ void bnet::TransportModule::ProcessSendCompleted(int recid, OperRec* rec)
 {
    if (!fAllToAllActive) return;
 
-   // DOUT1(("ProcessSendCompleted recid %d err %s", recid, DBOOL(rec->err)));
+   TransportHeader* hdr = (TransportHeader*) rec->header;
+
+   EventDataRec* evrec = FindEventRec(hdr->evid);
+   if (evrec==0) {
+      EOUT(("Cannot find event structure for event %u which was send - is it skipped meanwhile???", (unsigned) hdr->evid));
+   } else {
+      // we mark event record as ready - it will be removed soon
+      evrec->state = evd_Ready;
+
+      DOUT1(("Process send completed evid %u", (unsigned) hdr->evid));
+   }
+
+   DOUT1(("ProcessSendCompleted recid %d err %s numfree %d", recid, DBOOL(rec->err), fRunnable->NumFreeRecs()));
 
    fNumComplSendPackets++;
 
@@ -1243,30 +1379,44 @@ void bnet::TransportModule::ProcessRecvCompleted(int recid, OperRec* rec)
 {
    if (!fAllToAllActive) return;
 
-   // DOUT1(("ProcessRecvCompleted recid %d err %s", recid, DBOOL(rec->err)));
+   DOUT1(("ProcessRecvCompleted recid %d err %s numfree %d", recid, DBOOL(rec->err), fRunnable->NumFreeRecs()));
 
-   double mem[2] = {0., 0.};
-   rec->buf.CopyTo(mem, sizeof(mem));
-   double sendtime = mem[0];
-   int sendcnt = (int) mem[1];
+   // TODO: event building should be implemented, for the moment we just skip all data
 
-   int lost = sendcnt - fRecvOperCounter(rec->tgtindx, rec->tgtnode) - 1;
+   TransportHeader* hdr = (TransportHeader*) rec->header;
+
+   bool isok(true);
+
+   int lost = (int) hdr->seqid - fRecvOperCounter(rec->tgtindx, rec->tgtnode) - 1;
    if (lost>0) {
       fNumLostPackets += lost;
       fRecvSkipCounter(rec->tgtindx, rec->tgtnode) += lost;
    }
 
-   fRecvOperCounter(rec->tgtindx, rec->tgtnode) = sendcnt;
+   if ((int) hdr->srcnode != rec->tgtnode) {
+      EOUT(("Missmatch of source node id in received buffer expected:%u received:%u", (unsigned) rec->tgtnode, (unsigned) hdr->srcnode));
+      isok = false;
+   }
+
+   if ((int) hdr->tgtnode != Node()) {
+      EOUT(("Missmatch of target node id in received buffer expected:%d received:%u", Node(), (unsigned) hdr->tgtnode));
+      isok = false;
+   }
+
+
+   fRecvOperCounter(rec->tgtindx, rec->tgtnode) = hdr->seqid;
 
    double curr_tm = fStamping();
 
-   fRecvComplTime.Fill(rec->compl_time - sendtime);
+   fRecvComplTime.Fill(rec->compl_time - hdr->send_tm);
 
    fOperBackTime.Fill(curr_tm - rec->compl_time);
 
    fRecvRate.Packet(fTestBufferSize, curr_tm);
 
    fTotalRecvPackets++;
+
+   if (isok) ProvideReceivedBuffer(hdr->evid, rec->tgtnode, rec->buf);
 }
 
 

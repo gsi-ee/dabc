@@ -285,7 +285,7 @@ namespace bnet {
          /** Clear all times and all receivers */
          void Clear();
 
-         bool ShiftToNextOperation(int node, double& basetm, int& nslot);
+         bool ShiftToNextOperation(int node, double& basetm, int& nslot, uint64_t* overflowcnt = 0);
 
          double totalTime();
 
@@ -293,7 +293,7 @@ namespace bnet {
 
          double calcBandwidth(dabc::IntMatrix* matr);
 
-         void FillRoundRoubin(dabc::IntColumn* ids = 0, double schstep = 1.);
+         void FillRoundRoubin(dabc::IntColumn* ids = 0, double schstep = 1., bool include_itself = false);
 
          bool BuildOptimized(IBClusterRouting& routing, dabc::IntColumn* ids = 0, bool show = false);
 

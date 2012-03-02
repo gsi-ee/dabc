@@ -39,6 +39,8 @@ bnet::Application::Application() :
 
    CreatePar("TestOutputQueue").DfltInt(5);
    CreatePar("TestInputQueue").DfltInt(10);
+   CreatePar("TestEventQueue").DfltInt(100);
+   CreatePar(names::EventLifeTime()).DfltDouble(2.);
    CreatePar("TestBufferSize").DfltInt(128*1024);
    CreatePar("TestPoolSize").DfltInt(250);
    CreatePar("TestRate").DfltInt(1000);
@@ -73,12 +75,15 @@ bool bnet::Application::CreateAppModules()
    int numbuf = Cfg(dabc::xmlNumBuffers).AsInt(1024);
    dabc::mgr.CreateMemoryPool("BnetDataPool", bufsize, numbuf, 2);
 
-   dabc::CmdCreateModule cmd("bnet::TransportModule", BNET_WORKERNAME, "BnetModule");
+   dabc::mgr.CreateModule("bnet::GeneratorModule", "BnetGener", "BnetGenerThrd");
+
+   dabc::CmdCreateModule cmd("bnet::TransportModule", BNET_WORKERNAME, "BnetModuleThrd");
    cmd.Field("NodeNumber").SetInt(dabc::mgr.NodeId());
    cmd.Field("NumNodes").SetInt(dabc::mgr.NumNodes());
    cmd.Field("NumPorts").SetInt((dabc::mgr.NodeId()==0) ? dabc::mgr.NumNodes()-1 : 1);
-
    if (!dabc::mgr.Execute(cmd)) return false;
+
+   dabc::mgr.Connect("BnetGener/Output", dabc::format("%s/DataInput", BNET_WORKERNAME));
 
    for (unsigned node = 1; node < NumNodes(); node++) {
       std::string port1 = dabc::Url::ComposePortName(0, FORMAT(("%s/Port", BNET_WORKERNAME)), node-1);
