@@ -8,15 +8,15 @@
        <taskset value="-c 10-12"/>
        <nullout value="true"/>
        <num_special_proc value="1"/>
-       <loglevel value="1"/>
-       <loglimit value="1000000"/>
+       <loglevel value="0"/>
+       <loglimit value="100000000"/>
        <runtime value="100"/>
        <!--runfunc value="test_affinity"/-->
      </Run>
      <Application class="bnet::Application">
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="65536"/>
-         <NumBuffers value="2000"/>
+         <NumBuffers value="1000"/>
          <SpecialThread value="true"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
@@ -28,6 +28,8 @@
          <TestRate value="1250"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
+         <TestEventQueue value="500"/>
+         <TestEventLifeTime value="3."/>
          <TestSchedule value=""/>
          <TestTimeout value="10"/>
        </Application>
