@@ -86,6 +86,8 @@ namespace bnet {
       dabc::Reference     fRunnableRef;  // reference on runnable
       BnetRunnable*  fRunnable;    // runnable where scheduled transfer is implemented
       dabc::PosixThread*  fRunThread;   // special thread where runnable is executed
+      EventHandlingRef    fEventHandling;
+
 
       /** Name of the file with the schedule */
       std::string         fTestScheduleFile;

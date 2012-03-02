@@ -11,6 +11,8 @@ namespace bnet {
       public:
          Factory(const char* name);
 
+         virtual dabc::Reference CreateObject(const char* classname, const char* objname, dabc::Command cmd);
+
          virtual dabc::Application* CreateApplication(const char* classname, dabc::Command cmd);
 
          virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd);

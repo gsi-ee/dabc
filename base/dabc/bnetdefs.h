@@ -18,6 +18,14 @@
 
 #include <stdint.h>
 
+#ifndef DABC_Object
+#include "dabc/Object.h"
+#endif
+
+#ifndef DABC_Buffer
+#include "dabc/Buffer.h"
+#endif
+
 namespace bnet {
 
    typedef uint64_t EventId;
@@ -33,8 +41,18 @@ namespace bnet {
       double  slave_scale;
    };
 
+   class EventHandling : public dabc::Object {
+      public:
+         EventHandling(const char* name) : dabc::Object(name) {}
 
+         virtual bool GenerateSubEvent(EventId evid, int subid, int numsubids, dabc::Buffer& buf) = 0;
+
+         virtual bool ExtractEventId(const dabc::Buffer& buf, EventId& evid) = 0;
+   };
+
+   class EventHandlingRef : public dabc::Reference {
+      DABC_REFERENCE(EventHandlingRef, dabc::Reference, EventHandling)
+   };
 }
-
 
 #endif

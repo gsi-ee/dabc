@@ -71,10 +71,16 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    fRunnableRef = dabc::mgr.CreateObject("verbs::BnetRunnable", "bnet-run");
    fRunThread = 0;
+   fEventHandling = dabc::mgr.CreateObject("TestEventHandling", "bnet-evnt");
 
    if (fRunnableRef.null()) {
       EOUT(("Cannot create runnable!!!"));
       exit(8);
+   }
+
+   if (fEventHandling.null()) {
+      EOUT(("Cannot create event handling!!!"));
+      exit(9);
    }
 
    fReplyItem = CreateUserItem("Reply");
@@ -1004,8 +1010,10 @@ void bnet::TransportModule::ProcessOutputEvent(dabc::Port* port)
 bnet::EventId bnet::TransportModule::ExtractEventId(const dabc::Buffer& buf)
 {
    bnet::EventId evid(0);
-   buf.CopyTo(&evid, sizeof(evid));
-   return evid;
+
+   if (fEventHandling()->ExtractEventId(buf,evid)) return evid;
+
+   return 0;
 }
 
 void bnet::TransportModule::ReadoutNextEvents(dabc::Port* port)

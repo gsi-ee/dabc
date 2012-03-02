@@ -1,5 +1,6 @@
 #include "bnet/Factory.h"
 
+#include "bnet/defines.h"
 #include "bnet/Application.h"
 #include "bnet/GeneratorModule.h"
 #include "bnet/TransportModule.h"
@@ -10,6 +11,14 @@ bnet::Factory::Factory(const char* name) :
    dabc::Factory(name)
 {
 }
+dabc::Reference bnet::Factory::CreateObject(const char* classname, const char* objname, dabc::Command cmd)
+{
+   if (strcmp(classname,"TestEventHandling")==0)
+      return new bnet::TestEventHandling(objname);
+
+   return 0;
+}
+
 
 dabc::Application* bnet::Factory::CreateApplication(const char* classname, dabc::Command cmd)
 {

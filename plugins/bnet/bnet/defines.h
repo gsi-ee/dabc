@@ -53,6 +53,16 @@ namespace bnet {
       static const char* EventLifeTime() { return "TestEventLifeTime"; }
    };
 
+   class TestEventHandling : public EventHandling {
+      public:
+         TestEventHandling(const char* name) : EventHandling(name) {}
+
+         virtual bool GenerateSubEvent(EventId evid, int subid, int numsubids, dabc::Buffer& buf);
+
+         virtual bool ExtractEventId(const dabc::Buffer& buf, EventId& evid);
+   };
+
+
    #pragma pack(1)
 
    struct CommandMessage

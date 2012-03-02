@@ -3,12 +3,17 @@
 
 #include "dabc/ModuleAsync.h"
 
+#include "bnet/defines.h"
+
 namespace bnet {
 
    class GeneratorModule : public dabc::ModuleAsync {
       protected:
-         uint64_t                fEventCnt;
-         uint64_t                fUniqueId;
+         EventId             fEventCnt;
+         int                 fUniqueId;
+         int                 fNumIds;
+
+         EventHandlingRef    fEventHandling;
 
       public:
          GeneratorModule(const char* name, dabc::Command cmd = 0);
@@ -16,10 +21,6 @@ namespace bnet {
          virtual void BeforeModuleStart();
 
          virtual void ProcessOutputEvent(dabc::Port* port);
-
-      protected:
-
-         bool FillPacket(dabc::Buffer& buf);
    };
 }
 

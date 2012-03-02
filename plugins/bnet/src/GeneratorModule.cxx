@@ -11,17 +11,28 @@
 
 bnet::GeneratorModule::GeneratorModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
-   fEventCnt(1),
-   fUniqueId(0)
+   fEventCnt(0),
+   fUniqueId(0),
+   fNumIds(1)
 {
    CreatePoolHandle("BnetDataPool");
 
    CreateOutput("Output", Pool(), 10);
+
+   fEventCnt = 1;
+
+   fEventHandling = dabc::mgr.CreateObject("TestEventHandling", "bnet-evnt-gener");
+
+   if (fEventHandling.null()) {
+      EOUT(("Cannot create event handling!!!"));
+      exit(9);
+   }
 }
 
 void bnet::GeneratorModule::BeforeModuleStart()
 {
    fUniqueId = dabc::mgr.NodeId();
+   fNumIds = dabc::mgr.NumNodes();
 }
 
 void bnet::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
@@ -29,21 +40,10 @@ void bnet::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
    while (port->CanSend()) {
       dabc::Buffer buf = Pool()->TakeBuffer();
 
-      if (!FillPacket(buf)) break;
+      if (!fEventHandling()->GenerateSubEvent(fEventCnt,fUniqueId,fNumIds,buf)) break;
+
+      fEventCnt++;
 
       port->Send(buf);
    }
-}
-
-bool bnet::GeneratorModule::FillPacket(dabc::Buffer& buf)
-{
-   if (buf.GetTotalSize() < 16) return false;
-
-   DOUT1(("Produce event %u", (unsigned)fEventCnt));
-
-   uint64_t data[2] = { fEventCnt++, fUniqueId };
-
-   buf.CopyFrom(data, sizeof(data));
-
-   return true;
 }
