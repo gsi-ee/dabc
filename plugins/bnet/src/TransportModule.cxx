@@ -13,11 +13,6 @@
 #include "dabc/Timer.h"
 #include "dabc/Port.h"
 
-#ifdef WITH_VERBS
-#include "bnet/VerbsRunnable.h"
-#endif
-
-
 bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fStamping(),
@@ -28,7 +23,7 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fNumNodes = cmd.Field("NumNodes").AsInt(1);
 
    fNumLids = Cfg("TestNumLids", cmd).AsInt(1);
-   if (fNumLids>BNET_MAXLID) fNumLids = BNET_MAXLID;
+   if (fNumLids>bnet::MAXLID) fNumLids = bnet::MAXLID;
 
    int nports = cmd.Field("NumPorts").AsInt(1);
 
@@ -58,7 +53,7 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    fCmdDelay = 0.;
 
-   for (int n=0;n<BNET_MAXLID;n++) {
+   for (int n=0;n<bnet::MAXLID;n++) {
       fSendQueue[n] = 0;
       fRecvQueue[n] = 0;
    }
@@ -74,16 +69,17 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
       }
    }
 
-   fRunnable = 0;
+   fRunnableRef = dabc::mgr.CreateObject("verbs::BnetRunnable", "bnet-run");
    fRunThread = 0;
 
-   #ifdef WITH_VERBS
-   fRunnable = new VerbsRunnable();
-   #endif
+   if (fRunnableRef.null()) {
+      EOUT(("Cannot create runnable!!!"));
+      exit(8);
+   }
 
    fReplyItem = CreateUserItem("Reply");
 
-   if (fRunnable==0) fRunnable = new TransportRunnable();
+   fRunnable = (bnet::BnetRunnable*) fRunnableRef();
 
    fRunnable->SetNodeId(fNodeNumber, fNumNodes, fNumLids, fReplyItem);
 
@@ -183,14 +179,15 @@ bnet::TransportModule::~TransportModule()
    DOUT2(("Calling ~TransportModule destructor name:%s", GetName()));
 
    delete fRunThread; fRunThread = 0;
-   delete fRunnable; fRunnable = 0;
+   fRunnableRef.Release();
+   fRunnable = 0;
 
    if (fCmdDataBuffer) {
       delete [] fCmdDataBuffer;
       fCmdDataBuffer = 0;
    }
 
-   for (int n=0;n<BNET_MAXLID;n++) {
+   for (int n=0;n<bnet::MAXLID;n++) {
       if (fSendQueue[n]) delete [] fSendQueue[n];
       if (fRecvQueue[n]) delete [] fRecvQueue[n];
    }

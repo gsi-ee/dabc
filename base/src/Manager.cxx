@@ -1005,6 +1005,10 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    if (cmd.IsName(CmdCreateMemoryPool::CmdName())) {
       cmd_res = cmd_bool(DoCreateMemoryPool(cmd));
    } else
+   if (cmd.IsName(CmdCreateObject::CmdName())) {
+      cmd.SetRef("Object", DoCreateObject(cmd.GetStr("ClassName"), cmd.GetStr("ObjName"), cmd));
+      cmd_res = cmd_true;
+   } else
    if (cmd.IsName(CmdCleanupApplication::CmdName())) {
       cmd_res = DoCleanupApplication();
    } else
@@ -1942,6 +1946,16 @@ bool dabc::ManagerRef::CreateMemoryPool(const char* poolname,
 
    return Execute(cmd);
 }
+
+dabc::Reference dabc::ManagerRef::CreateObject(const std::string& classname, const std::string& objname)
+{
+   CmdCreateObject cmd(classname, objname);
+
+   if (!Execute(cmd)) return dabc::Reference();
+
+   return cmd.GetRef("Object");
+}
+
 
 void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
 {

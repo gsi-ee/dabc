@@ -1,5 +1,24 @@
-#ifndef BNET_TransportRunnable
-#define BNET_TransportRunnable
+// $Id$
+
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
+#ifndef DABC_BnetRunnable
+#define DABC_BnetRunnable
+
+#include <vector>
+
+#include "dabc/Object.h"
 
 #include "dabc/threads.h"
 
@@ -13,8 +32,7 @@
 
 #include "dabc/MemoryPool.h"
 
-#include "bnet/defines.h"
-
+#include "dabc/bnetdefs.h"
 
 
 namespace bnet {
@@ -93,9 +111,22 @@ namespace bnet {
          void SetCoeff(void* args) { fTimeShift = ((double*) args)[0]; fTimeScale = ((double*) args)[1]; }
    };
 
+   class DoublesVector : public std::vector<double> {
+      public:
+      DoublesVector() : std::vector<double>() {}
+
+      void Sort();
+
+      double Mean(double max_cut = 1.);
+      double Dev(double max_cut = 1.);
+      double Max();
+      double Min();
+   };
+
    class TransportModule;
 
-   class TransportRunnable : public dabc::Runnable {
+   class BnetRunnable : public dabc::Object,
+                             public dabc::Runnable {
       protected:
 
          friend class TransportModule;
@@ -260,8 +291,8 @@ namespace bnet {
 
          // dabc::Mutex& mutex() { return fMutex; }
 
-         TransportRunnable();
-         virtual ~TransportRunnable();
+         BnetRunnable(const char* name);
+         virtual ~BnetRunnable();
 
          void SetNodeId(int id, int num, int nlids, dabc::ModuleItem* reply) { fNodeId = id; fNumNodes = num; fNumLids = nlids; fReplyItem = reply; }
 
@@ -310,7 +341,6 @@ namespace bnet {
           * TODO: probably one could use queue with producer/consumer, in this case one could accept many items at once */
          int GetCompleted(bool resetsignalled = true);
    };
-
 }
 
 #endif

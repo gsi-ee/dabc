@@ -117,22 +117,19 @@ namespace dabc {
    };
 
    class CmdCleanupApplication : public Command {
-      public:
-         static const char* CmdName() { return "CleanupManager"; }
-
-         CmdCleanupApplication() : Command(CmdName()) { }
+      DABC_COMMAND(CmdCleanupApplication, "CleanupManager");
    };
 
    class CmdCreateApplication : public Command {
-      public:
-         static const char* CmdName() { return "CreateApplication"; }
 
-         CmdCreateApplication(const char* appclass, const char* appthrd = 0) :
-            Command(CmdName())
-         {
-            SetStr("AppClass", appclass);
-            SetStr("AppThrd", appthrd);
-         }
+      DABC_COMMAND(CmdCreateApplication, "CreateApplication");
+
+      CmdCreateApplication(const char* appclass, const char* appthrd = 0) :
+         Command(CmdName())
+      {
+         SetStr("AppClass", appclass);
+         SetStr("AppThrd", appthrd);
+      }
      };
 
 
@@ -172,6 +169,19 @@ namespace dabc {
             SetStr("ThrdDev", devname);
          }
    };
+
+   class CmdCreateObject : public Command {
+
+      DABC_COMMAND(CmdCreateObject, "CreateObject");
+
+      CmdCreateObject(const std::string& classname, const std::string& objname) :
+         Command(CmdName())
+      {
+         SetStr("ClassName", classname);
+         SetStr("ObjName", objname);
+      }
+   };
+
 
    class CmdCreateTransport : public Command {
 
@@ -565,6 +575,7 @@ namespace dabc {
          bool DestroyDevice(const char* devname);
          WorkerRef FindDevice(const std::string& name);
 
+         Reference CreateObject(const std::string& classname, const std::string& objname);
 
          /** Generic method to create memory pool.
            * Creates memory pool with numbuffers buffers of size buffersize.

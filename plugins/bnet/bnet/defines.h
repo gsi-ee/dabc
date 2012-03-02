@@ -1,6 +1,8 @@
 #ifndef BNET_defines
 #define BNET_defines
 
+#include "dabc/bnetdefs.h"
+
 #include <stdint.h>
 #include <stdio.h>
 
@@ -8,11 +10,6 @@
 
 // maximum command buffer required to provide QPs connection over cluster
 // for 1000 QPs with 16 Lids and 12 byte per QP one require at least  192000 bytes
-
-#define BNET_MAXLID  16
-
-
-#define BNET_QP_QUEUE_SIZE 128
 
 #define BNET_CMD_MAGIC 0x1ff1
 
@@ -51,8 +48,6 @@
 
 namespace bnet {
 
-   typedef uint64_t EventId;
-
    struct names {
 //      names() {}
       static const char* EventLifeTime() { return "TestEventLifeTime"; }
@@ -72,15 +67,6 @@ namespace bnet {
       void* cmddata() const { return (int8_t*) this + sizeof(CommandMessage); }
    };
 
-   struct TimeSyncMessage
-   {
-      int32_t msgid;
-      double  master_time;
-      double  slave_shift;
-      double  slave_time;
-      double  slave_scale;
-   };
-
    struct TransportHeader {
       uint32_t   srcnode;   // source node id
       uint32_t   tgtnode;   // target node id
@@ -91,18 +77,6 @@ namespace bnet {
    };
 
 #pragma pack()
-
-   class DoublesVector : public std::vector<double> {
-      public:
-      DoublesVector() : std::vector<double>() {}
-
-      void Sort();
-
-      double Mean(double max_cut = 1.);
-      double Dev(double max_cut = 1.);
-      double Max();
-      double Min();
-   };
 
 }
 

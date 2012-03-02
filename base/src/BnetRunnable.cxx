@@ -1,6 +1,25 @@
-#include "bnet/TransportRunnable.h"
+// $Id$
+
+/************************************************************
+ * The Data Acquisition Backbone Core (DABC)                *
+ ************************************************************
+ * Copyright (C) 2009 -                                     *
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH      *
+ * Planckstr. 1, 64291 Darmstadt, Germany                   *
+ * Contact:  http://dabc.gsi.de                             *
+ ************************************************************
+ * This software can be used under the GPL license          *
+ * agreements as stated in LICENSE.txt file                 *
+ * which is part of the distribution.                       *
+ ************************************************************/
+
+#include "dabc/BnetRunnable.h"
+
+#include <algorithm>
+#include <math.h>
 
 #include "dabc/ModuleItem.h"
+
 
 void bnet::TimeStamping::ChangeShift(double shift)
 {
@@ -15,7 +34,52 @@ void bnet::TimeStamping::ChangeScale(double koef)
 
 // ==============================================================================
 
-bnet::TransportRunnable::TransportRunnable() :
+void bnet::DoublesVector::Sort()
+{
+   std::sort(begin(), end());
+}
+
+double bnet::DoublesVector::Mean(double max_cut)
+{
+   unsigned right = lrint(max_cut*(size()-1));
+
+   double sum(0);
+   for (unsigned n=0; n<=right; n++) sum+=at(n);
+   return right>0 ? sum / (right+1) : 0.;
+}
+
+double bnet::DoublesVector::Dev(double max_cut)
+{
+   unsigned right = lrint(max_cut*(size()-1));
+
+   if (right==0) return 0.;
+
+   double sum1(0), sum2(0);
+   for (unsigned n=0; n<=right; n++)
+      sum1+=at(n);
+   sum1 = sum1 / (right+1);
+
+   for (unsigned n=0; n<=right; n++)
+      sum2+=(at(n)-sum1)* (at(n)-sum1);
+
+   return ::sqrt(sum2/(right+1));
+}
+
+double bnet::DoublesVector::Min()
+{
+   return size()>0 ? at(0) : 0.;
+}
+
+double bnet::DoublesVector::Max()
+{
+   return size()>0 ? at(size()-1) : 0.;
+}
+
+// ==============================================================================
+
+
+bnet::BnetRunnable::BnetRunnable(const char* name) :
+   dabc::Object(name),
    dabc::Runnable(),
    fMutex(),
    fCondition(&fMutex),
@@ -46,7 +110,7 @@ bnet::TransportRunnable::TransportRunnable() :
 {
 }
 
-bnet::TransportRunnable::~TransportRunnable()
+bnet::BnetRunnable::~BnetRunnable()
 {
    fHeaderPool.Release(); // not necessary, but call it explicitly
 
@@ -61,7 +125,7 @@ bnet::TransportRunnable::~TransportRunnable()
    }
 }
 
-bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd)
+bool bnet::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd)
 {
    fActiveNodes = new bool[NumNodes()];
    for (int n=0;n<NumNodes();n++)
@@ -94,7 +158,7 @@ bool bnet::TransportRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool,
    return true;
 }
 
-bool bnet::TransportRunnable::SubmitCmd(int cmdid, void* args, int argssize)
+bool bnet::BnetRunnable::SubmitCmd(int cmdid, void* args, int argssize)
 {
    CheckModuleThrd();
 
@@ -118,7 +182,7 @@ bool bnet::TransportRunnable::SubmitCmd(int cmdid, void* args, int argssize)
    return true;
 }
 
-bool bnet::TransportRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
+bool bnet::BnetRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
 {
    CheckModuleThrd();
 
@@ -149,7 +213,7 @@ bool bnet::TransportRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
 }
 
 
-bool bnet::TransportRunnable::ExecuteConfigSync(int* args)
+bool bnet::BnetRunnable::ExecuteConfigSync(int* args)
 {
    CheckTransportThrd();
 
@@ -183,7 +247,7 @@ bool bnet::TransportRunnable::ExecuteConfigSync(int* args)
    return true;
 }
 
-bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int argssize)
+bool bnet::BnetRunnable::ExecuteTransportCommand(int cmdid, void* args, int argssize)
 {
    CheckTransportThrd();
 
@@ -244,7 +308,7 @@ bool bnet::TransportRunnable::ExecuteTransportCommand(int cmdid, void* args, int
    return false;
 }
 
-void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
+void bnet::BnetRunnable::PrepareSpecialKind(int& recid)
 {
    OperRec* rec = GetRec(recid);
 
@@ -351,7 +415,7 @@ void bnet::TransportRunnable::PrepareSpecialKind(int& recid)
    }
 }
 
-void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
+void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
 {
    OperRec* rec = GetRec(recid);
 
@@ -465,9 +529,9 @@ void  bnet::TransportRunnable::ProcessSpecialKind(int recid)
    }
 }
 
-void* bnet::TransportRunnable::MainLoop()
+void* bnet::BnetRunnable::MainLoop()
 {
-   DOUT0(("Enter TransportRunnable::MainLoop()"));
+   DOUT0(("Enter BnetRunnable::MainLoop()"));
 
    fMainLoopActive = true;
 
@@ -635,27 +699,27 @@ void* bnet::TransportRunnable::MainLoop()
       if (isdoreply && fReplyItem) fReplyItem->FireUserEvent();
    }
 
-   DOUT0(("Exit TransportRunnable::MainLoop()"));
+   DOUT0(("Exit BnetRunnable::MainLoop()"));
 
    return 0;
 }
 
-bool bnet::TransportRunnable::SetActiveNodes(void* data, int datasize)
+bool bnet::BnetRunnable::SetActiveNodes(void* data, int datasize)
 {
    return ExecuteCmd(cmd_ActiveNodes, data, datasize);
 }
 
-bool bnet::TransportRunnable::CreateQPs(void* recs, int recssize)
+bool bnet::BnetRunnable::CreateQPs(void* recs, int recssize)
 {
    return ExecuteCmd(cmd_CreateQP, recs, recssize);
 }
 
-bool bnet::TransportRunnable::ConnectQPs(void* recs, int recssize)
+bool bnet::BnetRunnable::ConnectQPs(void* recs, int recssize)
 {
    return ExecuteCmd(cmd_ConnectQP, recs, recssize);
 }
 
-bool bnet::TransportRunnable::ConfigSync(bool master, int nrepeat, bool dosync, bool doscale)
+bool bnet::BnetRunnable::ConfigSync(bool master, int nrepeat, bool dosync, bool doscale)
 {
    int args[4];
    args[0] = master ? 1 : 0;
@@ -666,7 +730,7 @@ bool bnet::TransportRunnable::ConfigSync(bool master, int nrepeat, bool dosync, 
    return ExecuteCmd(cmd_ConfigSync, args, sizeof(args));
 }
 
-bool bnet::TransportRunnable::ConfigQueueLimits(int send_limit, int recv_limit)
+bool bnet::BnetRunnable::ConfigQueueLimits(int send_limit, int recv_limit)
 {
    // limits used from module thread, assigned to record when it is submitted
    fSendQueueLimit = send_limit;
@@ -676,7 +740,7 @@ bool bnet::TransportRunnable::ConfigQueueLimits(int send_limit, int recv_limit)
 }
 
 
-bool bnet::TransportRunnable::GetSync(TimeStamping& stamp)
+bool bnet::BnetRunnable::GetSync(TimeStamping& stamp)
 {
    double args[2];
 
@@ -687,12 +751,12 @@ bool bnet::TransportRunnable::GetSync(TimeStamping& stamp)
    return true;
 }
 
-bool bnet::TransportRunnable::ResetStatistic()
+bool bnet::BnetRunnable::ResetStatistic()
 {
    return ExecuteCmd(cmd_ResetStat);
 }
 
-bool bnet::TransportRunnable::GetStatistic(double& mean_loop, double& max_loop, int& long_cnt)
+bool bnet::BnetRunnable::GetStatistic(double& mean_loop, double& max_loop, int& long_cnt)
 {
    double args[3];
 
@@ -705,18 +769,18 @@ bool bnet::TransportRunnable::GetStatistic(double& mean_loop, double& max_loop, 
    return true;
 }
 
-bool bnet::TransportRunnable::CloseQPs()
+bool bnet::BnetRunnable::CloseQPs()
 {
    return ExecuteCmd(cmd_CloseQP);
 }
 
-bool bnet::TransportRunnable::StopRunnable()
+bool bnet::BnetRunnable::StopRunnable()
 {
    // one exit command is submitted, runnable will not be
    return SubmitCmd(cmd_Exit) >= 0;
 }
 
-int bnet::TransportRunnable::PrepareOperation(OperKind kind, int hdrsize, dabc::Buffer buf)
+int bnet::BnetRunnable::PrepareOperation(OperKind kind, int hdrsize, dabc::Buffer buf)
 {
    CheckModuleThrd();
 
@@ -756,7 +820,7 @@ int bnet::TransportRunnable::PrepareOperation(OperKind kind, int hdrsize, dabc::
    return -1;
 }
 
-bool bnet::TransportRunnable::ReleaseRec(int recid)
+bool bnet::BnetRunnable::ReleaseRec(int recid)
 {
    CheckModuleThrd();
 
@@ -780,7 +844,7 @@ bool bnet::TransportRunnable::ReleaseRec(int recid)
    return true;
 }
 
-bool bnet::TransportRunnable::SubmitRec(int recid)
+bool bnet::BnetRunnable::SubmitRec(int recid)
 {
    CheckModuleThrd();
 
@@ -823,7 +887,7 @@ bool bnet::TransportRunnable::SubmitRec(int recid)
 }
 
 
-int bnet::TransportRunnable::GetCompleted(bool resetsignalled)
+int bnet::BnetRunnable::GetCompleted(bool resetsignalled)
 {
    // TODO first : first implement with condition
    // TODO second: fire event to the module - when it works asynchronousely

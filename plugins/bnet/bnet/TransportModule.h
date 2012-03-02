@@ -10,8 +10,8 @@
 #include "dabc/CommandsQueue.h"
 
 #include "bnet/defines.h"
+#include "dabc/BnetRunnable.h"
 #include "bnet/Schedule.h"
-#include "bnet/TransportRunnable.h"
 
 struct ScheduleEntry {
     int    node;
@@ -83,7 +83,8 @@ namespace bnet {
       void*               fCollectBuffer; // buffer to collect results from all nodes
       int                 fCollectBufferSize;
 
-      TransportRunnable*  fRunnable;    // runnable where scheduled transfer is implemented
+      dabc::Reference     fRunnableRef;  // reference on runnable
+      BnetRunnable*  fRunnable;    // runnable where scheduled transfer is implemented
       dabc::PosixThread*  fRunThread;   // special thread where runnable is executed
 
       /** Name of the file with the schedule */
@@ -93,8 +94,8 @@ namespace bnet {
 
       double             fCmdDelay;
 
-      int               *fSendQueue[BNET_MAXLID];    // size of individual sending queue
-      int               *fRecvQueue[BNET_MAXLID];    // size of individual receiving queue
+      int               *fSendQueue[bnet::MAXLID];    // size of individual sending queue
+      int               *fRecvQueue[bnet::MAXLID];    // size of individual receiving queue
       long               fTotalSendQueue;
       long               fTotalRecvQueue;
       long               fTestNumBuffers;

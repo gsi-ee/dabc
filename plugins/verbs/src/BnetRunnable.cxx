@@ -1,10 +1,7 @@
-#include "bnet/VerbsRunnable.h"
+#include "verbs/BnetRunnable.h"
 
-
-#ifdef WITH_VERBS
-
-bnet::VerbsRunnable::VerbsRunnable() :
-   bnet::TransportRunnable(),
+verbs::BnetRunnable::BnetRunnable(const char* name) :
+   bnet::BnetRunnable(name),
    fRelibaleConn(true),
    fIbContext(),
    f_rwr(0),
@@ -16,7 +13,7 @@ bnet::VerbsRunnable::VerbsRunnable() :
 
 }
 
-bnet::VerbsRunnable::~VerbsRunnable()
+verbs::BnetRunnable::~BnetRunnable()
 {
    delete[] f_rwr; f_rwr = 0;
    delete[] f_swr; f_swr = 0;
@@ -30,11 +27,11 @@ bnet::VerbsRunnable::~VerbsRunnable()
 }
 
 
-bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd)
+bool verbs::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd)
 {
    fRelibaleConn = m->Cfg("TestReliable", cmd).AsBool(true);
 
-   if (!TransportRunnable::Configure(m, pool, cmd)) return false;
+   if (!bnet::BnetRunnable::Configure(m, pool, cmd)) return false;
 
    if (!fIbContext.OpenVerbs(true)) {
       EOUT(("Cannot initialize VERBs!!!!"));
@@ -42,7 +39,7 @@ bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dab
    }
 
    fCQ = 0;
-   for (int lid=0; lid<BNET_MAXLID; lid++) {
+   for (int lid=0; lid<bnet::MAXLID; lid++) {
       fQPs[lid] = 0;
       fSendQueue[lid] = 0;
       fRecvQueue[lid] = 0;
@@ -86,11 +83,11 @@ bool bnet::VerbsRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dab
    return true;
 }
 
-bool bnet::VerbsRunnable::ExecuteCloseQPs()
+bool verbs::BnetRunnable::ExecuteCloseQPs()
 {
    CheckTransportThrd();
 
-   // DOUT0(("Executing VerbsRunnable::ExecuteCloseQPs()   numruns:%d", fNumRunningRecs));
+   // DOUT0(("Executing BnetRunnable::ExecuteCloseQPs()   numruns:%d", fNumRunningRecs));
 
    for (int lid=0; lid<NumLids(); lid++) {
       if (fQPs[lid]!=0) {
@@ -112,7 +109,7 @@ bool bnet::VerbsRunnable::ExecuteCloseQPs()
 }
 
 
-bool bnet::VerbsRunnable::ExecuteCreateQPs(void* args, int argssize)
+bool verbs::BnetRunnable::ExecuteCreateQPs(void* args, int argssize)
 {
    CheckTransportThrd();
 
@@ -168,7 +165,7 @@ bool bnet::VerbsRunnable::ExecuteCreateQPs(void* args, int argssize)
    return true;
 }
 
-void bnet::VerbsRunnable::ResortConnections(void* _recs)
+void verbs::BnetRunnable::ResortConnections(void* _recs)
 {
    CheckModuleThrd();
 
@@ -195,7 +192,7 @@ void bnet::VerbsRunnable::ResortConnections(void* _recs)
    free(tmp);
 }
 
-bool bnet::VerbsRunnable::ExecuteConnectQPs(void* args, int argssize)
+bool verbs::BnetRunnable::ExecuteConnectQPs(void* args, int argssize)
 {
    CheckTransportThrd();
 
@@ -222,14 +219,14 @@ bool bnet::VerbsRunnable::ExecuteConnectQPs(void* args, int argssize)
       }
    }
 
-   DOUT0(("VerbsRunnable::ExecuteConnectQPs done"));
+   DOUT0(("BnetRunnable::ExecuteConnectQPs done"));
 
    return true;
 }
 
-bool bnet::VerbsRunnable::DoPrepareRec(int recid)
+bool verbs::BnetRunnable::DoPrepareRec(int recid)
 {
-   OperRec* rec = GetRec(recid);
+   bnet::OperRec* rec = GetRec(recid);
 
    unsigned segid(recid*fSegmPerOper), num_sge(1);
 
@@ -262,7 +259,7 @@ bool bnet::VerbsRunnable::DoPrepareRec(int recid)
    }
 
    switch (rec->kind) {
-      case kind_Send:
+      case bnet::kind_Send:
          f_swr[recid].wr_id    = recid;  // as operation identifier recid is used
          f_swr[recid].sg_list  = f_sge + segid;
          f_swr[recid].num_sge  = num_sge;
@@ -273,7 +270,7 @@ bool bnet::VerbsRunnable::DoPrepareRec(int recid)
             // try to send small portion of data as inline
             f_swr[recid].send_flags = (ibv_send_flags) (IBV_SEND_SIGNALED | IBV_SEND_INLINE);
          break;
-      case kind_Recv:
+      case bnet::kind_Recv:
          f_rwr[recid].wr_id     = recid;
          f_rwr[recid].sg_list   = f_sge + segid;
          f_rwr[recid].num_sge   = num_sge;
@@ -284,31 +281,31 @@ bool bnet::VerbsRunnable::DoPrepareRec(int recid)
          break;
    }
 
-/*   DOUT0(("VerbsRunnable::DoPrepareRec recid:%d  %s  numseg:%u  header %p len:%u lkey:%u",
+/*   DOUT0(("BnetRunnable::DoPrepareRec recid:%d  %s  numseg:%u  header %p len:%u lkey:%u",
          recid, rec->kind == kind_Send ? "kind_Send" : "kind_Recv", num_sge,
         f_sge[segid].addr, f_sge[segid].length,  f_sge[segid].lkey));
 */
    return true;
 }
 
-bool bnet::VerbsRunnable::DoPerformOperation(int recid)
+bool verbs::BnetRunnable::DoPerformOperation(int recid)
 {
    CheckTransportThrd(); // executed only in transport
 
-   OperRec* rec = GetRec(recid);
+   bnet::OperRec* rec = GetRec(recid);
    if (rec==0) return false;
 
-   // DOUT0(("VerbsRunnable::DoPerformOperation recid:%d  %s", recid, rec->kind == kind_Send ? "kind_Send" : "kind_Recv"));
+   // DOUT0(("BnetRunnable::DoPerformOperation recid:%d  %s", recid, rec->kind == kind_Send ? "kind_Send" : "kind_Recv"));
 
    switch (rec->kind) {
-      case kind_None:
+      case bnet::kind_None:
          EOUT(("Operation cannot be done in IB"));
          return false;
 
-      case kind_Send:
+      case bnet::kind_Send:
          return fQPs[rec->tgtindx][rec->tgtnode]->Post_Send(f_swr + recid);
 
-      case kind_Recv:
+      case bnet::kind_Recv:
          return fQPs[rec->tgtindx][rec->tgtnode]->Post_Recv(f_rwr + recid);
    }
 
@@ -317,7 +314,7 @@ bool bnet::VerbsRunnable::DoPerformOperation(int recid)
    return false;
 }
 
-int bnet::VerbsRunnable::DoWaitOperation(double waittime, double fasttime)
+int verbs::BnetRunnable::DoWaitOperation(double waittime, double fasttime)
 {
 //   CheckTransportThrd(); // executed only in transport
 
@@ -328,7 +325,7 @@ int bnet::VerbsRunnable::DoWaitOperation(double waittime, double fasttime)
    if (res==0) return -1;
 
    int recid = (int) fCQ->arg();
-   OperRec* rec = GetRec(recid);
+   bnet::OperRec* rec = GetRec(recid);
 
    if (rec==0) {
       EOUT(("Wrong operation arg!!"));
@@ -339,8 +336,3 @@ int bnet::VerbsRunnable::DoWaitOperation(double waittime, double fasttime)
 
    return recid;
 }
-
-
-
-
-#endif

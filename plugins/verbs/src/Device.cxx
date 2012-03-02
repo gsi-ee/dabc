@@ -45,6 +45,7 @@ const char* verbs::xmlMcastAddr = "McastAddr";
 #include "verbs/Thread.h"
 #include "verbs/Transport.h"
 #include "verbs/MemoryPool.h"
+#include "verbs/BnetRunnable.h"
 
 const int LoopBackQueueSize = 8;
 const int LoopBackBufferSize = 64;
@@ -59,6 +60,8 @@ namespace verbs {
       public:
          VerbsFactory(const char* name) : dabc::Factory(name) {}
 
+         virtual dabc::Reference CreateObject(const char* classname, const char* objname, dabc::Command cmd);
+
          virtual dabc::Device* CreateDevice(const char* classname,
                                             const char* devname,
                                             dabc::Command cmd);
@@ -68,6 +71,14 @@ namespace verbs {
 
 
    VerbsFactory verbsfactory("verbs");
+}
+
+dabc::Reference verbs::VerbsFactory::CreateObject(const char* classname, const char* objname, dabc::Command cmd)
+{
+   if (strcmp(classname, "verbs::BnetRunnable")==0)
+      return new verbs::BnetRunnable(objname);
+
+   return 0;
 }
 
 dabc::Device* verbs::VerbsFactory::CreateDevice(const char* classname,
@@ -465,7 +476,7 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
 
       // here on initializes connection
       case dabc::ConnectionManager::progrDoingInit: {
-         
+
          dabc::PortRef port = req.GetPort();
          if (port.null()) {
             EOUT(("No port is available for the request"));
@@ -473,28 +484,28 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
          }
 
          ProtocolWorker* proc = new ProtocolWorker;
-         
+
          // FIXME: ConnectionRequest should be used
          if (!CreatePortQP(req.GetConnThread().c_str(), port(), 0,
                            proc->fPortThrd, proc->fPortCQ, proc->fPortQP)) {
             delete proc;
             return dabc::cmd_false;
          }
-         
+
          std::string portid;
-         
+
          dabc::formats(portid,"%04X:%08X:%08X", (unsigned) fIbContext.lid(), (unsigned) proc->fPortQP->qp_num(), (unsigned) proc->fPortQP->local_psn());
-         
+
          DOUT0(("CREATE CONNECTION %s", portid.c_str()));
-         
+
          if (req.IsServerSide()) {
             req.SetServerId(portid);
          } else
             req.SetClientId(portid);
-         
+
          // make backpointers, fCustomData is reference, automatically cleaned up by the connection manager
          req.SetCustomData(dabc::Reference(proc, true));
-         
+
          proc->fReqItem = reqitem;
 
          proc->fDevice = this;
@@ -506,7 +517,7 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
          // one should register request and start connection here
 
          DOUT2(("****** VERBS START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str()));
-         
+
          // once connection is started, custom data is no longer necessary by connection record
          // protocol worker will be cleaned up automatically either when connection is done or when connection is timedout
 
@@ -520,12 +531,12 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
 
          std::string remoteid;
          bool res = true;
-         
+
          if (req.IsServerSide())
             remoteid = req.GetClientId();
          else
             remoteid = req.GetServerId();
-         
+
          if (sscanf(remoteid.c_str(),"%X:%X:%X", &proc()->fRemoteLID, &proc()->fRemoteQPN, &proc()->fRemotePSN)!=3) {
             EOUT(("Cannot decode remote id string %s", remoteid.c_str()));
             res = false;
@@ -533,7 +544,7 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
 
          // reply remote command that one other side can start connection
          req.ReplyRemoteCommand(res);
-         
+
          if (res == dabc::cmd_false) {
             proc.Release();
 
@@ -541,21 +552,21 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
          }
 
          DOUT0(("CONNECT TO REMOTE %04x:%08x:%08x - %s", proc()->fRemoteLID, proc()->fRemoteQPN, proc()->fRemotePSN, remoteid.c_str()));
-         
+
          // FIXME: remote port should be handled correctly
          if (proc()->fPortQP->Connect(proc()->fRemoteLID, proc()->fRemoteQPN, proc()->fRemotePSN)) {
 
             proc()->fPool = new MemoryPool(fIbContext, "HandshakePool", 1, 1024, false);
-            
+
             proc()->fLocalCmd = cmd;
 
             proc()->SetQP(proc()->fPortQP);
-            
+
             // we need to preserve thread reference until transport itself will be created
             proc()->AssignToThread(proc()->fPortThrd.Ref());
 
             proc.SetOwner(false);
-            
+
             return dabc::cmd_postponed;
          }
 
@@ -583,7 +594,7 @@ int verbs::Device::ExecuteCommand(dabc::Command cmd)
 
    DOUT5(("Execute command %s", cmd.GetName()));
 
-   
+
    if (cmd.IsName(dabc::ConnectionManagerHandleCmd::CmdName())) {
 
       cmd_res = HandleManagerConnectionRequest(cmd);

@@ -1,22 +1,16 @@
-#ifndef BNET_VerbsRunnable
-#define BNET_VerbsRunnable
+#ifndef VERBS_BnetRunnable
+#define VERBS_BnetRunnable
 
-#include "bnet/TransportRunnable.h"
+#include "dabc/bnetdefs.h"
 
-#include "bnet/defines.h"
-
-
-
-#ifdef WITH_VERBS
+#include "dabc/BnetRunnable.h"
 
 #include "verbs/Context.h"
 #include "verbs/ComplQueue.h"
 #include "verbs/QueuePair.h"
 #include "verbs/MemoryPool.h"
 
-
-namespace bnet {
-
+namespace verbs {
 
    #pragma pack(1)
 
@@ -26,9 +20,10 @@ namespace bnet {
       uint32_t psn;
    };
 
-#pragma pack()
+  #pragma pack()
 
-   class VerbsRunnable : public TransportRunnable {
+
+   class BnetRunnable : public bnet::BnetRunnable {
       protected:
 
          bool fRelibaleConn; // is reliable connection will be used
@@ -36,10 +31,10 @@ namespace bnet {
          verbs::ContextRef  fIbContext;
 
          verbs::ComplQueue* fCQ;                 //!< completion queue, for a moment single
-         verbs::QueuePair** fQPs[BNET_MAXLID]; //!< arrays of QueuePairs pointers, NumNodes X NumLids
+         verbs::QueuePair** fQPs[bnet::MAXLID]; //!< arrays of QueuePairs pointers, NumNodes X NumLids
 
-         int               *fSendQueue[BNET_MAXLID];    // size of individual sending queue
-         int               *fRecvQueue[BNET_MAXLID];    // size of individual receiving queue
+         int               *fSendQueue[bnet::MAXLID];    // size of individual sending queue
+         int               *fRecvQueue[bnet::MAXLID];    // size of individual receiving queue
 
          struct ibv_recv_wr  *f_rwr; // field for receive config, allocated dynamically
          struct ibv_send_wr  *f_swr; // field for send config, allocated dynamically
@@ -58,8 +53,8 @@ namespace bnet {
          virtual int DoWaitOperation(double waittime, double fasttime);
 
       public:
-         VerbsRunnable();
-         virtual ~VerbsRunnable();
+         BnetRunnable(const char* name);
+         virtual ~BnetRunnable();
 
          bool IsReliableConn() const { return fRelibaleConn; }
 
@@ -72,14 +67,5 @@ namespace bnet {
    };
 
 }
-
-#else
-
-namespace bnet {
-   typedef TransportRunnable VerbsRunnable;
-}
-
-#endif
-
 
 #endif

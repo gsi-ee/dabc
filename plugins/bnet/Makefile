@@ -40,6 +40,6 @@ $(DABCINCPATH)/%.h: $(BNETDIR)/%.h
 $(DABCBNET_LIB):   $(BNET_O)
 	@$(MakeLib) $(DABCBNET_LIBNAME) "$(BNET_O)" $(TGTDLLPATH)
 
-$(BNET_O) : DEFINITIONS += $(subst true,WITH_VERBS,$(USEOFEDVERBS))
+# $(BNET_O) : DEFINITIONS += $(subst true,WITH_VERBS,$(USEOFEDVERBS))
 
 include $(DABCSYS)/config/Makefile.rules
