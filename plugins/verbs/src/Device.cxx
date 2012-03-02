@@ -36,7 +36,6 @@ const char* verbs::xmlMcastAddr = "McastAddr";
 #include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
-#include "dabc/Factory.h"
 #include "dabc/ConnectionRequest.h"
 #include "dabc/ConnectionManager.h"
 
@@ -45,7 +44,6 @@ const char* verbs::xmlMcastAddr = "McastAddr";
 #include "verbs/Thread.h"
 #include "verbs/Transport.h"
 #include "verbs/MemoryPool.h"
-#include "verbs/BnetRunnable.h"
 
 const int LoopBackQueueSize = 8;
 const int LoopBackBufferSize = 64;
@@ -54,66 +52,6 @@ const int LoopBackBufferSize = 64;
 // if no, all post/recv/completion operation for all QP/CQ will happens in the same thread
 
 bool verbs::Device::fThreadSafeVerbs = true;
-
-namespace verbs {
-   class VerbsFactory : public dabc::Factory {
-      public:
-         VerbsFactory(const char* name) : dabc::Factory(name) {}
-
-         virtual dabc::Reference CreateObject(const char* classname, const char* objname, dabc::Command cmd);
-
-         virtual dabc::Device* CreateDevice(const char* classname,
-                                            const char* devname,
-                                            dabc::Command cmd);
-
-         virtual dabc::Reference CreateThread(dabc::Reference parent, const char* classname, const char* thrdname, const char* thrddev, dabc::Command cmd);
-   };
-
-
-   VerbsFactory verbsfactory("verbs");
-}
-
-dabc::Reference verbs::VerbsFactory::CreateObject(const char* classname, const char* objname, dabc::Command cmd)
-{
-   if (strcmp(classname, "verbs::BnetRunnable")==0)
-      return new verbs::BnetRunnable(objname);
-
-   return 0;
-}
-
-dabc::Device* verbs::VerbsFactory::CreateDevice(const char* classname,
-                                                const char* devname,
-                                                dabc::Command cmd)
-{
-	if (strcmp(classname, "verbs::Device")!=0)
-	   return dabc::Factory::CreateDevice(classname, devname, cmd);
-
-	return new Device(devname);
-}
-
-dabc::Reference verbs::VerbsFactory::CreateThread(dabc::Reference parent, const char* classname, const char* thrdname, const char* thrddev, dabc::Command cmd)
-{
-   if ((classname==0) || (strcmp(classname, VERBS_THRD_CLASSNAME)!=0)) return dabc::Reference();
-
-   if (thrddev==0) {
-      EOUT(("Device name not specified to create verbs thread"));
-      return dabc::Reference();
-   }
-
-   verbs::DeviceRef dev = dabc::mgr()->FindDevice(thrddev);
-
-   if (dev.null()) {
-      EOUT(("Did not found verbs device with name %s", thrddev));
-      return dabc::Reference();
-   }
-
-   verbs::Thread* thrd = new verbs::Thread(parent, dev()->IbContext(), thrdname);
-
-   return dabc::Reference(thrd);
-}
-
-
-// ____________________________________________________________________
 
 
 namespace verbs {
