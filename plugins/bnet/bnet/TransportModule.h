@@ -51,23 +51,76 @@ namespace bnet {
     * Preserved in the queue until data is not transported
     */
 
-   enum EventDataState { evd_Init, evd_Scheduled, evd_Ready };
+   enum EventPartState { eps_Init, eps_Scheduled, eps_Ready };
 
-   struct EventDataRec {
-       EventDataState  state;     // actual state of the data
+   struct EventPartRec {
+       EventPartState  state;     // actual state of the data
        bnet::EventId   evid;      // eventid
        dabc::Buffer    buf;       // buffer with data
        double          acq_tm;    // time when event was insertred, will be used to remove it
 
-       EventDataRec() : state(evd_Init), evid(0), buf(), acq_tm(0.)  {}
+       EventPartRec() : state(eps_Init), evid(0), buf(), acq_tm(0.)  {}
 
-       EventDataRec(const EventDataRec& src) : state(src.state), evid(src.evid), buf(src.buf), acq_tm(src.acq_tm)  {}
+       EventPartRec(const EventPartRec& src) : state(src.state), evid(src.evid), buf(src.buf), acq_tm(src.acq_tm)  {}
 
-       ~EventDataRec() { reset(); }
+       ~EventPartRec() { reset(); }
 
-       void reset() {  state = evd_Init; evid = 0; buf.Release(); acq_tm = 0.; }
+       void reset() {  state = eps_Init; evid = 0; buf.Release(); acq_tm = 0.; }
    };
 
+
+   struct EventBundleRec {
+      bnet::EventId   evid;      // event identifier
+      int             numbuf;    // number of buffers
+      dabc::Buffer   *buf;       // array of buffers
+      double          acq_tm;    // time when bundle was produced, will be used to remove it
+
+      EventBundleRec() : evid(0), numbuf(0), buf(0), acq_tm(0.) {}
+
+      ~EventBundleRec() { destroy(); }
+
+      EventBundleRec(const EventBundleRec& src) :
+         evid(src.evid), acq_tm(src.acq_tm)
+      {
+         allocate(src.numbuf);
+         for (int n=0;n<src.numbuf;n++)
+            buf[n] = src.buf[n];
+      }
+
+      void allocate(int _numbuf)
+      {
+         if (_numbuf == numbuf) return;
+         destroy();
+         if (_numbuf > 0) {
+            numbuf = _numbuf;
+            buf = new dabc::Buffer[numbuf];
+         }
+      }
+
+      bool ready()
+      {
+         for (int n=0;n<numbuf;n++)
+            if (buf[n].null()) return false;
+         return true;
+      }
+
+      void destroy()
+      {
+         reset();
+         if (buf!=0) {
+            delete [] buf;
+            buf = 0;
+         }
+         numbuf = 0;
+      }
+
+      void reset()
+      {
+         evid = 0;
+         acq_tm = 0;
+         for (int n=0;n<numbuf;n++) buf[n].Release();
+      }
+   };
 
    class TransportModule : public dabc::ModuleAsync {
       protected:
@@ -84,7 +137,7 @@ namespace bnet {
       int                 fCollectBufferSize;
 
       dabc::Reference     fRunnableRef;  // reference on runnable
-      BnetRunnable*  fRunnable;    // runnable where scheduled transfer is implemented
+      BnetRunnable*       fRunnable;    // runnable where scheduled transfer is implemented
       dabc::PosixThread*  fRunThread;   // special thread where runnable is executed
       EventHandlingRef    fEventHandling;
 
@@ -127,8 +180,8 @@ namespace bnet {
 
       dabc::TimeStamp fConnStartTime;  // time when connection was starting
 
-      int64_t    fSyncArgs[6];  // arguments for time sync
-      int       fSlaveSyncNode;  // current slave node for time sync
+      int64_t         fSyncArgs[6];  // arguments for time sync
+      int             fSlaveSyncNode;  // current slave node for time sync
       dabc::TimeStamp fSyncStartTime;  // time when connection was starting
 
       dabc::CommandsQueue  fCmdsQueue; // commands submitted for execution
@@ -164,20 +217,23 @@ namespace bnet {
 
       // this all about events bookkeeping
 
-      dabc::RecordsQueue<EventDataRec, false>  fEvQueue;
+      dabc::RecordsQueue<EventPartRec, false>  fEvPartsQueue;
       double    fEventLifeTime; // time how long event would be preserved in memory
 
+      dabc::RecordsQueue<EventBundleRec, false>  fEvBundelsQueue;
 
       virtual void ProcessInputEvent(dabc::Port* port);
       virtual void ProcessOutputEvent(dabc::Port* port);
       virtual void ProcessTimerEvent(dabc::Timer* timer);
       virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
 
-      void ReleaseReadyEvents();
+      void ReleaseReadyEventParts();
       void ReadoutNextEvents(dabc::Port* port);
-      EventDataRec* FindEventRec(bnet::EventId evid);
+      EventPartRec* FindEventPartRec(bnet::EventId evid);
 
+      EventBundleRec* FindEventBundleRec(bnet::EventId evid);
       void ProvideReceivedBuffer(bnet::EventId evid, int nodeid, dabc::Buffer& buf);
+      void BuildReadyEvents(dabc::Port* port);
 
       void ProcessNextSlaveInputEvent();
 

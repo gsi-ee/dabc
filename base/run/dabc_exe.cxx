@@ -159,7 +159,7 @@ int main(int numc, char* args[])
    }
 
    // reserve special thread
-   dabc::PosixThread::ReduceAffinity(cfg.NumSpecialProcessors());
+   dabc::PosixThread::ReduceAffinity(cfg.NumSpecialThreads());
 
    dabc::PosixThread::PrintAffinity("Process");
 

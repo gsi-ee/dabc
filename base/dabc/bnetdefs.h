@@ -45,9 +45,11 @@ namespace bnet {
       public:
          EventHandling(const char* name) : dabc::Object(name) {}
 
-         virtual bool GenerateSubEvent(EventId evid, int subid, int numsubids, dabc::Buffer& buf) = 0;
+         virtual bool GenerateSubEvent(bnet::EventId evid, int subid, int numsubids, dabc::Buffer& buf) = 0;
 
-         virtual bool ExtractEventId(const dabc::Buffer& buf, EventId& evid) = 0;
+         virtual bool ExtractEventId(const dabc::Buffer& buf, bnet::EventId& evid) = 0;
+
+         virtual dabc::Buffer BuildFullEvent(bnet::EventId evid, dabc::Buffer* bufs, int numbufs) = 0;
    };
 
    class EventHandlingRef : public dabc::Reference {

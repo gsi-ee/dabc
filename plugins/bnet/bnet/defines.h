@@ -60,6 +60,8 @@ namespace bnet {
          virtual bool GenerateSubEvent(EventId evid, int subid, int numsubids, dabc::Buffer& buf);
 
          virtual bool ExtractEventId(const dabc::Buffer& buf, EventId& evid);
+
+         virtual dabc::Buffer BuildFullEvent(bnet::EventId evid, dabc::Buffer* bufs, int numbufs);
    };
 
 

@@ -17,7 +17,7 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fStamping(),
    fCmdsQueue(),
-   fEvQueue()
+   fEvPartsQueue()
 {
    fNodeNumber = cmd.Field("NodeNumber").AsInt(0);
    fNumNodes = cmd.Field("NumNodes").AsInt(1);
@@ -41,6 +41,8 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    }
 
    CreateInput("DataInput", FindPool("BnetDataPool"), 10);
+
+   CreateOutput("DataOutput", FindPool("BnetDataPool"), 10);
 
    fActiveNodes.clear();
    fActiveNodes.resize(fNumNodes, true);
@@ -116,9 +118,13 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
 
    int evqueuesize = Cfg("TestEventQueue", cmd).AsInt(100);
 
-   fEvQueue.Allocate(evqueuesize);
+   fEvPartsQueue.Allocate(evqueuesize);
 
    fEventLifeTime = Cfg(names::EventLifeTime(), cmd).AsDouble(2.);
+
+   int numfullevents = evqueuesize / NumNodes();
+   if (numfullevents<5) numfullevents = 5;
+   fEvBundelsQueue.Allocate(numfullevents);
 
    if (IsMaster()) {
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 0.3)); // master wait 0.3 seconds
@@ -685,6 +691,8 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 {
    if (!fAllToAllActive) return false;
 
+   BuildReadyEvents(FindPort("DataOutput"));
+
    ReadoutNextEvents(FindPort("DataInput"));
 
    double start_tm = 0;
@@ -785,7 +793,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                   return false;
                }
 
-               DOUT1(("SubmitRecvOper recid %d node %d lid %d till oper %8.6f", recid, node, lid, next_recv_time - curr_tm));
+               DOUT2(("SubmitRecvOper recid %d node %d lid %d till oper %8.6f", recid, node, lid, next_recv_time - curr_tm));
 
                did_submit = true;
             }
@@ -813,7 +821,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
             // later event id should be specified in the schedule itself
             bnet::EventId evid = 1 + fSendOverflowCnt*NumNodes() + node;
 
-            EventDataRec* evrec = FindEventRec(evid);
+            EventPartRec* evrec = FindEventPartRec(evid);
 
             if (evrec == 0) {
                EOUT(("Cannot find event %u at the moment when it should be sumbitted", (unsigned) evid));
@@ -823,9 +831,9 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
                ProvideReceivedBuffer(evid, Node(), evrec->buf);
                did_submit = true;
-               evrec->state = evd_Ready;
+               evrec->state = eps_Ready;
 
-               DOUT1(("Provide event %u to myself", (unsigned) evid));
+               DOUT2(("Provide event %u to myself", (unsigned) evid));
 
             } else
             if (/*canskipoperation &&*/ false /*  ((SendQueue(lid, node) >= max_sending_queue) || (TotalSendQueue() >= 2*max_sending_queue))*/ ) {
@@ -871,9 +879,9 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                   return false;
                }
 
-               DOUT1(("SubmitSendOper recid %d node %d lid %d till oper %8.6f", recid, node, lid, next_send_time - curr_tm));
+               DOUT2(("SubmitSendOper recid %d node %d lid %d till oper %8.6f", recid, node, lid, next_send_time - curr_tm));
 
-               evrec->state = evd_Scheduled;
+               evrec->state = eps_Scheduled;
 
                fNumSendPackets++;
 
@@ -1004,7 +1012,9 @@ void bnet::TransportModule::ProcessInputEvent(dabc::Port* port)
 
 void bnet::TransportModule::ProcessOutputEvent(dabc::Port* port)
 {
-
+   if (port->IsName("DataOutput")) {
+      BuildReadyEvents(port);
+   }
 }
 
 bnet::EventId bnet::TransportModule::ExtractEventId(const dabc::Buffer& buf)
@@ -1022,17 +1032,17 @@ void bnet::TransportModule::ReadoutNextEvents(dabc::Port* port)
 
    if (!fAllToAllActive) return;
 
-   ReleaseReadyEvents();
+   ReleaseReadyEventParts();
 
-   while (port->CanRecv() && !fEvQueue.Full()) {
+   while (port->CanRecv() && !fEvPartsQueue.Full()) {
       dabc::Buffer buf;
       buf << port->Recv();
 
       if (buf.null()) break;
 
-      EventDataRec* rec = fEvQueue.PushEmpty();
+      EventPartRec* rec = fEvPartsQueue.PushEmpty();
 
-      rec->state = evd_Init;
+      rec->state = eps_Init;
       rec->buf << buf;
       rec->buf.SetTransient(false); // we keep reference on the buffer until it is not processed
       rec->evid = ExtractEventId(rec->buf);
@@ -1040,33 +1050,81 @@ void bnet::TransportModule::ReadoutNextEvents(dabc::Port* port)
    }
 }
 
-bnet::EventDataRec* bnet::TransportModule::FindEventRec(bnet::EventId evid)
+bnet::EventPartRec* bnet::TransportModule::FindEventPartRec(bnet::EventId evid)
 {
    // TODO: make searching of even more optimal - one could use map or other methods
-   for (unsigned n=0;n<fEvQueue.Size();n++) {
-      bnet::EventDataRec* rec = &fEvQueue.Item(n);
+   for (unsigned n=0;n<fEvPartsQueue.Size();n++) {
+      bnet::EventPartRec* rec = &fEvPartsQueue.Item(n);
       if (rec->evid == evid) return rec;
    }
 
    return 0;
 }
 
+bnet::EventBundleRec* bnet::TransportModule::FindEventBundleRec(bnet::EventId evid)
+{
+   for (unsigned n=0;n<fEvBundelsQueue.Size();n++) {
+      bnet::EventBundleRec* rec = &fEvBundelsQueue.Item(n);
+      if (rec->evid == evid) return rec;
+   }
 
-void bnet::TransportModule::ReleaseReadyEvents()
+   return 0;
+}
+
+void bnet::TransportModule::ProvideReceivedBuffer(bnet::EventId evid, int nodeid, dabc::Buffer& buf)
+{
+   // here one should collect subevents and build ready event when all parts are there
+
+   bnet::EventBundleRec* rec = FindEventBundleRec(evid);
+
+   if (rec==0) {
+      if (fEvBundelsQueue.Full()) {
+         EOUT(("No place for new events!!!"));
+         buf.Release();
+         return;
+      }
+
+      rec = fEvBundelsQueue.PushEmpty();
+
+      rec->allocate(NumNodes());
+      rec->acq_tm = fStamping();
+      rec->evid = evid;
+   }
+
+   rec->buf[nodeid] << buf;
+}
+
+
+void bnet::TransportModule::BuildReadyEvents(dabc::Port* port)
 {
    double curr_tm = fStamping();
 
-   while (!fEvQueue.Empty()) {
-      EventDataRec* rec = &fEvQueue.Front();
+   while (!fEvBundelsQueue.Empty()) {
+      bnet::EventBundleRec* rec = &fEvBundelsQueue.Front();
 
-      if (rec->state == evd_Ready) {
-         fEvQueue.PopOnly();
+      if (curr_tm > rec->acq_tm + fEventLifeTime) {
+         EOUT(("Release event bundle due to timeout"));
+         fEvBundelsQueue.PopOnly();
          continue;
       }
 
-      if (curr_tm > rec->acq_tm + fEventLifeTime) {
-         EOUT(("Event %u should be dropped", (unsigned) rec->evid));
-         fEvQueue.PopOnly();
+      if (rec->ready() && port->CanSend()) {
+         // building of event
+         dabc::Buffer res;
+         res << fEventHandling()->BuildFullEvent(rec->evid, rec->buf, rec->numbuf);
+
+         if (res.null()) {
+            EOUT(("Event not build !!!!"));
+            return;
+         }
+
+         // deliver to the output
+         port->Send(res);
+
+         DOUT1(("Build event %u", (unsigned) rec->evid));
+
+         // release item
+         fEvBundelsQueue.PopOnly();
          continue;
       }
 
@@ -1074,14 +1132,31 @@ void bnet::TransportModule::ReleaseReadyEvents()
    }
 }
 
-void bnet::TransportModule::ProvideReceivedBuffer(bnet::EventId evid, int nodeid, dabc::Buffer& buf)
+
+
+
+
+void bnet::TransportModule::ReleaseReadyEventParts()
 {
-   // here one should collect subevents and build ready event when all parts are there
+   double curr_tm = fStamping();
 
-   // TODO: Make real implementation
-   buf.Release();
+   while (!fEvPartsQueue.Empty()) {
+      EventPartRec* rec = &fEvPartsQueue.Front();
+
+      if (rec->state == eps_Ready) {
+         fEvPartsQueue.PopOnly();
+         continue;
+      }
+
+      if (curr_tm > rec->acq_tm + fEventLifeTime) {
+         EOUT(("Event %u should be dropped", (unsigned) rec->evid));
+         fEvPartsQueue.PopOnly();
+         continue;
+      }
+
+      return;
+   }
 }
-
 
 void bnet::TransportModule::ProcessNextSlaveInputEvent()
 {
@@ -1355,17 +1430,17 @@ void bnet::TransportModule::ProcessSendCompleted(int recid, OperRec* rec)
 
    TransportHeader* hdr = (TransportHeader*) rec->header;
 
-   EventDataRec* evrec = FindEventRec(hdr->evid);
+   EventPartRec* evrec = FindEventPartRec(hdr->evid);
    if (evrec==0) {
       EOUT(("Cannot find event structure for event %u which was send - is it skipped meanwhile???", (unsigned) hdr->evid));
    } else {
       // we mark event record as ready - it will be removed soon
-      evrec->state = evd_Ready;
+      evrec->state = eps_Ready;
 
-      DOUT1(("Process send completed evid %u", (unsigned) hdr->evid));
+      DOUT2(("Process send completed evid %u", (unsigned) hdr->evid));
    }
 
-   DOUT1(("ProcessSendCompleted recid %d err %s numfree %d", recid, DBOOL(rec->err), fRunnable->NumFreeRecs()));
+   DOUT2(("ProcessSendCompleted recid %d err %s numfree %d", recid, DBOOL(rec->err), fRunnable->NumFreeRecs()));
 
    fNumComplSendPackets++;
 
@@ -1384,7 +1459,7 @@ void bnet::TransportModule::ProcessRecvCompleted(int recid, OperRec* rec)
 {
    if (!fAllToAllActive) return;
 
-   DOUT1(("ProcessRecvCompleted recid %d err %s numfree %d", recid, DBOOL(rec->err), fRunnable->NumFreeRecs()));
+   DOUT2(("ProcessRecvCompleted recid %d err %s numfree %d", recid, DBOOL(rec->err), fRunnable->NumFreeRecs()));
 
    // TODO: event building should be implemented, for the moment we just skip all data
 
@@ -1711,7 +1786,6 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
             RequestMasterCommand(BNET_CMD_CLEANUP, fCollectBuffer, -blocksize);
          break;
       }
-
 
       default:
          EOUT(("Command not supported"));

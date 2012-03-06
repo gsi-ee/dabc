@@ -65,7 +65,7 @@ namespace dabc {
          bool NormalMainThread();
          /** Return configured number of processors,
           * which are reserved for special threads and not consumed by rest of the system */
-         int NumSpecialProcessors();
+         int NumSpecialThreads();
 
          std::string GetUserPar(const char* name, const char* dflt = 0);
          int GetUserParInt(const char* name, int dflt = 0);

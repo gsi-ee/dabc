@@ -7,7 +7,7 @@
        <debugger value="false"/>
        <taskset value="-c 10-12"/>
        <nullout value="true"/>
-       <num_special_proc value="1"/>
+       <num_special_thrds value="1"/>
        <loglevel value="0"/>
        <loglimit value="100000000"/>
        <runtime value="100"/>

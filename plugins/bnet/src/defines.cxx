@@ -23,7 +23,7 @@ bool bnet::TestEventHandling::GenerateSubEvent(EventId evid, int subid, int nums
 {
    if (buf.GetTotalSize() < 16) return false;
 
-   DOUT1(("Produce event %u", (unsigned) evid));
+   DOUT2(("Produce event %u", (unsigned) evid));
 
    uint64_t data[2] = { evid, subid };
 
@@ -37,4 +37,17 @@ bool bnet::TestEventHandling::ExtractEventId(const dabc::Buffer& buf, EventId& e
    evid = 0;
    buf.CopyTo(&evid, sizeof(evid));
    return true;
+}
+
+dabc::Buffer bnet::TestEventHandling::BuildFullEvent(bnet::EventId evid, dabc::Buffer* bufs, int numbufs)
+{
+   dabc::Buffer res;
+   if (bufs==0) return res;
+
+   for (int n=0;n<numbufs;n++) {
+      if (n==0) res << bufs[n];
+      bufs[n].Release();
+   }
+
+   return res;
 }

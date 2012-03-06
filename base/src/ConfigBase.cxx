@@ -61,7 +61,7 @@ namespace dabc {
    const char* xmlLoglevel         = "loglevel";
    const char* xmlRunTime          = "runtime";
    const char* xmlNormalMainThrd   = "normalmainthrd";
-   const char* xmlNumSpecialProc   = "num_special_proc";
+   const char* xmlNumSpecialThreads   = "num_special_thrds";
    const char* xmlTaskset          = "taskset";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
    const char* xmlUserLib          = "lib";

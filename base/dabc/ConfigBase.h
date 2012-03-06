@@ -61,7 +61,7 @@ namespace dabc {
    extern const char* xmlLoglimit;
    extern const char* xmlRunTime;
    extern const char* xmlNormalMainThrd;
-   extern const char* xmlNumSpecialProc;
+   extern const char* xmlNumSpecialThreads;
    extern const char* xmlTaskset;
    extern const char* xmlLDPATH;
    extern const char* xmlUserLib;

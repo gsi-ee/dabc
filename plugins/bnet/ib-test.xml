@@ -14,9 +14,9 @@
        <debugger value="false"/>
        <errout value="/dev/null"/>
        <nullout value="false"/>
-       <num_special_proc value="1"/>
+       <num_special_thrds value="1"/>
        <taskset value="-c 0-1"/>
-       <loglevel value="0"/>
+       <loglevel value="1"/>
        <loglimit value="10000000"/>
        <runtime value="50"/>
        <!--runfunc value="test_affinity"/-->
