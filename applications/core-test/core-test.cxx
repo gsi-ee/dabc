@@ -1155,3 +1155,199 @@ extern "C" void RunPoolTest()
 
    DOUT0(("Pool test done"));
 }
+
+// ===================================== CPP test =================================
+
+/** Prototype of stack buffer - all fields are in stack, need to deep copy all of them by assign operator */
+class SBuffer {
+   protected:
+      int fField;
+   public:
+      SBuffer() : fField(0) { DOUT0(("SBuffer Default constructor")); }
+
+      SBuffer(const SBuffer& src) : fField(src.fField) { DOUT0(("SBuffer Copy constructor")); }
+
+      virtual ~SBuffer() { DOUT0(("SBuffer Destructor")); }
+
+      SBuffer& operator=(const SBuffer& src)
+      {
+         DOUT0(("operator=(const SBuffer& src)"));
+         fField = src.fField; return *this;
+      }
+
+      SBuffer& operator=(SBuffer& src)
+      {
+         DOUT0(("operator=(SBuffer& src)"));
+         fField = src.fField;
+         src.fField = 0;
+         return *this;
+      }
+
+      SBuffer& operator<<(SBuffer& src)
+      {
+         DOUT0(("operator<<(SBuffer& src)"));
+         fField = src.fField;
+         src.fField = 0;
+         return *this;
+      }
+
+      SBuffer& operator<<(const SBuffer& src)
+      {
+         DOUT0(("operator<<(const SBuffer& src)"));
+         fField = src.fField;
+         return *this;
+      }
+};
+
+struct DBufferRec {
+   int fRefCnt;
+   int fField1;
+   int fField2;
+   int fField3;
+   void incref() { fRefCnt++; }
+   bool decref() { return --fRefCnt<=0; }
+};
+
+class DBuffer {
+   protected:
+      DBufferRec* fRec;
+
+      void close()
+      {
+         if (fRec && fRec->decref()) free(fRec);
+         fRec = 0;
+      }
+
+   public:
+      DBuffer() : fRec(0) { DOUT0(("DBuffer Default constructor")); }
+
+      DBuffer(unsigned extrasz) : fRec(0)
+      {
+         DOUT0(("DBuffer normal constructor"));
+         allocate(extrasz);
+      }
+
+      DBuffer(const DBuffer& src) : fRec(src.fRec)
+      {
+         DOUT0(("DBuffer Copy constructor"));
+         if (fRec) fRec->incref();
+      }
+
+      virtual ~DBuffer()
+      {
+         DOUT0(("DBuffer Destructor"));
+         close();
+      }
+
+      void allocate(unsigned extrasz = 0)
+      {
+         close();
+         fRec = (DBufferRec*) malloc(sizeof(DBufferRec) + extrasz);
+         fRec->fRefCnt = 1;
+      }
+
+      DBuffer& operator=(const DBuffer& src)
+      {
+         close();
+         DOUT0(("operator=(const DBuffer& src)"));
+         fRec = src.fRec;
+         if (fRec) fRec->incref();
+         return *this;
+      }
+
+      DBuffer& operator<<(DBuffer& src)
+      {
+         DOUT0(("operator<<(DBuffer& src)"));
+         close();
+         fRec = src.fRec;
+         src.fRec = 0;
+         return *this;
+      }
+
+      DBuffer& operator<<(const DBuffer& src)
+      {
+         DOUT0(("operator<<(const DBuffer& src)"));
+         return operator=(src);
+      }
+};
+
+
+SBuffer SFunc1()
+{
+   DOUT0(("Enter SFunc1"));
+   SBuffer res;
+   DOUT0(("Return from SFunc1"));
+   return res;
+}
+
+SBuffer SFunc2()
+{
+   DOUT0(("Enter and return from SFunc2"));
+   return SFunc1();
+}
+
+DBuffer DFunc1()
+{
+   DOUT0(("Enter DFunc1"));
+   DBuffer res(16);
+   DOUT0(("Return from DFunc1"));
+   return res;
+}
+
+DBuffer DFunc2()
+{
+   DOUT0(("Enter and return from DFunc2"));
+   return DFunc1();
+}
+
+
+
+extern "C" void RunCPPTest()
+{
+   {
+   DOUT0(("***** Calling SBuffer res = SFunc1() ****** "));
+
+   SBuffer res = SFunc1();
+
+   DOUT0(("***** Calling SBuffer res2; res2 = SFunc1() ****** "));
+
+   SBuffer res2; res2 = SFunc1();
+
+   DOUT0(("***** Calling SBuffer res3 = SFunc2() ****** "));
+
+   SBuffer res3 = SFunc2();
+
+   DOUT0(("***** Calling SBuffer res4; res4 = SFunc2() ****** "));
+
+   SBuffer res4; res4 = SFunc2();
+
+   DOUT0(("***** Calling res4 = res2; ****** "));
+
+   res4 = res2;
+
+   DOUT0(("***** Calling res << res3; ****** "));
+
+   res << res3;
+
+   DOUT0(("***** Calling res << SFunc1(); ****** "));
+
+   res << SFunc1();
+
+   DOUT0(("***** Leaving SBuffer part ****** "));
+
+   }
+
+   {
+      DOUT0(("***** Calling DBuffer res = DFunc1() ****** "));
+
+      DBuffer res = DFunc1();
+
+      DOUT0(("***** Calling DBuffer res2; res2 = DFunc1() ****** "));
+
+      DBuffer res2; res2 = DFunc1();
+
+      DOUT0(("***** Leaving DBuffer part ****** "));
+
+
+   }
+}
