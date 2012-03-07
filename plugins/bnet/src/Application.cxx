@@ -77,18 +77,18 @@ bool bnet::Application::CreateAppModules()
 
    dabc::mgr.CreateModule("bnet::GeneratorModule", "BnetGener", "BnetGenerThrd");
 
-   dabc::CmdCreateModule cmd("bnet::TransportModule", BNET_WORKERNAME, "BnetModuleThrd");
+   dabc::CmdCreateModule cmd("bnet::TransportModule", names::WorkerModuleName(), "BnetModuleThrd");
    cmd.Field("NodeNumber").SetInt(dabc::mgr.NodeId());
    cmd.Field("NumNodes").SetInt(dabc::mgr.NumNodes());
    cmd.Field("NumPorts").SetInt((dabc::mgr.NodeId()==0) ? dabc::mgr.NumNodes()-1 : 1);
    if (!dabc::mgr.Execute(cmd)) return false;
 
-   dabc::mgr.Connect("BnetGener/Output", dabc::format("%s/DataInput", BNET_WORKERNAME));
+   dabc::mgr.Connect("BnetGener/Output", dabc::format("%s/DataInput", names::WorkerModuleName()));
 
    for (unsigned node = 1; node < NumNodes(); node++) {
-      std::string port1 = dabc::Url::ComposePortName(0, FORMAT(("%s/Port", BNET_WORKERNAME)), node-1);
+      std::string port1 = dabc::Url::ComposePortName(0, FORMAT(("%s/Port", names::WorkerModuleName())), node-1);
 
-      std::string port2 = dabc::Url::ComposePortName(node, FORMAT(("%s/Port", BNET_WORKERNAME)), 0);
+      std::string port2 = dabc::Url::ComposePortName(node, FORMAT(("%s/Port", names::WorkerModuleName())), 0);
 
       dabc::mgr.Connect(port1, port2).SetOptional(dabc::mgr.NodeId()==0);
    }

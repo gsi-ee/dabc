@@ -273,6 +273,9 @@ namespace bnet {
             return Item(nslot,nsender).Empty();
          }
 
+         /** Return slot which has transfer from sender to receiver node, -1 if failes */
+         int FindSlotWithConnection(int nsender, int nreceiver);
+
          /** Fill receive schedule, originally schedule was designed for senders */
          void FillReceiveSchedule(IBSchedule& recv);
 

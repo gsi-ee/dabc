@@ -1267,6 +1267,15 @@ void bnet::IBSchedule::Clear()
    SetTimeSlot(numSlots(), 0);
 }
 
+int bnet::IBSchedule::FindSlotWithConnection(int nsender, int nreceiver)
+{
+   for (int nslot=0; nslot<numSlots(); nslot++)
+      if (Item(nslot,nsender).node == nreceiver) return nslot;
+
+   return -1;
+}
+
+
 void bnet::IBSchedule::FillReceiveSchedule(IBSchedule& recv)
 {
    recv.Allocate(numSlots(), numSenders());

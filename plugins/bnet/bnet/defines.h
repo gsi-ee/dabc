@@ -11,46 +11,39 @@
 // maximum command buffer required to provide QPs connection over cluster
 // for 1000 QPs with 16 Lids and 12 byte per QP one require at least  192000 bytes
 
-#define BNET_CMD_MAGIC 0x1ff1
-
-// these commands are send over network
-#define BNET_CMD_EXIT        76543201
-#define BNET_CMD_TIMESYNC    76543202
-#define BNET_CMD_EXECSYNC    76543203
-#define BNET_CMD_GETSYNC     76543204
-#define BNET_CMD_COLLECT     76543205
-#define BNET_CMD_TEST        76543206
-#define BNET_CMD_CREATEQP    76543207
-#define BNET_CMD_CONNECTQP   76543208
-#define BNET_CMD_CLOSEQP     76543209
-#define BNET_CMD_ALLTOALL    76543210
-#define BNET_CMD_GETRUNRES   76543211
-#define BNET_CMD_SHOWRUNRES  76543212
-#define BNET_CMD_CLEANUP     76543213
-#define BNET_CMD_ASKQUEUE    76543214
-#define BNET_CMD_COLLRATE    76543217
-#define BNET_CMD_ACTIVENODES 76543218
-
-// these commands are local
-
-#define BNET_CMD_WAIT        80001  // wait for 1 seconds
-#define BNET_CMD_MEASURE     80002  // measure command delay
-#define BNET_CMD_CONNECTDONE 80003  // finilize connections
-
-#define BNET_WORKERNAME      "BnetWorker"
-
-#define CMDCH_RECV_ARG        123456
-#define CMDCH_SEND_ARG        654321
-
-// this is command sent via common channel for different kind of action
-// command specific settings should be sent after all or selected nodes
-// responded
-
 namespace bnet {
 
    struct names {
-//      names() {}
       static const char* EventLifeTime() { return "TestEventLifeTime"; }
+      static const char* WorkerModuleName() { return "BnetWorker"; }
+   };
+
+   enum BnetCommandsIds {
+      BNET_CMD_MAGIC      = 0x1ff1,
+
+      // these commands are send over network
+      BNET_CMD_EXIT      = 76543201,
+      BNET_CMD_TIMESYNC  = 76543202,
+      BNET_CMD_EXECSYNC  = 76543203,
+      BNET_CMD_GETSYNC   = 76543204,
+      BNET_CMD_COLLECT   = 76543205,
+      BNET_CMD_TEST      = 76543206,
+      BNET_CMD_CREATEQP  = 76543207,
+      BNET_CMD_CONNECTQP = 76543208,
+      BNET_CMD_CLOSEQP   = 76543209,
+      BNET_CMD_ALLTOALL  = 76543210,
+      BNET_CMD_GETRUNRES = 76543211,
+      BNET_CMD_SHOWRUNRES= 76543212,
+      BNET_CMD_CLEANUP   = 76543213,
+      BNET_CMD_ASKQUEUE  = 76543214,
+      BNET_CMD_COLLRATE  = 76543217,
+      BNET_CMD_ACTIVENODES=76543218,
+
+      // these commands are local
+
+      BNET_CMD_WAIT       = 80001,  // wait for 1 seconds
+      BNET_CMD_MEASURE    = 80002,  // measure command delay
+      BNET_CMD_CONNECTDONE= 80003  // finilize connections
    };
 
    class TestEventHandling : public EventHandling {
@@ -82,9 +75,10 @@ namespace bnet {
    struct TransportHeader {
       uint32_t   srcnode;   // source node id
       uint32_t   tgtnode;   // target node id
-      EventId    evid;    // event id
-      double     send_tm; // time when operation was send (for debugging)
-      uint32_t   seqid;   // sequence number of transfer - to detect skipped operations
+      EventId    evid;      // event id
+      double     send_tm;   // time when operation was send (for debugging)
+      uint32_t   seqid;     // sequence number of transfer - to detect skipped operations
+      uint32_t   sendkind;  // indicate that is send 0 - dummy (empty buffer), 1 - normal data
 
    };
 

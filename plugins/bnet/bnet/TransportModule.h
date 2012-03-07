@@ -168,21 +168,22 @@ namespace bnet {
       /** Send and receive schedule, used in all-to-all tests */
       IBSchedule  fSendSch;
       IBSchedule  fRecvSch;
+      bool        fTimeScheduled; // main switch, indicate if all transfer runs according the time or just first - first out
 
 
-      int fRunningCmdId; // id of running command, 0 if no command is runs
-      dabc::TimeStamp fCmdStartTime;  // time when command should finish its execution
-      dabc::TimeStamp fCmdEndTime;  // time when command should finish its execution
+      int               fRunningCmdId; // id of running command, 0 if no command is runs
+      dabc::TimeStamp   fCmdStartTime;  // time when command should finish its execution
+      dabc::TimeStamp   fCmdEndTime;  // time when command should finish its execution
       std::vector<bool> fCmdReplies; // indicates if cuurent cmd was replied
-      dabc::Average fCmdTestLoop; // average time of test loop
-      void*  fCmdAllResults;   // buffer where replies from all nodes collected
-      int    fCmdResultsPerNode;  // how many data in replied is expected
+      dabc::Average     fCmdTestLoop; // average time of test loop
+      void*             fCmdAllResults;   // buffer where replies from all nodes collected
+      int               fCmdResultsPerNode;  // how many data in replied is expected
 
-      dabc::TimeStamp fConnStartTime;  // time when connection was starting
+      dabc::TimeStamp   fConnStartTime;  // time when connection was starting
 
-      int64_t         fSyncArgs[6];  // arguments for time sync
-      int             fSlaveSyncNode;  // current slave node for time sync
-      dabc::TimeStamp fSyncStartTime;  // time when connection was starting
+      int64_t           fSyncArgs[6];  // arguments for time sync
+      int               fSlaveSyncNode;  // current slave node for time sync
+      dabc::TimeStamp   fSyncStartTime;  // time when connection was starting
 
       dabc::CommandsQueue  fCmdsQueue; // commands submitted for execution
 
@@ -197,9 +198,9 @@ namespace bnet {
       int                 fTestBufferSize;
       double              fTestStartTime, fTestStopTime; // start/stop time for data transfer
       int                 fSendSlotIndx, fRecvSlotIndx;
-      uint64_t            fSendOverflowCnt, fRecvOverflowCnt;
       double              fSendBaseTime, fRecvBaseTime;
       bool                fDoSending, fDoReceiving;
+      int                 fSendQueueLimit, fRecvQueueLimit; // limits for queue sizes
 
       dabc::Ratemeter    fWorkRate;
       dabc::Ratemeter    fSendRate;
@@ -218,7 +219,12 @@ namespace bnet {
       // this all about events bookkeeping
 
       dabc::RecordsQueue<EventPartRec, false>  fEvPartsQueue;
-      double    fEventLifeTime; // time how long event would be preserved in memory
+      double         fEventLifeTime;   // time how long event would be preserved in memory
+      bool           fIsFirstEventId;  // true if first id was obtained
+      bnet::EventId  fFirstEventId;    // id of the first event
+      bnet::EventId  fLastEventId;     // id of the last event
+      uint64_t       fSendOverflowCnt; // overflow counter of send schedule, used to assign events to the target node in simple scheme
+
 
       dabc::RecordsQueue<EventBundleRec, false>  fEvBundelsQueue;
 
@@ -230,9 +236,10 @@ namespace bnet {
       void ReleaseReadyEventParts();
       void ReadoutNextEvents(dabc::Port* port);
       EventPartRec* FindEventPartRec(bnet::EventId evid);
+      EventPartRec* GetFirstReadyPartRec();
 
       EventBundleRec* FindEventBundleRec(bnet::EventId evid);
-      void ProvideReceivedBuffer(bnet::EventId evid, int nodeid, dabc::Buffer& buf);
+      bool ProvideReceivedBuffer(bnet::EventId evid, int nodeid, dabc::Buffer& buf);
       void BuildReadyEvents(dabc::Port* port);
 
       void ProcessNextSlaveInputEvent();
@@ -244,6 +251,8 @@ namespace bnet {
       void PrepareSyncLoop(int tgtnode);
 
       void ActivateAllToAll(double* buff);
+
+      bool SubmitTransfersWithoutSchedule();
 
       bool ProcessAllToAllAction();
 

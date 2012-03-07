@@ -26,9 +26,6 @@
 
 namespace dabc {
 
-   // buffer id includes memory block id (high 16-bit)  and number inside block (low 16 bit)
-   // buffer size if limited by 32 bit - 4 gbyte is pretty enough for single structure
-
    extern const BufferSize_t BufferSizeError;
 
    enum EBufferTypes {
@@ -51,7 +48,6 @@ namespace dabc {
        BufferSize_t    datasize;  // length of data
        void*           buffer;    // pointer on the beginning of buffer (must be in the area of id)
    };
-
 
    class Buffer {
       friend class MemoryPool;

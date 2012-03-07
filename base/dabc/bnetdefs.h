@@ -30,6 +30,8 @@ namespace bnet {
 
    typedef uint64_t EventId;
 
+   EventId DummyEventId();
+
    enum { MAXLID = 16 };
 
    struct TimeSyncMessage

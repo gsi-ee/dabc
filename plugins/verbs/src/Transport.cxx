@@ -236,6 +236,8 @@ void verbs::Transport::_SubmitRecv(uint32_t recid)
       f_rwr[recid].num_sge  += buf.NumSegments();
    }
 
+   // FIXME: this is not a way how it should work - we already under transport mutex and msut not call FireEvent which requires even more mutexes
+   // TODO: fast post is no longer necessary (was used for time sync)
    if (fFastPost)
       fQP->Post_Recv(&(f_rwr[recid]));
    else
@@ -291,6 +293,9 @@ void verbs::Transport::_SubmitSend(uint32_t recid)
       // try to send small portion of data as inline
       f_swr[recid].send_flags = (ibv_send_flags) (IBV_SEND_SIGNALED | IBV_SEND_INLINE);
 
+
+   // FIXME: this is not a way how it should work - we already under transport mutex and msut not call FireEvent which requires even more mutexes
+   // TODO: fast post is no longer necessary (was used for time sync)
    if (fFastPost)
       fQP->Post_Send(&(f_swr[recid]));
    else

@@ -103,6 +103,11 @@ dabc::Buffer& dabc::Buffer::operator=(const Buffer& src) throw()
 
 //   DOUT0(("Buffer assign operator obj %p", this));
 
+   // TODO: VERY IMPORTANT
+   // one should extract all fields to container class and
+   // just copy/shift this pointer to the target buffer object
+   // Using ref counter, one could release container when is no longer used
+
    Release();
 
    fPool = src.fPool;
