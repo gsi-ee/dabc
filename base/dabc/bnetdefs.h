@@ -32,14 +32,16 @@ namespace bnet {
 
    EventId DummyEventId();
 
+   // TODO: should be a parameter, not a constant
    enum { MAXLID = 16 };
 
    struct TimeSyncMessage
    {
       int64_t msgid;
       double  master_time;
+      double  slave_recv;
+      double  slave_send;
       double  slave_shift;
-      double  slave_time;
       double  slave_scale;
    };
 

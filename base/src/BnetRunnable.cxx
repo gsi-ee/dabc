@@ -339,7 +339,8 @@ void bnet::BnetRunnable::PrepareSpecialKind(int& recid)
          TimeSyncMessage* msg = (TimeSyncMessage*) rec->header;
          msg->master_time = 0.;
          msg->slave_shift = 0.;
-         msg->slave_time = 0;
+         msg->slave_recv = 0;
+         msg->slave_send = 0;
          msg->slave_scale = 1.;
          msg->msgid = fSyncCycle;
 
@@ -373,8 +374,6 @@ void bnet::BnetRunnable::PrepareSpecialKind(int& recid)
          // DOUT0(("Sending %d master packet", fSyncCycle));
 
          fSyncSendTime = fStamping();
-         PerformOperation(recid, fSyncSendTime);
-         recid = -1;
          fSyncRecvDone = false;
 
          return;
@@ -388,23 +387,23 @@ void bnet::BnetRunnable::PrepareSpecialKind(int& recid)
          if (fSyncRecvDone /* && (fSyncSlaveRec==recid) */) {
             // send slave reply only when record is ready, means we not fulfill time constrains
             // but packet must be send anyway
-            EOUT(("Reply on the master request with long delay"));
+            // EOUT(("Reply on the master request with long delay"));
+
             OperRec* recout = GetRec(recid);
             TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
             msg_out->master_time = 0;
             msg_out->slave_shift = 0;
-            msg_out->slave_time = fStamping(); // time irrelevant here
+            msg_out->slave_recv = fSyncSlaveRecvTime; // time irrelevant here
+            msg_out->slave_send = fStamping(); // time irrelevant here
             msg_out->msgid = fSyncCycle++;
             fSyncSlaveRec = -1;
             fSyncRecvDone = false;
-            // put in the queue buffer which should be replied
-            PerformOperation(recid, msg_out->slave_time);
          } else {
-            // normal situation - just remember recid to use it as soon as possible for sendinf
+            // normal situation - just remember recid to use (reactiavte) it when packet from master received
             fSyncSlaveRec = recid;
+            recid = -1;
          }
 
-         recid = -1;
          return;
       case skind_SyncSlaveRecv:
          //DOUT0(("Prepare PrepareSpecialKind skind_SyncSlaveRecv"));
@@ -436,8 +435,8 @@ void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
             fSync_s_to_m.clear();
          } else {
             // exclude very first packet - it is
-            fSync_m_to_s.push_back(rcv->slave_time - fSyncSendTime);
-            fSync_s_to_m.push_back(recv_time - rcv->slave_time);
+            fSync_m_to_s.push_back(rcv->slave_recv - fSyncSendTime);
+            fSync_s_to_m.push_back(recv_time - rcv->slave_send);
          }
 
          if (rcv->msgid != fSyncCycle) {
@@ -483,7 +482,7 @@ void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
       case skind_SyncSlaveRecv: {
          // DOUT1(("skind_SyncSlaveRecv completed %d sendrec %d", fSyncCycle, fSyncSlaveRec));
 
-         double recv_time = fStamping();
+         fSyncSlaveRecvTime = fStamping();
 
          // if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
 
@@ -496,7 +495,7 @@ void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
             EOUT(("Missmatch of sync cycle %u %u on the slave", fSyncCycle, msg_in->msgid));
 
          if (msg_in->master_time>0) {
-            fStamping.ChangeShift(msg_in->master_time - recv_time);
+            fStamping.ChangeShift(msg_in->master_time - fSyncSlaveRecvTime);
          }
 
          if (msg_in->slave_shift!=0.) {
@@ -505,23 +504,13 @@ void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
                fStamping.ChangeScale(msg_in->slave_scale);
          }
 
-         if (fSyncSlaveRec<0) {
-            // this is situation that next recv operation faster than previous send is completed
-            // we just indicate that recv was done and send complition should send new buffer
-            fSyncRecvDone = true;
-            return;
+         fSyncRecvDone = true;
+
+         if (fSyncSlaveRec>=0) {
+            // reactivate send operation, will be called very soon
+            fAcceptedRecs.Push(fSyncSlaveRec);
+            fSyncSlaveRec = -1;
          }
-
-         OperRec* recout = GetRec(fSyncSlaveRec);
-         TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
-         msg_out->master_time = 0;
-         msg_out->slave_shift = 0;
-         msg_out->slave_time = recv_time;
-         msg_out->msgid = fSyncCycle++;
-         // put in the queue buffer which should be replied
-         PerformOperation(fSyncSlaveRec, recv_time);
-         fSyncSlaveRec = -1;
-
          return;
       }
       default:

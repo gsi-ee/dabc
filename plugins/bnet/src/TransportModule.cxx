@@ -160,23 +160,26 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_EXECSYNC));
       fCmdsQueue.PushD(TransportCmd(BNET_CMD_GETSYNC));
 
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_ALLTOALL)); // configure and start all to all execution
+      if (Cfg("TestKind", cmd).AsStdStr() == "TimeSync") {
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 10.)); // master wait 10 seconds
+      } else {
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_ALLTOALL)); // configure and start all to all execution
 
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, Cfg("TestTime").AsInt(10) + 3)); // master wait 10 seconds
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, Cfg("TestTime").AsInt(10) + 3)); // master wait 10 seconds
 
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_GETRUNRES));
-      TransportCmd cmd_coll1(BNET_CMD_COLLECT);
-      cmd_coll1.SetInt("SetSize", 14*sizeof(double));
-      fCmdsQueue.PushD(cmd_coll1);
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_GETRUNRES));
+         TransportCmd cmd_coll1(BNET_CMD_COLLECT);
+         cmd_coll1.SetInt("SetSize", 14*sizeof(double));
+         fCmdsQueue.PushD(cmd_coll1);
 
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_SHOWRUNRES));
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_SHOWRUNRES));
 
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_ASKQUEUE));
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLEANUP));
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 1.)); // master waits 1 second to let all operations run
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_ASKQUEUE));
-      fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLEANUP));
-
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_ASKQUEUE));
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLEANUP));
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_WAIT, 1.)); // master waits 1 second to let all operations run
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_ASKQUEUE));
+         fCmdsQueue.PushD(TransportCmd(BNET_CMD_CLEANUP));
+      }
 
       TransportCmd cmd_sync3(BNET_CMD_TIMESYNC, 5.);
       cmd_sync3.SetSyncArg(200, false, false);

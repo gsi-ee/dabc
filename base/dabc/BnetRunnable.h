@@ -208,6 +208,7 @@ namespace bnet {
          int    fSyncSlaveRec; // prepeared record for sending reply buffer by slave
          int    fSyncMasterRec; // prepeared record for sending request buffer by master
          bool   fSyncRecvDone; // indicates that next recv operation (slave or master) is done
+         double fSyncSlaveRecvTime; // time when slave receive last sync message, should be send back
          bool   fSyncSendDone; // indicates that next send operation (slave or master) is done
 
          int&   SendQueue(int indx, int node) { return fSendQueue[indx*NumNodes() + node]; }

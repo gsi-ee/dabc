@@ -28,7 +28,7 @@
          <SpecialThread value="true"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
-         <TestKind value="OnlyConnect"/>
+         <TestKind value="TimeSync"/>
          <TestReliable value="true"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
