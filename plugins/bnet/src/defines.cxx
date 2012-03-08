@@ -5,6 +5,8 @@
 
 #include "dabc/logging.h"
 
+#include "dabc/MemoryPool.h"
+
 double dabc::rand_0_1()
 {
    return drand48();
@@ -44,10 +46,26 @@ dabc::Buffer bnet::TestEventHandling::BuildFullEvent(bnet::EventId evid, dabc::B
    dabc::Buffer res;
    if (bufs==0) return res;
 
+   dabc::MemoryPool* pool(0);
+
+   unsigned numsegm(0);
    for (int n=0;n<numbufs;n++) {
-      if (n==0) res << bufs[n];
-      bufs[n].Release();
+      numsegm += bufs[n].NumSegments();
+      if (pool==0)
+         pool = bufs[n].GetPool();
+      else
+      if (pool!=bufs[n].GetPool()) {
+         EOUT(("Buffers from different pool - not supported"));
+         return res;
+      }
    }
+
+   if (pool==0) return res;
+
+   res = pool->TakeEmpty(numsegm);
+
+   for (int n=0;n<numbufs;n++)
+      res.Append(bufs[n], true);
 
    return res;
 }

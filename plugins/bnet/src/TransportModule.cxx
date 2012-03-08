@@ -1269,10 +1269,10 @@ void bnet::TransportModule::BuildReadyEvents(dabc::Port* port)
             return;
          }
 
+         DOUT1(("Build event %u len %u", (unsigned) rec->evid, (unsigned) res.GetTotalSize()));
+
          // deliver to the output
          port->Send(res);
-
-         DOUT1(("Build event %u", (unsigned) rec->evid));
 
          // release item
          fEvBundelsQueue.PopOnly();

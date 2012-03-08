@@ -133,6 +133,8 @@ namespace dabc {
          void SetTypeId(unsigned tid) { if (fRec) fRec->fTypeId = tid; }
          inline unsigned GetTypeId() const { return fRec ? fRec->fTypeId : mbt_Null; }
 
+         MemoryPool* GetPool() const { return fRec ? fRec->fPool : 0; }
+
          inline unsigned NumSegments() const { return fRec ? fRec->fNumSegments : 0; }
 
          /** Returns id of the segment, no any boundary checks */

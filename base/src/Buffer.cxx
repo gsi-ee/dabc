@@ -213,6 +213,7 @@ void dabc::Buffer::Release(Mutex* m) throw()
 }
 
 
+
 dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allowsegmented) throw()
 {
    dabc::Buffer res;
@@ -339,7 +340,7 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs) throw()
    for (unsigned n=NumSegments(); n>tgtseg + (tgtpos>0 ? 1 : 0); ) {
       n--;
 
-      DOUT0(("Move segm %u->%u", n, n + numrequired - NumSegments()));
+      // DOUT0(("Move segm %u->%u", n, n + numrequired - NumSegments()));
 
       segm[n + numrequired - NumSegments()] = segm[n];
       segm[n].datasize = 0;
@@ -350,7 +351,7 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs) throw()
    MemSegment* srcsegm = ownbuf.Segments();
    // copy all segments from external buffer
    for (unsigned n=0;n<ownbuf.NumSegments();n++) {
-      DOUT0(("copy segm src[%u]->tgt[%u]", n, tgtseg + n + (tgtpos>0 ? 1 : 0)));
+      // DOUT0(("copy segm src[%u]->tgt[%u]", n, tgtseg + n + (tgtpos>0 ? 1 : 0)));
       segm[tgtseg + n + (tgtpos>0 ? 1 : 0)] = srcsegm[n];
    }
 
@@ -367,7 +368,6 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs) throw()
       segm[tgtseg].datasize = tgtpos;
 
       DOUT0(("split segment %u on two parts, second is in %u", tgtseg, seg2));
-
    }
 
    // at the end
