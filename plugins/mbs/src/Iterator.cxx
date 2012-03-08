@@ -194,7 +194,7 @@ bool mbs::WriteIterator::Reset(const dabc::Buffer& buf)
       return false;
    }
 
-   fBuffer << buf;
+   fBuffer = buf;
    fBuffer.SetTypeId(mbt_MbsEvents);
    return true;
 }

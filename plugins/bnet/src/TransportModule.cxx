@@ -768,7 +768,6 @@ bool bnet::TransportModule::SubmitTransfersWithoutSchedule()
          // do not submit too many operations iover single link
          if (SendQueue(tgtlid,tgtnode) >= fSendQueueLimit) break;
 
-
          int recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), evrec->buf.Duplicate());
          OperRec* rec = fRunnable->GetRec(recid);
 
@@ -1132,8 +1131,7 @@ void bnet::TransportModule::ProcessInputEvent(dabc::Port* port)
    } else
    if (IsMaster() && ((int)portid<NumNodes()-1)) {
       if (!port->CanRecv()) return;
-      dabc::Buffer buf;
-      buf << port->Recv();
+      dabc::Buffer buf = port->Recv();
       ProcessReplyBuffer(portid+1, buf);
    }
 }
@@ -1163,8 +1161,7 @@ void bnet::TransportModule::ReadoutNextEvents(dabc::Port* port)
    ReleaseReadyEventParts();
 
    while (port->CanRecv() && !fEvPartsQueue.Full()) {
-      dabc::Buffer buf;
-      buf << port->Recv();
+      dabc::Buffer buf = port->Recv();
 
       if (buf.null()) break;
 
@@ -1172,7 +1169,6 @@ void bnet::TransportModule::ReadoutNextEvents(dabc::Port* port)
 
       rec->state = eps_Init;
       rec->buf << buf;
-      rec->buf.SetTransient(false); // we keep reference on the buffer until it is not processed
       rec->evid = ExtractEventId(rec->buf);
       rec->acq_tm = fStamping();
 
@@ -1266,8 +1262,7 @@ void bnet::TransportModule::BuildReadyEvents(dabc::Port* port)
 
       if (rec->ready() && port->CanSend()) {
          // building of event
-         dabc::Buffer res;
-         res << fEventHandling()->BuildFullEvent(rec->evid, rec->buf, rec->numbuf);
+         dabc::Buffer res = fEventHandling()->BuildFullEvent(rec->evid, rec->buf, rec->numbuf);
 
          if (res.null()) {
             EOUT(("Event not build !!!!"));
@@ -1323,8 +1318,7 @@ void bnet::TransportModule::ProcessNextSlaveInputEvent()
 
    if (!port->CanRecv()) return;
 
-   dabc::Buffer buf;
-   buf << port->Recv();
+   dabc::Buffer buf = port->Recv();
    if (buf.null()) return;
 
    fRunningCmdId = PreprocessTransportCommand(buf);

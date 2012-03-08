@@ -35,12 +35,14 @@ namespace dabc {
 
          virtual ~BuffersQueue() { Cleanup(); }
 
-         void Push(const Buffer& buf) { if (buf.ispool()) Parent::PushRef(buf); }
+         void Push(const Buffer& buf) { if (!buf.null()) Parent::PushRef(buf); }
 
-         /** Put buffer into queue under mutex and return true is succeed */
+         /** Put buffer into queue under mutex and return true if succeed */
          bool Push(const Buffer& buf, Mutex* m);
 
-         Buffer Pop() { Buffer buf; buf << Front(); Parent::PopOnly(); return buf; }
+         void PopBuffer(Buffer& buf) { buf << Front(); Parent::PopOnly(); }
+
+         Buffer Pop() { Buffer buf; PopBuffer(buf); return buf; }
 
          unsigned Size() const { return Parent::Size(); }
 

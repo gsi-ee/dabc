@@ -1085,15 +1085,9 @@ extern "C" void RunPoolTest()
 
       DOUT0(("buf1 = %p", &buf1));
 
-      return;
+      DOUT0(("Full size = %u numsegm %u", buf1.GetTotalSize(), buf1.NumSegments()));
 
-      dabc::Buffer buf2;
-
-      DOUT0(("Full size = %u trans %s numsegm %u", buf1.GetTotalSize(), DBOOL(buf1.IsTransient()), buf1.NumSegments()));
-
-      buf1.SetTransient(false);
-
-      buf2 = buf1;
+      dabc::Buffer buf2 = buf1.Duplicate();
 
       DOUT0(("Full size1 = %u size2 = %u", buf1.GetTotalSize(), buf2.GetTotalSize()));
 
@@ -1101,13 +1095,13 @@ extern "C" void RunPoolTest()
       dabc::Buffer hdr;
       dabc::Pointer ptr = buf2.GetPointer();
 
-      while (!(hdr << buf2.GetNextPart(ptr, 16)).null()) cnt++;
+      while (!(hdr = buf2.GetNextPart(ptr, 16)).null()) cnt++;
 
       DOUT0(("Get %u number of small parts, expected %u", cnt, 0x4000/16));
 
       ptr = buf2.GetPointer();
 
-      hdr << buf2.GetNextPart(ptr, 16);
+      hdr = buf2.GetNextPart(ptr, 16);
       hdr.CopyFromStr("First second");
 
       dabc::Buffer hdr2 = buf2.GetNextPart(ptr, 16);
@@ -1121,7 +1115,7 @@ extern "C" void RunPoolTest()
 
       const char* mystr = "This is example of external buffer";
 
-      buf1 << dabc::Buffer::CreateBuffer(mystr, strlen(mystr), false);
+      buf1 = dabc::Buffer::CreateBuffer(mystr, strlen(mystr), false);
 
       DOUT0(("Ext buffer: %s", buf1.AsStdString().c_str()));
 

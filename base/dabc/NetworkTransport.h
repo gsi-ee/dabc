@@ -115,7 +115,7 @@ namespace dabc {
          /** \brief Internal method, used to cleanup queue from all buffers */
          void CleanupNetTransportQueue();
 
-         uint32_t _TakeRec(const Buffer& buf, uint32_t kind = 0, uint32_t extras = 0);
+         uint32_t _TakeRec(Buffer& buf, uint32_t kind = 0, uint32_t extras = 0);
          void _ReleaseRec(uint32_t recid);
          void SetRecHeader(uint32_t recid, void* header);
 

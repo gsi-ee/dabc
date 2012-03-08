@@ -108,6 +108,15 @@ namespace dabc {
          /** Release raw buffer, allocated before by TakeRawBuffer */
          void ReleaseRawBuffer(unsigned indx);
 
+         /** Release all references, used in the record (under pool mutex).
+          * If return trues, new space is available in the memory pool */
+         bool _ReleaseBufferRec(dabc::Buffer::BufferRec* rec);
+
+         /** Release all references, used in the record */
+         void ReleaseBufferRec(dabc::Buffer::BufferRec* rec);
+
+         static void _TakeSegmentsList(MemoryPool* pool, dabc::Buffer& buf, unsigned numsegm);
+
          Buffer _TakeBuffer(BufferSize_t size, bool except, bool reserve_memory = true) throw();
 
          /** Method to allocate memory for the pool, mutex should be locked */
@@ -116,22 +125,13 @@ namespace dabc {
          /** Method called by assignment operator of Buffer class to
           * create copy of existing buffer - means same segments list and
           * increase refcounter for all used segments */
-         void DuplicateBuffer(const Buffer& src, Buffer& tgt, bool except = true) throw();
-
-         /** Method used to produce deep copy of source buffer.
-          * Means in any case new space will be reserved and content will be copied */
-         Buffer CopyBuffer(Buffer& src, bool except = true) throw();
+         static void DuplicateBuffer(const Buffer& src, Buffer& tgt, unsigned firstseg = 0, unsigned numsegm = 0) throw();
 
          /** Process submitted requests, if returns true if any requests was processed */
          bool _ProcessRequests();
 
          /** Inform requesters, that buffer is provided */
          void ReplyReadyRequests();
-
-         bool _ReleaseBuffer(Buffer& buf) throw();
-
-         /** Method called by buffer to release memory, referenced by the buffer */
-         void ReleaseBuffer(Buffer& buf) throw();
 
          /** Method increases ref.counuters of all segments */
          void IncreaseSegmRefs(MemSegment* segm, unsigned num) throw();
@@ -222,16 +222,21 @@ namespace dabc {
           * In case when memory pool cannot provide specified memory exception will be thrown */
          Buffer TakeBuffer(BufferSize_t size = 0) throw();
 
-         /** Returns Buffer object without any memory reserved.
-          * Instance can be used in later code to add references on the memory from other buffers */
-         Buffer TakeEmpty() throw();
-
          /** Returns Buffer or set request to the pool, which will be processed
           * when new memory is available in the buffer */
          Buffer TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size = 0) throw();
 
          /** Cancel previously submitted request */
          void RemoveRequester(MemoryPoolRequester* req);
+
+         /** Returns Buffer object without any memory reserved.
+          * Instance can be used in later code to add references on the memory from other buffers */
+         Buffer TakeEmpty(unsigned capacity = 0) throw();
+
+         /** Method used to produce deep copy of source buffer.
+          * Means in any case new space will be reserved and content will be copied */
+         Buffer CopyBuffer(const Buffer& src, bool except = true) throw();
+
 
          /** Check if memory pool structure was changed since last call, do not involves memory pool mutex */
          bool CheckChangeCounter(unsigned &cnt);

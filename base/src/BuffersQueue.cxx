@@ -19,7 +19,7 @@
 
 bool dabc::BuffersQueue::Push(const Buffer& buf, Mutex* m)
 {
-   if (!buf.ispool()) return true;
+   if (buf.null()) return true;
 
    dabc::LockGuard lock(m);
 
@@ -46,8 +46,8 @@ void dabc::BuffersQueue::Cleanup(Mutex* m)
 
       dabc::LockGuard lock(m);
 
-      if (Size()>0) buf << Pop();
+      if (Size()>0) PopBuffer(buf);
 
-   } while (buf.ispool());
+   } while (!buf.null());
 
 }

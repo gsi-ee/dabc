@@ -165,9 +165,9 @@ bool dabc::DataTransport::Recv(Buffer &buf)
           return false;
       }
 
-      buf << fInpQueue.Pop();
+      fInpQueue.PopBuffer(buf);
 
-      if (!buf.ispool()) EOUT(("Buffer without pool - should not happen!!!"));
+      if (buf.null()) EOUT(("Empty Buffer - should not happen!!!"));
 
       if (!fInpLoopActive) {
          fireinpevent = true;
@@ -176,8 +176,8 @@ bool dabc::DataTransport::Recv(Buffer &buf)
    }
 
    if (fireinpevent) FireEvent(evDataInput);
-   
-   return buf.ispool();
+
+   return !buf.null();
 }
 
 unsigned dabc::DataTransport::RecvQueueSize() const
@@ -286,8 +286,8 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
 
    if (state == inpPrepare) {
 
-      if (!currbuf.ispool()) {
-         EOUT(("Internal error - currbuf==0 when state is prepared"));
+      if (currbuf.null()) {
+         EOUT(("Internal error - currbuf null when state is prepared"));
          state = inpError;
       } else {
 
@@ -332,7 +332,7 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
    if (state == inpReady) {
 
       qbuf << currbuf;
-      if (qbuf.ispool()) qsize--;
+      if (!qbuf.null()) qsize--;
 
       if (qsize == 0) {
          doreadbegin = false;
@@ -374,7 +374,7 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
 
       currbuf = GetPool()->TakeBufferReq(this, fNextDataSize);
 
-      if (currbuf.ispool()) {
+      if (!currbuf.null()) {
          if (currbuf.GetTotalSize() < fNextDataSize) {
             EOUT(("Requested buffer smaller than actual data size"));
             state = inpError;
@@ -398,7 +398,7 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
       currbuf.Release();
 
       eqbuf = GetPool()->TakeEmpty();
-      if (!eqbuf.ispool()) {
+      if (eqbuf.null()) {
          EOUT(("Fatal error - cannot get empty buffer, try after 1 sec"));
          ret_tmout = 1.;
       } else {
@@ -424,7 +424,7 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
              dofireevent = false;
              iscallback = true;
              break;
-          default: 
+          default:
              state = inpError;
        }
 
@@ -433,8 +433,8 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
 
    {
       LockGuard lock(fMutex);
-      if (qbuf.ispool()) { fInpQueue.Push(qbuf); firecnt++; }
-      if (eqbuf.ispool()) { fInpQueue.Push(eqbuf); firecnt++; }
+      if (!qbuf.null()) { fInpQueue.Push(qbuf); firecnt++; }
+      if (!eqbuf.null()) { fInpQueue.Push(eqbuf); firecnt++; }
       // if queue become empty while single input event processing, restart loop
       if (!dofireevent && !iscallback && (fInpQueue.Size()==0) &&
            (state!=inpClosed) && (ret_tmout<=0.)) dofireevent = true;
@@ -444,7 +444,7 @@ double dabc::DataTransport::ProcessInputEvent(bool norm_call)
 
    }
 
-   if ((fInpState == inpPrepare) && !fCurrentBuf.ispool())
+   if ((fInpState == inpPrepare) && fCurrentBuf.null())
       EOUT(("Empty buffer in prepare state !!!"));
 
    // no need to use port mutex - we are inside thread
@@ -482,7 +482,7 @@ void dabc::DataTransport::ProcessOutputEvent()
    {
       LockGuard guard(fMutex);
       if (!fActive || (fOutQueue.Size()==0)) return;
-      buf << fOutQueue.Pop();
+      fOutQueue.PopBuffer(buf);
    }
 
    if (buf.null()) return;

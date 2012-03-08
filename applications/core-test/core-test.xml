@@ -3,8 +3,8 @@
   <Context name="core-test">
     <Run>
       <lib value="libDabcCoreTest.so"/>
-<!-- One can specify here: RunCoreTest, RunTimersTest, RunCmdTest, RunTimeTest, RunPoolTest, RunAllTests  -->       
-      <runfunc value="RunCPPTest"/>
+<!-- One can specify here: RunCoreTest, RunTimersTest, RunCmdTest, RunTimeTest, RunPoolTest, RunCPPTest, RunAllTests  -->       
+      <runfunc value="RunPoolTest"/>
       <logfile value="core-test.log"/>
       <loglevel value="1"/>
       <debuglevel value="1"/>

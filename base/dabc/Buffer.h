@@ -29,13 +29,14 @@ namespace dabc {
    extern const BufferSize_t BufferSizeError;
 
    enum EBufferTypes {
-      mbt_Generic      = 0,
-      mbt_Int64        = 1,
-      mbt_TymeSync     = 2,
-      mbt_AcknCounter  = 3,
-      mbt_RawData      = 4,
-      mbt_EOF          = 5,   // such packet produced when transport is closed completely
-      mbt_EOL          = 6,   // this is more line end-of-line case, where transport is not closed, but may deliver new kind of data (new event ids) afterwards
+      mbt_Null         = 0,
+      mbt_Generic      = 1,
+      mbt_Int64        = 2,
+      mbt_TymeSync     = 3,
+      mbt_AcknCounter  = 4,
+      mbt_RawData      = 5,
+      mbt_EOF          = 6,   // such packet produced when transport is closed completely
+      mbt_EOL          = 7,   // this is more line end-of-line case, where transport is not closed, but may deliver new kind of data (new event ids) afterwards
       mbt_User         = 1000
    };
 
@@ -45,7 +46,7 @@ namespace dabc {
 
    struct MemSegment {
        unsigned        id;        // id of the buffer
-       BufferSize_t    datasize;  // length of data
+       unsigned        datasize;  // length of data
        void*           buffer;    // pointer on the beginning of buffer (must be in the area of id)
    };
 
@@ -55,16 +56,46 @@ namespace dabc {
 
       protected:
 
-         Reference    fPool;         //!< reference to the pool, prevents pool deletion until buffer is used
-         unsigned     fPoolId;       //!< id, used by pool to identify segments list
+         struct BufferRec {
 
-         MemSegment*  fSegments;     //!< list of memory segments, allocated by memory pool
-         unsigned     fNumSegments;  //!< number of entries in segments list
-         unsigned     fCapacity;     //!< capacity of segments list
+            int          fRefCnt;       //!< counter of local references on the record, accessed without mutex, only allowed from the same thread
 
-         uint32_t     fTypeId;       //!< buffer type, identifies content of the buffer
+
+            // TODO: for debug purposes one can put thread id to verify that access performing always from the same thread
+            // TODO: this is critical when fRefCnt>1 - means several buffers are exists and reference same record
+
+            // TODO: In future one could use Reference here, but now back to pointer
+            MemoryPool*  fPool;         //!< pointer to the pool, reserved with ref counter
+            unsigned     fPoolId;       //!< id, used by pool to identify segments list, when -1 without pool identifies that memory in segments owned by Buffer
+
+            unsigned     fNumSegments;  //!< number of entries in segments list
+            unsigned     fCapacity;     //!< capacity of segments list
+
+            unsigned     fTypeId;       //!< buffer type, identifies content of the buffer
+
+            /** list of memory segments, allocated by memory pool, allocated right after record itself */
+            inline MemSegment* Segments() { return (MemSegment*) ((char*) this + sizeof(BufferRec)); }
+
+            inline MemSegment* Segment(unsigned nseg) { return Segments() + nseg; }
+
+            inline void increfcnt() { fRefCnt++; }
+            inline bool decrefcnt() { return --fRefCnt==0; }
+         };
+
+         BufferRec*   fRec;          //!< pointer on the record, either allocated by pool or explicitely, can be detected
+
+
+         MemSegment* Segments() const { return fRec ? fRec->Segments() : 0; }
+
+         void SetNumSegments(unsigned sz) { if (fRec) fRec->fNumSegments = sz; }
 
          void Locate(BufferSize_t p, unsigned& seg_indx, unsigned& seg_shift) const;
+
+         /** Allocates own record with specified capacity */
+         void AllocateRec(unsigned capacity = 4);
+
+         /** Assigns external rec */
+         void AssignRec(void* rec, unsigned recfullsize);
 
       public:
 
@@ -72,44 +103,46 @@ namespace dabc {
          Buffer(const Buffer& src) throw();
          ~Buffer();
 
-         /** Changes transient state of the buffer. If true, in any assign or method call
-          * all references in buffer will be moved and buffer will be empty afterwards
-          * For instance, after following code:
-          *    dabc::Buffer buf1 = pool->TakeBuffer(4096), buf2;
-          *    buf1.SetTransient(true);
-          *    buf2 = buf1;
-          * Buffer buf2 will reference 4096 bytes long buffer when buf1 will be empty. Code is
-          * equivalent to following:
-          *    dabc::Buffer buf1 = pool->TakeBuffer(4096), buf2;
-          *    buf2 << buf1;
-          **/
-         Buffer& SetTransient(bool on = true) { fPool.SetTransient(on); return *this; }
+         /** Returns true if buffer is empty. Happens when buffer created via default destructor
+           * or was released */
+         inline bool null() const { return fRec == 0; }
 
-         /** Return transient state of buffer, see SetTransient for more detailed explanation */
-         bool IsTransient() const { return fPool.IsTransient(); }
-
-         /** Disregard of transient state duplicate instance of Buffer will be created
+         /** Duplicate instance of Buffer with new segments list independent from source.
           * Means original instance will remain as is.
+          * Memory which is referenced by Buffer object is not duplicated or copied,
+          * means both instances are reference same memory regions.
           * This method can be time consuming, while pool mutex should be locked and
           * reference counter of all segments should be incremented.
           * When created instance destroyed, same operation in reverse order will be performed.
-          * Just do not duplicate buffer without real need for that.  */
+          * Just do not duplicate buffer without real need for that. */
          Buffer Duplicate() const;
 
-         void SetTypeId(uint32_t tid) { fTypeId = tid; }
-         inline uint32_t GetTypeId() const { return fTypeId; }
+         /** This method creates temporary object which could be deliver to the
+          *  any other method as argument. At the same time original object forgets
+          *  buffer and will be empty at the end of the call. Typical place where it should be used:
+          *  ...
+          *  port->Send(buf.HandOver());
+          *  ...
+          *  If one wants to keep reference on the memory after such call one should do:
+          *  ...
+          *  port->Send(buf.Duplicate());
+          *  ...
+          */
+         Buffer HandOver();
 
-         /** Returns true if buffer does not reference any memory
-             TODO: Check if second condition could be removed, than ispool can be removed */
-         inline bool null() const { return fPool.null() || (NumSegments() == 0); }
+         void SetTypeId(unsigned tid) { if (fRec) fRec->fTypeId = tid; }
+         inline unsigned GetTypeId() const { return fRec ? fRec->fTypeId : mbt_Null; }
 
-         /** Return true if pool is assigned and list for segments is available */
-         inline bool ispool() const { return !fPool.null(); }
+         inline unsigned NumSegments() const { return fRec ? fRec->fNumSegments : 0; }
 
-         inline unsigned NumSegments() const { return fNumSegments; }
-         inline unsigned SegmentId(unsigned n = 0) const { return n < NumSegments() ? fSegments[n].id : 0; }
-         inline void* SegmentPtr(unsigned n = 0) const { return n < NumSegments() ? fSegments[n].buffer : 0; }
-         inline BufferSize_t SegmentSize(unsigned n = 0) const { return n < NumSegments() ? fSegments[n].datasize : 0; }
+         /** Returns id of the segment, no any boundary checks */
+         inline unsigned SegmentId(unsigned n = 0) const { return fRec->Segment(n)->id; }
+
+         /** Returns ponter on the segment, no any boundary checks */
+         inline void* SegmentPtr(unsigned n = 0) const { return fRec->Segment(n)->buffer; }
+
+         /** Returns size on the segment, no any boundary checks */
+         inline unsigned SegmentSize(unsigned n = 0) const { return fRec->Segment(n)->datasize; }
 
          /** Return total size of all buffer segments */
          BufferSize_t GetTotalSize() const;
@@ -120,7 +153,7 @@ namespace dabc {
 
          Buffer& operator=(const Buffer& src) throw();
 
-         Buffer& operator<<(const Buffer& src);
+         Buffer& operator<<(Buffer& src) throw();
 
          /** \brief Release reference on the pool memory */
          void Release() throw();
@@ -131,18 +164,18 @@ namespace dabc {
 
          /** Append content of \param src buffer to the existing buffer.
           * If source buffer belong to other memory pool, content will be copied.
-          * If source buffer is transient, after the call it will be empty */
-         bool Append(Buffer& src) throw();
+          * If moverefs = true specified, references moved to the target and source buffer will be empty */
+         bool Append(Buffer& src, bool moverefs = true) throw();
 
          /** Prepend content of \param src buffer to the existing buffer.
           * If source buffer belong to other memory pool, content will be copied.
-          * If source buffer is transient, after the call it will be empty */
-         bool Prepend(Buffer& src) throw();
+          * If moverefs = true specified, references moved to the target and source buffer will be empty */
+         bool Prepend(Buffer& src, bool moverefs = true) throw();
 
          /** Insert content of \param src buffer at specified position to the existing buffer.
           * If source buffer belong to other memory pool, content will be copied.
-          * If source buffer is transient, after the call it will be empty */
-         bool Insert(BufferSize_t pos, Buffer& src) throw();
+          * If moverefs = true specified, references moved to the target and source buffer will be empty */
+         bool Insert(BufferSize_t pos, Buffer& src, bool moverefs = true) throw();
 
          /** Convert content of the buffer into std::string */
          std::string AsStdString();
@@ -251,11 +284,11 @@ namespace dabc {
 
          /** This static method create independent buffer for any other memory pools
           * Therefore it can be used in standalone case */
-         static Buffer CreateBuffer(BufferSize_t sz, unsigned numrefs = 8, unsigned numsegm = 4) throw();
+         static Buffer CreateBuffer(BufferSize_t sz) throw();
 
          /** This static method create Buffer instance, which contains pointer on specified peace of memory
           * Therefore it can be used in standalone case */
-         static Buffer CreateBuffer(const void* ptr, unsigned size, bool owner = false, unsigned numrefs = 8, unsigned numsegm = 4) throw();
+         static Buffer CreateBuffer(const void* ptr, unsigned size, bool owner = false) throw();
    };
 
 };

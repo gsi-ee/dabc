@@ -21,27 +21,17 @@
 const dabc::BufferSize_t dabc::BufferSizeError = (dabc::BufferSize_t) -1;
 
 dabc::Buffer::Buffer() :
-   fPool(),
-   fPoolId(0),
-   fSegments(0),
-   fNumSegments(0),
-   fCapacity(0),
-   fTypeId(0)
+   fRec(0)
 {
 //   DOUT0(("Buffer default constructor obj %p", this));
 }
 
 dabc::Buffer::Buffer(const Buffer& src) throw() :
-   fPool(),
-   fPoolId(0),
-   fSegments(0),
-   fNumSegments(0),
-   fCapacity(0),
-   fTypeId(0)
+   fRec(src.fRec)
 {
-//   DOUT0(("Buffer copy constructor obj %p", this));
+   //   DOUT0(("Buffer copy constructor obj %p", this));
 
-   *this = *(const_cast<Buffer*>(&src));
+   if (fRec) fRec->increfcnt();
 }
 
 dabc::Buffer::~Buffer()
@@ -51,11 +41,71 @@ dabc::Buffer::~Buffer()
    Release();
 }
 
+void dabc::Buffer::Release() throw()
+{
+   if (fRec && fRec->decrefcnt()) {
+      // TODO: if record allocated by pool, use lock pool mutex
+      // we need to release all segments and record itself
+
+      bool del = (fRec->fPool==0) || (fRec->fPoolId==0);
+
+      if (fRec->fPool)
+         fRec->fPool->ReleaseBufferRec(fRec);
+      else
+      if (fRec->fPoolId == (unsigned) -1) {
+         for (unsigned n=0;n<NumSegments();n++)
+            free(SegmentPtr(n));
+      }
+
+      // now just free record memory
+      if (del) free(fRec);
+   }
+
+   fRec = 0;
+}
+
+void dabc::Buffer::AssignRec(void* rec, unsigned recfullsize)
+{
+   if (fRec!=0) { EOUT(("Internal error - buffer MUST be empty")); exit(6); }
+   if (recfullsize < sizeof(dabc::Buffer::BufferRec)) {
+      EOUT(("record memory too small!!!"));
+      exit(7);
+   }
+   memset(rec, 0, recfullsize);
+
+   fRec = (BufferRec*) rec;
+
+   fRec->fRefCnt = 1;            // now we are the only reference
+   fRec->fCapacity = (recfullsize - sizeof(dabc::Buffer::BufferRec)) / sizeof(MemSegment);
+}
+
+
+void dabc::Buffer::AllocateRec(unsigned len)
+{
+   if (fRec!=0) { EOUT(("Internal error - buffer MUST be empty")); exit(6); }
+
+   unsigned capacity(4);
+   while ((capacity<len) && (capacity!=0)) capacity*=2;
+   if (capacity==0) capacity = len;
+
+   unsigned recfullsize = sizeof(BufferRec) + capacity*sizeof(dabc::MemSegment);
+
+   fRec = (BufferRec*) malloc(recfullsize);
+
+   if (fRec==0) { EOUT(("Cannot allocate record!!!")); return; }
+
+   memset(fRec, 0, recfullsize);
+
+   fRec->fRefCnt = 1;            // now we are the only reference
+   fRec->fCapacity = capacity;   // remember allocated segments list
+}
+
+
 dabc::BufferSize_t dabc::Buffer::GetTotalSize() const
 {
    BufferSize_t sz = 0;
-   for (unsigned n=0;n<fNumSegments;n++)
-      sz += fSegments[n].datasize;
+   for (unsigned n=0;n<NumSegments();n++)
+      sz += SegmentSize(n);
    return sz;
 }
 
@@ -77,58 +127,62 @@ void dabc::Buffer::SetTotalSize(BufferSize_t len) throw()
    unsigned nseg(0), npos(0);
    Locate(len, nseg, npos);
 
-   if (nseg >= fNumSegments)
+   if (nseg >= NumSegments())
       throw dabc::Exception("Cannot happen - internal error");
 
    if (npos>0) {
-      fSegments[nseg].datasize = npos;
+      fRec->Segment(nseg)->datasize = npos;
       nseg++;
    }
 
    // we should release peaces which are no longer required
 
-   if (nseg<fNumSegments) {
-      ((MemoryPool*)fPool())->DecreaseSegmRefs(fSegments+nseg, fNumSegments - nseg);
+   if (nseg<NumSegments()) {
+      if (fRec->fPool)
+         fRec->fPool->DecreaseSegmRefs(Segments()+nseg, NumSegments() - nseg);
 
-      fNumSegments = nseg;
+      fRec->fNumSegments = nseg;
    }
 }
 
 
 dabc::Buffer& dabc::Buffer::operator=(const Buffer& src) throw()
 {
-   // this is central point, if pool reference is moved from source object,
-   // one could move all other fields from source object and reset it
-   // if one could not do this, segments list should be duplicated
-
-//   DOUT0(("Buffer assign operator obj %p", this));
-
-   // TODO: VERY IMPORTANT
-   // one should extract all fields to container class and
-   // just copy/shift this pointer to the target buffer object
-   // Using ref counter, one could release container when is no longer used
+   // this is central point of understanding that Buffer is
+   // it is just smart pointer on the structure which describes gather-list of
+   // memory regions from SINGLE memory pool
+   // When copy constructor or assign operator is used,
+   // just pointer on such structure is duplicated.
+   // Means if afterwards one object will be modified (add/remove/resize) segments,
+   // all other objects will be also changed
+   // Thus, copies of the same buffer object could be used only in the SINGLE thread
+   // Only if buffer shifted from one thread to another, this could work.
+   // If one requires to keep reference on the same memory from different threads,
+   // dabc::Buffer::Duplicate() method should be used
 
    Release();
 
-   fPool = src.fPool;
+   fRec = src.fRec;
 
-   if (src.fPool.null()) {
-      fPoolId = src.fPoolId;
-      fSegments = src.fSegments;
-      fNumSegments = src.fNumSegments;
-      fCapacity = src.fCapacity;
-      fTypeId = src.fTypeId;
+   if (fRec) fRec->increfcnt();
 
-      Buffer* obj = const_cast<Buffer*>(&src);
-      obj->fPoolId = 0;
-      obj->fSegments = 0;
-      obj->fNumSegments = 0;
-      obj->fCapacity = 0;
-      obj->fTypeId = 0;
-   } else
-   if (!fPool.null()) {
-      ((MemoryPool*) fPool())->DuplicateBuffer(src, *this);
-   }
+   return *this;
+}
+
+dabc::Buffer dabc::Buffer::HandOver()
+{
+   Buffer res;
+   res.fRec = fRec;
+   fRec = 0;
+   return res;
+}
+
+dabc::Buffer& dabc::Buffer::operator<<(Buffer& src) throw()
+{
+   Release();
+
+   fRec = src.fRec;
+   src.fRec = 0;
 
    return *this;
 }
@@ -137,48 +191,11 @@ dabc::Buffer dabc::Buffer::Duplicate() const
 {
    dabc::Buffer res;
 
-   res.fPool = fPool.Ref();
+   if (fRec==0) return res;
 
-   if (!res.fPool.null())
-      ((MemoryPool*) res.fPool())->DuplicateBuffer(*this, res);
+   dabc::MemoryPool::DuplicateBuffer(*this, res);
 
    return res;
-}
-
-dabc::Buffer& dabc::Buffer::operator<<(const Buffer& src)
-{
-//   DOUT0(("Shift operator this %p << src %p", this, &src));
-
-   Release();
-
-   fPool << src.fPool;
-
-   Buffer* obj = const_cast<Buffer*>(&src);
-
-   fPoolId = src.fPoolId;           obj->fPoolId = 0;
-   fSegments = src.fSegments;       obj->fSegments = 0;
-   fNumSegments = src.fNumSegments; obj->fNumSegments = 0;
-   fCapacity = src.fCapacity;       obj->fCapacity = 0;
-   fTypeId = src.fTypeId;           obj->fTypeId = 0;
-
-   return *this;
-}
-
-
-void dabc::Buffer::Release() throw()
-{
-   if (!fPool.null()) {
-      // TODO: in future one could try to lock pool mutex once,
-      // for a moment we do it twice when release memory, referenced by the Buffer object
-      ((MemoryPool*) fPool())->ReleaseBuffer(*this);
-      fPool.Release();
-   }
-
-   fPoolId = 0;
-   fSegments = 0;
-   fNumSegments = 0;
-   fCapacity = 0;
-   fTypeId = 0;
 }
 
 void dabc::Buffer::Release(Mutex* m) throw()
@@ -200,7 +217,7 @@ dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allo
 {
    dabc::Buffer res;
 
-   if (fPool.null() || (ptr.fullsize()==0)) return res;
+   if (ptr.fullsize()<len) return res;
 
    while (!allowsegmented && (len > ptr.rawsize())) {
       Shift(ptr, ptr.rawsize());
@@ -209,50 +226,55 @@ dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allo
 
    if (ptr.fullsize() < len) return res;
 
-   if (len==0) len = ptr.rawsize();
+   unsigned firstseg(0), lastseg(0);
+   void* firstptr(0);
+   BufferSize_t firstlen(0), lastlen(0);
 
-   res << ((MemoryPool*) fPool())->TakeEmpty();
-
-   if (res.fPool.null()) return res;
-
-   unsigned rescnt(0);
-
-   while ((len > 0) && (rescnt<res.fCapacity) && (ptr.fSegm<fNumSegments)) {
-      unsigned partlen = len;
+   while ((len>0) && (ptr.fSegm<NumSegments())) {
+      unsigned partlen(len);
       if (partlen>ptr.rawsize()) partlen = ptr.rawsize();
       if (partlen==0) break;
 
-      res.fSegments[rescnt].id = fSegments[ptr.fSegm].id;
+      if (firstptr==0) {
+         firstptr = ptr.ptr();
+         firstlen = partlen;
+         firstseg = ptr.fSegm;
+      }
 
-      res.fSegments[rescnt].buffer = ptr.ptr();
-
-      res.fSegments[rescnt].datasize = partlen;
+      lastseg = ptr.fSegm;
+      lastlen = partlen;
 
       len -= partlen;
       Shift(ptr, partlen);
-      rescnt++;
    }
 
-   // at this moment number of segments is 0 therefore release just mean release of pool reference
-   if (len>0) { res.Release(); return res; }
+   if (len>0) {
+      EOUT(("Internal problem - not full length covered"));
+      return res;
+   }
 
-   ((MemoryPool*) res.fPool())->IncreaseSegmRefs(res.fSegments, rescnt);
+   dabc::MemoryPool::DuplicateBuffer(*this, res, firstseg, lastseg-firstseg+1);
 
-   res.SetTypeId(GetTypeId());
-   res.fNumSegments = rescnt;
+   if (res.null()) return res;
+
+   res.Segments()[0].buffer = firstptr;
+   res.Segments()[0].datasize = firstlen;
+
+   if (lastseg>firstseg)
+      res.Segments()[lastseg-firstseg].datasize = lastlen;
 
    return res;
 }
 
 
-bool dabc::Buffer::Append(Buffer& src) throw()
+bool dabc::Buffer::Append(Buffer& src, bool moverefs) throw()
 {
-   return Insert(GetTotalSize(), src);
+   return Insert(GetTotalSize(), src, moverefs);
 }
 
-bool dabc::Buffer::Prepend(Buffer& src) throw()
+bool dabc::Buffer::Prepend(Buffer& src, bool moverefs) throw()
 {
-   return Insert(0, src);
+   return Insert(0, src, moverefs);
 }
 
 void dabc::Buffer::Locate(BufferSize_t p, unsigned& seg_indx, unsigned& seg_shift) const
@@ -262,9 +284,9 @@ void dabc::Buffer::Locate(BufferSize_t p, unsigned& seg_indx, unsigned& seg_shif
 
    BufferSize_t curr(0);
 
-   while ((curr < p) && (seg_indx<fNumSegments)) {
-      if (curr + fSegments[seg_indx].datasize <= p) {
-         curr += fSegments[seg_indx].datasize;
+   while ((curr < p) && (seg_indx<NumSegments())) {
+      if (curr + SegmentSize(seg_indx) <= p) {
+         curr += SegmentSize(seg_indx);
          seg_indx++;
          continue;
       }
@@ -275,76 +297,89 @@ void dabc::Buffer::Locate(BufferSize_t p, unsigned& seg_indx, unsigned& seg_shif
 }
 
 
-bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src) throw()
+bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs) throw()
 {
    if (src.null()) return true;
 
    if (null()) {
-      dabc::Buffer::operator=(src);
+      if (moverefs) {
+         dabc::Buffer::operator=(src);
+         src.Release();
+      } else
+         *this = src.Duplicate();
       return true;
    }
 
-   if (!fPool.null() &&  (fPool()!= src.fPool())) {
-      Buffer buf2 = ((MemoryPool*)fPool())->CopyBuffer(src);
-      buf2.SetTransient(true);
-      return dabc::Buffer::Insert(pos, buf2);
-   }
+   Buffer ownbuf;
+
+   // if we have buffer assigned to the pool and its differ from
+   // source object we need deep copy to be able extend refs array
+   if ((fRec->fPool!=0) && (src.fRec->fPool!=fRec->fPool)) {
+      ownbuf = fRec->fPool->CopyBuffer(src);
+   } else
+   if (!moverefs)
+      ownbuf = src.Duplicate();
+   else
+      ownbuf = src;
+
 
    unsigned tgtseg(0), tgtpos(0);
 
    Locate(pos, tgtseg, tgtpos);
 
-   unsigned numrequired = fNumSegments + src.fNumSegments;
+   unsigned numrequired = NumSegments() + ownbuf.NumSegments();
    if (tgtpos>0) numrequired++;
 
-   if (numrequired > fCapacity)
+   if (numrequired > fRec->fCapacity)
       throw dabc::Exception("Required number of segments less than available in the buffer");
 
-   if (!src.IsTransient())
-      ((MemoryPool*)src.fPool())->IncreaseSegmRefs(src.fSegments, src.fNumSegments);
+   MemSegment* segm = Segments();
 
    // first move complete segments to the end
-   for (unsigned n=fNumSegments; n>tgtseg + (tgtpos>0 ? 1 : 0); ) {
+   for (unsigned n=NumSegments(); n>tgtseg + (tgtpos>0 ? 1 : 0); ) {
       n--;
 
-      DOUT0(("Move segm %u->%u", n, n + numrequired - fNumSegments));
+      DOUT0(("Move segm %u->%u", n, n + numrequired - NumSegments()));
 
-      fSegments[n + numrequired - fNumSegments] = fSegments[n];
-      fSegments[n].datasize = 0;
-      fSegments[n].id = 0;
-      fSegments[n].buffer = 0;
+      segm[n + numrequired - NumSegments()] = segm[n];
+      segm[n].datasize = 0;
+      segm[n].id = 0;
+      segm[n].buffer = 0;
    }
 
+   MemSegment* srcsegm = ownbuf.Segments();
    // copy all segments from external buffer
-   for (unsigned n=0;n<src.fNumSegments;n++) {
+   for (unsigned n=0;n<ownbuf.NumSegments();n++) {
       DOUT0(("copy segm src[%u]->tgt[%u]", n, tgtseg + n + (tgtpos>0 ? 1 : 0)));
-      fSegments[tgtseg + n + (tgtpos>0 ? 1 : 0)] = src.fSegments[n];
+      segm[tgtseg + n + (tgtpos>0 ? 1 : 0)] = srcsegm[n];
    }
 
    // in case when segment is divided on two parts
    if (tgtpos>0) {
-      ((MemoryPool*)fPool())->IncreaseSegmRefs(fSegments + tgtseg, 1);
+      if(fRec->fPool) fRec->fPool->IncreaseSegmRefs(segm + tgtseg, 1);
 
-      unsigned seg2 = tgtseg + src.fNumSegments + 1;
+      unsigned seg2 = tgtseg + ownbuf.NumSegments() + 1;
 
-      fSegments[seg2].id = fSegments[tgtseg].id;
-      fSegments[seg2].datasize = fSegments[tgtseg].datasize - tgtpos;
-      fSegments[seg2].buffer = (char*) fSegments[tgtseg].buffer + tgtpos;
+      segm[seg2].id = segm[tgtseg].id;
+      segm[seg2].datasize = segm[tgtseg].datasize - tgtpos;
+      segm[seg2].buffer = (char*) segm[tgtseg].buffer + tgtpos;
 
-      fSegments[tgtseg].datasize = tgtpos;
+      segm[tgtseg].datasize = tgtpos;
 
       DOUT0(("split segment %u on two parts, second is in %u", tgtseg, seg2));
 
    }
 
    // at the end
-   fNumSegments = numrequired;
+   fRec->fNumSegments = numrequired;
 
-   if (src.IsTransient()) {
+   if (fRec->fPool && (ownbuf.fRec->fPool == fRec->fPool)) {
       // forget about all segments - they are moved to target
-      src.fNumSegments = 0;
-      src.Release();
+      ownbuf.fRec->fNumSegments = 0;
+      ownbuf.Release();
    }
+
+   if (moverefs) src.Release();
 
    return true;
 }
@@ -363,9 +398,9 @@ void dabc::Buffer::Shift(Pointer& ptr, BufferSize_t len) const
       ptr.fPtr = 0;
       ptr.fSegm++;
 
-      while ((ptr.fSegm < NumSegments()) && (fSegments[ptr.fSegm].datasize < len)) {
-         len -= fSegments[ptr.fSegm].datasize;
-         ptr.fFullSize -= fSegments[ptr.fSegm].datasize;
+      while ((ptr.fSegm < NumSegments()) && (SegmentSize(ptr.fSegm) < len)) {
+         len -= SegmentSize(ptr.fSegm);
+         ptr.fFullSize -= SegmentSize(ptr.fSegm);
          ptr.fSegm++;
       }
 
@@ -396,14 +431,14 @@ int dabc::Buffer::Distance(const Pointer& ptr1, const Pointer& ptr2) const
 
    // we produce first negative value,
    // but than full segment size will be accumulated in following while loop
-   int sum = - (ptr1.fPtr - (unsigned char*) fSegments[nseg].buffer);
+   int sum = - (ptr1.fPtr - (unsigned char*) SegmentPtr(nseg));
 
    while (nseg < ptr2.fSegm) {
-     sum+=fSegments[nseg].datasize;
+     sum+=SegmentSize(nseg);
      nseg++;
    }
 
-   sum += (ptr2.fPtr - (unsigned char*) fSegments[nseg].buffer);
+   sum += (ptr2.fPtr - (unsigned char*) SegmentPtr(nseg));
 
    return sum;
 }
@@ -492,18 +527,17 @@ dabc::BufferSize_t dabc::Buffer::CopyFromStr(Pointer tgtptr, const char* src, un
    return CopyFrom(tgtptr, src, len);
 }
 
-
 std::string dabc::Buffer::AsStdString()
 {
    std::string sbuf;
 
    if (null()) return sbuf;
 
-   DOUT0(("Num segments = %u", fNumSegments));
+   DOUT0(("Num segments = %u", NumSegments()));
 
-   for (unsigned nseg=0; nseg<fNumSegments; nseg++) {
-      DOUT0(("Segm %u = %p %u", nseg, fSegments[nseg].buffer, fSegments[nseg].datasize));
-      sbuf.append((const char*)fSegments[nseg].buffer, fSegments[nseg].datasize);
+   for (unsigned nseg=0; nseg<NumSegments(); nseg++) {
+      DOUT0(("Segm %u = %p %u", nseg, SegmentPtr(nseg), SegmentSize(nseg)));
+      sbuf.append((const char*)SegmentPtr(nseg), SegmentSize(nseg));
    }
 
    return sbuf;
@@ -511,43 +545,28 @@ std::string dabc::Buffer::AsStdString()
 
 
 
-dabc::Buffer dabc::Buffer::CreateBuffer(BufferSize_t sz, unsigned numrefs, unsigned numsegm) throw()
+dabc::Buffer dabc::Buffer::CreateBuffer(BufferSize_t sz) throw()
 {
-   dabc::Buffer res;
-
-   if (sz==0) return res;
-
-   MemoryPool* pool1 = new MemoryPool("name", false);
-   pool1->SetMaxNumSegments(numsegm);
-
-   pool1->Allocate(sz, 1, numrefs);
-
-   res << pool1->TakeBuffer(sz);
-
-   // at the moment when reference will be released, pool should be deleted
-   res.fPool.SetOwner(true);
-
-   return res;
+   return CreateBuffer(malloc(sz), sz, true);
 }
 
-dabc::Buffer dabc::Buffer::CreateBuffer(const void* ptr, unsigned sz, bool owner, unsigned numrefs, unsigned numsegm) throw()
+dabc::Buffer dabc::Buffer::CreateBuffer(const void* ptr, unsigned sz, bool owner) throw()
 {
    dabc::Buffer res;
 
-   if ((sz==0) || (ptr==0)) return res;
+   if ((ptr==0) || (sz==0)) return res;
 
-   MemoryPool* pool1 = new MemoryPool("name", false);
-   pool1->SetMaxNumSegments(numsegm);
+   res.AllocateRec(4);
 
-   std::vector<void*> ptrs; ptrs.push_back((void*)ptr);
-   std::vector<unsigned> sizes; sizes.push_back(sz);
+   MemSegment* segm = res.Segments();
 
-   pool1->Assign(owner, ptrs, sizes, numrefs);
+   segm->id = 0;
+   segm->datasize = sz;
+   segm->buffer = (void*) ptr;
 
-   res << pool1->TakeBuffer(sz);
+   res.fRec->fNumSegments = 1;
 
-   // at the moment when last reference will be released, pool should be deleted
-   res.fPool.SetOwner(true);
+   if (owner) res.fRec->fPoolId = (unsigned) -1; // indicate that we are owner of the memory
 
    return res;
 }

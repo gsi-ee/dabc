@@ -166,6 +166,8 @@ namespace dabc {
           * Be aware that buffer after such operation still has reference on same memory and
           * one do not allowed to change this memory until transport is not finish its transfer.
           */
+         // TODO: important change interface to Send(Buffer buf) class, user should decide
+         // if he makes copy or hands over buffer
          bool Send(const Buffer& buf) throw (PortOutputException);
 
          unsigned MaxSendSegments() { return fTransport ? fTransport->MaxSendSegments() : 0; }

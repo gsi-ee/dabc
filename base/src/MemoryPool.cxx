@@ -192,7 +192,9 @@ bool dabc::MemoryPool::_Allocate(BufferSize_t bufsize, unsigned number, unsigned
 {
    if ((fMem!=0) && (fSeg!=0)) return false;
 
-   if ((bufsize*number==0) || (number*refcoef==0)) return false;
+   if (bufsize*number==0) return false;
+
+   if (refcoef==0) refcoef = 1;
 
    DOUT3(("POOL:%s Create num:%u X size:%u buffers align:%u", GetName(), number, bufsize, fAlignment));
 
@@ -202,7 +204,7 @@ bool dabc::MemoryPool::_Allocate(BufferSize_t bufsize, unsigned number, unsigned
    DOUT3(("POOL:%s Create num:%u references with num:%u segments", GetName(), number*refcoef, fMaxNumSegments));
 
    fSeg = new MemoryBlock;
-   fSeg->Allocate(number*refcoef, fMaxNumSegments*sizeof(MemSegment), 16);
+   fSeg->Allocate(number*refcoef, fMaxNumSegments*sizeof(MemSegment) + sizeof(dabc::Buffer::BufferRec), 16);
 
    fChangeCounter++;
 
@@ -229,7 +231,7 @@ bool dabc::MemoryPool::Assign(bool isowner, const std::vector<void*>& bufs, cons
    fMem->Assign(isowner, bufs, sizes);
 
    fSeg = new MemoryBlock;
-   fSeg->Allocate(bufs.size()*refcoef, fMaxNumSegments*sizeof(MemSegment), 16);
+   fSeg->Allocate(bufs.size()*refcoef, fMaxNumSegments*sizeof(MemSegment) + sizeof(dabc::Buffer::BufferRec), 16);
 
    return true;
 }
@@ -349,6 +351,31 @@ void dabc::MemoryPool::ReleaseRawBuffer(unsigned indx)
    if (fMem) fMem->fFree.Push(indx);
 }
 
+void dabc::MemoryPool::_TakeSegmentsList(MemoryPool* pool, dabc::Buffer& buf, unsigned numsegm)
+{
+   // segments list too long, allocate directly by the buffer
+   if ((pool==0) || (numsegm>pool->fMaxNumSegments) || !pool->fSeg->IsAnyFree()) {
+      buf.AllocateRec(numsegm);
+   } else {
+      unsigned refid = pool->fSeg->fFree.Pop();
+
+      if (pool->fSeg->fArr[refid].refcnt!=0)
+         throw dabc::Exception("Segments are not free even is declared so");
+
+      pool->fSeg->fArr[refid].refcnt++;
+
+      buf.AssignRec(pool->fSeg->fArr[refid].buf, pool->fSeg->fArr[refid].size);
+      buf.fRec->fPoolId = refid+1;
+   }
+
+   if (pool) {
+      pool->_IncObjectRefCnt();
+      buf.fRec->fPool = pool;
+   }
+
+}
+
+
 dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool reserve_memory) throw()
 {
    Buffer res;
@@ -368,18 +395,13 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
       return res;
    }
 
-   if (!fSeg->IsAnyFree()) {
-      if (except) throw dabc::Exception("No any segments list available in the pool");
-      return res;
-   }
-
    if ((size==0) && reserve_memory) size = fMem->fArr[fMem->fFree.Front()].size;
 
    // first check if required size is available
    BufferSize_t sum(0);
    unsigned cnt(0);
    while (sum<size) {
-      if ((cnt>=fMem->fFree.Size()) || (cnt>=fMaxNumSegments)) {
+      if (cnt>=fMem->fFree.Size()) {
          if (except) throw dabc::Exception("Cannot reserve buffer of requested size");
          return res;
       }
@@ -389,19 +411,20 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
       cnt++;
    }
 
-   unsigned refid = fSeg->fFree.Pop();
-   MemSegment* segs = (MemSegment*) fSeg->fArr[refid].buf;
-   if (fSeg->fArr[refid].refcnt!=0)
-      throw dabc::Exception("Segments are not free even is declared so");
+   _TakeSegmentsList(this, res, cnt);
 
-   fSeg->fArr[refid].refcnt++;
    sum = 0;
    cnt = 0;
+   MemSegment* segs = res.Segments();
+
    while (sum<size) {
       unsigned id = fMem->fFree.Pop();
 
       if (fMem->fArr[id].refcnt!=0)
          throw dabc::Exception("Buffer is not free even is declared so");
+
+      if (cnt>=res.fRec->fCapacity)
+         throw dabc::Exception("All mem segments does not fit into preallocated list");
 
       segs[cnt].buffer = fMem->fArr[id].buf;
       segs[cnt].datasize = fMem->fArr[id].size;
@@ -419,19 +442,9 @@ dabc::Buffer dabc::MemoryPool::_TakeBuffer(BufferSize_t size, bool except, bool 
       cnt++;
    }
 
-   // create reference to ensure that pool is preserved until all buffers are released
-   res.fPool = _MakeRef();
+   res.fRec->fNumSegments = cnt;
 
-   // via compiler optimization no any objects copy appears in code like
-   //  dabc::Buffer buf = pool.TakeBuffer(4096)
-   // Therefore no need to mark such intermediate object as transient
-   // not necessary res.SetTransient(true);
-
-   res.fPoolId = refid;
-   res.fCapacity = fMaxNumSegments;
-   res.fSegments = segs;
-   res.fNumSegments = cnt;
-   res.fTypeId = 0;
+   res.SetTypeId(mbt_Generic);
 
    return res;
 }
@@ -441,15 +454,13 @@ dabc::Buffer dabc::MemoryPool::TakeBuffer(BufferSize_t size) throw()
    bool process_req(false);
    dabc::Buffer res;
 
-//   DOUT0(("TakeBuffer Obj.res = %p", &res));
-
    {
       LockGuard lock(ObjectMutex());
 
       if (fReqQueue.Size()>0)
          process_req = _ProcessRequests();
 
-      res << _TakeBuffer(size, true);
+      res = _TakeBuffer(size, true);
    }
 
    if (process_req) ReplyReadyRequests();
@@ -457,48 +468,51 @@ dabc::Buffer dabc::MemoryPool::TakeBuffer(BufferSize_t size) throw()
    return res;
 }
 
-dabc::Buffer dabc::MemoryPool::TakeEmpty() throw()
+dabc::Buffer dabc::MemoryPool::TakeEmpty(unsigned capacity) throw()
 {
    dabc::Buffer res;
 
    {
       LockGuard lock(ObjectMutex());
 
-      res << _TakeBuffer(0, true, false);
+      if (capacity == 0) capacity = fMaxNumSegments;
+
+      _TakeSegmentsList(this, res, capacity);
    }
 
    return res;
 }
 
 
-void dabc::MemoryPool::DuplicateBuffer(const Buffer& src, Buffer& tgt, bool except) throw()
+void dabc::MemoryPool::DuplicateBuffer(const Buffer& src, Buffer& tgt, unsigned firstseg, unsigned numsegm) throw()
 {
-   LockGuard lock(ObjectMutex());
+   dabc::MemoryPool* pool = src.fRec ? src.fRec->fPool : 0;
 
-   if ((fSeg==0) || !fSeg->IsAnyFree()) {
-      if (except) throw dabc::Exception("No free segments list available in the pool");
-      return;
-   }
+   if (numsegm == 0) numsegm = src.NumSegments();
+   if (firstseg >= src.NumSegments()) return;
+   if (firstseg + numsegm > src.NumSegments())
+      numsegm = src.NumSegments() - numsegm;
 
-   unsigned refid = fSeg->fFree.Pop();
-   MemSegment* segs = (MemSegment*) fSeg->fArr[refid].buf;
-   fSeg->fArr[refid].refcnt++;
+   LockGuard lock(pool ? pool->ObjectMutex() : 0);
 
-   for (unsigned cnt=0; cnt<src.fNumSegments; cnt++) {
-      segs[cnt] = src.fSegments[cnt];
+   _TakeSegmentsList(pool, tgt, numsegm);
+
+   MemSegment* src_segm = src.Segments();
+   MemSegment* tgt_segm = tgt.Segments();
+
+   for (unsigned cnt=0; cnt<numsegm; cnt++) {
+      tgt_segm[cnt] = src_segm[firstseg + cnt];
 
       // increment reference counter on the memory space
-      fMem->fArr[segs[cnt].id].refcnt++;
+      if (pool) pool->fMem->fArr[tgt_segm[cnt].id].refcnt++;
    }
 
-   tgt.fPoolId = refid;
-   tgt.fCapacity = fMaxNumSegments;
-   tgt.fSegments = segs;
-   tgt.fNumSegments = src.fNumSegments;
-   tgt.fTypeId = src.fTypeId;
+   tgt.SetNumSegments(numsegm);
+
+   tgt.SetTypeId(src.GetTypeId());
 }
 
-dabc::Buffer dabc::MemoryPool::CopyBuffer(Buffer& src, bool except) throw()
+dabc::Buffer dabc::MemoryPool::CopyBuffer(const Buffer& src, bool except) throw()
 {
    dabc::Buffer res;
 
@@ -551,13 +565,18 @@ void dabc::MemoryPool::DecreaseSegmRefs(MemSegment* segm, unsigned num) throw()
 
 }
 
-bool dabc::MemoryPool::_ReleaseBuffer(Buffer& buf) throw()
+bool dabc::MemoryPool::_ReleaseBufferRec(dabc::Buffer::BufferRec* rec)
 {
-   MemSegment* segs = buf.fSegments;
-   buf.fSegments = 0;
-   unsigned size = buf.fNumSegments;
-   buf.fNumSegments = 0;
-   buf.fCapacity = 0;
+   if ((rec==0) || (rec->fPool != this)) {
+      EOUT(("Internal error - Wrong buffer record"));
+      return false;
+   }
+
+   // simply decrement counter, no need to try destroy ourself
+   _DecObjectRefCnt();
+
+   MemSegment* segs = rec->Segments();
+   unsigned size = rec->fNumSegments;
 
    bool isnewfree(false);
 
@@ -579,20 +598,18 @@ bool dabc::MemoryPool::_ReleaseBuffer(Buffer& buf) throw()
       }
    }
 
-   unsigned refid = buf.fPoolId;
-   buf.fPoolId = 0;
-
-   if (fSeg->fArr[refid].refcnt!=1) throw dabc::Exception("Segments list should referenced at this time exactly once");
-
-   fSeg->fArr[refid].refcnt--;
-
-   fSeg->fFree.Push(refid);
-
+   unsigned refid = rec->fPoolId;
+   // 0 is special case - record was created by Buffer itself
+   if (refid>0) {
+      refid--;
+      if (fSeg->fArr[refid].refcnt!=1) throw dabc::Exception("Segments list should referenced at this time exactly once");
+      fSeg->fArr[refid].refcnt--;
+      fSeg->fFree.Push(refid);
+   }
    return isnewfree;
 }
 
-
-void dabc::MemoryPool::ReleaseBuffer(Buffer& buf) throw()
+void dabc::MemoryPool::ReleaseBufferRec(dabc::Buffer::BufferRec* rec)
 {
 
    bool dofire(false), process_req(false);
@@ -600,10 +617,9 @@ void dabc::MemoryPool::ReleaseBuffer(Buffer& buf) throw()
    {
       LockGuard lock(ObjectMutex());
 
-      bool isnewfree = _ReleaseBuffer(buf);
+      bool isnewfree = _ReleaseBufferRec(rec);
 
       if (isnewfree && !fReqQueue.Empty()) {
-
          if (fUseThread) {
            if (!fEvntFired) { fEvntFired = true; dofire = true; }
          } else {
@@ -653,7 +669,7 @@ dabc::Buffer dabc::MemoryPool::TakeBufferReq(MemoryPoolRequester* req, BufferSiz
       if (fReqQueue.Size()>0)
          process_req = _ProcessRequests();
 
-      res << _TakeBuffer(size, true);
+      res = _TakeBuffer(size, true);
 
       if (res.null()) {
          req->bufsize = size;
@@ -674,14 +690,20 @@ void dabc::MemoryPool::RemoveRequester(MemoryPoolRequester* req)
 {
    if (req==0) return;
 
-   LockGuard lock(ObjectMutex());
+   dabc::Buffer buf;
 
    if (req->pool==this) {
+      LockGuard lock(ObjectMutex());
       req->pool = 0;
       fReqQueue.Remove(req);
-
-      _ReleaseBuffer(req->buf);
+      buf << req->buf;
+      if (!req->buf.null()) {
+         EOUT(("Internal error - buffer MUST be empty"));
+         exit(765);
+      }
    }
+
+   buf.Release();
 }
 
 bool dabc::MemoryPool::_ProcessRequests()
@@ -695,7 +717,7 @@ bool dabc::MemoryPool::_ProcessRequests()
       MemoryPoolRequester* req = fReqQueue.Item(n);
 
       if (req->buf.null())
-         req->buf << _TakeBuffer(req->bufsize, false);
+         req->buf = _TakeBuffer(req->bufsize, false);
 
       if (!req->buf.null()) res = true;
    }

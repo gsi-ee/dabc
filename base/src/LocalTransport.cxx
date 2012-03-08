@@ -119,7 +119,7 @@ bool dabc::LocalTransport::Recv(Buffer &buf)
 
       if (fQueue.Size()<=0) return false;
 
-      buf << fQueue.Pop();
+      fQueue.PopBuffer(buf);
    }
 
    // use port mutex only when other works in different thread
@@ -149,24 +149,20 @@ bool dabc::LocalTransport::Send(const Buffer& buf)
 
    if (buf.null() || (other==0)) return false;
 
+   dabc::Buffer sendbuf;
+
    if (fMemCopy && !buf.null()) {
       MemoryPool* pool = other->GetPool();
-      Buffer newbuf;
       if (pool)
-         newbuf << pool->TakeBuffer(buf.GetTotalSize());
-      if (!newbuf.null()) {
-         newbuf.CopyFrom(buf);
-         *(const_cast<Buffer*> (&buf)) << newbuf;
-      } else {
-         EOUT(("Cannot memcpy in localtransport while no new buffer can be ordered"));
-         return false;
-      }
+         sendbuf = pool->CopyBuffer(buf);
    }
+
+   if (sendbuf.null()) sendbuf = buf;
 
    bool res = false;
 
    if (other->fRunning)
-      res = other->fQueue.Push(buf, fMutex);
+      res = other->fQueue.Push(sendbuf, fMutex);
 
    if (res) {
       // here one need port mutex when other transport working in another thread

@@ -165,8 +165,7 @@ dabc::Buffer dabc::ModuleSync::TakeBuffer(PoolHandle* pool, BufferSize_t size, d
 {
    if (pool==0) return Buffer();
 
-   dabc::Buffer buf;
-   buf << pool->TakeRequestedBuffer();
+   dabc::Buffer buf = pool->TakeRequestedBuffer();
    if (!buf.null()) {
       EOUT(("There is requested buffer of size %d", buf.GetTotalSize()));
       buf.Release();
@@ -175,11 +174,11 @@ dabc::Buffer dabc::ModuleSync::TakeBuffer(PoolHandle* pool, BufferSize_t size, d
    if (timeout==0.)
       return pool->TakeBuffer(size);
 
-   buf << pool->TakeBufferReq(size);
+   buf = pool->TakeBufferReq(size);
    if (!buf.null()) return buf;
 
    do {
-      buf << pool->TakeRequestedBuffer();
+      buf = pool->TakeRequestedBuffer();
       if (!buf.null()) return buf;
    } while (WaitItemEvent(timeout, pool));
 

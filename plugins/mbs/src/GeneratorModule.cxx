@@ -127,7 +127,7 @@ void mbs::GeneratorModule::FillRandomBuffer(dabc::Buffer& buf)
    }
 
    // When close iterator - take back buffer with correctly modified length field
-   buf << iter.Close();
+   buf = iter.Close();
 
    if (fShowInfo)
       Par("Info").SetStr(dabc::format("Produce event %d", fEventCount));

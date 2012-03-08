@@ -333,7 +333,7 @@ void mbs::ServerTransport::MoveFrontBuffer(ServerIOProcessor* callproc)
          // buffer will be taken only for stream server and when queue is full
          if (isanyfull && (!fOutQueue.Full() || (Kind() == mbs::TransportServer))) return;
 
-         buf << fOutQueue.Pop();
+         fOutQueue.PopBuffer(buf);
          fireout = (Kind() == mbs::TransportServer);
       }
 
@@ -382,9 +382,9 @@ bool mbs::ServerTransport::Send(const dabc::Buffer& buf)
 
          if (fScaleCounter!=0) {
             // buffer is just skipped
-            dropbuf << buf;
+            dropbuf = buf;
          } else {
-            if (fOutQueue.Full()) dropbuf << fOutQueue.Pop();
+            if (fOutQueue.Full()) fOutQueue.PopBuffer(dropbuf);
             fOutQueue.Push(buf);
             firetransport = true;
          }

@@ -280,6 +280,26 @@ void dabc::Object::Destructor()
    gNumInstances--;
 }
 
+void dabc::Object::_IncObjectRefCnt()
+{
+   // TODO: make such check optional
+
+   if (fObjectMutex && !fObjectMutex->IsLocked())
+      EOUT(("Mutex not locked!!!"));
+
+   fObjectRefCnt++;
+}
+
+void dabc::Object::_DecObjectRefCnt()
+{
+   // TODO: make such check optional
+   if (fObjectMutex && !fObjectMutex->IsLocked())
+      EOUT(("Mutex not locked!!!"));
+
+   fObjectRefCnt--;
+}
+
+
 bool dabc::Object::IncReference(bool withmutex)
 {
    if (withmutex) {
@@ -334,7 +354,6 @@ bool dabc::Object::IsNormalState()
 
    return _IsNormalState();
 }
-
 
 
 bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool from_thread)
@@ -436,11 +455,10 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
    // Main point of all destroyment - call cleanup in correct place
    ObjectCleanup();
 
+   if (IsLogging())
+      DOUT0(("DecRefe after cleanup %p cleanup %s mgr %p", this, DBOOL(GetFlag(flCleanup)), dabc::mgr()));
 
    {
-
-      if (IsLogging())
-         DOUT0(("DecRefe after cleanup %p cleanup %s mgr %p", this, DBOOL(GetFlag(flCleanup)), dabc::mgr()));
 
       LockGuard guard(fObjectMutex);
 

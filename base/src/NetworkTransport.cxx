@@ -200,7 +200,7 @@ void dabc::NetworkTransport::CleanupNetTransportQueue()
 }
 
 
-uint32_t dabc::NetworkTransport::_TakeRec(const Buffer& buf, uint32_t kind, uint32_t extras)
+uint32_t dabc::NetworkTransport::_TakeRec(Buffer& buf, uint32_t kind, uint32_t extras)
 {
    if (fNumRecs == 0) return 0;
 
@@ -276,7 +276,7 @@ bool dabc::NetworkTransport::Send(const Buffer& buf)
    dabc::LockGuard guard(fMutex);
 
    fOutputQueueSize++;
-   uint32_t recid = _TakeRec(buf, netot_Send);
+   uint32_t recid = _TakeRec(*(const_cast<Buffer*> (&buf)), netot_Send);
    if (recid==fNumRecs) return false;
 
    // from this moment buf should be used from record directly
@@ -365,7 +365,9 @@ bool dabc::NetworkTransport::CheckAcknReadyCounter(unsigned newitems)
 
    fFirstAckn = false;
 
-   uint32_t recid = _TakeRec(Buffer(), netot_HdrSend, ackn_limit);
+   dabc::Buffer buf;
+
+   uint32_t recid = _TakeRec(buf, netot_HdrSend, ackn_limit);
 
    _SubmitSend(recid);
 

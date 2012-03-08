@@ -293,7 +293,7 @@ bool mbs::ClientTransport::Recv(dabc::Buffer &buf)
    {
       dabc::LockGuard lock(fMutex);
       dofire = fInpQueue.Full();
-      buf << fInpQueue.Pop();
+      fInpQueue.PopBuffer(buf);
    }
 
    if (dofire) FireEvent(evReactivate);
@@ -328,7 +328,7 @@ bool mbs::ClientTransport::RequestBuffer(uint32_t sz, dabc::Buffer &buf)
       return false;
    }
 
-   buf << GetPool()->TakeBufferReq(this, sz);
+   buf = GetPool()->TakeBufferReq(this, sz);
 
    return true;
 }
