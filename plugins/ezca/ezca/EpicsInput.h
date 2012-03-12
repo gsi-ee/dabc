@@ -56,12 +56,12 @@ namespace ezca {
 
 
          // question: what kind of possible data types are expected to be put into mbs subevent payload?
-         //		ezcaByte
-         //		ezcaString
-         //		ezcaShort
-         //		ezcaLong
-         //		ezcaFloat
-         //		ezcaDouble
+         //      ezcaByte
+         //      ezcaString
+         //      ezcaShort
+         //      ezcaLong
+         //      ezcaFloat
+         //      ezcaDouble
          // for the moment, we restrict to long and double
       public:
 
@@ -105,15 +105,15 @@ namespace ezca {
             fIDNumberRecord = name;
          }
 
-         const char* GetUpdateCommandReceiver()
-               {
-                  return fUpdateCommandReceiver.c_str();
-               }
+         std::string GetUpdateCommandReceiver()
+         {
+            return fUpdateCommandReceiver.c_str();
+         }
 
-               void SetUpdateCommandReceiver(std::string name)
-               {
-            	   fUpdateCommandReceiver = name;
-               }
+         void SetUpdateCommandReceiver(std::string name)
+         {
+            fUpdateCommandReceiver = name;
+         }
 
 
          void AddLongRecord(std::string name)

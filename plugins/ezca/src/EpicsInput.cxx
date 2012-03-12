@@ -102,10 +102,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
    if (std::string(fInfoDescr.GetIDRecord()) == "") {
       useid = false;
    }
-   bool hasreceiver = true;
-   if (std::string(fInfoDescr.GetUpdateCommandReceiver()) == "") {
-      hasreceiver = false;
-   }
+   bool hasreceiver = !fInfoDescr.GetUpdateCommandReceiver().empty();
 
    DOUT3(("EpicsInput:useflag is %d, useid is %d",useflag,useid));
    double tm1 = dabc::Now().AsDouble();
