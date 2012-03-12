@@ -130,9 +130,9 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
       if (hasreceiver) {
          dabc::Command cmd(ezca::nameUpdateCommand);
          cmd.SetReceiver(fInfoDescr.GetUpdateCommandReceiver());
-               cmd.SetInt(xmlUpdateFlagRecord, flag);
-               dabc::mgr.Submit(cmd);
-            }
+         cmd.SetInt(xmlUpdateFlagRecord, flag);
+         dabc::mgr.Submit(cmd);
+      }
       if (useid && CA_GetLong((char*) fInfoDescr.GetIDRecord(), evtnumber) != 0)
          return dabc::di_RepeatTimeOut; DOUT3(("EpicsInput:ReadComplete id record %s = %d ",fInfoDescr.GetIDRecord(), evtnumber));
       // if this is nonzero, read other records and write buffer

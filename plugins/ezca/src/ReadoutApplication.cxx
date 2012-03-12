@@ -52,9 +52,9 @@ ezca::ReadoutApplication::ReadoutApplication() :
 	DOUT1(("!!!! Data server plugin created %s value %d !!!!", GetName(), Par(ezca::xmlEpicsSubeventId).AsInt()));
 }
 
-int ezca::ReadoutApplication::DataServerKind() const
+std::string ezca::ReadoutApplication::DataServerKind() const
 {
-	return mbs::StrToServerKind(Par(mbs::xmlServerKind).AsStr());
+	return Par(mbs::xmlServerKind).AsStdStr();
 }
 
 
@@ -119,7 +119,7 @@ bool ezca::ReadoutApplication::CreateAppModules()
 			return false;
 	}
 
-	if (DataServerKind() != mbs::NoServer)
+	if (!DataServerKind().empty())
 	{
 		///// connect module to mbs server:
 		cmd = dabc::CmdCreateTransport(
@@ -127,14 +127,19 @@ bool ezca::ReadoutApplication::CreateAppModules()
 							mbs::typeServerTransport,
 							"MbsServerThrd");
 
+		// TODO: should be removed - port must find it from the application
+      cmd.SetStr(mbs::xmlServerKind, DataServerKind());
+
+      // no need to set extra parameters - they will be taken from application !!!
+//      cmd->SetInt(dabc::xmlBufferSize, GetParInt(dabc::xmlBufferSize, 8192));
+
 		// no need to set extra parameters - they will be taken from application !!!
 		//      cmd.Field(mbs::xmlServerKind).SetStr(mbs::ServerKindToStr(DataServerKind())); //mbs::StreamServer ,mbs::TransportServer
 		//      cmd.Field(dabc::xmlBufferSize).SetInt(Par(dabc::xmlBufferSize).AsInt(8192));
 
 		res = dabc::mgr.Execute(cmd);
 		DOUT1(("Connected readout module output to Mbs server = %s", DBOOL(res)));
-		if (!res)
-			return false;
+		if (!res) return false;
 	}
 
 	return true;

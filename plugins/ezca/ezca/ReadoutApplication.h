@@ -9,18 +9,12 @@
 
 namespace ezca {
 
-
-
-
-
-
    class ReadoutApplication : public dabc::Application {
       public:
          ReadoutApplication();
 
-
          /** id number of Mbs server (stream, transport)*/
-         int DataServerKind() const;
+         std::string DataServerKind() const;
 
          std::string OutputFileName() const { return Par(mbs::xmlFileName).AsStdStr(); }
 
