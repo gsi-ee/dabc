@@ -2,6 +2,8 @@
 
 #include "dabc/Port.h"
 #include "dabc/Pointer.h"
+#include "dabc/timing.h"
+#include "dabc/Manager.h"
 #include "mbs/MbsTypeDefs.h"
 #include "ezca/Definitions.h"
 
@@ -37,6 +39,7 @@ bool ezca::EpicsInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command
    fSubeventId = wrk.Cfg(ezca::xmlEpicsSubeventId, cmd).AsInt(fSubeventId);
    fInfoDescr.SetUpdateRecord(wrk.Cfg(ezca::xmlUpdateFlagRecord,cmd).AsStdStr(""));
    fInfoDescr.SetIDRecord(wrk.Cfg(ezca::xmlEventIDRecord,cmd).AsStdStr("id"));
+   fInfoDescr.SetUpdateCommandReceiver(wrk.Cfg(ezca::xmlCommandReceiver,cmd).AsStdStr(""));
    int numlongs = wrk.Cfg(ezca::xmlNumLongRecords, cmd).AsInt(0);
    for(int t=0;t<numlongs;++t)
       fInfoDescr.AddLongRecord(wrk.Cfg(dabc::format("%s%d", ezca::xmlNameLongRecords, t), cmd).AsStdStr("dummy"));
@@ -95,18 +98,42 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
    if (std::string(fInfoDescr.GetUpdateRecord()) == "") {
       useflag = false;
    }
-   DOUT3(("EpicsInput:useflag is %d",useflag));
+   bool useid = true;
+   if (std::string(fInfoDescr.GetIDRecord()) == "") {
+      useid = false;
+   }
+   bool hasreceiver = true;
+   if (std::string(fInfoDescr.GetUpdateCommandReceiver()) == "") {
+      hasreceiver = false;
+   }
+
+   DOUT3(("EpicsInput:useflag is %d, useid is %d",useflag,useid));
+   double tm1 = dabc::Now().AsDouble();
    if (useflag) {
       // first check the flag record:
       if (CA_GetLong((char*) fInfoDescr.GetUpdateRecord(), flag) != 0)
          return dabc::di_RepeatTimeOut; DOUT3(("EpicsInput:ReadComplete flag record %s = %d ",fInfoDescr.GetUpdateRecord(), flag));
-      if (flag != 0 || flag == oldflag) {
-         oldflag = flag;
+      //if (flag == 0 || flag == oldflag) { // new: flag 0 means do not read!
+      if (flag == 0) { // do not read 0 flag values for performance
+             return dabc::di_RepeatTimeOut;
+          }
+
+
+      if (flag == oldflag) { // read on every change of flag if not 0
+    	  //oldflag = flag;
          return dabc::di_RepeatTimeOut;
       }
+
       oldflag = flag;
 
-      if (CA_GetLong((char*) fInfoDescr.GetIDRecord(), evtnumber) != 0)
+      // TODO: optionally send here command to dabc receiver
+      if (hasreceiver) {
+         dabc::Command cmd(ezca::nameUpdateCommand);
+         cmd.SetReceiver(fInfoDescr.GetUpdateCommandReceiver());
+               cmd.SetInt(xmlUpdateFlagRecord, flag);
+               dabc::mgr.Submit(cmd);
+            }
+      if (useid && CA_GetLong((char*) fInfoDescr.GetIDRecord(), evtnumber) != 0)
          return dabc::di_RepeatTimeOut; DOUT3(("EpicsInput:ReadComplete id record %s = %d ",fInfoDescr.GetIDRecord(), evtnumber));
       // if this is nonzero, read other records and write buffer
    }
@@ -146,6 +173,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
    rawlen=0;
    //first payload: id number
    DOUT3(("EpicsInput:Got pointer after shift:0x%x",ptr()));
+   if(!useid) evtnumber=evcount; // no external eventid: use local counter instead
    *((unsigned int*) ptr()) = evtnumber;
    ptr.shift(sizeof(unsigned int));
    rawlen += sizeof(unsigned int);
@@ -248,8 +276,10 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
    subhdr->SetRawDataSize(rawlen);
    evhdr->SetSubEventsSize(sizeof(mbs::SubeventHeader) + rawlen);
    buf.SetTypeId(mbs::mbt_MbsEvents);
-   DOUT3(("EpicsInput:: totallen = %d, evnum=%d",totallen,evhdr->iEventNumber));
+   DOUT1(("EpicsInput:: totallen = %d, evnum=%d",totallen,evhdr->iEventNumber));
    buf.SetTotalSize(totallen);
+   double tm2 = dabc::Now().AsDouble();
+   DOUT1(("EpicsInput:: redout time is = %e s \n",tm2-tm1));
    return totallen > 0 ? dabc::di_Ok : dabc::di_RepeatTimeOut;
 }
 

@@ -47,6 +47,8 @@ ezca::ReadoutApplication::ReadoutApplication() :
 	CreatePar(mbs::xmlFileName).DfltStr("");
 	CreatePar(mbs::xmlSizeLimit).DfltInt(0);
 
+	CreatePar(ezca::xmlCommandReceiver).DfltStr("");
+
 	DOUT1(("!!!! Data server plugin created %s value %d !!!!", GetName(), Par(ezca::xmlEpicsSubeventId).AsInt()));
 }
 
@@ -86,6 +88,7 @@ bool ezca::ReadoutApplication::CreateAppModules()
 	cmd = dabc::CmdCreateTransport(FORMAT(("%s/Input0", Par(ezca::xmlModuleName).AsStr())), ezca::typeEpicsInput);
 	cmd.SetStr(ezca::xmlEpicsName, Par(ezca::xmlEpicsName).AsStdStr());
 	cmd.SetStr(ezca::xmlUpdateFlagRecord, Par(ezca::xmlUpdateFlagRecord).AsStdStr());
+	cmd.SetStr(ezca::xmlCommandReceiver, Par(ezca::xmlCommandReceiver).AsStdStr());
 	cmd.SetStr(ezca::xmlEventIDRecord, Par(ezca::xmlEventIDRecord).AsStdStr());
 	cmd.SetInt(ezca::xmlEpicsSubeventId, Par(ezca::xmlEpicsSubeventId).AsInt(8));
 	cmd.SetInt(ezca::xmlNumLongRecords,NumLongRecs());

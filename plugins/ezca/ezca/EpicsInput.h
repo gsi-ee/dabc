@@ -32,6 +32,10 @@ namespace ezca {
          /* the id number of the current dataset, i.e. the mbs event number*/
          std::string fIDNumberRecord;
 
+         /* name of the dabc command receiver that shall be informed
+          * whenever the PVs are updated*/
+         std::string fUpdateCommandReceiver;
+
          /* contains names of all long integer values to be requested*/
          std::vector<std::string> fLongRecords;
 
@@ -48,6 +52,8 @@ namespace ezca {
 
          /* real length of all name strings in long records list*/
          size_t fDoubleRecordStringsize;
+
+
 
          // question: what kind of possible data types are expected to be put into mbs subevent payload?
          //		ezcaByte
@@ -72,6 +78,7 @@ namespace ezca {
          {
             fUpdateFlagRecord = "";
             fIDNumberRecord = "";
+            fUpdateCommandReceiver="";
             fLongRecords.clear();
             fDoubleRecords.clear();
             fLongRecordStringsize = 0;
@@ -97,6 +104,17 @@ namespace ezca {
          {
             fIDNumberRecord = name;
          }
+
+         const char* GetUpdateCommandReceiver()
+               {
+                  return fUpdateCommandReceiver.c_str();
+               }
+
+               void SetUpdateCommandReceiver(std::string name)
+               {
+            	   fUpdateCommandReceiver = name;
+               }
+
 
          void AddLongRecord(std::string name)
          {

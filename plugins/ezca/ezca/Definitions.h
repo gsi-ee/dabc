@@ -13,6 +13,9 @@
 #define EZCA_nameReadoutAppClass  "ezca::Readout"
 #define EZCA_nameReadoutModuleClass "ezca::MonitorModule"
 
+#define EZCA_nameUpdateCommand "ezca::OnUpdate"
+
+
 #define EZCA_xmlEpicsName "EpicsIdentifier"
 
 #define EZCA_xmlUpdateFlagRecord "EpicsFlagRec"
@@ -34,6 +37,8 @@
 #define EZCA_xmlModuleName "EpicsModuleName"
 #define EZCA_xmlModuleThread "EpicsModuleThread"
 
+#define EZCA_xmlCommandReceiver "EpicsDabcCommandReceiver"
+
 namespace ezca {
 
 /*
@@ -44,6 +49,7 @@ namespace ezca {
    extern const char* typeEpicsInput;
    extern const char* nameReadoutAppClass;
    extern const char* nameReadoutModuleClass;
+   extern const char* nameUpdateCommand;
 
    /* Name of record containing the ioc identifier name- TODO Do we need this?*/
    extern const char* xmlEpicsName;
@@ -75,6 +81,9 @@ namespace ezca {
 
    extern const char* xmlModuleName;
    extern const char* xmlModuleThread;
+
+
+   extern const char* xmlCommandReceiver;
 
 
    /* duplicate here identifiers of other mbs payloads*/

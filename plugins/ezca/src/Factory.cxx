@@ -13,6 +13,8 @@ const char* ezca::typeEpicsInput 			= EZCA_typeEpicsInput;
 const char* ezca::nameReadoutAppClass   		= EZCA_nameReadoutAppClass;
 const char* ezca::nameReadoutModuleClass   	= EZCA_nameReadoutModuleClass;
 
+const char* ezca::nameUpdateCommand     = EZCA_nameUpdateCommand;
+
 const char* ezca::xmlEpicsName				= EZCA_xmlEpicsName;
 
 const char* ezca::xmlUpdateFlagRecord 			=  EZCA_xmlUpdateFlagRecord;
@@ -35,7 +37,7 @@ const char* ezca::xmlModuleName 				= EZCA_xmlModuleName; // Name of readout mod
 const char* ezca::xmlModuleThread 			= EZCA_xmlModuleName; // Name of thread for readout module
 
 
-
+const char* ezca::xmlCommandReceiver 			= EZCA_xmlCommandReceiver; // Command receiver on flag change event
 
 
 
