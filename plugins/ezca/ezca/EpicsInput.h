@@ -85,9 +85,9 @@ namespace ezca {
             fDoubleRecordStringsize = 0;
          }
 
-         const char* GetUpdateRecord()
+         const std::string& GetUpdateRecord()
          {
-            return fUpdateFlagRecord.c_str();
+            return fUpdateFlagRecord; //.c_str();
          }
 
          void SetUpdateRecord(std::string name)
@@ -95,9 +95,9 @@ namespace ezca {
             fUpdateFlagRecord = name;
          }
 
-         const char* GetIDRecord()
+         const std::string& GetIDRecord()
          {
-            return fIDNumberRecord.c_str();
+            return fIDNumberRecord; //.c_str();
          }
 
          void SetIDRecord(std::string name)
@@ -105,9 +105,9 @@ namespace ezca {
             fIDNumberRecord = name;
          }
 
-         std::string GetUpdateCommandReceiver()
+         const std::string& GetUpdateCommandReceiver()
          {
-            return fUpdateCommandReceiver.c_str();
+            return fUpdateCommandReceiver; //.c_str();
          }
 
          void SetUpdateCommandReceiver(std::string name)

@@ -48,7 +48,7 @@ bool ezca::EpicsInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command
       fInfoDescr.AddDoubleRecord(wrk.Cfg(dabc::format("%s%d", ezca::xmlNameDoubleRecords, t), cmd).AsStdStr("dummy"));
 
    DOUT1(("EpicsInput %s - BufferSize = %d byte, Timeout = %e s, subevtid:%d, update flag:%s id:%s ",
-         fName.c_str(), fBufferSize, fTimeout,fSubeventId,fInfoDescr.GetUpdateRecord(),fInfoDescr.GetIDRecord()));
+         fName.c_str(), fBufferSize, fTimeout,fSubeventId,fInfoDescr.GetUpdateRecord().c_str(),fInfoDescr.GetIDRecord().c_str()));
 
    return true;
 }
@@ -94,26 +94,27 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
    long evtnumber=0;
    long flag = 0;
    static long oldflag = -1;
-   bool useflag=true;
-   if (std::string(fInfoDescr.GetUpdateRecord()) == "") {
-      useflag = false;
-   }
-   bool useid = true;
-   if (std::string(fInfoDescr.GetIDRecord()) == "") {
-      useid = false;
-   }
+   bool useflag = !fInfoDescr.GetUpdateRecord().empty();
+//   if (std::string(fInfoDescr.GetUpdateRecord()) == "") {
+//      useflag = false;
+//   }
+   bool useid = !fInfoDescr.GetIDRecord().empty();
+//   if (std::string(fInfoDescr.GetIDRecord()) == "") {
+//      useid = false;
+//   }
    bool hasreceiver = !fInfoDescr.GetUpdateCommandReceiver().empty();
 
    DOUT3(("EpicsInput:useflag is %d, useid is %d",useflag,useid));
    double tm1 = dabc::Now().AsDouble();
    if (useflag) {
       // first check the flag record:
-      if (CA_GetLong((char*) fInfoDescr.GetUpdateRecord(), flag) != 0)
-         return dabc::di_RepeatTimeOut; DOUT3(("EpicsInput:ReadComplete flag record %s = %d ",fInfoDescr.GetUpdateRecord(), flag));
+      if (CA_GetLong((char*) fInfoDescr.GetUpdateRecord().c_str(), flag) != 0)
+         return dabc::di_RepeatTimeOut;
+      DOUT3(("EpicsInput:ReadComplete flag record %s = %d ",fInfoDescr.GetUpdateRecord().c_str(), flag));
       //if (flag == 0 || flag == oldflag) { // new: flag 0 means do not read!
-      if (flag == 0) { // do not read 0 flag values for performance
-             return dabc::di_RepeatTimeOut;
-          }
+//      if (flag == 0) { // do not read 0 flag values for performance
+//             return dabc::di_RepeatTimeOut;
+//          }
 
 
       if (flag == oldflag) { // read on every change of flag if not 0
@@ -130,7 +131,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
          cmd.SetInt(xmlUpdateFlagRecord, flag);
          dabc::mgr.Submit(cmd);
       }
-      if (useid && CA_GetLong((char*) fInfoDescr.GetIDRecord(), evtnumber) != 0)
+      if (useid && CA_GetLong((char*) fInfoDescr.GetIDRecord().c_str(), evtnumber) != 0)
          return dabc::di_RepeatTimeOut; DOUT3(("EpicsInput:ReadComplete id record %s = %d ",fInfoDescr.GetIDRecord(), evtnumber));
       // if this is nonzero, read other records and write buffer
    }
