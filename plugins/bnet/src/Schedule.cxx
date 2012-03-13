@@ -1323,7 +1323,7 @@ void bnet::IBSchedule::ExcludeInactiveNode(int node)
    }
 }
 
-bool bnet::IBSchedule::ShiftToNextOperation(int node, double& basetm, int& nslot, uint64_t* overflowcnt)
+bool bnet::IBSchedule::ShiftToNextOperation(int node, uint64_t& overflowcnt, int& nslot)
 {
    int cnt(0);
 
@@ -1331,8 +1331,7 @@ bool bnet::IBSchedule::ShiftToNextOperation(int node, double& basetm, int& nslot
       nslot++;
 
       if (nslot==numSlots()) {
-         basetm += endTime();
-         if (overflowcnt) (*overflowcnt)++;
+         overflowcnt++;
          nslot = 0;
       }
 

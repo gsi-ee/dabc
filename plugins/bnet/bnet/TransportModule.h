@@ -12,6 +12,7 @@
 #include "bnet/defines.h"
 #include "dabc/BnetRunnable.h"
 #include "bnet/Schedule.h"
+#include "bnet/Structures.h"
 
 struct ScheduleEntry {
     int    node;
@@ -47,80 +48,19 @@ namespace bnet {
       bool GetDoScale() const { return GetBool("DoScale", false); }
    };
 
-   /** Structure to store all relevant information for event buffer
-    * Preserved in the queue until data is not transported
-    */
-
-   enum EventPartState { eps_Init, eps_Scheduled, eps_Ready };
-
-   struct EventPartRec {
-       EventPartState  state;     // actual state of the data
-       bnet::EventId   evid;      // eventid
-       dabc::Buffer    buf;       // buffer with data
-       double          acq_tm;    // time when event was insertred, will be used to remove it
-
-       EventPartRec() : state(eps_Init), evid(0), buf(), acq_tm(0.)  {}
-
-       EventPartRec(const EventPartRec& src) : state(src.state), evid(src.evid), buf(src.buf), acq_tm(src.acq_tm)  {}
-
-       ~EventPartRec() { reset(); }
-
-       void reset() {  state = eps_Init; evid = 0; buf.Release(); acq_tm = 0.; }
+   enum MasterPacketKind {
+      mpk_Null = 0,
+      mpk_SubevSizes = 1,    // data with subevents sizes
+      mpk_EvSchedule = 2,    // data with event schedule - where event should be build
+      mpk_SchedSlot = 3      // definition of base time for next schedules
    };
 
-
-   struct EventBundleRec {
-      bnet::EventId   evid;      // event identifier
-      int             numbuf;    // number of buffers
-      dabc::Buffer   *buf;       // array of buffers
-      double          acq_tm;    // time when bundle was produced, will be used to remove it
-
-      EventBundleRec() : evid(0), numbuf(0), buf(0), acq_tm(0.) {}
-
-      ~EventBundleRec() { destroy(); }
-
-      EventBundleRec(const EventBundleRec& src) :
-         evid(src.evid), acq_tm(src.acq_tm)
-      {
-         allocate(src.numbuf);
-         for (int n=0;n<src.numbuf;n++)
-            buf[n] = src.buf[n];
-      }
-
-      void allocate(int _numbuf)
-      {
-         if (_numbuf == numbuf) return;
-         destroy();
-         if (_numbuf > 0) {
-            numbuf = _numbuf;
-            buf = new dabc::Buffer[numbuf];
-         }
-      }
-
-      bool ready()
-      {
-         for (int n=0;n<numbuf;n++)
-            if (buf[n].null()) return false;
-         return true;
-      }
-
-      void destroy()
-      {
-         reset();
-         if (buf!=0) {
-            delete [] buf;
-            buf = 0;
-         }
-         numbuf = 0;
-      }
-
-      void reset()
-      {
-         evid = 0;
-         acq_tm = 0;
-         for (int n=0;n<numbuf;n++) buf[n].Release();
-      }
+   struct MasterPacketHeader {
+       uint32_t kind;  // kind of data - see MasterPacketKind
+       uint32_t len;   // length of the data - including header
+       void* rawdata() { return (char*) this + sizeof(MasterPacketHeader); }
    };
+
 
    class TransportModule : public dabc::ModuleAsync {
       protected:
@@ -197,8 +137,8 @@ namespace bnet {
       bool                fAllToAllActive; // indicates that all-to-all transfer is running
       int                 fTestBufferSize;
       double              fTestStartTime, fTestStopTime; // start/stop time for data transfer
+      uint64_t            fSendTurnCnt, fRecvTurnCnt; // overflow counter of the schedules
       int                 fSendSlotIndx, fRecvSlotIndx;
-      double              fSendBaseTime, fRecvBaseTime;
       bool                fDoSending, fDoReceiving;
       int                 fSendQueueLimit, fRecvQueueLimit; // limits for queue sizes
 
@@ -218,15 +158,20 @@ namespace bnet {
 
       // this all about events bookkeeping
 
+      // Sender part
       dabc::RecordsQueue<EventPartRec, false>  fEvPartsQueue;
       double         fEventLifeTime;   // time how long event would be preserved in memory
       bool           fIsFirstEventId;  // true if first id was obtained
       bnet::EventId  fFirstEventId;    // id of the first event
       bnet::EventId  fLastEventId;     // id of the last event
-      uint64_t       fSendOverflowCnt; // overflow counter of send schedule, used to assign events to the target node in simple scheme
 
-
+      // Receiver part
       dabc::RecordsQueue<EventBundleRec, false>  fEvBundelsQueue;
+
+      // Master part
+      dabc::RecordsQueue<EventMasterRec, false>  fEvMasterQueue;
+
+      dabc::RecordsQueue<ScheduleTurnRec, false> fSchTurnsQueue;
 
       virtual void ProcessInputEvent(dabc::Port* port);
       virtual void ProcessOutputEvent(dabc::Port* port);
@@ -267,6 +212,9 @@ namespace bnet {
       void ProcessRecvCompleted(int recid, OperRec* rec);
 
       bnet::EventId ExtractEventId(const dabc::Buffer& buf);
+
+      // generates schedule turns just basing on precalculated rate
+      void AutomaticProduceScheduleTurn(bool for_first_time);
 
 
       // ===================================================================================

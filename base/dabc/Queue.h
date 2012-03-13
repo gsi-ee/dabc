@@ -41,6 +41,8 @@ namespace dabc {
          T*         fTail;
          unsigned   fInitSize; //!< original size of the queue, restored then Reset() method is called
 
+         T*         QueueItem(unsigned n) { return fQueue + n; }
+
       public:
          Queue() :
             fQueue(0),
@@ -342,11 +344,15 @@ namespace dabc {
 
          unsigned Size() const { return Parent::Size(); }
 
+         unsigned Capacity() const { return Parent::Capacity(); }
+
          T& Item(unsigned n) const { return Parent::Item(n); }
 
          void Push(const T& val) { Parent::PushRef(val); }
 
          T& Front() const { return Parent::Front(); }
+
+         T& Back() const { return Parent::Back(); }
 
          void PopOnly() { Front().reset(); Parent::PopOnly(); }
 
@@ -369,9 +375,25 @@ namespace dabc {
                Parent::Reset();
             }
          }
+
+         template<class DDD>
+         T* FindItemWithId(DDD id)
+         {
+            for (unsigned n=0;n<Size();n++) {
+               T* item = &Item(n);
+               if (item->id()==id) return item;
+            }
+            return 0;
+         }
+
+         /** Helper methods to preallocate memory in each record in the queue */
+         void AllocateRecs(unsigned rec_capacity)
+         {
+            for (unsigned n=0;n<Capacity();n++)
+               Parent::QueueItem(n)->allocate(rec_capacity);
+         }
+
    };
-
-
 
 }
 
