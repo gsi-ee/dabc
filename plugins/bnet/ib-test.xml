@@ -38,6 +38,8 @@
          <TestInputQueue value="6"/>
          <TestEventQueue value="500"/>
          <TestEventLifeTime value="3."/>
+         <TestControlKind value="0"/>
+         <TestStartTurns value="10"/>
          <TestSchedule value=""/>
          <TestTimeout value="10"/>
        </Application>

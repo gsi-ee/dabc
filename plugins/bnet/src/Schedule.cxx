@@ -1323,21 +1323,16 @@ void bnet::IBSchedule::ExcludeInactiveNode(int node)
    }
 }
 
-bool bnet::IBSchedule::ShiftToNextOperation(int node, uint64_t& overflowcnt, int& nslot)
+bool bnet::IBSchedule::ShiftToNextOperation(int node, int& nslot)
 {
-   int cnt(0);
+   if (nslot < -1) {
+      EOUT(("Wrong nslot %d - should be reworked by the user", nslot));
+      return false;
+   }
 
    do {
       nslot++;
-
-      if (nslot==numSlots()) {
-         overflowcnt++;
-         nslot = 0;
-      }
-
-      // no one operation found
-      if (cnt++ > 3*numSlots()) return false;
-
+      if (nslot>=numSlots()) { nslot = -2; return false; }
    } while (IsEmptyItem(nslot, node));
 
    return true;

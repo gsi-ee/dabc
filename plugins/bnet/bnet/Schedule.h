@@ -288,7 +288,9 @@ namespace bnet {
          /** Clear all times and all receivers */
          void Clear();
 
-         bool ShiftToNextOperation(int node, uint64_t& overflowcnt, int& nslot);
+         bool ShiftToNextOperation(int node, int& nslot);
+
+         bool isEndSlot(int nslot) const { return nslot >= numSlots(); }
 
          double totalTime();
 

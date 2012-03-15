@@ -15,8 +15,9 @@
 
 #include "dabc/bnetdefs.h"
 
+/*
 bnet::EventId DummyEventId()
 {
    return (bnet::EventId) -1;
 }
-
+*/

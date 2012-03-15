@@ -108,6 +108,9 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fCmdAllResults = 0;   // buffer where replies from all nodes collected
    fCmdResultsPerNode = 0;  // how many data in replied is expected
 
+   fTestControlKind = 0;
+   fDoDataReceiving = false;
+   fDoEventBuilding = false;
    fAllToAllActive = false;
 
    CreateTimer("Timer", 0.1); // every 100 milisecond
@@ -127,8 +130,8 @@ bnet::TransportModule::TransportModule(const char* name, dabc::Command cmd) :
    fFirstEventId = 0;
    fTimeScheduled = false;
 
-   // preallocate 100 turns, can be more in the future
-   fSchTurnsQueue.Allocate(100);
+   // FIXME: Is 10000 slots is enough???
+   fSchTurnsQueue.Allocate(10000 / NumNodes());
    fSchTurnsQueue.AllocateRecs(NumNodes()); // each turn include event assignment for all nodes
 
    // receiever part
@@ -453,6 +456,15 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
    fTestStopTime = arguments[5];
    int patternid = arguments[6];
    double datarate = arguments[7];
+
+   fTestControlKind = (int) arguments[10];
+
+   int startturns = (int) arguments[11];
+
+   fDoDataReceiving = (Node() > 0) || !haveController();
+   fDoEventBuilding = (Node() > 0) || !haveController();
+
+
    // double ratemeterinterval = arguments[8];
    // bool canskipoperation = arguments[9] > 0;
 
@@ -554,21 +566,26 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
             fRecvSch.Item(nslot, 0).Reset();
           }
 
-   fSendTurnCnt = 0; fSendSlotIndx = -1;
-   fRecvTurnCnt = 0; fRecvSlotIndx = -1;
+   fSendTurnRec = 0; fSendTurnCnt = 0; fSendSlotIndx = -2; fSendOperDone = false; fSendTurnEndTime = fTestStartTime;
+   fRecvTurnRec = 0; fRecvTurnCnt = 0; fRecvSlotIndx = -2; fRecvOperDone = false; fRecvTurnEndTime = fTestStartTime;
 
-   fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendTurnCnt, fSendSlotIndx);
-   fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvTurnCnt, fRecvSlotIndx);
-
-   AutomaticProduceScheduleTurn(true);
-
+   if (!haveController()) {
+      AutomaticProduceScheduleTurn(true);
+      startturns = 0;
+   } else {
+      if (startturns<1) EOUT(("No any start turns specified in control mode!!"));
+      if (startturns > (int) fSchTurnsQueue.Capacity()) {
+         EOUT(("Starting turns %d exceed capacity %u of correspondent queue", startturns, fSchTurnsQueue.Capacity()));
+         startturns  = (int) fSchTurnsQueue.Capacity();
+      }
+   }
 
    fSendStartTime.Reset();
    fSendComplTime.Reset();
    fRecvComplTime.Reset();
    fOperBackTime.Reset();
 
-   DOUT2(("ActiavteAllToAll: Starting dosend %s dorecv %s remains: %5.3fs", DBOOL(fDoSending), DBOOL(fDoReceiving), fTestStartTime - fStamping()));
+   DOUT2(("ActiavteAllToAll: remains: %5.3fs", fTestStartTime - fStamping()));
 
    // counter for must have send operations over each channel
    fSendOperCounter.SetSize(NumLids(), NumNodes());
@@ -599,6 +616,45 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
    ShootTimer("AllToAll", 0.001);
 
    DOUT0(("Activate ALL-to-ALL"));
+
+   fSendEmptyTurn.allocate(NumNodes());
+   fRecvEmptyTurn.allocate(NumNodes());
+
+   // transport only master-slave info
+   for (int n=0;n<NumNodes();n++) {
+      fSendEmptyTurn.fVector[n].SetNull();
+      fRecvEmptyTurn.fVector[n].SetNull();
+
+      if (IsController() || (n==0)) {
+         fSendEmptyTurn.fVector[n].SetCtrl();
+         fRecvEmptyTurn.fVector[n].SetCtrl();
+      }
+
+   }
+
+   unsigned nextid = 1; // start turn id producing from 1
+   double nexttm = fTestStartTime;
+
+   for (int cnt=0; cnt<startturns; cnt++) {
+      if (fSchTurnsQueue.Full()) {
+         EOUT(("Problem - no place in the turns queue - why!!!"));
+         exit(8);
+      }
+      ScheduleTurnRec* rec = fSchTurnsQueue.PushEmpty();
+
+      rec->fTurn = nextid;
+      rec->starttime = nexttm;
+
+      for (int n=0;n<NumNodes();n++) {
+         rec->fVector[n].SetNull();
+         // only for communicayion with controller specify special kind of event id
+         if (IsController() || (n==0)) rec->fVector[n].SetCtrl();
+      }
+
+      nextid++;
+      nexttm += fSendSch.endTime();
+   }
+
 }
 
 
@@ -615,7 +671,7 @@ void bnet::TransportModule::AutomaticProduceScheduleTurn(bool for_first_time)
 
    if (fSchTurnsQueue.Full()) return;
 
-   unsigned nextid = 0;
+   unsigned nextid = 1; // start turn id producing from 1
    double nexttm = fTestStartTime;
 
    if (!fSchTurnsQueue.Empty()) {
@@ -635,7 +691,7 @@ void bnet::TransportModule::AutomaticProduceScheduleTurn(bool for_first_time)
       rec->starttime = nexttm;
 
       for (int n=0;n<NumNodes();n++)
-         rec->fVector[n] = 1 + nextid*NumNodes() + n;
+         rec->fVector[n] = 1 + (nextid-1)*NumNodes() + n;
 
       nextid++;
       nexttm += fSendSch.endTime();
@@ -657,12 +713,15 @@ void bnet::TransportModule::PrepareAllToAllResults()
    DOUT0(("Mean loop %11.9f max %8.6f Longer loops %d", r_mean_loop, r_max_loop, r_long_cnt));
 
    DOUT3(("Total recv queue %ld send queue %ld", TotalSendQueue(), TotalRecvQueue()));
-   DOUT3(("Do recv %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
-         DBOOL(fDoReceiving), curr_tm, fRecvBaseTime + fRecvSch.timeSlot(fRecvSlotIndx), fRecvSlotIndx,
+
+   if (fRecvSlotIndx>=0)
+   DOUT3(("Receiving curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
+         curr_tm, fRecvBaseTime + fRecvSch.timeSlot(fRecvSlotIndx), fRecvSlotIndx,
          fRecvSch.Item(fRecvSlotIndx, Node()).node, fRecvSch.Item(fRecvSlotIndx, Node()).lid,
          RecvQueue(fRecvSch.Item(fRecvSlotIndx, Node()).lid, fRecvSch.Item(fRecvSlotIndx, Node()).node)));
-   DOUT3(("Do send %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
-         DBOOL(fDoSending), curr_tm, fSendSch.timeSlot(fSendSlotIndx), fSendSlotIndx,
+   if (fSendSlotIndx>=0)
+   DOUT3(("Sending curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
+         curr_tm, fSendSch.timeSlot(fSendSlotIndx), fSendSlotIndx,
          fSendSch.Item(fSendSlotIndx, Node()).node, fSendSch.Item(fSendSlotIndx, Node()).lid,
          SendQueue(fSendSch.Item(fSendSlotIndx, Node()).lid, fSendSch.Item(fSendSlotIndx, Node()).node)));
 
@@ -862,11 +921,14 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 {
    if (!fAllToAllActive) return false;
 
-   BuildReadyEvents(FindPort("DataOutput"));
+   if (doEventBuilding())
+      BuildReadyEvents(FindPort("DataOutput"));
 
-   ReadoutNextEvents(FindPort("DataInput"));
+   if (doDataReceiving())
+      ReadoutNextEvents(FindPort("DataInput"));
 
-   AutomaticProduceScheduleTurn(false);
+   if (!haveController())
+      AutomaticProduceScheduleTurn(false);
 
    if (!fTimeScheduled)
       return SubmitTransfersWithoutSchedule();
@@ -884,10 +946,11 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
    double next_recv_time(0.), next_send_time(0.), next_oper_time(0.);
 
-   // FIXME: should be removed - can be dangerous for small buffers
-   int maxcnt(200), send_node(0), send_lid(0);
+   // FIXME: maxcnt should be removed - can be dangerous for small buffers
+   int maxcnt(200);
+   int send_node(0), send_lid(0), recv_node(0), recv_lid(0);
 
-   bnet::EventId send_evid(0);
+   bnet::EventId send_evid, recv_evid;
 
    while ((next_oper_time<=0.) && (maxcnt-->0)) {
 
@@ -898,7 +961,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
       double curr_tm = fStamping();
       if (start_tm==0.) start_tm = curr_tm;
 
-      if (curr_tm>fTestStopTime) {
+      if (curr_tm > fTestStopTime) {
          fAllToAllActive = false;
          DOUT0(("All-to-all processing done"));
          fSendStartTime.Show("SendStartTime", true);
@@ -911,22 +974,73 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          return true;
       }
 
-      if (fDoReceiving && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
-         ScheduleTurnRec* rec = fSchTurnsQueue.FindItemWithId(fRecvTurnCnt);
-         if (rec==0) { EOUT(("Not find turn %u", (unsigned) fRecvTurnCnt)); exit(8); }
-         next_recv_time = rec->starttime + fRecvSch.timeSlot(fRecvSlotIndx) - recv_pre_time;
+      if (fSendOperDone) {
+         fSendSch.ShiftToNextOperation(Node(), fSendSlotIndx);
+         fSendOperDone = false;
+      }
+
+      if (fSendSlotIndx == -2) {
+         fSendTurnRec = fSchTurnsQueue.FindItemWithId(fSendTurnCnt+1);
+
+         if (fSendTurnRec!=0) {
+            fSendTurnCnt++;
+         } else {
+            if (curr_tm > fSendTurnEndTime - submit_pre_time) {
+               fSendTurnRec = &fSendEmptyTurn;
+               fSendEmptyTurn.starttime = fSendTurnEndTime;
+               DOUT0(("Select empty send turn while no other exists"));
+            }
+         }
+
+         if (fSendTurnRec!=0) {
+            fSendSlotIndx = -1;
+            fSendOperDone = true;
+            fSendTurnEndTime = fSendTurnRec->starttime + fSendSch.endTime();
+         }
+      }
+
+
+      if (fRecvOperDone) {
+         fRecvSch.ShiftToNextOperation(Node(), fRecvSlotIndx);
+         fRecvOperDone = false;
+      }
+
+      if (fRecvSlotIndx == -2) {
+         fRecvTurnRec = fSchTurnsQueue.FindItemWithId(fRecvTurnCnt+1);
+
+         if (fRecvTurnRec!=0) {
+            fRecvTurnCnt++;
+         } else {
+            if (curr_tm > fRecvTurnEndTime - submit_pre_time) {
+               fRecvTurnRec = &fRecvEmptyTurn;
+               fRecvEmptyTurn.starttime = fRecvTurnEndTime;
+               DOUT0(("Select empty recv turn while no other exists"));
+            }
+         }
+
+         if (fRecvTurnRec!=0) {
+            fRecvTurnEndTime = fRecvTurnRec->starttime + fRecvSch.endTime();
+            fRecvSlotIndx = -1;
+            fRecvOperDone = true;
+         }
+      }
+
+      if ((fRecvSlotIndx>=0) && fRecvTurnRec && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
+         next_recv_time = fRecvTurnRec->starttime + fRecvSch.timeSlot(fRecvSlotIndx) - recv_pre_time;
+
+         recv_node = fRecvSch.Item(fRecvSlotIndx, Node()).node;
+         recv_lid = fRecvSch.Item(fRecvSlotIndx, Node()).lid;
+
+         recv_evid = fRecvTurnRec->fVector[recv_node];
       }
 
       if (fIsFirstEventId) // only when first data exists, one could start scheduling operations
-         if (fDoSending && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
-            ScheduleTurnRec* rec = fSchTurnsQueue.FindItemWithId(fSendTurnCnt);
-            if (rec==0) { EOUT(("Not find turn %u", (unsigned) fSendTurnCnt)); exit(8); }
-
-            next_send_time = rec->starttime + fSendSch.timeSlot(fSendSlotIndx);
+         if ((fSendSlotIndx>=0) && fSendTurnRec && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
+            next_send_time = fSendTurnRec->starttime + fSendSch.timeSlot(fSendSlotIndx);
 
             send_node = fSendSch.Item(fSendSlotIndx, Node()).node;
             send_lid = fSendSch.Item(fSendSlotIndx, Node()).lid;
-            send_evid = rec->fVector[send_node];
+            send_evid = fSendTurnRec->fVector[send_node];
          }
 
       // if both operation want to be executed, selected first in the time
@@ -943,18 +1057,16 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          if (next_recv_time - submit_pre_time > curr_tm) {
             next_oper_time = next_recv_time;
          } else {
-            int node = fRecvSch.Item(fRecvSlotIndx, Node()).node;
-            int lid = fRecvSch.Item(fRecvSlotIndx, Node()).lid;
             bool did_submit(false);
 
-            if (node == Node()) {
+            if (recv_node == Node()) {
                // this is receive from itself, ignore it while it handled separately
                did_submit = true;
             } else
-            if ((fRecvSkipCounter(lid, node) > 0) && (RecvQueue(lid, node)>0)) {
+            if ((fRecvSkipCounter(recv_lid, recv_node) > 0) && (RecvQueue(recv_lid, recv_node)>0)) {
                // if packets over this channel were lost, we should not try
                // to receive them - they were skipped by sender most probably
-               fRecvSkipCounter(lid, node)--;
+               fRecvSkipCounter(recv_lid, recv_node)--;
                did_submit = true;
             } else {
 
@@ -975,15 +1087,15 @@ bool bnet::TransportModule::ProcessAllToAllAction()
                   return false;
                }
 
-               rec->SetTarget(node, lid);
+               rec->SetTarget(recv_node, recv_lid);
                rec->SetTime(next_recv_time);
 
                if (!SubmitToRunnable(recid,rec)) {
-                  EOUT(("Cannot submit recv operation to lid %d node %d", lid, node));
+                  EOUT(("Cannot submit recv operation to lid %d node %d", recv_lid, recv_node));
                   return false;
                }
 
-               DOUT2(("SubmitRecvOper recid %d node %d lid %d till oper %8.6f", recid, node, lid, next_recv_time - curr_tm));
+               DOUT2(("SubmitRecvOper recid %d node %d lid %d till oper %8.6f", recid, recv_node, recv_lid, next_recv_time - curr_tm));
 
                did_submit = true;
             }
@@ -992,8 +1104,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
             // dangerous but it is like it is - we should continue receiving otherwise input will be blocked
             // we should do here more smart solutions
 
-            if (did_submit)
-               fDoReceiving = fRecvSch.ShiftToNextOperation(Node(), fRecvTurnCnt, fRecvSlotIndx);
+            if (did_submit) fRecvOperDone = true;
          }
       }
 
@@ -1077,9 +1188,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
             }
 
             // shift to next operation, in some cases even when previous operation was not performed
-            if (did_submit)
-                // this indicates that we perform operation and moved to next counter
-               fDoSending = fSendSch.ShiftToNextOperation(Node(), fSendTurnCnt, fSendSlotIndx);
+            if (did_submit) fSendOperDone = true;
          }
       }
    }
@@ -1184,7 +1293,7 @@ void bnet::TransportModule::ProcessInputEvent(dabc::Port* port)
    unsigned portid = IOPortNumber(port);
 
    if (port->IsName("DataInput")) {
-      ReadoutNextEvents(port);
+      if (doDataReceiving()) ReadoutNextEvents(port);
    } else
    if (IsSlave() && (portid==0)) {
       ProcessNextSlaveInputEvent();
@@ -1199,7 +1308,7 @@ void bnet::TransportModule::ProcessInputEvent(dabc::Port* port)
 void bnet::TransportModule::ProcessOutputEvent(dabc::Port* port)
 {
    if (port->IsName("DataOutput")) {
-      BuildReadyEvents(port);
+      if (doEventBuilding()) BuildReadyEvents(port);
    }
 }
 
@@ -1693,7 +1802,6 @@ void bnet::TransportModule::ProcessRecvCompleted(int recid, OperRec* rec)
       isok = false;
    }
 
-
    fRecvOperCounter(rec->tgtindx, rec->tgtnode) = hdr->seqid;
 
    double curr_tm = fStamping();
@@ -1905,7 +2013,7 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          }
 
 
-         double arguments[10];
+         double arguments[12];
 
          arguments[0] = Cfg("BufferSize").AsInt(128*1024);
          arguments[1] = NumNodes();
@@ -1917,6 +2025,8 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          arguments[7] = Cfg("TestRate").AsInt(1000);
          arguments[8] = 0; // interval for ratemeter, 0 - off
          arguments[9] = allowed_to_skip ? 1 : 0;
+         arguments[10] = Cfg("TestControlKind").AsInt(0);  // kind of control 0 - no any controller, 1 - first node is master
+         arguments[11] = Cfg("TestStartTurns").AsInt(10);
 
          DOUT0(("====================================="));
          DOUT0(("%s pattern:%d size:%d rate:%3.0f send:%d recv:%d nodes:%d canskip:%s",

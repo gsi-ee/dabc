@@ -28,9 +28,50 @@
 
 namespace bnet {
 
-   typedef uint64_t EventId;
+   /** Structure to keep event/time frame identifier
+    * 64-bit unsigned value is used. There are following special values:
+    *   0 - null(), no event - no data expected
+    *  */
 
-   EventId DummyEventId();
+   struct EventId {
+      protected:
+
+      uint64_t id;
+
+      public:
+
+      EventId() : id(0) {}
+
+      EventId(const EventId& src) : id(src.id) {}
+
+      EventId(uint64_t src) : id(src) {}
+
+      EventId& operator=(const EventId& src) { id = src.id; return *this; }
+
+      EventId& operator=(uint64_t src) { id = src; return *this; }
+
+      inline operator uint64_t() const { return id; }
+      inline void Set(uint64_t _id) { id = _id; }
+      inline uint64_t Get() const { return id; }
+
+      inline bool null() const { return id==0; }
+      inline void SetNull() { id = 0; }
+
+      inline void SetCtrl() { id = (uint64_t) -1; }
+      inline bool ctrl() const { return id == (uint64_t) -1; }
+
+//      inline bool operator<(const EventId& src) const { return id < src.id; }
+
+//      inline bool operator>(const EventId& src) const { return id > src.id; }
+
+//      inline bool operator==(const EventId& src) const { return id == src.id; }
+
+//      inline uint64_t operator()() const { return id; }
+
+      inline EventId& operator++(int) { id++; return *this; }
+
+
+   };
 
    // TODO: should be a parameter, not a constant
    enum { MAXLID = 16 };
@@ -49,11 +90,11 @@ namespace bnet {
       public:
          EventHandling(const char* name) : dabc::Object(name) {}
 
-         virtual bool GenerateSubEvent(bnet::EventId evid, int subid, int numsubids, dabc::Buffer& buf) = 0;
+         virtual bool GenerateSubEvent(const bnet::EventId& evid, int subid, int numsubids, dabc::Buffer& buf) = 0;
 
          virtual bool ExtractEventId(const dabc::Buffer& buf, bnet::EventId& evid) = 0;
 
-         virtual dabc::Buffer BuildFullEvent(bnet::EventId evid, dabc::Buffer* bufs, int numbufs) = 0;
+         virtual dabc::Buffer BuildFullEvent(const bnet::EventId& evid, dabc::Buffer* bufs, int numbufs) = 0;
    };
 
    class EventHandlingRef : public dabc::Reference {

@@ -8,14 +8,12 @@
 
 #include <vector>
 
-// maximum command buffer required to provide QPs connection over cluster
-// for 1000 QPs with 16 Lids and 12 byte per QP one require at least  192000 bytes
-
 namespace bnet {
 
    struct names {
       static const char* EventLifeTime() { return "TestEventLifeTime"; }
-      static const char* WorkerModuleName() { return "BnetWorker"; }
+      static const char* WorkerModule() { return "BnetWorker"; }
+      static const char* ControlKind() { return "TestControlKind"; }
    };
 
    enum BnetCommandsIds {
@@ -50,11 +48,11 @@ namespace bnet {
       public:
          TestEventHandling(const char* name) : EventHandling(name) {}
 
-         virtual bool GenerateSubEvent(EventId evid, int subid, int numsubids, dabc::Buffer& buf);
+         virtual bool GenerateSubEvent(const bnet::EventId&, int subid, int numsubids, dabc::Buffer& buf);
 
          virtual bool ExtractEventId(const dabc::Buffer& buf, EventId& evid);
 
-         virtual dabc::Buffer BuildFullEvent(bnet::EventId evid, dabc::Buffer* bufs, int numbufs);
+         virtual dabc::Buffer BuildFullEvent(const bnet::EventId& evid, dabc::Buffer* bufs, int numbufs);
    };
 
 

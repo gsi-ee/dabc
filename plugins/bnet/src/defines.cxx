@@ -21,7 +21,7 @@ double dabc::GaussRand(double mean, double sigma)
   return mean + sigma*sin(x)*sqrt(-2*log(y));
 }
 
-bool bnet::TestEventHandling::GenerateSubEvent(EventId evid, int subid, int numsubids, dabc::Buffer& buf)
+bool bnet::TestEventHandling::GenerateSubEvent(const bnet::EventId& evid, int subid, int numsubids, dabc::Buffer& buf)
 {
    if (buf.GetTotalSize() < 16) return false;
 
@@ -41,7 +41,7 @@ bool bnet::TestEventHandling::ExtractEventId(const dabc::Buffer& buf, EventId& e
    return true;
 }
 
-dabc::Buffer bnet::TestEventHandling::BuildFullEvent(bnet::EventId evid, dabc::Buffer* bufs, int numbufs)
+dabc::Buffer bnet::TestEventHandling::BuildFullEvent(const bnet::EventId& evid, dabc::Buffer* bufs, int numbufs)
 {
    dabc::Buffer res;
    if (bufs==0) return res;

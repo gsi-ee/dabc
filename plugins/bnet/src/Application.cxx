@@ -49,6 +49,8 @@ bnet::Application::Application() :
    CreatePar("TestNumLids").DfltInt(1);
    CreatePar("TestSchedule");
    CreatePar("TestTimeout").DfltDouble(20);
+   CreatePar(names::ControlKind()).DfltInt(0);
+   CreatePar("TestStartTurns").DfltInt(10);
    CreatePar("TestRead").DfltBool(true);
    CreatePar("TestWrite").DfltBool(true);
 
@@ -75,20 +77,22 @@ bool bnet::Application::CreateAppModules()
    int numbuf = Cfg(dabc::xmlNumBuffers).AsInt(1024);
    dabc::mgr.CreateMemoryPool("BnetDataPool", bufsize, numbuf, 2);
 
-   dabc::mgr.CreateModule("bnet::GeneratorModule", "BnetGener", "BnetGenerThrd");
-
-   dabc::CmdCreateModule cmd("bnet::TransportModule", names::WorkerModuleName(), "BnetModuleThrd");
+   dabc::CmdCreateModule cmd("bnet::TransportModule", names::WorkerModule(), "BnetModuleThrd");
    cmd.Field("NodeNumber").SetInt(dabc::mgr.NodeId());
    cmd.Field("NumNodes").SetInt(dabc::mgr.NumNodes());
    cmd.Field("NumPorts").SetInt((dabc::mgr.NodeId()==0) ? dabc::mgr.NumNodes()-1 : 1);
    if (!dabc::mgr.Execute(cmd)) return false;
 
-   dabc::mgr.Connect("BnetGener/Output", dabc::format("%s/DataInput", names::WorkerModuleName()));
+   // create event generator only for nodes there it is really necessary
+   if ((Cfg(names::ControlKind()).AsInt()==0) || (dabc::mgr.NodeId()>0)) {
+      dabc::mgr.CreateModule("bnet::GeneratorModule", "BnetGener", "BnetGenerThrd");
+      dabc::mgr.Connect("BnetGener/Output", dabc::format("%s/DataInput", names::WorkerModule()));
+   }
 
    for (unsigned node = 1; node < NumNodes(); node++) {
-      std::string port1 = dabc::Url::ComposePortName(0, FORMAT(("%s/Port", names::WorkerModuleName())), node-1);
+      std::string port1 = dabc::Url::ComposePortName(0, FORMAT(("%s/Port", names::WorkerModule())), node-1);
 
-      std::string port2 = dabc::Url::ComposePortName(node, FORMAT(("%s/Port", names::WorkerModuleName())), 0);
+      std::string port2 = dabc::Url::ComposePortName(node, FORMAT(("%s/Port", names::WorkerModule())), 0);
 
       dabc::mgr.Connect(port1, port2).SetOptional(dabc::mgr.NodeId()==0);
    }

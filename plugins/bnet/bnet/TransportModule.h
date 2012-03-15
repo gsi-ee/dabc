@@ -15,9 +15,9 @@
 #include "bnet/Structures.h"
 
 struct ScheduleEntry {
-    int    node;
-    int    lid;
-    double time;
+      int    node;
+      int    lid;
+      double time;
 };
 
 namespace bnet {
@@ -56,9 +56,9 @@ namespace bnet {
    };
 
    struct MasterPacketHeader {
-       uint32_t kind;  // kind of data - see MasterPacketKind
-       uint32_t len;   // length of the data - including header
-       void* rawdata() { return (char*) this + sizeof(MasterPacketHeader); }
+      uint32_t kind;  // kind of data - see MasterPacketKind
+      uint32_t len;   // length of the data - including header
+      void* rawdata() { return (char*) this + sizeof(MasterPacketHeader); }
    };
 
 
@@ -134,12 +134,19 @@ namespace bnet {
 
       // these all about data transfer ....
 
+      int                 fTestControlKind; // kind of controller, 0 - no conrtroller, 1 - first node is only doing controller
+      bool                fDoDataReceiving;  // indicate if receiving of data is performed
+      bool                fDoEventBuilding;  // indicate if receiving of data is performed
       bool                fAllToAllActive; // indicates that all-to-all transfer is running
       int                 fTestBufferSize;
       double              fTestStartTime, fTestStopTime; // start/stop time for data transfer
-      uint64_t            fSendTurnCnt, fRecvTurnCnt; // overflow counter of the schedules
-      int                 fSendSlotIndx, fRecvSlotIndx;
-      bool                fDoSending, fDoReceiving;
+      uint64_t            fSendTurnCnt, fRecvTurnCnt; // turn counter of the schedules
+      int                 fSendSlotIndx, fRecvSlotIndx; // current index in the schedule
+      bool                fSendOperDone, fRecvOperDone;   // is operation performed or not
+      double              fSendTurnEndTime, fRecvTurnEndTime; // time when current turnout is finished
+      ScheduleTurnRec     *fSendTurnRec, *fRecvTurnRec;
+      ScheduleTurnRec     fSendEmptyTurn, fRecvEmptyTurn; // turn out to send/recv data from master
+
       int                 fSendQueueLimit, fRecvQueueLimit; // limits for queue sizes
 
       dabc::Ratemeter    fWorkRate;
@@ -225,6 +232,11 @@ namespace bnet {
       bool IsSlave() const { return Node() > 0; }
       bool IsMaster() const { return Node()==0; }
 
+      bool IsController() const { return (Node()==0) && (fTestControlKind>0); }
+      bool haveController() const { return fTestControlKind>0; }
+      bool doDataReceiving() const { return fDoDataReceiving; }
+      bool doEventBuilding() const { return fDoEventBuilding; }
+
       void AllocResults(int size);
       void AllocCollResults(int sz);
 
@@ -243,6 +255,7 @@ namespace bnet {
       int ProcessAskQueue(void* tgt);
 
       bool ProcessCleanup(int32_t* pars);
+
 
       public:
 

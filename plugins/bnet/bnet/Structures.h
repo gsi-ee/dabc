@@ -109,7 +109,7 @@ namespace bnet {
    struct ScheduleTurnRec {
       uint64_t fTurn;
       double   starttime;
-      std::vector<bnet::EventId>  fVector; // vector of events id - 1 for each node
+      std::vector<bnet::EventId>  fVector; // vector of events id - one for each node
 
       ScheduleTurnRec() { reset(); }
 
