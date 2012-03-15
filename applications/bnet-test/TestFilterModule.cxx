@@ -1,8 +1,8 @@
 /********************************************************************
  * The Data Acquisition Backbone Core (DABC)
  ********************************************************************
- * Copyright (C) 2009- 
- * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
+ * Copyright (C) 2009-
+ * GSI Helmholtzzentrum fuer Schwerionenforschung GmbH
  * Planckstr. 1
  * 64291 Darmstadt
  * Germany
@@ -17,6 +17,7 @@
 #include "dabc/PoolHandle.h"
 #include "dabc/Command.h"
 #include "dabc/Port.h"
+#include "dabc/Pointer.h"
 
 #include "bnet/common.h"
 
@@ -43,8 +44,7 @@ void bnet::TestFilterModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
          return;
       }
 
-      uint64_t* mem = (uint64_t*) buf.GetPointer()();
-      uint64_t evid = mem[0];
+      dabc::Pointer(buf).copyto(&evid, sizeof(evid));
 
       if (evid % 2) {
     //   DOUT1(("EVENT KILLED %llu", evid));

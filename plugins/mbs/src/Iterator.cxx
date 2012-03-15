@@ -16,7 +16,7 @@
 #include "dabc/logging.h"
 
 mbs::ReadIterator::ReadIterator() :
-   fBuffer(0),
+   fFirstEvent(false),
    fEvPtr(),
    fSubPtr(),
    fRawPtr()
@@ -24,7 +24,7 @@ mbs::ReadIterator::ReadIterator() :
 }
 
 mbs::ReadIterator::ReadIterator(const dabc::Buffer& buf) :
-   fBuffer(0),
+   fFirstEvent(false),
    fEvPtr(),
    fSubPtr(),
    fRawPtr()
@@ -33,7 +33,7 @@ mbs::ReadIterator::ReadIterator(const dabc::Buffer& buf) :
 }
 
 mbs::ReadIterator::ReadIterator(const ReadIterator& src) :
-   fBuffer(src.fBuffer),
+   fFirstEvent(src.fFirstEvent),
    fEvPtr(src.fEvPtr),
    fSubPtr(src.fSubPtr),
    fRawPtr(src.fRawPtr)
@@ -42,7 +42,7 @@ mbs::ReadIterator::ReadIterator(const ReadIterator& src) :
 
 mbs::ReadIterator& mbs::ReadIterator::operator=(const ReadIterator& src)
 {
-   fBuffer = src.fBuffer;
+   fFirstEvent = src.fFirstEvent;
    fEvPtr = src.fEvPtr;
    fSubPtr = src.fSubPtr;
    fRawPtr = src.fRawPtr;
@@ -61,7 +61,8 @@ bool mbs::ReadIterator::Reset(const dabc::Buffer& buf)
       return false;
    }
 
-   fBuffer = &buf;
+   fEvPtr = buf;
+   fFirstEvent = true;
 
    return true;
 }
@@ -71,18 +72,17 @@ void mbs::ReadIterator::Close()
    fEvPtr.reset();
    fSubPtr.reset();
    fRawPtr.reset();
-
-   fBuffer = 0;
+   fFirstEvent = false;
 }
 
 bool mbs::ReadIterator::NextEvent()
 {
-   if (fBuffer==0) return false;
+   if (fEvPtr.null()) return false;
 
-   if (fEvPtr.null())
-      fEvPtr = fBuffer->GetPointer();
+   if (fFirstEvent)
+      fFirstEvent = false;
    else
-      fBuffer->Shift(fEvPtr, evnt()->FullSize());
+      fEvPtr.shift(evnt()->FullSize());
 
    if (fEvPtr.fullsize() < sizeof(EventHeader)) {
       fEvPtr.reset();
@@ -129,9 +129,9 @@ bool mbs::ReadIterator::NextSubEvent()
          return false;
       }
       fSubPtr.reset(fEvPtr, evnt()->FullSize());
-      fBuffer->Shift(fSubPtr, sizeof(EventHeader));
+      fSubPtr.shift(sizeof(EventHeader));
    } else
-      fBuffer->Shift(fSubPtr, subevnt()->FullSize());
+      fSubPtr.shift(subevnt()->FullSize());
 
    if (fSubPtr.fullsize() < sizeof(SubeventHeader)) {
       fSubPtr.reset();
@@ -228,8 +228,7 @@ bool mbs::WriteIterator::NewEvent(EventNumType event_number, uint32_t minsubeven
 {
    if (fBuffer.null()) return false;
 
-   if (fEvPtr.null())
-      fEvPtr = fBuffer.GetPointer();
+   if (fEvPtr.null())  fEvPtr = fBuffer;
 
    fSubPtr.reset();
 
@@ -249,7 +248,7 @@ bool mbs::WriteIterator::NewSubevent(uint32_t minrawsize, uint8_t crate, uint16_
 
    if (fSubPtr.null()) {
       fSubPtr.reset(fEvPtr);
-      fBuffer.Shift(fSubPtr, sizeof(EventHeader));
+      fSubPtr.shift(sizeof(EventHeader));
    }
 
    if (fSubPtr.fullsize() < (sizeof(SubeventHeader) + minrawsize)) return false;
@@ -267,51 +266,43 @@ bool mbs::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
 
    subevnt()->SetRawDataSize(rawdatasz);
 
-   fBuffer.Shift(fSubPtr, subevnt()->FullSize());
+   fSubPtr.shift(subevnt()->FullSize());
 
    return true;
 }
 
-bool mbs::WriteIterator::AddSubevent(const dabc::Pointer& source, const dabc::Buffer* srcbuf)
+bool mbs::WriteIterator::AddSubevent(const dabc::Pointer& source)
 {
    if (fEvPtr.null()) return false;
 
    if (fSubPtr.null()) {
       fSubPtr.reset(fEvPtr);
-      fBuffer.Shift(fSubPtr, sizeof(EventHeader));
+      fSubPtr.shift(sizeof(EventHeader));
    }
 
    if (fSubPtr.fullsize() < source.fullsize()) return false;
 
-   *((unsigned*)fSubPtr()) = 0xff00ff00;
+   fSubPtr.copyfrom(source);
 
-   if (srcbuf==0)
-      fBuffer.CopyFrom(fSubPtr, source);
-   else
-      fBuffer.CopyFrom(fSubPtr, *srcbuf, source);
-
-   fBuffer.Shift(fSubPtr, source.fullsize());
+   fSubPtr.shift(source.fullsize());
 
    return true;
 }
 
 bool mbs::WriteIterator::AddSubevent(mbs::SubeventHeader* sub)
 {
-   dabc::Pointer ptr(sub, sub->FullSize());
-
-   return AddSubevent(ptr);
+   return AddSubevent(dabc::Pointer(sub, sub->FullSize()));
 }
-
 
 bool mbs::WriteIterator::FinishEvent()
 {
    if (fEvPtr.null()) return false;
 
    dabc::BufferSize_t dist = sizeof(EventHeader);
-   if (!fSubPtr.null()) dist = fBuffer.Distance(fEvPtr, fSubPtr);
+   if (!fSubPtr.null()) dist = fEvPtr.distance_to(fSubPtr);
    evnt()->SetFullSize(dist);
    fFullSize += dist;
-   fBuffer.Shift(fEvPtr,dist);
+   fEvPtr.shift(dist);
 
    return true;
 }

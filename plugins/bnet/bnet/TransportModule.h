@@ -48,20 +48,6 @@ namespace bnet {
       bool GetDoScale() const { return GetBool("DoScale", false); }
    };
 
-   enum MasterPacketKind {
-      mpk_Null = 0,
-      mpk_SubevSizes = 1,    // data with subevents sizes
-      mpk_EvSchedule = 2,    // data with event schedule - where event should be build
-      mpk_SchedSlot = 3      // definition of base time for next schedules
-   };
-
-   struct MasterPacketHeader {
-      uint32_t kind;  // kind of data - see MasterPacketKind
-      uint32_t len;   // length of the data - including header
-      void* rawdata() { return (char*) this + sizeof(MasterPacketHeader); }
-   };
-
-
    class TransportModule : public dabc::ModuleAsync {
       protected:
 
@@ -142,10 +128,12 @@ namespace bnet {
       double              fTestStartTime, fTestStopTime; // start/stop time for data transfer
       uint64_t            fSendTurnCnt, fRecvTurnCnt; // turn counter of the schedules
       int                 fSendSlotIndx, fRecvSlotIndx; // current index in the schedule
-      bool                fSendOperDone, fRecvOperDone;   // is operation performed or not
       double              fSendTurnEndTime, fRecvTurnEndTime; // time when current turnout is finished
       ScheduleTurnRec     *fSendTurnRec, *fRecvTurnRec;
       ScheduleTurnRec     fSendEmptyTurn, fRecvEmptyTurn; // turn out to send/recv data from master
+
+      EventPartRec        fWorkerCtrlRec; // packet prepared by the worker for the Controller
+      bnet::EventId       fWorkerCtrlEvId; // last evid, delivered to the master
 
       int                 fSendQueueLimit, fRecvQueueLimit; // limits for queue sizes
 
@@ -166,7 +154,7 @@ namespace bnet {
       // this all about events bookkeeping
 
       // Sender part
-      dabc::RecordsQueue<EventPartRec, false>  fEvPartsQueue;
+      EventsPartsQueue  fEvPartsQueue;
       double         fEventLifeTime;   // time how long event would be preserved in memory
       bool           fIsFirstEventId;  // true if first id was obtained
       bnet::EventId  fFirstEventId;    // id of the first event
@@ -187,7 +175,11 @@ namespace bnet {
 
       void ReleaseReadyEventParts();
       void ReadoutNextEvents(dabc::Port* port);
-      EventPartRec* FindEventPartRec(bnet::EventId evid);
+
+      unsigned CloseSubpacketHeader(dabc::Pointer& bgn, unsigned kind, unsigned len);
+
+      EventPartRec* ProduceCtrlRec(int rebuildid = -1);
+      EventPartRec* FindEventPartRec(const bnet::EventId& evid, int rebuildid = -1);
       EventPartRec* GetFirstReadyPartRec();
 
       EventBundleRec* FindEventBundleRec(bnet::EventId evid);
@@ -233,6 +225,7 @@ namespace bnet {
       bool IsMaster() const { return Node()==0; }
 
       bool IsController() const { return (Node()==0) && (fTestControlKind>0); }
+      bool IsWorker() const { return !IsController(); }
       bool haveController() const { return fTestControlKind>0; }
       bool doDataReceiving() const { return fDoDataReceiving; }
       bool doEventBuilding() const { return fDoEventBuilding; }

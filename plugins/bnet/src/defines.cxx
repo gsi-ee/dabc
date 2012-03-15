@@ -6,6 +6,7 @@
 #include "dabc/logging.h"
 
 #include "dabc/MemoryPool.h"
+#include "dabc/Pointer.h"
 
 double dabc::rand_0_1()
 {
@@ -29,7 +30,7 @@ bool bnet::TestEventHandling::GenerateSubEvent(const bnet::EventId& evid, int su
 
    uint64_t data[2] = { evid, subid };
 
-   buf.CopyFrom(data, sizeof(data));
+   dabc::Pointer(buf).copyfrom(data, sizeof(data));
 
    return true;
 }

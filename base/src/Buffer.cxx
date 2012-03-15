@@ -15,6 +15,7 @@
 
 #include "dabc/Buffer.h"
 
+#include "dabc/Pointer.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/logging.h"
 
@@ -221,7 +222,7 @@ dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allo
    if (ptr.fullsize()<len) return res;
 
    while (!allowsegmented && (len > ptr.rawsize())) {
-      Shift(ptr, ptr.rawsize());
+      ptr.shift(ptr.rawsize());
       if (ptr.fullsize() < len) break;
    }
 
@@ -246,7 +247,7 @@ dabc::Buffer dabc::Buffer::GetNextPart(Pointer& ptr, BufferSize_t len, bool allo
       lastlen = partlen;
 
       len -= partlen;
-      Shift(ptr, partlen);
+      ptr.shift(partlen);
    }
 
    if (len>0) {
@@ -384,147 +385,20 @@ bool dabc::Buffer::Insert(BufferSize_t pos, Buffer& src, bool moverefs) throw()
    return true;
 }
 
+dabc::Pointer dabc::Buffer::GetPointer(BufferSize_t pos, BufferSize_t len) const
+{
+   return Pointer(*this, pos, len);
+}
+
 void dabc::Buffer::Shift(Pointer& ptr, BufferSize_t len) const
 {
-   if (len < ptr.rawsize())
-      ptr.shift(len);
-   else
-   if (len >= ptr.fullsize())
-      ptr.reset();
-   else {
-      ptr.fFullSize -= ptr.rawsize();
-      len -= ptr.rawsize();
-      ptr.fRawSize = 0;
-      ptr.fPtr = 0;
-      ptr.fSegm++;
-
-      while ((ptr.fSegm < NumSegments()) && (SegmentSize(ptr.fSegm) < len)) {
-         len -= SegmentSize(ptr.fSegm);
-         ptr.fFullSize -= SegmentSize(ptr.fSegm);
-         ptr.fSegm++;
-      }
-
-      if (ptr.fSegm >= NumSegments())
-         throw dabc::Exception("Pointer has invalid full length field");
-
-      ptr.fPtr = (unsigned char*) SegmentPtr(ptr.fSegm) + len;
-      ptr.fRawSize = SegmentSize(ptr.fSegm) - len;
-      ptr.fFullSize -= len;
-   }
-}
-
-int dabc::Buffer::Distance(const Pointer& ptr1, const Pointer& ptr2) const
-{
-   if (ptr1.null() || ptr2.null()) return 0;
-
-   if ((ptr1.fSegm >= NumSegments()) || (ptr2.fSegm >= NumSegments()))
-      throw dabc::Exception("Pointer with wrong segment id is specified");
-
-   if (ptr1.fSegm > ptr2.fSegm) return -Distance(ptr2, ptr1);
-
-   if (ptr1.fSegm==ptr2.fSegm) {
-      if (ptr1.fPtr <= ptr2.fPtr) return ptr2.fPtr - ptr1.fPtr;
-      return - (ptr1.fPtr - ptr2.fPtr);
-   }
-
-   unsigned nseg = ptr1.fSegm;
-
-   // we produce first negative value,
-   // but than full segment size will be accumulated in following while loop
-   int sum = - (ptr1.fPtr - (unsigned char*) SegmentPtr(nseg));
-
-   while (nseg < ptr2.fSegm) {
-     sum+=SegmentSize(nseg);
-     nseg++;
-   }
-
-   sum += (ptr2.fPtr - (unsigned char*) SegmentPtr(nseg));
-
-   return sum;
+   ptr.shift(len);
 }
 
 
-dabc::BufferSize_t dabc::Buffer::CopyFrom(Pointer tgtptr, const Buffer& srcbuf, Pointer srcptr, BufferSize_t len) throw()
+dabc::BufferSize_t dabc::Buffer::CopyTo(void* ptr, BufferSize_t len) const throw()
 {
-   BufferSize_t maxlen = tgtptr.fullsize();
-   if (srcptr.fullsize()<maxlen) maxlen = srcptr.fullsize();
-   if (len==0) len = maxlen; else if (len>maxlen) len = maxlen;
-
-   BufferSize_t res(0);
-
-   while (len>0) {
-      unsigned copylen = (tgtptr.rawsize() < srcptr.rawsize()) ? tgtptr.rawsize() : srcptr.rawsize();
-      if (copylen>len) copylen = len;
-      if (copylen==0) break;
-
-      ::memcpy(tgtptr(), srcptr(), copylen);
-
-      len-=copylen;
-      res+=copylen;
-
-      Shift(tgtptr, copylen);
-      srcbuf.Shift(srcptr, copylen);
-   }
-
-   return res;
-}
-
-dabc::BufferSize_t dabc::Buffer::CopyFrom(Pointer tgtptr, Pointer srcptr, BufferSize_t len) throw()
-{
-   if (len==0) len = srcptr.fullsize();
-   if (len>tgtptr.fullsize()) len = tgtptr.fullsize();
-   if (srcptr.rawsize() < len)
-     throw dabc::Exception("Cannot use this CopyFrom() signature to copy from Pointer, use signature with Buffer");
-
-   BufferSize_t res(0);
-
-   while (len>0) {
-      unsigned copylen = tgtptr.rawsize();
-      if (copylen>len) copylen = len;
-
-      if (copylen==0) break;
-
-      ::memcpy(tgtptr(), srcptr(), copylen);
-
-      len-=copylen;
-      res+=copylen;
-
-      Shift(tgtptr, copylen);
-      srcptr.shift(copylen);
-   }
-
-   return res;
-}
-
-dabc::BufferSize_t dabc::Buffer::CopyTo(Pointer srcptr, void* ptr, BufferSize_t len) const throw()
-{
-   if (len>srcptr.fullsize()) len = srcptr.fullsize();
-
-   BufferSize_t res(0);
-
-   while (len>0) {
-      unsigned copylen = srcptr.rawsize();
-      if (copylen>len) copylen = len;
-
-      if (copylen==0) break;
-
-      ::memcpy(ptr, srcptr(), copylen);
-
-      len-=copylen;
-      res+=copylen;
-
-      Shift(srcptr, copylen);
-      ptr = (unsigned char*) ptr + copylen;
-   }
-
-   return res;
-}
-
-dabc::BufferSize_t dabc::Buffer::CopyFromStr(Pointer tgtptr, const char* src, unsigned len) throw()
-{
-   if (src==0) return 0;
-   if (len==0) len = strlen(src);
-   return CopyFrom(tgtptr, src, len);
+   return Pointer(*this).copyto(ptr, len);
 }
 
 std::string dabc::Buffer::AsStdString()
@@ -542,8 +416,6 @@ std::string dabc::Buffer::AsStdString()
 
    return sbuf;
 }
-
-
 
 dabc::Buffer dabc::Buffer::CreateBuffer(BufferSize_t sz) throw()
 {
@@ -570,3 +442,15 @@ dabc::Buffer dabc::Buffer::CreateBuffer(const void* ptr, unsigned sz, bool owner
 
    return res;
 }
+
+dabc::BufferSize_t dabc::Buffer::CopyFrom(const Buffer& srcbuf, BufferSize_t len) throw()
+{
+   return Pointer(*this).copyfrom(Pointer(srcbuf), len);
+}
+
+
+dabc::BufferSize_t dabc::Buffer::CopyFromStr(const char* src, unsigned len) throw()
+{
+   return Pointer(*this).copyfromstr(src, len);
+}
+

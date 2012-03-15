@@ -30,6 +30,7 @@
 #include "dabc/Configuration.h"
 #include "dabc/CommandsSet.h"
 #include "dabc/Url.h"
+#include "dabc/Pointer.h"
 
 int TestBufferSize = 8*1024;
 int TestSendQueueSize = 5;
@@ -239,9 +240,9 @@ class NetTestMcastModule : public dabc::ModuleAsync {
          dabc::Buffer buf = port->Recv();
          if (buf.null()) { EOUT(("AAAAAAA")); return; }
 
-//         DOUT0(("Process input event %d", buf->GetDataSize()));
+//         DOUT0(("Process input event %d", buf.GetTotalSize()));
 
-//         DOUT0(("Counter %3d Size %u Msg %s", fCounter++, buf->GetDataSize(), buf->GetDataLocation()));
+//         DOUT0(("Counter %3d Size %u Msg %s", fCounter++, buf.GetTotalSize(), buf.AsStdString().c_str()));
          buf.Release();
       }
 
@@ -261,11 +262,9 @@ class NetTestMcastModule : public dabc::ModuleAsync {
          dabc::Buffer buf = Pool()->TakeBuffer(1024);
          if (buf.null()) return;
 
-         sprintf((char*)buf.GetPointer().ptr(),"Message %3d from sender", fCounter++);
+         buf.CopyFromStr(dabc::format("Message %3d from sender", fCounter++).c_str());
 
-         buf.SetTotalSize(strlen((char*)buf.GetPointer().ptr())+1);
-
-         DOUT0(("Sending %3d Size %u Msg %s", fCounter, buf.GetTotalSize(), buf.GetPointer().ptr()));
+         DOUT0(("Sending %3d Size %u Msg %s", fCounter, buf.GetTotalSize(), buf.AsStdString().c_str()));
 
          Output()->Send(buf);
       }

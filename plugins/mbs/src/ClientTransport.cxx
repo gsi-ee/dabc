@@ -17,6 +17,7 @@
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/Device.h"
+#include "dabc/Pointer.h"
 
 
 mbs::ClientTransport::ClientTransport(dabc::Reference port, int kind, int fd) :
@@ -217,10 +218,10 @@ void mbs::ClientTransport::OnRecvCompleted()
          if (fHeader.UsedBufferSize()>0) {
             fRecvBuffer.SetTotalSize(fHeader.UsedBufferSize());
             if (fSwapping) {
-               dabc::Pointer ptr = fRecvBuffer.GetPointer();
+               dabc::Pointer ptr(fRecvBuffer);
                while (!ptr.null()) {
                   mbs::SwapData(ptr(), ptr.rawsize());
-                  fRecvBuffer.Shift(ptr, ptr.rawsize());
+                  ptr.shift(ptr.rawsize());
                }
             }
 

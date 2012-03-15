@@ -16,9 +16,7 @@
 #ifndef DABC_Buffer
 #define DABC_Buffer
 
-#ifndef DABC_Pointer
-#include "dabc/Pointer.h"
-#endif
+#include <stdint.h>
 
 #ifndef DABC_Reference
 #include "dabc/Reference.h"
@@ -26,7 +24,11 @@
 
 namespace dabc {
 
+   typedef uint32_t BufferSize_t;
+
    extern const BufferSize_t BufferSizeError;
+
+   class Pointer;
 
    enum EBufferTypes {
       mbt_Null         = 0,
@@ -59,7 +61,6 @@ namespace dabc {
          struct BufferRec {
 
             int          fRefCnt;       //!< counter of local references on the record, accessed without mutex, only allowed from the same thread
-
 
             // TODO: for debug purposes one can put thread id to verify that access performing always from the same thread
             // TODO: this is critical when fRefCnt>1 - means several buffers are exists and reference same record
@@ -157,6 +158,10 @@ namespace dabc {
 
          Buffer& operator<<(Buffer& src) throw();
 
+         bool operator==(const Buffer& src) const throw() { return fRec == src.fRec; }
+
+         bool operator!=(const Buffer& src) const throw() { return fRec != src.fRec; }
+
          /** \brief Release reference on the pool memory */
          void Release() throw();
 
@@ -187,74 +192,20 @@ namespace dabc {
          /** Initialize pointer instance.
           * By default, complete buffer content covered by the pointer.
           * If \param pos specified (non zero), pointer shifted
-          * If \param len specified (non zero), length is specified
-          */
-
-         Pointer GetPointer(BufferSize_t pos = 0, BufferSize_t len = 0) const
-         {
-            Pointer res;
-            res.fSegm = 0;
-            res.fPtr = (unsigned char*) SegmentPtr(0);
-            res.fRawSize = SegmentSize(0);
-            res.fFullSize = GetTotalSize();
-            if (pos>0) Shift(res, pos);
-            if (len>0) res.setfullsize(len);
-            return res;
-         }
+          * If \param len specified (non zero), length is specified   */
+         Pointer GetPointer(BufferSize_t pos = 0, BufferSize_t len = 0) const;
 
          void Shift(Pointer& ptr, BufferSize_t len) const;
 
-         /** Calculates distance between two pointers */
-         int Distance(const Pointer& ptr1, const Pointer& ptr2) const;
-
-         /** Performs memcpy of data from source buffer, starting from specified \param tgtptr position
-          * If len not specified, all data from buffer \param srcbuf will be copied, starting from specified \param srcptr position
-          * Return actual size of memory which was copied. */
-         BufferSize_t CopyFrom(Pointer tgtptr, const Buffer& srcbuf, Pointer srcptr, BufferSize_t len = 0) throw();
-
-
          /** Copy content of source buffer \param srcbuf to the buffer */
-         BufferSize_t CopyFrom(const Buffer& srcbuf, BufferSize_t len = 0) throw()
-         {
-            return CopyFrom(GetPointer(), srcbuf, srcbuf.GetPointer(), len);
-         }
-
-         /** Performs memcpy of data from source buffer, starting from specified \param tgtptr position
-          * If len not specified, all data from buffer \param srcbuf will be copied, starting from specified \param srcptr position
-          * Return actual size of memory which was copied. */
-         BufferSize_t CopyFrom(Pointer tgtptr, Pointer srcptr, BufferSize_t len = 0) throw();
-
-         /** Performs memcpy of data from raw buffer \param ptr */
-         BufferSize_t CopyFrom(Pointer tgtptr, const void* ptr, BufferSize_t len) throw()
-         {
-            return CopyFrom(tgtptr, Pointer(ptr,len), len);
-         }
-
-         /** Performs memcpy of data from raw buffer \param ptr */
-         BufferSize_t CopyFrom(const void* ptr, BufferSize_t len) throw()
-         {
-            return CopyFrom(GetPointer(), ptr, len);
-
-         }
+         BufferSize_t CopyFrom(const Buffer& srcbuf, BufferSize_t len = 0) throw();
 
          /** Copy data from \param src into Buffer memory
           * Returns byte counts actually copied  */
-         BufferSize_t CopyFromStr(Pointer tgtptr, const char* src, unsigned len = 0) throw();
-
-         BufferSize_t CopyFromStr(const char* src, unsigned len = 0) throw()
-         {
-            return CopyFromStr(GetPointer(), src, len);
-         }
-
+         BufferSize_t CopyFromStr(const char* src, unsigned len = 0) throw();
 
          /** Performs memcpy of data into raw buffer \param ptr */
-         BufferSize_t CopyTo(Pointer srcptr, void* ptr, BufferSize_t len) const throw();
-
-         /** Performs memcpy of data into raw buffer \param ptr */
-         BufferSize_t CopyTo(void* ptr, BufferSize_t len) const throw()
-         {
-            return CopyTo(GetPointer(), ptr, len);
-         }
+         BufferSize_t CopyTo(void* ptr, BufferSize_t len) const throw();
 
          /** Returns reference on the part of the memory, referenced by the object.
           * \param pos specified start point and will be increased when method returns valid buffer.
@@ -280,7 +231,6 @@ namespace dabc {
           * from the memory pool.
           */
          Buffer GetNextPart(Pointer& ptr, BufferSize_t len, bool allowsegmented = true) throw();
-
 
          // ===================================================================================
 

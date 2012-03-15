@@ -22,52 +22,88 @@
 #include "dabc/Exception.h"
 
 
-void dabc::Pointer::long_shift(BufferSize_t sz) throw()
+void dabc::Pointer::long_shift(BufferSize_t len) throw()
 {
-   throw dabc::Exception("Cannot shift pointer on large size, used Buffer::shift() method instead");
+   fFullSize -= rawsize();
+   len -= rawsize();
+   fRawSize = 0;
+   fPtr = 0;
+   fSegm++;
+
+   while ((fSegm < fBuf.NumSegments()) && (fBuf.SegmentSize(fSegm) < len)) {
+      len -= fBuf.SegmentSize(fSegm);
+      fFullSize -= fBuf.SegmentSize(fSegm);
+      fSegm++;
+   }
+
+   if (fSegm >= fBuf.NumSegments())
+      throw dabc::Exception("Pointer has invalid full length field");
+
+   fPtr = (unsigned char*) fBuf.SegmentPtr(fSegm) + len;
+   fRawSize = fBuf.SegmentSize(fSegm) - len;
+   fFullSize -= len;
 }
 
 dabc::BufferSize_t dabc::Pointer::copyfrom(const Pointer& src, BufferSize_t sz) throw()
 {
+   if (sz==0) sz = src.fullsize();
+
+   // this is the simplest case - just raw copy of original data
+   if ((sz <= rawsize()) && (sz <= src.rawsize())) {
+      ::memcpy(ptr(), src(), sz);
+      return sz;
+   }
+
    if (sz > src.fullsize()) {
-      EOUT(("source pointer has no so much memory %lu", sz));
+      EOUT(("source pointer has no so much memory %u", (unsigned) sz));
       sz = src.fullsize();
    }
 
    if (sz > fullsize()) {
-      EOUT(("target pointer has no so much memory %lu", sz));
+      EOUT(("target pointer has no so much memory %u", (unsigned) sz));
       sz = fullsize();
    }
 
-   if (sz==0) return sz;
+   Pointer tgtptr(*this), srcptr(src);
+   unsigned res(0);
 
-   if ((sz > rawsize()) || (sz > src.rawsize())) {
-      throw dabc::Exception("cannot copy buffer outside current segment, use Buffer::copyfrom method");
+   while (sz>0) {
+      unsigned copylen = (tgtptr.rawsize() < srcptr.rawsize()) ? tgtptr.rawsize() : srcptr.rawsize();
+      if (copylen>sz) copylen = sz;
+      if (copylen==0) break;
+
+      ::memcpy(tgtptr(), srcptr(), copylen);
+
+      res+=copylen;
+      sz-=copylen;
+      tgtptr.shift(copylen);
+      srcptr.shift(copylen);
    }
 
-   // this is special and simple case, treat is separately
-   ::memcpy(ptr(), src.ptr(), sz);
-   return sz;
+   return res;
 }
 
-dabc::BufferSize_t dabc::Pointer::copyto(void* tgt, BufferSize_t sz) throw()
+dabc::BufferSize_t dabc::Pointer::copyto(Pointer& src, BufferSize_t sz) const throw()
 {
-   if (sz > fullsize()) {
-      EOUT(("Source pointer has no such much memory %lu", sz));
-      sz = fullsize();
+   return src.copyfrom(*this, sz ? sz : fullsize());
+}
+
+dabc::BufferSize_t dabc::Pointer::copyto(void* tgt, BufferSize_t sz) const throw()
+{
+   if (sz==0) return 0;
+
+   if (sz <= rawsize()) {
+      ::memcpy(tgt, ptr(), sz);
+      return sz;
    }
 
-   if (sz==0) return sz;
-
-   if (sz > rawsize())
-      throw dabc::Exception("Cannot copy memory outside current segment, use Buffer::copyto() method");
-
-   ::memcpy(tgt, ptr(), sz);
-    return sz;
+   return Pointer(tgt, sz).copyfrom(*this, sz);
 }
 
-dabc::BufferSize_t dabc::Pointer::copyfrom(void* src, BufferSize_t sz) throw()
+dabc::BufferSize_t dabc::Pointer::copyfrom(const void* src, BufferSize_t sz) throw()
 {
+   if (src==0) return 0;
+
    if (sz > fullsize()) {
       EOUT(("target pointer has no so much memory %lu", sz));
       sz = fullsize();
@@ -83,3 +119,28 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(void* src, BufferSize_t sz) throw()
    return sz;
 }
 
+dabc::BufferSize_t dabc::Pointer::copyfromstr(const char* str, unsigned len) throw()
+{
+   return str ? copyfrom(str, len ? len : strlen(str)) : 0;
+}
+
+int dabc::Pointer::distance_to(const Pointer& child) const throw()
+{
+   if (fBuf != child.fBuf)
+      throw dabc::Exception("Pointer with wrong segment id is specified");
+
+   if (fSegm==child.fSegm)
+      return (fPtr <= child.fPtr) ? (child.fPtr - fPtr) : -(fPtr - child.fPtr);
+
+   if (fSegm > child.fSegm) return -child.distance_to(*this);
+
+   Pointer left(*this);
+   BufferSize_t dist(0);
+
+   while (left.fSegm < child.fSegm) {
+      dist += left.rawsize();
+      left.shift(left.rawsize());
+   }
+
+   return dist + (child.fPtr - left.fPtr);
+}

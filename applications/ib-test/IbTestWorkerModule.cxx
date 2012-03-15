@@ -10,6 +10,7 @@
 #include "dabc/logging.h"
 #include "dabc/Queue.h"
 #include "dabc/Manager.h"
+#include "dabc/Pointer.h"
 
 #ifdef WITH_GPU
 #include "IbTestGPU.h"
@@ -785,7 +786,7 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
       dabc::Buffer buf = TakeBuffer(Pool(), fCmdBufferSize, 1.);
       if (buf.null()) { EOUT(("No empty buffer")); return false; }
 
-      IbTestCommandMessage* msg = (IbTestCommandMessage*) buf.GetPointer()();
+      IbTestCommandMessage* msg = (IbTestCommandMessage*) buf.SegmentPtr(0);
 
       msg->magic = IBTEST_CMD_MAGIC;
       msg->cmdid = cmdid;
@@ -837,7 +838,7 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
 
       replies[nodeid] = true;
 
-      IbTestCommandMessage* rcv = (IbTestCommandMessage*) buf.GetPointer()();
+      IbTestCommandMessage* rcv = (IbTestCommandMessage*) buf.SegmentPtr(0);
 
       if (rcv->magic!=IBTEST_CMD_MAGIC) { EOUT(("Wrong magic")); return false; }
       if (rcv->cmdid!=cmdid) { EOUT(("Wrong ID")); return false; }
@@ -1059,7 +1060,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
 //     while (dabc::Now() < recvtm + delay);
 
    buf.SetTotalSize(sendpacketsize);
-   
+
    if (!cmd_res) EOUT(("Command %d failed", cmdid));
 
    return cmdid;
@@ -1218,7 +1219,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
 
 //   dabc::Average a1;
 //   a1.AllocateHist(50, 1., 6.);
-   
+
    double max_cut = 0.7;
 
    double time_shift;
@@ -1933,7 +1934,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
                default:
                   break;
             }
-            if (!do_again) break; 
+            if (!do_again) break;
           }
 
           // and now try to submit as much write operations as possible
@@ -2097,7 +2098,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
          ReleaseExclusive(gpu_read.Pop());
    }
 
-   if (gpu_oper_cnt>0) 
+   if (gpu_oper_cnt>0)
      DOUT0(("gpu_oper_cnt = %ld recv_cnt %ld send cnt %ld", gpu_oper_cnt, totalrecvpackets, numcomplsend));
 
    // cleanup all GPU-specific parts
@@ -2382,7 +2383,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    arguments[10] = Cfg("TestWrite").AsBool(false) ? 1 : 0;
    arguments[11] = Cfg("TestRead").AsBool(false) ? 1 : 0;
 
-   // shift start/stop time for 3 seconds, when GPU is used - buffers registrations takes too much time 
+   // shift start/stop time for 3 seconds, when GPU is used - buffers registrations takes too much time
    if ((arguments[10]>0) || (arguments[11]>0)) { arguments[4]+=3.; arguments[5]+=3.; }
 
    DOUT0(("====================================="));
@@ -2418,7 +2419,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
 
        if (allres[n*setsize+9]>=0.099)
           sprintf(cpuinfobuf,"%4.0f%s",allres[n*setsize+9]*100.,"%");
-       else      
+       else
           sprintf(cpuinfobuf,"%4.1f%s",allres[n*setsize+9]*100.,"%");
 
        DOUT0(("%3d |%10s |%7.1f |%7.1f |%8.1f |%6.0f |%6.0f |%5.0f |%s |%5.2f |%7.2f |%s |%5.1f (%5.0f)",
@@ -2645,7 +2646,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
    }
 
    bool is_ok = false;
-   
+
    double now = fStamping();
 
    // Main loop, not more than 7.5 sec
@@ -2764,7 +2765,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
          if (Pool_Check_Mcast(bufindx, 0.001)>0)
             ReleaseExclusive(bufindx, fMultiPool);
       }
-      
+
       if (fMultiCQ && fMultiPool)
          is_ok = (fMultiSendQueue==0) && (fMultiRecvQueue==0);
 
@@ -2779,7 +2780,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
             if ((sendoper[lid][node]>0) || (recvoper[lid][node]>0)) isotherspending = true;
          }
       }
-         
+
       is_ok = !isownpending && !isotherspending && !iscontrolpending;
 
       if (is_ok) {
@@ -2794,7 +2795,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
          for (int node=0;node<NumNodes();node++) {
             if ((node==Node()) || !fActiveNodes[node]) continue;
             if ((RecvQueue(lid,node)>0) || (SendQueue(lid,node)>0) || (sendoper[lid][node]>0) || (recvoper[lid][node]>0))
-               DOUT3(("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d sendoper = %d recvoper = %d", 
+               DOUT3(("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d sendoper = %d recvoper = %d",
                   lid, node, RecvQueue(lid,node), SendQueue(lid,node), sendoper[lid][node], recvoper[lid][node]));
          }
    }

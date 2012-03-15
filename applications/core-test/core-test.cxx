@@ -31,6 +31,7 @@
 #include "dabc/Iterator.h"
 #include "dabc/Factory.h"
 #include "dabc/Application.h"
+#include "dabc/Pointer.h"
 
 
 #define BUFFERSIZE 1024
@@ -1093,13 +1094,13 @@ extern "C" void RunPoolTest()
 
       unsigned cnt(0);
       dabc::Buffer hdr;
-      dabc::Pointer ptr = buf2.GetPointer();
+      dabc::Pointer ptr = buf2;
 
       while (!(hdr = buf2.GetNextPart(ptr, 16)).null()) cnt++;
 
       DOUT0(("Get %u number of small parts, expected %u", cnt, 0x4000/16));
 
-      ptr = buf2.GetPointer();
+      ptr = buf2;
 
       hdr = buf2.GetNextPart(ptr, 16);
       hdr.CopyFromStr("First second");

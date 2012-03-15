@@ -150,7 +150,7 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
 
 
    std::string descriptor; // this contains process variable names description
-   dabc::Pointer ptr=buf.GetPointer();
+   dabc::Pointer ptr = buf;
    DOUT3(("EpicsInput:Got pointer 0x%x, buf size:%d",ptr(),buf.GetTotalSize()));
    unsigned totallen = 0;
    unsigned rawlen = 0;
@@ -268,8 +268,8 @@ unsigned ezca::EpicsInput::Read_Complete(dabc::Buffer& buf)
       rawlen=(irawlen+1)*sizeof(int);
 
    int itotallen=totallen/sizeof(int);
-      if(itotallen*sizeof(int)<totallen)
-         totallen=(itotallen+1)*sizeof(int);
+   if(itotallen*sizeof(int)<totallen)
+      totallen=(itotallen+1)*sizeof(int);
 
    subhdr->SetRawDataSize(rawlen);
    evhdr->SetSubEventsSize(sizeof(mbs::SubeventHeader) + rawlen);

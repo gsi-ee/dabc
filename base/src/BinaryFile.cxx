@@ -18,6 +18,7 @@
 #include "dabc/FileIO.h"
 #include "dabc/logging.h"
 #include "dabc/MemoryPool.h"
+#include "dabc/Pointer.h"
 
 #define BinaryFileCurrentVersion 1
 #define BinaryFileMagicValue 1234
@@ -79,10 +80,10 @@ unsigned dabc::BinaryFileInput::Read_Complete(Buffer& buf)
    buf.SetTotalSize(fBufHeader.datalength);
    buf.SetTypeId(fBufHeader.buftype);
 
-   Pointer ptr = buf.GetPointer();
+   Pointer ptr = buf;
    while (!ptr.null()) {
       fIO->Read(ptr(), ptr.rawsize());
-      buf.Shift(ptr, ptr.rawsize());
+      ptr.shift(ptr.rawsize());
    }
 
    fReadBufHeader = false;
@@ -131,10 +132,10 @@ bool dabc::BinaryFileOutput::WriteBuffer(const Buffer& buf)
 
    fIO->Write(&hdr, sizeof(hdr));
 
-   Pointer ptr = buf.GetPointer();
+   Pointer ptr = buf;
    while (!ptr.null()) {
       fIO->Write(ptr(), ptr.rawsize());
-      buf.Shift(ptr, ptr.rawsize());
+      ptr.shift(ptr.rawsize());
    }
 
    fSyncCounter += sizeof(hdr) + hdr.datalength;

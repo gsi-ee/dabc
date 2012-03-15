@@ -207,7 +207,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
    while (!foundevent) {
 
-      if (!fInp[ninp].IsBuffer()) {
+      if (!fInp[ninp].IsData()) {
 
          if (Input(ninp)->InputPending()==0) return false;
 
@@ -478,18 +478,18 @@ bool mbs::CombinerModule::BuildEvent()
                // if header id still not defined, used first
                if (copyMbsHdrId<0) copyMbsHdrId = ninp;
 
-               if (!fInp[ninp].IsBuffer())
+               if (!fInp[ninp].IsData())
                   throw dabc::Exception("Input has no buffer but used for event building");
 
                dabc::Pointer ptr;
                fInp[ninp].AssignEventPointer(ptr);
 
-               fInp[ninp].GetBuffer()->Shift(ptr, sizeof(mbs::EventHeader));
+               ptr.shift(sizeof(mbs::EventHeader));
 
                if (ptr.segmid()>100)
                   throw dabc::Exception("Bad segment id");
 
-               fOut.AddSubevent(ptr, fInp[ninp].GetBuffer());
+               fOut.AddSubevent(ptr);
             }
          }
 

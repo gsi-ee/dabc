@@ -520,7 +520,7 @@ dabc::Buffer dabc::MemoryPool::CopyBuffer(const Buffer& src, bool except) throw(
 
    res = TakeBuffer(src.GetTotalSize());
 
-   res.CopyFrom(src);
+   res.CopyFrom(src, src.GetTotalSize());
 
    return res;
 }

@@ -315,27 +315,29 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
 {
    if (buf.null()) return BNET_CMD_EXIT;
 
-   CommandMessage* msg = (CommandMessage*) buf.SegmentPtr(0);
+   dabc::Pointer ptr(buf);
+   CommandMessage msg;
 
-   if (msg->magic!=BNET_CMD_MAGIC) {
+   ptr.copyto(&msg, sizeof(CommandMessage));
+
+   if (msg.magic!=BNET_CMD_MAGIC) {
        EOUT(("Magic id is not correct"));
        return BNET_CMD_EXIT;
    }
 
-   int cmdid = msg->cmdid;
+   int cmdid = msg.cmdid;
 
-   fCmdDataSize = msg->cmddatasize;
+   fCmdDataSize = msg.cmddatasize;
    if (fCmdDataSize > fCmdBufferSize) {
       EOUT(("command data too big for buffer!!!"));
       fCmdDataSize = fCmdBufferSize;
    }
 
-   memcpy(fCmdDataBuffer, msg->cmddata(), fCmdDataSize);
-//   double delay = msg->delay;
-//   dabc::TimeStamp recvtm = dabc::Now();
+   ptr.shift(sizeof(CommandMessage));
+   ptr.copyto(fCmdDataBuffer, fCmdDataSize);
 
-   msg->node = dabc::mgr()->NodeId();
-   msg->cmddatasize = 0;
+   msg.node = dabc::mgr.NodeId();
+   msg.cmddatasize = 0;
    int sendpacketsize = sizeof(CommandMessage);
 
    bool cmd_res(false);
@@ -375,18 +377,19 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
       }
 
       case BNET_CMD_COLLECT:
-         if ((msg->getresults > 0) && (fResults!=0)) {
-            msg->cmddatasize = msg->getresults;
-            sendpacketsize += msg->cmddatasize;
-            memcpy(msg->cmddata(), fResults, msg->getresults);
+         if ((msg.getresults > 0) && (fResults!=0)) {
+            msg.cmddatasize = msg.getresults;
+            sendpacketsize += msg.cmddatasize;
+            ptr.copyfrom(fResults, msg.getresults);
             cmd_res = true;
          }
          break;
 
       case BNET_CMD_CREATEQP: {
-         int ressize = msg->getresults;
-         cmd_res = fRunnable->CreateQPs(msg->cmddata(), ressize);
-         msg->cmddatasize = ressize;
+         int ressize = msg.getresults;
+         cmd_res = fRunnable->CreateQPs(fCmdDataBuffer, ressize);
+         ptr.copyfrom(fCmdDataBuffer, ressize);
+         msg.cmddatasize = ressize;
          sendpacketsize += ressize;
          break;
       }
@@ -404,8 +407,9 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
          break;
 
       case BNET_CMD_ASKQUEUE:
-         msg->cmddatasize = ProcessAskQueue(msg->cmddata());
-         sendpacketsize += msg->cmddatasize;
+         msg.cmddatasize = ProcessAskQueue(fCmdDataBuffer);
+         ptr.copyfrom(fCmdDataBuffer, msg.cmddatasize);
+         sendpacketsize += msg.cmddatasize;
          cmd_res = true;
          break;
 
@@ -438,6 +442,10 @@ int bnet::TransportModule::PreprocessTransportCommand(dabc::Buffer& buf)
          cmd_res = true;
          break;
    }
+
+   // copy header back to the buffer
+   ptr = buf;
+   ptr.copyfrom(&msg, sizeof(CommandMessage));
 
    buf.SetTotalSize(sendpacketsize);
 
@@ -566,8 +574,8 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
             fRecvSch.Item(nslot, 0).Reset();
           }
 
-   fSendTurnRec = 0; fSendTurnCnt = 0; fSendSlotIndx = -2; fSendOperDone = false; fSendTurnEndTime = fTestStartTime;
-   fRecvTurnRec = 0; fRecvTurnCnt = 0; fRecvSlotIndx = -2; fRecvOperDone = false; fRecvTurnEndTime = fTestStartTime;
+   fSendTurnRec = 0; fSendTurnCnt = 0; fSendSlotIndx = -2; fSendTurnEndTime = fTestStartTime;
+   fRecvTurnRec = 0; fRecvTurnCnt = 0; fRecvSlotIndx = -2; fRecvTurnEndTime = fTestStartTime;
 
    if (!haveController()) {
       AutomaticProduceScheduleTurn(true);
@@ -655,6 +663,13 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
       nexttm += fSendSch.endTime();
    }
 
+   // we prepare record which will be used to keep information about Worker->Controller communication
+   fWorkerCtrlRec.evid.SetCtrl();
+   fWorkerCtrlRec.acq_tm = fTestStartTime;
+   fWorkerCtrlRec.state = eps_Ready;
+   fWorkerCtrlRec.buf.Release();
+
+   fWorkerCtrlEvId.SetNull();
 }
 
 
@@ -974,11 +989,6 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          return true;
       }
 
-      if (fSendOperDone) {
-         fSendSch.ShiftToNextOperation(Node(), fSendSlotIndx);
-         fSendOperDone = false;
-      }
-
       if (fSendSlotIndx == -2) {
          fSendTurnRec = fSchTurnsQueue.FindItemWithId(fSendTurnCnt+1);
 
@@ -994,16 +1004,11 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
          if (fSendTurnRec!=0) {
             fSendSlotIndx = -1;
-            fSendOperDone = true;
+            fSendSch.ShiftToNextOperation(Node(), fSendSlotIndx);
             fSendTurnEndTime = fSendTurnRec->starttime + fSendSch.endTime();
          }
       }
 
-
-      if (fRecvOperDone) {
-         fRecvSch.ShiftToNextOperation(Node(), fRecvSlotIndx);
-         fRecvOperDone = false;
-      }
 
       if (fRecvSlotIndx == -2) {
          fRecvTurnRec = fSchTurnsQueue.FindItemWithId(fRecvTurnCnt+1);
@@ -1021,27 +1026,33 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          if (fRecvTurnRec!=0) {
             fRecvTurnEndTime = fRecvTurnRec->starttime + fRecvSch.endTime();
             fRecvSlotIndx = -1;
-            fRecvOperDone = true;
+            fRecvSch.ShiftToNextOperation(Node(), fRecvSlotIndx);
          }
       }
 
       if ((fRecvSlotIndx>=0) && fRecvTurnRec && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
-         next_recv_time = fRecvTurnRec->starttime + fRecvSch.timeSlot(fRecvSlotIndx) - recv_pre_time;
-
          recv_node = fRecvSch.Item(fRecvSlotIndx, Node()).node;
          recv_lid = fRecvSch.Item(fRecvSlotIndx, Node()).lid;
-
          recv_evid = fRecvTurnRec->fVector[recv_node];
+
+         if (recv_evid.null())
+            fRecvSch.ShiftToNextOperation(Node(), fRecvSlotIndx);
+         else
+            next_recv_time = fRecvTurnRec->starttime + fRecvSch.timeSlot(fRecvSlotIndx) - recv_pre_time;
       }
 
-      if (fIsFirstEventId) // only when first data exists, one could start scheduling operations
-         if ((fSendSlotIndx>=0) && fSendTurnRec && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
-            next_send_time = fSendTurnRec->starttime + fSendSch.timeSlot(fSendSlotIndx);
+      //if (fIsFirstEventId) // only when first data exists, one could start scheduling operations
+      if ((fSendSlotIndx>=0) && fSendTurnRec && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
 
-            send_node = fSendSch.Item(fSendSlotIndx, Node()).node;
-            send_lid = fSendSch.Item(fSendSlotIndx, Node()).lid;
-            send_evid = fSendTurnRec->fVector[send_node];
-         }
+         send_node = fSendSch.Item(fSendSlotIndx, Node()).node;
+         send_lid = fSendSch.Item(fSendSlotIndx, Node()).lid;
+         send_evid = fSendTurnRec->fVector[send_node];
+
+         if (send_evid.null())
+            fSendSch.ShiftToNextOperation(Node(), fSendSlotIndx);
+         else
+            next_send_time = fSendTurnRec->starttime + fSendSch.timeSlot(fSendSlotIndx);
+      }
 
       // if both operation want to be executed, selected first in the time
       if (next_recv_time>0. && next_send_time>0.) {
@@ -1104,7 +1115,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
             // dangerous but it is like it is - we should continue receiving otherwise input will be blocked
             // we should do here more smart solutions
 
-            if (did_submit) fRecvOperDone = true;
+            if (did_submit) fRecvSch.ShiftToNextOperation(Node(), fRecvSlotIndx);
          }
       }
 
@@ -1188,7 +1199,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
             }
 
             // shift to next operation, in some cases even when previous operation was not performed
-            if (did_submit) fSendOperDone = true;
+            if (did_submit) fSendSch.ShiftToNextOperation(Node(), fSendSlotIndx);
          }
       }
    }
@@ -1356,15 +1367,61 @@ void bnet::TransportModule::ReadoutNextEvents(dabc::Port* port)
    }
 }
 
-bnet::EventPartRec* bnet::TransportModule::FindEventPartRec(bnet::EventId evid)
+unsigned bnet::TransportModule::CloseSubpacketHeader(dabc::Pointer& bgn, unsigned kind, unsigned len)
 {
-   // TODO: make searching of even more optimal - one could use map or other methods
-   for (unsigned n=0;n<fEvPartsQueue.Size();n++) {
-      bnet::EventPartRec* rec = &fEvPartsQueue.Item(n);
-      if (rec->evid == evid) return rec;
+   ControlSubheader hdr;
+   hdr.kind = kind;
+   hdr.len = len;
+   bgn.copyfrom(&hdr, sizeof(hdr));
+   return len + sizeof(ControlSubheader);
+}
+
+
+bnet::EventPartRec* bnet::TransportModule::ProduceCtrlRec(int rebuildid)
+{
+   if (IsWorker()) {
+      if (rebuildid>=0) {
+         if (fWorkerCtrlRec.state != eps_Ready) {
+            EOUT(("Request to update worker control rec before it is ready!!"));
+            return 0;
+         }
+
+         fWorkerCtrlRec.buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+         if (fWorkerCtrlRec.buf.null()) {
+            EOUT(("Not enough buffers"));
+            return 0;
+         }
+
+         unsigned totallen(0);
+
+         dabc::Pointer ptr = fWorkerCtrlRec.buf;
+
+         dabc::Pointer bgn(ptr);
+         ptr.shift(sizeof(ControlSubheader));
+         unsigned len1 = fEvPartsQueue.FillEventsInfo(ptr, fWorkerCtrlEvId);
+         totallen += CloseSubpacketHeader(bgn, mpk_SubevSizes, len1);
+
+         fWorkerCtrlRec.buf.SetTotalSize(totallen);
+      }
+
+      return &fWorkerCtrlRec;
    }
 
    return 0;
+}
+
+
+
+
+bnet::EventPartRec* bnet::TransportModule::FindEventPartRec(const bnet::EventId& evid, int rebuildid)
+{
+   if (evid.null()) return 0;
+
+   if (evid.ctrl()) return ProduceCtrlRec(rebuildid);
+
+   // TODO: make searching of even more optimal - one could use map or other methods
+   return fEvPartsQueue.Find(evid);
 }
 
 bnet::EventPartRec* bnet::TransportModule::GetFirstReadyPartRec()
@@ -1550,18 +1607,22 @@ bool bnet::TransportModule::RequestMasterCommand(int cmdid, void* cmddata, int c
       dabc::Buffer buf = FindPool("BnetCtrlPool")->TakeBuffer(fullpacketsize);
       if (buf.null()) { EOUT(("No empty buffer")); return false; }
 
-      CommandMessage* msg = (CommandMessage*) buf.GetPointer()();
+      dabc::Pointer ptr(buf);
 
-      msg->magic = BNET_CMD_MAGIC;
-      msg->cmdid = cmdid;
-      msg->cmddatasize = cmddatasize;
-      msg->delay = 0;
-      msg->getresults = resultpernode;
+      CommandMessage msg;
+      msg.magic = BNET_CMD_MAGIC;
+      msg.cmdid = cmdid;
+      msg.cmddatasize = cmddatasize;
+      msg.delay = 0;
+      msg.getresults = resultpernode;
+      ptr.copyfrom(&msg, sizeof(msg));
+
       if ((cmddatasize>0) && (cmddata!=0)) {
+         ptr.shift(sizeof(msg));
          if (incremental_data)
-            memcpy(msg->cmddata(), (uint8_t*) cmddata + node * cmddatasize, cmddatasize);
+            ptr.copyfrom((uint8_t*) cmddata + node * cmddatasize, cmddatasize);
          else
-            memcpy(msg->cmddata(), cmddata, cmddatasize);
+            ptr.copyfrom(cmddata, cmddatasize);
       }
 
       buf.SetTotalSize(fullpacketsize);
@@ -1599,15 +1660,20 @@ bool bnet::TransportModule::ProcessReplyBuffer(int nodeid, dabc::Buffer buf)
 
    fCmdReplies[nodeid] = true;
 
-   CommandMessage* rcv = (CommandMessage*) buf.GetPointer()();
+   dabc::Pointer ptr(buf);
 
-   if (rcv->magic!=BNET_CMD_MAGIC) { EOUT(("Wrong magic")); return false; }
-   if (rcv->cmdid != fRunningCmdId) { EOUT(("Wrong ID recv %d  cmd %d", rcv->cmdid, fRunningCmdId)); return false; }
-   if (rcv->node != nodeid) { EOUT(("Wrong node")); return false; }
+   CommandMessage rcv;
+   ptr.copyto(&rcv, sizeof(CommandMessage));
 
-   if ((fCmdAllResults!=0) && (fCmdResultsPerNode>0) && (rcv->cmddatasize == fCmdResultsPerNode)) {
+   if (rcv.magic!=BNET_CMD_MAGIC) { EOUT(("Wrong magic")); return false; }
+   if (rcv.cmdid != fRunningCmdId) { EOUT(("Wrong ID recv %d  cmd %d", rcv.cmdid, fRunningCmdId)); return false; }
+   if (rcv.node != nodeid) { EOUT(("Wrong node")); return false; }
+
+   if ((fCmdAllResults!=0) && (fCmdResultsPerNode>0) && (rcv.cmddatasize == fCmdResultsPerNode)) {
+      ptr.shift(sizeof(CommandMessage));
+
       // DOUT0(("Copy from node %d buffer %d", nodeid, resultpernode));
-      memcpy((uint8_t*)fCmdAllResults + nodeid*fCmdResultsPerNode, rcv->cmddata(), fCmdResultsPerNode);
+      ptr.copyto((uint8_t*)fCmdAllResults + nodeid*fCmdResultsPerNode, fCmdResultsPerNode);
    }
 
    bool finished(true);

@@ -66,8 +66,6 @@ namespace bnet {
       double delay;         // how long should node waits before exit from command wait
       int32_t getresults;   // how many double values return from results array
       int32_t cmddatasize;
-
-      void* cmddata() const { return (int8_t*) this + sizeof(CommandMessage); }
    };
 
    struct TransportHeader {
@@ -79,6 +77,20 @@ namespace bnet {
       uint32_t   sendkind;  // indicate that is send 0 - dummy (empty buffer), 1 - normal data
 
    };
+
+   enum MasterPacketKind {
+      mpk_Null = 0,
+      mpk_SubevSizes = 1,    // data with subevents sizes
+      mpk_EvSchedule = 2,    // data with event schedule - where event should be build
+      mpk_SchedSlot = 3      // definition of base time for next schedules
+   };
+
+   struct ControlSubheader {
+      uint32_t kind;  // kind of data - see MasterPacketKind
+      uint32_t len;   // length of the data - including header
+      void* rawdata() { return (char*) this + sizeof(ControlSubheader); }
+   };
+
 
 #pragma pack()
 

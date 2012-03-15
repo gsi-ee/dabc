@@ -22,6 +22,7 @@
 #include "dabc/Manager.h"
 #include "dabc/Device.h"
 #include "dabc/BuffersQueue.h"
+#include "dabc/Pointer.h"
 
 dabc::NetworkTransport::NetworkTransport(Reference port, bool useakn) :
    Transport(port),
@@ -472,7 +473,7 @@ void dabc::NetworkTransport::ProcessRecvCompl(uint32_t recid)
          fRecs[recid].buf.SetTypeId(hdr->typid);
 
          if ((hdr->size>0) && (hdr->size <= fInlineDataSize))
-            fRecs[recid].buf.CopyFrom(fRecs[recid].inlinebuf, hdr->size);
+            Pointer(fRecs[recid].buf).copyfrom(fRecs[recid].inlinebuf, hdr->size);
 
          fInputQueue.Push(recid);
          dofire = true;

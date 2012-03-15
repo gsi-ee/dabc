@@ -63,6 +63,8 @@ extern "C"
 #include "dabc/logging.h"
 
 #include "dabc/MemoryPool.h"
+#include "dabc/Buffer.h"
+#include "dabc/Pointer.h"
 
 #include "mbs/MbsTypeDefs.h"
 
@@ -295,7 +297,7 @@ unsigned mbs::EvapiInput::Read_Complete(dabc::Buffer& buf)
 
    buf.SetTotalSize(size);
 
-   buf.CopyFrom(fEventHeader, size);
+   dabc::Pointer(buf).copyfrom(fEventHeader, size);
 
    return dabc::di_Ok;
 }

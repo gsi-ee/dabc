@@ -19,6 +19,23 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
+Changes in version 1.9.x (dabc2 beta) - spring 2012
+   1. Introduce new event building network. Implementation includes fast runnable,
+      with consumes one thread and aims to execute send/recv operation at predefined time.
+      Another code is less time-critical and purposed to fill operations queues of the 
+      runnable. Final aim is to achive synchron submission of data transfers (scheduling)
+      on the bif cluster. Implementation status in very initial/tesing phase.
+   2. Change dabc::Buffer implementation. Now it is smart pointer on preallocated record, there
+      all segments description are collected. Buffer still can use memory from only pool.
+      Conceptual change - buffer MUST be used only in single thread. Copy constructor of
+      buffer just copies pointer on segments list - means new object uses same structures as
+      old one. This only can work in single thread. Of course, there is method to duplicate buffer - 
+      makes copy of segments list, but without copy of the buffer content.
+   3. Make use of new dabc::Buffer concept in dabc::Pointer class. Pointer manage internally 
+      own dabc::Buffer instance. This simplify all pointer methods - no need to provide
+      additional reference to original buffer. 
+
+
 Changes in version 1.9.0 (dabc2 alpha)
    0. If shortly - mostly everything was changed. Trying to list:
     

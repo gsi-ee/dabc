@@ -3,6 +3,11 @@
 
 #include "bnet/defines.h"
 
+#include "dabc/Queue.h"
+
+#include "dabc/Pointer.h"
+
+
 namespace bnet {
 
    /** Structure to store all relevant information for event buffer
@@ -23,6 +28,19 @@ namespace bnet {
        ~EventPartRec() { reset(); }
 
        void reset() {  state = eps_Init; evid = 0; buf.Release(); acq_tm = 0.; }
+   };
+
+
+   class EventsPartsQueue : public dabc::RecordsQueue<EventPartRec, false> {
+      typedef dabc::RecordsQueue<EventPartRec, false> parent_class;
+
+      public:
+
+      EventsPartsQueue() : parent_class() {}
+
+      EventPartRec* Find(const bnet::EventId& id);
+
+      unsigned FillEventsInfo(dabc::Pointer& ptr, bnet::EventId& last);
    };
 
    /** Structure to collect information about event on the master node,

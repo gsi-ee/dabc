@@ -22,11 +22,15 @@
 #include "dabc/Buffer.h"
 #endif
 
+#ifndef DABC_Pointer
+#include "dabc/Pointer.h"
+#endif
+
 namespace mbs {
 
    class ReadIterator {
       protected:
-         const dabc::Buffer* fBuffer; // we keep buffer pointer - mean buffer should be preserved by user
+         bool           fFirstEvent;
          dabc::Pointer  fEvPtr;
          dabc::Pointer  fSubPtr;
          dabc::Pointer  fRawPtr;
@@ -51,8 +55,7 @@ namespace mbs {
 
          void Close();
 
-         bool IsBuffer() const { return fBuffer!=0; }
-         const dabc::Buffer* GetBuffer() const { return fBuffer; }
+         bool IsData() const { return !fEvPtr.null(); }
 
          bool NextEvent();
          bool NextSubEvent();
@@ -81,7 +84,7 @@ namespace mbs {
          bool NewSubevent(uint32_t minrawsize = 0, uint8_t crate = 0, uint16_t procid = 0, uint8_t control = 0);
          bool FinishSubEvent(uint32_t rawdatasz);
 
-         bool AddSubevent(const dabc::Pointer& source, const dabc::Buffer* buf = 0);
+         bool AddSubevent(const dabc::Pointer& source);
          bool AddSubevent(SubeventHeader* sub);
          bool FinishEvent();
 
