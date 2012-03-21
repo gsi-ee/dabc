@@ -54,13 +54,15 @@ namespace dabc {
          {
          }
 
-         inline Pointer(const Pointer& src) :
+         inline Pointer(const Pointer& src, BufferSize_t pos = 0, BufferSize_t fullsz = 0) :
             fBuf(src.fBuf),
             fSegm(src.fSegm),
             fPtr(src.fPtr),
             fRawSize(src.fRawSize),
             fFullSize(src.fFullSize)
          {
+            if (pos>0) shift(pos);
+            if (fullsz>0) setfullsize(fullsz);
          }
 
          inline Pointer(const Buffer& buf, unsigned pos = 0, unsigned len = 0) :
@@ -94,13 +96,14 @@ namespace dabc {
             fFullSize = sz;
          }
 
-         inline void reset(const Pointer& src, BufferSize_t fullsz = 0)
+         inline void reset(const Pointer& src, BufferSize_t pos = 0, BufferSize_t fullsz = 0)
          {
             fBuf = src.fBuf;
             fSegm = src.fSegm;
             fPtr = src.fPtr;
             fRawSize = src.fRawSize;
             fFullSize = src.fFullSize;
+            if (pos>0) shift(pos);
             if (fullsz>0) setfullsize(fullsz);
          }
 
@@ -137,17 +140,19 @@ namespace dabc {
          inline BufferSize_t rawsize() const { return fRawSize; }
          inline BufferSize_t fullsize() const { return fFullSize; }
 
-         inline void shift(BufferSize_t sz) throw()
+         inline BufferSize_t shift(BufferSize_t sz) throw()
          {
             if (sz<fRawSize) {
                fPtr += sz;
                fRawSize -= sz;
                fFullSize -= sz;
             } else
-            if (sz>=fFullSize)
+            if (sz>=fFullSize) {
+               sz = fFullSize;
                reset();
-            else
+            } else
                long_shift(sz);
+            return sz;
          }
 
          void setfullsize(BufferSize_t sz)
@@ -160,13 +165,27 @@ namespace dabc {
 
          inline void operator+=(BufferSize_t sz) throw() { shift(sz); }
 
-         BufferSize_t copyfrom(const Pointer& src, BufferSize_t sz = 0) throw();
-
          BufferSize_t copyto(void* tgt, BufferSize_t sz) const throw();
+
+         inline BufferSize_t copyto_shift(void* tgt, BufferSize_t sz) throw()
+            { return shift(copyto(tgt,sz)); }
 
          BufferSize_t copyto(Pointer& src, BufferSize_t sz) const throw();
 
+         inline BufferSize_t copyto_shift(Pointer& src, BufferSize_t sz) throw()
+           { return shift(copyto(src, sz)); }
+
+         /** Returns actual size copied */
+         BufferSize_t copyfrom(const Pointer& src, BufferSize_t sz = 0) throw();
+
+         /** Returns actual size copied and shifted */
+         inline BufferSize_t copyfrom_shift(const Pointer& src, BufferSize_t sz = 0) throw()
+               { return shift(copyfrom(src, sz)); }
+
          BufferSize_t copyfrom(const void* src, BufferSize_t sz) throw();
+
+         inline BufferSize_t copyfrom_shift(const void* src, BufferSize_t sz) throw()
+               { return shift(copyfrom(src, sz)); }
 
          BufferSize_t copyfromstr(const char* str, unsigned len = 0) throw();
 

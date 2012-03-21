@@ -115,7 +115,7 @@ bool mbs::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
       ptr.reset();
       return false;
    }
-   ptr.reset(fEvPtr, evnt()->FullSize());
+   ptr.reset(fEvPtr, 0, evnt()->FullSize());
    return true;
 }
 
@@ -128,7 +128,7 @@ bool mbs::ReadIterator::NextSubEvent()
          EOUT(("Mbs format error - event fullsize %u too small", evnt()->FullSize()));
          return false;
       }
-      fSubPtr.reset(fEvPtr, evnt()->FullSize());
+      fSubPtr.reset(fEvPtr, 0, evnt()->FullSize());
       fSubPtr.shift(sizeof(EventHeader));
    } else
       fSubPtr.shift(subevnt()->FullSize());
@@ -144,7 +144,7 @@ bool mbs::ReadIterator::NextSubEvent()
       return false;
    }
 
-   fRawPtr.reset(fSubPtr, subevnt()->FullSize());
+   fRawPtr.reset(fSubPtr, 0, subevnt()->FullSize());
    fRawPtr.shift(sizeof(SubeventHeader));
 
    return true;
@@ -246,10 +246,8 @@ bool mbs::WriteIterator::NewSubevent(uint32_t minrawsize, uint8_t crate, uint16_
 {
    if (fEvPtr.null()) return false;
 
-   if (fSubPtr.null()) {
-      fSubPtr.reset(fEvPtr);
-      fSubPtr.shift(sizeof(EventHeader));
-   }
+   if (fSubPtr.null())
+      fSubPtr.reset(fEvPtr, sizeof(EventHeader));
 
    if (fSubPtr.fullsize() < (sizeof(SubeventHeader) + minrawsize)) return false;
 
@@ -275,10 +273,8 @@ bool mbs::WriteIterator::AddSubevent(const dabc::Pointer& source)
 {
    if (fEvPtr.null()) return false;
 
-   if (fSubPtr.null()) {
-      fSubPtr.reset(fEvPtr);
-      fSubPtr.shift(sizeof(EventHeader));
-   }
+   if (fSubPtr.null())
+      fSubPtr.reset(fEvPtr, sizeof(EventHeader));
 
    if (fSubPtr.fullsize() < source.fullsize()) return false;
 

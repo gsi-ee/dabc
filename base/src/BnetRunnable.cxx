@@ -125,13 +125,13 @@ bnet::BnetRunnable::~BnetRunnable()
    }
 }
 
-bool bnet::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd)
+bool bnet::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, int numrecs)
 {
    fActiveNodes = new bool[NumNodes()];
    for (int n=0;n<NumNodes();n++)
       fActiveNodes[n] = true;
 
-   fNumRecs = 1000;   // FIXME - should depend from number of nodes
+   fNumRecs = numrecs;
    fRecs = new OperRec[fNumRecs];       // operation records
    fFreeRecs.Allocate(fNumRecs);
    fSubmRecs.Allocate(fNumRecs);
@@ -541,26 +541,42 @@ void* bnet::BnetRunnable::MainLoop()
       if (last_tm>0) {
          fLoopTime.Fill(currtm - last_tm); // for statistic
          if (currtm - last_tm > 0.001) fLoopMaxCnt++;
+
+         if (currtm - last_tm > 0.01) DOUT1(("LARGE DELAY %5.2f ms", (currtm - last_tm)*1e3));
       }
       last_tm = currtm;
 
       if (!fAcceptedRecs.Empty()) {
          OperRec* rec = GetRec(fAcceptedRecs.Front());
 
+          // TODO: introduce strict time limit - after some delay operation should be skipt
+         if ((rec->oper_time <= currtm) && !rec->IsQueueOk())
+            EOUT(("Queue problem with record %d tgtnode %d late %4.3f ms", fAcceptedRecs.Front(), rec->tgtnode, (currtm - rec->oper_time) * 1000.));
+
          if ((rec->oper_time <= currtm) && rec->IsQueueOk()) {
             int recid = fAcceptedRecs.Pop();
+
+            DOUT2(("Invoke record %d", recid));
 
             if (rec->skind!=skind_None)
                PrepareSpecialKind(recid);
 
             if (recid>=0) {
+               DOUT2(("Performing record %d", recid));
+
                PerformOperation(recid, currtm);
+
+               DOUT2(("Performing record %d done still %u", recid, fAcceptedRecs.Size()));
+
             } else {
                // special return value, means exit from the loop
                if (recid==-111) break;
             }
-         } else
+         } else {
             till_next_oper = rec->oper_time - currtm;
+
+            // DOUT1(("Record %d till next %7.6f", fAcceptedRecs.Front(), till_next_oper));
+         }
       }
 
       if (fNumRunningRecs>0) {
@@ -604,8 +620,10 @@ void* bnet::BnetRunnable::MainLoop()
 
             if ((--rec->repeatcnt <= 0) || rec->err) {
                fCompletedRecs.Push(recid);
-            } else
+               // DOUT1(("Rec %d completed signalled %s size %u", recid, DBOOL(fReplySignalled), fCompletedRecs.Size()));
+            } else {
                fAcceptedRecs.Push(recid);
+            }
          }
       }
 
@@ -653,6 +671,7 @@ void* bnet::BnetRunnable::MainLoop()
          // copy all submitted records to thread
          while (!fSubmRecs.Empty()) {
             fAcceptedRecs.Push(fSubmRecs.Pop());
+            // DOUT1(("Add new record frontid %d", fAcceptedRecs.Front()));
             till_next_oper = 0.; // indicate that next operation can be very soon
          }
 
@@ -685,7 +704,10 @@ void* bnet::BnetRunnable::MainLoop()
 
       } // end of locked mutex
 
-      if (isdoreply && fReplyItem) fReplyItem->FireUserEvent();
+      if (isdoreply && fReplyItem) {
+         // DOUT1(("Fire reply event size:%u", fReplyedRecs.Size()));
+         fReplyItem->FireUserEvent();
+      }
    }
 
    DOUT0(("Exit BnetRunnable::MainLoop()"));
@@ -885,12 +907,12 @@ int bnet::BnetRunnable::GetCompleted(bool resetsignalled)
 
    dabc::LockGuard lock(fMutex);
 
+   if (!fReplyedRecs.Empty())
+      return fReplyedRecs.Pop();
+
    // from this moment we decide that module was not signalled
    // TODO: probably, this flag should be reset only when no items in the queue
    if (resetsignalled) fReplySignalled = false;
-
-   if (!fReplyedRecs.Empty())
-      return fReplyedRecs.Pop();
 
    return -1;
 }

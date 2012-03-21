@@ -61,7 +61,7 @@ namespace verbs {
          // maximum size for commands
          virtual int ConnectionBufferSize() { return NumNodes() * NumLids() * sizeof(VerbsConnRec); }
 
-         virtual bool Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd);
+         virtual bool Configure(dabc::Module* m, dabc::MemoryPool* pool, int numrecs);
 
          virtual void ResortConnections(void* buf);
    };

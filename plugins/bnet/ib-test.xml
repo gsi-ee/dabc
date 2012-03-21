@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <dabc version="2">
-   <Context host="master" port="5432"/>
-   <Context host="node01" port="5433"/>
-   <Context host="node02" port="5434"/>
    <Context host="node03" port="5435"/>
+   <Context host="node02" port="5434"/>
+   <Context host="node01" port="5433"/>
+   <Context host="master" port="5432"/>
    <Context host="*">
      <Run>
        <lib value="libDabcVerbs.so"/>
@@ -16,7 +16,7 @@
        <nullout value="false"/>
        <num_special_thrds value="1"/>
        <taskset value="-c 0-1"/>
-       <loglevel value="1"/>
+       <loglevel value="0"/>
        <loglimit value="10000000"/>
        <runtime value="50"/>
        <!--runfunc value="test_affinity"/-->
@@ -24,7 +24,7 @@
      <Application class="bnet::Application">
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="65536"/>
-         <NumBuffers value="1000"/>
+         <NumBuffers value="2000"/>
          <SpecialThread value="true"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
@@ -36,12 +36,16 @@
          <TestRate value="200"/>
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
-         <TestEventQueue value="500"/>
-         <TestEventLifeTime value="3."/>
-         <TestControlKind value="0"/>
-         <TestStartTurns value="10"/>
+         <TestEventQueue value="1000"/>
+         <TestControlKind value="1"/>
+         <TestStartTurns value="20"/>
          <TestSchedule value=""/>
          <TestTimeout value="10"/>
+
+         <EventLifeTime value="3."/>
+         <SubmitPreTime value="0.005"/>
+         <ReceivePreTime value="0.0001"/>
+         
        </Application>
    </Context>
 </dabc>

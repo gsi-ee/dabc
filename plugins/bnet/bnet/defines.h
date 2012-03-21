@@ -11,9 +11,12 @@
 namespace bnet {
 
    struct names {
-      static const char* EventLifeTime() { return "TestEventLifeTime"; }
       static const char* WorkerModule() { return "BnetWorker"; }
+
+      static const char* EventLifeTime() { return "EventLifeTime"; }
       static const char* ControlKind() { return "TestControlKind"; }
+      static const char* SubmitPreTime() { return "SubmitPreTime"; }
+      static const char* ReceivePreTime() { return "ReceivePreTime"; }
    };
 
    enum BnetCommandsIds {
@@ -71,24 +74,25 @@ namespace bnet {
    struct TransportHeader {
       uint32_t   srcnode;   // source node id
       uint32_t   tgtnode;   // target node id
-      EventId    evid;      // event id
+      uint64_t   evid;      // event id
       double     send_tm;   // time when operation was send (for debugging)
       uint32_t   seqid;     // sequence number of transfer - to detect skipped operations
       uint32_t   sendkind;  // indicate that is send 0 - dummy (empty buffer), 1 - normal data
-
+      uint32_t   sendlen;   // length of send data
    };
 
-   enum MasterPacketKind {
-      mpk_Null = 0,
-      mpk_SubevSizes = 1,    // data with subevents sizes
-      mpk_EvSchedule = 2,    // data with event schedule - where event should be build
-      mpk_SchedSlot = 3      // definition of base time for next schedules
+   enum ControlPacketKind {
+      cpk_Null        = 0,
+      cpk_SubevSizes  = 123,    // data with subevents sizes
+      cpk_Turns       = 234,    // data with event association and in which time slot these events should be send
+      cpk_BuilderInfo = 345,    // information from event builder
+      cpk_SkipMarkers = 456,    // boundaries to skip events, turns, ...
+      cpk_SchedSlot   = 567     // definition of base time for next schedules
    };
 
    struct ControlSubheader {
-      uint32_t kind;  // kind of data - see MasterPacketKind
+      uint32_t kind;  // kind of data - see ControlPacketKind
       uint32_t len;   // length of the data - including header
-      void* rawdata() { return (char*) this + sizeof(ControlSubheader); }
    };
 
 

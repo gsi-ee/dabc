@@ -38,7 +38,7 @@ namespace dabc {
       mbt_AcknCounter  = 4,
       mbt_RawData      = 5,
       mbt_EOF          = 6,   // such packet produced when transport is closed completely
-      mbt_EOL          = 7,   // this is more line end-of-line case, where transport is not closed, but may deliver new kind of data (new event ids) afterwards
+      mbt_EOL          = 7,   // this is more like end-of-line case, where transport is not closed, but may deliver new kind of data (new event ids) afterwards
       mbt_User         = 1000
    };
 
@@ -171,17 +171,17 @@ namespace dabc {
 
          /** Append content of \param src buffer to the existing buffer.
           * If source buffer belong to other memory pool, content will be copied.
-          * If moverefs = true specified, references moved to the target and source buffer will be empty */
+          * If moverefs = true specified, references moved to the target and source buffer will be emptied */
          bool Append(Buffer& src, bool moverefs = true) throw();
 
          /** Prepend content of \param src buffer to the existing buffer.
           * If source buffer belong to other memory pool, content will be copied.
-          * If moverefs = true specified, references moved to the target and source buffer will be empty */
+          * If moverefs = true specified, references moved to the target and source buffer will be emptied */
          bool Prepend(Buffer& src, bool moverefs = true) throw();
 
          /** Insert content of \param src buffer at specified position to the existing buffer.
           * If source buffer belong to other memory pool, content will be copied.
-          * If moverefs = true specified, references moved to the target and source buffer will be empty */
+          * If moverefs = true specified, references moved to the target and source buffer will be emptied */
          bool Insert(BufferSize_t pos, Buffer& src, bool moverefs = true) throw();
 
          /** Convert content of the buffer into std::string */
@@ -192,9 +192,12 @@ namespace dabc {
          /** Initialize pointer instance.
           * By default, complete buffer content covered by the pointer.
           * If \param pos specified (non zero), pointer shifted
-          * If \param len specified (non zero), length is specified   */
+          * If \param len specified (non zero), length is specified
+          * TODO: remove method completely - one can use Pointer methods for this */
          Pointer GetPointer(BufferSize_t pos = 0, BufferSize_t len = 0) const;
 
+         /** Shifts pointer on specified len, pointer must be associated with buffer
+          * TODO: remove method completely */
          void Shift(Pointer& ptr, BufferSize_t len) const;
 
          /** Copy content of source buffer \param srcbuf to the buffer */
@@ -229,6 +232,8 @@ namespace dabc {
           *
           * Of course, one should check if buffer is expired and one need to take next piece
           * from the memory pool.
+          *
+          * TODO: one can exclude pointer and just cut buffer pieces until buffer is empty
           */
          Buffer GetNextPart(Pointer& ptr, BufferSize_t len, bool allowsegmented = true) throw();
 

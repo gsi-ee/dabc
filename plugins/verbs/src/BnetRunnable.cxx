@@ -27,11 +27,11 @@ verbs::BnetRunnable::~BnetRunnable()
 }
 
 
-bool verbs::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd)
+bool verbs::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, int numrecs)
 {
-   fRelibaleConn = m->Cfg("TestReliable", cmd).AsBool(true);
+   fRelibaleConn = m->Cfg("TestReliable").AsBool(true);
 
-   if (!bnet::BnetRunnable::Configure(m, pool, cmd)) return false;
+   if (!bnet::BnetRunnable::Configure(m, pool, numrecs)) return false;
 
    if (!fIbContext.OpenVerbs(true)) {
       EOUT(("Cannot initialize VERBs!!!!"));
@@ -303,9 +303,11 @@ bool verbs::BnetRunnable::DoPerformOperation(int recid)
          return false;
 
       case bnet::kind_Send:
+         // DOUT1(("Post send lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid));
          return fQPs[rec->tgtindx][rec->tgtnode]->Post_Send(f_swr + recid);
 
       case bnet::kind_Recv:
+         // DOUT1(("Post recv lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid));
          return fQPs[rec->tgtindx][rec->tgtnode]->Post_Recv(f_rwr + recid);
    }
 
@@ -333,6 +335,8 @@ int verbs::BnetRunnable::DoWaitOperation(double waittime, double fasttime)
    }
 
    if (res!=1) rec->err = true;
+
+   DOUT2(("Obtain operation %d kind %d repeatcnt %d", recid, rec->kind, rec->repeatcnt));
 
    return recid;
 }

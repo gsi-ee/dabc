@@ -68,7 +68,7 @@ namespace bnet {
 
 //      inline uint64_t operator()() const { return id; }
 
-      inline EventId& operator++(int) { id++; return *this; }
+      inline EventId operator++(int) { EventId res = *this; id++; return res; }
 
 
    };

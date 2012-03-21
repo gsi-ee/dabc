@@ -29,7 +29,7 @@
          <TestOutputQueue value="3"/>
          <TestInputQueue value="6"/>
          <TestEventQueue value="500"/>
-         <TestEventLifeTime value="3."/>
+         <EventLifeTime value="3."/>
          <TestSchedule value=""/>
          <TestTimeout value="10"/>
        </Application>

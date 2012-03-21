@@ -299,7 +299,7 @@ namespace bnet {
 
          void SetThreadsIds(dabc::Thread_t modid, dabc::Thread_t trid) { fModuleThrd = modid; fTransportThrd = trid; }
 
-         virtual bool Configure(dabc::Module* m, dabc::MemoryPool* pool, dabc::Command cmd);
+         virtual bool Configure(dabc::Module* m, dabc::MemoryPool* pool, int numrecs);
 
          virtual void* MainLoop();
 

@@ -184,9 +184,9 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
    // attr.ah_attr.static_rate = 3 /*IBV_RATE_5_GBPS*/; // SL: no idea how static rate works
    attr.ah_attr.src_path_bits = src_path_bits;
    attr.ah_attr.port_num   = fContext.IbPort();
-   
+
    DOUT3(("Modify to RTR"));
-   
+
    if (qp_type() == IBV_QPT_RC) {
       if (ibv_modify_qp(qp(), &attr, (ibv_qp_attr_mask)
              (IBV_QP_STATE              |
@@ -200,7 +200,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
          return false;
       }
    } else
-      
+
    if (qp_type() == IBV_QPT_UC) {
       if (ibv_modify_qp(qp(), &attr, (ibv_qp_attr_mask)
              (IBV_QP_STATE              |
@@ -222,7 +222,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
    }
 
    DOUT3(("Modify to RTS"));
-   
+
    attr.qp_state   = IBV_QPS_RTS;
    attr.sq_psn     = local_psn();
    if (qp_type() == IBV_QPT_RC) {
@@ -254,7 +254,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
    f_remote_psn = dest_psn;
 
    DOUT3(("QP connected !!!"));
-   
+
 //   if (qp_type()!= IBV_QPT_UD)
 //      DOUT1(("DO CONNECT local_qpn=%x remote_qpn=%x", qp_num(), dest_qpn));
 

@@ -8,17 +8,12 @@
 #include "dabc/statistic.h"
 #include "dabc/threads.h"
 #include "dabc/CommandsQueue.h"
+#include "dabc/Pointer.h"
 
 #include "bnet/defines.h"
 #include "dabc/BnetRunnable.h"
 #include "bnet/Schedule.h"
 #include "bnet/Structures.h"
-
-struct ScheduleEntry {
-      int    node;
-      int    lid;
-      double time;
-};
 
 namespace bnet {
 
@@ -89,12 +84,12 @@ namespace bnet {
       std::vector<bool>  fActiveNodes;
 
       /** Schedule, loaded from the file */
-      IBSchedule  fPreparedSch;
+      IBSchedule        fPreparedSch;
 
       /** Send and receive schedule, used in all-to-all tests */
-      IBSchedule  fSendSch;
-      IBSchedule  fRecvSch;
-      bool        fTimeScheduled; // main switch, indicate if all transfer runs according the time or just first - first out
+      IBSchedule        fSendSch;
+      IBSchedule        fRecvSch;
+      bool              fTimeScheduled; // main switch, indicate if all transfer runs according the time or just first - first out
 
 
       int               fRunningCmdId; // id of running command, 0 if no command is runs
@@ -130,12 +125,8 @@ namespace bnet {
       int                 fSendSlotIndx, fRecvSlotIndx; // current index in the schedule
       double              fSendTurnEndTime, fRecvTurnEndTime; // time when current turnout is finished
       ScheduleTurnRec     *fSendTurnRec, *fRecvTurnRec;
-      ScheduleTurnRec     fSendEmptyTurn, fRecvEmptyTurn; // turn out to send/recv data from master
-
-      EventPartRec        fWorkerCtrlRec; // packet prepared by the worker for the Controller
-      bnet::EventId       fWorkerCtrlEvId; // last evid, delivered to the master
-
       int                 fSendQueueLimit, fRecvQueueLimit; // limits for queue sizes
+      double              fOperPreTime, fRecvPreTime; // variables defines how early operation must be prepared and submitted
 
       dabc::Ratemeter    fWorkRate;
       dabc::Ratemeter    fSendRate;
@@ -155,18 +146,32 @@ namespace bnet {
 
       // Sender part
       EventsPartsQueue  fEvPartsQueue;
-      double         fEventLifeTime;   // time how long event would be preserved in memory
-      bool           fIsFirstEventId;  // true if first id was obtained
-      bnet::EventId  fFirstEventId;    // id of the first event
-      bnet::EventId  fLastEventId;     // id of the last event
+      int               fEventsQueueSize; // how many events could be preserved in the queues
+      double            fEventLifeTime;   // time how long event would be preserved in memory
+      bool              fIsFirstEventId;  // true if first id was obtained
+      bnet::EventId     fFirstEventId;    // id of the first event
+      bnet::EventId     fLastEventId;     // id of the last event
 
       // Receiver part
-      dabc::RecordsQueue<EventBundleRec, false>  fEvBundelsQueue;
+      EventBundlesQueue fEvBundelsQueue;
+      bnet::EventId     fLastBuildEventId; // keep id of last build event
+      double            fLastBuildEventTime;      // time when last event was build
+
+
+      // Schedule turns
+      ScheduleTurnsQueue  fSchTurnsQueue;
 
       // Master part
-      dabc::RecordsQueue<EventMasterRec, false>  fEvMasterQueue;
+      EventsMasterQueue    fEvMasterQueue;
+      MasterNodeInfoVector fNodesInfo;  // vector with actual collected information about each node
+      bnet::EventId        fMasterSkipEventId; // boundary to skip events - master nows that all previous are build
+      uint64_t             fMasterSkipTurnId;  // defined by master turn id, which could be skipped on all clients
 
-      dabc::RecordsQueue<ScheduleTurnRec, false> fSchTurnsQueue;
+      // Worker part
+      bnet::EventId       fWorkerCtrlEvId; // last evid, delivered to the master
+
+      uint64_t fLastTurnId; // last generated turn id
+      double fLastTurnTime; // time when last turn was finished
 
       virtual void ProcessInputEvent(dabc::Port* port);
       virtual void ProcessOutputEvent(dabc::Port* port);
@@ -176,14 +181,17 @@ namespace bnet {
       void ReleaseReadyEventParts();
       void ReadoutNextEvents(dabc::Port* port);
 
-      unsigned CloseSubpacketHeader(dabc::Pointer& bgn, unsigned kind, unsigned len);
+      unsigned CloseSubpacketHeader(unsigned kind, dabc::Pointer& bgn, const dabc::Pointer& ptr);
 
-      EventPartRec* ProduceCtrlRec(int rebuildid = -1);
-      EventPartRec* FindEventPartRec(const bnet::EventId& evid, int rebuildid = -1);
+      dabc::Buffer ProduceCtrlBuffer(int tgtnode);
+      EventPartRec* FindEventPartRec(const bnet::EventId& evid);
       EventPartRec* GetFirstReadyPartRec();
 
-      EventBundleRec* FindEventBundleRec(bnet::EventId evid);
-      bool ProvideReceivedBuffer(bnet::EventId evid, int nodeid, dabc::Buffer& buf);
+      EventBundleRec* FindEventBundleRec(const bnet::EventId& evid);
+      bool ProvideReceivedBuffer(const bnet::EventId& evid, int nodeid, dabc::Buffer& buf);
+
+      bool ProcessControlPacket(int nodeid, uint32_t kind, dabc::Pointer& rawdata);
+
       void BuildReadyEvents(dabc::Port* port);
 
       void ProcessNextSlaveInputEvent();
@@ -215,6 +223,9 @@ namespace bnet {
       // generates schedule turns just basing on precalculated rate
       void AutomaticProduceScheduleTurn(bool for_first_time);
 
+      void AnalyzeControllerData();
+
+
 
       // ===================================================================================
 
@@ -227,6 +238,10 @@ namespace bnet {
       bool IsController() const { return (Node()==0) && (fTestControlKind>0); }
       bool IsWorker() const { return !IsController(); }
       bool haveController() const { return fTestControlKind>0; }
+      int ControllerNodeId() const { return haveController() ? 0 : -1; }
+      int NumWorkers() const { return haveController() ? NumNodes()-1 : NumNodes(); }
+      int WorkerId() const { return IsWorker() ? (Node() - haveController() ? 1 : 0) : -1; }
+
       bool doDataReceiving() const { return fDoDataReceiving; }
       bool doEventBuilding() const { return fDoEventBuilding; }
 

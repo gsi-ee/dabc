@@ -31,7 +31,48 @@ namespace dabc {
    template<class T, bool canexpand = false>
    class Queue {
 
+      public:
+         class Iterator {
+
+            friend class Queue<T,canexpand>;
+
+            Queue<T,canexpand>* prnt;
+            T* item;
+            unsigned loop;
+
+            Iterator(Queue<T,canexpand>* _prnt, T* _item, unsigned _loop) : prnt(_prnt), item(_item), loop(_loop) {}
+
+            public:
+
+            Iterator() : prnt(0), item(0) {}
+            Iterator(const Iterator& src) : prnt(src.prnt), item(src.item), loop(src.loop) {}
+
+            T* operator()() const { return item; }
+
+            bool operator==(const Iterator& src) const { return (item == src.item) && (loop == src.loop); }
+            bool operator!=(const Iterator& src) const { return (item != src.item) || (loop != src.loop); }
+
+            Iterator& operator=(const Iterator& src) { prnt = src.prnt; item = src.item; return *this; }
+
+            // prefix ++iter
+            Iterator& operator++()
+            {
+               if (++item == prnt->fBorder) { item = prnt->fQueue; loop++; }
+               return *this;
+            }
+
+            // postfix  iter++
+            void operator++(int)
+            {
+               if (++item == prnt->fBorder) { item = prnt->fQueue; loop++; }
+            }
+         };
+
+
+
       protected:
+
+         friend class Queue<T,canexpand>::Iterator;
 
          T*         fQueue;
          T*         fBorder; // maximum pointer value
@@ -292,6 +333,9 @@ namespace dabc {
          bool Full() const { return Capacity() == Size(); }
 
          bool Empty() const { return Size() == 0; }
+
+         Iterator begin() { return Iterator(this, fTail, 0); }
+         Iterator end() { return Iterator(this, fHead, fHead > fTail ? 0 : 1); }
    };
 
    // ___________________________________________________________
@@ -329,7 +373,7 @@ namespace dabc {
     */
 
    template<class T, bool canexpand = true>
-   class RecordsQueue : protected Queue<T, canexpand> {
+   class RecordsQueue : public Queue<T, canexpand> {
       typedef Queue<T, canexpand> Parent;
       public:
          RecordsQueue() : Parent() {}
