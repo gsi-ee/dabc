@@ -16,7 +16,6 @@ namespace bnet {
       static const char* EventLifeTime() { return "EventLifeTime"; }
       static const char* ControlKind() { return "TestControlKind"; }
       static const char* SubmitPreTime() { return "SubmitPreTime"; }
-      static const char* ReceivePreTime() { return "ReceivePreTime"; }
    };
 
    enum BnetCommandsIds {

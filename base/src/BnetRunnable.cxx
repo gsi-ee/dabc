@@ -19,6 +19,8 @@
 #include <math.h>
 
 #include "dabc/ModuleItem.h"
+#include "dabc/Manager.h"
+
 
 
 void bnet::TimeStamping::ChangeShift(double shift)
@@ -93,13 +95,14 @@ bnet::BnetRunnable::BnetRunnable(const char* name) :
    fFreeRecs(),
    fSubmRecs(),
    fAcceptedRecs(),
+   fPoolRecs(),
+   fScheduledRecs(),
+   fImmediateRecs(),
    fRunningRecs(),
    fCompletedRecs(),
    fReplyedRecs(),
    fReplySignalled(false),
    fSegmPerOper(8),
-   fCmd(),
-   fCmdState(state_None),
    fHeaderPool("TransportHeaders", false),
    fModuleThrd(),
    fTransportThrd(),
@@ -136,6 +139,10 @@ bool bnet::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, int 
    fFreeRecs.Allocate(fNumRecs);
    fSubmRecs.Allocate(fNumRecs);
    fAcceptedRecs.Allocate(fNumRecs);
+   fPoolRecs.Allocate(fNumRecs);
+   fScheduledRecs.Allocate(fNumRecs);
+   fImmediateRecs.Allocate(fNumRecs);
+
    fNumRunningRecs = 0;
    fRunningRecs.resize(fNumRecs, false);
    fCompletedRecs.Allocate(fNumRecs);
@@ -158,55 +165,67 @@ bool bnet::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, int 
    return true;
 }
 
-bool bnet::BnetRunnable::SubmitCmd(int cmdid, void* args, int argssize)
+int bnet::BnetRunnable::SubmitCmd(int cmdid, bool isexec, void* args, int argssize)
 {
    CheckModuleThrd();
 
-   // DOUT0(("Submitting cmd %d", cmdid));
+//   DOUT0(("Submitting cmd %d", cmdid));
 
-   {
-      dabc::LockGuard lock(fMutex);
-      if (fCmdState != state_None) {
-         EOUT(("Command is not in the initial state!!!"));
-         return false;
-      }
+   int recid = PrepareOperation(kind_None, 0);
+   if (recid<0) {
+      EOUT(("Cannot prepeare command operation"));
+      return -1;
    }
 
-   fCmd = dabc::Command("TransportCmd");
-   fCmd.SetInt("Id", cmdid);
-   fCmd.SetPtr("Args", args);
-   fCmd.SetInt("ArgsSize", argssize);
+   OperRec* rec = GetRec(recid);
+   rec->skind = skind_Command;
 
-   dabc::LockGuard lock(fMutex);
-   fCmdState = state_Submitted;
-   return true;
+   // 0 - command does not require confirmation and will be automatically released when completed
+   // 1 - command will be returned back to the module thread where tgtnode will be switched to 2
+   rec->tgtnode = isexec ? 1 : 0;
+
+   rec->tgtindx = cmdid;
+   rec->header = args;
+   rec->hdrsize = argssize;
+   rec->err = false;
+
+   if (!SubmitRec(recid)) {
+      ReleaseRec(recid);
+      return -1;
+   }
+
+   return recid;
 }
 
 bool bnet::BnetRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
 {
    CheckModuleThrd();
 
-   if (!SubmitCmd(cmdid, args, argssize)) return false;
+   int recid = SubmitCmd(cmdid, true, args, argssize);
+   if (recid<0) return false;
+
+   OperRec* rec = GetRec(recid);
 
    dabc::TimeStamp tm = dabc::Now();
-
    bool res(false);
 
    while (!tm.Expired(5.)) {
+      dabc::mgr.Sleep(0.001);
 
-      {
-         dabc::LockGuard lock(fMutex);
+//      DOUT0(("Waiting command %d tm %5.3f", cmdid, tm.SpentTillNow()));
 
-         if (fCmdState != state_Returned) continue;
-
-         fCmdState = state_None;
+      if (rec->tgtnode==2) {
+         res = !rec->err;
+         break;
       }
+   }
 
-      res = fCmd.GetResult() == dabc::cmd_true;
-
-      fCmd.Release();
-
-      break;
+   if (rec->tgtnode==1) {
+      EOUT(("Command not finished at specified time interval"));
+      rec->tgtnode = 0; // indicate that record should be released
+   } else {
+      ReleaseRec(recid);
+//      DOUT0(("Command executed %d", cmdid));
    }
 
    return res;
@@ -250,6 +269,8 @@ bool bnet::BnetRunnable::ExecuteConfigSync(int* args)
 bool bnet::BnetRunnable::ExecuteTransportCommand(int cmdid, void* args, int argssize)
 {
    CheckTransportThrd();
+
+//   DOUT0(("ExecuteTransportCommand %d", cmdid));
 
    switch (cmdid) {
       case cmd_None:
@@ -308,15 +329,20 @@ bool bnet::BnetRunnable::ExecuteTransportCommand(int cmdid, void* args, int args
    return false;
 }
 
-void bnet::BnetRunnable::PrepareSpecialKind(int& recid)
+bool bnet::BnetRunnable::PreprocessSpecialKind(int recid, OperRec* rec)
 {
-   OperRec* rec = GetRec(recid);
-
    switch (rec->skind) {
       case skind_None:
-         return;
+      case skind_Pool:
+      case skind_Refill:
+         return true;
+      case skind_Command:
+         rec->err = !ExecuteTransportCommand(rec->tgtindx, rec->header, rec->hdrsize);
+         fCompletedRecs.Push(recid);
+         return false; // do not try to submit record
+
       case skind_SyncMasterSend: {
-         // DOUT1(("Prepare PrepareSpecialKind skind_SyncMasterSend"));
+         // DOUT1(("Prepare PreprocessSpecialKind skind_SyncMasterSend"));
 
          // send packet immediately only very first time,
          // in other cases remember id to use it when next reply comes from the slave
@@ -328,8 +354,7 @@ void bnet::BnetRunnable::PrepareSpecialKind(int& recid)
          // send operation is ready, but we need to wait that recv operation is done
          if (!fSyncRecvDone) {
             fSyncMasterRec = recid;
-            recid = -1;
-            return;
+            return false;
          }
 
          // send
@@ -376,13 +401,13 @@ void bnet::BnetRunnable::PrepareSpecialKind(int& recid)
          fSyncSendTime = fStamping();
          fSyncRecvDone = false;
 
-         return;
+         return true;
       }
       case skind_SyncMasterRecv:
-         //DOUT0(("Prepare PrepareSpecialKind skind_SyncMasterRecv repeat = %d", rec->repeatcnt));
-         return;
+         //DOUT0(("Prepare PreprocessSpecialKind skind_SyncMasterRecv repeat = %d", rec->repeatcnt));
+         return true;
       case skind_SyncSlaveSend:
-         //DOUT0(("Prepare PrepareSpecialKind skind_SyncSlaveSend"));
+         //DOUT0(("Prepare PreprocessSpecialKind skind_SyncSlaveSend"));
 
          if (fSyncRecvDone /* && (fSyncSlaveRec==recid) */) {
             // send slave reply only when record is ready, means we not fulfill time constrains
@@ -401,20 +426,22 @@ void bnet::BnetRunnable::PrepareSpecialKind(int& recid)
          } else {
             // normal situation - just remember recid to use (reactiavte) it when packet from master received
             fSyncSlaveRec = recid;
-            recid = -1;
+            return false;
          }
 
-         return;
+         return true;
       case skind_SyncSlaveRecv:
-         //DOUT0(("Prepare PrepareSpecialKind skind_SyncSlaveRecv"));
-         return;
+         //DOUT0(("Prepare PreprocessSpecialKind skind_SyncSlaveRecv"));
+         return true;
 
       default:
-         return;
+         return true;
    }
+
+   return true;
 }
 
-void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
+void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
 {
    OperRec* rec = GetRec(recid);
 
@@ -422,7 +449,29 @@ void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
 
    switch (rec->skind) {
       case skind_None:
+      case skind_Pool:
          return;
+      case skind_Refill: {
+         if (fPoolRecs.Empty()) {
+            EOUT(("Pool is empty - cannot refill queue!!!"));
+            exit(165);
+         }
+
+         int newid = fPoolRecs.Pop();
+         OperRec* newrec = GetRec(newid);
+
+         newrec->skind = skind_Refill;
+         newrec->tgtindx = rec->tgtindx;
+         newrec->tgtnode = rec->tgtnode;
+         newrec->SetImmediateTime();
+
+         fImmediateRecs.Push(newid);
+
+         return;
+      }
+      case skind_Command:
+         return;
+
       case skind_SyncMasterSend:
          // DOUT1(("skind_SyncMasterSend completed cycle %d", fSyncCycle));
          return;
@@ -448,7 +497,7 @@ void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
 
          // reactivate send operation
          if (fSyncMasterRec>=0) {
-            fAcceptedRecs.Push(fSyncMasterRec);
+            fScheduledRecs.Push(fSyncMasterRec);
             fSyncMasterRec = -1;
          }
 
@@ -508,7 +557,7 @@ void  bnet::BnetRunnable::ProcessSpecialKind(int recid)
 
          if (fSyncSlaveRec>=0) {
             // reactivate send operation, will be called very soon
-            fAcceptedRecs.Push(fSyncSlaveRec);
+            fScheduledRecs.Push(fSyncSlaveRec);
             fSyncSlaveRec = -1;
          }
          return;
@@ -531,8 +580,6 @@ void* bnet::BnetRunnable::MainLoop()
 
    fLoopMaxCnt = 0;
 
-   bool doexecute(false);
-
    while (fMainLoopActive) {
 
       double till_next_oper = 1.; // calculate time until next operation
@@ -546,51 +593,68 @@ void* bnet::BnetRunnable::MainLoop()
       }
       last_tm = currtm;
 
-      if (!fAcceptedRecs.Empty()) {
-         OperRec* rec = GetRec(fAcceptedRecs.Front());
+
+      // first of all, submit scheduled operation as soon as possible (according to schedule)
+      int selectedid(-1);
+      OperRec* selectedrec(0);
+
+      if (!fScheduledRecs.Empty()) {
+         OperRec* rec = GetRec(fScheduledRecs.Front());
 
           // TODO: introduce strict time limit - after some delay operation should be skipt
          if ((rec->oper_time <= currtm) && !rec->IsQueueOk())
-            EOUT(("Queue problem with record %d tgtnode %d late %4.3f ms", fAcceptedRecs.Front(), rec->tgtnode, (currtm - rec->oper_time) * 1000.));
+            EOUT(("Queue problem with record %d tgtnode %d late %4.3f ms", fScheduledRecs.Front(), rec->tgtnode, (currtm - rec->oper_time) * 1000.));
 
          if ((rec->oper_time <= currtm) && rec->IsQueueOk()) {
-            int recid = fAcceptedRecs.Pop();
-
-            DOUT2(("Invoke record %d", recid));
-
-            if (rec->skind!=skind_None)
-               PrepareSpecialKind(recid);
-
-            if (recid>=0) {
-               DOUT2(("Performing record %d", recid));
-
-               PerformOperation(recid, currtm);
-
-               DOUT2(("Performing record %d done still %u", recid, fAcceptedRecs.Size()));
-
-            } else {
-               // special return value, means exit from the loop
-               if (recid==-111) break;
-            }
+            selectedid = fScheduledRecs.Pop();
+            selectedrec = rec;
+            till_next_oper = 0; // we should recheck time to next operation again
          } else {
             till_next_oper = rec->oper_time - currtm;
 
-            // DOUT1(("Record %d till next %7.6f", fAcceptedRecs.Front(), till_next_oper));
+            // DOUT1(("Record %d till next %7.6f", fScheduledRecs.Front(), till_next_oper));
          }
       }
 
+      // Second, if exists check that immeadiate operation are executed - they have less priority that scheduled
+      // TODO: miminal time interval (here 10 microsec) make configurable or adjustable
+      if ((selectedid < 0) && (till_next_oper>1e-5) && !fImmediateRecs.Empty()) {
+         OperRec* rec = GetRec(fImmediateRecs.Front());
+
+          // TODO: introduce strict time limit - after some delay operation should be skipt
+         if (!rec->IsQueueOk())
+            EOUT(("Queue problem with immediate record %d for node %d", fImmediateRecs.Front(), rec->tgtnode));
+         else {
+            selectedid = fImmediateRecs.Pop();
+            selectedrec = rec;
+            till_next_oper = 0.;
+         }
+      }
+
+      // Third - EXECUTE operation which is selected
+
+      if (selectedrec)
+         if ((selectedrec->skind==skind_None) || PreprocessSpecialKind(selectedid,selectedrec))
+            PerformOperation(selectedid, currtm);
+
+      // if next operation comes in 0.005 ms do not start any other activities
+      if (till_next_oper<0.000005) continue;
+
+      // copy all accepted recs into different queues
+      while (!fAcceptedRecs.Empty()) {
+         int recid = fAcceptedRecs.Pop();
+         OperRec* rec = GetRec(recid);
+
+         if (rec->skind == skind_Pool) fPoolRecs.Push(recid); else
+         if (rec->IsImmediateTime()) fImmediateRecs.Push(recid); else
+         fScheduledRecs.Push(recid);
+      }
+
       if (fNumRunningRecs>0) {
-//         double wait_time(0.001), fast_time(0.00002);
-
-         // do not wait at all when new operation need to be submitted
-//         if (!fAcceptedRecs.Empty())
-//            if (wait_time > till_next_oper/2)
-//               wait_time  = till_next_oper/2;
-
          double wait_time(0.00001), fast_time(0.00001);
 
          // do not wait at all when new operation need to be submitted
-         if (!fAcceptedRecs.Empty() && (till_next_oper<fast_time)) {
+         if (!fScheduledRecs.Empty() && (till_next_oper<fast_time)) {
             wait_time = 0.;
             fast_time = 0.;
          }
@@ -608,10 +672,8 @@ void* bnet::BnetRunnable::MainLoop()
 
             OperRec* rec = GetRec(recid);
 
-            if (rec->skind!=skind_None) {
-               ProcessSpecialKind(recid);
-               last_tm = 0; // do not account time of special operations
-            }
+            if (rec->skind!=skind_None)
+               PostprocessSpecialKind(recid);
 
             // decrement appropriate queue counter
             rec->dec_queuelen();
@@ -622,6 +684,7 @@ void* bnet::BnetRunnable::MainLoop()
                fCompletedRecs.Push(recid);
                // DOUT1(("Rec %d completed signalled %s size %u", recid, DBOOL(fReplySignalled), fCompletedRecs.Size()));
             } else {
+               // reinject record again
                fAcceptedRecs.Push(recid);
             }
          }
@@ -629,8 +692,8 @@ void* bnet::BnetRunnable::MainLoop()
 
       // if (fNumRunningRecs==0) last_tm = 0; // do not account loops where no operation submitted
 
-      // if next operation comes in 0.005 ms do not start any communications with other thread
-      if (till_next_oper<0.000005) continue;
+      // if next operation comes in 0.01 ms do not start any other activities
+      if (till_next_oper<0.00001) continue;
 
       // if we have running records, do not check queues very often - 1 ms should be enough
       if (fNumRunningRecs>0)
@@ -640,21 +703,11 @@ void* bnet::BnetRunnable::MainLoop()
       if (currtm > last_yield_time + 0.005) {
          sched_yield();
          last_yield_time = currtm;
-         // last_tm = 0.;
          continue;
       }
 
       // if there are no very urgent operations we could enter locking area
       // and even set condition
-
-      if (doexecute) {
-         bool res = false;
-         if (fCmd.IsName("TransportCmd"))
-            res = ExecuteTransportCommand(fCmd.GetInt("Id"), fCmd.GetPtr("Args"), fCmd.GetInt("ArgsSize"));
-
-         fCmd.SetResult(res ? dabc::cmd_true : dabc::cmd_false);
-      }
-
 
       last_check_time = currtm;
 
@@ -671,7 +724,6 @@ void* bnet::BnetRunnable::MainLoop()
          // copy all submitted records to thread
          while (!fSubmRecs.Empty()) {
             fAcceptedRecs.Push(fSubmRecs.Pop());
-            // DOUT1(("Add new record frontid %d", fAcceptedRecs.Front()));
             till_next_oper = 0.; // indicate that next operation can be very soon
          }
 
@@ -681,22 +733,10 @@ void* bnet::BnetRunnable::MainLoop()
             fReplyedRecs.Push(fCompletedRecs.Pop());
          }
 
-         // this is return command back to the module
-         if (doexecute && (fCmdState == state_Executed)) {
-            doexecute = false;
-            fCmdState = state_Returned;
-         }
-
-         // this takes ownership over the command
-         if (fCmdState == state_Submitted) {
-            doexecute = true;
-            fCmdState = state_Executed;
-         }
-
          // if we have nothing to do for very long time, enter wait method for relaxing thread consumption
-         if (!isdoreply && !doexecute && (fNumRunningRecs==0) && (fAcceptedRecs.Empty() || (till_next_oper>0.2))) {
+         if (!isdoreply && (fNumRunningRecs==0) && (till_next_oper>0.1)) {
             fCondition._DoReset();
-            fCondition._DoWait(0.001);
+            fCondition._DoWait(0.01);
             last_tm = 0; // do not account time when we doing wait
             while (!fSubmRecs.Empty())
                fAcceptedRecs.Push(fSubmRecs.Pop());
@@ -813,6 +853,11 @@ int bnet::BnetRunnable::PrepareOperation(OperKind kind, int hdrsize, dabc::Buffe
    rec->tgtindx = 0;  // second id for the target, LID number in case of IB
    rec->repeatcnt = 1;  // repeat operation once
    rec->err = false;
+   rec->header = 0;
+   rec->hdrsize = 0;
+
+   // special case for operation like command
+   if ((kind == kind_None) && buf.null()) return recid;
 
    rec->header = fHeaderPool.GetBufferLocation(recid);
    if (hdrsize==0) hdrsize = fHeaderPool.GetBufferSize(recid);
@@ -835,7 +880,9 @@ bool bnet::BnetRunnable::ReleaseRec(int recid)
 {
    CheckModuleThrd();
 
-   if (GetRec(recid) == 0) {
+   OperRec* rec = GetRec(recid);
+
+   if (rec == 0) {
       EOUT(("Wrong RECID"));
       return false;
    }
@@ -845,10 +892,7 @@ bool bnet::BnetRunnable::ReleaseRec(int recid)
       return false;
    }
 
-   fRecs[recid].kind = kind_None;
-   fRecs[recid].skind = skind_None;
-
-   fRecs[recid].buf.Release();
+   rec->reset();
 
    fFreeRecs.Push(recid);
 
@@ -858,7 +902,6 @@ bool bnet::BnetRunnable::ReleaseRec(int recid)
 bool bnet::BnetRunnable::SubmitRec(int recid)
 {
    CheckModuleThrd();
-
 
    OperRec* rec = GetRec(recid);
    if (rec == 0) {
@@ -905,10 +948,39 @@ int bnet::BnetRunnable::GetCompleted(bool resetsignalled)
 
    CheckModuleThrd();
 
-   dabc::LockGuard lock(fMutex);
+   int recid(-1);
 
-   if (!fReplyedRecs.Empty())
-      return fReplyedRecs.Pop();
+   while (fMainLoopActive) {
+
+      if (recid>=0) {
+         GetRec(recid)->reset();
+         fFreeRecs.Push(recid);
+         recid = -1;
+      }
+
+      dabc::LockGuard lock(fMutex);
+
+      if (fReplyedRecs.Empty()) break;
+
+      recid = fReplyedRecs.Pop();
+      OperRec* rec = GetRec(recid);
+
+      if (rec->IsCommand())  {
+         // this is case when command submitted without waiting of reply -
+         // it should be freed outside locked area
+         if (rec->tgtnode==0) continue;
+
+         // this means that record finish its execution and should be processed in ExecuteCmd method
+         if (rec->tgtnode==1) {
+            rec->tgtnode = 2;
+            recid = -1;
+            continue;
+         }
+
+         EOUT(("Strange value of rec->tgtnode %d for command %d", rec->tgtnode, rec->tgtindx));
+      }
+      return recid;
+   }
 
    // from this moment we decide that module was not signalled
    // TODO: probably, this flag should be reset only when no items in the queue

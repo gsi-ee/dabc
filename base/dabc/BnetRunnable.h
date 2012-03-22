@@ -41,12 +41,15 @@ namespace bnet {
 
    enum OperKind {
       kind_None,
-      kind_Send,
-      kind_Recv
+      kind_Send,   // send operation
+      kind_Recv    // receive operation
    };
 
    enum OperSKind {
       skind_None,
+      skind_Pool,            // extra buffer to be used in any input queue
+      skind_Refill,          // indicate that similar recv operation should be submitted again
+      skind_Command,         // command, command id is in the tgtindx, extra command args in header and headersize parameters, tgtnode==1 indicates that execution done
       skind_SyncMasterSend,
       skind_SyncMasterRecv,
       skind_SyncSlaveSend,
@@ -71,9 +74,9 @@ namespace bnet {
 
       OperRec() :
          kind(kind_None), skind(skind_None),
-            oper_time(0.), is_time(0.), compl_time(0.),
-            buf(), header(0), hdrsize(0), tgtnode(0), tgtindx(0), repeatcnt(0), err(false),
-            queuelen(0) {}
+         oper_time(0.), is_time(0.), compl_time(0.),
+         buf(), header(0), hdrsize(0), tgtnode(0), tgtindx(0), repeatcnt(0), err(false),
+         queuelen(0), queuelimit(0) {}
 
       void SetRepeatCnt(int cnt) { repeatcnt = cnt; }
 
@@ -83,10 +86,35 @@ namespace bnet {
 
       void SetTime(double tm) { oper_time = tm; }
 
+      bool IsImmediateTime() const { return oper_time<=0; }
+
+      bool IsCommand() const { return (kind == kind_None) && (skind == skind_Command); }
+
       inline bool IsQueueOk() { return queuelen==0 ? true : *queuelen < queuelimit; }
+
+      void reset()
+      {
+         kind = kind_None;
+         skind = skind_None;
+         buf.Release();
+         header = 0;
+         hdrsize = 0;
+         oper_time = 0.;
+         is_time = 0.;
+         compl_time = 0.;
+         tgtnode = 0;
+         tgtindx = 0;
+         repeatcnt = 0;
+         err = false;
+         queuelen = 0;
+         queuelimit = 0;
+      }
 
       inline void inc_queuelen() { if (queuelen) (*queuelen)++; }
       inline void dec_queuelen() { if (queuelen) (*queuelen)--; }
+
+      private:
+      OperRec(const OperRec& src) {} // forbid copy constructor
    };
 
    class TimeStamping {
@@ -126,7 +154,7 @@ namespace bnet {
    class TransportModule;
 
    class BnetRunnable : public dabc::Object,
-                             public dabc::Runnable {
+                        public dabc::Runnable {
       protected:
 
          friend class TransportModule;
@@ -151,15 +179,15 @@ namespace bnet {
           * In the beginning all records are free and their ids collected in fFreeRecs queue.
           * fFreeRecs queue is fully used by module thread and does not requires any locking.
           * At any time module can reserve and prepare record and submit it to fSubmRecs, protected by fMutex.
-          * Runnable can copy (using mutex) records id from submitted list to fAcceptedRecs queue.
+          * Runnable copies (using mutex) records id from submitted list to fAcceptedRecs queue.
+          * This moves records into runnable context, where they could be used without mutex.
+          * There are two kinds of accepted recs - which are intendend for scheduled operations
+          * (fScheduledRecs) and which are collected in poll of buffers (fPoolRecs).
           * From this moment runnable is fully controls record and perform each operation according specified time,
           * marking recid in fRunningRecs vector. Transport implementation (IB or socket) should inform
           * runnable when operation is completed and than record is moved to fCompletedRecs.
           * Once completed, record will be moved to fReplyRecs queue (using mutex) which is accessible also
           * by the module thread again. TODO: probably one need to signal module that new record is there.
-          * Module (using mutex) extracts
-          *
-          *
           * */
 
          int              fNumRecs;        // number of records
@@ -167,6 +195,9 @@ namespace bnet {
          dabc::Queue<int> fFreeRecs;      // list of free records - used fully in module thread
          dabc::Queue<int> fSubmRecs;      // list of submitted records - shared between module and transport threads
          dabc::Queue<int> fAcceptedRecs;  // list of accepted records - used only in transport thread
+         dabc::Queue<int> fPoolRecs;      // list of pool recs - used only in transport thread
+         dabc::Queue<int> fScheduledRecs; // list of recs for time-shceduled operations - used only in transport thread
+         dabc::Queue<int> fImmediateRecs; // list of recs for immediate execution - used only in transport thread
          int fNumRunningRecs; // number of submitted records
          std::vector<bool> fRunningRecs;  // list of running records - used only in transport thread
          dabc::Queue<int> fCompletedRecs; // list of completed records - used only in transport thread
@@ -175,9 +206,6 @@ namespace bnet {
          int              fSegmPerOper;     // maximal allowed number of segments in operation (1 for header + rest for buffer)
          int              fHeaderBufSize;   // size of buffer for header
 
-         dabc::Command    fCmd; // command which could be executed in the runnable loop
-         enum CommandState { state_None, state_Submitted, state_Executed, state_Returned };
-         CommandState     fCmdState;  // state of the command
          bool             fMainLoopActive;
 
          std::vector<int> fSendQueue;  // running send queue, NumLids() * NumNodes()
@@ -250,7 +278,7 @@ namespace bnet {
 
          /** Method should be used from module thread to submit new command to the runnable,
           * returned is recid which is handle of the command */
-         bool SubmitCmd(int cmdid, void* args = 0, int argssize = 0);
+         int SubmitCmd(int cmdid, bool isexec = false, void* args = 0, int argssize = 0);
 
          /** Method should be used from module thread to submit command and wait for its execution */
          bool ExecuteCmd(int cmdid, void* args = 0, int argssize = 0);
@@ -264,8 +292,9 @@ namespace bnet {
          /** Method called in transport thread to actually execute command */
          bool ExecuteTransportCommand(int cmdid, void* args, int argssize);
 
-         void PrepareSpecialKind(int& recid);
-         void ProcessSpecialKind(int recid);
+         bool PreprocessSpecialKind(int recid, OperRec* rec);
+
+         void PostprocessSpecialKind(int recid);
 
          virtual void RunnableCancelled() {}
 

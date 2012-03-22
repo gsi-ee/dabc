@@ -452,8 +452,7 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
    fTestControlKind = (int) arguments[10];
 
    fOperPreTime = arguments[11];
-   fRecvPreTime = arguments[12];
-   int startturns = (int) arguments[13];
+   int startturns = (int) arguments[12];
 
 
    fDoDataReceiving = (Node() > 0) || !haveController();
@@ -562,7 +561,6 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
           }
 
    fSendTurnRec = 0; fSendTurnCnt = 0; fSendSlotIndx = -2; fSendTurnEndTime = fTestStartTime;
-   fRecvTurnRec = 0; fRecvTurnCnt = 0; fRecvSlotIndx = -2; fRecvTurnEndTime = fTestStartTime;
 
    fSendStartTime.Reset();
    fSendComplTime.Reset();
@@ -672,16 +670,73 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
 
    DOUT1(("Staring with %u turns in the queue", (unsigned) fSchTurnsQueue.Size()));
 
+   // submitting some buffers into receive pool of runnable
+
+   fRefillCounter = 0;
+   int nrecvpool = 100;
+
+   for (int n=0;n<nrecvpool;n++) {
+      dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+      if (buf.null()) {
+         EOUT(("Not enough buffers"));
+         exit(18);
+      }
+
+      int recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
+      OperRec* rec = fRunnable->GetRec(recid);
+
+      if (rec==0) {
+         EOUT(("Cannot prepare recv pool operation recid = %d", recid));
+         exit(19);
+      }
+
+      rec->skind = skind_Pool;
+      rec->SetTarget(0, 0);
+      rec->SetImmediateTime();
+
+      if (!SubmitToRunnable(recid,rec)) {
+         EOUT(("Cannot submit recv operation to pool"));
+         exit(20);
+      }
+   }
+
+   // now fill recv queues according to recv schedule
+   for (int indx=0;indx<fRecvSch.numSlots();indx++)
+      for (int nqueue=0;nqueue<fRecvQueueLimit;nqueue++) {
+         dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+         if (buf.null()) {
+            EOUT(("Not enough buffers"));
+            exit(18);
+         }
+
+         int recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
+         OperRec* rec = fRunnable->GetRec(recid);
+
+         if (rec==0) {
+            EOUT(("Cannot prepare recv pool operation recid = %d", recid));
+            exit(19);
+         }
+
+         rec->skind = skind_Refill; // indicate that ready operation should be replaced as soon as possible
+         rec->SetTarget(fRecvSch.Item(indx, Node()).node, fRecvSch.Item(indx, Node()).lid);
+         rec->SetImmediateTime();
+
+         if (!SubmitToRunnable(recid,rec)) {
+            EOUT(("Cannot submit recv operation to pool"));
+            exit(20);
+         }
+      }
+
    fWorkerCtrlEvId.SetNull();
 }
 
 
 void bnet::TransportModule::AutomaticProduceScheduleTurn(bool for_first_time)
 {
-   uint64_t min = fSendTurnCnt > fRecvTurnCnt ? fRecvTurnCnt : fSendTurnCnt;
-
-   while ((min>0) && !fSchTurnsQueue.Empty()) {
-      if (fSchTurnsQueue.Front().id() < min)
+   while ((fSendTurnCnt>0) && !fSchTurnsQueue.Empty()) {
+      if (fSchTurnsQueue.Front().id() < fSendTurnCnt)
          fSchTurnsQueue.PopOnly();
       else
          break;
@@ -729,11 +784,6 @@ void bnet::TransportModule::PrepareAllToAllResults()
 
    DOUT3(("Total recv queue %ld send queue %ld", TotalSendQueue(), TotalRecvQueue()));
 
-   if (fRecvSlotIndx>=0)
-   DOUT3(("Receiving curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
-         curr_tm, fRecvBaseTime + fRecvSch.timeSlot(fRecvSlotIndx), fRecvSlotIndx,
-         fRecvSch.Item(fRecvSlotIndx, Node()).node, fRecvSch.Item(fRecvSlotIndx, Node()).lid,
-         RecvQueue(fRecvSch.Item(fRecvSlotIndx, Node()).lid, fRecvSch.Item(fRecvSlotIndx, Node()).node)));
    if (fSendSlotIndx>=0)
    DOUT3(("Sending curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
          curr_tm, fSendSch.timeSlot(fSendSlotIndx), fSendSlotIndx,
@@ -1046,7 +1096,7 @@ void bnet::TransportModule::AnalyzeControllerData()
    }
 
    // TODO: more sophisticated way to find turn id which could be skipped
-   if ((fSendTurnCnt>5) && (fRecvTurnCnt > 5))
+   if (fSendTurnCnt>5)
       fMasterSkipTurnId = fSendTurnCnt - 2;
 
    if (fMasterSkipTurnId>0)
@@ -1081,9 +1131,9 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
    // FIXME: maxcnt should be removed - can be dangerous for small buffers
    int maxcnt(200);
-   int send_node(0), send_lid(0), recv_node(0), recv_lid(0);
+   int send_node(0), send_lid(0);
 
-   bnet::EventId send_evid, recv_evid;
+   bnet::EventId send_evid;
 
    static dabc::Average loop_time;
    double last_tm(0.);
@@ -1095,7 +1145,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
       did_operation = false;
 
-      double next_recv_time(0.), next_send_time(0.);
+      double next_send_time(0.);
 
       // if (maxcnt<199) DOUT1(("<<<<<<<<<<<<<<<< EXEC ProcessAllToAllLoop %d", maxcnt));
 
@@ -1137,49 +1187,6 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          }
       }
 
-      if (fRecvSlotIndx == -2) {
-
-         if ((fTestStopTime > 0.) && (fRecvTurnEndTime > fTestStopTime)) {
-            fRecvTurnRec = 0;
-            fRecvSlotIndx = -3; // end of work for receiver
-         } else {
-            fRecvTurnRec = fSchTurnsQueue.FindItemWithId(fRecvTurnCnt+1);
-
-            if (fRecvTurnRec!=0) {
-               fRecvTurnCnt++;
-               DOUT1(("Switch to the recv turn %u", (unsigned) fRecvTurnCnt));
-               fRecvTurnEndTime = fRecvTurnRec->starttime + fRecvSch.endTime();
-               fRecvSlotIndx = -1;
-               fRecvSch.ShiftToNextOperation(Node(), fRecvSlotIndx);
-            } else {
-               EOUT(("Problem - no receive schedule when it is required. Not yet handled - abort"));
-               exit(11);
-            }
-         }
-      }
-
-      if ((fRecvSlotIndx>=0) && fRecvTurnRec && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
-         recv_node = fRecvSch.Item(fRecvSlotIndx, Node()).node;
-         recv_lid = fRecvSch.Item(fRecvSlotIndx, Node()).lid;
-
-         // this is event id which we want to receieve
-         recv_evid = fRecvTurnRec->fVector[Node()];
-
-         // data from controller transfer should be always active
-         if ((IsWorker() && (recv_node==ControllerNodeId())) || (IsController() && (recv_node!=Node()))) recv_evid.SetCtrl();
-
-         // if node does not build event at this turn, one do not need to submit recv operation
-         if (recv_evid.null())
-            fRecvSch.ShiftToNextOperation(Node(), fRecvSlotIndx);
-         else {
-            next_recv_time = fRecvTurnRec->starttime + fRecvSch.timeSlot(fRecvSlotIndx) - fRecvPreTime;
-
-            if (curr_tm < next_recv_time - fOperPreTime) next_recv_time = 0;
-         }
-      }
-
-
-      //if (fIsFirstEventId) // only when first data exists, one could start scheduling operations
       if ((fSendSlotIndx>=0) && fSendTurnRec && fRunnable->IsFreeRec() && (curr_tm<fTestStopTime-0.1)) {
 
          send_node = fSendSch.Item(fSendSlotIndx, Node()).node;
@@ -1201,61 +1208,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          }
       }
 
-      // if both operation want to be executed, selected first in the time
-      if (next_recv_time>0. && next_send_time>0.) {
-         if (next_recv_time<next_send_time)
-            next_send_time = 0.;
-         else
-            next_recv_time = 0.;
-      }
 
-      // this is submit of recv operation
-
-      if (next_recv_time>0.) {
-         if (recv_node == Node()) {
-            // this is receive from itself, ignore it while it handled separately
-            did_operation = true;
-         } else
-         if ((fRecvSkipCounter(recv_lid, recv_node) > 0) && (RecvQueue(recv_lid, recv_node)>0)) {
-            // if packets over this channel were lost, we should not try
-            // to receive them - they were skipped by sender most probably
-            fRecvSkipCounter(recv_lid, recv_node)--;
-            did_operation = true;
-         } else {
-
-            dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
-
-            if (buf.null()) {
-               EOUT(("Not enough buffers"));
-               return false;
-            }
-
-            int recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
-            OperRec* rec = fRunnable->GetRec(recid);
-
-            if (rec==0) {
-               EOUT(("Cannot prepare recv operation recid = %d till_oper %5.3f", recid, next_recv_time - curr_tm));
-               return false;
-            }
-
-            rec->SetTarget(recv_node, recv_lid);
-            rec->SetTime(next_recv_time);
-
-            if (!SubmitToRunnable(recid,rec)) {
-               EOUT(("Cannot submit recv operation to lid %d node %d", recv_lid, recv_node));
-               return false;
-            }
-
-            DOUT1(("SubmitRecvOper recid %d node %d lid %d till oper %8.6f", recid, recv_node, recv_lid, next_recv_time - curr_tm));
-            did_operation = true;
-         }
-
-         // shift to next operation, even if previous was not submitted.
-         // dangerous but it is like it is - we should continue receiving otherwise input will be blocked
-         // we should do here more smart solutions
-
-         if (did_operation) fRecvSch.ShiftToNextOperation(Node(), fRecvSlotIndx);
-      }
 
       // this is submit of send operation
       if (next_send_time > 0.) {
@@ -1337,6 +1290,36 @@ bool bnet::TransportModule::ProcessAllToAllAction()
          if (did_operation)
             fSendSch.ShiftToNextOperation(Node(), fSendSlotIndx);
       }
+
+      // this is submit of recv operation
+      if ((fRefillCounter > 0) && !did_operation) {
+         dabc::Buffer buf = FindPool("BnetDataPool")->TakeBuffer(fTestBufferSize);
+
+         if (buf.null()) {
+            EOUT(("Not enough buffers"));
+            exit(18);
+         }
+
+         int recid = fRunnable->PrepareOperation(kind_Recv, sizeof(TransportHeader), buf);
+         OperRec* rec = fRunnable->GetRec(recid);
+
+         if (rec==0) {
+            EOUT(("Cannot prepare recv pool operation recid = %d", recid));
+            exit(19);
+         }
+
+         rec->skind = skind_Pool;
+         rec->SetTarget(0, 0);
+         rec->SetImmediateTime();
+
+         if (!SubmitToRunnable(recid,rec)) {
+            EOUT(("Cannot submit recv operation to pool"));
+            exit(20);
+         }
+         fRefillCounter--;
+         did_operation = true;
+      }
+
    } while (did_operation && (maxcnt-->0));
 
    if (loop_time.Number() > 50) {
@@ -2180,6 +2163,9 @@ void bnet::TransportModule::ProcessRecvCompleted(int recid, OperRec* rec)
 
    fTotalRecvPackets++;
 
+   // account buffers which should be refill
+   if (rec->skind == skind_Refill) fRefillCounter++;
+
    if (isok) ProvideReceivedBuffer(hdr->evid, rec->tgtnode, rec->buf);
 }
 
@@ -2381,7 +2367,7 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          }
 
 
-         double arguments[14];
+         double arguments[13];
 
          arguments[0] = Cfg("BufferSize").AsInt(128*1024);
          arguments[1] = NumNodes();
@@ -2395,7 +2381,6 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          arguments[9] = allowed_to_skip ? 1 : 0;
          arguments[10] = Cfg("TestControlKind").AsInt(0);  // kind of control 0 - no any controller, 1 - first node is master
          arguments[11] = Cfg(names::SubmitPreTime()).AsDouble(0.005);
-         arguments[12] = Cfg(names::ReceivePreTime()).AsDouble(0.0001);
 
          int startruns = Cfg("TestStartTurns").AsInt(5);
          // we need at least 2 transfers before normal turns can be generated
@@ -2405,7 +2390,7 @@ void bnet::TransportModule::ProcessTimerEvent(dabc::Timer* timer)
          if (fSendSch.endTime() > 0) emptyturns += 3 * arguments[11] / fSendSch.endTime();
          if (startruns < emptyturns) startruns = (int) emptyturns;
          DOUT0(("Start with %d empty runs", startruns));
-         arguments[13] = startruns;
+         arguments[12] = startruns;
 
          DOUT0(("====================================="));
          DOUT0(("%s pattern:%d size:%d rate:%3.0f send:%d recv:%d nodes:%d canskip:%s",

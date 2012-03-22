@@ -121,12 +121,13 @@ namespace bnet {
       bool                fAllToAllActive; // indicates that all-to-all transfer is running
       int                 fTestBufferSize;
       double              fTestStartTime, fTestStopTime; // start/stop time for data transfer
-      uint64_t            fSendTurnCnt, fRecvTurnCnt; // turn counter of the schedules
-      int                 fSendSlotIndx, fRecvSlotIndx; // current index in the schedule
-      double              fSendTurnEndTime, fRecvTurnEndTime; // time when current turnout is finished
-      ScheduleTurnRec     *fSendTurnRec, *fRecvTurnRec;
+      uint64_t            fSendTurnCnt; // turn counter of the schedules
+      int                 fSendSlotIndx; // current index in the schedule
+      double              fSendTurnEndTime; // time when current turnout is finished
+      ScheduleTurnRec     *fSendTurnRec;
       int                 fSendQueueLimit, fRecvQueueLimit; // limits for queue sizes
-      double              fOperPreTime, fRecvPreTime; // variables defines how early operation must be prepared and submitted
+      double              fOperPreTime; // variables defines how early operation must be prepared and submitted
+      int                 fRefillCounter; // count number of buffers, which should be refill in runnable receive pool
 
       dabc::Ratemeter    fWorkRate;
       dabc::Ratemeter    fSendRate;
