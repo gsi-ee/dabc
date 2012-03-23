@@ -103,6 +103,9 @@ bnet::BnetRunnable::BnetRunnable(const char* name) :
    fReplyedRecs(),
    fReplySignalled(false),
    fSegmPerOper(8),
+   fHeaderBufSize(0),
+   fRefillEnabled(false),
+   fMainLoopActive(false),
    fHeaderPool("TransportHeaders", false),
    fModuleThrd(),
    fTransportThrd(),
@@ -321,6 +324,28 @@ bool bnet::BnetRunnable::ExecuteTransportCommand(int cmdid, void* args, int args
       case cmd_CloseQP:
          return ExecuteCloseQPs();
 
+      case cmd_StopRefilling:
+         fRefillEnabled = false;
+         while (!fPoolRecs.Empty())
+            fCompletedRecs.Push(fPoolRecs.Pop());
+         return true;
+
+      case cmd_GetQueues: {
+         if (argssize < (int) (NumNodes() * NumLids() * 2 * sizeof(uint32_t))) {
+            EOUT(("Wrong buffer size in cmd_GetQueues"));
+            return false;
+         }
+
+         int32_t* mem = (int32_t*) args;
+         for(int node=0;node<NumNodes();node++)
+            for(int nlid=0;nlid<NumLids();nlid++) {
+               *mem++ = SendQueue(nlid, node);
+               *mem++ = RecvQueue(nlid, node);
+            }
+
+         return true;
+      }
+
       default:
          EOUT(("Uncknown command %d", cmdid));
          break;
@@ -452,6 +477,9 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
       case skind_Pool:
          return;
       case skind_Refill: {
+
+         if (!fRefillEnabled) return;
+
          if (fPoolRecs.Empty()) {
             EOUT(("Pool is empty - cannot refill queue!!!"));
             exit(165);
@@ -463,7 +491,12 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
          newrec->skind = skind_Refill;
          newrec->tgtindx = rec->tgtindx;
          newrec->tgtnode = rec->tgtnode;
+         newrec->queuelen = rec->queuelen ;
+         newrec->queuelimit = rec->queuelimit;
+
          newrec->SetImmediateTime();
+
+         DOUT1(("Refill new record %d instead of record %d", newid, recid));
 
          fImmediateRecs.Push(newid);
 
@@ -589,7 +622,7 @@ void* bnet::BnetRunnable::MainLoop()
          fLoopTime.Fill(currtm - last_tm); // for statistic
          if (currtm - last_tm > 0.001) fLoopMaxCnt++;
 
-         if (currtm - last_tm > 0.01) DOUT1(("LARGE DELAY %5.2f ms", (currtm - last_tm)*1e3));
+         if (currtm - last_tm > 0.01) DOUT1(("LARGE DELAY %5.2f ms  stamp %7.6f", (currtm - last_tm)*1e3, currtm));
       }
       last_tm = currtm;
 
@@ -621,9 +654,10 @@ void* bnet::BnetRunnable::MainLoop()
       if ((selectedid < 0) && (till_next_oper>1e-5) && !fImmediateRecs.Empty()) {
          OperRec* rec = GetRec(fImmediateRecs.Front());
 
-          // TODO: introduce strict time limit - after some delay operation should be skipt
+         // TODO: introduce strict time limit - after some delay operation should be skipt
          if (!rec->IsQueueOk())
-            EOUT(("Queue problem with immediate record %d for node %d", fImmediateRecs.Front(), rec->tgtnode));
+            EOUT(("Queue problem with immediate record %d for node %d lid %d recv %s queuelimit %d len %d",
+                  fImmediateRecs.Front(), rec->tgtnode, rec->tgtindx, DBOOL(rec->kind == kind_Recv), rec->queuelimit, rec->queuelen ? *(rec->queuelen) : -1));
          else {
             selectedid = fImmediateRecs.Pop();
             selectedrec = rec;
@@ -645,7 +679,7 @@ void* bnet::BnetRunnable::MainLoop()
          int recid = fAcceptedRecs.Pop();
          OperRec* rec = GetRec(recid);
 
-         if (rec->skind == skind_Pool) fPoolRecs.Push(recid); else
+         if (rec->skind == skind_Pool) { fPoolRecs.Push(recid); fRefillEnabled = true; } else
          if (rec->IsImmediateTime()) fImmediateRecs.Push(recid); else
          fScheduledRecs.Push(recid);
       }
@@ -820,6 +854,17 @@ bool bnet::BnetRunnable::GetStatistic(double& mean_loop, double& max_loop, int& 
    return true;
 }
 
+bool bnet::BnetRunnable::StopRefilling()
+{
+   return SubmitCmd(cmd_StopRefilling)>=0;
+}
+
+bool bnet::BnetRunnable::GetQueuesFillState(void* mem, int memsize)
+{
+   return ExecuteCmd(cmd_GetQueues, mem, memsize);
+}
+
+
 bool bnet::BnetRunnable::CloseQPs()
 {
    return ExecuteCmd(cmd_CloseQP);
@@ -913,12 +958,22 @@ bool bnet::BnetRunnable::SubmitRec(int recid)
 
    switch (rec->kind) {
       case kind_Send:
-         rec->queuelen = &(SendQueue(rec->tgtindx, rec->tgtnode));
-         rec->queuelimit = fSendQueueLimit;
+         if (rec->skind!=skind_NoQueueChk) {
+             rec->queuelen = &(SendQueue(rec->tgtindx, rec->tgtnode));
+             rec->queuelimit = fSendQueueLimit;
+         } else {
+            rec->queuelen = 0;
+            rec->queuelimit = 0;
+         }
          break;
       case kind_Recv:
-         rec->queuelen = &(RecvQueue(rec->tgtindx, rec->tgtnode));
-         rec->queuelimit = fRecvQueueLimit;
+         if (rec->skind!=skind_NoQueueChk) {
+            rec->queuelen = &(RecvQueue(rec->tgtindx, rec->tgtnode));
+            rec->queuelimit = fRecvQueueLimit;
+         } else {
+            rec->queuelen = 0;
+            rec->queuelimit = 0;
+         }
          break;
       default:
          rec->queuelen = 0;

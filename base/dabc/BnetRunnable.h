@@ -53,7 +53,8 @@ namespace bnet {
       skind_SyncMasterSend,
       skind_SyncMasterRecv,
       skind_SyncSlaveSend,
-      skind_SyncSlaveRecv
+      skind_SyncSlaveRecv,
+      skind_NoQueueChk       // indicate that no queue check should be done
    };
 
    struct OperRec {
@@ -206,6 +207,8 @@ namespace bnet {
          int              fSegmPerOper;     // maximal allowed number of segments in operation (1 for header + rest for buffer)
          int              fHeaderBufSize;   // size of buffer for header
 
+         bool             fRefillEnabled;   // true if recv queues can be refill from the pool
+
          bool             fMainLoopActive;
 
          std::vector<int> fSendQueue;  // running send queue, NumLids() * NumNodes()
@@ -264,7 +267,9 @@ namespace bnet {
             cmd_GetSync,    // return sync coefficients from runnable
             cmd_CloseQP,     // create connection handles - queue pair in IB
             cmd_ResetStat,   // reset statistic
-            cmd_GetStat      // return statistic
+            cmd_GetStat,      // return statistic
+            cmd_StopRefilling, // disable refiliing of recv queues and returns all pool buffers
+            cmd_GetQueues     // get send/recv queues fill length for each connection
          };
 
          int NodeId() const { return fNodeId; }
@@ -347,6 +352,9 @@ namespace bnet {
          bool GetSync(TimeStamping& stamp);
          bool ResetStatistic();
          bool GetStatistic(double& mean_loop, double& max_loop, int& long_cnt);
+         /** Disable refilling of recv queues, returns all pool buffers back to the module */
+         bool StopRefilling();
+         bool GetQueuesFillState(void* mem, int memsize);
 
          bool CloseQPs();
          bool StopRunnable();

@@ -11,12 +11,12 @@
        <!--LD_LIBRARY_PATH value="/home/linev/workspace/dabc/applications/ib-test"/-->
        <logfile value="/tmp/Node${DABCNODEID}.log"/>
        <debuglevel value="0"/>
-       <debugger value="false"/>
+       <debugger value="true"/>
        <errout value="/dev/null"/>
        <nullout value="false"/>
        <num_special_thrds value="1"/>
        <taskset value="-c 0-1"/>
-       <loglevel value="0"/>
+       <loglevel value="1"/>
        <loglimit value="10000000"/>
        <runtime value="50"/>
        <!--runfunc value="test_affinity"/-->
@@ -28,7 +28,7 @@
          <SpecialThread value="true"/>
 
       <!-- allowed: TimeSync or Normal -->
-         <TestKind value="TimeSync"/>
+         <TestKind value="Normal"/>
          <TestReliable value="true"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>

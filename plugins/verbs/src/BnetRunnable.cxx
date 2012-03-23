@@ -303,11 +303,11 @@ bool verbs::BnetRunnable::DoPerformOperation(int recid)
          return false;
 
       case bnet::kind_Send:
-         // DOUT1(("Post send lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid));
+         DOUT1(("Post send lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid));
          return fQPs[rec->tgtindx][rec->tgtnode]->Post_Send(f_swr + recid);
 
       case bnet::kind_Recv:
-         // DOUT1(("Post recv lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid));
+         DOUT1(("Post recv lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid));
          return fQPs[rec->tgtindx][rec->tgtnode]->Post_Recv(f_rwr + recid);
    }
 
