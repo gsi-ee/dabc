@@ -12,7 +12,7 @@ INCLUDES += $(DABCMBSROOTDIR)
 endif
 
 #DABCINCPATH += -I $(ROOTSYS)/include
-INCLUDES += $(DABC_ROOTINCDIR) 
+#INCLUDES += $(DABC_ROOTINCDIR) 
 
 ROOTCINTDABC   = echo "Generating dictionary $@ ..."; $(ROOTSYS)/bin/rootcint -f  $@ -c -p $(INCLUDES:%=-I%) -I$(DABCSYS)/include $(DEFINITIONS)  
 
