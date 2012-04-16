@@ -468,13 +468,6 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
    fRecvRate.Reset();
    fWorkRate.Reset();
 
-   for (int lid=0;lid<NumLids();lid++)
-      for (int n=0;n<NumNodes();n++) {
-         if (SendQueue(lid,n)>0) EOUT(("!!!! Problem in SendQueue[%d,%d]=%d",lid,n,SendQueue(lid,n)));
-         if (RecvQueue(lid,n)>0) EOUT(("!!!! Problem in RecvQueue[%d,%d]=%d",lid,n,RecvQueue(lid,n)));
-      }
-
-
    fTimeScheduled = datarate > 0;
    if (!fTimeScheduled) datarate = 1.; // just avoid math errors, time in schedule will be ingored anyway
 
@@ -791,10 +784,9 @@ void bnet::TransportModule::PrepareAllToAllResults()
    DOUT3(("Total recv queue %ld send queue %ld", TotalSendQueue(), TotalRecvQueue()));
 
    if (fSendSlotIndx>=0)
-   DOUT3(("Sending curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
+   DOUT3(("Sending curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d",
          curr_tm, fSendSch.timeSlot(fSendSlotIndx), fSendSlotIndx,
-         fSendSch.Item(fSendSlotIndx, Node()).node, fSendSch.Item(fSendSlotIndx, Node()).lid,
-         SendQueue(fSendSch.Item(fSendSlotIndx, Node()).lid, fSendSch.Item(fSendSlotIndx, Node()).node)));
+         fSendSch.Item(fSendSlotIndx, Node()).node, fSendSch.Item(fSendSlotIndx, Node()).lid));
 
    DOUT3(("Send operations diff %ld: submited %ld, completed %ld", fNumSendPackets-fNumComplSendPackets, fNumSendPackets, fNumComplSendPackets));
 
@@ -808,7 +800,7 @@ void bnet::TransportModule::PrepareAllToAllResults()
       for (int lid=0;lid<NumLids(); lid++)
         for (int node=0;node<NumNodes();node++) {
           if ((node==Node()) || !fActiveNodes[node]) continue;
-          DOUT5(("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d recvskp %d", lid, node, RecvQueue(lid,node), SendQueue(lid,node), fRecvSkipCounter(lid, node)));
+          DOUT5(("   Lid:%d Node:%d SendQueue = %d recvskp %d", lid, node, SendQueue(lid,node), fRecvSkipCounter(lid, node)));
        }
    }
 
@@ -943,8 +935,12 @@ bool bnet::TransportModule::SubmitTransfersWithoutSchedule()
 
          int tgtlid = fSendSch.Item(nslot, Node()).lid;
 
-         // do not submit too many operations iover single link
-         if (SendQueue(tgtlid,tgtnode) >= fSendQueueLimit) break;
+         // do not submit too many operations over single link
+
+         // TODO: should we limit by any means queue in such unscheduled mode
+         // should it be done in the runnable ??
+
+         if (SendQueue(tgtlid,tgtnode) >= 2*fSendQueueLimit) break;
 
          int recid = fRunnable->PrepareOperation(kind_Send, sizeof(TransportHeader), evrec->buf.Duplicate());
          OperRec* rec = fRunnable->GetRec(recid);
@@ -990,7 +986,8 @@ void bnet::TransportModule::AnalyzeControllerData()
 
    int numready = 0;
 
-   std::vector<EventMasterRec*> ready(NumWorkers(), NULL);
+   std::vector<EventMasterRec*> ready; //(NumWorkers(), NULL);
+   ready.resize(NumWorkers(), 0);
 
    uint64_t lastturnproduced(0);
 
@@ -1118,15 +1115,15 @@ bool bnet::TransportModule::ProcessAllToAllAction()
    if (doDataReceiving())
       ReadoutNextEvents(FindPort("DataInput"));
 
+   if (!fTimeScheduled)
+      return SubmitTransfersWithoutSchedule();
+
    if (!haveController())
       AutomaticProduceScheduleTurn(false);
 
    // TODO: call it once per turn or per regular time intervall
    if (IsController())
       AnalyzeControllerData();
-
-   if (!fTimeScheduled)
-      return SubmitTransfersWithoutSchedule();
 
    double start_tm = 0;
 
@@ -1335,16 +1332,7 @@ bool bnet::TransportModule::ProcessAllToAllAction()
 
 int bnet::TransportModule::ProcessAskQueue(void* tgt)
 {
-   // method is used to calculate how many queues entries are existing
-/*   int32_t* mem = (int32_t*) tgt;
-   for(int node=0;node<NumNodes();node++)
-      for(int nlid=0;nlid<NumLids();nlid++) {
-         *mem++ = SendQueue(nlid, node);
-         *mem++ = RecvQueue(nlid, node);
-      }
-
-*/
-   DOUT0(("Ask queue sizes"));
+   DOUT2(("Ask queue sizes"));
 
    int len = NumNodes()*NumLids()*2*sizeof(int32_t);
 
@@ -1352,7 +1340,7 @@ int bnet::TransportModule::ProcessAskQueue(void* tgt)
       EOUT(("Runnable fails to return queue sizes - why???"));
       exit(7);
    } else {
-      DOUT0(("Get queue sizes"));
+      DOUT2(("Get queue sizes"));
    }
 
    return len;
@@ -1362,7 +1350,7 @@ bool bnet::TransportModule::ProcessCleanup(int32_t* pars)
 {
    bool isany(true);
 
-   DOUT0(("Invoke cleanup command"));
+   DOUT2(("Invoke cleanup command"));
 
    while (isany) {
       isany = false;

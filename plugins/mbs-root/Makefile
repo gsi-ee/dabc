@@ -33,7 +33,7 @@ DABCMBSROOT_D         = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCMB
 DABCMBSROOT_DICT      = $(DABCMBSROOTDIR)/G__MBSROOT
 DABCMBSROOT_DH        = $(DABCMBSROOT_DICT).$(HedSuf)
 DABCMBSROOT_DS        = $(DABCMBSROOT_DICT).$(SrcSuf)
-DABCMBSROOT_DO        = $(DABCMBSROOT_DICT).$(ObjSuf)
+DABCMBSROOT_DO        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(DABCMBSROOT_DS))
 DABCMBSROOT_DD        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCMBSROOT_DS))
 
 # used in the main Makefile
@@ -57,15 +57,12 @@ $(DABCMBSROOT_DS): $(DABCMBSROOT_H)  $(DABCMBSROOT_LINKDEF)
 
 
 ########### extra roles #############
-$(DABCMBSROOT_O) $(DABCMBSROOT_D) $(DABCMBSROOT_DO) $(DABCMBSROOT_DD): INCLUDES += $(DABC_ROOTINCDIR)
+$(DABCMBSROOT_O) $(DABCMBSROOT_D): INCLUDES += $(DABC_ROOTINCDIR)
+
+$(DABCMBSROOT_DO) $(DABCMBSROOT_DD): INCLUDES += $(DABC_ROOTINCDIR) .
 
 clean-bin::
-	@rm -f $(DABCMBSROOT_O) $(DABCMBSROOT_DO)
-	@rm -f $(DABCMBSROOT_D) $(DABCMBSROOT_DD) $(DABCMBSROOT_DS) $(DABCMBSROOT_DH)
-	@rm -f 
-
-clean:: clean-bin
-	@$(CleanLib) $(DABCMBSROOT_LIBNAME) $(DABCMBSROOT_DIR)
+	@rm -f $(DABCMBSROOT_DS) $(DABCMBSROOT_DH)
 
 
 endif
