@@ -175,7 +175,9 @@ void dabc::PosixThread::Start(Runnable* run)
       pthread_attr_t attr;
       pthread_attr_init(&attr);
 
+#if _POSIX_C_SOURCE >= 200112L
       pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &mask);
+#endif
 
       pthread_create(&fThrd, &attr, StartTRunnable, run);
 
@@ -284,6 +286,8 @@ void dabc::PosixThread::PrintAffinity(const char* name)
 {
    if (name==0) name = "Thread";
 
+#if _POSIX_C_SOURCE >= 200112L
+
    int s;
    pthread_attr_t attr;
 
@@ -306,4 +310,7 @@ void dabc::PosixThread::PrintAffinity(const char* name)
    s = pthread_attr_destroy(&attr);
    if (s != 0)
       EOUT(("pthread_attr_destroy failed for %s", name));
+#else
+   EOUT(("Thread %s pthread_attr_getaffinity_np not supported by GLIBS", name));
+#endif
 }
