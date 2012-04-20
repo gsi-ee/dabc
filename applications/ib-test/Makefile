@@ -40,9 +40,13 @@ ALLDEPENDENC += $(IBTEST_D)
 libs::  $(IBTEST_LIB)
 
 ifeq ($(USEOFEDVERBS), true)
+
 EXTRAOPT+=-L$(DABCSYS)/lib -lDabcVerbs
 
+ifneq ($(wildcard /usr/include/infiniband/umad.h),)
+
 libs:: $(TRACERT_EXE)
+
 
 $(TRACERT_EXE) : $(TRACERT_S)
 	cd $(TRACERT_DIR); $(MAKE)
@@ -52,6 +56,8 @@ endif
 
 clean::
 	cd $(TRACERT_DIR); $(MAKE) clean
+
+endif
 
 endif
 
