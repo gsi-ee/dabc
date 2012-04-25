@@ -292,7 +292,7 @@ dabc::Manager::Manager(const char* managername, Configuration* cfg) :
 
       Factory* factory = 0;
 
-      while ((factory = Factory::NextNewFactory()) != 0)
+      while ((factory = FactoryPlugin::NextNewFactory()) != 0)
          AddFactory(factory);
    }
 

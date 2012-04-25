@@ -66,6 +66,14 @@ namespace dabc {
          LibEntry(const LibEntry& src) : fLib(src.fLib), fLibName(src.fLibName) {}
       };
 
+      static Mutex* LibsMutex()
+      {
+         static Mutex m;
+         return &m;
+      }
+
+      static std::vector<LibEntry> fLibs;
+
       public:
          Factory(const char* name);
 
@@ -100,6 +108,17 @@ namespace dabc {
          /** Method called by the manager during application start.
           * One can put arbitrary initialization code here - for instance, create some control instances */
          virtual void Initialize() {}
+   };
+
+
+   // ==============================================================================
+
+   class FactoryPlugin {
+      friend class Manager;
+
+      public:
+         FactoryPlugin(dabc::Factory* f);
+         ~FactoryPlugin();
 
       private:
          static PointersQueue<Factory> *Factories()
@@ -113,18 +132,7 @@ namespace dabc {
             return &m;
          }
 
-         static std::vector<LibEntry> fLibs;
-
          static Factory* NextNewFactory();
-   };
-
-
-   // ==============================================================================
-
-   class FactoryPlugin {
-      public:
-         FactoryPlugin(dabc::Factory* f);
-         ~FactoryPlugin();
    };
 
 }

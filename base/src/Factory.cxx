@@ -25,12 +25,6 @@
 
 std::vector<dabc::Factory::LibEntry> dabc::Factory::fLibs;
 
-dabc::Factory* dabc::Factory::NextNewFactory()
-{
-   dabc::LockGuard lock(FactoriesMutex());
-   return Factories()->Size()>0 ? Factories()->Pop() : 0;
-}
-
 bool dabc::Factory::LoadLibrary(const std::string& fname)
 {
    void* lib = dlopen(fname.c_str(), RTLD_LAZY | RTLD_GLOBAL);
@@ -42,7 +36,7 @@ bool dabc::Factory::LoadLibrary(const std::string& fname)
 
    DOUT1(("Library loaded %s", fname.c_str()));
 
-   dabc::LockGuard lock(FactoriesMutex());
+   dabc::LockGuard lock(LibsMutex());
 
    fLibs.push_back(LibEntry(lib, fname));
 
@@ -62,7 +56,7 @@ void* dabc::Factory::FindSymbol(const std::string& symbol)
 {
    if (symbol.empty()) return 0;
 
-   dabc::LockGuard lock(FactoriesMutex());
+   dabc::LockGuard lock(LibsMutex());
 
    for (unsigned n=0;n<fLibs.size();n++) {
       void* res = dlsym(fLibs[n].fLib, symbol.c_str());
@@ -79,13 +73,6 @@ dabc::Factory::Factory(const char* name) :
    Object(0, name)
 {
    DOUT2(("Factory %s is created", name));
-
-   if (dabc::mgr())
-      dabc::mgr()->AddFactory(this);
-   else {
-      dabc::LockGuard lock(FactoriesMutex());
-      Factories()->Push(this);
-   }
 }
 
 dabc::Transport* dabc::Factory::CreateTransport(Reference ref, const char* typ, dabc::Command cmd)
@@ -119,9 +106,23 @@ dabc::Transport* dabc::Factory::CreateTransport(Reference ref, const char* typ, 
 
 // ================================================
 
-dabc::FactoryPlugin::FactoryPlugin(Factory*)
+dabc::Factory* dabc::FactoryPlugin::NextNewFactory()
+{
+   dabc::LockGuard lock(FactoriesMutex());
+   return Factories()->Size()>0 ? Factories()->Pop() : 0;
+}
+
+
+dabc::FactoryPlugin::FactoryPlugin(Factory* f)
 {
   // for the moment do nothing, later list will be managed here
+
+   if (dabc::mgr())
+      dabc::mgr()->AddFactory(f);
+   else {
+      dabc::LockGuard lock(FactoriesMutex());
+      Factories()->Push(f);
+   }
 }
 
 dabc::FactoryPlugin::~FactoryPlugin()

@@ -54,6 +54,7 @@ namespace dabc {
    class ManagerRef;
    class Device;
    class Factory;
+   class FactoryPlugin;
    class DependPairList;
    class DataInput;
    class DataOutput;
@@ -283,6 +284,7 @@ namespace dabc {
 
       friend class Object;
       friend class Factory;
+      friend class FactoryPlugin;
       friend class ParameterContainer;
       friend class StdManagerFactory;
       friend class ManagerRef;
