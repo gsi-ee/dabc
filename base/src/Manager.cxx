@@ -214,6 +214,23 @@ dabc::Object* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
 
 dabc::FactoryPlugin stdfactory(new dabc::StdManagerFactory("std"));
 
+
+/** Helper class to destroy manager when finishing process */
+class AutoDestroyClass {
+   public:
+      AutoDestroyClass() {}
+      ~AutoDestroyClass()
+      {
+         printf("Vary last action mgr = %p\n", dabc::mgr());
+         if (dabc::mgr()) {
+            dabc::mgr()->HaltManager();
+            dabc::mgr.Destroy();
+         }
+      }
+};
+
+AutoDestroyClass auto_destroy_instance;
+
 // ******************************************************************
 
 dabc::Manager::Manager(const char* managername, Configuration* cfg) :
