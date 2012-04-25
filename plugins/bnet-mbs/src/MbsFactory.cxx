@@ -6,7 +6,7 @@
 #include "bnet/MbsBuilderModule.h"
 #include "bnet/SplitterModule.h"
 
-bnet::MbsFactory bnetmbsfactory("bnet-mbs");
+dabc::FactoryPlugin bnetmbsfactory(new bnet::MbsFactory("bnet-mbs"));
 
 const char* bnet::xmlMbsWorkerClass = "bnet::MbsWorker";
 

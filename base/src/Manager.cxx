@@ -212,7 +212,7 @@ dabc::Object* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const cha
    return res;
 }
 
-dabc::StdManagerFactory stdfactory("std");
+dabc::FactoryPlugin stdfactory(new dabc::StdManagerFactory("std"));
 
 // ******************************************************************
 

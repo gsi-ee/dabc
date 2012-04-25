@@ -18,7 +18,7 @@
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 
-dabc_root::Factory mbsfactory("dabc_root");
+dabc::FactoryPlugin dabc_root_factory(new dabc_root::Factory("dabc_root"));
 
 dabc::DataInput* dabc_root::Factory::CreateDataInput(const char* typ)
 {

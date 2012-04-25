@@ -48,4 +48,4 @@ dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const char* 
    return Reference(thrd);
 }
 
-dabc::SocketFactory socketfactory("sockets");
+dabc::FactoryPlugin socketfactory(new dabc::SocketFactory("sockets"));

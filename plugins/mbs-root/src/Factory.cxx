@@ -20,7 +20,7 @@
 
 #include "mbs_root/RootTreeOutput.h"
 
-mbs_root::Factory rootfactory("root");
+dabc::FactoryPlugin mbsrootfactory(new mbs_root::Factory("mbs-root"));
 
 dabc::DataInput* mbs_root::Factory::CreateDataInput(const char* typ)
 {

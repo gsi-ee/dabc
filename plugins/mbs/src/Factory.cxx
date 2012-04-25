@@ -34,7 +34,7 @@
 #include "mbs/EventAPI.h"
 #endif
 
-mbs::Factory mbsfactory("mbs");
+dabc::FactoryPlugin mbsfactory(new mbs::Factory("mbs"));
 
 dabc::Transport* mbs::Factory::CreateTransport(dabc::Reference ref, const char* typ, dabc::Command cmd)
 {

@@ -115,3 +115,17 @@ dabc::Transport* dabc::Factory::CreateTransport(Reference ref, const char* typ, 
 
    return new dabc::DataIOTransport(portref(), inp, out);
 }
+
+
+// ================================================
+
+dabc::FactoryPlugin::FactoryPlugin(Factory*)
+{
+  // for the moment do nothing, later list will be managed here
+}
+
+dabc::FactoryPlugin::~FactoryPlugin()
+{
+
+}
+

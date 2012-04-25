@@ -136,5 +136,5 @@ class IbTestFactory : public dabc::Factory  {
       }
 };
 
-IbTestFactory nettest("ib-test");
+dabc::FactoryPlugin ibtest(new IbTestFactory("ib-test"));
 

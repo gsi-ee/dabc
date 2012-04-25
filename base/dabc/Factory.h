@@ -47,9 +47,15 @@ namespace dabc {
    class Configuration;
    class Transport;
    class Port;
+   class FactoryPlugin;
+
+   /** \brief Factory class provides interfaces to add user-specific
+    *    classes to the DABC code
+    */
 
    class Factory : public Object {
       friend class Manager;
+      friend class FactoryPlugin;
 
       struct LibEntry {
          void*        fLib;
@@ -110,6 +116,15 @@ namespace dabc {
          static std::vector<LibEntry> fLibs;
 
          static Factory* NextNewFactory();
+   };
+
+
+   // ==============================================================================
+
+   class FactoryPlugin {
+      public:
+         FactoryPlugin(dabc::Factory* f);
+         ~FactoryPlugin();
    };
 
 }

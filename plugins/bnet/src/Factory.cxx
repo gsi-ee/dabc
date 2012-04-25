@@ -5,7 +5,7 @@
 #include "bnet/GeneratorModule.h"
 #include "bnet/TransportModule.h"
 
-bnet::Factory bnetfactory("bnet");
+dabc::FactoryPlugin bnetfactory(new bnet::Factory("bnet"));
 
 bnet::Factory::Factory(const char* name) :
    dabc::Factory(name)

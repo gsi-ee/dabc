@@ -7,20 +7,6 @@
 #include "bnet/defines.h"
 #include "bnet/TransportModule.h"
 
-
-//#include "dabc/timing.h"
-//#include "dabc/Port.h"
-//#include "dabc/Timer.h"
-//#include "dabc/Command.h"
-//#include "dabc/MemoryPool.h"
-//#include "dabc/PoolHandle.h"
-//#include "dabc/threads.h"
-//#include "dabc/Application.h"
-//#include "dabc/SocketDevice.h"
-//#include "dabc/statistic.h"
-//#include "dabc/Factory.h"
-//#include "dabc/Configuration.h"
-
 bnet::Application::Application() :
    dabc::Application("bnet::Application")
 {

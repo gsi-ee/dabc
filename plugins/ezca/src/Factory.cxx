@@ -40,8 +40,8 @@ const char* ezca::xmlModuleThread 			= EZCA_xmlModuleName; // Name of thread for
 const char* ezca::xmlCommandReceiver 			= EZCA_xmlCommandReceiver; // Command receiver on flag change event
 
 
+dabc::FactoryPlugin epicsfactory(new ezca::Factory("ezca"));
 
-ezca::Factory epicsfactory("ezca");
 
 ezca::Factory::Factory(const char* name) :
    dabc::Factory(name)

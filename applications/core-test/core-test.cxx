@@ -141,7 +141,7 @@ class TestModuleSync : public dabc::ModuleSync {
             case 0: GeneratorLoop(); break;
             case 1: RepeaterLoop(); break;
             case 2: ReceiverLoop(); break;
-            default: EOUT(("Error"));
+            default: EOUT(("Error")); break;
          }
       }
 
@@ -236,8 +236,7 @@ class CoreTestFactory : public dabc::Factory  {
       }
 };
 
-CoreTestFactory coretest("core-test");
-
+dabc::FactoryPlugin core_test(new CoreTestFactory("core-test"));
 
 
 void TestChain(bool isM, int number, int testkind = 0, double test_tm = 2.)

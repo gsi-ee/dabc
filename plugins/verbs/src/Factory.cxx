@@ -6,7 +6,7 @@
 #include "verbs/Device.h"
 #include "verbs/Thread.h"
 
-verbs::Factory verbsfactory("verbs");
+dabc::FactoryPlugin verbsfactory(new verbs::Factory("verbs"));
 
 dabc::Reference verbs::Factory::CreateObject(const char* classname, const char* objname, dabc::Command cmd)
 {

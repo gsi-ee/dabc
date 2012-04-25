@@ -19,7 +19,7 @@
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 
-dimc::Factory dimcfactory("dimc");
+dabc::FactoryPlugin dimcfactory(new dimc::Factory("dimc"));
 
 
 dabc::Module* dimc::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)

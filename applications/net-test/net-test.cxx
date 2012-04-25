@@ -418,7 +418,7 @@ class NetTestFactory : public dabc::Factory  {
       }
 };
 
-NetTestFactory nettest("net-test");
+dabc::FactoryPlugin nettest(new NetTestFactory("net-test"));
 
 
 
