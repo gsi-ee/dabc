@@ -447,6 +447,9 @@ namespace dabc {
 
          Object* ListMatchFiles(const char* typ, const char* filemask);
 
+         /** Method set flag if manager instance should be destroyed when process finished */
+         static void SetAutoDestroy(bool on);
+
       protected:
 
          struct ParamRec {

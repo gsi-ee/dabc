@@ -216,22 +216,38 @@ dabc::FactoryPlugin stdfactory(new dabc::StdManagerFactory("std"));
 
 
 /** Helper class to destroy manager when finishing process */
-class AutoDestroyClass {
-   public:
-      AutoDestroyClass() {}
-      ~AutoDestroyClass()
-      {
-         printf("Vary last action mgr = %p\n", dabc::mgr());
-         if (dabc::mgr()) {
-            dabc::mgr()->HaltManager();
-            dabc::mgr.Destroy();
-         }
-      }
-};
+namespace dabc {
+   class AutoDestroyClass {
+         friend class dabc::Manager;
 
-AutoDestroyClass auto_destroy_instance;
+         static bool fAutoDestroy;
+
+      public:
+         AutoDestroyClass() {}
+         ~AutoDestroyClass()
+         {
+            printf("Vary last action mgr = %p\n", dabc::mgr());
+            if (dabc::mgr() && fAutoDestroy) {
+               printf("Destroy manager\n");
+               dabc::mgr()->HaltManager();
+               dabc::mgr.Destroy();
+               printf("Destroy manager done\n");
+            }
+         }
+   };
+}
+
+bool dabc::AutoDestroyClass::fAutoDestroy = false;
+
+dabc::AutoDestroyClass auto_destroy_instance;
 
 // ******************************************************************
+
+void dabc::Manager::SetAutoDestroy(bool on)
+{
+   AutoDestroyClass::fAutoDestroy = on;
+}
+
 
 dabc::Manager::Manager(const char* managername, Configuration* cfg) :
    Worker(0, managername, true),
