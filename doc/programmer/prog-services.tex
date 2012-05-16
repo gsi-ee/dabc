@@ -107,11 +107,10 @@ For instance, a simplified version of
 
 \begin{small}
 \begin{verbatim}     
-void dabc::Module::SendToAllOutputs(dabc::Buffer* buf)
+void dabc::Module::SendToAllOutputs(const dabc::Buffer& buf)
 {
    for(unsigned n=0;n<NumOutputs();n++)
-      Output(n)->Send(buf->MakeReference());
-   dabc::Buffer::Release(buf);
+      Output(n)->Send(buf.Duplicate());
 }
 \end{verbatim}     
 \end{small}

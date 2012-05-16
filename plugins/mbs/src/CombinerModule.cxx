@@ -160,7 +160,7 @@ bool mbs::CombinerModule::FlushBuffer()
 
    DOUT3(("Send buffer of size = %d", buf.GetTotalSize()));
 
-   SendToAllOutputs(buf);
+   SendToAllOutputs(buf.HandOver());
 
    fFlushFlag = false; // indicate that next flush timeout one not need to send buffer
 

@@ -266,7 +266,7 @@ class NetTestMcastModule : public dabc::ModuleAsync {
 
          DOUT0(("Sending %3d Size %u Msg %s", fCounter, buf.GetTotalSize(), buf.AsStdString().c_str()));
 
-         Output()->Send(buf);
+         Output()->Send(buf.HandOver());
       }
 
       void AfterModuleStop()

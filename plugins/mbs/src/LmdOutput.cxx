@@ -217,8 +217,15 @@ bool mbs::LmdOutput::WriteBuffer(const dabc::Buffer& buf)
 
    unsigned numevents = mbs::ReadIterator::NumEvents(buf);
 
-   DOUT4(("Write %u events to lmd file", numevents));
-
+/*   DOUT0(("Counts events in buffer %u total size %u numsegm %u", buf.SegmentId(), (unsigned) buf.GetTotalSize(), buf.NumSegments()));
+   mbs::ReadIterator iter(buf);
+   unsigned numevents(0);
+   while (iter.NextEvent()) {
+      DOUT0(("   Count event %u size %u", iter.evnt()->EventNumber(), iter.evnt()->FullSize()));
+      numevents++;
+   }
+   DOUT0(("Write %u events to lmd file", numevents));
+*/
    fCurrentSize += buf.GetTotalSize();
    fTotalSize += buf.GetTotalSize();
 
