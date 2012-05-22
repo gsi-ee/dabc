@@ -120,6 +120,8 @@ class IbTestFactory : public dabc::Factory  {
 
       virtual dabc::Application* CreateApplication(const char* classname, dabc::Command cmd)
       {
+         DOUT0(("Try to create app %s", classname));
+      
          if (strcmp(classname, "IbTestApp")==0)
             return new IbTestApplication();
          return dabc::Factory::CreateApplication(classname, cmd);

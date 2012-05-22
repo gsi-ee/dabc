@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <vector>
 #include <math.h>
+#include <iostream>
+#include <fstream>
 
 #include "dabc/timing.h"
 #include "dabc/logging.h"
@@ -1178,7 +1180,7 @@ bool IbTestWorkerModule::MasterCreatePool(int numbuffers, int buffersize)
    return true;
 }
 
-bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, bool doscaling)
+bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, bool doscaling, bool debug_output)
 {
    // first request all salves to start sync
 
@@ -1356,6 +1358,20 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
       DOUT0(("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", m_to_s.Mean(max_cut)*1e6, m_to_s.Dev(max_cut)*1e6, m_to_s.Max()*1e6, m_to_s.Min()*1e6));
       DOUT0(("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", s_to_m.Mean(max_cut)*1e6, s_to_m.Dev(max_cut)*1e6, s_to_m.Max()*1e6, s_to_m.Min()*1e6));
 //      if (nremote==1) a1.ShowHist();
+
+      if (debug_output) {
+         std::string fname1 = dabc::format("m_to_s%d.txt", nremote);
+         std::ofstream f1(fname1.c_str());
+         for (unsigned n=0;n<m_to_s.size();n++)
+            f1 << m_to_s[n]*1e6 << std::endl;
+
+         std::string fname2 = dabc::format("s%d_to_m.txt", nremote);
+         std::ofstream f2(fname2.c_str());
+
+         for (unsigned n=0;n<s_to_m.size();n++)
+            f2 << s_to_m[n]*1e6 << std::endl;
+      }
+
 
       if (dosynchronisation)
          DOUT0(("   SET: Shift = %5.2f  Coef = %12.10f", set_time_shift*1e6, set_time_scale));
@@ -2920,9 +2936,9 @@ void IbTestWorkerModule::MainLoop()
    DOUT0(("----------------- DID CONN !!! ------------------- "));
 
 
-   MasterTimeSync(true, 200, false);
+   MasterTimeSync(true, 200, false, fTestKind == "DSimple");
 
-   if (fTestKind != "Simple") {
+   if ((fTestKind != "Simple") && (fTestKind != "DSimple")) {
 
       DOUT0(("SLEEP 10 sec"));
       WorkerSleep(10.);

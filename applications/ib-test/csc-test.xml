@@ -1,18 +1,16 @@
 <?xml version="1.0"?>
-<dabc version="1">
-  <Context host="node9-001" port="5432"/>
-  <Context host="node1-001" port="5433"/>
-  <Context host="node1-002" port="5432"/>
-  <Context host="node1-003" port="5433"/>
-  <Context host="node1-004" port="5432"/>
-  <Defaults>
-     <Context name="*">
+<dabc version="2">
+  <Context host="node9-081" port="5432"/>
+  <Context host="node9-082" port="5433"/>
+  <Context host="node9-083" port="5432"/>
+  <Context host="node9-084" port="5433"/>
+     <Context host="*">
        <Run>
          <lib value="libDabcIbTest.so"/>
          <LD_LIBRARY_PATH value="."/>
          <logfile value="/tmp/Node${DABCNODEID}.log"/>
-         <debuglevel value="1"/>
-	      <debugger value="false"/>
+         <debuglevel value="0"/>
+         <debugger value="false"/>
          <loglevel value="1"/>
          <loglimit value="1000000"/>
          <runtime value="50"/>
@@ -21,9 +19,9 @@
          <NetDevice value="dabc::SocketDevice"/>
          <BufferSize value="80000"/>
 
-      <!-- allowed: SingleRoute, TimeSync or NormalTest -->
-         <TestKind value="NormalTest"/>
-         <TestNumLids value="16"/>
+      <!-- allowed: Simple, SingleRoute, TimeSync or NormalTest -->
+         <TestKind value="DSimple"/>
+         <TestNumLids value="1"/>
          <TestPattern value="0"/>
          <TestTime value="10"/>
          <TestRate value="2000"/>
@@ -35,5 +33,4 @@
          <TestTimeout value="20"/>
        </Application>
      </Context>
-  </Defaults>
 </dabc>

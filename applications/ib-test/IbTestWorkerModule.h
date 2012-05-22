@@ -204,7 +204,7 @@ class IbTestWorkerModule : public dabc::ModuleSync {
 
       bool MasterTestGPU(int bufsize, int testtime, bool testwrite, bool testread);
 
-      bool MasterTimeSync(bool dosynchronisation, int numcycles, bool doscaling = false);
+      bool MasterTimeSync(bool dosynchronisation, int numcycles, bool doscaling = false, bool debug_output = false);
 
       bool MasterTiming();
 

@@ -5,7 +5,7 @@
        <logfile value="/tmp/Node${DABCNODEID}.log"/>
        <debuglevel value="0"/>
        <debugger value="false"/>
-       <taskset value="-c 10-12"/>
+       <taskset value="-c 10-15"/>
        <nullout value="true"/>
        <num_special_thrds value="1"/>
        <loglevel value="0"/>
@@ -20,7 +20,7 @@
          <SpecialThread value="true"/>
 
       <!-- allowed: OnlyConnect, Simple, SimpleSync, TimeSync or Normal -->
-         <TestKind value="Normal"/>
+         <TestKind value="TimeSync"/>
          <TestReliable value="true"/>
          <TestNumLids value="1"/>
          <TestPattern value="0"/>
