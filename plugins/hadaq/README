@@ -1,0 +1,41 @@
+**********************************************************
+****** DABC plugin for hadaq 
+****** (originally HADES collaboration DAQ and data format)
+*        Joern Adamczewski-Musch, j.adamczewski@gsi.de
+* Development Version 0.01 - 06-Jun-2012
+   : design of classes and first successful compilation
+
+* Components:
+   * HldFile - input and output to hld file format
+   * HldInput - read hadtu format from file
+   * HldOutput- write hadtu format to file
+   * UdpDataSocket - receive hadtu packets from trb frontend (single stream).
+   * MbsTransmitterModule - wrap hadtu format into mbs event container
+                            output is mbs server or lmd file.
+                            this format is used in mbs combiner and go4 unpacker 
+   * CombinerModule - do eventbuilding of hadtu format from several data streams.
+                      output is full event in hadtu format. This will be functionality of old daq_evtbuild.
+                      
+* Applications:
+ TODO
+ 
+* How to use:
+ TODO 
+ 
+* Changes:     
+   * Development Version 0.01 - 06-Jun-2012
+      : design of classes and first successful compilation.
+   *  Under construction
+   
+* DISCLAIMER:
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details (http://www.gnu.org).
+---------------------------------------------------------------  
+                     
