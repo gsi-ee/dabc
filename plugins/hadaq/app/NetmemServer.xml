@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<!-- 
+This is example how repeater for any kind of MBS server can be created.
+
+-->
+
+<dabc version="2">
+  <Context name="NetmemServer">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+       <lib value="libDabcHadaq.so"/>
+      <func value="InitHadaqMbsServer"/>
+    </Run>
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="200"/>
+    </MemoryPool>
+    <Module name="NetmemServer">
+       <Port name="Input">
+          <HadaqUdpSender value="0.0.0.0"/>
+          <HadaqUdpPort value="10101"/>
+       </Port>
+       <Port name="Output">
+          <MbsServerKind value="Stream"/>
+          <MbsServerPort value="6543"/>
+        </Port>
+     </Module>
+  </Context>
+</dabc>
