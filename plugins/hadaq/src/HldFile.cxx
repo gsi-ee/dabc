@@ -86,7 +86,7 @@ void hadaq::HldFile::Close()
    fMode = mNone;
 }
 
-bool hadaq::HldFile::WriteElements(Header* hdr, unsigned num)
+bool hadaq::HldFile::WriteElements(hadaq::Event* hdr, unsigned num)
 {
    if (!IsWriteMode() || (num==0)) {
       fLastError = HLD__FAILURE;
@@ -101,7 +101,7 @@ bool hadaq::HldFile::WriteElements(Header* hdr, unsigned num)
    return (fLastError == HLD__SUCCESS);
 }
 
-hadaq::Header* hadaq::HldFile::ReadElement()
+hadaq::Event* hadaq::HldFile::ReadElement()
 {
    if (!IsReadMode()) {
       fLastError = HLD__FAILURE;
@@ -133,12 +133,12 @@ unsigned int hadaq::HldFile::ReadBuffer(void* buf, uint32_t& bufsize)
    return numev;
 }
 
-bool hadaq::HldFile::WriteEvents(EventHeader* hdr, unsigned num)
+bool hadaq::HldFile::WriteEvents(hadaq::Event* hdr, unsigned num)
 {
    return false; //WriteElements(hdr, num);
 }
 
-hadaq::EventHeader* hadaq::HldFile::ReadEvent()
+hadaq::Event* hadaq::HldFile::ReadEvent()
 {
-   return (hadaq::EventHeader*) ReadElement();
+   return (hadaq::Event*) ReadElement();
 }

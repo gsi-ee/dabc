@@ -85,6 +85,28 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
    // one cannot have too much resend requests
    //fResend.Allocate(port->InputQueueCapacity() * fBufferSize / UDP_DATA_SIZE);
 
+   // put here additional socket options of nettrans:
+   ////////JAM this is copy of hadaq nettrans.c how to set this?
+   //         int rcvBufLenReq = 1 * (1 << 20);
+   //            int rcvBufLenRet;
+   //            size_t rcvBufLenLen = (size_t) sizeof(rcvBufLenReq);
+   //
+   //            if (setsockopt(   fSocket, SOL_SOCKET, SO_RCVBUF, &rcvBufLenReq, rcvBufLenLen) == -1) {
+   //               syslog(LOG_WARNING, "setsockopt(..., SO_RCVBUF, ...): %s", strerror(errno));
+   //            }
+   //
+   //            if (getsockopt(   fSocket, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, (socklen_t *) &rcvBufLenLen) == -1) {
+   //               syslog(LOG_WARNING, "getsockopt(..., SO_RCVBUF, ...): %s", strerror(errno));
+   //            }
+   //            if (rcvBufLenRet < rcvBufLenReq) {
+   //               syslog(LOG_WARNING, "UDP receive buffer length (%d) smaller than requested buffer length (%d)", rcvBufLenRet,
+   //                     rcvBufLenReq);
+   //            }
+   //
+
+
+
+
    DOUT2(("hadaq::UdpDataSocket:: Pool = %p buffer size = %u", fPool(), fBufferSize));
 }
 

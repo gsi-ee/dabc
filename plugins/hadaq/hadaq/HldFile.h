@@ -62,12 +62,12 @@ namespace hadaq {
          /** Write one or several elements into the file.
           * Each element must contain hadaq::Header with correctly set size
           */
-         bool WriteElements(hadaq::Header* hdr, unsigned num = 1);
+         bool WriteElements(hadaq::Event* hdr, unsigned num = 1);
 
          /** Read next element from file. File must be opened by method OpenRead(),
            * Data will be copied first in internal buffer and than provided to user.
            */
-         hadaq::Header* ReadElement();
+         hadaq::Event* ReadElement();
 
          /** Read one or several elements to provided user buffer
            * When called, bufsize should has available buffer size,
@@ -77,10 +77,10 @@ namespace hadaq {
 
          /** Write one or several events to the file.
           * Same as WriteElements */
-         bool WriteEvents(EventHeader* hdr, unsigned num = 1);
+         bool WriteEvents(hadaq::Event* hdr, unsigned num = 1);
 
          /** Read next event from file - same as ReadElement. */
-         hadaq::EventHeader* ReadEvent();
+         hadaq::Event* ReadEvent();
    };
 
 } // end of namespace

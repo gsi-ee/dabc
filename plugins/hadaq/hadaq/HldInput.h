@@ -41,7 +41,7 @@ namespace hadaq {
          virtual unsigned Read_Complete(dabc::Buffer& buf);
 
          // alternative way to read hadaq events from HldInput - no any dabc buffer are used
-         hadaq::EventHeader* ReadEvent();
+         hadaq::Event* ReadEvent();
 
       protected:
          bool CloseFile();

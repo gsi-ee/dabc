@@ -252,5 +252,5 @@ bool hadaq::HldOutput::WriteBuffer(const dabc::Buffer& buf)
 //
 //   ShowInfo(info);
 
-   return fFile.WriteEvents((hadaq::EventHeader*) buf.SegmentPtr(0), numevents);
+   return fFile.WriteEvents((hadaq::Event*) buf.SegmentPtr(0), numevents);
 }

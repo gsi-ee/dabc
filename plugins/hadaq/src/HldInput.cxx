@@ -156,12 +156,12 @@ unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
    return dabc::di_Ok;
 }
 
-hadaq::EventHeader* hadaq::HldInput::ReadEvent()
+hadaq::Event* hadaq::HldInput::ReadEvent()
 {
    while (true) {
        if (!fFile.IsReadMode()) return 0;
 
-       hadaq::EventHeader* hdr = fFile.ReadEvent();
+       hadaq::Event* hdr = fFile.ReadEvent();
        if (hdr!=0) return hdr;
 
        DOUT1(("File %s return 0 - end of file", fCurrentFileName.c_str()));
