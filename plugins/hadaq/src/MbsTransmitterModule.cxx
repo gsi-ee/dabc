@@ -21,7 +21,9 @@
 #include "dabc/Manager.h"
 
 #include "hadaq/HadaqTypeDefs.h"
+#include "hadaq/Iterator.h"
 #include "mbs/MbsTypeDefs.h"
+#include "mbs/Iterator.h"
 
 
 
@@ -54,21 +56,67 @@ void hadaq::MbsTransmitterModule::retransmit()
 {
 	bool dostop = false;
 	while (Output(0)->CanSend() && Input(0)->CanRecv()) {
-		dabc::Buffer buf = Input(0)->Recv();
-		if (buf.GetTypeId() == dabc::mbt_EOF) {
+		dabc::Buffer inbuf = Input(0)->Recv();
+		if (inbuf.GetTypeId() == dabc::mbt_EOF) {
 			DOUT0(("See EOF - stop module"));
 			dostop = true;
-		} else {
-		   Par("TransmitData").SetDouble(buf.GetTotalSize()/1024./1024);
-		   Par("TransmitBufs").SetDouble(1.);
 		}
+
 		// TODO: put here wrapping  of hadtu format into mbs subevent like in go4
+		dabc::Buffer outbuf = Pool()->TakeBuffer();
+		dabc::BufferSize_t usedsize=0;
+		mbs::WriteIterator miter(outbuf);
+		//unsigned eventcounter=0;
+		hadaq::ReadIterator hiter(inbuf);
+		hadaq::Event* hev;
+		while(hiter.NextEvent())
+		{
+		   hev=hiter.evnt();
+		   size_t evlen=hev->GetSize();
+		      // account padding of events to 8 byte boundaries:
+		   while((evlen % 8) !=0)
+		          {
+		             evlen++;
+		             //cout <<"Next Buffer extends for padding the length to "<<evlen<< endl;
+		          }
+
+
+		   //unsigned subeventlen=evlen/sizeof(uint16_t);
+		   unsigned id = hev->GetId();
+		   unsigned evcount=hev->GetSeqNr();
+		   // assign and check event/subevent header for wrapper structures:
+		   if (!miter.NewEvent(evcount))
+		      {
+		         DOUT1(("Can not add new mbs event to output buffer anymore - stop module. Check mempool setup!"));
+		         dostop = true;
+		         break;
+		      }
+		   usedsize+=sizeof(mbs::EventHeader);
+		   if (!miter.NewSubevent(evlen))
+		      {
+		           DOUT1(("Can not add new mbs subevent to output buffer anymore - stop module. Check mempool setup!"));
+		           dostop = true;
+		           break;
+		      }
+		   usedsize+=sizeof(mbs::SubeventHeader);
+		   // OK, we copy full hadaq event into mbs subevent payload:
+		    mbs::SubeventHeader* msub=miter.subevnt();
+		    msub->fFullId = id; // TODO: configure mbs ids from parameters
+		    memcpy(miter.rawdata(),hev,evlen);
+		    miter.FinishSubEvent(evlen);
+		    miter.FinishEvent();
+		    usedsize+=evlen;
+		} // while hiter.NextEvent()
 
 
 
 
 
-		Output(0)->Send(buf);
+		outbuf.SetTotalSize(usedsize);
+		outbuf.SetTypeId(mbs::mbt_MbsEvents);
+		Par("TransmitData").SetDouble(outbuf.GetTotalSize()/1024./1024);
+		Par("TransmitBufs").SetDouble(1.);
+		Output(0)->Send(outbuf);
 	}
 
 	if (dostop) {

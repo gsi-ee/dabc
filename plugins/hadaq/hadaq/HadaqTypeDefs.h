@@ -19,9 +19,86 @@
 
 namespace hadaq {
 
-
+typedef uint32_t EventNumType;
 
 #pragma pack(push, 1)
+
+   /*
+    * HADES transport unit header
+    * used both for event and subevent
+    */
+
+   struct HadTu
+    {
+    int32_t   tuSize;
+    int32_t   tuDecoding;
+    int32_t   tuId;
+
+
+    /* msb of decode word is always non zero...?*/
+    bool IsSwapped()
+    {
+       return  (tuDecoding > 0xffffff);
+    }
+
+    /* swapsave access to any data stolen from hadtu.h*/
+    int32_t Value(int32_t *member)
+    {
+
+       if (IsSwapped()) {
+          uint32_t tmp0;
+          uint32_t tmp1;
+
+          tmp0 = *member;
+          ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
+          ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
+          ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
+          ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
+          return tmp1;
+       } else {
+          return *member;
+       }
+    }
+
+
+    void SetValue(int32_t *member, int32_t val)
+      {
+
+         if (IsSwapped()) {
+            uint32_t tmp0;
+            tmp0 = *member;
+            ((char *) &tmp0)[3] = ((char *) &val)[0];
+            ((char *) &tmp0)[2] = ((char *) &val)[1];
+            ((char *) &tmp0)[1] = ((char *) &val)[2];
+            ((char *) &tmp0)[0] = ((char *) &val)[3];
+
+         } else {
+            *member=val;
+         }
+      }
+
+    size_t GetSize()
+    {
+       return (size_t) (Value(&tuSize));
+    }
+
+    void SetSize( size_t bytes)
+      {
+         SetValue(&tuSize, (uint32_t) bytes);
+      }
+
+  int32_t GetDecoding()
+    {
+       return Value(&tuDecoding);
+    }
+    int32_t GetId()
+    {
+       return Value(&tuId);
+    }
+
+
+    };
+
 
 
    //Description of the Event Structure
@@ -111,57 +188,32 @@ namespace hadaq {
 
 
 
-   struct Event
+   struct Event : public HadTu
    {
-   uint32_t   evtSize;
-   uint32_t   evtDecoding;
-   uint32_t    evtId;
-   uint32_t evtSeqNr;
-   uint32_t evtDate;
-   uint32_t evtTime;
-   uint32_t runNr;
-   uint32_t evtPad;
+   int32_t evtSeqNr;
+   int32_t evtDate;
+   int32_t evtTime;
+   int32_t runNr;
+   int32_t evtPad;
 
 
-   /* msb of decode word is always non zero...?*/
-   bool IsSwapped()
-   {
-      return  (evtDecoding > 0xffffff);
-   }
 
-   /* swapsave access to any data stolen from hadtu.h*/
-   uint32_t Value(uint32_t *member)
-   {
 
-      if (IsSwapped()) {
-         uint32_t tmp0;
-         uint32_t tmp1;
-
-         tmp0 = *member;
-         ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
-         ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
-         ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
-         ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
-         return tmp1;
-      } else {
-         return *member;
-      }
-   }
-
-   size_t GetSize()
-   {
-      return (size_t) (Value(&evtSize));
-   }
-
-   uint32_t GetId()
-   {
-      return Value(&evtId);
-   }
-
-   uint32_t GetSeqNr()
+   int32_t GetSeqNr()
    {
       return Value(&evtSeqNr);
    }
+
+
+   void Init(EventNumType evnt = 0, int32_t date=0, int32_t time=0, int32_t run=0)
+        {
+            evtSeqNr=evnt;
+            evtDate=date;
+            evtTime=time;
+            runNr=run;
+            evtPad=0;
+        }
+
 
 
    };
@@ -205,111 +257,74 @@ namespace hadaq {
    //    * The data words: The format of the data words (word length, compression algorithm, sub-sub-event format) is defined by the subEvtDecoding and apart from this it is completely free. The meaning of the data words (detector, geographical position, error information) is defined by the subEvtId and apart from this it is completely unknown to the data acquisition system.
 
 
-   struct Subevent
+   struct Subevent : public HadTu
    {
-   uint32_t   subEvtSize;
-   uint32_t   subEvtDecoding;
-   uint32_t   subEvtId;
-   uint32_t   subEvtTrigNr;
+      int32_t   subEvtTrigNr;
 
-   /* msb of decode word is always non zero...?*/
-   bool IsSwapped()
-   {
-      return  (subEvtDecoding > 0xffffff);
-   }
-
-
-   unsigned Alignment()
-   {
-      return 1 << ( GetDecoding() >> 16 & 0xff);
-   }
-
-   /* swapsave access to any member, stolen from hadtu.h*/
-   uint32_t Value(uint32_t *member)
-   {
-
-      if (IsSwapped()) {
-         uint32_t tmp0;
-         uint32_t tmp1;
-
-         tmp0 = *member;
-         ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
-         ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
-         ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
-         ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
-         return tmp1;
-      } else {
-         return *member;
+      int32_t GetTrigNr()
+      {
+         return Value(&subEvtTrigNr);
       }
-   }
+
+     unsigned Alignment()
+      {
+         return 1 << ( GetDecoding() >> 16 & 0xff);
+      }
 
 
-   size_t GetSize()
-   {
-      return (size_t) (Value(&subEvtSize));
-   }
+      /* swapsave access to any data. stolen from hadtu.h*/
+      uint32_t Data(unsigned idx)
+      {
+         const void* my= (char*) (this) + sizeof(hadaq::Subevent);
+         //const void* my= (char*) (this) + 16;
+         uint32_t val;
 
-   uint32_t GetDecoding()
-   {
-      return Value(&subEvtDecoding);
-   }
-
-   uint32_t GetId()
-   {
-      return Value(&subEvtId);
-   }
-
-   uint32_t GetTrigNr()
-   {
-      return Value(&subEvtTrigNr);
-   }
-
-
-
-   /* swapsave access to any data. stolen from hadtu.h*/
-   uint32_t Data(unsigned idx)
-   {
-      const void* my= (char*) (this) + sizeof(hadaq::Subevent);
-      //const void* my= (char*) (this) + 16;
-      uint32_t val;
-
-         switch (Alignment()) {
-         case 4:
-            if (IsSwapped()) {
-               uint32_t tmp0;
-               uint32_t tmp1;
-               tmp0 = ((uint32_t *) my)[idx];
-               ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
-               ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
-               ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
-               ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
-               val = tmp1;
-            } else {
-               val = ((uint32_t *) my)[idx];
+            switch (Alignment()) {
+            case 4:
+               if (IsSwapped()) {
+                  uint32_t tmp0;
+                  uint32_t tmp1;
+                  tmp0 = ((uint32_t *) my)[idx];
+                  ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
+                  ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
+                  ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
+                  ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
+                  val = tmp1;
+               } else {
+                  val = ((uint32_t *) my)[idx];
+               }
+               break;
+            case 2:
+               if (IsSwapped()) {
+                  uint16_t v;
+                  //swab(((uint16_t *) (my)[idx]), &v, 2);
+                  swab(((uint16_t *) (my)) + idx, &v, 2);
+                  val = v;
+               } else {
+                  val = ((uint16_t *) my)[idx];
+               }
+               break;
+            default:
+               val = ((uint8_t *) my)[idx];
+               break;
             }
-            break;
-         case 2:
-            if (IsSwapped()) {
-               uint16_t v;
-               //swab(((uint16_t *) (my)[idx]), &v, 2);
-               swab(((uint16_t *) (my)) + idx, &v, 2);
-               val = v;
-            } else {
-               val = ((uint16_t *) my)[idx];
-            }
-            break;
-         default:
-            val = ((uint8_t *) my)[idx];
-            break;
+            return val;
+
+
+
          }
-         return val;
 
 
+      void Init(int32_t trigger = 0)
+           {
+               subEvtTrigNr = trigger;
+           }
 
-      }
-
-
-
+      void* RawData()
+         {
+            void* my= (char*) (this) + sizeof(hadaq::Subevent);
+            return my;
+         }
    };
 
 
@@ -317,16 +332,6 @@ namespace hadaq {
 
 
 
-
-//   struct Header
-//   {
-//         int dummy; // for compilation FIXME
-//   };
-//
-//   struct EventHeader : public Header
-//     {
-//           int dummy2; // for compilation FIXME
-//     };
 
 
 

@@ -147,7 +147,6 @@ unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
    // here all stuff is related to hadtu format
 
 
-   //buf.SetTypeId(mbs::mbt_MbsEvents);
 
 
    buf.SetTypeId(hadaq::mbt_HadaqEvents);
