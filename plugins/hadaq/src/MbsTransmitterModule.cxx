@@ -30,6 +30,12 @@
 hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Command cmd) :
 	dabc::ModuleAsync(name, cmd)
 {
+   CreatePar(dabc::xmlBufferSize).DfltInt(65536);
+	CreatePar(dabc::xmlNumBuffers).DfltInt(20);
+	CreatePar(hadaq::xmlFileName).DfltStr("");
+	CreatePar(mbs::xmlFileName).DfltStr("");
+
+
 	CreatePoolHandle("Pool");
 
 	CreateInput("Input", Pool(), 5);
@@ -40,6 +46,8 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 //
 //	// create timer, but do not enable it
 //	if (fReconnect) CreateTimer("Reconn", -1);
+
+
 
    CreatePar("TransmitData").SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 3.).SetUnits("Buf");
@@ -58,7 +66,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 	while (Output(0)->CanSend() && Input(0)->CanRecv()) {
 		dabc::Buffer inbuf = Input(0)->Recv();
 		if (inbuf.GetTypeId() == dabc::mbt_EOF) {
-			DOUT0(("See EOF - stop module"));
+			DOUT1(("See EOF - stop module"));
 			dostop = true;
 		}
 
@@ -73,15 +81,8 @@ void hadaq::MbsTransmitterModule::retransmit()
 		{
 		   hev=hiter.evnt();
 		   size_t evlen=hev->GetSize();
-		      // account padding of events to 8 byte boundaries:
-		   while((evlen % 8) !=0)
-		          {
-		             evlen++;
-		             //cout <<"Next Buffer extends for padding the length to "<<evlen<< endl;
-		          }
+		   DOUT3(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
 
-
-		   //unsigned subeventlen=evlen/sizeof(uint16_t);
 		   unsigned id = hev->GetId();
 		   unsigned evcount=hev->GetSeqNr();
 		   // assign and check event/subevent header for wrapper structures:
@@ -91,6 +92,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		         dostop = true;
 		         break;
 		      }
+		   mbs::EventHeader* mev=miter.evnt();
 		   usedsize+=sizeof(mbs::EventHeader);
 		   if (!miter.NewSubevent(evlen))
 		      {
@@ -103,9 +105,11 @@ void hadaq::MbsTransmitterModule::retransmit()
 		    mbs::SubeventHeader* msub=miter.subevnt();
 		    msub->fFullId = id; // TODO: configure mbs ids from parameters
 		    memcpy(miter.rawdata(),hev,evlen);
+		    usedsize+=evlen;
 		    miter.FinishSubEvent(evlen);
 		    miter.FinishEvent();
-		    usedsize+=evlen;
+		    mev->SetSubEventsSize(evlen+sizeof(mbs::SubeventHeader));
+		    DOUT3(("retransmit - used size %d",usedsize));
 		} // while hiter.NextEvent()
 
 
@@ -155,19 +159,39 @@ void hadaq::MbsTransmitterModule::ProcessTimerEvent(dabc::Timer* timer)
 // This one will transmit file to mbs transport server:
 extern "C" void InitHadaqMbsTransmitter()
 {
-   dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "Transmitter", "WorkerThrd");
+   dabc::mgr.CreateMemoryPool("Pool",65536,100); // size and buf number should be specified in xml file
 
-   dabc::mgr.CreateTransport("Transmitter/Input", hadaq::typeHldInput, "WorkerThrd");
+   dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "HldServer", "WorkerThrd");
 
-   dabc::mgr.CreateTransport("Transmitter/Output", mbs::typeServerTransport, "MbsTransport");
+
+
+   dabc::mgr.CreateTransport("HldServer/Input", hadaq::typeHldInput, "WorkerThrd");
+
+   dabc::mgr.CreateTransport("HldServer/Output", mbs::typeServerTransport, "MbsTransport");
 }
+
+
+extern "C" void InitHadaqMbsConverter()
+{
+   dabc::mgr.CreateMemoryPool("Pool",65536,100); // size and buf number should be specified in xml file
+
+   dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "HldConv", "WorkerThrd");
+
+
+
+   dabc::mgr.CreateTransport("HldConv/Input", hadaq::typeHldInput, "WorkerThrd");
+
+   dabc::mgr.CreateTransport("HldConv/Output", mbs::typeLmdOutput, "MbsTransport");
+}
+
+
 
 // this will serve data at mbs transport/stream, as received on one udp (daq_netmem like) input
 extern "C" void InitHadaqMbsServer()
 {
    dabc::mgr.CreateMemoryPool("Pool"); // size and buf number should be specified in xml file
 
-   dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "Server", "WorkerThrd");
+   dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "Repeater", "WorkerThrd");
 
    dabc::mgr.CreateTransport("Repeater/Input", hadaq::typeUdpInput, "UdpThrd");
 

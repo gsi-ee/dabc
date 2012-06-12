@@ -4,9 +4,9 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
-      <func value="InitHadaqMbsTransmitter"/>      
+      <func value="InitHadaqMbsConverter"/>      
     </Run>
-    <Module name="HldServer">
+    <Module name="HldConv">
         <BufferSize value="32768"/>
         <NumBuffers value="500"/>       
        <Port name="Input">
@@ -15,7 +15,8 @@
        </Port>
        <Port name="Output">
           <OutputQueueSize value="10"/>
-          <MbsServerKind value="Transport"/>
+          <MbsFileName value="xx12153171835.lmd"/>
+          <BufferSize value="65536"/>
         </Port>
      </Module>
   </Context>

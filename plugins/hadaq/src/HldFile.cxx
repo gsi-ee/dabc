@@ -30,6 +30,7 @@ hadaq::HldFile::HldFile(): fBuffer(0)
    fMode = mNone;
    fLastError = HLD__SUCCESS;
    fEventCount=0;
+   fBufsize=0;
 }
 
 hadaq::HldFile::~HldFile()
@@ -129,15 +130,15 @@ hadaq::HadTu* hadaq::HldFile::ReadElement(char* buffer, size_t len)
          len=sizeof(fBuffer);
       }
    else
-   {
-     target = buffer;
-   }
-   hadaq::HadTu* hadtu =(hadaq::HadTu*) target;
+      {
+        target = buffer;
+      }
    // first read next event header:
    if(len<sizeof(hadaq::HadTu))
       {
          // output buffer is full, do not try to read next event.
-         DOUT1(("Next hadtu header 0x%x bigger than read buffer limit 0x%x", sizeof(hadaq::HadTu), len));
+         DOUT3(("Next hadtu header 0x%x bigger than read buffer limit 0x%x", sizeof(hadaq::HadTu), len));
+         fLastError=HLD__FULLBUF;
          return 0;
       }
 
@@ -145,34 +146,30 @@ hadaq::HadTu* hadaq::HldFile::ReadElement(char* buffer, size_t len)
    ReadFile(target, sizeof(hadaq::HadTu));
    if (fLastError == HLD__EOFILE)
       {
-         Close();
+         //Close();
          return 0;
       }
       // then read rest of buffer from file
+   hadaq::HadTu* hadtu =(hadaq::HadTu*) target;
    size_t evlen=hadtu->GetSize();
-      // account padding of events to 8 byte boundaries:
-    while((evlen % 8) !=0)
-       {
-          evlen++;
-          //cout <<"Next Buffer extends for padding the length to "<<evlen<< endl;
-       }
-   //cout <<"Next Buffer reads event of size:"<<evlen<< endl;
+   DOUT3(("ReadElement reads event of size: %d",evlen));
    if(evlen > len)
       {
-        DOUT1(("Next event length 0x%x bigger than read buffer limit 0x%x", evlen, len));
-        // TODO: rewind file pointer here to begin of hadtu header
+        DOUT3(("Next hadtu element length 0x%x bigger than read buffer limit 0x%x", evlen, len));
+        // rewind file pointer here to begin of hadtu header
         if(!RewindFile(-1 * sizeof(hadaq::HadTu)))
            {
               DOUT1(("Error on rewinding header position of file %s ", fName.c_str() ));              fLastError = HLD__FAILURE;
-              Close();
+              //Close();
            }
+        fLastError=HLD__FULLBUF;
         return 0;
       }
    ReadFile(target+sizeof(hadaq::HadTu), evlen - sizeof(hadaq::HadTu));
    if (fLastError == HLD__EOFILE)
       {
          DOUT1(("Found EOF before reading full element of length 0x%x! Maybe truncated or corrupt file?", evlen));
-         Close();
+         //Close();
          return 0;
       }
    return (hadaq::HadTu*) target;
@@ -186,24 +183,28 @@ unsigned int hadaq::HldFile::ReadBuffer(void* buf, uint32_t& bufsize)
    }
 
 #ifdef HLD_READBUFFER_ELEMENTWISE
-   // TODO: prevent event spanning over dabc buffers?
-   // perhaps we should do loop over events here
+   // prevent event spanning over dabc buffers?
+   // we do loop over complete events here
    char* cursor = (char*) buf;
    size_t rest=bufsize;
-   hadaq::HadTu* nextunit=0;
-   while((nextunit=ReadElement(cursor,rest))!=0)
-      {
-         cursor+=nextunit->GetSize();
-         rest-=nextunit->GetSize();
-         fBufsize+=nextunit->GetSize();
+   fBufsize=0; // only count bytes read from the actual function call
+   hadaq::HadTu* thisunit=0;
+   while((thisunit=ReadElement(cursor,rest))!=0)
+    {
+         size_t diff=thisunit->GetSize();
+         cursor+=diff;
+         rest-=diff;
+         fBufsize+=diff;
          fEventCount++;
+         // the above 2 printouts give somehow wrong shifted argument values. a bug?
+         //DOUT1(("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff));
+         //printf("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x\n", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff);
+         //std::cout<< "HldFile::ReadBuffer has read "<< fEventCount <<"elements,  hadtu:"<< (unsigned) thisunit<<", cursor:"<< (unsigned) cursor <<" rest:"<<(unsigned) rest<<" diff:"<< (unsigned) diff<<std::endl;
       }
 
    if (fLastError == HLD__EOFILE)
       {
-         DOUT1(("Read %d HadTu elements from file %s", fEventCount, fName.c_str()));
-         Close();
-         return 0;
+         DOUT1(("Read %d HadTu elements (%d bytes) from file %s", fEventCount, fBufsize, fName.c_str()));
       }
    return fBufsize;
 
@@ -228,17 +229,17 @@ hadaq::Event* hadaq::HldFile::ReadEvent()
 
 
 
-std::streamsize hadaq::HldFile::ReadFile(char* dest, size_t len)
+size_t hadaq::HldFile::ReadFile(char* dest, size_t len)
 {
    fFile->read(dest, len);
    if(fFile->eof() || !fFile->good())
          {
                fLastError = HLD__EOFILE;
                DOUT1(("End of input file %s", fName.c_str()));
-               return 0;
+               //return 0;
          }
    //cout <<"ReadFile reads "<< (hex) << fFile->gcount()<<" bytes to 0x"<< (hex) <<(int) dest<< endl;
-   return fFile->gcount();
+   return (size_t) fFile->gcount();
 }
 
 bool hadaq::HldFile::RewindFile(int offset)

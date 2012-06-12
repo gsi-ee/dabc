@@ -49,9 +49,10 @@ hadaq::HldInput::~HldInput()
 bool hadaq::HldInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
    fFileName = wrk.Cfg(hadaq::xmlFileName, cmd).AsStdStr(fFileName);
+   //fFileName ="/data.local1/adamczew/hld/xx12153171835.hld";
    fBufferSize = wrk.Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
-
-   // DOUT1(("BufferSize = %d", fBufferSize));
+   fBufferSize /=2; // use half of pool size for raw input buffers, provides headroom for mbs wrappers
+   DOUT1(("BufferSize = %d, filename=%s", fBufferSize,fFileName.c_str()));
 
    return Init();
 }
@@ -94,7 +95,7 @@ bool hadaq::HldInput::OpenNextFile()
       EOUT(("Cannot open file %s for reading, errcode:%u", nextfilename, fFile.LastError()));
    else {
       fCurrentFileName = nextfilename;
-      DOUT1(("Open lmd file %s for reading", fCurrentFileName.c_str()));
+      DOUT1(("Open hld file %s for reading", fCurrentFileName.c_str()));
    }
 
    fFilesList->DeleteChild(0);
@@ -123,35 +124,37 @@ unsigned hadaq::HldInput::Read_Size()
 
 unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
 {
-   unsigned numev = 0;
-   uint32_t bufsize = 0;
-
+   buf.SetTypeId(hadaq::mbt_HadaqEvents);
+   uint32_t readbytes = 0;
+   uint32_t filestat = HLD__SUCCESS;
+   char* dest = (char*) buf.SegmentPtr(0); // TODO: read into segmented buffer
+   uint32_t bufsize = buf.SegmentSize(0);
+   if(bufsize>fBufferSize ) bufsize=fBufferSize;
+   bool nextfile = false;
    do {
 
-       if (!fFile.IsReadMode()) return dabc::di_Error;
-
-       // TODO: read into segmented buffer
-       bufsize = buf.SegmentSize(0);
-
-       numev = fFile.ReadBuffer(buf.SegmentPtr(0), bufsize);
-
-       if (numev==0) {
-          DOUT3(("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf.GetTotalSize()));
-          if (!OpenNextFile()) return dabc::di_EndOfStream;
-       }
-
-   } while (numev==0);
-
-   fCurrentRead += bufsize;
-   buf.SetTotalSize(bufsize);
-   // here all stuff is related to hadtu format
-
-
-
-
-   buf.SetTypeId(hadaq::mbt_HadaqEvents);
-
-
+      if (!fFile.IsReadMode())
+         return dabc::di_Error;
+      readbytes = fFile.ReadBuffer(dest, bufsize);
+      fCurrentRead += readbytes;
+      filestat = fFile.LastError();
+      if (filestat == HLD__FULLBUF) {
+         DOUT3(("File %s has filled dabc buffer, readbytes:%u, bufsize: %u, allbytes: %u", fCurrentFileName.c_str(), readbytes, buf.GetTotalSize(),fCurrentRead ));
+         break;
+      } else if (filestat == HLD__EOFILE) {
+         DOUT1(("File %s has EOF for buffer, readbytes:%u, bufsize %u", fCurrentFileName.c_str(), readbytes, buf.GetTotalSize()));
+         if (!OpenNextFile()) {
+            buf.SetTotalSize(readbytes);
+            return dabc::di_EndOfStream;
+         }
+         nextfile = true;
+      }
+      dest += readbytes;
+      bufsize -= readbytes;
+      if (bufsize == 0)
+         break;
+   } while (nextfile);
+   buf.SetTotalSize(readbytes);
    return dabc::di_Ok;
 }
 

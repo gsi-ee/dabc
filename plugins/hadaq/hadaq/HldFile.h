@@ -15,16 +15,6 @@
 #define HADAQ_HldFile
 
 
-#define HLD__SUCCESS        0
-#define HLD__FAILURE        1
-#define HLD__CLOSE_ERR      3
-#define HLD__NOFILE      2
-#define HLD__NOHLDFILE   4
-#define HLD__EOFILE      5
-//#define PUTHLD__FILE_EXIST  101
-//#define PUTHLD__TOOBIG      102
-//#define PUTHLD__OPEN_ERR    103
-//#define PUTHLD__EXCEED      104
 
 #include <stdint.h>
 #include <fstream>
@@ -64,10 +54,10 @@ namespace hadaq {
          hadaq::Event* fHadEvent; //!
 
          /* actual size of bytes read into buffer most recently*/
-         std::streamsize fBufsize; //!
+         //std::streamsize fBufsize; //!
+         size_t fBufsize;
 
-
-         std::streamsize ReadFile(char* dest, size_t len);
+         size_t ReadFile(char* dest, size_t len);
 
          bool RewindFile(int offset);
 

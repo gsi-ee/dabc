@@ -16,6 +16,22 @@
 
 #include <fstream>
 #include <stdint.h>
+//#include "dabc/logging.h"
+
+#define HLD__SUCCESS        0
+#define HLD__FAILURE        1
+#define HLD__CLOSE_ERR      3
+#define HLD__NOFILE      2
+#define HLD__NOHLDFILE   4
+#define HLD__EOFILE      5
+#define HLD__FULLBUF      6
+//#define PUTHLD__FILE_EXIST  101
+//#define PUTHLD__TOOBIG      102
+//#define PUTHLD__OPEN_ERR    103
+//#define PUTHLD__EXCEED      104
+
+
+
 
 namespace hadaq {
 
@@ -79,7 +95,14 @@ typedef uint32_t EventNumType;
 
     size_t GetSize()
     {
-       return (size_t) (Value(&tuSize));
+       size_t hedsize=(size_t) (Value(&tuSize));
+       // account padding of events to 8 byte boundaries:
+       while((hedsize % 8) !=0)
+             {
+                hedsize++;
+                //DOUT0(("hadtu GetSize() extends for padding the length to %d",hedsize));
+             }
+       return hedsize;
     }
 
     void SetSize( size_t bytes)
