@@ -42,13 +42,7 @@ dabc::Transport* hadaq::Factory::CreateTransport(dabc::Reference ref, const char
    if (strcmp(typ, hadaq::typeUdpInput)==0)
       {
        // FIXME!
-        int nport= portref.Cfg(hadaq::xmlUdpPort, cmd).AsInt(0);
-        std::string hostname = portref.Cfg(hadaq::xmlUdpAddress, cmd).AsStdStr("0.0.0.0");
-        int fd = dabc::SocketThread::StartUdp(nport, nport, nport);
-        //fd = dabc::SocketThread::ConnectUdp(fd, hostname.c_str(), nport);
-        if (fd<=0) return 0;
-        DOUT2(("Create data socket %d for port %d connected to host %s", fd, nport, hostname.c_str()));
-        return (new hadaq::UdpDataSocket(portref, fd));
+        return (new hadaq::UdpDataSocket(portref));
       }
    else
       return dabc::Factory::CreateTransport(portref, typ, cmd);

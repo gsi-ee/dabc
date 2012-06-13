@@ -19,13 +19,15 @@
 #include "dabc/Port.h"
 #include "dabc/version.h"
 
+#include <errno.h>
+
 #include <math.h>
 
 // FIXME for hadtu
-const unsigned UDP_DATA_SIZE = ((sizeof(hadaq::UdpDataPacketFull) - sizeof(hadaq::UdpDataPacket)) / 6) * 6;
+//const unsigned UDP_DATA_SIZE = ((sizeof(hadaq::UdpDataPacketFull) - sizeof(hadaq::UdpDataPacket)) / 6) * 6;
 
-hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port, int fd) :
-   dabc::SocketWorker(fd),
+hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
+   dabc::SocketWorker(),
    dabc::Transport(port.Ref()),
    dabc::MemoryPoolRequester(),
    //fDev(dev),
@@ -41,32 +43,34 @@ hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port, int fd) :
    fTgtBufIndx = 0;
    fTgtShift = 0;
    fTgtPtr = 0;
-   fTgtCheckGap = false;
+   //fTgtCheckGap = false;
 
-   fTgtNextId = 0;
-   fTgtTailId = 0;
+//   fTgtNextId = 0;
+//   fTgtTailId = 0;
 
    fBufferSize = 0;
-   fTransferWindow = 40;
+   //fTransferWindow = 40;
 
    //rocNumber = 0;
-   daqState = daqInit;
-   daqCheckStop = false;
+   //daqState = daqInit;
+   //daqCheckStop = false;
 
    fTotalRecvPacket = 0;
-   fTotalResubmPacket = 0;
+   //fTotalResubmPacket = 0;
 
    //lastRequestTm.Reset();
 
    fFlushTimeout = .1;
    //fLastDelivery.Reset();
 
+
+
    ConfigureFor((dabc::Port*) port());
 }
 
 hadaq::UdpDataSocket::~UdpDataSocket()
 {
-   ResetDaq();
+   //ResetDaq();
 
 }
 
@@ -80,34 +84,27 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
    fPool = port->GetMemoryPool();
    fReadyBuffers = 0;
 
-   fTgtCheckGap = false;
+   //fTgtCheckGap = false;
 
-   // one cannot have too much resend requests
-   //fResend.Allocate(port->InputQueueCapacity() * fBufferSize / UDP_DATA_SIZE);
+   fMTU=port->Cfg(hadaq::xmlMTUsize).AsInt(63 * 1024);
 
-   // put here additional socket options of nettrans:
-   ////////JAM this is copy of hadaq nettrans.c how to set this?
-   //         int rcvBufLenReq = 1 * (1 << 20);
-   //            int rcvBufLenRet;
-   //            size_t rcvBufLenLen = (size_t) sizeof(rcvBufLenReq);
-   //
-   //            if (setsockopt(   fSocket, SOL_SOCKET, SO_RCVBUF, &rcvBufLenReq, rcvBufLenLen) == -1) {
-   //               syslog(LOG_WARNING, "setsockopt(..., SO_RCVBUF, ...): %s", strerror(errno));
-   //            }
-   //
-   //            if (getsockopt(   fSocket, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, (socklen_t *) &rcvBufLenLen) == -1) {
-   //               syslog(LOG_WARNING, "getsockopt(..., SO_RCVBUF, ...): %s", strerror(errno));
-   //            }
-   //            if (rcvBufLenRet < rcvBufLenReq) {
-   //               syslog(LOG_WARNING, "UDP receive buffer length (%d) smaller than requested buffer length (%d)", rcvBufLenRet,
-   //                     rcvBufLenReq);
-   //            }
-   //
+   int nport= port->Cfg(hadaq::xmlUdpPort).AsInt(0);
+   std::string hostname = port->Cfg(hadaq::xmlUdpAddress).AsStdStr("0.0.0.0");
+   int rcvBufLenReq = port->Cfg(hadaq::xmlUdpBuffer).AsInt(1 * (1 << 20));
+
+
+   if(OpenUdp(nport, nport, nport, rcvBufLenReq)<0)
+      {
+          EOUT(("hadaq::UdpDataSocket:: failed to open udp port %d with receive buffer %d", nport,rcvBufLenReq));
+          CloseSocket();
+          OnConnectionClosed();
+          return;
+      }
 
 
 
 
-   DOUT2(("hadaq::UdpDataSocket:: Pool = %p buffer size = %u", fPool(), fBufferSize));
+   DOUT0(("hadaq::UdpDataSocket:: Open udp port %d with rcvbuf %d, dabc buffer size = %u", nport, rcvBufLenReq, fBufferSize));
 }
 
 void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
@@ -118,17 +115,17 @@ void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
          // this is required for DABC 2.0 to again enable read event generation
          SetDoingInput(true);
 
-         void *tgt = fTgtPtr;
-         if (tgt==0) tgt = fTempBuf;
+//         void *tgt = fTgtPtr;
+//         if (tgt==0) tgt = fTempBuf;
 
-         ssize_t len = DoRecvBufferHdr(&fTgtHdr, sizeof(UdpDataPacket),
-                                        tgt, UDP_DATA_SIZE);
+//         ssize_t len = DoRecvBufferHdr(&fTgtHdr, sizeof(UdpDataPacket),
+//                                        tgt, UDP_DATA_SIZE);
 //         if (len>0) {
 //            fTotalRecvPacket++;
 ////            DOUT0(("READ Packet %d len %d", ntohl(fTgtHdr.pktid), len));
 //            AddDataPacket(len, tgt);
 //         }
-          len++;
+//          len++;
          // TODO: implement reading data from socket with
          //DoRecvBuffer(void* buf, ssize_t len)
          // after figuring out the length of next hadtu packet with
@@ -428,7 +425,7 @@ void hadaq::UdpDataSocket::AddBuffersToQueue(bool checkanyway)
 
 double hadaq::UdpDataSocket::ProcessTimeout(double)
 {
-   if (!daqActive()) return -1;
+   //if (!daqActive()) return -1;
 
 //   if (fTgtBuf == 0)
 //      AddBuffersToQueue(true);
@@ -447,35 +444,35 @@ double hadaq::UdpDataSocket::ProcessTimeout(double)
 }
 
 
-void hadaq::UdpDataSocket::ResetDaq()
-{
-//   daqCheckStop = false;
-//   daqState = daqInit;
-//
-//   fTransportBuffers = 0;
-//
-//   fTgtBuf = 0;
-//   fTgtBufIndx = 0;
-//   fTgtShift = 0;
-//   fTgtPtr = 0;
-//
-//   fTgtNextId = 0;
-//   fTgtTailId = 0;
-//   fTgtCheckGap = false;
-//
-//   lastRequestId = 0;
-//   lastSendFrontId = 0;
-//   lastRequestTm.Reset();
-//   lastRequestSeen = true;
-//
-//   fResend.Reset();
-//
-//   dabc::LockGuard lock(fQueueMutex);
-//   fQueue.Cleanup();
-//   fReadyBuffers = 0;
-//
-//   fLastDelivery.Reset();
-}
+//void hadaq::UdpDataSocket::ResetDaq()
+//{
+////   daqCheckStop = false;
+////   daqState = daqInit;
+////
+////   fTransportBuffers = 0;
+////
+////   fTgtBuf = 0;
+////   fTgtBufIndx = 0;
+////   fTgtShift = 0;
+////   fTgtPtr = 0;
+////
+////   fTgtNextId = 0;
+////   fTgtTailId = 0;
+////   fTgtCheckGap = false;
+////
+////   lastRequestId = 0;
+////   lastSendFrontId = 0;
+////   lastRequestTm.Reset();
+////   lastRequestSeen = true;
+////
+////   fResend.Reset();
+////
+////   dabc::LockGuard lock(fQueueMutex);
+////   fQueue.Cleanup();
+////   fReadyBuffers = 0;
+////
+////   fLastDelivery.Reset();
+//}
 
 void hadaq::UdpDataSocket::AddDataPacket(int len, void* tgt)
 {
@@ -740,4 +737,95 @@ int hadaq::UdpDataSocket::GetParameter(const char* name)
 //   if (strcmp(name, hadaq::xmlTransportKind)==0) return roc::kind_UDP;
 
    return dabc::Transport::GetParameter(name);
+}
+
+
+ssize_t hadaq::UdpDataSocket::DoRecvGeneric(void* buf, ssize_t len)
+{
+   ssize_t res=0;
+   // use recvfrom
+   //ssize_t res = recv(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
+
+//   NetTrans *my
+
+//   typedef struct NetTransS {
+//      char name[512];
+//      NetTransType type;
+//      union {
+//         struct sockaddr_in sa;
+//      } spec;
+//      size_t mtuSize;
+//      int fd;
+//      void *pkt;
+//           void *pkt_null;   /* pointer to a mem region for discarded packets */
+//      size_t pktSize;
+//      size_t offset;
+//      unsigned long *pktsSent;
+//      unsigned long *msgsSent;
+//      unsigned long *bytesSent;
+//      unsigned long *pktsReceived;
+//      unsigned long *pktsDiscarded;
+//      unsigned long *msgsReceived;
+//      unsigned long *msgsDiscarded;
+//      unsigned long *bytesReceived;
+//   } NetTrans;
+
+   //size_t socklen = (size_t) sizeof(my->spec.sa);
+   //retVal = recvfrom(my->fd, my->pkt, my->mtuSize, 0, &my->spec.sa, (socklen_t *) &socklen);
+
+
+
+   if (res==0) OnConnectionClosed(); else
+   if (res<0) {
+     if (errno!=EAGAIN) OnSocketError(errno, "When recv()");
+   }
+
+   return res;
+}
+
+
+int hadaq::UdpDataSocket::OpenUdp(int& portnum, int portmin, int portmax, int& rcvBufLenReq)
+{
+
+   int fd = socket(PF_INET, SOCK_DGRAM, 0);
+   if (fd<0) return -1;
+   SetSocket(fd);
+   int numtests = 1; // at least test value of portnum
+   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
+
+   if (dabc::SocketThread::SetNonBlockSocket(fd))
+      for(int ntest=0;ntest<numtests;ntest++) {
+         if ((ntest==0) && (portnum<0)) continue;
+         if (ntest>0) portnum = portmin - 1 + ntest;
+
+         memset(&fSockAddr, 0, sizeof(fSockAddr));
+         fSockAddr.sin_family = AF_INET;
+         fSockAddr.sin_port = htons(portnum);
+
+         if (rcvBufLenReq != 0) {
+            // for hadaq application: set receive buffer length _before_ bind:
+            //         int rcvBufLenReq = 1 * (1 << 20);
+            int rcvBufLenRet;
+            size_t rcvBufLenLen = (size_t) sizeof(rcvBufLenReq);
+            if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvBufLenReq,
+                  rcvBufLenLen) == -1) {
+               EOUT(( "setsockopt(..., SO_RCVBUF, ...): %s", strerror(errno)));
+            }
+
+            if (getsockopt(fd , SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, (socklen_t *) &rcvBufLenLen) == -1) {
+               EOUT(( "getsockopt(..., SO_RCVBUF, ...): %s", strerror(errno)));
+            }
+            if (rcvBufLenRet < rcvBufLenReq) {
+               EOUT(
+                     ("UDP receive buffer length (%d) smaller than requested buffer length (%d)", rcvBufLenRet, rcvBufLenReq));
+               rcvBufLenReq=rcvBufLenRet;
+            }
+         }
+
+
+         if (!bind(fd, (struct sockaddr *)&fSockAddr, sizeof(fSockAddr))) return fd;
+      }
+   CloseSocket();
+   //close(fd);
+   return -1;
 }

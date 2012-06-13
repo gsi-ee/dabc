@@ -42,20 +42,20 @@
 
 namespace hadaq {
 
-   // TODO: put here hadtu header structure of packet
-   struct UdpDataPacket
-      {
-         uint32_t pktid;
-         uint32_t lastreqid;
-         uint32_t nummsg;
-      // here all messages should follow
-      };
-
-      struct UdpDataPacketFull : public UdpDataPacket
-      {
-         uint8_t msgs[MAX_UDP_PAYLOAD - sizeof(struct UdpDataPacket)];
-      };
-
+//   // TODO: put here hadtu header structure of packet
+//   struct UdpDataPacket
+//      {
+//         uint32_t pktid;
+//         uint32_t lastreqid;
+//         uint32_t nummsg;
+//      // here all messages should follow
+//      };
+//
+//      struct UdpDataPacketFull : public UdpDataPacket
+//      {
+//         uint8_t msgs[MAX_UDP_PAYLOAD - sizeof(struct UdpDataPacket)];
+//      };
+//
 
 
 
@@ -84,36 +84,13 @@ namespace hadaq {
                           daqFails        // error state
                         };
 
-         struct ResendInfo {
-
-            uint32_t        pktid;    // id of packet
-            dabc::TimeStamp lasttm;   // when request was send last time
-            int             numtry;   // how many requests was send
-            dabc::Buffer*   buf;      // buffer pointer
-            unsigned        bufindx;  // index of buffer in the queue
-            char*           ptr;      // target location
-
-            ResendInfo(unsigned id = 0) :
-               pktid(id),
-               lasttm(),
-               numtry(0),
-               buf(0),
-               bufindx(0),
-               ptr(0) {}
-
-            ResendInfo(const ResendInfo& src) :
-               pktid(src.pktid),
-               lasttm(src.lasttm),
-               numtry(src.numtry),
-               buf(src.buf),
-               bufindx(src.bufindx),
-               ptr(src.ptr) {}
-
-         };
 
 
          // FIXME: one should not use pointers, only while device and transport are in same thread, one can do this
          //UdpDevice*         fDev;
+
+         struct sockaddr_in fSockAddr;
+         unsigned           fMTU;
          dabc::Mutex        fQueueMutex;
          dabc::BuffersQueue fQueue;
 
@@ -123,23 +100,23 @@ namespace hadaq {
          dabc::Buffer*      fTgtBuf;   // pointer on buffer, where next portion can be received, use pointer while it is buffer from the queue
          unsigned           fTgtBufIndx; // queue index of target buffer - use fQueue.Item(fReadyBuffers + fTgtBufIndx)
          unsigned           fTgtShift; // current shift in the buffer
-         UdpDataPacket      fTgtHdr;   // place where data header should be received
+         HadTu              fTgtHdr;   // place where data header should be received
          char*              fTgtPtr;   // location where next data should be received
-         uint32_t           fTgtNextId; // expected id of next packet
-         uint32_t           fTgtTailId; // first id of packet which can not be dropped on ROC side
-         bool               fTgtCheckGap;  // true if one should check gaps
+//         uint32_t           fTgtNextId; // expected id of next packet
+//         uint32_t           fTgtTailId; // first id of packet which can not be dropped on ROC side
+//         bool               fTgtCheckGap;  // true if one should check gaps
+//
+//         char               fTempBuf[2000]; // buffer to recv packet when no regular place is available
 
-         char               fTempBuf[2000]; // buffer to recv packet when no regular place is available
+//         dabc::Queue<ResendInfo>  fResend;
 
-         dabc::Queue<ResendInfo>  fResend;
-
-         EDaqState          daqState;
-         bool               daqCheckStop;
+//         EDaqState          daqState;
+//         bool               daqCheckStop;
 
          //UdpDataPacketFull  fRecvBuf;
 
          unsigned           fBufferSize;
-         unsigned           fTransferWindow;
+         //unsigned           fTransferWindow;
 
 
          dabc::MemoryPoolRef fPool;  // reference on the pool, reference should help us to preserve pool as long as we are using it
@@ -152,7 +129,7 @@ namespace hadaq {
 //         unsigned           rocNumber;
 
          uint64_t           fTotalRecvPacket;
-         uint64_t           fTotalResubmPacket;
+//         uint64_t           fTotalResubmPacket;
 
          double             fFlushTimeout;  // after such timeout partially filled packed will be delivered
          //dabc::TimeStamp    fLastDelivery;  // time of last delivery
@@ -161,7 +138,7 @@ namespace hadaq {
 
          //MessageFormat      fFormat;
 
-         inline bool daqActive() const { return (daqState == daqRuns); }
+         //inline bool daqActive() const { return (daqState == daqRuns); }
 
          virtual bool ReplyCommand(dabc::Command cmd);
 
@@ -180,7 +157,7 @@ namespace hadaq {
          void CompressBuffer(dabc::Buffer& buf);
          void CheckReadyBuffers(bool doflush = false);
 
-         void ResetDaq();
+         //void ResetDaq();
 
          //bool prepareForSuspend();
 
@@ -189,8 +166,13 @@ namespace hadaq {
          void setFlushTimeout(double tmout) { fFlushTimeout = tmout; }
          double getFlushTimeout() const {  return fFlushTimeout; }
 
+         int OpenUdp(int& portnum, int portmin, int portmax, int & rcvBufLenReq);
+
+         /* use recvfrom() as in hadaq nettrans::recvGeneric*/
+         ssize_t DoRecvGeneric(void* buf, ssize_t len);
+
       public:
-         UdpDataSocket(dabc::Reference port, int fd);
+         UdpDataSocket(dabc::Reference port);
          virtual ~UdpDataSocket();
 
          virtual void ProcessEvent(const dabc::EventId&);

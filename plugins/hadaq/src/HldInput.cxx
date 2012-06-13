@@ -151,7 +151,6 @@ unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
       } else if (filestat == HLD__EOFILE) {
          DOUT1(("File %s has EOF for buffer, readbytes:%u, bufsize %u, allbytes: %u", fCurrentFileName.c_str(), readbytes, buf.GetTotalSize(),fCurrentRead));
          if (!OpenNextFile()) {
-            DOUT1(("End of Input stream, suspend application until ctrl-c ..."));
             fLastBuffer=true; // delay end of stream to still get last read contents
             break;
          }

@@ -45,6 +45,9 @@ const char* hadaq::xmlFileName          = "HadaqFileName";
 const char* hadaq::xmlSizeLimit         = "HadaqFileSizeLimit";
 const char* hadaq::xmlUdpAddress        = "HadaqUdpSender";
 const char* hadaq::xmlUdpPort           = "HadaqUdpPort";
+const char* hadaq::xmlUdpBuffer           = "HadaqUdpBuffer";
+const char* hadaq::xmlMTUsize           = "HadaqUdpMTU";
+
 
 //const char* hadaq::xmlServerKind        = "HadaqServerKind";
 

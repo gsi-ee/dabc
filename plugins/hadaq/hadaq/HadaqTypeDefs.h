@@ -386,7 +386,8 @@ typedef uint32_t EventNumType;
    extern const char* xmlSizeLimit;
    extern const char* xmlUdpAddress;
    extern const char* xmlUdpPort;
-
+   extern const char* xmlUdpBuffer;
+   extern const char* xmlMTUsize;
 
 };
 

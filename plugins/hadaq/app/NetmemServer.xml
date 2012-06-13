@@ -20,6 +20,7 @@ This is example how repeater for any kind of MBS server can be created.
        <Port name="Input">
           <HadaqUdpSender value="0.0.0.0"/>
           <HadaqUdpPort value="10101"/>
+          <HadaqUdpBuffer value="1000000"/>
        </Port>
        <Port name="Output">
           <MbsServerKind value="Stream"/>
