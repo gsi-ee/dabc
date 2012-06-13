@@ -51,7 +51,6 @@ hadaq::HldInput::~HldInput()
 bool hadaq::HldInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
    fFileName = wrk.Cfg(hadaq::xmlFileName, cmd).AsStdStr(fFileName);
-   //fFileName ="/data.local1/adamczew/hld/xx12153171835.hld";
    fBufferSize = wrk.Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
    fBufferSize /=2; // use half of pool size for raw input buffers, provides headroom for mbs wrappers
    DOUT1(("BufferSize = %d, filename=%s", fBufferSize,fFileName.c_str()));
@@ -118,9 +117,13 @@ bool hadaq::HldInput::CloseFile()
 unsigned hadaq::HldInput::Read_Size()
 {
    // get size of the buffer which should be read from the file
-   //if(fLastBuffer) return dabc::di_EndOfStream;
-   if (!fFile.IsReadMode())
-      if (!OpenNextFile()) return dabc::di_EndOfStream;
+   if(fLastBuffer)
+   {
+      //std::cout <<":HldInput::Read_Size() has last buffer flag" << std::endl;
+      return fBufferSize; // need to avoid that we open file again. end of stream leads here to aloop
+   }
+      if (!fFile.IsReadMode())
+         if (!OpenNextFile()) return dabc::di_EndOfStream;
 
    return fBufferSize;
 }
@@ -151,7 +154,6 @@ unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
             DOUT1(("End of Input stream, suspend application until ctrl-c ..."));
             fLastBuffer=true; // delay end of stream to still get last read contents
             break;
-            //return dabc::di_EndOfStream;
          }
          nextfile = true;
       }

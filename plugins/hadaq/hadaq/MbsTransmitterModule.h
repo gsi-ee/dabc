@@ -31,8 +31,6 @@ namespace hadaq {
 
       protected:
 
-         bool  fReconnect; // indicate that module should try to reconnect input rather than stop execution
-
          void retransmit();
 
       public:
@@ -42,11 +40,6 @@ namespace hadaq {
 
          virtual void ProcessOutputEvent(dabc::Port*) { retransmit(); }
 
-         virtual void ProcessDisconnectEvent(dabc::Port* port);
-
-         virtual void ProcessTimerEvent(dabc::Timer* timer);
-
-         virtual void BeforeModuleStart();
    };
 
 }
