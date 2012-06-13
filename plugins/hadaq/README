@@ -2,29 +2,37 @@
 ****** DABC plugin for hadaq 
 ****** (originally HADES collaboration DAQ and data format)
 *        Joern Adamczewski-Musch, j.adamczewski@gsi.de
-* Development Version 0.01 - 06-Jun-2012
-   : design of classes and first successful compilation
-
+* Version 0.02 - 13-Jun-2012
+   : First working with HldConverter and HldServer applications.
+   
 * Components:
-   * HldFile - input and output to hld file format
-   * HldInput - read hadtu format from file
-   * HldOutput- write hadtu format to file
-   * UdpDataSocket - receive hadtu packets from trb frontend (single stream).
-   * MbsTransmitterModule - wrap hadtu format into mbs event container
+   * HldFile - input (OK) and output (TODO) of hld file format
+   * HldInput - (OK) read hadtu format from file 
+   * HldOutput- (TODO) write hadtu format to file 
+   * UdpDataSocket - (TODO).receive hadtu packets from trb frontend (single stream)
+   * MbsTransmitterModule - (OK) wrap hadtu format into mbs event container
                             output is mbs server or lmd file.
                             this format is used in mbs combiner and go4 unpacker 
-   * CombinerModule - do eventbuilding of hadtu format from several data streams.
+   * CombinerModule - (TODO) do eventbuilding of hadtu format from several data streams.
                       output is full event in hadtu format. This will be functionality of old daq_evtbuild.
                       
 * Applications:
- TODO
- 
+   * HldConverter.xml - (OK)
+         configuration to read hld file and write the hadtu events wrapped in mbs events to lmd file
+   * HldServer.xml -  (OK)
+         configuration to read hld file and serve the hadtu events as mbs events at transport server
+         dabc will wait 30 seconds before start processing, so go4 may connect to inspect data
+   * NetmemServer.xml -(TODO)
+         configuration to receive hadtu buffers at udp socket and serve them as mbs events at transport/stream server
+         
 * How to use:
  TODO 
  
 * Changes:     
-   * Development Version 0.01 - 06-Jun-2012
+   *  Version 0.01 - 06-Jun-2012
       : design of classes and first successful compilation.
+      Version 0.02 - 13-Jun-2012
+      : First working with HldConverter and HldServer applications.
    *  Under construction
    
 * DISCLAIMER:
