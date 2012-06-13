@@ -82,6 +82,7 @@ bool hadaq::HldFile::OpenRead(const char* fname, uint32_t buffersize)
 
 void hadaq::HldFile::Close()
 {
+   //std::cout<<"- hadaq::HldFile::Close()"<<std::endl;
    if (IsWriteMode()) {
       // implement close for writing here
       fLastError = HLD__FAILURE;
@@ -96,6 +97,7 @@ void hadaq::HldFile::Close()
    fName="";
    fMode = mNone;
    fEventCount=0;
+   fBufsize=0;
 }
 
 bool hadaq::HldFile::WriteElements(hadaq::Event* hdr, unsigned num)
@@ -181,40 +183,40 @@ unsigned int hadaq::HldFile::ReadBuffer(void* buf, uint32_t& bufsize)
       fLastError = HLD__FAILURE;
       return 0;
    }
-
+   unsigned int bytesread=0;
 #ifdef HLD_READBUFFER_ELEMENTWISE
    // prevent event spanning over dabc buffers?
    // we do loop over complete events here
    char* cursor = (char*) buf;
    size_t rest=bufsize;
-   fBufsize=0; // only count bytes read from the actual function call
    hadaq::HadTu* thisunit=0;
    while((thisunit=ReadElement(cursor,rest))!=0)
     {
          size_t diff=thisunit->GetSize();
          cursor+=diff;
          rest-=diff;
-         fBufsize+=diff;
+         bytesread+=diff;
          fEventCount++;
-         // the above 2 printouts give somehow wrong shifted argument values. a bug?
+         // FIXME: the above 2 printouts give somehow wrong shifted argument values. a bug?
          //DOUT1(("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff));
          //printf("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x\n", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff);
          //std::cout<< "HldFile::ReadBuffer has read "<< fEventCount <<"elements,  hadtu:"<< (unsigned) thisunit<<", cursor:"<< (unsigned) cursor <<" rest:"<<(unsigned) rest<<" diff:"<< (unsigned) diff<<std::endl;
       }
-
-   if (fLastError == HLD__EOFILE)
-      {
-         DOUT1(("Read %d HadTu elements (%d bytes) from file %s", fEventCount, fBufsize, fName.c_str()));
-      }
-   return fBufsize;
-
 #else
-   fBufsize=ReadFile( (char*) buf,bufsize);
-
-   if (fLastError == HLD__EOFILE) Close();
-   return (unsigned int) fBufsize;
+   bytesread=ReadFile( (char*) buf,bufsize);
 #endif
 
+   fBufsize+=bytesread;
+     if (fLastError == HLD__EOFILE)
+      {
+         // FIXME: upper line will crash at dabc::format in vsnprintf JAM
+         //DOUT1(("Read %d HadTu elements (%d bytes) from file %s", fEventCount, fBufsize, fName.c_str()));
+         // FIXME: following line shows 0 instead fBufsize
+         // DOUT1(("Read %d HadTu elements (%d bytes) from file", fEventCount, fBufsize));
+          std::cout<<"Read "<< fEventCount<<" HadTu elements ("<< fBufsize << " bytes) from file "<< fName.c_str()<<std::endl;
+      }
+
+     return bytesread;
 }
 
 bool hadaq::HldFile::WriteEvents(hadaq::Event* hdr, unsigned num)

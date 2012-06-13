@@ -56,6 +56,8 @@ namespace hadaq {
          hadaq::HldFile        fFile;
          std::string         fCurrentFileName;
          uint64_t            fCurrentRead;
+
+         bool fLastBuffer; // flag to remember that we reached last buffer after EOF
    };
 
 }

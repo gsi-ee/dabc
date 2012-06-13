@@ -68,9 +68,10 @@ void hadaq::MbsTransmitterModule::retransmit()
 		if (inbuf.GetTypeId() == dabc::mbt_EOF) {
 			DOUT1(("See EOF - stop module"));
 			dostop = true;
+			break;
 		}
 
-		// TODO: put here wrapping  of hadtu format into mbs subevent like in go4
+		// here wrapping  of hadtu format into mbs subevent like in go4 user source
 		dabc::Buffer outbuf = Pool()->TakeBuffer();
 		dabc::BufferSize_t usedsize=0;
 		mbs::WriteIterator miter(outbuf);
@@ -112,10 +113,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		    DOUT3(("retransmit - used size %d",usedsize));
 		} // while hiter.NextEvent()
 
-
-
-
-
+		if(dostop) break;
 		outbuf.SetTotalSize(usedsize);
 		outbuf.SetTypeId(mbs::mbt_MbsEvents);
 		Par("TransmitData").SetDouble(outbuf.GetTotalSize()/1024./1024);
@@ -181,7 +179,7 @@ extern "C" void InitHadaqMbsConverter()
 
    dabc::mgr.CreateTransport("HldConv/Input", hadaq::typeHldInput, "WorkerThrd");
 
-   dabc::mgr.CreateTransport("HldConv/Output", mbs::typeLmdOutput, "MbsTransport");
+   dabc::mgr.CreateTransport("HldConv/Output", mbs::typeLmdOutput, "WorkerThrd");
 }
 
 

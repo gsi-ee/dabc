@@ -21,6 +21,7 @@
 #include "dabc/FileIO.h"
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
+#include "dabc/DataTransport.h"
 
 #include "hadaq/HadaqTypeDefs.h"
 
@@ -32,7 +33,8 @@ hadaq::HldInput::HldInput(const char* fname, uint32_t bufsize) :
    fFilesList(0),
    fFile(),
    fCurrentFileName(),
-   fCurrentRead(0)
+   fCurrentRead(0),
+   fLastBuffer(false)
 {
 }
 
@@ -109,13 +111,14 @@ bool hadaq::HldInput::CloseFile()
    fFile.Close();
    fCurrentFileName = "";
    fCurrentRead = 0;
+   fLastBuffer=false;
    return true;
 }
 
 unsigned hadaq::HldInput::Read_Size()
 {
    // get size of the buffer which should be read from the file
-
+   //if(fLastBuffer) return dabc::di_EndOfStream;
    if (!fFile.IsReadMode())
       if (!OpenNextFile()) return dabc::di_EndOfStream;
 
@@ -124,6 +127,7 @@ unsigned hadaq::HldInput::Read_Size()
 
 unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
 {
+   if(fLastBuffer) return dabc::di_EndOfStream;
    buf.SetTypeId(hadaq::mbt_HadaqEvents);
    uint32_t readbytes = 0;
    uint32_t filestat = HLD__SUCCESS;
@@ -142,10 +146,12 @@ unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
          DOUT3(("File %s has filled dabc buffer, readbytes:%u, bufsize: %u, allbytes: %u", fCurrentFileName.c_str(), readbytes, buf.GetTotalSize(),fCurrentRead ));
          break;
       } else if (filestat == HLD__EOFILE) {
-         DOUT1(("File %s has EOF for buffer, readbytes:%u, bufsize %u", fCurrentFileName.c_str(), readbytes, buf.GetTotalSize()));
+         DOUT1(("File %s has EOF for buffer, readbytes:%u, bufsize %u, allbytes: %u", fCurrentFileName.c_str(), readbytes, buf.GetTotalSize(),fCurrentRead));
          if (!OpenNextFile()) {
-            buf.SetTotalSize(readbytes);
-            return dabc::di_EndOfStream;
+            DOUT1(("End of Input stream, suspend application until ctrl-c ..."));
+            fLastBuffer=true; // delay end of stream to still get last read contents
+            break;
+            //return dabc::di_EndOfStream;
          }
          nextfile = true;
       }
