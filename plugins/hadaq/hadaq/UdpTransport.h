@@ -31,38 +31,21 @@
 #include "dabc/MemoryPool.h"
 #endif
 
+#include <netinet/in.h>
+#include <sys/socket.h>
 
-//#include <list>
 
 #include "hadaq/HadaqTypeDefs.h"
 
-//#define UDP_PAYLOAD_OFFSET 42
-#define MAX_UDP_PAYLOAD 1472
-//#define MESSAGES_PER_PACKET 243
+
+
+#define DEFAULT_MTU 63 * 1024
 
 namespace hadaq {
 
-//   // TODO: put here hadtu header structure of packet
-//   struct UdpDataPacket
-//      {
-//         uint32_t pktid;
-//         uint32_t lastreqid;
-//         uint32_t nummsg;
-//      // here all messages should follow
-//      };
-//
-//      struct UdpDataPacketFull : public UdpDataPacket
-//      {
-//         uint8_t msgs[MAX_UDP_PAYLOAD - sizeof(struct UdpDataPacket)];
-//      };
-//
 
 
 
-   //class UdpDevice;
-
-   // TODO: in DABC2 data socket should be inherited from dabc::SocketWorker
-   //       or one should reorganize event loop to inherit from dabc::SocketIOWorker
 
    class UdpDataSocket : public dabc::SocketWorker,
                          public dabc::Transport,
@@ -72,73 +55,36 @@ namespace hadaq {
       DABC_TRANSPORT(dabc::SocketWorker)
 
       protected:
-         enum EUdpEvents { evntStartTransport = evntSocketLast + 1,
-                           evntStopTransport,
-                           evntConfirmCmd,
-                           evntFillBuffer };
-
-         enum EDaqState { daqInit,        // initial state
-                          daqStarting,    // daq runs, but no any start daq message was seen
-                          daqRuns,        // normal working mode
-                          daqStopping,    // we did poke(stop_daq) and just waiting that command is performed
-                          daqFails        // error state
-                        };
 
 
 
-         // FIXME: one should not use pointers, only while device and transport are in same thread, one can do this
-         //UdpDevice*         fDev;
 
-         struct sockaddr_in fSockAddr;
-         unsigned           fMTU;
+         struct sockaddr_in    fSockAddr;
+         size_t             fMTU;
          dabc::Mutex        fQueueMutex;
          dabc::BuffersQueue fQueue;
 
-         unsigned           fReadyBuffers; // how many buffers in queue can be provided to user
-         unsigned           fTransportBuffers; // how many buffers can be used for transport
 
-         dabc::Buffer*      fTgtBuf;   // pointer on buffer, where next portion can be received, use pointer while it is buffer from the queue
-         unsigned           fTgtBufIndx; // queue index of target buffer - use fQueue.Item(fReadyBuffers + fTgtBufIndx)
+         dabc::Buffer       fTgtBuf;   // pointer on buffer, where next portion can be received, use pointer while it is buffer from the queue
          unsigned           fTgtShift; // current shift in the buffer
-         HadTu              fTgtHdr;   // place where data header should be received
          char*              fTgtPtr;   // location where next data should be received
-//         uint32_t           fTgtNextId; // expected id of next packet
-//         uint32_t           fTgtTailId; // first id of packet which can not be dropped on ROC side
-//         bool               fTgtCheckGap;  // true if one should check gaps
-//
-//         char               fTempBuf[2000]; // buffer to recv packet when no regular place is available
-
-//         dabc::Queue<ResendInfo>  fResend;
-
-//         EDaqState          daqState;
-//         bool               daqCheckStop;
-
-         //UdpDataPacketFull  fRecvBuf;
+         char*              fEndPtr;   // end of current buffer
+         char*              fTempBuf; // buffer to recv packet when no regular place is available
 
          unsigned           fBufferSize;
-         //unsigned           fTransferWindow;
 
 
          dabc::MemoryPoolRef fPool;  // reference on the pool, reference should help us to preserve pool as long as we are using it
 
-//         dabc::TimeStamp    lastRequestTm;   // time when last request was send
-//         bool               lastRequestSeen; // indicate if we seen already reply on last request
-//         uint32_t           lastRequestId;   // last request id
-//         uint32_t           lastSendFrontId; // last send id of front packet
-//
-//         unsigned           rocNumber;
 
          uint64_t           fTotalRecvPacket;
-//         uint64_t           fTotalResubmPacket;
+         uint64_t           fTotalDiscardPacket;
+         uint64_t           fTotalRecvMsg;
+         uint64_t           fTotalDiscardMsg;
+         uint64_t           fTotalRecvBytes;
+
 
          double             fFlushTimeout;  // after such timeout partially filled packed will be delivered
-         //dabc::TimeStamp    fLastDelivery;  // time of last delivery
-
-         //base::OperList     fStartList;
-
-         //MessageFormat      fFormat;
-
-         //inline bool daqActive() const { return (daqState == daqRuns); }
 
          virtual bool ReplyCommand(dabc::Command cmd);
 
@@ -150,16 +96,6 @@ namespace hadaq {
 
          void ConfigureFor(dabc::Port* port);
 
-         void AddBuffersToQueue(bool checkanyway = true);
-         bool CheckNextRequest(bool check_retrans = true);
-
-         void AddDataPacket(int len, void* tgt);
-         void CompressBuffer(dabc::Buffer& buf);
-         void CheckReadyBuffers(bool doflush = false);
-
-         //void ResetDaq();
-
-         //bool prepareForSuspend();
 
          virtual int GetParameter(const char* name);
 
@@ -169,7 +105,15 @@ namespace hadaq {
          int OpenUdp(int& portnum, int portmin, int portmax, int & rcvBufLenReq);
 
          /* use recvfrom() as in hadaq nettrans::recvGeneric*/
-         ssize_t DoRecvGeneric(void* buf, ssize_t len);
+         ssize_t DoUdpRecvFrom(void* buf, size_t len, int flags=0);
+
+         /* copy next received unit from udp buffer to dabc buffer*/
+         void ReadUdp();
+
+         /* Switch to next dabc buffer, put old one into receive queue
+          * copyspanning will copy a spanning hadtu fragment from old to new buffers*/
+         void NewReceiveBuffer(bool copyspanning=false);
+
 
       public:
          UdpDataSocket(dabc::Reference port);

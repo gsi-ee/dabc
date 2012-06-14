@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 
 <!-- 
-This is example how repeater for any kind of MBS server can be created.
+This sets up an mbs server for hadaq data as received from trbnet via udp.
 
 -->
 
@@ -14,18 +14,22 @@ This is example how repeater for any kind of MBS server can be created.
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
-       <NumBuffers value="200"/>
+       <NumBuffers value="100"/>
     </MemoryPool>
     <Module name="NetmemServer">
        <Port name="Input">
           <HadaqUdpSender value="0.0.0.0"/>
           <HadaqUdpPort value="10101"/>
           <HadaqUdpBuffer value="1000000"/>
+          <!--HadaqUdpMTU value="64512"/-->   
+          <BufferSize value="65536"/>
+          <InputQueueSize value="50"/>       
        </Port>
        <Port name="Output">
           <MbsServerKind value="Stream"/>
-          <MbsServerPort value="6543"/>
+          <!--MbsServerPort value="6543"/-->
         </Port>
+          <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>
      </Module>
   </Context>
 </dabc>

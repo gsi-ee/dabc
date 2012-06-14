@@ -19,6 +19,7 @@
           <OutputQueueSize value="10"/>
           <MbsServerKind value="Transport"/>
         </Port>
+          <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>
      </Module>
   </Context>
 </dabc>
