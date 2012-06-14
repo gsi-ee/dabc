@@ -179,8 +179,11 @@ void hadaq::UdpDataSocket::StartTransport()
 void hadaq::UdpDataSocket::StopTransport()
 {
    DOUT0(("Stopping hada:udp transport -"));
-   DOUT0(("RecvPackets:%u, DiscPackets:%u, RecvMsg:%u, DiscMsg:%u, RecvBytes:%u",
-         fTotalRecvPacket, fTotalDiscardPacket, fTotalRecvMsg, fTotalDiscardMsg, fTotalRecvBytes));
+   // FIXME: again, we see strange things in DOUT, wrong or shifted values!
+   //DOUT0(("RecvPackets:%u, DiscPackets:%u, RecvMsg:%u, DiscMsg:%u, RecvBytes:%u",
+  //       fTotalRecvPacket, fTotalDiscardPacket, fTotalRecvMsg, fTotalDiscardMsg, fTotalRecvBytes));
+   std::cout <<"RecvPackets:"<<fTotalRecvPacket<<", DiscPackets:"<< fTotalDiscardPacket<<", RecvMsg:"<<fTotalRecvMsg<<", DiscMsg:"<< fTotalDiscardMsg<<", RecvBytes:"<<fTotalRecvBytes<<std::endl;
+
    //FireEvent(evntStopTransport);
 
 }
@@ -250,7 +253,8 @@ void hadaq::UdpDataSocket::ReadUdp()
       } else {
          fTotalRecvMsg++;
          fTotalRecvBytes += fTgtShift;
-         fTgtPtr += fTgtShift;
+         //fTgtPtr += fTgtShift;
+         fTgtPtr +=hadTu->GetSize(); // we will overwrite the trailing block of this message again
       }
       fTgtShift = 0;
       if(fTgtBuf.null() || (size_t)(fEndPtr-fTgtPtr) < fMTU)
@@ -308,6 +312,7 @@ void  hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
     if(!oldbuf.null())
     {
        fQueue.Push(oldbuf); // old buffer to transport receive queue no sooner than have copied spanning event
+       FirePortInput();
     }
 
 }
