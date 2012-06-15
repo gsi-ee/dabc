@@ -21,6 +21,7 @@ This sets up an mbs server for hadaq data as received from trbnet via udp.
           <HadaqUdpSender value="0.0.0.0"/>
           <HadaqUdpPort value="10101"/>
           <HadaqUdpBuffer value="1000000"/>
+          <HadaqBuildEvents value="true"/>
           <!--HadaqUdpMTU value="64512"/-->   
           <BufferSize value="65536"/>
           <InputQueueSize value="50"/>       

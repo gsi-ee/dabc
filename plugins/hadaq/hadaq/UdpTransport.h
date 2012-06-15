@@ -65,13 +65,37 @@ namespace hadaq {
          dabc::BuffersQueue fQueue;
 
 
+         /*
+          * Schema of the buffer pointer meanings:
+          *   fTgtBuf.SegmentPtr()  - begin of dabc buffer segment
+          *                                  ^
+          *                            previous events length
+          *                                  v
+          *    fCurrentEvent   - begin of event header
+          *                                  ^
+          *                            sizeof(hadaq::Event) (if fBuildFullEvent) or 0
+          *                                  v
+          *    fTgtPtr        - begin of current subevent
+          *                                  ^
+          *                              fTgtShift
+          *                                  v
+          *    (fTgtPtr +  fTgtShift) - next position to write data
+          *                                  ^
+          *                            fTgtBuf.SegmentSize() -  (fTgtPtr +  fTgtShift)
+          *                                  v
+          *    fEndPtr                - end of buffer segment
+          */
+
+
          dabc::Buffer       fTgtBuf;   // pointer on buffer, where next portion can be received, use pointer while it is buffer from the queue
          unsigned           fTgtShift; // current shift in the buffer
-         char*              fTgtPtr;   // location where next data should be received
+         char*              fTgtPtr;   // location of next subevent header data to be received
          char*              fEndPtr;   // end of current buffer
          char*              fTempBuf; // buffer to recv packet when no regular place is available
 
          unsigned           fBufferSize;
+
+         hadaq::Event*      fCurrentEvent; // points to begin of current event structure
 
 
          dabc::MemoryPoolRef fPool;  // reference on the pool, reference should help us to preserve pool as long as we are using it
@@ -82,9 +106,14 @@ namespace hadaq {
          uint64_t           fTotalRecvMsg;
          uint64_t           fTotalDiscardMsg;
          uint64_t           fTotalRecvBytes;
+         uint64_t           fTotalRecvEvents;
 
+         //double             fFlushTimeout;  // after such timeout partially filled packed will be delivered
 
-         double             fFlushTimeout;  // after such timeout partially filled packed will be delivered
+         /* if true, we will produce full hadaq events with subevent for direct use.
+          * otherwise, produce subevent stream for consequtive event builder module.
+          */
+         bool fBuildFullEvent;
 
          virtual bool ReplyCommand(dabc::Command cmd);
 
@@ -99,8 +128,8 @@ namespace hadaq {
 
          virtual int GetParameter(const char* name);
 
-         void setFlushTimeout(double tmout) { fFlushTimeout = tmout; }
-         double getFlushTimeout() const {  return fFlushTimeout; }
+//         void setFlushTimeout(double tmout) { fFlushTimeout = tmout; }
+//         double getFlushTimeout() const {  return fFlushTimeout; }
 
          int OpenUdp(int& portnum, int portmin, int portmax, int & rcvBufLenReq);
 
@@ -114,6 +143,10 @@ namespace hadaq {
           * copyspanning will copy a spanning hadtu fragment from old to new buffers*/
          void NewReceiveBuffer(bool copyspanning=false);
 
+         /*
+          * Finalize current event structure and set up new event header after the current target pointer
+          */
+         void NextEvent();
 
       public:
          UdpDataSocket(dabc::Reference port);

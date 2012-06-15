@@ -23,34 +23,30 @@
 
 #include <math.h>
 
-
 hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
-   dabc::SocketWorker(),
-   dabc::Transport(port.Ref()),
-   dabc::MemoryPoolRequester(),
-   fQueueMutex(),
-   fQueue(((dabc::Port*) port())->InputQueueCapacity()),
-   fTgtBuf()
+      dabc::SocketWorker(), dabc::Transport(port.Ref()), dabc::MemoryPoolRequester(), fQueueMutex(), fQueue(
+            ((dabc::Port*) port())->InputQueueCapacity()), fTgtBuf()
 {
    // we will react on all input packets
    SetDoingInput(true);
 
    fTgtShift = 0;
    fTgtPtr = 0;
-   fEndPtr =0;
+   fEndPtr = 0;
    fBufferSize = 0;
-   fTempBuf=0;
+   fTempBuf = 0;
+   fCurrentEvent = 0;
+
    fTotalRecvPacket = 0;
-   fTotalDiscardPacket=0;
-   fTotalRecvMsg=0;
-   fTotalDiscardMsg=0;
-   fTotalRecvBytes=0;
+   fTotalDiscardPacket = 0;
+   fTotalRecvMsg = 0;
+   fTotalDiscardMsg = 0;
+   fTotalRecvBytes = 0;
+   fTotalRecvEvents =0;
 
-
-
-   fFlushTimeout = .1;
-   fBufferSize = 2*DEFAULT_MTU;
-
+   //fFlushTimeout = .1;
+   fBufferSize = 2 * DEFAULT_MTU;
+   fBuildFullEvent = false;
 
    ConfigureFor((dabc::Port*) port());
 }
@@ -63,28 +59,29 @@ hadaq::UdpDataSocket::~UdpDataSocket()
 void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
 {
    fBufferSize = port->Cfg(dabc::xmlBufferSize).AsInt(fBufferSize);
-   fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
+   //fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
    // DOUT0(("fFlushTimeout = %5.1f %s", fFlushTimeout, dabc::xmlFlushTimeout));
+
+   fBuildFullEvent = port->Cfg(hadaq::xmlBuildFullEvent).AsBool(fBuildFullEvent);
 
    fPool = port->GetMemoryPool();
 
-   fMTU=port->Cfg(hadaq::xmlMTUsize).AsInt(DEFAULT_MTU);
+   fMTU = port->Cfg(hadaq::xmlMTUsize).AsInt(DEFAULT_MTU);
    delete fTempBuf;
    fTempBuf = new char[fMTU];
 
-   int nport= port->Cfg(hadaq::xmlUdpPort).AsInt(0);
+   int nport = port->Cfg(hadaq::xmlUdpPort).AsInt(0);
    std::string hostname = port->Cfg(hadaq::xmlUdpAddress).AsStdStr("0.0.0.0");
    int rcvBufLenReq = port->Cfg(hadaq::xmlUdpBuffer).AsInt(1 * (1 << 20));
 
-
-   if(OpenUdp(nport, nport, nport, rcvBufLenReq)<0)
-      {
-          EOUT(("hadaq::UdpDataSocket:: failed to open udp port %d with receive buffer %d", nport,rcvBufLenReq));
-          CloseSocket();
-          OnConnectionClosed();
-          return;
-      }
-   DOUT0(("hadaq::UdpDataSocket:: Open udp port %d with rcvbuf %d, dabc buffer size = %u", nport, rcvBufLenReq, fBufferSize));
+   if (OpenUdp(nport, nport, nport, rcvBufLenReq) < 0) {
+      EOUT(("hadaq::UdpDataSocket:: failed to open udp port %d with receive buffer %d", nport,rcvBufLenReq));
+      CloseSocket();
+      OnConnectionClosed();
+      return;
+   }
+   DOUT0(("hadaq::UdpDataSocket:: Open udp port %d with rcvbuf %d, dabc buffer size = %u, buildfullevents=%d", nport, rcvBufLenReq, fBufferSize, fBuildFullEvent));
+   std::cout <<"---------- fBuildFullEvent is "<< fBuildFullEvent << std::endl;
 }
 
 void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
@@ -97,25 +94,6 @@ void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
          ReadUdp();
          break;
       }
-
-//      case evntStartTransport: {
-//
-//         break;
-//      }
-//
-//      case evntStopTransport: {
-//
-//         break;
-//      }
-//
-//      case evntConfirmCmd: {
-//         }
-//         break;
-//      }
-//
-//      case evntFillBuffer:
-////         AddBuffersToQueue();
-//         break;
 
       default:
          dabc::SocketWorker::ProcessEvent(evnt);
@@ -138,20 +116,19 @@ bool hadaq::UdpDataSocket::Recv(dabc::Buffer& buf)
 {
    {
       dabc::LockGuard lock(fQueueMutex);
-      if (fQueue.Size()<=0) return false;
+      if (fQueue.Size() <= 0)
+         return false;
 
-   #if DABC_VERSION_CODE >= DABC_VERSION(1,9,2)
+#if DABC_VERSION_CODE >= DABC_VERSION(1,9,2)
       fQueue.PopBuffer(buf);
-    #else
+#else
       buf << fQueue.Pop();
-    #endif
+#endif
    }
-   //FireEvent(evntFillBuffer);
-
    return !buf.null();
 }
 
-unsigned  hadaq::UdpDataSocket::RecvQueueSize() const
+unsigned hadaq::UdpDataSocket::RecvQueueSize() const
 {
    dabc::LockGuard guard(fQueueMutex);
    return fQueue.Size();
@@ -181,23 +158,20 @@ void hadaq::UdpDataSocket::StopTransport()
    DOUT0(("Stopping hada:udp transport -"));
    // FIXME: again, we see strange things in DOUT, wrong or shifted values!
    //DOUT0(("RecvPackets:%u, DiscPackets:%u, RecvMsg:%u, DiscMsg:%u, RecvBytes:%u",
-  //       fTotalRecvPacket, fTotalDiscardPacket, fTotalRecvMsg, fTotalDiscardMsg, fTotalRecvBytes));
-   std::cout <<"RecvPackets:"<<fTotalRecvPacket<<", DiscPackets:"<< fTotalDiscardPacket<<", RecvMsg:"<<fTotalRecvMsg<<", DiscMsg:"<< fTotalDiscardMsg<<", RecvBytes:"<<fTotalRecvBytes<<std::endl;
+   //       fTotalRecvPacket, fTotalDiscardPacket, fTotalRecvMsg, fTotalDiscardMsg, fTotalRecvBytes));
+   std::cout << "RecvPackets:" << fTotalRecvPacket << ", DiscPackets:"
+         << fTotalDiscardPacket << ", RecvMsg:" << fTotalRecvMsg << ", DiscMsg:"
+         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes << std::endl;
 
    //FireEvent(evntStopTransport);
 
 }
-
-
 
 double hadaq::UdpDataSocket::ProcessTimeout(double)
 {
 
    return 0.01;
 }
-
-
-
 
 int hadaq::UdpDataSocket::GetParameter(const char* name)
 {
@@ -207,7 +181,6 @@ int hadaq::UdpDataSocket::GetParameter(const char* name)
 
    return dabc::Transport::GetParameter(name);
 }
-
 
 void hadaq::UdpDataSocket::ReadUdp()
 {
@@ -237,94 +210,99 @@ void hadaq::UdpDataSocket::ReadUdp()
    size_t msgsize = hadTu->GetSize() + 32; // trb sender adds a 32 byte control trailer identical to event header
    if ((size_t) len == fMTU) {
       // hadtu send from trb is bigger than mtu, we expect end of messages in the next recvfrom
-      if((size_t) (fEndPtr-fTgtPtr) < msgsize)
-         {
-            // rest of expected message does not fit anymore in current buffer
-            NewReceiveBuffer(true); // copy the spanning fragment to new dabc buffer
-         }
+      if ((size_t)(fEndPtr - fTgtPtr) < msgsize) {
+         // rest of expected message does not fit anymore in current buffer
+         NewReceiveBuffer(true); // copy the spanning fragment to new dabc buffer
+      } //   if ((size_t)(fEndPtr - fTgtPtr
    } else {
-      //std::cout <<"!!!! fTgtShift:"<<fTgtShift<<", hadTU size:"<< hadTu->GetSize()<< std::endl;
+      //std::cout << "!!!! fTgtShift:" << fTgtShift << ", hadTU size:"
+      //      << hadTu->GetSize() << std::endl;
       // we finished receive with current hadtu message, check it:
-      if (fTgtShift != msgsize || memcmp((char*) hadTu + hadTu->GetSize(), (char*) hadTu, 32)) {
-          // received size does not match header info, or header!=trailer contents
-          fTotalDiscardMsg++;
-          std::cout <<"discarded message:"<<fTotalDiscardMsg<<std::endl;
+      if (fTgtShift != msgsize
+            || memcmp((char*) hadTu + hadTu->GetSize(), (char*) hadTu, 32)) {
+         // received size does not match header info, or header!=trailer contents
+         fTgtShift = 0;
+         fTotalDiscardMsg++;
+         std::cout << "discarded message:" << fTotalDiscardMsg << std::endl;
 
       } else {
          fTotalRecvMsg++;
          fTotalRecvBytes += fTgtShift;
          //fTgtPtr += fTgtShift;
-         fTgtPtr +=hadTu->GetSize(); // we will overwrite the trailing block of this message again
-      }
-      fTgtShift = 0;
-      if(fTgtBuf.null() || (size_t)(fEndPtr-fTgtPtr) < fMTU)
-      {
-         NewReceiveBuffer(false); // no more space for full mtu in buffer, finalize it:
-      }
+         fTgtPtr += hadTu->GetSize(); // we will overwrite the trailing block of this message again
+         fTgtShift = 0;
+         if (fTgtBuf.null() || (size_t)(fEndPtr - fTgtPtr) < fMTU) {
+            NewReceiveBuffer(false); // no more space for full mtu in buffer, finalize old and get new:
+         } else {
+            NextEvent(); // just finalize old event and insert new header at current tgtptr
+         }
+      } // if (fTgtShift != msgsize
 
    } //if (len == fMTU)
 
-
 }
 
-void  hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
+void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
 {
 
-   DOUT5(("NewReceiveBuffer"));
-   dabc::Buffer oldbuf=fTgtBuf;
-   if(!oldbuf.null())
-   {
-      unsigned filledsize=fTgtPtr- (char*) fTgtBuf.SegmentPtr();
+   DOUT5(("NewReceiveBuffer, copyspanning=%d",copyspanning));
+   dabc::Buffer oldbuf = fTgtBuf;
+   if (!oldbuf.null()) {
+      unsigned filledsize = fTgtPtr - (char*) fTgtBuf.SegmentPtr();
       oldbuf.SetTotalSize(filledsize);
    }
 
-
    fTgtBuf = fPool.TakeBufferReq(this, fBufferSize);
-   if (!fTgtBuf.null())
-       {
-          fTgtBuf.SetTypeId(hadaq::mbt_HadaqEvents);
-          if(copyspanning)
-             {
-                memcpy(fTgtBuf.SegmentPtr(),fTgtPtr, fTgtShift);
-                DOUT0(("Copied %d spanning bytes to new DABC buffer of size %d",fTgtShift,fTgtBuf.SegmentSize()));
-             }
-          else
-             {
-                fTgtShift = 0; // note that we do keep shift in the other case of a spanning event
-             }
-          fTgtPtr = (char*) fTgtBuf.SegmentPtr();
-          fEndPtr = fTgtPtr+ fTgtBuf.SegmentSize();
-          DOUT5(("NewReceiveBuffer gets fTgtPtr: %x, fEndPtr: %x",fTgtPtr, fEndPtr));
-          if(fTgtBuf.SegmentSize()<fMTU)
-             {
-             EOUT(("hadaq::UdpDataSocket::NewReceiveBuffer - buffer segment size %d < mtu $d",fTgtBuf.SegmentSize(),fMTU));
-             OnConnectionClosed(); // FIXME: better error handling here!
-             }
-       }
-   else
-       {
+   if (!fTgtBuf.null()) {
+      fTgtBuf.SetTypeId(hadaq::mbt_HadaqEvents);
+      char* bufstart = (char*) fTgtBuf.SegmentPtr(); // is modified by puteventheader
+      if (copyspanning) {
+         // copy data with full event header for spanning events anyway
+         size_t copylength = fTgtShift;
+         if (fBuildFullEvent)
+            copylength += sizeof(hadaq::Event);
+         memcpy(bufstart, fCurrentEvent, copylength);
+         DOUT0(("Copied %d spanning bytes to new DABC buffer of size %d",copylength,fTgtBuf.SegmentSize()));
+         fTgtPtr = bufstart;
+         if (fBuildFullEvent)
+            fTgtPtr += sizeof(hadaq::Event);
+         fCurrentEvent = (hadaq::Event*) bufstart;
+         // note that we do keep old fTgtShift for the spanning event
+      } else {
+         fTgtPtr = bufstart;
+         NextEvent();
+      }
+      fEndPtr = (char*) fTgtBuf.SegmentPtr() + fTgtBuf.SegmentSize();
+      DOUT3(("NewReceiveBuffer gets fTgtPtr: %x, fEndPtr: %x",fTgtPtr, fEndPtr));
+      if (fTgtBuf.SegmentSize() < fMTU) {
+         EOUT(("hadaq::UdpDataSocket::NewReceiveBuffer - buffer segment size %d < mtu $d",fTgtBuf.SegmentSize(),fMTU));
+         OnConnectionClosed(); // FIXME: better error handling here!
+      }
 
-          fTgtPtr = fTempBuf;
-          fEndPtr =  fTempBuf + sizeof(fTempBuf);
-          DOUT0(("hadaq::UdpDataSocket:: No pool buffer available for socket read, use internal dummy!"));
-       }
 
-    if(!oldbuf.null())
-    {
-       fQueue.Push(oldbuf); // old buffer to transport receive queue no sooner than have copied spanning event
-       FirePortInput();
-    }
+   } else {
+      fCurrentEvent = (hadaq::Event*) fTempBuf;
+      fTgtPtr = fTempBuf;
+      fEndPtr = fTempBuf + sizeof(fTempBuf);
+      fTgtShift = 0;
+      DOUT0(("hadaq::UdpDataSocket:: No pool buffer available for socket read, use internal dummy!"));
+   }
+
+   if (!oldbuf.null()) {
+      fQueue.Push(oldbuf); // put old buffer to transport queue no sooner than we have copied spanning event
+      FirePortInput();
+   }
 
 }
-
-
 
 ssize_t hadaq::UdpDataSocket::DoUdpRecvFrom(void* buf, size_t len, int flags)
 {
    ssize_t res = 0;
    size_t socklen = (size_t) sizeof(fSockAddr);
-   sockaddr* saptr= (sockaddr*) &fSockAddr; // trick for compiler
+   sockaddr* saptr = (sockaddr*) &fSockAddr; // trick for compiler
+   //std::cout <<"recvfrom writes to "<<(int) buf <<", len="<<len<< std::endl;
    res = recvfrom(fSocket, buf, len, flags, saptr, (socklen_t *) &socklen);
+   //std::cout <<"recvfrom returns"<<res << std::endl;
    if (res == 0)
       OnConnectionClosed();
    else if (res < 0) {
@@ -334,20 +312,24 @@ ssize_t hadaq::UdpDataSocket::DoUdpRecvFrom(void* buf, size_t len, int flags)
    return res;
 }
 
-
-int hadaq::UdpDataSocket::OpenUdp(int& portnum, int portmin, int portmax, int& rcvBufLenReq)
+int hadaq::UdpDataSocket::OpenUdp(int& portnum, int portmin, int portmax,
+      int& rcvBufLenReq)
 {
 
    int fd = socket(PF_INET, SOCK_DGRAM, 0);
-   if (fd<0) return -1;
+   if (fd < 0)
+      return -1;
    SetSocket(fd);
    int numtests = 1; // at least test value of portnum
-   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
+   if ((portmin > 0) && (portmax > 0) && (portmin <= portmax))
+      numtests += (portmax - portmin + 1);
 
    if (dabc::SocketThread::SetNonBlockSocket(fd))
-      for(int ntest=0;ntest<numtests;ntest++) {
-         if ((ntest==0) && (portnum<0)) continue;
-         if (ntest>0) portnum = portmin - 1 + ntest;
+      for (int ntest = 0; ntest < numtests; ntest++) {
+         if ((ntest == 0) && (portnum < 0))
+            continue;
+         if (ntest > 0)
+            portnum = portmin - 1 + ntest;
 
          memset(&fSockAddr, 0, sizeof(fSockAddr));
          fSockAddr.sin_family = AF_INET;
@@ -363,19 +345,49 @@ int hadaq::UdpDataSocket::OpenUdp(int& portnum, int portmin, int portmax, int& r
                EOUT(( "setsockopt(..., SO_RCVBUF, ...): %s", strerror(errno)));
             }
 
-            if (getsockopt(fd , SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, (socklen_t *) &rcvBufLenLen) == -1) {
+            if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet,
+                  (socklen_t *) &rcvBufLenLen) == -1) {
                EOUT(( "getsockopt(..., SO_RCVBUF, ...): %s", strerror(errno)));
             }
             if (rcvBufLenRet < rcvBufLenReq) {
                EOUT(("UDP receive buffer length (%d) smaller than requested buffer length (%d)", rcvBufLenRet, rcvBufLenReq));
-               rcvBufLenReq=rcvBufLenRet;
+               rcvBufLenReq = rcvBufLenRet;
             }
          }
 
-
-         if (!bind(fd, (struct sockaddr *)&fSockAddr, sizeof(fSockAddr))) return fd;
+         if (!bind(fd, (struct sockaddr *) &fSockAddr, sizeof(fSockAddr)))
+            return fd;
       }
    CloseSocket();
    //close(fd);
    return -1;
 }
+
+void hadaq::UdpDataSocket::NextEvent()
+{
+   if (fBuildFullEvent) {
+      // first finalize old event:
+      if (fCurrentEvent) {
+         hadaq::Subevent* sub = (hadaq::Subevent*) ((char*) (fCurrentEvent)
+               + sizeof(hadaq::Event));
+
+         fCurrentEvent->SetSize(sub->GetSize() + sizeof(hadaq::Event)); // only one subevent in this mode.
+         // currId = currId | (DAQVERSION << 12);
+         uint32_t currId = 0x00003001; // we define DAQVERSION 3 for DABC
+         fCurrentEvent->SetId(currId);
+         fCurrentEvent->SetSeqNr(fTotalRecvEvents++);
+         fCurrentEvent->SetRunNr(0); // TODO: do we need to set from parameter? maybe left to eventbuilder module later.
+      }
+      // now set up next event header
+      char* bufstart = fTgtPtr; // is modified by puteventheader
+      fCurrentEvent = hadaq::Event::PutEventHeader(&bufstart, EvtId_data);
+      fTgtPtr = bufstart;
+   } else {
+      fCurrentEvent = (hadaq::Event*) fTgtPtr;
+   }
+   fTgtShift = 0;
+//   std::cout <<"NextEvent with fCurrentEvent:"<<(int) fCurrentEvent<<",fTgtPtr:"<< (int) fTgtPtr;
+//   std::cout << ", fTgtShift:"<< fTgtShift<<std::endl;
+
+}
+
