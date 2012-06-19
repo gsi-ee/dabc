@@ -15,6 +15,8 @@
 
 #include "dabc/logging.h"
 
+#include "iostream"
+
 hadaq::ReadIterator::ReadIterator() :
    fFirstEvent(false),
    fEvPtr(),
@@ -82,7 +84,7 @@ bool hadaq::ReadIterator::NextEvent()
    if (fFirstEvent)
       fFirstEvent = false;
    else
-      fEvPtr.shift(evnt()->GetSize());
+      fEvPtr.shift(evnt()->GetPaddedSize());
 
    if (fEvPtr.fullsize() < sizeof(hadaq::Event)) {
       fEvPtr.reset();
@@ -115,7 +117,7 @@ bool hadaq::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
       ptr.reset();
       return false;
    }
-   ptr.reset(fEvPtr, 0, evnt()->GetSize());
+   ptr.reset(fEvPtr, 0, evnt()->GetPaddedSize());
    return true;
 }
 
@@ -128,10 +130,10 @@ bool hadaq::ReadIterator::NextSubEvent()
          EOUT(("Hadaq format error - event fullsize %u too small", evnt()->GetSize()));
          return false;
       }
-      fSubPtr.reset(fEvPtr, 0, evnt()->GetSize());
+      fSubPtr.reset(fEvPtr, 0, evnt()->GetPaddedSize());
       fSubPtr.shift(sizeof(hadaq::Event));
    } else
-      fSubPtr.shift(subevnt()->GetSize());
+      fSubPtr.shift(subevnt()->GetPaddedSize());
 
    if (fSubPtr.fullsize() < sizeof(hadaq::Subevent)) {
       fSubPtr.reset();
@@ -139,12 +141,20 @@ bool hadaq::ReadIterator::NextSubEvent()
    }
 
    if (subevnt()->GetSize() < sizeof(hadaq::Subevent)) {
-      EOUT(("Hadaq format error - subevent fullsize too small"));
+      EOUT(("Hadaq format error - subevent fullsize %u too small", subevnt()->GetSize()));
+      char* ptr=(char*) subevnt();
+      for(int i=0; i<20; ++i)
+      {
+         std::cout <<"sub("<<i<<")=0x"<< (std::hex)<< *ptr ;
+         std::cout <<(std::dec)<< std::endl;
+      }
+
+
       fSubPtr.reset();
       return false;
    }
 
-   fRawPtr.reset(fSubPtr, 0, subevnt()->GetSize());
+   fRawPtr.reset(fSubPtr, 0, subevnt()->GetPaddedSize());
    fRawPtr.shift(sizeof(hadaq::Subevent));
 
    return true;

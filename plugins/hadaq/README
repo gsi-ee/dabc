@@ -2,8 +2,10 @@
 ****** DABC plugin for hadaq 
 ****** (originally HADES collaboration DAQ and data format)
 *        Joern Adamczewski-Musch, j.adamczewski@gsi.de
-* Version 0.02 - 13-Jun-2012
-   : First working with HldConverter and HldServer applications.
+* Version 0.04 - 19-Jun-2012
+   : Implemented valid simple eventbuilding in udp transport. 
+     Will put hades eventheader before each subevent
+     First version that is really working with hadaq trb simulator + Go4 client
    
 * Components:
    * HldFile - input (OK) and output (TODO) of hld file format
@@ -29,11 +31,19 @@
  TODO 
  
 * Changes:     
-   *  Version 0.01 - 06-Jun-2012
+   * Version 0.01 - 06-Jun-2012
       : design of classes and first successful compilation.
-      Version 0.02 - 13-Jun-2012
-      : First working with HldConverter and HldServer applications.
-   *  Under construction
+   * Version 0.02 - 13-Jun-2012
+      : First working with HldConverter and HldServer applications. 
+   * Version 0.03 - 15-Jun-2012
+      : First version with working UdpTransport. Tested with hadaq trb simulator + Go4 client
+   * Version 0.04 - 19-Jun-2012
+      : Implemented valid simple eventbuilding in udp transport. 
+        Will insert hades eventheader before each subevent of hadtu input stream.
+        First version that is _really_ working with hadaq trb simulator + Go4 client
+   
+   
+   * Under construction
    
 * DISCLAIMER:
 This program is free software; you can redistribute it and/or

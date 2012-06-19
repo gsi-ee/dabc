@@ -13,6 +13,7 @@
  ********************************************************************/
 
 #include "hadaq/UdpTransport.h"
+#include "hadaq/Iterator.h"
 
 #include "dabc/timing.h"
 #include "dabc/Port.h"
@@ -22,6 +23,10 @@
 #include <errno.h>
 
 #include <math.h>
+
+
+//#define UDP_PRINT_EVENTS
+
 
 hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
       dabc::SocketWorker(), dabc::Transport(port.Ref()), dabc::MemoryPoolRequester(), fQueueMutex(), fQueue(
@@ -35,7 +40,7 @@ hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
    fEndPtr = 0;
    fBufferSize = 0;
    fTempBuf = 0;
-   fCurrentEvent = 0;
+//   fCurrentEvent = 0;
 
    fTotalRecvPacket = 0;
    fTotalDiscardPacket = 0;
@@ -161,7 +166,7 @@ void hadaq::UdpDataSocket::StopTransport()
    //       fTotalRecvPacket, fTotalDiscardPacket, fTotalRecvMsg, fTotalDiscardMsg, fTotalRecvBytes));
    std::cout << "RecvPackets:" << fTotalRecvPacket << ", DiscPackets:"
          << fTotalDiscardPacket << ", RecvMsg:" << fTotalRecvMsg << ", DiscMsg:"
-         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes << std::endl;
+         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes<< ", fTotalRecvEvents:"<< fTotalRecvEvents<< std::endl;
 
    //FireEvent(evntStopTransport);
 
@@ -186,7 +191,8 @@ void hadaq::UdpDataSocket::ReadUdp()
 {
    // this function is a "translation" to dabc of the hadaq nettrans.c assembleMsg()
    if (fTgtPtr == 0) {
-      EOUT(("hadaq::UdpDataSocket::ReadUdp NEVER COME HERE: zero receive pointer"));
+      // this will happen if the udp senders are active before our transport is configured
+      //EOUT(("hadaq::UdpDataSocket::ReadUdp NEVER COME HERE: zero receive pointer"));
       return;
    }
    DOUT5(("ReadUdp before DoUdpRecvFrom"));
@@ -233,9 +239,11 @@ void hadaq::UdpDataSocket::ReadUdp()
          fTgtShift = 0;
          if (fTgtBuf.null() || (size_t)(fEndPtr - fTgtPtr) < fMTU) {
             NewReceiveBuffer(false); // no more space for full mtu in buffer, finalize old and get new:
-         } else {
-            NextEvent(); // just finalize old event and insert new header at current tgtptr
          }
+
+//         else {
+//            NextEvent(); // just finalize old event and insert new header at current tgtptr
+//         }
       } // if (fTgtShift != msgsize
 
    } //if (len == fMTU)
@@ -246,54 +254,179 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
 {
 
    DOUT5(("NewReceiveBuffer, copyspanning=%d",copyspanning));
-   dabc::Buffer oldbuf = fTgtBuf;
-   if (!oldbuf.null()) {
+   dabc::Buffer outbuf;
+   if (!fTgtBuf.null()) {
+      // first shrink last receive buffer to full received hadtu envelopes:
+      // to cut last trailing event header, otherwise we get trouble with read iterator for evtbuilding
       unsigned filledsize = fTgtPtr - (char*) fTgtBuf.SegmentPtr();
-      oldbuf.SetTotalSize(filledsize);
-   }
+      fTgtBuf.SetTotalSize(filledsize);
 
+      // then we optionally format the output buffer
+
+      if (fBuildFullEvent) {
+         // in simple eventbuilding mode, we have to scan old receive buffer for actual subevents
+         // and add an hades event header for each of those
+
+         fEvtBuf = fPool.TakeBufferReq(this, fBufferSize);
+         if (fEvtBuf.null()) {
+            EOUT(("hadaq::UdpDataSocket::NewReceiveBuffer - could not take event buffer of size %d ",fBufferSize));
+            OnConnectionClosed(); // FIXME: better error handling here!
+
+         }
+         fEvtBuf.SetTypeId(hadaq::mbt_HadaqEvents); // buffer will contain events with subevents
+         fEvtPtr = (char*) fEvtBuf.SegmentPtr();
+         fEvtEndPtr = (char*) fEvtBuf.SegmentPtr() + fEvtBuf.SegmentSize();
+
+         outbuf = fEvtBuf;
+         FillEventBuffer();
+
+
+      } else {
+         // no event building: pass receive buffer over as it is
+         outbuf = fTgtBuf;
+      }
+   } //  if (!fTgtBuf.null()) oldbuffer
+
+// now get new receive buffer
    fTgtBuf = fPool.TakeBufferReq(this, fBufferSize);
    if (!fTgtBuf.null()) {
-      fTgtBuf.SetTypeId(hadaq::mbt_HadaqEvents);
+      fTgtBuf.SetTypeId(hadaq::mbt_HadaqTransportUnit); // raw transport unit with subevents as from trb
+
       char* bufstart = (char*) fTgtBuf.SegmentPtr(); // is modified by puteventheader
       if (copyspanning) {
-         // copy data with full event header for spanning events anyway
+         // copy data with full NetTransx event header for spanning events anyway
          size_t copylength = fTgtShift;
-         if (fBuildFullEvent)
-            copylength += sizeof(hadaq::Event);
-         memcpy(bufstart, fCurrentEvent, copylength);
-         DOUT0(("Copied %d spanning bytes to new DABC buffer of size %d",copylength,fTgtBuf.SegmentSize()));
+//         if (fBuildFullEvent)
+//            copylength += sizeof(hadaq::Event);
+         memcpy(bufstart, fTgtPtr, copylength);
+         DOUT0(
+               ("Copied %d spanning bytes to new DABC buffer of size %d",copylength,fTgtBuf.SegmentSize()));
          fTgtPtr = bufstart;
-         if (fBuildFullEvent)
-            fTgtPtr += sizeof(hadaq::Event);
-         fCurrentEvent = (hadaq::Event*) bufstart;
+//         if (fBuildFullEvent)
+//            fTgtPtr += sizeof(hadaq::Event);
+//         fCurrentEvent = (hadaq::Event*) bufstart;
          // note that we do keep old fTgtShift for the spanning event
       } else {
          fTgtPtr = bufstart;
-         NextEvent();
+         //NextEvent();
       }
       fEndPtr = (char*) fTgtBuf.SegmentPtr() + fTgtBuf.SegmentSize();
       DOUT3(("NewReceiveBuffer gets fTgtPtr: %x, fEndPtr: %x",fTgtPtr, fEndPtr));
       if (fTgtBuf.SegmentSize() < fMTU) {
-         EOUT(("hadaq::UdpDataSocket::NewReceiveBuffer - buffer segment size %d < mtu $d",fTgtBuf.SegmentSize(),fMTU));
+         EOUT(
+               ("hadaq::UdpDataSocket::NewReceiveBuffer - buffer segment size %d < mtu $d",fTgtBuf.SegmentSize(),fMTU));
          OnConnectionClosed(); // FIXME: better error handling here!
       }
 
-
    } else {
-      fCurrentEvent = (hadaq::Event*) fTempBuf;
+      //fCurrentEvent = (hadaq::Event*) fTempBuf;
       fTgtPtr = fTempBuf;
       fEndPtr = fTempBuf + sizeof(fTempBuf);
       fTgtShift = 0;
-      DOUT0(("hadaq::UdpDataSocket:: No pool buffer available for socket read, use internal dummy!"));
-   }
+      DOUT0(
+            ("hadaq::UdpDataSocket:: No pool buffer available for socket read, use internal dummy!"));
+   } //if (!fTgtBuf.null()) newbuffer
 
-   if (!oldbuf.null()) {
-      fQueue.Push(oldbuf); // put old buffer to transport queue no sooner than we have copied spanning event
+   if (!outbuf.null()) {
+      fQueue.Push(outbuf); // put old buffer to transport queue no sooner than we have copied spanning event
       FirePortInput();
    }
 
 }
+
+
+
+
+void  hadaq::UdpDataSocket::FillEventBuffer()
+{
+   // TODO: implement iterator functions for hadtu buffer
+   //         hadaq::ReadIterator hiter(fTgtBuf);
+   //         //hadaq::Event* hev;
+   //         while (hiter.NextEvent()) {
+   //            //hadaq::Event* hev=hiter.evt;
+   //            // udp envelope is hades event header (32 bytes)
+   //            while (hiter.NextSubEvent()) {
+   //               hadaq::Subevent* source = hiter.subevnt();
+   /////////////////////////////////////////////
+             // manual approach:
+            char* cursor=(char*) fTgtBuf.SegmentPtr();
+            size_t bufsize=fTgtBuf.SegmentSize();
+            while(bufsize> sizeof(hadaq::HadTu) + sizeof(hadaq::Subevent)){
+
+               // outer loop get envelope header: This is a plain HadTu header!
+
+               hadaq::HadTu* hev= (hadaq::Subevent*) cursor;
+               size_t hevsize=hev->GetSize();
+#ifdef UDP_PRINT_EVENTS
+               std::cout <<"Container  0x"<< std::hex<< (int)hev <<" of size"<< std::dec<< hevsize << std::endl;
+               char* ptr= cursor;
+               for(int i=0; i<16; ++i)
+                    {
+                       std::cout <<"evt("<<i<<")=0x"<< (std::hex)<< ( (short) *(ptr+i) & 0xff ) <<" , ";
+                    }
+               std::cout <<(std::dec)<< std::endl;
+#endif
+               cursor += sizeof(hadaq::HadTu);
+               bufsize -=sizeof(hadaq::HadTu);
+               while(hevsize>sizeof(hadaq::Subevent)){
+                   // inner loop scans actual subevents
+                   hadaq::Subevent* sev= (hadaq::Subevent*) cursor;
+                   size_t sublen = sev->GetSize(); // real payload of subevent
+                   size_t padlen = sev->GetPaddedSize(); // actual copied data length, 8 byte padded
+                   size_t evlen = sublen + sizeof(hadaq::Event);
+                   // DUMP EVENT
+#ifdef UDP_PRINT_EVENTS
+                   std::cout <<" subevent 0x"<< std::hex<< (int)sev <<" of size "<< std::dec << sublen <<", padded size "<< std::dec << padlen<< std::endl;
+                   char* ptr= cursor + sizeof(hadaq::Subevent);
+                   for(int i=0; i<20; ++i)
+                       {
+                          std::cout <<"sub("<<i<<")=0x"<< (std::hex)<< ( (short) *(ptr+i) & 0xff ) <<" , ";
+                       }
+                  std::cout <<(std::dec)<< std::endl;
+#endif
+                  ///////////////
+
+
+                  // each subevent of single stream is wrapped into event header
+                  size_t subrest = (size_t)(fEvtEndPtr - fEvtPtr);
+                  if (subrest < evlen) {
+                     DOUT0(("hadaq::UdpDataSocket:: Remaining subevents do not fit in Event output buffer of size %d! Drop them. Check mempool setup",fEvtBuf.SegmentSize()));
+                     break;
+                     // TODO: dynamic spanning of output buffer. Maybe left to full combiner module
+                  }
+
+                  // TODO: handle this with write iterator later
+                  hadaq::Event* curev = hadaq::Event::PutEventHeader(&fEvtPtr,
+                        EvtId_data);
+                  memcpy(fEvtPtr, (char*) sev, padlen);
+                  curev->SetSize(evlen); // only one subevent in this mode.
+                  // currId = currId | (DAQVERSION << 12);
+                  uint32_t currId = 0x00003001; // we define DAQVERSION 3 for DABC
+                  curev->SetId(currId);
+                  curev->SetSeqNr(fTotalRecvEvents++);
+                  curev->SetRunNr(0); // TODO: do we need to set from parameter? maybe left to eventbuilder module later.
+#ifdef UDP_PRINT_EVENTS
+                  std::cout << "Build NextEvent " << fTotalRecvEvents
+                        << " with curev:" << (int) curev << ",fEvtPtr:"
+                        << (int) fEvtPtr;
+                  std::cout << ", evlen:" << evlen << std::endl;
+#endif
+
+                  fEvtPtr += padlen;
+                  cursor += padlen;
+                  hevsize -= padlen;
+                  bufsize -=padlen;
+
+               } // while next subevent
+               //break; // use only first hadtu in buffer
+            } // while next hadtu
+
+            unsigned filledsize = fEvtPtr - (char*) fEvtBuf.SegmentPtr();
+            fEvtBuf.SetTotalSize(filledsize);
+}
+
+
+
 
 ssize_t hadaq::UdpDataSocket::DoUdpRecvFrom(void* buf, size_t len, int flags)
 {
@@ -363,31 +496,31 @@ int hadaq::UdpDataSocket::OpenUdp(int& portnum, int portmin, int portmax,
    return -1;
 }
 
-void hadaq::UdpDataSocket::NextEvent()
-{
-   if (fBuildFullEvent) {
-      // first finalize old event:
-      if (fCurrentEvent) {
-         hadaq::Subevent* sub = (hadaq::Subevent*) ((char*) (fCurrentEvent)
-               + sizeof(hadaq::Event));
-
-         fCurrentEvent->SetSize(sub->GetSize() + sizeof(hadaq::Event)); // only one subevent in this mode.
-         // currId = currId | (DAQVERSION << 12);
-         uint32_t currId = 0x00003001; // we define DAQVERSION 3 for DABC
-         fCurrentEvent->SetId(currId);
-         fCurrentEvent->SetSeqNr(fTotalRecvEvents++);
-         fCurrentEvent->SetRunNr(0); // TODO: do we need to set from parameter? maybe left to eventbuilder module later.
-      }
-      // now set up next event header
-      char* bufstart = fTgtPtr; // is modified by puteventheader
-      fCurrentEvent = hadaq::Event::PutEventHeader(&bufstart, EvtId_data);
-      fTgtPtr = bufstart;
-   } else {
-      fCurrentEvent = (hadaq::Event*) fTgtPtr;
-   }
-   fTgtShift = 0;
-//   std::cout <<"NextEvent with fCurrentEvent:"<<(int) fCurrentEvent<<",fTgtPtr:"<< (int) fTgtPtr;
-//   std::cout << ", fTgtShift:"<< fTgtShift<<std::endl;
-
-}
+//void hadaq::UdpDataSocket::NextEvent()
+//{
+//   if (fBuildFullEvent) {
+//      // first finalize old event:
+//      if (fCurrentEvent) {
+//         hadaq::Subevent* sub = (hadaq::Subevent*) ((char*) (fCurrentEvent)
+//               + sizeof(hadaq::Event));
+//
+//         fCurrentEvent->SetSize(sub->GetSize() + sizeof(hadaq::Event)); // only one subevent in this mode.
+//         // currId = currId | (DAQVERSION << 12);
+//         uint32_t currId = 0x00003001; // we define DAQVERSION 3 for DABC
+//         fCurrentEvent->SetId(currId);
+//         fCurrentEvent->SetSeqNr(fTotalRecvEvents++);
+//         fCurrentEvent->SetRunNr(0); // TODO: do we need to set from parameter? maybe left to eventbuilder module later.
+//      }
+//      // now set up next event header
+//      char* bufstart = fTgtPtr; // is modified by puteventheader
+//      fCurrentEvent = hadaq::Event::PutEventHeader(&bufstart, EvtId_data);
+//      fTgtPtr = bufstart;
+//   } else {
+//      fCurrentEvent = (hadaq::Event*) fTgtPtr;
+//   }
+//   fTgtShift = 0;
+////   std::cout <<"NextEvent with fCurrentEvent:"<<(int) fCurrentEvent<<",fTgtPtr:"<< (int) fTgtPtr;
+////   std::cout << ", fTgtShift:"<< fTgtShift<<std::endl;
+//
+//}
 

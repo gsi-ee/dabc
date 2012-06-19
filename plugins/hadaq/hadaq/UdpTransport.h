@@ -95,8 +95,10 @@ namespace hadaq {
 
          unsigned           fBufferSize;
 
-         hadaq::Event*      fCurrentEvent; // points to begin of current event structure
-
+         dabc::Buffer       fEvtBuf; // buffer for output event/subevent data
+         //hadaq::Event*      fCurrentEvent; // points to begin of current event structure
+         char*              fEvtPtr;   // cursor pointer in EvtBuf
+         char*              fEvtEndPtr;   // end of current event buffer
 
          dabc::MemoryPoolRef fPool;  // reference on the pool, reference should help us to preserve pool as long as we are using it
 
@@ -146,7 +148,12 @@ namespace hadaq {
          /*
           * Finalize current event structure and set up new event header after the current target pointer
           */
-         void NextEvent();
+//         void NextEvent();
+
+         /*
+          * Do simple eventbuilding into output buffer if enabled.
+          */
+         void FillEventBuffer();
 
       public:
          UdpDataSocket(dabc::Reference port);

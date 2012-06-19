@@ -37,6 +37,8 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 
    CreatePar("TransmitData").SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 3.).SetUnits("Buf");
+//   Par("TransmitData").SetDebugLevel(1);
+//   Par("TransmitBufs").SetDebugLevel(1);
 }
 
 
@@ -61,8 +63,8 @@ void hadaq::MbsTransmitterModule::retransmit()
 		while(hiter.NextEvent())
 		{
 		   hev=hiter.evnt();
-		   size_t evlen=hev->GetSize();
-		   DOUT3(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
+		   size_t evlen=hev->GetPaddedSize();
+		   DOUT5(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
 
 		   unsigned id = hev->GetId();
 		   unsigned evcount=hev->GetSeqNr();
