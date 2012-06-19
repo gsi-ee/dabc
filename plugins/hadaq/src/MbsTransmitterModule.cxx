@@ -35,10 +35,10 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 	CreateInput("Input", Pool(), 5);
 	CreateOutput("Output", Pool(), 5);
 
-   CreatePar("TransmitData").SetRatemeter(false, 3.).SetUnits("MB");
-   CreatePar("TransmitBufs").SetRatemeter(false, 3.).SetUnits("Buf");
-//   Par("TransmitData").SetDebugLevel(1);
-//   Par("TransmitBufs").SetDebugLevel(1);
+   CreatePar("TransmitData").SetRatemeter(false, 10.).SetUnits("MB");
+   CreatePar("TransmitBufs").SetRatemeter(false, 10.).SetUnits("Buf");
+   Par("TransmitData").SetDebugLevel(1);
+   Par("TransmitBufs").SetDebugLevel(1);
 }
 
 

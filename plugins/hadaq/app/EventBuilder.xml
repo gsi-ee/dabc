@@ -1,0 +1,55 @@
+<?xml version="1.0"?>
+<dabc version="1">
+  <Context host="localhost" name="Worker">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <lib value="libDabcHadaq.so"/>      
+      <func value="InitHadaqEvtbuilder"/>
+      <logfile value="hadaqevtbuild.log"/>
+    </Run>
+     <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="500"/>
+    </MemoryPool>
+    
+    
+    
+    <Module name="Combiner">      
+       <DoFile value="false"/>
+       <DoServer value="true"/>
+       <BufferSize value="65536"/>
+       <NumInputs value="5"/>
+       <Port name="Input0">
+          <HadaqUdpPort value="10101"/>
+       </Port>
+       <Port name="Input1">
+          <HadaqUdpPort value="10102"/>
+       </Port>
+       <Port name="Input2">
+          <HadaqUdpPort value="10103"/>
+       </Port>
+       <Port name="Input3">
+          <HadaqUdpPort value="10104"/>
+       </Port>
+       <Port name="Input4">
+          <HadaqUdpPort value="10105"/>
+       </Port>       
+       <Port name="Input*">
+          <HadaqUdpBuffer value="1000000"/>
+          <!--HadaqUdpMTU value="64512"/-->   
+          <BufferSize value="65536"/>
+          <InputQueueSize value="5"/>
+       </Port>       
+     </Module>
+     
+     <Module name="OnlineServer">
+       <Port name="Output">
+          <MbsServerKind value="Stream"/>
+          <!--MbsServerPort value="6543"/-->
+        </Port>
+     </Module>
+
+     
+     
+  </Context>
+</dabc>
