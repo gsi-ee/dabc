@@ -58,8 +58,10 @@ bool hadaq::ReadIterator::Reset(const dabc::Buffer& buf)
 
    if (buf.null()) return false;
 
-   if (buf.GetTypeId() != mbt_HadaqEvents) {
-      EOUT(("Only buffer format mbt_HadaqEvents is supported"));
+   fBufType=buf.GetTypeId();
+
+   if (!(fBufType == mbt_HadaqEvents || fBufType == mbt_HadaqTransportUnit) ) {
+      EOUT(("Only buffer format mbt_HadaqEvents or mbt_HadaqTransportUnit is supported"));
       return false;
    }
 
@@ -75,10 +77,59 @@ void hadaq::ReadIterator::Close()
    fSubPtr.reset();
    fRawPtr.reset();
    fFirstEvent = false;
+   fBufType=dabc::mbt_Null;
 }
+
+
+bool hadaq::ReadIterator::NextHadTu()
+{
+   if (fBufType != mbt_HadaqTransportUnit ) {
+         EOUT(("NextHadTu only allowed for buffer type mbt_HadaqTransportUnit. Check your code!"));
+         return false;
+      }
+
+
+   if (fEvPtr.null()) return false;
+
+   if (fFirstEvent)
+      fFirstEvent = false;
+   else
+      fEvPtr.shift(hadtu()->GetPaddedSize());
+
+   if (fEvPtr.fullsize() < sizeof(hadaq::HadTu)) {
+      fEvPtr.reset();
+      return false;
+   }
+
+   if (fEvPtr.rawsize() < sizeof(hadaq::HadTu)) {
+      EOUT(("Raw size less than transport unit header - not supported !!!!"));
+      fEvPtr.reset();
+      return false;
+   }
+
+   if (fEvPtr.fullsize() < hadtu()->GetSize()) {
+      EOUT(("Error in HADAQ format - declared event size %u smaller than actual portion in buffer %u",
+            (unsigned) hadtu()->GetSize(), (unsigned) fEvPtr.fullsize()));
+      fEvPtr.reset();
+      return false;
+   }
+
+   fSubPtr.reset();
+   fRawPtr.reset();
+
+   return true;
+}
+
+
+
 
 bool hadaq::ReadIterator::NextEvent()
 {
+   if (fBufType != mbt_HadaqEvents ) {
+           EOUT(("NextEvent only allowed for buffer type mbt_HadaqEvents. Check your code!"));
+           return false;
+        }
+
    if (fEvPtr.null()) return false;
 
    if (fFirstEvent)
@@ -126,12 +177,27 @@ bool hadaq::ReadIterator::NextSubEvent()
 {
    if (fSubPtr.null()) {
       if (fEvPtr.null()) return false;
-      if (evnt()->GetSize() < sizeof(hadaq::Event)) {
-         EOUT(("Hadaq format error - event fullsize %u too small", evnt()->GetSize()));
+      // this function is used both in hadtu and in event mode. Check out mode:
+      dabc::BufferSize_t headsize=0;
+      size_t containersize = 0;
+      if (fBufType == mbt_HadaqEvents) {
+         headsize = sizeof(hadaq::Event);
+         containersize = evnt()->GetPaddedSize();
+      } else if (fBufType == mbt_HadaqTransportUnit) {
+         headsize = sizeof(hadaq::HadTu);
+         containersize = hadtu()->GetPaddedSize();
+      } else {
+         EOUT(("NextSubEvent only allowed for buffer type mbt_HadaqEvents or mbt_HadaqTransportUnit. Check your code!"));
          return false;
       }
-      fSubPtr.reset(fEvPtr, 0, evnt()->GetPaddedSize());
-      fSubPtr.shift(sizeof(hadaq::Event));
+
+       if (containersize < headsize) {
+         EOUT(("Hadaq format error - tu container fullsize %u too small", containersize));
+         return false;
+      }
+      fSubPtr.reset(fEvPtr, 0, containersize);
+
+      fSubPtr.shift(headsize);
    } else
       fSubPtr.shift(subevnt()->GetPaddedSize());
 
@@ -234,7 +300,8 @@ bool hadaq::WriteIterator::IsPlaceForEvent(uint32_t subeventssize)
 }
 
 
-bool hadaq::WriteIterator::NewEvent(EventNumType event_number, uint32_t minsubeventssize)
+bool  hadaq::WriteIterator::NewEvent(EventNumType evtSeqNr, RunId runNr, uint32_t minsubeventssize)
+
 {
    // TODO: add arguments to set other event header fields
    if (fBuffer.null()) return false;
@@ -248,7 +315,7 @@ bool hadaq::WriteIterator::NewEvent(EventNumType event_number, uint32_t minsubev
       return false;
    }
 
-   evnt()->Init(event_number);
+   evnt()->Init(evtSeqNr, runNr);
 
    return true;
 }
@@ -275,7 +342,7 @@ bool hadaq::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
 
    subevnt()->SetSize(rawdatasz);
 
-   fSubPtr.shift(subevnt()->GetSize());
+   fSubPtr.shift(subevnt()->GetPaddedSize());
 
    return true;
 }
@@ -298,7 +365,7 @@ bool hadaq::WriteIterator::AddSubevent(const dabc::Pointer& source)
 
 bool hadaq::WriteIterator::AddSubevent(hadaq::Subevent* sub)
 {
-   return AddSubevent(dabc::Pointer(sub, sub->GetSize()));
+   return AddSubevent(dabc::Pointer(sub, sub->GetPaddedSize()));
 }
 
 bool hadaq::WriteIterator::FinishEvent()
@@ -308,8 +375,9 @@ bool hadaq::WriteIterator::FinishEvent()
    dabc::BufferSize_t dist = sizeof(hadaq::Event);
    if (!fSubPtr.null()) dist = fEvPtr.distance_to(fSubPtr);
    evnt()->SetSize(dist);
-   fFullSize += dist;
-   fEvPtr.shift(dist);
+   dabc::BufferSize_t paddeddist=evnt()->GetPaddedSize();
+   fFullSize += paddeddist;
+   fEvPtr.shift(paddeddist);
 
    return true;
 }

@@ -37,8 +37,10 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 
    CreatePar("TransmitData").SetRatemeter(false, 10.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 10.).SetUnits("Buf");
+   CreatePar("TransmitEvents").SetRatemeter(false, 10.).SetUnits("Evts");
    Par("TransmitData").SetDebugLevel(1);
    Par("TransmitBufs").SetDebugLevel(1);
+   Par("TransmitEvents").SetDebugLevel(1);
 }
 
 
@@ -91,7 +93,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		    usedsize+=evlen;
 		    miter.FinishSubEvent(evlen);
 		    miter.FinishEvent();
-		    //mev->SetSubEventsSize(evlen+sizeof(mbs::SubeventHeader));
+		    Par("TransmitEvents").SetDouble(1.);
 		    DOUT3(("retransmit - used size %d",usedsize));
 		} // while hiter.NextEvent()
 

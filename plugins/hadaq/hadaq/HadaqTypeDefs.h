@@ -30,12 +30,18 @@
 //#define PUTHLD__OPEN_ERR    103
 //#define PUTHLD__EXCEED      104
 
+
+#define HADAQ_TIMEOFFSET 1200000000 /* needed to reconstruct time from runId */
+
+
 namespace hadaq {
 
    typedef uint32_t EventNumType;
+   typedef uint32_t RunId;
 
    enum EvtId {
       EvtId_data = 1,
+      EvtId_DABC = 0x00003001,      // hades DAQVERSION=3 (evtbuild.c uses DAQVERSION=2)
       EvtId_runStart = 0x00010002,
       EvtId_runStop = 0x00010003
    };
@@ -43,6 +49,12 @@ namespace hadaq {
    enum EvtDecoding {
       EvtDecoding_default = 1,
       EvtDecoding_64bitAligned = (0x03 << 16) | 0x0001
+   };
+
+   enum EHadaqBufferTypes {
+      mbt_HadaqEvents = 142,        // event/subevent structure
+      mbt_HadaqTransportUnit = 143  //plain hadtu container with single subevents
+
    };
 
 
@@ -107,6 +119,7 @@ namespace hadaq {
          size_t GetPaddedSize()
             {
                size_t hedsize = GetSize();
+               // TODO: take actual decoding into account
                // account padding of events to 8 byte boundaries:
                while ((hedsize % 8) != 0) {
                   hedsize++;
@@ -279,20 +292,18 @@ namespace hadaq {
             SetValue(&evtTime, t);
          }
 
-         void Init(EventNumType evnt = 0, int32_t date = 0, int32_t time = 0,
-               int32_t run = 0)
-         {
-            evtSeqNr = evnt;
-            evtDate = date;
-            evtTime = time;
-            evtRunNr = run;
-            evtPad = 0;
-         }
+         void Init(EventNumType evnt, RunId run=0, EvtId evid=EvtId_DABC);
 
          /*
           * Insert full event header at position buf. Returns pointer on this new event
           * */
          static hadaq::Event* PutEventHeader(char** buf, EvtId id);
+
+         /*
+          * Generate run id from current time.
+          * Same as used in hades eventbuilders for filenames
+          */
+         static hadaq::RunId  CreateRunId();
 
    };
 
@@ -401,11 +412,7 @@ namespace hadaq {
 
 #pragma pack(pop)
 
-   enum EHadaqBufferTypes {
-      mbt_HadaqEvents = 142, // event/subevent structure
-      mbt_HadaqTransportUnit = 143, // plain hadtu container with single subevents
-   // several hadaq events
-   };
+
 
    extern const char* typeHldInput;
    extern const char* typeHldOutput;

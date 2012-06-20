@@ -15,6 +15,7 @@
 
 #include <string.h>
 #include <byteswap.h>
+#include <sys/time.h>
 #include <time.h>
 
 const char* hadaq::typeHldInput = "hadaq::HldInput";
@@ -76,5 +77,24 @@ hadaq::Event* hadaq::Event::PutEventHeader(char** buf, EvtId id)
    clock |= gmTime->tm_sec;
    ev->SetTime(clock);
    return ev;
+}
+
+hadaq::RunId  hadaq::Event::CreateRunId()
+{
+   hadaq::RunId runNr;
+   struct timeval tv;
+   gettimeofday(&tv, NULL);
+   runNr = tv.tv_sec - HADAQ_TIMEOFFSET;
+   return runNr;
+}
+
+
+void  hadaq::Event::Init(EventNumType evnt, RunId run, EvtId evid)
+{
+   char* my=(char*) (this);
+   hadaq::Event::PutEventHeader(&my, evid);
+   evtSeqNr = evnt;
+   evtRunNr = run;
+   evtPad = 0;
 }
 

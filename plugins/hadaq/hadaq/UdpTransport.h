@@ -71,11 +71,7 @@ namespace hadaq {
           *                                  ^
           *                            previous events length
           *                                  v
-          *    fCurrentEvent   - begin of event header
-          *                                  ^
-          *                            sizeof(hadaq::Event) (if fBuildFullEvent) or 0
-          *                                  v
-          *    fTgtPtr        - begin of current subevent
+          *    fTgtPtr        - begin of current HadTu message
           *                                  ^
           *                              fTgtShift
           *                                  v
@@ -96,7 +92,6 @@ namespace hadaq {
          unsigned           fBufferSize;
 
          dabc::Buffer       fEvtBuf; // buffer for output event/subevent data
-         //hadaq::Event*      fCurrentEvent; // points to begin of current event structure
          char*              fEvtPtr;   // cursor pointer in EvtBuf
          char*              fEvtEndPtr;   // end of current event buffer
 
@@ -116,6 +111,9 @@ namespace hadaq {
           * otherwise, produce subevent stream for consequtive event builder module.
           */
          bool fBuildFullEvent;
+
+         /* run id from timeofday for eventbuilding*/
+         RunId fRunNumber;
 
          virtual bool ReplyCommand(dabc::Command cmd);
 
@@ -145,10 +143,6 @@ namespace hadaq {
           * copyspanning will copy a spanning hadtu fragment from old to new buffers*/
          void NewReceiveBuffer(bool copyspanning=false);
 
-         /*
-          * Finalize current event structure and set up new event header after the current target pointer
-          */
-//         void NextEvent();
 
          /*
           * Do simple eventbuilding into output buffer if enabled.

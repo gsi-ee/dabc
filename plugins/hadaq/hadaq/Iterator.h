@@ -14,17 +14,9 @@
 #ifndef HADAQ_Iterator
 #define HADAQ_Iterator
 
-#ifndef HADAQ_HadaqTypeDefs
 #include "hadaq/HadaqTypeDefs.h"
-#endif
-
-#ifndef DABC_Buffer
 #include "dabc/Buffer.h"
-#endif
-
-#ifndef DABC_Pointer
 #include "dabc/Pointer.h"
-#endif
 
 namespace hadaq {
 
@@ -34,6 +26,8 @@ namespace hadaq {
          dabc::Pointer  fEvPtr;
          dabc::Pointer  fSubPtr;
          dabc::Pointer  fRawPtr;
+
+         unsigned fBufType;
 
       public:
          ReadIterator();
@@ -57,10 +51,12 @@ namespace hadaq {
 
          bool IsData() const { return !fEvPtr.null(); }
 
+         bool NextHadTu();
          bool NextEvent();
          bool NextSubEvent();
 
          hadaq::Event* evnt() const { return (hadaq::Event*) fEvPtr(); }
+         hadaq::HadTu* hadtu() const { return (hadaq::HadTu*) fEvPtr(); }
          bool AssignEventPointer(dabc::Pointer& ptr);
          hadaq::Subevent* subevnt() const { return (hadaq::Subevent*) fSubPtr(); }
          void* rawdata() const { return fRawPtr(); }
@@ -80,7 +76,7 @@ namespace hadaq {
          bool IsBuffer() const { return !fBuffer.null(); }
          bool IsEmpty() const { return fFullSize == 0; }
          bool IsPlaceForEvent(uint32_t subeventsize);
-         bool NewEvent(EventNumType event_number = 0, uint32_t subeventsize = 0);
+         bool NewEvent(EventNumType evtSeqNr=0, RunId runNr=0, uint32_t minsubeventsize=0);
          bool NewSubevent(uint32_t minrawsize = 0, uint32_t trigger = 0);
          bool FinishSubEvent(uint32_t rawdatasz);
 
