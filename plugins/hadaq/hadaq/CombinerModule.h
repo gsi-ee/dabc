@@ -114,6 +114,8 @@ namespace hadaq {
          /** Method should be used to skip current buffer from the queue */
          bool ShiftToNextBuffer(unsigned ninp);
 
+         bool SkipInputBuffer(unsigned ninp);
+
          /* cleanup input buffers in case of too large eventnumber mismatch*/
          bool DropAllInputBuffers();
 

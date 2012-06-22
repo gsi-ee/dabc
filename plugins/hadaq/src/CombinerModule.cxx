@@ -170,12 +170,13 @@ void hadaq::CombinerModule::BeforeModuleStart()
 
 void hadaq::CombinerModule::AfterModuleStop()
 {
+   DOUT0(("%s: Complete Events:%d , BrokenEvents:%d, DroppedEvents:%d, RecvBytes:%d, data errors:%d, tag errors:%d", GetName(), (int) fTotalRecvEvents, (int) fTotalDiscEvents , (int) fTotalDroppedEvents, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors));
 
-   std::cout << "----- Combiner Module Statistics: -----" << std::endl;
-   std::cout << "Complete Events:" << fTotalRecvEvents << ", BrokenEvents:"
-         << fTotalDiscEvents << ", DroppedEvents:" << fTotalDroppedEvents
-         << ", RecvBytes:" << fTotalRecvBytes << ", data errors:"
-         << fTotalDataErrors << ", tag errors:" << fTotalTagErrors << std::endl;
+//   std::cout << "----- Combiner Module Statistics: -----" << std::endl;
+//   std::cout << "Complete Events:" << fTotalRecvEvents << ", BrokenEvents:"
+//         << fTotalDiscEvents << ", DroppedEvents:" << fTotalDroppedEvents
+//         << ", RecvBytes:" << fTotalRecvBytes << ", data errors:"
+//         << fTotalDataErrors << ", tag errors:" << fTotalTagErrors << std::endl;
 
 }
 
@@ -236,41 +237,48 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
 ///////////////////////////////////////////////////////////////
 //////// INPUT BUFFER METHODS:
 
+bool hadaq::CombinerModule::SkipInputBuffer(unsigned ninp)
+{
+   DOUT5(("CombinerModule::SkipInputBuffer  %d ", ninp));
+   return (Input(ninp)->SkipInputBuffers(1));
+}
+
+
 bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 {
    DOUT5(("CombinerModule::ShiftToNextBuffer %d ", ninp));
    fInp[ninp].Close();
-   return (Input(ninp)->SkipInputBuffers(1));
+   //if (Input(ninp)->InputPending() == 0)
+   if(!Input(ninp)->CanRecv())
+               return false;
+   //if(!fInp[ninp].Reset(Input(ninp)->FirstInputBuffer())) {
+   if (!fInp[ninp].Reset(Input(ninp)->Recv())) {
+               DOUT5(("CombinerModule::ShiftToNextBuffer %d could not reset to FirstInputBuffer", ninp));
+               // skip buffer and try again
+               //SkipInputBuffer(ninp);
+               return false;
+            }
+   return true;
 }
 
 bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 {
    DOUT5(("CombinerModule::ShiftToNextHadTu %d begins", ninp));
-   //std::cout <<"ShiftToNextHadTu n="<<ninp << std::endl;
    bool foundhadtu(false);
-   while (!foundhadtu) {
-
-      if (!fInp[ninp].IsData()) {
-         if (Input(ninp)->InputPending() == 0)
+   //while (!foundhadtu) {
+         if (!fInp[ninp].IsData()) {
+         if (!ShiftToNextBuffer(ninp))
             return false;
-
-         if (!fInp[ninp].Reset(Input(ninp)->FirstInputBuffer())) {
-            DOUT5(("CombinerModule::ShiftToNextHadTu %d could not reset FirstInputBuffer", ninp));
-            // skip buffer and try again
-            ShiftToNextBuffer(ninp);
-
-            continue;
-         }
       }
-
-      bool res = fInp[ninp].NextHadTu();
+     bool res = fInp[ninp].NextHadTu();
       if (!res || (fInp[ninp].hadtu() == 0)) {
          DOUT5(("CombinerModule::ShiftToNextHadTu %d has zero NextHadTu()", ninp));
-         ShiftToNextBuffer(ninp);
-         continue;
+         //if(!ShiftToNextBuffer(ninp)) return false;
+         return false;
+         //continue;
       }
       foundhadtu = true;
-   } //  while (!foundhadtu)
+   //} //  while (!foundhadtu)
    return true;
 
 }
@@ -286,7 +294,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
          DOUT5(("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp));
          // retry in next hadtu container
          if (!ShiftToNextHadTu(ninp))
-            return false; // no more pending input buffers
+            return false; // no more input buffers available
          continue;
       }
 
@@ -308,7 +316,7 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
 {
    DOUT0(("hadaq::CombinerModule::DropAllInputBuffers()..."));
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-      while (ShiftToNextBuffer(ninp))
+      while (SkipInputBuffer(ninp))
          ; // until no more buffer in input port
    }
    return true;
@@ -341,7 +349,7 @@ bool hadaq::CombinerModule::BuildEvent()
 #endif
 
    ///////////////////////////////////////////////////////////
-   // alternative approach like simplified mbs event building:
+   // alternative approach like a simplified mbs event building:
    //////////////////////////////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    // first input loop: find out maximum trignum of all inputs = current event trignumber

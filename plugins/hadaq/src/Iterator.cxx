@@ -91,6 +91,8 @@ bool hadaq::ReadIterator::NextHadTu()
 
    if (fEvPtr.null()) return false;
 
+
+
    if (fFirstEvent)
       fFirstEvent = false;
    else

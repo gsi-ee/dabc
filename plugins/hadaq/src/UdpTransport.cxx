@@ -134,6 +134,7 @@ bool hadaq::UdpDataSocket::Recv(dabc::Buffer& buf)
       if (fQueue.Size() <= 0)
          return false;
 
+      DOUT5(("%s UdpDataSocket::Recv has queue entry",GetName()));
 #if DABC_VERSION_CODE >= DABC_VERSION(1,9,2)
       fQueue.PopBuffer(buf);
 #else
@@ -146,12 +147,14 @@ bool hadaq::UdpDataSocket::Recv(dabc::Buffer& buf)
 unsigned hadaq::UdpDataSocket::RecvQueueSize() const
 {
    dabc::LockGuard guard(fQueueMutex);
+   DOUT5(("%s UdpDataSocket::RecvQueueSize()=%d",GetName(),fQueue.Size()));
    return fQueue.Size();
 }
 
 dabc::Buffer& hadaq::UdpDataSocket::RecvBuffer(unsigned indx) const
 {
    dabc::LockGuard lock(fQueueMutex);
+   DOUT5(("%s UdpDataSocket::RecvBuffer %d ",GetName(),indx));
    return fQueue.ItemRef(indx);
 }
 
@@ -169,16 +172,16 @@ void hadaq::UdpDataSocket::StartTransport()
 void hadaq::UdpDataSocket::StopTransport()
 {
    DOUT5(("Stopping hadaq:udp transport -"));
-   // FIXME: again, we see strange things in DOUT, wrong or shifted values!
-   //DOUT0(("RecvPackets:%u, DiscPackets:%u, RecvMsg:%u, DiscMsg:%u, RecvBytes:%u",
-   //       fTotalRecvPacket, fTotalDiscardPacket, fTotalRecvMsg, fTotalDiscardMsg, fTotalRecvBytes));
-   std::cout <<"----- UdpDataSocket "<<GetName()<<" Statistics: -----"<<std::endl;
-   std::cout << "RecvPackets:" << fTotalRecvPacket << ", DiscPackets:"
-         << fTotalDiscardPacket << ", RecvMsg:" << fTotalRecvMsg << ", DiscMsg:"
-         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes << ", RecvBuffers:" << fTotalRecvBuffers<< ", DroppedBuffers:" << fTotalDroppedBuffers;
-   if(fBuildFullEvent)
-      std::cout << ", fTotalRecvEvents:"<< fTotalRecvEvents;
-   std::cout <<std::endl;
+   DOUT0(("%s: RecvPackets:%d, DiscPackets:%d, RecvMsg:%d, DiscMsg:%d, RecvBytes:%d, RcvBufs:%d DropBufs:%d BuildEvts:%d", GetName(), (int) fTotalRecvPacket, (int) fTotalDiscardPacket, (int) fTotalRecvMsg, (int) fTotalDiscardMsg, (int) fTotalRecvBytes, (int) fTotalRecvBuffers, (int) fTotalDroppedBuffers, (int) fTotalRecvEvents));
+   // NOTE : we see strange things in DOUT, wrong or shifted values if we do not cast uint63_t to int!
+// this output would not go into dabc logfile:
+//   std::cout <<"----- UdpDataSocket "<<GetName()<<" Statistics: -----"<<std::endl;
+//   std::cout << "RecvPackets:" << fTotalRecvPacket << ", DiscPackets:"
+//         << fTotalDiscardPacket << ", RecvMsg:" << fTotalRecvMsg << ", DiscMsg:"
+//         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes << ", RecvBuffers:" << fTotalRecvBuffers<< ", DroppedBuffers:" << fTotalDroppedBuffers;
+//   if(fBuildFullEvent)
+//      std::cout << ", fTotalRecvEvents:"<< fTotalRecvEvents;
+//   std::cout <<std::endl;
 
 }
 
@@ -259,7 +262,7 @@ void hadaq::UdpDataSocket::ReadUdp()
 void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
 {
 
-   DOUT5(("NewReceiveBuffer, copyspanning=%d",copyspanning));
+   DOUT5(("%s NewReceiveBuffer, copyspanning=%d",GetName(),copyspanning));
    dabc::Buffer outbuf;
    if (!fTgtBuf.null()) {
       // first shrink last receive buffer to full received hadtu envelopes:
@@ -302,8 +305,6 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
       if (copyspanning) {
          // copy data with full NetTransx event header for spanning events anyway
          size_t copylength = fTgtShift;
-//         if (fBuildFullEvent)
-//            copylength += sizeof(hadaq::Event);
          memcpy(bufstart, fTgtPtr, copylength);
          DOUT0(("Copied %d spanning bytes to new DABC buffer of size %d",copylength,fTgtBuf.SegmentSize()));
          fTgtPtr = bufstart;
@@ -327,19 +328,26 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
 
    if (!outbuf.null()) {
       // TODO: here check if we can still add something to queue. otherwise we drop
-      if(fQueue.Full())
-         {
-            DOUT0(("hadaq::UdpDataSocket:: output queue is full, dropping buffer!"));
-            fTotalDroppedBuffers++;
-            outbuf.Release();
-         }
-      else
+      bool dropbuffer = false;
       {
-         fQueue.Push(outbuf); // put old buffer to transport queue no sooner than we have copied spanning event
-         FirePortInput();
+         dabc::LockGuard lock(fQueueMutex);
+         if (fQueue.Full()) {
+            DOUT0(("hadaq::UdpDataSocket %s: output queue is full, dropping buffer!",GetName()));
+            dropbuffer = true;
+         } else {
+            fQueue.Push(outbuf); // put old buffer to transport queue no sooner than we have copied spanning event
+         }
+      } // lockguard
+      // do framework actions outside queue mutex:
+      if (dropbuffer) {
+         outbuf.Release();
+         fTotalDroppedBuffers++;
+      } else {
+
          fTotalRecvBuffers++;
       }
-   }
+      FirePortInput();
+   } // if (!outbuf.null())
 
 }
 
