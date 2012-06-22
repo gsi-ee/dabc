@@ -50,7 +50,6 @@ namespace hadaq {
    class UdpDataSocket : public dabc::SocketWorker,
                          public dabc::Transport,
                          protected dabc::MemoryPoolRequester {
-      friend class UdpDevice;
 
       DABC_TRANSPORT(dabc::SocketWorker)
 
@@ -104,6 +103,8 @@ namespace hadaq {
          uint64_t           fTotalDiscardMsg;
          uint64_t           fTotalRecvBytes;
          uint64_t           fTotalRecvEvents;
+         uint64_t           fTotalRecvBuffers;
+         uint64_t           fTotalDroppedBuffers;
 
          //double             fFlushTimeout;  // after such timeout partially filled packed will be delivered
 

@@ -25,7 +25,7 @@
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
 
-
+//#define HADAQ_MBSTRANSMITTER_TESTRECEIVE 1
 
 hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Command cmd) :
 	dabc::ModuleAsync(name, cmd)
@@ -35,9 +35,9 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 	CreateInput("Input", Pool(), 5);
 	CreateOutput("Output", Pool(), 5);
 
-   CreatePar("TransmitData").SetRatemeter(false, 10.).SetUnits("MB");
-   CreatePar("TransmitBufs").SetRatemeter(false, 10.).SetUnits("Buf");
-   CreatePar("TransmitEvents").SetRatemeter(false, 10.).SetUnits("Evts");
+   CreatePar("TransmitData").SetRatemeter(false, 5.).SetUnits("MB");
+   CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
+   CreatePar("TransmitEvents").SetRatemeter(false, 5.).SetUnits("Evts");
    Par("TransmitData").SetDebugLevel(1);
    Par("TransmitBufs").SetDebugLevel(1);
    Par("TransmitEvents").SetDebugLevel(1);
@@ -48,7 +48,21 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 void hadaq::MbsTransmitterModule::retransmit()
 {
    DOUT5(("MbsTransmitterModule::retransmit() starts"));
-	bool dostop = false;
+#ifdef HADAQ_MBSTRANSMITTER_TESTRECEIVE
+      if(Input(0)->CanRecv())
+      {
+         dabc::Buffer inbuf = Input(0)->Recv();
+         size_t bufferlen=0;
+         if(!inbuf.null()) bufferlen=inbuf.GetTotalSize();
+         Par("TransmitData").SetDouble(bufferlen/1024./1024);
+         Par("TransmitBufs").SetDouble(1.);
+         inbuf.Release();
+      }
+      return;
+#endif
+
+
+   bool dostop = false;
 	while (Output(0)->CanSend() && Input(0)->CanRecv()) {
 		dabc::Buffer inbuf = Input(0)->Recv();
 		if (inbuf.GetTypeId() == dabc::mbt_EOF) {

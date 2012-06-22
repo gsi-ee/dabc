@@ -41,7 +41,15 @@
           <!--HadaqUdpMTU value="64512"/-->   
           <BufferSize value="65536"/>
           <InputQueueSize value="500"/>
-       </Port>       
+       </Port>
+        <Port name="ServerOutput">
+          <OutputQueueSize value="500"/>       
+        </Port>  
+       <Port name="FileOutput">
+          <HadaqFileName value="te000.hld"/>       
+        </Port> 
+
+              
      </Module>
      
      <Module name="OnlineServer">

@@ -152,6 +152,7 @@ namespace hadaq {
 
          uint64_t           fTotalRecvBytes;
          uint64_t           fTotalRecvEvents;
+         uint64_t           fTotalDroppedEvents;
          uint64_t           fTotalDiscEvents;
          uint64_t           fTotalTagErrors;
          uint64_t           fTotalDataErrors;

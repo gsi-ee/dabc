@@ -49,6 +49,8 @@ hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
    fTotalDiscardMsg = 0;
    fTotalRecvBytes = 0;
    fTotalRecvEvents =0;
+   fTotalRecvBuffers=0;
+   fTotalDroppedBuffers=0;
 
    //fFlushTimeout = .1;
    fBufferSize = 2 * DEFAULT_MTU;
@@ -64,6 +66,8 @@ hadaq::UdpDataSocket::~UdpDataSocket()
 
 void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
 {
+
+   SetName(port->GetName());
    fBufferSize = port->Cfg(dabc::xmlBufferSize).AsInt(fBufferSize);
    //fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
    // DOUT0(("fFlushTimeout = %5.1f %s", fFlushTimeout, dabc::xmlFlushTimeout));
@@ -164,14 +168,14 @@ void hadaq::UdpDataSocket::StartTransport()
 
 void hadaq::UdpDataSocket::StopTransport()
 {
-   DOUT0(("Stopping hada:udp transport -"));
+   DOUT5(("Stopping hadaq:udp transport -"));
    // FIXME: again, we see strange things in DOUT, wrong or shifted values!
    //DOUT0(("RecvPackets:%u, DiscPackets:%u, RecvMsg:%u, DiscMsg:%u, RecvBytes:%u",
    //       fTotalRecvPacket, fTotalDiscardPacket, fTotalRecvMsg, fTotalDiscardMsg, fTotalRecvBytes));
    std::cout <<"----- UdpDataSocket "<<GetName()<<" Statistics: -----"<<std::endl;
    std::cout << "RecvPackets:" << fTotalRecvPacket << ", DiscPackets:"
          << fTotalDiscardPacket << ", RecvMsg:" << fTotalRecvMsg << ", DiscMsg:"
-         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes;
+         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes << ", RecvBuffers:" << fTotalRecvBuffers<< ", DroppedBuffers:" << fTotalDroppedBuffers;
    if(fBuildFullEvent)
       std::cout << ", fTotalRecvEvents:"<< fTotalRecvEvents;
    std::cout <<std::endl;
@@ -322,8 +326,19 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
    } //if (!fTgtBuf.null()) newbuffer
 
    if (!outbuf.null()) {
-      fQueue.Push(outbuf); // put old buffer to transport queue no sooner than we have copied spanning event
-      FirePortInput();
+      // TODO: here check if we can still add something to queue. otherwise we drop
+      if(fQueue.Full())
+         {
+            DOUT0(("hadaq::UdpDataSocket:: output queue is full, dropping buffer!"));
+            fTotalDroppedBuffers++;
+            outbuf.Release();
+         }
+      else
+      {
+         fQueue.Push(outbuf); // put old buffer to transport queue no sooner than we have copied spanning event
+         FirePortInput();
+         fTotalRecvBuffers++;
+      }
    }
 
 }

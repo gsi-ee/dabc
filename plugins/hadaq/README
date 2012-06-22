@@ -2,21 +2,21 @@
 ****** DABC plugin for hadaq 
 ****** (originally HADES collaboration DAQ and data format)
 *        Joern Adamczewski-Musch, j.adamczewski@gsi.de
-* Version 0.04 - 19-Jun-2012
-   : Implemented valid simple eventbuilding in udp transport. 
-     Will put hades eventheader before each subevent
-     First version that is really working with hadaq trb simulator + Go4 client
+* Version 0.05 - 22-Jun-2012
+   : First full eventbuilding in CombinerModule. 
+     Tested with hadaq trb simulator + Go4 client
    
 * Components:
    * HldFile - input (OK) and output (TODO) of hld file format
    * HldInput - (OK) read hadtu format from file 
    * HldOutput- (TODO) write hadtu format to file 
-   * UdpDataSocket - (TODO).receive hadtu packets from trb frontend (single stream)
+   * UdpDataSocket - (OK) receive hadtu packets from trb frontend (single stream)
    * MbsTransmitterModule - (OK) wrap hadtu format into mbs event container
                             output is mbs server or lmd file.
                             this format is used in mbs combiner and go4 unpacker 
-   * CombinerModule - (TODO) do eventbuilding of hadtu format from several data streams.
-                      output is full event in hadtu format. This will be functionality of old daq_evtbuild.
+   * CombinerModule - (OK) do eventbuilding of hadtu format from several data streams.
+                      output is full event in hadtu format. 
+                      Should provide functionality of old daq_evtbuild in the end.
                       
 * Applications:
    * HldConverter.xml - (OK)
@@ -24,8 +24,14 @@
    * HldServer.xml -  (OK)
          configuration to read hld file and serve the hadtu events as mbs events at transport server
          dabc will wait 30 seconds before start processing, so go4 may connect to inspect data
-   * NetmemServer.xml -(TODO)
+   * NetmemServer.xml -(OK)
          configuration to receive hadtu buffers at udp socket and serve them as mbs events at transport/stream server
+
+   * EventBuilder.xml -(OK)
+         configuration to receive hadtu data at n udp sockets, and do a full eventbuilding.
+         Output events can be served via mbs transmitter at transport/stream server
+         in parallel, output events can be written to hld file (TODO)
+
          
 * How to use:
  TODO 
@@ -41,7 +47,9 @@
       : Implemented valid simple eventbuilding in udp transport. 
         Will insert hades eventheader before each subevent of hadtu input stream.
         First version that is _really_ working with hadaq trb simulator + Go4 client
-   
+   * Version 0.05 - 22-Jun-2012
+      : First full eventbuilding in CombinerModule. 
+        Tested with hadaq trb simulator + Go4 client  
    
    * Under construction
    
