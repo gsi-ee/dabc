@@ -108,7 +108,7 @@ namespace hadaq {
          //double             fFlushTimeout;  // after such timeout partially filled packed will be delivered
 
          /* if true, we will produce full hadaq events with subevent for direct use.
-          * otherwise, produce subevent stream for consequtive event builder module.
+          * otherwise, produce subevent stream for consecutive event builder module.
           */
          bool fBuildFullEvent;
 

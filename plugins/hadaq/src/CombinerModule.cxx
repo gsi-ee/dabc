@@ -14,6 +14,8 @@
 #include "hadaq/CombinerModule.h"
 
 #include <math.h>
+#include <iostream>
+
 
 #include "dabc/Port.h"
 #include "dabc/PoolHandle.h"
@@ -23,6 +25,8 @@
 #include "hadaq/HadaqTypeDefs.h"
 #include "mbs/MbsTypeDefs.h"
 
+// this define will just receive all buffers, note their size and discard them, no event building
+//#define HADAQ_COMBINER_TESTRECEIVE 1
 
 hadaq::CombinerModule::CombinerModule(const char* name,  dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -34,18 +38,35 @@ hadaq::CombinerModule::CombinerModule(const char* name,  dabc::Command cmd) :
    fServOutput(false),
    fBuildCompleteEvents(true)
 {
+   fTotalRecvBytes=0;
+   fTotalRecvEvents=0;
+   fTotalDiscEvents=0;
+   fTotalTagErrors=0;
+   fTotalDataErrors=0;
+
+   fRunNumber=hadaq::Event::CreateRunId(); // runid from configuration time
+      // TODO: new runid for any new output file. probably get run number from application later
+
 
    fBufferSize = Cfg(dabc::xmlBufferSize,cmd).AsInt(16384);
 
+   //fMasterChannel=0; // TODO: configure this from xml
+   fTriggerNrTolerance = 10000;
    std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr(dabc::xmlWorkPool);
 
    CreatePoolHandle(poolname.c_str());
 
    int numinp = Cfg(dabc::xmlNumInputs,cmd).AsInt(1);
 
-   fDoOutput = Cfg(hadaq::xmlNormalOutput,cmd).AsBool(true);
+//   if(fMasterChannel > numinp-1)
+//      {
+//         DOUT0(("HadaqCombinerModule: master channel index %d exceeds limit, reduce to %d", fMasterChannel, numinp-1));
+//         fMasterChannel=numinp-1;
+//     }
+
+//   fDoOutput = Cfg(hadaq::xmlNormalOutput,cmd).AsBool(true);
    fFileOutput = Cfg(hadaq::xmlFileOutput,cmd).AsBool(false);
-//   fServOutput = Cfg(hadaq::xmlServerOutput,cmd).AsBool(false);
+   fServOutput = Cfg(hadaq::xmlServerOutput,cmd).AsBool(false);
 
 //     fBuildCompleteEvents = Cfg(mbs::xmlCombineCompleteOnly,cmd).AsBool(true);
 //
@@ -70,19 +91,20 @@ hadaq::CombinerModule::CombinerModule(const char* name,  dabc::Command cmd) :
 
 //     fNumObligatoryInputs = NumInputs();
 //
-     if (fDoOutput) CreateOutput(hadaq::portOutput, Pool(), 5);
+//     if (fDoOutput) CreateOutput(hadaq::portOutput, Pool(), 5);
      if (fFileOutput) CreateOutput(hadaq::portFileOutput, Pool(), 5);
-//     if (fServOutput) CreateOutput(hadaq::portServerOutput, Pool(), 5);
+     if (fServOutput) CreateOutput(hadaq::portServerOutput, Pool(), 5);
 
      if (flushtmout>0.) CreateTimer("FlushTimer", flushtmout, false);
 
      fEventRateName = ratesprefix+"Events";
+     fEventDiscardedRateName = ratesprefix+"DiscardedEvents";
      fDataRateName = ratesprefix+"Data";
      fInfoName = ratesprefix+"Info";
 
-     CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
-     CreatePar(fEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
-
+     CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("MB");
+     CreatePar(fEventRateName).SetRatemeter(false, 5.).SetUnits("Ev");
+     CreatePar(fEventDiscardedRateName).SetRatemeter(false, 5.).SetUnits("Ev");
      // must be configured in xml file
      //   fDataRate->SetDebugOutput(true);
 
@@ -95,9 +117,12 @@ hadaq::CombinerModule::CombinerModule(const char* name,  dabc::Command cmd) :
 //     CreateCmdDef(mbs::comStopServer);
 //
      CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
-     SetInfo(dabc::format("HADAQ combiner module ready. Mode: flush:%3.1f" ,flushtmout), true);
-
-
+     SetInfo(dabc::format("HADAQ combiner module ready. Runid:%d, fileout:%d, servout:%d flush:%3.1f" ,
+           fRunNumber, fFileOutput, fServOutput, flushtmout), true);
+     DOUT0(("HADAQ combiner module ready. Runid:%d, fileout:%d, servout:%d flush:%3.1f" ,fRunNumber, fFileOutput, fServOutput, flushtmout));
+     Par(fDataRateName).SetDebugLevel(1);
+     Par(fEventRateName).SetDebugLevel(1);
+     Par(fEventDiscardedRateName).SetDebugLevel(1);
 
 
 }
@@ -115,17 +140,19 @@ void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 
 void hadaq::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
 {
-   if (fFlushFlag) FlushBuffer();
+   if (fFlushFlag) FlushOutputBuffer();
    fFlushFlag = true;
 }
 
 void hadaq::CombinerModule::ProcessInputEvent(dabc::Port* port)
 {
+
    while (BuildEvent());
 }
 
 void hadaq::CombinerModule::ProcessOutputEvent(dabc::Port* port)
 {
+    // events are build from queue data until we require something from framework
    while (BuildEvent());
 }
 
@@ -139,7 +166,60 @@ void hadaq::CombinerModule::ProcessDisconnectEvent(dabc::Port* port)
    DOUT0(("HadaqCombinerModule ProcessDisconnectEvent %s", port->GetName()));
 }
 
-bool hadaq::CombinerModule::FlushBuffer()
+
+
+void hadaq::CombinerModule::BeforeModuleStart()
+{
+   DOUT2(("hadaq::CombinerModule::BeforeModuleStart name: %s is calling first build event...", GetName()));
+
+   // FIXME: why event processing already done here ???
+
+   //while (BuildEvent());
+
+   DOUT0(("hadaq::CombinerModule::BeforeModuleStart name: %s is finished", GetName()));
+}
+
+void hadaq::CombinerModule::AfterModuleStop()
+{
+
+   std::cout <<"----- Combiner Module Statistics: -----"<<std::endl;
+   std::cout << "Complete Events:" << fTotalRecvEvents << ", DiscardedEvents:"
+            << fTotalDiscEvents << ", RecvBytes:" << fTotalRecvBytes<< ", data errors:"<< fTotalDataErrors<<", tag errors:"<< fTotalTagErrors<< std::endl;
+
+
+
+}
+
+///////////////////////////////////////////////////////////////
+//////// OUTPUT BUFFER METHODS:
+
+bool hadaq::CombinerModule::EnsureOutputBuffer(uint32_t payload)
+{
+   // check if we have enough space in current buffer
+   if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(payload)){
+               // no, we close current buffer
+               if (!FlushOutputBuffer()) return false;
+   }
+   // after flushing last buffer, take next one:
+   if (!fOut.IsBuffer()) {
+      dabc::Buffer buf = Pool()->TakeBufferReq(fBufferSize);
+      if (buf.null()) return false;
+
+      if (!fOut.Reset(buf)) {
+                  SetInfo("Cannot use buffer for output - hard error!!!!", true);
+                  buf.Release();
+                  dabc::mgr.StopApplication();
+                  return false;
+               }
+   }
+   // now check working buffer for space:
+   if (!fOut.IsPlaceForEvent(payload)) return false;
+
+   return true;
+
+}
+
+bool hadaq::CombinerModule::FlushOutputBuffer()
 {
    if (fOut.IsEmpty() || !fOut.IsBuffer()) return false;
 
@@ -156,117 +236,87 @@ bool hadaq::CombinerModule::FlushBuffer()
    return true;
 }
 
-void hadaq::CombinerModule::BeforeModuleStart()
-{
-   DOUT2(("hadaq::CombinerModule::BeforeModuleStart name: %s is calling first build event...", GetName()));
-
-   // FIXME: why event processing already done here ???
-
-   while (BuildEvent());
-
-   DOUT2(("hadaq::CombinerModule::BeforeModuleStart name: %s is finished", GetName()));
-}
-
-void hadaq::CombinerModule::AfterModuleStop()
-{
-   // FIXME: we should process data which is remains in the input queues
-   // probably, we could build incomplete events if they are allowed
-}
-
+///////////////////////////////////////////////////////////////
+//////// INPUT BUFFER METHODS:
 
 
 bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
 {
-   fCfg[ninp].curr_evnt_num = 0;
-   fCfg[ninp].selected = false;
-   fCfg[ninp].valid = false;
-
+   DOUT5(("CombinerModule::ShiftToNextBuffer %d ", ninp));
    fInp[ninp].Close();
-   Input(ninp)->SkipInputBuffers(1);
+   return (Input(ninp)->SkipInputBuffers(1));
+}
+
+bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
+{
+   DOUT5(("CombinerModule::ShiftToNextHadTu %d begins", ninp));
+   //std::cout <<"ShiftToNextHadTu n="<<ninp << std::endl;
+   bool foundhadtu(false);
+    while (!foundhadtu) {
+
+        if (!fInp[ninp].IsData()) {
+           if (Input(ninp)->InputPending()==0) return false;
+
+           if (!fInp[ninp].Reset(Input(ninp)->FirstInputBuffer())) {
+              DOUT5(("CombinerModule::ShiftToNextHadTu %d could not reset FirstInputBuffer", ninp));
+              // skip buffer and try again
+              ShiftToNextBuffer(ninp);
+
+              continue;
+            }
+        }
+
+        bool res = fInp[ninp].NextHadTu();
+        if (!res || (fInp[ninp].hadtu()==0)) {
+           DOUT5(("CombinerModule::ShiftToNextHadTu %d has zero NextHadTu()", ninp));
+           ShiftToNextBuffer(ninp);
+           continue;
+        }
+        foundhadtu=true;
+     } //  while (!foundhadtu)
+return true;
+
+}
+
+
+
+bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
+{
+   DOUT5(("CombinerModule::ShiftToNextSubEvent %d ", ninp));
+   fCfg[ninp].Reset();
+   bool foundevent(false);
+//
+   while (!foundevent) {
+      bool res = fInp[ninp].NextSubEvent();
+      if (!res || (fInp[ninp].subevnt() == 0)) {
+         DOUT5(("CombinerModule::ShiftToNextSubEvent %d with zero NextSubEvent()", ninp));
+         // retry in next hadtu container
+          if (!ShiftToNextHadTu(ninp))
+             return false; // no more pending input buffers
+         continue;
+      }
+
+      foundevent = true;
+
+      fCfg[ninp].fTrigNr = fInp[ninp].subevnt()->GetTrigNr() >> 8;
+      fCfg[ninp].fTrigTag = fInp[ninp].subevnt()->GetTrigNr() & 0xFF;
+      if (fInp[ninp].subevnt()->GetSize() > sizeof(hadaq::Subevent)) {
+         fCfg[ninp].fEmpty = false;
+      }
+      fCfg[ninp].fDataError = fInp[ninp].subevnt()->GetDataError();
+
+}
 
    return true;
 }
 
-bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp)
-{
-   // always set event number to 0
-//   fCfg[ninp].curr_evnt_num = 0;
-//   fCfg[ninp].curr_evnt_special = false;
-//   fCfg[ninp].valid = false;
-//
-//   bool foundevent(false);
-//
-//   while (!foundevent) {
-//
-//      if (!fInp[ninp].IsData()) {
-//
-//         if (Input(ninp)->InputPending()==0) return false;
-//
-//         if (!fInp[ninp].Reset(Input(ninp)->FirstInputBuffer())) {
-//
-//            // skip buffer and try again
-//            fInp[ninp].Close();
-//            Input(ninp)->SkipInputBuffers(1);
-//            continue;
-//          }
-//      }
-//
-//      bool res = fInp[ninp].NextEvent();
-//
-//      if (!res || (fInp[ninp].evnt()==0)) {
-//         fInp[ninp].Close();
-//         Input(ninp)->SkipInputBuffers(1);
-//         continue;
-//      }
-//
-//      if (fCfg[ninp].real_hadaq && (fInp[ninp].evnt()->iTrigger>=fSpecialTriggerLimit)) {
-//         // TODO: Probably, one should combine trigger events from all normal hadaq channels.
-//         foundevent = true;
-//         fCfg[ninp].curr_evnt_special = true;
-//         fCfg[ninp].curr_evnt_num = fInp[ninp].evnt()->EventNumber();
-//         DOUT1(("Found special event with trigger %d on input %u", fInp[ninp].evnt()->iTrigger, ninp));
-//      } else
-//      if (fCfg[ninp].real_evnt_num) {
-//         foundevent = true;
-//         fCfg[ninp].curr_evnt_num = fInp[ninp].evnt()->EventNumber() & fEventIdMask;
-//
-//         // DOUT1(("Find in input %u event %u", ninp, fCfg[ninp].curr_evnt_num));
-//      } else
-//      if (fCfg[ninp].no_evnt_num) {
-//
-//         // indicate that data in optional input was found, should be append to the next event
-//         foundevent = true;
-//
-//      } else {
-//         mbs::SubeventHeader* subevnt = fInp[ninp].evnt()->SubEvents();
-//         fCfg[ninp].curr_evnt_num = 0;
-//
-//         while (subevnt!=0) {
-//            // DOUT1(("Saw subevent fullid %u", subevnt->fFullId));
-//            if (subevnt->fFullId == fCfg[ninp].evntsrc_fullid) break;
-//            subevnt = fInp[ninp].evnt()->NextSubEvent(subevnt);
-//         }
-//
-//         if (subevnt!=0) {
-//            uint32_t* data = (uint32_t*) (((uint8_t*) subevnt->RawData()) + fCfg[ninp].evntsrc_shift);
-//
-//            if (fCfg[ninp].evntsrc_shift + sizeof(uint32_t) <= subevnt->RawDataSize()) {
-//               foundevent = true;
-//               fCfg[ninp].curr_evnt_num = *data & fEventIdMask; // take only required bits
-//               //DOUT1(("Find in input %u event %u (in subevent)", ninp, fCfg[ninp].curr_evnt_num));
-//            } else {
-//               EOUT(("Subevent too small %u compare with required shift %u for id location", subevnt->RawDataSize(), fCfg[ninp].evntsrc_shift));
-//            }
-//         } else {
-//            EOUT(("Did not found subevent for id location"));
-//         }
-//      }
-//   }
-//
-//   // DOUT1(("Inp%u Event%d", ninp, fCfg[ninp].curr_evnt_num));
-//
-//   fCfg[ninp].valid = true;
 
+bool hadaq::CombinerModule::DropAllInputBuffers()
+{
+   DOUT0(("hadaq::CombinerModule::DropAllInputBuffers()..."));
+   for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
+      while(ShiftToNextBuffer(ninp)); // until no more buffer in input port
+   }
    return true;
 }
 
@@ -274,237 +324,177 @@ bool hadaq::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
 bool hadaq::CombinerModule::BuildEvent()
 {
-   hadaq::EventNumType mineventid(0), maxeventid(0), triggereventid(0);
+   // RETURN VALUE: true - event is successfully build, recall immediately
+   //               false - leave event loop for framework (other modules input is required!)
 
-   // indicate if some of main (non-optional) input queues are mostly full
-   // if such queue will be found, incomplete event may be build when it is allowed
 
-   int mostly_full(-1);
-   bool required_missing(false);
+   // eventbuilding on hadtu streams here:
 
-//   for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
-//      dabc::Port* port = Input(ninp);
-//
-////      DOUT0(("  Port%u: pending %u capacity %u", ninp, port->InputPending(), port->InputQueueCapacity()));
-//
-//      if (fCfg[ninp].no_evnt_num) continue;
-//
-//      if (!port->IsConnected()) required_missing = true;
-//
-//      if ((port->InputPending() + 1 >= port->InputQueueCapacity()) && (mostly_full<0))
-//         mostly_full = (int) ninp;
-//   }
-//
-//   if (required_missing && fBuildCompleteEvents) {
-//      // if some of important input missing than we should clean our queues
-//      // to let data flowing, no event will be produced to output
-//
-//      for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
-//         dabc::Port* port = Input(ninp);
-//         if ((port->InputPending() + 1 >= port->InputQueueCapacity()) ||
-//             (fCfg[ninp].no_evnt_num && port->InputPending()>1)) {
-//            ShiftToNextBuffer(ninp);
-//            SetInfo(dabc::format("Skip buffer on input %u while some other input is disconnected", ninp));
-//            // DOUT0(("Skip buffer on input %u",ninp));
-//         }
-//      }
-//
-//      // all queues now have at least one empty entry, one could wait for the next event
-//      return false;
-//   }
-//
-//   int hasTriggerEvent = -1;
-//   int num_valid = 0;
-//
-//   for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
-//
-//      fCfg[ninp].selected = false;
-//
-//      if (fInp[ninp].evnt()==0)
-//         if (!ShiftToNextEvent(ninp)) {
-//            // if optional input is absent just continue
-//            if (fCfg[ninp].no_evnt_num) continue;
-//            // we can now exclude this input completely while some other is mostly full
-//            if ((mostly_full>=0) && !fBuildCompleteEvents) continue;
-//            return false;
-//         }
-//
-//      if (fCfg[ninp].no_evnt_num) continue;
-//
-//      hadaq::EventNumType evid = fCfg[ninp].curr_evnt_num;
-//
-//      if (num_valid == 0)  {
-//         mineventid = evid;
-//         maxeventid = evid;
-//      } else {
-//         if (evid < mineventid) mineventid = evid; else
-//            if (evid > maxeventid) maxeventid = evid;
-//      }
-//
-//      num_valid++;
-//
-//      if (fCfg[ninp].curr_evnt_special && (hasTriggerEvent<0)) {
-//         hasTriggerEvent = ninp;
-//         triggereventid = evid;
-//      }
-//
-//   } // for ninp
-//
-//   if (num_valid==0) return false;
-//
-//   // we always try to build event with minimum id
-//   hadaq::EventNumType buildevid(mineventid);
-//   hadaq::EventNumType diff = maxeventid - mineventid;
-//
-//   // if any trigger event found, it will be send as is
-//   if (hasTriggerEvent>=0) {
-//      buildevid = triggereventid;
-//      fCfg[hasTriggerEvent].selected = true;
-//      diff = 0;
-//
-//   } else {
-//
-//      // but due to event counter overflow one should build event with maxid
-//      if (diff > fEventIdMask/2) {
-//         buildevid = maxeventid;
-//         diff = fEventIdMask - diff + 1;
-//      }
-//
-//      if ((fEventIdTolerance > 0) && (diff > fEventIdTolerance)) {
-//         SetInfo(dabc::format("Event id difference %u exceeding tolerance window %u, stopping dabc!", diff, fEventIdTolerance), true);
-//         dabc::mgr.StopApplication();
-//         return false; // need to return immediately after stop state is set
-//      }
-//
-//      // select inputs which will be used for building
-//      for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
-//         if (fCfg[ninp].valid && ((fCfg[ninp].curr_evnt_num == buildevid) || fCfg[ninp].no_evnt_num))
-//            fCfg[ninp].selected = true;
-//   }
-//
-//   // calculated result event size and define if hadaq header is available
-//   // also check here if all subids are unique
-//   uint32_t subeventssize = 0;
-//   // define number of input which will be used to copy hadaq header
-//   int copyMbsHdrId = -1;
-//   std::map<uint32_t, bool> subid_map;
-//   unsigned numusedinp = 0;
-//
-//   // check of unique subevent ids:
-//   bool duplicatefound = false;
-//
-//   int firstselected = -1;
-//
-//   for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-//      if (!fCfg[ninp].selected) continue;
-//
-//      if (!fCfg[ninp].no_evnt_num) {
-//         // take into account only events with "normal" event number
-//         if (firstselected<0) firstselected = ninp;
-//         numusedinp++;
-//         if (fCfg[ninp].real_hadaq && (copyMbsHdrId<0)) copyMbsHdrId = ninp;
-//      }
-//
-//      subeventssize += fInp[ninp].evnt()->SubEventsSize();
-//
-//      if (fCheckSubIds)
-//         while (fInp[ninp].NextSubEvent()) {
-//            uint32_t fullid = fInp[ninp].subevnt()->fFullId;
-//            if (subid_map.find(fullid) != subid_map.end()) {
-//               EOUT(("Duplicate fullid = 0x%x", fullid));
-//               duplicatefound = true;
-//            }
-//            subid_map[fullid] = true;
-//         }
-//   }
-//
-//   if (fBuildCompleteEvents && (numusedinp < NumObligatoryInputs()) && (hasTriggerEvent<0)) {
-//      SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumObligatoryInputs(), diff));
-//   } else
-//   if (duplicatefound && (hasTriggerEvent<0)) {
-//      SetInfo(dabc::format("Skip event %u while duplicates subevents found", buildevid));
-//   } else {
-//
-//      if (numusedinp < NumObligatoryInputs()) {
-//         SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
-//         EOUT(("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
-//      } else
-//         SetInfo(dabc::format("Build event %u with %u inputs", buildevid, numusedinp));
-//
-//      // if there is no place for the event, flush current buffer
-//      if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize))
-//         if (!FlushBuffer()) return false;
-//
-//      if (!fOut.IsBuffer()) {
-//
-//         dabc::Buffer buf = Pool()->TakeBufferReq(fBufferSize);
-//         if (buf.null()) return false;
-//
-//         if (!fOut.Reset(buf)) {
-//            SetInfo("Cannot use buffer for output - hard error!!!!", true);
-//
-//            buf.Release();
-//
-//            dabc::mgr.StopApplication();
-//            return false;
-//         }
-//      }
-//
-//      if (!fOut.IsPlaceForEvent(subeventssize)) {
-//         EOUT(("Event size %u too big for buffer %u, skip event %u completely", subeventssize+ sizeof(hadaq::EventHeader), fBufferSize, buildevid));
-//      } else {
-//
-//         if (copyMbsHdrId<0) {
-//            // SetInfo("No mbs eventid found in mbs event number mode, stop dabc", true);
-//            // dabc::mgr.StopApplication();
-//         }
-//
-//         DOUT4(("Building event %u num_valid %u", buildevid, num_valid));
-//         fOut.NewEvent(buildevid); // note: this header id may be overwritten due to mode
-//
-//         for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-//
-//            if (fCfg[ninp].selected) {
-//
-//               // if header id still not defined, used first
-//               if (copyMbsHdrId<0) copyMbsHdrId = ninp;
-//
-//               if (!fInp[ninp].IsData())
-//                  throw dabc::Exception("Input has no buffer but used for event building");
-//
-//               dabc::Pointer ptr;
-//               fInp[ninp].AssignEventPointer(ptr);
-//
-//               ptr.shift(sizeof(mbs::EventHeader));
-//
-//               if (ptr.segmid()>100)
-//                  throw dabc::Exception("Bad segment id");
-//
-//               fOut.AddSubevent(ptr);
-//            }
-//         }
-//
-//         fOut.evnt()->CopyHeader(fInp[copyMbsHdrId].evnt());
-//
-//         fOut.FinishEvent();
-//
-//         DOUT4(("Produced event %d subevents %u", buildevid, subeventssize));
-//
-//         Par(fEventRateName).SetInt(1);
-//         Par(fDataRateName).SetDouble((subeventssize + sizeof(mbs::EventHeader))/1024./1024.);
-//
-//         // if output buffer filled already, flush it immediately
-//         if (!fOut.IsPlaceForEvent(0))
-//            FlushBuffer();
-//      }
-//   } // end of incomplete event
+   // this is daq_evtbuild logic:
+   // first check eventnumber of master channel
+   // here loop over all channels: skip subevts with too old eventnumbers
+   // if event is not complete, discard this and try next master channel index
 
-   for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
-      if (fCfg[ninp].selected) ShiftToNextEvent(ninp);
+#ifdef HADAQ_COMBINER_TESTRECEIVE
+   // Testing: just discard all input buffers immediately:
+   for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
+      if (!Input(ninp)->CanRecv()) continue;
+      dabc::Buffer buf =Input(ninp)->FirstInputBuffer();
+      size_t bufferlen=0;
+      if(!buf.null()) bufferlen=buf.GetTotalSize();
+      fTotalRecvBytes+=bufferlen;
+      Par(fDataRateName).SetDouble(bufferlen/1024./1024.);
+      ShiftToNextBuffer(ninp);
+   }
+   return false; // always leave process event function immediately
+#endif
+
+
+
+   ///////////////////////////////////////////////////////////
+   // alternative approach like simplified mbs event building:
+   //////////////////////////////////////////////////////////
+   /////////////////////////////////////////////////////////////////////////////////////
+   // first input loop: find out maximum trignum of all inputs = current event trignumber
+   int num_valid = 0;
+   unsigned masterchannel=0;
+   uint32_t subeventssize = 0;
+   hadaq::EventNumType mineventid(0), maxeventid(0);;
+   for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
+            if (fInp[ninp].subevnt()==0)
+               if (!ShiftToNextSubEvent(ninp)) {
+                  return false; // could not get subevent data on any channel. let framework do something before next try
+               }
+
+
+   hadaq::EventNumType evid = fCfg[ninp].fTrigNr;
+
+        if (num_valid == 0) {
+         mineventid = evid;
+         maxeventid = evid;
+         masterchannel = ninp;
+      } else {
+         if (evid < mineventid) {
+            mineventid = evid;
+         } else if (evid > maxeventid) {
+            maxeventid = evid;
+            masterchannel = ninp;
+         }
+      }
+
+
+        num_valid++;
+   } // for ninp
+
+   if(fCfg[masterchannel].fTrigNr != maxeventid)
+   {
+      EOUT(("Combiner Module NEVER COME HERE: buildevid %u inconsistent with id %u at master channel %u, "
+            , maxeventid, fCfg[masterchannel].fTrigNr, masterchannel));
+      dabc::mgr.StopApplication();
+      return false; // to leave event processing loops
+   }
+
+   //if (num_valid==0) return false;
+    // we always build event with maximum trigger id = newest event, discard incomplete older events
+    hadaq::EventNumType buildevid= maxeventid;
+    hadaq::EventNumType buildtag=fCfg[masterchannel].fTrigTag;
+    hadaq::EventNumType diff = maxeventid - mineventid;
+
+    ///////////////////////////////////////////////////////////////////////////////
+    // check too large triggertag difference on input channels, flush input buffers
+    if ((fTriggerNrTolerance > 0) && (diff > fTriggerNrTolerance)) {
+           SetInfo(dabc::format("Event id difference %u exceeding tolerance window %u, flushing buffers!", diff, fTriggerNrTolerance), true);
+           DropAllInputBuffers();
+           return false; // retry on next set of buffers
+        }
+
+    ////////////////////////////////////////////////////////////////////////
+    // second input loop: skip all subevents until we reach current trignum
+    // select inputs which will be used for building
+    //bool eventIsBroken=false;
+    bool dataError=false;
+    bool tagError=false;
+    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
+      bool foundsubevent = false;
+      while (!foundsubevent) {
+
+         hadaq::EventNumType trignr = fCfg[ninp].fTrigNr;
+         hadaq::EventNumType trigtag = fCfg[ninp].fTrigTag;
+         bool isempty = fCfg[ninp].fEmpty;
+         bool haserror = fCfg[ninp].fDataError;
+         if (trignr == buildevid) {
+
+            if (!isempty) {
+               // check also trigtag:
+               if (trigtag != buildtag) {
+                  tagError = true;
+               }
+               if (haserror) {
+                  dataError = true;
+               }
+               subeventssize += fInp[ninp].subevnt()->GetPaddedSize();
+            }
+            foundsubevent = true;
+            break;
+
+
+         } else if (trignr < buildevid) {
+
+            ShiftToNextSubEvent(ninp); // try with next subevt until reaching buildevid
+            // TODO: account dropped subevents to statistics
+            continue;
+         } else {
+            // can happen when the subevent of the buildevid is missing on this channel
+            // we account broken event and let call BuildEvent again, rescan buildevid without shifting other subevts.
+            Par(fEventDiscardedRateName).SetInt(1);
+            fTotalDiscEvents++;
+            //eventIsBroken = true;
+            return false; // we give the framework some time to do other things though
+         }
+
+      } // while foundsubevent
+   } // for ninpt
+
+
+      // here all inputs should be aligned to buildevid
+    // ensure that we have output buffer that is big enough:
+          if (EnsureOutputBuffer(subeventssize))
+         {
+             // EVENT BUILDING IS HERE
+         fOut.NewEvent(fTotalRecvEvents++,fRunNumber); // like in hadaq, event sequence number is independent of trigger.
+         // TODO: we may put sync id from subevent payload to event sequence number already here.
+         fOut.evnt()->SetDataError((dataError || tagError));
+         if(dataError)
+            fTotalDataErrors++;
+         if(tagError)
+            fTotalTagErrors++;
+
+         // third input loop: build output event from all not empty subevents
+         for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
+            if (fCfg[ninp].fEmpty) continue;
+            fOut.AddSubevent(fInp[ninp].subevnt());
+         } // for ninp
+          fOut.FinishEvent();
+
+          Par(fEventRateName).SetInt(1);
+          unsigned currentbytes = subeventssize + sizeof(hadaq::Event);
+          fTotalRecvBytes+=currentbytes;
+          Par(fDataRateName).SetDouble(currentbytes/1024./1024.);
+
+         }
+          else
+          {
+             EOUT(("Event size %u too big for buffer %u, skip event %u completely", subeventssize+ sizeof(hadaq::Event), fBufferSize, buildevid));
+          } // ensure outputbuffer
+
+         // FINAL loop: proceed to next subevents
+          for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
+                ShiftToNextSubEvent(ninp);
+
 
    // return true means that method can be called again immediately
    // in all places one requires while loop
-   return true;
+   return true; // event is build successfully. try next one
 }
 
 
@@ -617,10 +607,12 @@ extern "C" void InitHadaqEvtbuilder()
 
    DOUT0(("Create Hadaq combiner module"));
 
-   dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool);
+   //dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool);
+
+   dabc::mgr.CreateMemoryPool("Pool");
 
    hadaq::CombinerModule* m = new hadaq::CombinerModule("Combiner");
-   dabc::mgr()->MakeThreadFor(m);
+   dabc::mgr()->MakeThreadFor(m,"EvtBuilderThrd");
 
    for (unsigned n=0;n<m->NumInputs();n++){
       if (!dabc::mgr.CreateTransport(FORMAT(("Combiner/%s%u", hadaq::portInput, n)), hadaq::typeUdpInput, "UdpThrd")) {
@@ -631,7 +623,7 @@ extern "C" void InitHadaqEvtbuilder()
    if (m->IsServOutput()) {
          DOUT0(("Create Mbs transmitter module for server"));
          dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "OnlineServer", "OnlineThrd");
-         dabc::mgr.CreateTransport(FORMAT(("OnlineServer/%s", hadaq::portInput)), FORMAT(("Combiner/%s", hadaq::portServerOutput)), "OnlineThrd");
+         dabc::mgr.Connect(FORMAT(("OnlineServer/%s", hadaq::portInput)), FORMAT(("Combiner/%s", hadaq::portServerOutput)));
          dabc::mgr.CreateTransport(FORMAT(("OnlineServer/%s", hadaq::portOutput)), mbs::typeServerTransport, "MbsTransport");
    }
 

@@ -33,34 +33,42 @@ namespace hadaq {
 
          struct InputCfg {
 
-               /** keeps current event number */
-               hadaq::EventNumType curr_evnt_num;
 
-               /** indicates if input was selected for event building */
-               bool selected;
+               /** keeps current trigger sequence number */
+               hadaq::EventNumType fTrigNr;
 
-               /** indicates if input has valid data */
-               bool valid;
+               /** keeps current trigger tag */
+               hadaq::EventNumType fTrigTag;
+
+
+               /** indicates if subevent has data error bit set */
+               bool fDataError;
+
+               /** indicates if input has empty data */
+               bool fEmpty;
 
                InputCfg() :
-                     curr_evnt_num(0),
-                     selected(false),
-                     valid(false)
+                  fTrigNr(0),
+                  fTrigTag(0),
+                  fDataError(false),
+                  fEmpty(true)
                {
                }
 
                InputCfg(const InputCfg& src) :
-                     curr_evnt_num(src.curr_evnt_num),
-                     selected(src.selected),
-                     valid(src.valid)
+                  fTrigNr(src.fTrigNr),
+                  fTrigTag(src.fTrigTag),
+                  fDataError(src.fDataError),
+                  fEmpty(src.fEmpty)
                {
                }
 
                void Reset()
                {
-                  curr_evnt_num = 0;
-                  selected = false;
-                  valid = false;
+                  fTrigNr = 0;
+                  fTrigTag =0;
+                  fDataError = false;
+                  fEmpty = true;
                }
          };
 
@@ -89,18 +97,27 @@ namespace hadaq {
       protected:
 
          bool BuildEvent();
-         bool FlushBuffer();
+         bool FlushOutputBuffer();
+
+         /* provide output buffer that has room for payload size of bytes
+          * returns false if not possible*/
+         bool EnsureOutputBuffer(uint32_t payload);
 
          virtual void BeforeModuleStart();
 
          virtual void AfterModuleStop();
 
-         bool ShiftToNextEvent(unsigned ninp);
+         bool ShiftToNextSubEvent(unsigned ninp);
+
+         bool ShiftToNextHadTu(unsigned ninp);
 
          /** Method should be used to skip current buffer from the queue */
          bool ShiftToNextBuffer(unsigned ninp);
 
-         hadaq::EventNumType CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
+         /* cleanup input buffers in case of too large eventnumber mismatch*/
+         bool DropAllInputBuffers();
+
+         //hadaq::EventNumType CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
 
          void SetInfo(const std::string& info, bool forceinfo = false);
 
@@ -108,10 +125,16 @@ namespace hadaq {
 
          unsigned                   fBufferSize;
 
-         std::vector<ReadIterator> fInp;
+         /* master stream for event building*/
+         //unsigned fMasterChannel;
+
+         /* maximum allowed difference of trigger numbers (subevent sequence number)*/
+         hadaq::EventNumType fTriggerNrTolerance;
+
          std::vector<InputCfg> fCfg;
+         std::vector<ReadIterator> fInp;
          WriteIterator fOut;
-         dabc::Buffer fOutBuf;
+         //dabc::Buffer fOutBuf;
          bool fFlushFlag;
 
          bool fDoOutput;
@@ -123,10 +146,18 @@ namespace hadaq {
          bool                          fBuildCompleteEvents;
 
          std::string                fEventRateName;
+         std::string                fEventDiscardedRateName;
          std::string                fDataRateName;
          std::string                fInfoName;
 
+         uint64_t           fTotalRecvBytes;
+         uint64_t           fTotalRecvEvents;
+         uint64_t           fTotalDiscEvents;
+         uint64_t           fTotalTagErrors;
+         uint64_t           fTotalDataErrors;
 
+         /* run id from timeofday for eventbuilding*/
+         RunId fRunNumber;
    };
 
 }

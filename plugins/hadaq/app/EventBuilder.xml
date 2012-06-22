@@ -1,20 +1,22 @@
 <?xml version="1.0"?>
 <dabc version="1">
-  <Context host="localhost" name="Worker">
+  <Context host="localhost" name="EventBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>      
       <func value="InitHadaqEvtbuilder"/>
       <logfile value="hadaqevtbuild.log"/>
+      <loglimit value="500"/>
     </Run>
      <MemoryPool name="Pool">
        <BufferSize value="65536"/>
-       <NumBuffers value="500"/>
+       <NumBuffers value="5000"/>
     </MemoryPool>
     
     
     
-    <Module name="Combiner">      
+    <Module name="Combiner">    
+       <PoolName value="Pool"/>  
        <DoFile value="false"/>
        <DoServer value="true"/>
        <BufferSize value="65536"/>
@@ -35,10 +37,10 @@
           <HadaqUdpPort value="10105"/>
        </Port>       
        <Port name="Input*">
-          <HadaqUdpBuffer value="1000000"/>
+          <HadaqUdpBuffer value="200000"/>
           <!--HadaqUdpMTU value="64512"/-->   
           <BufferSize value="65536"/>
-          <InputQueueSize value="5"/>
+          <InputQueueSize value="500"/>
        </Port>       
      </Module>
      

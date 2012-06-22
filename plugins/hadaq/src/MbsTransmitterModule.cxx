@@ -47,6 +47,7 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 
 void hadaq::MbsTransmitterModule::retransmit()
 {
+   DOUT5(("MbsTransmitterModule::retransmit() starts"));
 	bool dostop = false;
 	while (Output(0)->CanSend() && Input(0)->CanRecv()) {
 		dabc::Buffer inbuf = Input(0)->Recv();
@@ -94,7 +95,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		    miter.FinishSubEvent(evlen);
 		    miter.FinishEvent();
 		    Par("TransmitEvents").SetDouble(1.);
-		    DOUT3(("retransmit - used size %d",usedsize));
+		    DOUT5(("retransmit - used size %d",usedsize));
 		} // while hiter.NextEvent()
 
 		if(dostop) break;
@@ -104,7 +105,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		Par("TransmitBufs").SetDouble(1.);
 		Output(0)->Send(outbuf);
 	}
-
+	DOUT5(("MbsTransmitterModule::retransmit() leaves"));
 	if (dostop) {
 	   DOUT0(("Doing stop???"));
 	   dabc::mgr.StopApplication();

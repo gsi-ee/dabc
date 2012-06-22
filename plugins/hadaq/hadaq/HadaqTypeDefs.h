@@ -158,6 +158,19 @@ namespace hadaq {
             SetValue(&tuId, id);
          }
 
+    bool GetDataError()
+       {
+             return ((GetId() & 0x80000000UL) != 0);
+       }
+
+    void SetDataError(bool on)
+       {
+          if(on)
+             SetId(GetId() | 0x80000000UL);
+          else
+             SetId(GetId() & ~0x80000000UL);
+       }
+
    };
 
    //Description of the Event Structure

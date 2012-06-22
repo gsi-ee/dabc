@@ -168,10 +168,13 @@ void hadaq::UdpDataSocket::StopTransport()
    // FIXME: again, we see strange things in DOUT, wrong or shifted values!
    //DOUT0(("RecvPackets:%u, DiscPackets:%u, RecvMsg:%u, DiscMsg:%u, RecvBytes:%u",
    //       fTotalRecvPacket, fTotalDiscardPacket, fTotalRecvMsg, fTotalDiscardMsg, fTotalRecvBytes));
+   std::cout <<"----- UdpDataSocket "<<GetName()<<" Statistics: -----"<<std::endl;
    std::cout << "RecvPackets:" << fTotalRecvPacket << ", DiscPackets:"
          << fTotalDiscardPacket << ", RecvMsg:" << fTotalRecvMsg << ", DiscMsg:"
-         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes<< ", fTotalRecvEvents:"<< fTotalRecvEvents<< std::endl;
-
+         << fTotalDiscardMsg << ", RecvBytes:" << fTotalRecvBytes;
+   if(fBuildFullEvent)
+      std::cout << ", fTotalRecvEvents:"<< fTotalRecvEvents;
+   std::cout <<std::endl;
 
 }
 
