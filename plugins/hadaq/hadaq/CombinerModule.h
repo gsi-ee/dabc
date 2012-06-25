@@ -74,7 +74,7 @@ namespace hadaq {
 
       public:
          CombinerModule(const char* name, dabc::Command cmd = 0);
-
+         virtual ~CombinerModule();
 
          virtual void ProcessInputEvent(dabc::Port* port);
          virtual void ProcessOutputEvent(dabc::Port* port);
@@ -132,6 +132,8 @@ namespace hadaq {
 
          /* maximum allowed difference of trigger numbers (subevent sequence number)*/
          hadaq::EventNumType fTriggerNrTolerance;
+
+         dabc::Buffer fRcvBuf;
 
          std::vector<InputCfg> fCfg;
          std::vector<ReadIterator> fInp;

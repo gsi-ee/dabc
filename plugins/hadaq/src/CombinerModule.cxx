@@ -30,6 +30,7 @@
 hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
       dabc::ModuleAsync(name, cmd),
       fBufferSize(0),
+      fRcvBuf(),
       fInp(),
       fOut(),
       fFlushFlag(false),
@@ -122,6 +123,12 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    Par(fEventRateName).SetDebugLevel(1);
    Par(fEventDiscardedRateName).SetDebugLevel(1);
 
+}
+
+hadaq::CombinerModule::~CombinerModule()
+{
+   if(!fRcvBuf.null())
+        fRcvBuf.Release();
 }
 
 void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
@@ -249,15 +256,23 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
    DOUT5(("CombinerModule::ShiftToNextBuffer %d ", ninp));
    fInp[ninp].Close();
    //if (Input(ninp)->InputPending() == 0)
+   if(!fRcvBuf.null())
+      fRcvBuf.Release();
+
+//   if(!SkipInputBuffer(ninp))
+//               return false; // discard previous first buffer if we can receive a new one
    if(!Input(ninp)->CanRecv())
                return false;
-   //if(!fInp[ninp].Reset(Input(ninp)->FirstInputBuffer())) {
-   if (!fInp[ninp].Reset(Input(ninp)->Recv())) {
+
+   fRcvBuf=Input(ninp)->Recv();
+   if(!fInp[ninp].Reset(fRcvBuf)) {
+     // use new first buffer of input for work iterator, but leave it in input queue
                DOUT5(("CombinerModule::ShiftToNextBuffer %d could not reset to FirstInputBuffer", ninp));
                // skip buffer and try again
                //SkipInputBuffer(ninp);
                return false;
             }
+   ;
    return true;
 }
 
@@ -265,20 +280,21 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 {
    DOUT5(("CombinerModule::ShiftToNextHadTu %d begins", ninp));
    bool foundhadtu(false);
-   //while (!foundhadtu) {
+   while (!foundhadtu) {
          if (!fInp[ninp].IsData()) {
-         if (!ShiftToNextBuffer(ninp))
+            if (!ShiftToNextBuffer(ninp))
             return false;
       }
      bool res = fInp[ninp].NextHadTu();
       if (!res || (fInp[ninp].hadtu() == 0)) {
          DOUT5(("CombinerModule::ShiftToNextHadTu %d has zero NextHadTu()", ninp));
-         //if(!ShiftToNextBuffer(ninp)) return false;
-         return false;
-         //continue;
+
+         if(!ShiftToNextBuffer(ninp)) return false;
+         //return false;
+         continue;
       }
       foundhadtu = true;
-   //} //  while (!foundhadtu)
+   } //  while (!foundhadtu)
    return true;
 
 }
@@ -288,6 +304,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
    DOUT5(("CombinerModule::ShiftToNextSubEvent %d ", ninp));
    fCfg[ninp].Reset();
    bool foundevent(false);
+
    while (!foundevent) {
       bool res = fInp[ninp].NextSubEvent();
       if (!res || (fInp[ninp].subevnt() == 0)) {
@@ -316,8 +333,10 @@ bool hadaq::CombinerModule::DropAllInputBuffers()
 {
    DOUT0(("hadaq::CombinerModule::DropAllInputBuffers()..."));
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
+      fInp[ninp].Close();
+      if(!fRcvBuf.null()) fRcvBuf.Release(); // discard actual work buffer
       while (SkipInputBuffer(ninp))
-         ; // until no more buffer in input port
+         ; // drop input port queue buffers until no more there
    }
    return true;
 }
@@ -342,8 +361,8 @@ bool hadaq::CombinerModule::BuildEvent()
       size_t bufferlen=0;
       if(!buf.null()) bufferlen=buf.GetTotalSize();
       fTotalRecvBytes+=bufferlen;
-      Par(fDataRateName).SetDouble(bufferlen/1024./1024.);
-      ShiftToNextBuffer(ninp);
+      Par(fDataRateName).SetDouble( bufferlen /1024 ./1024.);
+      SkipInputBuffer(ninp);
    }
    return false; // always leave process event function immediately
 #endif
@@ -398,6 +417,8 @@ bool hadaq::CombinerModule::BuildEvent()
             dabc::format(
                   "Event id difference %u exceeding tolerance window %u, flushing buffers!",
                   diff, fTriggerNrTolerance), true);
+      DOUT0(("Event id difference %u exceeding tolerance window %u, maxid:%u minid:%u, flushing buffers!",
+                  diff, fTriggerNrTolerance, maxeventid, mineventid));
       DropAllInputBuffers();
       return false; // retry on next set of buffers
    }
