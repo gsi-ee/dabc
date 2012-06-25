@@ -280,6 +280,7 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 {
    DOUT5(("CombinerModule::ShiftToNextHadTu %d begins", ninp));
    bool foundhadtu(false);
+   static unsigned ccount=0;
    while (!foundhadtu) {
          if (!fInp[ninp].IsData()) {
             if (!ShiftToNextBuffer(ninp))
@@ -291,6 +292,7 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 
          if(!ShiftToNextBuffer(ninp)) return false;
          //return false;
+         DOUT5(("CombinerModule::ShiftToNextHadTu in continue %d", (int) ccount++));
          continue;
       }
       foundhadtu = true;
@@ -304,7 +306,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
    DOUT5(("CombinerModule::ShiftToNextSubEvent %d ", ninp));
    fCfg[ninp].Reset();
    bool foundevent(false);
-
+   static unsigned ccount=0;
    while (!foundevent) {
       bool res = fInp[ninp].NextSubEvent();
       if (!res || (fInp[ninp].subevnt() == 0)) {
@@ -312,6 +314,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
          // retry in next hadtu container
          if (!ShiftToNextHadTu(ninp))
             return false; // no more input buffers available
+         DOUT5(("CombinerModule::ShiftToNextSubEvent in continue %d", (int) ccount++));
          continue;
       }
 
@@ -372,6 +375,7 @@ bool hadaq::CombinerModule::BuildEvent()
    //////////////////////////////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    // first input loop: find out maximum trignum of all inputs = current event trignumber
+   static unsigned ccount=0;
    int num_valid = 0;
    unsigned masterchannel = 0;
    uint32_t subeventssize = 0;
@@ -454,8 +458,12 @@ bool hadaq::CombinerModule::BuildEvent()
 
          } else if (trignr < buildevid) {
 
-            ShiftToNextSubEvent(ninp); // try with next subevt until reaching buildevid
+            if(!ShiftToNextSubEvent(ninp)) return false;
+            // try with next subevt until reaching buildevid
+
             // TODO: account dropped subevents to statistics
+            DOUT5(("CombinerModule::BuildEvent ch:%d trignr:%d buildevid:%d in continue %d",
+                  (int) ninp, (int) trignr, (int) buildevid, (int)ccount++));
             continue;
          } else {
             // can happen when the subevent of the buildevid is missing on this channel
