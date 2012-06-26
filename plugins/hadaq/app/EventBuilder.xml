@@ -17,7 +17,7 @@
     
     <Module name="Combiner">    
        <PoolName value="Pool"/>  
-       <DoFile value="false"/>
+       <DoFile value="true"/>
        <DoServer value="true"/>
        <BufferSize value="65536"/>
        <NumInputs value="5"/>
@@ -46,7 +46,8 @@
           <OutputQueueSize value="1000"/>       
         </Port>  
        <Port name="FileOutput">
-          <HadaqFileName value="te000.hld"/>       
+          <HadaqFileName value="/data.local1/adamczew/hld/dabc.hld"/>
+          <HadaqFileSizeLimit value="100"/>       
         </Port> 
 
               

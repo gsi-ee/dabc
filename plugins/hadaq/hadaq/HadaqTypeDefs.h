@@ -25,6 +25,7 @@
 #define HLD__NOHLDFILE   4
 #define HLD__EOFILE      5
 #define HLD__FULLBUF      6
+#define HLD__WRITE_ERR      7
 //#define PUTHLD__FILE_EXIST  101
 //#define PUTHLD__TOOBIG      102
 //#define PUTHLD__OPEN_ERR    103
@@ -317,6 +318,13 @@ namespace hadaq {
           * Same as used in hades eventbuilders for filenames
           */
          static hadaq::RunId  CreateRunId();
+
+
+         /*
+          * Format a HADES-convention filename string
+          * from a given run id.
+          */
+        static std::string FormatFilename (hadaq::RunId id);
 
    };
 

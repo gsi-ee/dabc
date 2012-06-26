@@ -2,14 +2,14 @@
 ****** DABC plugin for hadaq 
 ****** (originally HADES collaboration DAQ and data format)
 *        Joern Adamczewski-Musch, j.adamczewski@gsi.de
-* Version 0.05 - 22-Jun-2012
-   : First full eventbuilding in CombinerModule. 
-     Tested with hadaq trb simulator + Go4 client
+* Version 0.06 - 26-Jun-2012
+   :  Implemented hld file output. 
+      Improvements in Combiner module
    
 * Components:
    * HldFile - input (OK) and output (TODO) of hld file format
    * HldInput - (OK) read hadtu format from file 
-   * HldOutput- (TODO) write hadtu format to file 
+   * HldOutput- (OK) write hadtu format to file 
    * UdpDataSocket - (OK) receive hadtu packets from trb frontend (single stream)
    * MbsTransmitterModule - (OK) wrap hadtu format into mbs event container
                             output is mbs server or lmd file.
@@ -50,6 +50,9 @@
    * Version 0.05 - 22-Jun-2012
       : First full eventbuilding in CombinerModule. 
         Tested with hadaq trb simulator + Go4 client  
+   * Version 0.06 - 26-Jun-2012
+   :  Implemented hld file output. 
+      Improvements in Combiner module
    
    * Under construction
    

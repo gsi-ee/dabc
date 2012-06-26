@@ -55,7 +55,7 @@ dabc::DataInput* hadaq::Factory::CreateDataInput(const char* typ)
 {
    if ((typ==0) || (strlen(typ)==0)) return 0;
 
-   DOUT1(("Factory::CreateDataInput %s", typ));
+   DOUT3(("Factory::CreateDataInput %s", typ));
 
    if (strcmp(typ, hadaq::typeHldInput)==0) {
       DOUT1(("HADAQ Factory creating HldInput"));

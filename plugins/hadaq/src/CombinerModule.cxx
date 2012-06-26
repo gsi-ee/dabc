@@ -94,6 +94,10 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    if (flushtmout > 0.)
       CreateTimer("FlushTimer", flushtmout, false);
 
+   CreatePar("RunId");
+   Par("RunId").SetInt(fRunNumber); // to communicate with file components
+
+
    fEventRateName = ratesprefix + "Events";
    fEventDiscardedRateName = ratesprefix + "DiscardedEvents";
    fEventDroppedRateName = ratesprefix + "DroppedEvents";
@@ -372,12 +376,17 @@ bool hadaq::CombinerModule::BuildEvent()
    return false; // always leave process event function immediately
 #endif
 
+    // adjust run number that might have changed by file output
+    fRunNumber=Par("RunID").AsInt(fRunNumber); // PERFORMANCE?
+
    ///////////////////////////////////////////////////////////
    // alternative approach like a simplified mbs event building:
    //////////////////////////////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    // first input loop: find out maximum trignum of all inputs = current event trignumber
    //static unsigned ccount=0;
+
+
    int num_valid = 0;
    unsigned masterchannel = 0;
    uint32_t subeventssize = 0;

@@ -25,6 +25,7 @@
 #include "dabc/Parameter.h"
 
 #include "hadaq/HadaqTypeDefs.h"
+#include "hadaq/Iterator.h"
 
 
 hadaq::HldOutput::HldOutput(const char* fname,
@@ -34,7 +35,7 @@ hadaq::HldOutput::HldOutput(const char* fname,
    fInfoName(),
    fInfoTime(),
    fSizeLimit(sizelimit_mb),
-   fCurrentFileNumber(0),
+   //fCurrentFileNumber(0),
    fCurrentFileName(),
    fFile(),
    fCurrentSize(0),
@@ -116,56 +117,24 @@ bool hadaq::HldOutput::Init()
    if (!Close()) return false;
 
    if (fSizeLimit>0) fSizeLimit *= 1000000;
-
-   fCurrentFileNumber = 0;
-
-   std::string mask = FullFileName("_*");
-
-   dabc::Object *lst = dabc::mgr()->ListMatchFiles("", mask.c_str());
-
-   if (lst!=0) {
-      int maxnumber = -1;
-
-      unsigned cnt = 0;
-
-      while (cnt < lst->NumChilds()) {
-         std::string fname = lst->GetChild(cnt++)->GetName();
-         fname.erase(fname.length()-4, 4);
-         size_t pos = fname.length() - 1;
-         while ((fname[pos]>='0') && (fname[pos] <= '9')) pos--;
-         fname.erase(0, pos+1);
-
-         while ((fname.length()>1) && fname[0]=='0') fname.erase(0, 1);
-
-         if (fname.length()>0) {
-            int number = atoi(fname.c_str());
-            if (number>maxnumber) maxnumber = number;
-         }
-      }
-
-      if (fCurrentFileNumber <= maxnumber)
-         fCurrentFileNumber = maxnumber + 1;
-
-      ShowInfo(dabc::format("start with file number %d", fCurrentFileNumber));
-
-      dabc::Object::Destroy(lst);
-   }
-
    return StartNewFile();
 }
 
 bool hadaq::HldOutput::StartNewFile()
 {
-   if (fFile.IsWriteMode()) {
-       fFile.Close();
-       fCurrentFileName = "";
-       fCurrentSize = 0;
-       fCurrentFileNumber++;
-   }
+   //if (fFile.IsWriteMode()) {
+       Close();
+   //}
+   // new file will change run id for complete system:
+   RunId runNumber= hadaq::Event::CreateRunId();
+   dabc::Parameter par = dabc::mgr.FindPar("RunId");
+   par.SetInt(runNumber);
+   par.FireModified(); // inform eventbuilder about new runid: NOTE for exact sync we overwrite runid anyway. This one is only for some online monitor consistency...
 
-   std::string fname = FullFileName(dabc::format("_%04d", fCurrentFileNumber));
 
-   if (!fFile.OpenWrite(fname.c_str(), 0)) {
+   std::string fname = FullFileName(hadaq::Event::FormatFilename (runNumber));
+
+   if (!fFile.OpenWrite(fname.c_str(), runNumber)) {
       ShowInfo(dabc::format("%s cannot open file for writing, errcode %u", fname.c_str(), fFile.LastError()), 2);
       return false;
    }
@@ -175,16 +144,19 @@ bool hadaq::HldOutput::StartNewFile()
 
    ShowInfo(dabc::format("%s open for writing", fCurrentFileName.c_str()), 1);
 
+
    return true;
 }
 
 bool hadaq::HldOutput::Close()
 {
    if (fFile.IsWriteMode())
-      ShowInfo("File closed", 1);
-
+      {
+         ShowWriteInfo();
+         ShowInfo("------ File is CLOSED", 1);
+      }
    fFile.Close();
-   fCurrentFileNumber = 0;
+   //fCurrentFileNumber = 0;
    fCurrentFileName = "";
    fCurrentSize = 0;
    return true;
@@ -214,43 +186,46 @@ bool hadaq::HldOutput::WriteBuffer(const dabc::Buffer& buf)
          EOUT(("Cannot start new file for writing"));
          return false;
       }
-   unsigned numevents = 0; // FIXME: implement hadtu iterator?
-//   unsigned numevents = hadaq::ReadIterator::NumEvents(buf);
-//
-///*   DOUT0(("Counts events in buffer %u total size %u numsegm %u", buf.SegmentId(), (unsigned) buf.GetTotalSize(), buf.NumSegments()));
-//   hadaq::ReadIterator iter(buf);
-//   unsigned numevents(0);
-//   while (iter.NextEvent()) {
-//      DOUT0(("   Count event %u size %u", iter.evnt()->EventNumber(), iter.evnt()->FullSize()));
-//      numevents++;
-//   }
-//   DOUT0(("Write %u events to lmd file", numevents));
-//*/
-//   fCurrentSize += buf.GetTotalSize();
-//   fTotalSize += buf.GetTotalSize();
-//
-//   std::string info = fCurrentFileName;
-//   size_t pos = info.rfind("/");
-//   if (pos!=std::string::npos) info.erase(0, pos);
-//
-//   if (fTotalSize<1024*1024)
-//      info+=dabc::format(" %3u kB", (unsigned) (fTotalSize/1024));
-//   else if (fTotalSize<1024*1024*1024)
-//      info+=dabc::format(" %3.1f MB", fTotalSize/1024./1024.);
-//   else
-//      info+=dabc::format(" %4.2f GB", fTotalSize/1024./1024./1024.);
-//
-//   fTotalEvents += numevents;
-//
-//   if (fTotalEvents<1000000)
-//      info+=dabc::format(" %u events", (unsigned) fTotalEvents);
-//   else
-//      info+=dabc::format(" %8.3e events", fTotalEvents*1.);
-//
-//   if (fSizeLimit>0)
-//      info += dabc::format(" (%3.1f %s)", 100./fSizeLimit*fCurrentSize, "%");
-//
-//   ShowInfo(info);
 
+   unsigned numevents = hadaq::ReadIterator::NumEvents(buf);
+   DOUT3(("Write %u events to hld file", numevents));
+
+
+   fCurrentSize += buf.GetTotalSize();
+   fTotalSize += buf.GetTotalSize();
+   fTotalEvents += numevents;
+   ShowWriteInfo();
    return fFile.WriteEvents((hadaq::Event*) buf.SegmentPtr(0), numevents);
 }
+
+
+void  hadaq::HldOutput::ShowWriteInfo()
+{
+   // this is a copy of lmd output info display. useful for us too
+   std::string info = fCurrentFileName;
+   size_t pos = info.rfind("/");
+   if (pos != std::string::npos)
+      info.erase(0, pos);
+
+   if (fTotalSize < 1024 * 1024)
+      info += dabc::format(" %3u kB", (unsigned) (fTotalSize / 1024));
+   else if (fTotalSize < 1024 * 1024 * 1024)
+      info += dabc::format(" %3.1f MB", fTotalSize / 1024. / 1024.);
+   else
+      info += dabc::format(" %4.2f GB", fTotalSize / 1024. / 1024. / 1024.);
+
+
+
+   if (fTotalEvents < 1000000)
+      info += dabc::format(" %u events", (unsigned) fTotalEvents);
+   else
+      info += dabc::format(" %8.3e events", fTotalEvents * 1.);
+
+   if (fSizeLimit > 0)
+      info += dabc::format(" (%3.1f %s)", 100. / fSizeLimit * fCurrentSize,
+            "%");
+
+   ShowInfo(info);
+
+}
+

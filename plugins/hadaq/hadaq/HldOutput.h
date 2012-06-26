@@ -40,7 +40,7 @@ namespace hadaq {
          dabc::TimeStamp     fInfoTime;  // time when last info was shown
          uint64_t            fSizeLimit;
 
-         int                 fCurrentFileNumber;
+         //int                 fCurrentFileNumber;
          std::string         fCurrentFileName;
 
          hadaq::HldFile        fFile;
@@ -54,6 +54,9 @@ namespace hadaq {
          bool Close();
          bool StartNewFile();
          void ShowInfo(const std::string& info, int priority = 0);
+
+         /* current stats about written events etc.*/
+         void ShowWriteInfo();
 
       public:
 
