@@ -151,6 +151,7 @@ namespace hadaq {
 
          std::string                fEventRateName;
          std::string                fEventDiscardedRateName;
+         std::string                fEventDroppedRateName;
          std::string                fDataRateName;
          std::string                fInfoName;
 

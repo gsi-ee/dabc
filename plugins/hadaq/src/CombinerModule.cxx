@@ -50,7 +50,7 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
    fBufferSize = Cfg(dabc::xmlBufferSize, cmd).AsInt(16384);
 
-   fTriggerNrTolerance = 10000;
+   fTriggerNrTolerance = 50000;
    std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr(
          dabc::xmlWorkPool);
 
@@ -96,12 +96,14 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
    fEventRateName = ratesprefix + "Events";
    fEventDiscardedRateName = ratesprefix + "DiscardedEvents";
+   fEventDroppedRateName = ratesprefix + "DroppedEvents";
    fDataRateName = ratesprefix + "Data";
    fInfoName = ratesprefix + "Info";
 
    CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("MB");
    CreatePar(fEventRateName).SetRatemeter(false, 5.).SetUnits("Ev");
    CreatePar(fEventDiscardedRateName).SetRatemeter(false, 5.).SetUnits("Ev");
+   CreatePar(fEventDroppedRateName).SetRatemeter(false, 5.).SetUnits("Ev");
    // must be configured in xml file
    //   fDataRate->SetDebugOutput(true);
 
@@ -122,7 +124,7 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    Par(fDataRateName).SetDebugLevel(1);
    Par(fEventRateName).SetDebugLevel(1);
    Par(fEventDiscardedRateName).SetDebugLevel(1);
-
+   Par(fEventDroppedRateName).SetDebugLevel(1);
 }
 
 hadaq::CombinerModule::~CombinerModule()
@@ -196,7 +198,7 @@ bool hadaq::CombinerModule::EnsureOutputBuffer(uint32_t payload)
    if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(payload)) {
       // no, we close current buffer
       if (!FlushOutputBuffer()) {
-         DOUT0(("CombinerModule::EnsureOutputBuffer - could not flush buffer"));
+         DOUT3(("CombinerModule::EnsureOutputBuffer - could not flush buffer"));
          return false;
       }
    }
@@ -204,7 +206,7 @@ bool hadaq::CombinerModule::EnsureOutputBuffer(uint32_t payload)
    if (!fOut.IsBuffer()) {
       dabc::Buffer buf = Pool()->TakeBufferReq(fBufferSize);
       if (buf.null()) {
-         DOUT0(("CombinerModule::EnsureOutputBuffer - could not take new buffer"));
+         DOUT3(("CombinerModule::EnsureOutputBuffer - could not take new buffer"));
          return false;
       }
       if (!fOut.Reset(buf)) {
@@ -280,7 +282,7 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
 {
    DOUT5(("CombinerModule::ShiftToNextHadTu %d begins", ninp));
    bool foundhadtu(false);
-   static unsigned ccount=0;
+   //static unsigned ccount=0;
    while (!foundhadtu) {
          if (!fInp[ninp].IsData()) {
             if (!ShiftToNextBuffer(ninp))
@@ -306,7 +308,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
    DOUT5(("CombinerModule::ShiftToNextSubEvent %d ", ninp));
    fCfg[ninp].Reset();
    bool foundevent(false);
-   static unsigned ccount=0;
+   //static unsigned ccount=0;
    while (!foundevent) {
       bool res = fInp[ninp].NextSubEvent();
       if (!res || (fInp[ninp].subevnt() == 0)) {
@@ -375,7 +377,7 @@ bool hadaq::CombinerModule::BuildEvent()
    //////////////////////////////////////////////////////////
    /////////////////////////////////////////////////////////////////////////////////////
    // first input loop: find out maximum trignum of all inputs = current event trignumber
-   static unsigned ccount=0;
+   //static unsigned ccount=0;
    int num_valid = 0;
    unsigned masterchannel = 0;
    uint32_t subeventssize = 0;
@@ -502,7 +504,8 @@ bool hadaq::CombinerModule::BuildEvent()
       Par(fDataRateName).SetDouble(currentbytes / 1024. / 1024.);
 
    } else {
-      DOUT0(("Skip event %u of size %u : no output buffer of size %u available!", buildevid, subeventssize+ sizeof(hadaq::Event), fBufferSize));
+      DOUT3(("Skip event %u of size %u : no output buffer of size %u available!", buildevid, subeventssize+ sizeof(hadaq::Event), fBufferSize));
+      Par(fEventDroppedRateName).SetInt(1);
       fTotalDroppedEvents++;
    } // ensure outputbuffer
 

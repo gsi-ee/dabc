@@ -6,11 +6,11 @@
       <lib value="libDabcHadaq.so"/>      
       <func value="InitHadaqEvtbuilder"/>
       <logfile value="hadaqevtbuild.log"/>
-      <loglimit value="500"/>
+      <loglimit value="1000000"/>
     </Run>
      <MemoryPool name="Pool">
        <BufferSize value="65536"/>
-       <NumBuffers value="5000"/>
+       <NumBuffers value="10000"/>
     </MemoryPool>
     
     
@@ -40,10 +40,10 @@
           <HadaqUdpBuffer value="200000"/>
           <!--HadaqUdpMTU value="64512"/-->   
           <BufferSize value="65536"/>
-          <InputQueueSize value="500"/>
+          <InputQueueSize value="1000"/>
        </Port>
         <Port name="ServerOutput">
-          <OutputQueueSize value="500"/>       
+          <OutputQueueSize value="1000"/>       
         </Port>  
        <Port name="FileOutput">
           <HadaqFileName value="te000.hld"/>       
