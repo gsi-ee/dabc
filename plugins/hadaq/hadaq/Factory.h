@@ -34,6 +34,8 @@ namespace hadaq {
 
          virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd);
 
+         virtual void Initialize();
+
       protected:
 
    };

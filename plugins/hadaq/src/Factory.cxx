@@ -28,7 +28,7 @@
 #include "hadaq/UdpTransport.h"
 #include "hadaq/CombinerModule.h"
 #include "hadaq/MbsTransmitterModule.h"
-
+#include "hadaq/Observer.h"
 
 dabc::FactoryPlugin hadaqfactory(new hadaq::Factory("hadaq"));
 
@@ -97,23 +97,16 @@ dabc::Module* hadaq::Factory::CreateModule(const char* classname, const char* mo
 }
 
 
-//dabc::Device* hadaq::Factory::CreateDevice(const char* classname, const char* devname, dabc::Command cmd)
-//{
-//   const char* thrdname = cmd.Field("Thread").AsStr();
-//
-//   if (strcmp(classname, hadaq::typeUdpDevice)==0) {
-//      DOUT2(("hadaq::Factory::CreateDevice - Creating Hadaq Netmem UdpDevice %s ...", devname));
-//
-//      hadaq::UdpDevice* dev = new hadaq::UdpDevice(devname, thrdname, cmd);
-//
-//      if (!dev->IsConnected()) {
-//         dabc::Object::Destroy(dev);
-//         return 0;
-//      }
-//
-//      return dev;
-//   }
-//
-//   return 0;
-//}
+
+
+void hadaq::Factory::Initialize()
+{
+   DOUT0(("Initialize SHM connected control"));
+
+   hadaq::Observer* o = new hadaq::Observer("/shm");
+
+   dabc::mgr()->MakeThreadFor(o,"ShmThread");
+
+//   o->thread()()->SetLogging(true);
+}
 

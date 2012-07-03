@@ -27,8 +27,15 @@ HADAQ_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(HADAQ_S))
 HADAQ_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(HADAQ_S))
 
 
-DABCHADAQ_O       = $(HADAQ_O) 
-DABCHADAQ_D       = $(HADAQ_D) 
+HADAQ_CS       = $(wildcard $(HADAQDIRS)/*.$(CSuf))
+HADAQ_CO       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(HADAQ_CS))
+HADAQ_CD       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(DepSuf), $(HADAQ_CS))
+
+
+
+
+DABCHADAQ_O       = $(HADAQ_O) $(HADAQ_CO)
+DABCHADAQ_D       = $(HADAQ_D) $(HADAQ_CD)
 
 
 # used in the main Makefile
@@ -49,11 +56,10 @@ $(DABCHADAQ_LIB):   $(DABCHADAQ_O)
 
 
 clean::
-	rm -f $(HADAQFAPI_PACKAGE)
+#	rm -f $(HADAQFAPI_PACKAGE)
 
 ########### extra rules #############
-$(HADAQ_O) $(HADAQ_D) : DEFINITIONS += $(HADAQAPI_DEFINITIONS) 
-$(HADAQAPI_CO) $(HADAQAPI_CD): C_DEFINITIONS += $(HADAQAPI_DEFINITIONS)
-
+#$(HADAQ_O) $(HADAQ_D) : DEFINITIONS += $(HADAQAPI_DEFINITIONS) 
+$(HADAQ_CO) $(HADAQ_CD): C_INCLUDES += -I $(HADAQDIRI) 
 
 include $(DABCSYS)/config/Makefile.rules

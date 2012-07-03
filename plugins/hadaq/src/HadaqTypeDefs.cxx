@@ -56,6 +56,10 @@ const char* hadaq::xmlBuildFullEvent = "HadaqBuildEvents";
 const char* hadaq::xmlNormalOutput      = "DoOutput";
 const char* hadaq::xmlFileOutput        = "DoFile";
 const char* hadaq::xmlServerOutput      = "DoServer";
+const char* hadaq::xmlObserverEnabled      = "DoShmControl";
+
+const char* hadaq::NetmemPrefix     = "Netmem";
+const char* hadaq::EvtbuildPrefix   = "Evtbuild";
 
 hadaq::Event* hadaq::Event::PutEventHeader(char** buf, EvtId id)
 {

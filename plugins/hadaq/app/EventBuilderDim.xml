@@ -4,21 +4,24 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
+       <lib value="libDabcDim.so"/>    
       <func value="InitHadaqEvtbuilder"/>
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
     </Run>
     
+     <!-- dim config -->
+   <Observer name="dim">
+     <dns value="lxg0532"/>
+     <mask value="*"/>
+   </Observer>
   
      <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="10000"/>
     </MemoryPool>
     
-     <!-- shmem control config -->
-   <Observer name="shm">
-     <DoShmControl value="false"/>
-   </Observer>
+    
     
     <Module name="Combiner">    
        <PoolName value="Pool"/>  
