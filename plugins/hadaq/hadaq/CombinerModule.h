@@ -99,6 +99,10 @@ namespace hadaq {
          bool BuildEvent();
          bool FlushOutputBuffer();
 
+         void RegisterExportedCounters();
+         bool UpdateExportedCounters();
+         void ClearExportedCounters();
+
          /* provide output buffer that has room for payload size of bytes
           * returns false if not possible*/
          bool EnsureOutputBuffer(uint32_t payload);
@@ -124,6 +128,21 @@ namespace hadaq {
          void SetInfo(const std::string& info, bool forceinfo = false);
 
 
+         /* helper methods to export ebctrl parameters */
+         std::string GetEvtbuildParName(const std::string& name);
+         void CreateEvtbuildPar(const std::string& name);
+         void SetEvtbuildPar(const std::string& name, unsigned value);
+         //void IncEvtbuildPar(const std::string& name);
+
+         std::string GetNetmemParName(const std::string& name);
+         void CreateNetmemPar(const std::string& name);
+         void SetNetmemPar(const std::string& name, unsigned value);
+         //void IncNetmemPar(const std::string& name);
+
+
+
+
+
 
          unsigned                   fBufferSize;
 
@@ -140,10 +159,13 @@ namespace hadaq {
          WriteIterator fOut;
          //dabc::Buffer fOutBuf;
          bool fFlushFlag;
+         bool fUpdateCountersFlag;
 
          bool fDoOutput;
          bool fFileOutput;
          bool fServOutput;
+         bool fWithObserver;
+         int fNumInputs;
 
          /* switch between partial combining of smallest event ids (false)
                  * and building of complete events only (true)*/

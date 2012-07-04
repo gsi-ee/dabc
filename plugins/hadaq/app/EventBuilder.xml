@@ -17,11 +17,12 @@
     
      <!-- shmem control config -->
    <Observer name="shm">
-     <DoShmControl value="false"/>
+     <DoShmControl value="true"/>
    </Observer>
     
     <Module name="Combiner">    
-       <PoolName value="Pool"/>  
+       <PoolName value="Pool"/>
+       <DoShmControl value="true"/>  
        <DoFile value="true"/>
        <DoServer value="true"/>
        <BufferSize value="65536"/>

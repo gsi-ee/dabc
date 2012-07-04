@@ -429,7 +429,69 @@ namespace hadaq {
             void* my = (char*) (this) + sizeof(hadaq::Subevent);
             return my;
          }
-   };
+
+         // TODO: methods to extract error bit pattern (last word of subevent payload)
+//         uint32_t SubEvt_errBit(const void *my)
+//         {
+//            unsigned i;
+//            uint32_t val;
+//
+//            i = SubEvt_nrOfDataWords(my);
+//
+//            val = SubEvt_dataValue(my, i);
+//
+//            return val;
+//         }
+//
+//         uint32_t SubEvt_debugWord(const void *my)
+//         {
+//            unsigned i;
+//            uint32_t val;
+//            unsigned wordNr = -1;
+//
+//            /* Define debug word for the RICH */
+//            if (SubEvt_id(my) == 0x00008300UL || SubEvt_id(my) == 0x00008310UL || SubEvt_id(my) == 0x00008320UL) {
+//               wordNr = 2;
+//            }
+//
+//            i = SubEvt_nrOfDataWords(my);
+//
+//            if (wordNr == -1) {
+//               val = 0;
+//            } else if (i > wordNr) {
+//               val = SubEvt_dataValue(my, wordNr - 1);
+//            } else {
+//               val = 0;
+//            }
+//
+//            return val;
+//         }
+
+
+
+         // TODO: need implement SubEvt_nrOfDataWords for this, depending on Alignment
+//         unsigned SubEvt_nrOfDataWords(const void *my)
+//         {
+//            unsigned i;
+//
+//            if (SubEvt_decoding(my) == SubEvtDecoding_32bitData) {
+//               i = SubEvt_dataSize(my) / sizeof(uint32_t) - 1;
+//            } else if (SubEvt_decoding(my) == SubEvtDecoding_16bitData) {
+//               i = SubEvt_dataSize(my) / sizeof(uint16_t) - 1;
+//            } else if (SubEvt_decoding(my) == SubEvtDecoding_8bitData) {
+//               i = SubEvt_dataSize(my) / sizeof(uint8_t) - 1;
+//            } else if (SubEvt_decoding(my) == SubEvtDecoding_SubEvts) {
+//               fprintf(stderr, "ERROR: Crate event are not supported any longer, decoding: %x\n", SubEvt_decoding(my));
+//            } else {
+//               fprintf(stderr, "ERROR: Unknown decoding: %i\n", SubEvt_decoding(my));
+//            }
+//
+//            return i;
+//         }
+//
+
+
+  };
 
 #pragma pack(pop)
 

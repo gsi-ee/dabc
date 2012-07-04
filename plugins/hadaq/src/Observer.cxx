@@ -23,7 +23,7 @@ hadaq::Observer::Observer(const char* name) :
          DOUT0(("hadaq shmem observer is disabled."));
          return;
       }
-   fNodeId = dabc::mgr()->NodeId();
+   fNodeId = dabc::mgr()->NodeId()+1; // hades eb ids start with 1
    //std::string nodename = dabc::mgr()->cfg()->NodeName(fNodeid);
 
    // Default, all parameter events are registered
@@ -126,12 +126,11 @@ std::string hadaq::Observer::ReducedName(const std::string& dabcname)
 {
    std::string res="";
    size_t sep;
-    // different member versions of find in the same order as above:
-    sep=dabcname.find("_");
+   sep=dabcname.find("_");
     if (sep!=std::string::npos)
        {
-          res=dabcname.substr (sep,std::string::npos);
-          std::cout <<"ReducedName:" << res << std::endl;
+          res=dabcname.substr (sep+1,std::string::npos);
+          //std::cout <<"ReducedName:" << res << std::endl;
        }
    return res;
 }
@@ -140,21 +139,22 @@ std::string hadaq::Observer::ShmName(const std::string& dabcname)
 {
    std::string res = "";
    size_t sep;
-   // different member versions of find in the same order as above:
+
    sep = dabcname.find("_");
    if (sep != std::string::npos) {
-      res = dabcname.substr(0, sep - 1);
-      std::cout << "ShmName:" << res << std::endl;
+      res = dabcname.substr(0, sep);
+      //std::cout << "ShmName:" << res << std::endl;
    }
-   if (res == hadaq::EvtbuildPrefix)
+   // our prefix is behind dabc path, check if it is contained:
+   if (res.find(hadaq::EvtbuildPrefix)!= std::string::npos)
       res = "daq_evtbuild";
-   else if (res == hadaq::NetmemPrefix)
+   else if (res.find(hadaq::NetmemPrefix)!= std::string::npos)
       res = "daq_netmem";
    else
       res = "unknown";
 
    std::string retval=std::string(dabc::format("%s%d", res.c_str(), fNodeId));
-   std::cout <<"ShmName:" << retval << std::endl;
+   //std::cout <<"ShmName:" << retval << std::endl;
    return retval;
 }
 
@@ -190,17 +190,6 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
    if(!fEnabled) return;
 
    std::string parname = evnt.ParName();
-//   std::string shmemname=ShmName(parname);
-//   std::string statsname=ReducedName(parname);
-
-   std::string dimname;
-//   if (parname==fDRateName) dimname = "DRate"; else
-//   if (parname==fERateName) dimname = "ERate"; else
-//   if (parname==fInfoName) dimname = "Info"; else
-//   if (parname==fInfo2Name) dimname = "Info2"; else
-//   if (parname==fInfo3Name) dimname = "Info3";
-
-
 
 //   DOUT0(("Get event %d par %s entry %p value %s", evnt.EventId(), parname.c_str(), entry, evnt.ParValue().c_str()));
 
@@ -219,11 +208,6 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
          }
          entry->UpdateValue(evnt.ParValue());
 
-         // this may indicate changes in parameter, one could recreate service for the entry
-//         if (evnt.AttrModified())
-//            entry->UpdateService(dabc::mgr.FindPar(parname));
-//         else
-//            entry->UpdateValue(evnt.ParValue());
 
          break;
       }

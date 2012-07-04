@@ -34,8 +34,10 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
       fInp(),
       fOut(),
       fFlushFlag(false),
+      fUpdateCountersFlag(false),
       fFileOutput(false),
       fServOutput(false),
+      fWithObserver(false),
       fBuildCompleteEvents(true)
 {
    fTotalRecvBytes = 0;
@@ -56,12 +58,12 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
    CreatePoolHandle(poolname.c_str());
 
-   int numinp = Cfg(dabc::xmlNumInputs, cmd).AsInt(1);
+   fNumInputs = Cfg(dabc::xmlNumInputs, cmd).AsInt(1);
 
 //   fDoOutput = Cfg(hadaq::xmlNormalOutput,cmd).AsBool(true);
    fFileOutput = Cfg(hadaq::xmlFileOutput, cmd).AsBool(false);
    fServOutput = Cfg(hadaq::xmlServerOutput, cmd).AsBool(false);
-
+   fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 //     fBuildCompleteEvents = Cfg(mbs::xmlCombineCompleteOnly,cmd).AsBool(true);
 //
 //
@@ -72,7 +74,7 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
    double flushtmout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(1.);
 
-   for (int n = 0; n < numinp; n++) {
+   for (int n = 0; n < fNumInputs; n++) {
       CreateInput(FORMAT((hadaq::portInputFmt, n)), Pool(), 10);
 
       //      DOUT0(("  Port%u: Capacity %u", n, Input(n)->InputQueueCapacity()));
@@ -129,6 +131,9 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    Par(fEventRateName).SetDebugLevel(1);
    Par(fEventDiscardedRateName).SetDebugLevel(1);
    Par(fEventDroppedRateName).SetDebugLevel(1);
+   RegisterExportedCounters();
+
+
 }
 
 hadaq::CombinerModule::~CombinerModule()
@@ -136,6 +141,10 @@ hadaq::CombinerModule::~CombinerModule()
    if(!fRcvBuf.null())
         fRcvBuf.Release();
 }
+
+
+
+
 
 void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 {
@@ -150,6 +159,10 @@ void hadaq::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
    if (fFlushFlag)
       FlushOutputBuffer();
    fFlushFlag = true;
+   if (fUpdateCountersFlag)
+      UpdateExportedCounters();
+   fUpdateCountersFlag= true;
+
 }
 
 void hadaq::CombinerModule::ProcessInputEvent(dabc::Port* port)
@@ -246,6 +259,137 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
 
    return true;
 }
+
+void hadaq::CombinerModule::RegisterExportedCounters()
+{
+   if(!fWithObserver) return;
+   DOUT0(("##### CombinerModule::RegisterExportedCounters for shmem"));
+   CreateEvtbuildPar("evtsDiscarded");
+   CreateEvtbuildPar("evtsComplete");
+   CreateEvtbuildPar("evtsDataError");
+   CreateEvtbuildPar("evtsTagError");
+   CreateEvtbuildPar("bytesWritten");
+   CreateEvtbuildPar("runId");
+   CreateEvtbuildPar("nrOfMsgs");
+
+   for (int i = 0; i < fNumInputs; i++)
+      {
+         CreateEvtbuildPar(dabc::format("trigNr%d",i));
+         CreateEvtbuildPar(dabc::format("errBit%d",i));
+      }
+
+
+//   for (i = 0; i < theArgs->nrOfMsgs; i++) {
+//         char buf[WORKER_MAX_NAME_LEN];
+//
+//         sprintf(buf, "trigNr%d", i);
+//         theStats->trigNr[i] = Worker_addStatistic(worker, buf);
+//      }
+//
+//      for (i = 0; i < theArgs->nrOfMsgs; i++) {
+//         char buf[WORKER_MAX_NAME_LEN];
+//
+//         sprintf(buf, "errBit%d", i);
+//         theStats->errBit[i] = Worker_addStatistic(worker, buf);
+//      }
+
+
+
+//   theStats->evtsDiscarded = Worker_addStatistic(worker, "evtsDiscarded");
+//      theStats->evtsComplete = Worker_addStatistic(worker, "evtsComplete");
+//      theStats->evtsDataError = Worker_addStatistic(worker, "evtsDataError");
+//      theStats->evtsTagError = Worker_addStatistic(worker, "evtsTagError");
+//      theStats->bytesWritten = Worker_addStatistic(worker, "bytesWritten");
+//      theStats->runId = Worker_addStatistic(worker, "runId");
+
+//   fTotalRecvBytes = 0;
+//     fTotalRecvEvents = 0;
+//     fTotalDiscEvents = 0;
+//     fTotalDroppedEvents = 0;
+//     fTotalTagErrors = 0;
+//     fTotalDataErrors = 0;
+}
+
+void hadaq::CombinerModule::ClearExportedCounters()
+{
+     // TODO: we need mechanism that calls this method whenever a new run begins
+     // problem: run id is decided by hld file output, need command communication
+     fTotalRecvBytes = 0;
+     fTotalRecvEvents = 0;
+     fTotalDiscEvents = 0;
+     fTotalDroppedEvents = 0;
+     fTotalTagErrors = 0;
+     fTotalDataErrors = 0;
+     UpdateExportedCounters();
+}
+
+
+bool hadaq::CombinerModule::UpdateExportedCounters()
+{
+   if(!fWithObserver) return false;
+      SetEvtbuildPar("nrOfMsgs",fNumInputs);
+     SetEvtbuildPar("evtsDiscarded",fTotalDiscEvents+fTotalDroppedEvents);
+     SetEvtbuildPar("evtsComplete",fTotalRecvEvents);
+     SetEvtbuildPar("evtsDataError",fTotalDataErrors);
+     SetEvtbuildPar("evtsTagError", fTotalTagErrors);
+     SetEvtbuildPar("bytesWritten", fTotalRecvBytes);
+     SetEvtbuildPar("runId",Par("RunId").AsUInt()); // sync local parameter to observer export
+
+     for (int i = 0; i < fNumInputs; i++)
+           {
+              unsigned trignr= (fCfg[i].fTrigNr << 8) |  (fCfg[i].fTrigTag & 0xff);
+              SetEvtbuildPar(dabc::format("trigNr%d",i),trignr);
+              // TODO: methods to extract error bit pattern (last word of subevent payload)
+              SetEvtbuildPar(dabc::format("errBit%d",i),0);
+           }
+
+//   (*theStats->bytesWritten) = 0;
+//            (*theStats->evtsComplete) = 0;
+//            (*theStats->evtsDiscarded) = 0;
+//            (*theStats->evtsDataError) = 0;
+//            (*theStats->evtsTagError) = 0;
+//
+//            for (i = 0; i < theArgs->nrOfMsgs; i++)
+//               (*theStats->trigNr[i]) = 0;
+//
+//            for (i = 0; i < NEVTIDS; i++)
+//               (*theStats->evtId[i]) = 0;
+//
+//            for (i = 0; i < ERRBITPTRNMAX; i++)
+//               (*theStats->errBitPtrn[i]) = 0;
+//
+//            for (i = 0; i < theArgs->nrOfMsgs; i++) {
+//               (*theStats->errBitStat0[i]) = 0;
+//               (*theStats->errBitStat1[i]) = 0;
+//               (*theStats->errBitStat2[i]) = 0;
+//               (*theStats->errBitStat3[i]) = 0;
+//               (*theStats->errBitStat4[i]) = 0;
+//            }
+//         }
+
+
+
+
+
+
+
+
+
+
+
+//   fTotalRecvBytes;
+//           uint64_t           fTotalRecvEvents;
+//           uint64_t           fTotalDroppedEvents;
+//           uint64_t           fTotalDiscEvents;
+//           uint64_t           fTotalTagErrors;
+//           uint64_t           fTotalDataErrors;
+
+   fUpdateCountersFlag= false;
+   return true;
+}
+
+
+
 
 ///////////////////////////////////////////////////////////////
 //////// INPUT BUFFER METHODS:
@@ -621,6 +765,59 @@ int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
    return dabc::ModuleAsync::ExecuteCommand(cmd);
 
 }
+
+
+std::string  hadaq::CombinerModule::GetEvtbuildParName(const std::string& name)
+{
+   return dabc::format("%s_%s",hadaq::EvtbuildPrefix,name.c_str());
+}
+
+void hadaq::CombinerModule::CreateEvtbuildPar(const std::string& name)
+{
+   CreatePar(GetEvtbuildParName(name));
+}
+
+void hadaq::CombinerModule::SetEvtbuildPar(const std::string& name,
+      unsigned value)
+{
+    Par(GetEvtbuildParName(name)).SetUInt(value);
+}
+//void hadaq::CombinerModule::IncEvtbuildPar(const std::string& name)
+//{
+//   std::string fullname=GetEvtbuildParName(name);
+//   unsigned val=Par(fullname).AsUInt()++;
+//   Par(fullname).SetUInt(val);
+//
+//}
+
+std::string  hadaq::CombinerModule::GetNetmemParName(const std::string& name)
+{
+   return dabc::format("%s_%s",hadaq::NetmemPrefix,name.c_str());
+}
+
+void hadaq::CombinerModule::CreateNetmemPar(const std::string& name)
+{
+   CreatePar(GetNetmemParName(name));
+}
+
+void hadaq::CombinerModule::SetNetmemPar(const std::string& name,
+      unsigned value)
+{
+   Par(GetNetmemParName(name)).SetUInt(value);
+}
+
+//void hadaq::CombinerModule::IncNetmemPar(const std::string& name)
+//{
+//   std::string fullname=GetNetmemParName(name);
+//   unsigned val=Par(fullname).AsUInt()++;
+//   Par(fullname).SetUInt(val);
+//}
+
+
+
+
+
+
 
 extern "C" void InitHadaqEvtbuilder()
 {
