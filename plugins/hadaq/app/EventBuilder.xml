@@ -44,6 +44,7 @@
        </Port>       
        <Port name="Input*">
           <HadaqUdpBuffer value="200000"/>
+          <DoShmControl value="true"/>  
           <!--HadaqUdpMTU value="64512"/-->   
           <BufferSize value="65536"/>
           <InputQueueSize value="1000"/>

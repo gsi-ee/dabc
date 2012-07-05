@@ -52,6 +52,14 @@ namespace hadaq {
                /* errorbit statistics counter */
                uint32_t fErrorbitStats[HADAQ_NUMERRPATTS];
 
+               /* current input queue fill level*/
+               float fQueueLevel;
+
+
+               /* remember id of last build event*/
+               hadaq::EventNumType fLastEvtBuildTrigId;
+
+
                /** indicates if subevent has data error bit set in header id */
                bool fDataError;
 
@@ -64,6 +72,8 @@ namespace hadaq {
                   fTrigType(0),
                   fSubId(0),
                   fErrorBits(0),
+                  fQueueLevel(0),
+                  fLastEvtBuildTrigId(0),
                   fDataError(false),
                   fEmpty(true)
                {
@@ -76,7 +86,9 @@ namespace hadaq {
                   fTrigTag(src.fTrigTag),
                   fTrigType(src.fTrigType),
                   fSubId(src.fSubId),
-                  fErrorBits(0),
+                  fErrorBits(src.fErrorBits),
+                  fQueueLevel(src.fQueueLevel),
+                  fLastEvtBuildTrigId(src.fLastEvtBuildTrigId),
                   fDataError(src.fDataError),
                   fEmpty(src.fEmpty)
                {
@@ -96,6 +108,7 @@ namespace hadaq {
                   fEmpty = true;
                   for(int i=0;i<HADAQ_NUMERRPATTS;++i)
                      fErrorbitStats[i]=0;
+                  // do not clear last fill level and last trig id
                }
          };
 
@@ -131,6 +144,8 @@ namespace hadaq {
          void ClearExportedCounters();
 
          void DoErrorBitStatistics(unsigned ninp);
+
+         void DoInputSnapshot(unsigned ninp);
 
          /* provide output buffer that has room for payload size of bytes
           * returns false if not possible*/

@@ -30,7 +30,6 @@
 
 #define UDP_FILLEVENTS_WITHITERATOR 1
 
-//dabc::SocketWorker(0, port.GetName())
 
 hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
       dabc::SocketWorker(), dabc::Transport(port.Ref()), dabc::MemoryPoolRequester(), fQueueMutex(), fQueue(
@@ -82,7 +81,7 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
    fFlushTimeout = 1.0;
    // DOUT0(("fFlushTimeout = %5.1f %s", fFlushTimeout, dabc::xmlFlushTimeout));
 
-
+   fWithObserver = port->Cfg(hadaq::xmlObserverEnabled).AsBool(false);
 
    fBuildFullEvent = port->Cfg(hadaq::xmlBuildFullEvent).AsBool(fBuildFullEvent);
 
@@ -109,9 +108,15 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
    }
    DOUT0(("hadaq::UdpDataSocket:: Open udp port %d with rcvbuf %d, dabc buffer size = %u, buildfullevents=%d", fNPort, rcvBufLenReq, fBufferSize, fBuildFullEvent));
    //std::cout <<"---------- fBuildFullEvent is "<< fBuildFullEvent << std::endl;
-
-   RegisterExportedCounters();
-
+   if(fWithObserver)
+   {
+      // workaround to suppress problems with dim observer when this ratemeter is registered:
+      std::string ratesprefix = GetName();
+      fDataRateName = ratesprefix + "-Datarate";
+      CreatePar(fDataRateName).SetRatemeter(false, 5.).SetUnits("B");
+      Par(fDataRateName).SetDebugLevel(1);
+      RegisterExportedCounters();
+   }
 
 
 }
@@ -144,6 +149,7 @@ double  hadaq::UdpDataSocket::ProcessTimeout(double lastdiff)
 
 void hadaq::UdpDataSocket::RegisterExportedCounters()
 {
+   if(!fWithObserver) return;
    CreateNetmemPar(dabc::format("pktsReceived%d",fIdNumber));
    CreateNetmemPar(dabc::format("pktsDiscarded%d",fIdNumber));
    CreateNetmemPar(dabc::format("msgsReceived%d",fIdNumber));
@@ -159,6 +165,7 @@ void hadaq::UdpDataSocket::RegisterExportedCounters()
 
 bool hadaq::UdpDataSocket::UpdateExportedCounters()
 {
+   if(!fWithObserver) return false;
    fUpdateCountersFlag = false; // do not call this from timer again while it is processed
    SetNetmemPar(dabc::format("pktsReceived%d", fIdNumber), fTotalRecvPacket);
    SetNetmemPar(dabc::format("pktsDiscarded%d", fIdNumber),
@@ -176,7 +183,7 @@ bool hadaq::UdpDataSocket::UpdateExportedCounters()
    unsigned fill=100*ratio;
    SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber),fill);
 
-   // TODO: calculate bytesreceived rate
+   SetNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber), Par(fDataRateName).AsUInt());
 
    return true;
 }
@@ -193,12 +200,6 @@ void hadaq::UdpDataSocket::ClearExportedCounters()
    fTotalDroppedBuffers = 0;
 }
 
-
-//bool hadaq::UdpDataSocket::ReplyCommand(dabc::Command cmd)
-//{
-//
-//   return true;
-//}
 
 bool hadaq::UdpDataSocket::Recv(dabc::Buffer& buf)
 {
@@ -241,7 +242,7 @@ void hadaq::UdpDataSocket::StartTransport()
    DOUT0(("Starting UDP transport %s",GetName()));
    NewReceiveBuffer();
    // note: we can no sooner activate the timeout, since threads are not assigned in ctor JAM
-   if (fFlushTimeout > 0.)
+   if (fWithObserver && fFlushTimeout > 0.)
           if(!ActivateTimeout(fFlushTimeout))
              EOUT(("%s could not activate timeout of %f s",GetName(),fFlushTimeout));
 
@@ -264,11 +265,6 @@ void hadaq::UdpDataSocket::StopTransport()
 
 }
 
-//double hadaq::UdpDataSocket::ProcessTimeout(double)
-//{
-//
-//   return 0.01;
-//}
 
 int hadaq::UdpDataSocket::GetParameter(const char* name)
 {
@@ -326,6 +322,7 @@ void hadaq::UdpDataSocket::ReadUdp()
       } else {
          fTotalRecvMsg++;
          fTotalRecvBytes += fTgtShift;
+         Par(fDataRateName).SetDouble(fTgtShift);
          fTgtPtr += hadTu->GetPaddedSize(); // we will overwrite the trailing block of this message again
          fTgtShift = 0;
          if (fTgtBuf.null() || (size_t)(fEndPtr - fTgtPtr) < fMTU) {

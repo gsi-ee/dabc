@@ -114,6 +114,9 @@ namespace hadaq {
           */
          bool fBuildFullEvent;
 
+         /* switch to export some counters to shmem observer*/
+         bool fWithObserver;
+
          /* run id from timeofday for eventbuilding*/
          RunId fRunNumber;
 
@@ -122,6 +125,8 @@ namespace hadaq {
 
          /* actually opened udp port number*/
          int fNPort;
+
+         std::string                fDataRateName;
 
          //virtual bool ReplyCommand(dabc::Command cmd);
 

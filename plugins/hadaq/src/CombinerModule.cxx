@@ -353,17 +353,21 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
      //std::cout <<"!!!!!! Update run id:"<<Par("RunId").AsUInt() << std::endl;
      for (int i = 0; i < fNumInputs; i++)
            {
-              unsigned trignr= (fCfg[i].fTrigNr << 8) |  (fCfg[i].fTrigTag & 0xff);
-              SetEvtbuildPar(dabc::format("trigNr%d",i),trignr);
+
+              //unsigned trignr= (fCfg[i].fTrigNr << 8) |  (fCfg[i].fTrigTag & 0xff);
+              SetEvtbuildPar(dabc::format("trigNr%d",i),fCfg[i].fLastEvtBuildTrigId); // prerecorded id of last complete event
               SetEvtbuildPar(dabc::format("errBit%d",i),fCfg[i].fErrorBits);
-              dabc::Port* input=Input(i);
-              if(input)
-                 {
-                    float ratio=0;
-                    if(input->InputQueueSize()>0) ratio = input->InputPending() / input->InputQueueSize();
-                    unsigned fillevel= 100*ratio;
-                    SetEvtbuildPar(dabc::format("evtbuildBuff%d", i), fillevel);
-                 }
+// note: if we get those values here, we are most likely in between event building. use prerecorded values instead
+//              dabc::Port* input=Input(i);
+//              if(input)
+//                 {
+//                    float ratio=0;
+//                    if(input->InputQueueSize()>0) ratio = input->InputPending() / input->InputQueueSize();
+//                    unsigned fillevel= 100*ratio;
+//                    SetEvtbuildPar(dabc::format("evtbuildBuff%d", i), fillevel);
+//                 }
+
+              SetEvtbuildPar(dabc::format("evtbuildBuff%d", i), 100 * fCfg[i].fQueueLevel);
 
               for (int ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn){
                     SetEvtbuildPar(dabc::format("errBitStat%d_%d",ptrn,i),fCfg[i].fErrorbitStats[ptrn]);
@@ -671,6 +675,7 @@ bool hadaq::CombinerModule::BuildEvent()
          if (fCfg[ninp].fEmpty)
             continue;
          fOut.AddSubevent(fInp[ninp].subevnt());
+         DoInputSnapshot(ninp); // record current state of event tag and queue level for control system
       } // for ninp
 
 
@@ -714,6 +719,19 @@ void hadaq::CombinerModule::DoErrorBitStatistics(unsigned ninp)
    }
 }
 
+void  hadaq::CombinerModule::DoInputSnapshot(unsigned ninp)
+{
+   // copy here input properties at the moment of event building to stats:
+
+   dabc::Port* input=Input(ninp);
+   if(input)
+   {
+      float ratio=0;
+      if(input->InputQueueSize()>0) ratio = input->InputPending() / input->InputQueueSize();
+      fCfg[ninp].fQueueLevel=ratio;
+   }
+   fCfg[ninp].fLastEvtBuildTrigId = (fCfg[ninp].fTrigNr << 8) |  (fCfg[ninp].fTrigTag & 0xff);
+}
 
 
 int hadaq::CombinerModule::ExecuteCommand(dabc::Command cmd)
