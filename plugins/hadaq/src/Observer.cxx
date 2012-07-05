@@ -62,13 +62,6 @@ hadaq::Observer::Observer(const char* name) :
 
 }
 
-//void hadaq::Observer::ExtendRegistrationFor(const std::string& mask, const std::string& name)
-//{
-//   if (name.empty()) return;
-//
-//   if (mask.empty() || !dabc::Object::NameMatch(name, mask))
-//      RegisterForParameterEvent(name, false);
-//}
 
 
 
@@ -88,24 +81,29 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
    std::string statsname=ReducedName(parname);
    hadaq::ShmEntry* entry = FindEntry(statsname,shmemname);
 
+
+
    dabc::Parameter par = dabc::mgr.FindPar(parname);
 
-   if (par.null()) {
-      EOUT(("Did not find parameter %s !!!!", parname.c_str()));
-      return false;
-   }
+// NOTE/TODO: parameters exported from transport workers are not found under their pathname here
+// Name is e.g. "//Input3/Netmem_pktsReceived3"
+// Names from Combiner module are found "Combiner/Evtbuild_trigNr1"
+//   if (par.null()) {
+//      EOUT(("Warning - Did not find parameter %s !!!!", parname.c_str()));
+//      //return false;
+//   }
 
 
    if (entry==0) {
-      DOUT0(("Create new entry for parameter %s", parname.c_str()));
+      DOUT3(("Create new entry for parameter %s", parname.c_str()));
       ::Worker* my=0;
       if(parname.find(hadaq::NetmemPrefix)!= std::string::npos){
-         DOUT0(("Use netmem:"));
+         DOUT3(("Use netmem:"));
          my=fNetmemWorker;
 
       }
       else if(parname.find(hadaq::EvtbuildPrefix)!= std::string::npos){
-         DOUT0(("Use evtbuild:"));
+         DOUT3(("Use evtbuild:"));
          my=fEvtbuildWorker;
       }
       if(my==0)
@@ -116,7 +114,9 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
       entry = new ShmEntry(statsname, shmemname,my);
       fEntries.push_back(entry);
    }
-   entry->UpdateValue(par.AsStdStr());
+
+   if(!par.null())
+      entry->UpdateValue(par.AsStdStr());
 
 
    return true;
@@ -191,6 +191,14 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 
    std::string parname = evnt.ParName();
 
+   // may need to strip dabc path
+//     size_t pos = parname.rfind("/");
+//     if (pos!=std::string::npos)
+//     {
+//        parname = parname.substr(pos+1, std::string::npos);
+//     }
+
+
 //   DOUT0(("Get event %d par %s entry %p value %s", evnt.EventId(), parname.c_str(), entry, evnt.ParValue().c_str()));
 
    switch (evnt.EventId()) {
@@ -226,6 +234,34 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 
 //   DOUT0(("Did event %d", evnt.EventId()));
 }
+
+int hadaq::Observer::Args_prefixCode(const char* prefix)
+{
+   char alphabet[] = "abcdefghijklmnopqrstuvwxyz";
+   int code = 0;
+   int i, j;
+
+   /* Loop over prefix */
+   for (j = 0; j < 2; j++) {
+
+      /* Loop over letters of Alphabet */
+      for (i = 0; i < 26; i++) {
+
+         if (alphabet[i] == prefix[j]) {
+
+            /*
+             *  Build prefix code:
+             *  add 1 to the code to get rid of zero's
+             *  in case of 'aa' prefix.
+             */
+            code = code * 100 + i + 1;
+         }
+      }
+   }
+
+   return code;
+}
+
 
 
 void  hadaq::sigHandler(int sig)

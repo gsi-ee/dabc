@@ -18,6 +18,7 @@
 #include "dabc/timing.h"
 #include "dabc/Port.h"
 #include "dabc/version.h"
+#include "dabc/Manager.h"
 
 #include <iostream>
 #include <errno.h>
@@ -29,6 +30,7 @@
 
 #define UDP_FILLEVENTS_WITHITERATOR 1
 
+//dabc::SocketWorker(0, port.GetName())
 
 hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
       dabc::SocketWorker(), dabc::Transport(port.Ref()), dabc::MemoryPoolRequester(), fQueueMutex(), fQueue(
@@ -52,7 +54,8 @@ hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
    fTotalRecvBuffers=0;
    fTotalDroppedBuffers=0;
 
-   //fFlushTimeout = .1;
+   fFlushTimeout = 0;
+   fUpdateCountersFlag=false;
    fBufferSize = 2 * DEFAULT_MTU;
    fBuildFullEvent = false;
 
@@ -66,11 +69,20 @@ hadaq::UdpDataSocket::~UdpDataSocket()
 
 void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
 {
-
    SetName(port->GetName());
-   fBufferSize = port->Cfg(dabc::xmlBufferSize).AsInt(fBufferSize);
+   fIdNumber=0;
+   int id=0;
+   if(sscanf(GetName(), "Input%d", &id)==1){
+      fIdNumber=id;
+      std::cout<<"Data Socket"<<GetName()<<" got id:"<<fIdNumber << std::endl;
+   }
+
+         fBufferSize = port->Cfg(dabc::xmlBufferSize).AsInt(fBufferSize);
    //fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
+   fFlushTimeout = 1.0;
    // DOUT0(("fFlushTimeout = %5.1f %s", fFlushTimeout, dabc::xmlFlushTimeout));
+
+
 
    fBuildFullEvent = port->Cfg(hadaq::xmlBuildFullEvent).AsBool(fBuildFullEvent);
 
@@ -85,18 +97,23 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
    delete fTempBuf;
    fTempBuf = new char[fMTU];
 
-   int nport = port->Cfg(hadaq::xmlUdpPort).AsInt(0);
+   fNPort = port->Cfg(hadaq::xmlUdpPort).AsInt(0);
    std::string hostname = port->Cfg(hadaq::xmlUdpAddress).AsStdStr("0.0.0.0");
    int rcvBufLenReq = port->Cfg(hadaq::xmlUdpBuffer).AsInt(1 * (1 << 20));
 
-   if (OpenUdp(nport, nport, nport, rcvBufLenReq) < 0) {
-      EOUT(("hadaq::UdpDataSocket:: failed to open udp port %d with receive buffer %d", nport,rcvBufLenReq));
+   if (OpenUdp(fNPort, fNPort, fNPort, rcvBufLenReq) < 0) {
+      EOUT(("hadaq::UdpDataSocket:: failed to open udp port %d with receive buffer %d", fNPort,rcvBufLenReq));
       CloseSocket();
       OnConnectionClosed();
       return;
    }
-   DOUT0(("hadaq::UdpDataSocket:: Open udp port %d with rcvbuf %d, dabc buffer size = %u, buildfullevents=%d", nport, rcvBufLenReq, fBufferSize, fBuildFullEvent));
+   DOUT0(("hadaq::UdpDataSocket:: Open udp port %d with rcvbuf %d, dabc buffer size = %u, buildfullevents=%d", fNPort, rcvBufLenReq, fBufferSize, fBuildFullEvent));
    //std::cout <<"---------- fBuildFullEvent is "<< fBuildFullEvent << std::endl;
+
+   RegisterExportedCounters();
+
+
+
 }
 
 void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
@@ -116,16 +133,72 @@ void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
    }
 }
 
-bool hadaq::UdpDataSocket::ReplyCommand(dabc::Command cmd)
+double  hadaq::UdpDataSocket::ProcessTimeout(double lastdiff)
 {
-//   int res = cmd.GetResult();
-//
-//   DOUT3(("hadaq::UdpDataSocket::ReplyCommand %s res = %s ", cmd.GetName(), DBOOL(res)));
-//
-//   //FireEvent(evntConfirmCmd, res==dabc::cmd_true ? 1 : 0);
+   DOUT5(("hadaq::UdpDataSocket %s ProcessTimeoutlastdiff=%e", GetName(),lastdiff));
+   if (fUpdateCountersFlag)
+      UpdateExportedCounters();
+   fUpdateCountersFlag= true;
+   return fFlushTimeout;
+}
+
+void hadaq::UdpDataSocket::RegisterExportedCounters()
+{
+   CreateNetmemPar(dabc::format("pktsReceived%d",fIdNumber));
+   CreateNetmemPar(dabc::format("pktsDiscarded%d",fIdNumber));
+   CreateNetmemPar(dabc::format("msgsReceived%d",fIdNumber));
+   CreateNetmemPar(dabc::format("msgsDiscarded%d",fIdNumber));
+   CreateNetmemPar(dabc::format("bytesReceived%d",fIdNumber));
+   CreateNetmemPar(dabc::format("netmemBuff%d",fIdNumber));
+   CreateNetmemPar(dabc::format("bytesReceivedRate%d",fIdNumber));
+   CreateNetmemPar(dabc::format("portNr%d",fIdNumber));
+   SetNetmemPar(dabc::format("portNr%d",fIdNumber),fNPort);
+
+}
+
+
+bool hadaq::UdpDataSocket::UpdateExportedCounters()
+{
+   fUpdateCountersFlag = false; // do not call this from timer again while it is processed
+   SetNetmemPar(dabc::format("pktsReceived%d", fIdNumber), fTotalRecvPacket);
+   SetNetmemPar(dabc::format("pktsDiscarded%d", fIdNumber),
+         fTotalDiscardPacket);
+   SetNetmemPar(dabc::format("msgsReceived%d", fIdNumber), fTotalRecvMsg);
+   SetNetmemPar(dabc::format("msgsDiscarded%d", fIdNumber), fTotalDiscardMsg);
+   SetNetmemPar(dabc::format("bytesReceived%d", fIdNumber), fTotalRecvBytes);
+   float ratio=0;
+   {
+   // may this lead to some deadlock?
+   //dabc::LockGuard guard(fQueueMutex);
+      if(fQueue.Capacity()>0)
+         ratio=fQueue.Size()/fQueue.Capacity();
+   }
+   unsigned fill=100*ratio;
+   SetNetmemPar(dabc::format("netmemBuff%d",fIdNumber),fill);
+
+   // TODO: calculate bytesreceived rate
 
    return true;
 }
+
+void hadaq::UdpDataSocket::ClearExportedCounters()
+{
+   fTotalRecvPacket = 0;
+   fTotalDiscardPacket = 0;
+   fTotalRecvMsg = 0;
+   fTotalDiscardMsg = 0;
+   fTotalRecvBytes = 0;
+   fTotalRecvEvents = 0;
+   fTotalRecvBuffers = 0;
+   fTotalDroppedBuffers = 0;
+}
+
+
+//bool hadaq::UdpDataSocket::ReplyCommand(dabc::Command cmd)
+//{
+//
+//   return true;
+//}
 
 bool hadaq::UdpDataSocket::Recv(dabc::Buffer& buf)
 {
@@ -165,8 +238,14 @@ bool hadaq::UdpDataSocket::ProcessPoolRequest()
 
 void hadaq::UdpDataSocket::StartTransport()
 {
-   DOUT0(("Starting UDP transport "));
+   DOUT0(("Starting UDP transport %s",GetName()));
    NewReceiveBuffer();
+   // note: we can no sooner activate the timeout, since threads are not assigned in ctor JAM
+   if (fFlushTimeout > 0.)
+          if(!ActivateTimeout(fFlushTimeout))
+             EOUT(("%s could not activate timeout of %f s",GetName(),fFlushTimeout));
+
+
 }
 
 void hadaq::UdpDataSocket::StopTransport()
@@ -185,11 +264,11 @@ void hadaq::UdpDataSocket::StopTransport()
 
 }
 
-double hadaq::UdpDataSocket::ProcessTimeout(double)
-{
-
-   return 0.01;
-}
+//double hadaq::UdpDataSocket::ProcessTimeout(double)
+//{
+//
+//   return 0.01;
+//}
 
 int hadaq::UdpDataSocket::GetParameter(const char* name)
 {
@@ -531,6 +610,24 @@ int hadaq::UdpDataSocket::OpenUdp(int& portnum, int portmin, int portmax,
       }
    CloseSocket();
    return -1;
+}
+
+
+
+std::string  hadaq::UdpDataSocket::GetNetmemParName(const std::string& name)
+{
+   return dabc::format("%s_%s",hadaq::NetmemPrefix,name.c_str());
+}
+
+void hadaq::UdpDataSocket::CreateNetmemPar(const std::string& name)
+{
+   CreatePar(GetNetmemParName(name));
+}
+
+void hadaq::UdpDataSocket::SetNetmemPar(const std::string& name,
+      unsigned value)
+{
+   Par(GetNetmemParName(name)).SetUInt(value);
 }
 
 

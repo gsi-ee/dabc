@@ -80,6 +80,8 @@ namespace hadaq {
 
          static const char* RunStatusName() { return "RunStatus"; }
 
+         /* converts prefix text to number for shmem export*/
+         static int Args_prefixCode(const char* prefix);
 
 
    };

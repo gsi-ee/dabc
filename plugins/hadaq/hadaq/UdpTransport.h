@@ -106,8 +106,9 @@ namespace hadaq {
          uint64_t           fTotalRecvBuffers;
          uint64_t           fTotalDroppedBuffers;
 
-         //double             fFlushTimeout;  // after such timeout partially filled packed will be delivered
+         double             fFlushTimeout;  // timeout for controls parameter update
 
+         bool fUpdateCountersFlag;
          /* if true, we will produce full hadaq events with subevent for direct use.
           * otherwise, produce subevent stream for consecutive event builder module.
           */
@@ -116,21 +117,27 @@ namespace hadaq {
          /* run id from timeofday for eventbuilding*/
          RunId fRunNumber;
 
-         virtual bool ReplyCommand(dabc::Command cmd);
+         /* port id number from transport name*/
+         unsigned int fIdNumber;
+
+         /* actually opened udp port number*/
+         int fNPort;
+
+         //virtual bool ReplyCommand(dabc::Command cmd);
 
          virtual void ProcessPoolChanged(dabc::MemoryPool* pool) {}
 
          virtual bool ProcessPoolRequest();
 
-         virtual double ProcessTimeout(double last_diff);
+         virtual double ProcessTimeout(double lastdiff);
 
          void ConfigureFor(dabc::Port* port);
 
 
          virtual int GetParameter(const char* name);
 
-//         void setFlushTimeout(double tmout) { fFlushTimeout = tmout; }
-//         double getFlushTimeout() const {  return fFlushTimeout; }
+         void setFlushTimeout(double tmout) { fFlushTimeout = tmout; }
+         double getFlushTimeout() const {  return fFlushTimeout; }
 
          int OpenUdp(int& portnum, int portmin, int portmax, int & rcvBufLenReq);
 
@@ -150,11 +157,27 @@ namespace hadaq {
           */
          void FillEventBuffer();
 
+         /*
+          * Export counters to control system here:
+          * */
+         std::string GetNetmemParName(const std::string& name);
+         void CreateNetmemPar(const std::string& name);
+         void SetNetmemPar(const std::string& name, unsigned value);
+
+
+         void RegisterExportedCounters();
+         bool UpdateExportedCounters();
+         void ClearExportedCounters();
+
+
+
       public:
          UdpDataSocket(dabc::Reference port);
          virtual ~UdpDataSocket();
 
          virtual void ProcessEvent(const dabc::EventId&);
+
+
 
          virtual bool ProvidesInput() { return true; }
          virtual bool ProvidesOutput() { return false; }

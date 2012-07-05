@@ -40,8 +40,19 @@ namespace hadaq {
                /** keeps current trigger tag */
                hadaq::EventNumType fTrigTag;
 
+               /* current subevent trigger type*/
+               uint32_t fTrigType;
 
-               /** indicates if subevent has data error bit set */
+               /* current subevent id*/
+               uint32_t fSubId;
+
+               /* errorbit status word from payload end*/
+               uint32_t fErrorBits;
+
+               /* errorbit statistics counter */
+               uint32_t fErrorbitStats[HADAQ_NUMERRPATTS];
+
+               /** indicates if subevent has data error bit set in header id */
                bool fDataError;
 
                /** indicates if input has empty data */
@@ -50,25 +61,41 @@ namespace hadaq {
                InputCfg() :
                   fTrigNr(0),
                   fTrigTag(0),
+                  fTrigType(0),
+                  fSubId(0),
+                  fErrorBits(0),
                   fDataError(false),
                   fEmpty(true)
                {
+                  for(int i=0;i<HADAQ_NUMERRPATTS;++i)
+                     fErrorbitStats[i]=0;
                }
 
                InputCfg(const InputCfg& src) :
                   fTrigNr(src.fTrigNr),
                   fTrigTag(src.fTrigTag),
+                  fTrigType(src.fTrigType),
+                  fSubId(src.fSubId),
+                  fErrorBits(0),
                   fDataError(src.fDataError),
                   fEmpty(src.fEmpty)
                {
+                  for(int i=0;i<HADAQ_NUMERRPATTS;++i)
+                     fErrorbitStats[i]=src.fErrorbitStats[i];
+
                }
 
                void Reset()
                {
                   fTrigNr = 0;
                   fTrigTag =0;
+                  fTrigType=0;
+                  fSubId=0;
+                  fErrorBits=0;
                   fDataError = false;
                   fEmpty = true;
+                  for(int i=0;i<HADAQ_NUMERRPATTS;++i)
+                     fErrorbitStats[i]=0;
                }
          };
 
@@ -103,6 +130,8 @@ namespace hadaq {
          bool UpdateExportedCounters();
          void ClearExportedCounters();
 
+         void DoErrorBitStatistics(unsigned ninp);
+
          /* provide output buffer that has room for payload size of bytes
           * returns false if not possible*/
          bool EnsureOutputBuffer(uint32_t payload);
@@ -132,12 +161,10 @@ namespace hadaq {
          std::string GetEvtbuildParName(const std::string& name);
          void CreateEvtbuildPar(const std::string& name);
          void SetEvtbuildPar(const std::string& name, unsigned value);
-         //void IncEvtbuildPar(const std::string& name);
 
          std::string GetNetmemParName(const std::string& name);
          void CreateNetmemPar(const std::string& name);
          void SetNetmemPar(const std::string& name, unsigned value);
-         //void IncNetmemPar(const std::string& name);
 
 
 
@@ -183,6 +210,10 @@ namespace hadaq {
          uint64_t           fTotalDiscEvents;
          uint64_t           fTotalTagErrors;
          uint64_t           fTotalDataErrors;
+
+         unsigned fEventIdCount[HADAQ_NEVTIDS];
+
+         uint32_t fErrorbitPattern[HADAQ_NUMERRPATTS];
 
          /* run id from timeofday for eventbuilding*/
          RunId fRunNumber;

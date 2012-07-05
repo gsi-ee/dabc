@@ -18,6 +18,8 @@
 #include <stdint.h>
 //#include "dabc/logging.h"
 
+
+
 #define HLD__SUCCESS        0
 #define HLD__FAILURE        1
 #define HLD__CLOSE_ERR      3
@@ -31,9 +33,10 @@
 //#define PUTHLD__OPEN_ERR    103
 //#define PUTHLD__EXCEED      104
 
-
+#define HADAQ_NEVTIDS 64UL       /* must be 2^n */
+#define HADAQ_NEVTIDS_IN_FILE 0UL      /* must be 2^n */
 #define HADAQ_TIMEOFFSET 1200000000 /* needed to reconstruct time from runId */
-
+#define HADAQ_NUMERRPATTS 5
 
 namespace hadaq {
 
@@ -382,6 +385,7 @@ namespace hadaq {
          /* swapsave access to any data. stolen from hadtu.h*/
          uint32_t Data(unsigned idx)
          {
+            if(idx>=GetNrOfDataWords()) return 0;
             const void* my = (char*) (this) + sizeof(hadaq::Subevent);
             //const void* my= (char*) (this) + 16;
             uint32_t val;
@@ -429,6 +433,33 @@ namespace hadaq {
             void* my = (char*) (this) + sizeof(hadaq::Subevent);
             return my;
          }
+
+
+         /* returns number of payload data words, not maximum index!*/
+         unsigned GetNrOfDataWords()
+         {
+            unsigned i;
+            unsigned datasize=GetSize()-sizeof(hadaq::Subevent);
+            switch (Alignment()) {
+               case 4:
+                  i = datasize / sizeof(uint32_t);
+                  break;
+               case 2:
+                  i = datasize  / sizeof(uint16_t);
+                  break;
+               default:
+                  i = datasize / sizeof(uint8_t);
+                  break;
+
+            };
+            return i;
+         }
+
+         uint32_t GetErrBits()
+            {
+                 return Data(GetNrOfDataWords()-1);
+            }
+
 
          // TODO: methods to extract error bit pattern (last word of subevent payload)
 //         uint32_t SubEvt_errBit(const void *my)
