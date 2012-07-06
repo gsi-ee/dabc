@@ -54,7 +54,8 @@
         </Port>  
        <Port name="FileOutput">
           <HadaqFileName value="/data.local1/adamczew/hld/dabc.hld"/>
-          <HadaqFileSizeLimit value="100"/>       
+          <HadaqEPICSControl value="true"/>
+          <HadaqFileSizeLimit value="1600"/>       
         </Port> 
 
               

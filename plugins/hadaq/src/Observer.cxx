@@ -15,7 +15,7 @@ extern "C" {
 #include <stdlib.h>
 
 hadaq::Observer::Observer(const char* name) :
-   dabc::Worker(MakePair(name))
+   dabc::Worker(MakePair(name)),fEntryMutex()
 {
    fEnabled = Cfg(hadaq::xmlObserverEnabled).AsBool(false);
    if(!fEnabled)
@@ -24,12 +24,7 @@ hadaq::Observer::Observer(const char* name) :
          return;
       }
    fNodeId = dabc::mgr()->NodeId()+1; // hades eb ids start with 1
-   //std::string nodename = dabc::mgr()->cfg()->NodeName(fNodeid);
 
-   // Default, all parameter events are registered
-   //std::string mask = Cfg("mask").AsStdStr("*");
-
-   // if (mask.empty()) mask = "*";
 
    // we use here mask for evtbuild and netmem prefixes only
    std::string maskn=dabc::format("%s_*",hadaq::NetmemPrefix);
@@ -37,11 +32,6 @@ hadaq::Observer::Observer(const char* name) :
 
    RegisterForParameterEvent(maskn, false);
    RegisterForParameterEvent(maske, false);
-
-
-
-   // TODO:  initialize different sharedmem for daq_evtbuild and daq_netmem
-   // probably we already create the expected worker entries here?
 
    std::string netname=dabc::format("daq_netmem%d", fNodeId);
    fNetmemWorker=::Worker_initBegin(netname.c_str(), hadaq::sigHandler, 0, 0);
@@ -57,6 +47,8 @@ hadaq::Observer::Observer(const char* name) :
    } else {
       ::Worker_initEnd(fEvtbuildWorker); // this will just add pid as default entry.
    }
+
+   fFlushTimeout=1.0;
 
    DOUT0(("############ Creating hadaq observer with shmems %s and %s ##########",netname.c_str(), evtname.c_str()));
 
@@ -75,8 +67,37 @@ hadaq::Observer::~Observer()
 
 }
 
+
+double hadaq::Observer::ProcessTimeout(double lastdiff)
+{
+   DOUT5(("###hadaq::Observer::ProcessTimeout"));
+//   return 1.0;
+
+   // TODO: lock updating the  variables during processparameter event
+    //dabc::LockGuard guard(fEntryMutex);
+//      ShmEntriesList::iterator iter = fEntries.begin();
+//      while (iter!=fEntries.end()) {
+//         (*iter)->UpdateParameter();
+//      }
+// NOTE the above will lead to an overflowing with parameter update events. need to avoid circular signalling here
+
+   // for the moment, we will just update the one value we need for hades eventbuilding:
+   std::string netname=dabc::format("daq_evtbuild%d", fNodeId);
+      hadaq::ShmEntry* entry = FindEntry("runId",netname);
+      if(entry){
+         entry->UpdateParameter();
+         //std::cout <<"updated runid parameter with "<<entry->GetValue() << std::endl;
+      }
+
+return 1.0;
+}
+
+
+
 bool hadaq::Observer::CreateShmEntry(const std::string& parname)
 {
+   //dabc::LockGuard guard(fEntryMutex);
+
    std::string shmemname=ShmName(parname);
    std::string statsname=ReducedName(parname);
    hadaq::ShmEntry* entry = FindEntry(statsname,shmemname);
@@ -111,7 +132,7 @@ bool hadaq::Observer::CreateShmEntry(const std::string& parname)
             EOUT(("Worker for shmem %s is zero!!!!", shmemname.c_str()));
             return false;
          }
-      entry = new ShmEntry(statsname, shmemname,my);
+      entry = new ShmEntry(statsname, shmemname,my,par);
       fEntries.push_back(entry);
    }
 
@@ -161,6 +182,7 @@ std::string hadaq::Observer::ShmName(const std::string& dabcname)
 
 hadaq::ShmEntry* hadaq::Observer::FindEntry(const std::string& statsname, const std::string& shmemname)
 {
+   //dabc::LockGuard guard(fEntryMutex);
    ShmEntriesList::iterator iter = fEntries.begin();
    while (iter!=fEntries.end()) {
       if (((*iter)->IsShmemName(shmemname)) && (*iter)->IsStatsName(statsname)) return *iter;
@@ -172,6 +194,7 @@ hadaq::ShmEntry* hadaq::Observer::FindEntry(const std::string& statsname, const 
 void hadaq::Observer::RemoveEntry(ShmEntry* entry)
 {
    if (entry==0) return;
+   //dabc::LockGuard guard(fEntryMutex);
    ShmEntriesList::iterator iter = fEntries.begin();
    while (iter!=fEntries.end()) {
       if (*iter==entry) {
@@ -191,15 +214,21 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 
    std::string parname = evnt.ParName();
 
-   // may need to strip dabc path
-//     size_t pos = parname.rfind("/");
-//     if (pos!=std::string::npos)
-//     {
-//        parname = parname.substr(pos+1, std::string::npos);
-//     }
+
+//if(parname=="Combiner/Evtbuild_runId")
+//   {
+//      DOUT0(("Get event %d par %s value %s", evnt.EventId(), parname.c_str(), evnt.ParValue().c_str()));
+//   }
+
+// we can not activate timeout in constructor, need to defer it here. todo for dabc framework?
+   static bool firsttime = true;
+   if (firsttime && fFlushTimeout > 0.) {
+      if (!ActivateTimeout(fFlushTimeout))
+         EOUT(("%s could not activate timeout of %f s",GetName(),fFlushTimeout));
+      firsttime = false;
+   }
 
 
-//   DOUT0(("Get event %d par %s entry %p value %s", evnt.EventId(), parname.c_str(), entry, evnt.ParValue().c_str()));
 
    switch (evnt.EventId()) {
       case dabc::parCreated: {
@@ -208,6 +237,7 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
       }
 
       case dabc::parModified: {
+           //dabc::LockGuard guard(fEntryMutex);
            hadaq::ShmEntry* entry = FindEntry(parname);
          if (entry==0) {
             DOUT0(("NEVER COME HERE: Modified event for non-known parameter %s !!!!", parname.c_str()));
@@ -221,7 +251,7 @@ void hadaq::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
       }
 
       case dabc::parDestroy: {
-
+         //dabc::LockGuard guard(fEntryMutex);
          hadaq::ShmEntry* entry = FindEntry(parname);
          if (entry!=0) {
             RemoveEntry(entry);

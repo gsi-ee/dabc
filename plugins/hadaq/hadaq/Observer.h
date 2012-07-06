@@ -37,6 +37,7 @@ namespace hadaq {
 
       bool fEnabled;
       int fNodeId;
+      double fFlushTimeout;
 
       /* handle for shmem worker structure for netmem emulation*/
       ::Worker* fNetmemWorker;
@@ -47,6 +48,7 @@ namespace hadaq {
       typedef std::list<ShmEntry*> ShmEntriesList;
 
       ShmEntriesList fEntries;
+      dabc::Mutex        fEntryMutex;
 
       ShmEntry*  FindEntry(const std::string& parname)
          {
@@ -65,8 +67,7 @@ namespace hadaq {
 
       void RemoveEntry(ShmEntry* entry);
 
-
-      //void ExtendRegistrationFor(const std::string& mask, const std::string& name);
+      virtual double ProcessTimeout(double lastdiff);
 
       public:
          Observer(const char* name);

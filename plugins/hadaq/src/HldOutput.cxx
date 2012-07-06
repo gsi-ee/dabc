@@ -35,7 +35,8 @@ hadaq::HldOutput::HldOutput(const char* fname,
    fInfoName(),
    fInfoTime(),
    fSizeLimit(sizelimit_mb),
-   //fCurrentFileNumber(0),
+   fEpicsControl(false),
+   fRunNumber(0),
    fCurrentFileName(),
    fFile(),
    fCurrentSize(0),
@@ -55,9 +56,24 @@ bool hadaq::HldOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Comman
    fSizeLimit = wrk.Cfg(hadaq::xmlSizeLimit, cmd).AsInt(fSizeLimit);
    fInfoName = wrk.Cfg("InfoPar", cmd).AsStdStr();
    fInfoTime.GetNow();
+   fRunidPar=dabc::mgr.FindPar("Combiner/Evtbuild_runId");
+   if(fRunidPar.null())
+       EOUT(("HldOutput::Write_Init did not find runid parameter"));
 
-   ShowInfo(dabc::format("Set file size limit:%llu", fSizeLimit));
+   fBytesWrittenPar=dabc::mgr.FindPar("Combiner/Evtbuild_bytesWritten");
+   if(fBytesWrittenPar.null())
+       EOUT(("HldOutput::Write_Init did not find written bytes parameter"));
 
+   fEpicsControl=wrk.Cfg(hadaq::xmlExternalRunid, cmd).AsBool(fEpicsControl);
+   if (fEpicsControl) {
+         fRunNumber = GetRunId();
+         ShowInfo(dabc::format("EPICS control is enabled, first runid:%d",fRunNumber));
+
+   }
+   else
+      {
+      ShowInfo(dabc::format("Set file size limit:%llu",fSizeLimit));
+   }
    return Init();
 }
 
@@ -120,21 +136,42 @@ bool hadaq::HldOutput::Init()
    return StartNewFile();
 }
 
+hadaq::RunId hadaq::HldOutput::GetRunId()
+{
+      hadaq::RunId nextrunid =0;
+      unsigned counter=0;
+      do{
+         nextrunid=fRunidPar.AsUInt();
+         if(nextrunid) break;
+         dabc::Sleep(0.1);
+         counter++;
+         if(counter>100)
+            {
+               EOUT(("HldOutput could not get run id from EPICS master within 10s. Use self generated id. Disable epics runid control."));
+               nextrunid= hadaq::Event::CreateRunId(); // TODO: correct error handling here, shall we terminate instead?
+               fEpicsControl=false;
+            }
+      } while (nextrunid==0);
+      return nextrunid;
+
+}
+
+
 bool hadaq::HldOutput::StartNewFile()
 {
-   //if (fFile.IsWriteMode()) {
        Close();
-   //}
    // new file will change run id for complete system:
-   RunId runNumber= hadaq::Event::CreateRunId();
-   dabc::Parameter par = dabc::mgr.FindPar("RunId");
-   par.SetInt(runNumber);
-   par.FireModified(); // inform eventbuilder about new runid: NOTE for exact sync we overwrite runid anyway. This one is only for some online monitor consistency...
 
 
-   std::string fname = FullFileName(hadaq::Event::FormatFilename (runNumber));
+      if (!fEpicsControl || fRunNumber == 0) {
+      fRunNumber = hadaq::Event::CreateRunId();
+      DOUT0(("HldOutput Generates New Runid %d ", fRunNumber));
+      fRunidPar.SetUInt(fRunNumber);
+   }
 
-   if (!fFile.OpenWrite(fname.c_str(), runNumber)) {
+   std::string fname = FullFileName(hadaq::Event::FormatFilename (fRunNumber));
+
+   if (!fFile.OpenWrite(fname.c_str(), fRunNumber)) {
       ShowInfo(dabc::format("%s cannot open file for writing, errcode %u", fname.c_str(), fFile.LastError()), 2);
       return false;
    }
@@ -181,17 +218,37 @@ bool hadaq::HldOutput::WriteBuffer(const dabc::Buffer& buf)
       return false;
    }
 
-   if ((fSizeLimit > 0) && (fCurrentSize + buf.GetTotalSize() > fSizeLimit))
-      if (!StartNewFile()) {
+   bool startnewfile = false;
+   if (fEpicsControl) {
+      // check if EPICS master has assigned a new run for us:
+      RunId nextrunid = GetRunId();
+      if (nextrunid > fRunNumber) {
+         fRunNumber = nextrunid;
+         startnewfile = true;
+         DOUT0(("HldOutput Gets New Runid %d from EPICS", fRunNumber));
+      }
+   } else {
+      // no EPICS control, use local size limits:
+      if ((fSizeLimit > 0) && (fCurrentSize + buf.GetTotalSize() > fSizeLimit))
+         startnewfile = true;
+   }
+
+
+   if(startnewfile)
+   {
+        if (!StartNewFile()) {
          EOUT(("Cannot start new file for writing"));
          return false;
       }
+   }
+
 
    unsigned numevents = hadaq::ReadIterator::NumEvents(buf);
    DOUT3(("Write %u events to hld file", numevents));
 
 
    fCurrentSize += buf.GetTotalSize();
+   fBytesWrittenPar.SetUInt(fCurrentSize);
    fTotalSize += buf.GetTotalSize();
    fTotalEvents += numevents;
    ShowWriteInfo();

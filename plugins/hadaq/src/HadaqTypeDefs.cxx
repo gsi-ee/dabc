@@ -57,6 +57,7 @@ const char* hadaq::xmlNormalOutput      = "DoOutput";
 const char* hadaq::xmlFileOutput        = "DoFile";
 const char* hadaq::xmlServerOutput      = "DoServer";
 const char* hadaq::xmlObserverEnabled      = "DoShmControl";
+const char* hadaq::xmlExternalRunid       = "HadaqEPICSControl";
 
 const char* hadaq::NetmemPrefix     = "Netmem";
 const char* hadaq::EvtbuildPrefix   = "Evtbuild";

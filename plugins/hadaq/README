@@ -2,22 +2,22 @@
 ****** DABC plugin for hadaq 
 ****** (originally HADES collaboration DAQ and data format)
 *        Joern Adamczewski-Musch, j.adamczewski@gsi.de
-* Version 0.07 - 04-Jul-2012
-   :  First working interface to hades shared memory control (hadaq "worker").
-      Tested with original hades ebctrl ioc + medm
+* Version 0.08 - 08-Jul-2012
+   :  Added control of distributed runid from hades epics master
    
 * Components:
-   * HldFile - input (OK) and output (TODO) of hld file format
+   * HldFile - (OK) input and output of hld file format
    * HldInput - (OK) read hadtu format from file 
    * HldOutput- (OK) write hadtu format to file 
    * UdpDataSocket - (OK) receive hadtu packets from trb frontend (single stream)
    * MbsTransmitterModule - (OK) wrap hadtu format into mbs event container
                             output is mbs server or lmd file.
-                            this format is used in mbs combiner and go4 unpacker 
+                            this format is used in mbs subevent combiner and go4 monitoring unpacker 
    * CombinerModule - (OK) do eventbuilding of hadtu format from several data streams.
                       output is full event in hadtu format. 
                       Should provide functionality of old daq_evtbuild in the end.
-   * Observer  - (OK/TODO) control system interface to hades shared memory.
+   * Observer  - (OK) Control system interface to hades shared memory. 
+                      We use original hadaq code (worker and psxshm) and wrap it into dabc parameter scheme.
                       
 * Applications:
    * HldConverter.xml - (OK)
@@ -31,8 +31,11 @@
    * EventBuilder.xml -(OK)
          configuration to receive hadtu data at n udp sockets, and do a full eventbuilding.
          Output events can be served via mbs transmitter at transport/stream server
-         in parallel, output events can be written to hld file (OK)
-
+         In parallel, output events can be written to hld file.
+         May enable export of variables via shared mem to hades EPICS-based eventbuilder control system
+   
+   * EventBuilderDim.xml -(OK)
+         as EventBuilder.xml, but shows how to activate additionally DIM control system export.
          
 * How to use:
  TODO 
@@ -54,9 +57,11 @@
    * Version 0.06 - 26-Jun-2012
       :  Implemented hld file output. 
          Improvements in Combiner module
-   * Version 0.07 - 04-Jul-2012
-      :  First working interface to hades shared memory control (hadaq "worker").
+   * Version 0.07 - 05-Jul-2012
+      :  Implemented interface to hades shared memory control (hadaq "worker").
          Tested with original hades ebctrl ioc + medm
+   * Version 0.08 - 08-Jul-2012
+      :  Added control of distributed runid from hades epics master
    * Under construction
    
 * DISCLAIMER:

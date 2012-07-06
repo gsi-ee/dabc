@@ -39,8 +39,12 @@ namespace hadaq {
          std::string         fInfoName;  // parameter name for info settings
          dabc::TimeStamp     fInfoTime;  // time when last info was shown
          uint64_t            fSizeLimit;
+         bool                fEpicsControl; // true if run id is controlled by epics master
+         RunId               fRunNumber; // id number of current run
 
-         //int                 fCurrentFileNumber;
+         dabc::Parameter     fRunidPar;
+         dabc::Parameter     fBytesWrittenPar;
+
          std::string         fCurrentFileName;
 
          hadaq::HldFile        fFile;
@@ -57,6 +61,8 @@ namespace hadaq {
 
          /* current stats about written events etc.*/
          void ShowWriteInfo();
+
+         RunId GetRunId();
 
       public:
 
