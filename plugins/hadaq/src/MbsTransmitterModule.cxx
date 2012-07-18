@@ -25,6 +25,9 @@
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
 
+
+
+
 //#define HADAQ_MBSTRANSMITTER_TESTRECEIVE 1
 
 hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Command cmd) :
@@ -34,6 +37,8 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 	CreatePoolHandle("Pool");
 	CreateInput("Input", Pool(), 5);
 	CreateOutput("Output", Pool(), 5);
+
+	fSubeventId = Cfg(hadaq::xmlMbsSubeventId, cmd).AsInt(0x000001F);
 
    CreatePar("TransmitData").SetRatemeter(false, 5.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
@@ -83,7 +88,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		   size_t evlen=hev->GetPaddedSize();
 		   DOUT5(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
 
-		   unsigned id = hev->GetId();
+		   //unsigned id = hev->GetId();
 		   unsigned evcount=hev->GetSeqNr();
 		   // assign and check event/subevent header for wrapper structures:
 		   if (!miter.NewEvent(evcount))
@@ -103,7 +108,8 @@ void hadaq::MbsTransmitterModule::retransmit()
 		   usedsize+=sizeof(mbs::SubeventHeader);
 		   // OK, we copy full hadaq event into mbs subevent payload:
 		    mbs::SubeventHeader* msub=miter.subevnt();
-		    msub->fFullId = id; // TODO: configure mbs ids from parameters
+		    msub->iProcId=fSubeventId; // configured for TTrbProc etc.
+
 		    memcpy(miter.rawdata(),hev,evlen);
 		    usedsize+=evlen;
 		    miter.FinishSubEvent(evlen);

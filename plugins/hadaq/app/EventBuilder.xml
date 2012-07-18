@@ -23,7 +23,7 @@
     <Module name="Combiner">    
        <PoolName value="Pool"/>
        <DoShmControl value="true"/>  
-       <DoFile value="true"/>
+       <DoFile value="false"/>
        <DoServer value="true"/>
        <BufferSize value="65536"/>
        <NumInputs value="5"/>
@@ -65,6 +65,7 @@
        <Port name="Output">
           <MbsServerKind value="Stream"/>
           <!--MbsServerPort value="6543"/-->
+            <SubeventFullId value="0x000001F"/>
         </Port>
      </Module>
 

@@ -13,6 +13,7 @@
     <Module name="HldServer">
        <Port name="Input">
           <InputQueueSize value="10"/>
+          <SubeventFullId value="0x000001F"/>
           <HadaqFileName value="/data.local1/adamczew/hld/xx12153171835.hld"/>        
        </Port>
        <Port name="Output">

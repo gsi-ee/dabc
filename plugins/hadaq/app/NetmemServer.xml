@@ -30,6 +30,8 @@ This sets up an mbs server for hadaq data as received from trbnet via udp.
           <MbsServerKind value="Stream"/>
           <!--MbsServerPort value="6543"/-->
         </Port>
+        
+          <SubeventFullId value="0x000001F"/>
           <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>
      </Module>
   </Context>

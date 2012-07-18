@@ -33,6 +33,8 @@ namespace hadaq {
 
          void retransmit();
 
+         unsigned int fSubeventId;
+
       public:
       	MbsTransmitterModule(const char* name, dabc::Command cmd = 0);
 
