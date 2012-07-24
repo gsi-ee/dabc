@@ -20,64 +20,130 @@
 
 #include <stdio.h>
 
+#ifndef DABC_defines
+#include "dabc/defines.h"
+#endif
+
+#ifndef DABC_logging
+#include "dabc/logging.h"
+#endif
+
 namespace dabc {
 
    class Mutex {
      friend class LockGuard;
      friend class UnlockGuard;
      friend class Condition;
+     friend class MutexPtr;
      protected:
         pthread_mutex_t  fMutex;
      public:
         Mutex(bool recursive = false);
-        virtual ~Mutex() { pthread_mutex_destroy(&fMutex); }
+        inline ~Mutex() { pthread_mutex_destroy(&fMutex); }
         inline void Lock() { pthread_mutex_lock(&fMutex); }
         inline void Unlock() { pthread_mutex_unlock(&fMutex); }
         bool TryLock();
         bool IsLocked();
    };
 
+   class MutexPtr {
+      protected:
+         pthread_mutex_t*  fMutex;
+      public:
+         inline MutexPtr(pthread_mutex_t& mutex) : fMutex(&mutex) {}
+         inline MutexPtr(pthread_mutex_t* mutex) : fMutex(mutex) {}
+         inline MutexPtr(const Mutex& mutex) : fMutex((pthread_mutex_t*)&(mutex.fMutex)) {}
+         inline MutexPtr(const Mutex* mutex) : fMutex(mutex ? (pthread_mutex_t*) &(mutex->fMutex) : 0) {}
+         inline MutexPtr(const MutexPtr& src) : fMutex(src.fMutex) {}
+
+         inline ~MutexPtr() {}
+
+         bool null() const { return fMutex == 0; }
+         void clear() { fMutex = 0; }
+
+         inline void Lock() { if (fMutex) pthread_mutex_lock(fMutex); }
+         inline void Unlock() { if (fMutex) pthread_mutex_unlock(fMutex); }
+         bool TryLock();
+         bool IsLocked();
+   };
+
    // ___________________________________________________________
 
 #ifdef DABC_EXTRA_CHECKS
 
-#define DABC_LOCKGUARD(mutex,info) { \
-   dabc::LockGuard dabc_guard(mutex); \
-}
+//#define DABC_LOCKGUARD(mutex,info)  dabc::LockGuard dabc_guard(mutex)
+
+#define DABC_LOCKGUARD(mutex,info) \
+   dabc::LockGuard dabc_guard(mutex, false); \
+   while (!dabc_guard.TryingLock()) EOUT((info));
 
 #else
 
-#define DABC_LOCKGUARD(mutex,info) { \
-   dabc::LockGuard dabc_guard(mutex); \
-}
+#define DABC_LOCKGUARD(mutex,info)  dabc::LockGuard dabc_guard(mutex)
 
 #endif
 
 
    class LockGuard {
      protected:
-        pthread_mutex_t* fMutex;
+         MutexPtr fMutex;
      public:
-        inline LockGuard(pthread_mutex_t& mutex) : fMutex(&mutex)
+        inline LockGuard(pthread_mutex_t& mutex) :
+           fMutex(mutex)
         {
-           pthread_mutex_lock(fMutex);
+           fMutex.Lock();
         }
-        inline LockGuard(pthread_mutex_t* mutex) : fMutex(mutex)
+        inline LockGuard(pthread_mutex_t* mutex) :
+           fMutex(mutex)
         {
-           pthread_mutex_lock(fMutex);
+           fMutex.Lock();
         }
-        inline LockGuard(const Mutex& mutex) : fMutex((pthread_mutex_t*)&(mutex.fMutex))
+        inline LockGuard(const Mutex& mutex) :
+           fMutex(mutex)
         {
-           pthread_mutex_lock(fMutex);
+           fMutex.Lock();
         }
-        inline LockGuard(const Mutex* mutex) : fMutex(mutex ? (pthread_mutex_t*) &(mutex->fMutex) : 0)
+        inline LockGuard(const Mutex* mutex) :
+           fMutex(mutex)
         {
-           if (fMutex) pthread_mutex_lock(fMutex);
+           fMutex.Lock();
         }
+
+        inline LockGuard(pthread_mutex_t& mutex, bool) :
+           fMutex(mutex)
+        {
+        }
+        inline LockGuard(pthread_mutex_t* mutex, bool) :
+           fMutex(mutex)
+        {
+        }
+        inline LockGuard(const Mutex& mutex, bool) :
+           fMutex(mutex)
+        {
+        }
+        inline LockGuard(const Mutex* mutex, bool) :
+           fMutex(mutex)
+        {
+        }
+
         inline ~LockGuard()
         {
-           if (fMutex) pthread_mutex_unlock(fMutex);
+           fMutex.Unlock();
         }
+
+        bool TryingLock()
+        {
+           if (fMutex.null()) return true;
+
+           int cnt=1000000;
+           while (cnt-->0)
+              if (fMutex.TryLock()) return true;
+
+           // return false if many attempts to lock mutex fails
+           return false;
+        }
+
+
    };
 
    class UnlockGuard {

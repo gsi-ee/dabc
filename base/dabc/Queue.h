@@ -26,6 +26,10 @@
 #include "dabc/logging.h"
 #endif
 
+#ifndef DABC_string
+#include "dabc/string.h"
+#endif
+
 namespace dabc {
 
    template<class T, bool canexpand = false>

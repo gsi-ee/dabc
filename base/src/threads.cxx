@@ -50,6 +50,24 @@ bool dabc::Mutex::IsLocked()
 
 //_____________________________________________________________
 
+bool dabc::MutexPtr::TryLock()
+{
+   return fMutex ? pthread_mutex_trylock(fMutex) != EBUSY : false;
+}
+
+
+bool dabc::MutexPtr::IsLocked()
+{
+   if (fMutex==0) return false;
+   int res = pthread_mutex_trylock(fMutex);
+   if (res==EBUSY) return true;
+   pthread_mutex_unlock(fMutex);
+   return false;
+}
+
+
+//_____________________________________________________________
+
 dabc::Condition::Condition(Mutex* ext_mtx) :
    fInternCondMutex(),
    fCondMutex(ext_mtx ? ext_mtx : &fInternCondMutex),

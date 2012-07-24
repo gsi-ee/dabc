@@ -532,7 +532,7 @@ bool dabc::Manager::ProcessParameterEvents()
       ParamRec rec;
 
       {
-         DABC_LOCKGUARD(ObjectMutex(), "info");
+         DABC_LOCKGUARD(ObjectMutex(), "Extracting event from fParsQueue");
          // LockGuard lock(ObjectMutex());
          if (fParsQueue.Size()==0) return false;
          rec.par << fParsQueue.Front().par;
