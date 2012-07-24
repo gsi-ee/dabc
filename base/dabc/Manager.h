@@ -455,7 +455,7 @@ namespace dabc {
       protected:
 
          struct ParamRec {
-            Parameter par;  //!< reference on the paramer
+            Parameter par;  //!< reference on the parameter
             int event;
 
             ParamRec() : par(), event(0) {}

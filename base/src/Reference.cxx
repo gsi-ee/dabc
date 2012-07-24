@@ -139,7 +139,7 @@ dabc::Reference& dabc::Reference::operator<<(const Reference& src) throw()
    // we move only ownership flag, transient status remains as before
    SetOwner(src.IsOwner());
 
-   // there is no need to chage ownership flag, it has no meaning without object pointer
+   // there is no need to change ownership flag, it has no meaning without object pointer
    //src.SetOwner(false);
 
    return *this;
