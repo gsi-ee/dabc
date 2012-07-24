@@ -52,7 +52,7 @@ void mbs_root::DabcSubEvent::AddData(Int_t* src, Int_t len)
         if(fLen+len>fAllocLen)
             {
                 copylen= (fAllocLen-fLen)*sizeof(Int_t);
-                cout <<"Warning: data exceeding allocated length, truncating!1!" << endl;
+                std::cout <<"Warning: data exceeding allocated length, truncating!1!" << std::endl;
             }
         //memcpy((void*)( fData + fLen), src, copylen);   
         memcpy(fData+fLen, src, copylen);   
@@ -79,7 +79,7 @@ mbs_root::DabcSubEvent::DabcSubEvent(Int_t crate, Int_t control, Int_t procid, B
         fLen=0;
         if(init)
         {
-            cout <<"Initialized sub event "<< crate <<" with length "<<fAllocLen << endl;
+            std::cout <<"Initialized sub event "<< crate <<" with length "<<fAllocLen << std::endl;
             fData=new Int_t[fAllocLen];
         }
     }
