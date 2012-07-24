@@ -531,9 +531,10 @@ bool dabc::Manager::ProcessParameterEvents()
       ParamRec rec;
 
       {
-         LockGuard lock(fMgrMutex);
+         LockGuard lock(ObjectMutex());
          if (fParsQueue.Size()==0) return false;
-         rec = fParsQueue.Front();
+         rec.par << fParsQueue.Front().par;
+         rec.event = fParsQueue.Front().event;
          fParsQueue.PopOnly();
       }
 
