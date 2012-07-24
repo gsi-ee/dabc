@@ -502,7 +502,8 @@ void dabc::Manager::ProduceParameterEvent(ParameterContainer* par, int evid)
    {
       // now add record to the queue
 
-      LockGuard lock(ObjectMutex());
+      //LockGuard lock(ObjectMutex());
+      DABC_LOCKGUARD(ObjectMutex(), "Inserting new event into fParsQueue");
 
       fire = fParsQueue.Size() == 0;
 
