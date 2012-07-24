@@ -408,7 +408,7 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
       {
          dabc::LockGuard lock(fQueueMutex);
          if (fQueue.Full()) {
-            DOUT0(("hadaq::UdpDataSocket %s: output queue is full, dropping buffer!",GetName()));
+            DOUT3(("hadaq::UdpDataSocket %s: output queue is full, dropping buffer!",GetName()));
             dropbuffer = true;
          } else {
             fQueue.Push(outbuf); // put old buffer to transport queue no sooner than we have copied spanning event
