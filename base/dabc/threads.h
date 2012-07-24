@@ -39,6 +39,21 @@ namespace dabc {
 
    // ___________________________________________________________
 
+#ifdef DABC_EXTRA_CHECKS
+
+#define DABC_LOCKGUARD(mutex,info) { \
+   dabc::LockGuard dabc_guard(mutex); \
+}
+
+#else
+
+#define DABC_LOCKGUARD(mutex,info) { \
+   dabc::LockGuard dabc_guard(mutex); \
+}
+
+#endif
+
+
    class LockGuard {
      protected:
         pthread_mutex_t* fMutex;

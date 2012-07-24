@@ -510,6 +510,7 @@ void dabc::Manager::ProduceParameterEvent(ParameterContainer* par, int evid)
       ParamRec* rec = fParsQueue.PushEmpty();
 
       if (rec!=0) {
+         memset(rec, 0, sizeof(ParamRec));
          rec->par << parref; // we are trying to avoid parameter locking under locked queue mutex
          rec->event = evid;
       }
@@ -531,7 +532,8 @@ bool dabc::Manager::ProcessParameterEvents()
       ParamRec rec;
 
       {
-         LockGuard lock(ObjectMutex());
+         DABC_LOCKGUARD(ObjectMutex(), "info");
+         // LockGuard lock(ObjectMutex());
          if (fParsQueue.Size()==0) return false;
          rec.par << fParsQueue.Front().par;
          rec.event = fParsQueue.Front().event;
