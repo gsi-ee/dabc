@@ -602,7 +602,10 @@ bool dabc::MemoryPool::_ReleaseBufferRec(dabc::Buffer::BufferRec* rec)
    // 0 is special case - record was created by Buffer itself
    if (refid>0) {
       refid--;
-      if (fSeg->fArr[refid].refcnt!=1) throw dabc::Exception("Segments list should referenced at this time exactly once");
+      if (fSeg->fArr[refid].refcnt!=1) {
+         EOUT(("HARD FAILURE refid=%u refcnt=%u", refid, (unsigned) fSeg->fArr[refid].refcnt));
+         throw dabc::Exception("Segments list should referenced at this time exactly once");
+      }
       fSeg->fArr[refid].refcnt--;
       fSeg->fFree.Push(refid);
    }
