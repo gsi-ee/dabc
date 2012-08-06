@@ -24,6 +24,11 @@
 #define HLD_READBUFFER_ELEMENTWISE 1
 
 
+// this definitions switches to write events either separately (off)
+// or to write the whole buffer after configuring event headers (on)
+#define HLD_WRITEEVENTS_FAST 1
+
+
 
 hadaq::HldFile::HldFile(): fBuffer(0)
 {
@@ -148,6 +153,7 @@ bool hadaq::HldFile::WriteEvents(hadaq::Event* hdr, unsigned num)
             // JAM: must adjust run id to match id of this file. Otherwise, we may have queue delay effects between combiner and output
             // therefore we do not need to synchronize exactly the default runid of combiner (for online server) with file runid
          size_t elength=cursor->GetPaddedSize();
+#ifndef HLD_WRITEEVENTS_FAST
          size_t written=WriteFile((char*) cursor,elength);
          if(written!=elength)
             {
@@ -155,8 +161,20 @@ bool hadaq::HldFile::WriteEvents(hadaq::Event* hdr, unsigned num)
                fLastError = HLD__WRITE_ERR;
                return false;
             }
+#endif
          cursor = (hadaq::Event*)((char*) (cursor) + elength);
       } // while num
+
+#ifdef HLD_WRITEEVENTS_FAST
+   size_t buflength=(char*)cursor - (char*)hdr; // big buffer writes may be faster...
+   size_t written=WriteFile((char*) hdr ,buflength);
+   if(written!=buflength)
+   {
+      DOUT1(("HldFile::WriteEvents: Write file %s length mismatch: %d bytes of %d requested written", fName.c_str(), written, buflength));
+      fLastError = HLD__WRITE_ERR;
+      return false;
+   }
+#endif
    fLastError = HLD__SUCCESS;
    return true;
 }
