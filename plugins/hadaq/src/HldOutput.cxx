@@ -161,7 +161,12 @@ bool hadaq::HldOutput::StartNewFile()
 {
        Close();
    // new file will change run id for complete system:
-
+       if(fFileName.empty())
+       {
+          // do not open any file if user left filename blank
+          DOUT1(("HldOutput with empty filename - disabled output!"));
+          return true; // otherwise init of dabc will fail completely
+       }
 
       if (!fEpicsControl || fRunNumber == 0) {
       fRunNumber = hadaq::Event::CreateRunId();
