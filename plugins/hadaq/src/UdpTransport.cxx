@@ -405,7 +405,7 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
 
    } else {
       fTgtPtr = fTempBuf;
-      fEndPtr = fTempBuf + sizeof(fTempBuf);
+      fEndPtr = fTempBuf + fMTU*sizeof(char);
       fTgtShift = 0;
       DOUT0(("hadaq::UdpDataSocket:: No pool buffer available for socket read, use internal dummy!"));
    } //if (!fTgtBuf.null()) newbuffer
