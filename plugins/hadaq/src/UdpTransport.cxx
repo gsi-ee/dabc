@@ -68,6 +68,11 @@ hadaq::UdpDataSocket::~UdpDataSocket()
 //   DOUT0(("Delete %p instance of UdpDataSocket", this));
 
    if (fTempBuf) { delete [] fTempBuf; fTempBuf = 0; }
+
+   fEvtBuf.Release();
+   fTgtBuf.Release();
+   fQueue.Cleanup();
+   fPool.Release();
 }
 
 void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
