@@ -117,6 +117,10 @@ dabc::Thread::~Thread()
    dabc::Object::Destroy(fExec);
    fExec = 0;
 
+   for (unsigned n=0;n<fWorkers.size();n++) {
+      if (fWorkers[n]) { delete fWorkers[n]; fWorkers[n] = 0; }
+   }
+
    LockGuard guard(ThreadMutex());
    if (fState==stError) {
       EOUT(("Kill thread in error state, nothing better can be done"));
