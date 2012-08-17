@@ -59,11 +59,15 @@ hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
    fBuildFullEvent = false;
 
    ConfigureFor((dabc::Port*) port());
+
+//   DOUT0(("Create %p instance of UdpDataSocket", this));
 }
 
 hadaq::UdpDataSocket::~UdpDataSocket()
 {
-   delete fTempBuf;
+//   DOUT0(("Delete %p instance of UdpDataSocket", this));
+
+   if (fTempBuf) { delete [] fTempBuf; fTempBuf = 0; }
 }
 
 void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
@@ -93,7 +97,7 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
    fPool = port->GetMemoryPool();
 
    fMTU = port->Cfg(hadaq::xmlMTUsize).AsInt(DEFAULT_MTU);
-   delete fTempBuf;
+   if (fTempBuf) delete [] fTempBuf;
    fTempBuf = new char[fMTU];
 
    fNPort = port->Cfg(hadaq::xmlUdpPort).AsInt(0);
