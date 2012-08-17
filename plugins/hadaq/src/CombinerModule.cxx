@@ -132,8 +132,6 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    Par(fEventDiscardedRateName).SetDebugLevel(1);
    Par(fEventDroppedRateName).SetDebugLevel(1);
    RegisterExportedCounters();
-
-
 }
 
 hadaq::CombinerModule::~CombinerModule()
@@ -141,10 +139,6 @@ hadaq::CombinerModule::~CombinerModule()
    if(!fRcvBuf.null())
         fRcvBuf.Release();
 }
-
-
-
-
 
 void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 {
@@ -161,8 +155,7 @@ void hadaq::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
    fFlushFlag = true;
    if (fUpdateCountersFlag)
       UpdateExportedCounters();
-   fUpdateCountersFlag= true;
-
+   fUpdateCountersFlag = true;
 }
 
 void hadaq::CombinerModule::ProcessInputEvent(dabc::Port* port)
@@ -191,12 +184,14 @@ void hadaq::CombinerModule::ProcessDisconnectEvent(dabc::Port* port)
 
 void hadaq::CombinerModule::BeforeModuleStart()
 {
-   DOUT5(("hadaq::CombinerModule::BeforeModuleStart name: %s ", GetName()));
+   DOUT0(("hadaq::CombinerModule::BeforeModuleStart name: %s ", GetName()));
 }
 
 void hadaq::CombinerModule::AfterModuleStop()
 {
    DOUT0(("%s: Complete Events:%d , BrokenEvents:%d, DroppedEvents:%d, RecvBytes:%d, data errors:%d, tag errors:%d", GetName(), (int) fTotalRecvEvents, (int) fTotalDiscEvents , (int) fTotalDroppedEvents, (int) fTotalRecvBytes ,(int) fTotalDataErrors ,(int) fTotalTagErrors));
+
+   DOUT0(("Recv buffer:%s out isbuff:%s", DBOOL(!fRcvBuf.null()), DBOOL(fOut.IsBuffer())));
 
 //   std::cout << "----- Combiner Module Statistics: -----" << std::endl;
 //   std::cout << "Complete Events:" << fTotalRecvEvents << ", BrokenEvents:"
@@ -303,23 +298,13 @@ void hadaq::CombinerModule::RegisterExportedCounters()
       }
 
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++) {
-         CreateEvtbuildPar(dabc::format("evtId%d",i));
-      }
-
+      CreateEvtbuildPar(dabc::format("evtId%d",i));
+   }
 
 
    for (int p = 0; p < HADAQ_NUMERRPATTS; p++) {
-          CreateEvtbuildPar(dabc::format("errBitPtrn%d",p));
-       }
-
-
-
-
-
-
-
-
-
+        CreateEvtbuildPar(dabc::format("errBitPtrn%d",p));
+   }
 }
 
 void hadaq::CombinerModule::ClearExportedCounters()
@@ -339,7 +324,7 @@ void hadaq::CombinerModule::ClearExportedCounters()
 bool hadaq::CombinerModule::UpdateExportedCounters()
 {
    if(!fWithObserver) return false;
-   fUpdateCountersFlag= false; // do not call this from timer again while it is processed
+   fUpdateCountersFlag = false; // do not call this from timer again while it is processed
      SetEvtbuildPar("nrOfMsgs",fNumInputs);
      SetNetmemPar("nrOfMsgs",fNumInputs);
      SetEvtbuildPar("evtsDiscarded",fTotalDiscEvents+fTotalDroppedEvents);
@@ -907,7 +892,7 @@ extern "C" void InitHadaqEvtbuilder()
       }
    }
    if (m->IsServOutput()) {
-      DOUT0(("Create Mbs transmitter module for server"));
+      DOUT0(("!!!!! Create Mbs transmitter module for server !!!!!"));
       dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "OnlineServer",
             "OnlineThrd");
       dabc::mgr.Connect(FORMAT(("OnlineServer/%s", hadaq::portInput)),
@@ -916,12 +901,14 @@ extern "C" void InitHadaqEvtbuilder()
             mbs::typeServerTransport, "MbsTransport");
    }
 
-   if (m->IsFileOutput())
+   if (m->IsFileOutput()) {
+      DOUT0(("!!!!! Create HLD file output !!!!!"));
       if (!dabc::mgr.CreateTransport("Combiner/FileOutput",
             hadaq::typeHldOutput, "HldFileThrd")) {
          EOUT(("Cannot create HLD file output"));
          exit(133);
       }
+   }
 
    //    m->Start();
 

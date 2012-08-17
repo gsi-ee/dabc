@@ -296,7 +296,11 @@ void dabc::Object::_DecObjectRefCnt()
    if (fObjectMutex && !fObjectMutex->IsLocked())
       EOUT(("Mutex not locked!!!"));
 
+   // if (IsLogging()) DOUT0(("Dec object refcounter in 299"));
    fObjectRefCnt--;
+
+   if ((fObjectRefCnt==0) && (GetState()!=stNormal))
+      EOUT(("!!! potential problem - change release order in your program, some object may not be cleanup correctly !!!"));
 }
 
 
@@ -363,14 +367,19 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
 
    bool viathrd = false;
 
+
    {
       dabc::LockGuard lock(fObjectMutex);
 
-      if (GetFlag(flLogging))
-         DOUT0(("Obj:%s %p  Class:%s DecReference %u destroy %s dodec %s state %d numchilds %u flags %x",
-               GetName(), this, ClassName(),
-               fObjectRefCnt, DBOOL(ask_to_destroy), DBOOL(do_decrement), GetState(),
-               (fObjectChilds ? fObjectChilds->GetSize() : 0), fObjectFlags));
+//      if (GetFlag(flLogging)) {
+//           DOUT0(("Call DecReference for object %p %s refcnt = %d, ask_to_destroy %s do_decrement %s state %d from_thread %s", this, GetName(), fObjectRefCnt, DBOOL(ask_to_destroy), DBOOL(do_decrement), GetState(), DBOOL(from_thread)));
+//      }
+
+//      if (GetFlag(flLogging))
+//         DOUT0(("Obj:%s %p  Class:%s DecReference %u destroy %s dodec %s state %d numchilds %u flags %x",
+//               GetName(), this, ClassName(),
+//               fObjectRefCnt, DBOOL(ask_to_destroy), DBOOL(do_decrement), GetState(),
+//               (fObjectChilds ? fObjectChilds->GetSize() : 0), fObjectFlags));
 
       if (do_decrement) {
 
@@ -380,6 +389,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
             return false;
          }
 
+         // if (IsLogging()) DOUT0(("Dec object refcounter in 389"));
          fObjectRefCnt--;
       }
 
@@ -415,7 +425,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
                // once return true, never do it again
                // returning true means that destructor will be immediately call
                SetState(stDestructor);
-               return  true;
+               return true;
             }
 
             #ifdef DABC_EXTRA_CHECKS
@@ -448,16 +458,21 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
       dabc::LockGuard lock(fObjectMutex);
       SetState(stDoingDestroy);
       // thread reject destroyment, therefore refcounter can be decreased
+      // if (IsLogging()) DOUT0(("Dec object refcounter in 459"));
       fObjectRefCnt--;
    }
 
 
+//   if (IsLogging()) DOUT0(("Calling object cleanup"));
+
    // Main point of all destroyment - call cleanup in correct place
    ObjectCleanup();
 
+//   if (IsLogging()) DOUT0(("Did object cleanup"));
+
+
    if (IsLogging())
       DOUT0(("DecRefe after cleanup %p cleanup %s mgr %p", this, DBOOL(GetFlag(flCleanup)), dabc::mgr()));
-
    {
 
       LockGuard guard(fObjectMutex);
@@ -469,7 +484,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
       } else
       if ((fObjectRefCnt==0) && _NoOtherReferences()) {
          // no need to deal with manager - can call destructor immediately
-         DOUT3(("Obj:%p can be destroyed, TRUE", this));
+         DOUT3(("Obj:%p can be destroyed", this));
          if (_DoDeleteItself()) {
             SetState(stWaitForDestructor);
             return false;
@@ -575,13 +590,19 @@ void dabc::Object::ObjectCleanup()
 
    // first we delete all childs !!!!
    if (chlds!=0) {
-      DOUT3(("Obj:%p %s Deleting childs %u", this, GetName(), chlds->GetSize()));
+      if (IsLogging()) DOUT0(("Obj:%p %s Deleting childs %u", this, GetName(), chlds->GetSize()));
       delete chlds;
+      if (IsLogging()) DOUT0(("Obj:%p %s Deleting childs done", this, GetName()));
    }
+
+   if (IsLogging()) DOUT0(("Before remove from parent"));
 
    // Than we remove reference on the object from parent
    if (fObjectParent())
       fObjectParent()->RemoveChild(this);
+
+   if (IsLogging()) DOUT0(("After remove from parent"));
+
 
    DOUT3(("Obj:%s Class:%s Finish cleanup numrefs %u", GetName(), ClassName(), NumReferences()));
 

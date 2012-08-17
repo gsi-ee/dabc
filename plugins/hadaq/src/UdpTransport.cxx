@@ -20,7 +20,7 @@
 #include "dabc/version.h"
 #include "dabc/Manager.h"
 
-#include <iostream>
+// #include <iostream>
 #include <errno.h>
 
 #include <math.h>
@@ -82,7 +82,7 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
    int id=0;
    if(sscanf(GetName(), "Input%d", &id)==1){
       fIdNumber=id;
-      std::cout<<"Data Socket"<<GetName()<<" got id:"<<fIdNumber << std::endl;
+      DOUT0(("Data Socket %s got id:", GetName(), fIdNumber));
    }
 
          fBufferSize = port->Cfg(dabc::xmlBufferSize).AsInt(fBufferSize);
@@ -326,7 +326,7 @@ void hadaq::UdpDataSocket::ReadUdp()
          // received size does not match header info, or header!=trailer contents
          fTgtShift = 0;
          fTotalDiscardMsg++;
-         std::cout << "discarded message:" << fTotalDiscardMsg << std::endl;
+         DOUT0(("Discarded message: %d", fTotalDiscardMsg));
 
       } else {
          fTotalRecvMsg++;

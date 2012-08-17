@@ -149,13 +149,16 @@ dabc::MemoryPool::MemoryPool(const char* name, bool withmanager) :
    fChangeCounter(0),
    fUseThread(false)
 {
-   DOUT4(("MemoryPool %p constructor", this));
+   DOUT3(("MemoryPool %p name %s constructor", this, GetName()));
+
+//   if (IsName("Pool")) SetLogging(true);
 }
 
 dabc::MemoryPool::~MemoryPool()
 {
    Release();
-   DOUT4(("MemoryPool %p destructor", this));
+
+   DOUT3(("MemoryPool %p name %s destructor", this, GetName()));
 }
 
 bool dabc::MemoryPool::SetAlignment(unsigned align)

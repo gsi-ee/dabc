@@ -98,14 +98,14 @@ dabc::Module* hadaq::Factory::CreateModule(const char* classname, const char* mo
 
 
 
-
 void hadaq::Factory::Initialize()
 {
    DOUT0(("Initialize SHM connected control"));
 
-   hadaq::Observer* o = new hadaq::Observer("/shm");
+//   SL: TODO: one only need to create observer when it is active
 
-   dabc::mgr()->MakeThreadFor(o,"ShmThread");
+//   hadaq::Observer* o = new hadaq::Observer("/shm");
+//   dabc::mgr()->MakeThreadFor(o,"ShmThread");
 
 //   o->thread()()->SetLogging(true);
 }

@@ -461,6 +461,8 @@ namespace dabc {
             ParamRec() : par(), event(0) {}
             ParamRec(Parameter p, int e) : par(p), event(e) {}
             ParamRec(const ParamRec& src) : par(src.par), event(src.event) {}
+            ~ParamRec() { reset(); }
+
             ParamRec& operator=(const ParamRec& src)
             {
                par = src.par;
