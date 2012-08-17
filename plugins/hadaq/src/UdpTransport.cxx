@@ -82,10 +82,10 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
    int id=0;
    if(sscanf(GetName(), "Input%d", &id)==1){
       fIdNumber=id;
-      DOUT0(("Data Socket %s got id:", GetName(), fIdNumber));
+      DOUT0(("hadaq::UdpDataSocket %s got id: %d", GetName(), fIdNumber));
    }
 
-         fBufferSize = port->Cfg(dabc::xmlBufferSize).AsInt(fBufferSize);
+   fBufferSize = port->Cfg(dabc::xmlBufferSize).AsInt(fBufferSize);
    //fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
    fFlushTimeout = 1.0;
    // DOUT0(("fFlushTimeout = %5.1f %s", fFlushTimeout, dabc::xmlFlushTimeout));

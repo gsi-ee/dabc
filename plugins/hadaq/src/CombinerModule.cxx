@@ -121,6 +121,9 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 //
 //     CreateCmdDef(mbs::comStopServer);
 //
+   // SL FIXME - this is only workaround, we keep pool reference to release it after all buffers
+   fPool = dabc::mgr.FindItem("Pool");
+
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
    SetInfo(
          dabc::format(
@@ -136,8 +139,15 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
 hadaq::CombinerModule::~CombinerModule()
 {
-   if(!fRcvBuf.null())
-        fRcvBuf.Release();
+   fRcvBuf.Release();
+
+   fOut.Close().Release();
+
+   fCfg.clear();
+
+   fInp.clear();
+
+   fPool.Release();
 }
 
 void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)

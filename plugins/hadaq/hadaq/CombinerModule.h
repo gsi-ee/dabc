@@ -18,6 +18,10 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+#ifndef DABC_MemoryPool
+#include "dabc/MemoryPool.h"
+#endif
+
 
 #include "hadaq/HadaqTypeDefs.h"
 #include "hadaq/Iterator.h"
@@ -182,12 +186,7 @@ namespace hadaq {
          void CreateNetmemPar(const std::string& name);
          void SetNetmemPar(const std::string& name, unsigned value);
 
-
-
-
-
-
-         unsigned                   fBufferSize;
+         unsigned            fBufferSize;
 
          /* master stream for event building*/
          //unsigned fMasterChannel;
@@ -200,6 +199,9 @@ namespace hadaq {
          std::vector<InputCfg> fCfg;
          std::vector<ReadIterator> fInp;
          WriteIterator fOut;
+
+         dabc::MemoryPoolRef fPool;  // reference on the pool, reference should help us to preserve pool as long as we are using it
+
          //dabc::Buffer fOutBuf;
          bool fFlushFlag;
          bool fUpdateCountersFlag;
@@ -212,13 +214,13 @@ namespace hadaq {
 
          /* switch between partial combining of smallest event ids (false)
                  * and building of complete events only (true)*/
-         bool                          fBuildCompleteEvents;
+         bool               fBuildCompleteEvents;
 
-         std::string                fEventRateName;
-         std::string                fEventDiscardedRateName;
-         std::string                fEventDroppedRateName;
-         std::string                fDataRateName;
-         std::string                fInfoName;
+         std::string        fEventRateName;
+         std::string        fEventDiscardedRateName;
+         std::string        fEventDroppedRateName;
+         std::string        fDataRateName;
+         std::string        fInfoName;
 
          uint64_t           fTotalRecvBytes;
          uint64_t           fTotalRecvEvents;
