@@ -176,16 +176,32 @@ void hadaq::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
 
 void hadaq::CombinerModule::ProcessInputEvent(dabc::Port* port)
 {
+//   DOUT0(("Enter ProcessInputEvent"));
 
-   while (BuildEvent())
-      ;
+   // SL - FIXME: workaround, process maximum 3 events a time,
+   //  otherwise combiner can accumulate too many events in the queues
+
+   int cnt(3);
+
+   while (BuildEvent() && (cnt-->0)) ;
+
+//   DOUT0(("Exit ProcessInputEvent"));
+
 }
 
 void hadaq::CombinerModule::ProcessOutputEvent(dabc::Port* port)
 {
+//   DOUT0(("Enter ProcessOutputEvent"));
+
+   // SL - FIXME: workaround, process maximum 3 events a time,
+   //  otherwise combiner can accumulate too many events in the queues
+
+   int cnt(3);
+
    // events are build from queue data until we require something from framework
-   while (BuildEvent())
-      ;
+   while (BuildEvent() && (cnt-->0));
+
+//   DOUT0(("Exit ProcessOutputEvent"));
 }
 
 void hadaq::CombinerModule::ProcessConnectEvent(dabc::Port* port)
@@ -670,8 +686,6 @@ bool hadaq::CombinerModule::BuildEvent()
       unsigned currentid=fCfg[0].fTrigType | (3 << 12); // DAQVERSION=3 for dabc
       fEventIdCount[currentid & (HADAQ_NEVTIDS - 1)]++;
       fOut.evnt()->SetId(currentid & (HADAQ_NEVTIDS_IN_FILE - 1));
-
-
 
 
       // third input loop: build output event from all not empty subevents

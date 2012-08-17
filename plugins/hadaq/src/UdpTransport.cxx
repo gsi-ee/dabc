@@ -374,7 +374,6 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
          outbuf = fEvtBuf;
          FillEventBuffer();
 
-
       } else {
          // no event building: pass receive buffer over as it is
          outbuf = fTgtBuf;
@@ -420,20 +419,18 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
             DOUT3(("hadaq::UdpDataSocket %s: output queue is full, dropping buffer!",GetName()));
             dropbuffer = true;
          } else {
-            fQueue.Push(outbuf); // put old buffer to transport queue no sooner than we have copied spanning event
+            fQueue.Push(outbuf.HandOver()); // put old buffer to transport queue no sooner than we have copied spanning event
          }
       } // lockguard
       // do framework actions outside queue mutex:
       if (dropbuffer) {
-         outbuf.Release();
          fTotalDroppedBuffers++;
+         outbuf.Release();
       } else {
-
          fTotalRecvBuffers++;
+         FirePortInput();
       }
-      FirePortInput();
    } // if (!outbuf.null())
-
 }
 
 
