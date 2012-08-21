@@ -141,6 +141,8 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    Par(fEventDiscardedRateName).SetDebugLevel(1);
    Par(fEventDroppedRateName).SetDebugLevel(1);
    RegisterExportedCounters();
+
+   fNumCompletedBuffers = 0;
 }
 
 hadaq::CombinerModule::~CombinerModule()
@@ -172,6 +174,8 @@ void hadaq::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
    if (fUpdateCountersFlag)
       UpdateExportedCounters();
    fUpdateCountersFlag = true;
+
+   // ProcessInputEvent(0);
 }
 
 void hadaq::CombinerModule::ProcessInputEvent(dabc::Port* port)
@@ -181,9 +185,15 @@ void hadaq::CombinerModule::ProcessInputEvent(dabc::Port* port)
    // SL - FIXME: workaround, process maximum 3 events a time,
    //  otherwise combiner can accumulate too many events in the queues
 
-   int cnt(3);
+   int cnt(1000);
 
-   while (BuildEvent() && (cnt-->0)) ;
+   fNumCompletedBuffers = 0;
+
+   while (BuildEvent() && (cnt-->0)) {
+      // at least two buffer were taken, one can break event building loop
+      // TODO: should be done absolutely different - via new queue and state changes
+      if ((fNumCompletedBuffers>=2) && (fNumCompletedBuffers>=fNumInputs)) break;
+   }
 
 //   DOUT0(("Exit ProcessInputEvent"));
 
@@ -196,10 +206,16 @@ void hadaq::CombinerModule::ProcessOutputEvent(dabc::Port* port)
    // SL - FIXME: workaround, process maximum 3 events a time,
    //  otherwise combiner can accumulate too many events in the queues
 
-   int cnt(3);
+   int cnt(1000);
+
+   fNumCompletedBuffers = 0;
 
    // events are build from queue data until we require something from framework
-   while (BuildEvent() && (cnt-->0));
+   while (BuildEvent() && (cnt-->0)) {
+     // at least two buffer were taken, one can break event building loop
+     // TODO: should be done absolutely different
+     if ((fNumCompletedBuffers>=2) && (fNumCompletedBuffers>=fNumInputs)) break;
+   }
 
 //   DOUT0(("Exit ProcessOutputEvent"));
 }
@@ -413,6 +429,8 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
 
 bool hadaq::CombinerModule::SkipInputBuffer(unsigned ninp)
 {
+   fNumCompletedBuffers++;
+
    DOUT5(("CombinerModule::SkipInputBuffer  %d ", ninp));
    return (Input(ninp)->SkipInputBuffers(1));
 }
@@ -431,7 +449,10 @@ bool hadaq::CombinerModule::ShiftToNextBuffer(unsigned ninp)
    if(!Input(ninp)->CanRecv())
                return false;
 
-   fRcvBuf=Input(ninp)->Recv();
+   fRcvBuf = Input(ninp)->Recv();
+
+   fNumCompletedBuffers++;
+
    if(!fInp[ninp].Reset(fRcvBuf)) {
      // use new first buffer of input for work iterator, but leave it in input queue
                DOUT5(("CombinerModule::ShiftToNextBuffer %d could not reset to FirstInputBuffer", ninp));

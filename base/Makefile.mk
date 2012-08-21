@@ -97,3 +97,5 @@ $(DABC_XMLEXE) : $(DABC_XMLEXEO) $(DABC_BASESUB_O)
 $(DABC_BASESH): $(BASERUN_SH)
 	@echo "Produce $@"
 	@cp -f $< $@
+
+$(BASE_D) $(BASERUN_D) $(DABC_XMLEXED) : $(DABCINCPATH)/dabc/defines.h

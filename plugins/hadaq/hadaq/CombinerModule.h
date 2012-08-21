@@ -210,7 +210,8 @@ namespace hadaq {
          bool fFileOutput;
          bool fServOutput;
          bool fWithObserver;
-         int fNumInputs;
+         int  fNumInputs;
+         int  fNumCompletedBuffers; // SL: workaround counter, which indicates how many buffers were taken from queues
 
          /* switch between partial combining of smallest event ids (false)
                  * and building of complete events only (true)*/
