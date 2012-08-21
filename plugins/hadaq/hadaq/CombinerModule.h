@@ -141,6 +141,9 @@ namespace hadaq {
       protected:
 
          bool BuildEvent();
+
+         void BuildSeveralEvents();
+
          bool FlushOutputBuffer();
 
          void RegisterExportedCounters();
@@ -193,8 +196,6 @@ namespace hadaq {
 
          /* maximum allowed difference of trigger numbers (subevent sequence number)*/
          hadaq::EventNumType fTriggerNrTolerance;
-
-         dabc::Buffer fRcvBuf;
 
          std::vector<InputCfg> fCfg;
          std::vector<ReadIterator> fInp;
