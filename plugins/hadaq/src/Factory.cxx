@@ -104,8 +104,8 @@ void hadaq::Factory::Initialize()
 
 //   SL: TODO: one only need to create observer when it is active
 
-//   hadaq::Observer* o = new hadaq::Observer("/shm");
-//   dabc::mgr()->MakeThreadFor(o,"ShmThread");
+   hadaq::Observer* o = new hadaq::Observer("/shm");
+   dabc::mgr()->MakeThreadFor(o,"ShmThread");
 
 //   o->thread()()->SetLogging(true);
 }
