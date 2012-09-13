@@ -35,6 +35,12 @@ dabc::Url::~Url()
 {
 }
 
+void dabc::Url::Reset()
+{
+   SetUrl("", false);
+}
+
+
 bool dabc::Url::SetUrl(const std::string& url, bool showerr)
 {
    fValid = false;
