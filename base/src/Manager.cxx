@@ -366,7 +366,7 @@ void dabc::Manager::HaltManager()
    // run dummy event loop several seconds to complete event which may be submitted there
 
    // FIXME: one should avoid any kind of timeouts
-   int maxcnt = 200; // about 0.2 seconds
+   int maxcnt = 500; // about 0.5 seconds
 
    int cnt = maxcnt;
 

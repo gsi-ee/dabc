@@ -16,9 +16,9 @@
 
 #include <fstream>
 #include <stdint.h>
+#include <unistd.h>
+
 //#include "dabc/logging.h"
-
-
 
 #define HLD__SUCCESS        0
 #define HLD__FAILURE        1
