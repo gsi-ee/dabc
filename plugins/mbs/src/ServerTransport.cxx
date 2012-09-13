@@ -13,6 +13,8 @@
 
 #include "mbs/ServerTransport.h"
 
+#include <unistd.h>
+
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 #include "dabc/Port.h"

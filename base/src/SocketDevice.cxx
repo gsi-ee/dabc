@@ -15,8 +15,9 @@
 
 #include "dabc/SocketDevice.h"
 
-#include "dabc/SocketTransport.h"
+#include <unistd.h>
 
+#include "dabc/SocketTransport.h"
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
 #include "dabc/Configuration.h"

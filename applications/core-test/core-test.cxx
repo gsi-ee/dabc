@@ -12,6 +12,8 @@
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
 
+#include <unistd.h>
+
 #include "dabc/logging.h"
 
 #include "dabc/FileIO.h"
