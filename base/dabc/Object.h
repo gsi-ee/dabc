@@ -183,7 +183,8 @@ namespace dabc {
          Reference _MakeRef();
 
          /** Method could be used to directly increment reference counter without creating dabc::Reference instance
-          * Object mutex must be locked at the moment - will be checked in debug mode */
+          * Object mutex must be locked at the moment - will be checked in debug mode 
+          * FIXME: one should not use it, otherwise cleanup of object can be screwed up */
          void _IncObjectRefCnt();
 
          /** Method shoul be used to directly decrement reference counter. Complimentary to _DecRefCnt()

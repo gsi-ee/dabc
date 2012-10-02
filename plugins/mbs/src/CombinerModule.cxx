@@ -103,6 +103,16 @@ mbs::CombinerModule::~CombinerModule()
 {
 }
 
+void mbs::CombinerModule::ModuleCleanup()
+{
+   DOUT3(("mbs::CombinerModule::ModuleCleanup()"));
+
+   fOut.Close().Release();
+   for (unsigned n=0;n<fInp.size();n++)
+      fInp[n].Reset();
+}
+
+
 void mbs::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 {
 

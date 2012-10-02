@@ -102,7 +102,6 @@ namespace mbs {
          std::vector<ReadIterator>  fInp;
          std::vector<InputCfg>      fCfg;
          WriteIterator              fOut;
-         dabc::Buffer               fOutBuf;
          bool                       fFlushFlag;
 
          bool                       fDoOutput;
@@ -161,6 +160,8 @@ namespace mbs {
 
          CombinerModule(const char* name, dabc::Command cmd = 0);
          virtual ~CombinerModule();
+
+         virtual void ModuleCleanup();
 
          virtual void ProcessInputEvent(dabc::Port* port);
          virtual void ProcessOutputEvent(dabc::Port* port);
