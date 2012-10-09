@@ -544,18 +544,19 @@ namespace hadaq {
    extern const char* xmlMTUsize;
    extern const char* xmlBuildFullEvent;
 
-   extern const char* xmlNormalOutput;
-   extern const char* xmlFileOutput;
-   extern const char* xmlServerOutput;
    extern const char* xmlObserverEnabled;
    extern const char* xmlExternalRunid;
    extern const char* xmlMbsSubeventId;
-   extern const char* portOutput;
-   extern const char* portOutputFmt;
-   extern const char* portInput;
-   extern const char* portInputFmt;
-   extern const char* portFileOutput;
-   extern const char* portServerOutput;
+
+//   extern const char* xmlNormalOutput;
+//   extern const char* xmlFileOutput;
+//   extern const char* xmlServerOutput;
+//   extern const char* portOutput;
+//   extern const char* portOutputFmt;
+//   extern const char* portInput;
+//   extern const char* portInputFmt;
+//   extern const char* portFileOutput;
+//   extern const char* portServerOutput;
 
    extern const char* NetmemPrefix;
    extern const char* EvtbuildPrefix;

@@ -32,13 +32,6 @@ const char* hadaq::protocolHadaq = "hadaq";
 //const char* hadaq::comStartFile         = "StartFile";
 //const char* hadaq::comStopFile          = "StopFile";
 
-// port names and name formats:
-const char* hadaq::portOutput           = "Output";
-const char* hadaq::portOutputFmt        = "Output%d";
-const char* hadaq::portInput            = "Input";
-const char* hadaq::portInputFmt         = "Input%d";
-const char* hadaq::portFileOutput       = "FileOutput";
-const char* hadaq::portServerOutput     = "ServerOutput";
 
 // tag names for xml config file:
 const char* hadaq::xmlFileName = "HadaqFileName";
@@ -53,12 +46,25 @@ const char* hadaq::xmlBuildFullEvent = "HadaqBuildEvents";
 
 //const char* hadaq::xmlServerScale       = "HadaqServerScale";
 //const char* hadaq::xmlServerLimit       = "HadaqServerLimit";
-const char* hadaq::xmlNormalOutput      = "DoOutput";
-const char* hadaq::xmlFileOutput        = "DoFile";
-const char* hadaq::xmlServerOutput      = "DoServer";
+
 const char* hadaq::xmlObserverEnabled      = "DoShmControl";
 const char* hadaq::xmlExternalRunid       = "HadaqEPICSControl";
 const char* hadaq::xmlMbsSubeventId       = "SubeventFullId";
+
+// use MBS constants at that place
+
+//const char* hadaq::xmlNormalOutput      = "DoOutput";
+//const char* hadaq::xmlFileOutput        = "DoFile";
+//const char* hadaq::xmlServerOutput      = "DoServer";
+
+// port names and name formats:
+//const char* hadaq::portOutput           = "Output";
+//const char* hadaq::portOutputFmt        = "Output%d";
+//const char* hadaq::portInput            = "Input";
+//const char* hadaq::portInputFmt         = "Input%d";
+//const char* hadaq::portFileOutput       = "FileOutput";
+//const char* hadaq::portServerOutput     = "ServerOutput";
+
 
 const char* hadaq::NetmemPrefix     = "Netmem";
 const char* hadaq::EvtbuildPrefix   = "Evtbuild";

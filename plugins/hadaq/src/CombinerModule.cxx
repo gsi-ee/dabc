@@ -58,16 +58,15 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    fBufferSize = Cfg(dabc::xmlBufferSize, cmd).AsInt(16384);
 
    fTriggerNrTolerance = 50000;
-   std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr(
-         dabc::xmlWorkPool);
+   std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr(dabc::xmlWorkPool);
 
    CreatePoolHandle(poolname.c_str());
 
    fNumInputs = Cfg(dabc::xmlNumInputs, cmd).AsInt(1);
 
-//   fDoOutput = Cfg(hadaq::xmlNormalOutput,cmd).AsBool(true);
-   fFileOutput = Cfg(hadaq::xmlFileOutput, cmd).AsBool(false);
-   fServOutput = Cfg(hadaq::xmlServerOutput, cmd).AsBool(false);
+   fDoOutput = Cfg(mbs::xmlNormalOutput,cmd).AsBool(false);
+   fFileOutput = Cfg(mbs::xmlFileOutput, cmd).AsBool(false);
+   fServOutput = Cfg(mbs::xmlServerOutput, cmd).AsBool(false);
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 //     fBuildCompleteEvents = Cfg(mbs::xmlCombineCompleteOnly,cmd).AsBool(true);
 //
@@ -80,7 +79,7 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    double flushtmout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(1.);
 
    for (int n = 0; n < fNumInputs; n++) {
-      CreateInput(FORMAT((hadaq::portInputFmt, n)), Pool(), 10);
+      CreateInput(FORMAT((mbs::portInputFmt, n)), Pool(), 10);
 
       //      DOUT0(("  Port%u: Capacity %u", n, Input(n)->InputQueueCapacity()));
 
@@ -92,11 +91,12 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
 //     fNumObligatoryInputs = NumInputs();
 //
-//     if (fDoOutput) CreateOutput(hadaq::portOutput, Pool(), 5);
+   if (fDoOutput)
+      CreateOutput(mbs::portOutput, Pool(), 5);
    if (fFileOutput)
-      CreateOutput(hadaq::portFileOutput, Pool(), 5);
+      CreateOutput(mbs::portFileOutput, Pool(), 5);
    if (fServOutput)
-      CreateOutput(hadaq::portServerOutput, Pool(), 5);
+      CreateOutput(mbs::portServerOutput, Pool(), 5);
 
    if (flushtmout > 0.)
       CreateTimer("FlushTimer", flushtmout, false);
@@ -294,7 +294,7 @@ void hadaq::CombinerModule::RegisterExportedCounters()
    if(!fWithObserver) return;
    DOUT0(("##### CombinerModule::RegisterExportedCounters for shmem"));
    CreateEvtbuildPar("prefix");
-   dabc::Port* fileoutput=FindPort(hadaq::portFileOutput);
+   dabc::Port* fileoutput = FindPort(mbs::portFileOutput);
    if(fileoutput)
      {
         std::string filename=fileoutput->Cfg(hadaq::xmlFileName).AsStdStr();
@@ -911,8 +911,7 @@ extern "C" void InitHadaqEvtbuilder()
 
    for (unsigned n = 0; n < m->NumInputs(); n++) {
       if (!dabc::mgr.CreateTransport(
-            FORMAT(("Combiner/%s%u", hadaq::portInput, n)), hadaq::typeUdpInput,
-            "UdpThrd")) {
+            FORMAT(("Combiner/%s%u", mbs::portInput, n)), hadaq::typeUdpInput, "UdpThrd")) {
          EOUT(("Cannot create Netmem client transport %d",n));
          exit(131);
       }
@@ -921,9 +920,9 @@ extern "C" void InitHadaqEvtbuilder()
       DOUT0(("!!!!! Create Mbs transmitter module for server !!!!!"));
       dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "OnlineServer",
             "OnlineThrd");
-      dabc::mgr.Connect(FORMAT(("OnlineServer/%s", hadaq::portInput)),
-            FORMAT(("Combiner/%s", hadaq::portServerOutput)));
-      dabc::mgr.CreateTransport(FORMAT(("OnlineServer/%s", hadaq::portOutput)),
+      dabc::mgr.Connect(FORMAT(("OnlineServer/%s", mbs::portInput)),
+            FORMAT(("Combiner/%s", mbs::portServerOutput)));
+      dabc::mgr.CreateTransport(FORMAT(("OnlineServer/%s", mbs::portOutput)),
             mbs::typeServerTransport, "MbsTransport");
    }
 

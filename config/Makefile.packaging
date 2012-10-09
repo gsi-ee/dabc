@@ -52,7 +52,7 @@ package: clean
 
 packageroc: clean
 	tar chf $(ROCTAR_NAME) Makefile *.txt base config build/*.sh --exclude=.svn
-	tar rhf $(ROCTAR_NAME) applications/core-test plugins/mbs --exclude=.svn
+	tar rhf $(ROCTAR_NAME) applications/core-test plugins/mbs plugins/hadaq --exclude=.svn
 	@mkdir -p $(PACKAGE_DIR); mv -f $(ROCTAR_NAME) $(PACKAGE_DIR)
 	cd $(PACKAGE_DIR); rm -f $(ROCTAR_NAME).gz; gzip $(ROCTAR_NAME) 
 	@echo "Source package $(ROCTAR_NAME).gz done"  

@@ -35,19 +35,21 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 {
 
 	CreatePoolHandle("Pool");
-	CreateInput("Input", Pool(), 5);
-	CreateOutput("Output", Pool(), 5);
+
+	CreateInput(mbs::portInput, Pool(), 5);
+	CreateOutput(mbs::portOutput, Pool(), 5);
 
 	fSubeventId = Cfg(hadaq::xmlMbsSubeventId, cmd).AsInt(0x000001F);
+
+	DOUT0(("hadaq:TransmitterModule subevid = 0x%x", (unsigned) fSubeventId));
 
    CreatePar("TransmitData").SetRatemeter(false, 5.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
    CreatePar("TransmitEvents").SetRatemeter(false, 5.).SetUnits("Evts");
-   Par("TransmitData").SetDebugLevel(1);
-   Par("TransmitBufs").SetDebugLevel(1);
-   Par("TransmitEvents").SetDebugLevel(1);
+   if (Par("TransmitData").GetDebugLevel()<0) Par("TransmitData").SetDebugLevel(1);
+   if (Par("TransmitBufs").GetDebugLevel()<0) Par("TransmitBufs").SetDebugLevel(1);
+   if (Par("TransmitEvents").GetDebugLevel()<0) Par("TransmitEvents").SetDebugLevel(1);
 }
-
 
 
 void hadaq::MbsTransmitterModule::retransmit()
