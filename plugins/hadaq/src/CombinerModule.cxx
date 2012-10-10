@@ -693,7 +693,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
       if(fUseSyncSeqNumber)
          {
-      // TODO: we may put sync id from subevent payload to event sequence number already here.
+      // we may put sync id from subevent payload to event sequence number already here.
          hadaq::Subevent* syncsub= fInp[0].subevnt(); // for the moment, sync number must be in first udp input
                             // TODO: put this to configuration
 
@@ -716,10 +716,10 @@ bool hadaq::CombinerModule::BuildEvent()
                //! Central hub header and inside
                if ((data & 0xFFFF) == fSyncSubeventId) {
                   unsigned centHubLen = ((data >> 16) & 0xFFFF);
-                  DOUT1(("***  --- central hub header: 0x%x, size=%d\n", data, centHubLen));
+                  DOUT5(("***  --- central hub header: 0x%x, size=%d\n", data, centHubLen));
                   unsigned syncdata = syncsub->Data(ix + centHubLen);
                   unsigned syncnum = (syncdata & 0xFFFFFF);
-                  DOUT1(("***  --- found sync data: 0x%x, sync number is %d\n", syncdata, syncnum));
+                  DOUT5(("***  --- found sync data: 0x%x, sync number is %d\n", syncdata, syncnum));
                   fOut.evnt()->SetSeqNr(syncnum);
                   break;
                }
