@@ -86,6 +86,9 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port, dabc::Command cmd)
    }
 
    fBufferSize = port->Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
+   
+   DOUT0(("Hadaq buffer size %u", (unsigned) fBufferSize));
+   
    //fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
    fFlushTimeout = 1.0;
    // DOUT0(("fFlushTimeout = %5.1f %s", fFlushTimeout, dabc::xmlFlushTimeout));
@@ -108,7 +111,7 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port, dabc::Command cmd)
    fNPort = port->Cfg(hadaq::xmlUdpPort, cmd).AsInt(0);
    std::string hostname = port->Cfg(hadaq::xmlUdpAddress, cmd).AsStdStr("0.0.0.0");
    int rcvBufLenReq = port->Cfg(hadaq::xmlUdpBuffer, cmd).AsInt(1 * (1 << 20));
-
+   
    if (OpenUdp(fNPort, fNPort, fNPort, rcvBufLenReq) < 0) {
       EOUT(("hadaq::UdpDataSocket:: failed to open udp port %d with receive buffer %d", fNPort,rcvBufLenReq));
       CloseSocket();

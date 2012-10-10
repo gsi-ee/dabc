@@ -97,7 +97,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		   // assign and check event/subevent header for wrapper structures:
 		   if (!miter.NewEvent(evcount))
 		      {
-		         DOUT1(("Can not add new mbs event to output buffer anymore - stop module. Check mempool setup!"));
+		         DOUT1(("Count limit. Can not add new mbs event to output buffer anymore - stop module. Check mempool setup!"));
 		         dostop = true;
 		         break;
 		      }
@@ -105,7 +105,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		   usedsize+=sizeof(mbs::EventHeader);
 		   if (!miter.NewSubevent(evlen))
 		      {
-		           DOUT1(("Can not add new mbs subevent to output buffer anymore - stop module. Check mempool setup!"));
+		           DOUT1(("Len limit: %u Buffer: %u Can not add new mbs subevent to output buffer anymore - stop module. Check mempool setup!", (unsigned) evlen, (unsigned) inbuf.GetTotalSize()));
 		           dostop = true;
 		           break;
 		      }

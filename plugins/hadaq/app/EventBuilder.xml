@@ -11,7 +11,7 @@
     
   
      <MemoryPool name="Pool">
-       <BufferSize value="65536"/>
+       <BufferSize value="131072"/>
        <NumBuffers value="10000"/>
     </MemoryPool>
     
@@ -25,16 +25,15 @@
        <DoShmControl value="true"/>  
        <DoFile value="false"/>
        <DoServer value="true"/>
-      
-       <BufferSize value="65536"/>   
+       <BufferSize value="65536"/>
        
        <!-- take event sequence number from vulom/roc sync message at cts -->
-       <UseSyncSequenceNumber value="false"/>
+       <UseSyncSequenceNumber value="true"/>
        <SyncSubeventId value="0x8000"/>
        
-       <NumInputs value="5"/>
+       <NumInputs value="1"/>
        <Port name="Input0">
-          <HadaqUdpPort value="10101"/>
+          <HadaqUdpPort value="50000"/>
        </Port>
        <Port name="Input1">
           <HadaqUdpPort value="10102"/>
@@ -59,7 +58,7 @@
           <OutputQueueSize value="1000"/>       
         </Port>  
        <Port name="FileOutput">
-          <HadaqFileName value="/data.local1/adamczew/hld/dabc.hld"/>
+          <HadaqFileName value="/data/trb/dabc.hld"/>
           <HadaqEPICSControl value="true"/>
           <HadaqFileSizeLimit value="1600"/>       
         </Port> 
@@ -68,10 +67,13 @@
      </Module>
      
      <Module name="OnlineServer">
+       <PoolName value="Pool"/>
        <Port name="Output">
           <MbsServerKind value="Stream"/>
-          <!--MbsServerPort value="6543"/-->
-            <SubeventFullId value="0x000001F"/>
+          <MbsServerPort value="6543"/>
+            <SubeventFullId value="0x000001F"/> 
+            <OutputQueueSize value="1000"/>
+
         </Port>
      </Module>
 
