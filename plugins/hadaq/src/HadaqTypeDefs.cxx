@@ -51,6 +51,10 @@ const char* hadaq::xmlObserverEnabled      = "DoShmControl";
 const char* hadaq::xmlExternalRunid       = "HadaqEPICSControl";
 const char* hadaq::xmlMbsSubeventId       = "SubeventFullId";
 
+
+const char* hadaq::xmlSyncSeqNumberEnabled ="UseSyncSequenceNumber";
+const char* hadaq::xmlSyncSubeventId       = "SyncSubeventId";
+
 // use MBS constants at that place
 
 //const char* hadaq::xmlNormalOutput      = "DoOutput";

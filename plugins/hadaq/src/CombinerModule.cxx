@@ -69,8 +69,12 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    fServOutput = Cfg(mbs::xmlServerOutput, cmd).AsBool(false);
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 
-   fUseSyncSeqNumber=true; // if true, use vulom/roc syncnumber for event sequence number
-   fSyncSubeventId=0x8000; // TODO: configuration from xml
+   fUseSyncSeqNumber= Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(true); // if true, use vulom/roc syncnumber for event sequence number
+   fSyncSubeventId=   Cfg(hadaq::xmlSyncSubeventId, cmd).AsInt(0x8000);//0x8000; // TODO: configuration from xml
+   if (fUseSyncSeqNumber)
+      DOUT0(("HADAQ combiner module with VULOM sync event sequence number from cts subevent id 0x%0x",fSyncSubeventId));
+   else
+      DOUT0(("HADAQ combiner module with independent event sequence number"));
 
 
 //     fBuildCompleteEvents = Cfg(mbs::xmlCombineCompleteOnly,cmd).AsBool(true);
@@ -714,7 +718,7 @@ bool hadaq::CombinerModule::BuildEvent()
                //scan through trb3 data words and look for the cts subsubevent
                unsigned data = syncsub->Data(ix);
                //! Central hub header and inside
-               if ((data & 0xFFFF) == fSyncSubeventId) {
+               if ((data & 0xFFFF) == (unsigned) fSyncSubeventId) {
                   unsigned centHubLen = ((data >> 16) & 0xFFFF);
                   DOUT5(("***  --- central hub header: 0x%x, size=%d\n", data, centHubLen));
                   unsigned syncdata = syncsub->Data(ix + centHubLen);

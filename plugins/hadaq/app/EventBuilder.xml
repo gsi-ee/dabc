@@ -25,7 +25,13 @@
        <DoShmControl value="true"/>  
        <DoFile value="false"/>
        <DoServer value="true"/>
-       <BufferSize value="65536"/>
+      
+       <BufferSize value="65536"/>   
+       
+       <!-- take event sequence number from vulom/roc sync message at cts -->
+       <UseSyncSequenceNumber value="false"/>
+       <SyncSubeventId value="0x8000"/>
+       
        <NumInputs value="5"/>
        <Port name="Input0">
           <HadaqUdpPort value="10101"/>
