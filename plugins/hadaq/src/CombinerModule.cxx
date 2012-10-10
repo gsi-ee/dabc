@@ -68,6 +68,11 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    fFileOutput = Cfg(mbs::xmlFileOutput, cmd).AsBool(false);
    fServOutput = Cfg(mbs::xmlServerOutput, cmd).AsBool(false);
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
+
+   fUseSyncSeqNumber=true; // if true, use vulom/roc syncnumber for event sequence number
+   fSyncSubeventId=0x8000; // TODO: configuration from xml
+
+
 //     fBuildCompleteEvents = Cfg(mbs::xmlCombineCompleteOnly,cmd).AsBool(true);
 //
 //
@@ -673,9 +678,6 @@ bool hadaq::CombinerModule::BuildEvent()
       fOut.NewEvent(fTotalRecvEvents++, fRunNumber); // like in hadaq, event sequence number is independent of trigger.
 
 
-      // TODO: we may put sync id from subevent payload to event sequence number already here.
-      //....
-      ///////
 
       fOut.evnt()->SetDataError((dataError || tagError));
       if (dataError)
@@ -689,7 +691,46 @@ bool hadaq::CombinerModule::BuildEvent()
       fOut.evnt()->SetId(currentid & (HADAQ_NEVTIDS_IN_FILE - 1));
 
 
-      // third input loop: build output event from all not empty subevents
+      if(fUseSyncSeqNumber)
+         {
+      // TODO: we may put sync id from subevent payload to event sequence number already here.
+         hadaq::Subevent* syncsub= fInp[0].subevnt(); // for the moment, sync number must be in first udp input
+                            // TODO: put this to configuration
+
+         // look into subevent for subsubevent with id of cts payload
+//         char* cursor =  (char*) syncsub;
+//         char* endofdata= cursor+ syncsub->GetSize();
+//         cursor+=sizeof(hadaq::Subevent); // move to begin of subsubevent data
+//
+         if (syncsub->GetId() != fSyncSubeventId) {
+            // main subevent has same id as cts/hub subsubevent
+            DOUT1(("***  --- sync subevent at input 0x%x has wrong id 0x%x !!! Check configuration.\n", 0, syncsub->GetId()));
+         }
+
+         else {
+            unsigned datasize = syncsub->GetNrOfDataWords();
+            unsigned ix = 0;
+            while (ix < datasize) {
+               //scan through trb3 data words and look for the cts subsubevent
+               unsigned data = syncsub->Data(ix);
+               //! Central hub header and inside
+               if ((data & 0xFFFF) == fSyncSubeventId) {
+                  unsigned centHubLen = ((data >> 16) & 0xFFFF);
+                  DOUT1(("***  --- central hub header: 0x%x, size=%d\n", data, centHubLen));
+                  unsigned syncdata = syncsub->Data(ix + centHubLen);
+                  unsigned syncnum = (syncdata & 0xFFFFFF);
+                  DOUT1(("***  --- found sync data: 0x%x, sync number is %d\n", syncdata, syncnum));
+                  fOut.evnt()->SetSeqNr(syncnum);
+                  break;
+               }
+               ++ix;
+            }
+
+         } // if (syncsub->GetId() != fSyncSubeventId)
+
+         } // if(fUseSyncSeqNumber)
+
+         // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
          if (fCfg[ninp].fEmpty)
             continue;

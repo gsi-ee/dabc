@@ -211,6 +211,10 @@ namespace hadaq {
          bool fFileOutput;
          bool fServOutput;
          bool fWithObserver;
+
+         bool fUseSyncSeqNumber; // if true, use vulom/roc syncnumber for event sequence number
+         int  fSyncSubeventId; // id number of sync subevent
+
          int  fNumInputs;
          int  fNumCompletedBuffers; // SL: workaround counter, which indicates how many buffers were taken from queues
 
