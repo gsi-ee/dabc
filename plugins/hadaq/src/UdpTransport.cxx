@@ -31,7 +31,7 @@
 #define UDP_FILLEVENTS_WITHITERATOR 1
 
 
-hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
+hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port, dabc::Command cmd) :
       dabc::SocketWorker(), dabc::Transport(port.Ref()), dabc::MemoryPoolRequester(), fQueueMutex(), fQueue(
             ((dabc::Port*) port())->InputQueueCapacity()), fTgtBuf()
 {
@@ -58,7 +58,7 @@ hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port) :
    fBufferSize = 2 * DEFAULT_MTU;
    fBuildFullEvent = false;
 
-   ConfigureFor((dabc::Port*) port());
+   ConfigureFor((dabc::Port*) port(), cmd);
 
 //   DOUT0(("Create %p instance of UdpDataSocket", this));
 }
@@ -75,7 +75,7 @@ hadaq::UdpDataSocket::~UdpDataSocket()
    fPool.Release();
 }
 
-void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
+void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port, dabc::Command cmd)
 {
    SetName(port->GetName());
    fIdNumber=0;
@@ -85,14 +85,14 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
       DOUT0(("hadaq::UdpDataSocket %s got id: %d", GetName(), fIdNumber));
    }
 
-   fBufferSize = port->Cfg(dabc::xmlBufferSize).AsInt(fBufferSize);
+   fBufferSize = port->Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
    //fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
    fFlushTimeout = 1.0;
    // DOUT0(("fFlushTimeout = %5.1f %s", fFlushTimeout, dabc::xmlFlushTimeout));
 
-   fWithObserver = port->Cfg(hadaq::xmlObserverEnabled).AsBool(false);
+   fWithObserver = port->Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 
-   fBuildFullEvent = port->Cfg(hadaq::xmlBuildFullEvent).AsBool(fBuildFullEvent);
+   fBuildFullEvent = port->Cfg(hadaq::xmlBuildFullEvent, cmd).AsBool(fBuildFullEvent);
 
    if(fBuildFullEvent)
       fRunNumber=hadaq::Event::CreateRunId(); // runid from configuration time
@@ -101,13 +101,13 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port)
 
    fPool = port->GetMemoryPool();
 
-   fMTU = port->Cfg(hadaq::xmlMTUsize).AsInt(DEFAULT_MTU);
+   fMTU = port->Cfg(hadaq::xmlMTUsize, cmd).AsInt(DEFAULT_MTU);
    if (fTempBuf) delete [] fTempBuf;
    fTempBuf = new char[fMTU];
 
-   fNPort = port->Cfg(hadaq::xmlUdpPort).AsInt(0);
-   std::string hostname = port->Cfg(hadaq::xmlUdpAddress).AsStdStr("0.0.0.0");
-   int rcvBufLenReq = port->Cfg(hadaq::xmlUdpBuffer).AsInt(1 * (1 << 20));
+   fNPort = port->Cfg(hadaq::xmlUdpPort, cmd).AsInt(0);
+   std::string hostname = port->Cfg(hadaq::xmlUdpAddress, cmd).AsStdStr("0.0.0.0");
+   int rcvBufLenReq = port->Cfg(hadaq::xmlUdpBuffer, cmd).AsInt(1 * (1 << 20));
 
    if (OpenUdp(fNPort, fNPort, fNPort, rcvBufLenReq) < 0) {
       EOUT(("hadaq::UdpDataSocket:: failed to open udp port %d with receive buffer %d", fNPort,rcvBufLenReq));

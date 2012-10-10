@@ -34,21 +34,18 @@ dabc::FactoryPlugin hadaqfactory(new hadaq::Factory("hadaq"));
 
 dabc::Transport* hadaq::Factory::CreateTransport(dabc::Reference ref, const char* typ, dabc::Command cmd)
 {
-   dabc::PortRef portref = ref;
-   if (portref.null()) {
-      EOUT(("Port not specified"));
-      return 0;
-   }
-   if (strcmp(typ, hadaq::typeUdpInput)==0)
-      {
-       // FIXME!
-        return (new hadaq::UdpDataSocket(portref));
+   if (strcmp(typ, hadaq::typeUdpInput)==0) {
+      dabc::PortRef portref = ref;
+      if (portref.null()) {
+         EOUT(("Port not specified"));
+         return 0;
       }
-   else
-      return dabc::Factory::CreateTransport(portref, typ, cmd);
 
+       // FIXME!
+      return (new hadaq::UdpDataSocket(portref, cmd));
+   }
 
-   return 0;
+   return dabc::Factory::CreateTransport(ref, typ, cmd);
 }
 
 dabc::DataInput* hadaq::Factory::CreateDataInput(const char* typ)

@@ -34,7 +34,9 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 	dabc::ModuleAsync(name, cmd)
 {
 
-	CreatePoolHandle("Pool");
+   std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr(dabc::xmlWorkPool);
+
+	CreatePoolHandle(poolname.c_str());
 
 	CreateInput(mbs::portInput, Pool(), 5);
 	CreateOutput(mbs::portOutput, Pool(), 5);

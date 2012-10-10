@@ -136,7 +136,7 @@ namespace hadaq {
 
          virtual double ProcessTimeout(double lastdiff);
 
-         void ConfigureFor(dabc::Port* port);
+         void ConfigureFor(dabc::Port* port, dabc::Command cmd);
 
 
          virtual int GetParameter(const char* name);
@@ -177,7 +177,7 @@ namespace hadaq {
 
 
       public:
-         UdpDataSocket(dabc::Reference port);
+         UdpDataSocket(dabc::Reference port, dabc::Command cmd);
          virtual ~UdpDataSocket();
 
          virtual void ProcessEvent(const dabc::EventId&);
