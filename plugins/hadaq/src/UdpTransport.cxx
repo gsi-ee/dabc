@@ -334,6 +334,11 @@ void hadaq::UdpDataSocket::ReadUdp()
       } else {
          fTotalRecvMsg++;
          fTotalRecvBytes += fTgtShift;
+         uint32_t* p1 = (uint32_t*)(fTgtPtr + hadTu->GetPaddedSize());
+
+         // only debug, should be seen swapped SYNC message
+         DOUT5(("Get UDP data of size %u %x", (unsigned) fTgtShift, *(p1-4)));
+
          Par(fDataRateName).SetDouble(fTgtShift);
          fTgtPtr += hadTu->GetPaddedSize(); // we will overwrite the trailing block of this message again
          fTgtShift = 0;
