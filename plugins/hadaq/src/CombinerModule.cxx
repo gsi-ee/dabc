@@ -704,14 +704,18 @@ bool hadaq::CombinerModule::BuildEvent()
                   DOUT5(("***  --- central hub header: 0x%x, size=%d", data, centHubLen));
 
                   // evaluate trigger type from cts:
-                  syncdata = syncsub->Data(ix + 1);
-                  trigtype=(syncdata >> 24) & 0xFF;
-                  trignum= (syncdata >> 16) & 0xFF;
-                  DOUT1(("***  --- CTS trigtype: 0x%x, trignum=0x%x", trigtype, trignum));
+                  data = syncsub->Data(ix + 1);
+                  // old HADES style:
+//                   trigtype=(syncdata >> 24) & 0xFF;
+//                   trignum= (syncdata >> 16) & 0xFF;
+                  // new cts
+                  trigtype=(data & 0xFFFF);
+                  trignum= (data >> 16) & 0xF;
+                  DOUT5(("***  --- CTS trigtype: 0x%x, trignum=0x%x", trigtype, trignum));
                   fCfg[0].fTrigType=trigtype; // overwrite default trigger type from main hades cts format
                   syncdata = syncsub->Data(ix + centHubLen);
                   syncnum = (syncdata & 0xFFFFFF);
-                  DOUT1(("***  --- found sync data: 0x%x, sync number is %d", syncdata, syncnum));
+                  DOUT5(("***  --- found sync data: 0x%x, sync number is %d", syncdata, syncnum));
 
                   break;
                }
@@ -719,15 +723,16 @@ bool hadaq::CombinerModule::BuildEvent()
             }
             if(syncnum==0)
                {
-                  DOUT1(("***  --- Found zero sync number!, full sync data:0x%x",syncdata));
+                  DOUT5(("***  --- Found zero sync number!, full sync data:0x%x",syncdata));
                }
-            else if ( (syncdata >> 31) & 0x1 == 0x1)
+            else if ( ((syncdata >> 31) & 0x1) == 0x1)
                {
-                  DOUT1(("***  --- Found error bit at sync number: 0x%x, full sync data:0x%x", syncnum, syncdata));
+                  DOUT5(("***  --- Found error bit at sync number: 0x%x, full sync data:0x%x", syncnum, syncdata));
                }
-            else if (trigtype != 0) // todo: configure which trigger type contains the sync, currently it'S 0
+            //else if (trigtype   != 0) // todo: configure which trigger type contains the sync, currently it'S 0
+            else if ((trigtype & 0x1) != 0x1)
             {
-                  DOUT1(("***  --- Found non SYNC trigger type :0x%x , full sync data:0x%x ",trigtype,syncdata));
+                  DOUT5(("***  --- Found non SYNC trigger type :0x%x , full sync data:0x%x ",trigtype,syncdata));
             }
             else
                {
