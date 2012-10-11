@@ -692,7 +692,7 @@ bool hadaq::CombinerModule::BuildEvent()
          }
 
          else {
-            unsigned syncdata=0, syncnum=0;
+            unsigned syncdata=0, syncnum=0, trigtype=0, trignum=0;
             unsigned datasize = syncsub->GetNrOfDataWords();
             unsigned ix = 0;
             while (ix < datasize) {
@@ -702,10 +702,16 @@ bool hadaq::CombinerModule::BuildEvent()
                if ((data & 0xFFFF) == (unsigned) fSyncSubeventId) {
                   unsigned centHubLen = ((data >> 16) & 0xFFFF);
                   DOUT5(("***  --- central hub header: 0x%x, size=%d", data, centHubLen));
+
+                  // evaluate trigger type from cts:
+                  syncdata = syncsub->Data(ix + 1);
+                  trigtype=(syncdata >> 24) & 0xFF;
+                  trignum= (syncdata >> 16) & 0xFF;
+                  DOUT1(("***  --- CTS trigtype: 0x%x, trignum=0x%x", trigtype, trignum));
+                  fCfg[0].fTrigType=trigtype; // overwrite default trigger type from main hades cts format
                   syncdata = syncsub->Data(ix + centHubLen);
                   syncnum = (syncdata & 0xFFFFFF);
                   DOUT1(("***  --- found sync data: 0x%x, sync number is %d", syncdata, syncnum));
-                  //fOut.evnt()->SetSeqNr(syncnum);
 
                   break;
                }
@@ -719,6 +725,10 @@ bool hadaq::CombinerModule::BuildEvent()
                {
                   DOUT1(("***  --- Found error bit at sync number: 0x%x, full sync data:0x%x", syncnum, syncdata));
                }
+            else if (trigtype != 0) // todo: configure which trigger type contains the sync, currently it'S 0
+            {
+                  DOUT1(("***  --- Found non SYNC trigger type :0x%x , full sync data:0x%x ",trigtype,syncdata));
+            }
             else
                {
                   sequencenumber=syncnum;
