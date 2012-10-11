@@ -688,7 +688,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
          if (syncsub->GetId() != fSyncSubeventId) {
             // main subevent has same id as cts/hub subsubevent
-            DOUT1(("***  --- sync subevent at input 0x%x has wrong id 0x%x !!! Check configuration.\n", 0, syncsub->GetId()));
+            DOUT1(("***  --- sync subevent at input 0x%x has wrong id 0x%x !!! Check configuration.", 0, syncsub->GetId()));
          }
 
          else {
@@ -701,10 +701,10 @@ bool hadaq::CombinerModule::BuildEvent()
                //! Central hub header and inside
                if ((data & 0xFFFF) == (unsigned) fSyncSubeventId) {
                   unsigned centHubLen = ((data >> 16) & 0xFFFF);
-                  DOUT5(("***  --- central hub header: 0x%x, size=%d\n", data, centHubLen));
+                  DOUT5(("***  --- central hub header: 0x%x, size=%d", data, centHubLen));
                   syncdata = syncsub->Data(ix + centHubLen);
                   syncnum = (syncdata & 0xFFFFFF);
-                  DOUT1(("***  --- found sync data: 0x%x, sync number is %d\n", syncdata, syncnum));
+                  DOUT1(("***  --- found sync data: 0x%x, sync number is %d", syncdata, syncnum));
                   //fOut.evnt()->SetSeqNr(syncnum);
 
                   break;
@@ -713,11 +713,11 @@ bool hadaq::CombinerModule::BuildEvent()
             }
             if(syncnum==0)
                {
-                  DOUT1(("***  --- Found zero sync number!, full sync data:0x%x \n",syncdata));
+                  DOUT1(("***  --- Found zero sync number!, full sync data:0x%x",syncdata));
                }
             else if ( (syncdata >> 31) & 0x1 == 0x1)
                {
-                  DOUT1(("***  --- Found error bit at sync number: 0x%x, full sync data:0x%x\n", syncnum, syncdata));
+                  DOUT1(("***  --- Found error bit at sync number: 0x%x, full sync data:0x%x", syncnum, syncdata));
                }
             else
                {
