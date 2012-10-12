@@ -590,7 +590,14 @@ bool dabc::MemoryPool::_ReleaseBufferRec(dabc::Buffer::BufferRec* rec)
       // than one should not try to dec ref counter of buffer 0
       if ((id==0) && (segs[cnt].buffer==0) && (segs[cnt].datasize==0)) continue;
 
-      if (fMem->fArr[id].refcnt == 0) throw dabc::Exception("Memory release more times as it is referenced");
+      
+      // FIXME: should be real error handling
+      // if (fMem->fArr[id].refcnt == 0) throw dabc::Exception("Memory release more times as it is referenced");
+      
+      if (fMem->fArr[id].refcnt == 0) {
+         EOUT(("!!!!!!! HARD ERROR 1 - ZERO REFCNT for pool %s segment %u - try to continue !!!!!!!!!!!", GetName(), (unsigned) id));
+         continue;
+      }
 
       // decrement reference counter on the memory space
       fMem->fArr[id].refcnt--;
@@ -606,11 +613,13 @@ bool dabc::MemoryPool::_ReleaseBufferRec(dabc::Buffer::BufferRec* rec)
    if (refid>0) {
       refid--;
       if (fSeg->fArr[refid].refcnt!=1) {
-         EOUT(("HARD FAILURE refid=%u refcnt=%u", refid, (unsigned) fSeg->fArr[refid].refcnt));
-         throw dabc::Exception("Segments list should referenced at this time exactly once");
+         EOUT(("!!!!!!! HARD ERROR 2 - segment list with refid=%u haz refcnt=%u", refid, (unsigned) fSeg->fArr[refid].refcnt));
+         // FIXME: should be real error handling
+         // throw dabc::Exception("Segments list should referenced at this time exactly once");
+      } else {
+         fSeg->fArr[refid].refcnt--;
+         fSeg->fFree.Push(refid);
       }
-      fSeg->fArr[refid].refcnt--;
-      fSeg->fFree.Push(refid);
    }
    return isnewfree;
 }
