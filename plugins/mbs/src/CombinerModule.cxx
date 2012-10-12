@@ -412,10 +412,24 @@ bool mbs::CombinerModule::BuildEvent()
    // check of unique subevent ids:
    bool duplicatefound = false;
 
+   // indicate if important input skipped - means input which could have important data,
+   // used to check if incomplete event can be build when if fBuildCompleteEvents = true
+   bool important_input_skipped = false;
+
    int firstselected = -1;
 
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
-      if (!fCfg[ninp].selected) continue;
+      if (!fCfg[ninp].selected) {
+         // input without number can be skipped without any problem
+         if (fCfg[ninp].no_evnt_num) continue;
+
+         // if optional input not selected, but has valid data than it is not important for us
+         if (fCfg[ninp].optional_input && fCfg[ninp].valid) continue;
+
+         important_input_skipped = true;
+
+         continue;
+      }
 
       if (!fCfg[ninp].no_evnt_num) {
          // take into account only events with "normal" event number
@@ -437,14 +451,18 @@ bool mbs::CombinerModule::BuildEvent()
          }
    }
 
-   if (fBuildCompleteEvents && (numusedinp < NumObligatoryInputs()) && (hasTriggerEvent<0)) {
+   if (fBuildCompleteEvents && important_input_skipped && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumObligatoryInputs(), diff));
    } else
    if (duplicatefound && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip event %u while duplicates subevents found", buildevid));
    } else {
 
-      if (numusedinp < NumObligatoryInputs()) {
+      if (fBuildCompleteEvents && (numusedinp < NumObligatoryInputs())) {
+         SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
+         EOUT(("%s skip optional input and build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
+      } else
+      if (important_input_skipped) {
          SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
          EOUT(("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
       } else
@@ -587,6 +605,7 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command cmd)
          fCfg[ninp].real_mbs = cmd.GetBool("RealMbs", fCfg[ninp].real_mbs);
          fCfg[ninp].real_evnt_num = cmd.GetBool("RealEvntNum", fCfg[ninp].real_evnt_num);
          fCfg[ninp].no_evnt_num = cmd.GetBool("NoEvntNum", fCfg[ninp].no_evnt_num);
+         fCfg[ninp].optional_input = cmd.GetBool("Optional", fCfg[ninp].optional_input);
 
 //         DOUT0(("Do1 input configure %u size %u", ninp, fCfg.size()));
          fCfg[ninp].evntsrc_fullid = cmd.GetUInt("EvntSrcFullId", fCfg[ninp].evntsrc_fullid);

@@ -98,8 +98,6 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
       fCfg[n].Reset();
    }
 
-//     fNumObligatoryInputs = NumInputs();
-//
    if (fDoOutput)
       CreateOutput(mbs::portOutput, Pool(), 5);
    if (fFileOutput)

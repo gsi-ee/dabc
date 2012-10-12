@@ -50,6 +50,10 @@ namespace mbs {
              * In this case current data from the input will be add to next mbs event */
             bool no_evnt_num;
 
+            /** Indicates that data from input optional and can be missing BUT
+             * one must ensure that next data is arrived indicating that such eventid really not exists */
+            bool optional_input;
+
             /** Full id of subevent, where actual event id should be searched */
             uint32_t evntsrc_fullid;
 
@@ -68,6 +72,7 @@ namespace mbs {
                curr_evnt_special(false),
                real_evnt_num(true),
                no_evnt_num(false),
+               optional_input(false),
                evntsrc_fullid(0),
                evntsrc_shift(0),
                selected(false),
@@ -79,6 +84,7 @@ namespace mbs {
                curr_evnt_special(src.curr_evnt_special),
                real_evnt_num(src.real_evnt_num),
                no_evnt_num(src.no_evnt_num),
+               optional_input(src.optional_input),
                evntsrc_fullid(src.evntsrc_fullid),
                evntsrc_shift(src.evntsrc_shift),
                selected(src.selected),
@@ -91,6 +97,7 @@ namespace mbs {
                curr_evnt_special = false;
                real_evnt_num = true;
                no_evnt_num = false;
+               optional_input = false;
                evntsrc_fullid = 0;
                evntsrc_shift = 0;
                selected = false;
@@ -132,8 +139,7 @@ namespace mbs {
          int                        fSpecialTriggerLimit;
 
          /** Indicates how many inputs should provide data that event is accepted as full
-          *  Can be less than number of inputs while inputs may be optional
-          */
+          *  Can be less than number of inputs while inputs may be optional */
          unsigned                   fNumObligatoryInputs;
 
          std::string                fEventRateName;

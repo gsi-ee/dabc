@@ -452,7 +452,7 @@ void dabc::Module::SendToAllOutputs(const dabc::Buffer& buf)
    unsigned n = 0;
    while (n < NumOutputs()-1)
       Output(n++)->Send(buf.Duplicate());
-   Output(n)->Send(buf);
+   Output(n)->Send(const_cast<dabc::Buffer*>(&buf)->HandOver());
 }
 
 
