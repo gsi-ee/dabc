@@ -73,14 +73,17 @@ namespace dabc {
             unsigned     fCapacity;     //!< capacity of segments list
 
             unsigned     fTypeId;       //!< buffer type, identifies content of the buffer
-
+            
+            // FIXME:  one should use mutex in other way - probably individual for each Buffer
+            dabc::Mutex* fMutex;        //!< mutex to protect refcnt, use for now pool mutex
+            
             /** list of memory segments, allocated by memory pool, allocated right after record itself */
             inline MemSegment* Segments() { return (MemSegment*) ((char*) this + sizeof(BufferRec)); }
 
             inline MemSegment* Segment(unsigned nseg) { return Segments() + nseg; }
 
-            inline void increfcnt() { fRefCnt++; }
-            inline bool decrefcnt() { return --fRefCnt==0; }
+            void increfcnt();
+            bool decrefcnt();
          };
 
          BufferRec*   fRec;          //!< pointer on the record, either allocated by pool or explicitely, can be detected
@@ -96,7 +99,7 @@ namespace dabc {
          void AllocateRec(unsigned capacity = 4);
 
          /** Assigns external rec */
-         void AssignRec(void* rec, unsigned recfullsize);
+         void AssignRec(void* rec, unsigned recfullsize, dabc::Mutex* m = 0);
 
       public:
 

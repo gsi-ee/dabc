@@ -151,6 +151,7 @@ dabc::MemoryPool::MemoryPool(const char* name, bool withmanager) :
 {
    DOUT3(("MemoryPool %p name %s constructor", this, GetName()));
 
+   fBufMutex = new dabc::Mutex;
 //   if (IsName("Pool")) SetLogging(true);
 }
 
@@ -158,6 +159,7 @@ dabc::MemoryPool::~MemoryPool()
 {
    Release();
 
+   delete fBufMutex; fBufMutex = 0;
    DOUT3(("MemoryPool %p name %s destructor", this, GetName()));
 }
 
@@ -367,7 +369,7 @@ void dabc::MemoryPool::_TakeSegmentsList(MemoryPool* pool, dabc::Buffer& buf, un
 
       pool->fSeg->fArr[refid].refcnt++;
 
-      buf.AssignRec(pool->fSeg->fArr[refid].buf, pool->fSeg->fArr[refid].size);
+      buf.AssignRec(pool->fSeg->fArr[refid].buf, pool->fSeg->fArr[refid].size, pool->fBufMutex);
       buf.fRec->fPoolId = refid+1;
    }
 
@@ -582,6 +584,8 @@ bool dabc::MemoryPool::_ReleaseBufferRec(dabc::Buffer::BufferRec* rec)
    unsigned size = rec->fNumSegments;
 
    bool isnewfree(false);
+   
+   int errcnt(0);
 
    for (unsigned cnt=0; cnt<size; cnt++) {
       unsigned id = segs[cnt].id;
@@ -596,6 +600,7 @@ bool dabc::MemoryPool::_ReleaseBufferRec(dabc::Buffer::BufferRec* rec)
       
       if (fMem->fArr[id].refcnt == 0) {
          EOUT(("!!!!!!! HARD ERROR 1 - ZERO REFCNT for pool %s segment %u - try to continue !!!!!!!!!!!", GetName(), (unsigned) id));
+         errcnt++;
          continue;
       }
 
@@ -614,6 +619,7 @@ bool dabc::MemoryPool::_ReleaseBufferRec(dabc::Buffer::BufferRec* rec)
       refid--;
       if (fSeg->fArr[refid].refcnt!=1) {
          EOUT(("!!!!!!! HARD ERROR 2 - segment list with refid=%u haz refcnt=%u", refid, (unsigned) fSeg->fArr[refid].refcnt));
+         errcnt++;
          // FIXME: should be real error handling
          // throw dabc::Exception("Segments list should referenced at this time exactly once");
       } else {

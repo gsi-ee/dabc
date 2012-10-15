@@ -21,6 +21,23 @@
 
 const dabc::BufferSize_t dabc::BufferSizeError = (dabc::BufferSize_t) -1;
 
+
+void dabc::Buffer::BufferRec::increfcnt() 
+{ 
+   dabc::LockGuard lock(fMutex); 
+   if (fRefCnt==0) EOUT(("Refcnt already ZERO"));
+   fRefCnt++; 
+   
+   
+}
+bool dabc::Buffer::BufferRec::decrefcnt() 
+{ 
+   dabc::LockGuard lock(fMutex); 
+   --fRefCnt;
+   if (fRefCnt<0) EOUT(("REFCNT less than 0 %d", fRefCnt));
+   return fRefCnt==0; 
+}
+
 dabc::Buffer::Buffer() :
    fRec(0)
 {
@@ -65,7 +82,7 @@ void dabc::Buffer::Release() throw()
    fRec = 0;
 }
 
-void dabc::Buffer::AssignRec(void* rec, unsigned recfullsize)
+void dabc::Buffer::AssignRec(void* rec, unsigned recfullsize, dabc::Mutex* m)
 {
    if (fRec!=0) { EOUT(("Internal error - buffer MUST be empty")); exit(6); }
    if (recfullsize < sizeof(dabc::Buffer::BufferRec)) {
@@ -77,6 +94,7 @@ void dabc::Buffer::AssignRec(void* rec, unsigned recfullsize)
    fRec = (BufferRec*) rec;
 
    fRec->fRefCnt = 1;            // now we are the only reference
+   fRec->fMutex = m;
    fRec->fCapacity = (recfullsize - sizeof(dabc::Buffer::BufferRec)) / sizeof(MemSegment);
 }
 

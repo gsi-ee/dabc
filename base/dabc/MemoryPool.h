@@ -95,6 +95,8 @@ namespace dabc {
          unsigned        fChangeCounter;  //!< memory pool change counter, incremented every time memory is allocated or freed
 
          bool            fUseThread;      //!< indicate if thread functionality should be used to process supplied requests
+         
+         dabc::Mutex*    fBufMutex;      //!< FIXME: temporary mutex, used to protect refcnt in buffer objects
 
          static unsigned fDfltAlignment;   //!< default alignment for memory allocation
          static unsigned fDfltNumSegments; //!< default number of segments in memory pool
