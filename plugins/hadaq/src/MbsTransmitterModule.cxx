@@ -94,7 +94,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		int evcount=0;
 		size_t totalevlen=0;
 		void* destcursor=0;
-		while(hiter.NextEvent())
+	while(hiter.NextEvent())
 		{
 		   hev=hiter.evnt();
 		   size_t evlen=hev->GetPaddedSize();
@@ -103,7 +103,9 @@ void hadaq::MbsTransmitterModule::retransmit()
                   && mergecount++ < fMergeSyncMaxEvents) {
                // OK, we continue merging to first event
             } else {
-               DOUT5(("close output event %d of size %d, mergecount:%d",hev->GetSeqNr(),totalevlen, mergecount));
+  //             if(mergecount>0)
+    //              DOUT0(("close output event %d of size %d, mergecount:%d",evcount,totalevlen, mergecount));
+               DOUT5(("close output event %d of size %d, mergecount:%d",evcount,totalevlen, mergecount));
                // close current mbs event, start next:
                miter.FinishSubEvent(totalevlen);
                miter.FinishEvent();
@@ -111,11 +113,11 @@ void hadaq::MbsTransmitterModule::retransmit()
                DOUT5(("retransmit - used size %d",usedsize));
                firstevent = true;
                totalevlen = 0;
-               //usedsize = 0;
+               mergecount=0;
             }
          } //  if(!firstevent)
-		   totalevlen+=evlen;
-		   DOUT5(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
+	  totalevlen+=evlen;
+	   DOUT5(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
 
          if (firstevent) {
             firstevent = false;
@@ -145,8 +147,22 @@ void hadaq::MbsTransmitterModule::retransmit()
 		    msub->iProcId=fSubeventId; // configured for TTrbProc etc.
 		    memcpy(destcursor,hev,evlen);
 		    usedsize+=evlen;
+                    destcursor+=evlen;
 
 	} // while hiter.NextEvent()
+
+         // need to close output event properly in case we leave loop:
+           if (!firstevent) {
+               DOUT5(("After while loop: close output event %d of size %d, mergecount:%d",evcount,totalevlen, mergecount));
+               // close current mbs event, start next:
+               miter.FinishSubEvent(totalevlen);
+               miter.FinishEvent();
+               Par("TransmitEvents").SetDouble(1.);
+               DOUT5(("retransmit - used size %d",usedsize));
+           }
+         
+
+
 
 		if(dostop) break;
 		outbuf.SetTotalSize(usedsize);
