@@ -111,7 +111,7 @@ void hadaq::MbsTransmitterModule::retransmit()
                DOUT5(("retransmit - used size %d",usedsize));
                firstevent = true;
                totalevlen = 0;
-               usedsize = 0;
+               //usedsize = 0;
             }
          } //  if(!firstevent)
 		   totalevlen+=evlen;
@@ -146,7 +146,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		    memcpy(destcursor,hev,evlen);
 		    usedsize+=evlen;
 
-		} // while hiter.NextEvent()
+	} // while hiter.NextEvent()
 
 		if(dostop) break;
 		outbuf.SetTotalSize(usedsize);
