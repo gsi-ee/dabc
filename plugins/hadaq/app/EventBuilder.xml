@@ -28,10 +28,10 @@
        <BufferSize value="65536"/>
        
        <!-- take event sequence number from vulom/roc sync message at cts -->
-       <UseSyncSequenceNumber value="true"/>
+       <UseSyncSequenceNumber value="false"/>
        <SyncSubeventId value="0x8000"/>
-       
-       <NumInputs value="1"/>
+       <SyncTriggerMask value="0x01"/>
+       <NumInputs value="5"/>
        <Port name="Input0">
           <HadaqUdpPort value="50000"/>
        </Port>
@@ -72,6 +72,8 @@
           <MbsServerKind value="Stream"/>
           <MbsServerPort value="6543"/>
             <SubeventFullId value="0x000001F"/> 
+             <DoMergeSyncedEvents value="false"/> 
+             <MergeLimit value="10"/> 
             <OutputQueueSize value="1000"/>
 
         </Port>

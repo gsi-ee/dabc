@@ -214,6 +214,7 @@ namespace hadaq {
 
          bool fUseSyncSeqNumber; // if true, use vulom/roc syncnumber for event sequence number
          int  fSyncSubeventId; // id number of sync subevent
+         uint32_t fSyncTriggerMask; // bit mask for accepted trigger inputs in sync mode
 
          int  fNumInputs;
          int  fNumCompletedBuffers; // SL: workaround counter, which indicates how many buffers were taken from queues

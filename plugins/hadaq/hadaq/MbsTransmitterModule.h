@@ -35,6 +35,13 @@ namespace hadaq {
 
          unsigned int fSubeventId;
 
+         /* true if subsequent hadaq events with same sequence number should be merged
+          * into one mbs subevent*/
+         bool fMergeSyncedEvents;
+
+         /* Threshold how many subsequent events of same sequence number shall be merged*/
+         unsigned fMergeSyncMaxEvents;
+
       public:
       	MbsTransmitterModule(const char* name, dabc::Command cmd = 0);
 

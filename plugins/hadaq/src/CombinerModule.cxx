@@ -70,9 +70,10 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 
    fUseSyncSeqNumber= Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(true); // if true, use vulom/roc syncnumber for event sequence number
-   fSyncSubeventId=   Cfg(hadaq::xmlSyncSubeventId, cmd).AsInt(0x8000);//0x8000; // TODO: configuration from xml
+   fSyncSubeventId=   Cfg(hadaq::xmlSyncSubeventId, cmd).AsInt(0x8000);//0x8000;
+   fSyncTriggerMask=   Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
    if (fUseSyncSeqNumber)
-      DOUT0(("HADAQ combiner module with VULOM sync event sequence number from cts subevent id 0x%0x",fSyncSubeventId));
+      DOUT0(("HADAQ combiner module with VULOM sync event sequence number from cts subevent:0x%0x, trigger mask:0x%0x",fSyncSubeventId, fSyncTriggerMask));
    else
       DOUT0(("HADAQ combiner module with independent event sequence number"));
 
@@ -728,9 +729,9 @@ bool hadaq::CombinerModule::BuildEvent()
                   DOUT5(("***  --- Found error bit at sync number: 0x%x, full sync data:0x%x", syncnum, syncdata));
                }
             //else if (trigtype   != 0) // todo: configure which trigger type contains the sync, currently it'S 0
-            else if ((trigtype & 0x1) != 0x1)
+            else if ((trigtype & fSyncTriggerMask) == 0x0)
             {
-                  DOUT5(("***  --- Found non SYNC trigger type :0x%x , full sync data:0x%x ",trigtype,syncdata));
+                  DOUT5(("***  --- Found not accepted trigger type :0x%x , full sync data:0x%x ",trigtype,syncdata));
             }
             else
                {
@@ -767,44 +768,6 @@ bool hadaq::CombinerModule::BuildEvent()
       fOut.evnt()->SetId(currentid & (HADAQ_NEVTIDS_IN_FILE - 1));
 
 
-//      if(fUseSyncSeqNumber)
-//         {
-//      // we may put sync id from subevent payload to event sequence number already here.
-//         hadaq::Subevent* syncsub= fInp[0].subevnt(); // for the moment, sync number must be in first udp input
-//                            // TODO: put this to configuration
-//
-//         // look into subevent for subsubevent with id of cts payload
-////         char* cursor =  (char*) syncsub;
-////         char* endofdata= cursor+ syncsub->GetSize();
-////         cursor+=sizeof(hadaq::Subevent); // move to begin of subsubevent data
-////
-//         if (syncsub->GetId() != fSyncSubeventId) {
-//            // main subevent has same id as cts/hub subsubevent
-//            DOUT1(("***  --- sync subevent at input 0x%x has wrong id 0x%x !!! Check configuration.\n", 0, syncsub->GetId()));
-//         }
-//
-//         else {
-//            unsigned datasize = syncsub->GetNrOfDataWords();
-//            unsigned ix = 0;
-//            while (ix < datasize) {
-//               //scan through trb3 data words and look for the cts subsubevent
-//               unsigned data = syncsub->Data(ix);
-//               //! Central hub header and inside
-//               if ((data & 0xFFFF) == (unsigned) fSyncSubeventId) {
-//                  unsigned centHubLen = ((data >> 16) & 0xFFFF);
-//                  DOUT5(("***  --- central hub header: 0x%x, size=%d\n", data, centHubLen));
-//                  unsigned syncdata = syncsub->Data(ix + centHubLen);
-//                  unsigned syncnum = (syncdata & 0xFFFFFF);
-//                  DOUT5(("***  --- found sync data: 0x%x, sync number is %d\n", syncdata, syncnum));
-//                  fOut.evnt()->SetSeqNr(syncnum);
-//                  break;
-//               }
-//               ++ix;
-//            }
-//
-//         } // if (syncsub->GetId() != fSyncSubeventId)
-//
-//         } // if(fUseSyncSeqNumber)
 
          // third input loop: build output event from all not empty subevents
       for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {

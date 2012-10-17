@@ -42,8 +42,10 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 	CreateOutput(mbs::portOutput, Pool(), 5);
 
 	fSubeventId = Cfg(hadaq::xmlMbsSubeventId, cmd).AsInt(0x000001F);
+	fMergeSyncedEvents = Cfg(hadaq::xmlMbsMergeSyncMode, cmd).AsBool(false);
+	fMergeSyncMaxEvents = Cfg(hadaq::xmlMbsMergeLimit, cmd).AsInt(20);
 
-	DOUT0(("hadaq:TransmitterModule subevid = 0x%x", (unsigned) fSubeventId));
+	DOUT0(("hadaq:TransmitterModule subevid = 0x%x, merge sync mode = %d", (unsigned) fSubeventId, fMergeSyncedEvents));
 
    CreatePar("TransmitData").SetRatemeter(false, 5.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
@@ -70,6 +72,9 @@ void hadaq::MbsTransmitterModule::retransmit()
       return;
 #endif
 
+      bool firstevent=true;
+      unsigned mergecount=0;
+
 
    bool dostop = false;
 	while (Output(0)->CanSend() && Input(0)->CanRecv()) {
@@ -86,40 +91,62 @@ void hadaq::MbsTransmitterModule::retransmit()
 		mbs::WriteIterator miter(outbuf);
 		hadaq::ReadIterator hiter(inbuf);
 		hadaq::Event* hev;
+		int evcount=0;
+		size_t totalevlen=0;
+		void* destcursor=0;
 		while(hiter.NextEvent())
 		{
 		   hev=hiter.evnt();
 		   size_t evlen=hev->GetPaddedSize();
-		   DOUT5(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
+         if (!firstevent) {
+            if (fMergeSyncedEvents && evcount == hev->GetSeqNr()
+                  && mergecount++ < fMergeSyncMaxEvents) {
+               // OK, we continue merging to first event
+            } else {
+               DOUT0(
+                     ("close output event %d of size %d, mergecount:%d",hev->GetSeqNr(),totalevlen, mergecount));
+               // close current mbs event, start next:
+               miter.FinishSubEvent(totalevlen);
+               miter.FinishEvent();
+               Par("TransmitEvents").SetDouble(1.);
+               DOUT5(("retransmit - used size %d",usedsize));
+               firstevent = true;
+               totalevlen = 0;
+               usedsize = 0;
+            }
+         } //  if(!firstevent)
+		   totalevlen+=evlen;
+		   DOUT0(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
 
-		   //unsigned id = hev->GetId();
-		   unsigned evcount=hev->GetSeqNr();
-		   // assign and check event/subevent header for wrapper structures:
-		   if (!miter.NewEvent(evcount))
-		      {
-		         DOUT1(("Count limit. Can not add new mbs event to output buffer anymore - stop module. Check mempool setup!"));
-		         dostop = true;
-		         break;
-		      }
-		   //mbs::EventHeader* mev=miter.evnt();
-		   usedsize+=sizeof(mbs::EventHeader);
-		   if (!miter.NewSubevent(evlen))
-		      {
-		           DOUT1(("Len limit: %u Buffer: %u Can not add new mbs subevent to output buffer anymore - stop module. Check mempool setup!", (unsigned) evlen, (unsigned) inbuf.GetTotalSize()));
-		           dostop = true;
-		           break;
-		      }
-		   usedsize+=sizeof(mbs::SubeventHeader);
+         if (firstevent) {
+            firstevent = false;
+            //unsigned id = hev->GetId();
+            evcount = hev->GetSeqNr();
+            // assign and check event/subevent header for wrapper structures:
+            if (!miter.NewEvent(evcount)) {
+               DOUT1(
+                     ("Count limit. Can not add new mbs event to output buffer anymore - stop module. Check mempool setup!"));
+               dostop = true;
+               break;
+            }
+            //mbs::EventHeader* mev=miter.evnt();
+            usedsize += sizeof(mbs::EventHeader);
+            if (!miter.NewSubevent(evlen)) {
+               DOUT1(("Len limit: %u Buffer: %u Can not add new mbs subevent to output buffer anymore - stop module. Check mempool setup!", (unsigned) evlen, (unsigned) inbuf.GetTotalSize()));
+               dostop = true;
+               break;
+            }
+            usedsize += sizeof(mbs::SubeventHeader);
+            destcursor = miter.rawdata();
+         }  // firstevent
+
+
 		   // OK, we copy full hadaq event into mbs subevent payload:
 		    mbs::SubeventHeader* msub=miter.subevnt();
 		    msub->iProcId=fSubeventId; // configured for TTrbProc etc.
-
-		    memcpy(miter.rawdata(),hev,evlen);
+		    memcpy(destcursor,hev,evlen);
 		    usedsize+=evlen;
-		    miter.FinishSubEvent(evlen);
-		    miter.FinishEvent();
-		    Par("TransmitEvents").SetDouble(1.);
-		    DOUT5(("retransmit - used size %d",usedsize));
+
 		} // while hiter.NextEvent()
 
 		if(dostop) break;
