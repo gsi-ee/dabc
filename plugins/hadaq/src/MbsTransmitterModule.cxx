@@ -103,8 +103,7 @@ void hadaq::MbsTransmitterModule::retransmit()
                   && mergecount++ < fMergeSyncMaxEvents) {
                // OK, we continue merging to first event
             } else {
-               DOUT0(
-                     ("close output event %d of size %d, mergecount:%d",hev->GetSeqNr(),totalevlen, mergecount));
+               DOUT5(("close output event %d of size %d, mergecount:%d",hev->GetSeqNr(),totalevlen, mergecount));
                // close current mbs event, start next:
                miter.FinishSubEvent(totalevlen);
                miter.FinishEvent();
@@ -116,7 +115,7 @@ void hadaq::MbsTransmitterModule::retransmit()
             }
          } //  if(!firstevent)
 		   totalevlen+=evlen;
-		   DOUT0(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
+		   DOUT5(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
 
          if (firstevent) {
             firstevent = false;
