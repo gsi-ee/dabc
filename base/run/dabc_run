@@ -6,7 +6,7 @@ if [[ "$1" == "-version" || "$1" == "-v" || "$1" == "--version" ]] ; then
 fi
 
 if [[ "$1" == "" || "$1" == "?" || "$1" == "-help" || "$1" == "-h" || "$1" == "/?" ]] ; then
-   echo "Usage: run.sh filename.xml [run|start|stop|copy|test|kill|dellog] [-node N] [-v|-verbose]"
+   echo "Usage: dabc_run filename.xml [run|start|stop|copy|test|kill|dellog] [-node N] [-v|-verbose]"
    echo "    filename.xml - xml file with application(s) configuration "
    echo "Run options: "
    echo "    start - only start application [default]"
