@@ -53,8 +53,8 @@ hadaq::UdpDataSocket::UdpDataSocket(dabc::Reference port, dabc::Command cmd) :
    fTotalRecvBuffers=0;
    fTotalDroppedBuffers=0;
 
-   fFlushTimeout = 0;
-   fUpdateCountersFlag=false;
+   fLastUpdateTime = 0;
+   fFlushTimeout = 0.2;
    fBufferSize = 2 * DEFAULT_MTU;
    fBuildFullEvent = false;
 
@@ -87,11 +87,12 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port, dabc::Command cmd)
 
    fBufferSize = port->Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
    
-   DOUT0(("Hadaq buffer size %u", (unsigned) fBufferSize));
+   fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
+   // fFlushTimeout = 0.2;
+//   DOUT0(("fFlushTimeout = %5.3f %s  port %s", fFlushTimeout, dabc::xmlFlushTimeout, port->GetName()));
+
+   DOUT0(("Hadaq buffer size %u flush timeout %3.2f", (unsigned) fBufferSize, fFlushTimeout));
    
-   //fFlushTimeout = port->Cfg(dabc::xmlFlushTimeout).AsDouble(fFlushTimeout);
-   fFlushTimeout = 1.0;
-   // DOUT0(("fFlushTimeout = %5.1f %s", fFlushTimeout, dabc::xmlFlushTimeout));
 
    fWithObserver = port->Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 
@@ -129,9 +130,8 @@ void hadaq::UdpDataSocket::ConfigureFor(dabc::Port* port, dabc::Command cmd)
       Par(fDataRateName).SetDebugLevel(1);
       RegisterExportedCounters();
    }
-
-
 }
+
 
 void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
 {
@@ -141,6 +141,19 @@ void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
          // this is required for DABC 2.0 to again enable read event generation
          SetDoingInput(true);
          ReadUdp();
+
+         /*
+         static unsigned  numd(0);
+         static dabc::TimeStamp tm1, tm2;
+         if (++numd == 500) {
+            tm2.GetNow();
+            if (!tm1.null())
+               DOUT0(("DRate = %5.2f", 1.*numd / (0.+tm2.AsDouble()-tm1.AsDouble())));
+            tm1 = tm2;
+            numd = 0;
+         }
+         */
+         
          break;
       }
 
@@ -153,10 +166,14 @@ void hadaq::UdpDataSocket::ProcessEvent(const dabc::EventId& evnt)
 double  hadaq::UdpDataSocket::ProcessTimeout(double lastdiff)
 {
    DOUT5(("hadaq::UdpDataSocket %s ProcessTimeoutlastdiff=%e", GetName(),lastdiff));
-   if (fUpdateCountersFlag)
+   
+   if (fFlushTimeout > 0)
+      NewReceiveBuffer();
+   
+   if (fWithObserver) 
       UpdateExportedCounters();
-   fUpdateCountersFlag= true;
-   return fFlushTimeout;
+   
+   return fFlushTimeout > 0. ? fFlushTimeout : 3.;
 }
 
 void hadaq::UdpDataSocket::RegisterExportedCounters()
@@ -178,7 +195,12 @@ void hadaq::UdpDataSocket::RegisterExportedCounters()
 bool hadaq::UdpDataSocket::UpdateExportedCounters()
 {
    if(!fWithObserver) return false;
-   fUpdateCountersFlag = false; // do not call this from timer again while it is processed
+   
+   double tm1 = dabc::TimeStamp::Now().AsDouble();
+   if (tm1 - fLastUpdateTime < 1) return false;
+   fLastUpdateTime = tm1;
+   
+   
    SetNetmemPar(dabc::format("pktsReceived%d", fIdNumber), fTotalRecvPacket);
    SetNetmemPar(dabc::format("pktsDiscarded%d", fIdNumber),
          fTotalDiscardPacket);
@@ -251,19 +273,16 @@ bool hadaq::UdpDataSocket::ProcessPoolRequest()
 
 void hadaq::UdpDataSocket::StartTransport()
 {
-   DOUT0(("Starting UDP transport %s",GetName()));
+   DOUT3(("Starting UDP transport %s",GetName()));
    NewReceiveBuffer();
-   // note: we can no sooner activate the timeout, since threads are not assigned in ctor JAM
-   if (fWithObserver && fFlushTimeout > 0.)
-          if(!ActivateTimeout(fFlushTimeout))
-             EOUT(("%s could not activate timeout of %f s",GetName(),fFlushTimeout));
-
-
+   
+   if(!ActivateTimeout(fFlushTimeout > 0. ? fFlushTimeout : 3.))
+      EOUT(("%s could not activate timeout of %f s",GetName(),fFlushTimeout));
 }
 
 void hadaq::UdpDataSocket::StopTransport()
 {
-   DOUT5(("Stopping hadaq:udp transport -"));
+   DOUT3(("Stopping hadaq:udp transport -"));
    DOUT0(("%s: RecvPackets:%d, DiscPackets:%d, RecvMsg:%d, DiscMsg:%d, RecvBytes:%d, RcvBufs:%d DropBufs:%d BuildEvts:%d", GetName(), (int) fTotalRecvPacket, (int) fTotalDiscardPacket, (int) fTotalRecvMsg, (int) fTotalDiscardMsg, (int) fTotalRecvBytes, (int) fTotalRecvBuffers, (int) fTotalDroppedBuffers, (int) fTotalRecvEvents));
    // NOTE : we see strange things in DOUT, wrong or shifted values if we do not cast uint63_t to int!
 // this output would not go into dabc logfile:
@@ -361,6 +380,9 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
       // first shrink last receive buffer to full received hadtu envelopes:
       // to cut last trailing event header, otherwise we get trouble with read iterator for evtbuilding
       unsigned filledsize = fTgtPtr - (char*) fTgtBuf.SegmentPtr();
+      
+      if (filledsize==0) return;
+      
       fTgtBuf.SetTotalSize(filledsize);
 
       // then we optionally format the output buffer
@@ -384,7 +406,7 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
 
       } else {
          // no event building: pass receive buffer over as it is
-         outbuf = fTgtBuf;
+         outbuf = fTgtBuf.HandOver();
       }
    } //  if (!fTgtBuf.null()) oldbuffer
 
@@ -437,6 +459,7 @@ void hadaq::UdpDataSocket::NewReceiveBuffer(bool copyspanning)
       } else {
          fTotalRecvBuffers++;
          FirePortInput();
+         // DOUT0(("New buffer in the queue"));
       }
    } // if (!outbuf.null())
 }

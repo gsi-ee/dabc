@@ -106,6 +106,8 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    if (fServOutput)
       CreateOutput(mbs::portServerOutput, Pool(), 5);
 
+   CreatePar(dabc::xmlFlushTimeout).DfltDouble(0.5);
+
    if (flushtmout > 0.)
       CreateTimer("FlushTimer", flushtmout, false);
 
@@ -138,6 +140,8 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    fPool = dabc::mgr.FindItem("Pool");
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
+ 
+   
    SetInfo(
          dabc::format(
                "HADAQ combiner module ready. Runid:%d, fileout:%d, servout:%d flush:%3.1f",
@@ -151,6 +155,10 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
    fNumCompletedBuffers = 0;
 }
+
+// unsigned firstsync(0), lastsync(0), numsync(0), numd(0);
+// dabc::TimeStamp tm1, tm2, tmd;
+
 
 hadaq::CombinerModule::~CombinerModule()
 {
@@ -175,6 +183,10 @@ void hadaq::CombinerModule::ModuleCleanup()
    fCfg.clear();
    
    fPool.Release();
+   
+//   DOUT0(("First %06x Last %06x Num %u Time %5.2f", firstsync, lastsync, numsync, tm2-tm1));
+//   if (numsync>0)
+//      DOUT0(("Step %5.2f rate %5.2f sync/s", (lastsync-firstsync + 0.) / numsync, (numsync + 0.) / (tm2-tm1)));
 }
 
 
@@ -732,6 +744,26 @@ bool hadaq::CombinerModule::BuildEvent()
                   syncnum = (syncdata & 0xFFFFFF);
                   DOUT5(("***  --- found sync data: 0x%x, sync number is %d, errorbit %s", syncdata, syncnum, DBOOL((syncdata >> 31) & 0x1)));
 
+/*                  if (firstsync==0) {
+                     firstsync = syncnum;
+                     tm1.GetNow();
+                     tmd.GetNow();
+                     numd = 0;
+                     DOUT0((" =========== FIRST %u ================", syncnum));
+                  }
+                  
+                  if ((lastsync!=0) && ((syncnum - lastsync) != 32))
+                     EOUT(("Prev %u Next %u Diff %u", lastsync, syncnum, syncnum - lastsync));
+                  
+                  lastsync = syncnum;
+                  tm2.GetNow();
+                  numsync++;
+                  if (++numd == 500) {
+                     DOUT0(("Rate = %5.2f", 1.*numd / (tm2 - tmd)));
+                     numd = 0;
+                     tmd = tm2;
+                  }
+*/                  
                   break;
                }
                ++ix;
@@ -981,12 +1013,6 @@ void hadaq::CombinerModule::SetNetmemPar(const std::string& name,
 {
    Par(GetNetmemParName(name)).SetUInt(value);
 }
-
-
-
-
-
-
 
 
 extern "C" void InitHadaqEvtbuilder()

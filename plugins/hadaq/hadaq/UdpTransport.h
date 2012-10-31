@@ -108,7 +108,6 @@ namespace hadaq {
 
          double             fFlushTimeout;  // timeout for controls parameter update
 
-         bool fUpdateCountersFlag;
          /* if true, we will produce full hadaq events with subevent for direct use.
           * otherwise, produce subevent stream for consecutive event builder module.
           */
@@ -116,6 +115,8 @@ namespace hadaq {
 
          /* switch to export some counters to shmem observer*/
          bool fWithObserver;
+         
+         double fLastUpdateTime;
 
          /* run id from timeofday for eventbuilding*/
          RunId fRunNumber;
