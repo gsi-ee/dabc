@@ -119,6 +119,8 @@ namespace hadaq {
       public:
          CombinerModule(const char* name, dabc::Command cmd = 0);
          virtual ~CombinerModule();
+         
+         virtual void ModuleCleanup();
 
          virtual void ProcessInputEvent(dabc::Port* port);
          virtual void ProcessOutputEvent(dabc::Port* port);

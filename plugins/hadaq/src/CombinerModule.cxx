@@ -163,6 +163,22 @@ hadaq::CombinerModule::~CombinerModule()
    fPool.Release();
 }
 
+void hadaq::CombinerModule::ModuleCleanup()
+{
+   DOUT1(("hadaq::CombinerModule::ModuleCleanup()"));
+
+   fOut.Close().Release();
+   
+   for (unsigned n=0;n<fInp.size();n++)
+      fInp[n].Reset();
+
+   fCfg.clear();
+   
+   fPool.Release();
+}
+
+
+
 void hadaq::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
 {
 
@@ -714,7 +730,7 @@ bool hadaq::CombinerModule::BuildEvent()
                   fCfg[0].fTrigType=trigtype; // overwrite default trigger type from main hades cts format
                   syncdata = syncsub->Data(ix + centHubLen);
                   syncnum = (syncdata & 0xFFFFFF);
-                  DOUT5(("***  --- found sync data: 0x%x, sync number is %d", syncdata, syncnum));
+                  DOUT5(("***  --- found sync data: 0x%x, sync number is %d, errorbit %s", syncdata, syncnum, DBOOL((syncdata >> 31) & 0x1)));
 
                   break;
                }
