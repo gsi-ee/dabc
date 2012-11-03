@@ -61,10 +61,20 @@ namespace mbs {
          bool NextSubEvent();
 
          EventHeader* evnt() const { return (EventHeader*) fEvPtr(); }
+         // return actual event size, will not exceed buffers limit
+         unsigned GetEventSize() const;
          bool AssignEventPointer(dabc::Pointer& ptr);
+
+         /** Returns pointer, which assign on complete event, including header */
+         dabc::Pointer GetEventPointer();
+
+         /** Returns pointer, which assign only on subevents */
+         dabc::Pointer GetSubeventsPointer();
+
+
          SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
          void* rawdata() const { return fRawPtr(); }
-         uint32_t rawdatasize() const { return fRawPtr.fullsize(); }
+         unsigned rawdatasize() const { return fRawPtr.fullsize(); }
 
          static unsigned NumEvents(const dabc::Buffer& buf);
    };
@@ -79,14 +89,22 @@ namespace mbs {
 
          bool IsBuffer() const { return !fBuffer.null(); }
          bool IsEmpty() const { return fFullSize == 0; }
+
          bool IsPlaceForEvent(uint32_t subeventsize);
          bool NewEvent(EventNumType event_number = 0, uint32_t subeventsize = 0);
+
          bool NewSubevent(uint32_t minrawsize = 0, uint8_t crate = 0, uint16_t procid = 0, uint8_t control = 0);
          bool FinishSubEvent(uint32_t rawdatasz);
-
          bool AddSubevent(const dabc::Pointer& source);
          bool AddSubevent(SubeventHeader* sub);
+
          bool FinishEvent();
+
+         /** Method to copy full event from the other place.
+          * ptr should contain event with full header.
+          * Fot instance, mbs::ReadIterator.AssignEventPointer() could be used.
+          * If finish==false, one could add more subevents. */
+         bool CopyEventFrom(const dabc::Pointer& ptr, bool finish = true);
 
          dabc::Buffer Close();
 

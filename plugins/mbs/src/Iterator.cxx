@@ -109,6 +109,30 @@ bool mbs::ReadIterator::NextEvent()
    return true;
 }
 
+unsigned mbs::ReadIterator::GetEventSize() const
+{
+   if (evnt()==0) return 0;
+   unsigned res = evnt()->FullSize();
+   return res < fEvPtr.fullsize() ? res : fEvPtr.fullsize();
+
+}
+
+dabc::Pointer mbs::ReadIterator::GetEventPointer()
+{
+   dabc::Pointer res;
+   AssignEventPointer(res);
+   return res;
+}
+
+dabc::Pointer mbs::ReadIterator::GetSubeventsPointer()
+{
+   dabc::Pointer res;
+   AssignEventPointer(res);
+   if (!res.null()) res.shift(sizeof(mbs::EventHeader));
+   return res;
+}
+
+
 bool mbs::ReadIterator::AssignEventPointer(dabc::Pointer& ptr)
 {
    if (fEvPtr.null()) {
@@ -196,46 +220,45 @@ bool mbs::WriteIterator::Reset(const dabc::Buffer& buf)
 
    fBuffer = buf;
    fBuffer.SetTypeId(mbt_MbsEvents);
+   fEvPtr = fBuffer;
    return true;
 }
 
 dabc::Buffer mbs::WriteIterator::Close()
 {
+   if (!fSubPtr.null()) FinishEvent();
    fEvPtr.reset();
-   fSubPtr.reset();
    if ((fFullSize>0) && (fBuffer.GetTotalSize() >= fFullSize))
       fBuffer.SetTotalSize(fFullSize);
    fFullSize = 0;
 
-   dabc::Buffer res;
-   res << fBuffer;
-
-   return res;
+   return fBuffer.HandOver();
 }
 
 bool mbs::WriteIterator::IsPlaceForEvent(uint32_t subeventssize)
 {
-   dabc::BufferSize_t availible = 0;
-
-   if (!fEvPtr.null()) availible = fEvPtr.fullsize();
-                 else  availible = fBuffer.GetTotalSize();
-
-   return availible >= (sizeof(EventHeader) + subeventssize);
+   return fEvPtr.fullsize() >= (sizeof(EventHeader) + subeventssize);
 }
 
 
 bool mbs::WriteIterator::NewEvent(EventNumType event_number, uint32_t minsubeventssize)
 {
-   if (fBuffer.null()) return false;
-
-   if (fEvPtr.null())  fEvPtr = fBuffer;
-
-   fSubPtr.reset();
-
-   if (fEvPtr.fullsize() < (sizeof(EventHeader) + minsubeventssize)) {
-      fEvPtr.reset();
+   if (!fSubPtr.null()) {
+      EOUT(("Previous event not closed"));
       return false;
    }
+
+   if (fEvPtr.null()) {
+      EOUT(("No any place for new event"));
+      return false;
+   }
+
+   if (fEvPtr.fullsize() < (sizeof(EventHeader) + minsubeventssize)) {
+      EOUT(("Too few place for the new event"));
+      return false;
+   }
+
+   fSubPtr.reset(fEvPtr, sizeof(EventHeader));
 
    evnt()->Init(event_number);
 
@@ -244,10 +267,7 @@ bool mbs::WriteIterator::NewEvent(EventNumType event_number, uint32_t minsubeven
 
 bool mbs::WriteIterator::NewSubevent(uint32_t minrawsize, uint8_t crate, uint16_t procid, uint8_t control)
 {
-   if (fEvPtr.null()) return false;
-
-   if (fSubPtr.null())
-      fSubPtr.reset(fEvPtr, sizeof(EventHeader));
+   if (fSubPtr.null()) return false;
 
    if (fSubPtr.fullsize() < (sizeof(SubeventHeader) + minrawsize)) return false;
 
@@ -271,15 +291,13 @@ bool mbs::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
 
 bool mbs::WriteIterator::AddSubevent(const dabc::Pointer& source)
 {
-   if (fEvPtr.null()) return false;
-
-   if (fSubPtr.null())
-      fSubPtr.reset(fEvPtr, sizeof(EventHeader));
+   if (fSubPtr.null()) return false;
 
    if (fSubPtr.fullsize() < source.fullsize()) return false;
 
    fSubPtr.copyfrom(source);
 
+   // we expect here, that subevent has correct length
    fSubPtr.shift(source.fullsize());
 
    return true;
@@ -292,14 +310,39 @@ bool mbs::WriteIterator::AddSubevent(mbs::SubeventHeader* sub)
 
 bool mbs::WriteIterator::FinishEvent()
 {
-   if (fEvPtr.null()) return false;
+   if (fEvPtr.null() || fSubPtr.null()) return false;
 
-   dabc::BufferSize_t dist = sizeof(EventHeader);
-   if (!fSubPtr.null()) dist = fEvPtr.distance_to(fSubPtr);
+   dabc::BufferSize_t dist = fEvPtr.distance_to(fSubPtr);
    evnt()->SetFullSize(dist);
-   fFullSize += dist;
    fEvPtr.shift(dist);
+   fSubPtr.reset();
+   fFullSize += dist;
 
    return true;
 }
 
+bool mbs::WriteIterator::CopyEventFrom(const dabc::Pointer& ptr, bool finish)
+{
+   if (!fSubPtr.null()) {
+      EOUT(("Previous event not closed"));
+      return false;
+   }
+
+   if (fEvPtr.null()) {
+      EOUT(("No any place for new event"));
+      return false;
+   }
+
+   if (fEvPtr.fullsize() < ptr.fullsize()) {
+      EOUT(("Too few place for the new event"));
+      return false;
+   }
+
+   fEvPtr.copyfrom(ptr);
+
+   fSubPtr.reset(fEvPtr, ptr.fullsize());
+
+   if (finish) return FinishEvent();
+
+   return true;
+}
