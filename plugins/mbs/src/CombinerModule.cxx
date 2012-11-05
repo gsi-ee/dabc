@@ -619,9 +619,14 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command cmd)
 
 //         DOUT0(("Do3 input configure %u size %u", ninp, fCfg.size()));
 
+         // optional imputs not need to be accounted for obligatory inputs
+         if (fCfg[ninp].optional_input || fCfg[ninp].no_evnt_num) {
+            if (fNumObligatoryInputs>1) fNumObligatoryInputs--;
+         }
+
+         // events without number could not be MBS events
          if (fCfg[ninp].no_evnt_num) {
             fCfg[ninp].real_mbs = false;
-            if (fNumObligatoryInputs>1) fNumObligatoryInputs--;
          }
 
          DOUT1(("Configure input%u of module %s: RealMbs:%s RealEvntNum:%s EvntSrcFullId: 0x%x EvntSrcShift: %u",
