@@ -60,7 +60,7 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    for (int n=0;n<numinp;n++) {
       CreateInput(FORMAT((mbs::portInputFmt, n)), Pool(), 10);
 
-//      DOUT0(("  Port%u: Capacity %u", n, Input(n)->InputQueueCapacity()));
+      DOUT0((" MBS COMBINER  Port%u: Capacity %u", n, Input(n)->InputQueueCapacity()));
 
       fInp.push_back(ReadIterator());
       fCfg.push_back(InputCfg());
@@ -153,6 +153,12 @@ void mbs::CombinerModule::ProcessOutputEvent(dabc::Port* port)
 void mbs::CombinerModule::ProcessConnectEvent(dabc::Port* port)
 {
    DOUT0(("MbsCombinerModule ProcessConnectEvent %s", port->GetName()));
+
+   for (int n=0;n<NumInputs();n++) {
+      DOUT0((" MBS COMBINER  Port%u: Size %u %u", n, Input(n)->InputQueueSize(), Input(n)->OutputQueueSize()));
+  }
+
+
 }
 
 void mbs::CombinerModule::ProcessDisconnectEvent(dabc::Port* port)
@@ -180,6 +186,7 @@ bool mbs::CombinerModule::FlushBuffer()
 void mbs::CombinerModule::BeforeModuleStart()
 {
    DOUT2(("mbs::CombinerModule::BeforeModuleStart name: %s is calling first build event...", GetName()));
+
 
    // FIXME: why event processing already done here ???
 
@@ -298,6 +305,8 @@ bool mbs::CombinerModule::BuildEvent()
    // indicate if some of main (non-optional) input queues are mostly full
    // if such queue will be found, incomplete event may be build when it is allowed
 
+//   DOUT0(("BuildEvent method"));
+
    int mostly_full(-1);
    bool required_missing(false);
 
@@ -324,7 +333,7 @@ bool mbs::CombinerModule::BuildEvent()
              (fCfg[ninp].no_evnt_num && port->InputPending()>1)) {
             ShiftToNextBuffer(ninp);
             SetInfo(dabc::format("Skip buffer on input %u while some other input is disconnected", ninp));
-            // DOUT0(("Skip buffer on input %u",ninp));
+            DOUT0(("Skip buffer on input %u",ninp));
          }
       }
 
@@ -453,20 +462,24 @@ bool mbs::CombinerModule::BuildEvent()
 
    if (fBuildCompleteEvents && important_input_skipped && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumObligatoryInputs(), diff));
+//      DOUT0(("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumObligatoryInputs(), diff));
    } else
    if (duplicatefound && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip event %u while duplicates subevents found", buildevid));
+//      DOUT0(("Skip event %u while duplicates subevents found", buildevid));
    } else {
 
       if (fBuildCompleteEvents && (numusedinp < NumObligatoryInputs())) {
          SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
-         DOUT2(("%s skip optional input and build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
+//         DOUT0(("%s skip optional input and build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
       } else
       if (important_input_skipped) {
          SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
-         DOUT2(("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
-      } else
+//         DOUT0(("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
+      } else {
          SetInfo(dabc::format("Build event %u with %u inputs", buildevid, numusedinp));
+//         DOUT0(("Build event %u with %u inputs", buildevid, numusedinp));
+      }
 
       // if there is no place for the event, flush current buffer
       if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(subeventssize))

@@ -36,6 +36,8 @@ dabc::LocalTransport::LocalTransport(Reference port, Mutex* mutex, bool owner, b
    fRunning(true)
 {
    RegisterTransportDependencies(this);
+   
+   DOUT0(("Create local transport with queue capacity %u", fQueue.Capacity()));
 }
 
 dabc::LocalTransport::~LocalTransport()
