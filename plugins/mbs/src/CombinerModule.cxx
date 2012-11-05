@@ -315,7 +315,7 @@ bool mbs::CombinerModule::BuildEvent()
 
 //      DOUT0(("  Port%u: pending %u capacity %u", ninp, port->InputPending(), port->InputQueueCapacity()));
 
-      if (fCfg[ninp].no_evnt_num) continue;
+      if (IsOptionalInput(ninp)) continue;
 
       if (!port->IsConnected()) required_missing = true;
 
@@ -440,7 +440,7 @@ bool mbs::CombinerModule::BuildEvent()
          continue;
       }
 
-      if (!fCfg[ninp].no_evnt_num) {
+      if (!IsOptionalInput(ninp)) {
          // take into account only events with "normal" event number
          if (firstselected<0) firstselected = ninp;
          numusedinp++;
