@@ -417,7 +417,7 @@ bool mbs::CombinerModule::BuildEvent()
    // define number of input which will be used to copy mbs header
    int copyMbsHdrId = -1;
    std::map<uint32_t, bool> subid_map;
-   unsigned numusedinp = 0;
+   unsigned num_selected_important(0), num_selected_all(0);
 
    // check of unique subevent ids:
    bool duplicatefound = false;
@@ -441,10 +441,12 @@ bool mbs::CombinerModule::BuildEvent()
          continue;
       }
 
+      num_selected_all++;
+
       if (!IsOptionalInput(ninp)) {
          // take into account only events with "normal" event number
          if (firstselected<0) firstselected = ninp;
-         numusedinp++;
+         num_selected_important++;
          if (fCfg[ninp].real_mbs && (copyMbsHdrId<0)) copyMbsHdrId = ninp;
       }
 
@@ -462,24 +464,24 @@ bool mbs::CombinerModule::BuildEvent()
    }
 
    if (fBuildCompleteEvents && important_input_skipped && (hasTriggerEvent<0)) {
-      SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumObligatoryInputs(), diff));
-//    DOUT0(("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, numusedinp, NumObligatoryInputs(), diff));
+      SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, num_selected_important, NumObligatoryInputs(), diff));
+//    DOUT0(("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, num_selected_important, NumObligatoryInputs(), diff));
    } else
    if (duplicatefound && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip event %u while duplicates subevents found", buildevid));
 //    DOUT0(("Skip event %u while duplicates subevents found", buildevid));
    } else {
 
-      if (fBuildCompleteEvents && (numusedinp < NumObligatoryInputs())) {
-         SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
-//       DOUT0(("%s skip optional input and build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
+      if (fBuildCompleteEvents && (num_selected_important < NumObligatoryInputs())) {
+         SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
+//       DOUT0(("%s skip optional input and build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
       } else
       if (important_input_skipped) {
-         SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
-//       DOUT0(("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, numusedinp, NumObligatoryInputs(), firstselected, diff, mostly_full));
+         SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
+//       DOUT0(("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
       } else {
-         SetInfo(dabc::format("Build event %u with %u inputs", buildevid, numusedinp));
-//       DOUT0(("Build event %u with %u inputs", buildevid, numusedinp));
+         SetInfo(dabc::format("Build event %u with %u inputs", buildevid, num_selected_all));
+//       DOUT0(("Build event %u with %u inputs", buildevid, num_selected_all));
       }
 
       // if there is no place for the event, flush current buffer
