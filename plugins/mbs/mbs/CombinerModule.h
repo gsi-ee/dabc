@@ -162,7 +162,7 @@ namespace mbs {
 
          void SetInfo(const std::string& info, bool forceinfo = false);
 
-         bool IsOptionalInput(unsigned ninp) { return ninp<fCfg.size() ? fCfg[ninp].optinal_input || fCfg[ninp].no_evnt_num(false) : true; }
+         bool IsOptionalInput(unsigned ninp) { return ninp<fCfg.size() ? (fCfg[ninp].optional_input || fCfg[ninp].no_evnt_num) : true; }
 
       public:
 
