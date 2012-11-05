@@ -203,7 +203,7 @@ void mbs::TransmitterModule::BeforeModuleStart()
 void mbs::TransmitterModule::retransmit()
 {
 	bool dostop = false;
-	while (Output(0)->CanSend() && Input(0)->CanRecv()) {
+	while (Input()->CanRecv() && (!Output()->IsConnected() || Output()->CanSend())) {
 		dabc::Buffer buf = Input(0)->Recv();
 		if (buf.GetTypeId() == dabc::mbt_EOF) {
 			DOUT0(("See EOF - stop module"));
@@ -212,7 +212,10 @@ void mbs::TransmitterModule::retransmit()
 		   Par("TransmitData").SetDouble(buf.GetTotalSize()/1024./1024);
 		   Par("TransmitBufs").SetDouble(1.);
 		}
-		Output(0)->Send(buf);
+		if (Output()->CanSend())
+		   Output()->Send(buf);
+		else
+		   buf.Release();
 	}
 
 	if (dostop) {
