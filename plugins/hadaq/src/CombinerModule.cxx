@@ -154,6 +154,8 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    RegisterExportedCounters();
 
    fNumCompletedBuffers = 0;
+   
+   fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
 }
 
 // unsigned firstsync(0), lastsync(0), numsync(0), numd(0);
@@ -743,6 +745,8 @@ bool hadaq::CombinerModule::BuildEvent()
                   syncdata = syncsub->Data(ix + centHubLen);
                   syncnum = (syncdata & 0xFFFFFF);
                   DOUT5(("***  --- found sync data: 0x%x, sync number is %d, errorbit %s", syncdata, syncnum, DBOOL((syncdata >> 31) & 0x1)));
+                  if (fPrintSync) DOUT1(("SYNC: 0x%06X, errorbit %s", syncnum, DBOOL((syncdata >> 31) & 0x1)));
+
 
 /*                  if (firstsync==0) {
                      firstsync = syncnum;

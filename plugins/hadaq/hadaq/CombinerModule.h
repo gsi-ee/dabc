@@ -215,6 +215,7 @@ namespace hadaq {
          bool fWithObserver;
 
          bool fUseSyncSeqNumber; // if true, use vulom/roc syncnumber for event sequence number
+         bool fPrintSync; // if true, print syncs with DOUT1
          int  fSyncSubeventId; // id number of sync subevent
          uint32_t fSyncTriggerMask; // bit mask for accepted trigger inputs in sync mode
 
