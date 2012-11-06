@@ -147,7 +147,7 @@ void hadaq::MbsTransmitterModule::retransmit()
 		    msub->iProcId=fSubeventId; // configured for TTrbProc etc.
 		    memcpy(destcursor,hev,evlen);
 		    usedsize+=evlen;
-                    destcursor+=evlen;
+          destcursor=((char*) destcursor) + evlen;
 
 	} // while hiter.NextEvent()
 
