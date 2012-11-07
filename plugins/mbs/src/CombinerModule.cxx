@@ -353,12 +353,17 @@ bool mbs::CombinerModule::BuildEvent()
 
       fCfg[ninp].selected = false;
 
+      if (fCfg[ninp].last_valid_tm <= 0) fCfg[ninp].last_valid_tm = tm_now;
+
       if (fInp[ninp].evnt()==0) {
          if (!ShiftToNextEvent(ninp)) {
             // if optional input is absent just continue
             if (fCfg[ninp].no_evnt_num) continue;
             // we can now exclude this input completely while some other is mostly full
             if ((mostly_full>=0) && !fBuildCompleteEvents) continue;
+
+            if (fCfg[ninp].optional_input && (tm_now > (fCfg[ninp].last_valid_tm + fExcludeTime))) continue;
+
             return false;
          } else {
             fCfg[ninp].last_valid_tm = tm_now;
@@ -435,21 +440,24 @@ bool mbs::CombinerModule::BuildEvent()
 
    int firstselected = -1;
 
+   std::string sel_str;
+
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       if (!fCfg[ninp].selected) {
          // input without number can be skipped without any problem
          if (fCfg[ninp].no_evnt_num) continue;
 
          // if optional input not selected, but has valid data than it is not important for us
-         if (fCfg[ninp].optional_input && fCfg[ninp].valid) continue;
-
          // if no new events on the optional input for a long time, one can skip it as well
-         if (fCfg[ninp].optional_input && (tm_now > fCfg[ninp].last_valid_tm + fExcludeTime)) continue;
+         if (fCfg[ninp].optional_input)
+            if (fCfg[ninp].valid || (tm_now > (fCfg[ninp].last_valid_tm + fExcludeTime))) continue;
 
          important_input_skipped = true;
 
          continue;
       }
+      
+      sel_str += dabc::format(" %d", ninp);
 
       num_selected_all++;
 
@@ -474,11 +482,13 @@ bool mbs::CombinerModule::BuildEvent()
    }
 
    bool do_skip_data = false;
+   
+   
 
    if (fBuildCompleteEvents && important_input_skipped && (hasTriggerEvent<0)) {
-      SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, num_selected_important, NumObligatoryInputs(), diff));
+      SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u selected  %s", buildevid, num_selected_important, NumObligatoryInputs(), sel_str.c_str()));
       do_skip_data = true;
-//    DOUT0(("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, num_selected_important, NumObligatoryInputs(), diff));
+//      DOUT0(("Skip incomplete event %u, found inputs %u required %u diff %u selected %s", buildevid, num_selected_important, NumObligatoryInputs(), diff, sel_str.c_str()));
    } else
    if (duplicatefound && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip event %u while duplicates subevents found", buildevid));
@@ -494,8 +504,8 @@ bool mbs::CombinerModule::BuildEvent()
          SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
 //       DOUT0(("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
       } else {
-         SetInfo(dabc::format("Build event %u with %u inputs", buildevid, num_selected_all));
-//       DOUT0(("Build event %u with %u inputs", buildevid, num_selected_all));
+         SetInfo(dabc::format("Build event %u with %u inputs %s", buildevid, num_selected_all, sel_str.c_str()));
+//         DOUT0(("Build event %u with %u inputs selected %s", buildevid, num_selected_all, sel_str.c_str()));
       }
 
       // if there is no place for the event, flush current buffer
@@ -571,7 +581,8 @@ bool mbs::CombinerModule::BuildEvent()
          // if just skipping data, do not remove special (EPICS) inputs
          if (do_skip_data && fCfg[ninp].no_evnt_num) continue;
 
-         ShiftToNextEvent(ninp);
+         if (ShiftToNextEvent(ninp))
+            fCfg[ninp].last_valid_tm = tm_now;
       }
 
    // return true means that method can be called again immediately
