@@ -50,13 +50,16 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
    CreatePar("TransmitData").SetRatemeter(false, 5.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
    CreatePar("TransmitEvents").SetRatemeter(false, 5.).SetUnits("Evts");
-   if (Par("TransmitData").GetDebugLevel()<0) Par("TransmitData").SetDebugLevel(1);
-   if (Par("TransmitBufs").GetDebugLevel()<0) Par("TransmitBufs").SetDebugLevel(1);
-   if (Par("TransmitEvents").GetDebugLevel()<0) Par("TransmitEvents").SetDebugLevel(1);
+//   if (Par("TransmitData").GetDebugLevel()<0) Par("TransmitData").SetDebugLevel(1);
+//   if (Par("TransmitBufs").GetDebugLevel()<0) Par("TransmitBufs").SetDebugLevel(1);
+//   if (Par("TransmitEvents").GetDebugLevel()<0) Par("TransmitEvents").SetDebugLevel(1);
 
    fLastEventCnt = -1;
    if (fFlushTimeout > 0.)
       CreateTimer("FlushTimer", fFlushTimeout, false);
+      
+   fIgnoreEvent = -1;
+   fCounter = 0;
 }
 
 
@@ -90,6 +93,8 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
    hadaq::ReadIterator hiter(inbuf);
    while(hiter.NextEvent()) {
+       if ((fIgnoreEvent>=0) && (hiter.evnt()->GetSeqNr()==fIgnoreEvent)) continue;
+     
       if (!fMergeSyncedEvents || (fLastEventCnt != hiter.evnt()->GetSeqNr())) {
          // first close existing events
          CloseCurrentEvent();
@@ -101,18 +106,40 @@ bool hadaq::MbsTransmitterModule::retransmit()
       if (fLastEventCnt<0) {
          // start header
 
+         if (fHdrPtr.null()) {
+            EOUT(("Something wrong with header"));
+            exit(5);
+         }
+
          fDataPtr = fHdrPtr;
          fDataPtr.shift(sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader));
       //   DOUT0(("Starting dummy event with size %u", fHdrPtr.distance_to(fDataPtr)));
          fLastEventCnt = hiter.evnt()->GetSeqNr();
+         fFlushTimeout = -1;
+
+         if (fDataPtr.null()) {
+            EOUT(("Something went wrong"));
+            exit(5);
+         }
+
       }
 
-      if (fDataPtr.fullsize() < evlen) FlushBuffer();
+      if (fDataPtr.fullsize() <= evlen) FlushBuffer();
 
-      if (fDataPtr.fullsize() < evlen) {
-         EOUT(("Should not be - do something"));
+      if ((fDataPtr.fullsize() <= evlen) && (fHdrPtr.fullsize() == fTgtBuf.GetTotalSize())) {
+         // event in very beginning, flush it and ignore all its other parts
+          FlushBuffer(true);
+          DOUT2(("Ignore rest of the event %d", fIgnoreEvent));
+          fIgnoreEvent = hiter.evnt()->GetSeqNr();
+          continue;
+      }
+
+      if (fDataPtr.fullsize() <= evlen) {
+         EOUT(("Should not be - do something  dataptr %u  evlen %u", fDataPtr.fullsize(), evlen));
          exit(2);
       }
+
+//      if (fDataPtr.fullsize() == evlen) EOUT(("DANGER!!!!"));
 
       fDataPtr.copyfrom(hiter.evnt(), evlen);
       // append to the buffer
@@ -132,17 +159,22 @@ bool hadaq::MbsTransmitterModule::retransmit()
 void hadaq::MbsTransmitterModule::CloseCurrentEvent()
 {
 
+    // do nothing
+   if (fLastEventCnt<0) return;
+
    if (fDataPtr.null() && (fLastEventCnt>=0)) {
-      EOUT(("Something wrong"));
+      EOUT(("Something wrong evid = %d, but data empty", fLastEventCnt));
       return;
    }
+   
 
    unsigned fullsize = fHdrPtr.distance_to(fDataPtr);
    mbs::EventHeader ev;
    ev.Init(fLastEventCnt);
    ev.SetFullSize(fullsize);
 
-//   DOUT0(("Building event %u of size %u === %u", fRawSync, fullsize, ev.FullSize()));
+   DOUT2(("Building event %d of size %u", fLastEventCnt, fullsize));
+   fCounter++;
 
    mbs::SubeventHeader sub;
    sub.fFullId = fSubeventId;
@@ -156,9 +188,9 @@ void hadaq::MbsTransmitterModule::CloseCurrentEvent()
    fHdrPtr.shift(sizeof(ev));
    fHdrPtr.copyfrom(&sub, sizeof(sub));
    fHdrPtr.shift(fullsize - sizeof(ev));
+   fDataPtr.reset();
 
    fLastEventCnt = -1;
-
 }
 
 
@@ -174,20 +206,26 @@ void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
       if (fHdrPtr.fullsize() == fTgtBuf.GetTotalSize()) {
          // this is a case when event start from buffer begin, therefore copy of event data will not help
          if (!force) return;
-         DOUT0(("Very special case - closing event when events starts from buffer begin and must be flushed"));
+         DOUT2(("Very special case - closing event when events starts from buffer begin and must be flushed"));
          CloseCurrentEvent();
       } else {
          // we copy partial data  to new buffer
 
 //          DOUT0(("Coping of partial data into new buffer"));
 
+         DOUT2(("Current event %d  isdatanull %s", fLastEventCnt, DBOOL(fDataPtr.null())));
+
          newbuf = Pool()->TakeBuffer();
          dabc::Pointer new_ptr = newbuf.GetPointer();
          newbufused = fHdrPtr.distance_to(fDataPtr);
+         
+         DOUT2(("Shift data to new buffer size:%u move:%u", newbuf.GetTotalSize(), newbufused));
+         
          new_ptr.copyfrom(fHdrPtr, newbufused);
 
          newevid = fLastEventCnt;
          // mark as we do not fill data in the fDataPtr
+         fDataPtr.reset();
          fLastEventCnt = -1;
       }
    }
@@ -201,6 +239,11 @@ void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
        fTgtBuf.SetTotalSize(fTgtBuf.GetTotalSize() - fHdrPtr.fullsize());
        fTgtBuf.SetTypeId(mbs::mbt_MbsEvents);
 
+       Par("TransmitBufs").SetDouble(1.);
+       Par("TransmitData").SetDouble(fTgtBuf.GetTotalSize()/1024./1024.);
+       Par("TransmitEvents").SetDouble(fCounter);
+       fCounter = 0;
+//       DOUT0(("Send buffe of size %u",  fTgtBuf.GetTotalSize()));
        Output()->Send(fTgtBuf.HandOver());
        fLastFlushTime.GetNow();
    }
@@ -215,9 +258,20 @@ void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
    fDataPtr.reset();
 
    if ((newbufused>0) && (newevid>=0)) {
+      if (fHdrPtr.null()) {
+         EOUT(("Something went wrong"));
+         return;
+      }
+
       fDataPtr = fHdrPtr;
       fDataPtr.shift(newbufused);
       fLastEventCnt = newevid;
+
+         if (fDataPtr.null()) {
+            EOUT(("Something went wrong"));
+            exit(5);
+         }
+
    }
 }
 

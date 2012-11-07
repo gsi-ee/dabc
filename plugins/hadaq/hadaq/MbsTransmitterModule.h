@@ -64,6 +64,8 @@ namespace hadaq {
       dabc::Pointer      fDataPtr;   // pointer on next raw data
       int                fLastEventCnt; // last number of HADAQ event count
       dabc::TimeStamp    fLastFlushTime; // time when last flushing was done
+      int                fIgnoreEvent;  // 
+      int                fCounter; // simple counter
 
    public:
       MbsTransmitterModule(const char* name, dabc::Command cmd = 0);
