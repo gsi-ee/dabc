@@ -8,30 +8,32 @@
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
     </Run>
-    
   
-     <MemoryPool name="Pool">
-       <BufferSize value="131072"/>
+    <MemoryPool name="Pool">
+       <BufferSize value="200000"/>
        <NumBuffers value="10000"/>
     </MemoryPool>
     
      <!-- shmem control config -->
-   <Observer name="shm">
-     <DoShmControl value="true"/>
-   </Observer>
     
     <Module name="Combiner">    
        <PoolName value="Pool"/>
-       <DoShmControl value="true"/>  
+       <DoShmControl value="false"/>  
        <DoFile value="false"/>
        <DoServer value="true"/>
-       <BufferSize value="65536"/>
+       <BufferSize value="150000"/>
        
+       <FlushTimeout value="0.3"/>
+       <DoShmControl value="false"/>
+       <PrintSync value="false"/>
+       <SyncTriggerMask value="0x3"/>
+       <FlushBySync value="false"/>
+
        <!-- take event sequence number from vulom/roc sync message at cts -->
-       <UseSyncSequenceNumber value="false"/>
+       <UseSyncSequenceNumber value="true"/>
        <SyncSubeventId value="0x8000"/>
        <SyncTriggerMask value="0x01"/>
-       <NumInputs value="5"/>
+       <NumInputs value="1"/>
        <Port name="Input0">
           <HadaqUdpPort value="50000"/>
        </Port>
@@ -49,7 +51,7 @@
        </Port>       
        <Port name="Input*">
           <HadaqUdpBuffer value="200000"/>
-          <DoShmControl value="true"/>  
+          <DoShmControl value="false"/>  
           <!--HadaqUdpMTU value="64512"/-->   
           <BufferSize value="65536"/>
           <InputQueueSize value="1000"/>
@@ -62,24 +64,20 @@
           <HadaqEPICSControl value="true"/>
           <HadaqFileSizeLimit value="1600"/>       
         </Port> 
-
-              
      </Module>
      
      <Module name="OnlineServer">
+       <SubeventFullId value="0x000001F"/>
+       <DoMergeSyncedEvents value="true"/>
+       <PrintSync value="false"/>
+       <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
+       <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
        <PoolName value="Pool"/>
        <Port name="Output">
           <MbsServerKind value="Stream"/>
-          <MbsServerPort value="6543"/>
-            <SubeventFullId value="0x000001F"/> 
-             <DoMergeSyncedEvents value="false"/> 
-             <MergeLimit value="10"/> 
-            <OutputQueueSize value="1000"/>
-
+          <MbsServerPort value="6999"/>
         </Port>
      </Module>
-
-     
      
   </Context>
 </dabc>

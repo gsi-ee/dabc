@@ -46,9 +46,7 @@ namespace hadaq {
        * into one mbs subevent*/
       bool fMergeSyncedEvents;
 
-      /* Threshold how many subsequent events of same sequence number shall be merged*/
-      unsigned fMergeSyncMaxEvents;
-
+      /** When specified, SYNC number is printed */
       bool fPrintSync;
 
       double fFlushTimeout;
@@ -62,9 +60,9 @@ namespace hadaq {
       dabc::Buffer       fTgtBuf;   // buffer for data
       dabc::Pointer      fHdrPtr;   // pointer on header
       dabc::Pointer      fDataPtr;   // pointer on next raw data
-      int                fLastEventCnt; // last number of HADAQ event count
+      int                fLastEventNumber; // last number of HADAQ event count
       dabc::TimeStamp    fLastFlushTime; // time when last flushing was done
-      int                fIgnoreEvent;  // 
+      int                fIgnoreEvent;  // id of event, which should be ignored
       int                fCounter; // simple counter
 
    public:

@@ -70,11 +70,9 @@ hadaq::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    fServOutput = Cfg(mbs::xmlServerOutput, cmd).AsBool(false);
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 
-   fUseSyncSeqNumber= Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(true); // if true, use vulom/roc syncnumber for event sequence number
-   fFlushBySync = Cfg("FlushBySync", cmd).AsBool(false);
-   fLastSyncNumber = -1;
-   fSyncSubeventId=   Cfg(hadaq::xmlSyncSubeventId, cmd).AsInt(0x8000);//0x8000;
-   fSyncTriggerMask=   Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
+   fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(true); // if true, use vulom/roc syncnumber for event sequence number
+   fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsInt(0x8000);//0x8000;
+   fSyncTriggerMask = Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
    if (fUseSyncSeqNumber)
       DOUT0(("HADAQ combiner module with VULOM sync event sequence number from cts subevent:0x%0x, trigger mask:0x%0x",fSyncSubeventId, fSyncTriggerMask));
    else
@@ -279,10 +277,10 @@ void hadaq::CombinerModule::AfterModuleStop()
 ///////////////////////////////////////////////////////////////
 //////// OUTPUT BUFFER METHODS:
 
-bool hadaq::CombinerModule::EnsureOutputBuffer(uint32_t payload, bool need_flush)
+bool hadaq::CombinerModule::EnsureOutputBuffer(uint32_t payload)
 {
    // check if we have enough space in current buffer
-   if (fOut.IsBuffer() && (!fOut.IsPlaceForEvent(payload) || need_flush)) {
+   if (fOut.IsBuffer() && !fOut.IsPlaceForEvent(payload)) {
       // no, we close current buffer
       if (!FlushOutputBuffer()) {
          DOUT3(("CombinerModule::EnsureOutputBuffer - could not flush buffer"));
@@ -711,8 +709,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
    // for sync sequence number, check first if we have error from cts:
    hadaq::EventNumType sequencenumber=fTotalRecvEvents;
-   bool hascorrectsync=false;
-   bool dobufferflush = false;
+   bool hascorrectsync = false;
    
    if(fUseSyncSeqNumber)
          {
@@ -789,20 +786,11 @@ bool hadaq::CombinerModule::BuildEvent()
             else if ((trigtype & fSyncTriggerMask) == 0x0)
             {
                   DOUT5(("***  --- Found not accepted trigger type :0x%x , full sync data:0x%x ",trigtype,syncdata));
-            }
-            else
-               {
-               
+            } else {
 //                  DOUT1(("FIND SYNC in HADAQ %06x", syncnum));
-                  sequencenumber=syncnum;
-                  hascorrectsync=true;
-                  // force buffer flush when new sync message is detected
-                  if (fFlushBySync && (fLastSyncNumber != syncnum))
-                     dobufferflush = true;
-
-                  fLastSyncNumber = syncnum;
-
-               }
+                 sequencenumber=syncnum;
+                 hascorrectsync=true;
+             }
 
 
          } // if (syncsub->GetId() != fSyncSubeventId)
@@ -816,7 +804,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
 
    // ensure that we have output buffer that is big enough:
-   if (hascorrectsync && EnsureOutputBuffer(subeventssize, dobufferflush)) {
+   if (hascorrectsync && EnsureOutputBuffer(subeventssize)) {
       // EVENT BUILDING IS HERE
       fOut.NewEvent(sequencenumber, fRunNumber); // like in hadaq, event sequence number is independent of trigger.
       fTotalRecvEvents++;

@@ -51,7 +51,6 @@ const char* hadaq::xmlObserverEnabled      = "DoShmControl";
 const char* hadaq::xmlExternalRunid       = "HadaqEPICSControl";
 const char* hadaq::xmlMbsSubeventId       = "SubeventFullId";
 const char* hadaq::xmlMbsMergeSyncMode    = "DoMergeSyncedEvents";
-const char* hadaq::xmlMbsMergeLimit       = "MergeLimit";
 
 const char* hadaq::xmlSyncSeqNumberEnabled ="UseSyncSequenceNumber";
 const char* hadaq::xmlSyncSubeventId       = "SyncSubeventId";

@@ -39,22 +39,16 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 
    fSubeventId = Cfg(hadaq::xmlMbsSubeventId, cmd).AsInt(0x000001F);
    fMergeSyncedEvents = Cfg(hadaq::xmlMbsMergeSyncMode, cmd).AsBool(false);
-   fMergeSyncMaxEvents = Cfg(hadaq::xmlMbsMergeLimit, cmd).AsInt(20);
-
    fFlushTimeout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(3);
-
    fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
 
    DOUT0(("hadaq:TransmitterModule subevid = 0x%x, merge sync mode = %d", (unsigned) fSubeventId, fMergeSyncedEvents));
 
    CreatePar("TransmitData").SetRatemeter(false, 5.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
-   CreatePar("TransmitEvents").SetRatemeter(false, 5.).SetUnits("Evts");
-//   if (Par("TransmitData").GetDebugLevel()<0) Par("TransmitData").SetDebugLevel(1);
-//   if (Par("TransmitBufs").GetDebugLevel()<0) Par("TransmitBufs").SetDebugLevel(1);
-//   if (Par("TransmitEvents").GetDebugLevel()<0) Par("TransmitEvents").SetDebugLevel(1);
+   CreatePar("TransmitEvents").SetRatemeter(false, 5.).SetUnits("Ev");
 
-   fLastEventCnt = -1;
+   fLastEventNumber = -1;
    if (fFlushTimeout > 0.)
       CreateTimer("FlushTimer", fFlushTimeout, false);
       
@@ -67,8 +61,6 @@ bool hadaq::MbsTransmitterModule::retransmit()
 {
    DOUT5(("MbsTransmitterModule::retransmit() starts"));
 
-   // fFlushFlag = false; // set when buffer was sent some time ago
-
    // we need at least one entry in the outout queue before we start doing something
    if (!Output(0)->CanSend()) return false;
 
@@ -80,7 +72,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
       if (fTgtBuf.null()) return false;
       fHdrPtr = fTgtBuf.GetPointer();
       fDataPtr.reset();
-      fLastEventCnt = -1;
+      fLastEventNumber = -1;
       // fDataPtr = fHdrPtr; fDataPtr.shift(sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader));
    }
 
@@ -95,7 +87,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
    while(hiter.NextEvent()) {
        if ((fIgnoreEvent>=0) && (hiter.evnt()->GetSeqNr()==fIgnoreEvent)) continue;
      
-      if (!fMergeSyncedEvents || (fLastEventCnt != hiter.evnt()->GetSeqNr())) {
+      if (!fMergeSyncedEvents || (fLastEventNumber != hiter.evnt()->GetSeqNr())) {
          // first close existing events
          CloseCurrentEvent();
          if (fHdrPtr.fullsize()<200) FlushBuffer();
@@ -103,7 +95,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
       size_t evlen = hiter.evnt()->GetPaddedSize();
 
-      if (fLastEventCnt<0) {
+      if (fLastEventNumber<0) {
          // start header
 
          if (fHdrPtr.null()) {
@@ -114,7 +106,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
          fDataPtr = fHdrPtr;
          fDataPtr.shift(sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader));
       //   DOUT0(("Starting dummy event with size %u", fHdrPtr.distance_to(fDataPtr)));
-         fLastEventCnt = hiter.evnt()->GetSeqNr();
+         fLastEventNumber = hiter.evnt()->GetSeqNr();
          fFlushTimeout = -1;
 
          if (fDataPtr.null()) {
@@ -160,20 +152,20 @@ void hadaq::MbsTransmitterModule::CloseCurrentEvent()
 {
 
     // do nothing
-   if (fLastEventCnt<0) return;
+   if (fLastEventNumber<0) return;
 
-   if (fDataPtr.null() && (fLastEventCnt>=0)) {
-      EOUT(("Something wrong evid = %d, but data empty", fLastEventCnt));
+   if (fDataPtr.null() && (fLastEventNumber>=0)) {
+      EOUT(("Something wrong evid = %d, but data empty", fLastEventNumber));
       return;
    }
    
 
    unsigned fullsize = fHdrPtr.distance_to(fDataPtr);
    mbs::EventHeader ev;
-   ev.Init(fLastEventCnt);
+   ev.Init(fLastEventNumber);
    ev.SetFullSize(fullsize);
 
-   DOUT2(("Building event %d of size %u", fLastEventCnt, fullsize));
+   DOUT2(("Building event %d of size %u", fLastEventNumber, fullsize));
    fCounter++;
 
    mbs::SubeventHeader sub;
@@ -181,7 +173,7 @@ void hadaq::MbsTransmitterModule::CloseCurrentEvent()
    sub.SetFullSize(fullsize - sizeof(ev));
 
    if (fHdrPtr.fullsize() < 30) {
-      EOUT(("Something went wrong   evid = %d hdrptr size = %u", fLastEventCnt, fHdrPtr.fullsize()));
+      EOUT(("Something went wrong   evid = %d hdrptr size = %u", fLastEventNumber, fHdrPtr.fullsize()));
    }
 
    fHdrPtr.copyfrom(&ev, sizeof(ev));
@@ -190,7 +182,7 @@ void hadaq::MbsTransmitterModule::CloseCurrentEvent()
    fHdrPtr.shift(fullsize - sizeof(ev));
    fDataPtr.reset();
 
-   fLastEventCnt = -1;
+   fLastEventNumber = -1;
 }
 
 
@@ -201,7 +193,7 @@ void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
    unsigned newbufused(0);
    int newevid = -1;
 
-   if (fLastEventCnt >= 0) {
+   if (fLastEventNumber >= 0) {
       // we need to copy part of event in the new buffer
       if (fHdrPtr.fullsize() == fTgtBuf.GetTotalSize()) {
          // this is a case when event start from buffer begin, therefore copy of event data will not help
@@ -213,7 +205,7 @@ void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
 
 //          DOUT0(("Coping of partial data into new buffer"));
 
-         DOUT2(("Current event %d  isdatanull %s", fLastEventCnt, DBOOL(fDataPtr.null())));
+         DOUT2(("Current event %d  isdatanull %s", fLastEventNumber, DBOOL(fDataPtr.null())));
 
          newbuf = Pool()->TakeBuffer();
          dabc::Pointer new_ptr = newbuf.GetPointer();
@@ -223,14 +215,14 @@ void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
          
          new_ptr.copyfrom(fHdrPtr, newbufused);
 
-         newevid = fLastEventCnt;
+         newevid = fLastEventNumber;
          // mark as we do not fill data in the fDataPtr
          fDataPtr.reset();
-         fLastEventCnt = -1;
+         fLastEventNumber = -1;
       }
    }
 
-   if (fLastEventCnt >= 0) {
+   if (fLastEventNumber >= 0) {
       EOUT(("Something went wrong"));
       return;
    }
@@ -270,7 +262,7 @@ void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
 
       fDataPtr = fHdrPtr;
       fDataPtr.shift(newbufused);
-      fLastEventCnt = newevid;
+      fLastEventNumber = newevid;
 
          if (fDataPtr.null()) {
             EOUT(("Something went wrong"));
@@ -323,4 +315,3 @@ extern "C" void InitHadaqMbsServer()
    dabc::mgr.CreateTransport("NetmemServer/Input", hadaq::typeUdpInput, "UdpThrd");
    dabc::mgr.CreateTransport("NetmemServer/Output", mbs::typeServerTransport, "MbsTransport");
 }
-

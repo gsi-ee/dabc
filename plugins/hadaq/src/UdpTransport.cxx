@@ -296,16 +296,6 @@ void hadaq::UdpDataSocket::StopTransport()
 
 }
 
-
-int hadaq::UdpDataSocket::GetParameter(const char* name)
-{
-//   if ((strcmp(name, hadaq::xmlRocNumber)==0) && fDev) return fDev->rocNumber();
-//   if (strcmp(name, hadaq::xmlMsgFormat)==0) return fFormat;
-//   if (strcmp(name, hadaq::xmlTransportKind)==0) return roc::kind_UDP;
-
-   return dabc::Transport::GetParameter(name);
-}
-
 void hadaq::UdpDataSocket::ReadUdp()
 {
    // this function is a "translation" to dabc of the hadaq nettrans.c assembleMsg()

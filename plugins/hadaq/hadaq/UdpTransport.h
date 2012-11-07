@@ -44,9 +44,6 @@
 namespace hadaq {
 
 
-
-
-
    class UdpDataSocket : public dabc::SocketWorker,
                          public dabc::Transport,
                          protected dabc::MemoryPoolRequester {
@@ -54,9 +51,6 @@ namespace hadaq {
       DABC_TRANSPORT(dabc::SocketWorker)
 
       protected:
-
-
-
 
          struct sockaddr_in    fSockAddr;
          size_t             fMTU;
@@ -139,9 +133,6 @@ namespace hadaq {
 
          void ConfigureFor(dabc::Port* port, dabc::Command cmd);
 
-
-         virtual int GetParameter(const char* name);
-
          void setFlushTimeout(double tmout) { fFlushTimeout = tmout; }
          double getFlushTimeout() const {  return fFlushTimeout; }
 
@@ -156,7 +147,6 @@ namespace hadaq {
          /* Switch to next dabc buffer, put old one into receive queue
           * copyspanning will copy a spanning hadtu fragment from old to new buffers*/
          void NewReceiveBuffer(bool copyspanning=false);
-
 
          /*
           * Do simple eventbuilding into output buffer if enabled.
@@ -175,15 +165,11 @@ namespace hadaq {
          bool UpdateExportedCounters();
          void ClearExportedCounters();
 
-
-
       public:
          UdpDataSocket(dabc::Reference port, dabc::Command cmd);
          virtual ~UdpDataSocket();
 
          virtual void ProcessEvent(const dabc::EventId&);
-
-
 
          virtual bool ProvidesInput() { return true; }
          virtual bool ProvidesOutput() { return false; }

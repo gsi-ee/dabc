@@ -158,7 +158,7 @@ namespace hadaq {
 
          /* provide output buffer that has room for payload size of bytes
           * returns false if not possible*/
-         bool EnsureOutputBuffer(uint32_t payload, bool need_flush);
+         bool EnsureOutputBuffer(uint32_t payload);
 
          virtual void BeforeModuleStart();
 
@@ -226,9 +226,6 @@ namespace hadaq {
                  * and building of complete events only (true)*/
          bool               fBuildCompleteEvents;
          
-         bool               fFlushBySync; // flush complete buffer when new sync message comes, simplify work of supercombiner
-         int                fLastSyncNumber; // keep last sync number
-
          std::string        fEventRateName;
          std::string        fEventDiscardedRateName;
          std::string        fEventDroppedRateName;

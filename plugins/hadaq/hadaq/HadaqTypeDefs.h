@@ -548,7 +548,6 @@ namespace hadaq {
    extern const char* xmlExternalRunid;
    extern const char* xmlMbsSubeventId;
    extern const char* xmlMbsMergeSyncMode;
-   extern const char* xmlMbsMergeLimit;
 
    extern const char* xmlSyncSeqNumberEnabled;
    extern const char* xmlSyncSubeventId;
