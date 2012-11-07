@@ -244,7 +244,12 @@ void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
        Par("TransmitEvents").SetDouble(fCounter);
        fCounter = 0;
 //       DOUT0(("Send buffe of size %u",  fTgtBuf.GetTotalSize()));
-       Output()->Send(fTgtBuf.HandOver());
+       if (Output()->CanSend())
+          Output()->Send(fTgtBuf.HandOver());
+       else {
+          fTgtBuf.Release();
+          DOUT0(("Drop buffer !!!"));
+       }
        fLastFlushTime.GetNow();
    }
 
