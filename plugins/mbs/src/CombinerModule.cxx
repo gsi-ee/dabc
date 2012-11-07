@@ -55,6 +55,8 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
    fSpecialTriggerLimit = Cfg(mbs::xmlSpecialTriggerLimit,cmd).AsInt(12);
 
+   fExcludeTime = Cfg("ExcludeTime", cmd).AsDouble(5.);
+
    double flushtmout = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(1.);
 
    for (int n=0;n<numinp;n++) {
@@ -331,7 +333,7 @@ bool mbs::CombinerModule::BuildEvent()
       for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
          dabc::Port* port = Input(ninp);
          if ((port->InputPending() + 1 >= port->InputQueueCapacity()) ||
-             (fCfg[ninp].no_evnt_num && port->InputPending()>1)) {
+             (fCfg[ninp].no_evnt_num && port->InputPending() > port->InputQueueCapacity() / 2)) {
             ShiftToNextBuffer(ninp);
             SetInfo(dabc::format("Skip buffer on input %u while some other input is disconnected", ninp));
             DOUT0(("Skip buffer on input %u",ninp));
@@ -345,18 +347,23 @@ bool mbs::CombinerModule::BuildEvent()
    int hasTriggerEvent = -1;
    int num_valid = 0;
 
+   double tm_now = dabc::TimeStamp::Now().AsDouble();
+
    for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
 
       fCfg[ninp].selected = false;
 
-      if (fInp[ninp].evnt()==0)
+      if (fInp[ninp].evnt()==0) {
          if (!ShiftToNextEvent(ninp)) {
             // if optional input is absent just continue
             if (fCfg[ninp].no_evnt_num) continue;
             // we can now exclude this input completely while some other is mostly full
             if ((mostly_full>=0) && !fBuildCompleteEvents) continue;
             return false;
+         } else {
+            fCfg[ninp].last_valid_tm = tm_now;
          }
+      }
 
       if (fCfg[ninp].no_evnt_num) continue;
 
@@ -436,6 +443,9 @@ bool mbs::CombinerModule::BuildEvent()
          // if optional input not selected, but has valid data than it is not important for us
          if (fCfg[ninp].optional_input && fCfg[ninp].valid) continue;
 
+         // if no new events on the optional input for a long time, one can skip it as well
+         if (fCfg[ninp].optional_input && (tm_now > fCfg[ninp].last_valid_tm + fExcludeTime)) continue;
+
          important_input_skipped = true;
 
          continue;
@@ -463,12 +473,16 @@ bool mbs::CombinerModule::BuildEvent()
          }
    }
 
+   bool do_skip_data = false;
+
    if (fBuildCompleteEvents && important_input_skipped && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, num_selected_important, NumObligatoryInputs(), diff));
+      do_skip_data = true;
 //    DOUT0(("Skip incomplete event %u, found inputs %u required %u diff %u", buildevid, num_selected_important, NumObligatoryInputs(), diff));
    } else
    if (duplicatefound && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip event %u while duplicates subevents found", buildevid));
+      do_skip_data = true;
 //    DOUT0(("Skip event %u while duplicates subevents found", buildevid));
    } else {
 
@@ -553,7 +567,12 @@ bool mbs::CombinerModule::BuildEvent()
    } // end of incomplete event
 
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++)
-      if (fCfg[ninp].selected) ShiftToNextEvent(ninp);
+      if (fCfg[ninp].selected) {
+         // if just skipping data, do not remove special (EPICS) inputs
+         if (do_skip_data && fCfg[ninp].no_evnt_num) continue;
+
+         ShiftToNextEvent(ninp);
+      }
 
    // return true means that method can be called again immediately
    // in all places one requires while loop

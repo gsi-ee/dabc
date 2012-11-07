@@ -66,6 +66,9 @@ namespace mbs {
             /** indicates if input has valid data */
             bool valid;
 
+            /** time when last valid event was produced, can be used to remove optional input completely */
+            double last_valid_tm;
+
             InputCfg() :
                real_mbs(true),
                curr_evnt_num(0),
@@ -76,7 +79,8 @@ namespace mbs {
                evntsrc_fullid(0),
                evntsrc_shift(0),
                selected(false),
-               valid(false) {}
+               valid(false),
+               last_valid_tm(0){}
 
             InputCfg(const InputCfg& src) :
                real_mbs(src.real_mbs),
@@ -88,7 +92,8 @@ namespace mbs {
                evntsrc_fullid(src.evntsrc_fullid),
                evntsrc_shift(src.evntsrc_shift),
                selected(src.selected),
-               valid(src.valid) {}
+               valid(src.valid),
+               last_valid_tm(src.last_valid_tm) {}
 
             void Reset()
             {
@@ -102,6 +107,7 @@ namespace mbs {
                evntsrc_shift = 0;
                selected = false;
                valid = false;
+               last_valid_tm = 0.;
             }
          };
 
@@ -141,6 +147,9 @@ namespace mbs {
          /** Indicates how many inputs should provide data that event is accepted as full
           *  Can be less than number of inputs while inputs may be optional */
          unsigned                   fNumObligatoryInputs;
+
+         /** Time to exclude optional input when no data comming */
+         double                     fExcludeTime;
 
          std::string                fEventRateName;
          std::string                fDataRateName;
