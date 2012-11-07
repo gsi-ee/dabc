@@ -26,28 +26,26 @@
 #include "mbs/Iterator.h"
 
 
-
-
-//#define HADAQ_MBSTRANSMITTER_TESTRECEIVE 1
-
 hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Command cmd) :
-	dabc::ModuleAsync(name, cmd)
+   dabc::ModuleAsync(name, cmd)
 {
 
    std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr(dabc::xmlWorkPool);
 
-	CreatePoolHandle(poolname.c_str());
+   CreatePoolHandle(poolname.c_str());
 
-	CreateInput(mbs::portInput, Pool(), 5);
-	CreateOutput(mbs::portOutput, Pool(), 5);
+   CreateInput(mbs::portInput, Pool(), 5);
+   CreateOutput(mbs::portOutput, Pool(), 5);
 
-	fSubeventId = Cfg(hadaq::xmlMbsSubeventId, cmd).AsInt(0x000001F);
-	fMergeSyncedEvents = Cfg(hadaq::xmlMbsMergeSyncMode, cmd).AsBool(false);
-	fMergeSyncMaxEvents = Cfg(hadaq::xmlMbsMergeLimit, cmd).AsInt(20);
-	
-	fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
+   fSubeventId = Cfg(hadaq::xmlMbsSubeventId, cmd).AsInt(0x000001F);
+   fMergeSyncedEvents = Cfg(hadaq::xmlMbsMergeSyncMode, cmd).AsBool(false);
+   fMergeSyncMaxEvents = Cfg(hadaq::xmlMbsMergeLimit, cmd).AsInt(20);
 
-	DOUT0(("hadaq:TransmitterModule subevid = 0x%x, merge sync mode = %d", (unsigned) fSubeventId, fMergeSyncedEvents));
+   fFlushTimeout = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(3);
+
+   fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
+
+   DOUT0(("hadaq:TransmitterModule subevid = 0x%x, merge sync mode = %d", (unsigned) fSubeventId, fMergeSyncedEvents));
 
    CreatePar("TransmitData").SetRatemeter(false, 5.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 5.).SetUnits("Buf");
@@ -55,133 +53,183 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
    if (Par("TransmitData").GetDebugLevel()<0) Par("TransmitData").SetDebugLevel(1);
    if (Par("TransmitBufs").GetDebugLevel()<0) Par("TransmitBufs").SetDebugLevel(1);
    if (Par("TransmitEvents").GetDebugLevel()<0) Par("TransmitEvents").SetDebugLevel(1);
+
+   fLastEventCnt = -1;
+   if (fFlushTimeout > 0.)
+      CreateTimer("FlushTimer", fFlushTimeout, false);
 }
 
 
-void hadaq::MbsTransmitterModule::retransmit()
+bool hadaq::MbsTransmitterModule::retransmit()
 {
    DOUT5(("MbsTransmitterModule::retransmit() starts"));
-#ifdef HADAQ_MBSTRANSMITTER_TESTRECEIVE
-      if(Input(0)->CanRecv())
-      {
-         dabc::Buffer inbuf = Input(0)->Recv();
-         size_t bufferlen=0;
-         if(!inbuf.null()) bufferlen=inbuf.GetTotalSize();
-         Par("TransmitData").SetDouble(bufferlen/1024./1024);
-         Par("TransmitBufs").SetDouble(1.);
-         inbuf.Release();
+
+   // fFlushFlag = false; // set when buffer was sent some time ago
+
+   // we need at least one entry in the outout queue before we start doing something
+   if (!Output(0)->CanSend()) return false;
+
+   // nothing to do
+   if (!Input(0)->CanRecv()) return false;
+
+   if (fTgtBuf.null()) {
+      fTgtBuf = Pool()->TakeBuffer();
+      if (fTgtBuf.null()) return false;
+      fHdrPtr = fTgtBuf.GetPointer();
+      fDataPtr.reset();
+      fLastEventCnt = -1;
+      // fDataPtr = fHdrPtr; fDataPtr.shift(sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader));
+   }
+
+   dabc::Buffer inbuf = Input(0)->Recv();
+   if (inbuf.GetTypeId() == dabc::mbt_EOF) {
+      DOUT1(("See EOF - stop module"));
+      dabc::mgr.StopApplication();
+      return false;
+   }
+
+   hadaq::ReadIterator hiter(inbuf);
+   while(hiter.NextEvent()) {
+      if (!fMergeSyncedEvents || (fLastEventCnt != hiter.evnt()->GetSeqNr())) {
+         // first close existing events
+         CloseCurrentEvent();
+         if (fHdrPtr.fullsize()<200) FlushBuffer();
       }
+
+      size_t evlen = hiter.evnt()->GetPaddedSize();
+
+      if (fLastEventCnt<0) {
+         // start header
+
+         fDataPtr = fHdrPtr;
+         fDataPtr.shift(sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader));
+      //   DOUT0(("Starting dummy event with size %u", fHdrPtr.distance_to(fDataPtr)));
+         fLastEventCnt = hiter.evnt()->GetSeqNr();
+      }
+
+      if (fDataPtr.fullsize() < evlen) FlushBuffer();
+
+      if (fDataPtr.fullsize() < evlen) {
+         EOUT(("Should not be - do something"));
+         exit(2);
+      }
+
+      fDataPtr.copyfrom(hiter.evnt(), evlen);
+      // append to the buffer
+
+      fDataPtr.shift(evlen);
+   }
+
+   if (!fMergeSyncedEvents) {
+      // first close existing events
+      CloseCurrentEvent();
+      if (fHdrPtr.fullsize()<200) FlushBuffer();
+   }
+
+   return true;
+}
+
+void hadaq::MbsTransmitterModule::CloseCurrentEvent()
+{
+
+   if (fDataPtr.null() && (fLastEventCnt>=0)) {
+      EOUT(("Something wrong"));
       return;
-#endif
+   }
 
-      bool firstevent=true;
-      unsigned mergecount=0;
+   unsigned fullsize = fHdrPtr.distance_to(fDataPtr);
+   mbs::EventHeader ev;
+   ev.Init(fLastEventCnt);
+   ev.SetFullSize(fullsize);
 
+//   DOUT0(("Building event %u of size %u === %u", fRawSync, fullsize, ev.FullSize()));
 
-   bool dostop = false;
-	while (Output(0)->CanSend() && Input(0)->CanRecv()) {
-		dabc::Buffer inbuf = Input(0)->Recv();
-		if (inbuf.GetTypeId() == dabc::mbt_EOF) {
-			DOUT1(("See EOF - stop module"));
-			dostop = true;
-			break;
-		}
+   mbs::SubeventHeader sub;
+   sub.fFullId = fSubeventId;
+   sub.SetFullSize(fullsize - sizeof(ev));
 
-		// here wrapping  of hadtu format into mbs subevent like in go4 user source
-		dabc::Buffer outbuf = Pool()->TakeBuffer();
-		dabc::BufferSize_t usedsize=0;
-		mbs::WriteIterator miter(outbuf);
-		hadaq::ReadIterator hiter(inbuf);
-		hadaq::Event* hev;
-		int evcount=0;
-		size_t totalevlen=0;
-		void* destcursor=0;
-	while(hiter.NextEvent())
-		{
-		   hev=hiter.evnt();
-		   size_t evlen=hev->GetPaddedSize();
-         if (!firstevent) {
-            if (fMergeSyncedEvents && evcount == hev->GetSeqNr()
-                  && mergecount++ < fMergeSyncMaxEvents) {
-               // OK, we continue merging to first event
-            } else {
-  //             if(mergecount>0)
-    //              DOUT0(("close output event %d of size %d, mergecount:%d",evcount,totalevlen, mergecount));
-               DOUT5(("close output event %d of size %d, mergecount:%d",evcount,totalevlen, mergecount));
-               // close current mbs event, start next:
-               miter.FinishSubEvent(totalevlen);
-               miter.FinishEvent();
-               Par("TransmitEvents").SetDouble(1.);
-               DOUT5(("retransmit - used size %d",usedsize));
-               firstevent = true;
-               totalevlen = 0;
-               mergecount=0;
-            }
-         } //  if(!firstevent)
-	  totalevlen+=evlen;
-	   DOUT5(("retransmit - event %d of size %d",hev->GetSeqNr(),evlen));
+   if (fHdrPtr.fullsize() < 30) {
+      EOUT(("Something went wrong   evid = %d hdrptr size = %u", fLastEventCnt, fHdrPtr.fullsize()));
+   }
 
-         if (firstevent) {
-            firstevent = false;
-            //unsigned id = hev->GetId();
-            evcount = hev->GetSeqNr();
-            // assign and check event/subevent header for wrapper structures:
-            if (!miter.NewEvent(evcount)) {
-               DOUT1(
-                     ("Count limit. Can not add new mbs event to output buffer anymore - stop module. Check mempool setup!"));
-               dostop = true;
-               break;
-            }
-            //mbs::EventHeader* mev=miter.evnt();
-            usedsize += sizeof(mbs::EventHeader);
-            if (!miter.NewSubevent(evlen)) {
-               DOUT1(("Len limit: %u Buffer: %u Can not add new mbs subevent to output buffer anymore - stop module. Check mempool setup!", (unsigned) evlen, (unsigned) inbuf.GetTotalSize()));
-               dostop = true;
-               break;
-            }
-            usedsize += sizeof(mbs::SubeventHeader);
-            destcursor = miter.rawdata();
-         }  // firstevent
+   fHdrPtr.copyfrom(&ev, sizeof(ev));
+   fHdrPtr.shift(sizeof(ev));
+   fHdrPtr.copyfrom(&sub, sizeof(sub));
+   fHdrPtr.shift(fullsize - sizeof(ev));
 
+   fLastEventCnt = -1;
 
-		   // OK, we copy full hadaq event into mbs subevent payload:
-		    mbs::SubeventHeader* msub=miter.subevnt();
-		    msub->iProcId=fSubeventId; // configured for TTrbProc etc.
-		    memcpy(destcursor,hev,evlen);
-		    usedsize+=evlen;
-          destcursor=((char*) destcursor) + evlen;
-
-	} // while hiter.NextEvent()
-
-         // need to close output event properly in case we leave loop:
-           if (!firstevent) {
-               DOUT5(("After while loop: close output event %d of size %d, mergecount:%d",evcount,totalevlen, mergecount));
-               if (fPrintSync && fMergeSyncedEvents) DOUT1(("Merge events %06X", (unsigned) evcount));
-               // close current mbs event, start next:
-               miter.FinishSubEvent(totalevlen);
-               miter.FinishEvent();
-               Par("TransmitEvents").SetDouble(1.);
-               DOUT5(("retransmit - used size %d",usedsize));
-           }
-         
-
-
-
-		if(dostop) break;
-		outbuf.SetTotalSize(usedsize);
-		outbuf.SetTypeId(mbs::mbt_MbsEvents);
-		Par("TransmitData").SetDouble(outbuf.GetTotalSize()/1024./1024);
-		Par("TransmitBufs").SetDouble(1.);
-		Output(0)->Send(outbuf);
-	}
-	DOUT5(("MbsTransmitterModule::retransmit() leaves"));
-	if (dostop) {
-	   DOUT0(("Doing stop???"));
-	   dabc::mgr.StopApplication();
-	}
 }
 
 
+
+void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
+{
+   dabc::Buffer newbuf;
+   unsigned newbufused(0);
+   int newevid = -1;
+
+   if (fLastEventCnt >= 0) {
+      // we need to copy part of event in the new buffer
+      if (fHdrPtr.fullsize() == fTgtBuf.GetTotalSize()) {
+         // this is a case when event start from buffer begin, therefore copy of event data will not help
+         if (!force) return;
+         DOUT0(("Very special case - closing event when events starts from buffer begin and must be flushed"));
+         CloseCurrentEvent();
+      } else {
+         // we copy partial data  to new buffer
+
+//          DOUT0(("Coping of partial data into new buffer"));
+
+         newbuf = Pool()->TakeBuffer();
+         dabc::Pointer new_ptr = newbuf.GetPointer();
+         newbufused = fHdrPtr.distance_to(fDataPtr);
+         new_ptr.copyfrom(fHdrPtr, newbufused);
+
+         newevid = fLastEventCnt;
+         // mark as we do not fill data in the fDataPtr
+         fLastEventCnt = -1;
+      }
+   }
+
+   if (fLastEventCnt >= 0) {
+      EOUT(("Something went wrong"));
+      return;
+   }
+
+   if (!fTgtBuf.null() && (fHdrPtr.fullsize() < fTgtBuf.GetTotalSize())) {
+       fTgtBuf.SetTotalSize(fTgtBuf.GetTotalSize() - fHdrPtr.fullsize());
+       fTgtBuf.SetTypeId(mbs::mbt_MbsEvents);
+
+       Output()->Send(fTgtBuf.HandOver());
+       fLastFlushTime.GetNow();
+   }
+
+
+   if (newbuf.null())
+      fTgtBuf = Pool()->TakeBuffer();
+   else
+      fTgtBuf = newbuf.HandOver();
+
+   fHdrPtr = fTgtBuf.GetPointer();
+   fDataPtr.reset();
+
+   if ((newbufused>0) && (newevid>=0)) {
+      fDataPtr = fHdrPtr;
+      fDataPtr.shift(newbufused);
+      fLastEventCnt = newevid;
+   }
+}
+
+void hadaq::MbsTransmitterModule::ProcessTimerEvent(dabc::Timer* timer)
+{
+   if (fLastFlushTime.null()) fLastFlushTime.GetNow();
+
+   double tm = fLastFlushTime.SpentTillNow();
+
+   if (tm > fFlushTimeout)
+      FlushBuffer( tm > 5*fFlushTimeout);
+}
 
 
 // This one will transmit file to mbs transport server:

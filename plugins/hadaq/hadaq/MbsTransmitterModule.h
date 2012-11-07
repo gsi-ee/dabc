@@ -18,6 +18,15 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+#ifndef DABC_Buffer
+#include "dabc/Buffer.h"
+#endif
+
+#ifndef DABC_Pointer
+#include "dabc/Pointer.h"
+#endif
+
+
 namespace hadaq {
 
 
@@ -29,27 +38,41 @@ namespace hadaq {
 
    class MbsTransmitterModule : public dabc::ModuleAsync {
 
-      protected:
+   protected:
 
-         void retransmit();
+      unsigned int fSubeventId;
 
-         unsigned int fSubeventId;
+      /* true if subsequent hadaq events with same sequence number should be merged
+       * into one mbs subevent*/
+      bool fMergeSyncedEvents;
 
-         /* true if subsequent hadaq events with same sequence number should be merged
-          * into one mbs subevent*/
-         bool fMergeSyncedEvents;
+      /* Threshold how many subsequent events of same sequence number shall be merged*/
+      unsigned fMergeSyncMaxEvents;
 
-         /* Threshold how many subsequent events of same sequence number shall be merged*/
-         unsigned fMergeSyncMaxEvents;
-         
-         bool fPrintSync; 
+      bool fPrintSync;
 
-      public:
-         MbsTransmitterModule(const char* name, dabc::Command cmd = 0);
+      double fFlushTimeout;
 
-         virtual void ProcessInputEvent(dabc::Port*) { retransmit(); }
+      void FlushBuffer(bool force = false);
 
-         virtual void ProcessOutputEvent(dabc::Port*) { retransmit(); }
+      bool retransmit();
+
+      void CloseCurrentEvent();
+
+      dabc::Buffer       fTgtBuf;   // buffer for data
+      dabc::Pointer      fHdrPtr;   // pointer on header
+      dabc::Pointer      fDataPtr;   // pointer on next raw data
+      int                fLastEventCnt; // last number of HADAQ event count
+      dabc::TimeStamp    fLastFlushTime; // time when last flushing was done
+
+   public:
+      MbsTransmitterModule(const char* name, dabc::Command cmd = 0);
+
+      virtual void ProcessInputEvent(dabc::Port*) { retransmit(); }
+
+      virtual void ProcessOutputEvent(dabc::Port*) { retransmit(); }
+
+      virtual void ProcessTimerEvent(dabc::Timer* timer);
 
    };
 
