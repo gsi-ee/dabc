@@ -44,6 +44,8 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const char* name, dabc::Comman
 	fSubeventId = Cfg(hadaq::xmlMbsSubeventId, cmd).AsInt(0x000001F);
 	fMergeSyncedEvents = Cfg(hadaq::xmlMbsMergeSyncMode, cmd).AsBool(false);
 	fMergeSyncMaxEvents = Cfg(hadaq::xmlMbsMergeLimit, cmd).AsInt(20);
+	
+	fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
 
 	DOUT0(("hadaq:TransmitterModule subevid = 0x%x, merge sync mode = %d", (unsigned) fSubeventId, fMergeSyncedEvents));
 
@@ -154,6 +156,7 @@ void hadaq::MbsTransmitterModule::retransmit()
          // need to close output event properly in case we leave loop:
            if (!firstevent) {
                DOUT5(("After while loop: close output event %d of size %d, mergecount:%d",evcount,totalevlen, mergecount));
+               if (fPrintSync && fMergeSyncedEvents) DOUT1(("Merge events %06X", (unsigned) evcount));
                // close current mbs event, start next:
                miter.FinishSubEvent(totalevlen);
                miter.FinishEvent();

@@ -41,9 +41,11 @@ namespace hadaq {
 
          /* Threshold how many subsequent events of same sequence number shall be merged*/
          unsigned fMergeSyncMaxEvents;
+         
+         bool fPrintSync; 
 
       public:
-      	MbsTransmitterModule(const char* name, dabc::Command cmd = 0);
+         MbsTransmitterModule(const char* name, dabc::Command cmd = 0);
 
          virtual void ProcessInputEvent(dabc::Port*) { retransmit(); }
 
