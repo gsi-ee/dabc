@@ -65,21 +65,22 @@ endif
 clean::
 	rm -f $(IBTEST_LIB) $(IBTESTDIR)*.log
 
-$(IBTEST_LIB):  $(IBTEST_O)
-	@$(MakeLib) $(IBTEST_LIBNAME) "$(IBTEST_O)" "$(IBTESTDIR)" "$(EXTRAOPT)"
-
-
 ifeq ($(USEOFEDVERBS),true)
 $(IBTEST_O) : DEFINITIONS += WITH_VERBS
 endif
 
 ifeq ($(USEGPU),true)
 EXTRAOPT+=-Wl,-rpath,$(GPU_LIBPATH) -L$(GPU_LIBPATH) $(GPU_LIB)
-
 $(IBTEST_O) : DEFINITIONS += WITH_GPU
 $(IBTEST_O) : INCLUDES += $(GPU_INCPATH)
-
 endif
+
+$(IBTEST_LIB):  LDFLAGS += $(EXTRAOPT)
+
+$(IBTEST_LIB):  $(IBTEST_O)
+	@$(MakeLib) $(IBTEST_LIBNAME) "$(IBTEST_O)" $(IBTESTDIR)
+
+
 
 
 include $(DABCSYS)/config/Makefile.rules

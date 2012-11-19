@@ -36,8 +36,10 @@ $(DABCINCPATH)/%.h: $(DABCROOTDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
+$(DABCROOT_LIB): LDFLAGS += $(DABC_ROOTLIBS)
+
 $(DABCROOT_LIB):   $(DABCROOT_O)
-	@$(MakeLib) $(DABCROOT_LIBNAME) "$(DABCROOT_O)" $(TGTDLLPATH) "$(DABC_ROOTLIBS)"
+	@$(MakeLib) $(DABCROOT_LIBNAME) "$(DABCROOT_O)" $(TGTDLLPATH)
 
 
 ########### extra roles #############

@@ -77,8 +77,10 @@ $(DABCINCPATH)/%.h: $(DABC_BASEDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
+$(DABCBASE_LIB): LDFLAGS += -lpthread -ldl -lrt
+
 $(DABCBASE_LIB):   $(BASE_CORE_O) $(BASE_SOCKET_O)
-	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_CORE_O) $(BASE_SOCKET_O)" $(DABCDLLPATH) "-lpthread -ldl -lrt"
+	@$(MakeLib) $(DABCBASE_LIBNAME) "$(BASE_CORE_O) $(BASE_SOCKET_O)" $(DABCDLLPATH)
 
 #$(DABCSOCKET_LIB): $(BASE_SOCKET_O)
 #	@$(MakeLib) $(DABCSOCKET_LIBNAME) "$(BASE_SOCKET_O)" $(DABCDLLPATH) "-lpthread -ldl -lrt"

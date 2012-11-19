@@ -78,6 +78,9 @@ clean::
 
 $(EZCA_O) $(EZCA_D) : INCLUDES += $(EPICS_BASE)/include $(EPICS_BASE)/include/os/Linux $(EPICS_EXTENSIONS)/include 
 
+# TODO: link to the EZCA library
+#$(EZCA_LIB) : LDFLAGS += -L... -lezca
+
 $(EZCA_LIB):  $(EZCA_O)
 	@$(MakeLib) $(EZCA_LIBNAME) "$(EZCA_O)" $(TGTDLLPATH)
 

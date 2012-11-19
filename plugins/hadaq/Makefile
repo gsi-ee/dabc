@@ -51,8 +51,10 @@ $(DABCINCPATH)/%.h: $(HADAQDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
+$(DABCHADAQ_LIB): LDFLAGS += -lrt
+
 $(DABCHADAQ_LIB):   $(DABCHADAQ_O)
-	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH) "-lrt"
+	@$(MakeLib) $(DABCHADAQ_LIBNAME) "$(DABCHADAQ_O)" $(TGTDLLPATH)
 
 
 clean::

@@ -77,8 +77,11 @@ $(DABCINCPATH)/%.h: $(MBSDIR)/%.h
 	@echo "Header: $@" 
 	@cp -f $< $@
 
+
+$(DABCMBS_LIB): LDFLAGS += -lrt
+
 $(DABCMBS_LIB):   $(DABCMBS_O)
-	@$(MakeLib) $(DABCMBS_LIBNAME) "$(DABCMBS_O)" $(TGTDLLPATH) "-lrt"
+	@$(MakeLib) $(DABCMBS_LIBNAME) "$(DABCMBS_O)" $(TGTDLLPATH) 
 
 $(MBSFAPI_PACKAGE) : $(MBSFAPI_H) $(MBSFAPI_S) $(MBSFAPI_DISTR) 
 	@rm -f $(MBSFAPI_PACKAGE)
