@@ -91,10 +91,10 @@ $(DABCBASE_LIB):   $(BASE_CORE_O) $(BASE_SOCKET_O)
 #	$(AR) $(ARFLAGS) $(DABCBASE_SLIB) $(BASE_O)
 
 $(DABC_BASEEXE):  $(BASERUN_O) $(DABCBASE_LIB)
-	$(LD) $(LDFLAGS) $(BASERUN_O) $(LIBS_CORESET) $(OutPutOpt) $(DABC_BASEEXE)
+	$(LD) -Wl,--no-as-needed -O $(BASERUN_O) $(LIBS_CORESET) -lpthread -ldl -lrt -o $(DABC_BASEEXE)
 
 $(DABC_XMLEXE) : $(DABC_XMLEXEO) $(DABC_BASESUB_O) 
-	$(LD) $(LDFLAGS) $(DABC_XMLEXEO) $(DABC_BASESUB_O) -lpthread -lrt $(OutPutOpt) $(DABC_XMLEXE)
+	$(LD) -Wl,--no-as-needed -O $(DABC_XMLEXEO) $(DABC_BASESUB_O) -lpthread -lrt -o $(DABC_XMLEXE)
 
 $(DABC_BASESH): $(BASERUN_SH)
 	@echo "Produce $@"
