@@ -12,7 +12,7 @@
     
      <!-- dim config -->
    <Observer name="dim">
-     <dns value="lxg0532"/>
+     <dns value="lxg0537"/>
      <mask value="*"/>
    </Observer>
   
@@ -62,10 +62,13 @@
      </Module>
      
      <Module name="OnlineServer">
+       <PoolName value="Pool"/>
        <Port name="Output">
           <MbsServerKind value="Stream"/>
           <!--MbsServerPort value="6543"/-->
         </Port>
+       <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
+       <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
      </Module>
 
      

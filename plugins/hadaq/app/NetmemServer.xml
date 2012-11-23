@@ -17,6 +17,7 @@ This sets up an mbs server for hadaq data as received from trbnet via udp.
        <NumBuffers value="100"/>
     </MemoryPool>
     <Module name="NetmemServer">
+       <PoolName value="Pool"/>
        <Port name="Input">
           <HadaqUdpSender value="0.0.0.0"/>
           <HadaqUdpPort value="10101"/>
@@ -29,10 +30,11 @@ This sets up an mbs server for hadaq data as received from trbnet via udp.
        <Port name="Output">
           <MbsServerKind value="Stream"/>
           <!--MbsServerPort value="6543"/-->
-        </Port>
-        
+        </Port>        
           <SubeventFullId value="0x000001F"/>
-          <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>
+           <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
+           <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
+           <TransmitBufs width="4" prec="3" low="2" up="100000" debug="1"/>
      </Module>
   </Context>
 </dabc>

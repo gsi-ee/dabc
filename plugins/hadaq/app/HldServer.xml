@@ -11,6 +11,7 @@
        <NumBuffers value="100"/>         
     </MemoryPool>
     <Module name="HldServer">
+       <PoolName value="Pool"/>
        <Port name="Input">
           <InputQueueSize value="10"/>
           <SubeventFullId value="0x000001F"/>
@@ -20,7 +21,9 @@
           <OutputQueueSize value="10"/>
           <MbsServerKind value="Transport"/>
         </Port>
-          <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>
+        <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
+        <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
+        <TransmitBufs width="4" prec="3" low="2" up="100000" debug="1"/>
      </Module>
   </Context>
 </dabc>

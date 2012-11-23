@@ -12,6 +12,7 @@
     </MemoryPool>
     <Module name="HldConv">
        <SubeventFullId value="0x000001F"/>
+       <PoolName value="Pool"/>
        <Port name="Input">
           <InputQueueSize value="10"/>
           <HadaqFileName value="/data.local1/adamczew/hld/xx12153171835.hld"/>        
@@ -20,7 +21,10 @@
           <OutputQueueSize value="10"/>
           <MbsFileName value="xx12153171835.lmd"/>
           <BufferSize value="65536"/>
-        </Port>        
+       </Port>
+       <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
+       <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
+       <TransmitBufs width="4" prec="3" low="2" up="100000" debug="1"/>        
      </Module>
   </Context>
 </dabc>
