@@ -34,6 +34,7 @@ Changes in version 1.9.x (dabc2 beta) - spring 2012
    3. Make use of new dabc::Buffer concept in dabc::Pointer class. Pointer manage internally 
       own dabc::Buffer instance. This simplify all pointer methods - no need to provide
       additional reference to original buffer. 
+   4. That ever else
 
 
 Changes in version 1.9.0 (dabc2 alpha)
