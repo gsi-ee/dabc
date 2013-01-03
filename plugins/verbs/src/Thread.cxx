@@ -14,6 +14,7 @@
 #include "verbs/Thread.h"
 
 #include <sys/poll.h>
+#include <unistd.h>
 
 #include <infiniband/verbs.h>
 
