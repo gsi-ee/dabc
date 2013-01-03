@@ -44,6 +44,7 @@ ifeq ($(USEOFEDVERBS), true)
 EXTRAOPT+=-L$(DABCSYS)/lib -lDabcVerbs
 
 ifneq ($(wildcard /usr/include/infiniband/umad.h),)
+ifneq ($(wildcard /usr/include/infiniband/complib/cl_nodenamemap.h),)
 
 libs:: $(TRACERT_EXE)
 
@@ -57,6 +58,7 @@ endif
 clean::
 	cd $(TRACERT_DIR); $(MAKE) clean
 
+endif
 endif
 
 endif
