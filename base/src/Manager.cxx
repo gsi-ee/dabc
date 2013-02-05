@@ -49,6 +49,7 @@
 #include "dabc/ConnectionManager.h"
 #include "dabc/ReferencesVector.h"
 #include "dabc/CpuInfoModule.h"
+#include "dabc/MultiplexerModule.h"
 
 namespace dabc {
 
@@ -130,6 +131,9 @@ dabc::Module* dabc::StdManagerFactory::CreateModule(const char* classname, const
    else
    if (strcmp(classname, "dabc::ConnectionManager")==0)
       return new ConnectionManager(modulename, cmd);
+   else
+   if (strcmp(classname, "dabc::MultiplexerModule")==0)
+      return new MultiplexerModule(modulename, cmd);
 
    return 0;
 }

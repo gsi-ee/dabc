@@ -75,6 +75,9 @@ bool dabc::Url::SetUrl(const std::string& url, bool showerr)
 
    pos = s.find("/");
 
+   if (pos==0) {
+      fFileName = s;
+   } else
    if (pos != std::string::npos) {
       fHostName = s.substr(0, pos);
       fFileName = s.substr(pos+1);

@@ -60,6 +60,11 @@ namespace dabc {
 
    extern const char* xmlNumInputs;
    extern const char* xmlNumOutputs;
+   extern const char* xmlInputPrefix;
+   extern const char* xmlInputMask;
+   extern const char* xmlOutputPrefix;
+   extern const char* xmlOutputMask;
+
    extern const char* xmlUseAcknowledge;
    extern const char* xmlFlushTimeout;
    extern const char* xmlTrThread;

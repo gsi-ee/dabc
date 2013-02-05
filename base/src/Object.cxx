@@ -58,6 +58,10 @@ namespace dabc {
 
    const char* xmlNumInputs         = "NumInputs";
    const char* xmlNumOutputs        = "NumOutputs";
+   const char* xmlInputPrefix       = "Input";
+   const char* xmlInputMask         = "Input%u";
+   const char* xmlOutputPrefix      = "Output";
+   const char* xmlOutputMask        = "Output%u";
    const char* xmlUseAcknowledge    = "UseAcknowledge";
    const char* xmlFlushTimeout      = "FlushTimeout";
    const char* xmlTrThread          = "TrThread";
