@@ -71,7 +71,7 @@ $(MBSFAPI_LIB): $(MBSFAPI_O)
 
 $(MBSFAPI_DS): $(MBSFAPI_H)  $(MBSFAPI_LINKDEF)
 	echo "Generating root dictionary $(MBSFAPI_DS) ..."
-	$(ROOTSYS)/bin/rootcint -f $@ -c -p $(DEFINITIONS:%=-D%) $(INCLUDES:%=-I%) $(MBSFAPI_H) $(MBSFAPI_LINKDEF)
+	$(DABC_ROOTBIN)rootcint -f $@ -c -p $(DEFINITIONS:%=-D%) $(INCLUDES:%=-I%) $(MBSFAPI_H) $(MBSFAPI_LINKDEF)
 
 $(MBSFAPI_RMAP): $(MBSFAPI_LIB)
 	echo "Generating root map $@ ..."

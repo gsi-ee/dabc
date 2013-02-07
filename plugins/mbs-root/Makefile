@@ -9,7 +9,7 @@ else
 DABCMBSROOTDIR = .
 endif
 
-ROOTCINTDABC   = echo "Generating dictionary $@ ..."; $(ROOTSYS)/bin/rootcint -f  $@ -c -p $(INCLUDES:%=-I%) -I$(DABCSYS)/include $(DEFINITIONS)  
+ROOTCINTDABC   = echo "Generating dictionary $@ ..."; $(DABC_ROOTBIN)rootcint -f  $@ -c -p $(INCLUDES:%=-I%) -I$(DABCSYS)/include $(DEFINITIONS)  
 
 DABCMBSROOTDIRI         = $(DABCMBSROOTDIR)/mbs_root
 DABCMBSROOTDIRS         = $(DABCMBSROOTDIR)/src
