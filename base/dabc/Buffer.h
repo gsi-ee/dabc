@@ -157,6 +157,9 @@ namespace dabc {
           *  Size cannot be bigger than original size of the buffer */
          void SetTotalSize(BufferSize_t len) throw();
 
+         /** Remove part of buffer from the beginning */
+         void CutFromBegin(BufferSize_t len) throw();
+
          Buffer& operator=(const Buffer& src) throw();
 
          Buffer& operator<<(Buffer& src) throw();

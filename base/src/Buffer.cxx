@@ -27,9 +27,8 @@ void dabc::Buffer::BufferRec::increfcnt()
    dabc::LockGuard lock(fMutex); 
    if (fRefCnt==0) EOUT(("Refcnt already ZERO"));
    fRefCnt++; 
-   
-   
 }
+
 bool dabc::Buffer::BufferRec::decrefcnt() 
 { 
    dabc::LockGuard lock(fMutex); 
@@ -127,6 +126,39 @@ dabc::BufferSize_t dabc::Buffer::GetTotalSize() const
       sz += SegmentSize(n);
    return sz;
 }
+
+void dabc::Buffer::CutFromBegin(BufferSize_t len) throw()
+{
+   if (len==0) return;
+
+   if (len>=GetTotalSize()) {
+      Release();
+      return;
+   }
+
+   unsigned nseg(0), npos(0);
+   Locate(len, nseg, npos);
+
+   if (nseg >= NumSegments())
+      throw dabc::Exception("Cannot happen - internal error");
+
+   // we should release segments which are no longer required
+   if (nseg>0) {
+      if (fRec->fPool)
+         fRec->fPool->DecreaseSegmRefs(Segments(), nseg);
+
+      for (unsigned n=0;n<NumSegments()-nseg;n++)
+         *(fRec->Segment(n)) = *(fRec->Segment(n+nseg));
+
+      fRec->fNumSegments -= nseg;
+   }
+
+   if (npos>0) {
+      fRec->Segment(0)->datasize -= npos;
+      fRec->Segment(0)->buffer = (char*) (fRec->Segment(0)->buffer) + npos;
+   }
+}
+
 
 void dabc::Buffer::SetTotalSize(BufferSize_t len) throw()
 {
