@@ -39,6 +39,9 @@ dabc::MultiplexerModule::MultiplexerModule(const char* name, dabc::Command cmd) 
 
    if (!fDataRateName.empty())
       CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
+   
+   DOUT0(("Create multiplexer module %s with %d inputs and %d outputs", name, numinp, numout));
+   
 }
 
 void dabc::MultiplexerModule::ProcessInputEvent(Port* port)
@@ -64,7 +67,7 @@ void dabc::MultiplexerModule::CheckDataSending()
       if (buf.null()) EOUT(("Fail to get buffer from input %u", id));
 
       if (!fDataRateName.empty())
-         Par(fDataRateName).SetDouble(buf.GetTotalSize());
+         Par(fDataRateName).SetDouble(buf.GetTotalSize()/1024./1024.);
 
       SendToAllOutputs(buf);
    }

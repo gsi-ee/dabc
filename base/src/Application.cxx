@@ -79,8 +79,10 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
    } else
 
    if (cmd.IsName("CheckWorkDone")) {
-      if (IsWorkDone())
+      if (IsWorkDone()) {
+         DOUT0(("Stop application while work is completed"));
          Submit(InvokeAppFinishCmd());
+      }
 
       return cmd_true;
    }
