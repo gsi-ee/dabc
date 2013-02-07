@@ -33,6 +33,8 @@ namespace dabc {
       protected:
          PortIdsQueue fQueue;
 
+         std::string fDataRateName;
+
          void CheckDataSending();
 
       public:
