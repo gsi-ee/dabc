@@ -217,6 +217,11 @@ int dabc::Port::ExecuteCommand(Command cmd)
 
       fTransport = (Transport*) cmd.GetPtr("#Transport");
       fTrHandle = cmd.GetRef("TrHandle");
+      
+      // FIXME: workaround, at this moment we check if module running or not
+      // At any next point (like in SetPort() method) module can start and will invoke port->transport running
+      // therefore only if module was running here, we need to re-start transport ourself
+      bool module_was_running = GetModule()->IsRunning();
 
       DOUT4(("%s Get AssignTransport command old %p new %p", ItemName().c_str(), oldtr, fTransport));
 
@@ -238,7 +243,7 @@ int dabc::Port::ExecuteCommand(Command cmd)
          GetConnReq(true).ChangeState(ConnectionObject::sConnected, true);
       }
 
-      if (GetModule()->IsRunning() && fTransport)
+      if (module_was_running && fTransport)
          fTransport->StartTransport();
 
       DOUT5(("%s processed AssignTransport command cansend %s", ItemName().c_str(), DBOOL(CanSend())));

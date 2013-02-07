@@ -196,13 +196,11 @@ bool dabc::ApplicationBase::StartModules()
    ReferencesVector vect;
 
    GetAllChildRef(&vect);
-
+   
    while (vect.GetSize()>0) {
       ModuleRef m = vect.TakeRef(0);
       m.Start();
    }
-
-   DOUT2(("Start modules"));
 
    return true;
 }
@@ -415,7 +413,6 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
    if (cmd == stcmdDoStart()) {
       res = BeforeAppModulesStarted();
       res = StartModules() && res;
-
       if (res) {
          LockGuard lock(ObjectMutex());
          fWasRunning = true;

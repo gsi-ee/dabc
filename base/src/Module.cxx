@@ -207,6 +207,8 @@ bool dabc::Module::DoStart()
 {
    if (IsRunning()) return true;
 
+   DOUT3(("dabc::Module::DoStart() %s", GetName()));
+
    BeforeModuleStart();
 
    fRunState = true;
@@ -218,12 +220,14 @@ bool dabc::Module::DoStart()
 
    if (fLostEvents.Size()>0) FireEvent(evntReinjectlost);
 
+   DOUT3(("dabc::Module::DoStart() %s done", GetName()));
+   
    return true;
 }
 
 bool dabc::Module::DoStop()
 {
-   DOUT3(("Module::DoStop %s", GetName()));
+   DOUT3(("dabc::Module::DoStop() %s", GetName()));
 
    if (!IsRunning()) return true;
 
@@ -236,7 +240,7 @@ bool dabc::Module::DoStop()
 
    AfterModuleStop();
 
-   DOUT3(("Module::DoStop %s done", GetName()));
+   DOUT3(("dabc::Module::DoStop() %s done", GetName()));
 
    return true;
 }
