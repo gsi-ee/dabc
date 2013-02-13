@@ -34,7 +34,7 @@ include $(DABCSYS)/config/Makefile.config
 
 
 
-DOOPTIMIZATION = false
+#DOOPTIMIZATION = false
 
 
 
