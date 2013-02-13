@@ -333,7 +333,7 @@ void hadaq::UdpDataSocket::ReadUdp()
       //std::cout << "!!!! fTgtShift:" << fTgtShift << ", hadTU size:"
       //      << hadTu->GetSize() << std::endl;
       // we finished receive with current hadtu message, check it:
-      if (fTgtShift != msgsize
+      if ((fTgtShift != msgsize)
             || memcmp((char*) hadTu + hadTu->GetPaddedSize(), (char*) hadTu, 32)) {
          // received size does not match header info, or header!=trailer contents
          fTgtShift = 0;
@@ -637,7 +637,6 @@ int hadaq::UdpDataSocket::OpenUdp(int& portnum, int portmin, int portmax,
 }
 
 
-
 std::string  hadaq::UdpDataSocket::GetNetmemParName(const std::string& name)
 {
    return dabc::format("%s_%s",hadaq::NetmemPrefix,name.c_str());
@@ -648,8 +647,7 @@ void hadaq::UdpDataSocket::CreateNetmemPar(const std::string& name)
    CreatePar(GetNetmemParName(name));
 }
 
-void hadaq::UdpDataSocket::SetNetmemPar(const std::string& name,
-      unsigned value)
+void hadaq::UdpDataSocket::SetNetmemPar(const std::string& name, unsigned value)
 {
    Par(GetNetmemParName(name)).SetUInt(value);
 }
