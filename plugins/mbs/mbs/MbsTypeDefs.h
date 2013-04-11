@@ -182,31 +182,14 @@ namespace mbs {
 
    extern void SwapData(void* data, unsigned bytessize);
 
-   extern const char* typeLmdInput;
-   extern const char* typeLmdOutput;
-   extern const char* typeTextInput;
-   extern const char* typeServerTransport;
-   extern const char* typeClientTransport;
-
    extern const char* protocolLmd;
    extern const char* protocolMbs;
-   extern const char* protocolMbsTransport;
-   extern const char* protocolMbsStream;
 
    extern const char* comStartServer;
    extern const char* comStopServer;
    extern const char* comStartFile;
    extern const char* comStopFile;
 
-   extern const char* portOutput;
-   extern const char* portOutputFmt;
-   extern const char* portInput;
-   extern const char* portInputFmt;
-   extern const char* portFileOutput;
-   extern const char* portServerOutput;
-
-   extern const char* xmlFileName;
-   extern const char* xmlSizeLimit;
    extern const char* xmlServerName;
    extern const char* xmlServerKind;
    extern const char* xmlServerPort;
@@ -218,9 +201,6 @@ namespace mbs {
    extern const char* xmlTextHeaderLines;
    extern const char* xmlTextCharBuffer;
 
-   extern const char* xmlNormalOutput;
-   extern const char* xmlFileOutput;
-   extern const char* xmlServerOutput;
    extern const char* xmlCombineCompleteOnly;
    extern const char* xmlCheckSubeventIds;
    extern const char* xmlEvidMask;

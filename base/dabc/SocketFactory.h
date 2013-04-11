@@ -24,15 +24,13 @@ namespace dabc {
 
    class SocketFactory : public Factory {
       public:
-         SocketFactory(const char* name) : Factory(name) {}
+         SocketFactory(const std::string& name) : Factory(name) {}
 
-         virtual Reference CreateObject(const char* classname, const char* objname, Command cmd);
+         virtual Reference CreateObject(const std::string& classname, const std::string& objname, Command cmd);
 
-         virtual Device* CreateDevice(const char* classname,
-                                      const char* devname,
-                                      Command);
+         virtual Device* CreateDevice(const std::string& classname, const std::string& devname, Command cmd);
 
-         virtual Reference CreateThread(Reference parent, const char* classname, const char* thrdname, const char* thrddev, Command cmd);
+         virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd);
    };
 
 }

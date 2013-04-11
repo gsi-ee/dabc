@@ -122,49 +122,49 @@ namespace dabc {
          unsigned          fLogLimit;   // maximum number of log messages before drop
    };
 
-   #define DOUT(level, args) \
-     dabc::Logger::Debug(level, __FILE__, __LINE__, __func__, dabc::format args .c_str())
+   #define DOUT(level, args ... ) \
+     dabc::Logger::Debug(level, __FILE__, __LINE__, __func__, dabc::format( args ).c_str())
 
    #if DEBUGLEVEL > -2
-      #define EOUT(args) DOUT(-1, args)
+      #define EOUT( args ... ) DOUT(-1, args )
    #else
-      #define EOUT(args)
+      #define EOUT( args ... )
    #endif
 
    #if DEBUGLEVEL > -1
-      #define DOUT0(args) DOUT(0, args)
+      #define DOUT0( args ... ) DOUT(0, args )
    #else
-      #define DOUT0(args)
+      #define DOUT0( args ... )
    #endif
 
    #if DEBUGLEVEL > 0
-      #define DOUT1(args) DOUT(1, args)
+      #define DOUT1( args ... ) DOUT(1, args )
    #else
-      #define DOUT1(args)
+      #define DOUT1( args )
    #endif
 
    #if DEBUGLEVEL > 1
-      #define DOUT2(args) DOUT(2, args)
+      #define DOUT2( args ... ) DOUT( 2, args )
    #else
-      #define DOUT2(args)
+      #define DOUT2( args ... )
    #endif
 
    #if DEBUGLEVEL > 2
-      #define DOUT3(args) DOUT(3, args)
+      #define DOUT3( args ... ) DOUT(3, args )
    #else
-      #define DOUT3(args)
+      #define DOUT3( args ... )
    #endif
 
    #if DEBUGLEVEL > 3
-      #define DOUT4(args) DOUT(4, args)
+      #define DOUT4( args ... ) DOUT(4, args )
    #else
-      #define DOUT4(args)
+      #define DOUT4( args ... )
    #endif
 
    #if DEBUGLEVEL > 4
-      #define DOUT5(args) DOUT(5, args)
+      #define DOUT5( args ... ) DOUT(5, args )
    #else
-      #define DOUT5(args)
+      #define DOUT5( args ... )
    #endif
 
    #define DBOOL(arg) (arg ? "true" : "false")

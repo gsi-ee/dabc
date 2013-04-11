@@ -1,36 +1,48 @@
 <?xml version="1.0"?>
-<dabc version="1">
- <Context name="Readout">
+<dabc version="2">
+ <Context name="Ecza">
   <Run> 
      <lib value="libDabcMbs.so"/>
      <lib value="libDabcEzca.so"/>
-     <lib value="/misc/adamczew/epics/myextensions/lib/linux-x86/libezca.so"/>   
+     <func value="StartMbsCombiner"/>
      <logfile value="Ezca.log"/>
   </Run> 
-  <Application class="ezca::Readout">
-    <EpicsIdentifier value="myIOC"/>
-    <EpicsSubeventId value="0x000000A"/>
-    <EpicsFlagRec value="adamczewHost:calcExample"/>
-    <EpicsEventIDRec value="adamczewHost:aiExample"/>
-    <EpicsNumLongRecs value="3"/>
-    <EpicsLongRec-0 value="adamczewHost:calcExample1"/>
-    <EpicsLongRec-1 value="adamczewHost:calcExample2"/>
-    <EpicsLongRec-2 value="adamczewHost:calcExample3"/>
-    <EpicsNumDoubleRecs value="1"/>
-    <EpicsDoubleRec-0 value="adamczewHost:aiExample"/>
-	<EpicsDoubleRec-1 value="Current"/>
-	<EpicsPollingTimeout  value="0.1"/>
-    <PoolName value="EpicsPool"/>     
-    <BufferSize value="1024"/>
-    <NumBuffers value="100"/>
-    <EpicsModuleName value="EpicsMonitor"/>
-    <EpicsModuleThread value="EpicsThread"/>    
-    <MbsServerKind value="Stream"/>
-	<MbsFileName value=""/>
-    <MbsFileSizeLimit value="110"/>
-  </Application>
-  <Module name="EpicsMonitor">
-     <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>
+
+  <MemoryPool name="Pool">
+     <BufferSize value="1024"/>
+     <NumBuffers value="100"/>
+  </MemoryPool>
+  
+  <Module name="Combiner">
+     <NumInputs value="1"/>
+     <NumOutputs value="1"/>
+     <CombinerRatesPrefix value="Ezca"/>
+     
+     <InputPort name="Input0" queue="20" url="ezca://myIOC">
+	    <EpicsSubeventId value="0x000000A"/>
+	    <!--EpicsFlagRec value="zumbruchHost:calcExample"/-->
+	    <!--EpicsEventIDRec value="zumbruchHost:aiExample"/-->
+	    <EpicsNumLongRecs value="1"/>
+	    <EpicsLongRec-0 value="zumbruchHost:integer"/>
+	    <EpicsNumDoubleRecs value="4"/>
+	    <EpicsDoubleRec-0 value="zumbruchHost:calcExample1"/>
+	    <EpicsDoubleRec-1 value="zumbruchHost:calcExample2"/>
+	    <EpicsDoubleRec-2 value="zumbruchHost:calcExample3"/>
+	    <EpicsDoubleRec-3 value="zumbruchHost:aiExample"/>
+	    <EpicsPollingTimeout value="0.1"/>
+	    <!-- configuration of ezca -->
+	    <EzcaTimeout value="0.2"/>
+	    <EzcaRetryCount value="20"/>
+	    <EzcaDebug value="false"/>
+	    <EzcaAutoError value="false"/>
+     </InputPort>
+     
+     <OutputPort name="Output0" queue="20" url="mbs://Stream:6111"/>
+     <OutputPort name="Output1" queue="10" url="lmd://test.lmd?maxsize=30"/>
+     
+     <EzcaData width="5" prec="3" low="0" up="50" debug="1"/>
+     <EzcaEvents width="5" prec="3" low="0" up="50" debug="1"/>
   </Module>
+  
  </Context>
 </dabc>

@@ -37,7 +37,7 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
 {
    if (!IsGenerator()) return false;
 
-   DOUT1(("CreateReadout buf = %d", Par(xmlReadoutBuffer).AsInt()));
+   DOUT1("CreateReadout buf = %d", Par(xmlReadoutBuffer).AsInt());
 
    bool res = false;
 
@@ -47,16 +47,15 @@ bool bnet::TestWorkerApplication::CreateReadout(const char* portname, int portnu
        fABBActive = dabc::mgr.CreateDevice("abb::Device", abbdevname);
 
        res = dabc::mgr.CreateTransport(portname, abbdevname);
-       if (!res) EOUT(("Cannot create ABB transport"));
+       if (!res) EOUT("Cannot create ABB transport");
        dabc::mgr()->LogMessage(0,"created ABB readout");
 
    } else {
       // create dummy event generator module:
 
       std::string modulename = dabc::format("Readout%d", portnumber);
-      dabc::mgr.CreateModule("bnet::TestGeneratorModule", modulename.c_str(), SenderThreadName);
-      modulename += "/Output";
-      res = dabc::mgr()->ConnectPorts(modulename.c_str(), portname);
+      dabc::mgr.CreateModule("bnet::TestGeneratorModule", modulename, SenderThreadName);
+      res = dabc::mgr.Connect(modulename + "/Output", portname);
       fABBActive = false;
       dabc::mgr()->LogMessage(0,"created dummy event generator readout");
    }

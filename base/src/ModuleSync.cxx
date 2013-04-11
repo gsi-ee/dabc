@@ -16,11 +16,9 @@
 #include "dabc/ModuleSync.h"
 
 #include "dabc/logging.h"
-#include "dabc/ModuleItem.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/CommandsQueue.h"
 
-dabc::ModuleSync::ModuleSync(const char* name, Command cmd) :
+dabc::ModuleSync::ModuleSync(const std::string& name, Command cmd) :
    Module(name, cmd),
    fTmoutExcept(false),
    fDisconnectExcept(false),
@@ -38,50 +36,51 @@ dabc::ModuleSync::~ModuleSync()
    // if module was not yet halted, make sure that mainloop of the module is leaved
 
    if (IsRunning()) {
-      EOUT(("Problem in sync module %s destructor - cannot leave normally main loop, must crash :-O", GetName()));
+      EOUT("Problem in sync module %s destructor - cannot leave normally main loop, must crash :-O", GetName());
    }
 
    if (fNewCommands!=0) {
-      EOUT(("Some commands remain event in module %s destructor - BAD", GetName()));
+      EOUT("Some commands remain event in module %s destructor - BAD", GetName());
       delete fNewCommands;
       fNewCommands = 0;
    }
 }
 
-bool dabc::ModuleSync::WaitConnect(Port* port, double timeout)
-   throw (PortException, StopException, TimeoutException)
+bool dabc::ModuleSync::WaitConnect(const std::string& name, double timeout) throw (Exception)
 {
-   if (port==0) return false;
+   PortRef port = FindPort(name);
 
-   uint16_t evid(evntNone);
+   if (port.null()) return false;
+
+   uint16_t evid(evntModuleNone);
 
    do {
-      if (port->IsConnected()) return true;
+      // we are using direct pointer, while method can only be used from inside thread
+      if (port()->IsConnected()) return true;
 
-      if (evid == evntPortConnect) {
-         EOUT(("Internal error. Connect event, but no transport"));
-         throw PortException(port, "Internal");
-      }
+      if (evid == evntPortConnect)
+         throw Exception(ex_Connect, "Get connection event when port is not connected", port.ItemName());
 
-   } while (WaitItemEvent(timeout, port, &evid));
+   } while (WaitItemEvent(timeout, port(), &evid));
 
    return false;
 
 }
 
-bool dabc::ModuleSync::Send(Port* port, const Buffer &buf, double timeout)
-   throw (PortOutputException, StopException, TimeoutException)
+bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout) throw (Exception)
 {
+   OutputPort* port = Output(indx);
+
    if ((port==0) || buf.null()) return false;
 
-   uint16_t evid(evntNone);
+   uint16_t evid(evntModuleNone);
 
    // one need Keeper to release buffer in case of exceptions
    do {
 
       if (evid == evntPortDisconnect)
          if (IsDisconnectExcept())
-            throw PortOutputException(port, "Disconnect");
+            throw Exception(ex_Disconnect, "Port disconnected when sending buffer", port->ItemName());
 
       if (port->CanSend())
          return port->Send(buf);
@@ -92,17 +91,18 @@ bool dabc::ModuleSync::Send(Port* port, const Buffer &buf, double timeout)
 }
 
 
-dabc::Buffer dabc::ModuleSync::Recv(Port* port, double timeout)
-   throw (PortInputException, StopException, TimeoutException)
+dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout) throw (Exception)
 {
+   InputPort* port = Input(indx);
+
    if (port==0) return Buffer();
 
-   uint16_t evid(evntNone);
+   uint16_t evid(evntModuleNone);
 
    do {
       if (evid == evntPortDisconnect)
          if (IsDisconnectExcept())
-            throw PortInputException(port, "Disconnect");
+            throw Exception(ex_Disconnect, "Port disconnected when receiving buffer", port->ItemName());
 
       if (port->CanRecv())
          return port->Recv();
@@ -112,27 +112,43 @@ dabc::Buffer dabc::ModuleSync::Recv(Port* port, double timeout)
    return Buffer();
 }
 
-dabc::Buffer dabc::ModuleSync::RecvFromAny(Port** port, double timeout)
-   throw (PortInputException, StopException, TimeoutException)
+dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout) throw (Exception)
 {
-   uint16_t evid(evntNone);
+   PoolHandle* handle = Pool(poolindx);
+   if (handle==0) return Buffer();
+
+   do {
+      if (handle->CanTakeBuffer())
+         return handle->TakeBuffer();
+   } while (WaitItemEvent(timeout, handle));
+
+   return Buffer();
+}
+
+
+
+dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout) throw (Exception)
+{
+   uint16_t evid(evntModuleNone);
    ModuleItem* resitem(0);
    unsigned shift(0);
 
    do {
       if (evid == evntPortDisconnect)
          if (IsDisconnectExcept())
-            throw PortInputException((Port*) resitem, "Disconnect");
+            throw Exception(ex_Disconnect, "Port disconnected when receiving buffer", resitem ? resitem->ItemName() : "");
 
       if (NumInputs() == 0) return Buffer();
 
-      if (evid == evntInput) shift = InputNumber( (Port*) resitem );
-                        else shift = 0;
+      if (resitem && (evid == evntInput))
+         shift = resitem->fSubId;
+      else
+         shift = 0;
 
       for (unsigned n=0; n < NumInputs(); n++) {
-         Port* p = Input( (n+shift) % NumInputs());
+         InputPort* p = fInputs[(n+shift) % NumInputs()];
          if (p->CanRecv()) {
-            if (port) *port = p;
+            if (indx) *indx = p->fSubId;
             return p->Recv();
          }
       }
@@ -142,62 +158,36 @@ dabc::Buffer dabc::ModuleSync::RecvFromAny(Port** port, double timeout)
 }
 
 
-bool dabc::ModuleSync::WaitInput(Port* port, unsigned minqueuesize, double timeout)
-  throw (PortInputException, StopException, TimeoutException)
+bool dabc::ModuleSync::WaitInput(unsigned indx, unsigned minqueuesize, double timeout) throw (Exception)
 {
+   InputPort* port = Input(indx);
+
    if (port==0) return false;
 
-   uint16_t evid(evntNone);
+   uint16_t evid(evntModuleNone);
 
    do {
       if (evid == evntPortDisconnect)
          if (IsDisconnectExcept())
-            throw PortInputException(port, "Disconnect");
+            throw Exception(ex_Disconnect, "Port disconnected when waiting for input buffers", port->ItemName());
 
-      if (port->InputPending() >= minqueuesize) return true;
+      if (port->NumCanRecv() >= minqueuesize) return true;
    } while (WaitItemEvent(timeout, port, &evid));
 
    return false;
 }
 
-dabc::Buffer dabc::ModuleSync::TakeBuffer(PoolHandle* pool, BufferSize_t size, double timeout)
-   throw (StopException, TimeoutException)
-{
-   if (pool==0) return Buffer();
-
-   dabc::Buffer buf = pool->TakeRequestedBuffer();
-   if (!buf.null()) {
-      EOUT(("There is requested buffer of size %d", buf.GetTotalSize()));
-      buf.Release();
-   }
-
-   if (timeout==0.)
-      return pool->TakeBuffer(size);
-
-   buf = pool->TakeBufferReq(size);
-   if (!buf.null()) return buf;
-
-   do {
-      buf = pool->TakeRequestedBuffer();
-      if (!buf.null()) return buf;
-   } while (WaitItemEvent(timeout, pool));
-
-   return buf;
-}
-
-bool dabc::ModuleSync::ModuleWorking(double timeout)
-   throw (StopException, TimeoutException)
+bool dabc::ModuleSync::ModuleWorking(double timeout) throw (Exception)
 {
    AsyncProcessCommands();
 
    if (!SingleLoop(timeout))
-      throw StopException();
+      throw dabc::Exception(ex_Stop, "Module stopped", ItemName());
 
    return true;
 }
 
-uint16_t dabc::ModuleSync::WaitEvent(double timeout)
-   throw (StopException, TimeoutException)
+uint16_t dabc::ModuleSync::WaitEvent(double timeout) throw (Exception)
 {
    uint16_t evid = 0;
 
@@ -220,7 +210,7 @@ int dabc::ModuleSync::PreviewCommand(Command cmd)
       if (!IsRunning()) return cmd_true;
 
       if (!fInsideMainLoop) {
-         EOUT(("Something wrong, module %s runs without main loop ????", GetName()));
+         EOUT("Something wrong, module %s runs without main loop ????", GetName());
          return cmd_false;
       }
 
@@ -249,24 +239,24 @@ void dabc::ModuleSync::StopUntilRestart()
 {
    Stop();
 
-   DOUT1(("Stop module %s until restart", GetName()));
+   DOUT1("Stop module %s until restart", GetName());
 
    double tmout = -1.;
 
    WaitItemEvent(tmout);
 
-   DOUT1(("Finish StopUntilRestart for module %s", GetName()));
+   DOUT1("Finish StopUntilRestart for module %s", GetName());
 }
 
 
 void dabc::ModuleSync::ObjectCleanup()
 {
    if (fNewCommands!=0) {
-      EOUT(("Some commands remain event when module %s is cleaned up - BAD", GetName()));
+      EOUT("Some commands remain event when module %s is cleaned up - BAD", GetName());
       AsyncProcessCommands();
    }
 
-   DOUT4(("ModuleSync::ObjectCleanup %s", GetName()));
+   DOUT4("ModuleSync::ObjectCleanup %s", GetName());
 
    dabc::Module::ObjectCleanup();
 }
@@ -287,10 +277,13 @@ void dabc::ModuleSync::AsyncProcessCommands()
 
 void dabc::ModuleSync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
 {
+   if ((evid==evntInput) || (evid==evntOutput))
+     ((Port*) item)->ConfirmEvent();
+
    // no need to store any consequent events
    if (fWaitRes) return;
 
-   if (item==0) { EOUT(("Zero item !!!!!!!!!!!!!")); }
+   if (item==0) { EOUT("Zero item !!!!!!!!!!!!!"); }
 
    if ((fWaitItem==item) || (fWaitItem==0)) {
       fWaitRes = true;
@@ -299,9 +292,10 @@ void dabc::ModuleSync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
    }
 }
 
-bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *resevid, ModuleItem** resitem)
-  throw (StopException, TimeoutException)
+bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *resevid, ModuleItem** resitem) throw (Exception)
 {
+   if (tmout<0) return false;
+
    fWaitItem = item;
    fWaitId = 0;
    fWaitRes = false;
@@ -319,7 +313,7 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
             tmout -= (tm - last_tm);
             if (tmout<0) {
                if (IsTmoutExcept())
-                  throw TimeoutException();
+                  throw Exception(ex_Timeout, "Operation timeout for item", ItemName());
                else
                   return false;
             }
@@ -332,7 +326,7 @@ bool dabc::ModuleSync::WaitItemEvent(double& tmout, ModuleItem* item, uint16_t *
       // SingleLoop return false only when Worker should be halted,
       // we use this to stop module and break recursion
 
-      if (!SingleLoop(tmout)) throw StopException();
+      if (!SingleLoop(tmout)) throw Exception(ex_Stop, "Module stopped when waiting for", ItemName());
    }
 
    if (resevid!=0) *resevid = fWaitId;
@@ -366,5 +360,5 @@ void dabc::ModuleSync::DoWorkerAfterMainLoop()
       DoStop();
    }
 
-   DOUT3(("Stop sync module %s", GetName()));
+   DOUT3("Stop sync module %s", GetName());
 }

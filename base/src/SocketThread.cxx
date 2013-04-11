@@ -63,46 +63,66 @@ const char* SocketErr(int err)
    return "UNCKNOWN";
 }
 
-#define ShowSocketError(info, err) EOUT(("SocketError %d:%s %s", err, SocketErr(err), info))
+#define ShowSocketError(info, err) EOUT("SocketError fd:%d %d:%s %s", Socket(), err, SocketErr(err), info)
+
 
 // _____________________________________________________________________
 
-dabc::SocketWorker::SocketWorker(int fd, const char* name) :
-   dabc::Worker(MakePair(name), true),
+dabc::SocketAddon::SocketAddon(int fd) :
+   WorkerAddon("socket"),
    fSocket(fd),
    fDoingInput(false),
    fDoingOutput(false)
 {
 }
 
-dabc::SocketWorker::~SocketWorker()
+dabc::SocketAddon::~SocketAddon()
 {
    CloseSocket();
 }
 
-void dabc::SocketWorker::SetSocket(int fd)
+
+void dabc::SocketAddon::ProcessEvent(const EventId& evnt)
+{
+   switch (evnt.GetCode()) {
+      case evntSocketRead:
+         break;
+
+      case evntSocketWrite:
+         break;
+
+      case evntSocketError:
+         OnSocketError(0, "When working");
+         break;
+
+      default:
+         WorkerAddon::ProcessEvent(evnt);
+   }
+}
+
+void dabc::SocketAddon::SetSocket(int fd)
 {
    CloseSocket();
    fSocket = fd;
 }
 
-int dabc::SocketWorker::TakeSocket()
+int dabc::SocketAddon::TakeSocket()
 {
    int fd = fSocket;
    fSocket = -1;
    return fd;
 }
 
-void dabc::SocketWorker::CloseSocket()
+void dabc::SocketAddon::CloseSocket()
 {
    if (fSocket<0) return;
 
-   DOUT3(("~~~~~~~~~~~~~~~~ Close socket %d", fSocket));
+   DOUT3("~~~~~~~~~~~~~~~~ Close socket %d", fSocket);
    close(fSocket);
    fSocket = -1;
 }
 
-int dabc::SocketWorker::TakeSocketError()
+int dabc::SocketAddon::TakeSocketError()
 {
    if (Socket()<0) return -1;
 
@@ -116,37 +136,20 @@ int dabc::SocketWorker::TakeSocketError()
    return myerrno;
 }
 
-void dabc::SocketWorker::ProcessEvent(const EventId& evnt)
+void dabc::SocketAddon::OnConnectionClosed()
 {
-    switch (evnt.GetCode()) {
-       case evntSocketRead:
-          break;
-
-       case evntSocketWrite:
-          break;
-
-       case evntSocketError:
-          OnSocketError(0, "When working");
-          break;
-
-       default:
-          Worker::ProcessEvent(evnt);
-    }
+   DOUT2("Connection closed - destroy socket");
+   DeleteWorker();
 }
 
-void dabc::SocketWorker::OnConnectionClosed()
+void dabc::SocketAddon::OnSocketError(int errnum, const std::string& info)
 {
-   DOUT2(("Connection closed - destroy socket"));
-   DeleteThis();
+   ShowSocketError(info.c_str(), errnum);
+
+   DeleteWorker();
 }
 
-void dabc::SocketWorker::OnSocketError(int errnum, const char* info)
-{
-   ShowSocketError(info, errnum);
-   DeleteThis();
-}
-
-ssize_t dabc::SocketWorker::DoRecvBuffer(void* buf, ssize_t len)
+ssize_t dabc::SocketAddon::DoRecvBuffer(void* buf, ssize_t len)
 {
    ssize_t res = recv(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
 
@@ -158,7 +161,7 @@ ssize_t dabc::SocketWorker::DoRecvBuffer(void* buf, ssize_t len)
    return res;
 }
 
-ssize_t dabc::SocketWorker::DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr, unsigned srcaddrlen)
+ssize_t dabc::SocketAddon::DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr, unsigned srcaddrlen)
 {
    struct iovec iov[2];
 
@@ -188,7 +191,7 @@ ssize_t dabc::SocketWorker::DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf
    return res;
 }
 
-ssize_t dabc::SocketWorker::DoSendBuffer(void* buf, ssize_t len)
+ssize_t dabc::SocketAddon::DoSendBuffer(void* buf, ssize_t len)
 {
    ssize_t res = send(fSocket, buf, len, MSG_DONTWAIT | MSG_NOSIGNAL);
 
@@ -200,7 +203,7 @@ ssize_t dabc::SocketWorker::DoSendBuffer(void* buf, ssize_t len)
    return res;
 }
 
-ssize_t dabc::SocketWorker::DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* tgtaddr, unsigned tgtaddrlen)
+ssize_t dabc::SocketAddon::DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* tgtaddr, unsigned tgtaddrlen)
 {
    struct iovec iov[2];
 
@@ -233,8 +236,8 @@ ssize_t dabc::SocketWorker::DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf
 
 // _____________________________________________________________________
 
-dabc::SocketIOWorker::SocketIOWorker(int fd, bool isdatagram, bool usemsg) :
-   SocketWorker(fd),
+dabc::SocketIOAddon::SocketIOAddon(int fd, bool isdatagram, bool usemsg) :
+   SocketAddon(fd),
    fDatagramSocket(isdatagram),
    fUseMsgOper(usemsg),
    fSendUseMsg(true),
@@ -250,7 +253,7 @@ dabc::SocketIOWorker::SocketIOWorker(int fd, bool isdatagram, bool usemsg) :
    fLastRecvSize(0)
 {
    if (IsDatagramSocket() && !fUseMsgOper) {
-      EOUT(("Dangerous - datagram socket MUST use sendmsg()/recvmsg() operation to be able send/recv segmented buffers, force"));
+      EOUT("Dangerous - datagram socket MUST use sendmsg()/recvmsg() operation to be able send/recv segmented buffers, force");
       fUseMsgOper = true;
    }
 
@@ -265,21 +268,21 @@ dabc::SocketIOWorker::SocketIOWorker(int fd, bool isdatagram, bool usemsg) :
    #endif
 }
 
-dabc::SocketIOWorker::~SocketIOWorker()
+dabc::SocketIOAddon::~SocketIOAddon()
 {
    #ifdef SOCKET_PROFILING
-      DOUT1(("SocketIOWorker::~SocketIOWorker Send:%ld Recv:%ld", fSendOper, fRecvOper));
+      DOUT1("SocketIOAddon::~SocketIOAddon Send:%ld Recv:%ld", fSendOper, fRecvOper);
       if (fSendOper>0)
-         DOUT1(("   Send time:%5.1f microsec sz:%7.1f", fSendTime*1e6/fSendOper, 1.*fSendSize/fSendOper));
+         DOUT1("   Send time:%5.1f microsec sz:%7.1f", fSendTime*1e6/fSendOper, 1.*fSendSize/fSendOper);
       if (fRecvOper>0)
-         DOUT1(("   Recv time:%5.1f microsec sz:%7.1f", fRecvTime*1e6/fRecvOper, 1.*fRecvSize/fRecvOper));
+         DOUT1("   Recv time:%5.1f microsec sz:%7.1f", fRecvTime*1e6/fRecvOper, 1.*fRecvSize/fRecvOper);
    #endif
 
    AllocateSendIOV(0);
    AllocateRecvIOV(0);
 }
 
-void dabc::SocketIOWorker::AllocateSendIOV(unsigned size)
+void dabc::SocketIOAddon::AllocateSendIOV(unsigned size)
 {
    if (fSendIOV!=0) delete [] fSendIOV;
 
@@ -294,7 +297,7 @@ void dabc::SocketIOWorker::AllocateSendIOV(unsigned size)
    fSendIOV = new struct iovec [size];
 }
 
-void dabc::SocketIOWorker::AllocateRecvIOV(unsigned size)
+void dabc::SocketIOAddon::AllocateRecvIOV(unsigned size)
 {
    if (fRecvIOV!=0) delete [] fRecvIOV;
 
@@ -309,15 +312,15 @@ void dabc::SocketIOWorker::AllocateRecvIOV(unsigned size)
    fRecvIOV = new struct iovec [size];
 }
 
-bool dabc::SocketIOWorker::StartSend(void* buf, size_t size)
+bool dabc::SocketIOAddon::StartSend(void* buf, size_t size)
 {
    return StartSendHdr(0, 0, buf, size);
 }
 
-bool dabc::SocketIOWorker::StartSendHdr(void* hdr, unsigned hdrsize, void* buf, size_t size)
+bool dabc::SocketIOAddon::StartSendHdr(void* hdr, unsigned hdrsize, void* buf, size_t size)
 {
    if (fSendIOVNumber>0) {
-      EOUT(("Current send operation not yet completed"));
+      EOUT("Current send operation not yet completed");
       return false;
    }
 
@@ -342,16 +345,15 @@ bool dabc::SocketIOWorker::StartSendHdr(void* hdr, unsigned hdrsize, void* buf, 
    SetDoingOutput(true);
 
    return true;
-
 }
 
 
-bool dabc::SocketIOWorker::StartRecv(void* buf, size_t size)
+bool dabc::SocketIOAddon::StartRecv(void* buf, size_t size)
 {
    return StartRecvHdr(0, 0, buf, size);
 }
 
-bool dabc::SocketIOWorker::StartSend(const Buffer& buf)
+bool dabc::SocketIOAddon::StartSend(const Buffer& buf)
 {
    // this is simple version,
    // where only buffer itself without header is transported
@@ -359,10 +361,10 @@ bool dabc::SocketIOWorker::StartSend(const Buffer& buf)
    return StartNetSend(0, 0, buf);
 }
 
-bool dabc::SocketIOWorker::StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size)
+bool dabc::SocketIOAddon::StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size)
 {
    if (fRecvIOVNumber>0) {
-      EOUT(("Current recv operation not yet completed"));
+      EOUT("Current recv operation not yet completed");
       return false;
    }
 
@@ -391,17 +393,17 @@ bool dabc::SocketIOWorker::StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, 
 }
 
 
-bool dabc::SocketIOWorker::StartRecv(Buffer& buf, BufferSize_t datasize)
+bool dabc::SocketIOAddon::StartRecv(Buffer& buf, BufferSize_t datasize)
 {
    return StartNetRecv(0, 0, buf, datasize);
 }
 
-bool dabc::SocketIOWorker::StartNetRecv(void* hdr, unsigned hdrsize, Buffer& buf, BufferSize_t datasize)
+bool dabc::SocketIOAddon::StartNetRecv(void* hdr, unsigned hdrsize, Buffer& buf, BufferSize_t datasize)
 {
    // datasize==0 here really means that there is no data to get !!!!
 
    if (fRecvIOVNumber>0) {
-      EOUT(("Current recv operation not yet completed"));
+      EOUT("Current recv operation not yet completed");
       return false;
    }
 
@@ -440,10 +442,10 @@ bool dabc::SocketIOWorker::StartNetRecv(void* hdr, unsigned hdrsize, Buffer& buf
    return true;
 }
 
-bool dabc::SocketIOWorker::StartNetSend(void* hdr, unsigned hdrsize, const Buffer& buf)
+bool dabc::SocketIOAddon::StartNetSend(void* hdr, unsigned hdrsize, const Buffer& buf)
 {
    if (fSendIOVNumber>0) {
-      EOUT(("Current send operation not yet completed"));
+      EOUT("Current send operation not yet completed");
       return false;
    }
 
@@ -477,19 +479,19 @@ bool dabc::SocketIOWorker::StartNetSend(void* hdr, unsigned hdrsize, const Buffe
 }
 
 
-void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
+void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
 {
     switch (evnt.GetCode()) {
        case evntSocketRead: {
 
 //          if (IsLogging())
-//             DOUT0(("Socket %d wants to receive number %d usemsg %s", Socket(), fRecvIOVNumber, DBOOL(fRecvUseMsg)));
+//             DOUT0("Socket %d wants to receive number %d usemsg %s", Socket(), fRecvIOVNumber, DBOOL(fRecvUseMsg));
 
           // nothing to recv
           if (fRecvIOVNumber==0) return;
 
           if ((fRecvIOV==0) || (fSocket<0)) {
-             EOUT(("HARD PROBLEM when reading socket"));
+             EOUT("HARD PROBLEM when reading socket");
              OnSocketError(1, "Missing socket when evntSocketRead fired");
              return;
           }
@@ -502,9 +504,9 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
           fLastRecvSize = 0;
           ssize_t res = 0;
 
-//          DOUT1(("Socket %d fRecvIOV = %p fRecvIOVFirst = %u number %u iov: %p %u",
+//          DOUT1("Socket %d fRecvIOV = %p fRecvIOVFirst = %u number %u iov: %p %u",
 //                fSocket, fRecvIOV, fRecvIOVFirst, fRecvIOVNumber,
-//                fRecvIOV[fRecvIOVFirst].iov_base, fRecvIOV[fRecvIOVFirst].iov_len));
+//                fRecvIOV[fRecvIOVFirst].iov_base, fRecvIOV[fRecvIOVFirst].iov_len);
 
           if (fRecvUseMsg) {
 
@@ -525,7 +527,7 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
           }
 
 //          if (IsLogging())
-//             DOUT0(("Socket %d get receive %d", Socket(), res));
+//             DOUT0("Socket %d get receive %d", Socket(), res);
 
           #ifdef SOCKET_PROFILING
              TimeStamp tm2 = dabc::Now();
@@ -545,7 +547,7 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
                 // we indicating that we want to receive data but there is nothing to read
                 // why we get message at all?
                 SetDoingInput(true);
-                EOUT(("Why socket read message produce but we do not get any data??"));
+                EOUT("Why socket read message produce but we do not get any data??");
              }
 
              return;
@@ -559,7 +561,7 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
              fRecvIOVNumber = 0;
 
 //             if (IsLogging())
-//                DOUT0(("Socket %d signals COMPL", Socket()));
+//                DOUT0("Socket %d signals COMPL", Socket());
 
              OnRecvCompleted();
              return;
@@ -575,13 +577,13 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
                 fRecvIOVFirst++;
 
                 if (fRecvIOVFirst==fRecvIOVNumber) {
-                   if (res!=0) EOUT(("Internal error - length after recvmsg() not zero"));
+                   if (res!=0) EOUT("Internal error - length after recvmsg() not zero");
 
                    fRecvIOVFirst = 0;
                    fRecvIOVNumber = 0;
 
 //                 if (IsLogging())
-//                    DOUT0(("Socket %d signals COMPL", Socket()));
+//                    DOUT0("Socket %d signals COMPL", Socket());
 
                    OnRecvCompleted();
 
@@ -610,7 +612,7 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
           #endif
 
           if ((fSocket<0) || (fSendIOV==0)) {
-             EOUT(("HARD PROBLEM when trying write socket"));
+             EOUT("HARD PROBLEM when trying write socket");
           }
 
           ssize_t res = 0;
@@ -644,18 +646,20 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
           }
 
           if (res<0) {
+             EOUT("Error when sending via socket %d  usemsg %s first %d number %d", fSocket, DBOOL(fSendUseMsg), fSendIOVFirst, fSendIOVNumber);
+
              if (errno!=EAGAIN)
                 OnSocketError(errno, "When sendmsg()");
              else {
                 // we indicating that we want to receive data but there is nothing to read
                 // why we get message at all?
                 SetDoingOutput(true);
-                EOUT(("Why socket write message produce but we did not send any bytes?"));
+                EOUT("Why socket write message produce but we did not send any bytes?");
              }
              return;
           }
 
-          DOUT5(("Socket %d send %d bytes", Socket(), res));
+          DOUT5("Socket %d send %d bytes", Socket(), res);
 
           while (res>0) {
              struct iovec* rec = &(fSendIOV[fSendIOVFirst]);
@@ -666,7 +670,7 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
                 fSendIOVFirst++;
 
                 if (fSendIOVFirst==fSendIOVNumber) {
-                   if (res!=0) EOUT(("Internal error - length after sendmsg() not zero"));
+                   if (res!=0) EOUT("Internal error - length after sendmsg() not zero");
 
                    fSendIOVFirst = 0;
                    fSendIOVNumber = 0;
@@ -688,21 +692,22 @@ void dabc::SocketIOWorker::ProcessEvent(const EventId& evnt)
           break;
        }
        default:
-          SocketWorker::ProcessEvent(evnt);
+          SocketAddon::ProcessEvent(evnt);
     }
 }
 
-void dabc::SocketIOWorker::CancelIOOperations()
+void dabc::SocketIOAddon::CancelIOOperations()
 {
    fSendIOVNumber = 0;
    fRecvIOVNumber = 0;
 }
 
 
+
 // ___________________________________________________________________
 
-dabc::SocketServerWorker::SocketServerWorker(int serversocket, int portnum) :
-   SocketConnectWorker(serversocket),
+dabc::SocketServerAddon::SocketServerAddon(int serversocket, int portnum) :
+   SocketConnectAddon(serversocket),
    fServerPortNumber(portnum),
    fServerHostName()
 {
@@ -712,9 +717,12 @@ dabc::SocketServerWorker::SocketServerWorker(int serversocket, int portnum) :
 
    SetDoingInput(true);
    listen(Socket(), 10);
+
+
+   DOUT0("dabc::SocketServerAddon   isinp=%s", DBOOL(IsDoingInput()));
 }
 
-void dabc::SocketServerWorker::ProcessEvent(const EventId& evnt)
+void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)
 {
     switch (evnt.GetCode()) {
        case evntSocketRead: {
@@ -725,19 +733,19 @@ void dabc::SocketServerWorker::ProcessEvent(const EventId& evnt)
           int connfd = accept(Socket(), 0, 0);
 
           if (connfd<0) {
-             EOUT(("Error with accept"));
+             EOUT("Error with accept");
              return;
           }
 
           listen(Socket(), 10);
 
           if (!dabc::SocketThread::SetNonBlockSocket(connfd)) {
-             EOUT(("Cannot set nonblocking flag for connected socket"));
+             EOUT("Cannot set nonblocking flag for connected socket");
              close(connfd);
              return;
           }
 
-          DOUT3(("We get new connection with fd: %d", connfd));
+          DOUT0("We get new connection with fd: %d", connfd);
 
           OnClientConnected(connfd);
 
@@ -745,33 +753,37 @@ void dabc::SocketServerWorker::ProcessEvent(const EventId& evnt)
        }
 
        default:
-          dabc::SocketWorker::ProcessEvent(evnt);
+          dabc::SocketConnectAddon::ProcessEvent(evnt);
     }
 }
 
-void dabc::SocketServerWorker::OnClientConnected(int fd)
+void dabc::SocketServerAddon::OnClientConnected(int fd)
 {
-   if (GetConnRecv()!=0) {
-      Command cmd("SocketConnect");
-      cmd.SetStr("Type", "Server");
-      cmd.SetInt("fd", fd);
-      cmd.SetStr("ConnId", GetConnId());
-      GetConnRecv()->Submit(cmd);
+   Command cmd("SocketConnect");
+   cmd.SetStr("Type", "Server");
+   cmd.SetInt("fd", fd);
+
+   if (!fConnRcv.null() && !fConnId.empty()) {
+      cmd.SetStr("ConnId", fConnId);
+      fConnRcv.Submit(cmd);
+   } else
+   if (!fWorker.null()) {
+      ((Worker*) fWorker())->Submit(cmd);
    } else {
-      EOUT(("Method not implemented - socked will be closed"));
+      EOUT("Method not implemented - socked will be closed");
       close(fd);
    }
 }
 
 // _____________________________________________________________________
 
-dabc::SocketClientWorker::SocketClientWorker(const struct addrinfo* serv_addr, int fd) :
-   SocketConnectWorker(fd),
+dabc::SocketClientAddon::SocketClientAddon(const struct addrinfo* serv_addr, int fd) :
+   SocketConnectAddon(fd),
    fRetry(1),
    fRetryTmout(-1)
 {
    if (serv_addr==0) {
-      EOUT(("Server address not specified"));
+      EOUT("Server address not specified");
       return;
    }
 
@@ -794,24 +806,24 @@ dabc::SocketClientWorker::SocketClientWorker(const struct addrinfo* serv_addr, i
    fServAddr.ai_next = 0;
 }
 
-dabc::SocketClientWorker::~SocketClientWorker()
+dabc::SocketClientAddon::~SocketClientAddon()
 {
    free(fServAddr.ai_addr); fServAddr.ai_addr = 0;
    free(fServAddr.ai_canonname); fServAddr.ai_canonname = 0;
 }
 
-void dabc::SocketClientWorker::SetRetryOpt(int nretry, double tmout)
+void dabc::SocketClientAddon::SetRetryOpt(int nretry, double tmout)
 {
    fRetry = nretry;
    fRetryTmout = tmout;
 }
 
-void dabc::SocketClientWorker::OnThreadAssigned()
+void dabc::SocketClientAddon::OnThreadAssigned()
 {
-   FireEvent(evntSocketStartConnect);
+   FireWorkerEvent(evntSocketStartConnect);
 }
 
-void dabc::SocketClientWorker::ProcessEvent(const EventId& evnt)
+void dabc::SocketClientAddon::ProcessEvent(const EventId& evnt)
 {
    switch (evnt.GetCode()) {
        case evntSocketWrite: {
@@ -820,7 +832,7 @@ void dabc::SocketClientWorker::ProcessEvent(const EventId& evnt)
           int myerrno = TakeSocketError();
 
           if (myerrno==0) {
-             DOUT5(("Connection done %7.5f", dabc::Now().AsDouble()));
+             DOUT5("Connection done %7.5f", dabc::Now().AsDouble());
              int fd = TakeSocket();
              OnConnectionEstablished(fd);
              return;
@@ -845,7 +857,7 @@ void dabc::SocketClientWorker::ProcessEvent(const EventId& evnt)
              int fd = socket(fServAddr.ai_family, fServAddr.ai_socktype, fServAddr.ai_protocol);
 
              if (fd<=0)
-                EOUT(("Cannot create socket of given addr"));
+                EOUT("Cannot create socket of given addr");
              else
                 SetSocket(fd);
           }
@@ -862,7 +874,7 @@ void dabc::SocketClientWorker::ProcessEvent(const EventId& evnt)
              }
 
              if (errno==EINPROGRESS) {
-                DOUT5(("Connection in progress %7.5f", dabc::Now().AsDouble()));
+                DOUT5("Connection in progress %7.5f", dabc::Now().AsDouble());
                 SetDoingOutput(true);
                 return;
              }
@@ -874,7 +886,7 @@ void dabc::SocketClientWorker::ProcessEvent(const EventId& evnt)
        }
 
        default:
-          dabc::SocketWorker::ProcessEvent(evnt);
+          dabc::SocketConnectAddon::ProcessEvent(evnt);
           return;
    }
 
@@ -882,7 +894,7 @@ void dabc::SocketClientWorker::ProcessEvent(const EventId& evnt)
    CloseSocket();
 
    if (--fRetry>0) {
-      DOUT3(("Try connect after %5.1f s  n:%d", fRetryTmout, fRetry));
+      DOUT3("Try connect after %5.1f s  n:%d", fRetryTmout, fRetry);
 
       ActivateTimeout(fRetryTmout > 0. ? fRetryTmout : 0.);
    } else {
@@ -890,47 +902,48 @@ void dabc::SocketClientWorker::ProcessEvent(const EventId& evnt)
    }
 }
 
-double dabc::SocketClientWorker::ProcessTimeout(double)
+double dabc::SocketClientAddon::ProcessTimeout(double)
 {
    // activate connection start again
 
-   FireEvent(evntSocketStartConnect);
+   FireWorkerEvent(evntSocketStartConnect);
    return -1.;
 }
 
-void dabc::SocketClientWorker::OnConnectionEstablished(int fd)
+void dabc::SocketClientAddon::OnConnectionEstablished(int fd)
 {
-   if (GetConnRecv()!=0) {
+   if (!fConnRcv.null()) {
       Command cmd("SocketConnect");
       cmd.SetStr("Type", "Client");
       cmd.SetInt("fd", fd);
-      cmd.SetStr("ConnId", GetConnId());
-      GetConnRecv()->Submit(cmd);
+      cmd.SetStr("ConnId", fConnId);
+      fConnRcv.Submit(cmd);
    } else {
-      EOUT(("Connection established, but not processed - close socket"));
+      EOUT("Connection established, but not processed - close socket");
       close(fd);
    }
 
-   DeleteThis();
+   DeleteWorker();
 }
 
-void dabc::SocketClientWorker::OnConnectionFailed()
+void dabc::SocketClientAddon::OnConnectionFailed()
 {
-   if (GetConnRecv()!=0) {
+   if (!fConnRcv.null()) {
       Command cmd("SocketConnect");
       cmd.SetStr("Type", "Error");
-      cmd.SetStr("ConnId", GetConnId());
-      GetConnRecv()->Submit(cmd);
+      cmd.SetStr("ConnId", fConnId);
+      fConnRcv.Submit(cmd);
    } else {
-      EOUT(("Connection failed to establish, error not processed"));
+      EOUT("Connection failed to establish, error not processed");
    }
 
-   DeleteThis();
+   DeleteWorker();
 }
+
 
 // _______________________________________________________________________
 
-dabc::SocketThread::SocketThread(Reference parent, const char* name, int numqueues) :
+dabc::SocketThread::SocketThread(Reference parent, const std::string& name, int numqueues) :
    dabc::Thread(parent, name, numqueues),
    fPipeFired(false),
    fWaitFire(false),
@@ -955,7 +968,7 @@ dabc::SocketThread::SocketThread(Reference parent, const char* name, int numqueu
    pipe(fPipe);
 
    // by this call we rebuild ufds array, for now only for the pipe
-   WorkersNumberChanged();
+   WorkersSetChanged();
 
 }
 
@@ -978,28 +991,28 @@ dabc::SocketThread::~SocketThread()
    }
 
    #ifdef SOCKET_PROFILING
-     DOUT1(("Thrd:%s Wait called %ld done %ld ratio %5.3f %s  Pipe:%ld", GetName(), fWaitCalls, fWaitDone, (fWaitCalls>0 ? 100.*fWaitDone/fWaitCalls : 0.) ,"%", fPipeCalled));
+     DOUT1("Thrd:%s Wait called %ld done %ld ratio %5.3f %s  Pipe:%ld", GetName(), fWaitCalls, fWaitDone, (fWaitCalls>0 ? 100.*fWaitDone/fWaitCalls : 0.) ,"%", fPipeCalled);
      if (fWaitDone>0)
-        DOUT1(("Aver times fill:%5.1f microsec wait:%5.1f microsec", fFillTime*1e6/fWaitDone, fWaitTime*1e6/fWaitDone));
+        DOUT1("Aver times fill:%5.1f microsec wait:%5.1f microsec", fFillTime*1e6/fWaitDone, fWaitTime*1e6/fWaitDone);
    #endif
 }
 
-bool dabc::SocketThread::CompatibleClass(const char* clname) const
+bool dabc::SocketThread::CompatibleClass(const std::string& clname) const
 {
    if (Thread::CompatibleClass(clname)) return true;
-   return strcmp(clname, typeSocketThread) == 0;
+   return clname == typeSocketThread;
 }
 
 bool dabc::SocketThread::SetNonBlockSocket(int fd)
 {
    int opts = fcntl(fd, F_GETFL);
    if (opts < 0) {
-      EOUT(("fcntl(F_GETFL) failed"));
+      EOUT("fcntl(F_GETFL) failed");
       return false;
    }
    opts = (opts | O_NONBLOCK);
    if (fcntl(fd, F_SETFL,opts) < 0) {
-      EOUT(("fcntl(F_SETFL) failed"));
+      EOUT("fcntl(F_SETFL) failed");
       return false;
    }
    return true;
@@ -1036,10 +1049,10 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 
      int n = getaddrinfo(myhostname, service, &hints, &info);
 
-     DOUT2(("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "---"), service, n));
+     DOUT2("GetAddrInfo %s:%s res = %d", (myhostname ? myhostname : "---"), service, n);
 
      if (n < 0) {
-        EOUT(("Cannot get addr info for service %s:%s", (myhostname ? myhostname : "localhost"), service));
+        EOUT("Cannot get addr info for service %s:%s", (myhostname ? myhostname : "localhost"), service);
         continue;
      }
 
@@ -1061,17 +1074,17 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
      freeaddrinfo(info);
 
      if (sockfd<0) {
-       DOUT3(("Cannot bind socket to service %s", service));
+       DOUT3("Cannot bind socket to service %s", service);
        continue;
      }
 
      if (dabc::SocketThread::SetNonBlockSocket(sockfd)) return sockfd;
 
-     EOUT(("Cannot set nonblocking flag for server socket"));
+     EOUT("Cannot set nonblocking flag for server socket");
      close(sockfd);
    }
 
-   EOUT(("Cannot bind server socket to port %d or find its in range %d:%d", firsttest, portmin, portmax));
+   EOUT("Cannot bind server socket to port %d or find its in range %d:%d", firsttest, portmin, portmax);
    portnum = -1;
    return -1;
 }
@@ -1080,19 +1093,17 @@ std::string dabc::SocketThread::DefineHostName()
 {
    char hostname[1000];
    if (gethostname(hostname, sizeof(hostname)))
-      EOUT(("ERROR gethostname"));
+      EOUT("ERROR gethostname");
    else
-      DOUT3(( "gethostname = %s", hostname));
+      DOUT3( "gethostname = %s", hostname);
    return std::string(hostname);
 }
 
-dabc::SocketServerWorker* dabc::SocketThread::CreateServerWorker(int nport, int portmin, int portmax)
+dabc::SocketServerAddon* dabc::SocketThread::CreateServerAddon(int nport, int portmin, int portmax)
 {
    int fd = dabc::SocketThread::StartServer(nport, portmin, portmax);
 
-   if (fd<0) return 0;
-
-   return new SocketServerWorker(fd, nport);
+   return fd < 0 ? 0 : new SocketServerAddon(fd, nport);
 }
 
 int dabc::SocketThread::StartClient(const char* host, int nport)
@@ -1107,49 +1118,54 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
    hints.ai_family = AF_UNSPEC;
    hints.ai_socktype = SOCK_STREAM;
 
-   if (getaddrinfo(host, service, &hints, &info)==0) {
-      for (struct addrinfo *t = info; t; t = t->ai_next) {
+   int sockfd(-1);
 
-         int sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
+   if (getaddrinfo(host, service, &hints, &info)!=0) return sockfd;
 
-         if (sockfd > 0){
-            if (connect(sockfd, t->ai_addr, t->ai_addrlen)==0){
-               if (dabc::SocketThread::SetNonBlockSocket(sockfd))
-                  return sockfd;
-               else
-                  EOUT(("Cannot set non-blocking flag for client socket"));
-            }
-         }
-         close(sockfd);
-         sockfd = -1;
+   for (struct addrinfo *t = info; t; t = t->ai_next) {
+
+      sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
+
+      if (sockfd<=0) { sockfd = -1; continue; }
+
+      if (connect(sockfd, t->ai_addr, t->ai_addrlen)==0) {
+         if (dabc::SocketThread::SetNonBlockSocket(sockfd))
+            break; // socket is initialized - one could return it
+         else
+            EOUT("Cannot set non-blocking flag for client socket");
       }
-      freeaddrinfo(info);
+
+      close(sockfd);
+      sockfd = -1;
    }
 
-   return -1;
+   // always must be called
+   freeaddrinfo(info);
+
+   return sockfd;
 }
 
 int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
 {
    if ((host==0) || (strlen(host)==0)) {
       host = "224.0.0.15";
-      EOUT(("Multicast address not specified, use %s", host));
+      EOUT("Multicast address not specified, use %s", host);
    }
 
    if (port<=0) {
       port = 4576;
-      EOUT(("Multicast port not specified, use %d", port));
+      EOUT("Multicast port not specified, use %d", port);
    }
 
    struct hostent *server_host_name = gethostbyname(host);
    if (server_host_name==0) {
-      EOUT(("Cannot get host information for %s", host));
+      EOUT("Cannot get host information for %s", host);
       return -1;
    }
 
    int socket_descriptor = socket (PF_INET, SOCK_DGRAM, 0);
    if (socket_descriptor<0) {
-      EOUT(("Cannot create datagram socket"));
+      EOUT("Cannot create datagram socket");
       return -1;
    }
 
@@ -1166,10 +1182,10 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
       int loop = 1;
       if (setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR,
                      &loop, sizeof (loop)) < 0) {
-          EOUT(("Cannot setsockopt SO_REUSEADDR"));
+          EOUT("Cannot setsockopt SO_REUSEADDR");
       }
       if(bind(socket_descriptor, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-         EOUT(("Fail to bind socket with port %d", port));
+         EOUT("Fail to bind socket with port %d", port);
          close(socket_descriptor);
          return -1;
       }
@@ -1178,7 +1194,7 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
       loop = 1;
       if (setsockopt (socket_descriptor, IPPROTO_IP, IP_MULTICAST_LOOP,
                       &loop, sizeof (loop)) < 0) {
-         EOUT(("Fail setsockopt IP_MULTICAST_LOOP"));
+         EOUT("Fail setsockopt IP_MULTICAST_LOOP");
          close(socket_descriptor);
          return -1;
       }
@@ -1187,13 +1203,13 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
       command.imr_multiaddr.s_addr = inet_addr (host);
       command.imr_interface.s_addr = htonl (INADDR_ANY);
       if (command.imr_multiaddr.s_addr == (in_addr_t)-1) {
-         EOUT(("%s is not valid address", host));
+         EOUT("%s is not valid address", host);
          close(socket_descriptor);
          return -1;
       }
       if (setsockopt(socket_descriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP,
                      &command, sizeof (command)) < 0) {
-          EOUT(("File setsockopt IP_ADD_MEMBERSHIP"));
+          EOUT("File setsockopt IP_ADD_MEMBERSHIP");
           close(socket_descriptor);
           return -1;
       }
@@ -1207,7 +1223,7 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
 
      if (connect(socket_descriptor, (struct sockaddr *) &address,
            sizeof (address)) < 0) {
-        EOUT(("Fail to connect to host %s port %d", host, port));
+        EOUT("Fail to connect to host %s port %d", host, port);
         close(socket_descriptor);
         return -1;
      }
@@ -1230,12 +1246,12 @@ void dabc::SocketThread::CloseMulticast(int handle, const char* host, bool isrec
       // Remove socket from multicast group
       if (setsockopt (handle, IPPROTO_IP, IP_DROP_MEMBERSHIP,
                       &command, sizeof (command)) < 0 ) {
-         EOUT(("Fail setsockopt:IP_DROP_MEMBERSHIP"));
+         EOUT("Fail setsockopt:IP_DROP_MEMBERSHIP");
       }
    }
 
    if (close(handle) < 0)
-      EOUT(("Error in socketclose"));
+      EOUT("Error in socketclose");
 }
 
 
@@ -1271,7 +1287,7 @@ int dabc::SocketThread::ConnectUdp(int fd, const char* remhost, int remport)
 
    struct hostent *host = gethostbyname(remhost);
    if ((host==0) || (host->h_addrtype!=AF_INET)) {
-      EOUT(("Cannot get host information for %s", remhost));
+      EOUT("Cannot get host information for %s", remhost);
       close(fd);
       return -1;
    }
@@ -1284,28 +1300,26 @@ int dabc::SocketThread::ConnectUdp(int fd, const char* remhost, int remport)
    address.sin_port = htons (remport);
 
    if (connect(fd, (struct sockaddr *) &address, sizeof (address)) < 0) {
-      EOUT(("Fail to connect to host %s port %d", remhost, remport));
+      EOUT("Fail to connect to host %s port %d", remhost, remport);
       close(fd);
       return -1;
    }
    return fd;
 }
 
-
-dabc::SocketClientWorker* dabc::SocketThread::CreateClientWorker(const char* serverid)
+dabc::SocketClientAddon* dabc::SocketThread::CreateClientAddon(const std::string& serverid)
 {
-   if (serverid==0) return 0;
+   if (serverid.empty()) return 0;
 
-   const char* service = strchr(serverid, ':');
-   if (service==0) return 0;
+   size_t pos = serverid.find(':');
+   if (pos == serverid.npos) return 0;
 
-   std::string host;
-   host.assign(serverid, service - serverid);
-   service++;
+   std::string host = serverid.substr(0, pos);
+   std::string service = serverid.substr(pos+1, serverid.length()-pos);
 
-   SocketClientWorker* proc = 0;
+   SocketClientAddon* addon = 0;
 
-   DOUT5(("CreateClientWorker %s:%s", service, serverid));
+   DOUT5("CreateClientAddon %s:%s", host.c_str(), service.c_str());
 
    struct addrinfo *info;
    struct addrinfo hints;
@@ -1313,28 +1327,28 @@ dabc::SocketClientWorker* dabc::SocketThread::CreateClientWorker(const char* ser
    hints.ai_family = AF_UNSPEC;
    hints.ai_socktype = SOCK_STREAM;
 
-   if (getaddrinfo(host.c_str(), service, &hints, &info)==0) {
+   if (getaddrinfo(host.c_str(), service.c_str(), &hints, &info)==0) {
       for (struct addrinfo *t = info; t; t = t->ai_next) {
 
          int sockfd = socket(t->ai_family, t->ai_socktype, t->ai_protocol);
 
          if (sockfd<=0) continue;
 
-         proc = new SocketClientWorker(t, sockfd);
+         addon = new SocketClientAddon(t, sockfd);
          break;
       }
       freeaddrinfo(info);
    }
 
-   DOUT5(("CreateClientWorker %s:%s done res = %p", service, serverid, proc));
+   DOUT5("CreateClientAddon %s:%s done res = %p", host.c_str(), service.c_str(), addon);
 
-   return proc;
+   return addon;
 }
 
 
 void dabc::SocketThread::_Fire(const dabc::EventId& arg, int nq)
 {
-   DOUT5(("SocketThread::_Fire %s nq:%d numq:%d waiting:%s", GetName(), nq, fNumQueues, DBOOL(fWaitFire)));
+   DOUT5("SocketThread::_Fire %s nq:%d numq:%d waiting:%s", GetName(), nq, fNumQueues, DBOOL(fWaitFire));
 
    _PushEvent(arg, nq);
 
@@ -1396,21 +1410,21 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
 
    for(unsigned n=1; n<fWorkers.size(); n++) {
       if (!f_recs[n].use) continue;
-      SocketWorker* proc = (SocketWorker*) fWorkers[n]->work;
+      SocketAddon* addon = (SocketAddon*) fWorkers[n]->addon;
 
-      if (proc->Socket()<=0) continue;
+      if (addon->Socket()<=0) continue;
 
       short events = 0;
 
-      if (proc->IsDoingInput())
-         events = events | POLLIN;
+      if (addon->IsDoingInput())
+         events |= POLLIN;
 
-      if (proc->IsDoingOutput())
-         events = events | POLLOUT;
+      if (addon->IsDoingOutput())
+         events |= POLLOUT;
 
       if (events==0) continue;
 
-      f_ufds[numufds].fd = proc->Socket();
+      f_ufds[numufds].fd = addon->Socket();
       f_ufds[numufds].events = events;
       f_ufds[numufds].revents = 0;
 
@@ -1428,9 +1442,12 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
      fFillTime += (tm2-tm1);
    #endif
 
-//   DOUT2(("SOCKETTHRD: start waiting %d", tmout));
+//   DOUT2("SOCKETTHRD: start waiting %d", tmout);
+
+//     DOUT0("SocketThread %s (%d) wait with timeout %d ms numufds %d", GetName(), entry_cnt, tmout, numufds);
 
    int poll_res = poll(f_ufds, numufds, tmout);
+
 
    #ifdef SOCKET_PROFILING
      TimeStamp tm3 = dabc::Now();
@@ -1439,7 +1456,7 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
 
    dabc::LockGuard lock(ThreadMutex());
 
-//   DOUT2(("SOCKETTHRD: did waiting %d numevents %u", tmout, _TotalNumberOfEvents()));
+//   DOUT2("SOCKETTHRD: did waiting %d numevents %u", tmout, _TotalNumberOfEvents());
 
 
    fWaitFire = false;
@@ -1459,35 +1476,40 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
 
          if (f_ufds[n].revents==0) continue;
 
-         SocketWorker* worker = (SocketWorker*) fWorkers[f_recs[n].indx]->work;
-         if (worker==0) {
-            EOUT(("Something went wrong - socket worker is disappear"));
+         SocketAddon* addon = (SocketAddon*) fWorkers[f_recs[n].indx]->addon;
+         Worker* worker = fWorkers[f_recs[n].indx]->work;
+
+         if ((addon==0) || (worker==0)) {
+            EOUT("Something went wrong - socket addon=%p worker = %p, something is gone", addon, worker);
             exit(543);
          }
 
+
          if (f_ufds[n].revents & (POLLERR | POLLHUP | POLLNVAL)) {
-//            EOUT(("Error on the socket %d", f_ufds[n].fd));
-            _PushEvent(EventId(SocketWorker::evntSocketError, f_recs[n].indx), 0);
-            worker->SetDoingInput(false);
-            worker->SetDoingOutput(false);
-            worker->fWorkerFiredEvents++;
+//            EOUT("Error on the socket %d", f_ufds[n].fd);
+            _PushEvent(EventId(SocketAddon::evntSocketError, f_recs[n].indx), 0);
+            addon->SetDoingInput(false);
+            addon->SetDoingOutput(false);
+            IncWorkerFiredEvents(worker);
             isany = true;
          }
 
          if (f_ufds[n].revents & (POLLIN | POLLPRI)) {
-            _PushEvent(EventId(SocketWorker::evntSocketRead, f_recs[n].indx), 1);
-            worker->SetDoingInput(false);
-            worker->fWorkerFiredEvents++;
+            _PushEvent(EventId(SocketAddon::evntSocketRead, f_recs[n].indx), 1);
+            addon->SetDoingInput(false);
+            IncWorkerFiredEvents(worker);
             isany = true;
          }
 
          if (f_ufds[n].revents & POLLOUT) {
-            _PushEvent(EventId(SocketWorker::evntSocketWrite, f_recs[n].indx), 1);
-            worker->SetDoingOutput(false);
-            worker->fWorkerFiredEvents++;
+            _PushEvent(EventId(SocketAddon::evntSocketWrite, f_recs[n].indx), 1);
+            addon->SetDoingOutput(false);
+            IncWorkerFiredEvents(worker);
             isany = true;
          }
       }
+
+//      DOUT0("SocketThread %s (%d) did wait with res %d isany %s", GetName(), entry_cnt, poll_res, DBOOL(isany));
 
    // we put additional event to enable again sockets checking
    if (isany) {
@@ -1497,26 +1519,24 @@ bool dabc::SocketThread::WaitEvent(EventId& evnt, double tmout_sec)
 
    #ifdef DABC_EXTRA_CHECKS
       sizeafter = _TotalNumberOfEvents();
-//      if (sizeafter-sizebefore > 1) DOUT0(("Thread:%s before:%u after:%u diff:%u", GetName(), sizebefore, sizeafter, sizeafter - sizebefore));
+//      if (sizeafter-sizebefore > 1) DOUT0("Thread:%s before:%u after:%u diff:%u", GetName(), sizebefore, sizeafter, sizeafter - sizebefore);
    #endif
 
    return _GetNextEvent(evnt);
 }
 
-void dabc::SocketThread::ProcessExtraThreadEvent(EventId evid)
+void dabc::SocketThread::ProcessExtraThreadEvent(const EventId& evid)
 {
-   switch (evid.GetCode()) {
-      case evntEnableCheck:
-         fCheckNewEvents = true;
-         break;
-      default:
-         dabc::Thread::ProcessExtraThreadEvent(evid);
-         break;
+   if (evid.GetCode() == evntEnableCheck) {
+     fCheckNewEvents = true;
+     return;
    }
+
+   dabc::Thread::ProcessExtraThreadEvent(evid);
 }
 
 
-void dabc::SocketThread::WorkersNumberChanged()
+void dabc::SocketThread::WorkersSetChanged()
 {
    unsigned new_sz = fWorkers.size();
 
@@ -1537,16 +1557,22 @@ void dabc::SocketThread::WorkersNumberChanged()
    f_recs[0].indx = 0;
    fIsAnySocket = false;
 
+//   DOUT0("SocketThread %s WorkersNumberChanged  size %u", GetName(), fWorkers.size());
+
    for (unsigned indx=1;indx<fWorkers.size();indx++) {
-      SocketWorker* proc = dynamic_cast<SocketWorker*> (fWorkers[indx]->work);
+      SocketAddon* addon = dynamic_cast<SocketAddon*> (fWorkers[indx]->addon);
 
-      f_recs[indx].use = proc!=0;
+      f_recs[indx].use = addon!=0;
 
-      if (proc!=0) fIsAnySocket = true;
+      if (addon!=0) {
+         fIsAnySocket = true;
+//         DOUT0("Socket %d doing input=%s output=%s", addon->Socket(), DBOOL(addon->IsDoingInput()), DBOOL(addon->IsDoingOutput()));
+      }
    }
 
    // any time new processor is added, check for new socket events
    fCheckNewEvents = fIsAnySocket;
 
-   DOUT5(("WorkersNumberChanged finished"));
+//   DOUT0("SocketThread %s WorkersNumberChanged %u done", GetName(), fWorkers.size());
+
 }

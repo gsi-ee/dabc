@@ -15,137 +15,59 @@
 
 #include "dabc/BinaryFile.h"
 
-#include "dabc/FileIO.h"
+#include <stdlib.h>
+#include <dirent.h>
+#include <fnmatch.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <string.h>
+
+#include "dabc/Object.h"
+
 #include "dabc/logging.h"
-#include "dabc/MemoryPool.h"
-#include "dabc/Pointer.h"
 
-#define BinaryFileCurrentVersion 1
-#define BinaryFileMagicValue 1234
-
-dabc::BinaryFileInput::BinaryFileInput(FileIO* io) :
-   DataInput(),
-   fIO(io),
-   fVersion(0),
-   fReadBufHeader(false)
+dabc::Object* dabc::FileInterface::fmatch(const char* fmask)
 {
-   if ((fIO==0) || !fIO->CanRead()) { CloseIO(); return; }
+   if ((fmask==0) || (*fmask==0)) return 0;
 
-   BinaryFileHeader rec;
+   std::string pathname;
+   const char* fname(0);
 
-   fIO->Read(&rec, sizeof(rec));
+   const char* slash = strrchr(fmask, '/');
 
-   if (rec.magic != BinaryFileMagicValue) {
-      EOUT(("Problem with magic value"));
+   if (slash==0) {
+      pathname = ".";
+      fname = fmask;
+   } else {
+      pathname.assign(fmask, slash - fmask + 1);
+      fname = slash + 1;
    }
 
-   fVersion = rec.version;
-}
+   struct dirent **namelist;
+   int len = scandir(pathname.c_str(), &namelist, 0, alphasort);
+   if (len < 0) return 0;
 
-dabc::BinaryFileInput::~BinaryFileInput()
-{
-   CloseIO();
-}
+   Object* res = 0;
+   struct stat buf;
 
-void dabc::BinaryFileInput::CloseIO()
-{
-   if (fIO) {
-      delete fIO;
-      fIO = 0;
-   }
-}
+   for (int n=0;n<len;n++) {
+      const char* item = namelist[n]->d_name;
 
-unsigned dabc::BinaryFileInput::Read_Size()
-{
-   if ((fIO==0) || fReadBufHeader) return di_Error;
+      if ((fname==0) || (fnmatch(fname, item, FNM_NOESCAPE)==0)) {
+         std::string fullitemname;
+         if (slash) fullitemname += pathname;
+         fullitemname += item;
+         if (stat(fullitemname.c_str(), &buf)==0)
+            if (!S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK)==0)) {
+               if (res==0) res = new dabc::Object(0, "FilesList", true);
+               new dabc::Object(res, fullitemname);
+            }
+      }
 
-   unsigned res = fIO->Read(&fBufHeader, sizeof(fBufHeader));
-
-   if (res==sizeof(fBufHeader)) {
-      fReadBufHeader = true;
-      return fBufHeader.datalength;
-   }
-   // this is indication of EOF
-   if (res==0) return di_EndOfStream;
-
-   // this is indication of error
-   return di_Error;
-}
-
-unsigned dabc::BinaryFileInput::Read_Complete(Buffer& buf)
-{
-   if ((fIO==0) || !fReadBufHeader || buf.null()) return di_Error;
-
-   if (buf.GetTotalSize() < fBufHeader.datalength) return di_Error;
-   buf.SetTotalSize(fBufHeader.datalength);
-   buf.SetTypeId(fBufHeader.buftype);
-
-   Pointer ptr = buf;
-   while (!ptr.null()) {
-      fIO->Read(ptr(), ptr.rawsize());
-      ptr.shift(ptr.rawsize());
+      free(namelist[n]);
    }
 
-   fReadBufHeader = false;
+   free(namelist);
 
-   return di_Ok;
+   return res;
 }
-
-// _________________________________________________________________
-
-dabc::BinaryFileOutput::BinaryFileOutput(FileIO* io) :
-   DataOutput(),
-   fIO(io),
-   fSyncCounter(0)
-{
-   if ((fIO==0) || !fIO->CanWrite()) { CloseIO(); return; }
-
-   BinaryFileHeader rec;
-
-   rec.version = 1;
-   rec.magic = BinaryFileMagicValue;
-
-   fIO->Write(&rec, sizeof(rec));
-}
-
-dabc::BinaryFileOutput::~BinaryFileOutput()
-{
-   CloseIO();
-}
-
-void dabc::BinaryFileOutput::CloseIO()
-{
-   if (fIO) {
-      delete fIO;
-      fIO = 0;
-   }
-}
-
-bool dabc::BinaryFileOutput::WriteBuffer(const Buffer& buf)
-{
-   if ((fIO==0) || buf.null()) return false;
-
-   BinaryFileBufHeader hdr;
-
-   hdr.buftype = buf.GetTypeId();
-   hdr.datalength = buf.GetTotalSize();
-
-   fIO->Write(&hdr, sizeof(hdr));
-
-   Pointer ptr = buf;
-   while (!ptr.null()) {
-      fIO->Write(ptr(), ptr.rawsize());
-      ptr.shift(ptr.rawsize());
-   }
-
-   fSyncCounter += sizeof(hdr) + hdr.datalength;
-
-   if (fSyncCounter>1e5) {
-      fIO->Sync();
-      fSyncCounter = 0;
-   }
-
-   return true;
-}
-
-

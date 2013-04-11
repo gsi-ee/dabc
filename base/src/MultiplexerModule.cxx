@@ -15,59 +15,51 @@
 
 #include "dabc/MultiplexerModule.h"
 
-#include "dabc/Port.h"
 
-
-dabc::MultiplexerModule::MultiplexerModule(const char* name, dabc::Command cmd) :
+dabc::MultiplexerModule::MultiplexerModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fQueue(100),
    fDataRateName()
 {
-   std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr("Pool");
-
-   CreatePoolHandle(poolname.c_str());
-
-   int numinp = Cfg(dabc::xmlNumInputs, cmd).AsInt(1);
-   int numout = Cfg(dabc::xmlNumOutputs, cmd).AsInt(1);
    fDataRateName = Cfg("DataRateName", cmd).AsStdStr();
-
-   for (int n=0;n<numinp;n++)
-      CreateInput(dabc::format(dabc::xmlInputMask, n).c_str(), Pool(), 10);
-
-   for (int n=0;n<numout;n++)
-      CreateOutput(dabc::format(dabc::xmlOutputMask, n).c_str(), Pool(), 10);
 
    if (!fDataRateName.empty())
       CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
-   
-   DOUT0(("Create multiplexer module %s with %d inputs and %d outputs", name, numinp, numout));
-   
+
+   for (unsigned n=0;n<NumInputs();n++) {
+      SetPortSignalling(InputName(n), dabc::Port::SignalEvery);
+      if (!fDataRateName.empty())
+         SetPortRatemeter(InputName(n), Par(fDataRateName));
+   }
+
+   DOUT0("Create multiplexer module %s with %u inputs and %u outputs", name.c_str(), NumInputs(), NumOutputs());
 }
 
-void dabc::MultiplexerModule::ProcessInputEvent(Port* port)
+void dabc::MultiplexerModule::ProcessInputEvent(unsigned port)
 {
-   unsigned id = InputNumber(port);
-   fQueue.Push(id);
+   fQueue.Push(port);
+
+//   DOUT0("MultiplexerModule %s process inp event from input %u", GetName(), id);
 
    CheckDataSending();
 }
 
-void dabc::MultiplexerModule::ProcessOutputEvent(Port* port)
+void dabc::MultiplexerModule::ProcessOutputEvent(unsigned indx)
 {
    CheckDataSending();
 }
 
 void dabc::MultiplexerModule::CheckDataSending()
 {
+//   DOUT0("MultiplexerModule %s CheckDataSending queue %u canallsend:%s numout %u",
+//         GetName(), fQueue.Size(), DBOOL(CanSendToAllOutputs()), NumOutputs());
+
    while (CanSendToAllOutputs() && (fQueue.Size()>0)) {
       unsigned id = fQueue.Pop();
 
-      dabc::Buffer buf = Input(id)->Recv();
+      dabc::Buffer buf = Recv(id);
 
-      if (buf.null()) EOUT(("Fail to get buffer from input %u", id));
-
-      if (!fDataRateName.empty())
-         Par(fDataRateName).SetDouble(buf.GetTotalSize()/1024./1024.);
+      if (buf.null()) EOUT("Fail to get buffer from input %u", id);
 
       SendToAllOutputs(buf);
    }

@@ -23,7 +23,7 @@ opencl::Context::Context() :
 opencl::Context::~Context()
 {
    CloseGPU();
-   DOUT2(("opencl::Context destroyed"));
+   DOUT2("opencl::Context destroyed");
 }
 
 bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type deviceType)
@@ -34,24 +34,24 @@ bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type dev
     char platformVendor[1024];
     status = clGetPlatformInfo(platform, CL_PLATFORM_VENDOR, sizeof(platformVendor), platformVendor, NULL);
     if(status!=CL_SUCCESS) {
-       EOUT(("clGetPlatformInfo failed"));
+       EOUT("clGetPlatformInfo failed");
        return false;
     }
 
-    DOUT2(("Selected Platform Vendor : %s", platformVendor));
+    DOUT2("Selected Platform Vendor : %s", platformVendor);
 
     // Get number of devices available
     cl_uint deviceCount = 0;
     status = clGetDeviceIDs(platform, deviceType, 0, NULL, &deviceCount);
     if(status!=CL_SUCCESS) {
-       EOUT(("clGetDeviceIDs failed"));
+       EOUT("clGetDeviceIDs failed");
        return false;
     }
 
     cl_device_id* deviceIds = (cl_device_id*)malloc(sizeof(cl_device_id) * deviceCount);
     if(deviceIds == NULL)
     {
-        EOUT(("Failed to allocate memory(deviceIds)"));
+        EOUT("Failed to allocate memory(deviceIds)");
         return 0;
     }
 
@@ -59,7 +59,7 @@ bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type dev
     status = clGetDeviceIDs(platform, deviceType, deviceCount, deviceIds, NULL);
 
     if(status!=CL_SUCCESS) {
-       EOUT(("clGetDeviceIDs failed"));
+       EOUT("clGetDeviceIDs failed");
     } else
     // Print device index and device names
     for(cl_uint i = 0; i < deviceCount; ++i)
@@ -68,11 +68,11 @@ bool opencl::Context::displayDevices(cl_platform_id platform, cl_device_type dev
         status = clGetDeviceInfo(deviceIds[i], CL_DEVICE_NAME, sizeof(deviceName), deviceName, NULL);
 
         if(status!=CL_SUCCESS) {
-           EOUT(("clGetDeviceInfo failed %u", i));
+           EOUT("clGetDeviceInfo failed %u", i);
            break;
         }
 
-        DOUT2(("Device %u : %s", i, deviceName));
+        DOUT2("Device %u : %s", i, deviceName);
     }
 
     free(deviceIds);
@@ -103,7 +103,7 @@ void opencl::Context::CloseGPU()
 
       status = clReleaseContext(fContext);
       if (status != CL_SUCCESS)
-         EOUT(("clReleaseContext failed."));
+         EOUT("clReleaseContext failed.");
       fContext = 0;
    }
 }
@@ -126,7 +126,7 @@ bool opencl::Context::OpenGPU()
    status = clGetPlatformIDs(0, NULL, &numPlatforms);
 
    if (status!= CL_SUCCESS) {
-      EOUT(("clGetPlatformIDs failed."));
+      EOUT("clGetPlatformIDs failed.");
       return false;
    }
 
@@ -135,7 +135,7 @@ bool opencl::Context::OpenGPU()
 
        status = clGetPlatformIDs(numPlatforms, platforms, NULL);
        if (status!=CL_SUCCESS) {
-          EOUT(("clGetPlatformIDs failed."));
+          EOUT("clGetPlatformIDs failed.");
           delete[] platforms;
           return false;
        }
@@ -151,7 +151,7 @@ bool opencl::Context::OpenGPU()
                                      NULL);
 
           if (status != CL_SUCCESS) {
-             EOUT(("clGetPlatformInfo failed."));
+             EOUT("clGetPlatformInfo failed.");
              delete[] platforms;
              return false;
           }
@@ -164,14 +164,14 @@ bool opencl::Context::OpenGPU()
 
    if(platform == NULL)
    {
-       EOUT(("NULL platform found so Exiting Application."));
+       EOUT("NULL platform found so Exiting Application.");
        return false;
    }
 
    // Display available devices.
    if(!displayDevices(platform, dType))
    {
-       EOUT(("displayDevices() failed"));
+       EOUT("displayDevices() failed");
        return false;
    }
 
@@ -192,7 +192,7 @@ bool opencl::Context::OpenGPU()
                                      &status);
 
    if(status!=CL_SUCCESS) {
-      EOUT(("clCreateContextFromType failed."));
+      EOUT("clCreateContextFromType failed.");
       return false;
    }
 
@@ -204,20 +204,20 @@ bool opencl::Context::OpenGPU()
              NULL,
              &deviceListSize);
    if(status!=CL_SUCCESS) {
-       EOUT(("clGetContextInfo failed."));
+       EOUT("clGetContextInfo failed.");
        return false;
    }
 
    int deviceCount = (int)(deviceListSize / sizeof(cl_device_id));
    if(deviceId >= deviceCount) {
-       EOUT(("devicedId = %d should be less than device count = %d, failed", deviceId , deviceCount));
+       EOUT("devicedId = %d should be less than device count = %d, failed", deviceId , deviceCount);
        return false;
    }
 
    /* Now allocate memory for device list based on the size we got earlier */
    fDevices = (cl_device_id *)malloc(deviceListSize);
    if(fDevices == NULL) {
-       EOUT(("Failed to allocate memory (devices)."));
+       EOUT("Failed to allocate memory (devices).");
        return false;
    }
 
@@ -230,7 +230,7 @@ bool opencl::Context::OpenGPU()
            NULL);
 
    if(status!=CL_SUCCESS) {
-      EOUT(("clGetGetContextInfo failed."));
+      EOUT("clGetGetContextInfo failed.");
       return false;
    }
 
@@ -243,7 +243,7 @@ bool opencl::Context::OpenGPU()
            NULL);
 
    if(status!=CL_SUCCESS) {
-      EOUT(("clGetDeviceInfo CL_DEVICE_MAX_WORK_GROUP_SIZE failed."));
+      EOUT("clGetDeviceInfo CL_DEVICE_MAX_WORK_GROUP_SIZE failed.");
       return false;
    }
 
@@ -255,7 +255,7 @@ bool opencl::Context::OpenGPU()
                NULL);
 
    if(status!=CL_SUCCESS) {
-      EOUT(("clGetDeviceInfo CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS failed."));
+      EOUT("clGetDeviceInfo CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS failed.");
       return false;
    }
 
@@ -269,7 +269,7 @@ bool opencl::Context::OpenGPU()
                NULL);
 
    if(status!=CL_SUCCESS) {
-      EOUT(("clGetDeviceInfo CL_DEVICE_MAX_WORK_ITEM_SIZES failed."));
+      EOUT("clGetDeviceInfo CL_DEVICE_MAX_WORK_ITEM_SIZES failed.");
       return false;
    }
 
@@ -281,7 +281,7 @@ bool opencl::Context::OpenGPU()
                NULL);
 
    if(status!=CL_SUCCESS) {
-      EOUT(("clGetDeviceInfo CL_DEVICE_LOCAL_MEM_SIZES failed."));
+      EOUT("clGetDeviceInfo CL_DEVICE_LOCAL_MEM_SIZES failed.");
       return false;
    }
 
@@ -293,11 +293,11 @@ bool opencl::Context::OpenGPU()
                NULL);
 
    if(status!=CL_SUCCESS) {
-      EOUT(("clGetDeviceInfo CL_DEVICE_GLOBAL_MEM_SIZES failed."));
+      EOUT("clGetDeviceInfo CL_DEVICE_GLOBAL_MEM_SIZES failed.");
       return false;
    }
 
-   DOUT2(("Total memory local %u global = %u", totalLocalMemory, totalGlobalMemory));
+   DOUT2("Total memory local %u global = %u", totalLocalMemory, totalGlobalMemory);
 
    return true;
 }
@@ -352,7 +352,7 @@ void opencl::Memory::Allocate(const ContextRef& ctx, unsigned sz)
            &status);
 
    if(status != CL_SUCCESS)
-      EOUT(("clCreateBuffer failed. (buffer_r)"));
+      EOUT("clCreateBuffer failed. (buffer_r)");
    else
       fSize = sz;
 }
@@ -364,7 +364,7 @@ opencl::Memory::~Memory()
    cl_int status = clReleaseMemObject(fMem);
 
    if (status != CL_SUCCESS)
-      EOUT(("clReleaseMemObject failed."));
+      EOUT("clReleaseMemObject failed.");
 }
 
 // ====================================================
@@ -383,7 +383,7 @@ opencl::CommandsQueue::CommandsQueue(ContextRef& ctx) :
 void opencl::CommandsQueue::Allocate(ContextRef& ctx)
 {
    if (ctx.null()) {
-      EOUT(("Empty context!!!"));
+      EOUT("Empty context!!!");
       return;
    }
 
@@ -399,7 +399,7 @@ void opencl::CommandsQueue::Allocate(ContextRef& ctx)
 
    if(status != 0) {
       fQueue = 0;
-      EOUT(("clCreateCommandQueue failed."));
+      EOUT("clCreateCommandQueue failed.");
    }
 }
 
@@ -407,7 +407,7 @@ void opencl::CommandsQueue::Allocate(ContextRef& ctx)
 opencl::CommandsQueue::~CommandsQueue()
 {
    cl_int status = clReleaseCommandQueue(fQueue);
-   if(status!=CL_SUCCESS) EOUT(("clReleaseCommandQueue failed."));
+   if(status!=CL_SUCCESS) EOUT("clReleaseCommandQueue failed.");
    fQueue = 0;
 }
 
@@ -432,7 +432,7 @@ bool opencl::CommandsQueue::SubmitWrite(QueueEvent& evt, Memory& mem, void* src,
                NULL,
                &evt);
    if(status != CL_SUCCESS) {
-       EOUT(("clEnqueueWriteBuffer failed."));
+       EOUT("clEnqueueWriteBuffer failed.");
        return false;
    }
 
@@ -459,7 +459,7 @@ bool opencl::CommandsQueue::SubmitRead(QueueEvent& evt, Memory& mem, void* tgt, 
                NULL,
                &evt);
    if(status != CL_SUCCESS) {
-       EOUT(("clEnqueueReadBuffer failed."));
+       EOUT("clEnqueueReadBuffer failed.");
        return false;
    }
 
@@ -470,7 +470,7 @@ bool opencl::CommandsQueue::Flush()
 {
    cl_int status = clFlush(fQueue);
    if (status != CL_SUCCESS) {
-      EOUT(("clFlush failed"));
+      EOUT("clFlush failed");
       return false;
    }
    return true;
@@ -490,7 +490,7 @@ int opencl::CommandsQueue::CheckComplete(QueueEvent& evt)
                     NULL);
 
    if(status!=CL_SUCCESS) {
-      EOUT(("clGetEventInfo failed."));
+      EOUT("clGetEventInfo failed.");
       return -1;
    }
 

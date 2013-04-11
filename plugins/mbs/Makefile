@@ -12,19 +12,15 @@ endif
 
 MBSDIRI         = $(MBSDIR)/mbs
 MBSDIRS         = $(MBSDIR)/src
-MBSAPIDIR       = $(MBSDIR)/evapi
 MBSFAPIDIR      = $(MBSDIR)/fileapi
-#MBSTESTDIR      = $(MBSDIR)/test
 
 DABCMBS_LIBNAME  = $(LIB_PREFIX)DabcMbs
 DABCMBS_LIB      = $(TGTDLLPATH)/$(DABCMBS_LIBNAME).$(DllSuf)
 
 MBSFAPI_DEFINITIONS = Linux FILEONLY _LARGEFILE64_SOURCE WITH_DABC
 
-MBS_EXCLUDE      = 
-
-MBS_H           = $(filter-out $(MBS_EXCLUDE), $(wildcard $(MBSDIRI)/*.$(HedSuf)))
-MBS_S           = $(filter-out $(MBS_EXCLUDE), $(wildcard $(MBSDIRS)/*.$(SrcSuf)))
+MBS_H           = $(wildcard $(MBSDIRI)/*.$(HedSuf))
+MBS_S           = $(wildcard $(MBSDIRS)/*.$(SrcSuf))
 MBS_O           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBS_S))
 MBS_D           = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(MBS_S))
 
@@ -46,23 +42,6 @@ MBSFAPI_DISTR   = $(MBSFAPI_CS) $(MBSFAPI_CH) \
 
 DABCMBS_O       = $(MBS_O) $(MBSFAPI_CO)
 DABCMBS_D       = $(MBS_D) $(MBSFAPI_CD) $(MBSFAPI_D)
-
-ifdef MBSEVAPI
-
-MBSAPI_H        = $(wildcard $(MBSAPIDIR)/*.$(HedSuf))
-MBSAPI_CS       = $(wildcard $(MBSAPIDIR)/*.$(CSuf))
-MBSAPI_CO       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(ObjSuf), $(MBSAPI_CS))
-MBSAPI_CD       = $(patsubst %.$(CSuf), $(BLD_DIR)/%.$(DepSuf), $(MBSAPI_CS))
-
-DABCMBS_O      += $(MBSAPI_CO)
-DABCMBS_D      += $(MBSAPI_CD)
-
-MBSAPI_DEFINITIONS = Linux _LARGEFILE64_SOURCE MBSEVAPI
-else
-MBS_EXCLUDE +=  $(MBSDIRI)/EventAPI.$(HedSuf) \
-                $(MBSDIRS)/EventAPI.$(SrcSuf)
-endif
-
 
 # used in the main Makefile
 
@@ -96,7 +75,6 @@ clean::
 
 ########### extra rules #############
 $(MBS_O) $(MBS_D) : DEFINITIONS += $(MBSAPI_DEFINITIONS) 
-$(MBSAPI_CO) $(MBSAPI_CD): C_DEFINITIONS += $(MBSAPI_DEFINITIONS)
 $(MBSFAPI_O) $(MBSFAPI_D): DEFINITIONS += $(MBSFAPI_DEFINITIONS)
 $(MBSFAPI_CO) $(MBSFAPI_CD): C_DEFINITIONS += $(MBSFAPI_DEFINITIONS)
 $(MBSFAPI_O) $(MBSFAPI_D) $(MBSFAPI_CD): INCLUDES += $(MBSDIRI) $(MBSFAPIDIR)

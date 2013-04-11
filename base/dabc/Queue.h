@@ -161,8 +161,6 @@ namespace dabc {
          // increase capacity of queue without lost of content
          bool Expand(unsigned newcapacity = 0)
          {
-            if (!canexpand) return false;
-
             if (newcapacity <= fCapacity)
                newcapacity = fCapacity * 2;
             if (newcapacity < 16) newcapacity = 16;
@@ -223,42 +221,42 @@ namespace dabc {
 
          bool MakePlaceForNext()
          {
-            return (fSize<fCapacity) || Expand();
+            return (fSize<fCapacity) || (canexpand && Expand());
          }
 
          void Push(T val)
          {
-            if ((fSize<fCapacity) || Expand()) {
+            if (MakePlaceForNext()) {
                *fHead++ = val;
                if (fHead==fBorder) fHead = fQueue;
                fSize++;
             } else {
-               EOUT(("No more space in fixed queue size = %d", fSize));
+               EOUT("No more space in fixed queue size = %d", fSize);
             }
          }
 
          T* PushEmpty()
          {
-            if ((fSize<fCapacity) || Expand()) {
+            if (MakePlaceForNext()) {
                T* res = fHead;
                if (++fHead==fBorder) fHead = fQueue;
                fSize++;
                return res;
             }
 
-            EOUT(("No more space in fixed queue size = %d", fSize));
+            EOUT("No more space in fixed queue size = %d", fSize);
             return 0;
          }
 
 
          void PushRef(const T& val)
          {
-            if ((fSize<fCapacity) || Expand()) {
+            if (MakePlaceForNext()) {
                *fHead++ = val;
                if (fHead==fBorder) fHead = fQueue;
                fSize++;
             } else {
-               EOUT(("No more space in fixed queue size = %d", fSize));
+               EOUT("No more space in fixed queue size = %d", fSize);
             }
          }
 
@@ -273,7 +271,7 @@ namespace dabc {
          T Pop()
          {
             #ifdef DABC_EXTRA_CHECKS
-               if (fSize==0) EOUT(("Queue is empty"));
+               if (fSize==0) EOUT("Queue is empty");
             #endif
             T* res = fTail++;
             if (fTail==fBorder) fTail = fQueue;
@@ -284,7 +282,7 @@ namespace dabc {
          T& Front() const
          {
             #ifdef DABC_EXTRA_CHECKS
-               if (fSize==0) EOUT(("Queue is empty"));
+               if (fSize==0) EOUT("Queue is empty");
             #endif
             return *fTail;
          }
@@ -295,7 +293,7 @@ namespace dabc {
          {
             #ifdef DABC_EXTRA_CHECKS
             if (indx>=fSize)
-               EOUT(("Wrong item index %u", indx));
+               EOUT("Wrong item index %u", indx);
             #endif
             T* item = fTail + indx;
             if (item>=fBorder) item -= fCapacity;
@@ -306,7 +304,7 @@ namespace dabc {
          {
             #ifdef DABC_EXTRA_CHECKS
             if (indx>=fSize) {
-               EOUT(("Wrong item index %u", indx));
+               EOUT("Wrong item index %u", indx);
                return 0;
             }
             #endif
@@ -318,7 +316,7 @@ namespace dabc {
          T& Back() const
          {
             #ifdef DABC_EXTRA_CHECKS
-               if (fSize==0) EOUT(("Queue is empty"));
+               if (fSize==0) EOUT("Queue is empty");
             #endif
             return Item(fSize-1);
          }

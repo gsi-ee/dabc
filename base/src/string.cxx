@@ -68,6 +68,38 @@ std::string dabc::format(const char *fmt, ...)
    return s;
 }
 
+std::string dabc::size_to_str(unsigned long sz, int prec, int select)
+{
+   if (select==0) {
+      if (sz < 0x400LU) select = 1; else
+      if (sz < 0x100000LU) select = 2; else
+      if (sz < 0x40000000LU) select =3; else select = 4;
+   }
+
+   switch (select) {
+      case 1:
+         return dabc::format("%lu B", sz);
+      case 2:
+         if (prec<=0)
+            return dabc::format(" %lu KB", sz/1024);
+         else
+            return dabc::format(" %*.*f KB", prec+2, prec, sz/1024.);
+      case 3:
+         if (prec<=0)
+            return dabc::format(" %lu MB", sz/0x100000LU);
+         else
+            return dabc::format(" %*.*f MB", prec+2, prec, sz/1024./1024.);
+      case 4:
+         if (prec<=0)
+            return dabc::format(" %lu GB", sz/0x40000000LU);
+         else
+            return dabc::format(" %*.*f GB", prec+2, prec, sz/1024./1024./1024.);
+   }
+
+   return dabc::format("%lu B", sz);
+}
+
+
 bool dabc::str_to_int(const char* val, int* res)
 {
    if (val==0) return false;

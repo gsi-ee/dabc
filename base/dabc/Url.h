@@ -36,6 +36,8 @@ namespace dabc {
          std::string fFileName;
          std::string fOptions;
 
+         bool GetOption(const std::string& optname, std::string* value = 0) const;
+
       public:
          Url();
          Url(const char* url);
@@ -56,6 +58,9 @@ namespace dabc {
          std::string GetOptions() const  { return fOptions; }
          std::string GetFullName() const;
 
+         bool HasOption(const std::string& optname) const { return GetOption(optname); }
+         std::string GetOptionStr(const std::string& optname, const std::string& dflt = "") const;
+         int GetOptionInt(const std::string& optname, int dflt = 0) const;
 
          /**! \brief Prodoces url string with unique address of specified item */
          static std::string ComposeItemName(int nodeid, const std::string& itemname = "");
@@ -64,7 +69,7 @@ namespace dabc {
           * If optional parameter portid is specified, it added as last symbols of the address
           * Like call dabc::Url::ComposePortName(1, "MyModule/Output", 2) will produce string
           * "dabc://node1/MyModule/Output2" */
-         static std::string ComposePortName(int nodeid, const char* fullportname, int portid = -1);
+         static std::string ComposePortName(int nodeid, const std::string& fullportname, int portid = -1);
 
          /** \brief Method decompose from url nodeid and full item name, which includes all parents */
          static bool DecomposeItemName(const std::string& url, int& nodeid, std::string& itemtname);

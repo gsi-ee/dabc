@@ -16,66 +16,282 @@
 #ifndef DABC_BinaryFile
 #define DABC_BinaryFile
 
-#ifndef DABC_DataIO
-#include "dabc/DataIO.h"
-#endif
-
 #include <stdint.h>
+#include <stdio.h>
 
 namespace dabc {
 
-   class FileIO;
+   // implement basic POSIX interface, can be extended in the future
 
-#pragma pack(1)
+   class Object;
+
+   class FileInterface {
+      public:
+         typedef void* Handle;
+
+         virtual ~FileInterface() {}
+
+         virtual Handle fopen(const char* fname, const char* mode) { return (Handle) ::fopen(fname, mode); }
+
+         virtual void fclose(Handle f) { if (f!=0) ::fclose((FILE*)f); }
+
+         virtual bool fwrite(Handle f, void* ptr, size_t sz)
+           { return (f==0) || (ptr==0) ? false : (::fwrite(ptr, sz, 1, (FILE*) f) == 1); }
+
+         virtual bool fread(Handle f, void* ptr, size_t sz)
+           { return (f==0) || (ptr==0) ? false : (::fread(ptr, sz, 1, (FILE*) f) == 1); }
+
+         virtual bool feof(Handle f)
+           { return f==0 ? false : feof((FILE*)f)>0; }
+
+         virtual bool fflush(Handle f)
+         { return f==0 ? false : ::fflush((FILE*)f)==0; }
+
+         /** Produce list of files, object must be explicitely destroyed with ref.Destroy call */
+         virtual Object* fmatch(const char* fmask);
+   };
+
 
    struct BinaryFileHeader {
       uint64_t magic;
       uint64_t version;
+
+      BinaryFileHeader() : magic(0), version(0) {}
    };
 
    struct BinaryFileBufHeader {
       uint64_t datalength;
       uint64_t buftype;
+
+      BinaryFileBufHeader() : datalength(0), buftype(0) {}
    };
 
-#pragma pack(0)
+   enum { BinaryFileMagicValue  = 1234 };
 
-   class BinaryFileInput : public DataInput {
-      public:
-         BinaryFileInput(FileIO* io);
-         virtual ~BinaryFileInput();
-
-         virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd) { return true; }
-
-         virtual unsigned Read_Size();
-         virtual unsigned Read_Complete(Buffer& buf);
-
+   class BinaryFile {
       protected:
-         void CloseIO();
+         FileInterface* io;              //!  interface to the file system
+         bool iowoner;                   //!  if true, io object owned by file
+         FileInterface::Handle fd;       //!  file descriptor
+         bool  fReadingMode;             //!  reading/writing mode
+         BinaryFileHeader    fFileHdr;   //!  file header
+         BinaryFileBufHeader fBufHdr;    //!  buffer header
 
-         FileIO*    fIO;
-         int64_t    fVersion;     // file format version
-         bool       fReadBufHeader; // indicate if we start reading of the buffer header
-         BinaryFileBufHeader fBufHeader;
-  };
-
-   // _________________________________________________________________
-
-   class BinaryFileOutput : public DataOutput {
       public:
-         BinaryFileOutput(FileIO* io);
-         virtual ~BinaryFileOutput();
 
-         virtual bool Write_Init(const WorkerRef& wrk, const Command& cmd) { return true; }
+         BinaryFile() :
+            io(0),
+            iowoner(false),
+            fd(0),
+            fReadingMode(false),
+            fFileHdr(),
+            fBufHdr()
+         {
+         }
 
-         virtual bool WriteBuffer(const Buffer& buf);
-      protected:
-         void CloseIO();
+         void SetIO(FileInterface* _io, bool _ioowner = false)
+         {
+            if (iowoner && io) delete io;
+            io = _io;
+            iowoner = _ioowner;
+         }
 
-         FileIO*    fIO;
-         int64_t    fSyncCounter; // byte counter to perform regularly fsync operation
+         ~BinaryFile()
+         {
+            Close();
+            if (iowoner && io) delete io;
+            io = 0; iowoner = false;
+         }
+
+         // returns true if file is opened
+         inline bool isOpened() const { return (io!=0) && (fd!=0); }
+
+         inline bool isReading() const { return isOpened() && fReadingMode; }
+
+         inline bool isWriting() const { return isOpened() && !fReadingMode; }
+
+         bool eof() const { return isReading() ? io->feof(fd) : true; }
+
+         bool OpenReading(const char* fname)
+         {
+            if (isOpened()) return false;
+
+            if (io==0) { io = new FileInterface; iowoner = true; }
+
+            if (fname==0 || *fname==0) {
+               fprintf(stderr, "file name not specified\n");
+               return false;
+            }
+            fd = io->fopen(fname,  "r");
+            if (fd==0) {
+               fprintf(stderr, "File open failed %s for reading\n", fname);
+               return false;
+            }
+
+            bool res = io->fread(fd, &fFileHdr, sizeof(fFileHdr));
+            if (!res || (fFileHdr.magic != BinaryFileMagicValue)) {
+               fprintf(stderr, "Failure reading file %s header", fname);
+               Close();
+               return false;
+            }
+
+            fReadingMode = true;
+            fBufHdr.datalength = 0;
+            fBufHdr.buftype = 0;
+            return true;
+         }
+
+         bool OpenWriting(const char* fname)
+         {
+            if (isOpened()) return false;
+
+            if (io==0) { io = new FileInterface; iowoner = true; }
+
+            if (fname==0 || *fname==0) {
+               fprintf(stderr, "file name not specified\n");
+               return false;
+            }
+            fd = io->fopen(fname, "w");
+            if (fd==0) {
+               fprintf(stderr, "File open failed %s for writing\n", fname);
+               return false;
+            }
+
+            fFileHdr.magic = BinaryFileMagicValue;
+            fFileHdr.version = 2;
+
+            if (!io->fwrite(fd, &fFileHdr, sizeof(fFileHdr))) {
+               fprintf(stderr, "Failure writing file %s header", fname);
+               Close();
+               return false;
+            }
+
+            fReadingMode = false;
+            fBufHdr.datalength = 0;
+            fBufHdr.buftype = 0;
+            return true;
+         }
+
+         bool Close()
+         {
+            if (fd && io) io->fclose(fd);
+            fd = 0;
+            return true;
+         }
+
+
+         const BinaryFileHeader& hdr() const { return fFileHdr; }
+
+         bool WriteBufHeader(uint64_t size, uint64_t typ = 0)
+         {
+            if (!isWriting() || (size==0)) return false;
+
+            if (fBufHdr.datalength != 0) {
+               fprintf(stderr, "writing of previous buffer was not completed, remained %u bytes\n", (unsigned) fBufHdr.datalength);
+               Close();
+               return false;
+            }
+
+            fBufHdr.datalength = size;
+            fBufHdr.buftype = typ;
+
+            if (!io->fwrite(fd, &fBufHdr, sizeof(fBufHdr))) {;
+               fprintf(stderr, "fail to write buffer header\n");
+               Close();
+               return false;
+            }
+
+            return true;
+         }
+
+         bool WriteBufPayload(void* ptr, uint64_t sz)
+         {
+            if (!isWriting() || (ptr==0) || (sz==0)) return false;
+
+            if (fBufHdr.datalength < sz) {
+               fprintf(stderr, "Appropriate header was not written for buffer %u\n", (unsigned) sz);
+               Close();
+               return false;
+            }
+
+            fBufHdr.datalength -= sz;
+
+            if (!io->fwrite(fd, ptr, sz)) {
+               fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) sz);
+               Close();
+               return false;
+            }
+
+            return true;
+         }
+
+         bool WriteBuffer(void* ptr, uint64_t sz, uint64_t typ = 0)
+         {
+            if (!WriteBufHeader(sz, typ)) return false;
+
+            return WriteBufPayload(ptr, sz);
+         }
+
+
+         bool ReadBufHeader(uint64_t* size, uint64_t* typ = 0)
+         {
+            if (!isReading()) return false;
+
+            if (fBufHdr.datalength != 0) {
+               fprintf(stderr, "reading of previous buffer was not completed, remained %u bytes\n", (unsigned) fBufHdr.datalength);
+               Close();
+               return false;
+            }
+            if (!io->fread(fd, &fBufHdr, sizeof(fBufHdr))) {
+               fprintf(stderr, "fail to read buffer header\n");
+               Close();
+               return false;
+            }
+            if (size) *size = fBufHdr.datalength;
+            if (typ) *typ = fBufHdr.buftype;
+
+            return true;
+         }
+
+         bool ReadBufPayload(void* ptr, uint64_t sz)
+         {
+            if (!isReading() || (ptr==0) || (sz==0)) return false;
+
+            if (fBufHdr.datalength < sz) {
+               fprintf(stderr, "Appropriate header was not read from buffer %u\n", (unsigned) sz);
+               Close();
+               return false;
+            }
+
+            fBufHdr.datalength -= sz;
+
+            if (!io->fread(fd, ptr, sz)) {
+               fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) sz);
+               Close();
+               return false;
+            }
+
+            return true;
+         }
+
+         bool ReadBuffer(void* ptr, uint64_t* sz, uint64_t* typ = 0)
+         {
+            if ((ptr==0) || (sz==0) || (*sz == 0)) return false;
+
+            uint64_t maxsz = *sz; *sz = 0;
+
+            if (!ReadBufHeader(sz, typ)) return false;
+
+            if (*sz > maxsz) {
+               fprintf(stderr, "Provided buffer %u is smaller than stored in the file %u\n", (unsigned) maxsz, (unsigned) *sz);
+               Close();
+               return false;
+            }
+
+            return ReadBufPayload(ptr, *sz);
+         }
+
    };
-
 }
 
 #endif

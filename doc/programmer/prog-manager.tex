@@ -56,9 +56,6 @@ Access to a \class{Port} by name. Returns $0$ if port does not exist.
 \item[\em Device* FindDevice\small (const char* name)] :
 Access to a \class{Device} by name. Returns $0$ if device does not exist.
 
-\item[\em Factory* FindFactory\small (const char* name)] :
-Access to a \class{Factory} by name. Returns $0$ if factory does not exist.
-
 
 \item[\em WorkingThread* FindThread\small (const char* name, const char* required\_class = 0)] :
 Access to a \class{WorkingThread} by name. The \func{required\_class} string may
@@ -107,7 +104,7 @@ Instantiate a \class{Device} of class \func{classname} with the object name
 
 
 
-% \item[\em WorkingThread* CreateThread(const char* thrdname, const char* classname = 0, const char* devname = 0, Command cmd = 0)] :
+% \item[\em ThreadRef CreateThread(const std::string& thrdname, const std::string& classname = 0, const std::string& devname = "", Command cmd = 0)] :
 
 
 
@@ -124,18 +121,8 @@ will be created. If \func{thrdname} is not defined, \dabc~ will use a new
 thread automatically with an internal name.
 Returns \keyw{true} or \keyw{false} depending on the instantiation success.
 
-
-% \item[\em FileIO* CreateFileIO\small (const char* typ, const char* name, int option)] :
-% \index{Manager interface !CreateFileIO()}
-% Returns a new \class{FileIO} of type \func{typ} (e.~g.~ "posix") with name
-% \func{name}. The \func{option} value may define the file access option,
-% e.~g.~ \keyw{ReadOnly}, \keyw{ReadWrite}, \keyw{WriteOnly}, \keyw{Create}, and 
-% \keyw{Recreate}. Current standard implementation is \\
-% \class{dabc::PosixFileIO}
-% which is provided in the manager by default.
-% Returns $0$ if instantiation of desired type fails.
   
-\item[\em bool CreateApplication\small (const char* classname = 0, const char* appthrd = 0)] :
+\item[\em bool CreateApplication\small (const std::string& classname = "", const std::string& appthrd = "")] :
 \index{Manager interface !CreateApplication()}
 Instantiate the \class{Application} of class \func{classname}. Optionally
 the name \func{appthrd} of the main application thread may be specified.
@@ -212,18 +199,6 @@ with a FIFO-like transport of queued \class{Buffer} references in local memory.
 \subsection{Thread management}	
 
 \begin{description}
-
-\item[\em bool MakeThreadFor\small (Worker* proc, const char* thrdname = 0, unsigned startmode = 0) ] :
-\index{Manager interface !MakeThreadFor()}
-Creates thread for processor \func{proc} and assigns processor to this thread.
-If thread name \func{thrdname} is not specified, a default name is used.
-Value of \func{startmode} specifies initial run state of the thread
-(currently, thread is started if $startmode>0$).
-
-%Thread name must be specified
-
-        
-
 	   
 \end{description}
 	 

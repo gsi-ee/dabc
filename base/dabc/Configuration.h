@@ -61,6 +61,7 @@ namespace dabc {
          std::string InitFuncName();
          std::string RunFuncName();
          int ShowCpuInfo();
+         bool UseControl();
          int GetRunTime();
          bool NormalMainThread();
          /** Return configured number of processors,
@@ -70,7 +71,7 @@ namespace dabc {
          std::string GetUserPar(const char* name, const char* dflt = 0);
          int GetUserParInt(const char* name, int dflt = 0);
 
-         const char* ConetextAppClass();
+         std::string ConetextAppClass();
 
          bool LoadLibs();
 

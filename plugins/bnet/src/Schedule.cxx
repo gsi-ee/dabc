@@ -89,7 +89,7 @@ int bnet::IBClusterRouting::AddNode(const std::string& name, int lid, int* liddi
       id = iter->second.id;
       diff = lid - iter->second.lid;
       if ((diff < 0) || (diff >= MaxNumLids)) {
-         EOUT(("Something completely wrong with lid calculations lid = %d", diff));
+         EOUT("Something completely wrong with lid calculations lid = %d", diff);
          exit(5);
       }
    }
@@ -128,9 +128,9 @@ int bnet::IBClusterRouting::FindSwitch(const std::string& name)
 void bnet::IBClusterRouting::AddCSCSwitches(int nspines, int nleafs)
 {
    for (int n=1;n<=nspines;n++)
-      AddSwitch(FORMAT(("ibspine%02d",n)));
+      AddSwitch( dabc::format("ibspine%02d",n) );
    for (int n=1;n<=nleafs;n++)
-      AddSwitch(FORMAT(("ibswitch%02d",n)));
+      AddSwitch( dabc::format("ibswitch%02d",n) );
 
    fNumSpines = nspines;
 }
@@ -161,7 +161,7 @@ bool bnet::IBClusterRouting::ReadFile(std::string filename)
    char sbuf[100];
 
    f = fopen (filename.c_str() , "r");
-   if (f == NULL) { EOUT(("Error opening file %s", filename.c_str())); return false; }
+   if (f == NULL) { EOUT("Error opening file %s", filename.c_str()); return false; }
 
    int cnt = 0;
 
@@ -177,7 +177,7 @@ bool bnet::IBClusterRouting::ReadFile(std::string filename)
       int res = sscanf(sbuf, "%s -> %s %d -> %d %s %s %s", name1, name2, &lid1, &lid2, sw1name, sw2name, sw3name);
 
       if ((res<4) || (res==6)) {
-         EOUT(("Problem to decode string %s ", sbuf));
+         EOUT("Problem to decode string %s ", sbuf);
          continue;
       }
 
@@ -201,7 +201,7 @@ bool bnet::IBClusterRouting::ReadFile(std::string filename)
             break;
 
          default:
-            EOUT(("What???"));
+            EOUT("What???");
             break;
       }
 
@@ -209,7 +209,7 @@ bool bnet::IBClusterRouting::ReadFile(std::string filename)
 
    fclose(f);
 
-   DOUT0(("read %d lines numnodes %d numswitches %d numnulls %d numlids %d", cnt, NumNodes(), NumSwitches(), numnull, NumLids()));
+   DOUT0("read %d lines numnodes %d numswitches %d numnulls %d numlids %d", cnt, NumNodes(), NumSwitches(), numnull, NumLids());
 
    for (int n=0;n<NumNodes();n++)
       fMatrix[n][n][0].SetLocal();
@@ -238,7 +238,7 @@ void bnet::IBClusterRouting::ReinjectOptimizedRoutes()
            fMatrix[n2][n1][0] = r12;
          else
          if (r21 != r12) {
-            EOUT(("Missmatch of short routes %d <-> %d", n1, n2));
+            EOUT("Missmatch of short routes %d <-> %d", n1, n2);
          }
 
          for (int n3=0; n3<NumNodes(); n3++) {
@@ -255,7 +255,7 @@ void bnet::IBClusterRouting::ReinjectOptimizedRoutes()
                   fMatrix[n2][n3][lid] = fMatrix[n1][n3][lid];
                else
                   if (fMatrix[n2][n3][lid] != fMatrix[n1][n3][lid])
-                     EOUT(("Missmatch of routes from %d, %d to %d with lid %d", n1, n2, n3, lid));
+                     EOUT("Missmatch of routes from %d, %d to %d with lid %d", n1, n2, n3, lid);
             }
 
          } // for n3
@@ -301,7 +301,7 @@ bool bnet::IBClusterRouting::CheckTargetRoutes()
                    IBRoute r2 = GetRoute(node2, node, lid);
 
                    if (!r1.IsNull() && !r2.IsNull() && (r1!=r2)) {
-                      EOUT(("Route %s differs from %s", GetRouteAsString(node1, node, lid).c_str(), GetRouteAsString(node2, node, lid).c_str()));
+                      EOUT("Route %s differs from %s", GetRouteAsString(node1, node, lid).c_str(), GetRouteAsString(node2, node, lid).c_str());
                       return false;
                    }
                 }
@@ -351,18 +351,18 @@ int bnet::IBClusterRouting::CheckUsefulLIDs()
                missing[spine]++;
 
 //         if ((lid==16) && (hist[lid]%100 == 0))
-//            DOUT0(("Maximum LID for connection %s -> %s", NodeName(n1), NodeName(n2)));
+//            DOUT0("Maximum LID for connection %s -> %s", NodeName(n1), NodeName(n2));
       }
 
-   DOUT0(("Maximum number of LIDs = %d minimum = %d", maxlid, minlid));
+   DOUT0("Maximum number of LIDs = %d minimum = %d", maxlid, minlid);
 
    for (int n=0;n<20;n++)
       if (hist[n]!=0)
-         DOUT0(("   Hist[%d] = %d", n, hist[n]));
+         DOUT0("   Hist[%d] = %d", n, hist[n]);
 
    for (int spine=0;spine<NumSpines();spine++)
       if (missing[spine] > 0)
-         DOUT0((" %s missing %d times", SwitchName(spine), missing[spine]));
+         DOUT0(" %s missing %d times", SwitchName(spine), missing[spine]);
 
 
    return maxlid;
@@ -374,7 +374,7 @@ void bnet::IBClusterRouting::GenerateFullTopology(int switchsize, bool manylids)
    if (switchsize==0) switchsize=36;
 
    if ((switchsize / 3) * 3 != switchsize) {
-      EOUT(("Switch size %d cannot be divided by three therefore half-fat tree cannot be build, use 6 as default"));
+      EOUT("Switch size %d cannot be divided by three therefore half-fat tree cannot be build, use 6 as default");
       switchsize = 6;
    }
 
@@ -384,7 +384,7 @@ void bnet::IBClusterRouting::GenerateFullTopology(int switchsize, bool manylids)
 
    for (int n=0;n<NumLeafs();n++)
       for (int m=0;m<nodesperswitch;m++)
-        AddNode(FORMAT(("node%02d-%02d", n + 1, m + 1)));
+        AddNode( dabc::format("node%02d-%02d", n + 1, m + 1) );
 
    if (manylids) {
       fNumLids = NumSpines();
@@ -508,7 +508,7 @@ void bnet::IBClusterRouting::RemoveUndefinedRoutes()
       }
 
       if (max>0) {
-         DOUT0(("Exclude node %d %s while it has %d nulls", pmax, NodeName(pmax), max));
+         DOUT0("Exclude node %d %s while it has %d nulls", pmax, NodeName(pmax), max);
          usage[pmax] = false;
          nexcluded++;
       }
@@ -517,7 +517,7 @@ void bnet::IBClusterRouting::RemoveUndefinedRoutes()
    for (int nn=NumNodes()-1; nn>=0; nn--)
       if (!usage[nn]) ExcludeNode(nn);
 
-   DOUT0(("Excluded %d nodes Remained %d %u", nexcluded, NumNodes(), fNodes.size()));
+   DOUT0("Excluded %d nodes Remained %d %u", nexcluded, NumNodes(), fNodes.size());
 }
 
 void bnet::IBClusterRouting::BuildOptimalRoutes()
@@ -597,21 +597,21 @@ void bnet::IBClusterRouting::PrintSpineStatistic()
          total++;
 
          if (spine<NumSpines()) switches[spine](sw1,sw2)++;
-                  else { EOUT(("WRONG SPINE %d", spine)); return; }
+                  else { EOUT("WRONG SPINE %d", spine); return; }
       }
 
 
    for (int n=0;n<NumSwitches();n++)
       if (spines(n)>0) {
-         DOUT0(("Name: %s cnt: %d rel : %5.3f", SwitchName(n), spines(n), 1.*spines(n)/total));
+         DOUT0("Name: %s cnt: %d rel : %5.3f", SwitchName(n), spines(n), 1.*spines(n)/total);
       }
 
-   DOUT0(("Printout of complete matrix between switches"));
-   DOUT0(("  maximum number of routes between two switches is 24x24 = 576"));
-   DOUT0(("  maximum number of routes via single spine is 24x24/NumSpines() = 48"));
+   DOUT0("Printout of complete matrix between switches");
+   DOUT0("  maximum number of routes between two switches is 24x24 = 576");
+   DOUT0("  maximum number of routes via single spine is 24x24/NumSpines() = 48");
 
    for (int loop=0;loop<2;loop++) {
-      if (loop==1) DOUT0((" ============ only strange routes ============= "));
+      if (loop==1) DOUT0(" ============ only strange routes ============= ");
 
       for (int sw1=0;sw1<NumSwitches();sw1++)
          for (int sw2=0;sw2<NumSwitches();sw2++) {
@@ -636,23 +636,23 @@ void bnet::IBClusterRouting::PrintSpineStatistic()
                                        else sbuf+=" ";
             }
 
-            DOUT0(("%s -> %s  %4d %s", SwitchName(sw1), SwitchName(sw2), sum, sbuf.c_str()));
+            DOUT0("%s -> %s  %4d %s", SwitchName(sw1), SwitchName(sw2), sum, sbuf.c_str());
          }
    }
 
 
 
-   DOUT0((""));
-   DOUT0(("============================================================================"));
-   DOUT0(("Printout of routes summary from single switch"));
-   DOUT0(("  maximum number of routes from single switch is 24x%d x 24 = %d", NumLeafs()-1, 24*(NumLeafs()-1)*24));
-   DOUT0(("  maximum number of routes via single spine is 24x%d x 24/NumSpines() = %d", (NumLeafs()-1), 24*(NumLeafs())-1*24/NumSpines()));
+   DOUT0("");
+   DOUT0("============================================================================");
+   DOUT0("Printout of routes summary from single switch");
+   DOUT0("  maximum number of routes from single switch is 24x%d x 24 = %d", NumLeafs()-1, 24*(NumLeafs()-1)*24);
+   DOUT0("  maximum number of routes via single spine is 24x%d x 24/NumSpines() = %d", (NumLeafs()-1), 24*(NumLeafs())-1*24/NumSpines());
 
 
    for (int loop=0;loop<2;loop++) {
       if (loop==1) {
-         DOUT0(("====================================================="));
-         DOUT0(("Now with relative values"));
+         DOUT0("=====================================================");
+         DOUT0("Now with relative values");
       }
 
       for (int sw1=0;sw1<NumSwitches();sw1++) {
@@ -681,20 +681,20 @@ void bnet::IBClusterRouting::PrintSpineStatistic()
             if (sum[n]>24*(NumLeafs()-1)*2) sbuf+="*"; else sbuf+=" ";
          }
 
-         DOUT0((" %s ->  %5d %s", SwitchName(sw1), total, sbuf.c_str()));
+         DOUT0(" %s ->  %5d %s", SwitchName(sw1), total, sbuf.c_str());
       }
    }
 
-   DOUT0((""));
-   DOUT0(("============================================================================"));
-   DOUT0(("Printout of routes summary to single switch"));
-   DOUT0(("  maximum number of routes to single switch is 24x%d x 24 = %d", (NumLeafs()-1), 24*(NumLeafs()-1)*24));
-   DOUT0(("  maximum number of routes via single spine is 24x%d x 24/NumSpines() = %d", (NumLeafs()-1), 24*(NumLeafs()-1)*24/NumSpines()));
+   DOUT0("");
+   DOUT0("============================================================================");
+   DOUT0("Printout of routes summary to single switch");
+   DOUT0("  maximum number of routes to single switch is 24x%d x 24 = %d", (NumLeafs()-1), 24*(NumLeafs()-1)*24);
+   DOUT0("  maximum number of routes via single spine is 24x%d x 24/NumSpines() = %d", (NumLeafs()-1), 24*(NumLeafs()-1)*24/NumSpines());
 
    for (int loop=0; loop<2; loop++) {
       if (loop==1) {
-         DOUT0(("====================================================="));
-         DOUT0(("Now with relative values"));
+         DOUT0("=====================================================");
+         DOUT0("Now with relative values");
       }
 
       for (int sw2=0;sw2<NumSwitches();sw2++) {
@@ -722,7 +722,7 @@ void bnet::IBClusterRouting::PrintSpineStatistic()
             if (sum[n]>24*(NumLeafs()-1)*2) sbuf+="*"; else sbuf+=" ";
          }
 
-         DOUT0((" -> %s  %5d %s", SwitchName(sw2), total, sbuf.c_str()));
+         DOUT0(" -> %s  %5d %s", SwitchName(sw2), total, sbuf.c_str());
       }
    }
 }
@@ -735,7 +735,7 @@ bool bnet::IBClusterRouting::MatchNodes(IBClusterRouting& other)
    while ((n1<NumNodes()) && (n2<other.NumNodes())) {
       const char* n1name = NodeName(n1);
       const char* n2name = other.NodeName(n2);
-      if ((n1name==0) || (n2name==0)) { EOUT(("Cannot define node name - FAILURE")); return false; }
+      if ((n1name==0) || (n2name==0)) { EOUT("Cannot define node name - FAILURE"); return false; }
 
       if (strcmp(n1name, n2name)==0) {
          n1++; n2++; continue;
@@ -747,21 +747,21 @@ bool bnet::IBClusterRouting::MatchNodes(IBClusterRouting& other)
       if ((id1<0) && (id2<0)) {
          ExcludeNode(n1);
          other.ExcludeNode(n2);
-         DOUT0(("Rare case - nodes n1:%s n2:%s unique in their routes tables", n1name, n2name));
+         DOUT0("Rare case - nodes n1:%s n2:%s unique in their routes tables", n1name, n2name);
          continue;
       }
 
       if ((id1>=0) && (id2>=0)) {
-         EOUT(("Complete disorder of nodes n1:%s n2:%s - should resort them before matching roting tables", n1name, n2name));
+         EOUT("Complete disorder of nodes n1:%s n2:%s - should resort them before matching roting tables", n1name, n2name);
          return false;
       }
 
       if (id1>=0) {
-         if (id1<n1) EOUT(("Disordering of nodes in first routing table %d %d %s %s", id1, n1, n1name, n2name));
+         if (id1<n1) EOUT("Disordering of nodes in first routing table %d %d %s %s", id1, n1, n1name, n2name);
          while (id1-->n1)
             ExcludeNode(n1);
       } else {
-         if (id2<n2) EOUT(("Disordering of nodes in second routing table %d %d %s %s", id2, n2, n1name, n2name));
+         if (id2<n2) EOUT("Disordering of nodes in second routing table %d %d %s %s", id2, n2, n1name, n2name);
          while (id2-->n2)
             other.ExcludeNode(n2);
       }
@@ -772,37 +772,37 @@ bool bnet::IBClusterRouting::MatchNodes(IBClusterRouting& other)
 
 void bnet::IBClusterRouting::PrintDifferecne(IBClusterRouting& other)
 {
-   DOUT0(("======================"));
+   DOUT0("======================");
 
-   DOUT0(("Comparation of two routing tables with %d %d nodes", NumNodes(), other.NumNodes()));
+   DOUT0("Comparation of two routing tables with %d %d nodes", NumNodes(), other.NumNodes());
 
    if (NumNodes() != other.NumNodes()) {
-      EOUT(("Number of nodes mismatch"));
+      EOUT("Number of nodes mismatch");
       return;
    }
 
    if (NumSwitches() != other.NumSwitches()) {
-      EOUT(("Number of switches mismatch"));
+      EOUT("Number of switches mismatch");
       return;
    }
 
    int numlids = NumLids();
 
    if (numlids != other.NumLids()) {
-      EOUT(("Number of lids mismatch %d %d", NumLids(), other.NumLids()));
+      EOUT("Number of lids mismatch %d %d", NumLids(), other.NumLids());
       if (numlids > other.NumLids()) numlids = other.NumLids();
    }
 
    for (int node = 0; node < NumNodes(); node++) {
       if (strcmp(NodeName(node), other.NodeName(node))!=0) {
-         EOUT(("Node %d names mismatch %s %s", node, NodeName(node), other.NodeName(node)));
+         EOUT("Node %d names mismatch %s %s", node, NodeName(node), other.NodeName(node));
          return;
       }
    }
 
    for (int sw = 0; sw < NumSwitches(); sw++) {
       if (strcmp(SwitchName(sw), other.SwitchName(sw))!=0) {
-         EOUT(("Switch %d names mismatch %s %s", sw, SwitchName(sw), other.SwitchName(sw)));
+         EOUT("Switch %d names mismatch %s %s", sw, SwitchName(sw), other.SwitchName(sw));
          return;
       }
    }
@@ -819,8 +819,8 @@ void bnet::IBClusterRouting::PrintDifferecne(IBClusterRouting& other)
          }
       }
 
-   DOUT0(("Overall number of differences are %d or %5.3f percent", numdiff, 100.*numdiff/numcnt));
-   DOUT0(("======================"));
+   DOUT0("Overall number of differences are %d or %5.3f percent", numdiff, 100.*numdiff/numcnt);
+   DOUT0("======================");
 }
 
 
@@ -832,7 +832,7 @@ void bnet::IBClusterRouting::FindSameRouteTwice(bool bothlanes, const IBRoute& r
 
    int random_shift = rnd ? lrint(dabc::rand_0_1() * (NumNodes()-1)) : 0;
 
-   DOUT0(("random_shift = %d rnd = %s", random_shift, DBOOL(rnd)));
+   DOUT0("random_shift = %d rnd = %s", random_shift, DBOOL(rnd));
 
    for (int in1=0;in1<NumNodes();in1++)
       for (int in2=0;in2<NumNodes();in2++) {
@@ -945,28 +945,28 @@ void bnet::IBClusterRouting::FindSameRouteTwice(bool bothlanes, const IBRoute& r
             }
 
          if ((dirk1>=0) && (dirk2>=0) && (revn1>=0) && (revn2>=0) && (revk1>=0) && (revk2>=0)) {
-            DOUT0(("%s -> %s : %s -> %s -> %s",
+            DOUT0("%s -> %s : %s -> %s -> %s",
                   NodeName(n1), NodeName(n2),
-                  SwitchName(route1.GetHop1()), SwitchName(route1.GetHop2()), SwitchName(route1.GetHop3())));
-            DOUT0(("%s -> %s : %s -> %s -> %s",
+                  SwitchName(route1.GetHop1()), SwitchName(route1.GetHop2()), SwitchName(route1.GetHop3()));
+            DOUT0("%s -> %s : %s -> %s -> %s",
                   NodeName(dirk1), NodeName(dirk2),
-                  SwitchName(route2.GetHop1()), SwitchName(route2.GetHop2()), SwitchName(route2.GetHop3())));
-            DOUT0(("%s -> %s : %s -> %s -> %s",
+                  SwitchName(route2.GetHop1()), SwitchName(route2.GetHop2()), SwitchName(route2.GetHop3()));
+            DOUT0("%s -> %s : %s -> %s -> %s",
                   NodeName(revn1), NodeName(revn2),
-                  SwitchName(rev_route1.GetHop1()), SwitchName(rev_route1.GetHop2()), SwitchName(rev_route1.GetHop3())));
-            DOUT0(("%s -> %s : %s -> %s -> %s",
+                  SwitchName(rev_route1.GetHop1()), SwitchName(rev_route1.GetHop2()), SwitchName(rev_route1.GetHop3()));
+            DOUT0("%s -> %s : %s -> %s -> %s",
                   NodeName(revk1), NodeName(revk2),
-                  SwitchName(rev_route2.GetHop1()), SwitchName(rev_route2.GetHop2()), SwitchName(rev_route2.GetHop3())));
+                  SwitchName(rev_route2.GetHop1()), SwitchName(rev_route2.GetHop2()), SwitchName(rev_route2.GetHop3()));
 
-            DOUT0(("List for test where bothlanes = %s:", DBOOL(bothlanes)));
-            DOUT0(("  %s", NodeName(n1)));
-            DOUT0(("  %s", NodeName(n2)));
-            DOUT0(("  %s", NodeName(dirk1)));
-            DOUT0(("  %s", NodeName(dirk2)));
-            DOUT0(("  %s", NodeName(revn1)));
-            DOUT0(("  %s", NodeName(revn2)));
-            DOUT0(("  %s", NodeName(revk1)));
-            DOUT0(("  %s", NodeName(revk2)));
+            DOUT0("List for test where bothlanes = %s:", DBOOL(bothlanes));
+            DOUT0("  %s", NodeName(n1));
+            DOUT0("  %s", NodeName(n2));
+            DOUT0("  %s", NodeName(dirk1));
+            DOUT0("  %s", NodeName(dirk2));
+            DOUT0("  %s", NodeName(revn1));
+            DOUT0("  %s", NodeName(revn2));
+            DOUT0("  %s", NodeName(revk1));
+            DOUT0("  %s", NodeName(revk2));
 
             return;
          }
@@ -978,7 +978,7 @@ void bnet::IBClusterRouting::FillBadIdsFor2Switches(dabc::IntColumn& column) con
 {
    column.Fill(-1);
    if ((column.size()!=NumNodes()) || (NumNodes() % 2 != 0)) {
-      EOUT(("One should have exact number of nodes in ID array"));
+      EOUT("One should have exact number of nodes in ID array");
       FillRandomIds(column);
       return;
    }
@@ -1007,7 +1007,7 @@ void bnet::IBClusterRouting::FillInteractiveNodes(dabc::IntColumn& column) const
 
    column.SetSize(cnt);
 
-   DOUT0(("Selected are %d interactive nodes", column.size()));
+   DOUT0("Selected are %d interactive nodes", column.size());
 }
 
 
@@ -1031,11 +1031,11 @@ void bnet::IBClusterRouting::FillRandomIds(dabc::IntColumn& column) const
    }
 
    if (cnt<column.size()) {
-      EOUT(("Was not able to fill random number in so many iterations - help it"));
+      EOUT("Was not able to fill random number in so many iterations - help it");
 
       for (int n=0; n<NumNodes(); n++)
          if ((cnt<column.size()) && !column.Find(n)) {
-            EOUT(("Add node %d", n));
+            EOUT("Add node %d", n);
             column(cnt++) = n;
          }
    }
@@ -1067,7 +1067,7 @@ bool bnet::IBClusterRouting::SelectNodes(const std::string& all_args, dabc::IntC
 
    for (unsigned n=0;n<args.size();n++) {
       if (args[n] == "cpu") {
-         EOUT(("cpu argument appears here - failure"));
+         EOUT("cpu argument appears here - failure");
          continue;
       } else
 
@@ -1102,7 +1102,7 @@ bool bnet::IBClusterRouting::SelectNodes(const std::string& all_args, dabc::IntC
       } else
       if (args[n].compare(0, 8, "ibswitch")==0) {
          int swid = FindSwitch(args[n]);
-         if (swid<0) { EOUT(("Cannot find switch of name %s", args[n].c_str())); continue; }
+         if (swid<0) { EOUT("Cannot find switch of name %s", args[n].c_str()); continue; }
 
          for (int node=0;node<NumNodes();node++)
             if ((GetNodeSwitch(node)==swid) && !ids.Find(node))
@@ -1112,7 +1112,7 @@ bool bnet::IBClusterRouting::SelectNodes(const std::string& all_args, dabc::IntC
       if (args[n].compare(0, 10, "noibswitch")==0) {
          // exclude all nodes, connected to specified switch
          int swid = FindSwitch(args[n].c_str()+2);
-         if (swid<0) { EOUT(("Cannot find switch of name %s", args[n].c_str()+2)); continue; }
+         if (swid<0) { EOUT("Cannot find switch of name %s", args[n].c_str()+2); continue; }
 
          int indx = -1;
 
@@ -1128,7 +1128,7 @@ bool bnet::IBClusterRouting::SelectNodes(const std::string& all_args, dabc::IntC
             ids(cnt++) = find;
 
       } else {
-         EOUT(("Cannot interpret argument %s", args[n].c_str()));
+         EOUT("Cannot interpret argument %s", args[n].c_str());
       }
    }
 
@@ -1143,7 +1143,7 @@ bool bnet::IBClusterRouting::SaveNodesList(const std::string& fname, const dabc:
    FILE *f = fopen (fname.c_str(), "w");
 
    if (f==0) {
-      EOUT(("Cannot open file %s for writing", fname.c_str()));
+      EOUT("Cannot open file %s for writing", fname.c_str());
       return false;
    }
 
@@ -1161,7 +1161,7 @@ bool bnet::IBClusterRouting::LoadNodesList(const std::string& fname, dabc::IntCo
    FILE *f = fopen (fname.c_str(), "r");
 
    if (f==0) {
-      EOUT(("Cannot open file %s for reading", fname.c_str()));
+      EOUT("Cannot open file %s for reading", fname.c_str());
       return false;
    }
 
@@ -1180,7 +1180,7 @@ bool bnet::IBClusterRouting::LoadNodesList(const std::string& fname, dabc::IntCo
       if (id>=0)
          ids(cnt++) = id;
       else
-         EOUT(("Node %s not found", sbuf));
+         EOUT("Node %s not found", sbuf);
    }
 
    ids.SetSize(cnt);
@@ -1294,7 +1294,7 @@ void bnet::IBSchedule::FillReceiveSchedule(IBSchedule& recv)
                slot2[recv].node = nsend;
                slot2[recv].lid = slot[nsend].lid;
             } else {
-               EOUT(("In slot %d more than 1 sender to node ", nslot, recv));
+               EOUT("In slot %d more than 1 sender to node ", nslot, recv);
             }
          }
    }
@@ -1326,7 +1326,7 @@ void bnet::IBSchedule::ExcludeInactiveNode(int node)
 bool bnet::IBSchedule::ShiftToNextOperation(int node, int& nslot)
 {
    if (nslot < -1) {
-      EOUT(("Wrong nslot %d - should be reworked by the user", nslot));
+      EOUT("Wrong nslot %d - should be reworked by the user", nslot);
       return false;
    }
 
@@ -1384,24 +1384,24 @@ double bnet::IBSchedule::calcBandwidth(dabc::IntMatrix* matr)
 
 void bnet::IBSchedule::Print(dabc::IntMatrix* matr)
 {
-   DOUT0(("Print out of schedule:"));
+   DOUT0("Print out of schedule:");
 
    for(int nslot=0;nslot<numSlots();nslot++) {
-      DOUT0(("Slot %d time %6.5f s", nslot, timeSlot(nslot)));
+      DOUT0("Slot %d time %6.5f s", nslot, timeSlot(nslot));
 
       IBScheduleItem* slot_sch = getScheduleSlot(nslot);
 
       for(int nsend=0;nsend<numSenders();nsend++) {
          int nrecv = slot_sch[nsend].node;
          if (nrecv>=0)
-            DOUT0(("  Sender %d sends to %d element = %d", nsend, nrecv, matr ? (*matr)(nsend,nrecv) : 1));
+            DOUT0("  Sender %d sends to %d element = %d", nsend, nrecv, matr ? (*matr)(nsend,nrecv) : 1);
          else
-            DOUT0(("  Sender %d sends nothing", nsend));
+            DOUT0("  Sender %d sends nothing", nsend);
      }
    }
 
-   DOUT0(("Schedule end time %6.5f  number of slots %d bandwidth = %5.1f %%",
-            endTime(), numSlots(), calcBandwidth(matr)));
+   DOUT0("Schedule end time %6.5f  number of slots %d bandwidth = %5.1f %%",
+            endTime(), numSlots(), calcBandwidth(matr));
 }
 
 
@@ -1472,7 +1472,7 @@ bool bnet::IBSchedule::BuildOptimized(IBClusterRouting& routing, dabc::IntColumn
 
       if (!isanytransfer) {
          if (show)
-            DOUT0(("Build optimized schedule for %d nodes with %d slots", numids, numSlots()));
+            DOUT0("Build optimized schedule for %d nodes with %d slots", numids, numSlots());
 
          return true;
       }
@@ -1481,7 +1481,7 @@ bool bnet::IBSchedule::BuildOptimized(IBClusterRouting& routing, dabc::IntColumn
 
       IBScheduleItem* slot = getScheduleSlot(fNumSlots++);
       if (slot==0) {
-         EOUT(("No more slots"));
+         EOUT("No more slots");
          return false;
       }
 
@@ -1550,7 +1550,7 @@ bool bnet::IBSchedule::BuildOptimized(IBClusterRouting& routing, dabc::IntColumn
       } // loop over nsend
    } // loop over slots
 
-   EOUT(("It was not possible to produce schedule inside reserved number of slots %d", maxNumSlots()));
+   EOUT("It was not possible to produce schedule inside reserved number of slots %d", maxNumSlots());
    return false;
 }
 
@@ -1584,13 +1584,13 @@ bool bnet::IBSchedule::BuildRegularSchedule(IBClusterRouting& routing, dabc::Int
       IBRoute route = routing.GetRoute(node, othernode);
 
       if (route.IsNull()) {
-         EOUT(("No route between %d %d ", node, othernode));
+         EOUT("No route between %d %d ", node, othernode);
          return false;
       }
 
       int leaf = route.GetHop1() - routing.NumSpines();
       if ((leaf<0) || (leaf>=regular_numleafs)) {
-         EOUT(("Leaf %d number for node %d out of regular range 0..%d", leaf, node, regular_numleafs));
+         EOUT("Leaf %d number for node %d out of regular range 0..%d", leaf, node, regular_numleafs);
          return false;
       }
 
@@ -1605,7 +1605,7 @@ bool bnet::IBSchedule::BuildRegularSchedule(IBClusterRouting& routing, dabc::Int
       }
 
       if (!placed) {
-         EOUT(("Cannot placed node %d in regular scheme - too many nodes on switch %d", node, leaf));
+         EOUT("Cannot placed node %d in regular scheme - too many nodes on switch %d", node, leaf);
          return false;
       }
    }
@@ -1615,7 +1615,7 @@ bool bnet::IBSchedule::BuildRegularSchedule(IBClusterRouting& routing, dabc::Int
    for (int nslot=0; nslot < regular_num_slots; nslot++) {
       IBScheduleItem* slot = getScheduleSlot(nslot);
       if (slot==0) {
-         EOUT(("No more slots nslot = %d NumSlots = %d Max = %d", nslot, numSlots(), maxNumSlots()));
+         EOUT("No more slots nslot = %d NumSlots = %d Max = %d", nslot, numSlots(), maxNumSlots());
          return false;
       }
 
@@ -1661,7 +1661,7 @@ bool bnet::IBSchedule::BuildRegularSchedule(IBClusterRouting& routing, dabc::Int
                }
             }
 //            if (slot[code_nsend].lid<0)
-//               EOUT(("Did not found LID for spine %d ", spine));
+//               EOUT("Did not found LID for spine %d ", spine);
          }
       }
    }
@@ -1762,20 +1762,20 @@ void bnet::IBSchedule::PrintSlotWithRouting(const IBClusterRouting& routing, int
    for (int nsend=0;nsend<numSenders();nsend++)
       if (!slot[nsend].Empty()) cnt++;
 
-   DOUT0(("  Slot %d has %d items", nslot, cnt));
+   DOUT0("  Slot %d has %d items", nslot, cnt);
 
    cnt = 0;
    for (int nsend=0;nsend<numSenders();nsend++)
       if (!slot[nsend].Empty()) {
          std::string str = routing.GetRouteAsString(nsend, slot[nsend].node, slot[nsend].lid);
-         DOUT0(("    Item: %d  %s", cnt++, str.c_str()));
+         DOUT0("    Item: %d  %s", cnt++, str.c_str());
       }
 }
 
 
 void bnet::IBSchedule::PrintWithRouting(const IBClusterRouting& routing, int nlast)
 {
-   DOUT0(("Schedule for %d senders has %d slots", numSenders(), numSlots()));
+   DOUT0("Schedule for %d senders has %d slots", numSenders(), numSlots());
 
    for (int nslot = 0; nslot < numSlots(); nslot++) {
       if ((nlast>0) && (nslot < numSlots() - nlast)) continue;
@@ -1815,7 +1815,7 @@ bool bnet::IBSchedule::CanMoveItemTo(const IBClusterRouting& routing, int nsende
          if (slot2[nsend].Empty()) continue;
 
          if (slot2[nsend].node == nreceiver) {
-            //         if (dodebug) DOUT0(("There is already entry for receiver %d", nreceiver));
+            //         if (dodebug) DOUT0("There is already entry for receiver %d", nreceiver);
             return false;
          }
 
@@ -1829,7 +1829,7 @@ bool bnet::IBSchedule::CanMoveItemTo(const IBClusterRouting& routing, int nsende
          if (route.GetPath2() == rrr.GetPath2()) npath2++;
       }
 
-      //   if (dodebug) DOUT0(("Accumulated paths %d %d", npath1, npath2));
+      //   if (dodebug) DOUT0("Accumulated paths %d %d", npath1, npath2);
 
       if ((npath1<2) && (npath2<2)) {
          if (lid != Item(nslot1, nsender).lid) newlid = lid;
@@ -1848,10 +1848,10 @@ bool bnet::IBSchedule::RollBack(IBScheduleMoveList& lst)
       IBScheduleMove oper = lst.back();
       lst.pop_back();
 
-      if (oper.Empty()) { EOUT(("Empty operation in rallback list")); return false; }
+      if (oper.Empty()) { EOUT("Empty operation in rallback list"); return false; }
 
       if (!Item(oper.slot1, oper.nsend).Empty()) {
-         EOUT(("Target item is not empty!!!"));
+         EOUT("Target item is not empty!!!");
          return false;
       }
 
@@ -1910,7 +1910,7 @@ bool bnet::IBSchedule::TryMoveSender(const IBClusterRouting& routing, IBSchedule
    }
 
 //   if (nslot0==842) {
-//      DOUT0(("Sender %d wants to transmit to %d in slot %d sender %d do it with route %s, try to move it", nsender0, nreceiver0, nslot1, nsender1, routing.GetRouteAsString(nsender1, nreceiver0).c_str()));
+//      DOUT0("Sender %d wants to transmit to %d in slot %d sender %d do it with route %s, try to move it", nsender0, nreceiver0, nslot1, nsender1, routing.GetRouteAsString(nsender1, nreceiver0).c_str());
 //   }
 
    IBScheduleMoveList lst1;
@@ -1941,7 +1941,7 @@ bool bnet::IBSchedule::TryMoveSender(const IBClusterRouting& routing, IBSchedule
 
             if (!didmove) continue;
 
-            if (show) DOUT0(("!!!! We did move our bad sender !!!"));
+            if (show) DOUT0("!!!! We did move our bad sender !!!");
          }
 
          nsender1 = -1;
@@ -1970,9 +1970,9 @@ bool bnet::IBSchedule::TryMoveSender(const IBClusterRouting& routing, IBSchedule
 
          MoveSender(global_lst, nsender0, nslot0, nslot1, lid0);
 
-         //      DOUT0(("After successful moving of sender %d from slot %d to slot %d global rall back size = %u", nsender0, nslot0, nslot1, global_lst.size()));
+         //      DOUT0("After successful moving of sender %d from slot %d to slot %d global rall back size = %u", nsender0, nslot0, nslot1, global_lst.size());
 
-         //               DOUT0(("We moved 1-hop operation %d -> %d from slot %d to slot %d", nsender0, nreceiver0, nslot0, nslot1));
+         //               DOUT0("We moved 1-hop operation %d -> %d from slot %d to slot %d", nsender0, nreceiver0, nslot0, nslot1);
          return true;
       }
 
@@ -1991,7 +1991,7 @@ bool bnet::IBSchedule::TryMoveSender(const IBClusterRouting& routing, IBSchedule
       }
 
       //   if (nslot0>835) {
-      //      DOUT0(("Sender %d wants to transmit to %d in slot %d over such paths goes %d %d buffers", nsender0, nreceiver0, nslot1, npath1, npath2));
+      //      DOUT0("Sender %d wants to transmit to %d in slot %d over such paths goes %d %d buffers", nsender0, nreceiver0, nslot1, npath1, npath2);
       //   }
 
       // now we should exclude one or both paths from the schedule slot
@@ -2021,7 +2021,7 @@ bool bnet::IBSchedule::TryMoveSender(const IBClusterRouting& routing, IBSchedule
 
                MoveSender(lst2, nsend, nslot1, nslot, newlid);
 
-               //           DOUT0(("Move sender %d from slot %d to slot %d", nsend, nslot1, nslot));
+               //           DOUT0("Move sender %d from slot %d to slot %d", nsend, nslot1, nslot);
 
                npath1--;
                break;
@@ -2052,7 +2052,7 @@ bool bnet::IBSchedule::TryMoveSender(const IBClusterRouting& routing, IBSchedule
 
                MoveSender(lst2, nsend, nslot1, nslot, newlid);
 
-               //                   DOUT0(("Move sender %d from slot %d to slot %d", nsend, nslot1, nslot));
+               //                   DOUT0("Move sender %d from slot %d to slot %d", nsend, nslot1, nslot);
                npath2--;
                break;
             }
@@ -2070,7 +2070,7 @@ bool bnet::IBSchedule::TryMoveSender(const IBClusterRouting& routing, IBSchedule
          MoveSender(global_lst, nsender0, nslot0, nslot1, lid0);
 
          //      if (nslot0>835)
-         //         DOUT0(("After successful moving of sender %d from slot %d to slot %d global rall back size = %u", nsender0, nslot0, nslot1, global_lst.size()));
+         //         DOUT0("After successful moving of sender %d from slot %d to slot %d global rall back size = %u", nsender0, nslot0, nslot1, global_lst.size());
 
          //slot1[nsender0].node = nreceiver0;
          //slot0[nsender0].Reset();
@@ -2107,7 +2107,7 @@ bool bnet::IBSchedule::TryToCompress(IBClusterRouting& routing, bool show, doubl
 
       if ((runtime>0) && (dabc::Now() - start > runtime)) {
          RollBack(global_lst);
-         if (show) DOUT0(("break sorting due to long time"));
+         if (show) DOUT0("break sorting due to long time");
          break;
       }
 
@@ -2124,7 +2124,7 @@ bool bnet::IBSchedule::TryToCompress(IBClusterRouting& routing, bool show, doubl
          }
 
       if (nsender0 < 0) {
-         if (show) DOUT0(("Remove slot %d - no entries remain", nslot0));
+         if (show) DOUT0("Remove slot %d - no entries remain", nslot0);
          for (int n1 = nslot0; n1 < fNumSlots - 1; n1++) {
             IBScheduleItem* sl0 = getScheduleSlot(n1);
             IBScheduleItem* sl1 = getScheduleSlot(n1+1);
@@ -2154,7 +2154,7 @@ bool bnet::IBSchedule::TryToCompress(IBClusterRouting& routing, bool show, doubl
       if (!can_move) {
 
          if (global_lst.size()>0) {
-            if (show) DOUT0(("Roll back %u operations for slot %d num senders remains %d", global_lst.size(), nslot0, num_senders));
+            if (show) DOUT0("Roll back %u operations for slot %d num senders remains %d", global_lst.size(), nslot0, num_senders);
 //            if (nslot0>835) PrintSlotWithRouting(routing, nslot0);
          }
 
@@ -2166,7 +2166,7 @@ bool bnet::IBSchedule::TryToCompress(IBClusterRouting& routing, bool show, doubl
 
 //         if (nslot0>835) PrintSlotWithRouting(routing, nslot0);
 
-         if ((nslot0 % 50 == 0) && show) DOUT0(("Processing slot %d", nslot0));
+         if ((nslot0 % 50 == 0) && show) DOUT0("Processing slot %d", nslot0);
          continue;
       }
 
@@ -2175,7 +2175,7 @@ bool bnet::IBSchedule::TryToCompress(IBClusterRouting& routing, bool show, doubl
    }
 
    if (show && (numBefore>0))
-      DOUT0(("Try to compress before:%d after %d ratio %4.2f", numBefore, numSlots(), 1. * numSlots() / numBefore));
+      DOUT0("Try to compress before:%d after %d ratio %4.2f", numBefore, numSlots(), 1. * numSlots() / numBefore);
 
    return numSlots() < numBefore;
 
@@ -2204,12 +2204,12 @@ double bnet::IBSchedule::CheckConjunction(IBClusterRouting& routing, bool show)
          IBRoute route = routing.GetRoute(nsend, nrecv, lid);
 
          if (route.IsNull()) {
-            EOUT(("NULL route between nodes %d -> %d", nsend, nrecv));
+            EOUT("NULL route between nodes %d -> %d", nsend, nrecv);
             continue;
          }
 
          if (route.IsLocal()) {
-            EOUT(("Schedule include sends to itself??? %d -> %d", nsend, nrecv));
+            EOUT("Schedule include sends to itself??? %d -> %d", nsend, nrecv);
             continue;
          }
 
@@ -2277,7 +2277,7 @@ bool bnet::IBSchedule::ProveSchedule(dabc::IntColumn* ids)
          matrix(nsend, nrecv)++;
 
          if (matrix(nsend, nrecv)>1) {
-            EOUT(("Matrix element %d %d more than once", nsend, nrecv));
+            EOUT("Matrix element %d %d more than once", nsend, nrecv);
             return false;
          }
       }
@@ -2288,7 +2288,7 @@ bool bnet::IBSchedule::ProveSchedule(dabc::IntColumn* ids)
          for (int n2=0;n2<numSenders();n2++) {
             int expected = n1==n2 ? 0 : 1;
             if (matrix(n1,n2)!=expected) {
-               EOUT(("Matrix %d %d != %d", n1, n2, expected));
+               EOUT("Matrix %d %d != %d", n1, n2, expected);
                return false;
             }
          }
@@ -2299,13 +2299,13 @@ bool bnet::IBSchedule::ProveSchedule(dabc::IntColumn* ids)
             int n2 = ids->at(i2);
             int expected = n1==n2 ? 0 : 1;
             if (matrix(n1,n2)!=expected) {
-               EOUT(("Matrix %d %d != %d", n1, n2, expected));
+               EOUT("Matrix %d %d != %d", n1, n2, expected);
                return false;
             }
          }
       }
 
-   DOUT0(("Schedule with %d slots is OK", numSlots()));
+   DOUT0("Schedule with %d slots is OK", numSlots());
 
    return true;
 }
@@ -2383,7 +2383,7 @@ bool bnet::IBSchedule::SaveToFile(const std::string& fname)
    FILE *f = fopen (fname.c_str(), "w");
 
    if (f==0) {
-      EOUT(("Cannot open file %s for writing", fname.c_str()));
+      EOUT("Cannot open file %s for writing", fname.c_str());
       return false;
    }
 
@@ -2399,7 +2399,7 @@ bool bnet::IBSchedule::SaveToFile(const std::string& fname)
 
    fclose(f);
 
-   DOUT0(("Schedule with %d slots for %d senders saved to file %s", numSlots(), numSenders(), fname.c_str()));
+   DOUT0("Schedule with %d slots for %d senders saved to file %s", numSlots(), numSenders(), fname.c_str());
 
    return true;
 }
@@ -2416,11 +2416,11 @@ bool bnet::IBSchedule::ReadFromFile(const std::string& fname)
 
    if (!fgets (sbuf, sizeof(sbuf), f) ||
          sscanf(sbuf,"Num slots: %d", &numslots)!=1)
-         { fclose(f); EOUT(("reading num slots")); return false; }
+         { fclose(f); EOUT("reading num slots"); return false; }
 
    if (!fgets (sbuf, sizeof(sbuf), f) ||
          sscanf(sbuf,"Num senders: %d", &numsenders)!=1)
-         { fclose(f); EOUT(("reading num senders")); return false; }
+         { fclose(f); EOUT("reading num senders"); return false; }
 
 
    Allocate(numslots, numsenders);
@@ -2435,17 +2435,17 @@ bool bnet::IBSchedule::ReadFromFile(const std::string& fname)
 
       if (!fgets (sbuf, sizeof(sbuf), f) ||
             (sscanf(sbuf,"Slot: %d", &filenslot)!=1) || (filenslot!=nslot))
-            { fclose(f); EOUT(("reading slot %d", nslot)); return false; }
+            { fclose(f); EOUT("reading slot %d", nslot); return false; }
 
       for (int nsend=0;nsend<numSenders();nsend++)
          if (!fgets (sbuf, sizeof(sbuf), f) ||
                (sscanf(sbuf,"%d -> %d %d", &filensend, &slot[nsend].node, &slot[nsend].lid)!=3) ||
                (filensend!=nsend))
-         { fclose(f); EOUT(("reading sender %d in slot %d", nsend, nslot)); return false; }
+         { fclose(f); EOUT("reading sender %d in slot %d", nsend, nslot); return false; }
    }
    fclose(f);
 
-   DOUT0(("Schedule nslot %d nsenders %d read from file %s", numSlots(), numSenders(), fname.c_str()));
+   DOUT0("Schedule nslot %d nsenders %d read from file %s", numSlots(), numSenders(), fname.c_str());
 
    return true;
 }
@@ -2473,7 +2473,7 @@ void BuildConjunctionCurve(bnet::IBClusterRouting& routing)
          rel_conj.Fill(rel);
       }
 
-      DOUT0(("NumNodes:%3d Rel.conj: %5.3f", num, rel_conj.Mean()));
+      DOUT0("NumNodes:%3d Rel.conj: %5.3f", num, rel_conj.Mean());
    }
 }
 
@@ -2484,24 +2484,24 @@ extern "C" void PrintRouting()
    bool optimize = dabc::mgr()->cfg()->GetUserPar("Optimize") == "true";
 
    if (filename.length()==0) {
-      EOUT(("File name not specified - exit"));
+      EOUT("File name not specified - exit");
       return;
    }
 
-   DOUT0(("Reading file"));
+   DOUT0("Reading file");
 
    bnet::IBClusterRouting routing;
 
    if (!routing.ReadFile(filename)) return;
 
-   DOUT0(("Reading file done"));
+   DOUT0("Reading file done");
 
    if (optimize) routing.BuildOptimalRoutes();
 
    routing.PrintSpineStatistic();
 
    if (routing.CheckTargetRoutes())
-      DOUT0(("!!! All routes defined by target LID !!!"));
+      DOUT0("!!! All routes defined by target LID !!!");
 
    if (routing.NumLids()>0)
       routing.CheckUsefulLIDs();
@@ -2521,18 +2521,18 @@ extern "C" void CompareRouting()
    }
 
    if (arr.size()<2) {
-      EOUT(("Only %u files in the list", arr.size()));
+      EOUT("Only %u files in the list", arr.size());
       return;
    }
 
    for (unsigned n=0; n<arr.size()-1;n++) {
 
       if ((arr[n].length()==0) || (arr[n+1].length()==0)) {
-         EOUT(("File names are not specified - exit"));
+         EOUT("File names are not specified - exit");
          return;
       }
 
-      DOUT0(("Comparing files %s %s", arr[n].c_str(), arr[n+1].c_str()));
+      DOUT0("Comparing files %s %s", arr[n].c_str(), arr[n+1].c_str());
 
       bnet::IBClusterRouting routing1, routing2;
 
@@ -2541,7 +2541,7 @@ extern "C" void CompareRouting()
 
       routing1.MatchNodes(routing2);
 
-      // DOUT0(("Routing1 %d nodes Routing2 %d nodes", routing1.NumNodes(), routing2.NumNodes()));
+      // DOUT0("Routing1 %d nodes Routing2 %d nodes", routing1.NumNodes(), routing2.NumNodes());
 
       routing1.PrintDifferecne(routing2);
    }
@@ -2563,21 +2563,21 @@ extern "C" void TestSorting()
    // seed = lrint(dabc::Now().AsDouble()*1000000) % 10000;
 
    if (filename.empty()) {
-      EOUT(("File name not specified - exit"));
+      EOUT("File name not specified - exit");
       return;
    }
 
-   DOUT0(("Reading file %s", filename.c_str()));
+   DOUT0("Reading file %s", filename.c_str());
 
    bnet::IBClusterRouting routing;
 
    if (!routing.ReadFile(filename)) return;
 
-   DOUT0(("Reading file done"));
+   DOUT0("Reading file done");
 
    if (optimize) routing.BuildOptimalRoutes();
 
-   DOUT0(("SEED = %d", seed));
+   DOUT0("SEED = %d", seed);
 
    if (seed>0) srand48(seed);
 
@@ -2599,7 +2599,7 @@ extern "C" void TestSorting()
          break;
    }
 
-   DOUT0(("Produce schedule"));
+   DOUT0("Produce schedule");
 
    bnet::IBSchedule sch2(routing.NumNodes()*3, routing.NumNodes());
    //sch2.BuildOptimized(routing, &ids, true);
@@ -2633,11 +2633,11 @@ extern "C" void TestSchedule()
    bool optimize = dabc::mgr()->cfg()->GetUserPar("Optimize") == "true";
 
    if (filename.length()==0) {
-      EOUT(("File name not specified - exit"));
+      EOUT("File name not specified - exit");
       return;
    }
 
-   DOUT0(("Reading file"));
+   DOUT0("Reading file");
 
    bnet::IBClusterRouting routing;
 
@@ -2651,7 +2651,7 @@ extern "C" void TestSchedule()
    return;
 
 
-   DOUT0(("Reading file done"));
+   DOUT0("Reading file done");
 
    if (optimize) routing.BuildOptimalRoutes();
 
@@ -2659,14 +2659,14 @@ extern "C" void TestSchedule()
 
    int seed = lrint(dabc::Now().AsDouble()*1000000) % 10000;
 
-   DOUT0(("SEED = %d", seed));
+   DOUT0("SEED = %d", seed);
 
    srand48(seed);
 
    for (int n=0;n<4;n++) {
 
-      DOUT0(("========================="));
-      DOUT0(("Loop cnt %d", n));
+      DOUT0("=========================");
+      DOUT0("Loop cnt %d", n);
 
       if (n==0)
          for (int k=0;k<ids.size();k++) ids(k) = k;
@@ -2711,13 +2711,13 @@ extern "C" void SelectCSCNodes()
    Tokanize(dabc::mgr()->cfg()->GetUserPar("FilesList"), files);
 
    if (files.size()==0) {
-      EOUT(("No any routing files in the list"));
+      EOUT("No any routing files in the list");
       return;
    }
 
    bnet::IBClusterRouting routing;
 
-   DOUT0(("Reading file %s args:%s", files.back().c_str(), all_args.c_str()));
+   DOUT0("Reading file %s args:%s", files.back().c_str(), all_args.c_str());
 
    if (!routing.ReadFile(files.back())) return;
 
@@ -2725,21 +2725,21 @@ extern "C" void SelectCSCNodes()
 
    if (all_args=="schedule") {
       if (!routing.LoadNodesList(nodeslistfile, ids)) {
-         EOUT(("Cannot read nodes list from the file"));
+         EOUT("Cannot read nodes list from the file");
          return;
 
       }
-      DOUT0(("Nodes list has %d nodes", ids.size()));
+      DOUT0("Nodes list has %d nodes", ids.size());
 
       // for (int n=0;n<ids.size();n++)
-      //    DOUT0(("node %d = %d", n, ids(n)));
+      //    DOUT0("node %d = %d", n, ids(n));
 
-      DOUT0(("============ First test round-robin schedule =============== "));
+      DOUT0("============ First test round-robin schedule =============== ");
       bnet::IBSchedule sch1(routing.NumNodes()-1, routing.NumNodes());
       sch1.FillRoundRoubin(&ids);
       sch1.CheckConjunction(routing, true);
 
-      DOUT0(("============ Now check sorted schedule =============== "));
+      DOUT0("============ Now check sorted schedule =============== ");
 
       bnet::IBSchedule sch2(routing.NumNodes()*3, routing.NumNodes());
       sch2.BuildOptimized(routing, &ids, true);
@@ -2747,9 +2747,9 @@ extern "C" void SelectCSCNodes()
       sch2.TryToCompress(routing, false, 30);
       sch2.ProveSchedule(&ids);
       sch2.CheckConjunction(routing, true);
-      DOUT0(("OPTIMIZED SCHEDULE SIZE = %d", sch2.numSlots()));
+      DOUT0("OPTIMIZED SCHEDULE SIZE = %d", sch2.numSlots());
 
-      DOUT0(("============ last is regular schedule =============== "));
+      DOUT0("============ last is regular schedule =============== ");
 
       bnet::IBSchedule sch3(routing.NumNodes()*3, routing.NumNodes());
       sch3.BuildRegularSchedule(routing, &ids, false);
@@ -2758,7 +2758,7 @@ extern "C" void SelectCSCNodes()
       sch3.ProveSchedule(&ids);
       sch3.CheckConjunction(routing, true);
 
-      DOUT0(("REGULAR SCHEDULE SIZE = %d", sch3.numSlots()));
+      DOUT0("REGULAR SCHEDULE SIZE = %d", sch3.numSlots());
 
       bnet::IBSchedule sch4;
 
@@ -2772,11 +2772,11 @@ extern "C" void SelectCSCNodes()
    } else {
 
       if (!routing.SelectNodes(all_args, ids)) {
-         EOUT(("Cannot select nodes according to specified arguments"));
+         EOUT("Cannot select nodes according to specified arguments");
          return;
       }
 
-      DOUT0(("Select nodes done size = %d, store to file %s",ids.size(), nodeslistfile.c_str()));
+      DOUT0("Select nodes done size = %d, store to file %s",ids.size(), nodeslistfile.c_str());
 
       routing.SaveNodesList(nodeslistfile, ids);
    }

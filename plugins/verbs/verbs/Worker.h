@@ -23,7 +23,6 @@
 struct ibv_ah;
 
 namespace dabc {
-   class Port;
    class ConnectionObject;
 }
 
@@ -35,7 +34,7 @@ namespace verbs {
    class Thread;
    class Device;
 
-   class Worker : public dabc::Worker {
+   class WorkerAddon : public dabc::WorkerAddon {
 
       friend class verbs::Thread;
 
@@ -46,17 +45,17 @@ namespace verbs {
       public:
 
          enum EVerbsProcEvents {
-            evntVerbsSendCompl = evntFirstSystem,
+            evntVerbsSendCompl = dabc::Worker::evntFirstAddOn,
             evntVerbsRecvCompl,
             evntVerbsError,
             evntVerbsLast // from this event user can specified it own events
          };
 
-         Worker(QueuePair* qp);
+         WorkerAddon(QueuePair* qp);
 
-         virtual ~Worker();
+         virtual ~WorkerAddon();
 
-         virtual const char* RequiredThrdClass() const;
+         virtual std::string RequiredThrdClass() const;
 
          void SetQP(QueuePair* qp);
          inline QueuePair* QP() const { return fQP; }
@@ -70,13 +69,7 @@ namespace verbs {
 
          void CloseQP();
 
-         virtual const char* ClassName() const { return "verbs::Worker"; }
-   };
-
-   class WorkerRef : public dabc::WorkerRef {
-
-      DABC_REFERENCE(WorkerRef, dabc::WorkerRef, verbs::Worker)
-
+         virtual const char* ClassName() const { return "verbs::WorkerAddon"; }
    };
 
 }

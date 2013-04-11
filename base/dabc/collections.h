@@ -16,32 +16,14 @@
 #ifndef DABC_collections
 #define DABC_collections
 
-#include <stdint.h>
-#include <string.h>
-
-#ifndef DABC_logging
-#include "dabc/logging.h"
-#endif
-
-#ifndef DABC_defines
-#include "dabc/defines.h"
-#endif
+#include <vector>
 
 #ifndef DABC_Queue
 #include "dabc/Queue.h"
 #endif
 
 
-#include <vector>
-
 namespace dabc {
-
-   class Mutex;
-   class Command;
-   class Object;
-   class Buffer;
-
-   // ____________________________________________________________
 
    class PointersVector : public std::vector<void*> {
       public:

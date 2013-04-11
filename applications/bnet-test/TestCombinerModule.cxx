@@ -15,13 +15,11 @@
 
 #include "dabc/logging.h"
 #include "dabc/string.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
-#include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
-bnet::TestCombinerModule::TestCombinerModule(const char* name, dabc::Command cmd) :
+bnet::TestCombinerModule::TestCombinerModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fNumReadout(1),
    fModus(0)
@@ -37,7 +35,7 @@ bnet::TestCombinerModule::TestCombinerModule(const char* name, dabc::Command cmd
    fOutPort = CreateOutput("Output", fOutPool, SenderInQueueSize);
 
    for (int n=0;n<fNumReadout;n++) {
-      CreateInput(FORMAT(("Input%d", n)), fInpPool, ReadoutQueueSize);
+      CreateInput(dabc::format("Input%d", n), fInpPool, ReadoutQueueSize);
       fBuffers.push_back(0);
    }
 
@@ -55,7 +53,7 @@ bnet::TestCombinerModule::~TestCombinerModule()
 
    dabc::Buffer::Release(fOutBuffer);
 
-   DOUT5(("TestCombinerModule destroyed"));
+   DOUT5("TestCombinerModule destroyed");
 }
 
 void bnet::TestCombinerModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
@@ -72,7 +70,7 @@ void bnet::TestCombinerModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
 
       fBuffers[ninp] = buf;
 
-//      DOUT1(("Get buffer %p at input %d", buf, ninp));
+//      DOUT1("Get buffer %p at input %d", buf, ninp);
 
       fLastInput++;
    }
@@ -95,7 +93,7 @@ void bnet::TestCombinerModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
       fOutBuffer->SetHeaderSize(sizeof(bnet::EventId));
       *((bnet::EventId*) fOutBuffer->GetHeader()) = evid;
 
-//      DOUT1(("Combine subevent %llu", evid));
+//      DOUT1("Combine subevent %llu", evid);
 
       fLastEvent = evid;
    }
@@ -106,7 +104,7 @@ void bnet::TestCombinerModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
    fOutBuffer = 0;
    Output(0)->Send(buf);
 
-   DOUT3(("Combiner produces event %llu", fLastEvent));
+   DOUT3("Combiner produces event %llu", fLastEvent);
 
    fLastInput = 0; // start from the beginning
 }
@@ -119,14 +117,14 @@ dabc::Buffer* bnet::TestCombinerModule::MakeSegmenetedBuf(uint64_t& evid)
 
    for (unsigned n=0;n<fBuffers.size();n++) {
       if (fBuffers[n]==0) {
-         EOUT(("No buffer in the list"));
+         EOUT("No buffer in the list");
          exit(1);
       }
 
       uint64_t* mem = (uint64_t*) fBuffers[n]->GetDataLocation();
       if (n==0) evid = *mem; else
         if (evid != *mem) {
-           EOUT(("Missmatch with evid %lld %lld", evid, *mem));
+           EOUT("Missmatch with evid %lld %lld", evid, *mem);
            exit(1);
         }
 
@@ -138,7 +136,7 @@ dabc::Buffer* bnet::TestCombinerModule::MakeSegmenetedBuf(uint64_t& evid)
    }
 
    if (buf->GetTotalSize() > fOutBufferSize) {
-      EOUT(("Size missmtach %d %d", buf->GetTotalSize(), fOutBufferSize));
+      EOUT("Size missmtach %d %d", buf->GetTotalSize(), fOutBufferSize);
       exit(1);
    }
 
@@ -153,7 +151,7 @@ dabc::Buffer* bnet::TestCombinerModule::MakeMemCopyBuf(uint64_t& evid)
 
    for (unsigned n=0;n<fBuffers.size();n++) {
       if (fBuffers[n]==0) {
-         EOUT(("No buffer in the list n = %u sz = %u", n, fBuffers.size()));
+         EOUT("No buffer in the list n = %u sz = %u", n, fBuffers.size());
          exit(1);
       }
 
@@ -162,7 +160,7 @@ dabc::Buffer* bnet::TestCombinerModule::MakeMemCopyBuf(uint64_t& evid)
       uint64_t* mem = (uint64_t*) fBuffers[n]->GetDataLocation();
       if (n==0) evid = *mem; else
       if (evid != *mem) {
-         EOUT(("Missmatch with evid %lld %lld", evid, *mem));
+         EOUT("Missmatch with evid %lld %lld", evid, *mem);
          exit(1);
       }
    }

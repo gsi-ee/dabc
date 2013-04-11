@@ -127,7 +127,7 @@ namespace hadaq {
                // account padding of events to 8 byte boundaries:
                while ((hedsize % 8) != 0) {
                   hedsize++;
-                  //DOUT0(("hadtu GetSize() extends for padding the length to %d",hedsize));
+                  //DOUT0("hadtu GetSize() extends for padding the length to %d",hedsize);
                }
                return hedsize;
             }
@@ -528,17 +528,11 @@ namespace hadaq {
 
 
 
-   extern const char* typeHldInput;
-   extern const char* typeHldOutput;
    extern const char* typeUdpDevice;
-   extern const char* typeUdpInput;
 
    extern const char* protocolHld;
    extern const char* protocolHadaq;
 
-   extern const char* xmlFileName;
-   extern const char* xmlSizeLimit;
-   extern const char* xmlUdpAddress;
    extern const char* xmlUdpPort;
    extern const char* xmlUdpBuffer;
    extern const char* xmlMTUsize;
@@ -553,22 +547,8 @@ namespace hadaq {
    extern const char* xmlSyncSubeventId;
    extern const char* xmlSyncAcceptedTriggerMask;
 
-
-//   extern const char* xmlNormalOutput;
-//   extern const char* xmlFileOutput;
-//   extern const char* xmlServerOutput;
-//   extern const char* portOutput;
-//   extern const char* portOutputFmt;
-//   extern const char* portInput;
-//   extern const char* portInputFmt;
-//   extern const char* portFileOutput;
-//   extern const char* portServerOutput;
-
    extern const char* NetmemPrefix;
    extern const char* EvtbuildPrefix;
-
-
 }
-;
 
 #endif

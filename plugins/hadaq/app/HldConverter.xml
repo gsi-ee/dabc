@@ -4,24 +4,26 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
-      <func value="InitHadaqMbsConverter"/>
+      <func value="InitHadaqMbsTransmitter"/>
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>         
     </MemoryPool>
     <Module name="HldConv">
-       <SubeventFullId value="0x000001F"/>
        <PoolName value="Pool"/>
-       <Port name="Input">
-          <InputQueueSize value="10"/>
-          <HadaqFileName value="/data.local1/adamczew/hld/xx12153171835.hld"/>        
-       </Port>
-       <Port name="Output">
-          <OutputQueueSize value="10"/>
-          <MbsFileName value="xx12153171835.lmd"/>
-          <BufferSize value="65536"/>
-       </Port>
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+    
+       <SubeventFullId value="0x000001F"/>
+
+       <InputPort name="Input0">
+          <url value="hld:///data.local1/adamczew/hld/xx12153171835.hld"/>        
+       </InputPort>
+       <OutputPort name="Output0">
+          <url value="lmd://xx12153171835.lmd"/>
+        </OutputPort>
+    
        <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
        <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
        <TransmitBufs width="4" prec="3" low="2" up="100000" debug="1"/>        

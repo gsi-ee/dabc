@@ -150,14 +150,14 @@ namespace dabc {
 
 
 dabc::RecordContainer::RecordContainer(const std::string& name) :
-   Object(0, name.c_str()),
+   Object(0, name),
    fPars(new RecordContainerMap)
 {
    SetFlag(flAutoDestroy, true);
 }
 
 dabc::RecordContainer::RecordContainer(Reference parent, const std::string& name) :
-   Object(MakePair(parent, name.c_str())),
+   Object(MakePair(parent, name)),
    fPars(new RecordContainerMap)
 {
    SetFlag(flAutoDestroy, true);
@@ -170,13 +170,13 @@ dabc::RecordContainer::~RecordContainer()
 
 void dabc::RecordContainer::Print(int lvl)
 {
-   DOUT1(("%s : %s", ClassName(), GetName()));
+   DOUT1("%s : %s", ClassName(), GetName());
 
    RecordContainerMap::const_iterator iter = fPars->begin();
 
    while (iter!=fPars->end()) {
 
-      DOUT1(("   %s = %s", iter->first.c_str(), iter->second.c_str()));
+      DOUT1("   %s = %s", iter->first.c_str(), iter->second.c_str());
 
       iter++;
    }
@@ -223,60 +223,6 @@ bool dabc::RecordContainer::SetField(const std::string& name, const char* value,
    return true;
 }
 
-bool dabc::RecordContainer::ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite)
-{
-   XMLAttrPointer_t attr = Xml::GetFirstAttr(node);
-
-   while (attr!=0) {
-      const char* attrname = Xml::GetAttrName(attr);
-
-      DOUT3(("Cont:%p  attribue:%s overwrite:%s", this, attrname, DBOOL(overwrite)));
-
-      // TODO: do we really should use RecordContainer::GetField call here ???
-
-      if (overwrite || (RecordContainer::GetField(attrname)==0)) {
-         const char* vattr = Xml::GetAttrValue(attr);
-
-         DOUT3(("Cont:%p  attribue:%s value:%s", this, attrname, (vattr ? vattr : "---")));
-
-         if ((vattr!=0) && (strstr(vattr,"${")!=0))
-            SetField(attrname, dabc::mgr()->cfg()->ResolveEnv(vattr).c_str(), 0);
-         else
-            SetField(attrname, vattr, 0);
-      }
-
-      attr = Xml::GetNextAttr(attr);
-   }
-
-   XMLNodePointer_t child = Xml::GetChild(node);
-
-   while (child!=0) {
-
-      const char* vname = Xml::GetNodeName(child);
-      const char* vattr = Xml::GetAttr(child,"value");
-
-      if (vname && vattr) {
-         std::string field_name;
-
-         if (strcmp(vname,"_field")!=0)
-            field_name = std::string("_")+vname;
-         else
-            field_name = Xml::GetAttr(child,"name");
-
-         // TODO: do we really should use RecordContainer::GetField call here ???
-
-         if (overwrite || (RecordContainer::GetField(field_name)==0)) {
-            if ((vattr!=0) && (strstr(vattr,"${")!=0))
-               SetField(field_name, dabc::mgr()->cfg()->ResolveEnv(vattr).c_str(), 0);
-            else
-               SetField(field_name, vattr, 0);
-         }
-      }
-
-      child = Xml::GetNext(child);
-   }
-   return true;
-}
 
 std::string dabc::RecordContainer::FindField(const std::string& mask) const
 {
@@ -401,7 +347,9 @@ bool dabc::Record::ReadFromXml(const std::string& v)
 
    CreateContainer(Xml::GetNodeName(node));
 
-   GetObject()->ReadFieldsFromNode(node, true);
+   ConfigIO io(0);
+
+   io.ReadFieldsFromNode(node, GetObject(), true);
 
    Xml::FreeNode(node);
 

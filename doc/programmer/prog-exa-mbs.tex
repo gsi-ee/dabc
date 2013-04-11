@@ -48,14 +48,14 @@ void Print(dabc::Buffer* buf)
 {
    mbs::ReadIterator iter(buf);
    while (iter.NextEvent()) {
-      DOUT1(("Event %u size %u", 
+      DOUT1("Event %u size %u", 
               iter.evnt()->EventNumber(), 
-              iter.evnt()->FullSize()));
+              iter.evnt()->FullSize());
       while (iter.NextSubEvent()) {
-         DOUT1(("Subevent crate %u procid %u size %u",
+         DOUT1("Subevent crate %u procid %u size %u",
                iter.subevnt()->iSubcrate, 
                iter.subevnt()->iProcId, 
-               iter.subevnt()->FullSize()));
+               iter.subevnt()->FullSize());
       }
    }
 }
@@ -119,15 +119,15 @@ and allows to save MBS events, contained in \class{dabc::Buffer} objects, into a
 In addition to \class{mbs::LmdFile} functionality, it allows to create
 multiple files when a file size limit is exceeded. The class has following parameters:
 \bbul
-\item \param{MbsFileName}      - name of lmd file (including .lmd extension)  
-\item \param{MbsFileSizeLimit} - size limit (in Mb) of single file, 0 - no limit
+\item \param{FileName}      - name of lmd file (including .lmd extension)  
+\item \param{FileSizeLimit} - size limit (in Mb) of single file, 0 - no limit
 \ebul
 
 Class \class{mbs::LmdInput} inherits \class{dabc::DataInput} and allows to read 
 MBS events from {\tt \*.lmd} file(s) and to provide them over input ports into a module. 
 It has following parameters:
 \bbul
-\item \param{MbsFileName} - name of lmd file (multicast symbols '*' and '?' are supported)  
+\item \param{FileName} - name of lmd file (multicast symbols '*' and '?' are supported)  
 \item \param{BufferSize}  - buffer size to read data
 \ebul
 
@@ -142,10 +142,7 @@ Here is an example how the output file for a generator module can be configured:
 \begin{verbatim}
    ...
    dabc::mgr.CreateModule("mbs::GeneratorModule", "Generator");
-   dabc::CmdCreateTransport cmd("Generator/Output", mbs::typeLmdOutput);
-   cmd.SetStr(mbs::xmlFileName, "output.lmd");
-   cmd.SetInt(mbs::xmlSizeLimit, 100);
-   dabc::mgr.Execute(cmd);
+   dabc::mgr.CreateTransport("Generator/Output0", "lmd://output.lmd?maxsize=100");
    ...
 \end{verbatim}
 \end{small}
@@ -163,11 +160,8 @@ for a combiner module:
    cmd.SetInt(dabc::xmlNumInputs, 3);
    dabc::mgr.Execute(cmd);
    
-   for (unisgned n=0;n++;n<3) {
-      dabc::CmdCreateTransport cmd(FORMAT(("Combiner/Input%u",n)), mbs::typeLmdInput);
-      cmd.SetStr(mbs::xmlFileName, FORMAT(("input%u_*.lmd",n)));
-      dabc::mgr.Execute(cmd);
-   }   
+   for (unisgned n=0;n++;n<3) 
+      dabc::mgr.CreateTransport cmd(dabc::format("Combiner/Input%u",n), dabc::format("lmd://intput%u.lmd",n));
    ...
 \end{verbatim}
 \end{small}
@@ -190,9 +184,9 @@ The actual socket event processing is then done in virtual methods
 of class \class{dabc::SocketWorker} which has several subclasses for different 
 kinds of sockets: 
 \bbul
-\item  - \class{dabc::SocketServerWorker} - server socket for connection  
-\item  - \class{dabc::SocketClientWorker} - client socket for connection  
-\item  - \class{dabc::SocketIOWorker} - send/recv handling  
+\item  - \class{dabc::SocketServerAddon} - server socket for connection  
+\item  - \class{dabc::SocketClientAddon} - client socket for connection  
+\item  - \class{dabc::SocketIOAddon} - send/recv handling  
 \ebul
 
 One can use a \class{dabc::SocketThread} together with other kind of processors
@@ -243,12 +237,10 @@ the following code should be executed:
 \begin{small}
 \begin{verbatim}
   ...
-  dabc::mgr.CreateTransport("Generator/Output", 
-                  mbs::typeServerTransport, "GeneratorThrd");
+  dabc::mgr.CreateTransport("Generator/Output", "mbs://Transport", "GeneratorThrd");
   ...
 \end{verbatim}
 \end{small}
-
 
 Another possibility to specify these parameters consists in the 
 command \comm{dabc::CmdCreateTransport} which may wrap such values:
@@ -256,9 +248,7 @@ command \comm{dabc::CmdCreateTransport} which may wrap such values:
 \begin{small}
 \begin{verbatim}
   ...
-  dabc::CmdCreateTransport cmd("Generator/Output", mbs::typeServerTransport, "MbsTransThrd");
-  cmd.SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
-  cmd.SetInt(mbs::xmlServerPort, mbs::DefaultServerPort(mbs::StreamServer) + 5);
+  dabc::CmdCreateTransport cmd("Generator/Output", "mbs://Transport:6007", "MbsTransThrd");
   dabc::mgr.Execute(cmd);
   ...
 \end{verbatim}
@@ -290,12 +280,8 @@ To create client connection, the following piece of code should be used:
 \begin{small}
 \begin{verbatim}
   ...
-  dabc::CmdCreateTransport cmd("Combiner/Input0", 
-                         mbs::typeClientTransport, "MbsTransThrd");
-  cmd.SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
-  cmd.SetStr(mbs::xmlServerName, "lxi010.gsi.de");
-  cmd.SetInt(mbs::xmlServerPort, mbs::DefaultServerPort(mbs::StreamServer) + 5);
-  dabc::mgr.Execute(cmd);
+  dabc::mgr.CreateTransport("Combiner/Input0", 
+                            "mbs://lxi010.gsi.de/Stream", "MbsTransThrd");
   ...
 \end{verbatim}
 \end{small}
@@ -323,11 +309,12 @@ public:
       CreateOutput("Output", Pool(), 5);
    }
 
-   virtual void ProcessOutputEvent(dabc::Port* port)
+   virtual bool ProcessSend(unsigned port)
    {
-      dabc::Buffer buf = Pool()->TakeBuffer();
+      dabc::Buffer buf = TakeBuffer();
       FillRandomBuffer(buf);
-      port->Send(buf);
+      Send(port, buf);
+      return true;
    }
 };
 \end{verbatim}
@@ -372,9 +359,9 @@ and used by both a module and a transport object.
 \begin{verbatim}
 extern "C" void InitMbsGenerator()
 {
-  dabc::mgr()->CreateThread("GenerThrd", dabc::typeSocketThread);
+  dabc::mgr.CreateThread("GenerThrd", dabc::typeSocketThread);
   dabc::mgr.CreateModule("mbs::GeneratorModule", "Generator", "GenerThrd");
-  dabc::mgr.CreateTransport("Generator/Output", mbs::typeServerTransport, "GenerThrd");
+  dabc::mgr.CreateTransport("Generator/Output", "mbs://Stream", "GenerThrd");
 }
 \end{verbatim}
 \end{small}
@@ -411,11 +398,7 @@ Besides one may specify all module and transport parameters explicitely here:
        <SubeventSize value="128"/>
        <Go4Random value="false"/>
        <BufferSize value="16384"/>
-       <Port name="Output">
-          <OutputQueueSize value="5"/>
-          <MbsServerKind value="Stream"/>
-          <MbsServerPort value="6006"/>
-        </Port>
+       <OutputPort name="Output0" url="mbs://Stream:6006"/>
      </Module>
   </Context>
 </dabc>
@@ -465,33 +448,11 @@ configure a combiner module reading from three MBS transport servers:
        <DoFile value="false"/>
        <DoServer value="true"/>
        <BufferSize value="16384"/>
-       <Port name="Input0">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi009"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="Input1">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi010"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="Input2">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi011"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="FileOutput">
-          <OutputQueueSize value="5"/>
-          <MbsFileName value="combiner.lmd"/>
-          <MbsFileSizeLimit value="128"/>
-        </Port>
-       <Port name="ServerOutput">
-          <OutputQueueSize value="5"/>
-          <MbsServerKind value="Stream"/>
-        </Port>
+       <InputPort name="Input0" url="mbs://lxi009:6000/Transport" queue="5"/>
+       <InputPort name="Input1" url="mbs://lxi010:6000/Transport" queue="5"/>
+       <InputPort name="Input2" url="mbs://lxi011:6000/Transport" queue="5"/>
+       <OutputPort name="FileOutput" url="lmd://combiner.lmd?maxsize=128" queue="5"/>
+       <OutputPort name="ServerOutput" url="mbs://Stream" queue="5"/>
      </Module>
   </Context>
 </dabc>

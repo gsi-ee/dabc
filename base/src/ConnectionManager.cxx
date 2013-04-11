@@ -15,7 +15,6 @@
 
 #include "dabc/ConnectionManager.h"
 
-#include "dabc/Port.h"
 #include "dabc/Manager.h"
 #include "dabc/Device.h"
 #include "dabc/Url.h"
@@ -47,7 +46,7 @@ dabc::ConnectionManagerHandleCmd::ConnectionManagerHandleCmd(ConnectionRequestFu
    SetStr(ReqArg(), req.ItemName());
 }
 
-dabc::ConnectionManager::ConnectionManager(const char* name, Command cmd) :
+dabc::ConnectionManager::ConnectionManager(const std::string& name, Command cmd) :
    ModuleAsync(name, cmd),
    fRecs(),
    fConnCmd(),
@@ -56,7 +55,7 @@ dabc::ConnectionManager::ConnectionManager(const char* name, Command cmd) :
    // we want to see all events which produced by any of connection object
    RegisterForParameterEvent(ConnectionObject::ObjectName());
 
-   DOUT2(("Connection manager created"));
+   DOUT0("Connection manager created parent %p", GetParent());
 }
 
 dabc::ConnectionManager::~ConnectionManager()
@@ -69,18 +68,18 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
 {
     // here one should analyze
 
-   DOUT3(("Get change event for connection %s value %s", evnt.ParName().c_str(), evnt.ParValue().c_str()));
+   DOUT3("Get change event for connection %s value %s", evnt.ParName().c_str(), evnt.ParValue().c_str());
 
    if (evnt.ParValue() != ConnectionObject::GetStateName(ConnectionObject::sPending)) return;
 
    ConnectionRequestFull req = dabc::mgr.FindPar(evnt.ParName());
    if (req.null()) {
-      EOUT(("Connection handle not found !!!! "));
+      EOUT("Connection handle not found !!!! ");
       return;
    }
 
    if (fRecs.HasObject(req())) {
-      EOUT(("Connection %s already registered as pending - that happened??", evnt.ParName().c_str()));
+      EOUT("Connection %s already registered as pending - that happened??", evnt.ParName().c_str());
       return;
    }
 
@@ -88,7 +87,7 @@ void dabc::ConnectionManager::ProcessParameterEvent(const ParameterEvent& evnt)
 
    req.ResetConnData();
 
-   DOUT2(("We starting connection for %s url %s", evnt.ParName().c_str(), req.GetRemoteUrl().c_str()));
+   DOUT2("We starting connection for %s url %s", evnt.ParName().c_str(), req.GetRemoteUrl().c_str());
 
    // FIXME: derive connection id from unique application code
    if (req.IsServerSide())
@@ -163,14 +162,14 @@ void dabc::ConnectionManager::CheckConnectionRecs(bool finish_command_dueto_time
 
    if (iserror) {
       fConnCmd.ReplyFalse();
-      DOUT2(("SOME CONNECTIONS FINSIHED WITH FAILURE"));
+      DOUT2("SOME CONNECTIONS FINSIHED WITH FAILURE");
       // rest of the connections will be continued - application should decide how to work
       if (fRecs.GetSize()==0) fDoingConnection = 0;
    } else
    if (fRecs.GetSize()==0) {
       fDoingConnection = 0;
       fConnCmd.ReplyTrue();
-      DOUT2(("ALL CONNECTIONS FINSIHED OK"));
+      DOUT0("ALL CONNECTIONS FINSIHED OK");
    } else
    if (finish_command_dueto_timeout) {
       // we must finish command due to timeout, but if only optional requests are remaining
@@ -178,10 +177,10 @@ void dabc::ConnectionManager::CheckConnectionRecs(bool finish_command_dueto_time
       // in any case optional commands will be continued
 
       if (isonlyoptional) {
-         DOUT2(("ALL NON-OPTIONAL CONNECTIONS FINSIHED OK, OPTIONAL WILL BE CONTINUED"));
+         DOUT2("ALL NON-OPTIONAL CONNECTIONS FINSIHED OK, OPTIONAL WILL BE CONTINUED");
          fConnCmd.ReplyTrue();
       } else {
-         EOUT(("CONNECTION COMMAND is TIMEDOUT"));
+         EOUT("CONNECTION COMMAND is TIMEDOUT");
          fConnCmd.ReplyTimedout();
       }
    }
@@ -214,12 +213,12 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
 
             if (dev.null() || port.null()) {
                if (dev.null())
-                  EOUT(("Cannot find device %s for connection record", req.GetConnDevice().c_str()));
+                  EOUT("Cannot find device %s for connection record", req.GetConnDevice().c_str());
                if (port.null())
-                  EOUT(("Cannot find port %s for connection record", req.GetLocalUrl().c_str()));
+                  EOUT("Cannot find port %s for connection record", req.GetLocalUrl().c_str());
                req.SetProgress(progrFailed);
             } else {
-               req.SetInlineDataSize(port()->InlineDataSize());
+               // req.SetInlineDataSize(port()->InlineDataSize());
 
                req.SetProgress(progrDoingInit);
 
@@ -240,7 +239,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
          case progrDoingInit: {
             // wait for device reply
 
-            EOUT(("Device did not initialize record for so long time - one should do something. Now going in FAILURE"));
+            EOUT("Device did not initialize record for so long time - one should do something. Now going in FAILURE");
 
             req.SetProgress(progrFailed);
 
@@ -257,7 +256,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
                break;
             }
 
-            DOUT2(("Send request from client  %s", req.GetConnInfo().c_str()));
+            DOUT2("Send request from client  %s", req.GetConnInfo().c_str());
 
             dabc::GlobalConnectCmd cmd;
             // we change order that on other node one can compare directly
@@ -284,12 +283,12 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
          }
 
          case progrDoingConnect: {
-            EOUT(("Timeout when doing connect - device should be responsible here!!!"));
+            EOUT("Timeout when doing connect - device should be responsible here!!!");
             break;
          }
 
          case progrWaitReply: {
-            EOUT(("Timeout when waiting for reply - command timeout should be used here till the end %5.1f!!!", fConnCmd.TimeTillTimeout()));
+            EOUT("Timeout when waiting for reply - command timeout should be used here till the end %5.1f!!!", fConnCmd.TimeTillTimeout());
             break;
          }
 
@@ -327,11 +326,11 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 
       ConnectionRequestFull req = FindConnection(cmd1.GetUrl1(), cmd1.GetUrl2());
 
-      DOUT2(("Get request for %s <-> %s  found:%p",
-            cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str(), req()));
+      DOUT2("Get request for %s <-> %s  found:%p",
+            cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str(), req());
 
       if (req.null()) {
-         EOUT(("Request from remote for undefined connection"));
+         EOUT("Request from remote for undefined connection");
          return cmd_false;
       }
 
@@ -357,11 +356,11 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
          case progrWaitReply:
             // this is situation when client and server simultaneously sends request
             // it is forbidden that server sends requests, therefore it is definitely the error
-            EOUT(("Two requests for %s meet together - FAILURE", req.GetConnInfo().c_str()));
+            EOUT("Two requests for %s meet together - FAILURE", req.GetConnInfo().c_str());
             return cmd_false;
 
          default:
-            EOUT(("GlobalConnectCmd received in wrong progress state %d", req.progress()));
+            EOUT("GlobalConnectCmd received in wrong progress state %d", req.progress());
             break;
       }
 
@@ -370,6 +369,8 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
    } else
    if (cmd.IsName("ActivateConnections")) {
       fConnCmd.ReplyFalse();
+
+      DOUT0("Start processing of connections  number %u", fRecs.GetSize());
 
       fDoingConnection = 1;
       fConnCmd = cmd;
@@ -413,7 +414,7 @@ bool dabc::ConnectionManager::FillAnswerOnRemoteConnectCmd(Command cmd, Connecti
    DeviceRef dev = dabc::mgr.FindDevice(req.GetConnDevice());
 
    if (dev.null()) {
-      EOUT(("Cannot find device"));
+      EOUT("Cannot find device");
       return false;
    }
 
@@ -428,9 +429,10 @@ bool dabc::ConnectionManager::FillAnswerOnRemoteConnectCmd(Command cmd, Connecti
       cmd.SetInt("ServerInlineSize", req.GetInlineDataSize());
       cmd.SetDouble("ServerTimeout", req.GetConnTimeout());
       cmd.SetBool(dabc::xmlUseAcknowledge, req.GetUseAckn());
+
    } else {
       // should not happened
-      EOUT(("NEVER COME HERE"));
+      EOUT("NEVER COME HERE");
    }
 
    // FIXME: delay should correspond to awaited time to establish connection
@@ -450,7 +452,7 @@ void dabc::ConnectionManager::HandleGlobalConnectCmdReply(GlobalConnectCmd cmd)
 {
    ConnectionRequestFull req = FindConnection(cmd.GetUrl2(), cmd.GetUrl1());
    if (req.null()) {
-      EOUT(("Did not find connection request for reply command"));
+      EOUT("Did not find connection request for reply command");
       return;
    }
 
@@ -464,13 +466,13 @@ void dabc::ConnectionManager::HandleGlobalConnectCmdReply(GlobalConnectCmd cmd)
             // TODO: one can get more info why connection rejected and react more smarter
 
             if (res==77) {
-               DOUT2(("Connection %s was too early, try short again", req.GetConnInfo().c_str()));
+               DOUT2("Connection %s was too early, try short again", req.GetConnInfo().c_str());
 
                req.SetProgress(progrPending);
 
                req()->SetDelay(req.IsServerSide() ? 2. : 0.2); // for server retry rate is slower
             } else {
-               EOUT(("Connection %s is rejected res = %d - why?", req.GetConnInfo().c_str(), res));
+               EOUT("Connection %s is rejected res = %d - why?", req.GetConnInfo().c_str(), res);
 
                req.SetProgress(progrPending);
 
@@ -481,7 +483,7 @@ void dabc::ConnectionManager::HandleGlobalConnectCmdReply(GlobalConnectCmd cmd)
          }
 
          if (req.IsServerSide()) {
-            EOUT(("NEVER COME HERE"));
+            EOUT("NEVER COME HERE");
          } else {
             // we got server id which is required to establish connection
             req.SetServerId(cmd.GetStr("ServerId", ""));
@@ -495,16 +497,15 @@ void dabc::ConnectionManager::HandleGlobalConnectCmdReply(GlobalConnectCmd cmd)
 
             int inlinesize = cmd.GetInt("ServerInlineSize");
             if (inlinesize != req.GetInlineDataSize()) {
-               EOUT(("Mismatch in configured header sizes: %d %d", inlinesize, req.GetInlineDataSize()));
+               EOUT("Mismatch in configured header sizes: %d %d", inlinesize, req.GetInlineDataSize());
                req.SetInlineDataSize(inlinesize);
-               ((Port*)req.GetPort().GetObject())->ChangeInlineDataSize(inlinesize);
             }
          }
 
          DeviceRef dev = dabc::mgr.FindDevice(req.GetConnDevice());
 
          if (dev.null()) {
-            EOUT(("Cannot find device"));
+            EOUT("Cannot find device");
             return;
          }
 
@@ -519,7 +520,7 @@ void dabc::ConnectionManager::HandleGlobalConnectCmdReply(GlobalConnectCmd cmd)
       }
 
       default:
-         EOUT(("Reply on global connect in strange state"));
+         EOUT("Reply on global connect in strange state");
          break;
    }
 }
@@ -568,7 +569,7 @@ void dabc::ConnectionManager::HandleConnectRequestCmdReply(ConnectionManagerHand
       }
 
       default:
-         DOUT0(("Command reply at state %d - that to do?", req.progress()));
+         DOUT0("Command reply at state %d - that to do?", req.progress());
          break;
    }
 }

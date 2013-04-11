@@ -69,7 +69,7 @@ bool dabc::Configuration::SelectContext(unsigned nodeid, unsigned numnodes)
    fMgrName     = ContextName(nodeid);
    envContext   = fMgrName;
 
-   DOUT2(("Select context nodeid %u name %s", nodeid, fMgrName.c_str()));
+   DOUT2("Select context nodeid %u name %s", nodeid, fMgrName.c_str());
 
    dabc::SetDebugPrefix(fMgrName.c_str());
 
@@ -134,6 +134,13 @@ int dabc::Configuration::ShowCpuInfo()
    return dabc::str_to_int(res.c_str(), &kind) ? kind : -1;
 }
 
+bool dabc::Configuration::UseControl()
+{
+   if (fSelected==0) return true;
+   std::string res = Find1(fSelected, "", xmlRunNode, xmlUseControl);
+   return res.empty() ? true : (res != xmlFalseValue);
+}
+
 int dabc::Configuration::GetRunTime()
 {
    if (fSelected==0) return 0;
@@ -173,9 +180,9 @@ int dabc::Configuration::GetUserParInt(const char* name, int dflt)
    return dabc::str_to_int(sres.c_str(), &res) ? res : dflt;
 }
 
-const char* dabc::Configuration::ConetextAppClass()
+std::string dabc::Configuration::ConetextAppClass()
 {
-   if (fSelected==0) return 0;
+   if (fSelected==0) return std::string();
 
    XMLNodePointer_t node = Xml::GetChild(fSelected);
 
@@ -187,7 +194,9 @@ const char* dabc::Configuration::ConetextAppClass()
    if (node==0)
       node = FindMatch(0, fSelected, xmlApplication);
 
-   return Xml::GetAttr(node, xmlClassAttr);
+   const char* res = Xml::GetAttr(node, xmlClassAttr);
+
+   return std::string(res ? res : "");
 }
 
 
@@ -201,7 +210,7 @@ bool dabc::Configuration::LoadLibs()
     do {
        libname = FindN(fSelected, last, xmlRunNode, xmlUserLib);
        if (libname.empty()) break;
-       DOUT2(("Find library %s in config", libname.c_str()));
+       DOUT2("Find library %s in config", libname.c_str());
        if (!dabc::Factory::LoadLibrary(ResolveEnv(libname))) return false;
     } while (true);
 

@@ -63,14 +63,35 @@ namespace dabc {
 
    };
 
-   class SocketCommandChannel : public SocketWorker {
+   enum { MAX_UDP_PAYLOAD = 1472 };
+   enum { MAX_CMD_PAYLOAD = MAX_UDP_PAYLOAD - sizeof(SocketCmdPacket) };
 
+   class SocketCommandAddon : public SocketAddon {
       protected:
 
-         enum { MAX_UDP_PAYLOAD = 1472 };
-         enum { MAX_CMD_PAYLOAD = MAX_UDP_PAYLOAD - sizeof(SocketCmdPacket) };
 
-         int             fPort;
+         int  fPort;
+
+         virtual void ProcessEvent(const EventId&);
+
+         virtual void OnConnectionClosed() {}
+         virtual void OnSocketError(int errnum, const std::string& info) {}
+
+      public:
+         SocketCommandAddon(int fd, int port);
+         virtual ~SocketCommandAddon();
+
+
+         bool SendData(void* hdr, unsigned hdrsize, void* data, unsigned datasize, void* addr, unsigned addrsize);
+
+   };
+
+
+   class SocketCommandChannel : public Worker {
+
+      friend class SocketCommandAddon;
+
+      protected:
 
          uint64_t        fAppId;         //!< this should be unique id of the DABC application to let run several DABC on the node
 
@@ -95,9 +116,6 @@ namespace dabc {
          long            fSendPackets;   //!< total number of send packets
          long            fRetryPackets;  //!< total number of send retries
 
-         /*! \brief Analyze data received from the socket */
-         void ProcessRecvData(SocketCmdPacket* hdr, void* data, int len, void* addr, int addrlen);
-
          /*! \brief If available, sends next portion of data over socket */
          bool DoSendData(double* diff = 0);
 
@@ -121,9 +139,6 @@ namespace dabc {
 
          void ErrorCloseRec(SocketCmdRec* rec);
 
-         /*! \brief Process command replies */
-         bool ReplyCommand(Command cmd);
-
          /*! \brief Analyze if there is data to send */
          double CheckSocketCanSend(bool activate_timeout = true);
 
@@ -137,23 +152,23 @@ namespace dabc {
          /*! \brief Call of this method notifies application that node state is changed */
          void ProduceNodesStateNotification(int nodeid);
 
-      public:
-
-         SocketCommandChannel(int fd, int nport, const char* name = 0);
-         virtual ~SocketCommandChannel();
-
          virtual int PreviewCommand(Command cmd);
          virtual int ExecuteCommand(Command cmd);
-
+         virtual bool ReplyCommand(Command cmd);
          virtual void OnThreadAssigned();
-         virtual void OnConnectionClosed();
-         virtual void OnSocketError(int errnum, const char* info);
-
          virtual double ProcessTimeout(double);
 
-         virtual void ProcessEvent(const EventId&);
+      public:
 
-         static SocketCommandChannel* CreateChannel(const char* objname = 0);
+         SocketCommandChannel(const std::string& name, SocketCommandAddon* addon);
+         virtual ~SocketCommandChannel();
+
+
+
+         /*! \brief Analyze data received from the socket */
+         void ProcessRecvData(SocketCmdPacket* hdr, void* data, int len, void* addr, int addrlen);
+
+         static SocketCommandChannel* CreateChannel(const std::string& objname = "");
 
    };
 

@@ -80,7 +80,7 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
 
    if (cmd.IsName("CheckWorkDone")) {
       if (IsWorkDone()) {
-         DOUT0(("Stop application while work is completed"));
+         DOUT0("Stop application while work is completed");
          Submit(InvokeAppFinishCmd());
       }
 
@@ -116,7 +116,7 @@ bool dabc::ApplicationBase::PerformApplicationRun()
 {
    ExecuteStateTransition(stcmdDoStart(), SMCommandTimeout());
 
-   DOUT3(("@@@@@@@@ Start application done state = %s", GetState().c_str()));
+   DOUT3("@@@@@@@@ Start application done state = %s", GetState().c_str());
 
    return GetState() == stRunning();
 }
@@ -216,7 +216,7 @@ bool dabc::ApplicationBase::StopModules()
       m.Stop();
    }
 
-   DOUT2(("Stop modules"));
+   DOUT2("Stop modules");
 
    return true;
 }
@@ -277,7 +277,7 @@ dabc::Application::Application(const char* classname) :
    fAppClass(classname ? classname : typeApplication),
    fNodes()
 {
-   DOUT3(("Application %s created", ClassName()));
+   DOUT3("Application %s created", ClassName());
 
    CreateCmdDef(stcmdDoConfigure());
    CreateCmdDef(stcmdDoEnable());
@@ -289,12 +289,12 @@ dabc::Application::Application(const char* classname) :
 
 dabc::Application::~Application()
 {
-   DOUT3(("Start Application %s destructor", GetName()));
+   DOUT3("Start Application %s destructor", GetName());
 
    while (fNodes.size()>0)
       delete (NodeStateRec*) fNodes.pop();
 
-   DOUT3(("Did Application %s destructor", GetName()));
+   DOUT3("Did Application %s destructor", GetName());
 }
 
 int dabc::Application::ExecuteCommand(Command cmd)
@@ -336,7 +336,7 @@ bool dabc::Application::CreateAppModules()
 
 bool dabc::Application::PerformApplicationRun()
 {
-   DOUT3(("@@@@@@@@@@ Start application state = %s", GetState().c_str()));
+   DOUT3("@@@@@@@@@@ Start application state = %s", GetState().c_str());
 
    // Halt application in any case
    // ExecuteStateTransition(stcmdDoHalt(), SMCommandTimeout());
@@ -347,7 +347,7 @@ bool dabc::Application::PerformApplicationRun()
 
    ExecuteStateTransition(stcmdDoStart(), SMCommandTimeout());
 
-   DOUT3(("@@@@@@@@ Start application done state = %s", GetState().c_str()));
+   DOUT3("@@@@@@@@ Start application done state = %s", GetState().c_str());
 
    return GetState() == stRunning();
 }
@@ -359,7 +359,7 @@ bool dabc::Application::PerformApplicationFinish()
    // do halt will be done in any case
    ExecuteStateTransition(stcmdDoHalt(), SMCommandTimeout());
 
-//   DOUT0(("Finish application state = %s", GetState().c_str()));
+//   DOUT0("Finish application state = %s", GetState().c_str());
 
    return GetState() == stHalted();
 }
@@ -403,12 +403,12 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
    if (cmd == stcmdDoConfigure()) {
       res = CreateAppModules();
       tgtstate = stConfigured();
-      DOUT2(("Configure res = %s", DBOOL(res)));
+      DOUT2("Configure res = %s", DBOOL(res));
    } else
    if (cmd == stcmdDoEnable()) {
       res = dabc::mgr.ActivateConnections(SMCommandTimeout());
       tgtstate = stReady();
-      DOUT2(("Enable res = %s", DBOOL(res)));
+      DOUT2("Enable res = %s", DBOOL(res));
    } else
    if (cmd == stcmdDoStart()) {
       res = BeforeAppModulesStarted();
@@ -417,19 +417,19 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
          LockGuard lock(ObjectMutex());
          fWasRunning = true;
       }
-      DOUT2(("Start res = %s", DBOOL(res)));
+      DOUT2("Start res = %s", DBOOL(res));
       tgtstate = stRunning();
    } else
    if (cmd == stcmdDoStop()) {
       res = StopModules();
       res = AfterAppModulesStopped() && res;
-      DOUT2(("Stop res = %s", DBOOL(res)));
+      DOUT2("Stop res = %s", DBOOL(res));
       tgtstate = stReady();
    } else
    if (cmd == stcmdDoHalt()) {
       res = BeforeAppModulesDestroyed();
       res = CleanupApplication() && res;
-      DOUT2(("Halt res = %s", DBOOL(res)));
+      DOUT2("Halt res = %s", DBOOL(res));
       tgtstate = stHalted();
    } else
    if (cmd == stcmdDoError()) {

@@ -41,9 +41,9 @@ namespace dabc {
 
    class SocketThread;
 
-   /** \brief SocketWorker is special worker class for handling of socket and socket events
+   /** \brief SocketAddon is special addon class for handling of socket and socket events
     * Main aim is to provide asynchronous access to the sockets.
-    * SocketWorker has two boolean variables which indicates if worker wants to send or receive
+    * SocketAddon has two boolean variables which indicates if worker wants to send or receive
     * data from the socket. User should set these flags to true before starting of appropriate operation.
     * Thread will use these flags to check if such operation can be performed now. If yes,
     * event evntSocketRead or evntSocketWrite will be generated. User should implement ProcessEvent()
@@ -52,44 +52,28 @@ namespace dabc {
     * will be created and both flags will be cleared.
     */
 
-   class SocketWorker : public Worker {
+
+   class SocketAddon : public WorkerAddon {
 
       friend class SocketThread;
 
-      public:
+      protected:
 
          enum ESocketEvents {
-            evntSocketRead = evntFirstSystem,
+            evntSocketRead = Worker::evntFirstAddOn,
             evntSocketWrite,
             evntSocketError,
             evntSocketStartConnect,
             evntSocketLast // from this event number one can add more socket system events
          };
 
-         SocketWorker(int fd = -1, const char* name = 0);
-
-         virtual ~SocketWorker();
-
-         virtual const char* RequiredThrdClass() const { return typeSocketThread; }
-
-         virtual const char* ClassName() const { return "SocketWorker"; }
-
-         inline int Socket() const { return fSocket; }
+         int           fSocket;
+         bool          fDoingInput;
+         bool          fDoingOutput;
 
          virtual void ProcessEvent(const EventId&);
 
-         void CloseSocket();
-
-         void SetSocket(int fd);
-         int TakeSocket();
-         int TakeSocketError();
-
-      protected:
-
-         virtual void OnConnectionClosed();
-         virtual void OnSocketError(int errnum, const char* info);
-
-         /** \brief Call method to indicate that worker wants to read data from the socket.
+         /** \brief Call method to indicate that object wants to read data from the socket.
           * When it will be possible, worker get evntSocketRead event */
          inline void SetDoingInput(bool on = true) { fDoingInput = on; }
 
@@ -97,23 +81,39 @@ namespace dabc {
           * When it will be possible, worker get evntSocketWrite event */
          inline void SetDoingOutput(bool on = true) { fDoingOutput = on; }
 
-         inline bool IsDoingInput() const { return fDoingInput; }
-         inline bool IsDoingOutput() const { return fDoingOutput; }
+         virtual void OnConnectionClosed();
+         virtual void OnSocketError(int errnum, const std::string& info);
 
          ssize_t DoRecvBuffer(void* buf, ssize_t len);
          ssize_t DoRecvBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* srcaddr = 0, unsigned srcaddrlen = 0);
          ssize_t DoSendBuffer(void* buf, ssize_t len);
          ssize_t DoSendBufferHdr(void* hdr, ssize_t hdrlen, void* buf, ssize_t len, void* tgtaddr = 0, unsigned tgtaddrlen = 0);
 
-         int           fSocket;
-         bool          fDoingInput;
-         bool          fDoingOutput;
+      public:
+
+         SocketAddon(int fd = -1);
+         virtual ~SocketAddon();
+
+         virtual const char* ClassName() const { return "SocketAddon"; }
+         virtual std::string RequiredThrdClass() const { return typeSocketThread; }
+
+         inline int Socket() const { return fSocket; }
+
+         inline bool IsDoingInput() const { return fDoingInput; }
+         inline bool IsDoingOutput() const { return fDoingOutput; }
+
+         void CloseSocket();
+         void SetSocket(int fd);
+
+         int TakeSocket();
+         int TakeSocketError();
+
    };
 
-   // ______________________________________________________________________________________
 
+   // ______________________________________________________________________
 
-   class SocketIOWorker : public SocketWorker {
+   class SocketIOAddon : public SocketAddon {
       protected:
          bool          fDatagramSocket; //!< indicate if socket is datagram and all operations should be finished with single call
          bool          fUseMsgOper;     //!< indicate if sendmsg, recvmsg operations should be used, it is must for the datagram sockets
@@ -141,7 +141,7 @@ namespace dabc {
          long           fRecvSize;
 #endif
 
-         virtual const char* ClassName() const { return "SocketIOWorker"; }
+         virtual const char* ClassName() const { return "SocketIOAddon"; }
 
          bool IsDatagramSocket() const { return fDatagramSocket; }
 
@@ -166,13 +166,11 @@ namespace dabc {
           * only for datagram sockets, which can reads complete packet at once  */
          unsigned GetRecvSize() const { return fLastRecvSize; }
 
+         /** \brief Constructor of SocketIOAddon class */
+         SocketIOAddon(int fd = 0, bool isdatagram = false, bool usemsg = true);
 
-         /** \brief Constructor of SocketIOWorker class */
-         SocketIOWorker(int fd = 0, bool isdatagram = false, bool usemsg = true);
-
-         /** \brief Destructor of SocketIOWorker class */
-         virtual ~SocketIOWorker();
-
+         /** \brief Destructor of SocketIOAddon class */
+         virtual ~SocketIOAddon();
 
          bool StartSend(void* buf, size_t size);
          bool StartRecv(void* buf, size_t size);
@@ -191,32 +189,39 @@ namespace dabc {
          void CancelIOOperations();
    };
 
+
+
    // ______________________________________________________________________
 
 
-   class SocketConnectWorker : public SocketWorker {
+   class SocketConnectAddon : public SocketAddon {
       protected:
-         Worker* fConnRcv;
+         WorkerRef fConnRcv;
          std::string fConnId;
 
       public:
-         SocketConnectWorker(int fd) :
-            SocketWorker(fd),
-            fConnRcv(0),
+         SocketConnectAddon(int fd) :
+            SocketAddon(fd),
+            fConnRcv(),
             fConnId()
+         {}
+
+         virtual void ObjectCleanup()
          {
+            fConnRcv.Release();
+            SocketAddon::ObjectCleanup();
          }
 
-         void SetConnHandler(Worker* rcv, const char* connid)
+         virtual ~SocketConnectAddon() {}
+
+         /** Set connection handler. By default, worker will handle connection from addon */
+         void SetConnHandler(const WorkerRef& rcv, const std::string& connid)
          {
             fConnRcv = rcv;
             fConnId = connid;
          }
 
-         Worker* GetConnRecv() const { return fConnRcv; }
-         const char* GetConnId() const { return fConnId.c_str(); }
-
-         virtual const char* ClassName() const { return "SocketConnectWorker"; }
+         virtual const char* ClassName() const { return "SocketConnectAddon"; }
 
    };
 
@@ -226,9 +231,10 @@ namespace dabc {
    // this object establish server socket, which waits for new connection
    // of course, we do not want to block complete thread for such task :-)
 
-   class SocketServerWorker : public SocketConnectWorker {
+   class SocketServerAddon : public SocketConnectAddon {
       public:
-         SocketServerWorker(int serversocket, int portnum = -1);
+         SocketServerAddon(int serversocket, int portnum = -1);
+         virtual ~SocketServerAddon() {}
 
          virtual void ProcessEvent(const EventId&);
 
@@ -236,7 +242,7 @@ namespace dabc {
          const char* ServerHostName() { return fServerHostName.c_str(); }
          std::string ServerId() { return dabc::format("%s:%d", ServerHostName(), ServerPortNumber()); }
 
-         virtual const char* ClassName() const { return "SocketServerWorker"; }
+         virtual const char* ClassName() const { return "SocketServerAddon"; }
 
       protected:
 
@@ -248,10 +254,10 @@ namespace dabc {
 
    // ______________________________________________________________
 
-   class SocketClientWorker : public SocketConnectWorker {
+   class SocketClientAddon : public SocketConnectAddon {
       public:
-         SocketClientWorker(const struct addrinfo* serv_addr, int fd = -1);
-         virtual ~SocketClientWorker();
+         SocketClientAddon(const struct addrinfo* serv_addr, int fd = -1);
+         virtual ~SocketClientAddon();
 
          void SetRetryOpt(int nretry, double tmout = 1.);
 
@@ -259,7 +265,7 @@ namespace dabc {
 
          virtual double ProcessTimeout(double);
 
-         virtual const char* ClassName() const { return "SocketClientWorker"; }
+         virtual const char* ClassName() const { return "SocketClientAddon"; }
 
       protected:
          virtual void OnConnectionEstablished(int fd);
@@ -272,8 +278,8 @@ namespace dabc {
          double          fRetryTmout;
    };
 
-   // ______________________________________________________________
 
+   // ______________________________________________________________
 
    class SocketThread : public Thread {
       protected:
@@ -287,11 +293,11 @@ namespace dabc {
 
          // list of all events for all kind of socket processors
 
-         SocketThread(Reference parent, const char* name = "SocketThrd", int numqueues = 3);
+         SocketThread(Reference parent, const std::string& name = "SocketThrd", int numqueues = 3);
          virtual ~SocketThread();
 
          virtual const char* ClassName() const { return typeSocketThread; }
-         virtual bool CompatibleClass(const char* clname) const;
+         virtual bool CompatibleClass(const std::string& clname) const;
 
          static bool SetNonBlockSocket(int fd);
          static int StartServer(int& nport, int portmin=-1, int portmax=-1);
@@ -303,9 +309,9 @@ namespace dabc {
          static int ConnectUdp(int fd, const char* remhost, int remport);
 
 
-         static SocketServerWorker* CreateServerWorker(int nport, int portmin=-1, int portmax=-1);
+         static SocketServerAddon* CreateServerAddon(int nport, int portmin=-1, int portmax=-1);
 
-         static SocketClientWorker* CreateClientWorker(const char* servid);
+         static SocketClientAddon* CreateClientAddon(const std::string& servid);
 
       protected:
 
@@ -318,9 +324,9 @@ namespace dabc {
 
          virtual void _Fire(const EventId& evnt, int nq);
 
-         virtual void WorkersNumberChanged();
+         virtual void WorkersSetChanged();
 
-         virtual void ProcessExtraThreadEvent(EventId evid);
+         virtual void ProcessExtraThreadEvent(const EventId& evid);
 
 
          int            fPipe[2];

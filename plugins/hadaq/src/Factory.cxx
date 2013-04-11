@@ -32,77 +32,83 @@
 
 dabc::FactoryPlugin hadaqfactory(new hadaq::Factory("hadaq"));
 
-dabc::Transport* hadaq::Factory::CreateTransport(dabc::Reference ref, const char* typ, dabc::Command cmd)
+
+dabc::DataInput* hadaq::Factory::CreateDataInput(const std::string& typ)
 {
-   if (strcmp(typ, hadaq::typeUdpInput)==0) {
-      dabc::PortRef portref = ref;
-      if (portref.null()) {
-         EOUT(("Port not specified"));
-         return 0;
+   dabc::Url url(typ);
+   if (url.GetProtocol()=="hld") {
+      DOUT0("HLD input file name %s", url.GetFullName().c_str());
+
+      return new hadaq::HldInput(url);
+   }
+
+   return 0;
+}
+
+dabc::DataOutput* hadaq::Factory::CreateDataOutput(const std::string& typ)
+{
+   dabc::Url url(typ);
+   if (url.GetProtocol()=="hld") {
+      DOUT0("HLD output file name %s", url.GetFullName().c_str());
+      return new hadaq::HldOutput(url);
+   }
+
+   return 0;
+}
+
+dabc::Transport* hadaq::Factory::CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd)
+{
+   dabc::Url url(typ);
+
+   dabc::PortRef portref = port;
+
+   if (portref.IsInput() && (url.GetProtocol()=="hadaq") && !url.GetHostName().empty()) {
+
+      int nport = url.GetPort();
+      int rcvbuflen = url.GetOptionInt("buf", 1 << 20);
+
+      nport = portref.Cfg(hadaq::xmlUdpPort, cmd).AsInt(nport);
+      rcvbuflen = portref.Cfg(hadaq::xmlUdpBuffer, cmd).AsInt(rcvbuflen);
+      int mtu = portref.Cfg(hadaq::xmlMTUsize, cmd).AsInt(63*1024);
+
+      if (nport>0) {
+
+         int fd = DataSocketAddon::OpenUdp(nport, rcvbuflen);
+
+         if (fd>0) {
+            DataSocketAddon* addon = new DataSocketAddon(fd, nport, mtu);
+
+            return new hadaq::DataTransport(cmd, portref, addon);
+         }
       }
-
-       // FIXME!
-      return (new hadaq::UdpDataSocket(portref, cmd));
    }
 
-   return dabc::Factory::CreateTransport(ref, typ, cmd);
+
+   return dabc::Factory::CreateTransport(port, typ, cmd);
 }
 
-dabc::DataInput* hadaq::Factory::CreateDataInput(const char* typ)
+
+
+dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
 {
-   if ((typ==0) || (strlen(typ)==0)) return 0;
-
-   DOUT3(("Factory::CreateDataInput %s", typ));
-
-   if (strcmp(typ, hadaq::typeHldInput)==0) {
-      DOUT1(("HADAQ Factory creating HldInput"));
-      return new hadaq::HldInput();
-   }
-
-//   else
-//   if (strcmp(typ, hadaq::typeTextInput)==0) {
-//      return new hadaq::TextInput();
-//   }
-
-   return 0;
-}
-
-dabc::DataOutput* hadaq::Factory::CreateDataOutput(const char* typ)
-{
-   if ((typ==0) || (strlen(typ)==0)) return 0;
-
-   DOUT3(("Factory::CreateDataOutput typ:%s", typ));
-
-   if (strcmp(typ, typeHldOutput)==0) {
-      return new hadaq::HldOutput();
-   }
-
-   return 0;
-}
-
-dabc::Module* hadaq::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
-{
-
-
-   if (strcmp(classname, "hadaq::CombinerModule")==0)
+   if (classname == "hadaq::CombinerModule")
       return new hadaq::CombinerModule(modulename, cmd);
-   else
-   if (strcmp(classname, "hadaq::MbsTransmitterModule")==0)
+
+   if (classname == "hadaq::MbsTransmitterModule")
       return new hadaq::MbsTransmitterModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
 
 
-
 void hadaq::Factory::Initialize()
 {
-   DOUT0(("Initialize SHM connected control"));
+   DOUT0("Initialize SHM connected control");
 
 //   SL: TODO: one only need to create observer when it is active
 
-   hadaq::Observer* o = new hadaq::Observer("/shm");
-   dabc::mgr()->MakeThreadFor(o,"ShmThread");
+   dabc::WorkerRef w = new hadaq::Observer("/shm");
+   w.MakeThreadForWorker("ShmThread");
 
 //   o->thread()()->SetLogging(true);
 }

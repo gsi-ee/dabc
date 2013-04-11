@@ -29,9 +29,9 @@ namespace bnet {
          uint64_t              fUniquieId;
 
       public:
-         TestGeneratorModule(const char* name, dabc::Command cmd = 0);
+         TestGeneratorModule(const std::string& name, dabc::Command cmd = 0);
 
-         virtual void ProcessOutputEvent(dabc::Port* port);
+         virtual void ProcessOutputEvent(unsigned indx = 0);
    };
 }
 

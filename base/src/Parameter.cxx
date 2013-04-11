@@ -66,7 +66,7 @@ bool dabc::ParameterContainer::IsDeliverAllEvents() const
 bool dabc::ParameterContainer::SetField(const std::string& name, const char* value, const char* kind)
 {
 
-   DOUT4(("Par:%s ParameterContainer::SetField %s = %s kind = %s", GetName(), name.c_str(), value ? value : "---", kind ? kind : "---"));
+   DOUT4("Par:%s ParameterContainer::SetField %s = %s kind = %s", GetName(), name.c_str(), value ? value : "---", kind ? kind : "---");
 
    bool res(false), fire(false), doset(false), doworker(false);
    std::string sbuf;
@@ -156,8 +156,8 @@ bool dabc::ParameterContainer::SetField(const std::string& name, const char* val
    if (fire && res) FireModified(value);
 
 
-   DOUT4(("ParameterContainer::SetField %s = %s  doset %s res %s fire %s",
-         name.c_str(), value ? value : "---", DBOOL(doset), DBOOL(res),DBOOL(fire)));
+   DOUT4("ParameterContainer::SetField %s = %s  doset %s res %s fire %s",
+         name.c_str(), value ? value : "---", DBOOL(doset), DBOOL(res),DBOOL(fire));
 
    return res;
 }
@@ -169,7 +169,7 @@ void dabc::ParameterContainer::FireModified(const char* value)
    int doout = GetDebugLevel();
 
    if (doout>=0)
-      dabc::Logger::Debug(doout, __FILE__, __LINE__, __func__, FORMAT(("%s = %s %s", GetName(), value ? value : "(null)", GetActualUnits().c_str() )));
+      dabc::Logger::Debug(doout, __FILE__, __LINE__, __func__, dabc::format("%s = %s %s", GetName(), value ? value : "(null)", GetActualUnits().c_str()).c_str() );
 }
 
 const char* dabc::ParameterContainer::GetField(const std::string& name, const char* dflt)
@@ -199,7 +199,7 @@ void dabc::ParameterContainer::ProcessTimeout(double last_dif)
    std::string value;
    const char* cvalue(0);
 
-//   DOUT0(("Par %s Process timeout !!!", GetName()));
+//   DOUT0("Par %s Process timeout !!!", GetName());
 
    {
       LockGuard lock(ObjectMutex());
@@ -326,7 +326,7 @@ dabc::Parameter& dabc::Parameter::SetRatemeter(bool synchron, double interval)
 
       GetObject()->fAsynchron = !synchron;
 
-      DOUT3(("Asynchron = %s", DBOOL(GetObject()->fAsynchron)));
+      DOUT3("Asynchron = %s", DBOOL(GetObject()->fAsynchron));
 
       GetObject()->fRateValueSum = 0.;
       GetObject()->fRateTimeSum = 0.;
@@ -364,6 +364,19 @@ bool dabc::Parameter::IsRatemeter() const
    return GetObject()->fStatistic == ParameterContainer::kindRate;
 }
 
+dabc::Parameter& dabc::Parameter::SetWidthPrecision(unsigned width, unsigned prec)
+{
+   Field("width").SetInt(width);
+   Field("prec").SetInt(prec);
+
+   if (GetObject()) {
+      LockGuard lock(ObjectMutex());
+      GetObject()->fRateWidth = width;
+      GetObject()->fRatePrec = prec;
+   }
+   return *this;
+}
+
 
 dabc::Parameter& dabc::Parameter::SetAverage(bool synchron, double interval)
 {
@@ -381,7 +394,7 @@ dabc::Parameter& dabc::Parameter::SetAverage(bool synchron, double interval)
 
       GetObject()->fAsynchron = !synchron;
 
-      DOUT3(("Asynchron = %s", DBOOL(GetObject()->fAsynchron)));
+      DOUT3("Asynchron = %s", DBOOL(GetObject()->fAsynchron));
 
       GetObject()->fRateValueSum = 0.;
       GetObject()->fRateTimeSum = 0.;

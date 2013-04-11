@@ -55,7 +55,6 @@ kind &  Create  & Count & Access & Search \\
    \hline
 input   & \func{CreateInput(name, ...)} & \func{NumInputs()} & \func{Input(unsigned)} & \func{InputNumber()} \\
 output  & \func{CreateOutput(name, ...)} & \func{NumOutputs()} & \func{Output(unsigned)} & \func{OutputNumber()} \\
-inp/out  & \func{CreateIOPort(name, ...)} & \func{NumIOPorts()} & \func{IOPort(unsigned)} & \func{IOPortNumber()} \\
    \hline
 \end{tabular}
 
@@ -101,7 +100,7 @@ Here is an example how command execution can look like:
 int UserModule::ExecuteCommand(dabc::Command cmd) 
 {
    if (cmd.IsName("UserPrint")) {
-      DOUT1(("Printout from UserModule"));
+      DOUT1("Printout from UserModule");
       return dabc::cmd_true;
    }
    return dabc::ModuleSync::ExecuteCommand(cmd);
@@ -166,8 +165,8 @@ Method &  Description \\
 \end{tabular}
 
 In all these methods a timeout value as last argument can be specified.
-Method \func{SetTmoutExcept()} defines if a \class{dabc::TimeoutException} 
-exception is thrown when the timeout is expired. 
+Method \func{SetTmoutExcept()} defines if a \class{dabc::Exception} 
+exception with timeout kind is thrown when the timeout is expired. 
 By default, these blocking methods just return \keyw{false} in case of timeout.
 
 Data processing should be implemented in \func{MainLoop()} method.
@@ -241,8 +240,7 @@ Method &  Description \\
 \func{ProcessInputEvent()} & new buffer in input queue, it can be read 
 with \func{port->Recv()} \\
 \func{ProcessOutputEvent()} & new space in output queue is available, one can use \func{port->Send()}  \\
-\func{ProcessConnectEvent()} & port is connected to transport  \\
-\func{ProcessDisconnectEvent()} & port was disconnected from transport  \\
+\func{ProcessConnectEvent()} & port is connected/disconnected to transport  \\
 \func{ProcessPoolEvent()} & requested buffer can be read with 
 \func{handle->TakeRequestedBuffer()}  \\
 \func{ProcessTimerEvent()} & timer has fired an event  \\
@@ -272,34 +270,31 @@ Let's consider as an example the same repeater module, but implemented as asynch
 \begin{small}
 \begin{verbatim}
 #include "dabc/ModuleAsync.h"
-#include "dabc/Port.h"
 
 class RepeaterAsync : public dabc::ModuleAsync {
    unsigned   fCnt;
-public:
+   public:
+   
    RepeaterAsync(const char* name) : dabc::ModuleAsync(name)
    {
-      CreatePoolHandle("Pool");
-      CreateInput("Input", Pool(), 5);
-      CreateOutput("Output0", Pool(), 5);
-      CreateOutput("Output1", Pool(), 5);
+      EnsurePorts(1, 2);
       fCnt = 0;
    }
     
-   virtual void ProcessInputEvent(dabc::Port* port) 
+   virtual bool ProcessRecv(unsigned port) 
    {
-      while (Input()->CanRecv() && Output(fCnt % 2)->CanSend()) {
-         dabc::Buffer buf = Input()->Recv();
-         Output(fCnt++ % 2)->Send(buf);
-      }
+      if (!CanSend(fCnt % 2)) return false;
+      dabc::Buffer buf = Recv(port);
+      Send(fCnt++ % 2, buf);
+      return true;
    }
 
-   virtual void ProcessOutputEvent(dabc::Port* port) 
+   virtual bool ProcessSend(unsigned port) 
    {
-      while (Input()->CanRecv() && Output(fCnt % 2)->CanSend()) {
-         dabc::Buffer buf = Input()->Recv();
-         Output(fCnt++ % 2)->Send(buf);
-      }
+      if (!CanRecv() || (port != fCnt % 2)) return false;
+      dabc::Buffer buf = Recv();
+      Send(fCnt++ % 2, buf);
+      return true;
    }
 };
 \end{verbatim}
@@ -327,12 +322,12 @@ But in any case one should  avoid such \strong{wrong} code:
 
 \begin{small}
 \begin{verbatim}
-   virtual void ProcessInputEvent(dabc::Port* port) 
+   virtual void ProcessInputEvent(unsigned port) 
    {
       // this kind of waiting is WRONG!!!
-      while(!Output(fCnt % 2)->CanSend()) usleep(10);
+      while(!CanSend(fCnt % 2)) usleep(10);
    
-      dabc::Buffer* buf = Input()->Recv();
+      dabc::Buffer buf = Recv(indx);
       Output(fCnt++ % 2)->Send(buf);
    }
 
@@ -377,7 +372,7 @@ every 5 seconds.
    virtual void ProcessItemEvent(dabc::ModuleItem* item, uint16_t evnt)
    {
       ...
-      if (evnt == dabc::evntTimeout) DOUT1(("Buffers count = %d", fCnt));  
+      if (evnt == dabc::evntTimeout) DOUT1("Buffers count = %d", fCnt);  
    }
 \end{verbatim}
 \end{small}

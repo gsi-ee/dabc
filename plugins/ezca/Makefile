@@ -8,20 +8,26 @@
 #EPICS_EXTENSIONS=/misc/adamczew/epics/myextensions 
 #endif
 
+ifdef DABC_64BIT
+EPICS_LIBDIR = $(EPICS_EXTENSIONS)/lib/linux-x86_64
+else
+EPICS_LIBDIR = $(EPICS_EXTENSIONS)/lib/linux-x86
+endif
 
 
 ifndef USEEPICS
 
 ifdef EPICS_BASE
 ifdef EPICS_EXTENSIONS
-ifneq ($(wildcard $(EPICS_EXTENSIONS)/lib/linux-x86/libezca.*)$(wildcard $(EPICS_EXTENSIONS)/lib/linux-x86_64/libezca.*),)
+ifneq ($(wildcard $(EPICS_LIBDIR)/libezca.*),)
 USEEPICS    = true
 endif
 endif
 endif
 
-
 endif
+
+
 
 ifeq ($(USEEPICS),true)
 
@@ -80,6 +86,9 @@ $(EZCA_O) $(EZCA_D) : INCLUDES += $(EPICS_BASE)/include $(EPICS_BASE)/include/os
 
 # TODO: link to the EZCA library
 #$(EZCA_LIB) : LDFLAGS += -L... -lezca
+
+$(EZCA_LIB): LDFLAGS += -lezca 
+$(EZCA_LIB): LDDIRS += $(EPICS_LIBDIR) 
 
 $(EZCA_LIB):  $(EZCA_O)
 	@$(MakeLib) $(EZCA_LIBNAME) "$(EZCA_O)" $(TGTDLLPATH)

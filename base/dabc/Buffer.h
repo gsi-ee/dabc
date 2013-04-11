@@ -43,18 +43,17 @@ namespace dabc {
    };
 
    class MemoryPool;
-   class BuffersQueue;
-   class Mutex;
+   class LocalTransport;
 
    struct MemSegment {
-       unsigned        id;        // id of the buffer
-       unsigned        datasize;  // length of data
-       void*           buffer;    // pointer on the beginning of buffer (must be in the area of id)
+      unsigned        id;        // id of the buffer
+      unsigned        datasize;  // length of data
+      void*           buffer;    // pointer on the beginning of buffer (must be in the area of id)
    };
 
    class Buffer {
       friend class MemoryPool;
-      friend class BuffersQueue;
+      friend class LocalTransport;
 
       protected:
 
@@ -65,8 +64,7 @@ namespace dabc {
             // TODO: for debug purposes one can put thread id to verify that access performing always from the same thread
             // TODO: this is critical when fRefCnt>1 - means several buffers are exists and reference same record
 
-            // TODO: In future one could use Reference here, but now back to pointer
-            MemoryPool*  fPool;         //!< pointer to the pool, reserved with ref counter
+            Reference    fPool;         //!< reference on the memory pool
             unsigned     fPoolId;       //!< id, used by pool to identify segments list, when -1 without pool identifies that memory in segments owned by Buffer
 
             unsigned     fNumSegments;  //!< number of entries in segments list
@@ -74,20 +72,20 @@ namespace dabc {
 
             unsigned     fTypeId;       //!< buffer type, identifies content of the buffer
             
-            // FIXME:  one should use mutex in other way - probably individual for each Buffer
-            dabc::Mutex* fMutex;        //!< mutex to protect refcnt, use for now pool mutex
-            
             /** list of memory segments, allocated by memory pool, allocated right after record itself */
             inline MemSegment* Segments() { return (MemSegment*) ((char*) this + sizeof(BufferRec)); }
 
             inline MemSegment* Segment(unsigned nseg) { return Segments() + nseg; }
 
-            void increfcnt();
-            bool decrefcnt();
+            inline void increfcnt() { fRefCnt++; }
+            inline bool decrefcnt() { return --fRefCnt==0; }
+
+            inline MemoryPool* PoolPtr() const { return (MemoryPool*) fPool(); }
          };
 
          BufferRec*   fRec;          //!< pointer on the record, either allocated by pool or explicitely, can be detected
 
+         int RefCnt() const { return fRec ? fRec->fRefCnt : 0; }
 
          MemSegment* Segments() const { return fRec ? fRec->Segments() : 0; }
 
@@ -99,7 +97,9 @@ namespace dabc {
          void AllocateRec(unsigned capacity = 4);
 
          /** Assigns external rec */
-         void AssignRec(void* rec, unsigned recfullsize, dabc::Mutex* m = 0);
+         void AssignRec(void* rec, unsigned recfullsize);
+
+         void SetMemoryPool(Object* pool) { if (fRec && (fRec->fPoolId>0)) fRec->fPool = pool; }
 
       public:
 
@@ -107,7 +107,7 @@ namespace dabc {
          Buffer(const Buffer& src) throw();
          ~Buffer();
 
-         /** Returns true if buffer is empty. Happens when buffer created via default destructor
+         /** Returns true if buffer is empty. Happens when buffer created via default constructor
            * or was released */
          inline bool null() const { return fRec == 0; }
 
@@ -118,18 +118,27 @@ namespace dabc {
           * This method can be time consuming, while pool mutex should be locked and
           * reference counter of all segments should be incremented.
           * When created instance destroyed, same operation in reverse order will be performed.
-          * Just do not duplicate buffer without real need for that. */
+          * Method must be used when new instance should be used in other thread while initial
+          * instance Do not duplicate buffer without real need for that.
+          */
          Buffer Duplicate() const;
 
          /** This method creates temporary object which could be deliver to the
           *  any other method as argument. At the same time original object forgets
-          *  buffer and will be empty at the end of the call. Typical place where it should be used:
-          *  ...
-          *  port->Send(buf.HandOver());
-          *  ...
+          *  buffer and will be empty at the end of the call.
+          *  Typical place where it should be used is return method when source want to
+          *  forget buffer itself:
+          *
+          *  dabc::Buffer MyClass::GetLast()
+          *  {
+          *     fLastBuf.SetTotalSize(1024);
+          *     fLastBuf.SetTypeId(129);
+          *     return fLastBuf.HandOver();
+          *  }
+          *
           *  If one wants to keep reference on the memory after such call one should do:
           *  ...
-          *  port->Send(buf.Duplicate());
+          *     return fLastBuf;
           *  ...
           */
          Buffer HandOver();
@@ -137,7 +146,13 @@ namespace dabc {
          void SetTypeId(unsigned tid) { if (fRec) fRec->fTypeId = tid; }
          inline unsigned GetTypeId() const { return fRec ? fRec->fTypeId : mbt_Null; }
 
-         MemoryPool* GetPool() const { return fRec ? fRec->fPool : 0; }
+         /** Returns reference on the pool, in user code MemoryPoolRef can be used like
+          *  dabc::Buffer buf = Recv();
+          *  dabc::MemoryPoolRef pool = buf.GetPool(); */
+         inline Reference GetPool() const { return fRec ? fRec->fPool.Ref() : 0; }
+
+         /** Returns trus if buffer produced by the pool provided as reference */
+         bool IsPool(const Reference& pool) const { return fRec ? pool == fRec->fPool : false; }
 
          inline unsigned NumSegments() const { return fRec ? fRec->fNumSegments : 0; }
 
@@ -171,10 +186,6 @@ namespace dabc {
          /** \brief Release reference on the pool memory */
          void Release() throw();
 
-         /** \brief Release reference on the pool memory,
-          * content of object will be changed under locked mutex */
-         void Release(Mutex* m) throw();
-
          /** Append content of \param src buffer to the existing buffer.
           * If source buffer belong to other memory pool, content will be copied.
           * If moverefs = true specified, references moved to the target and source buffer will be emptied */
@@ -192,19 +203,6 @@ namespace dabc {
 
          /** Convert content of the buffer into std::string */
          std::string AsStdString();
-
-         // ============ all following methods are relative to current position in the buffer
-
-         /** Initialize pointer instance.
-          * By default, complete buffer content covered by the pointer.
-          * If \param pos specified (non zero), pointer shifted
-          * If \param len specified (non zero), length is specified
-          * TODO: remove method completely - one can use Pointer methods for this */
-         Pointer GetPointer(BufferSize_t pos = 0, BufferSize_t len = 0) const;
-
-         /** Shifts pointer on specified len, pointer must be associated with buffer
-          * TODO: remove method completely */
-         void Shift(Pointer& ptr, BufferSize_t len) const;
 
          /** Copy content of source buffer \param srcbuf to the buffer */
          BufferSize_t CopyFrom(const Buffer& srcbuf, BufferSize_t len = 0) throw();
@@ -231,10 +229,10 @@ namespace dabc {
           * Buffer buf = Pool()->TakeBuffer(64000);
           *
           *  // later in the code
-          * Buffer data = Input()->Recv();
+          * Buffer data = Recv();
           * Buffer hdr = buf.GetNextPart(16)
           * data.Prepend(hdr);
-          * Output()->Send(data);
+          * Send(data);
           *
           * Of course, one should check if buffer is expired and one need to take next piece
           * from the memory pool.

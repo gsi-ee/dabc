@@ -18,53 +18,28 @@
 #include "dabc/DataIO.h"
 #endif
 
-#ifndef DABC_string
-#include "dabc/string.h"
-#endif
-
-#ifndef DABC_timing
-#include "dabc/timing.h"
-#endif
-
 #ifndef MBS_LmdFile
 #include "mbs/LmdFile.h"
 #endif
 
 namespace mbs {
 
-   class LmdOutput : public dabc::DataOutput {
+   class LmdOutput : public dabc::FileOutput {
       protected:
 
-         std::string         fFileName;
-         std::string         fInfoName;  // parameter name for info settings
-         dabc::TimeStamp     fInfoTime;  // time when last info was shown
-         uint64_t            fSizeLimit;
-
-         int                 fCurrentFileNumber;
-         std::string         fCurrentFileName;
-
          mbs::LmdFile        fFile;
-         uint64_t            fCurrentSize;
 
-         uint64_t            fTotalSize;
-         uint64_t            fTotalEvents;
-
-         std::string FullFileName(std::string extens);
-
-         bool Close();
+         bool CloseFile();
          bool StartNewFile();
-         void ShowInfo(const std::string& info, int priority = 0);
 
       public:
 
-         LmdOutput(const char* fname = 0, unsigned sizelimit_mb = 0);
+         LmdOutput(const dabc::Url& url);
          virtual ~LmdOutput();
 
          virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
 
-         virtual bool WriteBuffer(const dabc::Buffer& buf);
-
-         bool Init();
+         virtual unsigned Write_Buffer(dabc::Buffer& buf);
    };
 }
 

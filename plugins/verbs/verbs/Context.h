@@ -112,7 +112,7 @@ namespace verbs {
          inline void CheckMRStructure()
          {
             if ((fPool!=0) && fPool->CheckChangeCounter(fLastChangeCounter)) {
-               EOUT(("POOL %p change counter now = %u", fPool, fLastChangeCounter));
+               EOUT("POOL %p change counter now = %u", fPool, fLastChangeCounter);
                throw dabc::Exception("Memory pool structure should not be changed at all");
             }
          }

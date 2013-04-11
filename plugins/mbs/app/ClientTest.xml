@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Client">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+      <func value="InitMbsClient"/>
+      <debuglevel value="1"/>
+      <runtime value="20"/>
+    </Run>
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+    <Module name="Receiver">
+       <InputPort name="Input">
+          <url value="mbs://lxg0538/Transport"/>
+          <InputQueueSize value="5"/>
+       </InputPort>
+     </Module>
+  </Context>
+</dabc>

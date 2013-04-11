@@ -28,14 +28,9 @@
 #include "dabc/Device.h"
 #endif
 
-#ifndef DABC_BuffersQueue
-#include "dabc/BuffersQueue.h"
-#endif
-
 #ifndef DABC_MemoryPool
 #include "dabc/MemoryPool.h"
 #endif
-
 
 #ifndef DABC_DataIO
 #include "dabc/DataIO.h"
@@ -43,96 +38,118 @@
 
 namespace dabc {
 
-   class Buffer;
-   class MemoryPool;
+   class InputTransport : public Transport {
 
-   class DataTransport : public Worker,
-                         public Transport,
-                         protected MemoryPoolRequester {
+      // enum EDataEvents { evCallBack = evntModuleLast };
 
-      DABC_TRANSPORT(Worker)
-
-      enum EDataEvents { evDataInput = evntFirstSystem, evDataOutput };
+      enum EInputStates {
+         inpInit,
+         inpInitTimeout, // waiting timeout read_size
+         inpBegin,
+         inpSizeCallBack, // wait for call-back with buffer size
+         inpCheckSize,    // in this state one should check return size argument
+         inpNeedBuffer,
+         inpWaitBuffer,  // in such state we are waiting for the buffer be delivered
+         inpCheckBuffer, // here size of buffer will be checked
+         inpHasBuffer,   // buffer is ready for use
+         inpCallBack,    // in this mode transport waits for call-back
+         inpCompliting,  // one need to complete operation
+         inpComplitTimeout, // waiting timeout after Read_Complete
+         inpReady,
+         inpError,
+         inpEnd,         // at such state we need to generate EOF buffer and close input
+         inpClosed
+      };
 
       protected:
 
-         // this is interface methods,
-         // which must be reimplemented in derived classes
+         DataInput         *fInput;
+         bool               fInputOwner; // if true, fInput object must be destroyed
+         EInputStates       fInpState;
+         Buffer             fCurrentBuf;   // currently used buffer
+         unsigned           fNextDataSize;    // indicate that input has data, but there is no buffer of required size
+         unsigned           fPoolChangeCounter;
+         MemoryPoolRef      fPoolRef;
+         unsigned           fExtraBufs;       // number of extra buffers provided to the transport addon
 
-         // meaning of the next methods are the same as from DataInput/DataOutput classes
-         virtual unsigned Read_Size() { return di_RepeatTimeOut; }
-         // In addition to DataInput, can returns:
-         //    di_CallBack      - read must be confirmed by Read_CallBack
-         virtual unsigned Read_Start(Buffer& buf) { return di_Ok; }
-         virtual unsigned Read_Complete(Buffer& buf) { return di_EndOfStream; }
 
-         // Defines timeout for operation
-         virtual double Read_Timeout() { return 0.1; }
+         void RequestPoolMonitoring();
+
+         virtual bool StartTransport();
+         virtual bool StopTransport();
+
+         void CloseInput();
+
+         virtual void ObjectCleanup();
+
+         virtual void ProcessEvent(const EventId&);
+
+         virtual bool ProcessSend(unsigned port);
+
+         virtual bool ProcessBuffer(unsigned pool);
+         virtual void ProcessTimerEvent(unsigned timer);
+
+
+
+      public:
+
+         InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner, WorkerAddon* addon = 0);
+         virtual ~InputTransport();
+
+         // in implementation user can get informed when something changed in the memory pool
+         virtual void ProcessPoolChanged(MemoryPool* pool) {}
+
 
          // This method MUST be called by transport, when Read_Start returns di_CallBack
          // It is only way to "restart" event loop in the transport
          void Read_CallBack(unsigned compl_res = di_Ok);
+   };
 
-         virtual bool WriteBuffer(const Buffer& buf) { return false; }
-         virtual void FlushOutput() {}
+// ======================================================================================
 
-         // these are extra methods for handling inputs/outputs
-         virtual void CloseInput() {}
-         virtual void CloseOutput() {}
 
-         virtual void ProcessPoolChanged(MemoryPool* pool) {}
+   class OutputTransport : public Transport {
 
-      public:
-         DataTransport(Reference port, bool doiunput = true, bool dooutput = false);
-         virtual ~DataTransport();
+      enum EDataEvents { evCallBack = evntModuleLast };
 
-         virtual bool ProvidesInput() { return fDoInput; }
-         virtual bool ProvidesOutput() { return fDoOutput; }
-
-         virtual bool Recv(Buffer&);
-         virtual unsigned RecvQueueSize() const;
-         virtual Buffer& RecvBuffer(unsigned indx) const;
-         virtual bool Send(const Buffer&);
-         virtual unsigned SendQueueSize();
-         virtual unsigned MaxSendSegments() { return 9999; }
+      enum EOutputStates {
+         outInit,
+         outInitTimeout,   // state when timeout should be completed before next check can be done
+         outWaitCallback,  // when waiting callback to inform when writing can be started
+         outStartWriting,  // we can apply buffer for start writing
+         outWaitFinishCallback, // when waiting when buffer writing is finished
+         outFinishWriting,
+         outError,
+         outClosing,   // closing transport
+         outClosed
+      };
 
       protected:
 
-         enum EInputStates { inpWorking, inpReady, inpBegin, inpNeedBuffer, inpPrepare, inpError, inpClosed };
+         DataOutput*        fOutput;
+         bool               fOutputOwner;
 
-         virtual void PortAssigned();
+         EOutputStates      fState;
+         Buffer             fCurrentBuf;   // currently used buffer
+
+         void CloseOutput();
+
+         virtual bool StartTransport();
+         virtual bool StopTransport();
+
+         virtual void ObjectCleanup();
 
          virtual void ProcessEvent(const EventId&);
 
-         virtual bool ProcessPoolRequest();
+         virtual bool ProcessRecv(unsigned port);
+         virtual void ProcessTimerEvent(unsigned timer);
 
-         virtual double ProcessTimeout(double);
+      public:
 
-         double ProcessInputEvent(bool norm_call = true);
-         void ProcessOutputEvent();
+         OutputTransport(dabc::Command cmd, const PortRef& outport, DataOutput* out, bool owner, WorkerAddon* addon = 0);
+         virtual ~OutputTransport();
 
-         virtual void StartTransport();
-         virtual void StopTransport();
-
-         /** \brief Inherited method, used to remove references from the transport */
-         virtual void CleanupFromTransport(Object* obj);
-
-         virtual void CleanupTransport();
-
-         virtual int ExecuteCommand(Command cmd);
-
-         Mutex              fMutex;
-         BuffersQueue       fInpQueue;
-         BuffersQueue       fOutQueue;
-         bool               fActive;
-         bool               fDoInput;
-         bool               fDoOutput;
-         EInputStates       fInpState;
-         bool               fInpLoopActive; // indicate if loop around inp is active means inp event or timeout should appear soon
-         unsigned           fNextDataSize; // indicate that input has data, but there is no buffer of required size
-         Buffer             fCurrentBuf;   // currently used buffer
-         unsigned           fComplRes;     // result, assigned to completion operation
-         unsigned           fPoolChangeCounter;
+         void Write_CallBack(unsigned arg) { FireEvent(evCallBack, arg); }
    };
 
 };

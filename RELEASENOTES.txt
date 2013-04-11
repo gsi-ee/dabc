@@ -19,7 +19,18 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
-Changes in version 1.9.x (dabc2 beta) - spring 2012
+
+
+
+
+Changes in version 1.9.3  - winter 2013 
+1.  Introduce separate InputPort and OutputPort classes. 
+2.  Communication between output and input port is performed via BuffersQueue class,
+    which assigned to the both ports
+3.  Next input/output event will be generated only if previous was reacted - means 
+    appropriate recv/send operaion was performed.
+
+Changes in version 1.9.2 (dabc2 beta) - spring 2012
    1. Introduce new event building network. Implementation includes fast runnable,
       with consumes one thread and aims to execute send/recv operation at predefined time.
       Another code is less time-critical and purposed to fill operations queues of the 

@@ -32,6 +32,13 @@ namespace dabc {
    class Configuration;
    class RecordContainer;
 
+
+   class ConfigFieldsScan {
+      public:
+         virtual void SetField(const std::string& attrname, const char* value) = 0;
+   };
+
+
    // TODO: later ConfigIO should be non-transient reference on configuration class
    class ConfigIO {
       protected:
@@ -53,11 +60,13 @@ namespace dabc {
 
          bool FindItem(const char* name);
 
-         /** Check if item, found by FindItem routine, has attribute with specified value
-          * If \param optional specified, attribute value will be checked only when attribute existing */
+         /** Check if item, found by FindItem routine, has attribute with specified value */
          bool CheckAttr(const char* name, const char* value);
 
          bool ReadRecord(Object* obj, const std::string& name, RecordContainer* cont);
+
+         bool ReadFieldsFromNode(XMLNodePointer_t node, RecordContainer* cont, bool overwrite = false);
+
    };
 
 }

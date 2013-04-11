@@ -35,9 +35,6 @@
 
 namespace dabc {
 
-   class Port;
-
-
    class ConnectionRequestFull : public ConnectionRequest {
 
        DABC_REFERENCE(ConnectionRequestFull, ConnectionRequest, ConnectionObject)
@@ -162,6 +159,12 @@ namespace dabc {
          /** Process changes in connection recs */
          virtual void ProcessParameterEvent(const ParameterEvent& evnt);
 
+         virtual int ExecuteCommand(Command cmd);
+         virtual bool ReplyCommand(Command cmd);
+
+         /** \brief Check status of connections establishing. Return interval for next timeout */
+         virtual double ProcessTimeout(double last_diff);
+
       public:
 
          enum EConnProgress {
@@ -174,14 +177,8 @@ namespace dabc {
             progrFailed        //!< fail state, request will be ignored forever
          };
 
-         ConnectionManager(const char* name, Command cmd = 0);
+         ConnectionManager(const std::string& name, Command cmd = 0);
          virtual ~ConnectionManager();
-
-         virtual int ExecuteCommand(Command cmd);
-         virtual bool ReplyCommand(Command cmd);
-
-         /** \brief Check status of connections establishing. Return interval for next timeout */
-         virtual double ProcessTimeout(double last_diff);
 
          ConnectionRequestFull FindConnection(const std::string& url1, const std::string& url2);
    };

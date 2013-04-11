@@ -28,6 +28,7 @@ namespace dabc {
 
    class Device;
    class Port;
+   class Module;
    class ConnectionManager;
    class ConnectionRequest;
    class ConnectionRequestFull;
@@ -45,7 +46,7 @@ namespace dabc {
       public:
 
          enum EState {
-            sInit,          //!< connection in inital state
+            sInit,          //!< connection in initial state
             sPending,       //!< connection is pending  (want to be connected)
             sConnecting,    //!< connection is in progress
             sConnected,     //!< connection is up and working
@@ -54,8 +55,6 @@ namespace dabc {
             sFailed         //!< connection cannot be established by connection manager
          };
 
-      // FIXME: most of these fields should be protected, make public just to let system compile
-
       protected:
 
          friend class Port;
@@ -63,9 +62,11 @@ namespace dabc {
          friend class ConnectionRequest;
          friend class ConnectionRequestFull;
 
-         EState            fConnState;    //!< actual state of the connection, is parameter value
+         EState        fConnState;    //!< actual state of the connection, is parameter value
 
-         std::string       fLocalUrl;     //!< full url of local port
+         std::string   fLocalUrl;     //!< full url of local port
+
+         std::string   fPoolName;     //!< pool which should be used for the connections
 
          // these are fields used only by connection manager and devices from their threads
          // connection manager for a time of connection keep reference on the connection
@@ -165,7 +166,9 @@ namespace dabc {
 
 
    class ConnectionRequest : public Parameter {
+
       friend class Port;
+      friend class Module;
       friend class ConnectionManager;
 
       DABC_REFERENCE(ConnectionRequest, Parameter, ConnectionObject)
@@ -179,6 +182,9 @@ namespace dabc {
       Reference GetPort() const { return Reference(GetObject() ? GetObject()->GetParent() : 0); }
 
       std::string GetLocalUrl() const { GET_PAR_FIELD(fLocalUrl,"") }
+
+      std::string GetPoolName() const { GET_PAR_FIELD(fPoolName,"") }
+      void SetPoolName(const std::string& name) { SET_PAR_FIELD(fPoolName, name) }
 
       /** Return url of data source to which connection should be established */
       std::string GetRemoteUrl() const { return Field("url").AsStdStr(); }

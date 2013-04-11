@@ -26,7 +26,7 @@ bool bnet::TestEventHandling::GenerateSubEvent(const bnet::EventId& evid, int su
 {
    if (buf.GetTotalSize() < 16) return false;
 
-   DOUT2(("Produce event %u", (unsigned) evid));
+   DOUT2("Produce event %u", (unsigned) evid);
 
    uint64_t data[2] = { evid, subid };
 
@@ -47,23 +47,23 @@ dabc::Buffer bnet::TestEventHandling::BuildFullEvent(const bnet::EventId& evid, 
    dabc::Buffer res;
    if (bufs==0) return res;
 
-   dabc::MemoryPool* pool(0);
+   dabc::MemoryPoolRef pool;
 
    unsigned numsegm(0);
    for (int n=0;n<numbufs;n++) {
       numsegm += bufs[n].NumSegments();
-      if (pool==0)
+      if (pool.null())
          pool = bufs[n].GetPool();
       else
-      if (pool!=bufs[n].GetPool()) {
-         EOUT(("Buffers from different pool - not supported"));
+      if (!bufs[n].IsPool(pool)) {
+         EOUT("Buffers from different pool - not supported");
          return res;
       }
    }
 
-   if (pool==0) return res;
+   if (pool.null()) return res;
 
-   res = pool->TakeEmpty(numsegm);
+   res = pool.TakeEmpty(numsegm);
 
    for (int n=0;n<numbufs;n++)
       res.Append(bufs[n], true);

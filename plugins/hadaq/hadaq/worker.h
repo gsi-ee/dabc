@@ -32,9 +32,7 @@ typedef struct WorkerS {
 	Statistic *statistics;
 	pid_t pid;
 	int isStandalone;
-}
-
-Worker;
+} Worker;
 
 int Worker_start(const char *path, char *const argv[]);
 char *Worker_status(const char *name);

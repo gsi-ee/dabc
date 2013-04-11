@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<dabc version="2">
+ <Context name="Raw">
+  <Run>
+    <lib value="libDabcMbs.so"/>
+    <lib value="libDabcRoc.so"/>
+    <runtime value="100000"/>
+    <logfile value="RawReadout.log"/>
+  </Run>
+  <Application class="roc::Readout">
+    <RawReadout value="true"/>
+    <NumRocs value="2"/>
+    <RocIp0 value="depc294"/>
+    <RocIp1 value="lxg0538"/>
+    <BufferSize value="65536"/>
+    <NumBuffers value="100"/>
+    <FlushTimeout value="2"/>
+    <TransportWindow value="30"/>
+    <RawFile value=""/>
+    <MbsServerKind value="mbs://Stream:6007"/>
+    <EpicsNode value=""/>
+  </Application>
+  <MemoryPool name="RocPool">
+     <BufferSize value="65536"/>
+     <NumBuffers value="100"/>
+  </MemoryPool>
+  <Module name="SuperComb">
+     <RawData width="5" prec="3" low="0" up="50" debug="0"/>
+  </Module>
+ </Context>
+</dabc>

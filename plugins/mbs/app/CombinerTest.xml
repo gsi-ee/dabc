@@ -1,59 +1,38 @@
 <?xml version="1.0"?>
-<dabc version="1">
+<dabc version="2">
   <Variables>
-     <genhost1 value="lxi042"/>
-     <genhost2 value="lxi045"/>
-     <genhost3 value="lxi038"/>
+     <genhost1 value="lxi060"/>
+     <genhost2 value="lxg0537"/>
      <genport value="6000"/>
-     <bufsize value="16384"/>
+     <bufsize value="65536"/>
   </Variables>
 
   <Context host="${genhost1}" name="Generator1"/>
   <Context host="${genhost2}" name="Generator2"/>
-  <Context host="${genhost3}" name="Generator3"/>
 
-  <Context host="lxg0526" name="Combiner">
+  <Context host="lxg0538" name="Combiner">
     <Run>
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsCombiner"/>
       <logfile value="combiner.log"/>
+      <debuglevel value="1"/>
       <debugger value="false"/>
     </Run>
-    <MemoryPool name="WorkPool">
+    <MemoryPool name="Pool">
        <NumBuffers value="100"/>
        <BufferSize value="${bufsize}"/>
     </MemoryPool>
     <Module name="Combiner">
-       <NumInputs value="3"/>
-       <DoFile value="false"/>
-       <DoServer value="true"/>
-       <BufferSize value="${bufsize}"/>
-       <Port name="Input0">
-          <MbsServerName value="${genhost1}"/>
-       </Port>
-       <Port name="Input1">
-          <MbsServerName value="${genhost2}"/>
-       </Port>
-       <Port name="Input2">
-          <MbsServerName value="${genhost3}"/>
-       </Port>
-       <Port name="Input*">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <ConnTimeout value="5"/>
-          <MbsServerPort value="${genport}"/>
-       </Port>   
-       <Port name="FileOutput">
-          <OutputQueueSize value="5"/>
-          <MbsFileName value="/data.local1/combiner.lmd"/>
-          <MbsFileSizeLimit value="500"/>
-          <ShowInfo value="true"/>
-        </Port>
-       <Port name="ServerOutput">
-          <OutputQueueSize value="5"/>
-          <MbsServerKind value="Stream"/>
-        </Port>
-        <Ratemeter name="DataRate" lower="0" upper="50" debug="true"/>
+       <NumInputs value="2"/>
+       <NumOutputs value="1"/>
+       <InputPort name="Input0" url="mbs://${genhost1}:${genport}/Transport"/>
+       <InputPort name="Input1" url="mbs://${genhost2}:${genport}/Transport"/>
+       <InputPort name="Input2" url="mbs://${genhost3}:${genport}/Transport"/>
+       <InputPort name="Input*" queue="5" timeout="5"/>
+       <OutputPort name="Output0" url="mbs://Stream"/>
+       <OutputPort name="Output1" url="lmd:///data.local1/combiner.lmd?maxsize=100"/>
+       <MbsData width="5" prec="2" low="5" up="50" debug="1"/>
+       <MbsEvents width="5" prec="1" low="5" up="50" debug="1"/>
      </Module>
   </Context>
 
@@ -63,24 +42,16 @@
      <lib value="libDabcMbs.so"/>
      <func value="InitMbsGenerator"/>
      <logfile value="${Context}.log"/>
-     <ctrl value="false"/>
+     <control value="false"/>
    </Run>
    <MemoryPool name="Pool">
       <NumBuffers value="100"/>
       <BufferSize value="${bufsize}"/>
    </MemoryPool>
    <Module name="Generator">
-      <FirstProcId value="${DABCCFGID}"/>
+      <FirstProcId value="${DABCNODEID}"/>
       <NumSubevents value="1"/>
-      <BufferSize value="${bufsize}"/>
-      <Port name="Output">
-         <OutputQueueSize value="5"/>
-         <MbsServerKind value="Transport"/>
-         <MbsServerPort value="${genport}"/>
-       </Port>
+      <OutputPort name="Output0" url="mbs://Transport:${genport}" queue="5"/>
    </Module>
   </Context>
-
-  <Defaults>
-  </Defaults>
 </dabc>

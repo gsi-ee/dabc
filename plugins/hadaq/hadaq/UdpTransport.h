@@ -19,21 +19,17 @@
 #include "dabc/SocketThread.h"
 #endif
 
-#ifndef DABC_Transport
-#include "dabc/Transport.h"
+#ifndef DABC_DataIO
+#include "dabc/DataIO.h"
 #endif
 
-#ifndef DABC_BuffersQueue
-#include "dabc/BuffersQueue.h"
+ #ifndef DABC_Pointer
+#include "dabc/Pointer.h"
 #endif
 
-#ifndef DABC_MemoryPool
-#include "dabc/MemoryPool.h"
+#ifndef DABC_DataTransport
+#include "dabc/DataTransport.h"
 #endif
-
-#include <netinet/in.h>
-#include <sys/socket.h>
-
 
 #include "hadaq/HadaqTypeDefs.h"
 
@@ -43,53 +39,21 @@
 
 namespace hadaq {
 
+   class DataTransport;
 
-   class UdpDataSocket : public dabc::SocketWorker,
-                         public dabc::Transport,
-                         protected dabc::MemoryPoolRequester {
-
-      DABC_TRANSPORT(dabc::SocketWorker)
-
+   class DataSocketAddon : public dabc::SocketAddon,
+                           public dabc::DataInput {
       protected:
 
-         struct sockaddr_in    fSockAddr;
-         size_t             fMTU;
-         dabc::Mutex        fQueueMutex;
-         dabc::BuffersQueue fQueue;
+         friend class DataTransport;
 
-
-         /*
-          * Schema of the buffer pointer meanings:
-          *   fTgtBuf.SegmentPtr()  - begin of dabc buffer segment
-          *                                  ^
-          *                            previous events length
-          *                                  v
-          *    fTgtPtr        - begin of current HadTu message
-          *                                  ^
-          *                              fTgtShift
-          *                                  v
-          *    (fTgtPtr +  fTgtShift) - next position to write data
-          *                                  ^
-          *                            fTgtBuf.SegmentSize() -  (fTgtPtr +  fTgtShift)
-          *                                  v
-          *    fEndPtr                - end of buffer segment
-          */
-
-
-         dabc::Buffer       fTgtBuf;   // pointer on buffer, where next portion can be received, use pointer while it is buffer from the queue
-         unsigned           fTgtShift; // current shift in the buffer
-         char*              fTgtPtr;   // location of next subevent header data to be received
-         char*              fEndPtr;   // end of current buffer
-         char*              fTempBuf; // buffer to recv packet when no regular place is available
-
-         unsigned           fBufferSize;
-
-         dabc::Buffer       fEvtBuf; // buffer for output event/subevent data
-         char*              fEvtPtr;   // cursor pointer in EvtBuf
-         char*              fEvtEndPtr;   // end of current event buffer
-
-         dabc::MemoryPoolRef fPool;  // reference on the pool, reference should help us to preserve pool as long as we are using it
-
+         int                fNPort;         // upd port number
+         dabc::Pointer      fTgtPtr;        // pointer used to read data
+         bool               fWaitMoreData;  // indicate that transport waits for more data
+         unsigned           fMTU;      // maximal size of packet expected from TRB
+         double             fFlushTimeout; // time when buffer will be flushed
+         bool               fBuildFullEvent;  // if specified, hadaq event should be build
+         int                fSendCnt;        // counter of send buffers since last timeout active
 
          uint64_t           fTotalRecvPacket;
          uint64_t           fTotalDiscardPacket;
@@ -100,89 +64,54 @@ namespace hadaq {
          uint64_t           fTotalRecvBuffers;
          uint64_t           fTotalDroppedBuffers;
 
-         double             fFlushTimeout;  // timeout for controls parameter update
 
-         /* if true, we will produce full hadaq events with subevent for direct use.
-          * otherwise, produce subevent stream for consecutive event builder module.
-          */
-         bool fBuildFullEvent;
-
-         /* switch to export some counters to shmem observer*/
-         bool fWithObserver;
-         
-         double fLastUpdateTime;
-
-         /* run id from timeofday for eventbuilding*/
-         RunId fRunNumber;
-
-         /* port id number from transport name*/
-         unsigned int fIdNumber;
-
-         /* actually opened udp port number*/
-         int fNPort;
-
-         std::string                fDataRateName;
-
-         //virtual bool ReplyCommand(dabc::Command cmd);
-
-         virtual void ProcessPoolChanged(dabc::MemoryPool* pool) {}
-
-         virtual bool ProcessPoolRequest();
-
+         virtual void ProcessEvent(const dabc::EventId&);
          virtual double ProcessTimeout(double lastdiff);
 
-         void ConfigureFor(dabc::Port* port, dabc::Command cmd);
+         void MakeCallback(unsigned sz);
 
-         void setFlushTimeout(double tmout) { fFlushTimeout = tmout; }
-         double getFlushTimeout() const {  return fFlushTimeout; }
+         /* Use codes which are valid for Read_Start */
+         unsigned ReadUdp();
 
-         int OpenUdp(int& portnum, int portmin, int portmax, int & rcvBufLenReq);
+      public:
+         DataSocketAddon(int fd, int nport, int mtu);
+         virtual ~DataSocketAddon();
 
-         /* use recvfrom() as in hadaq nettrans::recvGeneric*/
-         ssize_t DoUdpRecvFrom(void* buf, size_t len, int flags=0);
+         // this is interface from DataInput
+         virtual unsigned Read_Size() { return dabc::di_DfltBufSize; }
+         virtual unsigned Read_Start(dabc::Buffer& buf);
+         virtual unsigned Read_Complete(dabc::Buffer& buf);
+         virtual double Read_Timeout() { return 0.1; }
 
-         /* copy next received unit from udp buffer to dabc buffer*/
-         void ReadUdp();
+         void ClearCounters();
 
-         /* Switch to next dabc buffer, put old one into receive queue
-          * copyspanning will copy a spanning hadtu fragment from old to new buffers*/
-         void NewReceiveBuffer(bool copyspanning=false);
+         static int OpenUdp(int nport, int rcvbuflen);
 
-         /*
-          * Do simple eventbuilding into output buffer if enabled.
-          */
-         void FillEventBuffer();
+   };
 
-         /*
-          * Export counters to control system here:
-          * */
+   // ================================================================
+
+   class DataTransport : public dabc::InputTransport {
+      protected:
+
+         int            fIdNumber;
+         bool           fWithObserver;
+         std::string    fDataRateName;
+
          std::string GetNetmemParName(const std::string& name);
          void CreateNetmemPar(const std::string& name);
          void SetNetmemPar(const std::string& name, unsigned value);
-
 
          void RegisterExportedCounters();
          bool UpdateExportedCounters();
          void ClearExportedCounters();
 
+         virtual void ProcessTimerEvent(unsigned timer);
+
       public:
-         UdpDataSocket(dabc::Reference port, dabc::Command cmd);
-         virtual ~UdpDataSocket();
+         DataTransport(dabc::Command, const dabc::PortRef& inpport, DataSocketAddon* addon);
+         virtual ~DataTransport();
 
-         virtual void ProcessEvent(const dabc::EventId&);
-
-         virtual bool ProvidesInput() { return true; }
-         virtual bool ProvidesOutput() { return false; }
-
-         virtual bool Recv(dabc::Buffer& buf);
-         virtual unsigned  RecvQueueSize() const;
-         virtual dabc::Buffer& RecvBuffer(unsigned indx) const;
-         virtual bool Send(const dabc::Buffer& buf) { return false; }
-         virtual unsigned SendQueueSize() { return 0; }
-         virtual unsigned MaxSendSegments() { return 0; }
-
-         virtual void StartTransport();
-         virtual void StopTransport();
    };
 
 }

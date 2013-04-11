@@ -74,7 +74,7 @@ double DoublesVector::Max()
 
 
 
-IbTestWorkerModule::IbTestWorkerModule(const char* name, dabc::Command cmd) :
+IbTestWorkerModule::IbTestWorkerModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleSync(name, cmd),
    fStamping()
 {
@@ -96,12 +96,10 @@ IbTestWorkerModule::IbTestWorkerModule(const char* name, dabc::Command cmd) :
    fTestKind = Cfg("TestKind", cmd).AsStdStr();
    fTestPoolSize = Cfg("TestPoolSize", cmd).AsInt(250);
 
-   CreatePoolHandle("SendPool");
+   EnsurePorts(nports, nports, "SendPool");
 
-   for (int n=0;n<nports;n++) {
-//      DOUT0(("Create IOport %d", n));
-      CreateIOPort(FORMAT(("Port%d", n)), Pool(), 1, 1);
-  }
+   for (int n=0;n<nports;n++)
+      BindPorts(InputName(n), OutputName(n));
 
    fActiveNodes.clear();
    fActiveNodes.resize(fNumNodes, true);
@@ -149,7 +147,7 @@ IbTestWorkerModule::IbTestWorkerModule(const char* name, dabc::Command cmd) :
 
 IbTestWorkerModule::~IbTestWorkerModule()
 {
-   DOUT2(("Calling ~IbTestReceiverModule destructor name:%s", GetName()));
+   DOUT2("Calling ~IbTestReceiverModule destructor name:%s", GetName());
 
    if (fCmdDataBuffer) {
       delete [] fCmdDataBuffer;
@@ -197,12 +195,12 @@ int IbTestWorkerModule::ExecuteCommand(dabc::Command cmd)
 
 void IbTestWorkerModule::BeforeModuleStart()
 {
-   DOUT2(("IbTestWorkerModule starting"));
+   DOUT2("IbTestWorkerModule starting");
 
 #ifdef WITH_VERBS
 
    if (!fIbContext.OpenVerbs(true)) {
-      EOUT(("Cannot open verbs context - exit"));
+      EOUT("Cannot open verbs context - exit");
       dabc::mgr.StopApplication();
    }
 
@@ -211,7 +209,7 @@ void IbTestWorkerModule::BeforeModuleStart()
 
 void IbTestWorkerModule::AfterModuleStop()
 {
-   DOUT2(("IbTestWorkerModule finished"));
+   DOUT2("IbTestWorkerModule finished");
 
    CloseQPs();
 
@@ -247,7 +245,7 @@ bool IbTestWorkerModule::CreateQPs(void* data)
 
    ibv_qp_type qp_type = Cfg("TestReliable").AsBool(true) ? IBV_QPT_RC : IBV_QPT_UC;
 
-   if (qp_type == IBV_QPT_UC) DOUT0(("Testing unreliable connections"));
+   if (qp_type == IBV_QPT_UC) DOUT0("Testing unreliable connections");
 
    int qpdepth = 128;
 
@@ -277,7 +275,7 @@ bool IbTestWorkerModule::CreateQPs(void* data)
             recs[indx].qp = fQPs[lid][node]->qp_num();
             recs[indx].psn = fQPs[lid][node]->local_psn();
 
-            //         DOUT0(("Create QP %d -> %d  %04x:%08x:%08x", Node(), node, recs[node].lid, recs[node].qp, recs[node].psn));
+            //         DOUT0("Create QP %d -> %d  %04x:%08x:%08x", Node(), node, recs[node].lid, recs[node].qp, recs[node].psn);
          }
       }
    }
@@ -310,8 +308,7 @@ bool IbTestWorkerModule::ConnectQPs(void* data)
          // FIXME: one should deliver destination port as well
          if (!fQPs[lid][node]->Connect(recs[indx].lid, recs[indx].qp, recs[indx].psn, lid)) return false;
 
-         DOUT3(("Connect QP[%d,%d] -> with  %04x:%08x:%08x", lid, node, recs[indx].lid, recs[indx].qp, recs[indx].psn));
-
+         DOUT3("Connect QP[%d,%d] -> with  %04x:%08x:%08x", lid, node, recs[indx].lid, recs[indx].qp, recs[indx].psn);
       }
 
    }
@@ -391,7 +388,7 @@ bool IbTestWorkerModule::CreateCommPool(int64_t* pars)
 
    fTotalNumBuffers = pars[0];
 
-//   DOUT0(("Create comm pool %p  size %u X %u", fPool, pars[0], pars[1]));
+//   DOUT0("Create comm pool %p  size %u X %u", fPool, pars[0], pars[1]);
 
 
    return fPool!=0;
@@ -416,7 +413,7 @@ bool IbTestWorkerModule::Pool_Post(bool issend, int bufindx, int lid, int nremot
    // we expect maximum 1000 nodes
    // we expect maximum 100 lids
 
-   if ((bufindx>=1000000) || (nremote>=1000) || (lid>=100)) { EOUT(("Too large indexes !!!")); exit(5); }
+   if ((bufindx>=1000000) || (nremote>=1000) || (lid>=100)) { EOUT("Too large indexes !!!"); exit(5); }
 
    uint64_t arg = bufindx + nremote*1000000LLU + lid*1000000000LLU + (issend ? 100000000000LLU : 0);
 
@@ -425,7 +422,7 @@ bool IbTestWorkerModule::Pool_Post(bool issend, int bufindx, int lid, int nremot
       struct ibv_send_wr* swr = fPool->GetSendWR(bufindx, size);
       swr->wr_id = arg;
       res = fQPs[lid][nremote]->Post_Send(swr);
-//      DOUT0(("Post send nremote %d buf %d swr %p ", nremote, bufindx, swr));
+//      DOUT0("Post send nremote %d buf %d swr %p ", nremote, bufindx, swr);
 
    } else {
       struct ibv_recv_wr* rwr = fPool->GetRecvWR(bufindx);
@@ -433,7 +430,7 @@ bool IbTestWorkerModule::Pool_Post(bool issend, int bufindx, int lid, int nremot
 
       res = fQPs[lid][nremote]->Post_Recv(rwr);
 
-//      DOUT0(("Post recv remote %d buf %d rwr %p ", nremote, bufindx, rwr));
+//      DOUT0("Post recv remote %d buf %d rwr %p ", nremote, bufindx, rwr);
    }
 
    if (res) {
@@ -460,7 +457,7 @@ bool IbTestWorkerModule::Pool_Post_Mcast(bool issend, int bufindx, int size)
       struct ibv_send_wr* swr = fMultiPool->GetSendWR(bufindx, size);
       swr->wr_id = arg;
       res = fMultiQP->Post_Send(swr);
-//      DOUT0(("Post send nremote %d buf %d swr %p ", nremote, bufindx, swr));
+//      DOUT0("Post send nremote %d buf %d swr %p ", nremote, bufindx, swr);
 
    } else {
       struct ibv_recv_wr* rwr = fMultiPool->GetRecvWR(bufindx);
@@ -468,7 +465,7 @@ bool IbTestWorkerModule::Pool_Post_Mcast(bool issend, int bufindx, int size)
 
       res = fMultiQP->Post_Recv(rwr);
 
-//      DOUT0(("Post recv remote %d buf %d rwr %p ", nremote, bufindx, rwr));
+//      DOUT0("Post recv remote %d buf %d rwr %p ", nremote, bufindx, rwr);
    }
 
    if (res) {
@@ -541,7 +538,7 @@ int IbTestWorkerModule::Pool_Check(int &bufindx, int& lid, int &nremote, double 
    lid = (arg / 1000000000LLU) % 100;
 
    if ((nremote>=NumNodes()) || (lid>=NumLids())) {
-      EOUT(("Wrong result id buf:%d lid:%d node:%d", bufindx, lid, nremote));
+      EOUT("Wrong result id buf:%d lid:%d node:%d", bufindx, lid, nremote);
       exit(6);
    }
 
@@ -643,7 +640,7 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
 
    if (fPool==0) return false;
 
-   DOUT3(("Start SlaveTimeSync"));
+   DOUT3("Start SlaveTimeSync");
 
    int sendbufindx = GetExclusiveIndx();
    IbTestTymeSyncMessage* msg_out = (IbTestTymeSyncMessage*) GetPoolBuffer(sendbufindx);
@@ -685,20 +682,20 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
                res = 0;
                nsendcomplited++;
             } else {
-              EOUT(("Error when complete send sync message check_resindx:%s resnode:%d reslid:%d", DBOOL(resindx==sendbufindx), resnode, reslid));
+              EOUT("Error when complete send sync message check_resindx:%s resnode:%d reslid:%d", DBOOL(resindx==sendbufindx), resnode, reslid);
               return false;
             }
          }
       }
 
       if ((res!=1) || (resnode!=0) || (reslid!=sync_lid)) {
-         EOUT(("Error when receive %d sync message res:%d resindx:%d resnode:%d reslid:%d", repeatcounter, res, resindx, resnode, reslid));
+         EOUT("Error when receive %d sync message res:%d resindx:%d resnode:%d reslid:%d", repeatcounter, res, resindx, resnode, reslid);
          return false;
       }
 
       IbTestTymeSyncMessage* msg_in = (IbTestTymeSyncMessage*) GetPoolBuffer(resindx);
 
-      // if (repeatcounter==0) DOUT0(("Get first sync message from master"));
+      // if (repeatcounter==0) DOUT0("Get first sync message from master");
 
       msg_out->master_time = 0;
       msg_out->slave_shift = 0;
@@ -737,7 +734,7 @@ bool IbTestWorkerModule::SlaveTimeSync(int64_t* cmddata)
       if ((res==10) && (resindx==sendbufindx) && (resnode==0)) nsendcomplited++;
    }
 
-   if (nsendcomplited<numcycles) EOUT(("Not all send operations completed %d", numcycles - nsendcomplited));
+   if (nsendcomplited<numcycles) EOUT("Not all send operations completed %d", numcycles - nsendcomplited);
 
    ReleaseExclusive(sendbufindx);
 
@@ -777,7 +774,7 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
    }
 
    if (fullpacketsize>fCmdBufferSize) {
-      EOUT(("Too big command data size %d", cmddatasize));
+      EOUT("Too big command data size %d", cmddatasize);
       return false;
    }
 
@@ -785,8 +782,8 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
 
    for(int node=0;node<NumNodes();node++) if (fActiveNodes[node]) {
 
-      dabc::Buffer buf = TakeBuffer(Pool(), fCmdBufferSize, 1.);
-      if (buf.null()) { EOUT(("No empty buffer")); return false; }
+      dabc::Buffer buf = TakeBuffer(0, 1.);
+      if (buf.null()) { EOUT("No empty buffer"); return false; }
 
       IbTestCommandMessage* msg = (IbTestCommandMessage*) buf.SegmentPtr(0);
 
@@ -807,8 +804,8 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
       if (node==0) {
          buf0 << buf;
       } else {
-//         DOUT0(("Send buffer to slave %d", node));
-         Send(IOPort(node-1), buf, 1.);
+//         DOUT0("Send buffer to slave %d", node);
+         Send(node-1, buf, 1.);
       }
    }
 
@@ -824,30 +821,30 @@ bool IbTestWorkerModule::MasterCommandRequest(int cmdid, void* cmddata, int cmdd
       int nodeid = 0;
 
       if (buf.null()) {
-         dabc::Port* port(0);
+         unsigned port(0);
          nodeid = -1;
          buf = RecvFromAny(&port, 4.);
-         if (port) nodeid = IOPortNumber(port) + 1;
+         if (!buf.null()) nodeid = port + 1;
       }
 
       if (buf.null() || (nodeid<0)) {
          for (unsigned n=0;n<replies.size();n++)
-            if (fActiveNodes[n] && !replies[n]) EOUT(("Cannot get any reply from node %u", n));
+            if (fActiveNodes[n] && !replies[n]) EOUT("Cannot get any reply from node %u", n);
          return false;
       }
 
-//      DOUT0(("Recv reply from slave %d", nodeid));
+//      DOUT0("Recv reply from slave %d", nodeid);
 
       replies[nodeid] = true;
 
       IbTestCommandMessage* rcv = (IbTestCommandMessage*) buf.SegmentPtr(0);
 
-      if (rcv->magic!=IBTEST_CMD_MAGIC) { EOUT(("Wrong magic")); return false; }
-      if (rcv->cmdid!=cmdid) { EOUT(("Wrong ID")); return false; }
-      if (rcv->node != nodeid) { EOUT(("Wrong node")); return false; }
+      if (rcv->magic!=IBTEST_CMD_MAGIC) { EOUT("Wrong magic"); return false; }
+      if (rcv->cmdid!=cmdid) { EOUT("Wrong ID"); return false; }
+      if (rcv->node != nodeid) { EOUT("Wrong node"); return false; }
 
       if ((allresults!=0) && (resultpernode>0) && (rcv->cmddatasize == resultpernode)) {
-         // DOUT0(("Copy from node %d buffer %d", nodeid, resultpernode));
+         // DOUT0("Copy from node %d buffer %d", nodeid, resultpernode);
          memcpy((uint8_t*)allresults + nodeid*resultpernode, rcv->cmddata(), resultpernode);
       }
 
@@ -873,13 +870,13 @@ bool IbTestWorkerModule::MasterCollectActiveNodes()
    buff[0] = 1;
 
    for(int node=1;node<NumNodes();node++) {
-      bool active = IOPort(node-1)->IsConnected();
+      bool active = IsInputConnected(node-1);
       fActiveNodes.push_back(active);
       if (active) cnt++;
       buff[node] = active ? 1 : 0;
    }
 
-   DOUT0(("There are %d active nodes, %d missing", cnt, NumNodes() - cnt));
+   DOUT0("There are %d active nodes, %d missing", cnt, NumNodes() - cnt);
 
    if (!MasterCommandRequest(IBTEST_CMD_ACTIVENODES, buff, NumNodes())) return false;
 
@@ -910,7 +907,7 @@ bool IbTestWorkerModule::CalibrateCommandsChannel(int nloop)
 
    aver.Show("Command loop", true);
 
-   DOUT0(("Command loop = %5.3f ms", fCmdDelay*1e3));
+   DOUT0("Command loop = %5.3f ms", fCmdDelay*1e3);
 
    return true;
 }
@@ -924,14 +921,14 @@ bool IbTestWorkerModule::MasterConnectQPs()
 
    // own records will be add automatically
    if (!MasterCommandRequest(IBTEST_CMD_CREATEQP, 0, 0, recs, NumNodes()*NumLids()*sizeof(IbTestConnRec))) {
-      EOUT(("Cannot create and collect QPs"));
+      EOUT("Cannot create and collect QPs");
       delete[] recs;
       return false;
    }
 
    // now we should resort connection records, loop over targets
 
-   DOUT0(("First collect all QPs info"));
+   DOUT0("First collect all QPs info");
 
    IbTestConnRec* conn = new IbTestConnRec[NumNodes() * NumNodes() * NumLids()];
    memset(conn, 0, NumNodes() * NumNodes() * NumLids() * sizeof(IbTestConnRec));
@@ -946,7 +943,7 @@ bool IbTestWorkerModule::MasterConnectQPs()
 
             memcpy(conn + tgt, recs + src, sizeof(IbTestConnRec));
 
-//         DOUT0(("Try to connect %d -> %d %04x:%08x:%08x", n1, n2, conn[tgt].lid, conn[tgt].qp, conn[tgt].psn));
+//         DOUT0("Try to connect %d -> %d %04x:%08x:%08x", n1, n2, conn[tgt].lid, conn[tgt].qp, conn[tgt].psn);
       }
 
    bool res = MasterCommandRequest(IBTEST_CMD_CONNECTQP, conn, -NumNodes()*NumLids()*sizeof(IbTestConnRec));
@@ -955,7 +952,7 @@ bool IbTestWorkerModule::MasterConnectQPs()
 
    delete[] conn;
 
-   DOUT0(("Establish connections in %5.4f s ", tm.SpentTillNow()));
+   DOUT0("Establish connections in %5.4f s ", tm.SpentTillNow());
 
    return res;
 }
@@ -972,7 +969,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
    IbTestCommandMessage* msg = (IbTestCommandMessage*) buf.SegmentPtr(0);
 
    if (msg->magic!=IBTEST_CMD_MAGIC) {
-       EOUT(("Magic id is not correct"));
+       EOUT("Magic id is not correct");
        return IBTEST_CMD_EXIT;
    }
 
@@ -980,7 +977,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
 
    fCmdDataSize = msg->cmddatasize;
    if (fCmdDataSize > fCmdBufferSize) {
-      EOUT(("command data too big for buffer!!!"));
+      EOUT("command data too big for buffer!!!");
       fCmdDataSize = fCmdBufferSize;
    }
 
@@ -1063,7 +1060,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
 
    buf.SetTotalSize(sendpacketsize);
 
-   if (!cmd_res) EOUT(("Command %d failed", cmdid));
+   if (!cmd_res) EOUT("Command %d failed", cmdid);
 
    return cmdid;
 }
@@ -1072,7 +1069,7 @@ bool IbTestWorkerModule::ExecuteSlaveCommand(int cmdid)
 {
    switch (cmdid) {
       case IBTEST_CMD_NONE:
-         EOUT(("Error in WaitForCommand"));
+         EOUT("Error in WaitForCommand");
          return false;
 
       case IBTEST_CMD_TIMESYNC:
@@ -1084,7 +1081,7 @@ bool IbTestWorkerModule::ExecuteSlaveCommand(int cmdid)
 
       case IBTEST_CMD_EXIT:
          WorkerSleep(0.1);
-         DOUT2(("Propose worker to stop"));
+         DOUT2("Propose worker to stop");
          // Stop(); // stop module
          dabc::mgr.StopApplication();
          break;
@@ -1136,12 +1133,12 @@ void IbTestWorkerModule::SlaveMainLoop()
 {
    // slave is only good for reaction on the commands
    while (ModuleWorking()) {
-      dabc::Buffer buf = Recv(IOPort(), 1.);
+      dabc::Buffer buf = Recv(0, 1.);
       if (buf.null()) continue;
 
       int cmdid = PreprocessSlaveCommand(buf);
 
-      Send(IOPort(), buf);
+      Send(buf, 1.);
 
       ExecuteSlaveCommand(cmdid);
    }
@@ -1156,7 +1153,7 @@ bool IbTestWorkerModule::MasterCloseConnections()
    // this is just ensure that all nodes are on ready state
    if (!MasterCommandRequest(IBTEST_CMD_TEST)) return false;
 
-   DOUT0(("Comm ports are closed in %5.3fs", tm.SpentTillNow()));
+   DOUT0("Comm ports are closed in %5.3fs", tm.SpentTillNow());
 
    return true;
 }
@@ -1175,7 +1172,7 @@ bool IbTestWorkerModule::MasterCreatePool(int numbuffers, int buffersize)
    // this is just ensure that all nodes are on ready state
    if (!MasterCommandRequest(IBTEST_CMD_TEST)) return false;
 
-   DOUT0(("Pool is created after %6.5f", tm.SpentTillNow()));
+   DOUT0("Pool is created after %6.5f", tm.SpentTillNow());
 
    return true;
 }
@@ -1211,7 +1208,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
    int sendbufindx = GetExclusiveIndx();
    IbTestTymeSyncMessage* msg = (IbTestTymeSyncMessage*) GetPoolBuffer(sendbufindx);
 
-//   DOUT0(("Send buffer index = %d buf %p", sendbufindx, msg));
+//   DOUT0("Send buffer index = %d buf %p", sendbufindx, msg);
 
    int repeatcounter = 0;
 
@@ -1231,7 +1228,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
 
       if (!fActiveNodes[nremote]) continue;
 
-      DOUT2(("Start with node %d", nremote));
+      DOUT2("Start with node %d", nremote);
 
       // first fill receiving queue - only if it is not short case with single buffer
       if (!time_sync_short)
@@ -1305,7 +1302,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
             now = fStamping();
 
             if ((res>0) && ((resnode!=nremote) || (reslid != sync_lid))) {
-              EOUT(("Error node number %d or lid %d when complete %s operation", resnode, reslid, ((res==10) ? "send" : "receive")));
+              EOUT("Error node number %d or lid %d when complete %s operation", resnode, reslid, ((res==10) ? "send" : "receive") );
               return false;
             }
             if (res==10) { res_send_index = resindx; } else
@@ -1313,7 +1310,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
          }
 
           if (res_recv_index<0) {
-             EOUT(("TimeSync: Error when complete receive operation"));
+             EOUT("TimeSync: Error when complete receive operation");
              return false;
           }
 
@@ -1333,7 +1330,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
           }
 
           if (rcv->msgid!=repeatcounter) {
-             EOUT(("Mismatch in ID %d %d", rcv->msgid, repeatcounter));
+             EOUT("Mismatch in ID %d %d", rcv->msgid, repeatcounter);
           }
 
           if (!time_sync_short && (repeatcounter + RecvQueue(sync_lid, nremote) + 1 < numcycles))
@@ -1342,7 +1339,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
              ReleaseExclusive(res_recv_index);
 
           if (res_send_index!=sendbufindx) {
-             EOUT(("TimeSync: Error index when complete send sync message %d != %d", res_send_index, sendbufindx));
+             EOUT("TimeSync: Error index when complete send sync message %d != %d", res_send_index, sendbufindx);
              return false;
           }
 
@@ -1354,9 +1351,9 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
       m_to_s.Sort(); s_to_m.Sort();
       time_shift = (s_to_m.Mean(max_cut) - m_to_s.Mean(max_cut)) / 2.;
 
-      DOUT0(("Round trip to %2d: %5.2f microsec", nremote, m_to_s.Mean(max_cut)*1e6 + s_to_m.Mean(max_cut)*1e6));
-      DOUT0(("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", m_to_s.Mean(max_cut)*1e6, m_to_s.Dev(max_cut)*1e6, m_to_s.Max()*1e6, m_to_s.Min()*1e6));
-      DOUT0(("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", s_to_m.Mean(max_cut)*1e6, s_to_m.Dev(max_cut)*1e6, s_to_m.Max()*1e6, s_to_m.Min()*1e6));
+      DOUT0("Round trip to %2d: %5.2f microsec", nremote, m_to_s.Mean(max_cut)*1e6 + s_to_m.Mean(max_cut)*1e6);
+      DOUT0("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", m_to_s.Mean(max_cut)*1e6, m_to_s.Dev(max_cut)*1e6, m_to_s.Max()*1e6, m_to_s.Min()*1e6);
+      DOUT0("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", s_to_m.Mean(max_cut)*1e6, s_to_m.Dev(max_cut)*1e6, s_to_m.Max()*1e6, s_to_m.Min()*1e6);
 //      if (nremote==1) a1.ShowHist();
 
       if (debug_output) {
@@ -1374,9 +1371,9 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
 
 
       if (dosynchronisation)
-         DOUT0(("   SET: Shift = %5.2f  Coef = %12.10f", set_time_shift*1e6, set_time_scale));
+         DOUT0("   SET: Shift = %5.2f  Coef = %12.10f", set_time_shift*1e6, set_time_scale);
       else {
-         DOUT0(("   GET: Shift = %5.2f", time_shift*1e6));
+         DOUT0("   GET: Shift = %5.2f", time_shift*1e6);
          get_shift.Fill(time_shift*1e6);
       }
    }
@@ -1386,7 +1383,7 @@ bool IbTestWorkerModule::MasterTimeSync(bool dosynchronisation, int numcycles, b
 
    if (!dosynchronisation) get_shift.Show("GET shift", true);
 
-   DOUT0(("Tyme sync done in %5.4f sec", fStamping() - starttm));
+   DOUT0("Tyme sync done in %5.4f sec", fStamping() - starttm);
 
    return MasterCommandRequest(IBTEST_CMD_TEST);
 }
@@ -1408,8 +1405,8 @@ bool IbTestWorkerModule::MasterTiming()
 
    if (!MasterCreatePool(lrint(arguments[1])*NumNodes(), 1024*64)) return false;
 
-   DOUT0(("====================================="));
-   DOUT0(("MasterTiming()"));
+   DOUT0("=====================================");
+   DOUT0("MasterTiming()");
 
    if (!MasterCommandRequest(IBTEST_CMD_TIMING, arguments, sizeof(arguments))) return false;
 
@@ -1437,13 +1434,13 @@ bool IbTestWorkerModule::ExecuteTiming(double* arguments)
    int numtestbuf = lrint(arguments[1]);
 
    if (Node()==0) {
-      DOUT0(("Send from first node to all other %d buffers", numtestbuf));
+      DOUT0("Send from first node to all other %d buffers", numtestbuf);
       for (int k=0;k<numtestbuf;k++)
         for (int node=1;node<NumNodes();node++)
           Pool_Post(true, GetExclusiveIndx(), 0, node);
    }
 
-   DOUT0(("Wait %4.2f s", starttm-fStamping()));
+   DOUT0("Wait %4.2f s", starttm-fStamping());
 
    while (fStamping()<starttm);
 
@@ -1473,9 +1470,9 @@ bool IbTestWorkerModule::ExecuteTiming(double* arguments)
    }
 
    if (Node()>0)
-      DOUT0(("Start: %7.5f s  Full time = %7.5f s rate %5.1f MB/s", (start-starttm), (stop-start), numtestbuf*64.*1024./(stop-start)*1e-6));
+      DOUT0("Start: %7.5f s  Full time = %7.5f s rate %5.1f MB/s", (start-starttm), (stop-start), numtestbuf*64.*1024./(stop-start)*1e-6);
    else
-      DOUT0(("ExecuteTiming() done"));
+      DOUT0("ExecuteTiming() done");
 
    return true;
 }
@@ -1504,7 +1501,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
    AllocResults(14);
 
-   DOUT2(("ExecuteAllToAll - start"));
+   DOUT2("ExecuteAllToAll - start");
 
    dabc::Ratemeter sendrate, recvrate, multirate;
    dabc::Ratemeter** fIndividualRates = 0;
@@ -1542,8 +1539,8 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
    for (int lid=0;lid<NumLids();lid++)
       for (int n=0;n<NumNodes();n++) {
-         if (SendQueue(lid,n)>0) EOUT(("!!!! Problem in SendQueue[%d,%d]=%d",lid,n,SendQueue(lid,n)));
-         if (RecvQueue(lid,n)>0) EOUT(("!!!! Problem in RecvQueue[%d,%d]=%d",lid,n,RecvQueue(lid,n)));
+         if (SendQueue(lid,n)>0) EOUT("!!!! Problem in SendQueue[%d,%d]=%d",lid,n,SendQueue(lid,n));
+         if (RecvQueue(lid,n)>0) EOUT("!!!! Problem in RecvQueue[%d,%d]=%d",lid,n,RecvQueue(lid,n));
       }
 
    // schstep is in seconds, but datarate in MBytes/sec, therefore 1e-6
@@ -1611,7 +1608,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
          break;
    }
 
-   DOUT4(("ExecuteAllToAll: Define schedule"));
+   DOUT4("ExecuteAllToAll: Define schedule");
 
    fSendSch.FillReceiveSchedule(fRecvSch);
 
@@ -1624,7 +1621,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    if (patternid==6) // disable receive operation 1->0 to check that rest data will be transformed
       for (int nslot=0; nslot<fRecvSch.numSlots(); nslot++)
          if (fRecvSch.Item(nslot, 0).node == 1) {
-            // DOUT0(("Disable recv operation 1->0"));
+            // DOUT0("Disable recv operation 1->0");
             fRecvSch.Item(nslot, 0).Reset();
           }
 
@@ -1654,7 +1651,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 
    double lastcmdchecktime = fStamping();
 
-   DOUT2(("ExecuteAllToAll: Prepare first operations dosend %s dorecv %s remains: %5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping()));
+   DOUT2("ExecuteAllToAll: Prepare first operations dosend %s dorecv %s remains: %5.3fs", DBOOL(dosending), DBOOL(doreceiving), starttime - fStamping());
 
    // counter for must have send operations over each channel
    IbTestIntMatrix sendcounter(NumLids(), NumNodes());
@@ -1689,7 +1686,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       gpu_mem_num = gpu_ctx->getTotalMemory() / fBufferSize / 2;
       if (gpu_mem_num>100) gpu_mem_num = 100;
       if (gpu_mem_num<2) {
-         EOUT(("Too few memory on GPU for the test - break"));
+         EOUT("Too few memory on GPU for the test - break");
          return false;
       }
 
@@ -1698,7 +1695,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       for (int n=0;n<gpu_mem_num;n++) {
          gpu_mem[n] = new opencl::Memory(*gpu_ctx, fBufferSize);
          if (gpu_mem[n]->null()) {
-            EOUT(("Cannot allocate buffer num %d size %d on GPU", n, fBufferSize));
+            EOUT("Cannot allocate buffer num %d size %d on GPU", n, fBufferSize);
             return false;
          }
       }
@@ -1711,13 +1708,13 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
          opencl::QueueEvent evnt;
 
          if (!gpu_write_queue->SubmitWrite(evnt, *(gpu_mem[indx % gpu_mem_num]), GetPoolBuffer(indx), fBufferSize)) {
-            EOUT(("Failure when trying write memory %d from pool buffer %d", indx, indx % gpu_mem_num));
+            EOUT("Failure when trying write memory %d from pool buffer %d", indx, indx % gpu_mem_num);
             break;
          }
          gpu_write_queue->WaitComplete(evnt, 1.0);
 
          if (!gpu_read_queue->SubmitRead(evnt, *(gpu_mem[indx % gpu_mem_num]), GetPoolBuffer(indx), fBufferSize)) {
-            EOUT(("Failure when trying read memory %d to pool buffer %d", indx, indx % gpu_mem_num));
+            EOUT("Failure when trying read memory %d to pool buffer %d", indx, indx % gpu_mem_num);
             break;
          }
          gpu_read_queue->WaitComplete(evnt, 1.0);
@@ -1750,7 +1747,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    if (patternid==-2) cq_waittime = 0.001;
 
    if (dogpuwrite>0 || dogpuread>0)
-      DOUT0(("ExecuteAllToAll: Entering main loop, remains: %5.3fs", starttime - fStamping()));
+      DOUT0("ExecuteAllToAll: Entering main loop, remains: %5.3fs", starttime - fStamping());
 
    while ((curr_tm=fStamping()) < stoptime) {
 
@@ -1766,7 +1763,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 //      bool wascompletion = false;
 
       if (res<0) {
-         EOUT(("Error when Pool_Check"));
+         EOUT("Error when Pool_Check");
          break;
       } else
       if (res==1) { // start of receiving part
@@ -1776,7 +1773,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
           int sendcnt = (int) *mem++;
 
 //          if (sendcnt!=recvcounter[resnode]+1)
-//             EOUT(("Receive error: source:%d last pkt:%ld  curr:%ld diff:%ld",resnode, recvcounter[resnode], sendcnt, sendcnt-recvcounter[resnode]));
+//             EOUT("Receive error: source:%d last pkt:%ld  curr:%ld diff:%ld",resnode, recvcounter[resnode], sendcnt, sendcnt-recvcounter[resnode]);
 
           int lost = sendcnt - recvcounter(reslid, resnode) - 1;
           if (lost>0) {
@@ -1801,7 +1798,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
           if (dogpuwrite>0) {
              if (gpu_write.Full()) {
                 ReleaseExclusive(resindx);
-                EOUT(("No more place in gpu_write queue"));
+                EOUT("No more place in gpu_write queue");
              } else
                 gpu_write.Push(resindx);
           } else {
@@ -1848,12 +1845,12 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
             if (RecvQueue(lid, node) < max_receiving_queue) {
                int recvbufindx = GetExclusiveIndx();
                if (recvbufindx<0) {
-                  EOUT(("Not enough buffers"));
+                  EOUT("Not enough buffers");
                   return false;
                }
 
                if (!Pool_Post(false, recvbufindx, lid, node)) {
-                  EOUT(("Cannot submit receive operation to lid %d node %d", lid, node));
+                  EOUT("Cannot submit receive operation to lid %d node %d", lid, node);
                   return false;
                }
 
@@ -1897,11 +1894,11 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
                   if (!gpu_read.Empty())
                      sendbufindx = gpu_read.Pop();
                   else
-                     EOUT(("No enough buffers in gpu_read queue"));
+                     EOUT("No enough buffers in gpu_read queue");
                } else
                   sendbufindx = GetExclusiveIndx();
                if (sendbufindx<0) {
-                  EOUT(("Not enough buffers"));
+                  EOUT("Not enough buffers");
                   break;
                }
                double* mem = (double*) GetPoolBuffer(sendbufindx);
@@ -1911,7 +1908,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
                send_start.Fill(curr_tm - next_send_time);
 
                if (!Pool_Post(true, sendbufindx, lid, node, bufsize)) {
-                  EOUT(("ExecuteAllToAll cannot send to lid %d node %d", lid, node));
+                  EOUT("ExecuteAllToAll cannot send to lid %d node %d", lid, node);
                   break;
                }
 
@@ -1936,7 +1933,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
              bool do_again(false);
              switch (gpu_write_queue->CheckComplete(gpu_write_ev.Front())) {
                case -1:
-                  EOUT(("GPU WaitWrite failed"));
+                  EOUT("GPU WaitWrite failed");
                   dogpuwrite = false;
                   gpu_write_ev.PopOnly();
                   ReleaseExclusive(gpu_writepoolindx.Pop());
@@ -1963,7 +1960,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
                 gpu_write_ev.Push(evnt);
                 gpu_writepoolindx.Push(indx);
              } else {
-                EOUT(("GPU SubmitWrite failed - disable"));
+                EOUT("GPU SubmitWrite failed - disable");
                 dogpuwrite = false;
                 ReleaseExclusive(indx);
              }
@@ -1977,7 +1974,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
             bool do_again(false);
             switch (gpu_read_queue->CheckComplete(gpu_read_ev.Front())) {
                case -1:
-                  EOUT(("GPU WaitRead failed"));
+                  EOUT("GPU WaitRead failed");
                   ReleaseExclusive(gpu_readpoolindx.Pop());
                   gpu_read_ev.PopOnly();
                   dogpuread = false;
@@ -2005,7 +2002,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
                gpu_read_ev.Push(evnt);
                gpu_mem_cnt = (gpu_mem_cnt+1) % gpu_mem_num;
             } else {
-               EOUT(("GPU SubmitRead failed"));
+               EOUT("GPU SubmitRead failed");
                dogpuread = false;
                break;
             }
@@ -2015,13 +2012,13 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 #endif
 
       if (curr_tm > lastcmdchecktime + 0.1) {
-         if (Node()>0 && IOPort()->CanRecv()) {
+         if (Node()>0 && CanRecv()) {
              // set stop time in 0.1 s to allow completion of all send operation
              if (curr_tm+0.1 < stoptime) stoptime = curr_tm+0.1;
              // disable send operation anyhow
              dosending = false;
 
-             EOUT(("Did emergence stop while command is arrived"));
+             EOUT("Did emergence stop while command is arrived");
              // do not do immediate break
              // break;
          }
@@ -2030,29 +2027,29 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
       }
    }
 
-   DOUT3(("Total recv queue %ld limit %ld send queue %ld", TotalSendQueue(), recv_total_limit, TotalRecvQueue()));
-   DOUT3(("Do recv %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
+   DOUT3("Total recv queue %ld limit %ld send queue %ld", TotalSendQueue(), recv_total_limit, TotalRecvQueue());
+   DOUT3("Do recv %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
          DBOOL(doreceiving), curr_tm, recv_basetm + fRecvSch.timeSlot(recv_slot), recv_slot,
          fRecvSch.Item(recv_slot, Node()).node, fRecvSch.Item(recv_slot, Node()).lid,
-         RecvQueue(fRecvSch.Item(recv_slot, Node()).lid, fRecvSch.Item(recv_slot, Node()).node)));
-   DOUT3(("Do send %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
+         RecvQueue(fRecvSch.Item(recv_slot, Node()).lid, fRecvSch.Item(recv_slot, Node()).node));
+   DOUT3("Do send %s curr_tm %8.7f next_tm %8.7f slot %d node %d lid %d queue %d",
          DBOOL(dosending), curr_tm, send_basetm + fSendSch.timeSlot(send_slot), send_slot,
          fSendSch.Item(send_slot, Node()).node, fSendSch.Item(send_slot, Node()).lid,
-         SendQueue(fSendSch.Item(send_slot, Node()).lid, fSendSch.Item(send_slot, Node()).node)));
+         SendQueue(fSendSch.Item(send_slot, Node()).lid, fSendSch.Item(send_slot, Node()).node));
 
-   DOUT3(("Send operations diff %ld: submited %ld, completed %ld", numsendpackets-numcomplsend, numsendpackets, numcomplsend));
+   DOUT3("Send operations diff %ld: submited %ld, completed %ld", numsendpackets-numcomplsend, numsendpackets, numcomplsend);
 
    cpu_stat.Measure();
 
-   DOUT5(("CPU utilization = %5.1f % ", cpu_stat.CPUutil()*100.));
+   DOUT5("CPU utilization = %5.1f % ", cpu_stat.CPUutil()*100.);
 
    if (numsendpackets!=numcomplsend) {
-      EOUT(("Mismatch %d between submitted %ld and completed send operations %ld",numsendpackets-numcomplsend, numsendpackets, numcomplsend));
+      EOUT("Mismatch %d between submitted %ld and completed send operations %ld",numsendpackets-numcomplsend, numsendpackets, numcomplsend);
 
       for (int lid=0;lid<NumLids(); lid++)
         for (int node=0;node<NumNodes();node++) {
           if ((node==Node()) || !fActiveNodes[node]) continue;
-          DOUT5(("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d recvskp %d", lid, node, RecvQueue(lid,node), SendQueue(lid,node), recvskipcounter(lid, node)));
+          DOUT5("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d recvskp %d", lid, node, RecvQueue(lid,node), SendQueue(lid,node), recvskipcounter(lid, node));
        }
    }
 
@@ -2071,12 +2068,12 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    fResults[12] = (numsendpackets+skipsendcounter) > 0 ? 1.*skipsendcounter / (numsendpackets + skipsendcounter) : 0.;
    fResults[13] = recv_compl.Mean();
 
-   DOUT5(("Multi: total %ld lost %ld", totalrecvmulti, numlostmulti));
+   DOUT5("Multi: total %ld lost %ld", totalrecvmulti, numlostmulti);
 
    if (sendmulticounter+skipmulticounter>0)
-      DOUT0(("Multi send: %ld skipped %ld (%5.3f)",
+      DOUT0("Multi send: %ld skipped %ld (%5.3f)",
              sendmulticounter, skipmulticounter,
-             100.*skipmulticounter/(1.*sendmulticounter+skipmulticounter)));
+             100.*skipmulticounter/(1.*sendmulticounter+skipmulticounter));
 
    if (fIndividualRates!=0) {
 
@@ -2115,7 +2112,7 @@ bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
    }
 
    if (gpu_oper_cnt>0)
-     DOUT0(("gpu_oper_cnt = %ld recv_cnt %ld send cnt %ld", gpu_oper_cnt, totalrecvpackets, numcomplsend));
+     DOUT0("gpu_oper_cnt = %ld recv_cnt %ld send cnt %ld", gpu_oper_cnt, totalrecvpackets, numcomplsend);
 
    // cleanup all GPU-specific parts
    delete gpu_read_queue;
@@ -2147,8 +2144,8 @@ bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime, bool testwrite
    arguments[1] = testwrite ? 1 : 0;   // do writing
    arguments[2] = testread ? 1 : 0;   // do reading
 
-   DOUT0(("========================================="));
-   DOUT0(("TestGPU size:%d write:%s read:%s", bufsize, DBOOL(testwrite), DBOOL(testread)));
+   DOUT0("=========================================");
+   DOUT0("TestGPU size:%d write:%s read:%s", bufsize, DBOOL(testwrite), DBOOL(testread));
 
    if (!MasterCommandRequest(IBTEST_CMD_TESTGPU, arguments, sizeof(arguments))) return false;
 
@@ -2160,20 +2157,20 @@ bool IbTestWorkerModule::MasterTestGPU(int bufsize, int testtime, bool testwrite
 
    if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
 
-//   DOUT((1,"Results of all-to-all test"));
-   DOUT0(("  # |      Node |   Write |   Read "));
+//   DOUT((1,"Results of all-to-all test");
+   DOUT0("  # |      Node |   Write |   Read ");
    double sum1(0.), sum2(0.);
 
    for (int n=0;n<NumNodes();n++) {
 
-       DOUT0(("%3d |%10s | %7.1f | %7.1f",
+       DOUT0("%3d |%10s | %7.1f | %7.1f",
              n, dabc::mgr()->GetNodeName(n).c_str(),
-             allres[n*setsize+0], allres[n*setsize+1]));
+             allres[n*setsize+0], allres[n*setsize+1]);
        sum1 += allres[n*setsize+0];
        sum2 += allres[n*setsize+1];
    }
 
-   DOUT0(("    |  Average  | %7.1f | %7.1f", sum1/NumNodes(), sum2/NumNodes()));
+   DOUT0("    |  Average  | %7.1f | %7.1f", sum1/NumNodes(), sum2/NumNodes());
 
    return MasterCommandRequest(IBTEST_CMD_TEST);
 }
@@ -2192,7 +2189,7 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
    const int queue_size = 2;
 
    if ((fBufferSize==0) || (fPool==0)) {
-      EOUT(("No suitable local memory for GPU tests"));
+      EOUT("No suitable local memory for GPU tests");
       return false;
    }
 
@@ -2235,14 +2232,14 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
                if (wqueue.SubmitWrite(write_ev[cnt], write_buf[cnt], GetPoolBuffer(pool_wbuf[cnt]), fBufferSize)) {
                   dowrite[cnt] = 2;
                } else {
-                  EOUT(("SubmitWrite failed"));
+                  EOUT("SubmitWrite failed");
                   ReleaseExclusive(pool_wbuf[cnt]);
                   dowrite[cnt] = 0;
                }
                break;
             case 2: // wait
                switch (wqueue.CheckComplete(write_ev[cnt])) {
-                  case -1: EOUT(("WaitWrite failed")); dowrite[cnt] = 0; break;
+                  case -1: EOUT("WaitWrite failed"); dowrite[cnt] = 0; break;
                   case 1: dowrite[cnt] = 1; ReleaseExclusive(pool_wbuf[cnt]); if (cnt1++>queue_size) write_rate.Packet(fBufferSize); break;
                   default: break;
                }
@@ -2258,14 +2255,14 @@ bool IbTestWorkerModule::ExecuteTestGPU(double* arguments)
                if (rqueue.SubmitRead(read_ev[cnt], read_buf[cnt], GetPoolBuffer(pool_rbuf[cnt]), fBufferSize)) {
                   doread[cnt] = 2;
                } else {
-                  EOUT(("SubmitRead failed"));
+                  EOUT("SubmitRead failed");
                   doread[cnt] = 0;
                   ReleaseExclusive(pool_rbuf[cnt]);
                }
                break;
             case 2: // wait
                switch (rqueue.CheckComplete(read_ev[cnt])) {
-                  case -1: EOUT(("WaitRead failed")); doread[cnt] = 0; break;
+                  case -1: EOUT("WaitRead failed"); doread[cnt] = 0; break;
                   case 1: doread[cnt] = 1; ReleaseExclusive(pool_rbuf[cnt]); if (cnt2++>queue_size) read_rate.Packet(fBufferSize); break;
                   default: break;
                }
@@ -2330,7 +2327,7 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    bool needmulticast = false; // (pattern==5) || (pattern==6) || (pattern==7);
 
    if (needmulticast && !IsMulticastSupported()) {
-      EOUT(("Transport not supports multicast"));
+      EOUT("Transport not supports multicast");
       return true;
    }
 
@@ -2348,12 +2345,12 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
             if (!MasterInitMulticast(1, 2048, 20, 50)) return false;
       } else {
          // all nodes, except first can receive (and send) multicast messages
-         DOUT3(("First create multicast groups on nodes [%d, %d]",1, NumNodes()-1));
+         DOUT3("First create multicast groups on nodes [%d, %d]",1, NumNodes()-1);
          if (!MasterInitMulticast(1, 2048, 4, 20, 1, NumNodes()-1)) return false;
          // first node will be able only to send multicasts
-         DOUT3(("Now create multicast sender on node 0"));
+         DOUT3("Now create multicast sender on node 0");
          if (!MasterInitMulticast(2, 2048, 4, 20, 0, 0)) return false;
-         DOUT3(("Now multicast is prepared"));
+         DOUT3("Now multicast is prepared");
       }
    }
 
@@ -2402,9 +2399,9 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
    // shift start/stop time for 3 seconds, when GPU is used - buffers registrations takes too much time
    if ((arguments[10]>0) || (arguments[11]>0)) { arguments[4]+=3.; arguments[5]+=3.; }
 
-   DOUT0(("====================================="));
-   DOUT0(("%s pattern:%d size:%d rate:%d send:%d recv:%d nodes:%d canskip:%s",
-         pattern_name, pattern, bufsize, datarate, max_sending_queue, max_receiving_queue, NumNodes(), DBOOL(allowed_to_skip)));
+   DOUT0("=====================================");
+   DOUT0("%s pattern:%d size:%d rate:%d send:%d recv:%d nodes:%d canskip:%s",
+         pattern_name, pattern, bufsize, datarate, max_sending_queue, max_receiving_queue, NumNodes(), DBOOL(allowed_to_skip));
 
    if (!MasterCommandRequest(IBTEST_CMD_ALLTOALL, arguments, sizeof(arguments))) return false;
 
@@ -2416,8 +2413,8 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
 
    if (!MasterCommandRequest(IBTEST_CMD_COLLECT, 0, 0, allres, setsize*sizeof(double))) return false;
 
-//   DOUT((1,"Results of all-to-all test"));
-   DOUT0(("  # |      Node |   Send |   Recv |   Start |S_Compl|R_Compl| Lost | Skip | Loop | Max ms | CPU  | Multicast "));
+//   DOUT((1,"Results of all-to-all test");
+   DOUT0("  # |      Node |   Send |   Recv |   Start |S_Compl|R_Compl| Lost | Skip | Loop | Max ms | CPU  | Multicast ");
    double sum1send(0.), sum2recv(0.), sum3multi(0.), sum4cpu(0.);
    int sumcnt = 0;
    bool isok = true;
@@ -2438,9 +2435,9 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
        else
           sprintf(cpuinfobuf,"%4.1f%s",allres[n*setsize+9]*100.,"%");
 
-       DOUT0(("%3d |%10s |%7.1f |%7.1f |%8.1f |%6.0f |%6.0f |%5.0f |%s |%5.2f |%7.2f |%s |%5.1f (%5.0f)",
+       DOUT0("%3d |%10s |%7.1f |%7.1f |%8.1f |%6.0f |%6.0f |%5.0f |%s |%5.2f |%7.2f |%s |%5.1f (%5.0f)",
              n, dabc::mgr()->GetNodeName(n).c_str(),
-           allres[n*setsize+0], allres[n*setsize+1], allres[n*setsize+2]*1e6, allres[n*setsize+3]*1e6, allres[n*setsize+13]*1e6, allres[n*setsize+4], sbuf1, allres[n*setsize+10]*1e6, allres[n*setsize+11]*1e3, cpuinfobuf, allres[n*setsize+8], allres[n*setsize+7]));
+           allres[n*setsize+0], allres[n*setsize+1], allres[n*setsize+2]*1e6, allres[n*setsize+3]*1e6, allres[n*setsize+13]*1e6, allres[n*setsize+4], sbuf1, allres[n*setsize+10]*1e6, allres[n*setsize+11]*1e3, cpuinfobuf, allres[n*setsize+8], allres[n*setsize+7]);
        totallost += allres[n*setsize+4];
        totalrecv += allres[n*setsize+5];
        totalmultilost += allres[n*setsize+6];
@@ -2457,11 +2454,11 @@ bool IbTestWorkerModule::MasterAllToAll(int full_pattern,
        totalskipped += allres[n*setsize+12];
        if (allres[n*setsize+12]>0.03) isskipok = false;
    }
-   DOUT0(("          Total |%7.1f |%7.1f | Skip: %4.0f/%4.0f = %3.1f percent",
-          sum1send, sum2recv, totallost, totalrecv, 100*(totalrecv>0. ? totallost/(totalrecv+totallost) : 0.)));
+   DOUT0("          Total |%7.1f |%7.1f | Skip: %4.0f/%4.0f = %3.1f percent",
+          sum1send, sum2recv, totallost, totalrecv, 100*(totalrecv>0. ? totallost/(totalrecv+totallost) : 0.));
    if (totalmulti>0)
-      DOUT0(("Multicast %4.0f/%4.0f = %7.6f%s  Rate = %4.1f",
-         totalmultilost, totalmulti, totalmultilost/totalmulti*100., "%", sum3multi/sumcnt));
+      DOUT0("Multicast %4.0f/%4.0f = %7.6f%s  Rate = %4.1f",
+         totalmultilost, totalmulti, totalmultilost/totalmulti*100., "%", sum3multi/sumcnt);
 
    MasterCleanup(0);
 
@@ -2531,7 +2528,7 @@ void IbTestWorkerModule::ProcessAskQueue()
       res = Pool_Check(resindx, reslid, resnode, 0.001);
 
       if (res<0) {
-           EOUT(("Error when Pool_Check"));
+           EOUT("Error when Pool_Check");
       } else
       if (res==1) { // start of receiving part
          ReleaseExclusive(resindx);
@@ -2586,7 +2583,7 @@ void IbTestWorkerModule::MasterCleanup(int mainnode)
 
    for (int n=0;n<NumNodes();n++)
       if (fActiveNodes[n]) {
-         // DOUT0(("   Node %d send %3.0f recv %3.0f", n, allres[n*setsize], allres[n*setsize + 1]));
+         // DOUT0("   Node %d send %3.0f recv %3.0f", n, allres[n*setsize], allres[n*setsize + 1]);
          sumsend  += allres[n*setsize];
          sumrecv  += allres[n*setsize + 1];
          summulti += allres[n*setsize + 2];
@@ -2594,13 +2591,13 @@ void IbTestWorkerModule::MasterCleanup(int mainnode)
             maxmultiqueue = lrint(allres[n*setsize + 2]);
       }
 
-   //       DOUT0(("Total Tm %5.1f Queue sizes %3.0f %3.0f", fStamping()-tm, sumsend, sumrecv));
+   //       DOUT0("Total Tm %5.1f Queue sizes %3.0f %3.0f", fStamping()-tm, sumsend, sumrecv);
 
    if (sumsend<0) {
-      EOUT(("!!! PROBLEM with QUEUES !!!!"));
+      EOUT("!!! PROBLEM with QUEUES !!!!");
       for (int lid=0; lid<NumLids(); lid++)
          for(int n=1;n<NumNodes();n++)
-            EOUT(("To node (%d,%d) send queue %d",lid, n, SendQueue(lid, n)));
+            EOUT("To node (%d,%d) send queue %d",lid, n, SendQueue(lid, n));
    }
 
    if ((sumsend!=0.) || (sumrecv!=0.)) {
@@ -2617,7 +2614,7 @@ void IbTestWorkerModule::MasterCleanup(int mainnode)
    // for syncronisation
    if (!MasterCommandRequest(IBTEST_CMD_TEST)) return;
 
-   DOUT0(("Queues are cleaned in %5.4f s", fStamping() - tm));
+   DOUT0("Queues are cleaned in %5.4f s", fStamping() - tm);
 }
 
 void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
@@ -2645,7 +2642,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
    needrecvinfo.resize(NumNodes(), true);
 
    WorkerSleep(0.001);
-//   DOUT((1,"Cleaned queues"));
+//   DOUT((1,"Cleaned queues");
 
    int res, resindx, resnode, reslid;
 
@@ -2674,9 +2671,9 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
          // process recv compl event
          int* mem = (int*) GetPoolBuffer(resindx);
          if ((reslid==0) && (*mem++==-7654321)) {
-            if (!needrecvinfo[resnode]) EOUT(("We do not want to recv info from node %d", resnode));
+            if (!needrecvinfo[resnode]) EOUT("We do not want to recv info from node %d", resnode);
 
-            DOUT3(("Get cleanup info from node %d", resnode));
+            DOUT3("Get cleanup info from node %d", resnode);
             for (int lid=0; lid<NumLids(); lid++)
                sendoper[lid][resnode] = *mem++;
             for (int lid=0; lid<NumLids(); lid++)
@@ -2696,7 +2693,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
          ReleaseExclusive(resindx);
       } else
       if (res<0) {
-         EOUT(("Problem in Pool_Check"));
+         EOUT("Problem in Pool_Check");
       }
 
       // prepare buffers (if necessary) to recieve info from other nodes
@@ -2706,7 +2703,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
             resindx = GetExclusiveIndx();
             if (resindx<0) break;
 
-            DOUT3(("Post buffer for recv cleanup info from node %d", node));
+            DOUT3("Post buffer for recv cleanup info from node %d", node);
             Pool_Post(false, resindx, 0, node);
          }
 
@@ -2740,7 +2737,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
          // inform other side that we repeat sending again
          *mem++ = issendagain ? 1 : 0;
 
-         DOUT3(("Send cleanup info to node %d", node));
+         DOUT3("Send cleanup info to node %d", node);
          Pool_Post(true, resindx, 0, node);
 
          // repeat operation after 0.1 sec to ensure that everything went well
@@ -2800,23 +2797,23 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
       is_ok = !isownpending && !isotherspending && !iscontrolpending;
 
       if (is_ok) {
-        DOUT2(("Cleanup finished after %5.4f s", fStamping()-starttm));
+        DOUT2("Cleanup finished after %5.4f s", fStamping()-starttm);
         break;
       }
    }
 
    if (!is_ok) {
-      EOUT(("Cleanup broken"));
+      EOUT("Cleanup broken");
       for (int lid=0;lid<NumLids(); lid++)
          for (int node=0;node<NumNodes();node++) {
             if ((node==Node()) || !fActiveNodes[node]) continue;
             if ((RecvQueue(lid,node)>0) || (SendQueue(lid,node)>0) || (sendoper[lid][node]>0) || (recvoper[lid][node]>0))
-               DOUT3(("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d sendoper = %d recvoper = %d",
-                  lid, node, RecvQueue(lid,node), SendQueue(lid,node), sendoper[lid][node], recvoper[lid][node]));
+               DOUT3("   Lid:%d Node:%d RecvQueue = %d SendQueue = %d sendoper = %d recvoper = %d",
+                  lid, node, RecvQueue(lid,node), SendQueue(lid,node), sendoper[lid][node], recvoper[lid][node]);
          }
    }
 
-//   DOUT0(("Stop cleanup mcast send = %d recv = %d", fMultiSendQueue, fMultiRecvQueue));
+//   DOUT0("Stop cleanup mcast send = %d recv = %d", fMultiSendQueue, fMultiRecvQueue);
 
    for (int lid=0;lid<NumLids();lid++) {
       delete[] sendoper[lid];
@@ -2827,7 +2824,7 @@ void IbTestWorkerModule::ProcessCleanup(int64_t* pars)
 void IbTestWorkerModule::PerformTimingTest()
 {
    for (int n=0; n<5; n++) {
-      DOUT0(("SLEEP 10 sec N=%d", n));
+      DOUT0("SLEEP 10 sec N=%d", n);
       WorkerSleep(10.);
       if (n%5 == 0)
          MasterTimeSync(true, 200, true);
@@ -2856,7 +2853,7 @@ void IbTestWorkerModule::PerformTestGPU()
 
 void IbTestWorkerModule::PerformSingleRouteTest()
 {
-   DOUT0(("This is small suite to test single route performance"));
+   DOUT0("This is small suite to test single route performance");
 
    MasterAllToAll(15, 128*1024, 10., 1000., 5, 10);
 
@@ -2873,7 +2870,7 @@ void IbTestWorkerModule::PerformNormalTest()
 {
 //   MasterTiming();
 
-//   DOUT0(("SLEEP 1 sec"));
+//   DOUT0("SLEEP 1 sec");
 //   WorkerSleep(1.);
 
    int outq = Cfg("TestOutputQueue").AsInt(5);
@@ -2908,7 +2905,7 @@ void IbTestWorkerModule::MainLoop()
       return;
    }
 
-   DOUT0(("Entering mainloop master: %s test = %s", DBOOL(IsMaster()), fTestKind.c_str()));
+   DOUT0("Entering mainloop master: %s test = %s", DBOOL(IsMaster()), fTestKind.c_str());
 
    // here we are doing our test sequence (like in former verbs tests)
 
@@ -2918,7 +2915,7 @@ void IbTestWorkerModule::MainLoop()
 
    if (fTestKind == "OnlyConnect") {
 
-      DOUT0(("----------------- TRY ONLY COMMAND CHANNEL ------------------- "));
+      DOUT0("----------------- TRY ONLY COMMAND CHANNEL ------------------- ");
 
       CalibrateCommandsChannel(30);
 
@@ -2929,24 +2926,24 @@ void IbTestWorkerModule::MainLoop()
    }
 
 
-   DOUT0(("----------------- TRY CONN ------------------- "));
+   DOUT0("----------------- TRY CONN ------------------- ");
 
    MasterConnectQPs();
 
-   DOUT0(("----------------- DID CONN !!! ------------------- "));
+   DOUT0("----------------- DID CONN !!! ------------------- ");
 
 
    MasterTimeSync(true, 200, false, fTestKind == "DSimple");
 
    if ((fTestKind != "Simple") && (fTestKind != "DSimple")) {
 
-      DOUT0(("SLEEP 10 sec"));
+      DOUT0("SLEEP 10 sec");
       WorkerSleep(10.);
 
       MasterTimeSync(true, 200, true);
 
       if (fTestKind == "SimpleSync") {
-         DOUT0(("Sleep 10 sec more before end"));
+         DOUT0("Sleep 10 sec more before end");
          WorkerSleep(10.);
       } else
       if (fTestKind == "TimeSync") {

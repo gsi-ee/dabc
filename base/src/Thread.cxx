@@ -47,7 +47,7 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
 
 unsigned dabc::Thread::fThreadInstances = 0;
 
-dabc::Thread::Thread(Reference parent, const char* name, unsigned numqueus) :
+dabc::Thread::Thread(Reference parent, const std::string& name, unsigned numqueus) :
    Object(parent, name),
    PosixThread(),
    Runnable(),
@@ -75,9 +75,9 @@ dabc::Thread::Thread(Reference parent, const char* name, unsigned numqueus) :
      }
    }
 
-   DOUT2(("~~~~~~~~~~~~~~~~~~~~~~~ Thread %s %p created", GetName(), this));
+   DOUT2("~~~~~~~~~~~~~~~~~~~~~~~ Thread %s %p created", GetName(), this);
 
-   fWorkers.push_back(new WorkerRec(0)); // exclude id==0
+   fWorkers.push_back(new WorkerRec(0,0)); // exclude id==0
 
    fExec = new ExecWorker;
    //fExec->SetLogging(true);
@@ -85,25 +85,25 @@ dabc::Thread::Thread(Reference parent, const char* name, unsigned numqueus) :
    fExec->fThreadMutex = ThreadMutex();
    fExec->fWorkerId = fWorkers.size();
    fExec->fWorkerActive = true;
-   fWorkers.push_back(new WorkerRec(fExec));
+   fWorkers.push_back(new WorkerRec(fExec,0));
 
 //   SetLogging(true);
 
-   DOUT2(("---------------- THRD %s Constructed REFCNT %u------------------ ", GetName(), fObjectRefCnt));
+   DOUT2("---------------- THRD %s Constructed REFCNT %u------------------ ", GetName(), fObjectRefCnt);
 }
 
 dabc::Thread::~Thread()
 {
    // !!!!!!!! Do not forgot stopping thread in destructors of inherited classes too  !!!!!
 
-   DOUT2(("~~~~~~~~~~~~~~ Start thread %p %s destructor %s", this, GetName(), DBOOL(IsItself())));
+   DOUT2("~~~~~~~~~~~~~~ Start thread %p %s destructor %s", this, GetName(), DBOOL(IsItself()));
 
    // we stop thread in destructor, in all inherited classes stop also should be called
    // otherwise one get problem here if stop will use inherited methods which is no longer available
 
    Stop(1.);
 
-   DOUT2(("thread %s stopped", GetName()));
+   DOUT2("thread %s stopped", GetName());
 
    {
       LockGuard lock(ObjectMutex());
@@ -112,7 +112,7 @@ dabc::Thread::~Thread()
       if (fDidDecRefCnt) fObjectRefCnt++;
    }
 
-   DOUT2(("Destroy EXEC worker %p", fExec));
+   DOUT2("Destroy EXEC worker %p", fExec);
    fExec->ClearThreadRef();
    dabc::Object::Destroy(fExec);
    fExec = 0;
@@ -123,7 +123,7 @@ dabc::Thread::~Thread()
 
    LockGuard guard(ThreadMutex());
    if (fState==stError) {
-      EOUT(("Kill thread in error state, nothing better can be done"));
+      EOUT("Kill thread in error state, nothing better can be done");
       Kill();
       fState = stStopped;
    }
@@ -135,21 +135,26 @@ dabc::Thread::~Thread()
       totalsize+=fQueues[n].Size();
       for (unsigned k=0; k<fQueues[n].Size(); k++) {
          EventId evnt = fQueues[n].Item(k);
-         DOUT0(("THRD %s Queue:%u Item:%u Event:%s", GetName(), n, k, evnt.asstring().c_str()));
+         DOUT0("THRD %s Queue:%u Item:%u Event:%s", GetName(), n, k, evnt.asstring().c_str());
       }
    }
    if (totalsize>0)
-      EOUT(("THRD %s %u events are not processed", GetName(), totalsize));
+      EOUT("THRD %s %u events are not processed", GetName(), totalsize);
 #endif
 
    delete [] fQueues; fQueues = 0;
    fNumQueues = 0;
 
-   DOUT2(("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ THRD %s %p destroyed", GetName(), this));
+   DOUT2("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ THRD %s %p destroyed", GetName(), this);
 
    fThreadInstances--;
 }
 
+
+void dabc::Thread::IncWorkerFiredEvents(Worker* work)
+{
+   work->fWorkerFiredEvents++;
+}
 
 unsigned dabc::Thread::_TotalNumberOfEvents()
 {
@@ -173,7 +178,7 @@ void dabc::Thread::ProcessNoneEvent()
 
    fCheckThrdCleanup = false;
 
-   DOUT3(("THREAD %s check cleanup", GetName()));
+   DOUT3("THREAD %s check cleanup", GetName());
 
    // here we doing cleanup when no any events there
 
@@ -185,17 +190,17 @@ void dabc::Thread::ProcessNoneEvent()
       fWorkers[new_size] = 0;
    }
 
-   DOUT3(("THREAD %s oldsize %u newsize %u", GetName(), fWorkers.size(), new_size));
+   DOUT3("THREAD %s oldsize %u newsize %u", GetName(), fWorkers.size(), new_size);
 
    if (new_size==fWorkers.size()) return;
 
    fWorkers.resize(new_size);
-   DOUT3(("Thrd:%s Shrink processors size to %u normal state %s refcnt %d", GetName(), new_size, DBOOL(_IsNormalState()), fObjectRefCnt));
+   DOUT3("Thrd:%s Shrink processors size to %u normal state %s refcnt %d", GetName(), new_size, DBOOL(_IsNormalState()), fObjectRefCnt);
 
    // we check that object is in normal state,
    // otherwise it means that destryment is already started and will be done in other means
    if ((new_size==2) && _IsNormalState()) {
-      DOUT3(("THREAD %s generate cleanup", GetName()));
+      DOUT3("THREAD %s generate cleanup", GetName());
       _Fire(EventId(evntCleanupThrd, 0, 0), priorityLowest);
    }
 }
@@ -232,11 +237,11 @@ bool dabc::Thread::_GetNextEvent(dabc::EventId& evnt)
 }
 
 
-bool dabc::Thread::CompatibleClass(const char* clname) const
+bool dabc::Thread::CompatibleClass(const std::string& clname) const
 {
-   if ((clname==0) || (strlen(clname)==0)) return true;
+   if (clname.empty()) return true;
 
-   return strcmp(clname, typeThread) == 0;
+   return clname == typeThread;
 }
 
 
@@ -247,37 +252,37 @@ void* dabc::Thread::MainLoop()
    EventId evid;
    double tmout;
 
-   DOUT3(("*** Thrd:%s Starting MainLoop", GetName()));
+   DOUT3("*** Thrd:%s Starting MainLoop", GetName());
 
    while (fThrdWorking) {
 
-      DOUT5(("*** Thrd:%s Checking timeouts", GetName()));
+      DOUT5("*** Thrd:%s Checking timeouts", GetName());
 
       tmout = CheckTimeouts();
 
-      DOUT5(("*** Thrd:%s Check timeouts %5.3f", GetName(), tmout));
+      DOUT5("*** Thrd:%s Check timeouts %5.3f", GetName(), tmout);
 
       if (WaitEvent(evid, tmout)) {
 
-         DOUT5(("*** Thrd:%s GetEvent %s", GetName(), evid.asstring().c_str()));
+         DOUT5("*** Thrd:%s GetEvent %s", GetName(), evid.asstring().c_str());
 
          ProcessEvent(evid);
 
-         DOUT5(("*** Thrd:%s DidEvent %s", GetName(), evid.asstring().c_str()));
+         DOUT5("*** Thrd:%s DidEvent %s", GetName(), evid.asstring().c_str());
       } else
          ProcessNoneEvent();
 
       if (fExplicitLoop!=0) RunExplicitLoop();
    }
 
-   DOUT3(("*** Thrd:%s Leaving MainLoop", GetName()));
+   DOUT3("*** Thrd:%s Leaving MainLoop", GetName());
 
    return 0;
 }
 
 bool dabc::Thread::SingleLoop(unsigned workerid, double tmout_user)
 {
-   DOUT5(("*** Thrd:%s SingleLoop user_tmout %5.3f", GetName(), tmout_user));
+   DOUT5("*** Thrd:%s SingleLoop user_tmout %5.3f", GetName(), tmout_user);
 
    // check situation that worker is halted and should brake its execution
    // if necessary, worker should fire exception
@@ -302,12 +307,12 @@ bool dabc::Thread::SingleLoop(unsigned workerid, double tmout_user)
 void dabc::Thread::RunEventLoop(double tm)
 {
    if (!IsItself()) {
-      EOUT(("Cannot run thread %s event loop outer own thread", GetName()));
+      EOUT("Cannot run thread %s event loop outer own thread", GetName());
       return;
    }
 
    if (tm<0) {
-      EOUT(("negative (endless) timeout specified - set default 0 sec (single event)"));
+      EOUT("negative (endless) timeout specified - set default 0 sec (single event)");
       tm = 0;
    }
 
@@ -339,22 +344,22 @@ bool dabc::Thread::Start(double timeout_sec, bool real_thread)
          case stRunning:
             return true;
          case stError:
-            EOUT(("Restart from error state, may be dangerous"));
+            EOUT("Restart from error state, may be dangerous");
             needkill = fRealThrd;
             fRealThrd = real_thread;
             break;
          case stChanging:
-            EOUT(("Status is changing from other thread. Not supported"));
+            EOUT("Status is changing from other thread. Not supported");
             return false;
          default:
-            EOUT(("Forgot something???"));
+            EOUT("Forgot something???");
             break;
       }
 
       fState = stChanging;
    }
 
-   DOUT3(("Thread %s starting kill:%s", GetName(), DBOOL(needkill)));
+   DOUT3("Thread %s starting kill:%s", GetName(), DBOOL(needkill));
 
    if (needkill) PosixThread::Kill();
 
@@ -367,7 +372,7 @@ bool dabc::Thread::Start(double timeout_sec, bool real_thread)
       PosixThread::Start(this);
 
       if (fExec==0) {
-         EOUT(("Start thread without EXEC???"));
+         EOUT("Start thread without EXEC???");
          exit(765);
       }
       res = fExec->Execute("ConfirmStart", timeout_sec) == cmd_true;
@@ -382,7 +387,7 @@ bool dabc::Thread::Start(double timeout_sec, bool real_thread)
 
 void dabc::Thread::RunnableCancelled()
 {
-   DOUT3(("Thread cancelled %s", GetName()));
+   DOUT3("Thread cancelled %s", GetName());
 
    LockGuard guard(ThreadMutex());
 
@@ -405,13 +410,13 @@ bool dabc::Thread::Stop(double timeout_sec)
          case stStopped:
             return true;
          case stError:
-            EOUT(("Stop from error state, do nothing"));
+            EOUT("Stop from error state, do nothing");
             return true;
          case stChanging:
-            EOUT(("State is changing from other thread. Not supported"));
+            EOUT("State is changing from other thread. Not supported");
             return false;
          default:
-            EOUT(("Forgot something???"));
+            EOUT("Forgot something???");
             return false;
       }
 
@@ -423,7 +428,7 @@ bool dabc::Thread::Stop(double timeout_sec)
 
    bool res(false);
 
-   DOUT3(("Start doing stop"));
+   DOUT3("Start doing stop");
 
    if (!needstop) {
 
@@ -447,7 +452,7 @@ bool dabc::Thread::Stop(double timeout_sec)
          if (cnt++>1000) dabc::Sleep(0.001);
 
          if ((spent_time > timeout_sec * 0.7) && !did_cancel) {
-            DOUT1(("Cancel thread %s", GetName()));
+            DOUT1("Cancel thread %s", GetName());
             PosixThread::Cancel();
             did_cancel = true;
             cnt = 0;
@@ -458,7 +463,7 @@ bool dabc::Thread::Stop(double timeout_sec)
 
       } while ( (spent_time = tm1.SpentTillNow()) < timeout_sec);
 
-      if (!res) EOUT(("Cannot wait for join while stop was not succeeded"));
+      if (!res) EOUT("Cannot wait for join while stop was not succeeded");
           else PosixThread::Join();
    }
 
@@ -482,12 +487,12 @@ bool dabc::Thread::Sync(double timeout_sec)
 bool dabc::Thread::SetExplicitLoop(Worker* proc)
 {
    if (!IsItself()) {
-      EOUT(("Call from other thread - absolutely wrong"));
+      EOUT("Call from other thread - absolutely wrong");
       exit(113);
    }
 
    if (fExplicitLoop!=0)
-      EOUT(("Explicit loop is already set"));
+      EOUT("Explicit loop is already set");
    else
       fExplicitLoop = proc->fWorkerId;
 
@@ -498,7 +503,7 @@ void dabc::Thread::RunExplicitLoop()
 {
    if ((fExplicitLoop==0) || (fExplicitLoop>=fWorkers.size())) return;
 
-   DOUT4(("Enter RunExplicitMainLoop"));
+   DOUT4("Enter RunExplicitMainLoop");
 
    // first check that worker want to be halted, when do not start explicit loop at all
    if (fWorkers[fExplicitLoop]->doinghalt) return;
@@ -509,24 +514,18 @@ void dabc::Thread::RunExplicitLoop()
 
      fWorkers[fExplicitLoop]->work->DoWorkerMainLoop();
 
-  } catch (dabc::StopException e) {
-
-     DOUT2(("Worker %u stopped via exception", fExplicitLoop));
-
-  } catch (dabc::TimeoutException e) {
-
-     DOUT2(("Worker %u stopped via timeout", fExplicitLoop));
-
-  } catch(dabc::Exception e) {
-     EOUT(("Exception %s in processor %u", e.what(), fExplicitLoop));
+  } catch (dabc::Exception e) {
+     if (e.IsStop()) DOUT2("Worker %u stopped via exception", fExplicitLoop); else
+     if (e.IsTimeout()) DOUT2("Worker %u stopped via timeout", fExplicitLoop); else
+     EOUT("Exception %s in processor %u", e.what(), fExplicitLoop);
   } catch(...) {
-     EOUT(("Exception UNCKNOWN in processor %u", fExplicitLoop));
+     EOUT("Exception UNCKNOWN in processor %u", fExplicitLoop);
   }
 
   // we should call postloop in any case
   fWorkers[fExplicitLoop]->work->DoWorkerAfterMainLoop();
 
-  DOUT5(("Exit from RunExplicitMainLoop"));
+  DOUT5("Exit from RunExplicitMainLoop");
 
   fExplicitLoop = 0;
 }
@@ -541,12 +540,12 @@ void dabc::Thread::FireDoNothingEvent()
 
 int dabc::Thread::ExecuteThreadCommand(Command cmd)
 {
-   DOUT2(("Thread %s  Execute command %s", GetName(), cmd.GetName()));
+   DOUT2("Thread %s  Execute command %s", GetName(), cmd.GetName());
 
    int res = cmd_true;
 
    if (cmd.IsName("ConfirmStart")) {
-      DOUT2(("THRD:%s did confirm start", GetName()));
+      DOUT2("THRD:%s did confirm start", GetName());
    } else
    if (cmd.IsName("ConfirmSync")) {
    } else
@@ -555,13 +554,13 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
       Reference ref = cmd.GetRef("Worker");
       Worker* worker = (Worker*) ref();
 
-      DOUT2(("AddWorker %p in thrd %p", worker, this));
+      DOUT2("AddWorker %p in thrd %p", worker, this);
 
       if (worker==0) return cmd_false;
 
       if ((worker->fThread() != this) ||
           (worker->fThreadMutex != ThreadMutex())) {
-         EOUT(("Something went wrong - CRASH"));
+         EOUT("Something went wrong - CRASH");
          ref.Destroy();
          exit(765);
       }
@@ -571,20 +570,20 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 
          // we can use workers array outside mutex (as long as we are inside thread)
          // but we shoould lock mutex when we would like to change workers vector
-         fWorkers.push_back(new WorkerRec(worker));
+         fWorkers.push_back(new WorkerRec(worker, worker->fAddon()));
 
          // from this moment on processor is fully functional
          worker->fWorkerId = fWorkers.size()-1;
 
          worker->fWorkerActive = true;
 
-         DOUT2(("----------------THRD %s WORKER %p %s  PROCESSORID %u REFCNT %u------------------ ", GetName(), worker, worker->GetName(), worker->fWorkerId, fObjectRefCnt));
+         DOUT2("----------------THRD %s WORKER %p %s  PROCESSORID %u REFCNT %u------------------ ", GetName(), worker, worker->GetName(), worker->fWorkerId, fObjectRefCnt);
 
       }
 
-      WorkersNumberChanged();
+      WorkersSetChanged();
 
-      worker->OnThreadAssigned();
+      worker->InformThreadAssigned();
 
       //cmd->Print(1, "DIDjob");
 
@@ -592,14 +591,14 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
 
    if (cmd.IsName("InvokeWorkerDestroy")) {
 
-      DOUT2(("THRD:%s Request to destroy worker id = %u", GetName(), cmd.GetUInt("WorkerId")));
+      DOUT2("THRD:%s Request to destroy worker id = %u", GetName(), cmd.GetUInt("WorkerId"));
 
       return CheckWorkerCanBeHalted(cmd.GetUInt("WorkerId"), actDestroy, cmd);
    } else
 
    if (cmd.IsName("HaltWorker")) {
 
-      DOUT2(("THRD:%s Request to halt worker", GetName()));
+      DOUT2("THRD:%s Request to halt worker", GetName());
 
       return CheckWorkerCanBeHalted(cmd.GetUInt("WorkerId"), actHalt, cmd);
    } else
@@ -614,7 +613,7 @@ void dabc::Thread::ChangeRecursion(unsigned id, bool inc)
 {
 #ifdef DABC_EXTRA_CHECKS
    if (!IsItself()) {
-      EOUT(("ALARM, recursion changed not from thread itself"));
+      EOUT("ALARM, recursion changed not from thread itself");
    }
 #endif
 
@@ -632,10 +631,10 @@ void dabc::Thread::ChangeRecursion(unsigned id, bool inc)
 
 int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command cmd)
 {
-   DOUT2(("THRD:%s CheckWorkerCanBeHalted %u", GetName(), id));
+   DOUT2("THRD:%s CheckWorkerCanBeHalted %u", GetName(), id);
 
    if ((id>=fWorkers.size()) || (fWorkers[id]->work==0)) {
-      DOUT2(("THRD:%s Worker %u no longer exists", GetName(), id));
+      DOUT2("THRD:%s Worker %u no longer exists", GetName(), id);
 
       return cmd_false;
    }
@@ -654,15 +653,15 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
       balance = fWorkers[id]->work->fWorkerFiredEvents - fWorkers[id]->processed;
    }
 
-   DOUT2(("THRD:%s CheckWorkerCanBeHalted %u doinghalt = %u", GetName(), id, fWorkers[id]->doinghalt));
+   DOUT2("THRD:%s CheckWorkerCanBeHalted %u doinghalt = %u", GetName(), id, fWorkers[id]->doinghalt);
 
    if (fWorkers[id]->doinghalt==0) return cmd_false;
 
    if ((fWorkers[id]->recursion > 0)  || (balance > 0)) {
-      DOUT2(("THRD:%s ++++++++++++++++++++++ worker %p %s %s event balance %u fired:%u processed:%u recursion %d",
+      DOUT2("THRD:%s ++++++++++++++++++++++ worker %p %s %s event balance %u fired:%u processed:%u recursion %d",
             GetName(), fWorkers[id]->work, fWorkers[id]->work->GetName(), fWorkers[id]->work->ClassName(),
             balance, fWorkers[id]->work->fWorkerFiredEvents, fWorkers[id]->processed,
-            fWorkers[id]->recursion));
+            fWorkers[id]->recursion);
       if (!cmd.null()) fWorkers[id]->cmds.Push(cmd);
       return cmd_postponed;
    }
@@ -677,21 +676,21 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
       rec = fWorkers[id];
 
-      fWorkers[id] = new WorkerRec(0);
+      fWorkers[id] = new WorkerRec(0, 0);
    }
 
-   DOUT2(("THRD:%s CheckWorkerCanBeHalted %u rec = %p worker = %p", GetName(), id, rec, rec ? rec->work : 0));
+   DOUT2("THRD:%s CheckWorkerCanBeHalted %u rec = %p worker = %p", GetName(), id, rec, rec ? rec->work : 0);
 
    // FIXME: this must be legitime method to destroy any worker
    //        one can remove it from workers vector
 
    // before worker will be really destroyed indicate to the world that processor is disappear
-   WorkersNumberChanged();
+   WorkersSetChanged();
 
    if (rec!=0) {
 
       if (rec->work && rec->work->IsLogging())
-         DOUT0(("Trying to destroy worker %p id %u via thread %s", rec->work, id, GetName()));
+         DOUT0("Trying to destroy worker %p id %u via thread %s", rec->work, id, GetName());
 
       // true indicates that object should be destroyed immediately
       if (rec->doinghalt & actDestroy) {
@@ -707,7 +706,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
    LockGuard guard(ThreadMutex());
 
-   DOUT2(("THRD:%s specify cleanup", GetName()));
+   DOUT2("THRD:%s specify cleanup", GetName());
 
    // indicate for thread itself that it can be optimized
    fCheckThrdCleanup = true;
@@ -718,7 +717,7 @@ int dabc::Thread::CheckWorkerCanBeHalted(unsigned id, unsigned request, Command 
 
 void dabc::Thread::_Fire(const EventId& arg, int nq)
 {
-   DOUT3(("Thrd: %p %s Fire event code:%u item:%u arg:%u nq:%d NumQueues:%u", this, GetName(), arg.GetCode(), arg.GetItem(), arg.GetArg(), nq, fNumQueues));
+   DOUT3("Thrd: %p %s Fire event code:%u item:%u arg:%u nq:%d NumQueues:%u", this, GetName(), arg.GetCode(), arg.GetItem(), arg.GetArg(), nq, fNumQueues);
 
    _PushEvent(arg, nq);
    fWorkCond._DoFire();
@@ -729,9 +728,9 @@ void dabc::Thread::_Fire(const EventId& arg, int nq)
    for (int n=0;n<fNumQueues;n++) sum+=fQueues[n].Size();
    if (sum!=fWorkCond._FiredCounter()) {
       dabc::SetDebugLevel(5);
-      DOUT5(("Thrd %s Error sum1 %ld cond %ld  event %s",
+      DOUT5("Thrd %s Error sum1 %ld cond %ld  event %s",
             GetName(), sum, fWorkCond._FiredCounter(),
-            arg.asstring().c_str()));
+            arg.asstring().c_str());
    }
 #endif
 
@@ -742,16 +741,16 @@ bool dabc::Thread::WaitEvent(EventId& evid, double tmout)
    LockGuard lock(ThreadMutex());
 
 //  if (GetFlag(flLogging))
-//      DOUT0(("*** Thrd:%s Wait Event %5.1f cond_cnt %ld q0:%u q1:%u q2:%u",
+//      DOUT0("*** Thrd:%s Wait Event %5.1f cond_cnt %ld q0:%u q1:%u q2:%u",
 //         GetName(), tmout, fWorkCond._FiredCounter(),
-//         fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size()));
+//         fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size());
 
    if (fWorkCond._DoWait(tmout)) {
-//      if (GetFlag(flLogging)) DOUT0(("*** Thrd:%s return event", GetName()));
+//      if (GetFlag(flLogging)) DOUT0("*** Thrd:%s return event", GetName());
       return _GetNextEvent(evid);
    }
 
-//   if (GetFlag(flLogging)) DOUT0(("*** Thrd:%s Wait timedout", GetName()));
+//   if (GetFlag(flLogging)) DOUT0("*** Thrd:%s Wait timedout", GetName());
 
    return false;
 }
@@ -761,37 +760,40 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
 {
    uint16_t itemid = evnt.GetItem();
 
-   DOUT5(("*** Thrd:%s Event:%s  q0:%u q1:%u q2:%u",
+   DOUT5("*** Thrd:%s Event:%s  q0:%u q1:%u q2:%u",
          GetName(), evnt.asstring().c_str(),
-         fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size()));
+         fQueues[0].Size(), fQueues[1].Size(), fQueues[2].Size());
 
    if (itemid>0) {
       if (itemid>=fWorkers.size()) {
-         EOUT(("Thrd:%p %s FALSE worker id:%u size:%u evnt:%s - ignore", this, GetName(), itemid, fWorkers.size(), evnt.asstring().c_str()));
+         EOUT("Thrd:%p %s FALSE worker id:%u size:%u evnt:%s - ignore", this, GetName(), itemid, fWorkers.size(), evnt.asstring().c_str());
          return;
       }
 
       Worker* worker = fWorkers[itemid]->work;
 
-      DOUT3(("*** Thrd:%p proc:%p itemid:%u event:%u doinghalt:%u", this, worker, itemid, evnt.GetCode(), fWorkers[itemid]->doinghalt));
+      DOUT3("*** Thrd:%p proc:%p itemid:%u event:%u doinghalt:%u", this, worker, itemid, evnt.GetCode(), fWorkers[itemid]->doinghalt);
 
       if (worker==0) return;
 
       fWorkers[itemid]->processed++;
 
       if (worker==dabc::mgr())
-         DOUT2(("Process manager event %s fired:%u processed: %u", evnt.asstring().c_str(), worker->fWorkerFiredEvents, fWorkers[itemid]->processed));
+         DOUT2("Process manager event %s fired:%u processed: %u", evnt.asstring().c_str(), worker->fWorkerFiredEvents, fWorkers[itemid]->processed);
 
 
       try {
 
-         DOUT3(("*** Thrd:%p proc:%s event:%u", this, worker->GetName(), evnt.GetCode()));
+         DOUT3("*** Thrd:%p proc:%s event:%u", this, worker->GetName(), evnt.GetCode());
 
          IntGuard iguard(fWorkers[itemid]->recursion);
 
-         if (evnt.GetCode() < Worker::evntFirstSystem)
-            worker->ProcessCoreEvent(evnt);
-         else
+         if (evnt.GetCode() < Worker::evntFirstSystem) {
+            if (evnt.GetCode() < Worker::evntFirstAddOn)
+               worker->ProcessCoreEvent(evnt);
+            else
+               worker->fAddon()->ProcessEvent(evnt);
+         } else
             worker->ProcessEvent(evnt);
 
       } catch (...) {
@@ -809,51 +811,42 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
    } else
 
    switch (evnt.GetCode()) {
-      case evntCheckTmout: {
+      case evntCheckTmoutWorker: {
 
          if (evnt.GetArg() >= fWorkers.size()) {
-            DOUT3(("evntCheckTmout - mismatch in processor id:%u sz:%u ", evnt.GetArg(), fWorkers.size()));
+            DOUT3("evntCheckTmoutWorker - mismatch in processor id:%u sz:%u ", evnt.GetArg(), fWorkers.size());
             break;
          }
 
          WorkerRec* rec = fWorkers[evnt.GetArg()];
          if (rec->work==0) {
-            DOUT3(("Worker no longer exists", evnt.GetArg()));
+            DOUT3("Worker no longer exists", evnt.GetArg());
             break;
          }
 
-         TimeStamp mark;
-         double interv(0);
-
-         {
-            LockGuard lock(ThreadMutex());
-
-            if (!rec->tmout_active) break;
-            mark = rec->tmout_mark;
-            interv = rec->tmout_interv;
-            rec->tmout_active = false;
-         }
-
-         if (interv<0) {
-            rec->next_fire.Reset();
-            rec->prev_fire.Reset();
-         } else {
-            // if one activate timeout with positive interval, emulate
-            // that one already has previous call to ProcessTimeout
-            if (rec->prev_fire.null() && (interv>0))
-               rec->prev_fire = mark;
-
-            mark+=interv;
-
-            // set activation time only in the case if no other active timeout was used
-            if (rec->next_fire.null() || (mark < rec->next_fire)) {
-                rec->next_fire = mark;
-                CheckTimeouts(true);
-            }
-         }
+         if (rec->tmout_worker.CheckEvent(ThreadMutex())) CheckTimeouts(true);
 
          break;
       }
+
+      case evntCheckTmoutAddon: {
+
+         if (evnt.GetArg() >= fWorkers.size()) {
+            DOUT3("evntCheckTmoutWorker - mismatch in processor id:%u sz:%u ", evnt.GetArg(), fWorkers.size());
+            break;
+         }
+
+         WorkerRec* rec = fWorkers[evnt.GetArg()];
+         if (rec->work==0) {
+            DOUT3("Worker no longer exists", evnt.GetArg());
+            break;
+         }
+
+         if (rec->tmout_addon.CheckEvent(ThreadMutex())) CheckTimeouts(true);
+
+         break;
+      }
+
 
       case evntCleanupThrd: {
 
@@ -872,10 +865,10 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
             // this is situation when cleanup was started by DecReference while
             // there is no more references on the thread and one can destroy thread
             // one need to ensure that no more other events existing
-            DOUT3(("Cleanup running when more than 2 workers in the thread %s - something strange", GetName()));
+            DOUT3("Cleanup running when more than 2 workers in the thread %s - something strange", GetName());
          }
 
-         DOUT3(("THRD:%s Num workers = %u totalsize %u", GetName(), fWorkers.size(), totalsize));
+         DOUT3("THRD:%s Num workers = %u totalsize %u", GetName(), fWorkers.size(), totalsize);
 
          if ((totalsize>0) && (evnt.GetArg() % 100 <20)) {
             LockGuard lock(ThreadMutex());
@@ -883,17 +876,17 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          } else {
 
             if (totalsize>0)
-               EOUT(("THRD %s %u events are not processed", GetName(), totalsize));
+               EOUT("THRD %s %u events are not processed", GetName(), totalsize);
 
             if (dabc::mgr.null()) {
                printf("Cannot normally destroy thread %s while manager reference is already empty\n", GetName());
                fThrdWorking = false;
             } else
             if (!dabc::mgr()->DestroyObject(this)) {
-               EOUT(("Thread cannot be normally destroyed, just leave main loop"));
+               EOUT("Thread cannot be normally destroyed, just leave main loop");
                fThrdWorking = false;
             } else {
-               DOUT3((" -------- THRD %s refcnt %u DESTROYMENT GOES TO MANAGER", GetName(), fObjectRefCnt));
+               DOUT3(" -------- THRD %s refcnt %u DESTROYMENT GOES TO MANAGER", GetName(), fObjectRefCnt);
             }
          }
 
@@ -904,7 +897,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          break;
 
       case evntStopThrd: {
-         DOUT3(("Thread %s get stop event", GetName()));
+         DOUT3("Thread %s get stop event", GetName());
          fThrdWorking = false;
          break;
       }
@@ -914,7 +907,7 @@ void dabc::Thread::ProcessEvent(const EventId& evnt)
          break;
    }
 
-   DOUT5(("Thrd:%s Item:%u Event:%u arg:%u done", GetName(), itemid, evnt.GetCode(), evnt.GetArg()));
+   DOUT5("Thrd:%s Item:%u Event:%u arg:%u done", GetName(), itemid, evnt.GetCode(), evnt.GetArg());
 }
 
 
@@ -945,6 +938,34 @@ bool dabc::Thread::HaltWorker(Worker* work)
    return fExec->Execute(cmd);
 }
 
+
+void dabc::Thread::WorkerAddonChanged(Worker* work)
+{
+   if (work==0) return;
+
+   if (!IsItself()) {
+      EOUT("Not allowed from other thread");
+      exit(333);
+   }
+
+   if (work->WorkerId() >= fWorkers.size()) {
+      EOUT("Missmatch of workers IDs");
+      exit(333);
+   }
+
+   WorkerRec* rec = fWorkers[work->WorkerId()];
+
+   if (rec->work != work) {
+      EOUT("Missmatch of worker");
+      exit(444);
+   }
+
+   rec->addon = work->fAddon();
+
+   WorkersSetChanged();
+}
+
+
 bool dabc::Thread::InvokeWorkerDestroy(Worker* work)
 {
    // TODO: one must be sure that command is executed,
@@ -956,7 +977,7 @@ bool dabc::Thread::InvokeWorkerDestroy(Worker* work)
    Command cmd("InvokeWorkerDestroy");
    cmd.SetUInt("WorkerId", work->fWorkerId);
 
-   DOUT4(("Exec %p Invoke to destroy worker %p %s", fExec, work, work->GetName()));
+   DOUT4("Exec %p Invoke to destroy worker %p %s", fExec, work, work->GetName());
 
    return fExec->Submit(cmd);
 }
@@ -971,44 +992,32 @@ double dabc::Thread::CheckTimeouts(bool forcerecheck)
 
    if (!forcerecheck) {
       if (fNextTimeout.null()) return -1.;
-      now = dabc::Now();
+      now.GetNow();
       double dist = fNextTimeout - now;
       if (dist>0.) return dist;
    } else
-      now = dabc::Now();
+      now.GetNow();
 
-   double min_tmout = -1.;
+   double min_tmout(-1.), last_diff(0.);
 
    for (unsigned n=1;n<fWorkers.size();n++) {
       WorkerRec* rec = fWorkers[n];
       if ((rec==0) || (rec->work==0)) continue;
 
-      if (rec->next_fire.null()) continue;
+      if (rec->tmout_worker.CheckNextProcess(now, min_tmout, last_diff)) {
 
-      double dist = rec->next_fire - now;
+         double dist = rec->work->ProcessTimeout(last_diff);
 
-      if (dist<0.) {
-         double last_diff = 0;
-         if (!rec->prev_fire.null())
-            last_diff = now - rec->prev_fire;
-
-         DOUT5(("*** Thrd:%s Process timeout of processor %p", GetName(), rec->work));
-
-         dist = rec->work->ProcessTimeout(last_diff);
-
-         DOUT5(("*** Thrd:%s Process timeout of processor %p done", GetName(), rec->work));
-
-         if (dist>=0.) {
-            rec->prev_fire = now;
-            rec->next_fire = now + dist;
-         } else {
-            rec->prev_fire.Reset();
-            rec->next_fire.Reset();
-         }
+         rec->tmout_worker.SetNextFire(now, dist, min_tmout);
       }
 
-      if (dist>=0.)
-         if ((min_tmout<0.) || (dist<min_tmout))  min_tmout = dist;
+      if (rec->tmout_addon.CheckNextProcess(now, min_tmout, last_diff)) {
+
+         double dist = rec->work->ProcessAddonTimeout(last_diff);
+
+         rec->tmout_addon.SetNextFire(now, dist, min_tmout);
+      }
+
    }
 
    if (min_tmout>=0.)
@@ -1021,7 +1030,7 @@ double dabc::Thread::CheckTimeouts(bool forcerecheck)
 
 void dabc::Thread::ObjectCleanup()
 {
-   DOUT3(("---- THRD %s ObjectCleanup refcnt %u", GetName(), fObjectRefCnt));
+   DOUT3("---- THRD %s ObjectCleanup refcnt %u", GetName(), fObjectRefCnt);
 
    // FIXME: should we wait until all commands and all events are processed
 
@@ -1033,11 +1042,11 @@ void dabc::Thread::ObjectCleanup()
       fDidDecRefCnt = true;
    }
 
-   DOUT3(("---- THRD %s ObjectCleanup in the middle", GetName()));
+   DOUT3("---- THRD %s ObjectCleanup in the middle", GetName());
 
    dabc::Object::ObjectCleanup();
 
-   DOUT3(("---- THRD %s ObjectCleanup done refcnt = %u workerssize = %u", GetName(), NumReferences(), fWorkers.size()));
+   DOUT3("---- THRD %s ObjectCleanup done refcnt = %u workerssize = %u", GetName(), NumReferences(), fWorkers.size());
 }
 
 bool dabc::Thread::_DoDeleteItself()
@@ -1048,7 +1057,7 @@ bool dabc::Thread::_DoDeleteItself()
 
    if (!IsItself() || !fThrdWorking || !fRealThrd) return false;
 
-   DOUT2(("!!!!!!!!!!!! THRD %s DO DELETE ITSELF !!!!!!!!!!!!!!!", GetName()));
+   DOUT2("!!!!!!!!!!!! THRD %s DO DELETE ITSELF !!!!!!!!!!!!!!!", GetName());
 
    _Fire(EventId(evntCleanupThrd, 0, 100), priorityNormal);
 
@@ -1100,15 +1109,37 @@ bool dabc::ThreadRef::_ActivateWorkerTimeout(unsigned workerid, int priority, do
 
    Thread::WorkerRec* rec = GetObject()->fWorkers[workerid];
 
-   bool dofire = !rec->tmout_active;
+   // TODO: why worker priority is important here ????
+   //       with default priority multinode applications (ib-test) not connecting correctly
 
-   rec->tmout_mark = dabc::Now();
-   rec->tmout_interv = tmout;
-   rec->tmout_active = true;
+   if (rec->tmout_worker.Activate(tmout))
+      GetObject()->_Fire(EventId(Thread::evntCheckTmoutWorker, 0, workerid), priority);
+
+   return true;
+}
+
+bool dabc::ThreadRef::_ActivateAddonTimeout(unsigned workerid, int priority, double tmout)
+{
+   if (GetObject()==0) return false;
+
+   if (workerid >= GetObject()->fWorkers.size()) return false;
+
+   Thread::WorkerRec* rec = GetObject()->fWorkers[workerid];
 
    // TODO: why worker priority is important here ????
    //       with default priority multinode applications (ib-test) not connecting correctly
-   if (dofire) GetObject()->_Fire(EventId(Thread::evntCheckTmout, 0, workerid), priority);
+
+   if (rec->tmout_addon.Activate(tmout))
+      GetObject()->_Fire(EventId(Thread::evntCheckTmoutAddon, 0, workerid), priority);
 
    return true;
+}
+
+
+bool dabc::ThreadRef::MakeWorkerFor(WorkerAddon* addon, const std::string& name)
+{
+   if (null()) return false;
+   Worker* worker = new Worker(0, name.empty() ? "dummy" : name.c_str());
+   worker->AssignAddon(addon);
+   return worker->AssignToThread(*this);
 }

@@ -18,10 +18,7 @@
 #include <algorithm>
 #include <math.h>
 
-#include "dabc/ModuleItem.h"
 #include "dabc/Manager.h"
-
-
 
 void bnet::TimeStamping::ChangeShift(double shift)
 {
@@ -80,12 +77,13 @@ double bnet::DoublesVector::Max()
 // ==============================================================================
 
 
-bnet::BnetRunnable::BnetRunnable(const char* name) :
+bnet::BnetRunnable::BnetRunnable(const std::string& name) :
    dabc::Object(name),
    dabc::Runnable(),
    fMutex(),
    fCondition(&fMutex),
-   fReplyItem(0),
+   fReplyModule(),
+   fReplyEvent(),
    fNodeId(0),
    fNumNodes(1),
    fNumLids(1),
@@ -131,8 +129,11 @@ bnet::BnetRunnable::~BnetRunnable()
    }
 }
 
-bool bnet::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, int numrecs)
+bool bnet::BnetRunnable::Configure(const dabc::ModuleRef& m, const dabc::EventId& ev, dabc::MemoryPool* pool, int numrecs)
 {
+   fReplyModule = m;
+   fReplyEvent = ev;
+
    fActiveNodes = new bool[NumNodes()];
    for (int n=0;n<NumNodes();n++)
       fActiveNodes[n] = true;
@@ -172,11 +173,11 @@ int bnet::BnetRunnable::SubmitCmd(int cmdid, bool isexec, void* args, int argssi
 {
    CheckModuleThrd();
 
-//   DOUT0(("Submitting cmd %d", cmdid));
+//   DOUT0("Submitting cmd %d", cmdid);
 
    int recid = PrepareOperation(kind_None, 0);
    if (recid<0) {
-      EOUT(("Cannot prepeare command operation"));
+      EOUT("Cannot prepeare command operation");
       return -1;
    }
 
@@ -215,7 +216,7 @@ bool bnet::BnetRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
    while (!tm.Expired(5.)) {
       dabc::mgr.Sleep(0.001);
 
-//      DOUT0(("Waiting command %d tm %5.3f", cmdid, tm.SpentTillNow()));
+//      DOUT0("Waiting command %d tm %5.3f", cmdid, tm.SpentTillNow());
 
       if (rec->tgtnode==2) {
          res = !rec->err;
@@ -224,11 +225,11 @@ bool bnet::BnetRunnable::ExecuteCmd(int cmdid, void* args, int argssize)
    }
 
    if (rec->tgtnode==1) {
-      EOUT(("Command not finished at specified time interval"));
+      EOUT("Command not finished at specified time interval");
       rec->tgtnode = 0; // indicate that record should be released
    } else {
       ReleaseRec(recid);
-//      DOUT0(("Command executed %d", cmdid));
+//      DOUT0("Command executed %d", cmdid);
    }
 
    return res;
@@ -273,7 +274,7 @@ bool bnet::BnetRunnable::ExecuteTransportCommand(int cmdid, void* args, int args
 {
    CheckTransportThrd();
 
-//   DOUT0(("ExecuteTransportCommand %d", cmdid));
+//   DOUT0("ExecuteTransportCommand %d", cmdid);
 
    switch (cmdid) {
       case cmd_None:
@@ -285,7 +286,7 @@ bool bnet::BnetRunnable::ExecuteTransportCommand(int cmdid, void* args, int args
 
       case cmd_ActiveNodes: {
          if (argssize != NumNodes()) {
-            EOUT(("Wrong size of active nodes array"));
+            EOUT("Wrong size of active nodes array");
             return false;
          }
 
@@ -332,7 +333,7 @@ bool bnet::BnetRunnable::ExecuteTransportCommand(int cmdid, void* args, int args
 
       case cmd_GetQueues: {
          if (argssize < (int) (NumNodes() * NumLids() * 2 * sizeof(uint32_t))) {
-            EOUT(("Wrong buffer size in cmd_GetQueues"));
+            EOUT("Wrong buffer size in cmd_GetQueues");
             return false;
          }
 
@@ -347,7 +348,7 @@ bool bnet::BnetRunnable::ExecuteTransportCommand(int cmdid, void* args, int args
       }
 
       default:
-         EOUT(("Uncknown command %d", cmdid));
+         EOUT("Uncknown command %d", cmdid);
          break;
    }
 
@@ -367,13 +368,13 @@ bool bnet::BnetRunnable::PreprocessSpecialKind(int recid, OperRec* rec)
          return false; // do not try to submit record
 
       case skind_SyncMasterSend: {
-         // DOUT1(("Prepare PreprocessSpecialKind skind_SyncMasterSend"));
+         // DOUT1("Prepare PreprocessSpecialKind skind_SyncMasterSend");
 
          // send packet immediately only very first time,
          // in other cases remember id to use it when next reply comes from the slave
 
          if (fSyncMasterRec>=0) {
-            EOUT(("How it could happend - fSyncMasterRec submitted twice!!!"));
+            EOUT("How it could happend - fSyncMasterRec submitted twice!!!");
          }
 
          // send operation is ready, but we need to wait that recv operation is done
@@ -384,7 +385,7 @@ bool bnet::BnetRunnable::PreprocessSpecialKind(int recid, OperRec* rec)
 
          // send
 
-         if (fSyncCycle==0) DOUT1(("Send first master packet"));
+         if (fSyncCycle==0) DOUT1("Send first master packet");
 
          TimeSyncMessage* msg = (TimeSyncMessage*) rec->header;
          msg->master_time = 0.;
@@ -420,8 +421,8 @@ bool bnet::BnetRunnable::PreprocessSpecialKind(int recid, OperRec* rec)
             fSyncResetTimes = true;
          }
 
-         //if (fSyncCycle==0) DOUT0(("Sending first master packet"));
-         // DOUT0(("Sending %d master packet", fSyncCycle));
+         //if (fSyncCycle==0) DOUT0("Sending first master packet");
+         // DOUT0("Sending %d master packet", fSyncCycle);
 
          fSyncSendTime = fStamping();
          fSyncRecvDone = false;
@@ -429,15 +430,15 @@ bool bnet::BnetRunnable::PreprocessSpecialKind(int recid, OperRec* rec)
          return true;
       }
       case skind_SyncMasterRecv:
-         //DOUT0(("Prepare PreprocessSpecialKind skind_SyncMasterRecv repeat = %d", rec->repeatcnt));
+         //DOUT0("Prepare PreprocessSpecialKind skind_SyncMasterRecv repeat = %d", rec->repeatcnt);
          return true;
       case skind_SyncSlaveSend:
-         //DOUT0(("Prepare PreprocessSpecialKind skind_SyncSlaveSend"));
+         //DOUT0("Prepare PreprocessSpecialKind skind_SyncSlaveSend");
 
          if (fSyncRecvDone /* && (fSyncSlaveRec==recid) */) {
             // send slave reply only when record is ready, means we not fulfill time constrains
             // but packet must be send anyway
-            // EOUT(("Reply on the master request with long delay"));
+            // EOUT("Reply on the master request with long delay");
 
             OperRec* recout = GetRec(recid);
             TimeSyncMessage* msg_out = (TimeSyncMessage*) recout->header;
@@ -456,7 +457,7 @@ bool bnet::BnetRunnable::PreprocessSpecialKind(int recid, OperRec* rec)
 
          return true;
       case skind_SyncSlaveRecv:
-         //DOUT0(("Prepare PreprocessSpecialKind skind_SyncSlaveRecv"));
+         //DOUT0("Prepare PreprocessSpecialKind skind_SyncSlaveRecv");
          return true;
 
       default:
@@ -470,7 +471,7 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
 {
    OperRec* rec = GetRec(recid);
 
-   //DOUT0(("Complete skind:%d err:%s", rec->skind, DBOOL(rec->err)));
+   //DOUT0("Complete skind:%d err:%s", rec->skind, DBOOL(rec->err));
 
    switch (rec->skind) {
       case skind_None:
@@ -481,7 +482,7 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
          if (!fRefillEnabled) return;
 
          if (fPoolRecs.Empty()) {
-            EOUT(("Pool is empty - cannot refill queue!!!"));
+            EOUT("Pool is empty - cannot refill queue!!!");
             exit(165);
          }
 
@@ -496,7 +497,7 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
 
          newrec->SetImmediateTime();
 
-         DOUT1(("Refill new record %d instead of record %d", newid, recid));
+         DOUT1("Refill new record %d instead of record %d", newid, recid);
 
          fImmediateRecs.Push(newid);
 
@@ -506,10 +507,10 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
          return;
 
       case skind_SyncMasterSend:
-         // DOUT1(("skind_SyncMasterSend completed cycle %d", fSyncCycle));
+         // DOUT1("skind_SyncMasterSend completed cycle %d", fSyncCycle);
          return;
       case skind_SyncMasterRecv: {
-         //DOUT0(("Complete skind_SyncMasterRecv"));
+         //DOUT0("Complete skind_SyncMasterRecv");
          double recv_time = fStamping();
          TimeSyncMessage* rcv = (TimeSyncMessage*) rec->header;
          if (fSyncResetTimes) {
@@ -522,7 +523,7 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
          }
 
          if (rcv->msgid != fSyncCycle) {
-            EOUT(("Mismatch in ID %d %d", rcv->msgid, fSyncCycle));
+            EOUT("Mismatch in ID %d %d", rcv->msgid, fSyncCycle);
          }
 
          fSyncCycle++;
@@ -538,14 +539,14 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
             fSync_m_to_s.Sort(); fSync_s_to_m.Sort();
             double time_shift = (fSync_s_to_m.Mean(fSyncMaxCut) - fSync_m_to_s.Mean(fSyncMaxCut)) / 2.;
 
-            DOUT0(("Round trip to %2d: %5.2f microsec", rec->tgtnode, fSync_m_to_s.Mean(fSyncMaxCut)*1e6 + fSync_s_to_m.Mean(fSyncMaxCut)*1e6));
-            DOUT0(("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", fSync_m_to_s.Mean(fSyncMaxCut)*1e6, fSync_m_to_s.Dev(fSyncMaxCut)*1e6, fSync_m_to_s.Max()*1e6, fSync_m_to_s.Min()*1e6));
-            DOUT0(("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", fSync_s_to_m.Mean(fSyncMaxCut)*1e6, fSync_s_to_m.Dev(fSyncMaxCut)*1e6, fSync_s_to_m.Max()*1e6, fSync_s_to_m.Min()*1e6));
+            DOUT0("Round trip to %2d: %5.2f microsec", rec->tgtnode, fSync_m_to_s.Mean(fSyncMaxCut)*1e6 + fSync_s_to_m.Mean(fSyncMaxCut)*1e6);
+            DOUT0("   Master -> Slave  : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", fSync_m_to_s.Mean(fSyncMaxCut)*1e6, fSync_m_to_s.Dev(fSyncMaxCut)*1e6, fSync_m_to_s.Max()*1e6, fSync_m_to_s.Min()*1e6);
+            DOUT0("   Slave  -> Master : %5.2f  +- %4.2f (max = %5.2f min = %5.2f)", fSync_s_to_m.Mean(fSyncMaxCut)*1e6, fSync_s_to_m.Dev(fSyncMaxCut)*1e6, fSync_s_to_m.Max()*1e6, fSync_s_to_m.Min()*1e6);
 
             if (fDoTimeSync)
-               DOUT0(("   SET: Shift = %5.2f  Coef = %12.10f", fSyncSetTimeShift*1e6, fSyncSetTimeScale));
+               DOUT0("   SET: Shift = %5.2f  Coef = %12.10f", fSyncSetTimeShift*1e6, fSyncSetTimeScale);
             else {
-               DOUT0(("   GET: Shift = %5.2f", time_shift*1e6));
+               DOUT0("   GET: Shift = %5.2f", time_shift*1e6);
                //get_shift.Fill(time_shift*1e6);
             }
          }
@@ -553,28 +554,28 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
          return;
       }
       case skind_SyncSlaveSend:
-         // DOUT1(("skind_SyncSlaveSend completed %d sendrec %d", fSyncCycle, fSyncSlaveRec));
+         // DOUT1("skind_SyncSlaveSend completed %d sendrec %d", fSyncCycle, fSyncSlaveRec);
 
          if (fSyncSlaveRec>=0) {
-            EOUT(("How can be completed reserved record!!!"));
+            EOUT("How can be completed reserved record!!!");
             fSyncSlaveRec = -1;
          }
 
          return;
       case skind_SyncSlaveRecv: {
-         // DOUT1(("skind_SyncSlaveRecv completed %d sendrec %d", fSyncCycle, fSyncSlaveRec));
+         // DOUT1("skind_SyncSlaveRecv completed %d sendrec %d", fSyncCycle, fSyncSlaveRec);
 
          fSyncSlaveRecvTime = fStamping();
 
-         // if (fSyncCycle==0) DOUT0(("Slave receive first packet sendrec:%d", fSyncSlaveRec));
+         // if (fSyncCycle==0) DOUT0("Slave receive first packet sendrec:%d", fSyncSlaveRec);
 
-         // DOUT1(("Slave receive syncpacket: cycle:%d recid:%d", fSyncCycle, fSyncSlaveRec));
-         // DOUT0(("Receive master packet on the slave err = %s", DBOOL(rec->err)));
+         // DOUT1("Slave receive syncpacket: cycle:%d recid:%d", fSyncCycle, fSyncSlaveRec);
+         // DOUT0("Receive master packet on the slave err = %s", DBOOL(rec->err));
 
          TimeSyncMessage* msg_in = (TimeSyncMessage*) rec->header;
 
          if (fSyncCycle!=msg_in->msgid)
-            EOUT(("Missmatch of sync cycle %u %u on the slave", fSyncCycle, msg_in->msgid));
+            EOUT("Missmatch of sync cycle %u %u on the slave", fSyncCycle, msg_in->msgid);
 
          if (msg_in->master_time>0) {
             fStamping.ChangeShift(msg_in->master_time - fSyncSlaveRecvTime);
@@ -602,7 +603,7 @@ void  bnet::BnetRunnable::PostprocessSpecialKind(int recid)
 
 void* bnet::BnetRunnable::MainLoop()
 {
-   DOUT0(("Enter BnetRunnable::MainLoop()"));
+   DOUT0("Enter BnetRunnable::MainLoop()");
 
    fMainLoopActive = true;
 
@@ -622,7 +623,7 @@ void* bnet::BnetRunnable::MainLoop()
          fLoopTime.Fill(currtm - last_tm); // for statistic
          if (currtm - last_tm > 0.001) fLoopMaxCnt++;
 
-         if (currtm - last_tm > 0.01) DOUT1(("LARGE DELAY %5.2f ms  stamp %7.6f", (currtm - last_tm)*1e3, currtm));
+         if (currtm - last_tm > 0.01) DOUT1("LARGE DELAY %5.2f ms  stamp %7.6f", (currtm - last_tm)*1e3, currtm);
       }
       last_tm = currtm;
 
@@ -636,7 +637,7 @@ void* bnet::BnetRunnable::MainLoop()
 
           // TODO: introduce strict time limit - after some delay operation should be skipt
          if ((rec->oper_time <= currtm) && !rec->IsQueueOk())
-            EOUT(("Queue problem with record %d tgtnode %d late %4.3f ms", fScheduledRecs.Front(), rec->tgtnode, (currtm - rec->oper_time) * 1000.));
+            EOUT("Queue problem with record %d tgtnode %d late %4.3f ms", fScheduledRecs.Front(), rec->tgtnode, (currtm - rec->oper_time) * 1000.);
 
          if ((rec->oper_time <= currtm) && rec->IsQueueOk()) {
             selectedid = fScheduledRecs.Pop();
@@ -645,7 +646,7 @@ void* bnet::BnetRunnable::MainLoop()
          } else {
             till_next_oper = rec->oper_time - currtm;
 
-            // DOUT1(("Record %d till next %7.6f", fScheduledRecs.Front(), till_next_oper));
+            // DOUT1("Record %d till next %7.6f", fScheduledRecs.Front(), till_next_oper);
          }
       }
 
@@ -656,8 +657,8 @@ void* bnet::BnetRunnable::MainLoop()
 
          // TODO: introduce strict time limit - after some delay operation should be skipt
          if (!rec->IsQueueOk())
-            EOUT(("Queue problem with immediate record %d for node %d lid %d recv %s queuelimit %d len %d",
-                  fImmediateRecs.Front(), rec->tgtnode, rec->tgtindx, DBOOL(rec->kind == kind_Recv), rec->queuelimit, rec->queuelen ? *(rec->queuelen) : -1));
+            EOUT("Queue problem with immediate record %d for node %d lid %d recv %s queuelimit %d len %d",
+                  fImmediateRecs.Front(), rec->tgtnode, rec->tgtindx, DBOOL(rec->kind == kind_Recv), rec->queuelimit, rec->queuelen ? *(rec->queuelen) : -1);
          else {
             selectedid = fImmediateRecs.Pop();
             selectedrec = rec;
@@ -699,7 +700,7 @@ void* bnet::BnetRunnable::MainLoop()
 
          if (recid>=0) {
             if (!fRunningRecs[recid])
-               EOUT(("Wrongly completed operation which was not active recid:%d", recid));
+               EOUT("Wrongly completed operation which was not active recid:%d", recid);
 
             fRunningRecs[recid] = false;
             fNumRunningRecs--;
@@ -716,7 +717,7 @@ void* bnet::BnetRunnable::MainLoop()
 
             if ((--rec->repeatcnt <= 0) || rec->err) {
                fCompletedRecs.Push(recid);
-               // DOUT1(("Rec %d completed signalled %s size %u", recid, DBOOL(fReplySignalled), fCompletedRecs.Size()));
+               // DOUT1("Rec %d completed signalled %s size %u", recid, DBOOL(fReplySignalled), fCompletedRecs.Size());
             } else {
                // reinject record again
                fAcceptedRecs.Push(recid);
@@ -778,13 +779,13 @@ void* bnet::BnetRunnable::MainLoop()
 
       } // end of locked mutex
 
-      if (isdoreply && fReplyItem) {
-         // DOUT1(("Fire reply event size:%u", fReplyedRecs.Size()));
-         fReplyItem->FireUserEvent();
+      if (isdoreply && !fReplyModule.null()) {
+         // DOUT1("Fire reply event size:%u", fReplyedRecs.Size());
+         fReplyModule.FireEvent(fReplyEvent);
       }
    }
 
-   DOUT0(("Exit BnetRunnable::MainLoop()"));
+   DOUT0("Exit BnetRunnable::MainLoop()");
 
    return 0;
 }
@@ -908,7 +909,7 @@ int bnet::BnetRunnable::PrepareOperation(OperKind kind, int hdrsize, dabc::Buffe
    if (hdrsize==0) hdrsize = fHeaderPool.GetBufferSize(recid);
 
    if ((int) fHeaderPool.GetBufferSize(recid) < hdrsize) {
-      EOUT(("header size %d specified wrongly, maximum is %u", hdrsize, fHeaderPool.GetBufferSize(recid)));
+      EOUT("header size %d specified wrongly, maximum is %u", hdrsize, fHeaderPool.GetBufferSize(recid));
    }
 
    rec->hdrsize = hdrsize;
@@ -928,12 +929,12 @@ bool bnet::BnetRunnable::ReleaseRec(int recid)
    OperRec* rec = GetRec(recid);
 
    if (rec == 0) {
-      EOUT(("Wrong RECID"));
+      EOUT("Wrong RECID");
       return false;
    }
 
    if (fFreeRecs.Full()) {
-      EOUT(("internal problem - free records are full"));
+      EOUT("internal problem - free records are full");
       return false;
    }
 
@@ -950,7 +951,7 @@ bool bnet::BnetRunnable::SubmitRec(int recid)
 
    OperRec* rec = GetRec(recid);
    if (rec == 0) {
-      EOUT(("Wrong RECID"));
+      EOUT("Wrong RECID");
       return false;
    }
 
@@ -984,7 +985,7 @@ bool bnet::BnetRunnable::SubmitRec(int recid)
    dabc::LockGuard lock(fMutex);
 
    if (fSubmRecs.Full()) {
-      EOUT(("Sumbit queue full!!!!"));
+      EOUT("Sumbit queue full!!!!");
       return false;
    }
 
@@ -1032,7 +1033,7 @@ int bnet::BnetRunnable::GetCompleted(bool resetsignalled)
             continue;
          }
 
-         EOUT(("Strange value of rec->tgtnode %d for command %d", rec->tgtnode, rec->tgtindx));
+         EOUT("Strange value of rec->tgtnode %d for command %d", rec->tgtnode, rec->tgtindx);
       }
       return recid;
    }

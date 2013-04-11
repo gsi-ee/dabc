@@ -32,48 +32,33 @@
 
 namespace hadaq {
 
-   class HldOutput : public dabc::DataOutput {
+   class HldOutput : public dabc::FileOutput {
       protected:
 
-         std::string         fFileName;
-         std::string         fInfoName;  // parameter name for info settings
-         dabc::TimeStamp     fInfoTime;  // time when last info was shown
-         uint64_t            fSizeLimit;
          bool                fEpicsControl; // true if run id is controlled by epics master
          RunId               fRunNumber; // id number of current run
 
          dabc::Parameter     fRunidPar;
          dabc::Parameter     fBytesWrittenPar;
 
-         std::string         fCurrentFileName;
+         hadaq::HldFile       fFile;
 
-         hadaq::HldFile        fFile;
-         uint64_t            fCurrentSize;
-
-         uint64_t            fTotalSize;
-         uint64_t            fTotalEvents;
-
-         std::string FullFileName(std::string extens);
-
-         bool Close();
+         bool CloseFile();
          bool StartNewFile();
-         void ShowInfo(const std::string& info, int priority = 0);
-
-         /* current stats about written events etc.*/
-         void ShowWriteInfo();
 
          RunId GetRunId();
 
+         bool Init();
+
       public:
 
-         HldOutput(const char* fname = 0, unsigned sizelimit_mb = 0);
+         HldOutput(const dabc::Url& url);
          virtual ~HldOutput();
 
          virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
 
-         virtual bool WriteBuffer(const dabc::Buffer& buf);
+         virtual unsigned Write_Buffer(dabc::Buffer& buf);
 
-         bool Init();
    };
 }
 

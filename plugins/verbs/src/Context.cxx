@@ -50,16 +50,16 @@ verbs::PoolRegistry::PoolRegistry(ContextRef ctx, dabc::MemoryPool* pool) :
    f_nummr(0),
    f_mr(0)
 {
-   DOUT4(("Create registry for the POOL: %s numref %u", GetName(), NumReferences()));
+   DOUT4("Create registry for the POOL: %s numref %u", GetName(), NumReferences());
 }
 
 verbs::PoolRegistry::~PoolRegistry()
 {
-   DOUT4(("~PoolRegistry %s refs %u", GetName(), NumReferences()));
+   DOUT4("~PoolRegistry %s refs %u", GetName(), NumReferences());
 
    CleanMRStructure();
 
-   DOUT4(("~PoolRegistry %s refs %u done", GetName(), NumReferences()));
+   DOUT4("~PoolRegistry %s refs %u done", GetName(), NumReferences());
 }
 
 void verbs::PoolRegistry::ObjectCleanup()
@@ -74,7 +74,7 @@ void verbs::PoolRegistry::ObjectCleanup()
 void verbs::PoolRegistry::ObjectDestroyed(dabc::Object* obj)
 {
    if (obj == fPool) {
-      EOUT(("!!!!!!!!! Hard error - memory pool %s destroyed behind the scene", fPool->GetName()));
+      EOUT("!!!!!!!!! Hard error - memory pool %s destroyed behind the scene", fPool->GetName());
       CleanMRStructure();
       fPool = 0;
       DeleteThis();
@@ -83,16 +83,16 @@ void verbs::PoolRegistry::ObjectDestroyed(dabc::Object* obj)
 
 void verbs::PoolRegistry::CleanMRStructure()
 {
-   DOUT3(("CleanMRStructure %s call ibv_dereg_mr %u", GetName(), f_nummr));
+   DOUT3("CleanMRStructure %s call ibv_dereg_mr %u", GetName(), f_nummr);
 
    for (unsigned n=0;n<f_nummr;n++)
      if (f_mr[n] != 0) {
-        DOUT5(("CleanMRStructure %s mr[%u] = %p", GetName(), n, f_mr[n]));
+        DOUT5("CleanMRStructure %s mr[%u] = %p", GetName(), n, f_mr[n]);
 //        if (strcmp(GetName(),"TransportPool")!=0)
            ibv_dereg_mr(f_mr[n]);
 //        else
-//           EOUT(("Skip ibv_dereg_mr(f_mr[n])"));
-        DOUT5(("CleanMRStructure %s mr[%u] = %p done", GetName(), n, f_mr[n]));
+//           EOUT("Skip ibv_dereg_mr(f_mr[n])");
+        DOUT5("CleanMRStructure %s mr[%u] = %p done", GetName(), n, f_mr[n]);
      }
 
    delete[] f_mr;
@@ -107,7 +107,7 @@ void verbs::PoolRegistry::SyncMRStructure()
 {
    if (fPool==0) return;
 
-   DOUT5(("CreateMRStructure %s for pool %p numrefs %u", GetName(), fPool, NumReferences()));
+   DOUT5("CreateMRStructure %s for pool %p numrefs %u", GetName(), fPool, NumReferences());
 
    std::vector<void*> bufs;
    std::vector<unsigned> sizes;
@@ -126,7 +126,7 @@ void verbs::PoolRegistry::SyncMRStructure()
 
       if (f_nummr!=0) CleanMRStructure();
 
-      DOUT5(("CreateMRStructure %p for pool %p size %u", this, fPool, bufs.size()));
+      DOUT5("CreateMRStructure %p for pool %p size %u", this, fPool, bufs.size());
 
       f_nummr = bufs.size();
 
@@ -137,16 +137,16 @@ void verbs::PoolRegistry::SyncMRStructure()
          f_mr[n] = ibv_reg_mr(fContext.pd(), bufs[n], sizes[n],
                (ibv_access_flags) (IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE));
 
-         DOUT5(("CreateMRStructure %p for pool %p mr[%u] = %p done", this, fPool, n, f_mr[n]));
+         DOUT5("CreateMRStructure %p for pool %p mr[%u] = %p done", this, fPool, n, f_mr[n]);
 
          if (f_mr[n]==0) {
-            EOUT(("Fail to register VERBS memory - HALT"));
+            EOUT("Fail to register VERBS memory - HALT");
             exit(138);
          }
       }
    }
 
-   DOUT5(("CreateMRStructure %p for pool %p size %u done", this, fPool, bufs.size()));
+   DOUT5("CreateMRStructure %p for pool %p size %u done", this, fPool, bufs.size());
 
    // TODO: later one can enable this code to get
 
@@ -170,14 +170,14 @@ verbs::Context::~Context()
 {
    CloseVerbs();
 
-   DOUT0(("VERBS Context destroyed"));
+   DOUT0("VERBS Context destroyed");
 }
 
 
 
 bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int ibport)
 {
-   DOUT4(("Call  verbs::Device::Open"));
+   DOUT4("Call  verbs::Device::Open");
 
 #ifndef  __NO_MULTICAST__
    if (withmulticast) {
@@ -191,11 +191,11 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
    struct ibv_device **dev_list = ibv_get_device_list(&num_of_hcas);
 
    if ((dev_list==0) || (num_of_hcas<=0)) {
-      EOUT(("No verbs devices found"));
+      EOUT("No verbs devices found");
       return false;
    }
 
-   DOUT4(( "Number of hcas %d", num_of_hcas));
+   DOUT4( "Number of hcas %d", num_of_hcas);
 
    struct ibv_device *selected_device = 0;
    uint64_t gid;
@@ -212,7 +212,7 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
          if (strcmp(ibv_get_device_name(dev_list[n]), devicename)==0)
             selected_device = dev_list[n];
       if (selected_device==0) {
-         EOUT(("No verbs device with name %s", devicename));
+         EOUT("No verbs device with name %s", devicename);
       }
    }
 
@@ -220,32 +220,32 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
 
    fContext = ibv_open_device(selected_device);
    if (fContext==0) {
-      EOUT(("Cannot open device %s", devicename));
+      EOUT("Cannot open device %s", devicename);
       goto cleanup;
    }
 
    if (ibv_query_device(fContext, &fDeviceAttr)) {
-      EOUT(("Failed to query device props"));
+      EOUT("Failed to query device props");
       goto cleanup;
    }
 
    gid = ibv_get_device_guid(selected_device);
-   DOUT4(( "Open device: %s  gid: %016lx",  devicename, ntohll(gid)));
+   DOUT4( "Open device: %s  gid: %016lx",  devicename, ntohll(gid));
 
    fPD = ibv_alloc_pd(fContext);
    if (fPD==0) {
-      EOUT(("Couldn't allocate protection domain (PD)"));
+      EOUT("Couldn't allocate protection domain (PD)");
       goto cleanup;
    }
 
    if (ibv_query_port(fContext, fIbPort, &fPortAttr)) {
-      EOUT(("Fail to query port attributes"));
+      EOUT("Fail to query port attributes");
       goto cleanup;
    }
 
 //   PrintDevicesList(true);
 
-   DOUT4(("Call new TVerbsConnMgr(this) done"));
+   DOUT4("Call new TVerbsConnMgr(this) done");
 
    res = true;
 
@@ -264,11 +264,11 @@ bool verbs::Context::CloseVerbs()
    bool res = true;
 
    if (ibv_dealloc_pd(fPD)) {
-      EOUT(("Fail to deallocate PD"));
+      EOUT("Fail to deallocate PD");
       res = false;
    }
    if (ibv_close_device(fContext)) {
-      EOUT(("Fail to close device context"));
+      EOUT("Fail to close device context");
       res = false;
    }
 
@@ -357,7 +357,7 @@ struct ibv_ah* verbs::ContextRef::CreateAH(uint32_t dest_lid)
 
    ibv_ah *ah = ibv_create_ah(pd(), &ah_attr);
    if (ah==0) {
-      EOUT(("Failed to create Address Handle"));
+      EOUT("Failed to create Address Handle");
    }
    return ah;
 }
@@ -380,11 +380,11 @@ struct ibv_ah* verbs::ContextRef::CreateMAH(ibv_gid& mgid, uint32_t mlid)
    mah_attr.grh.hop_limit = 63; // should be copied from member rec
    mah_attr.grh.traffic_class = 0; // should be copied from member rec
 
-   //DOUT1(("Addr %02x %02x", ah_attr.grh.dgid.raw[0], ah_attr.grh.dgid.raw[1]));
+   //DOUT1("Addr %02x %02x", ah_attr.grh.dgid.raw[0], ah_attr.grh.dgid.raw[1]);
 
    struct ibv_ah* f_ah = ibv_create_ah(pd(), &mah_attr);
    if (f_ah==0) {
-     EOUT(("Failed to create Multicast Address Handle"));
+     EOUT("Failed to create Multicast Address Handle");
    }
 
    return f_ah;
@@ -400,12 +400,12 @@ dabc::Reference verbs::ContextRef::RegisterPool(dabc::MemoryPool* pool)
    PoolRegistryRef ref = folder.PutChild(new PoolRegistry(Ref(), pool));
 
    if (ref.null()) {
-      EOUT(("Error - cannot create pool registry object for pool %s", pool->GetName()));
+      EOUT("Error - cannot create pool registry object for pool %s", pool->GetName());
       return 0;
    }
 
    if (ref()->GetPool() != pool) {
-      EOUT(("Registry entry for name %s exists but pool pointer mismatch", pool->GetName()));
+      EOUT("Registry entry for name %s exists but pool pointer mismatch", pool->GetName());
 
       exit(543);
    }
@@ -420,9 +420,9 @@ int verbs::ContextRef::GetGidIndex(ibv_gid* lookgid)
    ibv_gid gid;
    int ret = 0;
 
-   DOUT5(( "Search for gid in table: %016lx : %016lx  ",
+   DOUT5( "Search for gid in table: %016lx : %016lx  ",
              ntohll(lookgid->global.subnet_prefix),
-             ntohll(lookgid->global.interface_id)));
+             ntohll(lookgid->global.interface_id));
 
    for (int i = 0; !ret; i++) {
       ret = ibv_query_gid(context(), IbPort(), i, &gid);
@@ -431,9 +431,9 @@ int verbs::ContextRef::GetGidIndex(ibv_gid* lookgid)
 
         if (null_gid(&gid)) continue;
 
-        DOUT5(( "   gid[%2d]: %016lx : %016lx  ", i,
-             ntohll(gid.global.subnet_prefix),
-             ntohll(gid.global.interface_id)));
+        DOUT5("   gid[%2d]: %016lx : %016lx  ", i,
+                ntohll(gid.global.subnet_prefix),
+                ntohll(gid.global.interface_id));
 
         if (!ret && !memcmp(lookgid, &gid, sizeof(ibv_gid))) return i;
    }

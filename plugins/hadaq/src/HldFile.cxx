@@ -68,7 +68,7 @@ bool hadaq::HldFile::OpenFile(const char* fname, bool iswriting,
       delete fFile;
       fFile = 0;
       fMode = mError;
-      DOUT1(("Eror opening file:%s", fname));
+      DOUT1("Eror opening file:%s", fname);
       return false;
    }
 
@@ -107,7 +107,7 @@ bool hadaq::HldFile::OpenRead(const char* fname, uint32_t buffersize)
 //   if((fFile==0) || !fFile->good()) {
 //        delete fFile; fFile = 0;
 //        fMode=mError;
-//        DOUT1(("Eror opening file:%s for reading", fname));
+//        DOUT1("Eror opening file:%s for reading", fname));
 //        return false;
 //     }
 //   fBuffer=new char[buffersize];
@@ -143,7 +143,7 @@ bool hadaq::HldFile::WriteEvents(hadaq::Event* hdr, unsigned num)
 {
    if (!IsWriteMode() || (num==0)) {
       fLastError = HLD__FAILURE;
-      DOUT1(("Cannot write %d elements to file %s", num, fName.c_str()));
+      DOUT1("Cannot write %d elements to file %s", num, fName.c_str());
       return false;
    }
    hadaq::Event* cursor=hdr;
@@ -157,7 +157,7 @@ bool hadaq::HldFile::WriteEvents(hadaq::Event* hdr, unsigned num)
          size_t written=WriteFile((char*) cursor,elength);
          if(written!=elength)
             {
-               DOUT1(("HldFile::WriteEvents: Write file %s length mismatch: %d bytes of %d requested written", fName.c_str(), written, elength));
+               DOUT1("HldFile::WriteEvents: Write file %s length mismatch: %d bytes of %d requested written", fName.c_str(), written, elength);
                fLastError = HLD__WRITE_ERR;
                return false;
             }
@@ -170,7 +170,7 @@ bool hadaq::HldFile::WriteEvents(hadaq::Event* hdr, unsigned num)
    size_t written=WriteFile((char*) hdr ,buflength);
    if(written!=buflength)
    {
-      DOUT1(("HldFile::WriteEvents: Write file %s length mismatch: %d bytes of %d requested written", fName.c_str(), written, buflength));
+      DOUT1("HldFile::WriteEvents: Write file %s length mismatch: %d bytes of %d requested written", fName.c_str(), written, buflength);
       fLastError = HLD__WRITE_ERR;
       return false;
    }
@@ -190,7 +190,7 @@ hadaq::HadTu* hadaq::HldFile::ReadElement(char* buffer, size_t len)
 {
    if (!IsReadMode()) {
       fLastError = HLD__FAILURE;
-      DOUT1(("Cannot read from file %s, was opened for writing", fName.c_str()));
+      DOUT1("Cannot read from file %s, was opened for writing", fName.c_str());
       return 0;
    }
    char* target;
@@ -207,7 +207,7 @@ hadaq::HadTu* hadaq::HldFile::ReadElement(char* buffer, size_t len)
    if(len<sizeof(hadaq::HadTu))
       {
          // output buffer is full, do not try to read next event.
-         DOUT3(("Next hadtu header 0x%x bigger than read buffer limit 0x%x", sizeof(hadaq::HadTu), len));
+         DOUT3("Next hadtu header 0x%x bigger than read buffer limit 0x%x", sizeof(hadaq::HadTu), len);
          fLastError=HLD__FULLBUF;
          return 0;
       }
@@ -221,14 +221,15 @@ hadaq::HadTu* hadaq::HldFile::ReadElement(char* buffer, size_t len)
       // then read rest of buffer from file
    hadaq::HadTu* hadtu =(hadaq::HadTu*) target;
    size_t evlen=hadtu->GetPaddedSize();
-   DOUT3(("ReadElement reads event of size: %d",evlen));
+   DOUT3("ReadElement reads event of size: %d",evlen);
    if(evlen > len)
       {
-        DOUT3(("Next hadtu element length 0x%x bigger than read buffer limit 0x%x", evlen, len));
+        DOUT3("Next hadtu element length 0x%x bigger than read buffer limit 0x%x", evlen, len);
         // rewind file pointer here to begin of hadtu header
-        if(!RewindFile(-1 * sizeof(hadaq::HadTu)))
+        if(!RewindFile(-1 * (int) sizeof(hadaq::HadTu)))
            {
-              DOUT1(("Error on rewinding header position of file %s ", fName.c_str() ));              fLastError = HLD__FAILURE;
+              DOUT1("Error on rewinding header position of file %s ", fName.c_str());
+              fLastError = HLD__FAILURE;
            }
         fLastError=HLD__FULLBUF;
         return 0;
@@ -236,7 +237,7 @@ hadaq::HadTu* hadaq::HldFile::ReadElement(char* buffer, size_t len)
    ReadFile(target+sizeof(hadaq::HadTu), evlen - sizeof(hadaq::HadTu));
    if (fLastError == HLD__EOFILE)
       {
-         DOUT1(("Found EOF before reading full element of length 0x%x! Maybe truncated or corrupt file?", evlen));
+         DOUT1("Found EOF before reading full element of length 0x%x! Maybe truncated or corrupt file?", evlen);
          return 0;
       }
    return (hadaq::HadTu*) target;
@@ -263,7 +264,7 @@ unsigned int hadaq::HldFile::ReadBuffer(void* buf, uint32_t& bufsize)
          bytesread+=diff;
          fEventCount++;
          // FIXME: the above 2 printouts give somehow wrong shifted argument values. a bug?
-         //DOUT1(("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff));
+         //DOUT1("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff);
          //printf("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x\n", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff);
          //std::cout<< "HldFile::ReadBuffer has read "<< fEventCount <<"elements,  hadtu:"<< (unsigned) thisunit<<", cursor:"<< (unsigned) cursor <<" rest:"<<(unsigned) rest<<" diff:"<< (unsigned) diff<<std::endl;
       }
@@ -275,9 +276,9 @@ unsigned int hadaq::HldFile::ReadBuffer(void* buf, uint32_t& bufsize)
      if (fLastError == HLD__EOFILE)
       {
          // FIXME: upper line will crash at dabc::format in vsnprintf JAM
-         //DOUT1(("Read %d HadTu elements (%d bytes) from file %s", fEventCount, fBufsize, fName.c_str()));
+         //DOUT1("Read %d HadTu elements (%d bytes) from file %s", fEventCount, fBufsize, fName.c_str());
          // FIXME: following line shows 0 instead fBufsize
-         // DOUT1(("Read %d HadTu elements (%d bytes) from file", fEventCount, fBufsize));
+         // DOUT1("Read %d HadTu elements (%d bytes) from file", fEventCount, fBufsize);
           std::cout<<"Read "<< fEventCount<<" HadTu elements ("<< fBufsize << " bytes) from file "<< fName.c_str()<<std::endl;
       }
 
@@ -298,7 +299,7 @@ size_t hadaq::HldFile::ReadFile(char* dest, size_t len)
    if(fFile->eof() || !fFile->good())
          {
                fLastError = HLD__EOFILE;
-               DOUT1(("End of input file %s", fName.c_str()));
+               DOUT1("End of input file %s", fName.c_str());
                //return 0;
          }
    //cout <<"ReadFile reads "<< (hex) << fFile->gcount()<<" bytes to 0x"<< (hex) <<(int) dest<< endl;
@@ -311,21 +312,21 @@ size_t hadaq::HldFile::WriteFile(char* src, size_t len)
    if(begin<0)
       {
          fLastError = HLD__WRITE_ERR;
-         DOUT1(("Write position begin error in output file %s", fName.c_str()));
+         DOUT1("Write position begin error in output file %s", fName.c_str());
          return 0;
       }
    fFile->write(src, len);
    if(!fFile->good())
          {
                fLastError = HLD__WRITE_ERR;
-               DOUT1(("Write Error in output file %s", fName.c_str()));
+               DOUT1("Write Error in output file %s", fName.c_str());
                return 0;
          }
    std::streampos end = fFile->tellp();
    if(end<0)
         {
            fLastError = HLD__WRITE_ERR;
-           DOUT1(("Write position end error in output file %s", fName.c_str()));
+           DOUT1("Write position end error in output file %s", fName.c_str());
            return 0;
         }
    //cout <<"WriteFile writes "<< (hex) << (end-begin)<<" bytes from 0x"<< (hex) <<(int) src<< endl;
@@ -335,13 +336,11 @@ size_t hadaq::HldFile::WriteFile(char* src, size_t len)
 
 bool hadaq::HldFile::RewindFile(int offset)
 {
-   fFile->seekg (offset, std::ios::cur);
-   if(!fFile->good())
-         {
-               fLastError = HLD__FAILURE;
-               DOUT1(("Problem rewinding file %s", fName.c_str()));
-               return false;
-         }
+   fFile->seekg(offset, std::ios::cur);
+   if(!fFile->good()) {
+      fLastError = HLD__FAILURE;
+      DOUT1("Problem rewinding file %s", fName.c_str());
+      return false;
+   }
    return true;
 }
-

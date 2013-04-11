@@ -1,9 +1,7 @@
 #include "bnet/MbsBuilderModule.h"
 
 #include "dabc/logging.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/Command.h"
-#include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
 #include "bnet/common.h"
@@ -37,7 +35,7 @@ void bnet::MbsBuilderModule::StartOutputBuffer(dabc::BufferSize_t bufsize)
       fOut.buf = TakeBuffer(fOutPool, bufsize);
 
       if (!fOut.iter.Reset(fOut.buf)) {
-         EOUT(("Problem to start with MBS buffer"));
+         EOUT("Problem to start with MBS buffer");
          exit(125);
       }
    }
@@ -60,7 +58,7 @@ void bnet::MbsBuilderModule::SendOutputBuffer()
 
 void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 {
-//   DOUT1(("start DoBuildEvent n = %d", fCfgEventsCombine));
+//   DOUT1("start DoBuildEvent n = %d", fCfgEventsCombine);
 
    std::vector<mbs::ReadIterator> recs;
    recs.resize(bufs.size());
@@ -68,16 +66,16 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
    for (unsigned n=0;n<bufs.size();n++) {
 
       if (bufs[n]==0) {
-         EOUT(("Buffer %d is NULL !!!!!!!!!!!!!!!", n));
+         EOUT("Buffer %d is NULL !!!!!!!!!!!!!!!", n);
          exit(126);
       }
 
       if (!recs[n].Reset(bufs[n]) || !recs[n].NextEvent()) {
-         EOUT(("Invalid MBS format on buffer %u size: %u", n, bufs[n]->GetTotalSize()));
+         EOUT("Invalid MBS format on buffer %u size: %u", n, bufs[n]->GetTotalSize());
          return;
       }
 
-      DOUT5(("Buf %u starts with event %d", n, recs[n].evnt()->EventNumber()));
+      DOUT5("Buf %u starts with event %d", n, recs[n].evnt()->EventNumber());
    }
 
    int nevent = 0;
@@ -95,16 +93,16 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
       }
 
       if (recs[pmin].evnt()->EventNumber() < recs[pmax].evnt()->EventNumber()) {
-         EOUT(("Skip subevent %u from buffer %u", recs[pmin].evnt()->EventNumber(), pmin));
+         EOUT("Skip subevent %u from buffer %u", recs[pmin].evnt()->EventNumber(), pmin);
          if (!recs[pmin].NextEvent()) return;
          // try to analyze events now
          continue;
       }
 
-//      DOUT1(("Build event %u len %u", recs[pmin].evnt()->EventNumber(), subeventslen));
+//      DOUT1("Build event %u len %u", recs[pmin].evnt()->EventNumber(), subeventslen);
 
       if (subeventslen==0) {
-         EOUT(("Something wrong with data"));
+         EOUT("Something wrong with data");
          return;
       }
 
@@ -120,13 +118,13 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
          StartOutputBuffer(subeventslen + sizeof(mbs::EventHeader));
 
          if (!fOut.iter.IsPlaceForEvent(subeventslen)) {
-            EOUT(("Single event do not pass in to the buffers"));
+            EOUT("Single event do not pass in to the buffers");
             exit(127);
          }
       }
 
       if (!fOut.iter.NewEvent(0, subeventslen)) {
-         EOUT(("Problem to start event in buffer"));
+         EOUT("Problem to start event in buffer");
          return;
       }
 
@@ -150,7 +148,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
 
       Par("EventRate").SetInt(1);
 
-//      DOUT1(("$$$$$$$$ Did event %d size %d", evhdr->iCount, evhdr->DataSize()));
+//      DOUT1("$$$$$$$$ Did event %d size %d", evhdr->iCount, evhdr->DataSize());
 
       nevent++;
 
@@ -160,18 +158,18 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
       if (nevent<fCfgEventsCombine)
          for (unsigned n=0;n<bufs.size();n++)
            if (!recs[n].NextEvent()) {
-              EOUT(("Too few events (%d from %d) in subevent packet from buf %u", nevent, fCfgEventsCombine, n));
+              EOUT("Too few events (%d from %d) in subevent packet from buf %u", nevent, fCfgEventsCombine, n);
               numfinished++;
            }
 
       if (numstopacq>0) {
          if (numstopacq<bufs.size())
-            EOUT(("!!! Not all events has stop ACQ trigger"));
+            EOUT("!!! Not all events has stop ACQ trigger");
 
          if ((numfinished<numstopacq) && (nevent<fCfgEventsCombine))
-            EOUT(("!!! Not all buffers finished after Stop ACQ  numstopacq:%u  numfinished:%u", numstopacq, numfinished));
+            EOUT("!!! Not all buffers finished after Stop ACQ  numstopacq:%u  numfinished:%u", numstopacq, numfinished);
 
-         DOUT5(("Flush output buffer and wait until restart"));
+         DOUT5("Flush output buffer and wait until restart");
 
          FinishOutputBuffer();
 
@@ -183,7 +181,7 @@ void bnet::MbsBuilderModule::DoBuildEvent(std::vector<dabc::Buffer*>& bufs)
       }
 
       if (numfinished>0) {
-         if (numfinished<bufs.size()) EOUT(("!!!!!!!!! Error - not all sub-buffers are finished"));
+         if (numfinished<bufs.size()) EOUT("!!!!!!!!! Error - not all sub-buffers are finished");
          return;
       }
    }

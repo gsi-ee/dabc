@@ -15,231 +15,371 @@
 
 #include "dabc/LocalTransport.h"
 
-#include "dabc/logging.h"
-
-#include "dabc/Port.h"
 #include "dabc/MemoryPool.h"
-#include "dabc/PoolHandle.h"
-#include "dabc/Module.h"
-#include "dabc/Manager.h"
 
-dabc::LocalTransport::LocalTransport(Reference port, Mutex* mutex, bool owner, bool memcopy, bool doinp, bool doout) :
-   Worker(0, "LocalTransport", true),
-   Transport(port),
-   fOther(0),
-   fQueue(GetPort()->InputQueueCapacity()),
-   fMutex(mutex),
-   fMutexOwner(owner),
-   fMemCopy(memcopy),
-   fDoInput(doinp),
-   fDoOutput(doout),
-   fRunning(true)
+
+dabc::LocalTransport::LocalTransport(unsigned capacity, bool withmutex) :
+    dabc::Object("queue"),
+    fQueue(capacity),
+    fWithMutex(withmutex),
+    fOut(),
+    fOutId(0),
+    fOutSignKind(0),
+    fSignalOut(3), // signal output after first operation
+    fInp(),
+    fInpId(0),
+    fInpSignKind(0),
+    fSignalInp(3),  // signal input after any first operation
+    fConnected(0)
 {
-   RegisterTransportDependencies(this);
-   
-   DOUT2(("Create local transport with queue capacity %u", fQueue.Capacity()));
+   SetFlag(flAutoDestroy, true);
+
+   DOUT3("Create buffers queue %p", this);
 }
 
 dabc::LocalTransport::~LocalTransport()
 {
-   DOUT2((" dabc::LocalTransport::~LocalTransport %p other %p queue = %d", this, fOther(), fQueue.Size()));
+   DOUT3("Destroy buffers queue %p size %u", this, fQueue.Size());
 
-   if (fMutex && fMutexOwner) {
+   if (fConnected!=0)
+      EOUT("Queue was not correctly disconnected %u", fConnected);
 
-      DOUT2(("~LocalTransport %p destroy mutex %p", this, fMutex));
-      delete fMutex;
-      fMutex = 0;
-      fMutexOwner = false;
+   if (fQueue.Size() != 0) {
+      EOUT("!!! QUEUE WAS NOT cleaned up");
+      CleanupQueue();
    }
-
-   if (fOther()!=0) {
-      EOUT(("Other pointer is still there"));
-      fOther.Release();
-   }
-
-   if (fQueue.Size()>0) EOUT(("Queue size is not zero!!!"));
-   fQueue.Cleanup();
 }
 
-void dabc::LocalTransport::CleanupFromTransport(Object* obj)
-{
-   DOUT4(("LocalTransport::CleanupFromTransport %p", obj));
 
-   if (obj==fOther()) {
-      DOUT3(("LocalTransport %p remove other %p", this, obj));
-      fOther.Release();
-      if (!fMutexOwner) {
-         DOUT3(("LocalTransport %p !!!!!!!! FORGET MUTEX !!!!!!!!!!!", this));
-         fMutex = 0;
+bool dabc::LocalTransport::Send(Buffer& buf)
+{
+   // TODO: check if we need mutex
+   // TODO: check if we need to copy buffer (different pools)
+   // TODO: check if thread boundary crossed, that not many references on the buffer exists
+   // TODO: check if every buffer must be signaled
+
+   if (buf.null()) return true;
+
+   dabc::WorkerRef mdl;
+   unsigned id(0);
+
+   {
+      dabc::LockGuard lock(QueueMutex());
+
+      // ignore all send operations when connection is not established
+      if (fConnected != MaskConn) return true;
+
+      if (buf.RefCnt() > 1)
+         EOUT("Buffer ref cnt %d bigger than 1, which means extra buffer instance inside thread", buf.RefCnt());
+
+      fQueue.PushBuffer(buf);
+
+      if (!buf.null()) { EOUT("Something went wrong - buffer is not null here"); exit(3); }
+
+      if (fSignalOut==2) fSignalOut = 3; // mark that output operation done
+
+      bool makesig(false);
+
+      switch (fInpSignKind) {
+         case Port::SignalNone: return true;
+
+         case Port::SignalConfirm:
+            if (fSignalInp == 3) { makesig = true; fSignalInp = 1; }
+            break;
+
+         case Port::SignalOperation:
+            if (fSignalInp == 3) { makesig = true; fSignalInp = 2; }
+            break;
+
+         case Port::SignalEvery:
+            makesig = true;
+            break;
       }
-      CloseTransport();
-   } else
-   if (obj == GetPool()) {
-      // pool reference will be cleaned up in parent class
 
-      DOUT4(("LocalTransport::CleanupFromTransport %p memory pool mutex %p locked %s size %u", obj, fMutex, DBOOL((fMutex ? fMutex->IsLocked() : false)), fQueue.Size()));
+//      DOUT1("QUEUE %p SEND inp:%u out:%u makesig:%s", this, fSignalInp, fSignalOut, DBOOL(makesig));
 
-      fQueue.Cleanup(fMutex);
+      // make reference under mutex - insure that something will not change in between
+      if (makesig) {
+         mdl = fInp.Ref();
+         id = fInpId;
+      }
    }
 
-   DOUT4(("LocalTransport::CleanupFromTransport %p done", obj));
+   mdl.FireEvent(evntInput, id);
 
-   dabc::Transport::CleanupFromTransport(obj);
+   return true;
 }
 
-void dabc::LocalTransport::CleanupTransport()
+bool dabc::LocalTransport::Recv(Buffer& buf)
 {
-   DOUT5(("LocalTransport::CleanupTransport %p other %p mutex %p refcounter %u", this, fOther(), fMutex, fObjectRefCnt));
+   dabc::WorkerRef mdl;
+   unsigned id(0);
 
    {
-      // first of all indicate that we are not longer running and will not accept new buffers
-      LockGuard lock(fMutex);
-      fRunning = false;
-   }
-
-   DOUT5(("LocalTransport::CleanupTransport size %u before", fQueue.Size()));
-
-   fQueue.Cleanup(fMutex);
-
-   DOUT5(("LocalTransport::CleanupTransport size %u after", fQueue.Size()));
-
-   // forgot about mutex
-   if (!fMutexOwner) fMutex = 0;
-
-   fOther.Release();
-
-   dabc::Transport::CleanupTransport();
-
-   DOUT3(("LocalTransport::CleanupTransport %p done", this));
-}
-
-
-bool dabc::LocalTransport::Recv(Buffer &buf)
-{
-   {
-      LockGuard lock(fMutex);
-
-      if (fQueue.Size()<=0) return false;
+      dabc::LockGuard lock(QueueMutex());
 
       fQueue.PopBuffer(buf);
+
+      if (fSignalInp == 2) fSignalInp = 3;
+
+      bool makesig(false);
+
+      switch (fOutSignKind) {
+         case Port::SignalNone: return true;
+
+         case Port::SignalConfirm:
+            // if operation was confirmed by sender, we could signal immediately
+            if (fSignalOut == 3) { makesig = true; fSignalOut = 1; }
+            break;
+
+         case Port::SignalOperation:
+            if (fSignalOut == 3) { makesig = true; fSignalOut = 2; }
+            break;
+
+         case Port::SignalEvery:
+            makesig = true;
+            break;
+      }
+
+//      DOUT1("QUEUE %p RECV inp:%u out:%u makesig:%s", this, fSignalInp, fSignalOut, DBOOL(makesig));
+
+      // signal output event only if sender did something after previous event
+      if (makesig) {
+         // make reference under mutex - insure that something will not change in between
+         mdl = fOut.Ref();
+         id = fOutId;
+      }
    }
 
-   // use port mutex only when other works in different thread
-   if (fOther())
-     ((LocalTransport*) fOther())->FirePortOutput(fMutex!=0);
+   mdl.FireEvent(evntOutput, id);
 
-   return !buf.null();
+   return true;
 }
 
-unsigned dabc::LocalTransport::RecvQueueSize() const
+void dabc::LocalTransport::SignalWhenFull()
 {
-   LockGuard lock(fMutex);
+   // Main motivation for the method - set queue in the state that it signal
+   // input port when queue is full.
 
-   return fQueue.Size();
-}
+   // But another use is like dummy read method.
+   // Means is there is enough space in the queue, output event will be
+   // generated simulating that input port read data from the queue
 
-dabc::Buffer& dabc::LocalTransport::RecvBuffer(unsigned indx) const
-{
-   LockGuard lock(fMutex);
 
-   return fQueue.ItemRef(indx);
-}
+   dabc::WorkerRef mdl;
+   unsigned id(0), evnt(0);
 
-bool dabc::LocalTransport::Send(const Buffer& buf)
-{
-   LocalTransport* other = (LocalTransport*) fOther();
+   {
+      dabc::LockGuard lock(QueueMutex());
 
-   if (buf.null() || (other==0)) return false;
+      if (fQueue.Full()) {
+         mdl = fInp.Ref();
+         id = fInpId;
+         evnt = evntInput;
+      } else {
+         if (fSignalInp == 2) fSignalInp = 3;
 
-   dabc::Buffer sendbuf;
+         bool makesig(false);
 
-   if (fMemCopy && !buf.null()) {
-      MemoryPool* pool = other->GetPool();
-      if (pool)
-         sendbuf = pool->CopyBuffer(buf);
+         switch (fOutSignKind) {
+            case Port::SignalNone: return;
+
+            case Port::SignalConfirm:
+               // if operation was confirmed by sender, we could signal immediately
+               if (fSignalOut == 3) { makesig = true; fSignalOut = 1; }
+               break;
+
+            case Port::SignalOperation:
+               if (fSignalOut == 3) { makesig = true; fSignalOut = 2; }
+               break;
+
+            case Port::SignalEvery:
+               makesig = true;
+               break;
+         }
+
+         // signal output event only if sender did something after previous event
+         if (makesig) {
+
+            DOUT3("Producing output signal from DummyRecv");
+
+            // make reference under mutex - insure that something will not change in between
+            mdl = fOut.Ref();
+            id = fOutId;
+            evnt = evntOutput;
+         }
+      }
    }
 
-   if (sendbuf.null()) sendbuf = buf;
-
-   bool res = false;
-
-   if (other->fRunning)
-      res = other->fQueue.Push(sendbuf, fMutex);
-
-   if (res) {
-      // here one need port mutex when other transport working in another thread
-      other->FirePortInput(fMutex!=0);
-   }
-
-   return res;
+   mdl.FireEvent(evnt, id);
 }
 
-unsigned dabc::LocalTransport::SendQueueSize()
-{
-   LockGuard lock(fMutex);
 
-   return fOther() ? ((LocalTransport*) fOther())->fQueue.Size() : 0;
+void dabc::LocalTransport::ConfirmEvent(bool fromoutputport)
+{
+   // method only called by ports, which are configured as Port::SignalConfirm
+
+
+   dabc::LockGuard lock(QueueMutex());
+
+   if (fromoutputport) {
+      // after current output event is confirmed we are normally
+      // should first send buffer in the queue and only than next recv operation on other side
+      // will produce new output event
+      // if queue full at this moment, no any send is possible and therefore
+      // we just waiting for next recv operation
+
+      fSignalOut = fQueue.Full() ? 3 : 2;
+   } else {
+      // after current input event confirmed we are normally
+      // should first take buffer from the queue and only than next send operation
+      // will produce new input event
+      // but if queue is empty at this moment, no any recv operation possible and therefore
+      // we just waiting for next send operation
+
+      fSignalInp = fQueue.Empty() ? 3 : 2; // we are waiting first recv operation
+   }
+
+//   DOUT0("QUEUE %p Conf inp:%u out:%u", this, fSignalInp, fSignalOut);
+
+}
+
+void dabc::LocalTransport::Disconnect(bool isinp)
+{
+   dabc::WorkerRef m1, m2;
+   unsigned id1, id2;
+
+   bool cleanup(false);
+
+   {
+      // we remove all references from queue itself
+      dabc::LockGuard lock(QueueMutex());
+
+      m1 << fInp;
+      id1 = fInpId; fInpId = 0;
+      m2 << fOut;
+      id2 = fOutId; fOutId = 0;
+      fConnected = fConnected & ~(isinp ? MaskInp : MaskOut);
+      if (fConnected == 0) cleanup = true;
+   }
+
+   DOUT3("Queue %p  disconnected isinp %s conn %u", this, DBOOL(isinp), fConnected);
+
+   if (!isinp) m1.FireEvent(evntPortDisconnect, id1);
+
+   if (isinp) m2.FireEvent(evntPortDisconnect, id2);
+
+   m1.Release();
+
+   m2.Release();
+
+   if (cleanup) {
+      DOUT3("Perform queue %p cleanup by disconnect", this);
+      CleanupQueue();
+   }
+
+}
+
+
+void dabc::LocalTransport::CleanupQueue()
+{
+   fQueue.Cleanup(QueueMutex());
+}
+
+
+void dabc::LocalTransport::PortActivated(int itemkind, bool on)
+{
+   dabc::WorkerRef other;
+   unsigned otherid(0);
+
+   {
+      dabc::LockGuard lock(QueueMutex());
+
+      if (itemkind==mitOutPort) {
+         other = fInp.Ref();
+         otherid = fInpId;
+      } else {
+         other = fOut.Ref();
+         otherid = fOutId;
+      }
+   }
+
+   other.FireEvent(on ? evntConnStart : evntConnStop, otherid);
+}
+
+dabc::Reference dabc::LocalTransport::GetPool()
+{
+   dabc::MemoryPoolRef pool;
+
+   {
+      dabc::LockGuard lock(QueueMutex());
+
+      pool = fOut.Ref();
+   }
+
+   return pool;
 }
 
 
 int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
 {
-   Port* port1 = (Port*) port1ref();
-   Port* port2 = (Port*) port2ref();
+   PortRef port_out = port1ref;
+   PortRef port_inp = port2ref;
 
-   if ((port1==0) || (port2==0)) return cmd_false;
+   if (port_out.null() || port_inp.null()) return cmd_false;
 
-   Module* m1 = port1->GetModule();
-   Module* m2 = port2->GetModule();
+   // FIXME: one need to protect module pointer via mutex - port can be destroyed or cleaned at any moment in its own thread
+   ModuleRef m1 = port_out.GetModule();
+   ModuleRef m2 = port_inp.GetModule();
 
-   bool memcopy = false;
-   Mutex* mutex = 0;
+   bool withmutex = true;
 
-   if ((m1!=0) && (m2!=0))
-      if (m1->thread()() != m2->thread()())
-         mutex = new Mutex;
-
-   if (port1->GetPoolHandle() && port2->GetPoolHandle()) {
-      memcopy = ! port1->GetPoolHandle()->IsName(port2->GetPoolHandle()->GetName());
-      if (memcopy) {
-         EOUT(("Transport between ports %s %s will be with memcpy",
-                 port1->ItemName().c_str(), port2->ItemName().c_str()));
-      }
+   if (m1.IsSameThread(m2)) {
+      DOUT0("!!!! Can create queue without mutex !!!");
+      withmutex = false;
    }
 
-   if (port1->InputQueueCapacity() < port2->OutputQueueCapacity())
-      port1->ChangeInputQueueCapacity(port2->OutputQueueCapacity());
-   bool doinp1 = port1->InputQueueCapacity() > 0;
+   unsigned queuesize = port_out.QueueCapacity() > port_inp.QueueCapacity() ?
+         port_out.QueueCapacity() : port_inp.QueueCapacity();
 
-   if (port2->InputQueueCapacity() < port1->OutputQueueCapacity())
-      port2->ChangeInputQueueCapacity(port1->OutputQueueCapacity());
-   bool doinp2 = port2->InputQueueCapacity() > 0;
+   LocalTransportRef q = new LocalTransport(queuesize, withmutex);
 
-   if (port1->InlineDataSize() < port2->InlineDataSize())
-      port1->ChangeInlineDataSize(port2->InlineDataSize());
-   else
-   if (port1->InlineDataSize() > port2->InlineDataSize())
-      port2->ChangeInlineDataSize(port1->InlineDataSize());
+   q()->fOut = m1.Ref();
+   q()->fOutId = port_out.ItemId();
+   q()->fOutSignKind = port_out.GetSignallingKind();
 
-   LocalTransport* tr1 = new LocalTransport(port1ref, mutex, true, memcopy, doinp1, doinp2);
-   LocalTransport* tr2 = new LocalTransport(port2ref, mutex, false, memcopy, doinp2, doinp1);
+   q()->fInp = m2.Ref();
+   q()->fInpId = port_inp.ItemId();
+   q()->fInpSignKind = port_inp.GetSignallingKind();
 
-   Reference ref1(tr1);
-   Reference ref2(tr2);
 
-   if (!tr1->AssignToThread(m1->thread()) || !tr2->AssignToThread(m2->thread())) {
-      ref1.Destroy();
-      ref2.Destroy();
-      return cmd_false;
-   }
+//   DOUT0("Connecting ports output %p input %p  m1 %p m2 %p", port1, port2, m1(), m2());
 
-   tr1->fOther = Reference(tr2);
-   tr2->fOther = Reference(tr1);
+   // first of all, we must connect input port
+   dabc::Command cmd2("SetQueue");
+   cmd2.SetStr("Port", port_inp.GetName());
+   cmd2.SetRef("Queue", q.Ref());
+   if (!m2.Execute(cmd2)) return cmd_false;
 
-   // register many dependencies to be able clear them at right moment
-   dabc::mgr()->RegisterDependency(tr1, tr2, true);
+   // than output port
+   dabc::Command cmd1("SetQueue");
+   cmd1.SetStr("Port", port_out.GetName());
+   cmd1.SetRef("Queue", q);
+   if (!m1.Execute(cmd1)) return cmd_false;
 
-   if (port1->AssignTransport(ref1, tr1) && port2->AssignTransport(ref2, tr2)) return cmd_true;
+   bool m1running = m1.IsRunning();
+   bool m2running = m2.IsRunning();
 
-   return cmd_false;
+   // inform each module that it's port is connected
+   m1.FireEvent(evntPortConnect, port_out.ItemId());
+   m2.FireEvent(evntPortConnect, port_inp.ItemId());
+
+   // inform modules if another is already running
+   if (m1running && !m2running)
+      m2.FireEvent(evntConnStart, port_inp.ItemId());
+
+   if (!m1running && m2running)
+      m1.FireEvent(evntConnStart, port_out.ItemId());
+
+   return cmd_true;
 }

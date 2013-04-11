@@ -2,35 +2,19 @@
 # following lines define the packaging:
 PACKAGE_DIR    = ./packages
 DABCPACK_VERS  = dabc-$(MAJOR).$(MINOR)
-ABBPACK_VERS   = abb_v$(MAJOR).$(MINOR)
-GUIPACK_VERS   = dabcgui_v$(MAJOR).$(MINOR)
 DABCTAR_NAME   = dabc-$(MAJOR).$(MINOR).tar
-ROCTAR_NAME    = dabcroc19.tar
-GUITAR_NAME    = dabcgui_v$(MAJOR).$(MINOR).tar
 
 DISTR_DIR  = ~/dabc_temp_packaging
 DABCDISTR_DIR  = $(DISTR_DIR)/$(DABCPACK_VERS)
-ROCDISTR_DIR   = $(DISTR_DIR)/$(ROCPACK_VERS)
-ABBDISTR_DIR   = $(DISTR_DIR)/$(ABBPACK_VERS)
-GUIDISTR_DIR   = $(DISTR_DIR)/$(GUIPACK_VERS)
-
-DABC_PLUGINS_PACK = plugins/mbs plugins/bnet plugins/bnet-mbs plugins/verbs plugins/ezca plugins/mbs-root plugins/dim
-DABC_APPLICATIONS_PACK = applications/bnet-mbs applications/bnet-test applications/core-test applications/net-test 
-
 
 # following is for adding header to sources (done once)
 DABC_HEADERS = $(wildcard base/*/*.h)
-DABC_HEADERS += $(wildcard controls/*/*/*.h)
 DABC_HEADERS += $(wildcard plugins/*/*/*.h)
 DABC_HEADERS += $(wildcard applications/*/*.h)
 
 DABC_IMPS = $(wildcard base/*/*.cxx)
-DABC_IMPS += $(wildcard controls/*/*/*.cxx)
 DABC_IMPS += $(wildcard plugins/*/*/*.cxx)
 DABC_IMPS += $(wildcard applications/*/*.cxx)
-
-DABC_JAVAS = $(wildcard gui/java/generic/src/*.java)
-DABC_JAVA_APPS = $(wildcard gui/java/generic/application/*.java)
 
 
 package: clean
@@ -49,30 +33,6 @@ package: clean
 	@rm -f -r $(DISTR_DIR)/*
 	@rmdir $(DISTR_DIR)
 	@echo "Package $(DABCTAR_NAME).gz done in $(PACKAGE_DIR)"
-
-packageroc: clean
-	tar chf $(ROCTAR_NAME) Makefile *.txt base config build/*.sh --exclude=.svn
-	tar rhf $(ROCTAR_NAME) applications/core-test plugins/mbs plugins/hadaq --exclude=.svn
-	@mkdir -p $(PACKAGE_DIR); mv -f $(ROCTAR_NAME) $(PACKAGE_DIR)
-	cd $(PACKAGE_DIR); rm -f $(ROCTAR_NAME).gz; gzip $(ROCTAR_NAME) 
-	@echo "Source package $(ROCTAR_NAME).gz done"  
-
-
-packagegui: all
-	@echo "Creating package $(GUITAR_NAME) ..."
-	@mkdir -p $(DISTR_DIR); cd $(DISTR_DIR); mkdir -p $(GUIPACK_VERS)
-	cp gui/java/packages/xgui.jar $(GUIDISTR_DIR)
-	cp gui/java/generic/application/*.java $(GUIDISTR_DIR) 
-	cp gui/java/generic/application/Makefile $(GUIDISTR_DIR) 
-	cp gui/java/generic/application/guilogin.sh $(GUIDISTR_DIR) 
-	@cd $(GUIDISTR_DIR); chmod u+rw *; chmod a-x *; 
-	@cd $(DISTR_DIR); tar chf $(GUITAR_NAME) $(GUIPACK_VERS); gzip -f $(GUITAR_NAME)
-	@mkdir -p $(PACKAGE_DIR)
-	@mv -f $(DISTR_DIR)/$(GUITAR_NAME).gz $(PACKAGE_DIR)
-	@rm -rf $(DISTR_DIR)
-	@echo "Package $(GUITAR_NAME).gz done in $(PACKAGE_DIR)"
-
-packages: packagegui package packageroc src
 
 src: clean
 	tar chf dabc.tar Makefile *.txt base config build script controls/simple dim controls/dimcontrol --exclude=.svn

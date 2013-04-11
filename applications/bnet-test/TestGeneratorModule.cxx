@@ -14,14 +14,12 @@
 #include "TestGeneratorModule.h"
 
 #include "dabc/logging.h"
-#include "dabc/Port.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/Buffer.h"
 #include "dabc/Pointer.h"
 
 #include "bnet/common.h"
 
-bnet::TestGeneratorModule::TestGeneratorModule(const char* name, dabc::Command cmd) :
+bnet::TestGeneratorModule::TestGeneratorModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fEventCnt(0)
 {
@@ -33,19 +31,19 @@ bnet::TestGeneratorModule::TestGeneratorModule(const char* name, dabc::Command c
 
    CreateOutput("Output", Pool(), ReadoutQueueSize);
 
-   DOUT1(("Test Generator %s: UniqueId:%llu", GetName(), fUniquieId));
+   DOUT1("Test Generator %s: UniqueId:%llu", GetName(), fUniquieId);
 }
 
-void bnet::TestGeneratorModule::ProcessOutputEvent(dabc::Port* port)
+void bnet::TestGeneratorModule::ProcessOutputEvent(unsigned indx)
 {
-   if (!port->CanSend()) {
-      EOUT(("Should not happen with generator"));
+   if (!CanSend(indx)) {
+      EOUT("Should not happen with generator");
       return;
    }
 
    dabc::Buffer* buf = Pool()->TakeBuffer(fBufferSize);
    if (buf==0) {
-      EOUT(("No free buffer - generator will block"));
+      EOUT("No free buffer - generator will block");
       return;
    }
 
@@ -61,7 +59,7 @@ void bnet::TestGeneratorModule::ProcessOutputEvent(dabc::Port* port)
    ptr.copyfrom(&fUniquieId, sizeof(fUniquieId));
    ptr+=sizeof(fUniquieId);
 
-   DOUT3(("Generate packet id %llu of size %d need %d", fUniquieId, buf->GetTotalSize(), fBufferSize));
+   DOUT3("Generate packet id %llu of size %d need %d", fUniquieId, buf->GetTotalSize(), fBufferSize);
 
-   port->Send(buf);
+   Send(indx, buf);
 }

@@ -2,7 +2,7 @@
 <dabc version="1">
   <Variables>
   <!--Enter the values for specific setup-->
-  <ctrl value="Linux controller node"/>
+     <ctrl value="Linux controller node"/>
      <mbs1 value="MBS readout node"/>
      <mbs2 value="MBS readout node"/>
      <read1 value="DABC readout node"/>

@@ -33,13 +33,13 @@ verbs::ComplQueue::ComplQueue(ContextRef ctx, int size,
    }
 
    if (f_channel==0) {
-      EOUT(("Completion channel not specified ???"));
+      EOUT("Completion channel not specified ???");
       return;
    }
 
    f_cq = ibv_create_cq(fContext.context(), size, &fCQContext, f_channel, 0);
    if (f_cq==0)
-      EOUT(("Couldn't allocate completion queue (CQ)"));
+      EOUT("Couldn't allocate completion queue (CQ)");
 
    fCQContext.events_get = 0;
    fCQContext.itself = this;
@@ -54,7 +54,7 @@ verbs::ComplQueue::~ComplQueue()
    AcknoledgeEvents();
 
    if (ibv_destroy_cq(f_cq))
-      EOUT(("Fail to destroy CQ"));
+      EOUT("Fail to destroy CQ");
 
    f_cq = 0;
 
@@ -74,13 +74,14 @@ int verbs::ComplQueue::Poll()
    if (ne==0) return 0;
 
    if (ne<0) {
-      EOUT(("ibv_poll_cq error"));
+      EOUT("ibv_poll_cq error");
       return 2;
    }
 
    if (f_wc.status != IBV_WC_SUCCESS) {
-      EOUT(("Completion error=%d %s  wr_id=%llu syndrom 0x%x qpnum=%x src_qp=%x",
-      f_wc.status, GetStrError(f_wc.status), f_wc.wr_id, f_wc.vendor_err, f_wc.qp_num, f_wc.src_qp));
+      EOUT("Completion error=%d %s  wr_id=%llu syndrom 0x%x qpnum=%x src_qp=%x",
+            f_wc.status, GetStrError(f_wc.status), f_wc.wr_id,
+            f_wc.vendor_err, f_wc.qp_num, f_wc.src_qp);
       return 2;
    }
 
@@ -109,7 +110,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
 
          int timeout_ms = lrint((finish-now)*1000);
 
-         if (timeout_ms<0) { EOUT(("Negative timeout!!!")); timeout_ms = 0; }
+         if (timeout_ms<0) { EOUT("Negative timeout!!!"); timeout_ms = 0; }
 
          // no need to wait while no timeout is remaining
          // if (timeout_ms==0) return Poll();
@@ -129,13 +130,13 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
          if (status>0) { is_event = true; break; }
 
          if ((status==-1) && (errno != EINTR)) {
-            EOUT(("Error when waiting IB event"));
+            EOUT("Error when waiting IB event");
             return 2;
          }
 
 /*
          int timeout_micros = lrint((finish-now)*1000000);
-         if (timeout_micros<0) { EOUT(("Negative timeout!!!")); timeout_micros = 0; }
+         if (timeout_micros<0) { EOUT("Negative timeout!!!"); timeout_micros = 0; }
          timeout_micros = 0;
 
          fd_set rfds;
@@ -150,7 +151,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
          int retval = select(1, &rfds, NULL, NULL, &tv);
 
          if (retval<0) {
-            EOUT(("Error when waiting IB event"));
+            EOUT("Error when waiting IB event");
             return 2;
          }
 
@@ -170,12 +171,12 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
    struct ibv_cq *ev_cq;
    ComplQueueContext *ev_ctx(0);
    if (ibv_get_cq_event(f_channel, &ev_cq, (void**)&ev_ctx)) {
-      EOUT(("Failed to get cq_event"));
+      EOUT("Failed to get cq_event");
       return 2;
    }
 
    if ((ev_ctx==0) || (ev_ctx->own_cq != ev_cq)) {
-      EOUT(("Error with getting context after ibv_get_cq_event"));
+      EOUT("Error with getting context after ibv_get_cq_event");
       return 2;
    }
 
@@ -188,7 +189,7 @@ int verbs::ComplQueue::Wait(double timeout, double fasttm)
    }
 
    if (ibv_req_notify_cq(ev_cq, 0)) {
-      EOUT(("Couldn't request CQ notification"));
+      EOUT("Couldn't request CQ notification");
       return 2;
    }
 

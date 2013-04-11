@@ -16,12 +16,9 @@
 #include "dabc/timing.h"
 #include "dabc/ModuleAsync.h"
 #include "dabc/ModuleSync.h"
-#include "dabc/Port.h"
-#include "dabc/Timer.h"
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/threads.h"
 #include "dabc/Application.h"
 #include "dabc/SocketDevice.h"
@@ -35,7 +32,7 @@
 int TestBufferSize = 8*1024;
 int TestSendQueueSize = 5;
 int TestRecvQueueSize = 10;
-bool TestUseAckn = false;
+bool TestUseAckn = true;
 
 class NetTestSenderModule : public dabc::ModuleAsync {
    protected:
@@ -44,14 +41,13 @@ class NetTestSenderModule : public dabc::ModuleAsync {
       bool                fChaotic;
 
    public:
-      NetTestSenderModule(const char* name, dabc::Command cmd) :
+      NetTestSenderModule(const std::string& name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
          int nports = Cfg("NumPorts",cmd).AsInt(3);
-         int buffsize = Cfg("BufferSize",cmd).AsInt(16*1024);
          fChaotic = Cfg("Chaotic", cmd).AsBool(true);
 
-         CreatePoolHandle("SendPool");
+         CreatePoolHandle("Pool", 0);
 
          dabc::Parameter rate = CreatePar("OutRate");
          rate.SetRatemeter(false, 3.);
@@ -60,19 +56,20 @@ class NetTestSenderModule : public dabc::ModuleAsync {
          //rate.SetDebugOutput(true);
 
          for (int n=0;n<nports;n++) {
-            dabc::Port* port = CreateOutput(FORMAT(("Output%d", n)), Pool(), TestSendQueueSize);
-            port->SetOutRateMeter(rate);
+            std::string name = dabc::format("Output%d", n);
+            CreateOutput(name, TestSendQueueSize);
+            SetPortRatemeter(name, rate);
          }
 
          fCanSend = Cfg("CanSend",cmd).AsBool(false);
          fPortCnt = 0;
 
-         DOUT1(("new TSendModule %s nports = %d buf = %d done", GetName(), NumOutputs(), buffsize));
+         DOUT1("new TSendModule %s nports = %d done", GetName(), NumOutputs());
       }
 
       ~NetTestSenderModule()
       {
-         DOUT3(("~NetTestSenderModule() %s", GetName()));
+         DOUT3("~NetTestSenderModule() %s", GetName());
       }
 
       int ExecuteCommand(dabc::Command cmd)
@@ -81,30 +78,34 @@ class NetTestSenderModule : public dabc::ModuleAsync {
             fCanSend = cmd.GetBool("Enable", true);
             if (fCanSend) StartSending();
             fPortCnt = 0;
+            DOUT0("Enabling sending %s", DBOOL(fCanSend));
             return dabc::cmd_true;
          }
 
          return ModuleAsync::ExecuteCommand(cmd);
       }
 
-      void ProcessOutputEvent(dabc::Port* port)
+      void ProcessOutputEvent(unsigned indx)
       {
-//         DOUT0(("Module %s Process output event port %s cansend %s", GetName(), port->GetName(), DBOOL(fCanSend)));
+//         DOUT0("Module %s Process output event port %s cansend %s", GetName(), port->GetName(), DBOOL(fCanSend));
 
          if (!fCanSend) return;
 
          if (fChaotic) {
-            dabc::Buffer buf = Pool()->TakeBuffer();
-  //          DOUT0(("Module %s Send buffer %p", GetName(), buf));
-            port->Send(buf);
+            while (CanSend(indx)) {
+               dabc::Buffer buf = TakeBuffer();
+               if (buf.null()) { EOUT("no buffers in memory pool"); return; }
+  //          DOUT0("Module %s Send buffer %p", GetName(), buf);
+               Send(indx, buf);
+            }
             return;
          }
 
          int cnt = 1000;
 
-         while (Output(fPortCnt)->CanSend()) {
-            dabc::Buffer buf = Pool()->TakeBuffer();
-            Output(fPortCnt)->Send(buf);
+         while (CanSend(fPortCnt)) {
+            dabc::Buffer buf = TakeBuffer();
+            Send(fPortCnt, buf);
             fPortCnt = (fPortCnt+1) % NumOutputs();
             if (cnt-- == 0) break;
          }
@@ -114,22 +115,22 @@ class NetTestSenderModule : public dabc::ModuleAsync {
       {
          for(int n=0;n<TestSendQueueSize;n++)
             for(unsigned nout=0;nout<NumOutputs();nout++)
-               if (Output(nout)->CanSend()) {
-                  dabc::Buffer buf = Pool()->TakeBuffer();
-                  if (buf.null()) { EOUT(("no buffers in memory pool")); }
-                  Output(nout)->Send(buf);
+               if (CanSend(nout)) {
+                  dabc::Buffer buf = TakeBuffer();
+                  if (buf.null()) { EOUT("no buffers in memory pool"); return; }
+                  Send(nout, buf);
                }
       }
 
       void BeforeModuleStart()
       {
-         DOUT2(("SenderModule starting"));
+         DOUT2("SenderModule starting");
       }
 
 
       void AfterModuleStop()
       {
-         DOUT0(("SenderModule finish Rate %s", Par("OutRate").AsStr()));
+         DOUT0("SenderModule finish Rate %s", Par("OutRate").AsStr());
       }
 };
 
@@ -139,35 +140,34 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
       int                  fSleepTime;
 
    public:
-      NetTestReceiverModule(const char* name, dabc::Command cmd) :
+      NetTestReceiverModule(const std::string& name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
          // we will use queue (second true) in the signal to detect order of signal fire
          int nports = Cfg("NumPorts",cmd).AsInt(3);
-         int buffsize = Cfg("BufferSize",cmd).AsInt(16*1024);
          fSleepTime = Cfg("SleepTime",cmd).AsInt(0);
-
-         CreatePoolHandle("RecvPool");
 
          dabc::Parameter par = CreatePar("InpRate");
          par.SetRatemeter(false, 3.);
          par.SetLimits(0., 100.);
          par.SetUnits("MB");
          par.SetDebugOutput(true);
+         par.SetWidthPrecision(5,2);
 
          for (int n=0;n<nports;n++) {
-            dabc::Port* port = CreateInput(FORMAT(("Input%d", n)), Pool(), TestRecvQueueSize);
-            port->SetInpRateMeter(par);
+            std::string name = dabc::format("Input%d", n);
+            CreateInput(name, TestRecvQueueSize);
+            SetPortRatemeter(name, par);
          }
 
-         DOUT1(("new TRecvModule %s nports:%d buf:%d", GetName(), nports, buffsize));
+         DOUT1("new TRecvModule %s nports:%d", GetName(), nports);
 
          fSleepTime = 0;
       }
 
       virtual ~NetTestReceiverModule()
       {
-          DOUT3(("Calling ~NetTestReceiverModule"));
+          DOUT1("Calling ~NetTestReceiverModule");
       }
 
       int ExecuteCommand(dabc::Command cmd)
@@ -180,33 +180,35 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
          return dabc::cmd_true;
       }
 
-      void ProcessInputEvent(dabc::Port* port)
+      virtual bool ProcessRecv(unsigned port)
       {
-         dabc::Buffer ref = port->Recv();
+         dabc::Buffer buf = Recv(port);
 
-//         DOUT0(("******************************************* Module %s Port %s Recv buffer %p", GetName(), port->GetName(), ref));
+//         DOUT0("******************************************* Module %s Port %s Recv buffer %u", GetName(), port->GetName(), buf.GetTotalSize());
 
 //         exit(076);
 
-         if (ref.null()) { EOUT(("AAAAAAA type = %u", ref.GetTypeId())); }
+         if (buf.null()) { EOUT("AAAAAAA type = %u", buf.GetTypeId()); }
 
-         ref.Release();
+         buf.Release();
 
          if (fSleepTime>0) {
 //            dabc::TimeStamp tm1 = dabc::Now();
             WorkerSleep(fSleepTime);
 //            dabc::TimeStamp tm2 = dabc::Now();
          }
+
+         return true;
       }
 
       void BeforeModuleStart()
       {
-         DOUT2(("ReceiverModule starting"));
+         DOUT0("ReceiverModule starting");
       }
 
       void AfterModuleStop()
       {
-         DOUT0(("ReceiverModule finish Rate %s", Par("InpRate").AsStr()));
+         DOUT0("ReceiverModule finish Rate %s", Par("InpRate").AsStr());
       }
 };
 
@@ -216,62 +218,36 @@ class NetTestMcastModule : public dabc::ModuleAsync {
       int  fCounter;
 
    public:
-      NetTestMcastModule(const char* name, dabc::Command cmd) :
+      NetTestMcastModule(const std::string& name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
          fReceiver = Cfg("IsReceiver",cmd).AsBool(true);
 
-         CreatePoolHandle("MPool");
+         EnsurePorts(fReceiver ? 1 : 0, fReceiver ? 0 : 1,  "MPool");
 
          fCounter = 0;
-
-         CreatePar("DataRate").SetRatemeter(false, 3.);
-
-         if (fReceiver)
-            CreateInput("Input", Pool())->SetInpRateMeter(Par("DataRate"));
-         else {
-            CreateOutput("Output", Pool())->SetOutRateMeter(Par("DataRate"));
-//            CreateTimer("Timer1", 0.1);
-         }
       }
 
-      void ProcessInputEvent(dabc::Port* port)
+      bool ProcessRecv(unsigned port)
       {
-         dabc::Buffer buf = port->Recv();
-         if (buf.null()) { EOUT(("AAAAAAA")); return; }
-
-//         DOUT0(("Process input event %d", buf.GetTotalSize()));
-
-//         DOUT0(("Counter %3d Size %u Msg %s", fCounter++, buf.GetTotalSize(), buf.AsStdString().c_str()));
+         dabc::Buffer buf = Recv(port);
+         if (buf.null()) { EOUT("AAAAAAA"); return false; }
          buf.Release();
+         return true;
       }
 
-      void ProcessOutputEvent(dabc::Port* port)
+      bool ProcessSend(unsigned port)
       {
-         dabc::Buffer buf = Pool()->TakeBuffer();
-         if (buf.null()) { EOUT(("AAAAAAA")); return; }
-
+         dabc::Buffer buf = TakeBuffer();
+         if (buf.null()) { EOUT("AAAAAAA"); return false; }
          buf.SetTotalSize(1000);
-//         DOUT0(("Process output event %d", buf->GetDataSize()));
-         port->Send(buf);
-      }
-
-      void ProcessTimerEvent(dabc::Timer* timer)
-      {
-         if (!Output()->CanSend()) return;
-         dabc::Buffer buf = Pool()->TakeBuffer(1024);
-         if (buf.null()) return;
-
-         buf.CopyFromStr(dabc::format("Message %3d from sender", fCounter++).c_str());
-
-         DOUT0(("Sending %3d Size %u Msg %s", fCounter, buf.GetTotalSize(), buf.AsStdString().c_str()));
-
-         Output()->Send(buf.HandOver());
+         Send(port, buf);
+         return true;
       }
 
       void AfterModuleStop()
       {
-         DOUT0(("Mcast module rate %f", Par("DataRate").AsDouble()));
+         DOUT0("Mcast module rate %f", Par("DataRate").AsDouble());
       }
 };
 
@@ -282,7 +258,7 @@ class NetTestApplication : public dabc::Application {
 
       NetTestApplication() : dabc::Application("NetTestApp")
       {
-         DOUT0(("Create net test application"));
+         DOUT0("Create net test application");
 
 
          CreatePar("Kind").DfltStr("all-to-all");
@@ -297,7 +273,7 @@ class NetTestApplication : public dabc::Application {
          CreatePar(dabc::xmlInputQueueSize).DfltInt(8);
          CreatePar(dabc::xmlUseAcknowledge).DfltBool(false);
 
-         DOUT0(("Test application was build"));
+         DOUT0("Test application was build");
       }
 
       int Kind()
@@ -313,7 +289,7 @@ class NetTestApplication : public dabc::Application {
 
          if (Kind() == kindAllToAll) {
 
-            if (!dabc::mgr.CreateDevice(devclass.c_str(), "NetDev")) return false;
+            if (!dabc::mgr.CreateDevice(devclass, "NetDev")) return false;
 
             // no need, will be done when modules are created
             // dabc::mgr.CreateMemoryPool("SendPool");
@@ -342,7 +318,7 @@ class NetTestApplication : public dabc::Application {
                }
             }
 
-            DOUT0(("Create all-to-all modules done"));
+            DOUT0("Create all-to-all modules done");
 
             return true;
 
@@ -351,9 +327,9 @@ class NetTestApplication : public dabc::Application {
          if (Kind() == kindMulticast) {
             bool isrecv = dabc::mgr()->NodeId() > 0;
 
-            DOUT1(("Create device %s", devclass.c_str()));
+            DOUT1("Create device %s", devclass.c_str());
 
-            if (!dabc::mgr.CreateDevice(devclass.c_str(), "MDev")) return false;
+            if (!dabc::mgr.CreateDevice(devclass, "MDev")) return false;
 
             dabc::CmdCreateModule cmd3("NetTestMcastModule", "MM");
             cmd3.SetBool("IsReceiver", isrecv);
@@ -361,7 +337,7 @@ class NetTestApplication : public dabc::Application {
 
             if (!dabc::mgr.CreateTransport(isrecv ? "MM/Input" : "MM/Output", "MDev")) return false;
 
-            DOUT1(("Create multicast modules done"));
+            DOUT1("Create multicast modules done");
 
             return true;
          }
@@ -381,38 +357,26 @@ class NetTestApplication : public dabc::Application {
 class NetTestFactory : public dabc::Factory  {
    public:
 
-      NetTestFactory(const char* name) : dabc::Factory(name) {}
+      NetTestFactory(const std::string& name) : dabc::Factory(name) {}
 
-      virtual dabc::Application* CreateApplication(const char* classname, dabc::Command cmd)
+      virtual dabc::Application* CreateApplication(const std::string& classname, dabc::Command cmd)
       {
-         if (strcmp(classname, "NetTestApp")==0)
+         if (classname == "NetTestApp")
             return new NetTestApplication();
          return dabc::Factory::CreateApplication(classname, cmd);
       }
 
 
-      virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
+      virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
       {
-         if (strcmp(classname,"NetTestSenderModule")==0)
+         if (classname == "NetTestSenderModule")
             return new NetTestSenderModule(modulename, cmd);
-         else
-         if (strcmp(classname,"NetTestReceiverModule")==0)
+
+         if (classname == "NetTestReceiverModule")
             return new NetTestReceiverModule(modulename, cmd);
-         else
-         if (strcmp(classname,"NetTestMcastModule")==0)
+
+         if (classname == "NetTestMcastModule")
             return new NetTestMcastModule(modulename, cmd);
-//         else
-//         if (strcmp(classname,"Test1WorkerModule")==0)
-//            return new Test1WorkerModule(modulename, cmd);
-//         else
-//         if (strcmp(classname,"Test2SendModule")==0)
-//            return new Test2SendModule(modulename, cmd);
-//         else
-//         if (strcmp(classname,"Test2RecvModule")==0)
-//            return new Test2RecvModule(modulename, cmd);
-//         else
-//         if (strcmp(classname,"Test2WorkerModule")==0)
-//            return new Test2WorkerModule(modulename, cmd);
 
          return 0;
       }
@@ -422,42 +386,44 @@ dabc::FactoryPlugin nettest(new NetTestFactory("net-test"));
 
 
 
-bool StartStopAll(bool isstart)
+bool RunCommands(int kind)
 {
-   dabc::CommandsSet cli(dabc::mgr()->thread());
+   //dabc::CommandsSet cli(dabc::mgr()->thread());
+
+   bool res = true;
+   std::string info;
 
    for (int node=0;node<dabc::mgr()->NumNodes();node++) {
       dabc::Command cmd;
-      if (isstart) cmd = dabc::CmdStartModule("*");
-              else cmd = dabc::CmdStopModule("*");
-      cmd.SetReceiver(node);
-      cli.Add(cmd, dabc::mgr());
+      switch (kind) {
+         case 0:
+            cmd = dabc::CmdStartModule("*");
+            cmd.SetReceiver(node);
+            break;
+         case 1:
+            cmd = dabc::Command("EnableSending");
+            cmd.SetBool("Enable", true);
+            cmd.SetReceiver(node, "Sender");
+            break;
+         default:
+            cmd = dabc::CmdStopModule("*");
+            cmd.SetReceiver(node);
+            break;
+      }
+      info = cmd.GetName();
+
+      //cli.Add(cmd, dabc::mgr());
+      if (!dabc::mgr.Execute(cmd)) res = false;
    }
 
-   int res = cli.ExecuteSet(3);
-   DOUT0(("%s all res = %s", (isstart ? "Start" : "Stop"), DBOOL(res)));
+   //int res = cli.ExecuteSet(3);
+   DOUT0("%s all res = %s", info.c_str(), DBOOL(res));
 
    return res;
 }
 
-bool EnableSending(bool on = true)
-{
-   dabc::CommandsSet cli(dabc::mgr()->thread());
-
-   for (int node=0;node<dabc::mgr()->NumNodes();node++) {
-      dabc::Command cmd("EnableSending");
-      cmd.SetBool("Enable", on);
-      cmd.SetReceiver(node, "Sender");
-
-      cli.Add(cmd, dabc::mgr());
-   }
-
-   return cli.ExecuteSet(3) == dabc::cmd_true;
-}
-
 extern "C" void RunAllToAll()
 {
-   if (dabc::mgr()->NodeId()!=0) return;
    int numnodes = dabc::mgr()->NumNodes();
 
    std::string devclass = dabc::mgr()->cfg()->GetUserPar("NetDevice", dabc::typeSocketDevice);
@@ -467,50 +433,23 @@ extern "C" void RunAllToAll()
    TestRecvQueueSize = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlInputQueueSize, TestRecvQueueSize);
    TestUseAckn = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlUseAcknowledge, TestUseAckn ? 1 : 0) > 0;
 
-   DOUT0(("Run All-to-All test numnodes = %d buffer size = %d", numnodes, TestBufferSize));
+   DOUT0("Run All-to-All test numnodes = %d buffer size = %d", numnodes, TestBufferSize);
 
-   bool res = false;
+   dabc::mgr.CreateMemoryPool("Pool", TestBufferSize, numnodes * (TestSendQueueSize + TestRecvQueueSize + 5));
 
-   dabc::CommandsSet cli(dabc::mgr()->thread());
+   dabc::CmdCreateModule cmd1("NetTestReceiverModule","Receiver");
+   cmd1.SetInt("NumPorts", numnodes-1);
+   bool res = dabc::mgr.Execute(cmd1);
 
-   for (int node=0;node<numnodes;node++) {
-      dabc::CmdCreateModule cmd("NetTestReceiverModule","Receiver");
-      cmd.SetInt("NumPorts", numnodes-1);
-      cmd.SetInt("BufferSize", TestBufferSize);
-      cmd.SetReceiver(node);
+   dabc::CmdCreateModule cmd5("NetTestSenderModule","Sender");
+   cmd5.SetInt("NumPorts", numnodes-1);
+   res = dabc::mgr.Execute(cmd5);
 
-      cli.Add(cmd, dabc::mgr());
-   }
-
-   for (int node=0;node<numnodes;node++) {
-      dabc::CmdCreateModule cmd("NetTestSenderModule","Sender");
-      cmd.SetInt("NumPorts", numnodes-1);
-      cmd.SetInt("BufferSize", TestBufferSize);
-      cmd.SetReceiver(node);
-
-      cli.Add(cmd, dabc::mgr());
-   }
-
-   res = cli.ExecuteSet(5);
-
-   DOUT0(("CreateAllModules() res = %s", DBOOL(res)));
-
-   cli.Cleanup();
+   DOUT0("CreateAllModules() res = %s", DBOOL(res));
 
    const char* devname = "Test1Dev";
 
-   for (int node = 0; node < numnodes; node++) {
-      dabc::CmdCreateDevice cmd(devclass.c_str(), devname);
-      cmd.SetReceiver(node);
-      cli.Add(cmd, dabc::mgr());
-   }
-
-   if (!cli.ExecuteSet(5)) {
-      EOUT(("Cannot create devices of class %s", devclass.c_str()));
-      return;
-   }
-
-   cli.Cleanup();
+   dabc::mgr.CreateDevice(devclass, devname);
 
    for (int nsender = 0; nsender < numnodes; nsender++) {
       for (int nreceiver = 0; nreceiver < numnodes; nreceiver++) {
@@ -525,19 +464,28 @@ extern "C" void RunAllToAll()
           req.SetUseAckn(TestUseAckn);
           req.SetConnDevice(devname);
           req.SetConnThread("TransportThrd");
+          req.SetPoolName("Pool");
       }
    }
 
    res = dabc::mgr.ActivateConnections(10.);
-   DOUT1(("ConnectAllModules() res = %s", DBOOL(res)));
+   DOUT1("ConnectAllModules() res = %s", DBOOL(res));
 
-   StartStopAll(true);
+   if (dabc::mgr()->NodeId()==0) {
 
-   EnableSending(true);
+      RunCommands(0);
 
-   dabc::mgr()->Sleep(10, "Waiting");
+      RunCommands(1);
 
-   StartStopAll(false);
+      dabc::mgr.Sleep(10, "Waiting");
+
+      RunCommands(2);
+   } else {
+      dabc::mgr.RunMainLoop(15);
+   }
+
+   dabc::mgr.StopApplication();
+
 }
 
 extern "C" void RunMulticastTest()
@@ -548,9 +496,9 @@ extern "C" void RunMulticastTest()
    int mcast_port = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlMcastPort, 7234);
    bool isrecv = dabc::mgr()->NodeId() > 0;
 
-   DOUT1(("Create device %s", devclass.c_str()));
+   DOUT1("Create device %s", devclass.c_str());
 
-   if (!dabc::mgr.CreateDevice(devclass.c_str(), "MDev")) return;
+   if (!dabc::mgr.CreateDevice(devclass, "MDev")) return;
 
    dabc::CmdCreateModule cmd("NetTestMcastModule", "MM");
    cmd.SetBool("IsReceiver", isrecv);
@@ -561,13 +509,13 @@ extern "C" void RunMulticastTest()
    cmd2.SetInt(dabc::xmlMcastPort, mcast_port);
    dabc::mgr.Execute(cmd2);
 
-   DOUT1(("Create transport for addr %s", mcast_host.c_str()));
+   DOUT1("Create transport for addr %s", mcast_host.c_str());
 
    dabc::mgr.StartAllModules();
 
-   dabc::mgr()->Sleep(5);
+   dabc::mgr.Sleep(5);
 
    dabc::mgr.StopAllModules();
 
-   DOUT0(("Multicast test done"));
+   DOUT0("Multicast test done");
 }

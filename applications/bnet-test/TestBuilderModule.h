@@ -30,7 +30,7 @@ namespace bnet {
          std::vector<dabc::Buffer*> fBuffers;
 
       public:
-         TestBuilderModule(const char* name, dabc::Command cmd = 0);
+         TestBuilderModule(const std::string& name, dabc::Command cmd = 0);
          virtual ~TestBuilderModule();
 
          virtual void ProcessItemEvent(dabc::ModuleItem* item, uint16_t evid);

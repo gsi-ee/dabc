@@ -247,7 +247,7 @@ In simple case:
 bool UserApplication::CreateAppModules()
 {
    ...
-   dabc::mgr()->CreateMemoryPool("WorkPool", 8192, 100);
+   dabc::mgr.CreateMemoryPool("Pool", 8192, 100);
    ...
 }
 \end{verbatim}     
@@ -270,7 +270,7 @@ For instance, one can do the following:
 bool UserApplication::CreateAppModules()
 {
    ...
-   dabc::CmdCreateMemoryPool cmd("WorkPool");
+   dabc::CmdCreateMemoryPool cmd("Pool");
    cmd.AddMem(8192, 100);  // 8K bufs
    cmd.AddMem(2048, 500);  // 2K bus
    cmd.AddRef(2048, 64);   // refs with 64 B headers
@@ -282,7 +282,7 @@ bool UserApplication::CreateAppModules()
 \end{small}
 
 All parameters, configured for the command, can be set up in the configuration file.
-In this case one should just call {\tt dabc::mgr.CreateMemoryPool("WorkPool")}. 
+In this case one should just call {\tt dabc::mgr.CreateMemoryPool("Pool")}. 
 
 
 \section{Threads organization}
@@ -466,11 +466,11 @@ int UserModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("UserCommand")) {
       int v = cmd.GetInt("UserArg", 0);
-      DOUT1(("Execute UserCommand with argument = %d", v));
+      DOUT1("Execute UserCommand with argument = %d", v);
       return dabc::cmd_true;
    } else
    if (cmd.IsName("UserGetCommand")) {
-      DOUT1(("Execute UserGetCommand without arguments"));
+      DOUT1("Execute UserGetCommand without arguments");
       cmd.SetInt("UserRes", fCounter);
       return dabc::cmd_true;
    } 
@@ -560,7 +560,7 @@ different threads, the commands will be executed \strong{in parallel}. For insta
 ...
 dabc::CommandClient cli;
 for (unsigned n=0; n<10; n++) {
-   dabc::ModuleRef m = dabc::mgr.FindModule(FORMAT(("Module%u",n)));
+   dabc::ModuleRef m = dabc::mgr.FindModule(dabc::format("Module%u",n));
    dabc::Command cmd("UserCommand");
    cli.Assign(cmd);
    m.Submit(cmd);
@@ -587,7 +587,7 @@ via \func{ReplyedCmds()} method:
 dabc::CommandClient cli(true);
 ...
 bool res = cli.WaitCommands();
-DOUT1(("One has %u commands in replyed queue", cli.ReplyedCmds().Size()));
+DOUT1("One has %u commands in replyed queue", cli.ReplyedCmds().Size());
 ...
 \end{verbatim}     
 \end{small}

@@ -88,7 +88,7 @@ bool dabc::Url::SetUrl(const std::string& url, bool showerr)
    pos = fHostName.find(":");
    if (pos != std::string::npos) {
       if (!dabc::str_to_int(fHostName.c_str()+pos+1, &fPort)) {
-         if (showerr) EOUT(("Invalid URL format:%s - wrong port number", fHostName.c_str()));
+         if (showerr) EOUT("Invalid URL format:%s - wrong port number", fHostName.c_str());
          fValid = false;
       }
       fHostName.erase(pos);
@@ -119,10 +119,10 @@ std::string dabc::Url::ComposeItemName(int nodeid, const std::string& itemname)
    return dabc::format("dabc://node%d/%s", nodeid, itemname.length() > 0 ? itemname.c_str() : "");
 }
 
-std::string dabc::Url::ComposePortName(int nodeid, const char* fullportname, int portid)
+std::string dabc::Url::ComposePortName(int nodeid, const std::string& fullportname, int portid)
 {
    std::string sbuf;
-   if ((nodeid<0) || (fullportname==0)) return sbuf;
+   if ((nodeid<0) || fullportname.empty()) return sbuf;
 
    sbuf = ComposeItemName(nodeid, fullportname);
 
@@ -136,7 +136,7 @@ bool dabc::Url::DecomposeItemName(const std::string& name, int& nodeid, std::str
 {
    Url url;
 
-//   DOUT0(("Url %s valid %d protocol %s host %s file %s", name, url.IsValid(), url.GetProtocol().c_str(), url.GetHostName().c_str(), url.GetFileName().c_str()));
+//   DOUT0("Url %s valid %d protocol %s host %s file %s", name, url.IsValid(), url.GetProtocol().c_str(), url.GetHostName().c_str(), url.GetFileName().c_str());
 
    if (!url.SetUrl(name, false)) return false;
 
@@ -170,3 +170,67 @@ int dabc::Url::ExtractNodeId(const std::string& url)
 
    return -1;
 }
+
+
+bool dabc::Url::GetOption(const std::string& optname, std::string* value) const
+{
+   if (value) value->clear();
+
+   if (optname.empty() || fOptions.empty()) return false;
+
+   size_t p = 0;
+
+   while (p < fOptions.length()) {
+
+      size_t separ = fOptions.find("&", p);
+
+      if (separ==std::string::npos) separ = fOptions.length();
+
+//      printf("Search for option %s  fullstr %s p=%d separ=%d\n", optname.c_str(), fOptions.c_str(), p, separ);
+
+      if (separ-p >= optname.length()) {
+         bool find = fOptions.compare(p, optname.length(), optname)==0;
+         if (find) {
+
+            p+=optname.length();
+
+            // this is just option name, nothing else - value is empty http://host?option
+            if (p==separ) return true;
+
+            if (fOptions[p]=='=') {
+               // also empty option possible, but with syntax http://host?option=
+               p++;
+               if ((p<separ) && value) *value = fOptions.substr(p, separ-p);
+               return true;
+            }
+         }
+      }
+
+      p = separ + 1; // +1 while we should skip & from search, no matter at the end of the string
+   }
+
+   return false;
+}
+
+
+std::string dabc::Url::GetOptionStr(const std::string& optname, const std::string& dflt) const
+{
+   std::string res;
+
+   if (GetOption(optname, &res)) return res;
+
+   return dflt;
+}
+
+int dabc::Url::GetOptionInt(const std::string& optname, int dflt) const
+{
+   std::string res = GetOptionStr(optname);
+
+   if (res.empty()) return dflt;
+
+   int resi(0);
+   if (str_to_int(res.c_str(), &resi)) return resi;
+
+   return dflt;
+}
+

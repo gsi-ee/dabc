@@ -19,85 +19,55 @@
 
 #include "dabc/logging.h"
 #include "dabc/Buffer.h"
-#include "dabc/FileIO.h"
 #include "dabc/Manager.h"
-#include "dabc/Port.h"
+#include "dabc/BinaryFile.h"
 
 #include "mbs/MbsTypeDefs.h"
 #include "mbs/Iterator.h"
 
-mbs::TextInput::TextInput(const char* fname, uint32_t bufsize) :
-   dabc::DataInput(),
-   fFileName(fname ? fname : ""),
-   fBufferSize(bufsize),
+mbs::TextInput::TextInput(const dabc::Url& url) :
+   dabc::FileInput(url),
    fDataFormat("uint32_t"),
    fNumData(8),
    fNumHeaderLines(1),
    fCharBufferLength(1024),
-   fFilesList(0),
-   fCurrentFileName(),
    fFile(),
    fCharBuffer(0),
    fEventCounter(0),
    fFormatId(0),
    fDataUnitSize(4)
 {
+   fDataFormat = url.GetOptionStr("format", fDataFormat);
+   fNumData = url.GetOptionInt("numdata", fNumData);
+   fNumHeaderLines = url.GetOptionInt("header", fNumHeaderLines);
+   fCharBufferLength = url.GetOptionInt("buflen", fCharBufferLength);
 }
 
 mbs::TextInput::~TextInput()
 {
-   // FIXME: cleanup should be done much earlier
    CloseFile();
-   if (fFilesList) {
-      dabc::Object::Destroy(fFilesList);
-      fFilesList = 0;
-   }
+
    delete [] fCharBuffer; fCharBuffer = 0;
 }
 
 bool mbs::TextInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-   fFileName = wrk.Cfg(mbs::xmlFileName, cmd).AsStdStr(fFileName);
-   fBufferSize = wrk.Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
+   if (!dabc::FileInput::Read_Init(wrk, cmd)) return false;
+
    fDataFormat = wrk.Cfg(mbs::xmlTextDataFormat, cmd).AsStdStr(fDataFormat);
    fNumData = wrk.Cfg(mbs::xmlTextNumData, cmd).AsInt(fNumData);
    fNumHeaderLines = wrk.Cfg(mbs::xmlTextHeaderLines, cmd).AsInt(fNumHeaderLines);
    fCharBufferLength = wrk.Cfg(mbs::xmlTextCharBuffer, cmd).AsInt(fCharBufferLength);
-
-   return Init();
-}
-
-bool mbs::TextInput::Init()
-{
-   if (fFileName.empty()) return false;
-
-   DOUT0(("File name = %s", fFileName.c_str()));
-
-   if (fFilesList!=0) {
-      EOUT(("Files list already exists"));
-      return false;
-   }
-
-   if (fBufferSize==0) {
-      EOUT(("Buffer size not specified !!!!"));
-      return false;
-   }
 
    if (fDataFormat=="float") { fFormatId = 0; fDataUnitSize = sizeof(float); } else
    if (fDataFormat=="int32_t") { fFormatId = 1; fDataUnitSize = 4; } else
    if (fDataFormat=="int") { fFormatId = 1; fDataUnitSize = 4; } else
    if (fDataFormat=="uint32_t") { fFormatId = 2; fDataUnitSize = 4; } else
    if (fDataFormat=="unsigned") { fFormatId = 2; fDataUnitSize = 4; } else {
-   	EOUT(("Unsupported data format %s", fDataFormat.c_str()));
-   	return false;
+      EOUT("Unsupported data format %s", fDataFormat.c_str());
+      return false;
    }
 
-   if (strpbrk(fFileName.c_str(),"*?")!=0)
-      fFilesList = dabc::mgr()->ListMatchFiles("", fFileName.c_str());
-   else {
-      fFilesList = new dabc::Object(0, "FilesList", true);
-      new dabc::Object(fFilesList, fFileName.c_str());
-   }
    if (fCharBufferLength < 1024) fCharBufferLength = 1024;
    fCharBuffer = new char[fCharBufferLength];
 
@@ -108,32 +78,26 @@ bool mbs::TextInput::OpenNextFile()
 {
    CloseFile();
 
-   if ((fFilesList==0) || (fFilesList->NumChilds()==0)) return false;
+   if (!TakeNextFileName()) return false;
 
-   const char* nextfilename = fFilesList->GetChild(0)->GetName();
-
-   fFile.open(nextfilename);
+   fFile.open(CurrentFileName().c_str());
 
    int cnt = fNumHeaderLines;
    while (cnt-- > 0) fFile.getline(fCharBuffer, fCharBufferLength);
 
-   bool res = fFile.good();
-
-   if (!res) {
-      EOUT(("Cannot open file %s for reading", nextfilename));
+   if (!fFile.good()) {
+      EOUT("Cannot open file %s for reading", CurrentFileName().c_str());
       fFile.close();
-   } else
-      fCurrentFileName = nextfilename;
+      return false;
+   }
 
-   fFilesList->DeleteChild(0);
-
-   return res;
+   return true;
 }
 
 bool mbs::TextInput::CloseFile()
 {
 	if (fFile.is_open()) fFile.close();
-   fCurrentFileName = "";
+	ClearCurrentFileName();
    return true;
 }
 
@@ -144,7 +108,7 @@ unsigned mbs::TextInput::Read_Size()
    if (!fFile.good())
       if (!OpenNextFile()) return dabc::di_EndOfStream;
 
-   return fBufferSize;
+   return dabc::di_DfltBufSize;
 }
 
 unsigned mbs::TextInput::Read_Complete(dabc::Buffer& buf)
@@ -171,19 +135,19 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer& buf)
       	fFile.getline(fCharBuffer, fCharBufferLength);
 
       	if ((strlen(fCharBuffer) == 0) && fFile.eof()) {
-      		DOUT1(("empty line in end of file"));
+      		DOUT1("empty line in end of file");
       		continue;
       	}
 
          if (fFile.bad()) {
-          	EOUT(("File: %s reading error", fCurrentFileName.c_str()));
+          	EOUT("File: %s reading error", CurrentFileName().c_str());
          	return dabc::di_Error;
          }
 
          sbuf = fCharBuffer;
          while ((*sbuf!=0) && ((*sbuf==' ') || (*sbuf=='\t'))) sbuf++;
 
-         if (strlen(sbuf)==0) DOUT1(("Empty string eof fail = %d %d", fFile.eof(), fFile.fail()));
+         if (strlen(sbuf)==0) DOUT1("Empty string eof fail = %d %d", fFile.eof(), fFile.fail());
 
       } while (strlen(sbuf)==0);
 
@@ -193,7 +157,7 @@ unsigned mbs::TextInput::Read_Complete(dabc::Buffer& buf)
       iter.FinishSubEvent(filledsize);
 
       if (!iter.FinishEvent()) {
-      	EOUT(("Problem with iterator"));
+      	EOUT("Problem with iterator");
       	return dabc::di_Error;
       }
 
@@ -228,8 +192,8 @@ unsigned mbs::TextInput::FillRawData(const char* str, void* rawdata, unsigned ma
          for(int n=0;n<fNumData;n++) {
             src >> *tgt;
             if (src.fail()) {
-              EOUT(("Fail to decode stream into float, cnt = %d", n));
-              EOUT(("Error Line %s", str));
+              EOUT("Fail to decode stream into float, cnt = %d", n);
+              EOUT("Error Line %s", str);
               return 0;
             }
             tgt++;
@@ -242,8 +206,8 @@ unsigned mbs::TextInput::FillRawData(const char* str, void* rawdata, unsigned ma
          for(int n=0;n<fNumData;n++) {
           src >> *tgt;
           if (src.fail()) {
-            EOUT(("Fail to decode stream into int32_t, cnt = %d", n));
-            EOUT(("Error Line %s", str));
+            EOUT("Fail to decode stream into int32_t, cnt = %d", n);
+            EOUT("Error Line %s", str);
             return 0;
           }
           tgt++;
@@ -256,8 +220,8 @@ unsigned mbs::TextInput::FillRawData(const char* str, void* rawdata, unsigned ma
         for(int n=0;n<fNumData;n++) {
           src >> *tgt;
           if (src.fail()) {
-            EOUT(("Fail to decode stream into uint32_t, cnt = %d", n));
-            EOUT(("Error Line %s", str));
+            EOUT("Fail to decode stream into uint32_t, cnt = %d", n);
+            EOUT("Error Line %s", str);
             return 0;
           }
           tgt++;

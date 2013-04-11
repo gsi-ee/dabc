@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<dabc version="1">
+<dabc version="2">
   <Context name="core-test">
     <Run>
       <lib value="libDabcCoreTest.so"/>

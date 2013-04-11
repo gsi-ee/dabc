@@ -29,7 +29,7 @@ dabc_root::RootTreeOutput::~RootTreeOutput()
 }
 
 
-bool dabc_root::RootTreeOutput::WriteBuffer(const dabc::Buffer& buf)
+unsigned dabc_root::RootTreeOutput::Write_Buffer(dabc::Buffer& buf)
 {
-   return true;
+   return dabc::do_Ok;
 }

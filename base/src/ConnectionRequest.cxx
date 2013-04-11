@@ -15,7 +15,6 @@
 
 #include "dabc/ConnectionRequest.h"
 
-#include "dabc/Port.h"
 
 dabc::ConnectionObject::ConnectionObject(Reference port, const std::string& localurl) :
    ParameterContainer(port, ObjectName(), "connection"),
@@ -103,7 +102,7 @@ void dabc::ConnectionObject::ChangeState(EState state, bool force)
       if (signal) fAllowedField = "%%state%%";
    }
 
-   DOUT3(("Change connection state to %s", GetStateName(state)));
+   DOUT3("Change connection state to %s", GetStateName(state));
 
    if (signal)
       SetField("", GetStateName(state), RecordField::kind_str());

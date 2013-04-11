@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<dabc version="1">
+<dabc version="2">
   <Context host="localhost" name="EventBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
@@ -11,72 +11,60 @@
   
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
-       <NumBuffers value="10000"/>
+       <NumBuffers value="1000"/>
     </MemoryPool>
     
-     <!-- shmem control config -->
-    
     <Module name="Combiner">    
-       <PoolName value="Pool"/>
-       <DoShmControl value="false"/>  
-       <DoFile value="false"/>
+        <!-- these parameters will force to create inputs/oputputs of module -->
+       <NumInputs value="5"/>
+       <NumOutputs value="1"/>
        <DoServer value="true"/>
-       <BufferSize value="150000"/>
-       
-       <FlushTimeout value="0.3"/>
-       <DoShmControl value="false"/>
-       <PrintSync value="false"/>
-       <SyncTriggerMask value="0x3"/>
-       <FlushBySync value="false"/>
+       <DoFile value="false"/>
 
-       <!-- take event sequence number from vulom/roc sync message at cts -->
-       <UseSyncSequenceNumber value="true"/>
-       <SyncSubeventId value="0x8000"/>
-       <SyncTriggerMask value="0x01"/>
-       <NumInputs value="1"/>
-       <Port name="Input0">
-          <HadaqUdpPort value="50000"/>
-       </Port>
-       <Port name="Input1">
-          <HadaqUdpPort value="10102"/>
-       </Port>
-       <Port name="Input2">
-          <HadaqUdpPort value="10103"/>
-       </Port>
-       <Port name="Input3">
-          <HadaqUdpPort value="10104"/>
-       </Port>
-       <Port name="Input4">
-          <HadaqUdpPort value="10105"/>
-       </Port>       
-       <Port name="Input*">
+       <InputPort name="Input0" url="hadaq://host:10101"/>
+       <InputPort name="Input1" url="hadaq://host:10102"/>
+       <InputPort name="Input2" url="hadaq://host:10103"/>
+       <InputPort name="Input3" url="hadaq://host:10104"/>
+       <InputPort name="Input4" url="hadaq://host:10105"/>
+       
+       <InputPort name="Input*" queue="10">
           <HadaqUdpBuffer value="200000"/>
           <DoShmControl value="false"/>  
-          <!--HadaqUdpMTU value="64512"/-->   
-          <BufferSize value="65536"/>
-          <InputQueueSize value="1000"/>
-       </Port>
-        <Port name="ServerOutput">
-          <OutputQueueSize value="1000"/>       
-        </Port>  
-       <Port name="FileOutput">
-          <HadaqFileName value="/data/trb/dabc.hld"/>
-          <HadaqEPICSControl value="true"/>
-          <HadaqFileSizeLimit value="1600"/>       
-        </Port> 
+          <HadaqUdpMTU value="64512"/>
+          <FlushTimeout value="2.0"/>   
+       </InputPort>
+       <OutputPort name="Output0" queue="20"/>
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30"/>
+       
+       <DoShmControl value="false"/>  
+       <FlushTimeout value="2.0"/>   
+
+       <!-- take event sequence number from vulom/roc sync message at cts -->
+       <UseSyncSequenceNumber value="false"/>
+       <SyncSubeventId value="0x8000"/>
+       <SyncTriggerMask value="0x01"/>
+       <PrintSync value="false"/>
+       <FlushBySync value="false"/>
+
+       <!-- rate meters configuration -->
+       <HadaqData width="4" prec="2" low="0" up="10" debug="1"/>
+       <HadaqEvents width="5" prec="1" low="0" up="1000" debug="1"/>
+       <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
+       <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
+
      </Module>
      
      <Module name="OnlineServer">
+       <NumOutputs value="1"/>
+       <OutputPort name="Output0" url="mbs://Stream"/>
+       <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
+
        <SubeventFullId value="0x000001F"/>
        <DoMergeSyncedEvents value="true"/>
        <PrintSync value="false"/>
-       <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
-       <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
-       <PoolName value="Pool"/>
-       <Port name="Output">
-          <MbsServerKind value="Stream"/>
-          <MbsServerPort value="6999"/>
-        </Port>
+       
+       <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
+       <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
      </Module>
      
   </Context>

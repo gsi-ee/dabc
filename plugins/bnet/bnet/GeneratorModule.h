@@ -16,11 +16,11 @@ namespace bnet {
          EventHandlingRef    fEventHandling;
 
       public:
-         GeneratorModule(const char* name, dabc::Command cmd = 0);
+         GeneratorModule(const std::string& name, dabc::Command cmd = 0);
 
          virtual void BeforeModuleStart();
 
-         virtual void ProcessOutputEvent(dabc::Port* port);
+         virtual bool ProcessSend(unsigned port);
    };
 }
 

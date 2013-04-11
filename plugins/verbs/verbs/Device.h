@@ -31,7 +31,7 @@ namespace verbs {
 
    class Transport;
    class Thread;
-   class ProtocolWorker;
+   class ProtocolAddon;
 
    extern const char* xmlMcastAddr;
 
@@ -40,7 +40,7 @@ namespace verbs {
    class Device : public dabc::Device {
       friend class Transport;
       friend class Thread;
-      friend class ProtocolWorker;
+      friend class ProtocolAddon;
 
       protected:
 
@@ -48,7 +48,7 @@ namespace verbs {
 
       public:
 
-         Device(const char* name);
+         Device(const std::string& name);
          virtual ~Device();
 
          ContextRef IbContext() { return fIbContext; }
@@ -66,20 +66,19 @@ namespace verbs {
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
-         bool CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
-                           dabc::ThreadRef &thrd, ComplQueue* &port_cq, QueuePair* &port_qp);
-         void CreateVerbsTransport(dabc::ThreadRef thrd, dabc::Reference port, bool useackn, ComplQueue* cq, QueuePair* qp);
+         QueuePair* CreatePortQP(const std::string& thrd_name, dabc::Reference port, int conn_type,
+                                 dabc::ThreadRef &thrd);
 
-         virtual dabc::Transport* CreateTransport(dabc::Command cmd, dabc::Reference portref);
-         
+         virtual dabc::Transport* CreateTransport(dabc::Command cmd, const dabc::Reference& port);
+
          virtual double ProcessTimeout(double last_diff);
 
          int HandleManagerConnectionRequest(dabc::Command cmd);
-         
+
          virtual void ObjectCleanup();
 
          bool fAllocateIndividualCQ; // for connections individual CQ will be used
-         
+
          static bool fThreadSafeVerbs;  // identifies if verbs is thread safe
    };
 

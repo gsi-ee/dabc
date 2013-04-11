@@ -13,35 +13,21 @@
 
 #include "mbs/CombinerModule.h"
 
-#include "dabc/Port.h"
-#include "dabc/PoolHandle.h"
+#include <stdlib.h>
+
 #include "dabc/Manager.h"
 
 #include <map>
 
-mbs::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
+mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
-   fBufferSize(0),
    fInp(),
    fOut(),
    fFlushFlag(false),
-   fFileOutput(false),
-   fServOutput(false),
    fBuildCompleteEvents(false),
    fCheckSubIds(false)
 {
-
-   fBufferSize = Cfg(dabc::xmlBufferSize,cmd).AsInt(16384);
-
-   std::string poolname = Cfg(dabc::xmlPoolName, cmd).AsStdStr(dabc::xmlWorkPool);
-
-   CreatePoolHandle(poolname.c_str());
-
-   int numinp = Cfg(dabc::xmlNumInputs,cmd).AsInt(1);
-
-   fDoOutput = Cfg(mbs::xmlNormalOutput,cmd).AsBool(true);
-   fFileOutput = Cfg(mbs::xmlFileOutput,cmd).AsBool(false);
-   fServOutput = Cfg(mbs::xmlServerOutput,cmd).AsBool(false);
+   EnsurePorts(0, 0, dabc::xmlWorkPool);
 
    fBuildCompleteEvents = Cfg(mbs::xmlCombineCompleteOnly,cmd).AsBool(true);
    fCheckSubIds = Cfg(mbs::xmlCheckSubeventIds,cmd).AsBool(true);
@@ -59,10 +45,8 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
    double flushtmout = Cfg(dabc::xmlFlushTimeout,cmd).AsDouble(1.);
 
-   for (int n=0;n<numinp;n++) {
-      CreateInput(FORMAT((mbs::portInputFmt, n)), Pool(), 10);
-
-      DOUT0((" MBS COMBINER  Port%u: Capacity %u", n, Input(n)->InputQueueCapacity()));
+   for (unsigned n=0;n<NumInputs();n++) {
+      DOUT0(" MBS COMBINER  Port%u: Capacity %u", n, PortQueueCapacity(InputName(n)));
 
       fInp.push_back(ReadIterator());
       fCfg.push_back(InputCfg());
@@ -72,15 +56,14 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
 
    fNumObligatoryInputs = NumInputs();
 
-   if (fDoOutput) CreateOutput(mbs::portOutput, Pool(), 5);
-   if (fFileOutput) CreateOutput(mbs::portFileOutput, Pool(), 5);
-   if (fServOutput) CreateOutput(mbs::portServerOutput, Pool(), 5);
-
    if (flushtmout>0.) CreateTimer("FlushTimer", flushtmout, false);
 
    fEventRateName = ratesprefix+"Events";
    fDataRateName = ratesprefix+"Data";
    fInfoName = ratesprefix+"Info";
+
+   DOUT0("Create rate %s", fDataRateName.c_str());
+
 
    CreatePar(fDataRateName).SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar(fEventRateName).SetRatemeter(false, 3.).SetUnits("Ev");
@@ -88,7 +71,7 @@ mbs::CombinerModule::CombinerModule(const char* name, dabc::Command cmd) :
    // must be configured in xml file
    //   fDataRate->SetDebugOutput(true);
 
-   CreateCmdDef(mbs::comStartFile).AddArg(mbs::xmlFileName, "string", true).AddArg(mbs::xmlSizeLimit, "int", false, "1000");
+   CreateCmdDef(mbs::comStartFile).AddArg(dabc::xmlFileName, "string", true).AddArg(dabc::xmlFileSizeLimit, "int", false, "1000");
 
    CreateCmdDef(mbs::comStopFile);
 
@@ -107,7 +90,7 @@ mbs::CombinerModule::~CombinerModule()
 
 void mbs::CombinerModule::ModuleCleanup()
 {
-   DOUT3(("mbs::CombinerModule::ModuleCleanup()"));
+   DOUT3("mbs::CombinerModule::ModuleCleanup()");
 
    fOut.Close().Release();
    for (unsigned n=0;n<fInp.size();n++)
@@ -130,42 +113,16 @@ void mbs::CombinerModule::SetInfo(const std::string& info, bool forceinfo)
    if (forceinfo || (now > fLastInfoTm + 2.)) {
       Par("MbsCombinerInfo").SetStr(dabc::format("%s: %s", GetName(), info.c_str()));
       fLastInfoTm = now;
-      if (!forceinfo) DOUT0(("%s: %s", GetName(), info.c_str()));
+      if (!forceinfo) DOUT0("%s: %s", GetName(), info.c_str());
    }
 */
 }
 
 
-void mbs::CombinerModule::ProcessTimerEvent(dabc::Timer* timer)
+void mbs::CombinerModule::ProcessTimerEvent(unsigned timer)
 {
    if (fFlushFlag) FlushBuffer();
    fFlushFlag = true;
-}
-
-void mbs::CombinerModule::ProcessInputEvent(dabc::Port* port)
-{
-   while (BuildEvent());
-}
-
-void mbs::CombinerModule::ProcessOutputEvent(dabc::Port* port)
-{
-   while (BuildEvent());
-}
-
-void mbs::CombinerModule::ProcessConnectEvent(dabc::Port* port)
-{
-//   DOUT0(("MbsCombinerModule ProcessConnectEvent %s", port->GetName()));
-
-//   for (int n=0;n<NumInputs();n++) {
-//      DOUT0((" MBS COMBINER  Port%u: Size %u %u", n, Input(n)->InputQueueSize(), Input(n)->OutputQueueSize()));
-//}
-
-
-}
-
-void mbs::CombinerModule::ProcessDisconnectEvent(dabc::Port* port)
-{
-   DOUT0(("MbsCombinerModule ProcessDisconnectEvent %s", port->GetName()));
 }
 
 bool mbs::CombinerModule::FlushBuffer()
@@ -176,9 +133,9 @@ bool mbs::CombinerModule::FlushBuffer()
 
    dabc::Buffer buf = fOut.Close();
 
-   DOUT3(("Send buffer of size = %d", buf.GetTotalSize()));
+   DOUT3("Send buffer of size = %d", buf.GetTotalSize());
 
-   SendToAllOutputs(buf.HandOver());
+   SendToAllOutputs(buf);
 
    fFlushFlag = false; // indicate that next flush timeout one not need to send buffer
 
@@ -187,14 +144,14 @@ bool mbs::CombinerModule::FlushBuffer()
 
 void mbs::CombinerModule::BeforeModuleStart()
 {
-   DOUT2(("mbs::CombinerModule::BeforeModuleStart name: %s is calling first build event...", GetName()));
+   DOUT0("mbs::CombinerModule::BeforeModuleStart name: %s is calling first build event...", GetName());
 
 
    // FIXME: why event processing already done here ???
 
    while (BuildEvent());
 
-   DOUT2(("mbs::CombinerModule::BeforeModuleStart name: %s is finished", GetName()));
+   DOUT0("mbs::CombinerModule::BeforeModuleStart name: %s is finished %u %u", GetName(), NumInputs(), NumOutputs());
 }
 
 void mbs::CombinerModule::AfterModuleStop()
@@ -210,7 +167,7 @@ bool mbs::CombinerModule::ShiftToNextBuffer(unsigned ninp)
    fCfg[ninp].valid = false;
 
    fInp[ninp].Close();
-   Input(ninp)->SkipInputBuffers(1);
+   SkipInputBuffers(ninp, 1);
 
    return true;
 }
@@ -228,13 +185,13 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
       if (!fInp[ninp].IsData()) {
 
-         if (Input(ninp)->InputPending()==0) return false;
+         if (NumCanRecv(ninp)==0) return false;
 
-         if (!fInp[ninp].Reset(Input(ninp)->FirstInputBuffer())) {
+         if (!fInp[ninp].Reset(RecvQueueItem(ninp, 0))) {
 
             // skip buffer and try again
             fInp[ninp].Close();
-            Input(ninp)->SkipInputBuffers(1);
+            SkipInputBuffers(ninp, 1);
             continue;
           }
       }
@@ -243,7 +200,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
 
       if (!res || (fInp[ninp].evnt()==0)) {
          fInp[ninp].Close();
-         Input(ninp)->SkipInputBuffers(1);
+         SkipInputBuffers(ninp, 1);
          continue;
       }
 
@@ -252,13 +209,13 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
          foundevent = true;
          fCfg[ninp].curr_evnt_special = true;
          fCfg[ninp].curr_evnt_num = fInp[ninp].evnt()->EventNumber();
-         DOUT1(("Found special event with trigger %d on input %u", fInp[ninp].evnt()->iTrigger, ninp));
+         DOUT1("Found special event with trigger %d on input %u", fInp[ninp].evnt()->iTrigger, ninp);
       } else
       if (fCfg[ninp].real_evnt_num) {
          foundevent = true;
          fCfg[ninp].curr_evnt_num = fInp[ninp].evnt()->EventNumber() & fEventIdMask;
 
-         // DOUT1(("Find in input %u event %u", ninp, fCfg[ninp].curr_evnt_num));
+         // DOUT1("Find in input %u event %u", ninp, fCfg[ninp].curr_evnt_num);
       } else
       if (fCfg[ninp].no_evnt_num) {
 
@@ -270,7 +227,7 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
          fCfg[ninp].curr_evnt_num = 0;
 
          while (subevnt!=0) {
-            // DOUT1(("Saw subevent fullid %u", subevnt->fFullId));
+            // DOUT1("Saw subevent fullid %u", subevnt->fFullId);
             if (subevnt->fFullId == fCfg[ninp].evntsrc_fullid) break;
             subevnt = fInp[ninp].evnt()->NextSubEvent(subevnt);
          }
@@ -281,18 +238,18 @@ bool mbs::CombinerModule::ShiftToNextEvent(unsigned ninp)
             if (fCfg[ninp].evntsrc_shift + sizeof(uint32_t) <= subevnt->RawDataSize()) {
                foundevent = true;
                fCfg[ninp].curr_evnt_num = *data & fEventIdMask; // take only required bits
-               //DOUT1(("Find in input %u event %u (in subevent)", ninp, fCfg[ninp].curr_evnt_num));
+               //DOUT1("Find in input %u event %u (in subevent)", ninp, fCfg[ninp].curr_evnt_num);
             } else {
-               EOUT(("Subevent too small %u compare with required shift %u for id location", subevnt->RawDataSize(), fCfg[ninp].evntsrc_shift));
+               EOUT("Subevent too small %u compare with required shift %u for id location", subevnt->RawDataSize(), fCfg[ninp].evntsrc_shift);
             }
          } else {
-            EOUT(("Did not found subevent for id location"));
+            EOUT("Did not found subevent for id location");
          }
       }
    }
 
 //   if (ninp==2)
-//      DOUT1(("Inp%u Event%d", ninp, fCfg[ninp].curr_evnt_num));
+//      DOUT1("Inp%u Event%d", ninp, fCfg[ninp].curr_evnt_num);
 
    fCfg[ninp].valid = true;
 
@@ -308,21 +265,19 @@ bool mbs::CombinerModule::BuildEvent()
    // indicate if some of main (non-optional) input queues are mostly full
    // if such queue will be found, incomplete event may be build when it is allowed
 
-//   DOUT0(("BuildEvent method"));
+//   DOUT0("BuildEvent method");
 
    int mostly_full(-1);
    bool required_missing(false);
 
    for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
-      dabc::Port* port = Input(ninp);
-
-//      DOUT0(("  Port%u: pending %u capacity %u", ninp, port->InputPending(), port->InputQueueCapacity()));
+//      DOUT0("  Port%u: pending %u capacity %u", ninp, port->InputPending(), port->InputQueueCapacity());
 
       if (IsOptionalInput(ninp)) continue;
 
-      if (!port->IsConnected()) required_missing = true;
+      if (!IsInputConnected(ninp)) required_missing = true;
 
-      if ((port->InputPending() + 1 >= port->InputQueueCapacity()) && (mostly_full<0))
+      if (InputQueueFull(ninp) && (mostly_full<0))
          mostly_full = (int) ninp;
    }
 
@@ -331,12 +286,11 @@ bool mbs::CombinerModule::BuildEvent()
       // to let data flowing, no event will be produced to output
 
       for (unsigned ninp=0; ninp<fCfg.size(); ninp++) {
-         dabc::Port* port = Input(ninp);
-         if ((port->InputPending() + 1 >= port->InputQueueCapacity()) ||
-             (fCfg[ninp].no_evnt_num && port->InputPending() > port->InputQueueCapacity() / 2)) {
+         if (InputQueueFull(ninp) ||
+             (fCfg[ninp].no_evnt_num && (NumCanRecv(ninp) > InputQueueCapacity(ninp) / 2))) {
             ShiftToNextBuffer(ninp);
             SetInfo(dabc::format("Skip buffer on input %u while some other input is disconnected", ninp));
-            DOUT0(("Skip buffer on input %u",ninp));
+            DOUT0("Skip buffer on input %u",ninp);
          }
       }
 
@@ -474,7 +428,7 @@ bool mbs::CombinerModule::BuildEvent()
          while (fInp[ninp].NextSubEvent()) {
             uint32_t fullid = fInp[ninp].subevnt()->fFullId;
             if (subid_map.find(fullid) != subid_map.end()) {
-               EOUT(("Duplicate fullid = 0x%x", fullid));
+               EOUT("Duplicate fullid = 0x%x", fullid);
                duplicatefound = true;
             }
             subid_map[fullid] = true;
@@ -488,24 +442,24 @@ bool mbs::CombinerModule::BuildEvent()
    if (fBuildCompleteEvents && important_input_skipped && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip incomplete event %u, found inputs %u required %u selected  %s", buildevid, num_selected_important, NumObligatoryInputs(), sel_str.c_str()));
       do_skip_data = true;
-//      DOUT0(("Skip incomplete event %u, found inputs %u required %u diff %u selected %s", buildevid, num_selected_important, NumObligatoryInputs(), diff, sel_str.c_str()));
+//      DOUT0("Skip incomplete event %u, found inputs %u required %u diff %u selected %s", buildevid, num_selected_important, NumObligatoryInputs(), diff, sel_str.c_str());
    } else
    if (duplicatefound && (hasTriggerEvent<0)) {
       SetInfo(dabc::format("Skip event %u while duplicates subevents found", buildevid));
       do_skip_data = true;
-//    DOUT0(("Skip event %u while duplicates subevents found", buildevid));
+//    DOUT0("Skip event %u while duplicates subevents found", buildevid);
    } else {
 
       if (fBuildCompleteEvents && (num_selected_important < NumObligatoryInputs())) {
-         SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
-//       DOUT0(("%s skip optional input and build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
+         SetInfo( dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full) );
+//       DOUT0("%s skip optional input and build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full);
       } else
       if (important_input_skipped) {
-         SetInfo(dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
-//       DOUT0(("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full));
+         SetInfo( dabc::format("Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full) );
+//       DOUT0("%s Build incomplete event %u, found inputs %u required %u first %d diff %u mostly_full %d", GetName(), buildevid, num_selected_important, NumObligatoryInputs(), firstselected, diff, mostly_full);
       } else {
-         SetInfo(dabc::format("Build event %u with %u inputs %s", buildevid, num_selected_all, sel_str.c_str()));
-//         DOUT0(("Build event %u with %u inputs selected %s", buildevid, num_selected_all, sel_str.c_str()));
+         SetInfo( dabc::format("Build event %u with %u inputs %s", buildevid, num_selected_all, sel_str.c_str()) );
+//         DOUT0("Build event %u with %u inputs selected %s", buildevid, num_selected_all, sel_str.c_str());
       }
 
       // if there is no place for the event, flush current buffer
@@ -514,7 +468,7 @@ bool mbs::CombinerModule::BuildEvent()
 
       if (!fOut.IsBuffer()) {
 
-         dabc::Buffer buf = Pool()->TakeBufferReq(fBufferSize);
+         dabc::Buffer buf = TakeBuffer();
          if (buf.null()) return false;
 
          if (!fOut.Reset(buf)) {
@@ -528,7 +482,7 @@ bool mbs::CombinerModule::BuildEvent()
       }
 
       if (!fOut.IsPlaceForEvent(subeventssize)) {
-         EOUT(("Event size %u too big for buffer %u, skip event %u completely", subeventssize+ sizeof(mbs::EventHeader), fBufferSize, buildevid));
+         EOUT("Event size %u too big for buffer, skip event %u completely", subeventssize+ sizeof(mbs::EventHeader), buildevid);
       } else {
 
          if (copyMbsHdrId<0) {
@@ -536,7 +490,7 @@ bool mbs::CombinerModule::BuildEvent()
             // dabc::mgr.StopApplication();
          }
 
-         DOUT4(("Building event %u num_valid %u", buildevid, num_valid));
+         DOUT4("Building event %u num_valid %u", buildevid, num_valid);
          fOut.NewEvent(buildevid); // note: this header id may be overwritten due to mode
 
          for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
@@ -565,7 +519,7 @@ bool mbs::CombinerModule::BuildEvent()
 
          fOut.FinishEvent();
 
-         DOUT4(("Produced event %d subevents %u", buildevid, subeventssize));
+         DOUT4("Produced event %d subevents %u", buildevid, subeventssize);
 
          Par(fEventRateName).SetInt(1);
          Par(fDataRateName).SetDouble((subeventssize + sizeof(mbs::EventHeader))/1024./1024.);
@@ -594,76 +548,62 @@ bool mbs::CombinerModule::BuildEvent()
 int mbs::CombinerModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName(mbs::comStartFile)) {
-      dabc::Port* port = FindPort(mbs::portFileOutput);
-      if (port==0) port = CreateOutput(mbs::portFileOutput, Pool(), 5);
+      if (NumOutputs()<2) {
+         EOUT("No ports was created for the file");
+         return dabc::cmd_false;
+      }
 
-      std::string filename = port->Cfg(mbs::xmlFileName, cmd).AsStdStr();
-      int sizelimit = port->Cfg(mbs::xmlSizeLimit,cmd).AsInt(1000);
-
-      SetInfo(dabc::format("Start mbs file %s sizelimit %d mb", filename.c_str(), sizelimit), true);
-
-      dabc::CmdCreateTransport dcmd(port->ItemName(), mbs::typeLmdOutput, "MbsFileThrd");
-      dcmd.SetStr(mbs::xmlFileName, filename);
-      dcmd.SetInt(mbs::xmlSizeLimit, sizelimit);
-      return dabc::mgr.Execute(dcmd) ? dcmd.GetResult() : dabc::cmd_false;
+      // TODO: check if it works, probably some parameters should be taken from original command
+      bool res = dabc::mgr.CreateTransport(OutputName(1, true));
+      return cmd_bool(res);
    } else
    if (cmd.IsName(mbs::comStopFile)) {
-      dabc::Port* port = FindPort(mbs::portFileOutput);
-      if (port!=0) port->Disconnect();
+
+      FindPort(OutputName(1)).Disconnect();
 
       SetInfo("Stop file", true);
 
       return dabc::cmd_true;
    } else
    if (cmd.IsName(mbs::comStartServer)) {
-      dabc::Port* port = FindPort(mbs::portServerOutput);
-      if (port==0) port = CreateOutput(mbs::portServerOutput, Pool(), 5);
+      if (NumOutputs()<1) {
+         EOUT("No ports was created for the server");
+         return dabc::cmd_false;
+      }
 
-      std::string serverkind = port->Cfg(mbs::xmlServerKind, cmd).AsStdStr();
-      int kind = StrToServerKind(serverkind.c_str());
-      if (kind==mbs::NoServer) kind = mbs::TransportServer;
-      serverkind = ServerKindToStr(kind);
+      bool res = dabc::mgr.CreateTransport(OutputName(0, true));
 
-      dabc::CmdCreateTransport dcmd(port->ItemName(), mbs::typeServerTransport, "MbsServThrd");
-      dcmd.SetStr(mbs::xmlServerKind, serverkind);
-      dcmd.SetInt(mbs::xmlServerPort, mbs::DefualtServerPort(kind));
-      bool res = dabc::mgr.Execute(dcmd);
-
-      SetInfo(dabc::format("%s: %s mbs server %s port %d",GetName(),
-            (res ? "Start" : " Fail to start"), serverkind.c_str(), DefualtServerPort(kind)), true);
-
-      return res ? dcmd.GetResult() : dabc::cmd_false;
+      return cmd_bool(res);
    } else
    if (cmd.IsName(mbs::comStopServer)) {
-      dabc::Port* port = FindPort(mbs::portServerOutput);
-      if (port!=0) port->Disconnect();
+      FindPort(OutputName()).Disconnect();
 
       SetInfo("Stop server", true);
       return dabc::cmd_true;
    } else
    if (cmd.IsName("ConfigureInput")) {
       unsigned ninp = cmd.GetUInt("Port", 0);
-//      DOUT0(("Start input configure %u size %u", ninp, fCfg.size()));
+//      DOUT0("Start input configure %u size %u", ninp, fCfg.size());
       if (ninp<fCfg.size()) {
 
-//         DOUT0(("Do0 input configure %u size %u", ninp, fCfg.size()));
+//         DOUT0("Do0 input configure %u size %u", ninp, fCfg.size());
 
          fCfg[ninp].real_mbs = cmd.GetBool("RealMbs", fCfg[ninp].real_mbs);
          fCfg[ninp].real_evnt_num = cmd.GetBool("RealEvntNum", fCfg[ninp].real_evnt_num);
          fCfg[ninp].no_evnt_num = cmd.GetBool("NoEvntNum", fCfg[ninp].no_evnt_num);
          fCfg[ninp].optional_input = cmd.GetBool("Optional", fCfg[ninp].optional_input);
 
-//         DOUT0(("Do1 input configure %u size %u", ninp, fCfg.size()));
+//         DOUT0("Do1 input configure %u size %u", ninp, fCfg.size());
          fCfg[ninp].evntsrc_fullid = cmd.GetUInt("EvntSrcFullId", fCfg[ninp].evntsrc_fullid);
          fCfg[ninp].evntsrc_shift = cmd.GetUInt("EvntSrcShift", fCfg[ninp].evntsrc_shift);
 
-//         DOUT0(("Do2 input configure %u size %u", ninp, fCfg.size()));
+//         DOUT0("Do2 input configure %u size %u", ninp, fCfg.size());
 
          std::string ratename = cmd.GetStdStr("RateName", "");
          if (!ratename.empty())
-            Input(ninp)->SetInpRateMeter(CreatePar(ratename).SetRatemeter(false,1.));
+            SetPortRatemeter(InputName(ninp), CreatePar(ratename).SetRatemeter(false,1.));
 
-//         DOUT0(("Do3 input configure %u size %u", ninp, fCfg.size()));
+//         DOUT0("Do3 input configure %u size %u", ninp, fCfg.size());
 
          // optional imputs not need to be accounted for obligatory inputs
          if (fCfg[ninp].optional_input || fCfg[ninp].no_evnt_num) {
@@ -675,12 +615,12 @@ int mbs::CombinerModule::ExecuteCommand(dabc::Command cmd)
             fCfg[ninp].real_mbs = false;
          }
 
-         DOUT1(("Configure input%u of module %s: RealMbs:%s RealEvntNum:%s EvntSrcFullId: 0x%x EvntSrcShift: %u",
+         DOUT1("Configure input%u of module %s: RealMbs:%s RealEvntNum:%s EvntSrcFullId: 0x%x EvntSrcShift: %u",
                ninp, GetName(),
                DBOOL(fCfg[ninp].real_mbs), DBOOL(fCfg[ninp].real_evnt_num),
-               fCfg[ninp].evntsrc_fullid, fCfg[ninp].evntsrc_shift));
+               fCfg[ninp].evntsrc_fullid, fCfg[ninp].evntsrc_shift);
 
-//         DOUT0(("Do4 input configure %u size %u", ninp, fCfg.size()));
+//         DOUT0("Do4 input configure %u size %u", ninp, fCfg.size());
 
       }
 
@@ -704,43 +644,27 @@ unsigned int mbs::CombinerModule::GetOverflowEventNumber() const
 extern "C" void StartMbsCombiner()
 {
    if (dabc::mgr.null()) {
-      EOUT(("Manager is not created"));
+      EOUT("Manager is not created");
       exit(1);
    }
 
-   DOUT0(("Create MBS combiner module"));
+   DOUT0("Create MBS combiner module");
 
    dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool);
 
-   mbs::CombinerModule* m = new mbs::CombinerModule("Combiner");
-   dabc::mgr()->MakeThreadFor(m);
+   dabc::ModuleRef m = dabc::mgr.CreateModule("mbs::CombinerModule", "Combiner");
 
-//   dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool,
-//                              m->Cfg(dabc::xmlBufferSize).AsInt(8192),
-//                              m->Cfg(dabc::xmlNumBuffers).AsInt(100));
-
-   for (unsigned n=0;n<m->NumInputs();n++)
-      if (!dabc::mgr.CreateTransport(FORMAT(("Combiner/Input%u", n)), mbs::typeClientTransport, "MbsInpThrd")) {
-         EOUT(("Cannot create MBS client transport"));
+   for (unsigned n=0;n<m.NumInputs();n++)
+      if (!dabc::mgr.CreateTransport(m.InputName(n))) {
+         EOUT("Cannot create MBS client transport");
          exit(131);
       }
 
-   if (m->IsServOutput()) {
-      if (!dabc::mgr.CreateTransport("Combiner/ServerOutput", mbs::typeServerTransport, "MbsServThrd")) {
-         EOUT(("Cannot create MBS server"));
+   for (unsigned n=0;n<m.NumOutputs();n++)
+      if (!dabc::mgr.CreateTransport(m.OutputName(n))) {
+         EOUT("Cannot create output transport");
          exit(132);
       }
-   }
-
-   if (m->IsFileOutput())
-      if (!dabc::mgr.CreateTransport("Combiner/FileOutput", mbs::typeLmdOutput, "MbsFileThrd")) {
-         EOUT(("Cannot create MBS file output"));
-         exit(133);
-      }
-
-   //    m->Start();
-
-   //    DOUT0(("Start MBS combiner module done"));
 }
 
 

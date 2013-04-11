@@ -28,14 +28,21 @@
 
 namespace hadaq {
 
-   class HldInput : public dabc::DataInput {
+   class HldInput : public dabc::FileInput {
+      protected:
+
+         hadaq::HldFile   fFile;
+         uint64_t         fCurrentRead;
+         bool             fLastBuffer; // flag to remember that we reached last buffer after EOF
+
+         bool CloseFile();
+         bool OpenNextFile();
+
       public:
-         HldInput(const char* fname = 0, uint32_t bufsize = 0x10000);
+         HldInput(const dabc::Url& ulr);
          virtual ~HldInput();
 
          virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
-
-         bool Init();
 
          virtual unsigned Read_Size();
          virtual unsigned Read_Complete(dabc::Buffer& buf);
@@ -43,21 +50,6 @@ namespace hadaq {
          // alternative way to read hadaq events from HldInput - no any dabc buffer are used
          hadaq::Event* ReadEvent();
 
-      protected:
-         bool CloseFile();
-
-         bool OpenNextFile();
-
-         std::string         fFileName;
-         uint32_t            fBufferSize;
-
-         dabc::Object*       fFilesList;
-
-         hadaq::HldFile        fFile;
-         std::string         fCurrentFileName;
-         uint64_t            fCurrentRead;
-
-         bool fLastBuffer; // flag to remember that we reached last buffer after EOF
    };
 
 }

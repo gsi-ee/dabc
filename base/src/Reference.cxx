@@ -28,7 +28,7 @@ dabc::Reference::Reference() :
    fObj(0),
    fFlags(flTransient)
 {
-//   DOUT0(("From default constructor"));
+//   DOUT0("From default constructor");
 }
 
 dabc::Reference::Reference(Object* obj, bool owner) throw() :
@@ -41,7 +41,7 @@ dabc::Reference::Reference(Object* obj, bool owner) throw() :
    if (obj->IncReference())
       fObj = obj;
    else
-      throw dabc::Exception(FORMAT(("Cannot assign reference to object %p %s", obj, obj->GetName())));
+      throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p", obj), obj->GetName() );
 }
 
 bool dabc::Reference::ConvertToString(char* buf, int buflen)
@@ -49,7 +49,7 @@ bool dabc::Reference::ConvertToString(char* buf, int buflen)
    int res = snprintf(buf, buflen, "%p:%u", fObj, fFlags);
 
    if ((res<0) || (res==buflen)) {
-      EOUT(("To small buffer len %d to convert reference!!!", buflen));
+      EOUT("To small buffer len %d to convert reference!!!", buflen);
       return false;
    }
 
@@ -68,7 +68,7 @@ dabc::Reference::Reference(const char* buf, int buflen) throw() :
    if ((strchr(buf,':')==0) || (sscanf(buf,"%p:%u", &fObj, &fFlags)!=2)) {
       fObj = 0;
       fFlags = 0;
-      throw dabc::Exception(FORMAT(("Cannot reconstruct reference from string %s", buf)));
+      throw dabc::Exception(ex_Object, dabc::format("Cannot reconstruct reference from string %s", buf), "Reference" );
    }
 }
 
@@ -87,7 +87,7 @@ void dabc::Reference::SetObject(Object* obj, bool owner, bool withmutex) throw()
    if (obj->IncReference(withmutex))
       fObj = obj;
    else
-      throw dabc::Exception(FORMAT(("Cannot assign reference to object %p %s", obj, DNAME(obj))));
+      throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p"), DNAME(obj) );
 }
 
 void dabc::Reference::Assign(const Reference& src) throw()
@@ -101,7 +101,7 @@ void dabc::Reference::Assign(const Reference& src) throw()
       fObj = src.fObj;
       SetFlag(flOwner, false);
    } else
-      throw dabc::Exception(FORMAT(("Cannot assign reference to object %p %s", src.fObj, src.GetName())));
+      throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p", src.fObj), src.GetName() );
 }
 
 dabc::Reference::Reference(const Reference& src) throw() :
@@ -163,7 +163,7 @@ dabc::Reference::Reference(bool withmutex, Object* obj) throw() :
       if (obj->IncReference(withmutex))
          fObj = obj;
       else
-         throw dabc::Exception(FORMAT(("Cannot assign reference to object %p %s mutex %s", obj, DNAME(obj), DBOOL(withmutex))));
+         throw dabc::Exception(ex_Object, dabc::format("Cannot assign reference to object %p mutex %s", obj, DBOOL(withmutex)), DNAME(obj));
    }
 }
 

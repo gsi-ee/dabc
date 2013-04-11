@@ -35,7 +35,7 @@ dabc::CommandContainer::CommandContainer(const char* name) :
    // object will be destroy as long no references are existing
    SetFlag(flAutoDestroy, true);
 
-   DOUT3(("CMD:%p name %s created", this, GetName()));
+   DOUT3("CMD:%p name %s created", this, GetName());
 }
 
 
@@ -43,7 +43,7 @@ dabc::CommandContainer::~CommandContainer()
 {
 
    if (fCallers.size()>0)
-      EOUT(("Non empty callers list in cmd %s !!!!!!!!!!!!!!", GetName()));
+      EOUT("Non empty callers list in cmd %s !!!!!!!!!!!!!!", GetName());
 
    fCallers.clear();
 
@@ -55,7 +55,7 @@ dabc::CommandContainer::~CommandContainer()
    do {
       field = FindField("##REF##*");
       if (!field.empty()) {
-         EOUT(("Reference %s not cleared correctly", field.c_str()));
+         EOUT("Reference %s not cleared correctly", field.c_str());
 
          const char* value = GetField(field);
          if (value!=0) dabc::Command::MakeRef(value).Release();
@@ -67,7 +67,7 @@ dabc::CommandContainer::~CommandContainer()
    } while (!field.empty());
 
 
-   DOUT3(("CMD:%p name %s deleted", this, GetName()));
+   DOUT3("CMD:%p name %s deleted", this, GetName());
 }
 
 
@@ -198,7 +198,7 @@ void dabc::Command::SetRef(const std::string& name, Reference ref)
    char buf[100];
 
    if (ref.ConvertToString(buf,sizeof(buf)))
-      SetStr(FORMAT(("##REF##%s", name.c_str())), buf);
+      SetStr(dabc::format("##REF##%s", name.c_str()).c_str(), buf);
 }
 
 dabc::Reference dabc::Command::MakeRef(const std::string& buf)
@@ -268,7 +268,7 @@ void dabc::Command::Reply(int res)
 
          if (cont->fCallers.size()==0) break;
 
-         DOUT5(("Cmd %s Finalize callers %u", cont->GetName(), cont->fCallers.size()));
+         DOUT5("Cmd %s Finalize callers %u", cont->GetName(), cont->fCallers.size());
 
          rec = cont->fCallers.back();
          cont->fCallers.pop_back();
@@ -278,13 +278,13 @@ void dabc::Command::Reply(int res)
       Worker* worker = (Worker*) rec.worker();
 
       if (process && worker) {
-         DOUT3(("Call GetCommandReply worker:%p cmd:%p", worker, cont));
+         DOUT3("Call GetCommandReply worker:%p cmd:%p", worker, cont);
          process = worker->GetCommandReply(*this, rec.exe_ready);
-         if (!process) { EOUT(("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s", GetName())); }
+         if (!process) { EOUT("AAAAAAAAAAAAAAAAAAAAAAAA Problem with cmd %s", GetName()); }
       }
    } while (!process);
 
-   DOUT3(("Command %p process %s", GetObject(), DBOOL(process)));
+   DOUT3("Command %p process %s", GetObject(), DBOOL(process));
 
    // in any case release reference at the end
    Release();
@@ -313,7 +313,7 @@ dabc::Command& dabc::Command::SetReceiver(int nodeid, Object* rcv)
    std::string s = rcv->ItemName();
 
    if (dynamic_cast<Worker*>(rcv)==0)
-      EOUT(("Object %s cannot be used to receive commands", s.c_str()));
+      EOUT("Object %s cannot be used to receive commands", s.c_str());
 
    return SetReceiver(nodeid, s);
 }

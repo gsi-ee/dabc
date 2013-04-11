@@ -31,29 +31,29 @@ ibv_gid VerbsConnThrd_Multi_Gid =  {   {
     } };
 
 
-verbs::Worker::Worker(QueuePair* qp) :
-   dabc::Worker(0, "Worker"),
+verbs::WorkerAddon::WorkerAddon(QueuePair* qp) :
+   dabc::WorkerAddon("verbs"),
    fQP(qp)
 {
 }
 
-verbs::Worker::~Worker()
+verbs::WorkerAddon::~WorkerAddon()
 {
    CloseQP();
 }
 
-const char* verbs::Worker::RequiredThrdClass() const
+std::string verbs::WorkerAddon::RequiredThrdClass() const
 {
    return VERBS_THRD_CLASSNAME;
 }
 
-void verbs::Worker::SetQP(QueuePair* qp)
+void verbs::WorkerAddon::SetQP(QueuePair* qp)
 {
    CloseQP();
    fQP = qp;
 }
 
-void verbs::Worker::CloseQP()
+void verbs::WorkerAddon::CloseQP()
 {
    if (fQP!=0) {
       delete fQP;
@@ -61,7 +61,7 @@ void verbs::Worker::CloseQP()
    }
 }
 
-verbs::QueuePair* verbs::Worker::TakeQP()
+verbs::QueuePair* verbs::WorkerAddon::TakeQP()
 {
    QueuePair* qp = fQP;
    fQP = 0;
@@ -69,7 +69,7 @@ verbs::QueuePair* verbs::Worker::TakeQP()
 }
 
 
-void verbs::Worker::ProcessEvent(const dabc::EventId& evnt)
+void verbs::WorkerAddon::ProcessEvent(const dabc::EventId& evnt)
 {
    switch (evnt.GetCode()) {
 
@@ -86,6 +86,7 @@ void verbs::Worker::ProcessEvent(const dabc::EventId& evnt)
          break;
 
       default:
-         dabc::Worker::ProcessEvent(evnt);
+         dabc::WorkerAddon::ProcessEvent(evnt);
    }
 }
+

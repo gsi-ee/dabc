@@ -28,7 +28,7 @@ int main(int numc, char* args[])
    if(numc > 1) configuration = args[1];
 
    dabc::ConfigBase cfg(configuration);
-   if (!cfg.IsOk()) return 7;
+   if (!cfg.IsOk() || (cfg.GetVersion()!=2)) return 7;
 
    int cnt = 2;
    while (cnt<numc) {

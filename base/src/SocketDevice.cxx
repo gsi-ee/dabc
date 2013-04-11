@@ -19,7 +19,6 @@
 
 #include "dabc/SocketTransport.h"
 #include "dabc/Manager.h"
-#include "dabc/Port.h"
 #include "dabc/Configuration.h"
 #include "dabc/ConnectionManager.h"
 
@@ -30,22 +29,34 @@
 
 namespace dabc {
 
-   class SocketProtocolWorker;
+   class SocketProtocolAddon;
 
    // TODO: Can we use here connection manager name - all information already there
 
    class NewConnectRec {
       public:
          std::string            fReqItem;    //!< reference in connection request
-         SocketClientWorker*    fClient;     //!< client-side processor, to establish connection
-         SocketProtocolWorker*  fProtocol;   //!< protocol processor, to verify connection id
+         SocketClientAddon*     fClient;     //!< client-side processor, to establish connection
+         SocketProtocolAddon*   fProtocol;   //!< protocol processor, to verify connection id
          double                 fTmOut;      //!< used by device to process connection timeouts
          std::string            fConnId;     //! connection id
          Command                fLocalCmd;   //!< command from connection manager which should be replied when connection established or failed
 
+
+         NewConnectRec() :
+            fReqItem(),
+            fClient(0),
+            fProtocol(0),
+            fTmOut(1.),
+            fConnId(),
+            fLocalCmd()
+         {
+         }
+
+
          NewConnectRec(const std::string& item,
                        ConnectionRequestFull& req,
-                       SocketClientWorker* clnt) :
+                       SocketClientAddon* clnt) :
             fReqItem(item),
             fClient(clnt),
             fProtocol(0),
@@ -64,7 +75,7 @@ namespace dabc {
    // when socket connection is established
    // it also used to transport commands on remote side and execute them
 
-   class SocketProtocolWorker : public SocketIOWorker {
+   class SocketProtocolAddon : public SocketIOAddon {
 
       friend class SocketDevice;
 
@@ -81,30 +92,31 @@ namespace dabc {
          char fOutBuf[ProtocolMsgSize];
       public:
 
-         SocketProtocolWorker(int connfd, SocketDevice* dev, NewConnectRec* rec) :
-            dabc::SocketIOWorker(connfd),
+         SocketProtocolAddon(int connfd, SocketDevice* dev, NewConnectRec* rec) :
+            dabc::SocketIOAddon(connfd),
             fDevice(dev),
             fRec(rec),
             fState(rec==0 ? stServerProto : stClientProto)
          {
          }
 
-         virtual ~SocketProtocolWorker()
+         virtual ~SocketProtocolAddon()
          {
          }
 
          void FinishWork(bool res)
          {
             fState = res ? stDone : stError;
-            fDevice->DestroyProtocolWorker(this, res);
+            fDevice->RemoveProtocolAddon(this, res);
+            DeleteWorker();
          }
 
-         void OnConnectionClosed()
+         virtual void OnConnectionClosed()
          {
             FinishWork(false);
          }
 
-         void OnSocketError(int errnum, const char* info)
+         virtual void OnSocketError(int errnum, const std::string& info)
          {
             FinishWork(false);
          }
@@ -125,7 +137,7 @@ namespace dabc {
                   StartRecv(fInBuf, ProtocolMsgSize);
                   break;
                default:
-                  EOUT(("Wrong state %d", fState));
+                  EOUT("Wrong state %d", fState);
                   FinishWork(false);
             }
          }
@@ -134,14 +146,15 @@ namespace dabc {
          {
             switch (fState) {
                case stServerProto:
-                  DOUT5(("Server job finished"));
-                  fDevice->ProtocolCompleted(this, 0);
+                  DOUT5("Server job finished");
+                  if (fDevice->ProtocolCompleted(this, 0))
+                     DeleteWorker();
                   break;
                case stClientProto:
-                  DOUT5(("Client send request, wait reply"));
+                  DOUT5("Client send request, wait reply");
                   break;
                default:
-                  EOUT(("Wrong state %d", fState));
+                  EOUT("Wrong state %d", fState);
                   FinishWork(false);
             }
          }
@@ -154,11 +167,12 @@ namespace dabc {
                   StartSend(fOutBuf, ProtocolMsgSize);
                   break;
                case stClientProto:
-                  DOUT5(("Client job finished"));
-                  fDevice->ProtocolCompleted(this, fInBuf);
+                  DOUT5("Client job finished");
+                  if (fDevice->ProtocolCompleted(this, fInBuf))
+                     DeleteWorker();
                   break;
                default:
-                  EOUT(("Wrong state %d", fState));
+                  EOUT("Wrong state %d", fState);
                   FinishWork(false);
             }
          }
@@ -168,17 +182,16 @@ namespace dabc {
 
 // ______________________________________________________________________
 
-dabc::SocketDevice::SocketDevice(const char* name) :
+dabc::SocketDevice::SocketDevice(const std::string& name) :
    dabc::Device(name),
-   fServer(0),
    fConnRecs(),
    fConnCounter(0)
 {
-   DOUT5(("Start SocketDevice constructor"));
+   DOUT5("Start SocketDevice constructor");
 
-   dabc::mgr()->MakeThreadFor(this, GetName());
+   MakeThreadForWorker(GetName());
 
-   DOUT5(("Did SocketDevice constructor"));
+   DOUT5("Did SocketDevice constructor");
 }
 
 dabc::SocketDevice::~SocketDevice()
@@ -188,23 +201,18 @@ dabc::SocketDevice::~SocketDevice()
    CleanupRecs(-1);
 
    while (fProtocols.size()>0) {
-      SocketProtocolWorker* pr = (SocketProtocolWorker*) fProtocols[0];
+      SocketProtocolAddon* pr = (SocketProtocolAddon*) fProtocols[0];
       fProtocols.remove_at(0);
       dabc::Object::Destroy(pr);
    }
 
-   SocketServerWorker* serv = 0;
-   {
-      LockGuard guard(DeviceMutex());
-      serv = fServer;
-      fServer = 0;
-   }
-   dabc::Object::Destroy(serv);
 }
 
-bool dabc::SocketDevice::StartServerWorker(Command cmd, std::string& servid)
+bool dabc::SocketDevice::StartServerAddon(Command cmd, std::string& servid)
 {
-   if (fServer==0) {
+   SocketServerAddon* serv = dynamic_cast<SocketServerAddon*> (fAddon());
+
+   if (serv == 0) {
 
       int port0(-1), portmin(7000), portmax(9000);
 
@@ -214,15 +222,17 @@ bool dabc::SocketDevice::StartServerWorker(Command cmd, std::string& servid)
          portmax = cmd.GetInt("SocketRangeMax", portmax);
       }
 
-      fServer = dabc::SocketThread::CreateServerWorker(port0, portmin, portmax);
+      serv = dabc::SocketThread::CreateServerAddon(port0, portmin, portmax);
 
-      if (fServer==0) return false;
+      DOUT0("Create server with ID:%s", serv->ServerId().c_str());
 
-      fServer->SetConnHandler(this, "---"); // we have no id for the connection
-      fServer->AssignToThread(thread());
+      // fServer->SetConnHandler(this, "---"); // we will automatically get connection
+      AssignAddon(serv);
    }
 
-   servid = fServer->ServerId();
+   if (serv==0) return false;
+
+   servid = serv->ServerId();
 
    return true;
 }
@@ -245,8 +255,8 @@ void dabc::SocketDevice::AddRec(NewConnectRec* rec)
 void dabc::SocketDevice::DestroyRec(NewConnectRec* rec, bool res)
 {
    if (rec==0) return;
-   dabc::Object::Destroy(rec->fClient);
-   dabc::Object::Destroy(rec->fProtocol);
+   if (rec->fClient) EOUT("Is client %p is destroyed?", rec->fClient);
+   if (rec->fProtocol) EOUT("Is protocol %p is destroyed?", rec->fProtocol);
 
    rec->fLocalCmd.ReplyBool(res);
 
@@ -280,7 +290,7 @@ bool dabc::SocketDevice::CleanupRecs(double tmout)
          rec->fTmOut -= tmout;
 
          if ((rec->fTmOut<0) || (tmout<0)) {
-            if (tmout>0) EOUT(("Record %p timedout", n));
+            if (tmout>0) EOUT("Record %u timedout", n);
             fConnRecs.remove_at(n);
             del_recs.push_back(rec);
          } else
@@ -315,7 +325,7 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
       case ConnectionManager::progrDoingInit: {
          if (req.IsServerSide()) {
             std::string serverid;
-            if (!StartServerWorker(0, serverid)) return cmd_false;
+            if (!StartServerAddon(0, serverid)) return cmd_false;
             req.SetServerId(serverid);
          } else
             req.SetClientId("");
@@ -326,7 +336,7 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
       case ConnectionManager::progrDoingConnect: {
          // one should register request and start connection here
 
-         DOUT2(("****** SOCKET START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str()));
+         DOUT2("****** SOCKET START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str());
 
          NewConnectRec* rec = 0;
 
@@ -337,18 +347,18 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
             AddRec(rec);
          } else {
 
-            SocketClientWorker* client = dabc::SocketThread::CreateClientWorker(req.GetServerId().c_str());
+            SocketClientAddon* client = dabc::SocketThread::CreateClientAddon(req.GetServerId());
             if (client!=0) {
 
                // try to make little bit faster than timeout expire why we need
                // some time for the connection protocol
                client->SetRetryOpt(req.GetConnTimeout(), 0.9);
-               client->SetConnHandler(this, req.GetConnId().c_str());
+               client->SetConnHandler(this, req.GetConnId());
 
                rec = new NewConnectRec(reqitem, req, client);
                AddRec(rec);
 
-               client->AssignToThread(thread());
+               thread().MakeWorkerFor(client);
             }
          }
 
@@ -366,7 +376,7 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
       }
 
       default:
-         EOUT(("Request from connection manager in undefined situation progress =  %d ???", req.progress()));
+         EOUT("Request from connection manager in undefined situation progress =  %d ???", req.progress());
          break;
    }
 
@@ -386,49 +396,50 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
 
    if (cmd.IsName("SocketConnect")) {
       const char* typ = cmd.GetStr("Type");
-      const char* connid = cmd.GetStr("ConnId");
+      std::string connid = cmd.GetStdStr("ConnId");
       int fd = cmd.GetInt("fd", -1);
 
       if (strcmp(typ, "Server")==0) {
-         DOUT2(("SocketDevice:: create server protocol for socket %d connid %s", fd, connid));
+         DOUT2("SocketDevice:: create server protocol for socket %d connid %s", fd, connid.c_str());
 
-         SocketProtocolWorker* proto = new SocketProtocolWorker(fd, this, 0);
-         proto->AssignToThread(thread());
+         SocketProtocolAddon* proto = new SocketProtocolAddon(fd, this, 0);
+
+         thread().MakeWorkerFor(proto, connid);
 
          LockGuard guard(DeviceMutex());
          fProtocols.push_back(proto);
       } else
       if (strcmp(typ, "Client")==0) {
-         SocketProtocolWorker* proto = 0;
+         SocketProtocolAddon* proto = 0;
 
          {
             LockGuard guard(DeviceMutex());
-            NewConnectRec* rec = _FindRec(connid);
+            NewConnectRec* rec = _FindRec(connid.c_str());
             if (rec==0) {
-               EOUT(("Client connected for not exiting rec %s", connid));
+               EOUT("Client connected for not exiting rec %s", connid.c_str());
                close(fd);
                cmd_res = cmd_false;
             } else {
-               DOUT2(("SocketDevice:: create client protocol for socket %d connid:%s", fd, connid));
+               DOUT2("SocketDevice:: create client protocol for socket %d connid:%s", fd, connid.c_str());
 
-               proto = new SocketProtocolWorker(fd, this, rec);
+               proto = new SocketProtocolAddon(fd, this, rec);
                rec->fClient = 0; // if we get command, client is destroyed
                rec->fProtocol = proto;
             }
          }
-         if (proto) proto->AssignToThread(thread());
+         if (proto) thread().MakeWorkerFor(proto, connid);
       } else
       if (strcmp(typ, "Error")==0) {
          NewConnectRec* rec = 0;
          {
             LockGuard guard(DeviceMutex());
-            rec = _FindRec(connid);
+            rec = _FindRec(connid.c_str());
             if (rec==0) {
-               EOUT(("Client error for not existing rec %s", connid));
+               EOUT("Client error for not existing rec %s", connid.c_str());
                cmd_res = cmd_false;
             } else {
-               EOUT(("Client error for connid %s", connid));
-               rec->fClient = 0;
+               EOUT("Client error for connid %s", connid.c_str());
+               rec->fClient = 0; // if we get command, client is destroyed
                fConnRecs.remove(rec);
             }
          }
@@ -442,7 +453,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
    return cmd_res;
 }
 
-void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolWorker* proc, const char* inmsg, char* outmsg)
+void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolAddon* proc, const char* inmsg, char* outmsg)
 {
    strcpy(outmsg, "denied");
 
@@ -463,7 +474,7 @@ void dabc::SocketDevice::ServerProtocolRequest(SocketProtocolWorker* proc, const
 
 }
 
-void dabc::SocketDevice::ProtocolCompleted(SocketProtocolWorker* proc, const char* inmsg)
+bool dabc::SocketDevice::ProtocolCompleted(SocketProtocolAddon* proc, const char* inmsg)
 {
    NewConnectRec* rec = proc->fRec;
 
@@ -472,60 +483,38 @@ void dabc::SocketDevice::ProtocolCompleted(SocketProtocolWorker* proc, const cha
    {
       LockGuard guard(DeviceMutex());
       if ((rec==0) || !fConnRecs.has_ptr(rec)) {
-         EOUT(("Protocol completed without rec"));
+         EOUT("Protocol completed without rec");
          fProtocols.remove(proc);
          destr = true;
       }
    }
 
-   if (destr) {
-      dabc::Object::Destroy(proc);
-      return;
-   }
+   if (destr) return true;
 
    bool res = true;
    if (inmsg) res = (strcmp(inmsg, "accepted")==0);
 
-   if (inmsg) DOUT3(("Reply from server: %s", inmsg));
+   if (inmsg) DOUT3("Reply from server: %s", inmsg);
 
    if (res) {
-
       // create transport for the established connection
       int fd = proc->TakeSocket();
 
       ConnectionRequestFull req = dabc::mgr.FindPar(rec->fReqItem);
 
-      PortRef port = req.GetPort();
+      SocketNetworkInetrface* addon = new SocketNetworkInetrface(fd);
 
-      if (req.null() || port.null()) {
-         EOUT(("Port or request disappear while connection is ready"));
-         close(fd);
-         res = false;
-      } else {
+      res = dabc::NetworkTransport::Make(req, addon, ThreadName());
 
-         // FIXME: ConnectionRequest should be used
-         std::string newthrdname = req.GetConnThread();
-         if (newthrdname.empty()) newthrdname = ThreadName();
-
-         DOUT2(("SocketDevice::ProtocolCompleted conn %s thrd %s useakn %s", rec->ConnId(), newthrdname.c_str(), DBOOL(req.GetUseAckn())));
-
-         SocketTransport* tr = new SocketTransport(port(), req.GetUseAckn(), fd);
-         Reference handle(tr);
-
-         if (dabc::mgr()->MakeThreadFor(tr, newthrdname.c_str()))
-            port()->AssignTransport(handle, tr);
-         else {
-            EOUT(("No thread for transport"));
-            handle.Destroy();
-            res = false;
-         }
-      }
+      DOUT0("Create socket transport for fd %d res %s", fd, DBOOL(res));
    }
 
-   DestroyProtocolWorker(proc, res);
+   RemoveProtocolAddon(proc, res);
+
+   return true;
 }
 
-void dabc::SocketDevice::DestroyProtocolWorker(SocketProtocolWorker* proc, bool res)
+void dabc::SocketDevice::RemoveProtocolAddon(SocketProtocolAddon* proc, bool res)
 {
    if (proc==0) return;
 
@@ -540,30 +529,27 @@ void dabc::SocketDevice::DestroyProtocolWorker(SocketProtocolWorker* proc, bool 
          fProtocols.remove(proc);
    }
 
-   dabc::Object::Destroy(proc);
-
    DestroyRec(rec, res);
 }
 
-dabc::Transport* dabc::SocketDevice::CreateTransport(Command cmd, Reference portref)
+dabc::Transport* dabc::SocketDevice::CreateTransport(Command cmd, const Reference& port)
 {
-   Port* port = (Port*) portref();
-   if (port==0) return 0;
+   // TODO: multicast and datagram socket transport
 
-   const char* portname = cmd.GetField("PortName");
+   dabc::PortRef portref = port;
 
-   std::string mhost = port->Cfg(xmlMcastAddr, cmd).AsStdStr();
+   std::string mhost = portref.Cfg(xmlMcastAddr, cmd).AsStdStr();
 
    if (!mhost.empty()) {
-      int mport = port->Cfg(xmlMcastPort,cmd).AsInt(7654);
-      bool mrecv = port->Cfg(xmlMcastRecv,cmd).AsBool(port->InputQueueCapacity() > 0);
+      int mport = portref.Cfg(xmlMcastPort,cmd).AsInt(7654);
+      bool mrecv = portref.Cfg(xmlMcastRecv,cmd).AsBool(portref.QueueCapacity() > 0);
 
-      if (mrecv && (port->InputQueueCapacity()==0)) {
-         EOUT(("Wrong Multicast configuration - port %s cannot recv packets", portname));
+      if (mrecv && (portref.QueueCapacity()==0)) {
+         EOUT("Wrong Multicast configuration - port cannot recv packets");
          return 0;
       } else
-      if (!mrecv && (port->OutputQueueCapacity()==0)) {
-         EOUT(("Wrong Multicast configuration - port %s cannot send packets", portname));
+      if (!mrecv && (portref.QueueCapacity()==0)) {
+         EOUT("Wrong Multicast configuration - port cannot send packets");
          return 0;
       }
 
@@ -575,7 +561,7 @@ dabc::Transport* dabc::SocketDevice::CreateTransport(Command cmd, Reference port
          return 0;
       }
 
-      return new SocketTransport(port, false, fhandle, true);
+//      return new SocketTransport(port, false, fhandle, true);
 
    }
 
@@ -588,7 +574,7 @@ std::string dabc::SocketDevice::GetLocalHost(bool force)
    if (host.empty() && force) {
       char sbuf[500];
       if (gethostname(sbuf, sizeof(sbuf))) {
-         EOUT(("Error to get local host name"));
+         EOUT("Error to get local host name");
          host = "localhost";
       } else
          host = sbuf;

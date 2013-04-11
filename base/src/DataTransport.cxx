@@ -16,533 +16,642 @@
 #include "dabc/DataTransport.h"
 
 #include "dabc/Buffer.h"
-#include "dabc/Port.h"
 #include "dabc/logging.h"
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/timing.h"
 
-dabc::DataTransport::DataTransport(Reference port, bool doinput, bool dooutput) :
-   Worker(0, "DataTransport", true),
-   Transport(port),
-   MemoryPoolRequester(),
-   fMutex(),
-   fInpQueue(doinput ? GetPort()->InputQueueCapacity() : 0),
-   fOutQueue(dooutput ? GetPort()->OutputQueueCapacity() : 0),
-   fActive(false),
-   fDoInput(doinput),
-   fDoOutput(dooutput),
-   fInpState(inpReady),
-   fInpLoopActive(false),
-   fNextDataSize(0),
+
+dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, DataInput* inp, bool owner, WorkerAddon* addon) :
+   dabc::Transport(cmd, inpport, 0),
+   fInput(inp),
+   fInputOwner(owner),
+   fInpState(inpInit),
    fCurrentBuf(),
-   fComplRes(di_None),
-   fPoolChangeCounter(0)
+   fNextDataSize(0),
+   fPoolChangeCounter(0),
+   fPoolRef(),
+   fExtraBufs(0)
 {
-   DOUT5(("Create DataTransport %p for port %s", this, port.ItemName().c_str()));
-
-   RegisterTransportDependencies(this);
+   AssignAddon(addon);
+   CreateTimer("SysTimer", -1, false);
+   DOUT0("Create InputTransport %s", GetName());
 }
 
-dabc::DataTransport::~DataTransport()
+dabc::InputTransport::~InputTransport()
 {
-   DOUT5(("Destroy DataTransport %u %p", fWorkerId, this));
-
-   fInpQueue.Cleanup();
-   fOutQueue.Cleanup();
-
-   DOUT5(("Destroy DataTransport %u %p done", fWorkerId, this));
-}
-
-int dabc::DataTransport::ExecuteCommand(Command cmd)
-{
-   if (cmd.IsName("TestPoolChange")) {
-      if (GetPool() && GetPool()->CheckChangeCounter(fPoolChangeCounter))
-         ProcessPoolChanged(GetPool());
-      return cmd_true;
-   }
-
-   return dabc::Worker::ExecuteCommand(cmd);
-}
-
-void dabc::DataTransport::PortAssigned()
-{
-   Execute("TestPoolChange");
-}
-
-void dabc::DataTransport::StartTransport()
-{
-   DOUT3(("DataTransport::StartTransport() %u", fWorkerId));
-   unsigned nout = 0;
-   bool fireinpevent = false;
-
-   {
-      LockGuard guard(fMutex);
-      fActive = true;
-      if (ProvidesOutput())
-         nout = fOutQueue.Size();
-
-      if (ProvidesInput() && !fInpLoopActive) {
-         fInpLoopActive = true;
-         fireinpevent = true;
-      }
-   }
-
-   // start reading of the input in the beginning
-   if (fireinpevent) FireEvent(evDataInput);
-
-   // if one had buffers in output queue, activate all of them
-   while (nout-- > 0) FireEvent(evDataOutput);
-}
-
-void dabc::DataTransport::StopTransport()
-{
-   DOUT3(("DataTransport::StopTransport() %u", fWorkerId));
-
-   {
-      LockGuard guard(fMutex);
-      fActive = false;
-   }
-}
-
-void dabc::DataTransport::CleanupFromTransport(Object* obj)
-{
-   if (obj == GetPool()) {
-      fInpQueue.Cleanup(&fMutex);
-      fOutQueue.Cleanup(&fMutex);
-
-      fCurrentBuf.Release(&fMutex);
-
-      LockGuard guard(fMutex);
-
-      // FIXME: that should be done when buffer reading is started and than buffer is disappearing????
-      // if (fInpState == inpPrepare) Complete_Buffer_Reading!!!!
-
-      fInpState = inpReady;
-   }
-
-
-
-   dabc::Transport::CleanupFromTransport(obj);
-}
-
-
-void dabc::DataTransport::CleanupTransport()
-{
-   if (ProvidesInput()) {
-      ProcessInputEvent(false);
-
-      // cancel request to the memory pool
-      if (GetPool()) GetPool()->RemoveRequester(this);
-   }
-
-   {
-      LockGuard guard(fMutex);
-      fInpState = inpReady;
-   }
-
-   fCurrentBuf.Release(&fMutex);
-
-   fInpQueue.Cleanup(&fMutex);
-   fOutQueue.Cleanup(&fMutex);
-
+   DOUT0("Destroy InputTransport %s", GetName());
    CloseInput();
-   CloseOutput();
+}
 
-   dabc::Transport::CleanupTransport();
+void dabc::InputTransport::RequestPoolMonitoring()
+{
+   fPoolRef = dabc::mgr.FindPool(PoolName());
+   if (fPoolRef.null())
+      EOUT("Cannot find memory pool, associated with handle %s, monitoring will not work", PoolName().c_str());
 }
 
 
-bool dabc::DataTransport::Recv(Buffer &buf)
+bool dabc::InputTransport::StartTransport()
 {
-   bool fireinpevent = false;
+   Transport::StartTransport();
 
-   {
-      LockGuard lock(fMutex);
+   DOUT0("============================= Start InputTransport %s isrunning %s", ItemName().c_str(), DBOOL(IsRunning()));
 
-      if (fInpQueue.Size()<=0) {
-          // EOUT(("Get buffer from DataTransport when it is empty"));
-          return false;
-      }
+   // if we are doing input transport,
+   // generate artificial event for the port to start transport
+   // TODO: should it be default for the module itself???
+   if (fInput==0) {
+      EOUT("Input object is not assigned");
 
-      fInpQueue.PopBuffer(buf);
-
-      if (buf.null()) EOUT(("Empty Buffer - should not happen!!!"));
-
-      if (!fInpLoopActive) {
-         fireinpevent = true;
-         fInpLoopActive = true;
-      }
+      return false;
    }
 
-   if (fireinpevent) FireEvent(evDataInput);
 
-   return !buf.null();
+   fInpState = inpInit;
+   fNextDataSize = 0;
+   ProduceOutputEvent();
+
+   return true;
 }
 
-unsigned dabc::DataTransport::RecvQueueSize() const
+bool dabc::InputTransport::StopTransport()
 {
-   LockGuard guard(fMutex);
+   DOUT0("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
-   return fInpQueue.Size();
-}
+   bool res = Transport::StopTransport();
 
-dabc::Buffer& dabc::DataTransport::RecvBuffer(unsigned indx) const
-{
-   LockGuard lock(fMutex);
-
-   return fInpQueue.ItemRef(indx);
-}
-
-bool dabc::DataTransport::Send(const Buffer& buf)
-{
-//   DOUT1(("dabc::DataTransport::Send %p", buf));
-
-   bool res = false;
-
-   if (!buf.null())
-      res = fOutQueue.Push(buf, &fMutex);
-
-   if (!res) {
-      EOUT(("AAAAAAAAAAA !!!!!!!!!!! %d %d ", fOutQueue.Size(), fOutQueue.Capacity()));
-   } else
-      FireEvent(evDataOutput);
+   DOUT0("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
    return res;
 }
 
-unsigned dabc::DataTransport::SendQueueSize()
+bool dabc::InputTransport::ProcessBuffer(unsigned pool)
 {
-   LockGuard guard(fMutex);
+   // we only need buffer when we explicitly request it
 
-   return fOutQueue.Size();
+   if (fInpState != inpWaitBuffer) return false;
+
+   // only when buffer is awaited, react on buffer event and continue
+   fCurrentBuf = TakeBuffer(pool);
+
+//   DOUT0("@@@@@@@@@@ Process buffer null %s size %u", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize());
+
+   fInpState = inpCheckBuffer;
+   ProcessOutputEvent();
+
+   // we are interesting for next buffer event if we really waiting for the buffer
+   return fInpState == inpWaitBuffer;
 }
 
-void dabc::DataTransport::ProcessEvent(const EventId& evnt)
+void dabc::InputTransport::CloseInput()
 {
-//   DOUT1(("DataTransport::ProcessEvent id:%u arg:%llx ev:%u", fWorkerId, arg, evid));
+   if ((fInput!=0) && fInputOwner)
+      delete fInput;
+   fInput = 0;
+   fInputOwner = false;
+}
 
-   switch (evnt.GetCode()) {
-      case evDataInput: {
-         double tmout = ProcessInputEvent(true);
-         if (tmout>=0) ActivateTimeout(tmout);
+void dabc::InputTransport::ObjectCleanup()
+{
+
+   if (fInpState != inpClosed) {
+      CloseInput();
+      fInpState = inpClosed;
+   }
+
+   fCurrentBuf.Release();
+
+   fPoolRef.Release();
+
+   dabc::Transport::ObjectCleanup();
+}
+
+
+void dabc::InputTransport::ProcessTimerEvent(unsigned timer)
+{
+   if (fInpState == inpInitTimeout)
+      fInpState = inpInit;
+
+   if (fInpState == inpComplitTimeout)
+      fInpState = inpCompliting;
+
+   ProcessOutputEvent();
+}
+
+void dabc::InputTransport::Read_CallBack(unsigned sz)
+{
+   // this inform that we are
+   if (sz == dabc::di_QueueBufReady) {
+      // in case when transport waiting for next buffer, switch state to receiving of next ready buffer
+      if ((fInpState == inpWaitBuffer) && (fExtraBufs>0))
+         fInpState = inpCallBack;
+   }
+
+   switch (fInpState) {
+
+      case inpInit:
+         if (fExtraBufs==0) {
+            EOUT("Call back at init state not with extra mode");
+            exit(333);
+         }
+         fInpState = inpCompliting;
          break;
-      }
-      case evDataOutput:
-         ProcessOutputEvent();
+
+      case inpSizeCallBack:
+         fInpState = inpCheckSize;
+         // we use mutex to protect field, which is accessed from addon???
+         fNextDataSize = sz;
+         break;
+
+      case inpCallBack:
+         fInpState = inpCompliting;
          break;
 
       default:
-         Worker::ProcessEvent(evnt);
+         EOUT("Get callback at wrong state %d", fInpState);
+         fInpState = inpError;
    }
+
+   ProcessOutputEvent();
 }
 
-double dabc::DataTransport::ProcessInputEvent(bool norm_call)
+void dabc::InputTransport::ProcessEvent(const EventId& evnt)
 {
-   // do recv next buffer
-   // returns required timeout, -1 - no timeout
-   // norm_call indicates that processing is called by event or by timeout
+   dabc::Transport::ProcessEvent(evnt);
+}
 
-   if (GetPool()==0) {
-      DOUT2(("DataTransport %p - no memory pool!!!!", this));
-      return -1.;
+bool dabc::InputTransport::ProcessSend(unsigned port)
+{
+   // DOUT0("dabc::InputTransport  %s  ProcessSend state %d", ItemName().c_str(), fInpState);
+
+   if (NumPools()==0) {
+      EOUT("InputTransport %s - no memory pool!!!!", GetName());
+      CloseTransport(true);
+      return false;
    }
 
-//   EOUT(("Tr:%08x Process event", this));
-
-   // do not try to read from input if module is blocked or data channel is blocked
-   // next time when module starts, we again get new event (via ProcessStart)
-   // and come back to this point again
-   if (!ProvidesInput()) return -1.;
-
-   bool doreadbegin = true;
-   bool dofireevent = false;
-   double ret_tmout = -1.;
-   EInputStates state = inpReady;
-
-   dabc::Buffer currbuf, qbuf, eqbuf;
-
-   unsigned qsize = 0;
-
-   {
-      LockGuard lock(fMutex);
-
-      // just an indicator, that somebody else activate event processing
-      if (fInpState == inpWorking) return -1.;
-
-      // we indicating that our loop now active and we do not want any external events
-      fInpLoopActive = true;
-
-      if (!fActive || !norm_call)
-         doreadbegin = false;
-
-      currbuf << fCurrentBuf;
-
-      state = fInpState;
-      fInpState = inpWorking;
-
-      qsize = fInpQueue.Capacity() - fInpQueue.Size();
+   if (fInput==0) {
+      EOUT("InputTransport %s - no memory pool!!!!", GetName());
+      CloseTransport(true);
+      return false;
    }
 
-   if (state == inpPrepare) {
-
-      if (currbuf.null()) {
-         EOUT(("Internal error - currbuf null when state is prepared"));
-         state = inpError;
-      } else {
-
-         if (fComplRes == di_None)
-            fComplRes = Read_Complete(currbuf);
-
-         switch (fComplRes) {
-            case di_Ok:
-               state = inpReady;
-               break;
-            case di_SkipBuffer:
-               currbuf.Release();
-               DOUT4(("Skip input buffer"));
-               state = inpReady;
-               break;
-            case di_EndOfStream:
-               currbuf.Release();
-               DOUT4(("End of stream"));
-               state = inpError;
-               break;
-            case di_Repeat:
-               fComplRes = di_None;
-               dofireevent = true;
-               break;
-            case di_RepeatTimeOut:
-               fComplRes = di_None;
-               ret_tmout = Read_Timeout();
-               if (ret_tmout>0)
-                  dofireevent = false; //do not fire event, function will be caused by timeout
-               else {
-                  dofireevent = true;
-                  ret_tmout = -1.;
-               }
-               break;
-            default:
-               EOUT(("Error when do buffer reading res = %d", fComplRes));
-               state = inpError;
-         }
-      }
+   if ((fInpState == inpSizeCallBack) || (fInpState == inpInitTimeout) || (fInpState == inpComplitTimeout)) {
+      // at these states one should get event from other source first
+      return false;
    }
 
-   if (state == inpReady) {
+//   EOUT("Tr:%08x Process event", this);
 
-      qbuf << currbuf;
-      if (!qbuf.null()) qsize--;
 
-      if (qsize == 0) {
-         doreadbegin = false;
-         dofireevent = false;
+
+   // first step - request size of the buffer
+
+   if (fInpState == inpInit) {
+
+      // if internal queue already acquire as many buffers, wait
+      if (fExtraBufs && (NumCanSend(port) <= fExtraBufs)) {
+//            DOUT0("There are too many buffers in the transport queue - start wait for the call-back buf %u", fCurrentBuf.GetTotalSize());
+         fInpState = inpCallBack;
+         return false;
       }
 
-      if (doreadbegin) {
-         fNextDataSize = Read_Size();
+      fNextDataSize = fInput->Read_Size();
 
-         if (fNextDataSize <= di_ValidSize)
-            state = inpNeedBuffer;
-         else
-         if (fNextDataSize == di_Repeat) {
-            // repeat process input as soon as possible
-            dofireevent = true;
-         } else
-         if (fNextDataSize == di_RepeatTimeOut) {
-            // repeat process after timeout
-            ret_tmout = Read_Timeout();
-            if (ret_tmout>0)
-               dofireevent = false; //do not fire event, function will be caused by timeout
+      // this is case when input want to repeat operation
+      // when we return true, we say that we want to continue processing
+
+      switch (fNextDataSize) {
+         case di_Repeat:
+            return true;
+         case di_RepeatTimeOut:
+            fInpState = inpInitTimeout;
+            ShootTimer("SysTimer", fInput->Read_Timeout());
+            return false;
+         case di_CallBack:
+            fInpState = inpSizeCallBack;
+            fNextDataSize = 0;
+            return false;
+      }
+
+      fInpState = inpCheckSize;
+   }
+
+   if (fInpState == inpCheckSize) {
+      switch (fNextDataSize) {
+
+         case di_CallBack:
+            EOUT("Wrong place for callback");
+            fInpState = inpError;
+            break;
+
+         case di_EndOfStream:
+            fInpState = inpEnd;
+            break;
+
+         case di_DfltBufSize:
+            fInpState = inpNeedBuffer;
+            fNextDataSize = 0;
+            break;
+
+         default:
+            if (fNextDataSize <= di_ValidSize)
+               fInpState = inpNeedBuffer;
             else {
-               dofireevent = true;
-               ret_tmout = -1.;
+               EOUT("Reading error");
+               fInpState = inpError;
+            }
+      }
+   }
+
+   // here we request buffer
+
+   if (fInpState == inpNeedBuffer) {
+
+     if (!fPoolRef.null() && fPoolRef()->CheckChangeCounter(fPoolChangeCounter))
+         ProcessPoolChanged(fPoolRef());
+
+      fCurrentBuf = TakeBuffer();
+
+//      DOUT0("Take buffer null %s size %u", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize());
+
+      if (!fCurrentBuf.null()) {
+         fInpState = inpCheckBuffer;
+      } else
+      if (IsAutoPool()) {
+         fInpState = inpWaitBuffer;
+         return false;
+      } else {
+         EOUT("Did not get buffer and pool queue is not configured - use minimal timeout");
+         ShootTimer("SysTimer", 0.001);
+         return false;
+      }
+   }
+
+   if (fInpState == inpCheckBuffer) {
+
+//      DOUT0("Check buffer null %s size %u", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize());
+      // if buffer was provided, use it
+      if (fCurrentBuf.GetTotalSize() < fNextDataSize) {
+         EOUT("Requested buffer smaller than actual data size");
+         fInpState = inpError;
+      } else {
+         if (fNextDataSize>0) fCurrentBuf.SetTotalSize(fNextDataSize);
+         fInpState = inpHasBuffer;
+      }
+   }
+
+   if (fInpState == inpHasBuffer) {
+//      DOUT0("Read_Start buf %u", fCurrentBuf.GetTotalSize());
+      unsigned start_res = fInput->Read_Start(fCurrentBuf);
+//      DOUT0("Read_Start res = %x buf %u", start_res, fCurrentBuf.GetTotalSize());
+      switch (start_res) {
+         case di_Ok:
+            // this will allows to call Read_Complete method in next iteration
+            fInpState = inpCompliting;
+            break;
+         case di_CallBack:
+            // if we starts callback, just not fire event
+            fInpState = inpCallBack;
+            return false;
+
+         case di_NeedMoreBuf:
+         case di_HasEnoughBuf:
+            // this is case when transport internally uses queue and need more buffers
+            fExtraBufs++;
+
+            if (start_res == di_NeedMoreBuf) {
+               fInpState = inpInit;
+               return true;
+            } else {
+               fInpState = inpCallBack;
+               return false;
             }
 
-         } else
-         if (fNextDataSize != di_EndOfStream) {
-            EOUT(("Reading error"));
-            state = inpError;
-         }
+         default:
+            fInpState = inpError;
       }
    }
 
-   if (state == inpNeedBuffer) {
 
-      if (GetPool()->CheckChangeCounter(fPoolChangeCounter))
-         ProcessPoolChanged(GetPool());
+   if (fInpState == inpCallBack) {
+      // this is state when transport fills buffer and should invoke CallBack
+      return false;
+   }
 
-      currbuf = GetPool()->TakeBufferReq(this, fNextDataSize);
+   if (fInpState == inpCompliting) {
 
-      if (!currbuf.null()) {
-         if (currbuf.GetTotalSize() < fNextDataSize) {
-            EOUT(("Requested buffer smaller than actual data size"));
-            state = inpError;
-         } else {
-            currbuf.SetTotalSize(fNextDataSize);
-            state = inpPrepare;
-            fComplRes = di_Ok;
-            dofireevent = true;
-         }
+      if (fExtraBufs && !fCurrentBuf.null()) {
+         EOUT("Internal error - currbuf not null when compliting");
+         return false;
+      }
+
+      if (!fExtraBufs && fCurrentBuf.null()) {
+         EOUT("Internal error - currbuf null when compliting");
+         return false;
+      }
+
+      unsigned res = fInput->Read_Complete(fCurrentBuf);
+
+      if (fExtraBufs) {
+         if (fCurrentBuf.null()) EOUT("Transport does not return buffer!!!");
+         fExtraBufs--;
+      }
+
+      switch (res) {
+         case di_Ok:
+            //
+            fInpState = inpReady;
+            break;
+         case di_MoreBufReady:
+            // we send immediately buffer and will try to take more buffers out of transport
+            Send(fCurrentBuf);
+            return true;
+         case di_SkipBuffer:
+            fCurrentBuf.Release();
+            DOUT4("Skip input buffer");
+            fInpState = inpInit;
+            break;
+         case di_EndOfStream:
+            fCurrentBuf.Release();
+            DOUT4("End of stream");
+            fInpState = inpEnd;
+            break;
+         case di_Repeat:
+            return true;
+         case di_RepeatTimeOut:
+            fInpState = inpComplitTimeout;
+            ShootTimer("SysTimer", fInput->Read_Timeout());
+            return false;
+         default:
+            EOUT("Error when do buffer reading res = %d", res);
+            fInpState = inpError;
       }
    }
 
-   if (state == inpError) {
+   if (fInpState == inpReady) {
+      Send(fCurrentBuf);
+//      DOUT0("Send to the output cansend %u", Output()->NumCanSend());
 
-      DOUT4(("Generate EOF packet"));
+      fCurrentBuf.Release();
+      fInpState = inpInit;
+   }
+
+   if ((fInpState == inpError) || (fInpState == inpEnd)) {
+
+      DOUT2("InputTransport:: Generate EOF packet");
       CloseInput();
       fNextDataSize = 0;
 
-      dofireevent = false;
+      fCurrentBuf.Release();
 
-      currbuf.Release();
-
-      eqbuf = GetPool()->TakeEmpty();
-      if (eqbuf.null()) {
-         EOUT(("Fatal error - cannot get empty buffer, try after 1 sec"));
-         ret_tmout = 1.;
+      fCurrentBuf = TakeEmpty();
+      if (fCurrentBuf.null()) {
+         EOUT("Fatal error - cannot get empty buffer, try after 1 sec");
+         ShootTimer("SysTimer", 1.);
+         return false;
       } else {
-         eqbuf.SetTypeId(dabc::mbt_EOF);
-         state = inpClosed;
+         fCurrentBuf.SetTypeId(dabc::mbt_EOF);
+         Send(fCurrentBuf);
+         fInpState = inpClosed;
       }
    }
 
-
-   // Call it here, where everything is ready to "leave" event loop
-   // This is important for callback functionality
-
-   bool iscallback = false;
-
-   if (state == inpPrepare)
-       switch (Read_Start(currbuf)) {
-          case di_Ok:
-             // this will allows to call Read_Complete method in next iteration
-             fComplRes = di_None;
-             break;
-          case di_CallBack:
-             // if we starts callback, just not fire event
-             dofireevent = false;
-             iscallback = true;
-             break;
-          default:
-             state = inpError;
-       }
-
-
-   int firecnt(0);
-
-   {
-      LockGuard lock(fMutex);
-      if (!qbuf.null()) { fInpQueue.Push(qbuf); firecnt++; }
-      if (!eqbuf.null()) { fInpQueue.Push(eqbuf); firecnt++; }
-      // if queue become empty while single input event processing, restart loop
-      if (!dofireevent && !iscallback && (fInpQueue.Size()==0) &&
-           (state!=inpClosed) && (ret_tmout<=0.)) dofireevent = true;
-      fInpLoopActive = dofireevent || (ret_tmout>0.);
-      fCurrentBuf << currbuf;
-      fInpState = state;
-
+   if (fInpState == inpClosed) {
+      CloseTransport(false);
+      return false;
    }
 
-   if ((fInpState == inpPrepare) && fCurrentBuf.null())
-      EOUT(("Empty buffer in prepare state !!!"));
-
-   // no need to use port mutex - we are inside thread
-   while (firecnt-->0) FirePortInput();
-   if (dofireevent) FireEvent(evDataInput);
-
-   return ret_tmout;
-}
-
-void dabc::DataTransport::Read_CallBack(unsigned compl_res)
-{
-   bool fireinpevent = false;
-
-   {
-      LockGuard lock(fMutex);
-
-      if (fInpState == inpPrepare) {
-         fireinpevent = true;
-         fComplRes = compl_res;
-      } else
-         EOUT(("Call back at wrong place !!!"));
-   }
-
-   if (fireinpevent) FireEvent(evDataInput);
-
-//   ProcessInputEvent(true, compl_res);
-}
-
-void dabc::DataTransport::ProcessOutputEvent()
-{
-   // do send next buffer
-
-   dabc::Buffer buf;
-
-   {
-      LockGuard guard(fMutex);
-      if (!fActive || (fOutQueue.Size()==0)) return;
-      fOutQueue.PopBuffer(buf);
-   }
-
-   if (buf.null()) return;
-
-   bool dofire = false;
-
-   if (!IsTransportErrorFlag()) {
-      if (buf.GetTypeId() == dabc::mbt_EOF) {
-         // we know that this is very last packet
-         // we can close output
-         CloseTransport();
-         DOUT1(("Close output while EOF"));
-      } else
-      if (buf.GetTypeId() == dabc::mbt_EOL) {
-         DOUT1(("Skip EOL buffer and flush output"));
-         FlushOutput();
-         dofire = true;
-      } else {
-         // we can do it outside lock while access to file itself is only possible
-         // from the FileThread only
-         if (fDoOutput){
-           if (WriteBuffer(buf))
-              dofire = true;
-           else {
-              EOUT(("Error when writing buffer to output - close it"));
-              CloseTransport(true);
-           }
-         }
-      }
-   }
-
-   // release buffer in any case
-   buf.Release();
-
-   // no need port mutex while we are inside the thread
-   if (dofire) FirePortOutput();
-}
-
-double dabc::DataTransport::ProcessTimeout(double)
-{
-   // timeout is only need for input processing, directly do it
-
-   return ProcessInputEvent(true);
-}
-
-bool dabc::DataTransport::ProcessPoolRequest()
-{
-   // this call done from other thread, therefore fire event to activate loop
-
-   bool fireinpevent = false;
-
-   {
-      LockGuard lock(fMutex);
-
-      if (!fInpLoopActive) {
-         fireinpevent = true;
-         fInpLoopActive = true;
-      }
-   }
-
-   if (fireinpevent) FireEvent(evDataInput);
    return true;
 }
+
+// ====================================================================================
+
+dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport, DataOutput* out, bool owner, WorkerAddon* addon) :
+   dabc::Transport(cmd, 0, outport),
+   fOutput(out),
+   fOutputOwner(owner),
+   fState(outInit),
+   fCurrentBuf()
+{
+   AssignAddon(addon);
+   CreateTimer("SysTimer", -1, false);
+}
+
+dabc::OutputTransport::~OutputTransport()
+{
+   CloseOutput();
+}
+
+void dabc::OutputTransport::CloseOutput()
+{
+   if ((fOutput!=0) && fOutputOwner)
+      delete fOutput;
+
+   fOutput = 0;
+   fOutputOwner = false;
+
+   fCurrentBuf.Release();
+}
+
+
+bool dabc::OutputTransport::StartTransport()
+{
+   DOUT0("Starting OutputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
+
+   Transport::StartTransport();
+
+   if (fOutput==0) {
+      EOUT("Output was not specified!!!");
+      return false;
+   }
+
+   return true;
+}
+
+bool dabc::OutputTransport::StopTransport()
+{
+   DOUT0("Stopping OutputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
+
+   return Transport::StopTransport();
+}
+
+
+void dabc::OutputTransport::ObjectCleanup()
+{
+   CloseOutput();
+
+   dabc::Transport::ObjectCleanup();
+}
+
+void dabc::OutputTransport::ProcessEvent(const EventId& evnt)
+{
+   if (evnt.GetCode() == evCallBack) {
+
+      if (evnt.GetArg() != do_Ok) {
+         EOUT("Callback with error argument");
+         fState = outClosing;
+         CloseOutput();
+         CloseTransport(true);
+         return;
+      }
+
+      if (fState == outWaitCallback) {
+         fState = outInit;
+         ProcessInputEvent();
+         return;
+      }
+
+      if (fState == outWaitFinishCallback) {
+         fState = outFinishWriting;
+
+         // we need to call ProcessRecv directly at least once before entering into normal loop
+         if (ProcessRecv(0))
+            ProcessInputEvent();
+
+         return;
+      }
+
+      EOUT("Call-back at wrong state!!");
+   }
+
+   dabc::Transport::ProcessEvent(evnt);
+}
+
+bool dabc::OutputTransport::ProcessRecv(unsigned port)
+{
+   if (fOutput==0) {
+      EOUT("Output object not specified");
+      fState = outError;
+   }
+
+
+
+   if (fState == outInit) {
+
+      unsigned ret(do_Ok);
+
+      unsigned buftyp = RecvQueueItem(port,0).GetTypeId();
+
+      if (buftyp == dabc::mbt_EOF) {
+         DOUT0("EOF - close output transport");
+         Recv(port).Release();
+         ret = do_Close;
+      } else
+      if (buftyp == dabc::mbt_EOL) {
+         fOutput->Write_Flush();
+         Recv(port).Release();
+         return true;
+      } else
+         ret = fOutput->Write_Check();
+
+      switch (ret) {
+         case do_Ok:
+            fState = outStartWriting;
+            break;
+         case do_Repeat:
+            return true;
+         case do_RepeatTimeOut:
+            fState = outInitTimeout;
+            ShootTimer("SysTimer", fOutput->Write_Timeout());
+            return false;
+         case do_CallBack:
+            fState = outWaitCallback;
+            return false;
+         case do_Skip:
+            Recv(port).Release();
+            return true;
+         case do_Close:
+            fState = outClosing;
+            break;
+         case do_Error:
+            fState = outError;
+            break;
+         default:
+            EOUT("Wrong return value %u for the Write_Check", ret);
+            fState = outError;
+      }
+   }
+
+   if (fState == outInitTimeout) {
+      return false;
+   }
+
+   if (fState == outStartWriting) {
+
+      fCurrentBuf = Recv(port);
+
+      unsigned ret = fOutput->Write_Buffer(fCurrentBuf);
+
+      switch (ret) {
+         case do_Ok:
+            fState = outFinishWriting;
+            break;
+         case do_CallBack:
+            fState = outWaitFinishCallback;
+            return false;
+         case do_Skip:
+            fState = outInit;
+            return true;
+         case do_Close:
+            fState = outClosing;
+            break;
+         case do_Error:
+            EOUT("Error when writing buffer");
+            fState = outError;
+            break;
+         default:
+            EOUT("Wrong return value %u for the Write_Buffer", ret);
+            fState = outError;
+      }
+   }
+
+   if (fState == outFinishWriting) {
+
+      fCurrentBuf.Release();
+
+      unsigned ret = fOutput->Write_Complete();
+
+      switch (ret) {
+         case do_Ok:
+            fState = outInit;
+            break;
+         case do_Close:
+            fState = outClosing;
+            break;
+         case do_Error:
+            fState = outError;
+            break;
+         default:
+            EOUT("Wrong return value %u for the Write_Complete", ret);
+            fState = outError;
+      }
+   }
+
+   if (fState == outClosing) {
+      fState = outClosed;
+      CloseOutput();
+      CloseTransport(false);
+      return false;
+   }
+
+   if (fState == outError) {
+      fState = outClosed;
+      CloseOutput();
+      CloseTransport(true);
+      return false;
+   }
+
+   return true;
+}
+
+void dabc::OutputTransport::ProcessTimerEvent(unsigned timer)
+{
+   if (fState == outInitTimeout)
+      fState = outInit;
+
+   ProcessInputEvent();
+}
+
+

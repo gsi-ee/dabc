@@ -42,10 +42,12 @@ bool mbs_root::RootTreeOutput::Close()
 
 bool mbs_root::RootTreeOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {   
+   if (!dabc::DataOutput::Write_Init(wrk, cmd)) return false;
+
    // TODO: member variables to contain properties for tree output   
    fFileName = wrk.Cfg("RootOutputFile", cmd).AsStdStr(fFileName); // parameter name is xml tag name
    fSplit = wrk.Cfg("RootSplitlevel", cmd).AsInt(fSplit);
-   DOUT0(("################# Create root file %s , split=%d",fFileName.c_str(),fSplit));
+   DOUT0("################# Create root file %s , split=%d",fFileName.c_str(),fSplit);
    fTreeBuf = wrk.Cfg("RootTreeBufsize", cmd).AsInt(fTreeBuf);
    fCompression = wrk.Cfg("RootCompression", cmd).AsInt(fCompression);
    fMaxSize = wrk.Cfg("RootMaxFileSize", cmd).AsInt(fMaxSize);
@@ -61,7 +63,7 @@ bool mbs_root::RootTreeOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc
 }
 
 
-bool mbs_root::RootTreeOutput::WriteBuffer(const dabc::Buffer& buf)
+unsigned mbs_root::RootTreeOutput::Write_Buffer(dabc::Buffer& buf)
 {
    // example how it could work JAM
    //if (buf==0) return false;
@@ -69,16 +71,16 @@ bool mbs_root::RootTreeOutput::WriteBuffer(const dabc::Buffer& buf)
    // some checks if input is of correct format, stolen from lmdoutput class JAM:
    if (buf.GetTypeId() == dabc::mbt_EOF) {
       Close(); // implement Close() function to immediately close outut file here if input comes to end
-      return false;
+      return dabc::do_Error;
    }
 
    if (buf.GetTypeId() != mbs::mbt_MbsEvents) {
-      EOUT(("Buffer must contain mbs event(s) 10-1, but has type %u", buf.GetTypeId() ));
-      return false;
+      EOUT("Buffer must contain mbs event(s) 10-1, but has type %u", buf.GetTypeId());
+      return dabc::do_Error;
    }
 
    //    if (buf->NumSegments()>1) {
-   //       EOUT(("Segmented buffer not (yet) supported"));
+   //       EOUT("Segmented buffer not (yet) supported");
    //       return false;
    //    }
 
@@ -108,7 +110,7 @@ bool mbs_root::RootTreeOutput::WriteBuffer(const dabc::Buffer& buf)
          Int_t subcrate=subev->iSubcrate;
          Int_t control=subev->iControl;
          Int_t datasize=subev->RawDataSize(); // size of data payload in bytes
-         //DOUT0(("################# procid:%d subcrate=%d ctrl:%d size=%d \n",procid,subcrate,control,datasize));
+         //DOUT0("################# procid:%d subcrate=%d ctrl:%d size=%d \n",procid,subcrate,control,datasize);
          //for(int x=0;x<500;++x){printf("%d \t", *((Int_t*) (subev->RawData()) + x)); }
          mbs_root::DabcSubEvent* mysub=fEvent->AddSubEvent(subcrate, control, procid);
 
@@ -126,5 +128,5 @@ bool mbs_root::RootTreeOutput::WriteBuffer(const dabc::Buffer& buf)
    // write tree buffers to file for each input buffer here? or
    //fTree->Write();
 
-   return true;
+   return dabc::do_Ok;
 }

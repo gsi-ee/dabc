@@ -18,121 +18,142 @@
 #include <stdlib.h>
 
 #include "dabc/logging.h"
-#include "dabc/Port.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
 
 const unsigned dabc::AcknoledgeQueueLength = 2;
 
-long dabc::Transport::gNumTransports = 0;
 
-dabc::Transport::Transport(Reference port) :
-   fPortMutex(),
-   fPort(port),
-   fPool(),
-   fTransportState(stNormal)
+std::string dabc::Transport::MakeName(const PortRef& inpport, const PortRef& outport)
 {
-   gNumTransports++;
+   std::string name = inpport.ItemName();
+   if (name.empty()) name = outport.ItemName();
+   name += "_Transport";
 
-   if (GetPort()) fPool = Reference(GetPort()->GetMemoryPool());
+   size_t pos;
+   while ((pos=name.find("/")) != name.npos)
+      name[pos] = '_';
+
+   return std::string("#") + name;
+}
+
+
+
+dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const PortRef& outport) :
+   ModuleAsync(MakeName(inpport, outport)),
+   fState(stInit),
+   fIsInputTransport(false),
+   fIsOutputTransport(false)
+{
+   std::string poolname;
+
+   if (!inpport.null()) {
+      poolname = inpport.Cfg(dabc::xmlPoolName, cmd).AsStdStr(poolname);
+
+//      DOUT0("DataTransport %s creates port Output pool %s", ItemName().c_str(), poolname.c_str());
+
+      CreateOutput("Output", inpport.QueueCapacity());
+
+      fIsInputTransport = true;
+   }
+
+   if (!outport.null()) {
+
+      poolname = outport.Cfg(dabc::xmlPoolName, cmd).AsStdStr(poolname);
+
+//      DOUT0("DataTransport %s creates port Input pool %s", ItemName().c_str(), poolname.c_str());
+
+      CreateInput("Input", outport.QueueCapacity());
+
+      fIsOutputTransport = true;
+   }
+
+   if (fIsInputTransport && poolname.empty()) poolname = dabc::xmlWorkPool;
+
+   if (!poolname.empty()) {
+//      DOUT0("Create hadnle in transport %s isinp:%s isout:%s", ItemName().c_str(), DBOOL(fIsInputTransport), DBOOL(fIsOutputTransport));
+
+      // TODO: one should be able to configure if transport use pool requests or not
+      CreatePoolHandle(poolname);
+   }
 }
 
 dabc::Transport::~Transport()
 {
-   gNumTransports--;
-
-   DOUT5(("Transport %p destroyed", this));
 }
 
-void dabc::Transport::RegisterTransportDependencies(Object* this_transport)
+
+void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool on)
 {
-   // dependency between transport and port is bidirectional
-   dabc::mgr()->RegisterDependency(this_transport, fPort(), true);
+   if (on) {
+      if ((GetState()==stInit) || (GetState()==stStopped)) {
+         if (StartTransport())
+            fState = stRunning;
+         else {
+            fState = stError;
+            DeleteThis();
+         }
+      } else {
+         DOUT0("dabc::Transport %s is running, ignore start message from port %s", GetName(), name.c_str());
+      }
 
-   // here only transport keeps reference on memory pool
-   dabc::mgr()->RegisterDependency(this_transport, fPool());
-}
-
-void dabc::Transport::CleanupTransport()
-{
-   // method normally called inside worker cleanup routine
-   // it means that we are already on long way to destructor
-   Reference port, pool;
-   {
-      LockGuard guard(fPortMutex);
-      port << fPort;
-      pool << fPool;
-
+   } else {
+      if (GetState()==stRunning) {
+         if (StopTransport())
+           fState = stStopped;
+         else {
+           fState = stError;
+           DeleteThis();
+         }
+      }
    }
-   port.Release();
-   pool.Release();
-
-   if (fTransportState==stNormal) fTransportState = stDeleting;
 }
 
-
-void dabc::Transport::CleanupFromTransport(Object* obj)
+void dabc::Transport::ProcessConnectEvent(const std::string& name, bool on)
 {
-   if ((fPort()==obj) || (fPool()==obj)) {
+   // ignore connect event
+   if (on) return;
 
-      bool del = (fTransportState==stNormal);
-
-      // we should release all data from transport
-      CleanupTransport();
-
-      if (del) DestroyTransport();
+   if (IsInputTransport() && (name == OutputName())) {
+      EOUT("Transport %s port %s is disconnected - automatic transport destroyment is started", GetName(), name.c_str());
+      DeleteThis();
+      return;
    }
+
+   if (IsOutputTransport() && (name == InputName())) {
+      EOUT("Transport %s port %s is disconnected - automatic transport destroyment is started", GetName(), name.c_str());
+      DeleteThis();
+      return;
+   }
+
 }
 
 void dabc::Transport::CloseTransport(bool witherr)
 {
-   bool del = (fTransportState==stNormal);
-
-   if (witherr)
-      fTransportState = stError;
-   else
-      if (fTransportState==stNormal) fTransportState = stDeleting;
-
-   // object can be deleted ourself
-   if (del) DestroyTransport();
+   DeleteThis();
 }
 
-bool dabc::Transport::SetPort(Port* port)
+int dabc::Transport::ExecuteCommand(Command cmd)
 {
-   // method called from the port thread, therefore it is just notification
-   // it is not allowed to changed port reference here, while it is used from
-   // transport thread without any mutexes
-   //
-
-   if (port==0) {
-
-      // TODO: do we need any confirmation here
-      return true;
+   if (cmd.IsName("CloseTransport")) {
+      CloseTransport(cmd.GetBool("IsError", true));
+      return cmd_true;
    }
 
-   {
-      LockGuard guard(fPortMutex);
-      if (fPort() != port) {
-         EOUT(("Something completely wrong - port pointers are differ %p %p", port, fPort()));
-         return false;
-      }
-   }
-
-   PortAssigned();
-
-   return true;
+   return ModuleAsync::ExecuteCommand(cmd);
 }
 
-bool dabc::Transport::FirePortInput(bool withmutex)
+
+bool dabc::Transport::StartTransport()
 {
-   LockGuard guard(withmutex ? &fPortMutex : 0);
-
-   return GetPort() ? GetPort()->FireInput() : false;
+   fAddon.Notify("StartTransport");
+   return Start();
 }
 
-bool dabc::Transport::FirePortOutput(bool withmutex)
+bool dabc::Transport::StopTransport()
 {
-   LockGuard guard(withmutex ? &fPortMutex : 0);
-
-   return GetPort() ? GetPort()->FireOutput() : false;
+   fAddon.Notify("StopTransport");
+   return Stop();
 }
+
+

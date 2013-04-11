@@ -111,15 +111,10 @@ namespace mbs {
             }
          };
 
-         unsigned                   fBufferSize;
          std::vector<ReadIterator>  fInp;
          std::vector<InputCfg>      fCfg;
          WriteIterator              fOut;
          bool                       fFlushFlag;
-
-         bool                       fDoOutput;
-         bool                       fFileOutput;
-         bool                       fServOutput;
 
          /* switch between partial combining of smallest event ids (false)
           * and building of complete events only (true)*/
@@ -175,20 +170,16 @@ namespace mbs {
 
       public:
 
-         CombinerModule(const char* name, dabc::Command cmd = 0);
+         CombinerModule(const std::string& name, dabc::Command cmd = 0);
          virtual ~CombinerModule();
 
          virtual void ModuleCleanup();
 
-         virtual void ProcessInputEvent(dabc::Port* port);
-         virtual void ProcessOutputEvent(dabc::Port* port);
-         virtual void ProcessConnectEvent(dabc::Port* port);
-         virtual void ProcessDisconnectEvent(dabc::Port* port);
+         virtual bool ProcessRecv(unsigned port) { return BuildEvent(); }
+         virtual bool ProcessSend(unsigned port) { return BuildEvent(); }
 
-         virtual void ProcessTimerEvent(dabc::Timer* timer);
+         virtual void ProcessTimerEvent(unsigned timer);
 
-         bool IsFileOutput() const { return fFileOutput; }
-         bool IsServOutput() const { return fServOutput; }
          unsigned NumObligatoryInputs() const { return fNumObligatoryInputs; }
 
          /* returns maximum possible eventnumber for overflow checking*/

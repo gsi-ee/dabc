@@ -10,7 +10,7 @@
 bnet::Application::Application() :
    dabc::Application("bnet::Application")
 {
-   DOUT2(("Create bnet::Application"));
+   DOUT2("Create bnet::Application");
 
    CreatePar("NetDevice").DfltStr(dabc::typeSocketDevice);
 
@@ -40,7 +40,7 @@ bnet::Application::Application() :
    CreatePar("TestRead").DfltBool(true);
    CreatePar("TestWrite").DfltBool(true);
 
-   DOUT2(("ib-test application was build"));
+   DOUT2("ib-test application was build");
 }
 
 bnet::Application::~Application()
@@ -51,7 +51,7 @@ bool bnet::Application::CreateAppModules()
 {
    std::string devclass = Par("NetDevice").AsStdStr();
 
-   if (!dabc::mgr.CreateDevice(devclass.c_str(), "NetDev")) return false;
+   if (!dabc::mgr.CreateDevice(devclass, "NetDev")) return false;
 
    // int connect_packet_size = 1024 + NumNodes() * Par("TestNumLids").AsInt() * sizeof(VerbsConnRec);
    int connect_packet_size = 50000;
@@ -76,9 +76,9 @@ bool bnet::Application::CreateAppModules()
    }
 
    for (unsigned node = 1; node < NumNodes(); node++) {
-      std::string port1 = dabc::Url::ComposePortName(0, FORMAT(("%s/Port", names::WorkerModule())), node-1);
+      std::string port1 = dabc::Url::ComposePortName(0, dabc::format("%s/Port", names::WorkerModule()), node-1);
 
-      std::string port2 = dabc::Url::ComposePortName(node, FORMAT(("%s/Port", names::WorkerModule())), 0);
+      std::string port2 = dabc::Url::ComposePortName(node, dabc::format("%s/Port", names::WorkerModule()), 0);
 
       dabc::mgr.Connect(port1, port2).SetOptional(dabc::mgr.NodeId()==0);
    }
@@ -88,7 +88,7 @@ bool bnet::Application::CreateAppModules()
 
 bool bnet::Application::BeforeAppModulesStarted()
 {
-   DOUT0(("Num threads in ib-test = %d %d", dabc::mgr()->GetThreadsFolder(true).NumChilds(), dabc::Thread::NumThreadInstances()));
+   DOUT0("Num threads in ib-test = %d %d", dabc::mgr.NumThreads(), dabc::Thread::NumThreadInstances());
 
    return true;
 }

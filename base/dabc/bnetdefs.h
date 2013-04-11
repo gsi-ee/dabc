@@ -88,7 +88,7 @@ namespace bnet {
 
    class EventHandling : public dabc::Object {
       public:
-         EventHandling(const char* name) : dabc::Object(name) {}
+         EventHandling(const std::string& name) : dabc::Object(name) {}
 
          virtual bool GenerateSubEvent(const bnet::EventId& evid, int subid, int numsubids, dabc::Buffer& buf) = 0;
 

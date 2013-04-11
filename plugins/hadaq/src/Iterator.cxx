@@ -61,7 +61,7 @@ bool hadaq::ReadIterator::Reset(const dabc::Buffer& buf)
    fBufType=buf.GetTypeId();
 
    if (!(fBufType == mbt_HadaqEvents || fBufType == mbt_HadaqTransportUnit) ) {
-      EOUT(("Only buffer format mbt_HadaqEvents or mbt_HadaqTransportUnit is supported"));
+      EOUT("Only buffer format mbt_HadaqEvents or mbt_HadaqTransportUnit is supported");
       return false;
    }
 
@@ -84,7 +84,7 @@ void hadaq::ReadIterator::Close()
 bool hadaq::ReadIterator::NextHadTu()
 {
    if (fBufType != mbt_HadaqTransportUnit ) {
-         EOUT(("NextHadTu only allowed for buffer type mbt_HadaqTransportUnit. Check your code!"));
+         EOUT("NextHadTu only allowed for buffer type mbt_HadaqTransportUnit. Check your code!");
          return false;
       }
 
@@ -104,14 +104,14 @@ bool hadaq::ReadIterator::NextHadTu()
    }
 
    if (fEvPtr.rawsize() < sizeof(hadaq::HadTu)) {
-      EOUT(("Raw size less than transport unit header - not supported !!!!"));
+      EOUT("Raw size less than transport unit header - not supported !!!!");
       fEvPtr.reset();
       return false;
    }
 
    if (fEvPtr.fullsize() < hadtu()->GetSize()) {
-      EOUT(("Error in HADAQ format - declared event size %u smaller than actual portion in buffer %u",
-            (unsigned) hadtu()->GetSize(), (unsigned) fEvPtr.fullsize()));
+      EOUT("Error in HADAQ format - declared event size %u smaller than actual portion in buffer %u",
+            (unsigned) hadtu()->GetSize(), (unsigned) fEvPtr.fullsize());
       fEvPtr.reset();
       return false;
    }
@@ -128,7 +128,7 @@ bool hadaq::ReadIterator::NextHadTu()
 bool hadaq::ReadIterator::NextEvent()
 {
    if (fBufType != mbt_HadaqEvents ) {
-           EOUT(("NextEvent only allowed for buffer type mbt_HadaqEvents. Check your code!"));
+           EOUT("NextEvent only allowed for buffer type mbt_HadaqEvents. Check your code!");
            return false;
         }
 
@@ -145,15 +145,15 @@ bool hadaq::ReadIterator::NextEvent()
    }
 
    if (fEvPtr.rawsize() < sizeof(hadaq::Event)) {
-      EOUT(("Raw size less than event header - not supported !!!!"));
+      EOUT("Raw size less than event header - not supported !!!!");
 
       fEvPtr.reset();
       return false;
    }
 
    if (fEvPtr.fullsize() < evnt()->GetSize()) {
-      EOUT(("Error in HADAQ format - declared event size %u smaller than actual portion in buffer %u",
-            (unsigned) evnt()->GetSize(), (unsigned) fEvPtr.fullsize()));
+      EOUT("Error in HADAQ format - declared event size %u smaller than actual portion in buffer %u",
+            (unsigned) evnt()->GetSize(), (unsigned) fEvPtr.fullsize());
       fEvPtr.reset();
       return false;
    }
@@ -189,12 +189,12 @@ bool hadaq::ReadIterator::NextSubEvent()
          headsize = sizeof(hadaq::HadTu);
          containersize = hadtu()->GetPaddedSize();
       } else {
-         EOUT(("NextSubEvent only allowed for buffer type mbt_HadaqEvents or mbt_HadaqTransportUnit. Check your code!"));
+         EOUT("NextSubEvent only allowed for buffer type mbt_HadaqEvents or mbt_HadaqTransportUnit. Check your code!");
          return false;
       }
 
        if (containersize < headsize) {
-         EOUT(("Hadaq format error - tu container fullsize %u too small", containersize));
+         EOUT("Hadaq format error - tu container fullsize %u too small", containersize);
          return false;
       }
       fSubPtr.reset(fEvPtr, 0, containersize);
@@ -209,7 +209,7 @@ bool hadaq::ReadIterator::NextSubEvent()
    }
 
    if (subevnt()->GetSize() < sizeof(hadaq::Subevent)) {
-      EOUT(("Hadaq format error - subevent fullsize %u too small", subevnt()->GetSize()));
+      EOUT("Hadaq format error - subevent fullsize %u too small", subevnt()->GetSize());
       char* ptr=(char*) subevnt();
       for(int i=0; i<20; ++i)
       {
@@ -268,7 +268,7 @@ bool hadaq::WriteIterator::Reset(const dabc::Buffer& buf)
    fFullSize = 0;
 
    if (buf.GetTotalSize() < sizeof(hadaq::Event) + sizeof(hadaq::Subevent)) {
-      EOUT(("Buffer too small for just empty HADAQ event"));
+      EOUT("Buffer too small for just empty HADAQ event");
       return false;
    }
 

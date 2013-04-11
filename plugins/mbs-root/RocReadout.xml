@@ -22,7 +22,6 @@
     <RootTreeBufsize value="32000"/>
     <RootCompression value="5"/>
     <RootMaxFileSize value="200000000"/>
-    <MbsFileSizeLimit value="110"/>
   </Application>
   <Module name="RocComb">
      <Ratemeter name="*" debug="true" interval="3" width="5" prec="2"/>

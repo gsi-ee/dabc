@@ -14,12 +14,9 @@
 
 #include "dabc/logging.h"
 #include "dabc/timing.h"
-#include "dabc/Port.h"
-#include "dabc/Timer.h"
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/MemoryPool.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/threads.h"
 #include "dabc/Application.h"
 #include "dabc/SocketDevice.h"
@@ -35,7 +32,7 @@ class IbTestApplication : public dabc::Application {
 
       IbTestApplication() : dabc::Application("IbTestApp")
       {
-         DOUT2(("Create ib-test application"));
+         DOUT2("Create ib-test application");
 
          CreatePar("NetDevice").DfltStr(dabc::typeSocketDevice);
 
@@ -56,7 +53,7 @@ class IbTestApplication : public dabc::Application {
          CreatePar("TestRead").DfltBool(true);
          CreatePar("TestWrite").DfltBool(true);
 
-         DOUT2(("ib-test application was build"));
+         DOUT2("ib-test application was build");
       }
 
       virtual ~IbTestApplication()
@@ -67,7 +64,7 @@ class IbTestApplication : public dabc::Application {
       {
          std::string devclass = Par("NetDevice").AsStdStr();
          
-         if (!dabc::mgr.CreateDevice(devclass.c_str(), "NetDev")) return false;
+         if (!dabc::mgr.CreateDevice(devclass, "NetDev")) return false;
 
          int connect_packet_size = 1024 + NumNodes() * Par("TestNumLids").AsInt() * sizeof(IbTestConnRec);
          int bufsize = 16*1024;
@@ -83,9 +80,9 @@ class IbTestApplication : public dabc::Application {
          if (!dabc::mgr.Execute(cmd)) return false;
 
          for (unsigned node = 1; node < NumNodes(); node++) {
-            std::string port1 = dabc::Url::ComposePortName(0, FORMAT(("%s/Port", IBTEST_WORKERNAME)), node-1);
+            std::string port1 = dabc::Url::ComposePortName(0, dabc::format("%s/Output", IBTEST_WORKERNAME), node-1);
 
-            std::string port2 = dabc::Url::ComposePortName(node, FORMAT(("%s/Port", IBTEST_WORKERNAME)), 0);
+            std::string port2 = dabc::Url::ComposePortName(node, dabc::format("%s/Input", IBTEST_WORKERNAME), 0);
 
             dabc::mgr.Connect(port1, port2).SetOptional(dabc::mgr()->NodeId()==0);
          }
@@ -95,7 +92,7 @@ class IbTestApplication : public dabc::Application {
 
       virtual bool BeforeAppModulesStarted()
       {
-         DOUT0(("Num threads in ib-test = %d %d", dabc::mgr()->GetThreadsFolder(true).NumChilds(), dabc::Thread::NumThreadInstances()));
+         DOUT0("Num threads in ib-test = %d %d", dabc::mgr.NumThreads(), dabc::Thread::NumThreadInstances());
 
          return true;
       }
@@ -116,21 +113,20 @@ class IbTestApplication : public dabc::Application {
 class IbTestFactory : public dabc::Factory  {
    public:
 
-      IbTestFactory(const char* name) : dabc::Factory(name) {}
+      IbTestFactory(const std::string& name) : dabc::Factory(name) {}
 
-      virtual dabc::Application* CreateApplication(const char* classname, dabc::Command cmd)
+      virtual dabc::Application* CreateApplication(const std::string& classname, dabc::Command cmd)
       {
-         DOUT0(("Try to create app %s", classname));
-      
-         if (strcmp(classname, "IbTestApp")==0)
+         if (classname == "IbTestApp")
             return new IbTestApplication();
+
          return dabc::Factory::CreateApplication(classname, cmd);
       }
 
 
-      virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
+      virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
       {
-         if (strcmp(classname,"IbTestWorkerModule")==0)
+         if (classname == "IbTestWorkerModule")
             return new IbTestWorkerModule(modulename, cmd);
 
 

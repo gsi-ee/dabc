@@ -18,63 +18,25 @@
 
 #include "dabc/logging.h"
 #include "dabc/Buffer.h"
-#include "dabc/FileIO.h"
 #include "dabc/Manager.h"
-#include "dabc/Port.h"
+#include "dabc/BinaryFile.h"
 
 #include "mbs/MbsTypeDefs.h"
 
-mbs::LmdInput::LmdInput(const char* fname, uint32_t bufsize) :
-   dabc::DataInput(),
-   fFileName(fname ? fname : ""),
-   fBufferSize(bufsize),
-   fFilesList(0),
-   fFile(),
-   fCurrentFileName(),
-   fCurrentRead(0)
+mbs::LmdInput::LmdInput(const dabc::Url& url) :
+   dabc::FileInput(url),
+   fFile()
 {
 }
 
 mbs::LmdInput::~LmdInput()
 {
-   // FIXME: cleanup should be done much earlier
    CloseFile();
-   if (fFilesList) {
-      dabc::Object::Destroy(fFilesList);
-      fFilesList = 0;
-   }
 }
 
 bool mbs::LmdInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
-   fFileName = wrk.Cfg(mbs::xmlFileName, cmd).AsStdStr(fFileName);
-   fBufferSize = wrk.Cfg(dabc::xmlBufferSize, cmd).AsInt(fBufferSize);
-
-   // DOUT1(("BufferSize = %d", fBufferSize));
-
-   return Init();
-}
-
-bool mbs::LmdInput::Init()
-{
-   if (fFileName.length()==0) return false;
-
-   if (fFilesList!=0) {
-      EOUT(("Files list already exists"));
-      return false;
-   }
-
-   if (fBufferSize==0) {
-      EOUT(("Buffer size not specified !!!!"));
-      return false;
-   }
-
-   if (strpbrk(fFileName.c_str(),"*?")!=0)
-      fFilesList = dabc::mgr()->ListMatchFiles("", fFileName.c_str());
-   else {
-      fFilesList = new dabc::Object(0, "FilesList", true);
-      new dabc::Object(fFilesList, fFileName.c_str());
-   }
+   if (!dabc::FileInput::Read_Init(wrk, cmd)) return false;
 
    return OpenNextFile();
 }
@@ -83,30 +45,23 @@ bool mbs::LmdInput::OpenNextFile()
 {
    CloseFile();
 
-   if ((fFilesList==0) || (fFilesList->NumChilds()==0)) return false;
+   if (!TakeNextFileName()) return false;
 
-   const char* nextfilename = fFilesList->GetChild(0)->GetName();
-
-   bool res = fFile.OpenRead(nextfilename);
-
-   if (!res)
-      EOUT(("Cannot open file %s for reading, errcode:%u", nextfilename, fFile.LastError()));
-   else {
-      fCurrentFileName = nextfilename;
-      DOUT1(("Open lmd file %s for reading", fCurrentFileName.c_str()));
+   if (!fFile.OpenRead(CurrentFileName().c_str())) {
+      EOUT("Cannot open file %s for reading, errcode:%u", CurrentFileName().c_str(), fFile.LastError());
+      return false;
    }
 
-   fFilesList->DeleteChild(0);
+   DOUT1("Open lmd file %s for reading", CurrentFileName().c_str());
 
-   return res;
+   return true;
 }
 
 
 bool mbs::LmdInput::CloseFile()
 {
    fFile.Close();
-   fCurrentFileName = "";
-   fCurrentRead = 0;
+   ClearCurrentFileName();
    return true;
 }
 
@@ -117,7 +72,7 @@ unsigned mbs::LmdInput::Read_Size()
    if (!fFile.IsReadMode())
       if (!OpenNextFile()) return dabc::di_EndOfStream;
 
-   return fBufferSize;
+   return dabc::di_DfltBufSize;
 }
 
 unsigned mbs::LmdInput::Read_Complete(dabc::Buffer& buf)
@@ -135,13 +90,12 @@ unsigned mbs::LmdInput::Read_Complete(dabc::Buffer& buf)
        numev = fFile.ReadBuffer(buf.SegmentPtr(0), bufsize);
 
        if (numev==0) {
-          DOUT3(("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf.GetTotalSize()));
+          DOUT3("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf.GetTotalSize());
           if (!OpenNextFile()) return dabc::di_EndOfStream;
        }
 
    } while (numev==0);
 
-   fCurrentRead += bufsize;
    buf.SetTotalSize(bufsize);
    buf.SetTypeId(mbs::mbt_MbsEvents);
 
@@ -156,7 +110,7 @@ mbs::EventHeader* mbs::LmdInput::ReadEvent()
        mbs::EventHeader* hdr = fFile.ReadEvent();
        if (hdr!=0) return hdr;
 
-       DOUT1(("File %s return 0 - end of file", fCurrentFileName.c_str()));
+       DOUT1("File %s return 0 - end of file", CurrentFileName().c_str());
        if (!OpenNextFile()) return 0;
    }
 

@@ -16,8 +16,8 @@
 #ifndef DABC_MemoryPool
 #define DABC_MemoryPool
 
-#ifndef DABC_Worker
-#include "dabc/Worker.h"
+#ifndef DABC_ModuleAsync
+#include "dabc/ModuleAsync.h"
 #endif
 
 #ifndef DABC_Queue
@@ -34,49 +34,26 @@
 
 #include <stdlib.h>
 
+#include <vector>
+
 namespace dabc {
 
    class Mutex;
-   class MemoryPool;
-
-   class MemoryPoolRequester {
-      friend class MemoryPool;
-
-      private:
-         // this members will be accessible only by MemoryPool
-
-         MemoryPool*   pool;
-         BufferSize_t  bufsize;
-         Buffer        buf;
-
-      protected:
-
-         Buffer TakeRequestedBuffer() { return buf; }
-
-      public:
-      // method must be reimplemented in user code to accept or
-      // not buffer which was requested before
-      // User returns true if he accept buffer, false means that buffer must be released
-
-         MemoryPoolRequester() : pool(0), bufsize(0), buf() {}
-         virtual bool ProcessPoolRequest() = 0;
-         virtual ~MemoryPoolRequester() { if (!buf.null()) EOUT(("buf !=0 in requester")); }
-   };
-
-
-
-   // =========================== NEW CODE, REPLACEMENT FOR OLD MEMORYPOOL ========================
-
-
    class MemoryBlock;
    class MemoryPoolRef;
 
-   class MemoryPool : public Worker {
+   class MemoryPool : public ModuleAsync {
       friend class Manager;
       friend class Buffer;
       friend class MemoryPoolRef;
 
-      enum  { evntProcessRequests = evntFirstSystem };
+      struct RequesterReq {
+         BufferSize_t   size;
+         bool           pending;   // if true, request is pending
+         bool           disconn;   // if true, requester output is free and can be reused
+
+         RequesterReq() : size(0), pending(false), disconn(false) {}
+      };
 
       protected:
 
@@ -87,22 +64,23 @@ namespace dabc {
          unsigned        fAlignment;      //!< alignment border for memory
          unsigned        fMaxNumSegments; //!< maximum number of segments in Buffer objects
 
-         // FIXME: request queue could be expand on the fly, do we need this
-         PointersQueue<MemoryPoolRequester> fReqQueue; //!< queue of submitted requests
+         std::vector<RequesterReq>     fReqests;        //!< configuration for each output
+
+         Queue<unsigned, true>         fPending;    //!< queue with requester indexes which are waiting release of the memory
 
          bool            fEvntFired;      //!< indicates if event was fired to process memory requests
+         bool            fWaitingRelease; //!< flag indicate that memory pool waiting release of next buffer
 
          unsigned        fChangeCounter;  //!< memory pool change counter, incremented every time memory is allocated or freed
 
          bool            fUseThread;      //!< indicate if thread functionality should be used to process supplied requests
          
-         dabc::Mutex*    fBufMutex;      //!< FIXME: temporary mutex, used to protect refcnt in buffer objects
-
          static unsigned fDfltAlignment;   //!< default alignment for memory allocation
          static unsigned fDfltNumSegments; //!< default number of segments in memory pool
          static unsigned fDfltRefCoeff;    //!< default coefficient for reference creation
          static unsigned fDfltBufSize;     //!< default buffer size
 
+         virtual bool Find(ConfigIO &cfg);
 
          /** Reserve raw buffer without creating Buffer instance */
          bool TakeRawBuffer(unsigned& indx);
@@ -143,11 +121,23 @@ namespace dabc {
 
          virtual void OnThreadAssigned() { fUseThread = HasThread(); }
 
+         bool ProcessSend(unsigned port);
+
          virtual void ProcessEvent(const EventId&);
+
+         virtual int ExecuteCommand(Command cmd);
+
+         /** Method called when port started or stopped. We could start buffer sending */
+         virtual void ProcessConnectionActivated(const std::string& name, bool on);
+
+         virtual void ProcessConnectEvent(const std::string& name, bool on);
+
+
+         bool RecheckRequests(bool from_recv = false);
 
       public:
 
-         MemoryPool(const char* name, bool withmanager = false);
+         MemoryPool(const std::string& name, bool withmanager = false);
          virtual ~MemoryPool();
 
          virtual const char* ClassName() const { return clMemoryPool; }
@@ -224,13 +214,6 @@ namespace dabc {
           * In case when memory pool cannot provide specified memory exception will be thrown */
          Buffer TakeBuffer(BufferSize_t size = 0) throw();
 
-         /** Returns Buffer or set request to the pool, which will be processed
-          * when new memory is available in the buffer */
-         Buffer TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size = 0) throw();
-
-         /** Cancel previously submitted request */
-         void RemoveRequester(MemoryPoolRequester* req);
-
          /** Returns Buffer object without any memory reserved.
           * Instance can be used in later code to add references on the memory from other buffers */
          Buffer TakeEmpty(unsigned capacity = 0) throw();
@@ -289,14 +272,9 @@ namespace dabc {
 
    };
 
-   class MemoryPoolRef : public WorkerRef {
+   class MemoryPoolRef : public ModuleAsyncRef {
 
-      DABC_REFERENCE(MemoryPoolRef, WorkerRef, MemoryPool)
-
-      Buffer TakeBufferReq(MemoryPoolRequester* req, BufferSize_t size = 0)
-      {
-         return GetObject() ? GetObject()->TakeBufferReq(req, size) : Buffer();
-      }
+      DABC_REFERENCE(MemoryPoolRef, ModuleAsyncRef, MemoryPool)
 
       /** Return usage of memory pool */
       double GetUsedRatio() const
@@ -315,8 +293,19 @@ namespace dabc {
       {
          return GetObject() ? GetObject()->GetMinBufSize() : 0.;
       }
-   };
 
+      Buffer TakeBuffer(BufferSize_t size = 0)
+      {
+         return GetObject() ? GetObject()->TakeBuffer(size) : Buffer();
+      }
+
+      Buffer TakeEmpty(unsigned capacity = 0)
+      {
+         return GetObject() ? GetObject()->TakeEmpty(capacity) : Buffer();
+      }
+
+      Reference CreateNewRequester();
+   };
 
 }
 

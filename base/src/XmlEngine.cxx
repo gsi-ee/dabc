@@ -1618,18 +1618,18 @@ void dabc::Xml::DisplayError(int error, int linenumber)
 {
    // Displays xml parsing error
    switch(error) {
-      case -11: EOUT(("Node cannot be closed with > symbol at line %d, for instance <?xml ... ?> node", linenumber)); break;
-      case -10: EOUT(("Error in xml comments definition at line %d, must be <!-- comments -->", linenumber)); break;
-      case -9:  EOUT(("Multiple name space definitions not allowed, line %d", linenumber)); break;
-      case -8:  EOUT(("Invalid namespace specification, line %d", linenumber)); break;
-      case -7:  EOUT(("Invalid attribute value, line %d", linenumber)); break;
-      case -6:  EOUT(("Invalid identifier for node attribute, line %d", linenumber)); break;
-      case -5:  EOUT(("Mismatch between open and close nodes, line %d", linenumber)); break;
-      case -4:  EOUT(("Unexpected close node, line %d", linenumber)); break;
-      case -3:  EOUT(("Valid identifier for close node is missing, line %d", linenumber)); break;
-      case -2:  EOUT(("No multiple content entries allowed, line %d", linenumber)); break;
-      case -1:  EOUT(("Unexpected end of xml file")); break;
-      default:  EOUT(("XML syntax error at line %d", linenumber)); break;
+      case -11: EOUT("Node cannot be closed with > symbol at line %d, for instance <?xml ... ?> node", linenumber); break;
+      case -10: EOUT("Error in xml comments definition at line %d, must be <!-- comments -->", linenumber); break;
+      case -9:  EOUT("Multiple name space definitions not allowed, line %d", linenumber); break;
+      case -8:  EOUT("Invalid namespace specification, line %d", linenumber); break;
+      case -7:  EOUT("Invalid attribute value, line %d", linenumber); break;
+      case -6:  EOUT("Invalid identifier for node attribute, line %d", linenumber); break;
+      case -5:  EOUT("Mismatch between open and close nodes, line %d", linenumber); break;
+      case -4:  EOUT("Unexpected close node, line %d", linenumber); break;
+      case -3:  EOUT("Valid identifier for close node is missing, line %d", linenumber); break;
+      case -2:  EOUT("No multiple content entries allowed, line %d", linenumber); break;
+      case -1:  EOUT("Unexpected end of xml file"); break;
+      default:  EOUT("XML syntax error at line %d", linenumber); break;
    }
 }
 

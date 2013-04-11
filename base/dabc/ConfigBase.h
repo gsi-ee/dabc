@@ -69,6 +69,7 @@ namespace dabc {
    extern const char* xmlRunFunc;
    extern const char* xmlCpuInfo;
    extern const char* xmlSocketHost;
+   extern const char* xmlUseControl;
 
    class ConfigIO;
 
@@ -81,7 +82,6 @@ namespace dabc {
 
          XMLDocPointer_t   fDoc;
          int               fVersion;  // -1 - error, 0 - xdaq, 1 and more - dabc
-         XMLNodePointer_t  fDflts;
          XMLNodePointer_t  fVariables;
 
          // following variables work as 'environment'
@@ -94,7 +94,6 @@ namespace dabc {
          std::string       envContext;         // name of current context
 
          XMLNodePointer_t RootNode();
-         XMLNodePointer_t Dflts();
          XMLNodePointer_t Variables();
 
          bool NodeMaskMatch(XMLNodePointer_t node, XMLNodePointer_t mask);
@@ -147,6 +146,8 @@ namespace dabc {
          // following methods implemented for both XDAQ/native xml formats
 
          bool IsOk() const { return fVersion>=0; }
+
+         int GetVersion() const { return fVersion; }
 
          /** returns number of nodes in xml file */
          unsigned NumNodes();

@@ -17,24 +17,13 @@
 
 #include "dabc/threads.h"
 
-bool dabc::BuffersQueue::Push(const Buffer& buf, Mutex* m)
-{
-   if (buf.null()) return true;
-
-   dabc::LockGuard lock(m);
-
-   if (MakePlaceForNext()) {
-      Push(buf);
-      return true;
-   }
-
-   return false;
-}
-
 void dabc::BuffersQueue::Cleanup()
 {
-   while (Size()>0)
-     Pop().Release();
+   Buffer buf;
+   while (Size()>0) {
+      PopBuffer(buf);
+      buf.Release();
+   }
 }
 
 void dabc::BuffersQueue::Cleanup(Mutex* m)
@@ -49,5 +38,4 @@ void dabc::BuffersQueue::Cleanup(Mutex* m)
       if (Size()>0) PopBuffer(buf);
 
    } while (!buf.null());
-
 }

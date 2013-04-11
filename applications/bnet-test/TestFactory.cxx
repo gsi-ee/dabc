@@ -23,26 +23,26 @@ bnet::TestFactory bnettestfactory("bnet-test");
 
 const char* bnet::xmlTestWorkerClass = "bnet::TestWorker";
 
-dabc::Application* bnet::TestFactory::CreateApplication(const char* classname, dabc::Command cmd)
+dabc::Application* bnet::TestFactory::CreateApplication(const std::string& classname, dabc::Command cmd)
 {
-   if (strcmp(classname, xmlTestWorkerClass)==0)
+   if (classname == xmlTestWorkerClass)
       return new bnet::TestWorkerApplication();
 
    return dabc::Factory::CreateApplication(classname, cmd);
 }
 
-dabc::Module* bnet::TestFactory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
+dabc::Module* bnet::TestFactory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
 {
-   if (strcmp(classname,"bnet::TestGeneratorModule")==0)
+   if (classname == "bnet::TestGeneratorModule")
       return new bnet::TestGeneratorModule(modulename, cmd);
-   else
-   if (strcmp(classname,"bnet::TestCombinerModule")==0)
+
+   if (classname == "bnet::TestCombinerModule")
       return new bnet::TestCombinerModule(modulename, cmd);
-   else
-   if (strcmp(classname,"bnet::TestBuilderModule")==0)
+
+   if (classname == "bnet::TestBuilderModule")
       return new bnet::TestBuilderModule(modulename, cmd);
-   else
-   if (strcmp(classname,"bnet::TestFilterModule")==0)
+
+   if (classname == "bnet::TestFilterModule")
       return new bnet::TestFilterModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);

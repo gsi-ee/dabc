@@ -6,7 +6,7 @@
 #include "dabc/Configuration.h"
 #include "dabc/SocketDevice.h"
 
-dimc::Observer::Observer(const char* name) :
+dimc::Observer::Observer(const std::string& name) :
    dabc::Worker(MakePair(name)),
    ::DimServer(),
    fEntries()
@@ -25,7 +25,7 @@ dimc::Observer::Observer(const char* name) :
    if (fDNS.empty()) fDNS = dabc::mgr()->cfg()->ResolveEnv("${DIM_DNS_NODE}");
 
    if (fDNS.empty()) {
-      EOUT(("!!! DIM_DNS_NODE is not specified - try to use localhost"));
+      EOUT("!!! DIM_DNS_NODE is not specified - try to use localhost");
       fDNS = "localhost";
    }
 
@@ -51,7 +51,7 @@ dimc::Observer::Observer(const char* name) :
    ExtendRegistrationFor(mask, fInfo2Name);
    ExtendRegistrationFor(mask, fInfo3Name);
 
-   DOUT0(("############ Creating dim observer dns:%s:%u mask:%s ##########", fDNS.c_str(), fDNSport, mask.c_str()));
+   DOUT0("############ Creating dim observer dns:%s:%u mask:%s ##########", fDNS.c_str(), fDNSport, mask.c_str());
 
    StartDimServer(dabc::format("DABC/%s:%d",  nodename.c_str(), nodeid), fDNS, fDNSport);
 
@@ -79,9 +79,9 @@ void dimc::Observer::StartDimServer(const std::string& name, const std::string& 
 
    if ((dnsport!=0) && !dnsnode.empty()) {
       ::DimServer::setDnsNode(dnsnode.c_str(), dnsport);
-      DOUT0(("Starting DIM server of name %s for dns %s:%d", name.c_str(), dnsnode.c_str(), dnsport));
+      DOUT0("Starting DIM server of name %s for dns %s:%d", name.c_str(), dnsnode.c_str(), dnsport);
    } else {
-      DOUT0(("Starting DIM server of name %s for DIM_DNS_NODE  %s:%d", name.c_str(), DimServer::getDnsNode(), DimServer::getDnsPort()));
+      DOUT0("Starting DIM server of name %s for DIM_DNS_NODE  %s:%d", name.c_str(), DimServer::getDnsNode(), DimServer::getDnsPort());
    }
    ::DimServer::start(name.c_str());
    ::DimServer::autoStartOn(); // any new service will be started afterwards
@@ -104,7 +104,7 @@ dimc::Observer::~Observer()
       delete entry;
    }
 
-   DOUT0(("############# Destroy dim observer #############"));
+   DOUT0("############# Destroy dim observer #############");
 
    StopDimServer();
 }
@@ -116,7 +116,7 @@ bool dimc::Observer::CreateEntryForParameter(const std::string& parname, const s
    dabc::Parameter par = dabc::mgr.FindPar(parname);
 
    if (par.null()) {
-      EOUT(("Did not find parameter %s !!!!", parname.c_str()));
+      EOUT("Did not find parameter %s !!!!", parname.c_str());
       return false;
    }
 
@@ -124,13 +124,13 @@ bool dimc::Observer::CreateEntryForParameter(const std::string& parname, const s
    if (!altername.empty()) dimname = fDimPrefix + altername;
 
    if (entry==0) {
-      DOUT2(("Create new entry for parameter %s", parname.c_str()));
+      DOUT2("Create new entry for parameter %s", parname.c_str());
       entry = new ServiceEntry(parname, dimname);
       fEntries.push_back(entry);
    }
 
    if (!entry->UpdateService(par)) {
-      EOUT(("Cannot create service for parameter %s", parname.c_str()));
+      EOUT("Cannot create service for parameter %s", parname.c_str());
       RemoveEntry(entry);
       delete entry;
       return false;
@@ -153,7 +153,7 @@ void dimc::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 
    dimc::ServiceEntry* entry = FindEntry(parname);
 
-//   DOUT0(("Get event %d par %s entry %p value %s", evnt.EventId(), parname.c_str(), entry, evnt.ParValue().c_str()));
+//   DOUT0("Get event %d par %s entry %p value %s", evnt.EventId(), parname.c_str(), entry, evnt.ParValue().c_str());
 
    switch (evnt.EventId()) {
       case dabc::parCreated: {
@@ -163,7 +163,7 @@ void dimc::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
 
       case dabc::parModified: {
          if (entry==0) {
-            DOUT2(("Modified event for non-known parameter %s !!!!", parname.c_str()));
+            DOUT2("Modified event for non-known parameter %s !!!!", parname.c_str());
             CreateEntryForParameter(parname, dimname);
             return;
          }
@@ -187,7 +187,7 @@ void dimc::Observer::ProcessParameterEvent(const dabc::ParameterEvent& evnt)
       }
    }
 
-//   DOUT0(("Did event %d", evnt.EventId()));
+//   DOUT0("Did event %d", evnt.EventId());
 }
 
 void dimc::Observer::errorHandler(int severity, int code, char *msg)
@@ -200,7 +200,7 @@ void dimc::Observer::clientExitHandler()
 
 void dimc::Observer::exitHandler( int code )
 {
-   DOUT0(("Process dim exit code %d", code));
+   DOUT0("Process dim exit code %d", code);
    dabc::mgr.StopApplication();
 }
 

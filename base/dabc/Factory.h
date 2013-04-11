@@ -37,7 +37,6 @@
 namespace dabc {
 
    class Module;
-   class FileIO;
    class DataInput;
    class DataOutput;
    class Command;
@@ -46,7 +45,6 @@ namespace dabc {
    class Application;
    class Configuration;
    class Transport;
-   class Port;
    class FactoryPlugin;
 
    /** \brief Factory class provides interfaces to add user-specific
@@ -57,45 +55,24 @@ namespace dabc {
       friend class Manager;
       friend class FactoryPlugin;
 
-      struct LibEntry {
-         void*        fLib;
-         std::string  fLibName;
-
-         LibEntry() : fLib(0), fLibName() {}
-         LibEntry(void* lib, const std::string& name) : fLib(lib), fLibName(name) {}
-         LibEntry(const LibEntry& src) : fLib(src.fLib), fLibName(src.fLibName) {}
-      };
-
-      static Mutex* LibsMutex()
-      {
-         static Mutex m;
-         return &m;
-      }
-
-      static std::vector<LibEntry> fLibs;
-
       public:
-         Factory(const char* name);
+         Factory(const std::string& name);
 
-         virtual Application* CreateApplication(const char* classname, Command cmd) { return 0; }
+         virtual Application* CreateApplication(const std::string& classname, Command cmd) { return 0; }
 
-         virtual Reference CreateObject(const char* classname, const char* objname, Command cmd) { return 0; }
+         virtual Reference CreateObject(const std::string& classname, const std::string& objname, Command cmd) { return 0; }
 
-         virtual Device* CreateDevice(const char* classname, const char* devname, Command cmd) { return 0; }
+         virtual Device* CreateDevice(const std::string& classname, const std::string& devname, Command cmd) { return 0; }
 
-         virtual Reference CreateThread(Reference parent, const char* classname, const char* thrdname, const char* thrddev, Command cmd) { return Reference(); }
+         virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd) { return Reference(); }
 
-         virtual Module* CreateModule(const char* classname, const char* modulename, Command cmd) { return 0; }
+         virtual Module* CreateModule(const std::string& classname, const std::string& modulename, Command cmd) { return 0; }
 
-         virtual Transport* CreateTransport(Reference port, const char* typ, Command cmd);
+         virtual Transport* CreateTransport(const Reference& port, const std::string& typ, Command cmd);
 
-         virtual FileIO* CreateFileIO(const char* typ, const char* name, int option) { return 0; }
+         virtual DataInput* CreateDataInput(const std::string& typ) { return 0; }
 
-         virtual Object* ListMatchFiles(const char* typ, const char* filemask) { return 0; }
-
-         virtual DataInput* CreateDataInput(const char* typ) { return 0; }
-
-         virtual DataOutput* CreateDataOutput(const char* typ) { return 0; }
+         virtual DataOutput* CreateDataOutput(const std::string& typ) { return 0; }
 
          static bool LoadLibrary(const std::string& fname);
 
@@ -114,25 +91,8 @@ namespace dabc {
    // ==============================================================================
 
    class FactoryPlugin {
-      friend class Manager;
-
       public:
          FactoryPlugin(dabc::Factory* f);
-         ~FactoryPlugin();
-
-      private:
-         static PointersQueue<Factory> *Factories()
-         {
-            static PointersQueue<Factory> f(16);
-            return &f;
-         }
-         static Mutex* FactoriesMutex()
-         {
-            static Mutex m;
-            return &m;
-         }
-
-         static Factory* NextNewFactory();
    };
 
 }

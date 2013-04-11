@@ -53,7 +53,7 @@ namespace verbs {
          virtual int DoWaitOperation(double waittime, double fasttime);
 
       public:
-         BnetRunnable(const char* name);
+         BnetRunnable(const std::string& name);
          virtual ~BnetRunnable();
 
          bool IsReliableConn() const { return fRelibaleConn; }
@@ -61,7 +61,7 @@ namespace verbs {
          // maximum size for commands
          virtual int ConnectionBufferSize() { return NumNodes() * NumLids() * sizeof(VerbsConnRec); }
 
-         virtual bool Configure(dabc::Module* m, dabc::MemoryPool* pool, int numrecs);
+         virtual bool Configure(const dabc::ModuleRef& m, const dabc::EventId& ev, dabc::MemoryPool* pool, int numrecs);
 
          virtual void ResortConnections(void* buf);
    };

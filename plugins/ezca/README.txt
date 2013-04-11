@@ -57,12 +57,6 @@ The Names of such records are specified with tags EpicsDoubleRec-0 ... EpicsDoub
 
 Tag PollingTimeout sets time in seconds for checking the EpicsFlagRec if new epics data shall be requested.
 
-Tag MbsServerKind defines "Stream" or "Event" server output to connect go4 online monitor. If blank, no
-data server is opened.
-
-Tag MbsFileName defines a filename for the *.lmd data output of the test readout. Note that this currently
-only contains the EPICS data; to combine with other DAQ readout, the ReadoutApplication has to be modified!
-
 2) Startup your epics ioc with the respective process variables.
 
 3) Start DABC data taking from epics ioc by

@@ -48,7 +48,7 @@ namespace bnet {
 
    class TestEventHandling : public EventHandling {
       public:
-         TestEventHandling(const char* name) : EventHandling(name) {}
+         TestEventHandling(const std::string& name) : EventHandling(name) {}
 
          virtual bool GenerateSubEvent(const bnet::EventId&, int subid, int numsubids, dabc::Buffer& buf);
 

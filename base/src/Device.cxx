@@ -19,13 +19,13 @@
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
 #include "dabc/Transport.h"
-#include "dabc/Port.h"
 
-dabc::Device::Device(const char* name) :
+
+dabc::Device::Device(const std::string& name) :
    Worker(MakePair(name), true),
    fDeviceMutex(true)
 {
-   DOUT3(("Device %p %s %s constructor prior:%d", this, GetName(), ItemName().c_str(), WorkerPriority()));
+   DOUT3("Device %p %s %s constructor prior:%d", this, GetName(), ItemName().c_str(), WorkerPriority());
 }
 
 dabc::Device::~Device()
@@ -33,34 +33,41 @@ dabc::Device::~Device()
    // by this call we synchronise us with anything else
    // that can happen on the device
 
-   DOUT3(("Device %s destr prior:%d", GetName(), WorkerPriority()));
+   DOUT3("Device %s destr prior:%d", GetName(), WorkerPriority());
 }
 
 int dabc::Device::ExecuteCommand(Command cmd)
 {
    if (cmd.IsName(CmdCreateTransport::CmdName())) {
+      CmdCreateTransport crcmd = cmd;
 
-      Reference portref = dabc::mgr.FindPort(cmd.GetStdStr("PortName"));
-      Port* port = (Port*) portref();
-      if (port==0) return cmd_false;
+      PortRef port = dabc::mgr.FindPort(crcmd.PortName());
 
-      portref.SetTransient(false);
-      Transport* tr = CreateTransport(cmd, portref);
+      if (port.null()) return cmd_false;
+
+      port.SetTransient(false);
+
+      TransportRef tr = CreateTransport(cmd, port);
+
       if (tr==0) return cmd_false;
 
-      Reference trhandle(tr->GetWorker());
+      std::string thrdname = crcmd.TrThreadName();
+      if (thrdname.empty()) thrdname = ThreadName();
 
-      std::string newthrdname = port->Cfg(xmlTrThread, cmd).AsStdStr(ThreadName());
-
-      if (dabc::mgr()->MakeThreadFor(tr->GetWorker(), newthrdname.c_str())) {
-         port->AssignTransport(trhandle, tr);
-         return cmd_true;
-      } else {
-         EOUT(("No thread for transport"));
-         trhandle.Destroy();
+      if (!tr.MakeThreadForWorker(thrdname)) {
+         EOUT("Fail to create thread for transport");
+         tr.Destroy();
+         return cmd_false;
       }
 
-      return cmd_false;
+      tr.ConnectPoolHandles();
+      if (port.IsInput())
+         dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port);
+      if (port.IsOutput())
+         dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
+
+
+      return cmd_true;
    }
 
    return dabc::Worker::ExecuteCommand(cmd);

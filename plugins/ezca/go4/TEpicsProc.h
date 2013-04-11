@@ -16,24 +16,53 @@
 
 #include "TGo4EventProcessor.h"
 
+#include "TH1.h"
+#include "TH2.h"
+#include "TGraph.h"
 
-#define _NUM_LONG_RECS_ 8
-#define _NUM_DOUBLE_RECS_ 8
-
-#define _VARPRINT_ 1
 
 class TEpicsProc : public TGo4EventProcessor {
+   protected:
+
+      struct VariableHist {
+         TH1*    fTrend;
+         TH1*    fStat;
+         TGraph* fGraph;
+         VariableHist() : fTrend(0), fStat(0), fGraph(0) {}
+         bool Empty() const { return fGraph==0; }
+         bool IsName(const std::string& name) const { return fGraph ? name==fGraph->GetName() : false; }
+      };
+
+      std::vector<VariableHist> all_hists;           //! list of all histograms
+
+      bool fVerbose;
+      Int_t fEventId;
+      UInt_t fUTimeSeconds;
+      char fcTimeString[200];
+
+      const char* GetUpdateTimeString();
+
+      VariableHist* FindVariable(const char* name);
+
+      VariableHist* CreateHist(const char* varname);
+
+      TGraph* MakeTimeGraph(const TString& name, const TString& dir);
+
+      void UpdateHist(VariableHist* hst, double val, const char* varname);
+
+      void UpdateTrending(TH1* histo, Double_t val, time_t time);
+
+      void  IncTrending( TH1 * histo, Double_t value, bool forwards );
+
+      void UpdateTimeGraph(TGraph* gr, Double_t value, time_t time);
+
+
    public:
       TEpicsProc() ;
       TEpicsProc(const char* name);
       virtual ~TEpicsProc() ;
 
       Bool_t BuildEvent(TGo4EventElement*); // event processing function
-
-   private:
-      TH1           *fLongRecords[_NUM_LONG_RECS_];
-      TH1           *fDoubleRecords[_NUM_DOUBLE_RECS_];
-
 
 
    ClassDef(TEpicsProc,1)

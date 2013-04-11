@@ -412,7 +412,7 @@ dcom.SetInt(ABB_PAR_BAR, 1);
 dcom.SetInt(ABB_PAR_ADDRESS, READADDRESS);
 dcom.SetInt(ABB_PAR_LENGTH, readsize);
 bool res=dabc::mgr.Execute(dcom);
-DOUT1(("CreateDevice = %s", DBOOL(res)));
+DOUT1("CreateDevice = %s", DBOOL(res));
 \end{verbatim}
 \end{small}
 
@@ -442,7 +442,7 @@ cmd.SetInt(ABB_COMPAR_STALONE,1);
 cmd.SetInt(ABB_COMPAR_QLENGTH, 10);
 cmd.SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
 bool res=dabc::mgr.Execute(cmd);
-DOUT1(("Create ABB readout module = %s", DBOOL(res)));
+DOUT1("Create ABB readout module = %s", DBOOL(res));
 \end{verbatim}
 \end{small}
 
@@ -460,7 +460,7 @@ the \class{abb::Device} is established by a direct method call of the manager:
 \begin{small}
 \begin{verbatim}
 res = manager.CreateTransport("ABB_Readout/Input", devname.c_str());
-DOUT1(("Connected module to ABB device = %s", DBOOL(res)));
+DOUT1("Connected module to ABB device = %s", DBOOL(res));
 \end{verbatim}  
 \end{small}
 The manager will find the \ABB~ device instance by the string {\tt devname}
@@ -473,7 +473,7 @@ is started by name with a manager method:
 \begin{small}
 \begin{verbatim}
 manager.StartModule("ABB_Readout");
-DOUT1(("Started readout module...."));
+DOUT1("Started readout module....");
 \end{verbatim}
 \end{small}
 Then the main process waits for 5 seconds while the \dabc~ threads
@@ -483,7 +483,7 @@ again then.
 \begin{verbatim}      
 sleep(5);
 manager.StopModule("ABB_Readout");
-DOUT1(("Stopped readout module."));
+DOUT1("Stopped readout module.");
 \end{verbatim}
 \end{small}
 After the module has stopped, its internal \class{dabc::Ratemeter}
@@ -535,7 +535,7 @@ cmd.SetInt(ABB_COMPAR_QLENGTH, 10);
 cmd.SetStr(ABB_COMPAR_POOL,"ABB-standalone-pool");
 cmd.SetStr(ABB_PAR_DEVICE,devname.c_str());
 bool res=dabc::mgr.Execute(cmd);
-DOUT1(("Create ABB writer module = %s", DBOOL(res)));
+DOUT1("Create ABB writer module = %s", DBOOL(res));
 \end{verbatim} 
 \end{small}
 Again the parameter names are expressd by 
@@ -546,7 +546,7 @@ the \class{abb::Device} is established by a direct method call of the manager:
 \begin{small}
 \begin{verbatim}
 res = manager.CreateTransport("ABB_Sender/Output", devname.c_str());
-DOUT1(("Connected module to ABB device = %s", DBOOL(res)));
+DOUT1("Connected module to ABB device = %s", DBOOL(res));
 \end{verbatim}  
 \end{small}
 
@@ -644,7 +644,7 @@ if(ReadoutPar(portnumber) == "ABB") {
    const char* abbdevname = "ABBDevice";
    fABBActive = dabc::mgr.CreateDevice("abb::Device", abbdevname);
    res = dabc::mgr.CreateTransport(portname, abbdevname);
-   if (!res) EOUT(("Cannot create ABB transport"));
+   if (!res) EOUT("Cannot create ABB transport");
 } 
 \end{verbatim}
 \end{small}

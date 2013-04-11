@@ -20,14 +20,6 @@
 #include "dabc/Module.h"
 #endif
 
-#ifndef DABC_Port
-#include "dabc/Port.h"
-#endif
-
-#ifndef DABC_Buffer
-#include "dabc/Buffer.h"
-#endif
-
 /** Subclass from Module class
   * Allows to use explicit main loop of the module
   * Provides blocking operation (Recv, Send, TakeBuffer, ...) with timeouts.
@@ -37,7 +29,7 @@
   * produced when port, used in operation (Send or Recv), disconnected.
   * Execution of module main loop can be suspended by Stop() function and resumed again
   * by Start() function. This can only happens in some of ModuleSync methods like Send, TakeBuffer and so on.
-  * In case when module is destroyed, MainLoop will be leaved by StopException.
+  * In case when module is destroyed, MainLoop will be leaved by stop exception Exception::IsStop().
   * User can catch this exception, but MUST throw it again that module can be safely deleted afterwards.
   * Typical MainLoop of the ModuleSync should look like this:
   *     void MainLoop()
@@ -57,65 +49,7 @@
 namespace dabc {
 
    class ModuleSync : public Module {
-
-      public:
-         ModuleSync(const char* name, Command cmd = 0);
-
-         virtual ~ModuleSync();
-
-         bool ModuleWorking(double timeout = 0.)
-            throw (StopException, TimeoutException);
-
-         virtual void MainLoop() = 0;
-
-         uint16_t WaitEvent(double timeout = -1)
-            throw (StopException, TimeoutException);
-         bool WaitConnect(Port* port, double timeout = -1)
-            throw (PortException, StopException, TimeoutException);
-         Buffer Recv(Port* port, double timeout = -1)
-            throw (PortInputException, StopException, TimeoutException);
-         Buffer RecvFromAny(Port** port = 0, double timeout = -1)
-            throw (PortInputException, StopException, TimeoutException);
-         bool WaitInput(Port* port, unsigned minqueuesize = 1, double timeout = -1)
-            throw (PortInputException, StopException, TimeoutException);
-         Buffer TakeBuffer(PoolHandle* pool, BufferSize_t size, double timeout = -1)
-            throw (StopException, TimeoutException);
-         bool Send(Port* port, const Buffer& buf, double timeout = -1)
-            throw (PortOutputException, StopException, TimeoutException);
-
-         void SetTmoutExcept(bool on = true) { fTmoutExcept = on; }
-         bool IsTmoutExcept() const { return fTmoutExcept; }
-
-         void SetDisconnectExcept(bool on = true) { fDisconnectExcept = on; }
-         bool IsDisconnectExcept() const { return fDisconnectExcept; }
-
-         void SetSyncCommands(bool on = true) { fSyncCommands = on; }
-         bool IsSyncCommands() const { return fSyncCommands; }
-
-      protected:
-
-         enum ELoopStatus { stInit, stRun, stSuspend };
-
-         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
-
-         /** Call this method from main loop if one want suspend of module
-           * execution until new Start of the module is called from outside */
-         void StopUntilRestart();
-
-         virtual void ObjectCleanup();
-
       private:
-
-         virtual void DoWorkerMainLoop();
-         virtual void DoWorkerAfterMainLoop();
-
-         virtual int PreviewCommand(Command cmd);
-
-         bool WaitItemEvent(double& tmout, ModuleItem* item = 0, uint16_t *resevid = 0, ModuleItem** resitem = 0)
-            throw (StopException, TimeoutException);
-
-         void AsyncProcessCommands();
-
          bool fTmoutExcept;
          bool fDisconnectExcept;
          bool fSyncCommands;
@@ -126,6 +60,66 @@ namespace dabc {
          bool          fWaitRes;
 
          bool          fInsideMainLoop;  //!< flag indicates if main loop is executing
+
+         virtual void DoWorkerMainLoop();
+         virtual void DoWorkerAfterMainLoop();
+
+         bool WaitItemEvent(double& tmout, ModuleItem* item = 0, uint16_t *resevid = 0, ModuleItem** resitem = 0)
+            throw (Exception);
+
+         void AsyncProcessCommands();
+
+         virtual int PreviewCommand(Command cmd);
+
+         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
+
+      protected:
+
+         /** Call this method from main loop if one want suspend of module
+           * execution until new Start of the module is called from outside */
+         void StopUntilRestart();
+
+         virtual void ObjectCleanup();
+
+//         enum ELoopStatus { stInit, stRun, stSuspend };
+
+         ModuleSync(const std::string& name, Command cmd = 0);
+
+         virtual ~ModuleSync();
+
+         bool ModuleWorking(double timeout = 0.) throw (Exception);
+
+         virtual void MainLoop() = 0;
+
+         uint16_t WaitEvent(double timeout = -1) throw (Exception);
+         bool WaitConnect(const std::string& name, double timeout = -1) throw (Exception);
+         bool WaitInput(unsigned indx, unsigned minqueuesize = 1, double timeout = -1) throw (Exception);
+
+         /** Method return true if recv from specified port can be done */
+         bool CanRecv(unsigned indx = 0) const
+            { return indx < fInputs.size() ? fInputs[indx]->CanRecv() : false; }
+         Buffer Recv(unsigned indx = 0, double timeout = -1) throw (Exception);
+         bool Send(unsigned indx, Buffer& buf, double timeout = -1) throw (Exception);
+         bool Send(Buffer& buf, double timeout = -1) throw (Exception)
+            { return Send(0, buf, timeout); }
+
+         Buffer RecvFromAny(unsigned* port = 0, double timeout = -1) throw (Exception);
+
+         Buffer TakeBuffer(unsigned pool = 0, double timeout = -1) throw (Exception);
+
+         void SetTmoutExcept(bool on = true) { fTmoutExcept = on; }
+         bool IsTmoutExcept() const { return fTmoutExcept; }
+
+         void SetDisconnectExcept(bool on = true) { fDisconnectExcept = on; }
+         bool IsDisconnectExcept() const { return fDisconnectExcept; }
+
+         void SetSyncCommands(bool on = true) { fSyncCommands = on; }
+         bool IsSyncCommands() const { return fSyncCommands; }
+
+      public:
+
+         virtual const char* ClassName() const { return "ModuleSync"; }
+
 
    };
 }

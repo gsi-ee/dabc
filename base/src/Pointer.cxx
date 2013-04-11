@@ -24,6 +24,13 @@
 
 void dabc::Pointer::long_shift(BufferSize_t len) throw()
 {
+   if (fFullSize == len) {
+      fPtr += len;
+      fFullSize = 0;
+      fRawSize = 0;
+      return;
+   }
+
    fFullSize -= rawsize();
    len -= rawsize();
    fRawSize = 0;
@@ -37,7 +44,7 @@ void dabc::Pointer::long_shift(BufferSize_t len) throw()
    }
 
    if (fSegm >= fBuf.NumSegments())
-      throw dabc::Exception("Pointer has invalid full length field");
+      throw dabc::Exception(ex_Pointer, "Pointer has invalid full length field", "Pointer");
 
    fPtr = (unsigned char*) fBuf.SegmentPtr(fSegm) + len;
    fRawSize = fBuf.SegmentSize(fSegm) - len;
@@ -55,12 +62,12 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(const Pointer& src, BufferSize_t sz) 
    }
 
    if (sz > src.fullsize()) {
-      EOUT(("source pointer has no so much memory %u", (unsigned) sz));
+      EOUT("source pointer has no so much memory %u", (unsigned) sz);
       sz = src.fullsize();
    }
 
    if (sz > fullsize()) {
-      EOUT(("target pointer has no so much memory %u", (unsigned) sz));
+      EOUT("target pointer has no so much memory %u", (unsigned) sz);
       sz = fullsize();
    }
 
@@ -105,7 +112,7 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(const void* src, BufferSize_t sz) thr
    if (src==0) return 0;
 
    if (sz > fullsize()) {
-      EOUT(("target pointer has no so much memory %lu", sz));
+      EOUT("target pointer has no so much memory %lu", sz);
       sz = fullsize();
    }
 
@@ -113,7 +120,7 @@ dabc::BufferSize_t dabc::Pointer::copyfrom(const void* src, BufferSize_t sz) thr
 
    // this is special and simple case, treat is separately
    if (sz > rawsize())
-      throw dabc::Exception("Cannot copy memory outside current segment, use Buffer::copyfrom() method");
+      throw dabc::Exception(ex_Pointer,"Cannot copy memory outside current segment, use Buffer::copyfrom() method", "Pointer");
 
    ::memcpy(ptr(), src, sz);
    return sz;
@@ -127,7 +134,7 @@ dabc::BufferSize_t dabc::Pointer::copyfromstr(const char* str, unsigned len) thr
 int dabc::Pointer::distance_to(const Pointer& child) const throw()
 {
    if (fBuf != child.fBuf)
-      throw dabc::Exception("Pointer with wrong segment id is specified");
+      throw dabc::Exception(ex_Pointer,"Pointer with wrong segment id is specified", "Pointer");
 
    if (fSegm==child.fSegm)
       return (fPtr <= child.fPtr) ? (child.fPtr - fPtr) : -(fPtr - child.fPtr);

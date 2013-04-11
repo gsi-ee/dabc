@@ -31,7 +31,6 @@
 namespace dabc {
 
    class Manager;
-   class Worker;
    class Thread;
    class Mutex;
    class Configuration;
@@ -40,16 +39,14 @@ namespace dabc {
    extern const char* clPoolHandle;
    extern const char* clMemoryPool;
 
+   extern const char* xmlQueueSize;
    extern const char* xmlInputQueueSize;
    extern const char* xmlOutputQueueSize;
    extern const char* xmlInlineDataSize;
 
    extern const char* xmlPoolName;
-   extern const char* xmlInputPoolName;
-   extern const char* xmlOutputPoolName;
    extern const char* xmlWorkPool;
    extern const char* xmlFixedLayout;
-   extern const char* xmlSizeLimitMb;
    extern const char* xmlCleanupTimeout;
    extern const char* xmlBufferSize;
    extern const char* xmlNumBuffers;
@@ -78,9 +75,12 @@ namespace dabc {
    // allows to specify them through standardized URL syntax
    extern const char* xmlProtocol;
    extern const char* xmlHostName;
-   extern const char* xmlFileName;
-   extern const char* xmlUrlName; // host + file (without port)
-   extern const char* xmlUrlPort;
+   extern const char* xmlFileName;     // used as file name option in separate xml node
+   extern const char* xmlFileNumber;   // used as file number option in separate xml node
+   extern const char* xmlFileSizeLimit; // used as separate xml node
+   extern const char* xml_maxsize;      // used as option in file url
+   extern const char* xml_number;       // used as option in file url
+
 
    extern const char* xmlMcastAddr;
    extern const char* xmlMcastPort;
@@ -155,12 +155,12 @@ namespace dabc {
       protected:
 
          enum EFlags {
-            flStateMask   = 0x00f,  //!< use 4 bits for state
-            flIsOwner     = 0x010,  //!< flag indicates default ownership for child objects
-            flCleanup     = 0x020,  //!< flag indicates that one should cleanup pointer from depended objects
-            flHasThread   = 0x040,  //!< flag indicates that object has thread and should be cleaned up via thread
-            flAutoDestroy = 0x080,  //!< object will be automatically destroyed when no references exists, normally set in constructor, example Command
-            flLogging     = 0x100   //!< object is marked to provide logging information, for debug purposes only
+            flStateMask      = 0x00f,  //!< use 4 bits for state
+            flIsOwner        = 0x010,  //!< flag indicates default ownership for child objects
+            flCleanup        = 0x020,  //!< flag indicates that one should cleanup pointer from depended objects
+            flHasThread      = 0x040,  //!< flag indicates that object has thread and should be cleaned up via thread
+            flAutoDestroy    = 0x080,  //!< object will be automatically destroyed when no references exists, normally set in constructor, example Command
+            flLogging        = 0x100   //!< object is marked to provide logging information, for debug purposes only
          };
 
          unsigned           fObjectFlags;    //!< flag, protected by the mutex
@@ -251,25 +251,23 @@ namespace dabc {
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
           * which is typically should be used as argument in class constructor
           * \param standalone identify if object should be inserted into manager hierarchy (default) or not */
-         static ConstructorPair MakePair(Reference prnt, const char* fullname, bool withmanager = true);
+         static ConstructorPair MakePair(Reference prnt, const std::string& fullname, bool withmanager = true);
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
           * which is typically should be used as argument in class constructor */
-         static ConstructorPair MakePair(Object* prnt, const char* fullname, bool withmanager = true);
+         static ConstructorPair MakePair(Object* prnt, const std::string& fullname, bool withmanager = true);
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
           * which is typically should be used as argument in class constructor */
-         static ConstructorPair MakePair(const char* fullname, bool withmanager = true);
+         static ConstructorPair MakePair(const std::string& fullname, bool withmanager = true);
 
          Object(const ConstructorPair& pair, bool owner = true);
 
       public:
 
-         Object(const char* name, bool owner = true);
+         Object(const std::string& name, bool owner = true);
 
-         Object(Object* parent, const char* name, bool owner = true);
-
-         Object(Reference parent, const char* name, bool owner = true);
+         Object(Reference parent, const std::string& name, bool owner = true);
 
          // FIXME: one should find a way to catch a call to the destructor
          virtual ~Object();
@@ -288,6 +286,9 @@ namespace dabc {
 
          /** \brief Checks if object name is same as provided \param str, thread-safe */
          bool IsName(const char* str) const { return fObjectName.compare(str)==0; }
+
+         /** \brief Checks if object name is same as provided \param str, thread-safe */
+         bool IsName(const std::string& str) const { return fObjectName.compare(str)==0; }
 
          /** \brief Checks if object name is same as provided \param str, thread-safe
           * \param len specifies how many characters should be checked.
@@ -375,7 +376,7 @@ namespace dabc {
           * in other thread in any time.
           * In some special cases objects cannot be destroyed at all - they will be cleaned by
           * other means (like thread - it is only destroyed by manager when no longer used
-          */
+          * TODO: probably, one should remove it and always use reference */
          static void Destroy(Object* obj) throw();
 
 

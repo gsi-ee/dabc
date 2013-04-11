@@ -110,8 +110,6 @@ namespace bnet {
 
       TransportCmd      fCurrentCmd; // currently executed command
 
-      dabc::ModuleItem*  fReplyItem; // item is used to generate events from runnable
-
 
       // these all about data transfer ....
 
@@ -174,13 +172,13 @@ namespace bnet {
       uint64_t fLastTurnId; // last generated turn id
       double fLastTurnTime; // time when last turn was finished
 
-      virtual void ProcessInputEvent(dabc::Port* port);
-      virtual void ProcessOutputEvent(dabc::Port* port);
-      virtual void ProcessTimerEvent(dabc::Timer* timer);
-      virtual void ProcessUserEvent(dabc::ModuleItem* item, uint16_t evid);
+      virtual bool ProcessRecv(unsigned port);
+      virtual bool ProcessSend(unsigned port);
+      virtual void ProcessTimerEvent(unsigned timer);
+      virtual void ProcessUserEvent(unsigned item);
 
       void ReleaseReadyEventParts();
-      void ReadoutNextEvents(dabc::Port* port);
+      bool ReadoutNextEvents(unsigned port);
 
       unsigned CloseSubpacketHeader(unsigned kind, dabc::Pointer& bgn, const dabc::Pointer& ptr);
 
@@ -193,9 +191,9 @@ namespace bnet {
 
       bool ProcessControlPacket(int nodeid, uint32_t kind, dabc::Pointer& rawdata);
 
-      void BuildReadyEvents(dabc::Port* port);
+      bool BuildReadyEvents(unsigned port);
 
-      void ProcessNextSlaveInputEvent();
+      bool ProcessNextSlaveInputEvent();
 
       bool RequestMasterCommand(int cmdid, void* cmddata = 0, int cmddatasize = 0, void* allresults = 0, int resultpernode = 0);
 
@@ -268,7 +266,7 @@ namespace bnet {
 
       public:
 
-      TransportModule(const char* name, dabc::Command cmd);
+      TransportModule(const std::string& name, dabc::Command cmd);
 
       virtual ~TransportModule();
 

@@ -1,34 +1,22 @@
 <?xml version="1.0"?>
-<dabc version="1">
-  <Variables>
-     <genhost value="lxi009"/>
-     <genport value="6027"/>
-  </Variables>
-  <Context host="${genhost}" name="Generator">
+<dabc version="2">
+  <Context name="Generator">
     <Run>
       <lib value="libDabcMbs.so"/>
       <func value="InitMbsGenerator"/>
+      <debuglevel value="0"/>
+      <loglevel value="1"/>
+      <logfile value="Gener.log"/>
+      <loglimit value="10000000"/>
+      <runtime value="30"/>
+      <control value="false"/>
     </Run>
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
     <Module name="Generator">
-       <Port name="Output">
-          <OutputQueueSize value="5"/>
-          <MbsServerPort value="${genport}"/>
-        </Port>
-     </Module>
-  </Context>
-  <Context host="lxi010" name="Client">
-    <Run>
-      <lib value="libDabcMbs.so"/>
-      <func value="InitMbsClient"/>
-    </Run>
-    <Module name="Receiver">
-       <BufferSize value="16384"/>
-       <Port name="Input">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="${genhost}"/>
-          <MbsServerPort value="${genport}"/>
-       </Port>
+       <OutputPort name="Output0" url="mbs://Stream?limit=1" queue="5"/>
      </Module>
   </Context>
 </dabc>

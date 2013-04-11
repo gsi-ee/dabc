@@ -25,9 +25,64 @@
 #include "dabc/ReferencesVector.h"
 
 
-dabc::Worker::Worker(Reference parent, const char* name, bool owner) :
+dabc::WorkerAddon::WorkerAddon(const std::string& name) :
+   Object(0, name),
+   fWorker()
+{
+   SetFlag(flAutoDestroy, true);
+}
+
+dabc::WorkerAddon::~WorkerAddon()
+{
+}
+
+
+void dabc::WorkerAddon::ObjectCleanup()
+{
+   fWorker.Release();
+}
+
+void dabc::WorkerAddon::DeleteWorker()
+{
+   if (fWorker.null()) DeleteThis();
+                 else fWorker.Destroy();
+}
+
+
+void dabc::WorkerAddon::FireWorkerEvent(unsigned evid)
+{
+   dabc::Worker* wrk = (dabc::Worker*) fWorker();
+   if (wrk) wrk->FireEvent(evid);
+}
+
+bool dabc::WorkerAddon::ActivateTimeout(double tmout_sec)
+{
+   dabc::Worker* wrk = (dabc::Worker*) fWorker();
+
+   if (wrk==0) return false;
+
+   LockGuard lock(wrk->fThreadMutex);
+
+   return wrk->fThread._ActivateAddonTimeout(wrk->fWorkerId, wrk->WorkerPriority(), tmout_sec);
+}
+
+void dabc::WorkerAddon::SubmitWorkerCmd(const std::string& cmdname)
+{
+   dabc::Worker* wrk = (dabc::Worker*) fWorker();
+
+   if (wrk) wrk->Submit(cmdname);
+
+}
+
+
+
+// ================================================================================
+
+
+dabc::Worker::Worker(Reference parent, const std::string& name, bool owner) :
    Object(parent, name, owner),
    fThread(),
+   fAddon(),
    fWorkerId(0),
    fWorkerPriority(-1), // minimum priority per default
 
@@ -46,6 +101,7 @@ dabc::Worker::Worker(Reference parent, const char* name, bool owner) :
 dabc::Worker::Worker(const ConstructorPair& pair, bool owner) :
    Object(pair, owner),
    fThread(),
+   fAddon(),
    fWorkerId(0),
    fWorkerPriority(-1), // minimum priority per default
 
@@ -62,16 +118,16 @@ dabc::Worker::Worker(const ConstructorPair& pair, bool owner) :
 
 dabc::Worker::~Worker()
 {
-   DOUT3(("~Worker %p %d thrd:%p 000 ", this, fWorkerId, fThread()));
+   DOUT3("~Worker %p %d thrd:%p 000 ", this, fWorkerId, fThread());
 
    CancelCommands();
 
-   DOUT3(("~Worker %p %d thrd:%p 111", this, fWorkerId, fThread()));
+   DOUT3("~Worker %p %d thrd:%p 111", this, fWorkerId, fThread());
 
    // just to ensure that reference is gone
    ClearThreadRef();
 
-   DOUT3(("~Worker %p %d thrd:%p done", this, fWorkerId, fThread()));
+   DOUT3("~Worker %p %d thrd:%p done", this, fWorkerId, fThread());
 }
 
 bool dabc::Worker::HasThread() const
@@ -114,7 +170,7 @@ bool dabc::Worker::AskToDestroyByThread()
    if (thrd()==0) return false;
 
    if (IsLogging())
-      DOUT0(("Worker %p Ask thread to destroy worker ", this));
+      DOUT0("Worker %p Ask thread to destroy worker ", this);
 
    return thrd()->InvokeWorkerDestroy(this);
 }
@@ -135,7 +191,7 @@ void dabc::Worker::ClearThreadRef()
    }
 
    if (IsLogging())
-      DOUT0(("Worker %s releases thread reference %p", GetName(), ref()));
+      DOUT0("Worker %s releases thread reference %p", GetName(), ref());
 
    ref.Release();
 
@@ -159,7 +215,7 @@ void dabc::Worker::ObjectCleanup()
 
    // now process old commands
    if (fWorkerCommandsLevel>0) {
-      EOUT(("We are in real trouble - when Worker %s %p executes command, cleanup is called", GetName(), this));
+      EOUT("We are in real trouble - when Worker %s %p executes command, cleanup is called", GetName(), this);
       exit(076);
    }
 
@@ -174,8 +230,58 @@ void dabc::Worker::ObjectCleanup()
    // here we cancel all commands we submit or get as replied
    CancelCommands();
 
-   DOUT5(("Worker %s class %s cleanup refcnt = %d", GetName(), ClassName(), fObjectRefCnt));
+   // here addon must be destroyed or at least cross-reference removed
+   fAddon.Release();
+
+   DOUT5("Worker %s class %s cleanup refcnt = %d", GetName(), ClassName(), fObjectRefCnt);
 }
+
+
+void dabc::Worker::AssignAddon(WorkerAddon* addon)
+{
+   if (!fAddon.null()) {
+      EOUT("Addon already assigned to the worker %s", GetName());
+      exit(5);
+   }
+
+   fAddon = addon;
+   if (addon) addon->fWorker = this;
+
+   ThreadRef thrd = thread();
+
+   if (!thrd.null()) {
+
+
+      if (!thrd.IsItself()) {
+         EOUT("Assign addon to worker %s from other thread", GetName());
+         exit(6);
+      }
+
+      thrd()->WorkerAddonChanged(this);
+   }
+
+}
+
+
+bool dabc::Worker::MakeThreadForWorker(const std::string& thrdname)
+{
+   std::string newname = thrdname;
+
+   if (newname.empty()) {
+      DOUT2("Thread name not specified - generate default, for a moment - processor name");
+      if (GetName() != 0) newname = GetName();
+   }
+
+   if (newname.empty()) {
+      EOUT("Still no thread name - used name Thread");
+      newname = "Thread";
+   }
+
+   ThreadRef thrd = dabc::mgr.CreateThread(newname, RequiredThrdClass());
+
+   return thrd.null() ? false : AssignToThread(thrd);
+}
+
 
 
 // FIXME: old code, need revising
@@ -184,24 +290,26 @@ void dabc::Worker::ObjectCleanup()
 bool dabc::Worker::AssignToThread(ThreadRef thrd, bool sync)
 {
    if (HasThread()) {
-      EOUT(("Thread is already assigned"));
+      EOUT("Thread is already assigned");
       return false;
    }
 
    if (thrd.null()) {
-      EOUT(("Thread is not specified"));
+      EOUT("Thread is not specified");
       return false;
    }
 
-   if (RequiredThrdClass()!=0)
-     if (strcmp(RequiredThrdClass(), thrd()->ClassName())!=0) {
-        EOUT(("Processor requires class %s than thread %s of class %s" , RequiredThrdClass(), thrd()->GetName(), thrd()->ClassName()));
+   std::string thrdcl = RequiredThrdClass();
+
+   if (thrdcl.length()>0)
+     if (thrdcl.compare(thrd.ClassName())!=0) {
+        EOUT("Processor requires class %s than thread %s of class %s" , thrdcl.c_str(), thrd.GetName(), thrd.ClassName());
         return false;
      }
 
    Reference ref(this);
    if (ref()==0) {
-      EOUT(("Cannot obtain reference on itself"));
+      EOUT("Cannot obtain reference on itself");
       return false;
    }
 
@@ -219,7 +327,7 @@ bool dabc::Worker::AssignToThread(ThreadRef thrd, bool sync)
       SetFlag(Object::flHasThread, true);
    }
 
-   DOUT2(("Assign worker %s to thread sync = %s", GetName(), DBOOL(sync)));
+   DOUT2("Assign worker %s to thread sync = %s", GetName(), DBOOL(sync));
 
    return fThread()->AddWorker(ref, sync);
 }
@@ -246,12 +354,12 @@ bool dabc::Worker::ActivateTimeout(double tmout_sec)
 
 void dabc::Worker::ProcessCoreEvent(EventId evnt)
 {
-   DOUT3(("Processor %p %u thrd %p CoreEvent %u", this, fWorkerId, fThread(), evnt.GetCode()));
+   DOUT3("Processor %p %u thrd %p CoreEvent %u", this, fWorkerId, fThread(), evnt.GetCode());
 
    switch (evnt.GetCode()) {
       case evntSubmitCommand: {
 
-         DOUT4(("Process evntSubmitCommand proc %p %u thrd %p arg %u", this, fWorkerId, fThread(), evnt.GetArg()));
+         DOUT4("Process evntSubmitCommand proc %p %u thrd %p arg %u", this, fWorkerId, fThread(), evnt.GetArg());
 
          Command cmd;
          {
@@ -259,7 +367,7 @@ void dabc::Worker::ProcessCoreEvent(EventId evnt)
             cmd = fWorkerCommands.PopWithId(evnt.GetArg());
          }
 
-         DOUT4(("Thread:%p Worker: %s Command process %s lvl %d", fThread(), GetName(), cmd.GetName(), fWorkerCommandsLevel));
+         DOUT4("Thread:%p Worker: %s Command process %s lvl %d", fThread(), GetName(), cmd.GetName(), fWorkerCommandsLevel);
 
          ProcessCommand(cmd);
 
@@ -273,13 +381,13 @@ void dabc::Worker::ProcessCoreEvent(EventId evnt)
             ProcessCommand(cmd);
          }
 
-         DOUT4(("Process evntSubmitCommand done proc %p", this));
+         DOUT4("Process evntSubmitCommand done proc %p", this);
 
          break;
       }
       case evntReplyCommand: {
 
-//         DOUT0(("Process evntReplyCommand arg %u", evnt.GetArg()));
+//         DOUT0("Process evntReplyCommand arg %u", evnt.GetArg());
 
          dabc::Command cmd;
          {
@@ -288,7 +396,7 @@ void dabc::Worker::ProcessCoreEvent(EventId evnt)
          }
 
          if (cmd.null())
-            EOUT(("evntReplyCommand: no command with specified id %u", evnt.GetArg()));
+            EOUT("evntReplyCommand: no command with specified id %u", evnt.GetArg());
          else {
             if (ReplyCommand(cmd)) cmd.Reply();
          }
@@ -297,7 +405,7 @@ void dabc::Worker::ProcessCoreEvent(EventId evnt)
       }
 
       default:
-         EOUT(("Core event %u arg:%u not processed", evnt.GetCode(), evnt.GetArg()));
+         EOUT("Core event %u arg:%u not processed", evnt.GetCode(), evnt.GetArg());
    }
 }
 
@@ -305,7 +413,7 @@ int dabc::Worker::ProcessCommand(Command cmd)
 {
    if (cmd.null()) return cmd_false;
 
-   DOUT3(("ProcessCommand cmd %s lvl %d isync %s", cmd.GetName(), fWorkerCommandsLevel, DBOOL(cmd.IsLastCallerSync())));
+   DOUT3("ProcessCommand cmd %s lvl %d isync %s", cmd.GetName(), fWorkerCommandsLevel, DBOOL(cmd.IsLastCallerSync()));
 
    if (cmd.IsCanceled()) {
       cmd.Reply(cmd_canceled);
@@ -326,7 +434,7 @@ int dabc::Worker::ProcessCommand(Command cmd)
    IntGuard guard(fWorkerCommandsLevel);
 
    if (IsLogging())
-     DOUT0(("Worker %p %s process command %s", this, GetName(), cmd.GetName()));
+     DOUT0("Worker %p %s process command %s", this, GetName(), cmd.GetName());
 
    int cmd_res = PreviewCommand(cmd);
 
@@ -334,14 +442,14 @@ int dabc::Worker::ProcessCommand(Command cmd)
       cmd_res = ExecuteCommand(cmd);
 
    if (cmd_res == cmd_ignore) {
-      EOUT(("Command ignored %s", cmd.GetName()));
+      EOUT("Command ignored %s", cmd.GetName());
       cmd_res = cmd_false;
    }
 
    // FIXME: is it only postponed command is not completed ???
    bool completed = cmd_res!=cmd_postponed;
 
-   DOUT3(("Thrd: %p Worker: %s ProcessCommand cmd %s lvl %d done", fThread(), GetName(), cmd.GetName(), fWorkerCommandsLevel));
+   DOUT3("Thrd: %p Worker: %s ProcessCommand cmd %s lvl %d done", fThread(), GetName(), cmd.GetName(), fWorkerCommandsLevel);
 
    if (completed) cmd.Reply(cmd_res);
 
@@ -350,8 +458,8 @@ int dabc::Worker::ProcessCommand(Command cmd)
 
 void dabc::Worker::ProcessEvent(const EventId& evnt)
 {
-   EOUT(("Event %u arg:%u not processed req:%s", evnt.GetCode(), evnt.GetArg(),
-         (RequiredThrdClass() ? RequiredThrdClass() : "dflt")));
+   EOUT("Event %u arg:%u not processed req:%s", evnt.GetCode(), evnt.GetArg(),
+         RequiredThrdClass().c_str());
 }
 
 bool dabc::Worker::ActivateMainLoop()
@@ -385,7 +493,7 @@ dabc::Parameter dabc::Worker::CreatePar(const std::string& name, const std::stri
 
       io.ReadRecord(this, name, cont);
 
-//      DOUT0(("Printout of parameter %s", name.c_str()));
+//      DOUT0("Printout of parameter %s", name.c_str());
 //      cont->Print();
 
       par = cont;
@@ -414,7 +522,7 @@ dabc::CommandDefinition dabc::Worker::CreateCmdDef(const std::string& name)
 
 bool dabc::Worker::Find(ConfigIO &cfg)
 {
-   DOUT4(("Worker::Find %p name = %s parent %p", this, GetName(), GetParent()));
+   DOUT3("Worker::Find %p name = %s parent %p", this, GetName(), GetParent());
 
    if (GetParent()==0) return false;
 
@@ -436,7 +544,7 @@ int dabc::Worker::PreviewCommand(Command cmd)
 {
    int cmd_res = cmd_ignore;
 
-   DOUT5(("Worker::PreviewCommand %s", cmd.GetName()));
+   DOUT5("Worker::PreviewCommand %s", cmd.GetName());
 
    if (cmd.IsName(CmdSetParameter::CmdName())) {
 
@@ -503,7 +611,7 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
 
    // we must be sure that call is done from thread itself - otherwise it is wrong
    if (!thrd.IsItself()) {
-      EOUT(("Cannot call ExecuteIn from other thread!!!"));
+      EOUT("Cannot call ExecuteIn from other thread!!!");
       cmd.ReplyFalse();
       return false;
    }
@@ -520,7 +628,7 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
 
       cmd.AddCaller(Reference(this), &exe_ready);
 
-      DOUT3(("********** Calling ExecteIn in thread %s %p", thrd()->GetName(), thrd()));
+      DOUT3("********** Calling ExecteIn in thread %s %p", thrd()->GetName(), thrd());
 
       // critical point - we want to submit command to other thread
       // if command receiver does not accept command means it either do not have thread or lost it
@@ -542,7 +650,7 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
                break;
             }
 
-            DOUT3(("ExecuteIn - cmd:%s singleLoop proc %u time %4.1f", cmd.GetName(), fWorkerId, ((tmout<=0) ? 0.1 : tmout)));
+            DOUT3("ExecuteIn - cmd:%s singleLoop proc %u time %4.1f", cmd.GetName(), fWorkerId, ((tmout<=0) ? 0.1 : tmout));
 
             if (!thrd()->SingleLoop(fWorkerId, (tmout<=0) ? 0.1 : tmout)) {
                // FIXME: one should cancel command in normal way
@@ -550,7 +658,7 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
                break;
             }
          } while (!exe_ready);
-         DOUT3(("------------ Proc %p Cmd %s ready = %s", this, cmd.GetName(), DBOOL(exe_ready)));
+         DOUT3("------------ Proc %p Cmd %s ready = %s", this, cmd.GetName(), DBOOL(exe_ready));
 
          if (exe_ready) res = cmd.GetResult();
 
@@ -560,7 +668,7 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
 
          // FIXME: should we do this - if destination does not accept command via Submit, should we execute it that way?
 
-         DOUT0(("Worker %s refuse to submit command - we do it as well", dest->GetName()));
+         DOUT0("Worker %s refuse to submit command - we do it as well", dest->GetName());
          res = cmd_false;
          cmd.SetResult(cmd_false);
          cmd.RemoveCaller(this, &exe_ready);
@@ -568,7 +676,7 @@ bool dabc::Worker::ExecuteIn(dabc::Worker* dest, dabc::Command cmd)
 
    } // this is end of parenthesis for RecursionGuard, should be closed before thread reference is released
 
-   DOUT3(("------------ Proc %p Cmd %s res = %d", this, cmd.GetName(), res));
+   DOUT3("------------ Proc %p Cmd %s res = %d", this, cmd.GetName(), res);
 
    return res>0;
 }
@@ -583,17 +691,17 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
    bool exe_direct = false;
 
    if (IsLogging())
-      DOUT0(("Worker %p %s Executes command %s", this, GetName(), cmd.GetName()));
+      DOUT0("Worker %p %s Executes command %s", this, GetName(), cmd.GetName());
 
    {
       LockGuard lock(fThreadMutex);
 
       if (fThread.null() || (fWorkerId==0)) {
-         EOUT(("Cannot execute command %s without working thread, do directly id = %u", cmd.GetName(), fWorkerId));
+         EOUT("Cannot execute command %s without working thread, do directly id = %u", cmd.GetName(), fWorkerId);
          exe_direct = true;
       } else
       if (fThread.IsItself()) {
-         // DOUT0(("Mutex = %p thrdmutex %p locked %s", fThreadMutex, fThread()->ThreadMutex(), DBOOL(fThreadMutex->IsLocked())));
+         // DOUT0("Mutex = %p thrdmutex %p locked %s", fThreadMutex, fThread()->ThreadMutex(), DBOOL(fThreadMutex->IsLocked()));
          thrd = fThread.Ref(false);
       }
    }
@@ -612,7 +720,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
    // but not really take over thread mainloop
    // This object is not seen from the manager, therefore many such instances may exist in parallel
 
-   DOUT3(("**** We really creating dummy thread for cmd %s worker:%p %s", cmd.GetName(), this, GetName()));
+   DOUT3("**** We really creating dummy thread for cmd %s worker:%p %s", cmd.GetName(), this, GetName());
 
    Thread curr(Reference(), "Current");
 
@@ -632,7 +740,7 @@ dabc::Command dabc::Worker::Assign(dabc::Command cmd)
       LockGuard lock(fThreadMutex);
 
       if (fThread()==0) {
-         EOUT(("Worker: %s - command %s cannot be assigned without thread", GetName(), cmd.GetName()));
+         EOUT("Worker: %s - command %s cannot be assigned without thread", GetName(), cmd.GetName());
          return Command();
       }
 
@@ -671,7 +779,7 @@ bool dabc::Worker::Submit(dabc::Command cmd)
 
             uint32_t arg = fWorkerCommands.Push(cmd, CommandsQueue::kindSubmit);
 
-            DOUT5(("Fire event for worker %d with priority %d", fWorkerId, priority));
+            DOUT5("Fire event for worker %d with priority %d", fWorkerId, priority);
 
             fThread()->_Fire(EventId(evntSubmitCommand, fWorkerId, arg), priority);
 
@@ -681,7 +789,7 @@ bool dabc::Worker::Submit(dabc::Command cmd)
       }
    }
 
-   DOUT0(("Worker:%s Command %s cannot be submitted - thread is not assigned", GetName(), cmd.GetName()));
+   DOUT0("Worker:%s Command %s cannot be submitted - thread is not assigned", GetName(), cmd.GetName());
 
    cmd.ReplyFalse();
 
@@ -694,7 +802,7 @@ bool dabc::Worker::GetCommandReply(dabc::Command& cmd, bool* exe_ready)
 
    LockGuard lock(fThreadMutex);
 
-   DOUT3(("GetCommandReply %s exe_ready %p Thread %p %s", cmd.GetName(), exe_ready, fThread(), fThread()->GetName()));
+   DOUT3("GetCommandReply %s exe_ready %p Thread %p %s", cmd.GetName(), exe_ready, fThread(), fThread()->GetName());
 
    if (exe_ready) {
       if (_FireDoNothingEvent()) {
@@ -711,7 +819,7 @@ bool dabc::Worker::GetCommandReply(dabc::Command& cmd, bool* exe_ready)
 
    if (!_FireEvent(evntReplyCommand, id, 0)) {
       fWorkerCommands.PopWithId(id);
-      EOUT(("Worker %s don't want get command for reply", GetName()));
+      EOUT("Worker %s don't want get command for reply", GetName());
       return false;
    }
 
@@ -792,6 +900,15 @@ bool dabc::WorkerRef::HasThread() const
 {
    return GetObject() ? GetObject()->HasThread() : false;
 }
+
+bool dabc::WorkerRef::IsSameThread(const WorkerRef& ref)
+{
+   if (GetObject() && ref.GetObject())
+      return GetObject()->thread()() == ref.GetObject()->thread()();
+
+   return false;
+}
+
 
 bool dabc::WorkerRef::CanSubmitCommand() const
 {

@@ -168,9 +168,11 @@ This buffer object should have a  header with a unique identifier of type
 \begin{small}
 \begin{verbatim}
   ...
-  dabc::Buffer* buf = fPool->TakeBuffer(bufsize);
+  dabc::Buffer buf = TakeBuffer(bufsize);
+  
+  // FIXME: code is out-to-date 
   buf->SetHeaderSize(sizeof(bnet::EventId));
-   *((bnet::EventId*) buf()->GetHeader()) = evid++;
+  *((bnet::EventId*) buf()->GetHeader()) = evid++;
   ...
 \end{verbatim}
 \end{small}

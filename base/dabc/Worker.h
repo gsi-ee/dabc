@@ -40,6 +40,60 @@ namespace dabc {
 
    class ParameterEvent;
 
+   class WorkerRef;
+   class Worker;
+   class WorkerAddonRef;
+
+   class WorkerAddon : public Object {
+
+      friend class Thread;
+      friend class Worker;
+      friend class WorkerAddonRef;
+
+      protected:
+         Reference  fWorker;
+
+         virtual void ObjectCleanup();
+
+         virtual void ProcessEvent(const EventId&) {}
+
+         void DeleteWorker();
+
+         void SubmitWorkerCmd(const std::string& cmdname);
+
+         void FireWorkerEvent(unsigned evid);
+
+         // method will be called by worker when thread was assigned
+         virtual void OnThreadAssigned() {}
+
+         // analog to Worker::ActiavteTimeout
+         bool ActivateTimeout(double tmout_sec);
+
+         // analog to Worker::ProcessTimeout
+         virtual double ProcessTimeout(double last_diff) { return -1.; }
+
+         /** Light-weight command interface, which can be used from worker */
+         virtual long Notify(const std::string&, int) { return 0; }
+
+      public:
+
+         virtual const char* ClassName() const { return "WorkerAddon"; }
+
+         virtual std::string RequiredThrdClass() const { return std::string(); }
+
+         WorkerAddon(const std::string& name);
+         virtual ~WorkerAddon();
+   };
+
+
+   class WorkerAddonRef : public Reference {
+      DABC_REFERENCE(WorkerAddonRef, Reference, WorkerAddon)
+
+      long Notify(const std::string& cmd, int arg = 0)
+         { return GetObject() ? GetObject()->Notify(cmd,arg) : 0; }
+   };
+
+
    class Worker : public Object {
 
       enum EParsMasks {
@@ -54,15 +108,30 @@ namespace dabc {
       friend class ParameterContainer;
       friend class Command;
       friend class Object;
+      friend class WorkerRef;
+      friend class WorkerAddon;
 
       private:
 
-         /** \brief Method to 'forget' thread reference
-          */
+         /** \brief Method to 'forget' thread reference */
          void ClearThreadRef();
+
+         /** Method called from the thread to inform Worker when it is assigned to thread */
+         void InformThreadAssigned()
+         {
+            OnThreadAssigned();
+            if (!fAddon.null()) fAddon()->OnThreadAssigned();
+         }
+
+         double ProcessAddonTimeout(double last_diff)
+         {
+            return fAddon.null() ? -1 : fAddon()->ProcessTimeout(last_diff);
+         }
 
       protected:
          ThreadRef        fThread;                     //!< reference on the thread, once assigned remain whole time
+         WorkerAddonRef   fAddon;                      //!< extension of worker for some special events
+
          uint32_t         fWorkerId;
          int              fWorkerPriority;             //!< priority of events, submitted by worker to the thread
 
@@ -98,7 +167,8 @@ namespace dabc {
 
          enum EWorkerEventsCodes {
             evntFirstCore   = 1,    // events   1  .. 99 used only by Worker itself
-            evntFirstSystem = 100,  // events 100 .. 999 used only inside DABC class
+            evntFirstAddOn  = 100,  // events 100 .. 199 are dedicated for specific add-ons
+            evntFirstSystem = 200,  // events 200 .. 999 used only inside DABC class
             evntFirstUser =   1000  // event from 1000 are available for users
          };
 
@@ -109,20 +179,24 @@ namespace dabc {
               priorityMagic = -77    // this priority allows to submit commands even when processor is stopped
          };
 
-         Worker(Reference parent, const char* name, bool owner = true);
+         Worker(Reference parent, const std::string& name, bool owner = true);
          virtual ~Worker();
 
          virtual const char* ClassName() const { return "Worker"; }
 
          /** Method returns name of required thread class for processor.
            * If returns 0 (default) any thread class is sufficient. */
-         virtual const char* RequiredThrdClass() const { return 0; }
+         virtual std::string RequiredThrdClass() const
+         { return fAddon.null() ? std::string() : fAddon()->RequiredThrdClass(); }
 
          /** \brief Indicates if pointer on thread is not zero; thread-safe */
          bool HasThread() const;
 
          /** \brief Assign worker to thread, worker becomes active immediately */
          bool AssignToThread(ThreadRef thrd, bool sync = true);
+
+         /** \brief Creates appropriate thread for worker and assign worker to the thread */
+         bool MakeThreadForWorker(const std::string& thrdname = "");
 
          /** \brief Detach worker from the thread, later worker can be assigned to some other thread
           * Method especially useful to normally finish object recursion (if it possible).
@@ -180,6 +254,11 @@ namespace dabc {
          bool Execute(Command cmd, double tmout = -1.);
 
          bool Execute(const std::string& cmd, double tmout = -1.) { return Execute(Command(cmd), tmout); }
+
+         /** Assigns addon to the worker
+          * Should be called before worker assigned to the thread
+          * TODO: make it more flexible to be able change addons on-the-fly */
+         void AssignAddon(WorkerAddon* addon);
 
       protected:
 
@@ -239,6 +318,7 @@ namespace dabc {
             LockGuard lock(fThreadMutex);
             return _FireEvent(evid, arg, pri);
          }
+
 
          inline bool _FireDoNothingEvent()
          {
@@ -325,6 +405,19 @@ namespace dabc {
          /** \brief Returns true when thread is assigned to the worker */
          bool HasThread() const;
 
+         /** \brief Returns thread name of worker assigned */
+         std::string ThreadName() const
+           { return GetObject() ? GetObject()->ThreadName() : std::string(); }
+
+         ThreadRef thread()
+            { return GetObject() ? GetObject()->thread() : ThreadRef(); }
+
+         /** \brief Returns true if two workers share same thread */
+         bool IsSameThread(const WorkerRef& ref);
+
+         bool MakeThreadForWorker(const std::string& thrdname = "")
+           { return GetObject() ? GetObject()->MakeThreadForWorker(thrdname) : false; }
+
          /** \brief Returns true if command can be submitted to the worker */
          bool CanSubmitCommand() const;
 
@@ -332,6 +425,9 @@ namespace dabc {
           *  We let worker to execute all queued commands and process all queued events. */
          bool SyncWorker(double tmout = -1.);
 
+         bool FireEvent(uint16_t evid, uint32_t arg) { return GetObject() ? GetObject()->FireEvent(evid, arg) : false; }
+
+         bool FireEvent(const EventId& ev) { return GetObject() ? GetObject()->FireEvent(ev.GetCode(), ev.GetArg()) : false; }
    };
 
 

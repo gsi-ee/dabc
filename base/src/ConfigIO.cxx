@@ -69,19 +69,20 @@ bool dabc::ConfigIO::CheckAttr(const char* name, const char* value)
 
    bool res = true;
 
-   if (value==0)
+   if (value==0) {
       res = Xml::HasAttr(fCurrItem, name);
-   else {
+   } else {
       const char* attr = Xml::GetAttr(fCurrItem, name);
 
       std::string sattr = attr ? fCfg->ResolveEnv(attr) : std::string("");
 
-      if (fCurrStrict)
+      if (fCurrStrict) {
          res = sattr.empty() ? false : (sattr == value);
-      else
-      if (!sattr.empty()) {
-         res = (sattr == value);
-         if (!res) res = fnmatch(sattr.c_str(), value, FNM_NOESCAPE) == 0;
+      } else {
+         if (!sattr.empty()) {
+            res = (sattr == value);
+            if (!res) res = fnmatch(sattr.c_str(), value, FNM_NOESCAPE) == 0;
+         }
       }
    }
 
@@ -131,21 +132,20 @@ bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, Record
    // TODO: could we read objects which are not in manager?
    if (prnt==0) return false;
 
-   DOUT2(("Start reading of obj %s item %s maxlevel %d", obj->ItemName().c_str(),  itemname.c_str(), maxlevel));
+   DOUT2("Start reading of obj %s item %s maxlevel %d", obj->ItemName().c_str(),  itemname.c_str(), maxlevel);
 
    bool isany = false;
 
-   // DOUT0(("Start read of record maxlvl %d", maxlevel));
+   // DOUT0("Start read of record maxlvl %d", maxlevel);
 
    Reference app = dabc::mgr.GetAppFolder();
 
    // first loop - strict syntax in the selected context
    // second loop - wildcard syntax in selected context
-   // third loop - wildcard syntax in defaults context
 
-   for (int dcnt=0;dcnt<3;dcnt++) {
+   for (int dcnt=0;dcnt<2;dcnt++) {
 
-      DOUT2(("Switch to search mode %d", dcnt));
+      DOUT2("Switch to search mode %d", dcnt);
 
       fCurrStrict = dcnt==0;
 
@@ -155,8 +155,7 @@ bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, Record
       switch (dcnt) {
          case 0: fCurrItem = fCfg->fSelected; break;
          case 1: fCurrItem = fCfg->RootNode(); break;
-         case 2: fCurrItem = fCfg->Dflts(); break;
-         default: EOUT(("INTERNAL ERROR")); fCurrItem = 0; break;
+         default: EOUT("INTERNAL ERROR"); fCurrItem = 0; break;
       }
 
       fCurrChld = 0;
@@ -166,27 +165,39 @@ bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, Record
       while (level >= 0) {
          prnt = GetObjParent(obj, level);
 
-         DOUT2(("Search with loop %d path level = %d obj = %s", dcnt,  level, DNAME(prnt)));
+         DOUT2("Search with loop %d path level = %d obj = %s class %s", dcnt,  level, DNAME(prnt), (prnt ? prnt->ClassName() : "---"));
 
-//         DOUT3(("Search with level = %d prnt = %p %s", level, prnt, DNAME(prnt)));
+//         DOUT3("Search with level = %d prnt = %p %s", level, prnt, DNAME(prnt));
 
          if (prnt == 0) return false;
 
-         // DOUT0(("+++ Search parent %s class %s level %d", prnt->GetName(), prnt->ClassName(), level));
+         // DOUT0("+++ Search parent %s class %s level %d", prnt->GetName(), prnt->ClassName(), level);
 
          XMLNodePointer_t curr = fCurrItem;
 
-//         DOUT0(("Search for parent %s level %d loop = %d", prnt->GetName(), level, dcnt));
+//         DOUT0("Search for parent %s level %d loop = %d", prnt->GetName(), level, dcnt);
 
          if (prnt->Find(*this)) {
-            DOUT2(("Find parent of level:%d", level));
+            DOUT2("Find parent of level:%d", level);
             if (level-->0) continue;
 
             XMLNodePointer_t item(fCurrItem);
+
+            const char* attrvalue = itemname.empty() ? 0 : Xml::GetAttr(fCurrItem, itemname.c_str());
+
+            if (attrvalue!=0 && !cont->HasField("")) {
+               if ((strstr(attrvalue,"${")!=0) && fCfg)
+                  cont->SetField("", fCfg->ResolveEnv(attrvalue).c_str(), 0);
+               else
+                  cont->SetField("", attrvalue, 0);
+            }
+
+            if (attrvalue!=0) isany = true;
+
             if (!itemname.empty()) fCurrItem = FindSubItem(fCurrItem, itemname.c_str());
             if (fCurrItem!=0) {
-               DOUT2(("Find searched item %s, try to read attributes cont:%p", itemname.c_str(), cont));
-               cont->ReadFieldsFromNode(fCurrItem, false);
+               DOUT2("Find searched item %s, try to read attributes cont:%p", itemname.c_str(), cont);
+               ReadFieldsFromNode(fCurrItem, cont, false);
                isany = true;
             }
 
@@ -194,16 +205,16 @@ bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, Record
             fCurrChld = 0;
          } else
          if ((curr != fCurrItem) || (fCurrChld != 0)) {
-            EOUT(("FIXME: should not happen"));
-            EOUT(("FIXME: problem in hierarchy search for %s lvl %d prnt %s", obj->ItemName().c_str(), level, prnt->GetName()));
-            EOUT(("fCurrChld %p   curr %p  fCurrItem %p", fCurrChld, curr, fCurrItem));
+            EOUT("FIXME: should not happen");
+            EOUT("FIXME: problem in hierarchy search for %s lvl %d prnt %s", obj->ItemName().c_str(), level, prnt->GetName());
+            EOUT("fCurrChld %p   curr %p  fCurrItem %p", fCurrChld, curr, fCurrItem);
             break;
          } else
          if ((level>0) && (app == prnt))  {
             // if we were trying to find application and didnot find it - no problem
             // probably modules/pools/device configuration specified without application - lets try to find it
 
-            DOUT2(("Skip missing application at level %d", level));
+            DOUT2("Skip missing application at level %d", level);
 
             // remember on which level we skip application, do not try to rall back
             appskiplevel = level--;
@@ -221,14 +232,69 @@ bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, Record
          fCurrItem = Xml::GetParent(fCurrItem);
 
          if (fCurrItem==0) {
-            EOUT(("FIXME: Wrong hierarchy search level = %d maxlevel = %d chld %p item %p dcnt = %d", level, maxlevel, fCurrChld, fCurrItem, dcnt));
+            EOUT("FIXME: Wrong hierarchy search level = %d maxlevel = %d chld %p item %p dcnt = %d", level, maxlevel, fCurrChld, fCurrItem, dcnt);
             break;
          }
 
       } // while (level >= 0) {
 
-//      DOUT3(("End of level loop"));
+//      DOUT3("End of level loop");
    }
 
    return isany;
+}
+
+bool dabc::ConfigIO::ReadFieldsFromNode(XMLNodePointer_t node, RecordContainer* cont, bool overwrite)
+{
+   XMLAttrPointer_t attr = Xml::GetFirstAttr(node);
+
+   while (attr!=0) {
+      const char* attrname = Xml::GetAttrName(attr);
+
+      DOUT3("Cont:%p  attribue:%s overwrite:%s", this, attrname, DBOOL(overwrite));
+
+      // TODO: do we really should use RecordContainer::GetField call here ???
+
+      if (overwrite || (cont->GetField(attrname)==0)) {
+         const char* vattr = Xml::GetAttrValue(attr);
+
+         DOUT3("Cont:%p  attribue:%s value:%s", this, attrname, (vattr ? vattr : "---"));
+
+         if ((vattr!=0) && (strstr(vattr,"${")!=0) && fCfg)
+            cont->SetField(attrname, fCfg->ResolveEnv(vattr).c_str(), 0);
+         else
+            cont->SetField(attrname, vattr, 0);
+      }
+
+      attr = Xml::GetNextAttr(attr);
+   }
+
+   XMLNodePointer_t child = Xml::GetChild(node);
+
+   while (child!=0) {
+
+      const char* vname = Xml::GetNodeName(child);
+      const char* vattr = Xml::GetAttr(child,"value");
+
+      if (vname && vattr) {
+         std::string field_name;
+
+         if (strcmp(vname,"_field")!=0)
+            field_name = std::string("_")+vname;
+         else
+            field_name = Xml::GetAttr(child,"name");
+
+         // TODO: do we really should use RecordContainer::GetField call here ???
+
+         if (overwrite || (cont->GetField(field_name)==0)) {
+            if ((vattr!=0) && (strstr(vattr,"${")!=0) && fCfg)
+               cont->SetField(field_name, fCfg->ResolveEnv(vattr).c_str(), 0);
+            else
+               cont->SetField(field_name, vattr, 0);
+         }
+      }
+
+      child = Xml::GetNext(child);
+   }
+   return true;
 }

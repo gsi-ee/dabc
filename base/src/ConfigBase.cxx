@@ -69,6 +69,7 @@ namespace dabc {
    const char* xmlRunFunc          = "runfunc";
    const char* xmlCpuInfo          = "cpuinfo";
    const char* xmlSocketHost       = "sockethost";
+   const char* xmlUseControl       = "control";
 }
 
 dabc::ConfigBase::ConfigBase(const char* fname) :
@@ -85,13 +86,12 @@ dabc::ConfigBase::ConfigBase(const char* fname) :
 
    XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
 
-   fDflts = 0;
    fVariables = 0;
 
    if (IsNodeName(rootnode, xmlRootNode)) {
       fVersion = GetIntAttr(rootnode, xmlVersionAttr, 1);
    } else {
-      EOUT(("Xml file %s not in dabc format", fname));
+      EOUT("Xml file %s not in dabc format", fname);
       Xml::FreeDoc(fDoc);
       fDoc = 0;
       fVersion = -1;
@@ -102,24 +102,6 @@ dabc::ConfigBase::~ConfigBase()
 {
    Xml::FreeDoc(fDoc);
    fDoc = 0;
-}
-
-dabc::XMLNodePointer_t dabc::ConfigBase::Dflts()
-{
-   if ((fDoc==0) || (fDflts!=0)) return fDflts;
-
-   fDflts = 0;
-   XMLNodePointer_t rootnode = Xml::DocGetRootElement(fDoc);
-   if (rootnode==0) return 0;
-
-   XMLNodePointer_t node = Xml::GetChild(rootnode);
-   while (node!=0) {
-      if (IsNodeName(node, xmlDefualtsNode)) break;
-      node = Xml::GetNext(node);
-   }
-
-   fDflts = node;
-   return fDflts;
 }
 
 dabc::XMLNodePointer_t dabc::ConfigBase::Variables()
@@ -261,20 +243,6 @@ dabc::XMLNodePointer_t dabc::ConfigBase::FindMatch(XMLNodePointer_t lastmatch,
 
       subfolder = Xml::GetNext(subfolder);
    }
-
-   subfolder = Xml::GetChild(Dflts());
-
-   while (subfolder!=0) {
-      if (NodeMaskMatch(node, subfolder)) {
-
-         nextmatch = FindItemMatch(lastmatch, subfolder, sub1, sub2, sub3);
-
-         if (nextmatch!=0) return nextmatch;
-      }
-
-      subfolder = Xml::GetNext(subfolder);
-   }
-
 
    return 0;
 }
@@ -450,7 +418,7 @@ std::string dabc::ConfigBase::ResolveEnv(const std::string& arg)
       pos2 = name.find("}");
 
       if ((pos1>pos2) || (pos2==name.npos)) {
-         EOUT(("Wrong variable parenthesis %s", arg.c_str()));
+         EOUT("Wrong variable parenthesis %s", arg.c_str());
          return arg;
       }
 
@@ -542,7 +510,7 @@ std::string dabc::ConfigBase::SshArgs(unsigned id, const char* skind, const char
    std::string envdabcsys = GetEnv("DABCSYS");
 
    if (topcfgfile==0) {
-      EOUT(("Config file not defined"));
+      EOUT("Config file not defined");
       return std::string("");
    }
 

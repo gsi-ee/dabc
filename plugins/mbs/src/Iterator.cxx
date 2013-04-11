@@ -57,7 +57,7 @@ bool mbs::ReadIterator::Reset(const dabc::Buffer& buf)
    if (buf.null()) return false;
 
    if (buf.GetTypeId() != mbt_MbsEvents) {
-      EOUT(("Only buffer format mbt_MbsEvents is supported"));
+      EOUT("Only buffer format mbt_MbsEvents is supported");
       return false;
    }
 
@@ -90,15 +90,15 @@ bool mbs::ReadIterator::NextEvent()
    }
 
    if (fEvPtr.rawsize() < sizeof(EventHeader)) {
-      EOUT(("Raw size less than event header - not supported !!!!"));
+      EOUT("Raw size less than event header - not supported !!!!");
 
       fEvPtr.reset();
       return false;
    }
 
    if (fEvPtr.fullsize() < evnt()->FullSize()) {
-      EOUT(("Error in MBS format - declared event size %u smaller than actual portion in buffer %u",
-            (unsigned) evnt()->FullSize(), (unsigned) fEvPtr.fullsize()));
+      EOUT("Error in MBS format - declared event size %u smaller than actual portion in buffer %u",
+            (unsigned) evnt()->FullSize(), (unsigned) fEvPtr.fullsize());
       fEvPtr.reset();
       return false;
    }
@@ -149,7 +149,7 @@ bool mbs::ReadIterator::NextSubEvent()
    if (fSubPtr.null()) {
       if (fEvPtr.null()) return false;
       if (evnt()->FullSize() < sizeof(EventHeader)) {
-         EOUT(("Mbs format error - event fullsize %u too small", evnt()->FullSize()));
+         EOUT("Mbs format error - event fullsize %u too small", evnt()->FullSize());
          return false;
       }
       fSubPtr.reset(fEvPtr, 0, evnt()->FullSize());
@@ -163,7 +163,7 @@ bool mbs::ReadIterator::NextSubEvent()
    }
 
    if (subevnt()->FullSize() < sizeof(SubeventHeader)) {
-      EOUT(("Mbs format error - subevent fullsize too small"));
+      EOUT("Mbs format error - subevent fullsize too small");
       fSubPtr.reset();
       return false;
    }
@@ -192,7 +192,7 @@ mbs::WriteIterator::WriteIterator() :
 {
 }
 
-mbs::WriteIterator::WriteIterator(const dabc::Buffer& buf) :
+mbs::WriteIterator::WriteIterator(dabc::Buffer& buf) :
    fBuffer(),
    fEvPtr(),
    fSubPtr(),
@@ -206,7 +206,7 @@ mbs::WriteIterator::~WriteIterator()
    Close();
 }
 
-bool mbs::WriteIterator::Reset(const dabc::Buffer& buf)
+bool mbs::WriteIterator::Reset(dabc::Buffer& buf)
 {
    fBuffer.Release();
    fEvPtr.reset();
@@ -214,11 +214,11 @@ bool mbs::WriteIterator::Reset(const dabc::Buffer& buf)
    fFullSize = 0;
 
    if (buf.GetTotalSize() < sizeof(EventHeader) + sizeof(SubeventHeader)) {
-      EOUT(("Buffer too small for just empty MBS event"));
+      EOUT("Buffer too small for just empty MBS event");
       return false;
    }
 
-   fBuffer = buf;
+   fBuffer << buf;
    fBuffer.SetTypeId(mbt_MbsEvents);
    fEvPtr = fBuffer;
    return true;
@@ -226,8 +226,13 @@ bool mbs::WriteIterator::Reset(const dabc::Buffer& buf)
 
 dabc::Buffer mbs::WriteIterator::Close()
 {
+   if (!fSubData.null()) FinishSubEvent();
    if (!fSubPtr.null()) FinishEvent();
+   unsigned full_size = fEvPtr.distance_to_ownbuf();
+   if (full_size != fFullSize)
+      EOUT("Sizes missmatch");
    fEvPtr.reset();
+
    if ((fFullSize>0) && (fBuffer.GetTotalSize() >= fFullSize))
       fBuffer.SetTotalSize(fFullSize);
    fFullSize = 0;
@@ -235,26 +240,66 @@ dabc::Buffer mbs::WriteIterator::Close()
    return fBuffer.HandOver();
 }
 
-bool mbs::WriteIterator::IsPlaceForEvent(uint32_t subeventssize)
+dabc::Buffer mbs::WriteIterator::CloseAndTransfer(dabc::Buffer& newbuf)
 {
-   return fEvPtr.fullsize() >= (sizeof(EventHeader) + subeventssize);
+   if (newbuf.null()) return Close();
+
+   if (!IsAnyUncompleteData()) {
+      dabc::Buffer oldbuf = Close();
+      Reset(newbuf);
+      return oldbuf;
+   }
+
+
+   if (!fEvPtr.is_same_buf(fSubPtr)) EOUT("Place 111");
+
+   unsigned subptr_shift = fEvPtr.distance_to(fSubPtr);
+   unsigned copy_size = subptr_shift;
+   unsigned subdata_shift(0);
+
+   if (!fSubData.null()) {
+      if (!fSubData.is_same_buf(fSubPtr)) EOUT("Place 222");
+      subdata_shift = fSubPtr.distance_to(fSubData);
+      copy_size += subdata_shift;
+   }
+
+   // this is copy of uncompleted data
+   dabc::Pointer(newbuf).copyfrom(fEvPtr, copy_size);
+
+   // forgot about event as it was
+   DiscardEvent();
+
+   // close iterator and fill ready data into the buffer
+   dabc::Buffer oldbuf = Close();
+
+   Reset(newbuf);
+   fSubPtr.reset(fEvPtr, subptr_shift);
+   if (subdata_shift>0) fSubData.reset(fSubPtr, subdata_shift);
+
+   return fBuffer.HandOver();
+}
+
+
+bool mbs::WriteIterator::IsPlaceForEvent(uint32_t subeventssize, bool add_subev_header)
+{
+   return fEvPtr.fullsize() >= (sizeof(EventHeader) + subeventssize + (add_subev_header ? sizeof(SubeventHeader) : 0));
 }
 
 
 bool mbs::WriteIterator::NewEvent(EventNumType event_number, uint32_t minsubeventssize)
 {
    if (!fSubPtr.null()) {
-      EOUT(("Previous event not closed"));
+      EOUT("Previous event not closed");
       return false;
    }
 
    if (fEvPtr.null()) {
-      EOUT(("No any place for new event"));
+      EOUT("No any place for new event");
       return false;
    }
 
    if (fEvPtr.fullsize() < (sizeof(EventHeader) + minsubeventssize)) {
-      EOUT(("Too few place for the new event"));
+      EOUT("Too few place for the new event");
       return false;
    }
 
@@ -269,22 +314,80 @@ bool mbs::WriteIterator::NewSubevent(uint32_t minrawsize, uint8_t crate, uint16_
 {
    if (fSubPtr.null()) return false;
 
+   if (!fSubData.null()) {
+      EOUT("Previous subevent not yet finished!!!");
+      return false;
+   }
+
    if (fSubPtr.fullsize() < (sizeof(SubeventHeader) + minrawsize)) return false;
 
    subevnt()->Init(crate, procid, control);
 
+   fSubData.reset(fSubPtr, sizeof(SubeventHeader));
+
+   return true;
+}
+
+bool mbs::WriteIterator::NewSubevent2(uint32_t fullid)
+{
+   if (fSubPtr.null()) return false;
+
+   if (!fSubData.null()) {
+      EOUT("Previous subevent not yet finished!!!");
+      return false;
+   }
+
+   subevnt()->fFullId = fullid;
+
+   fSubData.reset(fSubPtr, sizeof(SubeventHeader));
+
+   return true;
+}
+
+
+
+bool mbs::WriteIterator::IsPlaceForRawData(unsigned len) const
+{
+   return len <= fSubData.fullsize();
+}
+
+
+bool mbs::WriteIterator::AddRawData(const void* src, unsigned len)
+{
+   if (fSubData.null() || (len > fSubPtr.fullsize())) return false;
+   fSubData.copyfrom_shift(src, len);
    return true;
 }
 
 bool mbs::WriteIterator::FinishSubEvent(uint32_t rawdatasz)
 {
+//   DOUT0("Subptr %s subdata %s", DBOOL(fSubPtr.null()), DBOOL(fSubData.null()));
+
    if (fSubPtr.null()) return false;
 
-   if (rawdatasz > maxrawdatasize()) return false;
+   unsigned filled_rawsize = 0;
+   if (fSubData.null()) {
+      // maximum size was filled in such case
+      filled_rawsize = maxrawdatasize();
+   } else {
+      if (!fSubData.is_same_buf(fSubPtr)) EOUT("Place 333");
+      filled_rawsize = fSubPtr.distance_to(fSubData) - sizeof(SubeventHeader);
+   }
+
+   if (rawdatasz==0) rawdatasz = filled_rawsize;
+
+//   DOUT0("raw data size %u maxrawdata size %u", rawdatasz, maxrawdatasize());
+
+   if (rawdatasz > maxrawdatasize()) {
+      EOUT("So big raw data size %u not possible, maximum is %u", rawdatasz, maxrawdatasize());
+      rawdatasz  = maxrawdatasize();
+   }
 
    subevnt()->SetRawDataSize(rawdatasz);
 
    fSubPtr.shift(subevnt()->FullSize());
+
+   fSubData.reset();
 
    return true;
 }
@@ -305,36 +408,50 @@ bool mbs::WriteIterator::AddSubevent(const dabc::Pointer& source)
 
 bool mbs::WriteIterator::AddSubevent(mbs::SubeventHeader* sub)
 {
-   return AddSubevent(dabc::Pointer(sub, sub->FullSize()));
+   return AddSubevent( dabc::Pointer(sub, sub->FullSize()) );
 }
 
 bool mbs::WriteIterator::FinishEvent()
 {
-   if (fEvPtr.null() || fSubPtr.null()) return false;
+   if (fEvPtr.null()) return false;
 
-   dabc::BufferSize_t dist = fEvPtr.distance_to(fSubPtr);
-   evnt()->SetFullSize(dist);
-   fEvPtr.shift(dist);
+
+   dabc::BufferSize_t fullsize = fEvPtr.fullsize();
+
+   if (!fSubPtr.null()) {
+      if (!fEvPtr.is_same_buf(fSubPtr)) EOUT("Place 444");
+      fullsize = fEvPtr.distance_to(fSubPtr);
+   }
+
+   evnt()->SetFullSize(fullsize);
+   fEvPtr.shift(fullsize);
    fSubPtr.reset();
-   fFullSize += dist;
+   fFullSize += fullsize;
 
    return true;
 }
 
+void mbs::WriteIterator::DiscardEvent()
+{
+   fSubData.reset();
+   fSubPtr.reset();
+}
+
+
 bool mbs::WriteIterator::CopyEventFrom(const dabc::Pointer& ptr, bool finish)
 {
    if (!fSubPtr.null()) {
-      EOUT(("Previous event not closed"));
+      EOUT("Previous event not closed");
       return false;
    }
 
    if (fEvPtr.null()) {
-      EOUT(("No any place for new event"));
+      EOUT("No any place for new event");
       return false;
    }
 
    if (fEvPtr.fullsize() < ptr.fullsize()) {
-      EOUT(("Too few place for the new event"));
+      EOUT("Too few place for the new event");
       return false;
    }
 
@@ -346,3 +463,4 @@ bool mbs::WriteIterator::CopyEventFrom(const dabc::Pointer& ptr, bool finish)
 
    return true;
 }
+

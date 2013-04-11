@@ -19,33 +19,35 @@
 #include "dabc/SocketThread.h"
 #include "dabc/SocketCommandChannel.h"
 
+// as long as sockets integrated in libDabcBase, SocketFactory should be created directly by manager
+// dabc::FactoryPlugin socketfactory(new dabc::SocketFactory("sockets"));
 
-dabc::Reference dabc::SocketFactory::CreateObject(const char* classname, const char* objname, Command cmd)
+
+dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, const std::string& objname, Command cmd)
 {
-   if (strcmp(classname, "SocketCommandChannel")==0)
+   if (classname == "SocketCommandChannel")
       return dabc::SocketCommandChannel::CreateChannel(objname);
 
    return 0;
 }
 
 
-dabc::Device* dabc::SocketFactory::CreateDevice(const char* classname,
-                                                const char* devname, Command)
+dabc::Device* dabc::SocketFactory::CreateDevice(const std::string& classname,
+                                                const std::string& devname, Command)
 {
-   if (strcmp(classname, dabc::typeSocketDevice)==0)
+   if (classname == dabc::typeSocketDevice)
       return new SocketDevice(devname);
 
    return 0;
 }
 
-dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const char* classname, const char* thrdname, const char* thrddev, Command cmd)
+dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd)
 {
    dabc::Thread* thrd = 0;
 
-   if ((classname!=0) && strcmp(classname, typeSocketThread)==0)
+   if (classname == typeSocketThread)
       thrd = new SocketThread(parent, thrdname, cmd.GetInt("NumQueues", 3));
 
    return Reference(thrd);
 }
 
-dabc::FactoryPlugin socketfactory(new dabc::SocketFactory("sockets"));

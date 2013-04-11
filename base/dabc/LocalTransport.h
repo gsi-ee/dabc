@@ -20,52 +20,122 @@
 #include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_Transport
-#include "dabc/Transport.h"
-#endif
-
 #ifndef DABC_BuffersQueue
 #include "dabc/BuffersQueue.h"
 #endif
 
+
 namespace dabc {
 
+   class Port;
+   class LocalTransportRef;
 
-   class LocalTransport : public Worker,
-                          public Transport {
+   class LocalTransport : public Object {
 
-      DABC_TRANSPORT(Worker)
+      friend class Port;
+      friend class LocalTransportRef;
 
       protected:
-         Reference                  fOther;
-         BuffersQueue               fQueue;
-         Mutex                     *fMutex;
-         bool                       fMutexOwner;
-         bool                       fMemCopy;
-         bool                       fDoInput;
-         bool                       fDoOutput;
-         bool                       fRunning; //!< indicates that transport is running
 
-         virtual void CleanupTransport();
+         BuffersQueue fQueue;
+         bool fWithMutex;
 
-         virtual void CleanupFromTransport(Object* obj);
+         WorkerRef fOut;
+         unsigned fOutId;
+         int fOutSignKind;
+         unsigned fSignalOut;
+
+         WorkerRef fInp;
+         unsigned fInpId;
+         int fInpSignKind;
+         unsigned fSignalInp;
+
+         unsigned fConnected;
+
+         enum { MaskInp = 0x1, MaskOut = 0x2, MaskConn = 0x3 };
+
+         void SetConnected(bool isinp) { LockGuard lock(QueueMutex()); fConnected |= isinp ? MaskInp : MaskOut; }
+
+         void ConfirmEvent(bool isoutput);
+
+         void PortActivated(int itemkind, bool on);
+
+         void CleanupQueue();
+
 
       public:
-         LocalTransport(Reference port, Mutex* mutex, bool owner, bool memcopy, bool doinp, bool doout);
+
+         LocalTransport(unsigned capacity, bool withmutex);
+
          virtual ~LocalTransport();
 
-         virtual bool ProvidesInput() { return fDoInput; }
-         virtual bool ProvidesOutput() { return fDoOutput; }
+         bool IsConnected() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn); }
 
-         virtual bool Recv(Buffer&);
-         virtual unsigned RecvQueueSize() const;
-         virtual Buffer& RecvBuffer(unsigned indx) const;
-         virtual bool Send(const Buffer&);
-         virtual unsigned SendQueueSize();
-         virtual unsigned MaxSendSegments() { return 9999; }
+         unsigned NumCanSend() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn) ? (fQueue.Capacity() - fQueue.Size()) : 1; }
 
-         static int ConnectPorts(Reference port1, Reference port2);
+         bool CanSend() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn) ? !fQueue.Full() : true; }
+
+         bool Send(Buffer& buf);
+
+         bool CanRecv() const { LockGuard lock(QueueMutex()); return !fQueue.Empty(); }
+
+         bool Recv(Buffer& buf);
+
+         void SignalWhenFull();
+
+         inline Mutex* QueueMutex() const { return fWithMutex ? ObjectMutex() : 0; }
+
+         // no need for mutex - capacity is not changed until destructor call
+         unsigned Capacity() const { LockGuard lock(QueueMutex()); return fQueue.Capacity(); }
+
+         unsigned Size() const { LockGuard lock(QueueMutex()); return fQueue.Size(); }
+
+         unsigned Full() const { LockGuard lock(QueueMutex()); return fQueue.Full(); }
+
+         Buffer Item(unsigned indx) const { LockGuard lock(QueueMutex()); return fQueue.Item(indx); }
+
+         void Disconnect(bool isinp);
+
+
+         Reference GetPool();
+
+         static int ConnectPorts(Reference port1ref, Reference port2ref);
    };
+
+
+   class LocalTransportRef : public Reference {
+      DABC_REFERENCE(LocalTransportRef, Reference, LocalTransport)
+
+      bool IsConnected() const { return GetObject() ? GetObject()->IsConnected() : false; }
+
+      unsigned NumCanSend() const { return GetObject() ? GetObject()->NumCanSend() : 1; }
+
+      bool CanSend() const { return GetObject() ? GetObject()->CanSend() : true; }
+
+      bool Send(Buffer& buf) { return GetObject() ? GetObject()->Send(buf) : true; }
+
+      bool CanRecv() const { return GetObject() ? GetObject()->CanRecv() : false; }
+
+      bool Recv(Buffer& buf) { return GetObject() ? GetObject()->Recv(buf) : false; }
+
+      void SignalWhenFull() { if (GetObject()) GetObject()->SignalWhenFull(); }
+
+      void Disconnect(bool isinp) { if (GetObject()) GetObject()->Disconnect(isinp); Release(); }
+
+      void PortActivated(int itemkind, bool on) { if (GetObject()) GetObject()->PortActivated(itemkind, on); }
+
+      void ConfirmEvent(bool isoutput) { if (GetObject()) GetObject()->ConfirmEvent(isoutput); }
+
+//      Reference GetPool()  { return GetObject() ? GetObject()->GetPool() : Reference(); }
+
+      unsigned Size() const { return GetObject() ? GetObject()->Size() : 0; }
+
+      Buffer Item(unsigned indx) const { return GetObject() ? GetObject()->Item(indx) : Buffer(); }
+
+      bool Full() const { return GetObject() ? GetObject()->Full() : false; }
+   };
+
+
 
 }
 

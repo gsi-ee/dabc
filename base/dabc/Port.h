@@ -20,12 +20,8 @@
 #include "dabc/ModuleItem.h"
 #endif
 
-#ifndef DABC_Transport
-#include "dabc/Transport.h"
-#endif
-
-#ifndef DABC_Buffer
-#include "dabc/Buffer.h"
+#ifndef DABC_LocalTransport
+#include "dabc/LocalTransport.h"
 #endif
 
 #ifndef DABC_ConnectionRequest
@@ -34,185 +30,275 @@
 
 namespace dabc {
 
-   class Port;
    class PortRef;
+   class Port;
    class Module;
-   class PoolHandle;
+   class ModuleAsync;
+   class ModuleSync;
 
-   class PortException : public ModuleItemException {
-      public:
-         PortException(Port* port, const char* info) throw();
-         Port* GetPort() const throw();
-   };
-
-   class PortInputException : public PortException {
-      public:
-         PortInputException(Port* port, const char* info = "Input Error") :
-            PortException(port, info)
-         {
-         }
-   };
-
-   class PortOutputException : public PortException {
-      public:
-         PortOutputException(Port* port, const char* info = "Output Error") :
-            PortException(port, info)
-         {
-         }
-   };
 
    class Port : public ModuleItem {
 
       friend class Module;
-      friend class Transport;
+      friend class ModuleAsync;
+      friend class ModuleSync;
       friend class PortRef;
 
-      protected:
-         Reference         fPoolHandle; //!< reference on the pool handle to get some configuration parameters
-         Reference         fPool;       //!< reference on the pool itself to ensure that pool will remain all the time
-         unsigned          fInputQueueCapacity;
-         unsigned          fInputPending;
-         unsigned          fOutputQueueCapacity;
-         unsigned          fOutputPending;
-         unsigned          fInlineDataSize;
-         Parameter         fInpRate;
-         Parameter         fOutRate;
+      public:
+         // TODO: provide meaningful names
+         enum EventsProducing {
+            SignalNone = 0,   // port will not produce any events
+            SignalConfirm,    // next event can be produced when previous event is received, confirmed and
+                              // event consumer performed next operation
+            SignalOperation,  // next event can be produced when event consumer performs next operation
+            SignalEvery       // every operation will produce event
+         };
 
-         Reference         fTrHandle;  //!< reference on object which implements transport
-         Transport*        fTransport; //!< direct pointer on the transport
+      protected:
+         unsigned           fQueueCapacity;
+         Parameter          fRate;
+         EventsProducing    fSignal;
+
+         LocalTransportRef  fQueue;
+
+         std::string        fBindName; // name of bind port
+
+         unsigned           fMapLoopLength;
 
          /** \brief Inherited method, should cleanup everything */
          virtual void ObjectCleanup();
 
-         /** \brief Inherited method, should check if transport handle cleanup */
-         virtual void ObjectDestroyed(Object*);
-
-         virtual int ExecuteCommand(Command cmd);
-
          virtual void DoStart();
          virtual void DoStop();
 
-         virtual void ProcessEvent(const EventId&);
-
-         Port(Reference parent,
-              const char* name,
-              PoolHandle* pool,
-              unsigned recvqueue,
-              unsigned sendqueue);
+         Port(int kind, Reference parent,
+                  const std::string& name,
+                  unsigned queuesize);
          virtual ~Port();
 
-      public:
+         void SetQueue(Reference& ref);
 
-         virtual const char* ClassName() const { return "Port"; }
+         inline void ConfirmEvent()
+         { if (SignallingKind() == SignalConfirm) fQueue.ConfirmEvent(GetType()==mitOutPort); }
+
+         /** Return maximum number of events, which could be processed at once.
+          * For internal usage */
+         int GetMaxLoopLength();
+
+         /** Should be called from constructors of derived classes to read port configuration like queue and so on */
+         void ReadPortConfiguration();
+
+         /** Return number of events which should be produced when async module starts */
+         virtual unsigned NumStartEvents() { return 0; }
 
          /** Return reference on existing request object.
           * If object not exists and force flag is specified, new request object will be created */
          ConnectionRequest GetConnReq(bool force = false);
 
-         /** Create connection request to specified url.
-          * If connection to other dabc port is specified, isserver flag should identify which side is server
-          * and which is client during connection establishing
-          * TODO: one should try in future avoid isserver flag completely, it can be ruled later by connection manager
-          */
-         ConnectionRequest MakeConnReq(const std::string& url, bool isserver = false);
-
          /** Remove connection request - it does not automatically means that port will be disconnected */
          void RemoveConnReq();
 
-          //  here methods for config settings
-         PoolHandle* GetPoolHandle() const;
-         unsigned InputQueueCapacity() const { return fInputQueueCapacity; }
-         unsigned OutputQueueCapacity() const { return fOutputQueueCapacity; }
-         unsigned InlineDataSize() const { return fInlineDataSize; }
+         /** Method returns actual queue capacity of the port, object mutex is used */
+         unsigned QueueCapacity() const;
 
-         void ChangeInlineDataSize(unsigned sz) { if (!IsConnected()) fInlineDataSize = sz; }
-         void ChangeInputQueueCapacity(unsigned sz) { if (!IsConnected()) fInputQueueCapacity = sz; }
-         void ChangeOutputQueueCapacity(unsigned sz) { if (!IsConnected()) fOutputQueueCapacity = sz; }
+         void Disconnect() { fQueue.Disconnect(IsInput()); }
 
-         unsigned NumOutputBuffersRequired() const;
-         unsigned NumInputBuffersRequired() const;
+         void SetBindName(const std::string& name);
+         std::string GetBindName() const;
 
-         /** Returns pointer on memory pool
-          * Pointer will be requested from the pool handle.
-          * Once pointer acquired it will be stored in the reference -
-          * mean pool will not disappear until port is existing */
-         MemoryPool* GetMemoryPool();
+         /** Method can only be used from thread itself */
+         bool IsConnected() const { return fQueue.IsConnected(); }
 
-         /** Method used to assign transport to the port */
-         bool AssignTransport(Reference handle, Transport* tr, bool sync = false);
+         /** Set port ratemeter - must be used from module thread */
+         void SetRateMeter(const Parameter& ref);
 
-         bool IsConnected() const { return fTransport!=0; }
-         void Disconnect();
+         /** Specifies how many events can be processed at once. Could be used to balance load between ports */
+         void SetMaxLoopLength(unsigned cnt) { fMapLoopLength = cnt; }
 
-         bool IsInput() const { return fTransport ? fTransport->ProvidesInput() : false; }
-         bool IsOutput() const { return fTransport ? fTransport->ProvidesOutput() : false; }
+         bool SetSignalling(EventsProducing kind);
+         EventsProducing SignallingKind() const { return fSignal; }
 
-         unsigned OutputQueueSize() { return fTransport ? fTransport->SendQueueSize() : 0; }
-         unsigned OutputPending() const { return fOutputPending; }
-         bool CanSend() const { return !IsConnected() || (OutputPending() < OutputQueueCapacity()); }
+      public:
 
-         /** Send buffer via port.
-          * After this call buffer reference will be empty -
-          * user will not be able to access data from the buffer.
-          * Means, following code will fail:
-          *    Buffer buf = Pool()->TakeBuffer(1024);
-          *    buf.CopyFromStr("test string as buffer value");
-          *    Output(0)->Send(buf);
-          *    buf.CopyFromStr("fail while buffer do not reference any memory");
-          *
-          * To keep reference on the buffer, one should use duplicate method
-          *    Output(0)->Send(buf.Duplicate());
-          *
-          * Be aware that buffer after such operation still has reference on same memory and
-          * one do not allowed to change this memory until transport is not finish its transfer.
-          */
-         // TODO: important change interface to Send(Buffer buf) class, user should decide
-         // if he makes copy or hands over buffer
-         bool Send(const Buffer& buf) throw (PortOutputException);
+         virtual const char* ClassName() const { return "Port"; }
 
-         unsigned MaxSendSegments() { return fTransport ? fTransport->MaxSendSegments() : 0; }
-
-         /** Defines how many buffers can be preserved in the input queue */
-         unsigned InputQueueSize() { return fTransport ? fTransport->RecvQueueSize() : 0; }
-
-         /** Defines how many buffers already exists in the input queue */
-         unsigned InputPending() const { return fInputPending; }
-
-         /** Returns true, when input queue is full and cannot get more buffers */
-         bool InputQueueFull() { return InputPending() == InputQueueSize(); }
-
-         /** Returns true if user can get (receive) buffer from the port */
-         bool CanRecv() const { return IsConnected() && (InputPending() > 0); }
-
-         Buffer Recv() throw (PortInputException);
-
-         bool HasInputBuffer(unsigned indx = 0) const { return indx < InputPending(); }
-         Buffer& InputBuffer(unsigned indx = 0) const;
-         Buffer& FirstInputBuffer() const { return InputBuffer(0); }
-         Buffer& LastInputBuffer() const { return InputBuffer(InputPending()-1); }
-
-         bool SkipInputBuffers(unsigned num=1);
-
-         void SetInpRateMeter(const Parameter& ref);
-         void SetOutRateMeter(const Parameter& ref);
-
-         inline bool FireInput() { return FireEvent(evntInput); }
-         inline bool FireOutput() { return FireEvent(evntOutput); }
-
-         int GetTransportParameter(const char* name);
+         virtual bool IsInput() const { return false; }
+         virtual bool IsOutput() const { return false; }
    };
 
 
    class PortRef : public ModuleItemRef {
-
       DABC_REFERENCE(PortRef, ModuleItemRef, Port)
 
-      bool IsConnected() const;
+      bool IsInput() const { return GetObject() ? GetObject()->IsInput() : false; }
+      bool IsOutput() const { return GetObject() ? GetObject()->IsOutput() : false; }
 
+      /** Returns queue capacity of the port - thread safe */
+      unsigned QueueCapacity() const { return GetObject() ? GetObject()->QueueCapacity() : 0; }
+
+      /** Returns signalling method configured for the port - thread safe */
+      int GetSignallingKind();
+
+      /** Returns true if port is connected - thread safe */
+      bool IsConnected();
+
+      /** Disconnect port - thread safe  */
       bool Disconnect();
 
-      Reference GetPool();
+      /** Return reference on the bind port - thread safe */
+      PortRef GetBindPort();
+
+      /** Create connection request to specified url - thread safe.
+       * If connection to other dabc port is specified, isserver flag should identify which side is server
+       * and which is client during connection establishing
+       * TODO: one should try in future avoid isserver flag completely, it can be ruled later by connection manager */
+      ConnectionRequest MakeConnReq(const std::string& url, bool isserver = false);
    };
+
+
+   // =====================================================================================
+
+
+   class InputPort : public Port {
+
+      friend class Module;
+      friend class ModuleAsync;
+      friend class ModuleSync;
+
+      private:
+         InputPort(Reference parent,
+                   const std::string& name,
+                   unsigned queuesize);
+
+      protected:
+
+         virtual ~InputPort();
+
+         virtual unsigned NumStartEvents();
+
+         /** Defines how many buffers can be received */
+         inline unsigned NumCanRecv() { return fQueue.Size(); }
+
+         /** Returns true, when input queue is full and cannot get more buffers */
+         bool QueueFull() { return fQueue.Full(); }
+
+         Buffer Item(unsigned indx) { return fQueue.Item(indx); }
+
+         /** Returns true if user can get (receive) buffer from the port */
+         inline bool CanRecv() const { return fQueue.CanRecv(); }
+
+         Buffer Recv() { Buffer buf; fQueue.Recv(buf); fRate.SetDouble(buf.GetTotalSize()/1024./1024.); return buf; }
+
+         /** This method say framework that signal must be issued when queue will be fulled */
+         void SignalWhenFull() { fQueue.SignalWhenFull(); }
+
+         /** Remove buffer from the input queue. Return true when specified number of buffers were removed */
+         bool SkipBuffers(unsigned cnt=1);
+
+      public:
+
+         virtual const char* ClassName() const { return "InputPort"; }
+
+         virtual bool IsInput() const { return true; }
+   };
+
+
+   // =======================================================================================
+
+   class OutputPort : public Port {
+
+      friend class Module;
+      friend class ModuleAsync;
+      friend class ModuleSync;
+
+      private:
+
+         bool   fSendallFlag; // flag, used by SendToAllOutputs to mark, which output must be used for sending
+
+         OutputPort(Reference parent,
+                   const std::string& name,
+                   unsigned queuesize);
+
+      protected:
+
+         virtual ~OutputPort();
+
+         virtual unsigned NumStartEvents();
+
+         /** Returns number of buffer which can be put to the queue */
+         unsigned NumCanSend() const { return fQueue.NumCanSend(); }
+
+         /** Returns true if user can send get buffer via the port */
+         bool CanSend() const { return fQueue.CanSend(); }
+
+         bool Send(dabc::Buffer& buf) { fRate.SetDouble(buf.GetTotalSize()/1024./1024.); return fQueue.Send(buf); }
+
+      public:
+
+         virtual const char* ClassName() const { return "OutputPort"; }
+
+         virtual bool IsOutput() const { return true; }
+
+   };
+
+   // =======================================================================================
+
+   class PoolHandle : public Port {
+
+      friend class Module;
+      friend class ModuleAsync;
+      friend class ModuleSync;
+
+      private:
+
+         Reference     fPool;
+
+         PoolHandle(Reference parent,
+                    Reference pool,
+                    const std::string& name,
+                    unsigned queuesize);
+
+      protected:
+
+
+         virtual ~PoolHandle();
+
+         virtual void ObjectCleanup()
+         {
+            fPool.Release();
+            Port::ObjectCleanup();
+         }
+
+         virtual unsigned NumStartEvents();
+
+         // inline MemoryPool* Pool() const { return fPool(); }
+
+         inline bool CanTakeBuffer() const
+         {
+            return (QueueCapacity()==0) ? true : fQueue.CanRecv();
+         }
+
+         Buffer TakeEmpty();
+
+         Buffer TakeBuffer(BufferSize_t size = 0);
+
+         unsigned NumRequestedBuffer() const
+         {
+            return fQueue.Size();
+         }
+
+         Buffer TakeRequestedBuffer()
+         {
+            Buffer buf; fQueue.Recv(buf); return buf;
+         }
+
+      public:
+
+         virtual const char* ClassName() const { return "PoolHandle"; }
+
+         virtual bool IsInput() const { return true; }
+   };
+
 
 }
 

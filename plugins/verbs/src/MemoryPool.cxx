@@ -18,11 +18,11 @@
 
 
 verbs::MemoryPool::MemoryPool(ContextRef ctx,
-                                    const char* name,
-                                    int32_t number,
-                                    int64_t bufsize,
-                                    bool isud,
-                                    bool without_wr) :
+                              const char* name,
+                              int32_t number,
+                              int64_t bufsize,
+                              bool isud,
+                              bool without_wr) :
    dabc::MemoryPool(name, false),
    fUD(isud),
    fSendBufferOffset(isud ? VERBS_UD_MEMADDON : 0),
@@ -31,7 +31,7 @@ verbs::MemoryPool::MemoryPool(ContextRef ctx,
    f_swr(0),
    f_sge(0)
 {
-   DOUT4(("Create verbs::Pool %s %p", GetName(), this));
+   DOUT4("Create verbs::Pool %s %p", GetName(), this);
 
    if (isud && (bufsize>0x1000)) bufsize = 0x1000;
 
@@ -70,7 +70,7 @@ verbs::MemoryPool::MemoryPool(ContextRef ctx,
 
 verbs::MemoryPool::~MemoryPool()
 {
-   DOUT4(("Destroy verbs::Pool %s %p refs:%u", GetName(), this, NumReferences()));
+   DOUT4("Destroy verbs::Pool %s %p refs:%u", GetName(), this, NumReferences());
 
    fReg.Destroy();
 
@@ -78,7 +78,7 @@ verbs::MemoryPool::~MemoryPool()
    delete[] f_swr; f_swr = 0;
    delete[] f_sge; f_sge = 0;
 
-   DOUT4(("Destroy verbs::Pool %s %p refs:%u DONE", GetName(), this, NumReferences()));
+   DOUT4("Destroy verbs::Pool %s %p refs:%u DONE", GetName(), this, NumReferences());
 
 }
 

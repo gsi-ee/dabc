@@ -20,7 +20,7 @@ namespace bnet {
 
    class TestFilterModule : public dabc::ModuleAsync {
       public:
-         TestFilterModule(const char* name, dabc::Command cmd = 0);
+         TestFilterModule(const std::string& name, dabc::Command cmd = 0);
 
          virtual void ProcessItemEvent(dabc::ModuleItem* item, uint16_t evid);
    };

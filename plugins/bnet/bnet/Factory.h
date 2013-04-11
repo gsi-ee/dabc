@@ -9,13 +9,13 @@ namespace bnet {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const char* name);
+         Factory(const std::string& name);
 
-         virtual dabc::Reference CreateObject(const char* classname, const char* objname, dabc::Command cmd);
+         virtual dabc::Reference CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd);
 
-         virtual dabc::Application* CreateApplication(const char* classname, dabc::Command cmd);
+         virtual dabc::Application* CreateApplication(const std::string& classname, dabc::Command cmd);
 
-         virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd);
+         virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
    };
 
 }

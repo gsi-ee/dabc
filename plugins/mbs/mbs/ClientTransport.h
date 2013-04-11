@@ -14,20 +14,12 @@
 #ifndef MBS_ClientTransport
 #define MBS_ClientTransport
 
-#ifndef DABC_Transport
-#include "dabc/Transport.h"
-#endif
-
 #ifndef DABC_SocketThread
 #include "dabc/SocketThread.h"
 #endif
 
-#ifndef DABC_BuffersQueue
-#include "dabc/BuffersQueue.h"
-#endif
-
-#ifndef DABC_MemoryPool
-#include "dabc/MemoryPool.h"
+#ifndef DABC_DataIO
+#include "dabc/DataIO.h"
 #endif
 
 #ifndef MBS_MbsTypeDefs
@@ -39,50 +31,45 @@ namespace mbs {
    // TODO: implement following syntax for connection to mbs servers
    //   mbs://r4-3/transport, mbs://r4-3/stream, mbs://r4-3/eventserver:6009
 
-   class ClientTransport : public dabc::SocketIOWorker,
-                           public dabc::Transport,
-                           protected dabc::MemoryPoolRequester {
-
-      DABC_TRANSPORT(dabc::SocketIOWorker)
+   class ClientTransport : public dabc::SocketIOAddon,
+                           public dabc::DataInput {
 
       protected:
 
-         enum EIOState { ioInit, ioRecvInfo, ioReady, ioRecvHeder, ioWaitBuffer, ioRecvBuffer, ioClosing,  ioError };
+         enum EIOState {
+            ioInit,          // initial state
+            ioRecvInfo,      // receiving server info
+            ioReady,         // ready for work
+            ioRecvHeder,     // receiving buffer header
+            ioWaitBuffer,
+            ioRecvBuffer,
+            ioComplBuffer,   // at this stage buffer must be completed
+            ioClosing,
+            ioError };
+
+         enum EEvents {
+            evDataInput = evntSocketLast,
+            evReactivate };
+
 
          mbs::TransportInfo   fServInfo; // data, send by transport server in the beginning
          EIOState             fState;
          bool                 fSwapping;
          mbs::BufferHeader    fHeader;
          char                 fSendBuf[12];
-         dabc::Buffer         fRecvBuffer;
 
          int                  fKind; // values from EMbsServerKinds
 
-         dabc::Mutex          fMutex;
-         dabc::BuffersQueue   fInpQueue;
-         bool                 fRunning;
+         bool                 fPendingStart;
 
-         virtual void CleanupTransport();
 
-         virtual void CleanupFromTransport(Object* obj);
+         // this is part from SocketAddon
 
-         virtual bool ProcessPoolRequest();
+         virtual void ObjectCleanup();
 
-         bool HasPlaceInQueue();
-         bool RequestBuffer(uint32_t sz, dabc::Buffer &buf);
+         virtual void OnThreadAssigned();
 
-         unsigned ReadBufferSize();
-         bool IsDabcEnabledOnMbsSide(); // indicates if new format is enabled on mbs side
-
-      public:
-
-         enum EEvents { evDataInput = evntSocketLast,
-                        evRecvInfo,
-                        evReactivate,
-                        evSendClose };
-
-         ClientTransport(dabc::Reference port, int kind, int fd);
-         virtual ~ClientTransport();
+         virtual double ProcessTimeout(double last_diff);
 
          virtual void ProcessEvent(const dabc::EventId&);
 
@@ -91,20 +78,27 @@ namespace mbs {
 
          virtual void OnConnectionClosed();
 
+         void SubmitRequest();
+         void MakeCallback(unsigned sz);
+
+
+         unsigned ReadBufferSize();
+         bool IsDabcEnabledOnMbsSide(); // indicates if new format is enabled on mbs side
+
+      public:
+
+         ClientTransport(int fd, int kind);
+         virtual ~ClientTransport();
+
          int Kind() const { return fKind; }
 
-         virtual bool ProvidesInput() { return true; }
-         virtual void PortAssigned();
 
-         virtual void StartTransport();
-         virtual void StopTransport();
+         // this is interface from DataInput
 
-         virtual bool Recv(dabc::Buffer&);
-         virtual unsigned RecvQueueSize() const;
-         virtual dabc::Buffer& RecvBuffer(unsigned) const;
-         virtual bool Send(const dabc::Buffer&) { return false; }
-         virtual unsigned SendQueueSize() { return 0; }
-         virtual unsigned MaxSendSegments() { return 0; }
+         virtual unsigned Read_Size();
+         virtual unsigned Read_Start(dabc::Buffer& buf);
+         virtual unsigned Read_Complete(dabc::Buffer& buf);
+         virtual double Read_Timeout() { return 0.1; }
 
    };
 

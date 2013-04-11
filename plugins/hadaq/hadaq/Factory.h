@@ -24,15 +24,15 @@ namespace hadaq {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const char* name) : dabc::Factory(name) {}
+         Factory(const std::string& name) : dabc::Factory(name) {}
 
-         virtual dabc::Transport* CreateTransport(dabc::Reference port, const char* typ, dabc::Command cmd);
+         virtual dabc::Transport* CreateTransport(const dabc::Reference& port, const std::string& typ, dabc::Command cmd);
 
-         virtual dabc::DataInput* CreateDataInput(const char* typ);
+         virtual dabc::DataInput* CreateDataInput(const std::string& typ);
 
-         virtual dabc::DataOutput* CreateDataOutput(const char* typ);
+         virtual dabc::DataOutput* CreateDataOutput(const std::string& typ);
 
-         virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd);
+         virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
 
          virtual void Initialize();
 

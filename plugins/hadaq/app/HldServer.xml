@@ -12,15 +12,16 @@
     </MemoryPool>
     <Module name="HldServer">
        <PoolName value="Pool"/>
-       <Port name="Input">
-          <InputQueueSize value="10"/>
+       <NumInputs value="1"/>
+       <NumOutputs value="1"/>
+       
+       <InputPort name="Input0">
           <SubeventFullId value="0x000001F"/>
-          <HadaqFileName value="/data.local1/adamczew/hld/xx12153171835.hld"/>        
-       </Port>
-       <Port name="Output">
-          <OutputQueueSize value="10"/>
-          <MbsServerKind value="Transport"/>
-        </Port>
+          <url value="hld:///data.local1/adamczew/hld/xx12153171835.hld"/>        
+       </InputPort>
+       <OutputPort name="Output0">
+          <url value="mbs://Transport"/>
+        </OutputPort>
         <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
         <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
         <TransmitBufs width="4" prec="3" low="2" up="100000" debug="1"/>

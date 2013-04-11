@@ -11,26 +11,26 @@ dabc::FactoryPlugin bnetmbsfactory(new bnet::MbsFactory("bnet-mbs"));
 const char* bnet::xmlMbsWorkerClass = "bnet::MbsWorker";
 
 
-dabc::Application* bnet::MbsFactory::CreateApplication(const char* classname, dabc::Command cmd)
+dabc::Application* bnet::MbsFactory::CreateApplication(const std::string& classname, dabc::Command cmd)
 {
-   if (strcmp(classname, xmlMbsWorkerClass)==0)
+   if (classname == xmlMbsWorkerClass)
       return new bnet::MbsWorkerApplication;
 
    return dabc::Factory::CreateApplication(classname, cmd);
 }
 
-dabc::Module* bnet::MbsFactory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
+dabc::Module* bnet::MbsFactory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
 {
-   if (strcmp(classname, "bnet::MbsCombinerModule")==0)
+   if (classname == "bnet::MbsCombinerModule")
       return new bnet::MbsCombinerModule(modulename, cmd);
-   else
-   if (strcmp(classname, "bnet::MbsFilterModule")==0)
+
+   if (classname == "bnet::MbsFilterModule")
       return new bnet::MbsFilterModule(modulename, cmd);
-   else
-   if (strcmp(classname, "bnet::MbsBuilderModule")==0)
+
+   if (classname == "bnet::MbsBuilderModule")
       return new bnet::MbsBuilderModule(modulename, cmd);
-   else
-   if (strcmp(classname, "dabc::SplitterModule")==0)
+
+   if (classname == "dabc::SplitterModule")
       return new dabc::SplitterModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);

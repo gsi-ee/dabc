@@ -61,81 +61,173 @@
 namespace dabc {
 
    class Worker;
+   class WorkerAddon;
    class ThreadRef;
 
    class Thread : public Object,
-                   protected PosixThread,
-                   protected Runnable {
+                  protected PosixThread,
+                  protected Runnable {
       protected:
 
-      friend class Worker;
-      friend class ThreadRef;
+         friend class Worker;
+         friend class ThreadRef;
 
-      class RecursionGuard {
-         private:
-            Thread*  thrd;      //!< we can use direct pointer, reference will be preserved by other means
-            unsigned workerid;  //!< worker id which recursion is guarded
-         public:
-            RecursionGuard(Thread* t, unsigned id) :
-               thrd(t),
-               workerid(id)
+         class RecursionGuard {
+            private:
+               Thread*  thrd;      //!< we can use direct pointer, reference will be preserved by other means
+               unsigned workerid;  //!< worker id which recursion is guarded
+            public:
+               RecursionGuard(Thread* t, unsigned id) :
+                  thrd(t),
+                  workerid(id)
             {
-               if (thrd) thrd->ChangeRecursion(workerid, true);
+                  if (thrd) thrd->ChangeRecursion(workerid, true);
             }
 
-            ~RecursionGuard()
+               ~RecursionGuard()
+               {
+                  if (thrd) thrd->ChangeRecursion(workerid, false);
+               }
+
+         };
+
+         struct TimeoutRec {
+            TimeStamp      tmout_mark;   //!< time mark when timeout should happen
+            double         tmout_interv; //!< time interval was specified by timeout active
+            bool           tmout_active; //!< true when timeout active
+
+            TimeStamp      prev_fire;    //!< when previous timeout event was called
+            TimeStamp      next_fire;    //!< when next timeout event will be called
+
+            TimeoutRec() : tmout_mark(), tmout_interv(0.), tmout_active(false), prev_fire(), next_fire() {}
+
+            TimeoutRec(const TimeoutRec& src) :
+               tmout_mark(src.tmout_mark),
+               tmout_interv(src.tmout_interv),
+               tmout_active(src.tmout_active),
+               prev_fire(src.prev_fire),
+               next_fire(src.next_fire) {}
+
+            /** Activating timeout */
+            bool Activate(double tmout)
             {
-               if (thrd) thrd->ChangeRecursion(workerid, false);
+               bool dofire = !tmout_active;
+               tmout_mark = dabc::Now();
+               tmout_interv = tmout;
+               tmout_active = true;
+               return dofire;
             }
 
-      };
-
-      struct WorkerRec {
-         Worker*        work;         //!< pointer on the worker, should we use reference?
-         unsigned       doinghalt;    //!< indicates that events will not be longer accepted by the worker, all submitted commands still should be executed
-         int            recursion;    //!< recursion calls of the worker
-         unsigned       processed;    //!< current number of processed events, when balance between processed and fired is 0, worker can be halted
-         CommandsQueue  cmds;         //!< postponed commands, which are waiting until object is destroyed or halted
-
-         TimeStamp      tmout_mark;   //!< time mark when timeout should happen
-         double         tmout_interv; //!< time interval was specified by timeout active
-         bool           tmout_active; //!< true when timeout active
-
-         TimeStamp      prev_fire;    //!< when previous timeout event was called
-         TimeStamp      next_fire;    //!< when next timeout event will be called
-
-         WorkerRec(Worker* w) :
-            work(w),
-            doinghalt(0),
-            recursion(0),
-            processed(0),
-            cmds(CommandsQueue::kindSubmit),
-            tmout_mark(),
-            tmout_interv(0.),
-            tmout_active(false),
-            prev_fire(),
-            next_fire() {}
-      };
-
-      typedef std::vector<WorkerRec*> WorkersVector;
-
-
-      class EventsQueue : public Queue<EventId, true> {
-         public:
-            int scaler;
-
-            EventsQueue() :
-               Queue<EventId, true>(),
-               scaler(8)
+            /** Method called to check event, submitted when timeout was requested
+             * Returns true when check should be done */
+            bool CheckEvent(Mutex* thread_mutex)
             {
+               TimeStamp mark;
+               double interv(0.);
+
+               {
+                  LockGuard lock(thread_mutex);
+                  if (!tmout_active) return false;
+                  mark = tmout_mark;
+                  interv = tmout_interv;
+                  tmout_active = false;
+               }
+
+               if (interv<0) {
+                  next_fire.Reset();
+                  prev_fire.Reset();
+               } else {
+                  // if one activate timeout with positive interval, emulate
+                  // that one already has previous call to ProcessTimeout
+                  if (prev_fire.null() && (interv>0))
+                     prev_fire = mark;
+
+                  mark+=interv;
+
+                  // set activation time only in the case if no other active timeout was used
+                  // TODO: why such condition was here??
+                  // every new activate call should set new marker for timeout processing
+
+//                  if (next_fire.null() || (mark < next_fire)) {
+                     next_fire = mark;
+                     return true;
+//                  }
+               }
+
+               return false;
             }
-      };
 
-      class ExecWorker;
+            bool CheckNextProcess(const TimeStamp& now, double& min_tmout, double& last_diff)
+            {
+               if (next_fire.null()) return false;
 
-      friend class ExecWorker;
-      friend class Object;
-      friend class RecursionGuard;
+               double dist = next_fire - now;
+
+               if (dist>=0.) {
+                  if ((min_tmout<0.) || (dist<min_tmout))  min_tmout = dist;
+                  return false;
+               }
+
+               last_diff = prev_fire.null() ? 0. : now - prev_fire;
+
+               return true;
+            }
+
+            void SetNextFire(const TimeStamp& now, double dist, double& min_tmout)
+            {
+               if (dist>=0.) {
+                  prev_fire = now;
+                  next_fire = now + dist;
+                  if ((min_tmout<0.) || (dist<min_tmout))  min_tmout = dist;
+               } else {
+                  prev_fire.Reset();
+                  next_fire.Reset();
+               }
+            }
+         };
+
+
+
+         struct WorkerRec {
+            Worker*        work;         //!< pointer on the worker, should we use reference?
+            WorkerAddon*   addon;        //!< addon for the worker, maybe thread-specific
+            unsigned       doinghalt;    //!< indicates that events will not be longer accepted by the worker, all submitted commands still should be executed
+            int            recursion;    //!< recursion calls of the worker
+            unsigned       processed;    //!< current number of processed events, when balance between processed and fired is 0, worker can be halted
+            CommandsQueue  cmds;         //!< postponed commands, which are waiting until object is destroyed or halted
+
+            TimeoutRec     tmout_worker; //!< timeout handling for worker
+            TimeoutRec     tmout_addon;  //!< timeout handling for addon
+
+            WorkerRec(Worker* w, WorkerAddon* a) :
+               work(w),
+               addon(a),
+               doinghalt(0),
+               recursion(0),
+               processed(0),
+               cmds(CommandsQueue::kindSubmit),
+               tmout_worker(),
+               tmout_addon() {}
+         };
+
+         typedef std::vector<WorkerRec*> WorkersVector;
+
+         class EventsQueue : public Queue<EventId, true> {
+            public:
+               int scaler;
+
+               EventsQueue() :
+                  Queue<EventId, true>(),
+                  scaler(8)
+                  {
+                  }
+         };
+
+         class ExecWorker;
+
+         friend class ExecWorker;
+         friend class Object;
+         friend class RecursionGuard;
 
          /** \brief Internal DABC method, used to verify if worker can be halted now while recursion is over
           * Request indicates that halt action is requested : actDestroy = 1 or actHalt = 2.
@@ -144,8 +236,6 @@ namespace dabc {
          enum EHaltActions { actDestroy = 1, actHalt = 2 };
 
          enum EThreadState { stCreated, stRunning, stStopped, stError, stChanging };
-
-         int CheckWorkerCanBeHalted(unsigned id, unsigned request = 0, Command cmd = 0);
 
          EThreadState         fState;
 
@@ -170,14 +260,21 @@ namespace dabc {
 
          static unsigned      fThreadInstances;
 
+
+         int CheckWorkerCanBeHalted(unsigned id, unsigned request = 0, Command cmd = 0);
+
+         void IncWorkerFiredEvents(Worker* work);
+
+
       public:
 
-         enum EEvents { evntCheckTmout = 1,  //!< event used to process timeout for specific processor, used by ActivateTimeout
-                         evntCleanupThrd,     //!< event will be generated when thread can be destroyed
-                         evntDoNothing,       //!< event fired to wake-up thread and let thread or processor to perform regular checks
-                         evntStopThrd,        //!< event should stop thread
-                         evntLastThrd,
-                         evntUser = 10000 };
+         enum EEvents { evntCheckTmoutWorker = 1,  //!< event used to process timeout for specific worker, used by ActivateTimeout
+                        evntCheckTmoutAddon, //!< event used to process timeout for addon, used by ActivateTimeout
+                        evntCleanupThrd,     //!< event will be generated when thread can be destroyed
+                        evntDoNothing,       //!< event fired to wake-up thread and let thread or processor to perform regular checks
+                        evntStopThrd,        //!< event should stop thread
+                        evntLastThrd,
+                        evntUser = 10000 };
 
          enum EPriority { priorityHighest = 0,
                            priorityNormal = 1,
@@ -185,7 +282,7 @@ namespace dabc {
 
          static unsigned NumThreadInstances() { return fThreadInstances; }
 
-         Thread(Reference parent, const char* name, unsigned numqueus = 3);
+         Thread(Reference parent, const std::string& name, unsigned numqueus = 3);
 
          virtual ~Thread();
 
@@ -201,7 +298,7 @@ namespace dabc {
 
          virtual const char* ClassName() const { return typeThread; }
 
-         virtual bool CompatibleClass(const char* clname) const;
+         virtual bool CompatibleClass(const std::string& clname) const;
 
          void FireDoNothingEvent();
 
@@ -253,7 +350,7 @@ namespace dabc {
          {
             #ifdef DABC_EXTRA_CHECKS
             if ((fNumQueues==0) || (fQueues==0) || (nq>=fNumQueues)) {
-               EOUT(("False arguments fNumQueues:%d nq:%d", fNumQueues, nq));
+               EOUT("False arguments fNumQueues:%d nq:%d", fNumQueues, nq);
                return;
             }
             #endif
@@ -263,8 +360,8 @@ namespace dabc {
             #ifdef DABC_EXTRA_CHECKS
             if (nq<0) nq = fNumQueues - 1;
             if (fQueues[nq].Size()>maxlimit) {
-               EOUT(("Thrd:%s Queue %d Event code:%u item:%u arg:%u exceed limit: %u", GetName(), nq,
-                     arg.GetCode(), arg.GetItem(), arg.GetArg(), maxlimit));
+               EOUT("Thrd:%s Queue %d Event code:%u item:%u arg:%u exceed limit: %u", GetName(), nq,
+                     arg.GetCode(), arg.GetItem(), arg.GetArg(), maxlimit);
                maxlimit *= 2;
             }
             #endif
@@ -288,13 +385,16 @@ namespace dabc {
          /** \brief Halt worker - stops any execution, break recursion */
          bool HaltWorker(Worker* proc);
 
-         bool SetExplicitLoop(Worker* proc);
+         /** Called when worker addon changed on the fly */
+         void WorkerAddonChanged(Worker* work);
+
+         bool SetExplicitLoop(Worker* work);
 
          void RunExplicitLoop();
 
          /** \brief Virtual method, called from thread context to inform that number of
           * workers are changed. Can be used by derived class to reorganize its structure */
-         virtual void WorkersNumberChanged() {}
+         virtual void WorkersSetChanged() {}
 
          /** Cleanup object asynchronously.
           * This allows to call object cleanup from the thread where it processed.
@@ -318,11 +418,13 @@ namespace dabc {
    class ThreadRef : public Reference {
 
       friend class Worker;
+      friend class WorkerAddon;
 
       DABC_REFERENCE(ThreadRef, Reference, Thread)
 
       protected:
          bool _ActivateWorkerTimeout(unsigned workerid, int priority, double tmout);
+         bool _ActivateAddonTimeout(unsigned workerid, int priority, double tmout);
 
       public:
          bool IsItself() const { return GetObject() ? GetObject()->IsItself() : false; }
@@ -335,6 +437,9 @@ namespace dabc {
          void RunEventLoop(double tmout = 1.);
 
          inline bool IsRealThrd() const { return GetObject() ? GetObject()->fRealThrd : false; }
+
+         /** Make dummy worker to run addon inside the thread */
+         bool MakeWorkerFor(WorkerAddon* addon, const std::string& name = "");
    };
 
 }

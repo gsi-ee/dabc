@@ -33,10 +33,6 @@ struct ibv_wc;
 
 #define VERBS_THRD_CLASSNAME "VerbsThread"
 
-namespace dabc {
-   class Port;
-}
-
 namespace verbs {
 
    class MemoryPool;
@@ -81,7 +77,7 @@ namespace verbs {
       public:
          // list of all events for all kind of socket processors
 
-         Thread(dabc::Reference parent, ContextRef ctx, const char* name = "verbsthrd");
+         Thread(dabc::Reference parent, ContextRef ctx, const std::string& name = "verbsthrd");
          virtual ~Thread();
 
          void CloseThread();
@@ -94,7 +90,7 @@ namespace verbs {
 
          virtual const char* ClassName() const { return VERBS_THRD_CLASSNAME; }
 
-         virtual bool CompatibleClass(const char* clname) const;
+         virtual bool CompatibleClass(const std::string& clname) const;
 
          static const char* StatusStr(int code);
 
@@ -106,7 +102,7 @@ namespace verbs {
 
          virtual void _Fire(const dabc::EventId& evnt, int nq);
 
-         virtual void WorkersNumberChanged();
+         virtual void WorkersSetChanged();
 
          virtual void ProcessExtraThreadEvent(const dabc::EventId&);
 

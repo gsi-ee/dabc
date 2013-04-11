@@ -18,10 +18,7 @@
 #include <sys/time.h>
 #include <time.h>
 
-const char* hadaq::typeHldInput = "hadaq::HldInput";
-const char* hadaq::typeHldOutput = "hadaq::HldOutput";
 const char* hadaq::typeUdpDevice = "hadaq::UdpDevice";
-const char* hadaq::typeUdpInput = "hadaq::UdpInput";
 
 const char* hadaq::protocolHld = "hld";
 const char* hadaq::protocolHadaq = "hadaq";
@@ -34,12 +31,9 @@ const char* hadaq::protocolHadaq = "hadaq";
 
 
 // tag names for xml config file:
-const char* hadaq::xmlFileName = "HadaqFileName";
-const char* hadaq::xmlSizeLimit = "HadaqFileSizeLimit";
-const char* hadaq::xmlUdpAddress = "HadaqUdpSender";
-const char* hadaq::xmlUdpPort = "HadaqUdpPort";
-const char* hadaq::xmlUdpBuffer = "HadaqUdpBuffer";
-const char* hadaq::xmlMTUsize = "HadaqUdpMTU";
+const char* hadaq::xmlUdpPort        = "HadaqUdpPort";
+const char* hadaq::xmlUdpBuffer      = "HadaqUdpBuffer";
+const char* hadaq::xmlMTUsize        = "HadaqUdpMTU";
 const char* hadaq::xmlBuildFullEvent = "HadaqBuildEvents";
 
 //const char* hadaq::xmlServerKind        = "HadaqServerKind";
@@ -55,21 +49,6 @@ const char* hadaq::xmlMbsMergeSyncMode    = "DoMergeSyncedEvents";
 const char* hadaq::xmlSyncSeqNumberEnabled ="UseSyncSequenceNumber";
 const char* hadaq::xmlSyncSubeventId       = "SyncSubeventId";
 const char* hadaq::xmlSyncAcceptedTriggerMask       = "SyncTriggerMask";
-
-// use MBS constants at that place
-
-//const char* hadaq::xmlNormalOutput      = "DoOutput";
-//const char* hadaq::xmlFileOutput        = "DoFile";
-//const char* hadaq::xmlServerOutput      = "DoServer";
-
-// port names and name formats:
-//const char* hadaq::portOutput           = "Output";
-//const char* hadaq::portOutputFmt        = "Output%d";
-//const char* hadaq::portInput            = "Input";
-//const char* hadaq::portInputFmt         = "Input%d";
-//const char* hadaq::portFileOutput       = "FileOutput";
-//const char* hadaq::portServerOutput     = "ServerOutput";
-
 
 const char* hadaq::NetmemPrefix     = "Netmem";
 const char* hadaq::EvtbuildPrefix   = "Evtbuild";

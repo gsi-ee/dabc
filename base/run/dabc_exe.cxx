@@ -36,7 +36,7 @@ void dabc_CtrlCHandler(int number)
    SigCnt++;
 
    if ((SigCnt>2) || (dabc::mgr()==0)) {
-      EOUT(("Force application exit"));
+      EOUT("Force application exit");
       dabc::lgr()->CloseFile();
       exit(0);
    }
@@ -47,18 +47,18 @@ void dabc_CtrlCHandler(int number)
 bool dabc_InstallCtrlCHandler()
 {
    if (SigThrd!=0) {
-      EOUT(("Signal handler was already installed !!!"));
+      EOUT("Signal handler was already installed !!!");
       return false;
    }
 
    SigThrd = dabc::PosixThread::Self();
 
    if (signal(SIGINT, dabc_CtrlCHandler)==SIG_ERR) {
-      EOUT(("Cannot change handler for SIGINT"));
+      EOUT("Cannot change handler for SIGINT");
       return false;
    }
 
-   DOUT2(("Install Ctrl-C handler from thrd %d", SigThrd));
+   DOUT2("Install Ctrl-C handler from thrd %d", SigThrd);
 
    return true;
 }
@@ -75,6 +75,15 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
       dabc::mgr.StartModule("/CpuInfo");
    }
 
+
+   if (cfg.UseControl()) {
+      DOUT1("Connecting control");
+      if (!dabc::mgr()->ConnectControl()) {
+         EOUT("Cannot establish connection to command system");
+         return 1;
+      }
+   }
+
    dabc::Application::ExternalFunction* runfunc =
          (dabc::Application::ExternalFunction*)
          dabc::Factory::FindSymbol(cfg.RunFuncName());
@@ -84,23 +93,17 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
       return 0;
    }
 
-   DOUT2(("ConnectControl"));
-   if (!dabc::mgr()->ConnectControl()) {
-      EOUT(("Cannot establish connection to command system"));
-      return 1;
-   }
-
    // activate application only with non-controlled mode
 
    dabc::mgr.GetApp().Submit(dabc::InvokeAppRunCmd());
 
-   DOUT0(("Application mainloop is now running"));
-   DOUT0(("       Press Ctrl-C for stop"));
+   DOUT0("Application mainloop is now running");
+   DOUT0("       Press Ctrl-C for stop");
 
    // manager main loop will be run for specified time
    // at the exit application either stopped or will be requested to stop
 
-   dabc::mgr()->RunManagerMainLoop(cfg.GetRunTime());
+   dabc::mgr.RunMainLoop(cfg.GetRunTime());
 
    return 0;
 }
@@ -112,7 +115,7 @@ int main(int numc, char* args[])
 
 //   dabc::SetDebugLevel(0);
 
-   DOUT2(("Start  cnt = %u", dabc::Object::NumInstances()));
+   DOUT2("Start  cnt = %u", dabc::Object::NumInstances());
 
    const char* cfgfile(0);
 
@@ -124,7 +127,12 @@ int main(int numc, char* args[])
 
    dabc::Configuration cfg(cfgfile);
    if (!cfg.IsOk()) {
-      EOUT(("Cannot read configuration from file %s - Exit", (cfgfile ? cfgfile : "---")));
+      EOUT("Cannot read configuration from file %s - Exit", (cfgfile ? cfgfile : "---") );
+      return 7;
+   }
+
+   if (cfg.GetVersion() != 2) {
+      EOUT("Only dabc version 2 for xml files is supported - Exit");
       return 7;
    }
 
@@ -151,19 +159,21 @@ int main(int numc, char* args[])
    if (numnodes==0) numnodes = cfg.NumNodes();
    if (nodeid >= numnodes) nodeid = 0;
 
-   DOUT2(("Using config file: %s id: %u", cfgfile, nodeid));
+   DOUT2("Using config file: %s id: %u", cfgfile, nodeid);
 
    if (!cfg.SelectContext(nodeid, numnodes)) {
-      EOUT(("Did not found context"));
+      EOUT("Did not found context");
       return 1;
    }
 
    // reserve special thread
-   dabc::PosixThread::ReduceAffinity(cfg.NumSpecialThreads());
+   int numspecialthrds = cfg.NumSpecialThreads();
+   if (numspecialthrds>0) {
+      dabc::PosixThread::ReduceAffinity(numspecialthrds);
+      dabc::PosixThread::PrintAffinity("Process");
+   }
 
-   dabc::PosixThread::PrintAffinity("Process");
-
-   DOUT2(("Create manager"));
+   DOUT2("Create manager");
 
    new dabc::Manager(cfg.MgrName(), &cfg);
 
@@ -179,7 +189,7 @@ int main(int numc, char* args[])
 
    // TODO: in some situations application is not required
    if (res==0)
-     if (!dabc::mgr()->CreateApplication(cfg.ConetextAppClass())) res = -3;
+     if (!dabc::mgr.CreateApplication(cfg.ConetextAppClass())) res = -3;
 
    if (res==0) {
 
@@ -192,7 +202,7 @@ int main(int numc, char* args[])
 
    dabc::Object::InspectGarbageCollector();
 
-   DOUT2(("Exit  cnt = %u", dabc::Object::NumInstances()));
+   DOUT2("Exit  cnt = %u", dabc::Object::NumInstances());
 
    return res;
 }

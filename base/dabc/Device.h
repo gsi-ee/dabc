@@ -22,16 +22,14 @@
 
 namespace dabc {
 
-   class Port;
    class Transport;
 
    class Device : public Worker {
-      friend class Transport;
 
       protected:
          enum EDeviceEvents { eventDeviceLast = evntFirstUser };
 
-         Device(const char* name);
+         Device(const std::string& name);
 
          // FIXME: device mutex should be normal object mutex - isn't it?
          Mutex* DeviceMutex() { return &fDeviceMutex; }
@@ -43,7 +41,7 @@ namespace dabc {
 
          virtual int ExecuteCommand(Command cmd);
 
-         virtual Transport* CreateTransport(Command cmd, Reference port) { return 0; }
+         virtual Transport* CreateTransport(Command cmd, const Reference& port) { return 0; }
 
          virtual const char* ClassName() const { return "Device"; }
    };

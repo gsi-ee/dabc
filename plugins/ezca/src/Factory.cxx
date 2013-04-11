@@ -1,85 +1,48 @@
 #include "ezca/Factory.h"
 
+#include <stdlib.h>
+
 #include "dabc/Command.h"
 #include "dabc/logging.h"
+#include "dabc/Url.h"
+#include "dabc/Manager.h"
 
 #include "ezca/Definitions.h"
 #include "ezca/EpicsInput.h"
-#include "mbs/CombinerModule.h"
-#include "ezca/ReadoutApplication.h"
 
 
-const char* ezca::typeEpicsInput 			= EZCA_typeEpicsInput;
-const char* ezca::nameReadoutAppClass   		= EZCA_nameReadoutAppClass;
-const char* ezca::nameReadoutModuleClass   	= EZCA_nameReadoutModuleClass;
-
-const char* ezca::nameUpdateCommand     = EZCA_nameUpdateCommand;
-
-const char* ezca::xmlEpicsName				= EZCA_xmlEpicsName;
-
-const char* ezca::xmlUpdateFlagRecord 			=  EZCA_xmlUpdateFlagRecord;
-
-const char* ezca::xmlEventIDRecord				=  EZCA_xmlEventIDRecord;
-
-const char* ezca::xmlNumLongRecords				= 	EZCA_xmlNumLongRecords;
-
-const char* ezca::xmlNameLongRecords				=	EZCA_xmlNameLongRecords;
-
-const char* ezca::xmlNumDoubleRecords				= 	EZCA_xmlNumDoubleRecords;
-
-const char* ezca::xmlNameDoubleRecords			=	EZCA_xmlNameDoubleRecords;
-
-const char* ezca::xmlTimeout					=  EZCA_xmlTimeout;
-
-const char* ezca::xmlEpicsSubeventId= EZCA_xmlEpicsSubeventId;
-
-const char* ezca::xmlModuleName 				= EZCA_xmlModuleName; // Name of readout module instance
-const char* ezca::xmlModuleThread 			= EZCA_xmlModuleName; // Name of thread for readout module
+const char* ezca::xmlEpicsName               = "EpicsIdentifier";
+const char* ezca::xmlUpdateFlagRecord        = "EpicsFlagRec";
+const char* ezca::xmlEventIDRecord           = "EpicsEventIDRec";
+const char* ezca::xmlNumLongRecords          = "EpicsNumLongRecs";
+const char* ezca::xmlNameLongRecords         = "EpicsLongRec-";
+const char* ezca::xmlNumDoubleRecords        = "EpicsNumDoubleRecs";
+const char* ezca::xmlNameDoubleRecords       = "EpicsDoubleRec-";
+const char* ezca::xmlTimeout                 = "EpicsPollingTimeout";
+const char* ezca::xmlEpicsSubeventId         = "EpicsSubeventId";
+const char* ezca::xmlEzcaTimeout             = "EzcaTimeout";
+const char* ezca::xmlEzcaRetryCount          = "EzcaRetryCount";
+const char* ezca::xmlEzcaDebug               = "EzcaDebug";
+const char* ezca::xmlEzcaAutoError           = "EzcaAutoError";
 
 
-const char* ezca::xmlCommandReceiver 			= EZCA_xmlCommandReceiver; // Command receiver on flag change event
+const char* ezca::nameUpdateCommand          =  "ezca::OnUpdate";
+const char* ezca::xmlCommandReceiver         = "EpicsDabcCommandReceiver"; // Command receiver on flag change event
 
 
 dabc::FactoryPlugin epicsfactory(new ezca::Factory("ezca"));
 
 
-ezca::Factory::Factory(const char* name) :
+ezca::Factory::Factory(const std::string& name) :
    dabc::Factory(name)
 {
 }
 
-dabc::Application* ezca::Factory::CreateApplication(const char* classname, dabc::Command cmd)
+dabc::DataInput* ezca::Factory::CreateDataInput(const std::string& typ)
 {
-   if (strcmp(classname, ezca::nameReadoutAppClass)==0)
-      return new ezca::ReadoutApplication();
-
-   return dabc::Factory::CreateApplication(classname, cmd);
-}
-
-dabc::Module* ezca::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
-{
-   DOUT2(("ezca::Factory::CreateModule called for class:%s, module:%s", classname, modulename));
-
-   if (strcmp(classname, ezca::nameReadoutModuleClass)==0) {
-      DOUT0(("ezca::Factory::CreateModule - Created Mbs Combiner as Epics Monitor module %s ", modulename));
-           return new mbs::CombinerModule(modulename,cmd);
-   }
-
-   return dabc::Factory::CreateModule(classname, modulename, cmd);
-}
-
-dabc::DataInput* ezca::Factory::CreateDataInput(const char* typ)
-{
-   if ((typ==0) || (strlen(typ)==0)) return 0;
-   DOUT3(("ezca::Factory::CreateDataInput %s", typ));
-
-   if (strcmp(typ, typeEpicsInput) == 0)
-      return new ezca::EpicsInput();
+   dabc::Url url(typ);
+   if (url.GetProtocol()=="ezca")
+      return new ezca::EpicsInput(url.GetHostName());
 
    return 0;
-}
-
-dabc::Device* ezca::Factory::CreateDevice(const char* classname, const char* devname, dabc::Command cmd)
-{
-   return dabc::Factory::CreateDevice(classname, devname, cmd);
 }

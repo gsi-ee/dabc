@@ -35,7 +35,6 @@ const char* verbs::xmlMcastAddr = "McastAddr";
 
 #include "dabc/MemoryPool.h"
 #include "dabc/Manager.h"
-#include "dabc/Port.h"
 #include "dabc/ConnectionRequest.h"
 #include "dabc/ConnectionManager.h"
 
@@ -56,17 +55,15 @@ bool verbs::Device::fThreadSafeVerbs = true;
 
 namespace verbs {
 
-   class ProtocolWorker : public Worker {
+   class ProtocolAddon : public WorkerAddon {
       public:
          std::string      fReqItem;
 
          dabc::Command    fLocalCmd; //!< command which should be replied when connection established or failed
 
-         verbs::DeviceRef fDevice;
+         ContextRef       fIbContext;
 
          dabc::ThreadRef  fPortThrd;
-         QueuePair       *fPortQP;
-         ComplQueue      *fPortCQ;
 
          // address data of remote side
          unsigned        fRemoteLID;
@@ -78,17 +75,8 @@ namespace verbs {
          bool             fConnected;
 
       public:
-         ProtocolWorker();
-
-         /*
-         ProtocolWorker(Thread* thrd,
-                           QueuePair* hs_qp,
-                           bool server,
-                           const char* portname,
-                           dabc::Command* cmd);
-         */
-
-         virtual ~ProtocolWorker();
+         ProtocolAddon(QueuePair* qp);
+         virtual ~ProtocolAddon();
 
          virtual void VerbsProcessSendCompl(uint32_t);
          virtual void VerbsProcessRecvCompl(uint32_t);
@@ -100,21 +88,14 @@ namespace verbs {
          void Finish(bool res);
    };
 
-   class ProtocolWorkerRef : public WorkerRef {
-
-      DABC_REFERENCE(ProtocolWorkerRef, WorkerRef, verbs::ProtocolWorker)
-
-   };
 }
 
 
-verbs::ProtocolWorker::ProtocolWorker() :
-   Worker(0),
+verbs::ProtocolAddon::ProtocolAddon(QueuePair* qp) :
+   WorkerAddon(qp),
    fReqItem(),
    fLocalCmd(),
-   fPortThrd(0),
-   fPortQP(0),
-   fPortCQ(0),
+   fPortThrd(),
    fRemoteLID(0),
    fRemoteQPN(0),
    fRemotePSN(0),
@@ -123,21 +104,16 @@ verbs::ProtocolWorker::ProtocolWorker() :
 {
 }
 
-verbs::ProtocolWorker::~ProtocolWorker()
+verbs::ProtocolAddon::~ProtocolAddon()
 {
    fReqItem.clear();
 
    if (fPool) delete fPool; fPool = 0;
 
-   if (fPortQP!=QP()) delete fPortQP;
-   fPortQP = 0;
-   if (fPortCQ) delete fPortCQ;
-   fPortCQ = 0;
-
    CloseQP();
 }
 
-void verbs::ProtocolWorker::OnThreadAssigned()
+void verbs::ProtocolAddon::OnThreadAssigned()
 {
    dabc::ConnectionRequestFull req = dabc::mgr.FindPar(fReqItem);
    if (req.null()) {
@@ -159,7 +135,7 @@ void verbs::ProtocolWorker::OnThreadAssigned()
    ActivateTimeout(req.GetConnTimeout());
 }
 
-void verbs::ProtocolWorker::Finish(bool res)
+void verbs::ProtocolAddon::Finish(bool res)
 {
    fConnected = res;
 
@@ -167,71 +143,61 @@ void verbs::ProtocolWorker::Finish(bool res)
 
    fLocalCmd.ReplyBool(res);
 
-   fDevice.Release();
+   fIbContext.Release();
 
-   DeleteThis();
+   DeleteWorker();
 }
 
 
 
-double verbs::ProtocolWorker::ProcessTimeout(double last_diff)
+double verbs::ProtocolAddon::ProcessTimeout(double last_diff)
 {
    if (fConnected) return -1;
 
-   EOUT(("HANDSHAKE is timedout"));
+   EOUT("HANDSHAKE is timedout");
 
    Finish(false);
 
    return -1;
 }
 
-void verbs::ProtocolWorker::VerbsProcessSendCompl(uint32_t bufid)
+void verbs::ProtocolAddon::VerbsProcessSendCompl(uint32_t bufid)
 {
    if (bufid!=0) {
-      EOUT(("Wrong buffer id %u", bufid));
+      EOUT("Wrong buffer id %u", bufid);
       return;
    }
 
    dabc::ConnectionRequestFull req = dabc::mgr.FindPar(fReqItem);
    if (req.null()) {
-      EOUT(("Connection request disappear"));
+      EOUT("Connection request disappear");
       Finish(true);
       return;
    }
 
-
    const char* connid = (const char*) fPool->GetSendBufferLocation(bufid);
 
    if (req.GetConnId().compare(connid)!=0) {
-      EOUT(("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str()));
+      EOUT("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str());
    }
 
    // Here we are sure, that other side receive handshake packet,
    // therefore we can declare connection as done
 
 
-   TakeQP(); // we remove queue pair from the processor
+   VerbsNetworkInetrface* addon = new VerbsNetworkInetrface(fIbContext, TakeQP());
 
-   dabc::PortRef port = req.GetPort();
+   dabc::NetworkTransport::Make(req, addon, fPortThrd.GetName());
 
-   if (!fDevice.null() && !port.null())
-      fDevice()->CreateVerbsTransport(fPortThrd, port(), req.GetUseAckn(), fPortCQ, fPortQP);
-   else {
-      EOUT(("Cannot find verbs::Device to create transport"));
-   }
-
-   fPortQP = 0;
-   fPortCQ = 0;
-
-   DOUT0(("CREATE VERBS CLIENT %s",  req.GetConnId().c_str()));
+   DOUT0("CREATE VERBS CLIENT %s",  req.GetConnId().c_str());
 
    Finish(true);
 }
 
-void verbs::ProtocolWorker::VerbsProcessRecvCompl(uint32_t bufid)
+void verbs::ProtocolAddon::VerbsProcessRecvCompl(uint32_t bufid)
 {
    if (bufid!=0) {
-      EOUT(("Wrong buffer id %u", bufid));
+      EOUT("Wrong buffer id %u", bufid);
       return;
    }
 
@@ -240,60 +206,51 @@ void verbs::ProtocolWorker::VerbsProcessRecvCompl(uint32_t bufid)
    const char* connid = (const char*) fPool->GetBufferLocation(bufid);
 
    if (req.GetConnId().compare(connid)!=0) {
-      EOUT(("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str()));
+      EOUT("AAAAA !!!!! Mismatch with connid %s %s", connid, req.GetConnId().c_str());
    }
 
    // from here we knew, that client is ready and we also can complete connection
 
-   TakeQP(); // we remove queue pair from the processor
+   VerbsNetworkInetrface* addon = new VerbsNetworkInetrface(fIbContext, TakeQP());
 
-   dabc::PortRef port = req.GetPort();
+   dabc::NetworkTransport::Make(req, addon, fPortThrd.GetName());
 
-   if (!fDevice.null() && !port.null())
-      fDevice()->CreateVerbsTransport(fPortThrd, port(), req.GetUseAckn(), fPortCQ, fPortQP);
-   else {
-      EOUT(("Cannot find verbs::Device to create transport"));
-   }
-
-   fPortQP = 0;
-   fPortCQ = 0;
-
-   DOUT0(("CREATE VERBS SERVER %s",  req.GetConnId().c_str()));
+   DOUT0("CREATE VERBS SERVER %s",  req.GetConnId().c_str());
 
    Finish(true);
 }
 
-void verbs::ProtocolWorker::VerbsProcessOperError(uint32_t bufid)
+void verbs::ProtocolAddon::VerbsProcessOperError(uint32_t bufid)
 {
-   EOUT(("VerbsProtocolWorker error"));
+   EOUT("VerbsProtocolAddon error");
 
    Finish(false);
 }
 
 // ____________________________________________________________________
 
-verbs::Device::Device(const char* name) :
+verbs::Device::Device(const std::string& name) :
    dabc::Device(name),
    fIbContext(),
    fAllocateIndividualCQ(false)
 {
-   DOUT2(("Creating VERBS device %s  refcnt %u", name, NumReferences()));
+   DOUT2("Creating VERBS device %s  refcnt %u", GetName(), NumReferences());
 
    if (!fIbContext.OpenVerbs(true)) {
-      EOUT(("FATAL. Cannot start VERBS device"));
+      EOUT("FATAL. Cannot start VERBS device");
       exit(139);
    }
 
-   DOUT3(("Creating thread for device %s", GetName()));
+   DOUT3("Creating thread for device %s", GetName());
 
-   dabc::mgr()->MakeThreadFor(this, GetName());
+   MakeThreadForWorker(GetName());
 
-   DOUT2(("Creating VERBS device %s done refcnt %u", name, NumReferences()));
+   DOUT2("Creating VERBS device %s done refcnt %u", GetName(), NumReferences());
 }
 
 verbs::Device::~Device()
 {
-   DOUT5(("verbs::Device::~Device()"));
+   DOUT5("verbs::Device::~Device()");
 }
 
 void verbs::Device::ObjectCleanup()
@@ -301,102 +258,79 @@ void verbs::Device::ObjectCleanup()
    dabc::Device::ObjectCleanup();
 }
 
-bool verbs::Device::CreatePortQP(const char* thrd_name, dabc::Port* port, int conn_type,
-                                 dabc::ThreadRef &thrd, ComplQueue* &port_cq, QueuePair* &port_qp)
+verbs::QueuePair* verbs::Device::CreatePortQP(const std::string& thrd_name, dabc::Reference port, int conn_type, dabc::ThreadRef& thrd)
 {
    ibv_qp_type qp_type = IBV_QPT_RC;
 
    if (conn_type>0) qp_type = (ibv_qp_type) conn_type;
 
-   thrd = MakeThread(thrd_name, true);
+   thrd = MakeThread(thrd_name.c_str(), true);
 
    verbs::Thread* thrd_ptr = dynamic_cast<verbs::Thread*> (thrd());
 
-   if (thrd_ptr == 0) return false;
+   if (thrd_ptr == 0) return 0;
 
-   bool isowncq = IsAllocateIndividualCQ() && !thrd_ptr->IsFastModus();
+   unsigned input_size(0), output_size(0);
 
-   if (isowncq)
-      port_cq = new ComplQueue(fIbContext, port->NumOutputBuffersRequired() + port->NumInputBuffersRequired() + 2, thrd_ptr->Channel());
-   else
-      port_cq = thrd_ptr->MakeCQ();
+   dabc::NetworkTransport::GetRequiredQueuesSizes(port, input_size, output_size);
+
+   ComplQueue* port_cq = thrd_ptr->MakeCQ();
 
    int num_send_seg = fIbContext.max_sge() - 1;
    if (conn_type==IBV_QPT_UD) num_send_seg = fIbContext.max_sge() - 5; // I do not now why, but otherwise it fails
    if (num_send_seg<2) num_send_seg = 2;
 
-   port_qp = new QueuePair(IbContext(), qp_type,
-                           port_cq, port->NumOutputBuffersRequired(), num_send_seg,
-                           port_cq, port->NumInputBuffersRequired(), /*fIbContext.max_sge() / 2*/ 2);
+   verbs::QueuePair* port_qp = new QueuePair(IbContext(), qp_type,
+                                   port_cq, output_size + 1, num_send_seg,
+                                   port_cq, input_size + 1, 2);
 
-   if (!isowncq)
-      port_cq = 0;
-
-   return port_qp->qp()!=0;
-}
-
-
-void verbs::Device::CreateVerbsTransport(dabc::ThreadRef thrd, dabc::Reference portref, bool useackn, ComplQueue* cq, QueuePair* qp)
-{
-   dabc::Port* port = (dabc::Port*) portref();
-
-   if (thrd.null() || (port==0) || (qp==0)) {
-      EOUT(("verbs::Thread %p or Port %p or QueuePair %p disappear!!!", thrd(), port, qp));
-      delete qp;
-      delete cq;
-      return;
+   if (port_qp->qp()==0) {
+      delete port_qp;
+      port_qp = 0;
    }
 
-   Transport* tr = new Transport(fIbContext, cq, qp, portref, useackn);
-
-   dabc::Reference handle(tr);
-
-   if (tr->AssignToThread(thrd))
-      port->AssignTransport(handle, tr);
-   else {
-      EOUT(("No thread for transport"));
-      handle.Destroy();
-   }
+   return port_qp;
 }
 
 dabc::ThreadRef verbs::Device::MakeThread(const char* name, bool force)
 {
-   ThreadRef thrd = dabc::mgr()->FindThread(name, VERBS_THRD_CLASSNAME);
+   ThreadRef thrd = dabc::mgr.FindThread(name, VERBS_THRD_CLASSNAME);
 
    if (!thrd.null() || !force) return thrd;
 
-   return dabc::mgr()->CreateThread(name, VERBS_THRD_CLASSNAME, GetName());
+   return dabc::mgr.CreateThread(name, VERBS_THRD_CLASSNAME, GetName());
 }
 
-dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, dabc::Reference portref)
+dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::Reference& port)
 {
-   dabc::Port* port = (dabc::Port*) portref();
-   if (port==0) return 0;
+   // TODO: implement multicast transport for IB
 
-   std::string maddr = port->Cfg(xmlMcastAddr, cmd).AsStdStr();
+   dabc::PortRef portref = port;
+
+   std::string maddr = portref.Cfg(xmlMcastAddr, cmd).AsStdStr();
 
    if (!maddr.empty()) {
-      std::string thrdname = port->Cfg(dabc::xmlTrThread,cmd).AsStdStr(ThreadName());
+      std::string thrdname = portref.Cfg(dabc::xmlTrThread,cmd).AsStdStr(ThreadName());
 
       ibv_gid multi_gid;
 
       if (!ConvertStrToGid(maddr, multi_gid)) {
-         EOUT(("Cannot convert address %s to ibv_gid type", maddr.c_str()));
+         EOUT("Cannot convert address %s to ibv_gid type", maddr.c_str());
          return 0;
       }
 
       std::string buf = ConvertGidToStr(multi_gid);
       if (buf!=maddr) {
-         EOUT(("Addresses not the same: %s - %s", maddr.c_str(), buf.c_str()));
+         EOUT("Addresses not the same: %s - %s", maddr.c_str(), buf.c_str());
          return 0;
       }
 
-      ComplQueue* port_cq(0);
-      QueuePair*  port_qp(0);
-      ThreadRef   thrd;
 
-      if (CreatePortQP(thrdname.c_str(), port, IBV_QPT_UD, thrd, port_cq, port_qp))
-         return new Transport(fIbContext, port_cq, port_qp, portref, false, &multi_gid);
+
+//      QueuePair*  port_qp(0);
+//      ThreadRef   thrd;
+//      if (CreatePortQP(thrdname.c_str(), port, IBV_QPT_UD, thrd, port_qp))
+//         return new Transport(fIbContext, port_cq, port_qp, portref, false, &multi_gid);
    }
 
    return 0;
@@ -417,36 +351,33 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
 
          dabc::PortRef port = req.GetPort();
          if (port.null()) {
-            EOUT(("No port is available for the request"));
+            EOUT("No port is available for the request");
             return dabc::cmd_false;
          }
 
-         ProtocolWorker* proc = new ProtocolWorker;
+         dabc::ThreadRef thrd;
 
          // FIXME: ConnectionRequest should be used
-         if (!CreatePortQP(req.GetConnThread().c_str(), port(), 0,
-                           proc->fPortThrd, proc->fPortCQ, proc->fPortQP)) {
-            delete proc;
-            return dabc::cmd_false;
-         }
+         QueuePair* port_qp = CreatePortQP(req.GetConnThread(), port, 0, thrd);
+         if (port_qp==0) return dabc::cmd_false;
 
-         std::string portid;
+         std::string portid = dabc::format("%04X:%08X:%08X", (unsigned) fIbContext.lid(), (unsigned) port_qp->qp_num(), (unsigned) port_qp->local_psn());
+         DOUT0("CREATE CONNECTION %s", portid.c_str());
 
-         dabc::formats(portid,"%04X:%08X:%08X", (unsigned) fIbContext.lid(), (unsigned) proc->fPortQP->qp_num(), (unsigned) proc->fPortQP->local_psn());
+         ProtocolAddon* addon = new ProtocolAddon(port_qp);
+         addon->fPortThrd << thrd;
 
-         DOUT0(("CREATE CONNECTION %s", portid.c_str()));
-
-         if (req.IsServerSide()) {
+         if (req.IsServerSide())
             req.SetServerId(portid);
-         } else
+         else
             req.SetClientId(portid);
 
          // make backpointers, fCustomData is reference, automatically cleaned up by the connection manager
-         req.SetCustomData(dabc::Reference(proc, true));
+         req.SetCustomData(dabc::Reference(addon));
 
-         proc->fReqItem = reqitem;
+         addon->fReqItem = reqitem;
 
-         proc->fDevice = this;
+         addon->fIbContext = fIbContext;
 
          return dabc::cmd_true;
       }
@@ -454,16 +385,19 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
       case dabc::ConnectionManager::progrDoingConnect: {
          // one should register request and start connection here
 
-         DOUT2(("****** VERBS START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str()));
+         DOUT2("****** VERBS START: %s %s CONN: %s *******", (req.IsServerSide() ? "SERVER" : "CLIENT"), req.GetConnId().c_str(), req.GetConnInfo().c_str());
 
          // once connection is started, custom data is no longer necessary by connection record
          // protocol worker will be cleaned up automatically either when connection is done or when connection is timedout
 
          // by coping of the reference source reference will be cleaned
-         ProtocolWorkerRef proc = req.TakeCustomData();
+         // we use reference on addon while it will remain even if worker will be destroyed
+         dabc::Reference prot_ref = req.TakeCustomData();
 
-         if (proc.null()) {
-            EOUT(("SOMETHING WRONG - NO PROTOCOL PROCESSOR for the connection request"));
+         ProtocolAddon* proto = dynamic_cast<ProtocolAddon*> (prot_ref());
+
+         if (proto == 0) {
+            EOUT("SOMETHING WRONG - NO PROTOCOL addon for the connection request");
             return dabc::cmd_false;
          }
 
@@ -475,49 +409,40 @@ int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
          else
             remoteid = req.GetServerId();
 
-         if (sscanf(remoteid.c_str(),"%X:%X:%X", &proc()->fRemoteLID, &proc()->fRemoteQPN, &proc()->fRemotePSN)!=3) {
-            EOUT(("Cannot decode remote id string %s", remoteid.c_str()));
+         if (sscanf(remoteid.c_str(),"%X:%X:%X", &proto->fRemoteLID, &proto->fRemoteQPN, &proto->fRemotePSN)!=3) {
+            EOUT("Cannot decode remote id string %s", remoteid.c_str());
             res = false;
          }
 
          // reply remote command that one other side can start connection
          req.ReplyRemoteCommand(res);
 
-         if (res == dabc::cmd_false) {
-            proc.Release();
-
+         if (!res) {
+            prot_ref.Release();
             return dabc::cmd_false;
          }
 
-         DOUT0(("CONNECT TO REMOTE %04x:%08x:%08x - %s", proc()->fRemoteLID, proc()->fRemoteQPN, proc()->fRemotePSN, remoteid.c_str()));
+         DOUT0("CONNECT TO REMOTE %04x:%08x:%08x - %s", proto->fRemoteLID, proto->fRemoteQPN, proto->fRemotePSN, remoteid.c_str());
 
          // FIXME: remote port should be handled correctly
-         if (proc()->fPortQP->Connect(proc()->fRemoteLID, proc()->fRemoteQPN, proc()->fRemotePSN)) {
+         if (proto->QP()->Connect(proto->fRemoteLID, proto->fRemoteQPN, proto->fRemotePSN)) {
 
-            proc()->fPool = new MemoryPool(fIbContext, "HandshakePool", 1, 1024, false);
+            proto->fPool = new verbs::MemoryPool(fIbContext, "HandshakePool", 1, 1024, false);
 
-            proc()->fLocalCmd = cmd;
-
-            proc()->SetQP(proc()->fPortQP);
+            proto->fLocalCmd = cmd;
 
             // we need to preserve thread reference until transport itself will be created
-            proc()->AssignToThread(proc()->fPortThrd.Ref());
-
-            proc.SetOwner(false);
+            proto->fPortThrd.MakeWorkerFor(proto);
 
             return dabc::cmd_postponed;
          }
 
-         proc.Release();
-
          return dabc::cmd_false;
-
-         break;
       }
 
 
       default:
-         EOUT(("Request from connection manager in undefined situation progress = %d ???", req.progress()));
+         EOUT("Request from connection manager in undefined situation progress = %d ???", req.progress());
          return dabc::cmd_false;
          break;
    }
@@ -530,7 +455,7 @@ int verbs::Device::ExecuteCommand(dabc::Command cmd)
 {
    int cmd_res = dabc::cmd_true;
 
-   DOUT5(("Execute command %s", cmd.GetName()));
+   DOUT5("Execute command %s", cmd.GetName());
 
 
    if (cmd.IsName(dabc::ConnectionManagerHandleCmd::CmdName())) {

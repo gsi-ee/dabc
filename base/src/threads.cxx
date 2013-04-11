@@ -127,7 +127,7 @@ bool dabc::Condition::_DoWait(double wait_seconds)
 
 dabc::Runnable::~Runnable()
 {
-   DOUT5(("dabc::Runnable::~Runnable destructor %p", this));
+   DOUT5("dabc::Runnable::~Runnable destructor %p", this);
 }
 
 extern "C" void CleanupRunnable(void* abc)
@@ -225,7 +225,7 @@ void dabc::PosixThread::SetPriority(int prio)
    ret = pthread_setschedparam(fThrd, (prio>0) ? SCHED_FIFO : SCHED_OTHER,
                                  &thread_param);
    if (ret!=0)
-      EOUT(("pthread_setschedparam ret = %d %d %d %d %d\n", ret, (ret==EPERM), (ret==ESRCH), (ret==EINVAL), (ret==EFAULT)));
+      EOUT("pthread_setschedparam ret = %d %d %d %d %d\n", ret, (ret==EPERM), (ret==ESRCH), (ret==EINVAL), (ret==EFAULT));
 }
 
 void dabc::PosixThread::Kill(int sig)
@@ -247,7 +247,7 @@ bool dabc::PosixThread::ReduceAffinity(int reduce)
    int res = sched_getaffinity(0, sizeof(mask), &mask);
 
    if (res!=0) {
-      EOUT(("sched_getaffinity res = %d", res));
+      EOUT("sched_getaffinity res = %d", res);
       return false;
    }
 
@@ -255,12 +255,12 @@ bool dabc::PosixThread::ReduceAffinity(int reduce)
 
    for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
       if (CPU_ISSET(cpu, &mask)) {
-         // DOUT0(("  Before: process CPU%d set", cpu));
+         // DOUT0("  Before: process CPU%d set", cpu);
          numset++;
       }
 
    if (numset<=reduce) {
-      EOUT(("Cannot reduce affinity on %d processors - only %d assigned for process", reduce, numset));
+      EOUT("Cannot reduce affinity on %d processors - only %d assigned for process", reduce, numset);
       return false;
    }
 
@@ -276,18 +276,18 @@ bool dabc::PosixThread::ReduceAffinity(int reduce)
       }
 
    res = sched_setaffinity(0, sizeof(mask), &mask);
-   if (res!=0) { EOUT(("sched_setaffinity failed res = %d", res)); return false; }
+   if (res!=0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
 
 /*
    res = sched_getaffinity(0, sizeof(mask), &mask);
    if (res!=0) {
-      EOUT(("sched_getaffinity res = %d", res));
+      EOUT("sched_getaffinity res = %d", res);
       return false;
    }
 
    for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
       if (CPU_ISSET(cpu, &mask))
-         DOUT0(("  After: process CPU%d set", cpu));
+         DOUT0("  After: process CPU%d set", cpu);
 */
 
    return true;
@@ -310,25 +310,25 @@ void dabc::PosixThread::PrintAffinity(const char* name)
    pthread_attr_t attr;
 
    s = pthread_getattr_np(pthread_self(), &attr);
-   if (s != 0) { EOUT(("pthread_getattr_np failed for %s", name)); return; }
+   if (s != 0) { EOUT("pthread_getattr_np failed for %s", name); return; }
 
    cpu_set_t mask;
    CPU_ZERO(&mask);
    s = pthread_attr_getaffinity_np(&attr, sizeof(cpu_set_t), &mask);
    if (s != 0)
-      EOUT(("pthread_attr_getaffinity_np failed"));
+      EOUT("pthread_attr_getaffinity_np failed");
    else {
       std::string out = dabc::format("%s affinity", name);
       for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
          if (CPU_ISSET(cpu, &mask))
             out+=dabc::format(" CPU%d", cpu);
-      DOUT0((out.c_str()));
+      DOUT0(out.c_str());
    }
 
    s = pthread_attr_destroy(&attr);
    if (s != 0)
-      EOUT(("pthread_attr_destroy failed for %s", name));
+      EOUT("pthread_attr_destroy failed for %s", name);
 #else
-   EOUT(("Thread %s pthread_attr_getaffinity_np not supported by GLIBS", name));
+   EOUT("Thread %s pthread_attr_getaffinity_np not supported by GLIBS", name);
 #endif
 }

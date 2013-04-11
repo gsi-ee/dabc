@@ -28,14 +28,27 @@
 
 namespace mbs {
 
-   class TextInput : public dabc::DataInput {
+   class TextInput : public dabc::FileInput {
+      protected:
+         std::string         fDataFormat;    // int32_t, uint32_t, float
+         int                 fNumData;       // number of data entries in line
+         int                 fNumHeaderLines; // number of lines in header
+         int                 fCharBufferLength;   // buffer for single string
+
+         std::ifstream       fFile;
+         char*               fCharBuffer;
+         uint32_t            fEventCounter;
+         int                 fFormatId; // 0 - float, 1 - int32_t, 2 - uint32_t
+         unsigned            fDataUnitSize; // sizeof of single binary entry
+
+         bool CloseFile();
+         bool OpenNextFile();
+
       public:
-         TextInput(const char* fname = 0, uint32_t bufsize = 0x10000);
+         TextInput(const dabc::Url& url);
          virtual ~TextInput();
 
          virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
-
-         bool Init();
 
          virtual unsigned Read_Size();
          virtual unsigned Read_Complete(dabc::Buffer& buf);
@@ -43,27 +56,6 @@ namespace mbs {
          virtual unsigned RawDataSize();
          virtual unsigned FillRawData(const char* str, void* rawdata, unsigned maxsize);
 
-      protected:
-         bool CloseFile();
-
-         bool OpenNextFile();
-
-         std::string         fFileName;      // as specified in configuration
-         uint32_t            fBufferSize;    // buffer size
-         std::string         fDataFormat;    // int32_t, uint32_t, float
-         int                 fNumData;       // number of data entries in line
-         int                 fNumHeaderLines; // number of lines in header
-         int                 fCharBufferLength;   // buffer for single string
-
-         dabc::Object*       fFilesList;
-
-         std::string         fCurrentFileName;
-
-         std::ifstream       fFile;
-         char*               fCharBuffer;
-         uint32_t            fEventCounter;
-         int                 fFormatId; // 0 - float, 1 - int32_t, 2 - uint32_t
-         unsigned            fDataUnitSize; // sizeof of single binary entry
    };
 
 }

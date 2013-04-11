@@ -31,23 +31,20 @@ namespace verbs {
    class Device;
    class PoolRegistry;
 
-   class Transport : public verbs::Worker,
-                     public dabc::NetworkTransport  {
-
-      DABC_TRANSPORT(verbs::Worker)
-
-      friend class Device;
-
-      enum Events {
-         evntVerbsSendRec = evntVerbsLast,
-         evntVerbsRecvRec,
-         evntVerbsPool
-      };
-
+   class VerbsNetworkInetrface : public WorkerAddon,
+                             public dabc::NetworkInetrface {
       protected:
+         friend class Device;
+
+         enum Events {
+            evntVerbsSendRec = evntVerbsLast,
+            evntVerbsRecvRec,
+            evntVerbsPool
+         };
+
+
          verbs::ContextRef   fContext;
 
-         ComplQueue          *fCQ;
          bool                 fInitOk;
          PoolRegistryRef      fPoolReg;
          struct ibv_recv_wr  *f_rwr; // field for receive config, allocated dynamically
@@ -55,7 +52,6 @@ namespace verbs {
          struct ibv_sge      *f_sge; // memory segment description, used for both send/recv
          MemoryPool          *fHeadersPool; // polls with headers
          unsigned             fSegmPerOper;
-         bool                 fFastPost;
          struct ibv_ah       *f_ud_ah;
          uint32_t             f_ud_qpn;
          uint32_t             f_ud_qkey;
@@ -64,34 +60,32 @@ namespace verbs {
          uint16_t             f_multi_lid;
          bool                 f_multi_attch; // true if QP was attached to multicast group
 
-         virtual void _SubmitSend(uint32_t recid);
-         virtual void _SubmitRecv(uint32_t recid);
 
-         virtual bool ProcessPoolRequest();
+         virtual long Notify(const std::string&, int);
 
-         virtual void ProcessEvent(const dabc::EventId& evnt);
-
-         virtual void CleanupFromTransport(dabc::Object* obj);
-
-         /** \brief Call from inherited class, cleanup transport */
-         virtual void CleanupTransport();
+         virtual void VerbsProcessSendCompl(uint32_t);
+         virtual void VerbsProcessRecvCompl(uint32_t);
+         virtual void VerbsProcessOperError(uint32_t);
 
       public:
-         Transport(verbs::ContextRef ctx, ComplQueue* cq, QueuePair* qp,
-                   dabc::Reference port, bool useackn, ibv_gid* multi_gid = 0);
-         virtual ~Transport();
+         VerbsNetworkInetrface(verbs::ContextRef ctx, QueuePair* qp);
+         virtual ~VerbsNetworkInetrface();
+
+         bool AssignMultiGid(ibv_gid* multi_gid);
 
          bool IsInitOk() const { return fInitOk; }
          bool IsUD() const { return f_ud_ah!=0; }
 
          void SetUdAddr(struct ibv_ah *ud_ah, uint32_t ud_qpn, uint32_t ud_qkey);
 
-         virtual unsigned MaxSendSegments() { return fSegmPerOper - 1; }
 
-         virtual void VerbsProcessSendCompl(uint32_t);
-         virtual void VerbsProcessRecvCompl(uint32_t);
-         virtual void VerbsProcessOperError(uint32_t);
+         virtual void AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue);
+         virtual void SubmitSend(uint32_t recid);
+         virtual void SubmitRecv(uint32_t recid);
+
    };
+
+
 }
 
 #endif

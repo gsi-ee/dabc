@@ -179,16 +179,16 @@ namespace dabc {
          Reference& operator<<(const Reference& src) throw();
 
          /** \brief Compare operator - return true if references refer to same object */
-         inline bool operator==(const Reference& src) { return GetObject() == src(); }
+         inline bool operator==(const Reference& src) const { return GetObject() == src(); }
 
          /** \brief Compare operator - return true if references refer to different object */
-         inline bool operator!=(const Reference& src) { return GetObject() != src(); }
+         inline bool operator!=(const Reference& src) const { return GetObject() != src(); }
 
          /** \brief Compare operator - return true if reference refer to same object */
-         inline bool operator==(Object* obj) { return GetObject() == obj; }
+         inline bool operator==(Object* obj) const { return GetObject() == obj; }
 
          /** \brief Compare operator - return true if reference refer to different objects */
-         inline bool operator!=(Object* obj) { return GetObject() != obj; }
+         inline bool operator!=(Object* obj) const { return GetObject() != obj; }
 
          /** \brief Return new reference on the object disregard to transient status */
          Reference Ref(bool withmutex = true) const { return Reference(withmutex, GetObject()); }

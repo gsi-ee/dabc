@@ -72,7 +72,7 @@ void TOsm_query_callback(osmv_query_res_t * p_rec )
 
   if( p_rec->status != IB_SUCCESS )
     if ( p_rec->status != IB_INVALID_PARAMETER )
-       EOUT(("TOsm_query_result: Error on query (%s)", ib_get_err_str( p_rec->status )));
+       EOUT("TOsm_query_result: Error on query (%s)", ib_get_err_str( p_rec->status));
 }
 
 
@@ -103,7 +103,7 @@ bool verbs::OpenSM::Init()
    status = osm_log_init_v2(f_log, TRUE, 0x0001, NULL, 0, TRUE );
 //   status = osm_log_init(f_log, TRUE, 0x0001, NULL, TRUE );
    if( status != IB_SUCCESS ) {
-      EOUT(("Problem with osm_log_init_v2"));
+      EOUT("Problem with osm_log_init_v2");
       return false;
    }
 
@@ -116,7 +116,7 @@ bool verbs::OpenSM::Init()
 
    if (f_vendor==0) {
       //osm_log(f_log, OSM_LOG_ERROR, "Cannot create vendor\n" );
-      EOUT(("Cannot create vendor"));
+      EOUT("Cannot create vendor");
       return false;
    }
 
@@ -147,26 +147,25 @@ bool verbs::OpenSM::BindPort()
    */
    status = osm_vendor_get_all_port_attr( f_vendor, attr_array, &num_ports );
    if( status != IB_SUCCESS ) {
-      EOUT(("osm_vendor_get_all_port_attr fails"));
+      EOUT("osm_vendor_get_all_port_attr fails");
       return false;
    }
 
 /*
-   DOUT1(("Total number of ports = %u", num_ports));
+   DOUT1("Total number of ports = %u", num_ports);
    for (uint32_t n=0;n<num_ports;n++)
-     DOUT1(("  Port %u: %016lx ", n,
-           cl_ntoh64(attr_array[n].port_guid)));
+     DOUT1("  Port %u: %016lx ", n, cl_ntoh64(attr_array[n].port_guid);
 */
 
    /** Copy the port info for the selected port. */
    memcpy( &f_local_port, &(attr_array[port_index]), sizeof( f_local_port ) );
 
-//   DOUT1(("Try to bind to %016lx", cl_ntoh64(f_local_port.port_guid)));
+//   DOUT1("Try to bind to %016lx", cl_ntoh64(f_local_port.port_guid);
 
    f_bind_handle = osmv_bind_sa(f_vendor, &f_mad_pool, f_local_port.port_guid);
 
    if(f_bind_handle == OSM_BIND_INVALID_HANDLE ) {
-      EOUT(("Unable to bind to SA"));
+      EOUT("Unable to bind to SA");
       return false;
    }
 
@@ -176,11 +175,11 @@ bool verbs::OpenSM::BindPort()
 
 bool verbs::OpenSM::Close()
 {
-   DOUT4(( "osm_vendor_delete commented"));
+   DOUT4( "osm_vendor_delete commented");
 //   osm_vendor_delete(&f_vendor);
-   DOUT4(( "osm_mad_pool_destroy"));
+   DOUT4( "osm_mad_pool_destroy");
    osm_mad_pool_destroy(&f_mad_pool);
-   DOUT4(( "osm_log_destroy"));
+   DOUT4( "osm_log_destroy");
    osm_log_destroy(f_log);
    return true;
 }
@@ -220,7 +219,7 @@ bool verbs::OpenSM::Query_SA(osmv_query_type_t query_type,
   status = osmv_query_sa( f_bind_handle, &req );
 
   if ( status != IB_SUCCESS ) {
-    EOUT(("osmv_query_sa error -(%s)", ib_get_err_str(status)));
+    EOUT("osmv_query_sa error -(%s)", ib_get_err_str(status));
     goto Exit;
   }
 
@@ -230,7 +229,7 @@ bool verbs::OpenSM::Query_SA(osmv_query_type_t query_type,
   status = fLastResult.status;
 
   if((status != IB_SUCCESS ) && (status == IB_REMOTE_ERROR))
-      EOUT(( "osmv_query_sa remote error"));
+      EOUT( "osmv_query_sa remote error");
 //               ib_get_mad_status_str( osm_madw_get_mad_ptr( context.result.p_result_madw ) ) );
 
  Exit:
@@ -263,7 +262,7 @@ bool verbs::OpenSM::ManageMultiCastGroup(bool isadd,
 //   memcpy(&mc_req_rec.mgid, mgid, sizeof(ib_gid_t));
    memcpy(&mc_req_rec.mgid.raw, mgid_raw, sizeof(mc_req_rec.mgid.raw));
 
-  DOUT4(("  %s multicast port %016lx", (isadd ? "Add to" : "Remove from"), cl_ntoh64(f_local_port.port_guid)));
+  DOUT4("  %s multicast port %016lx", (isadd ? "Add to" : "Remove from"), cl_ntoh64(f_local_port.port_guid));
 
    // set port id, which will be add/removed from multicast group
   memcpy(&mc_req_rec.port_gid.unicast.interface_id,
@@ -368,26 +367,26 @@ bool verbs::OpenSM::PrintAllMulticasts()
   status = osmv_query_sa(f_bind_handle, &req );
 
   if( status != IB_SUCCESS ) {
-     EOUT(("PrintAllMulticasts error"
-             "osmv_query_sa failed (%s)\n", ib_get_err_str( status )));
+     EOUT("PrintAllMulticasts error"
+             "osmv_query_sa failed (%s)\n", ib_get_err_str( status ));
      goto Exit;
   }
 
   status = fLastResult.status;
 
   if(status != IB_SUCCESS) {
-    EOUT(("ib_query failed (%s)", ib_get_err_str( status ) ));
-    if(status==IB_REMOTE_ERROR) EOUT(("Remote error"));
+    EOUT("ib_query failed (%s)", ib_get_err_str( status ) ));
+    if(status==IB_REMOTE_ERROR) EOUT("Remote error");
     goto Exit;
   }
 
   num_recs = fLastResult.result_cnt;
-  DOUT0(("Number of Multicast records: %u", num_recs));
+  DOUT0("Number of Multicast records: %u", num_recs);
 
   for( i = 0; i < num_recs; i++ ) {
     p_rec = (ib_member_rec_t*) osmv_get_query_result( fLastResult.p_result_madw, i );
 
-/*    DOUT0(( "   Rec %2d: "
+/*    DOUT0( "   Rec %2d: "
              "mgid: %02x%02x%02x%02x%02x%02x%02x%02x : %02x%02x%02x%02x%02x%02x%02x%02x"
              "   mlid: %4x  mtu: %x  rate: %x", i,
               p_rec->mgid.raw[0], p_rec->mgid.raw[1], p_rec->mgid.raw[2], p_rec->mgid.raw[3],
@@ -397,7 +396,7 @@ bool verbs::OpenSM::PrintAllMulticasts()
               p_rec->mlid, p_rec->mtu, p_rec->rate));
 */
 
-    DOUT0(( "   Rec %2d: "
+    DOUT0( "   Rec %2d: "
              "mgid: %016lx : %016lx  mlid: %04x  mtu: %x  pkey: %x rate: %x", i,
              cl_ntoh64(p_rec->mgid.unicast.prefix),
              cl_ntoh64(p_rec->mgid.unicast.interface_id),
@@ -448,16 +447,16 @@ bool verbs::OpenSM::QueryMyltucastGroup(uint8_t* mgid, uint16_t& mlid)
   status = osmv_query_sa(f_bind_handle, &req );
 
   if( status != IB_SUCCESS ) {
-     EOUT(("osmv_query_sa failed (%s)", ib_get_err_str(status)));
+     EOUT("osmv_query_sa failed (%s)", ib_get_err_str(status));
      goto Exit;
   }
 
   status = fLastResult.status;
 
   if(status != IB_SUCCESS) {
-    EOUT(("PrintAllMulticasts error"
+    EOUT("PrintAllMulticasts error"
            "ib_query failed (%s)\n", ib_get_err_str( status ) ));
-    if(status==IB_REMOTE_ERROR) EOUT(("PrintAllMulticasts Remote error"));
+    if(status==IB_REMOTE_ERROR) EOUT("PrintAllMulticasts Remote error");
     goto Exit;
   }
 

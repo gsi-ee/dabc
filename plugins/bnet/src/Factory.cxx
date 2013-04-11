@@ -7,33 +7,33 @@
 
 dabc::FactoryPlugin bnetfactory(new bnet::Factory("bnet"));
 
-bnet::Factory::Factory(const char* name) :
+bnet::Factory::Factory(const std::string& name) :
    dabc::Factory(name)
 {
 }
-dabc::Reference bnet::Factory::CreateObject(const char* classname, const char* objname, dabc::Command cmd)
+dabc::Reference bnet::Factory::CreateObject(const std::string& classname, const std::string& objname, dabc::Command cmd)
 {
-   if (strcmp(classname,"TestEventHandling")==0)
+   if (classname == "TestEventHandling")
       return new bnet::TestEventHandling(objname);
 
    return 0;
 }
 
 
-dabc::Application* bnet::Factory::CreateApplication(const char* classname, dabc::Command cmd)
+dabc::Application* bnet::Factory::CreateApplication(const std::string& classname, dabc::Command cmd)
 {
-   if (strcmp(classname, "bnet::Application")==0)
+   if (classname == "bnet::Application")
       return new bnet::Application();
    return dabc::Factory::CreateApplication(classname, cmd);
 }
 
 
-dabc::Module* bnet::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
+dabc::Module* bnet::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
 {
-   if (strcmp(classname,"bnet::TransportModule")==0)
+   if (classname == "bnet::TransportModule")
       return new bnet::TransportModule(modulename, cmd);
 
-   if (strcmp(classname,"bnet::GeneratorModule")==0)
+   if (classname == "bnet::GeneratorModule")
       return new bnet::GeneratorModule(modulename, cmd);
 
    return 0;

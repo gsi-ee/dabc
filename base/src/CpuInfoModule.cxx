@@ -15,7 +15,7 @@
 
 #include "dabc/CpuInfoModule.h"
 
-dabc::CpuInfoModule::CpuInfoModule(const char* name, dabc::Command cmd, int kind) :
+dabc::CpuInfoModule::CpuInfoModule(const std::string& name, dabc::Command cmd, int kind) :
    dabc::ModuleAsync(name, cmd),
    fStat(true),
    fKind(kind)
@@ -32,7 +32,7 @@ dabc::CpuInfoModule::CpuInfoModule(const char* name, dabc::Command cmd, int kind
    }
    if (fStat.NumCPUs() > 2) {
      for (unsigned n=0; n < fStat.NumCPUs() - 1; n++) {
-        Parameter par = CreatePar(FORMAT(("CPU%u", n))).SetLimits(0, 100.).SetUnits("%");
+        Parameter par = CreatePar(dabc::format("CPU%u", n)).SetLimits(0, 100.).SetUnits("%");
         if (fKind & 4) par.SetAverage(true, period);
      }
    }
@@ -44,10 +44,10 @@ dabc::CpuInfoModule::CpuInfoModule(const char* name, dabc::Command cmd, int kind
 //      CreatePar("NumThreads").SetInt(0);
 }
 
-void dabc::CpuInfoModule::ProcessTimerEvent(Timer* timer)
+void dabc::CpuInfoModule::ProcessTimerEvent(unsigned timer)
 {
    if (!fStat.Measure()) {
-      EOUT(("Cannot measure CPU statistic"));
+      EOUT("Cannot measure CPU statistic");
       return;
    }
 
@@ -57,7 +57,7 @@ void dabc::CpuInfoModule::ProcessTimerEvent(Timer* timer)
 
    if ((fStat.NumCPUs() > 2) && (fKind & 6))
      for (unsigned n=0; n < fStat.NumCPUs() - 1; n++)
-        Par(FORMAT(("CPU%u", n))).SetDouble(fStat.CPUutil(n+1)*100.);
+        Par(dabc::format("CPU%u", n)).SetDouble(fStat.CPUutil(n+1)*100.);
 
    Par("VmSize").SetDouble(fStat.GetVmSize());
 //   Par("VmPeak").SetInt(fStat.GetVmPeak());

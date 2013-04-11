@@ -36,91 +36,175 @@
 #include "dabc/Buffer.h"
 #endif
 
+#ifndef DABC_Port
+#include "dabc/Port.h"
+#endif
+
+
 namespace dabc {
 
-   class PoolHandle;
-   class ModuleItem;
    class Manager;
-   class Port;
-   class Timer;
-   class Transport;
+   class ModuleSync;
+   class ModuleAsync;
+   class ModuleRef;
 
    class Module : public Worker {
 
       friend class Manager;
       friend class ModuleItem;
-      friend class Port;
-
-      enum  { evntReinjectlost = evntFirstSystem };
-
-      protected:
-         typedef std::vector<unsigned> ItemsIndexVector;
-
-         bool                       fRunState;    //!< module is in running state
-         PointersVector             fItems;       // map for fast search of module items
-         ItemsIndexVector           fInputPorts;  // map for fast access to input ports
-         ItemsIndexVector           fOutputPorts; // map for fast access to output ports
-         ItemsIndexVector           fPorts;       // map for fast access to i/o ports
-         ItemsIndexVector           fPoolHandels; // map for fast access to memory pools handles
-         Queue<EventId, true>       fLostEvents;  // events, coming while module is sleeping
+      friend class Timer;
+      friend class ModuleSync;
+      friend class ModuleAsync;
+      friend class ModuleRef;
 
       protected:
 
-         Module(const char* name = "module", Command cmd = 0);
+         bool                       fRunState;      //!< module is in running state
+         std::vector<ModuleItem*>   fItems;         // map for fast search of module items
+         std::vector<InputPort*>    fInputs;        // array of input ports
+         std::vector<OutputPort*>   fOutputs;       // array of output ports
+         std::vector<PoolHandle*>   fPools;         // array of pools
+         std::vector<Timer*>        fTimers;        // array of timers
+         std::vector<ModuleItem*>   fUsers;         // array of user items
+         unsigned                   fSysTimerIndex; // index of timer, which will be used with module itself
+         bool                       fAutoStop;      //!< module will automatically stop when all i/o ports will be disconncted
 
-         Port* GetPortItem(unsigned id) const;
+      private:
 
-      public:
+         void AddModuleItem(ModuleItem* item);
+         void RemoveModuleItem(ModuleItem* item);
+
+         inline PoolHandle* Pool(unsigned n = 0) const { return n < fPools.size() ? fPools[n] : 0; }
+         inline OutputPort* Output(unsigned n = 0) const { return n < fOutputs.size() ? fOutputs[n] : 0; }
+         inline InputPort* Input(unsigned n = 0) const { return n < fInputs.size() ? fInputs[n] : 0; }
+
+
+      protected:
+
+         Module(const std::string& name = "module", Command cmd = 0);
          virtual ~Module();
 
-         // this methods can be used from outside of module
+         /** \brief Inherited method, called during module cleanup.
+          * Used to stop module if it is still running */
+         virtual void ObjectCleanup();
+
+         virtual bool DoStop();
+         virtual bool DoStart();
+
+         virtual void OnThreadAssigned();
+         virtual int PreviewCommand(Command cmd);
+
+         virtual void ProcessEvent(const EventId&);
+
+         virtual double ProcessTimeout(double last_diff);
+
+         virtual bool Find(ConfigIO &cfg);
+
 
          /** Starts execution of the module code */
-         void Start();
+         bool Start();
 
-         /** Stops execution of the module code */
-         void Stop();
-
-         // end of public methods, rest later will be moved to protected area
-
-         PoolHandle* Pool(unsigned n = 0) const;
-
-         unsigned NumInputs() const { return fInputPorts.size(); }
-         unsigned NumOutputs() const { return fOutputPorts.size(); }
-         unsigned NumIOPorts() const { return fPorts.size(); }
-
-         Port* Input(unsigned n = 0) const { return n < fInputPorts.size() ? GetPortItem(fInputPorts[n]) : 0; }
-         Port* Output(unsigned n = 0) const { return n < fOutputPorts.size() ? GetPortItem(fOutputPorts[n]) : 0; }
-         Port* IOPort(unsigned n = 0) const { return n < fPorts.size() ? GetPortItem(fPorts[n]) : 0; }
-
-         Port* FindPort(const char* name);
-         PoolHandle* FindPool(const char* name = 0);
-
-         unsigned InputNumber(Port* port);
-         unsigned OutputNumber(Port* port);
-         unsigned IOPortNumber(Port* port);
-
-         Reference GetTimersFolder(bool force = false);
-
-         ModuleItem* GetItem(unsigned id) const { return id<fItems.size() ? (ModuleItem*) fItems.at(id) : 0; }
-
+         /** Returns true if module running */
          inline bool IsRunning() const { return fRunState; }
 
-         // generic users event processing function
-         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid) {}
+         /** Stops execution of the module code */
+         bool Stop();
 
-         // some useful routines for I/O handling
-         bool CanSendToAllOutputs() const;
-         void SendToAllOutputs(const Buffer& buf);
+         /** If set, module will be automatically stopped when all i/o ports are disconnected */
+         void SetAutoStop(bool on = true) { fAutoStop = on; }
 
-         virtual const char* ClassName() const { return "Module"; }
 
-      protected:
+         /** Creates handle for memory pool, which preserves reference on memory pool
+          * and provides fast access to memory pool functionality.
+          * Memory pool should exist before handle can be created
+          * Returns index of pool handle, which can be used later with operation like TakeBuffer */
+         unsigned CreatePoolHandle(const std::string& poolname, unsigned queue = 1);
 
-         // these two methods called before start and after stop of module
-         // disregard of module has its own mainloop or not
-         virtual void BeforeModuleStart() {}
-         virtual void AfterModuleStop() {}
+         unsigned CreateInput(const std::string& name, unsigned queue = 10);
+         unsigned CreateOutput(const std::string& name, unsigned queue = 10);
+
+         unsigned CreateTimer(const std::string& name, double period_sec = 1., bool synchron = false);
+
+         unsigned CreateUserItem(const std::string& name);
+
+
+         /** Method ensure that at least specified number of input and output ports will be created. */
+         void EnsurePorts(unsigned numinp = 0, unsigned numout = 0, const std::string& poolname = "");
+
+         /** Bind input and output ports that both will share same connection.
+          * In local case ports will be connected to appropriate pair of bind ports from other module */
+         bool BindPorts(const std::string& inpname, const std::string& outname);
+
+
+         // these are new methods, which should be protected
+         unsigned NumOutputs() const { return fOutputs.size(); }
+         bool IsValidOutput(unsigned indx = 0) const { return indx < fOutputs.size(); }
+         bool IsOutputConnected(unsigned indx = 0) const { return indx < fOutputs.size() ? fOutputs[indx]->IsConnected() : false; }
+         unsigned OutputQueueCapacity(unsigned indx = 0) const { return indx < fOutputs.size() ? fOutputs[indx]->QueueCapacity() : 0; }
+         unsigned FindOutput(const std::string& name) const;
+         std::string OutputName(unsigned indx = 0, bool fullname = false) const;
+
+         unsigned NumInputs() const { return fInputs.size(); }
+         bool IsValidInput(unsigned indx = 0) const { return indx < fInputs.size(); }
+         bool IsInputConnected(unsigned indx = 0) const { return indx < fInputs.size() ? fInputs[indx]->IsConnected() : false; }
+         bool InputQueueFull(unsigned indx = 0) const { return indx < fInputs.size() ? fInputs[indx]->QueueFull() : false; }
+         unsigned InputQueueCapacity(unsigned indx = 0) const { return indx < fInputs.size() ? fInputs[indx]->QueueCapacity() : 0; }
+         unsigned FindInput(const std::string& name) const;
+         std::string InputName(unsigned indx = 0, bool fullname = false) const;
+
+         unsigned NumPools() const { return fPools.size(); }
+         bool IsValidPool(unsigned indx = 0) const { return indx < fPools.size(); }
+         bool IsPoolConnected(unsigned indx = 0) const { return indx < fPools.size() ? fPools[indx]->IsConnected() : false; }
+         unsigned FindPool(const std::string& name) const;
+         std::string PoolName(unsigned indx = 0, bool fullname = false) const;
+         /** Returns true when handle automatically delivers buffers via the connection */
+         bool IsAutoPool(unsigned indx = 0) const { return indx<fPools.size() ? fPools[indx]->QueueCapacity() > 0 : false; }
+
+
+         PortRef FindPort(const std::string& name) const;
+         bool IsPortConnected(const std::string& name) const;
+         unsigned PortQueueCapacity(const std::string& name) const { return FindPort(name).QueueCapacity(); }
+         bool SetPortSignalling(const std::string& name, Port::EventsProducing signal);
+         bool SetPortRatemeter(const std::string& name, const Parameter& ref);
+         bool SetPortLoopLength(const std::string& name, unsigned cnt);
+
+         unsigned FindTimer(const std::string& name);
+         bool IsValidTimer(unsigned indx) const { return indx < fTimers.size(); }
+         unsigned NumTimers() const { return fTimers.size(); }
+         std::string TimerName(unsigned n = 0, bool fullname = false) const;
+
+         void ShootTimer(unsigned indx, double delay_sec = 0.)
+         {
+            if (indx < fTimers.size()) {
+               if (indx == fSysTimerIndex) ActivateTimeout(delay_sec);
+                                      else fTimers[indx]->SingleShoot(delay_sec);
+            }
+         }
+
+         void ShootTimer(const std::string& name, double delay_sec = 0.)
+           {  ShootTimer(FindTimer(name), delay_sec); }
+
+         ModuleItem* GetItem(unsigned id) const { return id<fItems.size() ? fItems[id] : 0; }
+
+         unsigned FindUserItem(const std::string& name);
+         bool IsValidUserItem(unsigned indx) const { return indx < fUsers.size(); }
+         std::string UserItemName(unsigned indx = 0, bool fullname = false) const;
+         EventId ConstructUserItemEvent(unsigned indx = 0)
+         { return EventId(evntUser, 0, indx < fUsers.size() ? fUsers[indx]->ItemId() : 0); }
+
+         // TODO: move to respective module classes
+         bool CanSendToAllOutputs(bool exclude_disconnected = true) const;
+         void SendToAllOutputs(Buffer& buf);
+
+
+         void ProduceInputEvent(unsigned indx = 0, unsigned cnt = 1);
+         void ProduceOutputEvent(unsigned indx = 0, unsigned cnt = 1);
+         void ProducePoolEvent(unsigned indx = 0, unsigned cnt = 1);
+         void ProduceUserItemEvent(unsigned indx = 0, unsigned cnt = 1);
+
+
+         // =================== can be reimplemented in derived classes ===============
+
 
          // user must redefine method when it want to execute commands.
          // If method return true or false (cmd_true or cmd_false),
@@ -130,6 +214,7 @@ namespace dabc {
          // User must call Module::ExecuteCommand() to enable processing of standard commands
          virtual int ExecuteCommand(Command cmd) { return dabc::Worker::ExecuteCommand(cmd); }
 
+
          // This is place of user code when command completion is arrived
          // User can implement any analysis of command data in this method
          // If returns true, command object will be delete automatically,
@@ -137,62 +222,34 @@ namespace dabc {
          // In that case command must be at some point replied - means user should call cmd.Reply(res) method.
          virtual bool ReplyCommand(Command cmd) { return dabc::Worker::ReplyCommand(cmd); }
 
-         // =======================================================
 
-         /** Creates handle for memory pool, which preserves reference on memory pool
-          * and provides fast access to memory pool functionality.
-          * Memory pool should exist before handle can be created
-          */
-         PoolHandle* CreatePoolHandle(const char* poolname);
-
-         Port* CreateIOPort(const char* name, PoolHandle* pool = 0, unsigned recvqueue = 10, unsigned sendqueue = 10);
-
-         Port* CreateInput(const char* name, PoolHandle* pool = 0, unsigned queue = 10)
-           { return CreateIOPort(name, pool, queue, 0); }
-         Port* CreateOutput(const char* name, PoolHandle* pool = 0, unsigned queue = 10)
-           { return CreateIOPort(name, pool, 0, queue); }
-
-         bool CreatePoolUsageParameter(const char* name, double interval = 1., const char* poolname = 0);
-
-         Timer* CreateTimer(const char* name, double period_sec = 1., bool synchron = false);
-         Timer* FindTimer(const char* name);
-         bool ShootTimer(const char* name, double delay_sec = 0.);
-
-         ModuleItem* CreateUserItem(const char* name);
-         ModuleItem* FindUserItem(const char* name);
-         bool ProduceUserItemEvent(const char* name);
-
-         void GetUserEvent(ModuleItem* item, uint16_t evid);
-
-         virtual void ProcessEvent(const EventId&);
-
-         /** \brief Inherited method, called during module cleanup.
-          * Used to stop module if it is still running */
-         virtual void ObjectCleanup();
-
+         // these two methods called before start and after stop of module
+         // disregard of module has its own mainloop or not
+         virtual void BeforeModuleStart() {}
+         virtual void AfterModuleStop() {}
          /** Method, which can be reimplemented by user and should cleanup all references on buffers
           * and other objects */
          virtual void ModuleCleanup() {}
 
-         bool DoStop();
-         bool DoStart();
+         // generic users event processing function
+         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid) {}
 
-         virtual void OnThreadAssigned();
-         virtual int PreviewCommand(Command cmd);
+         virtual void ProcessConnectionActivated(const std::string& name, bool on) {}
 
-         virtual void PoolHandleCleaned(PoolHandle* pool) {}
+      public:
 
-       private:
-
-         void ItemCleaned(ModuleItem* item);
-         void ItemCreated(ModuleItem* item);
-         void ItemDestroyed(ModuleItem* item);
+         virtual const char* ClassName() const { return "Module"; }
    };
 
 
    class ModuleRef : public WorkerRef {
 
       DABC_REFERENCE(ModuleRef, WorkerRef, Module)
+
+
+      friend class Manager;
+
+      protected:
 
       public:
 
@@ -210,6 +267,27 @@ namespace dabc {
          /** Returns true if specified output is connected */
          bool IsOutputConnected(unsigned ninp);
 
+         /** Returns number of inputs in the module */
+         unsigned NumInputs();
+
+         /** Returns number of outputs in the module */
+         unsigned NumOutputs();
+
+         /** Return reference on the port */
+         PortRef FindPort(const std::string& name);
+
+         /** Returns true if port with specified name is connected - thread safe */
+         bool IsPortConnected(const std::string& name);
+
+         /** Return item name of the input, can be used in connect command */
+         std::string InputName(unsigned n = 0, bool itemname = true);
+
+         /** Return item name of the output, can be used in connect command */
+         std::string OutputName(unsigned n = 0, bool itemname = true);
+
+         /** Method called by manager to establish connection to pools
+          * TODO: while used from devices, made public. Should be protected later again */
+         bool ConnectPoolHandles();
    };
 
 };

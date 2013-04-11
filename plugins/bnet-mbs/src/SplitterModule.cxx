@@ -1,9 +1,6 @@
 #include "bnet/SplitterModule.h"
 
-#include "dabc/Port.h"
-#include "dabc/Buffer.h"
-
-dabc::SplitterModule::SplitterModule(const char* name, Command cmd) :
+dabc::SplitterModule::SplitterModule(const std::string& name, Command cmd) :
    ModuleAsync(name, cmd)
 {
    int numout = Cfg(xmlNumOutputs,cmd).AsInt(2);
@@ -13,7 +10,7 @@ dabc::SplitterModule::SplitterModule(const char* name, Command cmd) :
    CreateInput("Input", Pool(0));
 
    for (int n=0; n<numout; n++)
-      CreateOutput(FORMAT(("Output%d", n)), Pool(0));
+      CreateOutput( dabc::format("Output%d", n), Pool(0));
 }
 
 void dabc::SplitterModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
@@ -28,7 +25,7 @@ void dabc::SplitterModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
 
       dabc::Buffer* buf = Input(0)->Recv();
       if (buf==0) {
-         EOUT(("Cannot recv buffer from input when expected"));
+         EOUT("Cannot recv buffer from input when expected");
          return;
       }
 

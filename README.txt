@@ -1,6 +1,6 @@
 --------------------------------------------------------------
          The Data Acquisition Backbone Core 
-         DABC Release v1.9.1  (25-January-2011)
+         DABC Release v1.9.3  (14-February-2013)
 -------------------------------------------------------------
 Copyright (C) 2009 -      
 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
@@ -48,7 +48,7 @@ INSTALLATION:
 4. After successful compilation "dabclogin" script will be generated,
    which should be called like ". dabclogin" before dabc can be used 
 
-5. Use executable "dabc_run" for single node batch mode.
+5. Use executable "dabc_exe" for single node batch mode.
 
 6. For DIM GUI controls: 
     * Start the DIM name server _once_ (by typing dimDns)

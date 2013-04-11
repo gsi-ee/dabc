@@ -16,9 +16,6 @@
 #include "dabc/ModuleAsync.h"
 
 #include "dabc/logging.h"
-#include "dabc/ModuleItem.h"
-#include "dabc/PoolHandle.h"
-#include "dabc/Port.h"
 #include "dabc/Buffer.h"
 
 dabc::ModuleAsync::~ModuleAsync()
@@ -26,54 +23,126 @@ dabc::ModuleAsync::~ModuleAsync()
 }
 
 
+bool dabc::ModuleAsync::RecvQueueFull(unsigned indx)
+{
+   InputPort* inp = Input(indx);
+   return inp ? inp->QueueFull() : false;
+}
+
+void dabc::ModuleAsync::SignalRecvWhenFull(unsigned indx)
+{
+   InputPort* inp = Input(indx);
+   if (inp) inp->SignalWhenFull();
+}
+
+dabc::Buffer dabc::ModuleAsync::RecvQueueItem(unsigned indx, unsigned nbuf)
+{
+   InputPort* inp = Input(indx);
+   if (inp) return inp->Item(nbuf);
+   return dabc::Buffer();
+}
+
 void dabc::ModuleAsync::ProcessItemEvent(ModuleItem* item, uint16_t evid)
 {
     switch (evid) {
        case evntInput:
-          ProcessInputEvent((Port*) item);
+          ((Port*) item)->ConfirmEvent();
+       case evntInputReinj:
+          if (item->GetType() == mitPool)
+             ProcessPoolEvent(item->fSubId);
+          else
+             ProcessInputEvent(item->fSubId);
           break;
        case evntOutput:
-          ProcessOutputEvent((Port*) item);
-          break;
-       case evntPool:
-          ProcessPoolEvent((PoolHandle*) item);
+          ((Port*) item)->ConfirmEvent();
+       case evntOutputReinj:
+          ProcessOutputEvent(item->fSubId);
           break;
        case evntTimeout:
-          ProcessTimerEvent((Timer*)item);
+          ProcessTimerEvent(item->fSubId);
           break;
        case evntPortConnect:
-          ProcessConnectEvent((Port*) item);
+          ProcessConnectEvent(item->GetName(), true);
           break;
        case evntPortDisconnect:
-          ProcessDisconnectEvent((Port*) item);
+          ProcessConnectEvent(item->GetName(), false);
           break;
        case evntUser:
-          ProcessUserEvent(item, evid);
+          ProcessUserEvent(item->fSubId);
           break;
        default:
-          if (evid>evntUser) ProcessUserEvent(item, evid);
           break;
     }
 }
 
-void dabc::ModuleAsync::ProcessPoolEvent(PoolHandle* pool)
+bool dabc::ModuleAsync::DoStart()
 {
-   // this is default implementation
+   if (!dabc::Module::DoStart()) return false;
 
-   pool->TakeRequestedBuffer().Release();
+   // TODO: in case of every event generate appropriate number of events
+   for (unsigned n=0;n<NumInputs();n++)
+      ProduceInputEvent(n, fInputs[n]->NumStartEvents());
+
+   for (unsigned n=0;n<NumOutputs();n++)
+      ProduceOutputEvent(n, fOutputs[n]->NumStartEvents());
+
+   for (unsigned n=0;n<NumPools();n++)
+      ProducePoolEvent(n, fPools[n]->NumStartEvents());
+
+   return true;
 }
 
-void dabc::ModuleAsync::OnThreadAssigned()
+void dabc::ModuleAsync::ProcessInputEvent(unsigned port)
 {
-   dabc::Module::OnThreadAssigned();
+   InputPort* inp = Input(port);
 
-   // produce initial output events,
-   // that user can fill output queue via processing of output event
-   for (unsigned n=0;n<NumOutputs();n++) {
-      Port* port = Output(n);
-      unsigned len = port->OutputQueueCapacity() - port->OutputPending();
-      while (len--)
-         GetUserEvent(port, evntOutput);
+   int cnt = inp->GetMaxLoopLength();
+
+   while (IsRunning() && inp->CanRecv()) {
+      if (!ProcessRecv(port)) return;
+      if (cnt<0) return;
+      if (cnt-- == 0) {
+         DOUT3("Port %s performed too many receive operations - break the loop", inp->ItemName().c_str());
+         FireEvent(evntInputReinj, inp->ItemId());
+         return;
+      }
    }
 }
+
+void dabc::ModuleAsync::ProcessOutputEvent(unsigned port)
+{
+   OutputPort* out = Output(port);
+
+   int cnt = out->GetMaxLoopLength();
+
+   while (IsRunning() && out->CanSend()) {
+      if (!ProcessSend(port)) return;
+      if (cnt<0) return;
+      if (cnt-- == 0) {
+         DOUT3("Port %s performed too many send operations - break the loop", out->ItemName().c_str());
+         FireEvent(evntOutputReinj, out->ItemId());
+         return;
+      }
+   }
+}
+
+void dabc::ModuleAsync::ProcessPoolEvent(unsigned indx)
+{
+   // DOUT0("Module %s process pool event %u", GetName(), pool->NumRequestedBuffer());
+
+   PoolHandle* pool = Pool(indx);
+
+   int cnt = pool->GetMaxLoopLength();
+
+   while (IsRunning() && pool->CanTakeBuffer()) {
+      if (!ProcessBuffer(indx)) return;
+      if (cnt<0) return;
+      if (cnt-- == 0) {
+         DOUT3("Pool %s performed too many send operations - break the loop", pool->GetName());
+         FireEvent(evntInputReinj, pool->ItemId());
+         return;
+      }
+   }
+}
+
 

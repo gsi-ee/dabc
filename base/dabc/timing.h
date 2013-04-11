@@ -98,16 +98,16 @@ namespace dabc {
 
          TimeStamp& operator-=(double _sub) { fValue-=_sub; return *this; }
 
-         TimeStamp operator+(double _add) { return TimeStamp(fValue+_add); }
+         TimeStamp operator+(double _add) const { return TimeStamp(fValue+_add); }
 
-         TimeStamp operator-(double _sub) { return TimeStamp(fValue-_sub); }
+         TimeStamp operator-(double _sub) const { return TimeStamp(fValue-_sub); }
 
          double operator()() const { return fValue; }
 
          /** \brief Return time stamp in form of double (in seconds) */
          double AsDouble() const { return fValue; }
 
-         double operator-(const TimeStamp& src) { return fValue - src.fValue; }
+         double operator-(const TimeStamp& src) const { return fValue - src.fValue; }
 
          bool operator<(const TimeStamp& src) const { return fValue < src.fValue; }
 

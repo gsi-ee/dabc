@@ -34,7 +34,7 @@ dabc::CpuStatistic::CpuStatistic(bool withmem) :
 
    fStatFp = fopen (cpu_stat_file, "r");
    if (fStatFp==0)
-     EOUT(("fopen of %s failed", cpu_stat_file));
+     EOUT("fopen of %s failed", cpu_stat_file);
 
 
    if (withmem) {
@@ -45,7 +45,7 @@ dabc::CpuStatistic::CpuStatistic(bool withmem) :
 
       fProcStatFp = fopen(fname,"r");
       if (fProcStatFp==0)
-         EOUT(("fopen of %s failed", fname));
+         EOUT("fopen of %s failed", fname);
    }
 
    Measure();
@@ -55,11 +55,11 @@ dabc::CpuStatistic::~CpuStatistic()
 {
    if (fStatFp!=0)
      if (fclose (fStatFp) != 0)
-        EOUT(("fclose of stat file failed"));
+        EOUT("fclose of stat file failed");
 
    if (fProcStatFp!=0)
      if (fclose (fProcStatFp) != 0)
-        EOUT(("fclose of proc stat file failed"));
+        EOUT("fclose of proc stat file failed");
 }
 
 bool dabc::CpuStatistic::Measure()
@@ -87,9 +87,9 @@ bool dabc::CpuStatistic::Measure()
 
       sscanf(info, "%lu %lu %lu %lu", &curr_user, &curr_nice, &curr_sys, &curr_idle);
 
-      //DOUT0(("Scan:%s", info));
+      //DOUT0("Scan:%s", info));
       //if (cnt==0)
-      //   DOUT0(("Res:%lu %lu %lu %lu", curr_user, curr_nice, curr_sys, curr_idle));
+      //   DOUT0("Res:%lu %lu %lu %lu", curr_user, curr_nice, curr_sys, curr_idle);
 
       curr_user += curr_nice;
 
@@ -337,7 +337,7 @@ void dabc::Average::Fill(double zn)
          // +0.5 to set integer value in the middle of interval
          long bin = lrint((zn - hist_min) / (hist_max-hist_min) * nhist  + 0.5);
          if ((bin>0) && (bin<=nhist)) hist[bin]++;
-                                else EOUT(("Bin error bin = %ld nhist = %d", bin, nhist));
+                                else EOUT("Bin error bin = %ld nhist = %d", bin, nhist);
       }
    }
 }
@@ -351,9 +351,9 @@ double dabc::Average::Dev() const
 void dabc::Average::Show(const char* name, bool showextr)
 {
    if (showextr)
-      DOUT0(("%s = %f +- %f (min = %f, max = %f)",name,Mean(), Dev(), min, max));
+      DOUT0("%s = %f +- %f (min = %f, max = %f)",name,Mean(), Dev(), min, max);
    else
-      DOUT0(("%s = %f +- %f",name,Mean(), Dev()));
+      DOUT0("%s = %f +- %f",name,Mean(), Dev());
 }
 
 void dabc::Average::ShowHist()
@@ -364,13 +364,13 @@ void dabc::Average::ShowHist()
    for (int n=0;n<nhist+2;n++) sum0+=hist[n];
    if (sum0<=0) sum0=1;
 
-   DOUT1(("Below %5.2f cnt = %3ld %5.1f", hist_min, hist[0], 100.*hist[0]/sum0));
+   DOUT1("Below %5.2f cnt = %3ld %5.1f", hist_min, hist[0], 100.*hist[0]/sum0);
    long sum1 = hist[0];
    for (int n=1;n<=nhist;n++) {
       sum1+=hist[n];
-      DOUT1(("Bin%02d x:%5.2f = %3ld %5.1f", n, (n - 0.5) / nhist * (hist_max-hist_min) + hist_min, hist[n], 100.*sum1/sum0));
+      DOUT1("Bin%02d x:%5.2f = %3ld %5.1f", n, (n - 0.5) / nhist * (hist_max-hist_min) + hist_min, hist[n], 100.*sum1/sum0);
    }
-   DOUT1(("Over %5.2f cnt = %3ld", hist_max, hist[nhist+1]));
+   DOUT1("Over %5.2f cnt = %3ld", hist_max, hist[nhist+1]);
 }
 
 
@@ -378,7 +378,7 @@ void dabc::Average::ShowHist()
 
 long dabc::GetProcVirtMem()
 {
-    DOUT1(("Something %d", 5));
+    DOUT1("Something %d", 5);
 
     pid_t id = getpid();
 

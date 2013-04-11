@@ -2,10 +2,8 @@
 
 #include "dabc/logging.h"
 #include "dabc/string.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/Command.h"
 #include "dabc/Manager.h"
-#include "dabc/Port.h"
 
 bnet::MbsCombinerModule::MbsCombinerModule(const char* name, dabc::Command cmd) :
    CombinerModule(name, cmd),
@@ -36,7 +34,7 @@ bnet::MbsCombinerModule::~MbsCombinerModule()
 {
    fRecs.clear();
 
-   DOUT5(("MbsCombinerModule destroyed"));
+   DOUT5("MbsCombinerModule destroyed");
 }
 
 void bnet::MbsCombinerModule::SkipNotUsedBuffers()
@@ -64,7 +62,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
       return 0;
    }
 
-   DOUT5(("Produce output buffer for events %u %u", fMinEvId, fMaxEvId));
+   DOUT5("Produce output buffer for events %u %u", fMinEvId, fMaxEvId);
 
    // define here if we can pack all subevents from all readout channel in
    // transport buffer. If not, just take as much as we can
@@ -78,7 +76,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 
          // if there is no first subevent, skip everything for that event
          if ((ninp==0) && fSubEvnts[recid].null()) {
-            DOUT1(("No data for subevent %d", nevnt));
+            DOUT1("No data for subevent %d", nevnt);
             break;
          }
 
@@ -96,8 +94,8 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
 //   fUsedEvents->Fill(NumUsedEvents);
 
    if (NumUsedEvents < fCfgEventsCombine) {
-      EOUT(("Can take only %d events from %d, buffer size %u bigger than transport buf %u",
-         NumUsedEvents, fCfgEventsCombine, fullbufsize, fTransportBufferSize));
+      EOUT("Can take only %d events from %d, buffer size %u bigger than transport buf %u",
+         NumUsedEvents, fCfgEventsCombine, fullbufsize, fTransportBufferSize);
    }
 
    dabc::BufferGuard buf = TakeBuffer(fOutPool, usedbufsize, sizeof(bnet::EventId));
@@ -113,7 +111,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
       mbs::EventHeader* srchdr = (mbs::EventHeader*) fSubEvnts[firtsrecid].ptr();
 
       if (!iter.NewEvent()) {
-         EOUT(("Cannot start new event"));
+         EOUT("Cannot start new event");
          exit(128);
       }
 
@@ -127,7 +125,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
          subevptr.shift(sizeof(mbs::EventHeader));
 
          if (!iter.AddSubevent(subevptr)) {
-            EOUT(("Cannot add subevent size recid = %d size = %u %u", recid, subevptr.fullsize(), fSubEvnts[recid].fullsize()));
+            EOUT("Cannot add subevent size recid = %d size = %u %u", recid, subevptr.fullsize(), fSubEvnts[recid].fullsize());
             exit(129);
          }
       }
@@ -138,7 +136,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
    iter.Close();
 
    if (buf()->GetDataSize() !=  usedbufsize) {
-      EOUT(("Error when filling data in combiner"));
+      EOUT("Error when filling data in combiner");
       exit(1);
    }
 
@@ -147,7 +145,7 @@ dabc::Buffer* bnet::MbsCombinerModule::ProduceOutputBuffer()
    buf()->SetHeaderSize(sizeof(bnet::EventId));
    *((bnet::EventId*) buf()->GetHeader()) = (fMinEvId - 1) / fCfgEventsCombine + 1;
 
-//   DOUT1(("Finish buffer id %d sz %u", (fMinEvId - 1) / fCfgEventsCombine, fullbufsize));
+//   DOUT1("Finish buffer id %d sz %u", (fMinEvId - 1) / fCfgEventsCombine, fullbufsize);
 
    Par("EventRate").SetInt(NumUsedEvents);
 
@@ -176,7 +174,7 @@ void bnet::MbsCombinerModule::MainLoop()
 
       if (isstopacq) {
 
-         DOUT1(("Send EOL buffer and wait for resume"));
+         DOUT1("Send EOL buffer and wait for resume");
          dabc::BufferGuard eolbuf = fOutPool->TakeEmptyBuffer();
          eolbuf()->SetTypeId(dabc::mbt_EOL);
          Send(fOutPort, eolbuf);
@@ -201,14 +199,14 @@ void bnet::MbsCombinerModule::MainLoop()
 
          buf = Input(ninp)->InputBuffer(fRecs[ninp].bufindx);
 
-         DOUT5(("Requested buffer from input %d indx %d buf %p", ninp, fRecs[ninp].bufindx, buf));
+         DOUT5("Requested buffer from input %d indx %d buf %p", ninp, fRecs[ninp].bufindx, buf);
 
          if (buf==0) {
             fRecs[ninp].bufindx--;
-            EOUT(("Should not happen !!!"));
+            EOUT("Should not happen !!!");
          } else
          if (buf->GetTypeId() == dabc::mbt_EOF) {
-            DOUT1(("Find EOF in the input %d, skip it", ninp));
+            DOUT1("Find EOF in the input %d, skip it", ninp);
             buf = 0;
          }
 
@@ -219,15 +217,15 @@ void bnet::MbsCombinerModule::MainLoop()
             continue;
          }
 
-         DOUT5(("Num events in buffer %p size: %u is %u ", buf, buf->GetDataSize(), mbs::ReadIterator::NumEvents(buf)));
+         DOUT5("Num events in buffer %p size: %u is %u ", buf, buf->GetDataSize(), mbs::ReadIterator::NumEvents(buf));
 
          if (fRecs[ninp].iter.Reset(buf) && fRecs[ninp].iter.NextEvent()) {
             fRecs[ninp].headbuf = buf;
 
-            DOUT5(("First event from ninp %d evid %d", ninp, fRecs[ninp].iter.evnt()->EventNumber()));
+            DOUT5("First event from ninp %d evid %d", ninp, fRecs[ninp].iter.evnt()->EventNumber());
          } else {
             // no error recovery, just continue
-            EOUT(("Get buffer of non MBS-format"));
+            EOUT("Get buffer of non MBS-format");
             isemptybuffer = true;
          }
       }
@@ -255,7 +253,7 @@ void bnet::MbsCombinerModule::MainLoop()
       // if one has not everywhere the same event,
       // skip minimum and continue from the beginning
       if (mineventid < maxeventid) {
-         EOUT(("Problem with event ids, skip event on input %d", mininp));
+         EOUT("Problem with event ids, skip event on input %d", mininp);
 
          // if no more events in the buffer, release it
          if (!fRecs[mininp].iter.NextEvent()) {
@@ -265,7 +263,7 @@ void bnet::MbsCombinerModule::MainLoop()
             // we copy all accumulated data to output buffer when input we using is full
             // we cannot wait longer while data from this input will be blocked
             if (Input(mininp)->InputQueueFull()) {
-               EOUT(("Produce here for input %d minev = %u maxev = %u", mininp, mineventid, maxeventid));
+               EOUT("Produce here for input %d minev = %u maxev = %u", mininp, mineventid, maxeventid);
 
                outbuf = ProduceOutputBuffer();
             }
@@ -284,7 +282,7 @@ void bnet::MbsCombinerModule::MainLoop()
       // we should close output buffer and send it over net
       if ((mineventid < fMinEvId) ||
           (mineventid >= fMaxEvId)) {
-             EOUT(("Jump ??? %u  interval %u %u", mineventid, fMinEvId, fMaxEvId));
+             EOUT("Jump ??? %u  interval %u %u", mineventid, fMinEvId, fMaxEvId);
 
              outbuf = ProduceOutputBuffer();
              continue;
@@ -295,7 +293,7 @@ void bnet::MbsCombinerModule::MainLoop()
          int recid = (mineventid - fMinEvId) * NumReadouts() + ninp;
 
          if (!fRecs[ninp].iter.AssignEventPointer(fSubEvnts[recid]))
-            EOUT(("Problem to assign event %u from input %d", mineventid, ninp));
+            EOUT("Problem to assign event %u from input %d", mineventid, ninp);
 
          if (fRecs[ninp].iter.evnt()->iTrigger==mbs::tt_StopAcq)
             isstopacq = true;
@@ -305,7 +303,7 @@ void bnet::MbsCombinerModule::MainLoop()
       }
 
       if (isstopacq) {
-         DOUT1(("See stop ACQ - flush buffer at event %d", mineventid));
+         DOUT1("See stop ACQ - flush buffer at event %d", mineventid);
       }
 
       // if we fill last event, just produce output buffer

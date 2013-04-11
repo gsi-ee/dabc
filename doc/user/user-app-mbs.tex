@@ -30,8 +30,8 @@ On the \dabc\ user working directory we need configuration files.
 
 Summary of parameters:
 \bdes
-\item[MbsFileName] File name for list mode data file (\keyw{LMD}). Overwritten by command.
-\item[MbsFileSizeLimit] File closes when size is reached, and new file opens.
+\item[FileName] File name for list mode data file (\keyw{LMD}). Overwritten by command.
+\item[FileSizeLimit] File closes when size is reached, and new file opens.
 \item[BufferSize] Should match \mbs\ buffer size.
 \item[MbsServerKind] \keyw{Transport} | \keyw{Stream}.
 \item[MbsServerPort] Port number transport (6000).
@@ -67,24 +67,10 @@ A simple setup looks like this:
        <DoFile value="false"/>
        <DoServer value="true"/>
        <BufferSize value="16384"/>
-       <Port name="Input0">
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="X86-xx"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="Input1">
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="X86-yy"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="FileOutput">
-          <OutputQueueSize value="5"/>
-          <MbsFileName value="combiner.lmd"/>
-          <MbsFileSizeLimit value="128"/>
-        </Port>
-       <Port name="ServerOutput">
-          <MbsServerKind value="Stream"/>
-        </Port>
+       <InputPort name="Input0" url="mbs://X86-xx/Transport"/>
+       <InputPort name="Input1" url="mbs://X86-yy/Transport"/>
+       <OutputPort name="FileOutput" url="lmd://combiner.lmd?maxsize=128" queue="5"/>
+       <OutputPort name="ServerOutput" url="mbs://Stream"/>
      </Module>
   </Context>
 </dabc>
@@ -100,7 +86,7 @@ Of course the \mbs\ setup must match these definitions.
 
 There are two output \keyw{Port}s in parallel here: A \keyw{FileOutput}
 that writes into a {\tt *.lmd} file as specified in the property 
-\keyw{MbsFileName}; and a \keyw{ServerOutput} that offers a standard \mbs\ stream server
+\keyw{FileName}; and a \keyw{ServerOutput} that offers a standard \mbs\ stream server
 for a monitoring program.
 A full description is in Programmer Manual section
 \paref{exa_mbs_eventbuilding}.

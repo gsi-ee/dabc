@@ -41,6 +41,9 @@ namespace hadaq {
                /** keeps current trigger sequence number */
                hadaq::EventNumType fTrigNr;
 
+               /** keeps previous trigger sequence number - used to control lost data */
+               hadaq::EventNumType fLastTrigNr;
+
                /** keeps current trigger tag */
                hadaq::EventNumType fTrigTag;
 
@@ -72,6 +75,7 @@ namespace hadaq {
 
                InputCfg() :
                   fTrigNr(0),
+                  fLastTrigNr(0),
                   fTrigTag(0),
                   fTrigType(0),
                   fSubId(0),
@@ -87,6 +91,7 @@ namespace hadaq {
 
                InputCfg(const InputCfg& src) :
                   fTrigNr(src.fTrigNr),
+                  fLastTrigNr(src.fLastTrigNr),
                   fTrigTag(src.fTrigTag),
                   fTrigType(src.fTrigType),
                   fSubId(src.fSubId),
@@ -104,6 +109,7 @@ namespace hadaq {
                void Reset()
                {
                   fTrigNr = 0;
+                  fLastTrigNr = 0;
                   fTrigTag =0;
                   fTrigType=0;
                   fSubId=0;
@@ -117,34 +123,22 @@ namespace hadaq {
          };
 
       public:
-         CombinerModule(const char* name, dabc::Command cmd = 0);
+         CombinerModule(const std::string& name, dabc::Command cmd = 0);
          virtual ~CombinerModule();
          
          virtual void ModuleCleanup();
 
-         virtual void ProcessInputEvent(dabc::Port* port);
-         virtual void ProcessOutputEvent(dabc::Port* port);
-         virtual void ProcessConnectEvent(dabc::Port* port);
-         virtual void ProcessDisconnectEvent(dabc::Port* port);
+         virtual bool ProcessBuffer(unsigned port);
+         virtual bool ProcessRecv(unsigned port) { return BuildEvent(); }
+         virtual bool ProcessSend(unsigned port) { return BuildEvent(); }
 
-         virtual void ProcessTimerEvent(dabc::Timer* timer);
-
-         bool IsFileOutput() const
-         {
-            return fFileOutput;
-         }
-         bool IsServOutput() const
-         {
-            return fServOutput;
-         }
+         virtual void ProcessTimerEvent(unsigned timer);
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
       protected:
 
          bool BuildEvent();
-
-         void BuildSeveralEvents();
 
          bool FlushOutputBuffer();
 
@@ -155,10 +149,6 @@ namespace hadaq {
          void DoErrorBitStatistics(unsigned ninp);
 
          void DoInputSnapshot(unsigned ninp);
-
-         /* provide output buffer that has room for payload size of bytes
-          * returns false if not possible*/
-         bool EnsureOutputBuffer(uint32_t payload);
 
          virtual void BeforeModuleStart();
 
@@ -191,27 +181,21 @@ namespace hadaq {
          void CreateNetmemPar(const std::string& name);
          void SetNetmemPar(const std::string& name, unsigned value);
 
-         unsigned            fBufferSize;
-
          /* master stream for event building*/
          //unsigned fMasterChannel;
 
          /* maximum allowed difference of trigger numbers (subevent sequence number)*/
-         hadaq::EventNumType fTriggerNrTolerance;
+         int fTriggerNrTolerance;
+
+         hadaq::EventNumType fLastTrigNr;  // last number of build event
 
          std::vector<InputCfg> fCfg;
          std::vector<ReadIterator> fInp;
          WriteIterator fOut;
 
-         dabc::MemoryPoolRef fPool;  // reference on the pool, reference should help us to preserve pool as long as we are using it
-
-         //dabc::Buffer fOutBuf;
          bool fFlushFlag;
          bool fUpdateCountersFlag;
 
-         bool fDoOutput;
-         bool fFileOutput;
-         bool fServOutput;
          bool fWithObserver;
 
          bool fUseSyncSeqNumber; // if true, use vulom/roc syncnumber for event sequence number
@@ -219,22 +203,21 @@ namespace hadaq {
          int  fSyncSubeventId; // id number of sync subevent
          uint32_t fSyncTriggerMask; // bit mask for accepted trigger inputs in sync mode
 
-         int  fNumInputs;
          int  fNumCompletedBuffers; // SL: workaround counter, which indicates how many buffers were taken from queues
 
          /* switch between partial combining of smallest event ids (false)
                  * and building of complete events only (true)*/
          bool               fBuildCompleteEvents;
          
-         std::string        fEventRateName;
-         std::string        fEventDiscardedRateName;
-         std::string        fEventDroppedRateName;
          std::string        fDataRateName;
+         std::string        fDataDroppedRateName;
+         std::string        fEventRateName;
+         std::string        fLostEventRateName;
          std::string        fInfoName;
 
          uint64_t           fTotalRecvBytes;
          uint64_t           fTotalRecvEvents;
-         uint64_t           fTotalDroppedEvents;
+         uint64_t           fTotalDroppedData;
          uint64_t           fTotalDiscEvents;
          uint64_t           fTotalTagErrors;
          uint64_t           fTotalDataErrors;

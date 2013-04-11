@@ -28,14 +28,20 @@
 
 namespace mbs {
 
-   class LmdInput : public dabc::DataInput {
+   class LmdInput : public dabc::FileInput {
+      protected:
+
+         mbs::LmdFile        fFile;
+
+         bool CloseFile();
+
+         bool OpenNextFile();
+
       public:
-         LmdInput(const char* fname = 0, uint32_t bufsize = 0x10000);
+         LmdInput(const dabc::Url& url);
          virtual ~LmdInput();
 
          virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
-
-         bool Init();
 
          virtual unsigned Read_Size();
          virtual unsigned Read_Complete(dabc::Buffer& buf);
@@ -43,19 +49,6 @@ namespace mbs {
          // alternative way to read mbs events from LmdInput - no any dabc buffer are used
          mbs::EventHeader* ReadEvent();
 
-      protected:
-         bool CloseFile();
-
-         bool OpenNextFile();
-
-         std::string         fFileName;
-         uint32_t            fBufferSize;
-
-         dabc::Object*       fFilesList;
-
-         mbs::LmdFile        fFile;
-         std::string         fCurrentFileName;
-         uint64_t            fCurrentRead;
    };
 
 }

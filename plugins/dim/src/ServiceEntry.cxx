@@ -52,29 +52,29 @@ void dimc::ServiceEntry::DeleteService()
 void dimc::ServiceEntry::commandHandler()
 {
    if (fCmd==0) {
-      EOUT(("No command was created !!!"));
+      EOUT("No command was created !!!");
       return;
    }
 
    dabc::CommandDefinition cmddef = dabc::mgr.FindPar(fDabcName);
    if (cmddef.null()) {
-      EOUT(("No command found"));
+      EOUT("No command found");
       return;
    }
 
 //   ::DimCommand* com = getCommand();
 //   if (com != fCmd) {
-//      EOUT(("!!!!!!!! Command mismatch !!!!!!"));
+//      EOUT("!!!!!!!! Command mismatch !!!!!!");
 //   }
 
 //   const char* arg = ;
 
-//   DOUT0(("Try to execute command %s full %s arg %s", cmddef.GetName(), fDabcName.c_str(), arg ? arg : "---"));
+//   DOUT0("Try to execute command %s full %s arg %s", cmddef.GetName(), fDabcName.c_str(), arg ? arg : "---");
 
    dabc::WorkerRef wrk = cmddef.GetWorker();
 
    if (wrk.null()) {
-      EOUT(("No worker found for command definition %s", fDabcName.c_str()));
+      EOUT("No worker found for command definition %s", fDabcName.c_str());
       return;
    }
 
@@ -120,7 +120,7 @@ bool dimc::ServiceEntry::ReadParsFromDimString(dabc::Command& cmd, const dabc::C
 
    dabc::XMLNodePointer_t node = dabc::Xml::ReadSingleNode(pars+14);
    if (node==0) {
-      EOUT(("Cannot parse DIM command %s", pars));
+      EOUT("Cannot parse DIM command %s", pars);
       return false;
    }
 
@@ -152,7 +152,7 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
    if (kind==kindNone) {
       std::string skind = par.Kind();
 
-      // DOUT0(("SKIND = %s", skind.c_str()));
+      // DOUT0("SKIND = %s", skind.c_str());
 
       if (par.IsRatemeter() || par.IsAverage()) kind = kindRate; else
       if (skind == dabc::Record::kind_int()) kind = kindInt; else
@@ -198,7 +198,7 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
             size = 8192; // make big buffer for command definition
             break;
          default:
-            EOUT(("Unprocessed kind %d", kind));
+            EOUT("Unprocessed kind %d", kind);
             return false;
       }
 
@@ -254,7 +254,7 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
             SetRecType(dimc::RATE);
          }
 
-         DOUT2(("Create ratemeter %s", par.GetName()));
+         DOUT2("Create ratemeter %s", par.GetName());
 
          break;
       }
@@ -306,7 +306,7 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
       }
 
       default:
-         EOUT(("Unprocessed kind %d in update", kind));
+         EOUT("Unprocessed kind %d in update", kind);
          return false;
    }
 
@@ -337,7 +337,7 @@ void dimc::ServiceEntry::UpdateValue(const std::string& value)
       }
       case kindStatus: {
          StatusRec* rec = (StatusRec*) fBuffer;
-         DOUT0(("CHANGE STATUS to %s", value.c_str()));
+         DOUT0("CHANGE STATUS to %s", value.c_str());
          strncpy(rec->status, value.c_str(), sizeof(rec->status)-1);
          if (value == dabc::ApplicationBase::stHalted()) strncpy(rec->color,_DABC_COLOR_RED_, sizeof(rec->color)-1); else
          if (value == dabc::ApplicationBase::stRunning()) strncpy(rec->color,_DABC_COLOR_GREEN_, sizeof(rec->color)-1); else
@@ -351,12 +351,12 @@ void dimc::ServiceEntry::UpdateValue(const std::string& value)
          break;
       }
       case kindCommand: {
-         DOUT0(("Change of default value of command definition is not interesting"));
+         DOUT0("Change of default value of command definition is not interesting");
          break;
       }
 
       default:
-         EOUT(("Unsupported kind %u", (unsigned) fKind));
+         EOUT("Unsupported kind %u", (unsigned) fKind);
          break;
    }
 

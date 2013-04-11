@@ -22,11 +22,9 @@ namespace dimc {
 
    class Factory : public dabc::Factory {
       public:
-         Factory(const char* name) : dabc::Factory(name) {}
+         Factory(const std::string& name) : dabc::Factory(name) {}
 
          virtual void Initialize();
-
-         virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd);
 
       protected:
 

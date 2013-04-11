@@ -20,18 +20,18 @@
 
 dabc::FactoryPlugin dabc_root_factory(new dabc_root::Factory("dabc_root"));
 
-dabc::DataInput* dabc_root::Factory::CreateDataInput(const char* typ)
+dabc::DataInput* dabc_root::Factory::CreateDataInput(const std::string& typ)
 {
    return 0;
 }
 
 
-dabc::DataOutput* dabc_root::Factory::CreateDataOutput(const char* typ)
+dabc::DataOutput* dabc_root::Factory::CreateDataOutput(const std::string& typ)
 {
 
-   DOUT3(("dabc_root::Factory::CreateDataOutput typ:%s", typ));
+   DOUT3("dabc_root::Factory::CreateDataOutput typ:%s", typ);
 
-   if (strcmp(typ, "RootTree")==0) {
+   if (typ == "RootTree") {
       return 0;
    }
 

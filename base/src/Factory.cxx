@@ -20,25 +20,21 @@
 #include "dabc/Manager.h"
 #include "dabc/Port.h"
 #include "dabc/DataIO.h"
-#include "dabc/DataIOTransport.h"
+#include "dabc/DataTransport.h"
 
 
-std::vector<dabc::Factory::LibEntry> dabc::Factory::fLibs;
+// std::vector<dabc::Factory::LibEntry> dabc::Factory::fLibs;
 
 bool dabc::Factory::LoadLibrary(const std::string& fname)
 {
-   void* lib = dlopen(fname.c_str(), RTLD_LAZY | RTLD_GLOBAL);
+   void* lib = dlopen(fname.c_str(), RTLD_NOW | RTLD_GLOBAL);
 
    if (lib==0) {
-      EOUT(("Cannot load library %s err:%s", fname.c_str(), dlerror()));
+      EOUT("Cannot load library %s err:%s", fname.c_str(), dlerror());
       return false;
    }
 
-   DOUT1(("Library loaded %s", fname.c_str()));
-
-   dabc::LockGuard lock(LibsMutex());
-
-   fLibs.push_back(LibEntry(lib, fname));
+   DOUT1("Library loaded %s", fname.c_str());
 
    return true;
 }
@@ -54,79 +50,58 @@ bool dabc::Factory::CreateManager(const std::string& name, Configuration* cfg)
 
 void* dabc::Factory::FindSymbol(const std::string& symbol)
 {
-   if (symbol.empty()) return 0;
+   return symbol.empty() ? 0 : dlsym(RTLD_DEFAULT, symbol.c_str());
+}
 
-   dabc::LockGuard lock(LibsMutex());
+dabc::Factory::Factory(const std::string& name) :
+   Object(0, name)
+{
+   DOUT2("Factory %s is created", GetName());
+}
 
-   for (unsigned n=0;n<fLibs.size();n++) {
-      void* res = dlsym(fLibs[n].fLib, symbol.c_str());
-      if (res!=0) {
-         DOUT3(("Found symbol %s in library %s", symbol.c_str(), fLibs[n].fLibName.c_str()));
-         return res;
+
+dabc::Transport* dabc::Factory::CreateTransport(const Reference& port, const std::string& typ, dabc::Command cmd)
+{
+   dabc::PortRef portref = port;
+
+   if (portref.IsInput()) {
+//      inpport.SetTransient(false);
+      dabc::DataInput* inp = CreateDataInput(typ);
+      if (inp!=0) {
+         if (!inp->Read_Init(portref, cmd)) {
+            EOUT("Input object %s cannot be initialized", typ.c_str());
+            delete inp;
+         } else {
+            DOUT0("Creating input transport for port %p", port());
+            return new dabc::InputTransport(cmd, portref, inp, true);
+         }
       }
    }
 
-   return dlsym(RTLD_DEFAULT, symbol.c_str());
-}
-
-dabc::Factory::Factory(const char* name) :
-   Object(0, name)
-{
-   DOUT2(("Factory %s is created", name));
-}
-
-dabc::Transport* dabc::Factory::CreateTransport(Reference ref, const char* typ, dabc::Command cmd)
-{
-   PortRef portref = ref;
-   if (portref.null()) {
-      EOUT(("Port is not specified"));
-      return 0;
-   }
-   portref.SetTransient(false);
-
-   dabc::DataInput* inp = CreateDataInput(typ);
-   if ((inp!=0) && !inp->Read_Init(portref, cmd)) {
-      EOUT(("Input object %s cannot be initialized", typ));
-      delete inp;
-      inp = 0;
+   if (portref.IsOutput()) {
+//      outport.SetTransient(false);
+      dabc::DataOutput* out = CreateDataOutput(typ);
+      if (out!=0) {
+         if (!out->Write_Init(portref, cmd)) {
+            EOUT("Output object %s cannot be initialized", typ.c_str());
+            delete out;
+         } else {
+            DOUT0("Creating output transport for port %p", portref());
+            return new dabc::OutputTransport(cmd, portref, out, true);
+         }
+      }
    }
 
-   dabc::DataOutput* out = CreateDataOutput(typ);
-   if ((out!=0) && !out->Write_Init(portref, cmd)) {
-      EOUT(("Output object %s cannot be initialized", typ));
-      delete out;
-      out = 0;
-   }
-
-   if ((inp==0) && (out==0)) return 0;
-
-   return new dabc::DataIOTransport(portref(), inp, out);
+   return 0;
 }
 
 
 // ================================================
-
-dabc::Factory* dabc::FactoryPlugin::NextNewFactory()
-{
-   dabc::LockGuard lock(FactoriesMutex());
-   return Factories()->Size()>0 ? Factories()->Pop() : 0;
-}
 
 
 dabc::FactoryPlugin::FactoryPlugin(Factory* f)
 {
   // for the moment do nothing, later list will be managed here
 
-   if (dabc::mgr())
-      dabc::mgr()->AddFactory(f);
-   else {
-      dabc::LockGuard lock(FactoriesMutex());
-      Factories()->Push(f);
-   }
+   dabc::Manager::ProcessFactory(f);
 }
-
-dabc::FactoryPlugin::~FactoryPlugin()
-{
-
-}
-

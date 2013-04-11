@@ -49,25 +49,17 @@ bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnum
 
       std::string modulename = dabc::format("Readout%d", portnumber);
 
-      dabc::mgr.CreateModule("mbs::GeneratorModule", modulename.c_str());
+      dabc::mgr.CreateModule("mbs::GeneratorModule", modulename);
 
-      dabc::mgr()->ConnectPorts((modulename + "/Output").c_str(), portname);
+      dabc::mgr.Connect(modulename + "/Output", portname);
 
       cfg = "Generator";
 
-   } else
-   if ((cfg.find("lmd") != cfg.npos) || (cfg.find("LMD") != cfg.npos)) {
-      dabc::CmdCreateTransport cmd(portname, mbs::typeLmdInput, "MbsInpThrd");
-      cmd.SetStr(mbs::xmlFileName, cfg);
-      if (!dabc::mgr.Execute(cmd, 10)) return false;
    } else {
-      dabc::CmdCreateTransport cmd(portname, mbs::typeClientTransport, "MbsReadoutThrd");
-      cmd.SetStr(mbs::xmlServerName, cfg);
-
-      if (!dabc::mgr.Execute(cmd, 10)) return false;
+      if (!dabc::mgr.CreateTransport(portname, cfg, "MbsReadoutThrd")) return false;
    }
 
-   DOUT1(("Create input for port:%s cfg:%s done", portname, cfg.c_str()));
+   DOUT1("Create input for port:%s cfg:%s done", portname, cfg.c_str());
 
    return true;
 }
@@ -112,15 +104,10 @@ bool bnet::MbsWorkerApplication::CreateOutFile(const char* portname, const std::
       Par("Info").SetStr(dabc::format("Stop file writing"));
 
    } else {
-      DOUT0(("Start Create output file = %s", filename.c_str()));
+      DOUT0("Create output file = %s", filename.c_str());
 
-      dabc::CmdCreateTransport cmd("Splitter/Output0", mbs::typeLmdOutput, "MbsOutThrd");
-      cmd.SetStr(mbs::xmlFileName, filename);
-      if (!dabc::mgr.Execute(cmd, 5)) {
-         EOUT(("Cannot create output file %s", filename.c_str()));
-         return false;
-      }
-      DOUT0(("Create output file = %s", filename.c_str()));
+      if (!dabc::mgr.CreateTransport("Splitter/Output0", filename)) return false;
+
       Par("Info").SetStr(dabc::format("Start file writing %s", filename.c_str()));
    }
    return true;
@@ -130,24 +117,10 @@ bool bnet::MbsWorkerApplication::CreateOutServer(const std::string& serverkind)
 {
    if (dabc::mgr.FindModule("Splitter").null()) return false;
 
-   if (serverkind.empty()) {
-      if (!dabc::mgr.CreateTransport("Splitter/Output1", "")) return false;
-   } else {
-      DOUT0(("Start CreateOutServer"));
+   if (!dabc::mgr.CreateTransport("Splitter/Output1", serverkind)) return false;
 
-      dabc::CmdCreateTransport cmd("Splitter/Output1", mbs::typeServerTransport, "MbsOutServThrd");
-      if ((serverkind != mbs::ServerKindToStr(mbs::TransportServer)) &&
-          (serverkind != mbs::ServerKindToStr(mbs::StreamServer)))
-            cmd.SetStr(mbs::xmlServerKind, mbs::ServerKindToStr(mbs::StreamServer));
-         else
-            cmd.SetStr(mbs::xmlServerKind, serverkind.c_str());
-      cmd.Field(dabc::xmlBufferSize).SetInt(Par(xmlEventBuffer).AsInt(16834));
-      if (!dabc::mgr.Execute(cmd, 5)) {
-         EOUT(("Cannot create output server of kind %s", serverkind.c_str()));
-         return false;
-      }
-      DOUT0(("Create output server of kind %s", serverkind.c_str()));
-   }
+   DOUT0("Create output server of kind %s", serverkind.c_str());
+
    return true;
 }
 

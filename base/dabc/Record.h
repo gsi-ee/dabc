@@ -30,6 +30,7 @@ namespace dabc {
    class Record;
    class RecordField;
    class RecordContainer;
+   class ConfigIO;
 
 
    class RecordField {
@@ -101,6 +102,7 @@ namespace dabc {
    class RecordContainer : public Object {
       friend class Record;
       friend class RecordField;
+      friend class ConfigIO;
 
       protected:
          RecordContainerMap* fPars;
@@ -130,8 +132,6 @@ namespace dabc {
          virtual const char* ClassName() const { return "Record"; }
 
          virtual void Print(int lvl = 0);
-
-         bool ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite = false);
    };
 
 

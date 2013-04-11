@@ -7,15 +7,8 @@
     </Run>
     <Module name="Transmitter">
        <BufferSize value="16384"/>
-       <Port name="Input">
-          <MbsFileName value="/misc/linev/wind.dat"/>
-          <MbsTextFormat value="float"/>
-          <MbsTextNumData value="15"/>
-          <MbsTextHeader value="0"/>
-       </Port>
-       <Port name="Output">
-          <MbsServerKind value="Transport"/>
-        </Port>
+       <InputPort name="Input0" url="txtlmd://wind.dat?float&numdata=15&header=0"/>
+       <OutputPort name="Output0" url="mbs://Transport"/>
      </Module>
   </Context>
 </dabc>

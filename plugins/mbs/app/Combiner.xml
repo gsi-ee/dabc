@@ -1,43 +1,23 @@
 <?xml version="1.0"?>
-<dabc version="1">
-  <Context host="localhost" name="Worker">
+<dabc version="2">
+  <Context name="Worker">
     <Run>
       <lib value="libDabcMbs.so"/>
       <func value="StartMbsCombiner"/>
       <logfile value="combiner.log"/>
     </Run>
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
     <Module name="Combiner">
        <NumInputs value="3"/>
-       <DoFile value="false"/>
-       <DoServer value="true"/>
-       <BufferSize value="16384"/>
-       <Port name="Input0">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi009"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="Input1">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi010"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="Input2">
-          <InputQueueSize value="5"/>
-          <MbsServerKind value="Transport"/>
-          <MbsServerName value="lxi011"/>
-          <MbsServerPort value="6000"/>
-       </Port>
-       <Port name="FileOutput">
-          <OutputQueueSize value="5"/>
-          <MbsFileName value="combiner.lmd"/>
-          <MbsFileSizeLimit value="128"/>
-        </Port>
-       <Port name="ServerOutput">
-          <OutputQueueSize value="5"/>
-          <MbsServerKind value="Stream"/>
-        </Port>
+       <NumOutputs value="1"/>
+       <InputPort name="Input0" url="mbs://lxi009/Transport" queue="5"/>
+       <InputPort name="Input1" url="mbs://lxi010/Transport" queue="5"/>
+       <InputPort name="Input2" url="mbs://lxi011/Transport" queue="5"/>
+       <OutputPort name="Output0" url="mbs://Stream" queue="5"/>
+       <OutputPort name="Output1" url="lmd://combiner.lmd?size=128" queue="5"/>
      </Module>
   </Context>
 </dabc>

@@ -26,6 +26,13 @@
 #include "dabc/Pointer.h"
 #endif
 
+#ifndef MBS_Iterator
+#include "mbs/Iterator.h"
+#endif
+
+#ifndef HADAQ_Iterator
+#include "hadaq/Iterator.h"
+#endif
 
 namespace hadaq {
 
@@ -40,16 +47,24 @@ namespace hadaq {
 
    protected:
 
-      unsigned int fSubeventId;
+      hadaq::ReadIterator fSrcIter;  // iterator over input buffer
+      mbs::WriteIterator  fTgtIter;   // buffer for data
+
+      int                 fCurrentEventNumber; // current event number in the output buffer
+      dabc::TimeStamp     fLastFlushTime; // time when last flushing was done
+      int                 fIgnoreEvent;  // id of event, which should be ignored
+      int                 fEvCounter; // simple counter
+
+      unsigned            fSubeventId;
 
       /* true if subsequent hadaq events with same sequence number should be merged
        * into one mbs subevent*/
-      bool fMergeSyncedEvents;
+      bool                fMergeSyncedEvents;
 
       /** When specified, SYNC number is printed */
-      bool fPrintSync;
+      bool                fPrintSync;
 
-      double fFlushTimeout;
+      int                 fFlushCnt;
 
       void FlushBuffer(bool force = false);
 
@@ -57,22 +72,16 @@ namespace hadaq {
 
       void CloseCurrentEvent();
 
-      dabc::Buffer       fTgtBuf;   // buffer for data
-      dabc::Pointer      fHdrPtr;   // pointer on header
-      dabc::Pointer      fDataPtr;   // pointer on next raw data
-      int                fLastEventNumber; // last number of HADAQ event count
-      dabc::TimeStamp    fLastFlushTime; // time when last flushing was done
-      int                fIgnoreEvent;  // id of event, which should be ignored
-      int                fCounter; // simple counter
-
    public:
-      MbsTransmitterModule(const char* name, dabc::Command cmd = 0);
+      MbsTransmitterModule(const std::string& name, dabc::Command cmd = 0);
 
-      virtual void ProcessInputEvent(dabc::Port*) { retransmit(); }
+      virtual bool ProcessBuffer(unsigned pool) { return retransmit(); }
 
-      virtual void ProcessOutputEvent(dabc::Port*) { retransmit(); }
+      virtual bool ProcessRecv(unsigned port) { return retransmit(); }
 
-      virtual void ProcessTimerEvent(dabc::Timer* timer);
+      virtual bool ProcessSend(unsigned port) { return retransmit(); }
+
+      virtual void ProcessTimerEvent(unsigned timer);
 
    };
 

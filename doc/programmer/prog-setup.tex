@@ -80,11 +80,11 @@ class UserModule : public dabc::ModuleAsync {
          CreateTimer("Timer", 1.0, false);
       }
       
-      virtual void ProcessTimerEvent(dabc::Timer*)
+      virtual void ProcessTimerEvent(unsigned timer)
       {
          Par("Counter").SetInt(Par("Counter").AsInt()+1);
          if (Par("Output").AsBool()) 
-            DOUT1(("Counter = %d", Par("Counter").AsInt()));
+            DOUT1("Counter = %d", Par("Counter").AsInt());
       }
 }; 
 \end{verbatim}
@@ -104,7 +104,7 @@ one should implement following method:
 virtual void ParameterChanged(dabc::Parameter* par) 
 {
    if (par->IsName("Output")) 
-   DOUT1(("Output flag changed to %s", DBOOL(GetParBool("Output")));
+   DOUT1("Output flag changed to %s", DBOOL(GetParBool("Output");
 }
 \end{verbatim}
 
@@ -388,7 +388,7 @@ extern "C" void InitMbsGenerator()
                                                  "Generator");
   cmd.SetInt("SubeventSize", 128);
   if (!dabc::mgr.Execute(cmd)) {
-     EOUT(("Cannot create generator module"));
+     EOUT("Cannot create generator module");
      exit(1);
   }
     

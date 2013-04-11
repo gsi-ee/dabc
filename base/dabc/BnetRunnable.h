@@ -167,7 +167,8 @@ namespace bnet {
          dabc::Condition fCondition;
 
          /** Item used to propogate events back to the module */
-         dabc::ModuleItem* fReplyItem;
+         dabc::ModuleRef fReplyModule;
+         dabc::EventId   fReplyEvent;
 
 
          int    fNodeId; // node number
@@ -247,13 +248,13 @@ namespace bnet {
 
          #define CheckModuleThrd() \
             if (dabc::PosixThread::Self() != fModuleThrd) { \
-               EOUT(("%s called from wrong thread - expected module thread", __func__)); \
+               EOUT("%s called from wrong thread - expected module thread", __func__); \
                exit(1); \
             }
 
          #define CheckTransportThrd() \
             if (dabc::PosixThread::Self() != fTransportThrd) { \
-               EOUT(("%s called from wrong thread - expected transport thread", __func__)); \
+               EOUT("%s called from wrong thread - expected transport thread", __func__); \
                exit(1); \
             }
 
@@ -326,14 +327,14 @@ namespace bnet {
 
          // dabc::Mutex& mutex() { return fMutex; }
 
-         BnetRunnable(const char* name);
+         BnetRunnable(const std::string& name);
          virtual ~BnetRunnable();
 
-         void SetNodeId(int id, int num, int nlids, dabc::ModuleItem* reply) { fNodeId = id; fNumNodes = num; fNumLids = nlids; fReplyItem = reply; }
+         void SetNodeId(int id, int num, int nlids) { fNodeId = id; fNumNodes = num; fNumLids = nlids; }
 
          void SetThreadsIds(dabc::Thread_t modid, dabc::Thread_t trid) { fModuleThrd = modid; fTransportThrd = trid; }
 
-         virtual bool Configure(dabc::Module* m, dabc::MemoryPool* pool, int numrecs);
+         virtual bool Configure(const dabc::ModuleRef& m, const dabc::EventId& ev, dabc::MemoryPool* pool, int numrecs);
 
          virtual void* MainLoop();
 

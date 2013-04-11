@@ -14,14 +14,12 @@
 #include "TestBuilderModule.h"
 
 #include "dabc/logging.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/Command.h"
-#include "dabc/Port.h"
 #include "dabc/Parameter.h"
 
 #include "bnet/common.h"
 
-bnet::TestBuilderModule::TestBuilderModule(const char* name, dabc::Command cmd) :
+bnet::TestBuilderModule::TestBuilderModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
    fInpPool(0),
    fOutPool(0),
@@ -67,7 +65,7 @@ void bnet::TestBuilderModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
       uint64_t* mem = (uint64_t*) fBuffers[n]->GetDataLocation();
       if (evid==0) evid = *mem; else
         if (evid!=*mem) {
-            EOUT(("Mismatch in events id %llu %llu", evid, *mem));
+            EOUT("Mismatch in events id %llu %llu", evid, *mem);
             exit(1);
         }
 
@@ -81,14 +79,14 @@ void bnet::TestBuilderModule::ProcessItemEvent(dabc::ModuleItem*, uint16_t)
 
    Output(0)->Send(outbuf);
 
-//   DOUT1(("!!!!!!! SEND EVENT %llu DONE", evid));
+//   DOUT1("!!!!!!! SEND EVENT %llu DONE", evid);
 }
 
 void bnet::TestBuilderModule::BeforeModuleStart()
 {
    fNumSenders = bnet::NodesVector(Par(parSendMask).AsStdStr()).size();
 
-//   DOUT1(("TestBuilderModule::BeforeModuleStart numsend = %d", fNumSenders));
+//   DOUT1("TestBuilderModule::BeforeModuleStart numsend = %d", fNumSenders);
 }
 
 void bnet::TestBuilderModule::AfterModuleStop()

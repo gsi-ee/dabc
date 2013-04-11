@@ -1,32 +1,29 @@
 <?xml version="1.0"?>
-
-<!--        NOT TESTED WITH DABC2 -->
-
-<dabc version="1">
-  <Context host="lxi013"/>
-  <Context host="lxi010"/>
-  <Context host="lxi011"/>
-  <Context host="lxi012"/>
-  <Defaults>
-     <Context name="*">
-       <Run>
-         <lib value="libDabcNetTest.so"/>
-         <debuglevel value="0"/>
-         <debugger value="false"/>
-         <loglevel value="3"/>
-         <logfile value="${Context}.log"/>
-         <loglimit value="10000000000"/>
-         <runfunc value="RunAllToAll"/>
-         <sockethost value="${host}"/>
-         <copycfg value="false"/>
-       </Run>
-       <User>
-         <NetDevice value="dabc::SocketDevice"/>
-         <BufferSize value="8000"/>
-         <OutputQueueSize value="4"/>
-         <InputQueueSize value="8"/>
-         <UseAcknowledge value="0"/>
-       </User>
-     </Context>
-  </Defaults>
+<dabc version="2">
+  <Context host="master"/>
+  <Context host="node01"/>
+  <Context host="node02"/>
+  <Context host="node03"/>
+  <Context host="*">
+    <Run>
+      <lib value="libDabcVerbs.so"/>
+      <lib value="libDabcNetTest.so"/>
+      <debuglevel value="1"/>
+      <debugger value="false"/>
+      <loglevel value="1"/>
+      <logfile value="${Context}.log"/>
+      <loglimit value="1000000"/>
+      <runfunc value="RunAllToAll"/>
+      <sockethost value="${host}"/>
+      <copycfg value="false"/>
+    </Run>
+    <User>
+      <!--NetDevice value="verbs::Device"/-->
+      <NetDevice value="dabc::SocketDevice"/>
+      <BufferSize value="800000"/>
+      <OutputQueueSize value="10"/>
+      <InputQueueSize value="20"/>
+      <UseAcknowledge value="0"/>
+    </User>
+  </Context>
 </dabc>

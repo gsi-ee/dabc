@@ -20,7 +20,6 @@
 
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
-#include "dabc/Port.h"
 #include "dabc/Command.h"
 
 #include "verbs/Device.h"
@@ -78,7 +77,7 @@ namespace verbs {
 
 // ____________________________________________________________________
 
-verbs::Thread::Thread(dabc::Reference parent, verbs::ContextRef ctx, const char* name) :
+verbs::Thread::Thread(dabc::Reference parent, verbs::ContextRef ctx, const std::string& name) :
    dabc::Thread(parent, name),
    fContext(ctx),
    fChannel(0),
@@ -97,7 +96,7 @@ verbs::Thread::Thread(dabc::Reference parent, verbs::ContextRef ctx, const char*
 {
    fChannel = ibv_create_comp_channel(fContext.context());
    if (fChannel==0) {
-      EOUT(("Cannot create completion channel - HALT"));
+      EOUT("Cannot create completion channel - HALT");
       exit(143);
    }
 
@@ -117,7 +116,7 @@ verbs::Thread::Thread(dabc::Reference parent, verbs::ContextRef ctx, const char*
                                 MakeCQ(), LoopBackQueueSize, 1);
 
    if (!fLoopBackQP->Connect(fContext.lid(), fLoopBackQP->qp_num(), fLoopBackQP->local_psn())) {
-      EOUT(("fLoopBackQP CONNECTION FAILED"));
+      EOUT("fLoopBackQP CONNECTION FAILED");
       exit(144);
    }
 
@@ -125,32 +124,32 @@ verbs::Thread::Thread(dabc::Reference parent, verbs::ContextRef ctx, const char*
 
    #endif
 
-   DOUT3(("Verbs thread %s %p is created", GetName(), this));
+   DOUT3("Verbs thread %s %p is created", GetName(), this);
 }
 
 verbs::Thread::~Thread()
 {
    CloseThread();
 
-   DOUT3(("Verbs thread %p %s destroyed", this, GetName()));
+   DOUT3("Verbs thread %p %s destroyed", this, GetName());
 }
 
-bool verbs::Thread::CompatibleClass(const char* clname) const
+bool verbs::Thread::CompatibleClass(const std::string& clname) const
 {
    if (dabc::Thread::CompatibleClass(clname)) return true;
-   return strcmp(clname, VERBS_THRD_CLASSNAME) == 0;
+   return clname == VERBS_THRD_CLASSNAME;
 }
 
 void verbs::Thread::CloseThread()
 {
-   DOUT2(("verbs::Thread::CloseThread() %s", GetName()));
+   DOUT2("verbs::Thread::CloseThread() %s", GetName());
 
    if (!IsItself())
       Stop(2.);
    else
-      EOUT(("Bad idea - close thread from itself"));
+      EOUT("Bad idea - close thread from itself");
 
-   DOUT2(("verbs::Thread::CloseThread() %s - did stop", GetName()));
+   DOUT2("verbs::Thread::CloseThread() %s - did stop", GetName());
 
 
    #ifdef VERBS_USING_PIPE
@@ -173,7 +172,7 @@ void verbs::Thread::CloseThread()
       fWCSize = 0;
    }
 
-   DOUT2(("verbs::Thread::CloseThread() %s done", GetName()));
+   DOUT2("verbs::Thread::CloseThread() %s done", GetName());
 }
 
 verbs::ComplQueue* verbs::Thread::MakeCQ()
@@ -201,7 +200,7 @@ int verbs::Thread::ExecuteThreadCommand(dabc::Command cmd)
 
 void verbs::Thread::_Fire(const dabc::EventId& evnt, int nq)
 {
-   DOUT4(("verbs::Thread %s   ::_Fire %s status %d", GetName(), evnt.asstring().c_str(), fWaitStatus));
+   DOUT4("verbs::Thread %s   ::_Fire %s status %d", GetName(), evnt.asstring().c_str(), fWaitStatus);
 
    _PushEvent(evnt, nq);
    if (fWaitStatus == wsWaiting)
@@ -223,7 +222,7 @@ void verbs::Thread::_Fire(const dabc::EventId& evnt, int nq)
 bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 {
 
-//   if (tmout_sec>=0) EOUT(("Non-empty timeout"));
+//   if (tmout_sec>=0) EOUT("Non-empty timeout");
 
    {
       dabc::LockGuard lock(ThreadMutex());
@@ -271,11 +270,11 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 
    int tmout = tmout_sec < 0 ? -1 : int(tmout_sec*1000.);
 
-   DOUT5(("VerbsThrd:%s start poll tmout:%d", GetName(), tmout));
+   DOUT5("VerbsThrd:%s start poll tmout:%d", GetName(), tmout);
 
    int res = poll(ufds, 2, tmout);
 
-   DOUT5(("VerbsThrd:%s did poll res:%d", GetName(), res));
+   DOUT5("VerbsThrd:%s did poll res:%d", GetName(), res);
 
    // if no events on the main channel
    if ((res <= 0) || (ufds[0].revents == 0)) {
@@ -305,10 +304,10 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
 
    void *ev_ctx = 0;
 
-//      DOUT1(("Call ibv_get_cq_event"));
+//      DOUT1("Call ibv_get_cq_event");
 
    if (ibv_get_cq_event(fChannel, &ev_cq, &ev_ctx)) {
-      EOUT(("ERROR when waiting for cq event"));
+      EOUT("ERROR when waiting for cq event");
    }
 
    ibv_req_notify_cq(ev_cq, 0);
@@ -316,7 +315,7 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
    if(ev_ctx!=0) {
       ComplQueueContext* cq_ctx = (ComplQueueContext*) ev_ctx;
       if (cq_ctx->own_cq != ev_cq) {
-         EOUT(("Mismatch in cq context"));
+         EOUT("Mismatch in cq context");
          exit(145);
       }
 
@@ -358,22 +357,21 @@ bool verbs::Thread::WaitEvent(dabc::EventId& evid, double tmout_sec)
          if (procid!=0) {
             uint16_t evnt = 0;
             if (wc->status != IBV_WC_SUCCESS) {
-               evnt = Worker::evntVerbsError;
-               EOUT(("Verbs error %s isrecv %s operid %u", StatusStr(wc->status), DBOOL(wc->opcode & IBV_WC_RECV), wc->wr_id));
+               evnt = WorkerAddon::evntVerbsError;
+               EOUT("Verbs error %s isrecv %s operid %u", StatusStr(wc->status), DBOOL(wc->opcode & IBV_WC_RECV), wc->wr_id);
             }
             else
                if (wc->opcode & IBV_WC_RECV)
-                  evnt = Worker::evntVerbsRecvCompl;
+                  evnt = WorkerAddon::evntVerbsRecvCompl;
                else
-                  evnt = Worker::evntVerbsSendCompl;
+                  evnt = WorkerAddon::evntVerbsSendCompl;
 
            _PushEvent(dabc::EventId(evnt, procid, wc->wr_id), 1);
 
            isany = true;
 
            // FIXME: we should increase number of fired events by worker
-           verbs::Worker* worker = (verbs::Worker*) fWorkers[procid]->work;
-           worker->fWorkerFiredEvents++;
+           IncWorkerFiredEvents(fWorkers[procid]->work);
 #ifdef VERBS_USING_PIPE
          }
 #else
@@ -410,27 +408,32 @@ void verbs::Thread::ProcessExtraThreadEvent(const dabc::EventId& evid)
 
 
 
-void verbs::Thread::WorkersNumberChanged()
+void verbs::Thread::WorkersSetChanged()
 {
    // we do not need locks while fWorkers and fMap can be changed only inside the thread
 
-   DOUT5(("WorkersNumberChanged started size:%u", fWorkers.size() ));
+   DOUT5("WorkersNumberChanged started size:%u", fWorkers.size());
 
    fMap.clear();
 
    for (unsigned indx=0;indx<fWorkers.size();indx++) {
-      DOUT5(("Test processor %u: %p", indx, fWorkers[indx].work));
+      verbs::WorkerAddon* addon = dynamic_cast<verbs::WorkerAddon*> (fWorkers[indx]->addon);
 
-      verbs::Worker* proc = dynamic_cast<verbs::Worker*> (fWorkers[indx]->work);
+      DOUT5("Test processor %u: work %p addon %p", indx, fWorkers[indx]->work, addon);
 
-      if ((proc==0) || (proc->QP()==0)) continue;
+      if ((addon==0) || (addon->QP()==0)) continue;
 
-      fMap[proc->QP()->qp_num()] = proc->WorkerId();
+      fMap[addon->QP()->qp_num()] = indx;
+
+      if (fWorkers[indx]->work->WorkerId() != indx) {
+         EOUT("Mismatch of worker id");
+         exit(44);
+      }
    }
 
    fCheckNewEvents = true;
 
-   DOUT5(("WorkersNumberChanged finished"));
+   DOUT5("WorkersNumberChanged finished");
 }
 
 const char* verbs::Thread::StatusStr(int code)

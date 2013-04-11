@@ -72,7 +72,7 @@ namespace dimc {
          void ExtendRegistrationFor(const std::string& mask, const std::string& name);
 
       public:
-         Observer(const char* name);
+         Observer(const std::string& name);
 
          virtual ~Observer();
 

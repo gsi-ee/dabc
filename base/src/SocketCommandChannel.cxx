@@ -98,7 +98,7 @@ class LostStatistic {
 
       void show()
       {
-         DOUT0(("LOST  STATISTIC: Recv %5ld Lost  %5ld %5.3f", numPkts, numLost, (numPkts > 0 ? 1.*numLost/numPkts : 0.)));
+         DOUT0("LOST  STATISTIC: Recv %5ld Lost  %5ld %5.3f", numPkts, numLost, (numPkts > 0 ? 1.*numLost/numPkts : 0.);
       }
 };
 
@@ -141,18 +141,18 @@ namespace dabc {
          };
 
          Command      fCmd;
-         uint32_t     fRecordId;     //!< unique id of the record inside correpspondent node
+         uint32_t     fRecordId;     //!< unique id of the record inside correspondent node
          int          fRecordNode;   //!< node where record was created, node+id are unique inside complete system
          int          fRemoteNode;   //!< remote node there command or reply should be send
          EState       fState;
-         TimeStamp fNextTm;
+         TimeStamp    fNextTm;
 
-         std::string fStrBuf;
+         std::string  fStrBuf;
 
-         int         fRetryLimit;
-         int         fRetryCnt;
-         double      fRetryTime;
-         EDelayKind  fRetryKind;
+         int          fRetryLimit;
+         int          fRetryCnt;
+         double       fRetryTime;
+         EDelayKind   fRetryKind;
 
 
          SocketCmdRec(Command cmd, int nodeid, EState state) :
@@ -169,7 +169,7 @@ namespace dabc {
 
          virtual ~SocketCmdRec()
          {
-            // DOUT0(("Delete rec %p", this));
+            // DOUT0("Delete rec %p", this);
          }
 
 
@@ -229,7 +229,7 @@ namespace dabc {
             return (res < DABC_SEND_RETRY_TM) ? DABC_SEND_RETRY_TM : res;
          }
 
-         double NextDelay() 
+         double NextDelay()
          {
             double zn = 1.;
             switch (fRetryKind) {
@@ -266,7 +266,7 @@ namespace dabc {
                   break;
 
                default:
-                  EOUT(("Something else ?? %d", State()));
+                  EOUT("Something else ?? %d", State());
             }
          }
 
@@ -394,9 +394,82 @@ namespace dabc {
 }
 
 
-dabc::SocketCommandChannel::SocketCommandChannel(int fd, int nport, const char* name) :
-   dabc::SocketWorker(fd, name),
-   fPort(nport),
+
+
+dabc::SocketCommandAddon::SocketCommandAddon(int fd, int port) :
+   dabc::SocketAddon(fd),
+   fPort(port)
+{
+   SetDoingInput(true);
+   SetDoingOutput(true);
+}
+
+dabc::SocketCommandAddon::~SocketCommandAddon()
+{
+}
+
+void dabc::SocketCommandAddon::ProcessEvent(const EventId& evnt)
+{
+   switch (evnt.GetCode()) {
+      case evntSocketRead: {
+
+         SetDoingInput(true);
+
+         SocketCmdPacket recvhdr;
+         uint8_t         recvbuf[MAX_CMD_PAYLOAD];
+         struct sockaddr_in recvaddr;
+
+         ssize_t len = DoRecvBufferHdr(&recvhdr, sizeof(SocketCmdPacket),
+                                        recvbuf, MAX_CMD_PAYLOAD,
+                                       &recvaddr, sizeof(struct sockaddr_in));
+
+         SocketCommandChannel* chl = (SocketCommandChannel*) fWorker();
+
+//         DOUT0("Recv data len = %d", len);
+
+         if (len>0) chl->ProcessRecvData(&recvhdr, recvbuf, len, &recvaddr, sizeof(struct sockaddr_in));
+
+         return;
+      }
+
+      case evntSocketWrite: {
+
+//         DOUT0("Can write to the socket");
+
+         // do not automatically enable event generation - only if we want to send something
+         // SetDoingOutput(true);
+
+         SocketCommandChannel* chl = (SocketCommandChannel*) fWorker();
+
+         chl->fCanSendDirect = true;
+
+         chl->CheckSocketCanSend();
+
+         return;
+      }
+   }
+
+   dabc::SocketAddon::ProcessEvent(evnt);
+
+}
+
+bool dabc::SocketCommandAddon::SendData(void* hdr, unsigned hdrsize, void* data, unsigned datasize, void* addr, unsigned addrsize)
+{
+   ssize_t res = DoSendBufferHdr(hdr, hdrsize, data, datasize, addr, addrsize);
+   bool isok = (res == hdrsize + datasize);
+
+   if (isok) SetDoingOutput(true);
+
+   return isok;
+}
+
+
+
+// ===============================================================================
+
+
+dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, SocketCommandAddon* addon) :
+   dabc::Worker(MakePair(name.empty() ? "/CommandChannel" : name)),
    fAppId(DABC_APP_HEADER),
    fAcceptRequests(true),
    fRecs(0),
@@ -405,8 +478,7 @@ dabc::SocketCommandChannel::SocketCommandChannel(int fd, int nport, const char* 
    fConnCmds(CommandsQueue::kindSubmit),
    fAddrs()
 {
-   SetDoingInput(true);
-   SetDoingOutput(true);
+   AssignAddon(addon);
 
    fCanSendDirect = true;
    fRecIdCounter = 0;
@@ -421,6 +493,8 @@ dabc::SocketCommandChannel::SocketCommandChannel(int fd, int nport, const char* 
 
    fSendPackets = 0;
    fRetryPackets = 0;
+
+   DOUT0("Create dabc::SocketCommandChannel parent %p", GetParent());
 }
 
 dabc::SocketCommandChannel::~SocketCommandChannel()
@@ -429,7 +503,7 @@ dabc::SocketCommandChannel::~SocketCommandChannel()
    lost.show();
    #endif
 
-   DOUT0(("RETRY STATISTIC: Send %5ld Retry %5ld %5.3f", fSendPackets, fRetryPackets, (fSendPackets>0 ? 1.*fRetryPackets/fSendPackets : 0.)));
+   DOUT0("RETRY STATISTIC: Send %5ld Retry %5ld %5.3f", fSendPackets, fRetryPackets, (fSendPackets>0 ? 1.*fRetryPackets/fSendPackets : 0.));
 
    delete fRecs;
    delete fPending;
@@ -448,12 +522,12 @@ int dabc::SocketCommandChannel::PreviewCommand(Command cmd)
    std::string url = cmd.GetReceiver();
 
    if (url.empty())
-      return dabc::SocketWorker::PreviewCommand(cmd);
+      return dabc::Worker::PreviewCommand(cmd);
 
    int remnode = Url::ExtractNodeId(url);
 
    if ((remnode<0) || (remnode==fNodeId))
-      return dabc::SocketWorker::PreviewCommand(cmd);
+      return dabc::Worker::PreviewCommand(cmd);
 
    int resolve = TryAddressResolve(remnode);
 
@@ -465,11 +539,11 @@ int dabc::SocketCommandChannel::PreviewCommand(Command cmd)
 
    if (sbuf.length() > MAX_CMD_PAYLOAD) {
       // FIXME: one should implement treatment of very long commands
-      EOUT(("TOO long command %u - supported only %u", sbuf.length(), MAX_CMD_PAYLOAD));
+      EOUT("TOO long command %u - supported only %u", sbuf.length(), MAX_CMD_PAYLOAD);
       return cmd_false;
    }
 
-   DOUT2(("Create command record for remnode %d", remnode));
+   DOUT2("Create command record for remnode %d", remnode);
 
    SocketCmdRec* rec = new SocketCmdRec(cmd, remnode, SocketCmdRec::stSendCommand);
    rec->fRecordId = fRecIdCounter++;
@@ -549,7 +623,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
    }
 
 
-   return dabc::SocketWorker::ExecuteCommand(cmd);
+   return dabc::Worker::ExecuteCommand(cmd);
 }
 
 
@@ -622,13 +696,13 @@ bool dabc::SocketCommandChannel::ReplyCommand(Command cmd)
    if (rec==0) rec = fPending->find_rec_by_cmd(cmd);
 
    if (rec==0) {
-      EOUT(("Cannot find record for command: %s", cmd.GetName()));
+      EOUT("Cannot find record for command: %s", cmd.GetName());
       return true;
    }
 
    cmd.SaveToString(rec->fStrBuf);
 
-   DOUT2(("RECID:%d:%u !!!!!! Reply command %s !!!!", rec->fRecordNode, rec->fRecordId, cmd.GetName()));
+   DOUT2("RECID:%d:%u !!!!!! Reply command %s !!!!", rec->fRecordNode, rec->fRecordId, cmd.GetName());
 
    rec->fCmd = 0;
    rec->SetState(SocketCmdRec::stExecuted);
@@ -658,13 +732,13 @@ int dabc::SocketCommandChannel::TryAddressResolve(int nodeid)
    if (remport <= 0) remport = 1237;
 
    if (nodename.length()==0) {
-      EOUT(("Cannot get nodename for node %d", nodeid));
+      EOUT("Cannot get nodename for node %d", nodeid);
       return -1;
    }
 
    struct hostent *host = gethostbyname(nodename.c_str());
    if ((host==0) || (host->h_addrtype!=AF_INET)) {
-      EOUT(("Cannot get host information for %s", nodename.c_str()));
+      EOUT("Cannot get host information for %s", nodename.c_str());
       return -1;
    }
 
@@ -705,7 +779,7 @@ void dabc::SocketCommandChannel::RefreshAddr(int nodeid, void* addr, int addrlen
 
       while ((int)fAddrs.size() <= nodeid) fAddrs.push_back(0);
 
-      DOUT2(("Node %d send its address itself", nodeid));
+      DOUT2("Node %d send its address itself", nodeid);
 
       fAddrs[nodeid] = rec;
 
@@ -715,15 +789,15 @@ void dabc::SocketCommandChannel::RefreshAddr(int nodeid, void* addr, int addrlen
    if (rec->resolved) {
       if (memcmp(&(rec->address), addr, sizeof(struct sockaddr_in))==0) return;
 
-      EOUT(("Address mismatch for remote node %d - use new", nodeid));
+      EOUT("Address mismatch for remote node %d - use new", nodeid);
 
       memcpy(&(rec->address), addr, sizeof(struct sockaddr_in));
    } else {
 
       if (memcmp(&(rec->address), addr, sizeof(struct sockaddr_in))==0)
-         DOUT2(("We got reply from node %d during resolution - good", nodeid));
+         DOUT2("We got reply from node %d during resolution - good", nodeid);
       else {
-         EOUT(("Address from node %d differ from that we trying to resolve - accept new", nodeid));
+         EOUT("Address from node %d differ from that we trying to resolve - accept new", nodeid);
          memcpy(&(rec->address), addr, sizeof(struct sockaddr_in));
       }
 
@@ -806,7 +880,7 @@ void dabc::SocketCommandChannel::ErrorCloseRec(SocketCmdRec* rec)
 
       close_addr = rec->fRemoteNode;
 
-      EOUT(("!!!!! Node %d cannot be resolved !!!!!", rec->fRemoteNode));
+      EOUT("!!!!! Node %d cannot be resolved !!!!!", rec->fRemoteNode);
    }
 
    fRecs->remove(rec);
@@ -821,64 +895,8 @@ void dabc::SocketCommandChannel::ErrorCloseRec(SocketCmdRec* rec)
 
 void dabc::SocketCommandChannel::OnThreadAssigned()
 {
-   DOUT2(("Start thread in command channel"));
+   DOUT2("Start thread in command channel");
    ActivateTimeout(1.);
-}
-
-void dabc::SocketCommandChannel::OnConnectionClosed()
-{
-}
-
-void dabc::SocketCommandChannel::OnSocketError(int errnum, const char* info)
-{
-}
-
-void dabc::SocketCommandChannel::ProcessEvent(const EventId& evnt)
-{
-   switch (evnt.GetCode()) {
-      case evntSocketRead: {
-
-         SetDoingInput(true);
-
-         SocketCmdPacket recvhdr;
-         uint8_t         recvbuf[MAX_CMD_PAYLOAD];
-         struct sockaddr_in recvaddr;
-
-         ssize_t len = DoRecvBufferHdr(&recvhdr, sizeof(SocketCmdPacket),
-                                        recvbuf, MAX_CMD_PAYLOAD,
-                                       &recvaddr, sizeof(struct sockaddr_in));
-
-//         DOUT0(("Recv data len = %d", len));
-
-         if (len>0) ProcessRecvData(&recvhdr, recvbuf, len, &recvaddr, sizeof(struct sockaddr_in));
-
-         break;
-      }
-
-      case evntSocketWrite: {
-
-//         DOUT0(("Can write to the socket"));
-
-         double diff = -1.;
-
-         // if data was not send now, one can send later immediately
-         if (DoSendData(&diff)) {
-            // if data was send, request to send new portion
-            fCanSendDirect = false;
-            SetDoingOutput(true);
-         } else {
-            fCanSendDirect = true;
-         }
-
-         if (fCanSendDirect && (diff>0) && (diff<1.))
-            ActivateTimeout(diff);
-
-         break;
-      }
-
-      default:
-         dabc::SocketWorker::ProcessEvent(evnt);
-   }
 }
 
 double dabc::SocketCommandChannel::CheckSocketCanSend(bool activate_timeout)
@@ -887,10 +905,7 @@ double dabc::SocketCommandChannel::CheckSocketCanSend(bool activate_timeout)
 
    double diff = -1.;
 
-   if (DoSendData(&diff)) {
-      fCanSendDirect = false;
-      SetDoingOutput(true);
-   }
+   DoSendData(&diff);
 
    if (activate_timeout && fCanSendDirect)
       if ((diff>0.) && (diff<1.)) ActivateTimeout(diff);
@@ -904,18 +919,18 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
    int datalen = len - sizeof(SocketCmdPacket);
 
    if (datalen < 0) {
-      EOUT(("UDP Message too short %d - just skip it", len));
+      EOUT("UDP Message too short %d - just skip it", len);
       return;
    }
 
    if ((hdr->dabc_header != DABC_CMD_HEADER) ||
        (hdr->app_header != fAppId)) {
-      EOUT(("Header does not match - ignore it"));
+      EOUT("Header does not match - ignore it");
       return;
    }
 
    if ((int) hdr->target_id != fNodeId) {
-      EOUT(("Target node mismatch %u != %d in the incoming packet, ignore", hdr->target_id, fNodeId));
+      EOUT("Target node mismatch %u != %d in the incoming packet from %u, ignore", hdr->target_id, fNodeId, hdr->source_id);
       return;
    }
 
@@ -923,13 +938,13 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
 #ifdef LOST_RATE
 
    if (lost.lost()) {
-      DOUT1(("Skip packet %u %u -> %u res:%d", hdr->data_kind, hdr->source_id, hdr->target_id, len));
+      DOUT1("Skip packet %u %u -> %u res:%d", hdr->data_kind, hdr->source_id, hdr->target_id, len);
       return;
    }
 
 #endif
 
-   DOUT3(("SocketCommandChannel::ProcessRecvData packet %u %u -> %u res:%d", hdr->data_kind, hdr->source_id, hdr->target_id, len));
+   DOUT3("SocketCommandChannel::ProcessRecvData packet %u %u -> %u res:%d", hdr->data_kind, hdr->source_id, hdr->target_id, len);
 
    switch (hdr->data_kind) {
       case kindResolveReq: {
@@ -953,7 +968,7 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
          // remove request record
          SocketCmdRec* rec = fRecs->find_rec(hdr->rec_id, fNodeId);
          if (rec==0) {
-            DOUT3(("No request found for reply"));
+            DOUT3("No request found for reply");
          }
          CloseRec(rec);
 
@@ -968,7 +983,7 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
          if (!fAcceptRequests) return;
 
          if (!CheckAddr(hdr->source_id, addr, addrlen)) {
-            EOUT(("IP Address of node %u is wrong", hdr->source_id));
+            EOUT("IP Address of node %u is wrong", hdr->source_id);
             return;
          }
 
@@ -978,20 +993,20 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
             if (rec->State() == SocketCmdRec::stReceived) {
                // reply as soon as possible
                rec->fNextTm = dabc::Now();
-               DOUT2(("RECID:%d:%u !!!!!! Confirm as soon as possible !!!!", rec->fRecordNode, rec->fRecordId));
+               DOUT2("RECID:%d:%u !!!!!! Confirm as soon as possible !!!!", rec->fRecordNode, rec->fRecordId);
             } else
             if (rec->State() == SocketCmdRec::stConfirmed) {
                // if we already confirm command, do it again
                rec->fNextTm = dabc::Now();
                rec->SetState(SocketCmdRec::stReceived);
-               DOUT2(("RECID:%d:%u !!!!!! Confirm again !!!!", rec->fRecordNode, rec->fRecordId));
+               DOUT2("RECID:%d:%u !!!!!! Confirm again !!!!", rec->fRecordNode, rec->fRecordId);
             } else
             if (rec->State() == SocketCmdRec::stExecuted) {
                // in this state command will be replied anyway
-               DOUT2(("RECID:%d:%u !!!!!! Executed - should be replied !!!!", rec->fRecordNode, rec->fRecordId));
+               DOUT2("RECID:%d:%u !!!!!! Executed - should be replied !!!!", rec->fRecordNode, rec->fRecordId);
             } else {
                // FIXME: should ignore such message in the future
-               EOUT(("RECID:%d:%u !!!!!! We get command request again when record state is %d - HARD ERROR!!!!", rec->fRecordNode, rec->fRecordId, rec->State()));
+               EOUT("RECID:%d:%u !!!!!! We get command request again when record state is %d - HARD ERROR!!!!", rec->fRecordNode, rec->fRecordId, rec->State());
                exit(1);
             }
             // send confirmed message again
@@ -1011,7 +1026,7 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
          }
 
          if (datalen==0) {
-            EOUT(("<<<<<<<< ZERO command length - should not happen >>>>>>>>>>"));
+            EOUT("<<<<<<<< ZERO command length - should not happen >>>>>>>>>>");
             return;
          }
 
@@ -1020,7 +1035,7 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
 
          dabc::Command cmd;
          if (!cmd.ReadFromString(str.c_str())) {
-            EOUT(("Cannot interpret command: %s - ignore it", str.c_str()));
+            EOUT("Cannot interpret command: %s - ignore it", str.c_str());
             return;
          }
 
@@ -1030,7 +1045,7 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
          rec->fNextTm = dabc::Now() + 0.5*DABC_SEND_RETRY_TM; // wait 0.05 second before confirm record
          fRecs->push_back(rec);
 
-         DOUT2(("RECID:%d:%u !!!!!! Get command from remote !!!!", rec->fRecordNode, rec->fRecordId));
+         DOUT2("RECID:%d:%u !!!!!! Get command from remote !!!!", rec->fRecordNode, rec->fRecordId);
 
          dabc::mgr()->Submit(Assign(cmd));
 
@@ -1042,16 +1057,16 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
       case kindCommandConf: {
 
          if (!CheckAddr(hdr->source_id, addr, addrlen)) {
-            EOUT(("IP Address of node %u is wrong", hdr->source_id));
+            EOUT("IP Address of node %u is wrong", hdr->source_id);
             return;
          }
 
          SocketCmdRec* rec = fRecs->find_rec(hdr->rec_id, fNodeId);
          if (rec==0) {
-            EOUT(("No request found for reply"));
+            EOUT("No request found for reply");
          } else {
             rec->SetState(SocketCmdRec::stGetConfirm);
-            DOUT2(("RECID:%d:%u !!!!!! Get confirmation !!!!", rec->fRecordNode, rec->fRecordId));
+            DOUT2("RECID:%d:%u !!!!!! Get confirmation !!!!", rec->fRecordNode, rec->fRecordId);
             // FIXME: exact number of retires and timedelay for first retry should be configurable
             rec->SetRetryLimit(DABC_EXECUTE_RETRY_LIMIT, SocketCmdRec::kindProgressive, DABC_EXECUTE_RETRY_TIME);
             rec->fNextTm = dabc::Now() + 0.5/* DABC_EXECUTE_FIRST_TIME */;
@@ -1063,13 +1078,13 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
          // we get reply for the command, process it
 
          if (!CheckAddr(hdr->source_id, addr, addrlen)) {
-            EOUT(("IP Address of node %u is wrong", hdr->source_id));
+            EOUT("IP Address of node %u is wrong", hdr->source_id);
             return;
          }
 
          SocketCmdRec* rec = fRecs->find_rec(hdr->rec_id, fNodeId);
          if (rec==0) {
-            EOUT(("No command with such id - ignore"));
+            EOUT("No command with such id - ignore");
             break;
          }
 
@@ -1078,11 +1093,11 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
 
          dabc::Command cmd;
          if (!cmd.ReadFromString(str.c_str())) {
-            EOUT(("Cannot interpret command: %s - ignore it", str.c_str()));
+            EOUT("Cannot interpret command: %s - ignore it", str.c_str());
             return;
          }
 
-         DOUT2(("RECID:%d:%u !!!!!! Get reply !!!!", rec->fRecordNode, rec->fRecordId));
+         DOUT2("RECID:%d:%u !!!!!! Get reply !!!!", rec->fRecordNode, rec->fRecordId);
 
          rec->fCmd.AddValuesFrom(cmd);
          int res = cmd.GetResult();
@@ -1098,17 +1113,17 @@ void dabc::SocketCommandChannel::ProcessRecvData(SocketCmdPacket* hdr, void* dat
       case kindDisconnect: {
 
          if (FindAddr(hdr->source_id) && !CheckAddr(hdr->source_id, addr, addrlen)) {
-            EOUT(("IP Address of node %u is wrong", hdr->source_id));
+            EOUT("IP Address of node %u is wrong", hdr->source_id);
             return;
          }
 
-         DOUT2(("Connection closed by node %u", hdr->source_id));
+         DOUT2("Connection closed by node %u", hdr->source_id);
          CloseAddr(hdr->source_id);
          break;
       }
 
       default:
-         EOUT(("Request of unknown type %u - ignore", hdr->data_kind));
+         EOUT("Request of unknown type %u - ignore", hdr->data_kind);
          break;
    };
 }
@@ -1174,7 +1189,7 @@ void dabc::SocketCommandChannel::CloseAddr(int nodeid)
             break;
 
          default:
-            EOUT(("INTERNAL ERROR - undefined record state %d", rec->State()));
+            EOUT("INTERNAL ERROR - undefined record state %d", rec->State());
             rec->Close(false);
             delete rec;
             break;
@@ -1200,6 +1215,16 @@ bool dabc::SocketCommandChannel::DoSendData(double* diff)
    SocketCmdRec* find = 0;
    SocketCmdAddr* cmdaddr = 0;
 
+   // set flag true, only at the end when operation started we can switch flag back to the false
+   fCanSendDirect = true;
+
+   SocketCommandAddon* addon = (SocketCommandAddon*) fAddon();
+
+   if (addon==0) {
+      EOUT("No proper addon");
+      return false;
+   }
+
    do {
 
       find = fRecs->find_rec_by_tm(tm, diff);
@@ -1207,7 +1232,7 @@ bool dabc::SocketCommandChannel::DoSendData(double* diff)
 
       // check if we can process record - maybe retry counter is expired
       if (!find->IncRetry()) {
-         EOUT(("Record retry counter is over, delete it"));
+         EOUT("Record retry counter is over, delete it");
          ErrorCloseRec(find);
          find = 0;
          continue;
@@ -1216,7 +1241,7 @@ bool dabc::SocketCommandChannel::DoSendData(double* diff)
       // if one can not define address for record, it should be discarded
       cmdaddr = FindAddr(find->fRemoteNode);
       if (cmdaddr == 0) {
-         EOUT(("Command rec for node %d without address", find->fRemoteNode));
+         EOUT("Command rec for node %d without address", find->fRemoteNode);
          ErrorCloseRec(find);
          find = 0;
          continue;
@@ -1260,7 +1285,7 @@ bool dabc::SocketCommandChannel::DoSendData(double* diff)
          break;
       case SocketCmdRec::stConfirmed:
          // one should cancel command execution here and send cancellation back
-         EOUT(("Command %s was not executed correctly to the end", find->fCmd.GetName()));
+         EOUT("Command %s was not executed correctly to the end", find->fCmd.GetName());
 
          find->fCmd.ReplyFalse();
          CloseRec(find);
@@ -1276,24 +1301,24 @@ bool dabc::SocketCommandChannel::DoSendData(double* diff)
          sendhdr.data_kind = kindDisconnect;
          break;
       default:
-         EOUT(("Nothing to do here"));
+         EOUT("Nothing to do here");
          return false;
    }
 
-   ssize_t res = DoSendBufferHdr(&sendhdr, sizeof(sendhdr),
-                                 send_data, sendhdr.data_len,
-                                 &(cmdaddr->address), sizeof(cmdaddr->address));
-
-   DOUT3(("SocketCommandChannel::DoSendData packet %u %u -> %u res:%d", sendhdr.data_kind, sendhdr.source_id, sendhdr.target_id, res));
-
    fSendPackets++;
-   if (find->RetryCnt() > 1) { fRetryPackets++; /* DOUT1(("??? retry ???")); */ }
+   if (find->RetryCnt() > 1) { fRetryPackets++; /* DOUT1("??? retry ???"); */ }
 
-   if (res != (int) (sizeof(sendhdr) + sendhdr.data_len)) {
-      EOUT(("Error sending command buffer kind %u", sendhdr.data_kind));
+   DOUT3("SocketCommandChannel::DoSendData packet %u %u -> %u", sendhdr.data_kind, sendhdr.source_id, sendhdr.target_id);
+
+   if (!addon->SendData(&sendhdr, sizeof(sendhdr),
+                        send_data, sendhdr.data_len,
+                        &(cmdaddr->address), sizeof(cmdaddr->address))) {
+      EOUT("Error sending command buffer kind %u", sendhdr.data_kind);
       ErrorCloseRec(find);
       return false;
    }
+
+   fCanSendDirect = false;
 
    switch (find->State()) {
       case SocketCmdRec::stRequestResolve:
@@ -1308,7 +1333,7 @@ bool dabc::SocketCommandChannel::DoSendData(double* diff)
          // just try to resend data after 0.1 sec
          find->fNextTm = tm + find->NextDelay();
 
-         DOUT2(("RECID:%d:%u !!!!!! Send command !!!!", find->fRecordNode, find->fRecordId));
+         DOUT2("RECID:%d:%u !!!!!! Send command !!!!", find->fRecordNode, find->fRecordId);
 
          break;
       case SocketCmdRec::stGetConfirm:
@@ -1332,7 +1357,7 @@ bool dabc::SocketCommandChannel::DoSendData(double* diff)
          break;
 
       default:
-         EOUT(("Still here"));
+         EOUT("Still here");
          break;
    }
 
@@ -1377,7 +1402,7 @@ double dabc::SocketCommandChannel::ProcessTimeout(double diff)
    return CheckSocketCanSend(false);
 }
 
-dabc::SocketCommandChannel* dabc::SocketCommandChannel::CreateChannel(const char* objname)
+dabc::SocketCommandChannel* dabc::SocketCommandChannel::CreateChannel(const std::string& objname)
 {
 
    int nport = dabc::mgr()->cfg()->MgrPort();
@@ -1387,11 +1412,13 @@ dabc::SocketCommandChannel* dabc::SocketCommandChannel::CreateChannel(const char
    int fd = dabc::SocketThread::StartUdp(nport, 7000, 7100);
 
    if (fd<=0) {
-      EOUT(("Cannot open cmd socket"));
+      EOUT("Cannot open cmd socket");
       return 0;
    }
 
-   DOUT2(("Start CMD SOCKET port:%d", nport));
+   DOUT1("Start CMD SOCKET port:%d", nport);
 
-   return new SocketCommandChannel(fd, nport, objname);
+   SocketCommandAddon* addon = new SocketCommandAddon(fd, nport);
+
+   return new SocketCommandChannel(objname, addon);
 }

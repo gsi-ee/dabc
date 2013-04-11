@@ -70,7 +70,7 @@ namespace hadaq {
       virtual double ProcessTimeout(double lastdiff);
 
       public:
-         Observer(const char* name);
+         Observer(const std::string& name);
 
          virtual ~Observer();
 

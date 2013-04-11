@@ -11,11 +11,11 @@ namespace bnet {
 
    class MbsFactory : public dabc::Factory {
    public:
-      MbsFactory(const char* name) : dabc::Factory(name) {}
+      MbsFactory(const std::string& name) : dabc::Factory(name) {}
 
-      virtual dabc::Application* CreateApplication(const char* classname, dabc::Command cmd);
+      virtual dabc::Application* CreateApplication(const std::string& classname, dabc::Command cmd);
 
-      virtual dabc::Module* CreateModule(const char* classname, const char* modulename, dabc::Command cmd);
+      virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd);
    };
 }
 

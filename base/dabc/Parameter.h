@@ -200,6 +200,9 @@ namespace dabc {
          Parameter& SetDebugLevel(int level = 1) { Field("debug").SetInt(level); return *this; }
          int GetDebugLevel() const;
 
+         /** Set parameter to convert double values to the string - used for ratemeter */
+         Parameter& SetWidthPrecision(unsigned width, unsigned prec);
+
          Parameter& SetUnits(const std::string& unit) { Field("units").SetStr(unit); return *this; }
          /** Return units of parameter value */
          const std::string GetUnits() const { return Field("units").AsStdStr(); }

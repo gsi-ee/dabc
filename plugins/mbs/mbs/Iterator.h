@@ -82,23 +82,44 @@ namespace mbs {
    class WriteIterator {
       public:
          WriteIterator();
-         WriteIterator(const dabc::Buffer& buf);
+         WriteIterator(dabc::Buffer& buf);
          ~WriteIterator();
 
-         bool Reset(const dabc::Buffer& buf);
+         bool Reset(dabc::Buffer& buf);
 
          bool IsBuffer() const { return !fBuffer.null(); }
          bool IsEmpty() const { return fFullSize == 0; }
 
-         bool IsPlaceForEvent(uint32_t subeventsize);
+         /** Return true if any complete event was written to the buffer */
+         bool IsAnyEvent() const { return fFullSize != 0; }
+
+         /** Return true if any uncomplete data were provided to the iterator */
+         bool IsAnyUncompleteData() const { return !fSubPtr.null(); }
+
+         /** Return true if anything was written to the buffer */
+         bool IsAnyData() const { return IsAnyEvent() || IsAnyUncompleteData(); }
+
+         bool IsPlaceForEvent(uint32_t subeventsize, bool add_subev_header = false);
          bool NewEvent(EventNumType event_number = 0, uint32_t subeventsize = 0);
+         /** Return true if new event was started and was not yet closed */
+         bool IsEventStarted() const { return !fSubPtr.null(); }
 
          bool NewSubevent(uint32_t minrawsize = 0, uint8_t crate = 0, uint16_t procid = 0, uint8_t control = 0);
-         bool FinishSubEvent(uint32_t rawdatasz);
+         bool NewSubevent2(uint32_t fullid);
+
+         bool IsPlaceForRawData(unsigned len) const;
+         bool AddRawData(const void* src, unsigned len);
+
+
+         bool FinishSubEvent(uint32_t rawdatasz = 0);
          bool AddSubevent(const dabc::Pointer& source);
          bool AddSubevent(SubeventHeader* sub);
 
          bool FinishEvent();
+
+         /** Ignore all data, which were add with last NewEvent call.
+          * Can be used when not enough place were available*/
+         void DiscardEvent();
 
          /** Method to copy full event from the other place.
           * ptr should contain event with full header.
@@ -108,15 +129,19 @@ namespace mbs {
 
          dabc::Buffer Close();
 
+         /** Method could be used to close current buffer and transfer all uncompleted parts to new buffer */
+         dabc::Buffer CloseAndTransfer(dabc::Buffer& newbuf);
+
          EventHeader* evnt() const { return (EventHeader*) fEvPtr(); }
          SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
          void* rawdata() const { return subevnt() ? subevnt()->RawData() : 0; }
          uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(SubeventHeader); }
 
       protected:
-         dabc::Buffer   fBuffer; // here we keep buffer - mean onwership is delivered to iterator
-         dabc::Pointer  fEvPtr;
-         dabc::Pointer  fSubPtr;
+         dabc::Buffer   fBuffer;  // here we keep buffer - mean onwership is delivered to iterator
+         dabc::Pointer  fEvPtr;   // place for current event
+         dabc::Pointer  fSubPtr;  // place for subevents
+         dabc::Pointer  fSubData; // pointer to place raw data of current subevent
          dabc::BufferSize_t fFullSize;
    };
 

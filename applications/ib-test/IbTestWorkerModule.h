@@ -240,7 +240,7 @@ class IbTestWorkerModule : public dabc::ModuleSync {
       void PerformNormalTest();
 
    public:
-      IbTestWorkerModule(const char* name, dabc::Command cmd);
+      IbTestWorkerModule(const std::string& name, dabc::Command cmd);
 
       virtual ~IbTestWorkerModule();
 

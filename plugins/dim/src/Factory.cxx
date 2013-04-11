@@ -21,24 +21,11 @@
 
 dabc::FactoryPlugin dimcfactory(new dimc::Factory("dimc"));
 
-
-dabc::Module* dimc::Factory::CreateModule(const char* classname, const char* modulename, dabc::Command cmd)
-{
-
-//   if (strcmp(classname, "dimc::Monitor")==0)
-//      return new mbs::GeneratorModule(modulename, cmd);
-
-   return dabc::Factory::CreateModule(classname, modulename, cmd);
-}
-
-
 void dimc::Factory::Initialize()
 {
-   DOUT0(("Initialize DIM control"));
+   DOUT0("Initialize DIM control");
 
-   dimc::Observer* o = new dimc::Observer("/dim");
+   dabc::WorkerRef w = new dimc::Observer("/dim");
 
-   dabc::mgr()->MakeThreadFor(o,"DimThread");
-
-//   o->thread()()->SetLogging(true);
+   w.MakeThreadForWorker("DimThread");
 }

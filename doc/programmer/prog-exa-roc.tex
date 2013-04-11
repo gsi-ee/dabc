@@ -184,7 +184,6 @@ It has following configuration parameters:
 \class{CombinerModule})
 \item \param{CalibrFile} - name of {\tt \*.lmd} file to store "calibrated" data (after
 \class{CalibrationModule})
-\item \param{MbsFileSizeLimit} - maximum size of each file, in Mb. If the written data 
 would exceed this size, a new output file is automatically created with a sequence number appended to the file name.
 \ebul
 
@@ -248,8 +247,6 @@ File {\tt Readout.xml} configures the readout from 3 ROCs:
     <NumBuffers value="100"/>
     <TransportWindow value="30"/>
     <RawFile value="run090.lmd"/>
-    <MbsServerKind value="Stream"/>
-    <MbsFileSizeLimit value="110"/>
   </Application>
  </Context>
 </dabc>
@@ -283,9 +280,7 @@ File  {\tt Calibr.xml} shows the special case of a configuration to convert
     <BufferSize value="65536"/>
     <NumBuffers value="100"/>
     <RawFile value="/d/cbm06/cbmdata/SEP08/raw/run028/run028*.lmd"/>
-    <MbsServerKind value="Stream"/>
     <CalibrFile value="testcal.lmd"/>
-    <MbsFileSizeLimit value="110"/>
   </Application>
  </Context>
 </dabc>
@@ -295,7 +290,7 @@ Here the "raw" data is read from the files matching the name wildcard pattern
 as defined in the {\tt <RawFile>} tag. Note that this example will 
 read subsequently all data of run "028" which possibly was saved
 into several files with subsequent numbers appended to their names, due to the 
-{\tt <MbsFileSizeLimit>} mechanism as described above.
+{\tt <FileSizeLimit>} mechanism as described above.
 The "calibrated" data is written as usual to the output file
 as specified in the {\tt <CalibrFile>} tag.
 

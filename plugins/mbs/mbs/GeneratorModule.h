@@ -24,10 +24,6 @@ namespace mbs {
 
       protected:
 
-         dabc::PoolHandle*       fPool;
-
-         dabc::BufferSize_t      fBufferSize;
-
          uint32_t    fEventCount;
          uint32_t    fStartStopPeriod;
          uint16_t    fNumSubevents;
@@ -40,10 +36,12 @@ namespace mbs {
 
          void   FillRandomBuffer(dabc::Buffer& buf);
 
-      public:
-         GeneratorModule(const char* name, dabc::Command cmd = 0);
+         virtual void BeforeModuleStart();
 
-         virtual void ProcessOutputEvent(dabc::Port* port);
+      public:
+         GeneratorModule(const std::string& name, dabc::Command cmd = 0);
+
+         virtual bool ProcessSend(unsigned port);
 
          virtual int ExecuteCommand(dabc::Command cmd);
    };
@@ -52,9 +50,9 @@ namespace mbs {
    class ReadoutModule : public dabc::ModuleAsync {
 
       public:
-         ReadoutModule(const char* name, dabc::Command cmd = 0);
+         ReadoutModule(const std::string& name, dabc::Command cmd = 0);
 
-         virtual void ProcessInputEvent(dabc::Port* port);
+         virtual bool ProcessRecv(unsigned port);
    };
 
    class TransmitterModule : public dabc::ModuleAsync {
@@ -63,18 +61,18 @@ namespace mbs {
 
          bool  fReconnect; // indicate that module should try to reconnect input rather than stop execution
 
-         void retransmit();
+         bool retransmit();
 
       public:
-      	TransmitterModule(const char* name, dabc::Command cmd = 0);
+      	TransmitterModule(const std::string& name, dabc::Command cmd = 0);
 
-         virtual void ProcessInputEvent(dabc::Port*) { retransmit(); }
+         virtual bool ProcessRecv(unsigned port);
 
-         virtual void ProcessOutputEvent(dabc::Port*) { retransmit(); }
+         virtual bool ProcessSend(unsigned port);
 
-         virtual void ProcessDisconnectEvent(dabc::Port* port);
+         virtual void ProcessConnectEvent(const std::string& name, bool on);
 
-         virtual void ProcessTimerEvent(dabc::Timer* timer);
+         virtual void ProcessTimerEvent(unsigned timer);
 
          virtual void BeforeModuleStart();
    };

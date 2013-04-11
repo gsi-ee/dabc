@@ -28,7 +28,7 @@ dabc::ConfigContainer::ConfigContainer(const std::string& name, Command cmd, Ref
    fWorker(worker),
    fReadFlag(-1)
 {
-//   DOUT0(("Create config container %p for %s", this, name.c_str()));
+//   DOUT0("Create config container %p for %s", this, name.c_str());
 }
 
 const char* dabc::ConfigContainer::GetField(const std::string& name, const char* dflt)
@@ -40,7 +40,7 @@ const char* dabc::ConfigContainer::GetField(const std::string& name, const char*
    if (!fName.empty() && name.empty()) res = fCmd.GetField(fName, 0); else
    if (fName.empty() && !name.empty()) res = fCmd.GetField(name, 0);
 
-   DOUT3(("CFG1: GETFIELD name:%s  fName:%s  res = %s", name.c_str(), fName.c_str(), (res ? res : "---")));
+   DOUT3("CFG1: GETFIELD name:%s  fName:%s  res = %s", name.c_str(), fName.c_str(), (res ? res : "---"));
 
    if (res!=0) return res;
 
@@ -63,18 +63,18 @@ const char* dabc::ConfigContainer::GetField(const std::string& name, const char*
       // indicate that setfield method could be applied
       fReadFlag = 0;
 
-      DOUT3(("Start reading %s from xml worker %s cont:%p!!!", fName.c_str(), fWorker.GetName(), this));
+      DOUT2("Start reading %s from xml worker %s class %s!!!", fName.c_str(), fWorker.GetName(), fWorker.ClassName());
 
       io.ReadRecord(fWorker(), fName, this);
 
-      DOUT3(("Did reading %s from xml worker %s!!!", fName.c_str(), fWorker.GetName()));
+      DOUT2("Did reading %s from xml worker %s class %s!!!", fName.c_str(), fWorker.GetName(), fWorker.ClassName());
 
       fReadFlag = 1;
    }
 
    res = dabc::RecordContainer::GetField(name, 0);
 
-   DOUT3(("CFG2: GETFIELD name %s par = %p res = %s", name.c_str(), fPar(), (res ? res : "---")));
+   DOUT3("CFG2: GETFIELD name %s par = %p res = %s", name.c_str(), fPar(), (res ? res : "---"));
 
    if (res!=0) return res;
 
@@ -93,7 +93,7 @@ const char* dabc::ConfigContainer::GetField(const std::string& name, const char*
 
    res = fPar.GetField(fName.empty() ? "" : name, 0);
 
-   DOUT3(("CFG3: GETFIELD name %s par = %p res = %s", name.c_str(), fPar(), (res ? res : "---")));
+   DOUT3("CFG3: GETFIELD name %s par = %p res = %s", name.c_str(), fPar(), (res ? res : "---"));
 
    if (res!=0) return res;
 
@@ -105,7 +105,7 @@ bool dabc::ConfigContainer::SetField(const std::string& name, const char* value,
 {
 
    if (fReadFlag==0) {
-      DOUT3(("*********************** Set for config %s field %s value %s", fName.c_str(), name.c_str(), (value ? value : "---")));
+      DOUT3("*********************** Set for config %s field %s value %s", fName.c_str(), name.c_str(), (value ? value : "---"));
       return dabc::RecordContainer::SetField(name, value, kind);
    }
 

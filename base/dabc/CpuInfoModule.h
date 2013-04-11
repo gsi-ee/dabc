@@ -39,9 +39,9 @@ namespace dabc {
          int             fKind;
 
       public:
-         CpuInfoModule(const char* name, dabc::Command cmd = 0, int kind = -1);
+         CpuInfoModule(const std::string& name, dabc::Command cmd = 0, int kind = -1);
 
-         virtual void ProcessTimerEvent(Timer* timer);
+         virtual void ProcessTimerEvent(unsigned timer);
    };
 
 }

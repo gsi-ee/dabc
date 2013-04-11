@@ -92,6 +92,6 @@ void dabc::Iterator::PrintHieararchy(Reference ref)
 {
    dabc::Iterator iter(ref);
    while (iter.next()) 
-      DOUT0(("%*s %s", iter.level()*2, "", iter.name()));
+      DOUT0("%*s %s", iter.level()*2, "", iter.name());
 }
 

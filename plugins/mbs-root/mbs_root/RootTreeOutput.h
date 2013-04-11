@@ -41,7 +41,7 @@ namespace mbs_root {
 
          virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
 
-         virtual bool WriteBuffer(const dabc::Buffer& buf);
+         virtual unsigned Write_Buffer(dabc::Buffer& buf);
 
       protected:
 

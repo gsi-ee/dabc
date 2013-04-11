@@ -13,7 +13,7 @@ namespace dabc {
 
 
    public:
-      SplitterModule(const char* name, Command cmd = 0);
+      SplitterModule(const std::string& name, Command cmd = 0);
 
       virtual void ProcessItemEvent(dabc::ModuleItem*, uint16_t);
 

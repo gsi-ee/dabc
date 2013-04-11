@@ -17,17 +17,8 @@
 #include <byteswap.h>
 
 
-const char* mbs::typeLmdInput         = "mbs::LmdInput";
-const char* mbs::typeLmdOutput        = "mbs::LmdOutput";
-const char* mbs::typeTextInput        = "mbs::TextInput";
-const char* mbs::typeServerTransport  = "mbs::ServerTransport";
-const char* mbs::typeClientTransport  = "mbs::ClientTransport";
-
-
 const char* mbs::protocolLmd          = "lmd";
 const char* mbs::protocolMbs          = "mbs";
-const char* mbs::protocolMbsTransport = "mbst";
-const char* mbs::protocolMbsStream    = "mbss";
 
 // Command names used in combiner module:
 const char* mbs::comStartServer       = "StartServer";
@@ -35,26 +26,12 @@ const char* mbs::comStopServer        = "StopServer";
 const char* mbs::comStartFile         = "StartFile";
 const char* mbs::comStopFile          = "StopFile";
 
-// port names and name formats:
-const char* mbs::portOutput           = "Output";
-const char* mbs::portOutputFmt        = "Output%d";
-const char* mbs::portInput            = "Input";
-const char* mbs::portInputFmt         = "Input%d";
-const char* mbs::portFileOutput       = "FileOutput";
-const char* mbs::portServerOutput     = "ServerOutput";
-
-
 // tag names for xml config file:
-const char* mbs::xmlFileName          = "MbsFileName";
-const char* mbs::xmlSizeLimit         = "MbsFileSizeLimit";
 const char* mbs::xmlServerName        = "MbsServerName";
 const char* mbs::xmlServerKind        = "MbsServerKind";
 const char* mbs::xmlServerPort        = "MbsServerPort";
 const char* mbs::xmlServerScale       = "MbsServerScale";
 const char* mbs::xmlServerLimit       = "MbsServerLimit";
-const char* mbs::xmlNormalOutput      = "DoOutput";
-const char* mbs::xmlFileOutput        = "DoFile";
-const char* mbs::xmlServerOutput      = "DoServer";
 
 const char* mbs::xmlTextDataFormat    = "MbsTextFormat";
 const char* mbs::xmlTextNumData       = "MbsTextNumData";
@@ -117,7 +94,7 @@ uint32_t mbs::BufferHeader::UsedBufferSize() const
       case MBS_TYPE(10,1): return i_used * 2;
 
       default: break;
-      //         EOUT(("Uncknown buffer type %d-%d", i_type, i_subtype));
+      //         EOUT("Uncknown buffer type %d-%d", i_type, i_subtype);
    }
 
    return 0;
@@ -140,7 +117,7 @@ void mbs::BufferHeader::SetUsedBufferSize(uint32_t len)
       break;
 
       default:
-         //         EOUT(("Uncknown buffer type %d-%d", i_type, i_subtype));
+         //         EOUT("Uncknown buffer type %d-%d", i_type, i_subtype);
          break;
    }
 }

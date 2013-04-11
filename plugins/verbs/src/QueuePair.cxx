@@ -42,7 +42,7 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
    fNumSendSegs(max_send_sge)
 {
    if ((send_cq==0) || (recv_cq==0)) {
-      EOUT(("No COMPLETION QUEUE WAS SPECIFIED"));
+      EOUT("No COMPLETION QUEUE WAS SPECIFIED");
       return;
    }
 
@@ -63,7 +63,7 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
 
    f_qp = ibv_create_qp(fContext.pd(), &attr);
    if (f_qp==0) {
-      EOUT(("Couldn't create queue pair (QP)"));
+      EOUT("Couldn't create queue pair (QP)");
       return;
    }
 
@@ -94,23 +94,23 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
    }
 
    if (res!=0) {
-      EOUT(("Failed to modify QP to INIT state"));
+      EOUT("Failed to modify QP to INIT state");
       return;
    }
 
    fQPCounter += 1;
    f_local_psn = fQPCounter;
 
-   DOUT4(("Create QueuePair %p", this));
+   DOUT4("Create QueuePair %p", this);
 }
 
 verbs::QueuePair::~QueuePair()
 {
-   DOUT4(("Destroy QueuePair %p", this));
+   DOUT4("Destroy QueuePair %p", this);
 
    ibv_destroy_qp(f_qp);
 
-   DOUT4(("Destroy QueuePair %p done", this));
+   DOUT4("Destroy QueuePair %p done", this);
 }
 
 bool verbs::QueuePair::InitUD()
@@ -122,7 +122,7 @@ bool verbs::QueuePair::InitUD()
    attr.path_mtu       = fContext.mtu();
 
    if (ibv_modify_qp(qp(), &attr, IBV_QP_STATE )) {
-       EOUT(("Failed to modify UD QP to RTR"));
+       EOUT("Failed to modify UD QP to RTR");
       return false;
    }
 
@@ -130,7 +130,7 @@ bool verbs::QueuePair::InitUD()
    attr.sq_psn     = local_psn();
    if (ibv_modify_qp(qp(), &attr, (ibv_qp_attr_mask)
                      (IBV_QP_STATE | IBV_QP_SQ_PSN))) {
-      EOUT(("Failed to modify UC/UD QP to RTS"));
+      EOUT("Failed to modify UC/UD QP to RTS");
       return false;
    }
 
@@ -144,11 +144,11 @@ bool verbs::QueuePair::InitUD()
 bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t dest_psn, uint8_t src_path_bits)
 {
    if (qp_type() == IBV_QPT_UD) {
-      EOUT(("QueuePair::Connect not supported for unreliable datagram connection. Use InitUD() instead"));
+      EOUT("QueuePair::Connect not supported for unreliable datagram connection. Use InitUD() instead");
       return false;
    }
 
-   DOUT3(("Start QP connect with %x:%x:%x", dest_lid, dest_qpn, dest_psn));
+   DOUT3("Start QP connect with %x:%x:%x", dest_lid, dest_qpn, dest_psn);
 
    struct ibv_qp_attr attr;
    memset(&attr, 0, sizeof attr);
@@ -163,7 +163,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
       case 1024: attr.path_mtu = IBV_MTU_1024; break;
       case 2048: attr.path_mtu = IBV_MTU_2048; break;
       case 4096: attr.path_mtu = IBV_MTU_4096; break;
-      default: EOUT(("Wrong mtu value %u", f_mtu));
+      default: EOUT("Wrong mtu value %u", f_mtu);
    }
 */
 
@@ -180,12 +180,12 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
    attr.ah_attr.is_global  = 0;
    attr.ah_attr.dlid       = dest_lid;
    attr.ah_attr.sl         = 0;
-   // DOUT0(("Configure static rate"));
+   // DOUT0("Configure static rate");
    // attr.ah_attr.static_rate = 3 /*IBV_RATE_5_GBPS*/; // SL: no idea how static rate works
    attr.ah_attr.src_path_bits = src_path_bits;
    attr.ah_attr.port_num   = fContext.IbPort();
 
-   DOUT3(("Modify to RTR"));
+   DOUT3("Modify to RTR");
 
    if (qp_type() == IBV_QPT_RC) {
       if (ibv_modify_qp(qp(), &attr, (ibv_qp_attr_mask)
@@ -196,7 +196,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
               IBV_QP_RQ_PSN             |
               IBV_QP_MIN_RNR_TIMER      |
               IBV_QP_MAX_DEST_RD_ATOMIC))) {
-         EOUT(("Failed here to modify RC QP to RTR lid: %x, qpn: %x, psn:%x", dest_lid, dest_qpn, dest_psn));
+         EOUT("Failed here to modify RC QP to RTR lid: %x, qpn: %x, psn:%x", dest_lid, dest_qpn, dest_psn);
          return false;
       }
    } else
@@ -208,7 +208,7 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
               IBV_QP_PATH_MTU           |
               IBV_QP_DEST_QPN           |
               IBV_QP_RQ_PSN))) {
-         EOUT(("Failed to modify UC QP to RTR"));
+         EOUT("Failed to modify UC QP to RTR");
          return false;
       }
    } else
@@ -216,12 +216,12 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
    if (qp_type() == IBV_QPT_UD) {
       if (ibv_modify_qp(qp(), &attr,
               IBV_QP_STATE )) {
-         EOUT(("Failed to modify UD QP to RTR"));
+         EOUT("Failed to modify UD QP to RTR");
          return false;
       }
    }
 
-   DOUT3(("Modify to RTS"));
+   DOUT3("Modify to RTS");
 
    attr.qp_state   = IBV_QPS_RTS;
    attr.sq_psn     = local_psn();
@@ -237,14 +237,14 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
               IBV_QP_RETRY_CNT          |
               IBV_QP_RNR_RETRY          |
               IBV_QP_MAX_QP_RD_ATOMIC))) {
-         EOUT(("Failed to modify RC QP to RTS"));
+         EOUT("Failed to modify RC QP to RTS");
          return false;
       }
    } else { /*both UC and UD */
       if (ibv_modify_qp(qp(), &attr, (ibv_qp_attr_mask)
              (IBV_QP_STATE              |
               IBV_QP_SQ_PSN))) {
-         EOUT(("Failed to modify UC/UD QP to RTS"));
+         EOUT("Failed to modify UC/UD QP to RTS");
          return false;
       }
    }
@@ -253,10 +253,10 @@ bool verbs::QueuePair::Connect(uint16_t dest_lid, uint32_t dest_qpn, uint32_t de
    f_remote_qpn = dest_qpn;
    f_remote_psn = dest_psn;
 
-   DOUT3(("QP connected !!!"));
+   DOUT3("QP connected !!!");
 
 //   if (qp_type()!= IBV_QPT_UD)
-//      DOUT1(("DO CONNECT local_qpn=%x remote_qpn=%x", qp_num(), dest_qpn));
+//      DOUT1("DO CONNECT local_qpn=%x remote_qpn=%x", qp_num(), dest_qpn);
 
    return true;
 }
@@ -266,7 +266,7 @@ bool verbs::QueuePair::Post_Send(struct ibv_send_wr* swr)
    struct ibv_send_wr* bad_swr = 0;
 
    if (ibv_post_send(qp(), swr, &bad_swr)) {
-      EOUT(("ibv_post_send fails arg %lx", bad_swr->wr_id));
+      EOUT("ibv_post_send fails arg %lx", bad_swr->wr_id);
       return false;
    }
 
@@ -278,7 +278,7 @@ bool verbs::QueuePair::Post_Recv(struct ibv_recv_wr* rwr)
    struct ibv_recv_wr* bad_rwr = 0;
 
    if (ibv_post_recv(qp(), rwr, &bad_rwr)) {
-      EOUT(("ibv_post_recv fails arg = %lx", bad_rwr->wr_id));
+      EOUT("ibv_post_recv fails arg = %lx", bad_rwr->wr_id);
       return false;
    }
 

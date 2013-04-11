@@ -29,27 +29,24 @@
 #include "dabc/timing.h"
 #include "dabc/threads.h"
 
-#include "dabc/Port.h"
+#include "dabc/Transport.h"
 #include "dabc/Module.h"
 #include "dabc/Command.h"
 #include "dabc/CommandsSet.h"
 #include "dabc/MemoryPool.h"
 #include "dabc/Device.h"
 #include "dabc/Url.h"
-#include "dabc/PoolHandle.h"
-#include "dabc/LocalTransport.h"
 #include "dabc/Thread.h"
 #include "dabc/Factory.h"
 #include "dabc/Application.h"
 #include "dabc/Iterator.h"
-#include "dabc/FileIO.h"
-#include "dabc/BinaryFile.h"
-#include "dabc/DataIOTransport.h"
+#include "dabc/BinaryFileIO.h"
 #include "dabc/Configuration.h"
 #include "dabc/ConnectionManager.h"
 #include "dabc/ReferencesVector.h"
 #include "dabc/CpuInfoModule.h"
 #include "dabc/MultiplexerModule.h"
+#include "dabc/SocketFactory.h"
 
 namespace dabc {
 
@@ -57,17 +54,16 @@ namespace dabc {
 
    class StdManagerFactory : public Factory {
       public:
-         StdManagerFactory(const char* name) : Factory(name) { }
+         StdManagerFactory(const std::string& name) : Factory(name) { }
 
-         virtual Module* CreateModule(const char* classname, const char* modulename, Command cmd);
+         virtual Module* CreateModule(const std::string& classname, const std::string& modulename, Command cmd);
 
-         virtual Reference CreateThread(Reference parent, const char* classname, const char* thrdname, const char* thrddev, Command cmd);
+         virtual Reference CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd);
 
-         virtual FileIO* CreateFileIO(const char* typ, const char* name, int option);
+         virtual DataOutput* CreateDataOutput(const std::string& typ);
 
-         virtual Object* ListMatchFiles(const char* typ, const char* filemask);
+         virtual DataInput* CreateDataInput(const std::string& typ);
    };
-
 
 
    /** DependPair keeps dependency between two objects.
@@ -124,102 +120,57 @@ namespace dabc {
 
 }
 
-dabc::Module* dabc::StdManagerFactory::CreateModule(const char* classname, const char* modulename, Command cmd)
+dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string& classname, const std::string& modulename, Command cmd)
 {
-   if (strcmp(classname, "dabc::CpuInfoModule")==0)
+   if (classname == "dabc::CpuInfoModule")
       return new CpuInfoModule(modulename, cmd);
-   else
-   if (strcmp(classname, "dabc::ConnectionManager")==0)
+
+   if (classname == "dabc::ConnectionManager")
       return new ConnectionManager(modulename, cmd);
-   else
-   if (strcmp(classname, "dabc::MultiplexerModule")==0)
+
+   if (classname == "dabc::MultiplexerModule")
       return new MultiplexerModule(modulename, cmd);
 
    return 0;
 }
 
-dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const char* classname, const char* thrdname, const char* thrddev, Command cmd)
+dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, Command cmd)
 {
    dabc::Thread* thrd = 0;
 
-   if ((classname==0) || (strlen(classname)==0) || (strcmp(classname, typeThread)==0))
+   if (classname.empty() || (classname == typeThread))
       thrd = new Thread(parent, thrdname, cmd.GetInt("NumQueues", 3));
 
    return Reference(thrd);
 }
 
-dabc::FileIO* dabc::StdManagerFactory::CreateFileIO(const char* typ, const char* name, int option)
+
+dabc::DataOutput* dabc::StdManagerFactory::CreateDataOutput(const std::string& typ)
 {
-   if (!((typ==0) || (strlen(typ)==0) ||
-       (strcmp(typ,"std")==0) || (strcmp(typ,"posix")==0))) return 0;
+   dabc::Url url(typ);
+   if (url.GetProtocol()=="bin") {
+      DOUT0("Binary output file name %s", url.GetFullName().c_str());
+      return new BinaryFileOutput(url);
+   }
 
-
-   dabc::FileIO* io = new dabc::PosixFileIO(name, option);
-
-   if (!io->IsOk()) { delete io; io = 0; }
-
-   return io;
+   return 0;
 }
 
-dabc::Object* dabc::StdManagerFactory::ListMatchFiles(const char* typ, const char* filemask)
+dabc::DataInput* dabc::StdManagerFactory::CreateDataInput(const std::string& typ)
 {
-   if (!((typ==0) || (strlen(typ)==0) ||
-       (strcmp(typ,"std")==0) || (strcmp(typ,"posix")==0))) return 0;
+   dabc::Url url(typ);
+   if (url.GetProtocol()=="bin") {
+      DOUT0("Binary input file name %s", url.GetFullName().c_str());
 
-   if ((filemask==0) || (strlen(filemask)==0)) return 0;
-
-   DOUT4(("List files %s", filemask));
-
-   std::string pathname;
-   const char* fname;
-
-   const char* slash = strrchr(filemask, '/');
-
-   if (slash==0) {
-      pathname = ".";
-      fname = filemask;
-   } else {
-      pathname.assign(filemask, slash - filemask + 1);
-      fname = slash + 1;
+      return new BinaryFileInput(url);
    }
 
-   struct dirent **namelist;
-   int len = scandir(pathname.c_str(), &namelist, 0, alphasort);
-   if (len < 0) {
-      EOUT(("Directory %s not found",  pathname.c_str()));
-      return 0;
-   }
-
-   Object* res = 0;
-   struct stat buf;
-
-   for (int n=0;n<len;n++) {
-      const char* item = namelist[n]->d_name;
-
-      if ((fname==0) || (fnmatch(fname, item, FNM_NOESCAPE)==0)) {
-         std::string fullitemname;
-         if (slash) fullitemname += pathname;
-         fullitemname += item;
-         if (stat(fullitemname.c_str(), &buf)==0)
-            if (!S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK)==0)) {
-               if (res==0) res = new Object(0, "FilesList", true);
-               new Object(res, fullitemname.c_str());
-               DOUT4((" File: %s", fullitemname.c_str()));
-            }
-      }
-
-      free(namelist[n]);
-   }
-
-   free(namelist);
-
-   return res;
+   return 0;
 }
 
-dabc::FactoryPlugin stdfactory(new dabc::StdManagerFactory("std"));
 
-
-/** Helper class to destroy manager when finishing process */
+/** Helper class to destroy manager when finishing process
+ * TODO: Check it precisely */
 namespace dabc {
    class AutoDestroyClass {
          friend class dabc::Manager;
@@ -253,7 +204,7 @@ void dabc::Manager::SetAutoDestroy(bool on)
 }
 
 
-dabc::Manager::Manager(const char* managername, Configuration* cfg) :
+dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
    Worker(0, managername, true),
    fMgrStoppedTime(),
    fMgrMutex(0),
@@ -267,10 +218,14 @@ dabc::Manager::Manager(const char* managername, Configuration* cfg) :
    fNodeId(0),
    fNumNodes(1)
 {
+
+   fInstance = this;
+   fInstanceId = MagicInstanceId;
+
    if (dabc::mgr.null()) {
       dabc::mgr = dabc::ManagerRef(this);
       dabc::mgr.SetTransient(false);
-      dabc::SetDebugPrefix(managername);
+      dabc::SetDebugPrefix(GetName());
    }
 
    if (cfg) {
@@ -291,16 +246,12 @@ dabc::Manager::Manager(const char* managername, Configuration* cfg) :
 
    fParEventsReceivers = new ParamEventReceiverList;
 
-   if (dabc::mgr() == this) {
-//      static StdManagerFactory stdfactory("std");
+   // this should automatically add all factories to the manager
+   ProcessFactory(new dabc::StdManagerFactory("std"));
 
-      Factory* factory = 0;
+   ProcessFactory(new dabc::SocketFactory("sockets"));
 
-      while ((factory = FactoryPlugin::NextNewFactory()) != 0)
-         AddFactory(factory);
-   }
-
-   MakeThreadFor(this, MgrThrdName());
+   MakeThreadForWorker(MgrThrdName());
 
    ActivateTimeout(1.);
 }
@@ -314,10 +265,10 @@ dabc::Manager::~Manager()
 //   dabc::SetDebugLevel(3);
 //   dabc::SetDebugLevel(3);
 
-   DOUT3(("~Manager -> DestroyQueue"));
+   DOUT3("~Manager -> DestroyQueue");
 
    if (fDestroyQueue && (fDestroyQueue->GetSize()>0))
-      EOUT(("Manager destroy queue is not empty"));
+      EOUT("Manager destroy queue is not empty");
 
    delete fParEventsReceivers; fParEventsReceivers = 0;
 
@@ -325,30 +276,33 @@ dabc::Manager::~Manager()
 
    if (fTimedPars!=0) {
       if (fTimedPars->GetSize() > 0) {
-         EOUT(("Manager timed parameters list not empty"));
+         EOUT("Manager timed parameters list not empty");
       }
 
       delete fTimedPars;
       fTimedPars = 0;
    }
 
-   DOUT3(("~Manager -> ~fDepend"));
+   DOUT3("~Manager -> ~fDepend");
 
    if (fDepend && (fDepend->size()>0))
-      EOUT(("Dependencies parameters list not empty"));
+      EOUT("Dependencies parameters list not empty");
 
    delete fDepend; fDepend = 0;
 
-   DOUT3(("~Manager -> ~fMgrMutex"));
+   DOUT3("~Manager -> ~fMgrMutex");
 
    delete fMgrMutex; fMgrMutex = 0;
 
    if (dabc::mgr()==this) {
-      DOUT1(("Real EXIT"));
+      DOUT1("Real EXIT");
       if (dabc::Logger::Instance())
          dabc::Logger::Instance()->LogFile(0);
    } else
-      EOUT(("What ??? !!!"));
+      EOUT("What ??? !!!");
+
+   fInstance = 0;
+   fInstanceId = 0;
 }
 
 
@@ -394,13 +348,13 @@ void dabc::Manager::HaltManager()
    TimeStamp tm2 = dabc::Now();
 
    if (dabc::Thread::NumThreadInstances() > 0)
-      EOUT(("!!!!!!!!! There are still %u threads - anyway declare manager halted cnt = %d  %5.3f !!!!!!", dabc::Thread::NumThreadInstances(), cnt, tm2 - tm1));
+      EOUT("!!!!!!!!! There are still %u threads - anyway declare manager halted cnt = %d  %5.3f !!!!!!", dabc::Thread::NumThreadInstances(), cnt, tm2 - tm1);
    else
-      DOUT1((" ALL THREADS STOP AFTER %d tries tm %5.3f", maxcnt-cnt, tm2-tm1));
+      DOUT1(" ALL THREADS STOP AFTER %d tries tm %5.3f", maxcnt-cnt, tm2-tm1);
 
    dabc::Object::InspectGarbageCollector();
 
-   DOUT3(("dabc::Manager::HaltManager done refcnt = %u", fObjectRefCnt));
+   DOUT3("dabc::Manager::HaltManager done refcnt = %u", fObjectRefCnt);
 }
 
 bool dabc::Manager::ProcessDestroyQueue()
@@ -444,7 +398,7 @@ bool dabc::Manager::ProcessDestroyQueue()
       Worker* w = dynamic_cast<Worker*> (obj);
       if (w!=0) {
          if (obj->IsLogging())
-            DOUT0(("Submit worker %p to thread", obj));
+            DOUT0("Submit worker %p to thread", obj);
          dabc::Command cmd("ObjectDestroyed");
          cmd.SetPtr("#Object", ptr_vect[n]);
          cmd.SetPriority(priorityMagic);
@@ -471,7 +425,7 @@ bool dabc::Manager::ProcessDestroyQueue()
          iter++;
    }
 
-   DOUT3(("MGR: Process destroy QUEUE vect = %u", (vect ? vect->GetSize() : 0)));
+   DOUT3("MGR: Process destroy QUEUE vect = %u", (vect ? vect->GetSize() : 0));
 
    // FIXME: remove timed parameters, otherwise it is not possible to delete it
    // if (fTimedPars!=0)
@@ -522,7 +476,7 @@ void dabc::Manager::ProduceParameterEvent(ParameterContainer* par, int evid)
 
    }
 
-//   DOUT0(("FireParamEvent id %d par %s", evid, par->GetName()));
+//   DOUT0("FireParamEvent id %d par %s", evid, par->GetName());
 
    if (fire) FireEvent(evntManagerParam);
 }
@@ -557,7 +511,7 @@ bool dabc::Manager::ProcessParameterEvents()
          case parConfigured:
             checkadd = rec.par.NeedTimeout();
             checkremove = !checkadd;
-            DOUT2(("Parameter %s configured checkadd %s", rec.par.GetName(), DBOOL(checkadd)));
+            DOUT2("Parameter %s configured checkadd %s", rec.par.GetName(), DBOOL(checkadd));
             break;
 
          case parModified:
@@ -607,12 +561,12 @@ bool dabc::Manager::ProcessParameterEvents()
             value = rec.par.AsStdStr();
 
          if (iter->queue > 1000) {
-            EOUT(("Too many events for receiver %s - block any following", iter->recv.GetName()));
+            EOUT("Too many events for receiver %s - block any following", iter->recv.GetName());
             continue;
          }
 
          if (!iter->recv.null() && !iter->recv.CanSubmitCommand()) {
-            DOUT4(("receiver %s cannot be used to submit command - ignore", iter->recv.GetName()));
+            DOUT4("receiver %s cannot be used to submit command - ignore", iter->recv.GetName());
             continue;
          }
 
@@ -643,7 +597,7 @@ bool dabc::Manager::ProcessParameterEvents()
 
 void dabc::Manager::ProcessEvent(const EventId& evnt)
 {
-   DOUT5(("MGR::ProcessEvent %s", evnt.asstring().c_str()));
+   DOUT5("MGR::ProcessEvent %s", evnt.asstring().c_str());
 
    switch (evnt.GetCode()) {
       case evntDestroyObj:
@@ -656,7 +610,7 @@ void dabc::Manager::ProcessEvent(const EventId& evnt)
          Worker::ProcessEvent(evnt);
          break;
    }
-   DOUT5(("MGR::ProcessEvent %s done", evnt.asstring().c_str()));
+   DOUT5("MGR::ProcessEvent %s done", evnt.asstring().c_str());
 }
 
 bool dabc::Manager::IsAnyModuleRunning()
@@ -693,35 +647,32 @@ dabc::Reference dabc::Manager::FindItem(const std::string& name, bool islocal)
    return ref;
 }
 
-dabc::ModuleRef dabc::Manager::FindModule(const char* name)
+dabc::ModuleRef dabc::Manager::FindModule(const std::string& name)
 {
    return FindItem(name);
 }
 
-dabc::Reference dabc::Manager::FindPort(const char* name)
+
+dabc::Reference dabc::Manager::FindPort(const std::string& name)
 {
    PortRef ref = FindItem(name);
 
    return ref;
 }
 
-dabc::Reference dabc::Manager::FindPool(const char* name)
+
+dabc::Reference dabc::Manager::FindPool(const std::string& name)
 {
    MemoryPoolRef ref = FindItem(name);
 
    return ref;
 }
 
-dabc::WorkerRef dabc::Manager::FindDevice(const char* name)
+dabc::WorkerRef dabc::Manager::FindDevice(const std::string& name)
 {
    DeviceRef ref = FindItem(name);
 
    return ref;
-}
-
-dabc::Factory* dabc::Manager::FindFactory(const char* name)
-{
-   return dynamic_cast<dabc::Factory*> (GetFactoriesFolder().FindChild(name)());
 }
 
 dabc::ApplicationRef dabc::Manager::GetApp()
@@ -752,18 +703,6 @@ void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool 
    }
 }
 
-bool dabc::Manager::DeletePool(const char* name)
-{
-   return Execute(CmdDeletePool(name));
-}
-
-bool dabc::Manager::ConnectPorts(const char* port1name,
-                                 const char* port2name,
-                                 const char* devname)
-{
-   return Execute(CmdConnectPorts(port1name, port2name, devname));
-}
-
 dabc::WorkerRef dabc::Manager::GetCommandChannel(bool force)
 {
    WorkerRef ref = FindItem(CmdChlName());
@@ -772,7 +711,7 @@ dabc::WorkerRef dabc::Manager::GetCommandChannel(bool force)
 
    ref = DoCreateObject("SocketCommandChannel", CmdChlName());
 
-   if (!ref.null()) MakeThreadFor(ref(), "CmdThrd");
+   ref.MakeThreadForWorker("CmdThrd");
 
    return ref;
 }
@@ -791,12 +730,12 @@ int dabc::Manager::PreviewCommand(Command cmd)
 
    if (!url.empty() && Url::DecomposeItemName(url, tgtnode, itemname)) {
 
-      DOUT5(("MGR: Preview command %s item %s tgtnode %d", cmd.GetName(), url.c_str(), tgtnode));
+      DOUT5("MGR: Preview command %s item %s tgtnode %d", cmd.GetName(), url.c_str(), tgtnode);
 
       if ((tgtnode>=0) && (tgtnode != NodeId())) {
 
          if (!GetCommandChannel(true).Submit(cmd))
-            EOUT(("Cannot submit command to remote node %d", tgtnode));
+            EOUT("Cannot submit command to remote node %d", tgtnode);
 
          return cmd_postponed;
       } else
@@ -819,7 +758,7 @@ int dabc::Manager::PreviewCommand(Command cmd)
             }
          }
 
-         EOUT(("Did not found receiver %s for command %s", itemname.c_str(), cmd.GetName()));
+         EOUT("Did not found receiver %s for command %s", itemname.c_str(), cmd.GetName());
 
          return cmd_false;
       }
@@ -841,31 +780,35 @@ int dabc::Manager::PreviewCommand(Command cmd)
    } \
 }
 
-dabc::WorkerRef dabc::Manager::DoCreateModule(const char* classname, const char* modulename, const char* thrdname, Command cmd)
+dabc::WorkerRef dabc::Manager::DoCreateModule(const std::string& classname, const std::string& modulename, const std::string& thrdname, Command cmd)
 {
-   ModuleRef ref = FindModule(modulename);
+   ModuleRef mdl = FindModule(modulename);
 
-   if (!ref.null()!=0) {
-      DOUT4(("Module name %s already exists", modulename));
+   if (!mdl.null()) {
+      DOUT4("Module name %s already exists", modulename.c_str());
 
    } else {
 
       FOR_EACH_FACTORY(
-         ref = factory->CreateModule(classname, modulename, cmd);
-         if (!ref.null()) break;
+         mdl = factory->CreateModule(classname, modulename, cmd);
+         if (!mdl.null()) break;
       )
 
-      if (ref.null())
-         EOUT(("Cannot create module of type %s", classname));
-      else
-         MakeThreadFor(ref(), thrdname);
+      if (mdl.null()) {
+         EOUT("Cannot create module of type %s", classname.c_str());
+         return mdl;
+      }
+
+      mdl.MakeThreadForWorker(thrdname);
+
+      mdl.ConnectPoolHandles();
    }
 
-   return ref;
+   return mdl;
 }
 
 
-dabc::Reference dabc::Manager::DoCreateObject(const char* classname, const char* objname, Command cmd)
+dabc::Reference dabc::Manager::DoCreateObject(const std::string& classname, const std::string& objname, Command cmd)
 {
 
    dabc::Reference ref;
@@ -881,14 +824,14 @@ dabc::Reference dabc::Manager::DoCreateObject(const char* classname, const char*
 
 int dabc::Manager::ExecuteCommand(Command cmd)
 {
-   DOUT5(("MGR: Execute %s", cmd.GetName()));
+   DOUT5("MGR: Execute %s", cmd.GetName());
 
    int cmd_res = cmd_true;
 
    if (cmd.IsName(CmdCreateModule::CmdName())) {
-      const char* classname = cmd.GetField("Class");
-      const char* modulename = cmd.GetField(CmdCreateModule::ModuleArg());
-      const char* thrdname = cmd.GetStr("Thread");
+      std::string classname = cmd.GetStdStr(CmdCreateModule::ClassArg());
+      std::string modulename = cmd.GetStdStr(CmdCreateModule::ModuleArg());
+      std::string thrdname = cmd.GetStdStr(CmdCreateModule::ThreadArg());
 
       ModuleRef ref = DoCreateModule(classname, modulename, thrdname, cmd);
       cmd_res = cmd_bool(!ref.null());
@@ -901,18 +844,17 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_true;
    } else
    if (cmd.IsName(CmdCreateApplication::CmdName())) {
-      const char* classname = cmd.GetStr("AppClass");
-      const char* appthrd = cmd.GetStr("AppThrd");
+      std::string classname = cmd.GetStdStr("AppClass");
+      std::string appthrd = cmd.GetStdStr("AppThrd");
 
-      // FIXME: classname can be specified as "*" in config file, should not be
-      if ((classname==0) || (strcmp(classname,"*")==0)) classname = typeApplication;
+      if (classname.empty()) classname = typeApplication;
 
       ApplicationRef app = GetApp();
 
-      if (!app.null() && (strcmp(app()->ClassName(), classname)==0)) {
-         DOUT2(("Application of class %s already exists", classname));
+      if (!app.null() && (classname == app.ClassName())) {
+         DOUT2("Application of class %s already exists", classname.c_str());
       } else
-      if (strcmp(classname, typeApplication)!=0) {
+      if (classname != typeApplication) {
          app.Destroy();
 
          FOR_EACH_FACTORY(
@@ -929,33 +871,32 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          if (func) app()->SetInitFunc((Application::ExternalFunction*)func);
       }
 
-      if ((appthrd==0) || (strlen(appthrd)==0)) appthrd = AppThrdName();
+      if (appthrd.empty()) appthrd = AppThrdName();
 
-      if (!app.null()) MakeThreadFor(app(), appthrd);
+      app.MakeThreadForWorker(appthrd);
 
       cmd_res = cmd_bool(!app.null());
 
-      if (app!=0) DOUT2(("Application of class %s created", classname));
-             else EOUT(("Cannot create application of class %s", classname));
+      if (app.null()) EOUT("Cannot create application of class %s", classname.c_str());
+                 else DOUT2("Application of class %s created", classname.c_str());
 
    } else
 
    if (cmd.IsName(CmdCreateDevice::CmdName())) {
-      const char* classname = cmd.GetStr("DevClass");
-      const char* devname = cmd.GetStr("DevName");
-      if (classname==0) classname = "";
-      if ((devname==0) || (strlen(devname)==0)) devname = classname;
+      std::string classname = cmd.GetStdStr("DevClass");
+      std::string devname = cmd.GetStdStr("DevName");
+      if (devname.empty()) devname = classname;
 
       WorkerRef dev = FindDevice(devname);
 
       cmd_res = cmd_false;
 
       if (!dev.null()) {
-        if (strcmp(dev.ClassName(), classname)==0) {
-           DOUT4(("Device %s of class %s already exists", devname, classname));
+        if (classname == dev.ClassName()) {
+           DOUT4("Device %s of class %s already exists", devname.c_str(), classname.c_str());
            cmd_res = cmd_true;
         } else {
-           EOUT(("Device %s has other class name %s than requested", devname, dev.ClassName(), classname));
+           EOUT("Device %s has other class name %s than requested", devname.c_str(), dev.ClassName(), classname.c_str());
         }
       } else {
          FOR_EACH_FACTORY(
@@ -966,10 +907,10 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          )
 
          if ((cmd_res==cmd_true) && FindDevice(devname).null())
-            EOUT(("Cannot find device %s after it is created", devname));
+            EOUT("Cannot find device %s after it is created", devname.c_str());
       }
 
-      if ((cmd_res==cmd_true) && (devname!=0)) {
+      if ((cmd_res==cmd_true) && !devname.empty()) {
          LockGuard guard(fMgrMutex);
          fLastCreatedDevName = devname;
       }
@@ -985,75 +926,91 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       dev.Destroy();
    } else
    if (cmd.IsName(CmdCreateTransport::CmdName())) {
-      const char* portname = cmd.GetStr("PortName");
-      const char* transportkind = cmd.GetStr("TransportKind");
-      const char* thrdname = cmd.GetStr(xmlTrThread);
 
-      PortRef portref = FindPort(portname);
-      Port* port = portref();
-      WorkerRef dev = FindDevice(transportkind);
+      CmdCreateTransport crcmd = cmd;
+      // TODO: make url xml node attribute as for parameter
 
-      if (portref.null()) {
-         EOUT(("Port %s not found - cannot create transport %s", portname, transportkind));
+      std::string trkind = crcmd.TransportKind();
+
+      PortRef port = FindItem(crcmd.PortName());
+      if (trkind.empty()) trkind = port.Cfg("url", cmd).AsStdStr();
+
+      WorkerRef dev = FindDevice(trkind);
+
+      if (port.null()) {
+         EOUT("Ports %s not found - cannot create transport", crcmd.PortName().c_str());
          cmd_res = cmd_false;
       } else
       if (!dev.null()) {
          dev.Submit(cmd);
          cmd_res = cmd_postponed;
       } else
-      if ((transportkind==0) || (strlen(transportkind)==0)) {
-         port->AssignTransport(Reference(), 0, true);
+      if (trkind.empty()) {
+         // disconnect will be done via special command
+         port.Disconnect();
          cmd_res = cmd_true;
       } else {
 
          cmd_res = cmd_false;
-         portref.SetTransient(false);
+         port.SetTransient(false);
 
-         Transport* tr = 0;
+         DOUT0("Request transport for port %p kind %s", port(), trkind.c_str());
+
+         TransportRef tr;
          FOR_EACH_FACTORY(
-            tr = factory->CreateTransport(portref, transportkind, cmd);
-            if (tr!=0) break;
+            tr = factory->CreateTransport(port, trkind, cmd);
+            if (!tr.null()) break;
          )
 
-         if (tr!=0) {
+         if (!tr.null()) {
 
-            // with explicit handle we lock transport before it starts to be active
-            Reference handle(tr->GetWorker());
+            std::string thrdname = crcmd.TrThreadName();
 
-            RegisterDependency(handle(), port, true);
+            if (thrdname.empty()) thrdname = port.GetModule().ThreadName();
 
-            std::string name(thrdname ? thrdname : "");
-            if (name.length()==0) name = port->ThreadName();
+            DOUT0("Creating thread %s for transport", thrdname.c_str());
 
-            if (!MakeThreadFor(tr->GetWorker(), name.c_str())) {
-               EOUT(("Fail to create thread for transport"));
-               handle.Destroy();
-            } else
-            if (port->AssignTransport(handle, tr))
+            // TODO: be aware that in future simple transport can be bidirectional!
+
+            if (!tr.MakeThreadForWorker(thrdname)) {
+               EOUT("Fail to create thread for transport");
+               tr.Destroy();
+            } else {
+               tr.ConnectPoolHandles();
                cmd_res = cmd_true;
+               if (port.IsInput())
+                  dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port);
+               if (port.IsOutput())
+                  dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
+            }
          }
       }
    } else
    if (cmd.IsName(CmdDestroyTransport::CmdName())) {
-      PortRef portref = FindPort(cmd.GetStr("PortName"));
+      PortRef portref = FindPort(cmd.GetStdStr("PortName"));
       if (!portref.Disconnect())
         cmd_res = cmd_false;
    } else
    if (cmd.IsName(CmdCreateThread::CmdName())) {
-      const char* thrdname = cmd.GetStr("ThrdName");
-      const char* thrdclass = cmd.GetStr("ThrdClass");
-      const char* thrddev = cmd.GetStr("ThrdDev");
+      const std::string& thrdname = cmd.GetStdStr(CmdCreateThread::ThrdNameArg());
+      const std::string& thrdclass = cmd.GetStdStr("ThrdClass");
+      const std::string& thrddev = cmd.GetStdStr("ThrdDev");
 
-      ThreadRef thrd = CreateThread(thrdname, thrdclass, thrddev, cmd);
+      ThreadRef thrd = DoCreateThread(thrdname, thrdclass, thrddev, cmd);
 
-      cmd_res = cmd_bool(!thrd.null());
+      if (thrd.null()) {
+         cmd_res = cmd_false;
+      } else {
+         cmd.SetStr(CmdCreateThread::ThrdNameArg(), thrd.GetName());
+         cmd_res = cmd_true;
+      }
 
    } else
    if (cmd.IsName(CmdCreateMemoryPool::CmdName())) {
       cmd_res = cmd_bool(DoCreateMemoryPool(cmd));
    } else
    if (cmd.IsName(CmdCreateObject::CmdName())) {
-      cmd.SetRef("Object", DoCreateObject(cmd.GetStr("ClassName"), cmd.GetStr("ObjName"), cmd));
+      cmd.SetRef("Object", DoCreateObject(cmd.GetStdStr("ClassName"), cmd.GetStdStr("ObjName"), cmd));
       cmd_res = cmd_true;
    } else
    if (cmd.IsName(CmdCleanupApplication::CmdName())) {
@@ -1073,7 +1030,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          cmd_res = cmd_true;
 
       } else {
-         ModuleRef m = FindModule(name.c_str());
+         ModuleRef m = FindModule(name);
          cmd_res = cmd_bool(m.Start());
       }
    } else
@@ -1087,70 +1044,38 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          while (iter.next_cast(m))
             m->Stop();
       } else {
-         ModuleRef m = FindModule(cmd.GetStr("Module",""));
+         ModuleRef m = FindModule(cmd.GetStdStr("Module"));
          cmd_res = cmd_bool(m.Stop());
       }
    } else
    if (cmd.IsName(CmdDeleteModule::CmdName())) {
-      ModuleRef ref = FindModule(cmd.GetStr(CmdDeleteModule::ModuleArg()));
+      ModuleRef ref = FindModule(cmd.GetStdStr(CmdDeleteModule::ModuleArg()));
 
-      cmd_res = cmd_bool(ref()!=0);
+      cmd_res = cmd_bool(!ref.null());
 
-      DOUT2(("Stop and delete module %s", ref.GetName()));
+      DOUT2("Stop and delete module %s", ref.GetName());
 
       ref.Destroy();
 
-      DOUT2(("Stop and delete module done"));
+      DOUT2("Stop and delete module done");
 
    } else
    if (cmd.IsName(CmdDeletePool::CmdName())) {
       FindPool(cmd.GetField("PoolName")).Destroy();
    } else
    if (cmd.IsName("Print")) {
-      DoPrint();
+      dabc::Iterator iter1(GetThreadsFolder());
+      Thread* thrd = 0;
+      while (iter1.next_cast(thrd, false))
+         DOUT1("Thrd: %s", thrd->GetName());
+
+      dabc::Iterator iter2(this);
+      Module* m = 0;
+      while (iter2.next_cast(m, false))
+         DOUT1("Module: %s", m->GetName());
    } else
 
    // these are two special commands with postponed execution
-   if (cmd.IsName(CmdConnectPorts::CmdName())) {
-
-      int node1(0), node2(0);
-      std::string item1, item2;
-
-      cmd_res = cmd_false;
-
-      DOUT3(("Connecting : %s %s", cmd.GetField("Port1Name"), cmd.GetField("Port2Name")));
-
-      if (Url::DecomposeItemName(cmd.GetStdStr("Port1Name"), node1, item1) &&
-          Url::DecomposeItemName(cmd.GetStdStr("Port2Name"), node2, item2)) {
-
-         if (node1<0) node1 = NodeId();
-         if (node2<0) node2 = NodeId();
-
-         DOUT2(("Connect : %d %s %d %s", node1, item1.c_str(), node2, item2.c_str()));
-
-         if ((node1 != NodeId()) && (node2 != NodeId()))
-            cmd_res = cmd_true;
-         else
-         if (node1==node2) {
-
-            Reference port1 = FindPort(item1.c_str());
-            Reference port2 = FindPort(item2.c_str());
-
-            DOUT2(("Connect : %s %s %p %p", item1.c_str(), item2.c_str(), port1(), port2()));
-
-            if (port1.null() || port2.null())
-               cmd_res = cmd_false;
-            else
-               cmd_res = dabc::LocalTransport::ConnectPorts(port1, port2);
-
-         } else {
-
-            FindModule(ConnMgrName()).Submit(cmd);
-
-            cmd_res = cmd_postponed;
-         }
-      }
-   } else
    if (cmd.IsName(CmdGetNodesState::CmdName())) {
       GetCommandChannel().Submit(cmd);
 
@@ -1166,7 +1091,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       std::string mask = cmd.GetStdStr("Mask");
       std::string remote = cmd.GetStdStr("RemoteWorker");
 
-      DOUT2(("Subscription with mask %s", mask.c_str()));
+      DOUT2("Subscription with mask %s", mask.c_str());
 
       if (cmd.GetBool("IsSubscribe")) {
 
@@ -1211,18 +1136,24 @@ bool dabc::Manager::DoCreateMemoryPool(Command cmd)
 
    std::string poolname = cmd.Field(xmlPoolName).AsStdStr();
    if (poolname.empty()) {
-      EOUT(("Pool name is not specified"));
+      EOUT("Pool name is not specified");
       return false;
    }
 
-   MemoryPoolRef ref = FindPool(poolname.c_str());
+   MemoryPoolRef ref = FindPool(poolname);
    if (ref.null()) {
-      ref = new dabc::MemoryPool(poolname.c_str(), true);
+      ref = new dabc::MemoryPool(poolname, true);
+
+      DOUT1("Create memory pool of name %s", poolname.c_str());
+
+      ref()->Reconstruct(cmd);
+
       // TODO: make thread name for pool configurable
       ref()->AssignToThread(thread());
+      ref.Start();
    }
 
-   return ref()->Reconstruct(cmd);
+   return !ref.null();
 }
 
 bool dabc::Manager::ReplyCommand(Command cmd)
@@ -1239,12 +1170,12 @@ bool dabc::Manager::ReplyCommand(Command cmd)
          if (&(*iter) == origin) {
             iter->queue--;
             if (iter->queue<0)
-               EOUT(("Internal error - parameters event queue negative"));
+               EOUT("Internal error - parameters event queue negative");
             return true;
          }
       }
 
-      EOUT(("Did not find original record with receiver for parameter events"));
+      EOUT("Did not find original record with receiver for parameter events");
 
       return true;
    }
@@ -1265,7 +1196,7 @@ bool dabc::Manager::DestroyObject(Reference ref)
    if (obj==0) return true;
 
    if (obj->IsLogging())
-      DOUT0(("dabc::Manager::DestroyObject %p %s", obj, obj->GetName()));
+      DOUT0("dabc::Manager::DestroyObject %p %s", obj, obj->GetName());
 
    bool fire = false;
 
@@ -1278,13 +1209,13 @@ bool dabc::Manager::DestroyObject(Reference ref)
          if (iter->src() == obj) {
             iter->fire = iter->fire | 1;
             if (obj->IsLogging())
-               DOUT0(("Find object %p as dependency source", obj));
+               DOUT0("Find object %p as dependency source", obj);
          }
 
          if (iter->tgt == obj) {
             iter->fire = iter->fire | 2;
             if (obj->IsLogging())
-               DOUT0(("Find object %p as dependency target", obj));
+               DOUT0("Find object %p as dependency target", obj);
          }
 
          iter++;
@@ -1306,7 +1237,7 @@ bool dabc::Manager::DestroyObject(Reference ref)
 
 bool dabc::Manager::DoCleanupApplication()
 {
-   DOUT3(("DoCleanupApplication starts numchilds %u", GetAppFolder().NumChilds()));
+   DOUT3("DoCleanupApplication starts numchilds %u", GetAppFolder().NumChilds());
 
    // destroy application if exist
    GetAppFolder().Destroy();
@@ -1316,25 +1247,6 @@ bool dabc::Manager::DoCleanupApplication()
    Object::InspectGarbageCollector();
 
    return true;
-}
-
-bool dabc::Manager::MakeThreadFor(Worker* proc, const char* thrdname)
-{
-   if (proc==0) return false;
-
-   if ((thrdname==0) || (strlen(thrdname)==0)) {
-      DOUT2(("Thread name not specified - generate default, for a moment - processor name"));
-      thrdname = proc->GetName();
-   }
-
-   if ((thrdname==0) || (strlen(thrdname)==0)) {
-      EOUT(("Still no thread name - used name Thread"));
-      thrdname = "Thread";
-   }
-
-   ThreadRef thrd = CreateThread(thrdname, proc->RequiredThrdClass());
-
-   return thrd() ? proc->AssignToThread(thrd) : false;
 }
 
 void dabc::Manager::Sleep(double tmout, const char* prefix)
@@ -1358,7 +1270,7 @@ void dabc::Manager::Sleep(double tmout, const char* prefix)
       }
    } else {
       if (prefix) {
-         fprintf(stdout, "%s ",  prefix);
+         fprintf(stdout, "%s    ",  prefix);
          fflush(stdout);
       }
 
@@ -1368,7 +1280,7 @@ void dabc::Manager::Sleep(double tmout, const char* prefix)
       while ((remain = finish - dabc::Now()) > 0) {
 
          if (prefix) {
-            fprintf(stdout, "\b\b\b%3ld", lrint(remain));
+            fprintf(stdout, "\b\b\b%3d", (int) lrint(remain));
             fflush(stdout);
          }
 
@@ -1382,22 +1294,6 @@ void dabc::Manager::Sleep(double tmout, const char* prefix)
    }
 }
 
-void dabc::Manager::DoPrint()
-{
-   dabc::Iterator iter(GetThreadsFolder());
-
-   while (iter.next()) {
-      Thread* thrd = dynamic_cast<Thread*> (iter.current());
-      if (thrd) DOUT1(("Thrd: %s", thrd->GetName()));
-   }
-
-   dabc::Iterator iter2(this);
-
-   while (iter2.next()) {
-      Module* m = dynamic_cast<Module*> (iter2.current());
-      if (m) DOUT1(("Module: %s", m->GetName()));
-   }
-}
 
 int dabc::Manager::NumActiveNodes()
 {
@@ -1495,43 +1391,23 @@ double dabc::Manager::ProcessTimeout(double last_diff)
    return 1.;
 }
 
-void dabc::Manager::AddFactory(Factory* factory)
+dabc::Manager* dabc::Manager::fInstance = 0;
+int dabc::Manager::fInstanceId = 0;
+
+
+void dabc::Manager::ProcessFactory(Factory* factory)
 {
    if (factory==0) return;
-
-   GetFactoriesFolder(true).AddChild(factory, false);
-
-   DOUT3(("Add factory %s", factory->GetName()));
-}
-
-bool dabc::Manager::CreateApplication(const char* classname, const char* appthrd)
-{
-   return Execute(CmdCreateApplication(classname, appthrd));
-}
-
-dabc::FileIO* dabc::Manager::CreateFileIO(const char* typ, const char* name, int option)
-{
-   FOR_EACH_FACTORY(
-      FileIO* io = factory->CreateFileIO(typ, name, option);
-      if (io!=0) return io;
-   )
-
-   return 0;
-}
-
-dabc::Object* dabc::Manager::ListMatchFiles(const char* typ, const char* filemask)
-{
-   FOR_EACH_FACTORY(
-      Object* res = factory->ListMatchFiles(typ, filemask);
-      if (res!=0) return res;
-   )
-
-   return 0;
+   if ((fInstance==0) || (fInstanceId!=MagicInstanceId)) {
+      printf("Manager is not exists when factory %s is created - abort\n", factory->GetName());
+      exit(1);
+   }
+   fInstance->GetFactoriesFolder(true).AddChild(factory, false);
 }
 
 void dabc::Manager::ProcessCtrlCSignal()
 {
-   DOUT0(("Process CTRL-C signal"));
+   DOUT0("Process CTRL-C signal");
 
    if (fMgrStoppedTime.null()) {
       fMgrStoppedTime = dabc::Now();
@@ -1543,32 +1419,32 @@ void dabc::Manager::ProcessCtrlCSignal()
    // TODO: make 10 second configurable
    if (spent<10.) return;
 
-   DOUT0(("Ctrl-C repeated more than after 10 sec out of main loop - force manager halt"));
+   DOUT0("Ctrl-C repeated more than after 10 sec out of main loop - force manager halt");
 
    HaltManager();
 
-   DOUT0(("Exit after Ctrl-C"));
+   DOUT0("Exit after Ctrl-C");
 
    exit(0);
 }
 
 void dabc::Manager::RunManagerMainLoop(double runtime)
 {
-   DOUT2(("Enter dabc::Manager::RunManagerMainLoop"));
+   DOUT2("Enter dabc::Manager::RunManagerMainLoop");
 
    ThreadRef thrd = thread();
 
    if (thrd.null()) return;
 
    if (!fMgrStoppedTime.null()) {
-      DOUT1(("Manager stopped before entering to the mainloop - stop running"));
+      DOUT1("Manager stopped before entering to the mainloop - stop running");
       return;
    }
 
    if (thrd.IsRealThrd()) {
-      DOUT3(("Manager has normal thread - just wait until application modules are stopped"));
+      DOUT3("Manager has normal thread - just wait until application modules are stopped");
    } else {
-      DOUT3(("Run manager thread mainloop inside main process"));
+      DOUT3("Run manager thread mainloop inside main process");
 
       // to be sure that timeout processing is active
       // only via timeout one should be able to stop processing of main loop
@@ -1614,7 +1490,7 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
          if (now > fMgrStoppedTime + 10.) break;
    }
 
-   DOUT2(("Exit dabc::Manager::RunManagerMainLoop"));
+   DOUT2("Exit dabc::Manager::RunManagerMainLoop");
 }
 
 
@@ -1639,35 +1515,12 @@ bool dabc::Manager::Find(ConfigIO &cfg)
 
 bool dabc::Manager::ConnectControl()
 {
-
    if (NumNodes()==1) return true;
 
    // FIXME: move this code later in dabc_exe - one need connection manager only when
    //        several nodes are running and should be connected with each other
 
    return !GetCommandChannel(true).null();
-
-   /* int res = GetCommandChannel(true).Execute("ConnectAll", 10);
-
-   DOUT0(("All slaves connected res = %d", res));
-
-   for (int n=0;n<NumNodes();n++) {
-      dabc::Command cmd("Ping");
-      cmd.SetReceiver(n);
-
-      TimeStamp t1 = dabc::Now();
-
-      res = Execute(cmd, 5);
-
-      TimeStamp t2 = dabc::Now();
-
-      DOUT0(("Ping %d -> %d res = %d  tm = %8.6f", NodeId(), n, res, t2-t1));
-   }
-
-   return true;
-
-   */
-
 }
 
 void dabc::Manager::DisconnectControl()
@@ -1684,13 +1537,13 @@ void dabc::Manager::DisconnectControl()
 // =================================== classes from ManagerRef class ==================================
 
 
-dabc::ThreadRef dabc::Manager::FindThread(const char* name, const char* required_class)
+dabc::ThreadRef dabc::Manager::FindThread(const std::string& name, const std::string& required_class)
 {
-   ThreadRef ref = GetThreadsFolder().FindChild(name);
+   ThreadRef ref = GetThreadsFolder().FindChild(name.c_str());
 
    if (ref.null()) return ref;
 
-   if ((required_class!=0) && !ref()->CompatibleClass(required_class)) ref.Release();
+   if (!required_class.empty() && !ref()->CompatibleClass(required_class)) ref.Release();
 
    return ref;
 }
@@ -1708,40 +1561,48 @@ dabc::ThreadRef dabc::Manager::CurrentThread()
    return ThreadRef();
 }
 
-dabc::ThreadRef dabc::Manager::CreateThread(const std::string& thrdname, const char* thrdclass, const char* thrddev, Command cmd)
+dabc::ThreadRef dabc::Manager::DoCreateThread(const std::string& thrdname, const std::string& thrdclass, const std::string& thrddev, Command cmd)
 {
-   ThreadRef thrd = FindThread(thrdname.c_str());
+   std::string newname = thrdname;
+   int basecnt = 0;
 
-   if (!thrd.null()) {
-      if (thrd()->CompatibleClass(thrdclass)) {
-      } else {
-         EOUT(("Thread %s of class %s exists and incompatible with %s class",
-            thrdname.c_str(), thrd()->ClassName(), (thrdclass ? thrdclass : "---")));
-         thrd.Release();
-      }
-      return thrd;
+   ThreadRef thrd = FindThread(newname);
+
+   while ((basecnt<1000) && !thrd.null()) {
+      if (thrd()->CompatibleClass(thrdclass)) return thrd;
+
+      EOUT("Thread %s of class %s exists and incompatible with %s class",
+          thrdname.c_str(), thrd()->ClassName(), (thrdclass.empty() ? "---" : thrdclass.c_str()) );
+
+      newname = dabc::format("%s_%d", thrdname.c_str(), basecnt++);
+      thrd = FindThread(newname);
    }
 
-   DOUT3(("CreateThread %s of class %s, is any %p", thrdname.c_str(), (thrdclass ? thrdclass : "---"), thrd()));
+   if (!thrd.null()) {
+      EOUT("Too many incompatible threads with name %s", thrdname.c_str());
+      exit(765);
+   }
+
+   DOUT2("CreateThread %s of class %s, is any %p", newname.c_str(), (thrdclass.empty() ? "---" : thrdclass.c_str()), thrd());
 
    FOR_EACH_FACTORY(
-      thrd = factory->CreateThread(GetThreadsFolder(true), thrdclass, thrdname.c_str(), thrddev, cmd);
+      thrd = factory->CreateThread(GetThreadsFolder(true), thrdclass, newname, thrddev, cmd);
       if (!thrd.null()) break;
    )
 
    bool noraml_thread = true;
-   if ((thrdname == MgrThrdName()) && cfg())
+   if ((newname == MgrThrdName()) && cfg())
       noraml_thread = cfg()->NormalMainThread();
 
-   DOUT2(("Starting thread %s as noraml %s refcnt %d", thrd.GetName(), DBOOL(noraml_thread), thrd()->fObjectRefCnt));
+   DOUT2("Starting thread %s as normal %s refcnt %d", thrd.GetName(), DBOOL(noraml_thread), thrd()->fObjectRefCnt);
 
    if (!thrd.null())
       if (!thrd()->Start(10, noraml_thread)) {
-         EOUT(("Thread %s cannot be started!!!", thrdname.c_str()));
+         EOUT("Thread %s cannot be started!!!", newname.c_str());
          thrd.Destroy();
       }
 
-   DOUT2(("Create thread %s of class %s thrd %p refcnt %d", thrdname.c_str(), (thrdclass ? thrdclass : "---"), thrd(), thrd()->fObjectRefCnt));
+   DOUT2("Create thread %s of class %s thrd %p refcnt %d done", newname.c_str(), (thrdclass.empty() ? "---" : thrdclass.c_str()), thrd(), thrd()->fObjectRefCnt);
 
    return thrd;
 }
@@ -1751,21 +1612,40 @@ dabc::ThreadRef dabc::Manager::CreateThread(const std::string& thrdname, const c
 
 bool dabc::ManagerRef::CreateConnectionManager()
 {
+   if (NumNodes() == 1) return false;
+
+   if (!GetObject()->cfg()->UseControl()) return false;
+
    ModuleRef m = FindModule(Manager::ConnMgrName());
 
    if (!m.null()) return true;
 
-   return CreateModule("dabc::ConnectionManager", Manager::ConnMgrName(), Manager::MgrThrdName());
+   DOUT0("+++++++++++++++ dabc::ManagerRef::CreateConnectionManager +++++++++++++");
+
+   m = CreateModule("dabc::ConnectionManager", Manager::ConnMgrName(), Manager::MgrThrdName());
+
+   return !m.null();
 }
 
-bool dabc::ManagerRef::CreateModule(const char* classname, const char* modulename, const char* thrdname)
+
+bool dabc::ManagerRef::CreateApplication(const std::string& classname, const std::string& appthrd)
 {
-   return Execute(CmdCreateModule(classname, modulename, thrdname));
+   return Execute(CmdCreateApplication(classname, appthrd));
 }
 
-dabc::ThreadRef dabc::ManagerRef::CreateThread(const std::string& thrdname, const char* classname)
+
+dabc::ModuleRef dabc::ManagerRef::CreateModule(const std::string& classname, const std::string& modulename, const std::string& thrdname)
 {
-   return GetObject() ? GetObject()->CreateThread(thrdname, classname) : dabc::ThreadRef();
+   CmdCreateModule cmd(classname, modulename, thrdname);
+
+   return Execute(cmd) ? FindModule(modulename) : dabc::ModuleRef();
+}
+
+dabc::ThreadRef dabc::ManagerRef::CreateThread(const std::string& thrdname, const std::string& classname, const std::string& devname)
+{
+   CmdCreateThread cmd(thrdname,  classname, devname);
+
+   return Execute(cmd) == cmd_true ? FindThread(cmd.GetThrdName()) : dabc::ThreadRef();
 }
 
 dabc::ThreadRef dabc::ManagerRef::CurrentThread()
@@ -1773,19 +1653,20 @@ dabc::ThreadRef dabc::ManagerRef::CurrentThread()
    return GetObject() ? GetObject()->CurrentThread() : dabc::ThreadRef();
 }
 
-bool dabc::ManagerRef::CreateDevice(const char* classname, const char* devname, const char* devthrd)
+bool dabc::ManagerRef::CreateDevice(const std::string& classname, const std::string& devname, const std::string& devthrd)
 {
    return Execute(CmdCreateDevice(classname, devname, devthrd));
 }
 
-bool dabc::ManagerRef::DestroyDevice(const char* devname)
+bool dabc::ManagerRef::DestroyDevice(const std::string& devname)
 {
    return Execute(CmdDestroyDevice(devname));
 }
 
+
 dabc::WorkerRef dabc::ManagerRef::FindDevice(const std::string& name)
 {
-   return GetObject() ? GetObject()->FindDevice(name.c_str()) : dabc::WorkerRef();
+   return GetObject() ? GetObject()->FindDevice(name) : dabc::WorkerRef();
 }
 
 
@@ -1795,17 +1676,17 @@ dabc::Reference dabc::ManagerRef::GetAppFolder(bool force)
 }
 
 
-dabc::ModuleRef dabc::ManagerRef::FindModule(const char* name)
+dabc::ModuleRef dabc::ManagerRef::FindModule(const std::string& name)
 {
    return GetObject() ? GetObject()->FindModule(name) : dabc::ModuleRef();
 }
 
-void dabc::ManagerRef::StartModule(const char* modulename)
+void dabc::ManagerRef::StartModule(const std::string& modulename)
 {
    Execute(dabc::CmdStartModule(modulename));
 }
 
-void dabc::ManagerRef::StopModule(const char* modulename)
+void dabc::ManagerRef::StopModule(const std::string& modulename)
 {
    Execute(dabc::CmdStopModule(modulename));
 }
@@ -1820,10 +1701,16 @@ bool dabc::ManagerRef::StopAllModules()
    return Execute(CmdStopModule("*"));
 }
 
-bool dabc::ManagerRef::DeleteModule(const char* name)
+bool dabc::ManagerRef::DeleteModule(const std::string& name)
 {
    return Execute(CmdDeleteModule(name));
 }
+
+bool dabc::ManagerRef::DeletePool(const std::string& name)
+{
+   return Execute(CmdDeletePool(name));
+}
+
 
 dabc::Reference dabc::ManagerRef::FindItem(const std::string& name)
 {
@@ -1832,7 +1719,12 @@ dabc::Reference dabc::ManagerRef::FindItem(const std::string& name)
 
 dabc::Reference dabc::ManagerRef::FindPort(const std::string& portname)
 {
-   return GetObject() ? GetObject()->FindPort(portname.c_str()) : Reference();
+   return GetObject() ? GetObject()->FindPort(portname) : Reference();
+}
+
+dabc::Reference dabc::ManagerRef::FindPool(const std::string& name)
+{
+   return GetObject() ? GetObject()->FindPool(name) : Reference();
 }
 
 dabc::Parameter dabc::ManagerRef::FindPar(const std::string& parname)
@@ -1879,7 +1771,7 @@ bool dabc::ManagerRef::ParameterEventSubscription(Worker* ptr, bool subscribe, c
    std::string itemname;
 
    if (!Url::DecomposeItemName(mask, nodeid, itemname)) {
-      EOUT(("Wrong parameter mask %s", mask.c_str()));
+      EOUT("Wrong parameter mask %s", mask.c_str());
       return false;
    }
 
@@ -1914,36 +1806,41 @@ bool dabc::ManagerRef::IsLocalItem(const std::string& name)
 dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, const std::string& port2name)
 {
    PortRef port1 = FindPort(port1name);
-
    PortRef port2 = FindPort(port2name);
 
+   if (IsLocalItem(port1name) && IsLocalItem(port2name)) {
+
+      if (!port1.null() && !port2.null()) {
+         // make local connection immediately
+         dabc::LocalTransport::ConnectPorts(port1, port2);
+         // connect also bind ports (if exists)
+         dabc::LocalTransport::ConnectPorts(port2.GetBindPort(), port1.GetBindPort());
+         return dabc::ConnectionRequest();
+      }
+   }
+
+
    if (IsLocalItem(port1name) && port1.null()) {
-      EOUT(("Did not found port %s", port1name.c_str()));
+      EOUT("Did not found port %s", port1name.c_str());
       return dabc::ConnectionRequest();
    }
 
    if (IsLocalItem(port2name) && port2.null()) {
-      EOUT(("Did not found port %s", port2name.c_str()));
+      EOUT("Did not found port %s", port2name.c_str());
       return dabc::ConnectionRequest();
    }
 
    if (port1.null() && port2.null()) return dabc::ConnectionRequest();
 
-   DOUT2(("Connect ports %s %p %s %p", port1name.c_str(), port1(), port2name.c_str(), port2()));
-
-   if (!port1.null() && !port2.null()) {
-      // make local connection immediately
-      dabc::LocalTransport::ConnectPorts(port1, port2);
-      return dabc::ConnectionRequest();
-   }
+   DOUT2("Connect ports %s %p %s %p", port1name.c_str(), port1(), port2name.c_str(), port2());
 
    dabc::ConnectionRequest req;
 
    if (!port1.null())
-      req = port1()->MakeConnReq(port2name, true);
+      req = port1.MakeConnReq(port2name, true);
 
    if (!port2.null())
-      req = port2()->MakeConnReq(port1name, false);
+      req = port2.MakeConnReq(port1name, false);
 
    // if not configured differently, specify
    if (req.GetConnDevice().empty() && GetObject())
@@ -1968,6 +1865,10 @@ bool dabc::ManagerRef::ActivateConnections(double tmout)
 
 bool dabc::ManagerRef::CreateTransport(const std::string& portname, const std::string& transportkind, const std::string& thrdname)
 {
+   PortRef port = FindPort(portname);
+
+   if (port.null()) return false;
+
    return Execute(CmdCreateTransport(portname, transportkind, thrdname));
 }
 
@@ -2010,4 +1911,10 @@ void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
       GetObject()->Sleep(tmout, prefix);
    else
       dabc::Sleep(tmout);
+}
+
+void dabc::ManagerRef::RunMainLoop(double runtime)
+{
+   if (GetObject())
+      GetObject()->RunManagerMainLoop(runtime);
 }

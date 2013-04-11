@@ -1,6 +1,6 @@
 #include "verbs/BnetRunnable.h"
 
-verbs::BnetRunnable::BnetRunnable(const char* name) :
+verbs::BnetRunnable::BnetRunnable(const std::string& name) :
    bnet::BnetRunnable(name),
    fRelibaleConn(true),
    fIbContext(),
@@ -27,14 +27,14 @@ verbs::BnetRunnable::~BnetRunnable()
 }
 
 
-bool verbs::BnetRunnable::Configure(dabc::Module* m, dabc::MemoryPool* pool, int numrecs)
+bool verbs::BnetRunnable::Configure(const dabc::ModuleRef& m, const dabc::EventId& ev, dabc::MemoryPool* pool, int numrecs)
 {
-   fRelibaleConn = m->Cfg("TestReliable").AsBool(true);
+   fRelibaleConn = m.Cfg("TestReliable").AsBool(true);
 
-   if (!bnet::BnetRunnable::Configure(m, pool, numrecs)) return false;
+   if (!bnet::BnetRunnable::Configure(m, ev, pool, numrecs)) return false;
 
    if (!fIbContext.OpenVerbs(true)) {
-      EOUT(("Cannot initialize VERBs!!!!"));
+      EOUT("Cannot initialize VERBs!!!!");
       return false;
    }
 
@@ -87,7 +87,7 @@ bool verbs::BnetRunnable::ExecuteCloseQPs()
 {
    CheckTransportThrd();
 
-   // DOUT0(("Executing BnetRunnable::ExecuteCloseQPs()   numruns:%d", fNumRunningRecs));
+   // DOUT0("Executing BnetRunnable::ExecuteCloseQPs()   numruns:%d", fNumRunningRecs);
 
    for (int lid=0; lid<NumLids(); lid++) {
       if (fQPs[lid]!=0) {
@@ -117,12 +117,12 @@ bool verbs::BnetRunnable::ExecuteCreateQPs(void* args, int argssize)
 
    ibv_qp_type qp_type = IsReliableConn() ? IBV_QPT_RC : IBV_QPT_UC;
 
-   if (qp_type == IBV_QPT_UC) DOUT0(("Testing unreliable connections"));
+   if (qp_type == IBV_QPT_UC) DOUT0("Testing unreliable connections");
 
    int qpdepth = 128;
 
    if ((unsigned) argssize != NumNodes()*NumLids()*sizeof(VerbsConnRec)) {
-      EOUT(("Wrong arguments length for CreateQPs"));
+      EOUT("Wrong arguments length for CreateQPs");
       return false;
    }
 
@@ -132,7 +132,7 @@ bool verbs::BnetRunnable::ExecuteCreateQPs(void* args, int argssize)
 
    fCQ = new verbs::ComplQueue(fIbContext, NumNodes() * qpdepth * 6, 0, true);
 
-   DOUT2(("Create CQ length %d", NumNodes() * qpdepth * 6));
+   DOUT2("Create CQ length %d", NumNodes() * qpdepth * 6);
 
    for (int lid = 0; lid<NumLids(); lid++) {
 
@@ -151,13 +151,13 @@ bool verbs::BnetRunnable::ExecuteCreateQPs(void* args, int argssize)
          } else {
             fQPs[lid][node] = new verbs::QueuePair(fIbContext, qp_type, fCQ, qpdepth, fSegmPerOper, fCQ, qpdepth, 2);
 
-            DOUT2(("Create QP[%d][%d]  length = %d segm %d", lid, node, qpdepth, fSegmPerOper));
+            DOUT2("Create QP[%d][%d]  length = %d segm %d", lid, node, qpdepth, fSegmPerOper);
 
             if (fQPs[lid][node]->qp()==0) return false;
             recs[indx].qp = fQPs[lid][node]->qp_num();
             recs[indx].psn = fQPs[lid][node]->local_psn();
 
-            //         DOUT0(("Create QP %d -> %d  %04x:%08x:%08x", Node(), node, recs[node].lid, recs[node].qp, recs[node].psn));
+            //         DOUT0("Create QP %d -> %d  %04x:%08x:%08x", Node(), node, recs[node].lid, recs[node].qp, recs[node].psn);
          }
       }
    }
@@ -199,7 +199,7 @@ bool verbs::BnetRunnable::ExecuteConnectQPs(void* args, int argssize)
    VerbsConnRec* recs = (VerbsConnRec*) args;
 
    if (argssize != ConnectionBufferSize()) {
-      EOUT(("Wrong size of data for connecting QPs"));
+      EOUT("Wrong size of data for connecting QPs");
       return false;
    }
 
@@ -214,12 +214,12 @@ bool verbs::BnetRunnable::ExecuteConnectQPs(void* args, int argssize)
          // FIXME: one should deliver destination port as well
          if (!fQPs[lid][node]->Connect(recs[indx].lid, recs[indx].qp, recs[indx].psn, lid)) return false;
 
-         DOUT3(("Connect QP[%d,%d] -> with  %04x:%08x:%08x", lid, node, recs[indx].lid, recs[indx].qp, recs[indx].psn));
+         DOUT3("Connect QP[%d,%d] -> with  %04x:%08x:%08x", lid, node, recs[indx].lid, recs[indx].qp, recs[indx].psn);
 
       }
    }
 
-   DOUT0(("BnetRunnable::ExecuteConnectQPs done"));
+   DOUT0("BnetRunnable::ExecuteConnectQPs done");
 
    return true;
 }
@@ -246,7 +246,7 @@ bool verbs::BnetRunnable::DoPrepareRec(int recid)
    if (!rec->buf.null() && !fMainReg.null()) {
 
       if ((int) rec->buf.NumSegments() >= fSegmPerOper) {
-         EOUT(("Too many segments (%u) in buffer allowed %d", rec->buf.NumSegments(), fSegmPerOper-1));
+         EOUT("Too many segments (%u) in buffer allowed %d", rec->buf.NumSegments(), fSegmPerOper-1);
          exit(147);
       }
 
@@ -277,13 +277,13 @@ bool verbs::BnetRunnable::DoPrepareRec(int recid)
          f_rwr[recid].next      = NULL;
          break;
       default:
-         EOUT(("Wrong operation code"));
+         EOUT("Wrong operation code");
          break;
    }
 
-/*   DOUT0(("BnetRunnable::DoPrepareRec recid:%d  %s  numseg:%u  header %p len:%u lkey:%u",
+/*   DOUT0("BnetRunnable::DoPrepareRec recid:%d  %s  numseg:%u  header %p len:%u lkey:%u",
          recid, rec->kind == kind_Send ? "kind_Send" : "kind_Recv", num_sge,
-        f_sge[segid].addr, f_sge[segid].length,  f_sge[segid].lkey));
+        f_sge[segid].addr, f_sge[segid].length,  f_sge[segid].lkey);
 */
    return true;
 }
@@ -295,23 +295,23 @@ bool verbs::BnetRunnable::DoPerformOperation(int recid)
    bnet::OperRec* rec = GetRec(recid);
    if (rec==0) return false;
 
-   // DOUT0(("BnetRunnable::DoPerformOperation recid:%d  %s", recid, rec->kind == kind_Send ? "kind_Send" : "kind_Recv"));
+   // DOUT0("BnetRunnable::DoPerformOperation recid:%d  %s", recid, rec->kind == kind_Send ? "kind_Send" : "kind_Recv");
 
    switch (rec->kind) {
       case bnet::kind_None:
-         EOUT(("Operation cannot be done in IB"));
+         EOUT("Operation cannot be done in IB");
          return false;
 
       case bnet::kind_Send:
-         DOUT1(("Post send lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid));
+         DOUT1("Post send lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid);
          return fQPs[rec->tgtindx][rec->tgtnode]->Post_Send(f_swr + recid);
 
       case bnet::kind_Recv:
-         DOUT1(("Post recv lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid));
+         DOUT1("Post recv lid %d node %d rec %d", rec->tgtindx, rec->tgtnode, recid);
          return fQPs[rec->tgtindx][rec->tgtnode]->Post_Recv(f_rwr + recid);
    }
 
-   EOUT(("Operation cannot be done in IB"));
+   EOUT("Operation cannot be done in IB");
 
    return false;
 }
@@ -330,13 +330,13 @@ int verbs::BnetRunnable::DoWaitOperation(double waittime, double fasttime)
    bnet::OperRec* rec = GetRec(recid);
 
    if (rec==0) {
-      EOUT(("Wrong operation arg!!"));
+      EOUT("Wrong operation arg!!");
       return -1;
    }
 
    if (res!=1) rec->err = true;
 
-   DOUT2(("Obtain operation %d kind %d repeatcnt %d", recid, rec->kind, rec->repeatcnt));
+   DOUT2("Obtain operation %d kind %d repeatcnt %d", recid, rec->kind, rec->repeatcnt);
 
    return recid;
 }

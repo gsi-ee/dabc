@@ -52,7 +52,7 @@ void dabc::CommandsSet::Add(Command cmd, Worker* recv, bool do_submit)
    if (cmd.null()) return;
 
    if (!HasThread() && !do_submit) {
-      EOUT(("Command %s cannot be submitted by the user when set not assigned to the thread!", cmd.GetName()));
+      EOUT("Command %s cannot be submitted by the user when set not assigned to the thread!", cmd.GetName());
    }
 
    CmdRec rec;
@@ -89,11 +89,11 @@ int dabc::CommandsSet::GetCmdResult(unsigned n)
 int dabc::CommandsSet::ExecuteCommand(Command cmd)
 {
    if (!fConfirm.null()) {
-      EOUT(("Something wrong - confirmation command already exists"));
+      EOUT("Something wrong - confirmation command already exists");
       return Worker::ExecuteCommand(cmd);
    }
 
-   DOUT4(("CommandsSet get command %s", cmd.GetName()));
+   DOUT4("CommandsSet get command %s", cmd.GetName());
 
    // first submit commands which should be submitted
    while (SubmitNextCommand())
@@ -108,7 +108,7 @@ int dabc::CommandsSet::ExecuteCommand(Command cmd)
       fCompleted = true;
    }
 
-   DOUT4(("CommandsSet execution res = %d", res));
+   DOUT4("CommandsSet execution res = %d", res);
 
    return res;
 }
@@ -118,10 +118,10 @@ bool dabc::CommandsSet::ReplyCommand(Command cmd)
    for (unsigned n=0; n<fCmds.Size();n++) {
       if (fCmds.Item(n).cmd == cmd) {
          if (fCmds.Item(n).state != 1)
-            EOUT(("Wrong state %d for command %s at reply", fCmds.Item(n).state, cmd.GetName()));
+            EOUT("Wrong state %d for command %s at reply", fCmds.Item(n).state, cmd.GetName());
          fCmds.Item(n).state = 2;
 
-         DOUT5(("Command %s replied res = %d", cmd.GetName(), cmd.GetResult()));
+         DOUT5("Command %s replied res = %d", cmd.GetName(), cmd.GetResult());
          break;
       }
    }
@@ -133,7 +133,7 @@ bool dabc::CommandsSet::ReplyCommand(Command cmd)
    int res = CheckExecutionResult();
 
    if (res!=cmd_postponed) {
-      DOUT4(("CommandsSet completed res = %d !!!", res));
+      DOUT4("CommandsSet completed res = %d !!!", res);
 
       if (!fCompleted) SetCompleted(res);
       fCompleted = true;
@@ -153,7 +153,7 @@ bool dabc::CommandsSet::SubmitNextCommand()
       if (fCmds.Item(n).state==0) {
          if (fCmds.Item(n).recv) {
 
-            DOUT5(("CommandsSet distributes cmd %s  item %u size %u", fCmds.Item(n).cmd.GetName(), n, fCmds.Size()));
+            DOUT5("CommandsSet distributes cmd %s  item %u size %u", fCmds.Item(n).cmd.GetName(), n, fCmds.Size());
 
             fCmds.Item(n).state = 1;
 
@@ -162,7 +162,7 @@ bool dabc::CommandsSet::SubmitNextCommand()
             return true;
 
          } else {
-            EOUT(("Not able submit next command %s", fCmds.Item(n).cmd.GetName()));
+            EOUT("Not able submit next command %s", fCmds.Item(n).cmd.GetName());
             fCmds.Item(n).state = 2;
          }
       }
@@ -194,25 +194,25 @@ int dabc::CommandsSet::ExecuteSet(double tmout)
    if (!HasThread()) {
 
       if (dabc::mgr()==0) {
-         EOUT(("Cannot use CommandsSet without running manager !!!"));
+         EOUT("Cannot use CommandsSet without running manager !!!");
          return cmd_false;
       }
 
-      ThreadRef thrd = dabc::mgr()->CurrentThread();
-      if (thrd()==0) {
-         DOUT4(("Cannot use commands set outside DABC threads, create dummy !!!"));
+      ThreadRef thrd = dabc::mgr.CurrentThread();
+      if (thrd.null()) {
+         DOUT4("Cannot use commands set outside DABC threads, create dummy !!!");
          curr.Start(0, false);
          thrd = ThreadRef(&curr);
       }
 
-      DOUT4(("Assign SET to thread %s", thrd()->GetName()));
+      DOUT4("Assign SET to thread %s", thrd()->GetName());
 
       AssignToThread(ThreadRef(thrd));
 
       didassign = true;
    }
 
-   DOUT4(("Calling AnyCommand"));
+   DOUT4("Calling AnyCommand");
 
    fSyncMode = true;
 
@@ -220,7 +220,7 @@ int dabc::CommandsSet::ExecuteSet(double tmout)
 
    CancelCommands();
 
-   DOUT1(("Calling AnyCommand res = %d", res));
+   DOUT1("Calling AnyCommand res = %d", res);
 
    if (didassign)
       DettachFromThread();
@@ -232,18 +232,18 @@ bool dabc::CommandsSet::SubmitSet(Command rescmd, double tmout)
 {
    if (!HasThread()==0) {
       if (dabc::mgr()==0) {
-         EOUT(("Cannot use CommandsSet without running manager !!!"));
+         EOUT("Cannot use CommandsSet without running manager !!!");
          return false;
       }
 
-      ThreadRef thrd = dabc::mgr()->CurrentThread();
-      if (thrd()==0) thrd = dabc::mgr()->thread();
-      if (thrd()==0) {
-         EOUT(("Cannot use commands set outside DABC threads !!!"));
+      ThreadRef thrd = dabc::mgr.CurrentThread();
+      if (thrd.null()) thrd = dabc::mgr.thread();
+      if (thrd.null()) {
+         EOUT("Cannot use commands set outside DABC threads !!!");
          return false;
       }
 
-      DOUT0(("Assign SET to thread %s", thrd()->GetName()));
+      DOUT0("Assign SET to thread %s", thrd()->GetName());
 
       AssignToThread(thrd);
    }
@@ -259,7 +259,7 @@ bool dabc::CommandsSet::SubmitSet(Command rescmd, double tmout)
 
 double dabc::CommandsSet::ProcessTimeout(double last_diff)
 {
-   EOUT(("CommandsSet Timeout !!!!!!!!!!!!!"));
+   EOUT("CommandsSet Timeout !!!!!!!!!!!!!");
 
    if (!fCompleted) SetCompleted(cmd_timedout);
    fCompleted = true;

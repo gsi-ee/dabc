@@ -13,13 +13,13 @@
 
 #include "mbs/GeneratorModule.h"
 
+#include <stdlib.h>
 #include <math.h>
 
-#include "dabc/Port.h"
-#include "dabc/PoolHandle.h"
 #include "dabc/Application.h"
 #include "dabc/Manager.h"
 #include "mbs/Iterator.h"
+
 
 double Gauss_Rnd(double mean, double sigma)
 {
@@ -36,9 +36,11 @@ double Gauss_Rnd(double mean, double sigma)
 }
 
 
-mbs::GeneratorModule::GeneratorModule(const char* name, dabc::Command cmd) :
+mbs::GeneratorModule::GeneratorModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
+   EnsurePorts(0, 1, dabc::xmlWorkPool);
+
    fEventCount = Cfg("FirstEventCount",cmd).AsInt(0);;
 
    fStartStopPeriod = Cfg("StartStopPeriod",cmd).AsInt(0);
@@ -48,22 +50,14 @@ mbs::GeneratorModule::GeneratorModule(const char* name, dabc::Command cmd) :
    fIsGo4RandomFormat = Cfg("Go4Random",cmd).AsBool(true);
    fFullId = Cfg("FullId",cmd).AsUInt(0);
 
-   fBufferSize = Cfg(dabc::xmlBufferSize,cmd).AsInt(16*1024);
-
-   DOUT1(("Generator buffer size %u numsub %u procid %u or fullid 0x%x", fBufferSize, fNumSubevents, fFirstProcId, fFullId));
-
-   fPool = CreatePoolHandle("Pool");
+   DOUT0("Generator numsub %u procid %u or fullid 0x%x", fNumSubevents, fFirstProcId, fFullId);
 
    fShowInfo = true;
-
-   CreateOutput("Output", fPool, 5);
 
    // create parameter which will be updated once a second
    CreatePar("Info", "info").SetSynchron(true, 1.);
 
-   dabc::Parameter par = CreatePar("Rate");
-   par.SetRatemeter(true);
-   par.SetUnits("ev");
+   CreatePar("Rate").SetRatemeter(true).SetUnits("ev");
 
    CreateCmdDef("ToggleInfo").AddArg("toggle","int", false);
 }
@@ -72,7 +66,7 @@ int mbs::GeneratorModule::ExecuteCommand(dabc::Command cmd)
 {
    if (cmd.IsName("ToggleInfo")) {
       fShowInfo = !fShowInfo;
-      Par("Info").SetStr(dabc::format("%sable info, toggle %d", (fShowInfo ? "En" : "Dis"), cmd.Field("toggle").AsInt()));
+      Par("Info").SetStr( dabc::format("%sable info, toggle %d", (fShowInfo ? "En" : "Dis"), cmd.Field("toggle").AsInt()) );
       Par("Info").FireModified();
       return dabc::cmd_true;
    }
@@ -82,7 +76,7 @@ int mbs::GeneratorModule::ExecuteCommand(dabc::Command cmd)
 
 void mbs::GeneratorModule::FillRandomBuffer(dabc::Buffer& buf)
 {
-   if (buf.null()) { EOUT(("No free buffer - generator will block")); return; }
+   if (buf.null()) { EOUT("No free buffer - generator will block"); return; }
 
    mbs::WriteIterator iter(buf);
 
@@ -133,137 +127,192 @@ void mbs::GeneratorModule::FillRandomBuffer(dabc::Buffer& buf)
       Par("Info").SetStr(dabc::format("Produce event %d", fEventCount));
 }
 
-
-void mbs::GeneratorModule::ProcessOutputEvent(dabc::Port* port)
+void mbs::GeneratorModule::BeforeModuleStart()
 {
-   dabc::Buffer buf = Pool()->TakeBuffer(fBufferSize);
+   ProduceOutputEvent();
+}
+
+bool mbs::GeneratorModule::ProcessSend(unsigned port)
+{
+   dabc::Buffer buf = TakeBuffer();
 
    FillRandomBuffer(buf);
 
-   port->Send(buf);
-}
+   Send(port, buf);
 
-extern "C" void InitMbsGenerator()
-{
-   dabc::mgr()->CreateThread("GenThrd", dabc::typeSocketThread);
-   dabc::mgr.CreateMemoryPool("Pool");
-   dabc::mgr.CreateModule("mbs::GeneratorModule", "Generator", "GenModThrd");
-   dabc::mgr.CreateTransport("Generator/Output", mbs::typeServerTransport, "GenThrd");
+   DOUT2("NEW BUFFER cansend %s", DBOOL(CanSend(port)));
+
+   return true;
 }
 
 
-
-mbs::ReadoutModule::ReadoutModule(const char* name,  dabc::Command cmd) :
+mbs::ReadoutModule::ReadoutModule(const std::string& name,  dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
-	CreatePoolHandle("Pool1");
+   CreateInput("Input", 5);
 
-	CreateInput("Input", Pool(), 5);
+   CreatePar("Data").SetRatemeter(false, 3.).SetUnits("MB").SetDebugLevel(1);
+   CreatePar("Evnts").SetRatemeter(false, 3.).SetUnits("Buf").SetDebugLevel(1);
 
-//	DOUT1(("Start as client for node %s:%d", port->Par(mbs::xmlServerName).AsStr(""), port->Par(mbs::xmlServerPort).AsInt()));
+
+//   DOUT1("Start as client for node %s:%d", port->Par(mbs::xmlServerName).AsStr(""), port->Par(mbs::xmlServerPort).AsInt());
 }
 
-void mbs::ReadoutModule::ProcessInputEvent(dabc::Port* port)
+bool mbs::ReadoutModule::ProcessRecv(unsigned port)
 {
-	dabc::Buffer buf = port->Recv();
+   dabc::Buffer buf = Recv(port);
 
-	unsigned cnt = mbs::ReadIterator::NumEvents(buf);
+   unsigned cnt = mbs::ReadIterator::NumEvents(buf);
 
-	DOUT1(("Found %u events in MBS buffer", cnt));
+//   DOUT1("Found %u events in MBS buffer", cnt);
 
-	buf.Release();
+   Par("Data").SetDouble(buf.GetTotalSize()/1024./1024);
+   Par("Evnts").SetDouble(cnt);
+
+   buf.Release();
+
+   return true;
 }
 
+// =======================================================================
 
-mbs::TransmitterModule::TransmitterModule(const char* name, dabc::Command cmd) :
-	dabc::ModuleAsync(name, cmd)
+
+mbs::TransmitterModule::TransmitterModule(const std::string& name, dabc::Command cmd) :
+   dabc::ModuleAsync(name, cmd)
 {
-	CreatePoolHandle("Pool");
+   CreateInput("Input", 5);
 
-	CreateInput("Input", Pool(), 5);
+   CreateOutput("Output", 5);
 
-	CreateOutput("Output", Pool(), 5);
+   fReconnect = Cfg("Reconnect", cmd).AsBool(false);
 
-	fReconnect = Cfg("Reconnect", cmd).AsBool(false);
-
-	// create timer, but do not enable it
-	if (fReconnect) CreateTimer("Reconn", -1);
+   // create timer, but do not enable it
+   if (fReconnect) CreateTimer("SysTimer", -1);
 
    CreatePar("TransmitData").SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 3.).SetUnits("Buf");
+
+   DOUT1("Create mbs::TransmitterModule %s", GetName());
 }
+
 
 void mbs::TransmitterModule::BeforeModuleStart()
 {
    // in case of reconnect allowed shoot timer to verify that connection is there
-   if (fReconnect) ShootTimer("Reconn", 0.1);
+
+   DOUT0("BeforeModuleStart %s", GetName());
+
+   if (fReconnect) ShootTimer("SysTimer", 0.1);
+}
+
+bool mbs::TransmitterModule::ProcessRecv(unsigned port)
+{
+//   DOUT0("ProcessRecv %s", GetName());
+
+   if (!CanSend()) return false;
+
+   return retransmit();
+}
+
+bool mbs::TransmitterModule::ProcessSend(unsigned port)
+{
+//   DOUT0("ProcessSend %s", GetName());
+
+   if (!CanRecv()) return false;
+
+   return retransmit();
 }
 
 
-void mbs::TransmitterModule::retransmit()
+bool mbs::TransmitterModule::retransmit()
 {
-	bool dostop = false;
-	while (Input()->CanRecv() && (!Output()->IsConnected() || Output()->CanSend())) {
-		dabc::Buffer buf = Input(0)->Recv();
-		if (buf.GetTypeId() == dabc::mbt_EOF) {
-			DOUT0(("See EOF - stop module"));
-			dostop = true;
-		} else {
-		   Par("TransmitData").SetDouble(buf.GetTotalSize()/1024./1024);
-		   Par("TransmitBufs").SetDouble(1.);
-		}
-		if (Output()->CanSend())
-		   Output()->Send(buf);
-		else
-		   buf.Release();
-	}
+   bool dostop = false;
 
-	if (dostop) {
-	   DOUT0(("Doing stop???"));
-	   dabc::mgr.StopApplication();
-	}
+   dabc::Buffer buf = Recv();
+
+   if (buf.GetTypeId() == dabc::mbt_EOF) {
+      DOUT0("See EOF - stop module");
+      dostop = true;
+   } else {
+      Par("TransmitData").SetDouble(buf.GetTotalSize()/1024./1024);
+      Par("TransmitBufs").SetDouble(1.);
+   }
+
+   Send(buf);
+
+   if (dostop) {
+      DOUT0("Doing stop - not now, wait auto stop when all ports are disconnected!!!");
+      // dabc::mgr.StopApplication();
+   }
+
+   return !dostop;
 }
 
-void mbs::TransmitterModule::ProcessDisconnectEvent(dabc::Port* port)
+void mbs::TransmitterModule::ProcessConnectEvent(const std::string& name, bool on)
 {
-   DOUT0(("Port %s disconnected from retransmitter", port->GetName()));
+   // ignore connect event
+   if (on) return;
 
-   if (fReconnect && port->IsName("Input")) {
-      DOUT0(("We will try to reconnect input as far as possible"));
-      ShootTimer("Reconn", 2.);
+   DOUT0("Port %s disconnected from retransmitter", name.c_str());
+
+   if (fReconnect && (name == "Input")) {
+      DOUT0("We will try to reconnect input as far as possible");
+      ShootTimer("SysTimer", 2.);
    } else {
       dabc::mgr.StopApplication();
    }
 }
 
-void mbs::TransmitterModule::ProcessTimerEvent(dabc::Timer* timer)
+void mbs::TransmitterModule::ProcessTimerEvent(unsigned timer)
 {
-   if (!fReconnect || Input(0)->IsConnected()) return;
+   if (!fReconnect || IsInputConnected()) return;
 
-   std::string item = Input(0)->ItemName();
+   std::string item = InputName(0, true);
 
-   bool res = dabc::mgr.CreateTransport(item, mbs::typeClientTransport, "MbsTransport");
+   bool res = dabc::mgr.CreateTransport(item);
 
-   if (res) DOUT0(("Port %s is reconnected again!!!", item.c_str()));
-       else ShootTimer("Reconn", 2.);
+   if (res) DOUT0("Port %s is reconnected again!!!", item.c_str());
+       else ShootTimer("SysTimer", 2.);
 }
 
+extern "C" void InitMbsGenerator()
+{
+//   dabc::mgr.CreateThread("GenThrd", dabc::typeSocketThread);
+   dabc::mgr.CreateMemoryPool("Pool");
+
+   dabc::mgr.CreateModule("mbs::GeneratorModule", "Generator", "GenModThrd");
+
+   dabc::mgr.CreateTransport("Generator/Output0");
+}
 
 
 extern "C" void InitMbsClient()
 {
+   dabc::mgr.CreateMemoryPool("Pool");
+
    dabc::mgr.CreateModule("mbs::ReadoutModule", "Receiver", "ModuleThrd");
 
-   dabc::mgr.CreateTransport("Receiver/Input", mbs::typeClientTransport, "MbsTransport");
+   dabc::mgr.CreateTransport("Receiver/Input");
 }
 
 extern "C" void InitMbsTransmitter()
 {
    dabc::mgr.CreateModule("mbs::TransmitterModule", "Transmitter", "WorkerThrd");
 
-   dabc::mgr.CreateTransport("Transmitter/Input", mbs::typeTextInput, "WorkerThrd");
+   dabc::mgr.CreateTransport("Transmitter/Input0");
 
-   dabc::mgr.CreateTransport("Transmitter/Output", mbs::typeServerTransport, "MbsTransport");
+   dabc::mgr.CreateTransport("Transmitter/Output0");
+}
+
+extern "C" void InitMbsFileRep()
+{
+   dabc::mgr.CreateMemoryPool("Pool");
+
+   dabc::mgr.CreateModule("mbs::TransmitterModule", "Repeater", "WorkerThrd");
+
+   dabc::mgr.CreateTransport("Repeater/Input0");
+
+   dabc::mgr.CreateTransport("Repeater/Output0");
 }
 
 extern "C" void InitMbsRepeater()
@@ -272,8 +321,8 @@ extern "C" void InitMbsRepeater()
 
    dabc::mgr.CreateModule("mbs::TransmitterModule", "Repeater", "WorkerThrd");
 
-   dabc::mgr.CreateTransport("Repeater/Input", mbs::typeClientTransport, "MbsTransport");
+   dabc::mgr.CreateTransport("Repeater/Input0");
 
-   dabc::mgr.CreateTransport("Repeater/Output", mbs::typeServerTransport, "MbsTransport");
+   dabc::mgr.CreateTransport("Repeater/Output0");
 }
 

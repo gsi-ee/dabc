@@ -27,22 +27,22 @@
 namespace dabc {
 
    class NewConnectRec;
-   class SocketProtocolWorker;
+   class SocketProtocolAddon;
 
    class SocketDevice : public Device {
 
-      friend class SocketProtocolWorker;
+      friend class SocketProtocolAddon;
       friend class SocketCommandChannel;
 
       public:
-         SocketDevice(const char* name);
+         SocketDevice(const std::string& name);
          virtual ~SocketDevice();
 
-         virtual const char* RequiredThrdClass() const { return typeSocketThread; }
+         virtual std::string RequiredThrdClass() const { return typeSocketThread; }
 
-         virtual bool StartServerWorker(Command cmd, std::string& servid);
+         virtual bool StartServerAddon(Command cmd, std::string& servid);
 
-         virtual Transport* CreateTransport(Command cmd, Reference port);
+         virtual Transport* CreateTransport(Command cmd, const Reference& port);
 
          static std::string GetLocalHost(bool force = false);
 
@@ -60,17 +60,16 @@ namespace dabc {
 
          NewConnectRec* _FindRec(const char* connid);
 
-         void ServerProtocolRequest(SocketProtocolWorker* proc, const char* inmsg, char* outmsg);
+         void ServerProtocolRequest(SocketProtocolAddon* proc, const char* inmsg, char* outmsg);
 
-         void ProtocolCompleted(SocketProtocolWorker* proc, const char* inmsg);
+         bool ProtocolCompleted(SocketProtocolAddon* proc, const char* inmsg);
 
-         void DestroyProtocolWorker(SocketProtocolWorker* proc, bool res);
+         void RemoveProtocolAddon(SocketProtocolAddon* proc, bool res);
 
          int HandleManagerConnectionRequest(Command cmd);
 
          virtual const char* ClassName() const { return dabc::typeSocketDevice; }
 
-         SocketServerWorker*    fServer;
          PointersVector         fConnRecs; // list of connections recs
          PointersVector         fProtocols; // list of protocol start processors
          long                   fConnCounter;

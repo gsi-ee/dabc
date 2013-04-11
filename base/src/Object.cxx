@@ -38,16 +38,14 @@ namespace dabc {
    const char* clPoolHandle         = "PoolHandle";
    const char* clMemoryPool         = "MemoryPool";
 
+   const char* xmlQueueSize         = "queue";
    const char* xmlInputQueueSize    = "InputQueueSize";
    const char* xmlOutputQueueSize   = "OutputQueueSize";
    const char* xmlInlineDataSize    = "InlineDataSize";
 
    const char* xmlPoolName          = "PoolName";
-   const char* xmlWorkPool          = "WorkPool";
-   const char* xmlInputPoolName     = "InputPoolName";
-   const char* xmlOutputPoolName    = "OutputPoolName";
+   const char* xmlWorkPool          = "Pool";
    const char* xmlFixedLayout       = "FixedLayout";
-   const char* xmlSizeLimitMb       = "SizeLimitMb";
    const char* xmlCleanupTimeout    = "CleanupTimeout";
    const char* xmlBufferSize        = "BufferSize";
    const char* xmlNumBuffers        = "NumBuffers";
@@ -77,8 +75,10 @@ namespace dabc {
    const char* xmlProtocol          = "Protocol";
    const char* xmlHostName          = "HostName";
    const char* xmlFileName          = "FileName";
-   const char* xmlUrlName           = "UrlName";
-   const char* xmlUrlPort           = "UrlPort";
+   const char* xmlFileNumber        = "FileNumber";
+   const char* xmlFileSizeLimit     = "FileSizeLimit";
+   const char* xml_maxsize          = "maxsize";
+   const char* xml_number           = "number";
 
    const char* typeThread           = "dabc::Thread";
    const char* typeSocketDevice     = "dabc::SocketDevice";
@@ -106,7 +106,7 @@ namespace dabc {
 
 
 
-dabc::Object::Object(const char* name, bool owner) :
+dabc::Object::Object(const std::string& name, bool owner) :
    fObjectFlags(0),
    fObjectParent(),
    fObjectName(name),
@@ -115,7 +115,7 @@ dabc::Object::Object(const char* name, bool owner) :
    fObjectChilds(0),
    fObjectBlock(0)
 {
-   DOUT3(("Created object %s %p", (name ? name : "---"), this));
+   DOUT3("Created object %s %p", GetName(), this);
 
    SetFlag(flIsOwner, owner);
 
@@ -123,7 +123,7 @@ dabc::Object::Object(const char* name, bool owner) :
 }
 
 
-dabc::Object::Object(Object* parent, const char* name, bool owner) :
+dabc::Object::Object(Reference parent, const std::string& name, bool owner) :
    fObjectFlags(0),
    fObjectParent(parent),
    fObjectName(name),
@@ -134,24 +134,7 @@ dabc::Object::Object(Object* parent, const char* name, bool owner) :
 {
    SetFlag(flIsOwner, owner);
 
-   DOUT3(("Object created %s %p", (name ? name : "---"), this));
-
-   Constructor();
-}
-
-
-dabc::Object::Object(Reference parent, const char* name, bool owner) :
-   fObjectFlags(0),
-   fObjectParent(parent),
-   fObjectName(name),
-   fObjectMutex(0),
-   fObjectRefCnt(0),
-   fObjectChilds(0),
-   fObjectBlock(0)
-{
-   SetFlag(flIsOwner, owner);
-
-   DOUT3(("Object created %s %p", (name ? name : "---"), this));
+   DOUT3("Object created %s %p", GetName(), this);
 
    Constructor();
 }
@@ -168,7 +151,7 @@ dabc::Object::Object(const ConstructorPair& pair, bool owner) :
 {
    SetFlag(flIsOwner, owner);
 
-   DOUT3(("Object created %s %p", GetName(), this));
+   DOUT3("Object created %s %p", GetName(), this);
 
    Constructor();
 }
@@ -178,7 +161,7 @@ dabc::Object::~Object()
 {
    Destructor();
 
-   DOUT3(("Object destroyed %s %p", GetName(), this));
+   DOUT3("Object destroyed %s %p", GetName(), this);
 }
 
 void dabc::Object::SetOwner(bool on)
@@ -241,22 +224,22 @@ void dabc::Object::Destructor()
       LockGuard lock(fObjectMutex);
 
       if ((GetState() != stDestructor) && (fObjectRefCnt!=0)) {
-         EOUT(("Object %p %s deleted not via Destroy method refcounter %u", this, GetName(), fObjectRefCnt));
+         EOUT("Object %p %s deleted not via Destroy method refcounter %u", this, GetName(), fObjectRefCnt);
       }
 
       SetState(stDestructor);
 
       if (fObjectRefCnt!=0) {
-         EOUT(("!!!!!!!!!!!! Destructor called when refcounter %u obj:%s %p", fObjectRefCnt, GetName(), this));
+         EOUT("!!!!!!!!!!!! Destructor called when refcounter %u obj:%s %p", fObjectRefCnt, GetName(), this);
 //         Object* obj = (Object*) 29387898;
 //         delete obj;
       }
 
       if (fObjectChilds!=0) {
-         EOUT(("!!!!!!! CHILDS %u ARE NOT DELETED completely obj:%s %p", fObjectChilds->GetSize(), GetName(), this));
+         EOUT("!!!!!!! CHILDS %u ARE NOT DELETED completely obj:%s %p", fObjectChilds->GetSize(), GetName(), this);
 
          if (fObjectBlock > 0)
-            EOUT(("!!!! CHILDS ARE STILL BLOCKED %d!!!!!!!", fObjectBlock));
+            EOUT("!!!! CHILDS ARE STILL BLOCKED %d!!!!!!!", fObjectBlock);
 
          chlds = fObjectChilds;
          fObjectChilds = 0;
@@ -289,7 +272,7 @@ void dabc::Object::_IncObjectRefCnt()
    // TODO: make such check optional
 
    if (fObjectMutex && !fObjectMutex->IsLocked())
-      EOUT(("Mutex not locked!!!"));
+      EOUT("Mutex not locked!!!");
 
    fObjectRefCnt++;
 }
@@ -298,13 +281,13 @@ void dabc::Object::_DecObjectRefCnt()
 {
    // TODO: make such check optional
    if (fObjectMutex && !fObjectMutex->IsLocked())
-      EOUT(("Mutex not locked!!!"));
+      EOUT("Mutex not locked!!!");
 
-   // if (IsLogging()) DOUT0(("Dec object refcounter in 299"));
+   // if (IsLogging()) DOUT0("Dec object refcounter in 299");
    fObjectRefCnt--;
 
    if ((fObjectRefCnt==0) && (GetState()!=stNormal))
-      EOUT(("!!! potential problem - change release order in your program, some object may not be cleanup correctly !!!"));
+      EOUT("!!! potential problem - change release order in your program, some object may not be cleanup correctly name:%s class:%s!!!", GetName(), ClassName());
 }
 
 
@@ -314,17 +297,17 @@ bool dabc::Object::IncReference(bool withmutex)
       dabc::LockGuard lock(fObjectMutex);
 
       if (GetState() == stDestructor) {
-         EOUT(("OBJ:%p %s %s Inc reference during destructor", this, GetName(), ClassName()));
+         EOUT("OBJ:%p %s %s Inc reference during destructor", this, GetName(), ClassName());
          return false;
-//         EOUT(("Obj:%p %s Class:%s IncReference %u inside destructor :(",
-//               this, GetName(), ClassName(), fObjectRefCnt));
+//         EOUT("Obj:%p %s Class:%s IncReference %u inside destructor :(",
+//               this, GetName(), ClassName(), fObjectRefCnt);
       }
 
       fObjectRefCnt++;
 
       if (GetFlag(flLogging))
-         DOUT2(("Obj:%s %p Class:%s IncReference %u state %d",
-               GetName(), this, ClassName(), fObjectRefCnt, GetState()));
+         DOUT2("Obj:%s %p Class:%s IncReference %u state %d",
+               GetName(), this, ClassName(), fObjectRefCnt, GetState());
 
       return true;
    }
@@ -333,12 +316,12 @@ bool dabc::Object::IncReference(bool withmutex)
    if (fObjectMutex==0) return false;
 
    if (!fObjectMutex->IsLocked()) {
-      EOUT(("Obj:%p %s Class:%s IncReference mutex is not lock but declared so",
-            this, GetName(), ClassName()));
+      EOUT("Obj:%p %s Class:%s IncReference mutex is not lock but declared so",
+            this, GetName(), ClassName());
       return false;
    }
 
-   DOUT3(("Obj:%p IncReference2 %u", this, fObjectRefCnt));
+   DOUT3("Obj:%p IncReference2 %u", this, fObjectRefCnt);
 
    fObjectRefCnt++;
    return true;
@@ -376,30 +359,30 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
       dabc::LockGuard lock(fObjectMutex);
 
 //      if (GetFlag(flLogging)) {
-//           DOUT0(("Call DecReference for object %p %s refcnt = %d, ask_to_destroy %s do_decrement %s state %d from_thread %s", this, GetName(), fObjectRefCnt, DBOOL(ask_to_destroy), DBOOL(do_decrement), GetState(), DBOOL(from_thread)));
+//           DOUT0("Call DecReference for object %p %s refcnt = %d, ask_to_destroy %s do_decrement %s state %d from_thread %s", this, GetName(), fObjectRefCnt, DBOOL(ask_to_destroy), DBOOL(do_decrement), GetState(), DBOOL(from_thread));
 //      }
 
 //      if (GetFlag(flLogging))
-//         DOUT0(("Obj:%s %p  Class:%s DecReference %u destroy %s dodec %s state %d numchilds %u flags %x",
+//         DOUT0("Obj:%s %p  Class:%s DecReference %u destroy %s dodec %s state %d numchilds %u flags %x",
 //               GetName(), this, ClassName(),
 //               fObjectRefCnt, DBOOL(ask_to_destroy), DBOOL(do_decrement), GetState(),
-//               (fObjectChilds ? fObjectChilds->GetSize() : 0), fObjectFlags));
+//               (fObjectChilds ? fObjectChilds->GetSize() : 0), fObjectFlags);
 
       if (do_decrement) {
 
          if (fObjectRefCnt==0) {
-            EOUT(("Reference counter is already 0"));
-            throw dabc::Exception("Reference counter is 0 - cannot decrease");
+            EOUT("Reference counter is already 0");
+            throw dabc::Exception(ex_Object, "Reference counter is 0 - cannot decrease", GetName());
             return false;
          }
 
-         // if (IsLogging()) DOUT0(("Dec object refcounter in 389"));
+         // if (IsLogging()) DOUT0("Dec object refcounter in 389");
          fObjectRefCnt--;
       }
 
       switch (GetState()) {
          case stConstructor:
-            EOUT(("Object %s is not yet constructed - most probably, big failure", GetName()));
+            EOUT("Object %s is not yet constructed - most probably, big failure", GetName());
             return false;
 
          case stNormal:
@@ -412,7 +395,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
          // we are waiting for the thread, only thread call can unblock
          case stWaitForThread:
             if (!from_thread) {
-               DOUT2(("Object %p %s tried to destroy not from thread - IGNORE", this, GetName()));
+               DOUT2("Object %p %s tried to destroy not from thread - IGNORE", this, GetName());
                return false;
             }
             break;
@@ -462,21 +445,22 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
       dabc::LockGuard lock(fObjectMutex);
       SetState(stDoingDestroy);
       // thread reject destroyment, therefore refcounter can be decreased
-      // if (IsLogging()) DOUT0(("Dec object refcounter in 459"));
+      // if (IsLogging()) DOUT0("Dec object refcounter in 459");
       fObjectRefCnt--;
    }
 
 
-//   if (IsLogging()) DOUT0(("Calling object cleanup"));
+//   if (IsLogging()) DOUT0("Calling object cleanup");
 
    // Main point of all destroyment - call cleanup in correct place
    ObjectCleanup();
 
-//   if (IsLogging()) DOUT0(("Did object cleanup"));
+//   if (IsLogging()) DOUT0("Did object cleanup");
 
 
    if (IsLogging())
-      DOUT0(("DecRefe after cleanup %p cleanup %s mgr %p", this, DBOOL(GetFlag(flCleanup)), dabc::mgr()));
+      DOUT0("DecRefe after cleanup %p cleanup %s mgr %p", this, DBOOL(GetFlag(flCleanup)), dabc::mgr());
+
    {
 
       LockGuard guard(fObjectMutex);
@@ -488,7 +472,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
       } else
       if ((fObjectRefCnt==0) && _NoOtherReferences()) {
          // no need to deal with manager - can call destructor immediately
-         DOUT3(("Obj:%p can be destroyed", this));
+         DOUT3("Obj:%p can be destroyed", this);
          if (_DoDeleteItself()) {
             SetState(stWaitForDestructor);
             return false;
@@ -525,7 +509,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
          return false;
       }
 
-      DOUT3(("Obj:%p can be destroyed", this));
+      DOUT3("Obj:%p can be destroyed", this);
       SetState(stDestructor);
       return true;
    }
@@ -541,13 +525,13 @@ bool dabc::Object::CallDestroyFromThread()
 void dabc::Object::DeleteThis()
 {
    if (IsLogging())
-      DOUT1(("OBJ:%p %s DELETETHIS cnt %u", this, GetName(), fObjectRefCnt));
+      DOUT1("OBJ:%p %s DELETETHIS cnt %u", this, GetName(), fObjectRefCnt);
 
    {
       LockGuard lock(fObjectMutex);
 
       if (GetState()!=stNormal) {
-//         EOUT(("Object %p already on the way to destroyment - do not harm it", this));
+//         EOUT("Object %p already on the way to destroyment - do not harm it", this);
          return;
       }
 
@@ -570,7 +554,7 @@ void dabc::Object::ObjectCleanup()
    while (--cnt>0) {
       dabc::LockGuard lock(fObjectMutex);
       if (GetState() != stDoingDestroy) {
-         EOUT(("obj:%p name:%s class:%s Something completely wrong - cleanup in wrong state %u ", this, GetName(), ClassName(), GetState()));
+         EOUT("obj:%p name:%s class:%s Something completely wrong - cleanup in wrong state %u ", this, GetName(), ClassName(), GetState());
       }
 
       if (fObjectChilds == 0) break;
@@ -584,31 +568,31 @@ void dabc::Object::ObjectCleanup()
 
    #ifdef DABC_EXTRA_CHECKS
    if (cnt < 999990)
-      DOUT0(("Object %s Retry %d time before childs were unblocked", 1000000-cnt));
+      DOUT0("Object %s Retry %d time before childs were unblocked", 1000000-cnt);
    #endif
 
    if (cnt==0) {
-      EOUT(("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName()));
+      EOUT("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName());
       exit(055);
    }
 
    // first we delete all childs !!!!
    if (chlds!=0) {
-      if (IsLogging()) DOUT0(("Obj:%p %s Deleting childs %u", this, GetName(), chlds->GetSize()));
+      if (IsLogging()) DOUT0("Obj:%p %s Deleting childs %u", this, GetName(), chlds->GetSize());
       delete chlds;
-      if (IsLogging()) DOUT0(("Obj:%p %s Deleting childs done", this, GetName()));
+      if (IsLogging()) DOUT0("Obj:%p %s Deleting childs done", this, GetName());
    }
 
-   if (IsLogging()) DOUT0(("Before remove from parent"));
+   if (IsLogging()) DOUT0("Before remove from parent");
 
    // Than we remove reference on the object from parent
    if (fObjectParent())
       fObjectParent()->RemoveChild(this);
 
-   if (IsLogging()) DOUT0(("After remove from parent"));
+   if (IsLogging()) DOUT0("After remove from parent");
 
 
-   DOUT3(("Obj:%s Class:%s Finish cleanup numrefs %u", GetName(), ClassName(), NumReferences()));
+   DOUT3("Obj:%s Class:%s Finish cleanup numrefs %u", GetName(), ClassName(), NumReferences());
 
 }
 
@@ -634,8 +618,8 @@ bool dabc::Object::AddChild(Object* child, bool withmutex, bool setparent) throw
          child->fObjectParent.SetObject(this, false, withmutex);
    } else
    if (child->GetParent() != this) {
-      EOUT(("Cannot move child from other parent"));
-      throw dabc::Exception("Cannot move child from other parent");
+      EOUT("Cannot move child from other parent");
+      throw dabc::Exception(ex_Object, "Cannot move child from other parent", GetName());
       return false;
    }
 
@@ -672,11 +656,11 @@ void dabc::Object::RemoveChild(Object* child) throw()
 
    #ifdef DABC_EXTRA_CHECKS
    if (cnt < 999990)
-      DOUT0(("Object %s Retry %d time before childs were unblocked", GetName(), 1000000-cnt));
+      DOUT0("Object %s Retry %d time before childs were unblocked", GetName(), 1000000-cnt);
    #endif
 
    if (cnt==0) {
-      EOUT(("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName()));
+      EOUT("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName());
       exit(055);
    }
 }
@@ -892,21 +876,21 @@ void dabc::Object::DeleteChilds(const std::string& exclude_mask)
 
    #ifdef DABC_EXTRA_CHECKS
    if (cnt < 999990)
-      DOUT0(("Object %s Retry %d times before childs were unblocked", 1000000-cnt));
+      DOUT0("Object %s Retry %d times before childs were unblocked", 1000000-cnt);
    #endif
 
    if (cnt==0) {
-      EOUT(("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName()));
+      EOUT("HARD error!!!! - For a long time fObjectBlock=%d is blocked in object %p %s", fObjectBlock, this, GetName());
       exit(055);
    }
 
    if (IsLogging())
-      DOUT1(("Obj:%s Deleting childs:%u", GetName(), del_vect.GetSize()));
+      DOUT1("Obj:%s Deleting childs:%u", GetName(), del_vect.GetSize());
 
    if (IsLogging())
       while (del_vect.GetSize()>0) {
          Reference ref = del_vect.TakeLast();
-         DOUT1(("    Del Child %s owner %s", ref.GetName(), DBOOL(ref.IsOwner())));
+         DOUT1("    Del Child %s owner %s", ref.GetName(), DBOOL(ref.IsOwner()));
       }
 
    del_vect.Clear();
@@ -929,8 +913,8 @@ void dabc::Object::SetName(const char* name)
    LockGuard guard(fObjectMutex);
 
    if (fObjectRefCnt>0) {
-      EOUT(("Cannot change object name when reference counter %d is not zero!!!", fObjectRefCnt));
-      throw dabc::Exception("Cannot change object name when refcounter is not zero");
+      EOUT("Cannot change object name when reference counter %d is not zero!!!", fObjectRefCnt);
+      throw dabc::Exception(ex_Object, "Cannot change object name when refcounter is not zero", GetName());
    }
 
    fObjectName = name;
@@ -976,24 +960,31 @@ void dabc::Object::Destroy(Object* obj) throw()
 
 bool dabc::Object::Find(ConfigIO &cfg)
 {
+   DOUT1("Object::Find %p name = %s parent %p", this, GetName(), GetParent());
+
    if (GetParent()==0) return false;
 
    return cfg.FindItem(GetName());
 }
 
-dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const char* fullname, bool withmanager)
+dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::string& fullnamearg, bool withmanager)
 {
-   if ((fullname==0) && prnt.null())
+   if (fullnamearg.empty() && prnt.null())
       return ConstructorPair();
 
-   if (fullname==0) fullname = "---";
-   bool isrootfolder = false;
+   const char* fullname = fullnamearg.empty() ? "---" : fullnamearg.c_str();
+   bool isrootfolder(false), isskipparent(false);
    while (*fullname=='/') {
       isrootfolder = true;
       fullname++;
    }
 
-   if (prnt.null() && withmanager) {
+   if (!isrootfolder && (*fullname=='#')) {
+      fullname++;
+      isskipparent = true;
+   }
+
+   if (prnt.null() && withmanager && !isskipparent) {
       if (!isrootfolder) prnt = dabc::mgr.GetAppFolder(true);
       if (prnt.null()) prnt = dabc::mgr;
    }
@@ -1011,17 +1002,18 @@ dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const char*
       pair.name = fullname;
    }
 
-   pair.parent = prnt;
+   if (!isskipparent)
+      pair.parent = prnt;
 
    return pair;
 }
 
-dabc::Object::ConstructorPair dabc::Object::MakePair(Object* prnt, const char* fullname, bool withmanager)
+dabc::Object::ConstructorPair dabc::Object::MakePair(Object* prnt, const std::string& fullname, bool withmanager)
 {
    return dabc::Object::MakePair(Reference(prnt), fullname, withmanager);
 }
 
-dabc::Object::ConstructorPair dabc::Object::MakePair(const char* fullname, bool withmanager)
+dabc::Object::ConstructorPair dabc::Object::MakePair(const std::string& fullname, bool withmanager)
 {
    return dabc::Object::MakePair(Reference(), fullname, withmanager);
 }
@@ -1146,11 +1138,11 @@ void dabc::Object::InspectGarbageCollector()
 #ifdef DABC_EXTRA_CHECKS
    LockGuard lock(gObjectGarbageMutex);
 
-   DOUT0(("GarbageCollector: there are %u objects in collector now", gObjectGarbageCollector.size()));
+   DOUT0("GarbageCollector: there are %u objects in collector now", gObjectGarbageCollector.size());
 
    for (unsigned n=0;n<gObjectGarbageCollector.size();n++) {
       Object* obj = (Object*) gObjectGarbageCollector.at(n);
-      DOUT0(("   obj:%p name:%s class:%s refcnt:%u", obj, obj->GetName(), obj->ClassName(), obj->fObjectRefCnt));
+      DOUT0("   obj:%p name:%s class:%s refcnt:%u", obj, obj->GetName(), obj->ClassName(), obj->fObjectRefCnt);
    }
 
 #endif

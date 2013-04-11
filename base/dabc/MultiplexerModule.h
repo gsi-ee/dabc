@@ -38,10 +38,10 @@ namespace dabc {
          void CheckDataSending();
 
       public:
-         MultiplexerModule(const char* name, dabc::Command cmd = 0);
+         MultiplexerModule(const std::string& name, dabc::Command cmd = 0);
 
-         virtual void ProcessInputEvent(Port* port);
-         virtual void ProcessOutputEvent(Port* port);
+         virtual void ProcessInputEvent(unsigned port);
+         virtual void ProcessOutputEvent(unsigned port);
    };
 
 }

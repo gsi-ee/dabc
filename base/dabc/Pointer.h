@@ -147,7 +147,7 @@ namespace dabc {
                fRawSize -= sz;
                fFullSize -= sz;
             } else
-            if (sz>=fFullSize) {
+            if (sz>fFullSize) {
                sz = fFullSize;
                reset();
             } else
@@ -180,16 +180,20 @@ namespace dabc {
 
          /** Returns actual size copied and shifted */
          inline BufferSize_t copyfrom_shift(const Pointer& src, BufferSize_t sz = 0) throw()
-               { return shift(copyfrom(src, sz)); }
+            { return shift(copyfrom(src, sz)); }
 
          BufferSize_t copyfrom(const void* src, BufferSize_t sz) throw();
 
          inline BufferSize_t copyfrom_shift(const void* src, BufferSize_t sz) throw()
-               { return shift(copyfrom(src, sz)); }
+            { return shift(copyfrom(src, sz)); }
 
          BufferSize_t copyfromstr(const char* str, unsigned len = 0) throw();
 
          int distance_to(const Pointer& child) const throw();
+
+         int distance_to_ownbuf() const { return fBuf.null() ? 0 : Pointer(fBuf).distance_to(*this); }
+
+         bool is_same_buf(const Pointer& ptr) const { return fBuf == ptr.fBuf; }
 
          unsigned segmid() const { return fSegm; }
    };

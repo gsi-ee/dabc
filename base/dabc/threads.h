@@ -75,7 +75,7 @@ namespace dabc {
 
 #define DABC_LOCKGUARD(mutex,info) \
    dabc::LockGuard dabc_guard(mutex, false); \
-   while (!dabc_guard.TryingLock()) EOUT((info));
+   while (!dabc_guard.TryingLock()) EOUT(info);
 
 #else
 

@@ -9,7 +9,7 @@
    * HldFile - (OK) input and output of hld file format
    * HldInput - (OK) read hadtu format from file 
    * HldOutput- (OK) write hadtu format to file 
-   * UdpDataSocket - (OK) receive hadtu packets from trb frontend (single stream)
+   * DataSocketAddon - (Exp) receive hadtu packets from trb frontend (single stream)
    * MbsTransmitterModule - (OK) wrap hadtu format into mbs event container
                             output is mbs server or lmd file.
                             this format is used in mbs subevent combiner and go4 monitoring unpacker 

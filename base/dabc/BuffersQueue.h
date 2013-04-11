@@ -24,7 +24,9 @@
 #include "dabc/Queue.h"
 #endif
 
+
 namespace dabc {
+
    class BuffersQueue : protected Queue<Buffer, false> {
 
       protected:
@@ -35,14 +37,17 @@ namespace dabc {
 
          virtual ~BuffersQueue() { Cleanup(); }
 
-         void Push(const Buffer& buf) { if (!buf.null()) Parent::PushRef(buf); }
-
-         /** Put buffer into queue under mutex and return true if succeed */
-         bool Push(const Buffer& buf, Mutex* m);
+         bool PushBuffer(Buffer& buf)
+         {
+            Buffer* tgt = Parent::PushEmpty();
+            if (tgt) {
+               *tgt << buf;
+               return true;
+            }
+            return false;
+         }
 
          void PopBuffer(Buffer& buf) { buf << Front(); Parent::PopOnly(); }
-
-         Buffer Pop() { Buffer buf; PopBuffer(buf); return buf; }
 
          unsigned Size() const { return Parent::Size(); }
 
@@ -58,15 +63,16 @@ namespace dabc {
 
          /** Returns reference on the Buffer in the queue,
           * one can create any kind of buffer copies from it */
-         Buffer& ItemRef(unsigned n) const { return Parent::Item(n); }
+         Buffer& Item(unsigned n) const { return Parent::Item(n); }
 
          /** Return reference on the first item */
-         Buffer& First() const { return ItemRef(0); }
+         Buffer& Front() const { return Parent::Front(); }
 
          /** Return reference on the last item */
-         Buffer& Last() const { return ItemRef(Size()-1); }
+         Buffer& Back() const { return Parent::Back(); }
 
    };
+
 }
 
 
