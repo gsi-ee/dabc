@@ -1,4 +1,4 @@
-// $Id: BinaryFileIO.cxx 1547 2013-04-04 14:15:30Z linev $
+// $Id$
 
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
