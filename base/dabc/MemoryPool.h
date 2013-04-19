@@ -249,7 +249,7 @@ namespace dabc {
 
       DABC_COMMAND(CmdCreateMemoryPool, "CreateMemoryPool")
 
-      CmdCreateMemoryPool(const char* poolname) : Command(CmdName())
+      CmdCreateMemoryPool(const std::string& poolname) : Command(CmdName())
       {
          SetStr(xmlPoolName, poolname);
       }

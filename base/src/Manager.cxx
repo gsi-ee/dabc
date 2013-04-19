@@ -1880,10 +1880,10 @@ void dabc::ManagerRef::StopApplication()
          GetObject()->fMgrStoppedTime = dabc::Now();
 }
 
-bool dabc::ManagerRef::CreateMemoryPool(const char* poolname,
-                                     unsigned buffersize,
-                                     unsigned numbuffers,
-                                     unsigned refcoeff)
+bool dabc::ManagerRef::CreateMemoryPool(const std::string& poolname,
+                                        unsigned buffersize,
+                                        unsigned numbuffers,
+                                        unsigned refcoeff)
 {
 
    CmdCreateMemoryPool cmd(poolname);

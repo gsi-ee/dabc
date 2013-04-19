@@ -566,7 +566,7 @@ namespace dabc {
            * If none (arguments or xml file) provides non-zero values, only pool instance
            * without buffers will be created.
            * For more sophisticated configuration of memory pool CmdCreateMemoryPool should be used */
-         bool CreateMemoryPool(const char* poolname,
+         bool CreateMemoryPool(const std::string& poolname,
                                unsigned buffersize = 0,
                                unsigned numbuffers = 0,
                                unsigned refcoeff = 0);

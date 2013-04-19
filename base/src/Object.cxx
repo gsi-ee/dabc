@@ -737,7 +737,7 @@ dabc::Reference dabc::Object::FindChildRef(const char* name, bool force) const t
 
 dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, bool firsttime, bool force, bool isowner) throw()
 {
-   if (ref()==0) return ref;
+   if (ref.null()) return ref;
 
    if ((name==0) || (strlen(name)==0)) return ref;
 
