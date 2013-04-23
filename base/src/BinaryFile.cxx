@@ -15,6 +15,7 @@
 
 #include "dabc/BinaryFile.h"
 
+#include <unistd.h>
 #include <stdlib.h>
 #include <dirent.h>
 #include <fnmatch.h>
