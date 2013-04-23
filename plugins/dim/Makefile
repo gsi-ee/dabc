@@ -1,3 +1,5 @@
+ifndef nodim
+
 include $(DABCSYS)/config/Makefile.config
 
 DIM_VERSION = dim_v20r5
@@ -147,3 +149,5 @@ libs::
 endif
 
 include $(DABCSYS)/config/Makefile.rules
+
+endif
