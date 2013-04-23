@@ -33,8 +33,10 @@ dabc::DataOutput* mbs_root::Factory::CreateDataOutput(const std::string& typ)
 
    DOUT3("mbs_root::Factory::CreateDataOutput typ:%s", typ.c_str());
 
-   if (typ == "RootTree") {
-      return new mbs_root::RootTreeOutput();
+   dabc::Url url(typ);
+
+   if (url.GetProtocol() == "mbsroot") {
+      return new mbs_root::RootTreeOutput(url);
    }
 
    return 0;

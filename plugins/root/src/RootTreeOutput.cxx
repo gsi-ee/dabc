@@ -16,8 +16,8 @@
 #include "TTree.h"
 
 
-dabc_root::RootTreeOutput::RootTreeOutput() :
-   DataOutput(),
+dabc_root::RootTreeOutput::RootTreeOutput(const dabc::Url& url) :
+   DataOutput(url),
    fTree(0)
 {
 }

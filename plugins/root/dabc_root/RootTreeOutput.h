@@ -27,7 +27,7 @@ namespace dabc_root {
    class RootTreeOutput : public dabc::DataOutput {
       public:
 
-         RootTreeOutput();
+         RootTreeOutput(const dabc::Url& url);
          virtual ~RootTreeOutput();
 
          virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd) { return false; }

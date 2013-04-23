@@ -16,6 +16,7 @@
 #include "dabc/string.h"
 #include "dabc/logging.h"
 #include "dabc/Command.h"
+#include "dabc/Url.h"
 #include "dabc/Manager.h"
 
 dabc::FactoryPlugin dabc_root_factory(new dabc_root::Factory("dabc_root"));
@@ -31,7 +32,9 @@ dabc::DataOutput* dabc_root::Factory::CreateDataOutput(const std::string& typ)
 
    DOUT3("dabc_root::Factory::CreateDataOutput typ:%s", typ);
 
-   if (typ == "RootTree") {
+   dabc::Url url(typ);
+
+   if (url.GetProtocol() == "root") {
       return 0;
    }
 

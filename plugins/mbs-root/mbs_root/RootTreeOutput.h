@@ -20,23 +20,16 @@
 #include "dabc/DataIO.h"
 //#endif
 
-#include "Riostream.h"
-#include "Rtypes.h"
-
-// This is class to access TTree interface from the DABC
-
 class TTree;
-class TFile;
-
 
 namespace mbs_root {
 
     class DabcEvent;
 
-   class RootTreeOutput : public dabc::DataOutput {
+   class RootTreeOutput : public dabc::FileOutput {
       public:
 
-         RootTreeOutput();
+         RootTreeOutput(const dabc::Url& url);
          virtual ~RootTreeOutput();
 
          virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
@@ -45,17 +38,15 @@ namespace mbs_root {
 
       protected:
 
-         TTree*       fTree;
-	 TFile*		fFile;
+         TTree*         fTree;
 	 mbs_root::DabcEvent* fEvent;
 
-	std::string fFileName;
-	Int_t 		fSplit;	
-	Int_t 		fTreeBuf;
-	Int_t		fCompression;	
-	Int_t		fMaxSize;
+	 int 		fSplit;	
+	 int 		fTreeBuf;
+	 int		fCompression;	
+	 int		fMaxSize;
 
-	bool Close();
+	 bool Close();
 	
 	//mbs_root::ReadIterator	iter(buf);
    };
