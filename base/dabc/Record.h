@@ -55,6 +55,7 @@ namespace dabc {
 
          // TODO: one should try to 'hide' this constructor signature while user can think to keep record field for longer time
          RecordField(const RecordField& src) : rec(src.rec), name(src.name) {}
+         virtual ~RecordField() {}
 
          /** Return true if any value exists for the field */
          bool IsValue() const { return !IsEmpty(); }
@@ -94,6 +95,7 @@ namespace dabc {
          virtual bool Set(const char* val, const char* kind) { return false; }
       public:
          RecordValue(const std::string& value) : RecordField(0, value) {}
+         virtual ~RecordValue() {}
 
    };
 

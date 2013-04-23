@@ -352,7 +352,7 @@ int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
 
                // try to make little bit faster than timeout expire why we need
                // some time for the connection protocol
-               client->SetRetryOpt(req.GetConnTimeout(), 0.9);
+               client->SetRetryOpt(5, req.GetConnTimeout());
                client->SetConnHandler(this, req.GetConnId());
 
                rec = new NewConnectRec(reqitem, req, client);

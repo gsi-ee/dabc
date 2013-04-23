@@ -88,6 +88,8 @@ namespace dabc {
 
    class CommandAccess {
       public:
+         virtual ~CommandAccess() {}
+      
          virtual CommandContainer* GetObject() const = 0;
 
          static bool transient() { return false; }

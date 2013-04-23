@@ -285,13 +285,13 @@ namespace dabc {
       /** Return maximum buffer size in the pool */
       unsigned GetMaxBufSize() const
       {
-         return GetObject() ? GetObject()->GetMaxBufSize() : 0.;
+         return GetObject() ? GetObject()->GetMaxBufSize() : 0;
       }
 
       /** Return minimum buffer size in the pool */
       unsigned GetMinBufSize() const
       {
-         return GetObject() ? GetObject()->GetMinBufSize() : 0.;
+         return GetObject() ? GetObject()->GetMinBufSize() : 0;
       }
 
       Buffer TakeBuffer(BufferSize_t size = 0)

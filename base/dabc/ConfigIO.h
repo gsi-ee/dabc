@@ -35,7 +35,10 @@ namespace dabc {
 
    class ConfigFieldsScan {
       public:
+         virtual ~ConfigFieldsScan() {}
+      
          virtual void SetField(const std::string& attrname, const char* value) = 0;
+         
    };
 
 
