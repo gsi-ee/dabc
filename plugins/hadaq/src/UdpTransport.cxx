@@ -257,12 +257,12 @@ int hadaq::DataSocketAddon::OpenUdp(int nport, int rcvbuflen)
        // for hadaq application: set receive buffer length _before_ bind:
        //         int rcvBufLenReq = 1 * (1 << 20);
        int rcvBufLenRet;
-       size_t rcvBufLenLen = (size_t) sizeof(rcvbuflen);
+       socklen_t rcvBufLenLen = sizeof(rcvbuflen);
        if (setsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvbuflen, rcvBufLenLen) == -1) {
           EOUT("Fail to setsockopt SO_RCVBUF %s", strerror(errno));
        }
 
-      if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, (socklen_t *) &rcvBufLenLen) == -1) {
+      if (getsockopt(fd, SOL_SOCKET, SO_RCVBUF, &rcvBufLenRet, &rcvBufLenLen) == -1) {
           EOUT("fail to getsockopt SO_RCVBUF, ...): %s", strerror(errno));
       }
 

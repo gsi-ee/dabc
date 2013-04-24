@@ -63,7 +63,8 @@ bool mbs_root::RootTreeOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc
 
    DOUT0("################# Create root file %s , split=%d",CurrentFileName().c_str(),fSplit);
    
-   TFile* f = new TFile(CurrentFileName().c_str(),"recreate","Mbs tree file",fCompression);
+   // gFile pointer is used when tree is created
+   new TFile(CurrentFileName().c_str(),"recreate","Mbs tree file",fCompression);
    fTree = new TTree("DabcTree","Dabc Mbs Tree format");   
    fTree->Branch("mbs_root::DabcEvent", &fEvent,fTreeBuf ,fSplit);
    TTree::SetMaxTreeSize(fMaxSize); // after filling this number of bytes, tree will write into next file with name fFileName+"_i"    

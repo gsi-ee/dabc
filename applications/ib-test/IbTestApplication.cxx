@@ -101,7 +101,7 @@ class IbTestApplication : public dabc::Application {
       virtual int SMCommandTimeout() const
       {
          // all slaves should be able to connect inside 10 seconds, master timeout could be configurable
-         if (dabc::mgr()->NodeId()>0) return 10.;
+         if (dabc::mgr()->NodeId()>0) return 10;
 
          return Par("TestTimeout").AsInt(20);
       }

@@ -310,7 +310,7 @@ bool hadaq::CombinerModule::UpdateExportedCounters()
       //                    SetEvtbuildPar(dabc::format("evtbuildBuff%d", i), fillevel);
       //                 }
 
-      SetEvtbuildPar(dabc::format("evtbuildBuff%u", i), 100 * fCfg[i].fQueueLevel);
+      SetEvtbuildPar(dabc::format("evtbuildBuff%u", i), (int) (100 * fCfg[i].fQueueLevel));
 
       for (unsigned ptrn = 0; ptrn < HADAQ_NUMERRPATTS;++ptrn)
          SetEvtbuildPar(dabc::format("errBitStat%u_%u",ptrn,i),fCfg[i].fErrorbitStats[ptrn]);
@@ -570,7 +570,7 @@ bool hadaq::CombinerModule::BuildEvent()
 
 //            DOUT0("Drop data inp %u size %d", ninp, droppedsize);
 
-            Par(fDataDroppedRateName).SetInt(droppedsize/1024./1024.);
+            Par(fDataDroppedRateName).SetInt(droppedsize/1024/1024);
             fTotalDroppedData+=droppedsize;
 
             if(!ShiftToNextSubEvent(ninp)) return false;

@@ -1480,13 +1480,13 @@ bool IbTestWorkerModule::ExecuteTiming(double* arguments)
 
 bool IbTestWorkerModule::ExecuteAllToAll(double* arguments)
 {
-   int bufsize = arguments[0];
+   int bufsize = (int) arguments[0];
 //   int NumUsedNodes = arguments[1];
-   int max_sending_queue = arguments[2];
-   int max_receiving_queue = arguments[3];
+   int max_sending_queue = (int) arguments[2];
+   int max_receiving_queue = (int) arguments[3];
    double starttime = arguments[4];
    double stoptime = arguments[5];
-   int patternid = arguments[6];
+   int patternid = (int) arguments[6];
    double datarate = arguments[7];
    double ratemeterinterval = arguments[8];
    bool canskipoperation = arguments[9] > 0;
@@ -2845,7 +2845,7 @@ void IbTestWorkerModule::PerformTestGPU()
   for (int bufsize=4096; bufsize<=4096*1024; bufsize*=2) {
 //      MasterTestGPU(bufsize, 5., false, true);
 //      MasterTestGPU(bufsize, 5., true, false);
-      MasterTestGPU(bufsize, 5., true, true);
+      MasterTestGPU(bufsize, 5, true, true);
   }
 
 }
@@ -2855,15 +2855,15 @@ void IbTestWorkerModule::PerformSingleRouteTest()
 {
    DOUT0("This is small suite to test single route performance");
 
-   MasterAllToAll(15, 128*1024, 10., 1000., 5, 10);
+   MasterAllToAll(15, 128*1024, 10., 1000, 5, 10);
 
-   MasterAllToAll(15, 1024*1024, 10., 1000., 5, 10);
+   MasterAllToAll(15, 1024*1024, 10., 1000, 5, 10);
 
-   MasterAllToAll(5, 128*1024, 10., 940., 5, 10);
+   MasterAllToAll(5, 128*1024, 10., 940, 5, 10);
 
-   MasterAllToAll(5, 128*1024, 10., 1900., 5, 10);
+   MasterAllToAll(5, 128*1024, 10., 1900, 5, 10);
 
-   MasterAllToAll(5, 1024*1024, 10., 1945., 5, 10);
+   MasterAllToAll(5, 1024*1024, 10., 1945, 5, 10);
 }
 
 void IbTestWorkerModule::PerformNormalTest()

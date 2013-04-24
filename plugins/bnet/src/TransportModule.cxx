@@ -439,13 +439,13 @@ void bnet::TransportModule::ActivateAllToAll(double* arguments)
 {
    dabc::SetFileLevel(0);
 
-   fTestBufferSize = arguments[0];
+   fTestBufferSize = (int) arguments[0];
 //   int NumUsedNodes = arguments[1];
-   fSendQueueLimit = arguments[2];
-   fRecvQueueLimit = arguments[3];
+   fSendQueueLimit = (int) arguments[2];
+   fRecvQueueLimit = (int) arguments[3];
    fTestStartTime = arguments[4];
    fTestStopTime = arguments[5];
-   int patternid = arguments[6];
+   int patternid = (int) arguments[6];
    double datarate = arguments[7];
 
    fTestControlKind = (int) arguments[10];
