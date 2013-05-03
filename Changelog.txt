@@ -227,3 +227,14 @@ Main aim now bring project to real version 2 with interface finalized.
 11.04.2013
 1. Switch main DABC brunch to version 2.
 
+3.05.2013
+1. Introduce mbs::LmdFileNew class, which should replace LmdFile in next future. Idea
+   is to use same logic as with dabc::BinaryFile, where different low-level file I/O
+   can be used. Also like dabc::BinaryFile, only appropriate includes will be required
+   to use mbs::LmdFileNew classes outside DABC. One more argument for mbs::LmdFileNew - 
+   reduce functionality of lmd storage to absolute minimum, remove never-used index table.
+2. Provide LMD random generator input, which could be configured in form
+      <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2" queue="5"/>
+   It should replace MBS generator module in the near future. 
+3. Provide temporary "lmd2" file input and output classes, which are using 
+   mbs::LmdFileNew. New lmd files can be used with go4 as well.

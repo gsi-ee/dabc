@@ -12,22 +12,30 @@ void rfio::FileInterface::fclose(Handle f)
    if (f!=0) rfio_fclose((RFILE*)f);
 }
 
-bool rfio::FileInterface::fwrite(Handle f, void* ptr, size_t sz)
+size_t rfio::FileInterface::fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f)
 {
-   return (f==0) || (ptr==0) ? false : (rfio_fwrite((const char*)ptr, sz, 1, (RFILE*) f) == 1);
+   return ((f==0) || (ptr==0)) ? 0 : rfio_fwrite((const char*)ptr, sz, nmemb, (RFILE*) f);
 }
 
-bool rfio::FileInterface::fread(Handle f, void* ptr, size_t sz)
+size_t rfio::FileInterface::fread(void* ptr, size_t sz, size_t nmemb, Handle f)
 {
-   return (f==0) || (ptr==0) ? false : (rfio_fread((char*) ptr, sz, 1, (RFILE*) f) == 1);
+   return ((f==0) || (ptr==0)) ? 0 : rfio_fread((char*) ptr, sz, nmemb, (RFILE*) f);
 }
+
+bool rfio::FileInterface::fseek(Handle f, long int offset, bool realtive)
+{
+   if (f==0) return false;
+
+   return false;
+
+   // rfio_fseek((FILE*)f, offset, relative ? SEEK_CUR : SEEK_SET) == 0;
+}
+
 
 bool rfio::FileInterface::feof(Handle f)
 {
    // not implemented
-   return false;
-
-   // return f==0 ? false : feof((FILE*)f)>0;
+   return f==0 ? false : (rfio_fendfile((RFILE*)f) > 0);
 }
 
 bool rfio::FileInterface::fflush(Handle f)

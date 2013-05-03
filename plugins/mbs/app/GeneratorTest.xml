@@ -1,22 +1,21 @@
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="Generator">
+  <Context name="Gener">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="InitMbsGenerator"/>
-      <debuglevel value="0"/>
-      <loglevel value="1"/>
+      <func value="StartMultiplexer"/>
       <logfile value="Gener.log"/>
-      <loglimit value="10000000"/>
-      <runtime value="30"/>
-      <control value="false"/>
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-    <Module name="Generator">
-       <OutputPort name="Output0" url="mbs://Stream?limit=1" queue="5"/>
+    <Module name="Multi">
+       <NumInputs value="1"/>
+       <NumOutputs value="2"/>
+       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2" queue="5"/>
+       <OutputPort name="Output0" url="mbs://Stream:6767" queue="5"/>
+       <OutputPort name="Output1" url="lmd2://gener.lmd?maxsize=128" queue="5"/>
      </Module>
   </Context>
 </dabc>

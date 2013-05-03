@@ -107,3 +107,87 @@ unsigned mbs::LmdOutput::Write_Buffer(dabc::Buffer& buf)
 
    return dabc::do_Ok;
 }
+
+// ================================================================================
+
+mbs::LmdOutputNew::LmdOutputNew(const dabc::Url& url) :
+   dabc::FileOutput(url, ".lmd"),
+   fFile()
+{
+}
+
+mbs::LmdOutputNew::~LmdOutputNew()
+{
+   CloseFile();
+}
+
+bool mbs::LmdOutputNew::Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+{
+   if (!dabc::FileOutput::Write_Init(wrk, cmd)) return false;
+
+   return StartNewFile();
+}
+
+bool mbs::LmdOutputNew::StartNewFile()
+{
+   CloseFile();
+
+   ProduceNewFileName();
+
+   if (!fFile.OpenWriting(CurrentFileName().c_str())) {
+      ShowError(dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
+      return false;
+   }
+
+   ShowInfo(dabc::format("Open %s for writing", CurrentFileName().c_str()), true);
+
+   return true;
+}
+
+bool mbs::LmdOutputNew::CloseFile()
+{
+   if (fFile.isWriting()) {
+      ShowInfo(dabc::format("Close file %s", CurrentFileName().c_str()), true);
+      fFile.Close();
+   }
+   return true;
+}
+
+unsigned mbs::LmdOutputNew::Write_Buffer(dabc::Buffer& buf)
+{
+   if (!fFile.isWriting() || buf.null()) return dabc::do_Error;
+
+   if (buf.GetTypeId() == dabc::mbt_EOF) {
+      CloseFile();
+      return dabc::do_Close;
+   }
+
+   if (buf.GetTypeId() != mbs::mbt_MbsEvents) {
+      ShowError(dabc::format("Buffer must contain mbs event(s) 10-1, but has type %u", buf.GetTypeId()));
+      return dabc::do_Error;
+   }
+
+   if (buf.NumSegments()>1) {
+      ShowError("Segmented buffer not (yet) supported");
+      return dabc::do_Error;
+   }
+
+   if (CheckBufferForNextFile(buf.GetTotalSize()))
+      if (!StartNewFile()) {
+         EOUT("Cannot start new file for writing");
+         return dabc::do_Error;
+      }
+
+   unsigned numevents = mbs::ReadIterator::NumEvents(buf);
+
+   for (unsigned n=0;n<buf.NumSegments();n++)
+      if (!fFile.WriteBuffer(buf.SegmentPtr(n), buf.SegmentSize(n))) {
+         EOUT("lmd write error");
+         return dabc::do_Error;
+      }
+
+   AccountBuffer(buf.GetTotalSize(), numevents);
+
+   return dabc::do_Ok;
+}
+

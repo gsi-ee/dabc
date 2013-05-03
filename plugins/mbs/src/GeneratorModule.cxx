@@ -36,14 +36,89 @@ double Gauss_Rnd(double mean, double sigma)
 }
 
 
+mbs::GeneratorInput::GeneratorInput(const dabc::Url& url) :
+   dabc::DataInput(),
+   fEventCount(0),
+   fNumSubevents(2),
+   fFirstProcId(0),
+   fSubeventSize(32),
+   fIsGo4RandomFormat(true),
+   fFullId(0)
+{
+   fEventCount = url.GetOptionInt("first", 0);
+
+   fNumSubevents = url.GetOptionInt("numsub", 2);
+   fFirstProcId = url.GetOptionInt("procid", 0);
+   fSubeventSize = url.GetOptionInt("size", 32);
+   fIsGo4RandomFormat = url.GetOptionStr("go4","true") == "true";
+   fFullId = url.GetOptionInt("fullid", 0);
+}
+
+bool mbs::GeneratorInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+{
+   return dabc::DataInput::Read_Init(wrk,cmd);
+}
+
+unsigned mbs::GeneratorInput::Read_Complete(dabc::Buffer& buf)
+{
+
+   mbs::WriteIterator iter(buf);
+
+   while (iter.NewEvent(fEventCount)) {
+
+      bool eventdone = true;
+
+      for (unsigned subcnt = 0; subcnt < fNumSubevents; subcnt++)
+         if (iter.NewSubevent(fSubeventSize, fFirstProcId + subcnt + 1, fFirstProcId + subcnt)) {
+
+            if ((fFullId!=0) && (fNumSubevents==1))
+               iter.subevnt()->fFullId = fFullId;
+
+            unsigned subsz = fSubeventSize;
+
+            uint32_t* value = (uint32_t*) iter.rawdata();
+
+            if (fIsGo4RandomFormat) {
+               unsigned numval = fSubeventSize / sizeof(uint32_t);
+               for (unsigned nval=0;nval<numval;nval++)
+                  *value++ = (uint32_t) Gauss_Rnd(nval*100 + 2000, 500./(nval+1));
+
+               subsz = numval * sizeof(uint32_t);
+            } else {
+               if (subsz>0) *value++ = fEventCount;
+               if (subsz>4) *value++ = fFirstProcId + subcnt;
+            }
+
+            iter.FinishSubEvent(subsz);
+         } else {
+            eventdone = false;
+            break;
+         }
+
+      if (!eventdone) break;
+
+      if (!iter.FinishEvent()) break;
+
+      fEventCount++;
+   }
+
+   // When close iterator - take back buffer with correctly modified length field
+   buf = iter.Close();
+
+   return dabc::di_Ok;
+}
+
+
+
+// =================================================================================
+
 mbs::GeneratorModule::GeneratorModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd)
 {
    EnsurePorts(0, 1, dabc::xmlWorkPool);
 
-   fEventCount = Cfg("FirstEventCount",cmd).AsInt(0);;
+   fEventCount = Cfg("FirstEventCount",cmd).AsInt(0);
 
-   fStartStopPeriod = Cfg("StartStopPeriod",cmd).AsInt(0);
    fNumSubevents = Cfg("NumSubevents",cmd).AsInt(2);
    fFirstProcId = Cfg("FirstProcId",cmd).AsInt(0);
    fSubeventSize = Cfg("SubeventSize",cmd).AsInt(32);

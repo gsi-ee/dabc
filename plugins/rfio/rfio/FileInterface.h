@@ -18,13 +18,15 @@ namespace rfio {
 
          virtual void fclose(Handle f);
 
-         virtual bool fwrite(Handle f, void* ptr, size_t sz);
+         virtual size_t fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f);
 
-         virtual bool fread(Handle f, void* ptr, size_t sz);
+         virtual size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f);
 
          virtual bool feof(Handle f);
 
          virtual bool fflush(Handle f);
+
+         virtual bool fseek(Handle f, long int offset, bool realtive = true);
 
          virtual dabc::Object* fmatch(const char* fmask);
    };

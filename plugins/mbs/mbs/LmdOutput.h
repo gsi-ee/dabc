@@ -22,6 +22,10 @@
 #include "mbs/LmdFile.h"
 #endif
 
+#ifndef MBS_LmdFileNew
+#include "mbs/LmdFileNew.h"
+#endif
+
 namespace mbs {
 
    class LmdOutput : public dabc::FileOutput {
@@ -41,6 +45,27 @@ namespace mbs {
 
          virtual unsigned Write_Buffer(dabc::Buffer& buf);
    };
+
+   // ====================================================================
+
+   class LmdOutputNew : public dabc::FileOutput {
+      protected:
+
+         mbs::LmdFileNew       fFile;
+
+         bool CloseFile();
+         bool StartNewFile();
+
+      public:
+
+         LmdOutputNew(const dabc::Url& url);
+         virtual ~LmdOutputNew();
+
+         virtual bool Write_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+
+         virtual unsigned Write_Buffer(dabc::Buffer& buf);
+   };
+
 }
 
 #endif

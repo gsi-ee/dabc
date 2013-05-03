@@ -47,6 +47,22 @@ namespace mbs {
       inline void SetFullSize(uint32_t sz) { iWords = (sz - 8) /2; }
 
       inline uint32_t Type() const { return iType; }
+      inline void SetType(uint32_t t) { iType = t; }
+      inline void SetTypePair(unsigned typ, unsigned subtyp) { iType = (typ & 0xffff) | ((subtyp << 16) & 0xffff0000); }
+   };
+
+
+   struct FileHeader : public Header {
+      uint64_t iTableOffset; // optional offset to element offset table in file
+      uint32_t iElements;    // compatible with s_bufhe
+      uint32_t iOffsetSize;  // Offset size, 4 or 8 [bytes]
+      uint32_t iTimeSpecSec; // compatible with s_bufhe (2*32bit)
+      uint32_t iTimeSpecNanoSec; // compatible with s_bufhe (2*32bit)
+      //  struct timespec TimeSpec;
+      uint32_t iEndian;      // compatible with s_bufhe free[0]
+      uint32_t iWrittenEndian;// one of LMD__ENDIAN_x
+      uint32_t iUsedWords;   // total words without header to read for type=100, free[2]
+      uint32_t iFree3;       // free[3]
    };
 
 #pragma pack(pop)

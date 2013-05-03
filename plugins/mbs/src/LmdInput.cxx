@@ -116,3 +116,84 @@ mbs::EventHeader* mbs::LmdInput::ReadEvent()
 
    return 0;
 }
+
+// ==========================================================================
+
+mbs::LmdInputNew::LmdInputNew(const dabc::Url& url) :
+   dabc::FileInput(url),
+   fFile()
+{
+}
+
+mbs::LmdInputNew::~LmdInputNew()
+{
+   CloseFile();
+}
+
+bool mbs::LmdInputNew::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
+{
+   if (!dabc::FileInput::Read_Init(wrk, cmd)) return false;
+
+   return OpenNextFile();
+}
+
+bool mbs::LmdInputNew::OpenNextFile()
+{
+   CloseFile();
+
+   if (!TakeNextFileName()) return false;
+
+   if (!fFile.OpenReading(CurrentFileName().c_str())) {
+      EOUT("Cannot open file %s for reading", CurrentFileName().c_str());
+      return false;
+   }
+
+   DOUT1("Open lmd file %s for reading", CurrentFileName().c_str());
+
+   return true;
+}
+
+
+bool mbs::LmdInputNew::CloseFile()
+{
+   fFile.Close();
+   ClearCurrentFileName();
+   return true;
+}
+
+unsigned mbs::LmdInputNew::Read_Size()
+{
+   // get size of the buffer which should be read from the file
+
+   if (!fFile.isReading())
+      if (!OpenNextFile()) return dabc::di_EndOfStream;
+
+   return dabc::di_DfltBufSize;
+}
+
+unsigned mbs::LmdInputNew::Read_Complete(dabc::Buffer& buf)
+{
+   uint64_t bufsize = 0;
+
+   while (true) {
+
+       if (!fFile.isReading()) return dabc::di_Error;
+
+       // TODO: read into segmented buffer
+
+       bufsize = buf.SegmentSize(0);
+
+       if (!fFile.ReadBuffer(buf.SegmentPtr(0), &bufsize)) {
+          DOUT3("File %s return 0 numev for buffer %u - end of file", fCurrentFileName.c_str(), buf.GetTotalSize());
+          if (!OpenNextFile()) return dabc::di_EndOfStream;
+       }
+
+       if (bufsize==0) return dabc::di_Error;
+       break;
+   }
+
+   buf.SetTotalSize(bufsize);
+   buf.SetTypeId(mbs::mbt_MbsEvents);
+
+   return dabc::di_Ok;
+}

@@ -18,14 +18,39 @@
 #include "dabc/ModuleAsync.h"
 #endif
 
+#ifndef DABC_DataIO
+#include "dabc/DataIO.h"
+#endif
+
+
 namespace mbs {
+
+   class GeneratorInput : public dabc::DataInput {
+      protected:
+         uint32_t    fEventCount;
+         uint16_t    fNumSubevents;
+         uint16_t    fFirstProcId;
+         uint32_t    fSubeventSize;
+         bool        fIsGo4RandomFormat;
+         uint32_t    fFullId; /** subevent id, if number subevents==1 and nonzero */
+      public:
+         GeneratorInput(const dabc::Url& url);
+         virtual ~GeneratorInput() {}
+
+         virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+
+         virtual unsigned Read_Size() { return dabc::di_DfltBufSize; }
+
+         virtual unsigned Read_Complete(dabc::Buffer& buf);
+   };
+
+   // ===================================================================
 
    class GeneratorModule : public dabc::ModuleAsync {
 
       protected:
 
          uint32_t    fEventCount;
-         uint32_t    fStartStopPeriod;
          uint16_t    fNumSubevents;
          uint16_t    fFirstProcId;
          uint32_t    fSubeventSize;

@@ -180,6 +180,12 @@ static int iOS64 = 0;    /* =0: 4 byte filesize, =1: 8 byte filesize */
 #include "rawapitd-gsin.h"
 #include "rawapplcli.h"
 
+
+static char cNodeMaster0[MAX_NODE] = "lxgstore";     /* entry server */
+static char cNodeMasterE1[MAX_NODE] = "lxha05";  /* def entry server */
+static char cNodeMasterE2[MAX_NODE] = "lxha04";  /* bkp entry server */
+
+
 int* piEntryList;              /* external in some utility functions */
 int imySigS;         /* if = 1: CTL C specified (extern in rconnect) */
 FILE *fLogFile = NULL;         /* external in some utility functions */

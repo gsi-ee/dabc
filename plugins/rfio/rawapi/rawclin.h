@@ -64,10 +64,6 @@
  *********************************************************************
  * */
 
-static int iMB = 1024000;                                    /* 1 MB */
-static char cPathPrefix[16] = "@PATH:";              /* for filelist */
-static int iPathPrefix = 0;        /* >0: path for files in filelist */
-
 /* definitions for command interface */
 #define MAX_CMDPARM 20           /* max number of command parameters */
 #define MAX_CMDPARM_LEN 256      /* max length of command parameters */

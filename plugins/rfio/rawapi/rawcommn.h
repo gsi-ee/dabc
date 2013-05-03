@@ -223,9 +223,6 @@ static const char cTooBig[8] = "(>=4GB)";
                /* for 32 bit clients: substitute for filesize >= 4GB */
 
 #define MAX_NODE    16                       /* max length node name */
-static char cNodeMaster0[MAX_NODE] = "lxgstore";     /* entry server */
-static char cNodeMasterE1[MAX_NODE] = "lxha05";  /* def entry server */
-static char cNodeMasterE2[MAX_NODE] = "lxha04";  /* bkp entry server */
 
 #define MIN_DATAFS_PATH 12              /* min path length in lustre */
 static char cDataFSType[16] = "lustre";              /* general name */
@@ -238,7 +235,7 @@ static char cForceMigPath[32] = "/ArchiveNow";  /* special path name */
 
 /* query client operating system */
 #define MAX_OS       8           /* max length operating system name */
-static char *pcOS;
+// static char *pcOS;
 #ifdef _AIX
 static char cOS[MAX_OS] = "AIX    ";
 #endif

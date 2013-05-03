@@ -35,11 +35,11 @@ namespace dabc {
 
          virtual void fclose(Handle f) { if (f!=0) ::fclose((FILE*)f); }
 
-         virtual bool fwrite(Handle f, void* ptr, size_t sz)
-           { return (f==0) || (ptr==0) ? false : (::fwrite(ptr, sz, 1, (FILE*) f) == 1); }
+         virtual size_t fwrite(const void* ptr, size_t sz, size_t nmemb, Handle f)
+           { return ((f==0) || (ptr==0)) ? 0 : ::fwrite(ptr, sz, nmemb, (FILE*) f); }
 
-         virtual bool fread(Handle f, void* ptr, size_t sz)
-           { return (f==0) || (ptr==0) ? false : (::fread(ptr, sz, 1, (FILE*) f) == 1); }
+         virtual size_t fread(void* ptr, size_t sz, size_t nmemb, Handle f)
+           { return ((f==0) || (ptr==0)) ? 0 : ::fread(ptr, sz, nmemb, (FILE*) f); }
 
          virtual bool feof(Handle f)
            { return f==0 ? false : feof((FILE*)f)>0; }
@@ -47,7 +47,10 @@ namespace dabc {
          virtual bool fflush(Handle f)
          { return f==0 ? false : ::fflush((FILE*)f)==0; }
 
-         /** Produce list of files, object must be explicitely destroyed with ref.Destroy call */
+         virtual bool fseek(Handle f, long int offset, bool relative = true)
+         { return f==0 ? false : ::fseek((FILE*)f, offset, relative ? SEEK_CUR : SEEK_SET) == 0; }
+
+         /** Produce list of files, object must be explicitly destroyed with ref.Destroy call */
          virtual Object* fmatch(const char* fmask);
    };
 
@@ -128,8 +131,8 @@ namespace dabc {
                return false;
             }
 
-            bool res = io->fread(fd, &fFileHdr, sizeof(fFileHdr));
-            if (!res || (fFileHdr.magic != BinaryFileMagicValue)) {
+            size_t res = io->fread(&fFileHdr, sizeof(fFileHdr), 1, fd);
+            if ((res!=1) || (fFileHdr.magic != BinaryFileMagicValue)) {
                fprintf(stderr, "Failure reading file %s header", fname);
                Close();
                return false;
@@ -160,7 +163,7 @@ namespace dabc {
             fFileHdr.magic = BinaryFileMagicValue;
             fFileHdr.version = 2;
 
-            if (!io->fwrite(fd, &fFileHdr, sizeof(fFileHdr))) {
+            if (io->fwrite(&fFileHdr, sizeof(fFileHdr), 1, fd) != 1) {
                fprintf(stderr, "Failure writing file %s header", fname);
                Close();
                return false;
@@ -195,7 +198,7 @@ namespace dabc {
             fBufHdr.datalength = size;
             fBufHdr.buftype = typ;
 
-            if (!io->fwrite(fd, &fBufHdr, sizeof(fBufHdr))) {;
+            if (io->fwrite(&fBufHdr, sizeof(fBufHdr), 1, fd) != 1) {
                fprintf(stderr, "fail to write buffer header\n");
                Close();
                return false;
@@ -204,7 +207,7 @@ namespace dabc {
             return true;
          }
 
-         bool WriteBufPayload(void* ptr, uint64_t sz)
+         bool WriteBufPayload(const void* ptr, uint64_t sz)
          {
             if (!isWriting() || (ptr==0) || (sz==0)) return false;
 
@@ -216,7 +219,7 @@ namespace dabc {
 
             fBufHdr.datalength -= sz;
 
-            if (!io->fwrite(fd, ptr, sz)) {
+            if (io->fwrite(ptr, sz, 1, fd)!=1) {
                fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) sz);
                Close();
                return false;
@@ -225,7 +228,7 @@ namespace dabc {
             return true;
          }
 
-         bool WriteBuffer(void* ptr, uint64_t sz, uint64_t typ = 0)
+         bool WriteBuffer(const void* ptr, uint64_t sz, uint64_t typ = 0)
          {
             if (!WriteBufHeader(sz, typ)) return false;
 
@@ -242,7 +245,7 @@ namespace dabc {
                Close();
                return false;
             }
-            if (!io->fread(fd, &fBufHdr, sizeof(fBufHdr))) {
+            if (io->fread(&fBufHdr, sizeof(fBufHdr), 1, fd) != 1) {
                fprintf(stderr, "fail to read buffer header\n");
                Close();
                return false;
@@ -265,7 +268,7 @@ namespace dabc {
 
             fBufHdr.datalength -= sz;
 
-            if (!io->fread(fd, ptr, sz)) {
+            if (io->fread(ptr, sz, 1, fd) != 1) {
                fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) sz);
                Close();
                return false;

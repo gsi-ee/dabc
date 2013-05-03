@@ -142,10 +142,17 @@ dabc::DataInput* mbs::Factory::CreateDataInput(const std::string& typ)
    DOUT2("Factory::CreateDataInput %s", typ.c_str());
 
    dabc::Url url(typ);
+   if ((url.GetProtocol()==mbs::protocolLmd) && (url.GetFullName() == "Generator")) {
+      DOUT0("Create LMD Generator input");
+      return new mbs::GeneratorInput(url);
+   } else
    if (url.GetProtocol()==mbs::protocolLmd) {
       DOUT0("LMD input file name %s", url.GetFullName().c_str());
-
       return new mbs::LmdInput(url);
+   } else
+   if (url.GetProtocol()=="lmd2") {
+      DOUT0("LMD2 input file name %s", url.GetFullName().c_str());
+      return new mbs::LmdInputNew(url);
    } else
    if (url.GetProtocol()=="lmdtxt") {
       DOUT0("TEXT LMD input file name %s", url.GetFullName().c_str());
@@ -163,6 +170,10 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string& typ)
    if (url.GetProtocol()==mbs::protocolLmd) {
       DOUT0("LMD output file name %s", url.GetFullName().c_str());
       return new mbs::LmdOutput(url);
+   } else
+   if (url.GetProtocol()=="lmd2") {
+      DOUT0("LMD2 output file name %s", url.GetFullName().c_str());
+      return new mbs::LmdOutputNew(url);
    }
 
    return 0;

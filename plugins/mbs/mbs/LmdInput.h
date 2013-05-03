@@ -26,6 +26,11 @@
 #include "mbs/LmdFile.h"
 #endif
 
+
+#ifndef MBS_LmdFileNew
+#include "mbs/LmdFileNew.h"
+#endif
+
 namespace mbs {
 
    class LmdInput : public dabc::FileInput {
@@ -50,6 +55,27 @@ namespace mbs {
          mbs::EventHeader* ReadEvent();
 
    };
+
+   // ===============================================================================
+
+   class LmdInputNew : public dabc::FileInput {
+       protected:
+
+          mbs::LmdFileNew      fFile;
+
+          bool CloseFile();
+
+          bool OpenNextFile();
+
+       public:
+          LmdInputNew(const dabc::Url& url);
+          virtual ~LmdInputNew();
+
+          virtual bool Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd);
+
+          virtual unsigned Read_Size();
+          virtual unsigned Read_Complete(dabc::Buffer& buf);
+    };
 
 }
 

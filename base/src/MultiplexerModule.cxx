@@ -15,6 +15,9 @@
 
 #include "dabc/MultiplexerModule.h"
 
+#include <stdlib.h>
+#include "dabc/Manager.h"
+
 
 dabc::MultiplexerModule::MultiplexerModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -64,4 +67,34 @@ void dabc::MultiplexerModule::CheckDataSending()
       SendToAllOutputs(buf);
    }
 }
+
+// ==============================================================
+
+
+extern "C" void StartMultiplexer()
+{
+   if (dabc::mgr.null()) {
+      EOUT("Manager is not created");
+      exit(1);
+   }
+
+   DOUT0("Create multiplexer module");
+
+   dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool);
+
+   dabc::ModuleRef m = dabc::mgr.CreateModule("dabc::MultiplexerModule", "Multi");
+
+   for (unsigned n=0;n<m.NumInputs();n++)
+      if (!dabc::mgr.CreateTransport(m.InputName(n))) {
+         EOUT("Cannot create input transports");
+         exit(131);
+      }
+
+   for (unsigned n=0;n<m.NumOutputs();n++)
+      if (!dabc::mgr.CreateTransport(m.OutputName(n))) {
+         EOUT("Cannot create output transport");
+         exit(132);
+      }
+}
+
 

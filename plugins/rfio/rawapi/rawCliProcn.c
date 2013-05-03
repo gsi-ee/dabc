@@ -153,6 +153,10 @@ static unsigned int iFileList = sizeof(srawFileList);
 static char cPath[MAX_FULL_FILE] = "";
                   /* returned in rawGetFullFile, must not be locally */
 
+static char cPathPrefix[16] = "@PATH:";              /* for filelist */
+static int iPathPrefix = 0;        /* >0: path for files in filelist */
+
+
 /*********************************************************************
  * rawCheckFilelist: remove objects already archived from file list
  *    returns number of removed objects
