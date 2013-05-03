@@ -57,13 +57,18 @@ void dabc::Buffer::Release() throw()
          fRec->fPool.Release();
       } else {
          if (fRec->fPoolId == (unsigned) -1) {
-            for (unsigned n=0;n<NumSegments();n++)
+            for (unsigned n=0;n<NumSegments();n++) {
+               printf("Destroy buffer segment %p\n", SegmentPtr(n));
                free(SegmentPtr(n));
+            }
          }
       }
 
       // now just free record memory
-      if (del) free(fRec);
+      if (del) {
+         /* printf("Destroy buffer rec %p poolptr %p poolid %u numseg %u\n", fRec, fRec->PoolPtr(), fRec->fPoolId, NumSegments()); */
+         free(fRec);
+      }
    }
 
    fRec = 0;

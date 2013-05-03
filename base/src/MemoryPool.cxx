@@ -63,14 +63,22 @@ namespace dabc {
          {
             if (fArr==0) return;
 
+//            printf("Release memblock %p size %u arr %p\n", this, fNumber, fArr);
+
             for (unsigned n=0;n<fNumber;n++) {
-               if (fArr[n].buf && fArr[n].owner) free(fArr[n].buf);
+               if (fArr[n].buf && fArr[n].owner) {
+//                  printf("    destroy buf %3u %p size %u\n", n, fArr[n].buf, (unsigned) fArr[n].size);
+                  free(fArr[n].buf);
+               }
                fArr[n].buf = 0;
+               fArr[n].owner = false;
             }
 
             delete[] fArr;
             fArr = 0;
             fNumber = 0;
+
+//            printf("Release memblock %p done\n", this);
 
             fFree.Reset();
          }
@@ -490,6 +498,8 @@ dabc::Buffer dabc::MemoryPool::TakeEmpty(unsigned capacity) throw()
 
       _TakeSegmentsList(this, res, capacity);
    }
+
+   res.SetMemoryPool(this);
 
    return res;
 }

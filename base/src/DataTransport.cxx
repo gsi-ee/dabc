@@ -106,8 +106,10 @@ bool dabc::InputTransport::ProcessBuffer(unsigned pool)
 
 void dabc::InputTransport::CloseInput()
 {
-   if ((fInput!=0) && fInputOwner)
+   if ((fInput!=0) && fInputOwner) {
+      // printf("keep input\n");
       delete fInput;
+   }
    fInput = 0;
    fInputOwner = false;
 }
@@ -192,7 +194,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    }
 
    if (fInput==0) {
-      EOUT("InputTransport %s - no memory pool!!!!", GetName());
+      EOUT("InputTransport %s - no input object!!!!", GetName());
       CloseTransport(true);
       return false;
    }
@@ -525,7 +527,6 @@ bool dabc::OutputTransport::ProcessRecv(unsigned port)
       EOUT("Output object not specified");
       fState = outError;
    }
-
 
 
    if (fState == outInit) {

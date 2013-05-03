@@ -92,6 +92,24 @@ namespace mbs {
                return false;
             }
 
+            if (!fFileHdr.isTypePair(0x65, 0x1)) {
+               fprintf(stderr, "Wrong header type in file %s", fname);
+               Close();
+               return false;
+            }
+
+            if (fFileHdr.iOffsetSize != 8) {
+               fprintf(stderr, "Wrong offset size %u in file %s, expected 8", (unsigned) fFileHdr.iOffsetSize, fname);
+               Close();
+               return false;
+            }
+
+            if (fFileHdr.iEndian != 1) {
+               fprintf(stderr, "Wrong endian %u in file %s, expected 1", (unsigned) fFileHdr.iEndian, fname);
+               Close();
+               return false;
+            }
+
             fReadingMode = true;
             return true;
          }

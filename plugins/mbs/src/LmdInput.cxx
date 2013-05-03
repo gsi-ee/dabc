@@ -192,6 +192,8 @@ unsigned mbs::LmdInputNew::Read_Complete(dabc::Buffer& buf)
        break;
    }
 
+   // DOUT0("Read buffer of size %u total %u", (unsigned) bufsize, (unsigned) buf.SegmentSize(0));
+
    buf.SetTotalSize(bufsize);
    buf.SetTypeId(mbs::mbt_MbsEvents);
 

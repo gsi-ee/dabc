@@ -46,7 +46,7 @@ namespace dabc {
          unsigned         fCounter;
          time_t           fMsgTime; // normal time when message will be output
          std::string      fLastMsg; // last shown message
-         TimeStamp     fLastTm;  // dabc (fast) time of last output
+         TimeStamp        fLastTm;  // dabc (fast) time of last output
          unsigned         fDropCnt; // number of dropped messages
          bool             fShown;   // used in statistic output
 
@@ -56,6 +56,7 @@ namespace dabc {
             fLine(line),
             fLevel(lvl),
             fCounter(0),
+            fMsgTime(),
             fLastMsg(),
             fLastTm(),
             fDropCnt(0),
@@ -140,8 +141,11 @@ dabc::Logger::~Logger()
 
    {
      LockGuard lock(fMutex);
+
+//     printf("Destroy logger %p lines %u\n", this, fMaxLine);
+
      for (unsigned n=0; n<fMaxLine; n++)
-        if (fLines[n]) delete fLines[n];
+        if (fLines[n]) { /*printf("  destroy line %3u %p\n", n, fLines[n]); */ delete fLines[n]; }
      _ExtendLines(0);
    }
 
@@ -176,6 +180,9 @@ void dabc::Logger::_ExtendLines(unsigned max)
 
    LoggerLineEntry **lin = 0;
    if (max>0) {
+
+      printf("Extend logger lines %u\n", max);
+
       lin = new LoggerLineEntry* [max];
       unsigned n = 0;
 

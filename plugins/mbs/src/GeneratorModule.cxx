@@ -43,7 +43,9 @@ mbs::GeneratorInput::GeneratorInput(const dabc::Url& url) :
    fFirstProcId(0),
    fSubeventSize(32),
    fIsGo4RandomFormat(true),
-   fFullId(0)
+   fFullId(0),
+   fTotalSize(0),
+   fTotalSizeLimit(0)
 {
    fEventCount = url.GetOptionInt("first", 0);
 
@@ -52,12 +54,21 @@ mbs::GeneratorInput::GeneratorInput(const dabc::Url& url) :
    fSubeventSize = url.GetOptionInt("size", 32);
    fIsGo4RandomFormat = url.GetOptionStr("go4","true") == "true";
    fFullId = url.GetOptionInt("fullid", 0);
+   fTotalSizeLimit = url.GetOptionInt("total", 0);
 }
 
 bool mbs::GeneratorInput::Read_Init(const dabc::WorkerRef& wrk, const dabc::Command& cmd)
 {
    return dabc::DataInput::Read_Init(wrk,cmd);
 }
+
+unsigned mbs::GeneratorInput::Read_Size()
+{
+   if ((fTotalSizeLimit>0) && (fTotalSize / 1024. / 1024. > fTotalSizeLimit)) return dabc::di_EndOfStream;
+
+   return dabc::di_DfltBufSize;
+}
+
 
 unsigned mbs::GeneratorInput::Read_Complete(dabc::Buffer& buf)
 {
@@ -104,6 +115,8 @@ unsigned mbs::GeneratorInput::Read_Complete(dabc::Buffer& buf)
 
    // When close iterator - take back buffer with correctly modified length field
    buf = iter.Close();
+
+   fTotalSize += buf.GetTotalSize();
 
    return dabc::di_Ok;
 }

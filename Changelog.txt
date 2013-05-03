@@ -237,4 +237,6 @@ Main aim now bring project to real version 2 with interface finalized.
       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2" queue="5"/>
    It should replace MBS generator module in the near future. 
 3. Provide temporary "lmd2" file input and output classes, which are using 
-   mbs::LmdFileNew. New lmd files can be used with go4 as well.
+   mbs::LmdFileNew. New lmd files can be used with go4 as well. Test it.
+4. Fix error with MemoryPool::TakeEmpty - pool reference was not set correctly
+   in buffer, which leads to double delete of memory.

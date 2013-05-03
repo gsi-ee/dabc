@@ -123,6 +123,8 @@ dabc::FileInput::FileInput(const dabc::Url& url) :
 
 dabc::FileInput::~FileInput()
 {
+   DOUT0("Destroy file input %p", this);
+
    if (fIO!=0) {
       delete fIO;
       fIO = 0;
