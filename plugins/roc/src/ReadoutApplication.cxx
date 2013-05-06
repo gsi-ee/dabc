@@ -561,20 +561,22 @@ bool roc::ReadoutApplication::CreateAppModules()
       DOUT1("Created MBS client transport for node %s : result is %s", MbsAddr(nmbs).c_str(), DBOOL(res));
       if (!res) return false;
 
-      dabc::Command cmd6("ConfigureInput");
-      cmd6.SetInt("Port", nsuperinp);
-      cmd6.SetBool("RealMbs", true);
-      cmd6.SetBool("RealEvntNum", false);
-      cmd6.SetUInt("EvntSrcFullId",
-            Par(dabc::format("%s%d", roc::xmlSyncSubeventId, nmbs)).AsInt(0));
-      cmd6.SetUInt("EvntSrcShift", 0);
-      cmd6.SetStr("RateName", "MbsData");
+      if (!DoRawReadout()) {
+         dabc::Command cmd6("ConfigureInput");
+         cmd6.SetInt("Port", nsuperinp);
+         cmd6.SetBool("RealMbs", true);
+         cmd6.SetBool("RealEvntNum", false);
+         cmd6.SetUInt("EvntSrcFullId",
+               Par(dabc::format("%s%d", roc::xmlSyncSubeventId, nmbs)).AsInt(0));
+         cmd6.SetUInt("EvntSrcShift", 0);
+         cmd6.SetStr("RateName", "MbsData");
 
-      cmd6.SetReceiver(nameSuperComb);
-      res = dabc::mgr.Execute(cmd6);
+         cmd6.SetReceiver(nameSuperComb);
+         res = dabc::mgr.Execute(cmd6);
 
-      DOUT1("Configure special MBS case as supercombiner input %d : result is %s", nsuperinp, DBOOL(res));
-      if (!res) return false;
+         DOUT1("Configure special MBS case as supercombiner input %d : result is %s", nsuperinp, DBOOL(res));
+         if (!res) return false;
+      }
 
       nsuperinp++;
    }
@@ -891,6 +893,9 @@ bool roc::ReadoutApplication::ConnectSlave(int nslave, int ninp)
       DOUT0("==============================================");
       if (slavesubevid!=1) return false;
    }
+
+   if (DoRawReadout()) return res;
+
 
    if (slavesubevid==0) {
       DOUT1("Configure slave %d input as normal MBS input", nslave);

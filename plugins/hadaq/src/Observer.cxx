@@ -24,7 +24,7 @@ hadaq::Observer::Observer(const std::string& name) :
          DOUT0("hadaq shmem observer is disabled.");
          return;
       }
-   fNodeId = dabc::mgr()->NodeId()+1; // hades eb ids start with 1
+   fNodeId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
 
 
    // we use here mask for evtbuild and netmem prefixes only
