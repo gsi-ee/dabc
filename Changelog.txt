@@ -240,3 +240,36 @@ Main aim now bring project to real version 2 with interface finalized.
    mbs::LmdFileNew. New lmd files can be used with go4 as well. Test it.
 4. Fix error with MemoryPool::TakeEmpty - pool reference was not set correctly
    in buffer, which leads to double delete of memory.
+   
+7.05.2013
+1. Tag version 2.0.0 in repository.
+
+8.05.2013
+1. Memory pool, modules and connections between them could be created automatically,
+   based on information from xml file. For module one should specify class tag. 
+   In addition, thread tag can be provided. For instance: 
+   
+   <Module name="Combiner" class="hadaq::CombinerModule">
+      ...
+   </Module>
+   
+   Local connection between modules can be configured via simplified url:
+   
+   <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
+     ...
+     <InputPort name="Input0" url="Combiner/Output1" queue="10"/>
+     ...          
+   </Module>
+   
+   As alternative, one could specify connectiion between modules in extra node:
+   
+   <Connection output="Combiner/Output1" input="OnlineServer/Input0"/> 
+   
+   hadaq plugin is first plugin with such examples.
+2. Provide new configuration files for hadaq plugin, showing autocreation functionality  
+3. Introduce BasicFile class, which only contains file descriptor and IO object.
+   Used as basic class for dabc::BinaryFile, mbs::LmdFileNew, hadaq::HldFile.
+4. Change implementaion of hadaq::HldFile file. Main change - use DABC IO class
+   to be able switch to any other file system. Also when reading events, first read
+   as much as possible and than rewind if non-complete events are read.
+   

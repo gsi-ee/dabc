@@ -32,8 +32,6 @@ namespace hadaq {
       protected:
 
          hadaq::HldFile   fFile;
-         uint64_t         fCurrentRead;
-         bool             fLastBuffer; // flag to remember that we reached last buffer after EOF
 
          bool CloseFile();
          bool OpenNextFile();
@@ -46,10 +44,6 @@ namespace hadaq {
 
          virtual unsigned Read_Size();
          virtual unsigned Read_Complete(dabc::Buffer& buf);
-
-         // alternative way to read hadaq events from HldInput - no any dabc buffer are used
-         hadaq::Event* ReadEvent();
-
    };
 
 }

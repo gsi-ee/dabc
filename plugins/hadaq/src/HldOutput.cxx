@@ -97,7 +97,7 @@ bool hadaq::HldOutput::StartNewFile()
    ProduceNewFileName();
 
    if (!fFile.OpenWrite(CurrentFileName().c_str(), fRunNumber)) {
-      ShowError(dabc::format("%s cannot open file for writing, errcode %u", CurrentFileName().c_str(), fFile.LastError()));
+      ShowError(dabc::format("%s cannot open file for writing", CurrentFileName().c_str()));
       return false;
    }
 
@@ -108,16 +108,15 @@ bool hadaq::HldOutput::StartNewFile()
 
 bool hadaq::HldOutput::CloseFile()
 {
-   if (fFile.IsWriteMode()) {
+   if (fFile.isWriting())
       ShowInfo("HLD file is CLOSED", true);
-   }
    fFile.Close();
    return true;
 }
 
 unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 {
-   if (!fFile.IsWriteMode() || buf.null()) return dabc::do_Error;
+   if (!fFile.isWriting() || buf.null()) return dabc::do_Error;
 
    if (buf.GetTypeId() == dabc::mbt_EOF) {
       CloseFile();
@@ -126,11 +125,6 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
 
    if (buf.GetTypeId() != hadaq::mbt_HadaqEvents) {
       ShowError(dabc::format("Buffer must contain hadaq event(s), but has type %u", buf.GetTypeId()));
-      return dabc::do_Error;
-   }
-
-   if (buf.NumSegments()>1) {
-      ShowError("Segmented buffer not (yet) supported");
       return dabc::do_Error;
    }
 
@@ -151,15 +145,13 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
          return dabc::do_Error;
       }
 
-   unsigned numevents = hadaq::ReadIterator::NumEvents(buf);
-
-   DOUT3("Write %u events to hld file", numevents);
-
    fBytesWrittenPar.SetUInt(fCurrentFileSize);
 
-   if (!fFile.WriteEvents((hadaq::Event*) buf.SegmentPtr(0), numevents)) return dabc::do_Error;
+   for (unsigned n=0;n<buf.NumSegments();n++)
+      if (!fFile.WriteBuffer(buf.SegmentPtr(n), buf.SegmentSize(n)))
+         return dabc::do_Error;
 
-   AccountBuffer(buf.GetTotalSize(), numevents);
+   AccountBuffer(buf.GetTotalSize(), hadaq::ReadIterator::NumEvents(buf));
 
    return dabc::do_Ok;
 }

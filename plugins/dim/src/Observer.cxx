@@ -237,7 +237,7 @@ std::string dimc::Observer::BuildDIMName(const dabc::Parameter& par, const std::
    res = par.GetName();
 
    Object* prnt = par.GetParent();
-   while ((prnt!=0) && (prnt!=dabc::mgr()) && (prnt!=dabc::mgr.GetApp()())) {
+   while ((prnt!=0) && (prnt!=dabc::mgr()) && (prnt!=dabc::mgr.app()())) {
       res += ".";
       res += prnt->GetName();
       prnt = prnt->GetParent();

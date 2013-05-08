@@ -35,8 +35,9 @@ unsigned dabc::Object::gNumCreated = 0;
 namespace dabc {
 
 
-   const char* clPoolHandle         = "PoolHandle";
-   const char* clMemoryPool         = "MemoryPool";
+   const char* xmlMemoryPoolNode    = "MemoryPool";
+   const char* xmlModuleNode        = "Module";
+   const char* xmlConnectionNode    = "Connection";
 
    const char* xmlQueueSize         = "queue";
    const char* xmlInputQueueSize    = "InputQueueSize";
@@ -960,11 +961,7 @@ void dabc::Object::Destroy(Object* obj) throw()
 
 bool dabc::Object::Find(ConfigIO &cfg)
 {
-   DOUT1("Object::Find %p name = %s parent %p", this, GetName(), GetParent());
-
-   if (GetParent()==0) return false;
-
-   return cfg.FindItem(GetName());
+   return GetParent()==0 ? false : cfg.FindItem(GetName());
 }
 
 dabc::Object::ConstructorPair dabc::Object::MakePair(Reference prnt, const std::string& fullnamearg, bool withmanager)

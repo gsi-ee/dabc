@@ -629,8 +629,8 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
 void dabc::SocketCommandChannel::ProduceNodesStateNotification(int nodeid)
 {
-   dabc::ApplicationRef app = dabc::mgr.GetApp();
-   if (app.null()) return;
+   dabc::ApplicationRef appref = dabc::mgr.app();
+   if (appref.null()) return;
 
    CmdGetNodesState cmd;
 
@@ -643,7 +643,7 @@ void dabc::SocketCommandChannel::ProduceNodesStateNotification(int nodeid)
 
    cmd.SetInt(CmdGetNodesState::NodeId(), nodeid);
 
-   app.Submit(cmd);
+   appref.Submit(cmd);
 }
 
 bool dabc::SocketCommandChannel::CheckConnCommandStatus(Command cmd)

@@ -179,7 +179,7 @@ bool dabc::MemoryPool::Find(ConfigIO &cfg)
    if (GetParent()==0) return false;
 
    // module will always have tag "Module", class could be specified with attribute
-   while (cfg.FindItem("MemoryPool")) {
+   while (cfg.FindItem(xmlMemoryPoolNode)) {
       if (cfg.CheckAttr(xmlNameAttr, GetName())) return true;
    }
 

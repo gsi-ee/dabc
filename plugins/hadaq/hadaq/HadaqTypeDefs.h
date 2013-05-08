@@ -14,9 +14,8 @@
 #ifndef HADAQ_HadaqTypeDefs
 #define HADAQ_HadaqTypeDefs
 
-#include <fstream>
 #include <stdint.h>
-#include <unistd.h>
+// #include <unistd.h>
 
 //#include "dabc/logging.h"
 
@@ -71,78 +70,60 @@ namespace hadaq {
     */
 
    struct HadTu {
-         int32_t tuSize;
-         int32_t tuDecoding;
+      int32_t tuSize;
+      int32_t tuDecoding;
 
-         /* msb of decode word is always non zero...?*/
-         bool IsSwapped()
-         {
-            return (tuDecoding > 0xffffff);
+      /* msb of decode word is always non zero...?*/
+      bool IsSwapped() const { return (tuDecoding > 0xffffff); }
+
+      /* swapsave access to any data stolen from hadtu.h*/
+      int32_t Value(const int32_t* member) const
+      {
+         if (IsSwapped()) {
+            uint32_t tmp1(0);
+            uint32_t tmp0 = *member;
+            ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
+            ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
+            ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
+            ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
+            return tmp1;
+         } else {
+            return *member;
          }
+      }
 
-         /* swapsave access to any data stolen from hadtu.h*/
-         int32_t Value(int32_t *member)
-         {
+      void SetValue(int32_t *member, int32_t val)
+      {
+         if (IsSwapped()) {
+            uint32_t tmp0 = *member;
+            ((char *) &tmp0)[3] = ((char *) &val)[0];
+            ((char *) &tmp0)[2] = ((char *) &val)[1];
+            ((char *) &tmp0)[1] = ((char *) &val)[2];
+            ((char *) &tmp0)[0] = ((char *) &val)[3];
 
-            if (IsSwapped()) {
-               uint32_t tmp0;
-               uint32_t tmp1;
-
-               tmp0 = *member;
-               ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
-               ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
-               ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
-               ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
-               return tmp1;
-            } else {
-               return *member;
-            }
+         } else {
+            *member = val;
          }
+      }
 
-         void SetValue(int32_t *member, int32_t val)
-         {
+      int32_t GetSize() const { return Value(&tuSize); }
 
-            if (IsSwapped()) {
-               uint32_t tmp0;
-               tmp0 = *member;
-               ((char *) &tmp0)[3] = ((char *) &val)[0];
-               ((char *) &tmp0)[2] = ((char *) &val)[1];
-               ((char *) &tmp0)[1] = ((char *) &val)[2];
-               ((char *) &tmp0)[0] = ((char *) &val)[3];
-
-            } else {
-               *member = val;
-            }
+      int32_t GetPaddedSize() const
+      {
+         int32_t hedsize = GetSize();
+         // TODO: take actual decoding into account
+         // account padding of events to 8 byte boundaries:
+         while ((hedsize % 8) != 0) {
+            hedsize++;
+            //DOUT0("hadtu GetSize() extends for padding the length to %d",hedsize);
          }
-
-         size_t GetSize()
-         {
-            return (size_t)(Value(&tuSize));
-         }
-
-         size_t GetPaddedSize()
-            {
-               size_t hedsize = GetSize();
-               // TODO: take actual decoding into account
-               // account padding of events to 8 byte boundaries:
-               while ((hedsize % 8) != 0) {
-                  hedsize++;
-                  //DOUT0("hadtu GetSize() extends for padding the length to %d",hedsize);
-               }
-               return hedsize;
-            }
+         return hedsize;
+      }
 
 
-         void SetSize(size_t bytes)
-         {
-            SetValue(&tuSize, (uint32_t) bytes);
-         }
+      void SetSize(int32_t bytes) { SetValue(&tuSize, bytes); }
 
-         int32_t GetDecoding()
-         {
-            return Value(&tuDecoding);
-         }
-
+      int32_t GetDecoding() const { return Value(&tuDecoding); }
 
    };
 
@@ -150,30 +131,20 @@ namespace hadaq {
     * Intermediate hierarchy class as common base for event and subevent
     */
    struct HadTuId : public HadTu {
-           int32_t tuId;
+      int32_t tuId;
 
-    int32_t GetId()
-         {
-            return Value(&tuId);
-         }
+      int32_t GetId() const { return Value(&tuId); }
+      void SetId(uint32_t id) { SetValue(&tuId, id); }
 
-         void SetId(uint32_t id)
-         {
-            SetValue(&tuId, id);
-         }
+      bool GetDataError() const { return (GetId() & 0x80000000UL) != 0; }
 
-    bool GetDataError()
-       {
-             return ((GetId() & 0x80000000UL) != 0);
-       }
-
-    void SetDataError(bool on)
-       {
-          if(on)
-             SetId(GetId() | 0x80000000UL);
-          else
-             SetId(GetId() & ~0x80000000UL);
-       }
+      void SetDataError(bool on)
+      {
+         if(on)
+            SetId(GetId() | 0x80000000UL);
+         else
+            SetId(GetId() & ~0x80000000UL);
+      }
 
    };
 
@@ -263,72 +234,33 @@ namespace hadaq {
    //    * evtPad - padding: Makes the event header a multiple of 64 bits long.
 
    struct Event: public HadTuId {
-         int32_t evtSeqNr;
-         int32_t evtDate;
-         int32_t evtTime;
-         int32_t evtRunNr;
-         int32_t evtPad;
+      int32_t evtSeqNr;
+      int32_t evtDate;
+      int32_t evtTime;
+      int32_t evtRunNr;
+      int32_t evtPad;
 
-         int32_t GetSeqNr()
-         {
-            return Value(&evtSeqNr);
-         }
+      int32_t GetSeqNr() const { return Value(&evtSeqNr); }
+      void SetSeqNr(int32_t n) { SetValue(&evtSeqNr, n); }
 
-         void SetSeqNr(int32_t n)
-         {
-            SetValue(&evtSeqNr, n);
-         }
+      int32_t GetRunNr() const { return Value(&evtRunNr); }
+      void SetRunNr(int32_t n) { SetValue(&evtRunNr, n); }
 
-         int32_t GetRunNr()
-         {
-            return Value(&evtRunNr);
-         }
+      int32_t GetDate() const { return Value(&evtDate); }
+      void SetDate(int32_t d) { SetValue(&evtDate, d); }
 
-         void SetRunNr(int32_t n)
-         {
-            SetValue(&evtRunNr, n);
-         }
+      int32_t GetTime() const { return Value(&evtTime); }
+      void SetTime(int32_t t) { SetValue(&evtTime, t); }
 
-         int32_t GetDate()
-         {
-            return Value(&evtDate);
-         }
+      void Init(EventNumType evnt, RunId run=0, EvtId evid=EvtId_DABC);
 
-         void SetDate(int32_t d)
-         {
-            SetValue(&evtDate, d);
-         }
+      /** Insert full event header at position buf.
+       * Returns pointer on this new event*/
+      static hadaq::Event* PutEventHeader(char** buf, EvtId id);
 
-         int32_t GetTime()
-         {
-            return Value(&evtTime);
-         }
-
-         void SetTime(int32_t t)
-         {
-            SetValue(&evtTime, t);
-         }
-
-         void Init(EventNumType evnt, RunId run=0, EvtId evid=EvtId_DABC);
-
-         /*
-          * Insert full event header at position buf. Returns pointer on this new event
-          * */
-         static hadaq::Event* PutEventHeader(char** buf, EvtId id);
-
-         /*
-          * Generate run id from current time.
-          * Same as used in hades eventbuilders for filenames
-          */
-         static hadaq::RunId  CreateRunId();
-
-
-         /*
-          * Format a HADES-convention filename string
-          * from a given run id.
-          */
-        static std::string FormatFilename (hadaq::RunId id);
-
+      /** Generate run id from current time.
+        * Same as used in hades eventbuilders for filenames */
+      static hadaq::RunId  CreateRunId();
    };
 
    //Subevent
@@ -369,163 +301,146 @@ namespace hadaq {
    //    * The data words: The format of the data words (word length, compression algorithm, sub-sub-event format) is defined by the subEvtDecoding and apart from this it is completely free. The meaning of the data words (detector, geographical position, error information) is defined by the subEvtId and apart from this it is completely unknown to the data acquisition system.
 
    struct Subevent: public HadTuId {
-         int32_t subEvtTrigNr;
+      int32_t subEvtTrigNr;
 
-         int32_t GetTrigNr()
-         {
-            return Value(&subEvtTrigNr);
-         }
+      int32_t GetTrigNr() const { return Value(&subEvtTrigNr); }
 
-         unsigned Alignment()
-         {
-            return 1 << (GetDecoding() >> 16 & 0xff);
-         }
+      unsigned Alignment() const { return 1 << (GetDecoding() >> 16 & 0xff); }
 
+      /* swapsave access to any data. stolen from hadtu.h*/
+      uint32_t Data(unsigned idx)
+      {
+         if(idx>=GetNrOfDataWords()) return 0;
+         const void* my = (char*) (this) + sizeof(hadaq::Subevent);
+         //const void* my= (char*) (this) + 16;
+         uint32_t val;
 
-         /* swapsave access to any data. stolen from hadtu.h*/
-         uint32_t Data(unsigned idx)
-         {
-            if(idx>=GetNrOfDataWords()) return 0;
-            const void* my = (char*) (this) + sizeof(hadaq::Subevent);
-            //const void* my= (char*) (this) + 16;
-            uint32_t val;
+         switch (Alignment()) {
+            case 4:
+               if (IsSwapped()) {
+                  uint32_t tmp0;
+                  uint32_t tmp1;
+                  tmp0 = ((uint32_t *) my)[idx];
+                  ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
+                  ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
+                  ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
+                  ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
+                  val = tmp1;
+               } else {
+                  val = ((uint32_t *) my)[idx];
+               }
+               break;
 
-            switch (Alignment()) {
-               case 4:
-                  if (IsSwapped()) {
-                     uint32_t tmp0;
-                     uint32_t tmp1;
-                     tmp0 = ((uint32_t *) my)[idx];
-                     ((char *) &tmp1)[0] = ((char *) &tmp0)[3];
-                     ((char *) &tmp1)[1] = ((char *) &tmp0)[2];
-                     ((char *) &tmp1)[2] = ((char *) &tmp0)[1];
-                     ((char *) &tmp1)[3] = ((char *) &tmp0)[0];
-                     val = tmp1;
-                  } else {
-                     val = ((uint32_t *) my)[idx];
-                  }
-                  break;
-               case 2:
-                  if (IsSwapped()) {
-                     uint16_t v;
-                     //swab(((uint16_t *) (my)[idx]), &v, 2);
-                     swab(((uint16_t *) (my)) + idx, &v, 2);
-                     val = v;
-                  } else {
-                     val = ((uint16_t *) my)[idx];
-                  }
-                  break;
-               default:
-                  val = ((uint8_t *) my)[idx];
-                  break;
-            }
-            return val;
+            case 2: {
 
-         }
+               int16_t tmp = ((int16_t *) my)[idx];
 
-         void Init(int32_t trigger = 0)
-         {
-            subEvtTrigNr = trigger;
-         }
+               if (IsSwapped()) tmp = ((tmp >> 8) & 0xff) | ((tmp << 8) & 0xff00);
 
-         void* RawData()
-         {
-            void* my = (char*) (this) + sizeof(hadaq::Subevent);
-            return my;
-         }
-
-
-         /* returns number of payload data words, not maximum index!*/
-         unsigned GetNrOfDataWords()
-         {
-            unsigned i;
-            unsigned datasize=GetSize()-sizeof(hadaq::Subevent);
-            switch (Alignment()) {
-               case 4:
-                  i = datasize / sizeof(uint32_t);
-                  break;
-               case 2:
-                  i = datasize  / sizeof(uint16_t);
-                  break;
-               default:
-                  i = datasize / sizeof(uint8_t);
-                  break;
-
-            };
-            return i;
-         }
-
-         uint32_t GetErrBits()
-            {
-                 return Data(GetNrOfDataWords()-1);
+               val = tmp;
+               break;
             }
 
+            default:
+               val = ((uint8_t *) my)[idx];
+               break;
+         }
+         return val;
+      }
 
-         // TODO: methods to extract error bit pattern (last word of subevent payload)
-//         uint32_t SubEvt_errBit(const void *my)
-//         {
-//            unsigned i;
-//            uint32_t val;
-//
-//            i = SubEvt_nrOfDataWords(my);
-//
-//            val = SubEvt_dataValue(my, i);
-//
-//            return val;
-//         }
-//
-//         uint32_t SubEvt_debugWord(const void *my)
-//         {
-//            unsigned i;
-//            uint32_t val;
-//            unsigned wordNr = -1;
-//
-//            /* Define debug word for the RICH */
-//            if (SubEvt_id(my) == 0x00008300UL || SubEvt_id(my) == 0x00008310UL || SubEvt_id(my) == 0x00008320UL) {
-//               wordNr = 2;
-//            }
-//
-//            i = SubEvt_nrOfDataWords(my);
-//
-//            if (wordNr == -1) {
-//               val = 0;
-//            } else if (i > wordNr) {
-//               val = SubEvt_dataValue(my, wordNr - 1);
-//            } else {
-//               val = 0;
-//            }
-//
-//            return val;
-//         }
+      void Init(int32_t trigger = 0)
+      {
+         subEvtTrigNr = trigger;
+      }
+
+      void* RawData()
+      {
+         void* my = (char*) (this) + sizeof(hadaq::Subevent);
+         return my;
+      }
 
 
+      /* returns number of payload data words, not maximum index!*/
+      unsigned GetNrOfDataWords() const
+      {
+         unsigned datasize = GetSize() - sizeof(hadaq::Subevent);
+         switch (Alignment()) {
+            case 4:  return datasize / sizeof(uint32_t);
+            case 2:  return datasize / sizeof(uint16_t);
+            default: return datasize / sizeof(uint8_t);
+         }
+         return datasize;
+      }
 
-         // TODO: need implement SubEvt_nrOfDataWords for this, depending on Alignment
-//         unsigned SubEvt_nrOfDataWords(const void *my)
-//         {
-//            unsigned i;
-//
-//            if (SubEvt_decoding(my) == SubEvtDecoding_32bitData) {
-//               i = SubEvt_dataSize(my) / sizeof(uint32_t) - 1;
-//            } else if (SubEvt_decoding(my) == SubEvtDecoding_16bitData) {
-//               i = SubEvt_dataSize(my) / sizeof(uint16_t) - 1;
-//            } else if (SubEvt_decoding(my) == SubEvtDecoding_8bitData) {
-//               i = SubEvt_dataSize(my) / sizeof(uint8_t) - 1;
-//            } else if (SubEvt_decoding(my) == SubEvtDecoding_SubEvts) {
-//               fprintf(stderr, "ERROR: Crate event are not supported any longer, decoding: %x\n", SubEvt_decoding(my));
-//            } else {
-//               fprintf(stderr, "ERROR: Unknown decoding: %i\n", SubEvt_decoding(my));
-//            }
-//
-//            return i;
-//         }
-//
+      uint32_t GetErrBits()
+      {
+         return Data(GetNrOfDataWords()-1);
+      }
 
+
+      // TODO: methods to extract error bit pattern (last word of subevent payload)
+      //         uint32_t SubEvt_errBit(const void *my)
+      //         {
+      //            unsigned i;
+      //            uint32_t val;
+      //
+      //            i = SubEvt_nrOfDataWords(my);
+      //
+      //            val = SubEvt_dataValue(my, i);
+      //
+      //            return val;
+      //         }
+      //
+      //         uint32_t SubEvt_debugWord(const void *my)
+      //         {
+      //            unsigned i;
+      //            uint32_t val;
+      //            unsigned wordNr = -1;
+      //
+      //            /* Define debug word for the RICH */
+      //            if (SubEvt_id(my) == 0x00008300UL || SubEvt_id(my) == 0x00008310UL || SubEvt_id(my) == 0x00008320UL) {
+      //               wordNr = 2;
+      //            }
+      //
+      //            i = SubEvt_nrOfDataWords(my);
+      //
+      //            if (wordNr == -1) {
+      //               val = 0;
+      //            } else if (i > wordNr) {
+      //               val = SubEvt_dataValue(my, wordNr - 1);
+      //            } else {
+      //               val = 0;
+      //            }
+      //
+      //            return val;
+      //         }
+
+
+
+      // TODO: need implement SubEvt_nrOfDataWords for this, depending on Alignment
+      //         unsigned SubEvt_nrOfDataWords(const void *my)
+      //         {
+      //            unsigned i;
+      //
+      //            if (SubEvt_decoding(my) == SubEvtDecoding_32bitData) {
+      //               i = SubEvt_dataSize(my) / sizeof(uint32_t) - 1;
+      //            } else if (SubEvt_decoding(my) == SubEvtDecoding_16bitData) {
+      //               i = SubEvt_dataSize(my) / sizeof(uint16_t) - 1;
+      //            } else if (SubEvt_decoding(my) == SubEvtDecoding_8bitData) {
+      //               i = SubEvt_dataSize(my) / sizeof(uint8_t) - 1;
+      //            } else if (SubEvt_decoding(my) == SubEvtDecoding_SubEvts) {
+      //               fprintf(stderr, "ERROR: Crate event are not supported any longer, decoding: %x\n", SubEvt_decoding(my));
+      //            } else {
+      //               fprintf(stderr, "ERROR: Unknown decoding: %i\n", SubEvt_decoding(my));
+      //            }
+      //
+      //            return i;
+      //         }
+      //
 
   };
 
 #pragma pack(pop)
-
 
 
    extern const char* typeUdpDevice;

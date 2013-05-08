@@ -385,7 +385,7 @@ bool dabc::Module::Find(ConfigIO &cfg)
    if (GetParent()==0) return false;
 
    // module will always have tag "Module", class could be specified with attribute
-   while (cfg.FindItem("Module")) {
+   while (cfg.FindItem(xmlModuleNode)) {
       if (cfg.CheckAttr(xmlNameAttr, GetName())) return true;
    }
 
@@ -705,6 +705,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
             DOUT0("Module %s automatically stopped while all connections are now disconnected", GetName());
             DoStop();
+            // dabc::mgr.app().CheckWorkDone();
          }
 
          break;

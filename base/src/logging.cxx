@@ -181,7 +181,7 @@ void dabc::Logger::_ExtendLines(unsigned max)
    LoggerLineEntry **lin = 0;
    if (max>0) {
 
-      printf("Extend logger lines %u\n", max);
+//      printf("Extend logger lines %u\n", max);
 
       lin = new LoggerLineEntry* [max];
       unsigned n = 0;

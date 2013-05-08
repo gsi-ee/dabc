@@ -26,9 +26,7 @@
 
 hadaq::HldInput::HldInput(const dabc::Url& url) :
    dabc::FileInput(url),
-   fFile(),
-   fCurrentRead(0),
-   fLastBuffer(false)
+   fFile()
 {
 }
 
@@ -51,7 +49,7 @@ bool hadaq::HldInput::OpenNextFile()
    if (!TakeNextFileName()) return false;
 
    if (!fFile.OpenRead(CurrentFileName().c_str())) {
-      EOUT("Cannot open file %s for reading, errcode:%u", CurrentFileName().c_str(), fFile.LastError());
+      EOUT("Cannot open file %s for reading", CurrentFileName().c_str());
       return false;
    }
 
@@ -65,17 +63,14 @@ bool hadaq::HldInput::CloseFile()
 {
    fFile.Close();
    ClearCurrentFileName();
-   fCurrentRead = 0;
-   fLastBuffer=false;
    return true;
 }
 
 unsigned hadaq::HldInput::Read_Size()
 {
-   // get size of the buffer which should be read from the file
-   if(fLastBuffer) return dabc::di_DfltBufSize;
+   if (!fFile.isReading()) return dabc::di_Error;
 
-   if (!fFile.IsReadMode())
+   if (fFile.eof())
       if (!OpenNextFile()) return dabc::di_EndOfStream;
 
    return dabc::di_DfltBufSize;
@@ -83,51 +78,23 @@ unsigned hadaq::HldInput::Read_Size()
 
 unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
 {
-   if(fLastBuffer) return dabc::di_EndOfStream;
-   buf.SetTypeId(hadaq::mbt_HadaqEvents);
-   uint32_t readbytes = 0;
-   uint32_t filestat = HLD__SUCCESS;
-   char* dest = (char*) buf.SegmentPtr(0); // TODO: read into segmented buffer
-   uint32_t bufsize = buf.SegmentSize(0);
-   bool nextfile = false;
-   do {
-
-      if (!fFile.IsReadMode())
-         return dabc::di_Error;
-      readbytes = fFile.ReadBuffer(dest, bufsize);
-      fCurrentRead += readbytes;
-      filestat = fFile.LastError();
-      if (filestat == HLD__FULLBUF) {
-         DOUT3("File %s has filled dabc buffer, readbytes:%u, bufsize: %u, allbytes: %u", fCurrentFileName.c_str(), readbytes, buf.GetTotalSize(),fCurrentRead );
-         break;
-      } else if (filestat == HLD__EOFILE) {
-         DOUT1("File %s has EOF for buffer, readbytes:%u, bufsize %u, allbytes: %u", CurrentFileName().c_str(), readbytes, buf.GetTotalSize(),fCurrentRead);
-         if (!OpenNextFile()) {
-            fLastBuffer=true; // delay end of stream to still get last read contents
-            break;
-         }
-         nextfile = true;
-      }
-      dest += readbytes;
-      bufsize -= readbytes;
-      if (bufsize == 0)
-         break;
-   } while (nextfile);
-   buf.SetTotalSize(readbytes);
-   return dabc::di_Ok;
-}
-
-hadaq::Event* hadaq::HldInput::ReadEvent()
-{
-   while (true) {
-      if (!fFile.IsReadMode()) return 0;
-
-      hadaq::Event* hdr = fFile.ReadEvent();
-      if (hdr!=0) return hdr;
-
-      DOUT1("File %s return 0 - end of file", CurrentFileName().c_str());
-      if (!OpenNextFile()) return 0;
+   if (fFile.eof()) {
+      EOUT("EOF should not happen when buffer reading should be started");
+      return dabc::di_Error;
    }
 
-   return 0;
+   // only first segment can be used for reading
+   uint64_t bufsize = buf.SegmentSize(0);
+
+   if (!fFile.ReadBuffer(buf.SegmentPtr(0), &bufsize)) {
+      // if by chance reading of buffer leads to eof, skip buffer and let switch file on the next turn
+      if (fFile.eof()) return dabc::di_SkipBuffer;
+      CloseFile();
+      return dabc::di_Error;
+   }
+
+   buf.SetTypeId(hadaq::mbt_HadaqEvents);
+   buf.SetTotalSize(bufsize);
+   DOUT3("Read %u bytes from %s file", (unsigned) bufsize, CurrentFileName().c_str());
+   return dabc::di_Ok;
 }

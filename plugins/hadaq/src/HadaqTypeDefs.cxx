@@ -85,17 +85,6 @@ hadaq::RunId  hadaq::Event::CreateRunId()
 }
 
 
-std::string hadaq::Event::FormatFilename (hadaq::RunId id)
-{
-   // same
-   char buf[128];
-   time_t iocTime;
-   iocTime = id + HADAQ_TIMEOFFSET;
-   strftime(buf, 18, "%y%j%H%M%S", localtime(&iocTime));
-   return std::string(buf);
-}
-
-
 void  hadaq::Event::Init(EventNumType evnt, RunId run, EvtId evid)
 {
    char* my=(char*) (this);

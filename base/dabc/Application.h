@@ -87,6 +87,10 @@ namespace dabc {
          /** Set external function, which creates all necessary components of the application */
          void SetInitFunc(ExternalFunction* initfunc);
 
+         /** Default method to automatically create all components like pools, modules, connections, ...
+          * Returns true if specified components were created successfully */
+         bool DefaultInitFunc();
+
          /** Return true if all application-relevant modules are running */
          virtual bool IsModulesRunning();
 

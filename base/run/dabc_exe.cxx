@@ -75,7 +75,6 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
       dabc::mgr.StartModule("/CpuInfo");
    }
 
-
    if (cfg.UseControl()) {
       DOUT1("Connecting control");
       if (!dabc::mgr()->ConnectControl()) {
@@ -84,18 +83,9 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
       }
    }
 
-   dabc::Application::ExternalFunction* runfunc =
-         (dabc::Application::ExternalFunction*)
-         dabc::Factory::FindSymbol(cfg.RunFuncName());
-
-   if (runfunc!=0) {
-      runfunc();
-      return 0;
-   }
-
    // activate application only with non-controlled mode
 
-   dabc::mgr.GetApp().Submit(dabc::InvokeAppRunCmd());
+   dabc::mgr.app().Submit(dabc::InvokeAppRunCmd());
 
    DOUT0("Application mainloop is now running");
    DOUT0("       Press Ctrl-C for stop");
@@ -187,13 +177,18 @@ int main(int numc, char* args[])
    if (res==0)
       dabc::mgr.Execute("InitFactories");
 
-   // TODO: in some situations application is not required
-   if (res==0)
-     if (!dabc::mgr.CreateApplication(cfg.ConetextAppClass())) res = -3;
+   dabc::Application::ExternalFunction* runfunc =
+         (dabc::Application::ExternalFunction*)
+         dabc::Factory::FindSymbol(cfg.RunFuncName());
 
-   if (res==0) {
+   if (runfunc!=0) {
+      if (res==0) runfunc();
+   } else {
+      if (res==0)
+         if (!dabc::mgr.CreateApplication(cfg.ConetextAppClass())) res = -3;
 
-      res = RunApplication(cfg, nodeid, numnodes, dorun);
+      if (res==0)
+         res = RunApplication(cfg, nodeid, numnodes, dorun);
    }
 
    dabc::mgr()->HaltManager();

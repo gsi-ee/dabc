@@ -675,7 +675,7 @@ dabc::WorkerRef dabc::Manager::FindDevice(const std::string& name)
    return ref;
 }
 
-dabc::ApplicationRef dabc::Manager::GetApp()
+dabc::ApplicationRef dabc::Manager::app()
 {
    return FindChildRef(xmlAppDfltName);
 }
@@ -849,36 +849,36 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
       if (classname.empty()) classname = typeApplication;
 
-      ApplicationRef app = GetApp();
+      ApplicationRef appref = app();
 
-      if (!app.null() && (classname == app.ClassName())) {
+      if (!appref.null() && (classname == appref.ClassName())) {
          DOUT2("Application of class %s already exists", classname.c_str());
       } else
       if (classname != typeApplication) {
-         app.Destroy();
+         appref.Destroy();
 
          FOR_EACH_FACTORY(
-            app = factory->CreateApplication(classname, cmd);
-            if (!app.null()) break;
+            appref = factory->CreateApplication(classname, cmd);
+            if (!appref.null()) break;
          )
       } else {
-         app.Destroy();
+         appref.Destroy();
 
          void* func = dabc::Factory::FindSymbol(fCfg->InitFuncName());
 
-         app = new Application();
+         appref = new Application();
 
-         if (func) app()->SetInitFunc((Application::ExternalFunction*)func);
+         if (func) appref()->SetInitFunc((Application::ExternalFunction*)func);
       }
 
       if (appthrd.empty()) appthrd = AppThrdName();
 
-      app.MakeThreadForWorker(appthrd);
+      appref.MakeThreadForWorker(appthrd);
 
-      cmd_res = cmd_bool(!app.null());
+      cmd_res = cmd_bool(!appref.null());
 
-      if (app.null()) EOUT("Cannot create application of class %s", classname.c_str());
-                 else DOUT2("Application of class %s created", classname.c_str());
+      if (appref.null()) EOUT("Cannot create application of class %s", classname.c_str());
+                    else DOUT2("Application of class %s created", classname.c_str());
 
    } else
 
@@ -932,14 +932,22 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
       std::string trkind = crcmd.TransportKind();
 
-      PortRef port = FindItem(crcmd.PortName());
+      PortRef port = FindPort(crcmd.PortName());
       if (trkind.empty()) trkind = port.Cfg("url", cmd).AsStdStr();
+
+      PortRef port2 = FindPort(trkind);
 
       WorkerRef dev = FindDevice(trkind);
 
       if (port.null()) {
          EOUT("Ports %s not found - cannot create transport", crcmd.PortName().c_str());
          cmd_res = cmd_false;
+      } else
+      if (!port2.null()) {
+         // this is local connection between two ports
+         cmd_res = dabc::LocalTransport::ConnectPorts(port2, port);
+         // connect also bind ports (if exists)
+         dabc::LocalTransport::ConnectPorts(port.GetBindPort(), port2.GetBindPort());
       } else
       if (!dev.null()) {
          dev.Submit(cmd);
@@ -1467,9 +1475,9 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
 
       TimeStamp now = dabc::Now();
 
-      ApplicationRef app = GetApp();
+      ApplicationRef appref = app();
 
-      if (app.IsFinished()) break;
+      if (appref.IsFinished()) break;
 
       // check if stop time was not set
       if (fMgrStoppedTime.null()) {
@@ -1477,12 +1485,12 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
          if ((runtime > 0) && (now > start + runtime)) fMgrStoppedTime = now;
 
          // TODO: logic with automatic stop of application should be implemented in the application itself
-         if (app.IsWorkDone()) fMgrStoppedTime = now;
+         if (appref.IsWorkDone()) fMgrStoppedTime = now;
       }
 
       if (!fMgrStoppedTime.null() && !appstopped) {
          appstopped = true;
-         app.Submit(InvokeAppFinishCmd());
+         appref.Submit(InvokeAppFinishCmd());
       }
 
       // TODO: make 10 second configurable
@@ -1732,9 +1740,9 @@ dabc::Parameter dabc::ManagerRef::FindPar(const std::string& parname)
    return GetObject() ? GetObject()->FindItem(parname) : Reference();
 }
 
-dabc::ApplicationRef dabc::ManagerRef::GetApp()
+dabc::ApplicationRef dabc::ManagerRef::app()
 {
-   return GetObject() ? GetObject()->GetApp() : dabc::ApplicationRef();
+   return GetObject() ? GetObject()->app() : dabc::ApplicationRef();
 }
 
 bool dabc::ManagerRef::CleanupApplication()

@@ -21,7 +21,8 @@ hadaq::ReadIterator::ReadIterator() :
    fFirstEvent(false),
    fEvPtr(),
    fSubPtr(),
-   fRawPtr()
+   fRawPtr(),
+   fBufType(dabc::mbt_Null)
 {
 }
 
@@ -29,7 +30,8 @@ hadaq::ReadIterator::ReadIterator(const dabc::Buffer& buf) :
    fFirstEvent(false),
    fEvPtr(),
    fSubPtr(),
-   fRawPtr()
+   fRawPtr(),
+   fBufType(dabc::mbt_Null)
 {
    Reset(buf);
 }
@@ -38,7 +40,8 @@ hadaq::ReadIterator::ReadIterator(const ReadIterator& src) :
    fFirstEvent(src.fFirstEvent),
    fEvPtr(src.fEvPtr),
    fSubPtr(src.fSubPtr),
-   fRawPtr(src.fRawPtr)
+   fRawPtr(src.fRawPtr),
+   fBufType(src.fBufType)
 {
 }
 
@@ -48,6 +51,7 @@ hadaq::ReadIterator& hadaq::ReadIterator::operator=(const ReadIterator& src)
    fEvPtr = src.fEvPtr;
    fSubPtr = src.fSubPtr;
    fRawPtr = src.fRawPtr;
+   fBufType = src.fBufType;
 
    return *this;
 }
@@ -58,7 +62,9 @@ bool hadaq::ReadIterator::Reset(const dabc::Buffer& buf)
 
    if (buf.null()) return false;
 
-   fBufType=buf.GetTypeId();
+//   DOUT0("Assign buffer size %u", (unsigned) buf.GetTotalSize());
+
+   fBufType = buf.GetTypeId();
 
    if (!(fBufType == mbt_HadaqEvents || fBufType == mbt_HadaqTransportUnit) ) {
       EOUT("Only buffer format mbt_HadaqEvents or mbt_HadaqTransportUnit is supported");
@@ -77,21 +83,18 @@ void hadaq::ReadIterator::Close()
    fSubPtr.reset();
    fRawPtr.reset();
    fFirstEvent = false;
-   fBufType=dabc::mbt_Null;
+   fBufType = dabc::mbt_Null;
 }
 
 
 bool hadaq::ReadIterator::NextHadTu()
 {
    if (fBufType != mbt_HadaqTransportUnit ) {
-         EOUT("NextHadTu only allowed for buffer type mbt_HadaqTransportUnit. Check your code!");
-         return false;
-      }
-
+      EOUT("NextHadTu only allowed for buffer type mbt_HadaqTransportUnit. Check your code!");
+      return false;
+   }
 
    if (fEvPtr.null()) return false;
-
-
 
    if (fFirstEvent)
       fFirstEvent = false;
@@ -123,14 +126,12 @@ bool hadaq::ReadIterator::NextHadTu()
 }
 
 
-
-
 bool hadaq::ReadIterator::NextEvent()
 {
    if (fBufType != mbt_HadaqEvents ) {
-           EOUT("NextEvent only allowed for buffer type mbt_HadaqEvents. Check your code!");
-           return false;
-        }
+      EOUT("NextEvent only allowed for buffer type mbt_HadaqEvents. Check your code!");
+      return false;
+   }
 
    if (fEvPtr.null()) return false;
 
@@ -152,7 +153,7 @@ bool hadaq::ReadIterator::NextEvent()
    }
 
    if (fEvPtr.fullsize() < evnt()->GetSize()) {
-      EOUT("Error in HADAQ format - declared event size %u smaller than actual portion in buffer %u",
+      EOUT("Error in HADAQ format - declared event size %u bigger than actual portion in buffer %u",
             (unsigned) evnt()->GetSize(), (unsigned) fEvPtr.fullsize());
       fEvPtr.reset();
       return false;
@@ -193,7 +194,7 @@ bool hadaq::ReadIterator::NextSubEvent()
          return false;
       }
 
-       if (containersize < headsize) {
+      if (containersize < headsize) {
          EOUT("Hadaq format error - tu container fullsize %u too small", containersize);
          return false;
       }
@@ -296,7 +297,7 @@ bool hadaq::WriteIterator::IsPlaceForEvent(uint32_t subeventssize)
    dabc::BufferSize_t availible = 0;
 
    if (!fEvPtr.null()) availible = fEvPtr.fullsize();
-                 else  availible = fBuffer.GetTotalSize();
+   else  availible = fBuffer.GetTotalSize();
 
    return availible >= (sizeof(hadaq::Event) + subeventssize);
 }

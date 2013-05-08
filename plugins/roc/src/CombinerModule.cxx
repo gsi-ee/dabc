@@ -227,11 +227,11 @@ void roc::CombinerModule::ProcessTimerEvent(unsigned timer)
 
          fSpillState = !fSpillState;
 
-         dabc::mgr.GetApp().Submit(roc::CmdCalibration(fSpillState));
+         dabc::mgr.app().Submit(roc::CmdCalibration(fSpillState));
 
          ShootTimer("CalibrTimer", fSpillState ? fCalibrationLength : fCalibrationPeriod);
       } else {
-         dabc::mgr.GetApp().Submit(roc::CmdCalibration(false));
+         dabc::mgr.app().Submit(roc::CmdCalibration(false));
       }
    } else
 
@@ -418,7 +418,7 @@ bool roc::CombinerModule::FindNextEvent(unsigned recid)
                      fLastCalibrationTime = now;
                      DOUT0("Invoke autocalibr mode after %5.1f s", dist);
 
-                     dabc::mgr.GetApp().Submit(roc::CmdCalibration(true));
+                     dabc::mgr.app().Submit(roc::CmdCalibration(true));
                      ShootTimer("CalibrTimer", fCalibrationLength);
                   }
                }
@@ -608,7 +608,7 @@ void roc::CombinerModule::InvokeAllGet4Reset()
    fLastGet4ResetTm = dabc::Now();
    fDetectGet4Problem = false;
    DOUT0("Submit GET4 reset command");
-   dabc::mgr.GetApp().Submit(dabc::Command("ResetAllGet4"));
+   dabc::mgr.app().Submit(dabc::Command("ResetAllGet4"));
 }
 
 

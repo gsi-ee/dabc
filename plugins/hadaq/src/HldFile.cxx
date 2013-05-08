@@ -19,328 +19,191 @@
 
 #include "dabc/logging.h"
 
-// this definitions switches reading single hadtu chunks
-// if disabled, we read from file full dabc buffers without header checking
-#define HLD_READBUFFER_ELEMENTWISE 1
 
-
-// this definitions switches to write events either separately (off)
-// or to write the whole buffer after configuring event headers (on)
-#define HLD_WRITEEVENTS_FAST 1
-
-
-
-hadaq::HldFile::HldFile(): fBuffer(0)
+hadaq::HldFile::HldFile() :
+   dabc::BasicFile(),
+   fRunNumber(0),
+   fEOF(true)
 {
-   fMode = mNone;
-   fLastError = HLD__SUCCESS;
-   fEventCount=0;
-   fBufsize=0;
 }
 
 hadaq::HldFile::~HldFile()
 {
    Close();
-   fLastError = HLD__SUCCESS;
 }
-
-bool hadaq::HldFile::OpenFile(const char* fname, bool iswriting,
-      uint32_t buffersize)
-{
-   Close();
-   std::ios_base::openmode mode = std::ios::binary;
-   fName = fname;
-   if (iswriting) {
-      mode |= std::fstream::out;
-      fMode = mWrite;
-
-   } else {
-      mode |= std::fstream::in;
-      fMode = mRead;
-      if (buffersize < 1024) {
-         printf("Aux read Buffer size %u too small, use 1024\n", buffersize);
-         buffersize = 1024;
-      }
-      fBuffer = new char[buffersize];
-   }
-   fFile = new std::fstream(fname, mode);
-   if ((fFile == 0) || !fFile->good()) {
-      delete fFile;
-      fFile = 0;
-      fMode = mError;
-      DOUT1("Eror opening file:%s", fname);
-      return false;
-   }
-
-   return true;
-
-}
-
 
 bool hadaq::HldFile::OpenWrite(const char* fname,  hadaq::RunId rid)
 {
-   bool rev=true;
-   Close();
-   fRunNumber=rid;
-   if(!OpenFile(fname, true, 0)) return false;
+   if (isOpened()) return false;
+
+   if (fname==0 || *fname==0) {
+      fprintf(stderr, "file name not specified\n");
+      return false;
+   }
+
+   CheckIO();
+
+   fd = io->fopen(fname, "w");
+   if (fd==0) {
+      fprintf(stderr, "File open failed %s for writing\n", fname);
+      return false;
+   }
+
    // put here a dummy event into file:
 
-   fHadEvent= new hadaq::Event;
-   fHadEvent->Init(0, fRunNumber, EvtId_runStart);
-   if(!WriteEvents(fHadEvent, 1)) rev = false;
-   delete fHadEvent;
-   return rev;
+   hadaq::Event evnt;
+   evnt.Init(0, fRunNumber, EvtId_runStart);
+   if(!WriteBuffer(&evnt, sizeof(evnt))) {
+      CloseBasicFile();
+      return false;
+   }
+
+   fReadingMode = false;
+   fRunNumber = rid;
+
+   return true;
 }
 
-bool hadaq::HldFile::OpenRead(const char* fname, uint32_t buffersize)
+bool hadaq::HldFile::OpenRead(const char* fname)
 {
-   return (OpenFile(fname, false, buffersize));
+   if (isOpened()) return false;
 
-//   Close();
-//   fName=fname;
-//   if (buffersize < 1024) {
-//      printf("Buffer size %u too small, use 1024\n", buffersize);
-//      buffersize = 1024;
-//   }
-//
-//   fFile = new std::fstream(fname,  std::fstream::in | std::ios::binary);
-//   if((fFile==0) || !fFile->good()) {
-//        delete fFile; fFile = 0;
-//        fMode=mError;
-//        DOUT1("Eror opening file:%s for reading", fname));
-//        return false;
-//     }
-//   fBuffer=new char[buffersize];
-//   fMode = mRead;
-//   return true;
+   if (fname==0 || *fname==0) {
+      fprintf(stderr, "file name not specified\n");
+      return false;
+   }
+
+   CheckIO();
+
+   fd = io->fopen(fname,  "r");
+   if (fd==0) {
+      fprintf(stderr, "File open failed %s for reading\n", fname);
+      return false;
+   }
+
+//   DOUT0("Open HLD file %s for reading", fname);
+
+   hadaq::Event evnt;
+   uint64_t size = sizeof(hadaq::Event);
+
+   if (!ReadBuffer(&evnt, &size, true)) {
+      EOUT("Cannot read starting event from file");
+      CloseBasicFile();
+      return false;
+   }
+
+   if ((size!=sizeof(hadaq::Event)) || (evnt.GetId() != EvtId_runStart)) {
+      EOUT("Did not found start event at the file beginning");
+      CloseBasicFile();
+      return false;
+   }
+
+//   DOUT0("Find start event at the file begin");
+
+   fRunNumber = evnt.GetRunNr();
+   fReadingMode = true;
+   fEOF = false;
+
+   return true;
 }
 
 void hadaq::HldFile::Close()
 {
-   //std::cout<<"- hadaq::HldFile::Close()"<<std::endl;
-  fLastError = HLD__SUCCESS;
-  if(fMode==mNone) return;
-  if (IsWriteMode()) {
+  if (isWriting()) {
       // need to add empty terminating event:
-      fHadEvent= new hadaq::Event;
-      fHadEvent->Init(0, fRunNumber, EvtId_runStop);
-      if(!WriteEvents(fHadEvent, 1)) fLastError= HLD__WRITE_ERR;
-      delete fHadEvent;
+      hadaq::Event evnt;
+      evnt.Init(0, fRunNumber, EvtId_runStop);
+      WriteBuffer(&evnt, sizeof(evnt));
    }
 
-   // TODO: error checking from fstream
-  fFile->close();
-  delete fFile; fFile=0;
-  delete [] fBuffer; fBuffer=0;
-   fName="";
-   fMode = mNone;
-   fEventCount=0;
-   fBufsize=0;
-   fRunNumber=0;
+  CloseBasicFile();
+
+  fRunNumber=0;
+  fEOF = true;
 }
 
-bool hadaq::HldFile::WriteEvents(hadaq::Event* hdr, unsigned num)
-{
-   if (!IsWriteMode() || (num==0)) {
-      fLastError = HLD__FAILURE;
-      DOUT1("Cannot write %d elements to file %s", num, fName.c_str());
-      return false;
-   }
-   hadaq::Event* cursor=hdr;
-   while(num-- >0)
-      {
-         cursor->SetRunNr(fRunNumber);
-            // JAM: must adjust run id to match id of this file. Otherwise, we may have queue delay effects between combiner and output
-            // therefore we do not need to synchronize exactly the default runid of combiner (for online server) with file runid
-         size_t elength=cursor->GetPaddedSize();
-#ifndef HLD_WRITEEVENTS_FAST
-         size_t written=WriteFile((char*) cursor,elength);
-         if(written!=elength)
-            {
-               DOUT1("HldFile::WriteEvents: Write file %s length mismatch: %d bytes of %d requested written", fName.c_str(), written, elength);
-               fLastError = HLD__WRITE_ERR;
-               return false;
-            }
-#endif
-         cursor = (hadaq::Event*)((char*) (cursor) + elength);
-      } // while num
 
-#ifdef HLD_WRITEEVENTS_FAST
-   size_t buflength=(char*)cursor - (char*)hdr; // big buffer writes may be faster...
-   size_t written=WriteFile((char*) hdr ,buflength);
-   if(written!=buflength)
-   {
-      DOUT1("HldFile::WriteEvents: Write file %s length mismatch: %d bytes of %d requested written", fName.c_str(), written, buflength);
-      fLastError = HLD__WRITE_ERR;
+
+bool hadaq::HldFile::WriteBuffer(void* buf, uint32_t bufsize)
+{
+   if (!isWriting() || (buf==0) || (bufsize==0)) return false;
+
+   if (io->fwrite(buf, bufsize, 1, fd)!=1) {
+      fprintf(stderr, "fail to write buffer payload of size %u\n", (unsigned) bufsize);
+      CloseBasicFile();
       return false;
    }
-#endif
-   fLastError = HLD__SUCCESS;
+
    return true;
 }
 
-
-
-unsigned int hadaq::HldFile::WriteBuffer(void* buf, uint32_t bufsize)
+bool hadaq::HldFile::ReadBuffer(void* ptr, uint64_t* sz, bool onlyevent)
 {
-   return 0;
-}
+   if (!isReading() || (ptr==0) || (sz==0) || (*sz < sizeof(hadaq::HadTu))) return false;
 
-hadaq::HadTu* hadaq::HldFile::ReadElement(char* buffer, size_t len)
-{
-   if (!IsReadMode()) {
-      fLastError = HLD__FAILURE;
-      DOUT1("Cannot read from file %s, was opened for writing", fName.c_str());
-      return 0;
-   }
-   char* target;
-   if(buffer==0)
-      {
-         target=fBuffer;
-         len=sizeof(fBuffer);
-      }
-   else
-      {
-        target = buffer;
-      }
-   // first read next event header:
-   if(len<sizeof(hadaq::HadTu))
-      {
-         // output buffer is full, do not try to read next event.
-         DOUT3("Next hadtu header 0x%x bigger than read buffer limit 0x%x", sizeof(hadaq::HadTu), len);
-         fLastError=HLD__FULLBUF;
-         return 0;
-      }
+   uint64_t maxsz = *sz; *sz = 0;
 
+   size_t readsz = io->fread(ptr, 1, maxsz, fd);
 
-   ReadFile(target, sizeof(hadaq::HadTu));
-   if (fLastError == HLD__EOFILE)
-      {
-         return 0;
-      }
-      // then read rest of buffer from file
-   hadaq::HadTu* hadtu =(hadaq::HadTu*) target;
-   size_t evlen=hadtu->GetPaddedSize();
-   DOUT3("ReadElement reads event of size: %d",evlen);
-   if(evlen > len)
-      {
-        DOUT3("Next hadtu element length 0x%x bigger than read buffer limit 0x%x", evlen, len);
-        // rewind file pointer here to begin of hadtu header
-        if(!RewindFile(-1 * (int) sizeof(hadaq::HadTu)))
-           {
-              DOUT1("Error on rewinding header position of file %s ", fName.c_str());
-              fLastError = HLD__FAILURE;
-           }
-        fLastError=HLD__FULLBUF;
-        return 0;
-      }
-   ReadFile(target+sizeof(hadaq::HadTu), evlen - sizeof(hadaq::HadTu));
-   if (fLastError == HLD__EOFILE)
-      {
-         DOUT1("Found EOF before reading full element of length 0x%x! Maybe truncated or corrupt file?", evlen);
-         return 0;
-      }
-   return (hadaq::HadTu*) target;
-}
+//   DOUT0("Read HLD portion of data %u", (unsigned) readsz);
 
-unsigned int hadaq::HldFile::ReadBuffer(void* buf, uint32_t& bufsize)
-{
-   if (!IsReadMode() || (buf==0) || (bufsize==0)) {
-      fLastError = HLD__FAILURE;
-      return 0;
-   }
-   unsigned int bytesread=0;
-#ifdef HLD_READBUFFER_ELEMENTWISE
-   // prevent event spanning over dabc buffers?
-   // we do loop over complete events here
-   char* cursor = (char*) buf;
-   size_t rest=bufsize;
-   hadaq::HadTu* thisunit=0;
-   while((thisunit=ReadElement(cursor,rest))!=0)
-    {
-         size_t diff=thisunit->GetPaddedSize();
-         cursor+=diff;
-         rest-=diff;
-         bytesread+=diff;
-         fEventCount++;
-         // FIXME: the above 2 printouts give somehow wrong shifted argument values. a bug?
-         //DOUT1("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff);
-         //printf("HldFile::ReadBuffer has read %d HadTu elements,  hadtu:0x%x, cursor:0x%x rest:0x%x diff:0x%x\n", fEventCount, (unsigned) thisunit,(unsigned) cursor, (unsigned) rest, (unsigned) diff);
-         //std::cout<< "HldFile::ReadBuffer has read "<< fEventCount <<"elements,  hadtu:"<< (unsigned) thisunit<<", cursor:"<< (unsigned) cursor <<" rest:"<<(unsigned) rest<<" diff:"<< (unsigned) diff<<std::endl;
-      }
-#else
-   bytesread=ReadFile( (char*) buf,bufsize);
-#endif
-
-   fBufsize+=bytesread;
-     if (fLastError == HLD__EOFILE)
-      {
-         // FIXME: upper line will crash at dabc::format in vsnprintf JAM
-         //DOUT1("Read %d HadTu elements (%d bytes) from file %s", fEventCount, fBufsize, fName.c_str());
-         // FIXME: following line shows 0 instead fBufsize
-         // DOUT1("Read %d HadTu elements (%d bytes) from file", fEventCount, fBufsize);
-          std::cout<<"Read "<< fEventCount<<" HadTu elements ("<< fBufsize << " bytes) from file "<< fName.c_str()<<std::endl;
-      }
-
-     return bytesread;
-}
-
-
-hadaq::Event* hadaq::HldFile::ReadEvent()
-{
-   return (hadaq::Event*) ReadElement();
-}
-
-
-
-size_t hadaq::HldFile::ReadFile(char* dest, size_t len)
-{
-   fFile->read(dest, len);
-   if(fFile->eof() || !fFile->good())
-         {
-               fLastError = HLD__EOFILE;
-               DOUT1("End of input file %s", fName.c_str());
-               //return 0;
-         }
-   //cout <<"ReadFile reads "<< (hex) << fFile->gcount()<<" bytes to 0x"<< (hex) <<(int) dest<< endl;
-   return (size_t) fFile->gcount();
-}
-
-size_t hadaq::HldFile::WriteFile(char* src, size_t len)
-{
-   std::streampos begin = fFile->tellp();
-   if(begin<0)
-      {
-         fLastError = HLD__WRITE_ERR;
-         DOUT1("Write position begin error in output file %s", fName.c_str());
-         return 0;
-      }
-   fFile->write(src, len);
-   if(!fFile->good())
-         {
-               fLastError = HLD__WRITE_ERR;
-               DOUT1("Write Error in output file %s", fName.c_str());
-               return 0;
-         }
-   std::streampos end = fFile->tellp();
-   if(end<0)
-        {
-           fLastError = HLD__WRITE_ERR;
-           DOUT1("Write position end error in output file %s", fName.c_str());
-           return 0;
-        }
-   //cout <<"WriteFile writes "<< (hex) << (end-begin)<<" bytes from 0x"<< (hex) <<(int) src<< endl;
-   return (size_t) (end-begin);
-}
-
-
-bool hadaq::HldFile::RewindFile(int offset)
-{
-   fFile->seekg(offset, std::ios::cur);
-   if(!fFile->good()) {
-      fLastError = HLD__FAILURE;
-      DOUT1("Problem rewinding file %s", fName.c_str());
+   if (readsz < sizeof(hadaq::HadTu)) {
+      if (io->feof(fd)) fEOF = true;
       return false;
    }
-   return true;
+
+   size_t checkedsz = 0;
+
+   hadaq::HadTu* hdr = (hadaq::HadTu*) ptr;
+
+   while (checkedsz < readsz) {
+      // special case when event was read not completely
+      // or we want to provide only event
+
+      size_t restsize = readsz - checkedsz;
+      if (restsize >= sizeof(hadaq::HadTu)) restsize = hdr->GetPaddedSize();
+
+      if ((restsize == sizeof(hadaq::Event)) && (((hadaq::Event*)hdr)->GetId() == EvtId_runStop)) {
+         // we are not deliver such stop event to the top
+
+         // printf("Find stop event at the file end\n");
+         fEOF = true;
+         break;
+      }
+
+      bool not_enough_place_for_next_event = checkedsz + restsize > readsz;
+
+      if (not_enough_place_for_next_event || (onlyevent && (checkedsz>0))) {
+
+         if (not_enough_place_for_next_event && (readsz<maxsz)) fEOF = true;
+
+         // return file pointer to the begin of event
+         io->fseek(fd, -(readsz - checkedsz), true);
+
+         break;
+      }
+      checkedsz += hdr->GetPaddedSize();
+      hdr = (hadaq::HadTu*) ((char*) hdr + hdr->GetPaddedSize());
+   }
+
+   // detect end of file by such method
+   if ((readsz<maxsz) && (checkedsz == readsz) && !fEOF) fEOF = true;
+
+   *sz = checkedsz;
+
+//   DOUT0("Return size %u", (unsigned) checkedsz);
+
+   return checkedsz>0;
 }
+
+/*
+std::string hadaq::HldFile::FormatFilename (hadaq::RunId id)
+{
+   // same
+   char buf[128];
+   time_t iocTime;
+   iocTime = id + HADAQ_TIMEOFFSET;
+   strftime(buf, 128, "%y%j%H%M%S", localtime(&iocTime));
+   return std::string(buf);
+}
+*/

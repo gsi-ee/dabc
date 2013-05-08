@@ -1,41 +1,57 @@
 <?xml version="1.0"?>
+
+<!-- 
+This is example file how HADAQ event building should be implemented in DABC.
+Event building process implemented in Combiner module of hadaq::CombinerModule class.
+Module can have several inputs, each with separate port number for receiving data from TRB boards.
+In each input port configuration only port number has meaning.
+First output of combiner module reserved for the connection to 
+optional the MBS transmitter module.
+Second output can be use to store data in hld files. To enable storage, one should
+specify two output ports and correctly configure Output1 of combiner module.
+
+Optionally one can enable MBS transmitter module, which converts HLD to LMD format.
+To enable transmitter, one should specify auto="true" in configuration which seys DABC
+to automatically create module when starting application. 
+First output of the module reserved for stream server, second output can be used to
+store data in lmd files. 
+  
+-->
+
 <dabc version="2">
   <Context host="localhost" name="EventBuilder">
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>  
-      <func value="InitHadaqEvtbuilder"/>
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
     </Run>
-  
+
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>
     </MemoryPool>
-    
+
     <Module name="Combiner" class="hadaq::CombinerModule">    
         <!-- these parameters will force to create inputs/oputputs of module -->
        <NumInputs value="5"/>
        <NumOutputs value="1"/>
-       <DoServer value="true"/>
-       <DoFile value="false"/>
 
        <InputPort name="Input0" url="hadaq://host:10101"/>
        <InputPort name="Input1" url="hadaq://host:10102"/>
        <InputPort name="Input2" url="hadaq://host:10103"/>
        <InputPort name="Input3" url="hadaq://host:10104"/>
        <InputPort name="Input4" url="hadaq://host:10105"/>
-       
+
        <InputPort name="Input*" queue="10">
           <HadaqUdpBuffer value="200000"/>
           <DoShmControl value="false"/>  
           <HadaqUdpMTU value="64512"/>
           <FlushTimeout value="2.0"/>   
        </InputPort>
-       <OutputPort name="Output0" queue="20"/>
-       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30"/>
        
+       <OutputPort name="Output1" url="hld://dabc.hld?maxsize=30"/>
+
        <DoShmControl value="false"/>  
        <FlushTimeout value="2.0"/>   
 
@@ -52,20 +68,23 @@
        <HadaqDroppedData width="5" prec="3" low="0" up="1" debug="1"/>
        <HadaqLostEvents width="4" prec="2" low="0" up="100" debug="1"/>
      </Module>
-     
-     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule">
+
+     <Module name="OnlineServer" class="hadaq::MbsTransmitterModule" auto="true">
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
+
+       <InputPort name="Input0" url="Combiner/Output0" queue="10"/>
+
        <OutputPort name="Output0" url="mbs://Stream"/>
        <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
 
        <SubeventFullId value="0x000001F"/>
        <DoMergeSyncedEvents value="true"/>
        <PrintSync value="false"/>
-       
+
        <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
        <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
      </Module>
-     
+
   </Context>
 </dabc>

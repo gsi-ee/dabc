@@ -54,6 +54,66 @@ namespace dabc {
          virtual Object* fmatch(const char* fmask);
    };
 
+   // ==============================================================================
+
+   class BasicFile {
+      protected:
+         FileInterface* io;              //!  interface to the file system
+         bool iowoner;                   //!  if true, io object owned by file
+         FileInterface::Handle fd;       //!  file descriptor
+         bool  fReadingMode;             //!  reading/writing mode
+
+         bool CloseBasicFile()
+         {
+            if (fd && io) io->fclose(fd);
+            fd = 0;
+            fReadingMode = true;
+            return true;
+         }
+
+         void CheckIO()
+         {
+            if (io==0) { io = new FileInterface; iowoner = true; }
+         }
+
+      public:
+
+         BasicFile() :
+            io(0),
+            iowoner(false),
+            fd(0),
+            fReadingMode(false)
+         {
+         }
+
+         void SetIO(FileInterface* _io, bool _ioowner = false)
+         {
+            if (iowoner && io) delete io;
+            io = _io;
+            iowoner = _ioowner;
+         }
+
+         ~BasicFile()
+         {
+            CloseBasicFile();
+            if (iowoner && io) delete io;
+            io = 0; iowoner = false;
+         }
+
+         // returns true if file is opened
+         inline bool isOpened() const { return (io!=0) && (fd!=0); }
+
+         inline bool isReading() const { return isOpened() && fReadingMode; }
+
+         inline bool isWriting() const { return isOpened() && !fReadingMode; }
+
+         bool eof() const { return isReading() ? io->feof(fd) : true; }
+   };
+
+
+
+   // ===============================================================================
+
 
    struct BinaryFileHeader {
       uint64_t magic;
@@ -71,60 +131,33 @@ namespace dabc {
 
    enum { BinaryFileMagicValue  = 1234 };
 
-   class BinaryFile {
+   class BinaryFile : public BasicFile {
       protected:
-         FileInterface* io;              //!  interface to the file system
-         bool iowoner;                   //!  if true, io object owned by file
-         FileInterface::Handle fd;       //!  file descriptor
-         bool  fReadingMode;             //!  reading/writing mode
          BinaryFileHeader    fFileHdr;   //!  file header
          BinaryFileBufHeader fBufHdr;    //!  buffer header
 
       public:
 
-         BinaryFile() :
-            io(0),
-            iowoner(false),
-            fd(0),
-            fReadingMode(false),
-            fFileHdr(),
-            fBufHdr()
+         BinaryFile() : BasicFile(), fFileHdr(), fBufHdr()
          {
-         }
-
-         void SetIO(FileInterface* _io, bool _ioowner = false)
-         {
-            if (iowoner && io) delete io;
-            io = _io;
-            iowoner = _ioowner;
          }
 
          ~BinaryFile()
          {
             Close();
-            if (iowoner && io) delete io;
-            io = 0; iowoner = false;
          }
-
-         // returns true if file is opened
-         inline bool isOpened() const { return (io!=0) && (fd!=0); }
-
-         inline bool isReading() const { return isOpened() && fReadingMode; }
-
-         inline bool isWriting() const { return isOpened() && !fReadingMode; }
-
-         bool eof() const { return isReading() ? io->feof(fd) : true; }
 
          bool OpenReading(const char* fname)
          {
             if (isOpened()) return false;
 
-            if (io==0) { io = new FileInterface; iowoner = true; }
-
             if (fname==0 || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
+
+            CheckIO();
+
             fd = io->fopen(fname,  "r");
             if (fd==0) {
                fprintf(stderr, "File open failed %s for reading\n", fname);
@@ -148,12 +181,13 @@ namespace dabc {
          {
             if (isOpened()) return false;
 
-            if (io==0) { io = new FileInterface; iowoner = true; }
-
             if (fname==0 || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
+
+            CheckIO();
+
             fd = io->fopen(fname, "w");
             if (fd==0) {
                fprintf(stderr, "File open failed %s for writing\n", fname);
@@ -177,11 +211,8 @@ namespace dabc {
 
          bool Close()
          {
-            if (fd && io) io->fclose(fd);
-            fd = 0;
-            return true;
+            return CloseBasicFile();
          }
-
 
          const BinaryFileHeader& hdr() const { return fFileHdr; }
 

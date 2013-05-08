@@ -68,6 +68,10 @@ namespace dabc {
           * which are reserved for special threads and not consumed by rest of the system */
          int NumSpecialThreads();
 
+         /** Method is used to find xml nodes like Module, MemoryPool, Connection in
+          * the xml file which should be used for autocreation */
+         bool NextCreationNode(XMLNodePointer_t& prev, const char* nodename, bool check_name_for_multicast);
+
          std::string GetUserPar(const char* name, const char* dflt = 0);
          int GetUserParInt(const char* name, int dflt = 0);
 

@@ -27,59 +27,32 @@
 
 namespace mbs {
 
-   // implement basic POSIX interface, can be extended in the future
+   // New LMD file, exclude index table from previous implementation
 
-   class LmdFileNew {
+   class LmdFileNew : public dabc::BasicFile {
       protected:
-         dabc::FileInterface*        io;                //!  interface to the file system
-         bool                        iowoner;           //!  if true, io object owned by file
-         dabc::FileInterface::Handle fd;                //!  file descriptor
-         bool                        fReadingMode;      //!  reading/writing mode
          FileHeader                  fFileHdr;          //!  file header
 
       public:
 
-         LmdFileNew() :
-            io(0),
-            iowoner(false),
-            fd(0),
-            fReadingMode(false)
-         {
-         }
-
-         void SetIO(dabc::FileInterface* _io, bool _ioowner = false)
-         {
-            if (iowoner && io) delete io;
-            io = _io;
-            iowoner = _ioowner;
-         }
+         LmdFileNew() : dabc::BasicFile(), fFileHdr() {}
 
          ~LmdFileNew()
          {
             Close();
-            if (iowoner && io) delete io;
-            io = 0; iowoner = false;
          }
-
-         // returns true if file is opened
-         inline bool isOpened() const { return (io!=0) && (fd!=0); }
-
-         inline bool isReading() const { return isOpened() && fReadingMode; }
-
-         inline bool isWriting() const { return isOpened() && !fReadingMode; }
-
-         bool eof() const { return isReading() ? io->feof(fd) : true; }
 
          bool OpenReading(const char* fname)
          {
             if (isOpened()) return false;
 
-            if (io==0) { io = new dabc::FileInterface; iowoner = true; }
-
             if (fname==0 || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
+
+            CheckIO();
+
             fd = io->fopen(fname,  "r");
             if (fd==0) {
                fprintf(stderr, "File open failed %s for reading\n", fname);
@@ -118,12 +91,13 @@ namespace mbs {
          {
             if (isOpened()) return false;
 
-            if (io==0) { io = new dabc::FileInterface; iowoner = true; }
-
             if (fname==0 || *fname==0) {
                fprintf(stderr, "file name not specified\n");
                return false;
             }
+
+            CheckIO();
+
             fd = io->fopen(fname, "w");
             if (fd==0) {
                fprintf(stderr, "File open failed %s for writing\n", fname);
@@ -155,9 +129,7 @@ namespace mbs {
 
          bool Close()
          {
-            if (fd && io) io->fclose(fd);
-            fd = 0;
-            return true;
+            return CloseBasicFile();
          }
 
          const FileHeader& hdr() const { return fFileHdr; }
@@ -179,7 +151,7 @@ namespace mbs {
 
          bool ReadBuffer(void* ptr, uint64_t* sz, bool onlyevent = false)
          {
-            if (isWriting() || (ptr==0) || (sz==0) || (*sz == 0)) return false;
+            if (isWriting() || (ptr==0) || (sz==0) || (*sz < sizeof(mbs::Header))) return false;
 
             uint64_t maxsz = *sz; *sz = 0;
 

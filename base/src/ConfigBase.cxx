@@ -34,6 +34,8 @@ namespace dabc {
    const char* xmlHostAttr         = "host";
    const char* xmlPortAttr         = "port";
    const char* xmlClassAttr        = "class";
+   const char* xmlThreadAttr       = "thread";
+   const char* xmlAutoAttr         = "auto";
    const char* xmlValueAttr        = "value";
    const char* xmlRunNode          = "Run";
    const char* xmlUserNode         = "User";
@@ -61,7 +63,7 @@ namespace dabc {
    const char* xmlLoglevel         = "loglevel";
    const char* xmlRunTime          = "runtime";
    const char* xmlNormalMainThrd   = "normalmainthrd";
-   const char* xmlNumSpecialThreads   = "num_special_thrds";
+   const char* xmlNumSpecialThreads= "num_special_thrds";
    const char* xmlTaskset          = "taskset";
    const char* xmlLDPATH           = "LD_LIBRARY_PATH";
    const char* xmlUserLib          = "lib";

@@ -216,3 +216,24 @@ bool dabc::Configuration::LoadLibs()
 
     return true;
 }
+
+bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char* nodename, bool check_name_for_multicast)
+{
+   do {
+
+      prev = FindMatch(prev, fSelected, nodename);
+      if (prev==0) break;
+
+      // if creation node marked with auto="false" atribute, than creation is disabled
+      const char* autoattr = Xml::GetAttr(prev, xmlAutoAttr);
+      if ((autoattr!=0) && strcmp(autoattr,xmlFalseValue)==0) continue;
+
+      if (!check_name_for_multicast) break;
+      const char* nameattr = Xml::GetAttr(prev, xmlNameAttr);
+      if ((nameattr==0) || (strpbrk(nameattr,"*?")==0)) break;
+
+   } while (prev!=0);
+
+   return prev!=0;
+}
+

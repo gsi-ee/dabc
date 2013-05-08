@@ -36,8 +36,9 @@ namespace dabc {
    class Configuration;
    class ReferencesVector;
 
-   extern const char* clPoolHandle;
-   extern const char* clMemoryPool;
+   extern const char* xmlMemoryPoolNode;
+   extern const char* xmlModuleNode;
+   extern const char* xmlConnectionNode;
 
    extern const char* xmlQueueSize;
    extern const char* xmlInputQueueSize;

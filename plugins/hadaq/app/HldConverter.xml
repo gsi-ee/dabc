@@ -1,32 +1,32 @@
 <?xml version="1.0"?>
-<dabc version="1">
-  <Context name="Converter">      
+<dabc version="2">
+  <Context name="Converter">
+        
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHadaq.so"/>
-      <func value="InitHadaqMbsTransmitter"/>
+      <loglimit value="1000000"/>
+      <logfile value="Converter.log"/>
     </Run>
+    
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>         
     </MemoryPool>
-    <Module name="HldConv">
-       <PoolName value="Pool"/>
+    
+    <Module name="Conv" class="hadaq::MbsTransmitterModule">
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
     
        <SubeventFullId value="0x000001F"/>
+       
+       <InputPort name="Input0" url="hld://dabc_000*.hld"/>
 
-       <InputPort name="Input0">
-          <url value="hld:///data.local1/adamczew/hld/xx12153171835.hld"/>        
-       </InputPort>
-       <OutputPort name="Output0">
-          <url value="lmd://xx12153171835.lmd"/>
-        </OutputPort>
+       <OutputPort name="Output0" url="lmd://dabc.lmd?maxsize=30&log=2"/>
     
-       <TransmitData width="5" prec="6" low="5" up="50" debug="1"/>
-       <TransmitEvents width="4" prec="3" low="2" up="100000" debug="1"/>
-       <TransmitBufs width="4" prec="3" low="2" up="100000" debug="1"/>        
+       <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
+       <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>
      </Module>
+     
   </Context>
 </dabc>

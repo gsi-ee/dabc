@@ -370,7 +370,7 @@ namespace dabc {
          Reference FindPort(const std::string& name);
 
          Reference GetAppFolder(bool force = false);
-         ApplicationRef GetApp();
+         ApplicationRef app();
 
          bool IsAnyModuleRunning();
 
@@ -529,7 +529,7 @@ namespace dabc {
 
          Reference GetAppFolder(bool force = false);
 
-         ApplicationRef GetApp();
+         ApplicationRef app();
 
          /** Method safely deletes all object created for application - modules, devices, memory pools.
           * All these objects normally collected under "/App" folder, therefore manager cleanup is just

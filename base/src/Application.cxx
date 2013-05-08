@@ -79,6 +79,9 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
    } else
 
    if (cmd.IsName("CheckWorkDone")) {
+      DOUT0("Verify that application did its job running %s modules %s",
+            DBOOL(GetState() == stRunning()), DBOOL(IsModulesRunning()));
+
       if (IsWorkDone()) {
          DOUT0("Stop application while work is completed");
          Submit(InvokeAppFinishCmd());
@@ -145,9 +148,12 @@ bool dabc::ApplicationBase::DoStateTransition(const std::string& cmd)
 
    if (cmd == stcmdDoStart()) {
 
-      if (fInitFunc!=0) fInitFunc();
+      if (fInitFunc!=0)
+         fInitFunc();
+      else
+         res = DefaultInitFunc();
 
-      if (!dabc::mgr.ActivateConnections(20.)) res = false;
+      if (res && !dabc::mgr.ActivateConnections(20.)) res = false;
 
       if (res && !StartModules()) res = false;
 
@@ -184,7 +190,7 @@ bool dabc::ApplicationBase::IsModulesRunning()
 
    while (vect.GetSize()>0) {
       ModuleRef m = vect.TakeLast();
-      if (m.IsRunning()) return true;
+      if (m.IsRunning() && (std::string("MemoryPool")!=m.ClassName())) return true;
    }
 
    return false;
@@ -269,6 +275,52 @@ bool dabc::ApplicationBase::Find(ConfigIO &cfg)
    return false;
 }
 
+bool dabc::ApplicationBase::DefaultInitFunc()
+{
+   XMLNodePointer_t node = 0;
+
+   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlMemoryPoolNode, true)) {
+      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      DOUT0("Create memory pool %s", name);
+      if (!dabc::mgr.CreateMemoryPool(name)) return false;
+   }
+
+   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlModuleNode, true)) {
+      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      const char* clname = Xml::GetAttr(node, xmlClassAttr);
+      const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
+      if (clname==0) continue;
+      DOUT0("Create module %s class %s", name, clname);
+      if (thrdname==0) thrdname="";
+
+      dabc::ModuleRef m = dabc::mgr.CreateModule(clname, name, thrdname);
+
+      if (m.null()) return false;
+
+      for (unsigned n = 0; n < m.NumInputs(); n++)
+         if (!dabc::mgr.CreateTransport(m.InputName(n))) {
+            EOUT("Cannot create input transport for port %s", m.InputName(n).c_str());
+            return false;
+         }
+
+      for (unsigned n=0; n < m.NumOutputs(); n++)
+         if (!dabc::mgr.CreateTransport(m.OutputName(n))) {
+            EOUT("Cannot create output transport for port %s", m.OutputName(n).c_str());
+            return false;
+         }
+   }
+
+   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlConnectionNode, false)) {
+      const char* outputname = Xml::GetAttr(node, "output");
+      const char* inputname = Xml::GetAttr(node, "input");
+
+      if ((outputname!=0) && (inputname!=0))
+         dabc::mgr.Connect(outputname, inputname);
+   }
+
+   return true;
+}
+
 // ==============================================================
 
 
@@ -330,7 +382,11 @@ void dabc::Application::GetFirstNodesConfig()
 
 bool dabc::Application::CreateAppModules()
 {
-   if (fInitFunc!=0) fInitFunc();
+   // if no init func was specified, default will be called
+   if (fInitFunc==0)
+      return DefaultInitFunc();
+
+   fInitFunc();
    return true;
 }
 
@@ -451,7 +507,6 @@ bool dabc::Application::MakeSystemSnapshot(double tmout)
    cmd.SetTimeout(tmout);
 
    if (!Execute(cmd)) return false;
-
 
    std::string sbuf = cmd.GetStdStr(CmdGetNodesState::States());
 
