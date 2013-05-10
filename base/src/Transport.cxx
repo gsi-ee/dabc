@@ -85,8 +85,13 @@ dabc::Transport::~Transport()
 
 void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool on)
 {
+   // ignore connect/disconnect from pool handles
+   if (IsValidPool(FindPool(name))) return;
+
    if (on) {
       if ((GetState()==stInit) || (GetState()==stStopped)) {
+         DOUT0("Connection %s activated by transport %s - make start", name.c_str(), GetName());
+
          if (StartTransport())
             fState = stRunning;
          else {
@@ -146,6 +151,8 @@ int dabc::Transport::ExecuteCommand(Command cmd)
 
 bool dabc::Transport::StartTransport()
 {
+   DOUT0("Start transport %s", GetName());
+
    fAddon.Notify("StartTransport");
    return Start();
 }

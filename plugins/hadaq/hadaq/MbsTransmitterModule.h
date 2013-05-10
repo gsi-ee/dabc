@@ -47,11 +47,10 @@ namespace hadaq {
 
    protected:
 
-      hadaq::ReadIterator fSrcIter;  // iterator over input buffer
-      mbs::WriteIterator  fTgtIter;   // buffer for data
+      hadaq::ReadIterator fSrcIter;   // iterator over input buffer
+      mbs::WriteIterator  fTgtIter;   // iterator over output buffer
 
       int                 fCurrentEventNumber; // current event number in the output buffer
-      dabc::TimeStamp     fLastFlushTime; // time when last flushing was done
       int                 fIgnoreEvent;  // id of event, which should be ignored
       int                 fEvCounter; // simple counter
 
@@ -61,16 +60,11 @@ namespace hadaq {
        * into one mbs subevent*/
       bool                fMergeSyncedEvents;
 
-      /** When specified, SYNC number is printed */
-      bool                fPrintSync;
-
       int                 fFlushCnt;
 
-      void FlushBuffer(bool force = false);
+      dabc::Buffer        feofbuf;    // keep eof buffer, it is mark that module must be stopped
 
       bool retransmit();
-
-      void CloseCurrentEvent();
 
    public:
       MbsTransmitterModule(const std::string& name, dabc::Command cmd = 0);

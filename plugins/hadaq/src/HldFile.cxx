@@ -84,7 +84,7 @@ bool hadaq::HldFile::OpenRead(const char* fname)
 //   DOUT0("Open HLD file %s for reading", fname);
 
    hadaq::Event evnt;
-   uint64_t size = sizeof(hadaq::Event);
+   uint32_t size = sizeof(hadaq::Event);
 
    if (!ReadBuffer(&evnt, &size, true)) {
       EOUT("Cannot read starting event from file");
@@ -137,7 +137,7 @@ bool hadaq::HldFile::WriteBuffer(void* buf, uint32_t bufsize)
    return true;
 }
 
-bool hadaq::HldFile::ReadBuffer(void* ptr, uint64_t* sz, bool onlyevent)
+bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 {
    if (!isReading() || (ptr==0) || (sz==0) || (*sz < sizeof(hadaq::HadTu))) return false;
 

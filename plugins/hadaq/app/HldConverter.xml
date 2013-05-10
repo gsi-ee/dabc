@@ -11,7 +11,7 @@
     
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
-       <NumBuffers value="100"/>         
+       <NumBuffers value="1000"/>         
     </MemoryPool>
     
     <Module name="Conv" class="hadaq::MbsTransmitterModule">
@@ -20,7 +20,7 @@
     
        <SubeventFullId value="0x000001F"/>
        
-       <InputPort name="Input0" url="hld://dabc_000*.hld"/>
+       <InputPort name="Input0" url="hld://dabc_000*.hld" queue="50"/>
 
        <OutputPort name="Output0" url="lmd://dabc.lmd?maxsize=30&log=2"/>
     

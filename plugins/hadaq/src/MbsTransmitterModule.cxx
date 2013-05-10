@@ -23,7 +23,10 @@
 
 
 hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc::Command cmd) :
-   dabc::ModuleAsync(name, cmd)
+   dabc::ModuleAsync(name, cmd),
+   fSrcIter(),
+   fTgtIter(),
+   feofbuf()
 {
    // we need at least one input and one output port
    EnsurePorts(1, 1, dabc::xmlWorkPool);
@@ -31,7 +34,6 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
    fSubeventId = Cfg(hadaq::xmlMbsSubeventId, cmd).AsInt(0x000001F);
    fMergeSyncedEvents = Cfg(hadaq::xmlMbsMergeSyncMode, cmd).AsBool(false);
    double flushtime = Cfg(dabc::xmlFlushTimeout, cmd).AsDouble(3);
-   // fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
 
    DOUT0("hadaq:TransmitterModule subevid = 0x%x, merge sync mode = %d", (unsigned) fSubeventId, fMergeSyncedEvents);
 
@@ -52,21 +54,61 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
 
 bool hadaq::MbsTransmitterModule::retransmit()
 {
+   // method performs reads at maximum one event from input and
+   // push it with MBS header to output
+   // Method will be called from ProcessRecv/ProcessSend methods,
+   // means as long as any buffer in the recv queue exists or
+   // any new buffer to send queue can be provided
+
    DOUT5("MbsTransmitterModule::retransmit() starts");
+
 
    // nothing to do
    if (!CanSendToAllOutputs()) return false;
+
+   if (!feofbuf.null()) {
+
+      // DOUT1("MbsTransmitterModule sends EOF to all outputs is any outdata %s canrecv %s", DBOOL(fTgtIter.IsAnyData()), DBOOL(CanRecv()));
+
+      SendToAllOutputs(feofbuf);
+
+      return false;
+   }
 
    // is source do not have pointer, reset it to read new buffer
    if (!fSrcIter.IsData()) {
       if (!CanRecv()) return false;
 
       dabc::Buffer buf = Recv();
+
       if (buf.GetTypeId() == dabc::mbt_EOF) {
-         DOUT1("See EOF - stop module");
-         SendToAllOutputs(buf);
+
+         // DOUT0("+++++++++++++++ GET EOF ++++++++++++++");
+
+         feofbuf << buf;
+
+         if (fTgtIter.IsEventStarted()) {
+            fTgtIter.FinishSubEvent();
+            fTgtIter.FinishEvent();
+            fCurrentEventNumber = -1;
+         }
+
+         if (fTgtIter.IsAnyData()) {
+
+            dabc::Buffer sendbuf = fTgtIter.Close();
+
+            SendToAllOutputs(sendbuf);
+
+            return true;
+         }
+
+         SendToAllOutputs(feofbuf);
+
          return false;
       }
+
+      // DOUT0("Recv   %u totalsize %u", (unsigned) buf.SegmentId(0), (unsigned) buf.GetTotalSize() );
+
       fSrcIter.Reset(buf);
       // locate to the first event
       fSrcIter.NextEvent();
@@ -77,6 +119,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
    if (fIgnoreEvent>=0) {
       if (fIgnoreEvent == fSrcIter.evnt()->GetSeqNr()) {
          fSrcIter.NextEvent();
+         DOUT0("Ignore event");
          return true;
       }
       fIgnoreEvent = -1;
@@ -87,7 +130,6 @@ bool hadaq::MbsTransmitterModule::retransmit()
        dabc::Buffer buf = TakeBuffer();
        if (buf.null()) return false;
        fTgtIter.Reset(buf);
-       // fDataPtr = fHdrPtr; fDataPtr.shift(sizeof(mbs::EventHeader) + sizeof(mbs::SubeventHeader));
     }
 
    // close current event if it not will be merged with next source event
@@ -101,9 +143,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
       }
    }
 
-
    size_t evlen = fSrcIter.evnt()->GetPaddedSize();
-
 
    bool has_required_place = false;
    if (fTgtIter.IsEventStarted())
@@ -121,7 +161,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
          return true;
       }
 
-      // mo sense to make flush when no any
+      // no sense to make flush when no any data
       if (doflush && !fTgtIter.IsAnyEvent()) return false;
 
       dabc::Buffer sendbuf;
@@ -170,36 +210,11 @@ bool hadaq::MbsTransmitterModule::retransmit()
       }
    }
 
-
    return true;
 }
 
-void hadaq::MbsTransmitterModule::CloseCurrentEvent()
-{
-
-}
-
-
-
-void hadaq::MbsTransmitterModule::FlushBuffer(bool force)
-{
-}
 
 void hadaq::MbsTransmitterModule::ProcessTimerEvent(unsigned timer)
 {
    if (fFlushCnt>0) fFlushCnt--;
-}
-
-
-// This one will transmit file to mbs transport server:
-extern "C" void InitHadaqMbsTransmitter()
-{
-   dabc::mgr.CreateMemoryPool("Pool");
-   dabc::mgr.CreateModule("hadaq::MbsTransmitterModule", "HldServer", "WorkerThrd");
-   dabc::mgr.CreateTransport("HldServer/Input0");
-   dabc::mgr.CreateTransport("HldServer/Output0");
-
-//   unsigned secs=30;
-//   DOUT1("InitHadaqMbsTransmitter sleeps %d seconds before client connect", secs);
-//   dabc::mgr.Sleep(secs);
 }

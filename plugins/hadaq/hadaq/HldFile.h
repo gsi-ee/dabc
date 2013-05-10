@@ -24,8 +24,8 @@ namespace hadaq {
 
    class HldFile : public dabc::BasicFile {
       protected:
-         RunId       fRunNumber;        //! run number
-         bool        fEOF;  // flag indicate that end-of-file was reached
+         RunId       fRunNumber;   //! run number
+         bool        fEOF;         //! flag indicate that end-of-file was reached
 
       public:
          HldFile();
@@ -38,16 +38,22 @@ namespace hadaq {
            * when data read partially and must be kept there. */
          bool OpenRead(const char* fname);
 
+         /** Close file */
+         void Close();
+
+         /** Returns runid, assigned with the file */
+         RunId GetRunId() const { return fRunNumber; }
+
+         /** When file open for reading, method returns true when file end was achieved */
          bool eof() const { return fEOF; }
 
-         void Close();
 
          /** Read one or several elements to provided user buffer
            * When called, bufsize should has available buffer size,
            * after call contains actual size read.
            * If /param onlyevent=true, the only hadaq element will be read.
            * Returns true if any data were successfully read. */
-         bool ReadBuffer(void* ptr, uint64_t* bufsize, bool onlyevent = false);
+         bool ReadBuffer(void* ptr, uint32_t* bufsize, bool onlyevent = false);
 
          /** Write user buffer to file without reformatting
           * User must be aware about correct formatting of data.

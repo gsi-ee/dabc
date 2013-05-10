@@ -80,7 +80,6 @@ store data in lmd files.
 
        <SubeventFullId value="0x000001F"/>
        <DoMergeSyncedEvents value="true"/>
-       <PrintSync value="false"/>
 
        <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>
        <TransmitEvents width="4" prec="1" low="0" up="100" debug="1"/>

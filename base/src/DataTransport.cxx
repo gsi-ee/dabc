@@ -393,9 +393,9 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    }
 
    if (fInpState == inpReady) {
-      Send(fCurrentBuf);
-//      DOUT0("Send to the output cansend %u", Output()->NumCanSend());
+      // DOUT0("Input transport sends buf %u", (unsigned) fCurrentBuf.SegmentId(0));
 
+      Send(fCurrentBuf);
       fCurrentBuf.Release();
       fInpState = inpInit;
    }

@@ -60,6 +60,8 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
    if (buf.null()) return true;
 
+//   DOUT0("Local transport %p send buffer %u", this, (unsigned) buf.SegmentId(0));
+
    dabc::WorkerRef mdl;
    unsigned id(0);
 
@@ -67,7 +69,10 @@ bool dabc::LocalTransport::Send(Buffer& buf)
       dabc::LockGuard lock(QueueMutex());
 
       // ignore all send operations when connection is not established
-      if (fConnected != MaskConn) return true;
+      if (fConnected != MaskConn) {
+         EOUT("Local transport ignore buffer while not fully connected");
+         return true;
+      }
 
       if (buf.RefCnt() > 1)
          EOUT("Buffer ref cnt %d bigger than 1, which means extra buffer instance inside thread", buf.RefCnt());
@@ -263,7 +268,7 @@ void dabc::LocalTransport::Disconnect(bool isinp)
       if (fConnected == 0) cleanup = true;
    }
 
-   DOUT3("Queue %p  disconnected isinp %s conn %u", this, DBOOL(isinp), fConnected);
+   DOUT0("Queue %p  disconnected isinp %s conn %u", this, DBOOL(isinp), fConnected);
 
    if (!isinp) m1.FireEvent(evntPortDisconnect, id1);
 
@@ -274,7 +279,7 @@ void dabc::LocalTransport::Disconnect(bool isinp)
    m2.Release();
 
    if (cleanup) {
-      DOUT3("Perform queue %p cleanup by disconnect", this);
+      DOUT0("Perform queue %p cleanup by disconnect", this);
       CleanupQueue();
    }
 
@@ -295,7 +300,7 @@ void dabc::LocalTransport::PortActivated(int itemkind, bool on)
    {
       dabc::LockGuard lock(QueueMutex());
 
-      if (itemkind==mitOutPort) {
+      if (itemkind == mitOutPort) {
          other = fInp.Ref();
          otherid = fInpId;
       } else {
@@ -306,20 +311,6 @@ void dabc::LocalTransport::PortActivated(int itemkind, bool on)
 
    other.FireEvent(on ? evntConnStart : evntConnStop, otherid);
 }
-
-dabc::Reference dabc::LocalTransport::GetPool()
-{
-   dabc::MemoryPoolRef pool;
-
-   {
-      dabc::LockGuard lock(QueueMutex());
-
-      pool = fOut.Ref();
-   }
-
-   return pool;
-}
-
 
 int dabc::LocalTransport::ConnectPorts(Reference port1ref, Reference port2ref)
 {

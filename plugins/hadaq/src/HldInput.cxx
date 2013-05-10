@@ -84,7 +84,7 @@ unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
    }
 
    // only first segment can be used for reading
-   uint64_t bufsize = buf.SegmentSize(0);
+   uint32_t bufsize = buf.SegmentSize(0);
 
    if (!fFile.ReadBuffer(buf.SegmentPtr(0), &bufsize)) {
       // if by chance reading of buffer leads to eof, skip buffer and let switch file on the next turn
@@ -95,6 +95,7 @@ unsigned hadaq::HldInput::Read_Complete(dabc::Buffer& buf)
 
    buf.SetTypeId(hadaq::mbt_HadaqEvents);
    buf.SetTotalSize(bufsize);
-   DOUT3("Read %u bytes from %s file", (unsigned) bufsize, CurrentFileName().c_str());
+   DOUT3("HLD file read %u bytes from %s file", (unsigned) bufsize, CurrentFileName().c_str());
+
    return dabc::di_Ok;
 }

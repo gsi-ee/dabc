@@ -691,7 +691,10 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
          port->GetConnReq(true).ChangeState(ConnectionObject::sDisconnected, true);
 
-         DOUT0("Module %s running %s get disconnect event for port %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str());
+         DOUT0("Module %s running %s get disconnect event for port %s connected %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()));
+
+         InputPort* inp = dynamic_cast<InputPort*> (port);
+         if (inp) DOUT0("Input still can recv %u buffers", inp->NumCanRecv());
 
          // deliver event to the user disregard running state
          ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());

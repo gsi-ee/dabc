@@ -273,3 +273,10 @@ Main aim now bring project to real version 2 with interface finalized.
    to be able switch to any other file system. Also when reading events, first read
    as much as possible and than rewind if non-complete events are read.
    
+   
+10.05.2013
+1. Fix error in transport start/stop logic. Transport was started before connection to
+   the module was established, therefore many first buffers were lost. Was happened, while
+   transport was reacting on connection activating with memory pool.
+2. Fix flushing error in hadaq::MbsTransmitterModule. When EOF marker was appearing,
+   rest of data in output iterator was not finalized and was not delivered to the output.       

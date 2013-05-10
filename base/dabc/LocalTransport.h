@@ -96,9 +96,6 @@ namespace dabc {
 
          void Disconnect(bool isinp);
 
-
-         Reference GetPool();
-
          static int ConnectPorts(Reference port1ref, Reference port2ref);
    };
 
@@ -125,8 +122,6 @@ namespace dabc {
       void PortActivated(int itemkind, bool on) { if (GetObject()) GetObject()->PortActivated(itemkind, on); }
 
       void ConfirmEvent(bool isoutput) { if (GetObject()) GetObject()->ConfirmEvent(isoutput); }
-
-//      Reference GetPool()  { return GetObject() ? GetObject()->GetPool() : Reference(); }
 
       unsigned Size() const { return GetObject() ? GetObject()->Size() : 0; }
 
