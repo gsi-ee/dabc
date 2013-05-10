@@ -20,8 +20,8 @@
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 
-#include "hadaq/HadaqTypeDefs.h"
 #include "hadaq/Observer.h"
+
 #include "mbs/MbsTypeDefs.h"
 
 hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) :
@@ -48,7 +48,7 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    for (unsigned i = 0; i < HADAQ_NEVTIDS; i++)
       fEventIdCount[i] = 0;
 
-   fRunNumber = hadaq::Event::CreateRunId(); // runid from configuration time.
+   fRunNumber = hadaq::RawEvent::CreateRunId(); // runid from configuration time.
 
    fTriggerNrTolerance = 50000;
 
@@ -57,10 +57,10 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fWithObserver = Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 
    fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(false); // if true, use vulom/roc syncnumber for event sequence number
-   fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsInt(0x8000);//0x8000;
+   fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsUInt(0x8000);//0x8000;
    fSyncTriggerMask = Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
    if (fUseSyncSeqNumber)
-      DOUT0("HADAQ combiner module with VULOM sync event sequence number from cts subevent:0x%0x, trigger mask:0x%0x",fSyncSubeventId, fSyncTriggerMask);
+      DOUT0("HADAQ combiner module with VULOM sync event sequence number from cts subevent:0x%0x, trigger mask:0x%0x", (unsigned) fSyncSubeventId, (unsigned) fSyncTriggerMask);
    else
       DOUT0("HADAQ combiner module with independent event sequence number");
 
@@ -388,9 +388,9 @@ bool hadaq::CombinerModule::ShiftToNextHadTu(unsigned ninp)
    return true;
 }
 
-const hadaq::EventNumType MaxHadaqTrigger = 0x1000000;
+const uint32_t MaxHadaqTrigger = 0x1000000;
 
-int CalcTrigNumDiff(const hadaq::EventNumType& prev, const hadaq::EventNumType& next)
+int CalcTrigNumDiff(const uint32_t& prev, const uint32_t& next)
 {
    int res = (int) (next) - prev;
    if (res > (int) MaxHadaqTrigger/2) res-=MaxHadaqTrigger; else
@@ -421,7 +421,7 @@ bool hadaq::CombinerModule::ShiftToNextSubEvent(unsigned ninp)
 
       fCfg[ninp].fTrigNr = fInp[ninp].subevnt()->GetTrigNr() >> 8;
       fCfg[ninp].fTrigTag = fInp[ninp].subevnt()->GetTrigNr() & 0xFF;
-      if (fInp[ninp].subevnt()->GetSize() > sizeof(hadaq::Subevent)) {
+      if (fInp[ninp].subevnt()->GetSize() > sizeof(hadaq::RawSubevent)) {
          fCfg[ninp].fEmpty = false;
       }
       fCfg[ninp].fDataError = fInp[ninp].subevnt()->GetDataError();
@@ -491,13 +491,13 @@ bool hadaq::CombinerModule::BuildEvent()
 
    unsigned masterchannel = 0;
    uint32_t subeventssize = 0;
-   hadaq::EventNumType mineventid(0), maxeventid(0);
+   uint32_t mineventid(0), maxeventid(0);
    for (unsigned ninp = 0; ninp < fCfg.size(); ninp++) {
       if (fInp[ninp].subevnt() == 0)
          if (!ShiftToNextSubEvent(ninp))
             return false; // could not get subevent data on any channel. let framework do something before next try
 
-      hadaq::EventNumType evid = fCfg[ninp].fTrigNr;
+      uint32_t evid = fCfg[ninp].fTrigNr;
 
       if (ninp == 0) {
          mineventid = evid;
@@ -515,8 +515,8 @@ bool hadaq::CombinerModule::BuildEvent()
    } // for ninp
 
    // we always build event with maximum trigger id = newest event, discard incomplete older events
-   hadaq::EventNumType buildevid = maxeventid;
-   hadaq::EventNumType buildtag = fCfg[masterchannel].fTrigTag;
+   uint32_t buildevid = maxeventid;
+   uint32_t buildtag = fCfg[masterchannel].fTrigTag;
    int diff = CalcTrigNumDiff(mineventid, maxeventid);
 
 //   DOUT0("Min:%8u Max:%8u diff:%5d", mineventid, maxeventid, diff);
@@ -543,8 +543,8 @@ bool hadaq::CombinerModule::BuildEvent()
       bool foundsubevent = false;
       while (!foundsubevent) {
 
-         hadaq::EventNumType trignr = fCfg[ninp].fTrigNr;
-         hadaq::EventNumType trigtag = fCfg[ninp].fTrigTag;
+         uint32_t trignr = fCfg[ninp].fTrigNr;
+         uint32_t trigtag = fCfg[ninp].fTrigTag;
          bool isempty = fCfg[ninp].fEmpty;
          bool haserror = fCfg[ninp].fDataError;
          DoErrorBitStatistics(ninp); // also for not complete events
@@ -589,14 +589,14 @@ bool hadaq::CombinerModule::BuildEvent()
    // here all inputs should be aligned to buildevid
 
    // for sync sequence number, check first if we have error from cts:
-   hadaq::EventNumType sequencenumber = fTotalRecvEvents;
+   uint32_t sequencenumber = fTotalRecvEvents;
    bool hascorrectsync = true;
    
    if(fUseSyncSeqNumber) {
       hascorrectsync = false;
 
       // we may put sync id from subevent payload to event sequence number already here.
-      hadaq::Subevent* syncsub = fInp[0].subevnt(); // for the moment, sync number must be in first udp input
+      hadaq::RawSubevent* syncsub = fInp[0].subevnt(); // for the moment, sync number must be in first udp input
       // TODO: put this to configuration
 
       if (syncsub->GetId() != fSyncSubeventId) {
@@ -609,7 +609,7 @@ bool hadaq::CombinerModule::BuildEvent()
             //scan through trb3 data words and look for the cts subsubevent
             unsigned data = syncsub->Data(ix);
             //! Central hub header and inside
-            if ((data & 0xFFFF) != (unsigned) fSyncSubeventId) continue;
+            if ((data & 0xFFFF) != fSyncSubeventId) continue;
 
             unsigned centHubLen = ((data >> 16) & 0xFFFF);
             DOUT5("***  --- central hub header: 0x%x, size=%d", data, centHubLen);
@@ -727,7 +727,7 @@ bool hadaq::CombinerModule::BuildEvent()
          fTotalDiscEvents+=diff;
       }
 
-      unsigned currentbytes = subeventssize + sizeof(hadaq::Event);
+      unsigned currentbytes = subeventssize + sizeof(hadaq::RawEvent);
       fTotalRecvBytes += currentbytes;
       Par(fDataRateName).SetDouble(currentbytes / 1024. / 1024.);
 

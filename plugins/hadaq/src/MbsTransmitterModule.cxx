@@ -44,9 +44,9 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
    if (flushtime > 0.)
       CreateTimer("FlushTimer", flushtime, false);
 
-   fCurrentEventNumber = -1;
+   fCurrentEventNumber = 0;
 
-   fIgnoreEvent = -1;
+   fIgnoreEvent = 0; isIgnoreEvent = false;
    fEvCounter = 0;
    fFlushCnt = 2;
 }
@@ -90,7 +90,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
          if (fTgtIter.IsEventStarted()) {
             fTgtIter.FinishSubEvent();
             fTgtIter.FinishEvent();
-            fCurrentEventNumber = -1;
+            fCurrentEventNumber = 0;
          }
 
          if (fTgtIter.IsAnyData()) {
@@ -116,13 +116,13 @@ bool hadaq::MbsTransmitterModule::retransmit()
    }
 
    // ignore all events with selected id
-   if (fIgnoreEvent>=0) {
+   if (isIgnoreEvent) {
       if (fIgnoreEvent == fSrcIter.evnt()->GetSeqNr()) {
          fSrcIter.NextEvent();
          DOUT0("Ignore event");
          return true;
       }
-      fIgnoreEvent = -1;
+      isIgnoreEvent = false;
    }
 
 
@@ -138,7 +138,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
          // first close existing events
          fTgtIter.FinishSubEvent();
          fTgtIter.FinishEvent();
-         fCurrentEventNumber = -1;
+         fCurrentEventNumber = 0;
          fEvCounter++;
       }
    }
@@ -158,6 +158,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
       // this is completely empty buffer, we should ignore event when it does not fit into empty buffer
       if (!has_required_place && !fTgtIter.IsAnyData()) {
          fIgnoreEvent = fSrcIter.evnt()->GetSeqNr();
+         isIgnoreEvent = true;
          return true;
       }
 
@@ -205,7 +206,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
          // first close existing events
          fTgtIter.FinishSubEvent();
          fTgtIter.FinishEvent();
-         fCurrentEventNumber = -1;
+         fCurrentEventNumber = 0;
          fEvCounter++;
       }
    }

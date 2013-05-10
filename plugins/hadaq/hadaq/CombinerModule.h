@@ -22,8 +22,8 @@
 #include "dabc/MemoryPool.h"
 #endif
 
-
 #include "hadaq/HadaqTypeDefs.h"
+
 #include "hadaq/Iterator.h"
 
 /*
@@ -31,96 +31,97 @@
  * Use functionality as in daq_evtbuild here.
  */
 
+#define HADAQ_NEVTIDS 64UL             /* must be 2^n */
+#define HADAQ_NEVTIDS_IN_FILE 0UL      /* must be 2^n */
+#define HADAQ_NUMERRPATTS 5
+
 namespace hadaq {
 
    class CombinerModule: public dabc::ModuleAsync {
 
-         struct InputCfg {
+      struct InputCfg {
 
+         /** keeps current trigger sequence number */
+         uint32_t fTrigNr;
 
-               /** keeps current trigger sequence number */
-               hadaq::EventNumType fTrigNr;
+         /** keeps previous trigger sequence number - used to control lost data */
+         uint32_t fLastTrigNr;
 
-               /** keeps previous trigger sequence number - used to control lost data */
-               hadaq::EventNumType fLastTrigNr;
+         /** keeps current trigger tag */
+         uint32_t fTrigTag;
 
-               /** keeps current trigger tag */
-               hadaq::EventNumType fTrigTag;
+         /* current subevent trigger type*/
+         uint32_t fTrigType;
 
-               /* current subevent trigger type*/
-               uint32_t fTrigType;
+         /* current subevent id*/
+         uint32_t fSubId;
 
-               /* current subevent id*/
-               uint32_t fSubId;
+         /* errorbit status word from payload end*/
+         uint32_t fErrorBits;
 
-               /* errorbit status word from payload end*/
-               uint32_t fErrorBits;
+         /* errorbit statistics counter */
+         uint32_t fErrorbitStats[HADAQ_NUMERRPATTS];
 
-               /* errorbit statistics counter */
-               uint32_t fErrorbitStats[HADAQ_NUMERRPATTS];
+         /* current input queue fill level*/
+         float fQueueLevel;
 
-               /* current input queue fill level*/
-               float fQueueLevel;
+         /* remember id of last build event*/
+         uint32_t fLastEvtBuildTrigId;
 
+         /** indicates if subevent has data error bit set in header id */
+         bool fDataError;
 
-               /* remember id of last build event*/
-               hadaq::EventNumType fLastEvtBuildTrigId;
+         /** indicates if input has empty data */
+         bool fEmpty;
 
+         InputCfg() :
+            fTrigNr(0),
+            fLastTrigNr(0),
+            fTrigTag(0),
+            fTrigType(0),
+            fSubId(0),
+            fErrorBits(0),
+            fQueueLevel(0),
+            fLastEvtBuildTrigId(0),
+            fDataError(false),
+            fEmpty(true)
+         {
+            for(int i=0;i<HADAQ_NUMERRPATTS;++i)
+               fErrorbitStats[i]=0;
+         }
 
-               /** indicates if subevent has data error bit set in header id */
-               bool fDataError;
+         InputCfg(const InputCfg& src) :
+            fTrigNr(src.fTrigNr),
+            fLastTrigNr(src.fLastTrigNr),
+            fTrigTag(src.fTrigTag),
+            fTrigType(src.fTrigType),
+            fSubId(src.fSubId),
+            fErrorBits(src.fErrorBits),
+            fQueueLevel(src.fQueueLevel),
+            fLastEvtBuildTrigId(src.fLastEvtBuildTrigId),
+            fDataError(src.fDataError),
+            fEmpty(src.fEmpty)
+         {
+            for(int i=0;i<HADAQ_NUMERRPATTS;++i)
+               fErrorbitStats[i]=src.fErrorbitStats[i];
 
-               /** indicates if input has empty data */
-               bool fEmpty;
+         }
 
-               InputCfg() :
-                  fTrigNr(0),
-                  fLastTrigNr(0),
-                  fTrigTag(0),
-                  fTrigType(0),
-                  fSubId(0),
-                  fErrorBits(0),
-                  fQueueLevel(0),
-                  fLastEvtBuildTrigId(0),
-                  fDataError(false),
-                  fEmpty(true)
-               {
-                  for(int i=0;i<HADAQ_NUMERRPATTS;++i)
-                     fErrorbitStats[i]=0;
-               }
-
-               InputCfg(const InputCfg& src) :
-                  fTrigNr(src.fTrigNr),
-                  fLastTrigNr(src.fLastTrigNr),
-                  fTrigTag(src.fTrigTag),
-                  fTrigType(src.fTrigType),
-                  fSubId(src.fSubId),
-                  fErrorBits(src.fErrorBits),
-                  fQueueLevel(src.fQueueLevel),
-                  fLastEvtBuildTrigId(src.fLastEvtBuildTrigId),
-                  fDataError(src.fDataError),
-                  fEmpty(src.fEmpty)
-               {
-                  for(int i=0;i<HADAQ_NUMERRPATTS;++i)
-                     fErrorbitStats[i]=src.fErrorbitStats[i];
-
-               }
-
-               void Reset()
-               {
-                  fTrigNr = 0;
-                  fLastTrigNr = 0;
-                  fTrigTag =0;
-                  fTrigType=0;
-                  fSubId=0;
-                  fErrorBits=0;
-                  fDataError = false;
-                  fEmpty = true;
-                  for(int i=0;i<HADAQ_NUMERRPATTS;++i)
-                     fErrorbitStats[i]=0;
-                  // do not clear last fill level and last trig id
-               }
-         };
+         void Reset()
+         {
+            fTrigNr = 0;
+            fLastTrigNr = 0;
+            fTrigTag =0;
+            fTrigType=0;
+            fSubId=0;
+            fErrorBits=0;
+            fDataError = false;
+            fEmpty = true;
+            for(int i=0;i<HADAQ_NUMERRPATTS;++i)
+               fErrorbitStats[i]=0;
+            // do not clear last fill level and last trig id
+         }
+      };
 
       public:
          CombinerModule(const std::string& name, dabc::Command cmd = 0);
@@ -166,7 +167,7 @@ namespace hadaq {
          /* cleanup input buffers in case of too large eventnumber mismatch*/
          bool DropAllInputBuffers();
 
-         //hadaq::EventNumType CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
+         //uint32_t CurrEventId(unsigned int ninp) const { return fCfg[ninp].curr_evnt_num; }
 
          void SetInfo(const std::string& info, bool forceinfo = false);
 
@@ -187,7 +188,7 @@ namespace hadaq {
          /* maximum allowed difference of trigger numbers (subevent sequence number)*/
          int fTriggerNrTolerance;
 
-         hadaq::EventNumType fLastTrigNr;  // last number of build event
+         uint32_t fLastTrigNr;  // last number of build event
 
          std::vector<InputCfg> fCfg;
          std::vector<ReadIterator> fInp;
@@ -200,13 +201,13 @@ namespace hadaq {
 
          bool fUseSyncSeqNumber; // if true, use vulom/roc syncnumber for event sequence number
          bool fPrintSync; // if true, print syncs with DOUT1
-         int  fSyncSubeventId; // id number of sync subevent
+         uint32_t fSyncSubeventId; // id number of sync subevent
          uint32_t fSyncTriggerMask; // bit mask for accepted trigger inputs in sync mode
 
          int  fNumCompletedBuffers; // SL: workaround counter, which indicates how many buffers were taken from queues
 
          /* switch between partial combining of smallest event ids (false)
-                 * and building of complete events only (true)*/
+          * and building of complete events only (true)*/
          bool               fBuildCompleteEvents;
          
          std::string        fDataRateName;
@@ -227,7 +228,7 @@ namespace hadaq {
          uint32_t fErrorbitPattern[HADAQ_NUMERRPATTS];
 
          /* run id from timeofday for eventbuilding*/
-         RunId fRunNumber;
+         uint32_t           fRunNumber;
    };
 
 }

@@ -36,7 +36,7 @@ namespace hadaq {
       protected:
 
          bool                fEpicsControl; // true if run id is controlled by epics master
-         RunId               fRunNumber; // id number of current run
+         uint32_t            fRunNumber; // id number of current run
 
          dabc::Parameter     fRunidPar;
          dabc::Parameter     fBytesWrittenPar;
@@ -46,7 +46,7 @@ namespace hadaq {
          bool CloseFile();
          bool StartNewFile();
 
-         RunId GetRunId();
+         uint32_t GetRunId();
 
          bool Init();
 

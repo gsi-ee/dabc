@@ -18,21 +18,23 @@
 #include "dabc/BinaryFile.h"
 #endif
 
-#include "hadaq/HadaqTypeDefs.h"
+#ifndef HADAQ_defines
+#include "hadaq/defines.h"
+#endif
 
 namespace hadaq {
 
    class HldFile : public dabc::BasicFile {
       protected:
-         RunId       fRunNumber;   //! run number
-         bool        fEOF;         //! flag indicate that end-of-file was reached
+         uint32_t       fRunNumber;   //! run number
+         bool           fEOF;         //! flag indicate that end-of-file was reached
 
       public:
          HldFile();
          ~HldFile();
 
          /** Open file with specified name for writing */
-         bool OpenWrite(const char* fname, hadaq::RunId rid=0);
+         bool OpenWrite(const char* fname, uint32_t rid=0);
 
          /** Opened file for reading. Internal buffer required
            * when data read partially and must be kept there. */
@@ -42,11 +44,10 @@ namespace hadaq {
          void Close();
 
          /** Returns runid, assigned with the file */
-         RunId GetRunId() const { return fRunNumber; }
+         uint32_t GetRunId() const { return fRunNumber; }
 
          /** When file open for reading, method returns true when file end was achieved */
          bool eof() const { return fEOF; }
-
 
          /** Read one or several elements to provided user buffer
            * When called, bufsize should has available buffer size,
@@ -60,9 +61,6 @@ namespace hadaq {
           * Returns true if data was written.*/
          bool WriteBuffer(void* buf, uint32_t bufsize);
 
-         /** Format a HADES-convention filename string
-           * from a given run id. */
-//         static std::string FormatFilename(hadaq::RunId id);
    };
 
 } // end of namespace

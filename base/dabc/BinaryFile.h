@@ -42,7 +42,7 @@ namespace dabc {
            { return ((f==0) || (ptr==0)) ? 0 : ::fread(ptr, sz, nmemb, (FILE*) f); }
 
          virtual bool feof(Handle f)
-           { return f==0 ? false : feof((FILE*)f)>0; }
+           { return f==0 ? false : ::feof((FILE*)f)>0; }
 
          virtual bool fflush(Handle f)
          { return f==0 ? false : ::fflush((FILE*)f)==0; }

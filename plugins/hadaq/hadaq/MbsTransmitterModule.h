@@ -50,8 +50,9 @@ namespace hadaq {
       hadaq::ReadIterator fSrcIter;   // iterator over input buffer
       mbs::WriteIterator  fTgtIter;   // iterator over output buffer
 
-      int                 fCurrentEventNumber; // current event number in the output buffer
-      int                 fIgnoreEvent;  // id of event, which should be ignored
+      uint32_t            fCurrentEventNumber; // current event number in the output buffer
+      uint32_t            fIgnoreEvent;  // id of event, which should be ignored
+      bool                isIgnoreEvent;  // true if event should be ignored
       int                 fEvCounter; // simple counter
 
       unsigned            fSubeventId;

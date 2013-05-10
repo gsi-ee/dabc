@@ -63,9 +63,9 @@ bool hadaq::HldOutput::Write_Init(const dabc::WorkerRef& wrk, const dabc::Comman
 }
 
 
-hadaq::RunId hadaq::HldOutput::GetRunId()
+uint32_t hadaq::HldOutput::GetRunId()
 {
-   hadaq::RunId nextrunid =0;
+   uint32_t nextrunid =0;
    unsigned counter=0;
    do{
       nextrunid=fRunidPar.AsUInt();
@@ -74,12 +74,11 @@ hadaq::RunId hadaq::HldOutput::GetRunId()
       counter++;
       if(counter>100) {
          EOUT("HldOutput could not get run id from EPICS master within 10s. Use self generated id. Disable epics runid control.");
-         nextrunid = hadaq::Event::CreateRunId(); // TODO: correct error handling here, shall we terminate instead?
+         nextrunid = hadaq::RawEvent::CreateRunId(); // TODO: correct error handling here, shall we terminate instead?
          fEpicsControl=false;
       }
    } while (nextrunid==0);
    return nextrunid;
-
 }
 
 
@@ -89,7 +88,7 @@ bool hadaq::HldOutput::StartNewFile()
    // new file will change run id for complete system:
 
    if (!fEpicsControl || fRunNumber == 0) {
-      fRunNumber = hadaq::Event::CreateRunId();
+      fRunNumber = hadaq::RawEvent::CreateRunId();
       DOUT0("HldOutput Generates New Runid %d ", fRunNumber);
       fRunidPar.SetUInt(fRunNumber);
    }
@@ -131,7 +130,7 @@ unsigned hadaq::HldOutput::Write_Buffer(dabc::Buffer& buf)
    bool startnewfile = CheckBufferForNextFile(buf.GetTotalSize());
    if (fEpicsControl) {
       // check if EPICS master has assigned a new run for us:
-      RunId nextrunid = GetRunId();
+      uint32_t nextrunid = GetRunId();
       if (nextrunid > fRunNumber) {
          fRunNumber = nextrunid;
          startnewfile = true;

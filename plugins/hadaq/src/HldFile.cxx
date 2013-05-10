@@ -17,9 +17,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "dabc/logging.h"
-
-
 hadaq::HldFile::HldFile() :
    dabc::BasicFile(),
    fRunNumber(0),
@@ -32,7 +29,7 @@ hadaq::HldFile::~HldFile()
    Close();
 }
 
-bool hadaq::HldFile::OpenWrite(const char* fname,  hadaq::RunId rid)
+bool hadaq::HldFile::OpenWrite(const char* fname, uint32_t runid)
 {
    if (isOpened()) return false;
 
@@ -51,15 +48,15 @@ bool hadaq::HldFile::OpenWrite(const char* fname,  hadaq::RunId rid)
 
    // put here a dummy event into file:
 
-   hadaq::Event evnt;
-   evnt.Init(0, fRunNumber, EvtId_runStart);
+   hadaq::RawEvent evnt;
+   evnt.Init(0, runid, EvtId_runStart);
    if(!WriteBuffer(&evnt, sizeof(evnt))) {
       CloseBasicFile();
       return false;
    }
 
    fReadingMode = false;
-   fRunNumber = rid;
+   fRunNumber = runid;
 
    return true;
 }
@@ -83,17 +80,17 @@ bool hadaq::HldFile::OpenRead(const char* fname)
 
 //   DOUT0("Open HLD file %s for reading", fname);
 
-   hadaq::Event evnt;
-   uint32_t size = sizeof(hadaq::Event);
+   hadaq::RawEvent evnt;
+   uint32_t size = sizeof(hadaq::RawEvent);
 
    if (!ReadBuffer(&evnt, &size, true)) {
-      EOUT("Cannot read starting event from file");
+      fprintf(stderr,"Cannot read starting event from file");
       CloseBasicFile();
       return false;
    }
 
-   if ((size!=sizeof(hadaq::Event)) || (evnt.GetId() != EvtId_runStart)) {
-      EOUT("Did not found start event at the file beginning");
+   if ((size!=sizeof(hadaq::RawEvent)) || (evnt.GetId() != EvtId_runStart)) {
+      fprintf(stderr,"Did not found start event at the file beginning");
       CloseBasicFile();
       return false;
    }
@@ -111,7 +108,7 @@ void hadaq::HldFile::Close()
 {
   if (isWriting()) {
       // need to add empty terminating event:
-      hadaq::Event evnt;
+      hadaq::RawEvent evnt;
       evnt.Init(0, fRunNumber, EvtId_runStop);
       WriteBuffer(&evnt, sizeof(evnt));
    }
@@ -163,7 +160,7 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
       size_t restsize = readsz - checkedsz;
       if (restsize >= sizeof(hadaq::HadTu)) restsize = hdr->GetPaddedSize();
 
-      if ((restsize == sizeof(hadaq::Event)) && (((hadaq::Event*)hdr)->GetId() == EvtId_runStop)) {
+      if ((restsize == sizeof(hadaq::RawEvent)) && (((hadaq::RawEvent*)hdr)->GetId() == EvtId_runStop)) {
          // we are not deliver such stop event to the top
 
          // printf("Find stop event at the file end\n");
@@ -197,7 +194,7 @@ bool hadaq::HldFile::ReadBuffer(void* ptr, uint32_t* sz, bool onlyevent)
 }
 
 /*
-std::string hadaq::HldFile::FormatFilename (hadaq::RunId id)
+std::string hadaq::HldFile::FormatFilename (uint32_t id)
 {
    // same
    char buf[128];

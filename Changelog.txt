@@ -279,4 +279,6 @@ Main aim now bring project to real version 2 with interface finalized.
    the module was established, therefore many first buffers were lost. Was happened, while
    transport was reacting on connection activating with memory pool.
 2. Fix flushing error in hadaq::MbsTransmitterModule. When EOF marker was appearing,
-   rest of data in output iterator was not finalized and was not delivered to the output.       
+   rest of data in output iterator was not finalized and was not delivered to the output.
+3. Unified typedefs and structures HADAQ between DABC and Stream analysis.
+   Idea to use as much as possible common code in both frameworks.
