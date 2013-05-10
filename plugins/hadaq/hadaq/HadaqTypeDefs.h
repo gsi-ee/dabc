@@ -15,22 +15,6 @@
 #define HADAQ_HadaqTypeDefs
 
 #include <stdint.h>
-// #include <unistd.h>
-
-//#include "dabc/logging.h"
-
-#define HLD__SUCCESS        0
-#define HLD__FAILURE        1
-#define HLD__CLOSE_ERR      3
-#define HLD__NOFILE      2
-#define HLD__NOHLDFILE   4
-#define HLD__EOFILE      5
-#define HLD__FULLBUF      6
-#define HLD__WRITE_ERR      7
-//#define PUTHLD__FILE_EXIST  101
-//#define PUTHLD__TOOBIG      102
-//#define PUTHLD__OPEN_ERR    103
-//#define PUTHLD__EXCEED      104
 
 #define HADAQ_NEVTIDS 64UL       /* must be 2^n */
 #define HADAQ_NEVTIDS_IN_FILE 0UL      /* must be 2^n */
@@ -43,10 +27,10 @@ namespace hadaq {
    typedef uint32_t RunId;
 
    enum EvtId {
-      EvtId_data = 1,
-      EvtId_DABC = 0x00003001,      // hades DAQVERSION=3 (evtbuild.c uses DAQVERSION=2)
+      EvtId_data     = 0x00000001,
+      EvtId_DABC     = 0x00003001,      // hades DAQVERSION=3 (evtbuild.c uses DAQVERSION=2)
       EvtId_runStart = 0x00010002,
-      EvtId_runStop = 0x00010003
+      EvtId_runStop  = 0x00010003
    };
 
    enum EvtDecoding {

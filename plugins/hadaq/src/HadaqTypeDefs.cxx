@@ -89,8 +89,8 @@ void  hadaq::Event::Init(EventNumType evnt, RunId run, EvtId evid)
 {
    char* my=(char*) (this);
    hadaq::Event::PutEventHeader(&my, evid);
-   evtSeqNr = evnt;
-   evtRunNr = run;
+   SetSeqNr(evnt);
+   SetRunNr(run);
    evtPad = 0;
 }
 
