@@ -97,7 +97,7 @@ it will be also applied for the new module; otherwise, a new thread of the name
 will be created. If \func{thrdname} is not defined, \dabc~ will use module name for it.
 Returns \keyw{true} or \keyw{false} depending on the instantiation success.
 
-\item[\em bool CreateDevice\small (const char* classname, const char* devname)]:
+\item[\em bool CreateDevice\small (const std::string& classname, const std::string& devname)]:
 \index{Manager interface !CreateDevice()} 
 Instantiate a \class{Device} of class \func{classname} with the object name
 \func{devname}. Returns \keyw{true} or \keyw{false} depending on the instantiation success.

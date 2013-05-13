@@ -294,11 +294,11 @@ verbs::QueuePair* verbs::Device::CreatePortQP(const std::string& thrd_name, dabc
 
 dabc::ThreadRef verbs::Device::MakeThread(const char* name, bool force)
 {
-   ThreadRef thrd = dabc::mgr.FindThread(name, VERBS_THRD_CLASSNAME);
+   ThreadRef thrd = dabc::mgr.FindThread(name, verbs::typeThread);
 
    if (!thrd.null() || !force) return thrd;
 
-   return dabc::mgr.CreateThread(name, VERBS_THRD_CLASSNAME, GetName());
+   return dabc::mgr.CreateThread(name, verbs::typeThread, GetName());
 }
 
 dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::Reference& port)

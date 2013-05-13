@@ -282,3 +282,13 @@ Main aim now bring project to real version 2 with interface finalized.
    rest of data in output iterator was not finalized and was not delivered to the output.
 3. Unified typedefs and structures HADAQ between DABC and Stream analysis.
    Idea to use as much as possible common code in both frameworks.
+   
+13.05.2013
+1. Add possibility to create devices and threads automatically via xml file.
+   Xml code should look like: 
+
+   <Thread name="thread1" class="dabc::SocketThread"/>
+
+   <Device name="verbs" class="verbs::Device"/>
+   <Thread name="thread2" class="verbs::Thread" device="verbs"/>
+       

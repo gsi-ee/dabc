@@ -426,7 +426,7 @@ A \class{Device} is typically created in the user application by:
 \begin{small}
 \begin{verbatim}
 ...
-dabc::mgr()->CreateDevice("roc::Device", "ROC");
+dabc::mgr.CreateDevice("roc::Device", "ROC");
 ...
 \end{verbatim}     
 \end{small}
@@ -485,8 +485,8 @@ should be created:
 \begin{small}
 \begin{verbatim}
 ...
-dabc::mgr()->CreateDevice(dabc::typeSocketDevice, "UserDev");
-dabc::mgr()->CreateModule("UserModule", "MyModule");
+dabc::mgr.CreateDevice(dabc::typeSocketDevice, "UserDev");
+dabc::mgr.CreateModule("UserModule", "MyModule");
 ...
 \end{verbatim}     
 \end{small}

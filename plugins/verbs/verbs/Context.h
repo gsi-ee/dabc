@@ -32,6 +32,9 @@ namespace verbs {
    class OpenSM;
    class ContextRef;
 
+   extern const char* typeThread;
+   extern const char* typeDevice;
+
    // ________________________________________________________
 
 

@@ -139,12 +139,11 @@ namespace dabc {
       public:
          static const char* CmdName() { return "CreateDevice"; }
 
-         CmdCreateDevice(const std::string& devclass, const std::string& devname, const std::string& thrdname = "") :
+         CmdCreateDevice(const std::string& devclass, const std::string& devname) :
             Command(CmdName())
          {
             SetStr("DevClass", devclass);
             SetStr("DevName", devname);
-            SetStr("Thread", thrdname);
          }
    };
 
@@ -553,7 +552,7 @@ namespace dabc {
           * null reference will be return */
          ThreadRef CurrentThread();
 
-         bool CreateDevice(const std::string& classname, const std::string& devname, const std::string& devthrd = "");
+         bool CreateDevice(const std::string& classname, const std::string& devname);
          bool DestroyDevice(const std::string& devname);
          WorkerRef FindDevice(const std::string& name);
 

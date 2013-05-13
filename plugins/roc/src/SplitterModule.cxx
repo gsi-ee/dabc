@@ -225,7 +225,8 @@ extern "C" void InitSplitter()
 
    dabc::mgr.CreateMemoryPool(roc::xmlRocPool);
 
-   dabc::CmdCreateDevice cmd1(roc::typeAbbDevice, "AbbDev", "AbbThrd");
+   dabc::CmdCreateDevice cmd1(roc::typeAbbDevice, "AbbDev");
+   cmd1.SetStr("Thread", "AbbThrd");
    cmd1.SetStr(roc::xmlBoardAddr, "abb");
    cmd1.SetStr(roc::xmlRole, base::roleToString(base::roleDAQ));
 

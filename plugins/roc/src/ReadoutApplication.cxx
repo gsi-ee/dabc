@@ -215,8 +215,8 @@ bool roc::ReadoutApplication::CreateRawOpticInput(const std::string& portname, c
    if (isfirstoptic) {
 
       // create ABB device
-      dabc::CmdCreateDevice cmd2(roc::typeAbbDevice, opticdevname.c_str(), opticthrdname.c_str());
-      // cmd2.SetBool(roc::xmlUseDLM, true);
+      dabc::CmdCreateDevice cmd2(roc::typeAbbDevice, opticdevname);
+      cmd2.SetStr("Thread", opticthrdname);
 
       if (!dabc::mgr.Execute(cmd2)) {
          EOUT("Cannot create AbbDevice");
@@ -265,7 +265,8 @@ bool roc::ReadoutApplication::CreateRawUdpInput(const std::string& portname, con
    std::string devname = dabc::format("Roc%udev", rocindx);
    std::string thrdname = "RocReadoutThrd";
 
-   dabc::CmdCreateDevice cmd6(roc::typeUdpDevice, devname.c_str(), thrdname.c_str());
+   dabc::CmdCreateDevice cmd6(roc::typeUdpDevice, devname);
+   cmd6.SetStr("Thread", thrdname);
    cmd6.SetStr(roc::xmlBoardAddr, rocaddr);
    cmd6.SetStr(roc::xmlRole, base::roleToString(base::roleDAQ));
 
@@ -318,8 +319,8 @@ bool roc::ReadoutApplication::CreateRocCombiner(const char* modulename,
       opticdevname = "AbbDev";
       opticthrdname = "AbbDevThrd";
 
-      dabc::CmdCreateDevice cmd2(roc::typeAbbDevice, opticdevname.c_str(),
-            opticthrdname.c_str());
+      dabc::CmdCreateDevice cmd2(roc::typeAbbDevice, opticdevname);
+      cmd2.SetStr("Thread", opticthrdname);
 //      cmd2.SetBool(roc::xmlUseDLM, true);
 
       if (!dabc::mgr.Execute(cmd2)) {
@@ -394,8 +395,8 @@ bool roc::ReadoutApplication::CreateRocCombiner(const char* modulename,
 
          brds.addDLMDev(devname);
 
-         dabc::CmdCreateDevice cmd6(roc::typeUdpDevice, devname.c_str(),
-               thrdname.c_str());
+         dabc::CmdCreateDevice cmd6(roc::typeUdpDevice, devname);
+         cmd6.SetStr("Thread", thrdname);
          cmd6.SetStr(roc::xmlBoardAddr, rocaddr);
          cmd6.SetStr(roc::xmlRole, base::roleToString(base::roleDAQ));
 

@@ -162,7 +162,8 @@ base::Board* roc::Factory::DoConnect(const char* name, base::ClientRole role)
 
    if (role==base::roleNone) role = base::roleObserver;
 
-   dabc::CmdCreateDevice cmd(typeUdpDevice, devname.c_str());
+   dabc::CmdCreateDevice cmd(typeUdpDevice, devname);
+   cmd.SetStr("Thread", devname);
    cmd.SetStr(roc::xmlBoardAddr, brdname);
    cmd.SetStr(roc::xmlRole, base::roleToString(role));
    if (!dabc::mgr.Execute(cmd)) return 0;

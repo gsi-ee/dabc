@@ -20,7 +20,7 @@ dabc::Device* verbs::Factory::CreateDevice(const std::string& classname,
                                            const std::string& devname,
                                            dabc::Command cmd)
 {
-   if (classname == "verbs::Device")
+   if (classname == verbs::typeDevice)
       return new verbs::Device(devname);
 
    return 0;
@@ -28,7 +28,7 @@ dabc::Device* verbs::Factory::CreateDevice(const std::string& classname,
 
 dabc::Reference verbs::Factory::CreateThread(dabc::Reference parent, const std::string& classname, const std::string& thrdname, const std::string& thrddev, dabc::Command cmd)
 {
-   if (classname != VERBS_THRD_CLASSNAME) return dabc::Reference();
+   if (classname != verbs::typeThread) return dabc::Reference();
 
    if (thrddev.empty()) {
       EOUT("Device name not specified to create verbs thread");

@@ -35,6 +35,8 @@ unsigned dabc::Object::gNumCreated = 0;
 namespace dabc {
 
 
+   const char* xmlDeviceNode        = "Device";
+   const char* xmlThreadNode        = "Thread";
    const char* xmlMemoryPoolNode    = "MemoryPool";
    const char* xmlModuleNode        = "Module";
    const char* xmlConnectionNode    = "Connection";
@@ -82,6 +84,7 @@ namespace dabc {
    const char* xml_number           = "number";
 
    const char* typeThread           = "dabc::Thread";
+   const char* typeDevice           = "dabc::Device";
    const char* typeSocketDevice     = "dabc::SocketDevice";
    const char* typeSocketThread     = "dabc::SocketThread";
    const char* typeApplication      = "dabc::Application";

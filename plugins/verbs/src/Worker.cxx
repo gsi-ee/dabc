@@ -44,7 +44,7 @@ verbs::WorkerAddon::~WorkerAddon()
 
 std::string verbs::WorkerAddon::RequiredThrdClass() const
 {
-   return VERBS_THRD_CLASSNAME;
+   return verbs::typeThread;
 }
 
 void verbs::WorkerAddon::SetQP(QueuePair* qp)

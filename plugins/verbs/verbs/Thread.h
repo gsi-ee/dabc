@@ -22,7 +22,6 @@
 #include "verbs/Context.h"
 #endif
 
-
 #include <map>
 #include <stdint.h>
 
@@ -30,8 +29,6 @@ struct ibv_comp_channel;
 struct ibv_wc;
 
 #define VERBS_USING_PIPE
-
-#define VERBS_THRD_CLASSNAME "VerbsThread"
 
 namespace verbs {
 
@@ -88,7 +85,7 @@ namespace verbs {
 
          bool IsFastModus() const { return fFastModus > 0; }
 
-         virtual const char* ClassName() const { return VERBS_THRD_CLASSNAME; }
+         virtual const char* ClassName() const { return verbs::typeThread; }
 
          virtual bool CompatibleClass(const std::string& clname) const;
 

@@ -404,7 +404,7 @@ method \func{CreateDevice()} of \class{abb::Factory}:
 #define READSIZE 16*1024
 ...
 std::string devname="ABB";
-dabc::CmdCreateDevice dcom("abb::Device", devname.c_str());
+dabc::CmdCreateDevice dcom("abb::Device", devname);
 // arguments: (class name, device name)
 // set additional parameters for abb device here:
 dcom.SetInt(ABB_PAR_BOARDNUM, BOARD_NUM);

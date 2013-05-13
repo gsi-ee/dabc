@@ -34,6 +34,7 @@ namespace dabc {
    const char* xmlHostAttr         = "host";
    const char* xmlPortAttr         = "port";
    const char* xmlClassAttr        = "class";
+   const char* xmlDeviceAttr       = "device";
    const char* xmlThreadAttr       = "thread";
    const char* xmlAutoAttr         = "auto";
    const char* xmlValueAttr        = "value";

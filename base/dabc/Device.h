@@ -43,7 +43,7 @@ namespace dabc {
 
          virtual Transport* CreateTransport(Command cmd, const Reference& port) { return 0; }
 
-         virtual const char* ClassName() const { return "Device"; }
+         virtual const char* ClassName() const { return dabc::typeDevice; }
    };
 
    class DeviceRef : public WorkerRef {

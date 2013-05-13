@@ -33,6 +33,11 @@
 #include "dabc/logging.h"
 #include "dabc/Manager.h"
 
+
+const char* verbs::typeThread = "verbs::Thread";
+const char* verbs::typeDevice = "verbs::Device";
+
+
 int null_gid(union ibv_gid *gid)
 {
    return !(gid->raw[8] | gid->raw[9] | gid->raw[10] | gid->raw[11] |

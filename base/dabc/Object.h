@@ -36,6 +36,8 @@ namespace dabc {
    class Configuration;
    class ReferencesVector;
 
+   extern const char* xmlDeviceNode;
+   extern const char* xmlThreadNode;
    extern const char* xmlMemoryPoolNode;
    extern const char* xmlModuleNode;
    extern const char* xmlConnectionNode;
@@ -88,6 +90,7 @@ namespace dabc {
    extern const char* xmlMcastRecv;
 
    extern const char* typeThread;
+   extern const char* typeDevice;
    extern const char* typeSocketDevice;
    extern const char* typeSocketThread;
    extern const char* typeApplication;

@@ -279,6 +279,21 @@ bool dabc::ApplicationBase::DefaultInitFunc()
 {
    XMLNodePointer_t node = 0;
 
+   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlDeviceNode, true)) {
+      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      const char* clname = Xml::GetAttr(node, xmlClassAttr);
+      if ((name!=0) && (clname!=0)) dabc::mgr.CreateDevice(clname, name);
+   }
+
+   while (dabc::mgr()->cfg()->NextCreationNode(node, xmlThreadNode, true)) {
+      const char* name = Xml::GetAttr(node, xmlNameAttr);
+      const char* clname = Xml::GetAttr(node, xmlClassAttr);
+      const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
+      if (clname==0) clname = dabc::typeThread;
+      if (devname==0) devname = "";
+      if (name!=0) dabc::mgr.CreateThread(name, clname, devname);
+   }
+
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlMemoryPoolNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       DOUT0("Create memory pool %s", name);

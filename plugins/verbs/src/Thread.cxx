@@ -137,7 +137,7 @@ verbs::Thread::~Thread()
 bool verbs::Thread::CompatibleClass(const std::string& clname) const
 {
    if (dabc::Thread::CompatibleClass(clname)) return true;
-   return clname == VERBS_THRD_CLASSNAME;
+   return clname == verbs::typeThread;
 }
 
 void verbs::Thread::CloseThread()

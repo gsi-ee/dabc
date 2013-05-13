@@ -58,7 +58,7 @@ namespace verbs {
          bool IsAllocateIndividualCQ() const { return fAllocateIndividualCQ; }
          void SetAllocateIndividualCQ(bool on) { fAllocateIndividualCQ = on; }
 
-         virtual const char* ClassName() const { return "verbs::Device"; }
+         virtual const char* ClassName() const { return verbs::typeDevice; }
 
          static bool IsThreadSafeVerbs() { return fThreadSafeVerbs; }
 

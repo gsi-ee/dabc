@@ -1661,10 +1661,12 @@ dabc::ThreadRef dabc::ManagerRef::CurrentThread()
    return GetObject() ? GetObject()->CurrentThread() : dabc::ThreadRef();
 }
 
-bool dabc::ManagerRef::CreateDevice(const std::string& classname, const std::string& devname, const std::string& devthrd)
+
+bool dabc::ManagerRef::CreateDevice(const std::string& classname, const std::string& devname)
 {
-   return Execute(CmdCreateDevice(classname, devname, devthrd));
+   return Execute(CmdCreateDevice(classname, devname));
 }
+
 
 bool dabc::ManagerRef::DestroyDevice(const std::string& devname)
 {
