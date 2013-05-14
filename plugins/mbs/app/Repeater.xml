@@ -1,10 +1,5 @@
 <?xml version="1.0"?>
-
-<!-- 
-This is example how repeater for any kind of MBS server can be created.
-
--->
-
+<!-- This is example how repeater for any kind of MBS server can be created. -->
 <dabc version="2">
   <Context name="Repeater">
     <Run>

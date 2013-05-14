@@ -289,9 +289,11 @@ bool dabc::ApplicationBase::DefaultInitFunc()
       const char* name = Xml::GetAttr(node, xmlNameAttr);
       const char* clname = Xml::GetAttr(node, xmlClassAttr);
       const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
+      if (name==0) continue;
       if (clname==0) clname = dabc::typeThread;
       if (devname==0) devname = "";
-      if (name!=0) dabc::mgr.CreateThread(name, clname, devname);
+      DOUT0("Create thread %s", name);
+      dabc::mgr.CreateThread(name, clname, devname);
    }
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlMemoryPoolNode, true)) {
@@ -329,8 +331,29 @@ bool dabc::ApplicationBase::DefaultInitFunc()
       const char* outputname = Xml::GetAttr(node, "output");
       const char* inputname = Xml::GetAttr(node, "input");
 
-      if ((outputname!=0) && (inputname!=0))
-         dabc::mgr.Connect(outputname, inputname);
+      if ((outputname==0) || (inputname==0)) continue;
+      dabc::ConnectionRequest req = dabc::mgr.Connect(outputname, inputname);
+
+      if (req.null()) continue;
+
+      const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
+      req.SetConnThread(thrdname);
+
+      const char* useackn = Xml::GetAttr(node, xmlUseacknAttr);
+      if (useackn!=0)
+         req.SetUseAckn(strcmp(useackn, xmlTrueValue)==0);
+
+      const char* optional = Xml::GetAttr(node, xmlOptionalAttr);
+      if (optional!=0)
+         req.SetOptional(strcmp(optional, xmlTrueValue)==0);
+
+      const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
+      if (devname!=0) req.SetConnDevice(devname);
+
+      double val(10.);
+      const char* tmout = Xml::GetAttr(node, xmlTimeoutAttr);
+      if ((tmout!=0) && str_to_double(tmout, &val))
+         req.SetConnTimeout(val);
    }
 
    return true;

@@ -41,9 +41,9 @@ namespace dabc {
 
        // these states are representing connection state during connection establishing
 
-       void SetUseAcknDirectly(bool on) { SetAllowedField("useackn"); SetUseAckn(on); }
+       void SetUseAcknDirectly(bool on) { SetAllowedField(xmlUseacknAttr); SetUseAckn(on); }
 
-       void SetConnTimeoutDirectly(double tm) { SetAllowedField("timeout"); SetConnTimeout(tm); }
+       void SetConnTimeoutDirectly(double tm) { SetAllowedField(xmlTimeoutAttr); SetConnTimeout(tm); }
 
        std::string GetServerId() const { GET_PAR_FIELD(fServerId,"") }
        void SetServerId(const std::string& id) { SET_PAR_FIELD(fServerId, id) }

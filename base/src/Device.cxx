@@ -51,7 +51,7 @@ int dabc::Device::ExecuteCommand(Command cmd)
 
       if (tr==0) return cmd_false;
 
-      std::string thrdname = crcmd.TrThreadName();
+      std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStdStr();
       if (thrdname.empty()) thrdname = ThreadName();
 
       if (!tr.MakeThreadForWorker(thrdname)) {
@@ -65,7 +65,6 @@ int dabc::Device::ExecuteCommand(Command cmd)
          dabc::LocalTransport::ConnectPorts(tr.OutputPort(), port);
       if (port.IsOutput())
          dabc::LocalTransport::ConnectPorts(port, tr.InputPort());
-
 
       return cmd_true;
    }

@@ -199,7 +199,7 @@ bool hadaq::CombinerModule::FlushOutputBuffer()
       return false;
    }
    if (!CanSendToAllOutputs()) {
-      DOUT0("FlushOutputBuffer can't send to all outputs %u cansend %s", NumOutputs(), DBOOL(CanSend(0)));
+      DOUT0("FlushOutputBuffer can't send to all outputs NumOutputs() = %u  CanSend(0) = %s", NumOutputs(), DBOOL(CanSend(0)));
       return false;
    }
    dabc::Buffer buf = fOut.Close();

@@ -64,6 +64,8 @@ namespace dabc {
          bool UseControl();
          int GetRunTime();
          bool NormalMainThread();
+         std::string ThreadsLayout();
+
          /** Return configured number of processors,
           * which are reserved for special threads and not consumed by rest of the system */
          int NumSpecialThreads();

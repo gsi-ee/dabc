@@ -1,6 +1,6 @@
 --------------------------------------------------------------
          The Data Acquisition Backbone Core 
-         DABC Release v1.9.3  (14-February-2013)
+         DABC Release v2.0.0  (15-April-2013)
 -------------------------------------------------------------
 Copyright (C) 2009 -      
 GSI Helmholtzzentrum fuer Schwerionenforschung GmbH 
@@ -26,7 +26,7 @@ GNU General Public License for more details (http://www.gnu.org).
 ---------------------------------------------------------------
 
 This package was tested on:
-    Debian 5.0 Lenny (32 bit & 64 bit)
+    Debian 5.0/6.0 (32 bit & 64 bit)
     SuSe 11.2, 11.4, 12.1 (64bit)
     compilers: gcc 4.3.2, gcc 4.4.x 
 
@@ -36,6 +36,11 @@ INSTALLATION:
 1. Unpack this DABC distribution in the future DABC System directory,
    e.g. /usr/local/pub/dabc 
    ("cd /usr/local/pub/dabc; tar zxvf dabc.tar.gz")
+   
+   or checkout DABC from repository:
+   
+   cd /usr/local/pub; svn co https://subversion.gsi.de/dabc/trunk dabc
+   
 
 2. To compile DIM with Java extensions, JDK_INCLUDE variable should be set.
    By default, $JAVA_HOME/include path is used by DABC. This means, that
@@ -43,12 +48,13 @@ INSTALLATION:
    One can set JDK_INCLUDE explicitly before starting compilation.  
    
 3. Change to the dabc installation directory and start the build:
-   "cd $DABCSYS; make"
+   "cd your_dabc_path; make"
 
 4. After successful compilation "dabclogin" script will be generated,
    which should be called like ". dabclogin" before dabc can be used 
 
-5. Use executable "dabc_exe" for single node batch mode.
+5. Use executable "dabc_exe you_file.xml" for single node applications, 
+   "dabc_run you_file.xml" for multi-node applications
 
 6. For DIM GUI controls: 
     * Start the DIM name server _once_ (by typing dimDns)

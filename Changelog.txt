@@ -292,3 +292,20 @@ Main aim now bring project to real version 2 with interface finalized.
    <Device name="verbs" class="verbs::Device"/>
    <Thread name="thread2" class="verbs::Thread" device="verbs"/>
        
+14.05.2013
+1. Add possibility to configure threads layout. Layout defines how many threads will be
+   created for particular elements. At the moment following layouts are supported:
+      "minimal"    - minimal number of threads
+      "permodule"  - each module should use single thread, including all transports
+      "balanced"   - per each module three threads - for module, all input and all output transports
+      "maximal"    - each entity will gets its own thread
+   Threads layout can be specified in <Run> section of xml file:
+      <threads_layout value="permodule"/>
+   Default kind of threads layout is balanced.
+2. Allow to configure "timeout", "thread", "device", "useackn" and "timeout" attributes 
+   for port or for connection. These attributes will be used for transport creation for
+   particular port. For instance, one could specify thread attribute:
+      <InputPort name="Input0" url="lmd://file*.lmd" queue="10" thread="InputThrd0"/>
+   to define which thread will be used for the transport.
+           
+      

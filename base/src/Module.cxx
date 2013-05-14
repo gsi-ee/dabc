@@ -362,6 +362,26 @@ int dabc::Module::PreviewCommand(Command cmd)
 
          req.SetRemoteUrl(cmd.GetStdStr("Url"));
          req.SetServerSide(cmd.GetBool("IsServer"));
+
+         std::string thrdname = port.Cfg(xmlThreadAttr).AsStdStr();
+         if (thrdname.empty())
+            switch (dabc::mgr.GetThreadsLayout()) {
+               case dabc::layoutMinimalistic: thrdname = dabc::mgr.ThreadName(); break;
+               case dabc::layoutPerModule: thrdname = ThreadName(); break;
+               case dabc::layoutBalanced: thrdname = ThreadName() + (port.IsInput() ? "Inp" : "Out"); break;
+               case dabc::layoutMaximal: thrdname = ThreadName() + port.GetName(); break;
+               default: thrdname = ThreadName(); break;
+            }
+         req.SetConnThread(thrdname);
+
+         req.SetUseAckn(port.Cfg(xmlUseacknAttr).AsBool(false));
+
+         req.SetOptional(port.Cfg(xmlOptionalAttr).AsBool(false));
+
+         req.SetConnDevice(port.Cfg(xmlDeviceAttr).AsStdStr());
+
+         req.SetConnTimeout(port.Cfg(xmlTimeoutAttr).AsDouble(10.));
+
          cmd.SetRef("ConnReq", req);
 
          cmd_res = cmd_true;

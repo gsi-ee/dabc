@@ -165,6 +165,13 @@ int dabc::Configuration::NumSpecialThreads()
    return dabc::str_to_int(res.c_str(), &runtime) ? runtime : 0;
 }
 
+std::string dabc::Configuration::ThreadsLayout()
+{
+   if (fSelected==0) return "";
+
+   return Find1(fSelected, "", xmlRunNode, xmlThreadsLayout);
+}
+
 
 std::string dabc::Configuration::GetUserPar(const char* name, const char* dflt)
 {

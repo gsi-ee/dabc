@@ -65,7 +65,6 @@ namespace dabc {
    const char* xmlOutputMask        = "Output%u";
    const char* xmlUseAcknowledge    = "UseAcknowledge";
    const char* xmlFlushTimeout      = "FlushTimeout";
-   const char* xmlTrThread          = "TrThread";
    const char* xmlConnTimeout       = "ConnTimeout";
 
    const char* xmlTrueValue         = "true";

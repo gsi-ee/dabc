@@ -24,6 +24,10 @@
 #include "dabc/Command.h"
 #endif
 
+#ifndef DABC_ConfigBase
+#include "dabc/ConfigBase.h"
+#endif
+
 namespace dabc {
 
    class Device;
@@ -193,34 +197,34 @@ namespace dabc {
       bool IsServerSide() const { return Field("server").AsBool(false); }
 
       /** indicate if connection is optional and therefore may be ignored during failure or long timeout */
-      bool IsOptional() const { return Field("optional").AsBool(false); }
+      bool IsOptional() const { return Field(xmlOptionalAttr).AsBool(false); }
 
       /** Device name which may be used to create connection (depends from url) */
-      std::string GetConnDevice() const { return Field("device").AsStdStr(); }
+      std::string GetConnDevice() const { return Field(xmlDeviceAttr).AsStdStr(); }
 
       /** Thread name for transport */
-      std::string GetConnThread() const { return Field("thread").AsStdStr(); }
+      std::string GetConnThread() const { return Field(xmlThreadAttr).AsStdStr(); }
 
       /** Use of acknowledge in protocol */
-      bool GetUseAckn() const { return Field("useackn").AsBool(false); }
+      bool GetUseAckn() const { return Field(xmlUseacknAttr).AsBool(false); }
 
       /** time required to establish connection, if expired connection will be switched to "failed" state */
-      double GetConnTimeout() const { return Field("timeout").AsDouble(10.); }
+      double GetConnTimeout() const { return Field(xmlTimeoutAttr).AsDouble(10.); }
 
       // fields can be changed only in initial state right after creation of the request
       void SetRemoteUrl(const std::string& url) { Field("url").SetStr(url); }
 
       void SetServerSide(bool isserver = true) { Field("server").SetBool(isserver); }
 
-      void SetConnDevice(const std::string& dev) { Field("device").SetStr(dev); }
+      void SetConnDevice(const std::string& dev) { Field(xmlDeviceAttr).SetStr(dev); }
 
-      void SetOptional(bool on = true) { Field("optional").SetBool(on); }
+      void SetOptional(bool on = true) { Field(xmlOptionalAttr).SetBool(on); }
 
-      void SetUseAckn(bool on = true) { Field("useackn").SetBool(on); }
+      void SetUseAckn(bool on = true) { Field(xmlUseacknAttr).SetBool(on); }
 
-      void SetConnTimeout(double tm) { Field("timeout").SetDouble(tm); }
+      void SetConnTimeout(double tm) { Field(xmlTimeoutAttr).SetDouble(tm); }
 
-      void SetConnThread(const std::string& name) { Field("thread").SetStr(name); }
+      void SetConnThread(const std::string& name) { Field(xmlThreadAttr).SetStr(name); }
 
       protected:
 

@@ -44,6 +44,10 @@
 #include "dabc/ConnectionRequest.h"
 #endif
 
+#ifndef DABC_ConfigBase
+#include "dabc/ConfigBase.h"
+#endif
+
 namespace dabc {
 
    class Mutex;
@@ -86,14 +90,12 @@ namespace dabc {
    class CmdCreateModule : public CmdModule {
       public:
          static const char* CmdName() { return "CreateModule"; }
-         static const char* ClassArg() { return "Class"; }
-         static const char* ThreadArg() { return "Thread"; }
 
          CmdCreateModule(const std::string& classname, const std::string& modulename, const std::string& thrdname = "") :
             CmdModule(CmdName(), modulename)
             {
-               SetStr(ClassArg(), classname);
-               SetStr(ThreadArg(), thrdname);
+               SetStr(xmlClassAttr, classname);
+               if (!thrdname.empty()) SetStr(xmlThreadAttr, thrdname);
             }
    };
 
@@ -126,13 +128,13 @@ namespace dabc {
 
       DABC_COMMAND(CmdCreateApplication, "CreateApplication");
 
-      CmdCreateApplication(const std::string& appclass, const std::string& appthrd = "") :
+      CmdCreateApplication(const std::string& appclass, const std::string& thrdname = "") :
          Command(CmdName())
       {
          SetStr("AppClass", appclass);
-         SetStr("AppThrd", appthrd);
+         if (!thrdname.empty()) SetStr(xmlThreadAttr, thrdname);
       }
-     };
+   };
 
 
    class CmdCreateDevice : public Command {
@@ -200,14 +202,13 @@ namespace dabc {
       {
          SetStr(PortArg(), portname);
          SetStr(KindArg(), transportkind);
-         SetStr(xmlTrThread, thrdname);
+         if (!thrdname.empty()) SetStr(xmlThreadAttr, thrdname);
       }
 
       void SetPoolName(const std::string& name) { SetStr(xmlPoolName, name); }
 
       std::string PortName() const { return GetStdStr(PortArg()); }
       std::string TransportKind() const { return GetStdStr(KindArg()); }
-      std::string TrThreadName() const { return GetStdStr(xmlTrThread); }
       std::string PoolName() const { return GetStdStr(xmlPoolName); }
    };
 
@@ -268,6 +269,16 @@ namespace dabc {
          CleanupEnvelope(T* obj) : Object(0, "noname"), fObj(obj) {}
          virtual ~CleanupEnvelope() { delete fObj; }
    };
+
+
+   enum ThreadsLayout {
+      layoutMinimalistic,  // minimal number of threads
+      layoutPerModule,    // each module should use single thread, including all transports
+      layoutBalanced,     // per each module three threads - for module, all input and all output transports
+      layoutMaximal       // each entity will gets its own thread
+   };
+
+
 
    /** \brief This is central class of DABC which manages everything
     *
@@ -346,6 +357,8 @@ namespace dabc {
          int                   fNodeId;
          int                   fNumNodes;
 
+         ThreadsLayout          fThrLayout; //!< defines distribution of threads
+
          std::string fLastCreatedDevName;  //!< name of last created device, automatically used for connection establishing
 
          /** Find object in manager hierarchy with specified itemname.
@@ -379,7 +392,7 @@ namespace dabc {
           * \param startmode indicate if thread is real (=0)  or use current thread (=1) */
          ThreadRef DoCreateThread(const std::string& thrdname, const std::string& classname = "", const std::string& devname = "", Command cmd = 0);
 
-         WorkerRef DoCreateModule(const std::string& classname, const std::string& modulename, const std::string& thrdname = "", Command cmd = 0);
+         WorkerRef DoCreateModule(const std::string& classname, const std::string& modulename, Command cmd);
 
          Reference DoCreateObject(const std::string& classname, const std::string& objname = "", Command cmd = 0);
 
@@ -437,7 +450,6 @@ namespace dabc {
          static const char* CmdChlName()        { return "/#CommandChl"; }
 
 
-
          /** Return nodes id of local node */
          int NodeId() const { return fNodeId; }
          /** Returns number of nodes in the cluster FIXME:probably must be removed*/
@@ -456,6 +468,8 @@ namespace dabc {
          virtual bool ConnectControl();
          /** \brief Disconnect connection to control system */
          virtual void DisconnectControl();
+
+         ThreadsLayout GetThreadsLayout() const { return fThrLayout; }
 
          // -------------------------- misc functions ---------------
 
@@ -597,6 +611,9 @@ namespace dabc {
 
          unsigned NumThreads() const
             { return null() ? 0 : GetObject()->GetThreadsFolder().NumChilds(); }
+
+         ThreadsLayout GetThreadsLayout() const
+           { return null() ? layoutBalanced : GetObject()->GetThreadsLayout(); }
 
          /**\brief Request connection between two ports.
           * If both ports belong to local node, they will be connected immediately.

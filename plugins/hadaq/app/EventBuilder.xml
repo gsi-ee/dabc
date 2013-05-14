@@ -1,17 +1,16 @@
 <?xml version="1.0"?>
 
 <!-- 
-This is example file how HADAQ event building should be implemented in DABC.
+This is example file how HADAQ event building should be configured in DABC.
 Event building process implemented in Combiner module of hadaq::CombinerModule class.
-Module can have several inputs, each with separate port number for receiving data from TRB boards.
-In each input port configuration only port number has meaning.
+Module can have several inputs, each with separate port number for receiving data 
+from TRB boards. In each input port configuration only port number has meaning.
 First output of combiner module reserved for the connection to 
-optional the MBS transmitter module.
-Second output can be use to store data in hld files. To enable storage, one should
-specify two output ports and correctly configure Output1 of combiner module.
+the optional MBS transmitter module. Second output can be use to store data in hld files. 
+To enable storage, one should specify two output ports and correctly configure Output1 of combiner module.
 
 Optionally one can enable MBS transmitter module, which converts HLD to LMD format.
-To enable transmitter, one should specify auto="true" in configuration which seys DABC
+To enable transmitter, one should specify auto="true" in configuration which says DABC
 to automatically create module when starting application. 
 First output of the module reserved for stream server, second output can be used to
 store data in lmd files. 
@@ -26,7 +25,7 @@ store data in lmd files.
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
     </Run>
-
+    
     <MemoryPool name="Pool">
        <BufferSize value="200000"/>
        <NumBuffers value="1000"/>
@@ -78,7 +77,10 @@ store data in lmd files.
        <OutputPort name="Output0" url="mbs://Stream"/>
        <OutputPort name="Output1" url="lmd://test.lmd?maxsize=30&log=2"/>
 
+       <!-- this is 32-bit MBS subevent id, which than can be seen in the analysis. Here procid=0x1f is configured -->
        <SubeventFullId value="0x000001F"/>
+
+       <!-- If true, all events with the same SYNC number will be merged together into same MBS event -->
        <DoMergeSyncedEvents value="true"/>
 
        <TransmitData width="5" prec="3" low="0" up="50" debug="1"/>

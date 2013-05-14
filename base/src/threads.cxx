@@ -181,7 +181,7 @@ void dabc::PosixThread::Start(Runnable* run)
       if (CPU_ISSET(cpu, &fSpecialSet)) {
          if (cnt++ == fSpecialCpu) {
             CPU_SET(cpu, &mask);
-            cnt = -1; // indicate that mask make sence
+            cnt = -1; // indicate that mask make sense
             break;
          }
       }

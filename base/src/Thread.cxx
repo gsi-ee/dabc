@@ -43,6 +43,16 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
       {
          return fThread()->ExecuteThreadCommand(cmd);
       }
+
+/*      virtual bool Find(ConfigIO &cfg)
+      {
+         while (cfg.FindItem(xmlThreadNode)) {
+            if (cfg.CheckAttr(xmlNameAttr, fThread.GetName())) return true;
+         }
+         return false;
+      }
+*/
+
 };
 
 unsigned dabc::Thread::fThreadInstances = 0;
@@ -367,6 +377,9 @@ bool dabc::Thread::Start(double timeout_sec, bool real_thread)
 
    fThrdWorking = true;
    bool res = true;
+
+//   int affinity = fExec->Cfg("affinity").AsInt(0);
+//   if (affinity>0) DOUT0("Thread %s specified with affinity %d", GetName(), affinity);
 
    if (fRealThrd) {
       PosixThread::Start(this);

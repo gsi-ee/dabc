@@ -310,7 +310,16 @@ dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::R
    std::string maddr = portref.Cfg(xmlMcastAddr, cmd).AsStdStr();
 
    if (!maddr.empty()) {
-      std::string thrdname = portref.Cfg(dabc::xmlTrThread,cmd).AsStdStr(ThreadName());
+      std::string thrdname = portref.Cfg(dabc::xmlThreadAttr,cmd).AsStdStr();
+
+      if (thrdname.empty())
+         switch (dabc::mgr.GetThreadsLayout()) {
+            case dabc::layoutMinimalistic: thrdname = ThreadName(); break;
+            case dabc::layoutPerModule: thrdname = portref.GetModule().ThreadName(); break;
+            case dabc::layoutBalanced: thrdname = portref.GetModule().ThreadName() + (portref.IsInput() ? "Inp" : "Out"); break;
+            case dabc::layoutMaximal: thrdname = portref.GetModule().ThreadName() + portref.GetName(); break;
+            default: thrdname = portref.GetModule().ThreadName(); break;
+         }
 
       ibv_gid multi_gid;
 

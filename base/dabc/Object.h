@@ -67,7 +67,6 @@ namespace dabc {
 
    extern const char* xmlUseAcknowledge;
    extern const char* xmlFlushTimeout;
-   extern const char* xmlTrThread;
    extern const char* xmlConnTimeout;
 
    extern const char* xmlTrueValue;

@@ -36,6 +36,9 @@ namespace dabc {
    extern const char* xmlClassAttr;
    extern const char* xmlDeviceAttr;
    extern const char* xmlThreadAttr;
+   extern const char* xmlUseacknAttr;
+   extern const char* xmlOptionalAttr;
+   extern const char* xmlTimeoutAttr;
    extern const char* xmlAutoAttr;
    extern const char* xmlValueAttr;
    extern const char* xmlRunNode;
@@ -65,6 +68,7 @@ namespace dabc {
    extern const char* xmlRunTime;
    extern const char* xmlNormalMainThrd;
    extern const char* xmlNumSpecialThreads;
+   extern const char* xmlThreadsLayout;
    extern const char* xmlTaskset;
    extern const char* xmlLDPATH;
    extern const char* xmlUserLib;

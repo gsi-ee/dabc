@@ -216,7 +216,9 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
    fCfg(cfg),
    fCfgHost(),
    fNodeId(0),
-   fNumNodes(1)
+   fNumNodes(1),
+   fThrLayout(layoutBalanced),
+   fLastCreatedDevName()
 {
 
    fInstance = this;
@@ -232,6 +234,15 @@ dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
       fCfgHost = cfg->MgrHost();
       fNodeId = cfg->MgrNodeId();
       fNumNodes = cfg->MgrNumNodes();
+
+      std::string layout = cfg->ThreadsLayout();
+
+      if (layout=="minimal") fThrLayout = layoutMinimalistic; else
+      if (layout=="permodule") fThrLayout = layoutPerModule; else
+      if (layout=="balanced") fThrLayout = layoutBalanced; else
+      if (layout=="maximal") fThrLayout = layoutMaximal; else layout.clear();
+
+      if (!layout.empty()) DOUT0("Set threads layout to %s", layout.c_str());
    }
 
    // we create recursive mutex to avoid problem in Folder::GetFolder method,
@@ -780,7 +791,7 @@ int dabc::Manager::PreviewCommand(Command cmd)
    } \
 }
 
-dabc::WorkerRef dabc::Manager::DoCreateModule(const std::string& classname, const std::string& modulename, const std::string& thrdname, Command cmd)
+dabc::WorkerRef dabc::Manager::DoCreateModule(const std::string& classname, const std::string& modulename, Command cmd)
 {
    ModuleRef mdl = FindModule(modulename);
 
@@ -798,6 +809,17 @@ dabc::WorkerRef dabc::Manager::DoCreateModule(const std::string& classname, cons
          EOUT("Cannot create module of type %s", classname.c_str());
          return mdl;
       }
+
+      std::string thrdname = mdl.Cfg(xmlThreadAttr, cmd).AsStdStr();
+
+      if (thrdname.empty())
+         switch (GetThreadsLayout()) {
+            case layoutMinimalistic: thrdname = ThreadName(); break;
+            case layoutPerModule: thrdname = modulename + "Thrd"; break;
+            case layoutBalanced: thrdname = modulename + "Thrd"; break;
+            case layoutMaximal: thrdname = modulename + "Thrd"; break;
+            default: thrdname = modulename + "Thrd"; break;
+         }
 
       mdl.MakeThreadForWorker(thrdname);
 
@@ -829,11 +851,10 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    int cmd_res = cmd_true;
 
    if (cmd.IsName(CmdCreateModule::CmdName())) {
-      std::string classname = cmd.GetStdStr(CmdCreateModule::ClassArg());
+      std::string classname = cmd.GetStdStr(xmlClassAttr);
       std::string modulename = cmd.GetStdStr(CmdCreateModule::ModuleArg());
-      std::string thrdname = cmd.GetStdStr(CmdCreateModule::ThreadArg());
 
-      ModuleRef ref = DoCreateModule(classname, modulename, thrdname, cmd);
+      ModuleRef ref = DoCreateModule(classname, modulename, cmd);
       cmd_res = cmd_bool(!ref.null());
 
    } else
@@ -845,7 +866,6 @@ int dabc::Manager::ExecuteCommand(Command cmd)
    } else
    if (cmd.IsName(CmdCreateApplication::CmdName())) {
       std::string classname = cmd.GetStdStr("AppClass");
-      std::string appthrd = cmd.GetStdStr("AppThrd");
 
       if (classname.empty()) classname = typeApplication;
 
@@ -871,7 +891,15 @@ int dabc::Manager::ExecuteCommand(Command cmd)
          if (func) appref()->SetInitFunc((Application::ExternalFunction*)func);
       }
 
-      if (appthrd.empty()) appthrd = AppThrdName();
+
+      std::string appthrd = appref.Cfg(xmlThreadAttr, cmd).AsStdStr();
+
+      if (appthrd.empty())
+         switch (GetThreadsLayout()) {
+            case layoutMinimalistic: appthrd = ThreadName(); break;
+            default: appthrd = AppThrdName(); break;
+         }
+
 
       appref.MakeThreadForWorker(appthrd);
 
@@ -972,9 +1000,15 @@ int dabc::Manager::ExecuteCommand(Command cmd)
 
          if (!tr.null()) {
 
-            std::string thrdname = crcmd.TrThreadName();
-
-            if (thrdname.empty()) thrdname = port.GetModule().ThreadName();
+            std::string thrdname = port.Cfg(xmlThreadAttr, cmd).AsStdStr();
+            if (thrdname.empty())
+               switch (GetThreadsLayout()) {
+                  case layoutMinimalistic: thrdname = ThreadName(); break;
+                  case layoutPerModule: thrdname = port.GetModule().ThreadName(); break;
+                  case layoutBalanced: thrdname = port.GetModule().ThreadName() + (port.IsInput() ? "Inp" : "Out"); break;
+                  case layoutMaximal: thrdname = port.GetModule().ThreadName() + port.GetName(); break;
+                  default: thrdname = port.GetModule().ThreadName(); break;
+               }
 
             DOUT0("Creating thread %s for transport", thrdname.c_str());
 
