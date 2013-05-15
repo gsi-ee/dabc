@@ -200,7 +200,7 @@ namespace bnet {
          dabc::Queue<int> fPoolRecs;      // list of pool recs - used only in transport thread
          dabc::Queue<int> fScheduledRecs; // list of recs for time-shceduled operations - used only in transport thread
          dabc::Queue<int> fImmediateRecs; // list of recs for immediate execution - used only in transport thread
-         int fNumRunningRecs; // number of submitted records
+         int              fNumRunningRecs; // number of submitted records
          std::vector<bool> fRunningRecs;  // list of running records - used only in transport thread
          dabc::Queue<int> fCompletedRecs; // list of completed records - used only in transport thread
          dabc::Queue<int> fReplyedRecs;   // list of replies - shared between runnable and module

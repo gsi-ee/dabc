@@ -42,7 +42,7 @@ dabc::Reference verbs::Factory::CreateThread(dabc::Reference parent, const std::
       return dabc::Reference();
    }
 
-   verbs::Thread* thrd = new verbs::Thread(parent, dev()->IbContext(), thrdname);
+   verbs::Thread* thrd = new verbs::Thread(parent, thrdname, cmd, dev()->IbContext());
 
    return dabc::Reference(thrd);
 }

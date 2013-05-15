@@ -308,4 +308,24 @@ Main aim now bring project to real version 2 with interface finalized.
       <InputPort name="Input0" url="lmd://file*.lmd" queue="10" thread="InputThrd0"/>
    to define which thread will be used for the transport.
            
+15.05.2013
+1. Make more comfortable way to specify affinity of the threads and complete process.
+2. Already before it was possible to specify taskset arguments for complete dabc process in
+   <Run> section in the form like <taskset value="-c 10-15"/>. This is used in dabc_run script.
+3. One can specify default affinity for every new created thread, providing "affinity" 
+   parameter in <Run> section. Value can be following:
+       - unsigned value with processors mask
+       - string like "xxxoooxxxss" with allowed symbols 'x', 'o' and 's'.
+                  'x' - enabled, 'o' - disabled, 's' - special purpose
+                     first element in string corresponds to first processor
+       - string like "-N" where N is processors number which should be reserved 
+                  for special purposes. These processors could be later assigned 
+                  with SetAffinity("+M") call (M<N) 
+4. For every thread attribute "affinity" could be specified. Allowed values:
+       - unsigned value with processors mask
+       - string like "xxxoooxxx" were x and o identified enabled and disabled processors,
+               first element in string corresponds to first processor
+       - string like "+M" where M is processor number in special processors set, 
+                before SetDfltAffinity("-N") should be called (M<N) 
+   
       

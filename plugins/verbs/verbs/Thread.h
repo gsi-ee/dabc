@@ -74,7 +74,7 @@ namespace verbs {
       public:
          // list of all events for all kind of socket processors
 
-         Thread(dabc::Reference parent, ContextRef ctx, const std::string& name = "verbsthrd");
+         Thread(dabc::Reference parent, const std::string& name, dabc::Command cmd, ContextRef ctx);
          virtual ~Thread();
 
          void CloseThread();

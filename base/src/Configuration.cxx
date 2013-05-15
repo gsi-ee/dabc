@@ -156,13 +156,11 @@ bool dabc::Configuration::NormalMainThread()
    return Find1(fSelected, "", xmlRunNode, xmlNormalMainThrd) == xmlTrueValue;
 }
 
-int dabc::Configuration::NumSpecialThreads()
+std::string dabc::Configuration::Affinity()
 {
-   if (fSelected==0) return 0;
-   std::string res = Find1(fSelected, "", xmlRunNode, xmlNumSpecialThreads);
-   if (res.empty()) return 0;
-   int runtime(0);
-   return dabc::str_to_int(res.c_str(), &runtime) ? runtime : 0;
+   if (fSelected==0) return "";
+
+   return Find1(fSelected, "", xmlRunNode, xmlAffinity);
 }
 
 std::string dabc::Configuration::ThreadsLayout()

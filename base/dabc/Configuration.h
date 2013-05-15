@@ -66,9 +66,8 @@ namespace dabc {
          bool NormalMainThread();
          std::string ThreadsLayout();
 
-         /** Return configured number of processors,
-          * which are reserved for special threads and not consumed by rest of the system */
-         int NumSpecialThreads();
+         /** Return default affinity of any newly created thread */
+         std::string Affinity();
 
          /** Method is used to find xml nodes like Module, MemoryPool, Connection in
           * the xml file which should be used for autocreation */

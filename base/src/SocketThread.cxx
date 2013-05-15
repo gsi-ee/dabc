@@ -943,8 +943,8 @@ void dabc::SocketClientAddon::OnConnectionFailed()
 
 // _______________________________________________________________________
 
-dabc::SocketThread::SocketThread(Reference parent, const std::string& name, int numqueues) :
-   dabc::Thread(parent, name, numqueues),
+dabc::SocketThread::SocketThread(Reference parent, const std::string& name, Command cmd) :
+   dabc::Thread(parent, name, cmd),
    fPipeFired(false),
    fWaitFire(false),
    fScalerCounter(10),

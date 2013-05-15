@@ -155,46 +155,202 @@ extern "C" void* StartTRunnable(void* abc)
    pthread_exit(res);
 }
 
+// ====================================================================
 
 cpu_set_t dabc::PosixThread::fSpecialSet;
+cpu_set_t dabc::PosixThread::fDfltSet;
 
-dabc::PosixThread::PosixThread(int special_cpu) :
-   fThrd(),
-   fSpecialCpu(special_cpu)
+bool dabc::PosixThread::SetDfltAffinity(const char* aff)
 {
+   CPU_ZERO(&fSpecialSet);
+   CPU_ZERO(&fDfltSet);
+
+   if ((aff==0) || (*aff==0)) return true;
+
+   if ((*aff=='-') && (strlen(aff)>1)) {
+      unsigned numspecial(0);
+      if (!str_to_uint(aff+1, &numspecial) || (numspecial==0)) {
+         EOUT("Wrong  default affinity format %s", aff);
+         return false;
+      }
+
+      int res = sched_getaffinity(0, sizeof(fDfltSet), &fDfltSet);
+
+      if (res!=0) {
+         EOUT("sched_getaffinity res = %d", res);
+         return false;
+      }
+
+      unsigned numset(0);
+      for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
+         if (CPU_ISSET(cpu, &fDfltSet)) numset++;
+
+      if (numset<=numspecial) {
+         EOUT("Cannot reduce affinity on %u processors - only %u assigned for process", numspecial, numset);
+         return false;
+      }
+
+      unsigned cnt(0);
+      for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
+         if (CPU_ISSET(cpu, &fDfltSet)) {
+            if (++cnt>numset-numspecial) {
+               CPU_CLR(cpu, &fDfltSet);
+               CPU_SET(cpu, &fSpecialSet);
+            }
+         }
+
+      res = sched_setaffinity(0, sizeof(fDfltSet), &fDfltSet);
+      if (res!=0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
+      return true;
+   }
+
+
+   if ((*aff=='o') || (*aff=='x') || (*aff=='s')) {
+      unsigned cpu = 0;
+      const char* curr = aff;
+      bool isany(false);
+
+      while ((*curr!=0) && (cpu<CPU_SETSIZE)) {
+         switch (*curr) {
+            case 'x': CPU_SET(cpu, &fDfltSet); isany = true; break;
+            case 'o': CPU_CLR(cpu, &fDfltSet); break;
+            case 's': CPU_SET(cpu, &fSpecialSet); break;
+            default: EOUT("Wrong  default affinity format %s", aff); return false;
+         }
+         curr++; cpu++;
+      }
+
+      if (isany) {
+         int res = sched_setaffinity(0, sizeof(fDfltSet), &fDfltSet);
+         if (res!=0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
+      }
+
+      return true;
+
+   }
+
+   unsigned mask(0);
+
+   if (!str_to_uint(aff, &mask)) {
+      EOUT("Wrong  default affinity format %s", aff);
+      return false;
+   }
+
+   if (mask==0) return true;
+
+   for (unsigned cpu = 0; (cpu < sizeof(mask)*8) && (cpu<CPU_SETSIZE); cpu++)
+      if ((mask & (1 << cpu)) != 0)
+         CPU_SET(cpu, &fDfltSet);
+
+   int res = sched_setaffinity(0, sizeof(fDfltSet), &fDfltSet);
+   if (res!=0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
+
+   return true;
+}
+
+
+dabc::PosixThread::PosixThread() :
+   fThrd(),
+   fCpuSet()
+{
+   CPU_ZERO(&fCpuSet);
+   for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++)
+      if (CPU_ISSET(cpu, &fDfltSet))
+         CPU_SET(cpu, &fCpuSet);
 }
 
 dabc::PosixThread::~PosixThread()
 {
 }
 
+bool dabc::PosixThread::SetAffinity(const char* aff)
+{
+   CPU_ZERO(&fCpuSet);
+
+   if ((aff==0) || (*aff==0)) {
+      for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++)
+         if (CPU_ISSET(cpu, &fDfltSet))
+            CPU_SET(cpu, &fCpuSet);
+      return true;
+   }
+
+   if ((*aff=='+') && (strlen(aff)>1)) {
+
+      unsigned specialid(0), numspecial(0);
+      if (!str_to_uint(aff+1, &specialid)) {
+         EOUT("Wrong affinity format %s", aff);
+         return false;
+      }
+
+      for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++)
+         if (CPU_ISSET(cpu, &fSpecialSet)) {
+            if (specialid == numspecial++)
+               CPU_SET(cpu, &fCpuSet);
+         }
+
+      if (specialid >= numspecial) {
+         EOUT("Where are only %u special processors, cannot assigned id %u", numspecial, specialid);
+         return false;
+      }
+
+      return true;
+   }
+
+   if ((*aff=='o') || (*aff=='x')) {
+      unsigned cpu = 0;
+      const char* curr = aff;
+      bool isany(false);
+
+      while ((*curr!=0) && (cpu<CPU_SETSIZE)) {
+         switch (*curr) {
+            case 'x': CPU_SET(cpu, &fCpuSet); isany = true; break;
+            case 'o': CPU_CLR(cpu, &fCpuSet); break;
+            default: EOUT("Wrong  affinity format %s", aff); return false;
+         }
+         curr++; cpu++;
+      }
+
+      if (!isany) { EOUT("Wrong affinity format %s", aff); return false; }
+
+      return true;
+   }
+
+   unsigned mask(0);
+
+   if (!str_to_uint(aff, &mask)) {
+      EOUT("Wrong  affinity format %s", aff);
+      return false;
+   }
+
+   if (mask==0) {
+      EOUT("Zero affinity mask specified %s", aff);
+      return false;
+   }
+
+   for (unsigned cpu = 0; (cpu < sizeof(mask)*8) && (cpu<CPU_SETSIZE); cpu++)
+      if ((mask & (1 << cpu)) != 0)
+         CPU_SET(cpu, &fCpuSet);
+
+   return true;
+}
+
+
 void dabc::PosixThread::Start(Runnable* run)
 {
    if (run==0) return;
 
-   /** This is example how to set thread affinity */
-   cpu_set_t mask;
-   CPU_ZERO(&mask);
+   bool isany(false);
+   for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++)
+      if (CPU_ISSET(cpu, &fCpuSet)) isany = true;
 
-   int cnt(0);
-   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
-      if (CPU_ISSET(cpu, &fSpecialSet)) {
-         if (cnt++ == fSpecialCpu) {
-            CPU_SET(cpu, &mask);
-            cnt = -1; // indicate that mask make sense
-            break;
-         }
-      }
-
-   if (cnt>=0) {
+   if (!isany) {
       pthread_create(&fThrd, NULL, StartTRunnable, run);
    } else {
-
       pthread_attr_t attr;
       pthread_attr_init(&attr);
 
 #if _POSIX_C_SOURCE >= 200112L
-      pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &mask);
+      pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &fCpuSet);
 #endif
 
       pthread_create(&fThrd, &attr, StartTRunnable, run);
@@ -238,97 +394,85 @@ void dabc::PosixThread::Cancel()
    pthread_cancel(fThrd);
 }
 
-bool dabc::PosixThread::ReduceAffinity(int reduce)
+
+bool dabc::PosixThread::GetDfltAffinity(char* buf, unsigned maxbuf)
 {
-   cpu_set_t mask;
+   unsigned last(0);
 
-   CPU_ZERO(&fSpecialSet);
+   if (maxbuf==0) return false;
 
-   int res = sched_getaffinity(0, sizeof(mask), &mask);
+   for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++) {
+      char symb = 'o';
+      if (CPU_ISSET(cpu, &fDfltSet)) symb = 'x'; else
+      if (CPU_ISSET(cpu, &fSpecialSet)) symb = 's';
 
-   if (res!=0) {
-      EOUT("sched_getaffinity res = %d", res);
-      return false;
+      if (symb!='o') last = cpu;
+      if (cpu<maxbuf) buf[cpu] = symb;
    }
 
-   int numset(0);
-
-   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
-      if (CPU_ISSET(cpu, &mask)) {
-         // DOUT0("  Before: process CPU%d set", cpu);
-         numset++;
-      }
-
-   if (numset<=reduce) {
-      EOUT("Cannot reduce affinity on %d processors - only %d assigned for process", reduce, numset);
-      return false;
+   if (last+1 < maxbuf) {
+      unsigned wrap = (last / 8 + 1) * 8;
+      if (wrap < maxbuf) buf[wrap] = 0;
+                    else buf[last+1] = 0;
+      return true;
    }
 
-   int cnt(0);
-
-   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
-      if (CPU_ISSET(cpu, &mask)) {
-         cnt++;
-         if (cnt>numset-reduce) {
-            CPU_CLR(cpu, &mask);
-            CPU_SET(cpu, &fSpecialSet);
-         }
-      }
-
-   res = sched_setaffinity(0, sizeof(mask), &mask);
-   if (res!=0) { EOUT("sched_setaffinity failed res = %d", res); return false; }
-
-/*
-   res = sched_getaffinity(0, sizeof(mask), &mask);
-   if (res!=0) {
-      EOUT("sched_getaffinity res = %d", res);
-      return false;
-   }
-
-   for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
-      if (CPU_ISSET(cpu, &mask))
-         DOUT0("  After: process CPU%d set", cpu);
-*/
-
-   return true;
-
-
-   //      void CPU_CLR(int cpu, cpu_set_t *set);
-//      int CPU_ISSET(int cpu, cpu_set_t *set);
-//      void CPU_SET(int cpu, cpu_set_t *set);
-//      void CPU_ZERO(cpu_set_t *set);
+   // it was not enough place to keep all active-special threads
+   buf[maxbuf-1] = 0;
+   return false;
 }
 
-
-void dabc::PosixThread::PrintAffinity(const char* name)
+bool dabc::PosixThread::GetAffinity(bool actual, char* buf, unsigned maxbuf)
 {
-   if (name==0) name = "Thread";
 
-#if _POSIX_C_SOURCE >= 200112L
-
-   int s;
-   pthread_attr_t attr;
-
-   s = pthread_getattr_np(pthread_self(), &attr);
-   if (s != 0) { EOUT("pthread_getattr_np failed for %s", name); return; }
+   if (maxbuf==0) return false;
 
    cpu_set_t mask;
+   cpu_set_t *arg;
    CPU_ZERO(&mask);
-   s = pthread_attr_getaffinity_np(&attr, sizeof(cpu_set_t), &mask);
-   if (s != 0)
-      EOUT("pthread_attr_getaffinity_np failed");
+
+   if (!actual)
+      arg = &fCpuSet;
    else {
-      std::string out = dabc::format("%s affinity", name);
-      for (int cpu=0;cpu<CPU_SETSIZE;cpu++)
-         if (CPU_ISSET(cpu, &mask))
-            out+=dabc::format(" CPU%d", cpu);
-      DOUT0(out.c_str());
+
+   #if _POSIX_C_SOURCE >= 200112L
+      int s;
+      pthread_attr_t attr;
+      s = pthread_getattr_np(pthread_self(), &attr);
+      if (s != 0) { EOUT("pthread_getattr_np failed"); return false; }
+
+      s = pthread_attr_getaffinity_np(&attr, sizeof(cpu_set_t), &mask);
+      if (s != 0) EOUT("pthread_attr_getaffinity_np failed");
+
+      s = pthread_attr_destroy(&attr);
+      if (s != 0) EOUT("pthread_attr_destroy failed");
+
+      arg = &mask;
+   #else
+      buf[0] = 0;
+      return false;
+   #endif
    }
 
-   s = pthread_attr_destroy(&attr);
-   if (s != 0)
-      EOUT("pthread_attr_destroy failed for %s", name);
-#else
-   EOUT("Thread %s pthread_attr_getaffinity_np not supported by GLIBS", name);
-#endif
+
+   unsigned last(0);
+
+   for (unsigned cpu=0;cpu<CPU_SETSIZE;cpu++) {
+      char symb = 'o';
+      if (CPU_ISSET(cpu, arg)) symb = 'x';
+      if (symb!='o') last = cpu;
+      if (cpu<maxbuf) buf[cpu] = symb;
+   }
+
+   if (last+1 < maxbuf) {
+      unsigned wrap = (last / 8 + 1) * 8;
+      if (wrap < maxbuf) buf[wrap] = 0;
+                    else buf[last+1] = 0;
+      return true;
+   }
+
+   // it was not enough place to keep all active-special threads
+   buf[maxbuf-1] = 0;
+   return false;
 }
+

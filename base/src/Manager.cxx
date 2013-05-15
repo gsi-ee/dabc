@@ -139,7 +139,7 @@ dabc::Reference dabc::StdManagerFactory::CreateThread(Reference parent, const st
    dabc::Thread* thrd = 0;
 
    if (classname.empty() || (classname == typeThread))
-      thrd = new Thread(parent, thrdname, cmd.GetInt("NumQueues", 3));
+      thrd = new Thread(parent, thrdname, cmd);
 
    return Reference(thrd);
 }

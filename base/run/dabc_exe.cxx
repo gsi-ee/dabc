@@ -157,11 +157,16 @@ int main(int numc, char* args[])
    }
 
    // reserve special thread
-   int numspecialthrds = cfg.NumSpecialThreads();
-   if (numspecialthrds>0) {
-      dabc::PosixThread::ReduceAffinity(numspecialthrds);
-      dabc::PosixThread::PrintAffinity("Process");
-   }
+   std::string affinity = cfg.Affinity();
+   if (!affinity.empty())
+      dabc::PosixThread::SetDfltAffinity(affinity.c_str());
+   else
+      dabc::PosixThread::SetDfltAffinity();
+
+   char sbuf[200];
+   if (dabc::PosixThread::GetDfltAffinity(sbuf, sizeof(sbuf)))
+      DOUT0("Process affinity %s", sbuf);
+
 
    DOUT2("Create manager");
 

@@ -293,7 +293,7 @@ namespace dabc {
 
          // list of all events for all kind of socket processors
 
-         SocketThread(Reference parent, const std::string& name = "SocketThrd", int numqueues = 3);
+         SocketThread(Reference parent, const std::string& name, Command cmd);
          virtual ~SocketThread();
 
          virtual const char* ClassName() const { return typeSocketThread; }

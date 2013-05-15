@@ -77,8 +77,8 @@ namespace verbs {
 
 // ____________________________________________________________________
 
-verbs::Thread::Thread(dabc::Reference parent, verbs::ContextRef ctx, const std::string& name) :
-   dabc::Thread(parent, name),
+verbs::Thread::Thread(dabc::Reference parent, const std::string& name, dabc::Command cmd, ContextRef ctx) :
+   dabc::Thread(parent, name, cmd),
    fContext(ctx),
    fChannel(0),
 #ifndef VERBS_USING_PIPE

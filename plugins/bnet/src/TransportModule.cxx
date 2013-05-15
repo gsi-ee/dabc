@@ -247,11 +247,16 @@ void bnet::TransportModule::BeforeModuleStart()
 {
    DOUT2("IbTestWorkerModule starting");
 
-   int special_thrd = Cfg("SpecialThread").AsBool(false) ? 0 : -1;
+   fRunThread = new dabc::PosixThread();
 
-   fRunThread = new dabc::PosixThread(special_thrd); // create thread with specially-allocated CPU
+   if (Cfg("SpecialThread").AsBool(false))
+      fRunThread->SetAffinity("+0"); // create thread with specially-allocated CPU
 
    fRunThread->Start(fRunnable);
+
+   char sbuf[200];
+   if (fRunThread->GetAffinity(true, sbuf, sizeof(sbuf)))
+      DOUT0("Run thread affinity %s", sbuf);
 
    // set threads id to be able check correctness of calling
    fRunnable->SetThreadsIds(dabc::PosixThread::Self(), fRunThread->Id());

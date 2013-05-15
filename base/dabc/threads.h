@@ -249,32 +249,76 @@ namespace dabc {
    class PosixThread {
       protected:
          pthread_t    fThrd;
-         int         fSpecialCpu; // number of specially-allocated CPU for thread
-         void         UseCurrentAsSelf() { fThrd = pthread_self(); }
+
+         cpu_set_t    fCpuSet;   //
+
+         static cpu_set_t fDfltSet;
          static cpu_set_t fSpecialSet; // set of processors, which can be used for special threads
+
+         void         UseCurrentAsSelf() { fThrd = pthread_self(); }
+
       public:
 
          typedef void* (StartRoutine)(void*);
 
-         PosixThread(int special_cpu = -1);
+         PosixThread();
          virtual ~PosixThread();
+
+         /** Sets affinity mask for the thread
+          * Should be called before thread is started
+          * Can be:
+          *   - unsigned value with processors mask
+          *   - string like "xxxoooxxx" were x and o identified enabled and disabled processors,
+          *           first element in string corresponds to first processor
+          *   -string like "+M" where M is processor number in special processors set, before SetDfltAffinity("-N") should be called  (M<N)  */
+         bool SetAffinity(const char* aff);
+
+         /** Returns thread affinity in form of "xxxooooo"
+          * If actual==true, request will be done to the thread,
+          * otherwise configured value will be provided
+          * See SetAffinity method for more information */
+         bool GetAffinity(bool actual, char* buf, unsigned maxbuf);
+
+         /** Start thread with provided runnable */
          void Start(Runnable* run);
+
+         /** Start thread with provided routine and call arguments */
          void Start(StartRoutine* func, void* args);
+
+         /** Join thread - method waits until thread execution is completed */
          void Join();
+
+         /** Kill thread with specified signal */
          void Kill(int sig = 9);
+
+         /** Try to cancel thread execution */
          void Cancel();
 
+         /** Change thread priority */
          void SetPriority(int prio);
-//         inline bool IsItself() const { return pthread_equal(pthread_self(), fThrd) != 0; }
-         inline bool IsItself() const { return fThrd == pthread_self(); }
 
          inline Thread_t Id() const { return fThrd; }
 
          static Thread_t Self() { return pthread_self(); }
 
-         static bool ReduceAffinity(int reduce = 1);
+         //         inline bool IsItself() const { return pthread_equal(pthread_self(), fThrd) != 0; }
+         inline bool IsItself() const { return fThrd == pthread_self(); }
 
-         static void PrintAffinity(const char* name = 0);
+
+         /** Sets default affinity for next threads to be created and for main process.
+          * Can be:
+          *    - unsigned value with processors mask
+          *    - string like "xxxoooxxxss" with allowed symbols 'x', 'o' and 's'.
+          *            'x' - enabled, 'o' - disabled, 's' - special purpose
+          *             first element in string corresponds to first processor
+          *    - string like "-N" where N is processors number which should be
+          *             reserved for special purposes, these processors could be
+          *             later assigned with SetAffinity("+M") call (M<N) */
+         static bool SetDfltAffinity(const char* aff = 0);
+
+         /** Returns default affinity mask in form "xxxooosss".
+          * See SetDfltAffinity for more details */
+         static bool GetDfltAffinity(char* buf, unsigned maxbuf);
    };
 
 }

@@ -607,8 +607,6 @@ void* bnet::BnetRunnable::MainLoop()
 
    fMainLoopActive = true;
 
-   dabc::PosixThread::PrintAffinity("bnet-transport");
-
    // last time when in/out queue was checked
    double last_check_time(0.), last_yield_time(0.), last_tm(0);
 

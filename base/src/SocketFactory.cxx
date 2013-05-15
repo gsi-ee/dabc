@@ -46,7 +46,7 @@ dabc::Reference dabc::SocketFactory::CreateThread(Reference parent, const std::s
    dabc::Thread* thrd = 0;
 
    if (classname == typeSocketThread)
-      thrd = new SocketThread(parent, thrdname, cmd.GetInt("NumQueues", 3));
+      thrd = new SocketThread(parent, thrdname, cmd);
 
    return Reference(thrd);
 }

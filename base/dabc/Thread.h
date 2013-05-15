@@ -282,7 +282,7 @@ namespace dabc {
 
          static unsigned NumThreadInstances() { return fThreadInstances; }
 
-         Thread(Reference parent, const std::string& name, unsigned numqueus = 3);
+         Thread(Reference parent, const std::string& name, Command cmd = 0);
 
          virtual ~Thread();
 

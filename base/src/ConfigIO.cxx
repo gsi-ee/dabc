@@ -100,6 +100,11 @@ bool dabc::ConfigIO::CheckAttr(const char* name, const char* value)
 
 dabc::Object* dabc::ConfigIO::GetObjParent(Object* obj, int lvl)
 {
+   // make hack for the objects, which are not registered in the object manager,
+   // but which are want to use config files. Make special case:
+
+   if ((obj!=0) && (obj->GetParent()==0) && (lvl==1) && (obj!=dabc::mgr())) return dabc::mgr();
+
    while ((obj!=0) && (lvl-->0)) obj = obj->GetParent();
    return obj;
 }

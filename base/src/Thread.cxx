@@ -44,20 +44,19 @@ class dabc::Thread::ExecWorker : public dabc::Worker {
          return fThread()->ExecuteThreadCommand(cmd);
       }
 
-/*      virtual bool Find(ConfigIO &cfg)
+      virtual bool Find(ConfigIO &cfg)
       {
          while (cfg.FindItem(xmlThreadNode)) {
             if (cfg.CheckAttr(xmlNameAttr, fThread.GetName())) return true;
          }
          return false;
       }
-*/
 
 };
 
 unsigned dabc::Thread::fThreadInstances = 0;
 
-dabc::Thread::Thread(Reference parent, const std::string& name, unsigned numqueus) :
+dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
    Object(parent, name),
    PosixThread(),
    Runnable(),
@@ -66,7 +65,7 @@ dabc::Thread::Thread(Reference parent, const std::string& name, unsigned numqueu
    fRealThrd(true),
    fWorkCond(fObjectMutex),
    fQueues(0),
-   fNumQueues(numqueus),
+   fNumQueues(3),
    fNextTimeout(),
    fProcessingTimeouts(0),
    fWorkers(),
@@ -76,14 +75,6 @@ dabc::Thread::Thread(Reference parent, const std::string& name, unsigned numqueu
    fCheckThrdCleanup(false)
 {
    fThreadInstances++;
-
-   if (fNumQueues>0) {
-     fQueues = new EventsQueue[fNumQueues];
-     for (int n=0;n<fNumQueues;n++) {
-        fQueues[n].Init(256);
-        fQueues[n].scaler = 8;
-     }
-   }
 
    DOUT2("~~~~~~~~~~~~~~~~~~~~~~~ Thread %s %p created", GetName(), this);
 
@@ -95,6 +86,26 @@ dabc::Thread::Thread(Reference parent, const std::string& name, unsigned numqueu
    fExec->fThreadMutex = ThreadMutex();
    fExec->fWorkerId = fWorkers.size();
    fExec->fWorkerActive = true;
+
+   // keep numqueues 3 for the moment
+   //fNumQueues = fExec->Cfg("NumQueues", cmd).AsUInt(fNumQueues);
+
+   if (fNumQueues>0) {
+     fQueues = new EventsQueue[fNumQueues];
+     for (int n=0;n<fNumQueues;n++) {
+        fQueues[n].Init(256);
+        fQueues[n].scaler = 8;
+     }
+   }
+
+   std::string affinity = fExec->Cfg(xmlAffinity, cmd).AsStdStr();
+   if (!affinity.empty()) {
+      SetAffinity(affinity.c_str());
+      char sbuf[200];
+      if (GetAffinity(false, sbuf, sizeof(sbuf)))
+         DOUT0("Thread %s specified affinity %s mask %s", GetName(), affinity.c_str(), sbuf);
+   }
+
    fWorkers.push_back(new WorkerRec(fExec,0));
 
 //   SetLogging(true);
@@ -257,8 +268,6 @@ bool dabc::Thread::CompatibleClass(const std::string& clname) const
 
 void* dabc::Thread::MainLoop()
 {
-//   PrintAffinity(GetName());
-
    EventId evid;
    double tmout;
 
@@ -377,9 +386,6 @@ bool dabc::Thread::Start(double timeout_sec, bool real_thread)
 
    fThrdWorking = true;
    bool res = true;
-
-//   int affinity = fExec->Cfg("affinity").AsInt(0);
-//   if (affinity>0) DOUT0("Thread %s specified with affinity %d", GetName(), affinity);
 
    if (fRealThrd) {
       PosixThread::Start(this);
