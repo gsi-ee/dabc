@@ -51,6 +51,7 @@ namespace hadaq {
       mbs::WriteIterator  fTgtIter;   // iterator over output buffer
 
       uint32_t            fCurrentEventNumber; // current event number in the output buffer
+      bool                isCurrentEventNumber; //! true if current event number is valid
       uint32_t            fIgnoreEvent;  // id of event, which should be ignored
       bool                isIgnoreEvent;  // true if event should be ignored
       int                 fEvCounter; // simple counter

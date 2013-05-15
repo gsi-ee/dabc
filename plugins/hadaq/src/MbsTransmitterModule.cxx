@@ -45,8 +45,11 @@ hadaq::MbsTransmitterModule::MbsTransmitterModule(const std::string& name, dabc:
       CreateTimer("FlushTimer", flushtime, false);
 
    fCurrentEventNumber = 0;
+   isCurrentEventNumber = false;
 
-   fIgnoreEvent = 0; isIgnoreEvent = false;
+   fIgnoreEvent = 0;
+   isIgnoreEvent = false;
+
    fEvCounter = 0;
    fFlushCnt = 2;
 }
@@ -91,6 +94,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
             fTgtIter.FinishSubEvent();
             fTgtIter.FinishEvent();
             fCurrentEventNumber = 0;
+            isCurrentEventNumber = false;
          }
 
          if (fTgtIter.IsAnyData()) {
@@ -119,10 +123,11 @@ bool hadaq::MbsTransmitterModule::retransmit()
    if (isIgnoreEvent) {
       if (fIgnoreEvent == fSrcIter.evnt()->GetSeqNr()) {
          fSrcIter.NextEvent();
-         DOUT0("Ignore event");
+         DOUT0("Ignore event %u", (unsigned) fIgnoreEvent);
          return true;
       }
       isIgnoreEvent = false;
+      fIgnoreEvent = 0;
    }
 
 
@@ -134,11 +139,12 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
    // close current event if it not will be merged with next source event
    if (fTgtIter.IsEventStarted()) {
-      if (!fMergeSyncedEvents || (fCurrentEventNumber != fSrcIter.evnt()->GetSeqNr())) {
+      if (!fMergeSyncedEvents || (isCurrentEventNumber && (fCurrentEventNumber != fSrcIter.evnt()->GetSeqNr()))) {
          // first close existing events
          fTgtIter.FinishSubEvent();
          fTgtIter.FinishEvent();
          fCurrentEventNumber = 0;
+         isCurrentEventNumber = false;
          fEvCounter++;
       }
    }
@@ -190,6 +196,7 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
    if (!fTgtIter.IsEventStarted()) {
       fCurrentEventNumber = fSrcIter.evnt()->GetSeqNr();
+      isCurrentEventNumber = true;
 
       // create proper MBS event header and
       fTgtIter.NewEvent(fCurrentEventNumber);
@@ -202,11 +209,12 @@ bool hadaq::MbsTransmitterModule::retransmit()
 
    // close current event if next portion will have another id
    if (fSrcIter.IsData()) {
-      if (!fMergeSyncedEvents || (fCurrentEventNumber != fSrcIter.evnt()->GetSeqNr())) {
+      if (!fMergeSyncedEvents || (isCurrentEventNumber && (fCurrentEventNumber != fSrcIter.evnt()->GetSeqNr()))) {
          // first close existing events
          fTgtIter.FinishSubEvent();
          fTgtIter.FinishEvent();
          fCurrentEventNumber = 0;
+         isCurrentEventNumber = false;
          fEvCounter++;
       }
    }
