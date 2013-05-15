@@ -327,5 +327,5 @@ Main aim now bring project to real version 2 with interface finalized.
                first element in string corresponds to first processor
        - string like "+M" where M is processor number in special processors set, 
                 before SetDfltAffinity("-N") should be called (M<N) 
-   
+5. Mark current repository trunk as 2.0.1 version    
       

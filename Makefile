@@ -29,7 +29,7 @@ libs:: dabclogin
 
 clean::
 
-dabclogin: build/dabclogin.sh
+dabclogin: build/dabclogin.sh config/Makefile.config
 	@sed -e "s|\`pwd\`|$(CURDIR)|" -e "s|version|$(VERSSUF)|" \
 	< build/dabclogin.sh > dabclogin; chmod 755 dabclogin; echo "Create dabclogin"
 
