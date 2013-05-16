@@ -34,8 +34,8 @@ dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, 
    fExtraBufs(0)
 {
    AssignAddon(addon);
-   CreateTimer("SysTimer", -1, false);
-   DOUT0("Create InputTransport %s", GetName());
+   CreateTimer("SysTimer");
+//   DOUT0("Create InputTransport %s", GetName());
 }
 
 dabc::InputTransport::~InputTransport()
@@ -77,7 +77,7 @@ bool dabc::InputTransport::StartTransport()
 
 bool dabc::InputTransport::StopTransport()
 {
-   DOUT0("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
+//   DOUT0("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
    bool res = Transport::StopTransport();
 
@@ -162,7 +162,7 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
 
       case inpSizeCallBack:
          fInpState = inpCheckSize;
-         // we use mutex to protect field, which is accessed from addon???
+         // DOUT0("dabc::InputTransport::Get request for buffer %u", sz);
          fNextDataSize = sz;
          break;
 
@@ -241,6 +241,9 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
    }
 
    if (fInpState == inpCheckSize) {
+
+//      DOUT0("InputTransport process fInpState == inpCheckSize sz %u", fNextDataSize);
+
       switch (fNextDataSize) {
 
          case di_CallBack:
@@ -276,7 +279,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
 
       fCurrentBuf = TakeBuffer();
 
-//      DOUT0("Take buffer null %s size %u", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize());
+//      DOUT0("input transport taking buffer null %s size %u autopool %s connected %s", DBOOL(fCurrentBuf.null()), fCurrentBuf.GetTotalSize(), DBOOL(IsAutoPool()), DBOOL(IsPoolConnected()));
 
       if (!fCurrentBuf.null()) {
          fInpState = inpCheckBuffer;
@@ -438,7 +441,7 @@ dabc::OutputTransport::OutputTransport(dabc::Command cmd, const PortRef& outport
    fCurrentBuf()
 {
    AssignAddon(addon);
-   CreateTimer("SysTimer", -1, false);
+   CreateTimer("SysTimer");
 }
 
 dabc::OutputTransport::~OutputTransport()

@@ -29,12 +29,13 @@ namespace dabc {
    class ModuleSync;
 
    enum EModuleItemType {
-           mitInpPort,  // input port
-           mitOutPort,  // output port
-           mitPool,     // pool handle
-           mitParam,    // parameter
-           mitTimer,    // timer
-           mitUser      // item to produce/receive user-specific events
+           mitInpPort,   // input port
+           mitOutPort,   // output port
+           mitPool,      // pool handle
+           mitParam,     // parameter
+           mitTimer,     // timer
+           mitConnTimer, // timer to reconnect ports
+           mitUser       // item to produce/receive user-specific events
     };
 
    enum EModuleEvents {
@@ -154,6 +155,28 @@ namespace dabc {
       private:
          Timer(Reference parent, bool systimer, const std::string& name, double timeout = -1., bool synchron = false);
 
+   };
+
+   // ==================================================================================
+
+   class ConnTimer : public ModuleItem {
+      friend class Module;
+
+      protected:
+
+         std::string fPortName;
+         double fPeriod;
+
+         virtual bool ItemNeedThread() const { return true; }
+
+         virtual double ProcessTimeout(double last_diff);
+
+         void Activate() { ActivateTimeout(fPeriod); }
+         void SetPeriod(double v) { fPeriod = v; }
+
+      private:
+
+         ConnTimer(Reference parent, const std::string& name, const std::string& portname, double period);
    };
 
 }

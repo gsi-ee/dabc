@@ -18,7 +18,7 @@ roc::NxCalibrModule::NxCalibrModule(const std::string& name, dabc::Command cmd, 
    fLoopCounts(0),
    fState(0)
 {
-   CreateTimer("CalibrTimer", -1., false);
+   CreateTimer("CalibrTimer");
 
    fWorkPeriod = Cfg("WorkPeriod", cmd).AsDouble(100.);
    fCalibrPeriod = Cfg("CalibrPeriod", cmd).AsDouble(1.);

@@ -26,7 +26,8 @@ dabc::Port::Port(int kind, Reference parent, const std::string& name, unsigned q
    fSignal(SignalConfirm),
    fQueue(),
    fBindName(),
-   fMapLoopLength(0)
+   fMapLoopLength(0),
+   fDoingReconnect(false)
 {
 }
 

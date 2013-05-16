@@ -137,7 +137,7 @@ roc::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) 
 
       CreatePar("SpillRate").SetRatemeter(false, 10).SetUnits("spill");
 
-      CreateTimer("CalibrTimer", -1., false);
+      CreateTimer("CalibrTimer");
    }
 
    if (fGet4ResetPeriod>0) {

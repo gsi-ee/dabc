@@ -53,6 +53,7 @@ namespace dabc {
       friend class Manager;
       friend class ModuleItem;
       friend class Timer;
+      friend class ConnTimer;
       friend class ModuleSync;
       friend class ModuleAsync;
       friend class ModuleRef;
@@ -73,6 +74,8 @@ namespace dabc {
 
          void AddModuleItem(ModuleItem* item);
          void RemoveModuleItem(ModuleItem* item);
+
+         double ProcessConnTimer(ConnTimer* timer);
 
          inline PoolHandle* Pool(unsigned n = 0) const { return n < fPools.size() ? fPools[n] : 0; }
          inline OutputPort* Output(unsigned n = 0) const { return n < fOutputs.size() ? fOutputs[n] : 0; }
@@ -123,7 +126,7 @@ namespace dabc {
          unsigned CreateInput(const std::string& name, unsigned queue = 10);
          unsigned CreateOutput(const std::string& name, unsigned queue = 10);
 
-         unsigned CreateTimer(const std::string& name, double period_sec = 1., bool synchron = false);
+         unsigned CreateTimer(const std::string& name, double period_sec = -1., bool synchron = false);
 
          unsigned CreateUserItem(const std::string& name);
 

@@ -65,6 +65,8 @@ namespace dabc {
 
          unsigned           fMapLoopLength;
 
+         bool               fDoingReconnect;
+
          /** \brief Inherited method, should cleanup everything */
          virtual void ObjectCleanup();
 
@@ -108,6 +110,11 @@ namespace dabc {
 
          /** Method can only be used from thread itself */
          bool IsConnected() const { return fQueue.IsConnected(); }
+
+         /** Return true if reconnection procedure started for the port */
+         bool IsDoingReconnect() const { return fDoingReconnect; }
+
+         void SetDoingReconnect(bool on = true) { fDoingReconnect = on; }
 
          /** Set port ratemeter - must be used from module thread */
          void SetRateMeter(const Parameter& ref);

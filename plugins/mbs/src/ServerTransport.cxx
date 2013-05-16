@@ -183,9 +183,9 @@ unsigned mbs::ServerOutputAddon::Write_Check()
 
 unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 {
-//   DOUT0("mbs::ServerOutputAddon::Write_Buffer at state %d", fState);
-
    if (fState != oWaitingBuffer) return dabc::do_Error;
+
+//   DOUT0("mbs::ServerOutputAddon::Write_Buffer %u at state %d", buf.GetTotalSize(), fState);
 
    fHeader.Init(true);
    fHeader.SetUsedBufferSize(buf.GetTotalSize());
@@ -215,7 +215,7 @@ mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& ou
 
    if (fClientsLimit>0) DOUT0("Set client limit for MBS server to %d", fClientsLimit);
 
-   DOUT0("mbs::ServerTransport   isinp=%s", DBOOL(connaddon->IsDoingInput()));
+//   DOUT0("mbs::ServerTransport   isinp=%s", DBOOL(connaddon->IsDoingInput()));
 }
 
 mbs::ServerTransport::~ServerTransport()
@@ -342,5 +342,7 @@ void mbs::ServerTransport::ProcessConnectionActivated(const std::string& name, b
       dabc::Transport::ProcessConnectionActivated(name, on);
    } else {
       DOUT0("mbs::ServerTransport detect new client on %s %s", name.c_str(), (on ? "CONNECTED" : "DISCONNECTED") );
+      if (!on) FindPort(name).Disconnect();
+
    }
 }

@@ -522,7 +522,7 @@ void dabc::Module::AddModuleItem(ModuleItem* item)
    if (HasThread() && item->ItemNeedThread())
       item->AssignToThread(thread(), true);
 
-//   DOUT1("Module:%s Add item:%s Id:%d", GetName(), item->GetName(), id);
+//   DOUT0("Module:%s Add item:%s Id:%d", GetName(), item->GetName(), id);
 }
 
 void dabc::Module::RemoveModuleItem(ModuleItem* item)
@@ -713,18 +713,41 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
          DOUT0("Module %s running %s get disconnect event for port %s connected %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()));
 
-         InputPort* inp = dynamic_cast<InputPort*> (port);
-         if (inp) DOUT0("Input still can recv %u buffers", inp->NumCanRecv());
+         //InputPort* inp = dynamic_cast<InputPort*> (port);
+         //if (inp) DOUT0("Input still can recv %u buffers", inp->NumCanRecv());
 
          // deliver event to the user disregard running state
          ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
 
+         // if reconnect is specified and port is not declared as non-automatic
+         if (port->Cfg(xmlReconnectAttr).AsBool(false) && port->Cfg(xmlAutoAttr).AsBool(true)) {
+            std::string timername = dabc::format("ConnTimer_%s", port->GetName());
+
+            ConnTimer* timer = dynamic_cast<ConnTimer*> (FindChild(timername.c_str()));
+
+            if (timer==0) {
+               double period = port->Cfg(xmlTimeoutAttr).AsDouble(1.);
+               if (period<=0.) {
+                  EOUT("Negative timeout specified for port %s", port->ItemName().c_str());
+                  period = 1.;
+               }
+               timer = new ConnTimer(this, timername, port->GetName(), period);
+               AddModuleItem(timer);
+            }
+            timer->Activate();
+            port->SetDoingReconnect(true);
+
+            DOUT0("Module %s will try to reconnect port %s with period %f", GetName(), port->ItemName().c_str(), timer->fPeriod);
+
+            return;
+         }
+
          if (fAutoStop && IsRunning()) {
             for (unsigned n=0;n<NumOutputs();n++)
-               if (Output(n)->IsConnected()) return;
+               if (Output(n)->IsConnected() || Output(n)->IsDoingReconnect()) return;
 
             for (unsigned n=0;n<NumInputs();n++)
-               if (Input(n)->IsConnected()) return;
+               if (Input(n)->IsConnected() || Input(n)->IsDoingReconnect()) return;
 
             DOUT0("Module %s automatically stopped while all connections are now disconnected", GetName());
             DoStop();
@@ -780,6 +803,22 @@ void dabc::Module::SendToAllOutputs(Buffer& buf)
 
    buf.Release();
 }
+
+double dabc::Module::ProcessConnTimer(ConnTimer* timer)
+{
+   PortRef port = FindPort(timer->fPortName);
+   if (port.null()) return -1.;
+
+   DOUT0("Trying to reconnect port %s", port.GetName());
+
+   if (port.IsConnected() || dabc::mgr.CreateTransport(port.ItemName())) {
+      port()->SetDoingReconnect(false);
+      return -1.;
+   }
+
+   return timer->fPeriod;
+}
+
 
 // ==========================================================================
 

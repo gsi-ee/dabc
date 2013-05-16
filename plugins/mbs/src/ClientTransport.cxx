@@ -78,7 +78,7 @@ void mbs::ClientTransport::OnSendCompleted()
 
 void mbs::ClientTransport::OnRecvCompleted()
 {
-   DOUT5("mbs::ClientTransport::OnRecvCompleted() state = %d", fState);
+//   DOUT0("mbs::ClientTransport::OnRecvCompleted() state = %d", fState);
 
    switch (fState) {
       case ioRecvInfo:
@@ -129,7 +129,7 @@ void mbs::ClientTransport::OnRecvCompleted()
          } else
          if (ReadBufferSize() == 0) {
             fState = ioReady;
-            DOUT3("Keep alive buffer from MBS side");
+            DOUT0("Keep alive buffer from MBS side");
             MakeCallback(dabc::di_SkipBuffer);
          } else {
             fState = ioWaitBuffer;
@@ -167,7 +167,7 @@ void mbs::ClientTransport::OnRecvCompleted()
 
 void mbs::ClientTransport::OnConnectionClosed()
 {
-   DOUT0("Close mbs client connection");
+//   DOUT0("Close mbs client connection");
 
    // from this moment we have nothing to do and can close transport
    SubmitWorkerCmd("CloseTransport");
@@ -191,7 +191,7 @@ void mbs::ClientTransport::OnThreadAssigned()
    // check that server info is received in reasonable time
    ActivateTimeout(5.);
 
-   DOUT0("Try to recv server info at the begin");
+//   DOUT0("Try to recv server info at the begin");
 }
 
 double mbs::ClientTransport::ProcessTimeout(double last_diff)
@@ -249,7 +249,7 @@ unsigned mbs::ClientTransport::Read_Size()
 
 unsigned mbs::ClientTransport::Read_Start(dabc::Buffer& buf)
 {
-   DOUT5("mbs::ClientTransport::Read_Start");
+//   DOUT0("mbs::ClientTransport::Read_Start");
 
    if (fState != ioWaitBuffer) {
       EOUT("Start reading at wrong place");
@@ -272,7 +272,7 @@ unsigned mbs::ClientTransport::Read_Start(dabc::Buffer& buf)
 
 unsigned mbs::ClientTransport::Read_Complete(dabc::Buffer& buf)
 {
-   DOUT5("mbs::ClientTransport::Read_Complete");
+//   DOUT0("mbs::ClientTransport::Read_Complete");
 
    if (fState!=ioComplBuffer) {
       EOUT("Reading complete at strange place!!!");

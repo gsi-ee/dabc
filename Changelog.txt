@@ -334,3 +334,10 @@ Main aim now bring project to real version 2 with interface finalized.
 2. Adjust most of MBS examples to current modules creation logic. 
    Main advantage now - one do not need  special init functions for different use-cases.
 3. Remove mbs::GeneratorModule - one can use "lmd://Generator" input instead.
+4. Implement of automatic reconnection of any module input/output. 
+   For that "reconnect" attribute should be specified for the port:
+      <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="true"/>
+   One can additionally specify "timeout" attribute to specify how often reconnection 
+   should be performed.   
+5. Fix error that MemoryPool was stopped when no any connection was availible.
+   Thus when new connection was comming, it pool fail to provide new buffer to modules and transports.   

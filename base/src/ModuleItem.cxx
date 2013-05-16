@@ -86,9 +86,8 @@ void dabc::Timer::DoStart()
    fActive = true;
 
    // for sys timer timeout will be activated by module itself
-   if ((fPeriod>0.) && !IsSysTimer()) {
+   if ((fPeriod>0.) && !IsSysTimer())
       ActivateTimeout(fPeriod);
-   }
 }
 
 void dabc::Timer::DoStop()
@@ -123,4 +122,27 @@ double dabc::Timer::ProcessTimeout(double last_diff)
 
    return res;
 }
+
+
+// ==============================================================================
+
+dabc::ConnTimer::ConnTimer(Reference parent, const std::string& name, const std::string& portname, double period) :
+   ModuleItem(mitConnTimer, parent, name),
+   fPortName(portname),
+   fPeriod(period)
+{
+}
+
+double dabc::ConnTimer::ProcessTimeout(double last_diff)
+{
+   Module* m = dynamic_cast<Module*> (GetParent());
+
+   DOUT0("ConnTimer::ProcessTimeout m = %p", m);
+
+   if (m) return m->ProcessConnTimer(this);
+
+   return -1.;
+}
+
+
 

@@ -74,8 +74,7 @@ dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inppo
       }
 
       // use time to request buffer again
-      if (!IsAutoPool())
-         CreateTimer("SysTimer", -1, false);
+      if (!IsAutoPool()) CreateTimer("SysTimer");
    }
 
 

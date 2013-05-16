@@ -45,12 +45,13 @@ namespace mbs {
             ioRecvBuffer,
             ioComplBuffer,   // at this stage buffer must be completed
             ioClosing,
-            ioError };
+            ioError
+         };
 
          enum EEvents {
             evDataInput = evntSocketLast,
-            evReactivate };
-
+            evReactivate
+         };
 
          mbs::TransportInfo   fServInfo; // data, send by transport server in the beginning
          EIOState             fState;

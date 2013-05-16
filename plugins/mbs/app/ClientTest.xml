@@ -4,16 +4,16 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <debuglevel value="1"/>
-      <runtime value="10"/>
+      <runtime value="50"/>
     </Run>
     <MemoryPool name="Pool">
-       <BufferSize value="65536"/>
+       <BufferSize value="465536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
     <Module name="Read" class="mbs::TransmitterModule">
-       <Reconnect value="true"/>
-       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&total=1000"/>
-       <!--InputPort name="Input0" url="mbs://lxg0538/Transport"/-->
+       <!--Reconnect value="true"/-->
+       <!--InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&total=1000"/-->
+       <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="true"/>
        <OutputPort name="Output0" queue="10" auto="false"/>
      </Module>
   </Context>

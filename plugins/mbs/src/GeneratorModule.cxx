@@ -162,7 +162,7 @@ mbs::TransmitterModule::TransmitterModule(const std::string& name, dabc::Command
    fReconnect = Cfg("Reconnect", cmd).AsBool(false);
 
    // create timer, but do not enable it
-   if (fReconnect) CreateTimer("SysTimer", -1);
+   if (fReconnect) CreateTimer("SysTimer");
 
    CreatePar("TransmitData").SetRatemeter(false, 3.).SetUnits("MB");
    CreatePar("TransmitBufs").SetRatemeter(false, 3.).SetUnits("Buf");
@@ -226,15 +226,19 @@ bool mbs::TransmitterModule::retransmit()
 void mbs::TransmitterModule::ProcessConnectEvent(const std::string& name, bool on)
 {
    // ignore connect event
-   if (on) return;
+   if (on) {
+      DOUT0("Port %s connected to the transmitter module running %s input queue full %s",
+            name.c_str(), DBOOL(IsRunning()), DBOOL(InputQueueFull()));
+      return;
+   }
 
-   DOUT0("Port %s disconnected from retransmitter", name.c_str());
+   DOUT0("Port %s disconnected from transmitter", name.c_str());
 
    if (fReconnect && (name == InputName(0))) {
       DOUT0("We will try to reconnect input as far as possible");
       ShootTimer("SysTimer", 2.);
    } else {
-      dabc::mgr.StopApplication();
+//      dabc::mgr.StopApplication();
    }
 }
 

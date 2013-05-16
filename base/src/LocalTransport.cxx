@@ -39,13 +39,13 @@ dabc::LocalTransport::LocalTransport(unsigned capacity, bool withmutex) :
 
 dabc::LocalTransport::~LocalTransport()
 {
-   DOUT3("Destroy buffers queue %p size %u", this, fQueue.Size());
+//   DOUT3("Destroy dabc::LocalTransport %p size %u", this, fQueue.Size());
 
    if (fConnected!=0)
       EOUT("Queue was not correctly disconnected %u", fConnected);
 
    if (fQueue.Size() != 0) {
-      EOUT("!!! QUEUE WAS NOT cleaned up");
+      // EOUT("!!! QUEUE WAS NOT cleaned up");
       CleanupQueue();
    }
 }
@@ -70,7 +70,8 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
       // ignore all send operations when connection is not established
       if (fConnected != MaskConn) {
-         EOUT("Local transport ignore buffer while not fully connected");
+         EOUT("Local transport ignore buffer while not fully connected inp %s out %s",
+               (fInp.null() ? "---" : fInp.GetName()), (fOut.null() ? "---" : fOut.GetName()));
          return true;
       }
 

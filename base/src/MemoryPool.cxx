@@ -162,7 +162,7 @@ dabc::MemoryPool::MemoryPool(const std::string& name, bool withmanager) :
    fUseThread(false)
 {
    DOUT3("MemoryPool %p name %s constructor", this, GetName());
-
+   SetAutoStop(false);
 }
 
 dabc::MemoryPool::~MemoryPool()
