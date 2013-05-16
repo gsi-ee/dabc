@@ -27,6 +27,7 @@ dabc::Port::Port(int kind, Reference parent, const std::string& name, unsigned q
    fQueue(),
    fBindName(),
    fMapLoopLength(0),
+   fReconnectPeriod(-1),
    fDoingReconnect(false)
 {
 }
@@ -47,6 +48,9 @@ void dabc::Port::ReadPortConfiguration()
    if (signal == "oper")  fSignal = SignalConfirm; else
    if (signal == "every") fSignal = SignalEvery;
    fBindName = Cfg("bind").AsStdStr(fBindName);
+
+   if (Cfg(xmlReconnectAttr).AsBool(false) && Cfg(xmlAutoAttr).AsBool(true))
+      SetReconnectPeriod(Cfg(xmlTimeoutAttr).AsDouble(1.));
 }
 
 

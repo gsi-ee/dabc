@@ -65,7 +65,8 @@ namespace dabc {
 
          unsigned           fMapLoopLength;
 
-         bool               fDoingReconnect;
+         double             fReconnectPeriod; // defines how often reconnect for port should be tried, -1 disable reconnect
+         bool               fDoingReconnect;  // true if reconnection is now active
 
          /** \brief Inherited method, should cleanup everything */
          virtual void ObjectCleanup();
@@ -111,6 +112,11 @@ namespace dabc {
          /** Method can only be used from thread itself */
          bool IsConnected() const { return fQueue.IsConnected(); }
 
+         /** Specify reconnect period or disable reconnection with -1 */
+         void SetReconnectPeriod(double p = -1) { fReconnectPeriod = p; if (fReconnectPeriod<=0) SetDoingReconnect(false); }
+
+         double GetReconnectPeriod() const { return fReconnectPeriod; }
+
          /** Return true if reconnection procedure started for the port */
          bool IsDoingReconnect() const { return fDoingReconnect; }
 
@@ -154,6 +160,10 @@ namespace dabc {
 
       /** Return reference on the bind port - thread safe */
       PortRef GetBindPort();
+
+      void EnableReconnect(double period = 1.) { if (GetObject()) GetObject()->SetReconnectPeriod(period); }
+
+      void DisableReconnect() { if (GetObject()) GetObject()->SetReconnectPeriod(-1); }
 
       /** Create connection request to specified url - thread safe.
        * If connection to other dabc port is specified, isserver flag should identify which side is server

@@ -165,18 +165,16 @@ namespace dabc {
       protected:
 
          std::string fPortName;
-         double fPeriod;
 
          virtual bool ItemNeedThread() const { return true; }
 
          virtual double ProcessTimeout(double last_diff);
 
-         void Activate() { ActivateTimeout(fPeriod); }
-         void SetPeriod(double v) { fPeriod = v; }
+         void Activate(double period) { ActivateTimeout(period); }
 
       private:
 
-         ConnTimer(Reference parent, const std::string& name, const std::string& portname, double period);
+         ConnTimer(Reference parent, const std::string& name, const std::string& portname);
    };
 
 }

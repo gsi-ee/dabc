@@ -126,10 +126,9 @@ double dabc::Timer::ProcessTimeout(double last_diff)
 
 // ==============================================================================
 
-dabc::ConnTimer::ConnTimer(Reference parent, const std::string& name, const std::string& portname, double period) :
+dabc::ConnTimer::ConnTimer(Reference parent, const std::string& name, const std::string& portname) :
    ModuleItem(mitConnTimer, parent, name),
-   fPortName(portname),
-   fPeriod(period)
+   fPortName(portname)
 {
 }
 
@@ -143,6 +142,3 @@ double dabc::ConnTimer::ProcessTimeout(double last_diff)
 
    return -1.;
 }
-
-
-

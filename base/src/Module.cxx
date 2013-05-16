@@ -720,24 +720,19 @@ void dabc::Module::ProcessEvent(const EventId& evid)
          ProcessItemEvent(GetItem(evid.GetArg()), evid.GetCode());
 
          // if reconnect is specified and port is not declared as non-automatic
-         if (port->Cfg(xmlReconnectAttr).AsBool(false) && port->Cfg(xmlAutoAttr).AsBool(true)) {
+         if (port->GetReconnectPeriod() > 0) {
             std::string timername = dabc::format("ConnTimer_%s", port->GetName());
 
             ConnTimer* timer = dynamic_cast<ConnTimer*> (FindChild(timername.c_str()));
 
             if (timer==0) {
-               double period = port->Cfg(xmlTimeoutAttr).AsDouble(1.);
-               if (period<=0.) {
-                  EOUT("Negative timeout specified for port %s", port->ItemName().c_str());
-                  period = 1.;
-               }
-               timer = new ConnTimer(this, timername, port->GetName(), period);
+               timer = new ConnTimer(this, timername, port->GetName());
                AddModuleItem(timer);
             }
-            timer->Activate();
             port->SetDoingReconnect(true);
+            timer->Activate(port->GetReconnectPeriod());
 
-            DOUT0("Module %s will try to reconnect port %s with period %f", GetName(), port->ItemName().c_str(), timer->fPeriod);
+            DOUT0("Module %s will try to reconnect port %s with period %f", GetName(), port->ItemName().c_str(), port->GetReconnectPeriod());
 
             return;
          }
@@ -809,6 +804,8 @@ double dabc::Module::ProcessConnTimer(ConnTimer* timer)
    PortRef port = FindPort(timer->fPortName);
    if (port.null()) return -1.;
 
+   if (!port()->IsDoingReconnect()) return -1;
+
    DOUT0("Trying to reconnect port %s", port.GetName());
 
    if (port.IsConnected() || dabc::mgr.CreateTransport(port.ItemName())) {
@@ -816,7 +813,7 @@ double dabc::Module::ProcessConnTimer(ConnTimer* timer)
       return -1.;
    }
 
-   return timer->fPeriod;
+   return port()->GetReconnectPeriod();
 }
 
 
