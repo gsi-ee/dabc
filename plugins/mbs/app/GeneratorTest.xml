@@ -3,14 +3,13 @@
   <Context name="Gener">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMultiplexer"/>
       <logfile value="Gener.log"/>
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-    <Module name="Multi">
+    <Module name="Multi" class="dabc::MultiplexerModule">
        <NumInputs value="1"/>
        <NumOutputs value="1"/>
        <InputPort name="Input0" url="lmd2://test_0000.lmd" queue="5"/>

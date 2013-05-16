@@ -3,19 +3,18 @@
   <Context name="Client">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="InitMbsClient"/>
       <debuglevel value="1"/>
-      <runtime value="20"/>
+      <runtime value="10"/>
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-    <Module name="Receiver">
-       <InputPort name="Input">
-          <url value="mbs://lxg0538/Transport"/>
-          <InputQueueSize value="5"/>
-       </InputPort>
+    <Module name="Read" class="mbs::TransmitterModule">
+       <Reconnect value="true"/>
+       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&total=1000"/>
+       <!--InputPort name="Input0" url="mbs://lxg0538/Transport"/-->
+       <OutputPort name="Output0" queue="10" auto="false"/>
      </Module>
   </Context>
 </dabc>

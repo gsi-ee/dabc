@@ -3,14 +3,13 @@
   <Context name="Worker">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsCombiner"/>
       <logfile value="combiner.log"/>
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-    <Module name="Combiner">
+    <Module name="Combiner" class="mbs::CombinerModule">
        <NumInputs value="3"/>
        <NumOutputs value="1"/>
        <InputPort name="Input0" url="mbs://lxi009/Transport" queue="5"/>

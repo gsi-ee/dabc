@@ -13,7 +13,6 @@
   <Context host="lxg0538" name="Combiner">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="StartMbsCombiner"/>
       <logfile value="combiner.log"/>
       <debuglevel value="1"/>
       <debugger value="false"/>
@@ -22,12 +21,11 @@
        <NumBuffers value="100"/>
        <BufferSize value="${bufsize}"/>
     </MemoryPool>
-    <Module name="Combiner">
+    <Module name="Combiner" class="mbs::CombinerModule">
        <NumInputs value="2"/>
        <NumOutputs value="1"/>
        <InputPort name="Input0" url="mbs://${genhost1}:${genport}/Transport"/>
        <InputPort name="Input1" url="mbs://${genhost2}:${genport}/Transport"/>
-       <InputPort name="Input2" url="mbs://${genhost3}:${genport}/Transport"/>
        <InputPort name="Input*" queue="5" timeout="5"/>
        <OutputPort name="Output0" url="mbs://Stream"/>
        <OutputPort name="Output1" url="lmd:///data.local1/combiner.lmd?maxsize=100"/>
@@ -40,7 +38,6 @@
   <Context name="Generator*">
    <Run>
      <lib value="libDabcMbs.so"/>
-     <func value="InitMbsGenerator"/>
      <logfile value="${Context}.log"/>
      <control value="false"/>
    </Run>
@@ -48,9 +45,8 @@
       <NumBuffers value="100"/>
       <BufferSize value="${bufsize}"/>
    </MemoryPool>
-   <Module name="Generator">
-      <FirstProcId value="${DABCNODEID}"/>
-      <NumSubevents value="1"/>
+   <Module name="Generator" class="mbs::TransmitterModule">
+      <InputPort name="Input0" url="lmd://Generator?size=32&numsub=1&procid=${DABCNODEID}"/>
       <OutputPort name="Output0" url="mbs://Transport:${genport}" queue="5"/>
    </Module>
   </Context>

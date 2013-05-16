@@ -71,17 +71,15 @@
      <Context name="Gener*">
         <Run>
           <lib value="libDabcMbs.so"/>
-          <func value="InitMbsGenerator"/>
           <ctrl value="false"/>
         </Run>
-        <Module name="Generator">
+        <MemoryPool name="Pool">
            <BufferSize value="8192"/>
-           <Go4Random value="false"/>
-           <SubeventSize value="128"/>
-           <Port name="Output">
-              <OutputQueueSize value="5"/>
-              <MbsServerPort value="${custport}"/>
-           </Port>
+           <NumBuffers value="100"/>
+        </MemoryPool>
+        <Module name="Generator" class="mbs::TransmitterModule">
+          <InputPort name="Input0" url="lmd://Generator?size=128&numsub=1&procid=${DABCNODEID}"/>
+          <OutputPort name="Output0" url="mbs://Transport:${custport}"/>
         </Module>
      </Context>
      <Context name="Read*">

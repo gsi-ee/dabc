@@ -4,7 +4,6 @@
   <Run> 
      <lib value="libDabcMbs.so"/>
      <lib value="libDabcEzca.so"/>
-     <func value="StartMbsCombiner"/>
      <logfile value="Ezca.log"/>
   </Run> 
 
@@ -13,7 +12,7 @@
      <NumBuffers value="100"/>
   </MemoryPool>
   
-  <Module name="Combiner">
+  <Module name="Repeater" class="mbs::CombinerModule">
      <NumInputs value="1"/>
      <NumOutputs value="1"/>
      <CombinerRatesPrefix value="Ezca"/>

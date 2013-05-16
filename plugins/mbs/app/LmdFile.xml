@@ -3,22 +3,15 @@
   <Context name="LmdFile">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="InitMbsFileRep"/>
       <debuglevel value="1"/>
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
-    <Module name="Repeater">
-       <InputPort name="Input">
-          <url value="lmd:///data.local1/get4/newtest/test_chip_chip_uncorr_0000.lmd"/>
-          <InputQueueSize value="5"/>
-       </InputPort>
-       <OutputPort name="Output">
-          <url value="lmd://local.lmd?maxsize=20"/>
-          <OutputQueueSize value="5"/>
-       </OutputPort>
+    <Module name="Repeater" class="mbs::TransmitterModule">
+       <InputPort name="Input0" url="lmd:///data.local1/get4/newtest/test_chip_chip_uncorr_0000.lmd"/>
+       <OutputPort name="Output0" url="lmd://local.lmd?maxsize=100"/>
      </Module>
   </Context>
 </dabc>

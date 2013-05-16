@@ -1,21 +1,21 @@
 <?xml version="1.0"?>
-<dabc version="1">
+<dabc version="2">
   <Context name="Generator">
     <Run>
       <lib value="libDabcDim.so"/>
       <lib value="libDabcMbs.so"/>
-      <func value="InitMbsGenerator"/>
     </Run>
     <Observer name="dim">
        <dns value="${DIM_DNS_NODE}"/>
        <mask value="*"/>
     </Observer>
-    <Module name="Generator">
-       <Port name="Output">
-          <OutputQueueSize value="5"/>
-          <MbsServerKind value="Stream"/>
-<!--          <MbsServerPort value="${genport}"/> -->
-        </Port>
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="200"/>
+    </MemoryPool>
+    <Module name="Repeater" class="mbs::TransmitterModule">
+       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2"/>
+       <OutputPort name="Output0" url="mbs://Stream"/>
      </Module>
   </Context>
 </dabc>

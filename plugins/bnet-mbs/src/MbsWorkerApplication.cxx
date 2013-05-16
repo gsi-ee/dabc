@@ -43,21 +43,15 @@ int bnet::MbsWorkerApplication::ExecuteCommand(dabc::Command cmd)
 
 bool bnet::MbsWorkerApplication::CreateReadout(const char* portname, int portnumber)
 {
-   std::string cfg = ReadoutPar(portnumber);
+   std::string cfg;
 
-   if (IsGenerator()) {
+   if (IsGenerator())
+      cfg = dabc::format("lmd://Generator?size=32&numsub=1&procid=%d", portnumber);
+   else
+      cfg = ReadoutPar(portnumber);
 
-      std::string modulename = dabc::format("Readout%d", portnumber);
+   if (!dabc::mgr.CreateTransport(portname, cfg, "MbsReadoutThrd")) return false;
 
-      dabc::mgr.CreateModule("mbs::GeneratorModule", modulename);
-
-      dabc::mgr.Connect(modulename + "/Output", portname);
-
-      cfg = "Generator";
-
-   } else {
-      if (!dabc::mgr.CreateTransport(portname, cfg, "MbsReadoutThrd")) return false;
-   }
 
    DOUT1("Create input for port:%s cfg:%s done", portname, cfg.c_str());
 

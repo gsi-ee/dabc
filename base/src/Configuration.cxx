@@ -229,7 +229,7 @@ bool dabc::Configuration::NextCreationNode(XMLNodePointer_t& prev, const char* n
       prev = FindMatch(prev, fSelected, nodename);
       if (prev==0) break;
 
-      // if creation node marked with auto="false" atribute, than creation is disabled
+      // if creation node marked with auto="false" attribute, than creation is disabled
       const char* autoattr = Xml::GetAttr(prev, xmlAutoAttr);
       if ((autoattr!=0) && strcmp(autoattr,xmlFalseValue)==0) continue;
 

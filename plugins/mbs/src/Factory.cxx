@@ -181,9 +181,6 @@ dabc::DataOutput* mbs::Factory::CreateDataOutput(const std::string& typ)
 
 dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
 {
-   if (classname == "mbs::GeneratorModule")
-      return new mbs::GeneratorModule(modulename, cmd);
-
    if (classname == "mbs::CombinerModule")
       return new mbs::CombinerModule(modulename, cmd);
 
@@ -195,4 +192,3 @@ dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
-

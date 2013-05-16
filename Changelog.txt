@@ -329,3 +329,8 @@ Main aim now bring project to real version 2 with interface finalized.
                 before SetDfltAffinity("-N") should be called (M<N) 
 5. Mark current repository trunk as 2.0.1 version    
       
+16.05.2013
+1. Allow to specify auto="false" for every input/output port to avoid automatic port connection.
+2. Adjust most of MBS examples to current modules creation logic. 
+   Main advantage now - one do not need  special init functions for different use-cases.
+3. Remove mbs::GeneratorModule - one can use "lmd://Generator" input instead.

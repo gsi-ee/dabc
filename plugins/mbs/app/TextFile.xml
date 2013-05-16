@@ -1,14 +1,16 @@
 <?xml version="1.0"?>
-<dabc version="1">
-  <Context name="Test">
+<dabc version="2">
+  <Context name="Repeater">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="InitMbsTransmitter"/>
     </Run>
-    <Module name="Transmitter">
-       <BufferSize value="16384"/>
-       <InputPort name="Input0" url="txtlmd://wind.dat?float&numdata=15&header=0"/>
-       <OutputPort name="Output0" url="mbs://Transport"/>
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="200"/>
+    </MemoryPool>
+    <Module name="Repeater" class="mbs::TransmitterModule">
+       <InputPort name="Input0" url="lmdtxt://wind.dat?float&numdata=15&header=0"/>
+       <OutputPort name="Output0" url="lmd://test.lmd?maxsize=100"/>
      </Module>
   </Context>
 </dabc>

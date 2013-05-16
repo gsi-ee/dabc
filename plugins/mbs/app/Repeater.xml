@@ -4,22 +4,16 @@
   <Context name="Repeater">
     <Run>
       <lib value="libDabcMbs.so"/>
-      <func value="InitMbsRepeater"/>
+      <runtime value="10"/>
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
-       <NumBuffers value="200"/>
+       <NumBuffers value="100"/>
     </MemoryPool>
-    <Module name="Repeater">
+    <Module name="Repeater" class="mbs::TransmitterModule">
        <Reconnect value="true"/>
-       <Port name="Input">
-          <MbsServerName value="lxg0526"/>
-          <MbsServerKind value="Stream"/>
-       </Port>
-       <Port name="Output">
-          <MbsServerKind value="Stream"/>
-          <MbsServerPort value="6543"/>
-        </Port>
+       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&total=1000"/>
+       <OutputPort name="Output0" url="lmd://test.lmd?maxsize=100"/>
      </Module>
   </Context>
 </dabc>

@@ -314,17 +314,27 @@ bool dabc::ApplicationBase::DefaultInitFunc()
 
       if (m.null()) return false;
 
-      for (unsigned n = 0; n < m.NumInputs(); n++)
+      for (unsigned n = 0; n < m.NumInputs(); n++) {
+
+         PortRef port = m.FindPort(m.InputName(n, false));
+         if (!port.Cfg(xmlAutoAttr).AsBool(true)) continue;
+
          if (!dabc::mgr.CreateTransport(m.InputName(n))) {
             EOUT("Cannot create input transport for port %s", m.InputName(n).c_str());
             return false;
          }
+      }
 
-      for (unsigned n=0; n < m.NumOutputs(); n++)
+      for (unsigned n=0; n < m.NumOutputs(); n++) {
+
+         PortRef port = m.FindPort(m.OutputName(n, false));
+         if (!port.Cfg(xmlAutoAttr).AsBool(true)) continue;
+
          if (!dabc::mgr.CreateTransport(m.OutputName(n))) {
             EOUT("Cannot create output transport for port %s", m.OutputName(n).c_str());
             return false;
          }
+      }
    }
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlConnectionNode, false)) {

@@ -13,11 +13,10 @@
 
 #include "mbs/CombinerModule.h"
 
-#include <stdlib.h>
+#include <map>
 
 #include "dabc/Manager.h"
 
-#include <map>
 
 mbs::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd) :
    dabc::ModuleAsync(name, cmd),
@@ -637,35 +636,3 @@ unsigned int mbs::CombinerModule::GetOverflowEventNumber() const
 {
    return 0xffffffff;
 }
-
-// _________________________________________________________________________
-
-
-extern "C" void StartMbsCombiner()
-{
-   if (dabc::mgr.null()) {
-      EOUT("Manager is not created");
-      exit(1);
-   }
-
-   DOUT0("Create MBS combiner module");
-
-   dabc::mgr.CreateMemoryPool(dabc::xmlWorkPool);
-
-   dabc::ModuleRef m = dabc::mgr.CreateModule("mbs::CombinerModule", "Combiner");
-
-   for (unsigned n=0;n<m.NumInputs();n++)
-      if (!dabc::mgr.CreateTransport(m.InputName(n))) {
-         EOUT("Cannot create MBS client transport");
-         exit(131);
-      }
-
-   for (unsigned n=0;n<m.NumOutputs();n++)
-      if (!dabc::mgr.CreateTransport(m.OutputName(n))) {
-         EOUT("Cannot create output transport");
-         exit(132);
-      }
-}
-
-
-

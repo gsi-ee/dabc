@@ -47,34 +47,6 @@ namespace mbs {
          virtual unsigned Read_Complete(dabc::Buffer& buf);
    };
 
-   // ===================================================================
-
-   class GeneratorModule : public dabc::ModuleAsync {
-
-      protected:
-
-         uint32_t    fEventCount;
-         uint16_t    fNumSubevents;
-         uint16_t    fFirstProcId;
-         uint32_t    fSubeventSize;
-         bool        fIsGo4RandomFormat;
-         uint32_t    fFullId; /** subevent id, if number subevents==1 and nonzero */
-
-         bool        fShowInfo;   //!< enable/disable output of generator info
-
-         void   FillRandomBuffer(dabc::Buffer& buf);
-
-         virtual void BeforeModuleStart();
-
-      public:
-         GeneratorModule(const std::string& name, dabc::Command cmd = 0);
-
-         virtual bool ProcessSend(unsigned port);
-
-         virtual int ExecuteCommand(dabc::Command cmd);
-   };
-
-
    class ReadoutModule : public dabc::ModuleAsync {
 
       public:
