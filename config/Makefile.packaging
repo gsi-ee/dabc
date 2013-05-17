@@ -16,10 +16,13 @@ DABC_IMPS = $(wildcard base/*/*.cxx)
 DABC_IMPS += $(wildcard plugins/*/*/*.cxx)
 DABC_IMPS += $(wildcard applications/*/*.cxx)
 
+DABC_PLUGINS_PACK += plugins/mbs plugins/verbs plugins/dim plugins/ezca plugins/hadaq plugins/rfio 
+
+DABC_APPLICATIONS_PACK += applications/core-test applications/net-test
 
 package: clean
 	@echo "Creating package $(DABCTAR_NAME) ..."
-	tar cf $(DABCTAR_NAME) README.txt LICENSE.txt RELEASENOTES.txt  \
+	tar cf $(DABCTAR_NAME) README.txt LICENSE.txt Changelog.txt  \
            Makefile base/ build/*.sh config/Makefile.config config/Makefile.rules \
            $(DABC_PLUGINS_PACK) $(DABC_APPLICATIONS_PACK) \
             --exclude=.svn --exclude=*.log --exclude=*.bak 

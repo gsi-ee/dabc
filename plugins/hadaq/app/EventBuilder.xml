@@ -24,6 +24,7 @@ store data in lmd files.
       <lib value="libDabcHadaq.so"/>  
       <logfile value="hadaqevtbuild.log"/>
       <loglimit value="1000000"/>
+      <!--affinity value="-1"/-->
     </Run>
     
     <MemoryPool name="Pool">
@@ -88,4 +89,9 @@ store data in lmd files.
      </Module>
 
   </Context>
+
+  <!--Context name="*">
+      <Thread name="CombinerThrdInp" class="dabc::SocketThread" affinity="+0"/>
+  </Context-->
+  
 </dabc>
