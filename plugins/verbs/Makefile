@@ -2,7 +2,9 @@
 # switch to enable OFED library support 
 ifndef USEOFEDVERBS
 ifneq ($(wildcard /usr/lib64/libibverbs.*)$(wildcard /usr/lib/libibverbs.*),)
+ifneq ($(wildcard /usr/include/infiniband/*.h),)
 USEOFEDVERBS    = true
+endif
 endif
 endif
 
