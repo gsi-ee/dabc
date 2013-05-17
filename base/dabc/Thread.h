@@ -64,6 +64,12 @@ namespace dabc {
    class WorkerAddon;
    class ThreadRef;
 
+   /** \brief Represent thread functionality.
+    *
+    *
+    * \ingroup dabc_core_classes
+    */
+
    class Thread : public Object,
                   protected PosixThread,
                   protected Runnable {

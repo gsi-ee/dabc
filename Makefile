@@ -33,7 +33,7 @@ docs:: doxy
 
 doxy:
 	@echo "Creating doxygen documentation"
-	cd doc; rm -rf html; doxygen DoxygenConfig
+	cd doc; doxygen DoxygenConfig
 
 clean-doxy:
 	@echo "Clean doxygen documentation"

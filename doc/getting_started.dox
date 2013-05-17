@@ -1,0 +1,72 @@
+/*! \page  dabc_getting_started  Getting started with DABC
+
+
+\section dabc_intro_download Downloading DABC
+
+Most proper way to download DABC is to check out head version from repository.
+
+    [shell] svn co https://subversion.gsi.de/dabc/trunk dabc
+
+Alternative, one could check out specific tag:
+
+    [shell] svn co https://subversion.gsi.de/dabc/tags/200-00 dabc200-00
+
+
+
+\section dabc_intro_compile Compiling DABC
+
+To compile DABC, in most cases it is enough to call `make` in checout directory.
+
+    [shell] make -j4
+
+It is recommended to use -jN option to speedup compilation. 
+
+DABC includes [DIM](http://dim.web.cern.ch/dim/), which is not compiles smoothely on all platforms.
+To disable DIM compilation, one could use:
+
+    [shell] make -j4 nodim=1
+
+
+
+\section dabc_intro_run Running DABC
+
+When DABC successfully compiled, dabclogin script is created.
+Script must be called before DABC can be used:
+
+    [shell] . your_dabc_path/dabclogin
+
+If necessary, dabclogin script could be copied to any other location, 
+which is availible in PATH directory (for instance, `~/bin`). In that case one could do:
+
+    [shell] . dabclogin
+
+To run DABC, xml configuration file should be created. There are different files.
+Some of them could be found in `$DABCSYS/applications` directory. For instance:
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.xml}
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="core-test">
+    <Run>
+      <lib value="libDabcCoreTest.so"/>
+      <runfunc value="RunCoreTest"/>
+      <logfile value="core-test.log"/>
+      <runtime value="100"/>
+    </Run>
+  </Context>
+</dabc>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To run single-node application, one should call:
+
+    [shell] dabc_exe your_file.xml
+
+Running application can be always normally stopped by Ctrl-C keys combination. 
+
+If XML files contains more than one application, one should use `dabc_run` script:
+
+    [shell] dabc_run your_file.xml run
+  
+
+
+*/

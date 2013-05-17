@@ -1,5 +1,11 @@
 # Doxyfile 1.5.6
 
+# S.Linev extras
+
+QT_AUTOBRIEF = YES
+JAVADOC_AUTOBRIEF = YES
+
+
 # This file describes the settings to be used by the documentation system
 # doxygen (www.doxygen.org) for a project
 #
@@ -25,7 +31,7 @@ DOXYFILE_ENCODING      = UTF-8
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = DABC
+PROJECT_NAME           = "DABC (Data Acquisition Backbone Core)"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
@@ -563,7 +569,7 @@ RECURSIVE              = YES
 # excluded from the INPUT source files. This way you can easily exclude a 
 # subdirectory from a directory tree whose root is specified with the INPUT tag.
 
-EXCLUDE                = 
+EXCLUDE                = ../plugins/dim/dim_v20r5 ../plugins/dim/gui ../plugins/roc ../plugins/bnet ../plugins/bnet-mbs
 
 # The EXCLUDE_SYMLINKS tag can be used select whether or not files or 
 # directories that are symbolic links (a Unix filesystem feature) are excluded 

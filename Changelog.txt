@@ -349,4 +349,6 @@ Main aim now bring project to real version 2 with interface finalized.
      <InputPort name="Input0" url="mbs://lxg0538/Stream" rate="DataRate"/>
 2. Create dabc::RepeaterModule. It's only functionality - translate data from each input to
    correspondent output. Thus number inputs and outputs should be the same.
-             
+3. Remove old latex-based documentation, start long transition to doxygen-based one.
+   At least 1.8.0 version of doxygen is required. 
+   To generate documentation files, call "make doxy".              

@@ -48,6 +48,12 @@ namespace dabc {
    class ModuleAsync;
    class ModuleRef;
 
+   /** \brief Main functional class for user code.
+    *
+    *
+    * \ingroup dabc_core_classes
+    */
+
    class Module : public Worker {
 
       friend class Manager;

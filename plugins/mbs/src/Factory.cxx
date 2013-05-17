@@ -186,3 +186,18 @@ dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }
+
+/** \page mbs_plugin MBS plugin for DABC (libDabcMbs.so)
+ *
+ *  \subpage mbs_plugin_doc
+ *
+ *  \ingroup dabc_plugins
+ *
+ */
+
+
+/** \page mbs_plugin_doc Short description of MBS plugin
+ *
+ * This should be description of MBS plugin for DABC.
+ *
+ */
