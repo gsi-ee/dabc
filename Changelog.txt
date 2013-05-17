@@ -351,4 +351,6 @@ Main aim now bring project to real version 2 with interface finalized.
    correspondent output. Thus number inputs and outputs should be the same.
 3. Remove old latex-based documentation, start long transition to doxygen-based one.
    At least 1.8.0 version of doxygen is required. 
-   To generate documentation files, call "make doxy".              
+   To generate documentation files, call "make doxy".
+4. Produce 2.0.2 tag - currently working version of HADAQ readout
+              
