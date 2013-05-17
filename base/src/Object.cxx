@@ -41,7 +41,10 @@ namespace dabc {
    const char* xmlModuleNode        = "Module";
    const char* xmlConnectionNode    = "Connection";
 
-   const char* xmlQueueSize         = "queue";
+   const char* xmlQueueAttr         = "queue";
+   const char* xmlBindAttr          = "bind";
+   const char* xmlRateAttr          = "rate";
+   const char* xmlLoopAttr          = "loop";
    const char* xmlInputQueueSize    = "InputQueueSize";
    const char* xmlOutputQueueSize   = "OutputQueueSize";
    const char* xmlInlineDataSize    = "InlineDataSize";

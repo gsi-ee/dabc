@@ -44,6 +44,20 @@ namespace dabc {
          virtual void ProcessOutputEvent(unsigned port);
    };
 
+   // ====================================================================
+
+   class RepeaterModule : public dabc::ModuleAsync {
+
+      public:
+         RepeaterModule(const std::string& name, dabc::Command cmd = 0);
+
+         virtual bool ProcessRecv(unsigned port);
+
+         virtual bool ProcessSend(unsigned port);
+   };
+
+
+
 }
 
 #endif

@@ -11,17 +11,12 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#ifndef MBS_GeneratorModule
-#define MBS_GeneratorModule
-
-#ifndef DABC_ModuleAsync
-#include "dabc/ModuleAsync.h"
-#endif
+#ifndef MBS_GeneratorInput
+#define MBS_GeneratorInput
 
 #ifndef DABC_DataIO
 #include "dabc/DataIO.h"
 #endif
-
 
 namespace mbs {
 
@@ -45,36 +40,6 @@ namespace mbs {
          virtual unsigned Read_Size();
 
          virtual unsigned Read_Complete(dabc::Buffer& buf);
-   };
-
-   class ReadoutModule : public dabc::ModuleAsync {
-
-      public:
-         ReadoutModule(const std::string& name, dabc::Command cmd = 0);
-
-         virtual bool ProcessRecv(unsigned port);
-   };
-
-   class TransmitterModule : public dabc::ModuleAsync {
-
-      protected:
-
-         bool  fReconnect; // indicate that module should try to reconnect input rather than stop execution
-
-         bool retransmit();
-
-      public:
-      	TransmitterModule(const std::string& name, dabc::Command cmd = 0);
-
-         virtual bool ProcessRecv(unsigned port);
-
-         virtual bool ProcessSend(unsigned port);
-
-         virtual void ProcessConnectEvent(const std::string& name, bool on);
-
-         virtual void ProcessTimerEvent(unsigned timer);
-
-         virtual void BeforeModuleStart();
    };
 
 }

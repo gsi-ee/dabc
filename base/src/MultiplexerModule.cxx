@@ -22,6 +22,8 @@ dabc::MultiplexerModule::MultiplexerModule(const std::string& name, dabc::Comman
    fQueue(100),
    fDataRateName()
 {
+   EnsurePorts(1, 1);
+
    fDataRateName = Cfg("DataRateName", cmd).AsStdStr();
 
    if (!fDataRateName.empty())
@@ -64,4 +66,48 @@ void dabc::MultiplexerModule::CheckDataSending()
 
       SendToAllOutputs(buf);
    }
+}
+
+// ========================================================================================
+
+
+
+dabc::RepeaterModule::RepeaterModule(const std::string& name, dabc::Command cmd) :
+   dabc::ModuleAsync(name, cmd)
+{
+   EnsurePorts(1, 1);
+
+   std::string ratemeter = Cfg("DataRateName", cmd).AsStdStr();
+
+   if (!ratemeter.empty()) {
+      CreatePar(ratemeter).SetRatemeter(false, 3.).SetUnits("MB");
+
+      for (unsigned n=0;n<NumInputs();n++)
+         SetPortRatemeter(InputName(n), Par(ratemeter));
+   }
+
+   DOUT1("Create dabc::RepeaterModule:: %s", GetName());
+}
+
+bool dabc::RepeaterModule::ProcessRecv(unsigned port)
+{
+   bool isout = (port<NumOutputs());
+
+   if (isout && !CanSend(port)) return false;
+
+   dabc::Buffer buf = Recv(port);
+   if (isout) Send(port, buf);
+         else buf.Release();
+
+   return true;
+}
+
+bool dabc::RepeaterModule::ProcessSend(unsigned port)
+{
+   if (!CanRecv(port)) return false;
+
+   dabc::Buffer buf = Recv(port);
+   Send(port, buf);
+
+   return true;
 }

@@ -131,6 +131,9 @@ dabc::Module* dabc::StdManagerFactory::CreateModule(const std::string& classname
    if (classname == "dabc::MultiplexerModule")
       return new MultiplexerModule(modulename, cmd);
 
+   if (classname == "dabc::RepeaterModule")
+      return new dabc::RepeaterModule(modulename, cmd);
+
    return 0;
 }
 

@@ -25,9 +25,9 @@
 #include "mbs/LmdInput.h"
 #include "mbs/LmdOutput.h"
 #include "mbs/TextInput.h"
+#include "mbs/GeneratorInput.h"
 #include "mbs/ServerTransport.h"
 #include "mbs/ClientTransport.h"
-#include "mbs/GeneratorModule.h"
 #include "mbs/CombinerModule.h"
 
 dabc::FactoryPlugin mbsfactory(new mbs::Factory("mbs"));
@@ -183,12 +183,6 @@ dabc::Module* mbs::Factory::CreateModule(const std::string& classname, const std
 {
    if (classname == "mbs::CombinerModule")
       return new mbs::CombinerModule(modulename, cmd);
-
-   if (classname == "mbs::ReadoutModule")
-      return new mbs::ReadoutModule(modulename, cmd);
-
-   if (classname == "mbs::TransmitterModule")
-      return new mbs::TransmitterModule(modulename, cmd);
 
    return dabc::Factory::CreateModule(classname, modulename, cmd);
 }

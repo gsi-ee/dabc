@@ -42,7 +42,10 @@ namespace dabc {
    extern const char* xmlModuleNode;
    extern const char* xmlConnectionNode;
 
-   extern const char* xmlQueueSize;
+   extern const char* xmlQueueAttr;
+   extern const char* xmlBindAttr;
+   extern const char* xmlRateAttr;
+   extern const char* xmlLoopAttr;
    extern const char* xmlInputQueueSize;
    extern const char* xmlOutputQueueSize;
    extern const char* xmlInlineDataSize;

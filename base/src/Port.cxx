@@ -26,6 +26,7 @@ dabc::Port::Port(int kind, Reference parent, const std::string& name, unsigned q
    fSignal(SignalConfirm),
    fQueue(),
    fBindName(),
+   fRateName(),
    fMapLoopLength(0),
    fReconnectPeriod(-1),
    fDoingReconnect(false)
@@ -40,14 +41,15 @@ dabc::Port::~Port()
 
 void dabc::Port::ReadPortConfiguration()
 {
-   fQueueCapacity = Cfg(xmlQueueSize).AsInt(fQueueCapacity);
-   fMapLoopLength = Cfg("loop").AsInt(fMapLoopLength);
+   fQueueCapacity = Cfg(xmlQueueAttr).AsInt(fQueueCapacity);
+   fMapLoopLength = Cfg(xmlLoopAttr).AsInt(fMapLoopLength);
    std::string signal = Cfg("signal").AsStdStr();
    if (signal=="none") fSignal = SignalNone; else
    if ((signal == "confirm") || (signal == "normal")) fSignal = SignalConfirm; else
    if (signal == "oper")  fSignal = SignalConfirm; else
    if (signal == "every") fSignal = SignalEvery;
-   fBindName = Cfg("bind").AsStdStr(fBindName);
+   fBindName = Cfg(xmlBindAttr).AsStdStr(fBindName);
+   fRateName = Cfg(xmlRateAttr).AsStdStr(fRateName);
 
    if (Cfg(xmlAutoAttr).AsBool(true))
       SetReconnectPeriod(Cfg(xmlReconnectAttr).AsDouble(-1.));
@@ -314,7 +316,7 @@ dabc::PoolHandle::PoolHandle(Reference parent,
    Port(dabc::mitPool, parent, name, queuesize),
    fPool(pool)
 {
-   // only can do it here, while in Port Cfg() cannot correctly locate OutputPort as class
+   // only can do it here, while in Port Cfg() cannot correctly locate PoolHandle as class
    ReadPortConfiguration();
 }
 

@@ -592,6 +592,11 @@ unsigned dabc::Module::CreateInput(const std::string& name, unsigned queue)
    port->SetItemSubId(fInputs.size());
    fInputs.push_back(port);
 
+   if (!port->fRateName.empty() && port->fRate.null() && Par(port->fRateName).null()) {
+      CreatePar(port->fRateName).SetRatemeter(false, 3.).SetUnits("MB");
+      port->SetRateMeter(Par(port->fRateName));
+   }
+
    return port->ItemSubId();
 }
 
@@ -608,6 +613,11 @@ unsigned dabc::Module::CreateOutput(const std::string& name, unsigned queue)
 
    port->SetItemSubId(fOutputs.size());
    fOutputs.push_back(port);
+
+   if (!port->fRateName.empty() && port->fRate.null() && Par(port->fRateName).null()) {
+      CreatePar(port->fRateName).SetRatemeter(false, 3.).SetUnits("MB");
+      port->SetRateMeter(Par(port->fRateName));
+   }
 
    return port->ItemSubId();
 }

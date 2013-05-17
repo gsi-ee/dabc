@@ -63,6 +63,8 @@ namespace dabc {
 
          std::string        fBindName; // name of bind port
 
+         std::string        fRateName; // name of rate parameter, which should be assigned to port
+
          unsigned           fMapLoopLength;
 
          double             fReconnectPeriod; // defines how often reconnect for port should be tried, -1 disable reconnect
