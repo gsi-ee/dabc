@@ -301,7 +301,7 @@ hadaq::DataTransport::DataTransport(dabc::Command cmd, const dabc::PortRef& inpp
    fWithObserver = inpport.Cfg(hadaq::xmlObserverEnabled, cmd).AsBool(false);
 
    if(sscanf(GetName(), "Input%d", &fIdNumber)!=1) fIdNumber = 0;
-   DOUT0("hadaq::DataTransport got id: %d", fIdNumber);
+   DOUT4("hadaq::DataTransport got id: %d", fIdNumber);
 
    if(fWithObserver) {
       // workaround to suppress problems with dim observer when this ratemeter is registered:

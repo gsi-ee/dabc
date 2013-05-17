@@ -49,8 +49,8 @@ void dabc::Port::ReadPortConfiguration()
    if (signal == "every") fSignal = SignalEvery;
    fBindName = Cfg("bind").AsStdStr(fBindName);
 
-   if (Cfg(xmlReconnectAttr).AsBool(false) && Cfg(xmlAutoAttr).AsBool(true))
-      SetReconnectPeriod(Cfg(xmlTimeoutAttr).AsDouble(1.));
+   if (Cfg(xmlAutoAttr).AsBool(true))
+      SetReconnectPeriod(Cfg(xmlReconnectAttr).AsDouble(-1.));
 }
 
 

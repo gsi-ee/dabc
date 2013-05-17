@@ -15,7 +15,7 @@
     <Module name="Repeater" class="mbs::TransmitterModule">
        <!--Reconnect value="true"/-->
        <!--InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&total=1000"/-->
-       <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="true"/>
+       <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="5"/>
        <OutputPort name="Output0" url="lmd://test.lmd?maxsize=100&log=2"/>
      </Module>
   </Context>

@@ -29,18 +29,18 @@ mbs::ClientTransport::ClientTransport(int fd, int kind) :
    fPendingStart(false)
 {
    fServInfo.iStreams = 0; // by default, new format
+
+   DOUT3("Create mbs::ClientTransport::ClientTransport() %p fd:%d kind:%d", this, fd, kind);
 }
 
 mbs::ClientTransport::~ClientTransport()
 {
-   // FIXME: cleanup should be done much earlier
-
-   DOUT0("Destroy mbs::ClientTransport::~ClientTransport() %p", this);
+   DOUT3("Destroy mbs::ClientTransport::~ClientTransport() %p", this);
 }
 
 void mbs::ClientTransport::ObjectCleanup()
 {
-   DOUT0("mbs::ClientTransport::ObjectCleanup");
+   DOUT3("mbs::ClientTransport::ObjectCleanup");
 
    strcpy(fSendBuf, "CLOSE");
    DoSendBuffer(fSendBuf, 12);
