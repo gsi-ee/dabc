@@ -23,11 +23,21 @@ DABC_PLUGINS += $(wildcard applications/*)
 
 -include $(patsubst %, %/Makefile, $(DABC_PLUGINS))
 
--include doc/Makefile.mk
+-include doc/Makefile
 
 libs:: dabclogin
 
-clean::
+clean:: clean-doxy
+
+docs:: doxy
+
+doxy:
+	@echo "Creating doxygen documentation"
+	cd doc; rm -rf html; doxygen DoxygenConfig
+
+clean-doxy:
+	@echo "Clean doxygen documentation"
+	rm -rf doc/html
 
 dabclogin: build/dabclogin.sh config/Makefile.config
 	@sed -e "s|\`pwd\`|$(CURDIR)|" -e "s|version|$(VERSSUF)|" \
