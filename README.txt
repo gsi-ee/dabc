@@ -35,7 +35,7 @@ INSTALLATION:
 
 1. Unpack this DABC distribution in the future DABC System directory,
    e.g. /usr/local/pub/dabc 
-   ("cd /usr/local/pub/dabc; tar zxvf dabc.tar.gz")
+   ("cd /usr/local/pub/dabc; tar xzvf dabc.tar.gz")
    
    or checkout DABC from repository:
    
@@ -63,7 +63,7 @@ INSTALLATION:
     * start the dabc GUI in another shell by typing "dabc"
       (do not forget to call ". dabclogin.sh" first!)
 
-7. Read the DABC User Manual for further information how to configure
-   the DABC and how to use the GUI!
+7. Read the DABC online documentation (on dabc.gsi.de) 
+   for further information how to configure the DABC and how to use the GUI!
 
 Please contact the DABC developer team for any bug reports and wishes!

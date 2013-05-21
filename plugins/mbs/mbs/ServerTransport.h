@@ -92,6 +92,8 @@ namespace mbs {
          int fKind;             //!< kind of transport, stream or transport
          int fSlaveQueueLength; //!< queue length, used for slaves connections
          int fClientsLimit;     //!< maximum number of simultaneous clients
+         int fDoingClose;       //!< 0 - normal, 1 - saw EOF, 2 - all clients are gone
+         bool fBlocking;        //!< if true, server will block buffers until it can be delivered to client
 
          virtual bool StartTransport();
          virtual bool StopTransport();
@@ -100,14 +102,16 @@ namespace mbs {
 
          virtual int ExecuteCommand(dabc::Command cmd);
 
-         virtual bool ProcessRecv(unsigned port);
-         virtual bool ProcessSend(unsigned port);
+         virtual bool ProcessRecv(unsigned port) { return SendNextBuffer(); }
+         virtual bool ProcessSend(unsigned port) { return SendNextBuffer(); }
+
+         bool SendNextBuffer();
 
          void ProcessConnectionActivated(const std::string& name, bool on);
 
       public:
 
-         ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, dabc::SocketServerAddon* connaddon, int limit = 0);
+         ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, dabc::SocketServerAddon* connaddon, int limit = 0, bool blocking = false);
          virtual ~ServerTransport();
 
    };

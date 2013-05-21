@@ -1,5 +1,60 @@
 /*! \page  dabc_xmlfile_format  XML files format
 
-This will be description of DABC XML file format 
+ 
+# Introduction
+
+XML file in DABC provide way to configure most components of user application.
+This include generic application parameters, memory pool configuration, transport creation, 
+modules parameters and so on.
+
+
+# Simple example
+
+~~~~~~~~~~~~~~~~~~~~~
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="Gener">
+    <Run>
+      <lib value="libDabcMbs.so"/>
+    </Run>
+    <MemoryPool name="Pool">
+       <BufferSize value="65536"/>
+       <NumBuffers value="100"/>
+    </MemoryPool>
+    <Module name="Repeat" class="dabc::RepeaterModule">
+       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2&total=200" rate="Rate"/>
+       <OutputPort name="Output0" url="mbs://Stream:6767"/>
+       <Rate width="5" prec="3" low="0" up="50" debug="1"/>
+     </Module>
+  </Context>
+</dabc>
+~~~~~~~~~~~~~~~~~~~~~
+
+# XML file structure
+
+## Run parameters
+
+## Memory pool
+
+## Module
+
+## Port
+
+## Connections 
+
+# Automatic creation
+
+
+# Wildcard rules
+
+
+# Multi-node application
+
+
+[TOC]
+
+\tableofcontents
+
+
 
 */

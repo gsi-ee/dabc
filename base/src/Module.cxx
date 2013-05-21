@@ -800,10 +800,13 @@ void dabc::Module::SendToAllOutputs(Buffer& buf)
    for(unsigned n=0;n<NumOutputs();n++) {
       OutputPort* out = Output(n);
       if (!out->fSendallFlag) continue;
-      dabc::Buffer dupl;
-      if (n==last_can_send) dupl<<buf;
-                       else dupl = buf.Duplicate();
-      Output(n)->Send(dupl);
+
+      if (n==last_can_send) {
+         Output(n)->Send(buf);
+      } else {
+         dabc::Buffer dupl = buf.Duplicate();
+         Output(n)->Send(dupl);
+      }
    }
 
    buf.Release();

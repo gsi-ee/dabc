@@ -201,11 +201,13 @@ unsigned mbs::ServerOutputAddon::Write_Buffer(dabc::Buffer& buf)
 
 // ===============================================================================
 
-mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, dabc::SocketServerAddon* connaddon, int limit) :
+mbs::ServerTransport::ServerTransport(dabc::Command cmd, const dabc::PortRef& outport, int kind, dabc::SocketServerAddon* connaddon, int limit, bool blocking) :
    dabc::Transport(cmd, 0, outport),
    fKind(kind),
    fSlaveQueueLength(5),
-   fClientsLimit(limit)
+   fClientsLimit(limit),
+   fDoingClose(0),
+   fBlocking(blocking)
 {
    // this addon handles connection
    AssignAddon(connaddon);
@@ -267,7 +269,6 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
       // FIXME: should we configure buffer size or could one ignore it???
       addon->FillServInfo(0x100000, true);
 
-
       if (portindx<0) portindx = CreateOutput(dabc::format("Slave%u",NumOutputs()), fSlaveQueueLength);
 
       dabc::TransportRef tr = new dabc::OutputTransport(dabc::Command(), FindPort(OutputName(portindx)), addon, false, addon);
@@ -289,9 +290,11 @@ int mbs::ServerTransport::ExecuteCommand(dabc::Command cmd)
    return dabc::Transport::ExecuteCommand(cmd);
 }
 
-
-bool mbs::ServerTransport::ProcessRecv(unsigned port)
+bool mbs::ServerTransport::SendNextBuffer()
 {
+   // unconnected transport server will block until any connection is established
+   if ((NumOutputs()==0) && fBlocking && (fKind == mbs::TransportServer)) return false;
+
    bool allcansend = CanSendToAllOutputs(true);
 
 //   if (!allcansend)
@@ -300,41 +303,40 @@ bool mbs::ServerTransport::ProcessRecv(unsigned port)
    // in case of transport buffer all outputs should be
    // ready to get next buffer. Otherwise input port will be blocked
    if (!allcansend) {
-      if (fKind == mbs::TransportServer) return false;
-      // also stream server will wait until input queue will be filled
-      if (!RecvQueueFull(port)) {
-         DOUT3("mbs::ServerTransport::ProcessRecv LET input queue to be filled size:%u", NumCanRecv(port));
+      // blocking transport server will wait until all clients can get next buffer
+      if ((fKind == mbs::TransportServer) && fBlocking) return false;
+      // if server do not blocks, first wait until input queue will be filled
+      if (!RecvQueueFull()) {
+         DOUT3("mbs::ServerTransport::ProcessRecv LET input queue to be filled size:%u", NumCanRecv());
          //dabc::SetDebugLevel(1);
-         SignalRecvWhenFull(port);
+         SignalRecvWhenFull();
          return false;
       }
    }
 
    // this is normal situation when buffer can be send to all outputs
 
-   dabc::Buffer buf = Recv(port);
+   dabc::Buffer buf = Recv();
 
-//   if (numconn>0)
-//      DOUT1("Receiving buffer from port %s size %u", port->GetName(), buf.GetTotalSize());
+   bool iseof = (buf.GetTypeId() == dabc::mbt_EOF);
 
    SendToAllOutputs(buf);
 
-   return true;
+   if (iseof) {
+      DOUT0("Server transport saw EOF buffer");
+      fDoingClose = 1;
+
+      if ((NumOutputs()==0) || !fBlocking) {
+         DOUT0("One could close server transport immediately");
+         CloseTransport(false);
+         fDoingClose = 2;
+         return false;
+      }
+   }
+
+   return fDoingClose == 0;
 }
 
-bool mbs::ServerTransport::ProcessSend(unsigned port)
-{
-   // ignore output event, may be will be interesting for transport server
-
-   // stream server does not need to process output event, only input is important
-   if (fKind == mbs::StreamServer) return false;
-
-   // transport server is blocking therefore one should verify that next buffers can be provided
-   ProcessInputEvent();
-
-   // at this moment as much as possible buffers to all outputs was provided, therefore no other output events are interesting
-   return false;
-}
 
 void mbs::ServerTransport::ProcessConnectionActivated(const std::string& name, bool on)
 {
@@ -342,7 +344,24 @@ void mbs::ServerTransport::ProcessConnectionActivated(const std::string& name, b
       dabc::Transport::ProcessConnectionActivated(name, on);
    } else {
       DOUT0("mbs::ServerTransport detect new client on %s %s", name.c_str(), (on ? "CONNECTED" : "DISCONNECTED") );
+
+      if (on) {
+         ProcessInputEvent();
+         return;
+      }
+
+
       if (!on) FindPort(name).Disconnect();
 
+      if (fDoingClose == 1) {
+         bool isany = false;
+         for (unsigned n=0;n<NumOutputs();n++)
+            if (IsOutputConnected(n)) isany = true;
+         if (!isany) {
+            DOUT1("Close server transport while all clients are closed");
+            CloseTransport(false);
+            fDoingClose = 2;
+         }
+      }
    }
 }

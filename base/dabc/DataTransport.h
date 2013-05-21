@@ -72,7 +72,6 @@ namespace dabc {
          MemoryPoolRef      fPoolRef;
          unsigned           fExtraBufs;       // number of extra buffers provided to the transport addon
 
-
          void RequestPoolMonitoring();
 
          virtual bool StartTransport();
@@ -82,14 +81,10 @@ namespace dabc {
 
          virtual void ObjectCleanup();
 
-         virtual void ProcessEvent(const EventId&);
-
          virtual bool ProcessSend(unsigned port);
 
          virtual bool ProcessBuffer(unsigned pool);
          virtual void ProcessTimerEvent(unsigned timer);
-
-
 
       public:
 

@@ -178,14 +178,12 @@ void dabc::InputTransport::Read_CallBack(unsigned sz)
    ProcessOutputEvent();
 }
 
-void dabc::InputTransport::ProcessEvent(const EventId& evnt)
-{
-   dabc::Transport::ProcessEvent(evnt);
-}
-
 bool dabc::InputTransport::ProcessSend(unsigned port)
 {
    // DOUT0("dabc::InputTransport  %s  ProcessSend state %d", ItemName().c_str(), fInpState);
+
+   // if transport was already closed, one should ignore any other events
+   if (fInpState == inpClosed) return false;
 
    if (NumPools()==0) {
       EOUT("InputTransport %s - no memory pool!!!!", GetName());
@@ -353,7 +351,7 @@ bool dabc::InputTransport::ProcessSend(unsigned port)
       }
 
       if (!fExtraBufs && fCurrentBuf.null()) {
-         EOUT("Internal error - currbuf null when compliting");
+         EOUT("Internal error - currbuf null when completing");
          return false;
       }
 

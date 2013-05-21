@@ -23,7 +23,7 @@
 namespace dabc {
 
    /** Class dabc::Url supports following format:
-    *    [protocol://][hostname[:port]][/filename.ext][?options]
+    *    [protocol://][hostname[:port]][/filename.ext][?options[&moreoptions]]
     */
 
    class Url {

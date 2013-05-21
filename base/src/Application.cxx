@@ -22,7 +22,6 @@
 #include "dabc/Configuration.h"
 #include "dabc/Iterator.h"
 
-
 dabc::ApplicationBase::ApplicationBase() :
    Worker(dabc::mgr(), xmlAppDfltName, true),
    fInitFunc(0),

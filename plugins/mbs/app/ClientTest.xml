@@ -4,7 +4,7 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <debuglevel value="1"/>
-      <runtime value="50"/>
+      <runtime value="50000000"/>
     </Run>
     <MemoryPool name="Pool">
        <BufferSize value="465536"/>
