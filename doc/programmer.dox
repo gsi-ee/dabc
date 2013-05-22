@@ -23,7 +23,7 @@ and the use of a PCI express board [abb].
 
 
 
-# Role and  functionality of the objects
+# Role and functionality of the objects
 
 ## Modules
 All processing code runs in module objects. 
@@ -175,8 +175,23 @@ and defines the runtime actions in the different control system states (see sect
 In contrast to the dabc::Manager, the subclass of dabc::Application defines 
 the experiment specific behaviour of the DAQ.
 
+
+
+
+\section prog_app_creation  Creation of objects 
+
+
+\subsection prog_use_app Using dabc::Application class
+
+\subsection prog_init_func Initialization function
+
+\subsection prog_auto_creation Automatic modules creation
+
+
+
+
                
-# Controls and configuration [need to be revised]
+\section prog_control_and_config  Controls and configuration [need to be revised]
 
 
 \subsection prog_fsm  Finite state machine

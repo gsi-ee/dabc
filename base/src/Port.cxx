@@ -43,7 +43,7 @@ void dabc::Port::ReadPortConfiguration()
 {
    fQueueCapacity = Cfg(xmlQueueAttr).AsInt(fQueueCapacity);
    fMapLoopLength = Cfg(xmlLoopAttr).AsInt(fMapLoopLength);
-   std::string signal = Cfg("signal").AsStdStr();
+   std::string signal = Cfg(xmlSignalAttr).AsStdStr();
    if (signal=="none") fSignal = SignalNone; else
    if ((signal == "confirm") || (signal == "normal")) fSignal = SignalConfirm; else
    if (signal == "oper")  fSignal = SignalConfirm; else

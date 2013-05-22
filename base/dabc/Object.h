@@ -44,6 +44,7 @@ namespace dabc {
 
    extern const char* xmlQueueAttr;
    extern const char* xmlBindAttr;
+   extern const char* xmlSignalAttr;
    extern const char* xmlRateAttr;
    extern const char* xmlLoopAttr;
    extern const char* xmlInputQueueSize;

@@ -28,7 +28,6 @@ namespace dabc {
    extern const char* xmlContext;
    extern const char* xmlApplication;
    extern const char* xmlAppDfltName;
-   extern const char* xmlDefualtsNode;
    extern const char* xmlVariablesNode;
    extern const char* xmlNameAttr;
    extern const char* xmlHostAttr;

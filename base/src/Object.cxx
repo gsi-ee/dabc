@@ -43,6 +43,7 @@ namespace dabc {
 
    const char* xmlQueueAttr         = "queue";
    const char* xmlBindAttr          = "bind";
+   const char* xmlSignalAttr        = "signal";
    const char* xmlRateAttr          = "rate";
    const char* xmlLoopAttr          = "loop";
    const char* xmlInputQueueSize    = "InputQueueSize";

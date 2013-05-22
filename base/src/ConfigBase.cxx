@@ -28,7 +28,6 @@ namespace dabc {
    const char* xmlContext          = "Context";
    const char* xmlApplication      = "Application";
    const char* xmlAppDfltName      = "App";
-   const char* xmlDefualtsNode     = "Defaults";
    const char* xmlVariablesNode    = "Variables";
    const char* xmlNameAttr         = "name";
    const char* xmlHostAttr         = "host";
@@ -44,11 +43,11 @@ namespace dabc {
    const char* xmlValueAttr        = "value";
    const char* xmlRunNode          = "Run";
    const char* xmlUserNode         = "User";
-   const char* xmlSshUser          = "user";
-   const char* xmlSshPort          = "port";
-   const char* xmlSshInit          = "init";
-   const char* xmlSshTest          = "test";
-   const char* xmlSshTimeout       = "timeout";
+   const char* xmlSshUser          = "ssh_user";
+   const char* xmlSshPort          = "ssh_port";
+   const char* xmlSshInit          = "ssh_init";
+   const char* xmlSshTest          = "ssh_test";
+   const char* xmlSshTimeout       = "ssh_timeout";
    const char* xmlDABCSYS          = "DABCSYS";
    const char* xmlDABCUSERDIR      = "DABCUSERDIR";
    const char* xmlDABCWORKDIR      = "DABCWORKDIR";
