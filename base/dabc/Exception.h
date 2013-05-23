@@ -24,11 +24,6 @@
 
 namespace dabc {
   
-   /** Generic exception for all situation
-    * Not trying to duplicate classes hierarchy, just put exception name and
-    * source item name into central class. For convenience will provide several most common names
-    * like IsStop(), IsTimeout() and so on */
-
    enum ExceptionKind {
       ex_None,        // type is undefined
       ex_Stop,        // stop exception
@@ -42,8 +37,21 @@ namespace dabc {
       ex_Pool,        // memory pool error
       ex_Object,      // object error
       ex_Pointer,     // pointer error
-      ex_Generic      // generic exception, extra info is availible
+      ex_Generic      // generic exception, extra info is available
    };
+
+   /** \brief DABC exception
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    *
+    * Generic exception for all situation
+    * Not trying to duplicate classes hierarchy, just put exception name and
+    * source item name into central class.
+    * For convenience will provide several most common names
+    * like IsStop(), IsTimeout() and so on
+    */
 
    class Exception : public std::exception {
       protected:

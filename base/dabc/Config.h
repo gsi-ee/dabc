@@ -31,21 +31,30 @@ namespace dabc {
    class Worker;
    class WorkerRef;
 
+
+   /** \brief Configuration container
+    *
+    * \ingroup dabc_all_classes
+    *
+    *  Used as a source for configuration parameter(s) for \ref Config object
+    *
+    */
+
    class ConfigContainer : public RecordContainer {
       friend class Config;
       friend class Worker;
       friend class WorkerRef;
 
       protected:
-         std::string   fName;     //!< name of config parameter
+         std::string   fName;     ///< name of config parameter
 
-         Command       fCmd;      //!< value from the command
+         Command       fCmd;      ///< value from the command
 
-         Record        fPar;      //!< reference on parameter (if exists) of specified config name
+         Record        fPar;      ///< reference on parameter (if exists) of specified config name
 
-         Reference     fWorker;   //!<  reference on the worker where config requested
+         Reference     fWorker;   ///<  reference on the worker where config requested
 
-         int           fReadFlag; //!< -1 no read, 0 - reading from config, 1 - read done
+         int           fReadFlag; ///< -1 no read, 0 - reading from config, 1 - read done
 
          ConfigContainer(const std::string& name, Command cmd, Reference worker);
 
@@ -55,6 +64,12 @@ namespace dabc {
       public:
    };
 
+
+   /** \brief Provides configuration values to the user
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class Config : public Record {
 

@@ -24,6 +24,13 @@ namespace dabc {
 
    class Transport;
 
+   /** \brief Base class for device-specific classes
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    */
+
    class Device : public Worker {
 
       protected:
@@ -45,6 +52,14 @@ namespace dabc {
 
          virtual const char* ClassName() const { return dabc::typeDevice; }
    };
+
+
+   /** \brief Reference on \ref Device class
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class DeviceRef : public WorkerRef {
 

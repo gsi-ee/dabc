@@ -25,7 +25,11 @@ namespace dabc {
    class Object;
    class Mutex;
 
-   /** Reference on the arbitrary object
+   /** \brief Reference on the arbitrary object
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
     *  Ensure that object on which reference is pointing on is not disappear until reference
     *  is existing. In normal situation one should use reference in form:
     *
@@ -41,6 +45,29 @@ namespace dabc {
     *
     *  Reference object cannot be used from several threads simultaneously,
     *  one should create new reference to work such way
+    *
+    *  When derived class should be created, DABC_REFERENCE macro could be
+    *  used. For instance:
+    *
+    *   class WorkerRef : public Reference {
+    *      DABC_REFERENCE(WorkerRef, Reference, Worker)
+    *
+    *      public:
+    *         bool Execute(const std::string& cmdname)
+    *           { return GetObject() ? GetObject()->Execute(cmdname) : false; }
+    *    };
+    *
+    *  Macro defines all nice-to-have methods which should be presented in the reference
+    *  class - default constructor, copy constructor, assignment operator, some other.
+    *
+    *  Typically such reference class should be a friend for object class to have access to the
+    *  object protected-private methods and members.
+    *
+    *  Main motivation for such class is to provide thread-safe methods via references.
+    *  Once user acquire reference on the object, it can use any methods referenced object has.
+    *  Methods, implemented in object class, generally should be protected and
+    *  only can be used from class itself.
+    *
     */
 
    class Reference {
@@ -50,12 +77,12 @@ namespace dabc {
 
       private:
          enum EFlags {
-            flTransient = 0x01, //!< reference will be moved by any next copy operation
-            flOwner     = 0x02  //!< indicates if reference also is object owner
+            flTransient = 0x01, ///< reference will be moved by any next copy operation
+            flOwner     = 0x02  ///< indicates if reference also is object owner
          };
 
-         Object*    fObj;       //!< pointer on the object
-         unsigned   fFlags;     //!< flags, see EFlags
+         Object*    fObj;       ///< pointer on the object
+         unsigned   fFlags;     ///< flags, see EFlags
 
          /** \brief Return value of selected flag, non thread safe  */
          inline bool GetFlag(unsigned fl) const { return (fFlags & fl) != 0; }
@@ -208,32 +235,6 @@ namespace dabc {
 
 }
 
-/** Use this defines to create sub-references for specific class. Example:
- *
- *   class WorkerRef : public Reference {
- *      DABC_REFERENCE(WorkerRef, Reference, Worker)
- *
- *      public:
- *         bool Execute(const char* cmdname)
- *         {
- *            if (GetObject()) return GetObject()->Execute(cmdname);
- *            return false;
- *         }
- *    };
- *
- *  Macro defines all nice-to-have methods which should be presented in the reference
- *  class - default constructor, copy constructor, assignment operator, some other.
- *
- *  Typically such reference class should be a friend for object class to have access to the
- *  object protected-private methods and members.
- *  Main motivation for such class is to provide thread-safe methods via references. Mean
- *  once user acquire reference on the object, it can use any methods reference class has.
- *  Methods, implemented in object class, generally should be protected and
- *  only can be used from class itself.
- *
- */
-
-//
 
 #define DABC_REFERENCE(RefClass, ParentClass, T) \
       protected: \
@@ -265,7 +266,6 @@ namespace dabc {
          /** \brief Return new reference on the object - old reference will remain */ \
          /** If \param withmutex = false, no mutex locking will be performed, it is supposed that mutex already locked */ \
          RefClass Ref(bool withmutex = true) const { return RefClass(withmutex, GetObject()); }
-
 
 
 #endif

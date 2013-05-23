@@ -1044,7 +1044,7 @@ int IbTestWorkerModule::PreprocessSlaveCommand(dabc::Buffer& buf)
 
       int64_t firstpoint = ((int64_t*) msg_in->cmddata)[0];
       int64_t recvrate = ((int64_t*) msg_in->cmddata)[1];
-      TRatemeter* mtr = recvrate>0 ? fRecvRatemeter : fSendRatemeter;
+      Ratemeter* mtr = recvrate>0 ? fRecvRatemeter : fSendRatemeter;
       if ((mtr!=0) && (fWorkRatemeter!=0))
          for(int n=0;n<msg_in->getresults;n++) {
             double val = mtr->GetPoint(firstpoint + n);

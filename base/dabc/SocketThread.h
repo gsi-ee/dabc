@@ -41,7 +41,10 @@ namespace dabc {
 
    class SocketThread;
 
-   /** \brief SocketAddon is special addon class for handling of socket and socket events
+   /** \brief Special addon class for handling of socket and socket events
+    *
+    * \ingroup dabc_all_classes
+    *
     * Main aim is to provide asynchronous access to the sockets.
     * SocketAddon has two boolean variables which indicates if worker wants to send or receive
     * data from the socket. User should set these flags to true before starting of appropriate operation.
@@ -51,7 +54,6 @@ namespace dabc {
     * if operation should be continued, user should set flag again. In case of error evntSocketError
     * will be created and both flags will be cleared.
     */
-
 
    class SocketAddon : public WorkerAddon {
 
@@ -110,27 +112,31 @@ namespace dabc {
 
    };
 
-
    // ______________________________________________________________________
+
+   /** \brief Socket addon for handling I/O events
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class SocketIOAddon : public SocketAddon {
       protected:
-         bool          fDatagramSocket; //!< indicate if socket is datagram and all operations should be finished with single call
-         bool          fUseMsgOper;     //!< indicate if sendmsg, recvmsg operations should be used, it is must for the datagram sockets
+         bool          fDatagramSocket; ///< indicate if socket is datagram and all operations should be finished with single call
+         bool          fUseMsgOper;     ///< indicate if sendmsg, recvmsg operations should be used, it is must for the datagram sockets
 
-         bool          fSendUseMsg;     // use sendmsg for transport
-         struct iovec* fSendIOV;        // sending io vector for gather list
-         unsigned      fSendIOVSize;    // total number of elements in send vector
-         unsigned      fSendIOVFirst;   // number of element in send IOV where transfer is started
-         unsigned      fSendIOVNumber;  // number of elements in current send operation
+         bool          fSendUseMsg;     ///< use sendmsg for transport
+         struct iovec* fSendIOV;        ///< sending io vector for gather list
+         unsigned      fSendIOVSize;    ///< total number of elements in send vector
+         unsigned      fSendIOVFirst;   ///< number of element in send IOV where transfer is started
+         unsigned      fSendIOVNumber;  ///< number of elements in current send operation
          // receiving data
-         bool          fRecvUseMsg;     // use recvmsg for transport
-         struct iovec* fRecvIOV;        // receive io vector for scatter list
-         unsigned      fRecvIOVSize;    // number of elements in recv vector
-         unsigned      fRecvIOVFirst;   // number of element in recv IOV where transfer is started
-         unsigned      fRecvIOVNumber;  // number of elements in current recv operation
-         struct sockaddr_in fRecvAddr;  //!< source address of last receive operation
-         unsigned      fLastRecvSize;   // size of last recv operation
+         bool          fRecvUseMsg;     ///< use recvmsg for transport
+         struct iovec* fRecvIOV;        ///< receive io vector for scatter list
+         unsigned      fRecvIOVSize;    ///< number of elements in recv vector
+         unsigned      fRecvIOVFirst;   ///< number of element in recv IOV where transfer is started
+         unsigned      fRecvIOVNumber;  ///< number of elements in current recv operation
+         struct sockaddr_in fRecvAddr;  ///< source address of last receive operation
+         unsigned      fLastRecvSize;   ///< size of last recv operation
 
 #ifdef SOCKET_PROFILING
          long           fSendOper;
@@ -189,10 +195,12 @@ namespace dabc {
          void CancelIOOperations();
    };
 
-
-
    // ______________________________________________________________________
 
+   /** \brief Socket addon for handling connection events
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class SocketConnectAddon : public SocketAddon {
       protected:
@@ -227,9 +235,13 @@ namespace dabc {
 
    // ________________________________________________________________
 
-
-   // this object establish server socket, which waits for new connection
-   // of course, we do not want to block complete thread for such task :-)
+   /** \brief Socket addon for handling connection requests on server side
+    *
+    * \ingroup dabc_all_classes
+    *
+    * this object establish server socket, which waits for new connection
+    * of course, we do not want to block complete thread for such task :-)
+    */
 
    class SocketServerAddon : public SocketConnectAddon {
       public:
@@ -253,6 +265,12 @@ namespace dabc {
    };
 
    // ______________________________________________________________
+
+   /** \brief Socket addon for handling connection on client side
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class SocketClientAddon : public SocketConnectAddon {
       public:
@@ -278,14 +296,20 @@ namespace dabc {
          double          fRetryTmout;
    };
 
-
    // ______________________________________________________________
+
+   /** \brief Special thread class for handling sockets
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class SocketThread : public Thread {
       protected:
          enum ESocketEvents {
-            evntEnableCheck = evntLastThrd+1,  //!< event to enable again checking sockets for new events
-            evntLastSocketThrdEvent            //!< last event, which can be used by socket
+            evntEnableCheck = evntLastThrd+1,  ///< event to enable again checking sockets for new events
+            evntLastSocketThrdEvent            ///< last event, which can be used by socket
          };
 
 
@@ -308,7 +332,6 @@ namespace dabc {
          static void CloseMulticast(int handle, const char* host, bool isrecv = true);
          static int ConnectUdp(int fd, const char* remhost, int remport);
 
-
          static SocketServerAddon* CreateServerAddon(int nport, int portmin=-1, int portmax=-1);
 
          static SocketClientAddon* CreateClientAddon(const std::string& servid);
@@ -316,8 +339,8 @@ namespace dabc {
       protected:
 
          struct ProcRec {
-             bool      use;  // indicates if processor is used for poll
-             uint32_t  indx; // index for dereference of processor from ufds structure
+             bool      use;  ///< indicates if processor is used for poll
+             uint32_t  indx; ///< index for dereference of processor from ufds structure
          };
 
          virtual bool WaitEvent(EventId&, double tmout);
@@ -328,16 +351,15 @@ namespace dabc {
 
          virtual void ProcessExtraThreadEvent(const EventId& evid);
 
-
-         int            fPipe[2];
-         long           fPipeFired;  // indicate if something was written in pipe
-         bool           fWaitFire;
-         int            fScalerCounter; // variable used to test time to time sockets even if there are events in the queue
-         unsigned       f_sizeufds;  // size of the structure, which was allocated
-         pollfd        *f_ufds;      // list of file descriptors for poll call
-         ProcRec       *f_recs;      // identify used processors
-         bool           fIsAnySocket;   // indicates that at least one socket processors in the list
-         bool           fCheckNewEvents;  //!< flag indicate if sockets should be checked for new events even if there are already events in the queue
+         int            fPipe[2];         ///< array with i/o pipes handles
+         long           fPipeFired;       ///< indicate if something was written in pipe
+         bool           fWaitFire;        ///< indicates if pipe firing is awaited
+         int            fScalerCounter;   ///< variable used to test time to time sockets even if there are events in the queue
+         unsigned       f_sizeufds;       ///< size of the structure, which was allocated
+         pollfd        *f_ufds;           ///< list of file descriptors for poll call
+         ProcRec       *f_recs;           ///< identify used processors
+         bool           fIsAnySocket;     ///< indicates that at least one socket processors in the list
+         bool           fCheckNewEvents;  ///< flag indicate if sockets should be checked for new events even if there are already events in the queue
 
 #ifdef SOCKET_PROFILING
          long           fWaitCalls;

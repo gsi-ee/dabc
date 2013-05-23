@@ -280,12 +280,13 @@ namespace dabc {
 
 
 
-   /** \brief This is central class of DABC which manages everything
+   /** \brief Manager of everything in DABC
     *
-    * It manages: modules, devices, memory pools
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
     *
+    * It manages: modules, devices, memory pools, ...
     */
-
 
    class Manager : public Worker {
 
@@ -311,7 +312,7 @@ namespace dabc {
          enum MgrEvents { evntDestroyObj = evntFirstSystem, evntManagerParam };
 
          struct ParamRec {
-            Parameter par;  //!< reference on the parameter
+            Parameter par;  ///< reference on the parameter
             int event;
 
             ParamRec() : par(), event(0) {}
@@ -357,9 +358,9 @@ namespace dabc {
          int                   fNodeId;
          int                   fNumNodes;
 
-         ThreadsLayout          fThrLayout; //!< defines distribution of threads
+         ThreadsLayout          fThrLayout; ///< defines distribution of threads
 
-         std::string fLastCreatedDevName;  //!< name of last created device, automatically used for connection establishing
+         std::string fLastCreatedDevName;  ///< name of last created device, automatically used for connection establishing
 
          /** Find object in manager hierarchy with specified itemname.
           * Itemname can be complete url or just local path (islocal = true) */

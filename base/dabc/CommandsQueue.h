@@ -28,16 +28,22 @@ namespace dabc {
 
    class Worker;
 
+   /** \brief Queue of commands
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
+
    class CommandsQueue {
 
       public:
 
          enum EKind {
             kindNone,
-            kindSubmit,    //!< command submitted for execution
-            kindReply,     //!< command replied to the worker
-            kindAssign,    //!< command assign with the worker, but not yet replied
-            kindPostponed  //!< command submitted but postponed to not increase execution recursion
+            kindSubmit,    ///< command submitted for execution
+            kindReply,     ///< command replied to the worker
+            kindAssign,    ///< command assign with the worker, but not yet replied
+            kindPostponed  ///< command submitted but postponed to not increase execution recursion
          };
 
       protected:

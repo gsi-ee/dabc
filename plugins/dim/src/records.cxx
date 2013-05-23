@@ -13,14 +13,17 @@
 
 #include "dimc/records.h"
 
-const char* dimc::HistogramRecDesc =  _DABC_HISTOGRAM_RECORD_FORMAT_ ;
-const char* dimc::StatusRecDesc = _DABC_STATUS_RECORD_FORMAT_ ;
-const char* dimc::InfoRecDesc = _DABC_INFO_RECORD_FORMAT_ ;
-const char* dimc::RateRecDesc = _DABC_RATE_RECORD_FORMAT_;
+namespace dimc {
 
-const char* dimc::col_Red = _DABC_COLOR_RED_ ;
-const char* dimc::col_Green = _DABC_COLOR_GREEN_ ;
-const char* dimc::col_Blue = _DABC_COLOR_BLUE_ ;
-const char* dimc::col_Cyan = _DABC_COLOR_CYAN_ ;
-const char* dimc::col_Yellow = _DABC_COLOR_YELLOW_ ;
-const char* dimc::col_Magenta = _DABC_COLOR_MAGENTA_ ;
+   const char* desc_HistogramRec = "L:1;F:1;F:1;C:32;C:32;C:16;L";
+   const char* desc_StatusRec    = "L:1;C:16;C:16";
+   const char* desc_InfoRec      = "L:1;C:16;C:128";
+   const char* desc_RateRec      = "F:1;L:1;F:1;F:1;F:1;F:1;C:16;C:16;C:16";
+
+   const char* col_Red     =  "Red";
+   const char* col_Green   =  "Green";
+   const char* col_Blue    =  "Blue";
+   const char* col_Cyan    =  "Cyan";
+   const char* col_Yellow  =  "Yellow";
+   const char* col_Magenta =  "Magenta";
+}

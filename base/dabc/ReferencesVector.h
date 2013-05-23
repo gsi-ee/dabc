@@ -24,12 +24,21 @@
 
 namespace dabc {
 
+   /** \brief Vector of \ref dabc::Reference objects
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class ReferencesVector {
       private:
-         std::vector<Reference>  fVector;
+
+         std::vector<Reference>  fVector;  ///< vector with references
 
       public:
+         /** \brief Constructor */
          ReferencesVector() throw();
+
+         /** \brief Destructor */
          virtual ~ReferencesVector() throw();
 
          /** \brief Add reference to the vector */
@@ -51,10 +60,7 @@ namespace dabc {
          inline Object* GetObject(unsigned n) const
             { return (n<GetSize()) ? fVector[n].GetObject() : 0; }
 
-         /** \brief Returns reference, disabled while reference will be removed by this action */
-         // inline Reference& Ref(unsigned n) { return fVector[n]; }
-
-         /** destroy referenced objecs */
+         /** \brief destroy referenced objects */
          bool DestroyAll();
 
          /** \brief Returns new reference on object with index n */

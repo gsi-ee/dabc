@@ -22,16 +22,25 @@
 
 namespace dabc {
 
+   /** \brief Manipulator with \ref dabc::Buffer class
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    * \ref dabc::Buffer can contain segmented lists of memory regions.
+    * \ref dabc::Pointer class provides method which let work with such segmented memory as with contiguous region.
+    */
+
    class Pointer {
 
       friend class Buffer;
 
       protected:
-         Buffer            fBuf;      // we keep reference on the buffer, could be only used in same thread
-         unsigned          fSegm;     // segment id
-         unsigned char*    fPtr;      // pointer on the raw buffer
-         BufferSize_t      fRawSize;  // size of contiguous memory, pointed by fPtr
-         BufferSize_t      fFullSize; // full size of memory from pointer till the end
+         Buffer            fBuf;      ///< we keep reference on the buffer, could be only used in same thread
+         unsigned          fSegm;     ///< segment id
+         unsigned char*    fPtr;      ///< pointer on the raw buffer
+         BufferSize_t      fRawSize;  ///< size of contiguous memory, pointed by fPtr
+         BufferSize_t      fFullSize; ///< full size of memory from pointer till the end
 
          void long_shift(BufferSize_t sz) throw();
 

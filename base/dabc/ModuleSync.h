@@ -20,33 +20,38 @@
 #include "dabc/Module.h"
 #endif
 
-/** Subclass from Module class
-  * Allows to use explicit main loop of the module
-  * Provides blocking operation (Recv, Send, TakeBuffer, ...) with timeouts.
-  * If timeout is happening, either exception is produced or function returns with false results.
-  * One can specify usage of timeout exception by SetTmoutExcept() method (default - false).
-  * Another source of exceptions - disconnecting of module ports. Will be
-  * produced when port, used in operation (Send or Recv), disconnected.
-  * Execution of module main loop can be suspended by Stop() function and resumed again
-  * by Start() function. This can only happens in some of ModuleSync methods like Send, TakeBuffer and so on.
-  * In case when module is destroyed, MainLoop will be leaved by stop exception Exception::IsStop().
-  * User can catch this exception, but MUST throw it again that module can be safely deleted afterwards.
-  * Typical MainLoop of the ModuleSync should look like this:
-  *     void MainLoop()
-  *     {
-  *        while (ModuleWorking()) {
-  *          // do something
-  *        }
-  *     }
-  * ModuleWorking() function tests if module should continue to work, and will execute commands,
-  * submitted to module. To execute commands immediately, synchron modus must be
-  * specified by SetSyncCommands(true) call.
-  * In case when main loop contains no any methods like Recv or Send, it will
-  * consume 100% of CPU resources, therefore one better should use
-  * WaitEvent() call for waiting on any events which may happen in module.
-  */
 
 namespace dabc {
+
+   /** \brief Base class for user-derived code, implementing main loop.
+     *
+     * \ingroup dabc_user_classes
+     *
+     * Allows to use explicit main loop of the module
+     * Provides blocking operation (Recv, Send, TakeBuffer, ...) with timeouts.
+     * If timeout is happening, either exception is produced or function returns with false results.
+     * One can specify usage of timeout exception by SetTmoutExcept() method (default - false).
+     * Another source of exceptions - disconnecting of module ports. Will be
+     * produced when port, used in operation (Send or Recv), disconnected.
+     * Execution of module main loop can be suspended by Stop() function and resumed again
+     * by Start() function. This can only happens in some of ModuleSync methods like Send, TakeBuffer and so on.
+     * In case when module is destroyed, MainLoop will be leaved by stop exception Exception::IsStop().
+     * User can catch this exception, but MUST throw it again that module can be safely deleted afterwards.
+     * Typical MainLoop of the ModuleSync should look like this:
+     *     void MainLoop()
+     *     {
+     *        while (ModuleWorking()) {
+     *          // do something
+     *        }
+     *     }
+     * ModuleWorking() function tests if module should continue to work, and will execute commands,
+     * submitted to module. To execute commands immediately, synchron modus must be
+     * specified by SetSyncCommands(true) call.
+     * In case when main loop contains no any methods like Recv or Send, it will
+     * consume 100% of CPU resources, therefore one better should use
+     * WaitEvent() call for waiting on any events which may happen in module.
+     */
+
 
    class ModuleSync : public Module {
       private:
@@ -59,7 +64,7 @@ namespace dabc {
          uint16_t      fWaitId;
          bool          fWaitRes;
 
-         bool          fInsideMainLoop;  //!< flag indicates if main loop is executing
+         bool          fInsideMainLoop;  ///< flag indicates if main loop is executing
 
          virtual void DoWorkerMainLoop();
          virtual void DoWorkerAfterMainLoop();
@@ -119,7 +124,6 @@ namespace dabc {
       public:
 
          virtual const char* ClassName() const { return "ModuleSync"; }
-
 
    };
 }

@@ -53,50 +53,75 @@ namespace dabc {
       di_QueueBufReady = 0xFFFFFFFD    // when data input can provide next buffer
    };
 
+   /** \brief Interface for implementing any kind of data input
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    * dabc::DataInput object used by dabc::InputTransport to perform data reading.
+    * Input consists from sequence of following calls:
+    *   - \ref Read_Size -  defines required buffer size for next operation
+    *   - \ref Read_Start - intermediate call with buffer of requested size
+    *   - \ref Read_Complete - fill buffer with the data
+    */
+
    class DataInput {
       public:
 
          virtual ~DataInput() {}
 
-         /** This is generic virtual method to initialize input,
-          * using configurations from Port or from the Command  */
+         /** \brief Initialize data input, using port and command
+          *
+          * \par wrk  Reference on input port
+          * \par cmd  Reference on command object
+          *
+          * This is generic virtual method to initialize input,
+          * using configurations from Port and (or) from the Command  */
          virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd) { return true; }
 
-         // Generic input interface
-         // Read_Size() -  defines required buffer size for next operation
-         // Read_Start() - intermediate call with buffer of requested size
-         // Read_Complete() - fill buffer with the data
 
-         // Method must return size of next buffer
-         // (must be not grater than di_ValidSize = 0xFFFFFFF0)
-         // It also can return other codes:
-         //    di_EndOfStream   - this is end of stream, normal close of the input
-         //    di_DfltBufSize   - any non-zero buffer can be provided
-         //    di_Repeat        - nothing to read now, try again as soon as possible
-         //    di_RepeatTimeout - nothing to read now, try again after timeout
-         //    di_Error         - error, close input
+         /** \brief Defines required buffer size for next operation
+          *
+          * \returns size of next buffer (must be not grater than di_ValidSize = 0xFFFFFFF0)
+          * It also can return other codes:
+          *   - di_EndOfStream   - this is end of stream, normal close of the input
+          *   - di_DfltBufSize   - any non-zero buffer can be provided
+          *   - di_Repeat        - nothing to read now, try again as soon as possible
+          *   - di_RepeatTimeout - nothing to read now, try again after timeout
+          *   - di_Error         - error, close input */
          virtual unsigned Read_Size() { return di_EndOfStream; }
 
-         // Prepare buffer for reading (if required), returns:
-         //    di_Ok            - buffer must be filled in Read_Complete call
-         //    di_Error (or other) - error, skip buffer
+         /** \brief Prepare buffer for reading (if required)
+          *
+          * \returns
+          *   - di_Ok               - buffer must be filled in Read_Complete call
+          *   - di_Error (or other) - error, skip buffer */
          virtual unsigned Read_Start(Buffer& buf) { return di_Ok; }
 
-         // Complete reading of the buffer from source, returns:
-         //    di_Ok            - buffer filled and ready
-         //    di_EndOfStream   - this is end of stream, normal close of the input
-         //    di_SkipBuffer    - skip buffer
-         //    di_Error         - error, skip buffer and close input
-         //    di_Repeat        - not ready, call again as soon as possible
-         //    di_RepeatTimeout - not ready, call again after timeout
+         /** \brief Complete reading of the buffer from source,
+          *
+          * \returns
+          *   - di_Ok            - buffer filled and ready
+          *   - di_EndOfStream   - this is end of stream, normal close of the input
+          *   - di_SkipBuffer    - skip buffer
+          *   - di_Error         - error, skip buffer and close input
+          *   - di_Repeat        - not ready, call again as soon as possible
+          *   - di_RepeatTimeout - not ready, call again after timeout */
          virtual unsigned Read_Complete(Buffer& buf) { return di_EndOfStream; }
 
-         // Timeout (in seconds) used when Read_Size or Read_Complete
-         // returns di_RepeatTimeout to wait some time
-         // before new action on DataInput object will be performed.
+         /** \brief Provide timeout value
+          *
+          * \returns timeout in seconds
+          *
+          * When Read_Size or Read_Complete operations returns di_RepeatTimeout argument,
+          * specified timeout will be used before next operation will be done */
          virtual double Read_Timeout() { return 0.1; }
 
-         // return buffer object with currently available data
+         /** \brief Reads complete buffer
+          *
+          * \returns filled buffer
+          *
+          * Perform consequent call of Read_Size(), Read_Start() and Read_Complete() methods */
          Buffer ReadBuffer();
    };
 
@@ -112,6 +137,12 @@ namespace dabc {
        do_Close             // output is closed, one should destroy it
    };
 
+
+   /** \brief Interface for implementing any kind of data output
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    */
 
    class DataOutput {
       protected:
@@ -132,7 +163,6 @@ namespace dabc {
 
          /** This is generic virtual method to initialize output,
           * using configurations from Port or from the Command  */
-
          virtual bool Write_Init(const WorkerRef& wrk, const Command& cmd);
 
          /** Check if output can be done.
@@ -175,6 +205,14 @@ namespace dabc {
 
    class FileInterface;
 
+   /** \brief Interface for implementing file inputs
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    * Provide convenient way for managing list of files as inputs.
+    */
+
    class FileInput : public DataInput {
       protected:
          std::string          fFileName;
@@ -199,6 +237,14 @@ namespace dabc {
    };
 
    // ============================================================================
+
+   /** \brief Interface for implementing file outputs
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    * Provide convenient way for managing automatic file numbering.
+    */
 
    class FileOutput : public DataOutput {
       protected:
@@ -236,9 +282,7 @@ namespace dabc {
          void SetIO(dabc::FileInterface* io);
 
          virtual bool Write_Init(const WorkerRef& wrk, const Command& cmd);
-
    };
-
 
 }
 

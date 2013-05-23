@@ -21,12 +21,19 @@
 
 namespace dabc {
 
-   // implement basic POSIX interface, can be extended in the future
-
    class Object;
+
+   /** \brief Defines and implements basic POSIX file interface
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Used to virtualize access to file system and be able to replace such access by other file engines
+    */
 
    class FileInterface {
       public:
+
+         /** \brief File handle descriptor */
          typedef void* Handle;
 
          virtual ~FileInterface() {}
@@ -55,6 +62,14 @@ namespace dabc {
    };
 
    // ==============================================================================
+
+   /** \brief Base class for file writing/reading in DABC
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Mainly used to handle \ref FileInterface instance and
+    * \ref FileInterface::Handle pointer
+    */
 
    class BasicFile {
       protected:
@@ -130,6 +145,12 @@ namespace dabc {
    };
 
    enum { BinaryFileMagicValue  = 1234 };
+
+
+   /** \brief Generic file storage for DABC buffers
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class BinaryFile : public BasicFile {
       protected:

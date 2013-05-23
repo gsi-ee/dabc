@@ -30,6 +30,13 @@
 
 namespace dabc {
 
+   /** \brief Network interface
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Abstract interface for network transport, used by \ref dabc::NetworkTransport class
+    */
+
    class NetworkInetrface {
       public:
 
@@ -41,6 +48,15 @@ namespace dabc {
          virtual void SubmitRecv(uint32_t recid) = 0;
    };
 
+   // ___________________________________________________________________
+
+   /** \brief Network transport
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    * Base class to implement transport between modules on different nodes
+    */
 
    class NetworkTransport : public Transport {
       public:
@@ -99,7 +115,7 @@ namespace dabc {
          BufferSize_t  fFullHeaderSize;  // total header size
          BufferSize_t  fInlineDataSize;  // part of the header, which can be used for inline data (in the end of header)
 
-         bool          fStartBufReq;     //!< if true, request to memory pool was started and one should wait until it is finished
+         bool          fStartBufReq;     ///< if true, request to memory pool was started and one should wait until it is finished
 
          uint32_t TakeRec(Buffer& buf, uint32_t kind = 0, uint32_t extras = 0);
          void ReleaseRec(uint32_t recid);

@@ -32,6 +32,12 @@ namespace dabc {
    class Object;
    class ConfigIO;
 
+   /** \brief Full-functional class to reading configuration from xml files
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
+
    class Configuration : public ConfigBase {
       friend class ConfigIO;
 

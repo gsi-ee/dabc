@@ -32,8 +32,8 @@
 #include "dabc/EventId.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_Queue
+#include "dabc/Queue.h"
 #endif
 
 #ifndef DABC_Command
@@ -66,8 +66,8 @@ namespace dabc {
 
    /** \brief Represent thread functionality.
     *
-    *
     * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
     */
 
    class Thread : public Object,
@@ -80,15 +80,15 @@ namespace dabc {
 
          class RecursionGuard {
             private:
-               Thread*  thrd;      //!< we can use direct pointer, reference will be preserved by other means
-               unsigned workerid;  //!< worker id which recursion is guarded
+               Thread*  thrd;      ///< we can use direct pointer, reference will be preserved by other means
+               unsigned workerid;  ///< worker id which recursion is guarded
             public:
                RecursionGuard(Thread* t, unsigned id) :
                   thrd(t),
                   workerid(id)
-            {
+               {
                   if (thrd) thrd->ChangeRecursion(workerid, true);
-            }
+               }
 
                ~RecursionGuard()
                {
@@ -98,12 +98,12 @@ namespace dabc {
          };
 
          struct TimeoutRec {
-            TimeStamp      tmout_mark;   //!< time mark when timeout should happen
-            double         tmout_interv; //!< time interval was specified by timeout active
-            bool           tmout_active; //!< true when timeout active
+            TimeStamp      tmout_mark;   ///< time mark when timeout should happen
+            double         tmout_interv; ///< time interval was specified by timeout active
+            bool           tmout_active; ///< true when timeout active
 
-            TimeStamp      prev_fire;    //!< when previous timeout event was called
-            TimeStamp      next_fire;    //!< when next timeout event will be called
+            TimeStamp      prev_fire;    ///< when previous timeout event was called
+            TimeStamp      next_fire;    ///< when next timeout event will be called
 
             TimeoutRec() : tmout_mark(), tmout_interv(0.), tmout_active(false), prev_fire(), next_fire() {}
 
@@ -195,15 +195,15 @@ namespace dabc {
 
 
          struct WorkerRec {
-            Worker*        work;         //!< pointer on the worker, should we use reference?
-            WorkerAddon*   addon;        //!< addon for the worker, maybe thread-specific
-            unsigned       doinghalt;    //!< indicates that events will not be longer accepted by the worker, all submitted commands still should be executed
-            int            recursion;    //!< recursion calls of the worker
-            unsigned       processed;    //!< current number of processed events, when balance between processed and fired is 0, worker can be halted
-            CommandsQueue  cmds;         //!< postponed commands, which are waiting until object is destroyed or halted
+            Worker*        work;         ///< pointer on the worker, should we use reference?
+            WorkerAddon*   addon;        ///< addon for the worker, maybe thread-specific
+            unsigned       doinghalt;    ///< indicates that events will not be longer accepted by the worker, all submitted commands still should be executed
+            int            recursion;    ///< recursion calls of the worker
+            unsigned       processed;    ///< current number of processed events, when balance between processed and fired is 0, worker can be halted
+            CommandsQueue  cmds;         ///< postponed commands, which are waiting until object is destroyed or halted
 
-            TimeoutRec     tmout_worker; //!< timeout handling for worker
-            TimeoutRec     tmout_addon;  //!< timeout handling for addon
+            TimeoutRec     tmout_worker; ///< timeout handling for worker
+            TimeoutRec     tmout_addon;  ///< timeout handling for addon
 
             WorkerRec(Worker* w, WorkerAddon* a) :
                work(w),
@@ -274,11 +274,11 @@ namespace dabc {
 
       public:
 
-         enum EEvents { evntCheckTmoutWorker = 1,  //!< event used to process timeout for specific worker, used by ActivateTimeout
-                        evntCheckTmoutAddon, //!< event used to process timeout for addon, used by ActivateTimeout
-                        evntCleanupThrd,     //!< event will be generated when thread can be destroyed
-                        evntDoNothing,       //!< event fired to wake-up thread and let thread or processor to perform regular checks
-                        evntStopThrd,        //!< event should stop thread
+         enum EEvents { evntCheckTmoutWorker = 1,  ///< event used to process timeout for specific worker, used by ActivateTimeout
+                        evntCheckTmoutAddon, ///< event used to process timeout for addon, used by ActivateTimeout
+                        evntCleanupThrd,     ///< event will be generated when thread can be destroyed
+                        evntDoNothing,       ///< event fired to wake-up thread and let thread or processor to perform regular checks
+                        evntStopThrd,        ///< event should stop thread
                         evntLastThrd,
                         evntUser = 10000 };
 
@@ -420,6 +420,12 @@ namespace dabc {
          virtual bool _DoDeleteItself();
    };
 
+   // __________________________________________________________________________
+
+   /** \brief Reference on the \ref dabc::Thread class
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class ThreadRef : public Reference {
 

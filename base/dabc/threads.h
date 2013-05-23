@@ -30,6 +30,11 @@
 
 namespace dabc {
 
+   /** \brief posix pthread mutex
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class Mutex {
      friend class LockGuard;
      friend class UnlockGuard;
@@ -45,6 +50,13 @@ namespace dabc {
         bool TryLock();
         bool IsLocked();
    };
+
+   // ____________________________________________________________
+
+   /** \brief pointer on posix pthread mutex
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class MutexPtr {
       protected:
@@ -83,6 +95,11 @@ namespace dabc {
 
 #endif
 
+
+   /** \brief lock guard for posix mutex
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class LockGuard {
      protected:
@@ -146,6 +163,32 @@ namespace dabc {
 
    };
 
+   // ____________________________________________________________
+
+   /** \brief unlock guard for posix mutex
+    *
+    * \ingroup dabc_all_classes
+    *
+    * reverse to function of \ref dabc::LockGuard
+    * Idea to use in blocks like
+    *
+    * ~~~~~~~~~~~~~~~~~~~~{.c}
+    * {
+    *    dabc::LockGuard lock(mutex);
+    *    // do something within locked area
+    *
+    *    {
+    *       dabc::UnlockGuard unlock(mutex);
+    *       // here is mutex released and we could acquire other mutexes
+    *
+    *    }
+    *
+    *    // here mutex will be acquired again
+    * }
+    *
+    * ~~~~~~~~~~~~~~~~~~~~
+    */
+
    class UnlockGuard {
      protected:
         pthread_mutex_t* fMutex;
@@ -160,6 +203,16 @@ namespace dabc {
         }
    };
 
+   // ______________________________________________________________
+
+
+   /** \brief guard for integer value
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Analog to \red dabc::LockGuard. Increase int value in constructor and
+    * decrease it at the time when guard is destroyed.
+    */
 
    class IntGuard {
       private:
@@ -176,6 +229,11 @@ namespace dabc {
 
 
    // ___________________________________________________________
+
+   /** \brief posix pthread condition
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class Condition {
       protected:
@@ -231,6 +289,11 @@ namespace dabc {
 
    // ___________________________________________________________
 
+   /** \brief object which could be run inside the \ref dabc::PosixThread
+     *
+     * \ingroup dabc_all_classes
+     */
+
    class Runnable {
       friend class Thread;
 
@@ -246,14 +309,17 @@ namespace dabc {
 
    typedef pthread_t Thread_t;
 
+   /** \brief class represents posix pthread functionality
+     *
+     * \ingroup dabc_all_classes
+     */
+
    class PosixThread {
       protected:
-         pthread_t    fThrd;
-
-         cpu_set_t    fCpuSet;   //
-
-         static cpu_set_t fDfltSet;
-         static cpu_set_t fSpecialSet; // set of processors, which can be used for special threads
+         pthread_t    fThrd;            ///< pthread handle
+         cpu_set_t    fCpuSet;          ///< affinity property of the thread
+         static cpu_set_t fDfltSet;     ///< default affinity for new thread
+         static cpu_set_t fSpecialSet;  ///< set of processors, which can be used for special threads
 
          void         UseCurrentAsSelf() { fThrd = pthread_self(); }
 
@@ -264,59 +330,66 @@ namespace dabc {
          PosixThread();
          virtual ~PosixThread();
 
-         /** Sets affinity mask for the thread
-          * Should be called before thread is started
-          * Can be:
+         /** \brief Sets affinity mask for the thread
+          *
+          * Should be called before thread is started.
+          * \par add can be:
           *   - unsigned value with processors mask
           *   - string like "xxxoooxxx" were x and o identified enabled and disabled processors,
           *           first element in string corresponds to first processor
           *   -string like "+M" where M is processor number in special processors set, before SetDfltAffinity("-N") should be called  (M<N)  */
          bool SetAffinity(const char* aff);
 
-         /** Returns thread affinity in form of "xxxooooo"
-          * If actual==true, request will be done to the thread,
+         /** \brief Returns thread affinity in form of "xxxooooo"
+          * If \par actual is true, request will be done to the thread,
           * otherwise configured value will be provided
-          * See SetAffinity method for more information */
+          * See SetAffinity method for more information
+          * \par buf and \par maxbuf provides buffer.
+          * \returns true if operation was executed without error.
+          */
          bool GetAffinity(bool actual, char* buf, unsigned maxbuf);
 
-         /** Start thread with provided runnable */
+         /** \brief Start thread with provided runnable */
          void Start(Runnable* run);
 
-         /** Start thread with provided routine and call arguments */
+         /** \brief Start thread with provided routine and call arguments */
          void Start(StartRoutine* func, void* args);
 
-         /** Join thread - method waits until thread execution is completed */
+         /** \brief Join thread - method waits until thread execution is completed */
          void Join();
 
-         /** Kill thread with specified signal */
+         /** \brief Kill thread with specified signal */
          void Kill(int sig = 9);
 
-         /** Try to cancel thread execution */
+         /** \brief Try to cancel thread execution */
          void Cancel();
 
-         /** Change thread priority */
+         /** \brief Change thread priority */
          void SetPriority(int prio);
 
+         /** \brief \returns handle of thread object. */
          inline Thread_t Id() const { return fThrd; }
 
+         /** \brief \returns handle of current thread. */
          static Thread_t Self() { return pthread_self(); }
 
-         //         inline bool IsItself() const { return pthread_equal(pthread_self(), fThrd) != 0; }
+         /** \brief Returns true if called from thread context. */
          inline bool IsItself() const { return fThrd == pthread_self(); }
 
-
-         /** Sets default affinity for next threads to be created and for main process.
-          * Can be:
+         /** \brief Sets default affinity for next threads to be created and for main process.
+          * \par aff could be:
           *    - unsigned value with processors mask
           *    - string like "xxxoooxxxss" with allowed symbols 'x', 'o' and 's'.
           *            'x' - enabled, 'o' - disabled, 's' - special purpose
           *             first element in string corresponds to first processor
           *    - string like "-N" where N is processors number which should be
           *             reserved for special purposes, these processors could be
-          *             later assigned with SetAffinity("+M") call (M<N) */
+          *             later assigned with SetAffinity("+M") call (M<N)
+          * \returns true if successful */
          static bool SetDfltAffinity(const char* aff = 0);
 
-         /** Returns default affinity mask in form "xxxooosss".
+         /** \brief Returns default affinity mask in form "xxxooosss".
+          *
           * See SetDfltAffinity for more details */
          static bool GetDfltAffinity(char* buf, unsigned maxbuf);
    };

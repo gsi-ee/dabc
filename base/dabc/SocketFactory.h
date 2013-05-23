@@ -22,6 +22,11 @@
 
 namespace dabc {
 
+   /** \brief Factory for socket classes
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class SocketFactory : public Factory {
       public:
          SocketFactory(const std::string& name) : Factory(name) {}

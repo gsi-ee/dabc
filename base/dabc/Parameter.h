@@ -42,11 +42,16 @@ namespace dabc {
    class Parameter;
 
    enum EParamEvent {
-      parCreated = 0,      //!< produced once when parameter is created
-      parConfigured = 1,   //!< event only for manager, used to react on reconfiguration of parameter
-      parModified = 2,     //!< produced when parameter value modified. Either every change or after time interval (default = 1 sec)
-      parDestroy = 3       //!< produced once when parameter is destroyed
+      parCreated = 0,      ///< produced once when parameter is created
+      parConfigured = 1,   ///< event only for manager, used to react on reconfiguration of parameter
+      parModified = 2,     ///< produced when parameter value modified. Either every change or after time interval (default = 1 sec)
+      parDestroy = 3       ///< produced once when parameter is destroyed
    };
+
+   /** \brief Container for parameter object
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class ParameterContainer : public RecordContainer {
       friend class Parameter;
@@ -57,21 +62,21 @@ namespace dabc {
 
          enum EStatistic { kindNone, kindRate, kindAverage };
 
-         std::string   fKind;         //!< specified kind of parameter (int, double, info, ratemeter), to be used by reference to decide if object can be assigned
-         TimeStamp     fLastChangeTm; //!< last time when parameter was modified
-         double        fInterval;     //!< how often modified events are produced TODO: should we move it in the normal record field?
-         bool          fAsynchron;    //!< indicates if parameter can produce events asynchronous to the modification of parameter itself
-                                      //!< it is a case for ratemeters
-         EStatistic    fStatistic;    //!< indicates if statistic is calculated: 0 - off, 1 - rate, 2 - average
-         double        fRateValueSum; //!< sum of values
-         double        fRateTimeSum;  //!< sum of time
-         double        fRateNumSum;   //!< sum of accumulated counts
-         bool          fMonitored;    //!< if true parameter change event will be delivered to the worker
-         int           fDebugOutput;  //!< specifies level of debug output   TODO: record field??
-         bool          fAttrModified; //!< indicate if attribute was modified since last parameter event
-         bool          fDeliverAllEvents; //!< if true, any modification event will be delivered, default off
-         int           fRateWidth;    //!< display width of rate variable
-         int           fRatePrec;     //!< display precision of rate variable
+         std::string   fKind;         ///< specified kind of parameter (int, double, info, ratemeter), to be used by reference to decide if object can be assigned
+         TimeStamp     fLastChangeTm; ///< last time when parameter was modified
+         double        fInterval;     ///< how often modified events are produced TODO: should we move it in the normal record field?
+         bool          fAsynchron;    ///< indicates if parameter can produce events asynchronous to the modification of parameter itself
+                                      ///< it is a case for ratemeters
+         EStatistic    fStatistic;    ///< indicates if statistic is calculated: 0 - off, 1 - rate, 2 - average
+         double        fRateValueSum; ///< sum of values
+         double        fRateTimeSum;  ///< sum of time
+         double        fRateNumSum;   ///< sum of accumulated counts
+         bool          fMonitored;    ///< if true parameter change event will be delivered to the worker
+         int           fDebugOutput;  ///< specifies level of debug output   TODO: record field??
+         bool          fAttrModified; ///< indicate if attribute was modified since last parameter event
+         bool          fDeliverAllEvents; ///< if true, any modification event will be delivered, default off
+         int           fRateWidth;    ///< display width of rate variable
+         int           fRatePrec;     ///< display precision of rate variable
 
          virtual bool SetField(const std::string& name, const char* value, const char* kind);
          virtual const char* GetField(const std::string& name, const char* dflt = 0);
@@ -121,6 +126,18 @@ namespace dabc {
 
          const std::string& Kind() const;
    };
+
+   // _______________________________________________________________________
+
+   /** \brief Parameter class
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    * Allows to define parameter object in \ref dabc::Worker
+    * Can deliver events, which can be monitored by any external instances.
+    * Main component for implementing interface to slow-control
+    */
 
 
    class Parameter : public Record {

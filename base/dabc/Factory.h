@@ -47,7 +47,12 @@ namespace dabc {
    class Transport;
    class FactoryPlugin;
 
-   /** \brief Factory class provides interfaces to add user-specific
+   /** \brief Factory for user-specifc classes
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    * Factory class provides interfaces to add user-specific
     *    classes to the DABC code
     */
 

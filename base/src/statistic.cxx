@@ -148,6 +148,28 @@ bool dabc::CpuStatistic::Reset()
    return Measure();
 }
 
+long dabc::CpuStatistic::GetProcVirtMem()
+{
+   pid_t id = getpid();
+
+   char fname[100];
+   sprintf(fname,"/proc/%d/status", id);
+
+   FILE* f = fopen(fname,"r");
+   if (f==0) return 0;
+   char buf[256];
+
+   long sz = 0;
+
+   while(fgets(buf, sizeof(buf), f)) {
+      int rc = sscanf(buf, "VmSize: %ld", &sz);
+      if (rc == 1) break;
+   }
+   fclose(f);
+
+   return sz;
+}
+
 // ____________________________________________________________________________
 
 
@@ -371,31 +393,4 @@ void dabc::Average::ShowHist()
       DOUT1("Bin%02d x:%5.2f = %3ld %5.1f", n, (n - 0.5) / nhist * (hist_max-hist_min) + hist_min, hist[n], 100.*sum1/sum0);
    }
    DOUT1("Over %5.2f cnt = %3ld", hist_max, hist[nhist+1]);
-}
-
-
-// __________________________________________________________________
-
-long dabc::GetProcVirtMem()
-{
-    DOUT1("Something %d", 5);
-
-    pid_t id = getpid();
-
-    char fname[100];
-    sprintf(fname,"/proc/%d/status", id);
-
-    FILE* f = fopen(fname,"r");
-    if (f==0) return 0;
-    char buf[256];
-
-    long sz = 0;
-
-    while(fgets(buf, sizeof(buf), f)) {
-       int rc = sscanf(buf, "VmSize: %ld", &sz);
-       if (rc == 1) break;
-    }
-   fclose(f);
-
-   return sz;
 }

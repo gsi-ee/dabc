@@ -34,6 +34,14 @@ namespace dabc {
    class LoggerLineEntry;
    class Mutex;
 
+   /** \brief Logging class
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Acessible via dabc::lgr() function.
+    *
+    */
+
    class Logger {
       public:
          enum EShowInfo {

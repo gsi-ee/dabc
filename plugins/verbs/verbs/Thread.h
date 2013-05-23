@@ -47,8 +47,8 @@ namespace verbs {
       enum { LoopBackQueueSize = 10 };
 
       enum EVerbsThreadEvents {
-         evntEnableCheck = evntLastThrd+1,  //!< event to enable again checking sockets for new events
-         evntLastVerbsThrdEvent             //!< last event, which can be used by verbs thread
+         evntEnableCheck = evntLastThrd+1,  ///< event to enable again checking sockets for new events
+         evntLastVerbsThrdEvent             ///< last event, which can be used by verbs thread
       };
 
       protected:

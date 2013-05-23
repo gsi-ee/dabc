@@ -250,7 +250,7 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
          rec->upper = par.GetUpperLimit();
          strncpy((char*) rec->units, par.GetActualUnits().c_str(), sizeof(rec->units)-1);
          if (fService==0) {
-            fService = new ::DimService(fDimName.c_str(), const_cast<char*>(dimc::RateRecDesc), fBuffer, fBufferLen);
+            fService = new ::DimService(fDimName.c_str(), const_cast<char*>(dimc::desc_RateRec), fBuffer, fBufferLen);
             SetRecType(dimc::RATE);
          }
 
@@ -262,11 +262,11 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
       case kindStatus: {
          StatusRec* rec = (StatusRec*) fBuffer;
          rec->severity = 0;
-         strcpy(rec->color, _DABC_COLOR_GREEN_);
+         strcpy(rec->color, dimc::col_Green);
          strcpy(rec->status, "Running");
 
          if (fService==0) {
-            fService = new ::DimService(fDimName.c_str(), const_cast<char*>(dimc::StatusRecDesc), fBuffer, fBufferLen);
+            fService = new ::DimService(fDimName.c_str(), const_cast<char*>(dimc::desc_StatusRec), fBuffer, fBufferLen);
             SetRecType(dimc::STATUS);
          }
 
@@ -276,11 +276,11 @@ bool dimc::ServiceEntry::UpdateService(const dabc::Parameter& par, EServiceKind 
       case kindInfo: {
          InfoRec* rec = (InfoRec*) fBuffer;
          rec->verbose = 1;
-         strcpy(rec->color, _DABC_COLOR_GREEN_);
+         strcpy(rec->color, dimc::col_Green);
          strcpy(rec->info, "Initializing...");
 
          if (fService==0) {
-            fService = new ::DimService(fDimName.c_str(), const_cast<char*>(dimc::InfoRecDesc), fBuffer, fBufferLen);
+            fService = new ::DimService(fDimName.c_str(), const_cast<char*>(dimc::desc_InfoRec), fBuffer, fBufferLen);
             SetRecType(dimc::INFO);
          }
 
@@ -339,9 +339,9 @@ void dimc::ServiceEntry::UpdateValue(const std::string& value)
          StatusRec* rec = (StatusRec*) fBuffer;
          DOUT0("CHANGE STATUS to %s", value.c_str());
          strncpy(rec->status, value.c_str(), sizeof(rec->status)-1);
-         if (value == dabc::ApplicationBase::stHalted()) strncpy(rec->color,_DABC_COLOR_RED_, sizeof(rec->color)-1); else
-         if (value == dabc::ApplicationBase::stRunning()) strncpy(rec->color,_DABC_COLOR_GREEN_, sizeof(rec->color)-1); else
-            strncpy(rec->color,_DABC_COLOR_YELLOW_, sizeof(rec->color)-1);
+         if (value == dabc::ApplicationBase::stHalted()) strncpy(rec->color, dimc::col_Red, sizeof(rec->color)-1); else
+         if (value == dabc::ApplicationBase::stRunning()) strncpy(rec->color, dimc::col_Green, sizeof(rec->color)-1); else
+            strncpy(rec->color, dimc::col_Yellow, sizeof(rec->color)-1);
 
          break;
       }

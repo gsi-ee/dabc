@@ -24,6 +24,12 @@
 
 namespace dabc {
 
+   /** \brief Helper class to get CPU statistic
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
+
    class CpuStatistic {
       protected:
 
@@ -57,7 +63,18 @@ namespace dabc {
          long unsigned GetVmPeak() const { return fVmPeak; }
          long unsigned GetNumThreads() const { return fNumThreads; }
 
+         static long GetProcVirtMem();
    };
+
+   // _____________________________________________________________________________
+
+   /** \brief Helper class to calculate data rate.
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Should not be mixed up with \ref dabc::Parameter class,
+    * which could measure data rate as well
+    */
 
    class Ratemeter {
      public:
@@ -88,6 +105,16 @@ namespace dabc {
         double* fPoints;
    };
 
+   // ___________________________________________________________________________________
+
+   /** \brief Helper class to calculate average value.
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Should not be mixed up with \ref dabc::Parameter class,
+    * which could measure average value as well
+    */
+
    class Average {
       public:
          Average();
@@ -114,9 +141,6 @@ namespace dabc {
 
 
    };
-
-   long GetProcVirtMem();
-
 
 }
 

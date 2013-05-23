@@ -5,12 +5,13 @@
 # Using taskset to start dabc
 
    Already before it was possible to specify taskset arguments for complete dabc process in
-   <Run> section in the form like <taskset value="-c 10-15"/>. This is used in dabc_run script.
+   `<Run>` section in the form like `<taskset value="-c 10-15"/>`. 
+   This is used in dabc_run script.
 
 # Assign special arguments for the main process
 
    One can specify default affinity for every new created thread, providing "affinity" 
-   parameter in <Run> section. Value can be following:
+   parameter in `<Run>` section. Value can be following:
        - unsigned value with processors mask
        - string like "xxxoooxxxss" with allowed symbols 'x', 'o' and 's'.
                   'x' - enabled, 'o' - disabled, 's' - special purpose

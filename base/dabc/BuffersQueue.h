@@ -27,6 +27,11 @@
 
 namespace dabc {
 
+   /** \brief Queue of buffers
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class BuffersQueue : protected Queue<Buffer, false> {
 
       protected:

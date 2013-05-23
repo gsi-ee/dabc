@@ -35,6 +35,12 @@
 
 namespace dabc {
 
+   /** \brief Full description of connection request
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
+
    class ConnectionRequestFull : public ConnectionRequest {
 
        DABC_REFERENCE(ConnectionRequestFull, ConnectionRequest, ConnectionObject)
@@ -129,13 +135,20 @@ namespace dabc {
       std::string GetUrl2() const { return GetStdStr("Url2"); }
    };
 
+   // ____________________________________________________________________________________
+
+   /** \brief Connections manager class
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class ConnectionManager : public ModuleAsync {
       protected:
          ReferencesVector   fRecs;
 
-         Command            fConnCmd;          //!< actual global command for connections establishing/closing
-         int                fDoingConnection;  //!< flag indicates that about connection activity: 0 - nothing, -1 - closing, 1 - establishing
+         Command            fConnCmd;          ///< actual global command for connections establishing/closing
+         int                fDoingConnection;  ///< flag indicates that about connection activity: 0 - nothing, -1 - closing, 1 - establishing
 
          /** \brief Analyze reply of the command, send to the device */
          void HandleConnectRequestCmdReply(ConnectionManagerHandleCmd cmd);
@@ -168,13 +181,13 @@ namespace dabc {
       public:
 
          enum EConnProgress {
-            progrInit,         //!< initial state
-            progrDoingInit,    //!< state when record should be prepared by device
-            progrPending,      //!< state when record is prepared and can try connect
-            progrWaitReply,    //!< connection request is send to the remote side and waiting for reply
-            progrDoingConnect, //!< at this state device should drive connection itself and inform about completion or failure
-            progrConnected,    //!< this is normal state when connection is active
-            progrFailed        //!< fail state, request will be ignored forever
+            progrInit,         ///< initial state
+            progrDoingInit,    ///< state when record should be prepared by device
+            progrPending,      ///< state when record is prepared and can try connect
+            progrWaitReply,    ///< connection request is send to the remote side and waiting for reply
+            progrDoingConnect, ///< at this state device should drive connection itself and inform about completion or failure
+            progrConnected,    ///< this is normal state when connection is active
+            progrFailed        ///< fail state, request will be ignored forever
          };
 
          ConnectionManager(const std::string& name, Command cmd = 0);

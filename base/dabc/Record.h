@@ -32,6 +32,10 @@ namespace dabc {
    class RecordContainer;
    class ConfigIO;
 
+   /** \brief Represent single field of the record
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class RecordField {
       friend class Record;
@@ -88,6 +92,13 @@ namespace dabc {
          static const char* kind_str() { return "str"; }
    };
 
+   // __________________________________________________________________________________
+
+   /** \brief Helper class to interpret value as record field
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class RecordValue : public RecordField {
       protected:
          virtual const char* Get(const char* dflt = 0) const;
@@ -96,10 +107,14 @@ namespace dabc {
       public:
          RecordValue(const std::string& value) : RecordField(0, value) {}
          virtual ~RecordValue() {}
-
    };
 
+   // __________________________________________________________________________________
 
+   /** \brief Container for records fields
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class RecordContainer : public Object {
       friend class Record;
@@ -136,8 +151,14 @@ namespace dabc {
          virtual void Print(int lvl = 0);
    };
 
+   // ______________________________________________________________________________
 
-   /** Naming convention for record fields :
+   /** \brief Structured data with possibility convert to/from xml
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    * Naming convention for record fields :
     *    1. Any field started with '#' will not be stored to the xml string
     *    2. Any field started with '_' will be stored as extra node in xml
     *    3. All other fields will be present attribute in main xml tag  <Record attr=""/>

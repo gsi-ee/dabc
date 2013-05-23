@@ -42,6 +42,14 @@ namespace dabc {
    class MemoryBlock;
    class MemoryPoolRef;
 
+   /** \brief Memory pool
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    * Allocates and manage memory, which than can be accessed via \ref dabc::Buffer class
+    */
+
    class MemoryPool : public ModuleAsync {
       friend class Manager;
       friend class Buffer;
@@ -57,28 +65,28 @@ namespace dabc {
 
       protected:
 
-         MemoryBlock* fMem;    //!< list of preallocated memory
+         MemoryBlock* fMem;    ///< list of preallocated memory
 
-         MemoryBlock* fSeg;    //!< list of preallocated segmented lists
+         MemoryBlock* fSeg;    ///< list of preallocated segmented lists
 
-         unsigned        fAlignment;      //!< alignment border for memory
-         unsigned        fMaxNumSegments; //!< maximum number of segments in Buffer objects
+         unsigned        fAlignment;      ///< alignment border for memory
+         unsigned        fMaxNumSegments; ///< maximum number of segments in Buffer objects
 
-         std::vector<RequesterReq>     fReqests;        //!< configuration for each output
+         std::vector<RequesterReq>     fReqests;        ///< configuration for each output
 
-         Queue<unsigned, true>         fPending;    //!< queue with requester indexes which are waiting release of the memory
+         Queue<unsigned, true>         fPending;    ///< queue with requester indexes which are waiting release of the memory
 
-         bool            fEvntFired;      //!< indicates if event was fired to process memory requests
-         bool            fWaitingRelease; //!< flag indicate that memory pool waiting release of next buffer
+         bool            fEvntFired;      ///< indicates if event was fired to process memory requests
+         bool            fWaitingRelease; ///< flag indicate that memory pool waiting release of next buffer
 
-         unsigned        fChangeCounter;  //!< memory pool change counter, incremented every time memory is allocated or freed
+         unsigned        fChangeCounter;  ///< memory pool change counter, incremented every time memory is allocated or freed
 
-         bool            fUseThread;      //!< indicate if thread functionality should be used to process supplied requests
+         bool            fUseThread;      ///< indicate if thread functionality should be used to process supplied requests
          
-         static unsigned fDfltAlignment;   //!< default alignment for memory allocation
-         static unsigned fDfltNumSegments; //!< default number of segments in memory pool
-         static unsigned fDfltRefCoeff;    //!< default coefficient for reference creation
-         static unsigned fDfltBufSize;     //!< default buffer size
+         static unsigned fDfltAlignment;   ///< default alignment for memory allocation
+         static unsigned fDfltNumSegments; ///< default number of segments in memory pool
+         static unsigned fDfltRefCoeff;    ///< default coefficient for reference creation
+         static unsigned fDfltBufSize;     ///< default buffer size
 
          virtual bool Find(ConfigIO &cfg);
 
@@ -271,6 +279,13 @@ namespace dabc {
       }
 
    };
+
+   // ________________________________________________________________________________
+
+   /** \brief Reference on \ref dabc::MemoryPool
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class MemoryPoolRef : public ModuleAsyncRef {
 

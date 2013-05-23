@@ -296,7 +296,7 @@ in detail.
 # Package and library organisation
 
 ## Core system
-The **Core system** package uses namespace [dabc](\ref namespace dabc).
+The **Core system** package uses namespace [dabc](\ref namespacedabc).
 It defines all base classes and interfaces, 
 and implements basic functionalities for object organization, memory management, 
 thread control, and event communication. Section [@ref dabc_core_classes] gives a brief overview of the
@@ -326,7 +326,7 @@ Alternatively, the *Plugin packages* may be installed in a user directory and li
 *Core system* installation.
 
 ### Bnet package
-   This package uses namespace [bnet](\ref namespace bnet). 
+   This package uses namespace [bnet](\ref namespacebnet). 
    It depends on the *Core system* and implements 
    modules to cover a generic event builder network. 
    It defines interfaces (virtual methods) of the special Bnet modules to 

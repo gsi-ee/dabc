@@ -44,6 +44,12 @@ namespace dabc {
    class Worker;
    class WorkerAddonRef;
 
+   /** \brief Generic addon for \ref dabc::Worker
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
+
    class WorkerAddon : public Object {
 
       friend class Thread;
@@ -85,6 +91,12 @@ namespace dabc {
          virtual ~WorkerAddon();
    };
 
+   // ________________________________________________________________
+
+   /** \brief Reference on \ref dabc::WorkerAddon object
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class WorkerAddonRef : public Reference {
       DABC_REFERENCE(WorkerAddonRef, Reference, WorkerAddon)
@@ -93,6 +105,13 @@ namespace dabc {
          { return GetObject() ? GetObject()->Notify(cmd,arg) : 0; }
    };
 
+   // _________________________________________________________________
+
+   /** \brief Active object, which is working inside \ref dabc::Thread
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
 
    class Worker : public Object {
 
@@ -129,19 +148,19 @@ namespace dabc {
          }
 
       protected:
-         ThreadRef        fThread;                     //!< reference on the thread, once assigned remain whole time
-         WorkerAddonRef   fAddon;                      //!< extension of worker for some special events
+         ThreadRef        fThread;                     ///< reference on the thread, once assigned remain whole time
+         WorkerAddonRef   fAddon;                      ///< extension of worker for some special events
 
          uint32_t         fWorkerId;
-         int              fWorkerPriority;             //!< priority of events, submitted by worker to the thread
+         int              fWorkerPriority;             ///< priority of events, submitted by worker to the thread
 
-         Mutex*           fThreadMutex;                //!< pointer on main thread mutex
+         Mutex*           fThreadMutex;                ///< pointer on main thread mutex
 
          // FIXME: most workers should analyze FireEvent to recognize moment when worker is going into halt mode
-         bool             fWorkerActive;               //!< indicates if worker can submit events to the thread
-         unsigned         fWorkerFiredEvents;          //!< indicate current balance between fired and processed events, used to correctly halt worker
+         bool             fWorkerActive;               ///< indicates if worker can submit events to the thread
+         unsigned         fWorkerFiredEvents;          ///< indicate current balance between fired and processed events, used to correctly halt worker
 
-         CommandsQueue    fWorkerCommands;             //!< all kinds of commands, processed by the worker
+         CommandsQueue    fWorkerCommands;             ///< all kinds of commands, processed by the worker
 
          int              fWorkerCommandsLevel;      /** Number of process commands recursion */
 
@@ -384,6 +403,13 @@ namespace dabc {
          virtual void WorkerParameterChanged(Parameter par);
    };
 
+   // __________________________________________________________________________
+
+   /** \brief Reference on \ref dabc::Worker object
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class WorkerRef : public Reference {
 
       DABC_REFERENCE(WorkerRef, Reference, Worker)
@@ -430,6 +456,8 @@ namespace dabc {
          bool FireEvent(const EventId& ev) { return GetObject() ? GetObject()->FireEvent(ev.GetCode(), ev.GetArg()) : false; }
    };
 
+   // _____________________________________________________________________________
+
 
    /** This command used to distribute parameter event to receivers */
    class CmdParameterEvent : public Command {
@@ -447,7 +475,7 @@ namespace dabc {
       }
    };
 
-
+   // _____________________________________________________________________
 
    class ParameterEvent : protected CmdParameterEvent {
       friend class Worker;
@@ -464,8 +492,6 @@ namespace dabc {
          int EventId() const { return Field("Event").AsInt(parModified); }
          bool AttrModified() const { return Field("AttrMod").AsBool(false); }
    };
-
-
 
 }
 

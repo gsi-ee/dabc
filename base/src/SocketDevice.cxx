@@ -35,12 +35,12 @@ namespace dabc {
 
    class NewConnectRec {
       public:
-         std::string            fReqItem;    //!< reference in connection request
-         SocketClientAddon*     fClient;     //!< client-side processor, to establish connection
-         SocketProtocolAddon*   fProtocol;   //!< protocol processor, to verify connection id
-         double                 fTmOut;      //!< used by device to process connection timeouts
+         std::string            fReqItem;    ///< reference in connection request
+         SocketClientAddon*     fClient;     ///< client-side processor, to establish connection
+         SocketProtocolAddon*   fProtocol;   ///< protocol processor, to verify connection id
+         double                 fTmOut;      ///< used by device to process connection timeouts
          std::string            fConnId;     //! connection id
-         Command                fLocalCmd;   //!< command from connection manager which should be replied when connection established or failed
+         Command                fLocalCmd;   ///< command from connection manager which should be replied when connection established or failed
 
 
          NewConnectRec() :

@@ -80,6 +80,12 @@ namespace dabc {
 
    class ConfigIO;
 
+   /** \brief Base class to read configuration from xml file
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
+
    class ConfigBase {
 
       friend class ConfigIO;

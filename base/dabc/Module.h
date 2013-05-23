@@ -20,10 +20,6 @@
 #include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
-#endif
-
 #ifndef DABC_Command
 #include "dabc/Command.h"
 #endif
@@ -48,10 +44,11 @@ namespace dabc {
    class ModuleAsync;
    class ModuleRef;
 
-   /** \brief Main functional class for user code.
-    *
+   /** \brief Base for dabc::ModuleSync and dabc::ModuleAsync classes.
     *
     * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
     */
 
    class Module : public Worker {
@@ -66,17 +63,20 @@ namespace dabc {
 
       protected:
 
-         bool                       fRunState;      //!< module is in running state
-         std::vector<ModuleItem*>   fItems;         // map for fast search of module items
-         std::vector<InputPort*>    fInputs;        // array of input ports
-         std::vector<OutputPort*>   fOutputs;       // array of output ports
-         std::vector<PoolHandle*>   fPools;         // array of pools
-         std::vector<Timer*>        fTimers;        // array of timers
-         std::vector<ModuleItem*>   fUsers;         // array of user items
-         unsigned                   fSysTimerIndex; // index of timer, which will be used with module itself
-         bool                       fAutoStop;      //!< module will automatically stop when all i/o ports will be disconncted
+         bool                       fRunState;      ///< true if module in the running state
+         std::vector<ModuleItem*>   fItems;         ///< map for fast search of module items
+         std::vector<InputPort*>    fInputs;        ///< array of input ports
+         std::vector<OutputPort*>   fOutputs;       ///< array of output ports
+         std::vector<PoolHandle*>   fPools;         ///< array of pools
+         std::vector<Timer*>        fTimers;        ///< array of timers
+         std::vector<ModuleItem*>   fUsers;         ///< array of user items
+         unsigned                   fSysTimerIndex; ///< index of timer, which will be used with module itself
+         bool                       fAutoStop;      ///< module will automatically stop when all i/o ports will be disconncted
 
       private:
+
+         Module(const std::string& name, Command cmd);
+         virtual ~Module();
 
          void AddModuleItem(ModuleItem* item);
          void RemoveModuleItem(ModuleItem* item);
@@ -90,11 +90,9 @@ namespace dabc {
 
       protected:
 
-         Module(const std::string& name = "module", Command cmd = 0);
-         virtual ~Module();
-
-         /** \brief Inherited method, called during module cleanup.
-          * Used to stop module if it is still running */
+         /** \brief Inherited method, called during module destroyment.
+          *
+          * Used to stop module if it is still running. */
          virtual void ObjectCleanup();
 
          virtual bool DoStop();
@@ -110,13 +108,13 @@ namespace dabc {
          virtual bool Find(ConfigIO &cfg);
 
 
-         /** Starts execution of the module code */
+         /** \brief Starts execution of the module code */
          bool Start();
 
-         /** Returns true if module running */
+         /** \brief Returns true if module if running */
          inline bool IsRunning() const { return fRunState; }
 
-         /** Stops execution of the module code */
+         /** \brief Stops execution of the module code */
          bool Stop();
 
          /** If set, module will be automatically stopped when all i/o ports are disconnected */
@@ -250,11 +248,20 @@ namespace dabc {
          virtual const char* ClassName() const { return "Module"; }
    };
 
+   // ___________________________________________________________________
+
+
+   /** \brief Reference on \ref dabc::Module class
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    * This is main interface for user to access module functionality from outside
+    */
 
    class ModuleRef : public WorkerRef {
 
       DABC_REFERENCE(ModuleRef, WorkerRef, Module)
-
 
       friend class Manager;
 

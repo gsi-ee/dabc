@@ -30,8 +30,8 @@ namespace verbs {
 
          verbs::ContextRef  fIbContext;
 
-         verbs::ComplQueue* fCQ;                 //!< completion queue, for a moment single
-         verbs::QueuePair** fQPs[bnet::MAXLID]; //!< arrays of QueuePairs pointers, NumNodes X NumLids
+         verbs::ComplQueue* fCQ;                 ///< completion queue, for a moment single
+         verbs::QueuePair** fQPs[bnet::MAXLID]; ///< arrays of QueuePairs pointers, NumNodes X NumLids
 
          int               *fSendQueue[bnet::MAXLID];    // size of individual sending queue
          int               *fRecvQueue[bnet::MAXLID];    // size of individual receiving queue

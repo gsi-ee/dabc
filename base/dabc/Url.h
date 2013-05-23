@@ -22,19 +22,23 @@
 
 namespace dabc {
 
-   /** Class dabc::Url supports following format:
+   /** \brief Extract URL fields
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Class dabc::Url supports following format:
     *    [protocol://][hostname[:port]][/filename.ext][?options[&moreoptions]]
     */
 
    class Url {
       protected:
-         std::string fUrl;      /** Full URL */
-         bool        fValid;    /** Is URL valid */
-         std::string fProtocol;
-         std::string fHostName;
-         int         fPort;
-         std::string fFileName;
-         std::string fOptions;
+         std::string fUrl;      ///< Full URL
+         bool        fValid;    ///< Is URL valid
+         std::string fProtocol; ///< protocol
+         std::string fHostName; ///< host name
+         int         fPort;     ///< port number
+         std::string fFileName; ///< file name
+         std::string fOptions;  ///< list of options
 
          bool GetOption(const std::string& optname, std::string* value = 0) const;
 

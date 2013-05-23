@@ -105,11 +105,11 @@ class IbTestWorkerModule : public dabc::ModuleSync {
       verbs::ContextRef  fIbContext;
 
 #endif
-      verbs::ComplQueue* fCQ;                 //!< completion queue, for a moment single
-      verbs::QueuePair** fQPs[IBTEST_MAXLID]; //!< arrays of QueuePairs pointers, NumNodes X NumLids
+      verbs::ComplQueue* fCQ;                 ///< completion queue, for a moment single
+      verbs::QueuePair** fQPs[IBTEST_MAXLID]; ///< arrays of QueuePairs pointers, NumNodes X NumLids
 
-      verbs::MemoryPool* fPool;         //!< memory pool for tests
-      int                fBufferSize;   //!< requested size of buffers in the pool (actual size can be bigger)
+      verbs::MemoryPool* fPool;         ///< memory pool for tests
+      int                fBufferSize;   ///< requested size of buffers in the pool (actual size can be bigger)
       int               *fSendQueue[IBTEST_MAXLID];    // size of individual sending queue
       int               *fRecvQueue[IBTEST_MAXLID];    // size of individual receiving queue
       long               fTotalSendQueue;
@@ -122,7 +122,7 @@ class IbTestWorkerModule : public dabc::ModuleSync {
       verbs::ComplQueue  *fMultiCQ;     // completion queue of multicast group
       verbs::QueuePair   *fMultiQP;     // connection to multicastgroup
       verbs::MemoryPool  *fMultiPool;   // memory pool of multicast group
-      int                fMultiBufferSize;  //!< requested size of buffers in the mcast pool (actual size can be bigger)
+      int                fMultiBufferSize;  ///< requested size of buffers in the mcast pool (actual size can be bigger)
       int                fMultiRecvQueueSize; // maximal number of items in multicast recieve queue
       int                fMultiRecvQueue;  // current number of items in multicast recieve queue
       int                fMultiSendQueueSize; // maximal size of send queue
@@ -133,7 +133,7 @@ class IbTestWorkerModule : public dabc::ModuleSync {
       dabc::Ratemeter*   fSendRatemeter;
       dabc::Ratemeter*   fWorkRatemeter;
 
-      double             fTrendingInterval;   //!< interval (in seconds) for send/recv rate trending
+      double             fTrendingInterval;   ///< interval (in seconds) for send/recv rate trending
 
       /** array indicating active nodes in the system,
        *  Accumulated in the beginning by the master and distributed to all other nodes.

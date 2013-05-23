@@ -39,18 +39,18 @@ namespace dimc {
 
          typedef std::list<ServiceEntry*> ServiceEntriesList;
 
-         std::string  fDNS;     //!< DIM_DNS_NODE
-         unsigned     fDNSport; //!< port, default 2505
+         std::string  fDNS;     ///< DIM_DNS_NODE
+         unsigned     fDNSport; ///< port, default 2505
 
-         std::string  fDimPrefix; //!< prefix for all DIM services names
+         std::string  fDimPrefix; ///< prefix for all DIM services names
 
-         std::string  fERateName; //!< name of ratemeter exported as Rate value
-         std::string  fDRateName; //!< name of ratemeter exported as Rate value
-         std::string  fInfoName; //!< name of parameter exported as Info value
-         std::string  fInfo2Name; //!< name of parameter exported as Info value
-         std::string  fInfo3Name; //!< name of parameter exported as Info value
+         std::string  fERateName; ///< name of ratemeter exported as Rate value
+         std::string  fDRateName; ///< name of ratemeter exported as Rate value
+         std::string  fInfoName; ///< name of parameter exported as Info value
+         std::string  fInfo2Name; ///< name of parameter exported as Info value
+         std::string  fInfo3Name; ///< name of parameter exported as Info value
 
-         Server* fServer;  //!< dim server instance
+         Server* fServer;  ///< dim server instance
 
          ServiceEntriesList fEntries;
 

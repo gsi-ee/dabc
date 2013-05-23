@@ -41,9 +41,16 @@ namespace dabc {
          
    };
 
+   /** \brief Interface class between xml configuration and dabc objects
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
 
-   // TODO: later ConfigIO should be non-transient reference on configuration class
    class ConfigIO {
+
+     // TODO: later ConfigIO should be non-transient reference on configuration class
+
       protected:
          Configuration* fCfg;
 
@@ -69,7 +76,6 @@ namespace dabc {
          bool ReadRecord(Object* obj, const std::string& name, RecordContainer* cont);
 
          bool ReadFieldsFromNode(XMLNodePointer_t node, RecordContainer* cont, bool overwrite = false);
-
    };
 
 }

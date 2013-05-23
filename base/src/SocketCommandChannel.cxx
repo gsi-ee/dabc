@@ -116,34 +116,34 @@ namespace dabc {
          enum EState {
 
             /** These are states of address resolution, client side */
-            stRequestResolve,     //!< state with resolve request (on client)
+            stRequestResolve,     ///< state with resolve request (on client)
 
             /** These are states of address resolution, server (respond) side */
-            stReplyResolve,    //!< state just sends back packet that we are existing
+            stReplyResolve,    ///< state just sends back packet that we are existing
 
             /** This is state to disconnect from the node */
-            stDisconnect,      //!< just send information that connections will be deactivated, no reply is required
+            stDisconnect,      ///< just send information that connections will be deactivated, no reply is required
 
             /** These are states on the command sender side */
-            stSendCommand,   //!< command send to remote and waiting for replay
-            stGetConfirm,    //!< this indicates that command is confirmed, but not executed by receiver
+            stSendCommand,   ///< command send to remote and waiting for replay
+            stGetConfirm,    ///< this indicates that command is confirmed, but not executed by receiver
 
             /** These are states on the command receiver side */
-            stReceived,      //!< command received from remote
-            stConfirmed,     //!< command confirmed to the remote side
-            stExecuted       //!< command executed
+            stReceived,      ///< command received from remote
+            stConfirmed,     ///< command confirmed to the remote side
+            stExecuted       ///< command executed
          };
 
          enum EDelayKind {
-            kindLinear = 1,        //!< all delay equidistant over whole range
-            kindProgressive = 2,   //!< arithmetic progression
-            kindBurst = 3          //!< first half short, than linear
+            kindLinear = 1,        ///< all delay equidistant over whole range
+            kindProgressive = 2,   ///< arithmetic progression
+            kindBurst = 3          ///< first half short, than linear
          };
 
          Command      fCmd;
-         uint32_t     fRecordId;     //!< unique id of the record inside correspondent node
-         int          fRecordNode;   //!< node where record was created, node+id are unique inside complete system
-         int          fRemoteNode;   //!< remote node there command or reply should be send
+         uint32_t     fRecordId;     ///< unique id of the record inside correspondent node
+         int          fRecordNode;   ///< node where record was created, node+id are unique inside complete system
+         int          fRemoteNode;   ///< remote node there command or reply should be send
          EState       fState;
          TimeStamp    fNextTm;
 
@@ -362,10 +362,10 @@ namespace dabc {
    class SocketCmdAddr {
       public:
 
-         int                fRemoteNode;     //!< remote node id
-         bool               resolved;    //!< is address resolved
-         struct sockaddr_in address;     //!< ip address
-         TimeStamp       fLastRecvTm; //!< indicates when last packet was received from the remote node
+         int                fRemoteNode;     ///< remote node id
+         bool               resolved;    ///< is address resolved
+         struct sockaddr_in address;     ///< ip address
+         TimeStamp       fLastRecvTm; ///< indicates when last packet was received from the remote node
 
          SocketCmdAddr(int node) :
             fRemoteNode(node),
@@ -382,13 +382,13 @@ namespace dabc {
    };
 
    enum ECmdDataKind {
-      kindResolveReq    = 1,   //!< address resolution request              (client -> server)
-      kindResolveRepl   = 2,   //!< address resolution response             (server -> client)
-      kindCommandReq    = 3,   //!< command request                         (client -> server)
-      kindCommandConf   = 4,   //!< confirmation that command received      (server -> client)
-      kindCommandRepl   = 5,   //!< command reply                           (server -> client)
-      kindCommandCancel = 6,   //!< cancellation of the command             (server -> client)
-      kindDisconnect    = 7,   //!< close of connection                     (client -> server)
+      kindResolveReq    = 1,   ///< address resolution request              (client -> server)
+      kindResolveRepl   = 2,   ///< address resolution response             (server -> client)
+      kindCommandReq    = 3,   ///< command request                         (client -> server)
+      kindCommandConf   = 4,   ///< confirmation that command received      (server -> client)
+      kindCommandRepl   = 5,   ///< command reply                           (server -> client)
+      kindCommandCancel = 6,   ///< cancellation of the command             (server -> client)
+      kindDisconnect    = 7,   ///< close of connection                     (client -> server)
    };
 
 }

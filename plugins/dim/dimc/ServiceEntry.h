@@ -64,31 +64,31 @@ namespace dimc {
    class ServiceEntry : public ::DimCommandHandler {
       public:
          enum EServiceKind {
-            kindNone,           //!< unspecified kind
-            kindInt,            //!< integer
-            kindDouble,         //!< double
-            kindString,         //!< string
-            kindRate,           //!< ratemeter
-            kindStatus,         //!< status record
-            kindInfo,           //!< info record
-            kindCommand         //!< command + definition
+            kindNone,           ///< unspecified kind
+            kindInt,            ///< integer
+            kindDouble,         ///< double
+            kindString,         ///< string
+            kindRate,           ///< ratemeter
+            kindStatus,         ///< status record
+            kindInfo,           ///< info record
+            kindCommand         ///< command + definition
          };
 
 
       protected:
-         std::string fDabcName;    //!< parameter name in DABC
+         std::string fDabcName;    ///< parameter name in DABC
 
-         std::string fDimName;     //!< parameter name in DIM
+         std::string fDimName;     ///< parameter name in DIM
 
-         ::DimService* fService;   //!< service associated with parameter/data reference
+         ::DimService* fService;   ///< service associated with parameter/data reference
 
-         ::DimCommand* fCmd;       //!< dim command
+         ::DimCommand* fCmd;       ///< dim command
 
-         void* fBuffer;            //!< allocated space for dim variable
+         void* fBuffer;            ///< allocated space for dim variable
 
-         unsigned fBufferLen;      //!< size of allocated buffer
+         unsigned fBufferLen;      ///< size of allocated buffer
 
-         EServiceKind  fKind;      //!< kind of the server
+         EServiceKind  fKind;      ///< kind of the server
 
          recordtype   fRecType;
          recordstat   fRecStat;

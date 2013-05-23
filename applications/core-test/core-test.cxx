@@ -721,7 +721,7 @@ class TestModuleCmd : public dabc::ModuleAsync {
       int                 fNext; // -1 reply, or number of next in chain
       int                 fCount;
       bool                fTimeout;
-      bool                fSameCmd;  //!< should we submit same command or create new one
+      bool                fSameCmd;  ///< should we submit same command or create new one
       dabc::Command       fTmCmd;
 
    public:

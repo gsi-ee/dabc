@@ -20,8 +20,8 @@
 #include "dabc/Worker.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_Queue
+#include "dabc/Queue.h"
 #endif
 
 namespace dabc {
@@ -49,6 +49,14 @@ namespace dabc {
    class Manager;
    class ApplicationRef;
 
+   /** \brief Base application class
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    * Defines main methods and minimal set of state-machine states and commands.
+    */
+
    class ApplicationBase : public Worker {
 
       friend class Manager;
@@ -71,7 +79,7 @@ namespace dabc {
 
          ExternalFunction*  fInitFunc;
 
-         bool               fWasRunning; //!< indicate if application was running at least once
+         bool               fWasRunning; ///< indicate if application was running at least once
 
          virtual int ExecuteCommand(Command cmd);
 
@@ -143,6 +151,18 @@ namespace dabc {
 
          virtual const char* ClassName() const { return typeApplication; }
    };
+
+   // =====================================================================================
+
+   /** \brief Base class for user-specific applications.
+    *
+    * \ingroup dabc_user_classes
+    *
+    * Main aim of writing user-specific application is creation and management of
+    * different application components like modules, transports, devices, which cannot
+    * be handled by standard DABC components.
+    *
+    */
 
 
    class Application : public ApplicationBase {

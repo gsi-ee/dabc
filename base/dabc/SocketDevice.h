@@ -29,6 +29,11 @@ namespace dabc {
    class NewConnectRec;
    class SocketProtocolAddon;
 
+   /** \brief Device for establishing socket connections
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class SocketDevice : public Device {
 
       friend class SocketProtocolAddon;

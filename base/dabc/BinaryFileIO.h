@@ -26,6 +26,11 @@
 
 namespace dabc {
 
+   /** \brief Binary file input object
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class BinaryFileInput : public FileInput {
       protected:
          BinaryFile          fFile;
@@ -50,6 +55,11 @@ namespace dabc {
   };
 
    // _________________________________________________________________
+
+   /** \brief Binary file output object
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class BinaryFileOutput : public FileOutput {
       protected:

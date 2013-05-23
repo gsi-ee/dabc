@@ -14,24 +14,7 @@
 #ifndef DIMC_records
 #define DIMC_records
 
-#define _DABC_HISTOGRAM_RECORD_FORMAT_    "L:1;F:1;F:1;C:32;C:32;C:16;L"
-#define _DABC_STATUS_RECORD_FORMAT_       "L:1;C:16;C:16"
-#define _DABC_INFO_RECORD_FORMAT_         "L:1;C:16;C:128"
-#define _DABC_RATE_RECORD_FORMAT_         "F:1;L:1;F:1;F:1;F:1;F:1;C:16;C:16;C:16"
-
-#define _DABC_COLOR_RED_        "Red"
-#define _DABC_COLOR_GREEN_      "Green"
-#define _DABC_COLOR_BLUE_       "Blue"
-#define _DABC_COLOR_CYAN_       "Cyan"
-#define _DABC_COLOR_YELLOW_     "Yellow"
-#define _DABC_COLOR_MAGENTA_    "Magenta"
-
-
-#ifdef __cplusplus /* compatibility mode for pure C includes */
-
 namespace dimc {
-
-#endif
 
    typedef struct{
       int channels;  /* channels of data */
@@ -77,12 +60,10 @@ namespace dimc {
        DISPLAY_STAT = 3
    };
 
-#ifdef __cplusplus
-
-   extern const char* HistogramRecDesc;
-   extern const char* StatusRecDesc;
-   extern const char* InfoRecDesc;
-   extern const char* RateRecDesc;
+   extern const char* desc_HistogramRec;
+   extern const char* desc_StatusRec;
+   extern const char* desc_InfoRec;
+   extern const char* desc_RateRec;
 
    extern const char* col_Red;
    extern const char* col_Green;
@@ -92,7 +73,6 @@ namespace dimc {
    extern const char* col_Magenta;
 
 } /* namespace */
-#endif /* c++ */
 
 
 #endif

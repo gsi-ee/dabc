@@ -20,8 +20,8 @@
 #include "dabc/SocketThread.h"
 #endif
 
-#ifndef DABC_collections
-#include "dabc/collections.h"
+#ifndef DABC_Queue
+#include "dabc/Queue.h"
 #endif
 
 
@@ -33,7 +33,6 @@ namespace dabc {
    class SocketCmdRecList;
 
    /*! \brief Defines syntax of raw packet, transformed on the command channels
-    *
     *
     */
 
@@ -63,12 +62,18 @@ namespace dabc {
 
    };
 
+   // _________________________________________________________________________________
+
    enum { MAX_UDP_PAYLOAD = 1472 };
    enum { MAX_CMD_PAYLOAD = MAX_UDP_PAYLOAD - sizeof(SocketCmdPacket) };
 
+   /** \brief Addon implementing socket I/O for \ref SocketCommandChannel
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class SocketCommandAddon : public SocketAddon {
       protected:
-
 
          int  fPort;
 
@@ -81,11 +86,16 @@ namespace dabc {
          SocketCommandAddon(int fd, int port);
          virtual ~SocketCommandAddon();
 
-
          bool SendData(void* hdr, unsigned hdrsize, void* data, unsigned datasize, void* addr, unsigned addrsize);
-
    };
 
+
+   // __________________________________________________________________________________
+
+   /** \brief Provides command channel to the dabc process
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class SocketCommandChannel : public Worker {
 
@@ -93,28 +103,28 @@ namespace dabc {
 
       protected:
 
-         uint64_t        fAppId;         //!< this should be unique id of the DABC application to let run several DABC on the node
+         uint64_t        fAppId;         ///< this should be unique id of the DABC application to let run several DABC on the node
 
-         bool            fAcceptRequests; //!< indicates if any kind of requests will be accepted
+         bool            fAcceptRequests; ///< indicates if any kind of requests will be accepted
 
-         SocketCmdRecList* fRecs;        //!< these are active records which are now in processing
-         SocketCmdRecList* fPending;     //!< these records are pending - no address resolved
-         SocketCmdRecList* fProcessed;   //!< these records are processed - they are remain just certain time after that one can send back reply again
+         SocketCmdRecList* fRecs;        ///< these are active records which are now in processing
+         SocketCmdRecList* fPending;     ///< these records are pending - no address resolved
+         SocketCmdRecList* fProcessed;   ///< these records are processed - they are remain just certain time after that one can send back reply again
 
-         CommandsQueue   fConnCmds;      //!< pending connection commands, normally submitted by manager
+         CommandsQueue   fConnCmds;      ///< pending connection commands, normally submitted by manager
 
-         uint32_t        fRecIdCounter;  //!< counter for records id to assign unique ids for subsequent records
+         uint32_t        fRecIdCounter;  ///< counter for records id to assign unique ids for subsequent records
 
-         PointersVector  fAddrs;         //!< array with resolved addresses of other nodes
+         PointersVector  fAddrs;         ///< array with resolved addresses of other nodes
 
-         int             fNodeId;        //!<  current node id
+         int             fNodeId;        ///<  current node id
 
-         bool            fCanSendDirect; //!<  variable indicates if one can send packet immediately
+         bool            fCanSendDirect; ///<  variable indicates if one can send packet immediately
 
-         double          fCleanupTm;     //!<  time left from the last cleanup
+         double          fCleanupTm;     ///<  time left from the last cleanup
 
-         long            fSendPackets;   //!< total number of send packets
-         long            fRetryPackets;  //!< total number of send retries
+         long            fSendPackets;   ///< total number of send packets
+         long            fRetryPackets;  ///< total number of send retries
 
          /*! \brief If available, sends next portion of data over socket */
          bool DoSendData(double* diff = 0);
@@ -162,8 +172,6 @@ namespace dabc {
 
          SocketCommandChannel(const std::string& name, SocketCommandAddon* addon);
          virtual ~SocketCommandChannel();
-
-
 
          /*! \brief Analyze data received from the socket */
          void ProcessRecvData(SocketCmdPacket* hdr, void* data, int len, void* addr, int addrlen);

@@ -31,7 +31,10 @@ namespace dabc {
    class XmlOutputStream;
 
 
-   extern "C" {
+//   extern "C" {
+
+   /** \brief Contains number of functions to work with xml files
+    */
 
    namespace Xml {
       bool              HasAttr(XMLNodePointer_t xmlnode, const char* name);
@@ -111,7 +114,7 @@ namespace dabc {
       void              DisplayError(int error, int linenumber);
       XMLDocPointer_t   ParseStream(XmlInputStream* input, bool showerr);
 
-   }
+//   }
 
    }
 }

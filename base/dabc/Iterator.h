@@ -31,8 +31,13 @@
 #include <vector>
 
 namespace dabc {
-    
-   // TODO: Make iterator not with indexes but with childs references list - slower, but secure
+
+   /** \brief Iterator over objects hierarchy
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class Iterator {
       protected:

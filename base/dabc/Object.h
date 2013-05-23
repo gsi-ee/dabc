@@ -98,9 +98,13 @@ namespace dabc {
    extern const char* typeSocketThread;
    extern const char* typeApplication;
 
-   /* Base class for most of the DABC classes.
+   /** \brief Base class for most of the DABC classes.
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
     * Provides possibility to build thread-safe hierarchy of the objects.
-    * Has references counter to be sure how many references are existing on this object
+    * Has references counter to be sure how many references are existing on this object.
     *
     * Thread-safety for the Object only has means together with Reference class.
     * Only existence of reference can ensure that object will not be destroyed or completely changed
@@ -112,7 +116,6 @@ namespace dabc {
     * In normal case attempt to change the referenced object will rise an exception.
     */
 
-
    class Object {
       friend class Manager;
       friend class Reference;
@@ -121,16 +124,16 @@ namespace dabc {
 
          /** These are object live stages. Normally they should go one after another */
          enum EState {
-            stConstructor       = 0,      //!<  state during constructor
-            stNormal            = 1,      //!<  state during object normal functioning
-            stWaitForThread     = 2,      //!<  object must be cleaned by the thread
-            stDoingDestroy      = 3,      //!<  we are inside destroy method
-            stWaitForDestructor = 4,      //!<  one waits unit refcounter decreases
-            stDestructor        = 5       //!<  state during destructor
+            stConstructor       = 0,      ///<  state during constructor
+            stNormal            = 1,      ///<  state during object normal functioning
+            stWaitForThread     = 2,      ///<  object must be cleaned by the thread
+            stDoingDestroy      = 3,      ///<  we are inside destroy method
+            stWaitForDestructor = 4,      ///<  one waits unit refcounter decreases
+            stDestructor        = 5       ///<  state during destructor
          };
 
-         static unsigned  gNumInstances;  //!< actual number of existing instances
-         static unsigned  gNumCreated;    //!< number of created instances, will used for object id
+         static unsigned  gNumInstances;  ///< actual number of existing instances
+         static unsigned  gNumCreated;    ///< number of created instances, will used for object id
 
          /** \brief Initializes all variables of the object */
          void Constructor();
@@ -162,21 +165,21 @@ namespace dabc {
       protected:
 
          enum EFlags {
-            flStateMask      = 0x00f,  //!< use 4 bits for state
-            flIsOwner        = 0x010,  //!< flag indicates default ownership for child objects
-            flCleanup        = 0x020,  //!< flag indicates that one should cleanup pointer from depended objects
-            flHasThread      = 0x040,  //!< flag indicates that object has thread and should be cleaned up via thread
-            flAutoDestroy    = 0x080,  //!< object will be automatically destroyed when no references exists, normally set in constructor, example Command
-            flLogging        = 0x100   //!< object is marked to provide logging information, for debug purposes only
+            flStateMask      = 0x00f,  ///< use 4 bits for state
+            flIsOwner        = 0x010,  ///< flag indicates default ownership for child objects
+            flCleanup        = 0x020,  ///< flag indicates that one should cleanup pointer from depended objects
+            flHasThread      = 0x040,  ///< flag indicates that object has thread and should be cleaned up via thread
+            flAutoDestroy    = 0x080,  ///< object will be automatically destroyed when no references exists, normally set in constructor, example Command
+            flLogging        = 0x100   ///< object is marked to provide logging information, for debug purposes only
          };
 
-         unsigned           fObjectFlags;    //!< flag, protected by the mutex
-         Reference          fObjectParent;   //!< reference on the parent object
-         std::string        fObjectName;     //!< object name
-         Mutex*             fObjectMutex;    //!< mutex protects all private property of the object
-         int                fObjectRefCnt;   //!< accounts how many references existing on the object, thread-safe
-         ReferencesVector*  fObjectChilds;   //!< list of the child objects
-         int                fObjectBlock;    //!< counter for blocking calls, as long as non-zero, non of child can be removed
+         unsigned           fObjectFlags;    ///< flag, protected by the mutex
+         Reference          fObjectParent;   ///< reference on the parent object
+         std::string        fObjectName;     ///< object name
+         Mutex*             fObjectMutex;    ///< mutex protects all private property of the object
+         int                fObjectRefCnt;   ///< accounts how many references existing on the object, thread-safe
+         ReferencesVector*  fObjectChilds;   ///< list of the child objects
+         int                fObjectBlock;    ///< counter for blocking calls, as long as non-zero, non of child can be removed
 
          /** \brief Return value of selected flag, non thread safe  */
          inline bool GetFlag(unsigned fl) const { return (fObjectFlags & fl) != 0; }

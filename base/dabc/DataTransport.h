@@ -38,6 +38,13 @@
 
 namespace dabc {
 
+   /** \brief Base class for input transport implementations
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    */
+
    class InputTransport : public Transport {
 
       // enum EDataEvents { evCallBack = evntModuleLast };
@@ -102,6 +109,12 @@ namespace dabc {
 
 // ======================================================================================
 
+   /** \brief Base class for output transport implementations
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class OutputTransport : public Transport {
 

@@ -26,6 +26,11 @@
 
 namespace dabc {
 
+   /** \brief Module provides CPU information
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class CpuInfoModule : public dabc::ModuleAsync {
       protected:
          CpuStatistic    fStat;

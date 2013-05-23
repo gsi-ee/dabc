@@ -45,9 +45,12 @@ namespace dabc {
    };
 
 
-   /** This is just container object which is not see to normal user
-    * All operations should be performed with Command class which is reference to this container
-    */
+   /** \brief Container object for command which should not been seen to normal user
+    *
+    * \ingroup dabc_all_classes
+    *
+    * All operations should be performed with dabc::Command class
+    * which is reference to this container */
 
    class CommandContainer : public RecordContainer {
 
@@ -86,17 +89,9 @@ namespace dabc {
          virtual const char* ClassName() const { return "Command"; }
    };
 
-   class CommandAccess {
-      public:
-         virtual ~CommandAccess() {}
-      
-         virtual CommandContainer* GetObject() const = 0;
-
-         static bool transient() { return false; }
-   };
-
-
-   /** This is command class providing handling of commands.
+   /** \brief Represents command with its arguments
+    *
+    * \ingroup dabc_core_classes
     */
 
    class Command : public Record {

@@ -19,6 +19,9 @@
 namespace dabc {
 
    /** \brief Class for acquiring and holding timestamps.
+    *
+    * \ingroup dabc_all_classes
+    *
     * Time measurement is done in seconds relative to program start.
     * In normal case constant tsc counter is used - by program start during 0.1 seconds value of
     * tsc counter compared with normal monolitic clock. If deviation is less than 0.01%, tsc counter
@@ -30,9 +33,9 @@ namespace dabc {
 
    struct TimeStamp {
       protected:
-         double fValue;  //!< time since start of the application in seconds
+         double fValue;  ///< time since start of the application in seconds
 
-         static bool gFast;  //!< indicates if fast or slow method is used for time measurement
+         static bool gFast;  ///< indicates if fast or slow method is used for time measurement
 
          typedef long long int slowclock_t;
 

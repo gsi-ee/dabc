@@ -22,6 +22,13 @@
 
 namespace dabc {
 
+   /** \brief Base class for user-derived code, implementing event-processing.
+     *
+     * \ingroup dabc_user_classes
+     * \ingroup dabc_all_classes
+     *
+     */
+
    class ModuleAsync : public Module {
       private:
          virtual bool DoStart();
@@ -111,6 +118,13 @@ namespace dabc {
          virtual const char* ClassName() const { return "ModuleAsync"; }
 
    };
+
+   // ____________________________________________________________
+
+   /** \brief Reference on \ref dabc::ModuleAsync class
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class ModuleAsyncRef : public ModuleRef {
       DABC_REFERENCE(ModuleAsyncRef, ModuleRef, ModuleAsync)

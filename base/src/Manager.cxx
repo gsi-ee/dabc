@@ -74,9 +74,9 @@ namespace dabc {
     *
     */
    struct DependPair {
-      Reference src; //!< reference on object which want to be informed when \param tgt object is deleted
-      Object* tgt;   //!< object
-      int fire;      //!< how to proceed pair 0 - remain, 1 - inform src, 2 - just delete
+      Reference src; ///< reference on object which want to be informed when \param tgt object is deleted
+      Object* tgt;   ///< object
+      int fire;      ///< how to proceed pair 0 - remain, 1 - inform src, 2 - just delete
 
       DependPair() : src(), tgt(0), fire(0) {}
       DependPair(Object* _src, Object* _tgt) : src(_src), tgt(_tgt), fire(0) {}
@@ -87,12 +87,12 @@ namespace dabc {
 
 
    struct ParamEventReceiverRec {
-      WorkerRef    recv;          //!< only workers can be receiver of the parameters events
-      std::string  remote_recv;   //!< address of remote receiver of parameter events
-      bool         only_change;   //!< specify if only parameter-change events are produced
-      std::string  name_mask;     //!< mask only for parameter names, useful when only specific names are interested
-      std::string  fullname_mask; //!< mask for parameter full names, necessary when full parameter name is important
-      int          queue;         //!< number of parameters events submitted, if bigger than some limit events will be skipped
+      WorkerRef    recv;          ///< only workers can be receiver of the parameters events
+      std::string  remote_recv;   ///< address of remote receiver of parameter events
+      bool         only_change;   ///< specify if only parameter-change events are produced
+      std::string  name_mask;     ///< mask only for parameter names, useful when only specific names are interested
+      std::string  fullname_mask; ///< mask for parameter full names, necessary when full parameter name is important
+      int          queue;         ///< number of parameters events submitted, if bigger than some limit events will be skipped
 
       ParamEventReceiverRec() :
          recv(),

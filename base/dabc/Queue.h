@@ -18,6 +18,8 @@
 
 #include <string.h>
 
+#include <vector>
+
 #ifndef DABC_defines
 #include "dabc/defines.h"
 #endif
@@ -31,6 +33,12 @@
 #endif
 
 namespace dabc {
+
+   /** \brief Template of circular queue
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
 
    template<class T, bool canexpand = false>
    class Queue {
@@ -73,7 +81,6 @@ namespace dabc {
          };
 
 
-
       protected:
 
          friend class Queue<T,canexpand>::Iterator;
@@ -84,7 +91,7 @@ namespace dabc {
          unsigned   fSize;
          T*         fHead;
          T*         fTail;
-         unsigned   fInitSize; //!< original size of the queue, restored then Reset() method is called
+         unsigned   fInitSize; ///< original size of the queue, restored then Reset() method is called
 
          T*         QueueItem(unsigned n) { return fQueue + n; }
 
@@ -342,22 +349,58 @@ namespace dabc {
 
    // ___________________________________________________________
 
-   /** \brief PointersQueue is small specialization of Queue class operates
-    * with pointers on to some object. It is user responsibility to destroy
-    * dynamically-created objects
+   /** \brief Specialized vector with pointers
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Allows to check pointer duplications
     */
 
-   template<class T, bool canexpand = true>
-   class PointersQueue : public Queue<T*, canexpand> {
+   class PointersVector : public std::vector<void*> {
       public:
-         PointersQueue() : Queue<T*, canexpand>() {}
+         PointersVector() : std::vector<void*>() {}
 
-         PointersQueue(unsigned capacity) : Queue<T*, canexpand>(capacity) {}
+         void* pop()
+         {
+            if (size()==0) return 0;
+            void* res = back();
+            pop_back();
+            return res;
+         }
+
+         bool has_ptr(void* item) const
+         {
+            for (unsigned n=0; n<size(); n++)
+               if (at(n)==item) return true;
+            return false;
+         }
+
+         bool remove_at(unsigned n)
+         {
+            if (n>=size()) return false;
+            erase(begin()+n);
+            return true;
+         }
+
+         bool remove(void* item)
+         {
+            for (iterator iter = begin(); iter!=end(); iter++)
+               if (*iter == item) {
+                  erase(iter);
+                  return true;
+               }
+            return false;
+         }
    };
+
 
    // ___________________________________________________________
 
-   /** Special case of the queue when structure or class is used as entry of the queue.
+   /** \brief Template of queue with complex objects
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Special case of the queue when structure or class is used as entry of the queue.
     * Main difference from normal queue - one somehow should cleanup item when it is not longer used
     * without item destructor. The only way is to introduce reset() method in contained class which
     * do the job similar to destructor. It is also recommended that contained class has
@@ -379,6 +422,8 @@ namespace dabc {
       typedef Queue<T, canexpand> Parent;
       public:
          RecordsQueue() : Parent() {}
+
+         virtual ~RecordsQueue() {}
 
          RecordsQueue(unsigned capacity) : Parent(capacity) {}
 

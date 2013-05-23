@@ -22,6 +22,12 @@
 
 namespace dabc {
 
+   /** \brief Event structure, exchanged between DABC threads
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
+
    struct EventId {
       uint64_t value;
 

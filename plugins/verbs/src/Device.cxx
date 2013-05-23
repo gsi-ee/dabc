@@ -59,7 +59,7 @@ namespace verbs {
       public:
          std::string      fReqItem;
 
-         dabc::Command    fLocalCmd; //!< command which should be replied when connection established or failed
+         dabc::Command    fLocalCmd; ///< command which should be replied when connection established or failed
 
          ContextRef       fIbContext;
 

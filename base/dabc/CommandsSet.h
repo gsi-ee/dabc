@@ -22,7 +22,10 @@
 
 namespace dabc {
 
-   /** CommandsSet - class provides possibility to submit/control execution of commands sets
+    /** Cclass provides possibility to submit/control execution of commands sets
+     *
+     * \ingroup dabc_all_classes
+     *
      * It's main idea - several commands can be submitted in parallel or sequential and
      * only when all submitted commands are completed, master command is replied with true.
      * One also can specify timeout interval, after which master command will be replied with false.

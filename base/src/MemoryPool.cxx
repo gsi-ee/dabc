@@ -33,17 +33,17 @@ namespace dabc {
       public:
 
          struct Entry {
-            void         *buf;     //!< pointer on raw memory
-            BufferSize_t  size;    //!< size of the block
-            bool          owner;   //!< is memory should be released
-            int           refcnt;  //!< usage counter - number of references on the memory
+            void         *buf;     ///< pointer on raw memory
+            BufferSize_t  size;    ///< size of the block
+            bool          owner;   ///< is memory should be released
+            int           refcnt;  ///< usage counter - number of references on the memory
          };
 
          typedef Queue<unsigned, false> FreeQueue;
 
-         Entry*    fArr;       //!< array of buffers
-         unsigned  fNumber;    //!< number of buffers
-         FreeQueue fFree;      //!< list of free buffers
+         Entry*    fArr;       ///< array of buffers
+         unsigned  fNumber;    ///< number of buffers
+         FreeQueue fFree;      ///< list of free buffers
 
          MemoryBlock() :
             fArr(0),

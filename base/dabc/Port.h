@@ -36,6 +36,12 @@ namespace dabc {
    class ModuleAsync;
    class ModuleSync;
 
+   /** \brief Base class for input and output ports
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class Port : public ModuleItem {
 
@@ -141,6 +147,16 @@ namespace dabc {
          virtual bool IsOutput() const { return false; }
    };
 
+   // __________________________________________________________________________
+
+
+   /** \brief Reference on the \ref dabc::Port class
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    * Provides interface to the port functionality from outside module.
+    */
 
    class PortRef : public ModuleItemRef {
       DABC_REFERENCE(PortRef, ModuleItemRef, Port)
@@ -177,6 +193,11 @@ namespace dabc {
 
    // =====================================================================================
 
+   /** \brief Input port
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
 
    class InputPort : public Port {
 
@@ -224,6 +245,12 @@ namespace dabc {
 
    // =======================================================================================
 
+   /** \brief Output port
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
+
    class OutputPort : public Port {
 
       friend class Module;
@@ -261,6 +288,12 @@ namespace dabc {
    };
 
    // =======================================================================================
+
+   /** \brief Handle for pool connection
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
 
    class PoolHandle : public Port {
 
@@ -317,7 +350,6 @@ namespace dabc {
 
          virtual bool IsInput() const { return true; }
    };
-
 
 }
 

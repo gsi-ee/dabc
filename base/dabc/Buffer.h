@@ -51,6 +51,12 @@ namespace dabc {
       void*           buffer;    // pointer on the beginning of buffer (must be in the area of id)
    };
 
+   /** \brief Contains reference on memory from memory pool
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
+
    class Buffer {
       friend class MemoryPool;
       friend class LocalTransport;
@@ -59,18 +65,18 @@ namespace dabc {
 
          struct BufferRec {
 
-            int          fRefCnt;       //!< counter of local references on the record, accessed without mutex, only allowed from the same thread
+            int          fRefCnt;       ///< counter of local references on the record, accessed without mutex, only allowed from the same thread
 
             // TODO: for debug purposes one can put thread id to verify that access performing always from the same thread
             // TODO: this is critical when fRefCnt>1 - means several buffers are exists and reference same record
 
-            Reference    fPool;         //!< reference on the memory pool
-            unsigned     fPoolId;       //!< id, used by pool to identify segments list, when -1 without pool identifies that memory in segments owned by Buffer
+            Reference    fPool;         ///< reference on the memory pool
+            unsigned     fPoolId;       ///< id, used by pool to identify segments list, when -1 without pool identifies that memory in segments owned by Buffer
 
-            unsigned     fNumSegments;  //!< number of entries in segments list
-            unsigned     fCapacity;     //!< capacity of segments list
+            unsigned     fNumSegments;  ///< number of entries in segments list
+            unsigned     fCapacity;     ///< capacity of segments list
 
-            unsigned     fTypeId;       //!< buffer type, identifies content of the buffer
+            unsigned     fTypeId;       ///< buffer type, identifies content of the buffer
             
             /** list of memory segments, allocated by memory pool, allocated right after record itself */
             inline MemSegment* Segments() { return (MemSegment*) ((char*) this + sizeof(BufferRec)); }
@@ -83,7 +89,7 @@ namespace dabc {
             inline MemoryPool* PoolPtr() const { return (MemoryPool*) fPool(); }
          };
 
-         BufferRec*   fRec;          //!< pointer on the record, either allocated by pool or explicitely, can be detected
+         BufferRec*   fRec;          ///< pointer on the record, either allocated by pool or explicitely, can be detected
 
          int RefCnt() const { return fRec ? fRec->fRefCnt : 0; }
 

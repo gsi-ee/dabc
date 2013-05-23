@@ -29,6 +29,12 @@ namespace dabc {
 
    extern const unsigned AcknoledgeQueueLength;
 
+   /** \brief Base class for transport implementations
+    *
+    * \ingroup dabc_core_classes
+    * \ingroup dabc_all_classes
+    */
+
    class Transport : public ModuleAsync {
       protected:
          enum ETransportState {
@@ -74,6 +80,12 @@ namespace dabc {
          virtual void CloseTransport(bool witherr = false);
    };
 
+   // __________________________________________________
+
+   /** \brief Reference on \ref dabc::Transport class
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class TransportRef : public ModuleAsyncRef {
       DABC_REFERENCE(TransportRef, ModuleAsyncRef, Transport)

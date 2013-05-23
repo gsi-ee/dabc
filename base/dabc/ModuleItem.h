@@ -59,6 +59,13 @@ namespace dabc {
            moduleitemAnyId = 65535      // special id to identify any item (used in WaitForEvent)
    };
 
+   /** \brief Base class for module items like ports, timers, pool handles
+    *
+    * \ingroup dabc_all_classes
+    *
+    * Access to item functionality is possible only via \ref dabc::Module methods
+    */
+
    class ModuleItem : public Worker {
       friend class Module;
       friend class ModuleAsync;
@@ -89,6 +96,13 @@ namespace dabc {
    };
 
 
+   // _____________________________________________________________________
+
+   /** \brief Reference on \ref dabc::ModuleItem class
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class ModuleItemRef : public WorkerRef {
       DABC_REFERENCE(ModuleItemRef, WorkerRef, ModuleItem)
 
@@ -101,8 +115,10 @@ namespace dabc {
 
    // ==================================================================================
 
-
-   /** Provides timer event to the module
+    /** \brief Provides timer event to the module
+     *
+     * \ingroup dabc_all_classes
+     *
      * Main aim of this class is to generate periodical or single "shoot" events,
      * which can be used in module for different purposes.
      * If period parameter is positive, timer will produces periodical events.
@@ -158,6 +174,12 @@ namespace dabc {
    };
 
    // ==================================================================================
+
+   /** \brief Special timer to reestablish port connections in the module
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class ConnTimer : public ModuleItem {
       friend class Module;

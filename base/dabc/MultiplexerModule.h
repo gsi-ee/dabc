@@ -29,6 +29,16 @@ namespace dabc {
 
    typedef Queue<unsigned, true> PortIdsQueue;
 
+   /** \brief Multiplexer module
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    * Module receives buffers from all inputs and, keeping buffers order,
+    * deliver them to all outputs
+    * Can be used in many standard use-cases
+    */
+
    class MultiplexerModule : public dabc::ModuleAsync {
       protected:
          PortIdsQueue fQueue;
@@ -46,16 +56,24 @@ namespace dabc {
 
    // ====================================================================
 
+   /** \brief Repeater module
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
+    * Module translates buffer from each input to correspondent output.
+    *
+    * Can be used in many standard use-cases
+    */
+
    class RepeaterModule : public dabc::ModuleAsync {
 
       public:
          RepeaterModule(const std::string& name, dabc::Command cmd = 0);
 
          virtual bool ProcessRecv(unsigned port);
-
          virtual bool ProcessSend(unsigned port);
    };
-
 
 
 }

@@ -30,6 +30,13 @@ namespace dabc {
    class Port;
    class LocalTransportRef;
 
+   /** \brief Transport between two ports on the same node
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
+
+
    class LocalTransport : public Object {
 
       friend class Port;
@@ -54,6 +61,10 @@ namespace dabc {
 
          enum { MaskInp = 0x1, MaskOut = 0x2, MaskConn = 0x3 };
 
+         LocalTransport(unsigned capacity, bool withmutex);
+
+         virtual ~LocalTransport();
+
          void SetConnected(bool isinp) { LockGuard lock(QueueMutex()); fConnected |= isinp ? MaskInp : MaskOut; }
 
          void ConfirmEvent(bool isoutput);
@@ -61,13 +72,6 @@ namespace dabc {
          void PortActivated(int itemkind, bool on);
 
          void CleanupQueue();
-
-
-      public:
-
-         LocalTransport(unsigned capacity, bool withmutex);
-
-         virtual ~LocalTransport();
 
          bool IsConnected() const { LockGuard lock(QueueMutex()); return (fConnected == MaskConn); }
 
@@ -96,9 +100,18 @@ namespace dabc {
 
          void Disconnect(bool isinp);
 
+      public:
+
          static int ConnectPorts(Reference port1ref, Reference port2ref);
    };
 
+   // ________________________________________________________________________
+
+   /** \brief Reference on the \ref LocalTransport
+    *
+    * \ingroup dabc_all_classes
+    *
+    */
 
    class LocalTransportRef : public Reference {
       DABC_REFERENCE(LocalTransportRef, Reference, LocalTransport)

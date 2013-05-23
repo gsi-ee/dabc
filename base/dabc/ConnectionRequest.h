@@ -37,7 +37,12 @@ namespace dabc {
    class ConnectionRequest;
    class ConnectionRequestFull;
 
-   /** Connection object configures properties of connection,
+
+   /** \brief Container for connection parameters
+    *
+    *  \ingroup dabc_all_classes
+    *
+    * Connection object configures properties of connection,
     * which should be established for the port.
     * One can create the only connection object for each port.
     * Connection object is used by connection manager to establish connection with remote nodes.
@@ -50,13 +55,13 @@ namespace dabc {
       public:
 
          enum EState {
-            sInit,          //!< connection in initial state
-            sPending,       //!< connection is pending  (want to be connected)
-            sConnecting,    //!< connection is in progress
-            sConnected,     //!< connection is up and working
-            sDisconnected,  //!< connection is down by user, will not be reconnected
-            sBroken,        //!< connection is broken , if allowed connection manager will reactivate connection immediately
-            sFailed         //!< connection cannot be established by connection manager
+            sInit,          ///< connection in initial state
+            sPending,       ///< connection is pending  (want to be connected)
+            sConnecting,    ///< connection is in progress
+            sConnected,     ///< connection is up and working
+            sDisconnected,  ///< connection is down by user, will not be reconnected
+            sBroken,        ///< connection is broken , if allowed connection manager will reactivate connection immediately
+            sFailed         ///< connection cannot be established by connection manager
          };
 
       protected:
@@ -66,11 +71,11 @@ namespace dabc {
          friend class ConnectionRequest;
          friend class ConnectionRequestFull;
 
-         EState        fConnState;    //!< actual state of the connection, is parameter value
+         EState        fConnState;    ///< actual state of the connection, is parameter value
 
-         std::string   fLocalUrl;     //!< full url of local port
+         std::string   fLocalUrl;     ///< full url of local port
 
-         std::string   fPoolName;     //!< pool which should be used for the connections
+         std::string   fPoolName;     ///< pool which should be used for the connections
 
          // these are fields used only by connection manager and devices from their threads
          // connection manager for a time of connection keep reference on the connection
@@ -79,19 +84,19 @@ namespace dabc {
 
          int          fProgress;
 
-         std::string  fServerId;     //!< identifier for server side
-         std::string  fClientId;     //!< identifier for client side
-         Reference    fCustomData;   //!< implementation specific data, managed by the device, cleanuped by the record when connection is destroyed
-         std::string  fConnId;       //!< unique id for that connection, defined by the server (can be overwritten by device)
-         Command      fRemoteCmd;    //!< command from remote, interpretation depends from the state
-         int          fInlineDataSize;   //!< property of the port, if does not match, will be ruled by the server
+         std::string  fServerId;     ///< identifier for server side
+         std::string  fClientId;     ///< identifier for client side
+         Reference    fCustomData;   ///< implementation specific data, managed by the device, cleanuped by the record when connection is destroyed
+         std::string  fConnId;       ///< unique id for that connection, defined by the server (can be overwritten by device)
+         Command      fRemoteCmd;    ///< command from remote, interpretation depends from the state
+         int          fInlineDataSize;   ///< property of the port, if does not match, will be ruled by the server
 
          // these fields and methods used only by connection manager
          // therefore it is enough to have reference on it (no mutex required)
-         double      fAccDelay;    //!< accounting spent time, when negative - record is active
-         double      fSetDelay;    //!< set value for delay, will be activated first time timeout processing done
+         double      fAccDelay;    ///< accounting spent time, when negative - record is active
+         double      fSetDelay;    ///< set value for delay, will be activated first time timeout processing done
 
-         std::string  fAllowedField;  //!< name of field which is allowed to change in any state
+         std::string  fAllowedField;  ///< name of field which is allowed to change in any state
 
 
          ConnectionObject(Reference port, const std::string& localurl);
@@ -160,14 +165,19 @@ namespace dabc {
   if (GetObject()) { \
      LockGuard guard(GetObject()->fObjectMutex); \
      GetObject()-> field_name = value; \
-  }
+   }
 
 
-   /** ConnectionRequest is reference on ConnectionObject,
+   // _______________________________________________________________________________
+
+   /** \brief Connection request
+    *
+    * \ingroup dabc_all_classes
+    *
+    * ConnectionRequest is reference on \ref ConnectionObject,
     * which is used to specify user-specific parameters.
     * Not all fields of ConnectionObject accessible via ConnectionRequest.
     */
-
 
    class ConnectionRequest : public Parameter {
 

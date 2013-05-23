@@ -31,11 +31,11 @@ namespace hadaq {
 
 
       protected:
-         std::string fStatsName;      //!< statistics parameter name in hadaq "worker" segment
-         std::string fShmName;        //!< name of shared memory file
+         std::string fStatsName;      ///< statistics parameter name in hadaq "worker" segment
+         std::string fShmName;        ///< name of shared memory file
          ::Worker* fWorker;           // reference to shmem handle
 
-        unsigned long* fShmPtr;       //!<points to value in shared memory
+        unsigned long* fShmPtr;       ///<points to value in shared memory
 
         dabc::Parameter fPar;        // backreference to parameter
 
