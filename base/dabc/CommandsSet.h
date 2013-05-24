@@ -22,7 +22,7 @@
 
 namespace dabc {
 
-    /** Cclass provides possibility to submit/control execution of commands sets
+    /** \brief Class provides possibility to submit/control execution of commands sets
      *
      * \ingroup dabc_all_classes
      *

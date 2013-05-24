@@ -28,6 +28,8 @@
 
 namespace hadaq {
 
+   /** \brief Implementation of file input for HLD files */
+
    class HldInput : public dabc::FileInput {
       protected:
 

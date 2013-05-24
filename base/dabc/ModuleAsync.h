@@ -121,7 +121,7 @@ namespace dabc {
 
    // ____________________________________________________________
 
-   /** \brief Reference on \ref dabc::ModuleAsync class
+   /** \brief %Reference on \ref dabc::ModuleAsync class
     *
     * \ingroup dabc_all_classes
     */

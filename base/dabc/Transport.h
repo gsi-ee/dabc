@@ -82,7 +82,8 @@ namespace dabc {
 
    // __________________________________________________
 
-   /** \brief Reference on \ref dabc::Transport class
+
+   /** \brief %Reference on \ref dabc::Transport class
     *
     * \ingroup dabc_all_classes
     */

@@ -26,9 +26,11 @@
 #include "dabc/Buffer.h"
 #endif
 
+/** \brief Event building network __bnet__ (not yet ready) */
+
 namespace bnet {
 
-   /** Structure to keep event/time frame identifier
+   /** \brief Structure to keep event/time frame identifier
     * 64-bit unsigned value is used. There are following special values:
     *   0 - null(), no event - no data expected
     *  */

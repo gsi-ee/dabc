@@ -30,7 +30,7 @@ namespace dabc {
    class Port;
    class LocalTransportRef;
 
-   /** \brief Transport between two ports on the same node
+   /** \brief %Transport between two ports on the same node
     *
     * \ingroup dabc_all_classes
     *
@@ -107,7 +107,7 @@ namespace dabc {
 
    // ________________________________________________________________________
 
-   /** \brief Reference on the \ref LocalTransport
+   /** \brief %Reference on the \ref dabc::LocalTransport
     *
     * \ingroup dabc_all_classes
     *

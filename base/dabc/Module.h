@@ -251,7 +251,7 @@ namespace dabc {
    // ___________________________________________________________________
 
 
-   /** \brief Reference on \ref dabc::Module class
+   /** \brief %Reference on \ref dabc::Module class
     *
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes

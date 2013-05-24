@@ -41,6 +41,8 @@ namespace hadaq {
 
    class DataTransport;
 
+   /** \brief %Addon for socket thread to handle UDP data stream from TRB */
+
    class DataSocketAddon : public dabc::SocketAddon,
                            public dabc::DataInput {
       protected:
@@ -90,6 +92,11 @@ namespace hadaq {
    };
 
    // ================================================================
+
+   /** \brief Special HADAQ input transport
+    *
+    * Required to be able export different ratemeters to EPICS
+    */
 
    class DataTransport : public dabc::InputTransport {
       protected:

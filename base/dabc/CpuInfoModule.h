@@ -26,7 +26,7 @@
 
 namespace dabc {
 
-   /** \brief Module provides CPU information
+   /** \brief %Module provides CPU information
     *
     * \ingroup dabc_all_classes
     */

@@ -20,13 +20,17 @@
 
 namespace verbs {
 
-   class ComplQueue;
+   /** \brief Context object for completion queue operations */
 
    struct ComplQueueContext {
-      int    events_get;
-      ComplQueue*   itself;
+      int            events_get;
+      void*          itself;
       struct ibv_cq* own_cq;
    };
+
+   // __________________________________________________________________
+
+   /** \brief Wrapper for IB VERBS completion queue  */
 
    class ComplQueue  {
       protected:
@@ -37,7 +41,7 @@ namespace verbs {
          struct ibv_comp_channel *f_channel;
          bool                     f_ownchannel;
 
-         ComplQueueContext           fCQContext;
+         ComplQueueContext        fCQContext;
          // FIXME: for a moment put here, later should be removed
          struct ibv_wc            f_wc;
 

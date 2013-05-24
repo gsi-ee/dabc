@@ -32,7 +32,7 @@ namespace dabc {
    class WorkerRef;
 
 
-   /** \brief Configuration container
+   /** \brief %Configuration container
     *
     * \ingroup dabc_all_classes
     *

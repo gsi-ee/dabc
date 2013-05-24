@@ -28,7 +28,7 @@ namespace hadaq {
 
    class ShmEntry;
 
-   /** Class registers for parameter event from the DABC and export these events to SHM/hadaq "Worker" mechanism
+   /** \brief Class registers for parameter event from the DABC and export these events to SHM/hadaq "Worker" mechanism
     *
     */
 

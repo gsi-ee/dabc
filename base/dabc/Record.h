@@ -153,7 +153,7 @@ namespace dabc {
 
    // ______________________________________________________________________________
 
-   /** \brief Structured data with possibility convert to/from xml
+   /** \brief Structured data with possibility of converting to/from xml
     *
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes

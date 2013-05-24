@@ -34,6 +34,8 @@
 
 #include <vector>
 
+/** \brief Core framework classes */
+
 namespace dabc {
 
    class Module;
@@ -47,7 +49,7 @@ namespace dabc {
    class Transport;
    class FactoryPlugin;
 
-   /** \brief Factory for user-specifc classes
+   /** \brief %Factory for user-specifc classes
     *
     * \ingroup dabc_user_classes
     * \ingroup dabc_all_classes
@@ -94,6 +96,13 @@ namespace dabc {
 
 
    // ==============================================================================
+
+   /** \brief Small helper class to correctly instantiate user-specific factories
+    *
+    * In some of implementation files should stay:
+    *
+    *     dabc::FactoryPlugin user_plugin(new UserFactory);
+    */
 
    class FactoryPlugin {
       public:

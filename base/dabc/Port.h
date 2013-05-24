@@ -150,7 +150,7 @@ namespace dabc {
    // __________________________________________________________________________
 
 
-   /** \brief Reference on the \ref dabc::Port class
+   /** \brief %Reference on the \ref dabc::Port class
     *
     * \ingroup dabc_user_classes
     * \ingroup dabc_all_classes

@@ -33,6 +33,8 @@
 
 namespace mbs {
 
+   /** \brief Input for LMD files (lmd:) */
+
    class LmdInput : public dabc::FileInput {
       protected:
 
@@ -57,6 +59,8 @@ namespace mbs {
    };
 
    // ===============================================================================
+
+   /** \brief Input for new LMD files (lmd2:) */
 
    class LmdInputNew : public dabc::FileInput {
        protected:

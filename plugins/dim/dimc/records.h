@@ -16,6 +16,8 @@
 
 namespace dimc {
 
+   /** \brief Structure for histogram representation in dim control */
+
    typedef struct{
       int channels;  /* channels of data */
       float xlow;
@@ -27,20 +29,27 @@ namespace dimc {
      /* DIM record must be allocated by malloc, including this header and the data field. */
    } HistogramRec;
 
+   // _________________________________________________________________________
+
+   /** \brief Structure for status representation in dim control */
    typedef struct{
       int severity; /* (0=success, 1=warning, 2=error, 3=fatal)*/
       char color[16]; /* (color name: Red, Green, Blue, Cyan, Yellow, Magenta)*/
       char status[16]; /* status name */
    } StatusRec;
 
+   // _________________________________________________________________________
 
+   /** \brief Structure for information representation in dim control */
    typedef struct{
       int verbose; /* (0=Plain text, 1=Node:text) */
       char color[16]; /* (Red, Green, Blue, Cyan, Magenta, Yellow) */
       char info[128]; /* info message */
    } InfoRec;
 
+   // _________________________________________________________________________
 
+   /** \brief Structure for rate representation in dim control */
    typedef struct {
       float value; 
       int displaymode; /* one of the DISPLAY_x */
@@ -53,6 +62,8 @@ namespace dimc {
       char units[16];
    } RateRec;
 
+
+   /** \brief Different modes for rate display in gui */
    enum RateDisplayMode { 
        DISPLAY_ARC = 0,
        DISPLAY_BAR = 1,

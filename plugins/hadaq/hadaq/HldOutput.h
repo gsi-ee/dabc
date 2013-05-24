@@ -32,6 +32,8 @@
 
 namespace hadaq {
 
+   /** \brief Implementation of file output for HLD files */
+
    class HldOutput : public dabc::FileOutput {
       protected:
 

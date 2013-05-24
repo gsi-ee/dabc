@@ -31,8 +31,11 @@ namespace verbs {
    class Device;
    class PoolRegistry;
 
+   /** \brief Implementation of NetworkTransport for VERBS */
+
+
    class VerbsNetworkInetrface : public WorkerAddon,
-                             public dabc::NetworkInetrface {
+                                 public dabc::NetworkInetrface {
       protected:
          friend class Device;
 

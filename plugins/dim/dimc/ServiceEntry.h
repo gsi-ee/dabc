@@ -53,7 +53,6 @@ namespace dimc {
    };
 
 
-
    /** type safety for record mode bits */
    enum recordmode {
       NOMODE    = 0 ,
@@ -61,6 +60,7 @@ namespace dimc {
    };
 
 
+   /** \brief Entry for each variable which is exported to DIM control  */
    class ServiceEntry : public ::DimCommandHandler {
       public:
          enum EServiceKind {

@@ -53,7 +53,7 @@ namespace dabc {
 
    // ____________________________________________________________
 
-   /** \brief pointer on posix pthread mutex
+   /** \brief %Pointer on posix pthread mutex
     *
     * \ingroup dabc_all_classes
     */
@@ -96,7 +96,7 @@ namespace dabc {
 #endif
 
 
-   /** \brief lock guard for posix mutex
+   /** \brief Lock guard for posix mutex
     *
     * \ingroup dabc_all_classes
     */
@@ -165,7 +165,7 @@ namespace dabc {
 
    // ____________________________________________________________
 
-   /** \brief unlock guard for posix mutex
+   /** \brief Unlock guard for posix mutex
     *
     * \ingroup dabc_all_classes
     *
@@ -206,7 +206,7 @@ namespace dabc {
    // ______________________________________________________________
 
 
-   /** \brief guard for integer value
+   /** \brief Guard for integer value
     *
     * \ingroup dabc_all_classes
     *
@@ -289,7 +289,7 @@ namespace dabc {
 
    // ___________________________________________________________
 
-   /** \brief object which could be run inside the \ref dabc::PosixThread
+   /** \brief %Object which could be run inside the \ref dabc::PosixThread
      *
      * \ingroup dabc_all_classes
      */

@@ -5,7 +5,11 @@
 #include "dabc/Factory.h"
 #endif
 
+/** \brief Support of InfiniBand %verbs */
+
 namespace verbs {
+
+   /** \brief %Factory for VERBS classes */
 
    class Factory : public dabc::Factory {
       public:

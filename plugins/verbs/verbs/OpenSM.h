@@ -23,6 +23,8 @@
 
 namespace verbs {
 
+   /** \brief Interface class to opensm */
+
    class OpenSM {
       public:
          OpenSM();

@@ -28,6 +28,8 @@
 
 namespace mbs {
 
+   /** \brief Output for LMD files (lmd:) */
+
    class LmdOutput : public dabc::FileOutput {
       protected:
 
@@ -47,6 +49,8 @@ namespace mbs {
    };
 
    // ====================================================================
+
+   /** \brief Output for new LMD files (lmd2:) */
 
    class LmdOutputNew : public dabc::FileOutput {
       protected:

@@ -26,16 +26,17 @@
 
 #include "hadaq/Iterator.h"
 
-/*
- * This module will combine the hadtu data streams into full hadaq events
- * Use functionality as in daq_evtbuild here.
- */
-
 #define HADAQ_NEVTIDS 64UL             /* must be 2^n */
 #define HADAQ_NEVTIDS_IN_FILE 0UL      /* must be 2^n */
 #define HADAQ_NUMERRPATTS 5
 
 namespace hadaq {
+
+   /** \brief %Combiner of HADAQ subevents into full events
+    *
+    * This module will combine the hadtu data streams into full hadaq events
+    * Use functionality as in daq_evtbuild here.
+    */
 
    class CombinerModule: public dabc::ModuleAsync {
 

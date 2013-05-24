@@ -18,7 +18,11 @@
 #include "dabc/Factory.h"
 #endif
 
+/** \brief Support for MBS - standard GSI DAQ */
+
 namespace mbs {
+
+   /** \brief %Factory of MBS classes */
 
    class Factory : public dabc::Factory {
       public:

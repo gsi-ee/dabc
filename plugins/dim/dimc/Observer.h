@@ -30,7 +30,7 @@ namespace dimc {
 
    class ServiceEntry;
 
-   /** Class registers for parameter event from the DABC and export these events to DIM
+   /** \brief %Observer registers for parameter event from the DABC and export these events to DIM
     *
     */
 

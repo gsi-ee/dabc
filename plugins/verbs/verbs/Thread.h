@@ -40,6 +40,9 @@ namespace verbs {
    class QueuePair;
    class ComplQueue;
 
+   /** \brief VERBS thread */
+
+
    class Thread : public dabc::Thread {
 
       typedef std::map<uint32_t, uint32_t>  WorkersMap;
@@ -104,6 +107,10 @@ namespace verbs {
          virtual void ProcessExtraThreadEvent(const dabc::EventId&);
 
    };
+
+   // ___________________________________________________________
+
+   /** \brief %Reference on \ref verbs::Thread */
 
    class ThreadRef : public dabc::ThreadRef {
 

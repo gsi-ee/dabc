@@ -17,11 +17,11 @@
 
 namespace bnet {
 
-   class TransportCmd : public dabc::Command {
+   class CmdTransport : public dabc::Command {
 
-      DABC_COMMAND(TransportCmd, "TransportCmd");
+      DABC_COMMAND(CmdTransport, "CmdTransport");
 
-      TransportCmd(int id, double timeout = - 1.) :
+      CmdTransport(int id, double timeout = - 1.) :
          dabc::Command(CmdName())
       {
          SetInt("CmdId", id);
@@ -108,7 +108,7 @@ namespace bnet {
 
       dabc::CommandsQueue  fCmdsQueue; // commands submitted for execution
 
-      TransportCmd      fCurrentCmd; // currently executed command
+      CmdTransport      fCurrentCmd; // currently executed command
 
 
       // these all about data transfer ....

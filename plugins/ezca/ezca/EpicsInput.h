@@ -14,9 +14,7 @@
 
 namespace ezca {
 
-   /*
-    * The epics easy channel access data input implementation
-    *
+   /** \brief The epics easy channel access data input implementation
     */
 
    class EpicsInput: public dabc::DataInput {

@@ -37,6 +37,8 @@
 
 namespace mbs {
 
+   /** \brief %Addon for output of server-side different kinds of MBS server */
+
    class ServerOutputAddon : public dabc::SocketIOAddon,
                              public dabc::DataOutput {
       protected:
@@ -85,6 +87,8 @@ namespace mbs {
 
 
    // ===============================================================================
+
+   /** \brief Server transport for different kinds of MBS server */
 
    class ServerTransport : public dabc::Transport {
       protected:

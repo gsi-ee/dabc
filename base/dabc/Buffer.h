@@ -45,10 +45,11 @@ namespace dabc {
    class MemoryPool;
    class LocalTransport;
 
+   /** \brief Structure with descriptor of single memory segment */
    struct MemSegment {
-      unsigned        id;        // id of the buffer
-      unsigned        datasize;  // length of data
-      void*           buffer;    // pointer on the beginning of buffer (must be in the area of id)
+      unsigned        id;        ///< id of the buffer
+      unsigned        datasize;  ///< length of data
+      void*           buffer;    ///< pointer on the beginning of buffer (must be in the area of id)
    };
 
    /** \brief Contains reference on memory from memory pool

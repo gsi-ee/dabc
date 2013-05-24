@@ -32,15 +32,15 @@
  *  during definite time (now 5 sec) and confirm that record is initialized. On the reply
  *  of the command state of the record is changed to progrPending.
  *
- *  Once connection is pending, client side is allowed send GlobalConnectCmd to the server to ask
+ *  Once connection is pending, client side is allowed send CmdGlobalConnect to the server to ask
  *  for connection. At this moment state is moving to progrWaitReply.
  *
- *  When remote side receives GlobalConnectCmd, it asks device to start with connection.
- *  State is changed to progrDoingConnect. Device should reply GlobalConnectCmd to confirm that
+ *  When remote side receives CmdGlobalConnect, it asks device to start with connection.
+ *  State is changed to progrDoingConnect. Device should reply CmdGlobalConnect to confirm that
  *  now it takes responsibility about record handling.
  */
 
-dabc::ConnectionManagerHandleCmd::ConnectionManagerHandleCmd(ConnectionRequestFull& req) :
+dabc::CmdConnectionManagerHandle::CmdConnectionManagerHandle(ConnectionRequestFull& req) :
    dabc::Command(CmdName())
 {
    SetStr(ReqArg(), req.ItemName());
@@ -225,7 +225,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
                req()->SetDelay(5, true); // let 5 second to prepare record, one
 
                //FIXME: specify 5 second for submitted command as well
-               dev.Submit(Assign(ConnectionManagerHandleCmd(req)));
+               dev.Submit(Assign(CmdConnectionManagerHandle(req)));
             }
 
             break;
@@ -258,7 +258,7 @@ double dabc::ConnectionManager::ProcessTimeout(double last_diff)
 
             DOUT2("Send request from client  %s", req.GetConnInfo().c_str());
 
-            dabc::GlobalConnectCmd cmd;
+            dabc::CmdGlobalConnect cmd;
             // we change order that on other node one can compare directly
             cmd.SetUrl1(req.GetRemoteUrl());
             cmd.SetUrl2(req.GetLocalUrl());
@@ -320,9 +320,9 @@ dabc::ConnectionRequestFull dabc::ConnectionManager::FindConnection(const std::s
 
 int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 {
-   if (cmd.IsName(GlobalConnectCmd::CmdName())) {
+   if (cmd.IsName(CmdGlobalConnect::CmdName())) {
 
-      GlobalConnectCmd cmd1 = cmd;
+      CmdGlobalConnect cmd1 = cmd;
 
       ConnectionRequestFull req = FindConnection(cmd1.GetUrl1(), cmd1.GetUrl2());
 
@@ -360,7 +360,7 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
             return cmd_false;
 
          default:
-            EOUT("GlobalConnectCmd received in wrong progress state %d", req.progress());
+            EOUT("CmdGlobalConnect received in wrong progress state %d", req.progress());
             break;
       }
 
@@ -397,11 +397,11 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 
 bool dabc::ConnectionManager::ReplyCommand(Command cmd)
 {
-   if (cmd.IsName(ConnectionManagerHandleCmd::CmdName())) {
+   if (cmd.IsName(CmdConnectionManagerHandle::CmdName())) {
       HandleConnectRequestCmdReply(cmd);
    } else
-   if (cmd.IsName(GlobalConnectCmd::CmdName())) {
-      HandleGlobalConnectCmdReply(cmd);
+   if (cmd.IsName(CmdGlobalConnect::CmdName())) {
+      HandleCmdGlobalConnectReply(cmd);
    }
 
    return true;
@@ -442,13 +442,13 @@ bool dabc::ConnectionManager::FillAnswerOnRemoteConnectCmd(Command cmd, Connecti
 
    req.SetProgress(progrDoingConnect);
 
-   dev.Submit(Assign(ConnectionManagerHandleCmd(req)));
+   dev.Submit(Assign(CmdConnectionManagerHandle(req)));
 
    return true;
 }
 
 
-void dabc::ConnectionManager::HandleGlobalConnectCmdReply(GlobalConnectCmd cmd)
+void dabc::ConnectionManager::HandleCmdGlobalConnectReply(CmdGlobalConnect cmd)
 {
    ConnectionRequestFull req = FindConnection(cmd.GetUrl2(), cmd.GetUrl1());
    if (req.null()) {
@@ -514,7 +514,7 @@ void dabc::ConnectionManager::HandleGlobalConnectCmdReply(GlobalConnectCmd cmd)
 
          req.SetProgress(progrDoingConnect);
 
-         dev.Submit(Assign(ConnectionManagerHandleCmd(req)));
+         dev.Submit(Assign(CmdConnectionManagerHandle(req)));
 
          break;
       }
@@ -525,7 +525,7 @@ void dabc::ConnectionManager::HandleGlobalConnectCmdReply(GlobalConnectCmd cmd)
    }
 }
 
-void dabc::ConnectionManager::HandleConnectRequestCmdReply(ConnectionManagerHandleCmd cmd)
+void dabc::ConnectionManager::HandleConnectRequestCmdReply(CmdConnectionManagerHandle cmd)
 {
    ConnectionRequestFull req = dabc::mgr.FindPar(cmd.GetReq());
    if (req.null()) return;

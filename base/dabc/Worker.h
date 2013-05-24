@@ -93,7 +93,7 @@ namespace dabc {
 
    // ________________________________________________________________
 
-   /** \brief Reference on \ref dabc::WorkerAddon object
+   /** \brief %Reference on \ref dabc::WorkerAddon object
     *
     * \ingroup dabc_all_classes
     */
@@ -407,7 +407,7 @@ namespace dabc {
 
    // __________________________________________________________________________
 
-   /** \brief Reference on \ref dabc::Worker object
+   /** \brief %Reference on \ref dabc::Worker
     *
     * \ingroup dabc_all_classes
     */

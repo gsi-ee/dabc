@@ -28,6 +28,8 @@
 
 namespace mbs {
 
+   /** \brief Read iterator for MBS events/subevents */
+
    class ReadIterator {
       protected:
          bool           fFirstEvent;
@@ -79,7 +81,18 @@ namespace mbs {
          static unsigned NumEvents(const dabc::Buffer& buf);
    };
 
+   // ___________________________________________________________________________
+
+   /** \brief Write iterator for MBS events/subevents */
+
    class WriteIterator {
+      protected:
+         dabc::Buffer   fBuffer;  ///< here we keep buffer - mean onwership is delivered to iterator
+         dabc::Pointer  fEvPtr;   ///< place for current event
+         dabc::Pointer  fSubPtr;  ///< place for subevents
+         dabc::Pointer  fSubData; ///< pointer to place raw data of current subevent
+         dabc::BufferSize_t fFullSize; ///<
+
       public:
          WriteIterator();
          WriteIterator(dabc::Buffer& buf);
@@ -136,13 +149,6 @@ namespace mbs {
          SubeventHeader* subevnt() const { return (SubeventHeader*) fSubPtr(); }
          void* rawdata() const { return subevnt() ? subevnt()->RawData() : 0; }
          uint32_t maxrawdatasize() const { return fSubPtr.null() ? 0 : fSubPtr.fullsize() - sizeof(SubeventHeader); }
-
-      protected:
-         dabc::Buffer   fBuffer;  // here we keep buffer - mean onwership is delivered to iterator
-         dabc::Pointer  fEvPtr;   // place for current event
-         dabc::Pointer  fSubPtr;  // place for subevents
-         dabc::Pointer  fSubData; // pointer to place raw data of current subevent
-         dabc::BufferSize_t fFullSize;
    };
 
 }

@@ -27,8 +27,6 @@
 
 namespace verbs {
 
-   /** Class keeps verbs structures like context, protection domain, port and so on */
-
    class OpenSM;
    class ContextRef;
 
@@ -37,6 +35,10 @@ namespace verbs {
 
    // ________________________________________________________
 
+
+   /** \brief Context for all VERBS operations
+    *
+    * Class keeps verbs structures like context, protection domain, port and so on */
 
    class Context : public dabc::Object  {
 
@@ -65,6 +67,9 @@ namespace verbs {
          virtual ~Context();
    };
 
+   // _______________________________________________________________
+
+   /** \brief %Reference to \ref verbs::Context */
 
    class ContextRef : public dabc::Reference {
 
@@ -95,6 +100,10 @@ namespace verbs {
          int ManageMulticast(int action, ibv_gid& mgid, uint16_t& mlid);
          struct ibv_ah* CreateMAH(ibv_gid& mgid, uint32_t mlid);
    };
+
+   // ________________________________________________________________________
+
+   /** \brief Registry object for memory pool */
 
    class PoolRegistry : public dabc::Object {
       protected:
@@ -129,14 +138,15 @@ namespace verbs {
          void CleanMRStructure();
    };
 
+   // ______________________________________________________
+
+   /** \brief %Reference on \ref verbs::PoolRegistry */
 
    class PoolRegistryRef : public dabc::Reference {
 
       DABC_REFERENCE(PoolRegistryRef, dabc::Reference, verbs::PoolRegistry)
 
    };
-
-
 
 }
 

@@ -14,6 +14,8 @@ namespace verbs {
 
    #pragma pack(1)
 
+   /** \brief Structure with information, required for connection establishing */
+
    struct VerbsConnRec {
       uint32_t lid;
       uint32_t qp;
@@ -22,6 +24,10 @@ namespace verbs {
 
   #pragma pack()
 
+
+   /** \brief Special runnable for BNET over InfiniBand
+    *
+    * Not yet functional */
 
    class BnetRunnable : public bnet::BnetRunnable {
       protected:

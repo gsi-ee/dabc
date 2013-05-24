@@ -286,7 +286,7 @@ namespace dabc {
 
    // ________________________________________________________________________________
 
-   /** \brief Reference on \ref dabc::MemoryPool
+   /** \brief %Reference on \ref dabc::MemoryPool class
     *
     * \ingroup dabc_all_classes
     */

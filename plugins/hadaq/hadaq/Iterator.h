@@ -20,6 +20,8 @@
 
 namespace hadaq {
 
+   /** \brief Read iterator for HADAQ events/subevents */
+
    class ReadIterator {
       protected:
          bool           fFirstEvent;
@@ -64,6 +66,10 @@ namespace hadaq {
 
          static unsigned NumEvents(const dabc::Buffer& buf);
    };
+
+   // _____________________________________________________________________
+
+   /** \brief Write iterator for HADAQ events/subevents */
 
    class WriteIterator {
       public:

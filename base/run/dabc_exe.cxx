@@ -85,7 +85,7 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
 
    // activate application only with non-controlled mode
 
-   dabc::mgr.app().Submit(dabc::InvokeAppRunCmd());
+   dabc::mgr.app().Submit(dabc::CmdInvokeAppRun());
 
    DOUT0("Application mainloop is now running");
    DOUT0("       Press Ctrl-C for stop");

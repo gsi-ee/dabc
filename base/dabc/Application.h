@@ -28,18 +28,18 @@ namespace dabc {
 
    /** Command used to activate application - all necessary transitions will be
     * performed to bring application in working state. Used by main dabc runnable */
-   class InvokeAppRunCmd : public Command {
-      DABC_COMMAND(InvokeAppRunCmd, "InvokeAppRun");
+   class CmdInvokeAppRun : public Command {
+      DABC_COMMAND(CmdInvokeAppRun, "InvokeAppRun");
    };
 
    /** Command used to finish application work - it should destroy all components and
     * finally declare application as ready - IsDone() should return true at the end  */
-   class InvokeAppFinishCmd : public Command {
-      DABC_COMMAND(InvokeAppFinishCmd, "InvokeAppFinish");
+   class CmdInvokeAppFinish : public Command {
+      DABC_COMMAND(CmdInvokeAppFinish, "InvokeAppFinish");
    };
 
-   class InvokeTransitionCmd : public Command {
-      DABC_COMMAND(InvokeTransitionCmd, "InvokeTransition");
+   class CmdInvokeTransition : public Command {
+      DABC_COMMAND(CmdInvokeTransition, "InvokeTransition");
 
       void SetTransition(const std::string& cmd) { Field("Transition").SetStr(cmd); }
       std::string GetTransition() const { return Field("Transition").AsStdStr(); }
@@ -157,6 +157,7 @@ namespace dabc {
    /** \brief Base class for user-specific applications.
     *
     * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
     *
     * Main aim of writing user-specific application is creation and management of
     * different application components like modules, transports, devices, which cannot
@@ -250,6 +251,13 @@ namespace dabc {
           bool NodeActive(unsigned n) const { return NodeRec(n) ? NodeRec(n)->active : false; }
    };
 
+   // ________________________________________________________________________________
+
+
+   /** \brief %Reference on \ref dabc::Application class
+    *
+    * \ingroup dabc_all_classes
+    */
 
    class ApplicationRef : public WorkerRef {
 
@@ -257,12 +265,13 @@ namespace dabc {
 
       public:
 
+         /** \brief Verifies that all modules finish there job. If yes, complete process will be stopped. */
          void CheckWorkDone();
 
-         /** Return true if application normally finished its work (module is stopped) */
+         /** \brief Return true if application normally finished its work (module is stopped) */
          bool IsWorkDone();
 
-         /** Returns true when application is cleaned up */
+         /** \brief Returns true when application is cleaned up */
          bool IsFinished();
    };
 

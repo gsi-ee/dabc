@@ -27,7 +27,7 @@
 
 namespace dabc {
 
-   /** \brief Queue of buffers
+   /** \brief %Queue of buffers
     *
     * \ingroup dabc_all_classes
     */

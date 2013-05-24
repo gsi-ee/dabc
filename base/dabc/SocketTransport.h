@@ -30,8 +30,13 @@
 
 namespace dabc {
 
+   /** \brief Specific implementation of network transport for socket
+    *
+    * \ingroup dabc_all_classes
+    */
+
    class SocketNetworkInetrface : public SocketIOAddon,
-                              public NetworkInetrface {
+                                  public NetworkInetrface {
       protected:
 
          typedef Queue<uint32_t> RecIdsQueue;

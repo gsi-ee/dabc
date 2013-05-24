@@ -26,11 +26,13 @@ namespace verbs {
 
    class PoolRegistry;
 
+   /** \brief Special memory pool, which automatically includes PoolRegistry */
+
    class MemoryPool : public dabc::MemoryPool {
       protected:
          bool                fUD;
-         unsigned           fSendBufferOffset;
-         PoolRegistryRef      fReg;
+         unsigned            fSendBufferOffset;
+         PoolRegistryRef     fReg;
          struct ibv_recv_wr* f_rwr; // field for receive configs, allocated dynamically
          struct ibv_send_wr* f_swr; // field for send configs, allocated dynamically
          struct ibv_sge*     f_sge;  // memory segment description, used for both send/recv

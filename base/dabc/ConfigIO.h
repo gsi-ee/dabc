@@ -32,15 +32,6 @@ namespace dabc {
    class Configuration;
    class RecordContainer;
 
-
-   class ConfigFieldsScan {
-      public:
-         virtual ~ConfigFieldsScan() {}
-      
-         virtual void SetField(const std::string& attrname, const char* value) = 0;
-         
-   };
-
    /** \brief Interface class between xml configuration and dabc objects
     *
     * \ingroup dabc_all_classes

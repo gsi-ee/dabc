@@ -1527,7 +1527,7 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
 
       if (!fMgrStoppedTime.null() && !appstopped) {
          appstopped = true;
-         appref.Submit(InvokeAppFinishCmd());
+         appref.Submit(CmdInvokeAppFinish());
       }
 
       // TODO: make 10 second configurable

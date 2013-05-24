@@ -27,7 +27,10 @@
 
 namespace mbs {
 
-   // New LMD file, exclude index table from previous implementation
+   /** \brief Reading/writing LMD files (new API)
+    *
+    * New LMD file, exclude index table from previous implementation
+    * */
 
    class LmdFileNew : public dabc::BasicFile {
       protected:

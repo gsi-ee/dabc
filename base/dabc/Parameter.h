@@ -129,7 +129,7 @@ namespace dabc {
 
    // _______________________________________________________________________
 
-   /** \brief Parameter class
+   /** \brief %Parameter class
     *
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes
@@ -245,8 +245,16 @@ namespace dabc {
          void FireModified();
    };
 
+   // ___________________________________________________________________________________
 
-   /** This parameter class can only be used with parameters, created with CreatePar(name, "info") call */
+   /** \brief Special info parameter class
+    *
+    * \ingroup dabc_all_classes
+    *
+    * This parameter class can only be used with parameters,
+    * created with CreatePar(name, "info") call
+    */
+
    class InfoParameter : public Parameter {
 
       protected:
@@ -269,9 +277,16 @@ namespace dabc {
          static const char* infokind() { return "info"; }
    };
 
+   // _______________________________________________________________________________
 
-   /** This parameter class can only be used with parameters,
-    * created with CreatePar(name, "cmddef") call or CreateCmdDef(name) */
+   /** \brief Special command definition parameter class
+    *
+    * \ingroup dabc_all_classes
+    *
+    * This parameter class can only be used with parameters,
+    * created with CreatePar(name, "cmddef") call or CreateCmdDef(name)
+    */
+
    class CommandDefinition : public Parameter {
 
       protected:

@@ -34,6 +34,8 @@
 
 namespace verbs {
 
+   /** \brief Timeout producer for \ref verbs::Thread when pipe cannot be used */
+
    class TimeoutWorker : public dabc::Worker {
 
       protected:

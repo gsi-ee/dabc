@@ -54,7 +54,7 @@ namespace dabc {
    };
 
 
-   /** \brief Reference on \ref Device class
+   /** \brief %Reference on \ref dabc::Device class
     *
     * \ingroup dabc_user_classes
     * \ingroup dabc_all_classes

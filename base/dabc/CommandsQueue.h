@@ -28,7 +28,7 @@ namespace dabc {
 
    class Worker;
 
-   /** \brief Queue of commands
+   /** \brief %Queue of commands
     *
     * \ingroup dabc_all_classes
     *

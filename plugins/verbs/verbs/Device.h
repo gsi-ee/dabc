@@ -37,6 +37,8 @@ namespace verbs {
 
    // ____________________________________________________________________
 
+   /** \brief %Device for VERBS */
+
    class Device : public dabc::Device {
       friend class Transport;
       friend class Thread;
@@ -81,6 +83,10 @@ namespace verbs {
 
          static bool fThreadSafeVerbs;  // identifies if verbs is thread safe
    };
+
+   // _________________________________________________________
+
+   /** \brief %Refernce on \ref verbs::Device */
 
    class DeviceRef : public dabc::DeviceRef {
 

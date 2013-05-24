@@ -32,7 +32,7 @@
 
 namespace dabc {
 
-   /** \brief Iterator over objects hierarchy
+   /** \brief %Iterator over objects hierarchy
     *
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes

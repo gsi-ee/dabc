@@ -24,6 +24,8 @@
 
 namespace mbs {
 
+   /** \brief Reading/writing LMD files (old API)  */
+
    class LmdFile {
       protected:
          enum EMode { mNone, mWrite, mRead, mError };

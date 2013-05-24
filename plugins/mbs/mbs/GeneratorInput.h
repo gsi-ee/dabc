@@ -20,16 +20,18 @@
 
 namespace mbs {
 
+   /** \brief Input object for MBS-events generator */
+
    class GeneratorInput : public dabc::DataInput {
       protected:
-         uint32_t    fEventCount;
-         uint16_t    fNumSubevents;
-         uint16_t    fFirstProcId;
-         uint32_t    fSubeventSize;
-         bool        fIsGo4RandomFormat;
-         uint32_t    fFullId; /** subevent id, if number subevents==1 and nonzero */
-         uint64_t    fTotalSize;        //! total size of generated events
-         uint64_t    fTotalSizeLimit;   //! limit of generated events size
+         uint32_t    fEventCount;          ///< current event id
+         uint16_t    fNumSubevents;        ///< number of subevents to generate
+         uint16_t    fFirstProcId;         ///< procid of first subevent
+         uint32_t    fSubeventSize;        ///< size of each subevent
+         bool        fIsGo4RandomFormat;   ///< is subevents should be filled with random numbers
+         uint32_t    fFullId;              ///< subevent id, if number subevents==1 and nonzero
+         uint64_t    fTotalSize;           ///< total size of generated events
+         uint64_t    fTotalSizeLimit;      ///< limit of generated events size
 
       public:
          GeneratorInput(const dabc::Url& url);

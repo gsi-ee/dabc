@@ -18,9 +18,11 @@
 #include "dabc/Factory.h"
 #endif
 
+/** \brief Support for HADAQ - HADES DAQ  */
+
 namespace hadaq {
 
-
+   /** \brief %Factory for HADAQ classes  */
 
    class Factory : public dabc::Factory {
       public:

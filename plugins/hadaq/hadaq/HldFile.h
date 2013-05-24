@@ -24,6 +24,8 @@
 
 namespace hadaq {
 
+   /** \brief HLD file implementation */
+
    class HldFile : public dabc::BasicFile {
       protected:
          uint32_t       fRunNumber;   //! run number

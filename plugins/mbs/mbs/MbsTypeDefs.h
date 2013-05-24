@@ -31,6 +31,8 @@ namespace mbs {
 #pragma pack(push, 1)
 
 
+   /** \brief MBS subevent  */
+
    struct SubeventHeader : public Header {
       union {
 
@@ -67,7 +69,11 @@ namespace mbs {
 
    };
 
+   // _______________________________________________________________
+
    typedef uint32_t EventNumType;
+
+   /** \brief MBS event  */
 
    struct EventHeader : public Header {
 #if BYTE_ORDER == LITTLE_ENDIAN
@@ -113,6 +119,11 @@ namespace mbs {
       unsigned NumSubevents() const;
    };
 
+   // _______________________________________________________________
+
+   /** \brief MBS buffer header
+    *
+    * Used in LMD files, written by MBS directly. Not used in DABC  */
 
    struct BufferHeader : public Header {
       union {
@@ -152,6 +163,12 @@ namespace mbs {
       void SetEndian() { iEndian = 1; }
       bool IsCorrectEndian() const { return iEndian == 1; }
    };
+
+   // ________________________________________________________
+
+   /** \brief MBS server info structure
+    *
+    * Send by server after connection to server is established */
 
    struct TransportInfo {
       int32_t iEndian;      // byte order. Set to 1 by sender

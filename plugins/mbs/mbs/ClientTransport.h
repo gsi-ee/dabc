@@ -28,8 +28,7 @@
 
 namespace mbs {
 
-   // TODO: implement following syntax for connection to mbs servers
-   //   mbs://r4-3/transport, mbs://r4-3/stream, mbs://r4-3/eventserver:6009
+   /** \brief Client transport for different kinds of MBS server */
 
    class ClientTransport : public dabc::SocketIOAddon,
                            public dabc::DataInput {

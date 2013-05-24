@@ -34,6 +34,8 @@ namespace verbs {
    class Thread;
    class Device;
 
+   /** \brief %Addon for VERBS thread */
+
    class WorkerAddon : public dabc::WorkerAddon {
 
       friend class verbs::Thread;

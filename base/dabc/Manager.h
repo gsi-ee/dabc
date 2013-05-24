@@ -218,11 +218,11 @@ namespace dabc {
 
       DABC_COMMAND(CmdDestroyTransport, "DestroyTransport");
 
-         CmdDestroyTransport(const std::string& portname) :
+      CmdDestroyTransport(const std::string& portname) :
             Command(CmdName())
-         {
-            SetStr("PortName", portname);
-         }
+      {
+         SetStr("PortName", portname);
+      }
    };
 
    class CmdSetParameter : public Command {
@@ -238,29 +238,28 @@ namespace dabc {
       DABC_COMMAND(CmdShutdownControl, "CmdShutdownControl")
    };
 
-   /** \brief Command to request current state of known nodes */
-
+   /** \brief %Command to request current state of known nodes */
    class CmdGetNodesState : public Command {
-      public:
-         static const char* CmdName() { return "CmdGetNodesState"; }
-         static const char* States() { return "States"; }
-         static const char* NodeId() { return "NodeId"; }
 
-         static void SetState(std::string& sbuf, unsigned node, bool on)
-         {
-            while (sbuf.length() <= node) sbuf.append("x");
-            sbuf[node] = on ? 'x' : 'o';
-         }
+      DABC_COMMAND(CmdGetNodesState, "CmdGetNodesState")
 
-         static bool GetState(const std::string& sbuf, unsigned node)
-         {
-            if (node>=sbuf.length()) return false;
-            return sbuf[node] == 'x';
-         }
+      static const char* States() { return "States"; }
+      static const char* NodeId() { return "NodeId"; }
 
-         CmdGetNodesState() : Command(CmdName()) {}
+      static void SetState(std::string& sbuf, unsigned node, bool on)
+      {
+         while (sbuf.length() <= node) sbuf.append("x");
+         sbuf[node] = on ? 'x' : 'o';
+      }
+
+      static bool GetState(const std::string& sbuf, unsigned node)
+      {
+         if (node>=sbuf.length()) return false;
+         return sbuf[node] == 'x';
+      }
    };
 
+   /** \brief Template to put any object, not derived from \red dabc::Object, into cleanup queue */
    template<class T>
    class CleanupEnvelope : public Object {
       protected:
@@ -280,7 +279,7 @@ namespace dabc {
 
 
 
-   /** \brief Manager of everything in DABC
+   /** \brief %Manager of everything in DABC
     *
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes
@@ -528,11 +527,13 @@ namespace dabc {
          void ProduceParameterEvent(ParameterContainer* par, int evid);
    };
 
-
-   /** Reference on manager object
+   /** \brief %Reference on manager object
+    *
+    * \ingroup dabc_user_classes
+    * \ingroup dabc_all_classes
+    *
     *  Should be used as thread-safe interface to manager functionality.
-    *  Instance of ManagerRef is available via dabc::mgr function.
-    *  should not be seen by the user
+    *  Instance of ManagerRef is available via dabc::mgr variable.
     */
 
    class ManagerRef : public WorkerRef {

@@ -25,20 +25,17 @@ extern "C" {
 namespace hadaq {
 
 
+   /** \brief Class to export DABC parameter to shared memory entry */
 
    class ShmEntry {
-      public:
-
-
       protected:
          std::string fStatsName;      ///< statistics parameter name in hadaq "worker" segment
          std::string fShmName;        ///< name of shared memory file
-         ::Worker* fWorker;           // reference to shmem handle
+         ::Worker* fWorker;           ///< reference to shmem handle
 
-        unsigned long* fShmPtr;       ///<points to value in shared memory
+        unsigned long* fShmPtr;       ///< points to value in shared memory
 
-        dabc::Parameter fPar;        // backreference to parameter
-
+        dabc::Parameter fPar;         ///< backreference to parameter
 
       public:
 
@@ -49,7 +46,6 @@ namespace hadaq {
 
          bool IsStatsName(const std::string& name) const { return fStatsName == name; }
          bool IsShmemName(const std::string& name) const { return fShmName == name; }
-
 
          /** Update shm value from parameter */
          void UpdateValue(const std::string& value);

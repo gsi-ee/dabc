@@ -18,7 +18,11 @@
 #include "dabc/Factory.h"
 #endif
 
+/** \brief CERN DIM  */
+
 namespace dimc {
+
+   /** \brief %Factory for dim control classes */
 
    class Factory : public dabc::Factory {
       public:

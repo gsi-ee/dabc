@@ -27,8 +27,12 @@
 
 namespace mbs {
 
+   /** \brief Combiner of several MBS inputs - event building */
+
    class CombinerModule : public dabc::ModuleAsync {
       protected:
+
+         /** \brief Individual configuration and run parameters of each input */
 
          struct InputCfg {
             /** indicates if input is real mbs - means event produced by MBS

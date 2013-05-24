@@ -51,23 +51,23 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
    }
 
 
-   if (cmd.IsName(InvokeAppRunCmd::CmdName())) {
+   if (cmd.IsName(CmdInvokeAppRun::CmdName())) {
 
       bool res = PerformApplicationRun();
 
       return cmd_bool(res);
    } else
 
-   if (cmd.IsName(InvokeAppFinishCmd::CmdName())) {
+   if (cmd.IsName(CmdInvokeAppFinish::CmdName())) {
 
       bool res = PerformApplicationFinish();
 
       return cmd_bool(res);
    } else
 
-   if (cmd.IsName(InvokeTransitionCmd::CmdName())) {
+   if (cmd.IsName(CmdInvokeTransition::CmdName())) {
 
-      InvokeTransitionCmd tr = cmd;
+      CmdInvokeTransition tr = cmd;
 
       bool res = false;
 
@@ -83,7 +83,7 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
 
       if (IsWorkDone()) {
          DOUT0("Stop application while work is completed");
-         Submit(InvokeAppFinishCmd());
+         Submit(CmdInvokeAppFinish());
       }
 
       return cmd_true;
@@ -243,7 +243,7 @@ bool dabc::ApplicationBase::CleanupApplication()
 
 bool dabc::ApplicationBase::ExecuteStateTransition(const std::string& trans_cmd, double tmout)
 {
-   InvokeTransitionCmd cmd;
+   CmdInvokeTransition cmd;
    cmd.SetTransition(trans_cmd);
    cmd.SetTimeout(tmout);
    return Execute(cmd);
@@ -251,7 +251,7 @@ bool dabc::ApplicationBase::ExecuteStateTransition(const std::string& trans_cmd,
 
 bool dabc::ApplicationBase::InvokeStateTransition(const std::string& trans_cmd)
 {
-   InvokeTransitionCmd cmd;
+   CmdInvokeTransition cmd;
    cmd.SetTransition(trans_cmd);
    return Submit(cmd);
 }

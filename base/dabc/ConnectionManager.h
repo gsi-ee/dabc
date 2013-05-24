@@ -112,21 +112,21 @@ namespace dabc {
        }
    };
 
-   class ConnectionManagerHandleCmd : public dabc::Command {
+   class CmdConnectionManagerHandle : public dabc::Command {
 
-      DABC_COMMAND(ConnectionManagerHandleCmd, "ConnectionManagerCmd")
+      DABC_COMMAND(CmdConnectionManagerHandle, "CmdConnectionManager")
 
-         static const char* ReqArg() { return "#REQ"; }
+      static const char* ReqArg() { return "#REQ"; }
 
-         ConnectionManagerHandleCmd(ConnectionRequestFull& req);
+      CmdConnectionManagerHandle(ConnectionRequestFull& req);
 
-         std::string GetReq() const { return GetStdStr(ReqArg()); }
+      std::string GetReq() const { return GetStdStr(ReqArg()); }
    };
 
 
-   class GlobalConnectCmd : public Command {
+   class CmdGlobalConnect : public Command {
 
-      DABC_COMMAND(GlobalConnectCmd, "GlobalConnect")
+      DABC_COMMAND(CmdGlobalConnect, "CmdGlobalConnect")
 
       void SetUrl1(const std::string& url1) { SetStr("Url1", url1); }
       void SetUrl2(const std::string& url2) { SetStr("Url2", url2); }
@@ -151,10 +151,10 @@ namespace dabc {
          int                fDoingConnection;  ///< flag indicates that about connection activity: 0 - nothing, -1 - closing, 1 - establishing
 
          /** \brief Analyze reply of the command, send to the device */
-         void HandleConnectRequestCmdReply(ConnectionManagerHandleCmd cmd);
+         void HandleConnectRequestCmdReply(CmdConnectionManagerHandle cmd);
 
          /** \brief React on the reply of global connect command */
-         void HandleGlobalConnectCmdReply(GlobalConnectCmd cmd);
+         void HandleCmdGlobalConnectReply(CmdGlobalConnect cmd);
 
          /** \brief Fill answer on remote connection request and invoke device to start connection
           * When device confirms that connection starts, command will be replied  */

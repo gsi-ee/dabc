@@ -22,7 +22,7 @@
 
 namespace dabc {
 
-   /** \brief Factory for socket classes
+   /** \brief %Factory for socket classes
     *
     * \ingroup dabc_all_classes
     */

@@ -32,6 +32,8 @@ namespace verbs {
    class Device;
    class ComplQueue;
 
+   /** \brief Represent VERBS queue pair functionality */
+
    class QueuePair {
       public:
          QueuePair(ContextRef ctx, ibv_qp_type qp_type,
@@ -80,7 +82,7 @@ namespace verbs {
 
          struct ibv_qp *f_qp;
 
-         uint32_t f_local_psn;  // number used in connection
+         uint32_t f_local_psn;    ///< number used in connection
 
          uint16_t f_remote_lid;
          uint32_t f_remote_qpn;

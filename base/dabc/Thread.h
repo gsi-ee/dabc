@@ -422,7 +422,7 @@ namespace dabc {
 
    // __________________________________________________________________________
 
-   /** \brief Reference on the \ref dabc::Thread class
+   /** \brief %Reference on the \ref dabc::Thread class
     *
     * \ingroup dabc_all_classes
     */

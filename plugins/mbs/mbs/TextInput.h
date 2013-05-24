@@ -28,6 +28,10 @@
 
 namespace mbs {
 
+   /** \brief Text LMD input
+    *
+    * Provides way to read text files and convert data into MBS event structure  */
+
    class TextInput : public dabc::FileInput {
       protected:
          std::string         fDataFormat;    // int32_t, uint32_t, float

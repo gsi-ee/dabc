@@ -55,6 +55,8 @@ bool verbs::Device::fThreadSafeVerbs = true;
 
 namespace verbs {
 
+   /** \brief %Addon to establish and verify QP connection with remote node */
+
    class ProtocolAddon : public WorkerAddon {
       public:
          std::string      fReqItem;
@@ -347,7 +349,7 @@ dabc::Transport* verbs::Device::CreateTransport(dabc::Command cmd, const dabc::R
 
 int verbs::Device::HandleManagerConnectionRequest(dabc::Command cmd)
 {
-   std::string reqitem = cmd.GetStdStr(dabc::ConnectionManagerHandleCmd::ReqArg());
+   std::string reqitem = cmd.GetStdStr(dabc::CmdConnectionManagerHandle::ReqArg());
 
    dabc::ConnectionRequestFull req = dabc::mgr.FindPar(reqitem);
 
@@ -467,7 +469,7 @@ int verbs::Device::ExecuteCommand(dabc::Command cmd)
    DOUT5("Execute command %s", cmd.GetName());
 
 
-   if (cmd.IsName(dabc::ConnectionManagerHandleCmd::CmdName())) {
+   if (cmd.IsName(dabc::CmdConnectionManagerHandle::CmdName())) {
 
       cmd_res = HandleManagerConnectionRequest(cmd);
 

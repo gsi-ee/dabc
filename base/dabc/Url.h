@@ -22,7 +22,7 @@
 
 namespace dabc {
 
-   /** \brief Extract URL fields
+   /** \brief Uniform Resource Locator interpreter
     *
     * \ingroup dabc_all_classes
     *

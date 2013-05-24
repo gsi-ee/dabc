@@ -25,7 +25,7 @@ namespace dabc {
    class Object;
    class Mutex;
 
-   /** \brief Reference on the arbitrary object
+   /** \brief %Reference on the arbitrary object
     *
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes

@@ -98,7 +98,7 @@ namespace dabc {
 
    // _____________________________________________________________________
 
-   /** \brief Reference on \ref dabc::ModuleItem class
+   /** \brief %Reference on \ref dabc::ModuleItem class
     *
     * \ingroup dabc_all_classes
     */

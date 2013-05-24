@@ -37,11 +37,11 @@
 namespace hadaq {
 
 
-/*
+/** \brief Transfer HLD into LMD events
+ *
  * This module will take hadaq format input and wrap it into a Mbs subevent for further analysis.
  * Use same formatting as in hadaq eventsource of go4.
  */
-
 
    class MbsTransmitterModule : public dabc::ModuleAsync {
 

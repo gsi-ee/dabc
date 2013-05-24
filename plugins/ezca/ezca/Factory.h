@@ -5,7 +5,11 @@
 #include "dabc/Factory.h"
 #endif
 
+/** \brief EPICS E-Z (easy) channel access */
+
 namespace ezca {
+
+   /** \brief %Factory for epics eazy channel access classes */
 
    class Factory: public dabc::Factory {
 

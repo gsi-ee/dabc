@@ -313,7 +313,7 @@ double dabc::SocketDevice::ProcessTimeout(double last_diff)
 
 int dabc::SocketDevice::HandleManagerConnectionRequest(Command cmd)
 {
-   std::string reqitem = cmd.GetStdStr(ConnectionManagerHandleCmd::ReqArg());
+   std::string reqitem = cmd.GetStdStr(CmdConnectionManagerHandle::ReqArg());
 
    dabc::ConnectionRequestFull req = dabc::mgr.FindPar(reqitem);
 
@@ -388,7 +388,7 @@ int dabc::SocketDevice::ExecuteCommand(Command cmd)
 {
    int cmd_res = cmd_true;
 
-   if (cmd.IsName(ConnectionManagerHandleCmd::CmdName())) {
+   if (cmd.IsName(CmdConnectionManagerHandle::CmdName())) {
 
       cmd_res = HandleManagerConnectionRequest(cmd);
 
