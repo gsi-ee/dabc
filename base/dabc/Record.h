@@ -159,9 +159,9 @@ namespace dabc {
     * \ingroup dabc_all_classes
     *
     * Naming convention for record fields :
-    *    1. Any field started with '#' will not be stored to the xml string
-    *    2. Any field started with '_' will be stored as extra node in xml
-    *    3. All other fields will be present attribute in main xml tag  <Record attr=""/>
+    *    1. Any field started with `#` will not be stored to the xml string
+    *    2. Any field started with `_` will be stored as extra node in xml
+    *    3. All other fields will be present attribute in main xml tag  `<Record attr=""/>`
     */
 
    class Record : public Reference, public RecordField  {

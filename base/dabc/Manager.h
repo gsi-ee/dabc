@@ -390,7 +390,12 @@ namespace dabc {
          bool DoCreateMemoryPool(Command cmd);
 
          /** \brief Create thread with specified name and class name
-          * \param startmode indicate if thread is real (=0)  or use current thread (=1) */
+          *
+          * \param[in] thrdname    name of created thread
+          * \param[in] classname   class name (when empty, dabc::Thread will be created)
+          * \param[in] devname     device name to use for thread creation
+          * \param[in] cmd         command object with additional optional arguments
+          * \returns               reference on created thread */
          ThreadRef DoCreateThread(const std::string& thrdname, const std::string& classname = "", const std::string& devname = "", Command cmd = 0);
 
          WorkerRef DoCreateModule(const std::string& classname, const std::string& modulename, Command cmd);
@@ -411,7 +416,8 @@ namespace dabc {
 
          std::string GetLastCreatedDevName();
 
-         /** \brief Runs manager mainloop. If \param runtime bigger than 0, only specified time will be run */
+         /** \brief Runs manager mainloop.
+          * \param[in] runtime  - time limit for running, 0 - unlimited */
          void RunManagerMainLoop(double runtime = 0.);
 
          bool DoCleanupApplication();
@@ -489,13 +495,21 @@ namespace dabc {
              return DestroyObject(Reference(new CleanupEnvelope<T>(obj)));
          }
 
-         /** Register/unregister dependency between objects
-           * One use dependency to detect in \param src object situation when
-           * dependent \param tgt object is destroyed.
-           * In this case virtual ObjectDestroyed(tgt) method of src object will be called.
+         /** \brief Register dependency between objects
+          *
+           * One use dependency to notify source object situation when
+           * dependent tgt object is destroyed.
+           * In this case src->ObjectDestroyed(tgt) call will be done.
            * Normally one should "forget" pointer on dependent object at this moment.
-           * In case if reference was used, reference must be released */
+           * In case if reference was used, reference must be released
+           * \param[in] src,tgt        object src waiting when tgt object is destroyed
+           * \param[in] bidirectional  define that dependency should be register in both directions
+           * \returns                  true when dependency can be registered */
          bool RegisterDependency(Object* src, Object* tgt, bool bidirectional = false);
+
+         /** \brief Unregister dependency between objects
+          *
+          * Opposite to RegisterDependency call */
          bool UnregisterDependency(Object* src, Object* tgt, bool bidirectional = false);
 
          bool InstallCtrlCHandler();

@@ -155,6 +155,7 @@ namespace dabc {
 
          /** Set reference to the command */
          void SetRef(const std::string& name, Reference ref);
+
          /** \brief Returns reference from the command, can be called only once */
          Reference GetRef(const std::string& name);
 
@@ -168,15 +169,17 @@ namespace dabc {
          void ClearResult() { RemoveField(ResultParName()); }
          bool HasResult() const { return HasField(ResultParName()); }
 
-         /** Set maximum time which can be used for command execution
-          * If command is timedout, it will be replied with 'cmd_timedout' value.
-          * If argument \param tm is less or equal 0, timeout for command will be disabled */
+         /** \brief Set maximum time which can be used for command execution.
+          *
+          * If command is timed out, it will be replied with 'cmd_timedout' value.
+          * \param[in] tm  timeout value, if <=0, timeout for command will be disabled
+          * \returns      reference on command itself */
          Command& SetTimeout(double tm);
 
          /** \brief Return true if timeout was specified */
          bool IsTimeoutSet() const;
 
-         /** Returns time which remains until command should be timedout.
+         /** \brief Returns time which remains until command should be timed out.
           * If returns positive value, timeout was specified and not yet expired (value is time in seconds till timeout)
           * If returns 0 timeout is happened. If returns negative value, timeout was not specified for the command. */
          double TimeTillTimeout() const;

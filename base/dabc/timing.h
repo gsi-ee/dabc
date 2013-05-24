@@ -137,9 +137,12 @@ namespace dabc {
           * relative to time, kept in TimeStamp instance */
          inline bool Expired(double interval = 0.) const { return Now().AsDouble() > AsDouble() + interval; }
 
-         /** Method returns true if specified time interval expired
+         /** \brief Method returns true if specified time interval expired
           * relative to time, kept in TimeStamp instance.
-          * Current time provided as \param curr */
+          *
+          * \param[in] curr      current time
+          * \param[in] interval  time which should expire
+          * \returns             true if specified time interval had expired  */
          inline bool Expired(const TimeStamp& curr, double interval) const { return curr.AsDouble() > AsDouble() + interval; }
 
          /** \brief Method returns TimeStamp instance with current time stamp value, measured

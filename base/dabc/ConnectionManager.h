@@ -161,15 +161,16 @@ namespace dabc {
          bool FillAnswerOnRemoteConnectCmd(Command cmd, ConnectionRequestFull& req);
 
          /** \brief Check current situation with connections.
+          *
             If all of them ready or some fails, connection command will be completed.
-            \param  finish_command indicate if current connection command should be finished due to timeout
-            In case of timeout command can be finished succesfully if connection is optional */
+            Parameter finish_command indicate if current connection command should be finished due to timeout
+            In case of timeout command can be finished successfully if connection is optional */
          void CheckConnectionRecs(bool finish_command = false);
 
          /** \brief Destroy all connections, if necessary - request to cleanup custom data by device */
          virtual void ObjectCleanup();
 
-         /** Process changes in connection recs */
+         /** \brief Process changes in connection recs */
          virtual void ProcessParameterEvent(const ParameterEvent& evnt);
 
          virtual int ExecuteCommand(Command cmd);

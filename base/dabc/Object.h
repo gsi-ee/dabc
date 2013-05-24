@@ -103,7 +103,7 @@ namespace dabc {
     * \ingroup dabc_core_classes
     * \ingroup dabc_all_classes
     *
-    * Provides possibility to build thread-safe hierarchy of the objects.
+    * Provides possibility to build __thread safe__ hierarchy of the objects.
     * Has references counter to be sure how many references are existing on this object.
     *
     * Thread-safety for the Object only has means together with Reference class.
@@ -142,7 +142,7 @@ namespace dabc {
          void Destructor();
 
          /** \brief Increments reference counter, return false if it cannot be done
-          * \param withmutex can indicate that object mutex is already locked and we donot need repeat it again */
+          * \param[in] withmutex can indicate that object mutex is already locked and we do not need repeat it again */
          bool IncReference(bool withmutex = true);
 
          /** \brief Decrements reference counter, return true if object must be destroyed */
@@ -177,14 +177,14 @@ namespace dabc {
          Reference          fObjectParent;   ///< reference on the parent object
          std::string        fObjectName;     ///< object name
          Mutex*             fObjectMutex;    ///< mutex protects all private property of the object
-         int                fObjectRefCnt;   ///< accounts how many references existing on the object, thread-safe
+         int                fObjectRefCnt;   ///< accounts how many references existing on the object, __thread safe__
          ReferencesVector*  fObjectChilds;   ///< list of the child objects
          int                fObjectBlock;    ///< counter for blocking calls, as long as non-zero, non of child can be removed
 
-         /** \brief Return value of selected flag, non thread safe  */
+         /** \brief Return value of selected flag, __not thread safe__  */
          inline bool GetFlag(unsigned fl) const { return (fObjectFlags & fl) != 0; }
 
-         /** \brief Change value of selected flag, non thread safe  */
+         /** \brief Change value of selected flag, __not thread safe__  */
          inline void SetFlag(unsigned fl, bool on = true) { fObjectFlags = (on ? (fObjectFlags | fl) : (fObjectFlags & ~fl)); }
 
          /** \brief Returns mutex, used for protection of Object data members */
@@ -260,7 +260,10 @@ namespace dabc {
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
           * which is typically should be used as argument in class constructor
-          * \param standalone identify if object should be inserted into manager hierarchy (default) or not */
+          * \param[in] prnt        reference on parent object
+          * \param[in] fullname    relative to parent path and name
+          * \param[in] withmanager identify if object should be inserted into manager hierarchy (default) or not
+          * \returns               instance of ConstructorPair object*/
          static ConstructorPair MakePair(Reference prnt, const std::string& fullname, bool withmanager = true);
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
@@ -282,61 +285,71 @@ namespace dabc {
          // FIXME: one should find a way to catch a call to the destructor
          virtual ~Object();
 
-         /** \brief Returns pointer on parent object, thread-safe */
+         /** \brief Returns pointer on parent object, __thread safe__ */
          Object* GetParent() const { return fObjectParent(); }
 
-         /** \brief Returns reference on parent object, thread-safe */
+         /** \brief \returns reference on parent object, __thread safe__ */
          Reference GetParentRef() const { return fObjectParent.Ref(); }
 
-         /** \brief Checks if specified rgument is in the list of object parents */
+         /** \brief Checks if specified argument is in the list of object parents */
          bool IsParent(Object* obj) const;
 
-         /** \brief Returns name of the object, thread safe */
+         /** \brief Returns name of the object, __thread safe__ */
          const char* GetName() const { return fObjectName.c_str(); }
 
-         /** \brief Checks if object name is same as provided \param str, thread-safe */
+         /** \brief Checks if object name is same as provided string, __thread safe__ */
          bool IsName(const char* str) const { return fObjectName.compare(str)==0; }
 
-         /** \brief Checks if object name is same as provided \param str, thread-safe */
+         /** \brief Checks if object name is same as provided string, __thread safe__ */
          bool IsName(const std::string& str) const { return fObjectName.compare(str)==0; }
 
-         /** \brief Checks if object name is same as provided \param str, thread-safe
-          * \param len specifies how many characters should be checked.
-          * If len==0, method will return false. If len<0, str will be supposed normall null-terminated string */
+         /** \brief Checks if object name is same as provided, __thread safe__
+          *
+          * \param[in] str   string with name to be compared
+          * \param[in] len   specifies how many characters should be checked
+          *                  if len == 0, method will return false.
+          *                  if  len < 0, str will be supposed normal null-terminated string
+          * \returns   true if object name equal to provided string */
          bool IsName(const char* str, int len) const;
 
          /** Check if object name match to the mask */
          bool IsNameMatch(const std::string& mask) const;
 
-         /** \brief Returns true if object is owner of its children, thread-safe */
+         /** \brief Returns true if object is owner of its children, __thread safe__ */
          bool IsOwner() const;
 
-         /** \brief Return true if object selected for logging, thread safe */
+         /** \brief Return true if object selected for logging, __thread safe__ */
          bool IsLogging() const;
 
-         /** \brief Sets logging flag, thread safe */
+         /** \brief Sets logging flag, __thread safe__ */
          void SetLogging(bool on = true);
 
-         // List of children is thread-safe BUT may change in any time in between two calls
+         // List of children is __thread safe__ BUT may change in any time in between two calls
          // To perform some complex actions, references on child objects should be used
 
 
          // TODO: should it be public?
          // TODO: do we need another method
-         /** Add object to list of child objects, thread safe
-          * \param withmutex specify if object mutex should be locked
-          * \param setparent identify if parent field of child should be set*/
+
+         /** \brief Add object to list of child objects, __thread safe__
+          *
+          * \param[in] child        object to add
+          * \param[in] withmutex    true if object mutex should be locked
+          * \param[in] setparent    true if parent field of child should be set*/
          bool AddChild(Object* child, bool withmutex = true, bool setparent = true) throw();
 
-         /** This is another way how child can be add to the object.
-          * Here is main difference that object instance will be placed into the childs list
+         /** \brief Alternative way to add child to the object.
+          *
+          * Here is main difference that object instance obj will be placed into the children list
           * only if no other objects with that name exists. If child with name is existing
-          * and \param delduplicate = true (default), provided object will be deleted.
-          * Return reference on the child object */
+          * and delduplicate == true (default), provided object will be deleted.
+          * \param[in]  obj          child object to add
+          * \param[in] delduplicate  delete object if object with same name exists
+          * \returns                 reference on the child object */
          Reference PutChild(Object* obj, bool delduplicate = true);
 
          // TODO: should it be public?
-         /** Remove object from list of child objects, thread safe */
+         /** \brief Remove object from list of child objects, __thread safe__ */
          void RemoveChild(Object* child) throw();
 
          /** \brief returns number of child objects */
@@ -362,11 +375,15 @@ namespace dabc {
          /** \brief Delete childs, if exclude mask is specified, object which are match with the mask, will not be deleted */
          void DeleteChilds(const std::string& exclude_mask = "");
 
-         /** \brief Delete child with index \param n */
+         /** \brief Delete child with specified index */
          void DeleteChild(unsigned n) { GetChildRef(n).Destroy(); }
 
          /** \brief Return folder of specified name, no special symbols allowed.
-          * If \param force specified, folder will be created */
+          *
+          * \param[in] name    folder name
+          * \param[in] force   if true, missing folder will be created
+          * \param[in] isowner ownership flag of newly created folders
+          * \returns           reference on the folder */
          Reference GetFolder(const char* name, bool force = false, bool isowner = true) throw();
 
          /** \brief Print object content on debug output */
@@ -374,8 +391,10 @@ namespace dabc {
 
          /** \brief Produce string, which can be used as name argument in
           * dabc::mgr.FindItem(name) call.
-          * If compact=true specified [default], objects belonging to the application
-          * will not include application name in their path */
+          *
+          * \param[in] compact   if true [default], objects belonging to the application
+          * will not include application name in their path
+          * \returns  string with item name */
          std::string ItemName(bool compact = true) const;
 
          // ALL following methods about object destroyment and cleanup
@@ -398,7 +417,7 @@ namespace dabc {
          virtual const char* ClassName() const { return "Object"; }
 
 
-         // operations with object name (and info) are not thread-safe
+         // operations with object name (and info) are __not thread safe__
          // therefore, in the case when object name must be changed,
          // locking should be applied by any other means
 
@@ -415,11 +434,14 @@ namespace dabc {
           */
          static void InspectGarbageCollector();
 
-         /** Check if name matches to specified mask */
+         /** \brief Check if name matches to specified mask
+          *
+          * Mask can include special symbols `*` and `?` */
          static bool NameMatch(const std::string& name, const std::string& mask);
 
-         /** Check if name matches to specified mask
-          * Mask can be a list of masks separated by semicolon like name1*:name2*:??name?? */
+         /** \brief Check if name matches to specified mask.
+          *
+          * Mask can be a list of masks separated by semicolon like `name1*:name2*:??name??` */
          static bool NameMatchM(const std::string& name, const std::string& mask);
 
       protected:

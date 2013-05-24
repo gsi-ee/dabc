@@ -191,17 +191,18 @@ namespace dabc {
          Parameter& SetSynchron(bool on, double interval = 1., bool everyevnt = false);
 
          /** Converts parameter in ratemeter - all values will be summed up and divided on specified interval.
-          * Result value will have <units>/second dimension */
+          * Result value will have units/second dimension */
          Parameter& SetRatemeter(bool synchron = false, double interval = 1.0);
 
          /** Returns true if rate measurement is activated */
          bool IsRatemeter() const;
 
-         /** Disable ratemeter functionality */
+         /** \brief Disable ratemeter functionality */
          Parameter& DisableRatemeter();
 
-         /** Converts parameter in statistic variable - all values will be summed up and average over interval will be calculated.
-          * Result will have <units> of original variable */
+         /** \brief Converts parameter in statistic variable.
+          * All values will be summed up and average over interval will be calculated.
+          * Result will have units of original variable */
          Parameter& SetAverage(bool synchron = false, double interval = 1.0);
 
          Parameter& DisableAverage();
@@ -221,8 +222,10 @@ namespace dabc {
          Parameter& SetWidthPrecision(unsigned width, unsigned prec);
 
          Parameter& SetUnits(const std::string& unit) { Field("units").SetStr(unit); return *this; }
+
          /** Return units of parameter value */
          const std::string GetUnits() const { return Field("units").AsStdStr(); }
+
          /** Return actual units of parameter value, taking into account rate (1/s) unit when enabled */
          const std::string GetActualUnits() const;
 

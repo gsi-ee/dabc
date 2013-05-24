@@ -210,7 +210,7 @@ namespace dabc {
     *
     * \ingroup dabc_all_classes
     *
-    * Analog to \red dabc::LockGuard. Increase int value in constructor and
+    * Analog to \ref dabc::LockGuard. Increase int value in constructor and
     * decrease it at the time when guard is destroyed.
     */
 
@@ -333,20 +333,21 @@ namespace dabc {
          /** \brief Sets affinity mask for the thread
           *
           * Should be called before thread is started.
-          * \par add can be:
+          * \param[in] aff  can be
           *   - unsigned value with processors mask
           *   - string like "xxxoooxxx" were x and o identified enabled and disabled processors,
           *           first element in string corresponds to first processor
           *   -string like "+M" where M is processor number in special processors set, before SetDfltAffinity("-N") should be called  (M<N)  */
          bool SetAffinity(const char* aff);
 
-         /** \brief Returns thread affinity in form of "xxxooooo"
-          * If \par actual is true, request will be done to the thread,
-          * otherwise configured value will be provided
+         /** \brief Provides thread affinity in form of "xxxooooo".
+          *
           * See SetAffinity method for more information
-          * \par buf and \par maxbuf provides buffer.
-          * \returns true if operation was executed without error.
-          */
+          * \param[in] actual    if true, request will be done to the thread,
+          *                      otherwise configured value will be provided
+          * \param[out] buf      output buffer
+          * \param[out] maxbuf   size of output buffer
+          * \returns             true if operation was executed without error. */
          bool GetAffinity(bool actual, char* buf, unsigned maxbuf);
 
          /** \brief Start thread with provided runnable */
@@ -377,7 +378,8 @@ namespace dabc {
          inline bool IsItself() const { return fThrd == pthread_self(); }
 
          /** \brief Sets default affinity for next threads to be created and for main process.
-          * \par aff could be:
+          *
+          * \param[in] aff could be:
           *    - unsigned value with processors mask
           *    - string like "xxxoooxxxss" with allowed symbols 'x', 'o' and 's'.
           *            'x' - enabled, 'o' - disabled, 's' - special purpose

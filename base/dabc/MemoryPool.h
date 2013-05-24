@@ -209,32 +209,36 @@ namespace dabc {
          /** Return relative usage of memory pool buffers */
          double GetUsedRatio() const;
 
-         /** Return maximum buffer size in the pool */
+         /** \brief Return maximum buffer size in the pool */
          unsigned GetMaxBufSize() const;
 
-         /** Return minimum buffer size in the pool */
+         /** \brief Return minimum buffer size in the pool */
          unsigned GetMinBufSize() const;
 
-         /** Returns Buffer object with exclusive access rights
-          * \param size defines requested buffer area, if = 0 returns next empty buffer
+         /** \brief Returns Buffer object with exclusive access rights
+          *
+          * \param[in] size defines requested buffer area, if = 0 returns next empty buffer
           * If size longer as single buffer, memory pool will try to produce segmented list.
           * Returned object will have at least specified size (means, size can be bigger).
           * In case when memory pool cannot provide specified memory exception will be thrown */
          Buffer TakeBuffer(BufferSize_t size = 0) throw();
 
-         /** Returns Buffer object without any memory reserved.
-          * Instance can be used in later code to add references on the memory from other buffers */
+         /** \brief Returns Buffer object without any memory reserved.
+          *
+          * Instance can be used in later code to add references on
+          * the memory from other buffers */
          Buffer TakeEmpty(unsigned capacity = 0) throw();
 
-         /** Method used to produce deep copy of source buffer.
-          * Means in any case new space will be reserved and content will be copied */
+         /**\brief  Method used to produce deep copy of source buffer.
+          *
+          * In any case new space will be reserved and content will be copied */
          Buffer CopyBuffer(const Buffer& src, bool except = true) throw();
 
-
-         /** Check if memory pool structure was changed since last call, do not involves memory pool mutex */
+         /** \brief Check if memory pool structure was changed since last call, do not involves memory pool mutex */
          bool CheckChangeCounter(unsigned &cnt);
 
-         /** Reconstruct memory pool base on command configuration
+         /** \brief Reconstruct memory pool base on command configuration
+          *
           * If some parameters not specified, configured values from xml file will be used.
           * As very last point, defaults from static variables will be used */
          bool Reconstruct(Command cmd);

@@ -72,17 +72,17 @@ Example:
 
 Inside context following nodes can be presented:
 
-   - *<Run>*  different run parameters of the process
-   - *<Application>* application configuration parameters
-   - *<MemoryPool>* memory pool config
-   - *<Module>* module
-   - *<Connection>* connection
+   - `<Run>`  different run parameters of the process
+   - `<Application>` application configuration parameters
+   - `<MemoryPool>` memory pool config
+   - `<Module>` module
+   - `<Connection>` connection
 
 ## Run parameters
 
 Run parameters set different global parameters and are normally set in the beginning,
 when dabc_exe process is started. Here is table of parameters, 
-which can be specified in <Run> section. 
+which can be specified in `<Run>` section. 
 
 | Name       | Description |
 | --------:  | :---------- |
@@ -270,13 +270,13 @@ Also there are variables defined in the dabc process itself.
 
 Following variables defined inside dabc itself.
 
-| Variable   | Description |
-| --------:  | :---------- |
-| DABCSYS    | top directory of dabc installation |
-| DABCUSERDIR | user-specified directory |
-| DABCWORKDIR | current working directory |
-| DABCNUMNODES | number of <Context> nodes in configuration file |
-| DABCNODEID | sequence number of current <Context> node in configuration file | 
+| Variable     | Description |
+| --------:    | :---------- |
+| DABCSYS      | top directory of dabc installation |
+| DABCUSERDIR  | user-specified directory |
+| DABCWORKDIR  | current working directory |
+| DABCNUMNODES | number of `<Context>` nodes in configuration file |
+| DABCNODEID   | sequence number of current `<Context>` node in configuration file | 
 
 
 # Automatic creation

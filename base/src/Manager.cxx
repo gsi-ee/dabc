@@ -66,16 +66,16 @@ namespace dabc {
    };
 
 
-   /** DependPair keeps dependency between two objects.
-    * When \field tgt object want to be deleted,
-    * ObjectDestroyed() method will be called in \param src object to perform correct cleanup
-    * It is supposed that \param src has reference on \param tgt and this reference should be
-    * released, otherwise \param tgt object will be not possible to destroy
+   /** \brief Keeps dependency between two objects.
     *
+    * When DependPair#tgt object want to be deleted,
+    * ObjectDestroyed() method will be called in DependPair#src object to perform correct cleanup
+    * It is supposed that DependPair#src has reference on DependPair#tgt and
+    * this reference should be released, otherwise DependPair#tgt object will be not possible to destroy
     */
    struct DependPair {
-      Reference src; ///< reference on object which want to be informed when \param tgt object is deleted
-      Object* tgt;   ///< object
+      Reference src; ///< reference on object which want to be informed when DependPair#tgt object is deleted
+      Object* tgt;   ///< when this object deleted, DependPair#src will be informed
       int fire;      ///< how to proceed pair 0 - remain, 1 - inform src, 2 - just delete
 
       DependPair() : src(), tgt(0), fire(0) {}

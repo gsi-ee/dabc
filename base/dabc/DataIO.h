@@ -72,18 +72,19 @@ namespace dabc {
 
          /** \brief Initialize data input, using port and command
           *
-          * \par wrk  Reference on input port
-          * \par cmd  Reference on command object
-          *
           * This is generic virtual method to initialize input,
-          * using configurations from Port and (or) from the Command  */
+          * using configurations from Port and (or) from the Command
+          *
+          * \param[in] wrk  reference on input port
+          * \param[in] cmd  reference on command object
+          * \returns        false when method fails */
          virtual bool Read_Init(const WorkerRef& wrk, const Command& cmd) { return true; }
 
 
          /** \brief Defines required buffer size for next operation
           *
-          * \returns size of next buffer (must be not grater than di_ValidSize = 0xFFFFFFF0)
-          * It also can return other codes:
+          * \returns
+          *   - <di_ValidSize     - size of buffer for next read operation (di_ValidSize = 0xFFFFFFF0)
           *   - di_EndOfStream   - this is end of stream, normal close of the input
           *   - di_DfltBufSize   - any non-zero buffer can be provided
           *   - di_Repeat        - nothing to read now, try again as soon as possible
@@ -118,10 +119,10 @@ namespace dabc {
          virtual double Read_Timeout() { return 0.1; }
 
          /** \brief Reads complete buffer
+
+          * Perform consequent call of Read_Size(), Read_Start() and Read_Complete() methods
           *
-          * \returns filled buffer
-          *
-          * Perform consequent call of Read_Size(), Read_Start() and Read_Complete() methods */
+          * \returns filled buffer */
          Buffer ReadBuffer();
    };
 

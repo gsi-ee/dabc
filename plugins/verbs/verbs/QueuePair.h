@@ -35,8 +35,8 @@ namespace verbs {
    class QueuePair {
       public:
          QueuePair(ContextRef ctx, ibv_qp_type qp_type,
-                     ComplQueue* send_cq, int send_depth, int max_send_sge,
-                     ComplQueue* recv_cq, int recv_depth, int max_recv_sge);
+                   ComplQueue* send_cq, int send_depth, int max_send_sge,
+                   ComplQueue* recv_cq, int recv_depth, int max_recv_sge);
          virtual ~QueuePair();
 
          struct ibv_qp *qp() const { return f_qp; }
@@ -49,10 +49,16 @@ namespace verbs {
          unsigned NumSendSegs() const { return fNumSendSegs; }
 
          /** \brief Connect QP to specified remote queue pair
-          *  \param src_path_bits defines low bits of source lid, used by QP.
-          *  It is required when local HCA has multiple LID (LMC>0) and one want to use
-          *  LID address other than default one. */
+          *
+          * \param[in] lid    LID of remote node
+          * \param[in] qpn    QP number of remote node
+          * \param[in] psn    additional unique identifier of connection which should be established
+          * \param[in] src_path_bits   low bits of source lid, used by QP.
+          *            It is required when local HCA has multiple LID (LMC>0)
+          *            and one want to use LID address other than default one. */
          bool Connect(uint16_t lid, uint32_t qpn, uint32_t psn, uint8_t src_path_bits = 0);
+
+         /** \brief Initialize QP for unreliable datagram protocol */
          bool InitUD();
 
          uint16_t remote_lid() const { return f_remote_lid; }

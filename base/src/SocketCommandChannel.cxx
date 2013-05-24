@@ -98,7 +98,7 @@ class LostStatistic {
 
       void show()
       {
-         DOUT0("LOST  STATISTIC: Recv %5ld Lost  %5ld %5.3f", numPkts, numLost, (numPkts > 0 ? 1.*numLost/numPkts : 0.);
+         DOUT0("LOST  STATISTIC: Recv %5ld Lost  %5ld %5.3f", numPkts, numLost, (numPkts > 0 ? 1.*numLost/numPkts : 0.));
       }
 };
 
@@ -216,7 +216,7 @@ namespace dabc {
 
          /** This is another scheme of intervals
           * First half are always short and equal to DABC_SEND_RETRY_TM
-          * Second half is equally distributed over \par fulltm period
+          * Second half is equally distributed over SocketCmdRec::fRetryTime period
           */
          double NextBoorstDelay()
          {

@@ -33,11 +33,11 @@ docs:: doxy
 
 doxy:
 	@echo "Creating doxygen documentation"
-	cd doc; doxygen DoxygenConfig
+	doxygen doc/DoxygenConfig
 
 clean-doxy:
 	@echo "Clean doxygen documentation"
-	rm -rf doc/html
+	rm -rf html
 
 dabclogin: build/dabclogin.sh config/Makefile.config
 	@sed -e "s|\`pwd\`|$(CURDIR)|" -e "s|version|$(VERSSUF)|" \

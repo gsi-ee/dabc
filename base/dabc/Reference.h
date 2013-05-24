@@ -223,16 +223,17 @@ namespace dabc {
          /** \brief Show on debug output content of reference */
          void Print(int lvl=0, const char* from = 0) const;
 
-         /** \brief Return folder of specified name, no special symbols allowed.
-          * If \param force specified, folder will be created */
+         /** \brief Return folder of specified name, no special symbols are allowed.
+          * \param[in] name     requested folder name
+          * \param[in] force    if true, missing folder will be created
+          * \param[in] isowner  ownership flag for newly created folders
+          * \returns            reference on the folder */
          Reference GetFolder(const char* name, bool force = false, bool isowner = true) throw();
 
          /** \brief Produce string, which can be used as name argument in
           * dabc::mgr.FindItem(name) call */
          std::string ItemName(bool compact = true) const;
-
    };
-
 }
 
 
@@ -264,7 +265,7 @@ namespace dabc {
             return *this; \
          } \
          /** \brief Return new reference on the object - old reference will remain */ \
-         /** If \param withmutex = false, no mutex locking will be performed, it is supposed that mutex already locked */ \
+         /** \param[in] withmutex   if false, no mutex locking will be performed, it is supposed that mutex already locked */ \
          RefClass Ref(bool withmutex = true) const { return RefClass(withmutex, GetObject()); }
 
 

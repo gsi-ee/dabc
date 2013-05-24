@@ -231,12 +231,14 @@ namespace dabc {
          std::string ThreadName() const;
 
          /** \brief Method used to produce timeout events in the worker
+          *
           *  After specified time interval ProcessTimeout() method of worker will be called.
-          *  Parameter \param tmout_sec can has following meaning:
+          *
+          *  \param[in] tmout_sec has following meaning:
           *     = 0 ProcessTimeout() will be called as soon as possible
           *     < 0 deactivate if possible previously scheduled timeout
           *     > 0 activate after specified interval
-          *  Returns false if timeout cannot be configured (when thread is not assigned or not active) */
+          *  \returns false if timeout cannot be configured (when thread is not assigned or not active) */
          bool ActivateTimeout(double tmout_sec);
 
          void SetWorkerPriority(int nq) { fWorkerPriority = nq; }

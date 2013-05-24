@@ -117,7 +117,8 @@ namespace dabc {
            * or was released */
          inline bool null() const { return fRec == 0; }
 
-         /** Duplicate instance of Buffer with new segments list independent from source.
+         /** \brief Duplicates instance of Buffer with new segments list independent from source.
+          *
           * Means original instance will remain as is.
           * Memory which is referenced by Buffer object is not duplicated or copied,
           * means both instances are reference same memory regions.
@@ -192,40 +193,61 @@ namespace dabc {
          /** \brief Release reference on the pool memory */
          void Release() throw();
 
-         /** Append content of \param src buffer to the existing buffer.
+         /** \brief Append content of provided buffer.
+          *
           * If source buffer belong to other memory pool, content will be copied.
-          * If moverefs = true specified, references moved to the target and source buffer will be emptied */
+          * \param[in] src       buffer to append
+          * \param[in] moverefs  if true, references moved to the target and source buffer will be emptied
+          * \returns false if operation failed, otherwise true */
          bool Append(Buffer& src, bool moverefs = true) throw();
 
-         /** Prepend content of \param src buffer to the existing buffer.
+         /** \brief Prepend content of provided buffer.
+          *
           * If source buffer belong to other memory pool, content will be copied.
-          * If moverefs = true specified, references moved to the target and source buffer will be emptied */
+          * \param[in] src       buffer to prepend
+          * \param[in] moverefs  if true, references moved to the target and source buffer will be emptied
+          * \returns false if operation failed, otherwise true */
          bool Prepend(Buffer& src, bool moverefs = true) throw();
 
-         /** Insert content of \param src buffer at specified position to the existing buffer.
+         /** \brief Insert content of buffer at specified position.
+          *
           * If source buffer belong to other memory pool, content will be copied.
-          * If moverefs = true specified, references moved to the target and source buffer will be emptied */
+          * \param[in] pos       position at which buffer must be inserted
+          * \param[in] src       buffer to insert
+          * \param[in] moverefs  if true, references moved to the target and source buffer will be emptied
+          * \returns false if operation failed, otherwise true */
          bool Insert(BufferSize_t pos, Buffer& src, bool moverefs = true) throw();
 
-         /** Convert content of the buffer into std::string */
+         /** \brief Convert content of the buffer into std::string */
          std::string AsStdString();
 
-         /** Copy content of source buffer \param srcbuf to the buffer */
+         /** \brief Copy content from source buffer
+          *
+          * \param[in] srcbuf  source buffer
+          * \param[in] len     bytes to copy, if 0 - whole buffer
+          * \returns           actual number of bytes copied */
          BufferSize_t CopyFrom(const Buffer& srcbuf, BufferSize_t len = 0) throw();
 
-         /** Copy data from \param src into Buffer memory
-          * Returns byte counts actually copied  */
+         /** \brief Copy data from string.
+          *
+          * \param[in] src   source string
+          * \param[in] len   bytes copied, (if 0, complete string excluding trailing null)
+          * \returns         actual number of bytes copied  */
          BufferSize_t CopyFromStr(const char* src, unsigned len = 0) throw();
 
-         /** Performs memcpy of data into raw buffer \param ptr */
+         /** \brief Copy content into provided raw buffer.
+          *
+          * \param[in] ptr  pointer to destination memory
+          * \param[in] len  number of bytes to copy.
+          * \returns        actual number of bytes copied*/
          BufferSize_t CopyTo(void* ptr, BufferSize_t len) const throw();
 
-         /** Returns reference on the part of the memory, referenced by the object.
-          * \param pos specified start point and will be increased when method returns valid buffer.
-          * \param len specifies length of memory piece. If zero is specified,
-          * full size of next segment will be delivered.
-          * \param allowsegmented defines if return memory peace could be segmented or not.
-          * Method returns empty buffer when requested memory size is not available in the source buffer
+         /** \brief Returns reference on the part of the memory, referenced by the object.
+          *
+          * \param[in,out] ptr  pointer where next part will be extracted
+          * \param[in]    len   length of memory piece (0 - rest size of current segment will be delivered).
+          * \param[in]    allowsegmented defines if return memory peace could be segmented or not.
+          * \returns      reference of buffer part or empty buffer when requested memory size is not available in the source buffer
           *
           * This method could be used to manage small peaces of memory in the memory pool with big buffers.
           * For instance, one need some small headers which should managed separately from the main data.
