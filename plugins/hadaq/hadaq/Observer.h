@@ -35,39 +35,39 @@ namespace hadaq {
    class Observer : public dabc::Worker  {
       protected:
 
-      bool fEnabled;
-      int fNodeId;
-      double fFlushTimeout;
+         bool fEnabled;  ///< true when HADAQ observer is enabled
+         int fNodeId;
+         double fFlushTimeout;
 
-      /* handle for shmem worker structure for netmem emulation*/
-      ::Worker* fNetmemWorker;
+         /* handle for shmem worker structure for netmem emulation*/
+         ::Worker* fNetmemWorker;
 
-      /* handle for shmem worker structure for evtbuild emulation*/
-      ::Worker* fEvtbuildWorker;
+         /* handle for shmem worker structure for evtbuild emulation*/
+         ::Worker* fEvtbuildWorker;
 
-      typedef std::list<ShmEntry*> ShmEntriesList;
+         typedef std::list<ShmEntry*> ShmEntriesList;
 
-      ShmEntriesList fEntries;
-      dabc::Mutex        fEntryMutex;
+         ShmEntriesList fEntries;
+         dabc::Mutex        fEntryMutex;
 
-      ShmEntry*  FindEntry(const std::string& parname)
+         ShmEntry*  FindEntry(const std::string& parname)
          {
-               return FindEntry(ReducedName(parname), ShmName(parname));
+            return FindEntry(ReducedName(parname), ShmName(parname));
          }
 
-      ShmEntry*  FindEntry(const std::string& statsname, const std::string& shmemname);
+         ShmEntry*  FindEntry(const std::string& statsname, const std::string& shmemname);
 
-      /* strip netmem or evtbuild prefix from parameter name*/
-      std::string ReducedName(const std::string& dabcname);
+         /* strip netmem or evtbuild prefix from parameter name*/
+         std::string ReducedName(const std::string& dabcname);
 
-      /* evaluate name of shm file from parameter name prefix*/
-      std::string ShmName(const std::string& dabcname);
+         /* evaluate name of shm file from parameter name prefix*/
+         std::string ShmName(const std::string& dabcname);
 
-      bool CreateShmEntry(const std::string& parname);
+         bool CreateShmEntry(const std::string& parname);
 
-      void RemoveEntry(ShmEntry* entry);
+         void RemoveEntry(ShmEntry* entry);
 
-      virtual double ProcessTimeout(double lastdiff);
+         virtual double ProcessTimeout(double lastdiff);
 
       public:
          Observer(const std::string& name);
@@ -78,13 +78,12 @@ namespace hadaq {
 
          virtual void ProcessParameterEvent(const dabc::ParameterEvent& evnt);
 
-
          static const char* RunStatusName() { return "RunStatus"; }
+
+         bool IsEnabled() const { return fEnabled; }
 
          /* converts prefix text to number for shmem export*/
          static int Args_prefixCode(const char* prefix);
-
-
    };
 
 

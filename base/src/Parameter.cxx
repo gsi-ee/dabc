@@ -181,7 +181,7 @@ const char* dabc::ParameterContainer::GetField(const std::string& name, const ch
 
 void dabc::ParameterContainer::FireEvent(int id)
 {
-   if (dabc::mgr())
+   if (dabc::mgr() && IsParent(dabc::mgr()))
       dabc::mgr()->ProduceParameterEvent(this, id);
 }
 

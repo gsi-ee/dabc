@@ -360,4 +360,10 @@ Main aim now bring project to real version 2 with interface finalized.
    should be delivered to at least one client. If no one client is connected, transport will block.
    One can specify unblocking mode for transport server if configure:
        <OutputPort name="Output0" url="mbs://Transport?unblock"/>
-   Stream server will be always unblocking.     
+   Stream server will be always unblocking.
+   
+24.05.2013
+1. Make doxygen docu more readable
+
+27.05.2013
+1. Activate shared-memory observer in hadaq plugin only when it really enabled

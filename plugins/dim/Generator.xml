@@ -13,9 +13,10 @@
        <BufferSize value="65536"/>
        <NumBuffers value="200"/>
     </MemoryPool>
-    <Module name="Repeater" class="mbs::TransmitterModule">
-       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2"/>
-       <OutputPort name="Output0" url="mbs://Stream"/>
+    <Module name="Repeater" class="dabc::RepeaterModule">
+       <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2" rate="Gener"/>
+       <OutputPort name="Output0" url="mbs://Stream:6543"/>
+       <Gener width="5" prec="3" low="0" up="50" debug="1"/>
      </Module>
   </Context>
 </dabc>

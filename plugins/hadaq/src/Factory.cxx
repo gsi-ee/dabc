@@ -103,14 +103,14 @@ dabc::Module* hadaq::Factory::CreateModule(const std::string& classname, const s
 
 void hadaq::Factory::Initialize()
 {
-   DOUT0("Initialize SHM connected control");
-
-//   SL: TODO: one only need to create observer when it is active
-
-   dabc::WorkerRef w = new hadaq::Observer("/shm");
-   w.MakeThreadForWorker("ShmThread");
-
-//   o->thread()()->SetLogging(true);
+   hadaq::Observer* observ = new hadaq::Observer("/shm");
+   dabc::WorkerRef w = observ;
+   if (!observ->IsEnabled()) {
+      w.Destroy();
+   } else {
+      DOUT0("Initialize SHM connected control");
+      w.MakeThreadForWorker("ShmThread");
+   }
 }
 
 

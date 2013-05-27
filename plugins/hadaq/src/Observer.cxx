@@ -19,17 +19,16 @@ hadaq::Observer::Observer(const std::string& name) :
    fEntryMutex()
 {
    fEnabled = Cfg(hadaq::xmlObserverEnabled).AsBool(false);
-   if(!fEnabled)
-      {
-         DOUT0("hadaq shmem observer is disabled.");
-         return;
-      }
+   if(!fEnabled) {
+      DOUT0("hadaq shmem observer is disabled.");
+      return;
+   }
+
    fNodeId = dabc::mgr.NodeId()+1; // hades eb ids start with 1
 
-
    // we use here mask for evtbuild and netmem prefixes only
-   std::string maskn=dabc::format("%s_*",hadaq::NetmemPrefix);
-   std::string maske=dabc::format("%s_*",hadaq::EvtbuildPrefix);
+   std::string maskn = dabc::format("%s_*",hadaq::NetmemPrefix);
+   std::string maske = dabc::format("%s_*",hadaq::EvtbuildPrefix);
 
    RegisterForParameterEvent(maskn, false);
    RegisterForParameterEvent(maske, false);
