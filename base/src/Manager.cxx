@@ -1447,7 +1447,7 @@ void dabc::Manager::ProcessFactory(Factory* factory)
       printf("Manager is not exists when factory %s is created - abort\n", factory->GetName());
       exit(1);
    }
-   fInstance->GetFactoriesFolder(true).AddChild(factory, false);
+   fInstance->GetFactoriesFolder(true).AddChild(factory, true);
 }
 
 void dabc::Manager::ProcessCtrlCSignal()

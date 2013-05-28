@@ -21,6 +21,7 @@
 #include "dabc/logging.h"
 #include "dabc/Configuration.h"
 #include "dabc/Iterator.h"
+#include "dabc/Hierarchy.h"
 
 dabc::ApplicationBase::ApplicationBase() :
    Worker(dabc::mgr(), xmlAppDfltName, true),
@@ -521,6 +522,10 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
          fWasRunning = true;
       }
       DOUT2("Start res = %s", DBOOL(res));
+
+//      dabc::Hierarchy h;
+//      h.MakeHierarchy(dabc::mgr);
+
       tgtstate = stRunning();
    } else
    if (cmd == stcmdDoStop()) {

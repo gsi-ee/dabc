@@ -88,6 +88,12 @@ dabc::Object* dabc::Iterator::next(bool goinside)
    return fCurrent();
 }
 
+dabc::Object* dabc::Iterator::parent(unsigned lvl)
+{
+   return (lvl<fFolders.GetSize()) ? fFolders[lvl].GetObject() : 0;
+}
+
+
 void dabc::Iterator::PrintHieararchy(Reference ref)
 {
    dabc::Iterator iter(ref);

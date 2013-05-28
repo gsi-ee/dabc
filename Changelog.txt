@@ -367,3 +367,7 @@ Main aim now bring project to real version 2 with interface finalized.
 
 27.05.2013
 1. Activate shared-memory observer in hadaq plugin only when it really enabled
+
+28.05.2013
+1. Introduce dabc::Hierarchy class, which should represent in the future 
+   objects hierarchy of remote (or local) DABC process.

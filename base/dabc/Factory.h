@@ -87,6 +87,8 @@ namespace dabc {
 
          static bool CreateManager(const std::string& name = "mgr", Configuration* cfg = 0);
 
+         virtual const char* ClassName() const { return "Factory"; }
+
       protected:
 
          /** Method called by the manager during application start.
