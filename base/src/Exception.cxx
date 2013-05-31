@@ -64,6 +64,7 @@ const char* dabc::Exception::what() const throw()
       case ex_Buffer:  return fWhat.c_str();
       case ex_Pool:    return fWhat.c_str();
       case ex_Object:  return fWhat.c_str();
+      case ex_Hierarchy: return fWhat.c_str();
       case ex_Pointer: return fWhat.c_str();
       case ex_Generic: return fWhat.c_str();
    }

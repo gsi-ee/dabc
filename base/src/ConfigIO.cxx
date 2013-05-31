@@ -120,6 +120,32 @@ dabc::XMLNodePointer_t dabc::ConfigIO::FindSubItem(XMLNodePointer_t node, const 
    return FindSubItem(fCfg->FindChild(node, subname.c_str()), pos+1);
 }
 
+/** \biref Special class to resolve configuration variables at the time when field value set */
+
+namespace dabc {
+
+   class ConfigIOResolve : public RecordContainer::ResolveFunc {
+      protected:
+         Configuration* fCfg;
+         std::string fBuf;
+
+      public:
+         ConfigIOResolve(Configuration* cfg) : RecordContainer::ResolveFunc(), fCfg(cfg) {}
+
+         virtual ~ConfigIOResolve() {}
+
+         virtual const char* Resolve(const char* arg) const
+         {
+            if ((fCfg==0) || (arg==0) || (strstr(arg,"${")==0)) return arg;
+            ConfigIOResolve* me = const_cast<ConfigIOResolve*> (this);
+            me->fBuf = me->fCfg->ResolveEnv(arg);
+            return fBuf.c_str();
+         }
+   };
+
+}
+
+
 bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, RecordContainer* cont)
 {
    // here we search all nodes in config file which are compatible with for specified object
@@ -202,7 +228,11 @@ bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, Record
             if (!itemname.empty()) fCurrItem = FindSubItem(fCurrItem, itemname.c_str());
             if (fCurrItem!=0) {
                DOUT2("Find searched item %s, try to read attributes cont:%p", itemname.c_str(), cont);
-               ReadFieldsFromNode(fCurrItem, cont, false);
+
+               ConfigIOResolve res(fCfg);
+
+               cont->ReadFieldsFromNode(fCurrItem, false, res);
+
                isany = true;
             }
 
@@ -247,59 +277,4 @@ bool dabc::ConfigIO::ReadRecord(Object* obj, const std::string& itemname, Record
    }
 
    return isany;
-}
-
-bool dabc::ConfigIO::ReadFieldsFromNode(XMLNodePointer_t node, RecordContainer* cont, bool overwrite)
-{
-   XMLAttrPointer_t attr = Xml::GetFirstAttr(node);
-
-   while (attr!=0) {
-      const char* attrname = Xml::GetAttrName(attr);
-
-      DOUT3("Cont:%p  attribue:%s overwrite:%s", this, attrname, DBOOL(overwrite));
-
-      // TODO: do we really should use RecordContainer::GetField call here ???
-
-      if (overwrite || (cont->GetField(attrname)==0)) {
-         const char* vattr = Xml::GetAttrValue(attr);
-
-         DOUT3("Cont:%p  attribue:%s value:%s", this, attrname, (vattr ? vattr : "---"));
-
-         if ((vattr!=0) && (strstr(vattr,"${")!=0) && fCfg)
-            cont->SetField(attrname, fCfg->ResolveEnv(vattr).c_str(), 0);
-         else
-            cont->SetField(attrname, vattr, 0);
-      }
-
-      attr = Xml::GetNextAttr(attr);
-   }
-
-   XMLNodePointer_t child = Xml::GetChild(node);
-
-   while (child!=0) {
-
-      const char* vname = Xml::GetNodeName(child);
-      const char* vattr = Xml::GetAttr(child,"value");
-
-      if (vname && vattr) {
-         std::string field_name;
-
-         if (strcmp(vname,"_field")!=0)
-            field_name = std::string("_")+vname;
-         else
-            field_name = Xml::GetAttr(child,"name");
-
-         // TODO: do we really should use RecordContainer::GetField call here ???
-
-         if (overwrite || (cont->GetField(field_name)==0)) {
-            if ((vattr!=0) && (strstr(vattr,"${")!=0) && fCfg)
-               cont->SetField(field_name, fCfg->ResolveEnv(vattr).c_str(), 0);
-            else
-               cont->SetField(field_name, vattr, 0);
-         }
-      }
-
-      child = Xml::GetNext(child);
-   }
-   return true;
 }

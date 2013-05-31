@@ -505,7 +505,47 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
    std::string tgtstate;
 
    if (cmd == stcmdDoConfigure()) {
+
+/*      dabc::Hierarchy h;
+      h.UpdateHierarchy(dabc::mgr);
+
+      std::string s1 = h.SaveToXml(false);
+      uint64_t v1 = h.GetVersion();
+
+      DOUT0("First xml = ver %u \n%s", (unsigned) v1 , s1.c_str());
+*/
       res = CreateAppModules();
+/*
+      h.UpdateHierarchy(dabc::mgr);
+
+      std::string s2 = h.SaveToXml(false);
+      uint64_t v2 = h.GetVersion();
+
+      DOUT0("Second xml = ver %u \n%s", (unsigned) v2, s2.c_str());
+
+      std::string sdiff1 = h.SaveToXml(false, v1+1);
+
+      DOUT0("DIFF1 xml = ver %u \n%s", (unsigned) v1+1, sdiff1.c_str());
+
+      std::string sdiff2 = h.SaveToXml(false, v2+1);
+
+      DOUT0("DIFF2 xml = ver %u \n%s", (unsigned) v2+1, sdiff2.c_str());
+
+
+      dabc::Hierarchy hrem;
+      hrem.UpdateFromXml(s1);
+
+      DOUT0("REM0 xml = ver %u \n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml(false).c_str());
+
+      hrem.UpdateFromXml(sdiff1);
+
+      DOUT0("REM1 xml = ver %u \n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml(false).c_str());
+
+      hrem.UpdateFromXml(sdiff2);
+
+      DOUT0("REM12 xml = ver %u \n%s", (unsigned) hrem.GetVersion(), hrem.SaveToXml(false).c_str());
+*/
+
       tgtstate = stConfigured();
       DOUT2("Configure res = %s", DBOOL(res));
    } else
@@ -522,9 +562,6 @@ bool dabc::Application::DoStateTransition(const std::string& cmd)
          fWasRunning = true;
       }
       DOUT2("Start res = %s", DBOOL(res));
-
-//      dabc::Hierarchy h;
-//      h.MakeHierarchy(dabc::mgr);
 
       tgtstate = stRunning();
    } else

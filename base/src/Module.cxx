@@ -413,6 +413,16 @@ bool dabc::Module::Find(ConfigIO &cfg)
 }
 
 
+void dabc::Module::WorkerSaveAttr(RecordContainer* cont)
+{
+   dabc::Worker::WorkerSaveAttr(cont);
+
+   dabc::Record rec(cont);
+
+   rec.Field(xmlNumInputs).SetInt(NumInputs());
+   rec.Field(xmlNumOutputs).SetInt(NumOutputs());
+}
+
 void dabc::Module::ObjectCleanup()
 {
    DOUT3("Module cleanup %s numchilds %u", GetName(), NumChilds());

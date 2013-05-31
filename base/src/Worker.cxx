@@ -532,6 +532,26 @@ bool dabc::Worker::Find(ConfigIO &cfg)
    return false;
 }
 
+void dabc::Worker::SaveAttr(RecordContainer* cont)
+{
+   // method is called from any possible thread
+   // to avoid thread-crossing porblem, let used command
+
+   dabc::Command cmd("DoSaveAttr");
+   cmd.SetPtr("cont", cont);
+   Execute(cmd);
+}
+
+
+void dabc::Worker::WorkerSaveAttr(RecordContainer* cont)
+{
+   Record rec(cont);
+
+   if (HasThread())
+      rec.Field(xmlThreadAttr).SetStr(ThreadName());
+}
+
+
 void dabc::Worker::WorkerParameterChanged(Parameter par)
 {
    if (!par.IsMonitored()) return;
@@ -578,6 +598,12 @@ int dabc::Worker::PreviewCommand(Command cmd)
 
    if (cmd.IsName("SyncWorker")) {
       // this is just dummy command, which is submitted with minimum priority
+      cmd_res = cmd_true;
+   } else
+
+   if (cmd.IsName("DoSaveAttr")) {
+      RecordContainer* cont = (RecordContainer*)cmd.GetPtr("cont");
+      if (cont!=0) WorkerSaveAttr(cont);
       cmd_res = cmd_true;
    }
 

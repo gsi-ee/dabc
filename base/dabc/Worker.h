@@ -147,6 +147,9 @@ namespace dabc {
             return fAddon.null() ? -1 : fAddon()->ProcessTimeout(last_diff);
          }
 
+         /** Method should not be overwritten in derived class, WorkerSaveAttr must be used */
+         virtual void SaveAttr(RecordContainer* cont);
+
       protected:
          ThreadRef        fThread;                     ///< reference on the thread, once assigned remain whole time
          WorkerAddonRef   fAddon;                      ///< extension of worker for some special events
@@ -355,6 +358,9 @@ namespace dabc {
          bool SingleLoop(double tmout) { return fThread()->SingleLoop(fWorkerId, tmout); }
 
          void WorkerSleep(double tmout);
+
+         /** \brief Worker method to store attributes in the record */
+         virtual void WorkerSaveAttr(RecordContainer* cont);
 
          /** Executes command in specified worker. Call allowed only from worker thred (therefore method protected).
           * Makes it easy to recognise caller thread and keep its event loop running.

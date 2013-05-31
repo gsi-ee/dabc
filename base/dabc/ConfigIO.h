@@ -43,11 +43,11 @@ namespace dabc {
      // TODO: later ConfigIO should be non-transient reference on configuration class
 
       protected:
-         Configuration* fCfg;
+         Configuration* fCfg;           ///< pointer on configuration object
 
-         XMLNodePointer_t fCurrItem; // currently found item
-         XMLNodePointer_t fCurrChld; // selected child in current item
-         bool             fCurrStrict; // must have strict syntax match
+         XMLNodePointer_t fCurrItem;    ///< currently found item
+         XMLNodePointer_t fCurrChld;    ///< selected child in current item
+         bool             fCurrStrict;  ///< must have strict syntax match
 
          XMLNodePointer_t FindSubItem(XMLNodePointer_t node, const char* name);
 
@@ -57,16 +57,15 @@ namespace dabc {
          ConfigIO(Configuration* cfg);
 
          ConfigIO(const ConfigIO& src);
+
          virtual ~ConfigIO() {}
 
          bool FindItem(const char* name);
 
-         /** Check if item, found by FindItem routine, has attribute with specified value */
+         /** \brief Check if item, found by FindItem routine, has attribute with specified value */
          bool CheckAttr(const char* name, const char* value);
 
          bool ReadRecord(Object* obj, const std::string& name, RecordContainer* cont);
-
-         bool ReadFieldsFromNode(XMLNodePointer_t node, RecordContainer* cont, bool overwrite = false);
    };
 
 }

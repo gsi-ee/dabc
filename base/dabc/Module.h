@@ -107,6 +107,8 @@ namespace dabc {
 
          virtual bool Find(ConfigIO &cfg);
 
+         virtual void WorkerSaveAttr(RecordContainer* cont);
+
 
          /** \brief Starts execution of the module code */
          bool Start();

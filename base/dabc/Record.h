@@ -134,6 +134,11 @@ namespace dabc {
 
          virtual const char* GetField(const std::string& name, const char* dflt = 0);
          virtual bool SetField(const std::string& name, const char* value, const char* kind);
+         virtual void ClearFields();
+
+         RecordContainerMap* TakeContainer();
+         bool CompareFields(RecordContainerMap* oldmap);
+         void DeleteContainer(RecordContainerMap* oldmap);
 
          bool HasField(const std::string& name) { return GetField(name)!=0; }
 
@@ -144,11 +149,25 @@ namespace dabc {
          const RecordField Field(const std::string& name) const { return RecordField((RecordContainer*) this, name); }
 
       public:
+
+         class ResolveFunc {
+            public:
+               ResolveFunc(unsigned = 0) {}
+               virtual ~ResolveFunc() {}
+
+               virtual const char* Resolve(const char* arg) const { return arg; }
+         };
+
+
          virtual ~RecordContainer();
 
          virtual const char* ClassName() const { return "Record"; }
 
          virtual void Print(int lvl = 0);
+
+         XMLNodePointer_t SaveInXmlNode(XMLNodePointer_t parent, bool withattr = true);
+
+         bool ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite = true, const ResolveFunc& func = 0);
    };
 
    // ______________________________________________________________________________

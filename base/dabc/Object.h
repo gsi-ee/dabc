@@ -335,8 +335,18 @@ namespace dabc {
           *
           * \param[in] child        object to add
           * \param[in] withmutex    true if object mutex should be locked
-          * \param[in] setparent    true if parent field of child should be set*/
+          * \param[in] setparent    true if parent field of child should be set
+          * \returns                true if successful */
          bool AddChild(Object* child, bool withmutex = true, bool setparent = true) throw();
+
+         /** \brief Add object to list of child objects at specified position
+          *
+          * \param[in] child       object to add
+          * \param[in] pos         position at which add object, if grater than number of childs, will be add at the end
+          * \param[in] withmutex   true if object mutex should be locked
+          * \param[in] setparent   true if parent field of child should be set
+          * \returns               true if successful */
+         bool AddChildAt(Object* child, unsigned pos, bool withmutex = true, bool setparent = true);
 
          /** \brief Alternative way to add child to the object.
           *
@@ -408,26 +418,33 @@ namespace dabc {
           * TODO: probably, one should remove it and always use reference */
          static void Destroy(Object* obj) throw();
 
-
-         // FIXME: old code, should be adjusted
-
-
-
-         // these three methods describes look of element in xml file
+         /**  \brief Returns class name of the object instance.
+          *
+          * In some cases class name used to correctly locate object in xml file */
          virtual const char* ClassName() const { return "Object"; }
 
+         /** \brief Method to locate object in xml file
+          *
+          * Can be reimplemented in derived classes to check more attributes like class name */
+         virtual bool Find(ConfigIO &cfg);
+
+         /** \brief Method could be used to save any attributes of the object
+          *
+          *  Implementation should look like:
+          *
+          *      dabc::Record rec(cont);
+          *      rec.Field("number").SetInt(12); */
+         virtual void SaveAttr(RecordContainer* cont) {}
 
          // operations with object name (and info) are __not thread safe__
          // therefore, in the case when object name must be changed,
          // locking should be applied by any other means
 
-         virtual void FillInfo(std::string& info);
-
-         virtual bool Find(ConfigIO &cfg);
-
+         /** \brief Static variable counts total number of objects instances */
          static unsigned NumInstances() { return gNumInstances; }
 
-         /** Methods to inspect how many objects pointers are remained
+         /** \ brief Methods to inspect how many objects pointers are remained
+          *
           * Garbage collector will not remove lost objects itself - one can only watch
           * how many objects and which kind are remain in memory.
           * Method only work when DABC compiled with option "make extrachecks=true"

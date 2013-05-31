@@ -35,16 +35,24 @@ bool dabc::ReferencesVector::Add(Reference ref) throw()
 {
    if (ref.GetObject()==0) return false;
 
-//   ref.Print(0,"dabc::ReferencesVector::Add InputRec");
-
    fVector.push_back(ref);
-
-//   fVector.back().Print(0,"dabc::ReferencesVector::Add Array");
-
-//   fVector.back().SetTransient(false);
 
    return true;
 }
+
+
+bool dabc::ReferencesVector::AddAt(Reference ref, unsigned pos) throw()
+{
+   if (ref.GetObject()==0) return false;
+
+   if (pos >= fVector.size())
+      fVector.push_back(ref);
+   else
+      fVector.insert(fVector.begin() + pos, ref);
+
+   return true;
+}
+
 
 bool dabc::ReferencesVector::Remove(Object* obj) throw()
 {

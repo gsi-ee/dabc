@@ -644,6 +644,35 @@ bool dabc::Object::AddChild(Object* child, bool withmutex, bool setparent) throw
    return true;
 }
 
+bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex, bool setparent)
+{
+   if (child==0) return false;
+
+   if (child->GetParent() == 0) {
+      if (setparent)
+         child->fObjectParent.SetObject(this, false, withmutex);
+   } else
+   if (child->GetParent() != this) {
+      EOUT("Cannot move child from other parent");
+      throw dabc::Exception(ex_Object, "Cannot move child from other parent", GetName());
+      return false;
+   }
+
+   Reference ref(child);
+
+   LockGuard guard(withmutex ? fObjectMutex : 0);
+
+   // one can set owner flag under mutex - reference itself does not uses mutexes
+   ref.SetOwner(GetFlag(flIsOwner));
+
+   if (fObjectChilds==0) fObjectChilds = new ReferencesVector;
+
+   fObjectChilds->AddAt(ref, pos);
+
+   return true;
+}
+
+
 void dabc::Object::RemoveChild(Object* child) throw()
 {
    if (child==0) return;
@@ -1123,11 +1152,6 @@ std::string dabc::Object::ItemName(bool compact) const
 // ============================================================================
 // FIXME: old code, should be adjusted
 
-
-void dabc::Object::FillInfo(std::string& info)
-{
-   dabc::formats(info, "Object: %s", GetName());
-}
 
 void dabc::Object::Print(int lvl)
 {

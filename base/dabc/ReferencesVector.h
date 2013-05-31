@@ -44,6 +44,9 @@ namespace dabc {
          /** \brief Add reference to the vector */
          bool Add(Reference ref) throw();
 
+         /** \brief Add reference to the vector at specified position */
+         bool AddAt(Reference ref, unsigned pos) throw();
+
          /** \brief Remove reference on specified object  */
          bool Remove(Object* obj) throw();
 

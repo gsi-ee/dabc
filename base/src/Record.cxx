@@ -168,6 +168,36 @@ dabc::RecordContainer::~RecordContainer()
    delete fPars; fPars = 0;
 }
 
+dabc::RecordContainerMap* dabc::RecordContainer::TakeContainer()
+{
+   LockGuard lock(ObjectMutex());
+   dabc::RecordContainerMap* res = fPars;
+   fPars = new RecordContainerMap;
+   return res;
+}
+
+bool dabc::RecordContainer::CompareFields(RecordContainerMap* oldmap)
+{
+   if ((oldmap==0) || (fPars->size() != oldmap->size())) return false;
+
+   for (RecordContainerMap::iterator iter = fPars->begin(); iter != fPars->end(); iter++) {
+
+      RecordContainerMap::iterator iter2 = oldmap->find(iter->first);
+
+      if (iter2==oldmap->end()) return false;
+
+      if (iter->second != iter2->second) return false;
+   }
+
+   return true;
+}
+
+void dabc::RecordContainer::DeleteContainer(RecordContainerMap* oldmap)
+{
+   delete oldmap;
+}
+
+
 void dabc::RecordContainer::Print(int lvl)
 {
    DOUT1("%s : %s", ClassName(), GetName());
@@ -223,6 +253,13 @@ bool dabc::RecordContainer::SetField(const std::string& name, const char* value,
    return true;
 }
 
+void dabc::RecordContainer::ClearFields()
+{
+   LockGuard lock(ObjectMutex());
+   fPars->clear();
+}
+
+
 
 std::string dabc::RecordContainer::FindField(const std::string& mask) const
 {
@@ -255,6 +292,73 @@ const std::string dabc::RecordContainer::FieldName(unsigned cnt) const
    }
    return std::string();
 }
+
+dabc::XMLNodePointer_t dabc::RecordContainer::SaveInXmlNode(XMLNodePointer_t parent, bool withattr)
+{
+   XMLNodePointer_t node = Xml::NewChild(parent, 0, GetName(), 0);
+
+   if (!withattr) return node;
+
+   for(RecordContainerMap::const_iterator iter = fPars->begin();
+         iter!=fPars->end();iter++) {
+
+      if (iter->first.empty()) continue;
+
+      if (iter->first[0]=='#') continue;
+
+      // if somebody use wrong symbol in parameter name, pack it differently
+      if (iter->first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,")!=iter->first.npos) {
+         XMLNodePointer_t child = Xml::NewChild(node, 0, "dabc:field", 0);
+         Xml::NewAttr(child, 0, "name", iter->first.c_str());
+         Xml::NewAttr(child, 0, "value", iter->second.c_str());
+      } else {
+         // add attribute
+         Xml::NewAttr(node,0,iter->first.c_str(),iter->second.c_str());
+      }
+   }
+
+   return node;
+}
+
+bool dabc::RecordContainer::ReadFieldsFromNode(XMLNodePointer_t node, bool overwrite, const ResolveFunc& func)
+{
+   if (node==0) return false;
+
+   XMLAttrPointer_t attr = Xml::GetFirstAttr(node);
+
+   while (attr!=0) {
+      const char* attrname = Xml::GetAttrName(attr);
+
+      DOUT3("Cont:%p  attribute:%s overwrite:%s", this, attrname, DBOOL(overwrite));
+
+      if (overwrite || (GetField(attrname)==0)) {
+         SetField(attrname, func.Resolve(Xml::GetAttrValue(attr)), 0);
+      }
+
+      attr = Xml::GetNextAttr(attr);
+   }
+
+   XMLNodePointer_t child = Xml::GetChild(node);
+
+   while (child!=0) {
+
+      if (strcmp(Xml::GetNodeName(child), "dabc:field")==0) {
+
+         const char* attrname = Xml::GetAttr(child,"name");
+         const char* attrvalue = Xml::GetAttr(child,"value");
+
+         if (attrname!=0)
+            if (overwrite || (GetField(attrname)==0))
+               SetField(attrname, func.Resolve(attrvalue), 0);
+      }
+
+      child = Xml::GetNext(child);
+   }
+
+
+   return true;
+}
+
 
 //-------------------------------------------------------------------------
 
@@ -300,42 +404,22 @@ void dabc::Record::AddFieldsFrom(const Record& src, bool can_owerwrite)
    }
 }
 
+
 std::string dabc::Record::SaveToXml(bool compact)
 {
-   if (null()) return std::string();
-
-   XMLNodePointer_t node = Xml::NewChild(0,0,GetName(),0);
-
-   for(RecordContainerMap::const_iterator iter = GetObject()->fPars->begin();
-         iter!=GetObject()->fPars->end();iter++) {
-
-      if (iter->first.empty()) continue;
-
-      if (iter->first[0]=='#') continue;
-
-      // if somebody use wrong symbol in parameter name, pack it differently
-      if (iter->first.find_first_of(" #&\"\'!@%^*()=-\\/|~.,")!=iter->first.npos) {
-         XMLNodePointer_t child = Xml::NewChild(node,0,"_field",0);
-         Xml::NewAttr(child, 0, "name", iter->first.c_str());
-         Xml::NewAttr(child, 0, "value", iter->second.c_str());
-      } else
-      if (iter->first[0]!='_') {
-         // add attribute
-         Xml::NewAttr(node,0,iter->first.c_str(),iter->second.c_str());
-      } else {
-         // add child node
-         XMLNodePointer_t child = Xml::NewChild(node,0,iter->first.c_str()+1,0);
-         Xml::NewAttr(child, 0, "value", iter->second.c_str());
-      }
-   }
+   XMLNodePointer_t node = GetObject()->SaveInXmlNode(0, true);
 
    std::string res;
 
-   Xml::SaveSingleNode(node, &res, compact ? 0 : 1);
-   Xml::FreeNode(node);
+   if (node) {
+      Xml::SaveSingleNode(node, &res, compact ? 0 : 1);
+      Xml::FreeNode(node);
+   }
 
    return res;
 }
+
+
 
 bool dabc::Record::ReadFromXml(const std::string& v)
 {
@@ -347,9 +431,7 @@ bool dabc::Record::ReadFromXml(const std::string& v)
 
    CreateContainer(Xml::GetNodeName(node));
 
-   ConfigIO io(0);
-
-   io.ReadFieldsFromNode(node, GetObject(), true);
+   GetObject()->ReadFieldsFromNode(node, true);
 
    Xml::FreeNode(node);
 

@@ -371,3 +371,11 @@ Main aim now bring project to real version 2 with interface finalized.
 28.05.2013
 1. Introduce dabc::Hierarchy class, which should represent in the future 
    objects hierarchy of remote (or local) DABC process.
+   
+31.05.2013
+1. Provide version control of dabc::Hierarchy structure. Each element in hierarchy includes
+   version number, which indicate when last changes were performed. This version gaves
+   possibility to extract only changed items relative to specified version in the past.
+2. Implement conversion of dabc::Hierarchy structure into xml and reconstruct 
+   hierarchy from xml. This will allow to transport and reconstruct hierarchy on
+   any remote location.

@@ -36,6 +36,7 @@ namespace dabc {
       ex_Buffer,      // buffer error,
       ex_Pool,        // memory pool error
       ex_Object,      // object error
+      ex_Hierarchy,   // hierarchy error
       ex_Pointer,     // pointer error
       ex_Generic      // generic exception, extra info is available
    };
@@ -83,6 +84,7 @@ namespace dabc {
          bool IsPool() const { return kind() == ex_Pool; }
          bool IsPointer() const { return kind() == ex_Pointer; }
          bool IsObject() const { return kind() == ex_Object; }
+         bool IsHierarchy() const { return kind() == ex_Hierarchy; }
    };
 
 };

@@ -130,6 +130,19 @@ bool dabc::str_to_uint(const char* val, unsigned* res)
    return sscanf(val, "%u", res) == 1;
 }
 
+bool dabc::str_to_luint(const char* val, long unsigned* res)
+{
+   if (val==0) return false;
+   while (*val==' ') val++;
+   if (*val==0) return false;
+
+   if ((strlen(val)>2) && (val[0]=='0') && ((val[1]=='x') || (val[1]=='X'))) {
+      if (sscanf(val+2, "%lx", res) == 1) return true;
+   }
+
+   return sscanf(val, "%lu", res) == 1;
+}
+
 bool dabc::str_to_double(const char* val, double* res)
 {
    if (sscanf(val, "%lf", res) == 1) return true;
