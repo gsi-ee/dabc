@@ -30,7 +30,8 @@
 dabc::CommandContainer::CommandContainer(const char* name) :
    RecordContainer(name),
    fCallers(),
-   fTimeout()
+   fTimeout(),
+   fCanceled(false)
 {
    // object will be destroy as long no references are existing
    SetFlag(flAutoDestroy, true);
@@ -42,11 +43,11 @@ dabc::CommandContainer::CommandContainer(const char* name) :
 dabc::CommandContainer::~CommandContainer()
 {
 
-   if (fCallers.size()>0)
-      EOUT("Non empty callers list in cmd %s !!!!!!!!!!!!!!", GetName());
-
-   fCallers.clear();
-
+   if (fCallers.size()>0) {
+      EOUT("Non empty callers list in cmd %s destructor", GetName());
+      fCallers.clear();
+      EOUT("Did clear callers in cmd %s", GetName());
+   }
 
    // check if reference is remaining !!!
 
@@ -237,7 +238,6 @@ void dabc::Command::Print(int lvl, const char* from) const
    Record::Print(lvl, from);
 }
 
-
 void dabc::Command::Release()
 {
    dabc::Record::Release();
@@ -245,8 +245,24 @@ void dabc::Command::Release()
 
 void dabc::Command::Cancel()
 {
-   SetInt("_canceled_",1);
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont!=0) {
+      LockGuard lock(ObjectMutex());
+      cont->fCanceled = true;
+   }
+
    dabc::Record::Release();
+}
+
+bool dabc::Command::IsCanceled()
+{
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont!=0) {
+      LockGuard lock(ObjectMutex());
+      return cont->fCanceled;
+   }
+
+   return false;
 }
 
 void dabc::Command::Reply(int res)

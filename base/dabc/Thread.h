@@ -392,7 +392,7 @@ namespace dabc {
          bool HaltWorker(Worker* proc);
 
          /** Called when worker addon changed on the fly */
-         void WorkerAddonChanged(Worker* work);
+         void WorkerAddonChanged(Worker* work, bool assign = true);
 
          bool SetExplicitLoop(Worker* work);
 

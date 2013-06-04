@@ -197,15 +197,6 @@ namespace dabc {
           * Should be used when mutex is already locked before. */
          Reference _MakeRef();
 
-         /** Method could be used to directly increment reference counter without creating dabc::Reference instance
-          * Object mutex must be locked at the moment - will be checked in debug mode 
-          * FIXME: one should not use it, otherwise cleanup of object can be screwed up */
-         void _IncObjectRefCnt();
-
-         /** Method shoul be used to directly decrement reference counter. Complimentary to _DecRefCnt()
-          * One should avoid situation that only such inc/dec methods are used */
-         void _DecObjectRefCnt();
-
          /** \brief Internal DABC method, used to activate object cleanup via object thread
           * Returns: false - object cannot be cleanup by the thread,
           *          true  - thread guarantees that CallDestroyFromThread() will be called from thread context */

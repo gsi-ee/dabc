@@ -170,7 +170,7 @@ bool dabc::Worker::AskToDestroyByThread()
    if (thrd()==0) return false;
 
    if (IsLogging())
-      DOUT0("Worker %p Ask thread to destroy worker ", this);
+      DOUT0("Worker %p %s ask thread to destroy it ", this, GetName());
 
    return thrd()->InvokeWorkerDestroy(this);
 }
@@ -231,6 +231,7 @@ void dabc::Worker::ObjectCleanup()
    CancelCommands();
 
    // here addon must be destroyed or at least cross-reference removed
+   // DOUT0("Worker:%s Destroy addon:%p in ObjectCleanup", GetName(), fAddon());
    fAddon.Release();
 
    DOUT5("Worker %s class %s cleanup refcnt = %d", GetName(), ClassName(), fObjectRefCnt);
@@ -239,27 +240,28 @@ void dabc::Worker::ObjectCleanup()
 
 void dabc::Worker::AssignAddon(WorkerAddon* addon)
 {
+   ThreadRef thrd = thread();
+
    if (!fAddon.null()) {
-      EOUT("Addon already assigned to the worker %s", GetName());
-      exit(5);
+      // first remove addon from thread itself
+
+      thrd()->WorkerAddonChanged(this, false);
+
+      // clean worker pointer
+      fAddon()->fWorker.Release();
+
+      // release addon - it should be destroyed as soon as possible
+      fAddon.Release();
    }
 
    fAddon = addon;
-   if (addon) addon->fWorker = this;
-
-   ThreadRef thrd = thread();
-
-   if (!thrd.null()) {
-
-
-      if (!thrd.IsItself()) {
-         EOUT("Assign addon to worker %s from other thread", GetName());
-         exit(6);
-      }
-
-      thrd()->WorkerAddonChanged(this);
+   if (addon) {
+      addon->fWorker = this;
+//      addon->fWorker.SetTransient(false);
    }
 
+   if (!thrd.null())
+      thrd()->WorkerAddonChanged(this, true);
 }
 
 
@@ -437,6 +439,9 @@ int dabc::Worker::ProcessCommand(Command cmd)
      DOUT0("Worker %p %s process command %s", this, GetName(), cmd.GetName());
 
    int cmd_res = PreviewCommand(cmd);
+
+   if (IsLogging())
+     DOUT0("Worker %p %s did preview command %s ignored %s", this, GetName(), cmd.GetName(), DBOOL(cmd_res == cmd_ignore));
 
    if (cmd_res == cmd_ignore)
       cmd_res = ExecuteCommand(cmd);

@@ -326,7 +326,7 @@ int dabc::ConnectionManager::ExecuteCommand(Command cmd)
 
       ConnectionRequestFull req = FindConnection(cmd1.GetUrl1(), cmd1.GetUrl2());
 
-      DOUT2("Get request for %s <-> %s  found:%p",
+      DOUT2("Get request for %s -> %s  found:%p",
             cmd1.GetUrl1().c_str(), cmd1.GetUrl2().c_str(), req());
 
       if (req.null()) {

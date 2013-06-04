@@ -20,6 +20,7 @@
 #include "dabc/Manager.h"
 #include "dabc/logging.h"
 #include "dabc/Configuration.h"
+#include "dabc/Url.h"
 #include "dabc/Iterator.h"
 #include "dabc/Hierarchy.h"
 
@@ -38,8 +39,14 @@ dabc::ApplicationBase::ApplicationBase() :
 
 dabc::ApplicationBase::~ApplicationBase()
 {
-
+   DOUT0("############ dabc::ApplicationBase::~ApplicationBase %s", GetName());
 }
+
+void dabc::ApplicationBase::ObjectCleanup()
+{
+   dabc::Worker::ObjectCleanup();
+}
+
 
 int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
 {
@@ -57,14 +64,14 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
       bool res = PerformApplicationRun();
 
       return cmd_bool(res);
-   } else
+   }
 
    if (cmd.IsName(CmdInvokeAppFinish::CmdName())) {
 
       bool res = PerformApplicationFinish();
 
       return cmd_bool(res);
-   } else
+   }
 
    if (cmd.IsName(CmdInvokeTransition::CmdName())) {
 
@@ -76,14 +83,14 @@ int dabc::ApplicationBase::ExecuteCommand(dabc::Command cmd)
          res = DoStateTransition(tr.GetTransition());
 
       return cmd_bool(res);
-   } else
+   }
 
    if (cmd.IsName("CheckWorkDone")) {
-      DOUT0("Verify that application did its job running %s modules %s",
+      DOUT2("Verify that application did its job running %s modules %s",
             DBOOL(GetState() == stRunning()), DBOOL(IsModulesRunning()));
 
       if (IsWorkDone()) {
-         DOUT0("Stop application while work is completed");
+         DOUT2("Stop application while work is completed");
          Submit(CmdInvokeAppFinish());
       }
 
@@ -338,32 +345,35 @@ bool dabc::ApplicationBase::DefaultInitFunc()
    }
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlConnectionNode, false)) {
+
       const char* outputname = Xml::GetAttr(node, "output");
       const char* inputname = Xml::GetAttr(node, "input");
 
+      // output and input should always be specified
       if ((outputname==0) || (inputname==0)) continue;
-      dabc::ConnectionRequest req = dabc::mgr.Connect(outputname, inputname);
 
-      if (req.null()) continue;
+      const char* kind = Xml::GetAttr(node, "kind");
 
-      const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
-      req.SetConnThread(thrdname);
+      if ((kind==0) || (strcmp(kind,"all-to-all")!=0)) {
+         dabc::ConnectionRequest req = dabc::mgr.Connect(outputname, inputname);
+         req.SetConfigFromXml(node);
+      } else {
+         int numnodes = dabc::mgr.NumNodes();
 
-      const char* useackn = Xml::GetAttr(node, xmlUseacknAttr);
-      if (useackn!=0)
-         req.SetUseAckn(strcmp(useackn, xmlTrueValue)==0);
+         DOUT0("Create all-to-all connections for %d nodes", numnodes);
 
-      const char* optional = Xml::GetAttr(node, xmlOptionalAttr);
-      if (optional!=0)
-         req.SetOptional(strcmp(optional, xmlTrueValue)==0);
+         for (int nsender=0; nsender<numnodes; nsender++)
+            for (int nreceiver=0;nreceiver<numnodes;nreceiver++) {
+               std::string port1 = dabc::Url::ComposePortName(nsender, dabc::format("%s/Output", outputname), nreceiver);
 
-      const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
-      if (devname!=0) req.SetConnDevice(devname);
+               std::string port2 = dabc::Url::ComposePortName(nreceiver, dabc::format("%s/Input", inputname), nsender);
 
-      double val(10.);
-      const char* tmout = Xml::GetAttr(node, xmlTimeoutAttr);
-      if ((tmout!=0) && str_to_double(tmout, &val))
-         req.SetConnTimeout(val);
+               dabc::ConnectionRequest req = dabc::mgr.Connect(port1, port2);
+               req.SetConfigFromXml(node);
+            }
+
+         DOUT0("Submit all-to-all connections for %d nodes done", numnodes);
+      }
    }
 
    return true;
@@ -458,10 +468,20 @@ bool dabc::Application::PerformApplicationRun()
 
 bool dabc::Application::PerformApplicationFinish()
 {
+//   DOUT0("==================================================================");
+//   DOUT0("App PerformApplicationFinish1 DIFFFFFFFFFFFFFFF %u %u", NumReferences() - NumChilds(), NumChilds());
+
    ExecuteStateTransition(stcmdDoStop(), SMCommandTimeout());
+
+//   DOUT0("==================================================================");
+//   DOUT0("App PerformApplicationFinish2 DIFFFFFFFFFFFFFFF %u %u", NumReferences() - NumChilds(), NumChilds());
 
    // do halt will be done in any case
    ExecuteStateTransition(stcmdDoHalt(), SMCommandTimeout());
+
+//   DOUT0("==================================================================");
+//   DOUT0("App PerformApplicationFinish3 DIFFFFFFFFFFFFFFF %u %u", NumReferences() - NumChilds(), NumChilds());
+
 
 //   DOUT0("Finish application state = %s", GetState().c_str());
 

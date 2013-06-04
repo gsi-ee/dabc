@@ -78,8 +78,9 @@ namespace dabc {
          typedef std::list<CallerRec> CallersList;
 
 
-         CallersList   fCallers;     /** list of callers */
-         TimeStamp     fTimeout;     /** absolute time when timeout will be expired */
+         CallersList   fCallers;     ///< list of callers
+         TimeStamp     fTimeout;     ///< absolute time when timeout will be expired
+         bool          fCanceled;    ///< indicate if command was canceled ant not need to be executed further
 
          // make destructor protected that nobody can delete command directly
          CommandContainer(const char* name = "Command");
@@ -198,9 +199,6 @@ namespace dabc {
          /** Returns command priority */
          int GetPriority() const;
 
-         /** Return true if command was set as canceled. */
-         bool IsCanceled() { return HasField("_canceled_"); }
-
          /** \brief Show on debug output content of command */
          void Print(int lvl=0, const char* from = 0) const;
 
@@ -235,6 +233,8 @@ namespace dabc {
           * As far as possible command execution will be canceled */
          void Cancel();
 
+         /** \brief Return true if command was canceled. */
+         bool IsCanceled();
 
          /** These methods prepare command so, that one can submit
            * command to the manager like:

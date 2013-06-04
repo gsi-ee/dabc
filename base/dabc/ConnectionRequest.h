@@ -236,6 +236,8 @@ namespace dabc {
 
       void SetConnThread(const std::string& name) { Field(xmlThreadAttr).SetStr(name); }
 
+      void SetConfigFromXml(XMLNodePointer_t node);
+
       protected:
 
       /** Change state of the connection to init that other parameters can be changed */

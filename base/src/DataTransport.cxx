@@ -40,7 +40,7 @@ dabc::InputTransport::InputTransport(dabc::Command cmd, const PortRef& inpport, 
 
 dabc::InputTransport::~InputTransport()
 {
-   DOUT0("Destroy InputTransport %s", GetName());
+   DOUT2("Destroy InputTransport %s", GetName());
    CloseInput();
 }
 
@@ -56,7 +56,7 @@ bool dabc::InputTransport::StartTransport()
 {
    Transport::StartTransport();
 
-   DOUT0("============================= Start InputTransport %s isrunning %s", ItemName().c_str(), DBOOL(IsRunning()));
+   DOUT2("============================= Start InputTransport %s isrunning %s", ItemName().c_str(), DBOOL(IsRunning()));
 
    // if we are doing input transport,
    // generate artificial event for the port to start transport
@@ -81,7 +81,7 @@ bool dabc::InputTransport::StopTransport()
 
    bool res = Transport::StopTransport();
 
-   DOUT0("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
+   DOUT2("Stopping InputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
    return res;
 }
@@ -461,7 +461,7 @@ void dabc::OutputTransport::CloseOutput()
 
 bool dabc::OutputTransport::StartTransport()
 {
-   DOUT0("Starting OutputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
+   DOUT2("Starting OutputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
    Transport::StartTransport();
 
@@ -475,7 +475,7 @@ bool dabc::OutputTransport::StartTransport()
 
 bool dabc::OutputTransport::StopTransport()
 {
-   DOUT0("Stopping OutputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
+   DOUT2("Stopping OutputTransport %s isrunning %s", GetName(), DBOOL(IsRunning()));
 
    return Transport::StopTransport();
 }

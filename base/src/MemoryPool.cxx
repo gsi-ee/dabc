@@ -169,7 +169,7 @@ dabc::MemoryPool::~MemoryPool()
 {
    Release();
 
-   DOUT3("MemoryPool %p name %s destructor", this, GetName());
+   DOUT0("######## dabc::MemoryPool::~MemoryPool %s", GetName());
 }
 
 bool dabc::MemoryPool::Find(ConfigIO &cfg)

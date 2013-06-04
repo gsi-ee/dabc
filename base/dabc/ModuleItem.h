@@ -87,6 +87,10 @@ namespace dabc {
          virtual void DoStart() {}
          virtual void DoStop() {}
 
+         /** \brief Called when module object is cleaned up - should release all references if any */
+         virtual void DoCleanup() {}
+
+
       public:
          virtual ~ModuleItem();
 
@@ -165,6 +169,7 @@ namespace dabc {
 
          virtual void DoStart();
          virtual void DoStop();
+         virtual void DoCleanup() { fTimerSrc.Release(); }
 
          virtual double ProcessTimeout(double last_diff);
 

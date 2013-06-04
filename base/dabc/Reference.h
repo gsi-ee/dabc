@@ -141,7 +141,11 @@ namespace dabc {
          /** \brief Returns true if reference is owner of the object */
          inline bool IsOwner() const { return GetFlag(flOwner); }
 
+         /** \brief Set ownership flag for reference  */
          inline void SetOwner(bool on = true) { SetFlag(flOwner, on); }
+
+         /** \brief Returns number of references on the object */
+         unsigned NumReferences() const;
 
          /** \brief Releases reference on the object */
          void Release() throw();

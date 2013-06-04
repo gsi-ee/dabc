@@ -207,7 +207,7 @@ namespace dabc {
          virtual const char* ClassName() const { return "Worker"; }
 
          /** Method returns name of required thread class for processor.
-           * If returns 0 (default) any thread class is sufficient. */
+           * If returns empty string, any thread class is sufficient. */
          virtual std::string RequiredThrdClass() const
          { return fAddon.null() ? std::string() : fAddon()->RequiredThrdClass(); }
 
@@ -280,8 +280,7 @@ namespace dabc {
          bool Execute(const std::string& cmd, double tmout = -1.) { return Execute(Command(cmd), tmout); }
 
          /** Assigns addon to the worker
-          * Should be called before worker assigned to the thread
-          * TODO: make it more flexible to be able change addons on-the-fly */
+          * Should be called before worker assigned to the thread */
          void AssignAddon(WorkerAddon* addon);
 
       protected:

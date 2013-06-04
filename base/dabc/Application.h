@@ -83,6 +83,9 @@ namespace dabc {
 
          virtual int ExecuteCommand(Command cmd);
 
+         /** \brief Cleanup application */
+         virtual void ObjectCleanup();
+
          /** Method should bring application in to running state */
          virtual bool PerformApplicationRun();
 

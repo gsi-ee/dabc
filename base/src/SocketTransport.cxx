@@ -31,6 +31,7 @@ dabc::SocketNetworkInetrface::SocketNetworkInetrface(int fd) :
 dabc::SocketNetworkInetrface::~SocketNetworkInetrface()
 {
    delete [] fHeaders; fHeaders = 0;
+   DOUT0("############ ~SocketNetworkInetrface() #####################");
 }
 
 void dabc::SocketNetworkInetrface::AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue)

@@ -70,9 +70,9 @@ bool dabc::LocalTransport::Send(Buffer& buf)
 
       // ignore all send operations when connection is not established
       if (fConnected != MaskConn) {
-         EOUT("Local transport ignore buffer while not fully connected inp %s out %s",
+         DOUT4("Local transport ignore buffer while not fully connected inp %s out %s",
                (fInp.null() ? "---" : fInp.GetName()), (fOut.null() ? "---" : fOut.GetName()));
-         return true;
+         return false;
       }
 
       if (buf.RefCnt() > 1)
@@ -269,7 +269,7 @@ void dabc::LocalTransport::Disconnect(bool isinp)
       if (fConnected == 0) cleanup = true;
    }
 
-   DOUT0("Queue %p  disconnected isinp %s conn %u", this, DBOOL(isinp), fConnected);
+   DOUT3("Queue %p  disconnected isinp %s conn %u", this, DBOOL(isinp), fConnected);
 
    if (!isinp) m1.FireEvent(evntPortDisconnect, id1);
 
@@ -280,7 +280,7 @@ void dabc::LocalTransport::Disconnect(bool isinp)
    m2.Release();
 
    if (cleanup) {
-      DOUT0("Perform queue %p cleanup by disconnect", this);
+      DOUT3("Perform queue %p cleanup by disconnect", this);
       CleanupQueue();
    }
 

@@ -81,6 +81,7 @@ namespace dabc {
 
          virtual void DoStart();
          virtual void DoStop();
+         virtual void DoCleanup();
 
          Port(int kind, Reference parent,
                   const std::string& name,
@@ -314,6 +315,12 @@ namespace dabc {
 
 
          virtual ~PoolHandle();
+
+         virtual void DoCleanup()
+         {
+            fPool.Release();
+            Port::DoCleanup();
+         }
 
          virtual void ObjectCleanup()
          {

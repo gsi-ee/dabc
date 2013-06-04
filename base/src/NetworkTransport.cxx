@@ -114,7 +114,35 @@ dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inppo
 
 dabc::NetworkTransport::~NetworkTransport()
 {
+   DOUT0("############# ~NetworkTransport  fRecs %p ##################", fRecs);
+
 }
+
+void dabc::NetworkTransport::ObjectCleanup()
+{
+   dabc::Transport::ObjectCleanup();
+
+   DOUT0("############# NetworkTransport::Cleanup()  #########################");
+
+   // at this moment net should be destroyed by the addon cleanup
+   fNet = 0;
+
+   fAcknSendQueue.Reset();
+
+   if (fNumRecs>0) {
+      for (uint32_t n=0;n<fNumRecs;n++) {
+         fRecs[n].used = false;
+         fRecs[n].buf.Release();
+      }
+
+      delete[] fRecs;
+   }
+   fRecs = 0;
+   fNumRecs = 0;
+   fNumUsedRecs = 0;
+
+}
+
 
 void dabc::NetworkTransport::SetRecHeader(uint32_t recid, void* header)
 {

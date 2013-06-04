@@ -43,6 +43,11 @@ dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string
 {
 }
 
+dabc::ParameterContainer::~ParameterContainer()
+{
+   DOUT4("-------- Destroy Parameter %s %p", GetName(), this);
+}
+
 const std::string dabc::ParameterContainer::GetActualUnits() const
 {
    std::string units = Field("units").AsStdStr();

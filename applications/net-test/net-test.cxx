@@ -36,101 +36,139 @@ bool TestUseAckn = true;
 
 class NetTestSenderModule : public dabc::ModuleAsync {
    protected:
+      std::string         fKind;
+      unsigned            fCmdCnt;
       bool                fCanSend;
-      unsigned            fPortCnt;
-      bool                fChaotic;
+      unsigned            fIgnoreNode;
 
    public:
       NetTestSenderModule(const std::string& name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
-         int nports = Cfg("NumPorts",cmd).AsInt(3);
-         fChaotic = Cfg("Chaotic", cmd).AsBool(true);
+         fKind = Cfg("Kind", cmd).AsStdStr();
 
-         CreatePoolHandle("Pool", 0);
+         fCmdCnt =  dabc::mgr.NodeId();
 
-         dabc::Parameter rate = CreatePar("OutRate");
-         rate.SetRatemeter(false, 3.);
-         rate.SetLimits(0.,100.);
-         rate.SetUnits("MB");
-         //rate.SetDebugOutput(true);
+         fIgnoreNode = dabc::mgr.NodeId();
 
-         for (int n=0;n<nports;n++) {
-            std::string name = dabc::format("Output%d", n);
-            CreateOutput(name, TestSendQueueSize);
-            SetPortRatemeter(name, rate);
-         }
+         fCanSend = false;
 
-         fCanSend = Cfg("CanSend",cmd).AsBool(false);
-         fPortCnt = 0;
+         if (IsCmdTest())
+            CreatePar("CmdExeTime").SetAverage(false, 2);
 
-         DOUT1("new TSendModule %s nports = %d done", GetName(), NumOutputs());
+         DOUT1("new NetTestSenderModule %s numout = %d ignore %u done", GetName(), NumOutputs(), fIgnoreNode);
+//         for(unsigned n=0;n<NumOutputs();n++)
+//            DOUT1("   Output %s capacity %u", OutputName(n).c_str(), OutputQueueCapacity(n));
       }
 
       ~NetTestSenderModule()
       {
-         DOUT3("~NetTestSenderModule() %s", GetName());
+         DOUT0("#### ~NetTestSenderModule() ####");
       }
+
+      bool IsCmdTest() const { return fKind == "cmd-test"; }
+
+      bool IsChaoticTest() const { return fKind == "chaotic"; }
 
       int ExecuteCommand(dabc::Command cmd)
       {
-         if (cmd.IsName("EnableSending")) {
-            fCanSend = cmd.GetBool("Enable", true);
-            if (fCanSend) StartSending();
-            fPortCnt = 0;
-            DOUT0("Enabling sending %s", DBOOL(fCanSend));
-            return dabc::cmd_true;
-         }
-
          return ModuleAsync::ExecuteCommand(cmd);
       }
 
-      void ProcessOutputEvent(unsigned indx)
+      virtual bool ProcessSend(unsigned nout)
       {
-//         DOUT0("Module %s Process output event port %s cansend %s", GetName(), port->GetName(), DBOOL(fCanSend));
+//         DOUT1("Process output event");
 
-         if (!fCanSend) return;
+         if (IsChaoticTest()) {
 
-         if (fChaotic) {
-            while (CanSend(indx)) {
-               dabc::Buffer buf = TakeBuffer();
-               if (buf.null()) { EOUT("no buffers in memory pool"); return; }
-  //          DOUT0("Module %s Send buffer %p", GetName(), buf);
-               Send(indx, buf);
-            }
-            return;
-         }
+            if (nout==fIgnoreNode) return false;
 
-         int cnt = 1000;
+            if (!fCanSend) { DOUT0("Cannot send to output %u", nout); return false; }
 
-         while (CanSend(fPortCnt)) {
             dabc::Buffer buf = TakeBuffer();
-            Send(fPortCnt, buf);
-            fPortCnt = (fPortCnt+1) % NumOutputs();
-            if (cnt-- == 0) break;
+            if (buf.null()) return false;
+            Send(nout, buf);
+            return true;
          }
+
+         return false;
       }
 
-      void StartSending()
+      void StartChaoticSend()
       {
-         for(int n=0;n<TestSendQueueSize;n++)
-            for(unsigned nout=0;nout<NumOutputs();nout++)
-               if (CanSend(nout)) {
-                  dabc::Buffer buf = TakeBuffer();
-                  if (buf.null()) { EOUT("no buffers in memory pool"); return; }
-                  Send(nout, buf);
+         // keep all output queues equally filled
+
+         while (true) {
+
+            bool isany(false);
+
+            for(unsigned nout=0;nout<NumOutputs();nout++) {
+               if (nout==fIgnoreNode) continue;
+
+               if (!CanSend(nout)) continue;
+
+               dabc::Buffer buf = TakeBuffer();
+               if (buf.null()) {
+                  dabc::MemoryPoolRef pool = dabc::mgr.FindPool("Pool");
+                  EOUT("no buffers in memory pool %s used %5.3f", pool.GetName(), pool.GetUsedRatio());
+                  return;
                }
+
+               if (!Send(nout, buf)) {
+                  EOUT("Fail to send to output %u", nout);
+                  return;
+               }
+
+               isany = true;
+            }
+
+            if (!isany) return;
+         }
       }
 
       void BeforeModuleStart()
       {
-         DOUT2("SenderModule starting");
+         DOUT0("SenderModule starting numpools %u", NumPools());
+
+         if (IsCmdTest()) {
+            DOUT1("Start command test");
+            SendNextCommand();
+         }
+
+         fCanSend = true;
+
+         if (IsChaoticTest()) {
+            // StartChaoticSend();
+            // fCanSend = true;
+         }
       }
 
+      void SendNextCommand()
+      {
+         dabc::Command cmd("Test");
+         fCmdCnt = (fCmdCnt + 1) % dabc::mgr.NumNodes();
+         cmd.SetReceiver(dabc::Url::ComposeItemName(fCmdCnt, "Receiver"));
+         cmd.SetTimeout(1);
+
+         dabc::mgr.Submit(Assign(cmd));
+      }
+
+      virtual bool ReplyCommand(dabc::Command cmd)
+      {
+         double tmout = cmd.TimeTillTimeout();
+         if (fCmdCnt != (unsigned) dabc::mgr.NodeId())
+            Par("CmdExeTime").SetDouble((1.- tmout)*1000.);
+
+         //DOUT0("********************** Get command reply res = %d! ************************* ", cmd.GetResult());
+         //dabc::mgr.StopApplication();
+
+         if (cmd.GetResult() == dabc::cmd_true) SendNextCommand();
+         return true;
+      }
 
       void AfterModuleStop()
       {
-         DOUT0("SenderModule finish Rate %s", Par("OutRate").AsStr());
+         DOUT2("SenderModule finish");
       }
 };
 
@@ -144,30 +182,12 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
          dabc::ModuleAsync(name, cmd)
       {
          // we will use queue (second true) in the signal to detect order of signal fire
-         int nports = Cfg("NumPorts",cmd).AsInt(3);
          fSleepTime = Cfg("SleepTime",cmd).AsInt(0);
-
-         dabc::Parameter par = CreatePar("InpRate");
-         par.SetRatemeter(false, 3.);
-         par.SetLimits(0., 100.);
-         par.SetUnits("MB");
-         par.SetDebugOutput(true);
-         par.SetWidthPrecision(5,2);
-
-         for (int n=0;n<nports;n++) {
-            std::string name = dabc::format("Input%d", n);
-            CreateInput(name, TestRecvQueueSize);
-            SetPortRatemeter(name, par);
-         }
-
-         DOUT1("new TRecvModule %s nports:%d", GetName(), nports);
-
-         fSleepTime = 0;
       }
 
       virtual ~NetTestReceiverModule()
       {
-          DOUT1("Calling ~NetTestReceiverModule");
+          DOUT0("#### ~NetTestReceiverModule ####");
       }
 
       int ExecuteCommand(dabc::Command cmd)
@@ -175,16 +195,19 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
          if (cmd.IsName("ChangeSleepTime")) {
             fSleepTime = cmd.GetInt("SleepTime", 0);
          } else
-            return ModuleAsync::ExecuteCommand(cmd);
+         if (cmd.IsName("Test")) {
+            // DOUT0("---------------- Executing test command ---------------");
+            return dabc::cmd_true;
+         }
 
-         return dabc::cmd_true;
+         return ModuleAsync::ExecuteCommand(cmd);
       }
 
       virtual bool ProcessRecv(unsigned port)
       {
          dabc::Buffer buf = Recv(port);
 
-//         DOUT0("******************************************* Module %s Port %s Recv buffer %u", GetName(), port->GetName(), buf.GetTotalSize());
+//         DOUT0("Module %s Port %u Recv buffer %u", GetName(), port, buf.GetTotalSize());
 
 //         exit(076);
 
@@ -192,23 +215,21 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
 
          buf.Release();
 
-         if (fSleepTime>0) {
-//            dabc::TimeStamp tm1 = dabc::Now();
-            WorkerSleep(fSleepTime);
-//            dabc::TimeStamp tm2 = dabc::Now();
-         }
+//         if (fSleepTime>0) {
+//            WorkerSleep(fSleepTime);
+//         }
 
          return true;
       }
 
       void BeforeModuleStart()
       {
-         DOUT0("ReceiverModule starting");
+         DOUT2("ReceiverModule starting");
       }
 
       void AfterModuleStop()
       {
-         DOUT0("ReceiverModule finish Rate %s", Par("InpRate").AsStr());
+         DOUT2("ReceiverModule finish");
       }
 };
 

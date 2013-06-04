@@ -120,13 +120,13 @@ void dabc::Transport::ProcessConnectEvent(const std::string& name, bool on)
    if (on) return;
 
    if (IsInputTransport() && (name == OutputName())) {
-      EOUT("Transport %s port %s is disconnected - automatic transport destroyment is started", GetName(), name.c_str());
+      DOUT2("Transport %s port %s is disconnected - automatic transport destroyment is started", GetName(), name.c_str());
       DeleteThis();
       return;
    }
 
    if (IsOutputTransport() && (name == InputName())) {
-      EOUT("Transport %s port %s is disconnected - automatic transport destroyment is started", GetName(), name.c_str());
+      DOUT2("Transport %s port %s is disconnected - automatic transport destroyment is started", GetName(), name.c_str());
       DeleteThis();
       return;
    }

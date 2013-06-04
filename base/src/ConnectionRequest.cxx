@@ -122,3 +122,30 @@ void dabc::ConnectionRequest::SetAllowedField(const std::string& name)
 
    if (GetObject()) GetObject()->fAllowedField = name;
 }
+
+
+void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
+{
+   if ((node==0) || null()) return;
+
+   const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
+   if (thrdname!=0)
+      SetConnThread(thrdname);
+
+   const char* useackn = Xml::GetAttr(node, xmlUseacknAttr);
+   if (useackn!=0)
+      SetUseAckn(strcmp(useackn, xmlTrueValue)==0);
+
+   const char* optional = Xml::GetAttr(node, xmlOptionalAttr);
+   if (optional!=0)
+      SetOptional(strcmp(optional, xmlTrueValue)==0);
+
+   const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
+   if (devname!=0)
+      SetConnDevice(devname);
+
+   const char* tmout = Xml::GetAttr(node, xmlTimeoutAttr);
+   double tmout_val(10.);
+   if ((tmout!=0) && str_to_double(tmout, &tmout_val))
+      SetConnTimeout(tmout_val);
+}

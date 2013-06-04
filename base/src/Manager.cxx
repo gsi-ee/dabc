@@ -723,7 +723,7 @@ dabc::WorkerRef dabc::Manager::GetCommandChannel(bool force)
 
    if (!ref.null() || !force) return ref;
 
-   ref = DoCreateObject("SocketCommandChannel", CmdChlName());
+   ref = DoCreateObject("SocketCommandChannelNew", CmdChlName());
 
    ref.MakeThreadForWorker("CmdThrd");
 
@@ -1500,6 +1500,8 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
 
    bool appstopped = false;
 
+   ApplicationRef appref = app();
+
 
    while (true) {
 
@@ -1511,8 +1513,6 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
          thrd.RunEventLoop(0.1);
 
       TimeStamp now = dabc::Now();
-
-      ApplicationRef appref = app();
 
       if (appref.IsFinished()) break;
 

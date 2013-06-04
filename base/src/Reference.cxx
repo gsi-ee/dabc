@@ -155,6 +155,12 @@ dabc::Reference dabc::Reference::Take()
 }
 
 
+unsigned dabc::Reference::NumReferences() const
+{
+   return GetObject() ? GetObject()->NumReferences() : 0;
+}
+
+
 dabc::Reference::Reference(bool withmutex, Object* obj) throw() :
    fObj(0),
    fFlags(flTransient)

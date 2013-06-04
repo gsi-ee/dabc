@@ -28,6 +28,10 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
    if (classname == "SocketCommandChannel")
       return dabc::SocketCommandChannel::CreateChannel(objname);
 
+   if (classname == "SocketCommandChannelNew")
+      return dabc::SocketCommandChannelNew::CreateChannel(objname);
+
+
    return 0;
 }
 

@@ -61,17 +61,10 @@ namespace dabc {
 
       protected:
 
-         enum ESocketEvents {
-            evntSocketRead = Worker::evntFirstAddOn,
-            evntSocketWrite,
-            evntSocketError,
-            evntSocketStartConnect,
-            evntSocketLast // from this event number one can add more socket system events
-         };
-
          int           fSocket;
          bool          fDoingInput;
          bool          fDoingOutput;
+         bool          fDeliverEventsToWorker;  ///< if true, completion events will be delivered to the worker
 
          virtual void ProcessEvent(const EventId&);
 
@@ -93,6 +86,19 @@ namespace dabc {
 
       public:
 
+         enum ESocketEvents {
+            evntSocketRead = Worker::evntFirstAddOn,
+            evntSocketWrite,
+            evntSocketError,
+            evntSocketStartConnect,
+            evntSocketLast,        ///< from this event number one can add more socket system events
+            evntSocketRecvInfo  = Worker::evntFirstSystem,   ///< event delivered to worker when read is completed
+            evntSocketSendInfo,                     ///< event delivered to worker when write is completed
+            evntSocketErrorInfo,                    ///< event delivered to worker when error is detected
+            evntSocketCloseInfo,                    ///< event delivered to worker when socket is closed
+            evntSocketLastInfo                      ///< last system event, used by sockets
+         };
+
          SocketAddon(int fd = -1);
          virtual ~SocketAddon();
 
@@ -110,6 +116,8 @@ namespace dabc {
          int TakeSocket();
          int TakeSocketError();
 
+         bool IsDeliverEventsToWorker() const { return fDeliverEventsToWorker; }
+         void SetDeliverEventsToWorker(bool on = true) { fDeliverEventsToWorker = on; }
    };
 
    // ______________________________________________________________________
@@ -160,10 +168,16 @@ namespace dabc {
          inline bool IsDoingRecv() const { return fRecvIOVNumber>0; }
 
          /** \brief Method called when send operation is completed */
-         virtual void OnSendCompleted() {}
+         virtual void OnSendCompleted()
+         {
+            if (IsDeliverEventsToWorker()) FireWorkerEvent(evntSocketSendInfo);
+         }
 
          /** \brief Method called when receive operation is completed */
-         virtual void OnRecvCompleted() {}
+         virtual void OnRecvCompleted()
+         {
+            if (IsDeliverEventsToWorker()) FireWorkerEvent(evntSocketRecvInfo);
+         }
 
          /** \brief Method provide address of last receive operation */
          struct sockaddr_in& GetRecvAddr() { return fRecvAddr; }
@@ -172,16 +186,18 @@ namespace dabc {
           * only for datagram sockets, which can reads complete packet at once  */
          unsigned GetRecvSize() const { return fLastRecvSize; }
 
+      public:
+
          /** \brief Constructor of SocketIOAddon class */
          SocketIOAddon(int fd = 0, bool isdatagram = false, bool usemsg = true);
 
          /** \brief Destructor of SocketIOAddon class */
          virtual ~SocketIOAddon();
 
-         bool StartSend(void* buf, size_t size);
+         bool StartSend(const void* buf, size_t size);
          bool StartRecv(void* buf, size_t size);
 
-         bool StartSendHdr(void* hdr, unsigned hdrsize, void* buf, size_t size);
+         bool StartSendHdr(const void* hdr, unsigned hdrsize, const void* buf, size_t size);
          bool StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size);
 
          bool StartSend(const Buffer& buf);

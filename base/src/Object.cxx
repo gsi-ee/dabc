@@ -274,30 +274,6 @@ void dabc::Object::Destructor()
    gNumInstances--;
 }
 
-void dabc::Object::_IncObjectRefCnt()
-{
-   // TODO: make such check optional
-
-   if (fObjectMutex && !fObjectMutex->IsLocked())
-      EOUT("Mutex not locked!!!");
-
-   fObjectRefCnt++;
-}
-
-void dabc::Object::_DecObjectRefCnt()
-{
-   // TODO: make such check optional
-   if (fObjectMutex && !fObjectMutex->IsLocked())
-      EOUT("Mutex not locked!!!");
-
-   // if (IsLogging()) DOUT0("Dec object refcounter in 299");
-   fObjectRefCnt--;
-
-   if ((fObjectRefCnt==0) && (GetState()!=stNormal))
-      EOUT("!!! potential problem - change release order in your program, some object may not be cleanup correctly name:%s class:%s!!!", GetName(), ClassName());
-}
-
-
 bool dabc::Object::IncReference(bool withmutex)
 {
    if (withmutex) {
@@ -313,8 +289,7 @@ bool dabc::Object::IncReference(bool withmutex)
       fObjectRefCnt++;
 
       if (GetFlag(flLogging))
-         DOUT2("Obj:%s %p Class:%s IncReference %u state %d",
-               GetName(), this, ClassName(), fObjectRefCnt, GetState());
+         DOUT0("Obj:%s %p Class:%s IncReference +----- %u thrd:%s", GetName(), this, ClassName(), fObjectRefCnt, dabc::mgr.CurrentThread().GetName());
 
       return true;
    }
@@ -328,7 +303,8 @@ bool dabc::Object::IncReference(bool withmutex)
       return false;
    }
 
-   DOUT3("Obj:%p IncReference2 %u", this, fObjectRefCnt);
+   if (GetFlag(flLogging))
+      DOUT0("Obj:%s %p Class:%s IncReference -+---- %u", GetName(), this, ClassName(), fObjectRefCnt);
 
    fObjectRefCnt++;
    return true;
@@ -385,6 +361,9 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
 
          // if (IsLogging()) DOUT0("Dec object refcounter in 389");
          fObjectRefCnt--;
+
+         if (GetFlag(flLogging))
+            DOUT0("Obj:%s %p Class:%s DecReference ----+- %u thrd:%s", GetName(), this, ClassName(), fObjectRefCnt, dabc::mgr.CurrentThread().GetName());
       }
 
       switch (GetState()) {
@@ -440,6 +419,8 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
          SetState(stWaitForThread);
          // we delegate reference counter to the thread
          fObjectRefCnt++;
+         if (GetFlag(flLogging))
+            DOUT0("Obj:%s %p Class:%s IncReference --+--- %u", GetName(), this, ClassName(), fObjectRefCnt);
       } else {
          SetState(stDoingDestroy);
       }
@@ -454,16 +435,18 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
       // thread reject destroyment, therefore refcounter can be decreased
       // if (IsLogging()) DOUT0("Dec object refcounter in 459");
       fObjectRefCnt--;
+
+      if (GetFlag(flLogging))
+         DOUT0("Obj:%s %p Class:%s DecReference -----+ %u", GetName(), this, ClassName(), fObjectRefCnt);
    }
 
 
-//   if (IsLogging()) DOUT0("Calling object cleanup");
+   if (IsLogging()) DOUT0("Calling object %p cleanup from_thrd=%s do_decrement=%s", this, DBOOL(from_thread), DBOOL(do_decrement));
 
    // Main point of all destroyment - call cleanup in correct place
    ObjectCleanup();
 
 //   if (IsLogging()) DOUT0("Did object cleanup");
-
 
    if (IsLogging())
       DOUT0("DecRefe after cleanup %p cleanup %s mgr %p", this, DBOOL(GetFlag(flCleanup)), dabc::mgr());
@@ -476,6 +459,8 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
          // cleanup will be done by manager via reference
          fObjectRefCnt++;
          SetState(stWaitForDestructor);
+         if (GetFlag(flLogging))
+            DOUT0("Obj:%s %p Class:%s IncReference ---+-- %u", GetName(), this, ClassName(), fObjectRefCnt);
       } else
       if ((fObjectRefCnt==0) && _NoOtherReferences()) {
          // no need to deal with manager - can call destructor immediately
@@ -590,13 +575,21 @@ void dabc::Object::ObjectCleanup()
       if (IsLogging()) DOUT0("Obj:%p %s Deleting childs done", this, GetName());
    }
 
-   if (IsLogging()) DOUT0("Before remove from parent");
+   if (IsLogging()) {
+      DOUT0("Obj:%p %s refcnt %u Before remove from parent %p", this, GetName(), fObjectRefCnt, fObjectParent());
+
+      DOUT0("++++++++++++++++ AT DELETING APP %p +++++++++++++", dabc::mgr.app().GetObject());
+
+   }
 
    // Than we remove reference on the object from parent
    if (fObjectParent())
       fObjectParent()->RemoveChild(this);
 
-   if (IsLogging()) DOUT0("After remove from parent");
+   if (IsLogging()) {
+      DOUT0("Obj:%p %s refcnt %u after remove from parent", this, GetName(), fObjectRefCnt);
+      DOUT0("++++++++++++++++ AT DELETING APP %p +++++++++++++", dabc::mgr.app().GetObject());
+   }
 
 
    DOUT3("Obj:%s Class:%s Finish cleanup numrefs %u", GetName(), ClassName(), NumReferences());

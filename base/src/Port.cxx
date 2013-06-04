@@ -137,6 +137,13 @@ void dabc::Port::DoStop()
    fQueue.PortActivated(GetType(), false);
 }
 
+void dabc::Port::DoCleanup()
+{
+   Disconnect();
+   fRate.Release();
+}
+
+
 void dabc::Port::ObjectCleanup()
 {
    DOUT3("Port %s cleanup inp:%s out:%s", ItemName().c_str(), DBOOL(IsInput()), DBOOL(IsOutput()));

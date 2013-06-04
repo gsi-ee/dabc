@@ -210,15 +210,41 @@ Connection used during automatic creation and look like this:
 </dabc>
 ~~~~~~~~~~~~~~~~~~~~~
 
-Connection to remote node can be specified.
+As __output__ and __input__ names of output and input port must be specified.
+Port name can contains also node identifier, therefore connection with remote node can be 
+stablished as well. In this case syntax will looke like:
+
+~~~~~~~~~~~~~~~~~~~~~{.xml}
+...
+     <Connection output="dabc://node1/Module0/Output1" input="Module1/Input0"/>
+...     
+~~~~~~~~~~~~~~~~~~~~~
+ 
+It is required, that at least one port (or both) situated in local node.
 
 
-Following attributes can be specified:
+It is also possible to specify multiple connections with single !<Connectionin> node.
+There are typical situations, when connections between all application nodes must be established - 
+so calles "all-to-all" pattern. In this on each node module with __N__ outputs and
+module with __N__ inputs should be present, where __N__ is number of nodes. To establish connections between
+them, one should specify:
+
+~~~~~~~~~~~~~~~~~~~~~{.xml}
+...
+     <Connection kind="all-to-all" output="OutputModule" input="InputModule"/>
+...     
+~~~~~~~~~~~~~~~~~~~~~
+
+In such case  __output__ and __input__ should be modules names; it can be same module.
+
+
+Here is complete list of attributes:
 
 | Attribute  | Description |
 | --------:  | :---------- |
-| output     | Name of output port |
-| input      | Name of input port |
+| kind       | normal (default) - connection between two ports, all-to-all - connection between all nodes |
+| output     | Name of output (port or module) |
+| input      | Name of input (port or module) |
 | thread     | thread used to run connection |
 | useackn    | Is acknowledge should be used  |
 | optional   | If true, module could run alo when connection does not established  |
@@ -283,11 +309,13 @@ Following variables defined inside dabc itself.
 
 If no init function and no application class was set, dabc will try to create objects,
 based on the content of xml file. These objects are: 
+
    - Device
    - Thread
    - MemoryPool
    - Module
    - Ports connections
+   
 For every of these items one can specify attribute auto="false" to disable automatic creation of such object,
 even it is present in xml file.
     

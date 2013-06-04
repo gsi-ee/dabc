@@ -92,6 +92,7 @@ namespace dabc {
          void ProcessTimeout(double last_dif);
 
          ParameterContainer(Reference worker, const std::string& name, const std::string& parkind = "");
+         virtual ~ParameterContainer();
 
          inline void Modified() { FireEvent(parModified); }
 

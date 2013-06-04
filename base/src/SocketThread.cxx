@@ -72,7 +72,8 @@ dabc::SocketAddon::SocketAddon(int fd) :
    WorkerAddon("socket"),
    fSocket(fd),
    fDoingInput(false),
-   fDoingOutput(false)
+   fDoingOutput(false),
+   fDeliverEventsToWorker(false)
 {
 }
 
@@ -138,15 +139,24 @@ int dabc::SocketAddon::TakeSocketError()
 
 void dabc::SocketAddon::OnConnectionClosed()
 {
-   DOUT2("Connection closed - destroy socket");
-   DeleteWorker();
+   if (IsDeliverEventsToWorker()) {
+      DOUT2("Addon:%p Connection closed - worker should process", this);
+      FireWorkerEvent(evntSocketCloseInfo);
+   } else {
+      DOUT2("Connection closed - destroy socket");
+      DeleteWorker();
+   }
 }
 
 void dabc::SocketAddon::OnSocketError(int errnum, const std::string& info)
 {
    ShowSocketError(info.c_str(), errnum);
 
-   DeleteWorker();
+   if (IsDeliverEventsToWorker()) {
+      FireWorkerEvent(evntSocketErrorInfo);
+   } else {
+      DeleteWorker();
+   }
 }
 
 ssize_t dabc::SocketAddon::DoRecvBuffer(void* buf, ssize_t len)
@@ -278,6 +288,8 @@ dabc::SocketIOAddon::~SocketIOAddon()
          DOUT1("   Recv time:%5.1f microsec sz:%7.1f", fRecvTime*1e6/fRecvOper, 1.*fRecvSize/fRecvOper);
    #endif
 
+   DOUT4("Destroying SocketIOAddon %p fd:%d", this, Socket());
+
    AllocateSendIOV(0);
    AllocateRecvIOV(0);
 }
@@ -312,12 +324,12 @@ void dabc::SocketIOAddon::AllocateRecvIOV(unsigned size)
    fRecvIOV = new struct iovec [size];
 }
 
-bool dabc::SocketIOAddon::StartSend(void* buf, size_t size)
+bool dabc::SocketIOAddon::StartSend(const void* buf, size_t size)
 {
    return StartSendHdr(0, 0, buf, size);
 }
 
-bool dabc::SocketIOAddon::StartSendHdr(void* hdr, unsigned hdrsize, void* buf, size_t size)
+bool dabc::SocketIOAddon::StartSendHdr(const void* hdr, unsigned hdrsize, const void* buf, size_t size)
 {
    if (fSendIOVNumber>0) {
       EOUT("Current send operation not yet completed");
@@ -328,12 +340,12 @@ bool dabc::SocketIOAddon::StartSendHdr(void* hdr, unsigned hdrsize, void* buf, s
 
    int indx = 0;
    if (hdr && (hdrsize>0)) {
-      fSendIOV[indx].iov_base = hdr;
+      fSendIOV[indx].iov_base = (void*) hdr;
       fSendIOV[indx].iov_len = hdrsize;
       indx++;
    }
 
-   fSendIOV[indx].iov_base = buf;
+   fSendIOV[indx].iov_base = (void*) buf;
    fSendIOV[indx].iov_len = size;
    indx++;
 
@@ -481,6 +493,8 @@ bool dabc::SocketIOAddon::StartNetSend(void* hdr, unsigned hdrsize, const Buffer
 
 void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
 {
+//   DOUT0("IO addon:%p process event %u", this, evnt.GetCode());
+
     switch (evnt.GetCode()) {
        case evntSocketRead: {
 
@@ -536,6 +550,7 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
           #endif
 
           if (res==0) {
+             // DOUT0("Addon:%p socket:%d res==0 when doing read usemsg %s numseg %u seg0.len %u", this, fSocket, DBOOL(fRecvUseMsg), fRecvIOVNumber - fRecvIOVFirst, fRecvIOV[fRecvIOVFirst].iov_len);
              OnConnectionClosed();
              return;
           }
@@ -646,7 +661,7 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
           }
 
           if (res<0) {
-             EOUT("Error when sending via socket %d  usemsg %s first %d number %d", fSocket, DBOOL(fSendUseMsg), fSendIOVFirst, fSendIOVNumber);
+             DOUT2("Error when sending via socket %d  usemsg %s first %d number %d", fSocket, DBOOL(fSendUseMsg), fSendIOVFirst, fSendIOVNumber);
 
              if (errno!=EAGAIN)
                 OnSocketError(errno, "When sendmsg()");
@@ -745,7 +760,7 @@ void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)
              return;
           }
 
-          DOUT0("We get new connection with fd: %d", connfd);
+          DOUT2("We get new connection with fd: %d", connfd);
 
           OnClientConnected(connfd);
 
@@ -808,6 +823,8 @@ dabc::SocketClientAddon::SocketClientAddon(const struct addrinfo* serv_addr, int
 
 dabc::SocketClientAddon::~SocketClientAddon()
 {
+//   DOUT0("Actual destroy of SocketClientAddon %p worker %p", this, fWorker());
+
    free(fServAddr.ai_addr); fServAddr.ai_addr = 0;
    free(fServAddr.ai_canonname); fServAddr.ai_canonname = 0;
 }
@@ -827,6 +844,10 @@ void dabc::SocketClientAddon::ProcessEvent(const EventId& evnt)
 {
    switch (evnt.GetCode()) {
        case evntSocketWrite: {
+
+          // we could get write event after socket was closed by error - ignore such event
+          if (Socket()<=0) return;
+
           // we can check if connection established
 
           int myerrno = TakeSocketError();
@@ -853,11 +874,13 @@ void dabc::SocketClientAddon::ProcessEvent(const EventId& evnt)
        case evntSocketStartConnect: {
           // start next attempt for connection
 
+          DOUT3("Start next connect attempt sock:%d", Socket());
+
           if (Socket()<=0) {
              int fd = socket(fServAddr.ai_family, fServAddr.ai_socktype, fServAddr.ai_protocol);
 
              if (fd<=0)
-                EOUT("Cannot create socket of given addr");
+                EOUT("Cannot create socket with given address");
              else
                 SetSocket(fd);
           }
@@ -874,7 +897,7 @@ void dabc::SocketClientAddon::ProcessEvent(const EventId& evnt)
              }
 
              if (errno==EINPROGRESS) {
-                DOUT5("Connection in progress %7.5f", dabc::Now().AsDouble());
+                DOUT3("Connection in progress %7.5f", dabc::Now().AsDouble());
                 SetDoingOutput(true);
                 return;
              }
@@ -912,11 +935,17 @@ double dabc::SocketClientAddon::ProcessTimeout(double)
 
 void dabc::SocketClientAddon::OnConnectionEstablished(int fd)
 {
+   Command cmd("SocketConnect");
+   cmd.SetStr("Type", "Client");
+   cmd.SetInt("fd", fd);
+   cmd.SetStr("ConnId", fConnId);
+
+   if (!fWorker.null() && IsDeliverEventsToWorker()) {
+      ((Worker*) fWorker())->Submit(cmd);
+      return;
+   }
+
    if (!fConnRcv.null()) {
-      Command cmd("SocketConnect");
-      cmd.SetStr("Type", "Client");
-      cmd.SetInt("fd", fd);
-      cmd.SetStr("ConnId", fConnId);
       fConnRcv.Submit(cmd);
    } else {
       EOUT("Connection established, but not processed - close socket");
@@ -928,10 +957,16 @@ void dabc::SocketClientAddon::OnConnectionEstablished(int fd)
 
 void dabc::SocketClientAddon::OnConnectionFailed()
 {
+   Command cmd("SocketConnect");
+   cmd.SetStr("Type", "Error");
+   cmd.SetStr("ConnId", fConnId);
+
+   if (!fWorker.null() && IsDeliverEventsToWorker()) {
+      ((Worker*) fWorker())->Submit(cmd);
+      return;
+   }
+
    if (!fConnRcv.null()) {
-      Command cmd("SocketConnect");
-      cmd.SetStr("Type", "Error");
-      cmd.SetStr("ConnId", fConnId);
       fConnRcv.Submit(cmd);
    } else {
       EOUT("Connection failed to establish, error not processed");

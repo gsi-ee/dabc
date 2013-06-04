@@ -425,17 +425,18 @@ void dabc::Module::WorkerSaveAttr(RecordContainer* cont)
 
 void dabc::Module::ObjectCleanup()
 {
-   DOUT3("Module cleanup %s numchilds %u", GetName(), NumChilds());
-
    if (IsRunning()) DoStop();
 
    ModuleCleanup();
 
+   DOUT3("Module cleanup %s numchilds %u", GetName(), NumChilds());
+
+   for (unsigned n=0;n<fItems.size();n++)
+      if (fItems[n]) fItems[n]->DoCleanup();
+
    fSysTimerIndex = -1;
 
    dabc::Worker::ObjectCleanup();
-
-   DOUT3("Module cleanup %s done numchilds %u", GetName(), NumChilds());
 }
 
 double dabc::Module::ProcessTimeout(double last_diff)
@@ -602,8 +603,9 @@ unsigned dabc::Module::CreateInput(const std::string& name, unsigned queue)
    port->SetItemSubId(fInputs.size());
    fInputs.push_back(port);
 
-   if (!port->fRateName.empty() && port->fRate.null() && Par(port->fRateName).null()) {
-      CreatePar(port->fRateName).SetRatemeter(false, 3.).SetUnits("MB");
+   if (!port->fRateName.empty() && port->fRate.null()) {
+      if (Par(port->fRateName).null())
+         CreatePar(port->fRateName).SetRatemeter(false, 3.).SetUnits("MB");
       port->SetRateMeter(Par(port->fRateName));
    }
 
@@ -624,8 +626,9 @@ unsigned dabc::Module::CreateOutput(const std::string& name, unsigned queue)
    port->SetItemSubId(fOutputs.size());
    fOutputs.push_back(port);
 
-   if (!port->fRateName.empty() && port->fRate.null() && Par(port->fRateName).null()) {
-      CreatePar(port->fRateName).SetRatemeter(false, 3.).SetUnits("MB");
+   if (!port->fRateName.empty() && port->fRate.null()) {
+      if (Par(port->fRateName).null())
+         CreatePar(port->fRateName).SetRatemeter(false, 3.).SetUnits("MB");
       port->SetRateMeter(Par(port->fRateName));
    }
 
@@ -731,7 +734,7 @@ void dabc::Module::ProcessEvent(const EventId& evid)
 
          port->GetConnReq(true).ChangeState(ConnectionObject::sDisconnected, true);
 
-         DOUT0("Module %s running %s get disconnect event for port %s connected %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()));
+         DOUT2("Module %s running %s get disconnect event for port %s connected %s", GetName(), DBOOL(IsRunning()), port->ItemName().c_str(), DBOOL(port->IsConnected()));
 
          //InputPort* inp = dynamic_cast<InputPort*> (port);
          //if (inp) DOUT0("Input still can recv %u buffers", inp->NumCanRecv());

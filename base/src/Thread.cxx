@@ -76,7 +76,7 @@ dabc::Thread::Thread(Reference parent, const std::string& name, Command cmd) :
 {
    fThreadInstances++;
 
-   DOUT2("~~~~~~~~~~~~~~~~~~~~~~~ Thread %s %p created", GetName(), this);
+   DOUT2("---------- Thread %s %p created", GetName(), this);
 
    fWorkers.push_back(new WorkerRec(0,0)); // exclude id==0
 
@@ -166,7 +166,7 @@ dabc::Thread::~Thread()
    delete [] fQueues; fQueues = 0;
    fNumQueues = 0;
 
-   DOUT2("~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ THRD %s %p destroyed", GetName(), this);
+   DOUT2("~~~~~~~~ THRD %s destroyed", GetName());
 
    fThreadInstances--;
 }
@@ -588,7 +588,7 @@ int dabc::Thread::ExecuteThreadCommand(Command cmd)
          LockGuard guard(ThreadMutex());
 
          // we can use workers array outside mutex (as long as we are inside thread)
-         // but we shoould lock mutex when we would like to change workers vector
+         // but we should lock mutex when we would like to change workers vector
          fWorkers.push_back(new WorkerRec(worker, worker->fAddon()));
 
          // from this moment on processor is fully functional
@@ -958,7 +958,7 @@ bool dabc::Thread::HaltWorker(Worker* work)
 }
 
 
-void dabc::Thread::WorkerAddonChanged(Worker* work)
+void dabc::Thread::WorkerAddonChanged(Worker* work, bool assign)
 {
    if (work==0) return;
 
@@ -968,18 +968,18 @@ void dabc::Thread::WorkerAddonChanged(Worker* work)
    }
 
    if (work->WorkerId() >= fWorkers.size()) {
-      EOUT("Missmatch of workers IDs");
+      EOUT("Mismatch of workers IDs");
       exit(333);
    }
 
    WorkerRec* rec = fWorkers[work->WorkerId()];
 
    if (rec->work != work) {
-      EOUT("Missmatch of worker");
+      EOUT("Mismatch of worker");
       exit(444);
    }
 
-   rec->addon = work->fAddon();
+   rec->addon = assign ? work->fAddon() : 0;
 
    WorkersSetChanged();
 }
