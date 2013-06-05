@@ -76,7 +76,7 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
    }
 
    if (cfg.UseControl()) {
-      DOUT1("Connecting control");
+      DOUT2("Connecting control");
       if (!dabc::mgr()->ConnectControl()) {
          EOUT("Cannot establish connection to command system");
          return 1;
@@ -165,8 +165,7 @@ int main(int numc, char* args[])
 
    char sbuf[200];
    if (dabc::PosixThread::GetDfltAffinity(sbuf, sizeof(sbuf)))
-      DOUT0("Process affinity %s", sbuf);
-
+      DOUT2("Process affinity %s", sbuf);
 
    DOUT2("Create manager");
 

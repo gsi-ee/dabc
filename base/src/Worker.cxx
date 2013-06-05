@@ -728,7 +728,11 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
       LockGuard lock(fThreadMutex);
 
       if (fThread.null() || (fWorkerId==0)) {
-         EOUT("Cannot execute command %s without working thread, do directly id = %u", cmd.GetName(), fWorkerId);
+
+         // command execution possible without thread,
+         // but only manager allows to do it without warnings
+         if (this != dabc::mgr())
+            EOUT("Cannot execute command %s without working thread, do directly id = %u", cmd.GetName(), fWorkerId);
          exe_direct = true;
       } else
       if (fThread.IsItself()) {

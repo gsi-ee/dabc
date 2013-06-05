@@ -114,15 +114,14 @@ dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inppo
 
 dabc::NetworkTransport::~NetworkTransport()
 {
-   DOUT0("############# ~NetworkTransport  fRecs %p ##################", fRecs);
-
+   DOUT2("#### ~NetworkTransport fRecs %p", fRecs);
 }
 
 void dabc::NetworkTransport::ObjectCleanup()
 {
    dabc::Transport::ObjectCleanup();
 
-   DOUT0("############# NetworkTransport::Cleanup()  #########################");
+   DOUT3("NetworkTransport::Cleanup()");
 
    // at this moment net should be destroyed by the addon cleanup
    fNet = 0;

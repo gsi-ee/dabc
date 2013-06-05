@@ -59,18 +59,12 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    fUseSyncSeqNumber = Cfg(hadaq::xmlSyncSeqNumberEnabled, cmd).AsBool(false); // if true, use vulom/roc syncnumber for event sequence number
    fSyncSubeventId = Cfg(hadaq::xmlSyncSubeventId, cmd).AsUInt(0x8000);//0x8000;
    fSyncTriggerMask = Cfg(hadaq::xmlSyncAcceptedTriggerMask, cmd).AsInt(0x01); // chose bits of accepted trigge sources
+
    if (fUseSyncSeqNumber)
       DOUT0("HADAQ combiner module with VULOM sync event sequence number from cts subevent:0x%0x, trigger mask:0x%0x", (unsigned) fSyncSubeventId, (unsigned) fSyncTriggerMask);
    else
       DOUT0("HADAQ combiner module with independent event sequence number");
 
-
-//     fBuildCompleteEvents = Cfg(mbs::xmlCombineCompleteOnly,cmd).AsBool(true);
-//
-//
-//     fEventIdTolerance = Cfg(mbs::xmlEvidTolerance,cmd).AsInt(0);
-//
-//     std::string ratesprefix = Cfg(mbs::xmlCombinerRatesPrefix, cmd).AsStdStr("Hadaq");
    std::string ratesprefix = "Hadaq";
 
    for (unsigned n = 0; n < NumInputs(); n++) {
@@ -88,7 +82,6 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 //   CreatePar("RunId");
 //   Par("RunId").SetInt(fRunNumber); // to communicate with file components
 
-
    fDataRateName = ratesprefix + "Data";
    fEventRateName = ratesprefix + "Events";
    fLostEventRateName = ratesprefix + "LostEvents";
@@ -102,12 +95,12 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
 
    CreatePar(fInfoName, "info").SetSynchron(true, 2., false);
  
+   std::string info = dabc::format(
+         "HADAQ combiner module ready. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
+         fRunNumber, NumInputs(), NumOutputs(), flushtmout);
    
-   SetInfo(
-         dabc::format(
-               "HADAQ combiner module ready. Runid:%d, numinp:%u, numout:%u flush:%3.1f",
-               fRunNumber, NumInputs(), NumOutputs(), flushtmout), true);
-   DOUT0("HADAQ combiner module ready. Runid:%d, numinp:%u, numout:%uflush:%3.1f",fRunNumber, NumInputs(), NumOutputs(), flushtmout);
+   SetInfo(info, true);
+   DOUT0(info.c_str());
 
    RegisterExportedCounters();
 
@@ -115,9 +108,6 @@ hadaq::CombinerModule::CombinerModule(const std::string& name, dabc::Command cmd
    
    fPrintSync = Cfg("PrintSync", cmd).AsBool(false);
 }
-
-// unsigned firstsync(0), lastsync(0), numsync(0), numd(0);
-// dabc::TimeStamp tm1, tm2, tmd;
 
 
 hadaq::CombinerModule::~CombinerModule()

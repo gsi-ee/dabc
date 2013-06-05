@@ -55,7 +55,7 @@ dabc::ConnectionManager::ConnectionManager(const std::string& name, Command cmd)
    // we want to see all events which produced by any of connection object
    RegisterForParameterEvent(ConnectionObject::ObjectName());
 
-   DOUT0("Connection manager created parent %p", GetParent());
+   DOUT2("Connection manager created parent %p", GetParent());
 }
 
 dabc::ConnectionManager::~ConnectionManager()

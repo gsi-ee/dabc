@@ -90,7 +90,7 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
 
    if (on) {
       if ((GetState()==stInit) || (GetState()==stStopped)) {
-         DOUT0("Connection %s activated by transport %s - make start", name.c_str(), GetName());
+         DOUT2("Connection %s activated by transport %s - make start", name.c_str(), GetName());
 
          if (StartTransport())
             fState = stRunning;
@@ -99,7 +99,7 @@ void dabc::Transport::ProcessConnectionActivated(const std::string& name, bool o
             DeleteThis();
          }
       } else {
-         DOUT0("dabc::Transport %s is running, ignore start message from port %s", GetName(), name.c_str());
+         DOUT2("dabc::Transport %s is running, ignore start message from port %s", GetName(), name.c_str());
       }
 
    } else {
@@ -151,7 +151,7 @@ int dabc::Transport::ExecuteCommand(Command cmd)
 
 bool dabc::Transport::StartTransport()
 {
-   DOUT0("Start transport %s", GetName());
+   DOUT2("Start transport %s", GetName());
 
    fAddon.Notify("StartTransport");
    return Start();
@@ -159,6 +159,8 @@ bool dabc::Transport::StartTransport()
 
 bool dabc::Transport::StopTransport()
 {
+   DOUT2("Stop transport %s", GetName());
+
    fAddon.Notify("StopTransport");
    return Stop();
 }

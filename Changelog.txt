@@ -384,3 +384,10 @@ Main aim now bring project to real version 2 with interface finalized.
 1. Fix (implement) missing cleanup in several components - Port, PoolHandle, NetworkTransport.
    Cleanup mostly required to correctly release crosss-references before objects can be destroyed.
    Without correct cleanup manager can not destroy referenced objects - in most cases MemoryPool.  
+
+5.06.2013
+1. Introduce new command channel, based on TCP sockets (old was using UDP). There is 
+   one worker per connection and all commands to remote node are sequentialized via that worker.
+   At the moment functionality of old and new command channels are similar and they can be
+   easily replaced. In future command channel can be used to communicate with dabc
+   nodes from external application (command shell, go4 plugin and so on). 

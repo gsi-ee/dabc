@@ -39,7 +39,7 @@ dabc::ApplicationBase::ApplicationBase() :
 
 dabc::ApplicationBase::~ApplicationBase()
 {
-   DOUT0("############ dabc::ApplicationBase::~ApplicationBase %s", GetName());
+   DOUT0("#### ~ApplicationBase");
 }
 
 void dabc::ApplicationBase::ObjectCleanup()
@@ -299,13 +299,13 @@ bool dabc::ApplicationBase::DefaultInitFunc()
       if (name==0) continue;
       if (clname==0) clname = dabc::typeThread;
       if (devname==0) devname = "";
-      DOUT0("Create thread %s", name);
+      DOUT2("Create thread %s", name);
       dabc::mgr.CreateThread(name, clname, devname);
    }
 
    while (dabc::mgr()->cfg()->NextCreationNode(node, xmlMemoryPoolNode, true)) {
       const char* name = Xml::GetAttr(node, xmlNameAttr);
-      DOUT0("Create memory pool %s", name);
+      DOUT2("Create memory pool %s", name);
       if (!dabc::mgr.CreateMemoryPool(name)) return false;
    }
 
@@ -314,7 +314,7 @@ bool dabc::ApplicationBase::DefaultInitFunc()
       const char* clname = Xml::GetAttr(node, xmlClassAttr);
       const char* thrdname = Xml::GetAttr(node, xmlThreadAttr);
       if (clname==0) continue;
-      DOUT0("Create module %s class %s", name, clname);
+      DOUT2("Create module %s class %s", name, clname);
       if (thrdname==0) thrdname="";
 
       dabc::ModuleRef m = dabc::mgr.CreateModule(clname, name, thrdname);
@@ -360,7 +360,7 @@ bool dabc::ApplicationBase::DefaultInitFunc()
       } else {
          int numnodes = dabc::mgr.NumNodes();
 
-         DOUT0("Create all-to-all connections for %d nodes", numnodes);
+         DOUT2("Create all-to-all connections for %d nodes", numnodes);
 
          for (int nsender=0; nsender<numnodes; nsender++)
             for (int nreceiver=0;nreceiver<numnodes;nreceiver++) {
@@ -371,8 +371,6 @@ bool dabc::ApplicationBase::DefaultInitFunc()
                dabc::ConnectionRequest req = dabc::mgr.Connect(port1, port2);
                req.SetConfigFromXml(node);
             }
-
-         DOUT0("Submit all-to-all connections for %d nodes done", numnodes);
       }
    }
 

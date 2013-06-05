@@ -224,7 +224,7 @@ bool dabc::SocketDevice::StartServerAddon(Command cmd, std::string& servid)
 
       serv = dabc::SocketThread::CreateServerAddon(port0, portmin, portmax);
 
-      DOUT0("Create server with ID:%s", serv->ServerId().c_str());
+      DOUT0("SocketDevice creates server with ID:%s", serv->ServerId().c_str());
 
       // fServer->SetConnHandler(this, "---"); // we will automatically get connection
       AssignAddon(serv);

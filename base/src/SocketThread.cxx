@@ -733,8 +733,7 @@ dabc::SocketServerAddon::SocketServerAddon(int serversocket, int portnum) :
    SetDoingInput(true);
    listen(Socket(), 10);
 
-
-   DOUT0("dabc::SocketServerAddon   isinp=%s", DBOOL(IsDoingInput()));
+   DOUT2("Create dabc::SocketServerAddon");
 }
 
 void dabc::SocketServerAddon::ProcessEvent(const EventId& evnt)

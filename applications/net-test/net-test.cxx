@@ -56,14 +56,14 @@ class NetTestSenderModule : public dabc::ModuleAsync {
          if (IsCmdTest())
             CreatePar("CmdExeTime").SetAverage(false, 2);
 
-         DOUT1("new NetTestSenderModule %s numout = %d ignore %u done", GetName(), NumOutputs(), fIgnoreNode);
+         DOUT2("new NetTestSenderModule %s numout = %d ignore %u done", GetName(), NumOutputs(), fIgnoreNode);
 //         for(unsigned n=0;n<NumOutputs();n++)
 //            DOUT1("   Output %s capacity %u", OutputName(n).c_str(), OutputQueueCapacity(n));
       }
 
       ~NetTestSenderModule()
       {
-         DOUT0("#### ~NetTestSenderModule() ####");
+         DOUT0("#### ~NetTestSenderModule()");
       }
 
       bool IsCmdTest() const { return fKind == "cmd-test"; }
@@ -94,53 +94,16 @@ class NetTestSenderModule : public dabc::ModuleAsync {
          return false;
       }
 
-      void StartChaoticSend()
-      {
-         // keep all output queues equally filled
-
-         while (true) {
-
-            bool isany(false);
-
-            for(unsigned nout=0;nout<NumOutputs();nout++) {
-               if (nout==fIgnoreNode) continue;
-
-               if (!CanSend(nout)) continue;
-
-               dabc::Buffer buf = TakeBuffer();
-               if (buf.null()) {
-                  dabc::MemoryPoolRef pool = dabc::mgr.FindPool("Pool");
-                  EOUT("no buffers in memory pool %s used %5.3f", pool.GetName(), pool.GetUsedRatio());
-                  return;
-               }
-
-               if (!Send(nout, buf)) {
-                  EOUT("Fail to send to output %u", nout);
-                  return;
-               }
-
-               isany = true;
-            }
-
-            if (!isany) return;
-         }
-      }
-
       void BeforeModuleStart()
       {
-         DOUT0("SenderModule starting numpools %u", NumPools());
+         DOUT0("NetTestSenderModule starting");
 
          if (IsCmdTest()) {
             DOUT1("Start command test");
             SendNextCommand();
          }
 
-         fCanSend = true;
-
-         if (IsChaoticTest()) {
-            // StartChaoticSend();
-            // fCanSend = true;
-         }
+         if (IsChaoticTest()) fCanSend = true;
       }
 
       void SendNextCommand()
@@ -187,7 +150,7 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
 
       virtual ~NetTestReceiverModule()
       {
-          DOUT0("#### ~NetTestReceiverModule ####");
+          DOUT0("#### ~NetTestReceiverModule");
       }
 
       int ExecuteCommand(dabc::Command cmd)

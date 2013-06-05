@@ -1189,8 +1189,6 @@ bool dabc::Manager::DoCreateMemoryPool(Command cmd)
    if (ref.null()) {
       ref = new dabc::MemoryPool(poolname, true);
 
-      DOUT1("Create memory pool of name %s", poolname.c_str());
-
       ref()->Reconstruct(cmd);
 
       // TODO: make thread name for pool configurable
@@ -1664,8 +1662,6 @@ bool dabc::ManagerRef::CreateConnectionManager()
    ModuleRef m = FindModule(Manager::ConnMgrName());
 
    if (!m.null()) return true;
-
-   DOUT0("+++++++++++++++ dabc::ManagerRef::CreateConnectionManager +++++++++++++");
 
    m = CreateModule("dabc::ConnectionManager", Manager::ConnMgrName(), Manager::MgrThrdName());
 
