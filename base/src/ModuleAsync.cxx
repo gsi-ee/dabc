@@ -92,6 +92,14 @@ bool dabc::ModuleAsync::DoStart()
    return true;
 }
 
+void dabc::ModuleAsync::ActivateInput(unsigned port)
+{
+   InputPort* inp = Input(port);
+
+   if ((inp!=0) && IsRunning() && inp->CanRecv())
+      FireEvent(evntInputReinj, inp->ItemId());
+}
+
 void dabc::ModuleAsync::ProcessInputEvent(unsigned port)
 {
    InputPort* inp = Input(port);
@@ -107,6 +115,14 @@ void dabc::ModuleAsync::ProcessInputEvent(unsigned port)
          return;
       }
    }
+}
+
+void dabc::ModuleAsync::ActivateOutput(unsigned port)
+{
+   OutputPort* out = Output(port);
+
+   if ((out!=0) && IsRunning() && out->CanSend())
+      FireEvent(evntOutputReinj, out->ItemId());
 }
 
 void dabc::ModuleAsync::ProcessOutputEvent(unsigned port)
@@ -125,6 +141,15 @@ void dabc::ModuleAsync::ProcessOutputEvent(unsigned port)
       }
    }
 }
+
+void dabc::ModuleAsync::ActivatePool(unsigned poolindex)
+{
+   PoolHandle* pool = Pool(poolindex);
+
+   if ((pool!=0) && IsRunning() && pool->CanTakeBuffer())
+      FireEvent(evntOutputReinj, pool->ItemId());
+}
+
 
 void dabc::ModuleAsync::ProcessPoolEvent(unsigned indx)
 {

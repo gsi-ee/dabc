@@ -29,16 +29,10 @@
 #include "dabc/Url.h"
 #include "dabc/Pointer.h"
 
-int TestBufferSize = 8*1024;
-int TestSendQueueSize = 5;
-int TestRecvQueueSize = 10;
-bool TestUseAckn = true;
-
 class NetTestSenderModule : public dabc::ModuleAsync {
    protected:
       std::string         fKind;
-      unsigned            fCmdCnt;
-      bool                fCanSend;
+      unsigned            fSendCnt;
       unsigned            fIgnoreNode;
 
    public:
@@ -47,11 +41,9 @@ class NetTestSenderModule : public dabc::ModuleAsync {
       {
          fKind = Cfg("Kind", cmd).AsStdStr();
 
-         fCmdCnt =  dabc::mgr.NodeId();
+         fSendCnt =  dabc::mgr.NodeId();
 
          fIgnoreNode = dabc::mgr.NodeId();
-
-         fCanSend = false;
 
          if (IsCmdTest())
             CreatePar("CmdExeTime").SetAverage(false, 2);
@@ -70,6 +62,8 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
       bool IsChaoticTest() const { return fKind == "chaotic"; }
 
+      bool IsRegularTest() const { return fKind == "regular"; }
+
       int ExecuteCommand(dabc::Command cmd)
       {
          return ModuleAsync::ExecuteCommand(cmd);
@@ -83,12 +77,27 @@ class NetTestSenderModule : public dabc::ModuleAsync {
 
             if (nout==fIgnoreNode) return false;
 
-            if (!fCanSend) { DOUT0("Cannot send to output %u", nout); return false; }
-
             dabc::Buffer buf = TakeBuffer();
             if (buf.null()) return false;
             Send(nout, buf);
             return true;
+         }
+
+         if (IsRegularTest()) {
+
+            if (fSendCnt!=nout) return false;
+
+            dabc::Buffer buf = TakeBuffer();
+            if (buf.null()) return false;
+            Send(nout, buf);
+
+            do {
+               fSendCnt = (fSendCnt+1) % dabc::mgr.NumNodes();
+            } while (fSendCnt == fIgnoreNode);
+
+            ActivateOutput(fSendCnt);
+
+            return false;
          }
 
          return false;
@@ -102,15 +111,13 @@ class NetTestSenderModule : public dabc::ModuleAsync {
             DOUT1("Start command test");
             SendNextCommand();
          }
-
-         if (IsChaoticTest()) fCanSend = true;
       }
 
       void SendNextCommand()
       {
          dabc::Command cmd("Test");
-         fCmdCnt = (fCmdCnt + 1) % dabc::mgr.NumNodes();
-         cmd.SetReceiver(dabc::Url::ComposeItemName(fCmdCnt, "Receiver"));
+         fSendCnt = (fSendCnt + 1) % dabc::mgr.NumNodes();
+         cmd.SetReceiver(dabc::Url::ComposeItemName(fSendCnt, "Receiver"));
          cmd.SetTimeout(1);
 
          dabc::mgr.Submit(Assign(cmd));
@@ -119,7 +126,7 @@ class NetTestSenderModule : public dabc::ModuleAsync {
       virtual bool ReplyCommand(dabc::Command cmd)
       {
          double tmout = cmd.TimeTillTimeout();
-         if (fCmdCnt != (unsigned) dabc::mgr.NodeId())
+         if (fSendCnt != (unsigned) dabc::mgr.NodeId())
             Par("CmdExeTime").SetDouble((1.- tmout)*1000.);
 
          //DOUT0("********************** Get command reply res = %d! ************************* ", cmd.GetResult());
@@ -333,7 +340,6 @@ class NetTestApplication : public dabc::Application {
       {
          return true;
       }
-
 };
 
 
@@ -368,109 +374,6 @@ class NetTestFactory : public dabc::Factory  {
 
 dabc::FactoryPlugin nettest(new NetTestFactory("net-test"));
 
-
-
-bool RunCommands(int kind)
-{
-   //dabc::CommandsSet cli(dabc::mgr()->thread());
-
-   bool res = true;
-   std::string info;
-
-   for (int node=0;node<dabc::mgr()->NumNodes();node++) {
-      dabc::Command cmd;
-      switch (kind) {
-         case 0:
-            cmd = dabc::CmdStartModule("*");
-            cmd.SetReceiver(node);
-            break;
-         case 1:
-            cmd = dabc::Command("EnableSending");
-            cmd.SetBool("Enable", true);
-            cmd.SetReceiver(node, "Sender");
-            break;
-         default:
-            cmd = dabc::CmdStopModule("*");
-            cmd.SetReceiver(node);
-            break;
-      }
-      info = cmd.GetName();
-
-      //cli.Add(cmd, dabc::mgr());
-      if (!dabc::mgr.Execute(cmd)) res = false;
-   }
-
-   //int res = cli.ExecuteSet(3);
-   DOUT0("%s all res = %s", info.c_str(), DBOOL(res));
-
-   return res;
-}
-
-extern "C" void RunAllToAll()
-{
-   int numnodes = dabc::mgr()->NumNodes();
-
-   std::string devclass = dabc::mgr()->cfg()->GetUserPar("NetDevice", dabc::typeSocketDevice);
-
-   TestBufferSize = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlBufferSize, TestBufferSize);
-   TestSendQueueSize = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlOutputQueueSize, TestSendQueueSize);
-   TestRecvQueueSize = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlInputQueueSize, TestRecvQueueSize);
-   TestUseAckn = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlUseAcknowledge, TestUseAckn ? 1 : 0) > 0;
-
-   DOUT0("Run All-to-All test numnodes = %d buffer size = %d", numnodes, TestBufferSize);
-
-   dabc::mgr.CreateMemoryPool("Pool", TestBufferSize, numnodes * (TestSendQueueSize + TestRecvQueueSize + 5));
-
-   dabc::CmdCreateModule cmd1("NetTestReceiverModule","Receiver");
-   cmd1.SetInt("NumPorts", numnodes-1);
-   bool res = dabc::mgr.Execute(cmd1);
-
-   dabc::CmdCreateModule cmd5("NetTestSenderModule","Sender");
-   cmd5.SetInt("NumPorts", numnodes-1);
-   res = dabc::mgr.Execute(cmd5);
-
-   DOUT0("CreateAllModules() res = %s", DBOOL(res));
-
-   const char* devname = "Test1Dev";
-
-   dabc::mgr.CreateDevice(devclass, devname);
-
-   for (int nsender = 0; nsender < numnodes; nsender++) {
-      for (int nreceiver = 0; nreceiver < numnodes; nreceiver++) {
-          if (nsender==nreceiver) continue;
-
-          std::string port1 = dabc::Url::ComposePortName(nsender, "Sender/Output", (nreceiver>nsender ? nreceiver-1 : nreceiver));
-
-          std::string port2 = dabc::Url::ComposePortName(nreceiver, "Receiver/Input", (nsender>nreceiver ? nsender-1 : nsender));
-
-          dabc::ConnectionRequest req = dabc::mgr.Connect(port1, port2);
-
-          req.SetUseAckn(TestUseAckn);
-          req.SetConnDevice(devname);
-          req.SetConnThread("TransportThrd");
-          req.SetPoolName("Pool");
-      }
-   }
-
-   res = dabc::mgr.ActivateConnections(10.);
-   DOUT1("ConnectAllModules() res = %s", DBOOL(res));
-
-   if (dabc::mgr()->NodeId()==0) {
-
-      RunCommands(0);
-
-      RunCommands(1);
-
-      dabc::mgr.Sleep(10, "Waiting");
-
-      RunCommands(2);
-   } else {
-      dabc::mgr.RunMainLoop(15);
-   }
-
-   dabc::mgr.StopApplication();
-
-}
 
 extern "C" void RunMulticastTest()
 {

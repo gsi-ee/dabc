@@ -223,7 +223,7 @@ stablished as well. In this case syntax will looke like:
 It is required, that at least one port (or both) situated in local node.
 
 
-It is also possible to specify multiple connections with single !<Connectionin> node.
+It is also possible to specify multiple connections with single `<Connectionin>` node.
 There are typical situations, when connections between all application nodes must be established - 
 so calles "all-to-all" pattern. In this on each node module with __N__ outputs and
 module with __N__ inputs should be present, where __N__ is number of nodes. To establish connections between
@@ -235,7 +235,7 @@ them, one should specify:
 ...     
 ~~~~~~~~~~~~~~~~~~~~~
 
-In such case  __output__ and __input__ should be modules names; it can be same module.
+In such case  __output__ and __input__ should be modules names; it can be the same module.
 
 
 Here is complete list of attributes:

@@ -1,248 +1,135 @@
-This is log of changes in the dabc project,
-which are started in winter 2013. 
+This is log of changes in the dabc project, which is started in winter 2013. 
+In some cases it is best place to find documentation about current functionality 
+of framework.
 
-Main aim now bring project to real version 2 with interface finalized.
 
-14.02.2013
-1. Introduce InputPort and OutputPort
-2. Introduce BufferQueue for connection between ports
-3. Add support of new i/o ports into both modules kinds
-4. Generate i/o events only when consumer react on previous event
-5. Improve by factor 3 speed of buffers propogation over modules
-6. Exclude mutex from queue when ports comunicating in the same thread 
-7. Use thread for ModuleItems only when required. For instance i/o ports not
-   necessary need to be assigned to the thread. Also in case of Timer,
-   one can use Module thread. This should simplify start/stop procedure.
-   
-15.02.2013
-1. Introduce WorkerAddon class, which should contain all device-specific 
-   code for sockets and IB.
-2. MemoryPool class now derived from ModuleAsync - means just another source of
-   buffers. All requests now will be processed via ports, keep for the moment
-   direct TakeBuffer methods.
-   
-19.02.2013
-1. New event-generation model. Before each send/recv operation produces event,
-   which should be handled. This can leads to unlimited grow of thread events queue, if
-   event processing done not proper. To cover most typical tasks, new models for i/o ports
-   introduced. There are four models now:
-   enum EventsProducing {
-      SignalNone = 0,   // port will not produce any events
-      SignalConfirm,    // next event can be produced when previous event is received, confirmed and
-                        // event consumer performed next operation
-      SignalOperation,  // next event can be produced when event consumer performs next operation
-      SignalEvery       // every operation will produce event
-   }
-2. By default use SignalConfirm kind for i/o ports. This kind is useful when in 
-   each event processsing function many buffers can be handled - is a situation in most cases.    
-3. Implement burst mode in memory pool. When module permanently requests buffers from the pool,
-   maximum number of buffers will be send.
-4. Support of new pool handle in ModuleSync
 
-20.02.2013
-1. First working implementation of NewDataTransport, based on NewTransport. 
-   Here normal ModuleAsync is used to provide event loop, queues and so on.
-   Dramatically simplifies way how port and transport connected and work together.
-2. First adoption of NewDataTransport to lmd file input/output. 
-   First running example with such new transports.
-3. Introduce di_DfltBufSize return value for DataInput object. Allows to use default 
-   buffers, provided by the memory pool. Thus configuration can be shifted to memory pool.
-4. Allow to specify transport kind directly in the xml file - via url tag.
-   By one string one can specify type of transport and basic parameters. Like
-   output lmd file is set with <url value="lmd://local.lmd?maxsize=20"/>
-   
-21.02.2013
-1. Implementing full pallette of WorkerAddon for SocketThread. All new classes should
-   replace SocketWorker classes in dabc.
-2. Rewrite mbs::ClientTransport class with SocketIOAddon. Try to use DataInputTransport.
-   Only implementation, not yet tested.  
-   
-22.02.2013
-1. Deliver disconnect events to module also in non-running state.
-2. First working version of mbs::ClientTransport.
-3. Split DataTransport on two independend InputTransport and OutputTransport.
-   Both classes should be used with DataInput/DataOutput classes. 
-4. Adjust DataInput interface to work not only with blocking interfaces but also 
-   with call-back functionality - like DataInput already.
-   
-26.02.2013
-1. Significant redesign of mbs::ServerTransport. Now it consists from ServerAddon, which
-   handles connection and OutputAddon which handles data transfer to client. 
-   Many clients organized as many slave connection to server transport. Number of connections
-   can be increased or descreased dynamically. Tested with go4 and with dabc client. 
-     
-27.02.2013
-1. Refactor command channel, socket device, network transport and socket transport.
-   In all cases SocketAddon class used insted of SocketWorker. 
-   Still a lot of debugging to be done.
-   
-28.02.2013
-1. Debug network transport for socket, including acknowledge feature. Is working now.
-2. Introduce verbs::WorkerAddon class, which replaces specialized verbs::Worker
-   Redo all relevant verbs classes. Adjust NetworkTransport for verbs.
-   
-1.03.2013
-1. Refactor hadaq::UdpDataTransport - use InputTransport and SocketAddon instead.
-   Need to be verified with real setup.
-            
-4.03.2013 
-1. For time been include roc-udp plugin into dabc2 - just for convenience duting 
-   migration. Convert UdpTransport to SocketAddon.
-2. In NewDataInput allow to use queues of the buffers for transport addon. 
-   Use such feature for the roc udp transport
-3. First debugging of the roc-udp plugin - seems to be, it is working!
-4. Eliminate SocketWorker classes - now all codes based on Addons.
-             
-5.03.2013
-1. Change const char* to std::string in modules constructors and all related methods
-2. Adjust hadaq plugin to new organization, need to be tested.
-3. By default, module creates input and output ports and pool handle (if conbfigured) 
-4. Allow to put configuration parameters as node attributes in xml files like
-       <InputPort name="Input0" queue="11" url="hadaq://host:50000"/>
-   Should significantly simplify xml files. Old syntax is also valid:
-       <InputPort name="Input0">
-         <queue value="11"/>
-         <url value="hadaq://host:50000"/>
-       </InputPort>  
-5. Start transition of roc::CombinerModule to new scheme, remove some old features.
+5.06.2013
+1. Introduce new command channel, based on TCP sockets (old was using UDP). There is 
+   one worker per connection and all commands to remote node are sequentialized via that worker.
+   At the moment functionality of old and new command channels are similar and they can be
+   easily replaced. In future command channel can be used to communicate with dabc
+   nodes from external application (command shell, go4 plugin and so on). 
+2. Introduce ModuleAsync::ActivateOutput/ActivateInput to generate events for
+   specified output/input ports. Required when processing of events was stopped
+   when ProcessRecv/ProcessSend methods return false.
 
-6.03.2013
-1. Adjust mbs plugin modules to new scheme, need to test them
-2. First tests working with hadaq simulators! 
-3. Add possibility to balance performance between modules by limiting loop max count
-   per port. In this case ProcessRecv/ProcessSend calling sequence will be broken and
-   events are rescheduled. Probably, very important for hadaq
-4. Debug and improve hadaq::CombinerModule and hadaq::UspTransport classes. 
-   Now with minimal queue length everything works smoothly. Also correct treatment of
-   events id overflow is implemented.
-5. Test hld and lmd output for hadaq event builder module - works!   
-6. In hadaq transport use simple recv() function - socket is already bind to the port.
+4.06.2013
+1. Fix (implement) missing cleanup in several components - Port, PoolHandle, NetworkTransport.
+   Cleanup mostly required to correctly release crosss-references before objects can be destroyed.
+   Without correct cleanup manager can not destroy referenced objects - in most cases MemoryPool.  
 
-7.03.2013
-1. First workign setup with MBS combiner module. Main change - do not block event loop by 
-   event building forever. Use ProcessRecv/ProcessSend methods, they can reinject events itself.
-2. Strictly check version 2 of xml file.     
-3. In mbs::ServerTransport correctly treat second request from the client
-4. In epics plugin eliminate applications class - everything can be done with simple init
-   function. Simplify a lot class structure, still to be checked with epics. 
-5. Adjust mbs plugin, remove old examples and old eventapi
-6. Remove old port, pool handle, transport and local transport classes.
 
-8.03.2013
-1. Rename PortBase -> Port class.
-2. Modify BuffersQueue class, use it everywhere where it makes sencse.
-3. Start transition to module API, where user do not have access to pointers to the
-   objects like I/O port, pool handle, timer and so on. Either port index or port name
-   should be used. Also all main methods like Send/Recv should be protected to avoid
-   usage from outside module code.     
-   
-11.03.2013
-1. Next step to make PoolHandle like input port, which delivers buffers from the memory
-   pool. No any requests is necessary. Till now possible to request buffers directly from 
-   the pool, but most of transport and standard modules will use new feature.
-2. Continue API transition, step by step hide direct port methods from user.
+31.05.2013
+1. Provide version control of dabc::Hierarchy structure. Each element in hierarchy includes
+   version number, which indicate when last changes were performed. This version gaves
+   possibility to extract only changed items relative to specified version in the past.
+2. Implement conversion of dabc::Hierarchy structure into xml and reconstruct 
+   hierarchy from xml. This will allow to transport and reconstruct hierarchy on
+   any remote location.
 
-12.03.2013
-1. Modify EZCA plugin - remove static variables, use DataInput interface in proper way,
-   improve compilation 
-2. Fix timeout probelms in DataTransports
-3. Allow to change EZCA config parameters
-4. Use EZCA group operations - should improve performance when using many variables.
-5. Use mbs::WriteIterator in EZCA plugin, fix severeal errors in iterator itself.
-6. Rebuild EZCA descriptors only when variables list changed - mean once at the beginning
-7. Adjust simple go4 analysis in EZCA plugin to be able work with current readout.
 
-13.03.2013
-1. Change syntax of DOUT1(("something")) to DOUT1("something"). As before, command will not be
-   compiled when make debug=0 command is used.
-   
-14.03.2013
-1. Change logic how factories are instantiated, 
-2. Remove libraries handles list from the factory, it was used for symbols finding.
-3. Hide all PoolHandle methods from user, 
-   only Module methods can be used for correspondent functionality  
-4. Remove direct usage of InputPort/OutputPort classes in user code - everything done
-   via indexes or names. Later classes will be removed completely. Still one need to 
-   hide many module/ports methods 
+28.05.2013
+1. Introduce dabc::Hierarchy class, which should represent in the future 
+   objects hierarchy of remote (or local) DABC process.
 
-15.03.2013
-1. Make majority methods of Module and Port classes protected, some of them private.
-   Only reference classes will provide public, thread-safe methods.
-2. Like Ports, now Timers and UserItems not accessible via pointer in the module.
-   From now only module methods should be used for any kind of send/recv/timer or 
-   user event generation.
-3. Remove InputPort.h OutputPort.h Timer.h PoolHandle.h files. All these classes are
-   now "hidden" from normal user and should not be directly appear in the code.
-4. Make central dabc::Exception class with kind field to simplify handling of the exceptions.
+27.05.2013
+1. Activate shared-memory observer in hadaq plugin only when it really enabled
 
-19.03.2013
-1. Modify dabc::Buffer class. Now it uses reference on MemoryPool to access 
-   its functionality. When release buffer, memory pool mutex will be locked twice - 
-   first time to release memory structures and second time to release reference 
-   on pool itself. Solves very nasty problem during application cleanup, 
-   when memory pool potentially could remains hanging.
-2. Replace in many places const char* argument by const std::string&
-3. Remove direct pointer on module from module item, module is always must be 
-   direct parent of item.
+24.05.2013
+1. Make doxygen docu more readable
 
-20.03.2013
-1. Reintroduce BinaryFile class to the DABC. It is generic storage for any kind of
-   dabc buffer. Now segmented buffers are supported. Most important that BinaryFile.h
-   include can be directly used in any project without need of any addition library.
-   One can even use ROOT CINT in the way like:
+21.05.2013
+1. In mbs::ServerTransport implement correct stop of transport when EOF buffer has been seen.
+2. Make transport kind of mbs::ServerTransport blocking by default. In this case every buffer
+   should be delivered to at least one client. If no one client is connected, transport will block.
+   One can specify unblocking mode for transport server if configure:
+       <OutputPort name="Output0" url="mbs://Transport?unblock"/>
+   Stream server will be always unblocking.
 
-      .L $DABCSYS/include/dabc/BinaryFile.h
+17.05.2013
+1. In input and output ports properties "rate" attribute can be specified.
+   When specified, data rate parameter with such name will be created and assigned to port.
+     <InputPort name="Input0" url="mbs://lxg0538/Stream" rate="DataRate"/>
+2. Create dabc::RepeaterModule. It's only functionality - translate data from each input to
+   correspondent output. Thus number inputs and outputs should be the same.
+3. Remove old latex-based documentation, start long transition to doxygen-based one.
+   At least 1.8.0 version of doxygen is required. 
+   To generate documentation files, call "make doxy".
+4. Produce 2.0.2 tag - currently working version of HADAQ readout
 
-      dabc::BinaryFile f;
-      f.OpenReading("file.bin");
-      while (!f.eof()) {
-         uint64_t size = maxsize;
-         f.ReadBuffer(buf, size);
-      }
-      f.Close();
+16.05.2013
+1. Allow to specify auto="false" for every input/output port to avoid automatic port connection.
+2. Adjust most of MBS examples to current modules creation logic. 
+   Main advantage now - one do not need  special init functions for different use-cases.
+3. Remove mbs::GeneratorModule - one can use "lmd://Generator" input instead.
+4. Implement of automatic reconnection of any module input/output. 
+   For that "reconnect" attribute should be specified for the port:
+      <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="3"/>
+   Property specifies interval (in seconds) how often reconnect should be perfromed.
+   Reconnect will not be done when auto="false" specified.    
+5. Fix error that MemoryPool was stopped when no any connection was availible.
+   Thus when new connection was comming, pool failed to provide 
+   new buffer to modules and transports.
 
-2. Replace FileIO class by FileInterface. FileInterface is wrapper for posix file 
-   functions with very similar functions. Already FileInterface itself provides
-   basic IO functions and used in BinaryFile class. Later RFIO or ROOTD can be 
-   implemented.    
-3. Implement BinaryFileOutput which can be work as generic output for buffers in
-   DABC. Syntax is "bin://test.bin?maxsize=30"
-4. Replace const char* arguments in several Factory methods.
-5. Implement BinaryFileInput.
-6. Eliminate outdated FileIO classes, now everything goes via FileInterface.
-   Eliminate extra ListMatchFiles - implemented via FileIO. 
 
-21.03.2013
-1. Introduce RFIO plugin in DABC2. Idea to have example how FileInterface can be
-   used. Not yet really tested.
+15.05.2013
+1. Make more comfortable way to specify affinity of the threads and complete process.
+2. Already before it was possible to specify taskset arguments for complete dabc process in
+   <Run> section in the form like <taskset value="-c 10-15"/>. This is used in dabc_run script.
+3. One can specify default affinity for every new created thread, providing "affinity" 
+   parameter in <Run> section. Value can be following:
+       - unsigned value with processors mask
+       - string like "xxxoooxxxss" with allowed symbols 'x', 'o' and 's'.
+                  'x' - enabled, 'o' - disabled, 's' - special purpose
+                     first element in string corresponds to first processor
+       - string like "-N" where N is processors number which should be reserved 
+                  for special purposes. These processors could be later assigned 
+                  with SetAffinity("+M") call (M<N) 
+4. For every thread attribute "affinity" could be specified. Allowed values:
+       - unsigned value with processors mask
+       - string like "xxxoooxxx" were x and o identified enabled and disabled processors,
+               first element in string corresponds to first processor
+       - string like "+M" where M is processor number in special processors set, 
+                before SetDfltAffinity("-N") should be called (M<N) 
+5. Mark current repository trunk as 2.0.1 version    
 
-22.03.2013
-1. Make dabc::Manager class interface more clear, most functions must be used via
-   dabc::mgr instance - means via dabc::ManagerRef class
-2. Introduce FileInput class, which handles common functionality for file inputs.
-   Reused in dabc::BinaryFileInput, mbs::LmdInput, hadaq::HldInput, mbs::TextInput
-3. Introduce FileOutput class, which handles mots common tasks of file storage. Use
-   it for dabc::BinaryFileOutput, mbs::LmdOutput, hadaq::HldOutput.
+14.05.2013
+1. Add possibility to configure threads layout. Layout defines how many threads will be
+   created for particular elements. At the moment following layouts are supported:
+      "minimal"    - minimal number of threads
+      "permodule"  - each module should use single thread, including all transports
+      "balanced"   - per each module three threads - for module, all input and all output transports
+      "maximal"    - each entity will gets its own thread
+   Threads layout can be specified in <Run> section of xml file:
+      <threads_layout value="permodule"/>
+   Default kind of threads layout is balanced.
+2. Allow to configure "timeout", "thread", "device", "useackn" and "timeout" attributes 
+   for port or for connection. These attributes will be used for transport creation for
+   particular port. For instance, one could specify thread attribute:
+      <InputPort name="Input0" url="lmd://file*.lmd" queue="10" thread="InputThrd0"/>
+   to define which thread will be used for the transport.
 
-11.04.2013
-1. Switch main DABC brunch to version 2.
 
-3.05.2013
-1. Introduce mbs::LmdFileNew class, which should replace LmdFile in next future. Idea
-   is to use same logic as with dabc::BinaryFile, where different low-level file I/O
-   can be used. Also like dabc::BinaryFile, only appropriate includes will be required
-   to use mbs::LmdFileNew classes outside DABC. One more argument for mbs::LmdFileNew - 
-   reduce functionality of lmd storage to absolute minimum, remove never-used index table.
-2. Provide LMD random generator input, which could be configured in form
-      <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2" queue="5"/>
-   It should replace MBS generator module in the near future. 
-3. Provide temporary "lmd2" file input and output classes, which are using 
-   mbs::LmdFileNew. New lmd files can be used with go4 as well. Test it.
-4. Fix error with MemoryPool::TakeEmpty - pool reference was not set correctly
-   in buffer, which leads to double delete of memory.
-   
-7.05.2013
-1. Tag version 2.0.0 in repository.
+13.05.2013
+1. Add possibility to create devices and threads automatically via xml file.
+   Xml code should look like: 
+
+   <Thread name="thread1" class="dabc::SocketThread"/>
+
+   <Device name="verbs" class="verbs::Device"/>
+   <Thread name="thread2" class="verbs::Thread" device="verbs"/>
+
+
+10.05.2013
+1. Fix error in transport start/stop logic. Transport was started before connection to
+   the module was established, therefore many first buffers were lost. Was happened, while
+   transport was reacting on connection activating with memory pool.
+2. Fix flushing error in hadaq::MbsTransmitterModule. When EOF marker was appearing,
+   rest of data in output iterator was not finalized and was not delivered to the output.
+3. Unified typedefs and structures HADAQ between DABC and Stream analysis.
+   Idea to use as much as possible common code in both frameworks.
+
 
 8.05.2013
 1. Memory pool, modules and connections between them could be created automatically,
@@ -274,120 +161,244 @@ Main aim now bring project to real version 2 with interface finalized.
    as much as possible and than rewind if non-complete events are read.
    
    
-10.05.2013
-1. Fix error in transport start/stop logic. Transport was started before connection to
-   the module was established, therefore many first buffers were lost. Was happened, while
-   transport was reacting on connection activating with memory pool.
-2. Fix flushing error in hadaq::MbsTransmitterModule. When EOF marker was appearing,
-   rest of data in output iterator was not finalized and was not delivered to the output.
-3. Unified typedefs and structures HADAQ between DABC and Stream analysis.
-   Idea to use as much as possible common code in both frameworks.
+7.05.2013
+1. Tag version 2.0.0 in repository.
+
+
+3.05.2013
+1. Introduce mbs::LmdFileNew class, which should replace LmdFile in next future. Idea
+   is to use same logic as with dabc::BinaryFile, where different low-level file I/O
+   can be used. Also like dabc::BinaryFile, only appropriate includes will be required
+   to use mbs::LmdFileNew classes outside DABC. One more argument for mbs::LmdFileNew - 
+   reduce functionality of lmd storage to absolute minimum, remove never-used index table.
+2. Provide LMD random generator input, which could be configured in form
+      <InputPort name="Input0" url="lmd://Generator?size=32&numsub=2" queue="5"/>
+   It should replace MBS generator module in the near future. 
+3. Provide temporary "lmd2" file input and output classes, which are using 
+   mbs::LmdFileNew. New lmd files can be used with go4 as well. Test it.
+4. Fix error with MemoryPool::TakeEmpty - pool reference was not set correctly
+   in buffer, which leads to double delete of memory.
+
+11.04.2013
+1. Switch main DABC brunch to version 2.
+
+22.03.2013
+1. Make dabc::Manager class interface more clear, most functions must be used via
+   dabc::mgr instance - means via dabc::ManagerRef class
+2. Introduce FileInput class, which handles common functionality for file inputs.
+   Reused in dabc::BinaryFileInput, mbs::LmdInput, hadaq::HldInput, mbs::TextInput
+3. Introduce FileOutput class, which handles mots common tasks of file storage. Use
+   it for dabc::BinaryFileOutput, mbs::LmdOutput, hadaq::HldOutput.
+
+21.03.2013
+1. Introduce RFIO plugin in DABC2. Idea to have example how FileInterface can be
+   used. Not yet really tested.
+
+20.03.2013
+1. Reintroduce BinaryFile class to the DABC. It is generic storage for any kind of
+   dabc buffer. Now segmented buffers are supported. Most important that BinaryFile.h
+   include can be directly used in any project without need of any addition library.
+   One can even use ROOT CINT in the way like:
+
+      .L $DABCSYS/include/dabc/BinaryFile.h
+
+      dabc::BinaryFile f;
+      f.OpenReading("file.bin");
+      while (!f.eof()) {
+         uint64_t size = maxsize;
+         f.ReadBuffer(buf, size);
+      }
+      f.Close();
+
+2. Replace FileIO class by FileInterface. FileInterface is wrapper for posix file 
+   functions with very similar functions. Already FileInterface itself provides
+   basic IO functions and used in BinaryFile class. Later RFIO or ROOTD can be 
+   implemented.    
+3. Implement BinaryFileOutput which can be work as generic output for buffers in
+   DABC. Syntax is "bin://test.bin?maxsize=30"
+4. Replace const char* arguments in several Factory methods.
+5. Implement BinaryFileInput.
+6. Eliminate outdated FileIO classes, now everything goes via FileInterface.
+   Eliminate extra ListMatchFiles - implemented via FileIO. 
+
+19.03.2013
+1. Modify dabc::Buffer class. Now it uses reference on MemoryPool to access 
+   its functionality. When release buffer, memory pool mutex will be locked twice - 
+   first time to release memory structures and second time to release reference 
+   on pool itself. Solves very nasty problem during application cleanup, 
+   when memory pool potentially could remains hanging.
+2. Replace in many places const char* argument by const std::string&
+3. Remove direct pointer on module from module item, module is always must be 
+   direct parent of item.
+
+15.03.2013
+1. Make majority methods of Module and Port classes protected, some of them private.
+   Only reference classes will provide public, thread-safe methods.
+2. Like Ports, now Timers and UserItems not accessible via pointer in the module.
+   From now only module methods should be used for any kind of send/recv/timer or 
+   user event generation.
+3. Remove InputPort.h OutputPort.h Timer.h PoolHandle.h files. All these classes are
+   now "hidden" from normal user and should not be directly appear in the code.
+4. Make central dabc::Exception class with kind field to simplify handling of the exceptions.
+
+14.03.2013
+1. Change logic how factories are instantiated, 
+2. Remove libraries handles list from the factory, it was used for symbols finding.
+3. Hide all PoolHandle methods from user, 
+   only Module methods can be used for correspondent functionality  
+4. Remove direct usage of InputPort/OutputPort classes in user code - everything done
+   via indexes or names. Later classes will be removed completely. Still one need to 
+   hide many module/ports methods 
+
+13.03.2013
+1. Change syntax of DOUT1(("something")) to DOUT1("something"). As before, command will not be
+   compiled when make debug=0 command is used.
    
-13.05.2013
-1. Add possibility to create devices and threads automatically via xml file.
-   Xml code should look like: 
+12.03.2013
+1. Modify EZCA plugin - remove static variables, use DataInput interface in proper way,
+   improve compilation 
+2. Fix timeout probelms in DataTransports
+3. Allow to change EZCA config parameters
+4. Use EZCA group operations - should improve performance when using many variables.
+5. Use mbs::WriteIterator in EZCA plugin, fix severeal errors in iterator itself.
+6. Rebuild EZCA descriptors only when variables list changed - mean once at the beginning
+7. Adjust simple go4 analysis in EZCA plugin to be able work with current readout.
 
-   <Thread name="thread1" class="dabc::SocketThread"/>
+11.03.2013
+1. Next step to make PoolHandle like input port, which delivers buffers from the memory
+   pool. No any requests is necessary. Till now possible to request buffers directly from 
+   the pool, but most of transport and standard modules will use new feature.
+2. Continue API transition, step by step hide direct port methods from user.
 
-   <Device name="verbs" class="verbs::Device"/>
-   <Thread name="thread2" class="verbs::Thread" device="verbs"/>
-       
-14.05.2013
-1. Add possibility to configure threads layout. Layout defines how many threads will be
-   created for particular elements. At the moment following layouts are supported:
-      "minimal"    - minimal number of threads
-      "permodule"  - each module should use single thread, including all transports
-      "balanced"   - per each module three threads - for module, all input and all output transports
-      "maximal"    - each entity will gets its own thread
-   Threads layout can be specified in <Run> section of xml file:
-      <threads_layout value="permodule"/>
-   Default kind of threads layout is balanced.
-2. Allow to configure "timeout", "thread", "device", "useackn" and "timeout" attributes 
-   for port or for connection. These attributes will be used for transport creation for
-   particular port. For instance, one could specify thread attribute:
-      <InputPort name="Input0" url="lmd://file*.lmd" queue="10" thread="InputThrd0"/>
-   to define which thread will be used for the transport.
-           
-15.05.2013
-1. Make more comfortable way to specify affinity of the threads and complete process.
-2. Already before it was possible to specify taskset arguments for complete dabc process in
-   <Run> section in the form like <taskset value="-c 10-15"/>. This is used in dabc_run script.
-3. One can specify default affinity for every new created thread, providing "affinity" 
-   parameter in <Run> section. Value can be following:
-       - unsigned value with processors mask
-       - string like "xxxoooxxxss" with allowed symbols 'x', 'o' and 's'.
-                  'x' - enabled, 'o' - disabled, 's' - special purpose
-                     first element in string corresponds to first processor
-       - string like "-N" where N is processors number which should be reserved 
-                  for special purposes. These processors could be later assigned 
-                  with SetAffinity("+M") call (M<N) 
-4. For every thread attribute "affinity" could be specified. Allowed values:
-       - unsigned value with processors mask
-       - string like "xxxoooxxx" were x and o identified enabled and disabled processors,
-               first element in string corresponds to first processor
-       - string like "+M" where M is processor number in special processors set, 
-                before SetDfltAffinity("-N") should be called (M<N) 
-5. Mark current repository trunk as 2.0.1 version    
-      
-16.05.2013
-1. Allow to specify auto="false" for every input/output port to avoid automatic port connection.
-2. Adjust most of MBS examples to current modules creation logic. 
-   Main advantage now - one do not need  special init functions for different use-cases.
-3. Remove mbs::GeneratorModule - one can use "lmd://Generator" input instead.
-4. Implement of automatic reconnection of any module input/output. 
-   For that "reconnect" attribute should be specified for the port:
-      <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="3"/>
-   Property specifies interval (in seconds) how often reconnect should be perfromed.
-   Reconnect will not be done when auto="false" specified.    
-5. Fix error that MemoryPool was stopped when no any connection was availible.
-   Thus when new connection was comming, pool failed to provide 
-   new buffer to modules and transports.
+8.03.2013
+1. Rename PortBase -> Port class.
+2. Modify BuffersQueue class, use it everywhere where it makes sencse.
+3. Start transition to module API, where user do not have access to pointers to the
+   objects like I/O port, pool handle, timer and so on. Either port index or port name
+   should be used. Also all main methods like Send/Recv should be protected to avoid
+   usage from outside module code.     
 
-17.05.2013
-1. In input and output ports properties "rate" attribute can be specified.
-   When specified, data rate parameter with such name will be created and assigned to port.
-     <InputPort name="Input0" url="mbs://lxg0538/Stream" rate="DataRate"/>
-2. Create dabc::RepeaterModule. It's only functionality - translate data from each input to
-   correspondent output. Thus number inputs and outputs should be the same.
-3. Remove old latex-based documentation, start long transition to doxygen-based one.
-   At least 1.8.0 version of doxygen is required. 
-   To generate documentation files, call "make doxy".
-4. Produce 2.0.2 tag - currently working version of HADAQ readout
+7.03.2013
+1. First workign setup with MBS combiner module. Main change - do not block event loop by 
+   event building forever. Use ProcessRecv/ProcessSend methods, they can reinject events itself.
+2. Strictly check version 2 of xml file.     
+3. In mbs::ServerTransport correctly treat second request from the client
+4. In epics plugin eliminate applications class - everything can be done with simple init
+   function. Simplify a lot class structure, still to be checked with epics. 
+5. Adjust mbs plugin, remove old examples and old eventapi
+6. Remove old port, pool handle, transport and local transport classes.
 
-21.05.2013
-1. In mbs::ServerTransport implement correct stop of transport when EOF buffer has been seen.
-2. Make transport kind of mbs::ServerTransport blocking by default. In this case every buffer
-   should be delivered to at least one client. If no one client is connected, transport will block.
-   One can specify unblocking mode for transport server if configure:
-       <OutputPort name="Output0" url="mbs://Transport?unblock"/>
-   Stream server will be always unblocking.
+6.03.2013
+1. Adjust mbs plugin modules to new scheme, need to test them
+2. First tests working with hadaq simulators! 
+3. Add possibility to balance performance between modules by limiting loop max count
+   per port. In this case ProcessRecv/ProcessSend calling sequence will be broken and
+   events are rescheduled. Probably, very important for hadaq
+4. Debug and improve hadaq::CombinerModule and hadaq::UspTransport classes. 
+   Now with minimal queue length everything works smoothly. Also correct treatment of
+   events id overflow is implemented.
+5. Test hld and lmd output for hadaq event builder module - works!   
+6. In hadaq transport use simple recv() function - socket is already bind to the port.
+
+5.03.2013
+1. Change const char* to std::string in modules constructors and all related methods
+2. Adjust hadaq plugin to new organization, need to be tested.
+3. By default, module creates input and output ports and pool handle (if conbfigured) 
+4. Allow to put configuration parameters as node attributes in xml files like
+       <InputPort name="Input0" queue="11" url="hadaq://host:50000"/>
+   Should significantly simplify xml files. Old syntax is also valid:
+       <InputPort name="Input0">
+         <queue value="11"/>
+         <url value="hadaq://host:50000"/>
+       </InputPort>  
+5. Start transition of roc::CombinerModule to new scheme, remove some old features.
+
+4.03.2013 
+1. For time been include roc-udp plugin into dabc2 - just for convenience duting 
+   migration. Convert UdpTransport to SocketAddon.
+2. In NewDataInput allow to use queues of the buffers for transport addon. 
+   Use such feature for the roc udp transport
+3. First debugging of the roc-udp plugin - seems to be, it is working!
+4. Eliminate SocketWorker classes - now all codes based on Addons.
+
+1.03.2013
+1. Refactor hadaq::UdpDataTransport - use InputTransport and SocketAddon instead.
+   Need to be verified with real setup.
+
+28.02.2013
+1. Debug network transport for socket, including acknowledge feature. Is working now.
+2. Introduce verbs::WorkerAddon class, which replaces specialized verbs::Worker
+   Redo all relevant verbs classes. Adjust NetworkTransport for verbs.
    
-24.05.2013
-1. Make doxygen docu more readable
+27.02.2013
+1. Refactor command channel, socket device, network transport and socket transport.
+   In all cases SocketAddon class used insted of SocketWorker. 
+   Still a lot of debugging to be done.
 
-27.05.2013
-1. Activate shared-memory observer in hadaq plugin only when it really enabled
+26.02.2013
+1. Significant redesign of mbs::ServerTransport. Now it consists from ServerAddon, which
+   handles connection and OutputAddon which handles data transfer to client. 
+   Many clients organized as many slave connection to server transport. Number of connections
+   can be increased or descreased dynamically. Tested with go4 and with dabc client. 
 
-28.05.2013
-1. Introduce dabc::Hierarchy class, which should represent in the future 
-   objects hierarchy of remote (or local) DABC process.
-   
-31.05.2013
-1. Provide version control of dabc::Hierarchy structure. Each element in hierarchy includes
-   version number, which indicate when last changes were performed. This version gaves
-   possibility to extract only changed items relative to specified version in the past.
-2. Implement conversion of dabc::Hierarchy structure into xml and reconstruct 
-   hierarchy from xml. This will allow to transport and reconstruct hierarchy on
-   any remote location.
+22.02.2013
+1. Deliver disconnect events to module also in non-running state.
+2. First working version of mbs::ClientTransport.
+3. Split DataTransport on two independend InputTransport and OutputTransport.
+   Both classes should be used with DataInput/DataOutput classes. 
+4. Adjust DataInput interface to work not only with blocking interfaces but also 
+   with call-back functionality - like DataInput already.
 
-4.06.2013
-1. Fix (implement) missing cleanup in several components - Port, PoolHandle, NetworkTransport.
-   Cleanup mostly required to correctly release crosss-references before objects can be destroyed.
-   Without correct cleanup manager can not destroy referenced objects - in most cases MemoryPool.  
+21.02.2013
+1. Implementing full pallette of WorkerAddon for SocketThread. All new classes should
+   replace SocketWorker classes in dabc.
+2. Rewrite mbs::ClientTransport class with SocketIOAddon. Try to use DataInputTransport.
+   Only implementation, not yet tested.  
 
-5.06.2013
-1. Introduce new command channel, based on TCP sockets (old was using UDP). There is 
-   one worker per connection and all commands to remote node are sequentialized via that worker.
-   At the moment functionality of old and new command channels are similar and they can be
-   easily replaced. In future command channel can be used to communicate with dabc
-   nodes from external application (command shell, go4 plugin and so on). 
+20.02.2013
+1. First working implementation of NewDataTransport, based on NewTransport. 
+   Here normal ModuleAsync is used to provide event loop, queues and so on.
+   Dramatically simplifies way how port and transport connected and work together.
+2. First adoption of NewDataTransport to lmd file input/output. 
+   First running example with such new transports.
+3. Introduce di_DfltBufSize return value for DataInput object. Allows to use default 
+   buffers, provided by the memory pool. Thus configuration can be shifted to memory pool.
+4. Allow to specify transport kind directly in the xml file - via url tag.
+   By one string one can specify type of transport and basic parameters. Like
+   output lmd file is set with <url value="lmd://local.lmd?maxsize=20"/>
+
+19.02.2013
+1. New event-generation model. Before each send/recv operation produces event,
+   which should be handled. This can leads to unlimited grow of thread events queue, if
+   event processing done not proper. To cover most typical tasks, new models for i/o ports
+   introduced. There are four models now:
+   enum EventsProducing {
+      SignalNone = 0,   // port will not produce any events
+      SignalConfirm,    // next event can be produced when previous event is received, confirmed and
+                        // event consumer performed next operation
+      SignalOperation,  // next event can be produced when event consumer performs next operation
+      SignalEvery       // every operation will produce event
+   }
+2. By default use SignalConfirm kind for i/o ports. This kind is useful when in 
+   each event processsing function many buffers can be handled - is a situation in most cases.    
+3. Implement burst mode in memory pool. When module permanently requests buffers from the pool,
+   maximum number of buffers will be send.
+4. Support of new pool handle in ModuleSync
+
+15.02.2013
+1. Introduce WorkerAddon class, which should contain all device-specific 
+   code for sockets and IB.
+2. MemoryPool class now derived from ModuleAsync - means just another source of
+   buffers. All requests now will be processed via ports, keep for the moment
+   direct TakeBuffer methods.
+
+14.02.2013
+1. Introduce InputPort and OutputPort
+2. Introduce BufferQueue for connection between ports
+3. Add support of new i/o ports into both modules kinds
+4. Generate i/o events only when consumer react on previous event
+5. Improve by factor 3 speed of buffers propogation over modules
+6. Exclude mutex from queue when ports comunicating in the same thread 
+7. Use thread for ModuleItems only when required. For instance i/o ports not
+   necessary need to be assigned to the thread. Also in case of Timer,
+   one can use Module thread. This should simplify start/stop procedure.

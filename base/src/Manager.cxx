@@ -186,10 +186,10 @@ namespace dabc {
          {
             //printf("Vary last action mgr = %p\n", dabc::mgr());
             if (dabc::mgr() && fAutoDestroy) {
-               //printf("Destroy manager\n");
+               printf("Destroy manager\n");
                dabc::mgr()->HaltManager();
                dabc::mgr.Destroy();
-               //printf("Destroy manager done\n");
+               printf("Destroy manager done\n");
             }
          }
    };

@@ -120,7 +120,7 @@ dabc::XMLNodePointer_t dabc::ConfigIO::FindSubItem(XMLNodePointer_t node, const 
    return FindSubItem(fCfg->FindChild(node, subname.c_str()), pos+1);
 }
 
-/** \biref Special class to resolve configuration variables at the time when field value set */
+/** \brief Special class to resolve configuration variables at the time when field value set */
 
 namespace dabc {
 

@@ -259,7 +259,7 @@ namespace dabc {
       }
    };
 
-   /** \brief Template to put any object, not derived from \red dabc::Object, into cleanup queue */
+   /** \brief Template to put any object, not derived from \ref dabc::Object, into cleanup queue */
    template<class T>
    class CleanupEnvelope : public Object {
       protected:

@@ -33,19 +33,32 @@ namespace dabc {
       private:
          virtual bool DoStart();
 
+         /** \brief Generic event processing method
+          * Here all events are processed and delivered to the user.
+          * Made private to exclude possibility to redefine it */
+         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
+
       protected:
+         /** \brief Constructor of ModuleAsync class
+          * Made protected to exclude possibility to create instance of class iteself */
          ModuleAsync(const std::string& name, Command cmd = 0) : Module(name, cmd) { }
+
+         /** \brief Destructor of ModuleAsync class */
          virtual ~ModuleAsync();
 
-         /** Method return true if send over specified port can be done */
+         /** \brief Method return true if send over specified port can be done */
          bool CanSend(unsigned indx = 0) const
             { return indx < fOutputs.size() ? fOutputs[indx]->CanSend() : false; }
 
-         /** Method return true if send over specified port can be done */
+         /** \brief Method return true if send over specified port can be done */
          unsigned NumCanSend(unsigned indx = 0) const
             { return indx < fOutputs.size() ? fOutputs[indx]->NumCanSend() : false; }
 
-         /** Methods to send buffer via output port */
+         /** \brief Produces event for specified output port
+          * Should be used when processing was stopped due to return false in ProcessSend method */
+         void ActivateOutput(unsigned port);
+
+         /** \brief Methods to send buffer via specified output port */
          bool Send(unsigned indx, Buffer& buf)
          {
             if (indx < fOutputs.size())
@@ -54,67 +67,114 @@ namespace dabc {
             return false;
          }
 
+         /** \brief Send buffer over first output port */
          inline bool Send(Buffer& buf)
            { return Send(0, buf); }
 
-         /** Method return true if recv from specified port can be done */
+         /** \brief Method return true if recv from specified port can be done */
          bool CanRecv(unsigned indx = 0) const
             { return indx < fInputs.size() ? fInputs[indx]->CanRecv() : false; }
 
-         /** Method return number of buffers which can be received via the port */
+         /** \brief Method return number of buffers which can be received via the port */
          unsigned NumCanRecv(unsigned indx = 0) const
            { return indx < fInputs.size() ? fInputs[indx]->NumCanRecv() : 0; }
 
-         /** Methods receives buffers from the port */
+         /** \brief Methods receives buffers from the port */
          Buffer Recv(unsigned indx = 0)
             { return indx < fInputs.size() ? fInputs[indx]->Recv() : Buffer(); }
 
-         /** Returns true if recv queue is full and block input */
+         /** \brief Returns true if receive queue is full and block input */
          bool RecvQueueFull(unsigned port = 0);
 
-         /** Let input signal only when queue is full */
+         /** \brief Let input signal only when queue is full */
          void SignalRecvWhenFull(unsigned port = 0);
 
-         /** Returns buffer from recv queue */
+         /** \brief Produces event for specified input port
+          * Should be used when processing was stopped due to return false in ProcessRecv method */
+         void ActivateInput(unsigned port);
+
+         /** \brief Returns buffer from receive queue of the input port */
          Buffer RecvQueueItem(unsigned port = 0, unsigned nbuf = 0);
 
-         /** Remove items in input queue*/
+         /** \brief Remove items in input queue*/
          bool SkipInputBuffers(unsigned indx = 0, unsigned nbuf = 1)
          { return indx < fInputs.size() ? fInputs[indx]->SkipBuffers(nbuf) : false; }
 
 
-         bool CanTakeBuffer(unsigned indx = 0)
-         { return indx < fPools.size() ? fPools[indx]->CanTakeBuffer() : false; }
+         /** \brief Returns true if memory pool can provide buffer */
+         bool CanTakeBuffer(unsigned pool = 0)
+         { return pool < fPools.size() ? fPools[pool]->CanTakeBuffer() : false; }
 
-         Buffer TakeBuffer(unsigned indx = 0)
-         { return (indx < fPools.size()) ? fPools[indx]->TakeBuffer() : Buffer(); }
+         /** \brief Take buffer from memory pool */
+         Buffer TakeBuffer(unsigned pool = 0)
+         { return (pool < fPools.size()) ? fPools[pool]->TakeBuffer() : Buffer(); }
 
-         Buffer TakeEmpty(unsigned indx = 0)
-         { return (indx < fPools.size()) ? fPools[indx]->TakeEmpty() : Buffer(); }
+         /** \brief Take empty buffer (without memory region) from memory pool */
+         Buffer TakeEmpty(unsigned pool = 0)
+         { return (pool < fPools.size()) ? fPools[pool]->TakeEmpty() : Buffer(); }
 
+         /** \brief Produces event for specified pool handle.
+          * Should be used when processing was stopped due to return false in ProcessBuffer method */
+         void ActivatePool(unsigned pool);
 
          // here is a list of methods,
          // which can be reimplemented in user code
 
-         // Level 0: Either generic event processing function must be reimplemented
-         virtual void ProcessItemEvent(ModuleItem* item, uint16_t evid);
-
          // Level 1: Or one can redefine one or several following methods to
          // react on specific events only
+
+         /** \brief Method called by framework when input event is produced.
+          * \details Can be reimplemented by the user.
+          * Depending from port configuration it can happen for every new buffer
+          * in input queue or only when after previous event was processed */
          virtual void ProcessInputEvent(unsigned port = 0);
+
+
+         /** \brief Method called by framework when output event is produced.
+           * \details Can be reimplemented by the user. */
          virtual void ProcessOutputEvent(unsigned port = 0);
+
+
+         /** \brief Method called by framework when pool event is produced.
+           * \details Can be reimplemented by the user. */
          virtual void ProcessPoolEvent(unsigned pool = 0);
+
+         /** \brief Method called by framework when connection state of the item is changed.
+           * \details Can be reimplemented by the user.
+           * Called when input/output port or pool handle are connected or disconnected diregard
+           * of running state of the module */
          virtual void ProcessConnectEvent(const std::string& name, bool on) {}
+
+         /** \brief Method called by framework when timer event is produced.
+           * \details Can be reimplemented by the user. */
          virtual void ProcessTimerEvent(unsigned timer = 0) {}
+
+         /** \brief Method called by framework when custom user event is produced.
+           * \details Can be reimplemented by the user. */
          virtual void ProcessUserEvent(unsigned item = 0) {}
 
+
          // Level 2: One could process each buffer
+         // at this level user gets process calls for each new buffer
+
+         /** \brief Method called by framework when at least one buffer available in input port.
+          * \details Can be reimplemented by the user.
+          * Method should return true is user want method to be called again for next buffer in input port */
          virtual bool ProcessRecv(unsigned port = 0) { return false; }
+
+         /** \brief Method called by framework when at least one buffer can be send to output port.
+          * \details Can be reimplemented by the user.
+          * Method should return true is user want method to be called again for next possibility to send buffer */
          virtual bool ProcessSend(unsigned port = 0) { return false; }
+
+         /** \brief Method called by framework when at least one buffer available in pool handle.
+          * \details Can be reimplemented by the user.
+          * Method should return true is user want method to be called again for next buffer in pool handle */
          virtual bool ProcessBuffer(unsigned pool = 0) { return false; }
 
       public:
 
+         /** \brief Returns class name of the object */
          virtual const char* ClassName() const { return "ModuleAsync"; }
 
    };
