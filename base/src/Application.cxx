@@ -25,7 +25,7 @@
 #include "dabc/Hierarchy.h"
 
 dabc::ApplicationBase::ApplicationBase() :
-   Worker(dabc::mgr(), xmlAppDfltName, true),
+   Worker(dabc::mgr(), xmlAppDfltName),
    fInitFunc(0),
    fWasRunning(false)
 {
@@ -209,7 +209,7 @@ bool dabc::ApplicationBase::StartModules()
    ReferencesVector vect;
 
    GetAllChildRef(&vect);
-   
+
    while (vect.GetSize()>0) {
       ModuleRef m = vect.TakeRef(0);
       m.Start();

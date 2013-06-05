@@ -236,18 +236,18 @@ verbs::Device::Device(const std::string& name) :
    fIbContext(),
    fAllocateIndividualCQ(false)
 {
-   DOUT2("Creating VERBS device %s  refcnt %u", GetName(), NumReferences());
+   DOUT1("Creating VERBS device %s  refcnt %u", GetName(), NumReferences());
 
    if (!fIbContext.OpenVerbs(true)) {
       EOUT("FATAL. Cannot start VERBS device");
       exit(139);
    }
 
-   DOUT3("Creating thread for device %s", GetName());
+   DOUT1("Creating thread for device %s", GetName());
 
    MakeThreadForWorker(GetName());
 
-   DOUT2("Creating VERBS device %s done refcnt %u", GetName(), NumReferences());
+   DOUT1("Creating VERBS device %s done refcnt %u", GetName(), NumReferences());
 }
 
 verbs::Device::~Device()

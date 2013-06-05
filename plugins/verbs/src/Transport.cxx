@@ -115,7 +115,10 @@ bool verbs::VerbsNetworkInetrface::AssignMultiGid(ibv_gid* multi_gid)
 void verbs::VerbsNetworkInetrface::AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue)
 {
    dabc::NetworkTransport* tr = (dabc::NetworkTransport*) fWorker();
+
    if (tr==0) return;
+
+   DOUT3("++++ verbs::VerbsNetworkInetrface::AllocateNet tr = %p poolname %s", tr, tr->TransportPoolName().c_str());
 
    dabc::MemoryPoolRef pool = dabc::mgr.FindPool(tr->TransportPoolName());
 
@@ -176,6 +179,11 @@ void verbs::VerbsNetworkInetrface::SubmitSend(uint32_t recid)
    int senddtyp = tr->PackHeader(recid);
 
    dabc::NetworkTransport::NetIORec* rec = tr->GetRec(recid);
+
+   if ((rec==0) || (f_sge==0)) {
+      EOUT("Did not found rec %p or f_sge %p - abort", rec, f_sge);
+      exit(7);
+   }
 
    f_sge[segid].addr = (uintptr_t) rec->header;
    f_sge[segid].length = tr->GetFullHeaderSize();

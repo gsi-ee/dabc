@@ -20,7 +20,7 @@
 #include "dabc/Thread.h"
 
 dabc::CommandsSet::CommandsSet(ThreadRef thrd, bool parallel) :
-   Worker(0, "set", true),
+   Worker(0, "set"),
    fReceiver(dabc::mgr()),
    fCmds(10),
    fParallelExe(parallel),

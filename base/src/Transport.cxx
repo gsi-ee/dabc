@@ -50,7 +50,7 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
    if (!inpport.null()) {
       poolname = inpport.Cfg(dabc::xmlPoolName, cmd).AsStdStr(poolname);
 
-//      DOUT0("DataTransport %s creates port Output pool %s", ItemName().c_str(), poolname.c_str());
+//      DOUT0("Inpport %s pool %s", inpport.ItemName(false).c_str(), poolname.c_str());
 
       CreateOutput("Output", inpport.QueueCapacity());
 
@@ -61,7 +61,7 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
       poolname = outport.Cfg(dabc::xmlPoolName, cmd).AsStdStr(poolname);
 
-//      DOUT0("DataTransport %s creates port Input pool %s", ItemName().c_str(), poolname.c_str());
+//      DOUT0("Outport %s pool %s cmdhaspool %s", outport.ItemName(false).c_str(), poolname.c_str(), DBOOL(cmd.HasField(dabc::xmlPoolName)));
 
       CreateInput("Input", outport.QueueCapacity());
 
@@ -70,9 +70,9 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
    if (fIsInputTransport && poolname.empty()) poolname = dabc::xmlWorkPool;
 
-   if (!poolname.empty()) {
-//      DOUT0("Create hadnle in transport %s isinp:%s isout:%s", ItemName().c_str(), DBOOL(fIsInputTransport), DBOOL(fIsOutputTransport));
+//   DOUT0("Create transport inp %s out %s poolname %s", DBOOL(fIsInputTransport), DBOOL(fIsOutputTransport), poolname.c_str());
 
+   if (!poolname.empty() && (NumPools()==0)) {
       // TODO: one should be able to configure if transport use pool requests or not
       CreatePoolHandle(poolname);
    }

@@ -181,7 +181,7 @@ namespace dabc {
          inline bool IsWorkerActive() const { return fWorkerActive; }
 
          /** \brief Special constructor, designed for inherited classes */
-         Worker(const ConstructorPair& pair, bool owner = true);
+         Worker(const ConstructorPair& pair);
 
       public:
 
@@ -201,7 +201,7 @@ namespace dabc {
               priorityMagic = -77    // this priority allows to submit commands even when processor is stopped
          };
 
-         Worker(Reference parent, const std::string& name, bool owner = true);
+         Worker(Reference parent, const std::string& name);
          virtual ~Worker();
 
          virtual const char* ClassName() const { return "Worker"; }

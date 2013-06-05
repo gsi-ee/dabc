@@ -146,7 +146,9 @@ namespace dabc {
 
          unsigned GetFullHeaderSize() const { return fFullHeaderSize; }
 
-         /** We made method public to use in some other placses -
+         /** \brief Provides name of memory pool, used by transport
+          *
+          * We made method public to use in some other places -
           * one should take care that same thread is used */
          std::string TransportPoolName() const { return PoolName(); }
 

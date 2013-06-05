@@ -154,7 +154,7 @@ namespace dabc {
          /** \brief Set object state value */
          inline void SetState(EState st) { fObjectFlags = (fObjectFlags & ~flStateMask) | (unsigned) st ; }
 
-         static Reference SearchForChild(Reference& ref, const char* name, bool firsttime, bool force, bool isowner = true) throw();
+         static Reference SearchForChild(Reference& ref, const char* name, bool firsttime, bool force) throw();
 
          void FillFullName(std::string &fullname, Object* upto) const;
 
@@ -242,11 +242,14 @@ namespace dabc {
 
          /** Structure used to specify arguments for object constructor */
          struct ConstructorPair {
-            Reference parent;
-            std::string name;
+            friend class Object;
 
-            ConstructorPair() : parent(), name() {}
-            ConstructorPair(const ConstructorPair& src) : parent(src.parent), name(src.name) {}
+            private:
+               Reference parent;
+               std::string name;
+
+               ConstructorPair() : parent(), name() {}
+               ConstructorPair(const ConstructorPair& src) : parent(src.parent), name(src.name) {}
          };
 
          /** \brief Internal DABC method, used to produce pair - object parent and object name,
@@ -265,13 +268,13 @@ namespace dabc {
           * which is typically should be used as argument in class constructor */
          static ConstructorPair MakePair(const std::string& fullname, bool withmanager = true);
 
-         Object(const ConstructorPair& pair, bool owner = true);
+         Object(const ConstructorPair& pair);
 
       public:
 
-         Object(const std::string& name, bool owner = true);
+         Object(const std::string& name);
 
-         Object(Reference parent, const std::string& name, bool owner = true);
+         Object(Reference parent, const std::string& name);
 
          // FIXME: one should find a way to catch a call to the destructor
          virtual ~Object();
@@ -383,9 +386,8 @@ namespace dabc {
           *
           * \param[in] name    folder name
           * \param[in] force   if true, missing folder will be created
-          * \param[in] isowner ownership flag of newly created folders
           * \returns           reference on the folder */
-         Reference GetFolder(const char* name, bool force = false, bool isowner = true) throw();
+         Reference GetFolder(const char* name, bool force = false) throw();
 
          /** \brief Print object content on debug output */
          virtual void Print(int lvl = 0);

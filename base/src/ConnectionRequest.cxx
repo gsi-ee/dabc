@@ -140,6 +140,9 @@ void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
    if (optional!=0)
       SetOptional(strcmp(optional, xmlTrueValue)==0);
 
+   const char* poolname = Xml::GetAttr(node, xmlPoolAttr);
+   if (poolname!=0) SetPoolName(poolname);
+
    const char* devname = Xml::GetAttr(node, xmlDeviceAttr);
    if (devname!=0)
       SetConnDevice(devname);
@@ -148,4 +151,6 @@ void dabc::ConnectionRequest::SetConfigFromXml(XMLNodePointer_t node)
    double tmout_val(10.);
    if ((tmout!=0) && str_to_double(tmout, &tmout_val))
       SetConnTimeout(tmout_val);
+
+
 }

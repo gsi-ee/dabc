@@ -40,7 +40,8 @@ dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inppo
     fFirstAckn(true),
     fAcknReadyCounter(0),
     fFullHeaderSize(0),
-    fInlineDataSize(0)
+    fInlineDataSize(0),
+    fStartBufReq(false)
 {
    AssignAddon(addon);
 
@@ -57,7 +58,7 @@ dabc::NetworkTransport::NetworkTransport(dabc::Command cmd, const PortRef& inppo
    if (IsOutputTransport())
       fOutputQueueCapacity = outport.QueueCapacity();
 
-   DOUT0("Create new net transport inp %s out %s ackn %s", DBOOL(IsInputTransport()), DBOOL(IsOutputTransport()), DBOOL(fUseAckn));
+   DOUT2("Create new net transport inp %s out %s ackn %s", DBOOL(IsInputTransport()), DBOOL(IsOutputTransport()), DBOOL(fUseAckn));
 
    if (fUseAckn) {
       if (fInputQueueCapacity<AcknoledgeQueueLength)

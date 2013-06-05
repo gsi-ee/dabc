@@ -20,8 +20,10 @@ dabc::Device* verbs::Factory::CreateDevice(const std::string& classname,
                                            const std::string& devname,
                                            dabc::Command cmd)
 {
-   if (classname == verbs::typeDevice)
+   if (classname == verbs::typeDevice) {
+      DOUT1("Creating verbs device");
       return new verbs::Device(devname);
+   }
 
    return 0;
 }

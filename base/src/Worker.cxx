@@ -71,16 +71,12 @@ void dabc::WorkerAddon::SubmitWorkerCmd(const std::string& cmdname)
    dabc::Worker* wrk = (dabc::Worker*) fWorker();
 
    if (wrk) wrk->Submit(cmdname);
-
 }
-
-
 
 // ================================================================================
 
-
-dabc::Worker::Worker(Reference parent, const std::string& name, bool owner) :
-   Object(parent, name, owner),
+dabc::Worker::Worker(Reference parent, const std::string& name) :
+   Object(parent, name),
    fThread(),
    fAddon(),
    fWorkerId(0),
@@ -98,8 +94,8 @@ dabc::Worker::Worker(Reference parent, const std::string& name, bool owner) :
 }
 
 
-dabc::Worker::Worker(const ConstructorPair& pair, bool owner) :
-   Object(pair, owner),
+dabc::Worker::Worker(const ConstructorPair& pair) :
+   Object(pair),
    fThread(),
    fAddon(),
    fWorkerId(0),

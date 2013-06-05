@@ -31,21 +31,21 @@ dabc::Buffer dabc::DataInput::ReadBuffer()
    if (sz == di_DfltBufSize) sz = 0x10000;
 
    if (sz>di_ValidSize) return buf;
-    
+
    buf = dabc::Buffer::CreateBuffer(sz);
-    
+
    if (buf.null()) return buf;
-   
+
    if (Read_Start(buf) != di_Ok) {
       buf.Release();
       return buf;
    }
-    
+
    if (Read_Complete(buf) != di_Ok) {
       buf.Release();
       return buf;
    }
-    
+
    return buf;
 }
 
@@ -161,7 +161,7 @@ bool dabc::FileInput::Read_Init(const WorkerRef& wrk, const Command& cmd)
    if (fFileName.find_first_of("*?") != std::string::npos) {
       fFilesList = fIO->fmatch(fFileName.c_str());
    } else {
-      fFilesList = new dabc::Object(0, "FilesList", true);
+      fFilesList = new dabc::Object(0, "FilesList");
       new dabc::Object(fFilesList(), fFileName);
    }
 

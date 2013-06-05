@@ -19,7 +19,7 @@
 
 
 dabc::ModuleItem::ModuleItem(int typ, Reference parent, const std::string& name) :
-   Worker(parent, name.c_str(), true),
+   Worker(parent, name.c_str()),
    fItemType(typ),
    fItemId(0),
    fSubId(0)

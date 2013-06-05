@@ -276,11 +276,11 @@ void dabc::Reference::Print(int lvl, const char* from) const
    dabc::lgr()->Debug(lvl,"filename",1,"funcname", s.c_str());
 }
 
-dabc::Reference dabc::Reference::GetFolder(const char* name, bool force, bool isowner) throw()
+dabc::Reference dabc::Reference::GetFolder(const char* name, bool force) throw()
 {
    if (GetObject()==0) return Reference();
 
-   return GetObject()->GetFolder(name, force, isowner);
+   return GetObject()->GetFolder(name, force);
 }
 
 std::string dabc::Reference::ItemName(bool compact) const

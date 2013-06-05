@@ -205,7 +205,7 @@ namespace dabc {
          if (!thrdname.empty()) SetStr(xmlThreadAttr, thrdname);
       }
 
-      void SetPoolName(const std::string& name) { SetStr(xmlPoolName, name); }
+      void SetPoolName(const std::string& name) { if (!name.empty()) SetStr(xmlPoolName, name); }
 
       std::string PortName() const { return GetStdStr(PortArg()); }
       std::string TransportKind() const { return GetStdStr(KindArg()); }
@@ -401,13 +401,24 @@ namespace dabc {
 
          Reference DoCreateObject(const std::string& classname, const std::string& objname = "", Command cmd = 0);
 
-         /** Return reference on command channel, should be used from manager thread only
+         /** \brief Return reference on command channel
+          * \details should be used from manager thread only
           * If force specified, new command channel will be created */
          WorkerRef GetCommandChannel(bool force = false);
 
-         Reference GetFactoriesFolder(bool force = false) { return GetFolder(FactoriesFolderName(), force, false); }
+         /** \brief Return reference on folder with factories
+          *
+          * @param force - if specified, missing factories folder will be created
+          * @return reference on factories folder
+          */
+         Reference GetFactoriesFolder(bool force = false) { return GetFolder(FactoriesFolderName(), force); }
 
-         Reference GetThreadsFolder(bool force = false) { return GetFolder(ThreadsFolderName(), force, true); }
+         /** \brief Return reference on folder with all registered threads
+          *
+          * @param force - if specified, missing threads folder will be created
+          * @return reference on factories folder
+          */
+         Reference GetThreadsFolder(bool force = false) { return GetFolder(ThreadsFolderName(), force); }
 
          /** Perform sleeping with event loop running.
           *  If prefix specified, output on terminal is performed */

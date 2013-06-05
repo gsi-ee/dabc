@@ -162,7 +162,7 @@ void verbs::PoolRegistry::SyncMRStructure()
 // _________________________________________________________________________
 
 verbs::Context::Context() :
-   dabc::Object(0,"VERBS"),
+   dabc::Object(0, "VERBS"),
    fIbPort(0),
    fContext(0),
    fPD(0),
@@ -182,7 +182,7 @@ verbs::Context::~Context()
 
 bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int ibport)
 {
-   DOUT4("Call  verbs::Device::Open");
+   DOUT1("Call  verbs::Context::OpenVerbs multicast=%s", DBOOL(withmulticast));
 
 #ifndef  __NO_MULTICAST__
    if (withmulticast) {
@@ -200,7 +200,7 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
       return false;
    }
 
-   DOUT4( "Number of hcas %d", num_of_hcas);
+   DOUT1( "Number of hcas %d", num_of_hcas);
 
    struct ibv_device *selected_device = 0;
    uint64_t gid;
@@ -235,7 +235,7 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
    }
 
    gid = ibv_get_device_guid(selected_device);
-   DOUT4( "Open device: %s  gid: %016lx",  devicename, ntohll(gid));
+   DOUT1( "Open device: %s  gid: %016lx",  devicename, ntohll(gid));
 
    fPD = ibv_alloc_pd(fContext);
    if (fPD==0) {
@@ -250,7 +250,7 @@ bool verbs::Context::OpenVerbs(bool withmulticast, const char* devicename, int i
 
 //   PrintDevicesList(true);
 
-   DOUT4("Call new TVerbsConnMgr(this) done");
+   DOUT1("verbs::Context::OpenVerbs done");
 
    res = true;
 
@@ -296,7 +296,11 @@ bool verbs::ContextRef::OpenVerbs(bool withmulticast, const char* devicename, in
 {
    if (GetObject()) return true;
 
+   DOUT1("Creating new context object");
+
    Context* ctx = new Context;
+
+   DOUT1("Creating new context done");
 
    if (!ctx->OpenVerbs(withmulticast, devicename, ibport)) {
       delete ctx;
@@ -400,7 +404,7 @@ dabc::Reference verbs::ContextRef::RegisterPool(dabc::MemoryPool* pool)
 {
    if (pool==0) return 0;
 
-   dabc::Reference folder = GetFolder("PoolReg", true, true);
+   dabc::Reference folder = GetFolder("PoolReg", true);
 
    PoolRegistryRef ref = folder.PutChild(new PoolRegistry(Ref(), pool));
 

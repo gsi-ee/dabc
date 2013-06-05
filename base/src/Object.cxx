@@ -113,7 +113,7 @@ namespace dabc {
 
 
 
-dabc::Object::Object(const std::string& name, bool owner) :
+dabc::Object::Object(const std::string& name) :
    fObjectFlags(0),
    fObjectParent(),
    fObjectName(name),
@@ -124,13 +124,13 @@ dabc::Object::Object(const std::string& name, bool owner) :
 {
    DOUT3("Created object %s %p", GetName(), this);
 
-   SetFlag(flIsOwner, owner);
+   SetFlag(flIsOwner, true);
 
    Constructor();
 }
 
 
-dabc::Object::Object(Reference parent, const std::string& name, bool owner) :
+dabc::Object::Object(Reference parent, const std::string& name) :
    fObjectFlags(0),
    fObjectParent(parent),
    fObjectName(name),
@@ -139,15 +139,15 @@ dabc::Object::Object(Reference parent, const std::string& name, bool owner) :
    fObjectChilds(0),
    fObjectBlock(0)
 {
-   SetFlag(flIsOwner, owner);
-
    DOUT3("Object created %s %p", GetName(), this);
+
+   SetFlag(flIsOwner, true);
 
    Constructor();
 }
 
 
-dabc::Object::Object(const ConstructorPair& pair, bool owner) :
+dabc::Object::Object(const ConstructorPair& pair) :
    fObjectFlags(0),
    fObjectParent(pair.parent),
    fObjectName(pair.name),
@@ -156,9 +156,9 @@ dabc::Object::Object(const ConstructorPair& pair, bool owner) :
    fObjectChilds(0),
    fObjectBlock(0)
 {
-   SetFlag(flIsOwner, owner);
-
    DOUT3("Object created %s %p", GetName(), this);
+
+   SetFlag(flIsOwner, true);
 
    Constructor();
 }
@@ -764,7 +764,7 @@ dabc::Reference dabc::Object::FindChildRef(const char* name, bool force) const t
    return SearchForChild(ref, name, true, force);
 }
 
-dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, bool firsttime, bool force, bool isowner) throw()
+dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, bool firsttime, bool force) throw()
 {
    if (ref.null()) return ref;
 
@@ -774,7 +774,7 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
       if (firsttime) {
          while (ref()->GetParent()!=0)
             ref = Reference(ref()->GetParent());
-         return SearchForChild(ref, name+1, false, force, isowner);
+         return SearchForChild(ref, name+1, false, force);
       } else {
          // skip all slashes in the beginning
          while (*name=='/') name++;
@@ -789,14 +789,14 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 
       if (name[2]=='/') {
          ref = Reference(ref()->GetParent());
-         return SearchForChild(ref, name + 3, false, force, isowner);
+         return SearchForChild(ref, name + 3, false, force);
       }
    }
 
    if ((len>=1) && (name[0]=='.')) {
       if (len==1) return ref;
       if (name[1]=='/')
-         return SearchForChild(ref, name + 2, false, force, isowner);
+         return SearchForChild(ref, name + 2, false, force);
    }
 
    const char* ptok = name;
@@ -814,7 +814,7 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 
       // create new object under parent mutex - no one can create double entries simultaneously
       if ((obj==0) && force) {
-         obj = new Object(0, std::string(name, ptok-name).c_str(), isowner);
+         obj = new Object(0, std::string(name, ptok-name));
          ref()->AddChild(obj, false);
       }
 
@@ -832,15 +832,15 @@ dabc::Reference dabc::Object::SearchForChild(Reference& ref, const char* name, b
 
    if (*ptok==0) return ref;
 
-   return SearchForChild(ref, ptok+1, false, force, isowner);
+   return SearchForChild(ref, ptok+1, false, force);
 }
 
 
-dabc::Reference dabc::Object::GetFolder(const char* name, bool force, bool isowner) throw()
+dabc::Reference dabc::Object::GetFolder(const char* name, bool force) throw()
 {
    Reference ref(this);
 
-   return SearchForChild(ref, name, true, force, isowner)();
+   return SearchForChild(ref, name, true, force);
 }
 
 dabc::Reference dabc::Object::PutChild(Object* obj, bool delduplicate)

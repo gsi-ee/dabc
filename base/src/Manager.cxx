@@ -208,7 +208,7 @@ void dabc::Manager::SetAutoDestroy(bool on)
 
 
 dabc::Manager::Manager(const std::string& managername, Configuration* cfg) :
-   Worker(0, managername, true),
+   Worker(0, managername),
    fMgrStoppedTime(),
    fMgrMutex(0),
    fDestroyQueue(0),
@@ -696,7 +696,7 @@ dabc::ApplicationRef dabc::Manager::app()
 
 dabc::Reference dabc::Manager::GetAppFolder(bool force)
 {
-   return GetFolder(xmlAppDfltName, force, true);
+   return GetFolder(xmlAppDfltName, force);
 }
 
 void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool compact)

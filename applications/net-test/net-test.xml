@@ -1,9 +1,11 @@
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="app1" host="lxg0538" port="5432"/>
-  <Context name="app2" host="lxg0537" port="5433"/>
+  <Context name="app1" host="master" port="5432"/>
+  <Context name="app2" host="node01" port="5433"/>
+  <Context name="app3" host="node02" port="5434"/>
   <Context name="*">
     <Run>
+      <lib value="libDabcVerbs.so"/>
       <lib value="libDabcNetTest.so"/>
       <debuglevel value="1"/>
       <debugger value="false"/>
@@ -25,12 +27,15 @@
        <PoolName value="Pool"/>
        <NumOutputs value="${DABCNUMNODES}"/>
        <!--Kind value can be "cmd-test", "chaotic", "regular" -->
-       <Kind value="regular"/>
+       <Kind value="chaotic"/>
        <PoolHandle name="Pool" queue="0"/>
        <OutputPort name="*" queue="5" rate="OutRate"/>
        <OutRate width="5" prec="3" low="0" up="50" debug="1"/>
        <CmdExeTime width="5" prec="3" units="ms" low="0" up="50" debug="1"/>
     </Module>
+    
+    <!-- this is receiver module - just consuming data from receivers -->
+    
     <Module name="Receiver" class="NetTestReceiverModule">
        <NumInputs value="${DABCNUMNODES}"/>
        <InputPort name="*" queue="10" rate="InpRate"/>
@@ -39,8 +44,8 @@
     
     <!-- network device required to establish connections between application modules -->
     
-    <Device name="NetDev" class="dabc::SocketDevice"/>
-    <Connection kind="all-to-all" device="NetDev" output="Sender" input="Receiver"/>
+    <Device name="NetDev" class="verbs::Device"/>
+    <Connection kind="all-to-all" device="NetDev" output="Sender" input="Receiver" pool="Pool"/>
     
   </Context>
 </dabc>

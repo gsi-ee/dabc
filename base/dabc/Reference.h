@@ -230,9 +230,8 @@ namespace dabc {
          /** \brief Return folder of specified name, no special symbols are allowed.
           * \param[in] name     requested folder name
           * \param[in] force    if true, missing folder will be created
-          * \param[in] isowner  ownership flag for newly created folders
           * \returns            reference on the folder */
-         Reference GetFolder(const char* name, bool force = false, bool isowner = true) throw();
+         Reference GetFolder(const char* name, bool force = false) throw();
 
          /** \brief Produce string, which can be used as name argument in
           * dabc::mgr.FindItem(name) call */

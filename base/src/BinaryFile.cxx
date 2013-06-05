@@ -60,7 +60,7 @@ dabc::Object* dabc::FileInterface::fmatch(const char* fmask)
          fullitemname += item;
          if (stat(fullitemname.c_str(), &buf)==0)
             if (!S_ISDIR(buf.st_mode) && (access(fullitemname.c_str(), R_OK)==0)) {
-               if (res==0) res = new dabc::Object(0, "FilesList", true);
+               if (res==0) res = new dabc::Object(0, "FilesList");
                new dabc::Object(res, fullitemname);
             }
       }

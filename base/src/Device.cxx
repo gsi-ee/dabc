@@ -22,7 +22,7 @@
 
 
 dabc::Device::Device(const std::string& name) :
-   Worker(MakePair(name), true),
+   Worker(MakePair(name)),
    fDeviceMutex(true)
 {
    DOUT3("Device %p %s %s constructor prior:%d", this, GetName(), ItemName().c_str(), WorkerPriority());
