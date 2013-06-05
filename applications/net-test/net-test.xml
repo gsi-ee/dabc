@@ -24,11 +24,9 @@
     <!-- this is sender module, which produces data traffic -->
     
     <Module name="Sender" class="NetTestSenderModule">
-       <PoolName value="Pool"/>
        <NumOutputs value="${DABCNUMNODES}"/>
        <!--Kind value can be "cmd-test", "chaotic", "regular" -->
        <Kind value="chaotic"/>
-       <PoolHandle name="Pool" queue="0"/>
        <OutputPort name="*" queue="5" rate="OutRate"/>
        <OutRate width="5" prec="3" low="0" up="50" debug="1"/>
        <CmdExeTime width="5" prec="3" units="ms" low="0" up="50" debug="1"/>

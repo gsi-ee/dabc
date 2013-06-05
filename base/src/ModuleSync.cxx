@@ -67,7 +67,7 @@ bool dabc::ModuleSync::WaitConnect(const std::string& name, double timeout) thro
 
 }
 
-bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout) throw (Exception)
+bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout) throw (dabc::Exception)
 {
    OutputPort* port = Output(indx);
 
@@ -91,7 +91,7 @@ bool dabc::ModuleSync::Send(unsigned indx, Buffer &buf, double timeout) throw (E
 }
 
 
-dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout) throw (Exception)
+dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout) throw (dabc::Exception)
 {
    InputPort* port = Input(indx);
 
@@ -112,10 +112,10 @@ dabc::Buffer dabc::ModuleSync::Recv(unsigned indx, double timeout) throw (Except
    return Buffer();
 }
 
-dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout) throw (Exception)
+dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout) throw (dabc::Exception)
 {
    PoolHandle* handle = Pool(poolindx);
-   if (handle==0) return Buffer();
+   if (handle==0) return (poolindx==0) ? TakeDfltBuffer() : Buffer();
 
    do {
       if (handle->CanTakeBuffer())
@@ -127,7 +127,7 @@ dabc::Buffer dabc::ModuleSync::TakeBuffer(unsigned poolindx, double timeout) thr
 
 
 
-dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout) throw (Exception)
+dabc::Buffer dabc::ModuleSync::RecvFromAny(unsigned* indx, double timeout) throw (dabc::Exception)
 {
    uint16_t evid(evntModuleNone);
    ModuleItem* resitem(0);

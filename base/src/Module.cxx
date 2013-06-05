@@ -229,6 +229,20 @@ bool dabc::Module::Stop()
    return Execute("StopModule") == cmd_true;
 }
 
+dabc::Buffer dabc::Module::TakeDfltBuffer(bool empty)
+{
+   if (fDfltPool.null()) fDfltPool = dabc::mgr.FindPool(xmlWorkPool);
+
+   MemoryPool* pool = dynamic_cast<MemoryPool*> (fDfltPool());
+
+   if (pool!=0) {
+      return empty ? pool->TakeEmpty() : pool->TakeBuffer();
+   }
+
+   return dabc::Buffer();
+}
+
+
 int dabc::Module::PreviewCommand(Command cmd)
 {
    // this hook in command execution routine allows us to "preview"
@@ -433,6 +447,8 @@ void dabc::Module::ObjectCleanup()
 
    for (unsigned n=0;n<fItems.size();n++)
       if (fItems[n]) fItems[n]->DoCleanup();
+
+   fDfltPool.Release();
 
    fSysTimerIndex = -1;
 

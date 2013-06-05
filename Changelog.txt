@@ -13,10 +13,15 @@ of framework.
 2. Introduce ModuleAsync::ActivateOutput/ActivateInput to generate events for
    specified output/input ports. Required when processing of events was stopped
    when ProcessRecv/ProcessSend methods return false.
+3. ModuleAsync::TakeBuffer() not always requires handle to be created. In simple case
+   direct call to default memory pool (with name "Pool") will be performed. This should
+   exclude complex rules when handle is required or not. From this moment meaning of handle 
+   is provide self-filled queue of buffers, which can be used like any other input port.
+
 
 4.06.2013
 1. Fix (implement) missing cleanup in several components - Port, PoolHandle, NetworkTransport.
-   Cleanup mostly required to correctly release crosss-references before objects can be destroyed.
+   Cleanup mostly required to correctly release cross-references before objects can be destroyed.
    Without correct cleanup manager can not destroy referenced objects - in most cases MemoryPool.  
 
 

@@ -71,7 +71,8 @@ namespace dabc {
          std::vector<Timer*>        fTimers;        ///< array of timers
          std::vector<ModuleItem*>   fUsers;         ///< array of user items
          unsigned                   fSysTimerIndex; ///< index of timer, which will be used with module itself
-         bool                       fAutoStop;      ///< module will automatically stop when all i/o ports will be disconncted
+         bool                       fAutoStop;      ///< module will automatically stop when all i/o ports will be disconnected
+         dabc::Reference            fDfltPool;      ///< direct reference on memory pool, used when no pool handles are not created
 
       private:
 
@@ -82,6 +83,8 @@ namespace dabc {
          void RemoveModuleItem(ModuleItem* item);
 
          double ProcessConnTimer(ConnTimer* timer);
+
+         Buffer TakeDfltBuffer(bool empty = false);
 
          inline PoolHandle* Pool(unsigned n = 0) const { return n < fPools.size() ? fPools[n] : 0; }
          inline OutputPort* Output(unsigned n = 0) const { return n < fOutputs.size() ? fOutputs[n] : 0; }
@@ -127,7 +130,7 @@ namespace dabc {
           * and provides fast access to memory pool functionality.
           * Memory pool should exist before handle can be created
           * Returns index of pool handle, which can be used later with operation like TakeBuffer */
-         unsigned CreatePoolHandle(const std::string& poolname, unsigned queue = 1);
+         unsigned CreatePoolHandle(const std::string& poolname, unsigned queue = 10);
 
          unsigned CreateInput(const std::string& name, unsigned queue = 10);
          unsigned CreateOutput(const std::string& name, unsigned queue = 10);
