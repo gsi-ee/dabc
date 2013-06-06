@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="app1" host="lxg0537" port="5432"/>
-  <Context name="app2" host="lxg0538" port="5433"/>
+  <Context name="lxg0537" host="lxg0537" port="5432"/>
+  <Context name="lxg0538" host="lxg0538" port="5433"/>
   <Context name="*">
     <Run>
       <!--lib value="libDabcVerbs.so"/-->
@@ -27,9 +27,9 @@
     <!-- this is configuration of MCast module, which produces data traffic -->
     
     <Module name="Mcast" class="NetTestMcastModule">
-       <OutputPort name="Output0" url="udp://225.0.0.37:12345?mcast" queue="10" rate="MCastRate"/>
-       <InputPort name="Input0" url="udp://225.0.0.37:12345?mcast" queue="50" rate="MCastRate"/>
-       <MCastRate width="5" prec="3" low="0" up="50" debug="1"/>
+       <OutputPort name="Output0" url="udp://lxg0537:12345" queue="10" rate="UdpRate"/>
+       <InputPort name="Input0" url="udp://lxg0538:12345" queue="10" rate="UdpRate"/>
+       <UdpRate width="5" prec="3" low="0" up="50" debug="1"/>
     </Module>
     
   </Context>

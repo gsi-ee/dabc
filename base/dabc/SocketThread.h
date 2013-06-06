@@ -356,6 +356,11 @@ namespace dabc {
          static void DettachMulticast(int handle, const std::string& addr, bool isrecv = true);
          /** \brief Create datagram (udp) socket */
          static int CreateUdp();
+
+         /** \brief Create udp socket, which can be used for sending packet to other nodes */
+         static int CreateUdpSender(int port);
+
+
          static int ConnectUdp(int fd, const std::string& remhost, int remport);
 
          static SocketServerAddon* CreateServerAddon(int nport, int portmin=-1, int portmax=-1);

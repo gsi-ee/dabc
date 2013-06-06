@@ -94,7 +94,7 @@ dabc::Transport* dabc::SocketFactory::CreateTransport(const Reference& ref, cons
 
          if (isrecv) {
             addon->SetMCastAddr(url.GetHostName(), udp_port, isrecv);
-            addon->SetLogging(true);
+            // addon->SetLogging(true);
          } else {
             addon->SetSendAddr(url.GetHostName(), udp_port);
 

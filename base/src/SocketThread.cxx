@@ -1313,6 +1313,42 @@ void dabc::SocketThread::DettachMulticast(int handle, const std::string& host, b
 }
 
 
+int dabc::SocketThread::CreateUdpSender(int portnum)
+{
+   if (portnum<=0) return -1;
+
+   int fd = socket(PF_INET, SOCK_DGRAM, 0);
+   if (fd<0) return -1;
+
+   // Allow to use same port by many processes
+   int loop = 1;
+   if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &loop, sizeof (loop)) < 0) {
+       EOUT("Cannot setsockopt SO_REUSEADDR");
+       close(fd);
+       return -1;
+   }
+
+   if (!SetNonBlockSocket(fd)) {
+      EOUT("Fail to set non-blocking flag for socket");
+      close(fd);
+      return -1;
+   }
+
+   struct sockaddr_in m_addr;
+   memset(&m_addr, 0, sizeof(m_addr));
+   m_addr.sin_family = AF_INET;
+   m_addr.sin_port = htons(portnum);
+
+   if (bind(fd, (struct sockaddr *)&m_addr, sizeof(m_addr))!=0) {
+      EOUT("Fail to bind to port number %d", portnum);
+      close(fd);
+      return -1;
+   }
+
+   return fd;
+}
+
+
 int dabc::SocketThread::StartUdp(int& portnum, int portmin, int portmax)
 {
 
@@ -1345,6 +1381,7 @@ int dabc::SocketThread::CreateUdp()
    if (fd<0) return -1;
 
    if (SetNonBlockSocket(fd)) return fd;
+   close(fd);
    return -1;
 }
 
