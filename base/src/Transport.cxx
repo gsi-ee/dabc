@@ -74,7 +74,9 @@ dabc::Transport::Transport(dabc::Command cmd, const PortRef& inpport, const Port
 
    if (!poolname.empty() && (NumPools()==0)) {
       // TODO: one should be able to configure if transport use pool requests or not
-      CreatePoolHandle(poolname);
+
+      // for output transport one not need extra memory, just link to pool for special cases like verbs
+      CreatePoolHandle(poolname, fIsInputTransport ? 10 : 0);
    }
 }
 

@@ -309,7 +309,7 @@ dabc::Manager::~Manager()
    delete fMgrMutex; fMgrMutex = 0;
 
    if (dabc::mgr()==this) {
-      DOUT1("Real EXIT");
+      DOUT1("Normal EXIT");
       if (dabc::Logger::Instance())
          dabc::Logger::Instance()->LogFile(0);
    } else

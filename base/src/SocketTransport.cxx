@@ -15,8 +15,8 @@
 
 #include "dabc/SocketTransport.h"
 
-dabc::SocketNetworkInetrface::SocketNetworkInetrface(int fd) :
-   SocketIOAddon(fd, false, true),
+dabc::SocketNetworkInetrface::SocketNetworkInetrface(int fd, bool datagram) :
+   SocketIOAddon(fd, datagram, true),
    NetworkInetrface(),
    fHeaders(0),
    fSendQueue(),
@@ -24,12 +24,19 @@ dabc::SocketNetworkInetrface::SocketNetworkInetrface(int fd) :
    fRecvStatus(0),
    fRecvRecid(0),
    fSendStatus(0),
-   fSendRecid(0)
+   fSendRecid(0),
+   fMcastAddr(),
+   fMcastPort(0),
+   fMcastRecv(false)
 {
 }
 
 dabc::SocketNetworkInetrface::~SocketNetworkInetrface()
 {
+   if (!fMcastAddr.empty()) {
+      SocketThread::DettachMulticast(Socket(), fMcastAddr, fMcastRecv);
+   }
+
    delete [] fHeaders; fHeaders = 0;
    DOUT3("##### ~SocketNetworkInetrface()");
 }
@@ -71,6 +78,8 @@ void dabc::SocketNetworkInetrface::SubmitSend(uint32_t recid)
 
 void dabc::SocketNetworkInetrface::SubmitRecv(uint32_t recid)
 {
+//   DOUT0("dabc::SocketNetworkInetrface::SubmitRecv %u", recid);
+
    fRecvQueue.Push(recid);
 
    // we are in transport thread and can call event-processing methods directly
@@ -128,6 +137,8 @@ void dabc::SocketNetworkInetrface::OnSendCompleted()
 void dabc::SocketNetworkInetrface::OnRecvCompleted()
 {
    NetworkTransport* tr = (NetworkTransport*) fWorker();
+
+//   DOUT0("dabc::SocketNetworkInetrface::OnRecvCompleted %p", tr);
 
    if (tr==0) {
       EOUT("Transport not available!!!");
@@ -197,6 +208,7 @@ do_compl:
 //      DOUT0("SocketNetworkInetrface::OnRecvCompleted start receiving socket %d thrd %s", Socket(), tr->ThreadName().c_str());
 
       if (IsDatagramSocket()) {
+//         DOUT0("Start recv from datagram socket");
          fRecvStatus = 2;
          StartNetRecv(rec->header, tr->GetFullHeaderSize(), rec->buf, rec->buf.GetTotalSize());
       } else {

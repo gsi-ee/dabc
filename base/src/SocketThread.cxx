@@ -255,6 +255,7 @@ dabc::SocketIOAddon::SocketIOAddon(int fd, bool isdatagram, bool usemsg) :
    fSendIOVSize(0),
    fSendIOVFirst(0),
    fSendIOVNumber(0),
+   fSendUseAddr(false),
    fRecvUseMsg(true),
    fRecvIOV(0),
    fRecvIOVSize(0),
@@ -267,6 +268,7 @@ dabc::SocketIOAddon::SocketIOAddon(int fd, bool isdatagram, bool usemsg) :
       fUseMsgOper = true;
    }
 
+   memset(&fSendAddr, 0, sizeof(fSendAddr));
 
    #ifdef SOCKET_PROFILING
        fSendOper = 0;
@@ -293,6 +295,24 @@ dabc::SocketIOAddon::~SocketIOAddon()
    AllocateSendIOV(0);
    AllocateRecvIOV(0);
 }
+
+void dabc::SocketIOAddon::SetSendAddr(const std::string& host, int port)
+{
+   if (!IsDatagramSocket()) {
+      EOUT("Cannot specify send addr for non-datagram sockets");
+      return;
+   }
+   memset(&fSendAddr, 0, sizeof(fSendAddr));
+   fSendUseAddr = false;
+
+   if (!host.empty() && (port>0)) {
+      fSendUseAddr = true;
+      fSendAddr.sin_family = AF_INET;
+      fSendAddr.sin_addr.s_addr = inet_addr(host.c_str());
+      fSendAddr.sin_port = htons(port);
+   }
+}
+
 
 void dabc::SocketIOAddon::AllocateSendIOV(unsigned size)
 {
@@ -498,8 +518,8 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
     switch (evnt.GetCode()) {
        case evntSocketRead: {
 
-//          if (IsLogging())
-//             DOUT0("Socket %d wants to receive number %d usemsg %s", Socket(), fRecvIOVNumber, DBOOL(fRecvUseMsg));
+          if (IsLogging())
+             DOUT0("Socket %d wants to receive number %d usemsg %s", Socket(), fRecvIOVNumber, DBOOL(fRecvUseMsg));
 
           // nothing to recv
           if (fRecvIOVNumber==0) return;
@@ -636,8 +656,8 @@ void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
 
              struct msghdr msg;
 
-             msg.msg_name = 0;
-             msg.msg_namelen = 0;
+             msg.msg_name = fSendUseAddr ? &fSendAddr : 0;
+             msg.msg_namelen = fSendUseAddr ? sizeof(fSendAddr) : 0;;
              msg.msg_iov = &(fSendIOV[fSendIOVFirst]);
              msg.msg_iovlen = fSendIOVNumber - fSendIOVFirst;
              msg.msg_control = 0;
@@ -1097,7 +1117,7 @@ int dabc::SocketThread::StartServer(int& portnum, int portmin, int portmax)
 
            int opt = 1;
 
-           setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof opt);
+           setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
 
            if (!bind(sockfd, t->ai_addr, t->ai_addrlen)) break;
            close(sockfd);
@@ -1179,21 +1199,16 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
    return sockfd;
 }
 
-int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
+int dabc::SocketThread::StartMulticast(const std::string& host, int port, bool isrecv)
 {
-   if ((host==0) || (strlen(host)==0)) {
-      host = "224.0.0.15";
-      EOUT("Multicast address not specified, use %s", host);
+   if (host.empty() || (port<=0)) {
+      EOUT("Multicast address not specified, use %s", host.c_str());
+      return -1;
    }
 
-   if (port<=0) {
-      port = 4576;
-      EOUT("Multicast port not specified, use %d", port);
-   }
-
-   struct hostent *server_host_name = gethostbyname(host);
+   struct hostent *server_host_name = gethostbyname(host.c_str());
    if (server_host_name==0) {
-      EOUT("Cannot get host information for %s", host);
+      EOUT("Cannot get host information for %s", host.c_str());
       return -1;
    }
 
@@ -1233,11 +1248,17 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
          return -1;
       }
 
+      if (!SetNonBlockSocket(socket_descriptor)) {
+         EOUT("Fail to set non-blocking flag for socket");
+         close(socket_descriptor);
+         return -1;
+      }
+
       // Join the multicast group
-      command.imr_multiaddr.s_addr = inet_addr (host);
+      command.imr_multiaddr.s_addr = inet_addr (host.c_str());
       command.imr_interface.s_addr = htonl (INADDR_ANY);
       if (command.imr_multiaddr.s_addr == (in_addr_t)-1) {
-         EOUT("%s is not valid address", host);
+         EOUT("%s is not valid address", host.c_str());
          close(socket_descriptor);
          return -1;
       }
@@ -1252,12 +1273,18 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
 
      memset (&address, 0, sizeof (address));
      address.sin_family = AF_INET;
-     address.sin_addr.s_addr = inet_addr (host);
+     address.sin_addr.s_addr = inet_addr (host.c_str());
      address.sin_port = htons (port);
 
      if (connect(socket_descriptor, (struct sockaddr *) &address,
            sizeof (address)) < 0) {
-        EOUT("Fail to connect to host %s port %d", host, port);
+        EOUT("Fail to connect to host %s port %d", host.c_str(), port);
+        close(socket_descriptor);
+        return -1;
+     }
+
+     if (!SetNonBlockSocket(socket_descriptor)) {
+        EOUT("Fail to set non-blocking flag for socket");
         close(socket_descriptor);
         return -1;
      }
@@ -1266,15 +1293,15 @@ int dabc::SocketThread::StartMulticast(const char* host, int port, bool isrecv)
   return socket_descriptor;
 }
 
-void dabc::SocketThread::CloseMulticast(int handle, const char* host, bool isrecv)
+void dabc::SocketThread::DettachMulticast(int handle, const std::string& host, bool isrecv)
 {
-   if (handle<0) return;
+   if ((handle<0) || host.empty()) return;
 
    if (isrecv) {
 
       struct ip_mreq command;
 
-      command.imr_multiaddr.s_addr = inet_addr (host);
+      command.imr_multiaddr.s_addr = inet_addr (host.c_str());
       command.imr_interface.s_addr = htonl (INADDR_ANY);
 
       // Remove socket from multicast group
@@ -1283,9 +1310,6 @@ void dabc::SocketThread::CloseMulticast(int handle, const char* host, bool isrec
          EOUT("Fail setsockopt:IP_DROP_MEMBERSHIP");
       }
    }
-
-   if (close(handle) < 0)
-      EOUT("Error in socketclose");
 }
 
 
@@ -1315,13 +1339,22 @@ int dabc::SocketThread::StartUdp(int& portnum, int portmin, int portmax)
    return -1;
 }
 
-int dabc::SocketThread::ConnectUdp(int fd, const char* remhost, int remport)
+int dabc::SocketThread::CreateUdp()
+{
+   int fd = socket(PF_INET, SOCK_DGRAM, 0);
+   if (fd<0) return -1;
+
+   if (SetNonBlockSocket(fd)) return fd;
+   return -1;
+}
+
+int dabc::SocketThread::ConnectUdp(int fd, const std::string& remhost, int remport)
 {
    if (fd<0) return fd;
 
-   struct hostent *host = gethostbyname(remhost);
-   if ((host==0) || (host->h_addrtype!=AF_INET)) {
-      EOUT("Cannot get host information for %s", remhost);
+   struct hostent *host = gethostbyname(remhost.c_str());
+   if ((host==0) || (host->h_addrtype!=AF_INET) || remhost.empty()) {
+      EOUT("Cannot get host information for %s", remhost.c_str());
       close(fd);
       return -1;
    }
@@ -1334,7 +1367,7 @@ int dabc::SocketThread::ConnectUdp(int fd, const char* remhost, int remport)
    address.sin_port = htons (remport);
 
    if (connect(fd, (struct sockaddr *) &address, sizeof (address)) < 0) {
-      EOUT("Fail to connect to host %s port %d", remhost, remport);
+      EOUT("Fail to connect to host %s port %d", remhost.c_str(), remport);
       close(fd);
       return -1;
    }

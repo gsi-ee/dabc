@@ -534,38 +534,7 @@ void dabc::SocketDevice::RemoveProtocolAddon(SocketProtocolAddon* proc, bool res
 
 dabc::Transport* dabc::SocketDevice::CreateTransport(Command cmd, const Reference& port)
 {
-   // TODO: multicast and datagram socket transport
-
-   dabc::PortRef portref = port;
-
-   std::string mhost = portref.Cfg(xmlMcastAddr, cmd).AsStdStr();
-
-   if (!mhost.empty()) {
-      int mport = portref.Cfg(xmlMcastPort,cmd).AsInt(7654);
-      bool mrecv = portref.Cfg(xmlMcastRecv,cmd).AsBool(portref.QueueCapacity() > 0);
-
-      if (mrecv && (portref.QueueCapacity()==0)) {
-         EOUT("Wrong Multicast configuration - port cannot recv packets");
-         return 0;
-      } else
-      if (!mrecv && (portref.QueueCapacity()==0)) {
-         EOUT("Wrong Multicast configuration - port cannot send packets");
-         return 0;
-      }
-
-      int fhandle = dabc::SocketThread::StartMulticast(mhost.c_str(), mport, mrecv);
-      if (fhandle<0) return 0;
-
-      if (!dabc::SocketThread::SetNonBlockSocket(fhandle)) {
-         dabc::SocketThread::CloseMulticast(fhandle, mhost.c_str(), mrecv);
-         return 0;
-      }
-
-//      return new SocketTransport(port, false, fhandle, true);
-
-   }
-
-   return 0;
+   return dabc::Device::CreateTransport(cmd, port);
 }
 
 std::string dabc::SocketDevice::GetLocalHost(bool force)

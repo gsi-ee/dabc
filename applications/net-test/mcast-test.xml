@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<dabc version="2">
+  <Context name="app1" host="master" port="5432"/>
+  <Context name="app2" host="node01" port="5433"/>
+  <Context name="*">
+    <Run>
+      <lib value="libDabcVerbs.so"/>
+      <lib value="libDabcNetTest.so"/>
+      <debuglevel value="1"/>
+      <debugger value="false"/>
+      <loglevel value="1"/>
+      <logfile value="${Context}.log"/>
+      <loglimit value="1000000"/>
+      <sockethost value="${host}"/>
+      <copycfg value="false"/>
+      <runtime value="10"/>
+    </Run>
+
+    <MemoryPool name="Pool">
+       <BufferSize value="1024"/>
+       <NumBuffers value="200"/>
+    </MemoryPool>
+
+    <!-- Device can be required to create multicast connection --> 
+    <!--  Device name="NetDev" class="dabc::SocketDevice"/  -->
+    
+    <!-- this is configuration of MCast module, which produces data traffic -->
+    
+    <Module name="Mcast" class="NetTestMcastModule">
+       <OutputPort name="Output0" url="udp://225.0.0.37:12345?mcast" queue="10" rate="MCastRate"/>
+       <InputPort name="Input0" url="udp://225.0.0.37:12345?mcast" queue="50" rate="MCastRate"/>
+       <MCastRate width="5" prec="3" low="0" up="50" debug="1"/>
+    </Module>
+    
+  </Context>
+</dabc>

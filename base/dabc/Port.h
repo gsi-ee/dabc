@@ -162,30 +162,36 @@ namespace dabc {
    class PortRef : public ModuleItemRef {
       DABC_REFERENCE(PortRef, ModuleItemRef, Port)
 
+      /** \brief Returns true if it is input port */
       bool IsInput() const { return GetObject() ? GetObject()->IsInput() : false; }
+
+      /** \brief Returns true if it is output port */
       bool IsOutput() const { return GetObject() ? GetObject()->IsOutput() : false; }
 
-      /** Returns queue capacity of the port - thread safe */
+      /** \brief Returns queue capacity of the port */
       unsigned QueueCapacity() const { return GetObject() ? GetObject()->QueueCapacity() : 0; }
 
-      /** Returns signalling method configured for the port - thread safe */
+      /** \brief Returns signaling method configured for the port */
       int GetSignallingKind();
 
-      /** Returns true if port is connected - thread safe */
+      /** \brief Returns true if port is connected */
       bool IsConnected();
 
-      /** Disconnect port - thread safe  */
+      /** \brief Disconnect port  */
       bool Disconnect();
 
-      /** Return reference on the bind port - thread safe */
+      /** \brief Return reference on the bind port */
       PortRef GetBindPort();
 
+      /** \brief Enable of port reconnection, if connection was broken  */
       void EnableReconnect(double period = 1.) { if (GetObject()) GetObject()->SetReconnectPeriod(period); }
 
+      /** \brief Disable reconnection */
       void DisableReconnect() { if (GetObject()) GetObject()->SetReconnectPeriod(-1); }
 
-      /** Create connection request to specified url - thread safe.
-       * If connection to other dabc port is specified, isserver flag should identify which side is server
+      /** \brief Create connection request to specified url
+       * \details If connection to other dabc port is specified,
+       * isserver flag should identify which side is server
        * and which is client during connection establishing
        * TODO: one should try in future avoid isserver flag completely, it can be ruled later by connection manager */
       ConnectionRequest MakeConnReq(const std::string& url, bool isserver = false);

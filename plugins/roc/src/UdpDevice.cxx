@@ -395,7 +395,7 @@ roc::UdpDevice::UdpDevice(const std::string& name, const std::string& thrdname, 
 
    int fd = dabc::SocketThread::StartUdp(nport, nport, nport+1000);
 
-   fd = dabc::SocketThread::ConnectUdp(fd, fRocIp.c_str(), fRocCtrlPort);
+   fd = dabc::SocketThread::ConnectUdp(fd, fRocIp, fRocCtrlPort);
 
    if (fd<=0) return;
 
@@ -528,7 +528,7 @@ bool roc::UdpDevice::initUdp()
 
       int fd = dabc::SocketThread::StartUdp(nport, nport, nport+1000);
 
-      fd = dabc::SocketThread::ConnectUdp(fd, fRocIp.c_str(), fRocDataPort);
+      fd = dabc::SocketThread::ConnectUdp(fd, fRocIp, fRocDataPort);
 
       if (fd<=0) return false;
 

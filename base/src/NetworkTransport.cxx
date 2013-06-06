@@ -519,7 +519,7 @@ void dabc::NetworkTransport::GetRequiredQueuesSizes(const PortRef& port, unsigne
 }
 
 
-bool dabc::NetworkTransport::Make(const dabc::ConnectionRequest& req, WorkerAddon* addon, const std::string& devthrdname)
+bool dabc::NetworkTransport::Make(const ConnectionRequest& req, WorkerAddon* addon, const std::string& devthrdname)
 {
    PortRef port = req.GetPort();
 
@@ -539,11 +539,8 @@ bool dabc::NetworkTransport::Make(const dabc::ConnectionRequest& req, WorkerAddo
       inpport = outport.GetBindPort();
    }
 
-   // FIXME: ConnectionRequest should be used
    std::string newthrdname = req.GetConnThread();
    if (newthrdname.empty()) newthrdname = devthrdname;
-
-   // TODO: this is very similar to standard transport creation - try to use standard way
 
    dabc::CmdCreateTransport cmd;
    cmd.SetPoolName(req.GetPoolName());

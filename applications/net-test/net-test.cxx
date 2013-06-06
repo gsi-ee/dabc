@@ -206,39 +206,41 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
 class NetTestMcastModule : public dabc::ModuleAsync {
    protected:
       bool fReceiver;
-      int  fCounter;
+      int fCnt;
 
    public:
       NetTestMcastModule(const std::string& name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
-         fReceiver = Cfg("IsReceiver",cmd).AsBool(true);
+         fReceiver = dabc::mgr.NodeId() == 0;
 
-         EnsurePorts(fReceiver ? 1 : 0, fReceiver ? 0 : 1,  "MPool");
+         EnsurePorts(fReceiver ? 1 : 0, fReceiver ? 0 : 1);
 
-         fCounter = 0;
+         fCnt = 0;
       }
 
       bool ProcessRecv(unsigned port)
       {
          dabc::Buffer buf = Recv(port);
-         if (buf.null()) { EOUT("AAAAAAA"); return false; }
+         if (buf.null()) { EOUT("no buffer is received"); return false; }
          buf.Release();
+         fCnt++;
          return true;
       }
 
       bool ProcessSend(unsigned port)
       {
          dabc::Buffer buf = TakeBuffer();
-         if (buf.null()) { EOUT("AAAAAAA"); return false; }
-         buf.SetTotalSize(1000);
+         if (buf.null()) { EOUT("no free buffer"); return false; }
+         // buf.SetTotalSize(1000);
          Send(port, buf);
+         fCnt++;
          return true;
       }
 
       void AfterModuleStop()
       {
-         DOUT0("Mcast module rate %f", Par("DataRate").AsDouble());
+         DOUT1("Total num buffers %d", fCnt);
       }
 };
 

@@ -163,7 +163,7 @@ namespace dabc {
          void ProcessRecvCompl(uint32_t recid);
 
          static void GetRequiredQueuesSizes(const PortRef& port, unsigned& input_size, unsigned& output_size);
-         static bool Make(const dabc::ConnectionRequest& req, dabc::WorkerAddon* addon, const std::string& devthrdname = "");
+         static bool Make(const ConnectionRequest& req, WorkerAddon* addon, const std::string& devthrdname = "");
    };
 
 

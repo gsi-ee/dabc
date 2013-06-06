@@ -44,10 +44,14 @@ namespace dabc {
          char*       fHeaders;
          RecIdsQueue fSendQueue;
          RecIdsQueue fRecvQueue;
-         int         fRecvStatus; // 0 - idle, 1 - header, 2 - front buffer from recv queue
-         uint32_t    fRecvRecid; // if of the record, used for data receiving (status != 0)
-         int         fSendStatus; // 0 - idle, 1 - sending
-         uint32_t    fSendRecid; // id of the active send record
+         int         fRecvStatus;  ///< 0 - idle, 1 - header, 2 - front buffer from recv queue
+         uint32_t    fRecvRecid;   ///< if of the record, used for data receiving (status != 0)
+         int         fSendStatus;  ///< 0 - idle, 1 - sending
+         uint32_t    fSendRecid;   ///< id of the active send record
+
+         std::string fMcastAddr;   ///< mcast address
+         int         fMcastPort;   ///< mcast port
+         bool        fMcastRecv;   ///< is mcast recv
 
          virtual long Notify(const std::string&, int);
 
@@ -56,8 +60,16 @@ namespace dabc {
          virtual void OnRecvCompleted();
 
       public:
-         SocketNetworkInetrface(int fd);
+         SocketNetworkInetrface(int fd, bool datagram = false);
          virtual ~SocketNetworkInetrface();
+
+         /** \brief Set mcast address, required to correctly close socket */
+         void SetMCastAddr(const std::string addr, int port, bool recv)
+         {
+            fMcastAddr = addr;
+            fMcastPort = port;
+            fMcastRecv = recv;
+         }
 
          virtual void AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue);
          virtual void SubmitSend(uint32_t recid);

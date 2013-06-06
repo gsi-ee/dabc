@@ -132,11 +132,15 @@ namespace dabc {
          bool          fDatagramSocket; ///< indicate if socket is datagram and all operations should be finished with single call
          bool          fUseMsgOper;     ///< indicate if sendmsg, recvmsg operations should be used, it is must for the datagram sockets
 
+         // sending data
          bool          fSendUseMsg;     ///< use sendmsg for transport
          struct iovec* fSendIOV;        ///< sending io vector for gather list
          unsigned      fSendIOVSize;    ///< total number of elements in send vector
          unsigned      fSendIOVFirst;   ///< number of element in send IOV where transfer is started
          unsigned      fSendIOVNumber;  ///< number of elements in current send operation
+         struct sockaddr_in fSendAddr;  ///< optional send address for next send operation
+         bool          fSendUseAddr;    ///< if true, fSendAddr will be used
+
          // receiving data
          bool          fRecvUseMsg;     ///< use recvmsg for transport
          struct iovec* fRecvIOV;        ///< receive io vector for scatter list
@@ -193,6 +197,10 @@ namespace dabc {
 
          /** \brief Destructor of SocketIOAddon class */
          virtual ~SocketIOAddon();
+
+         /** \brief Set destination address for all send operations,
+          * \details Can be only specified for datagram sockets */
+         void SetSendAddr(const std::string& host = "", int port = 0);
 
          bool StartSend(const void* buf, size_t size);
          bool StartRecv(void* buf, size_t size);
@@ -344,9 +352,11 @@ namespace dabc {
          static int StartUdp(int& nport, int portmin=-1, int portmax=-1);
          static std::string DefineHostName();
          static int StartClient(const char* host, int nport);
-         static int StartMulticast(const char* host, int port, bool isrecv = true);
-         static void CloseMulticast(int handle, const char* host, bool isrecv = true);
-         static int ConnectUdp(int fd, const char* remhost, int remport);
+         static int StartMulticast(const std::string& addr, int port, bool isrecv = true);
+         static void DettachMulticast(int handle, const std::string& addr, bool isrecv = true);
+         /** \brief Create datagram (udp) socket */
+         static int CreateUdp();
+         static int ConnectUdp(int fd, const std::string& remhost, int remport);
 
          static SocketServerAddon* CreateServerAddon(int nport, int portmin=-1, int portmax=-1);
 
