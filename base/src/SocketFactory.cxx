@@ -66,44 +66,38 @@ dabc::Transport* dabc::SocketFactory::CreateTransport(const Reference& ref, cons
    dabc::Url url(typ);
    if (url.IsValid() && (url.GetProtocol()=="udp") && !port.null()) {
 
+      int fhandle = dabc::SocketThread::CreateUdp();
+      if (fhandle<0) return 0;
+
       SocketNetworkInetrface* addon = 0;
 
       if (port.IsOutput()) {
-
-         int fhandle = dabc::SocketThread::CreateUdp();
-         if (fhandle<0) return 0;
 
          addon = new SocketNetworkInetrface(fhandle, true);
 
          addon->SetSendAddr(url.GetHostName(), url.GetPort());
 
-      } else
-
-      if (url.HasOption("mcast")) {
-
-         int fhandle = dabc::SocketThread::AttachMulticast(url.GetHostName(), url.GetPort());
-
-         DOUT0("MULTICAST handle:%d", fhandle);
-
-         if (fhandle<0) return 0;
-
-         addon = new SocketNetworkInetrface(fhandle, true);
-
-         addon->SetMCastAddr(url.GetHostName());
       } else {
 
-         int udp_port = url.GetPort();
+         int udp_port = dabc::SocketThread::BindUdp(fhandle, url.GetPort());
 
-         int fhandle = dabc::SocketThread::CreateUdp();
-
-         udp_port = dabc::SocketThread::BindUdp(fhandle, udp_port);
          if (udp_port<=0) {
             dabc::SocketThread::CloseUdp(fhandle);
             return 0;
          }
 
+         bool mcast = url.HasOption("mcast");
+
+         if (mcast && !dabc::SocketThread::AttachMulticast(fhandle, url.GetHostName())) {
+            dabc::SocketThread::CloseUdp(fhandle);
+            return 0;
+         }
+
          addon = new SocketNetworkInetrface(fhandle, true);
+
+         if (mcast) addon->SetMCastAddr(url.GetHostName());
       }
+
 
       PortRef inpport, outport;
 

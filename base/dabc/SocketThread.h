@@ -367,7 +367,7 @@ namespace dabc {
          static void CloseUdp(int fd);
 
          /** \brief Attach datagram socket to multicast group to make receiving */
-         static int AttachMulticast(const std::string& addr, int port);
+         static bool AttachMulticast(int handle, const std::string& addr);
 
          /** \brief Dettach datagram socket from multicast group */
          static void DettachMulticast(int handle, const std::string& addr);

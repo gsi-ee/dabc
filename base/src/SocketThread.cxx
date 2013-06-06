@@ -1213,51 +1213,30 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
    return sockfd;
 }
 
-int dabc::SocketThread::AttachMulticast(const std::string& host, int port)
+bool dabc::SocketThread::AttachMulticast(int socket_descriptor, const std::string& host)
 {
-   if (host.empty() || (port<=0)) {
-      EOUT("Multicast address not specified, use %s", host.c_str());
-      return -1;
+   if (host.empty() || (socket_descriptor<=0)) {
+      EOUT("Multicast address or socket handle not specified");
+      return false;
    }
 
    struct hostent *server_host_name = gethostbyname(host.c_str());
    if (server_host_name==0) {
       EOUT("Cannot get host information for %s", host.c_str());
-      return -1;
+      return false;
    }
 
-   int socket_descriptor = CreateUdp();
-   if (socket_descriptor<0) {
-      EOUT("Cannot create datagram socket");
-      return -1;
-   }
-
-   struct sockaddr_in sin;
    struct ip_mreq command;
 
-   memset (&sin, 0, sizeof (sin));
-   sin.sin_family = PF_INET;
-   sin.sin_addr.s_addr = htonl (INADDR_ANY);
-   sin.sin_port = htons (port);
    // Allow to use same port by many processes
-   int loop = 1;
-   if (setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR, &loop, sizeof (loop)) < 0) {
-      EOUT("Cannot setsockopt SO_REUSEADDR");
-   }
 
-   if(bind(socket_descriptor, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-      EOUT("Fail to bind socket with port %d", port);
-      close(socket_descriptor);
-      return -1;
-   }
 
    // Allow to receive broadcast to this port
-   loop = 1;
+   int loop = 1;
    if (setsockopt (socket_descriptor, IPPROTO_IP, IP_MULTICAST_LOOP,
          &loop, sizeof (loop)) < 0) {
       EOUT("Fail setsockopt IP_MULTICAST_LOOP");
-      close(socket_descriptor);
-      return -1;
+      return false;
    }
 
    // Join the multicast group
@@ -1265,18 +1244,17 @@ int dabc::SocketThread::AttachMulticast(const std::string& host, int port)
    command.imr_interface.s_addr = htonl (INADDR_ANY);
    if (command.imr_multiaddr.s_addr == (in_addr_t)-1) {
       EOUT("%s is not valid address", host.c_str());
-      close(socket_descriptor);
-      return -1;
+      return false;
    }
    if (setsockopt(socket_descriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP,
          &command, sizeof (command)) < 0) {
       EOUT("File setsockopt IP_ADD_MEMBERSHIP");
-      close(socket_descriptor);
-      return -1;
+      return false;
    }
 
-  return socket_descriptor;
+  return true;
 }
+
 
 void dabc::SocketThread::DettachMulticast(int handle, const std::string& host)
 {

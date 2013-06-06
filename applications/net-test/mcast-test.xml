@@ -26,8 +26,8 @@
     
     <!-- this is configuration of MCast module, which produces data traffic -->
     
-    <Module name="Mcast" class="NetTestMcastModule">
-       <OutputPort name="Output0" url="udp://225.0.0.37:12345?mcast" queue="10" rate="MCastRate"/>
+    <Module name="Mcast" class="NetTestSpecialModule">
+       <OutputPort name="Output0" url="udp://225.0.0.37:12345" queue="10" rate="MCastRate"/>
        <InputPort name="Input0" url="udp://225.0.0.37:12345?mcast" queue="50" rate="MCastRate"/>
        <MCastRate width="5" prec="3" low="0" up="50" debug="1"/>
     </Module>

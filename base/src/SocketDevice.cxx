@@ -532,11 +532,6 @@ void dabc::SocketDevice::RemoveProtocolAddon(SocketProtocolAddon* proc, bool res
    DestroyRec(rec, res);
 }
 
-dabc::Transport* dabc::SocketDevice::CreateTransport(Command cmd, const Reference& port)
-{
-   return dabc::Device::CreateTransport(cmd, port);
-}
-
 std::string dabc::SocketDevice::GetLocalHost(bool force)
 {
    std::string host = dabc::Configuration::GetLocalHost();

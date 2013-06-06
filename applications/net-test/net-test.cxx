@@ -203,16 +203,16 @@ class NetTestReceiverModule : public dabc::ModuleAsync {
       }
 };
 
-class NetTestMcastModule : public dabc::ModuleAsync {
+class NetTestSpecialModule : public dabc::ModuleAsync {
    protected:
       bool fReceiver;
       int fCnt;
 
    public:
-      NetTestMcastModule(const std::string& name, dabc::Command cmd) :
+      NetTestSpecialModule(const std::string& name, dabc::Command cmd) :
          dabc::ModuleAsync(name, cmd)
       {
-         fReceiver = dabc::mgr.NodeId() == 0;
+         fReceiver = dabc::mgr.NodeId() < dabc::mgr.NumNodes() - 1;
 
          EnsurePorts(fReceiver ? 1 : 0, fReceiver ? 0 : 1);
 
@@ -324,7 +324,7 @@ class NetTestApplication : public dabc::Application {
 
             if (!dabc::mgr.CreateDevice(devclass, "MDev")) return false;
 
-            dabc::CmdCreateModule cmd3("NetTestMcastModule", "MM");
+            dabc::CmdCreateModule cmd3("NetTestSpecialModule", "MM");
             cmd3.SetBool("IsReceiver", isrecv);
             if (!dabc::mgr.Execute(cmd3)) return false;
 
@@ -367,8 +367,8 @@ class NetTestFactory : public dabc::Factory  {
          if (classname == "NetTestReceiverModule")
             return new NetTestReceiverModule(modulename, cmd);
 
-         if (classname == "NetTestMcastModule")
-            return new NetTestMcastModule(modulename, cmd);
+         if (classname == "NetTestSpecialModule")
+            return new NetTestSpecialModule(modulename, cmd);
 
          return 0;
       }
@@ -389,7 +389,7 @@ extern "C" void RunMulticastTest()
 
    if (!dabc::mgr.CreateDevice(devclass, "MDev")) return;
 
-   dabc::CmdCreateModule cmd("NetTestMcastModule", "MM");
+   dabc::CmdCreateModule cmd("NetTestSpecialModule", "MM");
    cmd.SetBool("IsReceiver", isrecv);
    dabc::mgr.Execute(cmd);
 

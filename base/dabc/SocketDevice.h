@@ -47,8 +47,6 @@ namespace dabc {
 
          virtual bool StartServerAddon(Command cmd, std::string& servid);
 
-         virtual Transport* CreateTransport(Command cmd, const Reference& port);
-
          static std::string GetLocalHost(bool force = false);
 
       protected:
