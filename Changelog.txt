@@ -29,7 +29,7 @@ of framework.
 
 31.05.2013
 1. Provide version control of dabc::Hierarchy structure. Each element in hierarchy includes
-   version number, which indicate when last changes were performed. This version gaves
+   version number, which indicate when last changes were performed. This version gives
    possibility to extract only changed items relative to specified version in the past.
 2. Implement conversion of dabc::Hierarchy structure into xml and reconstruct 
    hierarchy from xml. This will allow to transport and reconstruct hierarchy on
@@ -73,10 +73,10 @@ of framework.
 4. Implement of automatic reconnection of any module input/output. 
    For that "reconnect" attribute should be specified for the port:
       <InputPort name="Input0" url="mbs://lxg0538/Stream" reconnect="3"/>
-   Property specifies interval (in seconds) how often reconnect should be perfromed.
+   Property specifies interval (in seconds) how often reconnect should be performed.
    Reconnect will not be done when auto="false" specified.    
-5. Fix error that MemoryPool was stopped when no any connection was availible.
-   Thus when new connection was comming, pool failed to provide 
+5. Fix error that MemoryPool was stopped when no any connection was available.
+   Thus when new connection was coming, pool failed to provide 
    new buffer to modules and transports.
 
 
@@ -155,15 +155,15 @@ of framework.
      ...          
    </Module>
    
-   As alternative, one could specify connectiion between modules in extra node:
+   As alternative, one could specify connection between modules in extra node:
    
    <Connection output="Combiner/Output1" input="OnlineServer/Input0"/> 
    
    hadaq plugin is first plugin with such examples.
-2. Provide new configuration files for hadaq plugin, showing autocreation functionality  
+2. Provide new configuration files for hadaq plugin, showing auto-creation functionality  
 3. Introduce BasicFile class, which only contains file descriptor and IO object.
    Used as basic class for dabc::BinaryFile, mbs::LmdFileNew, hadaq::HldFile.
-4. Change implementaion of hadaq::HldFile file. Main change - use DABC IO class
+4. Change implementation of hadaq::HldFile file. Main change - use DABC IO class
    to be able switch to any other file system. Also when reading events, first read
    as much as possible and than rewind if non-complete events are read.
    
