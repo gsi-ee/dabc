@@ -25,17 +25,14 @@ dabc::SocketNetworkInetrface::SocketNetworkInetrface(int fd, bool datagram) :
    fRecvRecid(0),
    fSendStatus(0),
    fSendRecid(0),
-   fMcastAddr(),
-   fMcastPort(0),
-   fMcastRecv(false)
+   fMcastAddr()
 {
 }
 
 dabc::SocketNetworkInetrface::~SocketNetworkInetrface()
 {
-   if (!fMcastAddr.empty()) {
-      SocketThread::DettachMulticast(Socket(), fMcastAddr, fMcastRecv);
-   }
+   if (!fMcastAddr.empty())
+      SocketThread::DettachMulticast(Socket(), fMcastAddr);
 
    delete [] fHeaders; fHeaders = 0;
    DOUT3("##### ~SocketNetworkInetrface()");

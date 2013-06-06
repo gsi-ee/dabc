@@ -50,8 +50,6 @@ namespace dabc {
          uint32_t    fSendRecid;   ///< id of the active send record
 
          std::string fMcastAddr;   ///< mcast address
-         int         fMcastPort;   ///< mcast port
-         bool        fMcastRecv;   ///< is mcast recv
 
          virtual long Notify(const std::string&, int);
 
@@ -64,12 +62,7 @@ namespace dabc {
          virtual ~SocketNetworkInetrface();
 
          /** \brief Set mcast address, required to correctly close socket */
-         void SetMCastAddr(const std::string addr, int port, bool recv)
-         {
-            fMcastAddr = addr;
-            fMcastPort = port;
-            fMcastRecv = recv;
-         }
+         void SetMCastAddr(const std::string addr) { fMcastAddr = addr; }
 
          virtual void AllocateNet(unsigned fulloutputqueue, unsigned fullinputqueue);
          virtual void SubmitSend(uint32_t recid);

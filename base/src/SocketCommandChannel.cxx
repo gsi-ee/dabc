@@ -1409,10 +1409,13 @@ dabc::SocketCommandChannel* dabc::SocketCommandChannel::CreateChannel(const std:
 
    if (nport <= 0) nport = 1237;
 
-   int fd = dabc::SocketThread::StartUdp(nport, 7000, 7100);
+   int fd =  dabc::SocketThread::CreateUdp();
 
-   if (fd<=0) {
+   nport = dabc::SocketThread::BindUdp(fd, nport, 7000, 7100);
+
+   if (nport<0) {
       EOUT("Cannot open cmd socket");
+      dabc::SocketThread::CloseUdp(fd);
       return 0;
    }
 

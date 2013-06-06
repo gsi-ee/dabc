@@ -66,25 +66,22 @@ dabc::Transport* dabc::SocketFactory::CreateTransport(const Reference& ref, cons
    dabc::Url url(typ);
    if (url.IsValid() && (url.GetProtocol()=="udp") && !port.null()) {
 
-      int udp_port = url.GetPort();
-      if (udp_port==0) {
-         udp_port = 4567;
-         DOUT0("Multicast port not specified - use default %d", udp_port);
-      }
-
-      bool isrecv = port.IsInput();
-
       SocketNetworkInetrface* addon = 0;
+
+      if (port.IsOutput()) {
+
+         int fhandle = dabc::SocketThread::CreateUdp();
+         if (fhandle<0) return 0;
+
+         addon = new SocketNetworkInetrface(fhandle, true);
+
+         addon->SetSendAddr(url.GetHostName(), url.GetPort());
+
+      } else
 
       if (url.HasOption("mcast")) {
 
-         int fhandle = -1;
-
-         if (isrecv) {
-            fhandle = dabc::SocketThread::StartMulticast(url.GetHostName(), udp_port, isrecv);
-         } else {
-            fhandle = dabc::SocketThread::CreateUdp();
-         }
+         int fhandle = dabc::SocketThread::AttachMulticast(url.GetHostName(), url.GetPort());
 
          DOUT0("MULTICAST handle:%d", fhandle);
 
@@ -92,46 +89,28 @@ dabc::Transport* dabc::SocketFactory::CreateTransport(const Reference& ref, cons
 
          addon = new SocketNetworkInetrface(fhandle, true);
 
-         if (isrecv) {
-            addon->SetMCastAddr(url.GetHostName(), udp_port, isrecv);
-            // addon->SetLogging(true);
-         } else {
-            addon->SetSendAddr(url.GetHostName(), udp_port);
-
-         }
+         addon->SetMCastAddr(url.GetHostName());
       } else {
 
-         int fhandle = -1;
+         int udp_port = url.GetPort();
 
-         fhandle = dabc::SocketThread::StartUdp(udp_port);
+         int fhandle = dabc::SocketThread::CreateUdp();
 
-         DOUT0("Start UDP server at port %d  fd:%d", udp_port, fhandle);
-
-         fhandle = dabc::SocketThread::ConnectUdp(fhandle, url.GetHostName(), udp_port);
-
-         DOUT0("Connect UDP to remote host %s port %d  fd:%d", url.GetHostName().c_str(), udp_port, fhandle);
-
-         if (fhandle<=0) return 0;
+         udp_port = dabc::SocketThread::BindUdp(fhandle, udp_port);
+         if (udp_port<=0) {
+            dabc::SocketThread::CloseUdp(fhandle);
+            return 0;
+         }
 
          addon = new SocketNetworkInetrface(fhandle, true);
       }
 
-/*
-      if (isrecv) {
-         fhandle = dabc::SocketThread::CreateUdp();
-         fhandle = dabc::SocketThread::ConnectUdp(fhandle, url.GetHostName(), udp_port);
-      } else {
-         fhandle = dabc::SocketThread::StartUdp(udp_port);
-      }
-*/
-
-
       PortRef inpport, outport;
 
-      if (isrecv) {
-        inpport << port;
+      if (port.IsOutput()) {
+         outport << port;
       } else {
-        outport << port;
+         inpport << port;
       }
 
       return new dabc::NetworkTransport(dabc::Command(), inpport, outport, false, addon);

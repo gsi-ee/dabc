@@ -28,7 +28,7 @@
     
     <Module name="Mcast" class="NetTestMcastModule">
        <OutputPort name="Output0" url="udp://lxg0537:12345" queue="10" rate="UdpRate"/>
-       <InputPort name="Input0" url="udp://lxg0538:12345" queue="10" rate="UdpRate"/>
+       <InputPort name="Input0" url="udp://lxg0537:12345" queue="10" rate="UdpRate"/>
        <UdpRate width="5" prec="3" low="0" up="50" debug="1"/>
     </Module>
     

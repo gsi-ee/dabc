@@ -305,12 +305,26 @@ void dabc::SocketIOAddon::SetSendAddr(const std::string& host, int port)
    memset(&fSendAddr, 0, sizeof(fSendAddr));
    fSendUseAddr = false;
 
-   if (!host.empty() && (port>0)) {
+/*   if (!host.empty() && (port>0)) {
       fSendUseAddr = true;
       fSendAddr.sin_family = AF_INET;
       fSendAddr.sin_addr.s_addr = inet_addr(host.c_str());
       fSendAddr.sin_port = htons(port);
    }
+*/
+
+   struct hostent *h = gethostbyname(host.c_str());
+   if ((h==0) || (h->h_addrtype!=AF_INET) || host.empty()) {
+      EOUT("Cannot get host information for %s", host.c_str());
+      return;
+   }
+
+   fSendAddr.sin_family = AF_INET;
+   memcpy(&fSendAddr.sin_addr.s_addr, h->h_addr_list[0], h->h_length);
+   fSendAddr.sin_port = htons (port);
+
+   fSendUseAddr = true;
+
 }
 
 
@@ -1199,7 +1213,7 @@ int dabc::SocketThread::StartClient(const char* host, int nport)
    return sockfd;
 }
 
-int dabc::SocketThread::StartMulticast(const std::string& host, int port, bool isrecv)
+int dabc::SocketThread::AttachMulticast(const std::string& host, int port)
 {
    if (host.empty() || (port<=0)) {
       EOUT("Multicast address not specified, use %s", host.c_str());
@@ -1212,167 +1226,72 @@ int dabc::SocketThread::StartMulticast(const std::string& host, int port, bool i
       return -1;
    }
 
-   int socket_descriptor = socket (PF_INET, SOCK_DGRAM, 0);
+   int socket_descriptor = CreateUdp();
    if (socket_descriptor<0) {
       EOUT("Cannot create datagram socket");
       return -1;
    }
 
-   if (isrecv) {
+   struct sockaddr_in sin;
+   struct ip_mreq command;
 
-      struct sockaddr_in sin;
-      struct ip_mreq command;
+   memset (&sin, 0, sizeof (sin));
+   sin.sin_family = PF_INET;
+   sin.sin_addr.s_addr = htonl (INADDR_ANY);
+   sin.sin_port = htons (port);
+   // Allow to use same port by many processes
+   int loop = 1;
+   if (setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR, &loop, sizeof (loop)) < 0) {
+      EOUT("Cannot setsockopt SO_REUSEADDR");
+   }
 
-      memset (&sin, 0, sizeof (sin));
-      sin.sin_family = PF_INET;
-      sin.sin_addr.s_addr = htonl (INADDR_ANY);
-      sin.sin_port = htons (port);
-      // Allow to use same port by many processes
-      int loop = 1;
-      if (setsockopt(socket_descriptor, SOL_SOCKET, SO_REUSEADDR,
-                     &loop, sizeof (loop)) < 0) {
-          EOUT("Cannot setsockopt SO_REUSEADDR");
-      }
-      if(bind(socket_descriptor, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-         EOUT("Fail to bind socket with port %d", port);
-         close(socket_descriptor);
-         return -1;
-      }
+   if(bind(socket_descriptor, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
+      EOUT("Fail to bind socket with port %d", port);
+      close(socket_descriptor);
+      return -1;
+   }
 
-      // Allow to receive broadcast to this port
-      loop = 1;
-      if (setsockopt (socket_descriptor, IPPROTO_IP, IP_MULTICAST_LOOP,
-                      &loop, sizeof (loop)) < 0) {
-         EOUT("Fail setsockopt IP_MULTICAST_LOOP");
-         close(socket_descriptor);
-         return -1;
-      }
+   // Allow to receive broadcast to this port
+   loop = 1;
+   if (setsockopt (socket_descriptor, IPPROTO_IP, IP_MULTICAST_LOOP,
+         &loop, sizeof (loop)) < 0) {
+      EOUT("Fail setsockopt IP_MULTICAST_LOOP");
+      close(socket_descriptor);
+      return -1;
+   }
 
-      if (!SetNonBlockSocket(socket_descriptor)) {
-         EOUT("Fail to set non-blocking flag for socket");
-         close(socket_descriptor);
-         return -1;
-      }
-
-      // Join the multicast group
-      command.imr_multiaddr.s_addr = inet_addr (host.c_str());
-      command.imr_interface.s_addr = htonl (INADDR_ANY);
-      if (command.imr_multiaddr.s_addr == (in_addr_t)-1) {
-         EOUT("%s is not valid address", host.c_str());
-         close(socket_descriptor);
-         return -1;
-      }
-      if (setsockopt(socket_descriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP,
-                     &command, sizeof (command)) < 0) {
-          EOUT("File setsockopt IP_ADD_MEMBERSHIP");
-          close(socket_descriptor);
-          return -1;
-      }
-   } else {
-     struct sockaddr_in address;
-
-     memset (&address, 0, sizeof (address));
-     address.sin_family = AF_INET;
-     address.sin_addr.s_addr = inet_addr (host.c_str());
-     address.sin_port = htons (port);
-
-     if (connect(socket_descriptor, (struct sockaddr *) &address,
-           sizeof (address)) < 0) {
-        EOUT("Fail to connect to host %s port %d", host.c_str(), port);
-        close(socket_descriptor);
-        return -1;
-     }
-
-     if (!SetNonBlockSocket(socket_descriptor)) {
-        EOUT("Fail to set non-blocking flag for socket");
-        close(socket_descriptor);
-        return -1;
-     }
-  }
+   // Join the multicast group
+   command.imr_multiaddr.s_addr = inet_addr (host.c_str());
+   command.imr_interface.s_addr = htonl (INADDR_ANY);
+   if (command.imr_multiaddr.s_addr == (in_addr_t)-1) {
+      EOUT("%s is not valid address", host.c_str());
+      close(socket_descriptor);
+      return -1;
+   }
+   if (setsockopt(socket_descriptor, IPPROTO_IP, IP_ADD_MEMBERSHIP,
+         &command, sizeof (command)) < 0) {
+      EOUT("File setsockopt IP_ADD_MEMBERSHIP");
+      close(socket_descriptor);
+      return -1;
+   }
 
   return socket_descriptor;
 }
 
-void dabc::SocketThread::DettachMulticast(int handle, const std::string& host, bool isrecv)
+void dabc::SocketThread::DettachMulticast(int handle, const std::string& host)
 {
    if ((handle<0) || host.empty()) return;
 
-   if (isrecv) {
+   struct ip_mreq command;
 
-      struct ip_mreq command;
+   command.imr_multiaddr.s_addr = inet_addr (host.c_str());
+   command.imr_interface.s_addr = htonl (INADDR_ANY);
 
-      command.imr_multiaddr.s_addr = inet_addr (host.c_str());
-      command.imr_interface.s_addr = htonl (INADDR_ANY);
-
-      // Remove socket from multicast group
-      if (setsockopt (handle, IPPROTO_IP, IP_DROP_MEMBERSHIP,
-                      &command, sizeof (command)) < 0 ) {
-         EOUT("Fail setsockopt:IP_DROP_MEMBERSHIP");
-      }
+   // Remove socket from multicast group
+   if (setsockopt (handle, IPPROTO_IP, IP_DROP_MEMBERSHIP,
+                   &command, sizeof (command)) < 0 ) {
+      EOUT("Fail setsockopt:IP_DROP_MEMBERSHIP");
    }
-}
-
-
-int dabc::SocketThread::CreateUdpSender(int portnum)
-{
-   if (portnum<=0) return -1;
-
-   int fd = socket(PF_INET, SOCK_DGRAM, 0);
-   if (fd<0) return -1;
-
-   // Allow to use same port by many processes
-   int loop = 1;
-   if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &loop, sizeof (loop)) < 0) {
-       EOUT("Cannot setsockopt SO_REUSEADDR");
-       close(fd);
-       return -1;
-   }
-
-   if (!SetNonBlockSocket(fd)) {
-      EOUT("Fail to set non-blocking flag for socket");
-      close(fd);
-      return -1;
-   }
-
-   struct sockaddr_in m_addr;
-   memset(&m_addr, 0, sizeof(m_addr));
-   m_addr.sin_family = AF_INET;
-   m_addr.sin_port = htons(portnum);
-
-   if (bind(fd, (struct sockaddr *)&m_addr, sizeof(m_addr))!=0) {
-      EOUT("Fail to bind to port number %d", portnum);
-      close(fd);
-      return -1;
-   }
-
-   return fd;
-}
-
-
-int dabc::SocketThread::StartUdp(int& portnum, int portmin, int portmax)
-{
-
-   int fd = socket(PF_INET, SOCK_DGRAM, 0);
-   if (fd<0) return -1;
-
-   struct sockaddr_in m_addr;
-   int numtests = 1; // at least test value of portnum
-   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
-
-   if (SetNonBlockSocket(fd))
-      for(int ntest=0;ntest<numtests;ntest++) {
-         if ((ntest==0) && (portnum<0)) continue;
-         if (ntest>0) portnum = portmin - 1 + ntest;
-
-         memset(&m_addr, 0, sizeof(m_addr));
-         m_addr.sin_family = AF_INET;
-         m_addr.sin_port = htons(portnum);
-
-         if (!bind(fd, (struct sockaddr *)&m_addr, sizeof(m_addr))) return fd;
-      }
-
-   close(fd);
-   return -1;
 }
 
 int dabc::SocketThread::CreateUdp()
@@ -1382,6 +1301,35 @@ int dabc::SocketThread::CreateUdp()
 
    if (SetNonBlockSocket(fd)) return fd;
    close(fd);
+   return -1;
+}
+
+void dabc::SocketThread::CloseUdp(int fd)
+{
+   if (fd>0) close(fd);
+}
+
+
+int dabc::SocketThread::BindUdp(int fd, int nport, int portmin, int portmax)
+{
+   if (fd<0) return -1;
+
+   struct sockaddr_in m_addr;
+   int numtests = 1; // at least test value of portnum
+   if ((portmin>0) && (portmax>0) && (portmin<=portmax)) numtests+=(portmax-portmin+1);
+
+   for(int ntest=0;ntest<numtests;ntest++) {
+      if ((ntest==0) && (nport<0)) continue;
+      if (ntest>0) nport = portmin - 1 + ntest;
+
+      memset(&m_addr, 0, sizeof(m_addr));
+      m_addr.sin_family = AF_INET;
+      // m_addr.s_addr = htonl (INADDR_ANY);
+      m_addr.sin_port = htons(nport);
+
+      if (bind(fd, (struct sockaddr *)&m_addr, sizeof(m_addr))==0) return nport;
+   }
+
    return -1;
 }
 

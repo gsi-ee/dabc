@@ -349,17 +349,31 @@ namespace dabc {
 
          static bool SetNonBlockSocket(int fd);
          static int StartServer(int& nport, int portmin=-1, int portmax=-1);
-         static int StartUdp(int& nport, int portmin=-1, int portmax=-1);
-         static std::string DefineHostName();
          static int StartClient(const char* host, int nport);
-         static int StartMulticast(const std::string& addr, int port, bool isrecv = true);
-         static void DettachMulticast(int handle, const std::string& addr, bool isrecv = true);
-         /** \brief Create datagram (udp) socket */
+
+
+         /** \brief Create datagram (udp) socket
+          * \returns socket descriptor or negative value in case of failure */
          static int CreateUdp();
 
-         /** \brief Create udp socket, which can be used for sending packet to other nodes */
-         static int CreateUdpSender(int port);
+         /** \brief Bind UDP socket to specified port
+          * \param[in] fd - socket descriptor, created with \ref CreateUdp method
+          * \param[in] nport - port number to bind with
+          * \param[in] portmin, portmax - values range for possible port numbers
+          * \returns port number, which was bind or negative value in case of error */
+         static int BindUdp(int fd, int nport, int portmin=-1, int portmax=-1);
 
+         /** \brief Close datagram (udp) socket */
+         static void CloseUdp(int fd);
+
+         /** \brief Attach datagram socket to multicast group to make receiving */
+         static int AttachMulticast(const std::string& addr, int port);
+
+         /** \brief Dettach datagram socket from multicast group */
+         static void DettachMulticast(int handle, const std::string& addr);
+
+
+         static std::string DefineHostName();
 
          static int ConnectUdp(int fd, const std::string& remhost, int remport);
 

@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <dabc version="2">
-  <Context name="app1" host="lxg0537" port="5432"/>
-  <Context name="app2" host="lxg0538" port="5433"/>
+  <Context name="app1" host="lxg0538" port="5432"/>
+  <Context name="app2" host="lxg0537" port="5433"/>
   <Context name="*">
     <Run>
       <!--lib value="libDabcVerbs.so"/-->
