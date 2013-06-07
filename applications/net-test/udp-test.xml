@@ -21,10 +21,7 @@
        <NumBuffers value="200"/>
     </MemoryPool>
 
-    <!-- Device may be required to create multicast connection --> 
-    <!--  Device name="NetDev" class="dabc::SocketDevice"/  -->
-    
-    <!-- this is configuration of MCast module, which produces data traffic -->
+    <!-- this is configuration of module, which produces or consumes data traffic -->
     
     <Module name="UdpModule" class="NetTestSpecialModule">
        <OutputPort name="Output0" url="udp://lxg0537:12345" queue="10" rate="UdpRate"/>
