@@ -31,7 +31,10 @@ dabc::CommandContainer::CommandContainer(const char* name) :
    RecordContainer(name),
    fCallers(),
    fTimeout(),
-   fCanceled(false)
+   fCanceled(false),
+   fRawData(0),
+   fRawDataSize(0),
+   fRawDataOwner(false)
 {
    // object will be destroy as long no references are existing
    SetFlag(flAutoDestroy, true);
@@ -49,8 +52,9 @@ dabc::CommandContainer::~CommandContainer()
       EOUT("Did clear callers in cmd %s", GetName());
    }
 
-   // check if reference is remaining !!!
+   ClearRawData();
 
+   // check if reference is remaining !!!
    std::string field;
 
    do {
@@ -77,6 +81,13 @@ const std::string dabc::CommandContainer::DefaultFiledName() const
    return dabc::Command::ResultParName();
 }
 
+void dabc::CommandContainer::ClearRawData()
+{
+   if (fRawDataOwner && fRawData) free(fRawData);
+   fRawData = 0;
+   fRawDataSize = 0;
+   fRawDataOwner = false;
+}
 
 
 dabc::Command::Command(const std::string& name) throw()
@@ -396,5 +407,64 @@ bool dabc::Command::ReadFromCmdString(const std::string& str)
    if (narg>0) SetInt("NumArg", narg);
 
    return true;
+}
+
+
+bool dabc::Command::SetRawData(const void* ptr, unsigned len, bool owner, bool makecopy)
+{
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return false;
+
+   LockGuard lock(ObjectMutex());
+
+   cont->ClearRawData();
+
+   if ((ptr==0) || (len==0)) return true;
+
+   if (owner) {
+      cont->fRawData = (void*) ptr;
+      cont->fRawDataSize = len;
+      cont->fRawDataOwner = true;
+   } else
+   if (makecopy) {
+      cont->fRawData = malloc(len);
+      memcpy(cont->fRawData, ptr, len);
+      cont->fRawDataSize = len;
+      cont->fRawDataOwner = true;
+   } else {
+      cont->fRawData = (void*) ptr;
+      cont->fRawDataSize = len;
+      cont->fRawDataOwner = false;
+   }
+
+   return true;
+}
+
+void dabc::Command::ClearRawData()
+{
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return;
+
+   LockGuard lock(ObjectMutex());
+
+   cont->ClearRawData();
+}
+
+void* dabc::Command::GetRawData()
+{
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return 0;
+
+   LockGuard lock(ObjectMutex());
+   return cont->fRawData;
+}
+
+unsigned dabc::Command::GetRawDataSize()
+{
+   CommandContainer* cont = (CommandContainer*) GetObject();
+   if (cont==0) return 0;
+
+   LockGuard lock(ObjectMutex());
+   return cont->fRawDataSize;
 }
 

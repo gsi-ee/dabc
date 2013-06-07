@@ -47,6 +47,7 @@
 #include "dabc/CpuInfoModule.h"
 #include "dabc/MultiplexerModule.h"
 #include "dabc/SocketFactory.h"
+#include "dabc/Hierarchy.h"
 
 namespace dabc {
 
@@ -719,12 +720,12 @@ bool dabc::Manager::CreateControl(bool withserver)
    WorkerRef ref = GetCommandChannel();
    if (!ref.null()) return true;
 
-   dabc::CmdCreateObject cmd("SocketCommandChannelNew", CmdChlName());
+   dabc::CmdCreateObject cmd("SocketCommandChannel", CmdChlName());
    cmd.SetBool("WithServer", withserver);
    if (withserver && cfg())
       cmd.SetInt("ServerPort", cfg()->MgrPort());
 
-   ref = DoCreateObject("SocketCommandChannelNew", CmdChlName(), cmd);
+   ref = DoCreateObject("SocketCommandChannel", CmdChlName(), cmd);
 
    ref.MakeThreadForWorker("CmdThrd");
 
@@ -1128,6 +1129,7 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_postponed;
    } else
    if (cmd.IsName("Ping")) {
+      DOUT1("!!! PING !!!");
       cmd_res = cmd_true;
    } else
    if (cmd.IsName("ParameterEventSubscription")) {
@@ -1577,6 +1579,8 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
 
    std::string tgtnode;
 
+   Hierarchy rem_hierarchy;
+
    bool first(true);
 
    while (true) {
@@ -1646,6 +1650,49 @@ void dabc::Manager::RunManagerCmdLoop(double runtime)
          DOUT0("Tgt node not connected, command %s not executed", cmd.GetName());
          continue;
       }
+
+      if (cmd.IsName("close") || cmd.IsName("disconnect")) {
+         cmd.SetStr("host", tgtnode);
+         GetCommandChannel().Execute(cmd);
+         tgtnode.clear();
+         rem_hierarchy.Release();
+         continue;
+      }
+
+      if (cmd.IsName("update")) {
+
+         Command cmd2("GetHierarchy");
+         cmd2.SetInt("version", rem_hierarchy.GetVersion());
+         cmd2.SetReceiver(tgtnode);
+         cmd2.SetTimeout(5.);
+
+         if (GetCommandChannel().Execute(cmd2)!=cmd_true) {
+            DOUT0("Fail to get hierarchy");
+            continue;
+         }
+
+         if (cmd2.GetRawDataSize() > 0) {
+            // DOUT0("Get raw data %p %u", cmd2.GetRawData(), cmd2.GetRawDataSize());
+
+            std::string diff;
+            diff.append((const char*)cmd2.GetRawData(), cmd2.GetRawDataSize());
+            // DOUT0("diff = %s", diff.c_str());
+            if (rem_hierarchy.UpdateFromXml(diff)) {
+               DOUT0("Update of hierarchy to version %u done", rem_hierarchy.GetVersion());
+            }
+         }
+
+         continue;
+      }
+
+      if (cmd.IsName("ls")) {
+         if (!rem_hierarchy.null())
+            DOUT0("xml = ver %u \n%s", (unsigned) rem_hierarchy.GetVersion(), rem_hierarchy.SaveToXml(false).c_str());
+         else
+            DOUT0("No hierarchy available");
+         continue;
+      }
+
 
       cmd.SetReceiver(tgtnode);
       cmd.SetTimeout(5.);
@@ -1960,7 +2007,6 @@ dabc::ConnectionRequest dabc::ManagerRef::Connect(const std::string& port1name, 
          return dabc::ConnectionRequest();
       }
    }
-
 
    if (IsLocalItem(port1name) && port1.null()) {
       EOUT("Did not found port %s", port1name.c_str());

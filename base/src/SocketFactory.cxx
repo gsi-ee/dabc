@@ -29,7 +29,7 @@
 
 dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, const std::string& objname, Command cmd)
 {
-   if (classname == "SocketCommandChannelNew") {
+   if (classname == "SocketCommandChannel") {
 
       dabc::SocketServerAddon* addon = 0;
 
@@ -45,7 +45,7 @@ dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, 
          addon->SetDeliverEventsToWorker(true);
       }
 
-      return new SocketCommandChannelNew(objname, addon);
+      return new SocketCommandChannel(objname, addon);
    }
 
    return 0;

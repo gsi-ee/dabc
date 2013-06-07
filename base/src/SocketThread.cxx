@@ -358,30 +358,40 @@ void dabc::SocketIOAddon::AllocateRecvIOV(unsigned size)
    fRecvIOV = new struct iovec [size];
 }
 
-bool dabc::SocketIOAddon::StartSend(const void* buf, size_t size)
-{
-   return StartSendHdr(0, 0, buf, size);
-}
-
-bool dabc::SocketIOAddon::StartSendHdr(const void* hdr, unsigned hdrsize, const void* buf, size_t size)
+bool dabc::SocketIOAddon::StartSend(const void* buf1, unsigned size1,
+                                    const void* buf2, unsigned size2,
+                                    const void* buf3, unsigned size3)
 {
    if (fSendIOVNumber>0) {
       EOUT("Current send operation not yet completed");
       return false;
    }
 
-   if (fSendIOVSize<2) AllocateSendIOV(8);
+   if (fSendIOVSize<3) AllocateSendIOV(8);
 
    int indx = 0;
-   if (hdr && (hdrsize>0)) {
-      fSendIOV[indx].iov_base = (void*) hdr;
-      fSendIOV[indx].iov_len = hdrsize;
+   if (buf1 && (size1>0)) {
+      fSendIOV[indx].iov_base = (void*) buf1;
+      fSendIOV[indx].iov_len = size1;
       indx++;
    }
 
-   fSendIOV[indx].iov_base = (void*) buf;
-   fSendIOV[indx].iov_len = size;
-   indx++;
+   if (buf2 && (size2>0)) {
+      fSendIOV[indx].iov_base = (void*) buf2;
+      fSendIOV[indx].iov_len = size2;
+      indx++;
+   }
+
+   if (buf3 && (size3>0)) {
+      fSendIOV[indx].iov_base = (void*) buf3;
+      fSendIOV[indx].iov_len = size3;
+      indx++;
+   }
+
+   if (indx==0) {
+      EOUT("No buffer specified");
+      return false;
+   }
 
    fSendUseMsg = fUseMsgOper;
    fSendIOVFirst = 0;

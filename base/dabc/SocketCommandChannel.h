@@ -24,6 +24,10 @@
 #include "dabc/Queue.h"
 #endif
 
+#ifndef DABC_Hierarchy
+#include "dabc/Hierarchy.h"
+#endif
+
 
 namespace dabc {
 
@@ -32,7 +36,7 @@ namespace dabc {
     *
     */
 
-   struct SocketCmdPacketNew {
+   struct SocketCmdPacket {
 
       uint32_t dabc_header;   ///< constant, which identifies dabc packet
 
@@ -40,8 +44,11 @@ namespace dabc {
 
       uint32_t data_timeout;  ///< timeout in milliseconds, 0 - not timeout at all
 
-      uint32_t data_size;     ///< length of the information in the packet
+      uint32_t data_size;     ///< total length of the information in the packet
 
+      uint32_t data_cmdsize;  ///< which part of data is for command in xml format
+
+      uint32_t data_rawsize;  ///< which part of data at the end is raw data
 
       /** data here are depends from the kind specified */
    };
@@ -85,20 +92,18 @@ namespace dabc {
             stFailure      // failure is detected and connection will be close
          };
 
+         bool               fIsClient;          ///< true - client side, false - server side
 
-         bool         fIsClient;                 ///< true - client side, false - server side
+         std::string        fRemoteHostName;    ///<  host name and port number
+         bool               fConnected;         ///<  true when connection is established
 
-         int          fRemoteNodeId;             ///<  remote node id (if available)
-         std::string  fRemoteHostName;           ///<  host name and port number
-         bool         fConnected;                ///<  true when connection is established
+         CommandsQueue      fCmds;              ///< commands to be submitted to the server
 
-         CommandsQueue fCmds;                    ///< commands to be submitted to the server
+         EState             fState;             ///< current state of the worker
 
-         EState        fState;                   ///< current state of the worker
-
-         SocketCmdPacketNew fSendHdr;            ///< header for send command
+         SocketCmdPacket    fSendHdr;            ///< header for send command
          std::string        fSendBuf;            ///< content of transported command
-         SocketCmdPacketNew fRecvHdr;            ///< buffer for receiving header
+         SocketCmdPacket    fRecvHdr;            ///< buffer for receiving header
          char*              fRecvBuf;            ///< raw buffer for receiving command
          unsigned           fRecvBufSize;        ///< currently allocated size of recv buffer
 
@@ -126,9 +131,12 @@ namespace dabc {
          double ExtraClientTimeout() const { return 1.0; }
          double ExtraServerTimeout() const { return 0.1; }
 
+         bool ExecuteCommandByItself(Command cmd);
+
       public:
-         SocketCommandClient(Reference parent, const std::string& name, SocketAddon* addon,
-                            int remnode = -1, const std::string& hostname = "");
+         SocketCommandClient(Reference parent, const std::string& name,
+                             SocketAddon* addon,
+                             const std::string& hostname = "");
          virtual ~SocketCommandClient();
 
          void AppendCmd(Command cmd);
@@ -151,20 +159,27 @@ namespace dabc {
     * \ingroup dabc_all_classes
     */
 
-   class SocketCommandChannelNew : public Worker {
+   class SocketCommandChannel : public Worker {
+
+      friend class SocketCommandClient;
+
       protected:
          int             fNodeId;        ///<  current node id
          int             fClientCnt;     ///<  counter for new clients
+         Hierarchy       fHierarchy;     ///<  current hierarchy as seen by the channel
 
          virtual int PreviewCommand(Command cmd);
          virtual int ExecuteCommand(Command cmd);
 
+         /** \brief Provide string for connection to remote node */
+         std::string GetRemoteNode(const std::string& url, int* nodeid = 0);
+
          /** \brief Provides name of worker, which should handle client side of the connection */
-         std::string ClientWorkerName(int remnode, const std::string& remnodename);
+         std::string ClientWorkerName(const std::string& remnodename);
 
       public:
-         SocketCommandChannelNew(const std::string& name, SocketServerAddon* connaddon);
-         virtual ~SocketCommandChannelNew();
+         SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon);
+         virtual ~SocketCommandChannel();
 
          /** \brief As name said, command channel requires socket thread for the work */
          virtual std::string RequiredThrdClass() const { return typeSocketThread; }

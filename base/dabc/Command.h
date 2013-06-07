@@ -81,6 +81,9 @@ namespace dabc {
          CallersList   fCallers;     ///< list of callers
          TimeStamp     fTimeout;     ///< absolute time when timeout will be expired
          bool          fCanceled;    ///< indicate if command was canceled ant not need to be executed further
+         void*         fRawData;     ///< pointer on raw data
+         unsigned      fRawDataSize; ///< size of raw data
+         bool          fRawDataOwner;  ///< ownership flag of raw data
 
          // make destructor protected that nobody can delete command directly
          CommandContainer(const char* name = "Command");
@@ -88,6 +91,8 @@ namespace dabc {
          virtual ~CommandContainer();
 
          virtual const char* ClassName() const { return "Command"; }
+
+         void ClearRawData();
    };
 
    /** \brief Represents command with its arguments
@@ -148,7 +153,6 @@ namespace dabc {
          bool SetUInt(const std::string& name, unsigned v) { return Field(name).SetUInt(v); }
          unsigned GetUInt(const std::string& name, unsigned dflt = 0) const { return Field(name).AsUInt(dflt); }
 
-
          /** \brief Set pointer argument for the command */
          void SetPtr(const std::string& name, void* p);
          /** \brief Get pointer argument from the command */
@@ -159,6 +163,18 @@ namespace dabc {
 
          /** \brief Returns reference from the command, can be called only once */
          Reference GetRef(const std::string& name);
+
+         /** \brief Set raw data to the command, which can be transported also between nodes */
+         bool SetRawData(const void* ptr, unsigned len, bool owner = false, bool makecopy = false);
+
+         /** \brief Clear raw-data pointer, release memory if required */
+         void ClearRawData();
+
+         /** \brief Returns pointer on raw data */
+         void* GetRawData();
+
+         /** \brief Returns size of raw data */
+         unsigned GetRawDataSize();
 
          void AddValuesFrom(const Command& cmd, bool canoverwrite = true);
 

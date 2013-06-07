@@ -5,6 +5,12 @@ of framework.
 7.06.2013
 1. Introduce primitive command shell to remote dabc node. Via command channel
    any kind of command can be executed. 
+2. First working code for transport and update of hierarchy structure over
+   command channel. By this one should be able to inspect any remote dabc node
+   in the future, event several of them simultaneous. This command shell will be
+   very minimalistic, more advanced text-based interface will be tested with ncurses.
+   Later plugin for go4 will be done! 
+       
 
 6.06.2013
 1. Implement unreliable (datagram) socket communication.

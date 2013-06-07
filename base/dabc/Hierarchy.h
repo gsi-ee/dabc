@@ -81,7 +81,7 @@ namespace dabc {
     * Idea to completely replicate folder structure with many attributes,
     * which are stored into HierarchyContainer class.
     * One should be able to convert such hierarchy to/from xml file.
-    * Idea to create such hierarchy is to able provide different clients to monitor and control DABc process.
+    * Idea to create such hierarchy is to able provide different clients to monitor and control DABC process.
     */
 
    class Hierarchy : public Record {

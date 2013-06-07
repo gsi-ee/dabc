@@ -30,11 +30,11 @@
 
 
 
-dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::string& name, SocketAddon* addon,
-                                               int remnode, const std::string& hostname) :
+dabc::SocketCommandClient::SocketCommandClient(Reference parent, const std::string& name,
+                                               SocketAddon* addon,
+                                               const std::string& hostname) :
    dabc::Worker(MakePair(parent, name)),
    fIsClient(!hostname.empty()),
-   fRemoteNodeId(remnode),
    fRemoteHostName(hostname),
    fConnected(true),
    fCmds(fIsClient ? CommandsQueue::kindPostponed : CommandsQueue::kindNone),
@@ -85,6 +85,8 @@ bool dabc::SocketCommandClient::EnsureRecvBuffer(unsigned strsize)
       fRecvBufSize = 0;
       return false;
    }
+
+   DOUT0("ALLOCATE %u", fRecvBufSize);
 
    return true;
 }
@@ -139,6 +141,37 @@ int dabc::SocketCommandClient::ExecuteCommand(Command cmd)
    return dabc::Worker::ExecuteCommand(cmd);
 }
 
+bool dabc::SocketCommandClient::ExecuteCommandByItself(Command cmd)
+{
+   if (cmd.IsName("GetHierarchy")) {
+
+      unsigned lastversion = cmd.GetUInt("version");
+      cmd.RemoveField("version");
+
+      SocketCommandChannel* channel = dynamic_cast<SocketCommandChannel*> (GetParent());
+
+      if (channel==0) {
+         EOUT("Channel not found!!!");
+         return false;
+      }
+
+      channel->fHierarchy.UpdateHierarchy(dabc::mgr);
+
+      std::string diff = channel->fHierarchy.SaveToXml(false, lastversion + 1);
+
+      DOUT0("Produce hierarchy %u", channel->fHierarchy.GetVersion());
+
+      cmd.SetRawData(diff.c_str(), diff.length(), false, true);
+
+      cmd.SetResult(cmd_true);
+
+      return true;
+   }
+
+   return false;
+
+}
+
 
 void dabc::SocketCommandClient::ProcessRecvPacket()
 {
@@ -149,8 +182,11 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
    dabc::Command cmd;
 
-   if (fRecvHdr.data_size > 0) {
-      fRecvBuf[fRecvHdr.data_size] = 0; // add 0 at the end of the string
+   if (fRecvHdr.data_cmdsize > 0) {
+
+      std::string sbuf;
+
+      sbuf.append(fRecvBuf, fRecvHdr.data_cmdsize);
 
       if (!cmd.ReadFromXml(std::string(fRecvBuf))) {
          CloseClient(true, "command format error");
@@ -158,7 +194,7 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
       }
    }
 
-   // DOUT0("Worker: %s get command %s from remote", ItemName().c_str(), cmd.GetName());
+   DOUT0("Worker: %s get command %s from remote", ItemName().c_str(), cmd.GetName());
 
    if (IsClient()) {
 
@@ -168,6 +204,10 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
       } else {
          fCurrentCmd.AddValuesFrom(cmd);
+
+         if (!fCurrentCmd.null() && (fRecvHdr.data_rawsize>0)) {
+            fCurrentCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
+         }
 
          fCurrentCmd.Reply(cmd.GetResult());
       }
@@ -179,15 +219,28 @@ void dabc::SocketCommandClient::ProcessRecvPacket()
 
       fCurrentCmd = cmd;
 
-      double tmout = fRecvHdr.data_timeout * 0.001;
+      if (!fCurrentCmd.null() && (fRecvHdr.data_rawsize>0)) {
+         fCurrentCmd.SetRawData(fRecvBuf + fRecvHdr.data_cmdsize, fRecvHdr.data_rawsize, false, true);
+      }
 
-      if (tmout>0) fCurrentCmd.SetTimeout(tmout);
+      if (ExecuteCommandByItself(fCurrentCmd)) {
 
-      // DOUT0("Submit command %s %s for execution", fCurrentCmd.GetName(), cmd.GetName());
+         fCurrentCmd.RemoveReceiver();
 
-      ActivateTimeout(tmout > 0. ? tmout + 0.1 : 10.);
+         SendCurrentCommand();
 
-      dabc::mgr.Submit(Assign(cmd));
+      } else {
+
+         double tmout = fRecvHdr.data_timeout * 0.001;
+
+         if (tmout>0) fCurrentCmd.SetTimeout(tmout);
+
+         DOUT0("Submit command %s for execution", fCurrentCmd.GetName());
+
+         ActivateTimeout(tmout > 0. ? tmout + 0.1 : 10.);
+
+         dabc::mgr.Submit(Assign(cmd));
+      }
    }
 
    // first of all, sumbit next recv header operation
@@ -209,8 +262,7 @@ bool dabc::SocketCommandClient::ReplyCommand(Command cmd)
 
       SendCurrentCommand();
 
-      // we could release reference on current command immediately
-      fCurrentCmd.Release();
+      // we will release command when operation completed while raw buffer may be used during transfer
 
       return true;
    }
@@ -233,6 +285,8 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
          }
 
          fState = IsClient() ? stWaitReply : stWaitCmd;
+
+         if (IsServer()) fCurrentCmd.Release();
 
          break;
 
@@ -269,7 +323,7 @@ void dabc::SocketCommandClient::ProcessEvent(const EventId& evnt)
             SocketIOAddon* io = dynamic_cast<SocketIOAddon*> (fAddon());
             io->StartRecv(fRecvBuf, fRecvHdr.data_size);
 
-            // DOUT0("Start command recv data_size %u", fRecvHdr.data_size);
+            DOUT0("Start command recv data_size %u", fRecvHdr.data_size);
          }
 
          break;
@@ -330,11 +384,15 @@ void dabc::SocketCommandClient::SendCurrentCommand(double send_tmout)
    fSendHdr.data_kind = IsClient() ? kindCommand : kindReply;
    fSendHdr.data_timeout = send_tmout > 0 ? (unsigned) send_tmout*1000. : 0;
    fSendHdr.data_size = 0;
+   fSendHdr.data_cmdsize = 0;
+   fSendHdr.data_rawsize = 0;
 
    fSendBuf.clear();
    if (!fCurrentCmd.null()) {
       fSendBuf = fCurrentCmd.SaveToXml(true);
-      fSendHdr.data_size = fSendBuf.length();
+      fSendHdr.data_cmdsize = fSendBuf.length();
+      fSendHdr.data_rawsize = fCurrentCmd.GetRawDataSize();
+      fSendHdr.data_size = fSendHdr.data_cmdsize + fSendHdr.data_rawsize;
    }
 
    if (fSendBuf.length() == 0) fSendHdr.data_kind = kindCancel;
@@ -346,7 +404,11 @@ void dabc::SocketCommandClient::SendCurrentCommand(double send_tmout)
       return;
    }
 
-   if (!addon->StartSendHdr(&fSendHdr, sizeof(fSendHdr), fSendBuf.c_str(), fSendHdr.data_size)) {
+   DOUT0("Start command send fullsize:%u cmd:%u raw:%u", fSendHdr.data_size, fSendHdr.data_cmdsize, fSendHdr.data_rawsize);
+
+   if (!addon->StartSend(&fSendHdr, sizeof(fSendHdr),
+                         fSendBuf.c_str(), fSendHdr.data_cmdsize,
+                         fCurrentCmd.GetRawData(), fSendHdr.data_rawsize)) {
       CloseClient(true, "Fail to send data");
       return;
    }
@@ -390,10 +452,11 @@ double dabc::SocketCommandClient::ProcessTimeout(double last_diff)
 
 
 
-dabc::SocketCommandChannelNew::SocketCommandChannelNew(const std::string& name, SocketServerAddon* connaddon) :
+dabc::SocketCommandChannel::SocketCommandChannel(const std::string& name, SocketServerAddon* connaddon) :
    dabc::Worker(MakePair(name.empty() ? "/CommandChannel" : name)),
    fNodeId(0),
-   fClientCnt(0)
+   fClientCnt(0),
+   fHierarchy()
 {
    fNodeId = dabc::mgr()->cfg()->MgrNodeId();
 
@@ -402,35 +465,18 @@ dabc::SocketCommandChannelNew::SocketCommandChannelNew(const std::string& name, 
    AssignAddon(connaddon);
 }
 
-dabc::SocketCommandChannelNew::~SocketCommandChannelNew()
+dabc::SocketCommandChannel::~SocketCommandChannel()
 {
 }
 
-std::string dabc::SocketCommandChannelNew::ClientWorkerName(int remnode, const std::string& remnodename)
+std::string dabc::SocketCommandChannel::GetRemoteNode(const std::string& url_str, int* nodeid)
 {
-   if (remnode>=0) return dabc::format("Client%d", remnode);
-
-   std::string res = std::string("Client_") + remnodename;
-
-   std::size_t pos = 0;
-
-   while ((pos = res.find_first_of(":/. ")) != std::string::npos) res[pos] = '_';
-
-   return res;
-}
-
-
-int dabc::SocketCommandChannelNew::PreviewCommand(Command cmd)
-{
-   std::string url_str = cmd.GetReceiver();
-
-   if (url_str.empty())
-      return dabc::Worker::PreviewCommand(cmd);
+   if (url_str.empty()) return std::string();
 
    int remnode = Url::ExtractNodeId(url_str);
+   if (nodeid) *nodeid = remnode;
 
-   if ((remnode >=0) && (remnode == fNodeId))
-      return dabc::Worker::PreviewCommand(cmd);
+   if ((remnode >=0) && (remnode == fNodeId)) return std::string();
 
    std::string remnodename;
    int remport(0);
@@ -447,15 +493,36 @@ int dabc::SocketCommandChannelNew::PreviewCommand(Command cmd)
       }
    }
 
+   if (remnodename.empty()) return std::string();
+
+   if (remport <= 0) remport = 1237;
+
+   return remnodename + dabc::format(":%d", remport);
+}
+
+
+std::string dabc::SocketCommandChannel::ClientWorkerName(const std::string& remnodename)
+{
+   std::string res = remnodename;
+
+   std::size_t pos = 0;
+
+   while ((pos = res.find_first_of(":/. ")) != std::string::npos) res[pos] = '_';
+
+   return res;
+}
+
+
+int dabc::SocketCommandChannel::PreviewCommand(Command cmd)
+{
+   int nodeid(-1);
+
+   std::string remnodename = GetRemoteNode(cmd.GetReceiver(), &nodeid);
+
    if (remnodename.empty())
       return dabc::Worker::PreviewCommand(cmd);
 
-   if (remport <= 0) remport = 1237;
-   remnodename += dabc::format(":%d", remport);
-
-   // here we identify address, which should be used for connection
-
-   std::string worker_name = ClientWorkerName(remnode, remnodename);
+   std::string worker_name = ClientWorkerName(remnodename);
 
    SocketCommandClientRef worker = FindChildRef(worker_name.c_str());
 
@@ -467,11 +534,16 @@ int dabc::SocketCommandChannelNew::PreviewCommand(Command cmd)
       }
 
       // retry endless number of times
-      client->SetRetryOpt(2000000000, 0.1);
+      if (nodeid>=0)
+         client->SetRetryOpt(2000000000, 0.1);
+      else {
+         double tmout = cmd.TimeTillTimeout();
+         client->SetRetryOpt(5, tmout > 0. ? tmout/5 : 0.5);
+      }
 
       client->SetDeliverEventsToWorker(true);
 
-      worker = new SocketCommandClient(this, worker_name, client, remnode, remnodename);
+      worker = new SocketCommandClient(this, worker_name, client, remnodename);
 
       worker()->AssignToThread(thread());
    }
@@ -483,11 +555,9 @@ int dabc::SocketCommandChannelNew::PreviewCommand(Command cmd)
    worker.Release();
 
    return cmd_postponed;
-
 }
 
-
-int dabc::SocketCommandChannelNew::ExecuteCommand(Command cmd)
+int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 {
    if (cmd.IsName("SocketConnect")) {
 
@@ -516,7 +586,26 @@ int dabc::SocketCommandChannelNew::ExecuteCommand(Command cmd)
 
       worker.Release();
 
+      return dabc::cmd_true;
+   } else
+   if (cmd.IsName("disconnect") || cmd.IsName("close")) {
+      std::string remnodename = GetRemoteNode(cmd.GetStdStr("host"));
+
+      if (remnodename.empty()) return dabc::cmd_false;
+
+      std::string worker_name = ClientWorkerName(remnodename);
+
+      SocketCommandClientRef worker = FindChildRef(worker_name.c_str());
+
+      if (!worker.null()) {
+         DOUT0("Close connection to %s", remnodename.c_str());
+         worker.Destroy();
          return dabc::cmd_true;
+      }
+
+      DOUT0("No connection to %s exists", remnodename.c_str());
+
+      return dabc::cmd_false;
    }
 
    return dabc::Worker::ExecuteCommand(cmd);

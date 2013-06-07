@@ -461,8 +461,8 @@ namespace dabc {
 
          static const char* MgrThrdName()       { return "ManagerThrd"; }
          static const char* AppThrdName()       { return "AppThrd"; }
-         static const char* ConnMgrName()       { return "/#ConnMgr"; }
-         static const char* CmdChlName()        { return "/#CommandChl"; }
+         static const char* ConnMgrName()       { return "/ConnMgr"; }
+         static const char* CmdChlName()        { return "/CommandChl"; }
 
 
          /** Return nodes id of local node */

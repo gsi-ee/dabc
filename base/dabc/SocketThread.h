@@ -202,10 +202,11 @@ namespace dabc {
           * \details Can be only specified for datagram sockets */
          void SetSendAddr(const std::string& host = "", int port = 0);
 
-         bool StartSend(const void* buf, size_t size);
+         bool StartSend(const void* buf, unsigned size,
+                        const void* buf2 = 0, unsigned size2 = 0,
+                        const void* buf3 = 0, unsigned size3 = 0);
          bool StartRecv(void* buf, size_t size);
 
-         bool StartSendHdr(const void* hdr, unsigned hdrsize, const void* buf, size_t size);
          bool StartRecvHdr(void* hdr, unsigned hdrsize, void* buf, size_t size);
 
          bool StartSend(const Buffer& buf);
