@@ -45,7 +45,7 @@
          Connection specifies how modules are connected in the network. pool attribute
          required for verbs transport, while memory pool should be registered by verbs -->
     
-    <Device name="NetDev" class="verbs::Device"/>
+    <Device name="NetDev" class="dabc::SocketDevice"/>
     <Connection kind="all-to-all" device="NetDev" output="Sender" input="Receiver" pool="Pool"/>
     
   </Context>

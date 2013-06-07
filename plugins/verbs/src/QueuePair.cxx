@@ -39,6 +39,7 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
    f_local_psn(0),
    f_remote_lid(0),
    f_remote_qpn(0),
+   f_remote_psn(0),
    fNumSendSegs(max_send_sge)
 {
    if ((send_cq==0) || (recv_cq==0)) {
@@ -50,7 +51,7 @@ verbs::QueuePair::QueuePair(ContextRef ctx, ibv_qp_type qp_type,
    memset(&attr, 0, sizeof(struct ibv_qp_init_attr));
    attr.send_cq = send_cq->cq();
    attr.recv_cq = recv_cq->cq();
-//   attr.sq_sig_all = 1; // if signall all operation, set 1 ????
+//   attr.sq_sig_all = 1; // if signal all operation, set 1 ????
 
    attr.cap.max_send_wr  = send_depth;
    attr.cap.max_send_sge = max_send_sge;

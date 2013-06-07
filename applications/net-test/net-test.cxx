@@ -12,22 +12,19 @@
  * in LICENSE.txt file which is part of the distribution.
  ********************************************************************/
 
+// TODO: make example with IB MCast
+// one could use global ID like
+//           <McastAddr value="FF:12:A0:1C:FE:80:00:00:00:00:00:00:33:44:55:66"/>
+//           <McastPort value="112233"/>
+
+
 #include "dabc/logging.h"
 #include "dabc/timing.h"
 #include "dabc/ModuleAsync.h"
-#include "dabc/ModuleSync.h"
-#include "dabc/Command.h"
 #include "dabc/Manager.h"
-#include "dabc/MemoryPool.h"
-#include "dabc/threads.h"
-#include "dabc/Application.h"
-#include "dabc/SocketDevice.h"
-#include "dabc/statistic.h"
 #include "dabc/Factory.h"
-#include "dabc/Configuration.h"
-#include "dabc/CommandsSet.h"
 #include "dabc/Url.h"
-#include "dabc/Pointer.h"
+#include "dabc/Configuration.h"
 
 class NetTestSenderModule : public dabc::ModuleAsync {
    protected:
@@ -244,120 +241,12 @@ class NetTestSpecialModule : public dabc::ModuleAsync {
       }
 };
 
-class NetTestApplication : public dabc::Application {
-   public:
-
-      enum EKinds { kindAllToAll, kindMulticast };
-
-      NetTestApplication() : dabc::Application("NetTestApp")
-      {
-         DOUT0("Create net test application");
-
-
-         CreatePar("Kind").DfltStr("all-to-all");
-
-         CreatePar("NetDevice").DfltStr(dabc::typeSocketDevice);
-
-         CreatePar(dabc::xmlMcastAddr).DfltStr("224.0.0.15");
-         CreatePar(dabc::xmlMcastPort).DfltInt(7234);
-
-         CreatePar(dabc::xmlBufferSize).DfltInt(1024);
-         CreatePar(dabc::xmlOutputQueueSize).DfltInt(4);
-         CreatePar(dabc::xmlInputQueueSize).DfltInt(8);
-         CreatePar(dabc::xmlUseAcknowledge).DfltBool(false);
-
-         DOUT0("Test application was build");
-      }
-
-      int Kind()
-      {
-         if (Par("Kind").AsStdStr() == "all-to-all") return kindAllToAll;
-         if (Par("Kind").AsStdStr() == "multicast") return kindMulticast;
-         return kindAllToAll;
-      }
-
-      virtual bool CreateAppModules()
-      {
-         std::string devclass = Par("NetDevice").AsStdStr();
-
-         if (Kind() == kindAllToAll) {
-
-            if (!dabc::mgr.CreateDevice(devclass, "NetDev")) return false;
-
-            // no need, will be done when modules are created
-            // dabc::mgr.CreateMemoryPool("SendPool");
-
-            // no need, will be done when modules are created
-            // dabc::mgr.CreateMemoryPool("RecvPool");
-
-            dabc::CmdCreateModule cmd1("NetTestReceiverModule", "Receiver");
-            cmd1.SetInt("NumPorts", dabc::mgr()->NumNodes());
-            if (!dabc::mgr.Execute(cmd1)) return false;
-
-            dabc::CmdCreateModule cmd2("NetTestSenderModule", "Sender");
-            cmd2.SetInt("NumPorts", dabc::mgr()->NumNodes());
-            cmd2.SetBool("CanSend", true);
-            if (!dabc::mgr.Execute(cmd2)) return false;
-
-            for (unsigned nsender = 0; nsender < NumNodes(); nsender++) {
-               for (unsigned nreceiver = 0; nreceiver < NumNodes(); nreceiver++) {
-                  if (nsender == nreceiver) continue;
-
-                   std::string port1 = dabc::Url::ComposePortName(nsender, "Sender/Output", nreceiver);
-
-                   std::string port2 = dabc::Url::ComposePortName(nreceiver, "Receiver/Input", nsender);
-
-                   dabc::mgr.Connect(port1, port2);
-               }
-            }
-
-            DOUT0("Create all-to-all modules done");
-
-            return true;
-
-
-         } else
-         if (Kind() == kindMulticast) {
-            bool isrecv = dabc::mgr()->NodeId() > 0;
-
-            DOUT1("Create device %s", devclass.c_str());
-
-            if (!dabc::mgr.CreateDevice(devclass, "MDev")) return false;
-
-            dabc::CmdCreateModule cmd3("NetTestSpecialModule", "MM");
-            cmd3.SetBool("IsReceiver", isrecv);
-            if (!dabc::mgr.Execute(cmd3)) return false;
-
-            if (!dabc::mgr.CreateTransport(isrecv ? "MM/Input" : "MM/Output", "MDev")) return false;
-
-            DOUT1("Create multicast modules done");
-
-            return true;
-         }
-
-         return false;
-      }
-
-      virtual bool BeforeAppModulesStarted()
-      {
-         return true;
-      }
-};
-
 
 
 class NetTestFactory : public dabc::Factory  {
    public:
 
       NetTestFactory(const std::string& name) : dabc::Factory(name) {}
-
-      virtual dabc::Application* CreateApplication(const std::string& classname, dabc::Command cmd)
-      {
-         if (classname == "NetTestApp")
-            return new NetTestApplication();
-         return dabc::Factory::CreateApplication(classname, cmd);
-      }
-
 
       virtual dabc::Module* CreateModule(const std::string& classname, const std::string& modulename, dabc::Command cmd)
       {
@@ -375,36 +264,3 @@ class NetTestFactory : public dabc::Factory  {
 };
 
 dabc::FactoryPlugin nettest(new NetTestFactory("net-test"));
-
-
-extern "C" void RunMulticastTest()
-{
-   std::string devclass = dabc::mgr()->cfg()->GetUserPar("Device", dabc::typeSocketDevice);
-
-   std::string mcast_host = dabc::mgr()->cfg()->GetUserPar(dabc::xmlMcastAddr, "224.0.0.15");
-   int mcast_port = dabc::mgr()->cfg()->GetUserParInt(dabc::xmlMcastPort, 7234);
-   bool isrecv = dabc::mgr()->NodeId() > 0;
-
-   DOUT1("Create device %s", devclass.c_str());
-
-   if (!dabc::mgr.CreateDevice(devclass, "MDev")) return;
-
-   dabc::CmdCreateModule cmd("NetTestSpecialModule", "MM");
-   cmd.SetBool("IsReceiver", isrecv);
-   dabc::mgr.Execute(cmd);
-
-   dabc::CmdCreateTransport cmd2(isrecv ? "MM/Input" : "MM/Output", "MDev");
-   cmd2.SetStr(dabc::xmlMcastAddr, mcast_host);
-   cmd2.SetInt(dabc::xmlMcastPort, mcast_port);
-   dabc::mgr.Execute(cmd2);
-
-   DOUT1("Create transport for addr %s", mcast_host.c_str());
-
-   dabc::mgr.StartAllModules();
-
-   dabc::mgr.Sleep(5);
-
-   dabc::mgr.StopAllModules();
-
-   DOUT0("Multicast test done");
-}

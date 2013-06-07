@@ -436,15 +436,15 @@ int verbs::ContextRef::GetGidIndex(ibv_gid* lookgid)
    for (int i = 0; !ret; i++) {
       ret = ibv_query_gid(context(), IbPort(), i, &gid);
 
-        if (ret) break;
+      if (ret) break;
 
-        if (null_gid(&gid)) continue;
+      if (null_gid(&gid)) continue;
 
-        DOUT5("   gid[%2d]: %016lx : %016lx  ", i,
-                ntohll(gid.global.subnet_prefix),
-                ntohll(gid.global.interface_id));
+      DOUT5("   gid[%2d]: %016lx : %016lx  ", i,
+            ntohll(gid.global.subnet_prefix),
+            ntohll(gid.global.interface_id));
 
-        if (!ret && !memcmp(lookgid, &gid, sizeof(ibv_gid))) return i;
+      if (!ret && !memcmp(lookgid, &gid, sizeof(ibv_gid))) return i;
    }
    return 0;
 }

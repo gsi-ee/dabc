@@ -524,7 +524,6 @@ bool dabc::SocketIOAddon::StartNetSend(void* hdr, unsigned hdrsize, const Buffer
    return true;
 }
 
-
 void dabc::SocketIOAddon::ProcessEvent(const EventId& evnt)
 {
 //   DOUT0("IO addon:%p process event %u", this, evnt.GetCode());
@@ -750,8 +749,6 @@ void dabc::SocketIOAddon::CancelIOOperations()
    fSendIOVNumber = 0;
    fRecvIOVNumber = 0;
 }
-
-
 
 // ___________________________________________________________________
 
