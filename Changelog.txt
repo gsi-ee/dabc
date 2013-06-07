@@ -7,16 +7,19 @@ of framework.
    any kind of command can be executed. 
 2. First working code for transport and update of hierarchy structure over
    command channel. By this one should be able to inspect any remote dabc node
-   in the future, event several of them simultaneous. This command shell will be
+   in the future, even several of them simultaneous. This command shell will be
    very minimalistic, more advanced text-based interface will be tested with ncurses.
-   Later plugin for go4 will be done! 
-       
+   Later plugin for go4 will be done!
+3. Allow to transport raw data together with xml command description over command
+   channel. This allows potentially to transport any kind of data via the channel -
+   not only xml-based representation, which is not veru efficient for big raw objects. 
 
 6.06.2013
 1. Implement unreliable (datagram) socket communication.
    Idea to provide udp and multicast messages, where no any connections are required.
    Usage of datagram socket does not require connection manager and no any kind of control.
    Include appropriate example in net-test.   
+
 
 5.06.2013
 1. Introduce new command channel, based on TCP sockets (old was using UDP). There is 
@@ -52,8 +55,10 @@ of framework.
 1. Introduce dabc::Hierarchy class, which should represent in the future 
    objects hierarchy of remote (or local) DABC process.
 
+
 27.05.2013
 1. Activate shared-memory observer in hadaq plugin only when it really enabled
+
 
 24.05.2013
 1. Make doxygen docu more readable
