@@ -234,10 +234,6 @@ namespace dabc {
       RecordField ParValue() { return Field("ParValue"); }
    };
 
-   class CmdShutdownControl : public Command {
-      DABC_COMMAND(CmdShutdownControl, "CmdShutdownControl")
-   };
-
    /** \brief %Command to request current state of known nodes */
    class CmdGetNodesState : public Command {
 
@@ -402,9 +398,8 @@ namespace dabc {
          Reference DoCreateObject(const std::string& classname, const std::string& objname = "", Command cmd = 0);
 
          /** \brief Return reference on command channel
-          * \details should be used from manager thread only
-          * If force specified, new command channel will be created */
-         WorkerRef GetCommandChannel(bool force = false);
+          * \details should be used from manager thread only */
+         WorkerRef GetCommandChannel() { return FindItem(CmdChlName()); }
 
          /** \brief Return reference on folder with factories
           *
@@ -429,6 +424,9 @@ namespace dabc {
          /** \brief Runs manager mainloop.
           * \param[in] runtime  - time limit for running, 0 - unlimited */
          void RunManagerMainLoop(double runtime = 0.);
+
+         /** \brief Runs manager command loop - when command shell is used. */
+         void RunManagerCmdLoop(double runtime = 0.);
 
          bool DoCleanupApplication();
 
@@ -474,17 +472,16 @@ namespace dabc {
          /** Return name of node */
          std::string GetNodeName(int nodeid);
 
+         /** \brief Create command channel */
+         bool CreateControl(bool withserver);
+
+
          /** Returns true if node with specified id is active */
          virtual bool IsNodeActive(int num) { return num==0; }
          /** Returns number of currently active nodes */
          int NumActiveNodes();
          /** Test active nodes - try to execute simpe ping command on each active node */
          bool TestActiveNodes(double tmout = 5.);
-
-         /** \brief Establish/test connection to control system */
-         virtual bool ConnectControl();
-         /** \brief Disconnect connection to control system */
-         virtual void DisconnectControl();
 
          ThreadsLayout GetThreadsLayout() const { return fThrLayout; }
 
@@ -656,8 +653,14 @@ namespace dabc {
           * See Manager::Sleep() method for more details */
          void Sleep(double tmout, const char* prefix = 0);
 
-         /** Run manager main-loop, should be called either from manager thread or from main process */
-         void RunMainLoop(double runtime = 0.);
+         /** \brief Run manager main loop
+          * \details should be called either from manager thread or from main process */
+         void RunMainLoop(double runtime = 0.)
+            { if (GetObject()) GetObject()->RunManagerMainLoop(runtime); }
+
+         /** \brief Run manager command loop */
+         void RunCmdLoop(double runtime = 0.)
+            { if (GetObject()) GetObject()->RunManagerCmdLoop(runtime); }
 
    };
 

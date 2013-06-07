@@ -223,16 +223,6 @@ void dabc::Command::AddValuesFrom(const dabc::Command& cmd, bool canoverwrite)
    Record::AddFieldsFrom(cmd, canoverwrite);
 }
 
-void dabc::Command::SaveToString(std::string& v, bool compact)
-{
-   v = SaveToXml(compact);
-}
-
-bool dabc::Command::ReadFromString(const std::string& v)
-{
-   return ReadFromXml(v);
-}
-
 void dabc::Command::Print(int lvl, const char* from) const
 {
    Record::Print(lvl, from);
@@ -338,3 +328,73 @@ dabc::Command& dabc::Command::SetReceiver(Object* rcv)
 {
    return SetReceiver(-1, rcv);
 }
+
+size_t find_symbol(const std::string& str, size_t pos, char symb)
+{
+   bool quote = false;
+
+   while (pos < str.length()) {
+
+      if (str[pos]=='\"') quote = !quote;
+
+      if (!quote && (str[pos] == symb)) return pos;
+
+      pos++;
+   }
+
+   return str.length();
+}
+
+bool remove_quotes(std::string& str)
+{
+   size_t len = str.length();
+
+   if (len < 2) return true;
+
+   if (str[0] != str[len-1]) return true;
+
+   if (str[0]=='\"') {
+      str.erase(len-1, 1);
+      str.erase(0,1);
+   }
+   return true;
+}
+
+bool dabc::Command::ReadFromCmdString(const std::string& str)
+{
+   Release();
+
+   size_t pos = 0;
+   int narg = 0;
+
+   while (pos<str.length()) {
+      if (str[pos] == ' ') { pos++; continue; }
+
+      size_t next = find_symbol(str, pos, ' ');
+      std::string part = str.substr(pos, next-pos);
+      pos = next;
+
+      if (null()) { CreateContainer(part); continue; }
+
+      size_t separ = find_symbol(part, 0, '=');
+
+      if (separ == part.length()) {
+         SetStr(dabc::format("Arg%d", narg++), part);
+      } else
+      if (separ==0) {
+         EOUT("Wrong position of '=' symbol");
+         Release();
+         return false;
+      } else {
+         std::string argname = part.substr(0, separ-1);
+         std::string argvalue = part.substr(separ+1);
+         remove_quotes(argvalue);
+         SetStr(argname, argvalue);
+      }
+   }
+
+   if (narg>0) SetInt("NumArg", narg);
+
+   return true;
+}
+

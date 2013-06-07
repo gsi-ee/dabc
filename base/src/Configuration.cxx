@@ -134,11 +134,13 @@ int dabc::Configuration::ShowCpuInfo()
    return dabc::str_to_int(res.c_str(), &kind) ? kind : -1;
 }
 
-bool dabc::Configuration::UseControl()
+int dabc::Configuration::UseControl()
 {
-   if (fSelected==0) return true;
+   if (fSelected==0) return 0;
    std::string res = Find1(fSelected, "", xmlRunNode, xmlUseControl);
-   return res.empty() ? true : (res != xmlFalseValue);
+   if (res == xmlFalseValue) return -1;
+   if (res == xmlTrueValue) return 1;
+   return 0;
 }
 
 int dabc::Configuration::GetRunTime()

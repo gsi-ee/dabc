@@ -326,9 +326,6 @@ void dabc::Manager::HaltManager()
    // only for case, when treads does not run its own main loop, we should help him to finish processing
    if (thrd.IsRealThrd()) thrd.Release();
 
-   // command channel is special case - we let him inform others that we are going done
-   GetCommandChannel().Execute(CmdShutdownControl(), 1);
-
    FindModule(ConnMgrName()).Destroy();
 
    DettachFromThread();
@@ -595,7 +592,7 @@ bool dabc::Manager::ProcessParameterEvents()
 
          if (iter->remote_recv.length() > 0) {
             evnt.SetReceiver(iter->remote_recv);
-            GetCommandChannel(false).Submit(evnt);
+            GetCommandChannel().Submit(evnt);
          } else
             iter->recv.Submit(evnt);
       }
@@ -717,17 +714,21 @@ void dabc::Manager::FillItemName(const Object* ptr, std::string& itemname, bool 
    }
 }
 
-dabc::WorkerRef dabc::Manager::GetCommandChannel(bool force)
+bool dabc::Manager::CreateControl(bool withserver)
 {
-   WorkerRef ref = FindItem(CmdChlName());
+   WorkerRef ref = GetCommandChannel();
+   if (!ref.null()) return true;
 
-   if (!ref.null() || !force) return ref;
+   dabc::CmdCreateObject cmd("SocketCommandChannelNew", CmdChlName());
+   cmd.SetBool("WithServer", withserver);
+   if (withserver && cfg())
+      cmd.SetInt("ServerPort", cfg()->MgrPort());
 
-   ref = DoCreateObject("SocketCommandChannelNew", CmdChlName());
+   ref = DoCreateObject("SocketCommandChannelNew", CmdChlName(), cmd);
 
    ref.MakeThreadForWorker("CmdThrd");
 
-   return ref;
+   return !ref.null();
 }
 
 
@@ -748,7 +749,7 @@ int dabc::Manager::PreviewCommand(Command cmd)
 
       if ((tgtnode>=0) && (tgtnode != NodeId())) {
 
-         if (!GetCommandChannel(true).Submit(cmd))
+         if (!GetCommandChannel().Submit(cmd))
             EOUT("Cannot submit command to remote node %d", tgtnode);
 
          return cmd_postponed;
@@ -1130,8 +1131,6 @@ int dabc::Manager::ExecuteCommand(Command cmd)
       cmd_res = cmd_true;
    } else
    if (cmd.IsName("ParameterEventSubscription")) {
-
-
       Worker* worker = (Worker*) cmd.GetPtr("Worker");
       std::string mask = cmd.GetStdStr("Mask");
       std::string remote = cmd.GetStdStr("RemoteWorker");
@@ -1537,6 +1536,131 @@ void dabc::Manager::RunManagerMainLoop(double runtime)
 }
 
 
+int inputAvailable()
+{
+  struct timeval tv;
+  fd_set fds;
+  tv.tv_sec = 0;
+  tv.tv_usec = 0;
+  FD_ZERO(&fds);
+  FD_SET(STDIN_FILENO, &fds);
+  select(STDIN_FILENO+1, &fds, NULL, NULL, &tv);
+  return (FD_ISSET(STDIN_FILENO, &fds));
+}
+
+#include <iostream>
+
+void dabc::Manager::RunManagerCmdLoop(double runtime)
+{
+   DOUT0("Enter dabc::Manager::RunManagerCmdLoop");
+
+   ThreadRef thrd = thread();
+
+   if (thrd.null()) return;
+
+   if (GetCommandChannel().null()) {
+      EOUT("No command channel found");
+      return;
+   }
+
+   if (thrd.IsRealThrd()) {
+      DOUT3("Manager has normal thread - just wait until application modules are stopped");
+   } else {
+      DOUT3("Run manager thread mainloop inside main process");
+
+      // to be sure that timeout processing is active
+      // only via timeout one should be able to stop processing of main loop
+      ActivateTimeout(1.);
+   }
+
+   TimeStamp start = dabc::Now();
+
+   std::string tgtnode;
+
+   bool first(true);
+
+   while (true) {
+
+      // we run even loop in units of 0.1 sec
+      // TODO: make 0.1 sec configurable
+      if (thrd.IsRealThrd())
+         dabc::Sleep(0.001);
+      else
+         thrd.RunEventLoop(0.001);
+
+      if ((runtime>0) && start.Expired(runtime)) {
+         DOUT0("run time is over");
+         break;
+      }
+
+      if (!fMgrStoppedTime.null()) {
+         DOUT0("break command shell");
+         break;
+      }
+
+      std::string str;
+
+      if (first) {
+         first = false;
+         str = "connect lxg0538:4444";
+      } else {
+         if (inputAvailable()<=0) continue;
+         std::getline(std::cin, str);
+      }
+
+      if ((str=="quit") || (str=="exit") || (str==".q")) break;
+
+      dabc::Command cmd;
+      if (!cmd.ReadFromCmdString(str)) {
+         EOUT("Wrong syntax %s", str.c_str());
+         continue;
+      }
+
+      if (cmd.IsName("connect")) {
+         std::string node = cmd.GetStdStr("Arg0");
+
+         if (node.empty()) {
+            EOUT("Node not specified");
+            continue;
+         }
+
+         tgtnode = std::string("dabc://") + node;
+
+         dabc::Command cmd2("Ping");
+         cmd2.SetReceiver(tgtnode);
+         cmd2.SetTimeout(5.);
+
+         int res = GetCommandChannel().Execute(cmd2);
+
+         if (res == cmd_true) {
+            DOUT0("Connection to %s done", tgtnode.c_str());
+         } else {
+            DOUT0("FAIL connection to %s", tgtnode.c_str());
+            tgtnode.clear();
+         }
+
+         continue;
+      }
+
+      if (tgtnode.empty()) {
+         DOUT0("Tgt node not connected, command %s not executed", cmd.GetName());
+         continue;
+      }
+
+      cmd.SetReceiver(tgtnode);
+      cmd.SetTimeout(5.);
+
+      int res = GetCommandChannel().Execute(cmd);
+
+      if (res == cmd_timedout)
+         DOUT0("Command %s timeout", cmd.GetName());
+      else
+         DOUT0("Command %s res = %d", cmd.GetName(), res);
+
+   }
+}
+
+
 
 bool dabc::Manager::Find(ConfigIO &cfg)
 {
@@ -1553,29 +1677,6 @@ bool dabc::Manager::Find(ConfigIO &cfg)
    return false;
 }
 
-// __________________________________ NEW CODE ______________________________________
-
-
-bool dabc::Manager::ConnectControl()
-{
-   if (NumNodes()==1) return true;
-
-   // FIXME: move this code later in dabc_exe - one need connection manager only when
-   //        several nodes are running and should be connected with each other
-
-   return !GetCommandChannel(true).null();
-}
-
-void dabc::Manager::DisconnectControl()
-{
-   // WorkerSleep(5.);
-
-   FindModule(ConnMgrName()).Destroy();
-
-   GetCommandChannel().Execute(CmdShutdownControl(), 1.);
-
-   GetCommandChannel().Destroy();
-}
 
 // =================================== classes from ManagerRef class ==================================
 
@@ -1655,9 +1756,7 @@ dabc::ThreadRef dabc::Manager::DoCreateThread(const std::string& thrdname, const
 
 bool dabc::ManagerRef::CreateConnectionManager()
 {
-   if (NumNodes() == 1) return false;
-
-   if (!GetObject()->cfg()->UseControl()) return false;
+   if ( (GetObject()==0) || GetObject()->GetCommandChannel().null()) return false;
 
    ModuleRef m = FindModule(Manager::ConnMgrName());
 
@@ -1956,8 +2055,3 @@ void dabc::ManagerRef::Sleep(double tmout, const char* prefix)
       dabc::Sleep(tmout);
 }
 
-void dabc::ManagerRef::RunMainLoop(double runtime)
-{
-   if (GetObject())
-      GetObject()->RunManagerMainLoop(runtime);
-}

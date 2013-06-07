@@ -2,9 +2,15 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of framework.
 
+7.06.2013
+1. Introduce primitive command shell to remote dabc node. Via command channel
+   any kind of command can be executed. 
+
 6.06.2013
-1. Start implementing of unreliable (datagram) socket communication.
-   Idea to provide udp and multicast messages, where no any connections are required 
+1. Implement unreliable (datagram) socket communication.
+   Idea to provide udp and multicast messages, where no any connections are required.
+   Usage of datagram socket does not require connection manager and no any kind of control.
+   Include appropriate example in net-test.   
 
 5.06.2013
 1. Introduce new command channel, based on TCP sockets (old was using UDP). There is 

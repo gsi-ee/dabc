@@ -75,9 +75,12 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
       dabc::mgr.StartModule("/CpuInfo");
    }
 
-   if (cfg.UseControl()) {
+   int ctrl = cfg.UseControl();
+   if ((ctrl==0) && (cfg.NumNodes()>1)) ctrl = 1;
+
+   if (ctrl > 0) {
       DOUT2("Connecting control");
-      if (!dabc::mgr()->ConnectControl()) {
+      if (!dabc::mgr()->CreateControl(true)) {
          EOUT("Cannot establish connection to command system");
          return 1;
       }
@@ -98,6 +101,26 @@ int RunApplication(dabc::Configuration& cfg, int nodeid, int numnodes, bool doru
    return 0;
 }
 
+int command_shell()
+{
+   dabc::Configuration cfg;
+
+   new dabc::Manager("cmd", &cfg);
+
+   // ensure that all submitted events are processed
+   dabc::mgr.SyncWorker();
+
+   dabc::mgr()->CreateControl(false);
+
+   dabc::mgr.RunCmdLoop(1000);
+
+   dabc::mgr()->HaltManager();
+
+   dabc::mgr.Destroy();
+
+   return 0;
+}
+
 
 int main(int numc, char* args[])
 {
@@ -107,9 +130,12 @@ int main(int numc, char* args[])
 
    DOUT2("Start  cnt = %u", dabc::Object::NumInstances());
 
+   if ((numc>1) and (strcmp(args[1],"cmd")==0)) return command_shell();
+
    const char* cfgfile(0);
 
    if(numc > 1) cfgfile = args[1];
+
 
    unsigned nodeid = 1000000;
    unsigned numnodes = 0;

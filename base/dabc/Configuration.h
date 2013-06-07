@@ -67,7 +67,12 @@ namespace dabc {
          std::string InitFuncName();
          std::string RunFuncName();
          int ShowCpuInfo();
-         bool UseControl();
+
+         /** \brief Defines if control used in dabc node
+          * \returns -1 - when control="false" specified, no control created
+          *           0 - control parameter undefined, control will be used when NumNodes() > 1
+          *          +1 - when control="true" specified */
+         int UseControl();
          int GetRunTime();
          bool NormalMainThread();
          std::string ThreadsLayout();

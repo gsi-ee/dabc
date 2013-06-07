@@ -944,14 +944,14 @@ extern "C" void RunCmdTest()
    cmd1.SetInt("#hidden", 1222);
 
    std::string s1,s2;
-   cmd1.SaveToString(s1, false);
+   s1 = cmd1.SaveToXml(false);
 
    DOUT1("CMD1: \n%s", s1.c_str());
 
 
    dabc::Command cmd2;
-   cmd2.ReadFromString(s1);
-   cmd2.SaveToString(s2, false);
+   cmd2.ReadFromXml(s1);
+   s2 = cmd2.SaveToXml(false);
 
    DOUT1("CMD2: \n%s", s2.c_str());
 

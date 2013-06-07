@@ -160,9 +160,6 @@ namespace dabc {
          /** \brief Returns reference from the command, can be called only once */
          Reference GetRef(const std::string& name);
 
-         void SaveToString(std::string& v, bool compact=true);
-         bool ReadFromString(const std::string& v);
-
          void AddValuesFrom(const Command& cmd, bool canoverwrite = true);
 
          void SetResult(int res) { Field(ResultParName()).SetInt(res); }
@@ -191,6 +188,17 @@ namespace dabc {
          /** \brief Disable timeout for the command */
          void ResetTimeout() { SetTimeout(-1); }
 
+
+         /** \brief Read command from string, which is typed in std output
+          *  \details in simple case string is just command name
+          *  One could specify arguments as list parameters, separated by spaces
+          *  One also can specify arguments name with syntax arg_name=arg_value.
+          *  Valid syntax is:
+          *     ping
+          *     ping lxg0534
+          *     ping addr=lxg0534 port=2233
+          */
+         bool ReadFromCmdString(const std::string& str);
 
          /** Set command priority, defines how fast command should be treated
           *  In special cases priority allows to execute command also in worker which is not active */

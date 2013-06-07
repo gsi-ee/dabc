@@ -29,12 +29,24 @@
 
 dabc::Reference dabc::SocketFactory::CreateObject(const std::string& classname, const std::string& objname, Command cmd)
 {
-   if (classname == "SocketCommandChannel")
-      return dabc::SocketCommandChannel::CreateChannel(objname);
+   if (classname == "SocketCommandChannelNew") {
 
-   if (classname == "SocketCommandChannelNew")
-      return dabc::SocketCommandChannelNew::CreateChannel(objname);
+      dabc::SocketServerAddon* addon = 0;
 
+      if (cmd.GetBool("WithServer", true)) {
+         int nport = cmd.GetInt("ServerPort", 1237);
+         int fd = dabc::SocketThread::StartServer(nport);
+         if (fd<=0) {
+            EOUT("Cannot open cmd socket on port %d", nport);
+            return 0;
+         }
+         DOUT1("Start CMD SOCKET port:%d", nport);
+         addon = new dabc::SocketServerAddon(fd, nport);
+         addon->SetDeliverEventsToWorker(true);
+      }
+
+      return new SocketCommandChannelNew(objname, addon);
+   }
 
    return 0;
 }
