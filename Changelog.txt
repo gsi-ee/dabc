@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of framework.
 
+10.06.2013
+1. Minimalistic structure browser in dabc_shell. Menus from ncurses library are used.
+   Real functionality will be implemented in parallel to other implementations.
+   Idea to show some rates, infos, submit commands in such shell. 
+
+
 7.06.2013
 1. Introduce primitive command shell to remote dabc node. Via command channel
    any kind of command can be executed. 
@@ -13,6 +19,7 @@ of framework.
 3. Allow to transport raw data together with xml command description over command
    channel. This allows potentially to transport any kind of data via the channel -
    not only xml-based representation, which is not veru efficient for big raw objects. 
+
 
 6.06.2013
 1. Implement unreliable (datagram) socket communication.

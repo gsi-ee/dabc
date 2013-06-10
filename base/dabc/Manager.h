@@ -662,6 +662,9 @@ namespace dabc {
          void RunCmdLoop(double runtime = 0.)
             { if (GetObject()) GetObject()->RunManagerCmdLoop(runtime); }
 
+         WorkerRef GetCommandChannel()
+           { return GetObject() ? GetObject()->GetCommandChannel() : WorkerRef();  }
+
    };
 
    extern ManagerRef mgr;
