@@ -7,7 +7,7 @@ of framework.
    DABC. New libDabcHttp plugin is introduced, which should provide http protocol
    to DABC applications. For a moment it is just helloword application, should
    provide functionality similar to command shell, ncurses shell, go4-dabc browser. 
-
+2. Show application hierarchy in form of xml file.
 
 10.06.2013
 1. Minimalistic structure browser in dabc_shell. Menus from ncurses library are used.

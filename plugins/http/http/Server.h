@@ -47,6 +47,9 @@ namespace http {
          virtual const char* ClassName() const { return "HttpServer"; }
 
          bool IsEnabled() const { return fEnabled; }
+
+         int begin_request(struct mg_connection *conn);
+
    };
 
 }
