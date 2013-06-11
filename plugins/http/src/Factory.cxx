@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -11,24 +13,22 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dimc/Factory.h"
-#include "dimc/Observer.h"
+#include "http/Factory.h"
 
-#include "dabc/string.h"
-#include "dabc/logging.h"
-#include "dabc/Command.h"
-#include "dabc/Manager.h"
+#include "http/Server.h"
 
-dabc::FactoryPlugin dimcfactory(new dimc::Factory("dimc"));
+dabc::FactoryPlugin httpfactory(new http::Factory("http"));
 
-void dimc::Factory::Initialize()
+
+void http::Factory::Initialize()
 {
+   DOUT0("Initialize HTTP server");
 
-   dimc::Observer* observ = new dimc::Observer("/dim");
-   if (!observ->IsEnabled()) {
-      delete observ;
+   http::Server* serv = new http::Server("/http");
+   if (!serv->IsEnabled()) {
+      delete serv;
    } else {
-      DOUT0("Initialize DIM control");
-      dabc::WorkerRef(observ).MakeThreadForWorker("DimThread");
+      dabc::WorkerRef(serv).MakeThreadForWorker("HttpThread");
    }
 }
+

@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -39,6 +41,8 @@ namespace dimc {
 
          typedef std::list<ServiceEntry*> ServiceEntriesList;
 
+         bool         fEnabled;  ///< indicate if DIM observer is enabled
+
          std::string  fDNS;     ///< DIM_DNS_NODE
          unsigned     fDNSport; ///< port, default 2505
 
@@ -75,6 +79,8 @@ namespace dimc {
          Observer(const std::string& name);
 
          virtual ~Observer();
+
+         bool IsEnabled() const { return fEnabled; }
 
          virtual const char* ClassName() const { return "Observer"; }
 

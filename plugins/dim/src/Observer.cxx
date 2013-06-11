@@ -29,6 +29,9 @@ dimc::Observer::Observer(const std::string& name) :
       fDNS = "localhost";
    }
 
+   fEnabled = Cfg("enabled").AsBool(true);
+   if (!fEnabled) return;
+
    fDNSport = Cfg("port").AsUInt(2505);
 
    // Default, all parameter events are registered

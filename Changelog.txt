@@ -2,9 +2,16 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of framework.
 
+11.06.2013
+1. Mongoose web browser (from https://github.com/valenok/mongoose) integrated into
+   DABC. New libDabcHttp plugin is introduced, which should provide http protocol
+   to DABC applications. For a moment it is just helloword application, should
+   provide functionality similar to command shell, ncurses shell, go4-dabc browser. 
+
+
 10.06.2013
 1. Minimalistic structure browser in dabc_shell. Menus from ncurses library are used.
-   Real functionality will be implemented in parallel to other implementations.
+   Real functionality will be provided in parallel to other implementations.
    Idea to show some rates, infos, submit commands in such shell. 
 
 

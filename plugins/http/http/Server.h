@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -11,24 +13,42 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dimc/Factory.h"
-#include "dimc/Observer.h"
+#ifndef HTTP_Server
+#define HTTP_Server
 
-#include "dabc/string.h"
-#include "dabc/logging.h"
-#include "dabc/Command.h"
-#include "dabc/Manager.h"
+#ifndef DABC_Worker
+#include "dabc/Worker.h"
+#endif
 
-dabc::FactoryPlugin dimcfactory(new dimc::Factory("dimc"));
+#include "mongoose.h"
 
-void dimc::Factory::Initialize()
-{
 
-   dimc::Observer* observ = new dimc::Observer("/dim");
-   if (!observ->IsEnabled()) {
-      delete observ;
-   } else {
-      DOUT0("Initialize DIM control");
-      dabc::WorkerRef(observ).MakeThreadForWorker("DimThread");
-   }
+namespace http {
+
+   /** \brief %Server provides http access to DABC
+    *
+    */
+
+   class Server : public dabc::Worker  {
+      protected:
+         int fHttpPort;
+         bool fEnabled;
+
+         struct mg_context *   fCtx;
+         struct mg_callbacks   fCallbacks;
+
+         virtual void OnThreadAssigned();
+
+      public:
+         Server(const std::string& name);
+
+         virtual ~Server();
+
+         virtual const char* ClassName() const { return "HttpServer"; }
+
+         bool IsEnabled() const { return fEnabled; }
+   };
+
 }
+
+#endif

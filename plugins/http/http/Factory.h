@@ -1,3 +1,5 @@
+// $Id$
+
 /************************************************************
  * The Data Acquisition Backbone Core (DABC)                *
  ************************************************************
@@ -11,24 +13,29 @@
  * which is part of the distribution.                       *
  ************************************************************/
 
-#include "dimc/Factory.h"
-#include "dimc/Observer.h"
+#ifndef MBS_Factory
+#define MBS_Factory
 
-#include "dabc/string.h"
-#include "dabc/logging.h"
-#include "dabc/Command.h"
-#include "dabc/Manager.h"
+#ifndef DABC_Factory
+#include "dabc/Factory.h"
+#endif
 
-dabc::FactoryPlugin dimcfactory(new dimc::Factory("dimc"));
+/** \brief Support of HTTP in DABC */
 
-void dimc::Factory::Initialize()
-{
+namespace http {
 
-   dimc::Observer* observ = new dimc::Observer("/dim");
-   if (!observ->IsEnabled()) {
-      delete observ;
-   } else {
-      DOUT0("Initialize DIM control");
-      dabc::WorkerRef(observ).MakeThreadForWorker("DimThread");
-   }
+   /** \brief %Factory for HTTP-related classes in DABC */
+
+   class Factory : public dabc::Factory {
+      public:
+         Factory(const std::string& name) : dabc::Factory(name) {}
+
+         virtual void Initialize();
+
+      protected:
+
+   };
+
 }
+
+#endif
