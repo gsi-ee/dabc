@@ -229,6 +229,32 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objno
    return true;
 }
 
+void dabc::HierarchyContainer::SaveToHtml(std::string& sbuf, int level)
+{
+   if (NumChilds()==0) {
+      sbuf += dabc::format("%*s<li>%s</li>\n", level*3, "", GetName());
+      return;
+   }
+   sbuf += dabc::format("%*s<li>\n", level*3, "");
+   level++;
+
+   sbuf += dabc::format("%*s<span>%s</span>\n", level*3, "", GetName());
+   sbuf += dabc::format("%*s<ul>\n", level*3, "");
+
+   for (unsigned n=0;n<NumChilds();n++) {
+      dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
+
+      if (child) child->SaveToHtml(sbuf, level+1);
+
+   }
+
+   sbuf += dabc::format("%*s</ul>\n", level*3, "");
+
+   level--;
+   sbuf += dabc::format("%*s</li>\n", level*3, "");
+
+}
+
 
 // __________________________________________________-
 
@@ -321,6 +347,15 @@ bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
    Xml::FreeNode(topnode);
 
    return res;
-
 }
 
+std::string dabc::Hierarchy::SaveToHtml()
+{
+   if (null()) return "";
+
+   std::string res;
+
+   GetObject()->SaveToHtml(res, 0);
+
+   return res;
+}

@@ -21,7 +21,9 @@
 #endif
 
 #include "mongoose.h"
+#include <stdlib.h>
 
+#include <map>
 
 namespace http {
 
@@ -30,12 +32,28 @@ namespace http {
     */
 
    class Server : public dabc::Worker  {
+
+      struct FileBuf {
+         void *ptr;
+         int size;
+
+         FileBuf() : ptr(0), size(0) {}
+         FileBuf(const FileBuf& src) : ptr(0), size(0) {}
+         ~FileBuf() { if (ptr) free(ptr); }
+
+      };
+
+      typedef std::map<std::string, FileBuf> FilesMap;
+
       protected:
          int fHttpPort;
          bool fEnabled;
 
          struct mg_context *   fCtx;
          struct mg_callbacks   fCallbacks;
+
+         FilesMap fFiles;       ///< map with read into memory files
+         std::string fHttpSys;  ///< location of http plugin, need to read special files
 
          virtual void OnThreadAssigned();
 
@@ -50,6 +68,8 @@ namespace http {
 
          int begin_request(struct mg_connection *conn);
 
+         const char* open_file(const struct mg_connection* conn,
+                               const char *path, size_t *data_len = 0);
    };
 
 }

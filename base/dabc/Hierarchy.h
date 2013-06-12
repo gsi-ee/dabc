@@ -24,7 +24,12 @@
 
 namespace dabc {
 
+   class Hierarchy;
+
    class HierarchyContainer : public RecordContainer {
+
+      friend class Hierarchy;
+
       protected:
 
          enum {
@@ -42,6 +47,8 @@ namespace dabc {
          HierarchyContainer* TopParent();
 
          virtual bool SetField(const std::string& name, const char* value, const char* kind);
+
+         void SaveToHtml(std::string& sbuf, int level = 0);
 
       public:
          HierarchyContainer(const std::string& name);
@@ -92,11 +99,14 @@ namespace dabc {
 
       bool UpdateHierarchy(Reference top);
 
+
       std::string SaveToXml(bool compact = false, uint64_t version = 0);
 
       uint64_t GetVersion() const { return GetObject() ? GetObject()->GetVersion() : 0; }
 
       bool UpdateFromXml(const std::string& xml);
+
+      std::string SaveToHtml();
    };
 
 
