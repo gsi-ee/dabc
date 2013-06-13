@@ -5,6 +5,7 @@ of framework.
 13.06.2013
 1. Put node hierarchy as separate request. In future can update it like gauge 
    periodically, one could easely insert hierarchy in many different pages.
+2. Understand how correctly select items in hierarchy and how react on click.   
 
 12.06.2013
 1. Implement html hierarchy display with jquery.treeview java script.

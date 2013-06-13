@@ -238,7 +238,7 @@ void dabc::HierarchyContainer::SaveToHtml(std::string& sbuf, int kind, int level
       if (kind == Hierarchy::kind_Html)
          sbuf += dabc::format("%*s<li>%s</li>%s", level*3, "", GetName(), nl);
       else
-         sbuf += dabc::format("%*s{\"text\": \"%s\"}", level*3, "", GetName());
+         sbuf += dabc::format("%*s{\"text\": \"<a href='#' onClick='return displayObject(this);'>%s</a>\" }", level*3, "", GetName());
       return;
    }
 
