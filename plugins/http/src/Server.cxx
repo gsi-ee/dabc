@@ -115,21 +115,36 @@ int http::Server::begin_request(struct mg_connection *conn)
             h.SaveToXml(false) +
             std::string("</dabc>\n");
    } else
+   if (strcmp(request_info->uri,"/myreq.htm")==0) {
+//      content_type = "xml";
+//      content = "<?xml version=\"1.0\"?>\n"
+      //                "<node>"
+//                "</node>";
+      content_type = "text/plain";
+      content = open_file(0, "httpsys/json.txt");
+      // DOUT0("Request %s", content.c_str());
+   } else
    if (strcmp(request_info->uri,"/h.htm")==0) {
-      const char* h_begin = open_file(0, "./httpsys/files/hierarchy_head.htm");
-      const char* h_end = open_file(0, "./httpsys/files/hierarchy_end.htm");
 
-      if ((h_begin==0) || (h_end==0)) {
+      const char* hhhh = open_file(0, "httpsys/files/hierarchy.htm");
+      if ((hhhh==0)) {
          EOUT("Cannot find files in httpsys!");
          return 0;
       }
 
+      content = hhhh;
+   } else
+   if (strcmp(request_info->uri,"/nodetopology.txt")==0) {
       dabc::Hierarchy h;
       h.UpdateHierarchy(dabc::mgr);
-
-      content = std::string(h_begin) + h.SaveToHtml() + std::string(h_end);
+      content_type = "text/plain";
+      content = h.SaveToHtml(dabc::Hierarchy::kind_TxtList, true);
+      DOUT0("Provide hierarchy \n%s\n", content.c_str());
    } else {
       // let load some files
+
+      DOUT0("**** GET REQ %s", request_info->uri);
+
       return 0;
 
       dabc::formats(content, "Hello from DABC 2.0!<br>"

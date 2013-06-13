@@ -229,30 +229,54 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objno
    return true;
 }
 
-void dabc::HierarchyContainer::SaveToHtml(std::string& sbuf, int level)
+void dabc::HierarchyContainer::SaveToHtml(std::string& sbuf, int kind, int level)
 {
+   bool compact = level==0;
+   const char* nl = compact ? "" : "\n";
+
    if (NumChilds()==0) {
-      sbuf += dabc::format("%*s<li>%s</li>\n", level*3, "", GetName());
+      if (kind == Hierarchy::kind_Html)
+         sbuf += dabc::format("%*s<li>%s</li>%s", level*3, "", GetName(), nl);
+      else
+         sbuf += dabc::format("%*s{\"text\": \"%s\"}", level*3, "", GetName());
       return;
    }
-   sbuf += dabc::format("%*s<li>\n", level*3, "");
-   level++;
 
-   sbuf += dabc::format("%*s<span>%s</span>\n", level*3, "", GetName());
-   sbuf += dabc::format("%*s<ul>\n", level*3, "");
+   if (kind == Hierarchy::kind_Html) {
 
+      sbuf += dabc::format("%*s<li>%s", level*3, "", nl);
+      if (!compact) level++;
+
+      sbuf += dabc::format("%*s<span>%s</span>%s", level*3, "", GetName(), nl);
+      sbuf += dabc::format("%*s<ul>%s", level*3, "", nl);
+   } else {
+      sbuf += dabc::format("%*s{\"text\": \"%s\",%s", level*3, "", GetName(), nl);
+      sbuf += dabc::format("%*s \"children\": [%s", level*3, "", nl);
+      if (!compact) level++;
+   }
+
+   bool isfirst = true;
    for (unsigned n=0;n<NumChilds();n++) {
       dabc::HierarchyContainer* child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(n));
 
-      if (child) child->SaveToHtml(sbuf, level+1);
+      if (child==0) continue;
 
+      if ((kind == Hierarchy::kind_TxtList) && !isfirst)
+         sbuf += dabc::format(",%s", nl);
+
+      child->SaveToHtml(sbuf, kind, compact ? 0 : level+1);
+      isfirst = false;
    }
 
-   sbuf += dabc::format("%*s</ul>\n", level*3, "");
-
-   level--;
-   sbuf += dabc::format("%*s</li>\n", level*3, "");
-
+   if (kind == Hierarchy::kind_Html) {
+      sbuf += dabc::format("%*s</ul>%s", level*3, "", nl);
+      if (!compact) level--;
+      sbuf += dabc::format("%*s</li>%s", level*3, "", nl);
+   } else {
+      sbuf+= dabc::format("%s%*s]%s", nl, level*3, "", nl);
+      if (!compact) level--;
+      sbuf+= dabc::format("%*s}", level*3, "");
+   }
 }
 
 
@@ -349,13 +373,17 @@ bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
    return res;
 }
 
-std::string dabc::Hierarchy::SaveToHtml()
+std::string dabc::Hierarchy::SaveToHtml(int kind, bool compact)
 {
    if (null()) return "";
 
    std::string res;
 
-   GetObject()->SaveToHtml(res, 0);
+   if (kind==kind_TxtList) res.append(compact ? "[" : "[\n");
+
+   GetObject()->SaveToHtml(res, kind, compact ? 0 : 1);
+
+   if (kind==kind_TxtList) res.append(compact ? "]" : "\n]\n");
 
    return res;
 }
