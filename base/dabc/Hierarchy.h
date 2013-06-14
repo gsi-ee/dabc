@@ -48,7 +48,11 @@ namespace dabc {
 
          virtual bool SetField(const std::string& name, const char* value, const char* kind);
 
-         void SaveToHtml(std::string& sbuf, int kind = 0, int level = 0);
+         void SaveToJSON(std::string& sbuf, int level = 0);
+
+         std::string HtmlBrowserText();
+
+         std::string ItemName();
 
       public:
          HierarchyContainer(const std::string& name);
@@ -95,11 +99,13 @@ namespace dabc {
 
       DABC_REFERENCE(Hierarchy, Record, HierarchyContainer)
 
+      void Create(const std::string& name);
+
+      Hierarchy CreateChild(const std::string& name);
+
       void MakeHierarchy(Reference top);
 
       bool UpdateHierarchy(Reference top);
-
-      enum { kind_Html = 0, kind_TxtList = 1 };
 
       std::string SaveToXml(bool compact = false, uint64_t version = 0);
 
@@ -108,7 +114,7 @@ namespace dabc {
       bool UpdateFromXml(const std::string& xml);
 
       /** kind = 0 in html format, 1 - in ajax format */
-      std::string SaveToHtml(int kind = kind_Html, bool compact = false);
+      std::string SaveToJSON(bool compact = false, bool excludetop = false);
    };
 
 

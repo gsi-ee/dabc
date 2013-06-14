@@ -20,6 +20,10 @@
 #include "dabc/Worker.h"
 #endif
 
+#ifndef DABC_Hierarchy
+#include "dabc/Hierarchy.h"
+#endif
+
 #include "mongoose.h"
 #include <stdlib.h>
 
@@ -39,7 +43,12 @@ namespace http {
 
          FileBuf() : ptr(0), size(0) {}
          FileBuf(const FileBuf& src) : ptr(0), size(0) {}
-         ~FileBuf() { if (ptr) free(ptr); }
+         ~FileBuf() { release(); }
+
+         void release() {
+            if (ptr) free(ptr);
+            ptr = 0; size = 0;
+         }
 
       };
 
@@ -49,6 +58,12 @@ namespace http {
          int fHttpPort;
          bool fEnabled;
 
+         /** \brief Complete description of node(s) hierarchy
+          *  \details Can be updated independently from user requests  */
+         dabc::Hierarchy fHierarchy;
+
+         dabc::Mutex fHierarchyMutex; ///< used to protect content of hierarchy
+
          struct mg_context *   fCtx;
          struct mg_callbacks   fCallbacks;
 
@@ -56,6 +71,8 @@ namespace http {
          std::string fHttpSys;  ///< location of http plugin, need to read special files
 
          virtual void OnThreadAssigned();
+
+         virtual double ProcessTimeout(double last_diff);
 
       public:
          Server(const std::string& name);

@@ -156,8 +156,6 @@ namespace dabc {
 
          static Reference SearchForChild(Reference& ref, const char* name, bool firsttime, bool force) throw();
 
-         void FillFullName(std::string &fullname, Object* upto) const;
-
          /** Method set cleanup bit that object will be cleaned up in all registered objects
           * Used only by manager therefore private */
          void SetCleanupBit();
@@ -236,6 +234,10 @@ namespace dabc {
           * Typically should used from inside object itself (therefore protected) to reject from the
           * beginning actions which are too complex for object which is started to be destroyed */
          bool IsNormalState();
+
+         /** \brief Method used to produce full item name,
+          * \details Produced name can be used to find such item in the objects hierarchy */
+         void FillFullName(std::string &fullname, Object* upto, bool exclude_top_parent = false) const;
 
          /** \brief Same as IsNormalState() but without mutex lock - user should lock mutex himself */
          bool _IsNormalState();

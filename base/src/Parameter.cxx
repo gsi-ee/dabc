@@ -286,6 +286,20 @@ const std::string& dabc::ParameterContainer::Kind() const
    return fKind;
 }
 
+void dabc::ParameterContainer::SaveAttr(RecordContainer* cont)
+{
+   dabc::Record rec(cont);
+
+   const char* val = GetField("");
+   if (val) rec.Field("value").SetStr(val);
+
+   LockGuard lock(ObjectMutex());
+
+   if (fStatistic == ParameterContainer::kindRate)
+      rec.Field("rate").SetBool(true);
+}
+
+
 // --------------------------------------------------------------------------------
 
 bool dabc::Parameter::NeedTimeout()

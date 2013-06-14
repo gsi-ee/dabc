@@ -1120,14 +1120,17 @@ bool dabc::Object::NameMatchM(const std::string& name, const std::string& mask)
 }
 
 
-void dabc::Object::FillFullName(std::string &fullname, Object* upto) const
+void dabc::Object::FillFullName(std::string &fullname, Object* upto, bool exclude_top_parent) const
 {
    if ((GetParent()!=0) && (GetParent() != upto)) {
-      GetParent()->FillFullName(fullname, upto);
+      GetParent()->FillFullName(fullname, upto, exclude_top_parent);
       fullname.append("/");
    }
 
-   if (GetParent()==0) fullname.append("/");
+   if (GetParent()==0) {
+      if (exclude_top_parent) return;
+      fullname.append("/");
+   }
    fullname.append(GetName());
 }
 
@@ -1135,10 +1138,11 @@ void dabc::Object::FillFullName(std::string &fullname, Object* upto) const
 std::string dabc::Object::ItemName(bool compact) const
 {
    std::string res;
-   if (dabc::mgr.null()) {
-      FillFullName(res, 0);
-   } else
+   if (IsParent(dabc::mgr()))
       dabc::mgr()->FillItemName(this, res, compact);
+   else
+      FillFullName(res, 0);
+
    return res;
 }
 

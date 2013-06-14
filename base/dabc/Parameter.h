@@ -72,7 +72,6 @@ namespace dabc {
          double        fRateTimeSum;  ///< sum of time
          double        fRateNumSum;   ///< sum of accumulated counts
          bool          fMonitored;    ///< if true parameter change event will be delivered to the worker
-         int           fDebugOutput;  ///< specifies level of debug output   TODO: record field??
          bool          fAttrModified; ///< indicate if attribute was modified since last parameter event
          bool          fDeliverAllEvents; ///< if true, any modification event will be delivered, default off
          int           fRateWidth;    ///< display width of rate variable
@@ -120,6 +119,9 @@ namespace dabc {
          /** Internal method, used to inform system that parameter is modified
           * If configured, also debug output will be produced */
          void FireModified(const char* value);
+
+         /** \brief Save parameter attributes into container */
+         virtual void SaveAttr(RecordContainer* cont);
 
       public:
 

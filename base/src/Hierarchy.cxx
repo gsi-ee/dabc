@@ -88,7 +88,8 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromObject(Object* obj)
 
    if (obj==0) throw dabc::Exception(ex_Hierarchy, "empty obj", ItemName());
 
-   if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
+   // we do not check names here - top object name can be different
+   // if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
 
    // we need to recognize if any attribute disappear or changed
 
@@ -155,11 +156,19 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromObject(Object* obj)
    return fHierarchyChanged || fNodeChanged;
 }
 
-
+std::string dabc::HierarchyContainer::ItemName()
+{
+   std::string res;
+   FillFullName(res, 0, true);
+   return res;
+}
 
 bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objnode)
 {
-   if (!IsName(Xml::GetNodeName(objnode))) return false;
+   // we do not check node name - it is done when childs are selected
+   // for top-level node name can differ
+
+   // if (!IsName(Xml::GetNodeName(objnode))) return false;
 
    unsigned mask = maskDefaultValue;
    if (Xml::HasAttr(objnode,"dabc:mask")) {
@@ -229,31 +238,28 @@ bool dabc::HierarchyContainer::UpdateHierarchyFromXmlNode(XMLNodePointer_t objno
    return true;
 }
 
-void dabc::HierarchyContainer::SaveToHtml(std::string& sbuf, int kind, int level)
+std::string dabc::HierarchyContainer::HtmlBrowserText()
+{
+   if (NumChilds()>0) return GetName();
+
+   if (!HasField("rate")) return GetName();
+
+   return dabc::format("<a href='#' onClick='return displayObject(this);' fullname='%s'>%s</a>", ItemName().c_str(), GetName());
+}
+
+void dabc::HierarchyContainer::SaveToJSON(std::string& sbuf, int level)
 {
    bool compact = level==0;
    const char* nl = compact ? "" : "\n";
 
    if (NumChilds()==0) {
-      if (kind == Hierarchy::kind_Html)
-         sbuf += dabc::format("%*s<li>%s</li>%s", level*3, "", GetName(), nl);
-      else
-         sbuf += dabc::format("%*s{\"text\": \"<a href='#' onClick='return displayObject(this);'>%s</a>\" }", level*3, "", GetName());
+      sbuf += dabc::format("%*s{\"text\":\"%s\"}", level*3, "", HtmlBrowserText().c_str());
       return;
    }
 
-   if (kind == Hierarchy::kind_Html) {
-
-      sbuf += dabc::format("%*s<li>%s", level*3, "", nl);
-      if (!compact) level++;
-
-      sbuf += dabc::format("%*s<span>%s</span>%s", level*3, "", GetName(), nl);
-      sbuf += dabc::format("%*s<ul>%s", level*3, "", nl);
-   } else {
-      sbuf += dabc::format("%*s{\"text\": \"%s\",%s", level*3, "", GetName(), nl);
-      sbuf += dabc::format("%*s \"children\": [%s", level*3, "", nl);
-      if (!compact) level++;
-   }
+   sbuf += dabc::format("%*s{\"text\":\"%s\",%s", level*3, "",  HtmlBrowserText().c_str(), nl);
+   sbuf += dabc::format("%*s\"children\":[%s", level*3, "", nl);
+   if (!compact) level++;
 
    bool isfirst = true;
    for (unsigned n=0;n<NumChilds();n++) {
@@ -261,22 +267,15 @@ void dabc::HierarchyContainer::SaveToHtml(std::string& sbuf, int kind, int level
 
       if (child==0) continue;
 
-      if ((kind == Hierarchy::kind_TxtList) && !isfirst)
-         sbuf += dabc::format(",%s", nl);
+      if (!isfirst) sbuf += dabc::format(",%s", nl);
 
-      child->SaveToHtml(sbuf, kind, compact ? 0 : level+1);
+      child->SaveToJSON(sbuf, compact ? 0 : level+1);
       isfirst = false;
    }
 
-   if (kind == Hierarchy::kind_Html) {
-      sbuf += dabc::format("%*s</ul>%s", level*3, "", nl);
-      if (!compact) level--;
-      sbuf += dabc::format("%*s</li>%s", level*3, "", nl);
-   } else {
-      sbuf+= dabc::format("%s%*s]%s", nl, level*3, "", nl);
-      if (!compact) level--;
-      sbuf+= dabc::format("%*s}", level*3, "");
-   }
+   sbuf+= dabc::format("%s%*s]%s", nl, level*3, "", nl);
+   if (!compact) level--;
+   sbuf+= dabc::format("%*s}", level*3, "");
 }
 
 
@@ -297,11 +296,8 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
       return true;
    }
 
-   if (null()) {
-      SetObject(new HierarchyContainer(top.GetName()));
-      SetOwner(true);
-      SetTransient(false);
-   }
+   if (null()) Create(top.GetName());
+
    if (GetObject()->UpdateHierarchyFromObject(top())) {
 
       uint64_t next_ver = GetObject()->GetVersion() + 1;
@@ -333,6 +329,23 @@ std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)
 }
 
 
+void dabc::Hierarchy::Create(const std::string& name)
+{
+   Release();
+   SetObject(new HierarchyContainer(name));
+   SetOwner(true);
+   SetTransient(false);
+}
+
+dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name)
+{
+   if (null() || name.empty()) return dabc::Hierarchy();
+
+   GetObject()->AddChild(new dabc::HierarchyContainer(name));
+
+   return FindChild(name.c_str());
+}
+
 bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
 {
    if (src.empty()) return false;
@@ -354,11 +367,7 @@ bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
 
    if (res) {
 
-      if (null()) {
-         SetObject(new HierarchyContainer(Xml::GetNodeName(topnode)));
-         SetOwner(true);
-         SetTransient(false);
-      }
+      if (null()) Create(Xml::GetNodeName(topnode));
 
       if (!GetObject()->UpdateHierarchyFromXmlNode(topnode)) {
          EOUT("Fail to update hierarchy from xml");
@@ -373,17 +382,31 @@ bool dabc::Hierarchy::UpdateFromXml(const std::string& src)
    return res;
 }
 
-std::string dabc::Hierarchy::SaveToHtml(int kind, bool compact)
+std::string dabc::Hierarchy::SaveToJSON(bool compact, bool excludetop)
 {
    if (null()) return "";
 
    std::string res;
 
-   if (kind==kind_TxtList) res.append(compact ? "[" : "[\n");
+   res.append(compact ? "[" : "[\n");
 
-   GetObject()->SaveToHtml(res, kind, compact ? 0 : 1);
+   if (excludetop) {
+      bool isfirst = true;
+      for (unsigned n=0;n<NumChilds();n++) {
+         dabc::Hierarchy child = GetChild(n);
 
-   if (kind==kind_TxtList) res.append(compact ? "]" : "\n]\n");
+         if (child.null()) continue;
+
+         if (!isfirst) res += (compact ? "," : ",\n");
+
+         child()->SaveToJSON(res, compact ? 0 : 1);
+         isfirst = false;
+      }
+   } else {
+      GetObject()->SaveToJSON(res, compact ? 0 : 1);
+   }
+
+   res.append(compact ? "]" : "\n]\n");
 
    return res;
 }

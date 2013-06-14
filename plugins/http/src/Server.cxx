@@ -47,6 +47,8 @@ http::Server::Server(const std::string& name) :
    dabc::Worker(MakePair(name)),
    fHttpPort(0),
    fEnabled(false),
+   fHierarchy(),
+   fHierarchyMutex(),
    fCtx(0),
    fFiles(),
    fHttpSys()
@@ -91,7 +93,30 @@ void http::Server::OnThreadAssigned()
 
    // Start the web server.
    fCtx = mg_start(&fCallbacks, this, options);
+
+   fHierarchy.Create("Full");
+
+   fHierarchy.CreateChild("localhost");
+
+   ActivateTimeout(0);
 }
+
+double http::Server::ProcessTimeout(double last_diff)
+{
+   dabc::LockGuard lock(fHierarchyMutex);
+
+   dabc::Hierarchy local = fHierarchy.FindChild("localhost");
+
+   if (local.null()) {
+      EOUT("Did not find localhost in hierarchy");
+   } else {
+      // TODO: make via XML file like as for remote node!!
+      local.UpdateHierarchy(dabc::mgr);
+   }
+
+   return 1.;
+}
+
 
 int http::Server::begin_request(struct mg_connection *conn)
 {
@@ -100,33 +125,68 @@ int http::Server::begin_request(struct mg_connection *conn)
    std::string content;
    std::string content_type = "text/html";
 
-   if (strcmp(request_info->uri,"/")==0) {
-      dabc::formats(content, "Hello from DABC 2.0!<br><br>"
-                             "Here is <a href=\"h.htm\">hierarchy </a> of dabc objects<br>"
-                             "Here is is <a href=\"h.xml\">hierarchy </a> in xml format");
+   if ((strcmp(request_info->uri,"/")==0) ||
+       (strcmp(request_info->uri,"/main.htm")==0) || (strcmp(request_info->uri,"/main.html")==0) ||
+       (strcmp(request_info->uri,"/index.htm")==0) || (strcmp(request_info->uri,"/main.html")==0)) {
+      std::string content_type = "text/html";
+      content = open_file(0, "httpsys/files/main.htm");
    } else
    if (strcmp(request_info->uri,"/h.xml")==0) {
       content_type = "xml";
-      dabc::Hierarchy h;
-      h.UpdateHierarchy(dabc::mgr);
+
+      dabc::LockGuard lock(fHierarchyMutex);
+
       content =
             std::string("<?xml version=\"1.0\"?>\n") +
             std::string("<dabc version=\"2\" xmlns:dabc=\"http://dabc.gsi.de/xhtml\">\n")+
-            h.SaveToXml(false) +
+            fHierarchy.SaveToXml(false) +
             std::string("</dabc>\n");
    } else
-   if (strcmp(request_info->uri,"/myreq.htm")==0) {
+   if (strcmp(request_info->uri,"/chartreq.htm")==0) {
 //      content_type = "xml";
 //      content = "<?xml version=\"1.0\"?>\n"
       //                "<node>"
 //                "</node>";
+      std::string rates = request_info->query_string ? request_info->query_string : "";
+
+      //content = "{ \"rates\": [\n";
+      content = "[\n";
+      bool first = true;
+
+      dabc::LockGuard lock(fHierarchyMutex);
+
+      while (rates.length() > 0) {
+         size_t pos = rates.find('&');
+         std::string part;
+         if (pos==std::string::npos) {
+            part = rates;
+            rates.clear();
+         } else {
+            part.append(rates, 0, pos);
+            rates.erase(0, pos+1);
+         }
+
+         if (!first) content+=",\n";
+
+         dabc::Hierarchy chld = fHierarchy.FindChild(part.c_str());
+
+         if (chld.null()) { EOUT("Didnot find child %s", part.c_str()); }
+
+         if (!chld.null() && chld.HasField("value")) {
+            content += dabc::format("   { \"name\" : \"%s\" , \"value\" : \"%s\" }", part.c_str(), chld.GetField("value"));
+            first = false;
+         }
+      }
+
+      content += "\n]\n";
+
       content_type = "text/plain";
-      content = open_file(0, "httpsys/json.txt");
+
       // DOUT0("Request %s", content.c_str());
    } else
    if (strcmp(request_info->uri,"/h.htm")==0) {
 
-      const char* hhhh = open_file(0, "httpsys/files/hierarchy.htm");
+      const char* hhhh = open_file((mg_connection*) 1, "httpsys/files/hierarchy.htm");
       if ((hhhh==0)) {
          EOUT("Cannot find files in httpsys!");
          return 0;
@@ -135,23 +195,16 @@ int http::Server::begin_request(struct mg_connection *conn)
       content = hhhh;
    } else
    if (strcmp(request_info->uri,"/nodetopology.txt")==0) {
-      dabc::Hierarchy h;
-      h.UpdateHierarchy(dabc::mgr);
       content_type = "text/plain";
-      content = h.SaveToHtml(dabc::Hierarchy::kind_TxtList, true);
-      DOUT0("Provide hierarchy \n%s\n", content.c_str());
+      dabc::LockGuard lock(fHierarchyMutex);
+      content = fHierarchy.SaveToJSON(true, true);
+      // DOUT0("Provide hierarchy \n%s\n", content.c_str());
    } else {
       // let load some files
 
-      DOUT0("**** GET REQ %s", request_info->uri);
+      DOUT0("**** GET REQ:%s query:%s", request_info->uri, request_info->query_string ? request_info->query_string : "---");
 
       return 0;
-
-      dabc::formats(content, "Hello from DABC 2.0!<br>"
-                             "Requested url:%s<br>"
-                             "Client port:%d<br>"
-                             "Page not exists, go to  <a href=\"/\">home</a> page<br>",
-                             request_info->uri, request_info->remote_port);
    }
 
 
@@ -178,6 +231,8 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 {
    if ((path==0) || (*path==0)) return 0;
 
+   bool force = (((long) conn) == 1);
+
    DOUT3("Request file %s", path);
 
    std::string fname(path);
@@ -187,7 +242,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
    fname.erase(0, pos+7);
    fname = fHttpSys + fname;
 
-   {
+   if (!force) {
       dabc::LockGuard lock(ObjectMutex());
 
       FilesMap::iterator iter = fFiles.find(fname);
@@ -218,9 +273,14 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
    dabc::LockGuard lock(ObjectMutex());
 
-   fFiles[fname] = FileBuf();
-
    FilesMap::iterator iter = fFiles.find(fname);
+
+   if (iter == fFiles.end()) {
+      fFiles[fname] = FileBuf();
+      iter = fFiles.find(fname);
+   } else {
+      iter->second.release();
+   }
 
    if (iter!=fFiles.end()) {
 

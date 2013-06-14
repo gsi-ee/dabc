@@ -13,33 +13,133 @@
 	<script src="httpsys/scripts/jquery.treeview.js" type="text/javascript"></script>
 	<script src="httpsys/scripts/jquery.treeview.edit.js" type="text/javascript"></script>
 	<script src="httpsys/scripts/jquery.treeview.async.js" type="text/javascript"></script>
+   <script src="httpsys/scripts/raphael.2.1.0.min.js"></script>
+   <script src="httpsys/scripts/justgage.1.0.1.min.js"></script>
 	
 	<script type='text/javascript'>
 	
 	   var last_index = 0;
+
+      // object to submit requests to the server
+      var req;
+      
+      // list of full names 	   
+	   var gaug_list = new Array();
+
+      // list of full names 	   
+	   var gaug_ref = new Array();
+
+      // list of gauge ids  	   
+	   var gaug_uids = new Array();
 	
+			// Get an XMLHttpRequest object in a portable way.
+		function newRequest()
+		{
+		  req = false;
+		  // For Safari, Firefox, and other non-MS browsers
+		  if (window.XMLHttpRequest) {
+		    try {
+		      req = new XMLHttpRequest();
+		    } catch (e) {
+		      req = false;
+		    }
+		  } else if (window.ActiveXObject) {
+		    // For Internet Explorer on Windows
+		    try {
+		      req = new ActiveXObject("Msxml2.XMLHTTP");
+		    } catch (e) {
+		      try {
+		        req = new ActiveXObject("Microsoft.XMLHTTP");
+		      } catch (e) {
+		        req = false;
+		      }
+		    }
+		  }
+		}
 	
-	   function initTrees(item) {
+	   function initTrees() {
 	 	  $("#black").treeview( {
 	 	     url: "nodetopology.txt",
 		     control: "#treecontrol",
 		     persist: "cookie",
 		     cookieId: "treeview-black"
 	      });
+	      
+	      setInterval(updateChart, 3000);
 	   }
+	   
+	   function getRequest()
+		{
+		   req.open("POST", "myreq.htm", false);
+         req.send();
+         return JSON.parse(req.responseText);
+      }
+      
+      function updateChart() {
+         if (gaug_list.length == 0) return;
+          
+         var args = "chartreq.htm?";
+          
+         for (var i in gaug_list) {
+            if (i>0) args+="&";
+            args+=gaug_list[i];
+         }
+
+         if (!req) newRequest();
+ 		   req.open("POST", args, false);
+         req.send();
+         
+         
+         // var info = "<br><h5> value = " + req.responseText + "</h5>";
+         // $("#"+gaug_uids[0]+"_title").append(info);
+
+         // var reply = JSON.parse(req.responseText);
+         var repl = JSON && JSON.parse(req.responseText) || $.parseJSON(req.responseText);
+
+         // alert("Get response with " + repl);
+
+         gaug_ref[0].refresh(repl[0].value);
+
+      }
+	   
+	   
 	    
   	   function displayObject(item) {
   	       //alert("Call display");
           //return;
-          var name = item.textContent; 
+          var name = item.textContent;
+          var uid = "gauge_";
+          uid += last_index++; 
           
-          if (!name) name = "Anything"; 
-  	   
-          // var uid = "uid_accordion_"+(++last_index);
+          if (!name) name = "Anything";
           
-          var entryInfo = "<h5 id=histogram>" + name + "</h5>\n";
-          entryInfo += "<div id=histogram> </div> \n";
+          // var fullname = item.attr("fullname");
+          var fullname = item.getAttribute("fullname");
+          
+          // do not display same rate many times
+          for (var i in gaug_list) {
+            if (gaug_list[i] == fullname) return;
+          }
+          
+          if (!fullname) fullname = "not found"; 
+
+          var entryInfo = 
+            "<div id='"+uid+"_title'> </div>"+
+            "<div id='"+uid+ "' class='200x160px'> </div> \n";
           $("#report").append(entryInfo);
+
+          $("#"+uid+"_title").append("<h5> name: " + name + "  full:" + fullname + " </h5>");
+
+	       gaug_ref.push( new JustGage({
+	          id: uid, 
+             value: 67,
+             min: 0,
+             max: 100,
+             title: name
+          })); 
+
+          gaug_list.push(fullname);
+          gaug_uids.push(uid);
       }   
 	    
 	    
@@ -47,10 +147,11 @@
    	
 	</script>
 	
-	</head>
-	<body>
+</head>
+
+<body>
 	
-	<div id="overlay"><font face="Verdana" size="1px">DABC version 2.2</font></div>
+	<div id="overlay"><font face="Verdana" size="1px">DABC version 2.1</font></div>
 	
 	<div id="main" class="column" style="width:300px;float:left;">
    
@@ -68,10 +169,10 @@
  	      </ul>
       </div>
   </div>
-  
-  <div id="reportHolder" class="column" style="float:left;">
-      <div id="report"> </div>
+
+  <div id="reportHolder" class="column" style="width:500px;float:left;">
+     <div id="report"> </div>
   </div>
   
-  </body>
+</body>
 </html>
