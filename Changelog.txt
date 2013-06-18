@@ -2,6 +2,22 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of framework.
 
+18.06.2013
+1. First example, which demonstrate how JSRootIO could work inside DABC.
+   rootio.htm page shows how object, generated insied DABC application,
+   can be streamed, reconstructed and displayed in web browser.
+   Code is very-very preliminary and done only as demonstrator. Specil file
+   is required to provide streamer infos to the browser. Nevertheless, it is
+   prove of principal that online web-server for arbitrary ROOT analysis can be
+   implemented!
+     
+
+17.06.2013
+1. Principal possibility shown to transport ROOT-objects from DABC into browser
+   without intermediate file. Around such feature one could build application,
+   which can deliver any object from running ROOT code into web browser.   
+
+
 14.06.2013
 1. First working ratemeter in the browser! 
    Very simple JustGage element was used, can be always replaced by more advanced 

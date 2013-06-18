@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+	<meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+	<title>DABC/JSRootIO example</title>
+	
+	<link rel="stylesheet" type="text/css" href="httpsys/JSRootIO/style/JSRootInterface.css"/>
+	<script src="httpsys/JSRootIO/scripts/JSRootInterface.js" type="text/javascript" ></script>
+	
+	<script type='text/javascript'>
+	
+	   var urlid = 0;
+	   
+	   function initMain()
+	   {
+	   
+	      source_dir = "httpsys/JSRootIO/";
+	   
+	      AssertPrerequisites(function() { 
+	         $("#ArrayOutput").append("done<br>");
+   	      var fileurl = "ff.root";
+            gFile = new JSROOTIO.RootFile(fileurl);
+	         $("#ArrayOutput").append("load file " + fileurl + "<br>");
+//            $('#report').append("</body></html>");
+	         
+	      });
+	   
+//	      $("#ArrayOutput").append("more done<br>");
+	   
+//        BuildSimpleGUI();
+
+	       
+	       
+//	      var fileurl = "ff.root";
+//	      $("#status").html("file: " + fileurl + "<br/>");
+//         if (gFile) {
+//            gFile.Delete();
+//            delete gFile;
+//         }
+//         gFile = null;
+//         gFile = new JSROOTIO.RootFile(fileurl);
+//         $('#report').append("</body></html>");
+	   }
+	   
+	   function ProduceObject(buffer) {
+
+         $("#ArrayOutput").append(" len: " + buffer.length + " done<br>");
+
+	   
+	      var objbuf = {};
+         objbuf['unzipdata'] = buffer;
+         objbuf['irep'] = buffer.length;
+	   
+	      var obj = {};
+	      className = 'TH1F'; 
+         obj['_typename'] = 'JSROOTIO.' + className;
+         JSROOTIO.GetStreamer(className).Stream(obj, objbuf['unzipdata'], 0);
+         
+         JSROOTCore.addMethods(obj);
+         
+         // $("#ArrayOutput").append("  done.<br>");
+
+         $("#ArrayOutput").append("Object name " + obj['fName']+ " created<br>");
+
+         // $("#ArrayOutput").append("min = " + obj['fXaxis']['fXmin'] + " bins = " + obj['fXaxis']['fNbins'] + "<br>");
+          
+         // $("#ArrayOutput").append("arr[50] = " + obj['fArray'][50]+ "<br>");
+         
+         var cycle = 1;
+         displayObject(obj, cycle, obj_index);
+         obj_list.push(obj_name+cycle);
+         obj_index++;
+
+	   }
+	
+	   function ReadDabcBuffer() {
+	   
+	      $("#ArrayOutput").append("Start: ");
+	   
+	      // Read specified byte range from remote file
+         var ie9 = function(url) {
+            // IE9 Fallback
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+               if (this.readyState == 4 && (this.status == 200 || this.status == 206)) {
+                  var filecontent = new String("");
+                  var array = new VBArray(this.responseBody).toArray();
+                  for (var i = 0; i < array.length; i++) {
+                     filecontent = filecontent + String.fromCharCode(array[i]);
+                  }
+                  // callbk(file, filecontent, obj); // Call callback func with data
+                  
+                  ProduceObject(filecontent);
+                  
+                  delete filecontent;
+                  filecontent = null;
+               }
+               else if (this.readyState == 4 && this.status == 404) {
+                  alert("Error 404: Buffer not found!");
+               }
+               // delete this;
+            }
+            xhr.open('POST', url, true);
+            //var xhr_header = "bytes=" + pos + "-" + (pos + len);
+            //xhr.setRequestHeader("Range", xhr_header);
+            // xhr.setRequestHeader("If-Modified-Since", "Wed, 31 Dec 1980 00:00:00 GMT");
+            xhr.send(null);
+            xhr = null;
+         }
+         var other = function(url) {
+            //
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function() {
+               if (this.readyState == 4 && (this.status == 0 || this.status == 200 ||
+                   this.status == 206)) {
+                  var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
+                  if (HasArrayBuffer && 'mozResponse' in this) {
+                     Buf = this.mozResponse;
+                  } else if (HasArrayBuffer && this.mozResponseArrayBuffer) {
+                     Buf = this.mozResponseArrayBuffer;
+                  } else if ('responseType' in this) {
+                     Buf = this.response;
+                  } else {
+                     Buf = this.responseText;
+                     HasArrayBuffer = false;
+                  }
+                  if (HasArrayBuffer) {
+                     var filecontent = new String("");
+                     var bLen = Buf.byteLength;
+                     var u8Arr = new Uint8Array(Buf, 0, bLen);
+                     for (var i = 0; i < u8Arr.length; i++) {
+                        filecontent = filecontent + String.fromCharCode(u8Arr[i]);
+                     }
+                  } else {
+                     var filecontent = Buf;
+                  }
+                  // callbk(file, filecontent, obj); // Call callback func with data
+
+                  ProduceObject(filecontent);
+                  
+                  delete filecontent;
+                  filecontent = null;
+                  
+                  // delete this;
+               }
+            };
+            xhr.open('POST', url, true);
+            // var xhr_header = "bytes=" + pos + "-" + (pos + len);
+            // xhr.setRequestHeader("Range", xhr_header);
+          // next few lines are there to make Safari working with byte ranges...
+            // xhr.setRequestHeader("If-Modified-Since", "Wed, 31 Dec 1980 00:00:00 GMT");
+
+            var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
+            if (HasArrayBuffer && 'mozResponseType' in xhr) {
+               xhr.mozResponseType = 'arraybuffer';
+            } else if (HasArrayBuffer && 'responseType' in xhr) {
+               xhr.responseType = 'arraybuffer';
+            } else {
+               //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
+               xhr.overrideMimeType("text/plain; charset=x-user-defined");
+            }
+            xhr.send(null);
+            xhr = null;
+         }
+         
+         var url = "binary.data?";
+         url += urlid++;
+         
+         // Multi-browser support
+         if (typeof ActiveXObject == "function")
+            return ie9(url);
+         else
+            return other(url);
+	   }
+	
+	</script>
+	
+</head>
+
+<body onload="initMain()">
+   <div id="DabcMainGui" class="column" style="width:300px;float:left;">
+      <div id="title">
+         Hello from DABC 2.1!<br><br>
+         This is primitive ROOT I/O example, based on JSROOTIO<br>
+         Original code can be found on <a href="http://bellenot.web.cern.ch/bellenot/Public/JSRootIO/">Bertrand web site</a><br>
+
+        <input style="padding:2px; margin-left:10px; margin-top:5px;" onclick="ReadDabcBuffer()" type="button" title="Read direct buffer" value="Get historgam"/> <br>
+        
+        Press button to get histogram from server and display it. <br>
+        One should close window and press button again to see histogram with new content<br>
+        
+      </div>
+      
+      <div id="ArrayOutput">Starting...  </div>
+   </div>
+
+   <div id="reportHolder" class="column" style="width:800px;float:left;">
+     <div id="report"/>
+  </div>
+      
+</body>
+	
+</html>

@@ -5,6 +5,7 @@
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
       <logfile value="Gener.log"/>
+      <loglimit value="1000000"/>
       <control value="true"/>
     </Run>
     <MemoryPool name="Pool">

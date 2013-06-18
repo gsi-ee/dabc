@@ -24,6 +24,12 @@
 #include "dabc/Manager.h"
 
 
+#ifdef WITH_ROOT
+#include "TH1.h"
+#include "TFile.h"
+#include "TBufferFile.h"
+#endif
+
 
 static int begin_request_handler(struct mg_connection *conn)
 {
@@ -129,7 +135,7 @@ int http::Server::begin_request(struct mg_connection *conn)
        (strcmp(request_info->uri,"/main.htm")==0) || (strcmp(request_info->uri,"/main.html")==0) ||
        (strcmp(request_info->uri,"/index.htm")==0) || (strcmp(request_info->uri,"/main.html")==0)) {
       std::string content_type = "text/html";
-      content = open_file(0, "httpsys/files/main.htm");
+      content = open_file((struct mg_connection*)1, "httpsys/files/main.htm");
    } else
    if (strcmp(request_info->uri,"/h.xml")==0) {
       content_type = "xml";
@@ -204,7 +210,14 @@ int http::Server::begin_request(struct mg_connection *conn)
 
       DOUT0("**** GET REQ:%s query:%s", request_info->uri, request_info->query_string ? request_info->query_string : "---");
 
-      return 0;
+      if ((request_info->uri[0]=='/') && (strstr(request_info->uri,"httpsys")==0) && (strstr(request_info->uri,".htm")!=0) ) {
+         std::string fname = "httpsys/files";
+         fname += request_info->uri;
+         const char* res = open_file(0, fname.c_str(), 0);
+         if (res!=0) content = res;
+      }
+
+      if (content.empty()) return 0;
    }
 
 
@@ -231,9 +244,84 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 {
    if ((path==0) || (*path==0)) return 0;
 
+   if (strcmp(path,"./f.root")==0) return 0;
+   if (strcmp(path,"./ff.root")==0) return 0;
+
+
+   if (strstr(path,"binary.data")!=0) {
+
+      DOUT0("Produce binary data %s", path);
+
+#ifdef WITH_ROOT
+      static TH1* h1 = 0;
+      static TBufferFile* buf = 0;
+
+      if (h1==0) {
+//         TFile* f = TFile::Open("f.root");
+//         h1 = (TH1*) f->Get("h");
+
+//         h1->SetDirectory(0);
+//         delete f;
+
+
+         h1 = new TH1F("myhisto","Tilte of myhisto", 100, -10., 10.);
+         h1->SetDirectory(0);
+         DOUT0("Get h1 %s  class %s", h1->GetName(), h1->ClassName());
+      }
+
+      h1->FillRandom("gaus", 10000);
+
+      if (buf!=0) { delete buf; buf = 0; }
+
+      if (buf==0) {
+         buf = new TBufferFile(TBuffer::kWrite, 100000);
+
+         gFile = 0;
+         buf->MapObject(h1);
+         h1->Streamer(*buf);
+
+         DOUT0("Produced buffer length %d", buf->Length());
+      }
+
+//      char* ptr = buf->Buffer();
+//      for (int n=0;n<buf->Length();n++)
+//         DOUT0("buf[%3d] = %3u", n, (unsigned int) (ptr[n]));
+
+      DOUT0("Return length %d", buf->Length());
+
+      if (data_len) *data_len = buf->Length();
+      return buf->Buffer();
+
+
+#else
+      static char sbuf[33];
+      for (int n=0;n<33;n++) sbuf[n] = 30 + n;
+
+      *data_len = 33;
+      return sbuf;
+
+#endif
+
+   }
+
+
    bool force = (((long) conn) == 1);
 
-   DOUT3("Request file %s", path);
+   force = true;
+
+   if (force || (conn==0)) {
+      DOUT0("Request file %s", path);
+   } else {
+
+      const struct mg_request_info *request_info = mg_get_request_info((struct mg_connection*)conn);
+
+      const char* query = "---";
+      if (request_info->query_string) query = request_info->query_string;
+      const char* meth = "---";
+      if (request_info->request_method) meth = request_info->request_method;
+
+      DOUT0("Request file %s  meth:%s query:%s", path, meth, query);
+   }
 
    std::string fname(path);
 
@@ -248,7 +336,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
       FilesMap::iterator iter = fFiles.find(fname);
       if (iter!=fFiles.end()) {
          if (data_len) *data_len = iter->second.size;
-         // DOUT0("Return file %s len %d", fname.c_str(), iter->second.size);
+         DOUT0("Return file %s len %d", fname.c_str(), iter->second.size);
          return (const char*) iter->second.ptr;
       }
    }
@@ -289,7 +377,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
       if (data_len) *data_len = iter->second.size;
 
-      // DOUT0("Return file %s len %u", path, iter->second.size);
+      DOUT0("Return file %s len %u", path, iter->second.size);
 
       return (const char*) iter->second.ptr;
    }
