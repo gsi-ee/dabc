@@ -19,33 +19,34 @@
 	   
 	      AssertPrerequisites(function() { 
 	         $("#ArrayOutput").append("done<br>");
-   	      var fileurl = "ff.root";
-            gFile = new JSROOTIO.RootFile(fileurl);
-	         $("#ArrayOutput").append("load file " + fileurl + "<br>");
-//            $('#report').append("</body></html>");
 	         
+	         RequestDabcBuffer("streamerinfo.data");
 	      });
 	   
-//	      $("#ArrayOutput").append("more done<br>");
-	   
 //        BuildSimpleGUI();
-
-	       
-	       
-//	      var fileurl = "ff.root";
-//	      $("#status").html("file: " + fileurl + "<br/>");
-//         if (gFile) {
-//            gFile.Delete();
-//            delete gFile;
-//         }
-//         gFile = null;
-//         gFile = new JSROOTIO.RootFile(fileurl);
-//         $('#report').append("</body></html>");
 	   }
+	   
 	   
 	   function ProduceObject(buffer) {
 
          $("#ArrayOutput").append(" len: " + buffer.length + " done<br>");
+
+         if (!gFile) {
+         
+            gFile = new JSROOTIO.RootFile;
+
+	         streamer_info = new JSROOTIO.StreamerInfo();
+
+            $("#ArrayOutput").append(" try to unpack streamer infos<br>");
+	         
+	         gFile.fStreamerInfo.ExtractStreamerInfo(buffer);
+	         
+            $("#ArrayOutput").append(" extracting streamer info done<br>");
+	         
+	         return;
+	      }
+
+         $("#ArrayOutput").append(" try to create object<br>");
 
 	   
 	      var objbuf = {};
@@ -74,7 +75,7 @@
 
 	   }
 	
-	   function ReadDabcBuffer() {
+	   function RequestDabcBuffer(url) {
 	   
 	      $("#ArrayOutput").append("Start: ");
 	   
@@ -163,9 +164,10 @@
             xhr.send(null);
             xhr = null;
          }
-         
-         var url = "binary.data?";
-         url += urlid++;
+         if (!url) {
+            url = "binary.data?";
+            url += urlid++;
+         }
          
          // Multi-browser support
          if (typeof ActiveXObject == "function")
@@ -185,7 +187,7 @@
          This is primitive ROOT I/O example, based on JSROOTIO<br>
          Original code can be found on <a href="http://bellenot.web.cern.ch/bellenot/Public/JSRootIO/">Bertrand web site</a><br>
 
-        <input style="padding:2px; margin-left:10px; margin-top:5px;" onclick="ReadDabcBuffer()" type="button" title="Read direct buffer" value="Get historgam"/> <br>
+        <input style="padding:2px; margin-left:10px; margin-top:5px;" onclick="RequestDabcBuffer()" type="button" title="Read direct buffer" value="Get historgam"/> <br>
         
         Press button to get histogram from server and display it. <br>
         One should close window and press button again to see histogram with new content<br>

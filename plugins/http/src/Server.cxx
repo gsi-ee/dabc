@@ -27,6 +27,9 @@
 #ifdef WITH_ROOT
 #include "TH1.h"
 #include "TFile.h"
+#include "TList.h"
+#include "TMemFile.h"
+#include "TStreamerInfo.h"
 #include "TBufferFile.h"
 #endif
 
@@ -234,8 +237,48 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 {
    if ((path==0) || (*path==0)) return 0;
 
-   if (strcmp(path,"./f.root")==0) return 0;
-   if (strcmp(path,"./ff.root")==0) return 0;
+   if (strstr(path,"streamerinfo.data")!=0) {
+      DOUT0("Produce streamer info data %s", path);
+
+#ifdef WITH_ROOT
+      static TBufferFile* sbuf = 0;
+
+      if (sbuf==0) {
+
+         TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
+         TH1F* d = new TH1F("d","d", 10, 0, 10);
+         d->Write();
+         mem->WriteStreamerInfo();
+
+         TList* l = mem->GetStreamerInfoList();
+         l->Print("*");
+
+         sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+         sbuf->MapObject(l);
+         l->Streamer(*sbuf);
+
+         delete l;
+
+         delete mem;
+
+
+         unsigned char* ptr = (unsigned char*) sbuf->Buffer();
+         for (int n=0;n<100;n++)
+            DOUT0("sbuf[%3d] = %3u", n, (unsigned int) (ptr[n]));
+
+      }
+
+      DOUT0("Return streamer info length %d", sbuf->Length());
+
+      if (data_len) *data_len = sbuf->Length();
+      return sbuf->Buffer();
+
+#else
+      if (data_len) *data_len = 0;
+      return "";
+#endif
+
+   }
 
 
    if (strstr(path,"binary.data")!=0) {
@@ -257,6 +300,19 @@ const char* http::Server::open_file(const struct mg_connection* conn,
          h1 = new TH1F("myhisto","Tilte of myhisto", 100, -10., 10.);
          h1->SetDirectory(0);
          DOUT0("Get h1 %s  class %s", h1->GetName(), h1->ClassName());
+
+
+         TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
+         TH1F* d = new TH1F("d","d", 10, 0, 10);
+         d->Write();
+         mem->WriteStreamerInfo();
+
+         TList* l = mem->GetStreamerInfoList();
+         l->Print("*");
+         delete l;
+
+         delete mem;
+
       }
 
       h1->FillRandom("gaus", 10000);
@@ -284,12 +340,8 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
 
 #else
-      static char sbuf[33];
-      for (int n=0;n<33;n++) sbuf[n] = 30 + n;
-
-      *data_len = 33;
-      return sbuf;
-
+      if (data_len) *data_len = 0;
+      return "";
 #endif
 
    }

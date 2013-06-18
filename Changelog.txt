@@ -4,13 +4,14 @@ of framework.
 
 18.06.2013
 1. First example, which demonstrate how JSRootIO could work inside DABC.
-   rootio.htm page shows how object, generated insied DABC application,
+   rootio.htm page shows how object, generated inside DABC application,
    can be streamed, reconstructed and displayed in web browser.
-   Code is very-very preliminary and done only as demonstrator. Specil file
+   Code is very-very preliminary and done only as demonstrator. Special file
    is required to provide streamer infos to the browser. Nevertheless, it is
-   prove of principal that online web-server for arbitrary ROOT analysis can be
-   implemented!
-     
+   prove of principal that web-server for arbitrary ROOT analysis can be implemented!
+2. Found simple way to generate streamer infos on server side.
+   Therefore special ff.root file no longer required. 
+         
 
 17.06.2013
 1. Principal possibility shown to transport ROOT-objects from DABC into browser
