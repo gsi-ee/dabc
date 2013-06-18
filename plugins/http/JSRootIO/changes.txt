@@ -1,0 +1,44 @@
+This is version of JSRootIO, downloaded from  
+https://root.cern.ch/svn/root/trunk/js
+
+Following modifications were done:
+
+1. To be able use dummy file instance - gFile
+   is used now as storage for the streamer infos.
+   In fact one should avoid this
+
+    JSRootIOEvolution.js, line ~2439
+
+     if (this.fURL) {
+       this.fEND = this.GetSize(this.fURL);
+       this.ReadKeys();
+     }
+
+
+     JSRootIOEvolution.js, line ~2395
+     if (fileurl) {
+       this.fEND = this.GetSize(fileurl);
+     }
+     
+2. To avoid usage of external scripts (without Internet connections)
+     
+    JSRootInterface.js, ~line 218:
+    
+      loadScript(source_dir+'scripts/jquery.min.js', function() {
+      loadScript(source_dir+'scripts/jquery-ui.min.js', function() {
+      loadScript(source_dir+'scripts/d3.v2.min.js', function() {
+  
+    Correspondent scripts should be places in scripts/ subdirectory. 
+
+
+3. General wish - provide more clear names for global variables and functions, 
+    especially for:
+    
+    source_dir
+    AssertPrerequisites()
+    displayObject()
+    BuildSimpleGUI()
+    
+    It would be much clear, if everywhere "ROOT" as part of name is used.  
+    
+4.          

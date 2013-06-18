@@ -2391,7 +2391,10 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
          // init members of a Root file from given url
          this.fURL = fileurl;
          this.fLogMsg = "";
-         this.fEND = this.GetSize(fileurl);
+         
+         if (fileurl) {
+            this.fEND = this.GetSize(fileurl);
+         }
       };
 
       JSROOTIO.RootFile.prototype.Delete = function() {
@@ -2435,8 +2438,11 @@ var kBase = 0, kOffsetL = 20, kOffsetP = 40, kCounter = 6, kCharStar = 7,
       this.fTagOffset = 0;
       this.fStreamers = 0;
       this.fStreamerInfo = new JSROOTIO.StreamerInfo();
-      this.fEND = this.GetSize(this.fURL);
-      this.ReadKeys();
+      
+      if (this.fURL) {
+         this.fEND = this.GetSize(this.fURL);
+         this.ReadKeys();
+      }
       this.fStreamers = new Array();
       this.fObjectMap = new Array();
       //this.ReadStreamerInfo();

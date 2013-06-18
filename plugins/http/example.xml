@@ -8,10 +8,16 @@
       <loglimit value="1000000"/>
       <control value="true"/>
     </Run>
+
+    <HttpServer name="http">
+       <port value="8080"/>
+    </HttpServer>
+
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>
        <NumBuffers value="100"/>
     </MemoryPool>
+    
     <Module name="Multi" class="dabc::MultiplexerModule">
        <NumInputs value="1"/>
        <NumOutputs value="1"/>

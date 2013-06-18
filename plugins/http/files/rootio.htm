@@ -49,14 +49,10 @@
          $("#ArrayOutput").append(" try to create object<br>");
 
 	   
-	      var objbuf = {};
-         objbuf['unzipdata'] = buffer;
-         objbuf['irep'] = buffer.length;
-	   
 	      var obj = {};
 	      className = 'TH1F'; 
          obj['_typename'] = 'JSROOTIO.' + className;
-         JSROOTIO.GetStreamer(className).Stream(obj, objbuf['unzipdata'], 0);
+         JSROOTIO.GetStreamer(className).Stream(obj, buffer, 0);
          
          JSROOTCore.addMethods(obj);
          
@@ -64,9 +60,6 @@
 
          $("#ArrayOutput").append("Object name " + obj['fName']+ " created<br>");
 
-         // $("#ArrayOutput").append("min = " + obj['fXaxis']['fXmin'] + " bins = " + obj['fXaxis']['fNbins'] + "<br>");
-          
-         // $("#ArrayOutput").append("arr[50] = " + obj['fArray'][50]+ "<br>");
          
          var cycle = 1;
          displayObject(obj, cycle, obj_index);
@@ -103,9 +96,7 @@
                // delete this;
             }
             xhr.open('POST', url, true);
-            //var xhr_header = "bytes=" + pos + "-" + (pos + len);
-            //xhr.setRequestHeader("Range", xhr_header);
-            // xhr.setRequestHeader("If-Modified-Since", "Wed, 31 Dec 1980 00:00:00 GMT");
+            
             xhr.send(null);
             xhr = null;
          }
@@ -133,6 +124,7 @@
                      for (var i = 0; i < u8Arr.length; i++) {
                         filecontent = filecontent + String.fromCharCode(u8Arr[i]);
                      }
+                     delete u8Arr;
                   } else {
                      var filecontent = Buf;
                   }
@@ -147,11 +139,6 @@
                }
             };
             xhr.open('POST', url, true);
-            // var xhr_header = "bytes=" + pos + "-" + (pos + len);
-            // xhr.setRequestHeader("Range", xhr_header);
-          // next few lines are there to make Safari working with byte ranges...
-            // xhr.setRequestHeader("If-Modified-Since", "Wed, 31 Dec 1980 00:00:00 GMT");
-
             var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
             if (HasArrayBuffer && 'mozResponseType' in xhr) {
                xhr.mozResponseType = 'arraybuffer';
@@ -183,6 +170,8 @@
 <body onload="initMain()">
    <div id="DabcMainGui" class="column" style="width:300px;float:left;">
       <div id="title">
+         <a href="/">Main page</a><br><br>
+      
          Hello from DABC 2.1!<br><br>
          This is primitive ROOT I/O example, based on JSROOTIO<br>
          Original code can be found on <a href="http://bellenot.web.cern.ch/bellenot/Public/JSRootIO/">Bertrand web site</a><br>

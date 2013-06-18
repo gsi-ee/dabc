@@ -11,6 +11,7 @@ of framework.
    prove of principal that web-server for arbitrary ROOT analysis can be implemented!
 2. Found simple way to generate streamer infos on server side.
    Therefore special ff.root file no longer required. 
+3. Several fixes in JSRootIO to be able work with dummy JSROOTIO.RootFile.   
          
 
 17.06.2013

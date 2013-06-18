@@ -140,7 +140,7 @@ int http::Server::begin_request(struct mg_connection *conn)
       std::string content_type = "text/html";
       content = open_file((struct mg_connection*)1, "httpsys/files/main.htm");
    } else
-   if (strcmp(request_info->uri,"/h.xml")==0) {
+   if (strstr(request_info->uri,"/h.xml")!=0) {
       content_type = "xml";
 
       dabc::LockGuard lock(fHierarchyMutex);
@@ -151,14 +151,12 @@ int http::Server::begin_request(struct mg_connection *conn)
             fHierarchy.SaveToXml(false) +
             std::string("</dabc>\n");
    } else
-   if (strcmp(request_info->uri,"/chartreq.htm")==0) {
-//      content_type = "xml";
-//      content = "<?xml version=\"1.0\"?>\n"
-      //                "<node>"
-//                "</node>";
+   if (strstr(request_info->uri,"/chartreq.htm")!=0) {
+
+      DOUT0("Request chartreq.htm processed");
+
       std::string rates = request_info->query_string ? request_info->query_string : "";
 
-      //content = "{ \"rates\": [\n";
       content = "[\n";
       bool first = true;
 
@@ -190,10 +188,8 @@ int http::Server::begin_request(struct mg_connection *conn)
       content += "\n]\n";
 
       content_type = "text/plain";
-
-      // DOUT0("Request %s", content.c_str());
    } else
-   if (strcmp(request_info->uri,"/nodetopology.txt")==0) {
+   if (strstr(request_info->uri,"/nodetopology.txt")!=0) {
       content_type = "text/plain";
       dabc::LockGuard lock(fHierarchyMutex);
       content = fHierarchy.SaveToJSON(true, true);
