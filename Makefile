@@ -28,6 +28,7 @@ DABC_PLUGINS += $(wildcard applications/*)
 libs:: dabclogin
 
 clean:: clean-doxy
+	@rm -f $(DABCSYS)/config/Makefile.gener
 
 docs:: doxy
 

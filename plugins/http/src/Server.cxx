@@ -257,10 +257,9 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
          delete mem;
 
-
-         unsigned char* ptr = (unsigned char*) sbuf->Buffer();
-         for (int n=0;n<100;n++)
-            DOUT0("sbuf[%3d] = %3u", n, (unsigned int) (ptr[n]));
+//         unsigned char* ptr = (unsigned char*) sbuf->Buffer();
+//         for (int n=0;n<100;n++)
+//            DOUT0("sbuf[%3d] = %3u", n, (unsigned int) (ptr[n]));
 
       }
 
