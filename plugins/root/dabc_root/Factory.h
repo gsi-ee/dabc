@@ -24,6 +24,8 @@ namespace dabc_root {
       public:
          Factory(const std::string& name) : dabc::Factory(name) {}
 
+         virtual void Initialize();
+
          virtual dabc::DataInput* CreateDataInput(const std::string&);
 
          virtual dabc::DataOutput* CreateDataOutput(const std::string&);

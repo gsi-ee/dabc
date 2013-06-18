@@ -22,12 +22,11 @@ dabc::FactoryPlugin httpfactory(new http::Factory("http"));
 
 void http::Factory::Initialize()
 {
-   DOUT0("Initialize HTTP server");
-
    http::Server* serv = new http::Server("/http");
    if (!serv->IsEnabled()) {
       delete serv;
    } else {
+      DOUT0("Initialize HTTP server");
       dabc::WorkerRef(serv).MakeThreadForWorker("HttpThread");
    }
 }

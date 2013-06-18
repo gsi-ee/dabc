@@ -4,14 +4,20 @@
     <Run>
       <lib value="libDabcMbs.so"/>
       <lib value="libDabcHttp.so"/>
+      <lib value="libDabcRoot.so"/>
       <logfile value="Gener.log"/>
       <loglimit value="1000000"/>
       <control value="true"/>
     </Run>
 
     <HttpServer name="http">
+       <enabled value="true"/>
        <port value="8080"/>
     </HttpServer>
+
+    <RootSniffer name="ROOT">
+       <enabled value="true"/>
+    </RootSniffer>
 
     <MemoryPool name="Pool">
        <BufferSize value="65536"/>

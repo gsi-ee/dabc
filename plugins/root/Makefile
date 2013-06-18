@@ -7,7 +7,6 @@ ifdef DABCMAINMAKE
 DABCROOTDIR = plugins/root
 else
 DABCROOTDIR = .
-INCLUDES += $(DABCROOTDIR)
 endif
 
 DABCROOTDIRI         = $(DABCROOTDIR)/dabc_root
@@ -25,16 +24,16 @@ DABCROOT_D        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCROOT_S
 
 # used in the main Makefile
 
-ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_H))
+#ALLHDRS          += $(patsubst $(DABCROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCROOT_H))
 ALLDEPENDENC     += $(DABCROOT_D) 
 
 libs:: $(DABCROOT_LIB)
 
 ##### local rules #####
 
-$(DABCINCPATH)/%.h: $(DABCROOTDIR)/%.h
-	@echo "Header: $@" 
-	@cp -f $< $@
+#$(DABCINCPATH)/%.h: $(DABCROOTDIR)/%.h
+#	@echo "Header: $@" 
+#	@cp -f $< $@
 
 $(DABCROOT_LIB): LDFLAGS += $(DABC_ROOTLIBS)
 
@@ -43,7 +42,7 @@ $(DABCROOT_LIB):   $(DABCROOT_O)
 
 
 ########### extra roles #############
-$(DABCROOT_O) $(DABCROOT_D): INCLUDES += $(DABC_ROOTINCDIR)
+$(DABCROOT_O) $(DABCROOT_D): INCLUDES += $(DABC_ROOTINCDIR) $(DABCROOTDIR)
 
 endif
 

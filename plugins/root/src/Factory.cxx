@@ -19,7 +19,21 @@
 #include "dabc/Url.h"
 #include "dabc/Manager.h"
 
+#include "dabc_root/RootSniffer.h"
+
 dabc::FactoryPlugin dabc_root_factory(new dabc_root::Factory("dabc_root"));
+
+void dabc_root::Factory::Initialize()
+{
+   dabc_root::RootSniffer* serv = new dabc_root::RootSniffer("/ROOT");
+   if (!serv->IsEnabled()) {
+      delete serv;
+   } else {
+      DOUT0("Initialize ROOT sniffer");
+      dabc::WorkerRef(serv).MakeThreadForWorker("RootThread");
+   }
+}
+
 
 dabc::DataInput* dabc_root::Factory::CreateDataInput(const std::string& typ)
 {

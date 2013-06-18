@@ -68,6 +68,8 @@ http::Server::Server(const std::string& name) :
 
    fHttpPort = Cfg("port").AsUInt(8080);
    fEnabled = Cfg("enabled").AsBool(true);
+   if (fHttpPort<=0) fEnabled = false;
+
    if (!fEnabled) return;
 
    fHttpSys = ".";

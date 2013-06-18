@@ -38,16 +38,16 @@ DABCMBSROOT_DD        = $(patsubst %.$(SrcSuf), $(BLD_DIR)/%.$(DepSuf), $(DABCMB
 
 # used in the main Makefile
 
-ALLHDRS          += $(patsubst $(DABCMBSROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCMBSROOT_H))
+#ALLHDRS          += $(patsubst $(DABCMBSROOTDIR)/%.h, $(DABCINCPATH)/%.h, $(DABCMBSROOT_H))
 ALLDEPENDENC     += $(DABCMBSROOT_D) 
 
 libs:: $(DABCMBSROOT_LIB)
 
 ##### local rules #####
 
-$(DABCINCPATH)/%.h: $(DABCMBSROOTDIR)/%.h
-	@echo "Header: $@" 
-	@cp -f $< $@
+#$(DABCINCPATH)/%.h: $(DABCMBSROOTDIR)/%.h
+#	@echo "Header: $@" 
+#	@cp -f $< $@
 
 $(DABCMBSROOT_LIB): LDFLAGS += $(DABC_ROOTLIBS)
 
@@ -59,9 +59,9 @@ $(DABCMBSROOT_DS): $(DABCMBSROOT_H)  $(DABCMBSROOT_LINKDEF)
 
 
 ########### extra roles #############
-$(DABCMBSROOT_O) $(DABCMBSROOT_D): INCLUDES += $(DABC_ROOTINCDIR)
+$(DABCMBSROOT_O) $(DABCMBSROOT_D): INCLUDES += $(DABC_ROOTINCDIR) $(DABCMBSROOTDIR)
 
-$(DABCMBSROOT_DO) $(DABCMBSROOT_DD): INCLUDES += $(DABC_ROOTINCDIR) .
+$(DABCMBSROOT_DO) $(DABCMBSROOT_DD): INCLUDES += $(DABC_ROOTINCDIR) $(DABCMBSROOTDIR) .
 
 clean::
 	@rm -f $(DABCMBSROOT_DS) $(DABCMBSROOT_DH)
