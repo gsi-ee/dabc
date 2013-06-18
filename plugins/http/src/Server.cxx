@@ -190,16 +190,6 @@ int http::Server::begin_request(struct mg_connection *conn)
 
       // DOUT0("Request %s", content.c_str());
    } else
-   if (strcmp(request_info->uri,"/h.htm")==0) {
-
-      const char* hhhh = open_file((mg_connection*) 1, "httpsys/files/hierarchy.htm");
-      if ((hhhh==0)) {
-         EOUT("Cannot find files in httpsys!");
-         return 0;
-      }
-
-      content = hhhh;
-   } else
    if (strcmp(request_info->uri,"/nodetopology.txt")==0) {
       content_type = "text/plain";
       dabc::LockGuard lock(fHierarchyMutex);
