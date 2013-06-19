@@ -114,7 +114,7 @@ void http::Server::OnThreadAssigned()
 
 double http::Server::ProcessTimeout(double last_diff)
 {
-   dabc::LockGuard lock(fHierarchyMutex);
+   // dabc::LockGuard lock(fHierarchyMutex);
 
    dabc::Hierarchy local = fHierarchy.FindChild("localhost");
 
@@ -122,6 +122,7 @@ double http::Server::ProcessTimeout(double last_diff)
       EOUT("Did not find localhost in hierarchy");
    } else {
       // TODO: make via XML file like as for remote node!!
+
       local.UpdateHierarchy(dabc::mgr);
    }
 
@@ -193,9 +194,8 @@ int http::Server::begin_request(struct mg_connection *conn)
    } else
    if (strstr(request_info->uri,"/nodetopology.txt")!=0) {
       content_type = "text/plain";
-      dabc::LockGuard lock(fHierarchyMutex);
+      // dabc::LockGuard lock(fHierarchyMutex);
       content = fHierarchy.SaveToJSON(true, true);
-      // DOUT0("Provide hierarchy \n%s\n", content.c_str());
    } else {
       // let load some files
 

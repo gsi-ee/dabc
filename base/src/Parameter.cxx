@@ -24,6 +24,7 @@
 #include "dabc/Iterator.h"
 #include "dabc/Worker.h"
 #include "dabc/ConfigBase.h"
+#include "dabc/Hierarchy.h"
 
 dabc::ParameterContainer::ParameterContainer(Reference worker, const std::string& name, const std::string& parkind) :
    dabc::RecordContainer(worker, name),
@@ -286,9 +287,9 @@ const std::string& dabc::ParameterContainer::Kind() const
    return fKind;
 }
 
-void dabc::ParameterContainer::SaveAttr(RecordContainer* cont)
+void dabc::ParameterContainer::BuildHierarchy(HierarchyContainer* cont)
 {
-   dabc::Record rec(cont);
+   dabc::Hierarchy rec(cont);
 
    const char* val = GetField("");
    if (val) rec.Field("value").SetStr(val);

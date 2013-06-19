@@ -54,16 +54,23 @@ namespace dabc {
 
          std::string ItemName();
 
+         /** \brief Create child with specified name, when indx < 0
+          * \details If indx value specified, child will be created or kept at this position
+          * All intermediate childs will be removed
+          * \returns pointer on the child */
+         HierarchyContainer* CreateChildAt(const std::string& name, int indx);
+
+         /** \brief Update hierarchy from provided container
+          * \details Some field or childs could be extracted and change there ownership
+          * \returns true when something was changed */
+         bool UpdateHierarchyFrom(HierarchyContainer* cont);
+
       public:
          HierarchyContainer(const std::string& name);
 
          virtual const char* ClassName() const { return "Hierarchy"; }
 
          XMLNodePointer_t SaveHierarchyInXmlNode(XMLNodePointer_t parent, uint64_t version = 0);
-
-         /** \brief Update hierarchy structure according to object
-          * \returns true when something was changed */
-         bool UpdateHierarchyFromObject(Object* obj);
 
          bool UpdateHierarchyFromXmlNode(XMLNodePointer_t objnode);
 
@@ -83,6 +90,9 @@ namespace dabc {
 
          uint64_t GetVersion() const { return fNodeVersion > fHierarchyVersion ? fNodeVersion : fHierarchyVersion; }
 
+         /** \brief Method used to create copy of hierarchy again */
+         virtual void BuildHierarchy(HierarchyContainer* cont);
+
    };
 
    // ______________________________________________________________
@@ -101,10 +111,18 @@ namespace dabc {
 
       void Create(const std::string& name);
 
-      Hierarchy CreateChild(const std::string& name);
+      /** \brief Create child item in hierarchy with specified name
+       * \details If par indx specified, child will be created at specified position */
+      Hierarchy CreateChild(const std::string& name, int indx = -1);
 
-      void MakeHierarchy(Reference top);
+      /** \brief Build full hierarchy of the objects structure, provided in reference */
+      void Build(const std::string& topname, Reference top);
 
+      /** \brief Reconstruct complete hierarchy, setting node/structure modifications fields correctly
+       * \details source hierarchy can be modified to reuse fields inside */
+      bool Update(Hierarchy& src);
+
+      /** \brief Update from objects structure */
       bool UpdateHierarchy(Reference top);
 
       std::string SaveToXml(bool compact = false, uint64_t version = 0);

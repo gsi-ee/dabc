@@ -149,18 +149,16 @@ namespace dabc {
 }
 
 
-dabc::RecordContainer::RecordContainer(const std::string& name) :
-   Object(0, name),
+dabc::RecordContainer::RecordContainer(const std::string& name, unsigned flags) :
+   Object(0, name, flags | flAutoDestroy),
    fPars(new RecordContainerMap)
 {
-   SetFlag(flAutoDestroy, true);
 }
 
-dabc::RecordContainer::RecordContainer(Reference parent, const std::string& name) :
-   Object(MakePair(parent, name)),
+dabc::RecordContainer::RecordContainer(Reference parent, const std::string& name, unsigned flags) :
+   Object(MakePair(parent, name), flags | flAutoDestroy),
    fPars(new RecordContainerMap)
 {
-   SetFlag(flAutoDestroy, true);
 }
 
 dabc::RecordContainer::~RecordContainer()
@@ -168,13 +166,28 @@ dabc::RecordContainer::~RecordContainer()
    delete fPars; fPars = 0;
 }
 
-dabc::RecordContainerMap* dabc::RecordContainer::TakeContainer()
+dabc::RecordContainerMap* dabc::RecordContainer::GetFieldsMap()
+{
+   return fPars;
+}
+
+
+dabc::RecordContainerMap* dabc::RecordContainer::TakeFieldsMap()
 {
    LockGuard lock(ObjectMutex());
    dabc::RecordContainerMap* res = fPars;
    fPars = new RecordContainerMap;
    return res;
 }
+
+void dabc::RecordContainer::CopyFieldsMap(RecordContainerMap* src)
+{
+   if (src==0) return;
+
+   for (RecordContainerMap::iterator iter = src->begin(); iter != src->end(); iter++)
+      (*fPars)[iter->first] = iter->second;
+}
+
 
 bool dabc::RecordContainer::CompareFields(RecordContainerMap* oldmap)
 {
@@ -192,9 +205,12 @@ bool dabc::RecordContainer::CompareFields(RecordContainerMap* oldmap)
    return true;
 }
 
-void dabc::RecordContainer::DeleteContainer(RecordContainerMap* oldmap)
+void dabc::RecordContainer::SetFieldsMap(RecordContainerMap* newmap)
 {
-   delete oldmap;
+   LockGuard lock(ObjectMutex());
+   delete fPars;
+   fPars = newmap;
+   if (fPars==0) fPars = new RecordContainerMap;
 }
 
 

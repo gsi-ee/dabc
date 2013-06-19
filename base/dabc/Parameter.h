@@ -121,7 +121,7 @@ namespace dabc {
          void FireModified(const char* value);
 
          /** \brief Save parameter attributes into container */
-         virtual void SaveAttr(RecordContainer* cont);
+         virtual void BuildHierarchy(HierarchyContainer* cont);
 
       public:
 

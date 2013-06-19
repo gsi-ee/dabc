@@ -22,13 +22,12 @@
 #include "dabc/Exception.h"
 
 dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
-   dabc::RecordContainer(name),
+   dabc::RecordContainer(name, flNoMutex), // disable default ownership and no mutex is required
    fNodeVersion(0),
    fHierarchyVersion(0),
    fNodeChanged(false),
    fHierarchyChanged(false)
 {
-   SetOwner(true);
 }
 
 dabc::HierarchyContainer* dabc::HierarchyContainer::TopParent()
@@ -81,80 +80,97 @@ void dabc::HierarchyContainer::SetVersion(uint64_t version, bool recursive, bool
       }
 }
 
-bool dabc::HierarchyContainer::UpdateHierarchyFromObject(Object* obj)
+bool dabc::HierarchyContainer::UpdateHierarchyFrom(HierarchyContainer* cont)
 {
    fNodeChanged = false;
    fHierarchyChanged = false;
 
-   if (obj==0) throw dabc::Exception(ex_Hierarchy, "empty obj", ItemName());
+   if (cont==0) throw dabc::Exception(ex_Hierarchy, "empty container", ItemName());
 
    // we do not check names here - top object name can be different
    // if (!IsName(obj->GetName())) throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy itme", ItemName());
 
    // we need to recognize if any attribute disappear or changed
 
-   dabc::RecordContainerMap* fields = TakeContainer();
-
-   obj->SaveAttr(this);
-
-   if (!CompareFields(fields)) fNodeChanged = true;
-
-   DeleteContainer(fields);
+   if (!CompareFields(cont->GetFieldsMap())) {
+      fNodeChanged = true;
+      SetFieldsMap(cont->TakeFieldsMap());
+   }
 
    // now we should check if any childs was changed
 
-   unsigned cnt1(0); // counter over object childs
+   unsigned cnt1(0); // counter over source container
    unsigned cnt2(0); // counter over existing childs
 
-   while ((cnt1 < obj->NumChilds()) || (cnt2 < NumChilds())) {
-      if (cnt1 >= obj->NumChilds()) {
+   while ((cnt1 < cont->NumChilds()) || (cnt2 < NumChilds())) {
+      if (cnt1 >= cont->NumChilds()) {
          DeleteChild(cnt2);
          fHierarchyChanged = true;
          continue;
       }
 
-      Reference obj_child = obj->GetChildRef(cnt1);
+      dabc::Hierarchy cont_child(cont->GetChild(cnt1));
+      if (cont_child.null()) {
+         EOUT("FAILURE");
+         return false;
+      }
 
       bool findchild(false);
       unsigned findindx(0);
 
       for (unsigned n=cnt2;n<NumChilds();n++)
-         if (GetChild(n)->IsName(obj_child.GetName())) {
+         if (GetChild(n)->IsName(cont_child.GetName())) {
             findchild = true;
             findindx = n;
             break;
          }
 
-      dabc::HierarchyContainer* child = 0;
+      if (!findchild) {
+         // if child did not found, just take it out form source container and place at proper position
 
-      if (findchild) {
-         // delete all child with non-matching names
-         while (findindx > cnt2) { DeleteChild(cnt2); findindx--; fHierarchyChanged = true; }
-         child = dynamic_cast<dabc::HierarchyContainer*> (GetChild(cnt2));
-      } else {
-         child = new dabc::HierarchyContainer(obj_child.GetName());
-         AddChildAt(child, cnt2);
+         cont->RemoveChild(cont_child());
+
+         AddChildAt(cont_child(), cnt2);
+
          fHierarchyChanged = true;
+         cnt2++;
+
+         continue;
       }
 
-      if ((child==0) || !child->IsName(obj_child.GetName())) {
+      while (findindx > cnt2) { DeleteChild(cnt2); findindx--; fHierarchyChanged = true; }
+
+      dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) (GetChild(cnt2));
+
+      if ((child==0) || !child->IsName(cont_child.GetName())) {
          throw dabc::Exception(ex_Hierarchy, "mismatch between object and hierarchy item", ItemName());
          return false;
       }
 
-      if (child->UpdateHierarchyFromObject(obj_child())) fHierarchyChanged = true;
+      if (child->UpdateHierarchyFrom(cont_child())) fHierarchyChanged = true;
 
       cnt1++;
       cnt2++;
    }
 
-   if (cnt1!=cnt2) {
-      throw dabc::Exception(ex_Hierarchy, "internal failure - counters mismatch", ItemName());
-      return false;
-   }
-
    return fHierarchyChanged || fNodeChanged;
 }
+
+dabc::HierarchyContainer* dabc::HierarchyContainer::CreateChildAt(const std::string& name, int indx)
+{
+   while ((indx>=0) && (indx<(int) NumChilds())) {
+      dabc::HierarchyContainer* child = (dabc::HierarchyContainer*) GetChild(indx);
+      if (child->IsName(name.c_str())) return child;
+      DeleteChild(indx);
+   }
+
+   dabc::HierarchyContainer* res = new dabc::HierarchyContainer(name);
+   AddChild(res);
+
+   return res;
+}
+
+
 
 std::string dabc::HierarchyContainer::ItemName()
 {
@@ -278,27 +294,40 @@ void dabc::HierarchyContainer::SaveToJSON(std::string& sbuf, int level)
    sbuf+= dabc::format("%*s}", level*3, "");
 }
 
+void dabc::HierarchyContainer::BuildHierarchy(HierarchyContainer* cont)
+{
+   cont->CopyFieldsMap(GetFieldsMap());
+
+   dabc::RecordContainer::BuildHierarchy(cont);
+}
 
 // __________________________________________________-
 
 
-void dabc::Hierarchy::MakeHierarchy(Reference top)
+void dabc::Hierarchy::Build(const std::string& topname, Reference top)
 {
    Destroy();
 
-   UpdateHierarchy(top);
+   Create(topname);
+
+   if (!top.null())
+
+   top()->BuildHierarchy(GetObject());
 }
 
-bool dabc::Hierarchy::UpdateHierarchy(Reference top)
+bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
 {
-   if (top.null()) {
+   if (src.null()) {
       Destroy();
       return true;
    }
 
-   if (null()) Create(top.GetName());
+   if (null()) {
+      EOUT("Hierarchy structure MUST exist at this moment");
+      Create("DABC");
+   }
 
-   if (GetObject()->UpdateHierarchyFromObject(top())) {
+   if (GetObject()->UpdateHierarchyFrom(src())) {
 
       uint64_t next_ver = GetObject()->GetVersion() + 1;
 
@@ -309,6 +338,24 @@ bool dabc::Hierarchy::UpdateHierarchy(Reference top)
 }
 
 
+bool dabc::Hierarchy::UpdateHierarchy(Reference top)
+{
+   if (null()) {
+      Build(top.GetName(), top);
+      return true;
+   }
+
+   if (top.null()) {
+      EOUT("Objects structure must be provided");
+      return false;
+   }
+
+   dabc::Hierarchy src;
+
+   src.Build(top.GetName(), top);
+
+   return Update(src);
+}
 
 std::string dabc::Hierarchy::SaveToXml(bool compact, uint64_t version)
 {
@@ -333,15 +380,15 @@ void dabc::Hierarchy::Create(const std::string& name)
 {
    Release();
    SetObject(new HierarchyContainer(name));
-   SetOwner(true);
+   SetOwner(true); // top level is owner
    SetTransient(false);
 }
 
-dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name)
+dabc::Hierarchy dabc::Hierarchy::CreateChild(const std::string& name, int indx)
 {
    if (null() || name.empty()) return dabc::Hierarchy();
 
-   GetObject()->AddChild(new dabc::HierarchyContainer(name));
+   return GetObject()->CreateChildAt(name, indx);
 
    return FindChild(name.c_str());
 }

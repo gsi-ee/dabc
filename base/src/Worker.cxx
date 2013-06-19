@@ -533,26 +533,6 @@ bool dabc::Worker::Find(ConfigIO &cfg)
    return false;
 }
 
-void dabc::Worker::SaveAttr(RecordContainer* cont)
-{
-   // method is called from any possible thread
-   // to avoid thread-crossing porblem, let used command
-
-   dabc::Command cmd("DoSaveAttr");
-   cmd.SetPtr("cont", cont);
-   Execute(cmd);
-}
-
-
-void dabc::Worker::WorkerSaveAttr(RecordContainer* cont)
-{
-   Record rec(cont);
-
-   if (HasThread())
-      rec.Field(xmlThreadAttr).SetStr(ThreadName());
-}
-
-
 void dabc::Worker::WorkerParameterChanged(Parameter par)
 {
    if (!par.IsMonitored()) return;
@@ -602,9 +582,9 @@ int dabc::Worker::PreviewCommand(Command cmd)
       cmd_res = cmd_true;
    } else
 
-   if (cmd.IsName("DoSaveAttr")) {
-      RecordContainer* cont = (RecordContainer*)cmd.GetPtr("cont");
-      if (cont!=0) WorkerSaveAttr(cont);
+   if (cmd.IsName("BuildHierarchy")) {
+      HierarchyContainer* cont = (HierarchyContainer*) cmd.GetPtr("Container");
+      if (cont!=0) BuildHierarchy(cont);
       cmd_res = cmd_true;
    }
 
@@ -727,7 +707,7 @@ bool dabc::Worker::Execute(Command cmd, double tmout)
 
          // command execution possible without thread,
          // but only manager allows to do it without warnings
-         if ((this != dabc::mgr()) && !cmd.IsName("DoSaveAttr"))
+         if ((this != dabc::mgr()) && !cmd.IsName("BuildHierarchy"))
             EOUT("Cannot execute command %s without working thread, do directly id = %u", cmd.GetName(), fWorkerId);
          exe_direct = true;
       } else

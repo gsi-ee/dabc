@@ -21,6 +21,7 @@
 #include "TMemFile.h"
 #include "TStreamerInfo.h"
 #include "TBufferFile.h"
+#include "TROOT.h"
 
 
 dabc_root::RootSniffer::RootSniffer(const std::string& name) :
@@ -44,12 +45,25 @@ void dabc_root::RootSniffer::OnThreadAssigned()
       EOUT("sniffer was not enabled - why it is started??");
       return;
    }
+   fHierarchy.Create("ROOT");
+
    ActivateTimeout(0);
+   TH1* h1 = new TH1F("myhisto","Tilte of myhisto", 100, -10., 10.);
+   h1->FillRandom("gaus", 10000);
 }
 
 double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 {
-   dabc::LockGuard lock(fHierarchyMutex);
+   dabc::Hierarchy h;
+   h.Create("ROOT");
+
+   FillHieararchy(h, gROOT);
+
+   DOUT0("ROOT hierarchy = \n%s", h.SaveToXml().c_str());
+
+   fHierarchy.Update(h);
+
+//   dabc::LockGuard lock(fHierarchyMutex);
 
 //   dabc::Hierarchy local = fHierarchy.FindChild("localhost");
 
@@ -59,5 +73,24 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 //      // TODO: make via XML file like as for remote node!!
 //   }
 
-   return 1.;
+   return 10.;
 }
+
+
+void dabc_root::RootSniffer::FillHieararchy(dabc::Hierarchy& h, TDirectory* dir)
+{
+   if (dir==0) return;
+
+   TIter iter(dir ? dir->GetList() : 0);
+   TObject* obj(0);
+   while ((obj = iter())!=0) {
+      dabc::Hierarchy chld = h.CreateChild(obj->GetName());
+   }
+}
+
+
+void dabc_root::RootSniffer::BuildHierarchy(dabc::HierarchyContainer* cont)
+{
+   if (!fHierarchy.null()) fHierarchy()->BuildHierarchy(cont);
+}
+

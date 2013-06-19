@@ -24,6 +24,8 @@
 #include "dabc/Hierarchy.h"
 #endif
 
+class TDirectory;
+
 namespace dabc_root {
 
    /** \brief %RootSniffer provides access to ROOT objects for DABC
@@ -45,6 +47,8 @@ namespace dabc_root {
 
          virtual double ProcessTimeout(double last_diff);
 
+         void FillHieararchy(dabc::Hierarchy& h, TDirectory* dir);
+
       public:
          RootSniffer(const std::string& name);
 
@@ -53,6 +57,10 @@ namespace dabc_root {
          virtual const char* ClassName() const { return "RootSniffer"; }
 
          bool IsEnabled() const { return fEnabled; }
+
+         /** Should deliver hierarchy of the ROOT objects */
+         virtual void BuildHierarchy(dabc::HierarchyContainer* cont);
+
    };
 
 }

@@ -26,6 +26,7 @@
 #include "dabc/Device.h"
 #include "dabc/Application.h"
 #include "dabc/ConfigBase.h"
+#include "dabc/Hierarchy.h"
 
 // __________________________________________________________________
 
@@ -426,15 +427,15 @@ bool dabc::Module::Find(ConfigIO &cfg)
    return false;
 }
 
-
-void dabc::Module::WorkerSaveAttr(RecordContainer* cont)
+void dabc::Module::BuildHierarchy(HierarchyContainer* cont)
 {
-   dabc::Worker::WorkerSaveAttr(cont);
-
-   dabc::Record rec(cont);
+   dabc::Hierarchy rec(cont);
 
    rec.Field(xmlNumInputs).SetInt(NumInputs());
    rec.Field(xmlNumOutputs).SetInt(NumOutputs());
+
+   dabc::Worker::BuildHierarchy(cont);
+
 }
 
 void dabc::Module::ObjectCleanup()

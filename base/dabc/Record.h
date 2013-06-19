@@ -124,9 +124,9 @@ namespace dabc {
       protected:
          RecordContainerMap* fPars;
 
-         RecordContainer(const std::string& name);
+         RecordContainer(const std::string& name, unsigned flags = flIsOwner);
 
-         RecordContainer(Reference parent, const std::string& name);
+         RecordContainer(Reference parent, const std::string& name, unsigned flags = flIsOwner);
 
          virtual const std::string DefaultFiledName() const;
 
@@ -136,10 +136,24 @@ namespace dabc {
          virtual bool SetField(const std::string& name, const char* value, const char* kind);
          virtual void ClearFields();
 
-         RecordContainerMap* TakeContainer();
-         bool CompareFields(RecordContainerMap* oldmap);
-         void DeleteContainer(RecordContainerMap* oldmap);
+         /** \brief Returns pointer on field maps*/
+         RecordContainerMap* GetFieldsMap();
 
+         /** \brief Remove map and returns to the user.
+          * It is user responsibility to correctly destroy it */
+         RecordContainerMap* TakeFieldsMap();
+
+         /** \brief Compare if field changed
+          * \returns true when either number of fields or any field value is changed */
+         bool CompareFields(RecordContainerMap* oldmap);
+
+         /** \brief Copy all fields of from specified map */
+         void CopyFieldsMap(RecordContainerMap* src);
+
+         /** \brief Replaces existing fields map */
+         void SetFieldsMap(RecordContainerMap* newmap);
+
+         /** \brief returns true when object field is exists */
          bool HasField(const std::string& name) { return GetField(name)!=0; }
 
          unsigned NumFields() const;

@@ -28,6 +28,7 @@
 #include "dabc/ReferencesVector.h"
 #include "dabc/Worker.h"
 #include "dabc/Thread.h"
+#include "dabc/Hierarchy.h"
 
 unsigned dabc::Object::gNumInstances = 0;
 unsigned dabc::Object::gNumCreated = 0;
@@ -113,8 +114,8 @@ namespace dabc {
 
 
 
-dabc::Object::Object(const std::string& name) :
-   fObjectFlags(0),
+dabc::Object::Object(const std::string& name, unsigned flags) :
+   fObjectFlags(flags),
    fObjectParent(),
    fObjectName(name),
    fObjectMutex(0),
@@ -124,14 +125,12 @@ dabc::Object::Object(const std::string& name) :
 {
    DOUT3("Created object %s %p", GetName(), this);
 
-   SetFlag(flIsOwner, true);
-
    Constructor();
 }
 
 
-dabc::Object::Object(Reference parent, const std::string& name) :
-   fObjectFlags(0),
+dabc::Object::Object(Reference parent, const std::string& name, unsigned flags) :
+   fObjectFlags(flags),
    fObjectParent(parent),
    fObjectName(name),
    fObjectMutex(0),
@@ -141,14 +140,12 @@ dabc::Object::Object(Reference parent, const std::string& name) :
 {
    DOUT3("Object created %s %p", GetName(), this);
 
-   SetFlag(flIsOwner, true);
-
    Constructor();
 }
 
 
-dabc::Object::Object(const ConstructorPair& pair) :
-   fObjectFlags(0),
+dabc::Object::Object(const ConstructorPair& pair, unsigned flags) :
+   fObjectFlags(flags),
    fObjectParent(pair.parent),
    fObjectName(pair.name),
    fObjectMutex(0),
@@ -158,8 +155,6 @@ dabc::Object::Object(const ConstructorPair& pair) :
 {
    DOUT3("Object created %s %p", GetName(), this);
 
-   SetFlag(flIsOwner, true);
-
    Constructor();
 }
 
@@ -168,7 +163,7 @@ dabc::Object::~Object()
 {
    Destructor();
 
-   DOUT3("Object destroyed %s %p", GetName(), this);
+   DOUT3("Object destroyed %p", this);
 }
 
 void dabc::Object::SetOwner(bool on)
@@ -208,7 +203,9 @@ void dabc::Object::Constructor()
 
    // use non-recursive mutexes to see faster deadlock problems
    // FIXME: should we use recursive in final version?
-   fObjectMutex = new Mutex(false);
+
+   if (!GetFlag(flNoMutex))
+      fObjectMutex = new Mutex(false);
 
    SetState(stNormal);
 
@@ -269,7 +266,7 @@ void dabc::Object::Destructor()
    fObjectParent.Release();
 
    // destroy mutex
-   delete m; m =0;
+   delete m; m=0;
 
    gNumInstances--;
 }
@@ -354,7 +351,7 @@ bool dabc::Object::DecReference(bool ask_to_destroy, bool do_decrement, bool fro
       if (do_decrement) {
 
          if (fObjectRefCnt==0) {
-            EOUT("Reference counter is already 0");
+            EOUT("Obj %p %s Reference counter is already 0", this, GetName());
             throw dabc::Exception(ex_Object, "Reference counter is 0 - cannot decrease", GetName());
             return false;
          }
@@ -583,8 +580,8 @@ void dabc::Object::ObjectCleanup()
    }
 
    // Than we remove reference on the object from parent
-   if (fObjectParent())
-      fObjectParent()->RemoveChild(this);
+   if (!fObjectParent.null())
+      fObjectParent()->RemoveFromChildsList(this);
 
    if (IsLogging()) {
       DOUT0("Obj:%p %s refcnt %u after remove from parent", this, GetName(), fObjectRefCnt);
@@ -641,6 +638,8 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex, bool 
 {
    if (child==0) return false;
 
+   DOUT2("Adding child %p prnt %p", child, child->GetParent());
+
    if (child->GetParent() == 0) {
       if (setparent)
          child->fObjectParent.SetObject(this, false, withmutex);
@@ -665,8 +664,15 @@ bool dabc::Object::AddChildAt(Object* child, unsigned pos, bool withmutex, bool 
    return true;
 }
 
+bool dabc::Object::RemoveChild(Object* child) throw()
+{
+   if ((child==0) || (child->fObjectParent() != this)) return false;
+   child->fObjectParent.Release();
+   RemoveFromChildsList(child);
+   return true;
+}
 
-void dabc::Object::RemoveChild(Object* child) throw()
+void dabc::Object::RemoveFromChildsList(Object* child) throw()
 {
    if (child==0) return;
 
@@ -679,7 +685,9 @@ void dabc::Object::RemoveChild(Object* child) throw()
 
       if (fObjectBlock>0) continue;
 
+      // FIXME: seems to be mutex here locked second time
       fObjectChilds->Remove(child);
+
       break;
    }
 
@@ -1145,6 +1153,28 @@ std::string dabc::Object::ItemName(bool compact) const
 
    return res;
 }
+
+void dabc::Object::BuildHierarchy(HierarchyContainer* cont)
+{
+   for (unsigned cnt=0;cnt<NumChilds();cnt++) {
+      Reference child_obj = GetChildRef(cnt);
+      if (child_obj.null()) continue;
+
+      dabc::HierarchyContainer* child = new dabc::HierarchyContainer(child_obj.GetName());
+      cont->AddChild(child);
+
+      Worker* wrk = dynamic_cast<Worker*> (child_obj());
+
+      if (wrk==0) {
+         child_obj()->BuildHierarchy(child);
+      } else {
+         dabc::Command cmd("BuildHierarchy");
+         cmd.SetPtr("Container", child);
+         wrk->Execute(cmd, 1.);
+      }
+   }
+}
+
 
 // ============================================================================
 // FIXME: old code, should be adjusted

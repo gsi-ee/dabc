@@ -35,6 +35,7 @@ namespace dabc {
    class Mutex;
    class Configuration;
    class ReferencesVector;
+   class HierarchyContainer;
 
    extern const char* xmlDeviceNode;
    extern const char* xmlThreadNode;
@@ -160,6 +161,9 @@ namespace dabc {
           * Used only by manager therefore private */
          void SetCleanupBit();
 
+         /** \brief Remove object from list of child objects, __thread safe__ */
+         void RemoveFromChildsList(Object* child) throw();
+
       protected:
 
          enum EFlags {
@@ -168,7 +172,8 @@ namespace dabc {
             flCleanup        = 0x020,  ///< flag indicates that one should cleanup pointer from depended objects
             flHasThread      = 0x040,  ///< flag indicates that object has thread and should be cleaned up via thread
             flAutoDestroy    = 0x080,  ///< object will be automatically destroyed when no references exists, normally set in constructor, example Command
-            flLogging        = 0x100   ///< object is marked to provide logging information, for debug purposes only
+            flLogging        = 0x100,  ///< object is marked to provide logging information, for debug purposes only
+            flNoMutex        = 0x200   ///< object will be created without mutex, only can be used in contructor
          };
 
          unsigned           fObjectFlags;    ///< flag, protected by the mutex
@@ -270,13 +275,13 @@ namespace dabc {
           * which is typically should be used as argument in class constructor */
          static ConstructorPair MakePair(const std::string& fullname, bool withmanager = true);
 
-         Object(const ConstructorPair& pair);
+         Object(const ConstructorPair& pair, unsigned flags = flIsOwner);
 
       public:
 
-         Object(const std::string& name);
+         Object(const std::string& name, unsigned flags = flIsOwner);
 
-         Object(Reference parent, const std::string& name);
+         Object(Reference parent, const std::string& name, unsigned flags = flIsOwner);
 
          // FIXME: one should find a way to catch a call to the destructor
          virtual ~Object();
@@ -354,9 +359,8 @@ namespace dabc {
           * \returns                 reference on the child object */
          Reference PutChild(Object* obj, bool delduplicate = true);
 
-         // TODO: should it be public?
-         /** \brief Remove object from list of child objects, __thread safe__ */
-         void RemoveChild(Object* child) throw();
+         /** \brief Dettach child from parent object */
+         bool RemoveChild(Object* child) throw();
 
          /** \brief returns number of child objects */
          unsigned NumChilds() const;
@@ -424,12 +428,16 @@ namespace dabc {
          virtual bool Find(ConfigIO &cfg);
 
          /** \brief Method could be used to save any attributes of the object
-          *
+
           *  Implementation should look like:
           *
           *      dabc::Record rec(cont);
-          *      rec.Field("number").SetInt(12); */
-         virtual void SaveAttr(RecordContainer* cont) {}
+          *      rec.Field("number").SetInt(12);
+          *
+          *  If overwritten in derived class,
+          *  ParentClass::BuildHierarchy(cont) must be called to store
+          *  hierarchy of child objects */
+         virtual void BuildHierarchy(HierarchyContainer* cont);
 
          // operations with object name (and info) are __not thread safe__
          // therefore, in the case when object name must be changed,

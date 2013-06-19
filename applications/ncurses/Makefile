@@ -1,6 +1,6 @@
 ifndef noncurses
-ifneq (wildcard /usr/inlude/ncurses.h,)
-ifneq (wildcard /usr/inlude/menu.h,)
+ifneq ($(wildcard /usr/inlcude/ncurses.h),)
+ifneq ($(wildcard /usr/include/menu.h),)
 
 
 include $(DABCSYS)/config/Makefile.config

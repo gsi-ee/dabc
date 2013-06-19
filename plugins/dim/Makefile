@@ -1,4 +1,5 @@
 ifndef nodim
+ifdef withdim
 
 include $(DABCSYS)/config/Makefile.config
 
@@ -150,4 +151,5 @@ endif
 
 include $(DABCSYS)/config/Makefile.rules
 
+endif
 endif

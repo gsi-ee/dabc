@@ -59,10 +59,11 @@ bool dabc::ReferencesVector::Remove(Object* obj) throw()
    if ((obj==0) || (GetSize()==0)) return false;
 
    unsigned n = GetSize();
-
    while (n-->0) {
-      if (fVector[n].GetObject()==obj)
+      if (fVector[n].GetObject()==obj) {
+         fVector[n] = 0;
          fVector.erase(fVector.begin()+n);
+      }
    }
 
    return true;
