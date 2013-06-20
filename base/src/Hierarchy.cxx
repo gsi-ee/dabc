@@ -258,9 +258,18 @@ std::string dabc::HierarchyContainer::HtmlBrowserText()
 {
    if (NumChilds()>0) return GetName();
 
-   if (!HasField("rate")) return GetName();
+   const char* kind = GetField("kind");
 
-   return dabc::format("<a href='#' onClick='return displayObject(this);' fullname='%s'>%s</a>", ItemName().c_str(), GetName());
+   if (kind!=0) {
+      std::string res = dabc::format("<a href='#' onClick='DABC.mgr.click(this);' kind='%s' fullname='%s'", kind, ItemName().c_str());
+
+      const char* val = GetField("value");
+      if (val!=0) res += dabc::format(" value='%s'", val);
+
+      return res + dabc::format(">%s</a>", GetName());
+   }
+
+   return GetName();
 }
 
 void dabc::HierarchyContainer::SaveToJSON(std::string& sbuf, int level)

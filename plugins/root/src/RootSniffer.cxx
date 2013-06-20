@@ -85,6 +85,10 @@ void dabc_root::RootSniffer::FillHieararchy(dabc::Hierarchy& h, TDirectory* dir)
    while ((obj = iter())!=0) {
       DOUT0("Find ROOT object %s", obj->GetName());
       dabc::Hierarchy chld = h.CreateChild(obj->GetName());
+
+      if (obj->InheritsFrom(TH1::Class())) {
+         chld.Field("kind").SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+      }
    }
 }
 

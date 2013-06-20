@@ -18,55 +18,85 @@
    
    <script type='text/javascript'>
 
-      var mgr;
-
       DABC = {};
 
       DABC.version = "2.1.1";
+      
+      DABC.mgr = 0;
 
       DABC.DrawElement = function(_item) {
          this.itemname = _item;   // full item name in hierarhcy
-         this.obj = 0;            // object (if exists)
-         this.value = 0;          // value in text form
          this.frameid = "";       // id of top frame, where item is drawn
-         this.infoframeid = "";   // if of frame with information 
-         this.kind = "rate";      // kind of item
-         this.drawobj = 0;        // object created for drawing like Gauge
          return this;
       }
       
-      DABC.DrawElement.prototype.SetFrameId = function(id) {
-         this.frameid = "dabcframe_" + id;
-         this.infoframeid = "dabcinfoframe_" + id;
-      }
+      DABC.DrawElement.prototype.CreateFrames = function(topid,cnt) {
+         this.frameid = "dabc_dummy_" + cnt;
       
-      DABC.DrawElement.prototype.CreateFrames = function(topid) {
          var entryInfo = 
-           "<div id='"+this.infoframeid+"'> </div>"+
-           "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
+           "<div id='" +this.frameid + "'>" + 
+            "<h2> CreateFrames for item " + this.itemname + " not implemented </h2>"+
+           "</div>"; 
          $(topid).append(entryInfo);
       }
       
-      DABC.DrawElement.prototype.SetInfo = function(info) {
-         document.getElementById(this.infoframeid).innerHTML = info;
+      DABC.DrawElement.prototype.SetValue = function(val) {
+         document.getElementById(this.frameid).innerHTML = "Value = " + val;
+      }
+
+      // ======== end of DrawElement ======================
+
+      // ======== start of GaugeDrawElement ======================
+      
+      DABC.GaugeDrawElement = function(val) {
+         DABC.DrawElement.call(this, val);
+         this.gauge = 0;
       }
       
-      DABC.DrawElement.prototype.CreateGauge = function(info) {
-          this.drawobj = new JustGage({
+      // TODO: check how it works in different older browsers
+      DABC.GaugeDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+
+      DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
+
+         this.frameid = "dabc_gauge_" + id;
+
+         var entryInfo = 
+           "<div id='"+this.frameid+ "' class='200x160px'> </div> \n";
+         $(topid).append(entryInfo);
+
+         this.gauge = new JustGage({
              id: this.frameid, 
              value: 67,
              min: 0,
              max: 100,
              title: this.itemname
-          }); 
+         }); 
+      }
+
+      DABC.GaugeDrawElement.prototype.SetValue = function(val) {
+         this.gauge.refresh(val);
+      }
+
+      
+      // ======== end of GaugeDrawElement ======================
+
+
+      // ======== start of RootDrawElement ======================
+      
+      DABC.RootDrawElement = function(val) {
+         DABC.DrawElement.call(this, val);
+      
+         this.rootobj = 0; 
       }
       
-      DABC.DrawElement.prototype.SetValue = function(val) {
-         this.value = val;
-         this.drawobj.refresh(this.value);
-      }
       
-      // ======== end of DrawElement ======================
+      // TODO: check how it works in different older browsers
+      DABC.RootDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+      
+      // ======== end of RootDrawElement ======================
+
+      
       
       // ============= start of DABC.Manager =============== 
    
@@ -91,14 +121,11 @@
       
          if (this.FindItem(_item)) return;
          
-         var elem = new DABC.DrawElement(_item);
+         //var elem = new DABC.DrawElement(_item);
          
-         elem.SetFrameId(this.cnt++);
+         var elem = new DABC.RootDrawElement(_item);
          
-         elem.CreateFrames("#report");
-         // elem.SetInfo("<h5> full name:" + _item + " </h5>");
-         
-         elem.CreateGauge();
+         elem.CreateFrames("#report", this.cnt++);
          
          this.arr.push(elem);
       }
@@ -141,11 +168,6 @@
         return req;
       }
       
-      DABC.Manager.prototype.Alert = function() {
-         alert("Call Update all " + this.arr.length());
-      }
-      
-      
       DABC.Manager.prototype.UpdateAll = function() {
 
          var url = this.GetRequestUrl();
@@ -174,27 +196,46 @@
          }
       }
       
+      DABC.Manager.prototype.click = function(item) {
+         var itemname = item.getAttribute("fullname");
+         
+         if (this.FindItem(itemname)) return;
+         
+         var kind = item.getAttribute("kind");
+
+         var elem = 0;
+         
+         if (kind == "rate") {
+           elem = new DABC.GaugeDrawElement(itemname);
+         } else
+         if (kind.indexOf("ROOT.") == 0) {
+            elem = new DABC.RootDrawElement(itemname);
+         }
+         
+         if (elem==0) return;
+         
+         elem.CreateFrames("#report", this.cnt++);
+         
+         this.arr.push(elem);
+      }
+      
       
       
       // ============= end of DABC.Manager =============== 
    
       function initGUI() {
-         if (!mgr) mgr = new DABC.Manager();
+         if (!DABC.mgr) DABC.mgr = new DABC.Manager();
       
          $("#black").treeview( {
             url: "nodetopology.txt",
-           control: "#treecontrol",
-           persist: "cookie",
-           cookieId: "treeview-black"
+            control: "#treecontrol",
+            persist: "cookie",
+            cookieId: "treeview-black"
          });
          
-         setInterval(function() { mgr.UpdateAll(); }, 3000);
+         setInterval(function() { DABC.mgr.UpdateAll(); }, 3000);
       }
       
-      function displayObject(item) {
-         mgr.Draw(item.getAttribute("fullname"));
-      }
-       
       $(document).ready(initGUI);
       
    </script>

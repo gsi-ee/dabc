@@ -7,7 +7,8 @@ of the framework.
    It should manage most (probably all) draw elements, produce requests and update 
    draw elements. DABC.DrawElement class contains full description of drawn element - 
    item name, kind, draw object and so on.
-
+2. Create hierarchy of DABC.DrawElement classes to separate Gauge from Root canvas
+   from anything else.
 
 19.06.2013
 1. Change logic how hierarchy is managed. There is dabc::Object::BuildHierarchy()

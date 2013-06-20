@@ -3,9 +3,10 @@ https://root.cern.ch/svn/root/trunk/js
 
 Following modifications were done:
 
-1. To be able use dummy file instance - gFile
-   is used now as storage for the streamer infos.
-   In fact one should avoid this
+1. To be able use dummy file instance.
+   gFile is used now as storage for the streamer infos.
+   In fact one should avoid that file access data from network 
+   when no url is specified.
 
     JSRootIOEvolution.js, line ~2439
 
@@ -20,7 +21,9 @@ Following modifications were done:
        this.fEND = this.GetSize(fileurl);
      }
      
-2. To avoid usage of external scripts (without Internet connections)
+2. Avoid usage of external scripts. In many use cases web-server and web-browser
+   will run in Intranet without connection to Internet. This is a case in our 
+   special accelerator network.
      
     JSRootInterface.js, ~line 218:
     
@@ -40,5 +43,3 @@ Following modifications were done:
     BuildSimpleGUI()
     
     It would be much clear, if everywhere "ROOT" as part of name is used.  
-    
-4.          
