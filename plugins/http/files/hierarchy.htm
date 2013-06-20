@@ -24,11 +24,15 @@
       
       DABC.mgr = 0;
 
-      DABC.DrawElement = function(_item) {
-         this.itemname = _item;   // full item name in hierarhcy
-         this.frameid = "";       // id of top frame, where item is drawn
+      DABC.DrawElement = function() {
+         this.itemname = "";   // full item name in hierarhcy
+         this.frameid = 0;    // id of top frame, where item is drawn
          return this;
       }
+
+      // indicates if element operates with simple text fields, 
+      // which can be processed by SetValue() method
+      DABC.DrawElement.prototype.simple = function() { return false; }
       
       DABC.DrawElement.prototype.CreateFrames = function(topid,cnt) {
          this.frameid = "dabc_dummy_" + cnt;
@@ -41,21 +45,24 @@
       }
       
       DABC.DrawElement.prototype.SetValue = function(val) {
+         if (!val || !this.frameid) return;
          document.getElementById(this.frameid).innerHTML = "Value = " + val;
       }
+      
 
       // ======== end of DrawElement ======================
 
       // ======== start of GaugeDrawElement ======================
       
-      DABC.GaugeDrawElement = function(val) {
-         DABC.DrawElement.call(this, val);
+      DABC.GaugeDrawElement = function() {
+         DABC.DrawElement.call(this);
          this.gauge = 0;
       }
       
       // TODO: check how it works in different older browsers
       DABC.GaugeDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
 
+      DABC.GaugeDrawElement.prototype.simple = function() { return true; }
 
       DABC.GaugeDrawElement.prototype.CreateFrames = function(topid, id) {
 
@@ -67,7 +74,7 @@
 
          this.gauge = new JustGage({
              id: this.frameid, 
-             value: 67,
+             value: 0,
              min: 0,
              max: 100,
              title: this.itemname
@@ -75,7 +82,7 @@
       }
 
       DABC.GaugeDrawElement.prototype.SetValue = function(val) {
-         this.gauge.refresh(val);
+         if (val) this.gauge.refresh(val);
       }
 
       
@@ -84,10 +91,12 @@
 
       // ======== start of RootDrawElement ======================
       
-      DABC.RootDrawElement = function(val) {
-         DABC.DrawElement.call(this, val);
-      
-         this.rootobj = 0; 
+      DABC.RootDrawElement = function(_clname) {
+         DABC.DrawElement.call(this);
+
+         this.clname = _clname; // ROOT class name
+         this.obj = 0;          // object itself
+         this.sinfo = 0;        // used to refer to the streamer info record
       }
       
       
@@ -116,33 +125,6 @@
          return this.arr.length == 0;
       }
       
-      DABC.Manager.prototype.Draw = function(_item) {
-         if (!_item) return;
-      
-         if (this.FindItem(_item)) return;
-         
-         //var elem = new DABC.DrawElement(_item);
-         
-         var elem = new DABC.RootDrawElement(_item);
-         
-         elem.CreateFrames("#report", this.cnt++);
-         
-         this.arr.push(elem);
-      }
-
-      DABC.Manager.prototype.GetRequestUrl = function() {
-         if (!this.arr.length) return;
-      
-         var args = "chartreq.htm?";
-          
-         for (var i in this.arr) {
-            if (i>0) args+="&";
-            args += this.arr[i].itemname;
-         }
-         
-         return args;
-      }
-      
       DABC.Manager.prototype.NewRequest = function() {
         var req;
         // For Safari, Firefox, and other non-MS browsers
@@ -168,10 +150,20 @@
         return req;
       }
       
-      DABC.Manager.prototype.UpdateAll = function() {
+      // This method used to update all simple fields together
+      DABC.Manager.prototype.UpdateSimpleFields = function() {
+         if (this.empty()) return;
 
-         var url = this.GetRequestUrl();
-         if (!url) return;
+         var url = "chartreq.htm?";
+         var cnt = 0;
+      
+         for (var i in this.arr) {
+            if (!this.arr[i].simple()) continue;
+            if (cnt++>0) url+="&";
+            url += this.arr[i].itemname;
+         }
+         
+         if (cnt==0) return;
      
          var req = this.NewRequest();
          if (!req) return;
@@ -196,6 +188,11 @@
          }
       }
       
+      DABC.Manager.prototype.UpdateAll = function() {
+         this.UpdateSimpleFields();
+      }
+      
+      
       DABC.Manager.prototype.click = function(item) {
          var itemname = item.getAttribute("fullname");
          
@@ -206,15 +203,28 @@
          var elem = 0;
          
          if (kind == "rate") {
-           elem = new DABC.GaugeDrawElement(itemname);
+           elem = new DABC.GaugeDrawElement();
          } else
          if (kind.indexOf("ROOT.") == 0) {
-            elem = new DABC.RootDrawElement(itemname);
+            // this element is only required 
+            var sinfo = this.FindItem("streamerinfo.bin"); 
+            if (!sinfo) {
+               sinfo = new DABC.RootDrawElement("TStreamerInfo");
+               sinfo.itemname = "streamerinfo.bin";
+               this.arr.push(sinfo);
+            }
+         
+            elem = new DABC.RootDrawElement(kind.substr(5));
+            elem.sinfo = sinfo;
          }
          
          if (elem==0) return;
          
+         elem.itemname = itemname;
+         
          elem.CreateFrames("#report", this.cnt++);
+         
+         elem.SetValue(item.getAttribute("value"));
          
          this.arr.push(elem);
       }
