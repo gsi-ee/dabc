@@ -10,6 +10,9 @@ of the framework.
 2. Create hierarchy of DABC.DrawElement classes to separate Gauge from Root canvas
    from anything else. Only 'simple' classes handled in the main request, 
    rest will be treated by own-managed asynchronous requests.
+3. Extract DABC-specific JavaScript code to dabc.js. 
+4. Implement binary requests, central binary callback and  
+   first primitive version of drawing histogram from DABC browser!  
 
 19.06.2013
 1. Change logic how hierarchy is managed. There is dabc::Object::BuildHierarchy()

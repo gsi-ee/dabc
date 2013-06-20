@@ -18,7 +18,7 @@
 	      source_dir = "httpsys/JSRootIO/";
 	   
 	      AssertPrerequisites(function() { 
-	         $("#ArrayOutput").append("done<br>");
+	         $("#report").append("done<br>");
 	         
 	         RequestDabcBuffer("streamerinfo.data");
 	      });
@@ -29,7 +29,7 @@
 	   
 	   function ProduceObject(buffer) {
 
-         $("#ArrayOutput").append(" len: " + buffer.length + " done<br>");
+         $("#report").append(" len: " + buffer.length + " done<br>");
 
          if (!gFile) {
          
@@ -37,16 +37,16 @@
 
 	         streamer_info = new JSROOTIO.StreamerInfo();
 
-            $("#ArrayOutput").append(" try to unpack streamer infos<br>");
+            $("#report").append(" try to unpack streamer infos" + buffer.length + "<br>");
 	         
 	         gFile.fStreamerInfo.ExtractStreamerInfo(buffer);
 	         
-            $("#ArrayOutput").append(" extracting streamer info done<br>");
+            $("#report").append(" extracting streamer info done<br>");
 	         
 	         return;
 	      }
 
-         $("#ArrayOutput").append(" try to create object<br>");
+         $("#report").append(" try to create object<br>");
 
 	   
 	      var obj = {};
@@ -56,9 +56,9 @@
          
          JSROOTCore.addMethods(obj);
          
-         // $("#ArrayOutput").append("  done.<br>");
+         // $("#report").append("  done.<br>");
 
-         $("#ArrayOutput").append("Object name " + obj['fName']+ " created<br>");
+         $("#report").append("Object name " + obj['fName']+ " created<br>");
 
          
          var cycle = 1;
@@ -70,7 +70,7 @@
 	
 	   function RequestDabcBuffer(url) {
 	   
-	      $("#ArrayOutput").append("Start: ");
+	      $("#report").append("Start: ");
 	   
 	      // Read specified byte range from remote file
          var ie9 = function(url) {
