@@ -2,6 +2,13 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of the framework.
 
+20.06.2013
+1. Create DABC.Manager class for JavaScript applications (name is always the same :))
+   It should manage most (probably all) draw elements, produce requests and update 
+   draw elements. DABC.DrawElement class contains full description of drawn element - 
+   item name, kind, draw object and so on.
+
+
 19.06.2013
 1. Change logic how hierarchy is managed. There is dabc::Object::BuildHierarchy()
    method, which responsible to create hierarchy below. Method executed in thread
@@ -37,6 +44,7 @@ of the framework.
 2. Version number switched to 2.1.1. 
    Odd second number indicates that now many new features can appear - 
    mostly in http interface. 
+
 
 13.06.2013
 1. Put node hierarchy as separate request. In future can update it like gauge 

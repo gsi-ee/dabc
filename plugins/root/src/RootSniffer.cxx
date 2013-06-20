@@ -48,7 +48,7 @@ void dabc_root::RootSniffer::OnThreadAssigned()
    fHierarchy.Create("ROOT");
 
    ActivateTimeout(0);
-   TH1* h1 = new TH1F("myhisto","Tilte of myhisto", 100, -10., 10.);
+   TH1* h1 = new TH1F("histo1","Tilte of histo1", 100, -10., 10.);
    h1->FillRandom("gaus", 10000);
 }
 
@@ -56,10 +56,9 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 {
    dabc::Hierarchy h;
    h.Create("ROOT");
-
    FillHieararchy(h, gROOT);
 
-   DOUT0("ROOT hierarchy = \n%s", h.SaveToXml().c_str());
+   DOUT0("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
 
    fHierarchy.Update(h);
 
@@ -84,6 +83,7 @@ void dabc_root::RootSniffer::FillHieararchy(dabc::Hierarchy& h, TDirectory* dir)
    TIter iter(dir ? dir->GetList() : 0);
    TObject* obj(0);
    while ((obj = iter())!=0) {
+      DOUT0("Find ROOT object %s", obj->GetName());
       dabc::Hierarchy chld = h.CreateChild(obj->GetName());
    }
 }

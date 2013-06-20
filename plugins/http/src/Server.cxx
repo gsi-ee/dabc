@@ -154,48 +154,17 @@ int http::Server::begin_request(struct mg_connection *conn)
             fHierarchy.SaveToXml(false) +
             std::string("</dabc>\n");
    } else
-   if (strstr(request_info->uri,"/chartreq.htm")!=0) {
-
-      DOUT0("Request chartreq.htm processed");
-
-      std::string rates = request_info->query_string ? request_info->query_string : "";
-
-      content = "[\n";
-      bool first = true;
-
-      dabc::LockGuard lock(fHierarchyMutex);
-
-      while (rates.length() > 0) {
-         size_t pos = rates.find('&');
-         std::string part;
-         if (pos==std::string::npos) {
-            part = rates;
-            rates.clear();
-         } else {
-            part.append(rates, 0, pos);
-            rates.erase(0, pos+1);
-         }
-
-         if (!first) content+=",\n";
-
-         dabc::Hierarchy chld = fHierarchy.FindChild(part.c_str());
-
-         if (chld.null()) { EOUT("Didnot find child %s", part.c_str()); }
-
-         if (!chld.null() && chld.HasField("value")) {
-            content += dabc::format("   { \"name\" : \"%s\" , \"value\" : \"%s\" }", part.c_str(), chld.GetField("value"));
-            first = false;
-         }
-      }
-
-      content += "\n]\n";
-
-      content_type = "text/plain";
-   } else
    if (strstr(request_info->uri,"/nodetopology.txt")!=0) {
       content_type = "text/plain";
       // dabc::LockGuard lock(fHierarchyMutex);
       content = fHierarchy.SaveToJSON(true, true);
+   } else
+   if (strstr(request_info->uri, "chartreq.htm")!=0) {
+      content_type = "text/plain";
+
+      const char* res = open_file(conn, request_info->uri, 0);
+      if (res) content = res;
+
    } else {
       // let load some files
 
@@ -234,6 +203,23 @@ const char* http::Server::open_file(const struct mg_connection* conn,
                                     const char *path, size_t *data_len)
 {
    if ((path==0) || (*path==0)) return 0;
+
+
+   const struct mg_request_info *request_info = 0;
+   if (((long) conn) > 1) request_info = mg_get_request_info((struct mg_connection*)conn);
+
+   bool force = (((long) conn) == 1);
+
+   force = true;
+
+   const char* query = 0;
+   const char* meth = 0;
+   if (request_info) {
+      if (request_info->query_string) query = request_info->query_string;
+      if (request_info->request_method) meth = request_info->request_method;
+   }
+
+   DOUT0("Request file %s  meth:%s query:%s", path, meth ? meth : "---", query ? query : "---");
 
    if (strstr(path,"streamerinfo.data")!=0) {
       DOUT0("Produce streamer info data %s", path);
@@ -343,58 +329,89 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
    }
 
-
-   bool force = (((long) conn) == 1);
-
-   force = true;
-
-   if (force || (conn==0)) {
-      DOUT0("Request file %s", path);
-   } else {
-
-      const struct mg_request_info *request_info = mg_get_request_info((struct mg_connection*)conn);
-
-      const char* query = "---";
-      if (request_info->query_string) query = request_info->query_string;
-      const char* meth = "---";
-      if (request_info->request_method) meth = request_info->request_method;
-
-      DOUT0("Request file %s  meth:%s query:%s", path, meth, query);
-   }
-
+   char* buf = 0;
+   int length = 0;
    std::string fname(path);
 
-   size_t pos = fname.rfind("httpsys/");
-   if (pos==std::string::npos) return 0;
-   fname.erase(0, pos+7);
-   fname = fHttpSys + fname;
+   if (strstr(path,"chartreq.htm")!=0) {
 
-   if (!force) {
-      dabc::LockGuard lock(ObjectMutex());
+      DOUT0("Request chartreq.htm processed");
 
-      FilesMap::iterator iter = fFiles.find(fname);
-      if (iter!=fFiles.end()) {
-         if (data_len) *data_len = iter->second.size;
-         DOUT0("Return file %s len %d", fname.c_str(), iter->second.size);
-         return (const char*) iter->second.ptr;
+      force = true;
+
+      std::string rates = query ? query : "";
+
+      std::string content = "[\n";
+      bool first = true;
+
+      dabc::LockGuard lock(fHierarchyMutex);
+
+      while (rates.length() > 0) {
+         size_t pos = rates.find('&');
+         std::string part;
+         if (pos==std::string::npos) {
+            part = rates;
+            rates.clear();
+         } else {
+            part.append(rates, 0, pos);
+            rates.erase(0, pos+1);
+         }
+
+         if (!first) content+=",\n";
+
+         dabc::Hierarchy chld = fHierarchy.FindChild(part.c_str());
+
+         if (chld.null()) { EOUT("Didnot find child %s", part.c_str()); }
+
+         if (!chld.null() && chld.HasField("value")) {
+            content += dabc::format("   { \"name\" : \"%s\" , \"value\" : \"%s\" }", part.c_str(), chld.GetField("value"));
+            first = false;
+         }
       }
+
+      content += "\n]\n";
+
+
+      length = content.length();
+      buf = (char*) malloc(length+1);
+      strncpy(buf, content.c_str(), length+1);
+      buf[length] = 0;
+
+      DOUT0("Produced buffer = %s", buf);
    }
 
-   std::ifstream is(fname.c_str());
+   if (buf==0) {
+      size_t pos = fname.rfind("httpsys/");
+      if (pos==std::string::npos) return 0;
+      fname.erase(0, pos+7);
+      fname = fHttpSys + fname;
 
-   if (!is) return 0;
+      if (!force) {
+         dabc::LockGuard lock(ObjectMutex());
 
-   is.seekg (0, is.end);
-   int length = is.tellg();
-   is.seekg (0, is.beg);
+         FilesMap::iterator iter = fFiles.find(fname);
+         if (iter!=fFiles.end()) {
+            if (data_len) *data_len = iter->second.size;
+            DOUT0("Return file %s len %d", fname.c_str(), iter->second.size);
+            return (const char*) iter->second.ptr;
+         }
+      }
 
-   char* buf = (char*) malloc(length+1);
+      std::ifstream is(fname.c_str());
 
-   is.read(buf, length);
-   if (is)
-     DOUT0("all characters read successfully from file.");
-   else
-     EOUT("only %d could be read from %s", is.gcount(), path);
+      if (!is) return 0;
+
+      is.seekg (0, is.end);
+      length = is.tellg();
+      is.seekg (0, is.beg);
+
+      buf = (char*) malloc(length+1);
+      is.read(buf, length);
+      if (is)
+         DOUT0("all characters read successfully from file.");
+      else
+        EOUT("only %d could be read from %s", is.gcount(), path);
+   }
 
    buf[length] = 0;
 
