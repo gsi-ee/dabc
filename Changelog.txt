@@ -2,6 +2,18 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of the framework.
 
+21.06.2013
+1. Create BinDataContainer and BinData classes for manipuldation of
+   binary data in dabc::Hierarchy classes. Main motivation is to be able 
+   from any thread keep reference on binary data disregard of changes in hierarchy.
+   BinData also simplifies version control of binary data.
+2. In case of RootSniffer special container is created, which interfaces TBuffer
+   functionality. By that one do not require memcopy and duplication of memory.
+3. Implement GetBinary command for RootSniffer. By that step one completely decouples 
+   http::Server from ROOT functionality.
+4. Now it is possible to draw root objects and ratemeters from hierarchy browser.
+
+
 20.06.2013
 1. Create DABC.Manager class for JavaScript applications (name is always the same :))
    It should manage most (probably all) draw elements, produce requests and update 

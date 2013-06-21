@@ -25,8 +25,27 @@
 #endif
 
 class TDirectory;
+class TBufferFile;
 
 namespace dabc_root {
+
+   /** \brief %RootBinDataContainer provides access to ROOT TBuffer object for DABC
+    *
+    */
+
+   class RootBinDataContainer : public dabc::BinDataContainer {
+      protected:
+         TBufferFile* fBuf;
+      public:
+         RootBinDataContainer(TBufferFile* buf);
+         virtual ~RootBinDataContainer();
+
+         virtual void* data() const;
+         virtual unsigned length() const;
+   };
+
+
+
 
    /** \brief %RootSniffer provides access to ROOT objects for DABC
     *
@@ -48,6 +67,8 @@ namespace dabc_root {
          virtual double ProcessTimeout(double last_diff);
 
          void FillHieararchy(dabc::Hierarchy& h, TDirectory* dir);
+
+         virtual int ExecuteCommand(dabc::Command cmd);
 
       public:
          RootSniffer(const std::string& name);

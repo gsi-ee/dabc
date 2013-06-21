@@ -24,6 +24,30 @@
 #include "TROOT.h"
 
 
+dabc_root::RootBinDataContainer::RootBinDataContainer(TBufferFile* buf) :
+   dabc::BinDataContainer(),
+   fBuf(buf)
+{
+}
+
+dabc_root::RootBinDataContainer::~RootBinDataContainer()
+{
+    delete fBuf;
+    fBuf = 0;
+}
+
+void* dabc_root::RootBinDataContainer::data() const
+{
+   return fBuf ? fBuf->Buffer() : 0;
+}
+
+unsigned dabc_root::RootBinDataContainer::length() const
+{
+   return fBuf ? fBuf->Length() : 0;
+}
+
+// ==============================================================================
+
 dabc_root::RootSniffer::RootSniffer(const std::string& name) :
    dabc::Worker(MakePair(name)),
    fEnabled(false),
@@ -45,7 +69,9 @@ void dabc_root::RootSniffer::OnThreadAssigned()
       EOUT("sniffer was not enabled - why it is started??");
       return;
    }
+   // identify ourself as bin objects producer
    fHierarchy.Create("ROOT");
+   DOUT0("Root sniffer %s is bin producer!!!", ItemName().c_str());
 
    ActivateTimeout(0);
    TH1* h1 = new TH1F("histo1","Tilte of histo1", 100, -10., 10.);
@@ -56,6 +82,9 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 {
    dabc::Hierarchy h;
    h.Create("ROOT");
+   // this is fake element, which is need to be requested before first
+   h.CreateChild("StreamerInfo").Field("kind").SetStr("ROOT.TList");
+
    FillHieararchy(h, gROOT);
 
    DOUT0("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
@@ -73,6 +102,57 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 //   }
 
    return 10.;
+}
+
+int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
+{
+   if (cmd.IsName("GetBinary")) {
+
+      std::string item = cmd.GetStdStr("Item");
+
+      TBufferFile* sbuf = 0;
+
+      if (item=="StreamerInfo") {
+         TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
+         TH1F* d = new TH1F("d","d", 10, 0, 10);
+         d->Write();
+         mem->WriteStreamerInfo();
+
+         TList* l = mem->GetStreamerInfoList();
+         l->Print("*");
+
+         sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+         sbuf->MapObject(l);
+         l->Streamer(*sbuf);
+
+         delete l;
+
+         delete mem;
+      } else {
+         TObject* obj = gROOT->FindObject(item.c_str());
+
+         if (obj!=0) {
+
+            TH1* h1 = dynamic_cast<TH1*> (obj);
+
+            if (h1) h1->FillRandom("gaus", 10000);
+
+            sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+
+            gFile = 0;
+            sbuf->MapObject(obj);
+            obj->Streamer(*sbuf);
+         }
+
+         DOUT0("Produced buffer length %d", sbuf->Length());
+      }
+
+      if (sbuf!=0) cmd.SetRef("#BinData", dabc::BinData(new RootBinDataContainer(sbuf)));
+
+      return dabc::cmd_true;
+   }
+
+   return dabc::Worker::ExecuteCommand(cmd);
 }
 
 
@@ -95,6 +175,9 @@ void dabc_root::RootSniffer::FillHieararchy(dabc::Hierarchy& h, TDirectory* dir)
 
 void dabc_root::RootSniffer::BuildHierarchy(dabc::HierarchyContainer* cont)
 {
+   // indicate that we are bin producer of down objects
+   dabc::Hierarchy(cont).Field("#bin_producer").SetStr(ItemName());
+
    if (!fHierarchy.null()) fHierarchy()->BuildHierarchy(cont);
 }
 

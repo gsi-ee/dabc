@@ -24,16 +24,6 @@
 #include "dabc/Manager.h"
 
 
-#ifdef WITH_ROOT
-#include "TH1.h"
-#include "TFile.h"
-#include "TList.h"
-#include "TMemFile.h"
-#include "TStreamerInfo.h"
-#include "TBufferFile.h"
-#endif
-
-
 static int begin_request_handler(struct mg_connection *conn)
 {
    http::Server* serv = (http::Server*) mg_get_request_info(conn)->user_data;
@@ -134,14 +124,17 @@ int http::Server::begin_request(struct mg_connection *conn)
 {
    const struct mg_request_info *request_info = mg_get_request_info(conn);
 
+   DOUT0("BEGIN_REQ: %s", request_info->uri);
+
    std::string content;
    std::string content_type = "text/html";
+   bool iserror = false;
 
    if ((strcmp(request_info->uri,"/")==0) ||
        (strcmp(request_info->uri,"/main.htm")==0) || (strcmp(request_info->uri,"/main.html")==0) ||
        (strcmp(request_info->uri,"/index.htm")==0) || (strcmp(request_info->uri,"/main.html")==0)) {
       std::string content_type = "text/html";
-      content = open_file((struct mg_connection*)1, "httpsys/files/main.htm");
+      content = open_file(0, "httpsys/files/main.htm");
    } else
    if (strstr(request_info->uri,"/h.xml")!=0) {
       content_type = "xml";
@@ -165,6 +158,11 @@ int http::Server::begin_request(struct mg_connection *conn)
       const char* res = open_file(conn, request_info->uri, 0);
       if (res) content = res;
 
+   } else
+   if (strstr(request_info->uri, "getbinary.htm")!=0) {
+      if (ProcessGetBinary(conn, request_info->query_string)) return 1;
+
+      iserror = true;
    } else {
       // let load some files
 
@@ -180,11 +178,16 @@ int http::Server::begin_request(struct mg_connection *conn)
       if (content.empty()) return 0;
    }
 
-
    // Prepare the message we're going to send
 
-   // Send HTTP reply to the client
-   mg_printf(conn,
+   if (iserror) {
+      mg_printf(conn, "HTTP/1.1 404 Not Found\r\n"
+                "Content-Length: 0\r\n"
+                "Connection: close\r\n\r\n");
+   } else {
+
+      // Send HTTP reply to the client
+      mg_printf(conn,
              "HTTP/1.1 200 OK\r\n"
              "Content-Type: %s\r\n"
              "Content-Length: %d\r\n"        // Always set Content-Length
@@ -193,6 +196,7 @@ int http::Server::begin_request(struct mg_connection *conn)
              content_type.c_str(),
              (int) content.length(),
              content.c_str());
+   }
 
    // Returning non-zero tells mongoose that our function has replied to
    // the client, and mongoose should not send client any more data.
@@ -204,13 +208,13 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 {
    if ((path==0) || (*path==0)) return 0;
 
+   if (strstr(path,"getbinary")!=0)
+      return 0;
 
    const struct mg_request_info *request_info = 0;
-   if (((long) conn) > 1) request_info = mg_get_request_info((struct mg_connection*)conn);
+   if (conn!=0) request_info = mg_get_request_info((struct mg_connection*)conn);
 
-   bool force = (((long) conn) == 1);
-
-   force = true;
+   bool force = true;
 
    const char* query = 0;
    const char* meth = 0;
@@ -220,114 +224,6 @@ const char* http::Server::open_file(const struct mg_connection* conn,
    }
 
    DOUT0("Request file %s  meth:%s query:%s", path, meth ? meth : "---", query ? query : "---");
-
-   if (strstr(path,"streamerinfo.data")!=0) {
-      DOUT0("Produce streamer info data %s", path);
-
-#ifdef WITH_ROOT
-      static TBufferFile* sbuf = 0;
-
-      if (sbuf==0) {
-
-         TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
-         TH1F* d = new TH1F("d","d", 10, 0, 10);
-         d->Write();
-         mem->WriteStreamerInfo();
-
-         TList* l = mem->GetStreamerInfoList();
-         l->Print("*");
-
-         sbuf = new TBufferFile(TBuffer::kWrite, 100000);
-         sbuf->MapObject(l);
-         l->Streamer(*sbuf);
-
-         delete l;
-
-         delete mem;
-
-//         unsigned char* ptr = (unsigned char*) sbuf->Buffer();
-//         for (int n=0;n<100;n++)
-//            DOUT0("sbuf[%3d] = %3u", n, (unsigned int) (ptr[n]));
-
-      }
-
-      DOUT0("Return streamer info length %d", sbuf->Length());
-
-      if (data_len) *data_len = sbuf->Length();
-      return sbuf->Buffer();
-
-#else
-      if (data_len) *data_len = 0;
-      return "";
-#endif
-
-   }
-
-
-   if (strstr(path,"binary.data")!=0) {
-
-      DOUT0("Produce binary data %s", path);
-
-#ifdef WITH_ROOT
-      static TH1* h1 = 0;
-      static TBufferFile* buf = 0;
-
-      if (h1==0) {
-//         TFile* f = TFile::Open("f.root");
-//         h1 = (TH1*) f->Get("h");
-
-//         h1->SetDirectory(0);
-//         delete f;
-
-
-         h1 = new TH1F("myhisto","Tilte of myhisto", 100, -10., 10.);
-         h1->SetDirectory(0);
-         DOUT0("Get h1 %s  class %s", h1->GetName(), h1->ClassName());
-
-
-         TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
-         TH1F* d = new TH1F("d","d", 10, 0, 10);
-         d->Write();
-         mem->WriteStreamerInfo();
-
-         TList* l = mem->GetStreamerInfoList();
-         l->Print("*");
-         delete l;
-
-         delete mem;
-
-      }
-
-      h1->FillRandom("gaus", 10000);
-
-      if (buf!=0) { delete buf; buf = 0; }
-
-      if (buf==0) {
-         buf = new TBufferFile(TBuffer::kWrite, 100000);
-
-         gFile = 0;
-         buf->MapObject(h1);
-         h1->Streamer(*buf);
-
-         DOUT0("Produced buffer length %d", buf->Length());
-      }
-
-//      char* ptr = buf->Buffer();
-//      for (int n=0;n<buf->Length();n++)
-//         DOUT0("buf[%3d] = %3u", n, (unsigned int) (ptr[n]));
-
-      DOUT0("Return length %d", buf->Length());
-
-      if (data_len) *data_len = buf->Length();
-      return buf->Buffer();
-
-
-#else
-      if (data_len) *data_len = 0;
-      return "";
-#endif
-
-   }
 
    char* buf = 0;
    int length = 0;
@@ -442,4 +338,117 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
    return 0;
 }
+
+int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query)
+{
+   const char* itemname = query;
+
+   if (itemname==0) {
+      EOUT("Item is not specified in getbinary request");
+      return 0;
+   }
+
+   dabc::Hierarchy item;
+   dabc::BinData bindata;
+
+   {
+      dabc::LockGuard lock(fHierarchyMutex);
+      item = fHierarchy.FindChild(itemname);
+
+      if (item.null()) {
+         EOUT("Wrong request for non-existing item %s", itemname);
+         return 0;
+      }
+
+   }
+
+   bindata = item()->bindata();
+
+   // TODO: check version later
+   if (!bindata.null()) {
+      DOUT0("!!!! BINRARY READY %s sz %u", itemname ? itemname : "---", bindata.length());
+
+      mg_printf(conn,
+           "HTTP/1.1 200 OK\r\n"
+           "Content-Type: application/x-binary\r\n"
+           "Content-Length: %u\r\n"
+           "Connection: keep-alive\r\n"
+           "\r\n",
+           bindata.length());
+      mg_write(conn, bindata.data(), (size_t) bindata.length());
+      return 1;
+   }
+
+   dabc::Hierarchy parent = item;
+   std::string producer_name, request_name;
+
+   while (!parent.null()) {
+      if (parent.HasField("#bin_producer")) {
+         producer_name = parent.Field("#bin_producer").AsStdStr();
+         request_name = item.RelativeName(parent);
+         break;
+      }
+      parent = (dabc::HierarchyContainer*) parent.GetParent();
+   }
+
+   dabc::WorkerRef wrk;
+
+   if (!producer_name.empty()) wrk = dabc::mgr.FindItem(producer_name);
+
+   if (wrk.null() || request_name.empty()) {
+      EOUT("NO WAY TO GET BINARY DATA %s ", itemname ? itemname : "---");
+      return 0;
+   }
+
+   DOUT0("GETBINARY name:%s %s %s" , itemname ? itemname : "---", producer_name.c_str(), request_name.c_str());
+   {
+      dabc::LockGuard lock(fHierarchyMutex);
+      if (item.HasField("#doingreq")) {
+         EOUT("Parallel binary request is running - not yet implemented");
+         exit(111);
+      }
+      item.SetField("#doingreq","1");
+   }
+
+
+    dabc::Command cmd("GetBinary");
+    cmd.SetStr("Item", request_name);
+
+    DOUT0("************* EXECUTING GETBINARY COMMAND *****************");
+
+    if (wrk.Execute(cmd) != dabc::cmd_true) {
+       EOUT("Fail to get binary data");
+       return 0;
+    }
+
+    bindata = cmd.GetRef("#BinData");
+
+    DOUT0("************* EXECUTING DONE ***************** %u", bindata.length());
+
+    {
+      dabc::LockGuard lock(fHierarchyMutex);
+      item.SetField("#doingreq",0);
+      if (!bindata.null()) {
+
+         DOUT0("************* Setting binary data of length %u", bindata.length());
+
+         item()->bindata() = bindata;
+      }
+   }
+
+
+   DOUT0("Send binary data %u!!!!", bindata.length());
+
+   mg_printf(conn,
+        "HTTP/1.1 200 OK\r\n"
+        "Content-Type: application/x-binary\r\n"
+        "Content-Length: %u\r\n"
+        "Connection: keep-alive\r\n"
+        "\r\n",
+        bindata.length());
+   mg_write(conn, bindata.data(), (size_t) bindata.length());
+
+   return 1;
+}
+
 

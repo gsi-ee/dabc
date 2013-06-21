@@ -236,6 +236,11 @@ namespace dabc {
          /** \brief Produce string, which can be used as name argument in
           * dabc::mgr.FindItem(name) call */
          std::string ItemName(bool compact = true) const;
+
+         /** \brief Produce name, which can be used to find item, calling topitem.FindChild().
+          * \details topitem should be one of the parent
+          * TODO: one should be able to calculate relative name with any pairs of objects */
+         std::string RelativeName(const dabc::Reference& topitem);
    };
 }
 

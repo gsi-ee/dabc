@@ -91,44 +91,46 @@
   DABC.RootDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
   
   DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
-	 this.drawid = id;
-	 this.frameid = "histogram" + this.drawid;
-	 this.titleid = "uid_accordion_" + this.drawid; 
+    this.drawid = id;
+    this.frameid = "histogram" + this.drawid;
+    this.titleid = "uid_accordion_" + this.drawid; 
      var entryInfo = "<h5 id='"+this.titleid+"'><a>" + this.itemname + "</a>&nbsp; </h5>\n";
      entryInfo += "<div id='" + this.frameid + "'>\n";
      $(topid).append(entryInfo);
   }
   
   DABC.RootDrawElement.prototype.BinaryCallback = function(arg) {
-	 // in any case, request pointer will be reseted
-	  this.req = 0;
-	  
-	  if (!arg) {
-	 	 $("#report").append("<br> RootDrawElement get callback " + this.itemname + " error");
-	 	 return; 
-	  }
-	  
- 	  // $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length);
-	 
- 	  if (!this.sinfo) {
-		 // we are doing sreamer infos
-		 if (gFile) $("#report").append("<br> gFile already exists???"); 
-		     else gFile = new JSROOTIO.RootFile;
-		
+    // in any case, request pointer will be reseted
+     this.req = 0;
+     
+     if (!arg) {
+        $("#report").append("<br> RootDrawElement get callback " + this.itemname + " error");
+        return; 
+     }
+     
+      // $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length);
+    
+      if (!this.sinfo) {
+       // we are doing sreamer infos
+         if (gFile) $("#report").append("<br> gFile already exists???"); 
+            else gFile = new JSROOTIO.RootFile;
+      
          gFile.fStreamerInfo.ExtractStreamerInfo(arg);
          
          // we are done with the reconstructing of streamer infos
          this.ready = true;
+         
+         // $("#report").append("<br> Streamer infos unpacked!!!");
 
          // with streamer info one could try to update complex fields
          DABC.mgr.UpdateComplexFields();
 
          return;
-	  } 
+     } 
       // not try to update again
-	  this.ready = true;
-	  
-	  this.obj = {};
+     this.ready = true;
+     
+     this.obj = {};
       this.obj['_typename'] = 'JSROOTIO.' + this.clname;
       
       // $("#report").append("<br>make streaming " + arg.length + " for class "+ this.clname);
@@ -147,39 +149,36 @@
   }
   
   DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
-	 // in any case streamer info is required before normal request can be submitted
+    // in any case streamer info is required before normal request can be submitted
 
-	 if (this.sinfo) {
+    if (this.sinfo) {
 //         $("#report").append("<br> checking sinfo " + (this.sinfo.ready ? "true" : "false"));
-	 } else {
-//		 $("#report").append("<br> sinfo itself " + (this.ready ? "true" : "false"));
-	 }
-	  
-	 if (this.sinfo && !this.sinfo.ready) return;
-	 
-	 // when streamer info ready, than ignore request 
-	 if (!this.sinfo && this.ready) return;
-	 
-	 // if request is created and running, do nothing
-	 if (this.req) return;
-	 
-	 if (this.ready) return;
-	 
-	 var url;
-	 if (!this.sinfo)
-	    url = "streamerinfo.data";
-	 else
-		url = "binary.data"; 
-	 
-	 this.req = DABC.mgr.NewBinRequest(url, true, this.itemname);
-	 
+    } else {
+//       $("#report").append("<br> sinfo itself " + (this.ready ? "true" : "false"));
+    }
+     
+    if (this.sinfo && !this.sinfo.ready) return;
+    
+    // when streamer info ready, than ignore request 
+    if (!this.sinfo && this.ready) return;
+    
+    // if request is created and running, do nothing
+    if (this.req) return;
+    
+    if (this.ready) return;
+    
+    var url = "getbinary.htm?" + this.itemname;
+//    if (!this.sinfo)
+//       url = "streamerinfo.data";
+//    else
+//      url = "binary.data"; 
+    
+    this.req = DABC.mgr.NewBinRequest(url, true, this);
+    
      // $("#report").append("<br> Send request " + url);
-	 
-	 this.req.send();
+    
+    this.req.send();
   }
-  
-  
-  
   
   // ======== end of RootDrawElement ======================
 
@@ -187,7 +186,7 @@
   
   // ============= start of DABC.Manager =============== 
    
-  DABC.Manager = function(abc) {
+  DABC.Manager = function() {
      this.cnt = 0;            // counter to create new element 
      this.arr = new Array();  // array of DrawElement
      return this;
@@ -229,15 +228,10 @@
     return req;
   }
   
-  DABC.Manager.prototype.BinaryCallback = function(itemname, arg) {
-     var item = this.FindItem(itemname);
-	 if (item) item.BinaryCallback(arg);
-  }
   
-  
-  DABC.Manager.prototype.NewBinRequest = function(url, async, itemname) {
-	  var xhr = new XMLHttpRequest();
-	  
+  DABC.Manager.prototype.NewBinRequest = function(url, async, item) {
+     var xhr = new XMLHttpRequest();
+     
       if (typeof ActiveXObject == "function") {
           xhr.onreadystatechange = function() {
               if (this.readyState == 4 && (this.status == 200 || this.status == 206)) {
@@ -246,11 +240,12 @@
                  for (var i = 0; i < array.length; i++) {
                     filecontent = filecontent + String.fromCharCode(array[i]);
                  }
-                 DABC.mgr.BinaryCallback(itemname, filecontent);
+                 // DABC.mgr.BinaryCallback(itemname, filecontent);
+                 item.BinaryCallback(filecontent);
                  delete filecontent;
                  filecontent = null;
               }
-    	  xhr.open('POST', url, async);  
+         xhr.open('POST', url, async);  
       }
     } else {
           xhr.onreadystatechange = function() {
@@ -280,7 +275,9 @@
                   var filecontent = Buf;
                }
 
-               DABC.mgr.BinaryCallback(itemname, filecontent);
+               item.BinaryCallback(filecontent);
+
+               // DABC.mgr.BinaryCallback(itemname, filecontent);
                    
                delete filecontent;
                filecontent = null;
@@ -340,11 +337,11 @@
   }
   
   DABC.Manager.prototype.UpdateComplexFields = function() {
-	  if (this.empty()) return;
+     if (this.empty()) return;
 
       for (var i in this.arr) 
-	    if (!this.arr[i].simple())
-	       this.arr[i].CheckComplexRequest();
+       if (!this.arr[i].simple())
+          this.arr[i].CheckComplexRequest();
   }
   
   DABC.Manager.prototype.UpdateAll = function() {
@@ -366,13 +363,23 @@
        elem = new DABC.GaugeDrawElement();
      } else
      if (kind.indexOf("ROOT.") == 0) {
+
+        // one need to find item with StreamerInfo
+        // FIXME: later one need to find streamer info without any naming conventions
+        var pos = itemname.indexOf("ROOT/");
+        if (!pos) {
+           alert("String ROOT/ not found in ROOT item name - requiered to find StreamerInfo.");
+           return;
+        }
+        
+        var sinfoname = itemname.substr(0, pos+5) + "StreamerInfo";
+        
         // this element is only required 
-        var sinfo = this.FindItem("streamerinfo.bin"); 
+        var sinfo = this.FindItem(sinfoname); 
         if (!sinfo) {
-           AssertPrerequisites(function() { $("#report").append("Loading JSRootIO done<br>"); });
-           
-           sinfo = new DABC.RootDrawElement("TStreamerInfo");
-           sinfo.itemname = "streamerinfo.bin";
+           AssertPrerequisites(function() { $("#report").append("<br>Loading JSRootIO done<br> sinfo item " + sinfoname); });
+           sinfo = new DABC.RootDrawElement(kind.substr(5));
+           sinfo.itemname = sinfoname;
            this.arr.push(sinfo);
         }
      

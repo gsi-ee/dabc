@@ -289,3 +289,14 @@ std::string dabc::Reference::ItemName(bool compact) const
 
    return GetObject()->ItemName(compact);
 }
+
+std::string dabc::Reference::RelativeName(const dabc::Reference& topitem)
+{
+   if (null() || topitem.null()) return "";
+
+   std::string res;
+
+   GetObject()->FillFullName(res, topitem(), true);
+
+   return res;
+}

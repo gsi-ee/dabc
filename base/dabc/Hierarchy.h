@@ -26,6 +26,35 @@ namespace dabc {
 
    class Hierarchy;
 
+   class BinDataContainer : public Object {
+      protected:
+         void*      fData;           ///< binary data, assigned with the node
+         unsigned   fLength;         ///< length of binary data
+         bool       fOwner;          ///< is owner of binary data
+         uint64_t   fVersion;        ///< version of binary data
+      public:
+         BinDataContainer(void* data = 0, unsigned len = 0, bool owner = false);
+         virtual ~BinDataContainer();
+
+         virtual void* data() const { return fData; }
+         virtual unsigned length() const { return fLength; }
+
+         uint64_t  GetVersion() const { return fVersion; }
+         void SetVersion(uint64_t ver) { fVersion = ver; }
+   };
+
+   class BinData : public Reference {
+      static bool transient_refs() { return false; }
+
+      DABC_REFERENCE(BinData, Reference, BinDataContainer)
+
+      void* data() const { return null() ? 0 : GetObject()->data(); }
+      unsigned length() const { return null() ? 0 : GetObject()->length(); }
+   };
+
+
+   // ===================================================================================
+
    class HierarchyContainer : public RecordContainer {
 
       friend class Hierarchy;
@@ -41,14 +70,16 @@ namespace dabc {
          uint64_t   fNodeVersion;       ///< version number of node itself
          uint64_t   fHierarchyVersion;  ///< version number of hierarchy below
 
-         bool       fNodeChanged;       ///< indicate if something was changed in the node
+         bool       fNodeChanged;       ///< indicate if something was changed in the node during update
          bool       fHierarchyChanged;  ///< indicate if something was changed in the hierarchy
+
+         BinData    fBinData;
 
          HierarchyContainer* TopParent();
 
          virtual bool SetField(const std::string& name, const char* value, const char* kind);
 
-         void SaveToJSON(std::string& sbuf, int level = 0);
+         bool SaveToJSON(std::string& sbuf, bool isfirstchild = true, int level = 0);
 
          std::string HtmlBrowserText();
 
@@ -93,6 +124,7 @@ namespace dabc {
          /** \brief Method used to create copy of hierarchy again */
          virtual void BuildHierarchy(HierarchyContainer* cont);
 
+         BinData& bindata() { return fBinData; }
    };
 
    // ______________________________________________________________
@@ -106,6 +138,8 @@ namespace dabc {
     */
 
    class Hierarchy : public Record {
+
+      static bool transient_refs() { return false; }
 
       DABC_REFERENCE(Hierarchy, Record, HierarchyContainer)
 

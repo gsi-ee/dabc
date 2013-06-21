@@ -74,6 +74,8 @@ namespace http {
 
          virtual double ProcessTimeout(double last_diff);
 
+         int ProcessGetBinary(struct mg_connection* conn, const char *query);
+
       public:
          Server(const std::string& name);
 

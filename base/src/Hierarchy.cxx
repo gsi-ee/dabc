@@ -16,10 +16,33 @@
 #include "dabc/Hierarchy.h"
 
 #include <string.h>
+#include <stdlib.h>
 
 #include "dabc/Iterator.h"
 #include "dabc/logging.h"
 #include "dabc/Exception.h"
+
+
+dabc::BinDataContainer::BinDataContainer(void* data, unsigned len, bool owner) :
+   Object(0, "bindata", flAutoDestroy),
+   fData(data),
+   fLength(len),
+   fOwner(owner),
+   fVersion(0)
+{
+}
+
+dabc::BinDataContainer::~BinDataContainer()
+{
+   if (fData && fOwner) free(fData);
+   fData = 0;
+   fLength = 0;
+   fOwner = false;
+   fVersion = 0;
+}
+
+
+// ===============================================================================
 
 dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    dabc::RecordContainer(name, flNoMutex), // disable default ownership and no mutex is required
@@ -29,6 +52,7 @@ dabc::HierarchyContainer::HierarchyContainer(const std::string& name) :
    fHierarchyChanged(false)
 {
 }
+
 
 dabc::HierarchyContainer* dabc::HierarchyContainer::TopParent()
 {
@@ -272,14 +296,18 @@ std::string dabc::HierarchyContainer::HtmlBrowserText()
    return GetName();
 }
 
-void dabc::HierarchyContainer::SaveToJSON(std::string& sbuf, int level)
+bool dabc::HierarchyContainer::SaveToJSON(std::string& sbuf, bool isfirstchild, int level)
 {
+   if (GetField("hidden")!=0) return false;
+
    bool compact = level==0;
    const char* nl = compact ? "" : "\n";
 
+   if (!isfirstchild) sbuf += dabc::format(",%s", nl);
+
    if (NumChilds()==0) {
       sbuf += dabc::format("%*s{\"text\":\"%s\"}", level*3, "", HtmlBrowserText().c_str());
-      return;
+      return true;
    }
 
    sbuf += dabc::format("%*s{\"text\":\"%s\",%s", level*3, "",  HtmlBrowserText().c_str(), nl);
@@ -292,15 +320,14 @@ void dabc::HierarchyContainer::SaveToJSON(std::string& sbuf, int level)
 
       if (child==0) continue;
 
-      if (!isfirst) sbuf += dabc::format(",%s", nl);
-
-      child->SaveToJSON(sbuf, compact ? 0 : level+1);
-      isfirst = false;
+      if (child->SaveToJSON(sbuf, isfirst, compact ? 0 : level+1)) isfirst = false;
    }
 
    sbuf+= dabc::format("%s%*s]%s", nl, level*3, "", nl);
    if (!compact) level--;
    sbuf+= dabc::format("%*s}", level*3, "");
+
+   return true;
 }
 
 void dabc::HierarchyContainer::BuildHierarchy(HierarchyContainer* cont)
@@ -453,13 +480,10 @@ std::string dabc::Hierarchy::SaveToJSON(bool compact, bool excludetop)
 
          if (child.null()) continue;
 
-         if (!isfirst) res += (compact ? "," : ",\n");
-
-         child()->SaveToJSON(res, compact ? 0 : 1);
-         isfirst = false;
+         if (child()->SaveToJSON(res, isfirst, compact ? 0 : 1)) isfirst = false;
       }
    } else {
-      GetObject()->SaveToJSON(res, compact ? 0 : 1);
+      GetObject()->SaveToJSON(res, true, compact ? 0 : 1);
    }
 
    res.append(compact ? "]" : "\n]\n");
