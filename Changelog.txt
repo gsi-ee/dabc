@@ -12,7 +12,7 @@ of the framework.
 3. Implement GetBinary command for RootSniffer. By that step one completely decouples 
    http::Server from ROOT functionality.
 4. Now it is possible to draw root objects and ratemeters from hierarchy browser.
-
+5. Make more generic method to generate StreamerInfos. Test TGraph.
 
 20.06.2013
 1. Create DABC.Manager class for JavaScript applications (name is always the same :))

@@ -26,6 +26,7 @@
 
 class TDirectory;
 class TBufferFile;
+class TClass;
 
 namespace dabc_root {
 
@@ -43,8 +44,6 @@ namespace dabc_root {
          virtual void* data() const;
          virtual unsigned length() const;
    };
-
-
 
 
    /** \brief %RootSniffer provides access to ROOT objects for DABC
@@ -69,6 +68,10 @@ namespace dabc_root {
          void FillHieararchy(dabc::Hierarchy& h, TDirectory* dir);
 
          virtual int ExecuteCommand(dabc::Command cmd);
+
+         bool IsSupportedClass(TClass* cl);
+
+         TBufferFile* ProduceStreamerInfos();
 
       public:
          RootSniffer(const std::string& name);

@@ -142,7 +142,7 @@
 
       JSROOTCore.addMethods(this.obj);
 
-      // $("#report").append("<br>Object name " + this.obj['fName']+ " created");
+      $("#report").append("<br>Object name " + this.obj['fName']+ " class "  + this.obj['_typename'] + "  created");
 
       JSROOTPainter.drawObject(this.obj, this.drawid);
       addCollapsible("#"+this.titleid);

@@ -15,7 +15,12 @@
 
 #include "dabc_root/RootSniffer.h"
 
+#include <math.h>
+
 #include "TH1.h"
+#include "TGraph.h"
+#include "TProfile.h"
+#include "TCanvas.h"
 #include "TFile.h"
 #include "TList.h"
 #include "TMemFile.h"
@@ -23,6 +28,7 @@
 #include "TBufferFile.h"
 #include "TROOT.h"
 
+#include "dabc/Iterator.h"
 
 dabc_root::RootBinDataContainer::RootBinDataContainer(TBufferFile* buf) :
    dabc::BinDataContainer(),
@@ -73,9 +79,23 @@ void dabc_root::RootSniffer::OnThreadAssigned()
    fHierarchy.Create("ROOT");
    DOUT0("Root sniffer %s is bin producer!!!", ItemName().c_str());
 
+   gROOT->SetBatch(kTRUE);
+
+
    ActivateTimeout(0);
    TH1* h1 = new TH1F("histo1","Tilte of histo1", 100, -10., 10.);
    h1->FillRandom("gaus", 10000);
+
+   Double_t x[100], y[100];
+   Int_t n = 20;
+   for (Int_t i=0;i<n;i++) {
+     x[i] = i*0.1;
+     y[i] = 10*sin(x[i]+0.2);
+   }
+   TGraph* gr = new TGraph(n,x,y);
+   gr->SetName("graph");
+   DOUT0("***************************** Graph histogram = %p", gr->GetHistogram());
+   gROOT->Add(gr);
 }
 
 double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
@@ -113,21 +133,7 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
       TBufferFile* sbuf = 0;
 
       if (item=="StreamerInfo") {
-         TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
-         TH1F* d = new TH1F("d","d", 10, 0, 10);
-         d->Write();
-         mem->WriteStreamerInfo();
-
-         TList* l = mem->GetStreamerInfoList();
-         l->Print("*");
-
-         sbuf = new TBufferFile(TBuffer::kWrite, 100000);
-         sbuf->MapObject(l);
-         l->Streamer(*sbuf);
-
-         delete l;
-
-         delete mem;
+         sbuf = ProduceStreamerInfos();
       } else {
          TObject* obj = gROOT->FindObject(item.c_str());
 
@@ -166,11 +172,96 @@ void dabc_root::RootSniffer::FillHieararchy(dabc::Hierarchy& h, TDirectory* dir)
       DOUT0("Find ROOT object %s", obj->GetName());
       dabc::Hierarchy chld = h.CreateChild(obj->GetName());
 
-      if (obj->InheritsFrom(TH1::Class())) {
+      if (IsSupportedClass(obj->IsA())) {
          chld.Field("kind").SetStr(dabc::format("ROOT.%s", obj->ClassName()));
       }
    }
 }
+
+bool dabc_root::RootSniffer::IsSupportedClass(TClass* cl)
+{
+   if (cl==0) return false;
+
+   if (cl->InheritsFrom(TH1::Class())) return true;
+   if (cl->InheritsFrom(TGraph::Class())) return true;
+   if (cl->InheritsFrom(TCanvas::Class())) return true;
+   if (cl->InheritsFrom(TProfile::Class())) return true;
+
+   return false;
+}
+
+
+TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
+{
+   dabc::Iterator iter(fHierarchy);
+
+   dabc::HierarchyContainer* cont = 0;
+
+   TObjArray arr;
+
+   while (iter.next_cast(cont)) {
+
+      dabc::Hierarchy item(cont);
+
+      const char* kind = item.GetField("kind");
+      if (kind==0) continue;
+
+      //DOUT0("KIND = %s", kind);
+
+      if (strstr(kind,"ROOT.")!=kind) continue;
+
+      //DOUT0("Serach for = %s", kind+5);
+
+      TClass* cl = TClass::GetClass(kind+5, kFALSE);
+
+      if (!IsSupportedClass(cl)) continue;
+
+      if (!arr.FindObject(cl)) {
+         arr.Add(cl);
+         DOUT0("FOUND ROOT CLASS %s", cl->GetName());
+      }
+   }
+
+   if (arr.GetSize()==0) arr.Add(TH1F::Class());
+
+
+   TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
+
+   for (Int_t n = 0; n<=arr.GetLast(); n++) {
+      TClass* cl = (TClass*) arr[n];
+
+      void* obj = cl->New();
+
+      mem->WriteObjectAny(obj, cl, Form("obj%d",n));
+
+      cl->Destructor(obj);
+   }
+
+   /*
+   TH1F* d = new TH1F("d","d", 10, 0, 10);
+   mem->WriteObject(d, "h1");
+   TGraph* gr = new TGraph(10);
+   gr->SetName("abc");
+   gr->Draw("AC*");
+   mem->WriteObject(gr, "gr1");
+   */
+
+   mem->WriteStreamerInfo();
+
+   TList* l = mem->GetStreamerInfoList();
+   l->Print("*");
+
+   TBufferFile* sbuf = new TBufferFile(TBuffer::kWrite, 100000);
+   sbuf->MapObject(l);
+   l->Streamer(*sbuf);
+
+   delete l;
+
+   delete mem;
+
+   return sbuf;
+}
+
 
 
 void dabc_root::RootSniffer::BuildHierarchy(dabc::HierarchyContainer* cont)
