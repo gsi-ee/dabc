@@ -13,6 +13,8 @@ of the framework.
    http::Server from ROOT functionality.
 4. Now it is possible to draw root objects and ratemeters from hierarchy browser.
 5. Make more generic method to generate StreamerInfos. Test TGraph.
+6. First demonsrtation showing that simple redraw of the object is working.
+
 
 20.06.2013
 1. Create DABC.Manager class for JavaScript applications (name is always the same :))

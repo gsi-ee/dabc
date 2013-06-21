@@ -159,7 +159,7 @@ int http::Server::begin_request(struct mg_connection *conn)
       if (res) content = res;
 
    } else
-   if (strstr(request_info->uri, "getbinary.htm")!=0) {
+   if (strstr(request_info->uri, "getbinary")!=0) {
       if (ProcessGetBinary(conn, request_info->query_string)) return 1;
 
       iserror = true;
@@ -341,9 +341,13 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
 int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query)
 {
-   const char* itemname = query;
+   std::string itemname = query ? query : "";
 
-   if (itemname==0) {
+   size_t pos = itemname.find("&");
+   if (pos != std::string::npos)
+      itemname.erase(pos);
+
+   if (itemname.empty()) {
       EOUT("Item is not specified in getbinary request");
       return 0;
    }
@@ -351,12 +355,14 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
    dabc::Hierarchy item;
    dabc::BinData bindata;
 
+   bool force = true;
+
    {
       dabc::LockGuard lock(fHierarchyMutex);
-      item = fHierarchy.FindChild(itemname);
+      item = fHierarchy.FindChild(itemname.c_str());
 
       if (item.null()) {
-         EOUT("Wrong request for non-existing item %s", itemname);
+         EOUT("Wrong request for non-existing item %s", itemname.c_str());
          return 0;
       }
 
@@ -365,8 +371,8 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
    bindata = item()->bindata();
 
    // TODO: check version later
-   if (!bindata.null()) {
-      DOUT0("!!!! BINRARY READY %s sz %u", itemname ? itemname : "---", bindata.length());
+   if (!bindata.null() && !force) {
+      DOUT0("!!!! BINRARY READY %s sz %u", itemname.c_str(), bindata.length());
 
       mg_printf(conn,
            "HTTP/1.1 200 OK\r\n"
@@ -396,11 +402,11 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
    if (!producer_name.empty()) wrk = dabc::mgr.FindItem(producer_name);
 
    if (wrk.null() || request_name.empty()) {
-      EOUT("NO WAY TO GET BINARY DATA %s ", itemname ? itemname : "---");
+      EOUT("NO WAY TO GET BINARY DATA %s ", itemname.c_str());
       return 0;
    }
 
-   DOUT0("GETBINARY name:%s %s %s" , itemname ? itemname : "---", producer_name.c_str(), request_name.c_str());
+   DOUT0("GETBINARY name:%s %s %s" , itemname.c_str(), producer_name.c_str(), request_name.c_str());
    {
       dabc::LockGuard lock(fHierarchyMutex);
       if (item.HasField("#doingreq")) {
@@ -409,7 +415,6 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       }
       item.SetField("#doingreq","1");
    }
-
 
     dabc::Command cmd("GetBinary");
     cmd.SetStr("Item", request_name);
