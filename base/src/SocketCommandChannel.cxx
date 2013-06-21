@@ -572,7 +572,7 @@ int dabc::SocketCommandChannel::ExecuteCommand(Command cmd)
 
       if (!worker.null()) {
          EOUT("How such possible - client %s already exists", worker_name.c_str());
-         ::close(fd);
+         close(fd);
          return dabc::cmd_false;
       }
 

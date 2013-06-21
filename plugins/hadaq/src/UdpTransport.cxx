@@ -16,6 +16,7 @@
 
 #include <errno.h>
 #include <math.h>
+#include <unistd.h>
 
 #include <netinet/in.h>
 #include <sys/socket.h>
