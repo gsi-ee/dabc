@@ -14,6 +14,16 @@ of the framework.
 4. Now it is possible to draw root objects and ratemeters from hierarchy browser.
 5. Make more generic method to generate StreamerInfos. Test TGraph.
 6. First demonsrtation showing that simple redraw of the object is working.
+7. Introduce proper version control of the hierarchy components.
+   For every element hash property could be set, which must be changed if object is changing.
+   If hash changed, version of that item will be changed. This change will be propogated 
+   over all dependent hierarchy structures. When browser requests object, it provides
+   version of last instance it has. Server compare browser object version with 
+   local object version and if they match, returns empty reply. If not, binary buffer
+   will be requested first from producer and with current version number provided to the 
+   browser. Little bit complex, but prevent gui from unnecessary redraw and prevent server
+   from extra load if nothing is changing. To force object retrieving, one must specify 
+   extremely high version number.      
 
 
 20.06.2013

@@ -100,17 +100,33 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    var entryInfo = "<h5 id='"+this.titleid+"'><a>" + this.itemname + "</a>&nbsp; </h5>\n";
    entryInfo += "<div id='" + this.frameid + "'>\n";
    $(topid).append(entryInfo);
+   
+//   $("#report").append("is " + $("#"+this.titleid).schemaTypeInfo); 
 }
 
-DABC.RootDrawElement.prototype.BinaryCallback = function(arg) {
+DABC.RootDrawElement.prototype.BinaryCallback = function(arg, ver) {
    // in any case, request pointer will be reseted
+   // delete this.req;
    this.req = 0;
-
-   if (!arg) {
-      $("#report").append("<br> RootDrawElement get callback " + this.itemname + " error");
-      return; 
+   
+   if ((ver < 0) || !arg) {
+      $("#report").append("<br> RootDrawElement get error " + this.itemname);
+      return;
    }
 
+   // we mark that communication is completed
+   this.ready = true;
+
+   // if we got same version, do nothing - we are happy!!!
+   if ((ver > 0) && (this.version == ver)) {
+//      $("#report").append("<br> Get same version of object " + ver);
+//      if (arg) $("#report").append(" with data " + arg.length);
+//          else $("#report").append(" without data");
+      return;
+   } 
+
+   this.version = ver;
+   
    // $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length);
 
    if (!this.sinfo) {
@@ -120,9 +136,6 @@ DABC.RootDrawElement.prototype.BinaryCallback = function(arg) {
 
       gFile.fStreamerInfo.ExtractStreamerInfo(arg);
 
-      // we are done with the reconstructing of streamer infos
-      this.ready = true;
-
       // $("#report").append("<br> Streamer infos unpacked!!!");
 
       // with streamer info one could try to update complex fields
@@ -130,8 +143,6 @@ DABC.RootDrawElement.prototype.BinaryCallback = function(arg) {
 
       return;
    } 
-   // not try to update again
-   this.ready = true;
 
    var was_object = (this.obj != 0);
    
@@ -162,10 +173,12 @@ DABC.RootDrawElement.prototype.BinaryCallback = function(arg) {
 DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
    // in any case streamer info is required before normal request can be submitted
 
+   // $("#report").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? "true" : "false"));
+   
    if (this.sinfo) {
-//    $("#report").append("<br> checking sinfo " + (this.sinfo.ready ? "true" : "false"));
+    // $("#report").append("<br> checking sinfo " + (this.sinfo.ready ? "true" : "false"));
    } else {
-//    $("#report").append("<br> sinfo itself " + (this.ready ? "true" : "false"));
+    // $("#report").append("<br> sinfo itself " + (this.ready ? "true" : "false"));
    }
 
    // in any case one should wait streamer info
@@ -182,13 +195,13 @@ DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
 
    var url = "getbinary?" + this.itemname;
    
-   if (this.version>0) url += "&v=" + this.version;
+   if (this.version>0) url += "&ver=" + this.version;
 
    this.req = DABC.mgr.NewBinRequest(url, true, this);
 
    // $("#report").append("<br> Send request " + url);
 
-   this.req.send();
+   this.req.send(null);
 }
 
 // ======== end of RootDrawElement ======================
@@ -242,26 +255,53 @@ DABC.Manager.prototype.NewRequest = function() {
 
 DABC.Manager.prototype.NewBinRequest = function(url, async, item) {
    var xhr = new XMLHttpRequest();
+   
+   xhr.dabc_item = item;
 
-   if (typeof ActiveXObject == "function") {
+//   if (typeof ActiveXObject == "function") {
+   if (window.ActiveXObject) {
+      
+      // $("#report").append("<br> Create IE request");
+      
       xhr.onreadystatechange = function() {
-         if (this.readyState == 4 && (this.status == 200 || this.status == 206)) {
+         // $("#report").append("<br> Ready IE request");
+         if (this.readyState != 4) return;
+         if (!this.dabc_item || (this.dabc_item==0)) return;
+         
+         if (this.status == 200 || this.status == 206) {
             var filecontent = new String("");
             var array = new VBArray(this.responseBody).toArray();
             for (var i = 0; i < array.length; i++) {
                filecontent = filecontent + String.fromCharCode(array[i]);
             }
-            // DABC.mgr.BinaryCallback(itemname, filecontent);
-            item.BinaryCallback(filecontent);
+
+            var ver = this.getResponseHeader("Content-Version");
+            if (!ver) {
+               ver = -1;
+               $("#report").append("<br> Response version not specified");
+            }
+            // $("#report").append("<br> IE response ver = " + ver);
+            
+            this.dabc_item.BinaryCallback(filecontent, ver);
             delete filecontent;
             filecontent = null;
-         }
-         xhr.open('POST', url, async);  
+         } else {
+            this.dabc_item.BinaryCallback("", -1);
+         } 
+         this.dabc_item = null;
       }
+      
+      xhr.open('POST', url, async);
+      
    } else {
+      
       xhr.onreadystatechange = function() {
-         if (this.readyState == 4 && (this.status == 0 || this.status == 200 ||
-               this.status == 206)) {
+         //$("#report").append("<br> Response request "+this.readyState);
+
+         if (this.readyState != 4) return;
+         if (!this.dabc_item || (this.dabc_item==0)) return;
+         
+         if (this.status == 0 || this.status == 200 || this.status == 206) {
             var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
             var Buf;
             if (HasArrayBuffer && 'mozResponse' in this) {
@@ -285,17 +325,25 @@ DABC.Manager.prototype.NewBinRequest = function(url, async, item) {
             } else {
                var filecontent = Buf;
             }
+            
+            var ver = this.getResponseHeader("Content-Version");
+            if (!ver) {
+               ver = -1;
+               $("#report").append("<br> Response version not specified");
+            }
 
-            item.BinaryCallback(filecontent);
-
-            // DABC.mgr.BinaryCallback(itemname, filecontent);
+            this.dabc_item.BinaryCallback(filecontent, ver);
 
             delete filecontent;
             filecontent = null;
+         } else {
+            this.dabc_item.BinaryCallback("", -1);
          }
+         this.dabc_item = 0;
       }
 
       xhr.open('POST', url, async);
+      
       var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
       if (HasArrayBuffer && 'mozResponseType' in xhr) {
          xhr.mozResponseType = 'arraybuffer';
@@ -423,7 +471,7 @@ DABC.Manager.prototype.click = function(item) {
    
    this.arr.push(elem);
    
-   if (check_compl) this.UpdateComplexFields();
+   // if (check_compl) this.UpdateComplexFields();
 }
 
 // ============= end of DABC.Manager =============== 

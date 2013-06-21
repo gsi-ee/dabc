@@ -342,116 +342,173 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query)
 {
    std::string itemname = query ? query : "";
+   std::string sver;
+   long unsigned query_version(0);
+   uint64_t item_version(0);
 
    size_t pos = itemname.find("&");
-   if (pos != std::string::npos)
+   if (pos != std::string::npos) {
+      sver = itemname.substr(pos+1);
       itemname.erase(pos);
+   }
 
    if (itemname.empty()) {
       EOUT("Item is not specified in getbinary request");
       return 0;
    }
 
+   if  (sver.find("ver=") == 0) {
+      sver.erase(0,4);
+      if (!dabc::str_to_luint(sver.c_str(), &query_version)) query_version = 0;
+   }
+
    dabc::Hierarchy item;
    dabc::BinData bindata;
+   std::string producer_name, request_name;
+   dabc::WorkerRef wrk;
 
-   bool force = true;
+   bool force = false;
 
-   {
-      dabc::LockGuard lock(fHierarchyMutex);
-      item = fHierarchy.FindChild(itemname.c_str());
+   int check_requester_counter = 100;
 
-      if (item.null()) {
-         EOUT("Wrong request for non-existing item %s", itemname.c_str());
+   // we need this loop in the case, when several threads want to get new
+   // binary data from item
+
+   // in this case one thread will initiate it and other threads should loop and wait until
+   // version of binary data is changed
+
+   while (check_requester_counter-- > 0) {
+
+      {
+         dabc::LockGuard lock(fHierarchyMutex);
+         item = fHierarchy.FindChild(itemname.c_str());
+
+         if (item.null()) {
+            EOUT("Wrong request for non-existing item %s", itemname.c_str());
+            return 0;
+         }
+
+         // take data under lock that we are sure - nothing change for me
+         item_version = item.GetVersion();
+         bindata = item()->bindata();
+      }
+
+      DOUT0("BINARY REQUEST name:%s CURRENT:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) query_version);
+
+      // we only can reply if we know that buffered information is not old
+      // user can always force new buffer if he provide too big qyery version number
+
+      bool can_reply = !bindata.null() && (item_version==bindata.version()) && (query_version<=item_version) && !force;
+
+      if (can_reply) {
+         DOUT0("!!!! BINRARY READY %s sz %u", itemname.c_str(), bindata.length());
+
+         unsigned reply_length = bindata.length();
+
+         // we do not need to send data again while requester give as same number again
+         if ((query_version>0) && (query_version==bindata.version())) {
+            reply_length = 0;
+            DOUT0("!!!! NO NEED TO SEND DATA AGAIN");
+         }
+
+         mg_printf(conn,
+               "HTTP/1.1 200 OK\r\n"
+               "Content-Type: application/x-binary\r\n"
+               "Content-Version: %u\r\n"
+               "Content-Length: %u\r\n"
+               "Connection: keep-alive\r\n"
+               "\r\n",
+               (unsigned) bindata.version(), reply_length);
+         if (reply_length>0)
+            mg_write(conn, bindata.data(), (size_t) reply_length);
+         return 1;
+      }
+
+      dabc::Hierarchy parent = item;
+
+      while (!parent.null()) {
+         if (parent.HasField(dabc::prop_binary_producer)) {
+            producer_name = parent.Field(dabc::prop_binary_producer).AsStdStr();
+            request_name = item.RelativeName(parent);
+            break;
+         }
+         parent = (dabc::HierarchyContainer*) parent.GetParent();
+      }
+
+      if (!producer_name.empty()) wrk = dabc::mgr.FindItem(producer_name);
+
+      if (wrk.null() || request_name.empty()) {
+         EOUT("NO WAY TO GET BINARY DATA %s ", itemname.c_str());
          return 0;
       }
 
-   }
+      {
+         dabc::LockGuard lock(fHierarchyMutex);
+         if (!item.HasField("#doingreq")) {
+            item.SetField("#doingreq","1");
+            break;
+         }
+      }
+      DOUT0("There is running request - loop again");
+      wrk.Release();
+      item.Release();
+      producer_name.clear();
+      request_name.clear();
 
-   bindata = item()->bindata();
+      WorkerSleep(0.05);
+   } // end of check_requester_counter
 
-   // TODO: check version later
-   if (!bindata.null() && !force) {
-      DOUT0("!!!! BINRARY READY %s sz %u", itemname.c_str(), bindata.length());
+   if (check_requester_counter <= 0) {
+      EOUT("BINARY REQUESTER BLOCKING FOR VERY LONG TIME");
 
-      mg_printf(conn,
-           "HTTP/1.1 200 OK\r\n"
-           "Content-Type: application/x-binary\r\n"
-           "Content-Length: %u\r\n"
-           "Connection: keep-alive\r\n"
-           "\r\n",
-           bindata.length());
-      mg_write(conn, bindata.data(), (size_t) bindata.length());
+      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
+                       "Content-Length: 0\r\n"
+                        "Connection: close\r\n\r\n");
       return 1;
    }
 
-   dabc::Hierarchy parent = item;
-   std::string producer_name, request_name;
-
-   while (!parent.null()) {
-      if (parent.HasField("#bin_producer")) {
-         producer_name = parent.Field("#bin_producer").AsStdStr();
-         request_name = item.RelativeName(parent);
-         break;
-      }
-      parent = (dabc::HierarchyContainer*) parent.GetParent();
-   }
-
-   dabc::WorkerRef wrk;
-
-   if (!producer_name.empty()) wrk = dabc::mgr.FindItem(producer_name);
-
-   if (wrk.null() || request_name.empty()) {
-      EOUT("NO WAY TO GET BINARY DATA %s ", itemname.c_str());
-      return 0;
-   }
-
    DOUT0("GETBINARY name:%s %s %s" , itemname.c_str(), producer_name.c_str(), request_name.c_str());
-   {
-      dabc::LockGuard lock(fHierarchyMutex);
-      if (item.HasField("#doingreq")) {
-         EOUT("Parallel binary request is running - not yet implemented");
-         exit(111);
-      }
-      item.SetField("#doingreq","1");
-   }
 
-    dabc::Command cmd("GetBinary");
-    cmd.SetStr("Item", request_name);
+   dabc::Command cmd("GetBinary");
+   cmd.SetStr("Item", request_name);
 
-    DOUT0("************* EXECUTING GETBINARY COMMAND *****************");
+   DOUT0("************* EXECUTING GETBINARY COMMAND *****************");
 
-    if (wrk.Execute(cmd) != dabc::cmd_true) {
-       EOUT("Fail to get binary data");
-       return 0;
-    }
+   bool resok = true;
 
-    bindata = cmd.GetRef("#BinData");
+   if (wrk.Execute(cmd, 5.) != dabc::cmd_true) {
+      EOUT("Fail to get binary data");
+      resok = false;
+   } else {
+      bindata = cmd.GetRef("#BinData");
 
-    DOUT0("************* EXECUTING DONE ***************** %u", bindata.length());
-
-    {
       dabc::LockGuard lock(fHierarchyMutex);
       item.SetField("#doingreq",0);
       if (!bindata.null()) {
-
-         DOUT0("************* Setting binary data of length %u", bindata.length());
-
+         bindata()->SetVersion(item_version);
          item()->bindata() = bindata;
+      } else {
+         resok = false;
       }
    }
 
+   if (resok) {
+      DOUT0("Send binary data %u!!!!", bindata.length());
 
-   DOUT0("Send binary data %u!!!!", bindata.length());
-
-   mg_printf(conn,
-        "HTTP/1.1 200 OK\r\n"
-        "Content-Type: application/x-binary\r\n"
-        "Content-Length: %u\r\n"
-        "Connection: keep-alive\r\n"
-        "\r\n",
-        bindata.length());
-   mg_write(conn, bindata.data(), (size_t) bindata.length());
+      mg_printf(conn,
+            "HTTP/1.1 200 OK\r\n"
+            "Content-Type: application/x-binary\r\n"
+            "Content-Version: %u\r\n"
+            "Content-Length: %u\r\n"
+            "Connection: keep-alive\r\n"
+            "\r\n",
+            (unsigned) bindata.version(), bindata.length());
+      mg_write(conn, bindata.data(), (size_t) bindata.length());
+   } else {
+      mg_printf(conn, "HTTP/1.1 500 Server Error\r\n"
+                       "Content-Length: 0\r\n"
+                       "Connection: close\r\n\r\n");
+   }
 
    return 1;
 }

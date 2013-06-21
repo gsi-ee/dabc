@@ -297,7 +297,7 @@ void dabc::ParameterContainer::BuildHierarchy(HierarchyContainer* cont)
    LockGuard lock(ObjectMutex());
 
    if (fStatistic == ParameterContainer::kindRate)
-      rec.Field("kind").SetStr("rate");
+      rec.Field(dabc::prop_kind).SetStr("rate");
 }
 
 

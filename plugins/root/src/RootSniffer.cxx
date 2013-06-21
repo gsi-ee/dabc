@@ -103,7 +103,7 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
    dabc::Hierarchy h;
    h.Create("ROOT");
    // this is fake element, which is need to be requested before first
-   h.CreateChild("StreamerInfo").Field("kind").SetStr("ROOT.TList");
+   h.CreateChild("StreamerInfo").Field(dabc::prop_kind).SetStr("ROOT.TList");
 
    FillHieararchy(h, gROOT);
 
@@ -139,12 +139,9 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
 
          if (obj!=0) {
 
-            TH1* h1 = dynamic_cast<TH1*> (obj);
-
-            if (h1) h1->FillRandom("gaus", 10000);
+            // TH1* h1 = dynamic_cast<TH1*> (obj);
 
             sbuf = new TBufferFile(TBuffer::kWrite, 100000);
-
             gFile = 0;
             sbuf->MapObject(obj);
             obj->Streamer(*sbuf);
@@ -153,7 +150,12 @@ int dabc_root::RootSniffer::ExecuteCommand(dabc::Command cmd)
          DOUT0("Produced buffer length %d", sbuf->Length());
       }
 
-      if (sbuf!=0) cmd.SetRef("#BinData", dabc::BinData(new RootBinDataContainer(sbuf)));
+      if (sbuf!=0) {
+//         dabc::Hierarchy h = fHierarchy.FindChild(item.c_str());
+//         DOUT0("BINARY Item %s version %u", item.c_str(), h.GetVersion());
+
+         cmd.SetRef("#BinData", dabc::BinData(new RootBinDataContainer(sbuf)));
+      }
 
       return dabc::cmd_true;
    }
@@ -173,7 +175,14 @@ void dabc_root::RootSniffer::FillHieararchy(dabc::Hierarchy& h, TDirectory* dir)
       dabc::Hierarchy chld = h.CreateChild(obj->GetName());
 
       if (IsSupportedClass(obj->IsA())) {
-         chld.Field("kind").SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+         chld.Field(dabc::prop_kind).SetStr(dabc::format("ROOT.%s", obj->ClassName()));
+
+         if (obj->InheritsFrom(TH1::Class())) {
+            TH1* h1 = (TH1*) obj;
+            h1->FillRandom("gaus", 100000);
+
+            chld.Field(dabc::prop_content_hash).SetDouble(h1->Integral());
+         }
       }
    }
 }
@@ -203,7 +212,7 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
 
       dabc::Hierarchy item(cont);
 
-      const char* kind = item.GetField("kind");
+      const char* kind = item.GetField(dabc::prop_kind);
       if (kind==0) continue;
 
       //DOUT0("KIND = %s", kind);
@@ -227,6 +236,9 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
 
    TMemFile* mem = new TMemFile("dummy.file", "RECREATE");
 
+
+   // here we are creating dummy objects to fill streamer infos
+   // works for TH1/TGraph, should always be tested with new classes
    for (Int_t n = 0; n<=arr.GetLast(); n++) {
       TClass* cl = (TClass*) arr[n];
 
@@ -262,12 +274,12 @@ TBufferFile* dabc_root::RootSniffer::ProduceStreamerInfos()
    return sbuf;
 }
 
-
-
 void dabc_root::RootSniffer::BuildHierarchy(dabc::HierarchyContainer* cont)
 {
    // indicate that we are bin producer of down objects
-   dabc::Hierarchy(cont).Field("#bin_producer").SetStr(ItemName());
+
+   // do it here, while all properties of main node are ignored when hierarchy is build
+   dabc::Hierarchy(cont).Field(dabc::prop_binary_producer).SetStr(ItemName());
 
    if (!fHierarchy.null()) fHierarchy()->BuildHierarchy(cont);
 }

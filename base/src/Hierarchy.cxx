@@ -23,6 +23,11 @@
 #include "dabc/Exception.h"
 
 
+const char* dabc::prop_kind = "kind";
+const char* dabc::prop_binary_producer = "binary_producer";
+const char* dabc::prop_content_hash = "hash";
+
+
 dabc::BinDataContainer::BinDataContainer(void* data, unsigned len, bool owner) :
    Object(0, "bindata", flAutoDestroy),
    fData(data),
@@ -282,7 +287,7 @@ std::string dabc::HierarchyContainer::HtmlBrowserText()
 {
    if (NumChilds()>0) return GetName();
 
-   const char* kind = GetField("kind");
+   const char* kind = GetField(dabc::prop_kind);
 
    if (kind!=0) {
       std::string res = dabc::format("<a href='#' onClick='DABC.mgr.click(this);' kind='%s' fullname='%s'", kind, ItemName().c_str());

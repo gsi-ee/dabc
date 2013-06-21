@@ -24,6 +24,10 @@
 
 namespace dabc {
 
+   extern const char* prop_kind;
+   extern const char* prop_binary_producer;
+   extern const char* prop_content_hash;  // content hash, which should describe if object is changed
+
    class Hierarchy;
 
    class BinDataContainer : public Object {
@@ -50,6 +54,7 @@ namespace dabc {
 
       void* data() const { return null() ? 0 : GetObject()->data(); }
       unsigned length() const { return null() ? 0 : GetObject()->length(); }
+      uint64_t version() const { return null() ? 0 : GetObject()->GetVersion(); }
    };
 
 
