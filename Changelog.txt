@@ -8,6 +8,7 @@ of the framework.
    of the hierarchy browser. The only communication format between server and browser 
    will be xml.
 2. Made hierarchy.htm as main DABC page, remove no longer used files.   
+3. Enable display of streamer infos, assign images for ROOT objects. 
 
 21.06.2013
 1. Create BinDataContainer and BinData classes for manipuldation of

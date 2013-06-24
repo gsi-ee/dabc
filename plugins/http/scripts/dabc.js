@@ -1,10 +1,12 @@
 DABC = {};
 
-DABC.version = "2.1.1";
+DABC.version = "2.1.2";
 
 DABC.mgr = 0;
 
 DABC.dabc_tree = 0;   // variable to display hierarchy
+
+DABC.load_root_js = false;
 
 DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
@@ -36,6 +38,15 @@ DABC.DrawElement.prototype.SetValue = function(val) {
    if (!val || !this.frameid) return;
    document.getElementById(this.frameid).innerHTML = "Value = " + val;
 }
+
+DABC.DrawElement.prototype.IsDrawn = function() {
+   if (!this.frameid) return false;
+   
+   if (!document.getElementById(this.frameid)) return false;
+   
+   return true;
+}
+
 
 // ======== end of DrawElement ======================
 
@@ -129,17 +140,23 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
       var kind = node.getAttribute("kind");
       var value = node.getAttribute("value");
       
-      var html = node.nodeName;
+      var html = "";
       
       var nodefullname  = fullname + "/" + node.nodeName; 
       
+      var nodeimg = "";
+      
       if (kind) {
-         html = "<a href='#' onClick='DABC.mgr.click(this);' kind='" + kind + "' fullname='" + nodefullname + "'";
-         if (value) html += " value='" + value + "'";
-         html += ">" + node.nodeName + "</a>";
+         html = "javascript: DABC.mgr.display('"+nodefullname+"');";
+         
+         if (kind.match(/\bTH1/)) nodeimg = source_dir+'img/histo.png'; else
+         if (kind.match(/\bTH2/)) nodeimg = source_dir+'img/histo2d.png'; else  
+         if (kind.match(/\bTH3/)) nodeimg = source_dir+'img/histo3d.png'; else
+         if (kind.match(/\bTGraph/)) nodeimg = source_dir+'img/graph.png'; else
+         if (kind.match(/\bTList/) && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif';
       }
       
-      DABC.dabc_tree.add(nodeid, parentid, html);
+      DABC.dabc_tree.add(nodeid, parentid, node.nodeName, html, node.nodeName, "", nodeimg);
       
       nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
       
@@ -147,6 +164,37 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
    }
    
    return nodeid;
+}
+
+
+DABC.HierarchyDrawElement.prototype.TopNode = function() 
+{
+   if (!this.xmldoc) return;
+   
+   return this.nextNode(this.xmldoc.firstChild.firstChild);
+}
+
+
+DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
+
+//   $("#report").append("<br> Serching for " + fullname);
+
+   if (!top) top = this.TopNode();
+   if (!top || (fullname.length==0)) return;
+   if (fullname[0] != '/') return;
+   
+   var pos = fullname.indexOf("/", 1);
+   var localname = pos>0 ? fullname.substr(1, pos-1) : fullname.substr(1);  
+   var child = this.nextNode(top.firstChild);
+   while (child) {
+      if (child.nodeName == localname) break;
+      child = this.nextNode(child.nextSibling);
+   }
+   
+   if (!child  || (pos<=0)) return child;
+   
+   return this.FindNode(fullname.substr(pos), child);
+   
 }
 
 
@@ -163,7 +211,7 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver) {
    
    // $("#report").append("<br> xml doc is there");
    
-   var top = this.nextNode(this.xmldoc.firstChild.firstChild);
+   var top = this.TopNode();
    
    if (!top) { 
       $("#report").append("<br> XML top node not found");
@@ -203,7 +251,8 @@ DABC.RootDrawElement = function(_clname) {
    this.sinfo = 0;        // used to refer to the streamer info record
    this.req = 0;          // this is current request
    this.titleid = "";     
-   this.drawid = 0;       // numeric id of pad, where ROOT object is drawn 
+   this.drawid = 0;       // numeric id of pad, where ROOT object is drawn
+   this.canstart = false;  // one should enable flag only when all ROOT scripts are loaded
 }
 
 // TODO: check how it works in different older browsers
@@ -213,8 +262,16 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    this.drawid = id;
    this.frameid = "histogram" + this.drawid;
    this.titleid = "uid_accordion_" + this.drawid; 
-   var entryInfo = "<h5 id='"+this.titleid+"'><a>" + this.itemname + "</a>&nbsp; </h5>\n";
-   entryInfo += "<div id='" + this.frameid + "'>\n";
+   
+   var entryInfo = "";
+   if (this.sinfo) {
+      entryInfo = "<h5 id='"+this.titleid+"'><a>" + this.itemname + "</a>&nbsp; </h5>\n";
+      entryInfo += "<div id='" + this.frameid + "'>\n";
+   } else {
+      entryInfo = "<h5 id=\""+this.titleid+"\"><a> Streamer Infos </a>&nbsp; </h5><div>\n";
+      entryInfo += "<h6>Streamer Infos</h6><span id='" + this.frameid +"' class='dtree'></span></div>\n";
+
+   }
    $(topid).append(entryInfo);
    
 //   $("#report").append("is " + $("#"+this.titleid).schemaTypeInfo); 
@@ -243,7 +300,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
 
    this.version = ver;
    
-   // $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length);
+//   $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length);
 
    if (!this.sinfo) {
       // we are doing sreamer infos
@@ -252,7 +309,13 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
 
       gFile.fStreamerInfo.ExtractStreamerInfo(arg);
 
-      // $("#report").append("<br> Streamer infos unpacked!!!");
+//      $("#report").append("<br> Streamer infos unpacked!!!");
+      
+      // this indicates that object was clicked and want to be drawn
+      if (this.drawid > 0) {
+         JSROOTPainter.displayStreamerInfos(gFile.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
+         addCollapsible("#"+this.titleid);
+      }
 
       // with streamer info one could try to update complex fields
       DABC.mgr.UpdateComplexFields();
@@ -268,13 +331,18 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
    // $("#report").append("<br>make streaming " + arg.length + " for class "+ this.clname);
 
    if (!JSROOTIO.GetStreamer(this.clname))
-      $("#report").append("<br>!!!!! streamer not found !!!!!!!");
+      $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
 
    JSROOTIO.GetStreamer(this.clname).Stream(this.obj, arg, 0);
 
    JSROOTCore.addMethods(this.obj);
 
-   // $("#report").append("<br>Object name " + this.obj['fName']+ " class "  + this.obj['_typename'] + "  created");
+//   if (!this.IsDrawn()) {
+//      $("#report").append("<br>Object " + this.itemname + "  was closed");
+//      return;
+//   }
+   
+//   $("#report").append("<br>Object name " + this.obj['fName']+ " class "  + this.obj['_typename'] + "  created");
 
    if (was_object) {
       // here should be redraw of the object 
@@ -289,7 +357,10 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
 DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
    // in any case streamer info is required before normal request can be submitted
 
-   // $("#report").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? "true" : "false"));
+   // $("#report").append("<br> checking request for " + this.itemname + (this.sinfo.ready ? " true" : " false"));
+
+   // in any case, complete JSRootIO is required before we could start 
+   if (!DABC.load_root_js) return;
    
    if (this.sinfo) {
     // $("#report").append("<br> checking sinfo " + (this.sinfo.ready ? "true" : "false"));
@@ -330,7 +401,7 @@ DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
-   //$("#report").append("<br> Send request " + url);
+//   $("#report").append("<br> Send request " + url);
 
    this.req.send(null);
 }
@@ -554,22 +625,36 @@ DABC.Manager.prototype.UpdateAll = function() {
    this.UpdateComplexFields();
 }
 
+DABC.Manager.prototype.display = function(itemname) {
+   if (!itemname) return;
+   
+//   $("#report").append("<br> display click "+itemname);
+  
+   var xmlnode = this.FindXmlNode(itemname);
+   if (!xmlnode) {
+      $("#report").append("<br> cannot find xml node "+itemname);
+      return;
+   }
+   
+   var kind = xmlnode.getAttribute("kind");
+   if (!kind) return;
 
-DABC.Manager.prototype.click = function(item) {
-   var itemname = item.getAttribute("fullname");
-
+//   $("#report").append("<br> find kind of node "+itemname + " " + kind);
+   
    var elem = this.FindItem(itemname);
 
    if (elem) {
-      if (!elem.simple()) {
-         elem.ready = false; // indicate what we want to update it
+      // indicate what we want to update it
+      if (!elem.simple() && elem.ready) {
+         elem.ready = false; 
+         
+         if (!elem.IsDrawn()) elem.CreateFrames("#report", this.cnt++);
+         
          this.UpdateComplexFields();
       }
       return;
    }
 
-   var kind = item.getAttribute("kind");
-   
    var check_compl = false;
 
    if (kind == "rate") {
@@ -590,21 +675,25 @@ DABC.Manager.prototype.click = function(item) {
       var sinfo = this.FindItem(sinfoname);
       
       if (!sinfo) {
-         AssertPrerequisites(function() { $("#report").append("<br>Loading JSRootIO done<br> sinfo item " + sinfoname); });
          sinfo = new DABC.RootDrawElement(kind.substr(5));
          sinfo.itemname = sinfoname;
          this.arr.push(sinfo);
+         AssertPrerequisites(function() { 
+            DABC.load_root_js = true; 
+            $("#report").append("<br> load all JSRootIO scripts");
+            DABC.mgr.UpdateComplexFields();
+         });
       }
 
+      check_compl = true;
+      
       // if we clicked info, just ensure that it was created (but not drawn)
       if (itemname == sinfoname) {
-         this.UpdateComplexFields();
-         return;
+         elem = sinfo;
+      } else {
+         elem = new DABC.RootDrawElement(kind.substr(5));
+         elem.sinfo = sinfo;
       }
-      
-      elem = new DABC.RootDrawElement(kind.substr(5));
-      elem.sinfo = sinfo;
-      check_compl = true;
    }
 
    if (elem==0) return;
@@ -613,11 +702,11 @@ DABC.Manager.prototype.click = function(item) {
 
    elem.CreateFrames("#report", this.cnt++);
 
-   elem.SetValue(item.getAttribute("value"));
+   elem.SetValue(xmlnode.getAttribute("value"));
    
    this.arr.push(elem);
    
-   // if (check_compl) this.UpdateComplexFields();
+   if (check_compl) this.UpdateComplexFields();
 }
 
 DABC.Manager.prototype.DisplayHiearchy = function(holder) {
@@ -634,6 +723,12 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    this.arr.push(elem);
 
    this.UpdateComplexFields();
+}
+
+DABC.Manager.prototype.FindXmlNode = function(itemname) {
+   var elem = this.FindItem("ObjectsTree");
+   if (!elem) return;
+   return elem.FindNode(itemname);
 }
 
 // ============= end of DABC.Manager =============== 
