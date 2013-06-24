@@ -7,6 +7,7 @@ of the framework.
    Use dtree.jquery for that. This will allow to fully customize look and fill 
    of the hierarchy browser. The only communication format between server and browser 
    will be xml.
+2. Made hierarchy.htm as main DABC page, remove no longer used files.   
 
 21.06.2013
 1. Create BinDataContainer and BinData classes for manipuldation of

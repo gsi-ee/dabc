@@ -147,11 +147,6 @@ int http::Server::begin_request(struct mg_connection *conn)
             fHierarchy.SaveToXml(false) +
             std::string("</dabc>\n");
    } else
-   if (strstr(request_info->uri,"/nodetopology.txt")!=0) {
-      content_type = "text/plain";
-      // dabc::LockGuard lock(fHierarchyMutex);
-      content = fHierarchy.SaveToJSON(true, true);
-   } else
    if (strstr(request_info->uri, "chartreq.htm")!=0) {
       content_type = "text/plain";
 
