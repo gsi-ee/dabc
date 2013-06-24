@@ -257,7 +257,7 @@ DABC.RootDrawElement = function(_clname) {
    this.req = 0;          // this is current request
    this.titleid = "";     
    this.drawid = 0;       // numeric id of pad, where ROOT object is drawn
-   this.canstart = false;  // one should enable flag only when all ROOT scripts are loaded
+   this.drawfirst = true;  // one should enable flag only when all ROOT scripts are loaded
 }
 
 // TODO: check how it works in different older browsers
@@ -267,6 +267,8 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    this.drawid = id;
    this.frameid = "histogram" + this.drawid;
    this.titleid = "uid_accordion_" + this.drawid; 
+   
+   this.drawfirst = true;
    
    var entryInfo = "";
    if (this.sinfo) {
@@ -348,7 +350,9 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
 //   $("#report").append("<br>Object name " + this.obj['fName']+ " class "  + this.obj['_typename'] + "  created");
 
    JSROOTPainter.drawObject(this.obj, this.drawid);
-   addCollapsible("#"+this.titleid);
+   if (this.drawfirst) addCollapsible("#"+this.titleid);
+   
+   this.drawfirst = false;
 }
 
 DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
