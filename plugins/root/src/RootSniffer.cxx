@@ -77,7 +77,7 @@ void dabc_root::RootSniffer::OnThreadAssigned()
    }
    // identify ourself as bin objects producer
    fHierarchy.Create("ROOT");
-   DOUT0("Root sniffer %s is bin producer!!!", ItemName().c_str());
+   DOUT2("Root sniffer %s is bin producer!!!", ItemName().c_str());
 
    gROOT->SetBatch(kTRUE);
 
@@ -107,7 +107,7 @@ double dabc_root::RootSniffer::ProcessTimeout(double last_diff)
 
    FillHieararchy(h, gROOT);
 
-   DOUT0("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
+   DOUT2("ROOT %p hierarchy = \n%s", gROOT, h.SaveToXml().c_str());
 
    fHierarchy.Update(h);
 
@@ -171,7 +171,7 @@ void dabc_root::RootSniffer::FillHieararchy(dabc::Hierarchy& h, TDirectory* dir)
    TIter iter(dir ? dir->GetList() : 0);
    TObject* obj(0);
    while ((obj = iter())!=0) {
-      DOUT0("Find ROOT object %s", obj->GetName());
+      DOUT2("Find ROOT object %s", obj->GetName());
       dabc::Hierarchy chld = h.CreateChild(obj->GetName());
 
       if (IsSupportedClass(obj->IsA())) {

@@ -124,7 +124,7 @@ int http::Server::begin_request(struct mg_connection *conn)
 {
    const struct mg_request_info *request_info = mg_get_request_info(conn);
 
-   DOUT0("BEGIN_REQ: %s", request_info->uri);
+   DOUT2("BEGIN_REQ: %s", request_info->uri);
 
    std::string content;
    std::string content_type = "text/html";
@@ -137,7 +137,7 @@ int http::Server::begin_request(struct mg_connection *conn)
       content = open_file(0, "httpsys/files/main.htm");
    } else
    if (strstr(request_info->uri,"/h.xml")!=0) {
-      content_type = "xml";
+      content_type = "text/xml";
 
       dabc::LockGuard lock(fHierarchyMutex);
 
@@ -161,7 +161,7 @@ int http::Server::begin_request(struct mg_connection *conn)
    } else {
       // let load some files
 
-      DOUT0("**** GET REQ:%s query:%s", request_info->uri, request_info->query_string ? request_info->query_string : "---");
+      DOUT2("**** GET REQ:%s query:%s", request_info->uri, request_info->query_string ? request_info->query_string : "---");
 
       if ((request_info->uri[0]=='/') && (strstr(request_info->uri,"httpsys")==0) && (strstr(request_info->uri,".htm")!=0) ) {
          std::string fname = "httpsys/files";
@@ -226,7 +226,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
 
    if (strstr(path,"chartreq.htm")!=0) {
 
-      DOUT0("Request chartreq.htm processed");
+      // DOUT0("Request chartreq.htm processed");
 
       force = true;
 
@@ -268,7 +268,7 @@ const char* http::Server::open_file(const struct mg_connection* conn,
       strncpy(buf, content.c_str(), length+1);
       buf[length] = 0;
 
-      DOUT0("Produced buffer = %s", buf);
+      // DOUT0("Produced buffer = %s", buf);
    }
 
    if (buf==0) {
@@ -388,7 +388,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
          bindata = item()->bindata();
       }
 
-      DOUT0("BINARY REQUEST name:%s CURRENT:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) query_version);
+      DOUT2("BINARY REQUEST name:%s CURRENT:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) query_version);
 
       // we only can reply if we know that buffered information is not old
       // user can always force new buffer if he provide too big qyery version number
@@ -396,7 +396,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       bool can_reply = !bindata.null() && (item_version==bindata.version()) && (query_version<=item_version) && !force;
 
       if (can_reply) {
-         DOUT0("!!!! BINRARY READY %s sz %u", itemname.c_str(), bindata.length());
+         DOUT2("!!!! BINRARY READY %s sz %u", itemname.c_str(), bindata.length());
 
          unsigned reply_length = bindata.length();
 
@@ -444,7 +444,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
             break;
          }
       }
-      DOUT0("There is running request - loop again");
+      DOUT2("There is running request - loop again");
       wrk.Release();
       item.Release();
       producer_name.clear();
@@ -462,12 +462,12 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       return 1;
    }
 
-   DOUT0("GETBINARY name:%s %s %s" , itemname.c_str(), producer_name.c_str(), request_name.c_str());
+   DOUT2("GETBINARY name:%s %s %s" , itemname.c_str(), producer_name.c_str(), request_name.c_str());
 
    dabc::Command cmd("GetBinary");
    cmd.SetStr("Item", request_name);
 
-   DOUT0("************* EXECUTING GETBINARY COMMAND *****************");
+   DOUT2("************* EXECUTING GETBINARY COMMAND *****************");
 
    bool resok = true;
 
@@ -488,7 +488,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
    }
 
    if (resok) {
-      DOUT0("Send binary data %u!!!!", bindata.length());
+      DOUT2("Send binary data %u!!!!", bindata.length());
 
       mg_printf(conn,
             "HTTP/1.1 200 OK\r\n"
