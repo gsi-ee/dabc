@@ -171,7 +171,9 @@ DABC.HierarchyDrawElement.prototype.TopNode = function()
 {
    if (!this.xmldoc) return;
    
-   return this.nextNode(this.xmldoc.firstChild.firstChild);
+   var lvl1 = this.nextNode(this.xmldoc.firstChild);
+   
+   if (lvl1) return this.nextNode(lvl1.firstChild);
 }
 
 
@@ -201,10 +203,10 @@ DABC.HierarchyDrawElement.prototype.FindNode = function(fullname, top) {
 DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver) {
    this.req = 0;
 
-   // $("#report").append("<br> Get request callback");
-   
    if ((ver<0) || !arg) { this.ready = false; return; }
-   
+
+   // $("#report").append("<br> Get XML request callback "+ver);
+
    this.version = ver;
    
    this.xmldoc = arg;
@@ -217,15 +219,18 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver) {
       $("#report").append("<br> XML top node not found");
       return;
    }
-   
-   if (!top.hasAttribute("dabc:version")) {
+
+   var top_version = top.getAttribute("dabc:version");
+
+   if (!top_version) {
       $("#report").append("<br> dabc:version not found");
       return;
    } else {
-      this.version = top.getAttribute("dabc:version");
-      //$("#report").append("<br> found dabc:version " + this.version);
-      //$("#report").append("<br> found node " + top.nodeName);
+      this.version = top_version;
+      // $("#report").append("<br> found dabc:version " + this.version);
+      // $("#report").append("<br> found node " + top.nodeName);
    }
+
    
    this.createNode(0, -1, top.firstChild, "");
 
@@ -454,7 +459,6 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
 
 //   if (typeof ActiveXObject == "function") {
    if (window.ActiveXObject) {
-      
       // $("#report").append("<br> Create IE request");
       
       xhr.onreadystatechange = function() {
@@ -704,14 +708,17 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    
    if (elem) return;
 
+   // $("#report").append("<br> start2");
+
    elem = new DABC.HierarchyDrawElement();
    
    elem.itemname = "ObjectsTree";
-   
+
    elem.CreateFrames(holder, this.cnt++);
    
    this.arr.push(elem);
 
+   
    this.UpdateComplexFields();
 }
 
