@@ -304,8 +304,8 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
 
    if (!this.sinfo) {
       // we are doing sreamer infos
-      if (gFile) $("#report").append("<br> gFile already exists???"); 
-      else gFile = new JSROOTIO.RootFile;
+      // if (gFile) $("#report").append("<br> gFile already exists???"); else 
+      gFile = new JSROOTIO.RootFile;
 
       gFile.fStreamerInfo.ExtractStreamerInfo(arg);
 
@@ -323,8 +323,6 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
       return;
    } 
 
-   var was_object = (this.obj != 0);
-   
    this.obj = {};
    this.obj['_typename'] = 'JSROOTIO.' + this.clname;
 
@@ -344,14 +342,8 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
    
 //   $("#report").append("<br>Object name " + this.obj['fName']+ " class "  + this.obj['_typename'] + "  created");
 
-   if (was_object) {
-      // here should be redraw of the object 
-      JSROOTPainter.drawObject(this.obj, this.drawid);
-      // $("#report").append("<br>WE DID IT AGAIN");
-   } else {
-      JSROOTPainter.drawObject(this.obj, this.drawid);
-      addCollapsible("#"+this.titleid);
-   }
+   JSROOTPainter.drawObject(this.obj, this.drawid);
+   addCollapsible("#"+this.titleid);
 }
 
 DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
@@ -380,6 +372,7 @@ DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
    // new request will be started only when ready flag is not null
    if (this.ready) {
 
+      // we do not monitor streamer info
       if (!this.sinfo) return;
       
       var chkbox  = document.getElementById("monitoring");
@@ -387,12 +380,6 @@ DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
       if (!chkbox || !chkbox.checked) return;
       
       this.ready = false;
-
-      //alert("Try to reload " + this.itemname);
-//    return;
-      
-      // this will send new request again 
-      //
    }
 
    var url = "getbinary?" + this.itemname;
@@ -648,7 +635,10 @@ DABC.Manager.prototype.display = function(itemname) {
       if (!elem.simple() && elem.ready) {
          elem.ready = false; 
          
-         if (!elem.IsDrawn()) elem.CreateFrames("#report", this.cnt++);
+         if (!elem.IsDrawn()) {
+            elem.CreateFrames("#report", this.cnt++);
+            elem.version = 0; // force to get complete version
+         }
          
          this.UpdateComplexFields();
       }
@@ -680,7 +670,7 @@ DABC.Manager.prototype.display = function(itemname) {
          this.arr.push(sinfo);
          AssertPrerequisites(function() { 
             DABC.load_root_js = true; 
-            $("#report").append("<br> load all JSRootIO scripts");
+            // $("#report").append("<br> load all JSRootIO scripts");
             DABC.mgr.UpdateComplexFields();
          });
       }

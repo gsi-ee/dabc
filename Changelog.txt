@@ -9,6 +9,8 @@ of the framework.
    will be xml.
 2. Made hierarchy.htm as main DABC page, remove no longer used files.   
 3. Enable display of streamer infos, assign images for ROOT objects. 
+4. Smooth open/close logic, but it should be rewritten - dabc.js should
+   fully control itself how items are open or closed.
 
 21.06.2013
 1. Create BinDataContainer and BinData classes for manipuldation of
