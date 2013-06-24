@@ -2,6 +2,12 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of the framework.
 
+24.06.2013
+1. Update hierarchy via xml file and build tree structure direct in the browser.
+   Use dtree.jquery for that. This will allow to fully customize look and fill 
+   of the hierarchy browser. The only communication format between server and browser 
+   will be xml.
+
 21.06.2013
 1. Create BinDataContainer and BinData classes for manipuldation of
    binary data in dabc::Hierarchy classes. Main motivation is to be able 

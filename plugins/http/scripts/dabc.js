@@ -4,6 +4,8 @@ DABC.version = "2.1.1";
 
 DABC.mgr = 0;
 
+DABC.dabc_tree = 0;   // variable to display hierarchy
+
 DABC.DrawElement = function() {
    this.itemname = "";   // full item name in hierarhcy
    this.frameid = 0;    // id of top frame, where item is drawn
@@ -34,7 +36,6 @@ DABC.DrawElement.prototype.SetValue = function(val) {
    if (!val || !this.frameid) return;
    document.getElementById(this.frameid).innerHTML = "Value = " + val;
 }
-
 
 // ======== end of DrawElement ======================
 
@@ -73,8 +74,123 @@ DABC.GaugeDrawElement.prototype.SetValue = function(val) {
    if (val) this.gauge.refresh(val);
 }
 
+// ======== end of GaugeDrawElement ======================
+
+
+//======== start of HierarchyDrawElement ======================
+
+DABC.HierarchyDrawElement = function() {
+   DABC.DrawElement.call(this);
+   this.xmldoc = 0;
+}
+
+// TODO: check how it works in different older browsers
+DABC.HierarchyDrawElement.prototype = Object.create( DABC.DrawElement.prototype );
+
+DABC.HierarchyDrawElement.prototype.simple = function() { return false; }
+
+DABC.HierarchyDrawElement.prototype.CreateFrames = function(topid, id) {
+
+   this.frameid = topid;
+   
+   this.ready = false;
+
+   this.req = 0;             // this is current request
+}
+
+DABC.HierarchyDrawElement.prototype.CheckComplexRequest = function() {
+   if (this.ready || this.req) return;
+   
+   var url = "h.xml";
+   
+   // if (this.version>0) url += "&ver=" + this.version;
+
+   // $("#report").append("<br> Create xml request");
+   
+   this.req = DABC.mgr.NewHttpRequest(url, true, false, this);
+
+   this.req.send(null);
+}
+
+DABC.HierarchyDrawElement.prototype.nextNode = function(node)
+{
+   while (node && (node.nodeType!=1)) node = node.nextSibling;
+   return node;
+}
+
+DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node, fullname) 
+{
+   node = this.nextNode(node);
+
+   while (node) {
+
+      // $("#report").append("<br> Work with node " + node.nodeName);
+      
+      var kind = node.getAttribute("kind");
+      var value = node.getAttribute("value");
+      
+      var html = node.nodeName;
+      
+      var nodefullname  = fullname + "/" + node.nodeName; 
+      
+      if (kind) {
+         html = "<a href='#' onClick='DABC.mgr.click(this);' kind='" + kind + "' fullname='" + nodefullname + "'";
+         if (value) html += " value='" + value + "'";
+         html += ">" + node.nodeName + "</a>";
+      }
+      
+      DABC.dabc_tree.add(nodeid, parentid, html);
+      
+      nodeid = this.createNode(nodeid+1, nodeid, node.firstChild, nodefullname);
+      
+      node = this.nextNode(node.nextSibling);
+   }
+   
+   return nodeid;
+}
+
+
+DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver) {
+   this.req = 0;
+
+   // $("#report").append("<br> Get request callback");
+   
+   if ((ver<0) || !arg) { this.ready = false; return; }
+   
+   this.version = ver;
+   
+   this.xmldoc = arg;
+   
+   // $("#report").append("<br> xml doc is there");
+   
+   var top = this.nextNode(this.xmldoc.firstChild.firstChild);
+   
+   if (!top) { 
+      $("#report").append("<br> XML top node not found");
+      return;
+   }
+   
+   if (!top.hasAttribute("dabc:version")) {
+      $("#report").append("<br> dabc:version not found");
+      return;
+   } else {
+      this.version = top.getAttribute("dabc:version");
+      //$("#report").append("<br> found dabc:version " + this.version);
+      //$("#report").append("<br> found node " + top.nodeName);
+   }
+   
+   this.createNode(0, -1, top.firstChild, "");
+
+   var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a></p>";
+   content += DABC.dabc_tree;
+   $("#" + this.frameid).html(content);
+
+   
+   this.ready = true;
+}
 
 // ======== end of GaugeDrawElement ======================
+
 
 
 // ======== start of RootDrawElement ======================
@@ -104,7 +220,7 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
 //   $("#report").append("is " + $("#"+this.titleid).schemaTypeInfo); 
 }
 
-DABC.RootDrawElement.prototype.BinaryCallback = function(arg, ver) {
+DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
    // in any case, request pointer will be reseted
    // delete this.req;
    this.req = 0;
@@ -191,15 +307,30 @@ DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
    if (this.req) return;
 
    // new request will be started only when ready flag is not null
-   if (this.ready) return;
+   if (this.ready) {
+
+      if (!this.sinfo) return;
+      
+      var chkbox  = document.getElementById("monitoring");
+
+      if (!chkbox || !chkbox.checked) return;
+      
+      this.ready = false;
+
+      //alert("Try to reload " + this.itemname);
+//    return;
+      
+      // this will send new request again 
+      //
+   }
 
    var url = "getbinary?" + this.itemname;
    
    if (this.version>0) url += "&ver=" + this.version;
 
-   this.req = DABC.mgr.NewBinRequest(url, true, this);
+   this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
-   // $("#report").append("<br> Send request " + url);
+   //$("#report").append("<br> Send request " + url);
 
    this.req.send(null);
 }
@@ -213,6 +344,10 @@ DABC.RootDrawElement.prototype.CheckComplexRequest = function() {
 DABC.Manager = function() {
    this.cnt = 0;            // counter to create new element 
    this.arr = new Array();  // array of DrawElement
+
+   DABC.dabc_tree = new dTree('DABC.dabc_tree');
+   DABC.dabc_tree.config.useCookies = false;
+   
    return this;
 }
 
@@ -253,10 +388,11 @@ DABC.Manager.prototype.NewRequest = function() {
 }
 
 
-DABC.Manager.prototype.NewBinRequest = function(url, async, item) {
+DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
    var xhr = new XMLHttpRequest();
    
    xhr.dabc_item = item;
+   xhr.isbin = isbin;
 
 //   if (typeof ActiveXObject == "function") {
    if (window.ActiveXObject) {
@@ -269,24 +405,28 @@ DABC.Manager.prototype.NewBinRequest = function(url, async, item) {
          if (!this.dabc_item || (this.dabc_item==0)) return;
          
          if (this.status == 200 || this.status == 206) {
-            var filecontent = new String("");
-            var array = new VBArray(this.responseBody).toArray();
-            for (var i = 0; i < array.length; i++) {
-               filecontent = filecontent + String.fromCharCode(array[i]);
-            }
+            if (this.isbin) {
+               var filecontent = new String("");
+               var array = new VBArray(this.responseBody).toArray();
+               for (var i = 0; i < array.length; i++) {
+                  filecontent = filecontent + String.fromCharCode(array[i]);
+               }
 
-            var ver = this.getResponseHeader("Content-Version");
-            if (!ver) {
-               ver = -1;
-               $("#report").append("<br> Response version not specified");
+               var ver = this.getResponseHeader("Content-Version");
+               if (!ver) {
+                  ver = -1;
+                  $("#report").append("<br> Response version not specified");
+               }
+               // $("#report").append("<br> IE response ver = " + ver);
+
+               this.dabc_item.RequestCallback(filecontent, ver);
+               delete filecontent;
+               filecontent = null;
+            } else {
+               this.dabc_item.RequestCallback(this.responseXML, 0);
             }
-            // $("#report").append("<br> IE response ver = " + ver);
-            
-            this.dabc_item.BinaryCallback(filecontent, ver);
-            delete filecontent;
-            filecontent = null;
          } else {
-            this.dabc_item.BinaryCallback("", -1);
+            this.dabc_item.RequestCallback(null, -1);
          } 
          this.dabc_item = null;
       }
@@ -302,56 +442,62 @@ DABC.Manager.prototype.NewBinRequest = function(url, async, item) {
          if (!this.dabc_item || (this.dabc_item==0)) return;
          
          if (this.status == 0 || this.status == 200 || this.status == 206) {
-            var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
-            var Buf;
-            if (HasArrayBuffer && 'mozResponse' in this) {
-               Buf = this.mozResponse;
-            } else if (HasArrayBuffer && this.mozResponseArrayBuffer) {
-               Buf = this.mozResponseArrayBuffer;
-            } else if ('responseType' in this) {
-               Buf = this.response;
-            } else {
-               Buf = this.responseText;
-               HasArrayBuffer = false;
-            }
-            if (HasArrayBuffer) {
-               var filecontent = new String("");
-               var bLen = Buf.byteLength;
-               var u8Arr = new Uint8Array(Buf, 0, bLen);
-               for (var i = 0; i < u8Arr.length; i++) {
-                  filecontent = filecontent + String.fromCharCode(u8Arr[i]);
+            if (this.isbin) {
+               var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
+               var Buf;
+               if (HasArrayBuffer && 'mozResponse' in this) {
+                  Buf = this.mozResponse;
+               } else if (HasArrayBuffer && this.mozResponseArrayBuffer) {
+                  Buf = this.mozResponseArrayBuffer;
+               } else if ('responseType' in this) {
+                  Buf = this.response;
+               } else {
+                  Buf = this.responseText;
+                  HasArrayBuffer = false;
                }
-               delete u8Arr;
+               if (HasArrayBuffer) {
+                  var filecontent = new String("");
+                  var bLen = Buf.byteLength;
+                  var u8Arr = new Uint8Array(Buf, 0, bLen);
+                  for (var i = 0; i < u8Arr.length; i++) {
+                     filecontent = filecontent + String.fromCharCode(u8Arr[i]);
+                  }
+                  delete u8Arr;
+               } else {
+                  var filecontent = Buf;
+               }
+
+               var ver = this.getResponseHeader("Content-Version");
+               if (!ver) {
+                  ver = -1;
+                  $("#report").append("<br> Response version not specified");
+               }
+
+               this.dabc_item.RequestCallback(filecontent, ver);
+
+               delete filecontent;
+               filecontent = null;
             } else {
-               var filecontent = Buf;
+               this.dabc_item.RequestCallback(this.responseXML, 0);
             }
-            
-            var ver = this.getResponseHeader("Content-Version");
-            if (!ver) {
-               ver = -1;
-               $("#report").append("<br> Response version not specified");
-            }
-
-            this.dabc_item.BinaryCallback(filecontent, ver);
-
-            delete filecontent;
-            filecontent = null;
          } else {
-            this.dabc_item.BinaryCallback("", -1);
+            this.dabc_item.RequestCallback(null, -1);
          }
          this.dabc_item = 0;
       }
 
       xhr.open('POST', url, async);
       
-      var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
-      if (HasArrayBuffer && 'mozResponseType' in xhr) {
-         xhr.mozResponseType = 'arraybuffer';
-      } else if (HasArrayBuffer && 'responseType' in xhr) {
-         xhr.responseType = 'arraybuffer';
-      } else {
-         //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
-         xhr.overrideMimeType("text/plain; charset=x-user-defined");
+      if (xhr.isbin) {
+         var HasArrayBuffer = ('ArrayBuffer' in window && 'Uint8Array' in window);
+         if (HasArrayBuffer && 'mozResponseType' in xhr) {
+            xhr.mozResponseType = 'arraybuffer';
+         } else if (HasArrayBuffer && 'responseType' in xhr) {
+            xhr.responseType = 'arraybuffer';
+         } else {
+            //XHR binary charset opt by Marcus Granado 2006 [http://mgran.blogspot.com]
+            xhr.overrideMimeType("text/plain; charset=x-user-defined");
+         }
       }
    }
    return xhr;
@@ -472,6 +618,22 @@ DABC.Manager.prototype.click = function(item) {
    this.arr.push(elem);
    
    // if (check_compl) this.UpdateComplexFields();
+}
+
+DABC.Manager.prototype.DisplayHiearchy = function(holder) {
+   var elem = this.FindItem("ObjectsTree");
+   
+   if (elem) return;
+
+   elem = new DABC.HierarchyDrawElement();
+   
+   elem.itemname = "ObjectsTree";
+   
+   elem.CreateFrames(holder, this.cnt++);
+   
+   this.arr.push(elem);
+
+   this.UpdateComplexFields();
 }
 
 // ============= end of DABC.Manager =============== 
