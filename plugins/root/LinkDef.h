@@ -6,8 +6,8 @@
 
 #pragma link C++ nestedclasses;
 
-#pragma link C++ namespace mbs_root;
-#pragma link C++ class mbs_root::DabcEvent+;
-#pragma link C++ class mbs_root::DabcSubEvent+;
+#pragma link C++ namespace dabc_root;
+
+#pragma link C++ class dabc_root::HttpServer+;
 
 #endif

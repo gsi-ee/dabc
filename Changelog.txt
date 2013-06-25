@@ -2,6 +2,11 @@ This is log of changes in the dabc project, which is started in winter 2013.
 In some cases it is best place to find documentation about current functionality 
 of the framework.
 
+25.06.2013
+1. Generate dictionary and rootmap for libDabcRoot. This will allow to use
+   part of DABC functionality directly from ROOT.
+
+
 24.06.2013
 1. Update hierarchy via xml file and build tree structure direct in the browser.
    Use dtree.jquery for that. This will allow to fully customize look and fill 
@@ -11,6 +16,7 @@ of the framework.
 3. Enable display of streamer infos, assign images for ROOT objects. 
 4. Smooth open/close logic, but it should be rewritten - dabc.js should
    fully control itself how items are open or closed.
+
 
 21.06.2013
 1. Create BinDataContainer and BinData classes for manipuldation of
