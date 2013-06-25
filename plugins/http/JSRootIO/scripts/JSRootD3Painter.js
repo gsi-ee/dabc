@@ -3396,7 +3396,8 @@ function createFillPatterns(svg, id, color) {
    };
 
    JSROOTPainter.drawHistogram2D3D = function(vis, pad, histo, hframe) {
-      var i, logx = false, logy = false, logz = false, gridx = false, gridy = false, girdz = false;
+      var i, j, k, logx = false, logy = false, logz = false, 
+          gridx = false, gridy = false, girdz = false;
       var opt = histo['fOption'].toLowerCase();
       if (pad && typeof(pad) != 'undefined') {
          logx = pad['fLogx'];
@@ -3421,11 +3422,17 @@ function createFillPatterns(svg, id, color) {
       var scaley = (histo['fYaxis']['fXmax'] - histo['fYaxis']['fXmin']) /
                     histo['fYaxis']['fNbins'];
       var maxbin = -1e32, minbin = 1e32;
-      maxbin = d3.max(histo['fArray']);
-      minbin = d3.min(histo['fArray']);
+      for (i=0; i<nbinsx; ++i) {
+         for (j=0; j<nbinsy; ++j) {
+            var bin_content = histo.getBinContent(i, j);
+            if (bin_content < minbin) minbin = bin_content;
+            if (bin_content > maxbin) maxbin = bin_content;
+         }
+      }
+      maxbin *= 1.05;
       var bins = new Array();
       for (i=0; i<nbinsx; ++i) {
-         for (var j=0; j<nbinsy; ++j) {
+         for (j=0; j<nbinsy; ++j) {
             var bin_content = histo.getBinContent(i, j);
             if (bin_content > minbin) {
                var point = {
@@ -3487,15 +3494,19 @@ function createFillPatterns(svg, id, color) {
       var geometry = new THREE.Geometry();
       var imax, istep, len = 3, plen, sin45 = Math.sin(45);
       var text3d, text;
-      for ( i = tx( histo['fXaxis']['fXmin'] ), imax = tx( histo['fXaxis']['fXmax'] ),
-            istep = Math.round( imax/20 ); i <= imax; i+=istep ) {
-         plen = ( ( Math.round(i) % (size/2) ) ? len : len + 2) * sin45;
-         if ( Math.round(i) % (size/2) == 0 ) {
-            text3d = new THREE.TextGeometry( utx( i ), {
+      var xmajors = tx.ticks(8);
+      var xminors = tx.ticks(50);
+      for ( i=-size, j=0, k=0; i<size; ++i ) {
+         var is_major = ( utx( i ) <= xmajors[j] && utx( i+1 ) > xmajors[j] ) ? true : false;
+         var is_minor = ( utx( i ) <= xminors[k] && utx( i+1 ) > xminors[k] ) ? true : false;
+         plen = ( is_major ? len + 2 : len) * sin45;
+         if ( is_major ) {
+            text3d = new THREE.TextGeometry( xmajors[j], {
                size: 7,
                height: 0,
                curveSegments: 10
             });
+            ++j;
 
             text3d.computeBoundingBox();
             var centerOffset = 0.5 * ( text3d.boundingBox.max.x - text3d.boundingBox.min.x );
@@ -3509,20 +3520,27 @@ function createFillPatterns(svg, id, color) {
             text.rotation.y = Math.PI;
             toplevel.add( text );
          }
-         geometry.vertices.push( new THREE.Vector3( i, 0, size ) );
-         geometry.vertices.push( new THREE.Vector3( i, -plen, size+plen ) );
-         geometry.vertices.push( new THREE.Vector3( i, 0, -size ) );
-         geometry.vertices.push( new THREE.Vector3( i, -plen, -size-plen ) );
+         if ( is_major || is_minor ) {
+            ++k;
+            geometry.vertices.push( new THREE.Vector3( i, 0, size ) );
+            geometry.vertices.push( new THREE.Vector3( i, -plen, size+plen ) );
+            geometry.vertices.push( new THREE.Vector3( i, 0, -size ) );
+            geometry.vertices.push( new THREE.Vector3( i, -plen, -size-plen ) );
+         }
       }
-      for ( i = ty( histo['fYaxis']['fXmin'] ), imax = ty( histo['fYaxis']['fXmax'] ),
-            istep = Math.round( imax/20 ); i <= imax; i+=istep ) {
-         plen = ( ( Math.round(i) % (size/2) ) ? len : len + 2) * sin45;
-         if ( Math.round(i) % (size/2) == 0 ) {
-            text3d = new THREE.TextGeometry( uty( i ), {
+      var ymajors = ty.ticks(8);
+      var yminors = ty.ticks(50);
+      for ( i=size, j=0, k=0; i>-size; --i ) {
+         var is_major = ( uty( i ) <= ymajors[j] && uty( i-1 ) > ymajors[j] ) ? true : false;
+         var is_minor = ( uty( i ) <= yminors[k] && uty( i-1 ) > yminors[k] ) ? true : false;
+         plen = ( is_major ? len + 2 : len) * sin45;
+         if ( is_major ) {
+            text3d = new THREE.TextGeometry( ymajors[j], {
                size: 7,
                height: 0,
                curveSegments: 10
             });
+            ++j;
 
             text3d.computeBoundingBox();
             var centerOffset = 0.5 * ( text3d.boundingBox.max.x - text3d.boundingBox.min.x );
@@ -3537,20 +3555,27 @@ function createFillPatterns(svg, id, color) {
             text.rotation.y = -Math.PI/2;
             toplevel.add( text );
          }
-         geometry.vertices.push( new THREE.Vector3( size, 0, i ) );
-         geometry.vertices.push( new THREE.Vector3( size+plen, -plen, i ) );
-         geometry.vertices.push( new THREE.Vector3( -size, 0, i ) );
-         geometry.vertices.push( new THREE.Vector3( -size-plen, -plen, i ) );
+         if ( is_major || is_minor ) {
+            ++k;
+            geometry.vertices.push( new THREE.Vector3( size, 0, i ) );
+            geometry.vertices.push( new THREE.Vector3( size+plen, -plen, i ) );
+            geometry.vertices.push( new THREE.Vector3( -size, 0, i ) );
+            geometry.vertices.push( new THREE.Vector3( -size-plen, -plen, i ) );
+         }
       }
-      for ( i = tz( minbin ), imax = tz( Math.ceil( maxbin/10 )*10 ),
-            istep = Math.round( imax/20 ); i <= imax; i+=istep ) {
-         plen = ( ( Math.round(i) % (size/2) ) ? len : len + 2) * sin45;
-         if ( Math.round(i) % (size/2) == 0 ) {
-            text3d = new THREE.TextGeometry( utz( i ), {
+      var zmajors = tz.ticks(8);
+      var zminors = tz.ticks(50);
+      for ( i=0, j=0, k=0; i<(size*2); ++i ) {
+         var is_major = ( utz( i ) <= zmajors[j] && utz( i+1 ) > zmajors[j] ) ? true : false;
+         var is_minor = ( utz( i ) <= zminors[k] && utz( i+1 ) > zminors[k] ) ? true : false;
+         plen = ( is_major ? len + 2 : len) * sin45;
+         if ( is_major ) {
+            text3d = new THREE.TextGeometry( zmajors[j], {
                size: 7,
                height: 0,
                curveSegments: 10
             });
+            ++j;
 
             text3d.computeBoundingBox();
             var offset = 0.8 * ( text3d.boundingBox.max.x - text3d.boundingBox.min.x );
@@ -3575,14 +3600,17 @@ function createFillPatterns(svg, id, color) {
             text.rotation.y = -Math.PI/4;
             toplevel.add( text );
          }
-         geometry.vertices.push( new THREE.Vector3( size, i, size ) );
-         geometry.vertices.push( new THREE.Vector3( size+plen, i, size+plen ) );
-         geometry.vertices.push( new THREE.Vector3( size, i, -size ) );
-         geometry.vertices.push( new THREE.Vector3( size+plen, i, -size-plen ) );
-         geometry.vertices.push( new THREE.Vector3( -size, i, size ) );
-         geometry.vertices.push( new THREE.Vector3( -size-plen, i, size+plen ) );
-         geometry.vertices.push( new THREE.Vector3( -size, i, -size ) );
-         geometry.vertices.push( new THREE.Vector3( -size-plen, i, -size-plen ) );
+         if ( is_major || is_minor ) {
+            ++k;
+            geometry.vertices.push( new THREE.Vector3( size, i, size ) );
+            geometry.vertices.push( new THREE.Vector3( size+plen, i, size+plen ) );
+            geometry.vertices.push( new THREE.Vector3( size, i, -size ) );
+            geometry.vertices.push( new THREE.Vector3( size+plen, i, -size-plen ) );
+            geometry.vertices.push( new THREE.Vector3( -size, i, size ) );
+            geometry.vertices.push( new THREE.Vector3( -size-plen, i, size+plen ) );
+            geometry.vertices.push( new THREE.Vector3( -size, i, -size ) );
+            geometry.vertices.push( new THREE.Vector3( -size-plen, i, -size-plen ) );
+         }
       }
 
       // add the calibration lines
@@ -3609,8 +3637,8 @@ function createFillPatterns(svg, id, color) {
          bin.position.x = tx( bins[i].x + (scalex/2));
          bin.position.y = wei/2;
          bin.position.z = -(ty( bins[i].y + (scaley/2)));
-         bin.name = "x: [" + bins[i].x.toPrecision(4) + "," + (bins[i].x + scalex).toPrecision(4) + "]<br>" +
-                    "y: [" + bins[i].y.toPrecision(4) + "," + (bins[i].y + scaley).toPrecision(4) + "]<br>" + 
+         bin.name = "x: [" + bins[i].x.toPrecision(4) + ", " + (bins[i].x + scalex).toPrecision(4) + "]<br>" +
+                    "y: [" + bins[i].y.toPrecision(4) + ", " + (bins[i].y + scaley).toPrecision(4) + "]<br>" + 
                     "entries: " + bins[i].z.toFixed();
          toplevel.add( bin );
       }
@@ -3638,7 +3666,8 @@ function createFillPatterns(svg, id, color) {
    }
 
    JSROOTPainter.drawHistogram3D = function(vis, pad, histo, hframe) {
-      var i, logx = false, logy = false, logz = false, gridx = false, gridy = false, gridz = false;
+      var i, j, k, logx = false, logy = false, logz = false,
+          gridx = false, gridy = false, gridz = false;
       var opt = histo['fOption'].toLowerCase();
       if (pad && typeof(pad) != 'undefined') {
          logx = pad['fLogx'];
@@ -3695,10 +3724,10 @@ function createFillPatterns(svg, id, color) {
       }
       if (logy) {
          var ty = d3.scale.log().domain([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]).range([-size, size]);
-         var uty = d3.scale.log().domain([-size, size]).range([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]);
+         var uty = d3.scale.log().domain([size, -size]).range([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]);
       } else {
          var ty = d3.scale.linear().domain([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]).range([-size, size]);
-         var uty = d3.scale.linear().domain([-size, size]).range([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]);
+         var uty = d3.scale.linear().domain([size, -size]).range([histo['fYaxis']['fXmin'], histo['fYaxis']['fXmax']]);
       }
       if (logz) {
          var tz = d3.scale.log().domain([histo['fZaxis']['fXmin'], histo['fZaxis']['fXmax']]).range([-size, size]);
@@ -3734,15 +3763,19 @@ function createFillPatterns(svg, id, color) {
       var geometry = new THREE.Geometry();
       var imax, istep, len = 3, plen, sin45 = Math.sin(45);
       var text3d, text;
-      for ( i = tx( histo['fXaxis']['fXmin'] ), imax = tx( histo['fXaxis']['fXmax'] ),
-            istep = Math.round( imax/20 ); i <= imax; i+=istep ) {
-         plen = ( ( Math.round(i) % (size/2) ) ? len : len + 2) * sin45;
-         if ( Math.round(i) % (size/2) == 0 ) {
-            text3d = new THREE.TextGeometry( utx( i ), {
+      var xmajors = tx.ticks(5);
+      var xminors = tx.ticks(25);
+      for ( i=-size, j=0, k=0; i<=size; ++i ) {
+         var is_major = ( utx( i ) <= xmajors[j] && utx( i+1 ) > xmajors[j] ) ? true : false;
+         var is_minor = ( utx( i ) <= xminors[k] && utx( i+1 ) > xminors[k] ) ? true : false;
+         plen = ( is_major ? len + 2 : len) * sin45;
+         if ( is_major ) {
+            text3d = new THREE.TextGeometry( xmajors[j], {
                size: 7,
                height: 0,
                curveSegments: 10
             });
+            ++j;
 
             text3d.computeBoundingBox();
             var centerOffset = 0.5 * ( text3d.boundingBox.max.x - text3d.boundingBox.min.x );
@@ -3756,20 +3789,27 @@ function createFillPatterns(svg, id, color) {
             text.rotation.y = Math.PI;
             toplevel.add( text );
          }
-         geometry.vertices.push( new THREE.Vector3( i, -size, size ) );
-         geometry.vertices.push( new THREE.Vector3( i, -size-plen, size+plen ) );
-         geometry.vertices.push( new THREE.Vector3( i, -size, -size ) );
-         geometry.vertices.push( new THREE.Vector3( i, -size-plen, -size-plen ) );
+         if ( is_major || is_minor ) {
+            ++k;
+            geometry.vertices.push( new THREE.Vector3( i, -size, size ) );
+            geometry.vertices.push( new THREE.Vector3( i, -size-plen, size+plen ) );
+            geometry.vertices.push( new THREE.Vector3( i, -size, -size ) );
+            geometry.vertices.push( new THREE.Vector3( i, -size-plen, -size-plen ) );
+         }
       }
-      for ( i = ty( histo['fYaxis']['fXmin'] ), imax = ty( histo['fYaxis']['fXmax'] ),
-            istep = Math.round( imax/20 ); i <= imax; i+=istep ) {
-         plen = ( ( Math.round(i) % (size/2) ) ? len : len + 2) * sin45;
-         if ( Math.round(i) % (size/2) == 0 ) {
-            text3d = new THREE.TextGeometry( uty( -i ), {
+      var ymajors = ty.ticks(5);
+      var yminors = ty.ticks(25);
+      for ( i=size, j=0, k=0; i>-size; --i ) {
+         var is_major = ( uty( i ) <= ymajors[j] && uty( i-1 ) > ymajors[j] ) ? true : false;
+         var is_minor = ( uty( i ) <= yminors[k] && uty( i-1 ) > yminors[k] ) ? true : false;
+         plen = ( is_major ? len + 2 : len) * sin45;
+         if ( is_major ) {
+            text3d = new THREE.TextGeometry( ymajors[j], {
                size: 7,
                height: 0,
                curveSegments: 10
             });
+            ++j;
 
             text3d.computeBoundingBox();
             var centerOffset = 0.5 * ( text3d.boundingBox.max.x - text3d.boundingBox.min.x );
@@ -3784,20 +3824,27 @@ function createFillPatterns(svg, id, color) {
             text.rotation.y = -Math.PI/2;
             toplevel.add( text );
          }
-         geometry.vertices.push( new THREE.Vector3( size, -size, i ) );
-         geometry.vertices.push( new THREE.Vector3( size+plen, -size-plen, i ) );
-         geometry.vertices.push( new THREE.Vector3( -size, -size, i ) );
-         geometry.vertices.push( new THREE.Vector3( -size-plen, -size-plen, i ) );
+         if ( is_major || is_minor ) {
+            ++k;
+            geometry.vertices.push( new THREE.Vector3( size, -size, i ) );
+            geometry.vertices.push( new THREE.Vector3( size+plen, -size-plen, i ) );
+            geometry.vertices.push( new THREE.Vector3( -size, -size, i ) );
+            geometry.vertices.push( new THREE.Vector3( -size-plen, -size-plen, i ) );
+         }
       }
-      for ( i = tz( histo['fZaxis']['fXmin'] ), imax = tz( histo['fZaxis']['fXmax'] ),
-            istep = Math.round( imax/20 ); i <= imax; i+=istep ) {
-         plen = ( ( Math.round(i) % (size/2) ) ? len : len + 2) * sin45;
-         if ( Math.round(i) % (size/2) == 0 ) {
-            text3d = new THREE.TextGeometry( utz( i ), {
+      var zmajors = tz.ticks(5);
+      var zminors = tz.ticks(25);
+      for ( i=-size, j=0, k=0; i<=size; ++i ) {
+         var is_major = ( utz( i ) <= zmajors[j] && utz( i+1 ) > zmajors[j] ) ? true : false;
+         var is_minor = ( utz( i ) <= zminors[k] && utz( i+1 ) > zminors[k] ) ? true : false;
+         plen = ( is_major ? len + 2 : len) * sin45;
+         if ( is_major ) {
+            text3d = new THREE.TextGeometry( zmajors[j], {
                size: 7,
                height: 0,
                curveSegments: 10
             });
+            ++j;
 
             text3d.computeBoundingBox();
             var offset = 0.6 * ( text3d.boundingBox.max.x - text3d.boundingBox.min.x );
@@ -3822,14 +3869,17 @@ function createFillPatterns(svg, id, color) {
             text.rotation.y = -Math.PI/4;
             toplevel.add( text );
          }
-         geometry.vertices.push( new THREE.Vector3( size, i, size ) );
-         geometry.vertices.push( new THREE.Vector3( size+plen, i, size+plen ) );
-         geometry.vertices.push( new THREE.Vector3( size, i, -size ) );
-         geometry.vertices.push( new THREE.Vector3( size+plen, i, -size-plen ) );
-         geometry.vertices.push( new THREE.Vector3( -size, i, size ) );
-         geometry.vertices.push( new THREE.Vector3( -size-plen, i, size+plen ) );
-         geometry.vertices.push( new THREE.Vector3( -size, i, -size ) );
-         geometry.vertices.push( new THREE.Vector3( -size-plen, i, -size-plen ) );
+         if ( is_major || is_minor ) {
+            ++k;
+            geometry.vertices.push( new THREE.Vector3( size, i, size ) );
+            geometry.vertices.push( new THREE.Vector3( size+plen, i, size+plen ) );
+            geometry.vertices.push( new THREE.Vector3( size, i, -size ) );
+            geometry.vertices.push( new THREE.Vector3( size+plen, i, -size-plen ) );
+            geometry.vertices.push( new THREE.Vector3( -size, i, size ) );
+            geometry.vertices.push( new THREE.Vector3( -size-plen, i, size+plen ) );
+            geometry.vertices.push( new THREE.Vector3( -size, i, -size ) );
+            geometry.vertices.push( new THREE.Vector3( -size-plen, i, -size-plen ) );
+         }
       }
 
       // add the calibration lines
@@ -3864,9 +3914,9 @@ function createFillPatterns(svg, id, color) {
          bin.position.x = tx( bins[i].x - (scalex/2));
          bin.position.y = tz( bins[i].z - (scalez/2));
          bin.position.z = -(ty( bins[i].y - (scaley/2)));
-         bin.name = "x: [" + bins[i].x.toPrecision(4) + "," + (bins[i].x + scalex).toPrecision(4) + "]<br>" +
-                    "y: [" + bins[i].y.toPrecision(4) + "," + (bins[i].y + scaley).toPrecision(4) + "]<br>" + 
-                    "z: [" + bins[i].z.toPrecision(4) + "," + (bins[i].z + scalez).toPrecision(4) + "]<br>" + 
+         bin.name = "x: [" + bins[i].x.toPrecision(4) + ", " + (bins[i].x + scalex).toPrecision(4) + "]<br>" +
+                    "y: [" + bins[i].y.toPrecision(4) + ", " + (bins[i].y + scaley).toPrecision(4) + "]<br>" + 
+                    "z: [" + bins[i].z.toPrecision(4) + ", " + (bins[i].z + scalez).toPrecision(4) + "]<br>" + 
                     "entries: " + bins[i].n.toFixed();
          toplevel.add( bin );
       }
@@ -4512,16 +4562,13 @@ function createFillPatterns(svg, id, color) {
          else if (obj['_typename'].match(/\bJSROOTIO.TH2/)) {
             var renderer = 0;
             var vid = 'view3d_' + obj['fName'];
-            //$('<div><input type="checkbox" id="view3d" /><label for="view3d">View in 3D</label></div>')
             $('<div><input type="checkbox" id='+vid+' /><label for='+vid+'>View in 3D</label></div>')
                .css('padding', '10px').css('position', 'absolute').insertBefore( svg[0][0] );
-            //$('#view3d').click(function(e) {
             $('#'+vid).click(function(e) {
                if ( $(this).prop('checked') ) {
                   renderer = JSROOTPainter.drawHistogram2D3D(svg, null, obj, null);
                } else {
-                  //$( svg[0][0] ).show().parent().find('canvas').detach();
-                  $( svg[0][0] ).show().parent().find( renderer.domElement ).detach();
+                  $( svg[0][0] ).show().parent().find( renderer.domElement ).remove();
                }
             });
             JSROOTPainter.drawHistogram2D(svg, null, obj, null);
@@ -5370,6 +5417,8 @@ function createFillPatterns(svg, id, color) {
       }
       content += key_tree;
       $(container).append(content);
+      // to display the first object in the file, uncomment the following line
+      // setTimeout( function() { showObject(keys[0]['name'],keys[0]['cycle']); }, 20 );
    };
 
    JSROOTPainter.addDirectoryKeys = function(keys, container, dir_id) {

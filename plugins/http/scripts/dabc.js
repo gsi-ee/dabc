@@ -237,6 +237,8 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver) {
    var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a></p>";
    content += DABC.dabc_tree;
    $("#" + this.frameid).html(content);
+   
+   DABC.dabc_tree.openAll();
 
    
    this.ready = true;
@@ -272,11 +274,11 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
    
    var entryInfo = "";
    if (this.sinfo) {
-      entryInfo = "<h5 id='"+this.titleid+"'><a>" + this.itemname + "</a>&nbsp; </h5>\n";
-      entryInfo += "<div id='" + this.frameid + "'>\n";
+      entryInfo = "<h5 id='"+this.titleid+"'><a id='"+this.titleid + "_text'>" + this.itemname + "</a></h5>";
+      entryInfo += "<div id='" + this.frameid + "'>";
    } else {
-      entryInfo = "<h5 id=\""+this.titleid+"\"><a> Streamer Infos </a>&nbsp; </h5><div>\n";
-      entryInfo += "<h6>Streamer Infos</h6><span id='" + this.frameid +"' class='dtree'></span></div>\n";
+      entryInfo = "<h5 id=\""+this.titleid+"\"><a> Streamer Infos </a>&nbsp; </h5><div><br>";
+      entryInfo += "<h6>Streamer Infos</h6><span id='" + this.frameid +"' class='dtree'></span></div><br>";
 
    }
    $(topid).append(entryInfo);
@@ -349,6 +351,10 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver) {
    
 //   $("#report").append("<br>Object name " + this.obj['fName']+ " class "  + this.obj['_typename'] + "  created");
 
+   var child = document.getElementById(this.titleid + "_text");
+   // if (child) $("#report").append("<br>child " + child.innerHTML);
+   if (child) child.innerHTML = this.itemname + ",   version = " + this.version; 
+   
    JSROOTPainter.drawObject(this.obj, this.drawid);
    if (this.drawfirst) addCollapsible("#"+this.titleid);
    
