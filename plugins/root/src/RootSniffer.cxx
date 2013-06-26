@@ -565,7 +565,7 @@ void dabc_root::RootSniffer::ProcessActionsInRootContext()
 
    FillROOTHieararchy(fRoot);
 
-   DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
+   //DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
 
    {
       dabc::LockGuard lock(fHierarchyMutex);

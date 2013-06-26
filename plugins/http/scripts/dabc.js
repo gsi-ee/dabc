@@ -314,8 +314,7 @@ DABC.RootDrawElement.prototype.Update = function() {
 }
 
 DABC.RootDrawElement.prototype.HasVersion = function(ver) {
-   if (!this.obj) return false;
-   return this.version >= ver;
+   return this.obj && (this.version >= ver);
 }
 
 // if frame created and exists
@@ -328,8 +327,11 @@ DABC.RootDrawElement.prototype.DrawObject = function() {
    
    if (this.sinfo) 
       JSROOTPainter.drawObject(this.obj, this.drawid);
-   else
+   else {
+      gFile = this.obj;
       JSROOTPainter.displayStreamerInfos(this.obj.fStreamerInfo.fStreamerInfos, "#" + this.frameid);
+      gFile = 0;
+   }
    
    if (this.first_draw) addCollapsible("#"+this.titleid);
    this.first_draw = false;
@@ -385,25 +387,32 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    // if we got same version, do nothing - we are happy!!!
    if ((ver > 0) && (this.version == ver)) {
       this.state = this.StateEnum.stReady;
+      $("#report").append("<br> Get same version " + ver + " of object " + this.itemname);
       if (this.first_draw) this.DrawObject();
-      // $("#report").append("<br> Get same version of object " + ver);
       return;
    } 
    
 //   $("#report").append("<br> RootDrawElement get callback " + this.itemname + " sz " + arg.length);
 
    if (!this.sinfo) {
+      
+      delete this.obj; 
+      
       // we are doing sreamer infos
       // if (gFile) $("#report").append("<br> gFile already exists???"); else 
-      gFile = new JSROOTIO.RootFile; 
-
-      gFile.fStreamerInfo.ExtractStreamerInfo(arg);
+      this.obj = new JSROOTIO.RootFile;
       
-      this.obj = gFile;
+      gFile = this.obj; 
+
+      this.obj.fStreamerInfo.ExtractStreamerInfo(arg);
+      
+      gFile = null;
 
       this.version = ver;
+      this.state = this.StateEnum.stReady;
       
-//      $("#report").append("<br> Streamer infos unpacked!!!");
+      // $("#report").append("<br> Unpacked streamer infos of version " + ver);
+      if (!this.obj) $("#report").append("<br> No file in streamer infos!!!");
       
       // this indicates that object was clicked and want to be drawn
       
@@ -421,7 +430,7 @@ DABC.RootDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    if (mver) this.need_master_version = mver;
    
    if (this.sinfo && !this.sinfo.HasVersion(this.need_master_version)) {
-      $("#report").append("<br> Streamer info is required of vers " + this.need_master_version);
+      // $("#report").append("<br> Streamer info is required of vers " + this.need_master_version);
       this.state = this.StateEnum.stWaitSinfo;
       this.sinfo.Update();
       return;
@@ -448,8 +457,14 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
      case this.StateEnum.stInit: break;
      case this.StateEnum.stWaitRequest: return;
      case this.StateEnum.stWaitSinfo: { 
-        if (this.sinfo.HasVersion(this.need_master_version))
+        // $("#report").append("<br> item " + this.itemname+ " requires streamer info ver " + this.need_master_version  +  "  available is = " + this.sinfo.version);
+
+        if (this.sinfo.HasVersion(this.need_master_version)) {
+           // $("#report").append("<br> try to reconstruct");
            this.ReconstructRootObject();
+        } else {
+           // $("#report").append("<br> version is not ok");
+        }
         return;
      }
      case this.StateEnum.stReady: {
@@ -470,7 +485,7 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
 
    this.req = DABC.mgr.NewHttpRequest(url, true, true, this);
 
-//   $("#report").append("<br> Send request " + url);
+   // $("#report").append("<br> Send request " + url);
 
    this.req.send(null);
    
@@ -557,9 +572,11 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                if (!ver) {
                   ver = -1;
                   $("#report").append("<br> Response version not specified");
-               }
+               } else
+                  ver = new Number(ver);
                
                var mver = this.getResponseHeader("Master-Version");
+               if (mver) mver = new Number(mver);
                
                // $("#report").append("<br> IE response ver = " + ver);
 
@@ -615,9 +632,11 @@ DABC.Manager.prototype.NewHttpRequest = function(url, async, isbin, item) {
                if (!ver) {
                   ver = -1;
                   $("#report").append("<br> Response version not specified");
-               }
-
+               } else
+                  ver = new Number(ver);
+               
                var mver = this.getResponseHeader("Master-Version");
+               if (mver) mver = new Number(mver);
 
                this.dabc_item.RequestCallback(filecontent, ver, mver);
 
@@ -743,7 +762,8 @@ DABC.Manager.prototype.display = function(itemname) {
       sinfo = new DABC.RootDrawElement(kind.substr(5));
       sinfo.itemname = sinfoname;
       this.arr.push(sinfo);
-      sinfo.RegularCheck();
+      // mark sinfo item as ready - it will not be requested until is not really required
+      sinfo.state = sinfo.StateEnum.stReady;
    }
       
    elem = new DABC.RootDrawElement(kind.substr(5));

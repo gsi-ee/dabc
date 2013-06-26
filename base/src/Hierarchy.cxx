@@ -374,9 +374,18 @@ bool dabc::Hierarchy::Update(dabc::Hierarchy& src)
 
    if (GetObject()->UpdateHierarchyFrom(src())) {
 
-      uint64_t next_ver = GetObject()->GetVersion() + 1;
+      Hierarchy top = *this;
+      while (top.GetParent()) top = (HierarchyContainer*) top.GetParent();
+
+      uint64_t next_ver = top.GetVersion() + 1;
 
       GetObject()->SetVersion(next_ver, true, false);
+
+      top = *this;
+      while (top.GetParent()) {
+         top = (HierarchyContainer*) top.GetParent();
+         top()->SetVersion(next_ver, false, true);
+      }
    }
 
    return true;

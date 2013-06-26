@@ -388,12 +388,17 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
          // take data under lock that we are sure - nothing change for me
          item_version = item.GetVersion();
 
-         if (!master.null()) master_version = master.GetVersion();
+         DOUT0("BINARY REQUEST BEFORE VERSION %u", (unsigned) item_version);
+
+         if (!master.null()) {
+            master_version = master.GetVersion();
+            DOUT0("BINARY REQUEST BEFORE MASTER VERSION %u", (unsigned) master_version);
+         }
 
          bindata = item()->bindata();
       }
 
-      DOUT2("BINARY REQUEST name:%s CURRENT:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) query_version);
+      DOUT0("BINARY REQUEST name:%s CURRENT:%u REQUESTED:%u", itemname.c_str(), (unsigned) item_version, (unsigned) query_version);
 
       // we only can reply if we know that buffered information is not old
       // user can always force new buffer if he provide too big qyery version number
@@ -401,7 +406,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       bool can_reply = !bindata.null() && (item_version==bindata.version()) && (query_version<=item_version) && !force;
 
       if (can_reply) {
-         DOUT2("!!!! BINRARY READY %s sz %u", itemname.c_str(), bindata.length());
+         DOUT0("!!!! BINRARY READY %s sz %u", itemname.c_str(), bindata.length());
 
          unsigned reply_length = bindata.length();
 
@@ -469,12 +474,12 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       return 1;
    }
 
-   DOUT2("GETBINARY name:%s %s %s" , itemname.c_str(), producer_name.c_str(), request_name.c_str());
+   DOUT0("GETBINARY name:%s %s %s" , itemname.c_str(), producer_name.c_str(), request_name.c_str());
 
    dabc::Command cmd("GetBinary");
    cmd.SetStr("Item", request_name);
 
-   DOUT2("************* EXECUTING GETBINARY COMMAND *****************");
+   DOUT0("************* EXECUTING GETBINARY COMMAND *****************");
 
    bool resok = true;
 
@@ -485,7 +490,13 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
       bindata = cmd.GetRef("#BinData");
 
       dabc::LockGuard lock(fHierarchyMutex);
+
+      item_version = item.GetVersion();
+
       item.SetField("#doingreq",0);
+
+      DOUT0("BINARY REQUEST AFTER VERSION %u", (unsigned) item_version);
+
       if (!bindata.null()) {
          bindata()->SetVersion(item_version);
          item()->bindata() = bindata;
@@ -493,6 +504,8 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
          if (!master.null()) {
 
             master_version = master.GetVersion();
+
+            DOUT0("BINARY REQUEST AFTER MASTER VERSION %u", (unsigned) master_version);
 
             // master hash can let us know if something changed in the master
             std::string masterhash = cmd.GetStdStr("MasterHash");
@@ -513,7 +526,7 @@ int http::Server::ProcessGetBinary(struct mg_connection* conn, const char *query
    }
 
    if (resok) {
-      DOUT2("Send binary data %u!!!!", bindata.length());
+      DOUT0("SEND BINARY data item %s length %u version %u itemversion %u !!!!", itemname.c_str(), bindata.length(), bindata.version(), (unsigned) item.GetVersion());
 
       mg_printf(conn,
             "HTTP/1.1 200 OK\r\n"
