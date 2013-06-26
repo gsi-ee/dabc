@@ -79,7 +79,7 @@ TFile *hsimple(Int_t get=0)
    TRandom3 random;
    Float_t px, py, pz;
    const Int_t kUPDATE = 1000;
-   for (Int_t i = 0; i < 250000; i++) {
+   for (Int_t i = 0; i < 250000000; i++) {
       random.Rannor(px,py);
       pz = px*px + py*py;
       Float_t rnd = random.Rndm(1);

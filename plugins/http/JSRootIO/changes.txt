@@ -43,3 +43,9 @@ Following modifications were done:
     BuildSimpleGUI()
     
     It would be much clear, if everywhere "ROOT" as part of name is used.  
+
+    
+To do:
+1. reading canvas should work in the same way as other objects.
+2. Redraw of canvas do not work at all.    
+3. That to do with histogram infobox - it can be generated only in ROOT after Draw

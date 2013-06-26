@@ -16,6 +16,7 @@
 #include "dabc_root/RootSniffer.h"
 
 #include <math.h>
+#include <stdlib.h>
 
 #include "TH1.h"
 #include "TGraph.h"
@@ -87,7 +88,8 @@ dabc_root::RootSniffer::RootSniffer(const std::string& name, dabc::Command cmd) 
    fHierarchyMutex(),
    fRootCmds(dabc::CommandsQueue::kindPostponed),
    fMemFile(0),
-   fSinfoSize(0)
+   fSinfoSize(0),
+   fLastUpdate()
 {
    fEnabled = Cfg("enabled", cmd).AsBool(false);
    if (!fEnabled) return;
@@ -288,8 +290,8 @@ bool dabc_root::RootSniffer::IsSupportedClass(TClass* cl)
 
    if (cl->InheritsFrom(TH1::Class())) return true;
    if (cl->InheritsFrom(TGraph::Class())) return true;
-//   if (cl->InheritsFrom(TCanvas::Class())) return true;
-//   if (cl->InheritsFrom(TProfile::Class())) return true;
+   if (cl->InheritsFrom(TCanvas::Class())) return true;
+   if (cl->InheritsFrom(TProfile::Class())) return true;
 
    return false;
 }
@@ -394,7 +396,7 @@ void dabc_root::RootSniffer::BuildHierarchy(dabc::HierarchyContainer* cont)
 void dabc_root::RootSniffer::InstallSniffTimer()
 {
    if (fTimer==0) {
-      fTimer = new TDabcTimer(3000, kTRUE);
+      fTimer = new TDabcTimer(100, kTRUE);
       fTimer->SetSniffer(this);
       fTimer->TurnOn();
    }
@@ -517,8 +519,11 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
          sbuf->MapObject(obj);
          obj->Streamer(*sbuf);
 
-         if (fMemFile->GetClassIndex()==0) {
+         bool believe_not_changed = false;
+
+         if ((fMemFile->GetClassIndex()==0) || (fMemFile->GetClassIndex()->fArray[0] == 0)) {
             DOUT0("SEEMS to be, streamer info was not changed");
+            believe_not_changed = true;
          }
 
          fMemFile->WriteStreamerInfo();
@@ -531,6 +536,15 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
 
          DOUT0("=================== AFTER ========================");
          l2->Print("*");
+
+         if (believe_not_changed && (l1->GetSize() != l2->GetSize())) {
+            EOUT("Changed when we were expecting no changes!!!!!!!!!");
+            exit(444);
+         }
+
+         if (believe_not_changed && (l1->GetSize() == l2->GetSize())) {
+            DOUT0("+++++++++++++++++++++++++ NOT CHANGED AS WE EXPECTED ++++++++++++++++++++++++++++++ ");
+         }
 
          fSinfoSize = l2->GetSize();
 
@@ -554,20 +568,21 @@ int dabc_root::RootSniffer::ProcessGetBinary(dabc::Command cmd)
 
 void dabc_root::RootSniffer::ProcessActionsInRootContext()
 {
-   DOUT0("Get timeout from ROOT");
+   if (fLastUpdate.null() || fLastUpdate.Expired(3.)) {
+      DOUT0("Update ROOT structures");
+      fRoot.Release();
+      fRoot.Create("ROOT");
+      // this is fake element, whic.h is need to be requested before first
+      dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
+      si.Field(dabc::prop_kind).SetStr("ROOT.TList");
+      si.Field(dabc::prop_content_hash).SetInt(fSinfoSize);
 
-   fRoot.Release();
-   fRoot.Create("ROOT");
-   // this is fake element, whic.h is need to be requested before first
-   dabc::Hierarchy si = fRoot.CreateChild("StreamerInfo");
-   si.Field(dabc::prop_kind).SetStr("ROOT.TList");
-   si.Field(dabc::prop_content_hash).SetInt(fSinfoSize);
+      FillROOTHieararchy(fRoot);
 
-   FillROOTHieararchy(fRoot);
+      fLastUpdate.GetNow();
 
-   //DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
+      //DOUT0("ROOT %p hierarchy = \n%s", gROOT, fRoot.SaveToXml().c_str());
 
-   {
       dabc::LockGuard lock(fHierarchyMutex);
       fHierarchy.Update(fRoot);
    }

@@ -153,6 +153,8 @@ DABC.HierarchyDrawElement.prototype.createNode = function(nodeid, parentid, node
          if (kind.match(/\bTH1/)) nodeimg = source_dir+'img/histo.png'; else
          if (kind.match(/\bTH2/)) nodeimg = source_dir+'img/histo2d.png'; else  
          if (kind.match(/\bTH3/)) nodeimg = source_dir+'img/histo3d.png'; else
+         if (kind.match(/\bTCanvas/)) nodeimg = source_dir+'img/canvas.png'; else
+         if (kind.match(/\bTProfile/)) nodeimg = source_dir+'img/profile.png'; else
          if (kind.match(/\bTGraph/)) nodeimg = source_dir+'img/graph.png'; else
          if (kind.match(/\bTList/) && (node.nodeName == "StreamerInfo")) nodeimg = source_dir+'img/question.gif';
       }
@@ -235,7 +237,7 @@ DABC.HierarchyDrawElement.prototype.RequestCallback = function(arg, ver, mver) {
    
    this.createNode(0, -1, top.firstChild, "");
 
-   var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a></p>";
+   var content = "<p><a href='javascript: DABC.dabc_tree.openAll();'>open all</a> | <a href='javascript: DABC.dabc_tree.closeAll();'>close all</a> | <a href='javascript: DABC.mgr.ReloadTree();'>reload</a> </p>";
    content += DABC.dabc_tree;
    $("#" + this.frameid).html(content);
    
@@ -301,7 +303,13 @@ DABC.RootDrawElement.prototype.CreateFrames = function(topid, id) {
 
 DABC.RootDrawElement.prototype.ClickItem = function() {
    if (this.state != this.StateEnum.stReady) return; 
-   if (!this.IsDrawn()) this.CreateFrames("#report", this.cnt++);
+
+   // TODO: TCanvas update do not work in JSRootIO
+   if (this.clname == "TCanvas") return;
+
+   if (!this.IsDrawn()) 
+      this.CreateFrames("#report", this.cnt++);
+      
    this.state = this.StateEnum.stInit;
    this.RegularCheck();
 }
@@ -350,12 +358,19 @@ DABC.RootDrawElement.prototype.ReconstructRootObject = function() {
 
    gFile = this.sinfo.obj;
    
-   if (!JSROOTIO.GetStreamer(this.clname))
-      $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
-
-   JSROOTIO.GetStreamer(this.clname).Stream(this.obj, this.raw_data, 0);
-
-   JSROOTCore.addMethods(this.obj);
+   if (this.clname == "TCanvas") {
+      this.obj = JSROOTIO.ReadTCanvas(this.raw_data, 0);
+      if (this.obj && this.obj['fPrimitives']) {
+         if (this.obj['fName'] == "") this.obj['fName'] = "anyname";
+      }
+   } else {
+      if (!JSROOTIO.GetStreamer(this.clname)) {
+         $("#report").append("<br>!!!!! streamer not found !!!!!!!" + this.clname);
+      } else {
+         JSROOTIO.GetStreamer(this.clname).Stream(this.obj, this.raw_data, 0);
+         JSROOTCore.addMethods(this.obj);
+      }
+   }
 
    this.state = this.StateEnum.stReady;
    this.version = this.raw_data_version;
@@ -472,6 +487,10 @@ DABC.RootDrawElement.prototype.RegularCheck = function() {
         if (!this.IsDrawn()) return;
         var chkbox = document.getElementById("monitoring");
         if (!chkbox || !chkbox.checked) return;
+        
+        // TODO: TCanvas update do not work in JSRootIO
+        if (this.clname == "TCanvas") return;
+        
         break;
      }
      default: return;
@@ -792,6 +811,16 @@ DABC.Manager.prototype.DisplayHiearchy = function(holder) {
    
    elem.RegularCheck();
 }
+
+DABC.Manager.prototype.ReloadTree = function() 
+{
+   var elem = this.FindItem("ObjectsTree");
+   if (!elem) return;
+   
+   elem.ready = false;
+   elem.RegularCheck();
+}
+
 
 DABC.Manager.prototype.FindXmlNode = function(itemname) {
    var elem = this.FindItem("ObjectsTree");

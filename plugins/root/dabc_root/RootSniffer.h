@@ -83,6 +83,8 @@ namespace dabc_root {
 
          int         fSinfoSize;       ///< size of last generated streamer info
 
+         dabc::TimeStamp fLastUpdate;
+
          virtual void OnThreadAssigned();
 
          virtual double ProcessTimeout(double last_diff);
